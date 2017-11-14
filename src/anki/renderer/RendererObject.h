@@ -80,6 +80,15 @@ protected:
 	}
 
 	void bindStorage(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token) const;
+
+	template<typename TPtr>
+	TPtr allocateAndBindStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
+	{
+		StagingGpuMemoryToken token;
+		TPtr ptr = allocateStorage<TPtr>(size, token);
+		bindStorage(cmdb, set, binding, token);
+		return ptr;
+	}
 };
 /// @}
 

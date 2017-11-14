@@ -4,8 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/LensFlare.h>
-#include <anki/renderer/Bloom.h>
-#include <anki/renderer/GBuffer.h>
+#include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/misc/ConfigSet.h>
@@ -25,7 +24,6 @@ struct Sprite
 
 LensFlare::~LensFlare()
 {
-	m_queries.destroy(getAllocator());
 }
 
 Error LensFlare::init(const ConfigSet& config)
@@ -78,57 +76,21 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 {
 	GrManager& gr = getGrManager();
 
-	m_queries.create(getAllocator(), m_maxFlares);
-
-	m_queryResultBuff = gr.newInstance<Buffer>(m_maxFlares * sizeof(U32),
-		BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::QUERY_RESULT,
-		BufferMapAccessBit::NONE);
-
 	m_indirectBuff = gr.newInstance<Buffer>(m_maxFlares * sizeof(DrawArraysIndirectInfo),
-		BufferUsageBit::INDIRECT | BufferUsageBit::STORAGE_COMPUTE_WRITE | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
+		BufferUsageBit::INDIRECT | BufferUsageBit::STORAGE_COMPUTE_WRITE,
 		BufferMapAccessBit::NONE);
-
-	ANKI_CHECK(getResourceManager().loadResource("programs/LensFlareOcclusionTest.ankiprog", m_occlusionProg));
-	const ShaderProgramResourceVariant* variant;
-	m_occlusionProg->getOrCreateVariant(variant);
-	m_occlusionGrProg = variant->getProgram();
 
 	ANKI_CHECK(
 		getResourceManager().loadResource("programs/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
-	m_updateIndirectBuffProg->getOrCreateVariant(variant);
+
+	ShaderProgramResourceConstantValueInitList<1> consts(m_updateIndirectBuffProg);
+	consts.add("IN_DEPTH_MAP_SIZE", Vec2(m_r->getWidth() / 2 / 2, m_r->getHeight() / 2 / 2));
+
+	const ShaderProgramResourceVariant* variant;
+	m_updateIndirectBuffProg->getOrCreateVariant(consts.get(), variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();
 
 	return Error::NONE;
-}
-
-void LensFlare::resetOcclusionQueries(const RenderingContext& ctx, CommandBufferPtr& cmdb)
-{
-	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
-	ANKI_ASSERT(count > 0);
-
-	for(U i = 0; i < count; ++i)
-	{
-		if(!m_queries[i])
-		{
-			// Lazily create
-			m_queries[i] = getGrManager().newInstance<OcclusionQuery>();
-		}
-
-		cmdb->resetOcclusionQuery(m_queries[i]);
-	}
-}
-
-void LensFlare::copyQueryResult(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
-{
-	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
-	ANKI_ASSERT(count > 0);
-
-	// Write results to buffer
-	for(U i = 0; i < count; ++i)
-	{
-		cmdb->writeOcclusionQueryResultToBuffer(
-			m_queries[i], sizeof(U32) * i, rgraph.getBuffer(m_runCtx.m_queryResultBuffHandle));
-	}
 }
 
 void LensFlare::updateIndirectInfo(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
@@ -136,10 +98,21 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, const RenderGrap
 	U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	ANKI_ASSERT(count > 0);
 
-	// Update the indirect info
 	cmdb->bindShaderProgram(m_updateIndirectBuffGrProg);
-	cmdb->bindStorageBuffer(0, 0, rgraph.getBuffer(m_runCtx.m_queryResultBuffHandle), 0, MAX_PTR_SIZE);
+
+	// Write flare info
+	Vec4* flarePositions = allocateAndBindStorage<Vec4*>(sizeof(Mat4) + count * sizeof(Vec4), cmdb, 0, 0);
+	*reinterpret_cast<Mat4*>(flarePositions) = ctx.m_viewProjMatJitter;
+	flarePositions += 4;
+
+	for(U i = 0; i < count; ++i)
+	{
+		*flarePositions = Vec4(ctx.m_renderQueue->m_lensFlares[i].m_worldPosition, 1.0f);
+		++flarePositions;
+	}
+
 	cmdb->bindStorageBuffer(0, 1, rgraph.getBuffer(m_runCtx.m_indirectBuffHandle), 0, MAX_PTR_SIZE);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
 	cmdb->dispatchCompute(count, 1, 1);
 }
 
@@ -153,98 +126,30 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	// Import buffers
-	m_runCtx.m_queryResultBuffHandle = rgraph.importBuffer("LensFl OclBuff", m_queryResultBuff, BufferUsageBit::NONE);
+	// Import buffer
 	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer("LensFl Indirect", m_indirectBuff, BufferUsageBit::NONE);
 
-	// Reset occlustion queries
-	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("LF Reset OclQ");
-		rpass.setWork(runResetOclQueriesCallback, this, 0);
-	}
-
-	// Copy query results to the buffer
-	{
-		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("LF Copy OclQ");
-
-		rpass.setWork(runCopyQueryResultCallback, this, 0);
-		rpass.newConsumer({m_runCtx.m_queryResultBuffHandle, BufferUsageBit::QUERY_RESULT});
-		// Put a dummy consumer to depend on the G-Buffer pass
-		rpass.newConsumer({m_r->getGBuffer().getColorRt(0), TextureUsageBit::SAMPLED_FRAGMENT});
-
-		rpass.newProducer({m_runCtx.m_queryResultBuffHandle, BufferUsageBit::QUERY_RESULT});
-	}
-
-	// Copy results to indirect buffer
+	// Update the indirect buffer
 	{
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("LF Upd Ind/ct");
 
 		rpass.setWork(runUpdateIndirectCallback, this, 0);
 
 		rpass.newConsumer({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
-		rpass.newConsumer({m_runCtx.m_queryResultBuffHandle, BufferUsageBit::STORAGE_COMPUTE_READ});
+		rpass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
 		rpass.newProducer({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
 	}
 }
 
-void LensFlare::runOcclusionTests(const RenderingContext& ctx, CommandBufferPtr& cmdb)
-{
-	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
-	Vec3* positions = nullptr;
-	const Vec3* initialPositions;
-	if(count)
-	{
-		// Setup MVP UBO
-		Mat4* mvp = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
-		*mvp = ctx.m_renderQueue->m_viewProjectionMatrix;
-
-		// Alloc dyn mem
-		StagingGpuMemoryToken vertToken;
-		positions = static_cast<Vec3*>(m_r->getStagingGpuMemoryManager().allocateFrame(
-			sizeof(Vec3) * count, StagingGpuMemoryType::VERTEX, vertToken));
-		initialPositions = positions;
-
-		cmdb->bindVertexBuffer(0, vertToken.m_buffer, vertToken.m_offset, sizeof(Vec3));
-
-		// Setup state
-		cmdb->bindShaderProgram(m_occlusionGrProg);
-		cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
-		cmdb->setColorChannelWriteMask(0, ColorBit::NONE);
-		cmdb->setColorChannelWriteMask(1, ColorBit::NONE);
-		cmdb->setColorChannelWriteMask(2, ColorBit::NONE);
-		cmdb->setDepthWrite(false);
-	}
-
-	for(U i = 0; i < count; ++i)
-	{
-		*positions = ctx.m_renderQueue->m_lensFlares[i].m_worldPosition;
-
-		// Draw and query
-		cmdb->beginOcclusionQuery(m_queries[i]);
-		cmdb->drawArrays(PrimitiveTopology::POINTS, 1, 1, positions - initialPositions);
-		cmdb->endOcclusionQuery(m_queries[i]);
-
-		++positions;
-	}
-
-	// Restore state
-	if(count)
-	{
-		cmdb->setColorChannelWriteMask(0, ColorBit::ALL);
-		cmdb->setColorChannelWriteMask(1, ColorBit::ALL);
-		cmdb->setColorChannelWriteMask(2, ColorBit::ALL);
-		cmdb->setDepthWrite(true);
-	}
-}
-
 void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmdb)
 {
-	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
-	if(count == 0)
+	if(ctx.m_renderQueue->m_lensFlares.getSize() == 0)
 	{
 		return;
 	}
+
+	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 
 	cmdb->bindShaderProgram(m_realGrProg);
 	cmdb->setDepthWrite(false);

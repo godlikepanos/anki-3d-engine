@@ -134,11 +134,6 @@ void GBuffer::runInThread(CommandBufferPtr& cmdb, U32 threadId, U32 threadCount,
 			ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
 			ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);
 	}
-
-	if(threadId == threadCount - 1)
-	{
-		m_r->getLensFlare().runOcclusionTests(ctx, cmdb);
-	}
 }
 
 void GBuffer::populateRenderGraph(RenderingContext& ctx)

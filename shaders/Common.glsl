@@ -29,10 +29,10 @@ precision DEFAULT_INT_PRECISION int;
 
 const float EPSILON = 0.000001;
 const float FLT_MAX = 3.402823e+38;
+const uint MAX_U32 = 0xFFFFFFFFu;
+
 const float PI = 3.14159265358979323846;
 const uint UBO_MAX_SIZE = 16384u;
-
-const uint MAX_U32 = 0xFFFFFFFFu;
 
 #define UV_TO_NDC(x_) ((x_)*2.0 - 1.0)
 #define NDC_TO_UV(x_) ((x_)*0.5 + 0.5)
