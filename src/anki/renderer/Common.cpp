@@ -11,6 +11,6 @@ namespace anki
 const Array<PixelFormat, GBUFFER_COLOR_ATTACHMENT_COUNT> MS_COLOR_ATTACHMENT_PIXEL_FORMATS = {
 	{PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
 		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)}};
+		PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM)}};
 
 } // end namespace anki

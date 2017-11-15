@@ -29,6 +29,37 @@ vec3 unpackNormal(in vec2 enc)
 	return normalize(normal);
 }
 
+// See http://johnwhite3d.blogspot.no/2017/10/signed-octahedron-normal-encoding.html
+// Result in [0.0, 1.0]
+vec3 signedOctEncode(vec3 n)
+{
+	vec3 outn;
+
+	vec3 nabs = abs(n);
+	n /= nabs.x + nabs.y + nabs.z;
+
+	outn.y = n.y * 0.5 + 0.5;
+	outn.x = n.x * 0.5 + outn.y;
+	outn.y = n.x * -0.5 + outn.y;
+
+	outn.z = saturate(n.z * FLT_MAX);
+	return outn;
+}
+
+// See http://johnwhite3d.blogspot.no/2017/10/signed-octahedron-normal-encoding.html
+vec3 signedOctDecode(vec3 n)
+{
+	vec3 outn;
+
+	outn.x = n.x - n.y;
+	outn.y = n.x + n.y - 1.0;
+	outn.z = n.z * 2.0 - 1.0;
+	outn.z = outn.z * (1.0 - abs(outn.x) - abs(outn.y));
+
+	outn = normalize(outn);
+	return outn;
+}
+
 #if GL_ES || __VERSION__ < 400
 
 // Vectorized version. See clean one at <= r1048
@@ -97,7 +128,7 @@ vec2 unpackUnorm1ToUnorm2(in float c)
 }
 
 // Max emission. Keep as low as possible
-const float MAX_EMISSION = 10.0;
+const float MAX_EMISSION = 20.0;
 
 // G-Buffer structure
 struct GbufferInfo
@@ -117,13 +148,15 @@ void writeGBuffer(in GbufferInfo g, out vec4 rt0, out vec4 rt1, out vec4 rt2)
 	float comp = packUnorm2ToUnorm1(vec2(g.subsurface, g.metallic));
 	rt0 = vec4(g.diffuse, comp);
 	rt1 = vec4(g.specular, g.roughness);
-	rt2 = vec4(g.normal * 0.5 + 0.5, g.emission / MAX_EMISSION);
+
+	vec3 encNorm = signedOctEncode(g.normal);
+	rt2 = vec4(encNorm.xy, g.emission / MAX_EMISSION, encNorm.z);
 }
 
 // Read from G-buffer
 void readNormalFromGBuffer(in sampler2D rt2, in vec2 uv, out vec3 normal)
 {
-	normal = texture(rt2, uv).rgb * 2.0 - 1.0;
+	normal = signedOctDecode(texture(rt2, uv).rga);
 }
 
 // Read from the G buffer
@@ -140,8 +173,8 @@ void readGBuffer(in sampler2D rt0, in sampler2D rt1, in sampler2D rt2, in vec2 u
 	g.roughness = comp.w;
 
 	comp = textureLod(rt2, uv, lod);
-	g.normal = comp.xyz * 2.0 - 1.0;
-	g.emission = comp.w * MAX_EMISSION;
+	g.normal = signedOctDecode(comp.xyw);
+	g.emission = comp.z * MAX_EMISSION;
 
 	// Fix values
 	g.specular = mix(g.specular, g.diffuse, g.metallic);

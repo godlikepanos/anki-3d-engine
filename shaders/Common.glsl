@@ -36,6 +36,7 @@ const uint UBO_MAX_SIZE = 16384u;
 
 #define UV_TO_NDC(x_) ((x_)*2.0 - 1.0)
 #define NDC_TO_UV(x_) ((x_)*0.5 + 0.5)
+#define saturate(x_) clamp((x_), 0.0, 1.0)
 
 // Common locations
 #define POSITION_LOCATION 0

@@ -48,7 +48,7 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 	{
 		m_colorRtDescrs[i] = m_r->create2DRenderTargetDescription(m_r->getWidth(),
 			m_r->getHeight(),
-			MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
+			MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i],
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::NEAREST,
 			rtNames[i]);
