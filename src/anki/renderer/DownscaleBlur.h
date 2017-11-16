@@ -69,18 +69,12 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initSubpass(U idx, const UVec2& inputTexSize);
 
-	void run(const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void run(RenderPassWorkContext& rgraphCtx);
 
 	/// A RenderPassWorkCallback for the downscall passes.
-	static void runCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		DownscaleBlur* self = static_cast<DownscaleBlur*>(userData);
-		self->run(rgraph, cmdb);
+		scast<DownscaleBlur*>(rgraphCtx.m_userData)->run(rgraphCtx);
 	}
 };
 /// @}

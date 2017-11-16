@@ -74,44 +74,29 @@ private:
 	ANKI_USE_RESULT Error initVBlur(const ConfigSet& set);
 	ANKI_USE_RESULT Error initHBlur(const ConfigSet& set);
 
-	void runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, const RenderGraph& rgraph);
-	void runHBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph);
-	void runVBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph);
+	void runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runHBlur(RenderPassWorkContext& rgraphCtx);
+	void runVBlur(RenderPassWorkContext& rgraphCtx);
 
 	/// A RenderPassWorkCallback for SSAO main pass.
-	static void runMainCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runMainCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		Ssao* self = static_cast<Ssao*>(userData);
-		self->runMain(cmdb, *self->m_runCtx.m_ctx, rgraph);
+		Ssao* const self = scast<Ssao*>(rgraphCtx.m_userData);
+		self->runMain(*self->m_runCtx.m_ctx, rgraphCtx);
 	}
 
 	/// A RenderPassWorkCallback for SSAO HBlur.
-	static void runHBlurCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runHBlurCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		Ssao* self = static_cast<Ssao*>(userData);
-		self->runHBlur(cmdb, rgraph);
+		Ssao* const self = scast<Ssao*>(rgraphCtx.m_userData);
+		self->runHBlur(rgraphCtx);
 	}
 
 	/// A RenderPassWorkCallback for SSAO VBlur.
-	static void runVBlurCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runVBlurCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		Ssao* self = static_cast<Ssao*>(userData);
-		self->runVBlur(cmdb, rgraph);
+		Ssao* const self = scast<Ssao*>(rgraphCtx.m_userData);
+		self->runVBlur(rgraphCtx);
 	}
 };
 /// @}

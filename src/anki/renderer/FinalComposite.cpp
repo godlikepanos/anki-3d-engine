@@ -104,25 +104,28 @@ Error FinalComposite::loadColorGradingTexture(CString filename)
 	return Error::NONE;
 }
 
-void FinalComposite::run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+void FinalComposite::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	const Bool dbgEnabled = m_r->getDbg().getEnabled();
 	const Bool drawToDefaultFb = m_r->getDrawToDefaultFramebuffer();
 
 	// Bind stuff
 	cmdb->bindTextureAndSampler(0,
 		0,
-		rgraph.getTexture(m_r->getTemporalAA().getRt()),
+		rgraphCtx.getTexture(m_r->getTemporalAA().getRt()),
 		(drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
-	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getBloom().getRt()));
+	cmdb->bindTexture(0, 1, rgraphCtx.getTexture(m_r->getBloom().getRt()));
 	cmdb->bindTexture(0, 2, m_lut->getGrTexture());
 	cmdb->bindTexture(0, 3, m_blueNoise->getGrTexture());
 	if(dbgEnabled)
 	{
-		cmdb->bindTexture(0, 5, rgraph.getTexture(m_r->getDbg().getRt()));
+		cmdb->bindTexture(0, 5, rgraphCtx.getTexture(m_r->getDbg().getRt()));
 	}
 
-	cmdb->bindUniformBuffer(0, 1, rgraph.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
+	cmdb->bindUniformBuffer(
+		0, 1, rgraphCtx.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	uniforms->x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());

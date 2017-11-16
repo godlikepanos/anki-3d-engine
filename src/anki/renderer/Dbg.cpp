@@ -82,9 +82,11 @@ void Dbg::switchDepthTestEnabled()
 	m_drawer->setDepthTestEnabled(!enabled);
 }
 
-void Dbg::run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 {
 	ANKI_ASSERT(m_enabled);
+
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	if(!m_initialized)
 	{

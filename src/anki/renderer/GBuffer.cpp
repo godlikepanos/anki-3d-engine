@@ -76,9 +76,13 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 	return Error::NONE;
 }
 
-void GBuffer::runInThread(CommandBufferPtr& cmdb, U32 threadId, U32 threadCount, const RenderingContext& ctx) const
+void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER_MS);
+
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const U threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
+	const U threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
 
 	// Get some stuff
 	const PtrSize earlyZCount = ctx.m_renderQueue->m_earlyZRenderables.getSize();

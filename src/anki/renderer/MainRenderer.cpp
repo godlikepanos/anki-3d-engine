@@ -150,12 +150,13 @@ Error MainRenderer::render(RenderQueue& rqueue)
 	return Error::NONE;
 }
 
-void MainRenderer::runBlit(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+void MainRenderer::runBlit(RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->setViewport(0, 0, m_width, m_height);
 
 	cmdb->bindShaderProgram(m_blitGrProg);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getFinalComposite().getRt()));
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getFinalComposite().getRt()));
 
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
 }

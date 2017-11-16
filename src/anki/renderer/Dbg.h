@@ -65,17 +65,13 @@ private:
 	ANKI_USE_RESULT Error lazyInit();
 
 	// A RenderPassWorkCallback for debug pass.
-	static void runCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Dbg* self = static_cast<Dbg*>(userData);
-		self->run(*self->m_runCtx.m_ctx, rgraph, cmdb);
+		Dbg* self = static_cast<Dbg*>(rgraphCtx.m_userData);
+		self->run(rgraphCtx, *self->m_runCtx.m_ctx);
 	}
 
-	void run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx);
 };
 /// @}
 

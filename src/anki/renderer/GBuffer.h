@@ -52,17 +52,13 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	// A RenderPassWorkCallback for G-buffer pass.
-	static void runCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		GBuffer* self = static_cast<GBuffer*>(userData);
-		self->runInThread(cmdb, secondLevelCmdbIdx, secondLevelCmdbCount, *self->m_ctx);
+		GBuffer* self = scast<GBuffer*>(rgraphCtx.m_userData);
+		self->runInThread(*self->m_ctx, rgraphCtx);
 	}
 
-	void runInThread(CommandBufferPtr& cmdb, U32 threadId, U32 threadCount, const RenderingContext& ctx) const;
+	void runInThread(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
 };
 /// @}
 

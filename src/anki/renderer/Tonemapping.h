@@ -47,18 +47,13 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
-	void run(const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void run(RenderPassWorkContext& rgraphCtx);
 
 	/// A RenderPassWorkCallback to run the compute pass.
-	static void runCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		Tonemapping* self = static_cast<Tonemapping*>(userData);
-		self->run(rgraph, cmdb);
+		Tonemapping* const self = scast<Tonemapping*>(rgraphCtx.m_userData);
+		self->run(rgraphCtx);
 	}
 };
 /// @}

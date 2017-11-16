@@ -61,11 +61,13 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	return Error::NONE;
 }
 
-void Tonemapping::run(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+void Tonemapping::run(RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindStorageBuffer(0, 0, rgraph.getBuffer(m_runCtx.m_buffHandle), 0, MAX_PTR_SIZE);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDownscaleBlur().getPassRt(m_rtIdx)));
+	cmdb->bindStorageBuffer(0, 0, rgraphCtx.getBuffer(m_runCtx.m_buffHandle), 0, MAX_PTR_SIZE);
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getDownscaleBlur().getPassRt(m_rtIdx)));
 
 	cmdb->dispatchCompute(1, 1, 1);
 }

@@ -63,18 +63,13 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	void updateIndirectInfo(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 	/// A RenderPassWorkCallback for updating the indirect info.
-	static void runUpdateIndirectCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runUpdateIndirectCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		LensFlare* self = static_cast<LensFlare*>(userData);
-		self->updateIndirectInfo(*self->m_runCtx.m_ctx, rgraph, cmdb);
+		LensFlare* const self = scast<LensFlare*>(rgraphCtx.m_userData);
+		self->updateIndirectInfo(*self->m_runCtx.m_ctx, rgraphCtx);
 	}
 };
 /// @}

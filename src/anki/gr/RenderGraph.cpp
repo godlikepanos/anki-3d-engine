@@ -93,6 +93,22 @@ public:
 	DynamicArray<CommandBufferPtr> m_secondLevelCmdbs;
 	FramebufferPtr m_fb;
 	Array<U32, 4> m_fbRenderArea;
+
+// TODO
+#if 0
+	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;
+	Array<TextureSurfaceInfo, MAX_COLOR_ATTACHMENTS + 1> m_attachedSurfaces;
+
+	struct ConsumedTextureInfo
+	{
+		RenderTargetHandle m_handle;
+		TextureUsageBit m_usage;
+		TextureSurfaceInfo m_surface;
+		Bool8 m_wholeTex;
+	};
+
+	DynamicArray<ConsumedTextureInfo> m_consumedTextures;
+#endif
 };
 
 /// A batch of render passes. These passes can run in parallel.
@@ -546,12 +562,41 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		{
 			const GraphicsRenderPassDescription& graphicsPass =
 				static_cast<const GraphicsRenderPassDescription&>(inPass);
+
+// TODO
+#if 0
+			// Create consumer info
+			for(U i = 0; i < graphicsPass.m_consumers.getSize(); ++i)
+			{
+				const RenderPassDependency& inConsumer = graphicsPass.m_consumers[i];
+				if(inConsumer.m_isTexture)
+				{
+					outPass.m_consumedTextures.emplaceBack(alloc);
+					Pass::ConsumedTextureInfo& inf = outPass.m_consumedTextures.getBack();
+
+					ANKI_ASSERT(sizeof(inf) == sizeof(inConsumer.m_texture));
+					memcpy(&inf, &inConsumer.m_texture, sizeof(inf));
+				}
+			}
+#endif
+
 			if(graphicsPass.hasFramebuffer())
 			{
 				outPass.m_fb = getOrCreateFramebuffer(
 					graphicsPass.m_fbInitInfo, &graphicsPass.m_rtHandles[0], graphicsPass.m_fbHash);
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
+// TODO
+#if 0
+				outPass.m_rtHandles = graphicsPass.m_rtHandles;
+
+				for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+				{
+					outPass.m_attachedSurfaces[i] = graphicsPass.m_fbInitInfo.m_colorAttachments[i].m_surface;
+				}
+				outPass.m_attachedSurfaces[MAX_COLOR_ATTACHMENTS] =
+					graphicsPass.m_fbInitInfo.m_depthStencilAttachment.m_surface;
+#endif
 
 				// Create the second level command buffers
 				if(inPass.m_secondLevelCmdbsCount)
@@ -746,16 +791,25 @@ void RenderGraph::runSecondLevel(U32 threadIdx) const
 {
 	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
 	ANKI_ASSERT(m_ctx);
+
+	RenderPassWorkContext ctx;
+	ctx.m_rgraph = this;
+	ctx.m_currentSecondLevelCommandBufferIndex = threadIdx;
+
 	for(const Pass& p : m_ctx->m_passes)
 	{
 		const U size = p.m_secondLevelCmdbs.getSize();
 		if(threadIdx < size)
 		{
-			// TODO Inform about texture usage
-			ANKI_ASSERT(p.m_secondLevelCmdbs[threadIdx].isCreated());
-			p.m_callback(p.m_userData, p.m_secondLevelCmdbs[threadIdx], threadIdx, size, *this);
+			ctx.m_commandBuffer = p.m_secondLevelCmdbs[threadIdx];
+			ctx.m_secondLevelCommandBufferCount = size;
+			ctx.m_passIdx = &p - &m_ctx->m_passes[0];
+			ctx.m_userData = p.m_userData;
 
-			p.m_secondLevelCmdbs[threadIdx]->flush();
+			ANKI_ASSERT(ctx.m_commandBuffer.isCreated());
+			p.m_callback(ctx);
+
+			ctx.m_commandBuffer->flush();
 		}
 	}
 }
@@ -765,6 +819,12 @@ void RenderGraph::run() const
 	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
 	ANKI_ASSERT(m_ctx);
 	CommandBufferPtr& cmdb = m_ctx->m_cmdb;
+
+	RenderPassWorkContext ctx;
+	ctx.m_rgraph = this;
+	ctx.m_currentSecondLevelCommandBufferIndex = 0;
+	ctx.m_secondLevelCommandBufferCount = 0;
+	ctx.m_commandBuffer = cmdb;
 
 	for(const Batch& batch : m_ctx->m_batches)
 	{
@@ -795,6 +855,23 @@ void RenderGraph::run() const
 
 			if(pass.m_fb.isCreated())
 			{
+// TODO
+#if 0
+				Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colorUsage;
+				TextureUsageBit dsUsage;
+
+				for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+				{
+					colorUsage[i] = (pass.m_rtHandles[i].m_idx != MAX_U32)
+						? getCrntUsage(pass.m_rtHandles[i], pass, pass.m_attachedSurfaces[i])
+						: TextureUsageBit::NONE;
+				}
+				dsUsage = (pass.m_rtHandles[MAX_COLOR_ATTACHMENTS].m_idx != MAX_U32)
+					? getCrntUsage(
+						  pass.m_rtHandles[MAX_COLOR_ATTACHMENTS], pass, pass.m_attachedSurfaces[MAX_COLOR_ATTACHMENTS])
+					: TextureUsageBit::NONE;
+#endif
+
 				cmdb->beginRenderPass(pass.m_fb,
 					pass.m_fbRenderArea[0],
 					pass.m_fbRenderArea[1],
@@ -805,7 +882,10 @@ void RenderGraph::run() const
 			const U size = pass.m_secondLevelCmdbs.getSize();
 			if(size == 0)
 			{
-				pass.m_callback(pass.m_userData, cmdb, 0, 0, *this);
+				ctx.m_userData = pass.m_userData;
+				ctx.m_passIdx = passIdx;
+
+				pass.m_callback(ctx);
 			}
 			else
 			{
@@ -826,6 +906,40 @@ void RenderGraph::run() const
 void RenderGraph::flush()
 {
 	m_ctx->m_cmdb->flush();
+}
+
+TextureUsageBit RenderGraph::getCrntUsage(RenderTargetHandle handle, const Pass& pass, const TextureSurfaceInfo& surf)
+{
+// TODO
+#if 0
+	for(const Pass::ConsumedTextureInfo& inf : pass.m_consumedTextures)
+	{
+		if(inf.m_handle == handle && !inf.m_wholeTex && inf.m_surface == surf)
+		{
+			return inf.m_usage;
+		}
+	}
+
+	ANKI_ASSERT(!"Combination of handle and surface not found");
+#endif
+	return TextureUsageBit::NONE;
+}
+
+TextureUsageBit RenderGraph::getCrntUsage(RenderTargetHandle handle, const Pass& pass)
+{
+// TODO
+#if 0
+	for(const Pass::ConsumedTextureInfo& inf : pass.m_consumedTextures)
+	{
+		if(inf.m_handle == handle && inf.m_wholeTex)
+		{
+			return inf.m_usage;
+		}
+	}
+
+	ANKI_ASSERT(!"Handle not found");
+#endif
+	return TextureUsageBit::NONE;
 }
 
 #if ANKI_DBG_RENDER_GRAPH

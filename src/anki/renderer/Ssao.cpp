@@ -121,15 +121,17 @@ Error Ssao::init(const ConfigSet& config)
 	return err;
 }
 
-void Ssao::runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, const RenderGraph& rgraph)
+void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_main.m_grProg);
 
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
-	cmdb->bindTextureAndSampler(0, 1, rgraph.getTexture(m_r->getGBuffer().getColorRt(2)), m_r->getLinearSampler());
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+	cmdb->bindTextureAndSampler(0, 1, rgraphCtx.getTexture(m_r->getGBuffer().getColorRt(2)), m_r->getLinearSampler());
 	cmdb->bindTexture(0, 2, m_main.m_noiseTex->getGrTexture());
-	cmdb->bindTexture(0, 3, rgraph.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
+	cmdb->bindTexture(0, 3, rgraphCtx.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
 
 	struct Unis
 	{
@@ -150,21 +152,25 @@ void Ssao::runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, const Re
 	drawQuad(cmdb);
 }
 
-void Ssao::runHBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+void Ssao::runHBlur(RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_hblur.m_grProg);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_rts[m_r->getFrameCount() & 1]));
-	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_rts[m_r->getFrameCount() & 1]));
+	cmdb->bindTexture(0, 1, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
 	drawQuad(cmdb);
 }
 
-void Ssao::runVBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+void Ssao::runVBlur(RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_vblur.m_grProg);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
-	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
+	cmdb->bindTexture(0, 1, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
 	drawQuad(cmdb);
 }
 

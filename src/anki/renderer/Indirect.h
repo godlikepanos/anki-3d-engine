@@ -148,55 +148,39 @@ private:
 	Bool findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdx, Bool& cacheEntryFound);
 
 	void runGBuffer(CommandBufferPtr& cmdb);
-	void runLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx);
-	void runMipmappingOfLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx);
-	void runIrradiance(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx);
+	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+	void runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 
 	// A RenderPassWorkCallback for G-buffer pass
-	static void runGBufferCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runGBufferCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* self = static_cast<Indirect*>(userData);
-		self->runGBuffer(cmdb);
+		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		self->runGBuffer(rgraphCtx.m_commandBuffer);
 	}
 
 	// A RenderPassWorkCallback for the light shading pass into a single face.
 	template<U faceIdx>
-	static void runLightShadingCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runLightShadingCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* self = static_cast<Indirect*>(userData);
-		self->runLightShading(cmdb, rgraph, faceIdx);
+		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		self->runLightShading(faceIdx, rgraphCtx);
 	}
 
 	// A RenderPassWorkCallback for the mipmapping of light shading result.
 	template<U faceIdx>
-	static void runMipmappingOfLightShadingCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runMipmappingOfLightShadingCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* self = static_cast<Indirect*>(userData);
-		self->runMipmappingOfLightShading(cmdb, rgraph, faceIdx);
+		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		self->runMipmappingOfLightShading(faceIdx, rgraphCtx);
 	}
 
 	// A RenderPassWorkCallback for the irradiance calculation of a single cube face.
 	template<U faceIdx>
-	static void runIrradianceCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runIrradianceCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* self = static_cast<Indirect*>(userData);
-		self->runIrradiance(cmdb, rgraph, faceIdx);
+		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		self->runIrradiance(faceIdx, rgraphCtx);
 	}
 };
 /// @}

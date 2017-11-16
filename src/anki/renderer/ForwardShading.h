@@ -29,7 +29,7 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void drawUpscale(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void drawUpscale(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 	U32 getWidth() const
 	{
@@ -81,20 +81,15 @@ private:
 	ANKI_USE_RESULT Error initUpscale();
 
 	/// A RenderPassWorkCallback.
-	static void runCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		ForwardShading* self = static_cast<ForwardShading*>(userData);
-		self->run(*self->m_runCtx.m_ctx, cmdb, secondLevelCmdbIdx, secondLevelCmdbCount, rgraph);
+		ForwardShading* self = scast<ForwardShading*>(rgraphCtx.m_userData);
+		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
 	}
 
-	void run(RenderingContext& ctx, CommandBufferPtr& cmdb, U threadId, U threadCount, const RenderGraph& rgraph);
+	void run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
-	void drawVolumetric(RenderingContext& ctx, CommandBufferPtr& cmdb, const RenderGraph& rgraph);
+	void drawVolumetric(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

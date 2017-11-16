@@ -79,19 +79,21 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	return Error::NONE;
 }
 
-void DownscaleBlur::run(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	const U passIdx = m_runCtx.m_crntPassIdx++;
 
 	if(passIdx > 0)
 	{
 		// Bind the previous pass' Rt
 
-		cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_rts[passIdx - 1]));
+		cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_rts[passIdx - 1]));
 	}
 	else
 	{
-		cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getTemporalAA().getRt()));
+		cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getTemporalAA().getRt()));
 	}
 
 	const Subpass& pass = m_passes[passIdx];

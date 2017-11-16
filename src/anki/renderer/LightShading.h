@@ -83,18 +83,13 @@ private:
 
 	void updateCommonBlock(RenderingContext& ctx);
 
-	void run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 	/// A RenderPassWorkCallback for the light pass.
-	static void runCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		LightShading* self = static_cast<LightShading*>(userData);
-		self->run(*self->m_runCtx.m_ctx, rgraph, cmdb);
+		LightShading* const self = scast<LightShading*>(rgraphCtx.m_userData);
+		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
 	}
 };
 /// @}

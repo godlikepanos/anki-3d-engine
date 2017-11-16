@@ -98,8 +98,10 @@ Error ForwardShading::initUpscale()
 	return Error::NONE;
 }
 
-void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	cmdb->bindShaderProgram(m_vol.m_grProg);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->setDepthWrite(false);
@@ -109,10 +111,10 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr& cmd
 	computeLinearizeDepthOptimal(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, unis->x(), unis->y());
 
 	cmdb->bindTextureAndSampler(
-		0, 0, rgraph.getTexture(m_r->getDepthDownscale().getHalfDepthColorRt()), m_r->getNearestSampler());
+		0, 0, rgraphCtx.getTexture(m_r->getDepthDownscale().getHalfDepthColorRt()), m_r->getNearestSampler());
 	cmdb->bindTextureAndSampler(
-		0, 1, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()), m_r->getNearestSampler());
-	cmdb->bindTexture(0, 2, rgraph.getTexture(m_r->getVolumetric().getRt()));
+		0, 1, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()), m_r->getNearestSampler());
+	cmdb->bindTexture(0, 2, rgraphCtx.getTexture(m_r->getVolumetric().getRt()));
 	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture());
 
 	drawQuad(cmdb);
@@ -123,17 +125,19 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr& cmd
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 }
 
-void ForwardShading::drawUpscale(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+void ForwardShading::drawUpscale(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	// **WARNING** Remember to update the consumers of the render pass that calls this method
 	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(
 		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
 
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getGBuffer().getDepthRt()));
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getGBuffer().getDepthRt()));
 	cmdb->bindTextureAndSampler(
-		0, 1, rgraph.getTexture(m_r->getDepthDownscale().getHalfDepthColorRt()), m_r->getNearestSampler());
-	cmdb->bindTexture(0, 2, rgraph.getTexture(m_runCtx.m_rt));
+		0, 1, rgraphCtx.getTexture(m_r->getDepthDownscale().getHalfDepthColorRt()), m_r->getNearestSampler());
+	cmdb->bindTexture(0, 2, rgraphCtx.getTexture(m_runCtx.m_rt));
 	cmdb->bindTexture(0, 3, m_upscale.m_noiseTex->getGrTexture());
 
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
@@ -147,9 +151,11 @@ void ForwardShading::drawUpscale(const RenderingContext& ctx, const RenderGraph&
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
-void ForwardShading::run(
-	RenderingContext& ctx, CommandBufferPtr& cmdb, U threadId, U threadCount, const RenderGraph& rgraph)
+void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const U threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
+	const U threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
 	const U problemSize = ctx.m_renderQueue->m_forwardShadingRenderables.getSize();
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
@@ -157,8 +163,8 @@ void ForwardShading::run(
 	if(start != end)
 	{
 		const LightShadingResources& rsrc = m_r->getLightShading().getResources();
-		cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
-		cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
+		cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+		cmdb->bindTexture(0, 1, rgraphCtx.getTexture(m_r->getShadowMapping().getShadowmapRt()));
 		bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
 		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
@@ -182,7 +188,7 @@ void ForwardShading::run(
 
 	if(threadId == threadCount - 1)
 	{
-		drawVolumetric(ctx, cmdb, rgraph);
+		drawVolumetric(ctx, rgraphCtx);
 
 		if(ctx.m_renderQueue->m_lensFlares.getSize())
 		{

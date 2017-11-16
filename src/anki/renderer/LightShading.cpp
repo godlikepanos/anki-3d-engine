@@ -123,22 +123,23 @@ Error LightShading::binLights(RenderingContext& ctx)
 	return Error::NONE;
 }
 
-void LightShading::run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const LightShadingResources& rsrc = m_runCtx.m_resources;
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindShaderProgram(m_progVariant->getProgram());
 
-	cmdb->bindTexture(1, 0, rgraph.getTexture(m_r->getGBuffer().getColorRt(0)));
-	cmdb->bindTexture(1, 1, rgraph.getTexture(m_r->getGBuffer().getColorRt(1)));
-	cmdb->bindTexture(1, 2, rgraph.getTexture(m_r->getGBuffer().getColorRt(2)));
-	cmdb->bindTexture(1, 3, rgraph.getTexture(m_r->getGBuffer().getDepthRt()), DepthStencilAspectBit::DEPTH);
-	cmdb->bindTexture(1, 4, rgraph.getTexture(m_r->getSsao().getRt()));
+	cmdb->bindTexture(1, 0, rgraphCtx.getTexture(m_r->getGBuffer().getColorRt(0)));
+	cmdb->bindTexture(1, 1, rgraphCtx.getTexture(m_r->getGBuffer().getColorRt(1)));
+	cmdb->bindTexture(1, 2, rgraphCtx.getTexture(m_r->getGBuffer().getColorRt(2)));
+	cmdb->bindTexture(1, 3, rgraphCtx.getTexture(m_r->getGBuffer().getDepthRt()), DepthStencilAspectBit::DEPTH);
+	cmdb->bindTexture(1, 4, rgraphCtx.getTexture(m_r->getSsao().getRt()));
 
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
-	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getIndirect().getReflectionRt()));
-	cmdb->bindTexture(0, 2, rgraph.getTexture(m_r->getIndirect().getIrradianceRt()));
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getShadowMapping().getShadowmapRt()));
+	cmdb->bindTexture(0, 1, rgraphCtx.getTexture(m_r->getIndirect().getReflectionRt()));
+	cmdb->bindTexture(0, 2, rgraphCtx.getTexture(m_r->getIndirect().getIrradianceRt()));
 	cmdb->bindTextureAndSampler(
 		0, 3, m_r->getIndirect().getIntegrationLut(), m_r->getIndirect().getIntegrationLutSampler());
 	cmdb->bindTexture(0, 4, (rsrc.m_diffDecalTex) ? rsrc.m_diffDecalTex : m_r->getDummyTexture());
@@ -156,7 +157,7 @@ void LightShading::run(const RenderingContext& ctx, const RenderGraph& rgraph, C
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 
 	// Apply the forward shading result
-	m_r->getForwardShading().drawUpscale(ctx, rgraph, cmdb);
+	m_r->getForwardShading().drawUpscale(ctx, rgraphCtx);
 }
 
 void LightShading::updateCommonBlock(RenderingContext& ctx)

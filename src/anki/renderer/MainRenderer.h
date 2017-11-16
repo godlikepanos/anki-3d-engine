@@ -71,17 +71,13 @@ private:
 
 	RenderGraphPtr m_rgraph;
 
-	void runBlit(const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void runBlit(RenderPassWorkContext& rgraphCtx);
 
 	// A RenderPassWorkCallback for blit pass.
-	static void runCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		MainRenderer* self = static_cast<MainRenderer*>(userData);
-		self->runBlit(rgraph, cmdb);
+		MainRenderer* const self = scast<MainRenderer*>(rgraphCtx.m_userData);
+		self->runBlit(rgraphCtx);
 	}
 };
 /// @}

@@ -108,10 +108,12 @@ Error DepthDownscale::init(const ConfigSet& cfg)
 	return err;
 }
 
-void DepthDownscale::runHalf(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+void DepthDownscale::runHalf(RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	cmdb->bindShaderProgram(m_half.m_grProg);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getGBuffer().getDepthRt()));
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getGBuffer().getDepthRt()));
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
@@ -122,10 +124,12 @@ void DepthDownscale::runHalf(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 }
 
-void DepthDownscale::runQuarter(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+void DepthDownscale::runQuarter(RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	cmdb->bindShaderProgram(m_quarter.m_grProg);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_halfColorRt));
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_halfColorRt));
 	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
 
 	drawQuad(cmdb);

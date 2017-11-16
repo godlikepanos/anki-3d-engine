@@ -143,13 +143,15 @@ Error ShadowMapping::initInternal(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-void ShadowMapping::runEsm(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_esmResolveWorkItems.getSize());
 	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	cmdb->bindShaderProgram(m_esmResolveGrProg);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_scratchRt));
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_scratchRt));
 
 	for(const EsmResolveWorkItem& workItem : m_esmResolveWorkItems)
 	{
@@ -171,14 +173,17 @@ void ShadowMapping::runEsm(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	cmdb->setScissor(0, 0, MAX_U32, MAX_U32);
 }
 
-void ShadowMapping::runShadowMapping(CommandBufferPtr& cmdb, U32 threadId)
+void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_scratchWorkItems.getSize());
 	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const U threadIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
+
 	for(ScratchBufferWorkItem& work : m_scratchWorkItems)
 	{
-		if(work.m_threadPoolTaskIdx != threadId)
+		if(work.m_threadPoolTaskIdx != threadIdx)
 		{
 			continue;
 		}

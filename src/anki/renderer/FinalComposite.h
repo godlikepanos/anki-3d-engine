@@ -60,18 +60,13 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 
-	void run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 	/// A RenderPassWorkCallback for the composite pass.
-	static void runCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		FinalComposite* self = static_cast<FinalComposite*>(userData);
-		self->run(*self->m_runCtx.m_ctx, rgraph, cmdb);
+		FinalComposite* self = scast<FinalComposite*>(rgraphCtx.m_userData);
+		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
 	}
 };
 /// @}

@@ -93,8 +93,9 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 	return Error::NONE;
 }
 
-void LensFlare::updateIndirectInfo(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	ANKI_ASSERT(count > 0);
 
@@ -111,8 +112,8 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, const RenderGrap
 		++flarePositions;
 	}
 
-	cmdb->bindStorageBuffer(0, 1, rgraph.getBuffer(m_runCtx.m_indirectBuffHandle), 0, MAX_PTR_SIZE);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+	cmdb->bindStorageBuffer(0, 1, rgraphCtx.getBuffer(m_runCtx.m_indirectBuffHandle), 0, MAX_PTR_SIZE);
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
 	cmdb->dispatchCompute(count, 1, 1);
 }
 

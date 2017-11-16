@@ -440,10 +440,12 @@ void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 	cmdb->setScissor(0, 0, MAX_U32, MAX_U32);
 }
 
-void Indirect::runLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx)
+void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx <= 6);
 	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
+
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	ANKI_ASSERT(m_ctx.m_probe);
 	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
@@ -451,9 +453,9 @@ void Indirect::runLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph
 	// Set common state for all lights
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		cmdb->bindTexture(0, i, rgraph.getTexture(m_ctx.m_gbufferColorRts[i]));
+		cmdb->bindTexture(0, i, rgraphCtx.getTexture(m_ctx.m_gbufferColorRts[i]));
 	}
-	cmdb->bindTexture(0, GBUFFER_COLOR_ATTACHMENT_COUNT, rgraph.getTexture(m_ctx.m_gbufferDepthRt));
+	cmdb->bindTexture(0, GBUFFER_COLOR_ATTACHMENT_COUNT, rgraphCtx.getTexture(m_ctx.m_gbufferDepthRt));
 	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 	cmdb->setViewport(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
@@ -557,25 +559,29 @@ void Indirect::runLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph
 	cmdb->setCullMode(FaceSelectionBit::BACK);
 }
 
-void Indirect::runMipmappingOfLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx)
+void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx < 6);
 	ANKI_ASSERT(m_ctx.m_cacheEntryIdx < m_cacheEntries.getSize());
 
 	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
-	cmdb->generateMipmaps2d(rgraph.getTexture(m_ctx.m_lightShadingRt), faceIdx, m_ctx.m_cacheEntryIdx);
+
+	rgraphCtx.m_commandBuffer->generateMipmaps2d(
+		rgraphCtx.getTexture(m_ctx.m_lightShadingRt), faceIdx, m_ctx.m_cacheEntryIdx);
 }
 
-void Indirect::runIrradiance(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx)
+void Indirect::runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx < 6);
 	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
 	const U32 cacheEntryIdx = m_ctx.m_cacheEntryIdx;
 	ANKI_ASSERT(cacheEntryIdx < m_cacheEntries.getSize());
 
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	// Set state
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_ctx.m_lightShadingRt));
+	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_ctx.m_lightShadingRt));
 	cmdb->setViewport(0, 0, m_irradiance.m_tileSize, m_irradiance.m_tileSize);
 
 	// Set uniforms

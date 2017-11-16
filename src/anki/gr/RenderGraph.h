@@ -107,9 +107,27 @@ private:
 	U64 m_hash = 0;
 };
 
+/// The only parameter of RenderPassWorkCallback.
+class RenderPassWorkContext
+{
+	friend class RenderGraph;
+
+public:
+	void* m_userData ANKI_DBG_NULLIFY;
+	CommandBufferPtr m_commandBuffer;
+	U32 m_currentSecondLevelCommandBufferIndex ANKI_DBG_NULLIFY;
+	U32 m_secondLevelCommandBufferCount ANKI_DBG_NULLIFY;
+
+	TexturePtr getTexture(RenderTargetHandle handle) const;
+	BufferPtr getBuffer(RenderPassBufferHandle handle) const;
+
+private:
+	const RenderGraph* m_rgraph ANKI_DBG_NULLIFY;
+	U32 m_passIdx ANKI_DBG_NULLIFY;
+};
+
 /// Work callback for a RenderGraph pass.
-using RenderPassWorkCallback = void (*)(
-	void* userData, CommandBufferPtr cmdb, U32 secondLevelCmdbIdx, U32 secondLevelCmdbCount, const RenderGraph& rgraph);
+using RenderPassWorkCallback = void (*)(RenderPassWorkContext& ctx);
 
 /// RenderGraph pass dependency.
 class RenderPassDependency
@@ -309,6 +327,7 @@ public:
 	GraphicsRenderPassDescription()
 		: RenderPassDescriptionBase(Type::GRAPHICS)
 	{
+		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
 	}
 
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
@@ -359,7 +378,7 @@ public:
 	}
 
 private:
-	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles = {};
+	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;
 	FramebufferInitInfo m_fbInitInfo;
 	Array<U32, 4> m_fbRenderArea = {};
 	U64 m_fbHash = 0;
@@ -515,6 +534,8 @@ class RenderGraph final : public GrObject
 {
 	ANKI_GR_OBJECT
 
+	friend class RenderPassWorkContext;
+
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::RENDER_GRAPH;
 
@@ -552,18 +573,12 @@ public:
 	void run() const;
 	/// @}
 
-	/// @name 2nd and 3rd step methods
-	/// @{
-	TexturePtr getTexture(RenderTargetHandle handle) const;
-	BufferPtr getBuffer(RenderPassBufferHandle handle) const;
-	/// @}
-
-	/// @name 4th step methods
+	/// @name 3rd step methods
 	/// @{
 	void flush();
 	/// @}
 
-	/// @name 5th step methods
+	/// @name 4th step methods
 	/// @{
 
 	/// Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.
@@ -607,6 +622,9 @@ private:
 	static Bool overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b);
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
+	static TextureUsageBit getCrntUsage(RenderTargetHandle handle, const Pass& pass);
+	static TextureUsageBit getCrntUsage(RenderTargetHandle handle, const Pass& pass, const TextureSurfaceInfo& surf);
+
 	/// @name Dump the dependency graph into a file.
 	/// @{
 	ANKI_USE_RESULT Error dumpDependencyDotFile(
@@ -614,7 +632,20 @@ private:
 	static StringAuto textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage);
 	static StringAuto bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage);
 	/// @}
+
+	TexturePtr getTexture(RenderTargetHandle handle) const;
+	BufferPtr getBuffer(RenderPassBufferHandle handle) const;
 };
 /// @}
+
+inline TexturePtr RenderPassWorkContext::getTexture(RenderTargetHandle handle) const
+{
+	return m_rgraph->getTexture(handle);
+}
+
+inline BufferPtr RenderPassWorkContext::getBuffer(RenderPassBufferHandle handle) const
+{
+	return m_rgraph->getBuffer(handle);
+}
 
 } // end namespace anki

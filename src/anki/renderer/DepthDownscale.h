@@ -85,31 +85,19 @@ private:
 	ANKI_USE_RESULT Error initHalf(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initQuarter(const ConfigSet& cfg);
 
-	void runHalf(CommandBufferPtr& cmdb, const RenderGraph& rgraph);
-	void runQuarter(CommandBufferPtr& cmdb, const RenderGraph& rgraph);
+	void runHalf(RenderPassWorkContext& rgraphCtx);
+	void runQuarter(RenderPassWorkContext& rgraphCtx);
 
 	/// A RenderPassWorkCallback for half depth main pass.
-	static void runHalfCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runHalfCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		DepthDownscale* self = static_cast<DepthDownscale*>(userData);
-		self->runHalf(cmdb, rgraph);
+		scast<DepthDownscale*>(rgraphCtx.m_userData)->runHalf(rgraphCtx);
 	}
 
 	/// A RenderPassWorkCallback for half depth main pass.
-	static void runQuarterCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runQuarterCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		DepthDownscale* self = static_cast<DepthDownscale*>(userData);
-		self->runQuarter(cmdb, rgraph);
+		scast<DepthDownscale*>(rgraphCtx.m_userData)->runQuarter(rgraphCtx);
 	}
 };
 /// @}

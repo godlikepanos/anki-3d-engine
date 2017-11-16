@@ -98,17 +98,12 @@ private:
 	static Mat4 createSpotLightTextureMatrix(const Tile& tile);
 
 	/// A RenderPassWorkCallback for ESM
-	static void runEsmCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runEsmCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		static_cast<ShadowMapping*>(userData)->runEsm(cmdb, rgraph);
+		scast<ShadowMapping*>(rgraphCtx.m_userData)->runEsm(rgraphCtx);
 	}
 
-	void runEsm(CommandBufferPtr& cmdb, const RenderGraph& rgraph);
+	void runEsm(RenderPassWorkContext& rgraphCtx);
 	/// @}
 
 	/// @name Scratch buffer stuff
@@ -138,17 +133,12 @@ private:
 	ANKI_USE_RESULT Error initScratch(const ConfigSet& cfg);
 
 	/// A RenderPassWorkCallback for shadow passes.
-	static void runShadowmappingCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runShadowmappingCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		static_cast<ShadowMapping*>(userData)->runShadowMapping(cmdb, secondLevelCmdbIdx);
+		scast<ShadowMapping*>(rgraphCtx.m_userData)->runShadowMapping(rgraphCtx);
 	}
 
-	void runShadowMapping(CommandBufferPtr& cmdb, U32 treadId);
+	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 	/// @}
 
 	/// @name Misc & common

@@ -100,28 +100,18 @@ private:
 		return Error::NONE;
 	}
 
-	static void runExposureCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runExposureCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		static_cast<Bloom*>(userData)->runExposure(rgraph, cmdb);
+		scast<Bloom*>(rgraphCtx.m_userData)->runExposure(rgraphCtx);
 	}
 
-	static void runUpscaleAndSslfCallback(void* userData,
-		CommandBufferPtr cmdb,
-		U32 secondLevelCmdbIdx,
-		U32 secondLevelCmdbCount,
-		const RenderGraph& rgraph)
+	static void runUpscaleAndSslfCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		ANKI_ASSERT(userData);
-		static_cast<Bloom*>(userData)->runUpscaleAndSslf(rgraph, cmdb);
+		scast<Bloom*>(rgraphCtx.m_userData)->runUpscaleAndSslf(rgraphCtx);
 	}
 
-	void runExposure(const RenderGraph& rgraph, CommandBufferPtr& cmdb);
-	void runUpscaleAndSslf(const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void runExposure(RenderPassWorkContext& rgraphCtx);
+	void runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx);
 };
 
 /// @}
