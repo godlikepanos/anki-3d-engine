@@ -305,8 +305,8 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 				break;
 			case DescriptorType::IMAGE:
 				tex[texCount].sampler = VK_NULL_HANDLE;
-				tex[texCount].imageView = b.m_image.m_tex->getOrCreateSingleSurfaceView(
-					TextureSurfaceInfo(b.m_image.m_level, 0, 0, 0), b.m_tex.m_aspect);
+				tex[texCount].imageView =
+					b.m_image.m_tex->getOrCreateSingleLevelView(b.m_image.m_level, b.m_tex.m_aspect);
 				tex[texCount].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 				w.pImageInfo = &tex[texCount];

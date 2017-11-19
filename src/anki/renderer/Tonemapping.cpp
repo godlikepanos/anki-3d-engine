@@ -67,7 +67,7 @@ void Tonemapping::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindStorageBuffer(0, 0, rgraphCtx.getBuffer(m_runCtx.m_buffHandle), 0, MAX_PTR_SIZE);
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getDownscaleBlur().getPassRt(m_rtIdx)));
+	rgraphCtx.bindTexture(0, 0, m_r->getDownscaleBlur().getPassRt(m_rtIdx));
 
 	cmdb->dispatchCompute(1, 1, 1);
 }

@@ -228,7 +228,7 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 			progToBind = m_grProgs[RGBA_TEX];
 
 			Texture* t = numberToPtr<Texture*>(ptrToNumber(cmd->texture.ptr) & ~FONT_TEXTURE_MASK);
-			cmdb->bindTexture(0, 0, TexturePtr(t));
+			cmdb->bindTexture(0, 0, TexturePtr(t), TextureUsageBit::SAMPLED_FRAGMENT);
 		}
 		else
 		{

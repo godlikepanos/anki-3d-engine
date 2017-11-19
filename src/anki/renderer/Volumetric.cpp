@@ -125,10 +125,10 @@ void Volumetric::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
-	cmdb->bindTexture(0, 1, m_main.m_noiseTex->getGrTexture());
-	cmdb->bindTexture(0, 2, rgraphCtx.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
-	cmdb->bindTexture(0, 3, rgraphCtx.getTexture(m_r->getShadowMapping().getShadowmapRt()));
+	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getQuarterColorRt());
+	cmdb->bindTexture(0, 1, m_main.m_noiseTex->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindTexture(0, 2, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]);
+	rgraphCtx.bindTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 
 	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
 	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
@@ -166,7 +166,7 @@ void Volumetric::runHBlur(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_rts[m_r->getFrameCount() & 1]));
+	rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[m_r->getFrameCount() & 1]);
 	cmdb->bindShaderProgram(m_hblur.m_grProg);
 	cmdb->setViewport(0, 0, m_width, m_height);
 
@@ -177,7 +177,7 @@ void Volumetric::runVBlur(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
+	rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]);
 	cmdb->bindShaderProgram(m_vblur.m_grProg);
 	cmdb->setViewport(0, 0, m_width, m_height);
 

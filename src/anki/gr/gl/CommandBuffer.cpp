@@ -621,7 +621,8 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	}
 }
 
-void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect)
+void CommandBuffer::bindTexture(
+	U32 set, U32 binding, TexturePtr tex, TextureUsageBit usage, DepthStencilAspectBit aspect)
 {
 	class Cmd final : public GlCommand
 	{
@@ -661,7 +662,7 @@ void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStenc
 }
 
 void CommandBuffer::bindTextureAndSampler(
-	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectBit aspect)
+	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
 {
 	class Cmd final : public GlCommand
 	{
@@ -879,7 +880,13 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 	}
 }
 
-void CommandBuffer::beginRenderPass(FramebufferPtr fb, U32 minx, U32 miny, U32 width, U32 height)
+void CommandBuffer::beginRenderPass(FramebufferPtr fb,
+	const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+	TextureUsageBit depthStencilAttachmentUsage,
+	U32 minx,
+	U32 miny,
+	U32 width,
+	U32 height)
 {
 	class BindFramebufferCommand final : public GlCommand
 	{
@@ -1176,8 +1183,12 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 	m_impl->pushBackNewCommand<OqEndCommand>(query);
 }
 
-void CommandBuffer::copyBufferToTextureSurface(
-	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
+void CommandBuffer::copyBufferToTextureSurface(BufferPtr buff,
+	PtrSize offset,
+	PtrSize range,
+	TexturePtr tex,
+	const TextureSurfaceInfo& surf,
+	TextureUsageBit surfUsage)
 {
 	class TexSurfUploadCommand final : public GlCommand
 	{
@@ -1213,8 +1224,12 @@ void CommandBuffer::copyBufferToTextureSurface(
 	m_impl->pushBackNewCommand<TexSurfUploadCommand>(buff, offset, range, tex, surf);
 }
 
-void CommandBuffer::copyBufferToTextureVolume(
-	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
+void CommandBuffer::copyBufferToTextureVolume(BufferPtr buff,
+	PtrSize offset,
+	PtrSize range,
+	TexturePtr tex,
+	const TextureVolumeInfo& vol,
+	TextureUsageBit volUsage)
 {
 	class TexVolUploadCommand final : public GlCommand
 	{
@@ -1550,23 +1565,6 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 
 	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 	m_impl->pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
-}
-
-void CommandBuffer::informTextureSurfaceCurrentUsage(
-	TexturePtr tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
-{
-	// Nothing for GL
-}
-
-void CommandBuffer::informTextureVolumeCurrentUsage(
-	TexturePtr tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage)
-{
-	// Nothing for GL
-}
-
-void CommandBuffer::informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage)
-{
-	// Nothing for GL
 }
 
 } // end namespace anki

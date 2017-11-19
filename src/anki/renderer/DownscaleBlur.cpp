@@ -89,11 +89,11 @@ void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
 	{
 		// Bind the previous pass' Rt
 
-		cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_rts[passIdx - 1]));
+		rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[passIdx - 1]);
 	}
 	else
 	{
-		cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getTemporalAA().getRt()));
+		rgraphCtx.bindTexture(0, 0, m_r->getTemporalAA().getRt());
 	}
 
 	const Subpass& pass = m_passes[passIdx];

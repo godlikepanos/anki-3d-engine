@@ -147,7 +147,7 @@ void Bloom::runExposure(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
 	cmdb->bindShaderProgram(m_exposure.m_grProg);
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getDownscaleBlur().getPassRt(MAX_U)));
+	rgraphCtx.bindTexture(0, 0, m_r->getDownscaleBlur().getPassRt(MAX_U));
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	*uniforms = Vec4(m_exposure.m_threshold, m_exposure.m_scale, 0.0, 0.0);
@@ -165,13 +165,13 @@ void Bloom::runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx)
 	// Upscale
 	cmdb->setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
 	cmdb->bindShaderProgram(m_upscale.m_grProg);
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_exposureRt));
+	rgraphCtx.bindTexture(0, 0, m_runCtx.m_exposureRt);
 	drawQuad(cmdb);
 
 	// SSLF
 	cmdb->bindShaderProgram(m_sslf.m_grProg);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
-	cmdb->bindTexture(0, 1, m_sslf.m_lensDirtTex->getGrTexture());
+	cmdb->bindTexture(0, 1, m_sslf.m_lensDirtTex->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
 	drawQuad(cmdb);
 
 	// Retore state

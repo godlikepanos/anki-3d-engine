@@ -46,6 +46,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
 		m_activeFb = init.m_framebuffer;
+		m_colorAttachmentUsages = init.m_colorAttachmentUsages;
+		m_depthStencilAttachmentUsage = init.m_depthStencilAttachmentUsage;
 	}
 
 	return Error::NONE;
@@ -70,15 +72,13 @@ void CommandBufferImpl::beginRecording()
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->findLayoutFromTracker(
-				impl.getAttachedSurfaces()[i], m_texUsageTracker);
+			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->computeLayout(m_colorAttachmentUsages[i], 0);
 		}
 
 		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
-			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->findLayoutFromTracker(
-				impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS], m_texUsageTracker);
+			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->computeLayout(m_depthStencilAttachmentUsage, 0);
 		}
 
 		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
@@ -99,7 +99,13 @@ void CommandBufferImpl::beginRecording()
 	vkBeginCommandBuffer(m_handle, &begin);
 }
 
-void CommandBufferImpl::beginRenderPass(FramebufferPtr fb, U32 minx, U32 miny, U32 width, U32 height)
+void CommandBufferImpl::beginRenderPass(FramebufferPtr fb,
+	const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+	TextureUsageBit depthStencilAttachmentUsage,
+	U32 minx,
+	U32 miny,
+	U32 width,
+	U32 height)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
@@ -124,6 +130,9 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb, U32 minx, U32 miny, U
 	m_renderArea[1] = miny;
 	m_renderArea[2] = width;
 	m_renderArea[3] = height;
+
+	m_colorAttachmentUsages = colorAttachmentUsages;
+	m_depthStencilAttachmentUsage = depthStencilAttachmentUsage;
 
 	m_microCmdb->pushObjectRef(fb);
 
@@ -151,15 +160,13 @@ void CommandBufferImpl::beginRenderPassInternal()
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->findLayoutFromTracker(
-				impl.getAttachedSurfaces()[i], m_texUsageTracker);
+			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->computeLayout(m_colorAttachmentUsages[i], 0);
 		}
 
 		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
-			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->findLayoutFromTracker(
-				impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS], m_texUsageTracker);
+			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->computeLayout(m_depthStencilAttachmentUsage, 0);
 		}
 
 		bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
@@ -623,7 +630,7 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 	TextureImpl& impl = *tex->m_impl;
 	impl.checkSurfaceOrVolume(surf);
 	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
-	const VkImageLayout layout = impl.findLayoutFromTracker(surf, m_texUsageTracker);
+	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 	if(!impl.m_workarounds)
 	{
@@ -723,7 +730,7 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 	TextureImpl& impl = *tex->m_impl;
 	impl.checkSurfaceOrVolume(vol);
 	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
-	const VkImageLayout layout = impl.findLayoutFromTracker(vol, m_texUsageTracker);
+	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 	if(!impl.m_workarounds)
 	{

@@ -165,15 +165,16 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	m_impl->setBlendOperation(attachment, funcRgb, funcA);
 }
 
-void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect)
+void CommandBuffer::bindTexture(
+	U32 set, U32 binding, TexturePtr tex, TextureUsageBit usage, DepthStencilAspectBit aspect)
 {
-	m_impl->bindTexture(set, binding, tex, aspect);
+	m_impl->bindTexture(set, binding, tex, usage, aspect);
 }
 
 void CommandBuffer::bindTextureAndSampler(
-	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectBit aspect)
+	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
 {
-	m_impl->bindTextureAndSampler(set, binding, tex, sampler, aspect);
+	m_impl->bindTextureAndSampler(set, binding, tex, sampler, usage, aspect);
 }
 
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
@@ -202,9 +203,15 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 	m_impl->bindShaderProgram(prog);
 }
 
-void CommandBuffer::beginRenderPass(FramebufferPtr fb, U32 minx, U32 miny, U32 width, U32 height)
+void CommandBuffer::beginRenderPass(FramebufferPtr fb,
+	const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+	TextureUsageBit depthStencilAttachmentUsage,
+	U32 minx,
+	U32 miny,
+	U32 width,
+	U32 height)
 {
-	m_impl->beginRenderPass(fb, minx, miny, width, height);
+	m_impl->beginRenderPass(fb, colorAttachmentUsages, depthStencilAttachmentUsage, minx, miny, width, height);
 }
 
 void CommandBuffer::endRenderPass()
@@ -316,23 +323,6 @@ void CommandBuffer::setBufferBarrier(
 	BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
 {
 	m_impl->setBufferBarrier(buff, before, after, offset, size);
-}
-
-void CommandBuffer::informTextureSurfaceCurrentUsage(
-	TexturePtr tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
-{
-	m_impl->informTextureSurfaceCurrentUsage(tex, surf, crntUsage);
-}
-
-void CommandBuffer::informTextureVolumeCurrentUsage(
-	TexturePtr tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage)
-{
-	m_impl->informTextureVolumeCurrentUsage(tex, vol, crntUsage);
-}
-
-void CommandBuffer::informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage)
-{
-	m_impl->informTextureCurrentUsage(tex, crntUsage);
 }
 
 void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)

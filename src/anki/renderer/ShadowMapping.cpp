@@ -151,7 +151,7 @@ void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->bindShaderProgram(m_esmResolveGrProg);
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_scratchRt));
+	rgraphCtx.bindTexture(0, 0, m_scratchRt);
 
 	for(const EsmResolveWorkItem& workItem : m_esmResolveWorkItems)
 	{

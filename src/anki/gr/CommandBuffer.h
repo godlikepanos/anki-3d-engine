@@ -118,6 +118,8 @@ class CommandBufferInitInfo
 {
 public:
 	FramebufferPtr m_framebuffer; ///< For second level command buffers.
+	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
+	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
 	CommandBufferInitHints m_hints;
 
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
@@ -220,13 +222,29 @@ public:
 	}
 
 	/// Bind texture.
-	void bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param tex The texture to bind.
+	/// @param usage The state the tex is in.
+	/// @param aspect The depth stencil aspect.
+	void bindTexture(U32 set,
+		U32 binding,
+		TexturePtr tex,
+		TextureUsageBit usage,
+		DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);
 
 	/// Bind texture and sample.
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param tex The texture to bind.
+	/// @param sampler The sampler to override the default sampler of the tex.
+	/// @param usage The state the tex is in.
+	/// @param aspect The depth stencil aspect.
 	void bindTextureAndSampler(U32 set,
 		U32 binding,
 		TexturePtr tex,
 		SamplerPtr sampler,
+		TextureUsageBit usage,
 		DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);
 
 	/// Bind uniform buffer.
@@ -259,7 +277,13 @@ public:
 	/// Begin renderpass.
 	/// The minx, miny, width, height control the area that the load and store operations will happen. If the scissor is
 	/// bigger than the render area the results are undefined.
-	void beginRenderPass(FramebufferPtr fb, U32 minx = 0, U32 miny = 0, U32 width = MAX_U32, U32 height = MAX_U32);
+	void beginRenderPass(FramebufferPtr fb,
+		const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+		TextureUsageBit depthStencilAttachmentUsage,
+		U32 minx = 0,
+		U32 miny = 0,
+		U32 width = MAX_U32,
+		U32 height = MAX_U32);
 
 	/// End renderpass.
 	void endRenderPass();
@@ -359,26 +383,6 @@ public:
 
 	void setBufferBarrier(
 		BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage, PtrSize offset, PtrSize size);
-
-	/// The command buffer will have to know the current usage of a texture. That can be known if there was a barrier
-	/// but if it wasn't use this method.
-	/// @param tex The texture.
-	/// @param surf The texture surface.
-	/// @param crntUsage The texture's current usage.
-	void informTextureSurfaceCurrentUsage(TexturePtr tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage);
-
-	/// The command buffer will have to know the current usage of a texture. That can be known if there was a barrier
-	/// but if it wasn't use this method.
-	/// @param tex The texture.
-	/// @param vol The texture volume.
-	/// @param crntUsage The texture's current usage.
-	void informTextureVolumeCurrentUsage(TexturePtr tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage);
-
-	/// The command buffer will have to know the current usage of a texture. That can be known if there was a barrier
-	/// but if it wasn't use this method.
-	/// @param tex The texture.
-	/// @param crntUsage The texture's current usage.
-	void informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage);
 	/// @}
 
 	/// @name Other

@@ -453,9 +453,9 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 	// Set common state for all lights
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		cmdb->bindTexture(0, i, rgraphCtx.getTexture(m_ctx.m_gbufferColorRts[i]));
+		rgraphCtx.bindTexture(0, i, m_ctx.m_gbufferColorRts[i]);
 	}
-	cmdb->bindTexture(0, GBUFFER_COLOR_ATTACHMENT_COUNT, rgraphCtx.getTexture(m_ctx.m_gbufferDepthRt));
+	rgraphCtx.bindTexture(0, GBUFFER_COLOR_ATTACHMENT_COUNT, m_ctx.m_gbufferDepthRt);
 	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 	cmdb->setViewport(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
@@ -581,7 +581,7 @@ void Indirect::runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 
 	// Set state
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_ctx.m_lightShadingRt));
+	rgraphCtx.bindTexture(0, 0, m_ctx.m_lightShadingRt);
 	cmdb->setViewport(0, 0, m_irradiance.m_tileSize, m_irradiance.m_tileSize);
 
 	// Set uniforms
@@ -733,11 +733,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 				pass.setWork(callbacks[faceIdx], this, 0);
 
-				for(U mip = 0; mip < m_lightShading.m_mipCount; ++mip)
-				{
-					TextureSurfaceInfo surf(mip, 0, faceIdx, probeToUpdateCacheEntryIdx);
-					pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT, surf});
-				}
+				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT});
 
 				pass.newConsumer({m_ctx.m_irradianceRt,
 					TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,

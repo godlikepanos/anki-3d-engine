@@ -10,6 +10,7 @@
 #include <anki/gr/Texture.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/Framebuffer.h>
+#include <anki/gr/CommandBuffer.h>
 #include <anki/util/HashMap.h>
 #include <anki/util/BitSet.h>
 
@@ -113,13 +114,36 @@ class RenderPassWorkContext
 	friend class RenderGraph;
 
 public:
-	void* m_userData ANKI_DBG_NULLIFY;
+	void* m_userData ANKI_DBG_NULLIFY; ///< The userData passed in RenderPassDescriptionBase::setWork
 	CommandBufferPtr m_commandBuffer;
 	U32 m_currentSecondLevelCommandBufferIndex ANKI_DBG_NULLIFY;
 	U32 m_secondLevelCommandBufferCount ANKI_DBG_NULLIFY;
 
 	TexturePtr getTexture(RenderTargetHandle handle) const;
 	BufferPtr getBuffer(RenderPassBufferHandle handle) const;
+
+	TextureUsageBit getTextureUsage(RenderTargetHandle handle) const;
+	TextureUsageBit getTextureUsage(RenderTargetHandle handle, const TextureSurfaceInfo& surf) const;
+	TextureUsageBit getTextureUsage(RenderTargetHandle handle, const TextureVolumeInfo& vol) const;
+	TextureUsageBit getTextureUsage(RenderTargetHandle handle, U32 level) const;
+
+	/// Convenience method.
+	void bindTexture(
+		U32 set, U32 binding, RenderTargetHandle handle, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+	{
+		m_commandBuffer->bindTexture(set, binding, getTexture(handle), getTextureUsage(handle), aspect);
+	}
+
+	/// Convenience method.
+	void bindTextureAndSampler(U32 set,
+		U32 binding,
+		RenderTargetHandle handle,
+		SamplerPtr sampler,
+		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+	{
+		m_commandBuffer->bindTextureAndSampler(
+			set, binding, getTexture(handle), sampler, getTextureUsage(handle), aspect);
+	}
 
 private:
 	const RenderGraph* m_rgraph ANKI_DBG_NULLIFY;
@@ -160,8 +184,9 @@ public:
 	}
 
 private:
-	struct TextureInfo
+	class TextureInfo
 	{
+	public:
 		RenderTargetHandle m_handle;
 		TextureUsageBit m_usage;
 		TextureSurfaceInfo m_surface;
@@ -271,7 +296,6 @@ protected:
 };
 
 /// Framebuffer attachment info.
-/// @memberof FramebufferDescription
 class FramebufferDescriptionAttachment
 {
 public:
@@ -287,7 +311,6 @@ public:
 };
 
 /// Describes a framebuffer.
-/// @memberof GraphicsRenderPassDescription
 class FramebufferDescription
 {
 	friend class GraphicsRenderPassDescription;
@@ -622,8 +645,8 @@ private:
 	static Bool overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b);
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
-	static TextureUsageBit getCrntUsage(RenderTargetHandle handle, const Pass& pass);
-	static TextureUsageBit getCrntUsage(RenderTargetHandle handle, const Pass& pass, const TextureSurfaceInfo& surf);
+	TextureUsageBit getCrntUsage(RenderTargetHandle handle, U32 passIdx) const;
+	TextureUsageBit getCrntUsage(RenderTargetHandle handle, U32 passIdx, const TextureSurfaceInfo& surf) const;
 
 	/// @name Dump the dependency graph into a file.
 	/// @{
@@ -646,6 +669,30 @@ inline TexturePtr RenderPassWorkContext::getTexture(RenderTargetHandle handle) c
 inline BufferPtr RenderPassWorkContext::getBuffer(RenderPassBufferHandle handle) const
 {
 	return m_rgraph->getBuffer(handle);
+}
+
+inline TextureUsageBit RenderPassWorkContext::getTextureUsage(RenderTargetHandle handle) const
+{
+	return m_rgraph->getCrntUsage(handle, m_passIdx);
+}
+
+inline TextureUsageBit RenderPassWorkContext::getTextureUsage(
+	RenderTargetHandle handle, const TextureSurfaceInfo& surf) const
+{
+	return m_rgraph->getCrntUsage(handle, m_passIdx, surf);
+}
+
+inline TextureUsageBit RenderPassWorkContext::getTextureUsage(
+	RenderTargetHandle handle, const TextureVolumeInfo& vol) const
+{
+	ANKI_ASSERT(!"TODO");
+	return TextureUsageBit::NONE;
+}
+
+inline TextureUsageBit RenderPassWorkContext::getTextureUsage(RenderTargetHandle handle, U32 level) const
+{
+	ANKI_ASSERT(!"TODO");
+	return TextureUsageBit::NONE;
 }
 
 } // end namespace anki

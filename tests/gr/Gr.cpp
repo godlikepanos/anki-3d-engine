@@ -422,7 +422,7 @@ ANKI_TEST(Gr, ClearScreen)
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 		cmdb->endRenderPass();
 		cmdb->flush();
 
@@ -461,7 +461,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 		cmdb->endRenderPass();
 		cmdb->flush();
@@ -524,6 +524,8 @@ ANKI_TEST(Gr, ViewportAndScissor)
 			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN * 2, vp[3] - SCISSOR_MARGIN * 2);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb[i % 4],
+			{},
+			{},
 			vp[0] + RENDER_AREA_MARGIN,
 			vp[1] + RENDER_AREA_MARGIN,
 			vp[2] - RENDER_AREA_MARGIN * 2,
@@ -613,7 +615,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 				TextureUsageBit::NONE,
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 				TextureSurfaceInfo(0, 0, 0, 0));
-			cmdb->beginRenderPass(fb[0]);
+			cmdb->beginRenderPass(fb[0], {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}}, {});
 			cmdb->endRenderPass();
 			cmdb->setTextureSurfaceBarrier(rt,
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
@@ -637,6 +639,8 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN * 2, vp[3] - SCISSOR_MARGIN * 2);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb[i % 4],
+			{{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}},
+			{},
 			vp[0] + RENDER_AREA_MARGIN,
 			vp[1] + RENDER_AREA_MARGIN,
 			vp[2] - RENDER_AREA_MARGIN * 2,
@@ -652,8 +656,8 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->bindTexture(0, 0, rt);
-		cmdb->beginRenderPass(defaultFb);
+		cmdb->bindTexture(0, 0, rt, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->beginRenderPass(defaultFb, {}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -730,7 +734,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 
 		cmdb->bindUniformBuffer(0, 0, b, 0, MAX_PTR_SIZE);
 
@@ -821,7 +825,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->setPolygonOffset(0.0, 0.0);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 		cmdb->endRenderPass();
 		cmdb->flush();
@@ -1040,7 +1044,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 
 		for(U i = 0; i < 2; ++i)
 		{
@@ -1051,8 +1055,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 		}
 		cmdb->informTextureSurfaceCurrentUsage(b, TextureSurfaceInfo(2, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 
-		cmdb->bindTexture(0, 0, a);
-		cmdb->bindTexture(0, 1, b);
+		cmdb->bindTexture(0, 0, a, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 1, b, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 		cmdb->flush();
@@ -1199,7 +1203,9 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb,
+			{{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}},
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 
 		if(!useSecondLevel)
 		{
@@ -1242,11 +1248,11 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			TextureSurfaceInfo(0, 0, 0, 0));
 
 		// Draw quad
-		cmdb->beginRenderPass(dfb);
+		cmdb->beginRenderPass(dfb, {}, {});
 		cmdb->bindShaderProgram(resolveProg);
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->bindTexture(0, 0, col0);
-		cmdb->bindTexture(0, 1, col1);
+		cmdb->bindTexture(0, 0, col0, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 1, col1, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -1359,9 +1365,9 @@ ANKI_TEST(Gr, ImageLoadStore)
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(dfb);
+		cmdb->beginRenderPass(dfb, {}, {});
 		cmdb->informTextureSurfaceCurrentUsage(tex, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTexture(0, 0, tex);
+		cmdb->bindTexture(0, 0, tex, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -1501,7 +1507,7 @@ ANKI_TEST(Gr, 3DTextures)
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->beginRenderPass(dfb);
+		cmdb->beginRenderPass(dfb, {}, {});
 
 		cmdb->bindShaderProgram(prog);
 
@@ -1510,7 +1516,7 @@ ANKI_TEST(Gr, 3DTextures)
 		U idx = (F32(ITERATION_COUNT - iterations - 1) / ITERATION_COUNT) * TEX_COORDS_LOD.getSize();
 		*uv = TEX_COORDS_LOD[idx];
 
-		cmdb->bindTexture(0, 0, a);
+		cmdb->bindTexture(0, 0, a, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 
 		cmdb->endRenderPass();

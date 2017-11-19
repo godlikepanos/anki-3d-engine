@@ -65,9 +65,9 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTextureAndSampler(0, 0, rgraphCtx.getTexture(m_r->getGBuffer().getDepthRt()), m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(0, 1, rgraphCtx.getTexture(m_r->getLightShading().getRt()), m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(0, 2, rgraphCtx.getTexture(m_runCtx.m_historyRt), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getGBuffer().getDepthRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0, 2, m_runCtx.m_historyRt, m_r->getLinearSampler());
 
 	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
 	*unis = ctx.m_jitterMat * ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();

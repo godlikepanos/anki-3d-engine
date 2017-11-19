@@ -12,7 +12,6 @@
 #include <anki/gr/Buffer.h>
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
-#include <anki/gr/vulkan/TextureUsageTracker.h>
 #include <anki/gr/vulkan/Pipeline.h>
 #include <anki/util/List.h>
 
@@ -214,22 +213,23 @@ public:
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTexture(U32 set, U32 binding, TexturePtr tex_, DepthStencilAspectBit aspect)
+	void bindTexture(U32 set, U32 binding, TexturePtr tex_, TextureUsageBit usage, DepthStencilAspectBit aspect)
 	{
 		commandCommon();
 		const U realBinding = binding;
 		Texture& tex = *tex_;
-		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
+		const VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
 		m_dsetState[set].bindTexture(realBinding, &tex, aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);
 	}
 
-	void bindTextureAndSampler(U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, DepthStencilAspectBit aspect)
+	void bindTextureAndSampler(
+		U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
 	{
 		commandCommon();
 		const U realBinding = binding;
 		Texture& tex = *tex_;
-		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
+		const VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);
 		m_microCmdb->pushObjectRef(sampler);
@@ -244,7 +244,13 @@ public:
 		m_microCmdb->pushObjectRef(img);
 	}
 
-	void beginRenderPass(FramebufferPtr fb, U32 minx, U32 miny, U32 width, U32 height);
+	void beginRenderPass(FramebufferPtr fb,
+		const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+		TextureUsageBit depthStencilAttachmentUsage,
+		U32 minx,
+		U32 miny,
+		U32 width,
+		U32 height);
 
 	void endRenderPass();
 
@@ -324,24 +330,6 @@ public:
 	void copyBufferToTextureVolume(
 		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol);
 
-	void informTextureSurfaceCurrentUsage(TexturePtr& tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
-	{
-		lazyInit();
-		tex->m_impl->updateTracker(surf, crntUsage, m_texUsageTracker);
-	}
-
-	void informTextureVolumeCurrentUsage(TexturePtr& tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage)
-	{
-		lazyInit();
-		tex->m_impl->updateTracker(vol, crntUsage, m_texUsageTracker);
-	}
-
-	void informTextureCurrentUsage(TexturePtr& tex, TextureUsageBit crntUsage)
-	{
-		lazyInit();
-		tex->m_impl->updateTracker(crntUsage, m_texUsageTracker);
-	}
-
 	void copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range);
 
 private:
@@ -364,6 +352,8 @@ private:
 	FramebufferPtr m_activeFb;
 	Array<U32, 4> m_renderArea = {{0, 0, MAX_U32, MAX_U32}};
 	Array<U32, 2> m_fbSize = {{0, 0}};
+	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
+	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
 
 	ShaderProgramImpl* m_graphicsProg ANKI_DBG_NULLIFY; ///< Last bound graphics program
 
@@ -431,9 +421,6 @@ private:
 	DynamicArray<VkCommandBuffer> m_secondLevelAtoms;
 	U16 m_secondLevelAtomCount = 0;
 	/// @}
-
-	/// Track texture usage.
-	TextureUsageTracker m_texUsageTracker;
 
 	void lazyInit();
 

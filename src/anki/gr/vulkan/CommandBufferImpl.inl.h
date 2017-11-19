@@ -163,8 +163,6 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(surf, impl.m_akAspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
-
-	impl.updateTracker(surf, nextUsage, m_texUsageTracker);
 }
 
 inline void CommandBufferImpl::setTextureVolumeBarrier(
@@ -182,8 +180,6 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(vol, impl.m_akAspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
-
-	impl.updateTracker(vol, nextUsage, m_texUsageTracker);
 }
 
 inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
@@ -619,8 +615,6 @@ inline void CommandBufferImpl::lazyInit()
 	m_handle = m_microCmdb->getHandle();
 
 	m_alloc = m_microCmdb->getFastAllocator();
-
-	m_texUsageTracker.init(m_alloc);
 
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{

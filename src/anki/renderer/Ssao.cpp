@@ -128,10 +128,10 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_main.m_grProg);
 
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
-	cmdb->bindTextureAndSampler(0, 1, rgraphCtx.getTexture(m_r->getGBuffer().getColorRt(2)), m_r->getLinearSampler());
-	cmdb->bindTexture(0, 2, m_main.m_noiseTex->getGrTexture());
-	cmdb->bindTexture(0, 3, rgraphCtx.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
+	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getQuarterColorRt());
+	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
+	cmdb->bindTexture(0, 2, m_main.m_noiseTex->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindTexture(0, 3, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]);
 
 	struct Unis
 	{
@@ -158,8 +158,8 @@ void Ssao::runHBlur(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_hblur.m_grProg);
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_rts[m_r->getFrameCount() & 1]));
-	cmdb->bindTexture(0, 1, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+	rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[m_r->getFrameCount() & 1]);
+	rgraphCtx.bindTexture(0, 1, m_r->getDepthDownscale().getQuarterColorRt());
 	drawQuad(cmdb);
 }
 
@@ -169,8 +169,8 @@ void Ssao::runVBlur(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_vblur.m_grProg);
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
-	cmdb->bindTexture(0, 1, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+	rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]);
+	rgraphCtx.bindTexture(0, 1, m_r->getDepthDownscale().getQuarterColorRt());
 	drawQuad(cmdb);
 }
 

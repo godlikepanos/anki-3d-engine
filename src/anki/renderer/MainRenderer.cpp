@@ -156,7 +156,7 @@ void MainRenderer::runBlit(RenderPassWorkContext& rgraphCtx)
 	cmdb->setViewport(0, 0, m_width, m_height);
 
 	cmdb->bindShaderProgram(m_blitGrProg);
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getFinalComposite().getRt()));
+	rgraphCtx.bindTexture(0, 0, m_r->getFinalComposite().getRt());
 
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
 }

@@ -362,6 +362,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				TextureSurfaceInfo surf(mip, 0, face, layer);
 
 				FramebufferInitInfo fbInit;
+				Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
+				TextureUsageBit dsUsage = TextureUsageBit::NONE;
 
 				if(inf.m_format.m_components >= ComponentFormat::FIRST_DEPTH_STENCIL
 					&& inf.m_format.m_components <= ComponentFormat::LAST_DEPTH_STENCIL)
@@ -370,6 +372,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					fbInit.m_depthStencilAttachment.m_surface = surf;
 					fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH_STENCIL;
 					fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+
+					dsUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 				}
 				else
 				{
@@ -379,13 +383,15 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 					fbInit.m_colorAttachments[0].m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
 					fbInit.m_colorAttachments[0].m_clearValue = clearVal;
+
+					colUsage[0] = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 				}
 				FramebufferPtr fb = m_gr->newInstance<Framebuffer>(fbInit);
 
 				cmdb->setTextureSurfaceBarrier(
 					tex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
 
-				cmdb->beginRenderPass(fb);
+				cmdb->beginRenderPass(fb, colUsage, dsUsage);
 				cmdb->endRenderPass();
 
 				if(!!inf.m_initialUsage)

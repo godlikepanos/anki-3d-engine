@@ -662,6 +662,18 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	return out;
 }
 
+VkImageView TextureImpl::getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect)
+{
+	ANKI_ASSERT(mip < m_mipCount);
+
+	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
+	ci.subresourceRange.baseMipLevel = mip;
+	ci.subresourceRange.levelCount = 1;
+	ci.subresourceRange.aspectMask = convertAspect(aspect);
+
+	return getOrCreateView(ci);
+}
+
 VkImageView TextureImpl::getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect)
 {
 	checkSurfaceOrVolume(surf);

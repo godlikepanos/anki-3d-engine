@@ -110,12 +110,10 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, unis->x(), unis->y());
 
-	cmdb->bindTextureAndSampler(
-		0, 0, rgraphCtx.getTexture(m_r->getDepthDownscale().getHalfDepthColorRt()), m_r->getNearestSampler());
-	cmdb->bindTextureAndSampler(
-		0, 1, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()), m_r->getNearestSampler());
-	cmdb->bindTexture(0, 2, rgraphCtx.getTexture(m_r->getVolumetric().getRt()));
-	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture());
+	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
+	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getNearestSampler());
+	rgraphCtx.bindTexture(0, 2, m_r->getVolumetric().getRt());
+	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 	drawQuad(cmdb);
 
@@ -134,11 +132,10 @@ void ForwardShading::drawUpscale(const RenderingContext& ctx, RenderPassWorkCont
 	computeLinearizeDepthOptimal(
 		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
 
-	cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getGBuffer().getDepthRt()));
-	cmdb->bindTextureAndSampler(
-		0, 1, rgraphCtx.getTexture(m_r->getDepthDownscale().getHalfDepthColorRt()), m_r->getNearestSampler());
-	cmdb->bindTexture(0, 2, rgraphCtx.getTexture(m_runCtx.m_rt));
-	cmdb->bindTexture(0, 3, m_upscale.m_noiseTex->getGrTexture());
+	rgraphCtx.bindTexture(0, 0, m_r->getGBuffer().getDepthRt());
+	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
+	rgraphCtx.bindTexture(0, 2, m_runCtx.m_rt);
+	cmdb->bindTexture(0, 3, m_upscale.m_noiseTex->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
 
@@ -163,8 +160,8 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	if(start != end)
 	{
 		const LightShadingResources& rsrc = m_r->getLightShading().getResources();
-		cmdb->bindTexture(0, 0, rgraphCtx.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
-		cmdb->bindTexture(0, 1, rgraphCtx.getTexture(m_r->getShadowMapping().getShadowmapRt()));
+		rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getQuarterColorRt());
+		rgraphCtx.bindTexture(0, 1, m_r->getShadowMapping().getShadowmapRt());
 		bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
 		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
