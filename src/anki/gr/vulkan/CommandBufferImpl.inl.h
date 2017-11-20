@@ -542,30 +542,22 @@ inline void CommandBufferImpl::drawcallCommon()
 	{
 		VkRect2D scissor = {};
 
-		if(m_scissor[0] == 0 && m_scissor[1] == 0 && m_scissor[2] == MAX_U32 && m_scissor[3] == MAX_U32)
-		{
-			scissor.extent.width = MAX_U32;
-			scissor.extent.height = MAX_U32;
-			scissor.offset.x = 0;
-			scissor.offset.y = 0;
-		}
-		else
-		{
-			const Bool flipvp = flipViewport();
+		const Bool flipvp = flipViewport();
 
-			U32 fbWidth, fbHeight;
-			m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
+		U32 fbWidth, fbHeight;
+		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
 
-			const I minx = min<U>(fbWidth, m_scissor[0]);
-			const I miny = min<U>(fbHeight, m_scissor[1]);
-			const I width = min<U>(fbWidth, m_scissor[2]);
-			const I height = min<U>(fbHeight, m_scissor[3]);
+		const U32 minx = m_scissor[0];
+		const U32 miny = m_scissor[1];
+		const U32 width = min<U32>(fbWidth, m_scissor[2]);
+		const U32 height = min<U32>(fbHeight, m_scissor[3]);
+		ANKI_ASSERT(minx + width <= fbWidth);
+		ANKI_ASSERT(miny + height <= fbHeight);
 
-			scissor.extent.width = width;
-			scissor.extent.height = height;
-			scissor.offset.x = minx;
-			scissor.offset.y = (flipvp) ? (fbHeight - (miny + height)) : miny;
-		}
+		scissor.extent.width = width;
+		scissor.extent.height = height;
+		scissor.offset.x = minx;
+		scissor.offset.y = (flipvp) ? (fbHeight - (miny + height)) : miny;
 
 		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
 		m_scissorDirty = false;
@@ -717,6 +709,8 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 
 inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 {
+	commandCommon();
+
 	ShaderProgramImpl& impl = *prog->m_impl;
 
 	if(impl.isGraphics())

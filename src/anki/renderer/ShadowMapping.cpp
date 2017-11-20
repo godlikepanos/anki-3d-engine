@@ -230,8 +230,10 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 				threadCountForScratchPass && threadCountForScratchPass <= m_r->getThreadPool().getThreadCount());
 			pass.setWork(runShadowmappingCallback, this, threadCountForScratchPass);
 
-			pass.newConsumer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
-			pass.newProducer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+			pass.newConsumer(
+				{m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, DepthStencilAspectBit::DEPTH});
+			pass.newProducer(
+				{m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, DepthStencilAspectBit::DEPTH});
 		}
 
 		// ESM pass
@@ -242,7 +244,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			pass.setFramebufferInfo(m_esmFbDescr, {{m_esmRt}}, {});
 			pass.setWork(runEsmCallback, this, 0);
 
-			pass.newConsumer({m_scratchRt, TextureUsageBit::SAMPLED_FRAGMENT});
+			pass.newConsumer({m_scratchRt, TextureUsageBit::SAMPLED_FRAGMENT, DepthStencilAspectBit::DEPTH});
 			pass.newConsumer({m_esmRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 			pass.newProducer({m_esmRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		}

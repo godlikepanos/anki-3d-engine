@@ -214,6 +214,11 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 		stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
 
+	if(!stageMask)
+	{
+		stageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	}
+
 	ANKI_ASSERT(stageMask);
 	return stageMask;
 }
@@ -277,7 +282,6 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 		mask |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
-	ANKI_ASSERT(mask);
 	return mask;
 }
 
@@ -289,6 +293,7 @@ void BufferImpl::computeBarrierInfo(BufferUsageBit before,
 	VkAccessFlags& dstAccesses) const
 {
 	ANKI_ASSERT(usageValid(before) && usageValid(after));
+	ANKI_ASSERT(!!after);
 
 	srcStages = computePplineStage(before);
 	dstStages = computePplineStage(after);

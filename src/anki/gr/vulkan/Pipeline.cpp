@@ -23,6 +23,7 @@ void PipelineStateTracker::reset()
 	m_defaultFb = false;
 	m_fbColorAttachmentMask.unsetAll();
 	m_rpass = VK_NULL_HANDLE;
+	m_fb.reset(nullptr);
 }
 
 Bool PipelineStateTracker::updateHashes()
@@ -382,6 +383,10 @@ class PipelineFactory::PipelineInternal
 {
 public:
 	VkPipeline m_handle = VK_NULL_HANDLE;
+
+	/// The pipeline needs a render pass and the framebuffers are the owners of that. So the internal pipeline will
+	/// hold a ref to the FB in order to hold a ref to the render pass.
+	FramebufferPtr m_fb;
 };
 
 class PipelineFactory::Hasher
@@ -400,6 +405,7 @@ void PipelineFactory::destroy()
 		if(it.m_handle)
 		{
 			vkDestroyPipeline(m_dev, it.m_handle, nullptr);
+			it.m_fb.reset(nullptr);
 		}
 	}
 
@@ -428,6 +434,7 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline,
 	{
 		PipelineInternal pp;
 		const VkGraphicsPipelineCreateInfo& ci = state.updatePipelineCreateInfo();
+		pp.m_fb = state.getFb();
 
 		ANKI_TRACE_START_EVENT(VK_PIPELINE_CREATE);
 		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));

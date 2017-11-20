@@ -134,7 +134,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	rgraphCtx.bindTexture(1, 0, m_r->getGBuffer().getColorRt(0));
 	rgraphCtx.bindTexture(1, 1, m_r->getGBuffer().getColorRt(1));
 	rgraphCtx.bindTexture(1, 2, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindTexture(1, 3, m_r->getGBuffer().getDepthRt(), DepthStencilAspectBit::DEPTH);
+	rgraphCtx.bindTexture(1, 3, m_r->getGBuffer().getDepthRt());
 	rgraphCtx.bindTexture(1, 4, m_r->getSsao().getRt());
 
 	rgraphCtx.bindTexture(0, 0, m_r->getShadowMapping().getShadowmapRt());
@@ -208,7 +208,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newConsumer({m_r->getGBuffer().getColorRt(0), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT, DepthStencilAspectBit::DEPTH});
 	pass.newConsumer({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});

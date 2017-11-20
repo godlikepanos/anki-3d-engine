@@ -218,6 +218,7 @@ public:
 		commandCommon();
 		const U realBinding = binding;
 		Texture& tex = *tex_;
+		ANKI_ASSERT((!tex.m_impl->m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
 		const VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
 		m_dsetState[set].bindTexture(realBinding, &tex, aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);
@@ -229,6 +230,7 @@ public:
 		commandCommon();
 		const U realBinding = binding;
 		Texture& tex = *tex_;
+		ANKI_ASSERT((!tex.m_impl->m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
 		const VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);

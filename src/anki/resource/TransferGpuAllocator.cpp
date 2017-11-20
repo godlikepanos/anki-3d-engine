@@ -88,6 +88,11 @@ TransferGpuAllocator::TransferGpuAllocator()
 
 TransferGpuAllocator::~TransferGpuAllocator()
 {
+	for(Frame& frame : m_frames)
+	{
+		ANKI_ASSERT(frame.m_pendingReleases == 0);
+		frame.m_fences.destroy(m_alloc);
+	}
 }
 
 Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocator<U8> alloc)
@@ -108,17 +113,6 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocat
 	}
 
 	return Error::NONE;
-}
-
-void TransferGpuAllocator::destroy()
-{
-	LockGuard<Mutex> lock(m_mtx);
-
-	for(Frame& frame : m_frames)
-	{
-		ANKI_ASSERT(frame.m_pendingReleases == 0);
-		frame.m_fences.destroy(m_alloc);
-	}
 }
 
 Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& handle)

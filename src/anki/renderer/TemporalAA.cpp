@@ -72,8 +72,7 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
 	*unis = ctx.m_jitterMat * ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();
 
-	cmdb->bindUniformBuffer(
-		0, 1, rgraphCtx.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
+	rgraphCtx.bindUniformBuffer(0, 1, m_r->getTonemapping().getAverageLuminanceBuffer());
 
 	drawQuad(cmdb);
 }
@@ -96,7 +95,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_renderRt}}, {});
 
 	pass.newConsumer({m_runCtx.m_renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-	pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT, DepthStencilAspectBit::DEPTH});
 	pass.newConsumer({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_FRAGMENT});
 

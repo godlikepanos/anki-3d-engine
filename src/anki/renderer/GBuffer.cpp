@@ -170,8 +170,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		pass.newConsumer({m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newProducer({m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
-	pass.newConsumer({m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
-	pass.newProducer({m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+	pass.newConsumer({m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, DepthStencilAspectBit::DEPTH});
+	pass.newProducer({m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, DepthStencilAspectBit::DEPTH});
 }
 
 } // end namespace anki

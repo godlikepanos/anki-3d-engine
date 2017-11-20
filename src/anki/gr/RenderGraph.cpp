@@ -105,6 +105,7 @@ public:
 		TextureUsageBit m_usage;
 		TextureSurfaceInfo m_surface;
 		Bool8 m_wholeTex;
+		DepthStencilAspectBit m_aspect;
 	};
 	DynamicArray<ConsumedTextureInfo> m_consumedTextures;
 };
@@ -585,18 +586,31 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 				// Init the usage bits
 				if(graphicsPass.m_fbHash != 1)
 				{
+					TextureUsageBit usage;
+					DepthStencilAspectBit aspect;
+
 					for(U i = 0; i < graphicsPass.m_fbInitInfo.m_colorAttachmentCount; ++i)
 					{
-						outPass.m_colorUsages[i] = getCrntUsage(graphicsPass.m_rtHandles[i],
+						getCrntUsageAndAspect(graphicsPass.m_rtHandles[i],
 							passIdx,
-							graphicsPass.m_fbInitInfo.m_colorAttachments[i].m_surface);
+							graphicsPass.m_fbInitInfo.m_colorAttachments[i].m_surface,
+							usage,
+							aspect);
+
+						outPass.m_colorUsages[i] = usage;
+						ANKI_ASSERT(!aspect);
 					}
 
 					if(!!graphicsPass.m_fbInitInfo.m_depthStencilAttachment.m_aspect)
 					{
-						outPass.m_dsUsage = getCrntUsage(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS],
+						getCrntUsageAndAspect(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS],
 							passIdx,
-							graphicsPass.m_fbInitInfo.m_depthStencilAttachment.m_surface);
+							graphicsPass.m_fbInitInfo.m_depthStencilAttachment.m_surface,
+							usage,
+							aspect);
+
+						outPass.m_dsUsage = usage;
+						ANKI_ASSERT(!!aspect);
 					}
 				}
 
@@ -897,32 +911,39 @@ void RenderGraph::flush()
 	m_ctx->m_cmdb->flush();
 }
 
-TextureUsageBit RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 passIdx, const TextureSurfaceInfo& surf) const
+void RenderGraph::getCrntUsageAndAspect(RenderTargetHandle handle,
+	U32 passIdx,
+	const TextureSurfaceInfo& surf,
+	TextureUsageBit& usage,
+	DepthStencilAspectBit& aspect) const
 {
 	for(const Pass::ConsumedTextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
 	{
 		if(consumer.m_handle == handle && (consumer.m_wholeTex || consumer.m_surface == surf))
 		{
-			return consumer.m_usage;
+			usage = consumer.m_usage;
+			aspect = consumer.m_aspect;
+			return;
 		}
 	}
 
 	ANKI_ASSERT(!"Combination of handle and surface not found");
-	return TextureUsageBit::NONE;
 }
 
-TextureUsageBit RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 passIdx) const
+void RenderGraph::getCrntUsageAndAspect(
+	RenderTargetHandle handle, U32 passIdx, TextureUsageBit& usage, DepthStencilAspectBit& aspect) const
 {
 	for(const Pass::ConsumedTextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
 	{
 		if(consumer.m_handle == handle)
 		{
-			return consumer.m_usage;
+			usage = consumer.m_usage;
+			aspect = consumer.m_aspect;
+			return;
 		}
 	}
 
 	ANKI_ASSERT(!"Handle not found");
-	return TextureUsageBit::NONE;
 }
 
 #if ANKI_DBG_RENDER_GRAPH

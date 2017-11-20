@@ -112,7 +112,7 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 		++flarePositions;
 	}
 
-	cmdb->bindStorageBuffer(0, 1, rgraphCtx.getBuffer(m_runCtx.m_indirectBuffHandle), 0, MAX_PTR_SIZE);
+	rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
 	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getQuarterColorRt());
 	cmdb->dispatchCompute(count, 1, 1);
 }

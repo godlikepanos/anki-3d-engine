@@ -152,8 +152,7 @@ void Bloom::runExposure(RenderPassWorkContext& rgraphCtx)
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	*uniforms = Vec4(m_exposure.m_threshold, m_exposure.m_scale, 0.0, 0.0);
 
-	cmdb->bindStorageBuffer(
-		0, 0, rgraphCtx.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
+	rgraphCtx.bindStorageBuffer(0, 0, m_r->getTonemapping().getAverageLuminanceBuffer());
 
 	drawQuad(cmdb);
 }

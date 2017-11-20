@@ -566,8 +566,12 @@ void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& r
 
 	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
 
-	rgraphCtx.m_commandBuffer->generateMipmaps2d(
-		rgraphCtx.getTexture(m_ctx.m_lightShadingRt), faceIdx, m_ctx.m_cacheEntryIdx);
+	TexturePtr texToBind;
+	TextureUsageBit usage;
+	DepthStencilAspectBit aspect;
+	rgraphCtx.getRenderTargetState(m_ctx.m_lightShadingRt, texToBind, usage, aspect);
+
+	rgraphCtx.m_commandBuffer->generateMipmaps2d(texToBind, faceIdx, m_ctx.m_cacheEntryIdx);
 }
 
 void Indirect::runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx)

@@ -211,7 +211,9 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, m_r->getDepthDownscale().getHalfDepthDepthRt());
 
 	pass.newConsumer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
-	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthDepthRt(), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ});
+	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthDepthRt(),
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
+		DepthStencilAspectBit::DEPTH});
 	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getVolumetric().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});

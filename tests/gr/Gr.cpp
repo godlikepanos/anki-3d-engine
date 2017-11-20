@@ -286,27 +286,29 @@ static NativeWindow* win = nullptr;
 static GrManager* gr = nullptr;
 static StagingGpuMemoryManager* stagingMem = nullptr;
 
-#define COMMON_BEGIN()                                                         \
-	stagingMem = new StagingGpuMemoryManager();                                \
-	Config cfg;                                                                \
-	cfg.set("width", WIDTH);                                                   \
-	cfg.set("height", HEIGHT);                                                 \
-	cfg.set("window.debugContext", true);                                      \
-	cfg.set("window.vsync", false);                                            \
-	win = createWindow(cfg);                                                   \
-	gr = createGrManager(cfg, win);                                            \
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                   \
-	TransferGpuAllocator transfAlloc;                                          \
-	ANKI_TEST_EXPECT_NO_ERR(transfAlloc.init(128_MB, gr, gr->getAllocator())); \
+#define COMMON_BEGIN()                                                          \
+	stagingMem = new StagingGpuMemoryManager();                                 \
+	Config cfg;                                                                 \
+	cfg.set("width", WIDTH);                                                    \
+	cfg.set("height", HEIGHT);                                                  \
+	cfg.set("window.debugContext", true);                                       \
+	cfg.set("window.vsync", false);                                             \
+	win = createWindow(cfg);                                                    \
+	gr = createGrManager(cfg, win);                                             \
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                    \
+	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator();             \
+	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, gr, gr->getAllocator())); \
 	{
 
-#define COMMON_END()   \
-	}                  \
-	delete stagingMem; \
-	delete gr;         \
-	delete win;        \
-	win = nullptr;     \
-	gr = nullptr;      \
+#define COMMON_END()    \
+	}                   \
+	gr->finish();       \
+	delete transfAlloc; \
+	delete stagingMem;  \
+	delete gr;          \
+	delete win;         \
+	win = nullptr;      \
+	gr = nullptr;       \
 	stagingMem = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
@@ -331,7 +333,7 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 #define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_)                                                  \
 	do                                                                                                                \
 	{                                                                                                                 \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                                \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                               \
 		void* f = handle_.getMappedMemory();                                                                          \
 		memcpy(f, ptr_, size_);                                                                                       \
 		cmdb_->copyBufferToTextureSurface(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, surf_); \
@@ -340,7 +342,7 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 #define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_)                                                     \
 	do                                                                                                              \
 	{                                                                                                               \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                              \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                             \
 		void* f = handle_.getMappedMemory();                                                                        \
 		memcpy(f, ptr_, size_);                                                                                     \
 		cmdb_->copyBufferToTextureVolume(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, vol_); \
@@ -407,6 +409,7 @@ ANKI_TEST(Gr, ShaderProgram)
 ANKI_TEST(Gr, ClearScreen)
 {
 	COMMON_BEGIN()
+	ANKI_TEST_LOGI("Expect to see a magenta background");
 
 	FramebufferPtr fb = createDefaultFb(*gr);
 
@@ -1012,9 +1015,9 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 	FencePtr fence;
 	cmdb->flush(&fence);
-	transfAlloc.release(handle0, fence);
-	transfAlloc.release(handle1, fence);
-	transfAlloc.release(handle2, fence);
+	transfAlloc->release(handle0, fence);
+	transfAlloc->release(handle1, fence);
+	transfAlloc->release(handle2, fence);
 
 	//
 	// Create prog
@@ -1045,15 +1048,6 @@ ANKI_TEST(Gr, DrawWithTexture)
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb, {}, {});
-
-		for(U i = 0; i < 2; ++i)
-		{
-			cmdb->informTextureSurfaceCurrentUsage(
-				a, TextureSurfaceInfo(i, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
-			cmdb->informTextureSurfaceCurrentUsage(
-				b, TextureSurfaceInfo(i, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
-		}
-		cmdb->informTextureSurfaceCurrentUsage(b, TextureSurfaceInfo(2, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 
 		cmdb->bindTexture(0, 0, a, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->bindTexture(0, 1, b, TextureUsageBit::SAMPLED_FRAGMENT);
@@ -1218,13 +1212,6 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			cinit.m_framebuffer = fb;
 			CommandBufferPtr cmdb2 = gr.newInstance<CommandBuffer>(cinit);
 
-			cmdb2->informTextureSurfaceCurrentUsage(
-				col0, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
-			cmdb2->informTextureSurfaceCurrentUsage(
-				col1, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
-			cmdb2->informTextureSurfaceCurrentUsage(
-				dp, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
-
 			drawOffscreenDrawcalls(gr, prog, cmdb2, TEX_SIZE, indices, verts);
 
 			cmdb2->flush();
@@ -1366,7 +1353,6 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(dfb, {}, {});
-		cmdb->informTextureSurfaceCurrentUsage(tex, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->bindTexture(0, 0, tex, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
@@ -1452,7 +1438,7 @@ ANKI_TEST(Gr, 3DTextures)
 	Array<U8, 4> mip1 = {{128, 128, 128, 0}};
 
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
+	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
 
 	cmdb->setTextureVolumeBarrier(
@@ -1474,8 +1460,8 @@ ANKI_TEST(Gr, 3DTextures)
 
 	FencePtr fence;
 	cmdb->flush(&fence);
-	transfAlloc.release(handle0, fence);
-	transfAlloc.release(handle1, fence);
+	transfAlloc->release(handle0, fence);
+	transfAlloc->release(handle1, fence);
 
 	//
 	// Rest
@@ -1503,7 +1489,7 @@ ANKI_TEST(Gr, 3DTextures)
 		gr->beginFrame();
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);

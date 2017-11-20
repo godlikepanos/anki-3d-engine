@@ -151,11 +151,14 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 		pass.setFramebufferInfo(m_half.m_fbDescr, {{m_runCtx.m_halfColorRt}}, m_runCtx.m_halfDepthRt);
 		pass.setWork(runHalfCallback, this, 0);
 
-		pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer(
+			{m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT, DepthStencilAspectBit::DEPTH});
 		pass.newConsumer({m_runCtx.m_halfColorRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newConsumer({m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+		pass.newConsumer(
+			{m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, DepthStencilAspectBit::DEPTH});
 		pass.newProducer({m_runCtx.m_halfColorRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+		pass.newProducer(
+			{m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, DepthStencilAspectBit::DEPTH});
 	}
 
 	// Create quarter depth render pass

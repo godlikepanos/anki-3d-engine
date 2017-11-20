@@ -1183,12 +1183,8 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 	m_impl->pushBackNewCommand<OqEndCommand>(query);
 }
 
-void CommandBuffer::copyBufferToTextureSurface(BufferPtr buff,
-	PtrSize offset,
-	PtrSize range,
-	TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	TextureUsageBit surfUsage)
+void CommandBuffer::copyBufferToTextureSurface(
+	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
 {
 	class TexSurfUploadCommand final : public GlCommand
 	{
@@ -1224,12 +1220,8 @@ void CommandBuffer::copyBufferToTextureSurface(BufferPtr buff,
 	m_impl->pushBackNewCommand<TexSurfUploadCommand>(buff, offset, range, tex, surf);
 }
 
-void CommandBuffer::copyBufferToTextureVolume(BufferPtr buff,
-	PtrSize offset,
-	PtrSize range,
-	TexturePtr tex,
-	const TextureVolumeInfo& vol,
-	TextureUsageBit volUsage)
+void CommandBuffer::copyBufferToTextureVolume(
+	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
 {
 	class TexVolUploadCommand final : public GlCommand
 	{

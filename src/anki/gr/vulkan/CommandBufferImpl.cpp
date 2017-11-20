@@ -737,7 +737,6 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 		U width = impl.m_width >> vol.m_level;
 		U height = impl.m_height >> vol.m_level;
 		U depth = impl.m_depth >> vol.m_level;
-		(void)depth;
 		ANKI_ASSERT(range == computeVolumeSize(width, height, depth, impl.m_format));
 
 		// Copy
@@ -749,7 +748,7 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 		region.imageOffset = {0, 0, 0};
 		region.imageExtent.width = width;
 		region.imageExtent.height = height;
-		region.imageExtent.depth = impl.m_depth;
+		region.imageExtent.depth = depth;
 		region.bufferOffset = offset;
 		region.bufferImageHeight = 0;
 		region.bufferRowLength = 0;

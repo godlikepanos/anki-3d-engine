@@ -112,11 +112,9 @@ void FinalComposite::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	const Bool drawToDefaultFb = m_r->getDrawToDefaultFramebuffer();
 
 	// Bind stuff
-	cmdb->bindTextureAndSampler(0,
-		0,
-		rgraphCtx.getTexture(m_r->getTemporalAA().getRt()),
-		(drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler(),
-		rgraphCtx.getTextureUsage(m_r->getTemporalAA().getRt()));
+	rgraphCtx.bindTextureAndSampler(
+		0, 0, m_r->getTemporalAA().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
+
 	rgraphCtx.bindTexture(0, 1, m_r->getBloom().getRt());
 	cmdb->bindTexture(0, 2, m_lut->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(0, 3, m_blueNoise->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
@@ -125,8 +123,7 @@ void FinalComposite::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		rgraphCtx.bindTexture(0, 5, m_r->getDbg().getRt());
 	}
 
-	cmdb->bindUniformBuffer(
-		0, 1, rgraphCtx.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
+	rgraphCtx.bindUniformBuffer(0, 1, m_r->getTonemapping().getAverageLuminanceBuffer());
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	uniforms->x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());
