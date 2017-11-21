@@ -440,21 +440,21 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 		}
 		else
 		{
-			srcStages |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+			srcStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // See Table 4 in the spec
 			srcAccesses |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 		}
 	}
 
 	if(!!(before & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
 	{
-		srcStages |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-
 		if(m_depthStencil)
 		{
+			srcStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			srcAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		}
 		else
 		{
+			srcStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			srcAccesses |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		}
 	}
