@@ -124,7 +124,7 @@ class RenderGraph::BakeContext
 public:
 	StackAllocator<U8> m_alloc;
 	DynamicArray<Pass> m_passes;
-	BitSet<MAX_RENDER_GRAPH_PASSES> m_passIsInBatch = {false};
+	BitSet<MAX_RENDER_GRAPH_PASSES, U64> m_passIsInBatch = {false};
 	DynamicArray<Batch> m_batches;
 	DynamicArray<RT> m_rts;
 	DynamicArray<Buffer> m_buffers;
@@ -422,11 +422,11 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 	// Render targets
 	{
 		// Compute the 3 types of dependencies
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aReadBWrite = a.m_consumerRtMask & b.m_producerRtMask;
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aWriteBRead = a.m_producerRtMask & b.m_consumerRtMask;
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aWriteBWrite = a.m_producerRtMask & b.m_producerRtMask;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aReadBWrite = a.m_consumerRtMask & b.m_producerRtMask;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBRead = a.m_producerRtMask & b.m_consumerRtMask;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBWrite = a.m_producerRtMask & b.m_producerRtMask;
 
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
 		if(fullDep.getAny())
 		{
@@ -450,11 +450,11 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 
 	// Buffers
 	{
-		BitSet<MAX_RENDER_GRAPH_BUFFERS> aReadBWrite = a.m_consumerBufferMask & b.m_producerBufferMask;
-		BitSet<MAX_RENDER_GRAPH_BUFFERS> aWriteBRead = a.m_producerBufferMask & b.m_consumerBufferMask;
-		BitSet<MAX_RENDER_GRAPH_BUFFERS> aWriteBWrite = a.m_producerBufferMask & b.m_producerBufferMask;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aReadBWrite = a.m_consumerBufferMask & b.m_producerBufferMask;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBRead = a.m_producerBufferMask & b.m_consumerBufferMask;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBWrite = a.m_producerBufferMask & b.m_producerBufferMask;
 
-		BitSet<MAX_RENDER_GRAPH_BUFFERS> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
 		if(fullDep.getAny())
 		{
@@ -690,6 +690,9 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeCont
 	// For all batches
 	for(Batch& batch : ctx.m_batches)
 	{
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> rtHasBarrierMask = {false};
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> buffHasBarrierMask = {false};
+
 		// For all passes of that batch
 		for(U passIdx : batch.m_passIndices)
 		{
@@ -704,18 +707,51 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeCont
 					const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
 
 					Bool anySurfaceFound = false;
-					const Bool wholeTex = consumer.m_texture.m_wholeTex;
+					const Bool consumerWholeTex = consumer.m_texture.m_wholeTex;
 					for(RT::Usage& u : ctx.m_rts[rtIdx].m_surfUsages)
 					{
-						if(wholeTex || u.m_surface == consumer.m_texture.m_surface)
+						if(consumerWholeTex || u.m_surface == consumer.m_texture.m_surface)
 						{
 							anySurfaceFound = true;
+
+							// Check if we might need a new barrier
 							if(u.m_usage != consumerUsage)
 							{
-								batch.m_barriersBefore.emplaceBack(
-									alloc, consumer.m_texture.m_handle.m_idx, u.m_usage, consumerUsage, u.m_surface);
+								const Bool rtHasBarrier = rtHasBarrierMask.get(rtIdx);
 
-								u.m_usage = consumer.m_texture.m_usage;
+								if(!rtHasBarrier)
+								{
+									// RT hasn't had a barrier in this batch, add a new barrier
+
+									batch.m_barriersBefore.emplaceBack(alloc,
+										consumer.m_texture.m_handle.m_idx,
+										u.m_usage,
+										consumerUsage,
+										u.m_surface);
+
+									u.m_usage = consumer.m_texture.m_usage;
+									rtHasBarrierMask.set(rtIdx);
+								}
+								else
+								{
+									// RT already in a barrier, merge the 2 barriers
+
+									Barrier* barrierToMergeTo = nullptr;
+									for(Barrier& b : batch.m_barriersBefore)
+									{
+										if(b.m_isTexture && b.m_texture.m_idx == rtIdx)
+										{
+											barrierToMergeTo = &b;
+											break;
+										}
+									}
+
+									ANKI_ASSERT(barrierToMergeTo);
+									ANKI_ASSERT(!!barrierToMergeTo->m_texture.m_usageAfter);
+									ANKI_ASSERT(!!u.m_usage);
+									barrierToMergeTo->m_texture.m_usageAfter |= consumerUsage;
+									u.m_usage |= consumerUsage;
+								}
 							}
 						}
 					}
@@ -740,10 +776,37 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeCont
 
 					if(consumerUsage != ctx.m_buffers[buffIdx].m_usage)
 					{
-						batch.m_barriersBefore.emplaceBack(
-							alloc, buffIdx, ctx.m_buffers[buffIdx].m_usage, consumerUsage);
+						const Bool buffHasBarrier = buffHasBarrierMask.get(buffIdx);
 
-						ctx.m_buffers[buffIdx].m_usage = consumerUsage;
+						if(!buffHasBarrier)
+						{
+							// Buff hasn't had a barrier in this batch, add a new barrier
+
+							batch.m_barriersBefore.emplaceBack(
+								alloc, buffIdx, ctx.m_buffers[buffIdx].m_usage, consumerUsage);
+
+							ctx.m_buffers[buffIdx].m_usage = consumerUsage;
+							buffHasBarrierMask.set(buffIdx);
+						}
+						else
+						{
+							// Buff already in a barrier, merge the 2 barriers
+
+							Barrier* barrierToMergeTo = nullptr;
+							for(Barrier& b : batch.m_barriersBefore)
+							{
+								if(!b.m_isTexture && b.m_buffer.m_idx == buffIdx)
+								{
+									barrierToMergeTo = &b;
+									break;
+								}
+							}
+
+							ANKI_ASSERT(barrierToMergeTo);
+							ANKI_ASSERT(!!barrierToMergeTo->m_buffer.m_usageAfter);
+							barrierToMergeTo->m_buffer.m_usageAfter |= consumerUsage;
+							ctx.m_buffers[buffIdx].m_usage = barrierToMergeTo->m_buffer.m_usageAfter;
+						}
 					}
 				}
 			} // For all consumers

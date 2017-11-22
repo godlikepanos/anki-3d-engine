@@ -517,21 +517,24 @@ inline void CommandBufferImpl::drawcallCommon()
 	{
 		const Bool flipvp = flipViewport();
 
-		const I minx = m_viewport[0];
-		const I miny = m_viewport[1];
-		const I width = m_viewport[2];
-		const I height = m_viewport[3];
-
 		U32 fbWidth, fbHeight;
 		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
+
+		const U32 minx = m_viewport[0];
+		const U32 miny = m_viewport[1];
+		const U32 width = min<U32>(fbWidth, m_viewport[2]);
+		const U32 height = min<U32>(fbHeight, m_viewport[3]);
+		ANKI_ASSERT(width > 0 && height > 0);
+		ANKI_ASSERT(minx + width <= fbWidth);
+		ANKI_ASSERT(miny + height <= fbHeight);
 
 		VkViewport s;
 		s.x = minx;
 		s.y = (flipvp) ? (fbHeight - miny) : miny; // Move to the bottom;
 		s.width = width;
-		s.height = (flipvp) ? -height : height;
-		s.minDepth = 0.0;
-		s.maxDepth = 1.0;
+		s.height = (flipvp) ? -F32(height) : height;
+		s.minDepth = 0.0f;
+		s.maxDepth = 1.0f;
 		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
 
 		m_viewportDirty = false;

@@ -312,10 +312,10 @@ protected:
 	DynamicArray<RenderPassDependency> m_consumers;
 	DynamicArray<RenderPassDependency> m_producers;
 
-	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> m_consumerRtMask = {false};
-	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> m_producerRtMask = {false};
-	BitSet<MAX_RENDER_GRAPH_BUFFERS> m_consumerBufferMask = {false};
-	BitSet<MAX_RENDER_GRAPH_BUFFERS> m_producerBufferMask = {false};
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_consumerRtMask = {false};
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_producerRtMask = {false};
+	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_consumerBufferMask = {false};
+	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_producerBufferMask = {false};
 
 	String m_name;
 

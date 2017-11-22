@@ -102,6 +102,7 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
+	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_vol.m_grProg);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->setDepthWrite(false);
