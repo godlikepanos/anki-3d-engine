@@ -520,22 +520,14 @@ inline void CommandBufferImpl::drawcallCommon()
 		U32 fbWidth, fbHeight;
 		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
 
-		const U32 minx = m_viewport[0];
-		const U32 miny = m_viewport[1];
-		const U32 width = min<U32>(fbWidth, m_viewport[2]);
-		const U32 height = min<U32>(fbHeight, m_viewport[3]);
-		ANKI_ASSERT(width > 0 && height > 0);
-		ANKI_ASSERT(minx + width <= fbWidth);
-		ANKI_ASSERT(miny + height <= fbHeight);
+		VkViewport vp = computeViewport(&m_viewport[0], fbWidth, fbHeight, flipvp);
 
-		VkViewport s;
-		s.x = minx;
-		s.y = (flipvp) ? (fbHeight - miny) : miny; // Move to the bottom;
-		s.width = width;
-		s.height = (flipvp) ? -F32(height) : height;
-		s.minDepth = 0.0f;
-		s.maxDepth = 1.0f;
-		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
+		// Additional optimization
+		if(memcmp(&vp, &m_lastViewport, sizeof(vp)) != 0)
+		{
+			ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &vp), ANY_OTHER_COMMAND);
+			m_lastViewport = vp;
+		}
 
 		m_viewportDirty = false;
 	}
@@ -543,26 +535,20 @@ inline void CommandBufferImpl::drawcallCommon()
 	// Flush scissor
 	if(ANKI_UNLIKELY(m_scissorDirty))
 	{
-		VkRect2D scissor = {};
-
 		const Bool flipvp = flipViewport();
 
 		U32 fbWidth, fbHeight;
 		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
 
-		const U32 minx = m_scissor[0];
-		const U32 miny = m_scissor[1];
-		const U32 width = min<U32>(fbWidth, m_scissor[2]);
-		const U32 height = min<U32>(fbHeight, m_scissor[3]);
-		ANKI_ASSERT(minx + width <= fbWidth);
-		ANKI_ASSERT(miny + height <= fbHeight);
+		VkRect2D scissor = computeScissor(&m_scissor[0], fbWidth, fbHeight, flipvp);
 
-		scissor.extent.width = width;
-		scissor.extent.height = height;
-		scissor.offset.x = minx;
-		scissor.offset.y = (flipvp) ? (fbHeight - (miny + height)) : miny;
+		// Additional optimization
+		if(memcmp(&scissor, &m_lastScissor, sizeof(scissor)) != 0)
+		{
+			ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
+			m_lastScissor = scissor;
+		}
 
-		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
 		m_scissorDirty = false;
 	}
 

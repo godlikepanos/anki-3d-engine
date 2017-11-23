@@ -131,6 +131,10 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		getGrManagerImpl().flushCommandBuffer(cmdb, nullptr);
 	}
 
+#if 0
+	printf("image %s handle %p\n", (init.getName()) ? init.getName().cstr() : "-", m_imageHandle);
+#endif
+
 	return Error::NONE;
 }
 

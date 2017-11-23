@@ -88,12 +88,15 @@ Error Ssao::init(const ConfigSet& config)
 	for(U i = 0; i < 2; ++i)
 	{
 		// RT
-		m_rtTextures[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_width,
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_width,
 			m_height,
 			Ssao::RT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
 			SamplingFilter::LINEAR,
-			"ssaomain"));
+			"ssaomain");
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+
+		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit);
 	}
 
 	// FB descr

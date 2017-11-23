@@ -112,7 +112,12 @@ public:
 
 	Bool operator==(const BitSet& b) const
 	{
-		return memcmp(&m_chunks[0], &b.m_chunks[0], sizeof(m_chunks)) == 0;
+		Bool same = m_chunks[0] == b.m_chunks[0];
+		for(U i = 1; i < CHUNK_COUNT; ++i)
+		{
+			same = same && (m_chunks[i] == b.m_chunks[i]);
+		}
+		return same;
 	}
 
 	Bool operator!=(const BitSet& b) const

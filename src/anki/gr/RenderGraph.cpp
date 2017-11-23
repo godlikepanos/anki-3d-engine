@@ -404,16 +404,19 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 	return fb;
 }
 
+template<Bool isTexture>
 Bool RenderGraph::overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b)
 {
-	if(a.m_isTexture && b.m_isTexture)
+	ANKI_ASSERT(a.m_isTexture == isTexture && b.m_isTexture == isTexture);
+
+	if(isTexture)
 	{
 		return a.m_texture.m_handle == b.m_texture.m_handle
 			&& (a.m_texture.m_surface == b.m_texture.m_surface || a.m_texture.m_wholeTex || b.m_texture.m_wholeTex);
 	}
 	else
 	{
-		return a.m_isTexture == b.m_isTexture && a.m_buffer.m_handle == b.m_buffer.m_handle;
+		return a.m_buffer.m_handle == b.m_buffer.m_handle;
 	}
 }
 
@@ -438,7 +441,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 				{
 					for(const RenderPassDependency& producer : b.m_producers)
 					{
-						if(overlappingDependency(producer, consumer))
+						if(overlappingDependency<true>(producer, consumer))
 						{
 							return true;
 						}
@@ -449,6 +452,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 	}
 
 	// Buffers
+	if(a.m_hasBufferDeps)
 	{
 		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aReadBWrite = a.m_consumerBufferMask & b.m_producerBufferMask;
 		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBRead = a.m_producerBufferMask & b.m_consumerBufferMask;
@@ -466,7 +470,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 				{
 					for(const RenderPassDependency& producer : b.m_producers)
 					{
-						if(overlappingDependency(producer, consumer))
+						if(overlappingDependency<false>(producer, consumer))
 						{
 							return true;
 						}
@@ -639,6 +643,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 			ANKI_ASSERT(inPass.m_secondLevelCmdbsCount == 0 && "Can't have second level cmdbs");
 		}
 
+		// Set dependencies
 		U j = passIdx;
 		while(j--)
 		{

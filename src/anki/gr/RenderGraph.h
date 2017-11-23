@@ -26,7 +26,7 @@ class RenderGraph;
 /// @name RenderGraph constants
 /// @{
 static constexpr U MAX_RENDER_GRAPH_PASSES = 128;
-static constexpr U MAX_RENDER_GRAPH_RENDER_TARGETS = 128; ///< Max imported or not render targets in RenderGraph.
+static constexpr U MAX_RENDER_GRAPH_RENDER_TARGETS = 64; ///< Max imported or not render targets in RenderGraph.
 static constexpr U MAX_RENDER_GRAPH_BUFFERS = 64;
 /// @}
 
@@ -277,6 +277,7 @@ public:
 		else if(dep.m_buffer.m_usage != BufferUsageBit::NONE)
 		{
 			m_consumerBufferMask.set(dep.m_buffer.m_handle.m_idx);
+			m_hasBufferDeps = true;
 		}
 	}
 
@@ -291,6 +292,7 @@ public:
 		else
 		{
 			m_producerBufferMask.set(dep.m_buffer.m_handle.m_idx);
+			m_hasBufferDeps = true;
 		}
 	}
 
@@ -316,6 +318,7 @@ protected:
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_producerRtMask = {false};
 	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_consumerBufferMask = {false};
 	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_producerBufferMask = {false};
+	Bool8 m_hasBufferDeps = false; ///< Opt.
 
 	String m_name;
 
@@ -676,8 +679,11 @@ private:
 	FramebufferPtr getOrCreateFramebuffer(
 		const FramebufferInitInfo& fbInit, const RenderTargetHandle* rtHandles, U64 hash);
 
-	static Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
-	static Bool overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b);
+	static ANKI_HOT Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
+
+	template<Bool isTexture>
+	static ANKI_HOT Bool overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b);
+
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
 	void getCrntUsageAndAspect(

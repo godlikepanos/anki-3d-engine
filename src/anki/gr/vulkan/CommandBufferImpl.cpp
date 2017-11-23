@@ -137,6 +137,10 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb,
 	m_microCmdb->pushObjectRef(fb);
 
 	m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
+
+	// Re-set the viewport and scissor because sometimes they are set clamped
+	m_viewportDirty = true;
+	m_scissorDirty = true;
 }
 
 void CommandBufferImpl::beginRenderPassInternal()

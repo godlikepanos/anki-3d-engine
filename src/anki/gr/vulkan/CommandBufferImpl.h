@@ -374,7 +374,9 @@ private:
 	Array<U32, 4> m_viewport = {{0, 0, 0, 0}};
 	Array<U32, 4> m_scissor = {{0, 0, MAX_U32, MAX_U32}};
 	Bool8 m_viewportDirty = true;
+	VkViewport m_lastViewport = {};
 	Bool8 m_scissorDirty = true;
+	VkRect2D m_lastScissor = {{-1, -1}, {MAX_U32, MAX_U32}};
 	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.
 	Array<U32, 2> m_stencilWriteMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
 	Array<U32, 2> m_stencilReferenceMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
@@ -468,6 +470,44 @@ private:
 	void beginRecording();
 
 	Bool flipViewport() const;
+
+	static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight, Bool flipvp)
+	{
+		const U32 minx = viewport[0];
+		const U32 miny = viewport[1];
+		const U32 width = min<U32>(fbWidth, viewport[2]);
+		const U32 height = min<U32>(fbHeight, viewport[3]);
+		ANKI_ASSERT(width > 0 && height > 0);
+		ANKI_ASSERT(minx + width <= fbWidth);
+		ANKI_ASSERT(miny + height <= fbHeight);
+
+		VkViewport s = {};
+		s.x = minx;
+		s.y = (flipvp) ? (fbHeight - miny) : miny; // Move to the bottom;
+		s.width = width;
+		s.height = (flipvp) ? -F32(height) : height;
+		s.minDepth = 0.0f;
+		s.maxDepth = 1.0f;
+		return s;
+	}
+
+	static VkRect2D computeScissor(U32* scissor, U32 fbWidth, U32 fbHeight, Bool flipvp)
+	{
+		const U32 minx = scissor[0];
+		const U32 miny = scissor[1];
+		const U32 width = min<U32>(fbWidth, scissor[2]);
+		const U32 height = min<U32>(fbHeight, scissor[3]);
+		ANKI_ASSERT(minx + width <= fbWidth);
+		ANKI_ASSERT(miny + height <= fbHeight);
+
+		VkRect2D out = {};
+		out.extent.width = width;
+		out.extent.height = height;
+		out.offset.x = minx;
+		out.offset.y = (flipvp) ? (fbHeight - (miny + height)) : miny;
+
+		return out;
+	}
 };
 /// @}
 

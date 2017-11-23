@@ -643,8 +643,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				pass.newConsumer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 				pass.newProducer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 			}
-			pass.newConsumer({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
-			pass.newProducer({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+			pass.newConsumer({m_ctx.m_gbufferDepthRt,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+				DepthStencilAspectBit::DEPTH});
+			pass.newProducer({m_ctx.m_gbufferDepthRt,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+				DepthStencilAspectBit::DEPTH});
 		}
 
 		// Light shading passes
@@ -683,7 +687,8 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				{
 					pass.newConsumer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
 				}
-				pass.newConsumer({m_ctx.m_gbufferDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
+				pass.newConsumer(
+					{m_ctx.m_gbufferDepthRt, TextureUsageBit::SAMPLED_FRAGMENT, DepthStencilAspectBit::DEPTH});
 			}
 		}
 
