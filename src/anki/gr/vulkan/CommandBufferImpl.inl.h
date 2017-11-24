@@ -151,10 +151,10 @@ inline void CommandBufferImpl::setTextureBarrierRange(
 inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {
-	if(surf.m_level > 0)
+	if(ANKI_UNLIKELY(surf.m_level > 0 && nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
 	{
-		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
-			&& "This transition happens inside CommandBufferImpl::generateMipmapsX");
+		// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
+		return;
 	}
 
 	const TextureImpl& impl = *tex->m_impl;

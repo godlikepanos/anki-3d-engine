@@ -127,7 +127,7 @@ private:
 	ConditionVariable m_condVar;
 	Array<Frame, FRAME_COUNT> m_frames;
 	U8 m_frameCount = 0;
-	PtrSize m_crntFrameAllocatedSize;
+	PtrSize m_crntFrameAllocatedSize = 0;
 };
 /// @}
 

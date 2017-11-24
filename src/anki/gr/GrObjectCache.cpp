@@ -11,10 +11,10 @@ namespace anki
 GrObjectCache::~GrObjectCache()
 {
 	// Some GrObjects may be in flight but someone destroys the cache. Do a manual destruction of the map
-	for(auto it : m_map)
+	while(!m_map.isEmpty())
 	{
-		GrObject* ptr = it;
-		unregisterObject(ptr);
+		auto it = m_map.getBegin();
+		unregisterObject(*it);
 	}
 }
 

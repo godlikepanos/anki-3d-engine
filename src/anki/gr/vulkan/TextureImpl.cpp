@@ -131,10 +131,6 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		getGrManagerImpl().flushCommandBuffer(cmdb, nullptr);
 	}
 
-#if 0
-	printf("image %s handle %p\n", (init.getName()) ? init.getName().cstr() : "-", m_imageHandle);
-#endif
-
 	return Error::NONE;
 }
 
@@ -365,6 +361,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		memAllocCi.memoryTypeIndex = memIdx;
 
 		ANKI_VK_CHECK(vkAllocateMemory(getDevice(), &memAllocCi, nullptr, &m_dedicatedMem));
+		getGrManagerImpl().trySetVulkanHandleName(
+			init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, ptrToNumber(m_dedicatedMem));
 
 		ANKI_TRACE_START_EVENT(VK_BIND_OBJECT);
 		ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_dedicatedMem, 0));

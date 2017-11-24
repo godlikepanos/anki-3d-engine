@@ -688,6 +688,84 @@ void RenderGraph::initBatches()
 	}
 }
 
+void RenderGraph::setTextureBarrier(Batch& batch,
+	const RenderPassDescriptionBase& pass,
+	const RenderPassDependency& consumer,
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64>& rtHasBarrierMask,
+	const RenderGraphDescription& descr,
+	BakeContext& ctx) const
+{
+	ANKI_ASSERT(consumer.m_isTexture);
+
+	const StackAllocator<U8>& alloc = ctx.m_alloc;
+
+	const U32 rtIdx = consumer.m_texture.m_handle.m_idx;
+	const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
+	const Bool consumerWholeTex = consumer.m_texture.m_wholeTex;
+
+	Bool anySurfaceFound = false;
+	for(RT::Usage& u : ctx.m_rts[rtIdx].m_surfUsages)
+	{
+		if(!consumerWholeTex && u.m_surface != consumer.m_texture.m_surface)
+		{
+			// Not the right surface, continue
+			continue;
+		}
+
+		anySurfaceFound = true;
+
+		if(u.m_usage == consumerUsage)
+		{
+			// Surface in the correct usage, continue
+			continue;
+		}
+
+		// Check if we can merge barriers
+		const Bool rtHasBarrier = rtHasBarrierMask.get(rtIdx);
+		Barrier* barrierToMergeTo = nullptr;
+		if(rtHasBarrier)
+		{
+			for(Barrier& b : batch.m_barriersBefore)
+			{
+				if(b.m_isTexture && b.m_texture.m_idx == rtIdx && b.m_texture.m_surface == u.m_surface)
+				{
+					barrierToMergeTo = &b;
+					break;
+				}
+			}
+		}
+
+		if(barrierToMergeTo == nullptr)
+		{
+			// RT hasn't had a barrier in this batch, add a new one
+			batch.m_barriersBefore.emplaceBack(
+				alloc, consumer.m_texture.m_handle.m_idx, u.m_usage, consumerUsage, u.m_surface);
+
+			u.m_usage = consumer.m_texture.m_usage;
+			rtHasBarrierMask.set(rtIdx);
+		}
+		else
+		{
+			// RT already in a barrier, merge the 2 barriers
+
+			ANKI_ASSERT(!!barrierToMergeTo->m_texture.m_usageAfter);
+			ANKI_ASSERT(!!u.m_usage);
+			barrierToMergeTo->m_texture.m_usageAfter |= consumerUsage;
+			u.m_usage |= consumerUsage;
+		}
+	} // end for
+
+	// Create the transition from the initial state
+	if(!anySurfaceFound && descr.m_renderTargets[rtIdx].m_usage != consumerUsage)
+	{
+		batch.m_barriersBefore.emplaceBack(
+			alloc, rtIdx, descr.m_renderTargets[rtIdx].m_usage, consumerUsage, consumer.m_texture.m_surface);
+
+		RT::Usage usage{consumerUsage, consumer.m_texture.m_surface};
+		ctx.m_rts[rtIdx].m_surfUsages.emplaceBack(alloc, usage);
+	}
+}
+
 void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeContext& ctx) const
 {
 	const StackAllocator<U8>& alloc = ctx.m_alloc;
@@ -708,71 +786,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeCont
 			{
 				if(consumer.m_isTexture)
 				{
-					const U32 rtIdx = consumer.m_texture.m_handle.m_idx;
-					const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
-
-					Bool anySurfaceFound = false;
-					const Bool consumerWholeTex = consumer.m_texture.m_wholeTex;
-					for(RT::Usage& u : ctx.m_rts[rtIdx].m_surfUsages)
-					{
-						if(consumerWholeTex || u.m_surface == consumer.m_texture.m_surface)
-						{
-							anySurfaceFound = true;
-
-							// Check if we might need a new barrier
-							if(u.m_usage != consumerUsage)
-							{
-								const Bool rtHasBarrier = rtHasBarrierMask.get(rtIdx);
-
-								if(!rtHasBarrier)
-								{
-									// RT hasn't had a barrier in this batch, add a new barrier
-
-									batch.m_barriersBefore.emplaceBack(alloc,
-										consumer.m_texture.m_handle.m_idx,
-										u.m_usage,
-										consumerUsage,
-										u.m_surface);
-
-									u.m_usage = consumer.m_texture.m_usage;
-									rtHasBarrierMask.set(rtIdx);
-								}
-								else
-								{
-									// RT already in a barrier, merge the 2 barriers
-
-									Barrier* barrierToMergeTo = nullptr;
-									for(Barrier& b : batch.m_barriersBefore)
-									{
-										if(b.m_isTexture && b.m_texture.m_idx == rtIdx)
-										{
-											barrierToMergeTo = &b;
-											break;
-										}
-									}
-
-									ANKI_ASSERT(barrierToMergeTo);
-									ANKI_ASSERT(!!barrierToMergeTo->m_texture.m_usageAfter);
-									ANKI_ASSERT(!!u.m_usage);
-									barrierToMergeTo->m_texture.m_usageAfter |= consumerUsage;
-									u.m_usage |= consumerUsage;
-								}
-							}
-						}
-					}
-
-					// Create the transition from the initial state
-					if(!anySurfaceFound && descr.m_renderTargets[rtIdx].m_usage != consumerUsage)
-					{
-						batch.m_barriersBefore.emplaceBack(alloc,
-							rtIdx,
-							descr.m_renderTargets[rtIdx].m_usage,
-							consumerUsage,
-							consumer.m_texture.m_surface);
-
-						RT::Usage usage{consumerUsage, consumer.m_texture.m_surface};
-						ctx.m_rts[rtIdx].m_surfUsages.emplaceBack(alloc, usage);
-					}
+					setTextureBarrier(batch, pass, consumer, rtHasBarrierMask, descr, ctx);
 				}
 				else
 				{
@@ -825,7 +839,29 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeCont
 				const U aidx = (a.m_isTexture) ? a.m_texture.m_idx : a.m_buffer.m_idx;
 				const U bidx = (b.m_isTexture) ? b.m_texture.m_idx : b.m_buffer.m_idx;
 
-				return aidx < bidx;
+				if(aidx == bidx && a.m_isTexture && b.m_isTexture)
+				{
+					if(a.m_texture.m_surface.m_level != b.m_texture.m_surface.m_level)
+					{
+						return a.m_texture.m_surface.m_level < b.m_texture.m_surface.m_level;
+					}
+					else if(a.m_texture.m_surface.m_face != b.m_texture.m_surface.m_face)
+					{
+						return a.m_texture.m_surface.m_face < b.m_texture.m_surface.m_face;
+					}
+					else if(a.m_texture.m_surface.m_layer != b.m_texture.m_surface.m_layer)
+					{
+						return a.m_texture.m_surface.m_layer < b.m_texture.m_surface.m_layer;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else
+				{
+					return aidx < bidx;
+				}
 			});
 #endif
 	} // For all batches

@@ -17,31 +17,6 @@
 namespace anki
 {
 
-static VkBool32 debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
-	VkDebugReportObjectTypeEXT objectType,
-	uint64_t object,
-	size_t location,
-	int32_t messageCode,
-	const char* pLayerPrefix,
-	const char* pMessage,
-	void* pUserData)
-{
-	if(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
-	{
-		ANKI_VK_LOGE("%s", pMessage);
-	}
-	else if(flags & (VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT))
-	{
-		ANKI_VK_LOGW("%s", pMessage);
-	}
-	else
-	{
-		ANKI_VK_LOGI("%s", pMessage);
-	}
-
-	return false;
-}
-
 GrManagerImpl::~GrManagerImpl()
 {
 	// FIRST THING: wait for the GPU
@@ -122,6 +97,8 @@ GrManagerImpl::~GrManagerImpl()
 
 		vkDestroyInstance(m_instance, pallocCbs);
 	}
+
+	m_vkHandleToName.destroy(getAllocator());
 }
 
 GrAllocator<U8> GrManagerImpl::getAllocator() const
@@ -396,6 +373,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		ci.pfnCallback = debugReportCallbackEXT;
 		ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT
 			| VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+		ci.pUserData = this;
 
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
 			reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
@@ -696,7 +674,11 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 		return Error::FUNCTION_FAILED;
 	}
 
-	ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u", count, presentMode);
+	ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size %ux%u",
+		count,
+		presentMode,
+		m_surfaceWidth,
+		m_surfaceHeight);
 
 	Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
 	ANKI_VK_CHECK(vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, &images[0]));
@@ -920,16 +902,63 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 
 void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const
 {
-	if(m_pfnDebugMarkerSetObjectNameEXT && name)
+	if(name)
 	{
-		VkDebugMarkerObjectNameInfoEXT inf = {};
-		inf.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
-		inf.objectType = type;
-		inf.pObjectName = name.get();
-		inf.object = handle;
+		if(m_pfnDebugMarkerSetObjectNameEXT)
+		{
+			VkDebugMarkerObjectNameInfoEXT inf = {};
+			inf.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+			inf.objectType = type;
+			inf.pObjectName = name.get();
+			inf.object = handle;
 
-		m_pfnDebugMarkerSetObjectNameEXT(m_device, &inf);
+			m_pfnDebugMarkerSetObjectNameEXT(m_device, &inf);
+		}
+
+		LockGuard<SpinLock> lock(m_vkHandleToNameLock);
+		StringAuto newName(getAllocator());
+		newName.create(name);
+		m_vkHandleToName.emplace(getAllocator(), computeHash(&handle, sizeof(handle)), std::move(newName));
 	}
+}
+
+VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
+	VkDebugReportObjectTypeEXT objectType,
+	uint64_t object,
+	size_t location,
+	int32_t messageCode,
+	const char* pLayerPrefix,
+	const char* pMessage,
+	void* pUserData)
+{
+	// Get the object name
+	GrManagerImpl* self = static_cast<GrManagerImpl*>(pUserData);
+	LockGuard<SpinLock> lock(self->m_vkHandleToNameLock);
+	auto it = self->m_vkHandleToName.find(computeHash(&object, sizeof(object)));
+	CString objName;
+	if(it != self->m_vkHandleToName.getEnd())
+	{
+		objName = it->toCString();
+	}
+	else
+	{
+		objName = "Unnamed";
+	}
+
+	if(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+	{
+		ANKI_VK_LOGE("%s (handle: %s)", pMessage, objName.cstr());
+	}
+	else if(flags & (VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT))
+	{
+		ANKI_VK_LOGW("%s (handle: %s)", pMessage, objName.cstr());
+	}
+	else
+	{
+		ANKI_VK_LOGI("%s (handle: %s)", pMessage, objName.cstr());
+	}
+
+	return false;
 }
 
 } // end namespace anki

@@ -155,6 +155,11 @@ public:
 		return m_level == b.m_level && m_depth == b.m_depth && m_face == b.m_face && m_layer == b.m_layer;
 	}
 
+	Bool operator!=(const TextureSurfaceInfo& b) const
+	{
+		return !(*this == b);
+	}
+
 	U64 computeHash() const
 	{
 		return anki::computeHash(this, sizeof(*this), 0x1234567);

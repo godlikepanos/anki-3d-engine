@@ -282,6 +282,9 @@ private:
 
 	GrObjectCache* m_samplerCache = nullptr;
 
+	mutable HashMap<U64, StringAuto> m_vkHandleToName;
+	mutable SpinLock m_vkHandleToNameLock;
+
 	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initSurface(const GrManagerInitInfo& init);
@@ -301,6 +304,15 @@ private:
 #endif
 
 	void resetFrame(PerFrame& frame);
+
+	static VkBool32 debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
+		VkDebugReportObjectTypeEXT objectType,
+		uint64_t object,
+		size_t location,
+		int32_t messageCode,
+		const char* pLayerPrefix,
+		const char* pMessage,
+		void* pUserData);
 };
 /// @}
 

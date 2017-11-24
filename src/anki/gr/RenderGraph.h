@@ -686,6 +686,13 @@ private:
 
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
+	void setTextureBarrier(Batch& batch,
+		const RenderPassDescriptionBase& pass,
+		const RenderPassDependency& consumer,
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64>& rtHasBarrierMask,
+		const RenderGraphDescription& descr,
+		BakeContext& ctx) const;
+
 	void getCrntUsageAndAspect(
 		RenderTargetHandle handle, U32 passIdx, TextureUsageBit& usage, DepthStencilAspectBit& aspect) const;
 	void getCrntUsageAndAspect(RenderTargetHandle handle,

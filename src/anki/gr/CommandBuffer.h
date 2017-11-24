@@ -306,7 +306,8 @@ public:
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
-	/// Generate mipmaps for non-3D textures.
+	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
+	/// TextureUsageBit::GENERATE_MIPMAPS before calling this method.
 	/// @param tex The texture to generate mips.
 	/// @param face The face of a cube texture or zero.
 	/// @param layer The layer of an array texture or zero.
