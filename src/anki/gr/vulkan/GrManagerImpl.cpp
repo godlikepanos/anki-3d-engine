@@ -902,7 +902,7 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 
 void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const
 {
-	if(name)
+	if(name && name.getLength())
 	{
 		if(m_pfnDebugMarkerSetObjectNameEXT)
 		{

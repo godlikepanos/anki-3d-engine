@@ -23,6 +23,7 @@ class TextureInitInfo;
 class SamplerInitInfo;
 class GrManagerInitInfo;
 class FramebufferInitInfo;
+class BufferInitInfo;
 
 /// @addtogroup graphics
 /// @{
@@ -234,7 +235,7 @@ public:
 		// Zero it because the derived classes may be hashed.
 		memset(&m_name[0], 0, sizeof(m_name));
 
-		if(name)
+		if(name && name.getLength())
 		{
 			ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
 			memcpy(&m_name[0], &name[0], name.getLength() + 1);

@@ -39,10 +39,13 @@ FramebufferImpl::~FramebufferImpl()
 Error FramebufferImpl::init(const FramebufferInitInfo& init)
 {
 	m_defaultFb = init.refersToDefaultFramebuffer();
+	strcpy(&m_name[0], (init.getName()) ? init.getName().cstr() : "");
 
 	// Create a renderpass.
 	initRpassCreateInfo(init);
 	ANKI_VK_CHECK(vkCreateRenderPass(getDevice(), &m_rpassCi, nullptr, &m_compatibleOrDefaultRpass));
+	getGrManagerImpl().trySetVulkanHandleName(
+		init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_compatibleOrDefaultRpass);
 
 	// Create the FBs
 	ANKI_CHECK(initFbs(init));
@@ -112,6 +115,8 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 			ci.height = m_height;
 
 			ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbs[i]));
+			getGrManagerImpl().trySetVulkanHandleName(
+				init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_fbs[i]);
 		}
 
 		m_colorAttachmentMask.set(0);
@@ -185,6 +190,8 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 		ANKI_ASSERT(count == ci.attachmentCount);
 
 		ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbs[0]));
+		getGrManagerImpl().trySetVulkanHandleName(
+			init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_fbs[0]);
 	}
 
 	return Error::NONE;
@@ -320,6 +327,7 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 			}
 
 			ANKI_VK_CHECKF(vkCreateRenderPass(getDevice(), &ci, nullptr, &out));
+			getGrManagerImpl().trySetVulkanHandleName(&m_name[0], VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, out);
 
 			m_rpasses.emplace(getAllocator(), hash, out);
 		}

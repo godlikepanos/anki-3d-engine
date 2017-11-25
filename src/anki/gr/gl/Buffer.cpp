@@ -51,13 +51,13 @@ public:
 	}
 };
 
-void Buffer::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
+void Buffer::init(const BufferInitInfo& inf)
 {
 	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
 
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->m_impl->pushBackNewCommand<BufferCreateCommand>(this, size, usage, access);
+	cmdb->m_impl->pushBackNewCommand<BufferCreateCommand>(this, inf.m_size, inf.m_usage, inf.m_access);
 	cmdb->flush();
 }
 

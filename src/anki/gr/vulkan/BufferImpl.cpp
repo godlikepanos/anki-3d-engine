@@ -24,9 +24,14 @@ BufferImpl::~BufferImpl()
 	}
 }
 
-Error BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
+Error BufferImpl::init(const BufferInitInfo& inf)
 {
 	ANKI_ASSERT(!isCreated());
+
+	PtrSize size = inf.m_size;
+	BufferMapAccessBit access = inf.m_access;
+	BufferUsageBit usage = inf.m_usage;
+
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(usage != BufferUsageBit::NONE);
 
@@ -43,6 +48,7 @@ Error BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit ac
 	U32 queueIdx = getGrManagerImpl().getGraphicsQueueFamily();
 	ci.pQueueFamilyIndices = &queueIdx;
 	ANKI_VK_CHECK(vkCreateBuffer(getDevice(), &ci, nullptr, &m_handle));
+	getGrManagerImpl().trySetVulkanHandleName(inf.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_handle);
 
 	// Get mem requirements
 	VkMemoryRequirements req;

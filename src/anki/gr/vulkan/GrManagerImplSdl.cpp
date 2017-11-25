@@ -8,6 +8,7 @@
 #include <anki/core/NativeWindow.h>
 #include <anki/core/NativeWindowSdl.h>
 #include <SDL_syswm.h>
+#include <SDL_vulkan.h>
 #if ANKI_OS == ANKI_OS_LINUX
 #include <X11/Xlib-xcb.h>
 #elif ANKI_OS == ANKI_OS_WINDOWS
@@ -21,6 +22,13 @@ namespace anki
 
 Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 {
+#if ANKI_OS == ANKI_OS_LINUX
+	if(!SDL_Vulkan_CreateSurface(init.m_window->getNative().m_window, m_instance, &m_surface))
+	{
+		ANKI_VK_LOGE("SDL_Vulkan_CreateSurface() failed");
+		return Error::FUNCTION_FAILED;
+	}
+#elif ANKI_OS == ANKI_OS_WINDOWS
 	SDL_SysWMinfo wminfo;
 	SDL_VERSION(&wminfo.version);
 	if(!SDL_GetWindowWMInfo(init.m_window->getNative().m_window, &wminfo))
@@ -29,14 +37,6 @@ Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 		return Error::NONE;
 	}
 
-#if ANKI_OS == ANKI_OS_LINUX
-	VkXcbSurfaceCreateInfoKHR ci = {};
-	ci.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-	ci.connection = XGetXCBConnection(wminfo.info.x11.display);
-	ci.window = wminfo.info.x11.window;
-
-	ANKI_VK_CHECK(vkCreateXcbSurfaceKHR(m_instance, &ci, nullptr, &m_surface));
-#elif ANKI_OS == ANKI_OS_WINDOWS
 	Array<TCHAR, 512> className;
 	GetClassName(wminfo.info.win.window, &className[0], className.getSize());
 

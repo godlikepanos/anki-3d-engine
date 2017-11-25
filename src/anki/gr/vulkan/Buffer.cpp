@@ -18,11 +18,11 @@ Buffer::~Buffer()
 {
 }
 
-void Buffer::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
+void Buffer::init(const BufferInitInfo& inf)
 {
 	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
 
-	if(m_impl->init(size, usage, access))
+	if(m_impl->init(inf))
 	{
 		ANKI_VK_LOGF("Cannot recover");
 	}

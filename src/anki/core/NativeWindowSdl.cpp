@@ -5,6 +5,9 @@
 
 #include <anki/core/NativeWindowSdl.h>
 #include <anki/util/Logger.h>
+#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
+#include <SDL_vulkan.h>
+#endif
 
 namespace anki
 {
@@ -21,6 +24,14 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		ANKI_CORE_LOGE("SDL_Init() failed");
 		return Error::FUNCTION_FAILED;
 	}
+
+#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
+	if(SDL_Vulkan_LoadLibrary(nullptr))
+	{
+		ANKI_CORE_LOGE("SDL_Vulkan_LoadLibrary() failed");
+		return Error::FUNCTION_FAILED;
+	}
+#endif
 
 	//
 	// Set GL attributes
@@ -47,6 +58,8 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 
 #if ANKI_GR_BACKEND == ANKI_GR_BACKEND_GL
 	flags |= SDL_WINDOW_OPENGL;
+#elif ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
+	flags |= SDL_WINDOW_VULKAN;
 #endif
 
 	if(init.m_fullscreenDesktopRez)

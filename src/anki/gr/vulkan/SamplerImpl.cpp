@@ -5,6 +5,7 @@
 
 #include <anki/gr/vulkan/SamplerImpl.h>
 #include <anki/gr/Texture.h>
+#include <anki/gr/vulkan/GrManagerImpl.h>
 #include <cstring>
 
 namespace anki
@@ -75,6 +76,7 @@ Error SamplerImpl::init(const SamplerInitInfo& ii)
 
 	// Create
 	ANKI_VK_CHECK(vkCreateSampler(getDevice(), &ci, nullptr, &m_handle));
+	getGrManagerImpl().trySetVulkanHandleName(ii.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT, m_handle);
 
 	return Error::NONE;
 }

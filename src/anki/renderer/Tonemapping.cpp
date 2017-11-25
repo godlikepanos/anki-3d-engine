@@ -38,9 +38,10 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	m_grProg = variant->getProgram();
 
 	// Create buffer
-	m_luminanceBuff = getGrManager().newInstance<Buffer>(sizeof(Vec4),
+	m_luminanceBuff = getGrManager().newInstance<Buffer>(BufferInitInfo(sizeof(Vec4),
 		BufferUsageBit::STORAGE_ALL | BufferUsageBit::UNIFORM_ALL | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
-		BufferMapAccessBit::NONE);
+		BufferMapAccessBit::NONE,
+		"AvgLum"));
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;

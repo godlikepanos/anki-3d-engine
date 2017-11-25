@@ -193,6 +193,11 @@ public:
 
 	void trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const;
 
+	void trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, void* handle) const
+	{
+		trySetVulkanHandleName(name, type, U64(ptrToNumber(handle)));
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 

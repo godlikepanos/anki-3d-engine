@@ -52,6 +52,7 @@ TextureImpl::~TextureImpl()
 Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 {
 	TextureInitInfo init = init_;
+	init.m_sampling.setName(init.getName());
 	ANKI_ASSERT(textureInitInfoValid(init));
 	m_sampler = getGrManagerImpl().getSamplerCache().newInstance<Sampler>(init.m_sampling);
 
@@ -60,6 +61,14 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_height = init.m_height;
 	m_depth = init.m_depth;
 	m_type = init.m_type;
+	if(init.getName())
+	{
+		strcpy(&m_name[0], init.getName().cstr());
+	}
+	else
+	{
+		m_name[0] = '\0';
+	}
 
 	if(m_type == TextureType::_3D)
 	{
@@ -318,8 +327,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	}
 
 	ANKI_VK_CHECK(vkCreateImage(getDevice(), &ci, nullptr, &m_imageHandle));
-	getGrManagerImpl().trySetVulkanHandleName(
-		init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, ptrToNumber(m_imageHandle));
+	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_imageHandle);
 
 	// Allocate memory
 	//
@@ -708,6 +716,9 @@ VkImageView TextureImpl::getOrCreateView(const VkImageViewCreateInfo& ci)
 	{
 		VkImageView view = VK_NULL_HANDLE;
 		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &ci, nullptr, &view));
+		getGrManagerImpl().trySetVulkanHandleName(
+			(m_name[0]) ? &m_name[0] : CString(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(view));
+
 		m_viewsMap.emplace(getAllocator(), ci, view);
 
 		return view;

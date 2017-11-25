@@ -374,13 +374,13 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 	static const Array<U16, 6 * 2 * 3> idx = {
 		{0, 1, 3, 3, 1, 2, 1, 5, 6, 1, 6, 2, 7, 4, 0, 7, 0, 3, 6, 5, 7, 7, 5, 4, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7}};
 
-	verts = gr.newInstance<Buffer>(sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+	verts = gr.newInstance<Buffer>(BufferInitInfo(sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
 
 	void* mapped = verts->map(0, sizeof(pos), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &pos[0], sizeof(pos));
 	verts->unmap();
 
-	indices = gr.newInstance<Buffer>(sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE);
+	indices = gr.newInstance<Buffer>(BufferInitInfo(sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE));
 	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &idx[0], sizeof(idx));
 	indices->unmap();
@@ -683,10 +683,10 @@ ANKI_TEST(Gr, Buffer)
 {
 	COMMON_BEGIN()
 
-	BufferPtr a = gr->newInstance<Buffer>(512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE);
+	BufferPtr a = gr->newInstance<Buffer>(BufferInitInfo(512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE));
 
-	BufferPtr b =
-		gr->newInstance<Buffer>(64, BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::WRITE | BufferMapAccessBit::READ);
+	BufferPtr b = gr->newInstance<Buffer>(
+		BufferInitInfo(64, BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::WRITE | BufferMapAccessBit::READ));
 
 	void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -708,7 +708,8 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	COMMON_BEGIN()
 
 	// A non-uploaded buffer
-	BufferPtr b = gr->newInstance<Buffer>(sizeof(Vec4) * 3, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::WRITE);
+	BufferPtr b = gr->newInstance<Buffer>(
+		BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::WRITE));
 
 	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -778,7 +779,8 @@ ANKI_TEST(Gr, DrawWithVertex)
 	};
 	static_assert(sizeof(Vert) == sizeof(Vec4), "See file");
 
-	BufferPtr b = gr->newInstance<Buffer>(sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+	BufferPtr b =
+		gr->newInstance<Buffer>(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
 
 	Vert* ptr = static_cast<Vert*>(b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -792,7 +794,8 @@ ANKI_TEST(Gr, DrawWithVertex)
 	ptr[2].m_color = {{0, 0, 255}};
 	b->unmap();
 
-	BufferPtr c = gr->newInstance<Buffer>(sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+	BufferPtr c =
+		gr->newInstance<Buffer>(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
 
 	Vec3* otherColor = static_cast<Vec3*>(c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
 

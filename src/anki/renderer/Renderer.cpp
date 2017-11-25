@@ -97,8 +97,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 		m_dummyTex = getGrManager().newInstance<Texture>(texinit);
 	}
 
-	m_dummyBuff = getGrManager().newInstance<Buffer>(
-		getDummyBufferSize(), BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::NONE);
+	m_dummyBuff = getGrManager().newInstance<Buffer>(BufferInitInfo(getDummyBufferSize(),
+		BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL,
+		BufferMapAccessBit::NONE,
+		"Dummy"));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_indirect.reset(m_alloc.newInstance<Indirect>(this));

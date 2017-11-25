@@ -138,6 +138,8 @@ private:
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
 
+	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(const TextureInitInfo& init);
 
 	ANKI_USE_RESULT static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);

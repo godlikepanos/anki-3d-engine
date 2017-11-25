@@ -65,7 +65,8 @@ Error DepthDownscale::initQuarter(const ConfigSet&)
 	m_quarter.m_colorRtDescr = m_r->create2DRenderTargetDescription(width,
 		height,
 		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
+			| TextureUsageBit::SAMPLED_COMPUTE,
 		SamplingFilter::LINEAR,
 		"quarterdepth");
 	m_quarter.m_colorRtDescr.bake();

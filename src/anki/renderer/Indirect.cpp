@@ -92,12 +92,15 @@ Error Indirect::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& id
 	ANKI_CHECK(loader.load(fname));
 
 	PtrSize vertBuffSize = loader.getHeader().m_totalVerticesCount * sizeof(Vec3);
-	vert = getGrManager().newInstance<Buffer>(
-		vertBuffSize, BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferMapAccessBit::NONE);
+	vert = getGrManager().newInstance<Buffer>(BufferInitInfo(vertBuffSize,
+		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
+		BufferMapAccessBit::NONE,
+		"IndirectMesh"));
 
-	idx = getGrManager().newInstance<Buffer>(loader.getIndexDataSize(),
+	idx = getGrManager().newInstance<Buffer>(BufferInitInfo(loader.getIndexDataSize(),
 		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
-		BufferMapAccessBit::NONE);
+		BufferMapAccessBit::NONE,
+		"IndirectMesh"));
 
 	// Upload data
 	CommandBufferInitInfo init;

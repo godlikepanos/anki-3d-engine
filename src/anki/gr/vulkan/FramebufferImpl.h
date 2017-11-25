@@ -132,6 +132,8 @@ private:
 	Mutex m_rpassesMtx;
 	Array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> m_fbs = {};
 
+	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+
 	// Methods
 	ANKI_USE_RESULT Error initFbs(const FramebufferInitInfo& init);
 	void initRpassCreateInfo(const FramebufferInitInfo& init);

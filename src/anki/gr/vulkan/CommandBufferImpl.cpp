@@ -667,8 +667,8 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 		// Create a new shadow buffer
 		const PtrSize shadowSize =
 			computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
-		BufferPtr shadow =
-			getGrManager().newInstance<Buffer>(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE);
+		BufferPtr shadow = getGrManager().newInstance<Buffer>(
+			BufferInitInfo(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE, "Workaround"));
 		const VkBuffer shadowHandle = shadow->m_impl->getHandle();
 		m_microCmdb->pushObjectRef(shadow);
 
@@ -770,8 +770,8 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 		// Create a new shadow buffer
 		const PtrSize shadowSize =
 			computeVolumeSize(width, height, depth, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
-		BufferPtr shadow =
-			getGrManager().newInstance<Buffer>(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE);
+		BufferPtr shadow = getGrManager().newInstance<Buffer>(
+			BufferInitInfo(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE, "Workaround"));
 		const VkBuffer shadowHandle = shadow->m_impl->getHandle();
 		m_microCmdb->pushObjectRef(shadow);
 
