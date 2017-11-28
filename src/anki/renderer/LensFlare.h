@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
 
@@ -16,11 +16,11 @@ namespace anki
 /// @{
 
 /// Lens flare rendering pass. Part of forward shading.
-class LensFlare : public RenderingPass
+class LensFlare : public RendererObject
 {
 anki_internal:
 	LensFlare(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 
@@ -28,24 +28,21 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	void resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb);
+	void runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmdb);
 
-	void runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb);
+	void populateRenderGraph(RenderingContext& ctx);
 
-	void updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb);
-
-	void run(RenderingContext& ctx, CommandBufferPtr cmdb);
+	/// Get it to set a dependency.
+	RenderPassBufferHandle getIndirectDrawBuffer() const
+	{
+		return m_runCtx.m_indirectBuffHandle;
+	}
 
 private:
-	// Occlusion query
-	DynamicArray<OcclusionQueryPtr> m_queries;
-	BufferPtr m_queryResultBuff;
+	// Occlusion test
 	BufferPtr m_indirectBuff;
 	ShaderProgramResourcePtr m_updateIndirectBuffProg;
 	ShaderProgramPtr m_updateIndirectBuffGrProg;
-
-	ShaderProgramResourcePtr m_occlusionProg;
-	ShaderProgramPtr m_occlusionGrProg;
 
 	// Sprite billboards
 	ShaderProgramResourcePtr m_realProg;
@@ -54,10 +51,26 @@ private:
 	U8 m_maxFlares;
 	U16 m_maxSprites;
 
+	class
+	{
+	public:
+		RenderingContext* m_ctx = nullptr;
+		RenderPassBufferHandle m_indirectBuffHandle;
+	} m_runCtx;
+
 	ANKI_USE_RESULT Error initSprite(const ConfigSet& config);
 	ANKI_USE_RESULT Error initOcclusion(const ConfigSet& config);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
+
+	void updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+
+	/// A RenderPassWorkCallback for updating the indirect info.
+	static void runUpdateIndirectCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		LensFlare* const self = scast<LensFlare*>(rgraphCtx.m_userData);
+		self->updateIndirectInfo(*self->m_runCtx.m_ctx, rgraphCtx);
+	}
 };
 /// @}
 

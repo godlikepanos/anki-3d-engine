@@ -13,6 +13,7 @@ namespace anki
 DownscaleBlur::~DownscaleBlur()
 {
 	m_passes.destroy(getAllocator());
+	m_runCtx.m_rts.destroy(getAllocator());
 }
 
 Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
@@ -23,21 +24,16 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	pass.m_height = inputTexSize.y() / 2;
 
 	// RT
-	pass.m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(pass.m_width,
+	StringAuto name(getAllocator());
+	name.sprintf("DownBlur #%u", idx);
+	pass.m_rtDescr = m_r->create2DRenderTargetDescription(pass.m_width,
 		pass.m_height,
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::SAMPLED_COMPUTE,
 		SamplingFilter::LINEAR,
-		1,
-		"downblur"));
-
-	// FB
-	FramebufferInitInfo fbInit("downblur");
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = pass.m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	pass.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+		name.toCString());
+	pass.m_rtDescr.bake();
 
 	return Error::NONE;
 }
@@ -67,6 +63,14 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 		size /= 2;
 	}
 
+	m_runCtx.m_rts.create(getAllocator(), passCount);
+
+	// FB descr
+	m_fbDescr.m_colorAttachmentCount = 1;
+	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_fbDescr.bake();
+
+	// Shader programs
 	ANKI_CHECK(getResourceManager().loadResource("programs/DownscaleBlur.ankiprog", m_prog));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variant);
@@ -75,54 +79,74 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	return Error::NONE;
 }
 
-void DownscaleBlur::setPreRunBarriers(RenderingContext& ctx)
+void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_passes[0].m_rt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+	const U passIdx = m_runCtx.m_crntPassIdx++;
+
+	if(passIdx > 0)
+	{
+		// Bind the previous pass' Rt
+
+		rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[passIdx - 1]);
+	}
+	else
+	{
+		rgraphCtx.bindTexture(0, 0, m_r->getTemporalAA().getRt());
+	}
+
+	const Subpass& pass = m_passes[passIdx];
+	cmdb->setViewport(0, 0, pass.m_width, pass.m_height);
+	cmdb->bindShaderProgram(m_grProg);
+	drawQuad(cmdb);
 }
 
-void DownscaleBlur::run(RenderingContext& ctx)
+void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 {
-	CommandBufferPtr cmdb = ctx.m_commandBuffer;
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	m_runCtx.m_crntPassIdx = 0;
 
-	cmdb->bindTexture(0, 0, m_r->getTemporalAA().getRt());
-
+	// Create RTs
 	for(U i = 0; i < m_passes.getSize(); ++i)
 	{
-		Subpass& pass = m_passes[i];
+		m_runCtx.m_rts[i] = rgraph.newRenderTarget(m_passes[i].m_rtDescr);
+	}
 
-		if(i > 0u)
+	// Create passes
+	Array<CString, 8> passNames = {{"DownBlur #0",
+		"Down/Blur #1",
+		"Down/Blur #2",
+		"Down/Blur #3",
+		"Down/Blur #4",
+		"Down/Blur #5",
+		"Down/Blur #6",
+		"Down/Blur #7"}};
+	for(U i = 0; i < m_passes.getSize(); ++i)
+	{
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
+
+		pass.setWork(runCallback, this, 0);
+
+		RenderTargetHandle renderRt, sampleRt;
+		if(i > 0)
 		{
-			cmdb->setTextureSurfaceBarrier(m_passes[i - 1].m_rt,
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureUsageBit::SAMPLED_FRAGMENT,
-				TextureSurfaceInfo(0, 0, 0, 0));
-
-			cmdb->setTextureSurfaceBarrier(pass.m_rt,
-				TextureUsageBit::NONE,
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureSurfaceInfo(0, 0, 0, 0));
-
-			cmdb->bindTexture(0, 0, m_passes[i - 1].m_rt);
+			renderRt = m_runCtx.m_rts[i];
+			sampleRt = m_runCtx.m_rts[i - 1];
+		}
+		else
+		{
+			renderRt = m_runCtx.m_rts[0];
+			sampleRt = m_r->getTemporalAA().getRt();
 		}
 
-		cmdb->setViewport(0, 0, pass.m_width, pass.m_height);
-		cmdb->bindShaderProgram(m_grProg);
+		pass.setFramebufferInfo(m_fbDescr, {{renderRt}}, {});
 
-		cmdb->beginRenderPass(pass.m_fb);
-		m_r->drawQuad(cmdb);
-		cmdb->endRenderPass();
+		pass.newConsumer({renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({sampleRt, TextureUsageBit::SAMPLED_FRAGMENT});
+
+		pass.newProducer({renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
-}
-
-void DownscaleBlur::setPostRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_passes.getBack().m_rt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 } // end namespace anki

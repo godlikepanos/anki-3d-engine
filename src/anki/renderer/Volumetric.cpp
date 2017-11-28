@@ -14,85 +14,126 @@
 namespace anki
 {
 
-Error VolumetricMain::init(const ConfigSet& config)
+Error Volumetric::initMain(const ConfigSet& config)
 {
 	// Misc
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
-
-	for(U i = 0; i < 2; ++i)
-	{
-		// RT
-		TextureInitInfo rtInit = m_r->create2DRenderTargetInitInfo(m_vol->m_width,
-			m_vol->m_height,
-			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			SamplingFilter::LINEAR,
-			1,
-			"volmain");
-		rtInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_rt[i] = m_r->createAndClearRenderTarget(rtInit);
-
-		// FB
-		FramebufferInitInfo fbInit("volmain");
-		fbInit.m_colorAttachmentCount = 1;
-		fbInit.m_colorAttachments[0].m_texture = m_rt[i];
-		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
-	}
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_main.m_noiseTex));
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("programs/VolumetricFog.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("programs/VolumetricFog.ankiprog", m_main.m_prog));
 
-	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
+	ShaderProgramResourceMutationInitList<1> mutators(m_main.m_prog);
 	mutators.add("ENABLE_SHADOWS", 1);
 
-	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
-	consts.add("FB_SIZE", UVec2(m_vol->m_width, m_vol->m_height))
+	ShaderProgramResourceConstantValueInitList<3> consts(m_main.m_prog);
+	consts.add("FB_SIZE", UVec2(m_width, m_height))
 		.add("CLUSTER_COUNT",
 			UVec3(m_r->getLightShading().getLightBin().getClusterer().getClusterCountX(),
 				m_r->getLightShading().getLightBin().getClusterer().getClusterCountY(),
 				m_r->getLightShading().getLightBin().getClusterer().getClusterCountZ()))
-		.add("NOISE_MAP_SIZE", U32(m_noiseTex->getWidth()));
+		.add("NOISE_MAP_SIZE", U32(m_main.m_noiseTex->getWidth()));
 
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
-	m_grProg = variant->getProgram();
+	m_main.m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_main.m_grProg = variant->getProgram();
 
 	return Error::NONE;
 }
 
-TexturePtr VolumetricMain::getRt() const
+Error Volumetric::initHBlur(const ConfigSet& config)
 {
-	return m_rt[m_r->getFrameCount() & 1];
+	// Progs
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/LumaAwareBlur.ankiprog", m_hblur.m_prog));
+
+	ShaderProgramResourceMutationInitList<3> mutators(m_hblur.m_prog);
+	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 11).add("COLOR_COMPONENTS", 3);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_hblur.m_prog);
+	consts.add("TEXTURE_SIZE", UVec2(m_width, m_height));
+
+	const ShaderProgramResourceVariant* variant;
+	m_hblur.m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_hblur.m_grProg = variant->getProgram();
+
+	return Error::NONE;
 }
 
-void VolumetricMain::setPreRunBarriers(RenderingContext& ctx)
+Error Volumetric::initVBlur(const ConfigSet& config)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt[m_r->getFrameCount() & 1],
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	// Progs
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/LumaAwareBlur.ankiprog", m_vblur.m_prog));
+
+	ShaderProgramResourceMutationInitList<3> mutators(m_vblur.m_prog);
+	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 11).add("COLOR_COMPONENTS", 3);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_vblur.m_prog);
+	consts.add("TEXTURE_SIZE", UVec2(m_width, m_height));
+
+	const ShaderProgramResourceVariant* variant;
+	m_vblur.m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_vblur.m_grProg = variant->getProgram();
+
+	return Error::NONE;
 }
 
-void VolumetricMain::run(RenderingContext& ctx)
+Error Volumetric::init(const ConfigSet& config)
 {
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+	m_width = m_r->getWidth() / VOLUMETRIC_FRACTION;
+	m_height = m_r->getHeight() / VOLUMETRIC_FRACTION;
 
-	//
-	// Main pass
-	//
-	cmdb->setViewport(0, 0, m_vol->m_width, m_vol->m_height);
+	ANKI_R_LOGI("Initializing volumetric pass. Size %ux%u", m_width, m_height);
 
-	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_colorRt);
-	cmdb->bindTexture(0, 1, m_noiseTex->getGrTexture());
-	TexturePtr& history = m_rt[(m_r->getFrameCount() + 1) & 1];
-	cmdb->informTextureCurrentUsage(history, TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(0, 2, history);
-	cmdb->bindTexture(0, 3, m_r->getShadowMapping().m_shadowAtlas);
+	for(U i = 0; i < 2; ++i)
+	{
+		// RT
+		TextureInitInfo rtInit = m_r->create2DRenderTargetInitInfo(m_width,
+			m_height,
+			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			SamplingFilter::LINEAR,
+			"volmain");
+		rtInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		m_rtTextures[i] = m_r->createAndClearRenderTarget(rtInit);
+	}
 
-	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
-	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, ctx.m_lightShading.m_spotLightsToken);
+	// FB
+	m_fbDescr.m_colorAttachmentCount = 1;
+	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_fbDescr.bake();
+
+	Error err = initMain(config);
+
+	if(!err)
+	{
+		err = initHBlur(config);
+	}
+
+	if(!err)
+	{
+		err = initVBlur(config);
+	}
+
+	if(err)
+	{
+		ANKI_R_LOGE("Failed to initialize volumetric pass");
+	}
+
+	return err;
+}
+
+void Volumetric::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+{
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+	cmdb->setViewport(0, 0, m_width, m_height);
+
+	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getQuarterColorRt());
+	cmdb->bindTexture(0, 1, m_main.m_noiseTex->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindTexture(0, 2, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]);
+	rgraphCtx.bindTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
+
+	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
+	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
+	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 
 	struct Unis
 	{
@@ -106,172 +147,98 @@ void VolumetricMain::run(RenderingContext& ctx)
 		ctx.m_renderQueue->m_cameraFar,
 		uniforms->m_linearizeNoiseTexOffsetLayer.x(),
 		uniforms->m_linearizeNoiseTexOffsetLayer.y());
-	F32 texelOffset = 1.0 / m_noiseTex->getWidth();
+	F32 texelOffset = 1.0 / m_main.m_noiseTex->getWidth();
 	uniforms->m_linearizeNoiseTexOffsetLayer.z() = m_r->getFrameCount() * texelOffset;
-	uniforms->m_linearizeNoiseTexOffsetLayer.w() = m_r->getFrameCount() & (m_noiseTex->getLayerCount() - 1);
-	uniforms->m_fogParticleColorPad1 = Vec4(m_fogParticleColor, 0.0);
+	uniforms->m_linearizeNoiseTexOffsetLayer.w() = m_r->getFrameCount() & (m_main.m_noiseTex->getLayerCount() - 1);
+	uniforms->m_fogParticleColorPad1 = Vec4(m_main.m_fogParticleColor, 0.0);
 	uniforms->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevViewProjMat * ctx.m_renderQueue->m_viewProjectionMatrix.getInverse();
 
-	bindStorage(cmdb, 0, 0, ctx.m_lightShading.m_clustersToken);
-	bindStorage(cmdb, 0, 1, ctx.m_lightShading.m_lightIndicesToken);
+	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
 
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_main.m_grProg);
 
-	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() & 1]);
-	m_r->drawQuad(cmdb);
-	cmdb->endRenderPass();
+	drawQuad(cmdb);
 }
 
-void VolumetricMain::setPostRunBarriers(RenderingContext& ctx)
+void Volumetric::runHBlur(RenderPassWorkContext& rgraphCtx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt[m_r->getFrameCount() & 1],
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+	rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[m_r->getFrameCount() & 1]);
+	cmdb->bindShaderProgram(m_hblur.m_grProg);
+	cmdb->setViewport(0, 0, m_width, m_height);
+
+	drawQuad(cmdb);
 }
 
-Error VolumetricHBlur::init(const ConfigSet& config)
+void Volumetric::runVBlur(RenderPassWorkContext& rgraphCtx)
 {
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+	rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]);
+	cmdb->bindShaderProgram(m_vblur.m_grProg);
+	cmdb->setViewport(0, 0, m_width, m_height);
+
+	drawQuad(cmdb);
+}
+
+void Volumetric::populateRenderGraph(RenderingContext& ctx)
+{
+	m_runCtx.m_ctx = &ctx;
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
 	// Create RTs
-	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_vol->m_width,
-		m_vol->m_height,
-		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR,
-		1,
-		"volblur"));
+	const U rtToRenderIdx = m_r->getFrameCount() & 1;
+	m_runCtx.m_rts[rtToRenderIdx] =
+		rgraph.importRenderTarget("VOL #1", m_rtTextures[rtToRenderIdx], TextureUsageBit::NONE);
+	const U rtToReadIdx = !rtToRenderIdx;
+	m_runCtx.m_rts[rtToReadIdx] =
+		rgraph.importRenderTarget("VOL #2", m_rtTextures[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT);
 
-	// Create FBs
-	FramebufferInitInfo fbInit("volblur");
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
-
-	// Progs
-	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/LumaAwareBlur.ankiprog", m_prog));
-
-	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
-	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 11).add("COLOR_COMPONENTS", 3);
-	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("TEXTURE_SIZE", UVec2(m_vol->m_width, m_vol->m_height));
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
-	m_grProg = variant->getProgram();
-
-	return Error::NONE;
-}
-
-void VolumetricHBlur::setPreRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(
-		m_rt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void VolumetricHBlur::run(RenderingContext& ctx)
-{
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
-	cmdb->bindTexture(0, 0, m_vol->m_main.m_rt[m_r->getFrameCount() & 1]);
-	cmdb->bindShaderProgram(m_grProg);
-	cmdb->setViewport(0, 0, m_vol->m_width, m_vol->m_height);
-
-	cmdb->beginRenderPass(m_fb);
-	m_r->drawQuad(cmdb);
-	cmdb->endRenderPass();
-}
-
-void VolumetricHBlur::setPostRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-Error VolumetricVBlur::init(const ConfigSet& config)
-{
-	// Create FBs
-	for(U i = 0; i < 2; ++i)
+	// Create main render pass
 	{
-		FramebufferInitInfo fbInit;
-		fbInit.m_colorAttachmentCount = 1;
-		fbInit.m_colorAttachments[0].m_texture = m_vol->m_main.m_rt[i];
-		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("VOL main");
+
+		pass.setWork(runMainCallback, this, 0);
+		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToRenderIdx]}}, {});
+
+		pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
-	// Progs
-	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/LumaAwareBlur.ankiprog", m_prog));
-
-	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
-	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 11).add("COLOR_COMPONENTS", 3);
-	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("TEXTURE_SIZE", UVec2(m_vol->m_width, m_vol->m_height));
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
-	m_grProg = variant->getProgram();
-
-	return Error::NONE;
-}
-
-void VolumetricVBlur::setPreRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_vol->m_main.m_rt[m_r->getFrameCount() & 1],
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void VolumetricVBlur::run(RenderingContext& ctx)
-{
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
-	cmdb->bindTexture(0, 0, m_vol->m_hblur.m_rt);
-	cmdb->bindShaderProgram(m_grProg);
-	cmdb->setViewport(0, 0, m_vol->m_width, m_vol->m_height);
-
-	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() & 1]);
-	m_r->drawQuad(cmdb);
-	cmdb->endRenderPass();
-}
-
-void VolumetricVBlur::setPostRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_vol->m_main.m_rt[m_r->getFrameCount() & 1],
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-Error Volumetric::init(const ConfigSet& config)
-{
-	m_width = m_r->getWidth() / VOLUMETRIC_FRACTION;
-	m_height = m_r->getHeight() / VOLUMETRIC_FRACTION;
-
-	ANKI_R_LOGI("Initializing volumetric pass. Size %ux%u", m_width, m_height);
-
-	Error err = m_main.init(config);
-
-	if(!err)
+	// Create HBlur pass
 	{
-		err = m_hblur.init(config);
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("VOL hblur");
+
+		pass.setWork(runHBlurCallback, this, 0);
+		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToReadIdx]}}, {});
+
+		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
-	if(!err)
+	// Create VBlur pass
 	{
-		err = m_vblur.init(config);
-	}
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("VOL vblur");
 
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize volumetric pass");
-	}
+		pass.setWork(runVBlurCallback, this, 0);
+		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToRenderIdx]}}, {});
 
-	return err;
+		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	}
+}
+
+RenderTargetHandle Volumetric::getRt() const
+{
+	return m_runCtx.m_rts[m_r->getFrameCount() & 1];
 }
 
 } // end namespace anki

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -14,11 +14,11 @@ namespace anki
 /// @{
 
 /// Downsample the IS and blur it at the same time.
-class DownscaleBlur : public RenderingPass
+class DownscaleBlur : public RendererObject
 {
 anki_internal:
 	DownscaleBlur(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 
@@ -26,9 +26,8 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
-	void setPreRunBarriers(RenderingContext& ctx);
-	void run(RenderingContext& ctx);
-	void setPostRunBarriers(RenderingContext& ctx);
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
 
 	U getPassWidth(U pass) const
 	{
@@ -40,27 +39,43 @@ anki_internal:
 		return m_passes[min<U>(pass, m_passes.getSize() - 1)].m_height;
 	}
 
-	TexturePtr getPassTexture(U pass) const
+	RenderTargetHandle getPassRt(U pass) const
 	{
-		return m_passes[min<U>(pass, m_passes.getSize() - 1)].m_rt;
+		return m_runCtx.m_rts[min<U>(pass, m_runCtx.m_rts.getSize() - 1)];
 	}
 
 private:
 	class Subpass
 	{
 	public:
-		TexturePtr m_rt;
-		FramebufferPtr m_fb;
+		RenderTargetDescription m_rtDescr;
 		U32 m_width, m_height;
 	};
+
+	DynamicArray<Subpass> m_passes;
+
+	FramebufferDescription m_fbDescr;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
-	DynamicArray<Subpass> m_passes;
+	class
+	{
+	public:
+		DynamicArray<RenderTargetHandle> m_rts;
+		U32 m_crntPassIdx = MAX_U32;
+	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initSubpass(U idx, const UVec2& inputTexSize);
+
+	void run(RenderPassWorkContext& rgraphCtx);
+
+	/// A RenderPassWorkCallback for the downscall passes.
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		scast<DownscaleBlur*>(rgraphCtx.m_userData)->run(rgraphCtx);
+	}
 };
 /// @}
 

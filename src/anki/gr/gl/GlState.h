@@ -50,7 +50,7 @@ public:
 
 	Array2d<GLuint, MAX_DESCRIPTOR_SETS, MAX_TEXTURE_BUFFER_BINDINGS> m_texBuffTextures = {};
 
-	Array<U16, 4> m_scissor = {{0, 0, MAX_U16, MAX_U16}};
+	Array<GLsizei, 4> m_scissor = {{0, 0, MAX_I32, MAX_I32}};
 
 	GlState(GrManager* manager)
 		: m_manager(manager)

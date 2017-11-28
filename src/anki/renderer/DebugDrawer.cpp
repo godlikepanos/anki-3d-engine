@@ -39,8 +39,8 @@ Error DebugDrawer::init(Renderer* r)
 	// Create the vert buffs
 	for(BufferPtr& v : m_vertBuff)
 	{
-		v = gr.newInstance<Buffer>(
-			sizeof(Vertex) * MAX_VERTS_PER_FRAME, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+		v = gr.newInstance<Buffer>(BufferInitInfo(
+			sizeof(Vertex) * MAX_VERTS_PER_FRAME, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE, "DbgDrawer"));
 	}
 
 	m_mMat.setIdentity();

@@ -249,7 +249,7 @@ vec3 grayScale(vec3 col)
 	return vec3(grey);
 }
 
-vec3 saturate(vec3 col, float factor)
+vec3 saturateColor(vec3 col, float factor)
 {
 	const vec3 LUM_COEFF = vec3(0.2125, 0.7154, 0.0721);
 	vec3 intensity = vec3(dot(col, LUM_COEFF));

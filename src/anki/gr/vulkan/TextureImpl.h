@@ -14,7 +14,6 @@ namespace anki
 {
 
 // Forward
-class TextureUsageTracker;
 class TextureUsageState;
 
 /// @addtogroup vulkan
@@ -92,6 +91,9 @@ public:
 		return (usage & m_usage) == usage;
 	}
 
+	/// For image load/store.
+	VkImageView getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect);
+
 	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect);
 
 	/// That view will be used in descriptor sets.
@@ -119,16 +121,6 @@ public:
 		ANKI_ASSERT(range.baseMipLevel + range.levelCount <= m_mipCount);
 	}
 
-	template<typename TextureInfo>
-	VkImageLayout findLayoutFromTracker(const TextureInfo& surfOrVol, const TextureUsageTracker& tracker) const;
-
-	VkImageLayout findLayoutFromTracker(const TextureUsageTracker& tracker) const;
-
-	template<typename TextureInfo>
-	void updateTracker(const TextureInfo& surfOrVol, TextureUsageBit usage, TextureUsageTracker& tracker) const;
-
-	void updateTracker(TextureUsageBit usage, TextureUsageTracker& tracker) const;
-
 private:
 	class ViewHasher
 	{
@@ -145,6 +137,8 @@ private:
 	U64 m_uuid; ///< Steal the UUID from the Texture.
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
+
+	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
 
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(const TextureInitInfo& init);
 

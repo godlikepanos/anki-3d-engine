@@ -102,13 +102,15 @@ Error Mesh::load(const ResourceFilename& filename, Bool async)
 	// Allocate the buffers
 	GrManager& gr = getManager().getGrManager();
 
-	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
+	m_vertBuff = gr.newInstance<Buffer>(BufferInitInfo(loader.getVertexDataSize(),
 		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
-		BufferMapAccessBit::NONE);
+		BufferMapAccessBit::NONE,
+		"MeshVert"));
 
-	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
+	m_indicesBuff = gr.newInstance<Buffer>(BufferInitInfo(loader.getIndexDataSize(),
 		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
-		BufferMapAccessBit::NONE);
+		BufferMapAccessBit::NONE,
+		"MeshIdx"));
 
 	// Clear them
 	CommandBufferInitInfo cmdbinit;

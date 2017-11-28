@@ -7,7 +7,6 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/TemporalAA.h>
-#include <anki/renderer/ScreenSpaceLensFlare.h>
 #include <anki/renderer/Tonemapping.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/GBuffer.h>
@@ -23,7 +22,7 @@ namespace anki
 const PixelFormat FinalComposite::RT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 
 FinalComposite::FinalComposite(Renderer* r)
-	: RenderingPass(r)
+	: RendererObject(r)
 {
 }
 
@@ -40,19 +39,22 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 
 	if(!m_r->getDrawToDefaultFramebuffer())
 	{
-		m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
+		m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(),
 			m_r->getHeight(),
 			RT_PIXEL_FORMAT,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
 			SamplingFilter::LINEAR,
-			1,
-			"pps"));
+			"Final Composite");
+		m_rtDescr.bake();
 
-		FramebufferInitInfo fbInit("pps");
-		fbInit.m_colorAttachmentCount = 1;
-		fbInit.m_colorAttachments[0].m_texture = m_rt;
-		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+		m_fbDescr.m_colorAttachmentCount = 1;
+		m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		m_fbDescr.bake();
+	}
+	else
+	{
+		m_fbDescr.setDefaultFramebuffer();
+		m_fbDescr.bake();
 	}
 
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
@@ -102,47 +104,33 @@ Error FinalComposite::loadColorGradingTexture(CString filename)
 	return Error::NONE;
 }
 
-Error FinalComposite::run(RenderingContext& ctx)
+void FinalComposite::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	// Get the drawing parameters
-	const Bool drawToDefaultFb = ctx.m_outFb.isCreated();
-	const Bool dbgEnabled = m_r->getDbg().getEnabled();
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	CommandBufferPtr cmdb;
-	if(drawToDefaultFb)
-	{
-		cmdb = ctx.m_defaultFbCommandBuffer;
-	}
-	else
-	{
-		cmdb = ctx.m_commandBuffer;
-	}
+	const Bool dbgEnabled = m_r->getDbg().getEnabled();
+	const Bool drawToDefaultFb = m_r->getDrawToDefaultFramebuffer();
 
 	// Bind stuff
-	cmdb->informTextureCurrentUsage(m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->informTextureCurrentUsage(m_r->getBloom().m_upscale.m_rt, TextureUsageBit::SAMPLED_FRAGMENT);
-
-	cmdb->bindTextureAndSampler(
+	rgraphCtx.bindTextureAndSampler(
 		0, 0, m_r->getTemporalAA().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
-	cmdb->bindTexture(0, 1, m_r->getBloom().m_upscale.m_rt);
-	cmdb->bindTexture(0, 2, m_lut->getGrTexture());
-	cmdb->bindTexture(0, 3, m_blueNoise->getGrTexture());
+
+	rgraphCtx.bindTexture(0, 1, m_r->getBloom().getRt());
+	cmdb->bindTexture(0, 2, m_lut->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTexture(0, 3, m_blueNoise->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
 	if(dbgEnabled)
 	{
-		cmdb->bindTexture(0, 5, m_r->getDbg().getRt());
+		rgraphCtx.bindTexture(0, 5, m_r->getDbg().getRt());
 	}
 
-	cmdb->bindStorageBuffer(0, 0, m_r->getTonemapping().m_luminanceBuff, 0, MAX_PTR_SIZE);
+	rgraphCtx.bindUniformBuffer(0, 1, m_r->getTonemapping().getAverageLuminanceBuffer());
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	uniforms->x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());
 
-	// Get or create FB
-	FramebufferPtr* fb = nullptr;
 	U width, height;
 	if(drawToDefaultFb)
 	{
-		fb = &ctx.m_outFb;
 		width = ctx.m_outFbWidth;
 		height = ctx.m_outFbHeight;
 	}
@@ -150,24 +138,53 @@ Error FinalComposite::run(RenderingContext& ctx)
 	{
 		width = m_r->getWidth();
 		height = m_r->getHeight();
-		fb = &m_fb;
+	}
+	cmdb->setViewport(0, 0, width, height);
+
+	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
+	drawQuad(cmdb);
+}
+
+void FinalComposite::populateRenderGraph(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	m_runCtx.m_ctx = &ctx;
+	const Bool drawToDefaultFb = m_r->getDrawToDefaultFramebuffer();
+	const Bool dbgEnabled = m_r->getDbg().getEnabled();
+
+	// Maybe create the RT
+	if(!drawToDefaultFb)
+	{
+		m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 	}
 
-	cmdb->beginRenderPass(*fb);
-	cmdb->setViewport(0, 0, width, height);
-	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
-	m_r->drawQuad(cmdb);
-	cmdb->endRenderPass();
+	// Create the pass
+	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
+
+	pass.setWork(runCallback, this, 0);
+
+	if(drawToDefaultFb)
+	{
+		pass.setFramebufferInfo(m_fbDescr, {}, {});
+	}
+	else
+	{
+		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, {});
+	}
 
 	if(!drawToDefaultFb)
 	{
-		cmdb->setTextureSurfaceBarrier(m_rt,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, 0));
+		pass.newConsumer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
-	return Error::NONE;
+	if(dbgEnabled)
+	{
+		pass.newConsumer({m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	}
+	pass.newConsumer({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::UNIFORM_FRAGMENT});
 }
 
 } // end namespace anki

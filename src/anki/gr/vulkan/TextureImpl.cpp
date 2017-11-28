@@ -52,6 +52,7 @@ TextureImpl::~TextureImpl()
 Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 {
 	TextureInitInfo init = init_;
+	init.m_sampling.setName(init.getName());
 	ANKI_ASSERT(textureInitInfoValid(init));
 	m_sampler = getGrManagerImpl().getSamplerCache().newInstance<Sampler>(init.m_sampling);
 
@@ -60,6 +61,14 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_height = init.m_height;
 	m_depth = init.m_depth;
 	m_type = init.m_type;
+	if(init.getName())
+	{
+		strcpy(&m_name[0], init.getName().cstr());
+	}
+	else
+	{
+		m_name[0] = '\0';
+	}
 
 	if(m_type == TextureType::_3D)
 	{
@@ -318,8 +327,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	}
 
 	ANKI_VK_CHECK(vkCreateImage(getDevice(), &ci, nullptr, &m_imageHandle));
-	getGrManagerImpl().trySetVulkanHandleName(
-		init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, ptrToNumber(m_imageHandle));
+	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_imageHandle);
 
 	// Allocate memory
 	//
@@ -361,6 +369,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		memAllocCi.memoryTypeIndex = memIdx;
 
 		ANKI_VK_CHECK(vkAllocateMemory(getDevice(), &memAllocCi, nullptr, &m_dedicatedMem));
+		getGrManagerImpl().trySetVulkanHandleName(
+			init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, ptrToNumber(m_dedicatedMem));
 
 		ANKI_TRACE_START_EVENT(VK_BIND_OBJECT);
 		ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_dedicatedMem, 0));
@@ -440,21 +450,21 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 		}
 		else
 		{
-			srcStages |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+			srcStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // See Table 4 in the spec
 			srcAccesses |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 		}
 	}
 
 	if(!!(before & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
 	{
-		srcStages |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-
 		if(m_depthStencil)
 		{
+			srcStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			srcAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		}
 		else
 		{
+			srcStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			srcAccesses |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		}
 	}
@@ -662,6 +672,18 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	return out;
 }
 
+VkImageView TextureImpl::getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect)
+{
+	ANKI_ASSERT(mip < m_mipCount);
+
+	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
+	ci.subresourceRange.baseMipLevel = mip;
+	ci.subresourceRange.levelCount = 1;
+	ci.subresourceRange.aspectMask = convertAspect(aspect);
+
+	return getOrCreateView(ci);
+}
+
 VkImageView TextureImpl::getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect)
 {
 	checkSurfaceOrVolume(surf);
@@ -694,6 +716,9 @@ VkImageView TextureImpl::getOrCreateView(const VkImageViewCreateInfo& ci)
 	{
 		VkImageView view = VK_NULL_HANDLE;
 		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &ci, nullptr, &view));
+		getGrManagerImpl().trySetVulkanHandleName(
+			(m_name[0]) ? &m_name[0] : CString(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(view));
+
 		m_viewsMap.emplace(getAllocator(), ci, view);
 
 		return view;

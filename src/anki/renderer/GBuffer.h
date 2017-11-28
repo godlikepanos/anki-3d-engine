@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 
 namespace anki
@@ -15,16 +15,11 @@ namespace anki
 /// @{
 
 /// G buffer stage. It populates the G buffer
-class GBuffer : public RenderingPass
+class GBuffer : public RendererObject
 {
 anki_internal:
-	TexturePtr m_rt0;
-	TexturePtr m_rt1;
-	TexturePtr m_rt2;
-	TexturePtr m_depthRt;
-
 	GBuffer(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 
@@ -32,21 +27,38 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const;
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
 
-	void setPreRunBarriers(RenderingContext& ctx);
+	RenderTargetHandle getColorRt(U idx) const
+	{
+		return m_colorRts[idx];
+	}
 
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
+	RenderTargetHandle getDepthRt() const
+	{
+		return m_depthRt;
+	}
 
 private:
-	FramebufferPtr m_fb;
+	Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
+	RenderTargetDescription m_depthRtDescr;
+	FramebufferDescription m_fbDescr;
+
+	RenderingContext* m_ctx = nullptr;
+	Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRts;
+	RenderTargetHandle m_depthRt;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	/// Create a G buffer FBO
-	ANKI_USE_RESULT Error createRt();
+	// A RenderPassWorkCallback for G-buffer pass.
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		GBuffer* self = scast<GBuffer*>(rgraphCtx.m_userData);
+		self->runInThread(*self->m_ctx, rgraphCtx);
+	}
+
+	void runInThread(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const;
 };
 /// @}
 

@@ -70,7 +70,7 @@ Error SampleApp::userMainLoop(Bool& quit)
 	}
 	if(in.getKey(KeyCode::F2) == 1)
 	{
-		renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
+		// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
 	}
 	if(in.getKey(KeyCode::F6) == 1)
 	{

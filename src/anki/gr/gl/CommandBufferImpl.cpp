@@ -187,7 +187,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 		if(!m_state.m_scissorSet)
 		{
-			cmdb.setScissor(0, 0, MAX_U16, MAX_U16);
+			cmdb.setScissor(0, 0, MAX_U32, MAX_U32);
 		}
 	}
 

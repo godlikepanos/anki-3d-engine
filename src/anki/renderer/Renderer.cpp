@@ -27,14 +27,6 @@
 namespace anki
 {
 
-static Bool threadWillDoWork(PtrSize problemSize, U32 threadId, PtrSize threadCount)
-{
-	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
-
-	return start != end;
-}
-
 Renderer::Renderer()
 	: m_sceneDrawer(this)
 {
@@ -105,8 +97,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 		m_dummyTex = getGrManager().newInstance<Texture>(texinit);
 	}
 
-	m_dummyBuff = getGrManager().newInstance<Buffer>(
-		getDummyBufferSize(), BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::NONE);
+	m_dummyBuff = getGrManager().newInstance<Buffer>(BufferInitInfo(getDummyBufferSize(),
+		BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL,
+		BufferMapAccessBit::NONE,
+		"Dummy"));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_indirect.reset(m_alloc.newInstance<Indirect>(this));
@@ -163,8 +157,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_linearSampler = m_gr->newInstance<Sampler>(sinit);
 
 	initJitteredMats();
-
-	m_rgraph = m_gr->newInstance<RenderGraph>();
 
 	return Error::NONE;
 }
@@ -226,12 +218,8 @@ void Renderer::initJitteredMats()
 	}
 }
 
-Error Renderer::render(RenderingContext& ctx)
+Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
-	m_rgraph->reset();
-
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
 	ctx.m_jitterMat = m_jitteredMats8x[m_frameCount & (8 - 1)];
 	ctx.m_projMatJitter = ctx.m_jitterMat * ctx.m_renderQueue->m_projectionMatrix;
 	ctx.m_viewProjMatJitter = ctx.m_projMatJitter * ctx.m_renderQueue->m_viewMatrix;
@@ -252,134 +240,38 @@ Error Renderer::render(RenderingContext& ctx)
 		m_resourcesDirty = false;
 	}
 
-	// Prepare SM. Do that first because it touches the render queue elements
-	m_shadowMapping->prepareBuildCommandBuffers(ctx);
-
-	// Run stages
-	m_indirect->run(ctx);
-
-	ANKI_CHECK(m_lightShading->binLights(ctx));
-	m_lensFlare->resetOcclusionQueries(ctx, cmdb);
-
-	ANKI_CHECK(buildCommandBuffers(ctx));
-
-	// Barriers
-	m_shadowMapping->setPreRunBarriers(ctx);
-	m_gbuffer->setPreRunBarriers(ctx);
-
-	// Passes & more
-	m_shadowMapping->run(ctx);
-	m_gbuffer->run(ctx);
-
-	// Barriers
-	m_gbuffer->setPostRunBarriers(ctx);
-	m_shadowMapping->setPostRunBarriers(ctx);
-	m_depth->m_hd.setPreRunBarriers(ctx);
-
-	// Passes
-	m_depth->m_hd.run(ctx);
-	m_lensFlare->updateIndirectInfo(ctx, cmdb);
-
-	// Barriers
-	m_depth->m_hd.setPostRunBarriers(ctx);
-	m_depth->m_qd.setPreRunBarriers(ctx);
-
-	// Passes
-	m_depth->m_qd.run(ctx);
-
-	// Barriers
-	m_depth->m_qd.setPostRunBarriers(ctx);
-	m_vol->m_main.setPreRunBarriers(ctx);
-	m_ssao->m_main.setPreRunBarriers(ctx);
-
-	// Passes
-	m_vol->m_main.run(ctx);
-	m_ssao->m_main.run(ctx);
-
-	// Barriers
-	m_vol->m_main.setPostRunBarriers(ctx);
-	m_vol->m_hblur.setPreRunBarriers(ctx);
-	m_ssao->m_main.setPostRunBarriers(ctx);
-	m_ssao->m_hblur.setPreRunBarriers(ctx);
-
-	// Passes
-	m_vol->m_hblur.run(ctx);
-	m_ssao->m_hblur.run(ctx);
-
-	// Barriers
-	m_vol->m_hblur.setPostRunBarriers(ctx);
-	m_vol->m_vblur.setPreRunBarriers(ctx);
-	m_ssao->m_hblur.setPostRunBarriers(ctx);
-	m_ssao->m_vblur.setPreRunBarriers(ctx);
-
-	// Passes
-	m_vol->m_vblur.run(ctx);
-	m_ssao->m_vblur.run(ctx);
-
-	// Barriers
-	m_vol->m_vblur.setPostRunBarriers(ctx);
-	m_ssao->m_vblur.setPostRunBarriers(ctx);
-	m_forwardShading->setPreRunBarriers(ctx);
-
-	// Passes
-	m_forwardShading->run(ctx);
-
-	// Barriers
-	m_forwardShading->setPostRunBarriers(ctx);
-	m_lightShading->setPreRunBarriers(ctx);
-
-	// Passes
-	m_lightShading->run(ctx);
-
-	// Barriers
-	m_lightShading->setPostRunBarriers(ctx);
-	m_temporalAA->setPreRunBarriers(ctx);
-
-	// Passes
-	m_temporalAA->run(ctx);
-
-	// Barriers
-	m_temporalAA->setPostRunBarriers(ctx);
-	m_downscale->setPreRunBarriers(ctx);
-
-	// Passes
-	m_downscale->run(ctx);
-
-	// Barriers
-	m_downscale->setPostRunBarriers(ctx);
-
-	// Passes
-	m_tonemapping->run(ctx);
-
-	// Barriers
-	m_bloom->m_extractExposure.setPreRunBarriers(ctx);
-
-	// Passes
-	m_bloom->m_extractExposure.run(ctx);
-
-	// Barriers
-	m_bloom->m_extractExposure.setPostRunBarriers(ctx);
-	m_bloom->m_upscale.setPreRunBarriers(ctx);
-
-	// Passes
-	m_bloom->m_upscale.run(ctx);
-
-	// Barriers
-	m_bloom->m_upscale.setPostRunBarriers(ctx);
+	// Populate render graph. WARNING Watch the order
+	m_shadowMapping->populateRenderGraph(ctx);
+	m_indirect->populateRenderGraph(ctx);
+	m_gbuffer->populateRenderGraph(ctx);
+	m_depth->populateRenderGraph(ctx);
+	m_vol->populateRenderGraph(ctx);
+	m_ssao->populateRenderGraph(ctx);
+	m_lensFlare->populateRenderGraph(ctx);
+	m_forwardShading->populateRenderGraph(ctx);
+	m_lightShading->populateRenderGraph(ctx);
+	m_temporalAA->populateRenderGraph(ctx);
+	m_downscale->populateRenderGraph(ctx);
+	m_tonemapping->populateRenderGraph(ctx);
+	m_bloom->populateRenderGraph(ctx);
 
 	if(m_dbg->getEnabled())
 	{
-		ANKI_CHECK(m_dbg->run(ctx));
+		m_dbg->populateRenderGraph(ctx);
 	}
 
-	// Passes
-	ANKI_CHECK(m_finalComposite->run(ctx));
+	m_finalComposite->populateRenderGraph(ctx);
 
+	ANKI_CHECK(m_lightShading->binLights(ctx));
+
+	return Error::NONE;
+}
+
+void Renderer::finalize(const RenderingContext& ctx)
+{
 	++m_frameCount;
 	m_prevViewProjMat = ctx.m_renderQueue->m_viewProjectionMatrix;
 	m_prevCamTransform = ctx.m_renderQueue->m_cameraTransform;
-
-	return Error::NONE;
 }
 
 Vec3 Renderer::unproject(
@@ -401,7 +293,7 @@ Vec3 Renderer::unproject(
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(
-	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount, CString name)
+	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name)
 {
 	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	TextureInitInfo init(name);
@@ -412,18 +304,33 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 	init.m_layerCount = 1;
 	init.m_type = TextureType::_2D;
 	init.m_format = format;
-	init.m_mipmapsCount = mipsCount;
+	init.m_mipmapsCount = 1;
 	init.m_samples = 1;
 	init.m_usage = usage;
 	init.m_sampling.m_minMagFilter = filter;
-	if(mipsCount > 1)
-	{
-		init.m_sampling.m_mipmapFilter = filter;
-	}
-	else
-	{
-		init.m_sampling.m_mipmapFilter = SamplingFilter::BASE;
-	}
+	init.m_sampling.m_repeat = false;
+	init.m_sampling.m_anisotropyLevel = 0;
+
+	return init;
+}
+
+RenderTargetDescription Renderer::create2DRenderTargetDescription(
+	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name)
+{
+	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+	RenderTargetDescription init(name);
+
+	init.m_width = w;
+	init.m_height = h;
+	init.m_depth = 1;
+	init.m_layerCount = 1;
+	init.m_type = TextureType::_2D;
+	init.m_format = format;
+	init.m_mipmapsCount = 1;
+	init.m_samples = 1;
+	init.m_usage = usage;
+	init.m_sampling.m_minMagFilter = filter;
+	init.m_sampling.m_mipmapFilter = filter;
 	init.m_sampling.m_repeat = false;
 	init.m_sampling.m_anisotropyLevel = 0;
 
@@ -457,6 +364,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				TextureSurfaceInfo surf(mip, 0, face, layer);
 
 				FramebufferInitInfo fbInit;
+				Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
+				TextureUsageBit dsUsage = TextureUsageBit::NONE;
 
 				if(inf.m_format.m_components >= ComponentFormat::FIRST_DEPTH_STENCIL
 					&& inf.m_format.m_components <= ComponentFormat::LAST_DEPTH_STENCIL)
@@ -465,6 +374,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					fbInit.m_depthStencilAttachment.m_surface = surf;
 					fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH_STENCIL;
 					fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+
+					dsUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 				}
 				else
 				{
@@ -474,13 +385,15 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 					fbInit.m_colorAttachments[0].m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
 					fbInit.m_colorAttachments[0].m_clearValue = clearVal;
+
+					colUsage[0] = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 				}
 				FramebufferPtr fb = m_gr->newInstance<Framebuffer>(fbInit);
 
 				cmdb->setTextureSurfaceBarrier(
 					tex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
 
-				cmdb->beginRenderPass(fb);
+				cmdb->beginRenderPass(fb, colUsage, dsUsage);
 				cmdb->endRenderPass();
 
 				if(!!inf.m_initialUsage)
@@ -495,126 +408,6 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 	cmdb->flush();
 
 	return tex;
-}
-
-void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
-{
-	// G-Buffer pass
-	//
-	m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount);
-
-	// Append to the last MS's cmdb the occlusion tests
-	if(ctx.m_gbuffer.m_lastThreadWithWork == threadId)
-	{
-		m_lensFlare->runOcclusionTests(ctx, ctx.m_gbuffer.m_commandBuffers[threadId]);
-	}
-
-	if(ctx.m_gbuffer.m_commandBuffers[threadId])
-	{
-		ctx.m_gbuffer.m_commandBuffers[threadId]->flush();
-	}
-
-	// SM
-	//
-	m_shadowMapping->buildCommandBuffers(ctx, threadId, threadCount);
-
-	// FS
-	//
-	m_forwardShading->buildCommandBuffers(ctx, threadId, threadCount);
-
-	// Append to the last FB's cmdb the other passes
-	if(ctx.m_forwardShading.m_lastThreadWithWork == threadId)
-	{
-		m_lensFlare->run(ctx, ctx.m_forwardShading.m_commandBuffers[threadId]);
-		m_forwardShading->drawVolumetric(ctx, ctx.m_forwardShading.m_commandBuffers[threadId]);
-	}
-	else if(threadId == threadCount - 1 && ctx.m_forwardShading.m_lastThreadWithWork == MAX_U32)
-	{
-		// There is no FS work. Create a cmdb just for LF & VOL
-
-		CommandBufferInitInfo init;
-		init.m_flags =
-			CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH;
-		init.m_framebuffer = m_forwardShading->getFramebuffer();
-		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
-
-		// Inform on textures
-		cmdb->informTextureSurfaceCurrentUsage(m_forwardShading->getRt(),
-			TextureSurfaceInfo(0, 0, 0, 0),
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
-		cmdb->informTextureSurfaceCurrentUsage(
-			m_depth->m_hd.m_colorRt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->informTextureSurfaceCurrentUsage(m_depth->m_hd.m_depthRt,
-			TextureSurfaceInfo(0, 0, 0, 0),
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
-
-		cmdb->setViewport(0, 0, m_forwardShading->getWidth(), m_forwardShading->getHeight());
-
-		m_lensFlare->run(ctx, cmdb);
-		m_forwardShading->drawVolumetric(ctx, cmdb);
-
-		ctx.m_forwardShading.m_commandBuffers[threadId] = cmdb;
-	}
-
-	if(ctx.m_forwardShading.m_commandBuffers[threadId])
-	{
-		ctx.m_forwardShading.m_commandBuffers[threadId]->flush();
-	}
-}
-
-Error Renderer::buildCommandBuffers(RenderingContext& ctx)
-{
-	ANKI_TRACE_SCOPED_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
-	ThreadPool& threadPool = getThreadPool();
-
-	// Find the last jobs for MS and FS
-	U32 lastMsJob = MAX_U32;
-	U32 lastFsJob = MAX_U32;
-	const U threadCount = threadPool.getThreadsCount();
-	for(U i = threadCount - 1; i != 0; --i)
-	{
-		const U gbuffProblemSize =
-			ctx.m_renderQueue->m_renderables.getSize() + ctx.m_renderQueue->m_earlyZRenderables.getSize();
-		if(threadWillDoWork(gbuffProblemSize, i, threadCount) && lastMsJob == MAX_U32)
-		{
-			lastMsJob = i;
-		}
-
-		if(threadWillDoWork(ctx.m_renderQueue->m_forwardShadingRenderables.getSize(), i, threadCount)
-			&& lastFsJob == MAX_U32)
-		{
-			lastFsJob = i;
-		}
-	}
-
-	ctx.m_gbuffer.m_lastThreadWithWork = lastMsJob;
-	ctx.m_forwardShading.m_lastThreadWithWork = lastFsJob;
-
-	// Build
-	class Task : public ThreadPoolTask
-	{
-	public:
-		Renderer* m_r ANKI_DBG_NULLIFY;
-		RenderingContext* m_ctx ANKI_DBG_NULLIFY;
-
-		Error operator()(U32 threadId, PtrSize threadCount)
-		{
-			m_r->buildCommandBuffersInternal(*m_ctx, threadId, threadCount);
-			return Error::NONE;
-		}
-	};
-
-	Task task;
-	task.m_r = this;
-	task.m_ctx = &ctx;
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
-	{
-		threadPool.assignNewTask(i, &task);
-	}
-
-	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
-
-	return Error::NONE;
 }
 
 } // end namespace anki

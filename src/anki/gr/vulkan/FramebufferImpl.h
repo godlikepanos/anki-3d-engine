@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/gr/vulkan/SwapchainFactory.h>
 #include <anki/util/HashMap.h>
 #include <anki/util/BitSet.h>
 
@@ -34,25 +35,42 @@ public:
 	/// Good for pipeline creation.
 	VkRenderPass getCompatibleRenderPass() const
 	{
-		ANKI_ASSERT(m_compatibleOrDefaultRpass);
-		return m_compatibleOrDefaultRpass;
+		if(!m_defaultFb)
+		{
+			ANKI_ASSERT(m_noDflt.m_compatibleRpass);
+			return m_noDflt.m_compatibleRpass;
+		}
+		else
+		{
+			return m_dflt.m_swapchain->getRenderPass(m_dflt.m_loadOp);
+		}
 	}
 
-	/// Use it for binding.
+	/// Sync it before you bind it. It's thread-safe
+	void sync();
+
+	/// Use it for binding. It's thread-safe
 	VkRenderPass getRenderPassHandle(
 		const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts, VkImageLayout dsLayout);
 
 	VkFramebuffer getFramebufferHandle(U frame) const
 	{
-		ANKI_ASSERT(m_fbs[frame]);
-		return m_fbs[frame];
+		if(!m_defaultFb)
+		{
+			ANKI_ASSERT(m_noDflt.m_fb);
+			return m_noDflt.m_fb;
+		}
+		else
+		{
+			return m_dflt.m_swapchain->m_framebuffers[frame];
+		}
 	}
 
 	void getAttachmentInfo(BitSet<MAX_COLOR_ATTACHMENTS, U8>& colorAttachments, Bool& depth, Bool& stencil) const
 	{
 		colorAttachments = m_colorAttachmentMask;
-		depth = m_depthAttachment;
-		stencil = m_stencilAttachment;
+		depth = !!(m_aspect & DepthStencilAspectBit::DEPTH);
+		stencil = !!(m_aspect & DepthStencilAspectBit::STENCIL);
 	}
 
 	U getColorAttachmentCount() const
@@ -62,7 +80,7 @@ public:
 
 	Bool hasDepthStencil() const
 	{
-		return m_refs[MAX_COLOR_ATTACHMENTS].isCreated();
+		return !!m_aspect;
 	}
 
 	U getAttachmentCount() const
@@ -72,14 +90,14 @@ public:
 
 	TexturePtr getColorAttachment(U att) const
 	{
-		ANKI_ASSERT(m_refs[att].get());
-		return m_refs[att];
+		ANKI_ASSERT(m_noDflt.m_refs[att].get());
+		return m_noDflt.m_refs[att];
 	}
 
 	TexturePtr getDepthStencilAttachment() const
 	{
-		ANKI_ASSERT(m_refs[MAX_COLOR_ATTACHMENTS].get());
-		return m_refs[MAX_COLOR_ATTACHMENTS];
+		ANKI_ASSERT(m_noDflt.m_refs[MAX_COLOR_ATTACHMENTS].get());
+		return m_noDflt.m_refs[MAX_COLOR_ATTACHMENTS];
 	}
 
 	const VkClearValue* getClearValues() const
@@ -94,48 +112,73 @@ public:
 
 	void getAttachmentsSize(U32& width, U32& height) const
 	{
-		ANKI_ASSERT(m_width != 0 && m_height != 0);
-		width = m_width;
-		height = m_height;
+		if(!m_defaultFb)
+		{
+			ANKI_ASSERT(m_noDflt.m_width != 0 && m_noDflt.m_height != 0);
+			width = m_noDflt.m_width;
+			height = m_noDflt.m_height;
+		}
+		else
+		{
+			width = m_dflt.m_swapchain->m_surfaceWidth;
+			height = m_dflt.m_swapchain->m_surfaceHeight;
+		}
 	}
 
-	const Array<TextureSurfaceInfo, MAX_COLOR_ATTACHMENTS + 1>& getAttachedSurfaces() const
+	void getDefaultFramebufferInfo(MicroSwapchainPtr& swapchain, U32& crntBackBufferIdx)
 	{
-		return m_attachedSurfaces;
+		ANKI_ASSERT(m_defaultFb);
+		swapchain = m_dflt.m_swapchain;
+		crntBackBufferIdx = m_dflt.m_currentBackbufferIndex;
 	}
 
 private:
-	U32 m_width = 0;
-	U32 m_height = 0;
+	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
 
 	Bool8 m_defaultFb = false;
 
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentMask = {false};
-	Bool8 m_depthAttachment = false;
-	Bool8 m_stencilAttachment = false;
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 
 	U8 m_colorAttCount = 0;
 	Array<VkClearValue, MAX_COLOR_ATTACHMENTS + 1> m_clearVals;
 
-	Array<TexturePtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
-	Array<TextureSurfaceInfo, MAX_COLOR_ATTACHMENTS + 1> m_attachedSurfaces = {};
+	class
+	{
+	public:
+		U32 m_width = 0;
+		U32 m_height = 0;
 
-	// RenderPass create info
-	VkRenderPassCreateInfo m_rpassCi = {};
-	Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> m_attachmentDescriptions = {};
-	Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS + 1> m_references = {};
-	VkSubpassDescription m_subpassDescr = {};
+		Array<TexturePtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
 
-	// VK objects
-	VkRenderPass m_compatibleOrDefaultRpass = {}; ///< Compatible renderpass or default FB's renderpass.
-	HashMap<U64, VkRenderPass> m_rpasses;
-	Mutex m_rpassesMtx;
-	Array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> m_fbs = {};
+		// RenderPass create info
+		VkRenderPassCreateInfo m_rpassCi = {};
+		Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> m_attachmentDescriptions = {};
+		Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS + 1> m_references = {};
+		VkSubpassDescription m_subpassDescr = {};
+
+		// VK objects
+		VkRenderPass m_compatibleRpass = {}; ///< Compatible renderpass or default FB's renderpass.
+		HashMap<U64, VkRenderPass> m_rpasses;
+		Mutex m_rpassesMtx;
+		VkFramebuffer m_fb = {};
+	} m_noDflt; ///< Not default FB
+
+	class
+	{
+	public:
+		MicroSwapchainPtr m_swapchain;
+		SpinLock m_swapchainLock;
+		VkAttachmentLoadOp m_loadOp = {};
+		U8 m_currentBackbufferIndex = 0;
+	} m_dflt; ///< Default FB
 
 	// Methods
 	ANKI_USE_RESULT Error initFbs(const FramebufferInitInfo& init);
 	void initRpassCreateInfo(const FramebufferInitInfo& init);
-	void setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc) const;
+	void initClearValues(const FramebufferInitInfo& init);
+	void setupAttachmentDescriptor(
+		const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc, VkImageLayout layout) const;
 };
 /// @}
 

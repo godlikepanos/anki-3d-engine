@@ -43,7 +43,7 @@ layout(std140, ANKI_UBO_BINDING(0, 0)) uniform u0_
 	vec4 u_blueNoiseLayerPad3;
 };
 
-#define TONEMAPPING_RESOURCE readonly buffer
+#define TONEMAPPING_BINDING 1
 #include "shaders/TonemappingResources.glsl"
 
 layout(location = 0) in vec2 in_uv;

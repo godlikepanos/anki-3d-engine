@@ -46,6 +46,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
 		m_activeFb = init.m_framebuffer;
+		m_colorAttachmentUsages = init.m_colorAttachmentUsages;
+		m_depthStencilAttachmentUsage = init.m_depthStencilAttachmentUsage;
 	}
 
 	return Error::NONE;
@@ -65,20 +67,19 @@ void CommandBufferImpl::beginRecording()
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
 		FramebufferImpl& impl = *m_activeFb->m_impl;
+		impl.sync();
 
 		// Calc the layouts
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->findLayoutFromTracker(
-				impl.getAttachedSurfaces()[i], m_texUsageTracker);
+			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->computeLayout(m_colorAttachmentUsages[i], 0);
 		}
 
 		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
-			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->findLayoutFromTracker(
-				impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS], m_texUsageTracker);
+			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->computeLayout(m_depthStencilAttachmentUsage, 0);
 		}
 
 		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
@@ -90,7 +91,11 @@ void CommandBufferImpl::beginRecording()
 		}
 		else
 		{
-			inheritance.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
+			MicroSwapchainPtr swapchain;
+			U32 backbufferIdx;
+			impl.getDefaultFramebufferInfo(swapchain, backbufferIdx);
+
+			inheritance.framebuffer = impl.getFramebufferHandle(backbufferIdx);
 		}
 
 		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
@@ -99,7 +104,13 @@ void CommandBufferImpl::beginRecording()
 	vkBeginCommandBuffer(m_handle, &begin);
 }
 
-void CommandBufferImpl::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBufferImpl::beginRenderPass(FramebufferPtr fb,
+	const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+	TextureUsageBit depthStencilAttachmentUsage,
+	U32 minx,
+	U32 miny,
+	U32 width,
+	U32 height)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
@@ -107,20 +118,36 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U
 	m_rpCommandCount = 0;
 	m_activeFb = fb;
 
+	fb->m_impl->sync();
+
 	U32 fbWidth, fbHeight;
 	fb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
 	m_fbSize[0] = fbWidth;
 	m_fbSize[1] = fbHeight;
 
-	m_renderArea[0] = max<U16>(0, minx);
-	m_renderArea[1] = max<U16>(0, miny);
-	m_renderArea[2] = min<U16>(m_fbSize[0], maxx);
-	m_renderArea[3] = min<U16>(m_fbSize[1], maxy);
-	ANKI_ASSERT(m_renderArea[0] < m_renderArea[2] && m_renderArea[1] < m_renderArea[3]);
+	ANKI_ASSERT(minx < fbWidth && miny < fbHeight);
+
+	const U32 maxx = min<U32>(minx + width, fbWidth);
+	const U32 maxy = min<U32>(miny + height, fbHeight);
+	width = maxx - minx;
+	height = maxy - miny;
+	ANKI_ASSERT(minx + width <= fbWidth && miny + height <= fbHeight);
+
+	m_renderArea[0] = minx;
+	m_renderArea[1] = miny;
+	m_renderArea[2] = width;
+	m_renderArea[3] = height;
+
+	m_colorAttachmentUsages = colorAttachmentUsages;
+	m_depthStencilAttachmentUsage = depthStencilAttachmentUsage;
 
 	m_microCmdb->pushObjectRef(fb);
 
 	m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
+
+	// Re-set the viewport and scissor because sometimes they are set clamped
+	m_viewportDirty = true;
+	m_scissorDirty = true;
 }
 
 void CommandBufferImpl::beginRenderPassInternal()
@@ -144,15 +171,13 @@ void CommandBufferImpl::beginRenderPassInternal()
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->findLayoutFromTracker(
-				impl.getAttachedSurfaces()[i], m_texUsageTracker);
+			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->computeLayout(m_colorAttachmentUsages[i], 0);
 		}
 
 		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
-			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->findLayoutFromTracker(
-				impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS], m_texUsageTracker);
+			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->computeLayout(m_depthStencilAttachmentUsage, 0);
 		}
 
 		bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
@@ -162,9 +187,12 @@ void CommandBufferImpl::beginRenderPassInternal()
 		// Bind the default FB
 		m_renderedToDefaultFb = true;
 
-		bi.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
-		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> dummy;
-		bi.renderPass = impl.getRenderPassHandle(dummy, VK_IMAGE_LAYOUT_MAX_ENUM);
+		MicroSwapchainPtr swapchain;
+		U32 backbufferIdx;
+		impl.getDefaultFramebufferInfo(swapchain, backbufferIdx);
+
+		bi.framebuffer = impl.getFramebufferHandle(backbufferIdx);
+		bi.renderPass = impl.getRenderPassHandle({}, VK_IMAGE_LAYOUT_MAX_ENUM);
 
 		// Perform the transition
 		setImageBarrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -173,7 +201,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getCurrentBackbufferIndex()),
+			swapchain->m_images[backbufferIdx],
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
@@ -183,9 +211,9 @@ void CommandBufferImpl::beginRenderPassInternal()
 	{
 		ANKI_ASSERT(m_renderArea[3] <= m_fbSize[1]);
 	}
-	bi.renderArea.offset.y = (flipvp) ? m_fbSize[1] - m_renderArea[3] : m_renderArea[1];
-	bi.renderArea.extent.width = m_renderArea[2] - m_renderArea[0];
-	bi.renderArea.extent.height = m_renderArea[3] - m_renderArea[1];
+	bi.renderArea.offset.y = (flipvp) ? m_fbSize[1] - (m_renderArea[1] + m_renderArea[3]) : m_renderArea[1];
+	bi.renderArea.extent.width = m_renderArea[2];
+	bi.renderArea.extent.height = m_renderArea[3];
 
 	ANKI_CMD(vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents), ANY_OTHER_COMMAND);
 }
@@ -205,13 +233,17 @@ void CommandBufferImpl::endRenderPass()
 	// Default FB barrier/transition
 	if(m_activeFb->m_impl->isDefaultFramebuffer())
 	{
+		MicroSwapchainPtr swapchain;
+		U32 backbufferIdx;
+		m_activeFb->m_impl->getDefaultFramebufferInfo(swapchain, backbufferIdx);
+
 		setImageBarrier(VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 			VK_ACCESS_MEMORY_READ_BIT,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getCurrentBackbufferIndex()),
+			swapchain->m_images[backbufferIdx],
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
@@ -616,7 +648,7 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 	TextureImpl& impl = *tex->m_impl;
 	impl.checkSurfaceOrVolume(surf);
 	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
-	const VkImageLayout layout = impl.findLayoutFromTracker(surf, m_texUsageTracker);
+	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 	if(!impl.m_workarounds)
 	{
@@ -649,8 +681,8 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 		// Create a new shadow buffer
 		const PtrSize shadowSize =
 			computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
-		BufferPtr shadow =
-			getGrManager().newInstance<Buffer>(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE);
+		BufferPtr shadow = getGrManager().newInstance<Buffer>(
+			BufferInitInfo(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE, "Workaround"));
 		const VkBuffer shadowHandle = shadow->m_impl->getHandle();
 		m_microCmdb->pushObjectRef(shadow);
 
@@ -716,14 +748,13 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 	TextureImpl& impl = *tex->m_impl;
 	impl.checkSurfaceOrVolume(vol);
 	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
-	const VkImageLayout layout = impl.findLayoutFromTracker(vol, m_texUsageTracker);
+	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 	if(!impl.m_workarounds)
 	{
 		U width = impl.m_width >> vol.m_level;
 		U height = impl.m_height >> vol.m_level;
 		U depth = impl.m_depth >> vol.m_level;
-		(void)depth;
 		ANKI_ASSERT(range == computeVolumeSize(width, height, depth, impl.m_format));
 
 		// Copy
@@ -735,7 +766,7 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 		region.imageOffset = {0, 0, 0};
 		region.imageExtent.width = width;
 		region.imageExtent.height = height;
-		region.imageExtent.depth = impl.m_depth;
+		region.imageExtent.depth = depth;
 		region.bufferOffset = offset;
 		region.bufferImageHeight = 0;
 		region.bufferRowLength = 0;
@@ -753,8 +784,8 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 		// Create a new shadow buffer
 		const PtrSize shadowSize =
 			computeVolumeSize(width, height, depth, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
-		BufferPtr shadow =
-			getGrManager().newInstance<Buffer>(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE);
+		BufferPtr shadow = getGrManager().newInstance<Buffer>(
+			BufferInitInfo(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE, "Workaround"));
 		const VkBuffer shadowHandle = shadow->m_impl->getHandle();
 		m_microCmdb->pushObjectRef(shadow);
 

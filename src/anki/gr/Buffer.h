@@ -13,6 +13,30 @@ namespace anki
 /// @addtogroup graphics
 /// @{
 
+/// Buffer init info.
+class BufferInitInfo : public GrBaseInitInfo
+{
+public:
+	PtrSize m_size = 0;
+	BufferUsageBit m_usage = BufferUsageBit::NONE;
+	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
+
+	BufferInitInfo() = default;
+
+	BufferInitInfo(CString name)
+		: GrBaseInitInfo(name)
+	{
+	}
+
+	BufferInitInfo(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access, CString name = {})
+		: GrBaseInitInfo(name)
+		, m_size(size)
+		, m_usage(usage)
+		, m_access(access)
+	{
+	}
+};
+
 /// GPU buffer.
 class Buffer final : public GrObject
 {
@@ -37,7 +61,7 @@ anki_internal:
 	~Buffer();
 
 	/// Allocate the buffer.
-	void init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
+	void init(const BufferInitInfo& init);
 };
 /// @}
 

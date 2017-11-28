@@ -23,6 +23,7 @@ class TextureInitInfo;
 class SamplerInitInfo;
 class GrManagerInitInfo;
 class FramebufferInitInfo;
+class BufferInitInfo;
 
 /// @addtogroup graphics
 /// @{
@@ -155,6 +156,11 @@ public:
 		return m_level == b.m_level && m_depth == b.m_depth && m_face == b.m_face && m_layer == b.m_layer;
 	}
 
+	Bool operator!=(const TextureSurfaceInfo& b) const
+	{
+		return !(*this == b);
+	}
+
 	U64 computeHash() const
 	{
 		return anki::computeHash(this, sizeof(*this), 0x1234567);
@@ -229,7 +235,7 @@ public:
 		// Zero it because the derived classes may be hashed.
 		memset(&m_name[0], 0, sizeof(m_name));
 
-		if(name)
+		if(name && name.getLength())
 		{
 			ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
 			memcpy(&m_name[0], &name[0], name.getLength() + 1);

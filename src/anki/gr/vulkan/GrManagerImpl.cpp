@@ -17,31 +17,6 @@
 namespace anki
 {
 
-static VkBool32 debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
-	VkDebugReportObjectTypeEXT objectType,
-	uint64_t object,
-	size_t location,
-	int32_t messageCode,
-	const char* pLayerPrefix,
-	const char* pMessage,
-	void* pUserData)
-{
-	if(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
-	{
-		ANKI_VK_LOGE("%s", pMessage);
-	}
-	else if(flags & (VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT))
-	{
-		ANKI_VK_LOGW("%s", pMessage);
-	}
-	else
-	{
-		ANKI_VK_LOGI("%s", pMessage);
-	}
-
-	return false;
-}
-
 GrManagerImpl::~GrManagerImpl()
 {
 	// FIRST THING: wait for the GPU
@@ -55,15 +30,6 @@ GrManagerImpl::~GrManagerImpl()
 	m_cmdbFactory.destroy();
 
 	// SECOND THING: The destroy everything that has a reference to GrObjects.
-	for(auto& x : m_backbuffers)
-	{
-		if(x.m_imageView)
-		{
-			vkDestroyImageView(m_device, x.m_imageView, nullptr);
-			x.m_imageView = VK_NULL_HANDLE;
-		}
-	}
-
 	for(auto& x : m_perFrame)
 	{
 		x.m_presentFence.reset(nullptr);
@@ -76,20 +42,18 @@ GrManagerImpl::~GrManagerImpl()
 		getAllocator().deleteInstance(m_samplerCache);
 	}
 
+	m_crntSwapchain.reset(nullptr);
+
 	// THIRD THING: Continue with the rest
 	m_gpuMemManager.destroy();
 
 	m_barrierFactory.destroy(); // Destroy before fences
 	m_semaphores.destroy(); // Destroy before fences
+	m_swapchainFactory.destroy(); // Destroy before fences
 	m_fences.destroy();
 
 	m_pplineLayoutFactory.destroy();
 	m_descrFactory.destroy();
-
-	if(m_swapchain)
-	{
-		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-	}
 
 	m_pplineCache.destroy(m_device, m_physicalDevice, getAllocator());
 
@@ -122,6 +86,8 @@ GrManagerImpl::~GrManagerImpl()
 
 		vkDestroyInstance(m_instance, pallocCbs);
 	}
+
+	m_vkHandleToName.destroy(getAllocator());
 }
 
 GrAllocator<U8> GrManagerImpl::getAllocator() const
@@ -148,7 +114,10 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initSurface(init));
 	ANKI_CHECK(initDevice(init));
 	vkGetDeviceQueue(m_device, m_queueIdx, 0, &m_queue);
-	ANKI_CHECK(initSwapchain(init));
+
+	m_swapchainFactory.init(this, init.m_config->getNumber("window.vsync"));
+
+	m_crntSwapchain = m_swapchainFactory.newInstance();
 
 	ANKI_CHECK(m_pplineCache.init(m_device, m_physicalDevice, init.m_cacheDirectory, *init.m_config, getAllocator()));
 
@@ -396,6 +365,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		ci.pfnCallback = debugReportCallbackEXT;
 		ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT
 			| VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+		ci.pUserData = this;
 
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
 			reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
@@ -592,143 +562,6 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	return Error::NONE;
 }
 
-Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
-{
-	VkSurfaceCapabilitiesKHR surfaceProperties;
-	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceProperties));
-
-	if(surfaceProperties.currentExtent.width == MAX_U32 || surfaceProperties.currentExtent.height == MAX_U32)
-	{
-		ANKI_VK_LOGE("Wrong surface size");
-		return Error::FUNCTION_FAILED;
-	}
-	m_surfaceWidth = surfaceProperties.currentExtent.width;
-	m_surfaceHeight = surfaceProperties.currentExtent.height;
-
-	uint32_t formatCount;
-	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, nullptr));
-
-	DynamicArrayAuto<VkSurfaceFormatKHR> formats(getAllocator());
-	formats.create(formatCount);
-	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, &formats[0]));
-
-	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
-	while(formatCount--)
-	{
-		if(formats[formatCount].format == VK_FORMAT_B8G8R8A8_UNORM)
-		{
-			m_surfaceFormat = formats[formatCount].format;
-			colorspace = formats[formatCount].colorSpace;
-			break;
-		}
-	}
-
-	if(m_surfaceFormat == VK_FORMAT_UNDEFINED)
-	{
-		ANKI_VK_LOGE("Surface format not found");
-		return Error::FUNCTION_FAILED;
-	}
-
-	// Chose present mode
-	uint32_t presentModeCount;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &presentModeCount, nullptr);
-	presentModeCount = min(presentModeCount, 4u);
-	Array<VkPresentModeKHR, 4> presentModes;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &presentModeCount, &presentModes[0]);
-
-	VkPresentModeKHR presentMode = VK_PRESENT_MODE_MAX_ENUM_KHR;
-	if(init.m_config->getNumber("window.vsync"))
-	{
-		ANKI_VK_LOGI("vsync is on");
-		presentMode = VK_PRESENT_MODE_FIFO_KHR;
-	}
-	else
-	{
-		ANKI_VK_LOGI("vsync is off");
-		for(U i = 0; i < presentModeCount; ++i)
-		{
-			if(presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
-			{
-				presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-				break;
-			}
-			else if(presentModes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
-			{
-				presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-				break;
-			}
-		}
-	}
-
-	if(presentMode == VK_PRESENT_MODE_MAX_ENUM_KHR)
-	{
-		ANKI_VK_LOGE("Couldn't find a present mode");
-		return Error::FUNCTION_FAILED;
-	}
-
-	// Create swapchain
-	VkSwapchainCreateInfoKHR ci = {};
-	ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	ci.surface = m_surface;
-	ci.minImageCount = MAX_FRAMES_IN_FLIGHT;
-	ci.imageFormat = m_surfaceFormat;
-	ci.imageColorSpace = colorspace;
-	ci.imageExtent = surfaceProperties.currentExtent;
-	ci.imageArrayLayers = 1;
-	ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	ci.queueFamilyIndexCount = 1;
-	ci.pQueueFamilyIndices = &m_queueIdx;
-	ci.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-	ci.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	ci.presentMode = presentMode;
-	ci.clipped = false;
-	ci.oldSwapchain = VK_NULL_HANDLE;
-
-	ANKI_VK_CHECK(vkCreateSwapchainKHR(m_device, &ci, nullptr, &m_swapchain));
-
-	// Get images
-	uint32_t count = 0;
-	ANKI_VK_CHECK(vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, nullptr));
-	if(count != MAX_FRAMES_IN_FLIGHT)
-	{
-		ANKI_VK_LOGE("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
-		return Error::FUNCTION_FAILED;
-	}
-
-	ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u", count, presentMode);
-
-	Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
-	ANKI_VK_CHECK(vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, &images[0]));
-	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
-	{
-		m_backbuffers[i].m_image = images[i];
-		ANKI_ASSERT(images[i]);
-	}
-
-	// Create img views
-	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
-	{
-		VkImageViewCreateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ci.flags = 0;
-		ci.image = m_backbuffers[i].m_image;
-		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		ci.format = m_surfaceFormat;
-		ci.components = {
-			VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
-		ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		ci.subresourceRange.baseMipLevel = 0;
-		ci.subresourceRange.levelCount = 1;
-		ci.subresourceRange.baseArrayLayer = 0;
-		ci.subresourceRange.layerCount = 1;
-
-		ANKI_VK_CHECK(vkCreateImageView(m_device, &ci, nullptr, &m_backbuffers[i].m_imageView));
-	}
-
-	return Error::NONE;
-}
-
 Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 {
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
@@ -806,12 +639,16 @@ void GrManagerImpl::beginFrame()
 	// Get new image
 	uint32_t imageIdx;
 	ANKI_TRACE_START_EVENT(VK_ACQUIRE_IMAGE);
-	ANKI_VK_CHECKF(vkAcquireNextImageKHR(
-		m_device, m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(), fence->getHandle(), &imageIdx));
+	ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device,
+		m_crntSwapchain->m_swapchain,
+		UINT64_MAX,
+		frame.m_acquireSemaphore->getHandle(),
+		fence->getHandle(),
+		&imageIdx));
 	ANKI_TRACE_STOP_EVENT(VK_ACQUIRE_IMAGE);
 
 	ANKI_ASSERT(imageIdx < MAX_FRAMES_IN_FLIGHT);
-	m_crntBackbufferIdx = imageIdx;
+	m_crntSwapchain->m_currentBackbufferIndex = imageIdx;
 }
 
 void GrManagerImpl::endFrame()
@@ -842,12 +679,23 @@ void GrManagerImpl::endFrame()
 	present.waitSemaphoreCount = (frame.m_renderSemaphore) ? 1 : 0;
 	present.pWaitSemaphores = (frame.m_renderSemaphore) ? &frame.m_renderSemaphore->getHandle() : nullptr;
 	present.swapchainCount = 1;
-	present.pSwapchains = &m_swapchain;
-	present.pImageIndices = &m_crntBackbufferIdx;
+	present.pSwapchains = &m_crntSwapchain->m_swapchain;
+	U32 idx = m_crntSwapchain->m_currentBackbufferIndex;
+	present.pImageIndices = &idx;
 	present.pResults = &res;
 
-	ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
-	ANKI_VK_CHECKF(res);
+	VkResult res1 = vkQueuePresentKHR(m_queue, &present);
+	if(res1 == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queue and create a new one");
+		vkQueueWaitIdle(m_queue);
+		m_crntSwapchain = m_swapchainFactory.newInstance();
+	}
+	else
+	{
+		ANKI_VK_CHECKF(res1);
+		ANKI_VK_CHECKF(res);
+	}
 
 	m_descrFactory.endFrame();
 
@@ -901,6 +749,9 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 		submit.pSignalSemaphores = &frame.m_renderSemaphore->getHandle();
 
 		frame.m_presentFence = fence;
+
+		// Update the swapchain's fence
+		m_crntSwapchain->setFence(fence);
 	}
 
 	submit.commandBufferCount = 1;
@@ -920,16 +771,63 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 
 void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const
 {
-	if(m_pfnDebugMarkerSetObjectNameEXT && name)
+	if(name && name.getLength())
 	{
-		VkDebugMarkerObjectNameInfoEXT inf = {};
-		inf.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
-		inf.objectType = type;
-		inf.pObjectName = name.get();
-		inf.object = handle;
+		if(m_pfnDebugMarkerSetObjectNameEXT)
+		{
+			VkDebugMarkerObjectNameInfoEXT inf = {};
+			inf.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+			inf.objectType = type;
+			inf.pObjectName = name.get();
+			inf.object = handle;
 
-		m_pfnDebugMarkerSetObjectNameEXT(m_device, &inf);
+			m_pfnDebugMarkerSetObjectNameEXT(m_device, &inf);
+		}
+
+		LockGuard<SpinLock> lock(m_vkHandleToNameLock);
+		StringAuto newName(getAllocator());
+		newName.create(name);
+		m_vkHandleToName.emplace(getAllocator(), computeHash(&handle, sizeof(handle)), std::move(newName));
 	}
+}
+
+VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
+	VkDebugReportObjectTypeEXT objectType,
+	uint64_t object,
+	size_t location,
+	int32_t messageCode,
+	const char* pLayerPrefix,
+	const char* pMessage,
+	void* pUserData)
+{
+	// Get the object name
+	GrManagerImpl* self = static_cast<GrManagerImpl*>(pUserData);
+	LockGuard<SpinLock> lock(self->m_vkHandleToNameLock);
+	auto it = self->m_vkHandleToName.find(computeHash(&object, sizeof(object)));
+	CString objName;
+	if(it != self->m_vkHandleToName.getEnd())
+	{
+		objName = it->toCString();
+	}
+	else
+	{
+		objName = "Unnamed";
+	}
+
+	if(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+	{
+		ANKI_VK_LOGE("%s (handle: %s)", pMessage, objName.cstr());
+	}
+	else if(flags & (VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT))
+	{
+		ANKI_VK_LOGW("%s (handle: %s)", pMessage, objName.cstr());
+	}
+	else
+	{
+		ANKI_VK_LOGI("%s (handle: %s)", pMessage, objName.cstr());
+	}
+
+	return false;
 }
 
 } // end namespace anki

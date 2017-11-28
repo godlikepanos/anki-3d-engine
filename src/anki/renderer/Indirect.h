@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/renderer/Clusterer.h>
 #include <anki/resource/TextureResource.h>
 
@@ -17,7 +17,7 @@ namespace anki
 /// @{
 
 /// Probe reflections and irradiance.
-class Indirect : public RenderingPass
+class Indirect : public RendererObject
 {
 	friend class IrTask;
 
@@ -28,21 +28,12 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
-	void run(RenderingContext& ctx);
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
 
 	U getReflectionTextureMipmapCount() const
 	{
 		return m_lightShading.m_mipCount;
-	}
-
-	TexturePtr getIrradianceTexture() const
-	{
-		return m_irradiance.m_cubeArr;
-	}
-
-	TexturePtr getReflectionTexture() const
-	{
-		return m_lightShading.m_cubeArr;
 	}
 
 	TexturePtr getIntegrationLut() const
@@ -55,6 +46,16 @@ anki_internal:
 		return m_integrationLutSampler;
 	}
 
+	RenderTargetHandle getReflectionRt() const
+	{
+		return m_ctx.m_lightShadingRt;
+	}
+
+	RenderTargetHandle getIrradianceRt() const
+	{
+		return m_ctx.m_irradianceRt;
+	}
+
 private:
 	struct LightPassVertexUniforms;
 	struct LightPassPointLightUniforms;
@@ -64,9 +65,9 @@ private:
 	{
 	public:
 		U32 m_tileSize = 0;
-		Array<TexturePtr, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRts;
-		TexturePtr m_depthRt;
-		FramebufferPtr m_fb;
+		Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
+		RenderTargetDescription m_depthRtDescr;
+		FramebufferDescription m_fbDescr;
 	} m_gbuffer; ///< G-buffer pass.
 
 	class
@@ -108,8 +109,8 @@ private:
 		U64 m_probeUuid;
 		Timestamp m_lastUsedTimestamp = 0; ///< When it was rendered.
 
-		Array<FramebufferPtr, 6> m_lightShadingFbs;
-		Array<FramebufferPtr, 6> m_irradianceFbs;
+		Array<FramebufferDescription, 6> m_lightShadingFbDescrs;
+		Array<FramebufferDescription, 6> m_irradianceFbDescrs;
 	};
 
 	DynamicArray<CacheEntry> m_cacheEntries;
@@ -118,6 +119,18 @@ private:
 	// Other
 	TextureResourcePtr m_integrationLut;
 	SamplerPtr m_integrationLutSampler;
+
+	class
+	{
+	public:
+		const ReflectionProbeQueueElement* m_probe = nullptr;
+		U32 m_cacheEntryIdx = MAX_U32;
+
+		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
+		RenderTargetHandle m_gbufferDepthRt;
+		RenderTargetHandle m_lightShadingRt;
+		RenderTargetHandle m_irradianceRt;
+	} m_ctx; ///< Runtime context.
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initGBuffer(const ConfigSet& cfg);
@@ -130,12 +143,45 @@ private:
 
 	void prepareProbes(
 		RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate, U32& probeToUpdateCacheEntryIdx);
-	void runGBuffer(RenderingContext& rctx, const ReflectionProbeQueueElement& probe);
-	void runLightShading(RenderingContext& rctx, const ReflectionProbeQueueElement& probe, CacheEntry& cacheEntry);
-	void runIrradiance(RenderingContext& rctx, U32 cacheEntryIdx);
 
 	/// Find or allocate a new cache entry.
 	Bool findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdx, Bool& cacheEntryFound);
+
+	void runGBuffer(CommandBufferPtr& cmdb);
+	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+	void runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+
+	// A RenderPassWorkCallback for G-buffer pass
+	static void runGBufferCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		self->runGBuffer(rgraphCtx.m_commandBuffer);
+	}
+
+	// A RenderPassWorkCallback for the light shading pass into a single face.
+	template<U faceIdx>
+	static void runLightShadingCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		self->runLightShading(faceIdx, rgraphCtx);
+	}
+
+	// A RenderPassWorkCallback for the mipmapping of light shading result.
+	template<U faceIdx>
+	static void runMipmappingOfLightShadingCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		self->runMipmappingOfLightShading(faceIdx, rgraphCtx);
+	}
+
+	// A RenderPassWorkCallback for the irradiance calculation of a single cube face.
+	template<U faceIdx>
+	static void runIrradianceCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		self->runIrradiance(faceIdx, rgraphCtx);
+	}
 };
 /// @}
 

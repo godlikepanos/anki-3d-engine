@@ -12,7 +12,6 @@
 #include <anki/gr/Buffer.h>
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
-#include <anki/gr/vulkan/TextureUsageTracker.h>
 #include <anki/gr/vulkan/Pipeline.h>
 #include <anki/util/List.h>
 
@@ -119,35 +118,35 @@ public:
 		m_state.setCullMode(mode);
 	}
 
-	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
+	void setViewport(U32 minx, U32 miny, U32 width, U32 height)
 	{
-		ANKI_ASSERT(minx < maxx && miny < maxy);
+		ANKI_ASSERT(width > 0 && height > 0);
 		commandCommon();
 
-		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
+		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != width || m_viewport[3] != height)
 		{
 			m_viewportDirty = true;
 
 			m_viewport[0] = minx;
 			m_viewport[1] = miny;
-			m_viewport[2] = maxx;
-			m_viewport[3] = maxy;
+			m_viewport[2] = width;
+			m_viewport[3] = height;
 		}
 	}
 
-	void setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
+	void setScissor(U32 minx, U32 miny, U32 width, U32 height)
 	{
-		ANKI_ASSERT(minx < maxx && miny < maxy);
+		ANKI_ASSERT(width > 0 && height > 0);
 		commandCommon();
 
-		if(m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != maxx || m_scissor[3] != maxy)
+		if(m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != width || m_scissor[3] != height)
 		{
 			m_scissorDirty = true;
 
 			m_scissor[0] = minx;
 			m_scissor[1] = miny;
-			m_scissor[2] = maxx;
-			m_scissor[3] = maxy;
+			m_scissor[2] = width;
+			m_scissor[3] = height;
 		}
 	}
 
@@ -214,22 +213,25 @@ public:
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTexture(U32 set, U32 binding, TexturePtr tex_, DepthStencilAspectBit aspect)
+	void bindTexture(U32 set, U32 binding, TexturePtr tex_, TextureUsageBit usage, DepthStencilAspectBit aspect)
 	{
 		commandCommon();
 		const U realBinding = binding;
 		Texture& tex = *tex_;
-		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
+		ANKI_ASSERT((!tex.m_impl->m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
+		const VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
 		m_dsetState[set].bindTexture(realBinding, &tex, aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);
 	}
 
-	void bindTextureAndSampler(U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, DepthStencilAspectBit aspect)
+	void bindTextureAndSampler(
+		U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
 	{
 		commandCommon();
 		const U realBinding = binding;
 		Texture& tex = *tex_;
-		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
+		ANKI_ASSERT((!tex.m_impl->m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
+		const VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);
 		m_microCmdb->pushObjectRef(sampler);
@@ -244,7 +246,13 @@ public:
 		m_microCmdb->pushObjectRef(img);
 	}
 
-	void beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy);
+	void beginRenderPass(FramebufferPtr fb,
+		const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+		TextureUsageBit depthStencilAttachmentUsage,
+		U32 minx,
+		U32 miny,
+		U32 width,
+		U32 height);
 
 	void endRenderPass();
 
@@ -324,24 +332,6 @@ public:
 	void copyBufferToTextureVolume(
 		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol);
 
-	void informTextureSurfaceCurrentUsage(TexturePtr& tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
-	{
-		lazyInit();
-		tex->m_impl->updateTracker(surf, crntUsage, m_texUsageTracker);
-	}
-
-	void informTextureVolumeCurrentUsage(TexturePtr& tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage)
-	{
-		lazyInit();
-		tex->m_impl->updateTracker(vol, crntUsage, m_texUsageTracker);
-	}
-
-	void informTextureCurrentUsage(TexturePtr& tex, TextureUsageBit crntUsage)
-	{
-		lazyInit();
-		tex->m_impl->updateTracker(crntUsage, m_texUsageTracker);
-	}
-
 	void copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range);
 
 private:
@@ -362,8 +352,10 @@ private:
 
 	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	FramebufferPtr m_activeFb;
-	Array<U16, 4> m_renderArea = {{0, 0, MAX_U16, MAX_U16}};
-	Array<U16, 2> m_fbSize = {{0, 0}};
+	Array<U32, 4> m_renderArea = {{0, 0, MAX_U32, MAX_U32}};
+	Array<U32, 2> m_fbSize = {{0, 0}};
+	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
+	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
 
 	ShaderProgramImpl* m_graphicsProg ANKI_DBG_NULLIFY; ///< Last bound graphics program
 
@@ -379,10 +371,12 @@ private:
 
 	/// @name state_opts
 	/// @{
-	Array<U16, 4> m_viewport = {{0, 0, 0, 0}};
-	Array<U16, 4> m_scissor = {{0, 0, MAX_U16, MAX_U16}};
+	Array<U32, 4> m_viewport = {{0, 0, 0, 0}};
+	Array<U32, 4> m_scissor = {{0, 0, MAX_U32, MAX_U32}};
 	Bool8 m_viewportDirty = true;
+	VkViewport m_lastViewport = {};
 	Bool8 m_scissorDirty = true;
+	VkRect2D m_lastScissor = {{-1, -1}, {MAX_U32, MAX_U32}};
 	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.
 	Array<U32, 2> m_stencilWriteMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
 	Array<U32, 2> m_stencilReferenceMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
@@ -432,9 +426,6 @@ private:
 	U16 m_secondLevelAtomCount = 0;
 	/// @}
 
-	/// Track texture usage.
-	TextureUsageTracker m_texUsageTracker;
-
 	void lazyInit();
 
 	/// Some common operations per command.
@@ -479,6 +470,44 @@ private:
 	void beginRecording();
 
 	Bool flipViewport() const;
+
+	static VkViewport computeViewport(U32* viewport, U32 fbWidth, U32 fbHeight, Bool flipvp)
+	{
+		const U32 minx = viewport[0];
+		const U32 miny = viewport[1];
+		const U32 width = min<U32>(fbWidth, viewport[2]);
+		const U32 height = min<U32>(fbHeight, viewport[3]);
+		ANKI_ASSERT(width > 0 && height > 0);
+		ANKI_ASSERT(minx + width <= fbWidth);
+		ANKI_ASSERT(miny + height <= fbHeight);
+
+		VkViewport s = {};
+		s.x = minx;
+		s.y = (flipvp) ? (fbHeight - miny) : miny; // Move to the bottom;
+		s.width = width;
+		s.height = (flipvp) ? -F32(height) : height;
+		s.minDepth = 0.0f;
+		s.maxDepth = 1.0f;
+		return s;
+	}
+
+	static VkRect2D computeScissor(U32* scissor, U32 fbWidth, U32 fbHeight, Bool flipvp)
+	{
+		const U32 minx = scissor[0];
+		const U32 miny = scissor[1];
+		const U32 width = min<U32>(fbWidth, scissor[2]);
+		const U32 height = min<U32>(fbHeight, scissor[3]);
+		ANKI_ASSERT(minx + width <= fbWidth);
+		ANKI_ASSERT(miny + height <= fbHeight);
+
+		VkRect2D out = {};
+		out.extent.width = width;
+		out.extent.height = height;
+		out.offset.x = minx;
+		out.offset.y = (flipvp) ? (fbHeight - (miny + height)) : miny;
+
+		return out;
+	}
 };
 /// @}
 

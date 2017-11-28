@@ -38,9 +38,10 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	m_grProg = variant->getProgram();
 
 	// Create buffer
-	m_luminanceBuff = getGrManager().newInstance<Buffer>(sizeof(Vec4),
+	m_luminanceBuff = getGrManager().newInstance<Buffer>(BufferInitInfo(sizeof(Vec4),
 		BufferUsageBit::STORAGE_ALL | BufferUsageBit::UNIFORM_ALL | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
-		BufferMapAccessBit::NONE);
+		BufferMapAccessBit::NONE,
+		"AvgLum"));
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
@@ -61,14 +62,33 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	return Error::NONE;
 }
 
-void Tonemapping::run(RenderingContext& ctx)
+void Tonemapping::run(RenderPassWorkContext& rgraphCtx)
 {
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindStorageBuffer(0, 0, m_luminanceBuff, 0, MAX_PTR_SIZE);
-	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getPassTexture(m_rtIdx));
+	rgraphCtx.bindStorageBuffer(0, 0, m_runCtx.m_buffHandle);
+	rgraphCtx.bindTexture(0, 0, m_r->getDownscaleBlur().getPassRt(m_rtIdx));
 
 	cmdb->dispatchCompute(1, 1, 1);
+}
+
+void Tonemapping::populateRenderGraph(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
+	// Create buffer
+	m_runCtx.m_buffHandle = rgraph.importBuffer("Avg lum", m_luminanceBuff, BufferUsageBit::NONE);
+
+	// Create the pass
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Avg lum");
+
+	pass.setWork(runCallback, this, 0);
+
+	pass.newConsumer({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
+	pass.newConsumer({m_r->getDownscaleBlur().getPassRt(m_rtIdx), TextureUsageBit::SAMPLED_COMPUTE});
+
+	pass.newProducer({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
 }
 
 } // end namespace anki

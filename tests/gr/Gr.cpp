@@ -286,27 +286,29 @@ static NativeWindow* win = nullptr;
 static GrManager* gr = nullptr;
 static StagingGpuMemoryManager* stagingMem = nullptr;
 
-#define COMMON_BEGIN()                                                         \
-	stagingMem = new StagingGpuMemoryManager();                                \
-	Config cfg;                                                                \
-	cfg.set("width", WIDTH);                                                   \
-	cfg.set("height", HEIGHT);                                                 \
-	cfg.set("window.debugContext", true);                                      \
-	cfg.set("window.vsync", false);                                            \
-	win = createWindow(cfg);                                                   \
-	gr = createGrManager(cfg, win);                                            \
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                   \
-	TransferGpuAllocator transfAlloc;                                          \
-	ANKI_TEST_EXPECT_NO_ERR(transfAlloc.init(128_MB, gr, gr->getAllocator())); \
+#define COMMON_BEGIN()                                                          \
+	stagingMem = new StagingGpuMemoryManager();                                 \
+	Config cfg;                                                                 \
+	cfg.set("width", WIDTH);                                                    \
+	cfg.set("height", HEIGHT);                                                  \
+	cfg.set("window.debugContext", true);                                       \
+	cfg.set("window.vsync", false);                                             \
+	win = createWindow(cfg);                                                    \
+	gr = createGrManager(cfg, win);                                             \
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                    \
+	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator();             \
+	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, gr, gr->getAllocator())); \
 	{
 
-#define COMMON_END()   \
-	}                  \
-	delete stagingMem; \
-	delete gr;         \
-	delete win;        \
-	win = nullptr;     \
-	gr = nullptr;      \
+#define COMMON_END()    \
+	}                   \
+	gr->finish();       \
+	delete transfAlloc; \
+	delete stagingMem;  \
+	delete gr;          \
+	delete win;         \
+	win = nullptr;      \
+	gr = nullptr;       \
 	stagingMem = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
@@ -331,7 +333,7 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 #define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_)                                                  \
 	do                                                                                                                \
 	{                                                                                                                 \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                                \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                               \
 		void* f = handle_.getMappedMemory();                                                                          \
 		memcpy(f, ptr_, size_);                                                                                       \
 		cmdb_->copyBufferToTextureSurface(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, surf_); \
@@ -340,7 +342,7 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 #define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_)                                                     \
 	do                                                                                                              \
 	{                                                                                                               \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                              \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                             \
 		void* f = handle_.getMappedMemory();                                                                        \
 		memcpy(f, ptr_, size_);                                                                                     \
 		cmdb_->copyBufferToTextureVolume(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, vol_); \
@@ -372,13 +374,13 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 	static const Array<U16, 6 * 2 * 3> idx = {
 		{0, 1, 3, 3, 1, 2, 1, 5, 6, 1, 6, 2, 7, 4, 0, 7, 0, 3, 6, 5, 7, 7, 5, 4, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7}};
 
-	verts = gr.newInstance<Buffer>(sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+	verts = gr.newInstance<Buffer>(BufferInitInfo(sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
 
 	void* mapped = verts->map(0, sizeof(pos), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &pos[0], sizeof(pos));
 	verts->unmap();
 
-	indices = gr.newInstance<Buffer>(sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE);
+	indices = gr.newInstance<Buffer>(BufferInitInfo(sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE));
 	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &idx[0], sizeof(idx));
 	indices->unmap();
@@ -407,6 +409,7 @@ ANKI_TEST(Gr, ShaderProgram)
 ANKI_TEST(Gr, ClearScreen)
 {
 	COMMON_BEGIN()
+	ANKI_TEST_LOGI("Expect to see a magenta background");
 
 	FramebufferPtr fb = createDefaultFb(*gr);
 
@@ -422,7 +425,7 @@ ANKI_TEST(Gr, ClearScreen)
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 		cmdb->endRenderPass();
 		cmdb->flush();
 
@@ -461,7 +464,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 		cmdb->endRenderPass();
 		cmdb->flush();
@@ -499,9 +502,9 @@ ANKI_TEST(Gr, ViewportAndScissor)
 	}
 
 	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, WIDTH / 2, HEIGHT / 2}},
-		{{WIDTH / 2, 0, WIDTH, HEIGHT / 2}},
-		{{WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT}},
-		{{0, HEIGHT / 2, WIDTH / 2, HEIGHT}}}};
+		{{WIDTH / 2, 0, WIDTH / 2, HEIGHT / 2}},
+		{{WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2}},
+		{{0, HEIGHT / 2, WIDTH / 2, HEIGHT / 2}}}};
 
 	const U ITERATIONS = 400;
 	const U SCISSOR_MARGIN = 20;
@@ -521,13 +524,15 @@ ANKI_TEST(Gr, ViewportAndScissor)
 		auto vp = VIEWPORTS[idx];
 		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
 		cmdb->setScissor(
-			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN, vp[3] - SCISSOR_MARGIN);
+			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN * 2, vp[3] - SCISSOR_MARGIN * 2);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb[i % 4],
+			{},
+			{},
 			vp[0] + RENDER_AREA_MARGIN,
 			vp[1] + RENDER_AREA_MARGIN,
-			vp[2] - RENDER_AREA_MARGIN,
-			vp[3] - RENDER_AREA_MARGIN);
+			vp[2] - RENDER_AREA_MARGIN * 2,
+			vp[3] - RENDER_AREA_MARGIN * 2);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4);
 		cmdb->endRenderPass();
 		cmdb->flush();
@@ -588,9 +593,9 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	FramebufferPtr defaultFb = createDefaultFb(*gr);
 
 	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
-		{{RT_WIDTH / 2, 0, RT_WIDTH, RT_HEIGHT / 2}},
-		{{RT_WIDTH / 2, RT_HEIGHT / 2, RT_WIDTH, RT_HEIGHT}},
-		{{0, RT_HEIGHT / 2, RT_WIDTH / 2, RT_HEIGHT}}}};
+		{{RT_WIDTH / 2, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
+		{{RT_WIDTH / 2, RT_HEIGHT / 2, RT_WIDTH / 2, RT_HEIGHT / 2}},
+		{{0, RT_HEIGHT / 2, RT_WIDTH / 2, RT_HEIGHT / 2}}}};
 
 	const U ITERATIONS = 400;
 	const U SCISSOR_MARGIN = 2;
@@ -613,7 +618,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 				TextureUsageBit::NONE,
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 				TextureSurfaceInfo(0, 0, 0, 0));
-			cmdb->beginRenderPass(fb[0]);
+			cmdb->beginRenderPass(fb[0], {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}}, {});
 			cmdb->endRenderPass();
 			cmdb->setTextureSurfaceBarrier(rt,
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
@@ -634,13 +639,15 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		auto vp = VIEWPORTS[(i / 30) % 4];
 		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
 		cmdb->setScissor(
-			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN, vp[3] - SCISSOR_MARGIN);
+			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN * 2, vp[3] - SCISSOR_MARGIN * 2);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb[i % 4],
+			{{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}},
+			{},
 			vp[0] + RENDER_AREA_MARGIN,
 			vp[1] + RENDER_AREA_MARGIN,
-			vp[2] - RENDER_AREA_MARGIN,
-			vp[3] - RENDER_AREA_MARGIN);
+			vp[2] - RENDER_AREA_MARGIN * 2,
+			vp[3] - RENDER_AREA_MARGIN * 2);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4);
 		cmdb->endRenderPass();
 
@@ -652,8 +659,8 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->bindTexture(0, 0, rt);
-		cmdb->beginRenderPass(defaultFb);
+		cmdb->bindTexture(0, 0, rt, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->beginRenderPass(defaultFb, {}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -676,10 +683,10 @@ ANKI_TEST(Gr, Buffer)
 {
 	COMMON_BEGIN()
 
-	BufferPtr a = gr->newInstance<Buffer>(512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE);
+	BufferPtr a = gr->newInstance<Buffer>(BufferInitInfo(512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE));
 
-	BufferPtr b =
-		gr->newInstance<Buffer>(64, BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::WRITE | BufferMapAccessBit::READ);
+	BufferPtr b = gr->newInstance<Buffer>(
+		BufferInitInfo(64, BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::WRITE | BufferMapAccessBit::READ));
 
 	void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -701,7 +708,8 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	COMMON_BEGIN()
 
 	// A non-uploaded buffer
-	BufferPtr b = gr->newInstance<Buffer>(sizeof(Vec4) * 3, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::WRITE);
+	BufferPtr b = gr->newInstance<Buffer>(
+		BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::WRITE));
 
 	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -730,7 +738,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 
 		cmdb->bindUniformBuffer(0, 0, b, 0, MAX_PTR_SIZE);
 
@@ -771,7 +779,8 @@ ANKI_TEST(Gr, DrawWithVertex)
 	};
 	static_assert(sizeof(Vert) == sizeof(Vec4), "See file");
 
-	BufferPtr b = gr->newInstance<Buffer>(sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+	BufferPtr b =
+		gr->newInstance<Buffer>(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
 
 	Vert* ptr = static_cast<Vert*>(b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -785,7 +794,8 @@ ANKI_TEST(Gr, DrawWithVertex)
 	ptr[2].m_color = {{0, 0, 255}};
 	b->unmap();
 
-	BufferPtr c = gr->newInstance<Buffer>(sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+	BufferPtr c =
+		gr->newInstance<Buffer>(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
 
 	Vec3* otherColor = static_cast<Vec3*>(c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
 
@@ -821,7 +831,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->setPolygonOffset(0.0, 0.0);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 		cmdb->endRenderPass();
 		cmdb->flush();
@@ -1008,9 +1018,9 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 	FencePtr fence;
 	cmdb->flush(&fence);
-	transfAlloc.release(handle0, fence);
-	transfAlloc.release(handle1, fence);
-	transfAlloc.release(handle2, fence);
+	transfAlloc->release(handle0, fence);
+	transfAlloc->release(handle1, fence);
+	transfAlloc->release(handle2, fence);
 
 	//
 	// Create prog
@@ -1040,19 +1050,10 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb, {}, {});
 
-		for(U i = 0; i < 2; ++i)
-		{
-			cmdb->informTextureSurfaceCurrentUsage(
-				a, TextureSurfaceInfo(i, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
-			cmdb->informTextureSurfaceCurrentUsage(
-				b, TextureSurfaceInfo(i, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
-		}
-		cmdb->informTextureSurfaceCurrentUsage(b, TextureSurfaceInfo(2, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
-
-		cmdb->bindTexture(0, 0, a);
-		cmdb->bindTexture(0, 1, b);
+		cmdb->bindTexture(0, 0, a, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 1, b, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 		cmdb->flush();
@@ -1199,7 +1200,9 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->beginRenderPass(fb);
+		cmdb->beginRenderPass(fb,
+			{{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}},
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 
 		if(!useSecondLevel)
 		{
@@ -1211,13 +1214,6 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			cinit.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
 			cinit.m_framebuffer = fb;
 			CommandBufferPtr cmdb2 = gr.newInstance<CommandBuffer>(cinit);
-
-			cmdb2->informTextureSurfaceCurrentUsage(
-				col0, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
-			cmdb2->informTextureSurfaceCurrentUsage(
-				col1, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
-			cmdb2->informTextureSurfaceCurrentUsage(
-				dp, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 
 			drawOffscreenDrawcalls(gr, prog, cmdb2, TEX_SIZE, indices, verts);
 
@@ -1242,11 +1238,11 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			TextureSurfaceInfo(0, 0, 0, 0));
 
 		// Draw quad
-		cmdb->beginRenderPass(dfb);
+		cmdb->beginRenderPass(dfb, {}, {});
 		cmdb->bindShaderProgram(resolveProg);
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->bindTexture(0, 0, col0);
-		cmdb->bindTexture(0, 1, col1);
+		cmdb->bindTexture(0, 0, col0, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 1, col1, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -1359,9 +1355,8 @@ ANKI_TEST(Gr, ImageLoadStore)
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(dfb);
-		cmdb->informTextureSurfaceCurrentUsage(tex, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTexture(0, 0, tex);
+		cmdb->beginRenderPass(dfb, {}, {});
+		cmdb->bindTexture(0, 0, tex, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -1446,7 +1441,7 @@ ANKI_TEST(Gr, 3DTextures)
 	Array<U8, 4> mip1 = {{128, 128, 128, 0}};
 
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
+	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
 
 	cmdb->setTextureVolumeBarrier(
@@ -1468,8 +1463,8 @@ ANKI_TEST(Gr, 3DTextures)
 
 	FencePtr fence;
 	cmdb->flush(&fence);
-	transfAlloc.release(handle0, fence);
-	transfAlloc.release(handle1, fence);
+	transfAlloc->release(handle0, fence);
+	transfAlloc->release(handle1, fence);
 
 	//
 	// Rest
@@ -1497,11 +1492,11 @@ ANKI_TEST(Gr, 3DTextures)
 		gr->beginFrame();
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->beginRenderPass(dfb);
+		cmdb->beginRenderPass(dfb, {}, {});
 
 		cmdb->bindShaderProgram(prog);
 
@@ -1510,7 +1505,7 @@ ANKI_TEST(Gr, 3DTextures)
 		U idx = (F32(ITERATION_COUNT - iterations - 1) / ITERATION_COUNT) * TEX_COORDS_LOD.getSize();
 		*uv = TEX_COORDS_LOD[idx];
 
-		cmdb->bindTexture(0, 0, a);
+		cmdb->bindTexture(0, 0, a, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 
 		cmdb->endRenderPass();
@@ -1531,6 +1526,16 @@ ANKI_TEST(Gr, 3DTextures)
 	COMMON_END()
 }
 
+static RenderTargetDescription newRTDescr(CString name)
+{
+	RenderTargetDescription texInf(name);
+	texInf.m_width = texInf.m_height = 16;
+	texInf.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT;
+	texInf.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	texInf.bake();
+	return texInf;
+}
+
 ANKI_TEST(Gr, RenderGraph)
 {
 	COMMON_BEGIN()
@@ -1541,16 +1546,16 @@ ANKI_TEST(Gr, RenderGraph)
 
 	const U GI_MIP_COUNT = 4;
 
-	TextureInitInfo texInf("dummy tex");
-	texInf.m_width = texInf.m_height = 16;
-	texInf.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT;
-	texInf.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
-	TexturePtr dummyTex = gr->newInstance<Texture>(texInf);
+	TextureInitInfo texI("dummy");
+	texI.m_width = texI.m_height = 16;
+	texI.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT;
+	texI.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	TexturePtr dummyTex = gr->newInstance<Texture>(texI);
 
 	// SM
-	RenderTargetHandle smScratchRt = descr.newRenderTarget("SM", texInf);
+	RenderTargetHandle smScratchRt = descr.newRenderTarget(newRTDescr("SM scratch"));
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("SM");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("SM");
 		pass.newConsumer({smScratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 		pass.newProducer({smScratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 	}
@@ -1558,18 +1563,18 @@ ANKI_TEST(Gr, RenderGraph)
 	// SM to exponential SM
 	RenderTargetHandle smExpRt = descr.importRenderTarget("ESM", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("ESM");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("ESM");
 		pass.newConsumer({smScratchRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({smExpRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newProducer({smExpRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	// GI gbuff
-	RenderTargetHandle giGbuffNormRt = descr.newRenderTarget("GI GBuff norm", texInf);
-	RenderTargetHandle giGbuffDiffRt = descr.newRenderTarget("GI GBuff diff", texInf);
-	RenderTargetHandle giGbuffDepthRt = descr.newRenderTarget("GI GBuff depth", texInf);
+	RenderTargetHandle giGbuffNormRt = descr.newRenderTarget(newRTDescr("GI GBuff norm"));
+	RenderTargetHandle giGbuffDiffRt = descr.newRenderTarget(newRTDescr("GI GBuff diff"));
+	RenderTargetHandle giGbuffDepthRt = descr.newRenderTarget(newRTDescr("GI GBuff depth"));
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("GI gbuff");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("GI gbuff");
 		pass.newConsumer({giGbuffNormRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({giGbuffDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({giGbuffDiffRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
@@ -1583,7 +1588,7 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle giGiLightRt = descr.importRenderTarget("GI light", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
-		GraphicsRenderPassInfo& pass =
+		GraphicsRenderPassDescription& pass =
 			descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI lp%u", faceIdx).toCString());
 		pass.newConsumer(
 			{giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, faceIdx, 0)});
@@ -1599,7 +1604,7 @@ ANKI_TEST(Gr, RenderGraph)
 	{
 		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
-			GraphicsRenderPassInfo& pass =
+			GraphicsRenderPassDescription& pass =
 				descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI mip%u", faceIdx).toCString());
 
 			for(U mip = 0; mip < GI_MIP_COUNT; ++mip)
@@ -1612,12 +1617,12 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// Gbuffer
-	RenderTargetHandle gbuffRt0 = descr.newRenderTarget("GBuff RT0", texInf);
-	RenderTargetHandle gbuffRt1 = descr.newRenderTarget("GBuff RT1", texInf);
-	RenderTargetHandle gbuffRt2 = descr.newRenderTarget("GBuff RT2", texInf);
-	RenderTargetHandle gbuffDepth = descr.newRenderTarget("GBuff RT2", texInf);
+	RenderTargetHandle gbuffRt0 = descr.newRenderTarget(newRTDescr("GBuff RT0"));
+	RenderTargetHandle gbuffRt1 = descr.newRenderTarget(newRTDescr("GBuff RT1"));
+	RenderTargetHandle gbuffRt2 = descr.newRenderTarget(newRTDescr("GBuff RT2"));
+	RenderTargetHandle gbuffDepth = descr.newRenderTarget(newRTDescr("GBuff RT2"));
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("G-Buffer");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("G-Buffer");
 		pass.newConsumer({gbuffRt0, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({gbuffRt1, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({gbuffRt2, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
@@ -1630,68 +1635,68 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// Half depth
-	RenderTargetHandle halfDepthRt = descr.newRenderTarget("Depth/2", texInf);
+	RenderTargetHandle halfDepthRt = descr.newRenderTarget(newRTDescr("Depth/2"));
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("HalfDepth");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("HalfDepth");
 		pass.newConsumer({gbuffDepth, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newProducer({halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	// Quarter depth
-	RenderTargetHandle quarterDepthRt = descr.newRenderTarget("Depth/4", texInf);
+	RenderTargetHandle quarterDepthRt = descr.newRenderTarget(newRTDescr("Depth/4"));
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("QuarterDepth");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("QuarterDepth");
 		pass.newConsumer({quarterDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({halfDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newProducer({quarterDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	// SSAO
-	RenderTargetHandle ssaoRt = descr.newRenderTarget("SSAO", texInf);
+	RenderTargetHandle ssaoRt = descr.newRenderTarget(newRTDescr("SSAO"));
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("SSAO main");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("SSAO main");
 		pass.newConsumer({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({quarterDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({gbuffRt2, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newProducer({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
-		RenderTargetHandle ssaoVBlurRt = descr.newRenderTarget("SSAO tmp", texInf);
-		GraphicsRenderPassInfo& pass2 = descr.newGraphicsRenderPass("SSAO vblur");
+		RenderTargetHandle ssaoVBlurRt = descr.newRenderTarget(newRTDescr("SSAO tmp"));
+		GraphicsRenderPassDescription& pass2 = descr.newGraphicsRenderPass("SSAO vblur");
 		pass2.newConsumer({ssaoRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass2.newConsumer({ssaoVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass2.newProducer({ssaoVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
-		GraphicsRenderPassInfo& pass3 = descr.newGraphicsRenderPass("SSAO hblur");
+		GraphicsRenderPassDescription& pass3 = descr.newGraphicsRenderPass("SSAO hblur");
 		pass3.newConsumer({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass3.newProducer({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass3.newConsumer({ssaoVBlurRt, TextureUsageBit::SAMPLED_FRAGMENT});
 	}
 
 	// Volumetric
-	RenderTargetHandle volRt = descr.newRenderTarget("Vol", texInf);
+	RenderTargetHandle volRt = descr.newRenderTarget(newRTDescr("Vol"));
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("Vol main");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Vol main");
 		pass.newConsumer({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({quarterDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newProducer({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
-		RenderTargetHandle volVBlurRt = descr.newRenderTarget("Vol tmp", texInf);
-		GraphicsRenderPassInfo& pass2 = descr.newGraphicsRenderPass("Vol vblur");
+		RenderTargetHandle volVBlurRt = descr.newRenderTarget(newRTDescr("Vol tmp"));
+		GraphicsRenderPassDescription& pass2 = descr.newGraphicsRenderPass("Vol vblur");
 		pass2.newConsumer({volRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass2.newConsumer({volVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass2.newProducer({volVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
-		GraphicsRenderPassInfo& pass3 = descr.newGraphicsRenderPass("Vol hblur");
+		GraphicsRenderPassDescription& pass3 = descr.newGraphicsRenderPass("Vol hblur");
 		pass3.newConsumer({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass3.newProducer({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass3.newConsumer({volVBlurRt, TextureUsageBit::SAMPLED_FRAGMENT});
 	}
 
 	// Forward shading
-	RenderTargetHandle fsRt = descr.newRenderTarget("FS", texInf);
+	RenderTargetHandle fsRt = descr.newRenderTarget(newRTDescr("FS"));
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("Forward shading");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Forward shading");
 		pass.newConsumer({fsRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newProducer({fsRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer(
@@ -1702,7 +1707,7 @@ ANKI_TEST(Gr, RenderGraph)
 	// Light shading
 	RenderTargetHandle lightRt = descr.importRenderTarget("Light", dummyTex, TextureUsageBit::NONE);
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("Light shading");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Light shading");
 
 		pass.newConsumer({lightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({gbuffRt0, TextureUsageBit::SAMPLED_FRAGMENT});
@@ -1721,7 +1726,7 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle taaHistoryRt = descr.importRenderTarget("TAA hist", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
 	RenderTargetHandle taaRt = descr.importRenderTarget("TAA", dummyTex, TextureUsageBit::NONE);
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("Temporal AA");
+		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Temporal AA");
 
 		pass.newConsumer({lightRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({taaRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

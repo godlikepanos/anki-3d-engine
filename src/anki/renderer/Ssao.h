@@ -5,132 +5,99 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/Gr.h>
-#include <anki/core/Timestamp.h>
 
 namespace anki
 {
-
-// Forward
-class Ssao;
 
 /// @addtogroup renderer
 /// @{
 
 /// Screen space ambient occlusion pass
-class SsaoMain : public RenderingPass
+class Ssao : public RendererObject
 {
-	friend class SsaoVBlur;
-	friend class SsaoHBlur;
-
-anki_internal:
-	SsaoMain(Renderer* r, Ssao* ssao)
-		: RenderingPass(r)
-		, m_ssao(ssao)
-	{
-	}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
-
-private:
-	Ssao* m_ssao;
-
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-	TextureResourcePtr m_noiseTex;
-};
-
-/// Screen space ambient occlusion blur pass.
-class SsaoHBlur : public RenderingPass
-{
-	friend class SsaoVBlur;
-
-anki_internal:
-	SsaoHBlur(Renderer* r, Ssao* ssao)
-		: RenderingPass(r)
-		, m_ssao(ssao)
-	{
-	}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
-
-private:
-	Ssao* m_ssao;
-
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-};
-
-/// Screen space ambient occlusion blur pass.
-class SsaoVBlur : public RenderingPass
-{
-anki_internal:
-	SsaoVBlur(Renderer* r, Ssao* ssao)
-		: RenderingPass(r)
-		, m_ssao(ssao)
-	{
-	}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
-
-private:
-	Ssao* m_ssao;
-
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-};
-
-/// Screen space ambient occlusion pass
-class Ssao : public RenderingPass
-{
-	friend class SsaoMain;
-	friend class SsaoHBlur;
-	friend class SsaoVBlur;
-
 anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
-	SsaoMain m_main;
-	SsaoHBlur m_hblur;
-	SsaoVBlur m_vblur;
-
 	Ssao(Renderer* r)
-		: RenderingPass(r)
-		, m_main(r, this)
-		, m_hblur(r, this)
-		, m_vblur(r, this)
+		: RendererObject(r)
 	{
 	}
 
+	~Ssao();
+
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	TexturePtr getRt() const;
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
+
+	RenderTargetHandle getRt() const;
 
 private:
 	U32 m_width, m_height;
 
-	Array<TexturePtr, 2> m_rt;
-	Array<FramebufferPtr, 2> m_fb;
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+		TextureResourcePtr m_noiseTex;
+	} m_main; ///< Main noisy pass.
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+	} m_hblur; ///< Horizontal blur.
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+	} m_vblur; ///< Vertical blur.
+
+	class
+	{
+	public:
+		Array<RenderTargetHandle, 2> m_rts;
+		const RenderingContext* m_ctx = nullptr;
+	} m_runCtx; ///< Runtime context.
+
+	Array<TexturePtr, 2> m_rtTextures;
+	FramebufferDescription m_fbDescr;
+
+	ANKI_USE_RESULT Error initMain(const ConfigSet& set);
+	ANKI_USE_RESULT Error initVBlur(const ConfigSet& set);
+	ANKI_USE_RESULT Error initHBlur(const ConfigSet& set);
+
+	void runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runHBlur(RenderPassWorkContext& rgraphCtx);
+	void runVBlur(RenderPassWorkContext& rgraphCtx);
+
+	/// A RenderPassWorkCallback for SSAO main pass.
+	static void runMainCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Ssao* const self = scast<Ssao*>(rgraphCtx.m_userData);
+		self->runMain(*self->m_runCtx.m_ctx, rgraphCtx);
+	}
+
+	/// A RenderPassWorkCallback for SSAO HBlur.
+	static void runHBlurCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Ssao* const self = scast<Ssao*>(rgraphCtx.m_userData);
+		self->runHBlur(rgraphCtx);
+	}
+
+	/// A RenderPassWorkCallback for SSAO VBlur.
+	static void runVBlurCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Ssao* const self = scast<Ssao*>(rgraphCtx.m_userData);
+		self->runVBlur(rgraphCtx);
+	}
 };
 /// @}
 

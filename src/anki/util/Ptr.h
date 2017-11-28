@@ -364,6 +364,13 @@ public:
 		reset(other.m_ptr);
 	}
 
+	/// Move.
+	IntrusivePtr(IntrusivePtr&& other)
+		: Base()
+	{
+		move(other);
+	}
+
 	/// Copy, compatible pointer.
 	template<typename Y>
 	IntrusivePtr(const IntrusivePtr<Y, TDeleter>& other)
@@ -382,6 +389,14 @@ public:
 	IntrusivePtr& operator=(const IntrusivePtr& other)
 	{
 		reset(other.m_ptr);
+		return *this;
+	}
+
+	/// Move.
+	IntrusivePtr& operator=(IntrusivePtr&& other)
+	{
+		destroy();
+		move(other);
 		return *this;
 	}
 
@@ -418,6 +433,13 @@ private:
 
 			Base::m_ptr = nullptr;
 		}
+	}
+
+	void move(IntrusivePtr& b)
+	{
+		ANKI_ASSERT(Base::m_ptr == nullptr);
+		Base::m_ptr = b.m_ptr;
+		b.m_ptr = nullptr;
 	}
 };
 /// @}

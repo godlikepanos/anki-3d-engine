@@ -106,7 +106,7 @@ ANKI_TEST(Ui, Ui)
 			cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
-			cmdb->beginRenderPass(fb);
+			cmdb->beginRenderPass(fb, {{}}, {});
 			canvas->appendToCommandBuffer(cmdb);
 			cmdb->endRenderPass();
 			cmdb->flush();

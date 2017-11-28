@@ -349,7 +349,7 @@ LightBin::LightBin(const GenericMemoryPoolAllocator<U8>& alloc,
 	, m_clusterCount(clusterCountX * clusterCountY * clusterCountZ)
 	, m_threadPool(threadPool)
 	, m_stagingMem(stagingMem)
-	, m_barrier(threadPool->getThreadsCount())
+	, m_barrier(threadPool->getThreadCount())
 {
 	m_clusterer.init(alloc, clusterCountX, clusterCountY, clusterCountZ);
 }
@@ -366,16 +366,9 @@ Error LightBin::bin(const Mat4& viewMat,
 	StackAllocator<U8> frameAlloc,
 	U maxLightIndices,
 	Bool shadowsEnabled,
-	StagingGpuMemoryToken& pointLightsToken,
-	StagingGpuMemoryToken& spotLightsToken,
-	StagingGpuMemoryToken* probesToken,
-	StagingGpuMemoryToken& decalsToken,
-	StagingGpuMemoryToken& clustersToken,
-	StagingGpuMemoryToken& lightIndicesToken,
-	TexturePtr& diffuseDecalTexAtlas,
-	TexturePtr& normalRoughnessDecalTexAtlas)
+	LightBinOut& out)
 {
-	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
+	ANKI_TRACE_SCOPED_EVENT(RENDERER_LIGHT_BINNING);
 
 	// Prepare the clusterer
 	ClustererPrepareInfo pinf;
@@ -409,7 +402,7 @@ Error LightBin::bin(const Mat4& viewMat,
 	if(visiblePointLightsCount)
 	{
 		ShaderPointLight* data = static_cast<ShaderPointLight*>(m_stagingMem->allocateFrame(
-			sizeof(ShaderPointLight) * visiblePointLightsCount, StagingGpuMemoryType::UNIFORM, pointLightsToken));
+			sizeof(ShaderPointLight) * visiblePointLightsCount, StagingGpuMemoryType::UNIFORM, out.m_pointLightsToken));
 
 		ctx.m_pointLights = WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
 
@@ -418,13 +411,13 @@ Error LightBin::bin(const Mat4& viewMat,
 	}
 	else
 	{
-		pointLightsToken.markUnused();
+		out.m_pointLightsToken.markUnused();
 	}
 
 	if(visibleSpotLightsCount)
 	{
 		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(m_stagingMem->allocateFrame(
-			sizeof(ShaderSpotLight) * visibleSpotLightsCount, StagingGpuMemoryType::UNIFORM, spotLightsToken));
+			sizeof(ShaderSpotLight) * visibleSpotLightsCount, StagingGpuMemoryType::UNIFORM, out.m_spotLightsToken));
 
 		ctx.m_spotLights = WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
 
@@ -433,31 +426,28 @@ Error LightBin::bin(const Mat4& viewMat,
 	}
 	else
 	{
-		spotLightsToken.markUnused();
+		out.m_spotLightsToken.markUnused();
 	}
 
-	if(probesToken)
+	if(visibleProbeCount)
 	{
-		if(visibleProbeCount)
-		{
-			ShaderProbe* data = static_cast<ShaderProbe*>(m_stagingMem->allocateFrame(
-				sizeof(ShaderProbe) * visibleProbeCount, StagingGpuMemoryType::UNIFORM, *probesToken));
+		ShaderProbe* data = static_cast<ShaderProbe*>(m_stagingMem->allocateFrame(
+			sizeof(ShaderProbe) * visibleProbeCount, StagingGpuMemoryType::UNIFORM, out.m_probesToken));
 
-			ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
+		ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
 
-			ctx.m_vProbes =
-				WeakArray<const ReflectionProbeQueueElement>(rqueue.m_reflectionProbes.getBegin(), visibleProbeCount);
-		}
-		else
-		{
-			probesToken->markUnused();
-		}
+		ctx.m_vProbes =
+			WeakArray<const ReflectionProbeQueueElement>(rqueue.m_reflectionProbes.getBegin(), visibleProbeCount);
+	}
+	else
+	{
+		out.m_probesToken.markUnused();
 	}
 
 	if(visibleDecalCount)
 	{
 		ShaderDecal* data = static_cast<ShaderDecal*>(m_stagingMem->allocateFrame(
-			sizeof(ShaderDecal) * visibleDecalCount, StagingGpuMemoryType::UNIFORM, decalsToken));
+			sizeof(ShaderDecal) * visibleDecalCount, StagingGpuMemoryType::UNIFORM, out.m_decalsToken));
 
 		ctx.m_decals = WeakArray<ShaderDecal>(data, visibleDecalCount);
 
@@ -465,20 +455,20 @@ Error LightBin::bin(const Mat4& viewMat,
 	}
 	else
 	{
-		decalsToken.markUnused();
+		out.m_decalsToken.markUnused();
 	}
 
 	ctx.m_bin = this;
 
 	// Get mem for clusters
 	ShaderCluster* data = static_cast<ShaderCluster*>(m_stagingMem->allocateFrame(
-		sizeof(ShaderCluster) * m_clusterCount, StagingGpuMemoryType::STORAGE, clustersToken));
+		sizeof(ShaderCluster) * m_clusterCount, StagingGpuMemoryType::STORAGE, out.m_clustersToken));
 
 	ctx.m_clusters = WeakArray<ShaderCluster>(data, m_clusterCount);
 
 	// Allocate light IDs
-	U32* data2 = static_cast<U32*>(
-		m_stagingMem->allocateFrame(maxLightIndices * sizeof(U32), StagingGpuMemoryType::STORAGE, lightIndicesToken));
+	U32* data2 = static_cast<U32*>(m_stagingMem->allocateFrame(
+		maxLightIndices * sizeof(U32), StagingGpuMemoryType::STORAGE, out.m_lightIndicesToken));
 
 	ctx.m_lightIds = WeakArray<U32>(data2, maxLightIndices);
 
@@ -490,7 +480,7 @@ Error LightBin::bin(const Mat4& viewMat,
 	ctx.m_lightIdsCount.set(SIZE_IDX_COUNT);
 
 	// Fire the async job
-	for(U i = 0; i < m_threadPool->getThreadsCount(); i++)
+	for(U i = 0; i < m_threadPool->getThreadCount(); i++)
 	{
 		tasks[i].m_ctx = &ctx;
 
@@ -500,10 +490,9 @@ Error LightBin::bin(const Mat4& viewMat,
 	// Sync
 	ANKI_CHECK(m_threadPool->waitForAllThreadsToFinish());
 
-	diffuseDecalTexAtlas = ctx.m_diffDecalTexAtlas;
-	normalRoughnessDecalTexAtlas = ctx.m_normalRoughnessDecalTexAtlas;
+	out.m_diffDecalTex = ctx.m_diffDecalTexAtlas;
+	out.m_normRoughnessDecalTex = ctx.m_normalRoughnessDecalTexAtlas;
 
-	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 	return Error::NONE;
 }
 

@@ -30,7 +30,7 @@ ResourceManager::~ResourceManager()
 {
 	m_cacheDir.destroy(m_alloc);
 	m_alloc.deleteInstance(m_asyncLoader);
-	m_transferGpuAlloc.destroy();
+	m_alloc.deleteInstance(m_transferGpuAlloc);
 }
 
 Error ResourceManager::init(ResourceManagerInitInfo& init)
@@ -63,7 +63,8 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_asyncLoader = m_alloc.newInstance<AsyncLoader>();
 	m_asyncLoader->init(m_alloc);
 
-	ANKI_CHECK(m_transferGpuAlloc.init(init.m_config->getNumber("rsrc.transferScratchMemorySize"), m_gr, m_alloc));
+	m_transferGpuAlloc = m_alloc.newInstance<TransferGpuAllocator>();
+	ANKI_CHECK(m_transferGpuAlloc->init(init.m_config->getNumber("rsrc.transferScratchMemorySize"), m_gr, m_alloc));
 
 	return Error::NONE;
 }

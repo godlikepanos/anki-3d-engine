@@ -112,7 +112,12 @@ public:
 
 	Bool operator==(const BitSet& b) const
 	{
-		return memcmp(&m_chunks[0], &b.m_chunks[0], sizeof(m_chunks)) == 0;
+		Bool same = m_chunks[0] == b.m_chunks[0];
+		for(U i = 1; i < CHUNK_COUNT; ++i)
+		{
+			same = same && (m_chunks[i] == b.m_chunks[i]);
+		}
+		return same;
 	}
 
 	Bool operator!=(const BitSet& b) const
@@ -131,7 +136,7 @@ public:
 	{
 		U high, low;
 		position(static_cast<U>(pos), high, low);
-		ChunkType mask = MASK >> low;
+		const ChunkType mask = ChunkType(1) << low;
 		m_chunks[high] = (setBits) ? (m_chunks[high] | mask) : (m_chunks[high] & ~mask);
 	}
 
@@ -178,7 +183,7 @@ public:
 	{
 		U high, low;
 		position(static_cast<U>(pos), high, low);
-		ChunkType mask = MASK >> low;
+		const ChunkType mask = ChunkType(1) << low;
 		m_chunks[high] ^= mask;
 	}
 
@@ -188,7 +193,7 @@ public:
 	{
 		U high, low;
 		position(static_cast<U>(pos), high, low);
-		ChunkType mask = MASK >> low;
+		const ChunkType mask = ChunkType(1) << low;
 		return (m_chunks[high] & mask) != 0;
 	}
 
@@ -219,9 +224,6 @@ protected:
 	/// Number of chunks.
 	static const U CHUNK_COUNT = (N + (CHUNK_BIT_COUNT - 1)) / CHUNK_BIT_COUNT;
 
-	/// A mask for some stuff.
-	static const ChunkType MASK = ChunkType(1) << (CHUNK_BIT_COUNT - 1);
-
 	ChunkType m_chunks[CHUNK_COUNT];
 
 	BitSet()
@@ -240,9 +242,12 @@ protected:
 	/// Zero the unused bits.
 	void zeroUnusedBits()
 	{
-		const ChunkType REMAINING_BITS = N - (CHUNK_COUNT - 1) * CHUNK_BIT_COUNT;
-		const ChunkType REMAINING_BITMASK = std::numeric_limits<ChunkType>::max() >> REMAINING_BITS;
-		m_chunks[CHUNK_COUNT - 1] ^= REMAINING_BITMASK;
+		const ChunkType UNUSED_BITS = CHUNK_COUNT * CHUNK_BIT_COUNT - N;
+		const ChunkType USED_BITMASK = std::numeric_limits<ChunkType>::max() >> UNUSED_BITS;
+		if(USED_BITMASK > 0)
+		{
+			m_chunks[CHUNK_COUNT - 1] &= USED_BITMASK;
+		}
 	}
 };
 /// @}

@@ -133,7 +133,6 @@ inline void swapValues(T& a, T& b)
 template<typename TPtr>
 inline PtrSize ptrToNumber(TPtr ptr)
 {
-	ANKI_ASSERT(ptr);
 	uintptr_t i = reinterpret_cast<uintptr_t>(ptr);
 	PtrSize size = i;
 	return size;
@@ -242,6 +241,22 @@ inline void unflatten3dArrayIndex(const U sizeA, const U sizeB, const U sizeC, c
 	a = (flatIdx / (sizeB * sizeC)) % sizeA;
 	b = (flatIdx / sizeC) % sizeB;
 	c = flatIdx % sizeC;
+}
+
+/// Equivelent to static_cast.
+template<typename T, typename Y>
+inline T scast(Y from)
+{
+	ANKI_ASSERT(from);
+	return static_cast<T>(from);
+}
+
+/// Equivelent to reinterpret_cast.
+template<typename T, typename Y>
+inline T rcast(Y from)
+{
+	ANKI_ASSERT(from);
+	return reinterpret_cast<T>(from);
 }
 /// @}
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/resource/TextureResource.h>
 
 namespace anki
@@ -15,7 +15,7 @@ namespace anki
 /// @{
 
 /// Post-processing stage.
-class FinalComposite : public RenderingPass
+class FinalComposite : public RendererObject
 {
 public:
 	/// Load the color grading texture.
@@ -28,23 +28,20 @@ anki_internal:
 	~FinalComposite();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
-	const TexturePtr& getRt() const
-	{
-		return m_rt;
-	}
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
 
-	TexturePtr& getRt()
+	RenderTargetHandle getRt() const
 	{
-		return m_rt;
+		return m_runCtx.m_rt;
 	}
 
 private:
 	static const U LUT_SIZE = 16;
 
-	FramebufferPtr m_fb;
-	TexturePtr m_rt;
+	FramebufferDescription m_fbDescr;
+	RenderTargetDescription m_rtDescr;
 
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs; ///< One with Dbg and one without
@@ -54,7 +51,23 @@ private:
 
 	Bool8 m_sharpenEnabled = false;
 
+	class
+	{
+	public:
+		RenderTargetHandle m_rt;
+		RenderingContext* m_ctx = nullptr;
+	} m_runCtx;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
+
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+
+	/// A RenderPassWorkCallback for the composite pass.
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		FinalComposite* self = scast<FinalComposite*>(rgraphCtx.m_userData);
+		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
+	}
 };
 /// @}
 

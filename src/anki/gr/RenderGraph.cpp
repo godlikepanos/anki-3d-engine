@@ -6,14 +6,18 @@
 #include <anki/gr/RenderGraph.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/Texture.h>
+#include <anki/gr/Sampler.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/CommandBuffer.h>
+#include <anki/core/Trace.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/File.h>
 #include <anki/util/StringList.h>
 
 namespace anki
 {
+
+#define ANKI_DBG_RENDER_GRAPH 0
 
 /// Contains some extra things for render targets.
 class RenderGraph::RT
@@ -89,6 +93,21 @@ public:
 
 	DynamicArray<CommandBufferPtr> m_secondLevelCmdbs;
 	FramebufferPtr m_fb;
+	Array<U32, 4> m_fbRenderArea;
+	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorUsages = {}; ///< For beginRender pass
+	TextureUsageBit m_dsUsage = TextureUsageBit::NONE; ///< For beginRender pass
+
+	/// WARNING: Should be the same as RenderPassDependency::TextureInfo
+	class ConsumedTextureInfo
+	{
+	public:
+		RenderTargetHandle m_handle;
+		TextureUsageBit m_usage;
+		TextureSurfaceInfo m_surface;
+		Bool8 m_wholeTex;
+		DepthStencilAspectBit m_aspect;
+	};
+	DynamicArray<ConsumedTextureInfo> m_consumedTextures;
 };
 
 /// A batch of render passes. These passes can run in parallel.
@@ -105,7 +124,7 @@ class RenderGraph::BakeContext
 public:
 	StackAllocator<U8> m_alloc;
 	DynamicArray<Pass> m_passes;
-	BitSet<MAX_RENDER_GRAPH_PASSES> m_passIsInBatch = {false};
+	BitSet<MAX_RENDER_GRAPH_PASSES, U64> m_passIsInBatch = {false};
 	DynamicArray<Batch> m_batches;
 	DynamicArray<RT> m_rts;
 	DynamicArray<Buffer> m_buffers;
@@ -118,16 +137,46 @@ public:
 	}
 };
 
-void GraphicsRenderPassFramebufferInfo::bake()
+void FramebufferDescription::bake()
 {
+	ANKI_ASSERT(m_hash == 0 && "Already baked");
 	if(m_defaultFb)
 	{
+		m_fbInitInfo.m_colorAttachmentCount = 1;
 		m_hash = 1;
 		return;
 	}
 
-	m_hash = 0;
+	// Populate the FB init info
+	m_fbInitInfo.m_colorAttachmentCount = m_colorAttachmentCount;
+	for(U i = 0; i < m_colorAttachmentCount; ++i)
+	{
+		FramebufferAttachmentInfo& out = m_fbInitInfo.m_colorAttachments[i];
+		const FramebufferDescriptionAttachment& in = m_colorAttachments[i];
 
+		out.m_surface = in.m_surface;
+		out.m_clearValue = in.m_clearValue;
+		out.m_loadOperation = in.m_loadOperation;
+		out.m_storeOperation = in.m_storeOperation;
+	}
+
+	if(!!m_depthStencilAttachment.m_aspect)
+	{
+		FramebufferAttachmentInfo& out = m_fbInitInfo.m_depthStencilAttachment;
+		const FramebufferDescriptionAttachment& in = m_depthStencilAttachment;
+
+		out.m_surface = in.m_surface;
+		out.m_loadOperation = in.m_loadOperation;
+		out.m_storeOperation = in.m_storeOperation;
+		out.m_clearValue = in.m_clearValue;
+
+		out.m_stencilLoadOperation = in.m_stencilLoadOperation;
+		out.m_stencilStoreOperation = in.m_stencilStoreOperation;
+
+		out.m_aspect = in.m_aspect;
+	}
+
+	m_hash = 0;
 	ANKI_ASSERT(m_fbInitInfo.m_colorAttachmentCount > 0 || !!m_fbInitInfo.m_depthStencilAttachment.m_aspect);
 
 	// First the depth attachments
@@ -246,20 +295,22 @@ void RenderGraph::reset()
 
 	m_ctx->m_alloc = StackAllocator<U8>();
 	m_ctx = nullptr;
+	++m_version;
 }
 
-TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf)
+TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash)
 {
+	ANKI_ASSERT(hash);
 	auto alloc = getManager().getAllocator();
 
 	// Find a cache entry
 	RenderTargetCacheEntry* entry = nullptr;
-	auto it = m_renderTargetCache.find(initInf);
+	auto it = m_renderTargetCache.find(hash);
 	if(ANKI_UNLIKELY(it == m_renderTargetCache.getEnd()))
 	{
 		// Didn't found the entry, create a new one
 
-		auto it2 = m_renderTargetCache.emplace(getAllocator(), initInf);
+		auto it2 = m_renderTargetCache.emplace(getAllocator(), hash);
 		entry = &(*it2);
 	}
 	else
@@ -283,7 +334,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf)
 
 		tex = getManager().newInstance<Texture>(initInf);
 
-		ANKI_ASSERT(entry->m_texturesInUse == 0);
+		ANKI_ASSERT(entry->m_texturesInUse == entry->m_textures.getSize());
 		entry->m_textures.resize(alloc, entry->m_textures.getSize() + 1);
 		entry->m_textures[entry->m_textures.getSize() - 1] = tex;
 		++entry->m_texturesInUse;
@@ -303,7 +354,19 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 	if(!defaultFb)
 	{
 		// Create a hash that includes the render targets
-		hash = appendHash(rtHandles, sizeof(RenderTargetHandle) * (MAX_COLOR_ATTACHMENTS + 1), hash);
+		Array<U64, MAX_COLOR_ATTACHMENTS + 1> uuids;
+		U count = 0;
+		for(U i = 0; i < fbInit_.m_colorAttachmentCount; ++i)
+		{
+			uuids[count++] = m_ctx->m_rts[rtHandles[i].m_idx].m_texture->getUuid();
+		}
+
+		if(!!fbInit_.m_depthStencilAttachment.m_aspect)
+		{
+			uuids[count++] = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture->getUuid();
+		}
+
+		hash = appendHash(&uuids[0], sizeof(U64) * count, hash);
 	}
 
 	FramebufferPtr fb;
@@ -320,12 +383,15 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 		{
 			for(U i = 0; i < fbInit.m_colorAttachmentCount; ++i)
 			{
-				fbInit.m_colorAttachments[i].m_texture = m_ctx->m_rts[rtHandles[i]].m_texture;
+				fbInit.m_colorAttachments[i].m_texture = m_ctx->m_rts[rtHandles[i].m_idx].m_texture;
+				ANKI_ASSERT(fbInit.m_colorAttachments[i].m_texture.isCreated());
 			}
 
 			if(!!fbInit.m_depthStencilAttachment.m_aspect)
 			{
-				fbInit.m_depthStencilAttachment.m_texture = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS]].m_texture;
+				fbInit.m_depthStencilAttachment.m_texture =
+					m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture;
+				ANKI_ASSERT(fbInit.m_depthStencilAttachment.m_texture.isCreated());
 			}
 		}
 
@@ -338,16 +404,32 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 	return fb;
 }
 
-Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, const RenderPassBase& b)
+template<Bool isTexture>
+Bool RenderGraph::overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b)
+{
+	ANKI_ASSERT(a.m_isTexture == isTexture && b.m_isTexture == isTexture);
+
+	if(isTexture)
+	{
+		return a.m_texture.m_handle == b.m_texture.m_handle
+			&& (a.m_texture.m_surface == b.m_texture.m_surface || a.m_texture.m_wholeTex || b.m_texture.m_wholeTex);
+	}
+	else
+	{
+		return a.m_buffer.m_handle == b.m_buffer.m_handle;
+	}
+}
+
+Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b)
 {
 	// Render targets
 	{
-		/// Compute the 3 types of dependencies
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aReadBWrite = a.m_consumerRtMask & b.m_producerRtMask;
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aWriteBRead = a.m_producerRtMask & b.m_consumerRtMask;
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aWriteBWrite = a.m_producerRtMask & b.m_producerRtMask;
+		// Compute the 3 types of dependencies
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aReadBWrite = a.m_consumerRtMask & b.m_producerRtMask;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBRead = a.m_producerRtMask & b.m_consumerRtMask;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBWrite = a.m_producerRtMask & b.m_producerRtMask;
 
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
 		if(fullDep.getAny())
 		{
@@ -355,12 +437,11 @@ Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, con
 
 			for(const RenderPassDependency& consumer : a.m_consumers)
 			{
-				if(consumer.m_isTexture && fullDep.get(consumer.m_texture.m_handle))
+				if(consumer.m_isTexture && fullDep.get(consumer.m_texture.m_handle.m_idx))
 				{
 					for(const RenderPassDependency& producer : b.m_producers)
 					{
-						if(producer.m_isTexture && producer.m_texture.m_handle == consumer.m_texture.m_handle
-							&& producer.m_texture.m_surface == consumer.m_texture.m_surface)
+						if(overlappingDependency<true>(producer, consumer))
 						{
 							return true;
 						}
@@ -371,12 +452,13 @@ Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, con
 	}
 
 	// Buffers
+	if(a.m_hasBufferDeps)
 	{
-		BitSet<MAX_RENDER_GRAPH_BUFFERS> aReadBWrite = a.m_consumerBufferMask & b.m_producerBufferMask;
-		BitSet<MAX_RENDER_GRAPH_BUFFERS> aWriteBRead = a.m_producerBufferMask & b.m_consumerBufferMask;
-		BitSet<MAX_RENDER_GRAPH_BUFFERS> aWriteBWrite = a.m_producerBufferMask & b.m_producerBufferMask;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aReadBWrite = a.m_consumerBufferMask & b.m_producerBufferMask;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBRead = a.m_producerBufferMask & b.m_consumerBufferMask;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBWrite = a.m_producerBufferMask & b.m_producerBufferMask;
 
-		BitSet<MAX_RENDER_GRAPH_BUFFERS> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
 		if(fullDep.getAny())
 		{
@@ -384,11 +466,11 @@ Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, con
 
 			for(const RenderPassDependency& consumer : a.m_consumers)
 			{
-				if(!consumer.m_isTexture && fullDep.get(consumer.m_buffer.m_handle))
+				if(!consumer.m_isTexture && fullDep.get(consumer.m_buffer.m_handle.m_idx))
 				{
 					for(const RenderPassDependency& producer : b.m_producers)
 					{
-						if(!producer.m_isTexture && producer.m_buffer.m_handle == consumer.m_buffer.m_handle)
+						if(overlappingDependency<false>(producer, consumer))
 						{
 							return true;
 						}
@@ -445,7 +527,8 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 		}
 		else
 		{
-			TexturePtr rt = getOrCreateRenderTarget(descr.m_renderTargets[rtIdx].m_initInfo);
+			TexturePtr rt =
+				getOrCreateRenderTarget(descr.m_renderTargets[rtIdx].m_initInfo, descr.m_renderTargets[rtIdx].m_hash);
 			ctx->m_rts[rtIdx].m_texture = rt;
 		}
 	}
@@ -469,30 +552,81 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 	ANKI_ASSERT(passCount > 0);
 
 	ctx.m_passes.create(alloc, passCount);
-	for(U i = 0; i < passCount; ++i)
+	for(U passIdx = 0; passIdx < passCount; ++passIdx)
 	{
-		const RenderPassBase& inPass = *descr.m_passes[i];
-		Pass& outPass = ctx.m_passes[i];
+		const RenderPassDescriptionBase& inPass = *descr.m_passes[passIdx];
+		Pass& outPass = ctx.m_passes[passIdx];
 
 		outPass.m_callback = inPass.m_callback;
 		outPass.m_userData = inPass.m_userData;
 
-		// Create command buffers and framebuffer
-		if(inPass.m_type == RenderPassBase::Type::GRAPHICS)
+		// Create consumer info
+		for(U consumerIdx = 0; consumerIdx < inPass.m_consumers.getSize(); ++consumerIdx)
 		{
-			const GraphicsRenderPassInfo& graphicsPass = static_cast<const GraphicsRenderPassInfo&>(inPass);
+			const RenderPassDependency& inConsumer = inPass.m_consumers[consumerIdx];
+			if(inConsumer.m_isTexture)
+			{
+				outPass.m_consumedTextures.emplaceBack(alloc);
+				Pass::ConsumedTextureInfo& inf = outPass.m_consumedTextures.getBack();
+
+				ANKI_ASSERT(sizeof(inf) == sizeof(inConsumer.m_texture));
+				memcpy(&inf, &inConsumer.m_texture, sizeof(inf));
+			}
+		}
+
+		// Create command buffers and framebuffer
+		if(inPass.m_type == RenderPassDescriptionBase::Type::GRAPHICS)
+		{
+			const GraphicsRenderPassDescription& graphicsPass =
+				static_cast<const GraphicsRenderPassDescription&>(inPass);
+
 			if(graphicsPass.hasFramebuffer())
 			{
 				outPass.m_fb = getOrCreateFramebuffer(
 					graphicsPass.m_fbInitInfo, &graphicsPass.m_rtHandles[0], graphicsPass.m_fbHash);
+
+				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
+
+				// Init the usage bits
+				if(graphicsPass.m_fbHash != 1)
+				{
+					TextureUsageBit usage;
+					DepthStencilAspectBit aspect;
+
+					for(U i = 0; i < graphicsPass.m_fbInitInfo.m_colorAttachmentCount; ++i)
+					{
+						getCrntUsageAndAspect(graphicsPass.m_rtHandles[i],
+							passIdx,
+							graphicsPass.m_fbInitInfo.m_colorAttachments[i].m_surface,
+							usage,
+							aspect);
+
+						outPass.m_colorUsages[i] = usage;
+						ANKI_ASSERT(!aspect);
+					}
+
+					if(!!graphicsPass.m_fbInitInfo.m_depthStencilAttachment.m_aspect)
+					{
+						getCrntUsageAndAspect(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS],
+							passIdx,
+							graphicsPass.m_fbInitInfo.m_depthStencilAttachment.m_surface,
+							usage,
+							aspect);
+
+						outPass.m_dsUsage = usage;
+						ANKI_ASSERT(!!aspect);
+					}
+				}
 
 				// Create the second level command buffers
 				if(inPass.m_secondLevelCmdbsCount)
 				{
 					outPass.m_secondLevelCmdbs.create(alloc, inPass.m_secondLevelCmdbsCount);
 					CommandBufferInitInfo cmdbInit;
-					cmdbInit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+					cmdbInit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SECOND_LEVEL;
 					cmdbInit.m_framebuffer = outPass.m_fb;
+					cmdbInit.m_colorAttachmentUsages = outPass.m_colorUsages;
+					cmdbInit.m_depthStencilAttachmentUsage = outPass.m_dsUsage;
 					for(U cmdbIdx = 0; cmdbIdx < inPass.m_secondLevelCmdbsCount; ++cmdbIdx)
 					{
 						outPass.m_secondLevelCmdbs[cmdbIdx] = getManager().newInstance<CommandBuffer>(cmdbInit);
@@ -509,11 +643,12 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 			ANKI_ASSERT(inPass.m_secondLevelCmdbsCount == 0 && "Can't have second level cmdbs");
 		}
 
-		U j = i;
+		// Set dependencies
+		U j = passIdx;
 		while(j--)
 		{
-			const RenderPassBase& prevPass = *descr.m_passes[j];
-			if(passADependsOnB(ctx, inPass, prevPass))
+			const RenderPassDescriptionBase& prevPass = *descr.m_passes[j];
+			if(passADependsOnB(inPass, prevPass))
 			{
 				outPass.m_dependsOn.emplaceBack(alloc, j);
 			}
@@ -553,8 +688,189 @@ void RenderGraph::initBatches()
 	}
 }
 
+void RenderGraph::setTextureBarrier(Batch& batch,
+	const RenderPassDescriptionBase& pass,
+	const RenderPassDependency& consumer,
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64>& rtHasBarrierMask,
+	const RenderGraphDescription& descr,
+	BakeContext& ctx) const
+{
+	ANKI_ASSERT(consumer.m_isTexture);
+
+	const StackAllocator<U8>& alloc = ctx.m_alloc;
+
+	const U32 rtIdx = consumer.m_texture.m_handle.m_idx;
+	const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
+	const Bool consumerWholeTex = consumer.m_texture.m_wholeTex;
+
+	Bool anySurfaceFound = false;
+	for(RT::Usage& u : ctx.m_rts[rtIdx].m_surfUsages)
+	{
+		if(!consumerWholeTex && u.m_surface != consumer.m_texture.m_surface)
+		{
+			// Not the right surface, continue
+			continue;
+		}
+
+		anySurfaceFound = true;
+
+		if(u.m_usage == consumerUsage)
+		{
+			// Surface in the correct usage, continue
+			continue;
+		}
+
+		// Check if we can merge barriers
+		const Bool rtHasBarrier = rtHasBarrierMask.get(rtIdx);
+		Barrier* barrierToMergeTo = nullptr;
+		if(rtHasBarrier)
+		{
+			for(Barrier& b : batch.m_barriersBefore)
+			{
+				if(b.m_isTexture && b.m_texture.m_idx == rtIdx && b.m_texture.m_surface == u.m_surface)
+				{
+					barrierToMergeTo = &b;
+					break;
+				}
+			}
+		}
+
+		if(barrierToMergeTo == nullptr)
+		{
+			// RT hasn't had a barrier in this batch, add a new one
+			batch.m_barriersBefore.emplaceBack(
+				alloc, consumer.m_texture.m_handle.m_idx, u.m_usage, consumerUsage, u.m_surface);
+
+			u.m_usage = consumer.m_texture.m_usage;
+			rtHasBarrierMask.set(rtIdx);
+		}
+		else
+		{
+			// RT already in a barrier, merge the 2 barriers
+
+			ANKI_ASSERT(!!barrierToMergeTo->m_texture.m_usageAfter);
+			ANKI_ASSERT(!!u.m_usage);
+			barrierToMergeTo->m_texture.m_usageAfter |= consumerUsage;
+			u.m_usage |= consumerUsage;
+		}
+	} // end for
+
+	// Create the transition from the initial state
+	if(!anySurfaceFound && descr.m_renderTargets[rtIdx].m_usage != consumerUsage)
+	{
+		batch.m_barriersBefore.emplaceBack(
+			alloc, rtIdx, descr.m_renderTargets[rtIdx].m_usage, consumerUsage, consumer.m_texture.m_surface);
+
+		RT::Usage usage{consumerUsage, consumer.m_texture.m_surface};
+		ctx.m_rts[rtIdx].m_surfUsages.emplaceBack(alloc, usage);
+	}
+}
+
+void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeContext& ctx) const
+{
+	const StackAllocator<U8>& alloc = ctx.m_alloc;
+
+	// For all batches
+	for(Batch& batch : ctx.m_batches)
+	{
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> rtHasBarrierMask = {false};
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> buffHasBarrierMask = {false};
+
+		// For all passes of that batch
+		for(U passIdx : batch.m_passIndices)
+		{
+			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
+
+			// For all consumers
+			for(const RenderPassDependency& consumer : pass.m_consumers)
+			{
+				if(consumer.m_isTexture)
+				{
+					setTextureBarrier(batch, pass, consumer, rtHasBarrierMask, descr, ctx);
+				}
+				else
+				{
+					const U32 buffIdx = consumer.m_buffer.m_handle.m_idx;
+					const BufferUsageBit consumerUsage = consumer.m_buffer.m_usage;
+
+					if(consumerUsage != ctx.m_buffers[buffIdx].m_usage)
+					{
+						const Bool buffHasBarrier = buffHasBarrierMask.get(buffIdx);
+
+						if(!buffHasBarrier)
+						{
+							// Buff hasn't had a barrier in this batch, add a new barrier
+
+							batch.m_barriersBefore.emplaceBack(
+								alloc, buffIdx, ctx.m_buffers[buffIdx].m_usage, consumerUsage);
+
+							ctx.m_buffers[buffIdx].m_usage = consumerUsage;
+							buffHasBarrierMask.set(buffIdx);
+						}
+						else
+						{
+							// Buff already in a barrier, merge the 2 barriers
+
+							Barrier* barrierToMergeTo = nullptr;
+							for(Barrier& b : batch.m_barriersBefore)
+							{
+								if(!b.m_isTexture && b.m_buffer.m_idx == buffIdx)
+								{
+									barrierToMergeTo = &b;
+									break;
+								}
+							}
+
+							ANKI_ASSERT(barrierToMergeTo);
+							ANKI_ASSERT(!!barrierToMergeTo->m_buffer.m_usageAfter);
+							barrierToMergeTo->m_buffer.m_usageAfter |= consumerUsage;
+							ctx.m_buffers[buffIdx].m_usage = barrierToMergeTo->m_buffer.m_usageAfter;
+						}
+					}
+				}
+			} // For all consumers
+		} // For all passes
+
+#if ANKI_DBG_RENDER_GRAPH
+		// Sort the barriers to ease the dumped graph
+		std::sort(batch.m_barriersBefore.getBegin(),
+			batch.m_barriersBefore.getEnd(),
+			[&](const Barrier& a, const Barrier& b) {
+				const U aidx = (a.m_isTexture) ? a.m_texture.m_idx : a.m_buffer.m_idx;
+				const U bidx = (b.m_isTexture) ? b.m_texture.m_idx : b.m_buffer.m_idx;
+
+				if(aidx == bidx && a.m_isTexture && b.m_isTexture)
+				{
+					if(a.m_texture.m_surface.m_level != b.m_texture.m_surface.m_level)
+					{
+						return a.m_texture.m_surface.m_level < b.m_texture.m_surface.m_level;
+					}
+					else if(a.m_texture.m_surface.m_face != b.m_texture.m_surface.m_face)
+					{
+						return a.m_texture.m_surface.m_face < b.m_texture.m_surface.m_face;
+					}
+					else if(a.m_texture.m_surface.m_layer != b.m_texture.m_surface.m_layer)
+					{
+						return a.m_texture.m_surface.m_layer < b.m_texture.m_surface.m_layer;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else
+				{
+					return aidx < bidx;
+				}
+			});
+#endif
+	} // For all batches
+}
+
 void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
 {
+	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
+
 	// Init the context
 	BakeContext& ctx = *newContext(descr, alloc);
 	m_ctx = &ctx;
@@ -568,12 +884,12 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllo
 	// Create barriers between batches
 	setBatchBarriers(descr, ctx);
 
-	// Misc
+	// Create main command buffer
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::COMPUTE_WORK;
-	ctx.m_cmdb = getManager().newInstance<CommandBuffer>(cmdbInit);
+	m_ctx->m_cmdb = getManager().newInstance<CommandBuffer>(cmdbInit);
 
-#if 1
+#if ANKI_DBG_RENDER_GRAPH
 	if(dumpDependencyDotFile(descr, ctx, "./"))
 	{
 		ANKI_LOGF("Won't recover on debug code");
@@ -581,73 +897,160 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllo
 #endif
 }
 
-void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeContext& ctx) const
+TexturePtr RenderGraph::getTexture(RenderTargetHandle handle) const
 {
-	const StackAllocator<U8>& alloc = ctx.m_alloc;
-
-	// For all batches
-	for(Batch& batch : ctx.m_batches)
-	{
-		// For all passes of that batch
-		for(U passIdx : batch.m_passIndices)
-		{
-			const RenderPassBase& pass = *descr.m_passes[passIdx];
-
-			// For all consumers
-			for(const RenderPassDependency& consumer : pass.m_consumers)
-			{
-				if(consumer.m_isTexture)
-				{
-					const U32 rtIdx = consumer.m_texture.m_handle;
-					const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
-
-					Bool anySurfaceFound = false;
-					const Bool wholeTex = consumer.m_texture.m_wholeTex;
-					for(RT::Usage& u : ctx.m_rts[rtIdx].m_surfUsages)
-					{
-						if(wholeTex || u.m_surface == consumer.m_texture.m_surface)
-						{
-							anySurfaceFound = true;
-							if(u.m_usage != consumerUsage)
-							{
-								batch.m_barriersBefore.emplaceBack(
-									alloc, consumer.m_texture.m_handle, u.m_usage, consumerUsage, u.m_surface);
-
-								u.m_usage = consumer.m_texture.m_usage;
-							}
-						}
-					}
-
-					if(!anySurfaceFound && descr.m_renderTargets[rtIdx].m_usage != consumerUsage)
-					{
-						batch.m_barriersBefore.emplaceBack(alloc,
-							rtIdx,
-							descr.m_renderTargets[rtIdx].m_usage,
-							consumerUsage,
-							consumer.m_texture.m_surface);
-
-						RT::Usage usage{consumerUsage, consumer.m_texture.m_surface};
-						ctx.m_rts[rtIdx].m_surfUsages.emplaceBack(alloc, usage);
-					}
-				}
-				else
-				{
-					const U32 buffIdx = consumer.m_buffer.m_handle;
-					const BufferUsageBit consumerUsage = consumer.m_buffer.m_usage;
-
-					if(consumerUsage != ctx.m_buffers[buffIdx].m_usage)
-					{
-						batch.m_barriersBefore.emplaceBack(
-							alloc, buffIdx, ctx.m_buffers[buffIdx].m_usage, consumerUsage);
-
-						ctx.m_buffers[buffIdx].m_usage = consumerUsage;
-					}
-				}
-			} // For all consumers
-		} // For all passes
-	} // For all batches
+	ANKI_ASSERT(m_ctx->m_rts[handle.m_idx].m_texture.isCreated());
+	return m_ctx->m_rts[handle.m_idx].m_texture;
 }
 
+BufferPtr RenderGraph::getBuffer(RenderPassBufferHandle handle) const
+{
+	ANKI_ASSERT(m_ctx->m_buffers[handle.m_idx].m_buffer.isCreated());
+	return m_ctx->m_buffers[handle.m_idx].m_buffer;
+}
+
+void RenderGraph::runSecondLevel(U32 threadIdx) const
+{
+	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
+	ANKI_ASSERT(m_ctx);
+
+	RenderPassWorkContext ctx;
+	ctx.m_rgraph = this;
+	ctx.m_currentSecondLevelCommandBufferIndex = threadIdx;
+
+	for(const Pass& p : m_ctx->m_passes)
+	{
+		const U size = p.m_secondLevelCmdbs.getSize();
+		if(threadIdx < size)
+		{
+			ctx.m_commandBuffer = p.m_secondLevelCmdbs[threadIdx];
+			ctx.m_secondLevelCommandBufferCount = size;
+			ctx.m_passIdx = &p - &m_ctx->m_passes[0];
+			ctx.m_userData = p.m_userData;
+
+			ANKI_ASSERT(ctx.m_commandBuffer.isCreated());
+			p.m_callback(ctx);
+
+			ctx.m_commandBuffer->flush();
+		}
+	}
+}
+
+void RenderGraph::run() const
+{
+	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
+	ANKI_ASSERT(m_ctx);
+	CommandBufferPtr& cmdb = m_ctx->m_cmdb;
+
+	RenderPassWorkContext ctx;
+	ctx.m_rgraph = this;
+	ctx.m_currentSecondLevelCommandBufferIndex = 0;
+	ctx.m_secondLevelCommandBufferCount = 0;
+	ctx.m_commandBuffer = cmdb;
+
+	for(const Batch& batch : m_ctx->m_batches)
+	{
+		// Set the barriers
+		for(const Barrier& barrier : batch.m_barriersBefore)
+		{
+			if(barrier.m_isTexture)
+			{
+				cmdb->setTextureSurfaceBarrier(m_ctx->m_rts[barrier.m_texture.m_idx].m_texture,
+					barrier.m_texture.m_usageBefore,
+					barrier.m_texture.m_usageAfter,
+					barrier.m_texture.m_surface);
+			}
+			else
+			{
+				cmdb->setBufferBarrier(m_ctx->m_buffers[barrier.m_buffer.m_idx].m_buffer,
+					barrier.m_buffer.m_usageBefore,
+					barrier.m_buffer.m_usageAfter,
+					0,
+					MAX_PTR_SIZE);
+			}
+		}
+
+		// Call the passes
+		for(U passIdx : batch.m_passIndices)
+		{
+			const Pass& pass = m_ctx->m_passes[passIdx];
+
+			if(pass.m_fb.isCreated())
+			{
+				cmdb->beginRenderPass(pass.m_fb,
+					pass.m_colorUsages,
+					pass.m_dsUsage,
+					pass.m_fbRenderArea[0],
+					pass.m_fbRenderArea[1],
+					pass.m_fbRenderArea[2],
+					pass.m_fbRenderArea[3]);
+			}
+
+			const U size = pass.m_secondLevelCmdbs.getSize();
+			if(size == 0)
+			{
+				ctx.m_userData = pass.m_userData;
+				ctx.m_passIdx = passIdx;
+
+				pass.m_callback(ctx);
+			}
+			else
+			{
+				for(const CommandBufferPtr& cmdb2nd : pass.m_secondLevelCmdbs)
+				{
+					cmdb->pushSecondLevelCommandBuffer(cmdb2nd);
+				}
+			}
+
+			if(pass.m_fb.isCreated())
+			{
+				cmdb->endRenderPass();
+			}
+		}
+	}
+}
+
+void RenderGraph::flush()
+{
+	m_ctx->m_cmdb->flush();
+}
+
+void RenderGraph::getCrntUsageAndAspect(RenderTargetHandle handle,
+	U32 passIdx,
+	const TextureSurfaceInfo& surf,
+	TextureUsageBit& usage,
+	DepthStencilAspectBit& aspect) const
+{
+	for(const Pass::ConsumedTextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
+	{
+		if(consumer.m_handle == handle && (consumer.m_wholeTex || consumer.m_surface == surf))
+		{
+			usage = consumer.m_usage;
+			aspect = consumer.m_aspect;
+			return;
+		}
+	}
+
+	ANKI_ASSERT(!"Combination of handle and surface not found");
+}
+
+void RenderGraph::getCrntUsageAndAspect(
+	RenderTargetHandle handle, U32 passIdx, TextureUsageBit& usage, DepthStencilAspectBit& aspect) const
+{
+	for(const Pass::ConsumedTextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
+	{
+		if(consumer.m_handle == handle)
+		{
+			usage = consumer.m_usage;
+			aspect = consumer.m_aspect;
+			return;
+		}
+	}
+
+	ANKI_ASSERT(!"Handle not found");
+}
+
+#if ANKI_DBG_RENDER_GRAPH
 StringAuto RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage)
 {
 	StringListAuto slist(alloc);
@@ -663,6 +1066,7 @@ StringAuto RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsag
 	ANKI_TEX_USAGE(SAMPLED_TESSELLATION_EVALUATION);
 	ANKI_TEX_USAGE(SAMPLED_GEOMETRY);
 	ANKI_TEX_USAGE(SAMPLED_FRAGMENT);
+	ANKI_TEX_USAGE(SAMPLED_COMPUTE);
 	ANKI_TEX_USAGE(IMAGE_COMPUTE_READ);
 	ANKI_TEX_USAGE(IMAGE_COMPUTE_WRITE);
 	ANKI_TEX_USAGE(FRAMEBUFFER_ATTACHMENT_READ);
@@ -678,6 +1082,7 @@ StringAuto RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsag
 
 #undef ANKI_TEX_USAGE
 
+	ANKI_ASSERT(!slist.isEmpty());
 	StringAuto str(alloc);
 	slist.join(" | ", str);
 	return str;
@@ -726,8 +1131,14 @@ StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 	ANKI_BUFF_USAGE(TEXTURE_UPLOAD_SOURCE);
 	ANKI_BUFF_USAGE(QUERY_RESULT);
 
+	if(!usage)
+	{
+		slist.pushBackSprintf("NONE");
+	}
+
 #undef ANKI_BUFF_USAGE
 
+	ANKI_ASSERT(!slist.isEmpty());
 	StringAuto str(alloc);
 	slist.join(" | ", str);
 	return str;
@@ -758,7 +1169,10 @@ Error RenderGraph::dumpDependencyDotFile(
 		{
 			CString passName = descr.m_passes[passIdx]->m_name.toCString();
 
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box];\n", passName.cstr(), COLORS[batchIdx % 6]);
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=%s,shape=box];\n",
+				passName.cstr(),
+				COLORS[batchIdx % 6],
+				(descr.m_passes[passIdx]->m_type == RenderPassDescriptionBase::Type::GRAPHICS) ? "bold" : "dashed");
 
 			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
 			{
@@ -772,6 +1186,7 @@ Error RenderGraph::dumpDependencyDotFile(
 		}
 	}
 
+#if 0
 	// Color the resources
 	slist.pushBackSprintf("subgraph cluster_0 {\n");
 	for(U rtIdx = 0; rtIdx < descr.m_renderTargets.getSize(); ++rtIdx)
@@ -779,9 +1194,10 @@ Error RenderGraph::dumpDependencyDotFile(
 		slist.pushBackSprintf("\t\"%s\"[color=%s];\n", &descr.m_renderTargets[rtIdx].m_name[0], COLORS[rtIdx % 6]);
 	}
 	slist.pushBackSprintf("}\n");
+#endif
 
 	// Barriers
-	slist.pushBackSprintf("subgraph cluster_1 {\n");
+	// slist.pushBackSprintf("subgraph cluster_1 {\n");
 	StringAuto prevBubble(ctx.m_alloc);
 	prevBubble.create("START");
 	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
@@ -795,31 +1211,34 @@ Error RenderGraph::dumpDependencyDotFile(
 		{
 			const Barrier& barrier = batch.m_barriersBefore[barrierIdx];
 			StringAuto barrierName(ctx.m_alloc);
+			StringAuto barrierLabel(ctx.m_alloc);
 			if(barrier.m_isTexture)
 			{
-				barrierName.sprintf("%s barrier%u\n%s (mip,dp,f,l)=(%u,%u,%u,%u)\n%s -> %s",
-					batchName.cstr(),
-					barrierIdx,
+				barrierLabel.sprintf("<b>%s</b> (mip,dp,f,l)=(%u,%u,%u,%u)<br/>%s <b>-&gt;</b> %s",
 					&descr.m_renderTargets[barrier.m_texture.m_idx].m_name[0],
 					barrier.m_texture.m_surface.m_level,
 					barrier.m_texture.m_surface.m_depth,
 					barrier.m_texture.m_surface.m_face,
 					barrier.m_texture.m_surface.m_layer,
-					&textureUsageToStr(alloc, barrier.m_texture.m_usageBefore).toCString()[0],
-					&textureUsageToStr(alloc, barrier.m_texture.m_usageAfter).toCString()[0]);
+					textureUsageToStr(alloc, barrier.m_texture.m_usageBefore).cstr(),
+					textureUsageToStr(alloc, barrier.m_texture.m_usageAfter).cstr());
+
+				barrierName.sprintf("%s barrier%u", batchName.cstr(), barrierIdx);
 			}
 			else
 			{
-				barrierName.sprintf("%s barrier%u\n%s\n%s -> %s",
-					batchName.cstr(),
-					barrierIdx,
+				barrierLabel.sprintf("<b>%s</b><br/>%s <b>-&gt;</b> %s",
 					&descr.m_buffers[barrier.m_buffer.m_idx].m_name[0],
-					bufferUsageToStr(alloc, barrier.m_buffer.m_usageBefore).toCString().cstr(),
-					bufferUsageToStr(alloc, barrier.m_buffer.m_usageAfter).toCString().cstr());
+					bufferUsageToStr(alloc, barrier.m_buffer.m_usageBefore).cstr(),
+					bufferUsageToStr(alloc, barrier.m_buffer.m_usageAfter).cstr());
+
+				barrierName.sprintf("%s barrier%u", batchName.cstr(), barrierIdx);
 			}
 
-			slist.pushBackSprintf(
-				"\t\"%s\"[color=%s,style=bold,shape=box];\n", barrierName.cstr(), COLORS[batchIdx % 6]);
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n",
+				barrierName.cstr(),
+				COLORS[batchIdx % 6],
+				barrierLabel.cstr());
 			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), barrierName.cstr());
 
 			prevBubble = barrierName;
@@ -827,21 +1246,22 @@ Error RenderGraph::dumpDependencyDotFile(
 
 		for(U passIdx : batch.m_passIndices)
 		{
-			const RenderPassBase& pass = *descr.m_passes[passIdx];
+			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 			StringAuto passName(alloc);
-			passName.sprintf("_%s_", pass.m_name.cstr());
-			slist.pushBackSprintf("\t\"pass: %s\"[color=%s,style=bold];\n", passName.cstr(), COLORS[batchIdx % 6]);
-			slist.pushBackSprintf("\t\"%s\"->\"pass: %s\";\n", prevBubble.cstr(), passName.cstr());
+			passName.sprintf("%s pass", pass.m_name.cstr());
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold];\n", passName.cstr(), COLORS[batchIdx % 6]);
+			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), passName.cstr());
 
 			prevBubble = passName;
 		}
 	}
-	slist.pushBackSprintf("}\n");
+	// slist.pushBackSprintf("}\n");
 
 	slist.pushBackSprintf("}");
 
 	File file;
-	ANKI_CHECK(file.open(StringAuto(alloc).sprintf("%s/rgraph.dot", &path[0]).toCString(), FileOpenFlag::WRITE));
+	ANKI_CHECK(
+		file.open(StringAuto(alloc).sprintf("%s/rgraph_%u.dot", &path[0], m_version).toCString(), FileOpenFlag::WRITE));
 	for(const String& s : slist)
 	{
 		ANKI_CHECK(file.writeText("%s", &s[0]));
@@ -849,89 +1269,6 @@ Error RenderGraph::dumpDependencyDotFile(
 
 	return Error::NONE;
 }
-
-TexturePtr RenderGraph::getTexture(RenderTargetHandle handle) const
-{
-	ANKI_ASSERT(m_ctx->m_rts[handle].m_texture.isCreated());
-	return m_ctx->m_rts[handle].m_texture;
-}
-
-BufferPtr RenderGraph::getBuffer(RenderPassBufferHandle handle) const
-{
-	ANKI_ASSERT(m_ctx->m_buffers[handle].m_buffer.isCreated());
-	return m_ctx->m_buffers[handle].m_buffer;
-}
-
-void RenderGraph::runSecondLevel()
-{
-	ANKI_ASSERT(m_ctx);
-	for(Pass& p : m_ctx->m_passes)
-	{
-		const U size = p.m_secondLevelCmdbs.getSize();
-		for(U i = 0; i < size; ++i)
-		{
-			p.m_callback(p.m_userData, p.m_secondLevelCmdbs[i], i, size);
-		}
-	}
-}
-
-void RenderGraph::run()
-{
-	ANKI_ASSERT(m_ctx);
-
-	CommandBufferPtr& cmdb = m_ctx->m_cmdb;
-
-	for(const Batch& batch : m_ctx->m_batches)
-	{
-		// Set the barriers
-		for(const Barrier& barrier : batch.m_barriersBefore)
-		{
-			if(barrier.m_isTexture)
-			{
-				cmdb->setTextureSurfaceBarrier(m_ctx->m_rts[barrier.m_texture.m_idx].m_texture,
-					barrier.m_texture.m_usageBefore,
-					barrier.m_texture.m_usageAfter,
-					barrier.m_texture.m_surface);
-			}
-			else
-			{
-				cmdb->setBufferBarrier(m_ctx->m_buffers[barrier.m_buffer.m_idx].m_buffer,
-					barrier.m_buffer.m_usageBefore,
-					barrier.m_buffer.m_usageAfter,
-					0,
-					MAX_PTR_SIZE);
-			}
-		}
-
-		// Call the passes
-		for(U passIdx : batch.m_passIndices)
-		{
-			const Pass& pass = m_ctx->m_passes[passIdx];
-
-			if(pass.m_fb.isCreated())
-			{
-				cmdb->beginRenderPass(pass.m_fb); // TODO: Render area
-			}
-
-			const U size = pass.m_secondLevelCmdbs.getSize();
-			if(size == 0)
-			{
-				pass.m_callback(pass.m_userData, cmdb, 0, 0);
-			}
-			else
-			{
-				for(const CommandBufferPtr& cmdb2nd : pass.m_secondLevelCmdbs)
-				{
-					cmdb->pushSecondLevelCommandBuffer(cmdb2nd);
-				}
-			}
-
-			if(pass.m_fb.isCreated())
-			{
-				cmdb->endRenderPass();
-			}
-		}
-	}
-}
+#endif
 
 } // end namespace anki

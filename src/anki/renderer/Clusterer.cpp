@@ -209,7 +209,7 @@ void Clusterer::prepare(ThreadPool& threadPool, const ClustererPrepareInfo& inf)
 	//
 	Array<UpdatePlanesPerspectiveCameraTask, ThreadPool::MAX_THREADS> jobs;
 
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	for(U i = 0; i < threadPool.getThreadCount(); i++)
 	{
 		jobs[i].m_clusterer = this;
 		jobs[i].m_frustumChanged = frustumChanged;

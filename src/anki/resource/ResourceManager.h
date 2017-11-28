@@ -30,9 +30,6 @@ template<typename Type>
 class TypeResourceManager
 {
 protected:
-	/// @privatesection
-	using Container = List<Type*>;
-
 	TypeResourceManager()
 	{
 	}
@@ -69,6 +66,8 @@ protected:
 	}
 
 private:
+	using Container = List<Type*>;
+
 	ResourceAllocator<U8> m_alloc;
 	Container m_ptrs;
 
@@ -157,7 +156,7 @@ anki_internal:
 
 	TransferGpuAllocator& getTransferGpuAllocator()
 	{
-		return m_transferGpuAlloc;
+		return *m_transferGpuAlloc;
 	}
 
 	PhysicsWorld& getPhysicsWorld()
@@ -221,7 +220,7 @@ private:
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
-	TransferGpuAllocator m_transferGpuAlloc;
+	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
 };
 /// @}
 

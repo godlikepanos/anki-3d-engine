@@ -147,6 +147,36 @@ ANKI_TEST(Util, ThreadPool)
 	}
 
 	delete tp;
+
+	// Test choseStartEnd()
+	{
+		const U ITERATIONS = 100000;
+
+		for(U it = 0; it < ITERATIONS; ++it)
+		{
+			const U problemSize = max<U>(1, rand());
+			const U threadCount = max<U>(1, rand() % 128);
+			U totalCount = 0;
+			for(U tid = 0; tid < threadCount; ++tid)
+			{
+				PtrSize start, end;
+				ThreadPoolTask::choseStartEnd(tid, threadCount, problemSize, start, end);
+
+				if(tid == 0)
+				{
+					ANKI_TEST_EXPECT_EQ(start, 0);
+				}
+				else if(tid == threadCount - 1)
+				{
+					ANKI_TEST_EXPECT_EQ(end, problemSize);
+				}
+
+				totalCount += end - start;
+			}
+
+			ANKI_TEST_EXPECT_EQ(totalCount, problemSize);
+		}
+	}
 }
 
 ANKI_TEST(Util, Barrier)

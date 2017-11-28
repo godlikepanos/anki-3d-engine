@@ -83,7 +83,7 @@ public:
 	template<typename... TArgs>
 	explicit GenericPoolAllocator(AllocAlignedCallback allocCb, void* allocCbUserData, TArgs&&... args)
 	{
-		m_pool = reinterpret_cast<TPool*>(allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
+		m_pool = static_cast<TPool*>(allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
 		if(ANKI_UNLIKELY(!m_pool))
 		{
 			ANKI_UTIL_LOGF("Out of memory");
@@ -140,7 +140,7 @@ public:
 
 		// Operator new doesn't respect alignment (in GCC at least) so use the type's alignment. If hint override the
 		// alignment
-		PtrSize alignment = (hint != nullptr) ? *reinterpret_cast<const PtrSize*>(hint) : alignof(value_type);
+		PtrSize alignment = (hint != nullptr) ? *static_cast<const PtrSize*>(hint) : alignof(value_type);
 
 		void* out = m_pool->allocate(size, alignment);
 		if(ANKI_UNLIKELY(out == nullptr))
@@ -148,7 +148,7 @@ public:
 			ANKI_UTIL_LOGF("Out of memory");
 		}
 
-		return reinterpret_cast<pointer>(out);
+		return static_cast<pointer>(out);
 	}
 
 	/// Deallocate memory

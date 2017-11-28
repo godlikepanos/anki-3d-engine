@@ -30,7 +30,11 @@ class StagingGpuMemoryManager;
 class RenderingContext
 {
 public:
+	StackAllocator<U8> m_tempAllocator;
+
 	RenderQueue* m_renderQueue ANKI_DBG_NULLIFY;
+
+	RenderGraphDescription m_renderGraphDescr;
 
 	// Extra matrices
 	Mat4 m_projMatJitter;
@@ -41,58 +45,12 @@ public:
 
 	Vec4 m_unprojParams;
 
-	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
-	CommandBufferPtr m_defaultFbCommandBuffer; ///< The default framebuffer renderpass is in a separate cmdb.
-
-	StackAllocator<U8> m_tempAllocator;
-
-	class GBuffer
-	{
-	public:
-		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
-		U32 m_lastThreadWithWork = 0;
-	} m_gbuffer;
-
-	class LensFlare
-	{
-	public:
-		DynamicArrayAuto<OcclusionQueryPtr> m_queriesToTest;
-
-		LensFlare(const StackAllocator<U8>& alloc)
-			: m_queriesToTest(alloc)
-		{
-		}
-	} m_lensFlare;
-
-	class LightShading
-	{
-	public:
-		StagingGpuMemoryToken m_commonToken;
-		StagingGpuMemoryToken m_pointLightsToken;
-		StagingGpuMemoryToken m_spotLightsToken;
-		StagingGpuMemoryToken m_probesToken;
-		StagingGpuMemoryToken m_decalsToken;
-		StagingGpuMemoryToken m_clustersToken;
-		StagingGpuMemoryToken m_lightIndicesToken;
-
-		TexturePtr m_diffDecalTex;
-		TexturePtr m_normRoughnessDecalTex;
-	} m_lightShading;
-
-	class ForwardShading
-	{
-	public:
-		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
-		U32 m_lastThreadWithWork = 0;
-	} m_forwardShading;
-
-	FramebufferPtr m_outFb;
 	U32 m_outFbWidth = 0;
 	U32 m_outFbHeight = 0;
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
-		, m_lensFlare(alloc)
+		, m_renderGraphDescr(alloc)
 	{
 	}
 };
@@ -176,6 +134,16 @@ public:
 		return *m_downscale;
 	}
 
+	LensFlare& getLensFlare()
+	{
+		return *m_lensFlare;
+	}
+
+	const LensFlare& getLensFlare() const
+	{
+		return *m_lensFlare;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;
@@ -203,7 +171,9 @@ public:
 		Bool willDrawToDefaultFbo);
 
 	/// This function does all the rendering stages and produces a final result.
-	ANKI_USE_RESULT Error render(RenderingContext& ctx);
+	ANKI_USE_RESULT Error populateRenderGraph(RenderingContext& ctx);
+
+	void finalize(const RenderingContext& ctx);
 
 anki_internal:
 	U64 getFrameCount() const
@@ -235,17 +205,6 @@ anki_internal:
 	static Vec3 unproject(
 		const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4]);
 
-	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
-	static void drawQuad(CommandBufferPtr& cmdb)
-	{
-		drawQuadInstanced(cmdb, 1);
-	}
-
-	static void drawQuadInstanced(CommandBufferPtr& cmdb, U32 primitiveCount)
-	{
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, primitiveCount);
-	}
-
 	/// Get the LOD given the distance of an object from the camera
 	U calculateLod(F32 distance) const
 	{
@@ -265,13 +224,12 @@ anki_internal:
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
-	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(U32 w,
-		U32 h,
-		const PixelFormat& format,
-		TextureUsageBit usage,
-		SamplingFilter filter,
-		U mipsCount = 1,
-		CString name = {});
+	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(
+		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name = {});
+
+	/// Create the init info for a 2D texture that will be used as a render target.
+	ANKI_USE_RESULT RenderTargetDescription create2DRenderTargetDescription(
+		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name = {});
 
 	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(
 		const TextureInitInfo& inf, const ClearValue& clearVal = ClearValue());
@@ -352,11 +310,6 @@ anki_internal:
 		return m_linearSampler;
 	}
 
-	RenderGraphPtr getRenderGraph() const
-	{
-		return m_rgraph;
-	}
-
 private:
 	ThreadPool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
@@ -413,12 +366,7 @@ private:
 	SamplerPtr m_nearestSampler;
 	SamplerPtr m_linearSampler;
 
-	RenderGraphPtr m_rgraph;
-
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
-
-	ANKI_USE_RESULT Error buildCommandBuffers(RenderingContext& ctx);
-	void buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount);
 
 	void initJitteredMats();
 };

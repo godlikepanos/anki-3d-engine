@@ -23,22 +23,38 @@ class ConfigSet;
 /// @addtogroup renderer
 /// @{
 
-/// Rendering pass
-class RenderingPass
+/// Renderer object.
+class RendererObject
 {
 anki_internal:
-	RenderingPass(Renderer* r)
+	RendererObject(Renderer* r)
 		: m_r(r)
 	{
 	}
 
-	~RenderingPass()
+	~RendererObject()
 	{
 	}
 
 	HeapAllocator<U8> getAllocator() const;
 
-	StackAllocator<U8> getFrameAllocator() const;
+protected:
+	Renderer* m_r; ///< Know your father
+
+	GrManager& getGrManager();
+	const GrManager& getGrManager() const;
+
+	ResourceManager& getResourceManager();
+
+	void* allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+
+	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
+
+	/// Used in fullscreen quad draws.
+	static void drawQuad(CommandBufferPtr& cmdb)
+	{
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
+	}
 
 	template<typename TPtr>
 	TPtr allocateUniforms(PtrSize size, StagingGpuMemoryToken& token)
@@ -65,15 +81,14 @@ anki_internal:
 
 	void bindStorage(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token) const;
 
-protected:
-	Renderer* m_r; ///< Know your father
-
-	GrManager& getGrManager();
-	const GrManager& getGrManager() const;
-
-	ResourceManager& getResourceManager();
-
-	void* allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+	template<typename TPtr>
+	TPtr allocateAndBindStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
+	{
+		StagingGpuMemoryToken token;
+		TPtr ptr = allocateStorage<TPtr>(size, token);
+		bindStorage(cmdb, set, binding, token);
+		return ptr;
+	}
 };
 /// @}
 

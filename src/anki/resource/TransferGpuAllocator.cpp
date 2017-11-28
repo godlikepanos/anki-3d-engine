@@ -34,7 +34,8 @@ public:
 	{
 		TransferGpuAllocator::Memory* mm = m_alloc.newInstance<TransferGpuAllocator::Memory>();
 
-		mm->m_buffer = m_gr->newInstance<Buffer>(size, BufferUsageBit::BUFFER_UPLOAD_SOURCE, BufferMapAccessBit::WRITE);
+		mm->m_buffer = m_gr->newInstance<Buffer>(
+			BufferInitInfo(size, BufferUsageBit::BUFFER_UPLOAD_SOURCE, BufferMapAccessBit::WRITE, "Transfer"));
 		mm->m_mappedMemory = mm->m_buffer->map(0, size, BufferMapAccessBit::WRITE);
 
 		mem = mm;
@@ -88,6 +89,11 @@ TransferGpuAllocator::TransferGpuAllocator()
 
 TransferGpuAllocator::~TransferGpuAllocator()
 {
+	for(Frame& frame : m_frames)
+	{
+		ANKI_ASSERT(frame.m_pendingReleases == 0);
+		frame.m_fences.destroy(m_alloc);
+	}
 }
 
 Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocator<U8> alloc)
@@ -108,17 +114,6 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocat
 	}
 
 	return Error::NONE;
-}
-
-void TransferGpuAllocator::destroy()
-{
-	LockGuard<Mutex> lock(m_mtx);
-
-	for(Frame& frame : m_frames)
-	{
-		ANKI_ASSERT(frame.m_pendingReleases == 0);
-		frame.m_fences.destroy(m_alloc);
-	}
 }
 
 Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& handle)

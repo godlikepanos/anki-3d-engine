@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -14,11 +14,11 @@ namespace anki
 /// @{
 
 /// Forward rendering stage. The objects that blend must be handled differently
-class ForwardShading : public RenderingPass
+class ForwardShading : public RendererObject
 {
 anki_internal:
 	ForwardShading(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 
@@ -26,43 +26,32 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const;
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
 
-	void setPreRunBarriers(RenderingContext& ctx);
+	void drawUpscale(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
-
-	void drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb);
-
-	void drawUpscale(RenderingContext& ctx);
-
-	TexturePtr getRt() const
-	{
-		return m_rt;
-	}
-
-	U getWidth() const
+	U32 getWidth() const
 	{
 		return m_width;
 	}
 
-	U getHeight() const
+	U32 getHeight() const
 	{
 		return m_height;
 	}
 
-	FramebufferPtr getFramebuffer() const
+	RenderTargetHandle getRt() const
 	{
-		return m_fb;
+		return m_runCtx.m_rt;
 	}
 
 private:
-	U m_width;
-	U m_height;
-	FramebufferPtr m_fb;
-	TexturePtr m_rt;
+	U32 m_width;
+	U32 m_height;
+
+	FramebufferDescription m_fbDescr;
+	RenderTargetDescription m_rtDescr;
 
 	class Vol
 	{
@@ -80,9 +69,27 @@ private:
 		TextureResourcePtr m_noiseTex;
 	} m_upscale;
 
+	class
+	{
+	public:
+		RenderTargetHandle m_rt;
+		RenderingContext* m_ctx = nullptr;
+	} m_runCtx;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error initVol();
 	ANKI_USE_RESULT Error initUpscale();
+
+	/// A RenderPassWorkCallback.
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		ForwardShading* self = scast<ForwardShading*>(rgraphCtx.m_userData);
+		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
+	}
+
+	void run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+
+	void drawVolumetric(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

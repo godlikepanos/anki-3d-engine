@@ -371,12 +371,14 @@ public:
 		m_fbStencil = s;
 		m_rpass = fb->m_impl->getCompatibleRenderPass();
 		m_defaultFb = fb->m_impl->isDefaultFramebuffer();
+		m_fb = fb;
 	}
 
 	void endRenderPass()
 	{
 		ANKI_ASSERT(m_rpass);
 		m_rpass = VK_NULL_HANDLE;
+		m_fb.reset(nullptr);
 	}
 
 	void setPrimitiveTopology(PrimitiveTopology topology)
@@ -413,6 +415,12 @@ public:
 
 	/// Populate the internal pipeline create info structure.
 	const VkGraphicsPipelineCreateInfo& updatePipelineCreateInfo();
+
+	FramebufferPtr getFb() const
+	{
+		ANKI_ASSERT(m_fb.isCreated());
+		return m_fb;
+	}
 
 	void reset();
 
@@ -472,6 +480,7 @@ private:
 	Bool8 m_defaultFb = false;
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_fbColorAttachmentMask = {false};
 	VkRenderPass m_rpass = VK_NULL_HANDLE;
+	FramebufferPtr m_fb; ///< Hold the reference.
 
 	// Create info
 	class CreateInfo

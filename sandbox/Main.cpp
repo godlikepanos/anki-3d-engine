@@ -129,15 +129,15 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 	if(in.getKey(KeyCode::F2) == 1)
 	{
-		renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
+		// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
 	}
 	if(in.getKey(KeyCode::F3) == 1)
 	{
-		renderer.getDbg().flipFlags(DbgFlag::PHYSICS);
+		// renderer.getDbg().flipFlags(DbgFlag::PHYSICS);
 	}
 	if(in.getKey(KeyCode::F4) == 1)
 	{
-		renderer.getDbg().flipFlags(DbgFlag::SECTOR_COMPONENT);
+		// renderer.getDbg().flipFlags(DbgFlag::SECTOR_COMPONENT);
 	}
 	if(in.getKey(KeyCode::F6) == 1)
 	{

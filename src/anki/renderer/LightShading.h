@@ -5,21 +5,26 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
+#include <anki/renderer/LightBin.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/ShaderProgramResource.h>
 
 namespace anki
 {
 
-// Forward
-class LightBin;
-
 /// @addtogroup renderer
 /// @{
 
+/// @memberof LightShading
+class LightShadingResources : public LightBinOut
+{
+public:
+	StagingGpuMemoryToken m_commonUniformsToken;
+};
+
 /// Clustered deferred light pass.
-class LightShading : public RenderingPass
+class LightShading : public RendererObject
 {
 anki_internal:
 	LightShading(Renderer* r);
@@ -28,17 +33,13 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
+	void populateRenderGraph(RenderingContext& ctx);
+
 	ANKI_USE_RESULT Error binLights(RenderingContext& ctx);
 
-	void setPreRunBarriers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
-
-	TexturePtr getRt() const
+	RenderTargetHandle getRt() const
 	{
-		return m_rt;
+		return m_runCtx.m_rt;
 	}
 
 	const LightBin& getLightBin() const
@@ -46,15 +47,17 @@ anki_internal:
 		return *m_lightBin;
 	}
 
-private:
-	/// The IS render target
-	TexturePtr m_rt;
+	const LightShadingResources& getResources() const
+	{
+		return m_runCtx.m_resources;
+	}
 
+private:
 	Array<U32, 3> m_clusterCounts = {{0, 0, 0}};
 	U32 m_clusterCount = 0;
 
-	/// The IS FBO
-	FramebufferPtr m_fb;
+	RenderTargetDescription m_rtDescr;
+	FramebufferDescription m_fbDescr;
 
 	// Light shaders
 	ShaderProgramResourcePtr m_prog;
@@ -67,10 +70,27 @@ private:
 	U32 m_maxLightIds;
 	/// @}
 
+	class
+	{
+	public:
+		RenderTargetHandle m_rt;
+		RenderingContext* m_ctx;
+		LightShadingResources m_resources;
+	} m_runCtx; ///< Run context.
+
 	/// Called by init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	void updateCommonBlock(RenderingContext& ctx);
+
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+
+	/// A RenderPassWorkCallback for the light pass.
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		LightShading* const self = scast<LightShading*>(rgraphCtx.m_userData);
+		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
+	}
 };
 /// @}
 

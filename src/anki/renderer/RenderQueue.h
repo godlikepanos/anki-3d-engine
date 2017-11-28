@@ -141,7 +141,8 @@ class DecalQueueElement final
 public:
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
-	Texture* m_diffuseAtlas;
+	Texture* m_diffuseAtlas; ///< Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
+	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 	Texture* m_normalRoughnessAtlas;
 	Vec4 m_diffuseAtlasUv;
 	Vec4 m_normalRoughnessAtlasUv;

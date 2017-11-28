@@ -13,41 +13,85 @@ namespace anki
 
 FramebufferImpl::~FramebufferImpl()
 {
-	for(VkFramebuffer fb : m_fbs)
+	if(m_noDflt.m_fb)
 	{
-		if(fb)
-		{
-			vkDestroyFramebuffer(getDevice(), fb, nullptr);
-		}
+		vkDestroyFramebuffer(getDevice(), m_noDflt.m_fb, nullptr);
 	}
 
-	for(auto it : m_rpasses)
+	for(auto it : m_noDflt.m_rpasses)
 	{
 		VkRenderPass rpass = it;
 		ANKI_ASSERT(rpass);
 		vkDestroyRenderPass(getDevice(), rpass, nullptr);
 	}
 
-	m_rpasses.destroy(getAllocator());
+	m_noDflt.m_rpasses.destroy(getAllocator());
 
-	if(m_compatibleOrDefaultRpass)
+	if(m_noDflt.m_compatibleRpass)
 	{
-		vkDestroyRenderPass(getDevice(), m_compatibleOrDefaultRpass, nullptr);
+		vkDestroyRenderPass(getDevice(), m_noDflt.m_compatibleRpass, nullptr);
 	}
 }
 
 Error FramebufferImpl::init(const FramebufferInitInfo& init)
 {
+	// Init common
 	m_defaultFb = init.refersToDefaultFramebuffer();
+	strcpy(&m_name[0], (init.getName()) ? init.getName().cstr() : "");
 
-	// Create a renderpass.
-	initRpassCreateInfo(init);
-	ANKI_VK_CHECK(vkCreateRenderPass(getDevice(), &m_rpassCi, nullptr, &m_compatibleOrDefaultRpass));
+	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
+	{
+		m_colorAttachmentMask.set(i);
+		m_colorAttCount = i + 1;
+	}
 
-	// Create the FBs
-	ANKI_CHECK(initFbs(init));
+	if(!m_defaultFb && init.m_depthStencilAttachment.m_texture)
+	{
+		const TextureImpl& tex = *init.m_depthStencilAttachment.m_texture->m_impl;
 
-	// Set clear values and some other stuff
+		if(!!(tex.m_workarounds & TextureImplWorkaround::S8_TO_D24S8))
+		{
+			m_aspect = DepthStencilAspectBit::STENCIL;
+		}
+		else if(tex.m_akAspect == DepthStencilAspectBit::DEPTH)
+		{
+			m_aspect = DepthStencilAspectBit::DEPTH;
+		}
+		else if(tex.m_akAspect == DepthStencilAspectBit::STENCIL)
+		{
+			m_aspect = DepthStencilAspectBit::STENCIL;
+		}
+		else
+		{
+			ANKI_ASSERT(!!init.m_depthStencilAttachment.m_aspect);
+			m_aspect = init.m_depthStencilAttachment.m_aspect;
+		}
+	}
+
+	initClearValues(init);
+
+	if(m_defaultFb)
+	{
+		m_dflt.m_swapchain = getGrManagerImpl().getSwapchain();
+		m_dflt.m_loadOp = convertLoadOp(init.m_colorAttachments[0].m_loadOperation);
+	}
+	else
+	{
+		// Create a renderpass.
+		initRpassCreateInfo(init);
+		ANKI_VK_CHECK(vkCreateRenderPass(getDevice(), &m_noDflt.m_rpassCi, nullptr, &m_noDflt.m_compatibleRpass));
+		getGrManagerImpl().trySetVulkanHandleName(
+			init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_noDflt.m_compatibleRpass);
+
+		// Create the FB
+		ANKI_CHECK(initFbs(init));
+	}
+
+	return Error::NONE;
+}
+
+void FramebufferImpl::initClearValues(const FramebufferInitInfo& init)
+{
 	for(U i = 0; i < m_colorAttCount; ++i)
 	{
 		if(init.m_colorAttachments[i].m_loadOperation == AttachmentLoadOperation::CLEAR)
@@ -62,8 +106,6 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		{
 			m_clearVals[i] = {};
 		}
-
-		m_attachedSurfaces[i] = init.m_colorAttachments[i].m_surface;
 	}
 
 	if(hasDepthStencil())
@@ -81,125 +123,70 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		{
 			m_clearVals[m_colorAttCount] = {};
 		}
-
-		m_attachedSurfaces[MAX_COLOR_ATTACHMENTS] = init.m_depthStencilAttachment.m_surface;
 	}
-
-	return Error::NONE;
 }
 
 Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 {
-	const Bool hasDepthStencil = init.m_depthStencilAttachment.m_texture == true;
-
 	VkFramebufferCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	ci.renderPass = m_compatibleOrDefaultRpass;
-	ci.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil) ? 1 : 0);
-
+	ci.renderPass = m_noDflt.m_compatibleRpass;
+	ci.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil()) ? 1 : 0);
 	ci.layers = 1;
 
-	if(m_defaultFb)
+	Array<VkImageView, MAX_COLOR_ATTACHMENTS + 1> imgViews;
+	U count = 0;
+
+	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
-		for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+		const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
+		TextureImpl& tex = *att.m_texture->m_impl;
+
+		imgViews[count++] = tex.getOrCreateSingleSurfaceView(att.m_surface, att.m_aspect);
+
+		if(m_noDflt.m_width == 0)
 		{
-			VkImageView view = getGrManagerImpl().getDefaultSurfaceImageView(i);
-			ci.pAttachments = &view;
-
-			m_width = getGrManagerImpl().getDefaultSurfaceWidth();
-			m_height = getGrManagerImpl().getDefaultSurfaceHeight();
-			ci.width = m_width;
-			ci.height = m_height;
-
-			ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbs[i]));
+			m_noDflt.m_width = tex.m_width >> att.m_surface.m_level;
+			m_noDflt.m_height = tex.m_height >> att.m_surface.m_level;
 		}
 
-		m_colorAttachmentMask.set(0);
-		m_colorAttCount = 1;
+		m_noDflt.m_refs[i] = att.m_texture;
 	}
-	else
+
+	if(hasDepthStencil())
 	{
-		Array<VkImageView, MAX_COLOR_ATTACHMENTS + 1> attachments;
-		U count = 0;
+		const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
+		TextureImpl& tex = *att.m_texture->m_impl;
 
-		for(U i = 0; i < init.m_colorAttachmentCount; ++i)
+		imgViews[count++] = tex.getOrCreateSingleSurfaceView(att.m_surface, m_aspect);
+
+		if(m_noDflt.m_width == 0)
 		{
-			const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
-			TextureImpl& tex = *att.m_texture->m_impl;
-
-			attachments[count++] = tex.getOrCreateSingleSurfaceView(att.m_surface, att.m_aspect);
-
-			if(m_width == 0)
-			{
-				m_width = tex.m_width >> att.m_surface.m_level;
-				m_height = tex.m_height >> att.m_surface.m_level;
-			}
-
-			m_refs[i] = att.m_texture;
-			m_colorAttachmentMask.set(i);
-			m_colorAttCount = i + 1;
+			m_noDflt.m_width = tex.m_width >> att.m_surface.m_level;
+			m_noDflt.m_height = tex.m_height >> att.m_surface.m_level;
 		}
 
-		if(hasDepthStencil)
-		{
-			const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
-			TextureImpl& tex = *att.m_texture->m_impl;
-
-			DepthStencilAspectBit aspect;
-			if(!!(tex.m_workarounds & TextureImplWorkaround::S8_TO_D24S8))
-			{
-				aspect = DepthStencilAspectBit::STENCIL;
-			}
-			else if(tex.m_akAspect == DepthStencilAspectBit::DEPTH)
-			{
-				aspect = DepthStencilAspectBit::DEPTH;
-			}
-			else if(tex.m_akAspect == DepthStencilAspectBit::STENCIL)
-			{
-				aspect = DepthStencilAspectBit::STENCIL;
-			}
-			else
-			{
-				ANKI_ASSERT(!!att.m_aspect);
-				aspect = att.m_aspect;
-			}
-
-			m_depthAttachment = !!(aspect & DepthStencilAspectBit::DEPTH);
-			m_stencilAttachment = !!(aspect & DepthStencilAspectBit::STENCIL);
-
-			attachments[count++] = tex.getOrCreateSingleSurfaceView(att.m_surface, aspect);
-
-			if(m_width == 0)
-			{
-				m_width = tex.m_width >> att.m_surface.m_level;
-				m_height = tex.m_height >> att.m_surface.m_level;
-			}
-
-			m_refs[MAX_COLOR_ATTACHMENTS] = att.m_texture;
-		}
-
-		ci.width = m_width;
-		ci.height = m_height;
-
-		ci.pAttachments = &attachments[0];
-		ANKI_ASSERT(count == ci.attachmentCount);
-
-		ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbs[0]));
+		m_noDflt.m_refs[MAX_COLOR_ATTACHMENTS] = att.m_texture;
 	}
+
+	ci.width = m_noDflt.m_width;
+	ci.height = m_noDflt.m_height;
+
+	ci.pAttachments = &imgViews[0];
+	ANKI_ASSERT(count == ci.attachmentCount);
+
+	ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_noDflt.m_fb));
+	getGrManagerImpl().trySetVulkanHandleName(
+		init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_noDflt.m_fb);
 
 	return Error::NONE;
 }
 
 void FramebufferImpl::setupAttachmentDescriptor(
-	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc) const
+	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc, VkImageLayout layout) const
 {
-	// TODO This func won't work if it's default but this is a depth attachment
-
-	const VkImageLayout layout = (m_defaultFb) ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL;
-
 	desc = {};
-	desc.format = (m_defaultFb) ? getGrManagerImpl().getDefaultFramebufferSurfaceFormat()
-								: convertFormat(att.m_texture->m_impl->m_format);
+	desc.format = convertFormat(att.m_texture->m_impl->m_format);
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);
@@ -211,62 +198,60 @@ void FramebufferImpl::setupAttachmentDescriptor(
 
 void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 {
+	// Setup attachments and references
 	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
-		const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
+		setupAttachmentDescriptor(
+			init.m_colorAttachments[i], m_noDflt.m_attachmentDescriptions[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-		setupAttachmentDescriptor(att, m_attachmentDescriptions[i]);
-
-		m_references[i].attachment = i;
-		m_references[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		m_noDflt.m_references[i].attachment = i;
+		m_noDflt.m_references[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 
-	const Bool hasDepthStencil = init.m_depthStencilAttachment.m_texture == true;
-	if(hasDepthStencil)
+	if(hasDepthStencil())
 	{
-		VkAttachmentReference& dsReference = m_references[init.m_colorAttachmentCount];
+		setupAttachmentDescriptor(init.m_depthStencilAttachment,
+			m_noDflt.m_attachmentDescriptions[init.m_colorAttachmentCount],
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-		setupAttachmentDescriptor(init.m_depthStencilAttachment, m_attachmentDescriptions[init.m_colorAttachmentCount]);
-
+		VkAttachmentReference& dsReference = m_noDflt.m_references[init.m_colorAttachmentCount];
 		dsReference.attachment = init.m_colorAttachmentCount;
 		dsReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
 	// Setup the render pass
-	m_rpassCi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	m_rpassCi.pAttachments = &m_attachmentDescriptions[0];
-	m_rpassCi.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil) ? 1 : 0);
+	m_noDflt.m_rpassCi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	m_noDflt.m_rpassCi.pAttachments = &m_noDflt.m_attachmentDescriptions[0];
+	m_noDflt.m_rpassCi.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil()) ? 1 : 0);
 
 	// Subpass
-	m_subpassDescr.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	m_subpassDescr.colorAttachmentCount = init.m_colorAttachmentCount;
-	m_subpassDescr.pColorAttachments = (init.m_colorAttachmentCount) ? &m_references[0] : nullptr;
-	m_subpassDescr.pDepthStencilAttachment = (hasDepthStencil) ? &m_references[init.m_colorAttachmentCount] : nullptr;
+	m_noDflt.m_subpassDescr.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	m_noDflt.m_subpassDescr.colorAttachmentCount = init.m_colorAttachmentCount;
+	m_noDflt.m_subpassDescr.pColorAttachments = (init.m_colorAttachmentCount) ? &m_noDflt.m_references[0] : nullptr;
+	m_noDflt.m_subpassDescr.pDepthStencilAttachment =
+		(hasDepthStencil()) ? &m_noDflt.m_references[init.m_colorAttachmentCount] : nullptr;
 
-	m_rpassCi.subpassCount = 1;
-	m_rpassCi.pSubpasses = &m_subpassDescr;
+	m_noDflt.m_rpassCi.subpassCount = 1;
+	m_noDflt.m_rpassCi.pSubpasses = &m_noDflt.m_subpassDescr;
 }
 
 VkRenderPass FramebufferImpl::getRenderPassHandle(
 	const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts, VkImageLayout dsLayout)
 {
-	VkRenderPass out;
+	VkRenderPass out = {};
 
 	if(!m_defaultFb)
 	{
 		// Create hash
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS + 1> allLayouts;
 		U allLayoutCount = 0;
-		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+		for(U i = 0; i < m_colorAttCount; ++i)
 		{
-			if(m_colorAttachmentMask.get(i))
-			{
-				ANKI_ASSERT(colorLayouts[i] != VK_IMAGE_LAYOUT_UNDEFINED);
-				allLayouts[allLayoutCount++] = colorLayouts[i];
-			}
+			ANKI_ASSERT(colorLayouts[i] != VK_IMAGE_LAYOUT_UNDEFINED);
+			allLayouts[allLayoutCount++] = colorLayouts[i];
 		}
 
-		if(m_depthAttachment || m_stencilAttachment)
+		if(hasDepthStencil())
 		{
 			ANKI_ASSERT(dsLayout != VK_IMAGE_LAYOUT_UNDEFINED);
 			allLayouts[allLayoutCount++] = dsLayout;
@@ -275,9 +260,9 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 		U64 hash = computeHash(&allLayouts[0], allLayoutCount * sizeof(allLayouts[0]));
 
 		// Get or create
-		LockGuard<Mutex> lock(m_rpassesMtx);
-		auto it = m_rpasses.find(hash);
-		if(it != m_rpasses.getEnd())
+		LockGuard<Mutex> lock(m_noDflt.m_rpassesMtx);
+		auto it = m_noDflt.m_rpasses.find(hash);
+		if(it != m_noDflt.m_rpasses.getEnd())
 		{
 			out = *it;
 		}
@@ -285,10 +270,11 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 		{
 			// Create
 
-			VkRenderPassCreateInfo ci = m_rpassCi;
-			Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> attachmentDescriptions = m_attachmentDescriptions;
-			Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS + 1> references = m_references;
-			VkSubpassDescription subpassDescr = m_subpassDescr;
+			VkRenderPassCreateInfo ci = m_noDflt.m_rpassCi;
+			Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> attachmentDescriptions =
+				m_noDflt.m_attachmentDescriptions;
+			Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS + 1> references = m_noDflt.m_references;
+			VkSubpassDescription subpassDescr = m_noDflt.m_subpassDescr;
 
 			// Fix pointers
 			subpassDescr.pColorAttachments = &references[0];
@@ -306,7 +292,7 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 				references[i].layout = lay;
 			}
 
-			if(m_refs[MAX_COLOR_ATTACHMENTS])
+			if(hasDepthStencil())
 			{
 				const U i = subpassDescr.colorAttachmentCount;
 				const VkImageLayout lay = dsLayout;
@@ -320,17 +306,28 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 			}
 
 			ANKI_VK_CHECKF(vkCreateRenderPass(getDevice(), &ci, nullptr, &out));
+			getGrManagerImpl().trySetVulkanHandleName(&m_name[0], VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, out);
 
-			m_rpasses.emplace(getAllocator(), hash, out);
+			m_noDflt.m_rpasses.emplace(getAllocator(), hash, out);
 		}
 	}
 	else
 	{
-		out = m_compatibleOrDefaultRpass;
+		out = m_dflt.m_swapchain->getRenderPass(m_dflt.m_loadOp);
 	}
 
 	ANKI_ASSERT(out);
 	return out;
+}
+
+void FramebufferImpl::sync()
+{
+	if(m_defaultFb)
+	{
+		LockGuard<SpinLock> lock(m_dflt.m_swapchainLock);
+		m_dflt.m_swapchain = getGrManagerImpl().getSwapchain();
+		m_dflt.m_currentBackbufferIndex = m_dflt.m_swapchain->m_currentBackbufferIndex;
+	}
 }
 
 } // end namespace anki

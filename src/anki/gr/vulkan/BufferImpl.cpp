@@ -24,9 +24,14 @@ BufferImpl::~BufferImpl()
 	}
 }
 
-Error BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
+Error BufferImpl::init(const BufferInitInfo& inf)
 {
 	ANKI_ASSERT(!isCreated());
+
+	PtrSize size = inf.m_size;
+	BufferMapAccessBit access = inf.m_access;
+	BufferUsageBit usage = inf.m_usage;
+
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(usage != BufferUsageBit::NONE);
 
@@ -43,6 +48,7 @@ Error BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit ac
 	U32 queueIdx = getGrManagerImpl().getGraphicsQueueFamily();
 	ci.pQueueFamilyIndices = &queueIdx;
 	ANKI_VK_CHECK(vkCreateBuffer(getDevice(), &ci, nullptr, &m_handle));
+	getGrManagerImpl().trySetVulkanHandleName(inf.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_handle);
 
 	// Get mem requirements
 	VkMemoryRequirements req;
@@ -195,8 +201,9 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 
 	if(!!(usage & (BufferUsageBit::INDEX | BufferUsageBit::VERTEX)))
 	{
-		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
-			| VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+		stageMask |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
+			| VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT
+			| VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 	}
 
 	if(!!(usage & BufferUsageBit::INDIRECT))
@@ -212,6 +219,11 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 	if(!!(usage & (BufferUsageBit::QUERY_RESULT)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+
+	if(!stageMask)
+	{
+		stageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 	}
 
 	ANKI_ASSERT(stageMask);
@@ -277,7 +289,6 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 		mask |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
-	ANKI_ASSERT(mask);
 	return mask;
 }
 
@@ -289,6 +300,7 @@ void BufferImpl::computeBarrierInfo(BufferUsageBit before,
 	VkAccessFlags& dstAccesses) const
 {
 	ANKI_ASSERT(usageValid(before) && usageValid(after));
+	ANKI_ASSERT(!!after);
 
 	srcStages = computePplineStage(before);
 	dstStages = computePplineStage(after);

@@ -111,9 +111,9 @@ Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCal
 
 // To avoid having the g_removeDirectoryPath in stack or having to allocate it, make it global.
 static char g_removeDirectoryPath[PATH_MAX];
-Mutex g_removeDirectoryLock;
+static Mutex g_removeDirectoryLock;
 
-Error removeDirectory(const CString& dirname)
+static Error removeDirectoryInternal(const CString& dirname)
 {
 	DIR* dir;
 	struct dirent* entry;
@@ -125,7 +125,6 @@ Error removeDirectory(const CString& dirname)
 		return Error::FUNCTION_FAILED;
 	}
 
-	LockGuard<Mutex> lock(g_removeDirectoryLock);
 	while((entry = readdir(dir)) != nullptr)
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
@@ -134,7 +133,7 @@ Error removeDirectory(const CString& dirname)
 
 			if(entry->d_type == DT_DIR)
 			{
-				Error err = removeDirectory(CString(g_removeDirectoryPath));
+				Error err = removeDirectoryInternal(CString(g_removeDirectoryPath));
 				if(err)
 				{
 					return err;
@@ -151,6 +150,12 @@ Error removeDirectory(const CString& dirname)
 	remove(dirname.get());
 
 	return Error::NONE;
+}
+
+Error removeDirectory(const CString& dirname)
+{
+	LockGuard<Mutex> lock(g_removeDirectoryLock);
+	return removeDirectoryInternal(dirname);
 }
 
 Error createDirectory(const CString& dir)

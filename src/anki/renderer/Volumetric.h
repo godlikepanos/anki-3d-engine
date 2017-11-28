@@ -5,129 +5,17 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
 
-// Forward
-class Volumetric;
-
 /// @addtogroup renderer
 /// @{
 
-/// Volumetic main pass.
-class VolumetricMain : public RenderingPass
-{
-	friend class Volumetric;
-	friend class VolumetricHBlur;
-	friend class VolumetricVBlur;
-
-anki_internal:
-	VolumetricMain(Renderer* r, Volumetric* vol)
-		: RenderingPass(r)
-		, m_vol(vol)
-	{
-	}
-
-	~VolumetricMain()
-	{
-	}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-	void run(RenderingContext& ctx);
-	void setPostRunBarriers(RenderingContext& ctx);
-
-	TexturePtr getRt() const;
-
-private:
-	Volumetric* m_vol;
-
-	Vec3 m_fogParticleColor = Vec3(1.0);
-	Mat3x4 m_prevCameraRot = Mat3x4::getIdentity();
-
-	Array<TexturePtr, 2> m_rt; ///< vRT
-	Array<FramebufferPtr, 2> m_fb;
-
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-
-	TextureResourcePtr m_noiseTex;
-};
-
-/// Volumetric blur pass.
-class VolumetricHBlur : public RenderingPass
-{
-	friend class Volumetric;
-	friend class VolumetricVBlur;
-
-anki_internal:
-	VolumetricHBlur(Renderer* r, Volumetric* vol)
-		: RenderingPass(r)
-		, m_vol(vol)
-	{
-	}
-
-	~VolumetricHBlur()
-	{
-	}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-	void run(RenderingContext& ctx);
-	void setPostRunBarriers(RenderingContext& ctx);
-
-private:
-	Volumetric* m_vol;
-
-	TexturePtr m_rt;
-	FramebufferPtr m_fb;
-
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-};
-
-/// Volumetric blur pass.
-class VolumetricVBlur : public RenderingPass
-{
-	friend class Volumetric;
-
-anki_internal:
-	VolumetricVBlur(Renderer* r, Volumetric* vol)
-		: RenderingPass(r)
-		, m_vol(vol)
-	{
-	}
-
-	~VolumetricVBlur()
-	{
-	}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-	void run(RenderingContext& ctx);
-	void setPostRunBarriers(RenderingContext& ctx);
-
-private:
-	Volumetric* m_vol;
-
-	Array<FramebufferPtr, 2> m_fb;
-
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-};
-
 /// Volumetric effects.
-class Volumetric : public RenderingPass
+class Volumetric : public RendererObject
 {
-	friend class VolumetricMain;
-	friend class VolumetricHBlur;
-	friend class VolumetricVBlur;
-
 public:
 	void setFogParticleColor(const Vec3& col)
 	{
@@ -135,15 +23,9 @@ public:
 	}
 
 anki_internal:
-	VolumetricMain m_main;
-	VolumetricHBlur m_hblur;
-	VolumetricVBlur m_vblur;
 
 	Volumetric(Renderer* r)
-		: RenderingPass(r)
-		, m_main(r, this)
-		, m_hblur(r, this)
-		, m_vblur(r, this)
+		: RendererObject(r)
 	{
 	}
 
@@ -153,13 +35,78 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	TexturePtr getRt() const
-	{
-		return m_main.getRt();
-	}
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
+
+	RenderTargetHandle getRt() const;
 
 private:
 	U32 m_width = 0, m_height = 0;
+
+	class
+	{
+	public:
+		Vec3 m_fogParticleColor = Vec3(1.0);
+		Mat3x4 m_prevCameraRot = Mat3x4::getIdentity();
+
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+
+		TextureResourcePtr m_noiseTex;
+	} m_main; ///< Main noisy pass.
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+	} m_hblur; ///< Horizontal blur.
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+	} m_vblur; ///< Vertical blur.
+
+	class
+	{
+	public:
+		Array<RenderTargetHandle, 2> m_rts;
+		const RenderingContext* m_ctx = nullptr;
+	} m_runCtx; ///< Runtime context.
+
+	Array<TexturePtr, 2> m_rtTextures;
+	FramebufferDescription m_fbDescr;
+
+	ANKI_USE_RESULT Error initMain(const ConfigSet& set);
+	ANKI_USE_RESULT Error initVBlur(const ConfigSet& set);
+	ANKI_USE_RESULT Error initHBlur(const ConfigSet& set);
+
+	void runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void runHBlur(RenderPassWorkContext& rgraphCtx);
+	void runVBlur(RenderPassWorkContext& rgraphCtx);
+
+	/// A RenderPassWorkCallback for SSAO main pass.
+	static void runMainCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Volumetric* const self = scast<Volumetric*>(rgraphCtx.m_userData);
+		self->runMain(*self->m_runCtx.m_ctx, rgraphCtx);
+	}
+
+	/// A RenderPassWorkCallback for SSAO HBlur.
+	static void runHBlurCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Volumetric* const self = scast<Volumetric*>(rgraphCtx.m_userData);
+		self->runHBlur(rgraphCtx);
+	}
+
+	/// A RenderPassWorkCallback for SSAO VBlur.
+	static void runVBlurCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Volumetric* const self = scast<Volumetric*>(rgraphCtx.m_userData);
+		self->runVBlur(rgraphCtx);
+	}
 };
 /// @}
 

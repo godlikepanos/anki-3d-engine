@@ -90,15 +90,13 @@ class TransferGpuAllocator
 public:
 	static const U FRAME_COUNT = 3;
 	static const PtrSize CHUNK_INITIAL_SIZE = 64_MB;
-	static constexpr F64 MAX_FENCE_WAIT_TIME = 500.0_ms;
+	static constexpr Second MAX_FENCE_WAIT_TIME = 500.0_ms;
 
 	TransferGpuAllocator();
 
 	~TransferGpuAllocator();
 
 	ANKI_USE_RESULT Error init(PtrSize maxSize, GrManager* gr, ResourceAllocator<U8> alloc);
-
-	void destroy();
 
 	/// Allocate some transfer memory. If there is not enough memory it will block until some is releaced. It's
 	/// threadsafe.
@@ -129,7 +127,7 @@ private:
 	ConditionVariable m_condVar;
 	Array<Frame, FRAME_COUNT> m_frames;
 	U8 m_frameCount = 0;
-	PtrSize m_crntFrameAllocatedSize;
+	PtrSize m_crntFrameAllocatedSize = 0;
 };
 /// @}
 

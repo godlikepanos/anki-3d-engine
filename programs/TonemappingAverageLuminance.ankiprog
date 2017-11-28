@@ -28,6 +28,7 @@ const uint PIXEL_READ_Y = INPUT_TEX_SIZE.y / WORKGROUP_SIZE_Y;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
 
+#define TONEMAPPING_RESOURCE_AS_BUFFER 1
 #include "shaders/TonemappingResources.glsl"
 
 shared float g_avgLum[WORKGROUP_SIZE];
@@ -78,17 +79,21 @@ void main()
 #else
 		float crntLum = g_avgLum[0] / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y);
 #endif
-		crntLum = max(crntLum, 0.04);
 
 #if 1
 		float prevLum = u_averageLuminance;
 
 		// Lerp between previous and new L value
 		const float INTERPOLATION_FACTOR = 0.05;
-		u_averageLuminance = mix(prevLum, crntLum, INTERPOLATION_FACTOR);
+		float finalAvgLum = mix(prevLum, crntLum, INTERPOLATION_FACTOR);
 #else
-		u_averageLuminance = crntLum;
+		float finalAvgLum = crntLum;
 #endif
+
+		// This is a workaround because sometimes the avg lum becomes nan
+		finalAvgLum = clamp(finalAvgLum, EPSILON, FLT_MAX);
+
+		u_averageLuminance = finalAvgLum;
 		u_exposureThreshold0 = computeExposure(u_averageLuminance, 0.0);
 	}
 }

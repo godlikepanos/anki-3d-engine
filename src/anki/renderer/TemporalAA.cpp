@@ -13,7 +13,7 @@ namespace anki
 {
 
 TemporalAA::TemporalAA(Renderer* r)
-	: RenderingPass(r)
+	: RendererObject(r)
 {
 }
 
@@ -43,64 +43,63 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 
 	for(U i = 0; i < 2; ++i)
 	{
-		m_rts[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
+		m_rtTextures[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 			m_r->getHeight(),
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::LINEAR,
-			1,
-			"taa"));
-
-		FramebufferInitInfo fbInit("taa");
-		fbInit.m_colorAttachmentCount = 1;
-		fbInit.m_colorAttachments[0].m_texture = m_rts[i];
-		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		m_fbs[i] = getGrManager().newInstance<Framebuffer>(fbInit);
+			"TemporalAA"));
 	}
+
+	m_fbDescr.m_colorAttachmentCount = 1;
+	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_fbDescr.bake();
 
 	return Error::NONE;
 }
 
-void TemporalAA::setPreRunBarriers(RenderingContext& ctx)
+void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rts[m_r->getFrameCount() & 1],
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-void TemporalAA::run(RenderingContext& ctx)
-{
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
-	cmdb->beginRenderPass(m_fbs[m_r->getFrameCount() & 1]);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTextureAndSampler(0, 0, m_r->getGBuffer().m_depthRt, m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
-	cmdb->informTextureCurrentUsage(m_rts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTextureAndSampler(0, 2, m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
-	cmdb->bindStorageBuffer(0, 0, m_r->getTonemapping().m_luminanceBuff, 0, MAX_PTR_SIZE);
+	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getGBuffer().getDepthRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0, 2, m_runCtx.m_historyRt, m_r->getLinearSampler());
 
 	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
 	*unis = ctx.m_jitterMat * ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();
 
-	m_r->drawQuad(cmdb);
-	cmdb->endRenderPass();
+	rgraphCtx.bindUniformBuffer(0, 1, m_r->getTonemapping().getAverageLuminanceBuffer());
+
+	drawQuad(cmdb);
 }
 
-void TemporalAA::setPostRunBarriers(RenderingContext& ctx)
+void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rts[m_r->getFrameCount() & 1],
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
+	m_runCtx.m_ctx = &ctx;
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-TexturePtr TemporalAA::getRt() const
-{
-	return m_rts[m_r->getFrameCount() & 1];
+	// Import RTs
+	m_runCtx.m_historyRt = rgraph.importRenderTarget(
+		"TemporalAA hist", m_rtTextures[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
+	m_runCtx.m_renderRt =
+		rgraph.importRenderTarget("TemporalAA", m_rtTextures[m_r->getFrameCount() & 1], TextureUsageBit::NONE);
+
+	// Create pass
+	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("TemporalAA");
+
+	pass.setWork(runCallback, this, 0);
+	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_renderRt}}, {});
+
+	pass.newConsumer({m_runCtx.m_renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT, DepthStencilAspectBit::DEPTH});
+	pass.newConsumer({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_FRAGMENT});
+
+	pass.newProducer({m_runCtx.m_renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 }
 
 } // end namespace anki

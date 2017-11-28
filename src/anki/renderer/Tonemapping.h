@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -14,26 +14,47 @@ namespace anki
 /// @{
 
 /// Tonemapping.
-class Tonemapping : public RenderingPass
+class Tonemapping : public RendererObject
 {
 anki_internal:
-	BufferPtr m_luminanceBuff;
-
 	Tonemapping(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
-	void run(RenderingContext& ctx);
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
+
+	RenderPassBufferHandle getAverageLuminanceBuffer() const
+	{
+		return m_runCtx.m_buffHandle;
+	}
 
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	U8 m_rtIdx;
 
+	BufferPtr m_luminanceBuff;
+
+	class
+	{
+	public:
+		RenderPassBufferHandle m_buffHandle;
+	} m_runCtx;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+
+	void run(RenderPassWorkContext& rgraphCtx);
+
+	/// A RenderPassWorkCallback to run the compute pass.
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Tonemapping* const self = scast<Tonemapping*>(rgraphCtx.m_userData);
+		self->run(rgraphCtx);
+	}
 };
 /// @}
 

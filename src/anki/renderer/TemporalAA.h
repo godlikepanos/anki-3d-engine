@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -14,29 +14,47 @@ namespace anki
 /// @{
 
 /// Temporal AA resolve.
-class TemporalAA : public RenderingPass
+class TemporalAA : public RendererObject
 {
 public:
 	TemporalAA(Renderer* r);
 
 	~TemporalAA();
 
-	TexturePtr getRt() const;
-
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
-	void setPreRunBarriers(RenderingContext& ctx);
-	void run(RenderingContext& ctx);
-	void setPostRunBarriers(RenderingContext& ctx);
+	void populateRenderGraph(RenderingContext& ctx);
+
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_renderRt;
+	}
 
 private:
-	Array<TexturePtr, 2> m_rts;
-	Array<FramebufferPtr, 2> m_fbs;
+	Array<TexturePtr, 2> m_rtTextures;
+	FramebufferDescription m_fbDescr;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
+	class
+	{
+	public:
+		RenderingContext* m_ctx = nullptr;
+		RenderTargetHandle m_renderRt;
+		RenderTargetHandle m_historyRt;
+	} m_runCtx;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+
+	/// A RenderPassWorkCallback for the AA pass.
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		TemporalAA* const self = scast<TemporalAA*>(rgraphCtx.m_userData);
+		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
+	}
 };
 /// @}
 

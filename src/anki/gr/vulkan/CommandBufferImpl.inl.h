@@ -151,10 +151,10 @@ inline void CommandBufferImpl::setTextureBarrierRange(
 inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {
-	if(surf.m_level > 0)
+	if(ANKI_UNLIKELY(surf.m_level > 0 && nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
 	{
-		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
-			&& "This transition happens inside CommandBufferImpl::generateMipmapsX");
+		// This transition happens inside CommandBufferImpl::generateMipmapsX. No need to do something
+		return;
 	}
 
 	const TextureImpl& impl = *tex->m_impl;
@@ -163,8 +163,6 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(surf, impl.m_akAspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
-
-	impl.updateTracker(surf, nextUsage, m_texUsageTracker);
 }
 
 inline void CommandBufferImpl::setTextureVolumeBarrier(
@@ -182,8 +180,6 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(vol, impl.m_akAspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
-
-	impl.updateTracker(vol, nextUsage, m_texUsageTracker);
 }
 
 inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
@@ -521,22 +517,17 @@ inline void CommandBufferImpl::drawcallCommon()
 	{
 		const Bool flipvp = flipViewport();
 
-		const I minx = m_viewport[0];
-		const I miny = m_viewport[1];
-		const I maxx = m_viewport[2];
-		const I maxy = m_viewport[3];
-
 		U32 fbWidth, fbHeight;
 		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
 
-		VkViewport s;
-		s.x = minx;
-		s.y = (flipvp) ? (fbHeight - miny) : miny; // Move to the bottom;
-		s.width = maxx - minx;
-		s.height = (flipvp) ? -(maxy - miny) : (maxy - miny);
-		s.minDepth = 0.0;
-		s.maxDepth = 1.0;
-		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
+		VkViewport vp = computeViewport(&m_viewport[0], fbWidth, fbHeight, flipvp);
+
+		// Additional optimization
+		if(memcmp(&vp, &m_lastViewport, sizeof(vp)) != 0)
+		{
+			ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &vp), ANY_OTHER_COMMAND);
+			m_lastViewport = vp;
+		}
 
 		m_viewportDirty = false;
 	}
@@ -544,34 +535,20 @@ inline void CommandBufferImpl::drawcallCommon()
 	// Flush scissor
 	if(ANKI_UNLIKELY(m_scissorDirty))
 	{
-		VkRect2D scissor = {};
+		const Bool flipvp = flipViewport();
 
-		if(m_scissor[0] == 0 && m_scissor[1] == 0 && m_scissor[2] == MAX_U16 && m_scissor[3] == MAX_U16)
+		U32 fbWidth, fbHeight;
+		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
+
+		VkRect2D scissor = computeScissor(&m_scissor[0], fbWidth, fbHeight, flipvp);
+
+		// Additional optimization
+		if(memcmp(&scissor, &m_lastScissor, sizeof(scissor)) != 0)
 		{
-			scissor.extent.width = MAX_U16;
-			scissor.extent.height = MAX_U16;
-			scissor.offset.x = 0;
-			scissor.offset.y = 0;
-		}
-		else
-		{
-			const Bool flipvp = flipViewport();
-
-			U32 fbWidth, fbHeight;
-			m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
-
-			const I minx = min<U>(fbWidth, m_scissor[0]);
-			const I miny = min<U>(fbHeight, m_scissor[1]);
-			const I maxx = min<U>(fbWidth, m_scissor[2]);
-			const I maxy = min<U>(fbHeight, m_scissor[3]);
-
-			scissor.extent.width = maxx - minx;
-			scissor.extent.height = maxy - miny;
-			scissor.offset.x = minx;
-			scissor.offset.y = (flipvp) ? (fbHeight - maxy) : miny;
+			ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
+			m_lastScissor = scissor;
 		}
 
-		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
 		m_scissorDirty = false;
 	}
 
@@ -619,8 +596,6 @@ inline void CommandBufferImpl::lazyInit()
 	m_handle = m_microCmdb->getHandle();
 
 	m_alloc = m_microCmdb->getFastAllocator();
-
-	m_texUsageTracker.init(m_alloc);
 
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
@@ -723,6 +698,8 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 
 inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 {
+	commandCommon();
+
 	ShaderProgramImpl& impl = *prog->m_impl;
 
 	if(impl.isGraphics())
