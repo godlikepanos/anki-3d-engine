@@ -13,6 +13,7 @@
 #include <anki/gr/vulkan/QueryExtra.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/gr/vulkan/CommandBufferFactory.h>
+#include <anki/gr/vulkan/SwapchainFactory.h>
 #include <anki/gr/vulkan/PipelineLayout.h>
 #include <anki/gr/vulkan/PipelineCache.h>
 #include <anki/util/HashMap.h>
@@ -84,40 +85,6 @@ public:
 		return m_fences.newInstance();
 	}
 	/// @}
-
-	VkFormat getDefaultFramebufferSurfaceFormat() const
-	{
-		return m_surfaceFormat;
-	}
-
-	VkImageView getDefaultSurfaceImageView(U idx) const
-	{
-		ANKI_ASSERT(m_backbuffers[idx].m_imageView);
-		return m_backbuffers[idx].m_imageView;
-	}
-
-	VkImage getDefaultSurfaceImage(U idx) const
-	{
-		ANKI_ASSERT(m_backbuffers[idx].m_image);
-		return m_backbuffers[idx].m_image;
-	}
-
-	U getCurrentBackbufferIndex() const
-	{
-		return m_crntBackbufferIdx;
-	}
-
-	U getDefaultSurfaceWidth() const
-	{
-		ANKI_ASSERT(m_surfaceWidth);
-		return m_surfaceWidth;
-	}
-
-	U getDefaultSurfaceHeight() const
-	{
-		ANKI_ASSERT(m_surfaceHeight);
-		return m_surfaceHeight;
-	}
 
 	void flushCommandBuffer(CommandBufferPtr ptr, FencePtr* fence, Bool wait = false);
 
@@ -191,6 +158,22 @@ public:
 		return m_extensions;
 	}
 
+	MicroSwapchainPtr getSwapchain() const
+	{
+		return m_crntSwapchain;
+	}
+
+	VkSurfaceKHR getSurface() const
+	{
+		ANKI_ASSERT(m_surface);
+		return m_surface;
+	}
+
+	U32 getGraphicsQueueIndex() const
+	{
+		return m_queueIdx;
+	}
+
 	void trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const;
 
 	void trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, void* handle) const
@@ -232,13 +215,6 @@ private:
 
 	/// @name Surface_related
 	/// @{
-	class Backbuffer
-	{
-	public:
-		VkImage m_image = VK_NULL_HANDLE;
-		VkImageView m_imageView = VK_NULL_HANDLE;
-	};
-
 	class PerFrame
 	{
 	public:
@@ -250,12 +226,9 @@ private:
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
-	U32 m_surfaceWidth = 0, m_surfaceHeight = 0;
-	VkFormat m_surfaceFormat = VK_FORMAT_UNDEFINED;
-	VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
+	MicroSwapchainPtr m_crntSwapchain;
+
 	Array<PerFrame, MAX_FRAMES_IN_FLIGHT> m_perFrame;
-	Array<Backbuffer, MAX_FRAMES_IN_FLIGHT> m_backbuffers;
-	U32 m_crntBackbufferIdx = 0;
 	/// @}
 
 	/// @name Memory
@@ -272,6 +245,8 @@ private:
 	SemaphoreFactory m_semaphores;
 	DeferredBarrierFactory m_barrierFactory;
 	/// @}
+
+	SwapchainFactory m_swapchainFactory;
 
 	PipelineLayoutFactory m_pplineLayoutFactory;
 
@@ -294,7 +269,6 @@ private:
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initSurface(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initDevice(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initSwapchain(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initFramebuffers(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initMemory(const ConfigSet& cfg);
 

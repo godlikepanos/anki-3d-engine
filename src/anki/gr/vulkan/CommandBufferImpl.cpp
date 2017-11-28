@@ -67,6 +67,7 @@ void CommandBufferImpl::beginRecording()
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
 		FramebufferImpl& impl = *m_activeFb->m_impl;
+		impl.sync();
 
 		// Calc the layouts
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
@@ -90,7 +91,11 @@ void CommandBufferImpl::beginRecording()
 		}
 		else
 		{
-			inheritance.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
+			MicroSwapchainPtr swapchain;
+			U32 backbufferIdx;
+			impl.getDefaultFramebufferInfo(swapchain, backbufferIdx);
+
+			inheritance.framebuffer = impl.getFramebufferHandle(backbufferIdx);
 		}
 
 		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
@@ -112,6 +117,8 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb,
 
 	m_rpCommandCount = 0;
 	m_activeFb = fb;
+
+	fb->m_impl->sync();
 
 	U32 fbWidth, fbHeight;
 	fb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
@@ -180,9 +187,12 @@ void CommandBufferImpl::beginRenderPassInternal()
 		// Bind the default FB
 		m_renderedToDefaultFb = true;
 
-		bi.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
-		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> dummy;
-		bi.renderPass = impl.getRenderPassHandle(dummy, VK_IMAGE_LAYOUT_MAX_ENUM);
+		MicroSwapchainPtr swapchain;
+		U32 backbufferIdx;
+		impl.getDefaultFramebufferInfo(swapchain, backbufferIdx);
+
+		bi.framebuffer = impl.getFramebufferHandle(backbufferIdx);
+		bi.renderPass = impl.getRenderPassHandle({}, VK_IMAGE_LAYOUT_MAX_ENUM);
 
 		// Perform the transition
 		setImageBarrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -191,7 +201,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getCurrentBackbufferIndex()),
+			swapchain->m_images[backbufferIdx],
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
@@ -223,13 +233,17 @@ void CommandBufferImpl::endRenderPass()
 	// Default FB barrier/transition
 	if(m_activeFb->m_impl->isDefaultFramebuffer())
 	{
+		MicroSwapchainPtr swapchain;
+		U32 backbufferIdx;
+		m_activeFb->m_impl->getDefaultFramebufferInfo(swapchain, backbufferIdx);
+
 		setImageBarrier(VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 			VK_ACCESS_MEMORY_READ_BIT,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getCurrentBackbufferIndex()),
+			swapchain->m_images[backbufferIdx],
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
