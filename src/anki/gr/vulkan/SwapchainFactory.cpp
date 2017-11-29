@@ -280,102 +280,25 @@ GrAllocator<U8> MicroSwapchain::getAllocator() const
 	return m_factory->m_gr->getAllocator();
 }
 
-void SwapchainFactory::destroy()
-{
-	LockGuard<Mutex> lock(m_mtx);
-
-	U count = m_swapchainCount;
-	while(count--)
-	{
-		if(m_swapchains[count]->m_fence)
-		{
-			ANKI_ASSERT(m_swapchains[count]->m_fence->done());
-		}
-
-		m_gr->getAllocator().deleteInstance(m_swapchains[count]);
-#if ANKI_EXTRA_CHECKS
-		--m_swapchainsInFlight;
-#endif
-	}
-
-	m_swapchains.destroy(m_gr->getAllocator());
-
-	ANKI_ASSERT(m_swapchainsInFlight == 0 && "Wrong destroy order");
-}
-
 MicroSwapchainPtr SwapchainFactory::newInstance()
 {
-	LockGuard<Mutex> lock(m_mtx);
-
-	MicroSwapchain* out = nullptr;
-
-	if(m_swapchainCount > 0)
-	{
-		releaseFences();
-
-		U count = m_swapchainCount;
-		while(count--)
-		{
-			if(!m_swapchains[count]->m_fence)
-			{
-				out = m_swapchains[count];
-
-				// Pop it
-				for(U i = count; i < m_swapchainCount - 1; ++i)
-				{
-					m_swapchains[i] = m_swapchains[i + 1];
-				}
-
-				--m_swapchainCount;
-
-				break;
-			}
-		}
-	}
+	MicroSwapchain* out = m_recycler.findToReuse();
 
 	if(out == nullptr)
 	{
 		// Create a new one
 		out = m_gr->getAllocator().newInstance<MicroSwapchain>(this);
-#if ANKI_EXTRA_CHECKS
-		++m_swapchainsInFlight;
-#endif
 	}
 
-	ANKI_ASSERT(out->m_refcount.get() == 0);
 	return MicroSwapchainPtr(out);
 }
 
-void SwapchainFactory::releaseFences()
+void SwapchainFactory::init(GrManagerImpl* manager, Bool vsync)
 {
-	U count = m_swapchainCount;
-	while(count--)
-	{
-		MicroSwapchain& schain = *m_swapchains[count];
-		if(schain.m_fence && schain.m_fence->done())
-		{
-			schain.m_fence.reset(nullptr);
-		}
-	}
-}
-
-void SwapchainFactory::destroySwapchain(MicroSwapchain* schain)
-{
-	ANKI_ASSERT(schain);
-	ANKI_ASSERT(schain->m_refcount.get() == 0);
-
-	LockGuard<Mutex> lock(m_mtx);
-
-	releaseFences();
-
-	if(m_swapchains.getSize() <= m_swapchainCount)
-	{
-		// Grow storage
-		m_swapchains.resize(m_gr->getAllocator(), max<U>(1, m_swapchains.getSize() * 2));
-	}
-
-	m_swapchains[m_swapchainCount] = schain;
-	++m_swapchainCount;
+	ANKI_ASSERT(manager);
+	m_gr = manager;
+	m_vsync = vsync;
+	m_recycler.init(m_gr->getAllocator());
 }
 
 } // end namespace anki

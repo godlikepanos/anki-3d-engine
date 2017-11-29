@@ -26,10 +26,28 @@ inline MicroDeferredBarrier::~MicroDeferredBarrier()
 	}
 }
 
+inline GrAllocator<U8> MicroDeferredBarrier::getAllocator() const
+{
+	return m_factory->m_alloc;
+}
+
 inline void MicroDeferredBarrierPtrDeleter::operator()(MicroDeferredBarrier* s)
 {
 	ANKI_ASSERT(s);
-	s->m_factory->destroyBarrier(s);
+	s->m_factory->m_recycler.recycle(s);
+}
+
+inline MicroDeferredBarrierPtr DeferredBarrierFactory::newInstance()
+{
+	MicroDeferredBarrier* out = m_recycler.findToReuse();
+
+	if(out == nullptr)
+	{
+		// Create a new one
+		out = m_alloc.newInstance<MicroDeferredBarrier>(this);
+	}
+
+	return MicroDeferredBarrierPtr(out);
 }
 
 } // end namespace anki

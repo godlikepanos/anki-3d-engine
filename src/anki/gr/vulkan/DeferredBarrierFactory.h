@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/FenceFactory.h>
+#include <anki/gr/vulkan/MicroObjectRecycler.h>
 
 namespace anki
 {
@@ -45,6 +46,11 @@ public:
 		m_fence = f;
 	}
 
+	MicroFencePtr& getFence()
+	{
+		return m_fence;
+	}
+
 private:
 	VkEvent m_handle = VK_NULL_HANDLE;
 	Atomic<U32> m_refcount = {0};
@@ -78,20 +84,19 @@ public:
 		m_dev = dev;
 	}
 
-	void destroy();
+	void destroy()
+	{
+		m_recycler.destroy();
+	}
 
 	MicroDeferredBarrierPtr newInstance();
 
 private:
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
-	DynamicArray<MicroDeferredBarrier*> m_barriers;
-	U32 m_barrierCount = 0;
-	Mutex m_mtx;
+	MicroObjectRecycler<MicroDeferredBarrier> m_recycler;
 
 	void destroyBarrier(MicroDeferredBarrier* barrier);
-
-	void releaseFences();
 };
 /// @}
 

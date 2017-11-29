@@ -30,10 +30,35 @@ inline MicroSemaphore::~MicroSemaphore()
 	}
 }
 
+inline GrAllocator<U8> MicroSemaphore::getAllocator() const
+{
+	return m_factory->m_alloc;
+}
+
 inline void MicroSemaphorePtrDeleter::operator()(MicroSemaphore* s)
 {
 	ANKI_ASSERT(s);
-	s->m_factory->destroySemaphore(s);
+	s->m_factory->m_recycler.recycle(s);
+}
+
+inline MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence)
+{
+	ANKI_ASSERT(fence);
+
+	MicroSemaphore* out = m_recycler.findToReuse();
+
+	if(out == nullptr)
+	{
+		// Create a new one
+		out = m_alloc.newInstance<MicroSemaphore>(this, fence);
+	}
+	else
+	{
+		out->m_fence = fence;
+	}
+
+	ANKI_ASSERT(out->m_refcount.get() == 0);
+	return MicroSemaphorePtr(out);
 }
 
 } // end namespace anki

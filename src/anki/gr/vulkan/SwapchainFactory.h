@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/FenceFactory.h>
+#include <anki/gr/vulkan/MicroObjectRecycler.h>
 #include <anki/util/Ptr.h>
 
 namespace anki
@@ -54,6 +55,11 @@ public:
 		m_fence = fence;
 	}
 
+	MicroFencePtr& getFence()
+	{
+		return m_fence;
+	}
+
 	VkRenderPass getRenderPass(VkAttachmentLoadOp loadOp) const
 	{
 		const U idx = (loadOp == VK_ATTACHMENT_LOAD_OP_DONT_CARE) ? RPASS_LOAD_DONT_CARE : RPASS_LOAD_CLEAR;
@@ -95,39 +101,26 @@ class SwapchainFactory
 	friend class MicroSwapchain;
 
 public:
-	void init(GrManagerImpl* manager, Bool vsync)
-	{
-		ANKI_ASSERT(manager);
-		m_gr = manager;
-		m_vsync = vsync;
-	}
+	void init(GrManagerImpl* manager, Bool vsync);
 
-	void destroy();
+	void destroy()
+	{
+		m_recycler.destroy();
+	}
 
 	MicroSwapchainPtr newInstance();
 
 private:
 	GrManagerImpl* m_gr = nullptr;
 	Bool8 m_vsync = false;
-
-	Mutex m_mtx;
-
-	DynamicArray<MicroSwapchain*> m_swapchains;
-	U32 m_swapchainCount = 0;
-#if ANKI_EXTRA_CHECKS
-	U32 m_swapchainsInFlight = 0;
-#endif
-
-	void destroySwapchain(MicroSwapchain* schain);
-
-	void releaseFences();
+	MicroObjectRecycler<MicroSwapchain> m_recycler;
 };
 /// @}
 
 inline void MicroSwapchainPtrDeleter::operator()(MicroSwapchain* s)
 {
 	ANKI_ASSERT(s);
-	s->m_factory->destroySwapchain(s);
+	s->m_factory->m_recycler.recycle(s);
 }
 
 } // end namespace anki

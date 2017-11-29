@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/FenceFactory.h>
+#include <anki/gr/vulkan/MicroObjectRecycler.h>
 
 namespace anki
 {
@@ -36,6 +37,11 @@ public:
 	Atomic<U32>& getRefcount()
 	{
 		return m_refcount;
+	}
+
+	MicroFencePtr& getFence()
+	{
+		return m_fence;
 	}
 
 private:
@@ -73,23 +79,20 @@ public:
 		ANKI_ASSERT(dev);
 		m_alloc = alloc;
 		m_dev = dev;
+		m_recycler.init(alloc);
 	}
 
-	void destroy();
+	void destroy()
+	{
+		m_recycler.destroy();
+	}
 
 	MicroSemaphorePtr newInstance(MicroFencePtr fence);
 
 private:
 	GrAllocator<U8> m_alloc;
-	DynamicArray<MicroSemaphore*> m_sems;
-	U32 m_semCount = 0;
 	VkDevice m_dev = VK_NULL_HANDLE;
-	Mutex m_mtx;
-
-	void destroySemaphore(MicroSemaphore* s);
-
-	/// Iterate the semaphores and release the fences.
-	void releaseFences();
+	MicroObjectRecycler<MicroSemaphore> m_recycler;
 };
 /// @}
 
