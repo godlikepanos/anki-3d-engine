@@ -600,7 +600,7 @@ class RenderGraph final : public GrObject
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::RENDER_GRAPH;
 
-	RenderGraph(GrManager* manager, U64 hash, GrObjectCache* cache);
+	RenderGraph(GrManager* manager);
 
 	// Non-copyable
 	RenderGraph(const RenderGraph&) = delete;

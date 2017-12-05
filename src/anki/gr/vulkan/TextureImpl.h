@@ -8,6 +8,7 @@
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
 #include <anki/gr/common/Misc.h>
+#include <anki/gr/vulkan/SamplerFactory.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -32,7 +33,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
 class TextureImpl : public VulkanObject
 {
 public:
-	SamplerPtr m_sampler;
+	MicroSamplerPtr m_sampler;
 
 	VkImage m_imageHandle = VK_NULL_HANDLE;
 

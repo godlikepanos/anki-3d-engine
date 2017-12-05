@@ -15,7 +15,6 @@ namespace anki
 
 // Forward
 class GrObject;
-class GrObjectCache;
 
 class GrManager;
 class GrManagerImpl;
@@ -73,13 +72,12 @@ ANKI_GR_CLASS(RenderGraph)
 
 #undef ANKI_GR_CLASS
 
-#define ANKI_GR_OBJECT                 \
-	friend class GrManager;            \
-	template<typename, typename>       \
-	friend class IntrusivePtr;         \
-	template<typename, typename>       \
-	friend class GenericPoolAllocator; \
-	friend class GrObjectCache;
+#define ANKI_GR_OBJECT           \
+	friend class GrManager;      \
+	template<typename, typename> \
+	friend class IntrusivePtr;   \
+	template<typename, typename> \
+	friend class GenericPoolAllocator;
 
 /// Knowing the ventor allows some optimizations
 enum class GpuVendor : U8

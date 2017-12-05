@@ -36,7 +36,6 @@ public:
 class GrManager
 {
 	friend class GrManagerImpl;
-	friend class GrObjectCache;
 
 	template<typename>
 	friend class GrObjectPtrDeleter;
@@ -61,18 +60,11 @@ public:
 
 	/// Create a new graphics object.
 	template<typename T, typename... Args>
-	ANKI_USE_RESULT GrObjectPtr<T> newInstanceCached(U64 hash, GrObjectCache* cache, Args&&... args)
-	{
-		GrObjectPtr<T> ptr(m_alloc.newInstance<T>(this, hash, cache));
-		ptr->init(args...);
-		return ptr;
-	}
-
-	/// Create a new graphics object.
-	template<typename T, typename... Args>
 	ANKI_USE_RESULT GrObjectPtr<T> newInstance(Args&&... args)
 	{
-		return newInstanceCached<T>(0, nullptr, args...);
+		GrObjectPtr<T> ptr(m_alloc.newInstance<T>(this));
+		ptr->init(args...);
+		return ptr;
 	}
 
 	/// Call this before calling allocateFrameTransientMemory or tryAllocateFrameTransientMemory to get the exact memory

@@ -10,8 +10,8 @@
 namespace anki
 {
 
-ShaderProgram::ShaderProgram(GrManager* manager, U64 hash, GrObjectCache* cache)
-	: GrObject(manager, CLASS_TYPE, hash, cache)
+ShaderProgram::ShaderProgram(GrManager* manager)
+	: GrObject(manager, CLASS_TYPE)
 {
 }
 

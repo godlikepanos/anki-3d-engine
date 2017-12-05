@@ -10,7 +10,6 @@
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/common/Misc.h>
-#include <anki/gr/GrObjectCache.h>
 
 namespace anki
 {
@@ -54,7 +53,8 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	TextureInitInfo init = init_;
 	init.m_sampling.setName(init.getName());
 	ANKI_ASSERT(textureInitInfoValid(init));
-	m_sampler = getGrManagerImpl().getSamplerCache().newInstance<Sampler>(init.m_sampling);
+
+	ANKI_CHECK(getGrManagerImpl().getSamplerFactory().newInstance(init.m_sampling, m_sampler));
 
 	// Set some stuff
 	m_width = init.m_width;

@@ -28,8 +28,8 @@
 namespace anki
 {
 
-CommandBuffer::CommandBuffer(GrManager* manager, U64 hash, GrObjectCache* cache)
-	: GrObject(manager, CLASS_TYPE, hash, cache)
+CommandBuffer::CommandBuffer(GrManager* manager)
+	: GrObject(manager, CLASS_TYPE)
 {
 }
 

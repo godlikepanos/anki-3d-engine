@@ -9,8 +9,8 @@
 namespace anki
 {
 
-Fence::Fence(GrManager* manager, U64 hash, GrObjectCache* cache)
-	: GrObject(manager, CLASS_TYPE, hash, cache)
+Fence::Fence(GrManager* manager)
+	: GrObject(manager, CLASS_TYPE)
 {
 }
 

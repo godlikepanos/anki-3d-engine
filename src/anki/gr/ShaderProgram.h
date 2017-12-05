@@ -24,7 +24,7 @@ anki_internal:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER_PROGRAM;
 
 	/// Construct.
-	ShaderProgram(GrManager* manager, U64 hash, GrObjectCache* cache);
+	ShaderProgram(GrManager* manager);
 
 	/// Destroy.
 	~ShaderProgram();

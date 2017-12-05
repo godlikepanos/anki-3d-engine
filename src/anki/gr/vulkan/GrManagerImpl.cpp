@@ -7,7 +7,6 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/CommandBuffer.h>
-#include <anki/gr/GrObjectCache.h>
 #include <anki/gr/Fence.h>
 #include <anki/gr/vulkan/FenceImpl.h>
 
@@ -37,11 +36,6 @@ GrManagerImpl::~GrManagerImpl()
 		x.m_renderSemaphore.reset(nullptr);
 	}
 
-	if(m_samplerCache)
-	{
-		getAllocator().deleteInstance(m_samplerCache);
-	}
-
 	m_crntSwapchain.reset(nullptr);
 
 	// THIRD THING: Continue with the rest
@@ -50,12 +44,14 @@ GrManagerImpl::~GrManagerImpl()
 	m_barrierFactory.destroy(); // Destroy before fences
 	m_semaphores.destroy(); // Destroy before fences
 	m_swapchainFactory.destroy(); // Destroy before fences
-	m_fences.destroy();
+	m_samplerFactory.destroy(); // Destroy before fences
 
 	m_pplineLayoutFactory.destroy();
 	m_descrFactory.destroy();
 
 	m_pplineCache.destroy(m_device, m_physicalDevice, getAllocator());
+
+	m_fences.destroy();
 
 	if(m_device)
 	{
@@ -133,11 +129,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	glslang::InitializeProcess();
 	m_fences.init(getAllocator(), m_device);
 	m_semaphores.init(getAllocator(), m_device);
+	m_samplerFactory.init(this);
 	m_barrierFactory.init(getAllocator(), m_device);
-
 	m_queryAlloc.init(getAllocator(), m_device);
-
-	m_samplerCache = getAllocator().newInstance<GrObjectCache>(m_manager);
 
 	// Set m_r8g8b8ImagesSupported
 	{
@@ -723,7 +717,7 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 	// Create fence
 	if(outFence)
 	{
-		outFence->reset(getAllocator().newInstance<Fence>(m_manager, 0, nullptr));
+		outFence->reset(getAllocator().newInstance<Fence>(m_manager));
 		(*outFence)->m_impl.reset(getAllocator().newInstance<FenceImpl>(m_manager));
 		(*outFence)->m_impl->m_fence = fence;
 	}

@@ -55,7 +55,7 @@ anki_internal:
 	UniquePtr<BufferImpl> m_impl;
 
 	/// Construct.
-	Buffer(GrManager* manager, U64 hash, GrObjectCache* cache);
+	Buffer(GrManager* manager);
 
 	/// Destroy.
 	~Buffer();

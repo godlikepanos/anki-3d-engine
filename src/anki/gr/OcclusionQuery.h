@@ -24,7 +24,7 @@ anki_internal:
 	static const GrObjectType CLASS_TYPE = GrObjectType::OCCLUSION_QUERY;
 
 	/// Construct.
-	OcclusionQuery(GrManager* manager, U64 hash, GrObjectCache* cache);
+	OcclusionQuery(GrManager* manager);
 
 	/// Destroy.
 	~OcclusionQuery();

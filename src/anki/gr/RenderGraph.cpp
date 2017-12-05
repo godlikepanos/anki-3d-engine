@@ -242,8 +242,8 @@ void FramebufferDescription::bake()
 	ANKI_ASSERT(m_hash != 0 && m_hash != 1);
 }
 
-RenderGraph::RenderGraph(GrManager* manager, U64 hash, GrObjectCache* cache)
-	: GrObject(manager, CLASS_TYPE, hash, cache)
+RenderGraph::RenderGraph(GrManager* manager)
+	: GrObject(manager, CLASS_TYPE)
 {
 	ANKI_ASSERT(manager);
 }

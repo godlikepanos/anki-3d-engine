@@ -10,6 +10,7 @@
 #include <anki/gr/vulkan/SemaphoreFactory.h>
 #include <anki/gr/vulkan/DeferredBarrierFactory.h>
 #include <anki/gr/vulkan/FenceFactory.h>
+#include <anki/gr/vulkan/SamplerFactory.h>
 #include <anki/gr/vulkan/QueryExtra.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/gr/vulkan/CommandBufferFactory.h>
@@ -84,6 +85,11 @@ public:
 	{
 		return m_fences.newInstance();
 	}
+
+	SamplerFactory& getSamplerFactory()
+	{
+		return m_samplerFactory;
+	}
 	/// @}
 
 	void flushCommandBuffer(CommandBufferPtr ptr, FencePtr* fence, Bool wait = false);
@@ -129,12 +135,6 @@ public:
 	Bool getD24S8ImagesSupported() const
 	{
 		return m_d24S8ImagesSupported;
-	}
-
-	GrObjectCache& getSamplerCache()
-	{
-		ANKI_ASSERT(m_samplerCache);
-		return *m_samplerCache;
 	}
 
 	DescriptorSetFactory& getDescriptorSetFactory()
@@ -244,6 +244,7 @@ private:
 	FenceFactory m_fences;
 	SemaphoreFactory m_semaphores;
 	DeferredBarrierFactory m_barrierFactory;
+	SamplerFactory m_samplerFactory;
 	/// @}
 
 	SwapchainFactory m_swapchainFactory;
@@ -259,8 +260,6 @@ private:
 	Bool8 m_r8g8b8ImagesSupported = false;
 	Bool8 m_s8ImagesSupported = false;
 	Bool8 m_d24S8ImagesSupported = false;
-
-	GrObjectCache* m_samplerCache = nullptr;
 
 	mutable HashMap<U64, StringAuto> m_vkHandleToName;
 	mutable SpinLock m_vkHandleToNameLock;

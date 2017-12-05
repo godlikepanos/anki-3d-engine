@@ -94,7 +94,7 @@ anki_internal:
 	static const GrObjectType CLASS_TYPE = GrObjectType::TEXTURE;
 
 	/// Construct.
-	Texture(GrManager* manager, U64 hash, GrObjectCache* cache);
+	Texture(GrManager* manager);
 
 	/// Destroy.
 	~Texture();

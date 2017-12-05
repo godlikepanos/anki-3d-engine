@@ -89,7 +89,7 @@ anki_internal:
 	static const GrObjectType CLASS_TYPE = GrObjectType::FRAMEBUFFER;
 
 	/// Construct.
-	Framebuffer(GrManager* manager, U64 hash, GrObjectCache* cache);
+	Framebuffer(GrManager* manager);
 
 	/// Destroy.
 	~Framebuffer();

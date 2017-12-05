@@ -285,7 +285,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 			switch(b.m_type)
 			{
 			case DescriptorType::TEXTURE:
-				tex[texCount].sampler = b.m_tex.m_sampler->m_handle;
+				tex[texCount].sampler = b.m_tex.m_sampler->getHandle();
 				tex[texCount].imageView = b.m_tex.m_tex->getOrCreateResourceGroupView(b.m_tex.m_aspect);
 				tex[texCount].imageLayout = b.m_tex.m_layout;
 

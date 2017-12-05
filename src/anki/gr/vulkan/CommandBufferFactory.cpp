@@ -53,6 +53,9 @@ void CommandBufferThreadAllocator::destroyList(IntrusiveList<MicroCommandBuffer>
 		list.popFront();
 		ptr->destroy();
 		getAllocator().deleteInstance(ptr);
+#if ANKI_EXTRA_CHECKS
+		m_createdCmdbs.fetchSub(1);
+#endif
 	}
 }
 
@@ -78,6 +81,8 @@ void CommandBufferThreadAllocator::destroy()
 		vkDestroyCommandPool(m_factory->m_dev, m_pool, nullptr);
 		m_pool = {};
 	}
+
+	ANKI_ASSERT(m_createdCmdbs.load() == 0 && "Someone still holds references to command buffers");
 }
 
 Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& outPtr)
@@ -170,9 +175,14 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		ANKI_VK_CHECK(vkAllocateCommandBuffers(m_factory->m_dev, &ci, &cmdb));
 
 		MicroCommandBuffer* newCmdb = getAllocator().newInstance<MicroCommandBuffer>(this);
+
+#if ANKI_EXTRA_CHECKS
+		m_createdCmdbs.fetchAdd(1);
+#endif
+
 		newCmdb->m_fastAlloc = StackAllocator<U8>(m_factory->m_alloc.getMemoryPool().getAllocationCallback(),
 			m_factory->m_alloc.getMemoryPool().getAllocationCallbackUserData(),
-			(smallBatch) ? (1024 * 1024) : (1024 * 1024),
+			(smallBatch) ? 1_MB : 1_MB,
 			2.0f);
 
 		newCmdb->m_handle = cmdb;

@@ -9,8 +9,8 @@
 namespace anki
 {
 
-Sampler::Sampler(GrManager* manager, U64 hash, GrObjectCache* cache)
-	: GrObject(manager, CLASS_TYPE, hash, cache)
+Sampler::Sampler(GrManager* manager)
+	: GrObject(manager, CLASS_TYPE)
 {
 }
 

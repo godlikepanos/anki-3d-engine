@@ -66,7 +66,7 @@ class TextureBinding
 {
 public:
 	TextureImpl* m_tex = nullptr;
-	SamplerImpl* m_sampler = nullptr;
+	MicroSampler* m_sampler = nullptr;
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 	VkImageLayout m_layout = VK_IMAGE_LAYOUT_MAX_ENUM;
 };
@@ -117,7 +117,7 @@ public:
 		b.m_uuids[0] = b.m_uuids[1] = tex->getUuid();
 
 		b.m_tex.m_tex = tex->m_impl.get();
-		b.m_tex.m_sampler = tex->m_impl->m_sampler->m_impl.get();
+		b.m_tex.m_sampler = tex->m_impl->m_sampler.get();
 		b.m_tex.m_aspect = aspect;
 		b.m_tex.m_layout = layout;
 
@@ -134,7 +134,7 @@ public:
 		b.m_uuids[1] = sampler->getUuid();
 
 		b.m_tex.m_tex = tex->m_impl.get();
-		b.m_tex.m_sampler = sampler->m_impl.get();
+		b.m_tex.m_sampler = sampler->m_impl->m_sampler.get();
 		b.m_tex.m_aspect = aspect;
 		b.m_tex.m_layout = layout;
 

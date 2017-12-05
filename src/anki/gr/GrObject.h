@@ -34,10 +34,8 @@ enum GrObjectType : U16
 /// Base of all graphics objects.
 class GrObject : public NonCopyable
 {
-	friend class GrObjectCache;
-
 public:
-	GrObject(GrManager* manager, GrObjectType type, U64 hash, GrObjectCache* cache);
+	GrObject(GrManager* manager, GrObjectType type);
 
 	virtual ~GrObject();
 
@@ -69,19 +67,11 @@ public:
 		return m_uuid;
 	}
 
-	/// Get a hash if it's part of a cache. If zero then it's not cached.
-	U64 getHash() const
-	{
-		return m_hash;
-	}
-
 private:
 	Atomic<I32> m_refcount;
 	GrManager* m_manager;
 	U64 m_uuid;
-	U64 m_hash;
 	GrObjectType m_type;
-	GrObjectCache* m_cache;
 };
 /// @}
 

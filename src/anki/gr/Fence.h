@@ -30,7 +30,7 @@ anki_internal:
 	UniquePtr<FenceImpl> m_impl;
 
 	/// Construct.
-	Fence(GrManager* manager, U64 hash, GrObjectCache* cache);
+	Fence(GrManager* manager);
 
 	/// Destroy.
 	~Fence();

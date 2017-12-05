@@ -9,8 +9,8 @@
 namespace anki
 {
 
-Texture::Texture(GrManager* manager, U64 hash, GrObjectCache* cache)
-	: GrObject(manager, CLASS_TYPE, hash, cache)
+Texture::Texture(GrManager* manager)
+	: GrObject(manager, CLASS_TYPE)
 {
 }
 

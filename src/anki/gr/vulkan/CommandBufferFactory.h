@@ -139,6 +139,10 @@ private:
 		Mutex m_deletedMtx; ///< Lock because the dallocations may happen anywhere.
 	};
 
+#if ANKI_EXTRA_CHECKS
+	Atomic<U32> m_createdCmdbs = {0};
+#endif
+
 	Array2d<CmdbType, 2, 2> m_types;
 
 	void destroyList(IntrusiveList<MicroCommandBuffer>& list);

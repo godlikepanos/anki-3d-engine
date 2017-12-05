@@ -76,7 +76,7 @@ anki_internal:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER;
 
 	/// Construct.
-	Shader(GrManager* manager, U64 hash, GrObjectCache* cache);
+	Shader(GrManager* manager);
 
 	/// Destroy.
 	~Shader();
