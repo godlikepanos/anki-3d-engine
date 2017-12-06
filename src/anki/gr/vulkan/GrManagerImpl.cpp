@@ -44,7 +44,6 @@ GrManagerImpl::~GrManagerImpl()
 	m_barrierFactory.destroy(); // Destroy before fences
 	m_semaphores.destroy(); // Destroy before fences
 	m_swapchainFactory.destroy(); // Destroy before fences
-	m_samplerFactory.destroy(); // Destroy before fences
 
 	m_pplineLayoutFactory.destroy();
 	m_descrFactory.destroy();
@@ -52,6 +51,8 @@ GrManagerImpl::~GrManagerImpl()
 	m_pplineCache.destroy(m_device, m_physicalDevice, getAllocator());
 
 	m_fences.destroy();
+
+	m_samplerFactory.destroy();
 
 	if(m_device)
 	{
@@ -785,6 +786,28 @@ void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectType
 	}
 }
 
+StringAuto GrManagerImpl::tryGetVulkanHandleName(U64 handle) const
+{
+	StringAuto out(getAllocator());
+
+	LockGuard<SpinLock> lock(m_vkHandleToNameLock);
+
+	auto it = m_vkHandleToName.find(computeHash(&handle, sizeof(handle)));
+	CString objName;
+	if(it != m_vkHandleToName.getEnd())
+	{
+		objName = it->toCString();
+	}
+	else
+	{
+		objName = "Unnamed";
+	}
+
+	out.create(objName);
+
+	return out;
+}
+
 VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
 	VkDebugReportObjectTypeEXT objectType,
 	uint64_t object,
@@ -796,29 +819,19 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
 {
 	// Get the object name
 	GrManagerImpl* self = static_cast<GrManagerImpl*>(pUserData);
-	LockGuard<SpinLock> lock(self->m_vkHandleToNameLock);
-	auto it = self->m_vkHandleToName.find(computeHash(&object, sizeof(object)));
-	CString objName;
-	if(it != self->m_vkHandleToName.getEnd())
-	{
-		objName = it->toCString();
-	}
-	else
-	{
-		objName = "Unnamed";
-	}
+	StringAuto name = self->tryGetVulkanHandleName(object);
 
 	if(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		ANKI_VK_LOGE("%s (handle: %s)", pMessage, objName.cstr());
+		ANKI_VK_LOGE("%s (handle: %s)", pMessage, name.cstr());
 	}
 	else if(flags & (VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT))
 	{
-		ANKI_VK_LOGW("%s (handle: %s)", pMessage, objName.cstr());
+		ANKI_VK_LOGW("%s (handle: %s)", pMessage, name.cstr());
 	}
 	else
 	{
-		ANKI_VK_LOGI("%s (handle: %s)", pMessage, objName.cstr());
+		ANKI_VK_LOGI("%s (handle: %s)", pMessage, name.cstr());
 	}
 
 	return false;

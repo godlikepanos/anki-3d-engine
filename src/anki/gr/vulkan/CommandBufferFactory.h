@@ -52,13 +52,8 @@ public:
 	template<typename T>
 	void pushObjectRef(T& x)
 	{
-		if(m_objectRefs.getSize() <= m_objectRefCount)
-		{
-			// Grow storage
-			m_objectRefs.resize(m_fastAlloc, max<PtrSize>(10, m_objectRefs.getSize() * 2));
-		}
 		GrObject* grobj = x.get();
-		m_objectRefs[m_objectRefCount++] = IntrusivePtr<GrObject>(grobj);
+		m_objectRefs.emplaceBack(m_fastAlloc, IntrusivePtr<GrObject>(grobj));
 	}
 
 	void setFence(MicroFencePtr& fence)
@@ -75,7 +70,6 @@ private:
 	VkCommandBuffer m_handle = {};
 
 	DynamicArray<IntrusivePtr<GrObject>> m_objectRefs;
-	U32 m_objectRefCount = 0;
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 
 	MicroFencePtr m_fence;

@@ -85,6 +85,7 @@ Error Ssao::init(const ConfigSet& config)
 
 	ANKI_R_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
 
+	static const Array<const char*, 2> RT_NAMES = {{"SsaoMain #1", "SsaoMain #2"}};
 	for(U i = 0; i < 2; ++i)
 	{
 		// RT
@@ -93,7 +94,7 @@ Error Ssao::init(const ConfigSet& config)
 			Ssao::RT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
 			SamplingFilter::LINEAR,
-			"ssaomain");
+			&RT_NAMES[i][0]);
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 
 		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit);

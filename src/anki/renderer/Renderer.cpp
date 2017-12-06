@@ -363,7 +363,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 			{
 				TextureSurfaceInfo surf(mip, 0, face, layer);
 
-				FramebufferInitInfo fbInit;
+				FramebufferInitInfo fbInit("RendererClearRT");
 				Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
 				TextureUsageBit dsUsage = TextureUsageBit::NONE;
 

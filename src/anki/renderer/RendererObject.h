@@ -32,7 +32,7 @@ anki_internal:
 	{
 	}
 
-	~RendererObject()
+	virtual ~RendererObject()
 	{
 	}
 

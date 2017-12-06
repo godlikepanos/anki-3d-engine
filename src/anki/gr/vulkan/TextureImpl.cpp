@@ -51,7 +51,11 @@ TextureImpl::~TextureImpl()
 Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 {
 	TextureInitInfo init = init_;
-	init.m_sampling.setName(init.getName());
+
+	// Set a constant name because the name will take part in hashing. If it's unique every time then there is no point
+	// in having the SamplerFactory
+	init.m_sampling.setName("SamplForTex");
+
 	ANKI_ASSERT(textureInitInfoValid(init));
 
 	ANKI_CHECK(getGrManagerImpl().getSamplerFactory().newInstance(init.m_sampling, m_sampler));

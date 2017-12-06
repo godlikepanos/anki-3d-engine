@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/FenceFactory.h>
-#include <anki/gr/vulkan/MicroObjectRecycler.h>
+#include <anki/util/HashMap.h>
 
 namespace anki
 {
@@ -37,19 +37,10 @@ public:
 		return m_refcount;
 	}
 
-	GrAllocator<U8> getAllocator() const;
-
-	MicroFencePtr& getFence()
-	{
-		return m_dummyFence;
-	}
-
 private:
 	VkSampler m_handle = VK_NULL_HANDLE;
 	Atomic<U32> m_refcount = {0};
 	SamplerFactory* m_factory = nullptr;
-
-	MicroFencePtr m_dummyFence; ///< This is a dummy fence to satisfy the interface.
 
 	MicroSampler(SamplerFactory* f)
 		: m_factory(f)
@@ -66,7 +57,11 @@ private:
 class MicroSamplerPtrDeleter
 {
 public:
-	void operator()(MicroSampler* s);
+	void operator()(MicroSampler* s)
+	{
+		ANKI_ASSERT(s);
+		// Do nothing. The samplers will be destroyed at app shutdown
+	}
 };
 
 /// MicroSampler smart pointer.
@@ -76,7 +71,6 @@ using MicroSamplerPtr = IntrusivePtr<MicroSampler, MicroSamplerPtrDeleter>;
 class SamplerFactory
 {
 	friend class MicroSampler;
-	friend class MicroSamplerPtrDeleter;
 
 public:
 	SamplerFactory()
@@ -88,23 +82,18 @@ public:
 		ANKI_ASSERT(m_gr == nullptr && "Forgot to call destroy()");
 	}
 
-	ANKI_USE_RESULT Error init(GrManagerImpl* gr);
+	void init(GrManagerImpl* gr);
 
 	void destroy();
 
-	/// Create a new sampler.
+	/// Create a new sampler. It's thread-safe.
 	ANKI_USE_RESULT Error newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& psampler);
 
 private:
 	GrManagerImpl* m_gr = nullptr;
-	MicroObjectRecycler<MicroSampler> m_recycler;
+	HashMap<U64, MicroSampler*> m_map;
+	Mutex m_mtx;
 };
 /// @}
-
-inline void MicroSamplerPtrDeleter::operator()(MicroSampler* s)
-{
-	ANKI_ASSERT(s);
-	s->m_factory->m_recycler.recycle(s);
-}
 
 } // end namespace anki

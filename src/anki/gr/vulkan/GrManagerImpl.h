@@ -181,6 +181,13 @@ public:
 		trySetVulkanHandleName(name, type, U64(ptrToNumber(handle)));
 	}
 
+	StringAuto tryGetVulkanHandleName(U64 handle) const;
+
+	StringAuto tryGetVulkanHandleName(void* handle) const
+	{
+		return tryGetVulkanHandleName(U64(ptrToNumber(handle)));
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 

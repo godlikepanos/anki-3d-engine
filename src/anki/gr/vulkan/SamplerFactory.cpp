@@ -17,11 +17,6 @@ MicroSampler::~MicroSampler()
 	}
 }
 
-GrAllocator<U8> MicroSampler::getAllocator() const
-{
-	return m_factory->m_gr->getAllocator();
-}
-
 Error MicroSampler::init(const SamplerInitInfo& inf)
 {
 	// Fill the create cio
@@ -82,19 +77,31 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 	return Error::NONE;
 }
 
-Error SamplerFactory::init(GrManagerImpl* gr)
+void SamplerFactory::init(GrManagerImpl* gr)
 {
 	ANKI_ASSERT(gr);
 	ANKI_ASSERT(!m_gr);
 	m_gr = gr;
-	m_recycler.init(gr->getAllocator());
-
-	return Error::NONE;
 }
 
 void SamplerFactory::destroy()
 {
-	m_recycler.destroy();
+	if(!m_gr)
+	{
+		return;
+	}
+
+	GrAllocator<U8> alloc = m_gr->getAllocator();
+	for(auto it : m_map)
+	{
+		MicroSampler* const sampler = it;
+
+		ANKI_ASSERT(sampler->getRefcount().load() == 0 && "Someone still holds a reference to a sampler");
+		alloc.deleteInstance(sampler);
+	}
+
+	m_map.destroy(alloc);
+
 	m_gr = nullptr;
 }
 
@@ -103,9 +110,18 @@ Error SamplerFactory::newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& p
 	ANKI_ASSERT(m_gr);
 
 	Error err = Error::NONE;
-	MicroSampler* out = m_recycler.findToReuse();
+	MicroSampler* out = nullptr;
+	const U64 hash = inf.computeHash();
 
-	if(out == nullptr)
+	LockGuard<Mutex> lock(m_mtx);
+
+	auto it = m_map.find(hash);
+
+	if(it != m_map.getEnd())
+	{
+		out = *it;
+	}
+	else
 	{
 		// Create a new one
 
@@ -119,11 +135,14 @@ Error SamplerFactory::newInstance(const SamplerInitInfo& inf, MicroSamplerPtr& p
 			alloc.deleteInstance(out);
 			out = nullptr;
 		}
+		else
+		{
+			m_map.emplace(alloc, hash, out);
+		}
 	}
 
 	if(!err)
 	{
-		ANKI_ASSERT(out->m_refcount.get() == 0);
 		psampler.reset(out);
 	}
 

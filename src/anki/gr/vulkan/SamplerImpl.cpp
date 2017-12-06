@@ -10,8 +10,14 @@
 namespace anki
 {
 
-Error SamplerImpl::init(const SamplerInitInfo& inf)
+Error SamplerImpl::init(const SamplerInitInfo& inf_)
 {
+	SamplerInitInfo inf = inf_;
+
+	// Set a constant name because the name will take part in hashing. If it's unique every time then there is no point
+	// in having the SamplerFactory
+	inf.setName("SamplerSampler");
+
 	return getGrManagerImpl().getSamplerFactory().newInstance(inf, m_sampler);
 }
 

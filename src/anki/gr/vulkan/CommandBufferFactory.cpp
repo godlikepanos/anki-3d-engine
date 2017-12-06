@@ -26,7 +26,6 @@ void MicroCommandBuffer::reset()
 	ANKI_ASSERT(!m_fence.isCreated() || m_fence->done());
 
 	m_objectRefs.destroy(m_fastAlloc);
-	m_objectRefCount = 0;
 
 	m_fastAlloc.getMemoryPool().reset();
 

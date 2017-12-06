@@ -150,6 +150,8 @@ public:
 
 	void reset()
 	{
+		m_prog.reset(nullptr);
+
 		// Do a special construction. The state will be hashed and the padding may contain garbage. With this trick
 		// zero the padding
 		memset(this, 0, sizeof(*this));
@@ -525,8 +527,13 @@ private:
 class PipelineFactory
 {
 public:
-	PipelineFactory() = default;
-	~PipelineFactory() = default;
+	PipelineFactory()
+	{
+	}
+
+	~PipelineFactory()
+	{
+	}
 
 	void init(GrAllocator<U8> alloc, VkDevice dev, VkPipelineCache pplineCache)
 	{
