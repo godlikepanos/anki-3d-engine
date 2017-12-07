@@ -92,7 +92,7 @@ Bool PipelineStateTracker::updateHashes()
 	}
 
 	// Depth
-	if(m_dirty.m_depth && m_fbDepth)
+	if(m_fbDepth && m_dirty.m_depth)
 	{
 		m_dirty.m_depth = false;
 		stateDirty = true;
@@ -100,7 +100,7 @@ Bool PipelineStateTracker::updateHashes()
 	}
 
 	// Stencil
-	if(m_dirty.m_stencil && m_fbStencil)
+	if(m_fbStencil && m_dirty.m_stencil)
 	{
 		m_dirty.m_stencil = false;
 		stateDirty = true;
@@ -108,28 +108,29 @@ Bool PipelineStateTracker::updateHashes()
 	}
 
 	// Color
-	if(m_fbColorAttachmentMask.getAny())
+	if(!!m_shaderColorAttachmentWritemask)
 	{
 		ANKI_ASSERT(m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask
 			&& "Shader and fb should have same attachment mask");
-	}
 
-	if(m_dirty.m_color || !!(m_dirty.m_colAttachments & m_shaderColorAttachmentWritemask))
-	{
 		if(m_dirty.m_color)
 		{
+			m_dirty.m_color = false;
 			m_hashes.m_color = m_state.m_color.m_alphaToCoverageEnabled ? 1 : 2;
 			stateDirty = true;
 		}
 
-		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+		if(!!(m_dirty.m_colAttachments & m_shaderColorAttachmentWritemask))
 		{
-			if(m_shaderColorAttachmentWritemask.get(i) && m_dirty.m_colAttachments.get(i))
+			for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
 			{
-				m_dirty.m_colAttachments.unset(i);
-				m_hashes.m_colAttachments[i] =
-					computeHash(&m_state.m_color.m_attachments[i], sizeof(m_state.m_color.m_attachments[i]));
-				stateDirty = true;
+				if(m_shaderColorAttachmentWritemask.get(i) && m_dirty.m_colAttachments.get(i))
+				{
+					m_dirty.m_colAttachments.unset(i);
+					m_hashes.m_colAttachments[i] =
+						computeHash(&m_state.m_color.m_attachments[i], sizeof(m_state.m_color.m_attachments[i]));
+					stateDirty = true;
+				}
 			}
 		}
 	}
@@ -178,10 +179,7 @@ void PipelineStateTracker::updateSuperHash()
 	// Color
 	if(!!m_shaderColorAttachmentWritemask)
 	{
-		if(m_dirty.m_color)
-		{
-			buff[count++] = m_hashes.m_color;
-		}
+		buff[count++] = m_hashes.m_color;
 
 		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
 		{
