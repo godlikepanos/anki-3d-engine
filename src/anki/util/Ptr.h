@@ -425,7 +425,7 @@ private:
 		if(Base::m_ptr)
 		{
 			auto count = Base::m_ptr->getRefcount().fetchSub(1);
-			if(count == 1)
+			if(ANKI_UNLIKELY(count == 1))
 			{
 				TDeleter deleter;
 				deleter(Base::m_ptr);

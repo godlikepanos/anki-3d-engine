@@ -556,7 +556,7 @@ private:
 	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
 
 	HashMap<U64, PipelineInternal, Hasher> m_pplines;
-	Mutex m_pplinesMtx;
+	SpinLock m_pplinesMtx;
 };
 /// @}
 

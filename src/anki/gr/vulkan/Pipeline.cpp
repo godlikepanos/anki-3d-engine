@@ -421,7 +421,7 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline,
 		return;
 	}
 
-	LockGuard<Mutex> lock(m_pplinesMtx);
+	LockGuard<SpinLock> lock(m_pplinesMtx);
 
 	auto it = m_pplines.find(hash);
 	if(it != m_pplines.getEnd())
