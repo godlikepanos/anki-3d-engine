@@ -79,23 +79,27 @@ public:
 };
 
 /// GPU framebuffer.
-class Framebuffer final : public GrObject
+class Framebuffer : public GrObject
 {
 	ANKI_GR_OBJECT
 
-anki_internal:
-	UniquePtr<FramebufferImpl> m_impl;
-
+public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::FRAMEBUFFER;
 
+protected:
 	/// Construct.
-	Framebuffer(GrManager* manager);
+	Framebuffer(GrManager* manager)
+		: GrObject(manager, CLASS_TYPE)
+	{
+	}
 
 	/// Destroy.
-	~Framebuffer();
+	~Framebuffer()
+	{
+	}
 
-	/// Create.
-	void init(const FramebufferInitInfo& init);
+private:
+	static ANKI_USE_RESULT Framebuffer* newInstance(GrManager* manager, const FramebufferInitInfo& init);
 };
 /// @}
 

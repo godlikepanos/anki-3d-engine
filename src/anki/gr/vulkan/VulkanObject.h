@@ -13,37 +13,36 @@ namespace anki
 /// @addtogroup vulkan
 /// @{
 
-/// The base class for all Vulkan object implementations.
+/// Halper class that extends the XXXImpl objects.
+template<typename TBaseClass, typename TImplClass>
 class VulkanObject
 {
 public:
-	VulkanObject(GrManager* manager)
-		: m_manager(manager)
-	{
-		ANKI_ASSERT(manager);
-	}
-
-	virtual ~VulkanObject()
-	{
-	}
-
 	VkDevice getDevice() const;
-
-	GrAllocator<U8> getAllocator() const;
 
 	GrManagerImpl& getGrManagerImpl();
 
 	const GrManagerImpl& getGrManagerImpl() const;
 
-	GrManager& getGrManager()
-	{
-		ANKI_ASSERT(m_manager);
-		return *m_manager;
-	}
-
-protected:
-	GrManager* m_manager = nullptr;
+	/// Convenience method to allocate and initialize an XXXImpl.
+	template<typename TGrManager, typename... TArgs>
+	static ANKI_USE_RESULT TBaseClass* newInstanceHelper(TGrManager* manager, TArgs&&... args);
 };
+
+// Do this trick to avoid including heavy headers
+#define ANKI_INSTANTIATE_GR_OBJECT(type_)                                \
+	template<>                                                           \
+	VkDevice VulkanObject<type_, type_##Impl>::getDevice() const;        \
+	template<>                                                           \
+	GrManagerImpl& VulkanObject<type_, type_##Impl>::getGrManagerImpl(); \
+	template<>                                                           \
+	const GrManagerImpl& VulkanObject<type_, type_##Impl>::getGrManagerImpl() const;
+#define ANKI_INSTANTIATE_GR_OBJECT_DELIMITER()
+#include <anki/gr/common/InstantiationMacros.h>
+#undef ANKI_INSTANTIATE_GR_OBJECT_DELIMITER
+#undef ANKI_INSTANTIATE_GR_OBJECT
 /// @}
 
 } // end namespace anki
+
+#include <anki/gr/vulkan/VulkanObject.inl.h>

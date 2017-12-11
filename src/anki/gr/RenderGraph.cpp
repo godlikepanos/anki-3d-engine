@@ -263,6 +263,11 @@ RenderGraph::~RenderGraph()
 	m_fbCache.destroy(getAllocator());
 }
 
+RenderGraph* RenderGraph::newInstance(GrManager* manager)
+{
+	return manager->getAllocator().newInstance<RenderGraph>(manager);
+}
+
 void RenderGraph::reset()
 {
 	if(!m_ctx)
@@ -332,7 +337,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	{
 		// Create it
 
-		tex = getManager().newInstance<Texture>(initInf);
+		tex = getManager().newTexture(initInf);
 
 		ANKI_ASSERT(entry->m_texturesInUse == entry->m_textures.getSize());
 		entry->m_textures.resize(alloc, entry->m_textures.getSize() + 1);
@@ -395,7 +400,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 			}
 		}
 
-		fb = getManager().newInstance<Framebuffer>(fbInit);
+		fb = getManager().newFramebuffer(fbInit);
 
 		// TODO: Check why the hell it compiles if you remove the parameter "hash"
 		m_fbCache.emplace(getAllocator(), hash, fb);
@@ -629,7 +634,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 					cmdbInit.m_depthStencilAttachmentUsage = outPass.m_dsUsage;
 					for(U cmdbIdx = 0; cmdbIdx < inPass.m_secondLevelCmdbsCount; ++cmdbIdx)
 					{
-						outPass.m_secondLevelCmdbs[cmdbIdx] = getManager().newInstance<CommandBuffer>(cmdbInit);
+						outPass.m_secondLevelCmdbs[cmdbIdx] = getManager().newCommandBuffer(cmdbInit);
 					}
 				}
 			}
@@ -887,7 +892,7 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllo
 	// Create main command buffer
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::COMPUTE_WORK;
-	m_ctx->m_cmdb = getManager().newInstance<CommandBuffer>(cmdbInit);
+	m_ctx->m_cmdb = getManager().newCommandBuffer(cmdbInit);
 
 #if ANKI_DBG_RENDER_GRAPH
 	if(dumpDependencyDotFile(descr, ctx, "./"))

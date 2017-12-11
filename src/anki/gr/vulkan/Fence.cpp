@@ -5,22 +5,19 @@
 
 #include <anki/gr/Fence.h>
 #include <anki/gr/vulkan/FenceImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {
 
-Fence::Fence(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Fence* Fence::newInstance(GrManager* manager)
 {
+	return manager->getAllocator().newInstance<FenceImpl>(manager);
 }
 
-Fence::~Fence()
+Bool Fence::clientWait(Second seconds)
 {
-}
-
-Bool Fence::clientWait(F64 seconds)
-{
-	return m_impl->m_fence->clientWait(seconds);
+	return static_cast<FenceImpl*>(this)->m_fence->clientWait(seconds);
 }
 
 } // end namespace anki

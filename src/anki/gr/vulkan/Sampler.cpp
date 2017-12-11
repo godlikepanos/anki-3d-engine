@@ -5,27 +5,14 @@
 
 #include <anki/gr/Sampler.h>
 #include <anki/gr/vulkan/SamplerImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {
 
-Sampler::Sampler(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Sampler* Sampler::newInstance(GrManager* manager, const SamplerInitInfo& init)
 {
-}
-
-Sampler::~Sampler()
-{
-}
-
-void Sampler::init(const SamplerInitInfo& init)
-{
-	m_impl.reset(getAllocator().newInstance<SamplerImpl>(&getManager()));
-
-	if(m_impl->init(init))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
+	return SamplerImpl::newInstanceHelper(manager, init);
 }
 
 } // end namespace anki

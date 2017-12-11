@@ -44,7 +44,7 @@ public:
 
 	Bool done() const;
 
-	Bool clientWait(F64 seconds);
+	Bool clientWait(Second seconds);
 
 private:
 	VkFence m_handle = VK_NULL_HANDLE;

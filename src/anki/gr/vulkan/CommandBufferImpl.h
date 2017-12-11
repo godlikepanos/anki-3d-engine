@@ -5,11 +5,13 @@
 
 #pragma once
 
+#include <anki/gr/CommandBuffer.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/CommandBufferFactory.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/Texture.h>
 #include <anki/gr/Buffer.h>
+#include <anki/gr/Shader.h>
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
 #include <anki/gr/vulkan/Pipeline.h>
@@ -41,11 +43,14 @@ enum class CommandBufferCommandType : U8
 };
 
 /// Command buffer implementation.
-class CommandBufferImpl : public VulkanObject
+class CommandBufferImpl final : public CommandBuffer, public VulkanObject<CommandBuffer, CommandBufferImpl>
 {
 public:
 	/// Default constructor
-	CommandBufferImpl(GrManager* manager);
+	CommandBufferImpl(GrManager* manager)
+		: CommandBuffer(manager)
+	{
+	}
 
 	~CommandBufferImpl();
 
@@ -81,7 +86,7 @@ public:
 	{
 		commandCommon();
 		m_state.bindVertexBuffer(binding, stride, stepRate);
-		VkBuffer vkbuff = buff->m_impl->getHandle();
+		VkBuffer vkbuff = static_cast<const BufferImpl&>(*buff).getHandle();
 		ANKI_CMD(vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset), ANY_OTHER_COMMAND);
 		m_microCmdb->pushObjectRef(buff);
 	}
@@ -95,7 +100,8 @@ public:
 	void bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
 	{
 		commandCommon();
-		ANKI_CMD(vkCmdBindIndexBuffer(m_handle, buff->m_impl->getHandle(), offset, convertIndexType(type)),
+		ANKI_CMD(vkCmdBindIndexBuffer(
+					 m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset, convertIndexType(type)),
 			ANY_OTHER_COMMAND);
 		m_microCmdb->pushObjectRef(buff);
 	}
@@ -217,9 +223,10 @@ public:
 	{
 		commandCommon();
 		const U realBinding = binding;
-		Texture& tex = *tex_;
-		ANKI_ASSERT((!tex.m_impl->m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
-		const VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
+		const Texture& tex = *tex_;
+		const TextureImpl& teximpl = static_cast<const TextureImpl&>(tex);
+		ANKI_ASSERT((!teximpl.m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
+		const VkImageLayout lay = teximpl.computeLayout(usage, 0);
 		m_dsetState[set].bindTexture(realBinding, &tex, aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);
 	}
@@ -229,9 +236,10 @@ public:
 	{
 		commandCommon();
 		const U realBinding = binding;
-		Texture& tex = *tex_;
-		ANKI_ASSERT((!tex.m_impl->m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
-		const VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
+		const Texture& tex = *tex_;
+		const TextureImpl& teximpl = static_cast<const TextureImpl&>(tex);
+		ANKI_ASSERT((!teximpl.m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
+		const VkImageLayout lay = teximpl.computeLayout(usage, 0);
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);
 		m_microCmdb->pushObjectRef(sampler);

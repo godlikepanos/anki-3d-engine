@@ -352,9 +352,9 @@ const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformForma
 
 static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManager& gr)
 {
-	ShaderPtr vert = gr.newInstance<Shader>(ShaderType::VERTEX, vertSrc);
-	ShaderPtr frag = gr.newInstance<Shader>(ShaderType::FRAGMENT, fragSrc);
-	return gr.newInstance<ShaderProgram>(vert, frag);
+	ShaderPtr vert = gr.newShader(ShaderType::VERTEX, vertSrc);
+	ShaderPtr frag = gr.newShader(ShaderType::FRAGMENT, fragSrc);
+	return gr.newShaderProgram(vert, frag);
 }
 
 static FramebufferPtr createDefaultFb(GrManager& gr)
@@ -363,7 +363,7 @@ static FramebufferPtr createDefaultFb(GrManager& gr)
 	fbinit.m_colorAttachmentCount = 1;
 	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
 
-	return gr.newInstance<Framebuffer>(fbinit);
+	return gr.newFramebuffer(fbinit);
 }
 
 static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
@@ -374,13 +374,13 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 	static const Array<U16, 6 * 2 * 3> idx = {
 		{0, 1, 3, 3, 1, 2, 1, 5, 6, 1, 6, 2, 7, 4, 0, 7, 0, 3, 6, 5, 7, 7, 5, 4, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7}};
 
-	verts = gr.newInstance<Buffer>(BufferInitInfo(sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
+	verts = gr.newBuffer(BufferInitInfo(sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
 
 	void* mapped = verts->map(0, sizeof(pos), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &pos[0], sizeof(pos));
 	verts->unmap();
 
-	indices = gr.newInstance<Buffer>(BufferInitInfo(sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE));
+	indices = gr.newBuffer(BufferInitInfo(sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE));
 	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &idx[0], sizeof(idx));
 	indices->unmap();
@@ -392,7 +392,7 @@ ANKI_TEST(Gr, Shader)
 {
 	COMMON_BEGIN()
 
-	ShaderPtr shader = gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_MRT_SRC);
+	ShaderPtr shader = gr->newShader(ShaderType::FRAGMENT, FRAG_MRT_SRC);
 
 	COMMON_END()
 }
@@ -423,7 +423,7 @@ ANKI_TEST(Gr, ClearScreen)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->beginRenderPass(fb, {}, {});
 		cmdb->endRenderPass();
@@ -460,7 +460,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
@@ -498,7 +498,7 @@ ANKI_TEST(Gr, ViewportAndScissor)
 		fbinit.m_colorAttachmentCount = 1;
 		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{randFloat(1.0), randFloat(1.0), randFloat(1.0), 1.0}};
 
-		f = gr->newInstance<Framebuffer>(fbinit);
+		f = gr->newFramebuffer(fbinit);
 	}
 
 	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, WIDTH / 2, HEIGHT / 2}},
@@ -518,7 +518,7 @@ ANKI_TEST(Gr, ViewportAndScissor)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		U idx = (i / 30) % 4;
 		auto vp = VIEWPORTS[idx];
@@ -577,7 +577,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	init.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
 	init.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
 	init.m_type = TextureType::_2D;
-	TexturePtr rt = gr->newInstance<Texture>(init);
+	TexturePtr rt = gr->newTexture(init);
 
 	Array<FramebufferPtr, 4> fb;
 	for(FramebufferPtr& f : fb)
@@ -587,7 +587,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{randFloat(1.0), randFloat(1.0), randFloat(1.0), 1.0}};
 		fbinit.m_colorAttachments[0].m_texture = rt;
 
-		f = gr->newInstance<Framebuffer>(fbinit);
+		f = gr->newFramebuffer(fbinit);
 	}
 
 	FramebufferPtr defaultFb = createDefaultFb(*gr);
@@ -611,7 +611,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		{
 			CommandBufferInitInfo cinit;
 			cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
-			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 			cmdb->setViewport(0, 0, RT_WIDTH, RT_HEIGHT);
 			cmdb->setTextureSurfaceBarrier(rt,
@@ -629,7 +629,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		// Draw offscreen
 		cmdb->setTextureSurfaceBarrier(rt,
@@ -683,9 +683,9 @@ ANKI_TEST(Gr, Buffer)
 {
 	COMMON_BEGIN()
 
-	BufferPtr a = gr->newInstance<Buffer>(BufferInitInfo(512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE));
+	BufferPtr a = gr->newBuffer(BufferInitInfo(512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE));
 
-	BufferPtr b = gr->newInstance<Buffer>(
+	BufferPtr b = gr->newBuffer(
 		BufferInitInfo(64, BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::WRITE | BufferMapAccessBit::READ));
 
 	void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
@@ -708,8 +708,8 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	COMMON_BEGIN()
 
 	// A non-uploaded buffer
-	BufferPtr b = gr->newInstance<Buffer>(
-		BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::WRITE));
+	BufferPtr b =
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::WRITE));
 
 	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -734,7 +734,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
@@ -779,8 +779,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 	};
 	static_assert(sizeof(Vert) == sizeof(Vec4), "See file");
 
-	BufferPtr b =
-		gr->newInstance<Buffer>(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
+	BufferPtr b = gr->newBuffer(BufferInitInfo(sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
 
 	Vert* ptr = static_cast<Vert*>(b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -794,8 +793,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 	ptr[2].m_color = {{0, 0, 255}};
 	b->unmap();
 
-	BufferPtr c =
-		gr->newInstance<Buffer>(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
+	BufferPtr c = gr->newBuffer(BufferInitInfo(sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE));
 
 	Vec3* otherColor = static_cast<Vec3*>(c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
 
@@ -820,7 +818,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->bindVertexBuffer(0, b, 0, sizeof(Vert));
 		cmdb->bindVertexBuffer(1, c, 0, sizeof(Vec3));
@@ -855,7 +853,7 @@ ANKI_TEST(Gr, Sampler)
 
 	SamplerInitInfo init;
 
-	SamplerPtr b = gr->newInstance<Sampler>(init);
+	SamplerPtr b = gr->newSampler(init);
 
 	COMMON_END()
 }
@@ -878,7 +876,7 @@ ANKI_TEST(Gr, Texture)
 	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	init.m_type = TextureType::_2D;
 
-	TexturePtr b = gr->newInstance<Texture>(init);
+	TexturePtr b = gr->newTexture(init);
 
 	COMMON_END()
 }
@@ -906,7 +904,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	init.m_type = TextureType::_2D;
 
-	TexturePtr a = gr->newInstance<Texture>(init);
+	TexturePtr a = gr->newTexture(init);
 
 	//
 	// Create texture B
@@ -918,7 +916,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::GENERATE_MIPMAPS;
 	init.m_initialUsage = TextureUsageBit::NONE;
 
-	TexturePtr b = gr->newInstance<Texture>(init);
+	TexturePtr b = gr->newTexture(init);
 
 	//
 	// Upload all textures
@@ -978,7 +976,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
-	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
+	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
 	// Set barriers
 	cmdb->setTextureSurfaceBarrier(
@@ -1046,7 +1044,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
@@ -1137,11 +1135,11 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	init.m_type = TextureType::_2D;
 
-	TexturePtr col0 = gr.newInstance<Texture>(init);
-	TexturePtr col1 = gr.newInstance<Texture>(init);
+	TexturePtr col0 = gr.newTexture(init);
+	TexturePtr col1 = gr.newTexture(init);
 
 	init.m_format = DS_FORMAT;
-	TexturePtr dp = gr.newInstance<Texture>(init);
+	TexturePtr dp = gr.newTexture(init);
 
 	//
 	// Create FB
@@ -1156,7 +1154,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	fbinit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 	fbinit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
-	FramebufferPtr fb = gr.newInstance<Framebuffer>(fbinit);
+	FramebufferPtr fb = gr.newFramebuffer(fbinit);
 
 	//
 	// Create default FB
@@ -1188,7 +1186,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
-		CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr.newCommandBuffer(cinit);
 
 		cmdb->setPolygonOffset(0.0, 0.0);
 
@@ -1213,7 +1211,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			CommandBufferInitInfo cinit;
 			cinit.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
 			cinit.m_framebuffer = fb;
-			CommandBufferPtr cmdb2 = gr.newInstance<CommandBuffer>(cinit);
+			CommandBufferPtr cmdb2 = gr.newCommandBuffer(cinit);
 
 			drawOffscreenDrawcalls(gr, prog, cmdb2, TEX_SIZE, indices, verts);
 
@@ -1290,21 +1288,21 @@ ANKI_TEST(Gr, ImageLoadStore)
 	init.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 
-	TexturePtr tex = gr->newInstance<Texture>(init);
+	TexturePtr tex = gr->newTexture(init);
 
 	// Prog
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
 
 	// Create shader & compute prog
-	ShaderPtr shader = gr->newInstance<Shader>(ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC);
-	ShaderProgramPtr compProg = gr->newInstance<ShaderProgram>(shader);
+	ShaderPtr shader = gr->newShader(ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC);
+	ShaderProgramPtr compProg = gr->newShaderProgram(shader);
 
 	// FB
 	FramebufferPtr dfb = createDefaultFb(*gr);
 
 	// Write texture data
 	CommandBufferInitInfo cmdbinit;
-	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
+	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
 	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::CLEAR, TextureSurfaceInfo(0, 0, 0, 0));
 
@@ -1335,7 +1333,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::COMPUTE_WORK;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		// Write image
 		Vec4* col = SET_STORAGE(Vec4*, sizeof(*col), cmdb, 1, 0);
@@ -1400,7 +1398,7 @@ ANKI_TEST(Gr, 3DTextures)
 	init.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
 	init.m_type = TextureType::_3D;
 
-	TexturePtr a = gr->newInstance<Texture>(init);
+	TexturePtr a = gr->newTexture(init);
 
 	//
 	// Upload all textures
@@ -1442,7 +1440,7 @@ ANKI_TEST(Gr, 3DTextures)
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
+	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
 	cmdb->setTextureVolumeBarrier(
 		a, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureVolumeInfo(0));
@@ -1493,7 +1491,7 @@ ANKI_TEST(Gr, 3DTextures)
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->beginRenderPass(dfb, {}, {});
@@ -1542,7 +1540,7 @@ ANKI_TEST(Gr, RenderGraph)
 
 	StackAllocator<U8> alloc(allocAligned, nullptr, 2_MB);
 	RenderGraphDescription descr(alloc);
-	RenderGraphPtr rgraph = gr->newInstance<RenderGraph>();
+	RenderGraphPtr rgraph = gr->newRenderGraph();
 
 	const U GI_MIP_COUNT = 4;
 
@@ -1550,7 +1548,7 @@ ANKI_TEST(Gr, RenderGraph)
 	texI.m_width = texI.m_height = 16;
 	texI.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT;
 	texI.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
-	TexturePtr dummyTex = gr->newInstance<Texture>(texI);
+	TexturePtr dummyTex = gr->newTexture(texI);
 
 	// SM
 	RenderTargetHandle smScratchRt = descr.newRenderTarget(newRTDescr("SM scratch"));

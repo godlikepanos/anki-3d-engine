@@ -174,7 +174,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	init.m_sampling.m_anisotropyLevel = getManager().getTextureAnisotropy();
 
 	// Create the texture
-	m_tex = getManager().getGrManager().newInstance<Texture>(init);
+	m_tex = getManager().getGrManager().newTexture(init);
 
 	// Set the context
 	ctx->m_faces = faces;
@@ -210,7 +210,7 @@ Error TextureResource::load(LoadingContext& ctx)
 
 		CommandBufferInitInfo ci;
 		ci.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
-		CommandBufferPtr cmdb = ctx.m_gr->newInstance<CommandBuffer>(ci);
+		CommandBufferPtr cmdb = ctx.m_gr->newCommandBuffer(ci);
 
 		// Set the barriers of the batch
 		for(U i = begin; i < end; ++i)

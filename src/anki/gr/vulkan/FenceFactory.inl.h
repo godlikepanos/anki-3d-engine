@@ -55,7 +55,7 @@ inline Bool MicroFence::done() const
 	return false;
 }
 
-inline Bool MicroFence::clientWait(F64 seconds)
+inline Bool MicroFence::clientWait(Second seconds)
 {
 	if(seconds == 0.0)
 	{

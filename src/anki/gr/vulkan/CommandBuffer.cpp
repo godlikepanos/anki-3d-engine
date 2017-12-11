@@ -10,23 +10,9 @@
 namespace anki
 {
 
-CommandBuffer::CommandBuffer(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBufferInitInfo& init)
 {
-}
-
-CommandBuffer::~CommandBuffer()
-{
-}
-
-void CommandBuffer::init(CommandBufferInitInfo& inf)
-{
-	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
-
-	if(m_impl->init(inf))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
+	return CommandBufferImpl::newInstanceHelper(manager, init);
 }
 
 CommandBufferInitHints CommandBuffer::computeInitHints() const
@@ -38,11 +24,12 @@ CommandBufferInitHints CommandBuffer::computeInitHints() const
 
 void CommandBuffer::flush(FencePtr* fence)
 {
-	m_impl->endRecording();
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.endRecording();
 
-	if(!m_impl->isSecondLevel())
+	if(!self.isSecondLevel())
 	{
-		m_impl->getGrManagerImpl().flushCommandBuffer(CommandBufferPtr(this), fence);
+		self.getGrManagerImpl().flushCommandBuffer(CommandBufferPtr(this), fence);
 	}
 	else
 	{
@@ -52,58 +39,68 @@ void CommandBuffer::flush(FencePtr* fence)
 
 void CommandBuffer::finish()
 {
-	m_impl->endRecording();
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.endRecording();
 
-	if(!m_impl->isSecondLevel())
+	if(!self.isSecondLevel())
 	{
-		m_impl->getGrManagerImpl().finishCommandBuffer(CommandBufferPtr(this));
+		self.getGrManagerImpl().finishCommandBuffer(CommandBufferPtr(this));
 	}
 }
 
 void CommandBuffer::bindVertexBuffer(
 	U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 {
-	m_impl->bindVertexBuffer(binding, buff, offset, stride, stepRate);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindVertexBuffer(binding, buff, offset, stride, stepRate);
 }
 
 void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
 {
-	m_impl->setVertexAttribute(location, buffBinding, fmt, relativeOffset);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setVertexAttribute(location, buffBinding, fmt, relativeOffset);
 }
 
 void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
 {
-	m_impl->bindIndexBuffer(buff, offset, type);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindIndexBuffer(buff, offset, type);
 }
 
 void CommandBuffer::setPrimitiveRestart(Bool enable)
 {
-	m_impl->setPrimitiveRestart(enable);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setPrimitiveRestart(enable);
 }
 
 void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 {
-	m_impl->setViewport(minx, miny, width, height);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setViewport(minx, miny, width, height);
 }
 
 void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 {
-	m_impl->setScissor(minx, miny, width, height);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setScissor(minx, miny, width, height);
 }
 
 void CommandBuffer::setFillMode(FillMode mode)
 {
-	m_impl->setFillMode(mode);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setFillMode(mode);
 }
 
 void CommandBuffer::setCullMode(FaceSelectionBit mode)
 {
-	m_impl->setCullMode(mode);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setCullMode(mode);
 }
 
 void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 {
-	m_impl->setPolygonOffset(factor, units);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setPolygonOffset(factor, units);
 }
 
 void CommandBuffer::setStencilOperations(FaceSelectionBit face,
@@ -111,85 +108,101 @@ void CommandBuffer::setStencilOperations(FaceSelectionBit face,
 	StencilOperation stencilPassDepthFail,
 	StencilOperation stencilPassDepthPass)
 {
-	m_impl->setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
 }
 
 void CommandBuffer::setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 {
-	m_impl->setStencilCompareOperation(face, comp);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setStencilCompareOperation(face, comp);
 }
 
 void CommandBuffer::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {
-	m_impl->setStencilCompareMask(face, mask);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setStencilCompareMask(face, mask);
 }
 
 void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 {
-	m_impl->setStencilWriteMask(face, mask);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setStencilWriteMask(face, mask);
 }
 
 void CommandBuffer::setStencilReference(FaceSelectionBit face, U32 ref)
 {
-	m_impl->setStencilReference(face, ref);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setStencilReference(face, ref);
 }
 
 void CommandBuffer::setDepthWrite(Bool enable)
 {
-	m_impl->setDepthWrite(enable);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setDepthWrite(enable);
 }
 
 void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 {
-	m_impl->setDepthCompareOperation(op);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setDepthCompareOperation(op);
 }
 
 void CommandBuffer::setAlphaToCoverage(Bool enable)
 {
-	m_impl->setAlphaToCoverage(enable);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setAlphaToCoverage(enable);
 }
 
 void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 {
-	m_impl->setColorChannelWriteMask(attachment, mask);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setColorChannelWriteMask(attachment, mask);
 }
 
 void CommandBuffer::setBlendFactors(
 	U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 {
-	m_impl->setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
 }
 
 void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 {
-	m_impl->setBlendOperation(attachment, funcRgb, funcA);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setBlendOperation(attachment, funcRgb, funcA);
 }
 
 void CommandBuffer::bindTexture(
 	U32 set, U32 binding, TexturePtr tex, TextureUsageBit usage, DepthStencilAspectBit aspect)
 {
-	m_impl->bindTexture(set, binding, tex, usage, aspect);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindTexture(set, binding, tex, usage, aspect);
 }
 
 void CommandBuffer::bindTextureAndSampler(
 	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
 {
-	m_impl->bindTextureAndSampler(set, binding, tex, sampler, usage, aspect);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindTextureAndSampler(set, binding, tex, sampler, usage, aspect);
 }
 
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
-	m_impl->bindUniformBuffer(set, binding, buff, offset, range);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindUniformBuffer(set, binding, buff, offset, range);
 }
 
 void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
-	m_impl->bindStorageBuffer(set, binding, buff, offset, range);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindStorageBuffer(set, binding, buff, offset, range);
 }
 
 void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 {
-	m_impl->bindImage(set, binding, img, level);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindImage(set, binding, img, level);
 }
 
 void CommandBuffer::bindTextureBuffer(
@@ -200,7 +213,8 @@ void CommandBuffer::bindTextureBuffer(
 
 void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 {
-	m_impl->bindShaderProgram(prog);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindShaderProgram(prog);
 }
 
 void CommandBuffer::beginRenderPass(FramebufferPtr fb,
@@ -211,43 +225,51 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb,
 	U32 width,
 	U32 height)
 {
-	m_impl->beginRenderPass(fb, colorAttachmentUsages, depthStencilAttachmentUsage, minx, miny, width, height);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.beginRenderPass(fb, colorAttachmentUsages, depthStencilAttachmentUsage, minx, miny, width, height);
 }
 
 void CommandBuffer::endRenderPass()
 {
-	m_impl->endRenderPass();
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.endRenderPass();
 }
 
 void CommandBuffer::drawElements(
 	PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
-	m_impl->drawElements(topology, count, instanceCount, firstIndex, baseVertex, baseInstance);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.drawElements(topology, count, instanceCount, firstIndex, baseVertex, baseInstance);
 }
 
 void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
-	m_impl->drawArrays(topology, count, instanceCount, first, baseInstance);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.drawArrays(topology, count, instanceCount, first, baseInstance);
 }
 
 void CommandBuffer::drawArraysIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr buff)
 {
-	m_impl->drawArraysIndirect(topology, drawCount, offset, buff);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.drawArraysIndirect(topology, drawCount, offset, buff);
 }
 
 void CommandBuffer::drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr buff)
 {
-	m_impl->drawElementsIndirect(topology, drawCount, offset, buff);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.drawElementsIndirect(topology, drawCount, offset, buff);
 }
 
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
-	m_impl->dispatchCompute(groupCountX, groupCountY, groupCountZ);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.dispatchCompute(groupCountX, groupCountY, groupCountZ);
 }
 
 void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 {
-	m_impl->generateMipmaps2d(tex, face, layer);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.generateMipmaps2d(tex, face, layer);
 }
 
 void CommandBuffer::generateMipmaps3d(TexturePtr tex)
@@ -270,84 +292,99 @@ void CommandBuffer::copyTextureVolumeToTextureVolume(
 void CommandBuffer::clearTextureSurface(
 	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
-	m_impl->clearTextureSurface(tex, surf, clearValue, aspect);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.clearTextureSurface(tex, surf, clearValue, aspect);
 }
 
 void CommandBuffer::clearTextureVolume(
 	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
-	m_impl->clearTextureVolume(tex, vol, clearValue, aspect);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.clearTextureVolume(tex, vol, clearValue, aspect);
 }
 
 void CommandBuffer::copyBufferToTextureSurface(
 	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
 {
-	m_impl->copyBufferToTextureSurface(buff, offset, range, tex, surf);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.copyBufferToTextureSurface(buff, offset, range, tex, surf);
 }
 
 void CommandBuffer::copyBufferToTextureVolume(
 	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
 {
-	m_impl->copyBufferToTextureVolume(buff, offset, range, tex, vol);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.copyBufferToTextureVolume(buff, offset, range, tex, vol);
 }
 
 void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
 {
-	m_impl->fillBuffer(buff, offset, size, value);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.fillBuffer(buff, offset, size, value);
 }
 
 void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff)
 {
-	m_impl->writeOcclusionQueryResultToBuffer(query, offset, buff);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.writeOcclusionQueryResultToBuffer(query, offset, buff);
 }
 
 void CommandBuffer::copyBufferToBuffer(
 	BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset, PtrSize range)
 {
-	m_impl->copyBufferToBuffer(src, srcOffset, dst, dstOffset, range);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.copyBufferToBuffer(src, srcOffset, dst, dstOffset, range);
 }
 
 void CommandBuffer::setTextureSurfaceBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {
-	m_impl->setTextureSurfaceBarrier(tex, prevUsage, nextUsage, surf);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setTextureSurfaceBarrier(tex, prevUsage, nextUsage, surf);
 }
 
 void CommandBuffer::setTextureVolumeBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
 {
-	m_impl->setTextureVolumeBarrier(tex, prevUsage, nextUsage, vol);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setTextureVolumeBarrier(tex, prevUsage, nextUsage, vol);
 }
 
 void CommandBuffer::setBufferBarrier(
 	BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
 {
-	m_impl->setBufferBarrier(buff, before, after, offset, size);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setBufferBarrier(buff, before, after, offset, size);
 }
 
 void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)
 {
-	m_impl->resetOcclusionQuery(query);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.resetOcclusionQuery(query);
 }
 
 void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 {
-	m_impl->beginOcclusionQuery(query);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.beginOcclusionQuery(query);
 }
 
 void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 {
-	m_impl->endOcclusionQuery(query);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.endOcclusionQuery(query);
 }
 
 void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 {
-	m_impl->pushSecondLevelCommandBuffer(cmdb);
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.pushSecondLevelCommandBuffer(cmdb);
 }
 
 Bool CommandBuffer::isEmpty() const
 {
-	return m_impl->isEmpty();
+	ANKI_VK_SELF_CONST(CommandBufferImpl);
+	return self.isEmpty();
 }
 
 } // end namespace anki

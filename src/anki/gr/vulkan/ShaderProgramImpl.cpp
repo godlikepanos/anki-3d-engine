@@ -12,11 +12,6 @@
 namespace anki
 {
 
-ShaderProgramImpl::ShaderProgramImpl(GrManager* manager)
-	: VulkanObject(manager)
-{
-}
-
 ShaderProgramImpl::~ShaderProgramImpl()
 {
 	if(m_pplineFactory)
@@ -31,10 +26,10 @@ ShaderProgramImpl::~ShaderProgramImpl()
 	}
 }
 
-Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shaders)
+Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 {
 	ShaderTypeBit shaderMask = ShaderTypeBit::NONE;
-	m_shaders = shaders;
+	m_shaders = inf.m_shaders;
 
 	// Merge bindings
 	//
@@ -45,14 +40,14 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 	{
 		for(ShaderType stype = ShaderType::FIRST; stype < ShaderType::COUNT; ++stype)
 		{
-			if(!shaders[stype].isCreated())
+			if(!m_shaders[stype].isCreated())
 			{
 				continue;
 			}
 
 			shaderMask |= static_cast<ShaderTypeBit>(1 << stype);
 
-			const ShaderImpl& simpl = *shaders[stype]->m_impl;
+			const ShaderImpl& simpl = *scast<const ShaderImpl*>(m_shaders[stype].get());
 
 			m_refl.m_descriptorSetMask |= simpl.m_descriptorSetMask;
 			m_refl.m_activeBindingMask[set] |= simpl.m_activeBindingMask[set];
@@ -112,8 +107,9 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 	const Bool graphicsProg = !!(shaderMask & ShaderTypeBit::VERTEX);
 	if(graphicsProg)
 	{
-		m_refl.m_attributeMask = shaders[ShaderType::VERTEX]->m_impl->m_attributeMask;
-		m_refl.m_colorAttachmentWritemask = shaders[ShaderType::FRAGMENT]->m_impl->m_colorAttachmentWritemask;
+		m_refl.m_attributeMask = scast<const ShaderImpl*>(m_shaders[ShaderType::VERTEX].get())->m_attributeMask;
+		m_refl.m_colorAttachmentWritemask =
+			scast<const ShaderImpl*>(m_shaders[ShaderType::FRAGMENT].get())->m_colorAttachmentWritemask;
 
 		const U attachmentCount = m_refl.m_colorAttachmentWritemask.getEnabledBitCount();
 		for(U i = 0; i < attachmentCount; ++i)
@@ -128,7 +124,7 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 	{
 		for(ShaderType stype = ShaderType::VERTEX; stype <= ShaderType::FRAGMENT; ++stype)
 		{
-			if(!shaders[stype].isCreated())
+			if(!m_shaders[stype].isCreated())
 			{
 				continue;
 			}
@@ -138,7 +134,7 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 			inf.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			inf.stage = convertShaderTypeBit(static_cast<ShaderTypeBit>(1 << stype));
 			inf.pName = "main";
-			inf.module = shaders[stype]->m_impl->m_handle;
+			inf.module = scast<const ShaderImpl*>(m_shaders[stype].get())->m_handle;
 		}
 	}
 
@@ -162,7 +158,7 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 		ci.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 		ci.stage.pName = "main";
-		ci.stage.module = shaders[ShaderType::COMPUTE]->m_impl->m_handle;
+		ci.stage.module = scast<const ShaderImpl*>(m_shaders[ShaderType::COMPUTE].get())->m_handle;
 
 		ANKI_VK_CHECK(vkCreateComputePipelines(
 			getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_computePpline));

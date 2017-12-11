@@ -35,19 +35,12 @@ public:
 /// The graphics manager, owner of all graphics objects.
 class GrManager
 {
-	friend class GrManagerImpl;
-
-	template<typename>
-	friend class GrObjectPtrDeleter;
-
 public:
-	/// Default constructor
-	GrManager();
-
-	~GrManager();
-
 	/// Create.
-	ANKI_USE_RESULT Error init(GrManagerInitInfo& init);
+	static ANKI_USE_RESULT Error newInstance(GrManagerInitInfo& init, GrManager*& gr);
+
+	/// Destroy.
+	static void deleteInstance(GrManager* gr);
 
 	/// Begin frame.
 	void beginFrame();
@@ -58,14 +51,18 @@ public:
 	/// Wait for all work to finish.
 	void finish();
 
-	/// Create a new graphics object.
-	template<typename T, typename... Args>
-	ANKI_USE_RESULT GrObjectPtr<T> newInstance(Args&&... args)
-	{
-		GrObjectPtr<T> ptr(m_alloc.newInstance<T>(this));
-		ptr->init(args...);
-		return ptr;
-	}
+	/// @name Object creation methods. They are thread-safe.
+	/// @{
+	ANKI_USE_RESULT BufferPtr newBuffer(const BufferInitInfo& init);
+	ANKI_USE_RESULT TexturePtr newTexture(const TextureInitInfo& init);
+	ANKI_USE_RESULT SamplerPtr newSampler(const SamplerInitInfo& init);
+	ANKI_USE_RESULT ShaderPtr newShader(const ShaderInitInfo& init);
+	ANKI_USE_RESULT ShaderProgramPtr newShaderProgram(const ShaderProgramInitInfo& init);
+	ANKI_USE_RESULT CommandBufferPtr newCommandBuffer(const CommandBufferInitInfo& init);
+	ANKI_USE_RESULT FramebufferPtr newFramebuffer(const FramebufferInitInfo& init);
+	ANKI_USE_RESULT OcclusionQueryPtr newOcclusionQuery();
+	ANKI_USE_RESULT RenderGraphPtr newRenderGraph();
+	/// @}
 
 	/// Call this before calling allocateFrameTransientMemory or tryAllocateFrameTransientMemory to get the exact memory
 	/// that will be required for the CommandBuffer::uploadTextureSurface.
@@ -95,14 +92,9 @@ anki_internal:
 		return m_alloc;
 	}
 
-	GrManagerImpl& getImplementation()
+	GrAllocator<U8> getAllocator() const
 	{
-		return *m_impl;
-	}
-
-	const GrManagerImpl& getImplementation() const
-	{
-		return *m_impl;
+		return m_alloc;
 	}
 
 	CString getCacheDirectory() const
@@ -115,11 +107,14 @@ anki_internal:
 		return m_uuidIndex;
 	}
 
-private:
+protected:
 	GrAllocator<U8> m_alloc; ///< Keep it first to get deleted last
 	String m_cacheDir;
-	UniquePtr<GrManagerImpl> m_impl;
 	U64 m_uuidIndex = 1;
+
+	GrManager();
+
+	virtual ~GrManager();
 };
 /// @}
 

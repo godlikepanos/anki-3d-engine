@@ -94,10 +94,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 		texinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 		texinit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_dummyTex = getGrManager().newInstance<Texture>(texinit);
+		m_dummyTex = getGrManager().newTexture(texinit);
 	}
 
-	m_dummyBuff = getGrManager().newInstance<Buffer>(BufferInitInfo(getDummyBufferSize(),
+	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(getDummyBufferSize(),
 		BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL,
 		BufferMapAccessBit::NONE,
 		"Dummy"));
@@ -151,10 +151,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 	SamplerInitInfo sinit;
 	sinit.m_repeat = false;
 	sinit.m_minMagFilter = SamplingFilter::NEAREST;
-	m_nearestSampler = m_gr->newInstance<Sampler>(sinit);
+	m_nearestSampler = m_gr->newSampler(sinit);
 
 	sinit.m_minMagFilter = SamplingFilter::LINEAR;
-	m_linearSampler = m_gr->newInstance<Sampler>(sinit);
+	m_linearSampler = m_gr->newSampler(sinit);
 
 	initJitteredMats();
 
@@ -344,7 +344,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 	const U faceCount = (inf.m_type == TextureType::CUBE || inf.m_type == TextureType::CUBE_ARRAY) ? 6 : 1;
 
 	// Create tex
-	TexturePtr tex = m_gr->newInstance<Texture>(inf);
+	TexturePtr tex = m_gr->newTexture(inf);
 
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
@@ -353,7 +353,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 	{
 		cmdbinit.m_flags |= CommandBufferFlag::SMALL_BATCH;
 	}
-	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>(cmdbinit);
+	CommandBufferPtr cmdb = m_gr->newCommandBuffer(cmdbinit);
 
 	for(U mip = 0; mip < inf.m_mipmapsCount; ++mip)
 	{
@@ -388,7 +388,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 
 					colUsage[0] = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 				}
-				FramebufferPtr fb = m_gr->newInstance<Framebuffer>(fbInit);
+				FramebufferPtr fb = m_gr->newFramebuffer(fbInit);
 
 				cmdb->setTextureSurfaceBarrier(
 					tex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);

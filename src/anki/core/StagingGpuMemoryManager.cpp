@@ -53,8 +53,7 @@ void StagingGpuMemoryManager::initBuffer(
 {
 	auto& perframe = m_perFrameBuffers[type];
 
-	perframe.m_buff =
-		gr.newInstance<Buffer>(BufferInitInfo(perframe.m_size, usage, BufferMapAccessBit::WRITE, "Staging"));
+	perframe.m_buff = gr.newBuffer(BufferInitInfo(perframe.m_size, usage, BufferMapAccessBit::WRITE, "Staging"));
 	perframe.m_alloc.init(perframe.m_size, alignment, maxAllocSize);
 	perframe.m_mappedMem = static_cast<U8*>(perframe.m_buff->map(0, perframe.m_size, BufferMapAccessBit::WRITE));
 }

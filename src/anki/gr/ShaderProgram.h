@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/GrObject.h>
+#include <anki/gr/Shader.h>
 
 namespace anki
 {
@@ -13,30 +14,36 @@ namespace anki
 /// @addtogroup graphics
 /// @{
 
+/// ShaderProgram init info.
+class ShaderProgramInitInfo : GrBaseInitInfo
+{
+public:
+	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders = {};
+};
+
 /// GPU program.
-class ShaderProgram final : public GrObject
+class ShaderProgram : public GrObject
 {
 	ANKI_GR_OBJECT
 
-anki_internal:
-	UniquePtr<ShaderProgramImpl> m_impl;
-
+public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER_PROGRAM;
 
+protected:
 	/// Construct.
-	ShaderProgram(GrManager* manager);
+	ShaderProgram(GrManager* manager)
+		: GrObject(manager, CLASS_TYPE)
+	{
+	}
 
 	/// Destroy.
-	~ShaderProgram();
+	~ShaderProgram()
+	{
+	}
 
-	/// Create vertex+fragment.
-	void init(ShaderPtr vert, ShaderPtr frag);
-
-	/// Create compute.
-	void init(ShaderPtr comp);
-
-	/// Create with all.
-	void init(ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom, ShaderPtr frag);
+private:
+	/// Allocate and initialize new instance.
+	static ANKI_USE_RESULT ShaderProgram* newInstance(GrManager* manager, const ShaderProgramInitInfo& init);
 };
 /// @}
 

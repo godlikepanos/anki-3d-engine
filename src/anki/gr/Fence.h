@@ -14,26 +14,33 @@ namespace anki
 /// @{
 
 /// GPU fence.
-class Fence final : public GrObject
+class Fence : public GrObject
 {
 	ANKI_GR_OBJECT
 
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::FENCE;
+
 	/// Wait for the fence.
 	/// @param seconds The time to wait in seconds. If it's zero then just return the status.
 	/// @return True if is signaled (signaled == GPU work is done).
-	Bool clientWait(F64 seconds);
+	Bool clientWait(Second seconds);
 
-anki_internal:
-	static const GrObjectType CLASS_TYPE = GrObjectType::FENCE;
-
-	UniquePtr<FenceImpl> m_impl;
-
+protected:
 	/// Construct.
-	Fence(GrManager* manager);
+	Fence(GrManager* manager)
+		: GrObject(manager, CLASS_TYPE)
+	{
+	}
 
 	/// Destroy.
-	~Fence();
+	~Fence()
+	{
+	}
+
+private:
+	/// Allocate and initialize new instance.
+	static ANKI_USE_RESULT Fence* newInstance(GrManager* manager);
 };
 /// @}
 

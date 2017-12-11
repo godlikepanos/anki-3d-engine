@@ -5,29 +5,14 @@
 
 #include <anki/gr/Shader.h>
 #include <anki/gr/vulkan/ShaderImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {
 
-Shader::Shader(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 {
-}
-
-Shader::~Shader()
-{
-}
-
-void Shader::init(ShaderType shaderType, const CString& source)
-{
-	ANKI_ASSERT(!source.isEmpty());
-
-	m_impl.reset(getAllocator().newInstance<ShaderImpl>(&getManager()));
-
-	if(m_impl->init(shaderType, source))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
+	return ShaderImpl::newInstanceHelper(manager, init);
 }
 
 } // end namespace anki

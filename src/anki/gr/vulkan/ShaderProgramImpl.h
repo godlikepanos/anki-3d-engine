@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/ShaderProgram.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/PipelineLayout.h>
 
@@ -27,13 +28,17 @@ public:
 };
 
 /// Shader program implementation.
-class ShaderProgramImpl : public VulkanObject
+class ShaderProgramImpl final : public ShaderProgram, public VulkanObject<ShaderProgram, ShaderProgramImpl>
 {
 public:
-	ShaderProgramImpl(GrManager* manager);
+	ShaderProgramImpl(GrManager* manager)
+		: ShaderProgram(manager)
+	{
+	}
+
 	~ShaderProgramImpl();
 
-	Error init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shaders);
+	Error init(const ShaderProgramInitInfo& inf);
 
 	Bool isGraphics() const
 	{

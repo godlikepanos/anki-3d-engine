@@ -131,6 +131,8 @@ class CommandBuffer : public GrObject
 	ANKI_GR_OBJECT
 
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
+
 	/// Compute initialization hints.
 	CommandBufferInitHints computeInitHints() const;
 
@@ -404,19 +406,21 @@ public:
 	Bool isEmpty() const;
 	/// @}
 
-anki_internal:
-	UniquePtr<CommandBufferImpl> m_impl;
-
-	static const GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
-
+protected:
 	/// Construct.
-	CommandBuffer(GrManager* manager);
+	CommandBuffer(GrManager* manager)
+		: GrObject(manager, CLASS_TYPE)
+	{
+	}
 
 	/// Destroy.
-	~CommandBuffer();
+	~CommandBuffer()
+	{
+	}
 
-	/// Init the command buffer.
-	void init(CommandBufferInitInfo& inf);
+private:
+	/// Allocate and initialize new instance.
+	static ANKI_USE_RESULT CommandBuffer* newInstance(GrManager* manager, const CommandBufferInitInfo& init);
 };
 /// @}
 

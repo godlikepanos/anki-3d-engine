@@ -38,30 +38,34 @@ public:
 };
 
 /// GPU buffer.
-class Buffer final : public GrObject
+class Buffer : public GrObject
 {
 	ANKI_GR_OBJECT
 
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::BUFFER;
+
 	/// Map the buffer.
 	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
 	/// Unmap the buffer.
 	void unmap();
 
-anki_internal:
-	static const GrObjectType CLASS_TYPE = GrObjectType::BUFFER;
-
-	UniquePtr<BufferImpl> m_impl;
-
+protected:
 	/// Construct.
-	Buffer(GrManager* manager);
+	Buffer(GrManager* manager)
+		: GrObject(manager, CLASS_TYPE)
+	{
+	}
 
 	/// Destroy.
-	~Buffer();
+	~Buffer()
+	{
+	}
 
-	/// Allocate the buffer.
-	void init(const BufferInitInfo& init);
+private:
+	/// Allocate and initialize new instance.
+	static ANKI_USE_RESULT Buffer* newInstance(GrManager* manager, const BufferInitInfo& init);
 };
 /// @}
 

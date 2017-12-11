@@ -83,24 +83,29 @@ public:
 static_assert(sizeof(TextureInitInfo) == sizeof(GrBaseInitInfo) + 28 + sizeof(SamplerInitInfo),
 	"Class needs to be tightly packed since we hash it");
 
-/// GPU texture
-class Texture final : public GrObject
+/// GPU texture.
+class Texture : public GrObject
 {
 	ANKI_GR_OBJECT
 
-anki_internal:
-	UniquePtr<TextureImpl> m_impl;
-
+public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::TEXTURE;
 
+protected:
 	/// Construct.
-	Texture(GrManager* manager);
+	Texture(GrManager* manager)
+		: GrObject(manager, CLASS_TYPE)
+	{
+	}
 
 	/// Destroy.
-	~Texture();
+	~Texture()
+	{
+	}
 
-	/// Create it.
-	void init(const TextureInitInfo& init);
+private:
+	/// Allocate and initialize new instance.
+	static ANKI_USE_RESULT Texture* newInstance(GrManager* manager, const TextureInitInfo& init);
 };
 /// @}
 

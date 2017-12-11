@@ -102,12 +102,12 @@ Error Mesh::load(const ResourceFilename& filename, Bool async)
 	// Allocate the buffers
 	GrManager& gr = getManager().getGrManager();
 
-	m_vertBuff = gr.newInstance<Buffer>(BufferInitInfo(loader.getVertexDataSize(),
+	m_vertBuff = gr.newBuffer(BufferInitInfo(loader.getVertexDataSize(),
 		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
 		BufferMapAccessBit::NONE,
 		"MeshVert"));
 
-	m_indicesBuff = gr.newInstance<Buffer>(BufferInitInfo(loader.getIndexDataSize(),
+	m_indicesBuff = gr.newBuffer(BufferInitInfo(loader.getIndexDataSize(),
 		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
 		BufferMapAccessBit::NONE,
 		"MeshIdx"));
@@ -115,7 +115,7 @@ Error Mesh::load(const ResourceFilename& filename, Bool async)
 	// Clear them
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
+	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
 
 	cmdb->fillBuffer(m_vertBuff, 0, MAX_PTR_SIZE, 0);
 	cmdb->fillBuffer(m_indicesBuff, 0, MAX_PTR_SIZE, 0);
@@ -150,7 +150,7 @@ Error Mesh::load(LoadContext& ctx)
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
-	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
+	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
 
 	// Set barriers
 	cmdb->setBufferBarrier(

@@ -47,7 +47,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 	if(!m_defaultFb && init.m_depthStencilAttachment.m_texture)
 	{
-		const TextureImpl& tex = *init.m_depthStencilAttachment.m_texture->m_impl;
+		const TextureImpl& tex = static_cast<const TextureImpl&>(*init.m_depthStencilAttachment.m_texture);
 
 		if(!!(tex.m_workarounds & TextureImplWorkaround::S8_TO_D24S8))
 		{
@@ -140,7 +140,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
 		const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
-		TextureImpl& tex = *att.m_texture->m_impl;
+		const TextureImpl& tex = static_cast<const TextureImpl&>(*att.m_texture);
 
 		imgViews[count++] = tex.getOrCreateSingleSurfaceView(att.m_surface, att.m_aspect);
 
@@ -156,7 +156,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	if(hasDepthStencil())
 	{
 		const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
-		TextureImpl& tex = *att.m_texture->m_impl;
+		const TextureImpl& tex = static_cast<const TextureImpl&>(*att.m_texture);
 
 		imgViews[count++] = tex.getOrCreateSingleSurfaceView(att.m_surface, m_aspect);
 
@@ -186,7 +186,7 @@ void FramebufferImpl::setupAttachmentDescriptor(
 	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc, VkImageLayout layout) const
 {
 	desc = {};
-	desc.format = convertFormat(att.m_texture->m_impl->m_format);
+	desc.format = convertFormat(static_cast<const TextureImpl&>(*att.m_texture).m_format);
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);

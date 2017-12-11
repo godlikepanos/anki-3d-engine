@@ -221,11 +221,12 @@ Error ShaderImpl::genSpirv(const CString& source, std::vector<unsigned int>& spi
 	return Error::NONE;
 }
 
-Error ShaderImpl::init(ShaderType shaderType, const CString& source)
+Error ShaderImpl::init(const ShaderInitInfo& inf)
 {
-	ANKI_ASSERT(source);
+	ANKI_ASSERT(inf.m_source && inf.m_source.getLength() > 0);
 	ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
-	m_shaderType = shaderType;
+	m_shaderType = inf.m_shaderType;
+	CString source = inf.m_source;
 
 	// Setup the shader
 	auto alloc = getAllocator();
@@ -240,7 +241,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 
 	fullSrc.sprintf(SHADER_HEADER,
 		&GPU_VENDOR_STR[getGrManagerImpl().getGpuVendor()][0],
-		shaderName[shaderType],
+		shaderName[m_shaderType],
 		0,
 		MAX_TEXTURE_BINDINGS,
 		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
@@ -264,7 +265,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 			newName = name++;
 		}
 
-		switch(shaderType)
+		switch(m_shaderType)
 		{
 		case ShaderType::VERTEX:
 			ext = "vert";
@@ -290,7 +291,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		}
 
 		StringAuto fname(alloc);
-		CString cacheDir = getGrManager().getCacheDirectory();
+		CString cacheDir = getManager().getCacheDirectory();
 		fname.sprintf("%s/%05u.%s", &cacheDir[0], newName, ext);
 
 		File file;

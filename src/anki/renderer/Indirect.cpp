@@ -81,7 +81,7 @@ Error Indirect::initInternal(const ConfigSet& config)
 	sinit.m_minLod = 0.0;
 	sinit.m_maxLod = 1.0;
 	sinit.m_repeat = false;
-	m_integrationLutSampler = getGrManager().newInstance<Sampler>(sinit);
+	m_integrationLutSampler = getGrManager().newSampler(sinit);
 
 	return Error::NONE;
 }
@@ -92,12 +92,12 @@ Error Indirect::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& id
 	ANKI_CHECK(loader.load(fname));
 
 	PtrSize vertBuffSize = loader.getHeader().m_totalVerticesCount * sizeof(Vec3);
-	vert = getGrManager().newInstance<Buffer>(BufferInitInfo(vertBuffSize,
+	vert = getGrManager().newBuffer(BufferInitInfo(vertBuffSize,
 		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE,
 		"IndirectMesh"));
 
-	idx = getGrManager().newInstance<Buffer>(BufferInitInfo(loader.getIndexDataSize(),
+	idx = getGrManager().newBuffer(BufferInitInfo(loader.getIndexDataSize(),
 		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE,
 		"IndirectMesh"));
@@ -105,7 +105,7 @@ Error Indirect::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& id
 	// Upload data
 	CommandBufferInitInfo init;
 	init.m_flags = CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
+	CommandBufferPtr cmdb = getGrManager().newCommandBuffer(init);
 
 	TransferGpuAllocatorHandle handle;
 	ANKI_CHECK(m_r->getResourceManager().getTransferGpuAllocator().allocate(vertBuffSize, handle));

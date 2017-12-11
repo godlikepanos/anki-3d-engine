@@ -5,37 +5,26 @@
 
 #include <anki/gr/Buffer.h>
 #include <anki/gr/vulkan/BufferImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {
 
-Buffer::Buffer(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& init)
 {
-}
-
-Buffer::~Buffer()
-{
-}
-
-void Buffer::init(const BufferInitInfo& inf)
-{
-	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
-
-	if(m_impl->init(inf))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
+	return BufferImpl::newInstanceHelper(manager, init);
 }
 
 void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 {
-	return m_impl->map(offset, range, access);
+	ANKI_VK_SELF(BufferImpl);
+	return self.map(offset, range, access);
 }
 
 void Buffer::unmap()
 {
-	m_impl->unmap();
+	ANKI_VK_SELF(BufferImpl);
+	self.unmap();
 }
 
 } // end namespace anki

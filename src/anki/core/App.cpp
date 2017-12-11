@@ -91,7 +91,7 @@ void App::cleanup()
 
 	if(m_gr)
 	{
-		m_heapAlloc.deleteInstance(m_gr);
+		GrManager::deleteInstance(m_gr);
 		m_gr = nullptr;
 	}
 
@@ -225,8 +225,6 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// Graphics API
 	//
-	m_gr = m_heapAlloc.newInstance<GrManager>();
-
 	GrManagerInitInfo grInit;
 	grInit.m_allocCallback = m_allocCb;
 	grInit.m_allocCallbackUserData = m_allocCbData;
@@ -234,7 +232,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	grInit.m_config = &config;
 	grInit.m_window = m_window;
 
-	ANKI_CHECK(m_gr->init(grInit));
+	ANKI_CHECK(GrManager::newInstance(grInit, m_gr));
 
 	//
 	// Staging mem

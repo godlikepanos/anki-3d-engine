@@ -600,21 +600,6 @@ class RenderGraph final : public GrObject
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::RENDER_GRAPH;
 
-	RenderGraph(GrManager* manager);
-
-	// Non-copyable
-	RenderGraph(const RenderGraph&) = delete;
-
-	~RenderGraph();
-
-	// Non-copyable
-	RenderGraph& operator=(const RenderGraph&) = delete;
-
-	void init()
-	{
-		// Do nothing, implement the method to align with the general interface
-	}
-
 	/// @name 1st step methods
 	/// @{
 	void compileNewGraph(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
@@ -669,6 +654,12 @@ private:
 
 	BakeContext* m_ctx = nullptr;
 	U64 m_version = 0;
+
+	RenderGraph(GrManager* manager);
+
+	~RenderGraph();
+
+	static ANKI_USE_RESULT RenderGraph* newInstance(GrManager* manager);
 
 	BakeContext* newContext(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
 	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);

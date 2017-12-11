@@ -19,7 +19,7 @@ static FramebufferPtr createDefaultFb(GrManager& gr)
 	fbinit.m_colorAttachmentCount = 1;
 	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
 
-	return gr.newInstance<Framebuffer>(fbinit);
+	return gr.newFramebuffer(fbinit);
 }
 
 class Label : public UiImmediateModeBuilder
@@ -104,7 +104,7 @@ ANKI_TEST(Ui, Ui)
 
 			CommandBufferInitInfo cinit;
 			cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
-			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 			cmdb->beginRenderPass(fb, {{}}, {});
 			canvas->appendToCommandBuffer(cmdb);

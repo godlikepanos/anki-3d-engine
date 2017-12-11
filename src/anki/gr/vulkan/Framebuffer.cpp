@@ -5,26 +5,14 @@
 
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/vulkan/FramebufferImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {
 
-Framebuffer::Framebuffer(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Framebuffer* Framebuffer::newInstance(GrManager* manager, const FramebufferInitInfo& init)
 {
-}
-
-Framebuffer::~Framebuffer()
-{
-}
-
-void Framebuffer::init(const FramebufferInitInfo& init)
-{
-	m_impl.reset(getAllocator().newInstance<FramebufferImpl>(&getManager()));
-	if(m_impl->init(init))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
+	return FramebufferImpl::newInstanceHelper(manager, init);
 }
 
 } // end namespace anki

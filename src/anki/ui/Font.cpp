@@ -70,7 +70,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 
 	// Create and populate the buffer
 	PtrSize buffSize = width * height * 4;
-	BufferPtr buff = m_manager->getGrManager().newInstance<Buffer>(
+	BufferPtr buff = m_manager->getGrManager().newBuffer(
 		BufferInitInfo(buffSize, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferMapAccessBit::WRITE, "UI"));
 	void* mapped = buff->map(0, buffSize, BufferMapAccessBit::WRITE);
 	memcpy(mapped, data, buffSize);
@@ -88,12 +88,12 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	texInit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
 	texInit.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
 
-	m_tex = m_manager->getGrManager().newInstance<Texture>(texInit);
+	m_tex = m_manager->getGrManager().newTexture(texInit);
 
 	// Do the copy
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = m_manager->getGrManager().newInstance<CommandBuffer>(cmdbInit);
+	CommandBufferPtr cmdb = m_manager->getGrManager().newCommandBuffer(cmdbInit);
 
 	TextureSurfaceInfo surf(0, 0, 0, 0);
 

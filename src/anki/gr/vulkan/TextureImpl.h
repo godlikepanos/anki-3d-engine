@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/Texture.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
 #include <anki/gr/common/Misc.h>
@@ -30,7 +31,7 @@ enum class TextureImplWorkaround : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
 
 /// Texture container.
-class TextureImpl : public VulkanObject
+class TextureImpl final : public Texture, public VulkanObject<Texture, TextureImpl>
 {
 public:
 	MicroSamplerPtr m_sampler;
@@ -56,11 +57,14 @@ public:
 	Bool m_depthStencil = false;
 	TextureImplWorkaround m_workarounds = TextureImplWorkaround::NONE;
 
-	TextureImpl(GrManager* manager, U64 uuid);
+	TextureImpl(GrManager* manager)
+		: Texture(manager)
+	{
+	}
 
 	~TextureImpl();
 
-	ANKI_USE_RESULT Error init(const TextureInitInfo& init, Texture* tex);
+	ANKI_USE_RESULT Error init(const TextureInitInfo& init);
 
 	void checkSurfaceOrVolume(const TextureSurfaceInfo& surf) const
 	{
@@ -93,12 +97,12 @@ public:
 	}
 
 	/// For image load/store.
-	VkImageView getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect);
+	VkImageView getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect) const;
 
-	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect);
+	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect) const;
 
 	/// That view will be used in descriptor sets.
-	VkImageView getOrCreateResourceGroupView(DepthStencilAspectBit aspect);
+	VkImageView getOrCreateResourceGroupView(DepthStencilAspectBit aspect) const;
 
 	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
 	void computeBarrierInfo(TextureUsageBit before,
@@ -132,10 +136,9 @@ private:
 		}
 	};
 
-	HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher> m_viewsMap;
-	Mutex m_viewsMapMtx;
+	mutable HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher> m_viewsMap;
+	mutable Mutex m_viewsMapMtx;
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
-	U64 m_uuid; ///< Steal the UUID from the Texture.
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
 
@@ -149,7 +152,7 @@ private:
 
 	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
 
-	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci);
+	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci) const;
 
 	U computeSubresourceIdx(const TextureSurfaceInfo& surf) const;
 

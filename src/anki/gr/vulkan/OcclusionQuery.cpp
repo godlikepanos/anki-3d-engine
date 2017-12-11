@@ -5,27 +5,14 @@
 
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {
 
-OcclusionQuery::OcclusionQuery(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+OcclusionQuery* OcclusionQuery::newInstance(GrManager* manager)
 {
-}
-
-OcclusionQuery::~OcclusionQuery()
-{
-}
-
-void OcclusionQuery::init()
-{
-	m_impl.reset(getAllocator().newInstance<OcclusionQueryImpl>(&getManager()));
-
-	if(m_impl->init())
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
+	return OcclusionQueryImpl::newInstanceHelper(manager);
 }
 
 } // end namespace anki

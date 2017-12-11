@@ -65,26 +65,46 @@ void writeShaderBlockMemory(ShaderVariableDataType type,
 	void* buffBegin,
 	const void* buffEnd);
 
+/// Shader init info.
+class ShaderInitInfo : public GrBaseInitInfo
+{
+public:
+	ShaderType m_shaderType = ShaderType::COUNT;
+	CString m_source = {};
+
+	ShaderInitInfo()
+	{
+	}
+
+	ShaderInitInfo(CString name)
+		: GrBaseInitInfo(name)
+	{
+	}
+};
+
 /// GPU shader.
-class Shader final : public GrObject
+class Shader : public GrObject
 {
 	ANKI_GR_OBJECT
 
-anki_internal:
-	UniquePtr<ShaderImpl> m_impl;
-
+public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER;
 
+protected:
 	/// Construct.
-	Shader(GrManager* manager);
+	Shader(GrManager* manager)
+		: GrObject(manager, CLASS_TYPE)
+	{
+	}
 
 	/// Destroy.
-	~Shader();
+	~Shader()
+	{
+	}
 
-	/// Create shader.
-	/// @param shaderType The type of the shader.
-	/// @param source The GLSL code of the shader.
-	void init(ShaderType shaderType, const CString& source);
+private:
+	/// Allocate and initialize new instance.
+	static ANKI_USE_RESULT Shader* newInstance(GrManager* manager, const ShaderInitInfo& init);
 };
 /// @}
 

@@ -1073,7 +1073,7 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 	shaderHeaderSrc.join("", shaderHeader);
 
 	// Create the shaders and the program
-	Array<ShaderPtr, U(ShaderType::COUNT)> shaders;
+	ShaderProgramInitInfo progInf;
 	for(ShaderType i = ShaderType::FIRST; i < ShaderType::COUNT; ++i)
 	{
 		if(!m_sources[i])
@@ -1085,20 +1085,20 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 		src.append(shaderHeader);
 		src.append(m_sources[i]);
 
-		shaders[i] = getManager().getGrManager().newInstance<Shader>(i, src.toCString());
+		ShaderInitInfo inf("RsrcShader");
+		inf.m_shaderType = i;
+		inf.m_source = src.toCString();
+
+		progInf.m_shaders[i] = getManager().getGrManager().newShader(inf);
 	}
 
 	if(!m_compute)
 	{
-		variant.m_prog = getManager().getGrManager().newInstance<ShaderProgram>(shaders[ShaderType::VERTEX],
-			shaders[ShaderType::TESSELLATION_CONTROL],
-			shaders[ShaderType::TESSELLATION_EVALUATION],
-			shaders[ShaderType::GEOMETRY],
-			shaders[ShaderType::FRAGMENT]);
+		variant.m_prog = getManager().getGrManager().newShaderProgram(progInf);
 	}
 	else
 	{
-		variant.m_prog = getManager().getGrManager().newInstance<ShaderProgram>(shaders[ShaderType::COMPUTE]);
+		variant.m_prog = getManager().getGrManager().newShaderProgram(progInf);
 	}
 }
 
