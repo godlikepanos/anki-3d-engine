@@ -292,9 +292,9 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 	commandCommon();
 
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
+	ANKI_ASSERT(impl.getTextureType() != TextureType::_3D && "Not for 3D");
 
-	for(U i = 0; i < impl.m_mipCount - 1u; ++i)
+	for(U i = 0; i < impl.getMipmapCount() - 1u; ++i)
 	{
 		// Transition source
 		if(i > 0)
@@ -328,16 +328,16 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		}
 
 		// Setup the blit struct
-		I32 srcWidth = impl.m_width >> i;
-		I32 srcHeight = impl.m_height >> i;
+		I32 srcWidth = impl.getWidth() >> i;
+		I32 srcHeight = impl.getHeight() >> i;
 
-		I32 dstWidth = impl.m_width >> (i + 1);
-		I32 dstHeight = impl.m_height >> (i + 1);
+		I32 dstWidth = impl.getWidth() >> (i + 1);
+		I32 dstHeight = impl.getHeight() >> (i + 1);
 
 		ANKI_ASSERT(srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
 
 		U vkLayer = 0;
-		switch(impl.m_type)
+		switch(impl.getTextureType())
 		{
 		case TextureType::_2D:
 		case TextureType::_2D_ARRAY:
@@ -654,9 +654,9 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 
 	if(!impl.m_workarounds)
 	{
-		U width = impl.m_width >> surf.m_level;
-		U height = impl.m_height >> surf.m_level;
-		ANKI_ASSERT(range == computeSurfaceSize(width, height, impl.m_format));
+		U width = impl.getWidth() >> surf.m_level;
+		U height = impl.getHeight() >> surf.m_level;
+		ANKI_ASSERT(range == computeSurfaceSize(width, height, impl.getPixelFormat()));
 
 		// Copy
 		VkBufferImageCopy region;
@@ -679,8 +679,8 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 	}
 	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
 	{
-		U width = impl.m_width >> surf.m_level;
-		U height = impl.m_height >> surf.m_level;
+		U width = impl.getWidth() >> surf.m_level;
+		U height = impl.getHeight() >> surf.m_level;
 
 		// Create a new shadow buffer
 		const PtrSize shadowSize =
@@ -760,10 +760,10 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 
 	if(!impl.m_workarounds)
 	{
-		U width = impl.m_width >> vol.m_level;
-		U height = impl.m_height >> vol.m_level;
-		U depth = impl.m_depth >> vol.m_level;
-		ANKI_ASSERT(range == computeVolumeSize(width, height, depth, impl.m_format));
+		U width = impl.getWidth() >> vol.m_level;
+		U height = impl.getHeight() >> vol.m_level;
+		U depth = impl.getDepth() >> vol.m_level;
+		ANKI_ASSERT(range == computeVolumeSize(width, height, depth, impl.getPixelFormat()));
 
 		// Copy
 		VkBufferImageCopy region;
@@ -787,9 +787,9 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
 	{
 		// Find the offset to the RGBA staging buff
-		U width = impl.m_width >> vol.m_level;
-		U height = impl.m_height >> vol.m_level;
-		U depth = impl.m_depth >> vol.m_level;
+		U width = impl.getWidth() >> vol.m_level;
+		U height = impl.getHeight() >> vol.m_level;
+		U depth = impl.getDepth() >> vol.m_level;
 
 		// Create a new shadow buffer
 		const PtrSize shadowSize =

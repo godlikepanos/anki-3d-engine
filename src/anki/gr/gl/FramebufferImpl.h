@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <anki/gr/gl/GlObject.h>
 #include <anki/gr/Framebuffer.h>
+#include <anki/gr/gl/GlObject.h>
 
 namespace anki
 {
@@ -15,17 +15,17 @@ namespace anki
 /// @{
 
 /// Framebuffer implementation.
-class FramebufferImpl : public GlObject
+class FramebufferImpl final : public Framebuffer, public GlObject
 {
 public:
 	FramebufferImpl(GrManager* manager)
-		: GlObject(manager)
+		: Framebuffer(manager)
 	{
 	}
 
 	~FramebufferImpl()
 	{
-		destroyDeferred(glDeleteFramebuffers);
+		destroyDeferred(getManager(), glDeleteFramebuffers);
 	}
 
 	/// Set all the attachments. It will overwrite the previous state. If the initalizer list is empty the it will bind
@@ -33,7 +33,7 @@ public:
 	ANKI_USE_RESULT Error init(const FramebufferInitInfo& init);
 
 	/// Bind it to the state. Call it in rendering thread
-	void bind(const GlState& state, U32 minx, U32 miny, U32 width, U32 height);
+	void bind(const GlState& state, U32 minx, U32 miny, U32 width, U32 height) const;
 
 	void endRenderPass() const;
 

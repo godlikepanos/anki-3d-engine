@@ -207,7 +207,6 @@ Error Indirect::initLightShading(const ConfigSet& config)
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		texinit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 
 		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
 	}
@@ -259,7 +258,6 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		texinit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 
 		m_irradiance.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
 	}

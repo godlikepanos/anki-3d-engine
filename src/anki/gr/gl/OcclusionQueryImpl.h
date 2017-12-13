@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/gl/GlObject.h>
 
 namespace anki
@@ -14,17 +15,17 @@ namespace anki
 /// @{
 
 /// Occlusion query.
-class OcclusionQueryImpl : public GlObject
+class OcclusionQueryImpl final : public OcclusionQuery, public GlObject
 {
 public:
 	OcclusionQueryImpl(GrManager* manager)
-		: GlObject(manager)
+		: OcclusionQuery(manager)
 	{
 	}
 
 	~OcclusionQueryImpl()
 	{
-		destroyDeferred(glDeleteQueries);
+		destroyDeferred(getManager(), glDeleteQueries);
 	}
 
 	/// Create the query.

@@ -53,9 +53,6 @@ public:
 	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
 	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< It's initial usage.
 
-	/// It's usual usage. That way you won't need to call CommandBuffer::informTextureXXXCurrentUsage() all the time.
-	TextureUsageBit m_usageWhenEncountered = TextureUsageBit::NONE;
-
 	TextureType m_type = TextureType::_2D;
 
 	U8 m_mipmapsCount = 1;
@@ -91,7 +88,63 @@ class Texture : public GrObject
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::TEXTURE;
 
+	U32 getWidth() const
+	{
+		ANKI_ASSERT(m_width);
+		return m_width;
+	}
+
+	U32 getHeight() const
+	{
+		ANKI_ASSERT(m_height);
+		return m_height;
+	}
+
+	U32 getDepth() const
+	{
+		ANKI_ASSERT(m_depth);
+		return m_depth;
+	}
+
+	U32 getLayercount() const
+	{
+		ANKI_ASSERT(m_layerCount);
+		return m_layerCount;
+	}
+
+	U32 getMipmapCount() const
+	{
+		ANKI_ASSERT(m_mipCount);
+		return m_mipCount;
+	}
+
+	TextureType getTextureType() const
+	{
+		ANKI_ASSERT(m_texType != TextureType::COUNT);
+		return m_texType;
+	}
+
+	TextureUsageBit getTextureUsage() const
+	{
+		ANKI_ASSERT(!!m_usage);
+		return m_usage;
+	}
+
+	const PixelFormat& getPixelFormat() const
+	{
+		return m_format;
+	}
+
 protected:
+	U32 m_width = 0;
+	U32 m_height = 0;
+	U32 m_depth = 0;
+	U32 m_layerCount = 0;
+	U32 m_mipCount = 0;
+	TextureType m_texType = TextureType::COUNT;
+	TextureUsageBit m_usage = TextureUsageBit::NONE;
+	PixelFormat m_format;
+
 	/// Construct.
 	Texture(GrManager* manager)
 		: GrObject(manager, CLASS_TYPE)

@@ -11,54 +11,44 @@
 namespace anki
 {
 
-Texture::Texture(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Texture* Texture::newInstance(GrManager* manager, const TextureInitInfo& init)
 {
-}
-
-Texture::~Texture()
-{
-}
-
-class CreateTextureCommand final : public GlCommand
-{
-public:
-	IntrusivePtr<Texture> m_tex;
-	TextureInitInfo m_init;
-
-	CreateTextureCommand(Texture* tex, const TextureInitInfo& init)
-		: m_tex(tex)
-		, m_init(init)
+	class CreateTextureCommand final : public GlCommand
 	{
-	}
+	public:
+		TexturePtr m_tex;
+		TextureInitInfo m_init;
 
-	Error operator()(GlState&)
-	{
-		TextureImpl& impl = *m_tex->m_impl;
+		CreateTextureCommand(Texture* tex, const TextureInitInfo& init)
+			: m_tex(tex)
+			, m_init(init)
+		{
+		}
 
-		impl.init(m_init);
+		Error operator()(GlState&)
+		{
+			TextureImpl& impl = static_cast<TextureImpl&>(*m_tex);
 
-		GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
-		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
-		(void)oldState;
+			impl.init(m_init);
 
-		return Error::NONE;
-	}
-};
+			GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
+			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
+			(void)oldState;
 
-void Texture::init(const TextureInitInfo& init)
-{
-	ANKI_ASSERT(textureInitInfoValid(init));
-	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager()));
+			return Error::NONE;
+		}
+	};
 
-	// Need to pre-init because some funcs ask for members and we don't want
-	// to serialize
-	m_impl->preInit(init);
+	TextureImpl* impl = manager->getAllocator().newInstance<TextureImpl>(manager);
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	// Need to pre-init because some funcs ask for members and we don't want to serialize
+	impl->preInit(init);
 
-	cmdb->m_impl->pushBackNewCommand<CreateTextureCommand>(this, init);
-	cmdb->flush();
+	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
+	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CreateTextureCommand>(impl, init);
+	static_cast<CommandBufferImpl&>(*cmdb).flush();
+
+	return impl;
 }
 
 } // end namespace anki

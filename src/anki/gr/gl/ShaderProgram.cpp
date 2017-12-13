@@ -12,74 +12,7 @@
 namespace anki
 {
 
-ShaderProgram::ShaderProgram(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
-{
-}
-
-ShaderProgram::~ShaderProgram()
-{
-}
-
-void ShaderProgram::init(ShaderPtr vert, ShaderPtr frag)
-{
-	class CreateCommand final : public GlCommand
-	{
-	public:
-		ShaderProgramPtr m_prog;
-		ShaderPtr m_vert;
-		ShaderPtr m_frag;
-
-		CreateCommand(ShaderProgram* prog, ShaderPtr vert, ShaderPtr frag)
-			: m_prog(prog)
-			, m_vert(vert)
-			, m_frag(frag)
-		{
-		}
-
-		Error operator()(GlState&)
-		{
-			ShaderPtr none;
-			return m_prog->m_impl->initGraphics(m_vert, none, none, none, m_frag);
-		}
-	};
-
-	m_impl.reset(getAllocator().newInstance<ShaderProgramImpl>(&getManager()));
-
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
-	cmdb->m_impl->pushBackNewCommand<CreateCommand>(this, vert, frag);
-	cmdb->flush();
-}
-
-void ShaderProgram::init(ShaderPtr comp)
-{
-	class CreateCommand final : public GlCommand
-	{
-	public:
-		ShaderProgramPtr m_prog;
-		ShaderPtr m_comp;
-
-		CreateCommand(ShaderProgram* prog, ShaderPtr comp)
-			: m_prog(prog)
-			, m_comp(comp)
-		{
-		}
-
-		Error operator()(GlState&)
-		{
-			ShaderPtr none;
-			return m_prog->m_impl->initCompute(m_comp);
-		}
-	};
-
-	m_impl.reset(getAllocator().newInstance<ShaderProgramImpl>(&getManager()));
-
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
-	cmdb->m_impl->pushBackNewCommand<CreateCommand>(this, comp);
-	cmdb->flush();
-}
-
-void ShaderProgram::init(ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom, ShaderPtr frag)
+ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgramInitInfo& init)
 {
 	class CreateCommand final : public GlCommand
 	{
@@ -90,29 +23,51 @@ void ShaderProgram::init(ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, Shade
 		ShaderPtr m_tesse;
 		ShaderPtr m_geom;
 		ShaderPtr m_frag;
+		ShaderPtr m_comp;
 
-		CreateCommand(
-			ShaderProgram* prog, ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom, ShaderPtr frag)
+		CreateCommand(ShaderProgram* prog,
+			ShaderPtr vert,
+			ShaderPtr tessc,
+			ShaderPtr tesse,
+			ShaderPtr geom,
+			ShaderPtr frag,
+			ShaderPtr comp)
 			: m_prog(prog)
 			, m_vert(vert)
 			, m_tessc(tesse)
 			, m_tesse(tesse)
 			, m_geom(geom)
 			, m_frag(frag)
+			, m_comp(comp)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			return m_prog->m_impl->initGraphics(m_vert, m_tessc, m_tesse, m_geom, m_frag);
+			if(m_comp)
+			{
+				return static_cast<ShaderProgramImpl&>(*m_prog).initCompute(m_comp);
+			}
+			else
+			{
+				return static_cast<ShaderProgramImpl&>(*m_prog).initGraphics(m_vert, m_tessc, m_tesse, m_geom, m_frag);
+			}
 		}
 	};
 
-	m_impl.reset(getAllocator().newInstance<ShaderProgramImpl>(&getManager()));
+	ShaderProgramImpl* impl = manager->getAllocator().newInstance<ShaderProgramImpl>(manager);
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
-	cmdb->m_impl->pushBackNewCommand<CreateCommand>(this, vert, tessc, tesse, geom, frag);
-	cmdb->flush();
+	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
+	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CreateCommand>(impl,
+		init.m_shaders[ShaderType::VERTEX],
+		init.m_shaders[ShaderType::TESSELLATION_CONTROL],
+		init.m_shaders[ShaderType::TESSELLATION_EVALUATION],
+		init.m_shaders[ShaderType::GEOMETRY],
+		init.m_shaders[ShaderType::FRAGMENT],
+		init.m_shaders[ShaderType::COMPUTE]);
+	static_cast<CommandBufferImpl&>(*cmdb).flush();
+
+	return impl;
 }
 
 } // end namespace anki

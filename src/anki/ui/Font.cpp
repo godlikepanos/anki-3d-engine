@@ -83,7 +83,6 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	texInit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	texInit.m_usage =
 		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::GENERATE_MIPMAPS;
-	texInit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 	texInit.m_mipmapsCount = 4;
 	texInit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
 	texInit.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;

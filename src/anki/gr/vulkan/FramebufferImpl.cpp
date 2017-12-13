@@ -146,8 +146,8 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 
 		if(m_noDflt.m_width == 0)
 		{
-			m_noDflt.m_width = tex.m_width >> att.m_surface.m_level;
-			m_noDflt.m_height = tex.m_height >> att.m_surface.m_level;
+			m_noDflt.m_width = tex.getWidth() >> att.m_surface.m_level;
+			m_noDflt.m_height = tex.getHeight() >> att.m_surface.m_level;
 		}
 
 		m_noDflt.m_refs[i] = att.m_texture;
@@ -162,8 +162,8 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 
 		if(m_noDflt.m_width == 0)
 		{
-			m_noDflt.m_width = tex.m_width >> att.m_surface.m_level;
-			m_noDflt.m_height = tex.m_height >> att.m_surface.m_level;
+			m_noDflt.m_width = tex.getWidth() >> att.m_surface.m_level;
+			m_noDflt.m_height = tex.getHeight() >> att.m_surface.m_level;
 		}
 
 		m_noDflt.m_refs[MAX_COLOR_ATTACHMENTS] = att.m_texture;
@@ -186,7 +186,7 @@ void FramebufferImpl::setupAttachmentDescriptor(
 	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc, VkImageLayout layout) const
 {
 	desc = {};
-	desc.format = convertFormat(static_cast<const TextureImpl&>(*att.m_texture).m_format);
+	desc.format = convertFormat(att.m_texture->getPixelFormat());
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);

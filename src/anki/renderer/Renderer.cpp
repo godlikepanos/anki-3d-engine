@@ -92,7 +92,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 		texinit.m_width = texinit.m_height = 4;
 		texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
-		texinit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		m_dummyTex = getGrManager().newTexture(texinit);
 	}

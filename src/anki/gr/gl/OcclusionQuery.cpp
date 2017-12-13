@@ -11,16 +11,7 @@
 namespace anki
 {
 
-OcclusionQuery::OcclusionQuery(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
-{
-}
-
-OcclusionQuery::~OcclusionQuery()
-{
-}
-
-void OcclusionQuery::init()
+OcclusionQuery* OcclusionQuery::newInstance(GrManager* manager)
 {
 	class CreateOqCommand final : public GlCommand
 	{
@@ -34,7 +25,7 @@ void OcclusionQuery::init()
 
 		Error operator()(GlState&)
 		{
-			OcclusionQueryImpl& impl = *m_q->m_impl;
+			OcclusionQueryImpl& impl = static_cast<OcclusionQueryImpl&>(*m_q);
 
 			impl.init();
 
@@ -47,12 +38,13 @@ void OcclusionQuery::init()
 		}
 	};
 
-	m_impl.reset(getAllocator().newInstance<OcclusionQueryImpl>(&getManager()));
+	OcclusionQueryImpl* impl = manager->getAllocator().newInstance<OcclusionQueryImpl>(manager);
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
+	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CreateOqCommand>(impl);
+	static_cast<CommandBufferImpl&>(*cmdb).flush();
 
-	cmdb->m_impl->pushBackNewCommand<CreateOqCommand>(this);
-	cmdb->flush();
+	return impl;
 }
 
 } // end namespace anki

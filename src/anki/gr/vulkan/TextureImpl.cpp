@@ -58,7 +58,7 @@ Error TextureImpl::init(const TextureInitInfo& init_)
 	m_width = init.m_width;
 	m_height = init.m_height;
 	m_depth = init.m_depth;
-	m_type = init.m_type;
+	m_texType = init.m_type;
 	if(init.getName())
 	{
 		strcpy(&m_name[0], init.getName().cstr());
@@ -68,7 +68,7 @@ Error TextureImpl::init(const TextureInitInfo& init_)
 		m_name[0] = '\0';
 	}
 
-	if(m_type == TextureType::_3D)
+	if(m_texType == TextureType::_3D)
 	{
 		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
@@ -85,8 +85,6 @@ Error TextureImpl::init(const TextureInitInfo& init_)
 	m_depthStencil = formatIsDepthStencil(m_format);
 	m_aspect = convertImageAspect(m_format);
 	m_usage = init.m_usage;
-	m_usageWhenEncountered = init.m_usageWhenEncountered;
-	ANKI_ASSERT((m_usageWhenEncountered | m_usage) == m_usage);
 
 	if(m_aspect & VK_IMAGE_ASPECT_DEPTH_BIT)
 	{
@@ -264,12 +262,12 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	VkImageCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	ci.flags = calcCreateFlags(init);
-	ci.imageType = convertTextureType(m_type);
+	ci.imageType = convertTextureType(m_texType);
 	ci.format = m_vkFormat;
 	ci.extent.width = init.m_width;
 	ci.extent.height = init.m_height;
 
-	switch(m_type)
+	switch(m_texType)
 	{
 	case TextureType::_1D:
 	case TextureType::_2D:

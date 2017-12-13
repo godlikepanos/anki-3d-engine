@@ -300,15 +300,15 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, gr, gr->getAllocator())); \
 	{
 
-#define COMMON_END()    \
-	}                   \
-	gr->finish();       \
-	delete transfAlloc; \
-	delete stagingMem;  \
-	delete gr;          \
-	delete win;         \
-	win = nullptr;      \
-	gr = nullptr;       \
+#define COMMON_END()               \
+	}                              \
+	gr->finish();                  \
+	delete transfAlloc;            \
+	delete stagingMem;             \
+	GrManager::deleteInstance(gr); \
+	delete win;                    \
+	win = nullptr;                 \
+	gr = nullptr;                  \
 	stagingMem = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
@@ -352,9 +352,13 @@ const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformForma
 
 static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManager& gr)
 {
-	ShaderPtr vert = gr.newShader(ShaderType::VERTEX, vertSrc);
-	ShaderPtr frag = gr.newShader(ShaderType::FRAGMENT, fragSrc);
-	return gr.newShaderProgram(vert, frag);
+	ShaderPtr vert = gr.newShader({ShaderType::VERTEX, vertSrc});
+	ShaderPtr frag = gr.newShader({ShaderType::FRAGMENT, fragSrc});
+
+	ShaderProgramInitInfo inf;
+	inf.m_shaders[ShaderType::VERTEX] = vert;
+	inf.m_shaders[ShaderType::FRAGMENT] = frag;
+	return gr.newShaderProgram(inf);
 }
 
 static FramebufferPtr createDefaultFb(GrManager& gr)
@@ -392,7 +396,7 @@ ANKI_TEST(Gr, Shader)
 {
 	COMMON_BEGIN()
 
-	ShaderPtr shader = gr->newShader(ShaderType::FRAGMENT, FRAG_MRT_SRC);
+	ShaderPtr shader = gr->newShader({ShaderType::FRAGMENT, FRAG_MRT_SRC});
 
 	COMMON_END()
 }
@@ -1294,8 +1298,10 @@ ANKI_TEST(Gr, ImageLoadStore)
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
 
 	// Create shader & compute prog
-	ShaderPtr shader = gr->newShader(ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC);
-	ShaderProgramPtr compProg = gr->newShaderProgram(shader);
+	ShaderPtr shader = gr->newShader({ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC});
+	ShaderProgramInitInfo sprogInit;
+	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
+	ShaderProgramPtr compProg = gr->newShaderProgram(sprogInit);
 
 	// FB
 	FramebufferPtr dfb = createDefaultFb(*gr);
@@ -1386,7 +1392,6 @@ ANKI_TEST(Gr, 3DTextures)
 	init.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION;
 	init.m_initialUsage = TextureUsageBit::TRANSFER_DESTINATION;
-	init.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 	init.m_height = 2;
 	init.m_width = 2;
 	init.m_mipmapsCount = 2;

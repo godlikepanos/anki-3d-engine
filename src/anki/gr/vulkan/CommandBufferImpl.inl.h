@@ -403,7 +403,7 @@ inline void CommandBufferImpl::clearTextureSurface(
 	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
+	ANKI_ASSERT(impl.getTextureType() != TextureType::_3D && "Not for 3D");
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(surf, aspect, range);
@@ -414,7 +414,7 @@ inline void CommandBufferImpl::clearTextureVolume(
 	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	ANKI_ASSERT(impl.m_type == TextureType::_3D && "Only for 3D");
+	ANKI_ASSERT(impl.getTextureType() == TextureType::_3D && "Only for 3D");
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(vol, aspect, range);

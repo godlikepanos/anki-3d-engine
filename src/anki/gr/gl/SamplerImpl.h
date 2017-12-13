@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/Sampler.h>
 #include <anki/gr/gl/GlObject.h>
 
 namespace anki
@@ -14,17 +15,17 @@ namespace anki
 /// @{
 
 /// Sampler GL object.
-class SamplerImpl : public GlObject
+class SamplerImpl final : public Sampler, public GlObject
 {
 public:
 	SamplerImpl(GrManager* manager)
-		: GlObject(manager)
+		: Sampler(manager)
 	{
 	}
 
 	~SamplerImpl()
 	{
-		destroyDeferred(glDeleteSamplers);
+		destroyDeferred(getManager(), glDeleteSamplers);
 	}
 
 	void init(const SamplerInitInfo& sinit);

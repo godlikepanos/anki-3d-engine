@@ -179,7 +179,8 @@ enum class TextureType : U8
 	_3D,
 	_2D_ARRAY,
 	CUBE,
-	CUBE_ARRAY
+	CUBE_ARRAY,
+	COUNT
 };
 
 /// Texture usage hints. They are very important.

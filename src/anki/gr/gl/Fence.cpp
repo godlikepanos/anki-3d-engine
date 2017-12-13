@@ -13,18 +13,9 @@
 namespace anki
 {
 
-Fence::Fence(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Bool Fence::clientWait(Second seconds)
 {
-}
-
-Fence::~Fence()
-{
-}
-
-Bool Fence::clientWait(F64 seconds)
-{
-	if(m_impl->m_signaled.load())
+	if(static_cast<FenceImpl&>(*this).m_signaled.load())
 	{
 		return true;
 	}
@@ -33,11 +24,11 @@ Bool Fence::clientWait(F64 seconds)
 	{
 	public:
 		FencePtr m_fence;
-		F64 m_timeout;
-		F64 m_flushTime;
+		Second m_timeout;
+		Second m_flushTime;
 		Barrier* m_barrier;
 
-		CheckFenceCommand(FencePtr fence, F64 timeout, F64 flushTime, Barrier* barrier)
+		CheckFenceCommand(FencePtr fence, Second timeout, Second flushTime, Barrier* barrier)
 			: m_fence(fence)
 			, m_timeout(timeout)
 			, m_flushTime(flushTime)
@@ -49,7 +40,7 @@ Bool Fence::clientWait(F64 seconds)
 		{
 			// Since there is a delay between flushing the cmdb and returning this result try to adjust the time we
 			// wait
-			F64 timeToWait;
+			Second timeToWait;
 			if(m_timeout != 0.0)
 			{
 				timeToWait = m_timeout - (HighRezTimer::getCurrentTime() - m_flushTime);
@@ -60,11 +51,12 @@ Bool Fence::clientWait(F64 seconds)
 				timeToWait = 0.0;
 			}
 
-			GLenum out = glClientWaitSync(m_fence->m_impl->m_fence, GL_SYNC_FLUSH_COMMANDS_BIT, timeToWait * 1e+9);
+			FenceImpl& impl = static_cast<FenceImpl&>(*m_fence);
+			GLenum out = glClientWaitSync(impl.m_fence, GL_SYNC_FLUSH_COMMANDS_BIT, timeToWait * 1e+9);
 
 			if(out == GL_ALREADY_SIGNALED || out == GL_CONDITION_SATISFIED)
 			{
-				m_fence->m_impl->m_signaled.store(true);
+				impl.m_signaled.store(true);
 			}
 			else if(out == GL_TIMEOUT_EXPIRED)
 			{
@@ -85,14 +77,15 @@ Bool Fence::clientWait(F64 seconds)
 		}
 	};
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = getManager().newCommandBuffer(CommandBufferInitInfo());
 
 	if(seconds == 0.0)
 	{
 		// Send a cmd that will update the fence's status in case someone calls clientWait with seconds==0.0 all the
 		// time
-		cmdb->m_impl->pushBackNewCommand<CheckFenceCommand>(FencePtr(this), seconds, 0.0, nullptr);
-		cmdb->flush();
+		static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CheckFenceCommand>(
+			FencePtr(this), seconds, 0.0, nullptr);
+		static_cast<CommandBufferImpl&>(*cmdb).flush();
 
 		return false;
 	}
@@ -100,14 +93,15 @@ Bool Fence::clientWait(F64 seconds)
 	{
 		Barrier barrier(2);
 
-		F64 flushTime = HighRezTimer::getCurrentTime();
+		Second flushTime = HighRezTimer::getCurrentTime();
 
-		cmdb->m_impl->pushBackNewCommand<CheckFenceCommand>(FencePtr(this), seconds, flushTime, &barrier);
-		cmdb->flush();
+		static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CheckFenceCommand>(
+			FencePtr(this), seconds, flushTime, &barrier);
+		static_cast<CommandBufferImpl&>(*cmdb).flush();
 
 		barrier.wait();
 
-		return m_impl->m_signaled.load();
+		return static_cast<FenceImpl&>(*this).m_signaled.load();
 	}
 }
 

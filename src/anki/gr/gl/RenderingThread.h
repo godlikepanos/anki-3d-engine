@@ -21,7 +21,7 @@ class RenderingThread
 	friend class SwapBuffersCommand;
 
 public:
-	RenderingThread(GrManager* device);
+	RenderingThread(GrManagerImpl* device);
 
 	~RenderingThread();
 
@@ -51,7 +51,7 @@ public:
 	void swapBuffers();
 
 private:
-	WeakPtr<GrManager> m_manager;
+	WeakPtr<GrManagerImpl> m_manager;
 
 	static const U QUEUE_SIZE = 1024 * 2;
 	DynamicArray<CommandBufferPtr> m_queue; ///< Command queue

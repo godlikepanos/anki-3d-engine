@@ -37,12 +37,11 @@ public:
 };
 
 /// A number of GL commands organized in a chain
-class CommandBufferImpl
+class CommandBufferImpl final : public CommandBuffer
 {
 public:
 	using InitHints = CommandBufferInitHints;
 
-	GrManager* m_manager = nullptr;
 	GlCommand* m_firstCommand = nullptr;
 	GlCommand* m_lastCommand = nullptr;
 	CommandBufferAllocator<U8> m_alloc;
@@ -57,7 +56,7 @@ public:
 
 	/// Default constructor
 	CommandBufferImpl(GrManager* manager)
-		: m_manager(manager)
+		: CommandBuffer(manager)
 	{
 	}
 
@@ -74,9 +73,6 @@ public:
 	{
 		return m_alloc;
 	}
-
-	/// For the UniquePtr destructor.
-	GrAllocator<U8> getAllocator() const;
 
 	/// Compute initialization hints.
 	InitHints computeInitHints() const;
@@ -100,11 +96,6 @@ public:
 	void makeImmutable()
 	{
 		m_immutable = true;
-	}
-
-	GrManager& getManager()
-	{
-		return *m_manager;
 	}
 
 	Bool isEmpty() const

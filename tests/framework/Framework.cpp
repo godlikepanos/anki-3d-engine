@@ -247,14 +247,13 @@ NativeWindow* createWindow(const Config& cfg)
 
 GrManager* createGrManager(const Config& cfg, NativeWindow* win)
 {
-	GrManager* gr = new GrManager();
-
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
 	inf.m_cacheDirectory = "./";
 	inf.m_config = &cfg;
 	inf.m_window = win;
-	ANKI_TEST_EXPECT_NO_ERR(gr->init(inf));
+	GrManager* gr;
+	ANKI_TEST_EXPECT_NO_ERR(GrManager::newInstance(inf, gr));
 
 	return gr;
 }

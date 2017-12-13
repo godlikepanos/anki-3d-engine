@@ -68,10 +68,7 @@ public:
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryHandle m_memHandle;
-	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
-	U32 m_size = 0;
 	VkMemoryPropertyFlags m_memoryFlags = 0;
-	BufferUsageBit m_usage = BufferUsageBit::NONE;
 
 #if ANKI_EXTRA_CHECKS
 	Bool8 m_mapped = false;

@@ -40,7 +40,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[i];
 		const GLenum binding = GL_COLOR_ATTACHMENT0 + i;
 
-		attachTextureInternal(binding, *att.m_texture->m_impl, att);
+		attachTextureInternal(binding, static_cast<const TextureImpl&>(*att.m_texture), att);
 
 		m_drawBuffers[i] = binding;
 
@@ -51,13 +51,13 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		if(m_fbSize[0] == 0)
 		{
-			m_fbSize[0] = att.m_texture->m_impl->m_width;
-			m_fbSize[1] = att.m_texture->m_impl->m_height;
+			m_fbSize[0] = att.m_texture->getWidth();
+			m_fbSize[1] = att.m_texture->getHeight();
 		}
 		else
 		{
-			ANKI_ASSERT(m_fbSize[0] == att.m_texture->m_impl->m_width);
-			ANKI_ASSERT(m_fbSize[1] == att.m_texture->m_impl->m_height);
+			ANKI_ASSERT(m_fbSize[0] == att.m_texture->getWidth());
+			ANKI_ASSERT(m_fbSize[1] == att.m_texture->getHeight());
 		}
 	}
 
@@ -65,22 +65,22 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	if(m_in.m_depthStencilAttachment.m_texture.isCreated())
 	{
 		const FramebufferAttachmentInfo& att = m_in.m_depthStencilAttachment;
-		const TextureImpl& tex = *att.m_texture->m_impl;
+		const TextureImpl& tex = static_cast<const TextureImpl&>(*att.m_texture);
 
 		GLenum binding;
-		if(tex.m_format == GL_DEPTH_COMPONENT)
+		if(tex.m_glFormat == GL_DEPTH_COMPONENT)
 		{
 			binding = GL_DEPTH_ATTACHMENT;
 			m_dsAspect = DepthStencilAspectBit::DEPTH;
 		}
-		else if(tex.m_format == GL_STENCIL_INDEX)
+		else if(tex.m_glFormat == GL_STENCIL_INDEX)
 		{
 			binding = GL_STENCIL_ATTACHMENT;
 			m_dsAspect = DepthStencilAspectBit::STENCIL;
 		}
 		else
 		{
-			ANKI_ASSERT(tex.m_format == GL_DEPTH_STENCIL);
+			ANKI_ASSERT(tex.m_glFormat == GL_DEPTH_STENCIL);
 
 			if(att.m_aspect == DepthStencilAspectBit::DEPTH)
 			{
@@ -112,13 +112,13 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		if(m_fbSize[0] == 0)
 		{
-			m_fbSize[0] = att.m_texture->m_impl->m_width;
-			m_fbSize[1] = att.m_texture->m_impl->m_height;
+			m_fbSize[0] = att.m_texture->getWidth();
+			m_fbSize[1] = att.m_texture->getHeight();
 		}
 		else
 		{
-			ANKI_ASSERT(m_fbSize[0] == att.m_texture->m_impl->m_width);
-			ANKI_ASSERT(m_fbSize[1] == att.m_texture->m_impl->m_height);
+			ANKI_ASSERT(m_fbSize[0] == att.m_texture->getWidth());
+			ANKI_ASSERT(m_fbSize[1] == att.m_texture->getHeight());
 		}
 	}
 
@@ -174,11 +174,11 @@ void FramebufferImpl::attachTextureInternal(
 	}
 }
 
-void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, U32 height)
+void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, U32 height) const
 {
 	ANKI_ASSERT(width > 0 && height > 0);
 
-	if(m_in.getName() && getManager().getImplementation().debugMarkersEnabled())
+	if(m_in.getName() && static_cast<const GrManagerImpl&>(getManager()).debugMarkersEnabled())
 	{
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, m_glName, 0, &m_in.getName()[0]);
 	}
@@ -302,7 +302,7 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 
 void FramebufferImpl::endRenderPass() const
 {
-	if(m_in.getName() && getManager().getImplementation().debugMarkersEnabled())
+	if(m_in.getName() && static_cast<const GrManagerImpl&>(getManager()).debugMarkersEnabled())
 	{
 		glPopDebugGroup();
 	}

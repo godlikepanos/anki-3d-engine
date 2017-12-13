@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/Fence.h>
 #include <anki/gr/gl/GlObject.h>
 
 namespace anki
@@ -14,14 +15,14 @@ namespace anki
 /// @{
 
 /// Fence implementation.
-class FenceImpl : public GlObject
+class FenceImpl final : public Fence, public GlObject
 {
 public:
 	GLsync m_fence = nullptr;
 	Atomic<Bool> m_signaled = {false};
 
 	FenceImpl(GrManager* gr)
-		: GlObject(gr)
+		: Fence(gr)
 	{
 	}
 

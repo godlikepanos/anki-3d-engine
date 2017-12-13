@@ -45,6 +45,26 @@ class Buffer : public GrObject
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::BUFFER;
 
+	/// Return the size of the buffer.
+	PtrSize getSize() const
+	{
+		ANKI_ASSERT(m_size > 0);
+		return m_size;
+	}
+
+	/// Return the BufferUsageBit of the Buffer.
+	BufferUsageBit getBufferUsage() const
+	{
+		ANKI_ASSERT(!!m_usage);
+		return m_usage;
+	}
+
+	/// Return the BufferMapAccessBit of the Buffer.
+	BufferMapAccessBit getMapAccess() const
+	{
+		return m_access;
+	}
+
 	/// Map the buffer.
 	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
@@ -52,6 +72,10 @@ public:
 	void unmap();
 
 protected:
+	PtrSize m_size = 0;
+	BufferUsageBit m_usage = BufferUsageBit::NONE;
+	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
+
 	/// Construct.
 	Buffer(GrManager* manager)
 		: GrObject(manager, CLASS_TYPE)

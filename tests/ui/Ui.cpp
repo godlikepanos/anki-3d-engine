@@ -128,7 +128,7 @@ ANKI_TEST(Ui, Ui)
 	delete resource;
 	delete physics;
 	delete fs;
-	delete gr;
+	GrManager::deleteInstance(gr);
 	delete in;
 	delete win;
 }

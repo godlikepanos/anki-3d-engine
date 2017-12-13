@@ -19,14 +19,14 @@ class String;
 /// @{
 
 /// Shader program. It only contains a single shader and it can be combined with other programs in a program pipiline.
-class ShaderImpl : public GlObject
+class ShaderImpl final : public Shader, public GlObject
 {
 public:
 	GLenum m_glType = 0;
 	ShaderType m_type;
 
 	ShaderImpl(GrManager* manager)
-		: GlObject(manager)
+		: Shader(manager)
 	{
 	}
 

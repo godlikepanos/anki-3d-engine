@@ -40,18 +40,9 @@ public:
 
 	GpuMemoryHandle m_memHandle;
 
-	U32 m_width = 0;
-	U32 m_height = 0;
-	U32 m_depth = 0;
-	TextureType m_type = TextureType::CUBE;
-	U8 m_mipCount = 0;
-	U32 m_layerCount = 0;
 	U32 m_surfaceOrVolumeCount = 0;
 	VkImageAspectFlags m_aspect = 0;
 	DepthStencilAspectBit m_akAspect = DepthStencilAspectBit::NONE;
-	TextureUsageBit m_usage = TextureUsageBit::NONE;
-	TextureUsageBit m_usageWhenEncountered = TextureUsageBit::NONE;
-	PixelFormat m_format;
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
 
 	Bool m_depthStencil = false;
@@ -68,12 +59,12 @@ public:
 
 	void checkSurfaceOrVolume(const TextureSurfaceInfo& surf) const
 	{
-		checkTextureSurface(m_type, m_depth, m_mipCount, m_layerCount, surf);
+		checkTextureSurface(m_texType, m_depth, m_mipCount, m_layerCount, surf);
 	}
 
 	void checkSurfaceOrVolume(const TextureVolumeInfo& vol) const
 	{
-		ANKI_ASSERT(m_type == TextureType::_3D);
+		ANKI_ASSERT(m_texType == TextureType::_3D);
 		ANKI_ASSERT(vol.m_level < m_mipCount);
 	}
 

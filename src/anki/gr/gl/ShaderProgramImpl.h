@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/ShaderProgram.h>
 #include <anki/gr/gl/GlObject.h>
 
 namespace anki
@@ -14,10 +15,13 @@ namespace anki
 /// @{
 
 /// Shader program implementation.
-class ShaderProgramImpl : public GlObject
+class ShaderProgramImpl final : public ShaderProgram, public GlObject
 {
 public:
-	ShaderProgramImpl(GrManager* manager);
+	ShaderProgramImpl(GrManager* manager)
+		: ShaderProgram(manager)
+	{
+	}
 
 	~ShaderProgramImpl();
 

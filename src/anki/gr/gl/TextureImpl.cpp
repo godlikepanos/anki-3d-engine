@@ -39,6 +39,8 @@ static GLenum convertTextureType(TextureType type)
 	case TextureType::CUBE_ARRAY:
 		out = GL_TEXTURE_CUBE_MAP_ARRAY;
 		break;
+	default:
+		ANKI_ASSERT(0);
 	};
 
 	return out;
@@ -86,26 +88,27 @@ public:
 TextureImpl::~TextureImpl()
 {
 	GrManager& manager = getManager();
-	RenderingThread& thread = manager.getImplementation().getRenderingThread();
+	RenderingThread& thread = static_cast<GrManagerImpl&>(manager).getRenderingThread();
 
 	if(!thread.isServerThread())
 	{
 		CommandBufferPtr commands;
 
-		commands = manager.newInstance<CommandBuffer>(CommandBufferInitInfo());
-		commands->m_impl->pushBackNewCommand<DeleteTextureCommand>(m_glName, m_texViews, getAllocator());
-		commands->flush();
+		commands = manager.newCommandBuffer(CommandBufferInitInfo());
+		static_cast<CommandBufferImpl&>(*commands).pushBackNewCommand<DeleteTextureCommand>(
+			m_glName, m_texViews, getAllocator());
+		static_cast<CommandBufferImpl&>(*commands).flush();
 	}
 	else
 	{
 		DeleteTextureCommand cmd(m_glName, m_texViews, getAllocator());
-		cmd(manager.getImplementation().getState());
+		cmd(static_cast<GrManagerImpl&>(manager).getState());
 	}
 
 	m_glName = 0;
 }
 
-void TextureImpl::bind()
+void TextureImpl::bind() const
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(m_target, m_glName);
@@ -121,17 +124,17 @@ void TextureImpl::preInit(const TextureInitInfo& init)
 	m_layerCount = init.m_layerCount;
 	m_target = convertTextureType(init.m_type);
 	m_texType = init.m_type;
-	m_pformat = init.m_format;
+	m_format = init.m_format;
 
-	convertTextureInformation(init.m_format, m_compressed, m_format, m_internalFormat, m_type, m_dsAspect);
+	convertTextureInformation(init.m_format, m_compressed, m_glFormat, m_internalFormat, m_glType, m_dsAspect);
 
 	if(m_target != GL_TEXTURE_3D)
 	{
-		m_mipsCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
+		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
 	}
 	else
 	{
-		m_mipsCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
+		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
 
 	// Surface count
@@ -183,16 +186,16 @@ void TextureImpl::init(const TextureInitInfo& init)
 	{
 	case GL_TEXTURE_2D:
 	case GL_TEXTURE_CUBE_MAP:
-		glTexStorage2D(m_target, m_mipsCount, m_internalFormat, m_width, m_height);
+		glTexStorage2D(m_target, m_mipCount, m_internalFormat, m_width, m_height);
 		break;
 	case GL_TEXTURE_CUBE_MAP_ARRAY:
-		glTexStorage3D(m_target, m_mipsCount, m_internalFormat, m_width, m_height, m_layerCount * 6);
+		glTexStorage3D(m_target, m_mipCount, m_internalFormat, m_width, m_height, m_layerCount * 6);
 		break;
 	case GL_TEXTURE_2D_ARRAY:
-		glTexStorage3D(m_target, m_mipsCount, m_internalFormat, m_width, m_height, m_layerCount);
+		glTexStorage3D(m_target, m_mipCount, m_internalFormat, m_width, m_height, m_layerCount);
 		break;
 	case GL_TEXTURE_3D:
-		glTexStorage3D(m_target, m_mipsCount, m_internalFormat, m_width, m_height, m_depth);
+		glTexStorage3D(m_target, m_mipCount, m_internalFormat, m_width, m_height, m_depth);
 		break;
 	case GL_TEXTURE_2D_MULTISAMPLE:
 		glTexStorage2DMultisample(m_target, init.m_samples, m_internalFormat, m_width, m_height, GL_FALSE);
@@ -218,7 +221,7 @@ void TextureImpl::init(const TextureInitInfo& init)
 		}
 
 		// Make sure that the texture is complete
-		glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, m_mipsCount - 1);
+		glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, m_mipCount - 1);
 
 		// Set filtering type
 		GLenum minFilter = GL_NONE;
@@ -269,33 +272,34 @@ void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, GLuint pbo, PtrSi
 	case GL_TEXTURE_2D:
 		if(!m_compressed)
 		{
-			glTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_format, m_type, ptrOffset);
+			glTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_glFormat, m_glType, ptrOffset);
 		}
 		else
 		{
-			glCompressedTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_format, dataSize, ptrOffset);
+			glCompressedTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_glFormat, dataSize, ptrOffset);
 		}
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 		if(!m_compressed)
 		{
-			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_format, m_type, ptrOffset);
+			glTexSubImage2D(
+				GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_glFormat, m_glType, ptrOffset);
 		}
 		else
 		{
 			glCompressedTexSubImage2D(
-				GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_format, dataSize, ptrOffset);
+				GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_glFormat, dataSize, ptrOffset);
 		}
 		break;
 	case GL_TEXTURE_2D_ARRAY:
 	case GL_TEXTURE_3D:
 		if(!m_compressed)
 		{
-			glTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_format, m_type, ptrOffset);
+			glTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_glFormat, m_glType, ptrOffset);
 		}
 		else
 		{
-			glCompressedTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_format, dataSize, ptrOffset);
+			glCompressedTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_glFormat, dataSize, ptrOffset);
 		}
 		break;
 	default:
@@ -306,7 +310,7 @@ void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, GLuint pbo, PtrSi
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::writeVolume(const TextureVolumeInfo& vol, GLuint pbo, PtrSize offset, PtrSize dataSize)
+void TextureImpl::writeVolume(const TextureVolumeInfo& vol, GLuint pbo, PtrSize offset, PtrSize dataSize) const
 {
 	checkSurfaceOrVolume(vol);
 	ANKI_ASSERT(dataSize > 0);
@@ -326,11 +330,11 @@ void TextureImpl::writeVolume(const TextureVolumeInfo& vol, GLuint pbo, PtrSize 
 
 	if(!m_compressed)
 	{
-		glTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_format, m_type, ptrOffset);
+		glTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_glFormat, m_glType, ptrOffset);
 	}
 	else
 	{
-		glCompressedTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_format, dataSize, ptrOffset);
+		glCompressedTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_glFormat, dataSize, ptrOffset);
 	}
 
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -369,7 +373,7 @@ void TextureImpl::generateMipmaps2d(U face, U layer)
 				ANKI_ASSERT(0);
 			}
 
-			glTextureView(m_texViews[surface], target, m_glName, m_internalFormat, 0, m_mipsCount, surface, 1);
+			glTextureView(m_texViews[surface], target, m_glName, m_internalFormat, 0, m_mipCount, surface, 1);
 		}
 
 		glGenerateTextureMipmap(m_texViews[surface]);
@@ -386,8 +390,8 @@ void TextureImpl::copy(const TextureImpl& src,
 	const TextureSurfaceInfo& destSurf)
 {
 	ANKI_ASSERT(src.m_internalFormat == dest.m_internalFormat);
-	ANKI_ASSERT(src.m_format == dest.m_format);
-	ANKI_ASSERT(src.m_type == dest.m_type);
+	ANKI_ASSERT(src.m_glFormat == dest.m_glFormat);
+	ANKI_ASSERT(src.m_glType == dest.m_glType);
 
 	U width = src.m_width >> srcSurf.m_level;
 	U height = src.m_height >> srcSurf.m_level;
@@ -418,29 +422,29 @@ void TextureImpl::copy(const TextureImpl& src,
 void TextureImpl::clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(surf.m_level < m_mipsCount);
+	ANKI_ASSERT(surf.m_level < m_mipCount);
 	ANKI_ASSERT((aspect & m_dsAspect) == aspect);
 
 	// Find the aspect to clear
 	GLenum format;
 	if(aspect == DepthStencilAspectBit::DEPTH)
 	{
-		ANKI_ASSERT(m_format == GL_DEPTH_COMPONENT || m_format == GL_DEPTH_STENCIL);
+		ANKI_ASSERT(m_glFormat == GL_DEPTH_COMPONENT || m_glFormat == GL_DEPTH_STENCIL);
 		format = GL_DEPTH_COMPONENT;
 	}
 	else if(aspect == DepthStencilAspectBit::STENCIL)
 	{
-		ANKI_ASSERT(m_format == GL_STENCIL_INDEX || m_format == GL_DEPTH_STENCIL);
+		ANKI_ASSERT(m_glFormat == GL_STENCIL_INDEX || m_glFormat == GL_DEPTH_STENCIL);
 		format = GL_STENCIL_INDEX;
 	}
 	else if(aspect == DepthStencilAspectBit::DEPTH_STENCIL)
 	{
-		ANKI_ASSERT(m_format == GL_DEPTH_STENCIL);
+		ANKI_ASSERT(m_glFormat == GL_DEPTH_STENCIL);
 		format = GL_DEPTH_STENCIL;
 	}
 	else
 	{
-		format = m_format;
+		format = m_glFormat;
 	}
 
 	U surfaceIdx = computeSurfaceIdx(surf);

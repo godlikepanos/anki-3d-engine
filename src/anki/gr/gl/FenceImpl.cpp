@@ -34,16 +34,16 @@ FenceImpl::~FenceImpl()
 
 	if(m_fence)
 	{
-		GrManager& manager = getManager();
-		RenderingThread& thread = manager.getImplementation().getRenderingThread();
+		GrManagerImpl& manager = static_cast<GrManagerImpl&>(getManager());
+		RenderingThread& thread = manager.getRenderingThread();
 
 		if(!thread.isServerThread())
 		{
 			CommandBufferPtr commands;
 
-			commands = manager.newInstance<CommandBuffer>(CommandBufferInitInfo());
-			commands->m_impl->pushBackNewCommand<DeleteFenceCommand>(m_fence);
-			commands->flush();
+			commands = manager.newCommandBuffer(CommandBufferInitInfo());
+			static_cast<CommandBufferImpl&>(*commands).pushBackNewCommand<DeleteFenceCommand>(m_fence);
+			static_cast<CommandBufferImpl&>(*commands).flush();
 		}
 		else
 		{

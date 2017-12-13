@@ -80,6 +80,13 @@ public:
 		: GrBaseInitInfo(name)
 	{
 	}
+
+	ShaderInitInfo(ShaderType type, CString source, CString name = {})
+		: GrBaseInitInfo(name)
+		, m_shaderType(type)
+		, m_source(source)
+	{
+	}
 };
 
 /// GPU shader.

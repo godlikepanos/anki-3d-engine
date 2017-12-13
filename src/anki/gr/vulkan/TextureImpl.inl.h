@@ -33,7 +33,7 @@ inline void TextureImpl::computeSubResourceRange(
 	range.aspectMask = convertAspect(aspect);
 	range.baseMipLevel = surf.m_level;
 	range.levelCount = 1;
-	switch(m_type)
+	switch(m_texType)
 	{
 	case TextureType::_2D:
 		range.baseArrayLayer = 0;
@@ -72,7 +72,7 @@ inline U TextureImpl::computeVkArrayLayer(const TextureSurfaceInfo& surf) const
 {
 	checkSurfaceOrVolume(surf);
 	U layer = 0;
-	switch(m_type)
+	switch(m_texType)
 	{
 	case TextureType::_2D:
 		layer = 0;
@@ -100,7 +100,7 @@ inline U TextureImpl::computeSubresourceIdx(const TextureSurfaceInfo& surf) cons
 {
 	checkSurfaceOrVolume(surf);
 
-	switch(m_type)
+	switch(m_texType)
 	{
 	case TextureType::_1D:
 	case TextureType::_2D:

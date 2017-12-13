@@ -70,7 +70,6 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	TextureInitInfo init("RsrcTex");
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION
 		| TextureUsageBit::TRANSFER_DESTINATION;
-	init.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION;
 	U faces = 0;
 
 	ResourceFilePtr file;
