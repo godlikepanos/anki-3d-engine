@@ -6,67 +6,14 @@
 #include <anki/gr/ShaderProgram.h>
 #include <anki/gr/vulkan/ShaderProgramImpl.h>
 #include <anki/gr/Shader.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {
 
-ShaderProgram::ShaderProgram(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgramInitInfo& init)
 {
-}
-
-ShaderProgram::~ShaderProgram()
-{
-}
-
-void ShaderProgram::init(ShaderPtr vert, ShaderPtr frag)
-{
-	ANKI_ASSERT(vert && frag);
-
-	Array<ShaderPtr, U(ShaderType::COUNT)> shaders = {};
-	shaders[ShaderType::VERTEX] = vert;
-	shaders[ShaderType::FRAGMENT] = frag;
-
-	m_impl.reset(getAllocator().newInstance<ShaderProgramImpl>(&getManager()));
-
-	if(m_impl->init(shaders))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
-}
-
-void ShaderProgram::init(ShaderPtr comp)
-{
-	ANKI_ASSERT(comp);
-
-	Array<ShaderPtr, U(ShaderType::COUNT)> shaders = {};
-	shaders[ShaderType::COMPUTE] = comp;
-
-	m_impl.reset(getAllocator().newInstance<ShaderProgramImpl>(&getManager()));
-
-	if(m_impl->init(shaders))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
-}
-
-void ShaderProgram::init(ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom, ShaderPtr frag)
-{
-	ANKI_ASSERT(vert && frag);
-
-	Array<ShaderPtr, U(ShaderType::COUNT)> shaders = {};
-	shaders[ShaderType::VERTEX] = vert;
-	shaders[ShaderType::TESSELLATION_CONTROL] = tessc;
-	shaders[ShaderType::TESSELLATION_EVALUATION] = tesse;
-	shaders[ShaderType::GEOMETRY] = geom;
-	shaders[ShaderType::FRAGMENT] = frag;
-
-	m_impl.reset(getAllocator().newInstance<ShaderProgramImpl>(&getManager()));
-
-	if(m_impl->init(shaders))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
+	return ShaderProgramImpl::newInstanceHelper(manager, init);
 }
 
 } // end namespace anki

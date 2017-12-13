@@ -38,14 +38,14 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	m_grProg = variant->getProgram();
 
 	// Create buffer
-	m_luminanceBuff = getGrManager().newInstance<Buffer>(BufferInitInfo(sizeof(Vec4),
+	m_luminanceBuff = getGrManager().newBuffer(BufferInitInfo(sizeof(Vec4),
 		BufferUsageBit::STORAGE_ALL | BufferUsageBit::UNIFORM_ALL | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE,
 		"AvgLum"));
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
-	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
+	CommandBufferPtr cmdb = getGrManager().newCommandBuffer(cmdbinit);
 
 	TransferGpuAllocatorHandle handle;
 	ANKI_CHECK(m_r->getResourceManager().getTransferGpuAllocator().allocate(sizeof(Vec4), handle));

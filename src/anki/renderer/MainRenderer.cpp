@@ -71,7 +71,7 @@ Error MainRenderer::init(ThreadPool* threadpool,
 		ANKI_R_LOGI("The main renderer will have to blit the offscreen renderer's result");
 	}
 
-	m_rgraph = gr->newInstance<RenderGraph>();
+	m_rgraph = gr->newRenderGraph();
 
 	ANKI_R_LOGI("Main renderer initialized. Rendering size %ux%u", m_width, m_height);
 

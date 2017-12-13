@@ -17,14 +17,9 @@ static void deletePrograms(GLsizei n, const GLuint* progs)
 	glDeleteProgram(*progs);
 }
 
-ShaderProgramImpl::ShaderProgramImpl(GrManager* manager)
-	: GlObject(manager)
-{
-}
-
 ShaderProgramImpl::~ShaderProgramImpl()
 {
-	destroyDeferred(deletePrograms);
+	destroyDeferred(getManager(), deletePrograms);
 }
 
 Error ShaderProgramImpl::initGraphics(ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom, ShaderPtr frag)
@@ -32,31 +27,31 @@ Error ShaderProgramImpl::initGraphics(ShaderPtr vert, ShaderPtr tessc, ShaderPtr
 	m_glName = glCreateProgram();
 	ANKI_ASSERT(m_glName != 0);
 
-	glAttachShader(m_glName, vert->m_impl->getGlName());
+	glAttachShader(m_glName, static_cast<const ShaderImpl&>(*vert).getGlName());
 	m_shaders[ShaderType::VERTEX] = vert;
 
 	if(tessc)
 	{
-		glAttachShader(m_glName, tessc->m_impl->getGlName());
+		glAttachShader(m_glName, static_cast<const ShaderImpl&>(*tessc).getGlName());
 		m_shaders[ShaderType::TESSELLATION_CONTROL] = tessc;
 	}
 
 	if(tesse)
 	{
-		glAttachShader(m_glName, tesse->m_impl->getGlName());
+		glAttachShader(m_glName, static_cast<const ShaderImpl&>(*tesse).getGlName());
 		m_shaders[ShaderType::TESSELLATION_EVALUATION] = tesse;
 	}
 
 	if(geom)
 	{
-		glAttachShader(m_glName, geom->m_impl->getGlName());
+		glAttachShader(m_glName, static_cast<const ShaderImpl&>(*geom).getGlName());
 		m_shaders[ShaderType::GEOMETRY] = geom;
 	}
 
-	glAttachShader(m_glName, frag->m_impl->getGlName());
+	glAttachShader(m_glName, static_cast<const ShaderImpl&>(*frag).getGlName());
 	m_shaders[ShaderType::FRAGMENT] = frag;
 
-	return link(vert->m_impl->getGlName(), frag->m_impl->getGlName());
+	return link(static_cast<const ShaderImpl&>(*vert).getGlName(), static_cast<const ShaderImpl&>(*frag).getGlName());
 }
 
 Error ShaderProgramImpl::initCompute(ShaderPtr comp)
@@ -64,7 +59,7 @@ Error ShaderProgramImpl::initCompute(ShaderPtr comp)
 	m_glName = glCreateProgram();
 	ANKI_ASSERT(m_glName != 0);
 
-	glAttachShader(m_glName, comp->m_impl->getGlName());
+	glAttachShader(m_glName, static_cast<const ShaderImpl&>(*comp).getGlName());
 	m_shaders[ShaderType::COMPUTE] = comp;
 
 	return link(0, 0);

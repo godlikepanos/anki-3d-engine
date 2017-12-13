@@ -129,7 +129,7 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 inline void CommandBufferImpl::setTextureBarrierRange(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range)
 {
-	const TextureImpl& impl = *tex->m_impl;
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	ANKI_ASSERT(impl.usageValid(prevUsage));
 	ANKI_ASSERT(impl.usageValid(nextUsage));
 
@@ -157,7 +157,7 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 		return;
 	}
 
-	const TextureImpl& impl = *tex->m_impl;
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	impl.checkSurfaceOrVolume(surf);
 
 	VkImageSubresourceRange range;
@@ -174,7 +174,7 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 			&& "This transition happens inside CommandBufferImpl::generateMipmaps");
 	}
 
-	const TextureImpl& impl = *tex->m_impl;
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	impl.checkSurfaceOrVolume(vol);
 
 	VkImageSubresourceRange range;
@@ -224,7 +224,7 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 inline void CommandBufferImpl::setBufferBarrier(
 	BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
 {
-	const BufferImpl& impl = *buff->m_impl;
+	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 
 	VkPipelineStageFlags srcStage;
 	VkAccessFlags srcAccess;
@@ -258,7 +258,7 @@ inline void CommandBufferImpl::drawArraysIndirect(
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
-	const BufferImpl& impl = *buff->m_impl;
+	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(DrawArraysIndirectInfo) * drawCount) <= impl.getSize());
@@ -272,7 +272,7 @@ inline void CommandBufferImpl::drawElementsIndirect(
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
-	const BufferImpl& impl = *buff->m_impl;
+	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(DrawElementsIndirectInfo) * drawCount) <= impl.getSize());
@@ -325,8 +325,8 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = query->m_impl->m_handle.m_pool;
-	U32 idx = query->m_impl->m_handle.m_queryIndex;
+	VkQueryPool handle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_pool;
+	U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_queryIndex;
 	ANKI_ASSERT(handle);
 
 #if ANKI_BATCH_COMMANDS
@@ -353,8 +353,8 @@ inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = query->m_impl->m_handle.m_pool;
-	U32 idx = query->m_impl->m_handle.m_queryIndex;
+	VkQueryPool handle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_pool;
+	U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_queryIndex;
 	ANKI_ASSERT(handle);
 
 	ANKI_CMD(vkCmdBeginQuery(m_handle, handle, idx, 0), ANY_OTHER_COMMAND);
@@ -366,8 +366,8 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = query->m_impl->m_handle.m_pool;
-	U32 idx = query->m_impl->m_handle.m_queryIndex;
+	VkQueryPool handle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_pool;
+	U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_queryIndex;
 	ANKI_ASSERT(handle);
 
 	ANKI_CMD(vkCmdEndQuery(m_handle, handle, idx), ANY_OTHER_COMMAND);
@@ -384,7 +384,7 @@ inline void CommandBufferImpl::clearTextureInternal(
 	static_assert(sizeof(vclear) == sizeof(clearValue), "See file");
 	memcpy(&vclear, &clearValue, sizeof(clearValue));
 
-	const TextureImpl& impl = *tex->m_impl;
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	if(impl.m_aspect == VK_IMAGE_ASPECT_COLOR_BIT)
 	{
 		ANKI_CMD(vkCmdClearColorImage(
@@ -402,8 +402,8 @@ inline void CommandBufferImpl::clearTextureInternal(
 inline void CommandBufferImpl::clearTextureSurface(
 	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
-	const TextureImpl& impl = *tex->m_impl;
-	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
+	ANKI_ASSERT(impl.getTextureType() != TextureType::_3D && "Not for 3D");
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(surf, aspect, range);
@@ -413,8 +413,8 @@ inline void CommandBufferImpl::clearTextureSurface(
 inline void CommandBufferImpl::clearTextureVolume(
 	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
-	const TextureImpl& impl = *tex->m_impl;
-	ANKI_ASSERT(impl.m_type == TextureType::_3D && "Only for 3D");
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
+	ANKI_ASSERT(impl.getTextureType() == TextureType::_3D && "Only for 3D");
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(vol, aspect, range);
@@ -428,7 +428,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
 		|| m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 
-	ANKI_ASSERT(cmdb->m_impl->m_finalized);
+	ANKI_ASSERT(static_cast<const CommandBufferImpl&>(*cmdb).m_finalized);
 
 	m_subpassContents = VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
 
@@ -445,9 +445,10 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 		m_secondLevelAtoms.resize(m_alloc, max<U>(8, m_secondLevelAtomCount * 2));
 	}
 
-	m_secondLevelAtoms[m_secondLevelAtomCount++] = cmdb->m_impl->m_handle;
+	m_secondLevelAtoms[m_secondLevelAtomCount++] = static_cast<const CommandBufferImpl&>(*cmdb).m_handle;
 #else
-	ANKI_CMD(vkCmdExecuteCommands(m_handle, 1, &cmdb->m_impl->m_handle), ANY_OTHER_COMMAND);
+	ANKI_CMD(
+		vkCmdExecuteCommands(m_handle, 1, &static_cast<const CommandBufferImpl&>(*cmdb).m_handle), ANY_OTHER_COMMAND);
 #endif
 
 	++m_rpCommandCount;
@@ -518,7 +519,7 @@ inline void CommandBufferImpl::drawcallCommon()
 		const Bool flipvp = flipViewport();
 
 		U32 fbWidth, fbHeight;
-		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
+		static_cast<const FramebufferImpl&>(*m_activeFb).getAttachmentsSize(fbWidth, fbHeight);
 
 		VkViewport vp = computeViewport(&m_viewport[0], fbWidth, fbHeight, flipvp);
 
@@ -538,7 +539,7 @@ inline void CommandBufferImpl::drawcallCommon()
 		const Bool flipvp = flipViewport();
 
 		U32 fbWidth, fbHeight;
-		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
+		static_cast<const FramebufferImpl&>(*m_activeFb).getAttachmentsSize(fbWidth, fbHeight);
 
 		VkRect2D scissor = computeScissor(&m_scissor[0], fbWidth, fbHeight, flipvp);
 
@@ -637,7 +638,7 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
-	const BufferImpl& impl = *buff->m_impl;
+	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::FILL));
 
 	ANKI_ASSERT(offset < impl.getSize());
@@ -658,12 +659,12 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
 
-	const BufferImpl& impl = *buff->m_impl;
+	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::QUERY_RESULT));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(U32)) <= impl.getSize());
 
-	const OcclusionQueryImpl& q = *query->m_impl;
+	const OcclusionQueryImpl& q = static_cast<const OcclusionQueryImpl&>(*query);
 
 #if ANKI_BATCH_COMMANDS
 	flushBatches(CommandBufferCommandType::WRITE_QUERY_RESULT);
@@ -700,7 +701,7 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 {
 	commandCommon();
 
-	ShaderProgramImpl& impl = *prog->m_impl;
+	ShaderProgramImpl& impl = static_cast<ShaderProgramImpl&>(*prog);
 
 	if(impl.isGraphics())
 	{
@@ -739,8 +740,12 @@ inline void CommandBufferImpl::copyBufferToBuffer(
 	region.dstOffset = dstOffset;
 	region.size = range;
 
-	ANKI_CMD(
-		vkCmdCopyBuffer(m_handle, src->m_impl->getHandle(), dst->m_impl->getHandle(), 1, &region), ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdCopyBuffer(m_handle,
+				 static_cast<const BufferImpl&>(*src).getHandle(),
+				 static_cast<const BufferImpl&>(*dst).getHandle(),
+				 1,
+				 &region),
+		ANY_OTHER_COMMAND);
 
 	m_microCmdb->pushObjectRef(src);
 	m_microCmdb->pushObjectRef(dst);
@@ -748,7 +753,7 @@ inline void CommandBufferImpl::copyBufferToBuffer(
 
 inline Bool CommandBufferImpl::flipViewport() const
 {
-	return m_activeFb->m_impl->isDefaultFramebuffer()
+	return static_cast<const FramebufferImpl&>(*m_activeFb).isDefaultFramebuffer()
 		&& !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
 }
 

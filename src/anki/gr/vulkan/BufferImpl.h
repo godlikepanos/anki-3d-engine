@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/Buffer.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
 
@@ -15,11 +16,11 @@ namespace anki
 /// @{
 
 /// Buffer implementation
-class BufferImpl : public VulkanObject
+class BufferImpl final : public Buffer, public VulkanObject<Buffer, BufferImpl>
 {
 public:
 	BufferImpl(GrManager* manager)
-		: VulkanObject(manager)
+		: Buffer(manager)
 	{
 	}
 
@@ -67,10 +68,7 @@ public:
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryHandle m_memHandle;
-	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
-	U32 m_size = 0;
 	VkMemoryPropertyFlags m_memoryFlags = 0;
-	BufferUsageBit m_usage = BufferUsageBit::NONE;
 
 #if ANKI_EXTRA_CHECKS
 	Bool8 m_mapped = false;

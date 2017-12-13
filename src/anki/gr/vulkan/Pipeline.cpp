@@ -202,7 +202,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
 	// Prog
-	ci.pStages = m_state.m_prog->m_impl->getShaderCreateInfos(ci.stageCount);
+	ci.pStages = static_cast<const ShaderProgramImpl&>(*m_state.m_prog).getShaderCreateInfos(ci.stageCount);
 
 	// Vert
 	VkPipelineVertexInputStateCreateInfo& vertCi = m_ci.m_vert;
@@ -370,7 +370,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	ci.pDynamicState = &dynCi;
 
 	// The rest
-	ci.layout = m_state.m_prog->m_impl->getPipelineLayout().getHandle();
+	ci.layout = static_cast<const ShaderProgramImpl&>(*m_state.m_prog).getPipelineLayout().getHandle();
 	ci.renderPass = m_rpass;
 	ci.subpass = 0;
 

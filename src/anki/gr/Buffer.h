@@ -38,30 +38,58 @@ public:
 };
 
 /// GPU buffer.
-class Buffer final : public GrObject
+class Buffer : public GrObject
 {
 	ANKI_GR_OBJECT
 
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::BUFFER;
+
+	/// Return the size of the buffer.
+	PtrSize getSize() const
+	{
+		ANKI_ASSERT(m_size > 0);
+		return m_size;
+	}
+
+	/// Return the BufferUsageBit of the Buffer.
+	BufferUsageBit getBufferUsage() const
+	{
+		ANKI_ASSERT(!!m_usage);
+		return m_usage;
+	}
+
+	/// Return the BufferMapAccessBit of the Buffer.
+	BufferMapAccessBit getMapAccess() const
+	{
+		return m_access;
+	}
+
 	/// Map the buffer.
 	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
 	/// Unmap the buffer.
 	void unmap();
 
-anki_internal:
-	static const GrObjectType CLASS_TYPE = GrObjectType::BUFFER;
-
-	UniquePtr<BufferImpl> m_impl;
+protected:
+	PtrSize m_size = 0;
+	BufferUsageBit m_usage = BufferUsageBit::NONE;
+	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
 
 	/// Construct.
-	Buffer(GrManager* manager);
+	Buffer(GrManager* manager)
+		: GrObject(manager, CLASS_TYPE)
+	{
+	}
 
 	/// Destroy.
-	~Buffer();
+	~Buffer()
+	{
+	}
 
-	/// Allocate the buffer.
-	void init(const BufferInitInfo& init);
+private:
+	/// Allocate and initialize new instance.
+	static ANKI_USE_RESULT Buffer* newInstance(GrManager* manager, const BufferInitInfo& init);
 };
 /// @}
 

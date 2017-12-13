@@ -14,12 +14,6 @@
 namespace anki
 {
 
-TextureImpl::TextureImpl(GrManager* manager, U64 uuid)
-	: VulkanObject(manager)
-	, m_uuid(uuid)
-{
-}
-
 TextureImpl::~TextureImpl()
 {
 	for(auto it : m_viewsMap)
@@ -48,7 +42,7 @@ TextureImpl::~TextureImpl()
 	}
 }
 
-Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
+Error TextureImpl::init(const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
 
@@ -64,7 +58,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_width = init.m_width;
 	m_height = init.m_height;
 	m_depth = init.m_depth;
-	m_type = init.m_type;
+	m_texType = init.m_type;
 	if(init.getName())
 	{
 		strcpy(&m_name[0], init.getName().cstr());
@@ -74,7 +68,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		m_name[0] = '\0';
 	}
 
-	if(m_type == TextureType::_3D)
+	if(m_texType == TextureType::_3D)
 	{
 		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
@@ -91,8 +85,6 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_depthStencil = formatIsDepthStencil(m_format);
 	m_aspect = convertImageAspect(m_format);
 	m_usage = init.m_usage;
-	m_usageWhenEncountered = init.m_usageWhenEncountered;
-	ANKI_ASSERT((m_usageWhenEncountered | m_usage) == m_usage);
 
 	if(m_aspect & VK_IMAGE_ASPECT_DEPTH_BIT)
 	{
@@ -129,7 +121,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
-		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
+		CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbinit);
 
 		VkImageSubresourceRange range;
 		range.aspectMask = m_aspect;
@@ -138,9 +130,10 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		range.layerCount = m_layerCount;
 		range.levelCount = m_mipCount;
 
-		cmdb->m_impl->setTextureBarrierRange(TexturePtr(tex), TextureUsageBit::NONE, init.m_initialUsage, range);
+		static_cast<CommandBufferImpl&>(*cmdb).setTextureBarrierRange(
+			TexturePtr(this), TextureUsageBit::NONE, init.m_initialUsage, range);
 
-		cmdb->m_impl->endRecording();
+		static_cast<CommandBufferImpl&>(*cmdb).endRecording();
 		getGrManagerImpl().flushCommandBuffer(cmdb, nullptr);
 	}
 
@@ -269,12 +262,12 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	VkImageCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	ci.flags = calcCreateFlags(init);
-	ci.imageType = convertTextureType(m_type);
+	ci.imageType = convertTextureType(m_texType);
 	ci.format = m_vkFormat;
 	ci.extent.width = init.m_width;
 	ci.extent.height = init.m_height;
 
-	switch(m_type)
+	switch(m_texType)
 	{
 	case TextureType::_1D:
 	case TextureType::_2D:
@@ -676,7 +669,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	return out;
 }
 
-VkImageView TextureImpl::getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect)
+VkImageView TextureImpl::getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect) const
 {
 	ANKI_ASSERT(mip < m_mipCount);
 
@@ -688,7 +681,8 @@ VkImageView TextureImpl::getOrCreateSingleLevelView(U32 mip, DepthStencilAspectB
 	return getOrCreateView(ci);
 }
 
-VkImageView TextureImpl::getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect)
+VkImageView TextureImpl::getOrCreateSingleSurfaceView(
+	const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect) const
 {
 	checkSurfaceOrVolume(surf);
 
@@ -699,7 +693,7 @@ VkImageView TextureImpl::getOrCreateSingleSurfaceView(const TextureSurfaceInfo& 
 	return getOrCreateView(ci);
 }
 
-VkImageView TextureImpl::getOrCreateResourceGroupView(DepthStencilAspectBit aspect)
+VkImageView TextureImpl::getOrCreateResourceGroupView(DepthStencilAspectBit aspect) const
 {
 	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
 	ci.subresourceRange.aspectMask = convertAspect(aspect);
@@ -707,7 +701,7 @@ VkImageView TextureImpl::getOrCreateResourceGroupView(DepthStencilAspectBit aspe
 	return getOrCreateView(ci);
 }
 
-VkImageView TextureImpl::getOrCreateView(const VkImageViewCreateInfo& ci)
+VkImageView TextureImpl::getOrCreateView(const VkImageViewCreateInfo& ci) const
 {
 	LockGuard<Mutex> lock(m_viewsMapMtx);
 	auto it = m_viewsMap.find(ci);

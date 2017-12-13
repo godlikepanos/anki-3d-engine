@@ -63,7 +63,7 @@ public:
 	}
 };
 
-RenderingThread::RenderingThread(GrManager* manager)
+RenderingThread::RenderingThread(GrManagerImpl* manager)
 	: m_manager(manager)
 	, m_tail(0)
 	, m_head(0)
@@ -84,9 +84,8 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* fence)
 	if(fence)
 	{
 		FencePtr& f = *fence;
-
-		f.reset(m_manager->getImplementation().getAllocator().newInstance<Fence>(m_manager.get()));
-		f->m_impl.reset(m_manager->getAllocator().newInstance<FenceImpl>(m_manager.get()));
+		FenceImpl* fenceImpl = m_manager->getAllocator().newInstance<FenceImpl>(m_manager.get());
+		f.reset(fenceImpl);
 
 		class CreateFenceCmd final : public GlCommand
 		{
@@ -100,15 +99,15 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* fence)
 
 			Error operator()(GlState&)
 			{
-				m_fence->m_impl->m_fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+				static_cast<FenceImpl&>(*m_fence).m_fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 				return Error::NONE;
 			}
 		};
 
-		cmdb->m_impl->pushBackNewCommand<CreateFenceCmd>(f);
+		static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CreateFenceCmd>(f);
 	}
 
-	cmdb->m_impl->makeImmutable();
+	static_cast<CommandBufferImpl&>(*cmdb).makeImmutable();
 
 	{
 		LockGuard<Mutex> lock(m_mtx);
@@ -145,22 +144,23 @@ void RenderingThread::start()
 	m_queue.create(m_manager->getAllocator(), QUEUE_SIZE);
 
 	// Swap buffers stuff
-	m_swapBuffersCommands = m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
-	m_swapBuffersCommands->m_impl->pushBackNewCommand<SwapBuffersCommand>(this);
-	// Just in case noone swaps
-	m_swapBuffersCommands->m_impl->makeExecuted();
+	m_swapBuffersCommands = m_manager->newCommandBuffer(CommandBufferInitInfo());
 
-	m_manager->getImplementation().pinContextToCurrentThread(false);
+	static_cast<CommandBufferImpl&>(*m_swapBuffersCommands).pushBackNewCommand<SwapBuffersCommand>(this);
+	// Just in case noone swaps
+	static_cast<CommandBufferImpl&>(*m_swapBuffersCommands).makeExecuted();
+
+	m_manager->pinContextToCurrentThread(false);
 
 	// Start thread
 	m_thread.start(this, threadCallback);
 
 	// Create sync command buffer
-	m_syncCommands = m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
-	m_syncCommands->m_impl->pushBackNewCommand<SyncCommand>(this);
+	m_syncCommands = m_manager->newCommandBuffer(CommandBufferInitInfo());
+	static_cast<CommandBufferImpl&>(*m_syncCommands).pushBackNewCommand<SyncCommand>(this);
 
-	m_emptyCmdb = m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
-	m_emptyCmdb->m_impl->pushBackNewCommand<EmptyCommand>();
+	m_emptyCmdb = m_manager->newCommandBuffer(CommandBufferInitInfo());
+	static_cast<CommandBufferImpl&>(*m_emptyCmdb).pushBackNewCommand<EmptyCommand>();
 }
 
 void RenderingThread::stop()
@@ -175,7 +175,7 @@ void RenderingThread::stop()
 
 void RenderingThread::prepare()
 {
-	m_manager->getImplementation().pinContextToCurrentThread(true);
+	m_manager->pinContextToCurrentThread(true);
 
 	// Ignore the first error
 	glGetError();
@@ -188,7 +188,7 @@ void RenderingThread::prepare()
 	m_serverThreadId = Thread::getCurrentThreadId();
 
 	// Init state
-	m_manager->getImplementation().getState().initRenderThread();
+	m_manager->getState().initRenderThread();
 }
 
 void RenderingThread::finish()
@@ -199,7 +199,7 @@ void RenderingThread::finish()
 		if(m_queue[i].isCreated())
 		{
 			// Fake that it's executed to avoid warnings
-			m_queue[i]->m_impl->makeExecuted();
+			static_cast<CommandBufferImpl&>(*m_queue[i]).makeExecuted();
 
 			// Release
 			m_queue[i] = CommandBufferPtr();
@@ -207,11 +207,11 @@ void RenderingThread::finish()
 	}
 
 	// Cleanup GL
-	m_manager->getImplementation().getState().destroy();
+	m_manager->getState().destroy();
 
 	// Cleanup
 	glFinish();
-	m_manager->getImplementation().pinContextToCurrentThread(false);
+	m_manager->pinContextToCurrentThread(false);
 }
 
 Error RenderingThread::threadCallback(ThreadCallbackInfo& info)
@@ -253,7 +253,7 @@ void RenderingThread::threadLoop()
 		}
 
 		ANKI_TRACE_START_EVENT(GL_THREAD);
-		Error err = cmd->m_impl->executeAllCommands();
+		Error err = static_cast<CommandBufferImpl&>(*cmd).executeAllCommands();
 		ANKI_TRACE_STOP_EVENT(GL_THREAD);
 
 		if(err)
@@ -281,7 +281,7 @@ void RenderingThread::swapBuffersInternal()
 	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);
 
 	// Do the swap buffers
-	m_manager->getImplementation().swapBuffers();
+	m_manager->swapBuffers();
 
 	// Notify the main thread that we are done
 	{

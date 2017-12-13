@@ -32,7 +32,7 @@ public:
 	using GlDeleteFunction = void (*)(GLsizei, const GLuint*);
 
 	/// Default
-	GlObject(GrManager* manager);
+	GlObject();
 
 	~GlObject()
 	{
@@ -59,26 +59,12 @@ public:
 	}
 
 	/// Check if the object has been created and if not serialize the thread.
-	ANKI_USE_RESULT Error serializeRenderingThread();
+	ANKI_USE_RESULT Error serializeRenderingThread(GrManager& manager);
 
 	/// Should be called from GL objects for deferred deletion.
-	void destroyDeferred(GlDeleteFunction deleteCallback);
-
-	/// Get the allocator.
-	GrAllocator<U8> getAllocator() const;
-
-	GrManager& getManager()
-	{
-		return *m_manager;
-	}
-
-	const GrManager& getManager() const
-	{
-		return *m_manager;
-	}
+	void destroyDeferred(GrManager& manager, GlDeleteFunction deleteCallback);
 
 protected:
-	GrManager* m_manager = nullptr;
 	GLuint m_glName = 0; ///< OpenGL name
 	mutable Atomic<I32> m_state;
 };

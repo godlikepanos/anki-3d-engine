@@ -7,6 +7,7 @@
 
 #include <anki/gr/vulkan/Common.h>
 #include <anki/gr/Buffer.h>
+#include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/Texture.h>
 #include <anki/gr/vulkan/TextureImpl.h>
 #include <anki/gr/Sampler.h>
@@ -65,8 +66,8 @@ private:
 class TextureBinding
 {
 public:
-	TextureImpl* m_tex = nullptr;
-	MicroSampler* m_sampler = nullptr;
+	const TextureImpl* m_tex = nullptr;
+	const MicroSampler* m_sampler = nullptr;
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 	VkImageLayout m_layout = VK_IMAGE_LAYOUT_MAX_ENUM;
 };
@@ -74,7 +75,7 @@ public:
 class BufferBinding
 {
 public:
-	BufferImpl* m_buff = nullptr;
+	const BufferImpl* m_buff = nullptr;
 	PtrSize m_offset = MAX_PTR_SIZE;
 	PtrSize m_range = 0;
 };
@@ -82,7 +83,7 @@ public:
 class ImageBinding
 {
 public:
-	TextureImpl* m_tex = nullptr;
+	const TextureImpl* m_tex = nullptr;
 	U16 m_level = 0;
 };
 
@@ -109,15 +110,15 @@ public:
 		m_layoutDirty = true;
 	}
 
-	void bindTexture(U binding, Texture* tex, DepthStencilAspectBit aspect, VkImageLayout layout)
+	void bindTexture(U binding, const Texture* tex, DepthStencilAspectBit aspect, VkImageLayout layout)
 	{
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::TEXTURE;
 		b.m_uuids[0] = b.m_uuids[1] = tex->getUuid();
 
-		b.m_tex.m_tex = tex->m_impl.get();
-		b.m_tex.m_sampler = tex->m_impl->m_sampler.get();
+		b.m_tex.m_tex = static_cast<const TextureImpl*>(tex);
+		b.m_tex.m_sampler = static_cast<const TextureImpl*>(tex)->m_sampler.get();
 		b.m_tex.m_aspect = aspect;
 		b.m_tex.m_layout = layout;
 
@@ -125,7 +126,7 @@ public:
 	}
 
 	void bindTextureAndSampler(
-		U binding, Texture* tex, Sampler* sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
+		U binding, const Texture* tex, const Sampler* sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
 	{
 		AnyBinding& b = m_bindings[binding];
 		b = {};
@@ -133,22 +134,22 @@ public:
 		b.m_uuids[0] = tex->getUuid();
 		b.m_uuids[1] = sampler->getUuid();
 
-		b.m_tex.m_tex = tex->m_impl.get();
-		b.m_tex.m_sampler = sampler->m_impl->m_sampler.get();
+		b.m_tex.m_tex = static_cast<const TextureImpl*>(tex);
+		b.m_tex.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
 		b.m_tex.m_aspect = aspect;
 		b.m_tex.m_layout = layout;
 
 		m_anyBindingDirty = true;
 	}
 
-	void bindUniformBuffer(U binding, Buffer* buff, PtrSize offset, PtrSize range)
+	void bindUniformBuffer(U binding, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::UNIFORM_BUFFER;
 		b.m_uuids[0] = b.m_uuids[1] = buff->getUuid();
 
-		b.m_buff.m_buff = buff->m_impl.get();
+		b.m_buff.m_buff = static_cast<const BufferImpl*>(buff);
 		b.m_buff.m_offset = offset;
 		b.m_buff.m_range = range;
 
@@ -156,14 +157,14 @@ public:
 		m_dynamicOffsetDirty.set(binding);
 	}
 
-	void bindStorageBuffer(U binding, Buffer* buff, PtrSize offset, PtrSize range)
+	void bindStorageBuffer(U binding, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::STORAGE_BUFFER;
 		b.m_uuids[0] = b.m_uuids[1] = buff->getUuid();
 
-		b.m_buff.m_buff = buff->m_impl.get();
+		b.m_buff.m_buff = static_cast<const BufferImpl*>(buff);
 		b.m_buff.m_offset = offset;
 		b.m_buff.m_range = range;
 
@@ -171,14 +172,14 @@ public:
 		m_dynamicOffsetDirty.set(binding);
 	}
 
-	void bindImage(U binding, Texture* tex, U32 level)
+	void bindImage(U binding, const Texture* tex, U32 level)
 	{
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::IMAGE;
 		b.m_uuids[0] = b.m_uuids[1] = tex->getUuid();
 
-		b.m_image.m_tex = tex->m_impl.get();
+		b.m_image.m_tex = static_cast<const TextureImpl*>(tex);
 		b.m_image.m_level = level;
 
 		m_anyBindingDirty = true;

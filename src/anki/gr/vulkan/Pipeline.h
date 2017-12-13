@@ -356,7 +356,7 @@ public:
 	{
 		if(prog != m_state.m_prog)
 		{
-			const ShaderProgramImpl& impl = *prog->m_impl;
+			const ShaderProgramImpl& impl = static_cast<const ShaderProgramImpl&>(*prog);
 			m_shaderColorAttachmentWritemask = impl.getReflectionInfo().m_colorAttachmentWritemask;
 			m_shaderAttributeMask = impl.getReflectionInfo().m_attributeMask;
 			m_state.m_prog = prog;
@@ -368,11 +368,12 @@ public:
 	{
 		ANKI_ASSERT(m_rpass == VK_NULL_HANDLE);
 		Bool d, s;
-		fb->m_impl->getAttachmentInfo(m_fbColorAttachmentMask, d, s);
+		const FramebufferImpl& fbimpl = static_cast<const FramebufferImpl&>(*fb);
+		fbimpl.getAttachmentInfo(m_fbColorAttachmentMask, d, s);
 		m_fbDepth = d;
 		m_fbStencil = s;
-		m_rpass = fb->m_impl->getCompatibleRenderPass();
-		m_defaultFb = fb->m_impl->isDefaultFramebuffer();
+		m_rpass = fbimpl.getCompatibleRenderPass();
+		m_defaultFb = fbimpl.isDefaultFramebuffer();
 		m_fb = fb;
 	}
 

@@ -39,7 +39,7 @@ Error DebugDrawer::init(Renderer* r)
 	// Create the vert buffs
 	for(BufferPtr& v : m_vertBuff)
 	{
-		v = gr.newInstance<Buffer>(BufferInitInfo(
+		v = gr.newBuffer(BufferInitInfo(
 			sizeof(Vertex) * MAX_VERTS_PER_FRAME, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE, "DbgDrawer"));
 	}
 

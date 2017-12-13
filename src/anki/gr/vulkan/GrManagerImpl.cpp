@@ -87,11 +87,6 @@ GrManagerImpl::~GrManagerImpl()
 	m_vkHandleToName.destroy(getAllocator());
 }
 
-GrAllocator<U8> GrManagerImpl::getAllocator() const
-{
-	return m_manager->getAllocator();
-}
-
 Error GrManagerImpl::init(const GrManagerInitInfo& init)
 {
 	Error err = initInternal(init);
@@ -707,7 +702,7 @@ void GrManagerImpl::resetFrame(PerFrame& frame)
 
 void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence, Bool wait)
 {
-	CommandBufferImpl& impl = *cmdb->m_impl;
+	CommandBufferImpl& impl = static_cast<CommandBufferImpl&>(*cmdb);
 	VkCommandBuffer handle = impl.getHandle();
 
 	VkSubmitInfo submit = {};
@@ -718,9 +713,8 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 	// Create fence
 	if(outFence)
 	{
-		outFence->reset(getAllocator().newInstance<Fence>(m_manager));
-		(*outFence)->m_impl.reset(getAllocator().newInstance<FenceImpl>(m_manager));
-		(*outFence)->m_impl->m_fence = fence;
+		outFence->reset(getAllocator().newInstance<FenceImpl>(this));
+		static_cast<FenceImpl&>(**outFence).m_fence = fence;
 	}
 
 	LockGuard<Mutex> lock(m_globalMtx);

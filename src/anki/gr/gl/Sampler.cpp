@@ -11,16 +11,7 @@
 namespace anki
 {
 
-Sampler::Sampler(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
-{
-}
-
-Sampler::~Sampler()
-{
-}
-
-void Sampler::init(const SamplerInitInfo& init)
+Sampler* Sampler::newInstance(GrManager* manager, const SamplerInitInfo& init)
 {
 	class CreateSamplerCommand : public GlCommand
 	{
@@ -36,12 +27,11 @@ void Sampler::init(const SamplerInitInfo& init)
 
 		Error operator()(GlState&)
 		{
-			SamplerImpl& impl = *m_sampler->m_impl;
+			SamplerImpl& impl = static_cast<SamplerImpl&>(*m_sampler);
 
 			impl.init(m_init);
 
 			GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
-
 			(void)oldState;
 			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 
@@ -49,12 +39,13 @@ void Sampler::init(const SamplerInitInfo& init)
 		}
 	};
 
-	m_impl.reset(getAllocator().newInstance<SamplerImpl>(&getManager()));
+	SamplerImpl* impl = manager->getAllocator().newInstance<SamplerImpl>(manager);
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
+	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CreateSamplerCommand>(impl, init);
+	static_cast<CommandBufferImpl&>(*cmdb).flush();
 
-	cmdb->m_impl->pushBackNewCommand<CreateSamplerCommand>(this, init);
-	cmdb->flush();
+	return impl;
 }
 
 } // end namespace anki

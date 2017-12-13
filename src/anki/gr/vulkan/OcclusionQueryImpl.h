@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/QueryExtra.h>
 
@@ -15,13 +16,13 @@ namespace anki
 /// @{
 
 /// Occlusion query.
-class OcclusionQueryImpl : public VulkanObject
+class OcclusionQueryImpl final : public OcclusionQuery, public VulkanObject<OcclusionQuery, OcclusionQueryImpl>
 {
 public:
-	QueryAllocationHandle m_handle;
+	QueryAllocationHandle m_handle = {};
 
 	OcclusionQueryImpl(GrManager* manager)
-		: VulkanObject(manager)
+		: OcclusionQuery(manager)
 	{
 	}
 

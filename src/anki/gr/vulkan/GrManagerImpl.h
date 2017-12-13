@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/GrManager.h>
 #include <anki/gr/vulkan/Common.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
 #include <anki/gr/vulkan/SemaphoreFactory.h>
@@ -32,20 +33,16 @@ class ConfigSet;
 /// @{
 
 /// Vulkan implementation of GrManager.
-class GrManagerImpl
+class GrManagerImpl : public GrManager
 {
 public:
-	GrManagerImpl(GrManager* manager)
-		: m_manager(manager)
+	GrManagerImpl()
 	{
-		ANKI_ASSERT(manager);
 	}
 
 	~GrManagerImpl();
 
 	ANKI_USE_RESULT Error init(const GrManagerInitInfo& cfg);
-
-	GrAllocator<U8> getAllocator() const;
 
 	U32 getGraphicsQueueFamily() const
 	{
@@ -189,8 +186,6 @@ public:
 	}
 
 private:
-	GrManager* m_manager = nullptr;
-
 	U64 m_frame = 0;
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/GrManager.h>
 #include <anki/gr/gl/Common.h>
 
 namespace anki
@@ -19,18 +20,16 @@ class GlState;
 /// @{
 
 /// Graphics manager backend specific.
-class GrManagerImpl
+class GrManagerImpl final : public GrManager
 {
 public:
-	GrManagerImpl(GrManager* manager)
-		: m_manager(manager)
+	GrManagerImpl()
 	{
-		ANKI_ASSERT(manager);
 	}
 
 	~GrManagerImpl();
 
-	ANKI_USE_RESULT Error init(GrManagerInitInfo& init);
+	ANKI_USE_RESULT Error init(GrManagerInitInfo& init, GrAllocator<U8> alloc);
 
 	const RenderingThread& getRenderingThread() const
 	{
@@ -56,8 +55,6 @@ public:
 		return *m_state;
 	}
 
-	GrAllocator<U8> getAllocator() const;
-
 	void swapBuffers();
 
 	void pinContextToCurrentThread(Bool pin);
@@ -68,7 +65,6 @@ public:
 	}
 
 private:
-	GrManager* m_manager;
 	GlState* m_state = nullptr;
 	RenderingThread* m_thread = nullptr;
 	WindowingBackend* m_backend = nullptr; ///< The backend of the backend.

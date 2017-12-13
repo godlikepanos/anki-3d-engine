@@ -5,8 +5,16 @@
 
 #include <anki/gr/GrManager.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
-#include <anki/gr/vulkan/TextureImpl.h>
+
+#include <anki/gr/Buffer.h>
 #include <anki/gr/Texture.h>
+#include <anki/gr/Sampler.h>
+#include <anki/gr/Shader.h>
+#include <anki/gr/ShaderProgram.h>
+#include <anki/gr/CommandBuffer.h>
+#include <anki/gr/Framebuffer.h>
+#include <anki/gr/OcclusionQuery.h>
+#include <anki/gr/RenderGraph.h>
 
 namespace anki
 {
@@ -18,39 +26,106 @@ GrManager::GrManager()
 GrManager::~GrManager()
 {
 	// Destroy in reverse order
-	m_impl.reset(nullptr);
 	m_cacheDir.destroy(m_alloc);
 }
 
-Error GrManager::init(GrManagerInitInfo& init)
+Error GrManager::newInstance(GrManagerInitInfo& init, GrManager*& gr)
 {
-	m_alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
+	auto alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
 
-	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
+	GrManagerImpl* impl = alloc.newInstance<GrManagerImpl>();
 
-	m_impl.reset(m_alloc.newInstance<GrManagerImpl>(this));
-	ANKI_CHECK(m_impl->init(init));
+	// Init
+	impl->m_alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
+	impl->m_cacheDir.create(alloc, init.m_cacheDirectory);
+	Error err = impl->init(init);
 
-	return Error::NONE;
+	if(err)
+	{
+		alloc.deleteInstance(impl);
+		gr = nullptr;
+	}
+	else
+	{
+		gr = impl;
+	}
+
+	return err;
+}
+
+void GrManager::deleteInstance(GrManager* gr)
+{
+	ANKI_ASSERT(gr);
+	auto alloc = gr->m_alloc;
+	gr->~GrManager();
+	alloc.deallocate(gr, 1);
 }
 
 void GrManager::beginFrame()
 {
-	m_impl->beginFrame();
+	ANKI_VK_SELF(GrManagerImpl);
+	self.beginFrame();
 }
 
 void GrManager::swapBuffers()
 {
-	m_impl->endFrame();
+	ANKI_VK_SELF(GrManagerImpl);
+	self.endFrame();
 }
 
 void GrManager::finish()
 {
+	// TODO
+}
+
+BufferPtr GrManager::newBuffer(const BufferInitInfo& init)
+{
+	return BufferPtr(Buffer::newInstance(this, init));
+}
+
+TexturePtr GrManager::newTexture(const TextureInitInfo& init)
+{
+	return TexturePtr(Texture::newInstance(this, init));
+}
+
+SamplerPtr GrManager::newSampler(const SamplerInitInfo& init)
+{
+	return SamplerPtr(Sampler::newInstance(this, init));
+}
+
+ShaderPtr GrManager::newShader(const ShaderInitInfo& init)
+{
+	return ShaderPtr(Shader::newInstance(this, init));
+}
+
+ShaderProgramPtr GrManager::newShaderProgram(const ShaderProgramInitInfo& init)
+{
+	return ShaderProgramPtr(ShaderProgram::newInstance(this, init));
+}
+
+CommandBufferPtr GrManager::newCommandBuffer(const CommandBufferInitInfo& init)
+{
+	return CommandBufferPtr(CommandBuffer::newInstance(this, init));
+}
+
+FramebufferPtr GrManager::newFramebuffer(const FramebufferInitInfo& init)
+{
+	return FramebufferPtr(Framebuffer::newInstance(this, init));
+}
+
+OcclusionQueryPtr GrManager::newOcclusionQuery()
+{
+	return OcclusionQueryPtr(OcclusionQuery::newInstance(this));
+}
+
+RenderGraphPtr GrManager::newRenderGraph()
+{
+	return RenderGraphPtr(RenderGraph::newInstance(this));
 }
 
 void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
 {
-	const TextureImpl& impl = *tex->m_impl;
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	impl.checkSurfaceOrVolume(surf);
 
 	U width = impl.m_width >> surf.m_level;
@@ -77,7 +152,7 @@ void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurface
 
 void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
 {
-	const TextureImpl& impl = *tex->m_impl;
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	impl.checkSurfaceOrVolume(vol);
 
 	U width = impl.m_width >> vol.m_level;
@@ -105,19 +180,22 @@ void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeIn
 
 void GrManager::getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const
 {
-	bindOffsetAlignment = m_impl->getPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
-	maxUniformBlockSize = m_impl->getPhysicalDeviceProperties().limits.maxUniformBufferRange;
+	ANKI_VK_SELF_CONST(GrManagerImpl);
+	bindOffsetAlignment = self.getPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
+	maxUniformBlockSize = self.getPhysicalDeviceProperties().limits.maxUniformBufferRange;
 }
 
 void GrManager::getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStorageBlockSize) const
 {
-	bindOffsetAlignment = m_impl->getPhysicalDeviceProperties().limits.minStorageBufferOffsetAlignment;
-	maxStorageBlockSize = m_impl->getPhysicalDeviceProperties().limits.maxStorageBufferRange;
+	ANKI_VK_SELF_CONST(GrManagerImpl);
+	bindOffsetAlignment = self.getPhysicalDeviceProperties().limits.minStorageBufferOffsetAlignment;
+	maxStorageBlockSize = self.getPhysicalDeviceProperties().limits.maxStorageBufferRange;
 }
 
 void GrManager::getTextureBufferInfo(U32& bindOffsetAlignment, PtrSize& maxRange) const
 {
-	bindOffsetAlignment = m_impl->getPhysicalDeviceProperties().limits.minTexelBufferOffsetAlignment;
+	ANKI_VK_SELF_CONST(GrManagerImpl);
+	bindOffsetAlignment = self.getPhysicalDeviceProperties().limits.minTexelBufferOffsetAlignment;
 	maxRange = MAX_U32;
 }
 

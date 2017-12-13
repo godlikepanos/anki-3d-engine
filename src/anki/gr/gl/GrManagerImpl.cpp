@@ -17,37 +17,35 @@ GrManagerImpl::~GrManagerImpl()
 	if(m_thread)
 	{
 		m_thread->stop();
-		m_manager->getAllocator().deleteInstance(m_thread);
+		m_alloc.deleteInstance(m_thread);
 		m_thread = nullptr;
 	}
 
 	if(m_state)
 	{
-		m_manager->getAllocator().deleteInstance(m_state);
+		m_alloc.deleteInstance(m_state);
 	}
 
 	destroyBackend();
-	m_manager = nullptr;
 }
 
-GrAllocator<U8> GrManagerImpl::getAllocator() const
+Error GrManagerImpl::init(GrManagerInitInfo& init, GrAllocator<U8> alloc)
 {
-	return m_manager->getAllocator();
-}
+	m_alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
 
-Error GrManagerImpl::init(GrManagerInitInfo& init)
-{
+	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
+
 	m_debugMarkers = init.m_config->getNumber("window.debugMarkers");
 
 	// Init the backend of the backend
 	ANKI_CHECK(createBackend(init));
 
 	// First create the state
-	m_state = m_manager->getAllocator().newInstance<GlState>(m_manager);
+	m_state = m_alloc.newInstance<GlState>(this);
 	m_state->initMainThread(*init.m_config);
 
 	// Create thread
-	m_thread = m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
+	m_thread = m_alloc.newInstance<RenderingThread>(this);
 
 	// Start it
 	m_thread->start();

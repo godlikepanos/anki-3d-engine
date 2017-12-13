@@ -15,23 +15,28 @@ namespace anki
 /// @{
 
 /// GPU sampler.
-class Sampler final : public GrObject
+class Sampler : public GrObject
 {
 	ANKI_GR_OBJECT
 
-anki_internal:
-	UniquePtr<SamplerImpl> m_impl;
-
+public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SAMPLER;
 
+protected:
 	/// Construct.
-	Sampler(GrManager* manager);
+	Sampler(GrManager* manager)
+		: GrObject(manager, CLASS_TYPE)
+	{
+	}
 
 	/// Destroy.
-	~Sampler();
+	~Sampler()
+	{
+	}
 
-	/// Initialize it.
-	void init(const SamplerInitInfo& init);
+private:
+	/// Allocate and initialize new instance.
+	static ANKI_USE_RESULT Sampler* newInstance(GrManager* manager, const SamplerInitInfo& init);
 };
 /// @}
 

@@ -5,9 +5,9 @@
 
 #pragma once
 
+#include <anki/gr/Shader.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
-#include <anki/util/String.h>
 #include <anki/util/BitSet.h>
 #include <vector>
 
@@ -18,7 +18,7 @@ namespace anki
 /// @{
 
 /// Shader vulkan implementation.
-class ShaderImpl : public VulkanObject
+class ShaderImpl final : public Shader, public VulkanObject<Shader, ShaderImpl>
 {
 public:
 	VkShaderModule m_handle = VK_NULL_HANDLE;
@@ -31,13 +31,13 @@ public:
 	Array<BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U8>, MAX_DESCRIPTOR_SETS> m_activeBindingMask = {{{false}, {false}}};
 
 	ShaderImpl(GrManager* manager)
-		: VulkanObject(manager)
+		: Shader(manager)
 	{
 	}
 
 	~ShaderImpl();
 
-	ANKI_USE_RESULT Error init(ShaderType shaderType, const CString& source);
+	ANKI_USE_RESULT Error init(const ShaderInitInfo& init);
 
 private:
 	/// Generate SPIRV from GLSL.

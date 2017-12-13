@@ -51,7 +51,7 @@ static const char* SHADER_HEADER = R"(#version %u %s
 
 ShaderImpl::~ShaderImpl()
 {
-	destroyDeferred(deleteShaders);
+	destroyDeferred(getManager(), deleteShaders);
 }
 
 Error ShaderImpl::init(ShaderType type, const CString& source)
@@ -97,7 +97,7 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 	fullSrc.sprintf(SHADER_HEADER,
 		version,
 		versionType,
-		&GPU_VENDOR_STR[getManager().getImplementation().getState().m_gpu][0],
+		&GPU_VENDOR_STR[static_cast<const GrManagerImpl&>(getManager()).getState().m_gpu][0],
 		shaderName[U(type)],
 		MAX_UNIFORM_BUFFER_BINDINGS,
 		MAX_STORAGE_BUFFER_BINDINGS,
@@ -105,7 +105,7 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 		MAX_IMAGE_BINDINGS,
 		MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS,
 		MAX_TEXTURE_BUFFER_BINDINGS,
-		!!(getManager().getImplementation().getState().m_extensions & GlExtensions::ARB_SHADER_BALLOT),
+		!!(static_cast<const GrManagerImpl&>(getManager()).getState().m_extensions & GlExtensions::ARB_SHADER_BALLOT),
 		&source[0]);
 
 	// 2) Gen name, create, compile and link
@@ -146,7 +146,7 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 		}
 
 		StringAuto fname(alloc);
-		CString cacheDir = m_manager->getCacheDirectory();
+		CString cacheDir = getManager().getCacheDirectory();
 		fname.sprintf("%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
 		File file;

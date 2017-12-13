@@ -23,12 +23,22 @@ namespace anki
 
 void CommandBufferImpl::init(const CommandBufferInitInfo& init)
 {
-	auto& pool = m_manager->getAllocator().getMemoryPool();
+	auto& pool = getManager().getAllocator().getMemoryPool();
 
 	m_alloc = CommandBufferAllocator<GlCommand*>(
 		pool.getAllocationCallback(), pool.getAllocationCallbackUserData(), init.m_hints.m_chunkSize, 1.0, 0, false);
 
 	m_flags = init.m_flags;
+
+#if ANKI_EXTRA_CHECKS
+	m_state.m_secondLevel = !!(init.m_flags & CommandBufferFlag::SECOND_LEVEL);
+#endif
+
+	if(!!(init.m_flags & CommandBufferFlag::SECOND_LEVEL))
+	{
+		// TODO Need to hold a ref
+		m_state.m_fb = static_cast<const FramebufferImpl*>(init.m_framebuffer.get());
+	}
 }
 
 void CommandBufferImpl::destroy()
@@ -67,7 +77,7 @@ Error CommandBufferImpl::executeAllCommands()
 #endif
 
 	Error err = Error::NONE;
-	GlState& state = m_manager->getImplementation().getState();
+	GlState& state = static_cast<GrManagerImpl&>(getManager()).getState();
 
 	GlCommand* command = m_firstCommand;
 
@@ -88,11 +98,6 @@ CommandBufferImpl::InitHints CommandBufferImpl::computeInitHints() const
 	out.m_chunkSize = m_alloc.getMemoryPool().getMemoryCapacity();
 
 	return out;
-}
-
-GrAllocator<U8> CommandBufferImpl::getAllocator() const
-{
-	return m_manager->getAllocator();
 }
 
 void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)

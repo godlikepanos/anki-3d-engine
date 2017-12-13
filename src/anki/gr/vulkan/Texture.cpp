@@ -5,27 +5,14 @@
 
 #include <anki/gr/Texture.h>
 #include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {
 
-Texture::Texture(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Texture* Texture::newInstance(GrManager* manager, const TextureInitInfo& init)
 {
-}
-
-Texture::~Texture()
-{
-}
-
-void Texture::init(const TextureInitInfo& init)
-{
-	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager(), getUuid()));
-
-	if(m_impl->init(init, this))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
+	return TextureImpl::newInstanceHelper(manager, init);
 }
 
 } // end namespace anki

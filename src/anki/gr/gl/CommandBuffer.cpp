@@ -28,55 +28,44 @@
 namespace anki
 {
 
-CommandBuffer::CommandBuffer(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBufferInitInfo& inf)
 {
-}
-
-CommandBuffer::~CommandBuffer()
-{
-}
-
-void CommandBuffer::init(CommandBufferInitInfo& inf)
-{
-	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
-	m_impl->init(inf);
-
-#if ANKI_EXTRA_CHECKS
-	m_impl->m_state.m_secondLevel = !!(inf.m_flags & CommandBufferFlag::SECOND_LEVEL);
-#endif
-
-	if(!!(inf.m_flags & CommandBufferFlag::SECOND_LEVEL))
-	{
-		m_impl->m_state.m_fb = inf.m_framebuffer->m_impl.get();
-	}
+	CommandBufferImpl* impl = manager->getAllocator().newInstance<CommandBufferImpl>(manager);
+	impl->init(inf);
+	return impl;
 }
 
 void CommandBuffer::flush(FencePtr* fence)
 {
-	if(!m_impl->isSecondLevel())
+	ANKI_GL_SELF(CommandBufferImpl);
+
+	if(!self.isSecondLevel())
 	{
-		ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
+		ANKI_ASSERT(!self.m_state.insideRenderPass());
 	}
 	else
 	{
 		ANKI_ASSERT(fence == nullptr);
 	}
 
-	if(!m_impl->isSecondLevel())
+	if(!self.isSecondLevel())
 	{
-		getManager().getImplementation().getRenderingThread().flushCommandBuffer(CommandBufferPtr(this), fence);
+		static_cast<GrManagerImpl&>(getManager())
+			.getRenderingThread()
+			.flushCommandBuffer(CommandBufferPtr(this), fence);
 	}
 }
 
 void CommandBuffer::finish()
 {
-	if(!m_impl->isSecondLevel())
+	ANKI_GL_SELF(CommandBufferImpl);
+
+	if(!self.isSecondLevel())
 	{
-		ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
+		ANKI_ASSERT(!self.m_state.insideRenderPass());
 	}
 
-	getManager().getImplementation().getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
+	static_cast<GrManagerImpl&>(getManager()).getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
 }
 
 void CommandBuffer::bindVertexBuffer(
@@ -102,7 +91,7 @@ void CommandBuffer::bindVertexBuffer(
 
 		Error operator()(GlState& state)
 		{
-			glBindVertexBuffer(m_binding, m_buff->m_impl->getGlName(), m_offset, m_stride);
+			glBindVertexBuffer(m_binding, static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_stride);
 			glVertexBindingDivisor(m_binding, (m_instanced) ? 1 : 0);
 			return Error::NONE;
 		}
@@ -110,10 +99,11 @@ void CommandBuffer::bindVertexBuffer(
 
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(stride > 0);
+	ANKI_GL_SELF(CommandBufferImpl);
 
-	if(m_impl->m_state.bindVertexBuffer(binding, buff, offset, stride, stepRate))
+	if(self.m_state.bindVertexBuffer(binding, buff, offset, stride, stepRate))
 	{
-		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset, stride, stepRate == VertexStepRate::INSTANCE);
+		self.pushBackNewCommand<Cmd>(binding, buff, offset, stride, stepRate == VertexStepRate::INSTANCE);
 	}
 }
 
@@ -147,7 +137,9 @@ void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const Pixe
 		}
 	};
 
-	if(m_impl->m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset))
+	ANKI_GL_SELF(CommandBufferImpl);
+
+	if(self.m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset))
 	{
 		U compCount;
 		GLenum type;
@@ -155,7 +147,7 @@ void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const Pixe
 
 		convertVertexFormat(fmt, compCount, type, normalized);
 
-		m_impl->pushBackNewCommand<Cmd>(location, buffBinding, compCount, type, normalized, relativeOffset);
+		self.pushBackNewCommand<Cmd>(location, buffBinding, compCount, type, normalized, relativeOffset);
 	}
 }
 
@@ -173,16 +165,17 @@ void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType ty
 
 		Error operator()(GlState& state)
 		{
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buff->m_impl->getGlName());
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<const BufferImpl&>(*m_buff).getGlName());
 			return Error::NONE;
 		}
 	};
 
 	ANKI_ASSERT(buff);
+	ANKI_GL_SELF(CommandBufferImpl);
 
-	if(m_impl->m_state.bindIndexBuffer(buff, offset, type))
+	if(self.m_state.bindIndexBuffer(buff, offset, type))
 	{
-		m_impl->pushBackNewCommand<Cmd>(buff);
+		self.pushBackNewCommand<Cmd>(buff);
 	}
 }
 
@@ -213,9 +206,10 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 		}
 	};
 
-	if(m_impl->m_state.setPrimitiveRestart(enable))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setPrimitiveRestart(enable))
 	{
-		m_impl->pushBackNewCommand<Cmd>(enable);
+		self.pushBackNewCommand<Cmd>(enable);
 	}
 }
 
@@ -238,9 +232,10 @@ void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 		}
 	};
 
-	if(m_impl->m_state.setViewport(minx, miny, width, height))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setViewport(minx, miny, width, height))
 	{
-		m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, width, height);
+		self.pushBackNewCommand<ViewportCommand>(minx, miny, width, height);
 	}
 }
 
@@ -277,9 +272,10 @@ void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 	const GLsizei iminx = minx;
 	const GLsizei iminy = miny;
 
-	if(m_impl->m_state.setScissor(iminx, iminy, iwidth, iheight))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setScissor(iminx, iminy, iwidth, iheight))
 	{
-		m_impl->pushBackNewCommand<ScissorCommand>(iminx, iminy, iwidth, iheight);
+		self.pushBackNewCommand<ScissorCommand>(iminx, iminy, iwidth, iheight);
 	}
 }
 
@@ -302,9 +298,10 @@ void CommandBuffer::setFillMode(FillMode mode)
 		}
 	};
 
-	if(m_impl->m_state.setFillMode(mode))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setFillMode(mode))
 	{
-		m_impl->pushBackNewCommand<Cmd>(convertFillMode(mode));
+		self.pushBackNewCommand<Cmd>(convertFillMode(mode));
 	}
 }
 
@@ -327,9 +324,10 @@ void CommandBuffer::setCullMode(FaceSelectionBit mode)
 		}
 	};
 
-	if(m_impl->m_state.setCullMode(mode))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setCullMode(mode))
 	{
-		m_impl->pushBackNewCommand<Cmd>(convertFaceMode(mode));
+		self.pushBackNewCommand<Cmd>(convertFaceMode(mode));
 	}
 }
 
@@ -363,9 +361,10 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 		}
 	};
 
-	if(m_impl->m_state.setPolygonOffset(factor, units))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setPolygonOffset(factor, units))
 	{
-		m_impl->pushBackNewCommand<Cmd>(factor, units);
+		self.pushBackNewCommand<Cmd>(factor, units);
 	}
 }
 
@@ -397,9 +396,10 @@ void CommandBuffer::setStencilOperations(FaceSelectionBit face,
 		}
 	};
 
-	if(m_impl->m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass))
 	{
-		m_impl->pushBackNewCommand<Cmd>(convertFaceMode(face),
+		self.pushBackNewCommand<Cmd>(convertFaceMode(face),
 			convertStencilOperation(stencilFail),
 			convertStencilOperation(stencilPassDepthFail),
 			convertStencilOperation(stencilPassDepthPass));
@@ -408,12 +408,14 @@ void CommandBuffer::setStencilOperations(FaceSelectionBit face,
 
 void CommandBuffer::setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 {
-	m_impl->m_state.setStencilCompareOperation(face, comp);
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.m_state.setStencilCompareOperation(face, comp);
 }
 
 void CommandBuffer::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {
-	m_impl->m_state.setStencilCompareMask(face, mask);
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.m_state.setStencilCompareMask(face, mask);
 }
 
 void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
@@ -452,15 +454,17 @@ void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 		}
 	};
 
-	if(m_impl->m_state.setStencilWriteMask(face, mask))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setStencilWriteMask(face, mask))
 	{
-		m_impl->pushBackNewCommand<Cmd>(convertFaceMode(face), mask);
+		self.pushBackNewCommand<Cmd>(convertFaceMode(face), mask);
 	}
 }
 
 void CommandBuffer::setStencilReference(FaceSelectionBit face, U32 ref)
 {
-	m_impl->m_state.setStencilReference(face, ref);
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.m_state.setStencilReference(face, ref);
 }
 
 void CommandBuffer::setDepthWrite(Bool enable)
@@ -483,9 +487,10 @@ void CommandBuffer::setDepthWrite(Bool enable)
 		}
 	};
 
-	if(m_impl->m_state.setDepthWrite(enable))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setDepthWrite(enable))
 	{
-		m_impl->pushBackNewCommand<Cmd>(enable);
+		self.pushBackNewCommand<Cmd>(enable);
 	}
 }
 
@@ -508,9 +513,10 @@ void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 		}
 	};
 
-	if(m_impl->m_state.setDepthCompareOperation(op))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setDepthCompareOperation(op))
 	{
-		m_impl->pushBackNewCommand<Cmd>(convertCompareOperation(op));
+		self.pushBackNewCommand<Cmd>(convertCompareOperation(op));
 	}
 }
 
@@ -548,9 +554,10 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 		}
 	};
 
-	if(m_impl->m_state.setColorChannelWriteMask(attachment, mask))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setColorChannelWriteMask(attachment, mask))
 	{
-		m_impl->pushBackNewCommand<Cmd>(attachment, mask);
+		self.pushBackNewCommand<Cmd>(attachment, mask);
 	}
 }
 
@@ -582,9 +589,10 @@ void CommandBuffer::setBlendFactors(
 		}
 	};
 
-	if(m_impl->m_state.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA))
 	{
-		m_impl->pushBackNewCommand<Cmd>(attachment,
+		self.pushBackNewCommand<Cmd>(attachment,
 			convertBlendFactor(srcRgb),
 			convertBlendFactor(dstRgb),
 			convertBlendFactor(srcA),
@@ -615,9 +623,10 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 		}
 	};
 
-	if(m_impl->m_state.setBlendOperation(attachment, funcRgb, funcA))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.setBlendOperation(attachment, funcRgb, funcA))
 	{
-		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendOperation(funcRgb), convertBlendOperation(funcA));
+		self.pushBackNewCommand<Cmd>(attachment, convertBlendOperation(funcRgb), convertBlendOperation(funcA));
 	}
 }
 
@@ -642,7 +651,7 @@ void CommandBuffer::bindTexture(
 		{
 			if(m_tex)
 			{
-				glBindTextureUnit(m_unit, m_tex->m_impl->getGlName());
+				glBindTextureUnit(m_unit, static_cast<const TextureImpl&>(*m_tex).getGlName());
 			}
 
 			if(m_samplerChanged)
@@ -653,11 +662,12 @@ void CommandBuffer::bindTexture(
 		}
 	};
 
+	ANKI_GL_SELF(CommandBufferImpl);
 	Bool texChanged, samplerChanged;
-	if(m_impl->m_state.bindTexture(set, binding, tex, aspect, texChanged, samplerChanged))
+	if(self.m_state.bindTexture(set, binding, tex, aspect, texChanged, samplerChanged))
 	{
 		U unit = binding + MAX_TEXTURE_BINDINGS * set;
-		m_impl->pushBackNewCommand<Cmd>(unit, (texChanged) ? tex : TexturePtr(), samplerChanged);
+		self.pushBackNewCommand<Cmd>(unit, (texChanged) ? tex : TexturePtr(), samplerChanged);
 	}
 }
 
@@ -680,16 +690,17 @@ void CommandBuffer::bindTextureAndSampler(
 
 		Error operator()(GlState&)
 		{
-			glBindTextureUnit(m_unit, m_tex->m_impl->getGlName());
-			glBindSampler(m_unit, m_sampler->m_impl->getGlName());
+			glBindTextureUnit(m_unit, static_cast<const TextureImpl&>(*m_tex).getGlName());
+			glBindSampler(m_unit, static_cast<const SamplerImpl&>(*m_sampler).getGlName());
 			return Error::NONE;
 		}
 	};
 
-	if(m_impl->m_state.bindTextureAndSampler(set, binding, tex, sampler, aspect))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.bindTextureAndSampler(set, binding, tex, sampler, aspect))
 	{
 		U unit = binding + MAX_TEXTURE_BINDINGS * set;
-		m_impl->pushBackNewCommand<Cmd>(unit, tex, sampler);
+		self.pushBackNewCommand<Cmd>(unit, tex, sampler);
 	}
 }
 
@@ -713,18 +724,19 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 
 		Error operator()(GlState&)
 		{
-			m_buff->m_impl->bind(GL_UNIFORM_BUFFER, m_binding, m_offset, m_range);
+			static_cast<const BufferImpl&>(*m_buff).bind(GL_UNIFORM_BUFFER, m_binding, m_offset, m_range);
 			return Error::NONE;
 		}
 	};
 
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(range > 0);
+	ANKI_GL_SELF(CommandBufferImpl);
 
-	if(m_impl->m_state.bindUniformBuffer(set, binding, buff, offset, range))
+	if(self.m_state.bindUniformBuffer(set, binding, buff, offset, range))
 	{
 		binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
-		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset, range);
+		self.pushBackNewCommand<Cmd>(binding, buff, offset, range);
 	}
 }
 
@@ -748,18 +760,19 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 
 		Error operator()(GlState&)
 		{
-			m_buff->m_impl->bind(GL_SHADER_STORAGE_BUFFER, m_binding, m_offset, m_range);
+			static_cast<const BufferImpl&>(*m_buff).bind(GL_SHADER_STORAGE_BUFFER, m_binding, m_offset, m_range);
 			return Error::NONE;
 		}
 	};
 
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(range > 0);
+	ANKI_GL_SELF(CommandBufferImpl);
 
-	if(m_impl->m_state.bindStorageBuffer(set, binding, buff, offset, range))
+	if(self.m_state.bindStorageBuffer(set, binding, buff, offset, range))
 	{
 		binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
-		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset, range);
+		self.pushBackNewCommand<Cmd>(binding, buff, offset, range);
 	}
 }
 
@@ -782,22 +795,23 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 		Error operator()(GlState&)
 		{
 			glBindImageTexture(m_unit,
-				m_img->m_impl->getGlName(),
+				static_cast<const TextureImpl&>(*m_img).getGlName(),
 				m_level,
 				GL_TRUE,
 				0,
 				GL_READ_WRITE,
-				m_img->m_impl->m_internalFormat);
+				static_cast<const TextureImpl&>(*m_img).m_internalFormat);
 			return Error::NONE;
 		}
 	};
 
 	ANKI_ASSERT(img);
+	ANKI_GL_SELF(CommandBufferImpl);
 
-	if(m_impl->m_state.bindImage(set, binding, img, level))
+	if(self.m_state.bindImage(set, binding, img, level))
 	{
 		binding = binding + set * MAX_IMAGE_BINDINGS;
-		m_impl->pushBackNewCommand<Cmd>(binding, img, level);
+		self.pushBackNewCommand<Cmd>(binding, img, level);
 	}
 }
 
@@ -826,10 +840,10 @@ void CommandBuffer::bindTextureBuffer(
 
 		Error operator()(GlState& state)
 		{
-			ANKI_ASSERT(m_offset + m_range <= m_buff->m_impl->m_size);
+			ANKI_ASSERT(m_offset + m_range <= m_buff->getSize());
 
 			const GLuint tex = state.m_texBuffTextures[m_set][m_binding];
-			glTextureBufferRange(tex, m_fmt, m_buff->m_impl->getGlName(), m_offset, m_range);
+			glTextureBufferRange(tex, m_fmt, static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_range);
 
 			return Error::NONE;
 		}
@@ -846,7 +860,8 @@ void CommandBuffer::bindTextureBuffer(
 	(void)type;
 	(void)dsAspect;
 
-	m_impl->pushBackNewCommand<Cmd>(set, binding, buff, offset, range, internalFormat);
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.pushBackNewCommand<Cmd>(set, binding, buff, offset, range, internalFormat);
 }
 
 void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
@@ -863,16 +878,17 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 
 		Error operator()(GlState&)
 		{
-			glUseProgram(m_prog->m_impl->getGlName());
+			glUseProgram(static_cast<const ShaderProgramImpl&>(*m_prog).getGlName());
 			return Error::NONE;
 		}
 	};
 
 	ANKI_ASSERT(prog);
+	ANKI_GL_SELF(CommandBufferImpl);
 
-	if(m_impl->m_state.bindShaderProgram(prog))
+	if(self.m_state.bindShaderProgram(prog))
 	{
-		m_impl->pushBackNewCommand<Cmd>(prog);
+		self.pushBackNewCommand<Cmd>(prog);
 	}
 	else
 	{
@@ -902,14 +918,16 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb,
 
 		Error operator()(GlState& state)
 		{
-			m_fb->m_impl->bind(state, m_renderArea[0], m_renderArea[1], m_renderArea[2], m_renderArea[3]);
+			static_cast<const FramebufferImpl&>(*m_fb).bind(
+				state, m_renderArea[0], m_renderArea[1], m_renderArea[2], m_renderArea[3]);
 			return Error::NONE;
 		}
 	};
 
-	if(m_impl->m_state.beginRenderPass(fb))
+	ANKI_GL_SELF(CommandBufferImpl);
+	if(self.m_state.beginRenderPass(fb))
 	{
-		m_impl->pushBackNewCommand<BindFramebufferCommand>(fb, minx, miny, width, height);
+		self.pushBackNewCommand<BindFramebufferCommand>(fb, minx, miny, width, height);
 	}
 }
 
@@ -918,9 +936,9 @@ void CommandBuffer::endRenderPass()
 	class Command final : public GlCommand
 	{
 	public:
-		FramebufferImpl* m_fb;
+		const FramebufferImpl* m_fb;
 
-		Command(FramebufferImpl* fb)
+		Command(const FramebufferImpl* fb)
 			: m_fb(fb)
 		{
 			ANKI_ASSERT(fb);
@@ -933,8 +951,9 @@ void CommandBuffer::endRenderPass()
 		}
 	};
 
-	m_impl->pushBackNewCommand<Command>(m_impl->m_state.m_fb);
-	m_impl->m_state.endRenderPass();
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.pushBackNewCommand<Command>(self.m_state.m_fb);
+	self.m_state.endRenderPass();
 }
 
 void CommandBuffer::drawElements(
@@ -970,24 +989,26 @@ void CommandBuffer::drawElements(
 		}
 	};
 
-	m_impl->m_state.checkIndexedDracall();
-	m_impl->flushDrawcall(*this);
+	ANKI_GL_SELF(CommandBufferImpl);
+
+	self.m_state.checkIndexedDracall();
+	self.flushDrawcall(*this);
 
 	U idxBytes;
-	if(m_impl->m_state.m_idx.m_indexType == GL_UNSIGNED_SHORT)
+	if(self.m_state.m_idx.m_indexType == GL_UNSIGNED_SHORT)
 	{
 		idxBytes = sizeof(U16);
 	}
 	else
 	{
-		ANKI_ASSERT(m_impl->m_state.m_idx.m_indexType == GL_UNSIGNED_INT);
+		ANKI_ASSERT(self.m_state.m_idx.m_indexType == GL_UNSIGNED_INT);
 		idxBytes = sizeof(U32);
 	}
 
-	firstIndex = firstIndex * idxBytes + m_impl->m_state.m_idx.m_offset;
+	firstIndex = firstIndex * idxBytes + self.m_state.m_idx.m_offset;
 
 	DrawElementsIndirectInfo info(count, instanceCount, firstIndex, baseVertex, baseInstance);
-	m_impl->pushBackNewCommand<Cmd>(convertPrimitiveTopology(topology), m_impl->m_state.m_idx.m_indexType, info);
+	self.pushBackNewCommand<Cmd>(convertPrimitiveTopology(topology), self.m_state.m_idx.m_indexType, info);
 }
 
 void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
@@ -1015,11 +1036,13 @@ void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instan
 		}
 	};
 
-	m_impl->m_state.checkNonIndexedDrawcall();
-	m_impl->flushDrawcall(*this);
+	ANKI_GL_SELF(CommandBufferImpl);
+
+	self.m_state.checkNonIndexedDrawcall();
+	self.flushDrawcall(*this);
 
 	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
-	m_impl->pushBackNewCommand<DrawArraysCommand>(convertPrimitiveTopology(topology), info);
+	self.pushBackNewCommand<DrawArraysCommand>(convertPrimitiveTopology(topology), info);
 }
 
 void CommandBuffer::drawElementsIndirect(
@@ -1047,9 +1070,9 @@ void CommandBuffer::drawElementsIndirect(
 
 		Error operator()(GlState&)
 		{
-			const BufferImpl& buff = *m_buff->m_impl;
+			const BufferImpl& buff = static_cast<const BufferImpl&>(*m_buff);
 
-			ANKI_ASSERT(m_offset + sizeof(DrawElementsIndirectInfo) * m_drawCount <= buff.m_size);
+			ANKI_ASSERT(m_offset + sizeof(DrawElementsIndirectInfo) * m_drawCount <= buff.getSize());
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
 
@@ -1061,10 +1084,12 @@ void CommandBuffer::drawElementsIndirect(
 		}
 	};
 
-	m_impl->m_state.checkIndexedDracall();
-	m_impl->flushDrawcall(*this);
-	m_impl->pushBackNewCommand<DrawElementsIndirectCommand>(
-		convertPrimitiveTopology(topology), m_impl->m_state.m_idx.m_indexType, drawCount, offset, indirectBuff);
+	ANKI_GL_SELF(CommandBufferImpl);
+
+	self.m_state.checkIndexedDracall();
+	self.flushDrawcall(*this);
+	self.pushBackNewCommand<DrawElementsIndirectCommand>(
+		convertPrimitiveTopology(topology), self.m_state.m_idx.m_indexType, drawCount, offset, indirectBuff);
 }
 
 void CommandBuffer::drawArraysIndirect(
@@ -1090,9 +1115,9 @@ void CommandBuffer::drawArraysIndirect(
 
 		Error operator()(GlState& state)
 		{
-			const BufferImpl& buff = *m_buff->m_impl;
+			const BufferImpl& buff = static_cast<const BufferImpl&>(*m_buff);
 
-			ANKI_ASSERT(m_offset + sizeof(DrawArraysIndirectInfo) * m_drawCount <= buff.m_size);
+			ANKI_ASSERT(m_offset + sizeof(DrawArraysIndirectInfo) * m_drawCount <= buff.getSize());
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
 
@@ -1104,9 +1129,10 @@ void CommandBuffer::drawArraysIndirect(
 		}
 	};
 
-	m_impl->m_state.checkNonIndexedDrawcall();
-	m_impl->flushDrawcall(*this);
-	m_impl->pushBackNewCommand<DrawArraysIndirectCommand>(
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.m_state.checkNonIndexedDrawcall();
+	self.flushDrawcall(*this);
+	self.pushBackNewCommand<DrawArraysIndirectCommand>(
 		convertPrimitiveTopology(topology), drawCount, offset, indirectBuff);
 }
 
@@ -1129,9 +1155,11 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 		}
 	};
 
-	ANKI_ASSERT(!!(m_impl->m_flags & CommandBufferFlag::COMPUTE_WORK));
-	m_impl->m_state.checkDispatch();
-	m_impl->pushBackNewCommand<DispatchCommand>(groupCountX, groupCountY, groupCountZ);
+	ANKI_GL_SELF(CommandBufferImpl);
+
+	ANKI_ASSERT(!!(self.m_flags & CommandBufferFlag::COMPUTE_WORK));
+	self.m_state.checkDispatch();
+	self.pushBackNewCommand<DispatchCommand>(groupCountX, groupCountY, groupCountZ);
 }
 
 void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)
@@ -1153,12 +1181,13 @@ void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 
 		Error operator()(GlState&)
 		{
-			m_handle->m_impl->begin();
+			static_cast<OcclusionQueryImpl&>(*m_handle).begin();
 			return Error::NONE;
 		}
 	};
 
-	m_impl->pushBackNewCommand<OqBeginCommand>(query);
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.pushBackNewCommand<OqBeginCommand>(query);
 }
 
 void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
@@ -1175,12 +1204,13 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 
 		Error operator()(GlState&)
 		{
-			m_handle->m_impl->end();
+			static_cast<OcclusionQueryImpl&>(*m_handle).end();
 			return Error::NONE;
 		}
 	};
 
-	m_impl->pushBackNewCommand<OqEndCommand>(query);
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.pushBackNewCommand<OqEndCommand>(query);
 }
 
 void CommandBuffer::copyBufferToTextureSurface(
@@ -1207,7 +1237,8 @@ void CommandBuffer::copyBufferToTextureSurface(
 
 		Error operator()(GlState& state)
 		{
-			m_tex->m_impl->writeSurface(m_surf, m_buff->m_impl->getGlName(), m_offset, m_range);
+			static_cast<TextureImpl&>(*m_tex).writeSurface(
+				m_surf, static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_range);
 			return Error::NONE;
 		}
 	};
@@ -1215,9 +1246,10 @@ void CommandBuffer::copyBufferToTextureSurface(
 	ANKI_ASSERT(tex);
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(range > 0);
-	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
+	ANKI_GL_SELF(CommandBufferImpl);
+	ANKI_ASSERT(!self.m_state.insideRenderPass());
 
-	m_impl->pushBackNewCommand<TexSurfUploadCommand>(buff, offset, range, tex, surf);
+	self.pushBackNewCommand<TexSurfUploadCommand>(buff, offset, range, tex, surf);
 }
 
 void CommandBuffer::copyBufferToTextureVolume(
@@ -1243,7 +1275,8 @@ void CommandBuffer::copyBufferToTextureVolume(
 
 		Error operator()(GlState& state)
 		{
-			m_tex->m_impl->writeVolume(m_vol, m_buff->m_impl->getGlName(), m_offset, m_range);
+			static_cast<const TextureImpl&>(*m_tex).writeVolume(
+				m_vol, static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_range);
 			return Error::NONE;
 		}
 	};
@@ -1251,9 +1284,10 @@ void CommandBuffer::copyBufferToTextureVolume(
 	ANKI_ASSERT(tex);
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(range > 0);
-	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
+	ANKI_GL_SELF(CommandBufferImpl);
+	ANKI_ASSERT(!self.m_state.insideRenderPass());
 
-	m_impl->pushBackNewCommand<TexVolUploadCommand>(buff, offset, range, tex, vol);
+	self.pushBackNewCommand<TexVolUploadCommand>(buff, offset, range, tex, vol);
 }
 
 void CommandBuffer::copyBufferToBuffer(
@@ -1279,7 +1313,8 @@ void CommandBuffer::copyBufferToBuffer(
 
 		Error operator()(GlState& state)
 		{
-			m_dst->m_impl->write(m_src->m_impl->getGlName(), m_srcOffset, m_dstOffset, m_range);
+			static_cast<BufferImpl&>(*m_dst).write(
+				static_cast<const BufferImpl&>(*m_src).getGlName(), m_srcOffset, m_dstOffset, m_range);
 			return Error::NONE;
 		}
 	};
@@ -1287,9 +1322,10 @@ void CommandBuffer::copyBufferToBuffer(
 	ANKI_ASSERT(src);
 	ANKI_ASSERT(dst);
 	ANKI_ASSERT(range > 0);
-	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
+	ANKI_GL_SELF(CommandBufferImpl);
+	ANKI_ASSERT(!self.m_state.insideRenderPass());
 
-	m_impl->pushBackNewCommand<Cmd>(src, srcOffset, dst, dstOffset, range);
+	self.pushBackNewCommand<Cmd>(src, srcOffset, dst, dstOffset, range);
 }
 
 void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
@@ -1310,13 +1346,14 @@ void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 
 		Error operator()(GlState&)
 		{
-			m_tex->m_impl->generateMipmaps2d(m_face, m_layer);
+			static_cast<TextureImpl&>(*m_tex).generateMipmaps2d(m_face, m_layer);
 			return Error::NONE;
 		}
 	};
 
-	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
-	m_impl->pushBackNewCommand<GenMipsCommand>(tex, face, layer);
+	ANKI_GL_SELF(CommandBufferImpl);
+	ANKI_ASSERT(!self.m_state.insideRenderPass());
+	self.pushBackNewCommand<GenMipsCommand>(tex, face, layer);
 }
 
 void CommandBuffer::generateMipmaps3d(TexturePtr tex)
@@ -1326,7 +1363,8 @@ void CommandBuffer::generateMipmaps3d(TexturePtr tex)
 
 CommandBufferInitHints CommandBuffer::computeInitHints() const
 {
-	return m_impl->computeInitHints();
+	ANKI_GL_SELF_CONST(CommandBufferImpl);
+	return self.computeInitHints();
 }
 
 void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
@@ -1343,20 +1381,20 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 
 		Error operator()(GlState&)
 		{
-			ANKI_TRACE_START_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
-			Error err = m_cmdb->m_impl->executeAllCommands();
-			ANKI_TRACE_STOP_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
-			return err;
+			ANKI_TRACE_SCOPED_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
+			return static_cast<CommandBufferImpl&>(*m_cmdb).executeAllCommands();
 		}
 	};
 
-	m_impl->m_state.m_lastSecondLevelCmdb = cmdb->m_impl.get();
-	m_impl->pushBackNewCommand<ExecCmdbCommand>(cmdb);
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.m_state.m_lastSecondLevelCmdb = static_cast<CommandBufferImpl*>(cmdb.get());
+	self.pushBackNewCommand<ExecCmdbCommand>(cmdb);
 }
 
 Bool CommandBuffer::isEmpty() const
 {
-	return m_impl->isEmpty();
+	ANKI_GL_SELF_CONST(CommandBufferImpl);
+	return self.isEmpty();
 }
 
 void CommandBuffer::copyTextureSurfaceToTextureSurface(
@@ -1381,13 +1419,17 @@ void CommandBuffer::copyTextureSurfaceToTextureSurface(
 
 		Error operator()(GlState&)
 		{
-			TextureImpl::copy(*m_src->m_impl, m_srcSurf, *m_dest->m_impl, m_destSurf);
+			TextureImpl::copy(static_cast<const TextureImpl&>(*m_src),
+				m_srcSurf,
+				static_cast<const TextureImpl&>(*m_dest),
+				m_destSurf);
 			return Error::NONE;
 		}
 	};
 
-	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
-	m_impl->pushBackNewCommand<CopyTexCommand>(src, srcSurf, dest, destSurf);
+	ANKI_GL_SELF(CommandBufferImpl);
+	ANKI_ASSERT(!self.m_state.insideRenderPass());
+	self.pushBackNewCommand<CopyTexCommand>(src, srcSurf, dest, destSurf);
 }
 
 void CommandBuffer::setBufferBarrier(
@@ -1450,7 +1492,8 @@ void CommandBuffer::setBufferBarrier(
 	}
 
 	ANKI_ASSERT(d);
-	m_impl->pushBackNewCommand<SetBufferMemBarrierCommand>(d);
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.pushBackNewCommand<SetBufferMemBarrierCommand>(d);
 }
 
 void CommandBuffer::setTextureSurfaceBarrier(
@@ -1487,13 +1530,14 @@ void CommandBuffer::clearTextureSurface(
 
 		Error operator()(GlState&)
 		{
-			m_tex->m_impl->clear(m_surf, m_val, m_aspect);
+			static_cast<TextureImpl&>(*m_tex).clear(m_surf, m_val, m_aspect);
 			return Error::NONE;
 		}
 	};
 
-	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
-	m_impl->pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue, aspect);
+	ANKI_GL_SELF(CommandBufferImpl);
+	ANKI_ASSERT(!self.m_state.insideRenderPass());
+	self.pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue, aspect);
 }
 
 void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
@@ -1516,13 +1560,14 @@ void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32
 
 		Error operator()(GlState&)
 		{
-			m_buff->m_impl->fill(m_offset, m_size, m_value);
+			static_cast<BufferImpl&>(*m_buff).fill(m_offset, m_size, m_value);
 			return Error::NONE;
 		}
 	};
 
-	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
-	m_impl->pushBackNewCommand<FillBufferCommand>(buff, offset, size, value);
+	ANKI_GL_SELF(CommandBufferImpl);
+	ANKI_ASSERT(!self.m_state.insideRenderPass());
+	self.pushBackNewCommand<FillBufferCommand>(buff, offset, size, value);
 }
 
 void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff)
@@ -1544,19 +1589,22 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 
 		Error operator()(GlState&)
 		{
-			const BufferImpl& buff = *m_buff->m_impl;
-			ANKI_ASSERT(m_offset + 4 <= buff.m_size);
+			const BufferImpl& buff = static_cast<const BufferImpl&>(*m_buff);
+			ANKI_ASSERT(m_offset + 4 <= buff.getSize());
 
 			glBindBuffer(GL_QUERY_BUFFER, buff.getGlName());
-			glGetQueryObjectuiv(m_query->m_impl->getGlName(), GL_QUERY_RESULT, numberToPtr<GLuint*>(m_offset));
+			glGetQueryObjectuiv(static_cast<const OcclusionQueryImpl&>(*m_query).getGlName(),
+				GL_QUERY_RESULT,
+				numberToPtr<GLuint*>(m_offset));
 			glBindBuffer(GL_QUERY_BUFFER, 0);
 
 			return Error::NONE;
 		}
 	};
 
-	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
-	m_impl->pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
+	ANKI_GL_SELF(CommandBufferImpl);
+	ANKI_ASSERT(!self.m_state.insideRenderPass());
+	self.pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
 }
 
 } // end namespace anki

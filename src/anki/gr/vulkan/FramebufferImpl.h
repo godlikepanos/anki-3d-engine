@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/Framebuffer.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/SwapchainFactory.h>
 #include <anki/util/HashMap.h>
@@ -20,11 +21,11 @@ class FramebufferAttachmentInfo;
 /// @{
 
 /// Framebuffer implementation.
-class FramebufferImpl : public VulkanObject
+class FramebufferImpl final : public Framebuffer, public VulkanObject<Framebuffer, FramebufferImpl>
 {
 public:
 	FramebufferImpl(GrManager* manager)
-		: VulkanObject(manager)
+		: Framebuffer(manager)
 	{
 	}
 
@@ -125,7 +126,7 @@ public:
 		}
 	}
 
-	void getDefaultFramebufferInfo(MicroSwapchainPtr& swapchain, U32& crntBackBufferIdx)
+	void getDefaultFramebufferInfo(MicroSwapchainPtr& swapchain, U32& crntBackBufferIdx) const
 	{
 		ANKI_ASSERT(m_defaultFb);
 		swapchain = m_dflt.m_swapchain;

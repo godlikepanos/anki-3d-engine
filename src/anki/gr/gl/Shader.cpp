@@ -11,63 +11,51 @@
 namespace anki
 {
 
-Shader::Shader(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 {
-}
-
-Shader::~Shader()
-{
-}
-
-class ShaderCreateCommand final : public GlCommand
-{
-public:
-	ShaderPtr m_shader;
-	ShaderType m_type;
-	char* m_source;
-	CommandBufferAllocator<char> m_alloc;
-
-	ShaderCreateCommand(Shader* shader, ShaderType type, char* source, const CommandBufferAllocator<char>& alloc)
-		: m_shader(shader)
-		, m_type(type)
-		, m_source(source)
-		, m_alloc(alloc)
+	class ShaderCreateCommand final : public GlCommand
 	{
-	}
+	public:
+		ShaderPtr m_shader;
+		ShaderType m_type;
+		StringAuto m_source;
 
-	Error operator()(GlState&)
-	{
-		ShaderImpl& impl = *m_shader->m_impl;
+		ShaderCreateCommand(Shader* shader, ShaderType type, CString source, const CommandBufferAllocator<U8>& alloc)
+			: m_shader(shader)
+			, m_type(type)
+			, m_source(alloc)
+		{
+			m_source.create(source);
+		}
 
-		Error err = impl.init(m_type, m_source);
+		Error operator()(GlState&)
+		{
+			ShaderImpl& impl = static_cast<ShaderImpl&>(*m_shader);
 
-		GlObject::State oldState = impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
-		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
-		(void)oldState;
+			Error err = impl.init(m_type, m_source.toCString());
 
-		// Delete source
-		m_alloc.deallocate(m_source, 1);
+			GlObject::State oldState =
+				impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
+			(void)oldState;
 
-		return err;
-	}
-};
+			return err;
+		}
+	};
 
-void Shader::init(ShaderType shaderType, const CString& source)
-{
-	ANKI_ASSERT(!source.isEmpty());
+	ANKI_ASSERT(!init.m_source.isEmpty() && init.m_source.getLength() > 0);
 
-	m_impl.reset(getAllocator().newInstance<ShaderImpl>(&getManager()));
-
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	ShaderImpl* impl = manager->getAllocator().newInstance<ShaderImpl>(manager);
 
 	// Copy source to the command buffer
-	CommandBufferAllocator<char> alloc = cmdb->m_impl->getInternalAllocator();
-	char* src = alloc.allocate(source.getLength() + 1);
-	memcpy(src, &source[0], source.getLength() + 1);
+	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
+	CommandBufferImpl& cmdbimpl = static_cast<CommandBufferImpl&>(*cmdb);
+	CommandBufferAllocator<U8> alloc = cmdbimpl.getInternalAllocator();
 
-	cmdb->m_impl->pushBackNewCommand<ShaderCreateCommand>(this, shaderType, src, alloc);
-	cmdb->flush();
+	cmdbimpl.pushBackNewCommand<ShaderCreateCommand>(impl, init.m_shaderType, init.m_source, alloc);
+	cmdbimpl.flush();
+
+	return impl;
 }
 
 } // end namespace anki

@@ -11,85 +11,58 @@
 namespace anki
 {
 
-Buffer::Buffer(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& inf)
 {
-}
-
-Buffer::~Buffer()
-{
-}
-
-class BufferCreateCommand final : public GlCommand
-{
-public:
-	BufferPtr m_buff;
-	PtrSize m_size;
-	BufferUsageBit m_usage;
-	BufferMapAccessBit m_access;
-
-	BufferCreateCommand(Buffer* buff, PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
-		: m_buff(buff)
-		, m_size(size)
-		, m_usage(usage)
-		, m_access(access)
+	class BufferCreateCommand final : public GlCommand
 	{
-	}
+	public:
+		BufferPtr m_buff;
+		PtrSize m_size;
+		BufferUsageBit m_usage;
+		BufferMapAccessBit m_access;
 
-	Error operator()(GlState&)
-	{
-		BufferImpl& impl = *m_buff->m_impl;
+		BufferCreateCommand(Buffer* buff, PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
+			: m_buff(buff)
+			, m_size(size)
+			, m_usage(usage)
+			, m_access(access)
+		{
+		}
 
-		impl.init(m_size, m_usage, m_access);
+		Error operator()(GlState&)
+		{
+			BufferImpl& impl = static_cast<BufferImpl&>(*m_buff);
 
-		GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
+			impl.init(m_size, m_usage, m_access);
 
-		(void)oldState;
-		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
+			GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
+			(void)oldState;
+			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 
-		return Error::NONE;
-	}
-};
+			return Error::NONE;
+		}
+	};
 
-void Buffer::init(const BufferInitInfo& inf)
-{
-	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
+	BufferImpl* impl = manager->getAllocator().newInstance<BufferImpl>(manager);
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
+	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<BufferCreateCommand>(
+		impl, inf.m_size, inf.m_usage, inf.m_access);
+	static_cast<CommandBufferImpl&>(*cmdb).flush();
 
-	cmdb->m_impl->pushBackNewCommand<BufferCreateCommand>(this, inf.m_size, inf.m_usage, inf.m_access);
-	cmdb->flush();
+	return impl;
 }
 
 void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 {
-	// Wait for its creation
-	if(m_impl->serializeRenderingThread())
-	{
-		return nullptr;
-	}
-
-	// Sanity checks
-	ANKI_ASSERT(offset + range <= m_impl->m_size);
-	ANKI_ASSERT(m_impl->m_persistentMapping);
-
-	U8* ptr = static_cast<U8*>(m_impl->m_persistentMapping);
-	ptr += offset;
-
-#if ANKI_EXTRA_CHECKS
-	ANKI_ASSERT(!m_impl->m_mapped);
-	m_impl->m_mapped = true;
-#endif
-
-	return static_cast<void*>(ptr);
+	ANKI_GL_SELF(BufferImpl);
+	return self.map(offset, range, access);
 }
 
 void Buffer::unmap()
 {
-#if ANKI_EXTRA_CHECKS
-	ANKI_ASSERT(m_impl->m_mapped);
-	m_impl->m_mapped = false;
-#endif
+	ANKI_GL_SELF(BufferImpl);
+	self.unmap();
 }
 
 } // end namespace anki

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/Buffer.h>
 #include <anki/gr/gl/GlObject.h>
 
 namespace anki
@@ -14,26 +15,17 @@ namespace anki
 /// @{
 
 /// Buffer implementation
-class BufferImpl : public GlObject
+class BufferImpl final : public Buffer, public GlObject
 {
 public:
-	U32 m_size = 0; ///< The size of the buffer
-	void* m_persistentMapping = nullptr;
-	BufferUsageBit m_usage = BufferUsageBit::NONE;
-	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
-	GLenum m_target = GL_NONE; ///< A guess
-#if ANKI_EXTRA_CHECKS
-	Bool m_mapped = false;
-#endif
-
 	BufferImpl(GrManager* manager)
-		: GlObject(manager)
+		: Buffer(manager)
 	{
 	}
 
 	~BufferImpl()
 	{
-		destroyDeferred(glDeleteBuffers);
+		destroyDeferred(getManager(), glDeleteBuffers);
 	}
 
 	void init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
@@ -74,6 +66,43 @@ public:
 
 		glClearNamedBufferSubData(m_glName, GL_R32UI, offset, size, GL_RED_INTEGER, GL_UNSIGNED_INT, &value);
 	}
+
+	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
+	{
+		// Wait for its creation
+		if(serializeRenderingThread(getManager()))
+		{
+			return nullptr;
+		}
+
+		// Sanity checks
+		ANKI_ASSERT(offset + range <= m_size);
+		ANKI_ASSERT(m_persistentMapping);
+
+		U8* ptr = static_cast<U8*>(m_persistentMapping);
+		ptr += offset;
+
+#if ANKI_EXTRA_CHECKS
+		ANKI_ASSERT(!m_mapped);
+		m_mapped = true;
+#endif
+		return static_cast<void*>(ptr);
+	}
+
+	void unmap()
+	{
+#if ANKI_EXTRA_CHECKS
+		ANKI_ASSERT(m_mapped);
+		m_mapped = false;
+#endif
+	}
+
+private:
+	void* m_persistentMapping = nullptr;
+	GLenum m_target = GL_NONE; ///< A guess
+#if ANKI_EXTRA_CHECKS
+	Bool m_mapped = false;
+#endif
 };
 /// @}
 

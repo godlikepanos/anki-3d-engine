@@ -11,8 +11,14 @@
 #include <anki/gr/gl/FramebufferImpl.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/gl/BufferImpl.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/gl/TextureImpl.h>
 #include <anki/gr/Sampler.h>
 #include <anki/gr/gl/SamplerImpl.h>
+#include <anki/gr/ShaderProgram.h>
+#include <anki/gr/gl/ShaderProgramImpl.h>
+#include <anki/gr/Framebuffer.h>
+#include <anki/gr/gl/FramebufferImpl.h>
 #include <anki/gr/common/Misc.h>
 
 namespace anki
@@ -72,7 +78,7 @@ public:
 	Bool bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 	{
 		VertexBuffer& b = m_vertBuffs[binding];
-		b.m_buff = buff->m_impl.get();
+		b.m_buff = static_cast<BufferImpl*>(buff.get());
 		b.m_offset = offset;
 		b.m_stride = stride;
 		b.m_stepRate = stepRate;
@@ -89,7 +95,7 @@ public:
 
 	Bool bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
 	{
-		m_idx.m_buff = buff->m_impl.get();
+		m_idx.m_buff = static_cast<BufferImpl*>(buff.get());
 		m_idx.m_offset = offset;
 		m_idx.m_indexType = convertIndexType(type);
 		return true;
@@ -452,7 +458,7 @@ public:
 		U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect, Bool& texChanged, Bool& samplerChanged)
 	{
 		TextureBinding& b = m_textures[set][binding];
-		TextureImpl* texi = tex->m_impl.get();
+		TextureImpl* texi = static_cast<TextureImpl*>(tex.get());
 
 		texChanged = false;
 		samplerChanged = false;
@@ -476,8 +482,8 @@ public:
 	Bool bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectBit aspect)
 	{
 		TextureBinding& b = m_textures[set][binding];
-		b.m_tex = tex->m_impl.get();
-		b.m_sampler = sampler->m_impl.get();
+		b.m_tex = static_cast<TextureImpl*>(tex.get());
+		b.m_sampler = static_cast<SamplerImpl*>(sampler.get());
 		b.m_aspect = aspect;
 		return true;
 	}
@@ -495,7 +501,7 @@ public:
 	Bool bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
 		ShaderBufferBinding& b = m_ubos[set][binding];
-		b.m_buff = buff->m_impl.get();
+		b.m_buff = static_cast<BufferImpl*>(buff.get());
 		b.m_offset = offset;
 		b.m_range = range;
 		return true;
@@ -506,7 +512,7 @@ public:
 	Bool bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
 		ShaderBufferBinding& b = m_ssbos[set][binding];
-		b.m_buff = buff->m_impl.get();
+		b.m_buff = static_cast<BufferImpl*>(buff.get());
 		b.m_offset = offset;
 		b.m_range = range;
 		return true;
@@ -524,7 +530,7 @@ public:
 	Bool bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 	{
 		ImageBinding& b = m_images[set][binding];
-		b.m_tex = img->m_impl.get();
+		b.m_tex = static_cast<TextureImpl*>(img.get());
 		b.m_level = level;
 		return true;
 	}
@@ -533,9 +539,10 @@ public:
 
 	Bool bindShaderProgram(ShaderProgramPtr prog)
 	{
-		if(prog->m_impl.get() != m_prog)
+		ShaderProgramImpl* const progimpl = static_cast<ShaderProgramImpl*>(prog.get());
+		if(progimpl != m_prog)
 		{
-			m_prog = prog->m_impl.get();
+			m_prog = progimpl;
 			return true;
 		}
 		return false;
@@ -544,12 +551,12 @@ public:
 
 	/// @name other
 	/// @{
-	FramebufferImpl* m_fb = nullptr;
+	const FramebufferImpl* m_fb = nullptr;
 
 	Bool beginRenderPass(const FramebufferPtr& fb)
 	{
 		ANKI_ASSERT(!insideRenderPass() && "Already inside a renderpass");
-		m_fb = fb->m_impl.get();
+		m_fb = static_cast<const FramebufferImpl*>(fb.get());
 		m_lastSecondLevelCmdb = nullptr;
 		return true;
 	}

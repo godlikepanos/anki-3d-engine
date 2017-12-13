@@ -23,6 +23,9 @@ class SamplerInitInfo;
 class GrManagerInitInfo;
 class FramebufferInitInfo;
 class BufferInitInfo;
+class ShaderInitInfo;
+class ShaderProgramInitInfo;
+class CommandBufferInitInfo;
 
 /// @addtogroup graphics
 /// @{

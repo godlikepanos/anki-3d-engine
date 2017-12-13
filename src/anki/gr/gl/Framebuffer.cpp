@@ -11,16 +11,7 @@
 namespace anki
 {
 
-Framebuffer::Framebuffer(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
-{
-}
-
-Framebuffer::~Framebuffer()
-{
-}
-
-void Framebuffer::init(const FramebufferInitInfo& init)
+Framebuffer* Framebuffer::newInstance(GrManager* manager, const FramebufferInitInfo& init)
 {
 	class CreateFramebufferCommand final : public GlCommand
 	{
@@ -36,7 +27,7 @@ void Framebuffer::init(const FramebufferInitInfo& init)
 
 		Error operator()(GlState&)
 		{
-			FramebufferImpl& impl = *m_fb->m_impl;
+			FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_fb);
 			Error err = impl.init(m_init);
 
 			GlObject::State oldState =
@@ -48,12 +39,13 @@ void Framebuffer::init(const FramebufferInitInfo& init)
 		}
 	};
 
-	m_impl.reset(getAllocator().newInstance<FramebufferImpl>(&getManager()));
+	FramebufferImpl* impl = manager->getAllocator().newInstance<FramebufferImpl>(manager);
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
+	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CreateFramebufferCommand>(impl, init);
+	static_cast<CommandBufferImpl&>(*cmdb).flush();
 
-	cmdb->m_impl->pushBackNewCommand<CreateFramebufferCommand>(this, init);
-	cmdb->flush();
+	return impl;
 }
 
 } // end namespace anki

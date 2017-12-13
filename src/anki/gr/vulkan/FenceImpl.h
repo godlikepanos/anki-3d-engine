@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/gr/Fence.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/FenceFactory.h>
 
@@ -15,13 +16,13 @@ namespace anki
 /// @{
 
 /// Buffer implementation
-class FenceImpl : public VulkanObject
+class FenceImpl final : public Fence, public VulkanObject<Fence, FenceImpl>
 {
 public:
 	MicroFencePtr m_fence;
 
 	FenceImpl(GrManager* manager)
-		: VulkanObject(manager)
+		: Fence(manager)
 	{
 	}
 
