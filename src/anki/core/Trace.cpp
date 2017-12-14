@@ -36,6 +36,7 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"RESOURCE_ALL
 	"RENDERER_COMMAND_BUFFER_BUILDING",
 	"RENDERER_LIGHT_BINNING",
 	"GR_RENDER_GRAPH",
+	"GR_COMMAND_BUFFER_RESET",
 	"GL_THREAD",
 	"GL_2ND_LEVEL_CMD_BUFFER",
 	"GL_BIND_RESOURCES",
@@ -48,7 +49,8 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"RESOURCE_ALL
 	"VK_DESCRIPTOR_SET_GET_OR_CREATE",
 	"SWAP_BUFFERS",
 	"BARRIER_WAIT",
-	"LUA_EXEC"}};
+	"LUA_EXEC",
+	"TIMER_TICK_SLEEP"}};
 
 static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{"GR_DRAWCALLS",
 	"GR_VERTICES",

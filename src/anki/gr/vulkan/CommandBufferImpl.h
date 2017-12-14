@@ -352,7 +352,6 @@ private:
 	Bool8 m_finalized = false;
 	Bool8 m_empty = true;
 	Bool8 m_beganRecording = false;
-	Bool8 m_initialized = false;
 	ThreadId m_tid = ~ThreadId(0);
 #if ANKI_EXTRA_CHECKS
 	U32 m_commandCount = 0;
@@ -433,8 +432,6 @@ private:
 	DynamicArray<VkCommandBuffer> m_secondLevelAtoms;
 	U16 m_secondLevelAtomCount = 0;
 	/// @}
-
-	void lazyInit();
 
 	/// Some common operations per command.
 	void commandCommon();

@@ -86,13 +86,16 @@ public:
 class RenderGraph::Pass
 {
 public:
+	// WARNING!!!!!: Whatever you put here needs manual destruction in RenderGraph::reset()
+
 	DynamicArray<U32> m_dependsOn;
 
 	RenderPassWorkCallback m_callback;
 	void* m_userData;
 
 	DynamicArray<CommandBufferPtr> m_secondLevelCmdbs;
-	FramebufferPtr m_fb;
+	/// Will reuse the m_secondLevelCmdbInitInfo.m_framebuffer to get the framebuffer.
+	CommandBufferInitInfo m_secondLevelCmdbInitInfo;
 	Array<U32, 4> m_fbRenderArea;
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorUsages = {}; ///< For beginRender pass
 	TextureUsageBit m_dsUsage = TextureUsageBit::NONE; ///< For beginRender pass
@@ -108,6 +111,16 @@ public:
 		DepthStencilAspectBit m_aspect;
 	};
 	DynamicArray<ConsumedTextureInfo> m_consumedTextures;
+
+	FramebufferPtr& fb()
+	{
+		return m_secondLevelCmdbInitInfo.m_framebuffer;
+	}
+
+	const FramebufferPtr& fb() const
+	{
+		return m_secondLevelCmdbInitInfo.m_framebuffer;
+	}
 };
 
 /// A batch of render passes. These passes can run in parallel.
@@ -292,7 +305,7 @@ void RenderGraph::reset()
 
 	for(Pass& p : m_ctx->m_passes)
 	{
-		p.m_fb.reset(nullptr);
+		p.fb().reset(nullptr);
 		p.m_secondLevelCmdbs.destroy(m_ctx->m_alloc);
 	}
 
@@ -587,7 +600,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 
 			if(graphicsPass.hasFramebuffer())
 			{
-				outPass.m_fb = getOrCreateFramebuffer(
+				outPass.fb() = getOrCreateFramebuffer(
 					graphicsPass.m_fbInitInfo, &graphicsPass.m_rtHandles[0], graphicsPass.m_fbHash);
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
@@ -623,19 +636,15 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 					}
 				}
 
-				// Create the second level command buffers
+				// Do some pre-work for the second level command buffers
 				if(inPass.m_secondLevelCmdbsCount)
 				{
 					outPass.m_secondLevelCmdbs.create(alloc, inPass.m_secondLevelCmdbsCount);
-					CommandBufferInitInfo cmdbInit;
+					CommandBufferInitInfo& cmdbInit = outPass.m_secondLevelCmdbInitInfo;
 					cmdbInit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SECOND_LEVEL;
-					cmdbInit.m_framebuffer = outPass.m_fb;
+					ANKI_ASSERT(cmdbInit.m_framebuffer.isCreated());
 					cmdbInit.m_colorAttachmentUsages = outPass.m_colorUsages;
 					cmdbInit.m_depthStencilAttachmentUsage = outPass.m_dsUsage;
-					for(U cmdbIdx = 0; cmdbIdx < inPass.m_secondLevelCmdbsCount; ++cmdbIdx)
-					{
-						outPass.m_secondLevelCmdbs[cmdbIdx] = getManager().newCommandBuffer(cmdbInit);
-					}
 				}
 			}
 			else
@@ -914,7 +923,7 @@ BufferPtr RenderGraph::getBuffer(RenderPassBufferHandle handle) const
 	return m_ctx->m_buffers[handle.m_idx].m_buffer;
 }
 
-void RenderGraph::runSecondLevel(U32 threadIdx) const
+void RenderGraph::runSecondLevel(U32 threadIdx)
 {
 	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
 	ANKI_ASSERT(m_ctx);
@@ -923,11 +932,14 @@ void RenderGraph::runSecondLevel(U32 threadIdx) const
 	ctx.m_rgraph = this;
 	ctx.m_currentSecondLevelCommandBufferIndex = threadIdx;
 
-	for(const Pass& p : m_ctx->m_passes)
+	for(Pass& p : m_ctx->m_passes)
 	{
 		const U size = p.m_secondLevelCmdbs.getSize();
 		if(threadIdx < size)
 		{
+			ANKI_ASSERT(!p.m_secondLevelCmdbs[threadIdx].isCreated());
+			p.m_secondLevelCmdbs[threadIdx] = getManager().newCommandBuffer(p.m_secondLevelCmdbInitInfo);
+
 			ctx.m_commandBuffer = p.m_secondLevelCmdbs[threadIdx];
 			ctx.m_secondLevelCommandBufferCount = size;
 			ctx.m_passIdx = &p - &m_ctx->m_passes[0];
@@ -980,9 +992,9 @@ void RenderGraph::run() const
 		{
 			const Pass& pass = m_ctx->m_passes[passIdx];
 
-			if(pass.m_fb.isCreated())
+			if(pass.fb().isCreated())
 			{
-				cmdb->beginRenderPass(pass.m_fb,
+				cmdb->beginRenderPass(pass.fb(),
 					pass.m_colorUsages,
 					pass.m_dsUsage,
 					pass.m_fbRenderArea[0],
@@ -1007,7 +1019,7 @@ void RenderGraph::run() const
 				}
 			}
 
-			if(pass.m_fb.isCreated())
+			if(pass.fb().isCreated())
 			{
 				cmdb->endRenderPass();
 			}

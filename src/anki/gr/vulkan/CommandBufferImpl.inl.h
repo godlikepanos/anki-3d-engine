@@ -560,8 +560,6 @@ inline void CommandBufferImpl::commandCommon()
 {
 	ANKI_ASSERT(!m_finalized);
 
-	lazyInit();
-
 #if ANKI_EXTRA_CHECKS
 	++m_commandCount;
 #endif
@@ -578,30 +576,6 @@ inline void CommandBufferImpl::commandCommon()
 		&& "Commands must be recorder and flushed by the thread this command buffer was created");
 
 	ANKI_ASSERT(m_handle);
-}
-
-inline void CommandBufferImpl::lazyInit()
-{
-	if(m_initialized)
-	{
-		return;
-	}
-	m_initialized = true;
-
-	m_tid = Thread::getCurrentThreadId();
-
-	if(getGrManagerImpl().getCommandBufferFactory().newCommandBuffer(m_tid, m_flags, m_microCmdb))
-	{
-		ANKI_VK_LOGF("Cannot recover");
-	}
-	m_handle = m_microCmdb->getHandle();
-
-	m_alloc = m_microCmdb->getFastAllocator();
-
-	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
-	{
-		m_state.beginRenderPass(m_activeFb);
-	}
 }
 
 inline void CommandBufferImpl::flushBatches(CommandBufferCommandType type)

@@ -22,6 +22,8 @@ void MicroCommandBuffer::destroy()
 
 void MicroCommandBuffer::reset()
 {
+	ANKI_TRACE_SCOPED_EVENT(GR_COMMAND_BUFFER_RESET);
+
 	ANKI_ASSERT(m_refcount.load() == 0);
 	ANKI_ASSERT(!m_fence.isCreated() || m_fence->done());
 
@@ -88,8 +90,8 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 {
 	cmdbFlags = cmdbFlags & (CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH);
 
-	Bool secondLevel = !!(cmdbFlags & CommandBufferFlag::SECOND_LEVEL);
-	Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::SMALL_BATCH);
+	const Bool secondLevel = !!(cmdbFlags & CommandBufferFlag::SECOND_LEVEL);
+	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::SMALL_BATCH);
 	CmdbType& type = m_types[secondLevel][smallBatch];
 
 	// Move the deleted to (possibly) in-use
@@ -199,14 +201,8 @@ void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
 {
 	ANKI_ASSERT(ptr);
 
-	Bool secondLevel = !!(ptr->m_flags & CommandBufferFlag::SECOND_LEVEL);
-	Bool smallBatch = !!(ptr->m_flags & CommandBufferFlag::SMALL_BATCH);
-
-	if(secondLevel)
-	{
-		// We can safely reset the 2nd level cmdbs early
-		ptr->reset();
-	}
+	const Bool secondLevel = !!(ptr->m_flags & CommandBufferFlag::SECOND_LEVEL);
+	const Bool smallBatch = !!(ptr->m_flags & CommandBufferFlag::SMALL_BATCH);
 
 	CmdbType& type = m_types[secondLevel][smallBatch];
 
@@ -248,6 +244,7 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 {
 	CommandBufferThreadAllocator* alloc = nullptr;
 
+	// Get the thread allocator
 	{
 		LockGuard<SpinLock> lock(m_threadAllocMtx);
 

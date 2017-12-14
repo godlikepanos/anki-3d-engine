@@ -609,7 +609,7 @@ public:
 	/// @{
 
 	/// Will call a number of RenderPassWorkCallback that populate 2nd level command buffers.
-	void runSecondLevel(U32 threadIdx) const;
+	void runSecondLevel(U32 threadIdx);
 	/// @}
 
 	/// @name 3rd step methods

@@ -36,7 +36,7 @@ Error GrManager::newInstance(GrManagerInitInfo& init, GrManager*& gr)
 	GrManagerImpl* impl = alloc.newInstance<GrManagerImpl>();
 
 	// Init
-	impl->m_alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
+	impl->m_alloc = alloc;
 	impl->m_cacheDir.create(alloc, init.m_cacheDirectory);
 	Error err = impl->init(init);
 

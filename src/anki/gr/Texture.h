@@ -35,11 +35,14 @@ public:
 
 	U64 computeHash() const
 	{
-		return anki::computeHash(this, sizeof(*this));
+		const U8* const first = reinterpret_cast<const U8* const>(&m_minLod);
+		const U8* const last = reinterpret_cast<const U8* const>(&m_repeat) + sizeof(m_repeat);
+		const U size = last - first;
+		ANKI_ASSERT(size
+			== sizeof(F32) * 2 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8) + sizeof(Bool8));
+		return anki::computeHash(first, size);
 	}
 };
-static_assert(
-	sizeof(SamplerInitInfo) == sizeof(GrBaseInitInfo) + 16, "Class needs to be tightly packed since we hash it");
 
 /// Texture initializer.
 class alignas(4) TextureInitInfo : public GrBaseInitInfo
@@ -51,8 +54,7 @@ public:
 	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
 
 	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
-	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< It's initial usage.
-
+	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< Its initial usage.
 	TextureType m_type = TextureType::_2D;
 
 	U8 m_mipmapsCount = 1;
@@ -74,11 +76,15 @@ public:
 
 	U64 computeHash() const
 	{
-		return anki::computeHash(this, sizeof(*this));
+		const U8* const first = reinterpret_cast<const U8* const>(&m_width);
+		const U8* const last = reinterpret_cast<const U8* const>(&m_samples) + sizeof(m_samples);
+		const U size = last - first;
+		ANKI_ASSERT(size
+			== sizeof(U32) * 4 + sizeof(TextureUsageBit) * 2 + sizeof(TextureType) + sizeof(U8) + sizeof(PixelFormat)
+				+ sizeof(U8));
+		return appendHash(first, size, m_sampling.computeHash());
 	}
 };
-static_assert(sizeof(TextureInitInfo) == sizeof(GrBaseInitInfo) + 28 + sizeof(SamplerInitInfo),
-	"Class needs to be tightly packed since we hash it");
 
 /// GPU texture.
 class Texture : public GrObject

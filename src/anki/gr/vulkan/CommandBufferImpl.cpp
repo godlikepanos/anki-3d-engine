@@ -36,13 +36,21 @@ CommandBufferImpl::~CommandBufferImpl()
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 {
-	// Store some of the init info for later
+	m_tid = Thread::getCurrentThreadId();
 	m_flags = init.m_flags;
+
+	ANKI_CHECK(getGrManagerImpl().getCommandBufferFactory().newCommandBuffer(m_tid, m_flags, m_microCmdb));
+	m_handle = m_microCmdb->getHandle();
+
+	m_alloc = m_microCmdb->getFastAllocator();
+
+	// Store some of the init info for later
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
 		m_activeFb = init.m_framebuffer;
 		m_colorAttachmentUsages = init.m_colorAttachmentUsages;
 		m_depthStencilAttachmentUsage = init.m_depthStencilAttachmentUsage;
+		m_state.beginRenderPass(m_activeFb);
 	}
 
 	return Error::NONE;

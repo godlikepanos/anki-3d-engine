@@ -418,6 +418,7 @@ Error App::mainLoop()
 		timer.stop();
 		if(timer.getElapsedTime() < m_timerTick)
 		{
+			ANKI_TRACE_SCOPED_EVENT(TIMER_TICK_SLEEP);
 			HighRezTimer::sleep(m_timerTick - timer.getElapsedTime());
 		}
 

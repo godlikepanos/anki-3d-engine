@@ -95,7 +95,6 @@ void SamplerFactory::destroy()
 	for(auto it : m_map)
 	{
 		MicroSampler* const sampler = it;
-
 		ANKI_ASSERT(sampler->getRefcount().load() == 0 && "Someone still holds a reference to a sampler");
 		alloc.deleteInstance(sampler);
 	}
