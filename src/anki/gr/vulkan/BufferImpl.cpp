@@ -208,7 +208,7 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 
 	if(!!(usage & BufferUsageBit::INDIRECT))
 	{
-		stageMask |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+		stageMask |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
 	}
 
 	if(!!(usage & (BufferUsageBit::TRANSFER_ALL)))
