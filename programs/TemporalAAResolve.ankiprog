@@ -5,6 +5,18 @@ Code licensed under the BSD License.
 http://www.anki3d.org/LICENSE
 -->
 <shaderProgram>
+	<mutators>
+		<mutator name="SHARPEN" values="0 1 2"/> <!-- 0: disabled, 1: vertical, 2: horizontal -->
+		<mutator name="VARIANCE_CLIPPING" values="0 1"/>
+		<mutator name="TONEMAP_FIX" values="0 1"/>
+		<mutator name="YCBCR" values="0 1"/>
+	</mutators>
+
+	<inputs>
+		<input name="VARIANCE_CLIPPING_GAMMA" type="float" const="1"/>
+		<input name="BLEND_FACTOR" type="float" const="1"/>
+	</inputs>
+
 	<shaders>
 		<shader type="vert">
 			<source><![CDATA[
@@ -17,13 +29,6 @@ http://www.anki3d.org/LICENSE
 #include "shaders/Functions.glsl"
 #include "shaders/Pack.glsl"
 #include "shaders/Tonemapping.glsl"
-
-// Config
-#define VARIANCE_CLIPPING 1
-const float VARIANCE_CLIPPING_GAMMA = 1.75;
-#define YCBCR 0
-const float BLEND_FACTOR = 1.0 / 16.0; // Keep it low to have a better result
-#define TONEMAP_FIX 1
 
 layout(location = 0) in vec2 in_uv;
 
@@ -52,6 +57,19 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 #define sampleOffset(s, uv, x, y) textureLodOffset(s, uv, 0.0, ivec2(x, y)).rgb
 #endif
 
+vec3 sharpen()
+{
+	vec3 center = sample(u_inputRt, in_uv);
+#if SHARPEN == 1
+	vec3 near = sampleOffset(u_inputRt, in_uv, 1, 0) + sampleOffset(u_inputRt, in_uv, -1, 0);
+#else
+	vec3 near = sampleOffset(u_inputRt, in_uv, 0, 1) + sampleOffset(u_inputRt, in_uv, 0, -1);
+#endif
+	near *= 0.5;
+	float sharpness = 1.0;
+	return center + (center - near) * sharpness;
+}
+
 void main()
 {
 	float depth = textureLod(u_depthRt, in_uv, 0.0).r;
@@ -62,7 +80,11 @@ void main()
 
 	// Read textures
 	vec3 historyCol = sample(u_historyRt, oldUv);
+#if SHARPEN > 0
+	vec3 crntCol = sharpen();
+#else
 	vec3 crntCol = sample(u_inputRt, in_uv);
+#endif
 
 	// Remove ghosting by clamping the history color to neighbour's AABB
 	vec3 near0 = sampleOffset(u_inputRt, in_uv, 1, 0);

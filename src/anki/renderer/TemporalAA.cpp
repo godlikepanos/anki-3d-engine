@@ -37,9 +37,19 @@ Error TemporalAA::init(const ConfigSet& config)
 Error TemporalAA::initInternal(const ConfigSet& config)
 {
 	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/TemporalAAResolve.ankiprog", m_prog));
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variant);
-	m_grProg = variant->getProgram();
+
+	for(U i = 0; i < 2; ++i)
+	{
+		ShaderProgramResourceConstantValueInitList<2> consts(m_prog);
+		consts.add("VARIANCE_CLIPPING_GAMMA", 1.7f).add("BLEND_FACTOR", 1.0f / 16.0f);
+
+		ShaderProgramResourceMutationInitList<4> mutations(m_prog);
+		mutations.add("SHARPEN", i + 1).add("VARIANCE_CLIPPING", 1).add("TONEMAP_FIX", 1).add("YCBCR", 0);
+
+		const ShaderProgramResourceVariant* variant;
+		m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
+		m_grProgs[i] = variant->getProgram();
+	}
 
 	for(U i = 0; i < 2; ++i)
 	{
@@ -64,7 +74,7 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_grProgs[m_r->getFrameCount() & 1]);
 	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getGBuffer().getDepthRt(), m_r->getLinearSampler());
 	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
 	rgraphCtx.bindTextureAndSampler(0, 2, m_runCtx.m_historyRt, m_r->getLinearSampler());

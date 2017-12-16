@@ -35,7 +35,7 @@ private:
 	FramebufferDescription m_fbDescr;
 
 	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	Array<ShaderProgramPtr, 2> m_grProgs;
 
 	class
 	{
