@@ -31,8 +31,7 @@ GrManagerImpl::~GrManagerImpl()
 
 Error GrManagerImpl::init(GrManagerInitInfo& init, GrAllocator<U8> alloc)
 {
-	m_alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
-
+	m_alloc = alloc;
 	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 
 	m_debugMarkers = init.m_config->getNumber("window.debugMarkers");
