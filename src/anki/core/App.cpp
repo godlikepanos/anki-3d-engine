@@ -219,8 +219,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// ThreadPool
 	//
-	m_threadpool = m_heapAlloc.newInstance<ThreadPool>(config.getNumber("core.mainThreadCount"));
-	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(config.getNumber("core.mainThreadCount"), m_heapAlloc);
+	m_threadpool = m_heapAlloc.newInstance<ThreadPool>(config.getNumber("core.mainThreadCount"), true);
+	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(config.getNumber("core.mainThreadCount"), m_heapAlloc, true);
 
 	//
 	// Graphics API

@@ -50,7 +50,7 @@ public:
 	static const U MAX_THREADS = 32;
 
 	/// Create the hive.
-	ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc);
+	ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores = false);
 
 	~ThreadHive();
 

@@ -25,14 +25,14 @@ public:
 	Bool8 m_quit = false;
 
 	/// Constructor
-	ThreadPoolThread(U32 id, ThreadPool* threadpool)
+	ThreadPoolThread(U32 id, ThreadPool* threadpool, Bool pinToCore)
 		: m_id(id)
 		, m_thread("anki_threadpool")
 		, m_task(nullptr)
 		, m_threadpool(threadpool)
 	{
 		ANKI_ASSERT(threadpool);
-		m_thread.start(this, threadCallback);
+		m_thread.start(this, threadCallback, (pinToCore) ? m_id : -1);
 	}
 
 private:
@@ -69,7 +69,7 @@ private:
 
 ThreadPool::DummyTask ThreadPool::m_dummyTask;
 
-ThreadPool::ThreadPool(U32 threadCount)
+ThreadPool::ThreadPool(U32 threadCount, Bool pinToCores)
 	: m_barrier(threadCount + 1)
 {
 	m_threadsCount = threadCount;
@@ -84,7 +84,7 @@ ThreadPool::ThreadPool(U32 threadCount)
 
 	while(threadCount-- != 0)
 	{
-		::new(&m_threads[threadCount]) detail::ThreadPoolThread(threadCount, this);
+		::new(&m_threads[threadCount]) detail::ThreadPoolThread(threadCount, this, pinToCores);
 	}
 }
 

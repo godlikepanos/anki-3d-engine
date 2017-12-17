@@ -26,13 +26,13 @@ public:
 	ThreadHive* m_hive;
 
 	/// Constructor
-	Thread(U32 id, ThreadHive* hive)
+	Thread(U32 id, ThreadHive* hive, Bool pinToCores)
 		: m_id(id)
 		, m_thread("anki_threadhive")
 		, m_hive(hive)
 	{
 		ANKI_ASSERT(hive);
-		m_thread.start(this, threadCallback);
+		m_thread.start(this, threadCallback, (pinToCores) ? m_id : -1);
 	}
 
 private:
@@ -71,7 +71,7 @@ public:
 	}
 };
 
-ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc)
+ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores)
 	: m_slowAlloc(alloc)
 	, m_alloc(alloc.getMemoryPool().getAllocationCallback(),
 		  alloc.getMemoryPool().getAllocationCallbackUserData(),
@@ -81,7 +81,7 @@ ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc)
 	m_threads = reinterpret_cast<Thread*>(m_slowAlloc.allocate(sizeof(Thread) * threadCount));
 	for(U i = 0; i < threadCount; ++i)
 	{
-		::new(&m_threads[i]) Thread(i, this);
+		::new(&m_threads[i]) Thread(i, this, pinToCores);
 	}
 }
 

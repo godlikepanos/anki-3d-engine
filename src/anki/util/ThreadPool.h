@@ -51,7 +51,7 @@ public:
 	static constexpr U MAX_THREADS = 32; ///< An absolute limit
 
 	/// Constructor.
-	ThreadPool(U32 threadCount);
+	ThreadPool(U32 threadCount, Bool pinToCores = false);
 
 	~ThreadPool();
 
