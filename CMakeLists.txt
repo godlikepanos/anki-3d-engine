@@ -111,6 +111,7 @@ set(ANKI_GR_BACKEND "GL" CACHE STRING "The graphics API (GL or VULKAN)")
 if(${ANKI_GR_BACKEND} STREQUAL "GL")
 	set(GL TRUE)
 	set(VULKAN FALSE)
+	set(VIDEO_VULKAN TRUE) # Set for the SDL2 to pick up
 else()
 	set(GL FALSE)
 	set(VULKAN TRUE)

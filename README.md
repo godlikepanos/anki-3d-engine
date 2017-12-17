@@ -35,6 +35,7 @@ Prerequisites:
 - Cmake 2.8 and up
 - GCC 5.0 and up or Clang 3.7 and up
 - libx11-dev installed
+- libxrandr-dev installed
 - [Optional] libxinerama-dev if you want proper multi-monitor support
 
 To build the release version:
