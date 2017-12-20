@@ -15,8 +15,6 @@
 #include <anki/util/Enum.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/collision/ConvexHullShape.h>
-#include <anki/Ui.h> /// XXX
-#include <anki/renderer/Clusterer.h> /// XXX
 
 namespace anki
 {
@@ -49,7 +47,6 @@ Error Dbg::lazyInit()
 		m_r->getHeight(),
 		DBG_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		SamplingFilter::LINEAR,
 		"Dbg");
 	m_rtDescr.bake();
 

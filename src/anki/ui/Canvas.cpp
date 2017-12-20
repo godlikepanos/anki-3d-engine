@@ -54,6 +54,12 @@ Error Canvas::init(FontPtr font, U32 fontHeight)
 		getAllocator().getMemoryPool().getAllocationCallbackUserData(),
 		512_B);
 
+	SamplerInitInfo samplerInit("Canvas");
+	samplerInit.m_minMagFilter = SamplingFilter::LINEAR;
+	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
+	samplerInit.m_repeat = true;
+	m_sampler = m_manager->getGrManager().newSampler(samplerInit);
+
 	return Error::NONE;
 }
 
@@ -228,7 +234,7 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 			progToBind = m_grProgs[RGBA_TEX];
 
 			Texture* t = numberToPtr<Texture*>(ptrToNumber(cmd->texture.ptr) & ~FONT_TEXTURE_MASK);
-			cmdb->bindTexture(0, 0, TexturePtr(t), TextureUsageBit::SAMPLED_FRAGMENT);
+			cmdb->bindTextureAndSampler(0, 0, TexturePtr(t), m_sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		}
 		else
 		{

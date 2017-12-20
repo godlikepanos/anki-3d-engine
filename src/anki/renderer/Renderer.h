@@ -225,11 +225,11 @@ anki_internal:
 
 	/// Create the init info for a 2D texture that will be used as a render target.
 	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(
-		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name = {});
+		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name = {});
 
 	/// Create the init info for a 2D texture that will be used as a render target.
 	ANKI_USE_RESULT RenderTargetDescription create2DRenderTargetDescription(
-		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name = {});
+		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name = {});
 
 	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(
 		const TextureInitInfo& inf, const ClearValue& clearVal = ClearValue());
@@ -310,6 +310,11 @@ anki_internal:
 		return m_linearSampler;
 	}
 
+	SamplerPtr getTrilinearRepeatSampler() const
+	{
+		return m_trilinearRepeatSampler;
+	}
+
 private:
 	ThreadPool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
@@ -365,6 +370,7 @@ private:
 
 	SamplerPtr m_nearestSampler;
 	SamplerPtr m_linearSampler;
+	SamplerPtr m_trilinearRepeatSampler;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

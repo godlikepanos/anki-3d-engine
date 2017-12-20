@@ -45,11 +45,7 @@ TextureImpl::~TextureImpl()
 Error TextureImpl::init(const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
-	init.m_sampling.setName(init.getName());
-
 	ANKI_ASSERT(textureInitInfoValid(init));
-
-	ANKI_CHECK(getGrManagerImpl().getSamplerFactory().newInstance(init.m_sampling, m_sampler));
 
 	// Set some stuff
 	m_width = init.m_width;

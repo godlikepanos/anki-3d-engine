@@ -149,7 +149,6 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 			m_gbuffer.m_tileSize,
 			MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			SamplingFilter::NEAREST, // Because we don't want the light pass to bleed to near faces
 			"GI GBuffer");
 
 		// Create color RT descriptions
@@ -200,10 +199,8 @@ Error Indirect::initLightShading(const ConfigSet& config)
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 				| TextureUsageBit::GENERATE_MIPMAPS,
-			SamplingFilter::LINEAR,
 			"GI refl");
 		texinit.m_mipmapsCount = m_lightShading.m_mipCount;
-		texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
@@ -252,7 +249,6 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 			m_irradiance.m_tileSize,
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			SamplingFilter::LINEAR,
 			"GI irr");
 
 		texinit.m_layerCount = m_cacheEntries.getSize();
@@ -452,11 +448,13 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
 
 	// Set common state for all lights
+	// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		rgraphCtx.bindTexture(0, i, m_ctx.m_gbufferColorRts[i]);
+		rgraphCtx.bindTextureAndSampler(0, i, m_ctx.m_gbufferColorRts[i], m_r->getNearestSampler());
 	}
-	rgraphCtx.bindTexture(0, GBUFFER_COLOR_ATTACHMENT_COUNT, m_ctx.m_gbufferDepthRt);
+	rgraphCtx.bindTextureAndSampler(
+		0, GBUFFER_COLOR_ATTACHMENT_COUNT, m_ctx.m_gbufferDepthRt, m_r->getNearestSampler());
 	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 	cmdb->setViewport(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
@@ -586,7 +584,7 @@ void Indirect::runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 
 	// Set state
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
-	rgraphCtx.bindTexture(0, 0, m_ctx.m_lightShadingRt);
+	rgraphCtx.bindTextureAndSampler(0, 0, m_ctx.m_lightShadingRt, m_r->getLinearSampler());
 	cmdb->setViewport(0, 0, m_irradiance.m_tileSize, m_irradiance.m_tileSize);
 
 	// Set uniforms

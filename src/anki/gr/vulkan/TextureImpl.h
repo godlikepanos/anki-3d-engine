@@ -34,8 +34,6 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
 class TextureImpl final : public Texture, public VulkanObject<Texture, TextureImpl>
 {
 public:
-	MicroSamplerPtr m_sampler;
-
 	VkImage m_imageHandle = VK_NULL_HANDLE;
 
 	GpuMemoryHandle m_memHandle;

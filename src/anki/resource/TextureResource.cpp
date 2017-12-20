@@ -162,16 +162,6 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	// mipmapsCount
 	init.m_mipmapsCount = loader.getMipLevelsCount();
 
-	// filteringType
-	init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
-
-	// repeat
-	init.m_sampling.m_repeat = true;
-
-	// Anisotropy
-	init.m_sampling.m_anisotropyLevel = getManager().getTextureAnisotropy();
-
 	// Create the texture
 	m_tex = getManager().getGrManager().newTexture(init);
 
@@ -192,6 +182,14 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	{
 		ANKI_CHECK(load(*ctx));
 	}
+
+	// Create sampler
+	SamplerInitInfo samplerInit("TextureRsrc");
+	samplerInit.m_minMagFilter = SamplingFilter::LINEAR;
+	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
+	samplerInit.m_repeat = true;
+	samplerInit.m_anisotropyLevel = getManager().getTextureAnisotropy();
+	m_sampler = getManager().getGrManager().newSampler(samplerInit);
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 	m_layerCount = init.m_layerCount;

@@ -223,18 +223,6 @@ public:
 		setBlendOperation(attachment, func, func);
 	}
 
-	/// Bind texture.
-	/// @param set The set to bind to.
-	/// @param binding The binding to bind to.
-	/// @param tex The texture to bind.
-	/// @param usage The state the tex is in.
-	/// @param aspect The depth stencil aspect.
-	void bindTexture(U32 set,
-		U32 binding,
-		TexturePtr tex,
-		TextureUsageBit usage,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);
-
 	/// Bind texture and sample.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.

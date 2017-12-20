@@ -37,6 +37,12 @@ public:
 		return m_tex;
 	}
 
+	/// Get the sampler.
+	const SamplerPtr& getSampler() const
+	{
+		return m_sampler;
+	}
+
 	/// Get the texture
 	TexturePtr& getGrTexture()
 	{
@@ -74,6 +80,7 @@ private:
 	class LoadingContext;
 
 	TexturePtr m_tex;
+	SamplerPtr m_sampler;
 	UVec3 m_size = UVec3(0u);
 	U32 m_layerCount = 0;
 

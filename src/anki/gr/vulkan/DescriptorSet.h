@@ -110,21 +110,6 @@ public:
 		m_layoutDirty = true;
 	}
 
-	void bindTexture(U binding, const Texture* tex, DepthStencilAspectBit aspect, VkImageLayout layout)
-	{
-		AnyBinding& b = m_bindings[binding];
-		b = {};
-		b.m_type = DescriptorType::TEXTURE;
-		b.m_uuids[0] = b.m_uuids[1] = tex->getUuid();
-
-		b.m_tex.m_tex = static_cast<const TextureImpl*>(tex);
-		b.m_tex.m_sampler = static_cast<const TextureImpl*>(tex)->m_sampler.get();
-		b.m_tex.m_aspect = aspect;
-		b.m_tex.m_layout = layout;
-
-		m_anyBindingDirty = true;
-	}
-
 	void bindTextureAndSampler(
 		U binding, const Texture* tex, const Sampler* sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
 	{

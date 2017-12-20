@@ -43,7 +43,6 @@ Error ForwardShading::initInternal(const ConfigSet&)
 		m_height,
 		FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		SamplingFilter::LINEAR,
 		"forward");
 	m_rtDescr.bake();
 
@@ -113,8 +112,9 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext
 
 	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
 	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getNearestSampler());
-	rgraphCtx.bindTexture(0, 2, m_r->getVolumetric().getRt());
-	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindTextureAndSampler(0, 2, m_r->getVolumetric().getRt(), m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(
+		0, 3, m_vol.m_noiseTex->getGrTexture(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 	drawQuad(cmdb);
 
@@ -133,10 +133,14 @@ void ForwardShading::drawUpscale(const RenderingContext& ctx, RenderPassWorkCont
 	computeLinearizeDepthOptimal(
 		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
 
-	rgraphCtx.bindTexture(0, 0, m_r->getGBuffer().getDepthRt());
+	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getGBuffer().getDepthRt(), m_r->getNearestSampler());
 	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
-	rgraphCtx.bindTexture(0, 2, m_runCtx.m_rt);
-	cmdb->bindTexture(0, 3, m_upscale.m_noiseTex->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindTextureAndSampler(0, 2, m_runCtx.m_rt, m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(0,
+		3,
+		m_upscale.m_noiseTex->getGrTexture(),
+		m_r->getTrilinearRepeatSampler(),
+		TextureUsageBit::SAMPLED_FRAGMENT);
 
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
 
@@ -161,8 +165,8 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	if(start != end)
 	{
 		const LightShadingResources& rsrc = m_r->getLightShading().getResources();
-		rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getQuarterColorRt());
-		rgraphCtx.bindTexture(0, 1, m_r->getShadowMapping().getShadowmapRt());
+		rgraphCtx.bindTextureAndSampler(0, 0, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getLinearSampler());
+		rgraphCtx.bindTextureAndSampler(0, 1, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
 		bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
 		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);

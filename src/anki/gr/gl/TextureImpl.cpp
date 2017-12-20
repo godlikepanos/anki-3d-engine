@@ -172,7 +172,6 @@ void TextureImpl::init(const TextureInitInfo& init)
 	ANKI_ASSERT(!isCreated());
 
 	GrAllocator<U8> alloc = getAllocator();
-	const SamplerInitInfo& sinit = init.m_sampling;
 
 	// Create
 	//
@@ -204,49 +203,8 @@ void TextureImpl::init(const TextureInitInfo& init)
 		ANKI_ASSERT(0);
 	}
 
-	// Set parameters
-	if(init.m_samples == 1)
-	{
-		if(sinit.m_repeat)
-		{
-			glTexParameteri(m_target, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(m_target, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(m_target, GL_TEXTURE_WRAP_R, GL_REPEAT);
-		}
-		else
-		{
-			glTexParameteri(m_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(m_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(m_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-		}
-
-		// Make sure that the texture is complete
-		glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, m_mipCount - 1);
-
-		// Set filtering type
-		GLenum minFilter = GL_NONE;
-		GLenum magFilter = GL_NONE;
-		convertFilter(sinit.m_minMagFilter, sinit.m_mipmapFilter, minFilter, magFilter);
-
-		glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, minFilter);
-		glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, magFilter);
-
-#if ANKI_GL == ANKI_GL_DESKTOP
-		if(sinit.m_anisotropyLevel > 1)
-		{
-			glTexParameteri(m_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, GLint(sinit.m_anisotropyLevel));
-		}
-#endif
-
-		if(sinit.m_compareOperation != CompareOperation::ALWAYS)
-		{
-			glTexParameteri(m_target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-			glTexParameteri(m_target, GL_TEXTURE_COMPARE_FUNC, convertCompareOperation(sinit.m_compareOperation));
-		}
-
-		glTexParameteri(m_target, GL_TEXTURE_MIN_LOD, sinit.m_minLod);
-		glTexParameteri(m_target, GL_TEXTURE_MAX_LOD, sinit.m_maxLod);
-	}
+	// Make sure that the texture is complete
+	glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, m_mipCount - 1);
 
 	ANKI_CHECK_GL_ERROR();
 }

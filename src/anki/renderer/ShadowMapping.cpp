@@ -52,7 +52,6 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 			m_scratchTileResolution,
 			SHADOW_DEPTH_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-			SamplingFilter::LINEAR,
 			"Scratch ShadMap");
 		m_scratchRtDescr.bake();
 
@@ -79,7 +78,6 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 			m_atlasResolution,
 			SHADOW_COLOR_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			SamplingFilter::LINEAR,
 			"esm");
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		ClearValue clearVal;
@@ -151,7 +149,7 @@ void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->bindShaderProgram(m_esmResolveGrProg);
-	rgraphCtx.bindTexture(0, 0, m_scratchRt);
+	rgraphCtx.bindTextureAndSampler(0, 0, m_scratchRt, m_r->getLinearSampler());
 
 	for(const EsmResolveWorkItem& workItem : m_esmResolveWorkItems)
 	{

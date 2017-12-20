@@ -454,38 +454,27 @@ public:
 
 	Array2d<TextureBinding, MAX_DESCRIPTOR_SETS, MAX_TEXTURE_BINDINGS> m_textures;
 
-	Bool bindTexture(
-		U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect, Bool& texChanged, Bool& samplerChanged)
-	{
-		TextureBinding& b = m_textures[set][binding];
-		TextureImpl* texi = static_cast<TextureImpl*>(tex.get());
-
-		texChanged = false;
-		samplerChanged = false;
-
-		if(texi != b.m_tex)
-		{
-			b.m_tex = texi;
-			texChanged = true;
-		}
-
-		if(b.m_sampler != nullptr)
-		{
-			b.m_sampler = nullptr;
-			samplerChanged = true;
-		}
-
-		b.m_aspect = aspect;
-		return samplerChanged || texChanged;
-	}
-
 	Bool bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectBit aspect)
 	{
 		TextureBinding& b = m_textures[set][binding];
-		b.m_tex = static_cast<TextureImpl*>(tex.get());
-		b.m_sampler = static_cast<SamplerImpl*>(sampler.get());
-		b.m_aspect = aspect;
-		return true;
+
+		TextureImpl* teximpl = static_cast<TextureImpl*>(tex.get());
+		SamplerImpl* samplerimpl = static_cast<SamplerImpl*>(sampler.get());
+
+		Bool dirty;
+		if(b.m_tex != teximpl || b.m_sampler != samplerimpl || b.m_aspect != aspect)
+		{
+			b.m_tex = teximpl;
+			b.m_sampler = samplerimpl;
+			b.m_aspect = aspect;
+			dirty = true;
+		}
+		else
+		{
+			dirty = false;
+		}
+
+		return dirty;
 	}
 
 	class ShaderBufferBinding

@@ -43,7 +43,6 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 			m_r->getHeight(),
 			RT_PIXEL_FORMAT,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-			SamplingFilter::LINEAR,
 			"Final Composite");
 		m_rtDescr.bake();
 
@@ -115,12 +114,14 @@ void FinalComposite::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	rgraphCtx.bindTextureAndSampler(
 		0, 0, m_r->getTemporalAA().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
 
-	rgraphCtx.bindTexture(0, 1, m_r->getBloom().getRt());
-	cmdb->bindTexture(0, 2, m_lut->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(0, 3, m_blueNoise->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getBloom().getRt(), m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(
+		0, 2, m_lut->getGrTexture(), m_r->getLinearSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTextureAndSampler(
+		0, 3, m_blueNoise->getGrTexture(), m_blueNoise->getSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
 	if(dbgEnabled)
 	{
-		rgraphCtx.bindTexture(0, 5, m_r->getDbg().getRt());
+		rgraphCtx.bindTextureAndSampler(0, 5, m_r->getDbg().getRt(), m_r->getLinearSampler());
 	}
 
 	rgraphCtx.bindUniformBuffer(0, 1, m_r->getTonemapping().getAverageLuminanceBuffer());

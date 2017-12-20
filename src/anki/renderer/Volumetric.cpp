@@ -88,7 +88,6 @@ Error Volumetric::init(const ConfigSet& config)
 			m_height,
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			SamplingFilter::LINEAR,
 			"volmain");
 		rtInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		m_rtTextures[i] = m_r->createAndClearRenderTarget(rtInit);
@@ -125,10 +124,11 @@ void Volumetric::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 
-	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getQuarterColorRt());
-	cmdb->bindTexture(0, 1, m_main.m_noiseTex->getGrTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
-	rgraphCtx.bindTexture(0, 2, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]);
-	rgraphCtx.bindTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
+	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(
+		0, 1, m_main.m_noiseTex->getGrTexture(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindTextureAndSampler(0, 2, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0, 3, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
 
 	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
 	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
@@ -166,7 +166,7 @@ void Volumetric::runHBlur(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[m_r->getFrameCount() & 1]);
+	rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_rts[m_r->getFrameCount() & 1], m_r->getLinearSampler());
 	cmdb->bindShaderProgram(m_hblur.m_grProg);
 	cmdb->setViewport(0, 0, m_width, m_height);
 
@@ -177,7 +177,7 @@ void Volumetric::runVBlur(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]);
+	rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
 	cmdb->bindShaderProgram(m_vblur.m_grProg);
 	cmdb->setViewport(0, 0, m_width, m_height);
 

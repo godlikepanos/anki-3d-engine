@@ -18,11 +18,13 @@ void SamplerImpl::init(const SamplerInitInfo& sinit)
 	{
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_R, GL_REPEAT);
 	}
 	else
 	{
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	}
 
 	// Set filtering type
@@ -38,6 +40,12 @@ void SamplerImpl::init(const SamplerInitInfo& sinit)
 		glSamplerParameteri(m_glName, GL_TEXTURE_MAX_ANISOTROPY_EXT, GLint(sinit.m_anisotropyLevel));
 	}
 #endif
+
+	if(sinit.m_compareOperation != CompareOperation::ALWAYS)
+	{
+		glSamplerParameteri(m_glName, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+		glSamplerParameteri(m_glName, GL_TEXTURE_COMPARE_FUNC, convertCompareOperation(sinit.m_compareOperation));
+	}
 
 	glSamplerParameteri(m_glName, GL_TEXTURE_MIN_LOD, sinit.m_minLod);
 	glSamplerParameteri(m_glName, GL_TEXTURE_MAX_LOD, sinit.m_maxLod);

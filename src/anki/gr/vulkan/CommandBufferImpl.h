@@ -219,18 +219,6 @@ public:
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTexture(U32 set, U32 binding, TexturePtr tex_, TextureUsageBit usage, DepthStencilAspectBit aspect)
-	{
-		commandCommon();
-		const U realBinding = binding;
-		const Texture& tex = *tex_;
-		const TextureImpl& teximpl = static_cast<const TextureImpl&>(tex);
-		ANKI_ASSERT((!teximpl.m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
-		const VkImageLayout lay = teximpl.computeLayout(usage, 0);
-		m_dsetState[set].bindTexture(realBinding, &tex, aspect, lay);
-		m_microCmdb->pushObjectRef(tex_);
-	}
-
 	void bindTextureAndSampler(
 		U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
 	{

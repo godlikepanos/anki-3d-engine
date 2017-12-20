@@ -630,47 +630,6 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	}
 }
 
-void CommandBuffer::bindTexture(
-	U32 set, U32 binding, TexturePtr tex, TextureUsageBit usage, DepthStencilAspectBit aspect)
-{
-	class Cmd final : public GlCommand
-	{
-	public:
-		U32 m_unit;
-		TexturePtr m_tex;
-		Bool8 m_samplerChanged;
-
-		Cmd(U32 unit, TexturePtr tex, Bool samplerChanged)
-			: m_unit(unit)
-			, m_tex(tex)
-			, m_samplerChanged(samplerChanged)
-		{
-		}
-
-		Error operator()(GlState&)
-		{
-			if(m_tex)
-			{
-				glBindTextureUnit(m_unit, static_cast<const TextureImpl&>(*m_tex).getGlName());
-			}
-
-			if(m_samplerChanged)
-			{
-				glBindSampler(m_unit, 0);
-			}
-			return Error::NONE;
-		}
-	};
-
-	ANKI_GL_SELF(CommandBufferImpl);
-	Bool texChanged, samplerChanged;
-	if(self.m_state.bindTexture(set, binding, tex, aspect, texChanged, samplerChanged))
-	{
-		U unit = binding + MAX_TEXTURE_BINDINGS * set;
-		self.pushBackNewCommand<Cmd>(unit, (texChanged) ? tex : TexturePtr(), samplerChanged);
-	}
-}
-
 void CommandBuffer::bindTextureAndSampler(
 	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
 {

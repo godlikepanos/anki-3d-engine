@@ -185,9 +185,10 @@ void RenderComponent::allocateAndSetupUniforms(
 		case ShaderVariableDataType::SAMPLER_3D:
 		case ShaderVariableDataType::SAMPLER_CUBE:
 		{
-			ctx.m_commandBuffer->bindTexture(set,
+			ctx.m_commandBuffer->bindTextureAndSampler(set,
 				progVariant.getTextureUnit(progvar),
 				mvar.getValue<TextureResourcePtr>()->getGrTexture(),
+				mvar.getValue<TextureResourcePtr>()->getSampler(),
 				TextureUsageBit::SAMPLED_FRAGMENT);
 			break;
 		}

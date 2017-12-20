@@ -84,8 +84,6 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	texInit.m_usage =
 		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::GENERATE_MIPMAPS;
 	texInit.m_mipmapsCount = 4;
-	texInit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
-	texInit.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
 
 	m_tex = m_manager->getGrManager().newTexture(texInit);
 

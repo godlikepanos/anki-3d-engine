@@ -94,7 +94,6 @@ Error LightShading::initInternal(const ConfigSet& config)
 		m_r->getHeight(),
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		SamplingFilter::LINEAR,
 		"Light Shading");
 	m_rtDescr.bake();
 
@@ -131,25 +130,29 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindShaderProgram(m_progVariant->getProgram());
 
-	rgraphCtx.bindTexture(1, 0, m_r->getGBuffer().getColorRt(0));
-	rgraphCtx.bindTexture(1, 1, m_r->getGBuffer().getColorRt(1));
-	rgraphCtx.bindTexture(1, 2, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindTexture(1, 3, m_r->getGBuffer().getDepthRt());
-	rgraphCtx.bindTexture(1, 4, m_r->getSsao().getRt());
+	rgraphCtx.bindTextureAndSampler(1, 0, m_r->getGBuffer().getColorRt(0), m_r->getNearestSampler());
+	rgraphCtx.bindTextureAndSampler(1, 1, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
+	rgraphCtx.bindTextureAndSampler(1, 2, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
+	rgraphCtx.bindTextureAndSampler(1, 3, m_r->getGBuffer().getDepthRt(), m_r->getNearestSampler());
+	rgraphCtx.bindTextureAndSampler(1, 4, m_r->getSsao().getRt(), m_r->getLinearSampler());
 
-	rgraphCtx.bindTexture(0, 0, m_r->getShadowMapping().getShadowmapRt());
-	rgraphCtx.bindTexture(0, 1, m_r->getIndirect().getReflectionRt());
-	rgraphCtx.bindTexture(0, 2, m_r->getIndirect().getIrradianceRt());
+	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getIndirect().getReflectionRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0, 2, m_r->getIndirect().getIrradianceRt(), m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0,
 		3,
 		m_r->getIndirect().getIntegrationLut(),
 		m_r->getIndirect().getIntegrationLutSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(
-		0, 4, (rsrc.m_diffDecalTex) ? rsrc.m_diffDecalTex : m_r->getDummyTexture(), TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(0,
+	cmdb->bindTextureAndSampler(0,
+		4,
+		(rsrc.m_diffDecalTex) ? rsrc.m_diffDecalTex : m_r->getDummyTexture(),
+		m_r->getTrilinearRepeatSampler(),
+		TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTextureAndSampler(0,
 		5,
 		(rsrc.m_normRoughnessDecalTex) ? rsrc.m_normRoughnessDecalTex : m_r->getDummyTexture(),
+		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 
 	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);

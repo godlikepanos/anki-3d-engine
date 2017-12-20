@@ -57,7 +57,6 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 			m_r->getHeight(),
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			SamplingFilter::LINEAR,
 			"TemporalAA"));
 	}
 

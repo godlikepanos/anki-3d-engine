@@ -31,7 +31,6 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::SAMPLED_COMPUTE,
-		SamplingFilter::LINEAR,
 		name.toCString());
 	pass.m_rtDescr.bake();
 
@@ -89,11 +88,11 @@ void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
 	{
 		// Bind the previous pass' Rt
 
-		rgraphCtx.bindTexture(0, 0, m_runCtx.m_rts[passIdx - 1]);
+		rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_rts[passIdx - 1], m_r->getLinearSampler());
 	}
 	else
 	{
-		rgraphCtx.bindTexture(0, 0, m_r->getTemporalAA().getRt());
+		rgraphCtx.bindTextureAndSampler(0, 0, m_r->getTemporalAA().getRt(), m_r->getLinearSampler());
 	}
 
 	const Subpass& pass = m_passes[passIdx];

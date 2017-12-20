@@ -72,6 +72,7 @@ private:
 
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, SHADER_COUNT> m_grProgs;
+	SamplerPtr m_sampler;
 
 	StackAllocator<U8> m_stackAlloc;
 

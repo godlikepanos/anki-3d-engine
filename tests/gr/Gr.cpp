@@ -578,8 +578,6 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	init.m_depth = 1;
 	init.m_layerCount = 1;
 	init.m_samples = 1;
-	init.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
-	init.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
 	init.m_type = TextureType::_2D;
 	TexturePtr rt = gr->newTexture(init);
 
@@ -595,6 +593,11 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	}
 
 	FramebufferPtr defaultFb = createDefaultFb(*gr);
+
+	SamplerInitInfo samplerInit;
+	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
+	samplerInit.m_mipmapFilter = SamplingFilter::BASE;
+	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
 		{{RT_WIDTH / 2, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
@@ -663,7 +666,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->bindTexture(0, 0, rt, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, rt, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->beginRenderPass(defaultFb, {}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
@@ -876,8 +879,6 @@ ANKI_TEST(Gr, Texture)
 	init.m_depth = 1;
 	init.m_layerCount = 1;
 	init.m_samples = 1;
-	init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	init.m_type = TextureType::_2D;
 
 	TexturePtr b = gr->newTexture(init);
@@ -888,6 +889,15 @@ ANKI_TEST(Gr, Texture)
 ANKI_TEST(Gr, DrawWithTexture)
 {
 	COMMON_BEGIN()
+
+	//
+	// Create sampler
+	//
+	SamplerInitInfo samplerInit;
+	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
+	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
+	samplerInit.m_repeat = false;
+	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	//
 	// Create texture A
@@ -903,9 +913,6 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_samples = 1;
 	init.m_depth = 1;
 	init.m_layerCount = 1;
-	init.m_sampling.m_repeat = false;
-	init.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
-	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	init.m_type = TextureType::_2D;
 
 	TexturePtr a = gr->newTexture(init);
@@ -1054,8 +1061,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb, {}, {});
 
-		cmdb->bindTexture(0, 0, a, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTexture(0, 1, b, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, a, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 1, b, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 		cmdb->flush();
@@ -1122,6 +1129,11 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	//
 	// Create textures
 	//
+	SamplerInitInfo samplerInit;
+	samplerInit.m_minMagFilter = SamplingFilter::LINEAR;
+	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
+	SamplerPtr sampler = gr.newSampler(samplerInit);
+
 	const PixelFormat COL_FORMAT = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	const U TEX_SIZE = 256;
 
@@ -1135,8 +1147,6 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	init.m_depth = 1;
 	init.m_layerCount = 1;
 	init.m_samples = 1;
-	init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	init.m_type = TextureType::_2D;
 
 	TexturePtr col0 = gr.newTexture(init);
@@ -1243,8 +1253,8 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		cmdb->beginRenderPass(dfb, {}, {});
 		cmdb->bindShaderProgram(resolveProg);
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->bindTexture(0, 0, col0, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTexture(0, 1, col1, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, col0, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 1, col1, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -1284,13 +1294,17 @@ ANKI_TEST(Gr, ImageLoadStore)
 {
 	COMMON_BEGIN()
 
+	SamplerInitInfo samplerInit;
+	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
+	samplerInit.m_mipmapFilter = SamplingFilter::BASE;
+	SamplerPtr sampler = gr->newSampler(samplerInit);
+
 	TextureInitInfo init;
 	init.m_width = init.m_height = 4;
 	init.m_mipmapsCount = 2;
 	init.m_usage = TextureUsageBit::CLEAR | TextureUsageBit::SAMPLED_ALL | TextureUsageBit::IMAGE_COMPUTE_WRITE;
 	init.m_type = TextureType::_2D;
 	init.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
-	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 
 	TexturePtr tex = gr->newTexture(init);
 
@@ -1360,7 +1374,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(dfb, {}, {});
-		cmdb->bindTexture(0, 0, tex, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, tex, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -1384,6 +1398,12 @@ ANKI_TEST(Gr, 3DTextures)
 {
 	COMMON_BEGIN()
 
+	SamplerInitInfo samplerInit;
+	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
+	samplerInit.m_mipmapFilter = SamplingFilter::BASE;
+	samplerInit.m_repeat = false;
+	SamplerPtr sampler = gr->newSampler(samplerInit);
+
 	//
 	// Create texture A
 	//
@@ -1398,9 +1418,6 @@ ANKI_TEST(Gr, 3DTextures)
 	init.m_samples = 1;
 	init.m_depth = 2;
 	init.m_layerCount = 1;
-	init.m_sampling.m_repeat = false;
-	init.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
-	init.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
 	init.m_type = TextureType::_3D;
 
 	TexturePtr a = gr->newTexture(init);
@@ -1508,7 +1525,7 @@ ANKI_TEST(Gr, 3DTextures)
 		U idx = (F32(ITERATION_COUNT - iterations - 1) / ITERATION_COUNT) * TEX_COORDS_LOD.getSize();
 		*uv = TEX_COORDS_LOD[idx];
 
-		cmdb->bindTexture(0, 0, a, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, a, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 
 		cmdb->endRenderPass();

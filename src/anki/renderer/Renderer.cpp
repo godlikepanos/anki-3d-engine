@@ -147,13 +147,18 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_dbg.reset(m_alloc.newInstance<Dbg>(this));
 	ANKI_CHECK(m_dbg->init(config));
 
-	SamplerInitInfo sinit;
+	SamplerInitInfo sinit("Renderer");
 	sinit.m_repeat = false;
+	sinit.m_mipmapFilter = SamplingFilter::BASE;
 	sinit.m_minMagFilter = SamplingFilter::NEAREST;
 	m_nearestSampler = m_gr->newSampler(sinit);
 
 	sinit.m_minMagFilter = SamplingFilter::LINEAR;
 	m_linearSampler = m_gr->newSampler(sinit);
+
+	sinit.m_mipmapFilter = SamplingFilter::LINEAR;
+	sinit.m_repeat = true;
+	m_trilinearRepeatSampler = m_gr->newSampler(sinit);
 
 	initJitteredMats();
 
@@ -292,7 +297,7 @@ Vec3 Renderer::unproject(
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(
-	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name)
+	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name)
 {
 	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	TextureInitInfo init(name);
@@ -306,15 +311,12 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 	init.m_mipmapsCount = 1;
 	init.m_samples = 1;
 	init.m_usage = usage;
-	init.m_sampling.m_minMagFilter = filter;
-	init.m_sampling.m_repeat = false;
-	init.m_sampling.m_anisotropyLevel = 0;
 
 	return init;
 }
 
 RenderTargetDescription Renderer::create2DRenderTargetDescription(
-	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name)
+	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name)
 {
 	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	RenderTargetDescription init(name);
@@ -328,10 +330,6 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(
 	init.m_mipmapsCount = 1;
 	init.m_samples = 1;
 	init.m_usage = usage;
-	init.m_sampling.m_minMagFilter = filter;
-	init.m_sampling.m_mipmapFilter = filter;
-	init.m_sampling.m_repeat = false;
-	init.m_sampling.m_anisotropyLevel = 0;
 
 	return init;
 }

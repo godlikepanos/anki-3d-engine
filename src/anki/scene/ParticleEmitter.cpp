@@ -372,8 +372,8 @@ Error ParticleEmitter::frameUpdate(Second prevUpdateTime, Second crntTime)
 	// - Calc the AABB
 	// - Calc the instancing stuff
 	//
-	Vec4 aabbmin(MAX_F32, MAX_F32, MAX_F32, 0.0);
-	Vec4 aabbmax(MIN_F32, MIN_F32, MIN_F32, 0.0);
+	Vec4 aabbmin(MAX_F32, MAX_F32, MAX_F32, 0.0f);
+	Vec4 aabbmax(MIN_F32, MIN_F32, MIN_F32, 0.0f);
 	m_aliveParticlesCount = 0;
 
 	F32* verts = static_cast<F32*>(getSceneGraph().getStagingGpuMemoryManager().allocateFrame(

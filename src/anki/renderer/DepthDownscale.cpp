@@ -24,7 +24,6 @@ Error DepthDownscale::initHalf(const ConfigSet&)
 		height,
 		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		SamplingFilter::LINEAR,
 		"Half depth");
 	m_half.m_depthRtDescr.bake();
 
@@ -32,7 +31,6 @@ Error DepthDownscale::initHalf(const ConfigSet&)
 		height,
 		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-		SamplingFilter::LINEAR,
 		"Half depth col");
 	m_half.m_colorRtDescr.bake();
 
@@ -67,7 +65,6 @@ Error DepthDownscale::initQuarter(const ConfigSet&)
 		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::SAMPLED_COMPUTE,
-		SamplingFilter::LINEAR,
 		"quarterdepth");
 	m_quarter.m_colorRtDescr.bake();
 
@@ -114,7 +111,7 @@ void DepthDownscale::runHalf(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->bindShaderProgram(m_half.m_grProg);
-	rgraphCtx.bindTexture(0, 0, m_r->getGBuffer().getDepthRt());
+	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getGBuffer().getDepthRt(), m_r->getLinearSampler());
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
@@ -130,7 +127,7 @@ void DepthDownscale::runQuarter(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->bindShaderProgram(m_quarter.m_grProg);
-	rgraphCtx.bindTexture(0, 0, m_runCtx.m_halfColorRt);
+	rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_halfColorRt, m_r->getLinearSampler());
 	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
 
 	drawQuad(cmdb);

@@ -140,16 +140,6 @@ public:
 		DepthStencilAspectBit& aspect) const;
 
 	/// Convenience method.
-	void bindTexture(U32 set, U32 binding, RenderTargetHandle handle)
-	{
-		TexturePtr tex;
-		TextureUsageBit usage;
-		DepthStencilAspectBit aspect;
-		getRenderTargetState(handle, tex, usage, aspect);
-		m_commandBuffer->bindTexture(set, binding, tex, usage, aspect);
-	}
-
-	/// Convenience method.
 	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, SamplerPtr sampler)
 	{
 		TexturePtr tex;
