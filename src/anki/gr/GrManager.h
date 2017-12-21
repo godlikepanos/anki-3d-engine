@@ -55,6 +55,7 @@ public:
 	/// @{
 	ANKI_USE_RESULT BufferPtr newBuffer(const BufferInitInfo& init);
 	ANKI_USE_RESULT TexturePtr newTexture(const TextureInitInfo& init);
+	ANKI_USE_RESULT TextureViewPtr newTextureView(const TextureViewInitInfo& init);
 	ANKI_USE_RESULT SamplerPtr newSampler(const SamplerInitInfo& init);
 	ANKI_USE_RESULT ShaderPtr newShader(const ShaderInitInfo& init);
 	ANKI_USE_RESULT ShaderProgramPtr newShaderProgram(const ShaderProgramInitInfo& init);

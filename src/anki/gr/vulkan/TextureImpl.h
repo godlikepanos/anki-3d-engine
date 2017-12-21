@@ -115,6 +115,13 @@ public:
 		ANKI_ASSERT(range.baseMipLevel + range.levelCount <= m_mipCount);
 	}
 
+	VkImageView getOrCreateView(const VkImageSubresourceRange& range) const
+	{
+		VkImageViewCreateInfo viewCi = m_viewCreateInfoTemplate;
+		viewCi.subresourceRange = range;
+		return getOrCreateView(viewCi);
+	}
+
 private:
 	class ViewHasher
 	{

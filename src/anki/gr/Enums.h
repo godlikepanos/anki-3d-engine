@@ -327,6 +327,11 @@ public:
 	{
 		return !(*this == b);
 	}
+
+	Bool isValid() const
+	{
+		return m_components != ComponentFormat::NONE && m_transform != TransformFormat::NONE;
+	}
 };
 
 static_assert(sizeof(PixelFormat) == 2, "Need it to be packed");

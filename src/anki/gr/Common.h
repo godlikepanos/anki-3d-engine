@@ -19,6 +19,7 @@ class GrObject;
 class GrManager;
 class GrManagerImpl;
 class TextureInitInfo;
+class TextureViewInitInfo;
 class SamplerInitInfo;
 class GrManagerInitInfo;
 class FramebufferInitInfo;
@@ -64,6 +65,7 @@ using GrObjectPtr = IntrusivePtr<T, DefaultPtrDeleter<T>>;
 
 ANKI_GR_CLASS(Buffer)
 ANKI_GR_CLASS(Texture)
+ANKI_GR_CLASS(TextureView)
 ANKI_GR_CLASS(Sampler)
 ANKI_GR_CLASS(CommandBuffer)
 ANKI_GR_CLASS(Shader)

@@ -78,7 +78,7 @@ public:
 		return m_depth;
 	}
 
-	U32 getLayercount() const
+	U32 getLayerCount() const
 	{
 		ANKI_ASSERT(m_layerCount);
 		return m_layerCount;
@@ -104,6 +104,7 @@ public:
 
 	const PixelFormat& getPixelFormat() const
 	{
+		ANKI_ASSERT(m_format.isValid());
 		return m_format;
 	}
 

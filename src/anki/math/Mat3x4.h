@@ -206,7 +206,7 @@ public:
 
 	static const TMat3x4& getIdentity()
 	{
-		static const TMat3x4 ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		static const TMat3x4 ident(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 		return ident;
 	}
 	/// @}

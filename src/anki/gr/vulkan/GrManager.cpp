@@ -8,6 +8,7 @@
 
 #include <anki/gr/Buffer.h>
 #include <anki/gr/Texture.h>
+#include <anki/gr/TextureView.h>
 #include <anki/gr/Sampler.h>
 #include <anki/gr/Shader.h>
 #include <anki/gr/ShaderProgram.h>
@@ -86,6 +87,11 @@ BufferPtr GrManager::newBuffer(const BufferInitInfo& init)
 TexturePtr GrManager::newTexture(const TextureInitInfo& init)
 {
 	return TexturePtr(Texture::newInstance(this, init));
+}
+
+TextureViewPtr GrManager::newTextureView(const TextureViewInitInfo& init)
+{
+	return TextureViewPtr(TextureView::newInstance(this, init));
 }
 
 SamplerPtr GrManager::newSampler(const SamplerInitInfo& init)
