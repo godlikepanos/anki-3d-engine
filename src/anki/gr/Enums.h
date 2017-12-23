@@ -119,6 +119,8 @@ enum class VertexStepRate : U8
 	COUNT
 };
 
+/// Pixel and vertex component format.
+/// @note WARNING Be careful when changing this. You need updates to multiple places.
 enum class ComponentFormat : U8
 {
 	NONE,
@@ -139,7 +141,6 @@ enum class ComponentFormat : U8
 	// Special
 	R10G10B10A2,
 	R11G11B10,
-	DEFAULT_FRAMEBUFFER, ///< Implicit format.
 
 	// Compressed
 	R8G8B8_BC1, ///< DXT1
@@ -162,6 +163,21 @@ enum class ComponentFormat : U8
 	LAST_DEPTH_STENCIL = S8
 };
 
+inline Bool componentFormatIsDepthStencil(const ComponentFormat fmt)
+{
+	return fmt >= ComponentFormat::FIRST_DEPTH_STENCIL && fmt <= ComponentFormat::LAST_DEPTH_STENCIL;
+}
+
+inline Bool componentFormatIsDepth(const ComponentFormat fmt)
+{
+	return fmt >= ComponentFormat::D16 && fmt <= ComponentFormat::D32S8;
+}
+
+inline Bool componentFormatIsStencil(const ComponentFormat fmt)
+{
+	return fmt == ComponentFormat::D24S8 || fmt == ComponentFormat::D32S8 || fmt == ComponentFormat::S8;
+}
+
 enum class TransformFormat : U8
 {
 	NONE,
@@ -172,6 +188,7 @@ enum class TransformFormat : U8
 	FLOAT
 };
 
+/// Texture type.
 enum class TextureType : U8
 {
 	_1D,
@@ -182,6 +199,11 @@ enum class TextureType : U8
 	CUBE_ARRAY,
 	COUNT
 };
+
+inline Bool textureTypeIsCube(const TextureType t)
+{
+	return t == TextureType::CUBE || t == TextureType::CUBE_ARRAY;
+}
 
 /// Texture usage hints. They are very important.
 enum class TextureUsageBit : U16

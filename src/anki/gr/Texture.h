@@ -108,6 +108,55 @@ public:
 		return m_format;
 	}
 
+	Bool isSubresourceValid(const TextureSubresourceInfo& subresource) const
+	{
+#define ANKI_TEX_SUBRESOURCE_ASSERT(x_) \
+	if(!(x_))                           \
+	{                                   \
+		return false;                   \
+	}
+		const TextureType type = m_texType;
+		const Bool cube = textureTypeIsCube(type);
+
+		// Mips
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_mipmapCount > 0);
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_baseMipmap + subresource.m_mipmapCount <= m_mipCount);
+
+		// Layers
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_layerCount > 0);
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_baseLayer + subresource.m_layerCount <= m_layerCount);
+
+		// Faces
+		const U8 faceCount = (cube) ? 6 : 1;
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_faceCount == 1 || subresource.m_faceCount == 6);
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_baseFace + subresource.m_faceCount <= faceCount);
+
+		// Aspect
+		const PixelFormat fmt = m_format;
+		DepthStencilAspectBit aspect =
+			(componentFormatIsDepth(fmt.m_components)) ? DepthStencilAspectBit::DEPTH : DepthStencilAspectBit::NONE;
+		aspect |=
+			(componentFormatIsStencil(fmt.m_components)) ? DepthStencilAspectBit::STENCIL : DepthStencilAspectBit::NONE;
+		if(!!aspect)
+		{
+			ANKI_TEX_SUBRESOURCE_ASSERT(!!(aspect & subresource.m_depthStencilAspect));
+		}
+		else
+		{
+			ANKI_TEX_SUBRESOURCE_ASSERT(aspect == DepthStencilAspectBit::NONE);
+		}
+
+		// Misc
+		if(type == TextureType::CUBE_ARRAY && subresource.m_layerCount > 1)
+		{
+			// Because of the way surfaces are arranged in cube arrays
+			ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_faceCount == 6);
+		}
+
+#undef ANKI_TEX_SUBRESOURCE_ASSERT
+		return true;
+	}
+
 protected:
 	U32 m_width = 0;
 	U32 m_height = 0;

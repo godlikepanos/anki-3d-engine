@@ -192,10 +192,10 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 	self.bindStorageBuffer(set, binding, buff, offset, range);
 }
 
-void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
+void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindImage(set, binding, img, level);
+	self.bindImage(set, binding, img);
 }
 
 void CommandBuffer::bindTextureBuffer(

@@ -87,12 +87,42 @@ ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);
 ANKI_USE_RESULT VkFormat convertFormat(PixelFormat ak);
 
 /// Get format aspect mask.
-ANKI_USE_RESULT VkImageAspectFlags convertImageAspect(PixelFormat ak);
-
-ANKI_USE_RESULT inline Bool formatIsDepthStencil(PixelFormat fmt)
+ANKI_USE_RESULT inline DepthStencilAspectBit getImageAspectFromFormat(const PixelFormat& ak)
 {
-	VkImageAspectFlags aspect = convertImageAspect(fmt);
-	return !!(aspect & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT));
+	DepthStencilAspectBit out = DepthStencilAspectBit::NONE;
+	if(componentFormatIsStencil(ak.m_components))
+	{
+		out = DepthStencilAspectBit::STENCIL;
+	}
+
+	if(componentFormatIsDepth(ak.m_components))
+	{
+		out |= DepthStencilAspectBit::DEPTH;
+	}
+
+	return out;
+}
+
+/// Convert image aspect.
+ANKI_USE_RESULT inline VkImageAspectFlags convertImageAspect(const DepthStencilAspectBit ak)
+{
+	VkImageAspectFlags out = 0;
+	if(!!(ak & DepthStencilAspectBit::DEPTH))
+	{
+		out |= VK_IMAGE_ASPECT_DEPTH_BIT;
+	}
+
+	if(!!(ak & DepthStencilAspectBit::STENCIL))
+	{
+		out |= VK_IMAGE_ASPECT_STENCIL_BIT;
+	}
+
+	if(!out)
+	{
+		out = VK_IMAGE_ASPECT_COLOR_BIT;
+	}
+
+	return out;
 }
 
 /// Convert topology.

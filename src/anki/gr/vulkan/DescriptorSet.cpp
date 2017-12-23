@@ -305,8 +305,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 				break;
 			case DescriptorType::IMAGE:
 				tex[texCount].sampler = VK_NULL_HANDLE;
-				tex[texCount].imageView =
-					b.m_image.m_tex->getOrCreateSingleLevelView(b.m_image.m_level, b.m_tex.m_aspect);
+				tex[texCount].imageView = b.m_image.m_texView->m_handle;
 				tex[texCount].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 				w.pImageInfo = &tex[texCount];
@@ -518,7 +517,7 @@ void DescriptorSetState::flush(Bool& stateDirty,
 				dynamicOffsetsDirty = dynamicOffsetsDirty || m_dynamicOffsetDirty.get(i);
 				break;
 			case DescriptorType::IMAGE:
-				toHash[toHashCount++] = m_bindings[i].m_image.m_level;
+				// Nothing
 				break;
 			default:
 				ANKI_ASSERT(0);

@@ -142,6 +142,11 @@ public:
 class TextureSurfaceInfo
 {
 public:
+	U32 m_level = 0;
+	U32 m_depth = 0;
+	U32 m_face = 0;
+	U32 m_layer = 0;
+
 	TextureSurfaceInfo() = default;
 
 	TextureSurfaceInfo(const TextureSurfaceInfo&) = default;
@@ -168,17 +173,14 @@ public:
 	{
 		return anki::computeHash(this, sizeof(*this), 0x1234567);
 	}
-
-	U32 m_level = 0;
-	U32 m_depth = 0;
-	U32 m_face = 0;
-	U32 m_layer = 0;
 };
 
 /// A way to identify a volume in 3D textures.
 class TextureVolumeInfo
 {
 public:
+	U32 m_level = 0;
+
 	TextureVolumeInfo() = default;
 
 	TextureVolumeInfo(const TextureVolumeInfo&) = default;
@@ -187,8 +189,39 @@ public:
 		: m_level(level)
 	{
 	}
+};
 
-	U32 m_level = 0;
+/// Defines a subset of a texture.
+class TextureSubresourceInfo
+{
+public:
+	U32 m_baseMipmap = 0;
+	U32 m_mipmapCount = 1;
+
+	U32 m_baseLayer = 0;
+	U32 m_layerCount = 1;
+
+	U8 m_baseFace = 0;
+	U8 m_faceCount = 1;
+
+	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::NONE;
+
+	U8 _m_padding[1] = {0};
+
+	TextureSubresourceInfo() = default;
+
+	TextureSubresourceInfo(const TextureSubresourceInfo&) = default;
+
+	TextureSubresourceInfo(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+		: m_baseMipmap(surf.m_level)
+		, m_mipmapCount(1)
+		, m_baseLayer(surf.m_layer)
+		, m_layerCount(1)
+		, m_baseFace(surf.m_face)
+		, m_faceCount(1)
+		, m_depthStencilAspect(aspect)
+	{
+	}
 };
 
 enum class DescriptorType : U8

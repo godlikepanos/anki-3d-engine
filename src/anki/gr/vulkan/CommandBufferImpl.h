@@ -226,19 +226,19 @@ public:
 		const U realBinding = binding;
 		const Texture& tex = *tex_;
 		const TextureImpl& teximpl = static_cast<const TextureImpl&>(tex);
-		ANKI_ASSERT((!teximpl.m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
+		ANKI_ASSERT((!teximpl.m_aspect || !!aspect) && "Need to set aspect for DS textures");
 		const VkImageLayout lay = teximpl.computeLayout(usage, 0);
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindImage(U32 set, U32 binding, TexturePtr& img, U32 level)
+	void bindImage(U32 set, U32 binding, TextureViewPtr& img)
 	{
 		commandCommon();
 		const U realBinding =
 			binding + MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS;
-		m_dsetState[set].bindImage(realBinding, img.get(), level);
+		m_dsetState[set].bindImage(realBinding, img.get());
 		m_microCmdb->pushObjectRef(img);
 	}
 

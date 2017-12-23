@@ -39,11 +39,10 @@ public:
 	GpuMemoryHandle m_memHandle;
 
 	U32 m_surfaceOrVolumeCount = 0;
-	VkImageAspectFlags m_aspect = 0;
-	DepthStencilAspectBit m_akAspect = DepthStencilAspectBit::NONE;
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
+
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
 
-	Bool m_depthStencil = false;
 	TextureImplWorkaround m_workarounds = TextureImplWorkaround::NONE;
 
 	TextureImpl(GrManager* manager)
@@ -104,8 +103,6 @@ public:
 
 	/// Predict the image layout.
 	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
-
-	VkImageAspectFlags convertAspect(DepthStencilAspectBit ak) const;
 
 	void checkSubresourceRange(const VkImageSubresourceRange& range) const
 	{

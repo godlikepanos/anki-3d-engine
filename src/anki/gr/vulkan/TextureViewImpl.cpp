@@ -33,17 +33,21 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 
 	// Compute the VK range
 	VkImageSubresourceRange range;
-	range.aspectMask = tex.convertAspect(m_aspect);
+	range.aspectMask = convertImageAspect(m_aspect & tex.m_aspect);
 	range.baseMipLevel = m_baseMip;
 	range.levelCount = m_mipCount;
 
 	const TextureType type = tex.getTextureType();
-	const U32 faceCount = type == TextureType::CUBE_ARRAY || type == TextureType::CUBE;
+	const U32 faceCount = textureTypeIsCube(type) ? 6 : 1;
 	range.baseArrayLayer = m_baseLayer * faceCount + m_baseFace;
 	range.layerCount = m_layerCount * m_faceCount;
 
 	// Ask the texture for a view
 	m_handle = tex.getOrCreateView(range);
+
+	// Create the hash
+	Array<U64, 2> toHash = {{tex.getUuid(), ptrToNumber(m_handle)}};
+	m_hash = computeHash(&toHash[0], sizeof(toHash));
 
 	return Error::NONE;
 }

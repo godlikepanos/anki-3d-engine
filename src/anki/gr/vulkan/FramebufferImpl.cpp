@@ -53,11 +53,11 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		{
 			m_aspect = DepthStencilAspectBit::STENCIL;
 		}
-		else if(tex.m_akAspect == DepthStencilAspectBit::DEPTH)
+		else if(tex.m_aspect == DepthStencilAspectBit::DEPTH)
 		{
 			m_aspect = DepthStencilAspectBit::DEPTH;
 		}
-		else if(tex.m_akAspect == DepthStencilAspectBit::STENCIL)
+		else if(tex.m_aspect == DepthStencilAspectBit::STENCIL)
 		{
 			m_aspect = DepthStencilAspectBit::STENCIL;
 		}

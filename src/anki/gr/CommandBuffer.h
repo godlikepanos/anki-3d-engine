@@ -256,7 +256,7 @@ public:
 	void bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range);
 
 	/// Bind load/store image.
-	void bindImage(U32 set, U32 binding, TexturePtr img, U32 level);
+	void bindImage(U32 set, U32 binding, TextureViewPtr img);
 
 	/// Bind texture buffer.
 	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, PixelFormat fmt);

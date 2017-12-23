@@ -6,11 +6,9 @@
 #pragma once
 
 #include <anki/gr/vulkan/Common.h>
-#include <anki/gr/Buffer.h>
 #include <anki/gr/vulkan/BufferImpl.h>
-#include <anki/gr/Texture.h>
 #include <anki/gr/vulkan/TextureImpl.h>
-#include <anki/gr/Sampler.h>
+#include <anki/gr/vulkan/TextureViewImpl.h>
 #include <anki/gr/vulkan/SamplerImpl.h>
 #include <anki/util/BitSet.h>
 
@@ -83,8 +81,7 @@ public:
 class ImageBinding
 {
 public:
-	const TextureImpl* m_tex = nullptr;
-	U16 m_level = 0;
+	const TextureViewImpl* m_texView = nullptr;
 };
 
 class AnyBinding
@@ -157,15 +154,18 @@ public:
 		m_dynamicOffsetDirty.set(binding);
 	}
 
-	void bindImage(U binding, const Texture* tex, U32 level)
+	void bindImage(U binding, const TextureView* texView)
 	{
+		ANKI_ASSERT(texView);
+		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);
+		ANKI_ASSERT(impl->goodForImageLoadStore());
+
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::IMAGE;
-		b.m_uuids[0] = b.m_uuids[1] = tex->getUuid();
-
-		b.m_image.m_tex = static_cast<const TextureImpl*>(tex);
-		b.m_image.m_level = level;
+		ANKI_ASSERT(impl->m_hash);
+		b.m_uuids[0] = b.m_uuids[1] = impl->m_hash;
+		b.m_image.m_texView = impl;
 
 		m_anyBindingDirty = true;
 	}

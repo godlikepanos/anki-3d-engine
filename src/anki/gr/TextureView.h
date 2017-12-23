@@ -15,21 +15,10 @@ namespace anki
 /// @{
 
 /// TextureView init info.
-class TextureViewInitInfo : public GrBaseInitInfo
+class TextureViewInitInfo : public GrBaseInitInfo, public TextureSubresourceInfo
 {
 public:
 	TexturePtr m_texture;
-
-	U32 m_baseMipmap = MAX_U32;
-	U32 m_mipmapCount = MAX_U32;
-
-	U32 m_baseLayer = MAX_U32;
-	U32 m_layerCount = MAX_U32;
-
-	U8 m_baseFace = MAX_U8;
-	U8 m_faceCount = MAX_U8;
-
-	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::NONE;
 
 	TextureViewInitInfo(TexturePtr tex, CString name = {})
 		: GrBaseInitInfo(name)
@@ -42,7 +31,12 @@ public:
 		m_baseFace = 0;
 		m_faceCount =
 			(tex->getTextureType() == TextureType::CUBE_ARRAY || tex->getTextureType() == TextureType::CUBE) ? 6 : 1;
-		// TODO: m_depthStencilAspect = ?
+
+		const PixelFormat fmt = tex->getPixelFormat();
+		m_depthStencilAspect =
+			(componentFormatIsDepth(fmt.m_components)) ? DepthStencilAspectBit::DEPTH : DepthStencilAspectBit::NONE;
+		m_depthStencilAspect |=
+			(componentFormatIsStencil(fmt.m_components)) ? DepthStencilAspectBit::STENCIL : DepthStencilAspectBit::NONE;
 	}
 
 	TextureViewInitInfo(CString name = {})
@@ -50,38 +44,34 @@ public:
 	{
 	}
 
+	TextureViewInitInfo(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE,
+		CString name = {})
+		: GrBaseInitInfo(name)
+		, m_texture(tex)
+	{
+		m_baseMipmap = surf.m_level;
+		m_mipmapCount = 1;
+		m_baseLayer = surf.m_layer;
+		m_layerCount = 1;
+		m_baseFace = surf.m_face;
+		m_faceCount = 1;
+		m_depthStencilAspect = aspect;
+		ANKI_ASSERT(isValid());
+	}
+
+	TextureViewInitInfo(TexturePtr tex, const TextureSubresourceInfo& subresource, CString name = {})
+		: GrBaseInitInfo(name)
+		, m_texture(tex)
+	{
+		static_cast<TextureSubresourceInfo&>(*this) = subresource;
+		ANKI_ASSERT(isValid());
+	}
+
 	Bool isValid() const
 	{
-#define ANKI_TEX_VIEW_ASSERT(x_) \
-	if(!(x_))                    \
-	{                            \
-		return false;            \
-	}
-		ANKI_TEX_VIEW_ASSERT(m_texture.isCreated());
-		const TextureType type = m_texture->getTextureType();
-		const Bool cube = type == TextureType::CUBE_ARRAY || type == TextureType::CUBE;
-
-		// Mips
-		ANKI_TEX_VIEW_ASSERT(m_mipmapCount > 0);
-		ANKI_TEX_VIEW_ASSERT(m_baseMipmap + m_mipmapCount <= m_texture->getMipmapCount());
-
-		// Layers
-		ANKI_TEX_VIEW_ASSERT(m_layerCount > 0);
-		ANKI_TEX_VIEW_ASSERT(m_baseLayer + m_layerCount <= m_texture->getLayerCount());
-
-		// Faces
-		const U8 faceCount = (cube) ? 6 : 1;
-		ANKI_TEX_VIEW_ASSERT(m_faceCount > 0);
-		ANKI_TEX_VIEW_ASSERT(m_baseFace + m_faceCount <= faceCount);
-
-		// Misc
-		if(type == TextureType::CUBE_ARRAY && m_layerCount > 1)
-		{
-			ANKI_TEX_VIEW_ASSERT(m_faceCount == 6); // Because of the way surfaces are arranged in cube arrays
-		}
-
-#undef ANKI_TEX_VIEW_VALID
-		return true;
+		return m_texture.isCreated() && m_texture->isSubresourceValid(*this);
 	}
 };
 
@@ -117,6 +107,42 @@ public:
 		ANKI_ASSERT(initialized());
 		ANKI_ASSERT(m_texType == TextureType::_3D);
 		return m_mipCount == 1;
+	}
+
+	U32 getBaseMipmap() const
+	{
+		ANKI_ASSERT(initialized());
+		return m_baseMip;
+	}
+
+	U32 getMipmapCount() const
+	{
+		ANKI_ASSERT(initialized());
+		return m_mipCount;
+	}
+
+	U32 getBaseLayer() const
+	{
+		ANKI_ASSERT(initialized());
+		return m_baseLayer;
+	}
+
+	U32 getLayerCount() const
+	{
+		ANKI_ASSERT(initialized());
+		return m_layerCount;
+	}
+
+	U32 getBaseFace() const
+	{
+		ANKI_ASSERT(initialized());
+		return m_baseFace;
+	}
+
+	U32 getFaceCount() const
+	{
+		ANKI_ASSERT(initialized());
+		return m_faceCount;
 	}
 
 protected:

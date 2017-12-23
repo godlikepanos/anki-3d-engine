@@ -8,29 +8,11 @@
 namespace anki
 {
 
-inline VkImageAspectFlags TextureImpl::convertAspect(DepthStencilAspectBit ak) const
-{
-	VkImageAspectFlags out = 0;
-	if(m_aspect == (VK_IMAGE_ASPECT_STENCIL_BIT | VK_IMAGE_ASPECT_DEPTH_BIT))
-	{
-		out = !!(ak & DepthStencilAspectBit::DEPTH) ? VK_IMAGE_ASPECT_DEPTH_BIT : 0;
-		out |= !!(ak & DepthStencilAspectBit::STENCIL) ? VK_IMAGE_ASPECT_STENCIL_BIT : 0;
-	}
-	else
-	{
-		out = m_aspect;
-	}
-
-	ANKI_ASSERT(out != 0);
-	ANKI_ASSERT((out & m_aspect) == out);
-	return out;
-}
-
 inline void TextureImpl::computeSubResourceRange(
 	const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const
 {
 	checkSurfaceOrVolume(surf);
-	range.aspectMask = convertAspect(aspect);
+	range.aspectMask = convertImageAspect(m_aspect);
 	range.baseMipLevel = surf.m_level;
 	range.levelCount = 1;
 	switch(m_texType)
@@ -61,7 +43,7 @@ inline void TextureImpl::computeSubResourceRange(
 	const TextureVolumeInfo& vol, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const
 {
 	checkSurfaceOrVolume(vol);
-	range.aspectMask = convertAspect(aspect);
+	range.aspectMask = convertImageAspect(m_aspect);
 	range.baseMipLevel = vol.m_level;
 	range.levelCount = 1;
 	range.baseArrayLayer = 0;

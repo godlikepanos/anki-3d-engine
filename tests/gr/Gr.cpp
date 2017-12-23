@@ -883,6 +883,9 @@ ANKI_TEST(Gr, Texture)
 
 	TexturePtr b = gr->newTexture(init);
 
+	TextureViewInitInfo view(b);
+	TextureViewPtr v = gr->newTextureView(view);
+
 	COMMON_END()
 }
 
@@ -1308,6 +1311,11 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 	TexturePtr tex = gr->newTexture(init);
 
+	TextureViewInitInfo viewInit(tex);
+	viewInit.m_baseMipmap = 1;
+	viewInit.m_mipmapCount = 1;
+	TextureViewPtr view = gr->newTextureView(viewInit);
+
 	// Prog
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
 
@@ -1362,7 +1370,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 		cmdb->setTextureSurfaceBarrier(
 			tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, TextureSurfaceInfo(1, 0, 0, 0));
 		cmdb->bindShaderProgram(compProg);
-		cmdb->bindImage(0, 0, tex, 1);
+		cmdb->bindImage(0, 0, view);
 		cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
 		cmdb->setTextureSurfaceBarrier(tex,
 			TextureUsageBit::IMAGE_COMPUTE_WRITE,

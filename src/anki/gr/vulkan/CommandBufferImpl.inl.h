@@ -161,7 +161,7 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	impl.checkSurfaceOrVolume(surf);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, impl.m_akAspect, range);
+	impl.computeSubResourceRange(surf, impl.m_aspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
@@ -178,7 +178,7 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	impl.checkSurfaceOrVolume(vol);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(vol, impl.m_akAspect, range);
+	impl.computeSubResourceRange(vol, impl.m_aspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
@@ -385,7 +385,7 @@ inline void CommandBufferImpl::clearTextureInternal(
 	memcpy(&vclear, &clearValue, sizeof(clearValue));
 
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	if(impl.m_aspect == VK_IMAGE_ASPECT_COLOR_BIT)
+	if(!impl.m_aspect)
 	{
 		ANKI_CMD(vkCmdClearColorImage(
 					 m_handle, impl.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &range),
