@@ -20,6 +20,7 @@ class TextureViewImpl final : public TextureView, public VulkanObject<TextureVie
 public:
 	VkImageView m_handle = {};
 	TexturePtr m_tex; ///< Hold a reference.
+	TextureSubresourceInfo m_subresource;
 
 	/// This is a hash that depends on the Texture and the VkImageView. It's used as a replacement of
 	/// TextureView::m_uuid since it creates less unique IDs.
@@ -33,11 +34,6 @@ public:
 	~TextureViewImpl();
 
 	ANKI_USE_RESULT Error init(const TextureViewInitInfo& inf);
-
-	Bool goodForImageLoadStore() const
-	{
-		return m_mipCount == 1 && !m_aspect;
-	}
 };
 /// @}
 

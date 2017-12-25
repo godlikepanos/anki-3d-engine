@@ -119,6 +119,19 @@ public:
 		return getOrCreateView(viewCi);
 	}
 
+	void computeSubresourceRange(const TextureSubresourceInfo& in, VkImageSubresourceRange& range) const
+	{
+		ANKI_ASSERT(isSubresourceValid(in));
+
+		range.aspectMask = convertImageAspect(in.m_depthStencilAspect & m_aspect);
+		range.baseMipLevel = in.m_baseMipmap;
+		range.levelCount = in.m_mipmapCount;
+
+		const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
+		range.baseArrayLayer = in.m_baseLayer * faceCount + in.m_baseFace;
+		range.layerCount = in.m_layerCount * in.m_faceCount;
+	}
+
 private:
 	class ViewHasher
 	{

@@ -366,6 +366,11 @@ public:
 
 	/// @name Sync
 	/// @{
+	void setTextureBarrier(TexturePtr tex,
+		TextureUsageBit prevUsage,
+		TextureUsageBit nextUsage,
+		const TextureSubresourceInfo& subresource);
+
 	void setTextureSurfaceBarrier(
 		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf);
 

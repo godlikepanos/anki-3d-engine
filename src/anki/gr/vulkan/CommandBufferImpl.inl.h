@@ -148,6 +148,29 @@ inline void CommandBufferImpl::setTextureBarrierRange(
 	m_microCmdb->pushObjectRef(tex);
 }
 
+inline void CommandBufferImpl::setTextureBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource_)
+{
+	TextureSubresourceInfo subresource = subresource_;
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
+
+	// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
+	// subresource
+	if(nextUsage == TextureUsageBit::GENERATE_MIPMAPS)
+	{
+		ANKI_ASSERT(impl.isSubresourceGoodForMipmapGeneration(subresource));
+
+		subresource.m_baseMipmap = 0;
+		subresource.m_mipmapCount = 1;
+	}
+
+	ANKI_ASSERT(tex->isSubresourceValid(subresource));
+
+	VkImageSubresourceRange range;
+	impl.computeSubresourceRange(subresource, range);
+	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
+}
+
 inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {

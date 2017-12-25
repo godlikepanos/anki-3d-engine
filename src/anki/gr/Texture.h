@@ -157,6 +157,37 @@ public:
 		return true;
 	}
 
+	/// Mipmap generation requires a specific subresource range.
+	Bool isSubresourceGoodForMipmapGeneration(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		if(m_texType != TextureType::_3D)
+		{
+			return subresource.m_baseMipmap == 0 && subresource.m_mipmapCount == m_mipCount
+				&& subresource.m_faceCount == 1 && subresource.m_layerCount == 1;
+		}
+		else
+		{
+			ANKI_ASSERT(!"TODO");
+			return false;
+		}
+	}
+
+	/// Return true if the subresource is good to be bound for image load store.
+	Bool isSubresourceGoodForImageLoadStore(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		// One mip and no depth stencil
+		return subresource.m_mipmapCount == 1 && !subresource.m_depthStencilAspect;
+	}
+
+	/// Return true if the subresource can be bound for sampling.
+	Bool isSubresourceGoodForSampling(const TextureSubresourceInfo& subresource) const
+	{
+		/// Can bound only one aspect at a time.
+		return subresource.m_depthStencilAspect != DepthStencilAspectBit::DEPTH;
+	}
+
 protected:
 	U32 m_width = 0;
 	U32 m_height = 0;

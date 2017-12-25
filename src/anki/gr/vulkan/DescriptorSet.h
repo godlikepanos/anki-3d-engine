@@ -158,7 +158,7 @@ public:
 	{
 		ANKI_ASSERT(texView);
 		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);
-		ANKI_ASSERT(impl->goodForImageLoadStore());
+		ANKI_ASSERT(impl->m_tex->isSubresourceGoodForImageLoadStore(impl->m_subresource));
 
 		AnyBinding& b = m_bindings[binding];
 		b = {};

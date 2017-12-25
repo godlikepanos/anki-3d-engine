@@ -25,6 +25,7 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 	m_layerCount = inf.m_layerCount;
 	m_baseFace = inf.m_baseFace;
 	m_faceCount = inf.m_faceCount;
+	m_subresource = inf;
 	// TODO Set m_texType
 
 	m_tex = inf.m_texture;
@@ -33,14 +34,7 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 
 	// Compute the VK range
 	VkImageSubresourceRange range;
-	range.aspectMask = convertImageAspect(m_aspect & tex.m_aspect);
-	range.baseMipLevel = m_baseMip;
-	range.levelCount = m_mipCount;
-
-	const TextureType type = tex.getTextureType();
-	const U32 faceCount = textureTypeIsCube(type) ? 6 : 1;
-	range.baseArrayLayer = m_baseLayer * faceCount + m_baseFace;
-	range.layerCount = m_layerCount * m_faceCount;
+	tex.computeSubresourceRange(inf, range);
 
 	// Ask the texture for a view
 	m_handle = tex.getOrCreateView(range);

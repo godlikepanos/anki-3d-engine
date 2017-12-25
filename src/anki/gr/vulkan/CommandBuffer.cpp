@@ -329,6 +329,13 @@ void CommandBuffer::copyBufferToBuffer(
 	self.copyBufferToBuffer(src, srcOffset, dst, dstOffset, range);
 }
 
+void CommandBuffer::setTextureBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setTextureBarrier(tex, prevUsage, nextUsage, subresource);
+}
+
 void CommandBuffer::setTextureSurfaceBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {
