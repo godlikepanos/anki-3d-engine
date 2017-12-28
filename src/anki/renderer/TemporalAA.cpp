@@ -74,9 +74,13 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	cmdb->bindShaderProgram(m_grProgs[m_r->getFrameCount() & 1]);
-	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getGBuffer().getDepthRt(), m_r->getLinearSampler());
-	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
-	rgraphCtx.bindTextureAndSampler(0, 2, m_runCtx.m_historyRt, m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0,
+		0,
+		m_r->getGBuffer().getDepthRt(),
+		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH),
+		m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_runCtx.m_historyRt, m_r->getLinearSampler());
 
 	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
 	*unis = ctx.m_jitterMat * ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();
@@ -104,7 +108,9 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_renderRt}}, {});
 
 	pass.newConsumer({m_runCtx.m_renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-	pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT, DepthStencilAspectBit::DEPTH});
+	pass.newConsumer({m_r->getGBuffer().getDepthRt(),
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH)});
 	pass.newConsumer({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_FRAGMENT});
 

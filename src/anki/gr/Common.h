@@ -173,6 +173,11 @@ public:
 	{
 		return anki::computeHash(this, sizeof(*this), 0x1234567);
 	}
+
+	static TextureSurfaceInfo newZero()
+	{
+		return TextureSurfaceInfo();
+	}
 };
 
 /// A way to identify a volume in 3D textures.
@@ -212,15 +217,25 @@ public:
 
 	TextureSubresourceInfo(const TextureSubresourceInfo&) = default;
 
-	TextureSubresourceInfo(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
-		: m_baseMipmap(surf.m_level)
-		, m_mipmapCount(1)
-		, m_baseLayer(surf.m_layer)
-		, m_layerCount(1)
-		, m_baseFace(surf.m_face)
-		, m_faceCount(1)
-		, m_depthStencilAspect(aspect)
+	static TextureSubresourceInfo newFromSurface(
+		const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
 	{
+		TextureSubresourceInfo out;
+		out.m_baseMipmap = surf.m_level;
+		out.m_mipmapCount = 1;
+		out.m_baseLayer = surf.m_layer;
+		out.m_layerCount = 1;
+		out.m_baseFace = surf.m_face;
+		out.m_faceCount = 1;
+		out.m_depthStencilAspect = aspect;
+		return out;
+	}
+
+	static TextureSubresourceInfo newFromFirstSurface(DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+	{
+		TextureSubresourceInfo out;
+		out.m_depthStencilAspect = aspect;
+		return out;
 	}
 };
 

@@ -235,7 +235,7 @@ public:
 		TexturePtr tex,
 		SamplerPtr sampler,
 		TextureUsageBit usage,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);
+		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE);
 
 	/// Bind uniform buffer.
 	/// @param set The set to bind to.

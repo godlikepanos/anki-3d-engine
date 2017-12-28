@@ -54,6 +54,11 @@ public:
 
 	ANKI_USE_RESULT Error init(const TextureInitInfo& init);
 
+	Bool aspectValid(DepthStencilAspectBit aspect) const
+	{
+		return m_aspect == aspect || !!(aspect & m_aspect);
+	}
+
 	void checkSurfaceOrVolume(const TextureSurfaceInfo& surf) const
 	{
 		checkTextureSurface(m_texType, m_depth, m_mipCount, m_layerCount, surf);

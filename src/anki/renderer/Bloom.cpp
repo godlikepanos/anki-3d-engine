@@ -145,7 +145,7 @@ void Bloom::runExposure(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
 	cmdb->bindShaderProgram(m_exposure.m_grProg);
-	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getDownscaleBlur().getPassRt(MAX_U), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getDownscaleBlur().getPassRt(MAX_U), m_r->getLinearSampler());
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	*uniforms = Vec4(m_exposure.m_threshold, m_exposure.m_scale, 0.0, 0.0);
@@ -162,7 +162,7 @@ void Bloom::runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx)
 	// Upscale
 	cmdb->setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
 	cmdb->bindShaderProgram(m_upscale.m_grProg);
-	rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_exposureRt, m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 0, m_runCtx.m_exposureRt, m_r->getLinearSampler());
 	drawQuad(cmdb);
 
 	// SSLF

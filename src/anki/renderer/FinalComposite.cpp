@@ -111,17 +111,17 @@ void FinalComposite::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	const Bool drawToDefaultFb = m_r->getDrawToDefaultFramebuffer();
 
 	// Bind stuff
-	rgraphCtx.bindTextureAndSampler(
+	rgraphCtx.bindColorTextureAndSampler(
 		0, 0, m_r->getTemporalAA().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
 
-	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getBloom().getRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getBloom().getRt(), m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(
 		0, 2, m_lut->getGrTexture(), m_r->getLinearSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(
 		0, 3, m_blueNoise->getGrTexture(), m_blueNoise->getSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
 	if(dbgEnabled)
 	{
-		rgraphCtx.bindTextureAndSampler(0, 5, m_r->getDbg().getRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getDbg().getRt(), m_r->getLinearSampler());
 	}
 
 	rgraphCtx.bindUniformBuffer(0, 1, m_r->getTonemapping().getAverageLuminanceBuffer());

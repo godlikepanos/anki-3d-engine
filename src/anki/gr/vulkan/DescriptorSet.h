@@ -110,6 +110,7 @@ public:
 	void bindTextureAndSampler(
 		U binding, const Texture* tex, const Sampler* sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
 	{
+		ANKI_ASSERT(static_cast<const TextureImpl&>(*tex).aspectValid(aspect));
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::TEXTURE;
