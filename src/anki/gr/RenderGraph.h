@@ -7,7 +7,7 @@
 
 #include <anki/gr/GrObject.h>
 #include <anki/gr/Enums.h>
-#include <anki/gr/Texture.h>
+#include <anki/gr/TextureView.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/CommandBuffer.h>
@@ -19,6 +19,7 @@ namespace anki
 
 // Forward
 class RenderGraph;
+class RenderGraphDescription;
 
 /// @addtogroup graphics
 /// @{
@@ -141,12 +142,13 @@ public:
 		m_commandBuffer->bindTextureAndSampler(set, binding, tex, sampler, usage, subresource.m_depthStencilAspect);
 	}
 
-	/// Convenience method.
+	/// Convenience method to bind the whole texture as color.
 	void bindColorTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, SamplerPtr sampler)
 	{
-		TexturePtr tex;
+		TexturePtr tex = getTexture(handle);
+		TextureViewInitInfo subresource(tex); // Use the whole texture
 		TextureUsageBit usage;
-		getRenderTargetState(handle, TextureSubresourceInfo::newFromFirstSurface(), tex, usage);
+		getRenderTargetState(handle, subresource, tex, usage);
 		m_commandBuffer->bindTextureAndSampler(set, binding, tex, sampler, usage, DepthStencilAspectBit::NONE);
 	}
 
@@ -169,6 +171,8 @@ public:
 private:
 	const RenderGraph* m_rgraph ANKI_DBG_NULLIFY;
 	U32 m_passIdx ANKI_DBG_NULLIFY;
+
+	TexturePtr getTexture(RenderTargetHandle handle) const;
 };
 
 /// Work callback for a RenderGraph pass.
@@ -181,14 +185,23 @@ class RenderPassDependency
 	friend class RenderPassDescriptionBase;
 
 public:
-	/// Dependency to an individual surface.
-	RenderPassDependency(RenderTargetHandle handle,
-		TextureUsageBit usage,
-		const TextureSubresourceInfo& subresource = TextureSubresourceInfo())
+	/// Dependency to a texture subresource.
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
 		: m_texture({handle, usage, subresource})
 		, m_isTexture(true)
 	{
 		ANKI_ASSERT(handle.valid());
+	}
+
+	/// Dependency to the whole texture.
+	RenderPassDependency(
+		RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+		: m_texture({handle, usage, TextureSubresourceInfo()})
+		, m_isTexture(true)
+	{
+		ANKI_ASSERT(handle.valid());
+		m_texture.m_subresource.m_mipmapCount = MAX_U32; // Mark it as "whole texture"
+		m_texture.m_subresource.m_depthStencilAspect = aspect;
 	}
 
 	RenderPassDependency(RenderPassBufferHandle handle, BufferUsageBit usage)
@@ -245,35 +258,10 @@ public:
 	}
 
 	/// Add new consumer dependency.
-	void newConsumer(const RenderPassDependency& dep)
-	{
-		m_consumers.emplaceBack(m_alloc, dep);
-
-		if(dep.m_isTexture && dep.m_texture.m_usage != TextureUsageBit::NONE)
-		{
-			m_consumerRtMask.set(dep.m_texture.m_handle.m_idx);
-		}
-		else if(dep.m_buffer.m_usage != BufferUsageBit::NONE)
-		{
-			m_consumerBufferMask.set(dep.m_buffer.m_handle.m_idx);
-			m_hasBufferDeps = true;
-		}
-	}
+	void newConsumer(const RenderPassDependency& dep);
 
 	/// Add new producer dependency.
-	void newProducer(const RenderPassDependency& dep)
-	{
-		m_producers.emplaceBack(m_alloc, dep);
-		if(dep.m_isTexture)
-		{
-			m_producerRtMask.set(dep.m_texture.m_handle.m_idx);
-		}
-		else
-		{
-			m_producerBufferMask.set(dep.m_buffer.m_handle.m_idx);
-			m_hasBufferDeps = true;
-		}
-	}
+	void newProducer(const RenderPassDependency& dep);
 
 protected:
 	enum class Type : U8
@@ -285,6 +273,7 @@ protected:
 	Type m_type;
 
 	StackAllocator<U8> m_alloc;
+	RenderGraphDescription* m_descr;
 
 	RenderPassWorkCallback m_callback = nullptr;
 	void* m_userData = nullptr;
@@ -301,15 +290,19 @@ protected:
 
 	String m_name;
 
-	RenderPassDescriptionBase(Type t)
+	RenderPassDescriptionBase(Type t, RenderGraphDescription* descr)
 		: m_type(t)
+		, m_descr(descr)
 	{
+		ANKI_ASSERT(descr);
 	}
 
 	void setName(CString name)
 	{
 		m_name.create(m_alloc, (name.isEmpty()) ? "N/A" : name);
 	}
+
+	void fixSubresource(RenderPassDependency& dep) const;
 };
 
 /// Framebuffer attachment info.
@@ -362,14 +355,10 @@ class GraphicsRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
 	friend class RenderGraph;
+	template<typename, typename>
+	friend class GenericPoolAllocator;
 
 public:
-	GraphicsRenderPassDescription()
-		: RenderPassDescriptionBase(Type::GRAPHICS)
-	{
-		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
-	}
-
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
 		const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
 		RenderTargetHandle depthStencilRenderTargetHandle,
@@ -423,6 +412,12 @@ private:
 	Array<U32, 4> m_fbRenderArea = {};
 	U64 m_fbHash = 0;
 
+	GraphicsRenderPassDescription(RenderGraphDescription* descr)
+		: RenderPassDescriptionBase(Type::GRAPHICS, descr)
+	{
+		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
+	}
+
 	Bool hasFramebuffer() const
 	{
 		return m_fbHash != 0;
@@ -433,10 +428,12 @@ private:
 class ComputeRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
+	template<typename, typename>
+	friend class GenericPoolAllocator;
 
-public:
-	ComputeRenderPassDescription()
-		: RenderPassDescriptionBase(Type::NO_GRAPHICS)
+private:
+	ComputeRenderPassDescription(RenderGraphDescription* descr)
+		: RenderPassDescriptionBase(Type::NO_GRAPHICS, descr)
 	{
 	}
 };
@@ -445,6 +442,7 @@ public:
 class RenderGraphDescription
 {
 	friend class RenderGraph;
+	friend class RenderPassDescriptionBase;
 
 public:
 	RenderGraphDescription(const StackAllocator<U8>& alloc)
@@ -466,7 +464,7 @@ public:
 	/// Create a new graphics render pass.
 	GraphicsRenderPassDescription& newGraphicsRenderPass(CString name)
 	{
-		GraphicsRenderPassDescription* pass = m_alloc.newInstance<GraphicsRenderPassDescription>();
+		GraphicsRenderPassDescription* pass = m_alloc.newInstance<GraphicsRenderPassDescription>(this);
 		pass->m_alloc = m_alloc;
 		pass->setName(name);
 		m_passes.emplaceBack(m_alloc, pass);
@@ -476,7 +474,7 @@ public:
 	/// Create a new compute render pass.
 	ComputeRenderPassDescription& newComputeRenderPass(CString name)
 	{
-		ComputeRenderPassDescription* pass = m_alloc.newInstance<ComputeRenderPassDescription>();
+		ComputeRenderPassDescription* pass = m_alloc.newInstance<ComputeRenderPassDescription>(this);
 		pass->m_alloc = m_alloc;
 		pass->setName(name);
 		m_passes.emplaceBack(m_alloc, pass);
@@ -681,16 +679,6 @@ private:
 };
 /// @}
 
-inline void RenderPassWorkContext::getBufferState(RenderPassBufferHandle handle, BufferPtr& buff) const
-{
-	buff = m_rgraph->getBuffer(handle);
-}
-
-inline void RenderPassWorkContext::getRenderTargetState(
-	RenderTargetHandle handle, const TextureSubresourceInfo& subresource, TexturePtr& tex, TextureUsageBit& usage) const
-{
-	m_rgraph->getCrntUsage(handle, m_passIdx, subresource, usage);
-	tex = m_rgraph->getTexture(handle);
-}
-
 } // end namespace anki
+
+#include <anki/gr/RenderGraph.inl.h>
