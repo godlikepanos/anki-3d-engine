@@ -711,13 +711,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 				pass.setWork(callbacks[faceIdx], this, 0);
 
-				for(U mip = 0; mip < m_lightShading.m_mipCount; ++mip)
-				{
-					TextureSubresourceInfo subresource = TextureSubresourceInfo::newFromSurface(
-						TextureSurfaceInfo(mip, 0, faceIdx, probeToUpdateCacheEntryIdx));
-					pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
-					pass.newProducer({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
-				}
+				TextureSubresourceInfo subresource = TextureSubresourceInfo::newFromSurface(
+					TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+				subresource.m_mipmapCount = m_lightShading.m_mipCount;
+
+				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
+				pass.newProducer({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
 			}
 		}
 
