@@ -45,6 +45,8 @@ public:
 
 	TextureImplWorkaround m_workarounds = TextureImplWorkaround::NONE;
 
+	VkImageViewCreateInfo m_viewCreateInfoTemplate;
+
 	TextureImpl(GrManager* manager)
 		: Texture(manager)
 	{
@@ -89,11 +91,6 @@ public:
 		return (usage & m_usage) == usage;
 	}
 
-	/// For image load/store.
-	VkImageView getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect) const;
-
-	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect) const;
-
 	/// That view will be used in descriptor sets.
 	VkImageView getOrCreateResourceGroupView(DepthStencilAspectBit aspect) const;
 
@@ -117,13 +114,6 @@ public:
 		ANKI_ASSERT(range.baseMipLevel + range.levelCount <= m_mipCount);
 	}
 
-	VkImageView getOrCreateView(const VkImageSubresourceRange& range) const
-	{
-		VkImageViewCreateInfo viewCi = m_viewCreateInfoTemplate;
-		viewCi.subresourceRange = range;
-		return getOrCreateView(viewCi);
-	}
-
 	void computeSubresourceRange(const TextureSubresourceInfo& in, VkImageSubresourceRange& range) const
 	{
 		ANKI_ASSERT(isSubresourceValid(in));
@@ -137,6 +127,8 @@ public:
 		range.layerCount = in.m_layerCount * in.m_faceCount;
 	}
 
+	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci) const;
+
 private:
 	class ViewHasher
 	{
@@ -149,7 +141,6 @@ private:
 
 	mutable HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher> m_viewsMap;
 	mutable Mutex m_viewsMapMtx;
-	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
 
@@ -162,8 +153,6 @@ private:
 	ANKI_USE_RESULT Bool imageSupported(const TextureInitInfo& init);
 
 	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
-
-	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci) const;
 
 	U computeSubresourceIdx(const TextureSurfaceInfo& surf) const;
 

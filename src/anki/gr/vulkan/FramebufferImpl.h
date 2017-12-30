@@ -89,13 +89,13 @@ public:
 		return m_colorAttCount + (hasDepthStencil() ? 1 : 0);
 	}
 
-	TexturePtr getColorAttachment(U att) const
+	TextureViewPtr getColorAttachment(U att) const
 	{
 		ANKI_ASSERT(m_noDflt.m_refs[att].get());
 		return m_noDflt.m_refs[att];
 	}
 
-	TexturePtr getDepthStencilAttachment() const
+	TextureViewPtr getDepthStencilAttachment() const
 	{
 		ANKI_ASSERT(m_noDflt.m_refs[MAX_COLOR_ATTACHMENTS].get());
 		return m_noDflt.m_refs[MAX_COLOR_ATTACHMENTS];
@@ -150,7 +150,7 @@ private:
 		U32 m_width = 0;
 		U32 m_height = 0;
 
-		Array<TexturePtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
+		Array<TextureViewPtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
 
 		// RenderPass create info
 		VkRenderPassCreateInfo m_rpassCi = {};

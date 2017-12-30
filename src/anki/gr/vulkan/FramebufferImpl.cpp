@@ -35,6 +35,8 @@ FramebufferImpl::~FramebufferImpl()
 
 Error FramebufferImpl::init(const FramebufferInitInfo& init)
 {
+	ANKI_ASSERT(init.isValid());
+
 	// Init common
 	m_defaultFb = init.refersToDefaultFramebuffer();
 	strcpy(&m_name[0], (init.getName()) ? init.getName().cstr() : "");
@@ -45,27 +47,9 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		m_colorAttCount = i + 1;
 	}
 
-	if(!m_defaultFb && init.m_depthStencilAttachment.m_texture)
+	if(!m_defaultFb && init.m_depthStencilAttachment.m_textureView)
 	{
-		const TextureImpl& tex = static_cast<const TextureImpl&>(*init.m_depthStencilAttachment.m_texture);
-
-		if(!!(tex.m_workarounds & TextureImplWorkaround::S8_TO_D24S8))
-		{
-			m_aspect = DepthStencilAspectBit::STENCIL;
-		}
-		else if(tex.m_aspect == DepthStencilAspectBit::DEPTH)
-		{
-			m_aspect = DepthStencilAspectBit::DEPTH;
-		}
-		else if(tex.m_aspect == DepthStencilAspectBit::STENCIL)
-		{
-			m_aspect = DepthStencilAspectBit::STENCIL;
-		}
-		else
-		{
-			ANKI_ASSERT(!!init.m_depthStencilAttachment.m_aspect);
-			m_aspect = init.m_depthStencilAttachment.m_aspect;
-		}
+		m_aspect = init.m_depthStencilAttachment.m_textureView->getDepthStencilAspect();
 	}
 
 	initClearValues(init);
@@ -140,33 +124,37 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
 		const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
-		const TextureImpl& tex = static_cast<const TextureImpl&>(*att.m_texture);
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*att.m_textureView);
+		ANKI_ASSERT(view.isSingleSurface());
+		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
 
-		imgViews[count++] = tex.getOrCreateSingleSurfaceView(att.m_surface, att.m_aspect);
+		imgViews[count++] = view.m_handle;
 
 		if(m_noDflt.m_width == 0)
 		{
-			m_noDflt.m_width = tex.getWidth() >> att.m_surface.m_level;
-			m_noDflt.m_height = tex.getHeight() >> att.m_surface.m_level;
+			m_noDflt.m_width = tex.getWidth() >> view.getBaseMipmap();
+			m_noDflt.m_height = tex.getHeight() >> view.getBaseMipmap();
 		}
 
-		m_noDflt.m_refs[i] = att.m_texture;
+		m_noDflt.m_refs[i] = att.m_textureView;
 	}
 
 	if(hasDepthStencil())
 	{
 		const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
-		const TextureImpl& tex = static_cast<const TextureImpl&>(*att.m_texture);
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*att.m_textureView);
+		ANKI_ASSERT(view.isSingleSurface());
+		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
 
-		imgViews[count++] = tex.getOrCreateSingleSurfaceView(att.m_surface, m_aspect);
+		imgViews[count++] = view.m_handle;
 
 		if(m_noDflt.m_width == 0)
 		{
-			m_noDflt.m_width = tex.getWidth() >> att.m_surface.m_level;
-			m_noDflt.m_height = tex.getHeight() >> att.m_surface.m_level;
+			m_noDflt.m_width = tex.getWidth() >> view.getBaseMipmap();
+			m_noDflt.m_height = tex.getHeight() >> view.getBaseMipmap();
 		}
 
-		m_noDflt.m_refs[MAX_COLOR_ATTACHMENTS] = att.m_texture;
+		m_noDflt.m_refs[MAX_COLOR_ATTACHMENTS] = att.m_textureView;
 	}
 
 	ci.width = m_noDflt.m_width;
@@ -186,7 +174,7 @@ void FramebufferImpl::setupAttachmentDescriptor(
 	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc, VkImageLayout layout) const
 {
 	desc = {};
-	desc.format = convertFormat(att.m_texture->getPixelFormat());
+	desc.format = convertFormat(static_cast<const TextureViewImpl&>(*att.m_textureView).m_tex->getPixelFormat());
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);

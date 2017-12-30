@@ -364,23 +364,35 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
 				TextureUsageBit dsUsage = TextureUsageBit::NONE;
 
-				if(inf.m_format.m_components >= ComponentFormat::FIRST_DEPTH_STENCIL
-					&& inf.m_format.m_components <= ComponentFormat::LAST_DEPTH_STENCIL)
+				if(componentFormatIsDepthStencil(inf.m_format.m_components))
 				{
-					fbInit.m_depthStencilAttachment.m_texture = tex;
-					fbInit.m_depthStencilAttachment.m_surface = surf;
-					fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH_STENCIL;
+					DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE;
+					if(componentFormatIsDepth(inf.m_format.m_components))
+					{
+						aspect |= DepthStencilAspectBit::DEPTH;
+					}
+
+					if(componentFormatIsStencil(inf.m_format.m_components))
+					{
+						aspect |= DepthStencilAspectBit::STENCIL;
+					}
+
+					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf, aspect));
+
+					fbInit.m_depthStencilAttachment.m_textureView = view;
 					fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+					fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
+					fbInit.m_depthStencilAttachment.m_clearValue = clearVal;
 
 					dsUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 				}
 				else
 				{
+					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
+
 					fbInit.m_colorAttachmentCount = 1;
-					fbInit.m_colorAttachments[0].m_texture = tex;
-					fbInit.m_colorAttachments[0].m_surface = surf;
+					fbInit.m_colorAttachments[0].m_textureView = view;
 					fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-					fbInit.m_colorAttachments[0].m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
 					fbInit.m_colorAttachments[0].m_clearValue = clearVal;
 
 					colUsage[0] = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;

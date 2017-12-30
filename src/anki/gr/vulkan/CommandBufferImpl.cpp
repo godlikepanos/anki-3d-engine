@@ -76,16 +76,16 @@ void CommandBufferImpl::beginRecording()
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			colAttLayouts[i] = static_cast<const TextureImpl&>(
-				*impl.getColorAttachment(
-					i)).computeLayout(m_colorAttachmentUsages[i], 0);
+			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
+			colAttLayouts[i] =
+				static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_colorAttachmentUsages[i], 0);
 		}
 
 		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
-			dsAttLayout = static_cast<const TextureImpl&>(*impl.getDepthStencilAttachment())
-							  .computeLayout(m_depthStencilAttachmentUsage, 0);
+			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getDepthStencilAttachment());
+			dsAttLayout = static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_depthStencilAttachmentUsage, 0);
 		}
 
 		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
@@ -178,16 +178,16 @@ void CommandBufferImpl::beginRenderPassInternal()
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			colAttLayouts[i] = static_cast<const TextureImpl&>(
-				*impl.getColorAttachment(
-					i)).computeLayout(m_colorAttachmentUsages[i], 0);
+			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
+			colAttLayouts[i] =
+				static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_colorAttachmentUsages[i], 0);
 		}
 
 		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
-			dsAttLayout = static_cast<const TextureImpl&>(*impl.getDepthStencilAttachment())
-							  .computeLayout(m_depthStencilAttachmentUsage, 0);
+			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getDepthStencilAttachment());
+			dsAttLayout = static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_depthStencilAttachmentUsage, 0);
 		}
 
 		bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);

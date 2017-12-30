@@ -564,6 +564,11 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 void* GrManagerImpl::allocateCallback(
 	void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
+	if(ANKI_UNLIKELY(size == 0))
+	{
+		return nullptr;
+	}
+
 	ANKI_ASSERT(userData);
 	ANKI_ASSERT(size);
 	ANKI_ASSERT(isPowerOfTwo(alignment));

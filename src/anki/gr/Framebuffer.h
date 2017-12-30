@@ -6,8 +6,7 @@
 #pragma once
 
 #include <anki/gr/GrObject.h>
-#include <anki/gr/Texture.h>
-#include <cstring>
+#include <anki/gr/TextureView.h>
 
 namespace anki
 {
@@ -19,16 +18,15 @@ namespace anki
 class FramebufferAttachmentInfo
 {
 public:
-	TexturePtr m_texture;
-	TextureSurfaceInfo m_surface;
+	TextureViewPtr m_textureView;
+
 	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
 	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
-	ClearValue m_clearValue;
 
 	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
 	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::STORE;
 
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE; ///< Relevant only for depth stencil textures.
+	ClearValue m_clearValue;
 };
 
 /// Framebuffer initializer. If you require the default framebuffer then set m_colorAttachmentCount to 1 and don't set a
@@ -74,7 +72,12 @@ public:
 
 	Bool refersToDefaultFramebuffer() const
 	{
-		return m_colorAttachmentCount == 1 && !m_colorAttachments[0].m_texture.isCreated();
+		return m_colorAttachmentCount == 1 && !m_colorAttachments[0].m_textureView.isCreated();
+	}
+
+	Bool isValid() const
+	{
+		return m_colorAttachmentCount != 0 || m_depthStencilAttachment.m_textureView.isCreated();
 	}
 };
 

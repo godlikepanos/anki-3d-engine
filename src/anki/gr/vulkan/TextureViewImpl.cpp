@@ -26,18 +26,33 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 	m_baseFace = inf.m_baseFace;
 	m_faceCount = inf.m_faceCount;
 	m_subresource = inf;
-	// TODO Set m_texType
 
 	m_tex = inf.m_texture;
-
 	const TextureImpl& tex = static_cast<const TextureImpl&>(*m_tex);
+	ANKI_ASSERT(tex.isSubresourceValid(inf));
 
-	// Compute the VK range
-	VkImageSubresourceRange range;
-	tex.computeSubresourceRange(inf, range);
+	m_texType = tex.getTextureType();
+
+	// Compute the VkImageViewCreateInfo
+	VkImageViewCreateInfo viewCi;
+	memcpy(&viewCi, &tex.m_viewCreateInfoTemplate, sizeof(viewCi)); // Memcpy because it will be hashed
+	viewCi.subresourceRange.aspectMask = convertImageAspect(m_aspect);
+	viewCi.subresourceRange.baseMipLevel = inf.m_baseMipmap;
+	viewCi.subresourceRange.levelCount = inf.m_mipmapCount;
+
+	const U faceCount = textureTypeIsCube(tex.getTextureType()) ? 6 : 1;
+	viewCi.subresourceRange.baseArrayLayer = inf.m_baseLayer * faceCount + inf.m_baseFace;
+	viewCi.subresourceRange.layerCount = inf.m_layerCount * inf.m_faceCount;
+
+	// Fixup the image view type
+	if(textureTypeIsCube(m_texType) && inf.m_faceCount != 6)
+	{
+		m_texType = TextureType::_2D;
+		viewCi.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	}
 
 	// Ask the texture for a view
-	m_handle = tex.getOrCreateView(range);
+	m_handle = tex.getOrCreateView(viewCi);
 
 	// Create the hash
 	Array<U64, 2> toHash = {{tex.getUuid(), ptrToNumber(m_handle)}};

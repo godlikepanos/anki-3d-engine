@@ -324,6 +324,7 @@ public:
 class FramebufferDescription
 {
 	friend class GraphicsRenderPassDescription;
+	friend class RenderGraph;
 
 public:
 	Array<FramebufferDescriptionAttachment, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
@@ -344,7 +345,6 @@ public:
 	}
 
 private:
-	FramebufferInitInfo m_fbInitInfo;
 	Bool8 m_defaultFb = false;
 
 	U64 m_hash = 0;
@@ -391,26 +391,19 @@ public:
 		}
 #endif
 
-		if(fbInfo.m_defaultFb)
+		m_fbDescr = fbInfo;
+		if(!fbInfo.m_defaultFb)
 		{
-			m_fbInitInfo.m_colorAttachmentCount = 1;
-		}
-		else
-		{
-			m_fbInitInfo = fbInfo.m_fbInitInfo;
 			memcpy(&m_rtHandles[0], &colorRenderTargetHandles[0], sizeof(colorRenderTargetHandles));
 			m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
 		}
-		m_fbInitInfo.setName(m_name.toCString());
-		m_fbHash = fbInfo.m_hash;
 		m_fbRenderArea = {{minx, miny, maxx, maxy}};
 	}
 
 private:
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;
-	FramebufferInitInfo m_fbInitInfo;
+	FramebufferDescription m_fbDescr;
 	Array<U32, 4> m_fbRenderArea = {};
-	U64 m_fbHash = 0;
 
 	GraphicsRenderPassDescription(RenderGraphDescription* descr)
 		: RenderPassDescriptionBase(Type::GRAPHICS, descr)
@@ -420,7 +413,7 @@ private:
 
 	Bool hasFramebuffer() const
 	{
-		return m_fbHash != 0;
+		return m_fbDescr.m_hash != 0;
 	}
 };
 
@@ -644,8 +637,7 @@ private:
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(
-		const FramebufferInitInfo& fbInit, const RenderTargetHandle* rtHandles, U64 hash);
+	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles);
 
 	ANKI_HOT Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b) const;
 

@@ -147,45 +147,15 @@ void FramebufferDescription::bake()
 	ANKI_ASSERT(m_hash == 0 && "Already baked");
 	if(m_defaultFb)
 	{
-		m_fbInitInfo.m_colorAttachmentCount = 1;
 		m_hash = 1;
 		return;
 	}
 
-	// Populate the FB init info
-	m_fbInitInfo.m_colorAttachmentCount = m_colorAttachmentCount;
-	for(U i = 0; i < m_colorAttachmentCount; ++i)
-	{
-		FramebufferAttachmentInfo& out = m_fbInitInfo.m_colorAttachments[i];
-		const FramebufferDescriptionAttachment& in = m_colorAttachments[i];
-
-		out.m_surface = in.m_surface;
-		out.m_clearValue = in.m_clearValue;
-		out.m_loadOperation = in.m_loadOperation;
-		out.m_storeOperation = in.m_storeOperation;
-	}
-
-	if(!!m_depthStencilAttachment.m_aspect)
-	{
-		FramebufferAttachmentInfo& out = m_fbInitInfo.m_depthStencilAttachment;
-		const FramebufferDescriptionAttachment& in = m_depthStencilAttachment;
-
-		out.m_surface = in.m_surface;
-		out.m_loadOperation = in.m_loadOperation;
-		out.m_storeOperation = in.m_storeOperation;
-		out.m_clearValue = in.m_clearValue;
-
-		out.m_stencilLoadOperation = in.m_stencilLoadOperation;
-		out.m_stencilStoreOperation = in.m_stencilStoreOperation;
-
-		out.m_aspect = in.m_aspect;
-	}
-
 	m_hash = 0;
-	ANKI_ASSERT(m_fbInitInfo.m_colorAttachmentCount > 0 || !!m_fbInitInfo.m_depthStencilAttachment.m_aspect);
+	ANKI_ASSERT(m_colorAttachmentCount > 0 || !!m_depthStencilAttachment.m_aspect);
 
 	// First the depth attachments
-	if(m_fbInitInfo.m_colorAttachmentCount)
+	if(m_colorAttachmentCount)
 	{
 		ANKI_BEGIN_PACKED_STRUCT
 		struct ColorAttachment
@@ -199,20 +169,20 @@ void FramebufferDescription::bake()
 		static_assert(sizeof(ColorAttachment) == 4 * (4 + 1 + 1 + 4), "Wrong size");
 
 		Array<ColorAttachment, MAX_COLOR_ATTACHMENTS> colorAttachments;
-		for(U i = 0; i < m_fbInitInfo.m_colorAttachmentCount; ++i)
+		for(U i = 0; i < m_colorAttachmentCount; ++i)
 		{
-			const FramebufferAttachmentInfo& inAtt = m_fbInitInfo.m_colorAttachments[i];
+			const FramebufferDescriptionAttachment& inAtt = m_colorAttachments[i];
 			colorAttachments[i].m_surf = inAtt.m_surface;
 			colorAttachments[i].m_loadOp = static_cast<U32>(inAtt.m_loadOperation);
 			colorAttachments[i].m_storeOp = static_cast<U32>(inAtt.m_storeOperation);
 			memcpy(&colorAttachments[i].m_clearColor[0], &inAtt.m_clearValue.m_coloru[0], sizeof(U32) * 4);
 		}
 
-		m_hash = computeHash(&colorAttachments[0], sizeof(ColorAttachment) * m_fbInitInfo.m_colorAttachmentCount);
+		m_hash = computeHash(&colorAttachments[0], sizeof(ColorAttachment) * m_colorAttachmentCount);
 	}
 
 	// DS attachment
-	if(!!m_fbInitInfo.m_depthStencilAttachment.m_aspect)
+	if(!!m_depthStencilAttachment.m_aspect)
 	{
 		ANKI_BEGIN_PACKED_STRUCT
 		struct DSAttachment
@@ -228,7 +198,7 @@ void FramebufferDescription::bake()
 		} outAtt;
 		ANKI_END_PACKED_STRUCT
 
-		const FramebufferAttachmentInfo& inAtt = m_fbInitInfo.m_depthStencilAttachment;
+		const FramebufferDescriptionAttachment& inAtt = m_depthStencilAttachment;
 		const Bool hasDepth = !!(inAtt.m_aspect & DepthStencilAspectBit::DEPTH);
 		const Bool hasStencil = !!(inAtt.m_aspect & DepthStencilAspectBit::STENCIL);
 
@@ -354,9 +324,10 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 }
 
 FramebufferPtr RenderGraph::getOrCreateFramebuffer(
-	const FramebufferInitInfo& fbInit_, const RenderTargetHandle* rtHandles, U64 hash)
+	const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles)
 {
 	ANKI_ASSERT(rtHandles);
+	U64 hash = fbDescr.m_hash;
 	ANKI_ASSERT(hash > 0);
 
 	const Bool defaultFb = hash == 1;
@@ -366,12 +337,12 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 		// Create a hash that includes the render targets
 		Array<U64, MAX_COLOR_ATTACHMENTS + 1> uuids;
 		U count = 0;
-		for(U i = 0; i < fbInit_.m_colorAttachmentCount; ++i)
+		for(U i = 0; i < fbDescr.m_colorAttachmentCount; ++i)
 		{
 			uuids[count++] = m_ctx->m_rts[rtHandles[i].m_idx].m_texture->getUuid();
 		}
 
-		if(!!fbInit_.m_depthStencilAttachment.m_aspect)
+		if(!!fbDescr.m_depthStencilAttachment.m_aspect)
 		{
 			uuids[count++] = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture->getUuid();
 		}
@@ -388,21 +359,51 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 	else
 	{
 		// Create a complete fb init info
-		FramebufferInitInfo fbInit = fbInit_;
+		FramebufferInitInfo fbInit("RenderGraph");
 		if(!defaultFb)
 		{
+			fbInit.m_colorAttachmentCount = fbDescr.m_colorAttachmentCount;
 			for(U i = 0; i < fbInit.m_colorAttachmentCount; ++i)
 			{
-				fbInit.m_colorAttachments[i].m_texture = m_ctx->m_rts[rtHandles[i].m_idx].m_texture;
-				ANKI_ASSERT(fbInit.m_colorAttachments[i].m_texture.isCreated());
+				FramebufferAttachmentInfo& outAtt = fbInit.m_colorAttachments[i];
+				const FramebufferDescriptionAttachment& inAtt = fbDescr.m_colorAttachments[i];
+
+				outAtt.m_clearValue = inAtt.m_clearValue;
+				outAtt.m_loadOperation = inAtt.m_loadOperation;
+				outAtt.m_storeOperation = inAtt.m_storeOperation;
+
+				// Create texture view
+				TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[i].m_idx].m_texture,
+					TextureSubresourceInfo::newFromSurface(inAtt.m_surface),
+					"RenderGraph");
+				TextureViewPtr view = getManager().newTextureView(viewInit);
+
+				outAtt.m_textureView = view;
 			}
 
-			if(!!fbInit.m_depthStencilAttachment.m_aspect)
+			if(!!fbDescr.m_depthStencilAttachment.m_aspect)
 			{
-				fbInit.m_depthStencilAttachment.m_texture =
-					m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture;
-				ANKI_ASSERT(fbInit.m_depthStencilAttachment.m_texture.isCreated());
+				FramebufferAttachmentInfo& outAtt = fbInit.m_depthStencilAttachment;
+				const FramebufferDescriptionAttachment& inAtt = fbDescr.m_depthStencilAttachment;
+
+				outAtt.m_clearValue = inAtt.m_clearValue;
+				outAtt.m_loadOperation = inAtt.m_loadOperation;
+				outAtt.m_storeOperation = inAtt.m_storeOperation;
+				outAtt.m_stencilLoadOperation = inAtt.m_stencilLoadOperation;
+				outAtt.m_stencilStoreOperation = inAtt.m_stencilStoreOperation;
+
+				// Create texture view
+				TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture,
+					TextureSubresourceInfo::newFromSurface(inAtt.m_surface, inAtt.m_aspect),
+					"RenderGraph");
+				TextureViewPtr view = getManager().newTextureView(viewInit);
+
+				outAtt.m_textureView = view;
 			}
+		}
+		else
+		{
+			fbInit.m_colorAttachmentCount = 1;
 		}
 
 		fb = getManager().newFramebuffer(fbInit);
@@ -616,32 +617,31 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 
 			if(graphicsPass.hasFramebuffer())
 			{
-				outPass.fb() = getOrCreateFramebuffer(
-					graphicsPass.m_fbInitInfo, &graphicsPass.m_rtHandles[0], graphicsPass.m_fbHash);
+				outPass.fb() = getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0]);
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
 
 				// Init the usage bits
-				if(graphicsPass.m_fbHash != 1)
+				if(graphicsPass.m_fbDescr.m_hash != 1)
 				{
 					TextureUsageBit usage;
 
-					for(U i = 0; i < graphicsPass.m_fbInitInfo.m_colorAttachmentCount; ++i)
+					for(U i = 0; i < graphicsPass.m_fbDescr.m_colorAttachmentCount; ++i)
 					{
 						getCrntUsage(graphicsPass.m_rtHandles[i],
 							passIdx,
 							TextureSubresourceInfo::newFromSurface(
-								graphicsPass.m_fbInitInfo.m_colorAttachments[i].m_surface),
+								graphicsPass.m_fbDescr.m_colorAttachments[i].m_surface),
 							usage);
 
 						outPass.m_colorUsages[i] = usage;
 					}
 
-					if(!!graphicsPass.m_fbInitInfo.m_depthStencilAttachment.m_aspect)
+					if(!!graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect)
 					{
 						TextureSubresourceInfo subresource = TextureSubresourceInfo::newFromSurface(
-							graphicsPass.m_fbInitInfo.m_depthStencilAttachment.m_surface,
-							graphicsPass.m_fbInitInfo.m_depthStencilAttachment.m_aspect);
+							graphicsPass.m_fbDescr.m_depthStencilAttachment.m_surface,
+							graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect);
 
 						getCrntUsage(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS], passIdx, subresource, usage);
 

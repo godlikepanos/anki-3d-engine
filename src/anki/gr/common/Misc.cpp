@@ -89,11 +89,6 @@ Bool textureInitInfoValid(const TextureInitInfo& inf)
 #undef ANKI_CHECK_VAL_VALIDITY
 }
 
-Bool framebufferInitInfoValid(const FramebufferInitInfo& inf)
-{
-	return inf.m_colorAttachmentCount != 0 || inf.m_depthStencilAttachment.m_texture.isCreated();
-}
-
 void getFormatInfo(const PixelFormat& fmt, U& texelComponents, U& texelBytes, U& blockSize, U& blockBytes)
 {
 	blockSize = 0;
