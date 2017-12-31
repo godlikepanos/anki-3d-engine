@@ -584,10 +584,13 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	Array<FramebufferPtr, 4> fb;
 	for(FramebufferPtr& f : fb)
 	{
+		TextureViewInitInfo viewInf(rt);
+		TextureViewPtr view = gr->newTextureView(viewInf);
+
 		FramebufferInitInfo fbinit;
 		fbinit.m_colorAttachmentCount = 1;
 		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{randFloat(1.0), randFloat(1.0), randFloat(1.0), 1.0}};
-		fbinit.m_colorAttachments[0].m_texture = rt;
+		fbinit.m_colorAttachments[0].m_textureView = view;
 
 		f = gr->newFramebuffer(fbinit);
 	}
@@ -1141,15 +1144,10 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	const U TEX_SIZE = 256;
 
 	TextureInitInfo init;
-	init.m_depth = 1;
 	init.m_format = COL_FORMAT;
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	init.m_height = TEX_SIZE;
 	init.m_width = TEX_SIZE;
-	init.m_mipmapsCount = 1;
-	init.m_depth = 1;
-	init.m_layerCount = 1;
-	init.m_samples = 1;
 	init.m_type = TextureType::_2D;
 
 	TexturePtr col0 = gr.newTexture(init);
@@ -1163,12 +1161,13 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	//
 	FramebufferInitInfo fbinit;
 	fbinit.m_colorAttachmentCount = 2;
-	fbinit.m_colorAttachments[0].m_texture = col0;
+	fbinit.m_colorAttachments[0].m_textureView = gr.newTextureView(TextureViewInitInfo(col0));
 	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{0.1, 0.0, 0.0, 0.0}};
-	fbinit.m_colorAttachments[1].m_texture = col1;
+	fbinit.m_colorAttachments[1].m_textureView = gr.newTextureView(TextureViewInitInfo(col1));
 	fbinit.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0, 0.1, 0.0, 0.0}};
-	fbinit.m_depthStencilAttachment.m_texture = dp;
-	fbinit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+	TextureViewInitInfo viewInit(dp);
+	viewInit.m_depthStencilAspect = DepthStencilAspectBit::DEPTH;
+	fbinit.m_depthStencilAttachment.m_textureView = gr.newTextureView(viewInit);
 	fbinit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
 	FramebufferPtr fb = gr.newFramebuffer(fbinit);
@@ -1336,7 +1335,8 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 	ClearValue clear;
 	clear.m_colorf = {{0.0, 1.0, 0.0, 1.0}};
-	cmdb->clearTextureSurface(tex, TextureSurfaceInfo(0, 0, 0, 0), clear);
+	TextureViewInitInfo viewInit2(tex, TextureSurfaceInfo(0, 0, 0, 0));
+	cmdb->clearTextureView(gr->newTextureView(viewInit2), clear);
 
 	cmdb->setTextureSurfaceBarrier(
 		tex, TextureUsageBit::CLEAR, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
@@ -1344,7 +1344,8 @@ ANKI_TEST(Gr, ImageLoadStore)
 	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::CLEAR, TextureSurfaceInfo(1, 0, 0, 0));
 
 	clear.m_colorf = {{0.0, 0.0, 1.0, 1.0}};
-	cmdb->clearTextureSurface(tex, TextureSurfaceInfo(1, 0, 0, 0), clear);
+	TextureViewInitInfo viewInit3(tex, TextureSurfaceInfo(1, 0, 0, 0));
+	cmdb->clearTextureView(gr->newTextureView(viewInit3), clear);
 
 	cmdb->setTextureSurfaceBarrier(
 		tex, TextureUsageBit::CLEAR, TextureUsageBit::IMAGE_COMPUTE_WRITE, TextureSurfaceInfo(1, 0, 0, 0));
@@ -1360,7 +1361,8 @@ ANKI_TEST(Gr, ImageLoadStore)
 		gr->beginFrame();
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::COMPUTE_WORK;
+		cinit.m_flags =
+			CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		// Write image
@@ -1616,16 +1618,16 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle giGiLightRt = descr.importRenderTarget("GI light", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
+		TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
+
 		GraphicsRenderPassDescription& pass =
 			descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI lp%u", faceIdx).toCString());
-		pass.newConsumer(
-			{giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, faceIdx, 0)});
+		pass.newConsumer({giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
 		pass.newConsumer({giGbuffNormRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({giGbuffDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({giGbuffDiffRt, TextureUsageBit::SAMPLED_FRAGMENT});
 
-		pass.newProducer(
-			{giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, faceIdx, 0)});
+		pass.newProducer({giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
 	}
 
 	// GI light mips

@@ -149,11 +149,8 @@ void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->bindShaderProgram(m_esmResolveGrProg);
-	rgraphCtx.bindTextureAndSampler(0,
-		0,
-		m_scratchRt,
-		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH),
-		m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(
+		0, 0, m_scratchRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH), m_r->getLinearSampler());
 
 	for(const EsmResolveWorkItem& workItem : m_esmResolveWorkItems)
 	{
@@ -232,8 +229,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 				threadCountForScratchPass && threadCountForScratchPass <= m_r->getThreadPool().getThreadCount());
 			pass.setWork(runShadowmappingCallback, this, threadCountForScratchPass);
 
-			TextureSubresourceInfo subresource =
-				TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH);
+			TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
 			pass.newConsumer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
 			pass.newProducer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
 		}
@@ -246,9 +242,8 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			pass.setFramebufferInfo(m_esmFbDescr, {{m_esmRt}}, {});
 			pass.setWork(runEsmCallback, this, 0);
 
-			pass.newConsumer({m_scratchRt,
-				TextureUsageBit::SAMPLED_FRAGMENT,
-				TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH)});
+			pass.newConsumer(
+				{m_scratchRt, TextureUsageBit::SAMPLED_FRAGMENT, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 			pass.newConsumer({m_esmRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 			pass.newProducer({m_esmRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		}

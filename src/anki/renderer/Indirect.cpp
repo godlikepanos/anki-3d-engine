@@ -456,7 +456,7 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindTextureAndSampler(0,
 		GBUFFER_COLOR_ATTACHMENT_COUNT,
 		m_ctx.m_gbufferDepthRt,
-		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());
 	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 	cmdb->setViewport(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
@@ -570,8 +570,7 @@ void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& r
 
 	TexturePtr texToBind;
 	TextureUsageBit usage;
-	rgraphCtx.getRenderTargetState(
-		m_ctx.m_lightShadingRt, TextureSubresourceInfo::newFromFirstSurface(), texToBind, usage);
+	rgraphCtx.getRenderTargetState(m_ctx.m_lightShadingRt, TextureSubresourceInfo(), texToBind, usage);
 
 	rgraphCtx.m_commandBuffer->generateMipmaps2d(texToBind, faceIdx, m_ctx.m_cacheEntryIdx);
 }
@@ -646,8 +645,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				pass.newProducer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 			}
 
-			TextureSubresourceInfo subresource =
-				TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH);
+			TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
 			pass.newConsumer({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
 			pass.newProducer({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
 		}
@@ -680,8 +678,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 					{});
 				pass.setWork(callbacks[faceIdx], this, 0);
 
-				TextureSubresourceInfo subresource = TextureSubresourceInfo::newFromSurface(
-					TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
 				pass.newProducer({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
 
@@ -691,7 +688,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				}
 				pass.newConsumer({m_ctx.m_gbufferDepthRt,
 					TextureUsageBit::SAMPLED_FRAGMENT,
-					TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH)});
+					TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 			}
 		}
 
@@ -711,8 +708,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 				pass.setWork(callbacks[faceIdx], this, 0);
 
-				TextureSubresourceInfo subresource = TextureSubresourceInfo::newFromSurface(
-					TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 				subresource.m_mipmapCount = m_lightShading.m_mipCount;
 
 				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
@@ -747,8 +743,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT});
 
-				TextureSubresourceInfo subresource = TextureSubresourceInfo::newFromSurface(
-					TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 				pass.newConsumer({m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
 				pass.newProducer({m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
 			}

@@ -373,9 +373,8 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 				outAtt.m_storeOperation = inAtt.m_storeOperation;
 
 				// Create texture view
-				TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[i].m_idx].m_texture,
-					TextureSubresourceInfo::newFromSurface(inAtt.m_surface),
-					"RenderGraph");
+				TextureViewInitInfo viewInit(
+					m_ctx->m_rts[rtHandles[i].m_idx].m_texture, TextureSubresourceInfo(inAtt.m_surface), "RenderGraph");
 				TextureViewPtr view = getManager().newTextureView(viewInit);
 
 				outAtt.m_textureView = view;
@@ -394,7 +393,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 
 				// Create texture view
 				TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture,
-					TextureSubresourceInfo::newFromSurface(inAtt.m_surface, inAtt.m_aspect),
+					TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect),
 					"RenderGraph");
 				TextureViewPtr view = getManager().newTextureView(viewInit);
 
@@ -630,8 +629,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 					{
 						getCrntUsage(graphicsPass.m_rtHandles[i],
 							passIdx,
-							TextureSubresourceInfo::newFromSurface(
-								graphicsPass.m_fbDescr.m_colorAttachments[i].m_surface),
+							TextureSubresourceInfo(graphicsPass.m_fbDescr.m_colorAttachments[i].m_surface),
 							usage);
 
 						outPass.m_colorUsages[i] = usage;
@@ -639,9 +637,9 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 
 					if(!!graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect)
 					{
-						TextureSubresourceInfo subresource = TextureSubresourceInfo::newFromSurface(
-							graphicsPass.m_fbDescr.m_depthStencilAttachment.m_surface,
-							graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect);
+						TextureSubresourceInfo subresource =
+							TextureSubresourceInfo(graphicsPass.m_fbDescr.m_depthStencilAttachment.m_surface,
+								graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect);
 
 						getCrntUsage(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS], passIdx, subresource, usage);
 

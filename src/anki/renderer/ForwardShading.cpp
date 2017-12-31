@@ -137,7 +137,7 @@ void ForwardShading::drawUpscale(const RenderingContext& ctx, RenderPassWorkCont
 	rgraphCtx.bindTextureAndSampler(0,
 		0,
 		m_r->getGBuffer().getDepthRt(),
-		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(
 		0, 1, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
@@ -225,7 +225,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newConsumer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthDepthRt(),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH)});
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getVolumetric().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});

@@ -114,7 +114,7 @@ void DepthDownscale::runHalf(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindTextureAndSampler(0,
 		0,
 		m_r->getGBuffer().getDepthRt(),
-		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getLinearSampler());
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
@@ -153,7 +153,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 		pass.setFramebufferInfo(m_half.m_fbDescr, {{m_runCtx.m_halfColorRt}}, m_runCtx.m_halfDepthRt);
 		pass.setWork(runHalfCallback, this, 0);
 
-		TextureSubresourceInfo subresource = TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH);
+		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
 
 		pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT, subresource});
 		pass.newConsumer({m_runCtx.m_halfColorRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

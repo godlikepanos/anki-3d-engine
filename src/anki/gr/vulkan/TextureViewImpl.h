@@ -21,6 +21,7 @@ public:
 	VkImageView m_handle = {};
 	TexturePtr m_tex; ///< Hold a reference.
 	TextureSubresourceInfo m_subresource;
+	VkImageSubresourceRange m_vkSubresource;
 
 	/// This is a hash that depends on the Texture and the VkImageView. It's used as a replacement of
 	/// TextureView::m_uuid since it creates less unique IDs.

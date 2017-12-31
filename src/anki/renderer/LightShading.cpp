@@ -136,7 +136,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	rgraphCtx.bindTextureAndSampler(1,
 		3,
 		m_r->getGBuffer().getDepthRt(),
-		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(1, 4, m_r->getSsao().getRt(), m_r->getLinearSampler());
 
@@ -217,7 +217,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getGBuffer().getDepthRt(),
 		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH)});
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newConsumer({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});

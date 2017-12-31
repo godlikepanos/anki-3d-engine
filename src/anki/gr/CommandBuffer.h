@@ -315,24 +315,9 @@ public:
 		TexturePtr src, const TextureVolumeInfo& srcVol, TexturePtr dest, const TextureVolumeInfo& destVol);
 
 	/// Clear a single texture surface. Can be used for all textures except 3D.
-	/// @param tex The texture to clear.
-	/// @param surf The surface to clear.
-	/// @param clearValue The value to clear it with.
-	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
-	void clearTextureSurface(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		const ClearValue& clearValue,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE);
-
-	/// Clear a volume out of a 3D texture.
-	/// @param tex The texture to clear.
-	/// @param vol The volume to clear.
-	/// @param clearValue The value to clear it with.
-	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
-	void clearTextureVolume(TexturePtr tex,
-		const TextureVolumeInfo& vol,
-		const ClearValue& clearValue,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE);
+	/// @param[in,out] texView The texture view to clear.
+	/// @param[in] clearValue The value to clear it with.
+	void clearTextureView(TextureViewPtr texView, const ClearValue& clearValue);
 
 	/// Copy a buffer to a texture surface.
 	void copyBufferToTextureSurface(

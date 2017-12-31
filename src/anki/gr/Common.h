@@ -213,12 +213,14 @@ public:
 
 	U8 _m_padding[1] = {0};
 
-	TextureSubresourceInfo() = default;
+	TextureSubresourceInfo(DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+		: m_depthStencilAspect(aspect)
+	{
+	}
 
 	TextureSubresourceInfo(const TextureSubresourceInfo&) = default;
 
-	static TextureSubresourceInfo newFromSurface(
-		const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+	TextureSubresourceInfo(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
 	{
 		TextureSubresourceInfo out;
 		out.m_baseMipmap = surf.m_level;
@@ -228,14 +230,6 @@ public:
 		out.m_baseFace = surf.m_face;
 		out.m_faceCount = 1;
 		out.m_depthStencilAspect = aspect;
-		return out;
-	}
-
-	static TextureSubresourceInfo newFromFirstSurface(DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
-	{
-		TextureSubresourceInfo out;
-		out.m_depthStencilAspect = aspect;
-		return out;
 	}
 };
 

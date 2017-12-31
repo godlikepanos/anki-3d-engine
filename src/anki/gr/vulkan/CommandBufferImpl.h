@@ -271,11 +271,7 @@ public:
 
 	void generateMipmaps2d(TexturePtr tex, U face, U layer);
 
-	void clearTextureSurface(
-		TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect);
-
-	void clearTextureVolume(
-		TexturePtr tex, const TextureVolumeInfo& volume, const ClearValue& clearValue, DepthStencilAspectBit aspect);
+	void clearTextureView(TextureViewPtr texView, const ClearValue& clearValue);
 
 	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 
@@ -453,8 +449,6 @@ private:
 	void flushQueryResets();
 
 	void flushWriteQueryResults();
-
-	void clearTextureInternal(TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range);
 
 	void setImageBarrier(VkPipelineStageFlags srcStage,
 		VkAccessFlags srcAccess,

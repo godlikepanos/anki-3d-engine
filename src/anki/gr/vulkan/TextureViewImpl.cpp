@@ -58,6 +58,7 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 	Array<U64, 2> toHash = {{tex.getUuid(), ptrToNumber(m_handle)}};
 	m_hash = computeHash(&toHash[0], sizeof(toHash));
 
+	m_vkSubresource = viewCi.subresourceRange;
 	return Error::NONE;
 }
 

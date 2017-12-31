@@ -282,18 +282,10 @@ void CommandBuffer::copyTextureVolumeToTextureVolume(
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::clearTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
+void CommandBuffer::clearTextureView(TextureViewPtr texView, const ClearValue& clearValue)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.clearTextureSurface(tex, surf, clearValue, aspect);
-}
-
-void CommandBuffer::clearTextureVolume(
-	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectBit aspect)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.clearTextureVolume(tex, vol, clearValue, aspect);
+	self.clearTextureView(texView, clearValue);
 }
 
 void CommandBuffer::copyBufferToTextureSurface(

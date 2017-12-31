@@ -77,7 +77,7 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 	rgraphCtx.bindTextureAndSampler(0,
 		0,
 		m_r->getGBuffer().getDepthRt(),
-		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 2, m_runCtx.m_historyRt, m_r->getLinearSampler());
@@ -110,7 +110,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	pass.newConsumer({m_runCtx.m_renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	pass.newConsumer({m_r->getGBuffer().getDepthRt(),
 		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSubresourceInfo::newFromFirstSurface(DepthStencilAspectBit::DEPTH)});
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newConsumer({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_FRAGMENT});
 
