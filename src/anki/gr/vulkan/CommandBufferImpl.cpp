@@ -295,20 +295,26 @@ void CommandBufferImpl::endRecording()
 #endif
 }
 
-void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
+void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 {
 	commandCommon();
 
-	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	ANKI_ASSERT(impl.getTextureType() != TextureType::_3D && "Not for 3D");
+	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
+	const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+	ANKI_ASSERT(tex.getTextureType() != TextureType::_3D && "Not for 3D");
+	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.m_subresource));
 
-	for(U i = 0; i < impl.getMipmapCount() - 1u; ++i)
+	const DepthStencilAspectBit aspect = view.getDepthStencilAspect();
+	const U face = view.getBaseFace();
+	const U layer = view.getBaseLayer();
+
+	for(U i = 0; i < tex.getMipmapCount() - 1u; ++i)
 	{
 		// Transition source
 		if(i > 0)
 		{
 			VkImageSubresourceRange range;
-			impl.computeSubResourceRange(TextureSurfaceInfo(i, 0, face, layer), impl.m_aspect, range);
+			tex.computeSubResourceRange(TextureSurfaceInfo(i, 0, face, layer), aspect, range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -316,14 +322,14 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 				VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_READ_BIT,
 				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-				impl.m_imageHandle,
+				tex.m_imageHandle,
 				range);
 		}
 
 		// Transition destination
 		{
 			VkImageSubresourceRange range;
-			impl.computeSubResourceRange(TextureSurfaceInfo(i + 1, 0, face, layer), impl.m_aspect, range);
+			tex.computeSubResourceRange(TextureSurfaceInfo(i + 1, 0, face, layer), aspect, range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 				0,
@@ -331,21 +337,21 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 				VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT,
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				impl.m_imageHandle,
+				tex.m_imageHandle,
 				range);
 		}
 
 		// Setup the blit struct
-		I32 srcWidth = impl.getWidth() >> i;
-		I32 srcHeight = impl.getHeight() >> i;
+		I32 srcWidth = tex.getWidth() >> i;
+		I32 srcHeight = tex.getHeight() >> i;
 
-		I32 dstWidth = impl.getWidth() >> (i + 1);
-		I32 dstHeight = impl.getHeight() >> (i + 1);
+		I32 dstWidth = tex.getWidth() >> (i + 1);
+		I32 dstHeight = tex.getHeight() >> (i + 1);
 
 		ANKI_ASSERT(srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
 
 		U vkLayer = 0;
-		switch(impl.getTextureType())
+		switch(tex.getTextureType())
 		{
 		case TextureType::_2D:
 		case TextureType::_2D_ARRAY:
@@ -362,14 +368,14 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		}
 
 		VkImageBlit blit;
-		blit.srcSubresource.aspectMask = convertImageAspect(impl.m_aspect);
+		blit.srcSubresource.aspectMask = convertImageAspect(aspect);
 		blit.srcSubresource.baseArrayLayer = vkLayer;
 		blit.srcSubresource.layerCount = 1;
 		blit.srcSubresource.mipLevel = i;
 		blit.srcOffsets[0] = {0, 0, 0};
 		blit.srcOffsets[1] = {srcWidth, srcHeight, 1};
 
-		blit.dstSubresource.aspectMask = convertImageAspect(impl.m_aspect);
+		blit.dstSubresource.aspectMask = convertImageAspect(aspect);
 		blit.dstSubresource.baseArrayLayer = vkLayer;
 		blit.dstSubresource.layerCount = 1;
 		blit.dstSubresource.mipLevel = i + 1;
@@ -377,18 +383,18 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		blit.dstOffsets[1] = {dstWidth, dstHeight, 1};
 
 		ANKI_CMD(vkCmdBlitImage(m_handle,
-					 impl.m_imageHandle,
+					 tex.m_imageHandle,
 					 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-					 impl.m_imageHandle,
+					 tex.m_imageHandle,
 					 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 					 1,
 					 &blit,
-					 (!!impl.m_aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR),
+					 (!!aspect) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR),
 			ANY_OTHER_COMMAND);
 	}
 
 	// Hold the reference
-	m_microCmdb->pushObjectRef(tex);
+	m_microCmdb->pushObjectRef(texView);
 }
 
 void CommandBufferImpl::flushBarriers()
@@ -668,7 +674,7 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 
 		// Copy
 		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = convertImageAspect(impl.m_aspect);
+		region.imageSubresource.aspectMask = convertImageAspect(impl.getDepthStencilAspect());
 		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(surf);
 		region.imageSubresource.layerCount = 1;
 		region.imageSubresource.mipLevel = surf.m_level;
@@ -732,7 +738,7 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 
 		// Do the copy to the image
 		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = convertImageAspect(impl.m_aspect);
+		region.imageSubresource.aspectMask = convertImageAspect(impl.getDepthStencilAspect());
 		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(surf);
 		region.imageSubresource.layerCount = 1;
 		region.imageSubresource.mipLevel = surf.m_level;
@@ -775,7 +781,7 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 
 		// Copy
 		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = convertImageAspect(impl.m_aspect);
+		region.imageSubresource.aspectMask = convertImageAspect(impl.getDepthStencilAspect());
 		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(vol);
 		region.imageSubresource.layerCount = 1;
 		region.imageSubresource.mipLevel = vol.m_level;
@@ -844,7 +850,7 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 
 		// Do the copy to the image
 		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = convertImageAspect(impl.m_aspect);
+		region.imageSubresource.aspectMask = convertImageAspect(impl.getDepthStencilAspect());
 		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(vol);
 		region.imageSubresource.layerCount = 1;
 		region.imageSubresource.mipLevel = vol.m_level;

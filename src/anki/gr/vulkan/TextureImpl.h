@@ -39,7 +39,6 @@ public:
 	GpuMemoryHandle m_memHandle;
 
 	U32 m_surfaceOrVolumeCount = 0;
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
 

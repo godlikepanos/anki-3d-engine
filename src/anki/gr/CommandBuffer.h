@@ -298,14 +298,13 @@ public:
 
 	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
 	/// TextureUsageBit::GENERATE_MIPMAPS before calling this method.
-	/// @param tex The texture to generate mips.
-	/// @param face The face of a cube texture or zero.
-	/// @param layer The layer of an array texture or zero.
-	void generateMipmaps2d(TexturePtr tex, U face, U layer);
+	/// @param texView The texture view to generate mips. It should point to a subresource that contains the whole
+	///                mip chain and only one face and one layer.
+	void generateMipmaps2d(TextureViewPtr texView);
 
 	/// Generate mipmaps only for 3D textures.
-	/// @param tex The texture to generate mips.
-	void generateMipmaps3d(TexturePtr tex);
+	/// @param texView The texture view to generate mips.
+	void generateMipmaps3d(TextureViewPtr tex);
 
 	// TODO Rename to blit
 	void copyTextureSurfaceToTextureSurface(

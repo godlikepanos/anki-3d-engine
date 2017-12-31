@@ -184,7 +184,7 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	impl.checkSurfaceOrVolume(surf);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, impl.m_aspect, range);
+	impl.computeSubResourceRange(surf, impl.getDepthStencilAspect(), range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
@@ -201,7 +201,7 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	impl.checkSurfaceOrVolume(vol);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(vol, impl.m_aspect, range);
+	impl.computeSubResourceRange(vol, impl.getDepthStencilAspect(), range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 

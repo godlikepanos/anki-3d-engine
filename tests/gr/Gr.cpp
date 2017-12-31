@@ -1016,7 +1016,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	cmdb->setTextureSurfaceBarrier(
 		b, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS, TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->generateMipmaps2d(b, 0, 0);
+	cmdb->generateMipmaps2d(gr->newTextureView(TextureViewInitInfo(b)));
 
 	// Set barriers
 	cmdb->setTextureSurfaceBarrier(
@@ -1060,7 +1060,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		gr->beginFrame();
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);

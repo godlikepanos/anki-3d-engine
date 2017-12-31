@@ -98,7 +98,10 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	cmdb->copyBufferToTextureSurface(buff, 0, buffSize, m_tex, surf);
 	cmdb->setTextureSurfaceBarrier(
 		m_tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS, surf);
-	cmdb->generateMipmaps2d(m_tex, 0, 0);
+
+	TextureSubresourceInfo subresource(surf);
+	subresource.m_mipmapCount = texInit.m_mipmapsCount;
+	cmdb->generateMipmaps2d(m_manager->getGrManager().newTextureView(TextureViewInitInfo(m_tex, subresource)));
 	cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::GENERATE_MIPMAPS, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
 	cmdb->flush();

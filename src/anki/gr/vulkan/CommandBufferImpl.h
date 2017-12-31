@@ -226,7 +226,7 @@ public:
 		const U realBinding = binding;
 		const Texture& tex = *tex_;
 		const TextureImpl& teximpl = static_cast<const TextureImpl&>(tex);
-		ANKI_ASSERT((!teximpl.m_aspect || !!aspect) && "Need to set aspect for DS textures");
+		ANKI_ASSERT((!teximpl.getDepthStencilAspect() || !!aspect) && "Need to set aspect for DS textures");
 		const VkImageLayout lay = teximpl.computeLayout(usage, 0);
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
 		m_microCmdb->pushObjectRef(tex_);
@@ -269,7 +269,7 @@ public:
 
 	void endOcclusionQuery(OcclusionQueryPtr query);
 
-	void generateMipmaps2d(TexturePtr tex, U face, U layer);
+	void generateMipmaps2d(TextureViewPtr texView);
 
 	void clearTextureView(TextureViewPtr texView, const ClearValue& clearValue);
 

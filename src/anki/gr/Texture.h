@@ -108,6 +108,12 @@ public:
 		return m_format;
 	}
 
+	DepthStencilAspectBit getDepthStencilAspect() const
+	{
+		ANKI_ASSERT(m_format.isValid());
+		return m_aspect;
+	}
+
 	Bool isSubresourceValid(const TextureSubresourceInfo& subresource) const
 	{
 #define ANKI_TEX_SUBRESOURCE_ASSERT(x_) \
@@ -164,7 +170,8 @@ public:
 		if(m_texType != TextureType::_3D)
 		{
 			return subresource.m_baseMipmap == 0 && subresource.m_mipmapCount == m_mipCount
-				&& subresource.m_faceCount == 1 && subresource.m_layerCount == 1;
+				&& subresource.m_faceCount == 1 && subresource.m_layerCount == 1
+				&& subresource.m_depthStencilAspect == m_aspect;
 		}
 		else
 		{
@@ -197,6 +204,7 @@ protected:
 	TextureType m_texType = TextureType::COUNT;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
 	PixelFormat m_format;
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 
 	/// Construct.
 	Texture(GrManager* manager)

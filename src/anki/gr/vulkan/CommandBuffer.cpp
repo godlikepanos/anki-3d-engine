@@ -259,13 +259,13 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 	self.dispatchCompute(groupCountX, groupCountY, groupCountZ);
 }
 
-void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
+void CommandBuffer::generateMipmaps2d(TextureViewPtr texView)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.generateMipmaps2d(tex, face, layer);
+	self.generateMipmaps2d(texView);
 }
 
-void CommandBuffer::generateMipmaps3d(TexturePtr tex)
+void CommandBuffer::generateMipmaps3d(TextureViewPtr texView)
 {
 	ANKI_ASSERT(!"TODO");
 }
