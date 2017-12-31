@@ -306,12 +306,10 @@ public:
 	/// @param texView The texture view to generate mips.
 	void generateMipmaps3d(TextureViewPtr tex);
 
-	// TODO Rename to blit
-	void copyTextureSurfaceToTextureSurface(
-		TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf);
-
-	void copyTextureVolumeToTextureVolume(
-		TexturePtr src, const TextureVolumeInfo& srcVol, TexturePtr dest, const TextureVolumeInfo& destVol);
+	/// Blit from surface to surface.
+	/// @param srcView The source view that points to a surface.
+	/// @param dstView The destination view that points to a surface.
+	void blitTextureViews(TextureViewPtr srcView, TextureViewPtr destView);
 
 	/// Clear a single texture surface. Can be used for all textures except 3D.
 	/// @param[in,out] texView The texture view to clear.

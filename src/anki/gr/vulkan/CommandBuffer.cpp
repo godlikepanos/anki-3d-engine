@@ -270,14 +270,7 @@ void CommandBuffer::generateMipmaps3d(TextureViewPtr texView)
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::copyTextureSurfaceToTextureSurface(
-	TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::copyTextureVolumeToTextureVolume(
-	TexturePtr src, const TextureVolumeInfo& srcVol, TexturePtr dest, const TextureVolumeInfo& destVol)
+void CommandBuffer::blitTextureViews(TextureViewPtr srcView, TextureViewPtr destView)
 {
 	ANKI_ASSERT(!"TODO");
 }
