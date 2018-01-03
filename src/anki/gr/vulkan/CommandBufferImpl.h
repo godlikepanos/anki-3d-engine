@@ -323,11 +323,7 @@ public:
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void copyBufferToTextureSurface(
-		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf);
-
-	void copyBufferToTextureVolume(
-		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol);
+	void copyBufferToTextureViewInternal(BufferPtr buff, PtrSize offset, PtrSize range, TextureViewPtr texView);
 
 	void copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range);
 

@@ -281,18 +281,10 @@ void CommandBuffer::clearTextureView(TextureViewPtr texView, const ClearValue& c
 	self.clearTextureView(texView, clearValue);
 }
 
-void CommandBuffer::copyBufferToTextureSurface(
-	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
+void CommandBuffer::copyBufferToTextureView(BufferPtr buff, PtrSize offset, PtrSize range, TextureViewPtr texView)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.copyBufferToTextureSurface(buff, offset, range, tex, surf);
-}
-
-void CommandBuffer::copyBufferToTextureVolume(
-	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.copyBufferToTextureVolume(buff, offset, range, tex, vol);
+	self.copyBufferToTextureViewInternal(buff, offset, range, texView);
 }
 
 void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)

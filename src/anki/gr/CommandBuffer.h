@@ -316,13 +316,12 @@ public:
 	/// @param[in] clearValue The value to clear it with.
 	void clearTextureView(TextureViewPtr texView, const ClearValue& clearValue);
 
-	/// Copy a buffer to a texture surface.
-	void copyBufferToTextureSurface(
-		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf);
-
-	/// Copy buffer to a texture volume.
-	void copyBufferToTextureVolume(
-		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol);
+	/// Copy a buffer to a texture surface or volume.
+	/// @param buff The source buffer to copy from.
+	/// @param offset The offset in the buffer to start reading from.
+	/// @param range The size of the buffer to read.
+	/// @param texView The texture view that points to a surface or volume to write to.
+	void copyBufferToTextureView(BufferPtr buff, PtrSize offset, PtrSize range, TextureViewPtr texView);
 
 	/// Fill a buffer with some value.
 	/// @param[in,out] buff The buffer to fill.

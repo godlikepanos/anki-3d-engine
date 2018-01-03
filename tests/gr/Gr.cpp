@@ -330,22 +330,24 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 #define SET_UNIFORMS(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setUniforms(size_, cmdb_, set_, binding_))
 #define SET_STORAGE(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setStorage(size_, cmdb_, set_, binding_))
 
-#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_)                                                  \
-	do                                                                                                                \
-	{                                                                                                                 \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                               \
-		void* f = handle_.getMappedMemory();                                                                          \
-		memcpy(f, ptr_, size_);                                                                                       \
-		cmdb_->copyBufferToTextureSurface(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, surf_); \
+#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_)                                        \
+	do                                                                                                      \
+	{                                                                                                       \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                     \
+		void* f = handle_.getMappedMemory();                                                                \
+		memcpy(f, ptr_, size_);                                                                             \
+		TextureViewPtr view = gr->newTextureView(TextureViewInitInfo(tex_, surf_));                         \
+		cmdb_->copyBufferToTextureView(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view); \
 	} while(0)
 
-#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_)                                                     \
-	do                                                                                                              \
-	{                                                                                                               \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                             \
-		void* f = handle_.getMappedMemory();                                                                        \
-		memcpy(f, ptr_, size_);                                                                                     \
-		cmdb_->copyBufferToTextureVolume(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, vol_); \
+#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_)                                             \
+	do                                                                                                      \
+	{                                                                                                       \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                     \
+		void* f = handle_.getMappedMemory();                                                                \
+		memcpy(f, ptr_, size_);                                                                             \
+		TextureViewPtr view = gr->newTextureView(TextureViewInitInfo(tex_, vol_));                          \
+		cmdb_->copyBufferToTextureView(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view); \
 	} while(0)
 
 const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);

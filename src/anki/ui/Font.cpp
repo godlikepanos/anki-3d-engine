@@ -77,7 +77,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	buff->unmap();
 
 	// Create the texture
-	TextureInitInfo texInit;
+	TextureInitInfo texInit("Font");
 	texInit.m_width = width;
 	texInit.m_height = height;
 	texInit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
@@ -87,21 +87,26 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 
 	m_tex = m_manager->getGrManager().newTexture(texInit);
 
+	// Create the whole texture view
+	m_texView = m_manager->getGrManager().newTextureView(TextureViewInitInfo(m_tex, "Font"));
+
 	// Do the copy
+	static const TextureSurfaceInfo surf(0, 0, 0, 0);
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = m_manager->getGrManager().newCommandBuffer(cmdbInit);
+	{
+		TextureViewInitInfo viewInit(m_tex, surf, DepthStencilAspectBit::NONE, "TempFont");
+		TextureViewPtr tmpView = m_manager->getGrManager().newTextureView(viewInit);
 
-	TextureSurfaceInfo surf(0, 0, 0, 0);
+		cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
+		cmdb->copyBufferToTextureView(buff, 0, buffSize, tmpView);
+		cmdb->setTextureSurfaceBarrier(
+			m_tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS, surf);
+	}
 
-	cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
-	cmdb->copyBufferToTextureSurface(buff, 0, buffSize, m_tex, surf);
-	cmdb->setTextureSurfaceBarrier(
-		m_tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS, surf);
-
-	TextureSubresourceInfo subresource(surf);
-	subresource.m_mipmapCount = texInit.m_mipmapsCount;
-	cmdb->generateMipmaps2d(m_manager->getGrManager().newTextureView(TextureViewInitInfo(m_tex, subresource)));
+	// Gen mips
+	cmdb->generateMipmaps2d(m_texView);
 	cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::GENERATE_MIPMAPS, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
 	cmdb->flush();

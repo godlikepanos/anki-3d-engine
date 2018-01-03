@@ -230,6 +230,17 @@ public:
 		, m_depthStencilAspect(aspect)
 	{
 	}
+
+	TextureSubresourceInfo(const TextureVolumeInfo& vol)
+		: m_baseMipmap(vol.m_level)
+		, m_mipmapCount(1)
+		, m_baseLayer(0)
+		, m_layerCount(1)
+		, m_baseFace(0)
+		, m_faceCount(1)
+		, m_depthStencilAspect(DepthStencilAspectBit::NONE)
+	{
+	}
 };
 
 enum class DescriptorType : U8

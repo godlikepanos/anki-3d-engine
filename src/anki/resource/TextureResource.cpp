@@ -267,19 +267,20 @@ Error TextureResource::load(LoadingContext& ctx)
 
 			memcpy(data, surfOrVolData, surfOrVolSize);
 
+			// Create temp tex view
+			TextureSubresourceInfo subresource;
 			if(ctx.m_texType == TextureType::_3D)
 			{
-				TextureVolumeInfo vol(mip);
-				cmdb->copyBufferToTextureVolume(
-					handle.getBuffer(), handle.getOffset(), handle.getRange(), ctx.m_tex, vol);
+				subresource = TextureSubresourceInfo(TextureVolumeInfo(mip));
 			}
 			else
 			{
-				TextureSurfaceInfo surf(mip, 0, face, layer);
-
-				cmdb->copyBufferToTextureSurface(
-					handle.getBuffer(), handle.getOffset(), handle.getRange(), ctx.m_tex, surf);
+				subresource = TextureSubresourceInfo(TextureSurfaceInfo(mip, 0, face, layer));
 			}
+
+			TextureViewPtr tmpView = ctx.m_gr->newTextureView(TextureViewInitInfo(ctx.m_tex, subresource, "RsrcTmp"));
+
+			cmdb->copyBufferToTextureView(handle.getBuffer(), handle.getOffset(), handle.getRange(), tmpView);
 		}
 
 		// Set the barriers of the batch

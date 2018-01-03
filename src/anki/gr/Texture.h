@@ -138,19 +138,7 @@ public:
 		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_baseFace + subresource.m_faceCount <= faceCount);
 
 		// Aspect
-		const PixelFormat fmt = m_format;
-		DepthStencilAspectBit aspect =
-			(componentFormatIsDepth(fmt.m_components)) ? DepthStencilAspectBit::DEPTH : DepthStencilAspectBit::NONE;
-		aspect |=
-			(componentFormatIsStencil(fmt.m_components)) ? DepthStencilAspectBit::STENCIL : DepthStencilAspectBit::NONE;
-		if(!!aspect)
-		{
-			ANKI_TEX_SUBRESOURCE_ASSERT(!!(aspect & subresource.m_depthStencilAspect));
-		}
-		else
-		{
-			ANKI_TEX_SUBRESOURCE_ASSERT(aspect == DepthStencilAspectBit::NONE);
-		}
+		ANKI_TEX_SUBRESOURCE_ASSERT((m_aspect & subresource.m_depthStencilAspect) == subresource.m_depthStencilAspect);
 
 		// Misc
 		if(type == TextureType::CUBE_ARRAY && subresource.m_layerCount > 1)
@@ -191,8 +179,19 @@ public:
 	/// Return true if the subresource can be bound for sampling.
 	Bool isSubresourceGoodForSampling(const TextureSubresourceInfo& subresource) const
 	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
 		/// Can bound only one aspect at a time.
-		return subresource.m_depthStencilAspect != DepthStencilAspectBit::DEPTH;
+		return subresource.m_depthStencilAspect == DepthStencilAspectBit::DEPTH
+			|| subresource.m_depthStencilAspect == DepthStencilAspectBit::STENCIL
+			|| subresource.m_depthStencilAspect == DepthStencilAspectBit::NONE;
+	}
+
+	/// Return true if the subresource can be used in CommandBuffer::copyBufferToTextureView.
+	Bool isSubresourceGoodForCopyFromBuffer(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		return subresource.m_faceCount == 1 && subresource.m_mipmapCount == 1 && subresource.m_layerCount == 1
+			&& subresource.m_depthStencilAspect == DepthStencilAspectBit::NONE;
 	}
 
 protected:
