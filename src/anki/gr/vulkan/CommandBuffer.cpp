@@ -174,10 +174,10 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 }
 
 void CommandBuffer::bindTextureAndSampler(
-	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
+	U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindTextureAndSampler(set, binding, tex, sampler, usage, aspect);
+	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, usage);
 }
 
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)

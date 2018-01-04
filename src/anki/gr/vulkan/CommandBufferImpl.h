@@ -219,17 +219,19 @@ public:
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTextureAndSampler(
-		U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
+	void bindTextureAndSamplerInternal(
+		U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler, TextureUsageBit usage)
 	{
 		commandCommon();
 		const U realBinding = binding;
-		const Texture& tex = *tex_;
-		const TextureImpl& teximpl = static_cast<const TextureImpl&>(tex);
-		ANKI_ASSERT((!teximpl.getDepthStencilAspect() || !!aspect) && "Need to set aspect for DS textures");
-		const VkImageLayout lay = teximpl.computeLayout(usage, 0);
-		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
-		m_microCmdb->pushObjectRef(tex_);
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
+		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.m_subresource));
+		const VkImageLayout lay = tex.computeLayout(usage, 0);
+
+		m_dsetState[set].bindTextureAndSampler(realBinding, &view, sampler.get(), lay);
+
+		m_microCmdb->pushObjectRef(texView);
 		m_microCmdb->pushObjectRef(sampler);
 	}
 

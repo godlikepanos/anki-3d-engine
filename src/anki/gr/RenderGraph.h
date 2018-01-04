@@ -9,6 +9,7 @@
 #include <anki/gr/Enums.h>
 #include <anki/gr/TextureView.h>
 #include <anki/gr/Buffer.h>
+#include <anki/gr/GrManager.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/util/HashMap.h>
@@ -139,17 +140,20 @@ public:
 		TexturePtr tex;
 		TextureUsageBit usage;
 		getRenderTargetState(handle, subresource, tex, usage);
-		m_commandBuffer->bindTextureAndSampler(set, binding, tex, sampler, usage, subresource.m_depthStencilAspect);
+		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
+		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler, usage);
 	}
 
 	/// Convenience method to bind the whole texture as color.
 	void bindColorTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, SamplerPtr sampler)
 	{
 		TexturePtr tex = getTexture(handle);
-		TextureViewInitInfo subresource(tex); // Use the whole texture
+		TextureViewInitInfo viewInit(tex); // Use the whole texture
 		TextureUsageBit usage;
-		getRenderTargetState(handle, subresource, tex, usage);
-		m_commandBuffer->bindTextureAndSampler(set, binding, tex, sampler, usage, DepthStencilAspectBit::NONE);
+		getRenderTargetState(handle, viewInit, tex, usage);
+		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler, usage);
 	}
 
 	/// Convenience method.

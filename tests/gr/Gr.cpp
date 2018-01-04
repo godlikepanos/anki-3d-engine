@@ -583,6 +583,9 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	init.m_type = TextureType::_2D;
 	TexturePtr rt = gr->newTexture(init);
 
+	TextureViewInitInfo viewInit(rt);
+	TextureViewPtr texView = gr->newTextureView(viewInit);
+
 	Array<FramebufferPtr, 4> fb;
 	for(FramebufferPtr& f : fb)
 	{
@@ -671,7 +674,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->bindTextureAndSampler(0, 0, rt, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, texView, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->beginRenderPass(defaultFb, {}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
@@ -925,6 +928,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 	TexturePtr a = gr->newTexture(init);
 
+	TextureViewPtr aView = gr->newTextureView(TextureViewInitInfo(a));
+
 	//
 	// Create texture B
 	//
@@ -936,6 +941,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_initialUsage = TextureUsageBit::NONE;
 
 	TexturePtr b = gr->newTexture(init);
+
+	TextureViewPtr bView = gr->newTextureView(TextureViewInitInfo(b));
 
 	//
 	// Upload all textures
@@ -1069,8 +1076,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb, {}, {});
 
-		cmdb->bindTextureAndSampler(0, 0, a, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTextureAndSampler(0, 1, b, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, aView, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 1, bView, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 		cmdb->flush();
@@ -1154,6 +1161,9 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 	TexturePtr col0 = gr.newTexture(init);
 	TexturePtr col1 = gr.newTexture(init);
+
+	TextureViewPtr col0View = gr.newTextureView(TextureViewInitInfo(col0));
+	TextureViewPtr col1View = gr.newTextureView(TextureViewInitInfo(col1));
 
 	init.m_format = DS_FORMAT;
 	TexturePtr dp = gr.newTexture(init);
@@ -1257,8 +1267,8 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		cmdb->beginRenderPass(dfb, {}, {});
 		cmdb->bindShaderProgram(resolveProg);
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->bindTextureAndSampler(0, 0, col0, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTextureAndSampler(0, 1, col1, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 0, col0View, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 1, col1View, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -1386,7 +1396,8 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(dfb, {}, {});
-		cmdb->bindTextureAndSampler(0, 0, tex, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(
+			0, 0, gr->newTextureView(TextureViewInitInfo(tex)), sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 
@@ -1537,7 +1548,8 @@ ANKI_TEST(Gr, 3DTextures)
 		U idx = (F32(ITERATION_COUNT - iterations - 1) / ITERATION_COUNT) * TEX_COORDS_LOD.getSize();
 		*uv = TEX_COORDS_LOD[idx];
 
-		cmdb->bindTextureAndSampler(0, 0, a, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(
+			0, 0, gr->newTextureView(TextureViewInitInfo(a)), sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 
 		cmdb->endRenderPass();

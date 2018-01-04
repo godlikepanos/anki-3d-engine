@@ -56,7 +56,7 @@ Error Font::init(const CString& filename, const std::initializer_list<U32>& font
 
 	// End building
 	nk_handle texHandle;
-	texHandle.ptr = numberToPtr<void*>(ptrToNumber(m_tex.get()) | FONT_TEXTURE_MASK);
+	texHandle.ptr = numberToPtr<void*>(ptrToNumber(m_texView.get()) | FONT_TEXTURE_MASK);
 	nk_font_atlas_end(&m_atlas, texHandle, nullptr);
 
 	nk_font_atlas_cleanup(&m_atlas);

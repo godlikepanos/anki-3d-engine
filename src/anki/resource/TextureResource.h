@@ -31,22 +31,22 @@ public:
 	/// Load a texture
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
-	/// Get the texture
+	/// Get the texture.
 	const TexturePtr& getGrTexture() const
 	{
 		return m_tex;
+	}
+
+	/// Get the texture view.
+	const TextureViewPtr& getGrTextureView() const
+	{
+		return m_texView;
 	}
 
 	/// Get the sampler.
 	const SamplerPtr& getSampler() const
 	{
 		return m_sampler;
-	}
-
-	/// Get the texture
-	TexturePtr& getGrTexture()
-	{
-		return m_tex;
 	}
 
 	U getWidth() const
@@ -80,6 +80,7 @@ private:
 	class LoadingContext;
 
 	TexturePtr m_tex;
+	TextureViewPtr m_texView;
 	SamplerPtr m_sampler;
 	UVec3 m_size = UVec3(0u);
 	U32 m_layerCount = 0;

@@ -93,7 +93,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 		texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_dummyTex = getGrManager().newTexture(texinit);
+		TexturePtr tex = getGrManager().newTexture(texinit);
+
+		TextureViewInitInfo viewinit(tex);
+		m_dummyTexView = getGrManager().newTextureView(viewinit);
 	}
 
 	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(getDummyBufferSize(),

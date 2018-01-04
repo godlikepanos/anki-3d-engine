@@ -36,9 +36,9 @@ anki_internal:
 		return m_lightShading.m_mipCount;
 	}
 
-	TexturePtr getIntegrationLut() const
+	TextureViewPtr getIntegrationLut() const
 	{
-		return m_integrationLut->getGrTexture();
+		return m_integrationLut->getGrTextureView();
 	}
 
 	SamplerPtr getIntegrationLutSampler() const

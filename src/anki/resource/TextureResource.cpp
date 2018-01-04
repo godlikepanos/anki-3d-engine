@@ -194,6 +194,11 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 	m_layerCount = init.m_layerCount;
+
+	// Create the texture view
+	TextureViewInitInfo viewInit(m_tex, "Rsrc");
+	m_texView = getManager().getGrManager().newTextureView(viewInit);
+
 	return Error::NONE;
 }
 

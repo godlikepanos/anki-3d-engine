@@ -150,12 +150,12 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(0,
 		4,
-		(rsrc.m_diffDecalTex) ? rsrc.m_diffDecalTex : m_r->getDummyTexture(),
+		(rsrc.m_diffDecalTexView) ? rsrc.m_diffDecalTexView : m_r->getDummyTextureView(),
 		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(0,
 		5,
-		(rsrc.m_normRoughnessDecalTex) ? rsrc.m_normRoughnessDecalTex : m_r->getDummyTexture(),
+		(rsrc.m_normRoughnessDecalTexView) ? rsrc.m_normRoughnessDecalTexView : m_r->getDummyTextureView(),
 		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 

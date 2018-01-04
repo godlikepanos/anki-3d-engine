@@ -133,8 +133,11 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(
-		0, 2, m_main.m_noiseTex->getGrTexture(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTextureAndSampler(0,
+		2,
+		m_main.m_noiseTex->getGrTextureView(),
+		m_r->getTrilinearRepeatSampler(),
+		TextureUsageBit::SAMPLED_FRAGMENT);
 	rgraphCtx.bindColorTextureAndSampler(0, 3, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
 
 	struct Unis

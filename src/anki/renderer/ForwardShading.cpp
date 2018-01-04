@@ -114,8 +114,11 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext
 		0, 0, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getVolumetric().getRt(), m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(
-		0, 3, m_vol.m_noiseTex->getGrTexture(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTextureAndSampler(0,
+		3,
+		m_vol.m_noiseTex->getGrTextureView(),
+		m_r->getTrilinearRepeatSampler(),
+		TextureUsageBit::SAMPLED_FRAGMENT);
 
 	drawQuad(cmdb);
 
@@ -144,7 +147,7 @@ void ForwardShading::drawUpscale(const RenderingContext& ctx, RenderPassWorkCont
 	rgraphCtx.bindColorTextureAndSampler(0, 2, m_runCtx.m_rt, m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0,
 		3,
-		m_upscale.m_noiseTex->getGrTexture(),
+		m_upscale.m_noiseTex->getGrTextureView(),
 		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 

@@ -64,9 +64,8 @@ private:
 class TextureBinding
 {
 public:
-	const TextureImpl* m_tex = nullptr;
+	const TextureViewImpl* m_texView = nullptr;
 	const MicroSampler* m_sampler = nullptr;
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 	VkImageLayout m_layout = VK_IMAGE_LAYOUT_MAX_ENUM;
 };
 
@@ -107,19 +106,19 @@ public:
 		m_layoutDirty = true;
 	}
 
-	void bindTextureAndSampler(
-		U binding, const Texture* tex, const Sampler* sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
+	void bindTextureAndSampler(U binding, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
 	{
-		ANKI_ASSERT(static_cast<const TextureImpl&>(*tex).aspectValid(aspect));
+		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
+		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForSampling(viewImpl.m_subresource));
+
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::TEXTURE;
-		b.m_uuids[0] = tex->getUuid();
+		b.m_uuids[0] = viewImpl.m_hash;
 		b.m_uuids[1] = sampler->getUuid();
 
-		b.m_tex.m_tex = static_cast<const TextureImpl*>(tex);
+		b.m_tex.m_texView = &viewImpl;
 		b.m_tex.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
-		b.m_tex.m_aspect = aspect;
 		b.m_tex.m_layout = layout;
 
 		m_anyBindingDirty = true;

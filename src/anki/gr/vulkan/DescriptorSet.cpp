@@ -286,7 +286,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 			{
 			case DescriptorType::TEXTURE:
 				tex[texCount].sampler = b.m_tex.m_sampler->getHandle();
-				tex[texCount].imageView = b.m_tex.m_tex->getOrCreateResourceGroupView(b.m_tex.m_aspect);
+				tex[texCount].imageView = b.m_tex.m_texView->m_handle;
 				tex[texCount].imageLayout = b.m_tex.m_layout;
 
 				w.pImageInfo = &tex[texCount];
@@ -506,7 +506,6 @@ void DescriptorSetState::flush(Bool& stateDirty,
 			{
 			case DescriptorType::TEXTURE:
 				toHash[toHashCount++] = m_bindings[i].m_uuids[1];
-				toHash[toHashCount++] = U64(m_bindings[i].m_tex.m_aspect);
 				toHash[toHashCount++] = U64(m_bindings[i].m_tex.m_layout);
 				break;
 			case DescriptorType::UNIFORM_BUFFER:

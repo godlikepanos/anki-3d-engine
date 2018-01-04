@@ -226,16 +226,10 @@ public:
 	/// Bind texture and sample.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.
-	/// @param tex The texture to bind.
+	/// @param texView The texture view to bind.
 	/// @param sampler The sampler to override the default sampler of the tex.
 	/// @param usage The state the tex is in.
-	/// @param aspect The depth stencil aspect.
-	void bindTextureAndSampler(U32 set,
-		U32 binding,
-		TexturePtr tex,
-		SamplerPtr sampler,
-		TextureUsageBit usage,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE);
+	void bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage);
 
 	/// Bind uniform buffer.
 	/// @param set The set to bind to.

@@ -170,7 +170,7 @@ void Bloom::runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx)
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->bindTextureAndSampler(0,
 		1,
-		m_sslf.m_lensDirtTex->getGrTexture(),
+		m_sslf.m_lensDirtTex->getGrTextureView(),
 		m_sslf.m_lensDirtTex->getSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 	drawQuad(cmdb);
