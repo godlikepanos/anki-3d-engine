@@ -167,7 +167,7 @@ inline void CommandBufferImpl::setTextureBarrier(
 	ANKI_ASSERT(tex->isSubresourceValid(subresource));
 
 	VkImageSubresourceRange range;
-	impl.computeSubresourceRange(subresource, range);
+	impl.computeVkImageSubresourceRange(subresource, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
@@ -184,7 +184,7 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	impl.checkSurfaceOrVolume(surf);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, impl.getDepthStencilAspect(), range);
+	impl.computeVkImageSubresourceRange(TextureSubresourceInfo(surf, impl.getDepthStencilAspect()), range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
@@ -201,7 +201,7 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	impl.checkSurfaceOrVolume(vol);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(vol, impl.getDepthStencilAspect(), range);
+	impl.computeVkImageSubresourceRange(TextureSubresourceInfo(vol, impl.getDepthStencilAspect()), range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
@@ -411,9 +411,9 @@ inline void CommandBufferImpl::clearTextureView(TextureViewPtr texView, const Cl
 
 	if(!view.getDepthStencilAspect())
 	{
-		ANKI_CMD(
-			vkCmdClearColorImage(
-				m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &view.m_vkSubresource),
+		VkImageSubresourceRange vkRange = view.getVkImageSubresourceRange();
+		ANKI_CMD(vkCmdClearColorImage(
+					 m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &vkRange),
 			ANY_OTHER_COMMAND);
 	}
 	else

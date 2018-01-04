@@ -302,7 +302,7 @@ void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 	const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
 	ANKI_ASSERT(tex.getTextureType() != TextureType::_3D && "Not for 3D");
-	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.m_subresource));
+	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.getSubresource()));
 
 	const DepthStencilAspectBit aspect = view.getDepthStencilAspect();
 	const U face = view.getBaseFace();
@@ -314,7 +314,8 @@ void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 		if(i > 0)
 		{
 			VkImageSubresourceRange range;
-			tex.computeSubResourceRange(TextureSurfaceInfo(i, 0, face, layer), aspect, range);
+			tex.computeVkImageSubresourceRange(
+				TextureSubresourceInfo(TextureSurfaceInfo(i, 0, face, layer), aspect), range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -329,7 +330,8 @@ void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 		// Transition destination
 		{
 			VkImageSubresourceRange range;
-			tex.computeSubResourceRange(TextureSurfaceInfo(i + 1, 0, face, layer), aspect, range);
+			tex.computeVkImageSubresourceRange(
+				TextureSubresourceInfo(TextureSurfaceInfo(i + 1, 0, face, layer), aspect), range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 				0,

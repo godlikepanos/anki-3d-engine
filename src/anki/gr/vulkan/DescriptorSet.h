@@ -109,7 +109,7 @@ public:
 	void bindTextureAndSampler(U binding, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
 	{
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
-		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForSampling(viewImpl.m_subresource));
+		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForSampling(viewImpl.getSubresource()));
 
 		AnyBinding& b = m_bindings[binding];
 		b = {};
@@ -158,7 +158,7 @@ public:
 	{
 		ANKI_ASSERT(texView);
 		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);
-		ANKI_ASSERT(impl->m_tex->isSubresourceGoodForImageLoadStore(impl->m_subresource));
+		ANKI_ASSERT(impl->m_tex->isSubresourceGoodForImageLoadStore(impl->getSubresource()));
 
 		AnyBinding& b = m_bindings[binding];
 		b = {};

@@ -7,6 +7,7 @@
 
 #include <anki/gr/TextureView.h>
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/gr/vulkan/TextureImpl.h>
 
 namespace anki
 {
@@ -20,8 +21,6 @@ class TextureViewImpl final : public TextureView, public VulkanObject<TextureVie
 public:
 	VkImageView m_handle = {};
 	TexturePtr m_tex; ///< Hold a reference.
-	TextureSubresourceInfo m_subresource;
-	VkImageSubresourceRange m_vkSubresource;
 
 	/// This is a hash that depends on the Texture and the VkImageView. It's used as a replacement of
 	/// TextureView::m_uuid since it creates less unique IDs.
@@ -35,6 +34,26 @@ public:
 	~TextureViewImpl();
 
 	ANKI_USE_RESULT Error init(const TextureViewInitInfo& inf);
+
+	TextureSubresourceInfo getSubresource() const
+	{
+		TextureSubresourceInfo out;
+		out.m_baseMipmap = m_baseMip;
+		out.m_mipmapCount = m_mipCount;
+		out.m_baseLayer = m_baseLayer;
+		out.m_layerCount = m_layerCount;
+		out.m_baseFace = m_baseFace;
+		out.m_faceCount = m_faceCount;
+		out.m_depthStencilAspect = m_aspect;
+		return out;
+	}
+
+	VkImageSubresourceRange getVkImageSubresourceRange() const
+	{
+		VkImageSubresourceRange out;
+		static_cast<const TextureImpl&>(*m_tex).computeVkImageSubresourceRange(getSubresource(), out);
+		return out;
+	}
 };
 /// @}
 

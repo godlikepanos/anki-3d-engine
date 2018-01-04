@@ -231,15 +231,21 @@ public:
 	{
 	}
 
-	TextureSubresourceInfo(const TextureVolumeInfo& vol)
+	TextureSubresourceInfo(const TextureVolumeInfo& vol, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
 		: m_baseMipmap(vol.m_level)
 		, m_mipmapCount(1)
 		, m_baseLayer(0)
 		, m_layerCount(1)
 		, m_baseFace(0)
 		, m_faceCount(1)
-		, m_depthStencilAspect(DepthStencilAspectBit::NONE)
+		, m_depthStencilAspect(aspect)
 	{
+	}
+
+	U64 computeHash() const
+	{
+		static_assert(sizeof(*this) == sizeof(U32) * 4 + sizeof(U8) * 4, "Should be hashable");
+		return anki::computeHash(this, sizeof(*this));
 	}
 };
 

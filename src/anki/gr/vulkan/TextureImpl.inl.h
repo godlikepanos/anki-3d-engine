@@ -8,48 +8,6 @@
 namespace anki
 {
 
-inline void TextureImpl::computeSubResourceRange(
-	const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const
-{
-	checkSurfaceOrVolume(surf);
-	range.aspectMask = convertImageAspect(m_aspect);
-	range.baseMipLevel = surf.m_level;
-	range.levelCount = 1;
-	switch(m_texType)
-	{
-	case TextureType::_2D:
-		range.baseArrayLayer = 0;
-		break;
-	case TextureType::_3D:
-		range.baseArrayLayer = 0;
-		break;
-	case TextureType::CUBE:
-		range.baseArrayLayer = surf.m_face;
-		break;
-	case TextureType::_2D_ARRAY:
-		range.baseArrayLayer = surf.m_layer;
-		break;
-	case TextureType::CUBE_ARRAY:
-		range.baseArrayLayer = surf.m_layer * 6 + surf.m_face;
-		break;
-	default:
-		ANKI_ASSERT(0);
-		range.baseArrayLayer = 0;
-	}
-	range.layerCount = 1;
-}
-
-inline void TextureImpl::computeSubResourceRange(
-	const TextureVolumeInfo& vol, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const
-{
-	checkSurfaceOrVolume(vol);
-	range.aspectMask = convertImageAspect(m_aspect);
-	range.baseMipLevel = vol.m_level;
-	range.levelCount = 1;
-	range.baseArrayLayer = 0;
-	range.layerCount = 1;
-}
-
 inline U TextureImpl::computeVkArrayLayer(const TextureSurfaceInfo& surf) const
 {
 	checkSurfaceOrVolume(surf);

@@ -226,7 +226,7 @@ public:
 		const U realBinding = binding;
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
-		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.m_subresource));
+		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
 		const VkImageLayout lay = tex.computeLayout(usage, 0);
 
 		m_dsetState[set].bindTextureAndSampler(realBinding, &view, sampler.get(), lay);

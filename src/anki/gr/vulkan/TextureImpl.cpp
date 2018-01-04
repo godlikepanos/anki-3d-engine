@@ -655,31 +655,30 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	return out;
 }
 
-VkImageView TextureImpl::getOrCreateResourceGroupView(DepthStencilAspectBit aspect) const
-{
-	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
-	ci.subresourceRange.aspectMask = convertImageAspect(aspect);
-
-	return getOrCreateView(ci);
-}
-
-VkImageView TextureImpl::getOrCreateView(const VkImageViewCreateInfo& ci) const
+VkImageView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresource, TextureType& newTexType) const
 {
 	LockGuard<Mutex> lock(m_viewsMapMtx);
-	auto it = m_viewsMap.find(ci);
+	auto it = m_viewsMap.find(subresource);
 
 	if(it != m_viewsMap.getEnd())
 	{
+		// Fixup the image view type
+		newTexType = computeNewTexTypeOfSubresource(subresource);
+
 		return *it;
 	}
 	else
 	{
+		// Compute the VkImageViewCreateInfo
+		VkImageViewCreateInfo viewCi;
+		computeVkImageViewCreateInfo(subresource, viewCi, newTexType);
+
 		VkImageView view = VK_NULL_HANDLE;
-		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &ci, nullptr, &view));
+		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &view));
 		getGrManagerImpl().trySetVulkanHandleName(
 			(m_name[0]) ? &m_name[0] : CString(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(view));
 
-		m_viewsMap.emplace(getAllocator(), ci, view);
+		m_viewsMap.emplace(getAllocator(), subresource, view);
 
 		return view;
 	}
