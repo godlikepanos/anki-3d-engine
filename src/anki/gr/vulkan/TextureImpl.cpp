@@ -45,7 +45,7 @@ TextureImpl::~TextureImpl()
 Error TextureImpl::init(const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
-	ANKI_ASSERT(textureInitInfoValid(init));
+	ANKI_ASSERT(init.isValid());
 
 	// Set some stuff
 	m_width = init.m_width;

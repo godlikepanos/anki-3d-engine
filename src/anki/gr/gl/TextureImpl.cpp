@@ -50,10 +50,10 @@ class DeleteTextureCommand final : public GlCommand
 {
 public:
 	GLuint m_tex;
-	DynamicArray<GLuint> m_views;
+	HashMap<TextureSubresourceInfo, MicroTextureView> m_views;
 	GrAllocator<U8> m_alloc;
 
-	DeleteTextureCommand(GLuint tex, DynamicArray<GLuint>& views, GrAllocator<U8> alloc)
+	DeleteTextureCommand(GLuint tex, HashMap<TextureSubresourceInfo, MicroTextureView>& views, GrAllocator<U8> alloc)
 		: m_tex(tex)
 		, m_views(std::move(views))
 		, m_alloc(alloc)
@@ -63,16 +63,15 @@ public:
 	Error operator()(GlState& state)
 	{
 		// Delete views
-		if(m_views.getSize() > 0)
+		auto it = m_views.getBegin();
+		auto end = m_views.getEnd();
+		while(it != end)
 		{
-			for(GLuint name : m_views)
-			{
-				if(name != 0)
-				{
-					glDeleteTextures(1, &name);
-				}
-			}
+			const MicroTextureView& view = *it;
+			glDeleteTextures(1, &view.m_glName);
+			++it;
 		}
+
 		m_views.destroy(m_alloc);
 
 		// Delete texture
@@ -431,6 +430,55 @@ U TextureImpl::computeSurfaceIdx(const TextureSurfaceInfo& surf) const
 
 	ANKI_ASSERT(out < m_surfaceCountPerLevel);
 	return out;
+}
+
+MicroTextureView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresource) const
+{
+	LockGuard<Mutex> lock(m_viewsMapMtx);
+	auto it = m_viewsMap.find(subresource);
+
+	if(it != m_viewsMap.getEnd())
+	{
+		return *it;
+	}
+	else
+	{
+		// Create a new view
+
+		// Compute the new target if needed
+		const TextureType newTexType = computeNewTexTypeOfSubresource(subresource);
+		GLenum glTarget = m_target;
+		if(newTexType == TextureType::_2D)
+		{
+			// Change that anyway
+			glTarget = GL_TEXTURE_2D;
+		}
+
+		const U firstSurf = computeSurfaceIdx(
+			TextureSurfaceInfo(subresource.m_baseMipmap, 0, subresource.m_baseFace, subresource.m_baseLayer));
+		const U lastSurf = computeSurfaceIdx(TextureSurfaceInfo(subresource.m_baseMipmap,
+			0,
+			subresource.m_baseFace + subresource.m_faceCount - 1,
+			subresource.m_baseLayer + subresource.m_layerCount - 1));
+		ANKI_ASSERT(firstSurf < lastSurf);
+
+		MicroTextureView view;
+		view.m_aspect = subresource.m_depthStencilAspect;
+
+		glGenTextures(1, &view.m_glName);
+		glTextureView(view.m_glName,
+			glTarget,
+			m_glName,
+			m_internalFormat,
+			subresource.m_baseMipmap,
+			subresource.m_mipmapCount,
+			firstSurf,
+			lastSurf - firstSurf + 1);
+
+		m_viewsMap.emplace(getAllocator(), subresource, view);
+
+		return view;
+	}
 }
 
 } // end namespace anki

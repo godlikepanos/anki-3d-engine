@@ -5,7 +5,7 @@
 
 #include <anki/gr/gl/FramebufferImpl.h>
 #include <anki/gr/Texture.h>
-#include <anki/gr/gl/TextureImpl.h>
+#include <anki/gr/gl/TextureViewImpl.h>
 #include <anki/gr/gl/GlState.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
@@ -20,7 +20,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	ANKI_ASSERT(!isCreated());
 	m_in = init;
 
-	if(m_in.m_colorAttachmentCount == 1 && !m_in.m_colorAttachments[0].m_texture.isCreated())
+	if(init.refersToDefaultFramebuffer())
 	{
 		m_fbSize[0] = m_fbSize[1] = MAX_U16;
 		m_bindDefault = true;
@@ -38,9 +38,12 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	for(U i = 0; i < m_in.m_colorAttachmentCount; i++)
 	{
 		const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[i];
+		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*att.m_textureView);
+		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForFramebufferAttachment(viewImpl.getSubresource()));
+
 		const GLenum binding = GL_COLOR_ATTACHMENT0 + i;
 
-		attachTextureInternal(binding, static_cast<const TextureImpl&>(*att.m_texture), att);
+		attachTextureInternal(binding, viewImpl, att);
 
 		m_drawBuffers[i] = binding;
 
@@ -51,59 +54,39 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		if(m_fbSize[0] == 0)
 		{
-			m_fbSize[0] = att.m_texture->getWidth();
-			m_fbSize[1] = att.m_texture->getHeight();
+			m_fbSize[0] = viewImpl.m_tex->getWidth() >> viewImpl.getBaseMipmap();
+			m_fbSize[1] = viewImpl.m_tex->getHeight() >> viewImpl.getBaseMipmap();
 		}
 		else
 		{
-			ANKI_ASSERT(m_fbSize[0] == att.m_texture->getWidth());
-			ANKI_ASSERT(m_fbSize[1] == att.m_texture->getHeight());
+			ANKI_ASSERT(m_fbSize[0] == (viewImpl.m_tex->getWidth() >> viewImpl.getBaseMipmap()));
+			ANKI_ASSERT(m_fbSize[1] == (viewImpl.m_tex->getHeight() >> viewImpl.getBaseMipmap()));
 		}
 	}
 
 	// Attach depth/stencil
-	if(m_in.m_depthStencilAttachment.m_texture.isCreated())
+	if(m_in.m_depthStencilAttachment.m_textureView.isCreated())
 	{
 		const FramebufferAttachmentInfo& att = m_in.m_depthStencilAttachment;
-		const TextureImpl& tex = static_cast<const TextureImpl&>(*att.m_texture);
+		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*att.m_textureView);
+		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForFramebufferAttachment(viewImpl.getSubresource()));
 
 		GLenum binding;
-		if(tex.m_glFormat == GL_DEPTH_COMPONENT)
+		if(viewImpl.getDepthStencilAspect() == DepthStencilAspectBit::DEPTH)
 		{
 			binding = GL_DEPTH_ATTACHMENT;
-			m_dsAspect = DepthStencilAspectBit::DEPTH;
 		}
-		else if(tex.m_glFormat == GL_STENCIL_INDEX)
+		else if(viewImpl.getDepthStencilAspect() == DepthStencilAspectBit::STENCIL)
 		{
 			binding = GL_STENCIL_ATTACHMENT;
-			m_dsAspect = DepthStencilAspectBit::STENCIL;
 		}
 		else
 		{
-			ANKI_ASSERT(tex.m_glFormat == GL_DEPTH_STENCIL);
-
-			if(att.m_aspect == DepthStencilAspectBit::DEPTH)
-			{
-				binding = GL_DEPTH_ATTACHMENT;
-			}
-			else if(att.m_aspect == DepthStencilAspectBit::STENCIL)
-			{
-				binding = GL_STENCIL_ATTACHMENT;
-			}
-			else if(att.m_aspect == DepthStencilAspectBit::DEPTH_STENCIL)
-			{
-				binding = GL_DEPTH_STENCIL_ATTACHMENT;
-			}
-			else
-			{
-				ANKI_ASSERT(!"Need to set FramebufferAttachmentInfo::m_aspect");
-				binding = 0;
-			}
-
-			m_dsAspect = att.m_aspect;
+			ANKI_ASSERT(viewImpl.getDepthStencilAspect() == DepthStencilAspectBit::DEPTH_STENCIL);
+			binding = GL_DEPTH_STENCIL_ATTACHMENT;
 		}
 
-		attachTextureInternal(binding, tex, att);
+		attachTextureInternal(binding, viewImpl, att);
 
 		if(att.m_loadOperation == AttachmentLoadOperation::DONT_CARE)
 		{
@@ -112,14 +95,21 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		if(m_fbSize[0] == 0)
 		{
-			m_fbSize[0] = att.m_texture->getWidth();
-			m_fbSize[1] = att.m_texture->getHeight();
+			m_fbSize[0] = viewImpl.m_tex->getWidth() >> viewImpl.getBaseMipmap();
+			m_fbSize[1] = viewImpl.m_tex->getHeight() >> viewImpl.getBaseMipmap();
 		}
 		else
 		{
-			ANKI_ASSERT(m_fbSize[0] == att.m_texture->getWidth());
-			ANKI_ASSERT(m_fbSize[1] == att.m_texture->getHeight());
+			ANKI_ASSERT(m_fbSize[0] == (viewImpl.m_tex->getWidth() >> viewImpl.getBaseMipmap()));
+			ANKI_ASSERT(m_fbSize[1] == (viewImpl.m_tex->getHeight() >> viewImpl.getBaseMipmap()));
 		}
+
+		// Misc
+		m_clearDepth = !!(viewImpl.getDepthStencilAspect() & DepthStencilAspectBit::DEPTH)
+			&& att.m_loadOperation == AttachmentLoadOperation::CLEAR;
+
+		m_clearStencil = !!(viewImpl.getDepthStencilAspect() & DepthStencilAspectBit::STENCIL)
+			&& att.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR;
 	}
 
 	// Check completeness
@@ -135,38 +125,35 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 }
 
 void FramebufferImpl::attachTextureInternal(
-	GLenum attachment, const TextureImpl& tex, const FramebufferAttachmentInfo& info)
+	GLenum attachment, const TextureViewImpl& view, const FramebufferAttachmentInfo& info)
 {
-	tex.checkSurfaceOrVolume(info.m_surface);
-
 	const GLenum target = GL_FRAMEBUFFER;
+	const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+
 	switch(tex.m_target)
 	{
 	case GL_TEXTURE_2D:
 #if ANKI_GL == ANKI_GL_DESKTOP
 	case GL_TEXTURE_2D_MULTISAMPLE:
 #endif
-		glFramebufferTexture2D(target, attachment, tex.m_target, tex.getGlName(), info.m_surface.m_level);
+		glFramebufferTexture2D(target, attachment, tex.m_target, tex.getGlName(), view.getBaseMipmap());
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 		glFramebufferTexture2D(target,
 			attachment,
-			GL_TEXTURE_CUBE_MAP_POSITIVE_X + info.m_surface.m_face,
-			tex.getGlName(),
-			info.m_surface.m_level);
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X + view.getBaseFace(),
+			view.getGlName(),
+			view.getBaseMipmap());
 		break;
 	case GL_TEXTURE_2D_ARRAY:
-		glFramebufferTextureLayer(target, attachment, tex.getGlName(), info.m_surface.m_level, info.m_surface.m_layer);
+		glFramebufferTextureLayer(target, attachment, view.getGlName(), view.getBaseMipmap(), view.getBaseLayer());
 		break;
 	case GL_TEXTURE_3D:
-		glFramebufferTextureLayer(target, attachment, tex.getGlName(), info.m_surface.m_level, info.m_surface.m_depth);
+		ANKI_ASSERT(!"TODO");
 		break;
 	case GL_TEXTURE_CUBE_MAP_ARRAY:
-		glFramebufferTextureLayer(target,
-			attachment,
-			tex.getGlName(),
-			info.m_surface.m_level,
-			info.m_surface.m_layer * 6 + info.m_surface.m_face);
+		glFramebufferTextureLayer(
+			target, attachment, view.getGlName(), view.getBaseMipmap(), view.getBaseLayer() * 6 + view.getBaseFace());
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -258,8 +245,7 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 		}
 
 		// Clear depth
-		if(!!(m_dsAspect & DepthStencilAspectBit::DEPTH) && m_in.m_depthStencilAttachment.m_texture.isCreated()
-			&& m_in.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR)
+		if(m_clearDepth)
 		{
 			// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
 			if(state.m_depthWriteMask == false)
@@ -276,8 +262,7 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 		}
 
 		// Clear stencil
-		if(!!(m_dsAspect & DepthStencilAspectBit::STENCIL) && m_in.m_depthStencilAttachment.m_texture.isCreated()
-			&& m_in.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR)
+		if(m_clearStencil)
 		{
 			// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
 			// From the spec: The clear operation always uses the front stencil write mask when clearing the stencil

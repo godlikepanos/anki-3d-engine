@@ -47,48 +47,6 @@ void logShaderErrorCode(const CString& error, const CString& source, GenericMemo
 		&error[0]);
 }
 
-Bool textureInitInfoValid(const TextureInitInfo& inf)
-{
-#define ANKI_CHECK_VAL_VALIDITY(x) \
-	do                             \
-	{                              \
-		if(!(x))                   \
-		{                          \
-			return false;          \
-		}                          \
-	} while(0)
-
-	ANKI_CHECK_VAL_VALIDITY(inf.m_usage != TextureUsageBit::NONE);
-	ANKI_CHECK_VAL_VALIDITY(inf.m_mipmapsCount > 0);
-	ANKI_CHECK_VAL_VALIDITY(inf.m_width > 0);
-	ANKI_CHECK_VAL_VALIDITY(inf.m_height > 0);
-	switch(inf.m_type)
-	{
-	case TextureType::_2D:
-		ANKI_CHECK_VAL_VALIDITY(inf.m_depth == 1);
-		ANKI_CHECK_VAL_VALIDITY(inf.m_layerCount == 1);
-		break;
-	case TextureType::CUBE:
-		ANKI_CHECK_VAL_VALIDITY(inf.m_depth == 1);
-		ANKI_CHECK_VAL_VALIDITY(inf.m_layerCount == 1);
-		break;
-	case TextureType::_3D:
-		ANKI_CHECK_VAL_VALIDITY(inf.m_depth > 0);
-		ANKI_CHECK_VAL_VALIDITY(inf.m_layerCount == 1);
-		break;
-	case TextureType::_2D_ARRAY:
-	case TextureType::CUBE_ARRAY:
-		ANKI_CHECK_VAL_VALIDITY(inf.m_depth == 1);
-		ANKI_CHECK_VAL_VALIDITY(inf.m_layerCount > 0);
-		break;
-	default:
-		ANKI_CHECK_VAL_VALIDITY(0);
-	};
-
-	return true;
-#undef ANKI_CHECK_VAL_VALIDITY
-}
-
 void getFormatInfo(const PixelFormat& fmt, U& texelComponents, U& texelBytes, U& blockSize, U& blockBytes)
 {
 	blockSize = 0;

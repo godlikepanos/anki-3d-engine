@@ -38,9 +38,6 @@ inline void checkTextureSurface(TextureType type, U depth, U mipCount, U layerCo
 	};
 }
 
-/// Check the validity of the structure.
-Bool textureInitInfoValid(const TextureInitInfo& inf);
-
 /// Compute the size of a single surface.
 void getFormatInfo(const PixelFormat& fmt, U& texelComponents, U& texelBytes, U& blockSize, U& blockBytes);
 
