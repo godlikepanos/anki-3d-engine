@@ -49,23 +49,14 @@ public:
 	void init(const TextureInitInfo& init);
 
 	/// Write texture data.
-	void writeSurface(const TextureSurfaceInfo& surf, GLuint pbo, PtrSize offset, PtrSize dataSize);
-
-	/// Write texture data.
-	void writeVolume(const TextureVolumeInfo& vol, GLuint pbo, PtrSize offset, PtrSize dataSize) const;
+	void copyFromBuffer(const TextureSubresourceInfo& subresource, GLuint pbo, PtrSize offset, PtrSize dataSize) const;
 
 	/// Generate mipmaps.
-	void generateMipmaps2d(U face, U layer);
-
-	/// Copy a single surface from one texture to another.
-	static void copy(const TextureImpl& src,
-		const TextureSurfaceInfo& srcSurf,
-		const TextureImpl& dest,
-		const TextureSurfaceInfo& destSurf);
+	void generateMipmaps2d(const TextureViewImpl& view) const;
 
 	void bind() const;
 
-	void clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect);
+	void clear(const TextureSubresourceInfo& subresource, const ClearValue& clearValue) const;
 
 	U computeSurfaceIdx(const TextureSurfaceInfo& surf) const;
 

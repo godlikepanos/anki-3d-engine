@@ -666,6 +666,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 	const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
 	ANKI_ASSERT(tex.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
+	ANKI_ASSERT(tex.isSubresourceGoodForCopyFromBuffer(view.getSubresource()));
 	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	const Bool is3D = tex.getTextureType() == TextureType::_3D;
 	const VkImageAspectFlags aspect = convertImageAspect(view.getDepthStencilAspect());

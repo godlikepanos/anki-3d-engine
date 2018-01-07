@@ -16,16 +16,16 @@ TextureView* TextureView::newInstance(GrManager* manager, const TextureViewInitI
 	class CreateTextureViewCommand final : public GlCommand
 	{
 	public:
-		TextureViewPtr m_tex;
+		TextureViewPtr m_view;
 
-		CreateTextureCommand(TextureView* tex)
-			: m_tex(tex)
+		CreateTextureViewCommand(TextureView* view)
+			: m_view(view)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			TextureImpl& impl = static_cast<TextureImpl&>(*m_tex);
+			TextureViewImpl& impl = static_cast<TextureViewImpl&>(*m_view);
 
 			impl.init();
 

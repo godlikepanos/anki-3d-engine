@@ -91,6 +91,11 @@ TexturePtr GrManager::newTexture(const TextureInitInfo& init)
 	return TexturePtr(Texture::newInstance(this, init));
 }
 
+TextureViewPtr GrManager::newTextureView(const TextureViewInitInfo& init)
+{
+	return TextureViewPtr(TextureView::newInstance(this, init));
+}
+
 SamplerPtr GrManager::newSampler(const SamplerInitInfo& init)
 {
 	return SamplerPtr(Sampler::newInstance(this, init));
@@ -129,7 +134,7 @@ RenderGraphPtr GrManager::newRenderGraph()
 void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	impl.checkSurfaceOrVolume(surf);
+	// TODO impl.checkSurfaceOrVolume(surf);
 
 	U width = impl.m_width >> surf.m_level;
 	U height = impl.m_height >> surf.m_level;
@@ -139,7 +144,7 @@ void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurface
 void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	impl.checkSurfaceOrVolume(vol);
+	// TODO impl.checkSurfaceOrVolume(vol);
 
 	U width = impl.m_width >> vol.m_level;
 	U height = impl.m_height >> vol.m_level;
