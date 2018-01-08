@@ -419,9 +419,9 @@ Bool RenderGraph::overlappingTextureSubresource(const TextureSubresourceInfo& su
 #define ANKI_OVERLAPPING(first, count) \
 	((suba.first < subb.first + subb.count) && (subb.first < suba.first + suba.count))
 
-	const Bool overlappingFaces = ANKI_OVERLAPPING(m_baseFace, m_faceCount);
-	const Bool overlappingMips = ANKI_OVERLAPPING(m_baseMipmap, m_mipmapCount);
-	const Bool overlappingLayers = ANKI_OVERLAPPING(m_baseLayer, m_layerCount);
+	const Bool overlappingFaces = ANKI_OVERLAPPING(m_firstFace, m_faceCount);
+	const Bool overlappingMips = ANKI_OVERLAPPING(m_firstMipmap, m_mipmapCount);
+	const Bool overlappingLayers = ANKI_OVERLAPPING(m_firstLayer, m_layerCount);
 #undef ANKI_OVERLAPPING
 
 	return overlappingFaces && overlappingLayers && overlappingMips;
@@ -716,11 +716,11 @@ void RenderGraph::initBatches()
 template<typename TFunc>
 void RenderGraph::iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubresourceInfo& subresource, TFunc func)
 {
-	for(U mip = subresource.m_baseMipmap; mip < subresource.m_baseMipmap + subresource.m_mipmapCount; ++mip)
+	for(U mip = subresource.m_firstMipmap; mip < subresource.m_firstMipmap + subresource.m_mipmapCount; ++mip)
 	{
-		for(U layer = subresource.m_baseLayer; layer < subresource.m_baseLayer + subresource.m_layerCount; ++layer)
+		for(U layer = subresource.m_firstLayer; layer < subresource.m_firstLayer + subresource.m_layerCount; ++layer)
 		{
-			for(U face = subresource.m_baseFace; face < subresource.m_baseFace + subresource.m_faceCount; ++face)
+			for(U face = subresource.m_firstFace; face < subresource.m_firstFace + subresource.m_faceCount; ++face)
 			{
 				// Compute surf or vol idx
 				const U faceCount = textureTypeIsCube(tex->getTextureType()) ? 6 : 1;

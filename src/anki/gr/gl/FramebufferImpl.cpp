@@ -54,13 +54,13 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		if(m_fbSize[0] == 0)
 		{
-			m_fbSize[0] = viewImpl.m_tex->getWidth() >> viewImpl.getBaseMipmap();
-			m_fbSize[1] = viewImpl.m_tex->getHeight() >> viewImpl.getBaseMipmap();
+			m_fbSize[0] = viewImpl.m_tex->getWidth() >> viewImpl.getSubresource().m_firstMipmap;
+			m_fbSize[1] = viewImpl.m_tex->getHeight() >> viewImpl.getSubresource().m_firstMipmap;
 		}
 		else
 		{
-			ANKI_ASSERT(m_fbSize[0] == (viewImpl.m_tex->getWidth() >> viewImpl.getBaseMipmap()));
-			ANKI_ASSERT(m_fbSize[1] == (viewImpl.m_tex->getHeight() >> viewImpl.getBaseMipmap()));
+			ANKI_ASSERT(m_fbSize[0] == (viewImpl.m_tex->getWidth() >> viewImpl.getSubresource().m_firstMipmap));
+			ANKI_ASSERT(m_fbSize[1] == (viewImpl.m_tex->getHeight() >> viewImpl.getSubresource().m_firstMipmap));
 		}
 	}
 
@@ -72,17 +72,17 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForFramebufferAttachment(viewImpl.getSubresource()));
 
 		GLenum binding;
-		if(viewImpl.getDepthStencilAspect() == DepthStencilAspectBit::DEPTH)
+		if(viewImpl.getSubresource().m_depthStencilAspect == DepthStencilAspectBit::DEPTH)
 		{
 			binding = GL_DEPTH_ATTACHMENT;
 		}
-		else if(viewImpl.getDepthStencilAspect() == DepthStencilAspectBit::STENCIL)
+		else if(viewImpl.getSubresource().m_depthStencilAspect == DepthStencilAspectBit::STENCIL)
 		{
 			binding = GL_STENCIL_ATTACHMENT;
 		}
 		else
 		{
-			ANKI_ASSERT(viewImpl.getDepthStencilAspect() == DepthStencilAspectBit::DEPTH_STENCIL);
+			ANKI_ASSERT(viewImpl.getSubresource().m_depthStencilAspect == DepthStencilAspectBit::DEPTH_STENCIL);
 			binding = GL_DEPTH_STENCIL_ATTACHMENT;
 		}
 
@@ -95,20 +95,20 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		if(m_fbSize[0] == 0)
 		{
-			m_fbSize[0] = viewImpl.m_tex->getWidth() >> viewImpl.getBaseMipmap();
-			m_fbSize[1] = viewImpl.m_tex->getHeight() >> viewImpl.getBaseMipmap();
+			m_fbSize[0] = viewImpl.m_tex->getWidth() >> viewImpl.getSubresource().m_firstMipmap;
+			m_fbSize[1] = viewImpl.m_tex->getHeight() >> viewImpl.getSubresource().m_firstMipmap;
 		}
 		else
 		{
-			ANKI_ASSERT(m_fbSize[0] == (viewImpl.m_tex->getWidth() >> viewImpl.getBaseMipmap()));
-			ANKI_ASSERT(m_fbSize[1] == (viewImpl.m_tex->getHeight() >> viewImpl.getBaseMipmap()));
+			ANKI_ASSERT(m_fbSize[0] == (viewImpl.m_tex->getWidth() >> viewImpl.getSubresource().m_firstMipmap));
+			ANKI_ASSERT(m_fbSize[1] == (viewImpl.m_tex->getHeight() >> viewImpl.getSubresource().m_firstMipmap));
 		}
 
 		// Misc
-		m_clearDepth = !!(viewImpl.getDepthStencilAspect() & DepthStencilAspectBit::DEPTH)
+		m_clearDepth = !!(viewImpl.getSubresource().m_depthStencilAspect & DepthStencilAspectBit::DEPTH)
 			&& att.m_loadOperation == AttachmentLoadOperation::CLEAR;
 
-		m_clearStencil = !!(viewImpl.getDepthStencilAspect() & DepthStencilAspectBit::STENCIL)
+		m_clearStencil = !!(viewImpl.getSubresource().m_depthStencilAspect & DepthStencilAspectBit::STENCIL)
 			&& att.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR;
 	}
 
@@ -136,24 +136,31 @@ void FramebufferImpl::attachTextureInternal(
 #if ANKI_GL == ANKI_GL_DESKTOP
 	case GL_TEXTURE_2D_MULTISAMPLE:
 #endif
-		glFramebufferTexture2D(target, attachment, tex.m_target, tex.getGlName(), view.getBaseMipmap());
+		glFramebufferTexture2D(target, attachment, tex.m_target, tex.getGlName(), view.getSubresource().m_firstMipmap);
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 		glFramebufferTexture2D(target,
 			attachment,
-			GL_TEXTURE_CUBE_MAP_POSITIVE_X + view.getBaseFace(),
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X + view.getSubresource().m_firstFace,
 			tex.getGlName(),
-			view.getBaseMipmap());
+			view.getSubresource().m_firstMipmap);
 		break;
 	case GL_TEXTURE_2D_ARRAY:
-		glFramebufferTextureLayer(target, attachment, tex.getGlName(), view.getBaseMipmap(), view.getBaseLayer());
+		glFramebufferTextureLayer(target,
+			attachment,
+			tex.getGlName(),
+			view.getSubresource().m_firstMipmap,
+			view.getSubresource().m_firstLayer);
 		break;
 	case GL_TEXTURE_3D:
 		ANKI_ASSERT(!"TODO");
 		break;
 	case GL_TEXTURE_CUBE_MAP_ARRAY:
-		glFramebufferTextureLayer(
-			target, attachment, tex.getGlName(), view.getBaseMipmap(), view.getBaseLayer() * 6 + view.getBaseFace());
+		glFramebufferTextureLayer(target,
+			attachment,
+			tex.getGlName(),
+			view.getSubresource().m_firstMipmap,
+			view.getSubresource().m_firstLayer * 6 + view.getSubresource().m_firstFace);
 		break;
 	default:
 		ANKI_ASSERT(0);

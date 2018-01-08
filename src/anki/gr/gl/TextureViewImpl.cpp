@@ -13,13 +13,7 @@ void TextureViewImpl::preInit(const TextureViewInitInfo& inf)
 	ANKI_ASSERT(inf.isValid());
 
 	// Store some stuff
-	m_aspect = inf.m_depthStencilAspect;
-	m_baseMip = inf.m_baseMipmap;
-	m_mipCount = inf.m_mipmapCount;
-	m_baseLayer = inf.m_baseLayer;
-	m_layerCount = inf.m_layerCount;
-	m_baseFace = inf.m_baseFace;
-	m_faceCount = inf.m_faceCount;
+	m_subresource = inf;
 
 	m_tex = inf.m_texture;
 	const TextureImpl& tex = static_cast<const TextureImpl&>(*m_tex);

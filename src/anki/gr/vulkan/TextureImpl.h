@@ -101,11 +101,11 @@ public:
 		ANKI_ASSERT(isSubresourceValid(in));
 
 		range.aspectMask = convertImageAspect(in.m_depthStencilAspect);
-		range.baseMipLevel = in.m_baseMipmap;
+		range.baseMipLevel = in.m_firstMipmap;
 		range.levelCount = in.m_mipmapCount;
 
 		const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
-		range.baseArrayLayer = in.m_baseLayer * faceCount + in.m_baseFace;
+		range.baseArrayLayer = in.m_firstLayer * faceCount + in.m_firstFace;
 		range.layerCount = in.m_layerCount * in.m_faceCount;
 	}
 

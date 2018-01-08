@@ -47,7 +47,7 @@ anki_internal:
 		}
 
 		ANKI_ASSERT(0);
-		return *static_cast<const nk_user_font*>(nullptr);
+		return m_fonts[0].m_font->handle;
 	}
 
 private:

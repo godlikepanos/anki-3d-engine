@@ -214,7 +214,7 @@ void TextureImpl::copyFromBuffer(
 	ANKI_ASSERT(isSubresourceGoodForCopyFromBuffer(subresource));
 	ANKI_ASSERT(dataSize > 0);
 
-	const U mipmap = subresource.m_baseMipmap;
+	const U mipmap = subresource.m_firstMipmap;
 	const U w = m_width >> mipmap;
 	const U h = m_height >> mipmap;
 	const U d = m_depth >> mipmap;
@@ -239,7 +239,7 @@ void TextureImpl::copyFromBuffer(
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 	{
-		const U surfIdx = computeSurfaceIdx(TextureSurfaceInfo(mipmap, 0, subresource.m_baseFace, 0));
+		const U surfIdx = computeSurfaceIdx(TextureSurfaceInfo(mipmap, 0, subresource.m_firstFace, 0));
 		if(!m_compressed)
 		{
 			glTexSubImage2D(
@@ -254,7 +254,7 @@ void TextureImpl::copyFromBuffer(
 	}
 	case GL_TEXTURE_2D_ARRAY:
 	{
-		const U surfIdx = computeSurfaceIdx(TextureSurfaceInfo(mipmap, 0, 0, subresource.m_baseLayer));
+		const U surfIdx = computeSurfaceIdx(TextureSurfaceInfo(mipmap, 0, 0, subresource.m_firstLayer));
 		if(!m_compressed)
 		{
 			glTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_glFormat, m_glType, ptrOffset);
@@ -329,11 +329,12 @@ void TextureImpl::clear(const TextureSubresourceInfo& subresource, const ClearVa
 		format = m_glFormat;
 	}
 
-	for(U mip = subresource.m_baseMipmap; mip < subresource.m_baseMipmap + subresource.m_mipmapCount; ++mip)
+	for(U mip = subresource.m_firstMipmap; mip < subresource.m_firstMipmap + subresource.m_mipmapCount; ++mip)
 	{
-		for(U face = subresource.m_baseFace; face < subresource.m_baseFace + subresource.m_faceCount; ++face)
+		for(U face = subresource.m_firstFace; face < subresource.m_firstFace + subresource.m_faceCount; ++face)
 		{
-			for(U layer = subresource.m_baseLayer; layer < subresource.m_baseLayer + subresource.m_layerCount; ++layer)
+			for(U layer = subresource.m_firstLayer; layer < subresource.m_firstLayer + subresource.m_layerCount;
+				++layer)
 			{
 				const U surfaceIdx = computeSurfaceIdx(TextureSurfaceInfo(mip, 0, face, layer));
 				const U width = m_width >> mip;
@@ -388,11 +389,11 @@ MicroTextureView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subr
 		}
 
 		const U firstSurf = computeSurfaceIdx(
-			TextureSurfaceInfo(subresource.m_baseMipmap, 0, subresource.m_baseFace, subresource.m_baseLayer));
-		const U lastSurf = computeSurfaceIdx(TextureSurfaceInfo(subresource.m_baseMipmap,
+			TextureSurfaceInfo(subresource.m_firstMipmap, 0, subresource.m_firstFace, subresource.m_firstLayer));
+		const U lastSurf = computeSurfaceIdx(TextureSurfaceInfo(subresource.m_firstMipmap,
 			0,
-			subresource.m_baseFace + subresource.m_faceCount - 1,
-			subresource.m_baseLayer + subresource.m_layerCount - 1));
+			subresource.m_firstFace + subresource.m_faceCount - 1,
+			subresource.m_firstLayer + subresource.m_layerCount - 1));
 		ANKI_ASSERT(firstSurf <= lastSurf);
 
 		MicroTextureView view;
@@ -403,7 +404,7 @@ MicroTextureView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subr
 			glTarget,
 			m_glName,
 			m_internalFormat,
-			subresource.m_baseMipmap,
+			subresource.m_firstMipmap,
 			subresource.m_mipmapCount,
 			firstSurf,
 			lastSurf - firstSurf + 1);

@@ -33,9 +33,9 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 	const Bool wholeTexture = subresource.m_mipmapCount == MAX_U32;
 	if(wholeTexture)
 	{
-		ANKI_ASSERT(subresource.m_baseFace == 0);
-		ANKI_ASSERT(subresource.m_baseMipmap == 0);
-		ANKI_ASSERT(subresource.m_baseLayer == 0);
+		ANKI_ASSERT(subresource.m_firstFace == 0);
+		ANKI_ASSERT(subresource.m_firstMipmap == 0);
+		ANKI_ASSERT(subresource.m_firstLayer == 0);
 
 		const RenderGraphDescription::RT& rt = m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx];
 		if(rt.m_importedTex)

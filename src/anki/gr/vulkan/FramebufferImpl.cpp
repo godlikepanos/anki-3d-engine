@@ -49,7 +49,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 	if(!m_defaultFb && init.m_depthStencilAttachment.m_textureView)
 	{
-		m_aspect = init.m_depthStencilAttachment.m_textureView->getDepthStencilAspect();
+		m_aspect = init.m_depthStencilAttachment.m_textureView->getSubresource().m_depthStencilAspect;
 	}
 
 	initClearValues(init);
@@ -125,15 +125,15 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	{
 		const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*att.m_textureView);
-		ANKI_ASSERT(view.isSingleSurface());
 		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+		ANKI_ASSERT(tex.isSubresourceGoodForFramebufferAttachment(view.getSubresource()));
 
 		imgViews[count++] = view.m_handle;
 
 		if(m_noDflt.m_width == 0)
 		{
-			m_noDflt.m_width = tex.getWidth() >> view.getBaseMipmap();
-			m_noDflt.m_height = tex.getHeight() >> view.getBaseMipmap();
+			m_noDflt.m_width = tex.getWidth() >> view.getSubresource().m_firstMipmap;
+			m_noDflt.m_height = tex.getHeight() >> view.getSubresource().m_firstMipmap;
 		}
 
 		m_noDflt.m_refs[i] = att.m_textureView;
@@ -143,15 +143,15 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	{
 		const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*att.m_textureView);
-		ANKI_ASSERT(view.isSingleSurface());
 		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+		ANKI_ASSERT(tex.isSubresourceGoodForFramebufferAttachment(view.getSubresource()));
 
 		imgViews[count++] = view.m_handle;
 
 		if(m_noDflt.m_width == 0)
 		{
-			m_noDflt.m_width = tex.getWidth() >> view.getBaseMipmap();
-			m_noDflt.m_height = tex.getHeight() >> view.getBaseMipmap();
+			m_noDflt.m_width = tex.getWidth() >> view.getSubresource().m_firstMipmap;
+			m_noDflt.m_height = tex.getHeight() >> view.getSubresource().m_firstMipmap;
 		}
 
 		m_noDflt.m_refs[MAX_COLOR_ATTACHMENTS] = att.m_textureView;

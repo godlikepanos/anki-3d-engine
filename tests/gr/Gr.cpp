@@ -1323,7 +1323,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 	TexturePtr tex = gr->newTexture(init);
 
 	TextureViewInitInfo viewInit(tex);
-	viewInit.m_baseMipmap = 1;
+	viewInit.m_firstMipmap = 1;
 	viewInit.m_mipmapCount = 1;
 	TextureViewPtr view = gr->newTextureView(viewInit);
 

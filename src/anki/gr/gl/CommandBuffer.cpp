@@ -753,7 +753,7 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 
 			glBindImageTexture(m_unit,
 				view.m_view.m_glName,
-				m_img->getBaseMipmap(),
+				m_img->getSubresource().m_firstMipmap,
 				GL_TRUE,
 				0,
 				GL_READ_WRITE,

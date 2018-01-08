@@ -160,7 +160,7 @@ inline void CommandBufferImpl::setTextureBarrier(
 	{
 		ANKI_ASSERT(impl.isSubresourceGoodForMipmapGeneration(subresource));
 
-		subresource.m_baseMipmap = 0;
+		subresource.m_firstMipmap = 0;
 		subresource.m_mipmapCount = 1;
 	}
 
@@ -409,7 +409,7 @@ inline void CommandBufferImpl::clearTextureView(TextureViewPtr texView, const Cl
 	static_assert(sizeof(vclear) == sizeof(clearValue), "See file");
 	memcpy(&vclear, &clearValue, sizeof(clearValue));
 
-	if(!view.getDepthStencilAspect())
+	if(!view.getSubresource().m_depthStencilAspect)
 	{
 		VkImageSubresourceRange vkRange = view.getVkImageSubresourceRange();
 		ANKI_CMD(vkCmdClearColorImage(

@@ -24,11 +24,11 @@ public:
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
-		m_baseMipmap = 0;
+		m_firstMipmap = 0;
 		m_mipmapCount = tex->getMipmapCount();
-		m_baseLayer = 0;
+		m_firstLayer = 0;
 		m_layerCount = tex->getLayerCount();
-		m_baseFace = 0;
+		m_firstFace = 0;
 		m_faceCount =
 			(tex->getTextureType() == TextureType::CUBE_ARRAY || tex->getTextureType() == TextureType::CUBE) ? 6 : 1;
 
@@ -51,11 +51,11 @@ public:
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{
-		m_baseMipmap = surf.m_level;
+		m_firstMipmap = surf.m_level;
 		m_mipmapCount = 1;
-		m_baseLayer = surf.m_layer;
+		m_firstLayer = surf.m_layer;
 		m_layerCount = 1;
-		m_baseFace = surf.m_face;
+		m_firstFace = surf.m_face;
 		m_faceCount = 1;
 		m_depthStencilAspect = aspect;
 		ANKI_ASSERT(isValid());
@@ -89,79 +89,30 @@ public:
 		return m_texType;
 	}
 
-	DepthStencilAspectBit getDepthStencilAspect() const
+	const TextureSubresourceInfo& getSubresource() const
 	{
 		ANKI_ASSERT(initialized());
-		return m_aspect;
-	}
-
-	Bool isSingleSurface() const
-	{
-		ANKI_ASSERT(initialized());
-		ANKI_ASSERT(m_texType != TextureType::_3D);
-		return m_mipCount == 1 && m_layerCount == 1 && m_faceCount == 1;
-	}
-
-	Bool isSingleVolume() const
-	{
-		ANKI_ASSERT(initialized());
-		ANKI_ASSERT(m_texType == TextureType::_3D);
-		return m_mipCount == 1;
-	}
-
-	U32 getBaseMipmap() const
-	{
-		ANKI_ASSERT(initialized());
-		return m_baseMip;
-	}
-
-	U32 getMipmapCount() const
-	{
-		ANKI_ASSERT(initialized());
-		return m_mipCount;
-	}
-
-	U32 getBaseLayer() const
-	{
-		ANKI_ASSERT(initialized());
-		return m_baseLayer;
-	}
-
-	U32 getLayerCount() const
-	{
-		ANKI_ASSERT(initialized());
-		return m_layerCount;
-	}
-
-	U32 getBaseFace() const
-	{
-		ANKI_ASSERT(initialized());
-		return m_baseFace;
-	}
-
-	U32 getFaceCount() const
-	{
-		ANKI_ASSERT(initialized());
-		return m_faceCount;
+		return m_subresource;
 	}
 
 protected:
 	TextureType m_texType = TextureType::COUNT;
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
-
-	U32 m_baseMip = MAX_U32;
-	U32 m_mipCount = MAX_U32;
-
-	U32 m_baseLayer = MAX_U32;
-	U32 m_layerCount = MAX_U32;
-
-	U8 m_baseFace = MAX_U8;
-	U8 m_faceCount = MAX_U8;
+	TextureSubresourceInfo m_subresource;
 
 	/// Construct.
 	TextureView(GrManager* manager)
 		: GrObject(manager, CLASS_TYPE)
 	{
+		m_subresource.m_depthStencilAspect = DepthStencilAspectBit::NONE;
+
+		m_subresource.m_firstMipmap = MAX_U32;
+		m_subresource.m_mipmapCount = MAX_U32;
+
+		m_subresource.m_firstLayer = MAX_U32;
+		m_subresource.m_layerCount = MAX_U32;
+
+		m_subresource.m_firstFace = MAX_U8;
+		m_subresource.m_faceCount = MAX_U8;
 	}
 
 	/// Destroy.
@@ -171,8 +122,10 @@ protected:
 
 	Bool initialized() const
 	{
-		return m_texType != TextureType::COUNT && m_baseMip < MAX_U32 && m_mipCount < MAX_U32 && m_baseLayer < MAX_U32
-			&& m_layerCount < MAX_U32 && m_baseFace < MAX_U8 && m_faceCount < MAX_U8;
+		return m_texType != TextureType::COUNT && m_subresource.m_firstMipmap < MAX_U32
+			&& m_subresource.m_mipmapCount < MAX_U32 && m_subresource.m_firstLayer < MAX_U32
+			&& m_subresource.m_layerCount < MAX_U32 && m_subresource.m_firstFace < MAX_U8
+			&& m_subresource.m_faceCount < MAX_U8;
 	}
 
 private:

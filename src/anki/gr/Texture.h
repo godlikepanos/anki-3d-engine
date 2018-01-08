@@ -168,16 +168,16 @@ public:
 
 		// Mips
 		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_mipmapCount > 0);
-		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_baseMipmap + subresource.m_mipmapCount <= m_mipCount);
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_firstMipmap + subresource.m_mipmapCount <= m_mipCount);
 
 		// Layers
 		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_layerCount > 0);
-		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_baseLayer + subresource.m_layerCount <= m_layerCount);
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_firstLayer + subresource.m_layerCount <= m_layerCount);
 
 		// Faces
 		const U8 faceCount = (cube) ? 6 : 1;
 		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_faceCount == 1 || subresource.m_faceCount == 6);
-		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_baseFace + subresource.m_faceCount <= faceCount);
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_firstFace + subresource.m_faceCount <= faceCount);
 
 		// Aspect
 		ANKI_TEX_SUBRESOURCE_ASSERT((m_aspect & subresource.m_depthStencilAspect) == subresource.m_depthStencilAspect);
@@ -199,7 +199,7 @@ public:
 		ANKI_ASSERT(isSubresourceValid(subresource));
 		if(m_texType != TextureType::_3D)
 		{
-			return subresource.m_baseMipmap == 0 && subresource.m_mipmapCount == m_mipCount
+			return subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == m_mipCount
 				&& subresource.m_faceCount == 1 && subresource.m_layerCount == 1
 				&& subresource.m_depthStencilAspect == m_aspect;
 		}

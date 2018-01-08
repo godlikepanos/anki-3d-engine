@@ -39,19 +39,6 @@ public:
 		m_view = static_cast<const TextureImpl&>(*m_tex).getOrCreateView(getSubresource());
 		m_glName = m_view.m_glName;
 	}
-
-	TextureSubresourceInfo getSubresource() const
-	{
-		TextureSubresourceInfo out;
-		out.m_baseMipmap = m_baseMip;
-		out.m_mipmapCount = m_mipCount;
-		out.m_baseLayer = m_baseLayer;
-		out.m_layerCount = m_layerCount;
-		out.m_baseFace = m_baseFace;
-		out.m_faceCount = m_faceCount;
-		out.m_depthStencilAspect = m_aspect;
-		return out;
-	}
 };
 /// @}
 

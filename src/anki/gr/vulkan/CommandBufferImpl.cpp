@@ -304,9 +304,9 @@ void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 	ANKI_ASSERT(tex.getTextureType() != TextureType::_3D && "Not for 3D");
 	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.getSubresource()));
 
-	const DepthStencilAspectBit aspect = view.getDepthStencilAspect();
-	const U face = view.getBaseFace();
-	const U layer = view.getBaseLayer();
+	const DepthStencilAspectBit aspect = view.getSubresource().m_depthStencilAspect;
+	const U face = view.getSubresource().m_firstFace;
+	const U layer = view.getSubresource().m_firstLayer;
 
 	for(U i = 0; i < tex.getMipmapCount() - 1u; ++i)
 	{
@@ -669,10 +669,11 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 	ANKI_ASSERT(tex.isSubresourceGoodForCopyFromBuffer(view.getSubresource()));
 	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	const Bool is3D = tex.getTextureType() == TextureType::_3D;
-	const VkImageAspectFlags aspect = convertImageAspect(view.getDepthStencilAspect());
+	const VkImageAspectFlags aspect = convertImageAspect(view.getSubresource().m_depthStencilAspect);
 
-	const TextureSurfaceInfo surf(view.getBaseMipmap(), view.getBaseFace(), 0, view.getBaseLayer());
-	const TextureVolumeInfo vol(view.getBaseMipmap());
+	const TextureSurfaceInfo surf(
+		view.getSubresource().m_firstMipmap, view.getSubresource().m_firstFace, 0, view.getSubresource().m_firstLayer);
+	const TextureVolumeInfo vol(view.getSubresource().m_firstMipmap);
 
 	// Compute the sizes of the mip
 	const U width = tex.getWidth() >> surf.m_level;

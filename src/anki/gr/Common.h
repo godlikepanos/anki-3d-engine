@@ -200,13 +200,13 @@ public:
 class TextureSubresourceInfo
 {
 public:
-	U32 m_baseMipmap = 0;
+	U32 m_firstMipmap = 0;
 	U32 m_mipmapCount = 1;
 
-	U32 m_baseLayer = 0;
+	U32 m_firstLayer = 0;
 	U32 m_layerCount = 1;
 
-	U8 m_baseFace = 0;
+	U8 m_firstFace = 0;
 	U8 m_faceCount = 1;
 
 	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::NONE;
@@ -221,22 +221,22 @@ public:
 	TextureSubresourceInfo(const TextureSubresourceInfo&) = default;
 
 	TextureSubresourceInfo(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
-		: m_baseMipmap(surf.m_level)
+		: m_firstMipmap(surf.m_level)
 		, m_mipmapCount(1)
-		, m_baseLayer(surf.m_layer)
+		, m_firstLayer(surf.m_layer)
 		, m_layerCount(1)
-		, m_baseFace(surf.m_face)
+		, m_firstFace(surf.m_face)
 		, m_faceCount(1)
 		, m_depthStencilAspect(aspect)
 	{
 	}
 
 	TextureSubresourceInfo(const TextureVolumeInfo& vol, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
-		: m_baseMipmap(vol.m_level)
+		: m_firstMipmap(vol.m_level)
 		, m_mipmapCount(1)
-		, m_baseLayer(0)
+		, m_firstLayer(0)
 		, m_layerCount(1)
-		, m_baseFace(0)
+		, m_firstFace(0)
 		, m_faceCount(1)
 		, m_depthStencilAspect(aspect)
 	{
