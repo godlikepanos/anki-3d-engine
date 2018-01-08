@@ -56,6 +56,7 @@ ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgra
 	};
 
 	ShaderProgramImpl* impl = manager->getAllocator().newInstance<ShaderProgramImpl>(manager);
+	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
 	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CreateCommand>(impl,

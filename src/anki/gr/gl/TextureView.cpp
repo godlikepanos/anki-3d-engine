@@ -38,6 +38,7 @@ TextureView* TextureView::newInstance(GrManager* manager, const TextureViewInitI
 	};
 
 	TextureViewImpl* impl = manager->getAllocator().newInstance<TextureViewImpl>(manager);
+	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	// Need to pre-init because some funcs ask for members and we don't want to serialize
 	impl->preInit(init);

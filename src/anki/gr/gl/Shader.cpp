@@ -46,6 +46,7 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 	ANKI_ASSERT(!init.m_source.isEmpty() && init.m_source.getLength() > 0);
 
 	ShaderImpl* impl = manager->getAllocator().newInstance<ShaderImpl>(manager);
+	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	// Copy source to the command buffer
 	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());

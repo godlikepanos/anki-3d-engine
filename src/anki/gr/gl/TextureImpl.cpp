@@ -393,7 +393,7 @@ MicroTextureView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subr
 			0,
 			subresource.m_baseFace + subresource.m_faceCount - 1,
 			subresource.m_baseLayer + subresource.m_layerCount - 1));
-		ANKI_ASSERT(firstSurf < lastSurf);
+		ANKI_ASSERT(firstSurf <= lastSurf);
 
 		MicroTextureView view;
 		view.m_aspect = subresource.m_depthStencilAspect;

@@ -142,18 +142,18 @@ void FramebufferImpl::attachTextureInternal(
 		glFramebufferTexture2D(target,
 			attachment,
 			GL_TEXTURE_CUBE_MAP_POSITIVE_X + view.getBaseFace(),
-			view.getGlName(),
+			tex.getGlName(),
 			view.getBaseMipmap());
 		break;
 	case GL_TEXTURE_2D_ARRAY:
-		glFramebufferTextureLayer(target, attachment, view.getGlName(), view.getBaseMipmap(), view.getBaseLayer());
+		glFramebufferTextureLayer(target, attachment, tex.getGlName(), view.getBaseMipmap(), view.getBaseLayer());
 		break;
 	case GL_TEXTURE_3D:
 		ANKI_ASSERT(!"TODO");
 		break;
 	case GL_TEXTURE_CUBE_MAP_ARRAY:
 		glFramebufferTextureLayer(
-			target, attachment, view.getGlName(), view.getBaseMipmap(), view.getBaseLayer() * 6 + view.getBaseFace());
+			target, attachment, tex.getGlName(), view.getBaseMipmap(), view.getBaseLayer() * 6 + view.getBaseFace());
 		break;
 	default:
 		ANKI_ASSERT(0);

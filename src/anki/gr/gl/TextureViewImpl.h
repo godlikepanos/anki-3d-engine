@@ -29,6 +29,7 @@ public:
 
 	~TextureViewImpl()
 	{
+		m_glName = 0;
 	}
 
 	void preInit(const TextureViewInitInfo& inf);
@@ -36,6 +37,7 @@ public:
 	void init()
 	{
 		m_view = static_cast<const TextureImpl&>(*m_tex).getOrCreateView(getSubresource());
+		m_glName = m_view.m_glName;
 	}
 
 	TextureSubresourceInfo getSubresource() const
