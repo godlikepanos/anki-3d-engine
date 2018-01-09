@@ -161,7 +161,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// mipmapsCount
-	init.m_mipmapsCount = loader.getMipLevelsCount();
+	init.m_mipmapCount = loader.getMipLevelsCount();
 
 	// Create the texture
 	m_tex = getManager().getGrManager().newTexture(init);

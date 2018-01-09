@@ -76,7 +76,7 @@ void GrManager::swapBuffers()
 
 void GrManager::finish()
 {
-	// TODO
+	ANKI_ASSERT(!"TODO");
 }
 
 BufferPtr GrManager::newBuffer(const BufferInitInfo& init)

@@ -34,7 +34,7 @@ ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgra
 			ShaderPtr comp)
 			: m_prog(prog)
 			, m_vert(vert)
-			, m_tessc(tesse)
+			, m_tessc(tessc)
 			, m_tesse(tesse)
 			, m_geom(geom)
 			, m_frag(frag)
@@ -54,6 +54,8 @@ ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgra
 			}
 		}
 	};
+
+	ANKI_ASSERT(init.isValid());
 
 	ShaderProgramImpl* impl = manager->getAllocator().newInstance<ShaderProgramImpl>(manager);
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly

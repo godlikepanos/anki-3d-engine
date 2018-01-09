@@ -26,7 +26,7 @@ public:
 	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< Its initial usage.
 	TextureType m_type = TextureType::_2D;
 
-	U8 m_mipmapsCount = 1;
+	U8 m_mipmapCount = 1;
 
 	PixelFormat m_format;
 	U8 m_samples = 1;
@@ -63,7 +63,7 @@ public:
 	} while(0)
 
 		ANKI_CHECK_VAL_VALIDITY(m_usage != TextureUsageBit::NONE);
-		ANKI_CHECK_VAL_VALIDITY(m_mipmapsCount > 0);
+		ANKI_CHECK_VAL_VALIDITY(m_mipmapCount > 0);
 		ANKI_CHECK_VAL_VALIDITY(m_width > 0);
 		ANKI_CHECK_VAL_VALIDITY(m_height > 0);
 		switch(m_type)

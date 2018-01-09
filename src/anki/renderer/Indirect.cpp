@@ -200,7 +200,7 @@ Error Indirect::initLightShading(const ConfigSet& config)
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 				| TextureUsageBit::GENERATE_MIPMAPS,
 			"GI refl");
-		texinit.m_mipmapsCount = m_lightShading.m_mipCount;
+		texinit.m_mipmapCount = m_lightShading.m_mipCount;
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;

@@ -311,7 +311,7 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 	init.m_layerCount = 1;
 	init.m_type = TextureType::_2D;
 	init.m_format = format;
-	init.m_mipmapsCount = 1;
+	init.m_mipmapCount = 1;
 	init.m_samples = 1;
 	init.m_usage = usage;
 
@@ -330,7 +330,7 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(
 	init.m_layerCount = 1;
 	init.m_type = TextureType::_2D;
 	init.m_format = format;
-	init.m_mipmapsCount = 1;
+	init.m_mipmapCount = 1;
 	init.m_samples = 1;
 	init.m_usage = usage;
 
@@ -349,13 +349,13 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
-	if((inf.m_mipmapsCount * faceCount * inf.m_layerCount * 4) < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
+	if((inf.m_mipmapCount * faceCount * inf.m_layerCount * 4) < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
 	{
 		cmdbinit.m_flags |= CommandBufferFlag::SMALL_BATCH;
 	}
 	CommandBufferPtr cmdb = m_gr->newCommandBuffer(cmdbinit);
 
-	for(U mip = 0; mip < inf.m_mipmapsCount; ++mip)
+	for(U mip = 0; mip < inf.m_mipmapCount; ++mip)
 	{
 		for(U face = 0; face < faceCount; ++face)
 		{

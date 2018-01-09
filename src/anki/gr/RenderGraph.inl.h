@@ -47,7 +47,7 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 		else
 		{
 			subresource.m_faceCount = textureTypeIsCube(rt.m_initInfo.m_type) ? 6 : 1;
-			subresource.m_mipmapCount = rt.m_initInfo.m_mipmapsCount;
+			subresource.m_mipmapCount = rt.m_initInfo.m_mipmapCount;
 			subresource.m_layerCount = rt.m_initInfo.m_layerCount;
 		}
 	}

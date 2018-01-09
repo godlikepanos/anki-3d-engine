@@ -129,11 +129,11 @@ void TextureImpl::preInit(const TextureInitInfo& init)
 
 	if(m_target != GL_TEXTURE_3D)
 	{
-		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
+		m_mipCount = min<U>(init.m_mipmapCount, computeMaxMipmapCount2d(m_width, m_height));
 	}
 	else
 	{
-		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
+		m_mipCount = min<U>(init.m_mipmapCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
 
 	// Surface count

@@ -97,7 +97,15 @@ class Shader : public GrObject
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER;
 
+	ShaderType getShaderType() const
+	{
+		ANKI_ASSERT(m_shaderType != ShaderType::COUNT);
+		return m_shaderType;
+	}
+
 protected:
+	ShaderType m_shaderType = ShaderType::COUNT;
+
 	/// Construct.
 	Shader(GrManager* manager)
 		: GrObject(manager, CLASS_TYPE)

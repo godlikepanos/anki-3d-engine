@@ -63,13 +63,13 @@ Error TextureImpl::init(const TextureInitInfo& init_)
 
 	if(m_texType == TextureType::_3D)
 	{
-		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
+		m_mipCount = min<U>(init.m_mipmapCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
 	else
 	{
-		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
+		m_mipCount = min<U>(init.m_mipmapCount, computeMaxMipmapCount2d(m_width, m_height));
 	}
-	init.m_mipmapsCount = m_mipCount;
+	init.m_mipmapCount = m_mipCount;
 
 	m_layerCount = init.m_layerCount;
 
@@ -127,7 +127,7 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 {
 	VkFormatFeatureFlags flags = 0;
 
-	if(init.m_mipmapsCount > 1 && !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
+	if(init.m_mipmapCount > 1 && !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
 	{
 		// May be used for mip gen.
 		flags |= VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;

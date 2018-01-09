@@ -22,7 +22,6 @@ class ShaderImpl final : public Shader, public VulkanObject<Shader, ShaderImpl>
 {
 public:
 	VkShaderModule m_handle = VK_NULL_HANDLE;
-	ShaderType m_shaderType = ShaderType::COUNT;
 
 	Array<DynamicArray<DescriptorBinding>, MAX_DESCRIPTOR_SETS> m_bindings;
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentWritemask = {false};

@@ -28,6 +28,7 @@ ShaderProgramImpl::~ShaderProgramImpl()
 
 Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 {
+	ANKI_ASSERT(inf.isValid());
 	ShaderTypeBit shaderMask = ShaderTypeBit::NONE;
 	m_shaders = inf.m_shaders;
 
