@@ -1901,6 +1901,7 @@ void main()
 	cmdb->bindShaderProgram(prog);
 	cmdb->bindTextureAndSampler(0, 0, texView, sampler, TextureUsageBit::SAMPLED_COMPUTE);
 	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());
+	cmdb->dispatchCompute(1, 1, 1);
 
 	cmdb->setBufferBarrier(resultBuff,
 		BufferUsageBit::STORAGE_COMPUTE_WRITE,
