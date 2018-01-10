@@ -335,6 +335,12 @@ inline U computeMaxMipmapCount3d(U w, U h, U d)
 
 	return count;
 }
+
+/// Compute the size in bytes of a texture surface surface.
+PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt);
+
+/// Compute the size in bytes of the texture volume.
+PtrSize computeVolumeSize(U width, U height, U depth, const PixelFormat& fmt);
 /// @}
 
 } // end namespace anki

@@ -21,9 +21,7 @@ public:
 	BufferUsageBit m_usage = BufferUsageBit::NONE;
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
 
-	BufferInitInfo() = default;
-
-	BufferInitInfo(CString name)
+	BufferInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
 	{
 	}
@@ -34,6 +32,11 @@ public:
 		, m_usage(usage)
 		, m_access(access)
 	{
+	}
+
+	Bool isValid() const
+	{
+		return m_size && !!m_usage;
 	}
 };
 

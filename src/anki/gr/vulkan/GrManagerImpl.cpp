@@ -763,6 +763,12 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 	}
 }
 
+void GrManagerImpl::finish()
+{
+	LockGuard<Mutex> lock(m_globalMtx);
+	vkQueueWaitIdle(m_queue);
+}
+
 void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const
 {
 	if(name && name.getLength())

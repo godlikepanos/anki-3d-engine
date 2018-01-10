@@ -181,7 +181,6 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	}
 
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	impl.checkSurfaceOrVolume(surf);
 
 	VkImageSubresourceRange range;
 	impl.computeVkImageSubresourceRange(TextureSubresourceInfo(surf, impl.getDepthStencilAspect()), range);
@@ -198,7 +197,6 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	}
 
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	impl.checkSurfaceOrVolume(vol);
 
 	VkImageSubresourceRange range;
 	impl.computeVkImageSubresourceRange(TextureSubresourceInfo(vol, impl.getDepthStencilAspect()), range);
@@ -307,6 +305,7 @@ inline void CommandBufferImpl::drawElementsIndirect(
 inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	ANKI_ASSERT(m_computeProg);
+	ANKI_ASSERT(!!(m_flags & CommandBufferFlag::COMPUTE_WORK));
 	commandCommon();
 
 	// Bind descriptors

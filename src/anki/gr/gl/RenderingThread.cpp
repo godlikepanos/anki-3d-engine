@@ -30,6 +30,9 @@ public:
 
 	ANKI_USE_RESULT Error operator()(GlState&)
 	{
+		// Make sure that all GPU and CPU work is done
+		glFlush();
+		glFinish();
 		m_renderingThread->m_syncBarrier.wait();
 		return Error::NONE;
 	}
@@ -129,13 +132,6 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* fence)
 
 		m_condVar.notifyOne(); // Wake the thread
 	}
-}
-
-void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
-{
-	flushCommandBuffer(commands, nullptr);
-
-	syncClientServer();
 }
 
 void RenderingThread::start()

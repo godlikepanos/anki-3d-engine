@@ -51,18 +51,6 @@ void CommandBuffer::flush(FencePtr* fence)
 	}
 }
 
-void CommandBuffer::finish()
-{
-	ANKI_GL_SELF(CommandBufferImpl);
-
-	if(!self.isSecondLevel())
-	{
-		ANKI_ASSERT(!self.m_state.insideRenderPass());
-	}
-
-	static_cast<GrManagerImpl&>(getManager()).getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
-}
-
 void CommandBuffer::bindVertexBuffer(
 	U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 {
@@ -1395,6 +1383,12 @@ void CommandBuffer::setTextureVolumeBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
 {
 	// Do nothing
+}
+
+void CommandBuffer::setTextureBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource)
+{
+	// Do nothing for GL
 }
 
 void CommandBuffer::clearTextureView(TextureViewPtr texView, const ClearValue& clearValue)

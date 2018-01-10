@@ -13,40 +13,6 @@ namespace anki
 /// Internal function that logs a shader error.
 void logShaderErrorCode(const CString& error, const CString& source, GenericMemoryPoolAllocator<U8> alloc);
 
-inline void checkTextureSurface(TextureType type, U depth, U mipCount, U layerCount, const TextureSurfaceInfo& surf)
-{
-	ANKI_ASSERT(surf.m_level < mipCount);
-	switch(type)
-	{
-	case TextureType::_2D:
-		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face == 0 && surf.m_layer == 0);
-		break;
-	case TextureType::CUBE:
-		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face < 6 && surf.m_layer == 0);
-		break;
-	case TextureType::_3D:
-		ANKI_ASSERT(surf.m_depth < depth && surf.m_face == 0 && surf.m_layer == 0);
-		break;
-	case TextureType::_2D_ARRAY:
-		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face == 0 && surf.m_layer < layerCount);
-		break;
-	case TextureType::CUBE_ARRAY:
-		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face < 6 && surf.m_layer < layerCount);
-		break;
-	default:
-		ANKI_ASSERT(0);
-	};
-}
-
-/// Compute the size of a single surface.
-void getFormatInfo(const PixelFormat& fmt, U& texelComponents, U& texelBytes, U& blockSize, U& blockBytes);
-
-/// Compute the size of the surface.
-PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt);
-
-/// Compute the size of the volume.
-PtrSize computeVolumeSize(U width, U height, U depth, const PixelFormat& fmt);
-
 inline Bool stencilTestDisabled(StencilOperation stencilFail,
 	StencilOperation stencilPassDepthFail,
 	StencilOperation stencilPassDepthPass,

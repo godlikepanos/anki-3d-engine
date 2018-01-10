@@ -140,9 +140,6 @@ public:
 	/// @param[out] fence Optionaly create fence.
 	void flush(FencePtr* fence = nullptr);
 
-	/// Flush and wait to finish.
-	void finish();
-
 	/// @name State manipulation
 	/// @{
 

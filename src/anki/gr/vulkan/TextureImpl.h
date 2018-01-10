@@ -60,19 +60,33 @@ public:
 		return m_aspect == aspect || !!(aspect & m_aspect);
 	}
 
-	void checkSurfaceOrVolume(const TextureSurfaceInfo& surf) const
-	{
-		checkTextureSurface(m_texType, m_depth, m_mipCount, m_layerCount, surf);
-	}
-
-	void checkSurfaceOrVolume(const TextureVolumeInfo& vol) const
-	{
-		ANKI_ASSERT(m_texType == TextureType::_3D);
-		ANKI_ASSERT(vol.m_level < m_mipCount);
-	}
-
 	/// Compute the layer as defined by Vulkan.
-	U computeVkArrayLayer(const TextureSurfaceInfo& surf) const;
+	U computeVkArrayLayer(const TextureSurfaceInfo& surf) const
+	{
+		U layer = 0;
+		switch(m_texType)
+		{
+		case TextureType::_2D:
+			layer = 0;
+			break;
+		case TextureType::_3D:
+			layer = 0;
+			break;
+		case TextureType::CUBE:
+			layer = surf.m_face;
+			break;
+		case TextureType::_2D_ARRAY:
+			layer = surf.m_layer;
+			break;
+		case TextureType::CUBE_ARRAY:
+			layer = surf.m_layer * 6 + surf.m_face;
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+
+		return layer;
+	}
 
 	U computeVkArrayLayer(const TextureVolumeInfo& vol) const
 	{
@@ -144,14 +158,6 @@ private:
 
 	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
 
-	U computeSubresourceIdx(const TextureSurfaceInfo& surf) const;
-
-	U computeSubresourceIdx(const TextureVolumeInfo& vol) const
-	{
-		checkSurfaceOrVolume(vol);
-		return vol.m_level;
-	}
-
 	template<typename TextureInfo>
 	void updateUsageState(
 		const TextureInfo& surfOrVol, TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
@@ -168,5 +174,3 @@ private:
 /// @}
 
 } // end namespace anki
-
-#include <anki/gr/vulkan/TextureImpl.inl.h>

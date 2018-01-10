@@ -253,7 +253,10 @@ Error TextureResource::load(LoadingContext& ctx)
 				surfOrVolSize = vol.m_data.getSize();
 				surfOrVolData = &vol.m_data[0];
 
-				ctx.m_gr->getTextureVolumeUploadInfo(ctx.m_tex, TextureVolumeInfo(mip), allocationSize);
+				allocationSize = computeVolumeSize(ctx.m_tex->getWidth() >> mip,
+					ctx.m_tex->getHeight() >> mip,
+					ctx.m_tex->getDepth() >> mip,
+					ctx.m_tex->getPixelFormat());
 			}
 			else
 			{
@@ -261,8 +264,8 @@ Error TextureResource::load(LoadingContext& ctx)
 				surfOrVolSize = surf.m_data.getSize();
 				surfOrVolData = &surf.m_data[0];
 
-				ctx.m_gr->getTextureSurfaceUploadInfo(
-					ctx.m_tex, TextureSurfaceInfo(mip, 0, face, layer), allocationSize);
+				allocationSize = computeSurfaceSize(
+					ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip, ctx.m_tex->getPixelFormat());
 			}
 
 			ANKI_ASSERT(allocationSize >= surfOrVolSize);

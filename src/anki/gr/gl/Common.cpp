@@ -343,11 +343,26 @@ void convertTextureInformation(const PixelFormat& pf,
 			internalFormat = GL_RGB8;
 			type = GL_UNSIGNED_BYTE;
 		}
-		else
+		else if(pf.m_transform == TransformFormat::SNORM)
 		{
-			ANKI_ASSERT(pf.m_transform == TransformFormat::SNORM);
 			internalFormat = GL_RGB8_SNORM;
 			type = GL_BYTE;
+		}
+		else if(pf.m_transform == TransformFormat::UINT)
+		{
+			internalFormat = GL_RGB8UI;
+			type = GL_UNSIGNED_BYTE;
+			format = GL_RGB_INTEGER;
+		}
+		else if(pf.m_transform == TransformFormat::SINT)
+		{
+			internalFormat = GL_RGB8I;
+			type = GL_BYTE;
+			format = GL_RGB_INTEGER;
+		}
+		else
+		{
+			ANKI_ASSERT(!"TODO");
 		}
 		break;
 	case ComponentFormat::R8G8B8A8:

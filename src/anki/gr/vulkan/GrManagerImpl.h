@@ -58,6 +58,8 @@ public:
 
 	void endFrame();
 
+	void finish();
+
 	VkDevice getDevice() const
 	{
 		ANKI_ASSERT(m_device);
@@ -90,11 +92,6 @@ public:
 	/// @}
 
 	void flushCommandBuffer(CommandBufferPtr ptr, FencePtr* fence, Bool wait = false);
-
-	void finishCommandBuffer(CommandBufferPtr ptr)
-	{
-		flushCommandBuffer(ptr, nullptr, true);
-	}
 
 	/// @name Memory
 	/// @{

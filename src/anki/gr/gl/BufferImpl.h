@@ -28,7 +28,15 @@ public:
 		destroyDeferred(getManager(), glDeleteBuffers);
 	}
 
-	void init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
+	void preInit(const BufferInitInfo& init)
+	{
+		ANKI_ASSERT(init.isValid());
+		m_size = init.m_size;
+		m_usage = init.m_usage;
+		m_access = init.m_access;
+	}
+
+	void init();
 
 	void bind(GLenum target, U32 binding, PtrSize offset, PtrSize range) const
 	{
@@ -60,8 +68,8 @@ public:
 		ANKI_ASSERT(offset < m_size);
 		ANKI_ASSERT((offset % 4) == 0 && "Should be multiple of 4");
 
-		size = (size == MAX_PTR_SIZE) ? (m_size - offset) : size;
-		ANKI_ASSERT(offset + size <= m_size);
+		size = (size == MAX_PTR_SIZE) ? (m_realSize - offset) : size;
+		ANKI_ASSERT(offset + size <= m_realSize);
 		ANKI_ASSERT((size % 4) == 0 && "Should be multiple of 4");
 
 		glClearNamedBufferSubData(m_glName, GL_R32UI, offset, size, GL_RED_INTEGER, GL_UNSIGNED_INT, &value);
@@ -103,6 +111,7 @@ private:
 #if ANKI_EXTRA_CHECKS
 	Bool m_mapped = false;
 #endif
+	PtrSize m_realSize = 0;
 };
 /// @}
 

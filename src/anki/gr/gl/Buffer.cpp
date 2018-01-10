@@ -17,15 +17,9 @@ Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& inf)
 	{
 	public:
 		BufferPtr m_buff;
-		PtrSize m_size;
-		BufferUsageBit m_usage;
-		BufferMapAccessBit m_access;
 
-		BufferCreateCommand(Buffer* buff, PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
+		BufferCreateCommand(Buffer* buff)
 			: m_buff(buff)
-			, m_size(size)
-			, m_usage(usage)
-			, m_access(access)
 		{
 		}
 
@@ -33,7 +27,7 @@ Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& inf)
 		{
 			BufferImpl& impl = static_cast<BufferImpl&>(*m_buff);
 
-			impl.init(m_size, m_usage, m_access);
+			impl.init();
 
 			GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
 			(void)oldState;
@@ -46,9 +40,10 @@ Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& inf)
 	BufferImpl* impl = manager->getAllocator().newInstance<BufferImpl>(manager);
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
+	impl->preInit(inf);
+
 	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
-	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<BufferCreateCommand>(
-		impl, inf.m_size, inf.m_usage, inf.m_access);
+	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<BufferCreateCommand>(impl);
 	static_cast<CommandBufferImpl&>(*cmdb).flush();
 
 	return impl;

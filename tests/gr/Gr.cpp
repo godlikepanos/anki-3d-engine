@@ -1802,7 +1802,7 @@ void main()
 	memoryBarrierShared();
 	barrier();
 	
-	int lod;
+	int lod = -1;
 	uint idx;
 	
 	if(gl_LocalInvocationID.z == 0)
@@ -1810,7 +1810,7 @@ void main()
 		// First mip
 	
 		lod = 0;
-		uint idx = gl_LocalInvocationID.y * 8 + gl_LocalInvocationID.x;
+		idx = gl_LocalInvocationID.y * 8 + gl_LocalInvocationID.x;
 	}
 	else if(gl_LocalInvocationID.x < 4u && gl_LocalInvocationID.y < 4u)
 	{
@@ -1818,10 +1818,13 @@ void main()
 		idx = gl_LocalInvocationID.y * 4 + gl_LocalInvocationID.x;
 	}
 	
-	uvec3 col = texelFetch(u_tex, ivec2(gl_LocalInvocationID.x, gl_LocalInvocationID.x), lod).rgb;
-	if(col.x != idx || col.y != idx + 1 || col.z != idx + 2)
+	if(lod != -1)
 	{
-		atomicAdd(g_wrong, 1);
+		uvec3 col = texelFetch(u_tex, ivec2(gl_LocalInvocationID.x, gl_LocalInvocationID.y), lod).rgb;
+		if(col.x != idx || col.y != idx + 1 || col.z != idx + 2)
+		{
+			atomicAdd(g_wrong, 1);
+		}
 	}
 	
 	memoryBarrierShared();
@@ -1864,6 +1867,7 @@ void main()
 		data[2] = i + 2;
 		data += 3;
 	}
+	uploadBuff->unmap();
 
 	BufferPtr uploadBuff2 = gr->newBuffer(BufferInitInfo(
 		(texInit.m_width >> 1) * (texInit.m_height >> 1) * 3, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::WRITE));
@@ -1875,6 +1879,7 @@ void main()
 		data[2] = i + 2;
 		data += 3;
 	}
+	uploadBuff2->unmap();
 
 	// Create the result buffer
 	BufferPtr resultBuff =
@@ -1882,7 +1887,8 @@ void main()
 
 	// Upload data and test them
 	CommandBufferInitInfo cmdbInit;
-	cmdbInit.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
+	cmdbInit.m_flags =
+		CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbInit);
 
 	TextureSubresourceInfo subresource;
@@ -1909,7 +1915,8 @@ void main()
 		0,
 		resultBuff->getSize());
 
-	cmdb->finish();
+	cmdb->flush();
+	gr->finish();
 
 	// Get the result
 	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::READ));
@@ -1917,6 +1924,7 @@ void main()
 	ANKI_TEST_EXPECT_EQ(result->y(), 2);
 	ANKI_TEST_EXPECT_EQ(result->z(), 2);
 	ANKI_TEST_EXPECT_EQ(result->w(), 2);
+	resultBuff->unmap();
 
 	COMMON_END()
 }

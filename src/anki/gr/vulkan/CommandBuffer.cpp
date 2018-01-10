@@ -37,17 +37,6 @@ void CommandBuffer::flush(FencePtr* fence)
 	}
 }
 
-void CommandBuffer::finish()
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.endRecording();
-
-	if(!self.isSecondLevel())
-	{
-		self.getGrManagerImpl().finishCommandBuffer(CommandBufferPtr(this));
-	}
-}
-
 void CommandBuffer::bindVertexBuffer(
 	U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 {

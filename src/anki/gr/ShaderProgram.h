@@ -50,7 +50,7 @@ public:
 		}
 		else
 		{
-			invalid |= m_shaders[ShaderType::VERTEX] && m_shaders[ShaderType::FRAGMENT];
+			invalid |= !m_shaders[ShaderType::VERTEX] || !m_shaders[ShaderType::FRAGMENT];
 		}
 
 		for(ShaderType type = ShaderType::FIRST; type < ShaderType::COUNT; ++type)
