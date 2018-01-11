@@ -695,7 +695,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 		// Copy
 		VkBufferImageCopy region;
 		region.imageSubresource.aspectMask = aspect;
-		region.imageSubresource.baseArrayLayer = (is3D) ? tex.computeVkArrayLayer(surf) : tex.computeVkArrayLayer(vol);
+		region.imageSubresource.baseArrayLayer = (is3D) ? tex.computeVkArrayLayer(vol) : tex.computeVkArrayLayer(surf);
 		region.imageSubresource.layerCount = 1;
 		region.imageSubresource.mipLevel = surf.m_level;
 		region.imageOffset = {0, 0, 0};

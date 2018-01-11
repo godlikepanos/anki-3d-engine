@@ -69,9 +69,6 @@ public:
 		case TextureType::_2D:
 			layer = 0;
 			break;
-		case TextureType::_3D:
-			layer = 0;
-			break;
 		case TextureType::CUBE:
 			layer = surf.m_face;
 			break;
@@ -90,6 +87,7 @@ public:
 
 	U computeVkArrayLayer(const TextureVolumeInfo& vol) const
 	{
+		ANKI_ASSERT(m_texType == TextureType::_3D);
 		return 0;
 	}
 
