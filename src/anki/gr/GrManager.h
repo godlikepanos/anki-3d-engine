@@ -55,6 +55,7 @@ public:
 	/// @{
 	ANKI_USE_RESULT BufferPtr newBuffer(const BufferInitInfo& init);
 	ANKI_USE_RESULT TexturePtr newTexture(const TextureInitInfo& init);
+	ANKI_USE_RESULT TextureViewPtr newTextureView(const TextureViewInitInfo& init);
 	ANKI_USE_RESULT SamplerPtr newSampler(const SamplerInitInfo& init);
 	ANKI_USE_RESULT ShaderPtr newShader(const ShaderInitInfo& init);
 	ANKI_USE_RESULT ShaderProgramPtr newShaderProgram(const ShaderProgramInitInfo& init);
@@ -63,19 +64,6 @@ public:
 	ANKI_USE_RESULT OcclusionQueryPtr newOcclusionQuery();
 	ANKI_USE_RESULT RenderGraphPtr newRenderGraph();
 	/// @}
-
-	/// Call this before calling allocateFrameTransientMemory or tryAllocateFrameTransientMemory to get the exact memory
-	/// that will be required for the CommandBuffer::uploadTextureSurface.
-	///
-	/// If the expectedTransientAllocationSize is greater than the expected you are required to allocate that amount and
-	/// write your pixels to be uploaded to the first part of the memory as before and leave the rest of the memory for
-	/// internal use.
-	void getTextureSurfaceUploadInfo(
-		TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& expectedTransientAllocationSize);
-
-	/// Same as getTextureSurfaceUploadInfo but for volumes.
-	void getTextureVolumeUploadInfo(
-		TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& expectedTransientAllocationSize);
 
 	/// Get some buffer alignment and size info.
 	void getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const;

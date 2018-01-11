@@ -42,9 +42,14 @@ public:
 	/// Load a texture atlas.
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
-	TexturePtr getGrTexture() const
+	const TexturePtr& getGrTexture() const
 	{
 		return m_tex->getGrTexture();
+	}
+
+	const TextureViewPtr& getGrTextureView() const
+	{
+		return m_tex->getGrTextureView();
 	}
 
 	U getWidth() const

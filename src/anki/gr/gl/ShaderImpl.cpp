@@ -54,7 +54,7 @@ ShaderImpl::~ShaderImpl()
 	destroyDeferred(getManager(), deleteShaders);
 }
 
-Error ShaderImpl::init(ShaderType type, const CString& source)
+Error ShaderImpl::init(const CString& source)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated());
@@ -73,8 +73,7 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 		"ANKI_FRAGMENT_SHADER",
 		"ANKI_COMPUTE_SHADER"}};
 
-	m_type = type;
-	m_glType = gltype[U(type)];
+	m_glType = gltype[U(m_shaderType)];
 
 	// 1) Append some things in the source string
 	//
@@ -98,7 +97,7 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 		version,
 		versionType,
 		&GPU_VENDOR_STR[static_cast<const GrManagerImpl&>(getManager()).getState().m_gpu][0],
-		shaderName[U(type)],
+		shaderName[U(m_shaderType)],
 		MAX_UNIFORM_BUFFER_BINDINGS,
 		MAX_STORAGE_BUFFER_BINDINGS,
 		MAX_TEXTURE_BINDINGS,

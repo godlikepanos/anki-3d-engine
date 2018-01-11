@@ -187,7 +187,7 @@ void RenderComponent::allocateAndSetupUniforms(
 		{
 			ctx.m_commandBuffer->bindTextureAndSampler(set,
 				progVariant.getTextureUnit(progvar),
-				mvar.getValue<TextureResourcePtr>()->getGrTexture(),
+				mvar.getValue<TextureResourcePtr>()->getGrTextureView(),
 				mvar.getValue<TextureResourcePtr>()->getSampler(),
 				TextureUsageBit::SAMPLED_FRAGMENT);
 			break;

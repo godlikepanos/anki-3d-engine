@@ -81,29 +81,40 @@ void GrManager::finish()
 	self.getRenderingThread().syncClientServer();
 }
 
+#define ANKI_SAFE_CONSTRUCT(class_)                \
+	class_* out = class_::newInstance(this, init); \
+	class_##Ptr ptr(out);                          \
+	out->getRefcount().fetchSub(1);                \
+	return ptr
+
 BufferPtr GrManager::newBuffer(const BufferInitInfo& init)
 {
-	return BufferPtr(Buffer::newInstance(this, init));
+	ANKI_SAFE_CONSTRUCT(Buffer);
 }
 
 TexturePtr GrManager::newTexture(const TextureInitInfo& init)
 {
-	return TexturePtr(Texture::newInstance(this, init));
+	ANKI_SAFE_CONSTRUCT(Texture);
+}
+
+TextureViewPtr GrManager::newTextureView(const TextureViewInitInfo& init)
+{
+	ANKI_SAFE_CONSTRUCT(TextureView);
 }
 
 SamplerPtr GrManager::newSampler(const SamplerInitInfo& init)
 {
-	return SamplerPtr(Sampler::newInstance(this, init));
+	ANKI_SAFE_CONSTRUCT(Sampler);
 }
 
 ShaderPtr GrManager::newShader(const ShaderInitInfo& init)
 {
-	return ShaderPtr(Shader::newInstance(this, init));
+	ANKI_SAFE_CONSTRUCT(Shader);
 }
 
 ShaderProgramPtr GrManager::newShaderProgram(const ShaderProgramInitInfo& init)
 {
-	return ShaderProgramPtr(ShaderProgram::newInstance(this, init));
+	ANKI_SAFE_CONSTRUCT(ShaderProgram);
 }
 
 CommandBufferPtr GrManager::newCommandBuffer(const CommandBufferInitInfo& init)
@@ -113,12 +124,15 @@ CommandBufferPtr GrManager::newCommandBuffer(const CommandBufferInitInfo& init)
 
 FramebufferPtr GrManager::newFramebuffer(const FramebufferInitInfo& init)
 {
-	return FramebufferPtr(Framebuffer::newInstance(this, init));
+	ANKI_SAFE_CONSTRUCT(Framebuffer);
 }
 
 OcclusionQueryPtr GrManager::newOcclusionQuery()
 {
-	return OcclusionQueryPtr(OcclusionQuery::newInstance(this));
+	OcclusionQuery* out = OcclusionQuery::newInstance(this);
+	OcclusionQueryPtr ptr(out);
+	out->getRefcount().fetchSub(1);
+	return ptr;
 }
 
 RenderGraphPtr GrManager::newRenderGraph()
@@ -126,26 +140,7 @@ RenderGraphPtr GrManager::newRenderGraph()
 	return RenderGraphPtr(RenderGraph::newInstance(this));
 }
 
-void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
-{
-	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	impl.checkSurfaceOrVolume(surf);
-
-	U width = impl.m_width >> surf.m_level;
-	U height = impl.m_height >> surf.m_level;
-	allocationSize = computeSurfaceSize(width, height, impl.m_format);
-}
-
-void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
-{
-	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	impl.checkSurfaceOrVolume(vol);
-
-	U width = impl.m_width >> vol.m_level;
-	U height = impl.m_height >> vol.m_level;
-	U depth = impl.m_depth >> vol.m_level;
-	allocationSize = computeVolumeSize(width, height, depth, impl.m_format);
-}
+#undef ANKI_SAFE_CONSTRUCT
 
 void GrManager::getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const
 {

@@ -26,7 +26,7 @@ public:
 	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< Its initial usage.
 	TextureType m_type = TextureType::_2D;
 
-	U8 m_mipmapsCount = 1;
+	U8 m_mipmapCount = 1;
 
 	PixelFormat m_format;
 	U8 m_samples = 1;
@@ -49,6 +49,48 @@ public:
 			== sizeof(U32) * 4 + sizeof(TextureUsageBit) * 2 + sizeof(TextureType) + sizeof(U8) + sizeof(PixelFormat)
 				+ sizeof(U8));
 		return anki::computeHash(first, size);
+	}
+
+	Bool isValid() const
+	{
+#define ANKI_CHECK_VAL_VALIDITY(x) \
+	do                             \
+	{                              \
+		if(!(x))                   \
+		{                          \
+			return false;          \
+		}                          \
+	} while(0)
+
+		ANKI_CHECK_VAL_VALIDITY(m_usage != TextureUsageBit::NONE);
+		ANKI_CHECK_VAL_VALIDITY(m_mipmapCount > 0);
+		ANKI_CHECK_VAL_VALIDITY(m_width > 0);
+		ANKI_CHECK_VAL_VALIDITY(m_height > 0);
+		switch(m_type)
+		{
+		case TextureType::_2D:
+			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
+			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
+			break;
+		case TextureType::CUBE:
+			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
+			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
+			break;
+		case TextureType::_3D:
+			ANKI_CHECK_VAL_VALIDITY(m_depth > 0);
+			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
+			break;
+		case TextureType::_2D_ARRAY:
+		case TextureType::CUBE_ARRAY:
+			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
+			ANKI_CHECK_VAL_VALIDITY(m_layerCount > 0);
+			break;
+		default:
+			ANKI_CHECK_VAL_VALIDITY(0);
+		};
+
+		return true;
+#undef ANKI_CHECK_VAL_VALIDITY
 	}
 };
 
@@ -78,7 +120,7 @@ public:
 		return m_depth;
 	}
 
-	U32 getLayercount() const
+	U32 getLayerCount() const
 	{
 		ANKI_ASSERT(m_layerCount);
 		return m_layerCount;
@@ -104,7 +146,101 @@ public:
 
 	const PixelFormat& getPixelFormat() const
 	{
+		ANKI_ASSERT(m_format.isValid());
 		return m_format;
+	}
+
+	DepthStencilAspectBit getDepthStencilAspect() const
+	{
+		ANKI_ASSERT(m_format.isValid());
+		return m_aspect;
+	}
+
+	Bool isSubresourceValid(const TextureSubresourceInfo& subresource) const
+	{
+#define ANKI_TEX_SUBRESOURCE_ASSERT(x_) \
+	if(!(x_))                           \
+	{                                   \
+		return false;                   \
+	}
+		const TextureType type = m_texType;
+		const Bool cube = textureTypeIsCube(type);
+
+		// Mips
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_mipmapCount > 0);
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_firstMipmap + subresource.m_mipmapCount <= m_mipCount);
+
+		// Layers
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_layerCount > 0);
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_firstLayer + subresource.m_layerCount <= m_layerCount);
+
+		// Faces
+		const U8 faceCount = (cube) ? 6 : 1;
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_faceCount == 1 || subresource.m_faceCount == 6);
+		ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_firstFace + subresource.m_faceCount <= faceCount);
+
+		// Aspect
+		ANKI_TEX_SUBRESOURCE_ASSERT((m_aspect & subresource.m_depthStencilAspect) == subresource.m_depthStencilAspect);
+
+		// Misc
+		if(type == TextureType::CUBE_ARRAY && subresource.m_layerCount > 1)
+		{
+			// Because of the way surfaces are arranged in cube arrays
+			ANKI_TEX_SUBRESOURCE_ASSERT(subresource.m_faceCount == 6);
+		}
+
+#undef ANKI_TEX_SUBRESOURCE_ASSERT
+		return true;
+	}
+
+	/// Mipmap generation requires a specific subresource range.
+	Bool isSubresourceGoodForMipmapGeneration(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		if(m_texType != TextureType::_3D)
+		{
+			return subresource.m_firstMipmap == 0 && subresource.m_mipmapCount == m_mipCount
+				&& subresource.m_faceCount == 1 && subresource.m_layerCount == 1
+				&& subresource.m_depthStencilAspect == m_aspect;
+		}
+		else
+		{
+			ANKI_ASSERT(!"TODO");
+			return false;
+		}
+	}
+
+	/// Return true if the subresource is good to be bound for image load store.
+	Bool isSubresourceGoodForImageLoadStore(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		// One mip and no depth stencil
+		return subresource.m_mipmapCount == 1 && !subresource.m_depthStencilAspect;
+	}
+
+	/// Return true if the subresource can be bound for sampling.
+	Bool isSubresourceGoodForSampling(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		/// Can bound only one aspect at a time.
+		return subresource.m_depthStencilAspect == DepthStencilAspectBit::DEPTH
+			|| subresource.m_depthStencilAspect == DepthStencilAspectBit::STENCIL
+			|| subresource.m_depthStencilAspect == DepthStencilAspectBit::NONE;
+	}
+
+	/// Return true if the subresource can be used in CommandBuffer::copyBufferToTextureView.
+	Bool isSubresourceGoodForCopyFromBuffer(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		return subresource.m_faceCount == 1 && subresource.m_mipmapCount == 1 && subresource.m_layerCount == 1
+			&& subresource.m_depthStencilAspect == DepthStencilAspectBit::NONE;
+	}
+
+	/// Return true if the subresource can be used as Framebuffer attachment.
+	Bool isSubresourceGoodForFramebufferAttachment(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		return subresource.m_faceCount == 1 && subresource.m_mipmapCount == 1 && subresource.m_layerCount == 1;
 	}
 
 protected:
@@ -116,6 +252,7 @@ protected:
 	TextureType m_texType = TextureType::COUNT;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
 	PixelFormat m_format;
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 
 	/// Construct.
 	Texture(GrManager* manager)

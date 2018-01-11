@@ -17,12 +17,10 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 	{
 	public:
 		ShaderPtr m_shader;
-		ShaderType m_type;
 		StringAuto m_source;
 
-		ShaderCreateCommand(Shader* shader, ShaderType type, CString source, const CommandBufferAllocator<U8>& alloc)
+		ShaderCreateCommand(Shader* shader, CString source, const CommandBufferAllocator<U8>& alloc)
 			: m_shader(shader)
-			, m_type(type)
 			, m_source(alloc)
 		{
 			m_source.create(source);
@@ -32,7 +30,7 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 		{
 			ShaderImpl& impl = static_cast<ShaderImpl&>(*m_shader);
 
-			Error err = impl.init(m_type, m_source.toCString());
+			Error err = impl.init(m_source.toCString());
 
 			GlObject::State oldState =
 				impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
@@ -46,13 +44,17 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 	ANKI_ASSERT(!init.m_source.isEmpty() && init.m_source.getLength() > 0);
 
 	ShaderImpl* impl = manager->getAllocator().newInstance<ShaderImpl>(manager);
+	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
+
+	// Need to pre-init because some funcs ask for members and we don't want to serialize
+	impl->preInit(init);
 
 	// Copy source to the command buffer
 	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
 	CommandBufferImpl& cmdbimpl = static_cast<CommandBufferImpl&>(*cmdb);
 	CommandBufferAllocator<U8> alloc = cmdbimpl.getInternalAllocator();
 
-	cmdbimpl.pushBackNewCommand<ShaderCreateCommand>(impl, init.m_shaderType, init.m_source, alloc);
+	cmdbimpl.pushBackNewCommand<ShaderCreateCommand>(impl, init.m_source, alloc);
 	cmdbimpl.flush();
 
 	return impl;

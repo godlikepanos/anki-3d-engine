@@ -93,7 +93,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 		texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		m_dummyTex = getGrManager().newTexture(texinit);
+		TexturePtr tex = getGrManager().newTexture(texinit);
+
+		TextureViewInitInfo viewinit(tex);
+		m_dummyTexView = getGrManager().newTextureView(viewinit);
 	}
 
 	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(getDummyBufferSize(),
@@ -308,7 +311,7 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 	init.m_layerCount = 1;
 	init.m_type = TextureType::_2D;
 	init.m_format = format;
-	init.m_mipmapsCount = 1;
+	init.m_mipmapCount = 1;
 	init.m_samples = 1;
 	init.m_usage = usage;
 
@@ -327,7 +330,7 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(
 	init.m_layerCount = 1;
 	init.m_type = TextureType::_2D;
 	init.m_format = format;
-	init.m_mipmapsCount = 1;
+	init.m_mipmapCount = 1;
 	init.m_samples = 1;
 	init.m_usage = usage;
 
@@ -346,13 +349,13 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
-	if((inf.m_mipmapsCount * faceCount * inf.m_layerCount * 4) < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
+	if((inf.m_mipmapCount * faceCount * inf.m_layerCount * 4) < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
 	{
 		cmdbinit.m_flags |= CommandBufferFlag::SMALL_BATCH;
 	}
 	CommandBufferPtr cmdb = m_gr->newCommandBuffer(cmdbinit);
 
-	for(U mip = 0; mip < inf.m_mipmapsCount; ++mip)
+	for(U mip = 0; mip < inf.m_mipmapCount; ++mip)
 	{
 		for(U face = 0; face < faceCount; ++face)
 		{
@@ -364,23 +367,35 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
 				TextureUsageBit dsUsage = TextureUsageBit::NONE;
 
-				if(inf.m_format.m_components >= ComponentFormat::FIRST_DEPTH_STENCIL
-					&& inf.m_format.m_components <= ComponentFormat::LAST_DEPTH_STENCIL)
+				if(componentFormatIsDepthStencil(inf.m_format.m_components))
 				{
-					fbInit.m_depthStencilAttachment.m_texture = tex;
-					fbInit.m_depthStencilAttachment.m_surface = surf;
-					fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH_STENCIL;
+					DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE;
+					if(componentFormatIsDepth(inf.m_format.m_components))
+					{
+						aspect |= DepthStencilAspectBit::DEPTH;
+					}
+
+					if(componentFormatIsStencil(inf.m_format.m_components))
+					{
+						aspect |= DepthStencilAspectBit::STENCIL;
+					}
+
+					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf, aspect));
+
+					fbInit.m_depthStencilAttachment.m_textureView = view;
 					fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+					fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
+					fbInit.m_depthStencilAttachment.m_clearValue = clearVal;
 
 					dsUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 				}
 				else
 				{
+					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
+
 					fbInit.m_colorAttachmentCount = 1;
-					fbInit.m_colorAttachments[0].m_texture = tex;
-					fbInit.m_colorAttachments[0].m_surface = surf;
+					fbInit.m_colorAttachments[0].m_textureView = view;
 					fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-					fbInit.m_colorAttachments[0].m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
 					fbInit.m_colorAttachments[0].m_clearValue = clearVal;
 
 					colUsage[0] = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;

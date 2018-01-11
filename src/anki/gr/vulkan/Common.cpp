@@ -279,22 +279,6 @@ VkFormat convertFormat(PixelFormat ak)
 	return out;
 }
 
-VkImageAspectFlags convertImageAspect(PixelFormat ak)
-{
-	VkImageAspectFlags out = 0;
-	for(U i = 0; i < CONVERT_FORMAT_TABLE_SIZE; ++i)
-	{
-		const ConvertFormat& entry = CONVERT_FORMAT_TABLE[i];
-		if(ak == entry.m_ak)
-		{
-			out = static_cast<VkImageAspectFlags>(entry.m_aspect);
-		}
-	}
-
-	ANKI_ASSERT(out);
-	return out;
-}
-
 VkPrimitiveTopology convertTopology(PrimitiveTopology ak)
 {
 	VkPrimitiveTopology out = VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
@@ -625,7 +609,7 @@ VkImageUsageFlags convertTextureUsage(TextureUsageBit ak, const PixelFormat& for
 
 	if(!!(ak & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
 	{
-		if(formatIsDepthStencil(format))
+		if(componentFormatIsDepthStencil(format.m_components))
 		{
 			out |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		}

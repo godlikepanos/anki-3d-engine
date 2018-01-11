@@ -219,26 +219,28 @@ public:
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTextureAndSampler(
-		U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
+	void bindTextureAndSamplerInternal(
+		U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler, TextureUsageBit usage)
 	{
 		commandCommon();
 		const U realBinding = binding;
-		const Texture& tex = *tex_;
-		const TextureImpl& teximpl = static_cast<const TextureImpl&>(tex);
-		ANKI_ASSERT((!teximpl.m_depthStencil || !!aspect) && "Need to set aspect for DS textures");
-		const VkImageLayout lay = teximpl.computeLayout(usage, 0);
-		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
-		m_microCmdb->pushObjectRef(tex_);
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
+		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
+		const VkImageLayout lay = tex.computeLayout(usage, 0);
+
+		m_dsetState[set].bindTextureAndSampler(realBinding, &view, sampler.get(), lay);
+
+		m_microCmdb->pushObjectRef(texView);
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindImage(U32 set, U32 binding, TexturePtr& img, U32 level)
+	void bindImage(U32 set, U32 binding, TextureViewPtr& img)
 	{
 		commandCommon();
 		const U realBinding =
 			binding + MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS;
-		m_dsetState[set].bindImage(realBinding, img.get(), level);
+		m_dsetState[set].bindImage(realBinding, img.get());
 		m_microCmdb->pushObjectRef(img);
 	}
 
@@ -269,17 +271,18 @@ public:
 
 	void endOcclusionQuery(OcclusionQueryPtr query);
 
-	void generateMipmaps2d(TexturePtr tex, U face, U layer);
+	void generateMipmaps2d(TextureViewPtr texView);
 
-	void clearTextureSurface(
-		TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect);
-
-	void clearTextureVolume(
-		TexturePtr tex, const TextureVolumeInfo& volume, const ClearValue& clearValue, DepthStencilAspectBit aspect);
+	void clearTextureView(TextureViewPtr texView, const ClearValue& clearValue);
 
 	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 
 	void endRecording();
+
+	void setTextureBarrier(TexturePtr tex,
+		TextureUsageBit prevUsage,
+		TextureUsageBit nextUsage,
+		const TextureSubresourceInfo& subresource);
 
 	void setTextureSurfaceBarrier(
 		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf);
@@ -322,11 +325,7 @@ public:
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void copyBufferToTextureSurface(
-		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf);
-
-	void copyBufferToTextureVolume(
-		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol);
+	void copyBufferToTextureViewInternal(BufferPtr buff, PtrSize offset, PtrSize range, TextureViewPtr texView);
 
 	void copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range);
 
@@ -448,8 +447,6 @@ private:
 	void flushQueryResets();
 
 	void flushWriteQueryResults();
-
-	void clearTextureInternal(TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range);
 
 	void setImageBarrier(VkPipelineStageFlags srcStage,
 		VkAccessFlags srcAccess,

@@ -447,26 +447,21 @@ public:
 	class TextureBinding
 	{
 	public:
-		TextureImpl* m_tex = nullptr;
-		SamplerImpl* m_sampler = reinterpret_cast<SamplerImpl*>(0x1);
-		DepthStencilAspectBit m_aspect;
+		U64 m_texViewUuid = 0;
+		U64 m_samplerUuid = 0;
 	};
 
 	Array2d<TextureBinding, MAX_DESCRIPTOR_SETS, MAX_TEXTURE_BINDINGS> m_textures;
 
-	Bool bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectBit aspect)
+	Bool bindTextureViewAndSampler(U32 set, U32 binding, const TextureViewPtr& texView, const SamplerPtr& sampler)
 	{
 		TextureBinding& b = m_textures[set][binding];
 
-		TextureImpl* teximpl = static_cast<TextureImpl*>(tex.get());
-		SamplerImpl* samplerimpl = static_cast<SamplerImpl*>(sampler.get());
-
 		Bool dirty;
-		if(b.m_tex != teximpl || b.m_sampler != samplerimpl || b.m_aspect != aspect)
+		if(b.m_texViewUuid != texView->getUuid() || b.m_samplerUuid != sampler->getUuid())
 		{
-			b.m_tex = teximpl;
-			b.m_sampler = samplerimpl;
-			b.m_aspect = aspect;
+			b.m_texViewUuid = texView->getUuid();
+			b.m_samplerUuid = sampler->getUuid();
 			dirty = true;
 		}
 		else
@@ -510,17 +505,15 @@ public:
 	class ImageBinding
 	{
 	public:
-		TextureImpl* m_tex = nullptr;
-		U8 m_level;
+		U64 m_texViewUuid = 0;
 	};
 
 	Array2d<ImageBinding, MAX_DESCRIPTOR_SETS, MAX_IMAGE_BINDINGS> m_images;
 
-	Bool bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
+	Bool bindImage(U32 set, U32 binding, const TextureViewPtr& img)
 	{
 		ImageBinding& b = m_images[set][binding];
-		b.m_tex = static_cast<TextureImpl*>(img.get());
-		b.m_level = level;
+		b.m_texViewUuid = img->getUuid();
 		return true;
 	}
 

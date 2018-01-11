@@ -110,11 +110,15 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, unis->x(), unis->y());
 
-	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
-	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getNearestSampler());
-	rgraphCtx.bindTextureAndSampler(0, 2, m_r->getVolumetric().getRt(), m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(
-		0, 3, m_vol.m_noiseTex->getGrTexture(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindColorTextureAndSampler(
+		0, 0, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getVolumetric().getRt(), m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(0,
+		3,
+		m_vol.m_noiseTex->getGrTextureView(),
+		m_r->getTrilinearRepeatSampler(),
+		TextureUsageBit::SAMPLED_FRAGMENT);
 
 	drawQuad(cmdb);
 
@@ -133,12 +137,17 @@ void ForwardShading::drawUpscale(const RenderingContext& ctx, RenderPassWorkCont
 	computeLinearizeDepthOptimal(
 		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
 
-	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getGBuffer().getDepthRt(), m_r->getNearestSampler());
-	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
-	rgraphCtx.bindTextureAndSampler(0, 2, m_runCtx.m_rt, m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0,
+		0,
+		m_r->getGBuffer().getDepthRt(),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
+		m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(
+		0, 1, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_runCtx.m_rt, m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0,
 		3,
-		m_upscale.m_noiseTex->getGrTexture(),
+		m_upscale.m_noiseTex->getGrTextureView(),
 		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 
@@ -165,8 +174,9 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	if(start != end)
 	{
 		const LightShadingResources& rsrc = m_r->getLightShading().getResources();
-		rgraphCtx.bindTextureAndSampler(0, 0, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getLinearSampler());
-		rgraphCtx.bindTextureAndSampler(0, 1, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(
+			0, 0, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
 		bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
 		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
@@ -218,7 +228,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newConsumer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthDepthRt(),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-		DepthStencilAspectBit::DEPTH});
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getVolumetric().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});

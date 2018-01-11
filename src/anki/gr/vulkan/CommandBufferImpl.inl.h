@@ -148,6 +148,29 @@ inline void CommandBufferImpl::setTextureBarrierRange(
 	m_microCmdb->pushObjectRef(tex);
 }
 
+inline void CommandBufferImpl::setTextureBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource_)
+{
+	TextureSubresourceInfo subresource = subresource_;
+	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
+
+	// The transition of the non zero mip levels happens inside CommandBufferImpl::generateMipmapsX so limit the
+	// subresource
+	if(nextUsage == TextureUsageBit::GENERATE_MIPMAPS)
+	{
+		ANKI_ASSERT(impl.isSubresourceGoodForMipmapGeneration(subresource));
+
+		subresource.m_firstMipmap = 0;
+		subresource.m_mipmapCount = 1;
+	}
+
+	ANKI_ASSERT(tex->isSubresourceValid(subresource));
+
+	VkImageSubresourceRange range;
+	impl.computeVkImageSubresourceRange(subresource, range);
+	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
+}
+
 inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {
@@ -158,10 +181,9 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	}
 
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	impl.checkSurfaceOrVolume(surf);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, impl.m_akAspect, range);
+	impl.computeVkImageSubresourceRange(TextureSubresourceInfo(surf, impl.getDepthStencilAspect()), range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
@@ -175,10 +197,9 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	}
 
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	impl.checkSurfaceOrVolume(vol);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(vol, impl.m_akAspect, range);
+	impl.computeVkImageSubresourceRange(TextureSubresourceInfo(vol, impl.getDepthStencilAspect()), range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
@@ -284,6 +305,7 @@ inline void CommandBufferImpl::drawElementsIndirect(
 inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	ANKI_ASSERT(m_computeProg);
+	ANKI_ASSERT(!!(m_flags & CommandBufferFlag::COMPUTE_WORK));
 	commandCommon();
 
 	// Bind descriptors
@@ -375,50 +397,30 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 	m_microCmdb->pushObjectRef(query);
 }
 
-inline void CommandBufferImpl::clearTextureInternal(
-	TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range)
+inline void CommandBufferImpl::clearTextureView(TextureViewPtr texView, const ClearValue& clearValue)
 {
 	commandCommon();
+
+	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
+	const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
 
 	VkClearColorValue vclear;
 	static_assert(sizeof(vclear) == sizeof(clearValue), "See file");
 	memcpy(&vclear, &clearValue, sizeof(clearValue));
 
-	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	if(impl.m_aspect == VK_IMAGE_ASPECT_COLOR_BIT)
+	if(!view.getSubresource().m_depthStencilAspect)
 	{
+		VkImageSubresourceRange vkRange = view.getVkImageSubresourceRange();
 		ANKI_CMD(vkCmdClearColorImage(
-					 m_handle, impl.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &range),
+					 m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &vkRange),
 			ANY_OTHER_COMMAND);
 	}
 	else
 	{
-		ANKI_ASSERT(0 && "TODO");
+		ANKI_ASSERT(!"TODO");
 	}
 
-	m_microCmdb->pushObjectRef(tex);
-}
-
-inline void CommandBufferImpl::clearTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
-{
-	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	ANKI_ASSERT(impl.getTextureType() != TextureType::_3D && "Not for 3D");
-
-	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, aspect, range);
-	clearTextureInternal(tex, clearValue, range);
-}
-
-inline void CommandBufferImpl::clearTextureVolume(
-	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectBit aspect)
-{
-	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
-	ANKI_ASSERT(impl.getTextureType() == TextureType::_3D && "Only for 3D");
-
-	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(vol, aspect, range);
-	clearTextureInternal(tex, clearValue, range);
+	m_microCmdb->pushObjectRef(texView);
 }
 
 inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)

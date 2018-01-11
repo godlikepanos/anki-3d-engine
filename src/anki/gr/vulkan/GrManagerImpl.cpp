@@ -564,6 +564,11 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 void* GrManagerImpl::allocateCallback(
 	void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
+	if(ANKI_UNLIKELY(size == 0))
+	{
+		return nullptr;
+	}
+
 	ANKI_ASSERT(userData);
 	ANKI_ASSERT(size);
 	ANKI_ASSERT(isPowerOfTwo(alignment));
@@ -756,6 +761,12 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 	{
 		vkQueueWaitIdle(m_queue);
 	}
+}
+
+void GrManagerImpl::finish()
+{
+	LockGuard<Mutex> lock(m_globalMtx);
+	vkQueueWaitIdle(m_queue);
 }
 
 void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const

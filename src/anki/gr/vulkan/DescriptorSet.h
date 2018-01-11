@@ -6,11 +6,9 @@
 #pragma once
 
 #include <anki/gr/vulkan/Common.h>
-#include <anki/gr/Buffer.h>
 #include <anki/gr/vulkan/BufferImpl.h>
-#include <anki/gr/Texture.h>
 #include <anki/gr/vulkan/TextureImpl.h>
-#include <anki/gr/Sampler.h>
+#include <anki/gr/vulkan/TextureViewImpl.h>
 #include <anki/gr/vulkan/SamplerImpl.h>
 #include <anki/util/BitSet.h>
 
@@ -66,9 +64,8 @@ private:
 class TextureBinding
 {
 public:
-	const TextureImpl* m_tex = nullptr;
+	const TextureViewImpl* m_texView = nullptr;
 	const MicroSampler* m_sampler = nullptr;
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 	VkImageLayout m_layout = VK_IMAGE_LAYOUT_MAX_ENUM;
 };
 
@@ -83,8 +80,7 @@ public:
 class ImageBinding
 {
 public:
-	const TextureImpl* m_tex = nullptr;
-	U16 m_level = 0;
+	const TextureViewImpl* m_texView = nullptr;
 };
 
 class AnyBinding
@@ -110,18 +106,19 @@ public:
 		m_layoutDirty = true;
 	}
 
-	void bindTextureAndSampler(
-		U binding, const Texture* tex, const Sampler* sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
+	void bindTextureAndSampler(U binding, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
 	{
+		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
+		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForSampling(viewImpl.getSubresource()));
+
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::TEXTURE;
-		b.m_uuids[0] = tex->getUuid();
+		b.m_uuids[0] = viewImpl.m_hash;
 		b.m_uuids[1] = sampler->getUuid();
 
-		b.m_tex.m_tex = static_cast<const TextureImpl*>(tex);
+		b.m_tex.m_texView = &viewImpl;
 		b.m_tex.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
-		b.m_tex.m_aspect = aspect;
 		b.m_tex.m_layout = layout;
 
 		m_anyBindingDirty = true;
@@ -157,15 +154,18 @@ public:
 		m_dynamicOffsetDirty.set(binding);
 	}
 
-	void bindImage(U binding, const Texture* tex, U32 level)
+	void bindImage(U binding, const TextureView* texView)
 	{
+		ANKI_ASSERT(texView);
+		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);
+		ANKI_ASSERT(impl->m_tex->isSubresourceGoodForImageLoadStore(impl->getSubresource()));
+
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::IMAGE;
-		b.m_uuids[0] = b.m_uuids[1] = tex->getUuid();
-
-		b.m_image.m_tex = static_cast<const TextureImpl*>(tex);
-		b.m_image.m_level = level;
+		ANKI_ASSERT(impl->m_hash);
+		b.m_uuids[0] = b.m_uuids[1] = impl->m_hash;
+		b.m_image.m_texView = impl;
 
 		m_anyBindingDirty = true;
 	}

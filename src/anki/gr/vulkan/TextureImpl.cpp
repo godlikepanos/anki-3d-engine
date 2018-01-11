@@ -45,7 +45,7 @@ TextureImpl::~TextureImpl()
 Error TextureImpl::init(const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
-	ANKI_ASSERT(textureInitInfoValid(init));
+	ANKI_ASSERT(init.isValid());
 
 	// Set some stuff
 	m_width = init.m_width;
@@ -63,30 +63,20 @@ Error TextureImpl::init(const TextureInitInfo& init_)
 
 	if(m_texType == TextureType::_3D)
 	{
-		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
+		m_mipCount = min<U>(init.m_mipmapCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
 	else
 	{
-		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
+		m_mipCount = min<U>(init.m_mipmapCount, computeMaxMipmapCount2d(m_width, m_height));
 	}
-	init.m_mipmapsCount = m_mipCount;
+	init.m_mipmapCount = m_mipCount;
 
 	m_layerCount = init.m_layerCount;
 
 	m_format = init.m_format;
 	m_vkFormat = convertFormat(m_format);
-	m_depthStencil = formatIsDepthStencil(m_format);
-	m_aspect = convertImageAspect(m_format);
+	m_aspect = getImageAspectFromFormat(m_format);
 	m_usage = init.m_usage;
-
-	if(m_aspect & VK_IMAGE_ASPECT_DEPTH_BIT)
-	{
-		m_akAspect |= DepthStencilAspectBit::DEPTH;
-	}
-	if(m_aspect & VK_IMAGE_ASPECT_STENCIL_BIT)
-	{
-		m_akAspect |= DepthStencilAspectBit::STENCIL;
-	}
 
 	ANKI_CHECK(initImage(init));
 
@@ -100,7 +90,7 @@ Error TextureImpl::init(const TextureInitInfo& init_)
 	m_viewCreateInfoTemplate.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 	m_viewCreateInfoTemplate.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 	m_viewCreateInfoTemplate.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-	m_viewCreateInfoTemplate.subresourceRange.aspectMask = m_aspect;
+	m_viewCreateInfoTemplate.subresourceRange.aspectMask = convertImageAspect(m_aspect);
 	m_viewCreateInfoTemplate.subresourceRange.baseArrayLayer = 0;
 	m_viewCreateInfoTemplate.subresourceRange.baseMipLevel = 0;
 	m_viewCreateInfoTemplate.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
@@ -117,7 +107,7 @@ Error TextureImpl::init(const TextureInitInfo& init_)
 		CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbinit);
 
 		VkImageSubresourceRange range;
-		range.aspectMask = m_aspect;
+		range.aspectMask = convertImageAspect(m_aspect);
 		range.baseArrayLayer = 0;
 		range.baseMipLevel = 0;
 		range.layerCount = m_layerCount;
@@ -137,7 +127,7 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 {
 	VkFormatFeatureFlags flags = 0;
 
-	if(init.m_mipmapsCount > 1 && !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
+	if(init.m_mipmapCount > 1 && !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
 	{
 		// May be used for mip gen.
 		flags |= VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;
@@ -145,7 +135,7 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 
 	if(!!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
 	{
-		if(formatIsDepthStencil(init.m_format))
+		if(componentFormatIsDepthStencil(init.m_format.m_components))
 		{
 			flags |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		}
@@ -225,8 +215,6 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
 			m_workarounds = TextureImplWorkaround::S8_TO_D24S8;
-			m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-			m_akAspect = DepthStencilAspectBit::DEPTH | DepthStencilAspectBit::STENCIL;
 		}
 		else if(init.m_format.m_components == ComponentFormat::D24S8)
 		{
@@ -236,8 +224,6 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
 			m_workarounds = TextureImplWorkaround::D24S8_TO_D32S8;
-			m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-			m_akAspect = DepthStencilAspectBit::DEPTH | DepthStencilAspectBit::STENCIL;
 		}
 		else
 		{
@@ -318,6 +304,11 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 
 	ANKI_VK_CHECK(vkCreateImage(getDevice(), &ci, nullptr, &m_imageHandle));
 	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_imageHandle);
+#if 0
+	printf("Creating texture %p %s\n",
+		static_cast<void*>(m_imageHandle),
+		init.getName() ? init.getName().cstr() : "Unnamed");
+#endif
 
 	// Allocate memory
 	//
@@ -384,7 +375,8 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 	srcAccesses = 0;
 	dstStages = 0;
 	dstAccesses = 0;
-	Bool lastLevel = level == m_mipCount - 1u;
+	const Bool lastLevel = level == m_mipCount - 1u;
+	const Bool depthStencil = !!m_aspect;
 
 	//
 	// Before
@@ -433,7 +425,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 
 	if(!!(before & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
 	{
-		if(m_depthStencil)
+		if(depthStencil)
 		{
 			srcStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			srcAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
@@ -447,7 +439,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 
 	if(!!(before & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
 	{
-		if(m_depthStencil)
+		if(depthStencil)
 		{
 			srcStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			srcAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
@@ -537,7 +529,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 
 	if(!!(after & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
 	{
-		if(m_depthStencil)
+		if(depthStencil)
 		{
 			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			dstAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
@@ -551,7 +543,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 
 	if(!!(after & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
 	{
-		if(m_depthStencil)
+		if(depthStencil)
 		{
 			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			dstAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
@@ -598,7 +590,8 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	ANKI_ASSERT(usageValid(usage));
 
 	VkImageLayout out = VK_IMAGE_LAYOUT_MAX_ENUM;
-	Bool lastLevel = level == m_mipCount - 1u;
+	const Bool lastLevel = level == m_mipCount - 1u;
+	const Bool depthStencil = !!m_aspect;
 
 	if(usage == TextureUsageBit::NONE)
 	{
@@ -617,7 +610,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	else if(!(usage & ~TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
 	{
 		// Only FB access
-		if(m_depthStencil)
+		if(depthStencil)
 		{
 			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		}
@@ -626,13 +619,13 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 			out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
 	}
-	else if(m_depthStencil
+	else if(depthStencil
 		&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
 	{
 		// FB read & shader read
 		out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	}
-	else if(m_depthStencil
+	else if(depthStencil
 		&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)))
 	{
 		// Wild guess: One aspect is shader read and the other is read write
@@ -653,7 +646,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	}
-	else if(!m_depthStencil && usage == TextureUsageBit::TRANSFER_DESTINATION)
+	else if(!depthStencil && usage == TextureUsageBit::TRANSFER_DESTINATION)
 	{
 		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	}
@@ -662,55 +655,30 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	return out;
 }
 
-VkImageView TextureImpl::getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect) const
-{
-	ANKI_ASSERT(mip < m_mipCount);
-
-	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
-	ci.subresourceRange.baseMipLevel = mip;
-	ci.subresourceRange.levelCount = 1;
-	ci.subresourceRange.aspectMask = convertAspect(aspect);
-
-	return getOrCreateView(ci);
-}
-
-VkImageView TextureImpl::getOrCreateSingleSurfaceView(
-	const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect) const
-{
-	checkSurfaceOrVolume(surf);
-
-	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
-	ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	computeSubResourceRange(surf, aspect, ci.subresourceRange);
-
-	return getOrCreateView(ci);
-}
-
-VkImageView TextureImpl::getOrCreateResourceGroupView(DepthStencilAspectBit aspect) const
-{
-	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
-	ci.subresourceRange.aspectMask = convertAspect(aspect);
-
-	return getOrCreateView(ci);
-}
-
-VkImageView TextureImpl::getOrCreateView(const VkImageViewCreateInfo& ci) const
+VkImageView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresource, TextureType& newTexType) const
 {
 	LockGuard<Mutex> lock(m_viewsMapMtx);
-	auto it = m_viewsMap.find(ci);
+	auto it = m_viewsMap.find(subresource);
 
 	if(it != m_viewsMap.getEnd())
 	{
+		// Fixup the image view type
+		newTexType = computeNewTexTypeOfSubresource(subresource);
+
 		return *it;
 	}
 	else
 	{
+		// Compute the VkImageViewCreateInfo
+		VkImageViewCreateInfo viewCi;
+		computeVkImageViewCreateInfo(subresource, viewCi, newTexType);
+
 		VkImageView view = VK_NULL_HANDLE;
-		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &ci, nullptr, &view));
+		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &view));
 		getGrManagerImpl().trySetVulkanHandleName(
 			(m_name[0]) ? &m_name[0] : CString(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(view));
 
-		m_viewsMap.emplace(getAllocator(), ci, view);
+		m_viewsMap.emplace(getAllocator(), subresource, view);
 
 		return view;
 	}

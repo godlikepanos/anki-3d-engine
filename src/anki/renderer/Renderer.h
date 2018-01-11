@@ -285,9 +285,9 @@ anki_internal:
 		return m_willDrawToDefaultFbo;
 	}
 
-	TexturePtr getDummyTexture() const
+	TextureViewPtr getDummyTextureView() const
 	{
-		return m_dummyTex;
+		return m_dummyTexView;
 	}
 
 	BufferPtr getDummyBuffer() const
@@ -365,7 +365,7 @@ private:
 	Array<Mat4, 16> m_jitteredMats16x;
 	Array<Mat4, 8> m_jitteredMats8x;
 
-	TexturePtr m_dummyTex;
+	TextureViewPtr m_dummyTexView;
 	BufferPtr m_dummyBuff;
 
 	SamplerPtr m_nearestSampler;

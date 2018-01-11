@@ -39,12 +39,12 @@ public:
 	GpuMemoryHandle m_memHandle;
 
 	U32 m_surfaceOrVolumeCount = 0;
-	VkImageAspectFlags m_aspect = 0;
-	DepthStencilAspectBit m_akAspect = DepthStencilAspectBit::NONE;
+
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
 
-	Bool m_depthStencil = false;
 	TextureImplWorkaround m_workarounds = TextureImplWorkaround::NONE;
+
+	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 
 	TextureImpl(GrManager* manager)
 		: Texture(manager)
@@ -55,28 +55,39 @@ public:
 
 	ANKI_USE_RESULT Error init(const TextureInitInfo& init);
 
-	void checkSurfaceOrVolume(const TextureSurfaceInfo& surf) const
+	Bool aspectValid(DepthStencilAspectBit aspect) const
 	{
-		checkTextureSurface(m_texType, m_depth, m_mipCount, m_layerCount, surf);
+		return m_aspect == aspect || !!(aspect & m_aspect);
 	}
-
-	void checkSurfaceOrVolume(const TextureVolumeInfo& vol) const
-	{
-		ANKI_ASSERT(m_texType == TextureType::_3D);
-		ANKI_ASSERT(vol.m_level < m_mipCount);
-	}
-
-	void computeSubResourceRange(
-		const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const;
-
-	void computeSubResourceRange(
-		const TextureVolumeInfo& vol, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const;
 
 	/// Compute the layer as defined by Vulkan.
-	U computeVkArrayLayer(const TextureSurfaceInfo& surf) const;
+	U computeVkArrayLayer(const TextureSurfaceInfo& surf) const
+	{
+		U layer = 0;
+		switch(m_texType)
+		{
+		case TextureType::_2D:
+			layer = 0;
+			break;
+		case TextureType::CUBE:
+			layer = surf.m_face;
+			break;
+		case TextureType::_2D_ARRAY:
+			layer = surf.m_layer;
+			break;
+		case TextureType::CUBE_ARRAY:
+			layer = surf.m_layer * 6 + surf.m_face;
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+
+		return layer;
+	}
 
 	U computeVkArrayLayer(const TextureVolumeInfo& vol) const
 	{
+		ANKI_ASSERT(m_texType == TextureType::_3D);
 		return 0;
 	}
 
@@ -84,14 +95,6 @@ public:
 	{
 		return (usage & m_usage) == usage;
 	}
-
-	/// For image load/store.
-	VkImageView getOrCreateSingleLevelView(U32 mip, DepthStencilAspectBit aspect) const;
-
-	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect) const;
-
-	/// That view will be used in descriptor sets.
-	VkImageView getOrCreateResourceGroupView(DepthStencilAspectBit aspect) const;
 
 	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
 	void computeBarrierInfo(TextureUsageBit before,
@@ -105,29 +108,41 @@ public:
 	/// Predict the image layout.
 	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
 
-	VkImageAspectFlags convertAspect(DepthStencilAspectBit ak) const;
-
-	void checkSubresourceRange(const VkImageSubresourceRange& range) const
+	void computeVkImageSubresourceRange(const TextureSubresourceInfo& in, VkImageSubresourceRange& range) const
 	{
-		ANKI_ASSERT(range.baseArrayLayer < m_layerCount);
-		ANKI_ASSERT(range.baseArrayLayer + range.layerCount <= m_layerCount);
-		ANKI_ASSERT(range.levelCount < m_mipCount);
-		ANKI_ASSERT(range.baseMipLevel + range.levelCount <= m_mipCount);
+		ANKI_ASSERT(isSubresourceValid(in));
+
+		range.aspectMask = convertImageAspect(in.m_depthStencilAspect);
+		range.baseMipLevel = in.m_firstMipmap;
+		range.levelCount = in.m_mipmapCount;
+
+		const U32 faceCount = textureTypeIsCube(m_texType) ? 6 : 1;
+		range.baseArrayLayer = in.m_firstLayer * faceCount + in.m_firstFace;
+		range.layerCount = in.m_layerCount * in.m_faceCount;
 	}
 
-private:
-	class ViewHasher
+	void computeVkImageViewCreateInfo(
+		const TextureSubresourceInfo& subresource, VkImageViewCreateInfo& viewCi, TextureType& newTextureType) const
 	{
-	public:
-		U64 operator()(const VkImageViewCreateInfo& b) const
-		{
-			return computeHash(&b, sizeof(b));
-		}
-	};
+		ANKI_ASSERT(isSubresourceValid(subresource));
 
-	mutable HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher> m_viewsMap;
+		viewCi = m_viewCreateInfoTemplate;
+		computeVkImageSubresourceRange(subresource, viewCi.subresourceRange);
+
+		// Fixup the image view type
+		newTextureType = computeNewTexTypeOfSubresource(subresource);
+		if(newTextureType == TextureType::_2D)
+		{
+			// Change that anyway
+			viewCi.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		}
+	}
+
+	VkImageView getOrCreateView(const TextureSubresourceInfo& subresource, TextureType& newTexType) const;
+
+private:
+	mutable HashMap<TextureSubresourceInfo, VkImageView> m_viewsMap;
 	mutable Mutex m_viewsMapMtx;
-	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
 
@@ -141,24 +156,19 @@ private:
 
 	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
 
-	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci) const;
-
-	U computeSubresourceIdx(const TextureSurfaceInfo& surf) const;
-
-	U computeSubresourceIdx(const TextureVolumeInfo& vol) const
-	{
-		checkSurfaceOrVolume(vol);
-		return vol.m_level;
-	}
-
 	template<typename TextureInfo>
 	void updateUsageState(
 		const TextureInfo& surfOrVol, TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
 
 	void updateUsageState(TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
+
+	/// Compute the new type of a texture view.
+	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		return (textureTypeIsCube(m_texType) && subresource.m_faceCount != 6) ? TextureType::_2D : m_texType;
+	}
 };
 /// @}
 
 } // end namespace anki
-
-#include <anki/gr/vulkan/TextureImpl.inl.h>

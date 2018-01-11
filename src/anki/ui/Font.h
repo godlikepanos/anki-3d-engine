@@ -31,9 +31,9 @@ public:
 
 anki_internal:
 	/// Get font image atlas.
-	const TexturePtr& getTexture() const
+	const TextureViewPtr& getTextureView() const
 	{
-		return m_tex;
+		return m_texView;
 	}
 
 	const nk_user_font& getFont(U32 fontHeight) const
@@ -47,7 +47,7 @@ anki_internal:
 		}
 
 		ANKI_ASSERT(0);
-		return *static_cast<const nk_user_font*>(nullptr);
+		return m_fonts[0].m_font->handle;
 	}
 
 private:
@@ -62,6 +62,7 @@ private:
 	DynamicArray<NkFont> m_fonts;
 
 	TexturePtr m_tex;
+	TextureViewPtr m_texView; ///< Whole texture view
 
 	void createTexture(const void* data, U32 width, U32 height);
 };

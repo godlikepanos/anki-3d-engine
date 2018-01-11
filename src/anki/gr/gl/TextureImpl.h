@@ -8,7 +8,7 @@
 #include <anki/gr/Texture.h>
 #include <anki/gr/gl/GlObject.h>
 #include <anki/gr/common/Misc.h>
-#include <anki/util/DynamicArray.h>
+#include <anki/util/HashMap.h>
 
 namespace anki
 {
@@ -16,19 +16,24 @@ namespace anki
 /// @addtogroup opengl
 /// @{
 
+/// Small wrapper on top of a texture view and its aspect.
+struct MicroTextureView
+{
+	GLuint m_glName;
+	DepthStencilAspectBit m_aspect;
+};
+
 /// Texture container.
 class TextureImpl final : public Texture, public GlObject
 {
 public:
-	GLenum m_target = GL_NONE; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
-	GLenum m_internalFormat = GL_NONE; ///< GL_COMPRESSED_RED, GL_RGB16 etc
+	GLenum m_target = GL_NONE; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc.
+	GLenum m_internalFormat = GL_NONE; ///< GL_COMPRESSED_RED, GL_RGB16 etc.
 	GLenum m_glFormat = GL_NONE;
 	GLenum m_glType = GL_NONE;
 	U32 m_surfaceCountPerLevel = 0;
-	U8 m_faceCount = 0; ///< 6 for cubes and 1 for the rest
+	U8 m_faceCount = 0; ///< 6 for cubes and 1 for the rest.
 	Bool8 m_compressed = false;
-	DynamicArray<GLuint> m_texViews; ///< Temp views for gen mips.
-	DepthStencilAspectBit m_dsAspect = DepthStencilAspectBit::NONE;
 
 	TextureImpl(GrManager* manager)
 		: Texture(manager)
@@ -37,17 +42,6 @@ public:
 
 	~TextureImpl();
 
-	void checkSurfaceOrVolume(const TextureSurfaceInfo& surf) const
-	{
-		checkTextureSurface(m_texType, m_depth, m_mipCount, m_layerCount, surf);
-	}
-
-	void checkSurfaceOrVolume(const TextureVolumeInfo& vol) const
-	{
-		ANKI_ASSERT(m_texType == TextureType::_3D);
-		ANKI_ASSERT(vol.m_level < m_mipCount);
-	}
-
 	/// Init some stuff.
 	void preInit(const TextureInitInfo& init);
 
@@ -55,25 +49,28 @@ public:
 	void init(const TextureInitInfo& init);
 
 	/// Write texture data.
-	void writeSurface(const TextureSurfaceInfo& surf, GLuint pbo, PtrSize offset, PtrSize dataSize);
-
-	/// Write texture data.
-	void writeVolume(const TextureVolumeInfo& vol, GLuint pbo, PtrSize offset, PtrSize dataSize) const;
+	void copyFromBuffer(const TextureSubresourceInfo& subresource, GLuint pbo, PtrSize offset, PtrSize dataSize) const;
 
 	/// Generate mipmaps.
-	void generateMipmaps2d(U face, U layer);
-
-	/// Copy a single surface from one texture to another.
-	static void copy(const TextureImpl& src,
-		const TextureSurfaceInfo& srcSurf,
-		const TextureImpl& dest,
-		const TextureSurfaceInfo& destSurf);
+	void generateMipmaps2d(const TextureViewImpl& view) const;
 
 	void bind() const;
 
-	void clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect);
+	void clear(const TextureSubresourceInfo& subresource, const ClearValue& clearValue) const;
 
 	U computeSurfaceIdx(const TextureSurfaceInfo& surf) const;
+
+	MicroTextureView getOrCreateView(const TextureSubresourceInfo& subresource) const;
+
+	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const
+	{
+		ANKI_ASSERT(isSubresourceValid(subresource));
+		return (textureTypeIsCube(m_texType) && subresource.m_faceCount != 6) ? TextureType::_2D : m_texType;
+	}
+
+private:
+	mutable HashMap<TextureSubresourceInfo, MicroTextureView> m_viewsMap;
+	mutable Mutex m_viewsMapMtx;
 };
 /// @}
 

@@ -10,18 +10,13 @@
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/GlState.h>
 
-#include <anki/gr/Framebuffer.h>
 #include <anki/gr/gl/FramebufferImpl.h>
-#include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/gl/OcclusionQueryImpl.h>
-#include <anki/gr/Texture.h>
 #include <anki/gr/gl/TextureImpl.h>
-#include <anki/gr/Buffer.h>
 #include <anki/gr/gl/BufferImpl.h>
-#include <anki/gr/Sampler.h>
 #include <anki/gr/gl/SamplerImpl.h>
-#include <anki/gr/ShaderProgram.h>
 #include <anki/gr/gl/ShaderProgramImpl.h>
+#include <anki/gr/gl/TextureViewImpl.h>
 
 #include <anki/core/Trace.h>
 
@@ -54,18 +49,6 @@ void CommandBuffer::flush(FencePtr* fence)
 			.getRenderingThread()
 			.flushCommandBuffer(CommandBufferPtr(this), fence);
 	}
-}
-
-void CommandBuffer::finish()
-{
-	ANKI_GL_SELF(CommandBufferImpl);
-
-	if(!self.isSecondLevel())
-	{
-		ANKI_ASSERT(!self.m_state.insideRenderPass());
-	}
-
-	static_cast<GrManagerImpl&>(getManager()).getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
 }
 
 void CommandBuffer::bindVertexBuffer(
@@ -631,35 +614,38 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 }
 
 void CommandBuffer::bindTextureAndSampler(
-	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
+	U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage)
 {
 	class Cmd final : public GlCommand
 	{
 	public:
 		U32 m_unit;
-		TexturePtr m_tex;
+		TextureViewPtr m_texView;
 		SamplerPtr m_sampler;
 
-		Cmd(U32 unit, TexturePtr tex, SamplerPtr sampler)
+		Cmd(U32 unit, TextureViewPtr texView, SamplerPtr sampler)
 			: m_unit(unit)
-			, m_tex(tex)
+			, m_texView(texView)
 			, m_sampler(sampler)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			glBindTextureUnit(m_unit, static_cast<const TextureImpl&>(*m_tex).getGlName());
+			glBindTextureUnit(m_unit, static_cast<const TextureViewImpl&>(*m_texView).m_view.m_glName);
 			glBindSampler(m_unit, static_cast<const SamplerImpl&>(*m_sampler).getGlName());
 			return Error::NONE;
 		}
 	};
 
 	ANKI_GL_SELF(CommandBufferImpl);
-	if(self.m_state.bindTextureAndSampler(set, binding, tex, sampler, aspect))
+	ANKI_ASSERT(static_cast<const TextureViewImpl&>(*texView).m_tex->isSubresourceGoodForSampling(
+		static_cast<const TextureViewImpl&>(*texView).getSubresource()));
+
+	if(self.m_state.bindTextureViewAndSampler(set, binding, texView, sampler))
 	{
 		U unit = binding + MAX_TEXTURE_BINDINGS * set;
-		self.pushBackNewCommand<Cmd>(unit, tex, sampler);
+		self.pushBackNewCommand<Cmd>(unit, texView, sampler);
 	}
 }
 
@@ -735,42 +721,44 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 	}
 }
 
-void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
+void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 {
 	class Cmd final : public GlCommand
 	{
 	public:
-		TexturePtr m_img;
+		TextureViewPtr m_img;
 		U16 m_unit;
-		U8 m_level;
 
-		Cmd(U32 unit, TexturePtr img, U32 level)
+		Cmd(U32 unit, TextureViewPtr img)
 			: m_img(img)
 			, m_unit(unit)
-			, m_level(level)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
+			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*m_img);
+
 			glBindImageTexture(m_unit,
-				static_cast<const TextureImpl&>(*m_img).getGlName(),
-				m_level,
+				view.m_view.m_glName,
+				m_img->getSubresource().m_firstMipmap,
 				GL_TRUE,
 				0,
 				GL_READ_WRITE,
-				static_cast<const TextureImpl&>(*m_img).m_internalFormat);
+				static_cast<const TextureImpl&>(*view.m_tex).m_internalFormat);
 			return Error::NONE;
 		}
 	};
 
 	ANKI_ASSERT(img);
 	ANKI_GL_SELF(CommandBufferImpl);
+	ANKI_ASSERT(static_cast<const TextureViewImpl&>(*img).m_tex->isSubresourceGoodForImageLoadStore(
+		static_cast<const TextureViewImpl&>(*img).getSubresource()));
 
-	if(self.m_state.bindImage(set, binding, img, level))
+	if(self.m_state.bindImage(set, binding, img))
 	{
 		binding = binding + set * MAX_IMAGE_BINDINGS;
-		self.pushBackNewCommand<Cmd>(binding, img, level);
+		self.pushBackNewCommand<Cmd>(binding, img);
 	}
 }
 
@@ -1172,8 +1160,7 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 	self.pushBackNewCommand<OqEndCommand>(query);
 }
 
-void CommandBuffer::copyBufferToTextureSurface(
-	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
+void CommandBuffer::copyBufferToTextureView(BufferPtr buff, PtrSize offset, PtrSize range, TextureViewPtr texView)
 {
 	class TexSurfUploadCommand final : public GlCommand
 	{
@@ -1181,72 +1168,34 @@ void CommandBuffer::copyBufferToTextureSurface(
 		BufferPtr m_buff;
 		PtrSize m_offset;
 		PtrSize m_range;
-		TexturePtr m_tex;
-		TextureSurfaceInfo m_surf;
+		TextureViewPtr m_texView;
 
-		TexSurfUploadCommand(
-			BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
+		TexSurfUploadCommand(BufferPtr buff, PtrSize offset, PtrSize range, TextureViewPtr texView)
 			: m_buff(buff)
 			, m_offset(offset)
 			, m_range(range)
-			, m_tex(tex)
-			, m_surf(surf)
+			, m_texView(texView)
 		{
 		}
 
-		Error operator()(GlState& state)
+		Error operator()(GlState&)
 		{
-			static_cast<TextureImpl&>(*m_tex).writeSurface(
-				m_surf, static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_range);
+			const TextureViewImpl& viewImpl = static_cast<TextureViewImpl&>(*m_texView);
+			const TextureImpl& texImpl = static_cast<TextureImpl&>(*viewImpl.m_tex);
+
+			texImpl.copyFromBuffer(
+				viewImpl.getSubresource(), static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_range);
 			return Error::NONE;
 		}
 	};
 
-	ANKI_ASSERT(tex);
+	ANKI_ASSERT(texView);
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(range > 0);
 	ANKI_GL_SELF(CommandBufferImpl);
 	ANKI_ASSERT(!self.m_state.insideRenderPass());
 
-	self.pushBackNewCommand<TexSurfUploadCommand>(buff, offset, range, tex, surf);
-}
-
-void CommandBuffer::copyBufferToTextureVolume(
-	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
-{
-	class TexVolUploadCommand final : public GlCommand
-	{
-	public:
-		BufferPtr m_buff;
-		PtrSize m_offset;
-		PtrSize m_range;
-		TexturePtr m_tex;
-		TextureVolumeInfo m_vol;
-
-		TexVolUploadCommand(BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
-			: m_buff(buff)
-			, m_offset(offset)
-			, m_range(range)
-			, m_tex(tex)
-			, m_vol(vol)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			static_cast<const TextureImpl&>(*m_tex).writeVolume(
-				m_vol, static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_range);
-			return Error::NONE;
-		}
-	};
-
-	ANKI_ASSERT(tex);
-	ANKI_ASSERT(buff);
-	ANKI_ASSERT(range > 0);
-	ANKI_GL_SELF(CommandBufferImpl);
-	ANKI_ASSERT(!self.m_state.insideRenderPass());
-
-	self.pushBackNewCommand<TexVolUploadCommand>(buff, offset, range, tex, vol);
+	self.pushBackNewCommand<TexSurfUploadCommand>(buff, offset, range, texView);
 }
 
 void CommandBuffer::copyBufferToBuffer(
@@ -1287,35 +1236,34 @@ void CommandBuffer::copyBufferToBuffer(
 	self.pushBackNewCommand<Cmd>(src, srcOffset, dst, dstOffset, range);
 }
 
-void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
+void CommandBuffer::generateMipmaps2d(TextureViewPtr texView)
 {
 	class GenMipsCommand final : public GlCommand
 	{
 	public:
-		TexturePtr m_tex;
-		U8 m_face;
-		U32 m_layer;
+		TextureViewPtr m_texView;
 
-		GenMipsCommand(const TexturePtr& tex, U face, U layer)
-			: m_tex(tex)
-			, m_face(face)
-			, m_layer(layer)
+		GenMipsCommand(const TextureViewPtr& view)
+			: m_texView(view)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			static_cast<TextureImpl&>(*m_tex).generateMipmaps2d(m_face, m_layer);
+			const TextureViewImpl& viewImpl = static_cast<TextureViewImpl&>(*m_texView);
+			const TextureImpl& texImpl = static_cast<TextureImpl&>(*viewImpl.m_tex);
+
+			texImpl.generateMipmaps2d(viewImpl);
 			return Error::NONE;
 		}
 	};
 
 	ANKI_GL_SELF(CommandBufferImpl);
 	ANKI_ASSERT(!self.m_state.insideRenderPass());
-	self.pushBackNewCommand<GenMipsCommand>(tex, face, layer);
+	self.pushBackNewCommand<GenMipsCommand>(texView);
 }
 
-void CommandBuffer::generateMipmaps3d(TexturePtr tex)
+void CommandBuffer::generateMipmaps3d(TextureViewPtr tex)
 {
 	ANKI_ASSERT(!!"TODO");
 }
@@ -1356,39 +1304,9 @@ Bool CommandBuffer::isEmpty() const
 	return self.isEmpty();
 }
 
-void CommandBuffer::copyTextureSurfaceToTextureSurface(
-	TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
+void CommandBuffer::blitTextureViews(TextureViewPtr srcView, TextureViewPtr destView)
 {
-	class CopyTexCommand final : public GlCommand
-	{
-	public:
-		TexturePtr m_src;
-		TextureSurfaceInfo m_srcSurf;
-		TexturePtr m_dest;
-		TextureSurfaceInfo m_destSurf;
-
-		CopyTexCommand(
-			TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
-			: m_src(src)
-			, m_srcSurf(srcSurf)
-			, m_dest(dest)
-			, m_destSurf(destSurf)
-		{
-		}
-
-		Error operator()(GlState&)
-		{
-			TextureImpl::copy(static_cast<const TextureImpl&>(*m_src),
-				m_srcSurf,
-				static_cast<const TextureImpl&>(*m_dest),
-				m_destSurf);
-			return Error::NONE;
-		}
-	};
-
-	ANKI_GL_SELF(CommandBufferImpl);
-	ANKI_ASSERT(!self.m_state.insideRenderPass());
-	self.pushBackNewCommand<CopyTexCommand>(src, srcSurf, dest, destSurf);
+	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::setBufferBarrier(
@@ -1467,36 +1385,39 @@ void CommandBuffer::setTextureVolumeBarrier(
 	// Do nothing
 }
 
-void CommandBuffer::clearTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
+void CommandBuffer::setTextureBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource)
+{
+	// Do nothing for GL
+}
+
+void CommandBuffer::clearTextureView(TextureViewPtr texView, const ClearValue& clearValue)
 {
 	class ClearTextCommand final : public GlCommand
 	{
 	public:
-		TexturePtr m_tex;
+		TextureViewPtr m_texView;
 		ClearValue m_val;
-		TextureSurfaceInfo m_surf;
-		DepthStencilAspectBit m_aspect;
 
-		ClearTextCommand(
-			TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val, DepthStencilAspectBit aspect)
-			: m_tex(tex)
+		ClearTextCommand(TextureViewPtr texView, const ClearValue& val)
+			: m_texView(texView)
 			, m_val(val)
-			, m_surf(surf)
-			, m_aspect(aspect)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			static_cast<TextureImpl&>(*m_tex).clear(m_surf, m_val, m_aspect);
+			const TextureViewImpl& viewImpl = static_cast<TextureViewImpl&>(*m_texView);
+			const TextureImpl& texImpl = static_cast<TextureImpl&>(*viewImpl.m_tex);
+
+			texImpl.clear(viewImpl.getSubresource(), m_val);
 			return Error::NONE;
 		}
 	};
 
 	ANKI_GL_SELF(CommandBufferImpl);
 	ANKI_ASSERT(!self.m_state.insideRenderPass());
-	self.pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue, aspect);
+	self.pushBackNewCommand<ClearTextCommand>(texView, clearValue);
 }
 
 void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)

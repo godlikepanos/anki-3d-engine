@@ -28,7 +28,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 #if ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
 	if(SDL_Vulkan_LoadLibrary(nullptr))
 	{
-		ANKI_CORE_LOGE("SDL_Vulkan_LoadLibrary() failed");
+		ANKI_CORE_LOGE("SDL_Vulkan_LoadLibrary() failed: %s", SDL_GetError());
 		return Error::FUNCTION_FAILED;
 	}
 #endif

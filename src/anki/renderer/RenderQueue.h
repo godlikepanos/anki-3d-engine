@@ -128,7 +128,8 @@ public:
 	Vec3 m_worldPosition;
 	Vec2 m_firstFlareSize;
 	Vec4 m_colorMultiplier;
-	Texture* m_texture; ///< Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
+	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
+	const TextureView* m_textureView;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
 };
@@ -141,9 +142,10 @@ class DecalQueueElement final
 public:
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
-	Texture* m_diffuseAtlas; ///< Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
-	Texture* m_normalRoughnessAtlas;
+	const TextureView* m_diffuseAtlas;
+	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
+	const TextureView* m_normalRoughnessAtlas;
 	Vec4 m_diffuseAtlasUv;
 	Vec4 m_normalRoughnessAtlasUv;
 	F32 m_diffuseAtlasBlendFactor;

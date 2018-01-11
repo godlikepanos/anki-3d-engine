@@ -121,10 +121,10 @@ public:
 	void setupDecalQueueElement(DecalQueueElement& el) const
 	{
 		el.m_diffuseAtlas = (m_layers[LayerType::DIFFUSE].m_atlas)
-			? m_layers[LayerType::DIFFUSE].m_atlas->getGrTexture().get()
+			? m_layers[LayerType::DIFFUSE].m_atlas->getGrTextureView().get()
 			: nullptr;
 		el.m_normalRoughnessAtlas = (m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas)
-			? m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas->getGrTexture().get()
+			? m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas->getGrTextureView().get()
 			: nullptr;
 		el.m_diffuseAtlasUv = m_layers[LayerType::DIFFUSE].m_uv;
 		el.m_normalRoughnessAtlasUv = m_layers[LayerType::NORMAL_ROUGHNESS].m_uv;

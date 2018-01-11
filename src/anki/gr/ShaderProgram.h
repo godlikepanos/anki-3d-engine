@@ -19,6 +19,47 @@ class ShaderProgramInitInfo : GrBaseInitInfo
 {
 public:
 	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders = {};
+
+	ShaderProgramInitInfo(CString name = {})
+		: GrBaseInitInfo(name)
+	{
+	}
+
+	ShaderProgramInitInfo(const ShaderPtr& compute, CString name = {})
+		: GrBaseInitInfo(name)
+	{
+		m_shaders[compute->getShaderType()] = compute;
+	}
+
+	ShaderProgramInitInfo(const ShaderPtr& vert, const ShaderPtr& frag, CString name = {})
+		: GrBaseInitInfo(name)
+	{
+		m_shaders[vert->getShaderType()] = vert;
+		m_shaders[frag->getShaderType()] = frag;
+	}
+
+	Bool isValid() const
+	{
+		I32 invalid = 0;
+
+		if(m_shaders[ShaderType::COMPUTE])
+		{
+			invalid |= m_shaders[ShaderType::VERTEX] || m_shaders[ShaderType::TESSELLATION_CONTROL]
+				|| m_shaders[ShaderType::TESSELLATION_EVALUATION] || m_shaders[ShaderType::GEOMETRY]
+				|| m_shaders[ShaderType::FRAGMENT];
+		}
+		else
+		{
+			invalid |= !m_shaders[ShaderType::VERTEX] || !m_shaders[ShaderType::FRAGMENT];
+		}
+
+		for(ShaderType type = ShaderType::FIRST; type < ShaderType::COUNT; ++type)
+		{
+			invalid |= m_shaders[type] && m_shaders[type]->getShaderType() != type;
+		}
+
+		return invalid == 0;
+	}
 };
 
 /// GPU program.

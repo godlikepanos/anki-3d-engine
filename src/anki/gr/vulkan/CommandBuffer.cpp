@@ -37,17 +37,6 @@ void CommandBuffer::flush(FencePtr* fence)
 	}
 }
 
-void CommandBuffer::finish()
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.endRecording();
-
-	if(!self.isSecondLevel())
-	{
-		self.getGrManagerImpl().finishCommandBuffer(CommandBufferPtr(this));
-	}
-}
-
 void CommandBuffer::bindVertexBuffer(
 	U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 {
@@ -174,10 +163,10 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 }
 
 void CommandBuffer::bindTextureAndSampler(
-	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, TextureUsageBit usage, DepthStencilAspectBit aspect)
+	U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindTextureAndSampler(set, binding, tex, sampler, usage, aspect);
+	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, usage);
 }
 
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
@@ -192,10 +181,10 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 	self.bindStorageBuffer(set, binding, buff, offset, range);
 }
 
-void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
+void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindImage(set, binding, img, level);
+	self.bindImage(set, binding, img);
 }
 
 void CommandBuffer::bindTextureBuffer(
@@ -259,55 +248,32 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 	self.dispatchCompute(groupCountX, groupCountY, groupCountZ);
 }
 
-void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
+void CommandBuffer::generateMipmaps2d(TextureViewPtr texView)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.generateMipmaps2d(tex, face, layer);
+	self.generateMipmaps2d(texView);
 }
 
-void CommandBuffer::generateMipmaps3d(TexturePtr tex)
+void CommandBuffer::generateMipmaps3d(TextureViewPtr texView)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::copyTextureSurfaceToTextureSurface(
-	TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
+void CommandBuffer::blitTextureViews(TextureViewPtr srcView, TextureViewPtr destView)
 {
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::copyTextureVolumeToTextureVolume(
-	TexturePtr src, const TextureVolumeInfo& srcVol, TexturePtr dest, const TextureVolumeInfo& destVol)
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::clearTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
+void CommandBuffer::clearTextureView(TextureViewPtr texView, const ClearValue& clearValue)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.clearTextureSurface(tex, surf, clearValue, aspect);
+	self.clearTextureView(texView, clearValue);
 }
 
-void CommandBuffer::clearTextureVolume(
-	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectBit aspect)
+void CommandBuffer::copyBufferToTextureView(BufferPtr buff, PtrSize offset, PtrSize range, TextureViewPtr texView)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.clearTextureVolume(tex, vol, clearValue, aspect);
-}
-
-void CommandBuffer::copyBufferToTextureSurface(
-	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.copyBufferToTextureSurface(buff, offset, range, tex, surf);
-}
-
-void CommandBuffer::copyBufferToTextureVolume(
-	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	self.copyBufferToTextureVolume(buff, offset, range, tex, vol);
+	self.copyBufferToTextureViewInternal(buff, offset, range, texView);
 }
 
 void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
@@ -327,6 +293,13 @@ void CommandBuffer::copyBufferToBuffer(
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.copyBufferToBuffer(src, srcOffset, dst, dstOffset, range);
+}
+
+void CommandBuffer::setTextureBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setTextureBarrier(tex, prevUsage, nextUsage, subresource);
 }
 
 void CommandBuffer::setTextureSurfaceBarrier(

@@ -56,7 +56,7 @@ Error Font::init(const CString& filename, const std::initializer_list<U32>& font
 
 	// End building
 	nk_handle texHandle;
-	texHandle.ptr = numberToPtr<void*>(ptrToNumber(m_tex.get()) | FONT_TEXTURE_MASK);
+	texHandle.ptr = numberToPtr<void*>(ptrToNumber(m_texView.get()) | FONT_TEXTURE_MASK);
 	nk_font_atlas_end(&m_atlas, texHandle, nullptr);
 
 	nk_font_atlas_cleanup(&m_atlas);
@@ -77,28 +77,36 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	buff->unmap();
 
 	// Create the texture
-	TextureInitInfo texInit;
+	TextureInitInfo texInit("Font");
 	texInit.m_width = width;
 	texInit.m_height = height;
 	texInit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	texInit.m_usage =
 		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::GENERATE_MIPMAPS;
-	texInit.m_mipmapsCount = 4;
+	texInit.m_mipmapCount = 4;
 
 	m_tex = m_manager->getGrManager().newTexture(texInit);
 
+	// Create the whole texture view
+	m_texView = m_manager->getGrManager().newTextureView(TextureViewInitInfo(m_tex, "Font"));
+
 	// Do the copy
+	static const TextureSurfaceInfo surf(0, 0, 0, 0);
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = m_manager->getGrManager().newCommandBuffer(cmdbInit);
+	{
+		TextureViewInitInfo viewInit(m_tex, surf, DepthStencilAspectBit::NONE, "TempFont");
+		TextureViewPtr tmpView = m_manager->getGrManager().newTextureView(viewInit);
 
-	TextureSurfaceInfo surf(0, 0, 0, 0);
+		cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
+		cmdb->copyBufferToTextureView(buff, 0, buffSize, tmpView);
+		cmdb->setTextureSurfaceBarrier(
+			m_tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS, surf);
+	}
 
-	cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
-	cmdb->copyBufferToTextureSurface(buff, 0, buffSize, m_tex, surf);
-	cmdb->setTextureSurfaceBarrier(
-		m_tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS, surf);
-	cmdb->generateMipmaps2d(m_tex, 0, 0);
+	// Gen mips
+	cmdb->generateMipmaps2d(m_texView);
 	cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::GENERATE_MIPMAPS, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
 	cmdb->flush();

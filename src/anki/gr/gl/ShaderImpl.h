@@ -13,17 +13,15 @@ namespace anki
 
 // Forward
 class CString;
-class String;
 
 /// @addtogroup opengl
 /// @{
 
-/// Shader program. It only contains a single shader and it can be combined with other programs in a program pipiline.
+/// Shader program implementation.
 class ShaderImpl final : public Shader, public GlObject
 {
 public:
 	GLenum m_glType = 0;
-	ShaderType m_type;
 
 	ShaderImpl(GrManager* manager)
 		: Shader(manager)
@@ -32,10 +30,12 @@ public:
 
 	~ShaderImpl();
 
-	/// Create the shader.
-	/// @param shaderType The type of the shader in the program
-	/// @param source The shader's source
-	ANKI_USE_RESULT Error init(ShaderType shaderType, const CString& source);
+	void preInit(const ShaderInitInfo& init)
+	{
+		m_shaderType = init.m_shaderType;
+	}
+
+	ANKI_USE_RESULT Error init(const CString& source);
 };
 /// @}
 

@@ -19,6 +19,7 @@ class GrObject;
 class GrManager;
 class GrManagerImpl;
 class TextureInitInfo;
+class TextureViewInitInfo;
 class SamplerInitInfo;
 class GrManagerInitInfo;
 class FramebufferInitInfo;
@@ -64,6 +65,7 @@ using GrObjectPtr = IntrusivePtr<T, DefaultPtrDeleter<T>>;
 
 ANKI_GR_CLASS(Buffer)
 ANKI_GR_CLASS(Texture)
+ANKI_GR_CLASS(TextureView)
 ANKI_GR_CLASS(Sampler)
 ANKI_GR_CLASS(CommandBuffer)
 ANKI_GR_CLASS(Shader)
@@ -140,6 +142,11 @@ public:
 class TextureSurfaceInfo
 {
 public:
+	U32 m_level = 0;
+	U32 m_depth = 0;
+	U32 m_face = 0;
+	U32 m_layer = 0;
+
 	TextureSurfaceInfo() = default;
 
 	TextureSurfaceInfo(const TextureSurfaceInfo&) = default;
@@ -167,16 +174,18 @@ public:
 		return anki::computeHash(this, sizeof(*this), 0x1234567);
 	}
 
-	U32 m_level = 0;
-	U32 m_depth = 0;
-	U32 m_face = 0;
-	U32 m_layer = 0;
+	static TextureSurfaceInfo newZero()
+	{
+		return TextureSurfaceInfo();
+	}
 };
 
 /// A way to identify a volume in 3D textures.
 class TextureVolumeInfo
 {
 public:
+	U32 m_level = 0;
+
 	TextureVolumeInfo() = default;
 
 	TextureVolumeInfo(const TextureVolumeInfo&) = default;
@@ -185,8 +194,59 @@ public:
 		: m_level(level)
 	{
 	}
+};
 
-	U32 m_level = 0;
+/// Defines a subset of a texture.
+class TextureSubresourceInfo
+{
+public:
+	U32 m_firstMipmap = 0;
+	U32 m_mipmapCount = 1;
+
+	U32 m_firstLayer = 0;
+	U32 m_layerCount = 1;
+
+	U8 m_firstFace = 0;
+	U8 m_faceCount = 1;
+
+	DepthStencilAspectBit m_depthStencilAspect = DepthStencilAspectBit::NONE;
+
+	U8 _m_padding[1] = {0};
+
+	TextureSubresourceInfo(DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+		: m_depthStencilAspect(aspect)
+	{
+	}
+
+	TextureSubresourceInfo(const TextureSubresourceInfo&) = default;
+
+	TextureSubresourceInfo(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+		: m_firstMipmap(surf.m_level)
+		, m_mipmapCount(1)
+		, m_firstLayer(surf.m_layer)
+		, m_layerCount(1)
+		, m_firstFace(surf.m_face)
+		, m_faceCount(1)
+		, m_depthStencilAspect(aspect)
+	{
+	}
+
+	TextureSubresourceInfo(const TextureVolumeInfo& vol, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+		: m_firstMipmap(vol.m_level)
+		, m_mipmapCount(1)
+		, m_firstLayer(0)
+		, m_layerCount(1)
+		, m_firstFace(0)
+		, m_faceCount(1)
+		, m_depthStencilAspect(aspect)
+	{
+	}
+
+	U64 computeHash() const
+	{
+		static_assert(sizeof(*this) == sizeof(U32) * 4 + sizeof(U8) * 4, "Should be hashable");
+		return anki::computeHash(this, sizeof(*this));
+	}
 };
 
 enum class DescriptorType : U8
@@ -275,6 +335,12 @@ inline U computeMaxMipmapCount3d(U w, U h, U d)
 
 	return count;
 }
+
+/// Compute the size in bytes of a texture surface surface.
+PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt);
+
+/// Compute the size in bytes of the texture volume.
+PtrSize computeVolumeSize(U width, U height, U depth, const PixelFormat& fmt);
 /// @}
 
 } // end namespace anki

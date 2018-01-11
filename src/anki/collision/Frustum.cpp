@@ -211,17 +211,17 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 void OrthographicFrustum::recalculate()
 {
 	// Planes
-	m_planesL[FrustumPlaneType::LEFT] = Plane(Vec4(1.0, 0.0, 0.0, 0.0), m_left);
-	m_planesL[FrustumPlaneType::RIGHT] = Plane(Vec4(-1.0, 0.0, 0.0, 0.0), -m_right);
+	m_planesL[FrustumPlaneType::LEFT] = Plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), m_left);
+	m_planesL[FrustumPlaneType::RIGHT] = Plane(Vec4(-1.0f, 0.0f, 0.0f, 0.0f), -m_right);
 
-	m_planesL[FrustumPlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
-	m_planesL[FrustumPlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
-	m_planesL[FrustumPlaneType::TOP] = Plane(Vec4(0.0, -1.0, 0.0, 0.0), -m_top);
-	m_planesL[FrustumPlaneType::BOTTOM] = Plane(Vec4(0.0, 1.0, 0.0, 0.0), m_bottom);
+	m_planesL[FrustumPlaneType::NEAR] = Plane(Vec4(0.0f, 0.0f, -1.0f, 0.0f), m_near);
+	m_planesL[FrustumPlaneType::FAR] = Plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -m_far);
+	m_planesL[FrustumPlaneType::TOP] = Plane(Vec4(0.0f, -1.0f, 0.0f, 0.0f), -m_top);
+	m_planesL[FrustumPlaneType::BOTTOM] = Plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), m_bottom);
 
 	// OBB
-	Vec4 c((m_right + m_left) * 0.5, (m_top + m_bottom) * 0.5, -(m_far + m_near) * 0.5, 0.0);
-	Vec4 e = Vec4(m_right, m_top, -m_far, 0.0) - c;
+	Vec4 c((m_right + m_left) * 0.5f, (m_top + m_bottom) * 0.5f, -(m_far + m_near) * 0.5f, 0.0f);
+	Vec4 e = Vec4(m_right, m_top, -m_far, 0.0f) - c;
 	m_obbL = Obb(c, Mat3x4::getIdentity(), e);
 }
 

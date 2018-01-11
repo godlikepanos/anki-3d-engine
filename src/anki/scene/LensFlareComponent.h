@@ -85,7 +85,7 @@ public:
 		el.m_worldPosition = m_worldPosition.xyz();
 		el.m_firstFlareSize = m_firstFlareSize;
 		el.m_colorMultiplier = m_colorMul;
-		el.m_texture = m_tex->getGrTexture().get();
+		el.m_textureView = m_tex->getGrTextureView().get();
 		el.m_userData = this;
 		el.m_drawCallback = debugDrawCallback;
 	}

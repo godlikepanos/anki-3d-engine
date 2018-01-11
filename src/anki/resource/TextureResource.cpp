@@ -70,6 +70,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	TextureInitInfo init("RsrcTex");
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION
 		| TextureUsageBit::TRANSFER_DESTINATION;
+	init.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION;
 	U faces = 0;
 
 	ResourceFilePtr file;
@@ -160,7 +161,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// mipmapsCount
-	init.m_mipmapsCount = loader.getMipLevelsCount();
+	init.m_mipmapCount = loader.getMipLevelsCount();
 
 	// Create the texture
 	m_tex = getManager().getGrManager().newTexture(init);
@@ -193,6 +194,11 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 	m_layerCount = init.m_layerCount;
+
+	// Create the texture view
+	TextureViewInitInfo viewInit(m_tex, "Rsrc");
+	m_texView = getManager().getGrManager().newTextureView(viewInit);
+
 	return Error::NONE;
 }
 
@@ -247,7 +253,10 @@ Error TextureResource::load(LoadingContext& ctx)
 				surfOrVolSize = vol.m_data.getSize();
 				surfOrVolData = &vol.m_data[0];
 
-				ctx.m_gr->getTextureVolumeUploadInfo(ctx.m_tex, TextureVolumeInfo(mip), allocationSize);
+				allocationSize = computeVolumeSize(ctx.m_tex->getWidth() >> mip,
+					ctx.m_tex->getHeight() >> mip,
+					ctx.m_tex->getDepth() >> mip,
+					ctx.m_tex->getPixelFormat());
 			}
 			else
 			{
@@ -255,8 +264,8 @@ Error TextureResource::load(LoadingContext& ctx)
 				surfOrVolSize = surf.m_data.getSize();
 				surfOrVolData = &surf.m_data[0];
 
-				ctx.m_gr->getTextureSurfaceUploadInfo(
-					ctx.m_tex, TextureSurfaceInfo(mip, 0, face, layer), allocationSize);
+				allocationSize = computeSurfaceSize(
+					ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip, ctx.m_tex->getPixelFormat());
 			}
 
 			ANKI_ASSERT(allocationSize >= surfOrVolSize);
@@ -267,19 +276,20 @@ Error TextureResource::load(LoadingContext& ctx)
 
 			memcpy(data, surfOrVolData, surfOrVolSize);
 
+			// Create temp tex view
+			TextureSubresourceInfo subresource;
 			if(ctx.m_texType == TextureType::_3D)
 			{
-				TextureVolumeInfo vol(mip);
-				cmdb->copyBufferToTextureVolume(
-					handle.getBuffer(), handle.getOffset(), handle.getRange(), ctx.m_tex, vol);
+				subresource = TextureSubresourceInfo(TextureVolumeInfo(mip));
 			}
 			else
 			{
-				TextureSurfaceInfo surf(mip, 0, face, layer);
-
-				cmdb->copyBufferToTextureSurface(
-					handle.getBuffer(), handle.getOffset(), handle.getRange(), ctx.m_tex, surf);
+				subresource = TextureSubresourceInfo(TextureSurfaceInfo(mip, 0, face, layer));
 			}
+
+			TextureViewPtr tmpView = ctx.m_gr->newTextureView(TextureViewInitInfo(ctx.m_tex, subresource, "RsrcTmp"));
+
+			cmdb->copyBufferToTextureView(handle.getBuffer(), handle.getOffset(), handle.getRange(), tmpView);
 		}
 
 		// Set the barriers of the batch

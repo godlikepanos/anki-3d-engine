@@ -318,9 +318,9 @@ public:
 	Atomic<U32> m_count = {0};
 	Atomic<U32> m_count2 = {0};
 
-	TexturePtr m_diffDecalTexAtlas;
+	TextureViewPtr m_diffDecalTexAtlas;
 	SpinLock m_diffDecalTexAtlasMtx;
-	TexturePtr m_normalRoughnessDecalTexAtlas;
+	TextureViewPtr m_normalRoughnessDecalTexAtlas;
 	SpinLock m_normalRoughnessDecalTexAtlasMtx;
 
 	LightBin* m_bin = nullptr;
@@ -490,8 +490,8 @@ Error LightBin::bin(const Mat4& viewMat,
 	// Sync
 	ANKI_CHECK(m_threadPool->waitForAllThreadsToFinish());
 
-	out.m_diffDecalTex = ctx.m_diffDecalTexAtlas;
-	out.m_normRoughnessDecalTex = ctx.m_normalRoughnessDecalTexAtlas;
+	out.m_diffDecalTexView = ctx.m_diffDecalTexAtlas;
+	out.m_normRoughnessDecalTexView = ctx.m_normalRoughnessDecalTexAtlas;
 
 	return Error::NONE;
 }
@@ -792,7 +792,7 @@ void LightBin::writeAndBinDecal(const DecalQueueElement& decalEl, LightBinContex
 	I idx = ctx.m_decalCount.fetchAdd(1);
 	ShaderDecal& decal = ctx.m_decals[idx];
 
-	TexturePtr atlas(decalEl.m_diffuseAtlas);
+	TextureViewPtr atlas(const_cast<TextureView*>(decalEl.m_diffuseAtlas));
 	Vec4 uv = decalEl.m_diffuseAtlasUv;
 	decal.m_diffUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
 	decal.m_blendFactors[0] = decalEl.m_diffuseAtlasBlendFactor;
@@ -807,7 +807,7 @@ void LightBin::writeAndBinDecal(const DecalQueueElement& decalEl, LightBinContex
 		ctx.m_diffDecalTexAtlas = atlas;
 	}
 
-	atlas.reset(decalEl.m_normalRoughnessAtlas);
+	atlas.reset(const_cast<TextureView*>(decalEl.m_normalRoughnessAtlas));
 	uv = decalEl.m_normalRoughnessAtlasUv;
 	decal.m_normRoughnessUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
 	decal.m_blendFactors[1] = decalEl.m_normalRoughnessAtlasBlendFactor;

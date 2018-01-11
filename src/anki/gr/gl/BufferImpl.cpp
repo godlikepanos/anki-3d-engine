@@ -10,20 +10,15 @@
 namespace anki
 {
 
-void BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
+void BufferImpl::init()
 {
 	ANKI_ASSERT(!isCreated());
-	m_usage = usage;
-	m_access = access;
 
-	///
-	// Check size
-	//
-
-	ANKI_ASSERT(size > 0 && "Unacceptable size");
+	const BufferUsageBit usage = getBufferUsage();
+	const BufferMapAccessBit access = getMapAccess();
 
 	// Align size to satisfy BufferImpl::fill
-	alignRoundUp(4, size);
+	m_realSize = getAlignedRoundUp(4, getSize());
 
 	// This is a guess, not very important since DSA doesn't care about it on creation
 	m_target = GL_ARRAY_BUFFER;
@@ -37,8 +32,6 @@ void BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit acc
 	{
 		m_target = GL_SHADER_STORAGE_BUFFER;
 	}
-
-	m_size = size;
 
 	//
 	// Determine the creation flags
@@ -73,8 +66,7 @@ void BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit acc
 	//
 	glGenBuffers(1, &m_glName);
 	glBindBuffer(m_target, m_glName);
-	// Align the size to satisfy BufferImpl::fill
-	glBufferStorage(m_target, size, nullptr, flags);
+	glBufferStorage(m_target, m_realSize, nullptr, flags);
 
 	//
 	// Map
@@ -83,7 +75,7 @@ void BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit acc
 	{
 		const GLbitfield MAP_BITS = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 
-		m_persistentMapping = glMapBufferRange(m_target, 0, size, flags & MAP_BITS);
+		m_persistentMapping = glMapBufferRange(m_target, 0, m_size, flags & MAP_BITS);
 		ANKI_ASSERT(m_persistentMapping != nullptr);
 	}
 }

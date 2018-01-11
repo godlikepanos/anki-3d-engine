@@ -140,9 +140,6 @@ public:
 	/// @param[out] fence Optionaly create fence.
 	void flush(FencePtr* fence = nullptr);
 
-	/// Flush and wait to finish.
-	void finish();
-
 	/// @name State manipulation
 	/// @{
 
@@ -226,16 +223,10 @@ public:
 	/// Bind texture and sample.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.
-	/// @param tex The texture to bind.
+	/// @param texView The texture view to bind.
 	/// @param sampler The sampler to override the default sampler of the tex.
 	/// @param usage The state the tex is in.
-	/// @param aspect The depth stencil aspect.
-	void bindTextureAndSampler(U32 set,
-		U32 binding,
-		TexturePtr tex,
-		SamplerPtr sampler,
-		TextureUsageBit usage,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);
+	void bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage);
 
 	/// Bind uniform buffer.
 	/// @param set The set to bind to.
@@ -256,7 +247,7 @@ public:
 	void bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range);
 
 	/// Bind load/store image.
-	void bindImage(U32 set, U32 binding, TexturePtr img, U32 level);
+	void bindImage(U32 set, U32 binding, TextureViewPtr img);
 
 	/// Bind texture buffer.
 	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, PixelFormat fmt);
@@ -298,49 +289,30 @@ public:
 
 	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
 	/// TextureUsageBit::GENERATE_MIPMAPS before calling this method.
-	/// @param tex The texture to generate mips.
-	/// @param face The face of a cube texture or zero.
-	/// @param layer The layer of an array texture or zero.
-	void generateMipmaps2d(TexturePtr tex, U face, U layer);
+	/// @param texView The texture view to generate mips. It should point to a subresource that contains the whole
+	///                mip chain and only one face and one layer.
+	void generateMipmaps2d(TextureViewPtr texView);
 
 	/// Generate mipmaps only for 3D textures.
-	/// @param tex The texture to generate mips.
-	void generateMipmaps3d(TexturePtr tex);
+	/// @param texView The texture view to generate mips.
+	void generateMipmaps3d(TextureViewPtr tex);
 
-	// TODO Rename to blit
-	void copyTextureSurfaceToTextureSurface(
-		TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf);
-
-	void copyTextureVolumeToTextureVolume(
-		TexturePtr src, const TextureVolumeInfo& srcVol, TexturePtr dest, const TextureVolumeInfo& destVol);
+	/// Blit from surface to surface.
+	/// @param srcView The source view that points to a surface.
+	/// @param dstView The destination view that points to a surface.
+	void blitTextureViews(TextureViewPtr srcView, TextureViewPtr destView);
 
 	/// Clear a single texture surface. Can be used for all textures except 3D.
-	/// @param tex The texture to clear.
-	/// @param surf The surface to clear.
-	/// @param clearValue The value to clear it with.
-	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
-	void clearTextureSurface(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		const ClearValue& clearValue,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE);
+	/// @param[in,out] texView The texture view to clear.
+	/// @param[in] clearValue The value to clear it with.
+	void clearTextureView(TextureViewPtr texView, const ClearValue& clearValue);
 
-	/// Clear a volume out of a 3D texture.
-	/// @param tex The texture to clear.
-	/// @param vol The volume to clear.
-	/// @param clearValue The value to clear it with.
-	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
-	void clearTextureVolume(TexturePtr tex,
-		const TextureVolumeInfo& vol,
-		const ClearValue& clearValue,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE);
-
-	/// Copy a buffer to a texture surface.
-	void copyBufferToTextureSurface(
-		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf);
-
-	/// Copy buffer to a texture volume.
-	void copyBufferToTextureVolume(
-		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol);
+	/// Copy a buffer to a texture surface or volume.
+	/// @param buff The source buffer to copy from.
+	/// @param offset The offset in the buffer to start reading from.
+	/// @param range The size of the buffer to read.
+	/// @param texView The texture view that points to a surface or volume to write to.
+	void copyBufferToTextureView(BufferPtr buff, PtrSize offset, PtrSize range, TextureViewPtr texView);
 
 	/// Fill a buffer with some value.
 	/// @param[in,out] buff The buffer to fill.
@@ -366,6 +338,11 @@ public:
 
 	/// @name Sync
 	/// @{
+	void setTextureBarrier(TexturePtr tex,
+		TextureUsageBit prevUsage,
+		TextureUsageBit nextUsage,
+		const TextureSubresourceInfo& subresource);
+
 	void setTextureSurfaceBarrier(
 		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf);
 

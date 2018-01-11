@@ -13,7 +13,7 @@ do
 	count=$((${count}+1))
 
 	# Throttle the parallel commands
-	if !((count % 8)); then
+	if !((count % 16)); then
 		wait
 	fi
 done

@@ -1073,7 +1073,7 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 	shaderHeaderSrc.join("", shaderHeader);
 
 	// Create the shaders and the program
-	ShaderProgramInitInfo progInf;
+	ShaderProgramInitInfo progInf("RsrcProg");
 	for(ShaderType i = ShaderType::FIRST; i < ShaderType::COUNT; ++i)
 	{
 		if(!m_sources[i])

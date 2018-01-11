@@ -7,8 +7,9 @@
 
 #include <anki/gr/GrObject.h>
 #include <anki/gr/Enums.h>
-#include <anki/gr/Texture.h>
+#include <anki/gr/TextureView.h>
 #include <anki/gr/Buffer.h>
+#include <anki/gr/GrManager.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/util/HashMap.h>
@@ -19,6 +20,7 @@ namespace anki
 
 // Forward
 class RenderGraph;
+class RenderGraphDescription;
 
 /// @addtogroup graphics
 /// @{
@@ -42,6 +44,11 @@ public:
 	bool operator==(const RenderTargetHandle& b) const
 	{
 		return m_idx == b.m_idx;
+	}
+
+	bool operator!=(const RenderTargetHandle& b) const
+	{
+		return m_idx != b.m_idx;
 	}
 
 	Bool isValid() const
@@ -121,32 +128,32 @@ public:
 
 	void getBufferState(RenderPassBufferHandle handle, BufferPtr& buff) const;
 
-	void getRenderTargetState(
-		RenderTargetHandle handle, TexturePtr& tex, TextureUsageBit& usage, DepthStencilAspectBit& aspect) const;
 	void getRenderTargetState(RenderTargetHandle handle,
-		const TextureSurfaceInfo& surf,
+		const TextureSubresourceInfo& subresource,
 		TexturePtr& tex,
-		TextureUsageBit& usage,
-		DepthStencilAspectBit& aspect) const;
-	void getRenderTargetState(RenderTargetHandle handle,
-		const TextureVolumeInfo& vol,
-		TexturePtr& tex,
-		TextureUsageBit& usage,
-		DepthStencilAspectBit& aspect) const;
-	void getRenderTargetState(RenderTargetHandle handle,
-		U32 level,
-		TexturePtr& tex,
-		TextureUsageBit& usage,
-		DepthStencilAspectBit& aspect) const;
+		TextureUsageBit& usage) const;
 
 	/// Convenience method.
-	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, SamplerPtr sampler)
+	void bindTextureAndSampler(
+		U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, SamplerPtr sampler)
 	{
 		TexturePtr tex;
 		TextureUsageBit usage;
-		DepthStencilAspectBit aspect;
-		getRenderTargetState(handle, tex, usage, aspect);
-		m_commandBuffer->bindTextureAndSampler(set, binding, tex, sampler, usage, aspect);
+		getRenderTargetState(handle, subresource, tex, usage);
+		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
+		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler, usage);
+	}
+
+	/// Convenience method to bind the whole texture as color.
+	void bindColorTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, SamplerPtr sampler)
+	{
+		TexturePtr tex = getTexture(handle);
+		TextureViewInitInfo viewInit(tex); // Use the whole texture
+		TextureUsageBit usage;
+		getRenderTargetState(handle, viewInit, tex, usage);
+		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler, usage);
 	}
 
 	/// Convenience method.
@@ -168,6 +175,8 @@ public:
 private:
 	const RenderGraph* m_rgraph ANKI_DBG_NULLIFY;
 	U32 m_passIdx ANKI_DBG_NULLIFY;
+
+	TexturePtr getTexture(RenderTargetHandle handle) const;
 };
 
 /// Work callback for a RenderGraph pass.
@@ -180,12 +189,9 @@ class RenderPassDependency
 	friend class RenderPassDescriptionBase;
 
 public:
-	/// Dependency to an individual surface.
-	RenderPassDependency(RenderTargetHandle handle,
-		TextureUsageBit usage,
-		const TextureSurfaceInfo& surface,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
-		: m_texture({handle, usage, surface, false, aspect})
+	/// Dependency to a texture subresource.
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
+		: m_texture({handle, usage, subresource})
 		, m_isTexture(true)
 	{
 		ANKI_ASSERT(handle.valid());
@@ -194,10 +200,12 @@ public:
 	/// Dependency to the whole texture.
 	RenderPassDependency(
 		RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
-		: m_texture({handle, usage, TextureSurfaceInfo(0, 0, 0, 0), true, aspect})
+		: m_texture({handle, usage, TextureSubresourceInfo()})
 		, m_isTexture(true)
 	{
 		ANKI_ASSERT(handle.valid());
+		m_texture.m_subresource.m_mipmapCount = MAX_U32; // Mark it as "whole texture"
+		m_texture.m_subresource.m_depthStencilAspect = aspect;
 	}
 
 	RenderPassDependency(RenderPassBufferHandle handle, BufferUsageBit usage)
@@ -213,9 +221,7 @@ private:
 	public:
 		RenderTargetHandle m_handle;
 		TextureUsageBit m_usage;
-		TextureSurfaceInfo m_surface;
-		Bool8 m_wholeTex;
-		DepthStencilAspectBit m_aspect;
+		TextureSubresourceInfo m_subresource;
 	};
 
 	struct BufferInfo
@@ -256,35 +262,10 @@ public:
 	}
 
 	/// Add new consumer dependency.
-	void newConsumer(const RenderPassDependency& dep)
-	{
-		m_consumers.emplaceBack(m_alloc, dep);
-
-		if(dep.m_isTexture && dep.m_texture.m_usage != TextureUsageBit::NONE)
-		{
-			m_consumerRtMask.set(dep.m_texture.m_handle.m_idx);
-		}
-		else if(dep.m_buffer.m_usage != BufferUsageBit::NONE)
-		{
-			m_consumerBufferMask.set(dep.m_buffer.m_handle.m_idx);
-			m_hasBufferDeps = true;
-		}
-	}
+	void newConsumer(const RenderPassDependency& dep);
 
 	/// Add new producer dependency.
-	void newProducer(const RenderPassDependency& dep)
-	{
-		m_producers.emplaceBack(m_alloc, dep);
-		if(dep.m_isTexture)
-		{
-			m_producerRtMask.set(dep.m_texture.m_handle.m_idx);
-		}
-		else
-		{
-			m_producerBufferMask.set(dep.m_buffer.m_handle.m_idx);
-			m_hasBufferDeps = true;
-		}
-	}
+	void newProducer(const RenderPassDependency& dep);
 
 protected:
 	enum class Type : U8
@@ -296,6 +277,7 @@ protected:
 	Type m_type;
 
 	StackAllocator<U8> m_alloc;
+	RenderGraphDescription* m_descr;
 
 	RenderPassWorkCallback m_callback = nullptr;
 	void* m_userData = nullptr;
@@ -312,15 +294,19 @@ protected:
 
 	String m_name;
 
-	RenderPassDescriptionBase(Type t)
+	RenderPassDescriptionBase(Type t, RenderGraphDescription* descr)
 		: m_type(t)
+		, m_descr(descr)
 	{
+		ANKI_ASSERT(descr);
 	}
 
 	void setName(CString name)
 	{
 		m_name.create(m_alloc, (name.isEmpty()) ? "N/A" : name);
 	}
+
+	void fixSubresource(RenderPassDependency& dep) const;
 };
 
 /// Framebuffer attachment info.
@@ -342,6 +328,7 @@ public:
 class FramebufferDescription
 {
 	friend class GraphicsRenderPassDescription;
+	friend class RenderGraph;
 
 public:
 	Array<FramebufferDescriptionAttachment, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
@@ -362,7 +349,6 @@ public:
 	}
 
 private:
-	FramebufferInitInfo m_fbInitInfo;
 	Bool8 m_defaultFb = false;
 
 	U64 m_hash = 0;
@@ -373,14 +359,10 @@ class GraphicsRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
 	friend class RenderGraph;
+	template<typename, typename>
+	friend class GenericPoolAllocator;
 
 public:
-	GraphicsRenderPassDescription()
-		: RenderPassDescriptionBase(Type::GRAPHICS)
-	{
-		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
-	}
-
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
 		const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
 		RenderTargetHandle depthStencilRenderTargetHandle,
@@ -413,30 +395,29 @@ public:
 		}
 #endif
 
-		if(fbInfo.m_defaultFb)
+		m_fbDescr = fbInfo;
+		if(!fbInfo.m_defaultFb)
 		{
-			m_fbInitInfo.m_colorAttachmentCount = 1;
-		}
-		else
-		{
-			m_fbInitInfo = fbInfo.m_fbInitInfo;
 			memcpy(&m_rtHandles[0], &colorRenderTargetHandles[0], sizeof(colorRenderTargetHandles));
 			m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
 		}
-		m_fbInitInfo.setName(m_name.toCString());
-		m_fbHash = fbInfo.m_hash;
 		m_fbRenderArea = {{minx, miny, maxx, maxy}};
 	}
 
 private:
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;
-	FramebufferInitInfo m_fbInitInfo;
+	FramebufferDescription m_fbDescr;
 	Array<U32, 4> m_fbRenderArea = {};
-	U64 m_fbHash = 0;
+
+	GraphicsRenderPassDescription(RenderGraphDescription* descr)
+		: RenderPassDescriptionBase(Type::GRAPHICS, descr)
+	{
+		memset(&m_rtHandles[0], 0xFF, sizeof(m_rtHandles));
+	}
 
 	Bool hasFramebuffer() const
 	{
-		return m_fbHash != 0;
+		return m_fbDescr.m_hash != 0;
 	}
 };
 
@@ -444,10 +425,12 @@ private:
 class ComputeRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
+	template<typename, typename>
+	friend class GenericPoolAllocator;
 
-public:
-	ComputeRenderPassDescription()
-		: RenderPassDescriptionBase(Type::NO_GRAPHICS)
+private:
+	ComputeRenderPassDescription(RenderGraphDescription* descr)
+		: RenderPassDescriptionBase(Type::NO_GRAPHICS, descr)
 	{
 	}
 };
@@ -456,6 +439,7 @@ public:
 class RenderGraphDescription
 {
 	friend class RenderGraph;
+	friend class RenderPassDescriptionBase;
 
 public:
 	RenderGraphDescription(const StackAllocator<U8>& alloc)
@@ -477,7 +461,7 @@ public:
 	/// Create a new graphics render pass.
 	GraphicsRenderPassDescription& newGraphicsRenderPass(CString name)
 	{
-		GraphicsRenderPassDescription* pass = m_alloc.newInstance<GraphicsRenderPassDescription>();
+		GraphicsRenderPassDescription* pass = m_alloc.newInstance<GraphicsRenderPassDescription>(this);
 		pass->m_alloc = m_alloc;
 		pass->setName(name);
 		m_passes.emplaceBack(m_alloc, pass);
@@ -487,7 +471,7 @@ public:
 	/// Create a new compute render pass.
 	ComputeRenderPassDescription& newComputeRenderPass(CString name)
 	{
-		ComputeRenderPassDescription* pass = m_alloc.newInstance<ComputeRenderPassDescription>();
+		ComputeRenderPassDescription* pass = m_alloc.newInstance<ComputeRenderPassDescription>(this);
 		pass->m_alloc = m_alloc;
 		pass->setName(name);
 		m_passes.emplaceBack(m_alloc, pass);
@@ -654,33 +638,29 @@ private:
 	BakeContext* newContext(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
 	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
 	void initBatches();
-	void setBatchBarriers(const RenderGraphDescription& descr, BakeContext& ctx) const;
+	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(
-		const FramebufferInitInfo& fbInit, const RenderTargetHandle* rtHandles, U64 hash);
+	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles);
 
-	static ANKI_HOT Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
+	ANKI_HOT Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b) const;
+
+	static Bool overlappingTextureSubresource(const TextureSubresourceInfo& suba, const TextureSubresourceInfo& subb);
 
 	template<Bool isTexture>
-	static ANKI_HOT Bool overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b);
+	ANKI_HOT Bool overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b) const;
 
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
-	void setTextureBarrier(Batch& batch,
-		const RenderPassDescriptionBase& pass,
-		const RenderPassDependency& consumer,
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64>& rtHasBarrierMask,
-		const RenderGraphDescription& descr,
-		BakeContext& ctx) const;
+	void setTextureBarrier(Batch& batch, const RenderPassDependency& consumer);
 
-	void getCrntUsageAndAspect(
-		RenderTargetHandle handle, U32 passIdx, TextureUsageBit& usage, DepthStencilAspectBit& aspect) const;
-	void getCrntUsageAndAspect(RenderTargetHandle handle,
+	template<typename TFunc>
+	static void iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubresourceInfo& subresource, TFunc func);
+
+	void getCrntUsage(RenderTargetHandle handle,
 		U32 passIdx,
-		const TextureSurfaceInfo& surf,
-		TextureUsageBit& usage,
-		DepthStencilAspectBit& aspect) const;
+		const TextureSubresourceInfo& subresource,
+		TextureUsageBit& usage) const;
 
 	/// @name Dump the dependency graph into a file.
 	/// @{
@@ -695,41 +675,6 @@ private:
 };
 /// @}
 
-inline void RenderPassWorkContext::getBufferState(RenderPassBufferHandle handle, BufferPtr& buff) const
-{
-	buff = m_rgraph->getBuffer(handle);
-}
-
-inline void RenderPassWorkContext::getRenderTargetState(
-	RenderTargetHandle handle, TexturePtr& tex, TextureUsageBit& usage, DepthStencilAspectBit& aspect) const
-{
-	m_rgraph->getCrntUsageAndAspect(handle, m_passIdx, usage, aspect);
-	tex = m_rgraph->getTexture(handle);
-}
-
-inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle,
-	const TextureSurfaceInfo& surf,
-	TexturePtr& tex,
-	TextureUsageBit& usage,
-	DepthStencilAspectBit& aspect) const
-{
-	m_rgraph->getCrntUsageAndAspect(handle, m_passIdx, surf, usage, aspect);
-	tex = m_rgraph->getTexture(handle);
-}
-
-inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle,
-	const TextureVolumeInfo& vol,
-	TexturePtr& tex,
-	TextureUsageBit& usage,
-	DepthStencilAspectBit& aspect) const
-{
-	ANKI_ASSERT(!"TODO");
-}
-
-inline void RenderPassWorkContext::getRenderTargetState(
-	RenderTargetHandle handle, U32 level, TexturePtr& tex, TextureUsageBit& usage, DepthStencilAspectBit& aspect) const
-{
-	ANKI_ASSERT(!"TODO");
-}
-
 } // end namespace anki
+
+#include <anki/gr/RenderGraph.inl.h>
