@@ -134,8 +134,11 @@ public:
 		TextureUsageBit& usage) const;
 
 	/// Convenience method.
-	void bindTextureAndSampler(
-		U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, SamplerPtr sampler)
+	void bindTextureAndSampler(U32 set,
+		U32 binding,
+		RenderTargetHandle handle,
+		const TextureSubresourceInfo& subresource,
+		const SamplerPtr& sampler)
 	{
 		TexturePtr tex;
 		TextureUsageBit usage;
@@ -146,7 +149,7 @@ public:
 	}
 
 	/// Convenience method to bind the whole texture as color.
-	void bindColorTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, SamplerPtr sampler)
+	void bindColorTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle, const SamplerPtr& sampler)
 	{
 		TexturePtr tex = getTexture(handle);
 		TextureViewInitInfo viewInit(tex); // Use the whole texture
@@ -154,6 +157,17 @@ public:
 		getRenderTargetState(handle, viewInit, tex, usage);
 		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
 		m_commandBuffer->bindTextureAndSampler(set, binding, view, sampler, usage);
+	}
+
+	/// Convenience method.
+	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource)
+	{
+		TexturePtr tex;
+		TextureUsageBit usage;
+		getRenderTargetState(handle, subresource, tex, usage);
+		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
+		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		m_commandBuffer->bindImage(set, binding, view);
 	}
 
 	/// Convenience method.

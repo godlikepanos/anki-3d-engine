@@ -31,30 +31,30 @@ anki_internal:
 
 	U getPassWidth(U pass) const
 	{
-		return m_passes[min<U>(pass, m_passes.getSize() - 1)].m_width;
+		return m_rtTex->getWidth() >> min<U32>(pass, m_passCount - 1);
 	}
 
 	U getPassHeight(U pass) const
 	{
-		return m_passes[min<U>(pass, m_passes.getSize() - 1)].m_height;
+		return m_rtTex->getHeight() >> min<U32>(pass, m_passCount - 1);
 	}
 
-	RenderTargetHandle getPassRt(U pass) const
+	U getMipmapCount() const
 	{
-		return m_runCtx.m_rts[min<U>(pass, m_runCtx.m_rts.getSize() - 1)];
+		return m_passCount;
+	}
+
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_rt;
 	}
 
 private:
-	class Subpass
-	{
-	public:
-		RenderTargetDescription m_rtDescr;
-		U32 m_width, m_height;
-	};
+	U8 m_passCount = 0; ///< It's also the mip count of the m_rtTex.
 
-	DynamicArray<Subpass> m_passes;
+	TexturePtr m_rtTex;
 
-	FramebufferDescription m_fbDescr;
+	DynamicArray<FramebufferDescription> m_fbDescrs;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
@@ -62,7 +62,7 @@ private:
 	class
 	{
 	public:
-		DynamicArray<RenderTargetHandle> m_rts;
+		RenderTargetHandle m_rt;
 		U32 m_crntPassIdx = MAX_U32;
 	} m_runCtx;
 

@@ -159,6 +159,14 @@ void readNormalFromGBuffer(in sampler2D rt2, in vec2 uv, out vec3 normal)
 	normal = signedOctDecode(texture(rt2, uv).rga);
 }
 
+// Read the roughness from the G-buffer
+void readRoughnessSpecularFromGBuffer(in sampler2D rt1, in vec2 uv, out float roughness, out vec3 specular)
+{
+	vec4 comp = textureLod(rt1, uv, 0.0);
+	specular = comp.xyz;
+	roughness = comp.w;
+}
+
 // Read from the G buffer
 void readGBuffer(in sampler2D rt0, in sampler2D rt1, in sampler2D rt2, in vec2 uv, in float lod, out GbufferInfo g)
 {
@@ -168,9 +176,7 @@ void readGBuffer(in sampler2D rt0, in sampler2D rt1, in sampler2D rt2, in vec2 u
 	g.subsurface = comp2.x;
 	g.metallic = comp2.y;
 
-	comp = textureLod(rt1, uv, lod);
-	g.specular = comp.xyz;
-	g.roughness = comp.w;
+	readRoughnessSpecularFromGBuffer(rt1, uv, g.roughness, g.specular);
 
 	comp = textureLod(rt2, uv, lod);
 	g.normal = signedOctDecode(comp.xyw);

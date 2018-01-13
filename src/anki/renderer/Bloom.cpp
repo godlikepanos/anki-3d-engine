@@ -113,12 +113,14 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_exposureRt = rgraph.newRenderTarget(m_exposure.m_rtDescr);
 
 		// Set the render pass
-		GraphicsRenderPassDescription& rpass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Bloom Main");
+		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
 		rpass.setWork(runExposureCallback, this, 0);
 		rpass.setFramebufferInfo(m_exposure.m_fbDescr, {{m_runCtx.m_exposureRt}}, {});
 
+		TextureSubresourceInfo inputTexSubresource;
+		inputTexSubresource.m_firstMipmap = m_r->getDownscaleBlur().getMipmapCount() - 1;
+		rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_FRAGMENT, inputTexSubresource});
 		rpass.newConsumer({m_runCtx.m_exposureRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		rpass.newConsumer({m_r->getDownscaleBlur().getPassRt(MAX_U), TextureUsageBit::SAMPLED_FRAGMENT});
 		rpass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::STORAGE_FRAGMENT_READ});
 		rpass.newProducer({m_runCtx.m_exposureRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
@@ -129,7 +131,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_upscaleRt = rgraph.newRenderTarget(m_upscale.m_rtDescr);
 
 		// Set the render pass
-		GraphicsRenderPassDescription& rpass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Bloom Upscale");
+		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
 		rpass.setWork(runUpscaleAndSslfCallback, this, 0);
 		rpass.setFramebufferInfo(m_upscale.m_fbDescr, {{m_runCtx.m_upscaleRt}}, {});
 
@@ -145,7 +147,11 @@ void Bloom::runExposure(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
 	cmdb->bindShaderProgram(m_exposure.m_grProg);
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getDownscaleBlur().getPassRt(MAX_U), m_r->getLinearSampler());
+
+	TextureSubresourceInfo inputTexSubresource;
+	inputTexSubresource.m_firstMipmap = m_r->getDownscaleBlur().getMipmapCount() - 1;
+	rgraphCtx.bindTextureAndSampler(
+		0, 0, m_r->getDownscaleBlur().getRt(), inputTexSubresource, m_r->getLinearSampler());
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	*uniforms = Vec4(m_exposure.m_threshold, m_exposure.m_scale, 0.0, 0.0);

@@ -24,14 +24,16 @@ Error Tonemapping::init(const ConfigSet& cfg)
 
 Error Tonemapping::initInternal(const ConfigSet& initializer)
 {
-	m_rtIdx = computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), AVERAGE_LUMINANCE_RENDER_TARGET_SIZE) - 1;
+	m_inputTexMip =
+		computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), AVERAGE_LUMINANCE_RENDER_TARGET_SIZE) - 1;
 
 	// Create program
 	ANKI_CHECK(getResourceManager().loadResource("programs/TonemappingAverageLuminance.ankiprog", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("INPUT_TEX_SIZE",
-		UVec2(m_r->getDownscaleBlur().getPassWidth(m_rtIdx), m_r->getDownscaleBlur().getPassHeight(m_rtIdx)));
+		UVec2(
+			m_r->getDownscaleBlur().getPassWidth(m_inputTexMip), m_r->getDownscaleBlur().getPassHeight(m_inputTexMip)));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(consts.get(), variant);
@@ -62,17 +64,6 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	return Error::NONE;
 }
 
-void Tonemapping::run(RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	cmdb->bindShaderProgram(m_grProg);
-	rgraphCtx.bindStorageBuffer(0, 0, m_runCtx.m_buffHandle);
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getDownscaleBlur().getPassRt(m_rtIdx), m_r->getLinearSampler());
-
-	cmdb->dispatchCompute(1, 1, 1);
-}
-
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
@@ -86,9 +77,27 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork(runCallback, this, 0);
 
 	pass.newConsumer({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
-	pass.newConsumer({m_r->getDownscaleBlur().getPassRt(m_rtIdx), TextureUsageBit::SAMPLED_COMPUTE});
+
+	TextureSubresourceInfo inputTexSubresource;
+	inputTexSubresource.m_firstMipmap = m_inputTexMip;
+	pass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE, inputTexSubresource});
 
 	pass.newProducer({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
+}
+
+void Tonemapping::run(RenderPassWorkContext& rgraphCtx)
+{
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+	cmdb->bindShaderProgram(m_grProg);
+	rgraphCtx.bindStorageBuffer(0, 0, m_runCtx.m_buffHandle);
+
+	TextureSubresourceInfo inputTexSubresource;
+	inputTexSubresource.m_firstMipmap = m_inputTexMip;
+	rgraphCtx.bindTextureAndSampler(
+		0, 0, m_r->getDownscaleBlur().getRt(), inputTexSubresource, m_r->getLinearSampler());
+
+	cmdb->dispatchCompute(1, 1, 1);
 }
 
 } // end namespace anki

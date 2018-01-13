@@ -31,7 +31,7 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 	{
 		out = ShaderVariableDataType::IVEC4;
 	}
-	if(str == "uint")
+	else if(str == "uint")
 	{
 		out = ShaderVariableDataType::UINT;
 	}

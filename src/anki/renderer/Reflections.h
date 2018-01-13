@@ -13,48 +13,42 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Tonemapping.
-class Tonemapping : public RendererObject
+/// Reflections pass.
+class Reflections : public RendererObject
 {
 anki_internal:
-	Tonemapping(Renderer* r)
+	Reflections(Renderer* r)
 		: RendererObject(r)
 	{
 	}
+
+	~Reflections();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderPassBufferHandle getAverageLuminanceBuffer() const
-	{
-		return m_runCtx.m_buffHandle;
-	}
-
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
-	U8 m_inputTexMip;
 
-	BufferPtr m_luminanceBuff;
+	RenderTargetDescription m_rtDescr;
 
 	class
 	{
 	public:
-		RenderPassBufferHandle m_buffHandle;
+		RenderTargetHandle m_rt;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
-	void run(RenderPassWorkContext& rgraphCtx);
-
-	/// A RenderPassWorkCallback to run the compute pass.
 	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Tonemapping* const self = scast<Tonemapping*>(rgraphCtx.m_userData);
-		self->run(rgraphCtx);
+		static_cast<Reflections*>(rgraphCtx.m_userData)->run(rgraphCtx);
 	}
+
+	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 
