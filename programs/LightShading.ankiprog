@@ -266,7 +266,8 @@ void main()
 
 	outC += specIndirect * specIndirectTerm + diffIndirect * diffCol;
 
-	out_color = outC;
+	//out_color = outC;
+	out_color = diffCol;
 #if 0
 	count = scount;
 	if(count == 0)

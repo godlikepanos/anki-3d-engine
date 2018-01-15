@@ -73,8 +73,24 @@ void RenderComponent::allocateAndSetupUniforms(
 		}
 		case ShaderVariableDataType::VEC3:
 		{
-			Vec3 val = mvar.getValue<Vec3>();
-			progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
+			switch(mvar.getBuiltin())
+			{
+			case BuiltinMaterialVariableId::NONE:
+			{
+				Vec3 val = mvar.getValue<Vec3>();
+				progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::CAMERA_POSITION:
+			{
+				Vec3 val = ctx.m_cameraTransform.getTranslationPart().xyz();
+				progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
+				break;
+			}
+			default:
+				ANKI_ASSERT(0);
+			}
+
 			break;
 		}
 		case ShaderVariableDataType::VEC4:
@@ -109,6 +125,21 @@ void RenderComponent::allocateAndSetupUniforms(
 
 				progVariant.writeShaderBlockMemory(
 					progvar, &normMats[0], transforms.getSize(), uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::ROTATION_MATRIX:
+			{
+				ANKI_ASSERT(transforms.getSize() > 0);
+
+				DynamicArrayAuto<Mat3> rots(getFrameAllocator());
+				rots.create(transforms.getSize());
+
+				for(U i = 0; i < transforms.getSize(); i++)
+				{
+					rots[i] = transforms[i].getRotationPart();
+				}
+
+				progVariant.writeShaderBlockMemory(progvar, &rots[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::CAMERA_ROTATION_MATRIX:
@@ -161,6 +192,14 @@ void RenderComponent::allocateAndSetupUniforms(
 				}
 
 				progVariant.writeShaderBlockMemory(progvar, &mv[0], transforms.getSize(), uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::MODEL_MATRIX:
+			{
+				ANKI_ASSERT(transforms.getSize() > 0);
+
+				progVariant.writeShaderBlockMemory(
+					progvar, &transforms[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::VIEW_PROJECTION_MATRIX:

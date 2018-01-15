@@ -19,8 +19,8 @@ layout(location = 2) in mediump vec4 in_tangent;
 #if CALC_BITANGENT_IN_VERT
 layout(location = 3) in mediump vec3 in_bitangent;
 #endif
-layout(location = 4) in mediump vec3 in_vertPosViewSpace;
-layout(location = 5) in mediump vec3 in_eyeTangentSpace; // Parallax
+layout(location = 4) in mediump float in_distFromTheCamera; // Parallax
+layout(location = 5) in highp vec3 in_eyeTangentSpace; // Parallax
 layout(location = 6) in mediump vec3 in_normalTangentSpace; // Parallax
 #endif // PASS == PASS_GB_FS
 
@@ -90,7 +90,7 @@ vec2 computeTextureCoordParallax(in sampler2D heightMap, in vec2 uv, in float he
 	vec3 E = normalize(eyeTangentSpace);
 
 	float factor0 = -dot(E, normTangentSpace);
-	float factor1 = in_vertPosViewSpace.z / -MAX_EFFECTIVE_DISTANCE;
+	float factor1 = in_distFromTheCamera / -MAX_EFFECTIVE_DISTANCE;
 	float factor = (1.0 - factor0) * (1.0 - factor1);
 	float sampleCountf = mix(float(MIN_SAMPLES), float(MAX_SAMPLES), factor);
 

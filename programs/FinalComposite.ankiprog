@@ -86,9 +86,9 @@ void main()
 	out_color += blueNoise / 255.0;
 #endif
 
-#if 0
+#if 1
 	{
-		out_color = vec3(textureLod(u_isRt, uv, 0.0).r);
+		out_color = vec3(textureLod(u_isRt, uv, 0.0).rgb);
 	}
 #endif
 

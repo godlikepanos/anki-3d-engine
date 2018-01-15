@@ -22,8 +22,8 @@ const char* MATERIAL_TEMPLATE = R"(<?xml version="1.0" encoding="UTF-8" ?>
 	
 	<inputs>
 		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
-		<input shaderInput="normalMat" builtin="NORMAL_MATRIX"/>
-		%modelViewMat%
+		<input shaderInput="rotationMat" builtin="ROTATION_MATRIX"/>
+		%parallaxInput%
 	
 		%diff%
 		%spec%
@@ -247,7 +247,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 					  "\t\t<input shaderInput=\"heightMapScale\" value=\"0.05\"/>");
 
 			xml = replaceAllString(
-				xml, "%modelViewMat%", "<input shaderInput=\"modelViewMat\" builtin=\"MODEL_VIEW_MATRIX\"/>");
+				xml, "%parallaxInput%", "<input shaderInput=\"modelViewMat\" builtin=\"MODEL_VIEW_MATRIX\"/>");
 
 			xml = replaceAllString(xml, "%parallaxMutator%", "1");
 		}
@@ -259,7 +259,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	else
 	{
 		xml = replaceAllString(xml, "%height%", "");
-		xml = replaceAllString(xml, "%modelViewMat%", "");
+		xml = replaceAllString(xml, "%parallaxInput%", "");
 		xml = replaceAllString(xml, "%parallaxMutator%", "0");
 	}
 
