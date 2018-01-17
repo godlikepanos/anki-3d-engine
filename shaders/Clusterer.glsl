@@ -10,39 +10,32 @@
 
 #include "shaders/Common.glsl"
 
-uint computeClusterK(float near, float clustererMagic, float zVSpace)
+uint computeClusterK(vec4 clustererMagic, vec3 worldPos)
 {
-	float fz = sqrt((zVSpace + near) * clustererMagic);
+	float fz = sqrt(dot(clustererMagic.xyz, worldPos) - clustererMagic.w);
 	uint z = uint(fz);
 	return z;
 }
 
-uint computeClusterKSafe(float near, float far, float clustererMagic, float zVSpace)
-{
-	float z = clamp(zVSpace, -far, -near);
-	float kf = sqrt((z + near) * clustererMagic);
-	return uint(kf);
-}
-
 // Compute cluster index
-uint computeClusterIndex(
-	vec2 uv, float near, float clustererMagic, float zVSpace, uint clusterCountX, uint clusterCountY)
+uint computeClusterIndex(vec2 uv, vec4 clustererMagic, vec3 worldPos, uint clusterCountX, uint clusterCountY)
 {
 	uvec2 xy = uvec2(uv * vec2(clusterCountX, clusterCountY));
 
-	return computeClusterK(near, clustererMagic, zVSpace) * (clusterCountX * clusterCountY) + xy.y * clusterCountX
-		+ xy.x;
+	return computeClusterK(clustererMagic, worldPos) * (clusterCountX * clusterCountY) + xy.y * clusterCountX + xy.x;
 }
 
 // Compute the Z of the near plane given a cluster idx
-float computeClusterNear(uint k, float near, float clustererMagic)
+float computeClusterNear(uint k, float near, vec4 clustererMagic)
 {
-	return 1.0 / clustererMagic * pow(float(k), 2.0) - near;
+	// TODO
+	return near;
 }
 
-float computeClusterFar(uint k, float near, float clustererMagic)
+float computeClusterFar(uint k, float near, vec4 clustererMagic)
 {
-	return 1.0 / clustererMagic * pow(float(k + 1u), 2.0) - near;
+	// TODO
+	return near;
 }
 
 #endif

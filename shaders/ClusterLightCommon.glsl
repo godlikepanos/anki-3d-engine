@@ -12,8 +12,9 @@
 struct LightingUniforms
 {
 	vec4 projectionParams;
-	vec4 rendererSizeTimePad1;
-	vec4 nearFarClustererMagicPad1;
+	vec4 rendererSizeTimeNear;
+	vec4 cameraPosFar;
+	vec4 clustererMagic;
 	mat3 invViewRotation;
 	uvec4 tileCount;
 	mat4 invViewProjMat;
@@ -72,36 +73,19 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 	LightingUniforms u_lightingUniforms;
 };
 
-#define u_near readFirstInvocationARB(u_lightingUniforms.nearFarClustererMagicPad1.x)
-#define u_far readFirstInvocationARB(u_lightingUniforms.nearFarClustererMagicPad1.y)
+#define u_near readFirstInvocationARB(u_lightingUniforms.rendererSizeTimeNear.w)
+#define u_far readFirstInvocationARB(u_lightingUniforms.cameraPosFar.w)
 #define u_clusterCountX readFirstInvocationARB(u_lightingUniforms.tileCount.x)
 #define u_clusterCountY readFirstInvocationARB(u_lightingUniforms.tileCount.y)
-#define u_clustererMagic readFirstInvocationARB(u_lightingUniforms.nearFarClustererMagicPad1.z)
-#define u_time readFirstInvocationARB(u_lightingUniforms.rendererSizeTimePad1.z)
+#define u_clustererMagic readFirstInvocationARB(u_lightingUniforms.clustererMagic)
+#define u_time readFirstInvocationARB(u_lightingUniforms.rendererSizeTimeNear.z)
 #define u_unprojectionParams readFirstInvocationARB(u_lightingUniforms.projectionParams)
-
-#define u_invViewRotation                                               \
-	mat3(readFirstInvocationARB(u_lightingUniforms.invViewRotation[0]), \
-		readFirstInvocationARB(u_lightingUniforms.invViewRotation[1]),  \
-		readFirstInvocationARB(u_lightingUniforms.invViewRotation[2]))
-
-#define u_invProjMat                                               \
-	mat4(readFirstInvocationARB(u_lightingUniforms.invProjMat[0]), \
-		readFirstInvocationARB(u_lightingUniforms.invProjMat[1]),  \
-		readFirstInvocationARB(u_lightingUniforms.invProjMat[2]),  \
-		readFirstInvocationARB(u_lightingUniforms.invProjMat[3]))
-
-#define u_invViewProjMat                                               \
-	mat4(readFirstInvocationARB(u_lightingUniforms.invViewProjMat[0]), \
-		readFirstInvocationARB(u_lightingUniforms.invViewProjMat[1]),  \
-		readFirstInvocationARB(u_lightingUniforms.invViewProjMat[2]),  \
-		readFirstInvocationARB(u_lightingUniforms.invViewProjMat[3]))
-
-#define u_prevViewProjMat                                               \
-	mat4(readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[0]), \
-		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[1]),  \
-		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[2]),  \
-		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[3]))
+#define u_invViewRotation u_lightingUniforms.invViewRotation
+#define u_invProjMat u_lightingUniforms.invProjMat
+#define u_invViewProjMat u_lightingUniforms.invViewProjMat
+#define u_prevViewProjMat u_lightingUniforms.prevViewProjMat
+#define u_cameraPos u_lightingUniforms.cameraPosFar.xyz
+#define u_rendererSize u_lightingUniforms.rendererSizeTimeNear.xy
 
 #else
 const uint _NEXT_UBO_BINDING = LIGHT_UBO_BINDING;

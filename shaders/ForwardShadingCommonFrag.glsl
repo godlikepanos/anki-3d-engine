@@ -22,7 +22,7 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D anki_msDepthRt;
 #include "shaders/ClusterLightCommon.glsl"
 
 #define anki_u_time u_time
-#define RENDERER_SIZE (u_lightingUniforms.rendererSizeTimePad1.xy * 0.5)
+#define RENDERER_SIZE (u_rendererSize * 0.5)
 
 // Varyings
 layout(location = 0) flat in float in_alpha;
@@ -52,7 +52,8 @@ vec3 computeLightColor(vec3 diffCol)
 
 	// Find the cluster and then the light counts
 	uint clusterIdx = computeClusterIndex(
-		gl_FragCoord.xy / RENDERER_SIZE, u_near, u_clustererMagic, fragPos.z, u_clusterCountX, u_clusterCountY);
+		gl_FragCoord.xy / RENDERER_SIZE, u_clustererMagic, vec3(0.0), u_clusterCountX, u_clusterCountY);
+	clusterIdx = 0; // TODO
 
 	uint idxOffset = u_clusters[clusterIdx];
 
@@ -79,7 +80,6 @@ vec3 computeLightColor(vec3 diffCol)
 		{
 			shadow = computeShadowFactorOmni(frag2Light,
 				light.specularColorRadius.w,
-				u_invViewRotation,
 				light.atlasTilesPad2.xy,
 				light.diffuseColorShadowmapId.w,
 				u_shadowTex);

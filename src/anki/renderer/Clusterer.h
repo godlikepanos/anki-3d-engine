@@ -124,7 +124,10 @@ class ClustererPrepareInfo
 public:
 	Mat4 m_viewMat;
 	Mat4 m_projMat; ///< Must be perspective projection.
+	Mat4 m_viewProjMat;
 	Transform m_camTrf;
+	F32 m_near;
+	F32 m_far;
 };
 
 /// Collection of clusters for visibility tests.
@@ -152,8 +155,9 @@ public:
 	/// Bin a frustum.
 	void binPerspectiveFrustum(const PerspectiveFrustum& fr, const Aabb& csBox, ClustererTestResult& rez) const;
 
-	/// A value that will be used in shaders to calculate the cluster index.
-	F32 getShaderMagicValue() const
+	/// A value that will be used in shaders to calculate the cluster index. See the code that calculates it for info
+	/// on what it is.
+	const Vec4& getShaderMagicValue() const
 	{
 		return m_shaderMagicVal;
 	}
@@ -207,8 +211,8 @@ private:
 	Vec4 m_unprojParams = Vec4(0.0);
 	F32 m_near = 0.0;
 	F32 m_far = 0.0;
-	F32 m_calcNearOpt = 0.0;
-	F32 m_shaderMagicVal = 0.0;
+	F32 m_calcNearOpt = 0.0f;
+	Vec4 m_shaderMagicVal = Vec4(0.0f);
 
 	F32 calcNear(U k) const;
 

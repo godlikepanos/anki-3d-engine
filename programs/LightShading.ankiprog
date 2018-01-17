@@ -8,6 +8,7 @@ http://www.anki3d.org/LICENSE
 	<inputs>
 		<input name="CLUSTER_COUNT_X" type="uint" const="1"/>
 		<input name="CLUSTER_COUNT_Y" type="uint" const="1"/>
+		<input name="CLUSTER_COUNT_Z" type="uint" const="1"/>
 		<input name="CLUSTER_COUNT" type="uint" const="1"/>
 		<input name="IR_MIPMAP_COUNT" type="uint" const="1"/>
 	</inputs>
@@ -68,7 +69,7 @@ const float SUBSURFACE_MIN = 0.05;
 
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF() \
-	vec3 frag2Light = light.posRadius.xyz - fragPos; \
+	vec3 frag2Light = light.posRadius.xyz - worldPos; \
 	vec3 l = normalize(frag2Light); \
 	float nol = max(0.0, dot(normal, l)); \
 	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, light.specularColorRadius.rgb, a2, nol); \
@@ -85,9 +86,9 @@ void debugIncorrectColor(inout vec3 c)
 }
 
 // Compute the colors of a decal.
-void appendDecalColors(in Decal decal, in vec3 fragPos, inout vec3 diffuseColor, inout float roughness)
+void appendDecalColors(in Decal decal, in vec3 worldPos, inout vec3 diffuseColor, inout float roughness)
 {
-	vec4 texCoords4 = decal.texProjectionMat * vec4(fragPos, 1.0);
+	vec4 texCoords4 = decal.texProjectionMat * vec4(worldPos, 1.0);
 	vec2 texCoords2 = texCoords4.xy / texCoords4.w;
 
 	// Clamp the tex coords. Expect a border in the texture atlas
@@ -147,16 +148,11 @@ void main()
 	float depth = texture(u_msDepthRt, in_uv, 0.0).r;
 	vec2 ndc = UV_TO_NDC(in_uv);
 
-	// Get frag pos in view space
-	vec4 fragPos4 = u_invProjMat * vec4(ndc, depth, 1.0);
-	vec3 fragPos = fragPos4.xyz / fragPos4.w;
-
 	// Get world position
 	vec3 worldPos;
 	{
 		vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
-		worldPos4 = worldPos4 / worldPos4.w;
-		worldPos = worldPos4.xyz;
+		worldPos = worldPos4.xyz / worldPos4.w;
 	}
 
 	// Decode GBuffer
@@ -180,13 +176,17 @@ void main()
 
 	// Get SSAO
 	float ssao = texture(u_ssaoTex, in_uv).r;
-	diffCol *= ssao;
+	//diffCol *= ssao; TODO
 
-	// Get counts and offsets
-	uint clusterIdx = computeClusterK(u_near, u_clustererMagic, fragPos.z) * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y)
-		+ uint(in_clusterIJ.y) * CLUSTER_COUNT_X + uint(in_clusterIJ.x);
+	// Get first light index
+	uint idxOffset;
+	{
+		uint k = computeClusterK(u_clustererMagic, worldPos);
+		uint clusterIdx = 
+			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + uint(in_clusterIJ.y) * CLUSTER_COUNT_X + uint(in_clusterIJ.x);
 
-	uint idxOffset = u_clusters[clusterIdx];
+		idxOffset = u_clusters[clusterIdx];
+	}
 
 	// Decals
 	uint count = u_lightIndices[idxOffset++];
@@ -194,7 +194,7 @@ void main()
 	{
 		Decal decal = u_decals[u_lightIndices[idxOffset++]];
 
-		appendDecalColors(decal, fragPos, diffCol, roughness);
+		appendDecalColors(decal, worldPos, diffCol, roughness);
 	}
 
 	// Ambient and emissive color
@@ -205,7 +205,7 @@ void main()
 	a2 *= a2 * a2;
 
 	// Point lights
-	vec3 viewDir = normalize(-fragPos);
+	vec3 viewDir = normalize(u_cameraPos - worldPos);
 	count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
@@ -217,14 +217,13 @@ void main()
 		{
 			float shadow = computeShadowFactorOmni(frag2Light, 
 				light.specularColorRadius.w, 
-				u_invViewRotation, 
 				light.atlasTilesPad2.xy, 
 				light.diffuseColorShadowmapId.w,
 				u_shadowTex);
 			lambert *= shadow;
 		}
 
-		outC += (specC + diffC) * (att * max(subsurface, lambert));
+		outC += (diffC + specC) * (att * max(subsurface, lambert));
 	}
 
 	// Spot lights
@@ -241,7 +240,7 @@ void main()
 		if(shadowmapLayerIdx >= 0.0)
 		{
 			float shadow = computeShadowFactorSpot(
-				light.texProjectionMat, fragPos, light.specularColorRadius.w, u_shadowTex);
+				light.texProjectionMat, worldPos, light.specularColorRadius.w, u_shadowTex);
 			lambert *= shadow;
 		}
 
@@ -250,10 +249,7 @@ void main()
 
 	// Indirect
 	vec3 eye = -viewDir;
-
-	vec3 worldEye = u_invViewRotation * eye;
-	vec3 worldNormal = u_invViewRotation * normal;
-	vec3 worldR = reflect(worldEye, worldNormal);
+	vec3 reflVec = reflect(eye, normal);
 
 	float reflLod = float(IR_MIPMAP_COUNT) * a2;
 
@@ -262,12 +258,11 @@ void main()
 	vec3 specIndirectTerm = specCol * envBRDF.x + envBRDF.y;
 
 	vec3 specIndirect, diffIndirect;
-	readIndirect(idxOffset, worldPos, worldR, worldNormal, reflLod, specIndirect, diffIndirect);
+	readIndirect(idxOffset, worldPos, reflVec, normal, reflLod, specIndirect, diffIndirect);
 
 	outC += specIndirect * specIndirectTerm + diffIndirect * diffCol;
 
-	//out_color = outC;
-	out_color = diffCol;
+	out_color = outC;
 #if 0
 	count = scount;
 	if(count == 0)

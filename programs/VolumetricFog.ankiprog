@@ -77,7 +77,6 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 		{
 			factor *= computeShadowFactorOmni(frag2Light, 
 				-1.0 / light.posRadius.w, 
-				u_invViewRotation, 
 				light.atlasTilesPad2.xy,
 				light.diffuseColorShadowmapId.w,
 				u_shadowTex);

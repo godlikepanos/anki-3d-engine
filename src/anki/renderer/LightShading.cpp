@@ -15,15 +15,18 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
+#include <anki/collision/Functions.h>
 
 namespace anki
 {
 
+/// @note Should match the shader
 struct ShaderCommonUniforms
 {
 	Vec4 m_projectionParams;
-	Vec4 m_rendererSizeTimePad1;
-	Vec4 m_nearFarClustererMagicPad1;
+	Vec4 m_rendererSizeTimeNear;
+	Vec4 m_cameraPosFar;
+	Vec4 m_clustererMagic;
 	Mat3x4 m_invViewRotation;
 	UVec4 m_tileCount;
 	Mat4 m_invViewProjMat;
@@ -84,6 +87,7 @@ Error LightShading::initInternal(const ConfigSet& config)
 	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
 	consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))
 		.add("CLUSTER_COUNT_Y", U32(m_clusterCounts[1]))
+		.add("CLUSTER_COUNT_Z", U32(m_clusterCounts[2]))
 		.add("CLUSTER_COUNT", U32(m_clusterCount))
 		.add("IR_MIPMAP_COUNT", U32(m_r->getIndirect().getReflectionTextureMipmapCount()));
 
@@ -181,20 +185,22 @@ void LightShading::updateCommonBlock(RenderingContext& ctx)
 
 	// Start writing
 	blk->m_projectionParams = ctx.m_unprojParams;
-	blk->m_nearFarClustererMagicPad1 = Vec4(ctx.m_renderQueue->m_cameraNear,
-		ctx.m_renderQueue->m_cameraFar,
-		m_lightBin->getClusterer().getShaderMagicValue(),
-		0.0);
 
 	blk->m_invViewRotation = Mat3x4(ctx.m_renderQueue->m_viewMatrix.getInverse().getRotationPart());
 
-	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
+	blk->m_rendererSizeTimeNear =
+		Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), ctx.m_renderQueue->m_cameraNear);
 
 	blk->m_tileCount = UVec4(m_clusterCounts[0], m_clusterCounts[1], m_clusterCounts[2], m_clusterCount);
 
 	blk->m_invViewProjMat = ctx.m_viewProjMatJitter.getInverse();
 	blk->m_prevViewProjMat = ctx.m_prevViewProjMat;
 	blk->m_invProjMat = ctx.m_projMatJitter.getInverse();
+
+	blk->m_cameraPosFar =
+		Vec4(ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz(), ctx.m_renderQueue->m_cameraFar);
+
+	blk->m_clustererMagic = m_lightBin->getClusterer().getShaderMagicValue();
 }
 
 void LightShading::populateRenderGraph(RenderingContext& ctx)
