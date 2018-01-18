@@ -176,7 +176,7 @@ void main()
 
 	// Get SSAO
 	float ssao = texture(u_ssaoTex, in_uv).r;
-	//diffCol *= ssao; TODO
+	diffCol *= ssao;
 
 	// Get first light index
 	uint idxOffset;

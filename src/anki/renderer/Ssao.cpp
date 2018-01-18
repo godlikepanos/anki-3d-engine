@@ -146,6 +146,7 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		Vec4 m_projectionMat;
 		Vec4 m_noiseLayerPad3;
 		Mat4 m_prevViewProjMatMulInvViewProjMat;
+		Mat3x4 m_viewRotMat;
 	};
 
 	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
@@ -155,6 +156,7 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	unis->m_noiseLayerPad3 = Vec4(m_r->getFrameCount() % m_main.m_noiseTex->getLayerCount(), 0.0, 0.0, 0.0);
 	unis->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevViewProjMat * ctx.m_renderQueue->m_viewProjectionMatrix.getInverse();
+	unis->m_viewRotMat = Mat3x4(ctx.m_renderQueue->m_viewMatrix.getRotationPart());
 
 	drawQuad(cmdb);
 }
