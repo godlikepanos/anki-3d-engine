@@ -26,9 +26,9 @@ struct ShaderCommonUniforms
 	Vec4 m_projectionParams;
 	Vec4 m_rendererSizeTimeNear;
 	Vec4 m_cameraPosFar;
-	Vec4 m_clustererMagic;
-	Mat3x4 m_invViewRotation;
+	ClustererShaderMagicValues m_clustererMagicValues;
 	UVec4 m_tileCount;
+	Mat4 m_invViewMat;
 	Mat4 m_invViewProjMat;
 	Mat4 m_prevViewProjMat;
 	Mat4 m_invProjMat;
@@ -186,7 +186,7 @@ void LightShading::updateCommonBlock(RenderingContext& ctx)
 	// Start writing
 	blk->m_projectionParams = ctx.m_unprojParams;
 
-	blk->m_invViewRotation = Mat3x4(ctx.m_renderQueue->m_viewMatrix.getInverse().getRotationPart());
+	blk->m_invViewMat = ctx.m_renderQueue->m_viewMatrix.getInverse();
 
 	blk->m_rendererSizeTimeNear =
 		Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), ctx.m_renderQueue->m_cameraNear);
@@ -200,7 +200,7 @@ void LightShading::updateCommonBlock(RenderingContext& ctx)
 	blk->m_cameraPosFar =
 		Vec4(ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz(), ctx.m_renderQueue->m_cameraFar);
 
-	blk->m_clustererMagic = m_lightBin->getClusterer().getShaderMagicValue();
+	blk->m_clustererMagicValues = m_lightBin->getClusterer().getShaderMagicValues();
 }
 
 void LightShading::populateRenderGraph(RenderingContext& ctx)

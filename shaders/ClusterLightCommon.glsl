@@ -7,6 +7,7 @@
 #define ANKI_SHADERS_CLUSTER_LIGHT_COMMON_GLSL
 
 #include "shaders/LightFunctions.glsl"
+#include "shaders/Clusterer.glsl"
 
 // Common uniforms between lights
 struct LightingUniforms
@@ -14,9 +15,9 @@ struct LightingUniforms
 	vec4 projectionParams;
 	vec4 rendererSizeTimeNear;
 	vec4 cameraPosFar;
-	vec4 clustererMagic;
-	mat3 invViewRotation;
+	ClustererMagicValues clustererMagicValues;
 	uvec4 tileCount;
+	mat4 invViewMat;
 	mat4 invViewProjMat;
 	mat4 prevViewProjMat;
 	mat4 invProjMat;
@@ -77,10 +78,10 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 #define u_far readFirstInvocationARB(u_lightingUniforms.cameraPosFar.w)
 #define u_clusterCountX readFirstInvocationARB(u_lightingUniforms.tileCount.x)
 #define u_clusterCountY readFirstInvocationARB(u_lightingUniforms.tileCount.y)
-#define u_clustererMagic readFirstInvocationARB(u_lightingUniforms.clustererMagic)
+#define u_clustererMagic u_lightingUniforms.clustererMagicValues
 #define u_time readFirstInvocationARB(u_lightingUniforms.rendererSizeTimeNear.z)
 #define u_unprojectionParams readFirstInvocationARB(u_lightingUniforms.projectionParams)
-#define u_invViewRotation u_lightingUniforms.invViewRotation
+#define u_invViewMat u_lightingUniforms.invViewMat
 #define u_invProjMat u_lightingUniforms.invProjMat
 #define u_invViewProjMat u_lightingUniforms.invViewProjMat
 #define u_prevViewProjMat u_lightingUniforms.prevViewProjMat

@@ -203,7 +203,8 @@ void Clusterer::prepare(ThreadPool& threadPool, const ClustererPrepareInfo& inf)
 	m_unprojParams = m_projMat.extractPerspectiveUnprojectionParams();
 	m_calcNearOpt = (m_far - m_near) / pow(m_counts[2], 2.0);
 
-	// Compute magic val
+	// Compute magic val 0
+	// It's been used to calculate the 'k' of a cluster given the world position
 	{
 		// Given a distance 'd' from the camera's near plane in world space the 'k' split is calculated like:
 		// k = sqrt(d / (f - n) * Cz2)  (1)
@@ -231,7 +232,13 @@ void Clusterer::prepare(ThreadPool& threadPool, const ClustererPrepareInfo& inf)
 		Vec3 A = nearPlane.getNormal().xyz() * (m_counts[2] * m_counts[2]) / (m_far - m_near);
 		F32 B = nearPlane.getOffset() * (m_counts[2] * m_counts[2]) / (m_far - m_near);
 
-		m_shaderMagicVal = Vec4(A, B);
+		m_shaderMagicVals.m_val0 = Vec4(A, B);
+	}
+
+	// Compute magic val 1
+	{
+		m_shaderMagicVals.m_val1.x() = m_calcNearOpt;
+		m_shaderMagicVals.m_val1.y() = m_near;
 	}
 
 	//

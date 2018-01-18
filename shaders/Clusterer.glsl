@@ -10,32 +10,38 @@
 
 #include "shaders/Common.glsl"
 
-uint computeClusterK(vec4 clustererMagic, vec3 worldPos)
+// See the documentation of the Clusterer class.
+struct ClustererMagicValues
 {
-	float fz = sqrt(dot(clustererMagic.xyz, worldPos) - clustererMagic.w);
+	vec4 val0;
+	vec4 val1;
+};
+
+uint computeClusterK(ClustererMagicValues magic, vec3 worldPos)
+{
+	float fz = sqrt(dot(magic.val0.xyz, worldPos) - magic.val0.w);
 	uint z = uint(fz);
 	return z;
 }
 
 // Compute cluster index
-uint computeClusterIndex(vec2 uv, vec4 clustererMagic, vec3 worldPos, uint clusterCountX, uint clusterCountY)
+uint computeClusterIndex(ClustererMagicValues magic, vec2 uv, vec3 worldPos, uint clusterCountX, uint clusterCountY)
 {
 	uvec2 xy = uvec2(uv * vec2(clusterCountX, clusterCountY));
 
-	return computeClusterK(clustererMagic, worldPos) * (clusterCountX * clusterCountY) + xy.y * clusterCountX + xy.x;
+	return computeClusterK(magic, worldPos) * (clusterCountX * clusterCountY) + xy.y * clusterCountX + xy.x;
 }
 
 // Compute the Z of the near plane given a cluster idx
-float computeClusterNear(uint k, float near, vec4 clustererMagic)
+float computeClusterNear(ClustererMagicValues magic, uint k)
 {
-	// TODO
-	return near;
+	float fk = float(k);
+	return magic.val1.x * fk * fk + magic.val1.y;
 }
 
-float computeClusterFar(uint k, float near, vec4 clustererMagic)
+float computeClusterFar(ClustererMagicValues magic, uint k)
 {
-	// TODO
-	return near;
+	return computeClusterNear(magic, k + 1u);
 }
 
 #endif
