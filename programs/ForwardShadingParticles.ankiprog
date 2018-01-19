@@ -17,15 +17,26 @@ http://www.anki3d.org/LICENSE
 			<inputs>
 				<input name="mvp" type="mat4"/>
 				<input name="cameraRotMat" type="mat3"/>
-				<input name="viewMat" type="mat4"/>
 			</inputs>
 
 			<source><![CDATA[
 #include "shaders/ForwardShadingCommonVert.glsl"
 
+layout(location = SCALE_LOCATION) in float in_scale;
+layout(location = ALPHA_LOCATION) in float in_alpha;
+
+layout(location = 0) flat out float out_alpha;
+layout(location = 1) out vec2 out_uv;
+layout(location = 2) out vec3 out_worldPos;
+
 void main() 
 {
-	particle(mvp, cameraRotMat, viewMat);
+	out_uv = vec2(gl_VertexID & 1, gl_VertexID >> 1);
+
+	out_worldPos = cameraRotMat * vec3((out_uv - 0.5) * in_scale, 0.0) + in_position;
+	gl_Position = mvp * vec4(out_worldPos, 1.0);
+
+	out_alpha = in_alpha;
 }
 			]]>
 			</source>
@@ -53,8 +64,11 @@ void main()
 			</inputs>
 
 			<source><![CDATA[
-
 #include "shaders/ForwardShadingCommonFrag.glsl"
+
+layout(location = 0) flat in float in_alpha;
+layout(location = 1) in vec2 in_uv;
+layout(location = 2) in vec3 in_worldPos;
 
 void main() 
 {
@@ -65,7 +79,7 @@ void main()
 #endif
 
 #if LIGHT
-	texCol.rgb = computeLightColor(texCol.rgb);
+	texCol.rgb = computeLightColor(texCol.rgb, in_worldPos);
 #endif
 	
 	vec4 colScale = colorScale;

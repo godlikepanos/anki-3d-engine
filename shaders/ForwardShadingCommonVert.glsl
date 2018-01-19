@@ -22,28 +22,10 @@
 
 // In/out
 layout(location = POSITION_LOCATION) in vec3 in_position;
-layout(location = SCALE_LOCATION) in float in_scale;
-layout(location = ALPHA_LOCATION) in float in_alpha;
-
-layout(location = 0) flat out float out_alpha;
-layout(location = 1) out vec2 out_uv;
-layout(location = 2) out vec3 out_posViewSpace;
 
 out gl_PerVertex
 {
 	vec4 gl_Position;
 };
-
-void particle(in mat4 mvp, in mat3 camRot, in mat4 viewMat)
-{
-	out_uv = vec2(gl_VertexID & 1, gl_VertexID >> 1);
-
-	vec3 worldPos = camRot * vec3((out_uv - 0.5) * in_scale, 0.0) + in_position;
-	gl_Position = mvp * vec4(worldPos, 1.0);
-
-	out_posViewSpace = (viewMat * vec4(worldPos, 1.0)).xyz;
-
-	out_alpha = in_alpha;
-}
 
 #endif

@@ -208,7 +208,7 @@ void Clusterer::prepare(ThreadPool& threadPool, const ClustererPrepareInfo& inf)
 	{
 		// Given a distance 'd' from the camera's near plane in world space the 'k' split is calculated like:
 		// k = sqrt(d / (f - n) * Cz2)  (1)
-		// where 'n' and 'f' are the near and f vals of the projection and Cz2 is the m_counts[2]^2
+		// where 'n' and 'f' are the near and far vals of the projection and Cz2 is the m_counts[2]^2
 		// If the 'd' is not known and the world position instead is known then 'd' is the distance from that position
 		// to the camera's near plane.
 		// d = dot(Pn, W) - Po  (2)

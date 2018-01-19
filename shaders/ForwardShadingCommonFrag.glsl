@@ -24,11 +24,6 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D anki_msDepthRt;
 #define anki_u_time u_time
 #define RENDERER_SIZE (u_rendererSize * 0.5)
 
-// Varyings
-layout(location = 0) flat in float in_alpha;
-layout(location = 1) in vec2 in_uv;
-layout(location = 2) in vec3 in_posViewSpace;
-
 layout(location = 0) out vec4 out_color;
 
 void writeGBuffer(in vec4 color)
@@ -43,17 +38,13 @@ vec4 readAnimatedTextureRgba(sampler2DArray tex, float period, vec2 uv, float ti
 	return texture(tex, vec3(uv, layer));
 }
 
-vec3 computeLightColor(vec3 diffCol)
+vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 {
 	vec3 outColor = vec3(0.0);
 
-	// Compute frag pos in view space
-	vec3 fragPos = in_posViewSpace;
-
 	// Find the cluster and then the light counts
 	uint clusterIdx = computeClusterIndex(
-		u_clustererMagic, gl_FragCoord.xy / RENDERER_SIZE, vec3(0.0), u_clusterCountX, u_clusterCountY);
-	clusterIdx = 0; // TODO
+		u_clustererMagic, gl_FragCoord.xy / RENDERER_SIZE, worldPos, u_clusterCountX, u_clusterCountY);
 
 	uint idxOffset = u_clusters[clusterIdx];
 
@@ -69,7 +60,7 @@ vec3 computeLightColor(vec3 diffCol)
 
 		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
 
-		vec3 frag2Light = light.posRadius.xyz - fragPos;
+		vec3 frag2Light = light.posRadius.xyz - worldPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
 
 #if LOD > 1
@@ -97,7 +88,7 @@ vec3 computeLightColor(vec3 diffCol)
 
 		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
 
-		vec3 frag2Light = light.posRadius.xyz - fragPos;
+		vec3 frag2Light = light.posRadius.xyz - worldPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
 
 		vec3 l = normalize(frag2Light);
@@ -111,7 +102,8 @@ vec3 computeLightColor(vec3 diffCol)
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx >= 0.0)
 		{
-			shadow = computeShadowFactorSpot(light.texProjectionMat, fragPos, light.specularColorRadius.w, u_shadowTex);
+			shadow =
+				computeShadowFactorSpot(light.texProjectionMat, worldPos, light.specularColorRadius.w, u_shadowTex);
 		}
 #endif
 
@@ -126,7 +118,7 @@ void particleAlpha(vec4 color, vec4 scaleColor, vec4 biasColor)
 	writeGBuffer(color * scaleColor + biasColor);
 }
 
-void fog(vec3 color, float fogAlphaScale, float fogDistanceOfMaxThikness)
+void fog(vec3 color, float fogAlphaScale, float fogDistanceOfMaxThikness, float zVSpace)
 {
 	const vec2 screenSize = 1.0 / RENDERER_SIZE;
 
@@ -137,12 +129,11 @@ void fog(vec3 color, float fogAlphaScale, float fogDistanceOfMaxThikness)
 	vec4 fragPosVspace4 = u_invProjMat * vec4(vec3(UV_TO_NDC(texCoords), depth), 1.0);
 	float sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
-	float diff = max(0.0, in_posViewSpace.z - sceneZVspace);
+	float diff = max(0.0, zVSpace - sceneZVspace);
 
 	zFeatherFactor = min(1.0, diff / fogDistanceOfMaxThikness);
 
 	writeGBuffer(vec4(color, zFeatherFactor * fogAlphaScale));
-	// writeGBuffer(vec4(vec3(zFeatherFactor), 1.0));
 }
 
 #endif
