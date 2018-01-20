@@ -8,6 +8,7 @@ http://www.anki3d.org/LICENSE
 	<inputs>
 		<input name="CLUSTER_COUNT_X" type="uint" const="1"/>
 		<input name="CLUSTER_COUNT_Y" type="uint" const="1"/>
+		<input name="CLUSTER_COUNT_Z" type="uint" const="1"/>
 		<input name="CLUSTER_COUNT" type="uint" const="1"/>
 		<input name="IR_MIPMAP_COUNT" type="uint" const="1"/>
 	</inputs>
@@ -68,7 +69,7 @@ const float SUBSURFACE_MIN = 0.05;
 
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF() \
-	vec3 frag2Light = light.posRadius.xyz - fragPos; \
+	vec3 frag2Light = light.posRadius.xyz - worldPos; \
 	vec3 l = normalize(frag2Light); \
 	float nol = max(0.0, dot(normal, l)); \
 	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, light.specularColorRadius.rgb, a2, nol); \
@@ -85,26 +86,25 @@ void debugIncorrectColor(inout vec3 c)
 }
 
 // Compute the colors of a decal.
-void appendDecalColors(in Decal decal, in vec3 fragPos, inout vec3 diffuseColor, inout float roughness)
+void appendDecalColors(in Decal decal, in vec3 worldPos, inout vec3 diffuseColor, inout float roughness)
 {
-	vec4 texCoords4 = decal.texProjectionMat * vec4(fragPos, 1.0);
+	vec4 texCoords4 = decal.texProjectionMat * vec4(worldPos, 1.0);
 	vec2 texCoords2 = texCoords4.xy / texCoords4.w;
 
 	// Clamp the tex coords. Expect a border in the texture atlas
-	texCoords2 = clamp(texCoords2, 0.0, 1.0);
+	texCoords2 = saturate(texCoords2);
 
-	vec2 diffUv = texCoords2 * decal.diffUv.zw + decal.diffUv.xy;
+	vec2 diffUv = mad(texCoords2, decal.diffUv.zw, decal.diffUv.xy);
 	vec4 dcol = texture(u_diffDecalTex, diffUv);
 	diffuseColor = mix(diffuseColor, dcol.rgb, dcol.a * decal.blendFactors[0]);
 
 	// Roughness
-	vec2 roughnessUv = texCoords2 * decal.normRoughnessUv.zw + decal.normRoughnessUv.xy;
+	vec2 roughnessUv = mad(texCoords2, decal.normRoughnessUv.zw, decal.normRoughnessUv.xy);
 	float r = texture(u_normalRoughnessDecalTex, roughnessUv).w;
 	roughness = mix(roughness, r, dcol.a * decal.blendFactors[1]);
 }
 
-void readIndirect(
-	in uint idxOffset, in vec3 pos, in vec3 r, in vec3 n, in float lod, out vec3 specIndirect, out vec3 diffIndirect)
+void readIndirect(uint idxOffset, vec3 pos, vec3 r, vec3 n, float lod, out vec3 specIndirect, out vec3 diffIndirect)
 {
 	specIndirect = vec3(0.0);
 	diffIndirect = vec3(0.0);
@@ -137,7 +137,7 @@ void readIndirect(
 
 		// Do the same for diffuse
 		uv = computeCubemapVecAccurate(n, R2, f);
-		vec3 id = texture(u_irradianceTex, vec4(uv, cubemapIndex)).rgb;
+		vec3 id = textureLod(u_irradianceTex, vec4(uv, cubemapIndex), 0.0).rgb;
 		diffIndirect = mix(id, diffIndirect, factor);
 	}
 }
@@ -147,17 +147,9 @@ void main()
 	float depth = texture(u_msDepthRt, in_uv, 0.0).r;
 	vec2 ndc = UV_TO_NDC(in_uv);
 
-	// Get frag pos in view space
-	vec4 fragPos4 = u_invProjMat * vec4(ndc, depth, 1.0);
-	vec3 fragPos = fragPos4.xyz / fragPos4.w;
-
 	// Get world position
-	vec3 worldPos;
-	{
-		vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
-		worldPos4 = worldPos4 / worldPos4.w;
-		worldPos = worldPos4.xyz;
-	}
+	vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
+	vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Decode GBuffer
 	vec3 normal;
@@ -178,15 +170,15 @@ void main()
 	subsurface = max(gbuffer.subsurface, SUBSURFACE_MIN);
 	emission = gbuffer.emission;
 
-	// Get SSAO
-	float ssao = texture(u_ssaoTex, in_uv).r;
-	diffCol *= ssao;
+	// Get first light index
+	uint idxOffset;
+	{
+		uint k = computeClusterK(u_clustererMagic, worldPos);
+		uint clusterIdx = 
+			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + uint(in_clusterIJ.y) * CLUSTER_COUNT_X + uint(in_clusterIJ.x);
 
-	// Get counts and offsets
-	uint clusterIdx = computeClusterK(u_near, u_clustererMagic, fragPos.z) * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y)
-		+ uint(in_clusterIJ.y) * CLUSTER_COUNT_X + uint(in_clusterIJ.x);
-
-	uint idxOffset = u_clusters[clusterIdx];
+		idxOffset = u_clusters[clusterIdx];
+	}
 
 	// Decals
 	uint count = u_lightIndices[idxOffset++];
@@ -194,8 +186,12 @@ void main()
 	{
 		Decal decal = u_decals[u_lightIndices[idxOffset++]];
 
-		appendDecalColors(decal, fragPos, diffCol, roughness);
+		appendDecalColors(decal, worldPos, diffCol, roughness);
 	}
+
+	// Apply SSAO
+	float ssao = texture(u_ssaoTex, in_uv).r;
+	diffCol *= ssao;
 
 	// Ambient and emissive color
 	vec3 outC = diffCol * emission;
@@ -205,7 +201,7 @@ void main()
 	a2 *= a2 * a2;
 
 	// Point lights
-	vec3 viewDir = normalize(-fragPos);
+	vec3 viewDir = normalize(u_cameraPos - worldPos);
 	count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
@@ -217,14 +213,13 @@ void main()
 		{
 			float shadow = computeShadowFactorOmni(frag2Light, 
 				light.specularColorRadius.w, 
-				u_invViewRotation, 
 				light.atlasTilesPad2.xy, 
 				light.diffuseColorShadowmapId.w,
 				u_shadowTex);
 			lambert *= shadow;
 		}
 
-		outC += (specC + diffC) * (att * max(subsurface, lambert));
+		outC += (diffC + specC) * (att * max(subsurface, lambert));
 	}
 
 	// Spot lights
@@ -241,7 +236,7 @@ void main()
 		if(shadowmapLayerIdx >= 0.0)
 		{
 			float shadow = computeShadowFactorSpot(
-				light.texProjectionMat, fragPos, light.specularColorRadius.w, u_shadowTex);
+				light.texProjectionMat, worldPos, light.specularColorRadius.w, u_shadowTex);
 			lambert *= shadow;
 		}
 
@@ -249,22 +244,21 @@ void main()
 	}
 
 	// Indirect
-	vec3 eye = -viewDir;
+	{
+		vec3 eye = -viewDir;
+		vec3 reflVec = reflect(eye, normal);
 
-	vec3 worldEye = u_invViewRotation * eye;
-	vec3 worldNormal = u_invViewRotation * normal;
-	vec3 worldR = reflect(worldEye, worldNormal);
+		float reflLod = float(IR_MIPMAP_COUNT - 1u) * a2;
 
-	float reflLod = float(IR_MIPMAP_COUNT) * a2;
+		vec3 specIndirect, diffIndirect;
+		readIndirect(idxOffset, worldPos, reflVec, normal, reflLod, specIndirect, diffIndirect);
 
-	float ndotv = dot(normal, viewDir);
-	vec2 envBRDF = texture(u_integrationLut, vec2(a2, ndotv)).xy;
-	vec3 specIndirectTerm = specCol * envBRDF.x + envBRDF.y;
+		float ndotv = dot(normal, viewDir);
+		vec2 envBRDF = texture(u_integrationLut, vec2(a2, ndotv)).xy;
+		vec3 specIndirectTerm = specCol * envBRDF.x + envBRDF.y;
 
-	vec3 specIndirect, diffIndirect;
-	readIndirect(idxOffset, worldPos, worldR, worldNormal, reflLod, specIndirect, diffIndirect);
-
-	outC += specIndirect * specIndirectTerm + diffIndirect * diffCol;
+		outC += specIndirect * specIndirectTerm + diffIndirect * diffCol;
+	}
 
 	out_color = outC;
 #if 0

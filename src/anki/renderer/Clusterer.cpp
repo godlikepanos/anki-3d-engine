@@ -196,24 +196,61 @@ void Clusterer::prepare(ThreadPool& threadPool, const ClustererPrepareInfo& inf)
 	m_projMat = inf.m_projMat;
 	m_viewMat = inf.m_viewMat;
 	m_camTrf = inf.m_camTrf;
+	m_near = inf.m_near;
+	m_far = inf.m_far;
+	ANKI_ASSERT(m_near < m_far && m_near > 0.0);
 
 	m_unprojParams = m_projMat.extractPerspectiveUnprojectionParams();
-	m_near = -m_unprojParams.z() / (m_unprojParams.w() + 0.0);
-	m_far = -m_unprojParams.z() / (m_unprojParams.w() + 1.0);
-	ANKI_ASSERT(m_near < m_far && m_near > 0.0);
 	m_calcNearOpt = (m_far - m_near) / pow(m_counts[2], 2.0);
-	m_shaderMagicVal = -1.0 / m_calcNearOpt;
+
+	// Compute magic val 0
+	// It's been used to calculate the 'k' of a cluster given the world position
+	{
+		// Given a distance 'd' from the camera's near plane in world space the 'k' split is calculated like:
+		// k = sqrt(d / (f - n) * Cz2)  (1)
+		// where 'n' and 'f' are the near and far vals of the projection and Cz2 is the m_counts[2]^2
+		// If the 'd' is not known and the world position instead is known then 'd' is the distance from that position
+		// to the camera's near plane.
+		// d = dot(Pn, W) - Po  (2)
+		// where 'Pn' is the plane's normal, 'Po' is the plane's offset and 'W' is the world position.
+		// Substituting d from (2) in (1) we have:
+		// k = sqrt((dot(Pn, W) - Po) / (f - n) * Cz2) =>
+		// k = sqrt((dot(Pn, W) * Cz2 - Po * Cz2) / (f - n))
+		// k = sqrt(dot(Pn, W) * Cz2 / (f - n) - Po * Cz2 / (f - n))
+		// k = sqrt(dot(Pn * Cz2 / (f - n), W) - Po * Cz2 / (f - n))
+		// If we assume that:
+		// A = Pn * Cz2 / (f - n) and B =  Po * Cz2 / (f - n)
+		// Then:
+		// k = sqrt(dot(A, W) - B)
+
+		const Mat4& vp = inf.m_viewProjMat;
+		Plane nearPlane;
+		Array<Plane*, U(FrustumPlaneType::COUNT)> planes = {};
+		planes[FrustumPlaneType::NEAR] = &nearPlane;
+		extractClipPlanes(vp, planes);
+
+		Vec3 A = nearPlane.getNormal().xyz() * (m_counts[2] * m_counts[2]) / (m_far - m_near);
+		F32 B = nearPlane.getOffset() * (m_counts[2] * m_counts[2]) / (m_far - m_near);
+
+		m_shaderMagicVals.m_val0 = Vec4(A, B);
+	}
+
+	// Compute magic val 1
+	{
+		m_shaderMagicVals.m_val1.x() = m_calcNearOpt;
+		m_shaderMagicVals.m_val1.y() = m_near;
+	}
 
 	//
 	// Issue parallel jobs
 	//
-	Array<UpdatePlanesPerspectiveCameraTask, ThreadPool::MAX_THREADS> jobs;
+	UpdatePlanesPerspectiveCameraTask job;
+	job.m_clusterer = this;
+	job.m_frustumChanged = frustumChanged;
 
 	for(U i = 0; i < threadPool.getThreadCount(); i++)
 	{
-		jobs[i].m_clusterer = this;
-		jobs[i].m_frustumChanged = frustumChanged;
-		threadPool.assignNewTask(i, &jobs[i]);
+		threadPool.assignNewTask(i, &job);
 	}
 
 	// Sync threads

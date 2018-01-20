@@ -48,7 +48,7 @@ layout(location = 2) out mediump vec4 out_tangent;
 #if CALC_BITANGENT_IN_VERT
 layout(location = 3) out mediump vec3 out_bitangent;
 #endif
-layout(location = 4) out mediump vec3 out_vertPosViewSpace;
+layout(location = 4) out mediump float out_distFromTheCamera; // Parallax
 layout(location = 5) out mediump vec3 out_eyeTangentSpace; // Parallax
 layout(location = 6) out mediump vec3 out_normalTangentSpace; // Parallax
 #endif
@@ -66,35 +66,39 @@ mediump vec4 g_tangent = in_tangent;
 //
 // Functions
 //
+
+// Common store function
 #if PASS == PASS_GB_FS
-void positionUvNormalTangent(mat4 mvp, mat3 normalMat)
+void positionUvNormalTangent(mat4 mvp, mat3 rotationMat)
 {
 	out_uv = g_uv;
 	gl_Position = mvp * vec4(g_position, 1.0);
 
-	out_normal = normalMat * g_normal.xyz;
-	out_tangent.xyz = normalMat * g_tangent.xyz;
+	out_normal = rotationMat * g_normal.xyz;
+	out_tangent.xyz = rotationMat * g_tangent.xyz;
 	out_tangent.w = g_tangent.w;
 
 #if CALC_BITANGENT_IN_VERT
 	out_bitangent = cross(out_normal, out_tangent.xyz) * out_tangent.w;
 #endif
 }
+#endif // PASS == PASS_GB_FS
 
-void parallax(in mat4 modelViewMat)
+// Store stuff for parallax mapping
+#if PASS == PASS_GB_FS
+void parallax(mat4 modelViewMat)
 {
-	vec3 n = out_normal;
-	vec3 t = out_tangent.xyz;
-#if CALC_BITANGENT_IN_VERT
-	vec3 b = out_bitangent;
-#else
+	vec3 n = in_normal;
+	vec3 t = in_tangent.xyz;
 	vec3 b = cross(n, t) * in_tangent.w;
-#endif
-	mat3 invTbn = transpose(mat3(t, b, n));
 
-	out_vertPosViewSpace = vec3(modelViewMat * vec4(g_position, 1.0));
+	mat3 normalMat = mat3(modelViewMat);
+	mat3 invTbn = transpose(normalMat * mat3(t, b, n));
 
-	out_eyeTangentSpace = invTbn * out_vertPosViewSpace;
+	vec3 viewPos = (modelViewMat * vec4(g_position, 1.0)).xyz;
+	out_distFromTheCamera = viewPos.z;
+
+	out_eyeTangentSpace = invTbn * viewPos;
 	out_normalTangentSpace = invTbn * n;
 }
 #endif // PASS == PASS_GB_FS

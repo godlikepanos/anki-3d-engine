@@ -90,9 +90,9 @@ uint computeShadowSampleCount(const uint COUNT, float zVSpace)
 	return sampleCount;
 }
 
-float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos, float distance, sampler2D spotMapArr)
+float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 worldPos, float distance, sampler2D spotMapArr)
 {
-	vec4 texCoords4 = lightProjectionMat * vec4(fragPos, 1.0);
+	vec4 texCoords4 = lightProjectionMat * vec4(worldPos, 1.0);
 	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
 	const float near = LIGHT_FRUSTUM_NEAR_PLANE;
@@ -103,10 +103,9 @@ float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos, float dista
 	return clamp(exp(ESM_CONSTANT * (textureLod(spotMapArr, texCoords3.xy, 0.0).r - linearDepth)), 0.0, 1.0);
 }
 
-float computeShadowFactorOmni(
-	vec3 frag2Light, float radius, mat3 invViewMat, uvec2 atlasTiles, float tileSize, sampler2D shadowMap)
+float computeShadowFactorOmni(vec3 frag2Light, float radius, uvec2 atlasTiles, float tileSize, sampler2D shadowMap)
 {
-	vec3 dir = invViewMat * -frag2Light;
+	vec3 dir = -frag2Light;
 	vec3 dirabs = abs(dir);
 	float dist = max(dirabs.x, max(dirabs.y, dirabs.z));
 

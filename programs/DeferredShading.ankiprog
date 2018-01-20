@@ -53,8 +53,7 @@ layout(location = 0) out vec3 out_color;
 // Point light
 struct PointLight
 {
-	vec4 projectionParams;
-	vec4 posRadius; // xyz: Light pos in eye space. w: The -1/radius
+	vec4 posRadius; // xyz: Light pos in world space. w: The -1/radius
 	vec4 diffuseColorPad1; // xyz: diff color
 	vec4 specularColorPad1; // xyz: spec color
 };
@@ -62,8 +61,7 @@ struct PointLight
 // Spot light
 struct SpotLight
 {
-	vec4 projectionParams;
-	vec4 posRadius; // xyz: Light pos in eye space. w: The -1/radius
+	vec4 posRadius; // xyz: Light pos in world space. w: The -1/radius
 	vec4 diffuseColorOuterCos; // xyz: diff color, w: outer cosine of spot
 	vec4 specularColorInnerCos; // xyz: spec color, w: inner cosine of spot
 	vec4 lightDirPad1;
@@ -74,9 +72,11 @@ layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
 
-layout(ANKI_UBO_BINDING(0, 1)) uniform u1_
+layout(ANKI_UBO_BINDING(0, 1), row_major) uniform u1_
 {
 	vec4 u_inputTexUvScaleAndOffset; // Use this to get the correct face UVs
+	mat4 u_invViewProjMat;
+	vec4 u_camPosPad1;
 #if LIGHT_TYPE == POINT_LIGHT_TYPE
 	PointLight u_light;
 #elif LIGHT_TYPE == SPOT_LIGHT_TYPE
@@ -94,6 +94,8 @@ layout(ANKI_UBO_BINDING(0, 1)) uniform u1_
 #define u_lspec u_light.specularColorInnerCos.xyz
 #endif
 
+#define u_camPos u_camPosPad1.xyz
+
 void main()
 {
 	// Compute UV coordinates
@@ -107,17 +109,17 @@ void main()
 		discard;
 	}
 
+	// Decode and process gbuffer
 	GbufferInfo gbuffer;
 	readGBuffer(u_msRt0, u_msRt1, u_msRt2, uvToRead, 0.0, gbuffer);
 	float a2 = pow(gbuffer.roughness, 2.0);
 
-	// Calculate the light color
-	vec3 fragPos;
-	fragPos.z = u_light.projectionParams.z / (u_light.projectionParams.w + depth);
-	fragPos.xy = UV_TO_NDC(uv) * u_light.projectionParams.xy * fragPos.z;
+	vec4 worldPos4 = u_invViewProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
+	vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	vec3 viewDir = normalize(-fragPos);
-	vec3 frag2Light = u_light.posRadius.xyz - fragPos;
+	// Calculate the light color
+	vec3 viewDir = normalize(u_camPos - worldPos);
+	vec3 frag2Light = u_light.posRadius.xyz - worldPos;
 	vec3 l = normalize(frag2Light);
 	float nol = max(0.0, dot(gbuffer.normal, l));
 

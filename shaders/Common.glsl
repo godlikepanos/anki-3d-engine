@@ -24,6 +24,7 @@
 #define DEFAULT_INT_PRECISION highp
 #endif
 
+// Constants
 precision DEFAULT_FLOAT_PRECISION float;
 precision DEFAULT_INT_PRECISION int;
 
@@ -34,9 +35,11 @@ const uint MAX_U32 = 0xFFFFFFFFu;
 const float PI = 3.14159265358979323846;
 const uint UBO_MAX_SIZE = 16384u;
 
+// Macros
 #define UV_TO_NDC(x_) ((x_)*2.0 - 1.0)
 #define NDC_TO_UV(x_) ((x_)*0.5 + 0.5)
 #define saturate(x_) clamp((x_), 0.0, 1.0)
+#define mad(a_, b_, c_) fma((a_), (b_), (c_))
 
 // Common locations
 #define POSITION_LOCATION 0
@@ -48,15 +51,16 @@ const uint UBO_MAX_SIZE = 16384u;
 #define SCALE_LOCATION 1
 #define ALPHA_LOCATION 2
 
+// Passes
+#define PASS_GB_FS 0
+#define PASS_SM 1
+#define PASS_EZ 2
+
+// Other
 #if !defined(ANKI_ARB_SHADER_BALLOT)
 #define readFirstInvocationARB(x_) (x_)
 #endif
 
 #define CALC_BITANGENT_IN_VERT 1
-
-// Passes
-#define PASS_GB_FS 0
-#define PASS_SM 1
-#define PASS_EZ 2
 
 #endif

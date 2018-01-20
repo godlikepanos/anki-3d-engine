@@ -20,10 +20,13 @@ struct BuiltinVarInfo
 static const Array<BuiltinVarInfo, U(BuiltinMaterialVariableId::COUNT) - 1> BUILTIN_INFOS = {
 	{{"MODEL_VIEW_PROJECTION_MATRIX", ShaderVariableDataType::MAT4, true},
 		{"MODEL_VIEW_MATRIX", ShaderVariableDataType::MAT4, true},
+		{"MODEL_MATRIX", ShaderVariableDataType::MAT4, true},
 		{"VIEW_PROJECTION_MATRIX", ShaderVariableDataType::MAT4, false},
 		{"VIEW_MATRIX", ShaderVariableDataType::MAT4, false},
 		{"NORMAL_MATRIX", ShaderVariableDataType::MAT3, true},
-		{"CAMERA_ROTATION_MATRIX", ShaderVariableDataType::MAT3, false}}};
+		{"ROTATION_MATRIX", ShaderVariableDataType::MAT3, true},
+		{"CAMERA_ROTATION_MATRIX", ShaderVariableDataType::MAT3, false},
+		{"CAMERA_POSITION", ShaderVariableDataType::VEC3, false}}};
 
 MaterialVariable::MaterialVariable()
 {
@@ -297,7 +300,7 @@ Error Material::parseInputs(XmlElement inputsEl, Bool async)
 
 		if(!foundVar->acceptAllMutations(m_mutations))
 		{
-			ANKI_RESOURCE_LOGE("Variable \"%s\" is not needed by the material's mutations. Don't need it");
+			ANKI_RESOURCE_LOGE("Variable \"%s\" is not needed by the material's mutations");
 			return Error::USER_DATA;
 		}
 

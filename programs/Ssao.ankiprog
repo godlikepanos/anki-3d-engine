@@ -37,6 +37,7 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _blk
 	vec4 u_projectionMat;
 	vec4 u_noiseLayerPad3;
 	mat4 u_prevViewProjMatMulInvViewProjMat;
+	mat3 u_viewRotMat;
 };
 
 #define u_noiseLayer u_noiseLayerPad3.x
@@ -51,6 +52,7 @@ vec3 readNormal(in vec2 uv)
 {
 	vec3 normal;
 	readNormalFromGBuffer(u_msRt, uv, normal);
+	normal = u_viewRotMat * normal;
 	return normal;
 }
 

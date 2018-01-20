@@ -77,7 +77,6 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 		{
 			factor *= computeShadowFactorOmni(frag2Light, 
 				-1.0 / light.posRadius.w, 
-				u_invViewRotation, 
 				light.atlasTilesPad2.xy,
 				light.diffuseColorShadowmapId.w,
 				u_shadowTex);
@@ -153,7 +152,7 @@ void main()
 	vec3 newCol = vec3(0.0);
 	for(uint k = 0u; k < CLUSTER_COUNT.z; ++k)
 	{
-		float kFar = computeClusterFar(k, u_near, u_clustererMagic);
+		float kFar = -computeClusterFar(u_clustererMagic, k);
 
 		//
 		// Compute sample count
@@ -192,7 +191,10 @@ void main()
 
 			vec3 fragPos = viewDir * (zMedian / viewDir.z);
 
-			newCol += computeLightColor(fragPos, plightCount, plightIdx, slightCount, slightIdx);
+			// Move to world space
+			vec4 newWorldPos4 = u_invViewMat * vec4(fragPos, 1.0);
+
+			newCol += computeLightColor(newWorldPos4.xyz, plightCount, plightIdx, slightCount, slightIdx);
 		}
 
 		kNear = kFar;

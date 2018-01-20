@@ -374,7 +374,10 @@ Error LightBin::bin(const Mat4& viewMat,
 	ClustererPrepareInfo pinf;
 	pinf.m_viewMat = viewMat;
 	pinf.m_projMat = projMat;
+	pinf.m_viewProjMat = viewProjMat;
 	pinf.m_camTrf = Transform(camTrf);
+	pinf.m_near = rqueue.m_cameraNear;
+	pinf.m_far = rqueue.m_cameraFar;
 	m_clusterer.prepare(*m_threadPool, pinf);
 
 	//
@@ -653,9 +656,7 @@ void LightBin::writeAndBinPointLight(
 
 	ShaderPointLight& slight = ctx.m_pointLights[idx];
 
-	Vec4 pos = ctx.m_viewMat * lightEl.m_worldPosition.xyz1();
-
-	slight.m_posRadius = Vec4(pos.xyz(), 1.0f / (lightEl.m_radius * lightEl.m_radius));
+	slight.m_posRadius = Vec4(lightEl.m_worldPosition.xyz(), 1.0f / (lightEl.m_radius * lightEl.m_radius));
 	slight.m_diffuseColorTileSize = lightEl.m_diffuseColor.xyz0();
 
 	if(lightEl.m_shadowRenderQueues[0] == nullptr || !ctx.m_shadowsEnabled)
@@ -703,15 +704,15 @@ void LightBin::writeAndBinSpotLight(
 
 	if(lightEl.hasShadow() && ctx.m_shadowsEnabled)
 	{
-		// bias * proj_l * view_l * world_c
-		light.m_texProjectionMat = lightEl.m_textureMatrix * ctx.m_camTrf;
+		// bias * proj_l * view_l
+		light.m_texProjectionMat = lightEl.m_textureMatrix;
 
 		shadowmapIndex = 1.0f; // Just set a value
 	}
 
 	// Pos & dist
-	Vec4 pos = ctx.m_viewMat * lightEl.m_worldTransform.getTranslationPart().xyz1();
-	light.m_posRadius = Vec4(pos.xyz(), 1.0f / (lightEl.m_distance * lightEl.m_distance));
+	light.m_posRadius =
+		Vec4(lightEl.m_worldTransform.getTranslationPart().xyz(), 1.0f / (lightEl.m_distance * lightEl.m_distance));
 
 	// Diff color and shadowmap ID now
 	light.m_diffuseColorShadowmapId = Vec4(lightEl.m_diffuseColor, shadowmapIndex);
@@ -721,7 +722,6 @@ void LightBin::writeAndBinSpotLight(
 
 	// Light dir
 	Vec3 lightDir = -lightEl.m_worldTransform.getRotationPart().getZAxis();
-	lightDir = ctx.m_viewMat.getRotationPart() * lightDir;
 	light.m_lightDir = Vec4(lightDir, 0.0f);
 
 	// Angles
@@ -823,8 +823,8 @@ void LightBin::writeAndBinDecal(const DecalQueueElement& decalEl, LightBinContex
 		ctx.m_normalRoughnessDecalTexAtlas = atlas;
 	}
 
-	// bias * proj_l * view_l * world_c
-	decal.m_texProjectionMat = decalEl.m_textureMatrix * ctx.m_camTrf;
+	// bias * proj_l * view_
+	decal.m_texProjectionMat = decalEl.m_textureMatrix;
 
 	// Bin it
 	Obb obb(decalEl.m_obbCenter.xyz0(), Mat3x4(decalEl.m_obbRotation), decalEl.m_obbExtend.xyz0());

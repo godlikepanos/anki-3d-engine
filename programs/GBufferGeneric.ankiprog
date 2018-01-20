@@ -23,7 +23,7 @@ http://www.anki3d.org/LICENSE
 		<shader type="vert">
 			<inputs>
 				<input name="mvp" type="mat4" instanced="1"/>
-				<input name="normalMat" type="mat3" instanced="1">
+				<input name="rotationMat" type="mat3" instanced="1">
 					<mutators>
 						<mutator name="PASS" values="0"/>
 					</mutators>
@@ -45,7 +45,7 @@ void main()
 #endif
 
 #if PASS == PASS_GB_FS
-	positionUvNormalTangent(mvp, normalMat);
+	positionUvNormalTangent(mvp, rotationMat);
 	
 #	if PARALLAX
 	parallax(modelViewMat);

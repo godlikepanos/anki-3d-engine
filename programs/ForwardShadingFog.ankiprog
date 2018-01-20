@@ -17,10 +17,12 @@ http://www.anki3d.org/LICENSE
 			<source><![CDATA[
 #include "shaders/ForwardShadingCommonVert.glsl"
 
+layout(location = 0) out float out_zVSpace;
+
 void main() 
 {
 	gl_Position = mvp * vec4(in_position, 1.0);
-	out_posViewSpace = (modelView * vec4(in_position, 1.0)).xyz;
+	out_zVSpace = (modelView * vec4(in_position, 1.0)).z;
 }
 			]]></source>
 		</shader>
@@ -35,9 +37,11 @@ void main()
 			<source><![CDATA[
 #include "shaders/ForwardShadingCommonFrag.glsl"
 
+layout(location = 0) in float in_zVSpace;
+
 void main() 
 {
-	fog(fogColor, fogAlphaScale, fogDistanceOfMaxThikness);
+	fog(fogColor, fogAlphaScale, fogDistanceOfMaxThikness, in_zVSpace);
 }
 			]]></source>
 		</shader>

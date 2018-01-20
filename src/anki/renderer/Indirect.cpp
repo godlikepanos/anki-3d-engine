@@ -23,7 +23,8 @@ struct Indirect::LightPassVertexUniforms
 struct Indirect::LightPassPointLightUniforms
 {
 	Vec4 m_inputTexUvScaleAndOffset;
-	Vec4 m_projectionParams;
+	Mat4 m_invViewProjMat;
+	Vec4 m_camPosPad1;
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorPad1;
 	Vec4 m_specularColorPad1;
@@ -32,7 +33,8 @@ struct Indirect::LightPassPointLightUniforms
 struct Indirect::LightPassSpotLightUniforms
 {
 	Vec4 m_inputTexUvScaleAndOffset;
-	Vec4 m_projectionParams;
+	Mat4 m_invViewProjMat;
+	Vec4 m_camPosPad1;
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorOuterCos;
 	Vec4 m_specularColorInnerCos;
@@ -469,7 +471,7 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
 		const Mat4& vpMat = rqueue.m_viewProjectionMatrix;
-		const Mat4& vMat = rqueue.m_viewMatrix;
+		const Mat4 invViewProjMat = rqueue.m_viewProjectionMatrix.getInverse();
 
 		// Do point lights
 		cmdb->bindShaderProgram(m_lightShading.m_plightGrProg);
@@ -490,11 +492,11 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 			LightPassPointLightUniforms* light =
 				allocateAndBindUniforms<LightPassPointLightUniforms*>(sizeof(LightPassPointLightUniforms), cmdb, 0, 1);
 
-			Vec4 pos = vMat * plightEl->m_worldPosition.xyz1();
-
 			light->m_inputTexUvScaleAndOffset = Vec4(1.0f / 6.0f, 1.0f, faceIdx * (1.0f / 6.0f), 0.0f);
-			light->m_projectionParams = rqueue.m_projectionMatrix.extractPerspectiveUnprojectionParams();
-			light->m_posRadius = Vec4(pos.xyz(), 1.0f / (plightEl->m_radius * plightEl->m_radius));
+			light->m_invViewProjMat = invViewProjMat;
+			light->m_camPosPad1 = rqueue.m_cameraTransform.getTranslationPart();
+			light->m_posRadius =
+				Vec4(plightEl->m_worldPosition.xyz(), 1.0f / (plightEl->m_radius * plightEl->m_radius));
 			light->m_diffuseColorPad1 = plightEl->m_diffuseColor.xyz0();
 			light->m_specularColorPad1 = plightEl->m_specularColor.xyz0();
 
@@ -536,17 +538,17 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 				allocateAndBindUniforms<LightPassSpotLightUniforms*>(sizeof(LightPassSpotLightUniforms), cmdb, 0, 1);
 
 			light->m_inputTexUvScaleAndOffset = Vec4(1.0f / 6.0f, 1.0f, faceIdx * (1.0f / 6.0f), 0.0f);
-			light->m_projectionParams = rqueue.m_projectionMatrix.extractPerspectiveUnprojectionParams();
+			light->m_invViewProjMat = invViewProjMat;
+			light->m_camPosPad1 = rqueue.m_cameraTransform.getTranslationPart();
 
-			Vec4 pos = vMat * splightEl->m_worldTransform.getTranslationPart().xyz1();
-			light->m_posRadius = Vec4(pos.xyz(), 1.0f / (splightEl->m_distance * splightEl->m_distance));
+			light->m_posRadius = Vec4(splightEl->m_worldTransform.getTranslationPart().xyz(),
+				1.0f / (splightEl->m_distance * splightEl->m_distance));
 
 			light->m_diffuseColorOuterCos = Vec4(splightEl->m_diffuseColor, cos(splightEl->m_outerAngle / 2.0f));
 
 			light->m_specularColorInnerCos = Vec4(splightEl->m_specularColor, cos(splightEl->m_innerAngle / 2.0f));
 
 			Vec3 lightDir = -splightEl->m_worldTransform.getZAxis().xyz();
-			lightDir = vMat.getRotationPart() * lightDir;
 			light->m_lightDirPad1 = lightDir.xyz0();
 
 			// Draw
