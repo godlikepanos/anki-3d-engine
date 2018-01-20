@@ -20,7 +20,7 @@ layout(location = 2) in mediump vec4 in_tangent;
 layout(location = 3) in mediump vec3 in_bitangent;
 #endif
 layout(location = 4) in mediump float in_distFromTheCamera; // Parallax
-layout(location = 5) in highp vec3 in_eyeTangentSpace; // Parallax
+layout(location = 5) in mediump vec3 in_eyeTangentSpace; // Parallax
 layout(location = 6) in mediump vec3 in_normalTangentSpace; // Parallax
 #endif // PASS == PASS_GB_FS
 

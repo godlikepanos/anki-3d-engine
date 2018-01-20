@@ -242,9 +242,21 @@ public:
 	{
 	}
 
+	Bool operator==(const TextureSubresourceInfo& b) const
+	{
+		ANKI_ASSERT(_m_padding[0] == b.m_padding[0]);
+		return memcmp(this, &b, sizeof(*this)) == 0;
+	}
+
+	Bool operator!=(const TextureSubresourceInfo& b) const
+	{
+		return !(*this == b);
+	}
+
 	U64 computeHash() const
 	{
 		static_assert(sizeof(*this) == sizeof(U32) * 4 + sizeof(U8) * 4, "Should be hashable");
+		ANKI_ASSERT(_m_padding[0] == b.m_padding[0]);
 		return anki::computeHash(this, sizeof(*this));
 	}
 };

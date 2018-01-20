@@ -49,7 +49,7 @@ layout(location = 2) out mediump vec4 out_tangent;
 layout(location = 3) out mediump vec3 out_bitangent;
 #endif
 layout(location = 4) out mediump float out_distFromTheCamera; // Parallax
-layout(location = 5) out highp vec3 out_eyeTangentSpace; // Parallax
+layout(location = 5) out mediump vec3 out_eyeTangentSpace; // Parallax
 layout(location = 6) out mediump vec3 out_normalTangentSpace; // Parallax
 #endif
 
@@ -96,7 +96,7 @@ void parallax(mat4 modelViewMat)
 	mat3 invTbn = transpose(normalMat * mat3(t, b, n));
 
 	vec3 viewPos = (modelViewMat * vec4(g_position, 1.0)).xyz;
-	out_distFromTheCamera = length(viewPos);
+	out_distFromTheCamera = viewPos.z;
 
 	out_eyeTangentSpace = invTbn * viewPos;
 	out_normalTangentSpace = invTbn * n;

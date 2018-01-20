@@ -145,7 +145,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	rgraphCtx.bindColorTextureAndSampler(1, 4, m_r->getSsao().getRt(), m_r->getLinearSampler());
 
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getIndirect().getReflectionRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getIndirect().getIrradianceRt(), m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0,
 		3,

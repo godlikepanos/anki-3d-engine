@@ -368,6 +368,20 @@ U TextureImpl::computeSurfaceIdx(const TextureSurfaceInfo& surf) const
 
 MicroTextureView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresource) const
 {
+	// Quick opt: Check if the subresource refers to the whole tex
+	TextureSubresourceInfo wholeTexSubresource;
+	wholeTexSubresource.m_mipmapCount = getMipmapCount();
+	wholeTexSubresource.m_faceCount = textureTypeIsCube(getTextureType()) ? 6 : 1;
+	wholeTexSubresource.m_layerCount = getLayerCount();
+	wholeTexSubresource.m_depthStencilAspect = getDepthStencilAspect();
+
+	if(subresource == wholeTexSubresource)
+	{
+		MicroTextureView view{getGlName(), wholeTexSubresource.m_depthStencilAspect};
+		return view;
+	}
+
+	// Continue with the regular init
 	LockGuard<Mutex> lock(m_viewsMapMtx);
 	auto it = m_viewsMap.find(subresource);
 
