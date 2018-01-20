@@ -14,7 +14,7 @@
 	
 	<inputs>
 		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
-		<input shaderInput="normalMat" builtin="NORMAL_MATRIX"/>
+		<input shaderInput="rotationMat" builtin="ROTATION_MATRIX"/>
 		
 	
 		<input shaderInput="diffTex" value="assets/VasePlant_diffuse.ankitex"/>

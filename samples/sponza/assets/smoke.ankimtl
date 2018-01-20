@@ -8,7 +8,6 @@
 	<inputs>
 		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
 		<input shaderInput="cameraRotMat" builtin="CAMERA_ROTATION_MATRIX"/>
-		<input shaderInput="viewMat" builtin="VIEW_MATRIX"/>
 
 		<input shaderInput="diffuseMap" value="assets/smoke.ankitex"/>
 		<input shaderInput="colorScale" value="1.0 1.0 1.0 1.0"/>
