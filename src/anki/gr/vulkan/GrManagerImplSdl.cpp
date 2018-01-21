@@ -25,7 +25,7 @@ Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 #if ANKI_OS == ANKI_OS_LINUX
 	if(!SDL_Vulkan_CreateSurface(init.m_window->getNative().m_window, m_instance, &m_surface))
 	{
-		ANKI_VK_LOGE("SDL_Vulkan_CreateSurface() failed");
+		ANKI_VK_LOGE("SDL_Vulkan_CreateSurface() failed: %s", SDL_GetError());
 		return Error::FUNCTION_FAILED;
 	}
 #elif ANKI_OS == ANKI_OS_WINDOWS

@@ -84,7 +84,7 @@ Error LightShading::initInternal(const ConfigSet& config)
 	// Load shaders and programs
 	ANKI_CHECK(getResourceManager().loadResource("programs/LightShading.ankiprog", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
+	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))
 		.add("CLUSTER_COUNT_Y", U32(m_clusterCounts[1]))
 		.add("CLUSTER_COUNT_Z", U32(m_clusterCounts[2]))

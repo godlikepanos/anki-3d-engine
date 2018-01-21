@@ -72,7 +72,6 @@ Error PipelineCache::init(
 
 void PipelineCache::destroy(VkDevice dev, VkPhysicalDevice pdev, GrAllocator<U8> alloc)
 {
-	ANKI_ASSERT(dev && pdev);
 	Error err = destroyInternal(dev, pdev, alloc);
 	if(err)
 	{
@@ -84,6 +83,8 @@ Error PipelineCache::destroyInternal(VkDevice dev, VkPhysicalDevice pdev, GrAllo
 {
 	if(m_cacheHandle)
 	{
+		ANKI_ASSERT(dev && pdev);
+
 		// Get size of cache
 		size_t size = 0;
 		ANKI_VK_CHECK(vkGetPipelineCacheData(dev, m_cacheHandle, &size, nullptr));
