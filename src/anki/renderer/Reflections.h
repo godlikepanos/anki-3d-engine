@@ -35,10 +35,13 @@ private:
 
 	RenderTargetDescription m_rtDescr;
 
+	Array<U8, 2> m_workgroupSize = {{32, 32}};
+
 	class
 	{
 	public:
 		RenderTargetHandle m_rt;
+		RenderingContext* m_ctx ANKI_DBG_NULLIFY;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);

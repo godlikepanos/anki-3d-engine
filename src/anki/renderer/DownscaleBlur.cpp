@@ -60,13 +60,16 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	return Error::NONE;
 }
 
+void DownscaleBlur::importRenderTargets(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	m_runCtx.m_rt = rgraph.importRenderTarget("Down/Blur", m_rtTex, TextureUsageBit::NONE);
+}
+
 void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_crntPassIdx = 0;
-
-	// Create RT
-	m_runCtx.m_rt = rgraph.importRenderTarget("Down/Blur", m_rtTex, TextureUsageBit::NONE);
 
 	// Create passes
 	static const Array<CString, 8> passNames = {{"DownBlur #0",

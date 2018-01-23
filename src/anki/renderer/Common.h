@@ -34,6 +34,7 @@ class DownscaleBlur;
 class Volumetric;
 class DepthDownscale;
 class TemporalAA;
+class Reflections;
 
 class RenderingContext;
 class DebugDrawer;

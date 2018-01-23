@@ -23,6 +23,7 @@
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/TemporalAA.h>
+#include <anki/renderer/Reflections.h>
 
 namespace anki
 {
@@ -135,6 +136,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscale->init(config));
 
+	m_refl.reset(m_alloc.newInstance<Reflections>(this));
+	ANKI_CHECK(m_refl->init(config));
+
 	m_tonemapping.reset(getAllocator().newInstance<Tonemapping>(this));
 	ANKI_CHECK(m_tonemapping->init(config));
 
@@ -246,6 +250,9 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	{
 		m_resourcesDirty = false;
 	}
+
+	// Import RTs first
+	m_downscale->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
 	m_shadowMapping->populateRenderGraph(ctx);

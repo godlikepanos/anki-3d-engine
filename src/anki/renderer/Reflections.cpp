@@ -8,6 +8,8 @@
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/DownscaleBlur.h>
+#include <anki/renderer/RenderQueue.h>
+#include <anki/collision/Functions.h>
 
 namespace anki
 {
@@ -28,23 +30,27 @@ Error Reflections::init(const ConfigSet& cfg)
 
 Error Reflections::initInternal(const ConfigSet& cfg)
 {
-	U32 width = m_r->getWidth() / 2;
-	U32 height = m_r->getHeight() / 2;
+	U32 width = m_r->getWidth();
+	U32 height = m_r->getHeight();
 	ANKI_R_LOGI("Initializing reflection pass (%ux%u)", width, height);
 
 	// Create RT descr
 	m_rtDescr = m_r->create2DRenderTargetDescription(width,
 		height,
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_COMPUTE_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_COMPUTE_WRITE
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		"Refl");
 	m_rtDescr.bake();
 
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource("programs/Reflections.ankiprog", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("OUT_TEX_SIZE", UVec2(width, height));
+	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
+	consts.add("FB_SIZE", UVec2(width, height));
+	consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
+	consts.add("MAX_STEPS", U32(256));
+	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(consts.get(), variant);
@@ -56,6 +62,7 @@ Error Reflections::initInternal(const ConfigSet& cfg)
 void Reflections::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	m_runCtx.m_ctx = &ctx;
 
 	// Create RT
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
@@ -76,16 +83,38 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getLinearSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getDownscaleBlur().getRt(), m_r->getLinearSampler());
+	struct Unis
+	{
+		Mat4 m_viewProjMat;
+		Mat4 m_invViewProjMat;
+		Vec4 m_camPosPad1;
+		Vec4 m_nearPlane;
+	};
+
+	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
+	unis->m_viewProjMat = m_runCtx.m_ctx->m_renderQueue->m_viewProjectionMatrix;
+	unis->m_invViewProjMat = m_runCtx.m_ctx->m_renderQueue->m_viewProjectionMatrix.getInverse();
+	unis->m_camPosPad1 = m_runCtx.m_ctx->m_renderQueue->m_cameraTransform.getTranslationPart();
+
+	Plane nearPlane;
+	Array<Plane*, U(FrustumPlaneType::COUNT)> planes = {};
+	planes[FrustumPlaneType::NEAR] = &nearPlane;
+	extractClipPlanes(m_runCtx.m_ctx->m_renderQueue->m_viewProjectionMatrix, planes);
+	unis->m_nearPlane = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset() + 0.1f);
+
+	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getDownscaleBlur().getRt(), m_r->getTrilinearRepeatSampler());
 
 	TextureSubresourceInfo subresource;
 	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, subresource);
 
 	cmdb->bindShaderProgram(m_grProg);
 
-	cmdb->dispatchCompute(m_r->getWidth() / 2, m_r->getHeight() / 2, 1);
+	cmdb->dispatchCompute((m_r->getWidth() + m_workgroupSize[0] - 1) / m_workgroupSize[0],
+		(m_r->getHeight() + m_workgroupSize[1] - 1) / m_workgroupSize[1],
+		1);
 }
 
 } // end namespace anki

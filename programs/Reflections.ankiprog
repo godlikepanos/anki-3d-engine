@@ -20,17 +20,22 @@ http://www.anki3d.org/LICENSE
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_gbufferRt1;
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_gbufferRt2;
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_depthRt;
-layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_lightBufferRt;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_gbufferRt1;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_gbufferRt2;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_depthRt;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_lightBufferRt;
 
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D u_out;
 
 layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 {
-	mat4 u_prevViewProjMatMulInvViewProjMat;
+	mat4 u_viewProjMat;
+	mat4 u_invViewProjMat;
+	vec4 u_camPosPad1;
+	vec4 u_nearPlane;
 };
+
+#define u_camPos u_camPosPad1.xyz
 
 // http://paulbourke.net/geometry/pointlineplane/
 // Line segment A is p1, p2. Line segment B is p3, p4
@@ -38,6 +43,7 @@ vec3 lineSegmentsIntersection(vec3 p1, vec3 p2, vec3 p3, vec3 p4)
 {
 	vec3 p13 = p1 - p3;
 	vec3 p43 = p4 - p3;
+	vec3 p21 = p2 - p1;
 
 	float d1343 = dot(p13, p43);
 	float d4321 = dot(p43, p21);
@@ -66,12 +72,12 @@ vec3 doSslr(vec3 r, vec3 worldPos, vec2 uv, out float contribution)
 
 	// Compute an end point p1 that is p1 = p0 + t*r. p1 will lie in the near plane.
 	// The code is the same used to compute the intersection of a ray to a plane.
-	// NOTE: The nearPlane is a bit in front of the real near plane. We do that to be able to project p1 without 
+	// NOTE: The u_nearPlane is a bit in front of the real near plane. We do that to be able to project p1 without 
 	//       problems
 	vec3 p1;
 	{
-		float d = dot(nearPlane.xyz, p0) - nearPlane.w;
-		float a = dot(nearPlane.xyz, r);
+		float d = dot(u_nearPlane.xyz, p0) - u_nearPlane.w;
+		float a = dot(u_nearPlane.xyz, r);
 
 		float s;
 		if(d > 0.0 && a < 0.0)
@@ -147,6 +153,12 @@ vec3 doSslr(vec3 r, vec3 worldPos, vec2 uv, out float contribution)
 
 void main()
 {
+	if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
+	{
+		// Skip threads outside the writable image
+		return;
+	}
+
 	vec2 uv = vec2(gl_GlobalInvocationID.xy) / vec2(FB_SIZE);
 
 	// Get normal
@@ -159,15 +171,15 @@ void main()
 	vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Compute reflection vec
-	vec4 viewDir = normalize(worldPos - u_camPos);
-	vec3 refl = reflect(viewDir, normal);
+	vec3 viewDir = normalize(worldPos - u_camPos);
+	vec3 reflVec = reflect(viewDir, normal);
 
 	// Do SSLR
 	float sslrFactor;
-	vec3 sslrCol = doSslr(r, worldPos, uv, sslrFactor);
+	vec3 sslrCol = doSslr(reflVec, worldPos, uv, sslrFactor);
 
 	// Write it
-	imageStore(u_out, gl_GlobalInvocationID.xy, vec4(sslrCol, 0.0));
+	imageStore(u_out, ivec2(gl_GlobalInvocationID.xy), vec4(sslrCol, 0.0));
 }
 			]]></source>
 		</shader>
