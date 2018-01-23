@@ -29,6 +29,11 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_rt;
+	}
+
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;

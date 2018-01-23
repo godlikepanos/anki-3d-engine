@@ -144,6 +144,11 @@ public:
 		return *m_lensFlare;
 	}
 
+	Reflections& getReflections()
+	{
+		return *m_refl;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;

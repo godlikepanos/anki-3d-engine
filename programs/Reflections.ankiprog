@@ -65,10 +65,9 @@ vec3 lineSegmentsIntersection(vec3 p1, vec3 p2, vec3 p3, vec3 p4)
 	return result;
 }
 
-vec3 doSslr(vec3 r, vec3 worldPos, vec2 uv, out float contribution)
+vec4 doSslr(vec3 r, vec3 worldPos, vec2 uv)
 {
 	vec3 p0 = worldPos;
-	contribution = 0.0;
 
 	// Compute an end point p1 that is p1 = p0 + t*r. p1 will lie in the near plane.
 	// The code is the same used to compute the intersection of a ray to a plane.
@@ -112,7 +111,7 @@ vec3 doSslr(vec3 r, vec3 worldPos, vec2 uv, out float contribution)
 		// Check if it's out of the view
 		if(newUv.x < 0.0 || newUv.y < 0.0 || newUv.x > 1.0 || newUv.y > 1.0)
 		{
-			return vec3(0.0);
+			return vec4(0.0);
 		}
 
 		vec2 ndc = UV_TO_NDC(newUv);
@@ -136,7 +135,7 @@ vec3 doSslr(vec3 r, vec3 worldPos, vec2 uv, out float contribution)
 
 		if(diffDepth > EPSILON)
 		{
-			contribution = sin(length(ndc) * PI);
+			float contribution = sin(length(ndc) * PI);
 
 			float roughness;
 			vec3 specular;
@@ -144,11 +143,11 @@ vec3 doSslr(vec3 r, vec3 worldPos, vec2 uv, out float contribution)
 
 			float lod = float(LIGHT_BUFFER_MIP_COUNT - 1u) * roughness;
 			vec3 color = textureLod(u_lightBufferRt, newUv, lod).rgb;
-			return color;
+			return vec4(color, contribution);
 		}
 	}
 
-	return vec3(0.0);
+	return vec4(0.0);
 }
 
 void main()
@@ -175,8 +174,9 @@ void main()
 	vec3 reflVec = reflect(viewDir, normal);
 
 	// Do SSLR
-	float sslrFactor;
-	vec3 sslrCol = doSslr(reflVec, worldPos, uv, sslrFactor);
+	vec4 sslr = doSslr(reflVec, worldPos, uv);
+	float sslrFactor = sslr.w;
+	vec3 sslrCol = sslr.xyz;
 
 	// Write it
 	imageStore(u_out, ivec2(gl_GlobalInvocationID.xy), vec4(sslrCol, 0.0));

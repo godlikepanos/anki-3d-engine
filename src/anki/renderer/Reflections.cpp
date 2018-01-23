@@ -61,6 +61,8 @@ Error Reflections::initInternal(const ConfigSet& cfg)
 
 void Reflections::populateRenderGraph(RenderingContext& ctx)
 {
+	return; // TODO
+
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_ctx = &ctx;
 
@@ -72,6 +74,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	rpass.setWork(runCallback, this, 0);
 
 	rpass.newConsumer({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+	rpass.newConsumer({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getDepthDownscale().getHalfDepthColorRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
