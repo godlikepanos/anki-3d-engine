@@ -9,7 +9,6 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/RenderQueue.h>
-#include <anki/collision/Functions.h>
 
 namespace anki
 {
@@ -90,20 +89,18 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 	{
 		Mat4 m_viewProjMat;
 		Mat4 m_invViewProjMat;
-		Vec4 m_camPosPad1;
-		Vec4 m_nearPlane;
+		Mat4 m_invProjMat;
+		Mat4 m_viewMat;
+		Vec4 m_camPosNear;
 	};
 
 	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
-	unis->m_viewProjMat = m_runCtx.m_ctx->m_renderQueue->m_viewProjectionMatrix;
-	unis->m_invViewProjMat = m_runCtx.m_ctx->m_renderQueue->m_viewProjectionMatrix.getInverse();
-	unis->m_camPosPad1 = m_runCtx.m_ctx->m_renderQueue->m_cameraTransform.getTranslationPart();
-
-	Plane nearPlane;
-	Array<Plane*, U(FrustumPlaneType::COUNT)> planes = {};
-	planes[FrustumPlaneType::NEAR] = &nearPlane;
-	extractClipPlanes(m_runCtx.m_ctx->m_renderQueue->m_viewProjectionMatrix, planes);
-	unis->m_nearPlane = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset() + 0.1f);
+	unis->m_viewProjMat = m_runCtx.m_ctx->m_viewProjMatJitter;
+	unis->m_invViewProjMat = m_runCtx.m_ctx->m_viewProjMatJitter.getInverse();
+	unis->m_invProjMat = m_runCtx.m_ctx->m_projMatJitter.getInverse();
+	unis->m_viewMat = m_runCtx.m_ctx->m_renderQueue->m_viewMatrix;
+	unis->m_camPosNear = Vec4(m_runCtx.m_ctx->m_renderQueue->m_cameraTransform.getTranslationPart().xyz(),
+		m_runCtx.m_ctx->m_renderQueue->m_cameraNear + 0.1f);
 
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());

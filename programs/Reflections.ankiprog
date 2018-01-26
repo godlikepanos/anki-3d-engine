@@ -31,66 +31,32 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 {
 	mat4 u_viewProjMat;
 	mat4 u_invViewProjMat;
-	vec4 u_camPosPad1;
-	vec4 u_nearPlane;
+	mat4 u_invProjMat;
+	mat4 u_viewMat;
+	vec4 u_camPosNear;
 };
 
-#define u_camPos u_camPosPad1.xyz
-
-// http://paulbourke.net/geometry/pointlineplane/
-// Line segment A is p1, p2. Line segment B is p3, p4
-vec3 lineSegmentsIntersection(vec3 p1, vec3 p2, vec3 p3, vec3 p4)
-{
-	vec3 p13 = p1 - p3;
-	vec3 p43 = p4 - p3;
-	vec3 p21 = p2 - p1;
-
-	float d1343 = dot(p13, p43);
-	float d4321 = dot(p43, p21);
-	float d1321 = dot(p13, p21);
-	float d4343 = dot(p43, p43);
-	float d2121 = dot(p21, p21);
-
-	float denom = d2121 * d4343 - d4321 * d4321;
-	if(denom == 0.0)
-	{
-		denom = EPSILON;
-	}
-
-	float numer = d1343 * d4321 - d1321 * d4343;
-
-	float mua = numer / denom;
-
-	vec3 result = p1 + mua * p21;
-	return result;
-}
+#define u_camPos u_camPosNear.xyz
+#define u_near u_camPosNear.w
+#define u_normalMat mat3(u_viewMat)
 
 vec4 doSslr(vec3 r, vec3 worldPos, vec2 uv)
 {
-	vec3 p0 = worldPos;
+	// This func is working in view space
+	vec3 p0 = (u_viewMat * vec4(worldPos, 1.0)).xyz;
+	r = u_normalMat * r;
 
 	// Compute an end point p1 that is p1 = p0 + t*r. p1 will lie in the near plane.
-	// The code is the same used to compute the intersection of a ray to a plane.
-	// NOTE: The u_nearPlane is a bit in front of the real near plane. We do that to be able to project p1 without 
-	//       problems
+	// p1 = p0 + t*r or
+	// p1.x = p0.x + t*r.x (1)
+	// p1.y = p0.y + t*r.y (2) and
+	// p1.z = p0.z + t*r.z (3)
+	// p1.z is known to be -near so we can solve (3) for t
+	// NOTE: u_near is a bit bigger that the real near so that p1 will fall a bit in front of the near plane
 	vec3 p1;
 	{
-		float d = dot(u_nearPlane.xyz, p0) - u_nearPlane.w;
-		float a = dot(u_nearPlane.xyz, r);
-
-		float s;
-		if(d > 0.0 && a < 0.0)
-		{
-			// We have intersection, compute the intersection point
-			s = -d / a;
-		}
-		else
-		{
-			// No intersection, create a correct point
-			s = 1000.0;
-		}
-
-		p1 = p0 + s * r;
+		float t = -(u_near + p0.z) / (r.z + EPSILON);
+		p1 = p0 + r * t;	
 	}
 
 	// Project the starting and end points
@@ -100,7 +66,7 @@ vec4 doSslr(vec3 r, vec3 worldPos, vec2 uv)
 
 	// Compute the step size
 	vec2 dir = end - start;
-	float stepSize = max(dir.x, dir.y);
+	float stepSize = length(dir) / max(dir.x, dir.y);
 	dir = normalize(dir);
 
 	// Iterate
@@ -117,23 +83,32 @@ vec4 doSslr(vec3 r, vec3 worldPos, vec2 uv)
 		vec2 ndc = UV_TO_NDC(newUv);
 
 		// 'a' is ray that passes through the eye and into ndc
-		vec4 a4 = u_invViewProjMat * vec4(ndc, 1.0, 1.0);
+		vec4 a4 = u_invProjMat * vec4(ndc, 1.0, 1.0);
 		vec3 a = a4.xyz / a4.w;
+		a = normalize(a);
 		
-		// Compute the intersection between line segment (camera_pos, a) and line segment (p0, p1)
-		vec3 intersection = lineSegmentsIntersection(u_camPos, a, p0, p1);
+		// Compute the intersection between 'a' (before normalization) and r
+		// 'k' is the value to multiply to 'a' to get the intersection
+		// c0 = cross(a, r);
+		// c1 = cross(p0, r);
+		// k = c1.x / c0.x; and the optimized:
+		vec2 tmpv2 = a.yz * r.zy;
+		float c0x = tmpv2.x - tmpv2.y;
+		tmpv2 = p0.yz * r.zy;
+		float c1x = tmpv2.x - tmpv2.y;
+		float k = c1x / c0x;
 
-		// Project the intersection
-		vec4 intersection4 = u_viewProjMat * vec4(intersection, 1.0);
-		float intersectionDepth = intersection4.z / intersection4.w;
+		float intersectionZ = a.z * k;
 
-		// Read depth
+		// Read depth and get view space Z
 		float depth = textureLod(u_depthRt, newUv, 0.0).r;
+		vec4 newViewPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
+		float newViewPosZ = newViewPos4.z / newViewPos4.w;
 
 		// Compare depths
-		float diffDepth = depth - intersectionDepth;
+		float zDiff = intersectionZ - newViewPosZ;
 
-		if(diffDepth > EPSILON)
+		if(zDiff > 0.1)
 		{
 			float contribution = sin(length(ndc) * PI);
 
