@@ -6,6 +6,7 @@
 #include <anki/gr/vulkan/ShaderImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/common/Misc.h>
+#include <anki/core/Trace.h>
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include <SPIRV-Cross/spirv_cross.hpp>
@@ -192,6 +193,8 @@ ShaderImpl::~ShaderImpl()
 
 Error ShaderImpl::genSpirv(const CString& source, std::vector<unsigned int>& spirv)
 {
+	ANKI_TRACE_SCOPED_EVENT(GR_GLSLANG);
+
 	const EShLanguage stage = ankiToGlslangShaderType(m_shaderType);
 	const EShMessages messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
 
@@ -216,7 +219,9 @@ Error ShaderImpl::genSpirv(const CString& source, std::vector<unsigned int>& spi
 	}
 
 	// Gen SPIRV
-	glslang::GlslangToSpv(*program.getIntermediate(stage), spirv);
+	glslang::SpvOptions spvOptions;
+	spvOptions.optimizeSize = true;
+	glslang::GlslangToSpv(*program.getIntermediate(stage), spirv, &spvOptions);
 
 	return Error::NONE;
 }

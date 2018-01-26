@@ -78,8 +78,8 @@ option(ANKI_BUILD_SAMPLES "Build sample applications" ON)
 
 option(ANKI_STRIP "Srip the symbols from the executables" OFF)
 
-option(ANKI_ENABLE_TRACE "Enable performance tracing. Small overhead" OFF)
-if(ANKI_ENABLE_TRACE)
+option(ANKI_TRACE "Enable performance tracing. Small overhead" OFF)
+if(ANKI_TRACE)
 	set(_ANKI_ENABLE_TRACE 1)
 else()
 	set(_ANKI_ENABLE_TRACE 0)
@@ -87,7 +87,7 @@ endif()
 
 set(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
 
-option(ANKI_ENABLE_SIMD "Enable or not SIMD optimizations" ON)
+option(ANKI_SIMD "Enable or not SIMD optimizations" ON)
 option(ANKI_ADDRESS_SANITIZER "Enable address sanitizer (-fsanitize=address)" OFF)
 
 # Take a wild guess on the windowing system
@@ -177,7 +177,7 @@ if(NOT MSVC)
 		set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
 	endif()
 
-	if(ANKI_ENABLE_SIMD)
+	if(ANKI_SIMD)
 		if(LINUX OR MACOS OR WINDOWS)
 			set(COMPILER_FLAGS "${COMPILER_FLAGS} -msse4 ")
 		else()
@@ -313,7 +313,7 @@ else()
 	set(_ANKI_EXTRA_CHECKS 0)
 endif()
 
-if(ANKI_ENABLE_SIMD)
+if(ANKI_SIMD)
 	set(_ANKI_ENABLE_SIMD 1)
 else()
 	set(_ANKI_ENABLE_SIMD 0)
@@ -418,7 +418,7 @@ if(SDL)
 endif()
 
 if(VULKAN)
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glslang SPIRV HLSL OGLCompiler OSDependent ankispirvcross)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glslang SPIRV OGLCompiler OSDependent ankispirvcross)
 endif()
 
 # Add anki sub libraries
