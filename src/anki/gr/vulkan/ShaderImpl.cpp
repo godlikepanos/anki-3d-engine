@@ -54,7 +54,7 @@ static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 
 static TBuiltInResource setLimits()
 {
-	TBuiltInResource c;
+	TBuiltInResource c = {};
 
 	c.maxLights = 32;
 	c.maxClipPlanes = 6;

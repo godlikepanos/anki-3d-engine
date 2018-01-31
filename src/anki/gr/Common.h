@@ -31,6 +31,11 @@ class CommandBufferInitInfo;
 /// @addtogroup graphics
 /// @{
 
+#define ANKI_GR_LOGI(...) ANKI_LOG("GR  ", NORMAL, __VA_ARGS__)
+#define ANKI_GR_LOGE(...) ANKI_LOG("GR  ", ERROR, __VA_ARGS__)
+#define ANKI_GR_LOGW(...) ANKI_LOG("GR  ", WARNING, __VA_ARGS__)
+#define ANKI_GR_LOGF(...) ANKI_LOG("GR  ", FATAL, __VA_ARGS__)
+
 // Some constants
 const U MAX_VERTEX_ATTRIBUTES = 8;
 const U MAX_COLOR_ATTACHMENTS = 4;
@@ -84,7 +89,7 @@ ANKI_GR_CLASS(RenderGraph)
 	template<typename, typename> \
 	friend class GenericPoolAllocator;
 
-/// Knowing the ventor allows some optimizations
+/// Knowing the vendor allows some optimizations
 enum class GpuVendor : U8
 {
 	UNKNOWN,
@@ -96,6 +101,14 @@ enum class GpuVendor : U8
 };
 
 extern Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR;
+
+/// Graphics device capabilities.
+enum class DeviceCapabilityBit : U8
+{
+	NONE = 0,
+	SHADER_BALLOT = 1 << 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DeviceCapabilityBit, inline)
 
 /// The type of the allocator for heap allocations
 template<typename T>

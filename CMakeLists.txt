@@ -260,11 +260,9 @@ add_subdirectory(thirdparty/freetype)
 message("++ End configuring freetype")
 
 # glslang
-if(VULKAN)
-	message("++ Configuring glslang")
-	add_subdirectory(thirdparty/glslang)
-	message("++ End configuring glslang")
-endif()
+message("++ Configuring glslang")	
+add_subdirectory(thirdparty/glslang)
+message("++ End configuring glslang")
 
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
 	add_subdirectory(thirdparty/${TMP})
@@ -418,8 +416,10 @@ if(SDL)
 endif()
 
 if(VULKAN)
-	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glslang SPIRV OGLCompiler OSDependent ankispirvcross)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankispirvcross)
 endif()
+
+set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glslang SPIRV OGLCompiler OSDependent)
 
 # Add anki sub libraries
 set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource misc gr collision math util)
