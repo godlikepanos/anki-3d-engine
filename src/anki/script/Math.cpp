@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// WARNING: The file is auto generated.
+// WARNING: This file is auto generated.
 
 #include <anki/script/LuaBinder.h>
 #include <anki/Math.h>
@@ -28,7 +28,7 @@ const char* LuaBinder::getWrappedTypeName<Vec2>()
 /// Pre-wrap constructor for Vec2.
 static inline int pwrapVec2Ctor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -51,10 +51,10 @@ static inline int pwrapVec2Ctor(lua_State* l)
 	}
 
 	// Create user data
-	size = UserData::computeSizeForGarbageCollected<Vec2>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, classnameVec2);
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(arg0, arg1);
 
@@ -77,7 +77,7 @@ static int wrapVec2Ctor(lua_State* l)
 /// Wrap destructor for Vec2.
 static int wrapVec2Dtor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -102,7 +102,7 @@ static int wrapVec2Dtor(lua_State* l)
 /// Pre-wrap method Vec2::getX.
 static inline int pwrapVec2getX(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -144,7 +144,7 @@ static int wrapVec2getX(lua_State* l)
 /// Pre-wrap method Vec2::getY.
 static inline int pwrapVec2getY(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -186,7 +186,7 @@ static int wrapVec2getY(lua_State* l)
 /// Pre-wrap method Vec2::setX.
 static inline int pwrapVec2setX(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -232,7 +232,7 @@ static int wrapVec2setX(lua_State* l)
 /// Pre-wrap method Vec2::setY.
 static inline int pwrapVec2setY(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -278,7 +278,7 @@ static int wrapVec2setY(lua_State* l)
 /// Pre-wrap method Vec2::setAll.
 static inline int pwrapVec2setAll(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -330,7 +330,7 @@ static int wrapVec2setAll(lua_State* l)
 /// Pre-wrap method Vec2::getAt.
 static inline int pwrapVec2getAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -379,7 +379,7 @@ static int wrapVec2getAt(lua_State* l)
 /// Pre-wrap method Vec2::setAt.
 static inline int pwrapVec2setAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -431,7 +431,7 @@ static int wrapVec2setAt(lua_State* l)
 /// Pre-wrap method Vec2::operator=.
 static inline int pwrapVec2copy(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -479,7 +479,7 @@ static int wrapVec2copy(lua_State* l)
 /// Pre-wrap method Vec2::operator+.
 static inline int pwrapVec2__add(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -509,10 +509,10 @@ static inline int pwrapVec2__add(lua_State* l)
 	Vec2 ret = self->operator+(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec2>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
@@ -535,7 +535,7 @@ static int wrapVec2__add(lua_State* l)
 /// Pre-wrap method Vec2::operator-.
 static inline int pwrapVec2__sub(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -565,10 +565,10 @@ static inline int pwrapVec2__sub(lua_State* l)
 	Vec2 ret = self->operator-(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec2>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
@@ -591,7 +591,7 @@ static int wrapVec2__sub(lua_State* l)
 /// Pre-wrap method Vec2::operator*.
 static inline int pwrapVec2__mul(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -621,10 +621,10 @@ static inline int pwrapVec2__mul(lua_State* l)
 	Vec2 ret = self->operator*(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec2>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
@@ -647,7 +647,7 @@ static int wrapVec2__mul(lua_State* l)
 /// Pre-wrap method Vec2::operator/.
 static inline int pwrapVec2__div(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -677,10 +677,10 @@ static inline int pwrapVec2__div(lua_State* l)
 	Vec2 ret = self->operator/(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec2>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
@@ -703,7 +703,7 @@ static int wrapVec2__div(lua_State* l)
 /// Pre-wrap method Vec2::operator==.
 static inline int pwrapVec2__eq(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -754,7 +754,7 @@ static int wrapVec2__eq(lua_State* l)
 /// Pre-wrap method Vec2::getLength.
 static inline int pwrapVec2getLength(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -796,7 +796,7 @@ static int wrapVec2getLength(lua_State* l)
 /// Pre-wrap method Vec2::getNormalized.
 static inline int pwrapVec2getNormalized(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -817,10 +817,10 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	Vec2 ret = self->getNormalized();
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec2>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
@@ -843,7 +843,7 @@ static int wrapVec2getNormalized(lua_State* l)
 /// Pre-wrap method Vec2::normalize.
 static inline int pwrapVec2normalize(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -882,7 +882,7 @@ static int wrapVec2normalize(lua_State* l)
 /// Pre-wrap method Vec2::dot.
 static inline int pwrapVec2dot(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -973,7 +973,7 @@ const char* LuaBinder::getWrappedTypeName<Vec3>()
 /// Pre-wrap constructor for Vec3.
 static inline int pwrapVec3Ctor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1002,10 +1002,10 @@ static inline int pwrapVec3Ctor(lua_State* l)
 	}
 
 	// Create user data
-	size = UserData::computeSizeForGarbageCollected<Vec3>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, classnameVec3);
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(arg0, arg1, arg2);
 
@@ -1028,7 +1028,7 @@ static int wrapVec3Ctor(lua_State* l)
 /// Wrap destructor for Vec3.
 static int wrapVec3Dtor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1053,7 +1053,7 @@ static int wrapVec3Dtor(lua_State* l)
 /// Pre-wrap method Vec3::getX.
 static inline int pwrapVec3getX(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1095,7 +1095,7 @@ static int wrapVec3getX(lua_State* l)
 /// Pre-wrap method Vec3::getY.
 static inline int pwrapVec3getY(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1137,7 +1137,7 @@ static int wrapVec3getY(lua_State* l)
 /// Pre-wrap method Vec3::getZ.
 static inline int pwrapVec3getZ(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1179,7 +1179,7 @@ static int wrapVec3getZ(lua_State* l)
 /// Pre-wrap method Vec3::setX.
 static inline int pwrapVec3setX(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1225,7 +1225,7 @@ static int wrapVec3setX(lua_State* l)
 /// Pre-wrap method Vec3::setY.
 static inline int pwrapVec3setY(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1271,7 +1271,7 @@ static int wrapVec3setY(lua_State* l)
 /// Pre-wrap method Vec3::setZ.
 static inline int pwrapVec3setZ(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1317,7 +1317,7 @@ static int wrapVec3setZ(lua_State* l)
 /// Pre-wrap method Vec3::setAll.
 static inline int pwrapVec3setAll(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1375,7 +1375,7 @@ static int wrapVec3setAll(lua_State* l)
 /// Pre-wrap method Vec3::getAt.
 static inline int pwrapVec3getAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1424,7 +1424,7 @@ static int wrapVec3getAt(lua_State* l)
 /// Pre-wrap method Vec3::setAt.
 static inline int pwrapVec3setAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1476,7 +1476,7 @@ static int wrapVec3setAt(lua_State* l)
 /// Pre-wrap method Vec3::operator=.
 static inline int pwrapVec3copy(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1524,7 +1524,7 @@ static int wrapVec3copy(lua_State* l)
 /// Pre-wrap method Vec3::operator+.
 static inline int pwrapVec3__add(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1554,10 +1554,10 @@ static inline int pwrapVec3__add(lua_State* l)
 	Vec3 ret = self->operator+(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec3>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
@@ -1580,7 +1580,7 @@ static int wrapVec3__add(lua_State* l)
 /// Pre-wrap method Vec3::operator-.
 static inline int pwrapVec3__sub(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1610,10 +1610,10 @@ static inline int pwrapVec3__sub(lua_State* l)
 	Vec3 ret = self->operator-(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec3>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
@@ -1636,7 +1636,7 @@ static int wrapVec3__sub(lua_State* l)
 /// Pre-wrap method Vec3::operator*.
 static inline int pwrapVec3__mul(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1666,10 +1666,10 @@ static inline int pwrapVec3__mul(lua_State* l)
 	Vec3 ret = self->operator*(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec3>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
@@ -1692,7 +1692,7 @@ static int wrapVec3__mul(lua_State* l)
 /// Pre-wrap method Vec3::operator/.
 static inline int pwrapVec3__div(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1722,10 +1722,10 @@ static inline int pwrapVec3__div(lua_State* l)
 	Vec3 ret = self->operator/(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec3>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
@@ -1748,7 +1748,7 @@ static int wrapVec3__div(lua_State* l)
 /// Pre-wrap method Vec3::operator==.
 static inline int pwrapVec3__eq(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1799,7 +1799,7 @@ static int wrapVec3__eq(lua_State* l)
 /// Pre-wrap method Vec3::getLength.
 static inline int pwrapVec3getLength(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1841,7 +1841,7 @@ static int wrapVec3getLength(lua_State* l)
 /// Pre-wrap method Vec3::getNormalized.
 static inline int pwrapVec3getNormalized(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1862,10 +1862,10 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	Vec3 ret = self->getNormalized();
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec3>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
@@ -1888,7 +1888,7 @@ static int wrapVec3getNormalized(lua_State* l)
 /// Pre-wrap method Vec3::normalize.
 static inline int pwrapVec3normalize(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1927,7 +1927,7 @@ static int wrapVec3normalize(lua_State* l)
 /// Pre-wrap method Vec3::dot.
 static inline int pwrapVec3dot(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2020,7 +2020,7 @@ const char* LuaBinder::getWrappedTypeName<Vec4>()
 /// Pre-wrap constructor for Vec4.
 static inline int pwrapVec4Ctor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2055,10 +2055,10 @@ static inline int pwrapVec4Ctor(lua_State* l)
 	}
 
 	// Create user data
-	size = UserData::computeSizeForGarbageCollected<Vec4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, classnameVec4);
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(arg0, arg1, arg2, arg3);
 
@@ -2081,7 +2081,7 @@ static int wrapVec4Ctor(lua_State* l)
 /// Wrap destructor for Vec4.
 static int wrapVec4Dtor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2106,7 +2106,7 @@ static int wrapVec4Dtor(lua_State* l)
 /// Pre-wrap method Vec4::getX.
 static inline int pwrapVec4getX(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2148,7 +2148,7 @@ static int wrapVec4getX(lua_State* l)
 /// Pre-wrap method Vec4::getY.
 static inline int pwrapVec4getY(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2190,7 +2190,7 @@ static int wrapVec4getY(lua_State* l)
 /// Pre-wrap method Vec4::getZ.
 static inline int pwrapVec4getZ(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2232,7 +2232,7 @@ static int wrapVec4getZ(lua_State* l)
 /// Pre-wrap method Vec4::getW.
 static inline int pwrapVec4getW(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2274,7 +2274,7 @@ static int wrapVec4getW(lua_State* l)
 /// Pre-wrap method Vec4::setX.
 static inline int pwrapVec4setX(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2320,7 +2320,7 @@ static int wrapVec4setX(lua_State* l)
 /// Pre-wrap method Vec4::setY.
 static inline int pwrapVec4setY(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2366,7 +2366,7 @@ static int wrapVec4setY(lua_State* l)
 /// Pre-wrap method Vec4::setZ.
 static inline int pwrapVec4setZ(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2412,7 +2412,7 @@ static int wrapVec4setZ(lua_State* l)
 /// Pre-wrap method Vec4::setW.
 static inline int pwrapVec4setW(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2458,7 +2458,7 @@ static int wrapVec4setW(lua_State* l)
 /// Pre-wrap method Vec4::setAll.
 static inline int pwrapVec4setAll(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2522,7 +2522,7 @@ static int wrapVec4setAll(lua_State* l)
 /// Pre-wrap method Vec4::getAt.
 static inline int pwrapVec4getAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2571,7 +2571,7 @@ static int wrapVec4getAt(lua_State* l)
 /// Pre-wrap method Vec4::setAt.
 static inline int pwrapVec4setAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2623,7 +2623,7 @@ static int wrapVec4setAt(lua_State* l)
 /// Pre-wrap method Vec4::operator=.
 static inline int pwrapVec4copy(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2671,7 +2671,7 @@ static int wrapVec4copy(lua_State* l)
 /// Pre-wrap method Vec4::operator+.
 static inline int pwrapVec4__add(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2701,10 +2701,10 @@ static inline int pwrapVec4__add(lua_State* l)
 	Vec4 ret = self->operator+(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
@@ -2727,7 +2727,7 @@ static int wrapVec4__add(lua_State* l)
 /// Pre-wrap method Vec4::operator-.
 static inline int pwrapVec4__sub(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2757,10 +2757,10 @@ static inline int pwrapVec4__sub(lua_State* l)
 	Vec4 ret = self->operator-(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
@@ -2783,7 +2783,7 @@ static int wrapVec4__sub(lua_State* l)
 /// Pre-wrap method Vec4::operator*.
 static inline int pwrapVec4__mul(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2813,10 +2813,10 @@ static inline int pwrapVec4__mul(lua_State* l)
 	Vec4 ret = self->operator*(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
@@ -2839,7 +2839,7 @@ static int wrapVec4__mul(lua_State* l)
 /// Pre-wrap method Vec4::operator/.
 static inline int pwrapVec4__div(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2869,10 +2869,10 @@ static inline int pwrapVec4__div(lua_State* l)
 	Vec4 ret = self->operator/(arg0);
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
@@ -2895,7 +2895,7 @@ static int wrapVec4__div(lua_State* l)
 /// Pre-wrap method Vec4::operator==.
 static inline int pwrapVec4__eq(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2946,7 +2946,7 @@ static int wrapVec4__eq(lua_State* l)
 /// Pre-wrap method Vec4::getLength.
 static inline int pwrapVec4getLength(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2988,7 +2988,7 @@ static int wrapVec4getLength(lua_State* l)
 /// Pre-wrap method Vec4::getNormalized.
 static inline int pwrapVec4getNormalized(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3009,10 +3009,10 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	Vec4 ret = self->getNormalized();
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
@@ -3035,7 +3035,7 @@ static int wrapVec4getNormalized(lua_State* l)
 /// Pre-wrap method Vec4::normalize.
 static inline int pwrapVec4normalize(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3074,7 +3074,7 @@ static int wrapVec4normalize(lua_State* l)
 /// Pre-wrap method Vec4::dot.
 static inline int pwrapVec4dot(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3169,7 +3169,7 @@ const char* LuaBinder::getWrappedTypeName<Mat3>()
 /// Pre-wrap constructor for Mat3.
 static inline int pwrapMat3Ctor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3179,10 +3179,10 @@ static inline int pwrapMat3Ctor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 0);
 
 	// Create user data
-	size = UserData::computeSizeForGarbageCollected<Mat3>();
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, classnameMat3);
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6306819796139686981);
 	::new(ud->getData<Mat3>()) Mat3();
 
@@ -3205,7 +3205,7 @@ static int wrapMat3Ctor(lua_State* l)
 /// Wrap destructor for Mat3.
 static int wrapMat3Dtor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3230,7 +3230,7 @@ static int wrapMat3Dtor(lua_State* l)
 /// Pre-wrap method Mat3::operator=.
 static inline int pwrapMat3copy(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3278,7 +3278,7 @@ static int wrapMat3copy(lua_State* l)
 /// Pre-wrap method Mat3::getAt.
 static inline int pwrapMat3getAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3333,7 +3333,7 @@ static int wrapMat3getAt(lua_State* l)
 /// Pre-wrap method Mat3::setAt.
 static inline int pwrapMat3setAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3391,7 +3391,7 @@ static int wrapMat3setAt(lua_State* l)
 /// Pre-wrap method Mat3::setAll.
 static inline int pwrapMat3setAll(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3512,7 +3512,7 @@ const char* LuaBinder::getWrappedTypeName<Mat3x4>()
 /// Pre-wrap constructor for Mat3x4.
 static inline int pwrapMat3x4Ctor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3522,10 +3522,10 @@ static inline int pwrapMat3x4Ctor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 0);
 
 	// Create user data
-	size = UserData::computeSizeForGarbageCollected<Mat3x4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3x4>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, classnameMat3x4);
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(-2654194732934255869);
 	::new(ud->getData<Mat3x4>()) Mat3x4();
 
@@ -3548,7 +3548,7 @@ static int wrapMat3x4Ctor(lua_State* l)
 /// Wrap destructor for Mat3x4.
 static int wrapMat3x4Dtor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3573,7 +3573,7 @@ static int wrapMat3x4Dtor(lua_State* l)
 /// Pre-wrap method Mat3x4::operator=.
 static inline int pwrapMat3x4copy(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3621,7 +3621,7 @@ static int wrapMat3x4copy(lua_State* l)
 /// Pre-wrap method Mat3x4::getAt.
 static inline int pwrapMat3x4getAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3676,7 +3676,7 @@ static int wrapMat3x4getAt(lua_State* l)
 /// Pre-wrap method Mat3x4::setAt.
 static inline int pwrapMat3x4setAt(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3734,7 +3734,7 @@ static int wrapMat3x4setAt(lua_State* l)
 /// Pre-wrap method Mat3x4::setAll.
 static inline int pwrapMat3x4setAll(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3873,7 +3873,7 @@ const char* LuaBinder::getWrappedTypeName<Transform>()
 /// Pre-wrap constructor for Transform.
 static inline int pwrapTransformCtor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3883,10 +3883,10 @@ static inline int pwrapTransformCtor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 0);
 
 	// Create user data
-	size = UserData::computeSizeForGarbageCollected<Transform>();
+	size = LuaUserData::computeSizeForGarbageCollected<Transform>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, classnameTransform);
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(7048620195620777229);
 	::new(ud->getData<Transform>()) Transform();
 
@@ -3909,7 +3909,7 @@ static int wrapTransformCtor(lua_State* l)
 /// Wrap destructor for Transform.
 static int wrapTransformDtor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3934,7 +3934,7 @@ static int wrapTransformDtor(lua_State* l)
 /// Pre-wrap method Transform::operator=.
 static inline int pwrapTransformcopy(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3982,7 +3982,7 @@ static int wrapTransformcopy(lua_State* l)
 /// Pre-wrap method Transform::getOrigin.
 static inline int pwrapTransformgetOrigin(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -4003,10 +4003,10 @@ static inline int pwrapTransformgetOrigin(lua_State* l)
 	Vec4 ret = self->getOrigin();
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Vec4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
@@ -4029,7 +4029,7 @@ static int wrapTransformgetOrigin(lua_State* l)
 /// Pre-wrap method Transform::setOrigin.
 static inline int pwrapTransformsetOrigin(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -4077,7 +4077,7 @@ static int wrapTransformsetOrigin(lua_State* l)
 /// Pre-wrap method Transform::getRotation.
 static inline int pwrapTransformgetRotation(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -4098,10 +4098,10 @@ static inline int pwrapTransformgetRotation(lua_State* l)
 	Mat3x4 ret = self->getRotation();
 
 	// Push return value
-	size = UserData::computeSizeForGarbageCollected<Mat3x4>();
+	size = LuaUserData::computeSizeForGarbageCollected<Mat3x4>();
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Mat3x4");
-	ud = static_cast<UserData*>(voidp);
+	ud = static_cast<LuaUserData*>(voidp);
 	ud->initGarbageCollected(-2654194732934255869);
 	::new(ud->getData<Mat3x4>()) Mat3x4(std::move(ret));
 
@@ -4124,7 +4124,7 @@ static int wrapTransformgetRotation(lua_State* l)
 /// Pre-wrap method Transform::setRotation.
 static inline int pwrapTransformsetRotation(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -4172,7 +4172,7 @@ static int wrapTransformsetRotation(lua_State* l)
 /// Pre-wrap method Transform::getScale.
 static inline int pwrapTransformgetScale(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -4214,7 +4214,7 @@ static int wrapTransformgetScale(lua_State* l)
 /// Pre-wrap method Transform::setScale.
 static inline int pwrapTransformsetScale(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -4276,7 +4276,7 @@ static inline void wrapTransform(lua_State* l)
 /// Pre-wrap function toRad.
 static inline int pwraptoRad(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// WARNING: The file is auto generated.
+// WARNING: This file is auto generated.
 
 #include <anki/script/LuaBinder.h>
 #include <anki/script/ScriptManager.h>
@@ -40,7 +40,7 @@ const char* LuaBinder::getWrappedTypeName<LightEvent>()
 /// Pre-wrap method LightEvent::setIntensityMultiplier.
 static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -88,7 +88,7 @@ static int wrapLightEventsetIntensityMultiplier(lua_State* l)
 /// Pre-wrap method LightEvent::setFrequency.
 static inline int pwrapLightEventsetFrequency(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -163,7 +163,7 @@ const char* LuaBinder::getWrappedTypeName<EventManager>()
 /// Pre-wrap method EventManager::newLightEvent.
 static inline int pwrapEventManagernewLightEvent(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -211,8 +211,8 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "LightEvent");
 	ud->initPointed(840634010629725278, const_cast<LightEvent*>(ret));
 
@@ -243,7 +243,7 @@ static inline void wrapEventManager(lua_State* l)
 /// Pre-wrap function getEventManager.
 static inline int pwrapgetEventManager(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -262,8 +262,8 @@ static inline int pwrapgetEventManager(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "EventManager");
 	ud->initPointed(-6959305329499243407, const_cast<EventManager*>(ret));
 

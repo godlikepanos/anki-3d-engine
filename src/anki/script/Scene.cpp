@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// WARNING: The file is auto generated.
+// WARNING: This file is auto generated.
 
 #include <anki/script/LuaBinder.h>
 #include <anki/script/ScriptManager.h>
@@ -55,7 +55,7 @@ const char* LuaBinder::getWrappedTypeName<MoveComponent>()
 /// Pre-wrap method MoveComponent::setLocalOrigin.
 static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -103,7 +103,7 @@ static int wrapMoveComponentsetLocalOrigin(lua_State* l)
 /// Pre-wrap method MoveComponent::getLocalOrigin.
 static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -124,8 +124,8 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	const Vec4& ret = self->getLocalOrigin();
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->initPointed(6804478823655046386, const_cast<Vec4*>(&ret));
 
@@ -148,7 +148,7 @@ static int wrapMoveComponentgetLocalOrigin(lua_State* l)
 /// Pre-wrap method MoveComponent::setLocalRotation.
 static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -196,7 +196,7 @@ static int wrapMoveComponentsetLocalRotation(lua_State* l)
 /// Pre-wrap method MoveComponent::getLocalRotation.
 static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -217,8 +217,8 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	const Mat3x4& ret = self->getLocalRotation();
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Mat3x4");
 	ud->initPointed(-2654194732934255869, const_cast<Mat3x4*>(&ret));
 
@@ -241,7 +241,7 @@ static int wrapMoveComponentgetLocalRotation(lua_State* l)
 /// Pre-wrap method MoveComponent::setLocalScale.
 static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -287,7 +287,7 @@ static int wrapMoveComponentsetLocalScale(lua_State* l)
 /// Pre-wrap method MoveComponent::getLocalScale.
 static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -329,7 +329,7 @@ static int wrapMoveComponentgetLocalScale(lua_State* l)
 /// Pre-wrap method MoveComponent::setLocalTransform.
 static inline int pwrapMoveComponentsetLocalTransform(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -377,7 +377,7 @@ static int wrapMoveComponentsetLocalTransform(lua_State* l)
 /// Pre-wrap method MoveComponent::getLocalTransform.
 static inline int pwrapMoveComponentgetLocalTransform(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -398,8 +398,8 @@ static inline int pwrapMoveComponentgetLocalTransform(lua_State* l)
 	const Transform& ret = self->getLocalTransform();
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Transform");
 	ud->initPointed(7048620195620777229, const_cast<Transform*>(&ret));
 
@@ -451,7 +451,7 @@ const char* LuaBinder::getWrappedTypeName<LightComponent>()
 /// Pre-wrap method LightComponent::setDiffuseColor.
 static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -499,7 +499,7 @@ static int wrapLightComponentsetDiffuseColor(lua_State* l)
 /// Pre-wrap method LightComponent::getDiffuseColor.
 static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -520,8 +520,8 @@ static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 	const Vec4& ret = self->getDiffuseColor();
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->initPointed(6804478823655046386, const_cast<Vec4*>(&ret));
 
@@ -544,7 +544,7 @@ static int wrapLightComponentgetDiffuseColor(lua_State* l)
 /// Pre-wrap method LightComponent::setSpecularColor.
 static inline int pwrapLightComponentsetSpecularColor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -592,7 +592,7 @@ static int wrapLightComponentsetSpecularColor(lua_State* l)
 /// Pre-wrap method LightComponent::getSpecularColor.
 static inline int pwrapLightComponentgetSpecularColor(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -613,8 +613,8 @@ static inline int pwrapLightComponentgetSpecularColor(lua_State* l)
 	const Vec4& ret = self->getSpecularColor();
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->initPointed(6804478823655046386, const_cast<Vec4*>(&ret));
 
@@ -637,7 +637,7 @@ static int wrapLightComponentgetSpecularColor(lua_State* l)
 /// Pre-wrap method LightComponent::setRadius.
 static inline int pwrapLightComponentsetRadius(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -683,7 +683,7 @@ static int wrapLightComponentsetRadius(lua_State* l)
 /// Pre-wrap method LightComponent::getRadius.
 static inline int pwrapLightComponentgetRadius(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -725,7 +725,7 @@ static int wrapLightComponentgetRadius(lua_State* l)
 /// Pre-wrap method LightComponent::setDistance.
 static inline int pwrapLightComponentsetDistance(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -771,7 +771,7 @@ static int wrapLightComponentsetDistance(lua_State* l)
 /// Pre-wrap method LightComponent::getDistance.
 static inline int pwrapLightComponentgetDistance(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -813,7 +813,7 @@ static int wrapLightComponentgetDistance(lua_State* l)
 /// Pre-wrap method LightComponent::setInnerAngle.
 static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -859,7 +859,7 @@ static int wrapLightComponentsetInnerAngle(lua_State* l)
 /// Pre-wrap method LightComponent::getInnerAngle.
 static inline int pwrapLightComponentgetInnerAngle(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -901,7 +901,7 @@ static int wrapLightComponentgetInnerAngle(lua_State* l)
 /// Pre-wrap method LightComponent::setOuterAngle.
 static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -947,7 +947,7 @@ static int wrapLightComponentsetOuterAngle(lua_State* l)
 /// Pre-wrap method LightComponent::getOuterAngle.
 static inline int pwrapLightComponentgetOuterAngle(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -989,7 +989,7 @@ static int wrapLightComponentgetOuterAngle(lua_State* l)
 /// Pre-wrap method LightComponent::setShadowEnabled.
 static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1035,7 +1035,7 @@ static int wrapLightComponentsetShadowEnabled(lua_State* l)
 /// Pre-wrap method LightComponent::getShadowEnabled.
 static inline int pwrapLightComponentgetShadowEnabled(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1112,7 +1112,7 @@ const char* LuaBinder::getWrappedTypeName<DecalComponent>()
 /// Pre-wrap method DecalComponent::setDiffuseDecal.
 static inline int pwrapDecalComponentsetDiffuseDecal(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1179,7 +1179,7 @@ static int wrapDecalComponentsetDiffuseDecal(lua_State* l)
 /// Pre-wrap method DecalComponent::setNormalRoughnessDecal.
 static inline int pwrapDecalComponentsetNormalRoughnessDecal(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1246,7 +1246,7 @@ static int wrapDecalComponentsetNormalRoughnessDecal(lua_State* l)
 /// Pre-wrap method DecalComponent::updateShape.
 static inline int pwrapDecalComponentupdateShape(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1328,7 +1328,7 @@ const char* LuaBinder::getWrappedTypeName<LensFlareComponent>()
 /// Pre-wrap method LensFlareComponent::setFirstFlareSize.
 static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1376,7 +1376,7 @@ static int wrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 /// Pre-wrap method LensFlareComponent::setColorMultiplier.
 static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1447,7 +1447,7 @@ const char* LuaBinder::getWrappedTypeName<SceneNode>()
 /// Pre-wrap method SceneNode::getName.
 static inline int pwrapSceneNodegetName(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1489,7 +1489,7 @@ static int wrapSceneNodegetName(lua_State* l)
 /// Pre-wrap method SceneNode::addChild.
 static inline int pwrapSceneNodeaddChild(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1537,7 +1537,7 @@ static int wrapSceneNodeaddChild(lua_State* l)
 /// Pre-wrap method SceneNode::tryGetComponent<MoveComponent>.
 static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1564,8 +1564,8 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "MoveComponent");
 	ud->initPointed(2038493110845313445, const_cast<MoveComponent*>(ret));
 
@@ -1588,7 +1588,7 @@ static int wrapSceneNodegetMoveComponent(lua_State* l)
 /// Pre-wrap method SceneNode::tryGetComponent<LightComponent>.
 static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1615,8 +1615,8 @@ static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "LightComponent");
 	ud->initPointed(7940823622056993903, const_cast<LightComponent*>(ret));
 
@@ -1639,7 +1639,7 @@ static int wrapSceneNodegetLightComponent(lua_State* l)
 /// Pre-wrap method SceneNode::tryGetComponent<LensFlareComponent>.
 static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1666,8 +1666,8 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "LensFlareComponent");
 	ud->initPointed(-2019248835133422777, const_cast<LensFlareComponent*>(ret));
 
@@ -1690,7 +1690,7 @@ static int wrapSceneNodegetLensFlareComponent(lua_State* l)
 /// Pre-wrap method SceneNode::tryGetComponent<DecalComponent>.
 static inline int pwrapSceneNodegetDecalComponent(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1717,8 +1717,8 @@ static inline int pwrapSceneNodegetDecalComponent(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "DecalComponent");
 	ud->initPointed(-1979693900066114370, const_cast<DecalComponent*>(ret));
 
@@ -1768,7 +1768,7 @@ const char* LuaBinder::getWrappedTypeName<ModelNode>()
 /// Pre-wrap method ModelNode::getSceneNodeBase.
 static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1789,8 +1789,8 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -1835,7 +1835,7 @@ const char* LuaBinder::getWrappedTypeName<PerspectiveCamera>()
 /// Pre-wrap method PerspectiveCamera::getSceneNodeBase.
 static inline int pwrapPerspectiveCameragetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1856,8 +1856,8 @@ static inline int pwrapPerspectiveCameragetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -1880,7 +1880,7 @@ static int wrapPerspectiveCameragetSceneNodeBase(lua_State* l)
 /// Pre-wrap method PerspectiveCamera::setAll.
 static inline int pwrapPerspectiveCamerasetAll(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1967,7 +1967,7 @@ const char* LuaBinder::getWrappedTypeName<PointLight>()
 /// Pre-wrap method PointLight::getSceneNodeBase.
 static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -1988,8 +1988,8 @@ static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2012,7 +2012,7 @@ static int wrapPointLightgetSceneNodeBase(lua_State* l)
 /// Pre-wrap method PointLight::loadLensFlare.
 static inline int pwrapPointLightloadLensFlare(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2090,7 +2090,7 @@ const char* LuaBinder::getWrappedTypeName<SpotLight>()
 /// Pre-wrap method SpotLight::getSceneNodeBase.
 static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2111,8 +2111,8 @@ static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2157,7 +2157,7 @@ const char* LuaBinder::getWrappedTypeName<StaticCollisionNode>()
 /// Pre-wrap method StaticCollisionNode::getSceneNodeBase.
 static inline int pwrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2178,8 +2178,8 @@ static inline int pwrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2224,7 +2224,7 @@ const char* LuaBinder::getWrappedTypeName<Portal>()
 /// Pre-wrap method Portal::getSceneNodeBase.
 static inline int pwrapPortalgetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2245,8 +2245,8 @@ static inline int pwrapPortalgetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2291,7 +2291,7 @@ const char* LuaBinder::getWrappedTypeName<Sector>()
 /// Pre-wrap method Sector::getSceneNodeBase.
 static inline int pwrapSectorgetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2312,8 +2312,8 @@ static inline int pwrapSectorgetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2358,7 +2358,7 @@ const char* LuaBinder::getWrappedTypeName<ParticleEmitter>()
 /// Pre-wrap method ParticleEmitter::getSceneNodeBase.
 static inline int pwrapParticleEmittergetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2379,8 +2379,8 @@ static inline int pwrapParticleEmittergetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2425,7 +2425,7 @@ const char* LuaBinder::getWrappedTypeName<ReflectionProbe>()
 /// Pre-wrap method ReflectionProbe::getSceneNodeBase.
 static inline int pwrapReflectionProbegetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2446,8 +2446,8 @@ static inline int pwrapReflectionProbegetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2492,7 +2492,7 @@ const char* LuaBinder::getWrappedTypeName<ReflectionProxy>()
 /// Pre-wrap method ReflectionProxy::getSceneNodeBase.
 static inline int pwrapReflectionProxygetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2513,8 +2513,8 @@ static inline int pwrapReflectionProxygetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2559,7 +2559,7 @@ const char* LuaBinder::getWrappedTypeName<OccluderNode>()
 /// Pre-wrap method OccluderNode::getSceneNodeBase.
 static inline int pwrapOccluderNodegetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2580,8 +2580,8 @@ static inline int pwrapOccluderNodegetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2626,7 +2626,7 @@ const char* LuaBinder::getWrappedTypeName<DecalNode>()
 /// Pre-wrap method DecalNode::getSceneNodeBase.
 static inline int pwrapDecalNodegetSceneNodeBase(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2647,8 +2647,8 @@ static inline int pwrapDecalNodegetSceneNodeBase(lua_State* l)
 	SceneNode& ret = *self;
 
 	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
 
@@ -2693,7 +2693,7 @@ const char* LuaBinder::getWrappedTypeName<SceneGraph>()
 /// Pre-wrap method SceneGraph::newPerspectiveCamera.
 static inline int pwrapSceneGraphnewPerspectiveCamera(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2727,8 +2727,8 @@ static inline int pwrapSceneGraphnewPerspectiveCamera(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "PerspectiveCamera");
 	ud->initPointed(-4317960537256382878, const_cast<PerspectiveCamera*>(ret));
 
@@ -2751,7 +2751,7 @@ static int wrapSceneGraphnewPerspectiveCamera(lua_State* l)
 /// Pre-wrap method SceneGraph::newModelNode.
 static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2791,8 +2791,8 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ModelNode");
 	ud->initPointed(-1856316251880904290, const_cast<ModelNode*>(ret));
 
@@ -2815,7 +2815,7 @@ static int wrapSceneGraphnewModelNode(lua_State* l)
 /// Pre-wrap method SceneGraph::newPointLight.
 static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2849,8 +2849,8 @@ static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "PointLight");
 	ud->initPointed(3561037663389896020, const_cast<PointLight*>(ret));
 
@@ -2873,7 +2873,7 @@ static int wrapSceneGraphnewPointLight(lua_State* l)
 /// Pre-wrap method SceneGraph::newSpotLight.
 static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2907,8 +2907,8 @@ static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SpotLight");
 	ud->initPointed(7940385212889719421, const_cast<SpotLight*>(ret));
 
@@ -2931,7 +2931,7 @@ static int wrapSceneGraphnewSpotLight(lua_State* l)
 /// Pre-wrap method SceneGraph::newStaticCollisionNode.
 static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -2979,8 +2979,8 @@ static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "StaticCollisionNode");
 	ud->initPointed(-4376619865753613291, const_cast<StaticCollisionNode*>(ret));
 
@@ -3003,7 +3003,7 @@ static int wrapSceneGraphnewStaticCollisionNode(lua_State* l)
 /// Pre-wrap method SceneGraph::newPortal.
 static inline int pwrapSceneGraphnewPortal(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3043,8 +3043,8 @@ static inline int pwrapSceneGraphnewPortal(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Portal");
 	ud->initPointed(7450426072538297652, const_cast<Portal*>(ret));
 
@@ -3067,7 +3067,7 @@ static int wrapSceneGraphnewPortal(lua_State* l)
 /// Pre-wrap method SceneGraph::newSector.
 static inline int pwrapSceneGraphnewSector(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3107,8 +3107,8 @@ static inline int pwrapSceneGraphnewSector(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "Sector");
 	ud->initPointed(2371391302432627552, const_cast<Sector*>(ret));
 
@@ -3131,7 +3131,7 @@ static int wrapSceneGraphnewSector(lua_State* l)
 /// Pre-wrap method SceneGraph::newParticleEmitter.
 static inline int pwrapSceneGraphnewParticleEmitter(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3171,8 +3171,8 @@ static inline int pwrapSceneGraphnewParticleEmitter(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ParticleEmitter");
 	ud->initPointed(-1716560948193631017, const_cast<ParticleEmitter*>(ret));
 
@@ -3195,7 +3195,7 @@ static int wrapSceneGraphnewParticleEmitter(lua_State* l)
 /// Pre-wrap method SceneGraph::newReflectionProbe.
 static inline int pwrapSceneGraphnewReflectionProbe(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3235,8 +3235,8 @@ static inline int pwrapSceneGraphnewReflectionProbe(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ReflectionProbe");
 	ud->initPointed(205427259474779436, const_cast<ReflectionProbe*>(ret));
 
@@ -3259,7 +3259,7 @@ static int wrapSceneGraphnewReflectionProbe(lua_State* l)
 /// Pre-wrap method SceneGraph::newReflectionProxy.
 static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3299,8 +3299,8 @@ static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "ReflectionProxy");
 	ud->initPointed(205427259496779646, const_cast<ReflectionProxy*>(ret));
 
@@ -3323,7 +3323,7 @@ static int wrapSceneGraphnewReflectionProxy(lua_State* l)
 /// Pre-wrap method SceneGraph::newOccluderNode.
 static inline int pwrapSceneGraphnewOccluderNode(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3363,8 +3363,8 @@ static inline int pwrapSceneGraphnewOccluderNode(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "OccluderNode");
 	ud->initPointed(-6885028590097645115, const_cast<OccluderNode*>(ret));
 
@@ -3387,7 +3387,7 @@ static int wrapSceneGraphnewOccluderNode(lua_State* l)
 /// Pre-wrap method SceneGraph::newDecalNode.
 static inline int pwrapSceneGraphnewDecalNode(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3421,8 +3421,8 @@ static inline int pwrapSceneGraphnewDecalNode(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "DecalNode");
 	ud->initPointed(1097508121406753350, const_cast<DecalNode*>(ret));
 
@@ -3445,7 +3445,7 @@ static int wrapSceneGraphnewDecalNode(lua_State* l)
 /// Pre-wrap method SceneGraph::setActiveCamera.
 static inline int pwrapSceneGraphsetActiveCamera(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3513,7 +3513,7 @@ static inline void wrapSceneGraph(lua_State* l)
 /// Pre-wrap function getSceneGraph.
 static inline int pwrapgetSceneGraph(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -3532,8 +3532,8 @@ static inline int pwrapgetSceneGraph(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "SceneGraph");
 	ud->initPointed(-7754439619132389154, const_cast<SceneGraph*>(ret));
 

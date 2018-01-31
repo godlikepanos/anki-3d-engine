@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// WARNING: The file is auto generated.
+// WARNING: This file is auto generated.
 
 #include <anki/script/LuaBinder.h>
 #include <anki/script/ScriptManager.h>
@@ -39,7 +39,7 @@ const char* LuaBinder::getWrappedTypeName<Dbg>()
 /// Pre-wrap method Dbg::getEnabled.
 static inline int pwrapDbggetEnabled(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -81,7 +81,7 @@ static int wrapDbggetEnabled(lua_State* l)
 /// Pre-wrap method Dbg::setEnabled.
 static inline int pwrapDbgsetEnabled(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -150,7 +150,7 @@ const char* LuaBinder::getWrappedTypeName<MainRenderer>()
 /// Pre-wrap method MainRenderer::getAspectRatio.
 static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -200,7 +200,7 @@ static inline void wrapMainRenderer(lua_State* l)
 /// Pre-wrap function getMainRenderer.
 static inline int pwrapgetMainRenderer(lua_State* l)
 {
-	UserData* ud;
+	LuaUserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
@@ -219,8 +219,8 @@ static inline int pwrapgetMainRenderer(lua_State* l)
 		return -1;
 	}
 
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
 	luaL_setmetatable(l, "MainRenderer");
 	ud->initPointed(919289102518575326, const_cast<MainRenderer*>(ret));
 

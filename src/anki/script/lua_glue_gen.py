@@ -130,8 +130,8 @@ def ret(ret_el):
 		wglue("lua_pushnumber(l, ret);")
 	else:
 		if is_ptr or is_ref:
-		 	wglue("voidp = lua_newuserdata(l, sizeof(UserData));")
-			wglue("ud = static_cast<UserData*>(voidp);")
+		 	wglue("voidp = lua_newuserdata(l, sizeof(LuaUserData));")
+			wglue("ud = static_cast<LuaUserData*>(voidp);")
 			wglue("luaL_setmetatable(l, \"%s\");" % type)
 
 			if is_ptr:
@@ -139,11 +139,11 @@ def ret(ret_el):
 			elif is_ref:
 				wglue("ud->initPointed(%d, const_cast<%s*>(&ret));" % (type_sig(type), type))
 		else:
-			wglue("size = UserData::computeSizeForGarbageCollected<%s>();" % type)
+			wglue("size = LuaUserData::computeSizeForGarbageCollected<%s>();" % type)
 			wglue("voidp = lua_newuserdata(l, size);")
 			wglue("luaL_setmetatable(l, \"%s\");" % type)
 
-			wglue("ud = static_cast<UserData*>(voidp);")
+			wglue("ud = static_cast<LuaUserData*>(voidp);")
 			wglue("ud->initGarbageCollected(%d);" % type_sig(type))
 
 			wglue("::new(ud->getData<%s>()) %s(std::move(ret));" % (type, type))
@@ -262,7 +262,7 @@ def get_meth_alias(meth_el):
 	return meth_alias
 
 def write_local_vars():
-	wglue("UserData* ud;")
+	wglue("LuaUserData* ud;")
 	wglue("(void)ud;")
 	wglue("void* voidp;")
 	wglue("(void)voidp;")
@@ -417,10 +417,10 @@ def constructor(constr_el, class_name):
 	# Create new userdata
 	wglue("// Create user data")
 
-	wglue("size = UserData::computeSizeForGarbageCollected<%s>();" % class_name)
+	wglue("size = LuaUserData::computeSizeForGarbageCollected<%s>();" % class_name)
 	wglue("voidp = lua_newuserdata(l, size);")
 	wglue("luaL_setmetatable(l, classname%s);" % class_name)
-	wglue("ud = static_cast<UserData*>(voidp);")
+	wglue("ud = static_cast<LuaUserData*>(voidp);")
 	wglue("ud->initGarbageCollected(%d);" % type_sig(class_name))
 	wglue("::new(ud->getData<%s>()) %s(%s);" % (class_name, class_name, args_str))
 	wglue("")

@@ -4,7 +4,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// WARNING: The file is auto generated.
+// WARNING: This file is auto generated.
 
 #include <anki/script/LuaBinder.h>
 #include <anki/script/ScriptManager.h>

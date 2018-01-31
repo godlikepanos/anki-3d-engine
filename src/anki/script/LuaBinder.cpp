@@ -186,14 +186,14 @@ Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
 	return err;
 }
 
-Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature, UserData*& out)
+Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature, LuaUserData*& out)
 {
 	Error err = Error::NONE;
 
 	void* p = lua_touserdata(l, stackIdx);
 	if(p != nullptr)
 	{
-		out = reinterpret_cast<UserData*>(p);
+		out = reinterpret_cast<LuaUserData*>(p);
 		if(out->getSig() == typeSignature)
 		{
 			// Check using a LUA method again
