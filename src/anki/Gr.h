@@ -17,6 +17,7 @@
 #include <anki/gr/Fence.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/RenderGraph.h>
+#include <anki/gr/ShaderCompiler.h>
 
 /// @defgroup graphics Graphics API abstraction
 

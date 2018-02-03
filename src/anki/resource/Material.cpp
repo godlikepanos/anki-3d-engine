@@ -553,8 +553,8 @@ const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_, Bo
 		}
 
 		m_prog->getOrCreateVariant(
-			WeakArray<const ShaderProgramResourceMutation>(mutations.getSize() ? &mutations[0] : nullptr, count),
-			WeakArray<const ShaderProgramResourceConstantValue>(
+			ConstWeakArray<ShaderProgramResourceMutation>(mutations.getSize() ? &mutations[0] : nullptr, count),
+			ConstWeakArray<ShaderProgramResourceConstantValue>(
 				(m_constValues.getSize()) ? &m_constValues[0] : nullptr, m_constValues.getSize()),
 			variant.m_variant);
 	}

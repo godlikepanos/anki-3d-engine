@@ -66,7 +66,7 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch, U idx, const ModelNode&
 	return Error::NONE;
 }
 
-void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 {
 	ANKI_ASSERT(userData.getSize() > 0 && userData.getSize() <= MAX_INSTANCES);
 	ANKI_ASSERT(ctx.m_key.m_instanceCount == userData.getSize());
@@ -113,7 +113,7 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const v
 	self.getComponentAt<RenderComponent>(1).allocateAndSetupUniforms(
 		self.m_modelPatch->getMaterial()->getDescriptorSetIndex(),
 		ctx,
-		WeakArray<const Mat4>(&trfs[0], userData.getSize()),
+		ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
 		*ctx.m_stagingGpuAllocator);
 
 	// Draw
@@ -247,7 +247,7 @@ void ModelNode::onMoveComponentUpdate(const MoveComponent& move)
 	}
 }
 
-void ModelNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 {
 	ANKI_ASSERT(userData.getSize() > 0 && userData.getSize() <= MAX_INSTANCES);
 	ANKI_ASSERT(ctx.m_key.m_instanceCount == userData.getSize());
@@ -302,7 +302,7 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*>
 
 		self.getComponent<RenderComponent>().allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
 			ctx,
-			WeakArray<const Mat4>(&trfs[0], userData.getSize()),
+			ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
 			*ctx.m_stagingGpuAllocator);
 
 		// Bones storage

@@ -10,6 +10,7 @@
 #include <anki/gr/vulkan/TextureImpl.h>
 #include <anki/gr/vulkan/TextureViewImpl.h>
 #include <anki/gr/vulkan/SamplerImpl.h>
+#include <anki/util/WeakArray.h>
 #include <anki/util/BitSet.h>
 
 namespace anki

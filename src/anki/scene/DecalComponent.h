@@ -165,7 +165,7 @@ private:
 
 	void updateInternal();
 
-	static void debugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	static void debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 	{
 		// TODO
 	}

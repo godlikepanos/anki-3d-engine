@@ -7,6 +7,7 @@
 
 #include <anki/gr/GrObject.h>
 #include <anki/Math.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -70,7 +71,7 @@ class ShaderInitInfo : public GrBaseInitInfo
 {
 public:
 	ShaderType m_shaderType = ShaderType::COUNT;
-	CString m_source = {};
+	ConstWeakArray<U8> m_binary = {};
 
 	ShaderInitInfo()
 	{
@@ -81,10 +82,10 @@ public:
 	{
 	}
 
-	ShaderInitInfo(ShaderType type, CString source, CString name = {})
+	ShaderInitInfo(ShaderType type, ConstWeakArray<U8> bin, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_shaderType(type)
-		, m_source(source)
+		, m_binary(bin)
 	{
 	}
 };

@@ -4,14 +4,28 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/ShaderCompiler.h>
+#include <anki/gr/GrManager.h>
 #include <anki/core/Trace.h>
 #include <anki/util/StringList.h>
 #include <anki/util/Filesystem.h>
+#include <anki/core/Trace.h>
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
+#include <SPIRV-Cross/spirv_glsl.hpp>
 
 namespace anki
 {
+
+void ShaderCompilerOptions::setFromGrManager(const GrManager& gr)
+{
+	m_gpuVendor = gr.getGpuVendor();
+#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
+	m_outLanguage = ShaderLanguage::SPIRV;
+#else
+	m_outLanguage = ShaderLanguage::GLSL;
+#endif
+	m_gpuCapabilities = gr.getDeviceCapabilities();
+}
 
 static const Array<const char*, U(ShaderType::COUNT)> SHADER_NAME = {
 	{"VERTEX", "TESSELATION_CONTROL", "TESSELATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE"}};
@@ -185,48 +199,15 @@ public:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 };
 
-static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
-{
-	StringAuto prettySrc(alloc);
-	StringListAuto lines(alloc);
-
-	static const char* padding = "==============================================================================";
-
-	lines.splitString(source, '\n', true);
-
-	I lineno = 0;
-	for(auto it = lines.getBegin(); it != lines.getEnd(); ++it)
-	{
-		++lineno;
-		StringAuto tmp(alloc);
-
-		if(!it->isEmpty())
-		{
-			tmp.sprintf("%8d: %s\n", lineno, &(*it)[0]);
-		}
-		else
-		{
-			tmp.sprintf("%8d:\n", lineno);
-		}
-
-		prettySrc.append(tmp);
-	}
-
-	ANKI_GR_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s",
-		padding,
-		&error[0],
-		padding,
-		&prettySrc[0],
-		padding,
-		&error[0]);
-}
-
 static ANKI_USE_RESULT Error genSpirv(const ShaderCompiler::BuildContext& ctx, std::vector<unsigned int>& spirv)
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_GLSLANG);
-
 	const EShLanguage stage = ankiToGlslangShaderType(ctx.m_options.m_shaderType);
-	const EShMessages messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+
+	EShMessages messages = EShMsgSpvRules;
+	if(ctx.m_options.m_outLanguage == ShaderLanguage::SPIRV)
+	{
+		messages = static_cast<EShMessages>(messages | EShMsgVulkanRules);
+	}
 
 	// Setup the shader
 	glslang::TShader shader(stage);
@@ -234,7 +215,7 @@ static ANKI_USE_RESULT Error genSpirv(const ShaderCompiler::BuildContext& ctx, s
 	shader.setStrings(&csrc[0], 1);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
-		logShaderErrorCode(shader.getInfoLog(), ctx.m_src, ctx.m_alloc);
+		ShaderCompiler::logShaderErrorCode(shader.getInfoLog(), ctx.m_src, ctx.m_alloc);
 		return Error::USER_DATA;
 	}
 
@@ -286,10 +267,12 @@ ShaderCompiler::~ShaderCompiler()
 	}
 }
 
-Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin)
+Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const
 {
 	ANKI_ASSERT(!source.isEmpty() && source.getLength() > 0);
 	Error err = Error::NONE;
+
+	ANKI_TRACE_SCOPED_EVENT(GR_SHADER_COMPILE);
 
 	// Create the context
 	BuildContext ctx;
@@ -315,7 +298,7 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
 		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS,
 		// Ballot
-		!!(options.m_deviceCababilityMask & DeviceCapabilityBit::SHADER_BALLOT) ? 1u : 0u,
+		!!(options.m_gpuCapabilities & GpuDeviceCapabilitiesBit::SHADER_BALLOT) ? 1u : 0u,
 		&source[0]);
 
 	ctx.m_src = fullSrc.toCString();
@@ -323,8 +306,16 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 	// Compile
 	if(options.m_outLanguage == ShaderLanguage::GLSL)
 	{
-		bin.resize(ctx.m_src.getLength() + 1);
-		memcpy(&bin[0], &ctx.m_src[0], bin.getSize());
+		std::vector<unsigned int> spv;
+		err = genSpirv(ctx, spv);
+		if(!err)
+		{
+			spirv_cross::CompilerGLSL cross(spv);
+			std::string newSrc = cross.compile();
+
+			bin.resize(newSrc.length() + 1);
+			memcpy(&bin[0], &newSrc[0], bin.getSize());
+		}
 	}
 	else
 	{
@@ -332,7 +323,7 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 		err = genSpirv(ctx, spv);
 		if(!err)
 		{
-			bin.resize(spv.size());
+			bin.resize(spv.size() * sizeof(unsigned int));
 			memcpy(&bin[0], &spv[0], bin.getSize());
 		}
 	}
@@ -340,8 +331,44 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 	return err;
 }
 
+void ShaderCompiler::logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
+{
+	StringAuto prettySrc(alloc);
+	StringListAuto lines(alloc);
+
+	static const char* padding = "==============================================================================";
+
+	lines.splitString(source, '\n', true);
+
+	I lineno = 0;
+	for(auto it = lines.getBegin(); it != lines.getEnd(); ++it)
+	{
+		++lineno;
+		StringAuto tmp(alloc);
+
+		if(!it->isEmpty())
+		{
+			tmp.sprintf("%8d: %s\n", lineno, &(*it)[0]);
+		}
+		else
+		{
+			tmp.sprintf("%8d:\n", lineno);
+		}
+
+		prettySrc.append(tmp);
+	}
+
+	ANKI_GR_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s",
+		padding,
+		&error[0],
+		padding,
+		&prettySrc[0],
+		padding,
+		&error[0]);
+}
+
 Error ShaderCompilerCache::compile(
-	CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin)
+	CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const
 {
 	Error err = compileInternal(source, hash, options, bin);
 	if(err)
@@ -353,7 +380,7 @@ Error ShaderCompilerCache::compile(
 }
 
 Error ShaderCompilerCache::compileInternal(
-	CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin)
+	CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const
 {
 	ANKI_ASSERT(!source.isEmpty() && source.getLength() > 0);
 

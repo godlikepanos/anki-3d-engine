@@ -106,11 +106,6 @@ public:
 	}
 	/// @}
 
-	GpuVendor getGpuVendor() const
-	{
-		return m_vendor;
-	}
-
 	QueryAllocator& getQueryAllocator()
 	{
 		return m_queryAlloc;
@@ -201,7 +196,6 @@ private:
 	VkDebugReportCallbackEXT m_debugCallback = VK_NULL_HANDLE;
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 	VulkanExtensions m_extensions = VulkanExtensions::NONE;
-	GpuVendor m_vendor = GpuVendor::UNKNOWN;
 	VkDevice m_device = VK_NULL_HANDLE;
 	U32 m_queueIdx = MAX_U32;
 	VkQueue m_queue = VK_NULL_HANDLE;

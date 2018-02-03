@@ -7,6 +7,7 @@
 
 #include <anki/resource/ResourceObject.h>
 #include <anki/Math.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -46,10 +47,9 @@ public:
 		return m_idx;
 	}
 
-	WeakArray<const Bone*> getChildren() const
+	ConstWeakArray<Bone*> getChildren() const
 	{
-		const Bone** b = const_cast<const Bone**>(&m_children[0]);
-		return WeakArray<const Bone*>((m_childrenCount) ? b : nullptr, m_childrenCount);
+		return ConstWeakArray<Bone*>((m_childrenCount) ? &m_children[0] : nullptr, m_childrenCount);
 	}
 
 private:

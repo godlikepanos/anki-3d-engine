@@ -31,7 +31,7 @@ RenderComponent::~RenderComponent()
 }
 
 void RenderComponent::allocateAndSetupUniforms(
-	U set, const RenderQueueDrawContext& ctx, WeakArray<const Mat4> transforms, StagingGpuMemoryManager& alloc) const
+	U set, const RenderQueueDrawContext& ctx, ConstWeakArray<Mat4> transforms, StagingGpuMemoryManager& alloc) const
 {
 	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCES);
 

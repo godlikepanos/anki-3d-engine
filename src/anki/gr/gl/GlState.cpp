@@ -109,6 +109,11 @@ void GlState::initRenderThread()
 	{
 		m_gpu = GpuVendor::AMD;
 	}
+	else if(glstr.find("Intel") != CString::NPOS)
+	{
+		m_gpu = GpuVendor::INTEL;
+	}
+
 	ANKI_GL_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_gpu][0]);
 
 // Enable debug messages

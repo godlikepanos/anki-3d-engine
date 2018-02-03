@@ -186,12 +186,12 @@ private:
 
 	BitMask<U8> m_flags = BitMask<U8>(DIRTY | TRF_DIRTY);
 
-	static void pointLightDebugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	static void pointLightDebugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 	{
 		// TODO
 	}
 
-	static void spotLightDebugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	static void spotLightDebugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 	{
 		// TODO
 	}

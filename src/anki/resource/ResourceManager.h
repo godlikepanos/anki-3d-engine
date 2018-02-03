@@ -20,7 +20,7 @@ class PhysicsWorld;
 class ResourceManager;
 class AsyncLoader;
 class ResourceManagerModel;
-class Renderer;
+class ShaderCompilerCache;
 
 /// @addtogroup resource
 /// @{
@@ -199,6 +199,12 @@ anki_internal:
 		return *m_asyncLoader;
 	}
 
+	const ShaderCompilerCache& getShaderCompiler() const
+	{
+		ANKI_ASSERT(m_shaderCompiler);
+		return *m_shaderCompiler;
+	}
+
 	/// Get the number of times loadResource() was called.
 	U64 getLoadingRequestCount() const
 	{
@@ -221,6 +227,7 @@ private:
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
+	ShaderCompilerCache* m_shaderCompiler = nullptr;
 };
 /// @}
 

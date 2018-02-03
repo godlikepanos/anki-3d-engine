@@ -14,9 +14,10 @@ namespace anki
 /// @addtogroup util_containers
 /// @{
 
-/// The base of DynamicArray and WeakArray.
+/// Dynamic array with manual destruction. It doesn't hold the allocator and that makes it compact. At the same time
+/// that requires manual destruction. Used in permanent classes.
 template<typename T>
-class DynamicArrayBase
+class DynamicArray
 {
 public:
 	using Value = T;
@@ -24,6 +25,47 @@ public:
 	using ConstIterator = const Value*;
 	using Reference = Value&;
 	using ConstReference = const Value&;
+
+	static constexpr F32 GROW_SCALE = 2.0f;
+	static constexpr F32 SHRINK_SCALE = 2.0f;
+
+	DynamicArray()
+		: m_data(nullptr)
+		, m_size(0)
+		, m_capacity(0)
+	{
+	}
+
+	// Non-copyable
+	DynamicArray(const DynamicArray& b) = delete;
+
+	/// Move.
+	DynamicArray(DynamicArray&& b)
+		: DynamicArray()
+	{
+		*this = std::move(b);
+	}
+
+	~DynamicArray()
+	{
+		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0 && "Requires manual destruction");
+	}
+
+	/// Move.
+	DynamicArray& operator=(DynamicArray&& b)
+	{
+		ANKI_ASSERT(m_data == nullptr && m_size == 0 && "Cannot move before destroying");
+		m_data = b.m_data;
+		b.m_data = nullptr;
+		m_size = b.m_size;
+		b.m_size = 0;
+		m_capacity = b.m_capacity;
+		b.m_capacity = 0;
+		return *this;
+	}
+
+	// Non-copyable
+	DynamicArray& operator=(const DynamicArray& b) = delete;
 
 	Reference operator[](const PtrSize n)
 	{
@@ -129,67 +171,6 @@ public:
 		return m_size * sizeof(Value);
 	}
 
-protected:
-	DynamicArrayBase(Value* v, PtrSize size)
-		: m_data(v)
-		, m_size(size)
-	{
-	}
-
-	Value* m_data;
-	PtrSize m_size;
-};
-
-/// Dynamic array with manual destruction. It doesn't hold the allocator and that makes it compact. At the same time
-/// that requires manual destruction. Used in permanent classes.
-template<typename T>
-class DynamicArray : public DynamicArrayBase<T>
-{
-public:
-	using Base = DynamicArrayBase<T>;
-	using Base::m_data;
-	using Base::m_size;
-	using typename Base::Value;
-
-	static constexpr F32 GROW_SCALE = 2.0f;
-	static constexpr F32 SHRINK_SCALE = 2.0f;
-
-	DynamicArray()
-		: Base(nullptr, 0)
-	{
-	}
-
-	// Non-copyable
-	DynamicArray(const DynamicArray& b) = delete;
-
-	/// Move.
-	DynamicArray(DynamicArray&& b)
-		: DynamicArray()
-	{
-		*this = std::move(b);
-	}
-
-	~DynamicArray()
-	{
-		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0 && "Requires manual destruction");
-	}
-
-	/// Move.
-	DynamicArray& operator=(DynamicArray&& b)
-	{
-		ANKI_ASSERT(m_data == nullptr && m_size == 0 && "Cannot move before destroying");
-		m_data = b.m_data;
-		b.m_data = nullptr;
-		m_size = b.m_size;
-		b.m_size = 0;
-		m_capacity = b.m_capacity;
-		b.m_capacity = 0;
-		return *this;
-	}
-
-	// Non-copyable
-	DynamicArray& operator=(const DynamicArray& b) = delete;
-
 	/// Only create the array. Useful if @a T is non-copyable or movable .
 	template<typename TAllocator>
 	void create(TAllocator alloc, PtrSize size)
@@ -279,6 +260,8 @@ public:
 	}
 
 protected:
+	Value* m_data;
+	PtrSize m_size;
 	PtrSize m_capacity = 0;
 
 private:
@@ -374,73 +357,6 @@ public:
 
 private:
 	GenericMemoryPoolAllocator<T> m_alloc;
-};
-
-/// Array with preallocated memory.
-template<typename T>
-class WeakArray : public DynamicArrayBase<T>
-{
-public:
-	using Base = DynamicArrayBase<T>;
-	using Base::m_data;
-	using Base::m_size;
-
-	WeakArray()
-		: Base(nullptr, 0)
-	{
-	}
-
-	WeakArray(T* mem, PtrSize size)
-		: Base(mem, size)
-	{
-		if(size)
-		{
-			ANKI_ASSERT(mem);
-		}
-	}
-
-	template<typename Y, PtrSize S>
-	WeakArray(const Array<Y, S>& arr)
-		: Base(&arr[0], S)
-	{
-	}
-
-	template<typename Y>
-	WeakArray(const DynamicArrayBase<Y>& arr)
-		: Base((arr.getSize()) ? &arr[0] : nullptr, arr.getSize())
-	{
-	}
-
-	/// Copy.
-	WeakArray(const WeakArray& b)
-		: Base(b.m_data, b.m_size)
-	{
-	}
-
-	/// Move.
-	WeakArray(WeakArray&& b)
-		: WeakArray()
-	{
-		*this = std::move(b);
-	}
-
-	/// Copy.
-	WeakArray& operator=(const WeakArray& b)
-	{
-		m_data = b.m_data;
-		m_size = b.m_size;
-		return *this;
-	}
-
-	/// Move.
-	WeakArray& operator=(WeakArray&& b)
-	{
-		m_data = b.m_data;
-		b.m_data = nullptr;
-		m_size = b.m_size;
-		b.m_size = 0;
-		return *this;
-	}
 };
 /// @}
 

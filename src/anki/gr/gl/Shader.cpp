@@ -19,11 +19,11 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 		ShaderPtr m_shader;
 		StringAuto m_source;
 
-		ShaderCreateCommand(Shader* shader, CString source, const CommandBufferAllocator<U8>& alloc)
+		ShaderCreateCommand(Shader* shader, ConstWeakArray<U8> bin, const CommandBufferAllocator<U8>& alloc)
 			: m_shader(shader)
 			, m_source(alloc)
 		{
-			m_source.create(source);
+			m_source.create(reinterpret_cast<const char*>(&bin[0]));
 		}
 
 		Error operator()(GlState&)
@@ -41,7 +41,7 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 		}
 	};
 
-	ANKI_ASSERT(!init.m_source.isEmpty() && init.m_source.getLength() > 0);
+	ANKI_ASSERT(!init.m_binary.isEmpty());
 
 	ShaderImpl* impl = manager->getAllocator().newInstance<ShaderImpl>(manager);
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
@@ -54,7 +54,7 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 	CommandBufferImpl& cmdbimpl = static_cast<CommandBufferImpl&>(*cmdb);
 	CommandBufferAllocator<U8> alloc = cmdbimpl.getInternalAllocator();
 
-	cmdbimpl.pushBackNewCommand<ShaderCreateCommand>(impl, init.m_source, alloc);
+	cmdbimpl.pushBackNewCommand<ShaderCreateCommand>(impl, init.m_binary, alloc);
 	cmdbimpl.flush();
 
 	return impl;

@@ -7,7 +7,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/GlState.h>
-#include <anki/gr/common/Misc.h>
+#include <anki/gr/ShaderCompiler.h>
 #include <anki/util/StringList.h>
 #include <anki/util/Logger.h>
 
@@ -28,27 +28,6 @@ static void deleteShaders(GLsizei n, const GLuint* names)
 	glDeleteShader(*names);
 }
 
-static const char* SHADER_HEADER = R"(#version %u %s
-#define ANKI_GL 1
-#define ANKI_VENDOR_%s
-#define %s
-#define ANKI_UBO_BINDING(set_, binding_) binding = set_ * %u + binding_
-#define ANKI_SS_BINDING(set_, binding_) binding = set_ * %u + binding_
-#define ANKI_TEX_BINDING(set_, binding_) binding = set_ * %u + binding_
-#define ANKI_IMAGE_BINDING(set_, binding_) binding = set_ * %u + binding_
-#define ANKI_TBO_BINDING(set_, binding_) binding = %u + set_ * %u + binding_
-
-#if defined(ANKI_FRAGMENT_SHADER)
-#define ANKI_USING_FRAG_COORD(height_) vec4 anki_fragCoord = gl_FragCoord;
-#endif
-
-#if %u
-#extension GL_ARB_shader_ballot : require
-#define ANKI_ARB_SHADER_BALLOT 1
-#endif
-
-%s)";
-
 ShaderImpl::~ShaderImpl()
 {
 	destroyDeferred(getManager(), deleteShaders);
@@ -66,51 +45,12 @@ Error ShaderImpl::init(const CString& source)
 		GL_FRAGMENT_SHADER,
 		GL_COMPUTE_SHADER}};
 
-	static const Array<const char*, 6> shaderName = {{"ANKI_VERTEX_SHADER",
-		"ANKI_TESSELATION_CONTROL_SHADER",
-		"ANKI_TESSELATION_EVALUATION_SHADER",
-		"ANKI_GEOMETRY_SHADER",
-		"ANKI_FRAGMENT_SHADER",
-		"ANKI_COMPUTE_SHADER"}};
-
 	m_glType = gltype[U(m_shaderType)];
-
-	// 1) Append some things in the source string
-	//
-	U32 version;
-	{
-		GLint major, minor;
-		glGetIntegerv(GL_MAJOR_VERSION, &major);
-		glGetIntegerv(GL_MINOR_VERSION, &minor);
-		version = major * 100 + minor * 10;
-	}
-
-	auto alloc = getAllocator();
-	StringAuto fullSrc(alloc);
-#if ANKI_GL == ANKI_GL_DESKTOP
-	static const char* versionType = "core";
-#else
-	static const char* versionType = "es";
-#endif
-
-	fullSrc.sprintf(SHADER_HEADER,
-		version,
-		versionType,
-		&GPU_VENDOR_STR[static_cast<const GrManagerImpl&>(getManager()).getState().m_gpu][0],
-		shaderName[U(m_shaderType)],
-		MAX_UNIFORM_BUFFER_BINDINGS,
-		MAX_STORAGE_BUFFER_BINDINGS,
-		MAX_TEXTURE_BINDINGS,
-		MAX_IMAGE_BINDINGS,
-		MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS,
-		MAX_TEXTURE_BUFFER_BINDINGS,
-		!!(static_cast<const GrManagerImpl&>(getManager()).getState().m_extensions & GlExtensions::ARB_SHADER_BALLOT),
-		&source[0]);
 
 	// 2) Gen name, create, compile and link
 	//
 	const char* sourceStrs[1] = {nullptr};
-	sourceStrs[0] = &fullSrc[0];
+	sourceStrs[0] = &source[0];
 	m_glName = glCreateShader(m_glType);
 	glShaderSource(m_glName, 1, sourceStrs, NULL);
 	glCompileShader(m_glName);
@@ -144,13 +84,13 @@ Error ShaderImpl::init(const CString& source)
 			ANKI_ASSERT(0);
 		}
 
-		StringAuto fname(alloc);
+		StringAuto fname(getAllocator());
 		CString cacheDir = getManager().getCacheDirectory();
 		fname.sprintf("%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
 		File file;
 		ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
-		ANKI_CHECK(file.writeText("%s", &fullSrc[0]));
+		ANKI_CHECK(file.writeText("%s", source.cstr()));
 	}
 #endif
 
@@ -168,7 +108,7 @@ Error ShaderImpl::init(const CString& source)
 
 		glGetShaderInfoLog(m_glName, compilerLogLen, &charsWritten, &compilerLog[0]);
 
-		logShaderErrorCode(compilerLog.toCString(), fullSrc.toCString(), alloc);
+		ShaderCompiler::logShaderErrorCode(compilerLog.toCString(), source, alloc);
 
 		// Compilation failed, set error anyway
 		return Error::USER_DATA;

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/util/Thread.h>
-#include <anki/util/DynamicArray.h>
+#include <anki/util/WeakArray.h>
 #include <anki/util/Allocator.h>
 
 namespace anki

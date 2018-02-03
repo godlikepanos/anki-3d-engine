@@ -100,7 +100,7 @@ private:
 
 	Vec4 m_worldPosition = Vec4(0.0);
 
-	static void debugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	static void debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 	{
 		// Do nothing
 	}

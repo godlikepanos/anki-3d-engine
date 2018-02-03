@@ -92,7 +92,7 @@ private:
 		static_cast<ReflectionProbeComponent*>(userData)->m_markedForRendering = fillRenderQueuesOnNextFrame;
 	}
 
-	static void debugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	static void debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 	{
 		// TODO
 	}

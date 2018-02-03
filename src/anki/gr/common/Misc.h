@@ -10,9 +10,6 @@
 namespace anki
 {
 
-/// Internal function that logs a shader error.
-void logShaderErrorCode(const CString& error, const CString& source, GenericMemoryPoolAllocator<U8> alloc);
-
 inline Bool stencilTestDisabled(StencilOperation stencilFail,
 	StencilOperation stencilPassDepthFail,
 	StencilOperation stencilPassDepthPass,

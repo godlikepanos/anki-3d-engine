@@ -352,10 +352,25 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 
 const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
 
+static ShaderPtr createShader(CString src, ShaderType type, GrManager& gr)
+{
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	ShaderCompiler comp(alloc);
+
+	ShaderCompilerOptions options;
+	options.setFromGrManager(gr);
+	options.m_shaderType = type;
+
+	DynamicArrayAuto<U8> bin(alloc);
+	ANKI_TEST_EXPECT_NO_ERR(comp.compile(src, options, bin));
+
+	return gr.newShader({type, WeakArray<U8>(&bin[0], bin.getSize())});
+}
+
 static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManager& gr)
 {
-	ShaderPtr vert = gr.newShader({ShaderType::VERTEX, vertSrc});
-	ShaderPtr frag = gr.newShader({ShaderType::FRAGMENT, fragSrc});
+	ShaderPtr vert = createShader(vertSrc, ShaderType::VERTEX, gr);
+	ShaderPtr frag = createShader(fragSrc, ShaderType::FRAGMENT, gr);
 	return gr.newShaderProgram(ShaderProgramInitInfo(vert, frag));
 }
 
@@ -394,7 +409,7 @@ ANKI_TEST(Gr, Shader)
 {
 	COMMON_BEGIN()
 
-	ShaderPtr shader = gr->newShader({ShaderType::FRAGMENT, FRAG_MRT_SRC});
+	ShaderPtr shader = createShader(FRAG_MRT_SRC, ShaderType::FRAGMENT, *gr);
 
 	COMMON_END()
 }
@@ -1327,7 +1342,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
 
 	// Create shader & compute prog
-	ShaderPtr shader = gr->newShader({ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC});
+	ShaderPtr shader = createShader(COMP_WRITE_IMAGE_SRC, ShaderType::COMPUTE, *gr);
 	ShaderProgramInitInfo sprogInit;
 	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
 	ShaderProgramPtr compProg = gr->newShaderProgram(sprogInit);
@@ -1840,7 +1855,7 @@ void main()
 	}
 })";
 
-	ShaderPtr comp = gr->newShader(ShaderInitInfo(ShaderType::COMPUTE, COMP_SRC));
+	ShaderPtr comp = createShader(COMP_SRC, ShaderType::COMPUTE, *gr);
 	ShaderProgramPtr prog = gr->newShaderProgram(ShaderProgramInitInfo(comp));
 
 	// Create the texture

@@ -74,7 +74,7 @@ void RenderableDrawer::flushDrawcall(DrawContext& ctx)
 	ctx.m_queueCtx.m_key.m_instanceCount = ctx.m_cachedRenderElementCount;
 
 	ctx.m_cachedRenderElements[0].m_callback(
-		ctx.m_queueCtx, WeakArray<const void*>(&ctx.m_userData[0], ctx.m_cachedRenderElementCount));
+		ctx.m_queueCtx, ConstWeakArray<void*>(const_cast<void**>(&ctx.m_userData[0]), ctx.m_cachedRenderElementCount));
 
 	// Rendered something, reset the cached transforms
 	if(ctx.m_cachedRenderElementCount > 1)

@@ -8,6 +8,7 @@
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/SpatialComponent.h>
 #include <anki/resource/MeshLoader.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -61,7 +62,7 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 
 	const U8* buff = loader.getVertexData();
 	const U8* buffEnd = loader.getVertexData() + loader.getVertexDataSize();
-	WeakArray<const U16> indices(reinterpret_cast<const U16*>(loader.getIndexData()), indexCount);
+	ConstWeakArray<U16> indices(reinterpret_cast<const U16*>(loader.getIndexData()), indexCount);
 	for(U i = 0; i < quadCount; ++i)
 	{
 		Array<Vec4, 4>& quad = m_quadsLSpace[i];

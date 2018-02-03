@@ -94,7 +94,7 @@ public:
 	ANKI_USE_RESULT Error readF32(F32& f);
 
 	/// Write data to the file
-	ANKI_USE_RESULT Error write(void* buff, PtrSize size);
+	ANKI_USE_RESULT Error write(const void* buff, PtrSize size);
 
 	/// Write formated text
 	ANKI_USE_RESULT Error writeText(CString format, ...);

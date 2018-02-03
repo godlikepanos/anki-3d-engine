@@ -49,7 +49,7 @@ private:
 		el.m_mergeKey = m_mergeKey;
 	}
 
-	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
+	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 };
 
 /// The model scene node.
@@ -88,7 +88,7 @@ private:
 
 	void onMoveComponentUpdate(const MoveComponent& move);
 
-	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
+	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 
 	void setupRenderableQueueElement(RenderableQueueElement& el) const
 	{

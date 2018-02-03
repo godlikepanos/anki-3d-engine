@@ -766,8 +766,8 @@ void ShaderProgramResource::compInputVarDefineString(
 	}
 }
 
-U64 ShaderProgramResource::computeVariantHash(WeakArray<const ShaderProgramResourceMutation> mutations,
-	WeakArray<const ShaderProgramResourceConstantValue> constants) const
+U64 ShaderProgramResource::computeVariantHash(ConstWeakArray<ShaderProgramResourceMutation> mutations,
+	ConstWeakArray<ShaderProgramResourceConstantValue> constants) const
 {
 	U hash = 1;
 
@@ -784,8 +784,8 @@ U64 ShaderProgramResource::computeVariantHash(WeakArray<const ShaderProgramResou
 	return hash;
 }
 
-void ShaderProgramResource::getOrCreateVariant(WeakArray<const ShaderProgramResourceMutation> mutation,
-	WeakArray<const ShaderProgramResourceConstantValue> constants,
+void ShaderProgramResource::getOrCreateVariant(ConstWeakArray<ShaderProgramResourceMutation> mutation,
+	ConstWeakArray<ShaderProgramResourceConstantValue> constants,
 	const ShaderProgramResourceVariant*& variant) const
 {
 	// Sanity checks
@@ -833,8 +833,8 @@ void ShaderProgramResource::getOrCreateVariant(WeakArray<const ShaderProgramReso
 	}
 }
 
-void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMutation> mutations,
-	WeakArray<const ShaderProgramResourceConstantValue> constants,
+void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMutation> mutations,
+	ConstWeakArray<ShaderProgramResourceConstantValue> constants,
 	ShaderProgramResourceVariant& variant) const
 {
 	variant.m_activeInputVars.unsetAll();
@@ -1085,9 +1085,22 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 		src.append(shaderHeader);
 		src.append(m_sources[i]);
 
+		// Compile
+		DynamicArrayAuto<U8> bin(getTempAllocator());
+
+		ShaderCompilerOptions compileOptions;
+		compileOptions.setFromGrManager(getManager().getGrManager());
+		compileOptions.m_shaderType = i;
+
+		Error err = getManager().getShaderCompiler().compile(src.toCString(), nullptr, compileOptions, bin);
+		if(err)
+		{
+			ANKI_RESOURCE_LOGF("Shader compilation failed");
+		}
+
 		ShaderInitInfo inf("RsrcShader");
 		inf.m_shaderType = i;
-		inf.m_source = src.toCString();
+		inf.m_binary = ConstWeakArray<U8>(&bin[0], bin.getSize());
 
 		progInf.m_shaders[i] = getManager().getGrManager().newShader(inf);
 	}

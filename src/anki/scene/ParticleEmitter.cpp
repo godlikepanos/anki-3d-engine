@@ -266,7 +266,7 @@ Error ParticleEmitter::init(const CString& filename)
 	return Error::NONE;
 }
 
-void ParticleEmitter::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+void ParticleEmitter::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 {
 	ANKI_ASSERT(userData.getSize() == 1);
 

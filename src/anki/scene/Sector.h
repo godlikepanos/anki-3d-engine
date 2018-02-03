@@ -8,6 +8,7 @@
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/SceneComponent.h>
 #include <anki/Collision.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {

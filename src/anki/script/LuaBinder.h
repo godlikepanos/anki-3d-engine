@@ -33,14 +33,12 @@ public:
 
 	void initGarbageCollected(I64 sig)
 	{
-		ANKI_ASSERT(m_addressOrGarbageCollect == 0 && m_sig == 0);
 		m_sig = sig;
 		m_addressOrGarbageCollect = GC_MASK;
 	}
 
 	void initPointed(I64 sig, void* ptrToObject)
 	{
-		ANKI_ASSERT(m_addressOrGarbageCollect == 0 && m_sig == 0);
 		m_sig = sig;
 		U64 addr = ptrToNumber(ptrToObject);
 		ANKI_ASSERT((addr & GC_MASK) == 0 && "Address too high, cannot encode a flag");

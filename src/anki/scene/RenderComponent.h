@@ -102,7 +102,7 @@ public:
 
 	void allocateAndSetupUniforms(U set,
 		const RenderQueueDrawContext& ctx,
-		WeakArray<const Mat4> transforms,
+		ConstWeakArray<Mat4> transforms,
 		StagingGpuMemoryManager& alloc) const;
 
 	virtual void setupRenderableQueueElement(RenderableQueueElement& el) const = 0;

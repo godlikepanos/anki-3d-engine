@@ -115,7 +115,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 	for(const RenderableQueueElement& el : ctx.m_renderQueue->m_renderables)
 	{
-		Array<const void*, 1> a = {{el.m_userData}};
+		Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
 		el.m_callback(dctx, {&a[0], 1});
 	}
 

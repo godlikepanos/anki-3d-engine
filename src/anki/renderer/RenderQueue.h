@@ -35,7 +35,7 @@ public:
 };
 
 /// Draw callback for drawing.
-using RenderQueueDrawCallback = void (*)(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
+using RenderQueueDrawCallback = void (*)(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 
 /// Render queue element that contains info on items that populate the G-buffer or the forward shading buffer etc.
 class RenderableQueueElement final

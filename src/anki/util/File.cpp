@@ -354,7 +354,7 @@ Error File::readF32(F32& out)
 	return err;
 }
 
-Error File::write(void* buff, PtrSize size)
+Error File::write(const void* buff, PtrSize size)
 {
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(size > 0);

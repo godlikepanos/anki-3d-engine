@@ -17,17 +17,20 @@ namespace anki
 enum class ShaderLanguage : U8
 {
 	GLSL,
-	SPIRV
+	SPIRV,
+	COUNT
 };
 
 /// ShaderCompiler compile options.
 class ShaderCompilerOptions
 {
 public:
-	ShaderLanguage m_outLanguage = ShaderLanguage::GLSL;
-	ShaderType m_shaderType = ShaderType::VERTEX;
-	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
-	DeviceCapabilityBit m_deviceCababilityMask = DeviceCapabilityBit::NONE;
+	ShaderLanguage m_outLanguage = ShaderLanguage::COUNT;
+	ShaderType m_shaderType = ShaderType::COUNT;
+	GpuVendor m_gpuVendor = GpuVendor::COUNT;
+	GpuDeviceCapabilitiesBit m_gpuCapabilities = GpuDeviceCapabilitiesBit::NONE;
+
+	void setFromGrManager(const GrManager& gr);
 };
 
 /// Shader compiler. It's backend agnostic.
@@ -44,7 +47,11 @@ public:
 	/// @param source The source in GLSL.
 	/// @param options Compile options.
 	/// @param bin The output binary.
-	ANKI_USE_RESULT Error compile(CString source, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin);
+	ANKI_USE_RESULT Error compile(
+		CString source, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const;
+
+anki_internal:
+	static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc);
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -76,7 +83,7 @@ public:
 	/// @param options Compile options.
 	/// @param bin The output binary.
 	ANKI_USE_RESULT Error compile(
-		CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin);
+		CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const;
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -84,7 +91,7 @@ private:
 	String m_cacheDir;
 
 	ANKI_USE_RESULT Error compileInternal(
-		CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin);
+		CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const;
 };
 /// @}
 

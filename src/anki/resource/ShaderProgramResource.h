@@ -99,7 +99,7 @@ public:
 		return m_const;
 	}
 
-	Bool acceptAllMutations(const WeakArray<const ShaderProgramResourceMutation>& mutations) const
+	Bool acceptAllMutations(ConstWeakArray<ShaderProgramResourceMutation> mutations) const
 	{
 		for(const ShaderProgramResourceMutation& m : mutations)
 		{
@@ -363,32 +363,32 @@ public:
 
 	/// Get or create a graphics shader program variant.
 	/// @note It's thread-safe.
-	void getOrCreateVariant(WeakArray<const ShaderProgramResourceMutation> mutation,
-		WeakArray<const ShaderProgramResourceConstantValue> constants,
+	void getOrCreateVariant(ConstWeakArray<ShaderProgramResourceMutation> mutation,
+		ConstWeakArray<ShaderProgramResourceConstantValue> constants,
 		const ShaderProgramResourceVariant*& variant) const;
 
 	/// Get or create a graphics shader program variant.
 	/// @note It's thread-safe.
-	void getOrCreateVariant(WeakArray<const ShaderProgramResourceConstantValue> constants,
+	void getOrCreateVariant(ConstWeakArray<ShaderProgramResourceConstantValue> constants,
 		const ShaderProgramResourceVariant*& variant) const
 	{
-		getOrCreateVariant(WeakArray<const ShaderProgramResourceMutation>(), constants, variant);
+		getOrCreateVariant(ConstWeakArray<ShaderProgramResourceMutation>(), constants, variant);
 	}
 
 	/// Get or create a graphics shader program variant.
 	/// @note It's thread-safe.
 	void getOrCreateVariant(
-		WeakArray<const ShaderProgramResourceMutation> mutations, const ShaderProgramResourceVariant*& variant) const
+		ConstWeakArray<ShaderProgramResourceMutation> mutations, const ShaderProgramResourceVariant*& variant) const
 	{
-		getOrCreateVariant(mutations, WeakArray<const ShaderProgramResourceConstantValue>(), variant);
+		getOrCreateVariant(mutations, ConstWeakArray<ShaderProgramResourceConstantValue>(), variant);
 	}
 
 	/// Get or create a graphics shader program variant.
 	/// @note It's thread-safe.
 	void getOrCreateVariant(const ShaderProgramResourceVariant*& variant) const
 	{
-		getOrCreateVariant(WeakArray<const ShaderProgramResourceMutation>(),
-			WeakArray<const ShaderProgramResourceConstantValue>(),
+		getOrCreateVariant(ConstWeakArray<ShaderProgramResourceMutation>(),
+			ConstWeakArray<ShaderProgramResourceConstantValue>(),
 			variant);
 	}
 
@@ -438,11 +438,11 @@ private:
 		StringListAuto& globalsSrc,
 		StringListAuto& definesSrc);
 
-	U64 computeVariantHash(WeakArray<const ShaderProgramResourceMutation> mutations,
-		WeakArray<const ShaderProgramResourceConstantValue> constants) const;
+	U64 computeVariantHash(ConstWeakArray<ShaderProgramResourceMutation> mutations,
+		ConstWeakArray<ShaderProgramResourceConstantValue> constants) const;
 
-	void initVariant(WeakArray<const ShaderProgramResourceMutation> mutations,
-		WeakArray<const ShaderProgramResourceConstantValue> constants,
+	void initVariant(ConstWeakArray<ShaderProgramResourceMutation> mutations,
+		ConstWeakArray<ShaderProgramResourceConstantValue> constants,
 		ShaderProgramResourceVariant& v) const;
 
 	void compInputVarDefineString(const ShaderProgramResourceInputVariable& var, StringListAuto& list);
@@ -476,10 +476,10 @@ public:
 		return *this;
 	}
 
-	WeakArray<const ShaderProgramResourceConstantValue> get() const
+	ConstWeakArray<ShaderProgramResourceConstantValue> get() const
 	{
 		ANKI_ASSERT(m_count == count);
-		return WeakArray<const ShaderProgramResourceConstantValue>(&m_constantValues[0], m_count);
+		return ConstWeakArray<ShaderProgramResourceConstantValue>(&m_constantValues[0], m_count);
 	}
 
 private:
@@ -513,10 +513,10 @@ public:
 		return *this;
 	}
 
-	WeakArray<const ShaderProgramResourceMutation> get() const
+	ConstWeakArray<ShaderProgramResourceMutation> get() const
 	{
 		ANKI_ASSERT(m_count == count);
-		return WeakArray<const ShaderProgramResourceMutation>(&m_mutations[0], m_count);
+		return ConstWeakArray<ShaderProgramResourceMutation>(&m_mutations[0], m_count);
 	}
 
 	ShaderProgramResourceMutation& operator[](U idx)

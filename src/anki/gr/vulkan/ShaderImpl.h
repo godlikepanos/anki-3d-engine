@@ -42,7 +42,7 @@ private:
 	/// Generate SPIRV from GLSL.
 	ANKI_USE_RESULT Error genSpirv(const CString& source, std::vector<unsigned int>& spirv);
 
-	void doReflection(const std::vector<unsigned int>& spirv);
+	void doReflection(ConstWeakArray<U8> spirv);
 };
 /// @}
 
