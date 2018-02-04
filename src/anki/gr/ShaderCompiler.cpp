@@ -40,6 +40,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define ANKI_SS_BINDING(set_, binding_) binding = set_ * %u + binding_
 #	define ANKI_TEX_BINDING(set_, binding_) binding = set_ * %u + binding_
 #	define ANKI_IMAGE_BINDING(set_, binding_) binding = set_ * %u + binding_
+#	define ANKI_SPEC_CONST(binding_, type_, name_) const type_ name_ = _anki_spec_const_ ## binding_
 #else
 #	define gl_VertexID gl_VertexIndex
 #	define gl_InstanceID gl_InstanceIndex
@@ -47,6 +48,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define ANKI_UBO_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #	define ANKI_SS_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #	define ANKI_IMAGE_BINDING(set_, binding_) set = set_, binding = %u + binding_
+#	define ANKI_SPEC_CONST(binding_, type_, name_) layout(constant_id = binding_) const type_ name_ = type_(0)
 #endif
 
 #if %u
@@ -306,6 +308,7 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 	// Compile
 	if(options.m_outLanguage == ShaderLanguage::GLSL)
 	{
+#if 0
 		std::vector<unsigned int> spv;
 		err = genSpirv(ctx, spv);
 		if(!err)
@@ -316,6 +319,10 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 			bin.resize(newSrc.length() + 1);
 			memcpy(&bin[0], &newSrc[0], bin.getSize());
 		}
+#else
+		bin.resize(fullSrc.getLength() + 1);
+		memcpy(&bin[0], &fullSrc[0], bin.getSize());
+#endif
 	}
 	else
 	{

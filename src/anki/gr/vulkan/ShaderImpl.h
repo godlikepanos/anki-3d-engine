@@ -9,7 +9,13 @@
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/util/BitSet.h>
-#include <vector>
+#include <iosfwd>
+
+// Forward
+namespace spirv_cross
+{
+struct SpecializationConstant;
+} // end namespace spirv_cross
 
 namespace anki
 {
@@ -38,11 +44,15 @@ public:
 
 	ANKI_USE_RESULT Error init(const ShaderInitInfo& init);
 
-private:
-	/// Generate SPIRV from GLSL.
-	ANKI_USE_RESULT Error genSpirv(const CString& source, std::vector<unsigned int>& spirv);
+	const VkSpecializationInfo* getSpecConstInfo() const
+	{
+		return (m_specConstInfo.mapEntryCount) ? &m_specConstInfo : nullptr;
+	}
 
-	void doReflection(ConstWeakArray<U8> spirv);
+private:
+	VkSpecializationInfo m_specConstInfo = {};
+
+	void doReflection(ConstWeakArray<U8> spirv, std::vector<spirv_cross::SpecializationConstant>& specConstIds);
 };
 /// @}
 

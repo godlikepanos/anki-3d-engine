@@ -130,12 +130,15 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 				continue;
 			}
 
+			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[stype]);
+
 			VkPipelineShaderStageCreateInfo& inf = m_shaderCreateInfos[m_shaderCreateInfoCount++];
 			inf = {};
 			inf.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			inf.stage = convertShaderTypeBit(static_cast<ShaderTypeBit>(1 << stype));
 			inf.pName = "main";
-			inf.module = scast<const ShaderImpl*>(m_shaders[stype].get())->m_handle;
+			inf.module = shaderImpl.m_handle;
+			inf.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 		}
 	}
 
@@ -152,6 +155,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	if(!graphicsProg)
 	{
+		const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[ShaderType::COMPUTE]);
+
 		VkComputePipelineCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
 		ci.layout = m_pplineLayout.getHandle();
@@ -159,7 +164,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 		ci.stage.pName = "main";
-		ci.stage.module = scast<const ShaderImpl*>(m_shaders[ShaderType::COMPUTE].get())->m_handle;
+		ci.stage.module = shaderImpl.m_handle;
+		ci.stage.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 
 		ANKI_VK_CHECK(vkCreateComputePipelines(
 			getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_computePpline));

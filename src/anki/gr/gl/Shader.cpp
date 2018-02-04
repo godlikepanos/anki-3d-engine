@@ -18,19 +18,30 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 	public:
 		ShaderPtr m_shader;
 		StringAuto m_source;
+		DynamicArrayAuto<ShaderSpecializationConstValue> m_constValues;
 
-		ShaderCreateCommand(Shader* shader, ConstWeakArray<U8> bin, const CommandBufferAllocator<U8>& alloc)
+		ShaderCreateCommand(Shader* shader,
+			ConstWeakArray<U8> bin,
+			ConstWeakArray<ShaderSpecializationConstValue> constValues,
+			const CommandBufferAllocator<U8>& alloc)
 			: m_shader(shader)
 			, m_source(alloc)
+			, m_constValues(alloc)
 		{
 			m_source.create(reinterpret_cast<const char*>(&bin[0]));
+
+			if(constValues.getSize())
+			{
+				m_constValues.create(constValues.getSize());
+				memcpy(&m_constValues[0], &constValues[0], m_constValues.getByteSize());
+			}
 		}
 
 		Error operator()(GlState&)
 		{
 			ShaderImpl& impl = static_cast<ShaderImpl&>(*m_shader);
 
-			Error err = impl.init(m_source.toCString());
+			Error err = impl.init(m_source.toCString(), m_constValues);
 
 			GlObject::State oldState =
 				impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
@@ -54,7 +65,7 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 	CommandBufferImpl& cmdbimpl = static_cast<CommandBufferImpl&>(*cmdb);
 	CommandBufferAllocator<U8> alloc = cmdbimpl.getInternalAllocator();
 
-	cmdbimpl.pushBackNewCommand<ShaderCreateCommand>(impl, init.m_binary, alloc);
+	cmdbimpl.pushBackNewCommand<ShaderCreateCommand>(impl, init.m_binary, init.m_constValues, alloc);
 	cmdbimpl.flush();
 
 	return impl;

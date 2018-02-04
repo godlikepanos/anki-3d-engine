@@ -33,7 +33,7 @@ ShaderImpl::~ShaderImpl()
 	destroyDeferred(getManager(), deleteShaders);
 }
 
-Error ShaderImpl::init(const CString& source)
+Error ShaderImpl::init(CString source, ConstWeakArray<ShaderSpecializationConstValue> constValues)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated());
@@ -47,8 +47,46 @@ Error ShaderImpl::init(const CString& source)
 
 	m_glType = gltype[U(m_shaderType)];
 
-	// 2) Gen name, create, compile and link
-	//
+	// Create a new shader with spec consts if needed
+	StringAuto newSrc(getAllocator());
+	if(constValues.getSize())
+	{
+		// Create const str
+		StringListAuto constStrLines(getAllocator());
+		U count = 0;
+		for(const ShaderSpecializationConstValue& constVal : constValues)
+		{
+			if(constVal.m_dataType == ShaderVariableDataType::INT)
+			{
+				constStrLines.pushBackSprintf("#define _anki_spec_const_%u %i", count, constVal.m_int);
+			}
+			else
+			{
+				ANKI_ASSERT(constVal.m_dataType == ShaderVariableDataType::FLOAT);
+				constStrLines.pushBackSprintf("#define _anki_spec_const_%u %f", count, constVal.m_float);
+			}
+
+			++count;
+		}
+		StringAuto constStr(getAllocator());
+		constStrLines.join("\n", constStr);
+
+		// Break the old source
+		StringListAuto lines(getAllocator());
+		lines.splitString(source, '\n');
+		ANKI_ASSERT(lines.getFront().find("#version") == 0);
+		lines.popFront();
+
+		// Append the const values
+		lines.pushFront(constStr.toCString());
+		lines.pushFront("#version 450 core");
+
+		// Create the new string
+		lines.join("\n", newSrc);
+		source = newSrc.toCString();
+	}
+
+	// Gen name, create and compile
 	const char* sourceStrs[1] = {nullptr};
 	sourceStrs[0] = &source[0];
 	m_glName = glCreateShader(m_glType);

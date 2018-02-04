@@ -130,6 +130,11 @@ public:
 		return !getAny();
 	}
 
+	operator bool() const
+	{
+		return getAny();
+	}
+
 	/// Set or unset a bit at the given position.
 	template<typename TInt>
 	void set(TInt pos, Bool setBits = true)

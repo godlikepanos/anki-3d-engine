@@ -74,6 +74,16 @@ public:
 		Base::getBack() = std::move(str);
 	}
 
+	/// Push front plain CString
+	void pushFront(Allocator alloc, CString cstr)
+	{
+		String str;
+		str.create(alloc, cstr);
+
+		Base::emplaceFront(alloc);
+		Base::getFront() = std::move(str);
+	}
+
 	/// Split a string using a separator (@a separator) and return these strings in a string list.
 	void splitString(Allocator alloc, const CString& s, const Char separator, Bool keepEmpty = false);
 };
@@ -128,6 +138,19 @@ public:
 	void pushBack(CString cstr)
 	{
 		Base::pushBack(m_alloc, cstr);
+	}
+
+	/// Push front plain CString.
+	void pushFront(CString cstr)
+	{
+		Base::pushFront(m_alloc, cstr);
+	}
+
+	/// Pop front element.
+	void popFront()
+	{
+		getFront().destroy(m_alloc);
+		Base::popFront(m_alloc);
 	}
 
 	/// Split a string using a separator (@a separator) and return these strings in a string list.

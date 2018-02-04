@@ -352,7 +352,8 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 
 const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
 
-static ShaderPtr createShader(CString src, ShaderType type, GrManager& gr)
+static ShaderPtr createShader(
+	CString src, ShaderType type, GrManager& gr, ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	ShaderCompiler comp(alloc);
@@ -364,7 +365,10 @@ static ShaderPtr createShader(CString src, ShaderType type, GrManager& gr)
 	DynamicArrayAuto<U8> bin(alloc);
 	ANKI_TEST_EXPECT_NO_ERR(comp.compile(src, options, bin));
 
-	return gr.newShader({type, WeakArray<U8>(&bin[0], bin.getSize())});
+	ShaderInitInfo initInf(type, WeakArray<U8>(&bin[0], bin.getSize()));
+	initInf.m_constValues = specVals;
+
+	return gr.newShader(initInf);
 }
 
 static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManager& gr)
@@ -1931,6 +1935,112 @@ void main()
 		resultBuff->getSize());
 
 	cmdb->flush();
+	gr->finish();
+
+	// Get the result
+	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::READ));
+	ANKI_TEST_EXPECT_EQ(result->x(), 2);
+	ANKI_TEST_EXPECT_EQ(result->y(), 2);
+	ANKI_TEST_EXPECT_EQ(result->z(), 2);
+	ANKI_TEST_EXPECT_EQ(result->w(), 2);
+	resultBuff->unmap();
+
+	COMMON_END()
+}
+
+ANKI_TEST(Gr, SpecConsts)
+{
+	COMMON_BEGIN()
+
+	static const char* VERT_SRC = R"(
+ANKI_SPEC_CONST(0, int, const0);
+ANKI_SPEC_CONST(2, float, const1);
+
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
+layout(location = 0) flat out int out_const0;
+layout(location = 1) flat out float out_const1;
+
+void main()
+{
+	vec2 uv = vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
+	vec2 pos = uv * 2.0 - 1.0;
+
+	gl_Position = vec4(pos, 0.0, 1.0);
+
+	out_const0 = const0;
+	out_const1 = const1;
+}
+)";
+
+	static const char* FRAG_SRC = R"(
+ANKI_SPEC_CONST(0, int, const0);
+ANKI_SPEC_CONST(1, float, const1);
+
+layout(location = 0) flat in int in_const0;
+layout(location = 1) flat in float in_const1;
+
+layout(location = 0) out vec4 out_color;
+
+layout(ANKI_SS_BINDING(0, 0)) buffer s_
+{
+	uvec4 u_result;
+};
+
+void main()
+{
+	out_color = vec4(1.0);
+
+	if(gl_FragCoord.x == 0.5 && gl_FragCoord.y == 0.5)
+	{
+		if(in_const0 != 2147483647 || in_const1 != 1234.5678 || const0 != -2147483647 || const1 != -1.0)
+		{
+			u_result = uvec4(1u);
+		}
+		else
+		{
+			u_result = uvec4(2u);
+		}
+	}
+}
+)";
+
+	ShaderPtr vert = createShader(VERT_SRC,
+		ShaderType::VERTEX,
+		*gr,
+		Array<ShaderSpecializationConstValue, 3>{{ShaderSpecializationConstValue(2147483647),
+			ShaderSpecializationConstValue(-1.0f),
+			ShaderSpecializationConstValue(1234.5678f)}});
+	ShaderPtr frag = createShader(FRAG_SRC,
+		ShaderType::FRAGMENT,
+		*gr,
+		Array<ShaderSpecializationConstValue, 2>{
+			{ShaderSpecializationConstValue(-2147483647), ShaderSpecializationConstValue(-1.0f)}});
+	ShaderProgramPtr prog = gr->newShaderProgram(ShaderProgramInitInfo(vert, frag));
+
+	// Create the result buffer
+	BufferPtr resultBuff =
+		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::STORAGE_COMPUTE_WRITE, BufferMapAccessBit::READ));
+
+	// Draw
+	gr->beginFrame();
+
+	CommandBufferInitInfo cinit;
+	cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+
+	cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+	cmdb->bindShaderProgram(prog);
+	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());
+	cmdb->beginRenderPass(createDefaultFb(*gr), {}, {});
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	cmdb->endRenderPass();
+	cmdb->flush();
+
+	gr->swapBuffers();
 	gr->finish();
 
 	// Get the result

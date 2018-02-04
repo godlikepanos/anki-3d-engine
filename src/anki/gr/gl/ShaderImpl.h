@@ -35,7 +35,7 @@ public:
 		m_shaderType = init.m_shaderType;
 	}
 
-	ANKI_USE_RESULT Error init(const CString& source);
+	ANKI_USE_RESULT Error init(CString source, ConstWeakArray<ShaderSpecializationConstValue> constValues);
 };
 /// @}
 

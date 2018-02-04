@@ -66,12 +66,48 @@ void writeShaderBlockMemory(ShaderVariableDataType type,
 	void* buffBegin,
 	const void* buffEnd);
 
+/// Specialization constant value.
+class ShaderSpecializationConstValue
+{
+public:
+	union
+	{
+		F32 m_float;
+		I32 m_int;
+	};
+
+	ShaderVariableDataType m_dataType;
+
+	ShaderSpecializationConstValue()
+		: m_int(0)
+		, m_dataType(ShaderVariableDataType::NONE)
+	{
+	}
+
+	explicit ShaderSpecializationConstValue(F32 f)
+		: m_float(f)
+		, m_dataType(ShaderVariableDataType::FLOAT)
+	{
+	}
+
+	explicit ShaderSpecializationConstValue(I32 i)
+		: m_int(i)
+		, m_dataType(ShaderVariableDataType::INT)
+	{
+	}
+
+	ShaderSpecializationConstValue(const ShaderSpecializationConstValue&) = default;
+
+	ShaderSpecializationConstValue& operator=(const ShaderSpecializationConstValue&) = default;
+};
+
 /// Shader init info.
 class ShaderInitInfo : public GrBaseInitInfo
 {
 public:
 	ShaderType m_shaderType = ShaderType::COUNT;
 	ConstWeakArray<U8> m_binary = {};
+	ConstWeakArray<ShaderSpecializationConstValue> m_constValues;
 
 	ShaderInitInfo()
 	{

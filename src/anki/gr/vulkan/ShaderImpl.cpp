@@ -6,7 +6,6 @@
 #include <anki/gr/vulkan/ShaderImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/common/Misc.h>
-#include <anki/core/Trace.h>
 #include <SPIRV-Cross/spirv_cross.hpp>
 
 #define ANKI_DUMP_SHADERS ANKI_EXTRA_CHECKS
@@ -29,6 +28,18 @@ ShaderImpl::~ShaderImpl()
 	if(m_handle)
 	{
 		vkDestroyShaderModule(getDevice(), m_handle, nullptr);
+	}
+
+	if(m_specConstInfo.pMapEntries)
+	{
+		getAllocator().deleteArray(
+			const_cast<VkSpecializationMapEntry*>(m_specConstInfo.pMapEntries), m_specConstInfo.mapEntryCount);
+	}
+
+	if(m_specConstInfo.pData)
+	{
+		getAllocator().deleteArray(
+			static_cast<I32*>(const_cast<void*>(m_specConstInfo.pData)), m_specConstInfo.dataSize / sizeof(I32));
 	}
 }
 
@@ -67,12 +78,41 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 	ANKI_VK_CHECK(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
 
 	// Get reflection info
-	doReflection(inf.m_binary);
+	std::vector<spirv_cross::SpecializationConstant> specConstIds;
+	doReflection(inf.m_binary, specConstIds);
+
+	// Set spec info
+	if(specConstIds.size())
+	{
+		const U constCount = specConstIds.size();
+
+		m_specConstInfo.mapEntryCount = constCount;
+		m_specConstInfo.pMapEntries = getAllocator().newArray<VkSpecializationMapEntry>(constCount);
+		m_specConstInfo.dataSize = constCount * sizeof(I32);
+		m_specConstInfo.pData = getAllocator().newArray<I32>(constCount);
+
+		U count = 0;
+		for(const spirv_cross::SpecializationConstant& sconst : specConstIds)
+		{
+			// Set the entry
+			VkSpecializationMapEntry& entry = const_cast<VkSpecializationMapEntry&>(m_specConstInfo.pMapEntries[count]);
+			entry.constantID = sconst.constant_id;
+			entry.offset = count * sizeof(I32);
+			entry.size = sizeof(I32);
+
+			// Copy the data
+			U8* data = static_cast<U8*>(const_cast<void*>(m_specConstInfo.pData));
+			data += entry.offset;
+			*reinterpret_cast<I32*>(data) = inf.m_constValues[sconst.constant_id].m_int;
+
+			++count;
+		}
+	}
 
 	return Error::NONE;
 }
 
-void ShaderImpl::doReflection(ConstWeakArray<U8> spirv)
+void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, std::vector<spirv_cross::SpecializationConstant>& specConstIds)
 {
 	spirv_cross::Compiler spvc(reinterpret_cast<const uint32_t*>(&spirv[0]), spirv.getSize() / sizeof(unsigned int));
 	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
@@ -143,6 +183,9 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv)
 			m_attributeMask.set(location);
 		}
 	}
+
+	// Spec consts
+	specConstIds = spvc.get_specialization_constants();
 }
 
 } // end namespace anki
