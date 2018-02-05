@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/event/LightEvent.h>
-#include <anki/scene/Light.h>
-#include <anki/scene/LensFlareComponent.h>
+#include <anki/scene/LightNode.h>
+#include <anki/scene/components/LensFlareComponent.h>
 
 namespace anki
 {

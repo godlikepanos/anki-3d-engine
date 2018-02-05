@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/DecalNode.h>
-#include <anki/scene/DecalComponent.h>
-#include <anki/scene/MoveComponent.h>
-#include <anki/scene/SpatialComponent.h>
+#include <anki/scene/components/DecalComponent.h>
+#include <anki/scene/components/MoveComponent.h>
+#include <anki/scene/components/SpatialComponent.h>
 
 namespace anki
 {

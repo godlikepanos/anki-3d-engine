@@ -5,7 +5,7 @@
 
 #include <anki/event/JitterMoveEvent.h>
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/MoveComponent.h>
+#include <anki/scene/components/MoveComponent.h>
 #include <anki/util/Functions.h>
 
 namespace anki

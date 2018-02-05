@@ -11,12 +11,12 @@
 #include <anki/util/BitSet.h>
 #include <anki/util/List.h>
 #include <anki/util/Enum.h>
-#include <anki/scene/SceneComponent.h>
+#include <anki/scene/components/SceneComponent.h>
 
 namespace anki
 {
 
-class SceneGraph; // Don't include
+// Forward
 class ResourceManager;
 
 /// @addtogroup scene

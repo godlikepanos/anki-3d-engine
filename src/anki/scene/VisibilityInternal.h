@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/scene/Visibility.h>
-#include <anki/scene/Sector.h>
+#include <anki/scene/SectorNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/SoftwareRasterizer.h>
 #include <anki/util/Thread.h>

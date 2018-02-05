@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/Camera.h>
+#include <anki/scene/CameraNode.h>
 #include <anki/scene/ModelNode.h>
-#include <anki/scene/Sector.h>
+#include <anki/scene/SectorNode.h>
 #include <anki/core/Trace.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/resource/ResourceManager.h>
@@ -95,7 +95,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_maxReflectionProxyDistance = config.getNumber("scene.imageReflectionMaxDistance");
 
 	// Init the default main camera
-	ANKI_CHECK(newSceneNode<PerspectiveCamera>("mainCamera", m_defaultMainCam));
+	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
 	m_defaultMainCam->setAll(toRad(60.0f), toRad(60.0f), 0.1f, 1000.0f);
 	m_mainCam = m_defaultMainCam;
 

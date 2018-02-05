@@ -1818,22 +1818,22 @@ static inline void wrapModelNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
-static const char* classnamePerspectiveCamera = "PerspectiveCamera";
+static const char* classnamePerspectiveCameraNode = "PerspectiveCameraNode";
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<PerspectiveCamera>()
+I64 LuaBinder::getWrappedTypeSignature<PerspectiveCameraNode>()
 {
-	return -4317960537256382878;
+	return -7590637754681648962;
 }
 
 template<>
-const char* LuaBinder::getWrappedTypeName<PerspectiveCamera>()
+const char* LuaBinder::getWrappedTypeName<PerspectiveCameraNode>()
 {
-	return classnamePerspectiveCamera;
+	return classnamePerspectiveCameraNode;
 }
 
-/// Pre-wrap method PerspectiveCamera::getSceneNodeBase.
-static inline int pwrapPerspectiveCameragetSceneNodeBase(lua_State* l)
+/// Pre-wrap method PerspectiveCameraNode::getSceneNodeBase.
+static inline int pwrapPerspectiveCameraNodegetSceneNodeBase(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -1845,12 +1845,12 @@ static inline int pwrapPerspectiveCameragetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePerspectiveCamera, -4317960537256382878, ud))
+	if(LuaBinder::checkUserData(l, 1, classnamePerspectiveCameraNode, -7590637754681648962, ud))
 	{
 		return -1;
 	}
 
-	PerspectiveCamera* self = ud->getData<PerspectiveCamera>();
+	PerspectiveCameraNode* self = ud->getData<PerspectiveCameraNode>();
 
 	// Call the method
 	SceneNode& ret = *self;
@@ -1864,10 +1864,10 @@ static inline int pwrapPerspectiveCameragetSceneNodeBase(lua_State* l)
 	return 1;
 }
 
-/// Wrap method PerspectiveCamera::getSceneNodeBase.
-static int wrapPerspectiveCameragetSceneNodeBase(lua_State* l)
+/// Wrap method PerspectiveCameraNode::getSceneNodeBase.
+static int wrapPerspectiveCameraNodegetSceneNodeBase(lua_State* l)
 {
-	int res = pwrapPerspectiveCameragetSceneNodeBase(l);
+	int res = pwrapPerspectiveCameraNodegetSceneNodeBase(l);
 	if(res >= 0)
 	{
 		return res;
@@ -1877,8 +1877,8 @@ static int wrapPerspectiveCameragetSceneNodeBase(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method PerspectiveCamera::setAll.
-static inline int pwrapPerspectiveCamerasetAll(lua_State* l)
+/// Pre-wrap method PerspectiveCameraNode::setAll.
+static inline int pwrapPerspectiveCameraNodesetAll(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -1890,12 +1890,12 @@ static inline int pwrapPerspectiveCamerasetAll(lua_State* l)
 	LuaBinder::checkArgsCount(l, 5);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePerspectiveCamera, -4317960537256382878, ud))
+	if(LuaBinder::checkUserData(l, 1, classnamePerspectiveCameraNode, -7590637754681648962, ud))
 	{
 		return -1;
 	}
 
-	PerspectiveCamera* self = ud->getData<PerspectiveCamera>();
+	PerspectiveCameraNode* self = ud->getData<PerspectiveCameraNode>();
 
 	// Pop arguments
 	F32 arg0;
@@ -1928,10 +1928,10 @@ static inline int pwrapPerspectiveCamerasetAll(lua_State* l)
 	return 0;
 }
 
-/// Wrap method PerspectiveCamera::setAll.
-static int wrapPerspectiveCamerasetAll(lua_State* l)
+/// Wrap method PerspectiveCameraNode::setAll.
+static int wrapPerspectiveCameraNodesetAll(lua_State* l)
 {
-	int res = pwrapPerspectiveCamerasetAll(l);
+	int res = pwrapPerspectiveCameraNodesetAll(l);
 	if(res >= 0)
 	{
 		return res;
@@ -1941,31 +1941,31 @@ static int wrapPerspectiveCamerasetAll(lua_State* l)
 	return 0;
 }
 
-/// Wrap class PerspectiveCamera.
-static inline void wrapPerspectiveCamera(lua_State* l)
+/// Wrap class PerspectiveCameraNode.
+static inline void wrapPerspectiveCameraNode(lua_State* l)
 {
-	LuaBinder::createClass(l, classnamePerspectiveCamera);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPerspectiveCameragetSceneNodeBase);
-	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapPerspectiveCamerasetAll);
+	LuaBinder::createClass(l, classnamePerspectiveCameraNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPerspectiveCameraNodegetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapPerspectiveCameraNodesetAll);
 	lua_settop(l, 0);
 }
 
-static const char* classnamePointLight = "PointLight";
+static const char* classnamePointLightNode = "PointLightNode";
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<PointLight>()
+I64 LuaBinder::getWrappedTypeSignature<PointLightNode>()
 {
-	return 3561037663389896020;
+	return 8507789763949195644;
 }
 
 template<>
-const char* LuaBinder::getWrappedTypeName<PointLight>()
+const char* LuaBinder::getWrappedTypeName<PointLightNode>()
 {
-	return classnamePointLight;
+	return classnamePointLightNode;
 }
 
-/// Pre-wrap method PointLight::getSceneNodeBase.
-static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
+/// Pre-wrap method PointLightNode::getSceneNodeBase.
+static inline int pwrapPointLightNodegetSceneNodeBase(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -1977,12 +1977,12 @@ static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud))
+	if(LuaBinder::checkUserData(l, 1, classnamePointLightNode, 8507789763949195644, ud))
 	{
 		return -1;
 	}
 
-	PointLight* self = ud->getData<PointLight>();
+	PointLightNode* self = ud->getData<PointLightNode>();
 
 	// Call the method
 	SceneNode& ret = *self;
@@ -1996,10 +1996,10 @@ static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
 	return 1;
 }
 
-/// Wrap method PointLight::getSceneNodeBase.
-static int wrapPointLightgetSceneNodeBase(lua_State* l)
+/// Wrap method PointLightNode::getSceneNodeBase.
+static int wrapPointLightNodegetSceneNodeBase(lua_State* l)
 {
-	int res = pwrapPointLightgetSceneNodeBase(l);
+	int res = pwrapPointLightNodegetSceneNodeBase(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2009,8 +2009,8 @@ static int wrapPointLightgetSceneNodeBase(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method PointLight::loadLensFlare.
-static inline int pwrapPointLightloadLensFlare(lua_State* l)
+/// Pre-wrap method PointLightNode::loadLensFlare.
+static inline int pwrapPointLightNodeloadLensFlare(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2022,12 +2022,12 @@ static inline int pwrapPointLightloadLensFlare(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud))
+	if(LuaBinder::checkUserData(l, 1, classnamePointLightNode, 8507789763949195644, ud))
 	{
 		return -1;
 	}
 
-	PointLight* self = ud->getData<PointLight>();
+	PointLightNode* self = ud->getData<PointLightNode>();
 
 	// Pop arguments
 	const char* arg0;
@@ -2051,10 +2051,10 @@ static inline int pwrapPointLightloadLensFlare(lua_State* l)
 	return 1;
 }
 
-/// Wrap method PointLight::loadLensFlare.
-static int wrapPointLightloadLensFlare(lua_State* l)
+/// Wrap method PointLightNode::loadLensFlare.
+static int wrapPointLightNodeloadLensFlare(lua_State* l)
 {
-	int res = pwrapPointLightloadLensFlare(l);
+	int res = pwrapPointLightNodeloadLensFlare(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2064,31 +2064,31 @@ static int wrapPointLightloadLensFlare(lua_State* l)
 	return 0;
 }
 
-/// Wrap class PointLight.
-static inline void wrapPointLight(lua_State* l)
+/// Wrap class PointLightNode.
+static inline void wrapPointLightNode(lua_State* l)
 {
-	LuaBinder::createClass(l, classnamePointLight);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPointLightgetSceneNodeBase);
-	LuaBinder::pushLuaCFuncMethod(l, "loadLensFlare", wrapPointLightloadLensFlare);
+	LuaBinder::createClass(l, classnamePointLightNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPointLightNodegetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(l, "loadLensFlare", wrapPointLightNodeloadLensFlare);
 	lua_settop(l, 0);
 }
 
-static const char* classnameSpotLight = "SpotLight";
+static const char* classnameSpotLightNode = "SpotLightNode";
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<SpotLight>()
+I64 LuaBinder::getWrappedTypeSignature<SpotLightNode>()
 {
-	return 7940385212889719421;
+	return -9214759951813290587;
 }
 
 template<>
-const char* LuaBinder::getWrappedTypeName<SpotLight>()
+const char* LuaBinder::getWrappedTypeName<SpotLightNode>()
 {
-	return classnameSpotLight;
+	return classnameSpotLightNode;
 }
 
-/// Pre-wrap method SpotLight::getSceneNodeBase.
-static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
+/// Pre-wrap method SpotLightNode::getSceneNodeBase.
+static inline int pwrapSpotLightNodegetSceneNodeBase(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2100,12 +2100,12 @@ static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSpotLight, 7940385212889719421, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameSpotLightNode, -9214759951813290587, ud))
 	{
 		return -1;
 	}
 
-	SpotLight* self = ud->getData<SpotLight>();
+	SpotLightNode* self = ud->getData<SpotLightNode>();
 
 	// Call the method
 	SceneNode& ret = *self;
@@ -2119,10 +2119,10 @@ static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
 	return 1;
 }
 
-/// Wrap method SpotLight::getSceneNodeBase.
-static int wrapSpotLightgetSceneNodeBase(lua_State* l)
+/// Wrap method SpotLightNode::getSceneNodeBase.
+static int wrapSpotLightNodegetSceneNodeBase(lua_State* l)
 {
-	int res = pwrapSpotLightgetSceneNodeBase(l);
+	int res = pwrapSpotLightNodegetSceneNodeBase(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2132,11 +2132,11 @@ static int wrapSpotLightgetSceneNodeBase(lua_State* l)
 	return 0;
 }
 
-/// Wrap class SpotLight.
-static inline void wrapSpotLight(lua_State* l)
+/// Wrap class SpotLightNode.
+static inline void wrapSpotLightNode(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameSpotLight);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSpotLightgetSceneNodeBase);
+	LuaBinder::createClass(l, classnameSpotLightNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSpotLightNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -2207,22 +2207,22 @@ static inline void wrapStaticCollisionNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
-static const char* classnamePortal = "Portal";
+static const char* classnamePortalNode = "PortalNode";
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<Portal>()
+I64 LuaBinder::getWrappedTypeSignature<PortalNode>()
 {
-	return 7450426072538297652;
+	return 8385999185171246748;
 }
 
 template<>
-const char* LuaBinder::getWrappedTypeName<Portal>()
+const char* LuaBinder::getWrappedTypeName<PortalNode>()
 {
-	return classnamePortal;
+	return classnamePortalNode;
 }
 
-/// Pre-wrap method Portal::getSceneNodeBase.
-static inline int pwrapPortalgetSceneNodeBase(lua_State* l)
+/// Pre-wrap method PortalNode::getSceneNodeBase.
+static inline int pwrapPortalNodegetSceneNodeBase(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2234,12 +2234,12 @@ static inline int pwrapPortalgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePortal, 7450426072538297652, ud))
+	if(LuaBinder::checkUserData(l, 1, classnamePortalNode, 8385999185171246748, ud))
 	{
 		return -1;
 	}
 
-	Portal* self = ud->getData<Portal>();
+	PortalNode* self = ud->getData<PortalNode>();
 
 	// Call the method
 	SceneNode& ret = *self;
@@ -2253,10 +2253,10 @@ static inline int pwrapPortalgetSceneNodeBase(lua_State* l)
 	return 1;
 }
 
-/// Wrap method Portal::getSceneNodeBase.
-static int wrapPortalgetSceneNodeBase(lua_State* l)
+/// Wrap method PortalNode::getSceneNodeBase.
+static int wrapPortalNodegetSceneNodeBase(lua_State* l)
 {
-	int res = pwrapPortalgetSceneNodeBase(l);
+	int res = pwrapPortalNodegetSceneNodeBase(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2266,30 +2266,30 @@ static int wrapPortalgetSceneNodeBase(lua_State* l)
 	return 0;
 }
 
-/// Wrap class Portal.
-static inline void wrapPortal(lua_State* l)
+/// Wrap class PortalNode.
+static inline void wrapPortalNode(lua_State* l)
 {
-	LuaBinder::createClass(l, classnamePortal);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPortalgetSceneNodeBase);
+	LuaBinder::createClass(l, classnamePortalNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPortalNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-static const char* classnameSector = "Sector";
+static const char* classnameSectorNode = "SectorNode";
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<Sector>()
+I64 LuaBinder::getWrappedTypeSignature<SectorNode>()
 {
-	return 2371391302432627552;
+	return 1288065288496288368;
 }
 
 template<>
-const char* LuaBinder::getWrappedTypeName<Sector>()
+const char* LuaBinder::getWrappedTypeName<SectorNode>()
 {
-	return classnameSector;
+	return classnameSectorNode;
 }
 
-/// Pre-wrap method Sector::getSceneNodeBase.
-static inline int pwrapSectorgetSceneNodeBase(lua_State* l)
+/// Pre-wrap method SectorNode::getSceneNodeBase.
+static inline int pwrapSectorNodegetSceneNodeBase(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2301,12 +2301,12 @@ static inline int pwrapSectorgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSector, 2371391302432627552, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameSectorNode, 1288065288496288368, ud))
 	{
 		return -1;
 	}
 
-	Sector* self = ud->getData<Sector>();
+	SectorNode* self = ud->getData<SectorNode>();
 
 	// Call the method
 	SceneNode& ret = *self;
@@ -2320,10 +2320,10 @@ static inline int pwrapSectorgetSceneNodeBase(lua_State* l)
 	return 1;
 }
 
-/// Wrap method Sector::getSceneNodeBase.
-static int wrapSectorgetSceneNodeBase(lua_State* l)
+/// Wrap method SectorNode::getSceneNodeBase.
+static int wrapSectorNodegetSceneNodeBase(lua_State* l)
 {
-	int res = pwrapSectorgetSceneNodeBase(l);
+	int res = pwrapSectorNodegetSceneNodeBase(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2333,30 +2333,30 @@ static int wrapSectorgetSceneNodeBase(lua_State* l)
 	return 0;
 }
 
-/// Wrap class Sector.
-static inline void wrapSector(lua_State* l)
+/// Wrap class SectorNode.
+static inline void wrapSectorNode(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameSector);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSectorgetSceneNodeBase);
+	LuaBinder::createClass(l, classnameSectorNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSectorNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-static const char* classnameParticleEmitter = "ParticleEmitter";
+static const char* classnameParticleEmitterNode = "ParticleEmitterNode";
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<ParticleEmitter>()
+I64 LuaBinder::getWrappedTypeSignature<ParticleEmitterNode>()
 {
-	return -1716560948193631017;
+	return 4851204309813771919;
 }
 
 template<>
-const char* LuaBinder::getWrappedTypeName<ParticleEmitter>()
+const char* LuaBinder::getWrappedTypeName<ParticleEmitterNode>()
 {
-	return classnameParticleEmitter;
+	return classnameParticleEmitterNode;
 }
 
-/// Pre-wrap method ParticleEmitter::getSceneNodeBase.
-static inline int pwrapParticleEmittergetSceneNodeBase(lua_State* l)
+/// Pre-wrap method ParticleEmitterNode::getSceneNodeBase.
+static inline int pwrapParticleEmitterNodegetSceneNodeBase(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2368,12 +2368,12 @@ static inline int pwrapParticleEmittergetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameParticleEmitter, -1716560948193631017, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameParticleEmitterNode, 4851204309813771919, ud))
 	{
 		return -1;
 	}
 
-	ParticleEmitter* self = ud->getData<ParticleEmitter>();
+	ParticleEmitterNode* self = ud->getData<ParticleEmitterNode>();
 
 	// Call the method
 	SceneNode& ret = *self;
@@ -2387,10 +2387,10 @@ static inline int pwrapParticleEmittergetSceneNodeBase(lua_State* l)
 	return 1;
 }
 
-/// Wrap method ParticleEmitter::getSceneNodeBase.
-static int wrapParticleEmittergetSceneNodeBase(lua_State* l)
+/// Wrap method ParticleEmitterNode::getSceneNodeBase.
+static int wrapParticleEmitterNodegetSceneNodeBase(lua_State* l)
 {
-	int res = pwrapParticleEmittergetSceneNodeBase(l);
+	int res = pwrapParticleEmitterNodegetSceneNodeBase(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2400,30 +2400,30 @@ static int wrapParticleEmittergetSceneNodeBase(lua_State* l)
 	return 0;
 }
 
-/// Wrap class ParticleEmitter.
-static inline void wrapParticleEmitter(lua_State* l)
+/// Wrap class ParticleEmitterNode.
+static inline void wrapParticleEmitterNode(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameParticleEmitter);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapParticleEmittergetSceneNodeBase);
+	LuaBinder::createClass(l, classnameParticleEmitterNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapParticleEmitterNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-static const char* classnameReflectionProbe = "ReflectionProbe";
+static const char* classnameReflectionProbeNode = "ReflectionProbeNode";
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<ReflectionProbe>()
+I64 LuaBinder::getWrappedTypeSignature<ReflectionProbeNode>()
 {
-	return 205427259474779436;
+	return -801309373000950648;
 }
 
 template<>
-const char* LuaBinder::getWrappedTypeName<ReflectionProbe>()
+const char* LuaBinder::getWrappedTypeName<ReflectionProbeNode>()
 {
-	return classnameReflectionProbe;
+	return classnameReflectionProbeNode;
 }
 
-/// Pre-wrap method ReflectionProbe::getSceneNodeBase.
-static inline int pwrapReflectionProbegetSceneNodeBase(lua_State* l)
+/// Pre-wrap method ReflectionProbeNode::getSceneNodeBase.
+static inline int pwrapReflectionProbeNodegetSceneNodeBase(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2435,12 +2435,12 @@ static inline int pwrapReflectionProbegetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameReflectionProbe, 205427259474779436, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameReflectionProbeNode, -801309373000950648, ud))
 	{
 		return -1;
 	}
 
-	ReflectionProbe* self = ud->getData<ReflectionProbe>();
+	ReflectionProbeNode* self = ud->getData<ReflectionProbeNode>();
 
 	// Call the method
 	SceneNode& ret = *self;
@@ -2454,10 +2454,10 @@ static inline int pwrapReflectionProbegetSceneNodeBase(lua_State* l)
 	return 1;
 }
 
-/// Wrap method ReflectionProbe::getSceneNodeBase.
-static int wrapReflectionProbegetSceneNodeBase(lua_State* l)
+/// Wrap method ReflectionProbeNode::getSceneNodeBase.
+static int wrapReflectionProbeNodegetSceneNodeBase(lua_State* l)
 {
-	int res = pwrapReflectionProbegetSceneNodeBase(l);
+	int res = pwrapReflectionProbeNodegetSceneNodeBase(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2467,30 +2467,30 @@ static int wrapReflectionProbegetSceneNodeBase(lua_State* l)
 	return 0;
 }
 
-/// Wrap class ReflectionProbe.
-static inline void wrapReflectionProbe(lua_State* l)
+/// Wrap class ReflectionProbeNode.
+static inline void wrapReflectionProbeNode(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameReflectionProbe);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProbegetSceneNodeBase);
+	LuaBinder::createClass(l, classnameReflectionProbeNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProbeNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-static const char* classnameReflectionProxy = "ReflectionProxy";
+static const char* classnameReflectionProxyNode = "ReflectionProxyNode";
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<ReflectionProxy>()
+I64 LuaBinder::getWrappedTypeSignature<ReflectionProxyNode>()
 {
-	return 205427259496779646;
+	return 2307826176097073810;
 }
 
 template<>
-const char* LuaBinder::getWrappedTypeName<ReflectionProxy>()
+const char* LuaBinder::getWrappedTypeName<ReflectionProxyNode>()
 {
-	return classnameReflectionProxy;
+	return classnameReflectionProxyNode;
 }
 
-/// Pre-wrap method ReflectionProxy::getSceneNodeBase.
-static inline int pwrapReflectionProxygetSceneNodeBase(lua_State* l)
+/// Pre-wrap method ReflectionProxyNode::getSceneNodeBase.
+static inline int pwrapReflectionProxyNodegetSceneNodeBase(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2502,12 +2502,12 @@ static inline int pwrapReflectionProxygetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameReflectionProxy, 205427259496779646, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameReflectionProxyNode, 2307826176097073810, ud))
 	{
 		return -1;
 	}
 
-	ReflectionProxy* self = ud->getData<ReflectionProxy>();
+	ReflectionProxyNode* self = ud->getData<ReflectionProxyNode>();
 
 	// Call the method
 	SceneNode& ret = *self;
@@ -2521,10 +2521,10 @@ static inline int pwrapReflectionProxygetSceneNodeBase(lua_State* l)
 	return 1;
 }
 
-/// Wrap method ReflectionProxy::getSceneNodeBase.
-static int wrapReflectionProxygetSceneNodeBase(lua_State* l)
+/// Wrap method ReflectionProxyNode::getSceneNodeBase.
+static int wrapReflectionProxyNodegetSceneNodeBase(lua_State* l)
 {
-	int res = pwrapReflectionProxygetSceneNodeBase(l);
+	int res = pwrapReflectionProxyNodegetSceneNodeBase(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2534,11 +2534,11 @@ static int wrapReflectionProxygetSceneNodeBase(lua_State* l)
 	return 0;
 }
 
-/// Wrap class ReflectionProxy.
-static inline void wrapReflectionProxy(lua_State* l)
+/// Wrap class ReflectionProxyNode.
+static inline void wrapReflectionProxyNode(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameReflectionProxy);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProxygetSceneNodeBase);
+	LuaBinder::createClass(l, classnameReflectionProxyNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProxyNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -2690,8 +2690,8 @@ const char* LuaBinder::getWrappedTypeName<SceneGraph>()
 	return classnameSceneGraph;
 }
 
-/// Pre-wrap method SceneGraph::newPerspectiveCamera.
-static inline int pwrapSceneGraphnewPerspectiveCamera(lua_State* l)
+/// Pre-wrap method SceneGraph::newPerspectiveCameraNode.
+static inline int pwrapSceneGraphnewPerspectiveCameraNode(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2718,7 +2718,7 @@ static inline int pwrapSceneGraphnewPerspectiveCamera(lua_State* l)
 	}
 
 	// Call the method
-	PerspectiveCamera* ret = newSceneNode<PerspectiveCamera>(self, arg0);
+	PerspectiveCameraNode* ret = newSceneNode<PerspectiveCameraNode>(self, arg0);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -2729,16 +2729,16 @@ static inline int pwrapSceneGraphnewPerspectiveCamera(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "PerspectiveCamera");
-	ud->initPointed(-4317960537256382878, const_cast<PerspectiveCamera*>(ret));
+	luaL_setmetatable(l, "PerspectiveCameraNode");
+	ud->initPointed(-7590637754681648962, const_cast<PerspectiveCameraNode*>(ret));
 
 	return 1;
 }
 
-/// Wrap method SceneGraph::newPerspectiveCamera.
-static int wrapSceneGraphnewPerspectiveCamera(lua_State* l)
+/// Wrap method SceneGraph::newPerspectiveCameraNode.
+static int wrapSceneGraphnewPerspectiveCameraNode(lua_State* l)
 {
-	int res = pwrapSceneGraphnewPerspectiveCamera(l);
+	int res = pwrapSceneGraphnewPerspectiveCameraNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2812,8 +2812,8 @@ static int wrapSceneGraphnewModelNode(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneGraph::newPointLight.
-static inline int pwrapSceneGraphnewPointLight(lua_State* l)
+/// Pre-wrap method SceneGraph::newPointLightNode.
+static inline int pwrapSceneGraphnewPointLightNode(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2840,7 +2840,7 @@ static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 	}
 
 	// Call the method
-	PointLight* ret = newSceneNode<PointLight>(self, arg0);
+	PointLightNode* ret = newSceneNode<PointLightNode>(self, arg0);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -2851,16 +2851,16 @@ static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "PointLight");
-	ud->initPointed(3561037663389896020, const_cast<PointLight*>(ret));
+	luaL_setmetatable(l, "PointLightNode");
+	ud->initPointed(8507789763949195644, const_cast<PointLightNode*>(ret));
 
 	return 1;
 }
 
-/// Wrap method SceneGraph::newPointLight.
-static int wrapSceneGraphnewPointLight(lua_State* l)
+/// Wrap method SceneGraph::newPointLightNode.
+static int wrapSceneGraphnewPointLightNode(lua_State* l)
 {
-	int res = pwrapSceneGraphnewPointLight(l);
+	int res = pwrapSceneGraphnewPointLightNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -2870,8 +2870,8 @@ static int wrapSceneGraphnewPointLight(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneGraph::newSpotLight.
-static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
+/// Pre-wrap method SceneGraph::newSpotLightNode.
+static inline int pwrapSceneGraphnewSpotLightNode(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -2898,7 +2898,7 @@ static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
 	}
 
 	// Call the method
-	SpotLight* ret = newSceneNode<SpotLight>(self, arg0);
+	SpotLightNode* ret = newSceneNode<SpotLightNode>(self, arg0);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -2909,16 +2909,16 @@ static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SpotLight");
-	ud->initPointed(7940385212889719421, const_cast<SpotLight*>(ret));
+	luaL_setmetatable(l, "SpotLightNode");
+	ud->initPointed(-9214759951813290587, const_cast<SpotLightNode*>(ret));
 
 	return 1;
 }
 
-/// Wrap method SceneGraph::newSpotLight.
-static int wrapSceneGraphnewSpotLight(lua_State* l)
+/// Wrap method SceneGraph::newSpotLightNode.
+static int wrapSceneGraphnewSpotLightNode(lua_State* l)
 {
-	int res = pwrapSceneGraphnewSpotLight(l);
+	int res = pwrapSceneGraphnewSpotLightNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3000,8 +3000,8 @@ static int wrapSceneGraphnewStaticCollisionNode(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneGraph::newPortal.
-static inline int pwrapSceneGraphnewPortal(lua_State* l)
+/// Pre-wrap method SceneGraph::newPortalNode.
+static inline int pwrapSceneGraphnewPortalNode(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -3034,7 +3034,7 @@ static inline int pwrapSceneGraphnewPortal(lua_State* l)
 	}
 
 	// Call the method
-	Portal* ret = newSceneNode<Portal>(self, arg0, arg1);
+	PortalNode* ret = newSceneNode<PortalNode>(self, arg0, arg1);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3045,16 +3045,16 @@ static inline int pwrapSceneGraphnewPortal(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "Portal");
-	ud->initPointed(7450426072538297652, const_cast<Portal*>(ret));
+	luaL_setmetatable(l, "PortalNode");
+	ud->initPointed(8385999185171246748, const_cast<PortalNode*>(ret));
 
 	return 1;
 }
 
-/// Wrap method SceneGraph::newPortal.
-static int wrapSceneGraphnewPortal(lua_State* l)
+/// Wrap method SceneGraph::newPortalNode.
+static int wrapSceneGraphnewPortalNode(lua_State* l)
 {
-	int res = pwrapSceneGraphnewPortal(l);
+	int res = pwrapSceneGraphnewPortalNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3064,8 +3064,8 @@ static int wrapSceneGraphnewPortal(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneGraph::newSector.
-static inline int pwrapSceneGraphnewSector(lua_State* l)
+/// Pre-wrap method SceneGraph::newSectorNode.
+static inline int pwrapSceneGraphnewSectorNode(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -3098,7 +3098,7 @@ static inline int pwrapSceneGraphnewSector(lua_State* l)
 	}
 
 	// Call the method
-	Sector* ret = newSceneNode<Sector>(self, arg0, arg1);
+	SectorNode* ret = newSceneNode<SectorNode>(self, arg0, arg1);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3109,16 +3109,16 @@ static inline int pwrapSceneGraphnewSector(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "Sector");
-	ud->initPointed(2371391302432627552, const_cast<Sector*>(ret));
+	luaL_setmetatable(l, "SectorNode");
+	ud->initPointed(1288065288496288368, const_cast<SectorNode*>(ret));
 
 	return 1;
 }
 
-/// Wrap method SceneGraph::newSector.
-static int wrapSceneGraphnewSector(lua_State* l)
+/// Wrap method SceneGraph::newSectorNode.
+static int wrapSceneGraphnewSectorNode(lua_State* l)
 {
-	int res = pwrapSceneGraphnewSector(l);
+	int res = pwrapSceneGraphnewSectorNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3128,8 +3128,8 @@ static int wrapSceneGraphnewSector(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneGraph::newParticleEmitter.
-static inline int pwrapSceneGraphnewParticleEmitter(lua_State* l)
+/// Pre-wrap method SceneGraph::newParticleEmitterNode.
+static inline int pwrapSceneGraphnewParticleEmitterNode(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -3162,7 +3162,7 @@ static inline int pwrapSceneGraphnewParticleEmitter(lua_State* l)
 	}
 
 	// Call the method
-	ParticleEmitter* ret = newSceneNode<ParticleEmitter>(self, arg0, arg1);
+	ParticleEmitterNode* ret = newSceneNode<ParticleEmitterNode>(self, arg0, arg1);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3173,16 +3173,16 @@ static inline int pwrapSceneGraphnewParticleEmitter(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "ParticleEmitter");
-	ud->initPointed(-1716560948193631017, const_cast<ParticleEmitter*>(ret));
+	luaL_setmetatable(l, "ParticleEmitterNode");
+	ud->initPointed(4851204309813771919, const_cast<ParticleEmitterNode*>(ret));
 
 	return 1;
 }
 
-/// Wrap method SceneGraph::newParticleEmitter.
-static int wrapSceneGraphnewParticleEmitter(lua_State* l)
+/// Wrap method SceneGraph::newParticleEmitterNode.
+static int wrapSceneGraphnewParticleEmitterNode(lua_State* l)
 {
-	int res = pwrapSceneGraphnewParticleEmitter(l);
+	int res = pwrapSceneGraphnewParticleEmitterNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3192,8 +3192,8 @@ static int wrapSceneGraphnewParticleEmitter(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneGraph::newReflectionProbe.
-static inline int pwrapSceneGraphnewReflectionProbe(lua_State* l)
+/// Pre-wrap method SceneGraph::newReflectionProbeNode.
+static inline int pwrapSceneGraphnewReflectionProbeNode(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -3226,7 +3226,7 @@ static inline int pwrapSceneGraphnewReflectionProbe(lua_State* l)
 	}
 
 	// Call the method
-	ReflectionProbe* ret = newSceneNode<ReflectionProbe>(self, arg0, arg1);
+	ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0, arg1);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3237,16 +3237,16 @@ static inline int pwrapSceneGraphnewReflectionProbe(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "ReflectionProbe");
-	ud->initPointed(205427259474779436, const_cast<ReflectionProbe*>(ret));
+	luaL_setmetatable(l, "ReflectionProbeNode");
+	ud->initPointed(-801309373000950648, const_cast<ReflectionProbeNode*>(ret));
 
 	return 1;
 }
 
-/// Wrap method SceneGraph::newReflectionProbe.
-static int wrapSceneGraphnewReflectionProbe(lua_State* l)
+/// Wrap method SceneGraph::newReflectionProbeNode.
+static int wrapSceneGraphnewReflectionProbeNode(lua_State* l)
 {
-	int res = pwrapSceneGraphnewReflectionProbe(l);
+	int res = pwrapSceneGraphnewReflectionProbeNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3256,8 +3256,8 @@ static int wrapSceneGraphnewReflectionProbe(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneGraph::newReflectionProxy.
-static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
+/// Pre-wrap method SceneGraph::newReflectionProxyNode.
+static inline int pwrapSceneGraphnewReflectionProxyNode(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -3290,7 +3290,7 @@ static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
 	}
 
 	// Call the method
-	ReflectionProxy* ret = newSceneNode<ReflectionProxy>(self, arg0, arg1);
+	ReflectionProxyNode* ret = newSceneNode<ReflectionProxyNode>(self, arg0, arg1);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
@@ -3301,16 +3301,16 @@ static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
 
 	voidp = lua_newuserdata(l, sizeof(LuaUserData));
 	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "ReflectionProxy");
-	ud->initPointed(205427259496779646, const_cast<ReflectionProxy*>(ret));
+	luaL_setmetatable(l, "ReflectionProxyNode");
+	ud->initPointed(2307826176097073810, const_cast<ReflectionProxyNode*>(ret));
 
 	return 1;
 }
 
-/// Wrap method SceneGraph::newReflectionProxy.
-static int wrapSceneGraphnewReflectionProxy(lua_State* l)
+/// Wrap method SceneGraph::newReflectionProxyNode.
+static int wrapSceneGraphnewReflectionProxyNode(lua_State* l)
 {
-	int res = pwrapSceneGraphnewReflectionProxy(l);
+	int res = pwrapSceneGraphnewReflectionProxyNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3442,8 +3442,8 @@ static int wrapSceneGraphnewDecalNode(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneGraph::setActiveCamera.
-static inline int pwrapSceneGraphsetActiveCamera(lua_State* l)
+/// Pre-wrap method SceneGraph::setActiveCameraNode.
+static inline int pwrapSceneGraphsetActiveCameraNode(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -3472,15 +3472,15 @@ static inline int pwrapSceneGraphsetActiveCamera(lua_State* l)
 	SceneNode* arg0(iarg0);
 
 	// Call the method
-	self->setActiveCamera(arg0);
+	self->setActiveCameraNode(arg0);
 
 	return 0;
 }
 
-/// Wrap method SceneGraph::setActiveCamera.
-static int wrapSceneGraphsetActiveCamera(lua_State* l)
+/// Wrap method SceneGraph::setActiveCameraNode.
+static int wrapSceneGraphsetActiveCameraNode(lua_State* l)
 {
-	int res = pwrapSceneGraphsetActiveCamera(l);
+	int res = pwrapSceneGraphsetActiveCameraNode(l);
 	if(res >= 0)
 	{
 		return res;
@@ -3494,19 +3494,19 @@ static int wrapSceneGraphsetActiveCamera(lua_State* l)
 static inline void wrapSceneGraph(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameSceneGraph);
-	LuaBinder::pushLuaCFuncMethod(l, "newPerspectiveCamera", wrapSceneGraphnewPerspectiveCamera);
+	LuaBinder::pushLuaCFuncMethod(l, "newPerspectiveCameraNode", wrapSceneGraphnewPerspectiveCameraNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newModelNode", wrapSceneGraphnewModelNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newPointLight", wrapSceneGraphnewPointLight);
-	LuaBinder::pushLuaCFuncMethod(l, "newSpotLight", wrapSceneGraphnewSpotLight);
+	LuaBinder::pushLuaCFuncMethod(l, "newPointLightNode", wrapSceneGraphnewPointLightNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newSpotLightNode", wrapSceneGraphnewSpotLightNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newPortal", wrapSceneGraphnewPortal);
-	LuaBinder::pushLuaCFuncMethod(l, "newSector", wrapSceneGraphnewSector);
-	LuaBinder::pushLuaCFuncMethod(l, "newParticleEmitter", wrapSceneGraphnewParticleEmitter);
-	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProbe", wrapSceneGraphnewReflectionProbe);
-	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProxy", wrapSceneGraphnewReflectionProxy);
+	LuaBinder::pushLuaCFuncMethod(l, "newPortalNode", wrapSceneGraphnewPortalNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newSectorNode", wrapSceneGraphnewSectorNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newParticleEmitterNode", wrapSceneGraphnewParticleEmitterNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProbeNode", wrapSceneGraphnewReflectionProbeNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProxyNode", wrapSceneGraphnewReflectionProxyNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newOccluderNode", wrapSceneGraphnewOccluderNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newDecalNode", wrapSceneGraphnewDecalNode);
-	LuaBinder::pushLuaCFuncMethod(l, "setActiveCamera", wrapSceneGraphsetActiveCamera);
+	LuaBinder::pushLuaCFuncMethod(l, "setActiveCameraNode", wrapSceneGraphsetActiveCameraNode);
 	lua_settop(l, 0);
 }
 
@@ -3562,15 +3562,15 @@ void wrapModuleScene(lua_State* l)
 	wrapLensFlareComponent(l);
 	wrapSceneNode(l);
 	wrapModelNode(l);
-	wrapPerspectiveCamera(l);
-	wrapPointLight(l);
-	wrapSpotLight(l);
+	wrapPerspectiveCameraNode(l);
+	wrapPointLightNode(l);
+	wrapSpotLightNode(l);
 	wrapStaticCollisionNode(l);
-	wrapPortal(l);
-	wrapSector(l);
-	wrapParticleEmitter(l);
-	wrapReflectionProbe(l);
-	wrapReflectionProxy(l);
+	wrapPortalNode(l);
+	wrapSectorNode(l);
+	wrapParticleEmitterNode(l);
+	wrapReflectionProbeNode(l);
+	wrapReflectionProxyNode(l);
 	wrapOccluderNode(l);
 	wrapDecalNode(l);
 	wrapSceneGraph(l);

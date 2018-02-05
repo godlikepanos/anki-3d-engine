@@ -5,8 +5,8 @@
 
 #include <anki/scene/PlayerNode.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/MoveComponent.h>
-#include <anki/scene/PlayerControllerComponent.h>
+#include <anki/scene/components/MoveComponent.h>
+#include <anki/scene/components/PlayerControllerComponent.h>
 #include <anki/physics/PhysicsPlayerController.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/input/Input.h>

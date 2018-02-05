@@ -463,7 +463,7 @@ void Exporter::exportLight(const aiLight& light)
 		return;
 	}
 
-	file << "\nnode = scene:new" << ((light.mType == aiLightSource_POINT) ? "Point" : "Spot") << "Light(\""
+	file << "\nnode = scene:new" << ((light.mType == aiLightSource_POINT) ? "Point" : "Spot") << "LightNode(\""
 		 << light.mName.C_Str() << "\")\n";
 
 	file << "lcomp = node:getSceneNodeBase():getLightComponent()\n";
@@ -708,7 +708,7 @@ void Exporter::exportCamera(const aiCamera& cam)
 	LOGI("Exporting camera %s", cam.mName.C_Str());
 
 	// Write the main node
-	file << "\nnode = scene:newPerspectiveCamera(\"" << cam.mName.C_Str() << "\")\n";
+	file << "\nnode = scene:newPerspectiveCameraNode(\"" << cam.mName.C_Str() << "\")\n";
 
 	file << "scene:setActiveCamera(node:getSceneNodeBase())\n";
 
@@ -1014,7 +1014,7 @@ void Exporter::exportAll()
 
 		std::string name = getMeshName(getMeshAt(meshIndex));
 		std::string fname = m_rpath + name + ".ankimesh";
-		file << "\nnode = scene:newPortal(\"" << name << i << "\", \"" << fname << "\")\n";
+		file << "\nnode = scene:newPortalNode(\"" << name << i << "\", \"" << fname << "\")\n";
 
 		writeNodeTransform("node", portal.m_transform);
 		++i;
@@ -1031,7 +1031,7 @@ void Exporter::exportAll()
 
 		std::string name = getMeshName(getMeshAt(meshIndex));
 		std::string fname = m_rpath + name + ".ankimesh";
-		file << "\nnode = scene:newSector(\"" << name << i << "\", \"" << fname << "\")\n";
+		file << "\nnode = scene:newSectorNode(\"" << name << i << "\", \"" << fname << "\")\n";
 
 		writeNodeTransform("node", sector.m_transform);
 		++i;
@@ -1044,7 +1044,7 @@ void Exporter::exportAll()
 	for(const ParticleEmitter& p : m_particleEmitters)
 	{
 		std::string name = "particles" + std::to_string(i);
-		file << "\nnode = scene:newParticleEmitter(\"" << name << "\", \"" << p.m_filename << "\")\n";
+		file << "\nnode = scene:newParticleEmitterNode(\"" << name << "\", \"" << p.m_filename << "\")\n";
 
 		writeNodeTransform("node", p.m_transform);
 		++i;
@@ -1057,7 +1057,7 @@ void Exporter::exportAll()
 	for(const ReflectionProbe& probe : m_reflectionProbes)
 	{
 		std::string name = "reflprobe" + std::to_string(i);
-		file << "\nnode = scene:newReflectionProbe(\"" << name << "\", " << probe.m_radius << ")\n";
+		file << "\nnode = scene:newReflectionProbeNode(\"" << name << "\", " << probe.m_radius << ")\n";
 
 		aiMatrix4x4 trf;
 		aiMatrix4x4::Translation(probe.m_position, trf);
@@ -1076,7 +1076,7 @@ void Exporter::exportAll()
 		exportMesh(mesh, nullptr, 4);
 
 		std::string name = "reflproxy" + std::to_string(i);
-		file << "\nnode = scene:newReflectionProxy(\"" << name << "\", \"" << m_rpath << mesh.mName.C_Str()
+		file << "\nnode = scene:newReflectionProxyNode(\"" << name << "\", \"" << m_rpath << mesh.mName.C_Str()
 			 << ".ankimesh\")\n";
 
 		writeNodeTransform("node", proxy.m_transform);

@@ -5,7 +5,7 @@ local node
 local inst
 local lcomp
 
-node = scene:newSector("sector0", "assets/sector.ankimesh")
+node = scene:newSectorNode("sector0", "assets/sector.ankimesh")
 trf = Transform.new()
 trf:setOrigin(Vec4.new(0, 0, 0, 0))
 rot = Mat3x4.new()
@@ -59,7 +59,7 @@ trf:setRotation(rot)
 trf:setScale(1)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
 
-node = scene:newPointLight("Point")
+node = scene:newPointLightNode("Point")
 lcomp = node:getSceneNodeBase():getLightComponent()
 lcomp:setDiffuseColor(Vec4.new(2, 2, 2, 1))
 lcomp:setSpecularColor(Vec4.new(2, 2, 2, 1))
@@ -73,8 +73,8 @@ trf:setScale(1)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
 lcomp:setShadowEnabled(1)
 
-node = scene:newPerspectiveCamera("Camera")
-scene:setActiveCamera(node:getSceneNodeBase())
+node = scene:newPerspectiveCameraNode("Camera")
+scene:setActiveCameraNode(node:getSceneNodeBase())
 node:setAll(1.5708, 1.0 / getMainRenderer():getAspectRatio() * 1.5708, 0.1, 100)
 trf = Transform.new()
 trf:setOrigin(Vec4.new(-0.0971127, 3.80237, 5.98675, 0))

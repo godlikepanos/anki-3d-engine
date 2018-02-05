@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/BodyNode.h>
-#include <anki/scene/BodyComponent.h>
-#include <anki/scene/MoveComponent.h>
+#include <anki/scene/components/BodyComponent.h>
+#include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/resource/ResourceManager.h>

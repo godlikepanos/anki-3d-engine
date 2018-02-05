@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/scene/SpatialComponent.h>
+#include <anki/scene/components/SpatialComponent.h>
 
 namespace anki
 {

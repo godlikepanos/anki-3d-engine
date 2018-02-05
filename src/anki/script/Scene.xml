@@ -210,7 +210,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
-		<class name="PerspectiveCamera">
+		<class name="PerspectiveCameraNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
@@ -226,7 +226,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
-		<class name="PointLight">
+		<class name="PointLightNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
@@ -240,7 +240,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
-		<class name="SpotLight">
+		<class name="SpotLightNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
@@ -256,7 +256,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
-		<class name="Portal">
+		<class name="PortalNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
@@ -264,7 +264,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
-		<class name="Sector">
+		<class name="SectorNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
@@ -272,7 +272,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
-		<class name="ParticleEmitter">
+		<class name="ParticleEmitterNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
@@ -280,7 +280,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
-		<class name="ReflectionProbe">
+		<class name="ReflectionProbeNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
@@ -288,7 +288,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
-		<class name="ReflectionProxy">
+		<class name="ReflectionProxyNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
@@ -314,12 +314,12 @@ static SceneGraph* getSceneGraph(lua_State* l)
 		</class>
 		<class name="SceneGraph">
 			<methods>
-				<method name="newPerspectiveCamera">
-					<overrideCall><![CDATA[PerspectiveCamera* ret = newSceneNode<PerspectiveCamera>(self, arg0);]]></overrideCall>
+				<method name="newPerspectiveCameraNode">
+					<overrideCall><![CDATA[PerspectiveCameraNode* ret = newSceneNode<PerspectiveCameraNode>(self, arg0);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 					</args>
-					<return>PerspectiveCamera*</return>
+					<return>PerspectiveCameraNode*</return>
 				</method>
 				<method name="newModelNode">
 					<overrideCall><![CDATA[ModelNode* ret = newSceneNode<ModelNode>(self, arg0, arg1);]]></overrideCall>
@@ -329,19 +329,19 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					</args>
 					<return>ModelNode*</return>
 				</method>
-				<method name="newPointLight">
-					<overrideCall><![CDATA[PointLight* ret = newSceneNode<PointLight>(self, arg0);]]></overrideCall>
+				<method name="newPointLightNode">
+					<overrideCall><![CDATA[PointLightNode* ret = newSceneNode<PointLightNode>(self, arg0);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 					</args>
-					<return>PointLight*</return>
+					<return>PointLightNode*</return>
 				</method>
-				<method name="newSpotLight">
-					<overrideCall><![CDATA[SpotLight* ret = newSceneNode<SpotLight>(self, arg0);]]></overrideCall>
+				<method name="newSpotLightNode">
+					<overrideCall><![CDATA[SpotLightNode* ret = newSceneNode<SpotLightNode>(self, arg0);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 					</args>
-					<return>SpotLight*</return>
+					<return>SpotLightNode*</return>
 				</method>
 				<method name="newStaticCollisionNode">
 					<overrideCall><![CDATA[StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0, arg1, arg2);]]></overrideCall>
@@ -352,45 +352,45 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					</args>
 					<return>StaticCollisionNode*</return>
 				</method>
-				<method name="newPortal">
-					<overrideCall><![CDATA[Portal* ret = newSceneNode<Portal>(self, arg0, arg1);]]></overrideCall>
+				<method name="newPortalNode">
+					<overrideCall><![CDATA[PortalNode* ret = newSceneNode<PortalNode>(self, arg0, arg1);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 						<arg>const CString&amp;</arg>
 					</args>
-					<return>Portal*</return>
+					<return>PortalNode*</return>
 				</method>
-				<method name="newSector">
-					<overrideCall><![CDATA[Sector* ret = newSceneNode<Sector>(self, arg0, arg1);]]></overrideCall>
+				<method name="newSectorNode">
+					<overrideCall><![CDATA[SectorNode* ret = newSceneNode<SectorNode>(self, arg0, arg1);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 						<arg>const CString&amp;</arg>
 					</args>
-					<return>Sector*</return>
+					<return>SectorNode*</return>
 				</method>
-				<method name="newParticleEmitter">
-					<overrideCall><![CDATA[ParticleEmitter* ret = newSceneNode<ParticleEmitter>(self, arg0, arg1);]]></overrideCall>
+				<method name="newParticleEmitterNode">
+					<overrideCall><![CDATA[ParticleEmitterNode* ret = newSceneNode<ParticleEmitterNode>(self, arg0, arg1);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 						<arg>const CString&amp;</arg>
 					</args>
-					<return>ParticleEmitter*</return>
+					<return>ParticleEmitterNode*</return>
 				</method>
-				<method name="newReflectionProbe">
-					<overrideCall><![CDATA[ReflectionProbe* ret = newSceneNode<ReflectionProbe>(self, arg0, arg1);]]></overrideCall>
+				<method name="newReflectionProbeNode">
+					<overrideCall><![CDATA[ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0, arg1);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 						<arg>F32</arg>
 					</args>
-					<return>ReflectionProbe*</return>
+					<return>ReflectionProbeNode*</return>
 				</method>
-				<method name="newReflectionProxy">
-					<overrideCall><![CDATA[ReflectionProxy* ret = newSceneNode<ReflectionProxy>(self, arg0, arg1);]]></overrideCall>
+				<method name="newReflectionProxyNode">
+					<overrideCall><![CDATA[ReflectionProxyNode* ret = newSceneNode<ReflectionProxyNode>(self, arg0, arg1);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 						<arg>const CString&amp;</arg>
 					</args>
-					<return>ReflectionProxy*</return>
+					<return>ReflectionProxyNode*</return>
 				</method>
 				<method name="newOccluderNode">
 					<overrideCall><![CDATA[OccluderNode* ret = newSceneNode<OccluderNode>(self, arg0, arg1);]]></overrideCall>
@@ -407,7 +407,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					</args>
 					<return>DecalNode*</return>
 				</method>
-				<method name="setActiveCamera">
+				<method name="setActiveCameraNode">
 					<args>
 						<arg>SceneNode*</arg>
 					</args>

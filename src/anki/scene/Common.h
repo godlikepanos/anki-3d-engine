@@ -7,6 +7,7 @@
 
 #include <anki/util/Allocator.h>
 #include <anki/util/String.h>
+#include <anki/scene/Forward.h>
 
 namespace anki
 {

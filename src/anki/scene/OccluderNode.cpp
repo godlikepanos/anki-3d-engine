@@ -5,8 +5,8 @@
 
 #include <anki/scene/OccluderNode.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/MoveComponent.h>
-#include <anki/scene/OccluderComponent.h>
+#include <anki/scene/components/MoveComponent.h>
+#include <anki/scene/components/OccluderComponent.h>
 #include <anki/resource/MeshLoader.h>
 
 namespace anki

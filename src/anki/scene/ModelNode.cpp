@@ -5,8 +5,8 @@
 
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/BodyComponent.h>
-#include <anki/scene/SkinComponent.h>
+#include <anki/scene/components/BodyComponent.h>
+#include <anki/scene/components/SkinComponent.h>
 #include <anki/scene/Misc.h>
 #include <anki/resource/Model.h>
 #include <anki/resource/ResourceManager.h>

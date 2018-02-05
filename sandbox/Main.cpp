@@ -70,7 +70,7 @@ Error MyApp::init(int argc, char* argv[])
 
 #if PLAYER
 	SceneGraph& scene = getSceneGraph();
-	SceneNode& cam = scene.getActiveCamera();
+	SceneNode& cam = scene.getActiveCameraNode();
 
 	PlayerNode* pnode;
 	ANKI_CHECK(scene.newSceneNode<PlayerNode>(
@@ -104,11 +104,11 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 
 	// move the camera
-	static MoveComponent* mover = &scene.getActiveCamera().getComponent<MoveComponent>();
+	static MoveComponent* mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
 
 	if(in.getKey(KeyCode::_1))
 	{
-		mover = scene.getActiveCamera().tryGetComponent<MoveComponent>();
+		mover = scene.getActiveCameraNode().tryGetComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_2))
 	{

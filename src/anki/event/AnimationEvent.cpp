@@ -6,7 +6,7 @@
 #include <anki/event/AnimationEvent.h>
 #include <anki/resource/Animation.h>
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/MoveComponent.h>
+#include <anki/scene/components/MoveComponent.h>
 #include <anki/resource/ResourceManager.h>
 
 namespace anki

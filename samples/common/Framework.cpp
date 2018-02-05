@@ -57,11 +57,11 @@ Error SampleApp::userMainLoop(Bool& quit)
 	}
 
 	// move the camera
-	static MoveComponent* mover = &scene.getActiveCamera().getComponent<MoveComponent>();
+	static MoveComponent* mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
 
 	if(in.getKey(KeyCode::_1) == 1)
 	{
-		mover = &scene.getActiveCamera().getComponent<MoveComponent>();
+		mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
 	}
 
 	if(in.getKey(KeyCode::F1) == 1)

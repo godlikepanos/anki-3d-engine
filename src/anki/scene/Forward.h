@@ -9,6 +9,7 @@ namespace anki
 {
 
 // Components
+class SceneComponent;
 class FrustumComponent;
 class InstanceComponent;
 class MoveComponent;
@@ -18,17 +19,18 @@ class DecalComponent;
 class PortalComponent;
 class SectorComponent;
 class ReflectionProxyComponent;
+class ReflectionProbeComponent;
 
 // Nodes
 class SceneNode;
-class Light;
-class PointLight;
-class SpotLight;
-class Camera;
-class Path;
+class LightNode;
+class PointLightNode;
+class SpotLightNode;
+class CameraNode;
+class SectorNode;
+class PortalNode;
 
 // Other
 class SceneGraph;
-class Sector;
 
 } // end namespace anki

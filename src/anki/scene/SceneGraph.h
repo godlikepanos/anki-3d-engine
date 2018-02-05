@@ -22,11 +22,11 @@ namespace anki
 // Forward
 class MainRenderer;
 class ResourceManager;
-class Camera;
+class CameraNode;
 class Input;
 class SectorGroup;
 class ConfigSet;
-class PerspectiveCamera;
+class PerspectiveCameraNode;
 class UpdateSceneNodesCtx;
 
 /// @addtogroup scene
@@ -70,21 +70,21 @@ public:
 		return m_frameAlloc;
 	}
 
-	SceneNode& getActiveCamera()
+	SceneNode& getActiveCameraNode()
 	{
 		ANKI_ASSERT(m_mainCam != nullptr);
 		return *m_mainCam;
 	}
-	const SceneNode& getActiveCamera() const
+	const SceneNode& getActiveCameraNode() const
 	{
 		return *m_mainCam;
 	}
-	void setActiveCamera(SceneNode* cam)
+	void setActiveCameraNode(SceneNode* cam)
 	{
 		m_mainCam = cam;
 		m_activeCameraChangeTimestamp = getGlobalTimestamp();
 	}
-	Timestamp getActiveCameraChangeTimestamp() const
+	Timestamp getActiveCameraNodeChangeTimestamp() const
 	{
 		return m_activeCameraChangeTimestamp;
 	}
@@ -238,7 +238,7 @@ private:
 
 	SceneNode* m_mainCam = nullptr;
 	Timestamp m_activeCameraChangeTimestamp = 0;
-	PerspectiveCamera* m_defaultMainCam = nullptr;
+	PerspectiveCameraNode* m_defaultMainCam = nullptr;
 
 	EventManager m_events;
 	SectorGroup* m_sectors;
