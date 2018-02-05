@@ -9,13 +9,6 @@
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/util/BitSet.h>
-#include <iosfwd>
-
-// Forward
-namespace spirv_cross
-{
-struct SpecializationConstant;
-} // end namespace spirv_cross
 
 namespace anki
 {
@@ -52,7 +45,9 @@ public:
 private:
 	VkSpecializationInfo m_specConstInfo = {};
 
-	void doReflection(ConstWeakArray<U8> spirv, std::vector<spirv_cross::SpecializationConstant>& specConstIds);
+	class SpecConstsVector; ///< Wrap this into a class to avoid forward declarations of std::vector and spirv_cross.
+
+	void doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specConstIds);
 };
 /// @}
 

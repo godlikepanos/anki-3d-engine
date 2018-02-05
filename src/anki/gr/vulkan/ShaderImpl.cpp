@@ -18,6 +18,12 @@
 namespace anki
 {
 
+class ShaderImpl::SpecConstsVector
+{
+public:
+	std::vector<spirv_cross::SpecializationConstant> m_vec;
+};
+
 ShaderImpl::~ShaderImpl()
 {
 	for(auto& x : m_bindings)
@@ -78,13 +84,13 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 	ANKI_VK_CHECK(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
 
 	// Get reflection info
-	std::vector<spirv_cross::SpecializationConstant> specConstIds;
+	SpecConstsVector specConstIds;
 	doReflection(inf.m_binary, specConstIds);
 
 	// Set spec info
-	if(specConstIds.size())
+	if(specConstIds.m_vec.size())
 	{
-		const U constCount = specConstIds.size();
+		const U constCount = specConstIds.m_vec.size();
 
 		m_specConstInfo.mapEntryCount = constCount;
 		m_specConstInfo.pMapEntries = getAllocator().newArray<VkSpecializationMapEntry>(constCount);
@@ -92,7 +98,7 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 		m_specConstInfo.pData = getAllocator().newArray<I32>(constCount);
 
 		U count = 0;
-		for(const spirv_cross::SpecializationConstant& sconst : specConstIds)
+		for(const spirv_cross::SpecializationConstant& sconst : specConstIds.m_vec)
 		{
 			// Set the entry
 			VkSpecializationMapEntry& entry = const_cast<VkSpecializationMapEntry&>(m_specConstInfo.pMapEntries[count]);
@@ -112,7 +118,7 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 	return Error::NONE;
 }
 
-void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, std::vector<spirv_cross::SpecializationConstant>& specConstIds)
+void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specConstIds)
 {
 	spirv_cross::Compiler spvc(reinterpret_cast<const uint32_t*>(&spirv[0]), spirv.getSize() / sizeof(unsigned int));
 	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
@@ -185,7 +191,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, std::vector<spirv_cross:
 	}
 
 	// Spec consts
-	specConstIds = spvc.get_specialization_constants();
+	specConstIds.m_vec = spvc.get_specialization_constants();
 }
 
 } // end namespace anki
