@@ -8,6 +8,7 @@
 #include <anki/renderer/Common.h>
 #include <anki/core/Timestamp.h>
 #include <anki/resource/RenderingKey.h>
+#include <anki/ui/Canvas.h>
 
 namespace anki
 {
@@ -158,6 +159,19 @@ public:
 
 static_assert(std::is_trivially_destructible<DecalQueueElement>::value == true, "Should be trivially destructible");
 
+/// Draw callback for drawing.
+using UiQueueDrawCallback = void (*)(CanvasPtr& canvas, void* userData);
+
+/// UI element render queue element.
+class UiQueueElement final
+{
+public:
+	void* m_userData;
+	UiQueueDrawCallback m_drawCallback;
+};
+
+static_assert(std::is_trivially_destructible<UiQueueElement>::value == true, "Should be trivially destructible");
+
 /// The render queue. This is what the renderer is fed to render.
 class RenderQueue : public RenderingMatrices
 {
@@ -172,6 +186,7 @@ public:
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
 	WeakArray<DecalQueueElement> m_decals;
+	WeakArray<UiQueueElement> m_uis;
 
 	/// Applies only if the RenderQueue holds shadow casters. It's the timesamp that modified
 	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;

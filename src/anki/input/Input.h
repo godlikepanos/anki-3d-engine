@@ -63,6 +63,11 @@ public:
 		return m_mousePosNdc;
 	}
 
+	const UVec2& getWindowMousePosition() const
+	{
+		return m_mousePosWin;
+	}
+
 	/// Get the times an event was triggered and resets the counter
 	U getEvent(InputEvent eventId) const
 	{
@@ -112,6 +117,7 @@ private:
 	/// @}
 
 	Vec2 m_mousePosNdc = Vec2(2.0); ///< The coords are in the NDC space
+	UVec2 m_mousePosWin = UVec2(0u);
 
 	Array<U8, static_cast<U>(InputEvent::COUNT)> m_events;
 

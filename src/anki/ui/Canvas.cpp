@@ -24,9 +24,10 @@ Canvas::~Canvas()
 	nk_buffer_free(&m_nkCmdsBuff);
 }
 
-Error Canvas::init(FontPtr font, U32 fontHeight)
+Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 {
 	m_font = font;
+	resize(width, height);
 
 	nk_allocator alloc = makeNkAllocator(&getAllocator().getMemoryPool());
 	if(!nk_init(&m_nkCtx, &alloc, &m_font->getFont(fontHeight)))
@@ -77,7 +78,7 @@ void Canvas::handleInput()
 	const Input& in = m_manager->getInput();
 	nk_input_begin(&m_nkCtx);
 
-	Array<U32, 4> viewport = {{0, 0, 1920, 1080}}; // TODO
+	Array<U32, 4> viewport = {{0, 0, m_width, m_height}};
 
 	// Handle mouse
 	Vec2 mousePosf = in.getMousePosition() / 2.0f + 0.5f;
@@ -117,7 +118,7 @@ void Canvas::pushFont(FontPtr font, U32 fontHeight)
 
 void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 {
-	Array<U32, 4> viewport = {{0, 0, 1920, 1080}}; // TODO
+	Array<U32, 4> viewport = {{0, 0, m_width, m_height}};
 
 	//
 	// Allocate vertex data

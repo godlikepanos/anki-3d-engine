@@ -13,6 +13,7 @@
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/DownscaleBlur.h>
+#include <anki/renderer/UiStage.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
 
@@ -103,7 +104,7 @@ Error FinalComposite::loadColorGradingTexture(CString filename)
 	return Error::NONE;
 }
 
-void FinalComposite::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -144,6 +145,9 @@ void FinalComposite::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
 	drawQuad(cmdb);
+
+	// Draw UI
+	m_r->getUiStage().draw(ctx, cmdb);
 }
 
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)

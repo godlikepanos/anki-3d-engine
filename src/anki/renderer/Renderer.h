@@ -22,6 +22,7 @@ namespace anki
 class ConfigSet;
 class ResourceManager;
 class StagingGpuMemoryManager;
+class UiManager;
 
 /// @addtogroup renderer
 /// @{
@@ -63,6 +64,12 @@ public:
 	Renderer();
 
 	~Renderer();
+
+	UiManager& getUiManager()
+	{
+		ANKI_ASSERT(m_ui);
+		return *m_ui;
+	}
 
 	Indirect& getIndirect()
 	{
@@ -149,6 +156,11 @@ public:
 		return *m_refl;
 	}
 
+	UiStage& getUiStage()
+	{
+		return *m_uiStage;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;
@@ -169,6 +181,7 @@ public:
 		ResourceManager* resources,
 		GrManager* gr,
 		StagingGpuMemoryManager* stagingMem,
+		UiManager* ui,
 		HeapAllocator<U8> alloc,
 		StackAllocator<U8> frameAlloc,
 		const ConfigSet& config,
@@ -325,6 +338,7 @@ private:
 	ResourceManager* m_resources = nullptr;
 	GrManager* m_gr = nullptr;
 	StagingGpuMemoryManager* m_stagingMem = nullptr;
+	UiManager* m_ui = nullptr;
 	Timestamp* m_globTimestamp;
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_frameAlloc;
@@ -347,6 +361,7 @@ private:
 	UniquePtr<Bloom> m_bloom;
 	UniquePtr<FinalComposite> m_finalComposite; ///< Postprocessing rendering stage
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
+	UniquePtr<UiStage> m_uiStage;
 	/// @}
 
 	U32 m_width;

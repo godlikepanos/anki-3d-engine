@@ -60,7 +60,7 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 	/// A RenderPassWorkCallback for the composite pass.
 	static void runCallback(RenderPassWorkContext& rgraphCtx)

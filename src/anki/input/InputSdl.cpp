@@ -351,6 +351,8 @@ Error Input::handleEvents()
 			break;
 		}
 		case SDL_MOUSEMOTION:
+			m_mousePosWin.x() = event.button.x;
+			m_mousePosWin.y() = event.button.y;
 			m_mousePosNdc.x() = (F32)event.button.x / m_nativeWindow->getWidth() * 2.0 - 1.0;
 			m_mousePosNdc.y() = -((F32)event.button.y / m_nativeWindow->getHeight() * 2.0 - 1.0);
 			break;

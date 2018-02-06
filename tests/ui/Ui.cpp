@@ -33,7 +33,7 @@ public:
 
 		if(nk_begin(ctx,
 			   "Window name",
-			   nk_rect(10, 10, 200, 800),
+			   nk_rect(10, 10, 200, 500),
 			   NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE))
 		{
 			nk_layout_row_dynamic(ctx, 30, 1);
@@ -57,6 +57,8 @@ ANKI_TEST(Ui, Ui)
 	initConfig(cfg);
 	cfg.set("window.vsync", 1);
 	cfg.set("window.debugContext", 0);
+	cfg.set("width", 1024);
+	cfg.set("height", 760);
 
 	NativeWindow* win = createWindow(cfg);
 	Input* in = new Input();
@@ -80,21 +82,25 @@ ANKI_TEST(Ui, Ui)
 			ui->newInstance(font, "engine_data/UbuntuRegular.ttf", std::initializer_list<U32>{10, 20, 30, 60}));
 
 		CanvasPtr canvas;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 30));
+		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 30, win->getWidth(), win->getHeight()));
 
 		IntrusivePtr<Label> label;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));
 
 		FramebufferPtr fb = createDefaultFb(*gr);
 
-		U iterations = 300;
-		while(iterations--)
+		Bool done = false;
+		while(!done)
 		{
 			ANKI_TEST_EXPECT_NO_ERR(in->handleEvents());
 			HighRezTimer timer;
 			timer.start();
 
 			canvas->handleInput();
+			if(in->getKey(KeyCode::ESCAPE))
+			{
+				done = true;
+			}
 
 			canvas->beginBuilding();
 			label->build(canvas);

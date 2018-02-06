@@ -13,7 +13,8 @@ void Input::reset()
 {
 	std::memset(&m_keys[0], 0, sizeof(m_keys));
 	std::memset(&m_mouseBtns[0], 0, sizeof(m_mouseBtns));
-	m_mousePosNdc = Vec2(0.0);
+	m_mousePosNdc = Vec2(-1.0f);
+	m_mousePosWin = UVec2(0u);
 	std::memset(&m_events[0], 0, sizeof(m_events));
 }
 

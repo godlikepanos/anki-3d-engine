@@ -34,6 +34,7 @@ Error MainRenderer::init(ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gr,
 	StagingGpuMemoryManager* stagingMem,
+	UiManager* ui,
 	AllocAlignedCallback allocCb,
 	void* allocCbUserData,
 	const ConfigSet& config,
@@ -58,7 +59,7 @@ Error MainRenderer::init(ThreadPool* threadpool,
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
 	ANKI_CHECK(m_r->init(
-		threadpool, resources, gr, stagingMem, m_alloc, m_frameAlloc, config2, globTimestamp, m_rDrawToDefaultFb));
+		threadpool, resources, gr, stagingMem, ui, m_alloc, m_frameAlloc, config2, globTimestamp, m_rDrawToDefaultFb));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)

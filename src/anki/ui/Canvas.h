@@ -23,9 +23,9 @@ public:
 
 	virtual ~Canvas();
 
-	ANKI_USE_RESULT Error init(FontPtr font, U32 fontHeight);
+	ANKI_USE_RESULT Error init(FontPtr font, U32 fontHeight, U32 width, U32 height);
 
-	FontPtr getDefaultFont() const
+	const FontPtr& getDefaultFont() const
 	{
 		return m_font;
 	}
@@ -37,6 +37,14 @@ public:
 
 	/// Handle input.
 	virtual void handleInput();
+
+	/// Resize canvas.
+	void resize(U32 width, U32 height)
+	{
+		ANKI_ASSERT(width > 0 && height > 0);
+		m_width = width;
+		m_height = height;
+	}
 
 	/// @name building commands
 	/// @{
@@ -62,6 +70,8 @@ private:
 	FontPtr m_font;
 	nk_context m_nkCtx = {};
 	nk_buffer m_nkCmdsBuff = {};
+	U32 m_width;
+	U32 m_height;
 
 	enum SHADER_TYPE
 	{

@@ -24,6 +24,7 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/TemporalAA.h>
 #include <anki/renderer/Reflections.h>
+#include <anki/renderer/UiStage.h>
 
 namespace anki
 {
@@ -41,6 +42,7 @@ Error Renderer::init(ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gl,
 	StagingGpuMemoryManager* stagingMem,
+	UiManager* ui,
 	HeapAllocator<U8> alloc,
 	StackAllocator<U8> frameAlloc,
 	const ConfigSet& config,
@@ -54,6 +56,7 @@ Error Renderer::init(ThreadPool* threadpool,
 	m_resources = resources;
 	m_gr = gl;
 	m_stagingMem = stagingMem;
+	m_ui = ui;
 	m_alloc = alloc;
 	m_frameAlloc = frameAlloc;
 	m_willDrawToDefaultFbo = willDrawToDefaultFbo;
@@ -153,6 +156,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_dbg.reset(m_alloc.newInstance<Dbg>(this));
 	ANKI_CHECK(m_dbg->init(config));
+
+	m_uiStage.reset(m_alloc.newInstance<UiStage>(this));
+	ANKI_CHECK(m_uiStage->init(config));
 
 	SamplerInitInfo sinit("Renderer");
 	sinit.m_repeat = false;

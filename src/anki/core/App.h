@@ -35,6 +35,7 @@ class ScriptManager;
 class ResourceManager;
 class ResourceFilesystem;
 class StagingGpuMemoryManager;
+class UiManager;
 
 /// The core class of the engine.
 class App
@@ -154,6 +155,7 @@ private:
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
 	ResourceManager* m_resources = nullptr;
+	UiManager* m_ui = nullptr;
 	MainRenderer* m_renderer = nullptr;
 	SceneGraph* m_scene = nullptr;
 	ScriptManager* m_script = nullptr;

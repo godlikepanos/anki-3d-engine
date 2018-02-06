@@ -17,6 +17,7 @@ class ResourceManager;
 class ConfigSet;
 class ThreadPool;
 class StagingGpuMemoryManager;
+class UiManager;
 
 /// @addtogroup renderer
 /// @{
@@ -33,6 +34,7 @@ public:
 		ResourceManager* resources,
 		GrManager* gl,
 		StagingGpuMemoryManager* stagingMem,
+		UiManager* ui,
 		AllocAlignedCallback allocCb,
 		void* allocCbUserData,
 		const ConfigSet& config,

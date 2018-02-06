@@ -35,6 +35,7 @@ class Volumetric;
 class DepthDownscale;
 class TemporalAA;
 class Reflections;
+class UiStage;
 
 class RenderingContext;
 class DebugDrawer;

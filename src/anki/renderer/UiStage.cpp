@@ -1,0 +1,53 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include <anki/renderer/UiStage.h>
+#include <anki/renderer/Renderer.h>
+#include <anki/renderer/RenderQueue.h>
+#include <anki/ui/Font.h>
+#include <anki/ui/UiManager.h>
+
+namespace anki
+{
+
+UiStage::UiStage(Renderer* r)
+	: RendererObject(r)
+{
+}
+
+UiStage::~UiStage()
+{
+}
+
+Error UiStage::init(const ConfigSet&)
+{
+	ANKI_CHECK(
+		m_r->getUiManager().newInstance(m_font, "engine_data/UbuntuRegular.ttf", std::initializer_list<U32>{12}));
+	ANKI_CHECK(m_r->getUiManager().newInstance(m_canvas, m_font, 12, m_r->getWidth(), m_r->getHeight()));
+
+	return Error::NONE;
+}
+
+void UiStage::draw(RenderingContext& ctx, CommandBufferPtr& cmdb)
+{
+	// Early exit
+	if(ctx.m_renderQueue->m_uis.getSize() == 0)
+	{
+		return;
+	}
+
+	m_canvas->handleInput();
+	m_canvas->beginBuilding();
+
+	for(UiQueueElement& el : ctx.m_renderQueue->m_uis)
+	{
+		el.m_drawCallback(m_canvas, el.m_userData);
+	}
+
+	m_canvas->endBuilding();
+	m_canvas->appendToCommandBuffer(cmdb);
+}
+
+} // end namespace anki

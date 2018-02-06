@@ -23,6 +23,7 @@
 #include <anki/resource/ResourceFilesystem.h>
 #include <anki/resource/AsyncLoader.h>
 #include <anki/core/StagingGpuMemoryManager.h>
+#include <anki/ui/UiManager.h>
 
 #if ANKI_OS == ANKI_OS_ANDROID
 #include <android_native_app_glue.h>
@@ -63,6 +64,12 @@ void App::cleanup()
 	{
 		m_heapAlloc.deleteInstance(m_renderer);
 		m_renderer = nullptr;
+	}
+
+	if(m_ui)
+	{
+		m_heapAlloc.deleteInstance(m_ui);
+		m_ui = nullptr;
 	}
 
 	if(m_resources)
@@ -269,6 +276,12 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	ANKI_CHECK(m_resources->init(rinit));
 
 	//
+	// UI
+	//
+	m_ui = m_heapAlloc.newInstance<UiManager>();
+	ANKI_CHECK(m_ui->init(m_heapAlloc, m_resources, m_gr, m_stagingMem, m_input));
+
+	//
 	// Renderer
 	//
 	if(nwinit.m_fullscreenDesktopRez)
@@ -280,7 +293,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
 
 	ANKI_CHECK(m_renderer->init(
-		m_threadpool, m_resources, m_gr, m_stagingMem, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
+		m_threadpool, m_resources, m_gr, m_stagingMem, m_ui, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
 
 	//
 	// Scene
