@@ -63,6 +63,15 @@ public:
 	}
 
 	/// Create a new UI object.
+	template<typename T, typename Y, typename... Args>
+	ANKI_USE_RESULT Error newInstance(IntrusivePtr<Y>& ptr, Args&&... args)
+	{
+		T* p = m_alloc.newInstance<T>(this);
+		ptr.reset(static_cast<Y*>(p));
+		return p->init(args...);
+	}
+
+	/// Create a new UI object.
 	template<typename T, typename... Args>
 	ANKI_USE_RESULT Error newInstance(IntrusivePtr<T>& ptr, Args&&... args)
 	{

@@ -10,6 +10,7 @@
 #include <anki/util/String.h>
 #include <anki/util/Ptr.h>
 #include <anki/core/Timestamp.h>
+#include <anki/ui/UiImmediateModeBuilder.h>
 #if ANKI_OS == ANKI_OS_ANDROID
 #include <android_native_app_glue.h>
 #endif
@@ -36,6 +37,8 @@ class ResourceManager;
 class ResourceFilesystem;
 class StagingGpuMemoryManager;
 class UiManager;
+class UiQueueElement;
+class RenderQueue;
 
 /// The core class of the engine.
 class App
@@ -141,7 +144,19 @@ public:
 		return m_heapAlloc;
 	}
 
+	void setDisplayStats(Bool enable)
+	{
+		m_displayStats = enable;
+	}
+
+	Bool getDisplayStats() const
+	{
+		return m_displayStats;
+	}
+
 private:
+	class StatsUi;
+
 	// Allocation
 	AllocAlignedCallback m_allocCb;
 	void* m_allocCbData;
@@ -161,6 +176,8 @@ private:
 	ScriptManager* m_script = nullptr;
 
 	// Misc
+	UiImmediateModeBuilderPtr m_statsUi;
+	Bool8 m_displayStats = false;
 	Timestamp m_globalTimestamp = 1;
 	ThreadPool* m_threadpool = nullptr;
 	ThreadHive* m_threadHive = nullptr;
@@ -173,6 +190,9 @@ private:
 
 	ANKI_USE_RESULT Error initDirs(const ConfigSet& cfg);
 	void cleanup();
+
+	/// Inject a new UI element in the render queue for displaying stats.
+	void injectStatsUiElement(DynamicArrayAuto<UiQueueElement>& elements, RenderQueue& rqueue);
 };
 
 } // end namespace anki

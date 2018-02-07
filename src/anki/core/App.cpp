@@ -37,6 +37,53 @@ namespace anki
 android_app* gAndroidApp = nullptr;
 #endif
 
+class App::StatsUi : public UiImmediateModeBuilder
+{
+public:
+	Second m_frameTime = 0.0;
+	Second m_totalFrameTime = 0.0;
+	Second m_avgFrameTime = 0.0;
+	U32 m_bufferedFrames = 0;
+
+	StatsUi(UiManager* ui)
+		: UiImmediateModeBuilder(ui)
+	{
+	}
+
+	void build(CanvasPtr canvas)
+	{
+		nk_context* ctx = &canvas->getNkContext();
+
+		nk_style_push_style_item(
+			ctx, &ctx->style.window.fixed_background, nk_style_item_color(nk_rgba(255, 255, 255, 0)));
+
+		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 100, 200), 0))
+		{
+			nk_layout_row_dynamic(ctx, 30, 1);
+
+			// Frametime
+			const U32 BUFFERED_FRAMES = 16;
+			m_totalFrameTime += m_frameTime;
+			++m_bufferedFrames;
+
+			if(m_bufferedFrames == BUFFERED_FRAMES)
+			{
+				m_avgFrameTime = m_totalFrameTime / BUFFERED_FRAMES;
+				m_bufferedFrames = 0;
+				m_totalFrameTime = 0.0;
+			}
+
+			StringAuto timestamp(getAllocator());
+			timestamp.sprintf("Frametime: %f", m_avgFrameTime * 1000.0);
+			nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
+		}
+
+		nk_style_pop_style_item(ctx);
+
+		nk_end(ctx);
+	}
+};
+
 App::App()
 {
 }
@@ -68,6 +115,8 @@ void App::cleanup()
 
 	if(m_ui)
 	{
+		m_statsUi.reset(nullptr);
+
 		m_heapAlloc.deleteInstance(m_ui);
 		m_ui = nullptr;
 	}
@@ -281,6 +330,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_ui = m_heapAlloc.newInstance<UiManager>();
 	ANKI_CHECK(m_ui->init(m_heapAlloc, m_resources, m_gr, m_stagingMem, m_input));
 
+	ANKI_CHECK(m_ui->newInstance<StatsUi>(m_statsUi));
+
 	//
 	// Renderer
 	//
@@ -392,8 +443,7 @@ Error App::mainLoop()
 	while(!quit)
 	{
 		ANKI_TRACE_START_FRAME();
-		HighRezTimer timer;
-		timer.start();
+		const Second startTime = HighRezTimer::getCurrentTime();
 
 		prevUpdateTime = crntTime;
 		crntTime = HighRezTimer::getCurrentTime();
@@ -411,6 +461,11 @@ Error App::mainLoop()
 		RenderQueue rqueue;
 		m_scene->doVisibilityTests(rqueue);
 
+		// Inject stats UI
+		DynamicArrayAuto<UiQueueElement> newUiElementArr(m_heapAlloc);
+		injectStatsUiElement(newUiElementArr, rqueue);
+
+		// Render
 		ANKI_CHECK(m_renderer->render(rqueue));
 
 		// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
@@ -428,11 +483,13 @@ Error App::mainLoop()
 		m_resources->getAsyncLoader().resume();
 
 		// Sleep
-		timer.stop();
-		if(timer.getElapsedTime() < m_timerTick)
+		const Second endTime = HighRezTimer::getCurrentTime();
+		const Second frameTime = endTime - startTime;
+		static_cast<StatsUi&>(*m_statsUi).m_frameTime = frameTime;
+		if(frameTime < m_timerTick)
 		{
 			ANKI_TRACE_SCOPED_EVENT(TIMER_TICK_SLEEP);
-			HighRezTimer::sleep(m_timerTick - timer.getElapsedTime());
+			HighRezTimer::sleep(m_timerTick - frameTime);
 		}
 
 		++m_globalTimestamp;
@@ -441,6 +498,26 @@ Error App::mainLoop()
 	}
 
 	return Error::NONE;
+}
+
+void App::injectStatsUiElement(DynamicArrayAuto<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
+{
+	if(m_displayStats)
+	{
+		U count = rqueue.m_uis.getSize();
+		newUiElementArr.create(count + 1u);
+
+		if(count)
+		{
+			memcpy(&newUiElementArr[0], &rqueue.m_uis[0], rqueue.m_uis.getSizeInBytes());
+		}
+
+		newUiElementArr[count].m_userData = m_statsUi.get();
+		newUiElementArr[count].m_drawCallback = [](
+			CanvasPtr& canvas, void* userData) -> void { static_cast<StatsUi*>(userData)->build(canvas); };
+
+		rqueue.m_uis = newUiElementArr;
+	}
 }
 
 } // end namespace anki
