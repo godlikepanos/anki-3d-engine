@@ -8,6 +8,7 @@
 #include <anki/renderer/Common.h>
 #include <anki/resource/Forward.h>
 #include <anki/core/Timestamp.h>
+#include <anki/renderer/Renderer.h>
 
 namespace anki
 {
@@ -21,6 +22,13 @@ class UiManager;
 
 /// @addtogroup renderer
 /// @{
+
+/// MainRenderer statistics.
+class MainRendererStats : public RendererStats
+{
+public:
+	Second m_renderingTime ANKI_DBG_NULLIFY;
+};
 
 /// Main onscreen renderer
 class MainRenderer
@@ -56,6 +64,11 @@ public:
 		return *m_r;
 	}
 
+	const MainRendererStats& getStats() const
+	{
+		return m_stats;
+	}
+
 private:
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_frameAlloc;
@@ -72,6 +85,8 @@ private:
 	F32 m_renderingQuality = 1.0;
 
 	RenderGraphPtr m_rgraph;
+
+	MainRendererStats m_stats;
 
 	void runBlit(RenderPassWorkContext& rgraphCtx);
 

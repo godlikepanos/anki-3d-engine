@@ -192,6 +192,8 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_SCOPED_EVENT(SCENE_UPDATE);
 
+	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
+
 	m_timestamp = *m_globalTimestamp;
 
 	// Reset the framepool
@@ -233,12 +235,15 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 	ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
 
+	m_stats.m_updateTime = HighRezTimer::getCurrentTime() - m_stats.m_updateTime;
 	return Error::NONE;
 }
 
 void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
 {
+	m_stats.m_visibilityTestsTime = HighRezTimer::getCurrentTime();
 	anki::doVisibilityTests(*m_mainCam, *this, rqueue);
+	m_stats.m_visibilityTestsTime = HighRezTimer::getCurrentTime() - m_stats.m_visibilityTestsTime;
 }
 
 Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)

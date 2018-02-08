@@ -56,6 +56,14 @@ public:
 	}
 };
 
+/// Renderer statistics.
+class RendererStats
+{
+public:
+	U32 m_drawcallCount ANKI_DBG_NULLIFY;
+	Second m_lightBinTime ANKI_DBG_NULLIFY;
+};
+
 /// Offscreen renderer. It is a class and not a namespace because we may need external renderers for security cameras
 /// for example
 class Renderer
@@ -64,12 +72,6 @@ public:
 	Renderer();
 
 	~Renderer();
-
-	UiManager& getUiManager()
-	{
-		ANKI_ASSERT(m_ui);
-		return *m_ui;
-	}
 
 	Indirect& getIndirect()
 	{
@@ -193,6 +195,11 @@ public:
 
 	void finalize(const RenderingContext& ctx);
 
+	const RendererStats& getStats() const
+	{
+		return m_stats;
+	}
+
 anki_internal:
 	U64 getFrameCount() const
 	{
@@ -207,6 +214,12 @@ anki_internal:
 	RenderableDrawer& getSceneDrawer()
 	{
 		return m_sceneDrawer;
+	}
+
+	UiManager& getUiManager()
+	{
+		ANKI_ASSERT(m_ui);
+		return *m_ui;
 	}
 
 	Bool getTessellationEnabled() const
@@ -392,6 +405,8 @@ private:
 	SamplerPtr m_nearestSampler;
 	SamplerPtr m_linearSampler;
 	SamplerPtr m_trilinearRepeatSampler;
+
+	RendererStats m_stats;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

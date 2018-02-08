@@ -40,9 +40,41 @@ android_app* gAndroidApp = nullptr;
 class App::StatsUi : public UiImmediateModeBuilder
 {
 public:
-	Second m_frameTime = 0.0;
-	Second m_totalFrameTime = 0.0;
-	Second m_avgFrameTime = 0.0;
+	template<typename T>
+	class BufferedValue
+	{
+	public:
+		void set(T x)
+		{
+			m_total += x;
+			++m_count;
+		}
+
+		F64 get(Bool flush)
+		{
+			if(flush)
+			{
+				m_avg = F64(m_total) / m_count;
+				m_count = 0;
+				m_total = 0.0;
+			}
+
+			return m_avg;
+		}
+
+	private:
+		T m_total = T(0);
+		F64 m_avg = 0.0;
+		U32 m_count = 0;
+	};
+
+	BufferedValue<Second> m_frameTime;
+	BufferedValue<Second> m_renderTime;
+	BufferedValue<Second> m_lightBinTime;
+	BufferedValue<Second> m_sceneUpdateTime;
+	BufferedValue<Second> m_visTestsTime;
+
+	static const U32 BUFFERED_FRAMES = 16;
 	U32 m_bufferedFrames = 0;
 
 	StatsUi(UiManager* ui)
@@ -52,35 +84,44 @@ public:
 
 	void build(CanvasPtr canvas)
 	{
+		// Misc
+		++m_bufferedFrames;
+		Bool flush = false;
+		if(m_bufferedFrames == BUFFERED_FRAMES)
+		{
+			flush = true;
+			m_bufferedFrames = 0;
+		}
+
+		// Start drawing the UI
 		nk_context* ctx = &canvas->getNkContext();
+
+		canvas->pushFont(canvas->getDefaultFont(), 16);
 
 		nk_style_push_style_item(
 			ctx, &ctx->style.window.fixed_background, nk_style_item_color(nk_rgba(255, 255, 255, 0)));
 
-		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 100, 200), 0))
+		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 200, 200), 0))
 		{
-			nk_layout_row_dynamic(ctx, 30, 1);
+			nk_layout_row_dynamic(ctx, 17, 1);
 
-			// Frametime
-			const U32 BUFFERED_FRAMES = 16;
-			m_totalFrameTime += m_frameTime;
-			++m_bufferedFrames;
-
-			if(m_bufferedFrames == BUFFERED_FRAMES)
-			{
-				m_avgFrameTime = m_totalFrameTime / BUFFERED_FRAMES;
-				m_bufferedFrames = 0;
-				m_totalFrameTime = 0.0;
-			}
-
-			StringAuto timestamp(getAllocator());
-			timestamp.sprintf("Frametime: %f", m_avgFrameTime * 1000.0);
-			nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
+			labelTime(ctx, m_frameTime, "Frame", flush);
+			labelTime(ctx, m_renderTime, "Renderer", flush);
+			labelTime(ctx, m_lightBinTime, "Light bin", flush);
+			labelTime(ctx, m_sceneUpdateTime, "Scene update", flush);
+			labelTime(ctx, m_visTestsTime, "Visibility", flush);
 		}
 
 		nk_style_pop_style_item(ctx);
-
 		nk_end(ctx);
+		canvas->popFont();
+	}
+
+	void labelTime(nk_context* ctx, BufferedValue<Second>& val, CString name, Bool flush)
+	{
+		StringAuto timestamp(getAllocator());
+		timestamp.sprintf("%s: %fms", name.cstr(), val.get(flush) * 1000.0);
+		nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
 	}
 };
 
@@ -201,6 +242,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_allocCbData = allocCbUserData;
 	m_heapAlloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	ConfigSet config = config_;
+
+	m_displayStats = config.getNumber("core.displayStats");
 
 	ANKI_CHECK(initDirs(config));
 
@@ -485,12 +528,19 @@ Error App::mainLoop()
 		// Sleep
 		const Second endTime = HighRezTimer::getCurrentTime();
 		const Second frameTime = endTime - startTime;
-		static_cast<StatsUi&>(*m_statsUi).m_frameTime = frameTime;
 		if(frameTime < m_timerTick)
 		{
 			ANKI_TRACE_SCOPED_EVENT(TIMER_TICK_SLEEP);
 			HighRezTimer::sleep(m_timerTick - frameTime);
 		}
+
+		// Stats
+		StatsUi& statsUi = static_cast<StatsUi&>(*m_statsUi);
+		statsUi.m_frameTime.set(frameTime);
+		statsUi.m_renderTime.set(m_renderer->getStats().m_renderingTime);
+		statsUi.m_lightBinTime.set(m_renderer->getStats().m_lightBinTime);
+		statsUi.m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
+		statsUi.m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
 
 		++m_globalTimestamp;
 

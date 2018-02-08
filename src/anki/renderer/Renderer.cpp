@@ -7,6 +7,7 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
+#include <anki/util/HighRezTimer.h>
 
 #include <anki/renderer/Indirect.h>
 #include <anki/renderer/GBuffer.h>
@@ -283,7 +284,9 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	m_finalComposite->populateRenderGraph(ctx);
 
+	m_stats.m_lightBinTime = HighRezTimer::getCurrentTime();
 	ANKI_CHECK(m_lightShading->binLights(ctx));
+	m_stats.m_lightBinTime = HighRezTimer::getCurrentTime() - m_stats.m_lightBinTime;
 
 	return Error::NONE;
 }

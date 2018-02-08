@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/MainRenderer.h>
-#include <anki/renderer/Renderer.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/Dbg.h>
@@ -17,6 +16,7 @@
 #include <anki/core/Trace.h>
 #include <anki/core/App.h>
 #include <anki/misc/ConfigSet.h>
+#include <anki/util/HighRezTimer.h>
 
 namespace anki
 {
@@ -83,6 +83,8 @@ Error MainRenderer::render(RenderQueue& rqueue)
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER);
 
+	m_stats.m_renderingTime = HighRezTimer::getCurrentTime();
+
 	// First thing, reset the temp mem pool
 	m_frameAlloc.getMemoryPool().reset();
 
@@ -147,6 +149,10 @@ Error MainRenderer::render(RenderQueue& rqueue)
 	// Reset render pass for the next frame
 	m_rgraph->reset();
 	m_r->finalize(ctx);
+
+	// Stats
+	static_cast<RendererStats&>(m_stats) = m_r->getStats();
+	m_stats.m_renderingTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingTime;
 
 	return Error::NONE;
 }

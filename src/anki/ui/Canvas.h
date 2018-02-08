@@ -55,7 +55,7 @@ public:
 	/// End building.
 	void endBuilding();
 
-	void pushFont(FontPtr font, U32 fontHeight);
+	void pushFont(const FontPtr& font, U32 fontHeight);
 
 	void popFont()
 	{

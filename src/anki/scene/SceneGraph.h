@@ -32,6 +32,14 @@ class UpdateSceneNodesCtx;
 /// @addtogroup scene
 /// @{
 
+/// SceneGraph statistics.
+class SceneGraphStats
+{
+public:
+	Second m_updateTime ANKI_DBG_NULLIFY;
+	Second m_visibilityTestsTime ANKI_DBG_NULLIFY;
+};
+
 /// The scene graph that  all the scene entities
 class SceneGraph
 {
@@ -162,6 +170,11 @@ public:
 		m_objectsMarkedForDeletionCount.fetchAdd(1);
 	}
 
+	const SceneGraphStats& getStats() const
+	{
+		return m_stats;
+	}
+
 anki_internal:
 	ResourceManager& getResourceManager()
 	{
@@ -252,6 +265,8 @@ private:
 	SceneComponentLists m_componentLists;
 
 	F32 m_earlyZDist = -1.0;
+
+	SceneGraphStats m_stats;
 
 	/// Put a node in the appropriate containers
 	ANKI_USE_RESULT Error registerNode(SceneNode* node);

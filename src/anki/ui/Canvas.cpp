@@ -109,10 +109,10 @@ void Canvas::endBuilding()
 #endif
 }
 
-void Canvas::pushFont(FontPtr font, U32 fontHeight)
+void Canvas::pushFont(const FontPtr& font, U32 fontHeight)
 {
 	ANKI_ASSERT(m_building);
-	m_references.pushBack(m_stackAlloc, IntrusivePtr<UiObject>(font.get()));
+	m_references.pushBack(m_stackAlloc, IntrusivePtr<UiObject>(const_cast<Font*>(font.get())));
 	nk_style_push_font(&m_nkCtx, &font->getFont(fontHeight));
 }
 
