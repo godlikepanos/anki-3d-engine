@@ -138,8 +138,6 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 				{
 					out = mcmdb;
 				}
-
-				mcmdb->reset();
 			}
 			else
 			{
@@ -190,6 +188,10 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		newCmdb->m_flags = cmdbFlags;
 
 		out = newCmdb;
+	}
+	else
+	{
+		out->reset();
 	}
 
 	ANKI_ASSERT(out && out->m_refcount.load() == 0);

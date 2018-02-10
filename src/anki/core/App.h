@@ -9,7 +9,6 @@
 #include <anki/util/Allocator.h>
 #include <anki/util/String.h>
 #include <anki/util/Ptr.h>
-#include <anki/core/Timestamp.h>
 #include <anki/ui/UiImmediateModeBuilder.h>
 #if ANKI_OS == ANKI_OS_ANDROID
 #include <android_native_app_glue.h>
@@ -185,6 +184,21 @@ private:
 	String m_cacheDir; ///< This is used as a cache
 	Second m_timerTick;
 	U64 m_resourceCompletedAsyncTaskCount = 0;
+
+	class MemStats
+	{
+	public:
+		Atomic<PtrSize> m_allocatedMem = {0};
+		Atomic<U64> m_allocCount = {0};
+		Atomic<U64> m_freeCount = {0};
+
+		void* m_originalUserData = nullptr;
+		AllocAlignedCallback m_originalAllocCallback = nullptr;
+
+		static void* allocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment);
+	} m_memStats;
+
+	void initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData);
 

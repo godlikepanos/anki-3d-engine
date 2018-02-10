@@ -76,6 +76,9 @@ using Bool32 = I32; ///< A 32bit boolean
 
 using Second = F64; ///< The base time unit is second.
 
+using Timestamp = U64; ///< Timestamp type.
+const Timestamp MAX_TIMESTAMP = MAX_U64;
+
 /// Representation of error and a wrapper on top of error codes.
 class Error
 {
@@ -197,7 +200,12 @@ static constexpr unsigned long long int operator""_KB(unsigned long long int x)
 
 static constexpr unsigned long long int operator""_MB(unsigned long long int x)
 {
-	return x * 1024 * 1024;
+	return x * (1024 * 1024);
+}
+
+static constexpr unsigned long long int operator""_GB(unsigned long long int x)
+{
+	return x * (1024 * 1024 * 1024);
 }
 /// @}
 

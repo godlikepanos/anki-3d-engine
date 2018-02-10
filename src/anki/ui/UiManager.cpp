@@ -16,15 +16,19 @@ UiManager::~UiManager()
 {
 }
 
-Error UiManager::init(
-	HeapAllocator<U8> alloc, ResourceManager* resources, GrManager* gr, StagingGpuMemoryManager* gpuMem, Input* input)
+Error UiManager::init(AllocAlignedCallback allocCallback,
+	void* allocCallbackUserData,
+	ResourceManager* resources,
+	GrManager* gr,
+	StagingGpuMemoryManager* gpuMem,
+	Input* input)
 {
 	ANKI_ASSERT(resources);
 	ANKI_ASSERT(gr);
 	ANKI_ASSERT(gpuMem);
 	ANKI_ASSERT(input);
 
-	m_alloc = alloc;
+	m_alloc = UiAllocator(allocCallback, allocCallbackUserData);
 	m_resources = resources;
 	m_gr = gr;
 	m_gpuMem = gpuMem;

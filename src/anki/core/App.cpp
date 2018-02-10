@@ -74,6 +74,10 @@ public:
 	BufferedValue<Second> m_sceneUpdateTime;
 	BufferedValue<Second> m_visTestsTime;
 
+	PtrSize m_allocatedCpuMem = 0;
+	U64 m_allocCount = 0;
+	U64 m_freeCount = 0;
+
 	static const U32 BUFFERED_FRAMES = 16;
 	U32 m_bufferedFrames = 0;
 
@@ -101,15 +105,22 @@ public:
 		nk_style_push_style_item(
 			ctx, &ctx->style.window.fixed_background, nk_style_item_color(nk_rgba(255, 255, 255, 0)));
 
-		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 200, 200), 0))
+		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 500, 500), 0))
 		{
 			nk_layout_row_dynamic(ctx, 17, 1);
 
-			labelTime(ctx, m_frameTime, "Frame", flush);
-			labelTime(ctx, m_renderTime, "Renderer", flush);
-			labelTime(ctx, m_lightBinTime, "Light bin", flush);
-			labelTime(ctx, m_sceneUpdateTime, "Scene update", flush);
-			labelTime(ctx, m_visTestsTime, "Visibility", flush);
+			nk_label(ctx, "Time:", NK_TEXT_ALIGN_LEFT);
+			labelTime(ctx, m_frameTime.get(flush), "Total frame");
+			labelTime(ctx, m_renderTime.get(flush) - m_lightBinTime.get(flush), "Renderer");
+			labelTime(ctx, m_lightBinTime.get(false), "Light bin");
+			labelTime(ctx, m_sceneUpdateTime.get(flush), "Scene update");
+			labelTime(ctx, m_visTestsTime.get(flush), "Visibility");
+
+			nk_label(ctx, " ", NK_TEXT_ALIGN_LEFT);
+			nk_label(ctx, "Memory:", NK_TEXT_ALIGN_LEFT);
+			labelBytes(ctx, m_allocatedCpuMem, "Total CPU");
+			labelUint(ctx, m_allocCount, "Total allocations");
+			labelUint(ctx, m_freeCount, "Total frees");
 		}
 
 		nk_style_pop_style_item(ctx);
@@ -117,13 +128,102 @@ public:
 		canvas->popFont();
 	}
 
-	void labelTime(nk_context* ctx, BufferedValue<Second>& val, CString name, Bool flush)
+	void labelTime(nk_context* ctx, Second val, CString name)
 	{
 		StringAuto timestamp(getAllocator());
-		timestamp.sprintf("%s: %fms", name.cstr(), val.get(flush) * 1000.0);
+		timestamp.sprintf("%s: %fms", name.cstr(), val * 1000.0);
+		nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
+	}
+
+	void labelBytes(nk_context* ctx, PtrSize val, CString name)
+	{
+		CString measure = "B";
+		if(val > 10_GB)
+		{
+			val /= 1_GB;
+			measure = "GB";
+		}
+		else if(val > 10_MB)
+		{
+			val /= 1_MB;
+			measure = "MB";
+		}
+		else if(val > 10_KB)
+		{
+			val /= 1_KB;
+			measure = "KB";
+		}
+
+		StringAuto timestamp(getAllocator());
+		timestamp.sprintf("%s: %'llu%s", name.cstr(), val, measure.cstr());
+		nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
+	}
+
+	void labelUint(nk_context* ctx, U64 val, CString name)
+	{
+		StringAuto timestamp(getAllocator());
+		timestamp.sprintf("%s: %llu", name.cstr(), val);
 		nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
 	}
 };
+
+void* App::MemStats::allocCallback(void* userData, void* ptr, PtrSize size, PtrSize alignment)
+{
+	ANKI_ASSERT(userData);
+
+	static const PtrSize MAX_ALIGNMENT = 64;
+
+	struct alignas(MAX_ALIGNMENT) Header
+	{
+		PtrSize m_allocatedSize;
+		Array<U8, MAX_ALIGNMENT - sizeof(PtrSize)> _m_padding;
+	};
+	static_assert(sizeof(Header) == MAX_ALIGNMENT, "See file");
+	static_assert(alignof(Header) == MAX_ALIGNMENT, "See file");
+
+	void* out = nullptr;
+
+	if(ptr == nullptr)
+	{
+		// Need to allocate
+		ANKI_ASSERT(size > 0);
+		ANKI_ASSERT(alignment > 0 && alignment <= MAX_ALIGNMENT);
+
+		const PtrSize newAlignment = MAX_ALIGNMENT;
+		const PtrSize newSize = sizeof(Header) + size;
+
+		// Allocate
+		MemStats* self = static_cast<MemStats*>(userData);
+		Header* allocation = static_cast<Header*>(
+			self->m_originalAllocCallback(self->m_originalUserData, nullptr, newSize, newAlignment));
+		allocation->m_allocatedSize = size;
+		++allocation;
+		out = static_cast<void*>(allocation);
+
+		// Update stats
+		self->m_allocatedMem.fetchAdd(size);
+		self->m_allocCount.fetchAdd(1);
+	}
+	else
+	{
+		// Need to free
+
+		MemStats* self = static_cast<MemStats*>(userData);
+
+		Header* allocation = static_cast<Header*>(ptr);
+		--allocation;
+		ANKI_ASSERT(allocation->m_allocatedSize > 0);
+
+		// Update stats
+		self->m_freeCount.fetchAdd(1);
+		self->m_allocatedMem.fetchSub(allocation->m_allocatedSize);
+
+		// Free
+		self->m_originalAllocCallback(self->m_originalUserData, allocation, 0, 0);
+	}
+
+	return out;
+}
 
 App::App()
 {
@@ -238,12 +338,11 @@ Error App::init(const ConfigSet& config, AllocAlignedCallback allocCb, void* all
 
 Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
-	m_allocCb = allocCb;
-	m_allocCbData = allocCbUserData;
-	m_heapAlloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	ConfigSet config = config_;
-
 	m_displayStats = config.getNumber("core.displayStats");
+
+	initMemoryCallbacks(allocCb, allocCbUserData);
+	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData);
 
 	ANKI_CHECK(initDirs(config));
 
@@ -312,7 +411,6 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	// Input
 	//
 	m_input = m_heapAlloc.newInstance<Input>();
-
 	ANKI_CHECK(m_input->init(m_window));
 
 	//
@@ -371,7 +469,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	// UI
 	//
 	m_ui = m_heapAlloc.newInstance<UiManager>();
-	ANKI_CHECK(m_ui->init(m_heapAlloc, m_resources, m_gr, m_stagingMem, m_input));
+	ANKI_CHECK(m_ui->init(m_allocCb, m_allocCbData, m_resources, m_gr, m_stagingMem, m_input));
 
 	ANKI_CHECK(m_ui->newInstance<StatsUi>(m_statsUi));
 
@@ -535,12 +633,18 @@ Error App::mainLoop()
 		}
 
 		// Stats
-		StatsUi& statsUi = static_cast<StatsUi&>(*m_statsUi);
-		statsUi.m_frameTime.set(frameTime);
-		statsUi.m_renderTime.set(m_renderer->getStats().m_renderingTime);
-		statsUi.m_lightBinTime.set(m_renderer->getStats().m_lightBinTime);
-		statsUi.m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
-		statsUi.m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
+		if(m_displayStats)
+		{
+			StatsUi& statsUi = static_cast<StatsUi&>(*m_statsUi);
+			statsUi.m_frameTime.set(frameTime);
+			statsUi.m_renderTime.set(m_renderer->getStats().m_renderingTime);
+			statsUi.m_lightBinTime.set(m_renderer->getStats().m_lightBinTime);
+			statsUi.m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
+			statsUi.m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
+			statsUi.m_allocatedCpuMem = m_memStats.m_allocatedMem.load();
+			statsUi.m_allocCount = m_memStats.m_allocCount.load();
+			statsUi.m_freeCount = m_memStats.m_freeCount.load();
+		}
 
 		++m_globalTimestamp;
 
@@ -567,6 +671,23 @@ void App::injectStatsUiElement(DynamicArrayAuto<UiQueueElement>& newUiElementArr
 			CanvasPtr& canvas, void* userData) -> void { static_cast<StatsUi*>(userData)->build(canvas); };
 
 		rqueue.m_uis = newUiElementArr;
+	}
+}
+
+void App::initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserData)
+{
+	if(m_displayStats)
+	{
+		m_memStats.m_originalAllocCallback = allocCb;
+		m_memStats.m_originalUserData = allocCbUserData;
+
+		m_allocCb = MemStats::allocCallback;
+		m_allocCbData = &m_memStats;
+	}
+	else
+	{
+		m_allocCb = allocCb;
+		m_allocCbData = allocCbUserData;
 	}
 }
 

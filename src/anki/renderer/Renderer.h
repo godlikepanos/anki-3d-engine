@@ -10,7 +10,6 @@
 #include <anki/Math.h>
 #include <anki/Gr.h>
 #include <anki/resource/Forward.h>
-#include <anki/core/Timestamp.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/util/ThreadPool.h>
 #include <anki/collision/Forward.h>
@@ -185,7 +184,6 @@ public:
 		StagingGpuMemoryManager* stagingMem,
 		UiManager* ui,
 		HeapAllocator<U8> alloc,
-		StackAllocator<U8> frameAlloc,
 		const ConfigSet& config,
 		Timestamp* globTimestamp,
 		Bool willDrawToDefaultFbo);
@@ -280,11 +278,6 @@ anki_internal:
 		return m_alloc;
 	}
 
-	StackAllocator<U8> getFrameAllocator() const
-	{
-		return m_frameAlloc;
-	}
-
 	ResourceManager& getResourceManager()
 	{
 		return *m_resources;
@@ -354,7 +347,6 @@ private:
 	UiManager* m_ui = nullptr;
 	Timestamp* m_globTimestamp;
 	HeapAllocator<U8> m_alloc;
-	StackAllocator<U8> m_frameAlloc;
 
 	/// @name Rendering stages
 	/// @{

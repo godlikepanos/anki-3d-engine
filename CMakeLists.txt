@@ -366,7 +366,7 @@ endif()
 
 # AnKi compiler flags (Mainly warnings)
 if(NOT MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wunused-result -std=c++14")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result -std=c++14")
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4996 /wd4244 /wd4262 /wd4267")
 endif()

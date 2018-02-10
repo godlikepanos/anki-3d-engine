@@ -8,7 +8,6 @@
 #include <anki/renderer/Common.h>
 #include <anki/Math.h>
 #include <anki/collision/Aabb.h>
-#include <anki/core/Timestamp.h>
 
 namespace anki
 {

@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/renderer/Common.h>
-#include <anki/core/Timestamp.h>
 #include <anki/resource/RenderingKey.h>
 #include <anki/ui/Canvas.h>
 

@@ -45,7 +45,6 @@ Error Renderer::init(ThreadPool* threadpool,
 	StagingGpuMemoryManager* stagingMem,
 	UiManager* ui,
 	HeapAllocator<U8> alloc,
-	StackAllocator<U8> frameAlloc,
 	const ConfigSet& config,
 	Timestamp* globTimestamp,
 	Bool willDrawToDefaultFbo)
@@ -59,7 +58,6 @@ Error Renderer::init(ThreadPool* threadpool,
 	m_stagingMem = stagingMem;
 	m_ui = ui;
 	m_alloc = alloc;
-	m_frameAlloc = frameAlloc;
 	m_willDrawToDefaultFbo = willDrawToDefaultFbo;
 
 	Error err = initInternal(config);

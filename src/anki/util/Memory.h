@@ -32,7 +32,7 @@ void freeAligned(void* ptr);
 
 /// The function signature of a memory allocation/deallocation. See allocAligned function for the explanation of
 /// arguments
-using AllocAlignedCallback = void* (*)(void*, void*, PtrSize, PtrSize);
+using AllocAlignedCallback = void* (*)(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
 /// An internal type.
 using AllocationSignature = U32;

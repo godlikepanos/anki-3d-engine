@@ -58,8 +58,8 @@ Error MainRenderer::init(ThreadPool* threadpool,
 	m_rDrawToDefaultFb = m_renderingQuality == 1.0;
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
-	ANKI_CHECK(m_r->init(
-		threadpool, resources, gr, stagingMem, ui, m_alloc, m_frameAlloc, config2, globTimestamp, m_rDrawToDefaultFb));
+	ANKI_CHECK(
+		m_r->init(threadpool, resources, gr, stagingMem, ui, m_alloc, config2, globTimestamp, m_rDrawToDefaultFb));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)

@@ -8,7 +8,6 @@
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/TextureImpl.h>
 #include <anki/gr/gl/GlState.h>
-#include <anki/core/Timestamp.h>
 
 #include <anki/gr/Buffer.h>
 #include <anki/gr/Texture.h>

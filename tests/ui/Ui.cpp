@@ -74,7 +74,7 @@ ANKI_TEST(Ui, Ui)
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg));
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	ANKI_TEST_EXPECT_NO_ERR(ui->init(alloc, resource, gr, stagingMem, in));
+	ANKI_TEST_EXPECT_NO_ERR(ui->init(allocAligned, nullptr, resource, gr, stagingMem, in));
 
 	{
 		FontPtr font;

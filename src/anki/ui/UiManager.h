@@ -27,7 +27,8 @@ public:
 
 	~UiManager();
 
-	ANKI_USE_RESULT Error init(HeapAllocator<U8> alloc,
+	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCallback,
+		void* allocCallbackUserData,
 		ResourceManager* resources,
 		GrManager* gr,
 		StagingGpuMemoryManager* gpuMem,

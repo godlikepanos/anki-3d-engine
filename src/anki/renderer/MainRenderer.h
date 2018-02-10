@@ -7,7 +7,6 @@
 
 #include <anki/renderer/Common.h>
 #include <anki/resource/Forward.h>
-#include <anki/core/Timestamp.h>
 #include <anki/renderer/Renderer.h>
 
 namespace anki
