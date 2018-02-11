@@ -137,25 +137,36 @@ public:
 
 	void labelBytes(nk_context* ctx, PtrSize val, CString name)
 	{
-		CString measure = "B";
-		if(val > 10_GB)
-		{
-			val /= 1_GB;
-			measure = "GB";
-		}
-		else if(val > 10_MB)
-		{
-			val /= 1_MB;
-			measure = "MB";
-		}
-		else if(val > 10_KB)
-		{
-			val /= 1_KB;
-			measure = "KB";
-		}
+		U gb, mb, kb, b;
+
+		gb = val / 1_GB;
+		val -= gb * 1_GB;
+
+		mb = val / 1_MB;
+		val -= mb * 1_MB;
+
+		kb = val / 1_KB;
+		val -= kb * 1_KB;
+
+		b = val;
 
 		StringAuto timestamp(getAllocator());
-		timestamp.sprintf("%s: %'llu%s", name.cstr(), val, measure.cstr());
+		if(gb)
+		{
+			timestamp.sprintf("%s: %4u,%04u,%04u,%04u", name.cstr(), gb, mb, kb, b);
+		}
+		else if(mb)
+		{
+			timestamp.sprintf("%s: %4u,%04u,%04u", name.cstr(), mb, kb, b);
+		}
+		else if(kb)
+		{
+			timestamp.sprintf("%s: %4u,%04u", name.cstr(), kb, b);
+		}
+		else
+		{
+			timestamp.sprintf("%s: %4u", name.cstr(), b);
+		}
 		nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
 	}
 
