@@ -722,49 +722,52 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 		const VkBuffer shadowHandle = static_cast<const BufferImpl&>(*shadow).getHandle();
 		m_microCmdb->pushObjectRef(shadow);
 
-		// Create the copy regions
-		DynamicArrayAuto<VkBufferCopy> copies(m_alloc);
-		if(is3D)
+		// Copy to shadow buffer in batches. If the number of pixels is high and we do a single vkCmdCopyBuffer we will
+		// need many regions. That allocation will be huge so do the copies in batches.
+		const U regionCount = width * height * depth;
+		const U REGIONS_PER_CMD_COPY_BUFFER = 32;
+		const U cmdCopyBufferCount = (regionCount + REGIONS_PER_CMD_COPY_BUFFER - 1) / REGIONS_PER_CMD_COPY_BUFFER;
+		for(U cmdCopyBuffer = 0; cmdCopyBuffer < cmdCopyBufferCount; ++cmdCopyBuffer)
 		{
-			copies.create(width * height * depth);
+			const U beginRegion = cmdCopyBuffer * REGIONS_PER_CMD_COPY_BUFFER;
+			const U endRegion = min(regionCount, (cmdCopyBuffer + 1) * REGIONS_PER_CMD_COPY_BUFFER);
+			ANKI_ASSERT(beginRegion < regionCount);
+			ANKI_ASSERT(endRegion <= regionCount);
+
+			const U crntRegionCount = endRegion - beginRegion;
+			DynamicArrayAuto<VkBufferCopy> regions(m_alloc);
+			regions.create(crntRegionCount);
+
+			// Populate regions
 			U count = 0;
-			for(U x = 0; x < width; ++x)
+			for(U regionIdx = beginRegion; regionIdx < endRegion; ++regionIdx)
 			{
-				for(U y = 0; y < height; ++y)
+				U x, y, d;
+				unflatten3dArrayIndex(width, height, depth, regionIdx, x, y, d);
+
+				VkBufferCopy& c = regions[count++];
+
+				if(is3D)
 				{
-					for(U d = 0; d < depth; ++d)
-					{
-						VkBufferCopy& c = copies[count++];
-						c.srcOffset = (d * height * width + y * width + x) * 3 + offset;
-						c.dstOffset = (d * height * width + y * width + x) * 4 + 0;
-						c.size = 3;
-					}
+					c.srcOffset = (d * height * width + y * width + x) * 3 + offset;
+					c.dstOffset = (d * height * width + y * width + x) * 4 + 0;
 				}
-			}
-		}
-		else
-		{
-			copies.create(width * height);
-			U count = 0;
-			for(U x = 0; x < width; ++x)
-			{
-				for(U y = 0; y < height; ++y)
+				else
 				{
-					VkBufferCopy& c = copies[count++];
 					c.srcOffset = (y * width + x) * 3 + offset;
 					c.dstOffset = (y * width + x) * 4 + 0;
-					c.size = 3;
 				}
+				c.size = 3;
 			}
-		}
 
-		// Copy buffer to buffer
-		ANKI_CMD(vkCmdCopyBuffer(m_handle,
-					 static_cast<const BufferImpl&>(*buff).getHandle(),
-					 shadowHandle,
-					 copies.getSize(),
-					 &copies[0]),
-			ANY_OTHER_COMMAND);
+			// Do the copy to the shadow buffer
+			ANKI_CMD(vkCmdCopyBuffer(m_handle,
+						 static_cast<const BufferImpl&>(*buff).getHandle(),
+						 shadowHandle,
+						 regions.getSize(),
+						 &regions[0]),
+				ANY_OTHER_COMMAND);
+		}
 
 		// Set barrier
 		setBufferBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,

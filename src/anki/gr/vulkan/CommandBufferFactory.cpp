@@ -181,7 +181,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 		newCmdb->m_fastAlloc = StackAllocator<U8>(m_factory->m_alloc.getMemoryPool().getAllocationCallback(),
 			m_factory->m_alloc.getMemoryPool().getAllocationCallbackUserData(),
-			(smallBatch) ? 1_MB : 1_MB,
+			256_KB,
 			2.0f);
 
 		newCmdb->m_handle = cmdb;
