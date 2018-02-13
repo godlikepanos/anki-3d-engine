@@ -10,32 +10,32 @@
 
 #if ANKI_OS == ANKI_OS_WINDOWS
 
-#ifdef near
-#undef near
-#endif
+#	ifdef near
+#		undef near
+#	endif
 
-#ifdef far
-#undef far
-#endif
+#	ifdef far
+#		undef far
+#	endif
 
-#ifdef ERROR
-#undef ERROR
-#endif
+#	ifdef ERROR
+#		undef ERROR
+#	endif
 
-#ifdef DELETE
-#undef DELETE
-#endif
+#	ifdef DELETE
+#		undef DELETE
+#	endif
 
-#ifdef OUT
-#undef OUT
-#endif
+#	ifdef OUT
+#		undef OUT
+#	endif
 
-#ifdef min
-#undef min
-#endif
+#	ifdef min
+#		undef min
+#	endif
 
-#ifdef max
-#undef max
-#endif
+#	ifdef max
+#		undef max
+#	endif
 
 #endif

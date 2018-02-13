@@ -205,8 +205,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	m_pplineLayoutFactory.init(getAllocator(), m_device);
 
 	m_capabilities |= !!(m_extensions & VulkanExtensions::EXT_SHADER_SUBGROUP_BALLOT)
-		? GpuDeviceCapabilitiesBit::SHADER_BALLOT
-		: GpuDeviceCapabilitiesBit::NONE;
+						  ? GpuDeviceCapabilitiesBit::SHADER_BALLOT
+						  : GpuDeviceCapabilitiesBit::NONE;
 
 	return Error::NONE;
 }
@@ -309,7 +309,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 				instExtensions[instExtensionCount++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 			}
 #else
-#error TODO
+#	error TODO
 #endif
 			else if(CString(instExtensionInf[i].extensionName) == VK_KHR_SURFACE_EXTENSION_NAME)
 			{
@@ -358,7 +358,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
 		ci.pfnCallback = debugReportCallbackEXT;
 		ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT
-			| VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+				   | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
 		ci.pUserData = this;
 
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
@@ -492,13 +492,13 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_MAINTENANCE1_EXTENSION_NAME;
 			}
 			else if(CString(&extensionInfos[extCount].extensionName[0])
-				== VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME)
+					== VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT;
 				// Don't add it just yet. Can't enable it at the same time with VK_KHR_maintenance1
 			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME
-				&& init.m_config->getNumber("window.debugMarkers"))
+					&& init.m_config->getNumber("window.debugMarkers"))
 			{
 				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;

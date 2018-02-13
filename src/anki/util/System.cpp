@@ -8,18 +8,18 @@
 #include <cstdio>
 
 #if ANKI_POSIX
-#include <unistd.h>
-#include <signal.h>
+#	include <unistd.h>
+#	include <signal.h>
 #elif ANKI_OS == ANKI_OS_WINDOWS
-#include <windows.h>
+#	include <windows.h>
 #else
-#error "Unimplemented"
+#	error "Unimplemented"
 #endif
 
 // For print backtrace
 #if ANKI_POSIX && ANKI_OS != ANKI_OS_ANDROID
-#include <execinfo.h>
-#include <cstdlib>
+#	include <execinfo.h>
+#	include <cstdlib>
 #endif
 
 namespace anki
@@ -34,7 +34,7 @@ U32 getCpuCoresCount()
 	GetSystemInfo(&sysinfo);
 	return sysinfo.dwNumberOfProcessors;
 #else
-#error "Unimplemented"
+#	error "Unimplemented"
 #endif
 }
 

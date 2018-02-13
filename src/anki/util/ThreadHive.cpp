@@ -13,9 +13,9 @@ namespace anki
 #define ANKI_ENABLE_HIVE_DEBUG_PRINT 0
 
 #if ANKI_ENABLE_HIVE_DEBUG_PRINT
-#define ANKI_HIVE_DEBUG_PRINT(...) printf(__VA_ARGS__)
+#	define ANKI_HIVE_DEBUG_PRINT(...) printf(__VA_ARGS__)
 #else
-#define ANKI_HIVE_DEBUG_PRINT(...) ((void)0)
+#	define ANKI_HIVE_DEBUG_PRINT(...) ((void)0)
 #endif
 
 class ThreadHive::Thread

@@ -130,7 +130,7 @@ private:
 	Bool isTexture() const
 	{
 		return m_dataType >= ShaderVariableDataType::SAMPLERS_FIRST
-			&& m_dataType <= ShaderVariableDataType::SAMPLERS_LAST;
+			   && m_dataType <= ShaderVariableDataType::SAMPLERS_LAST;
 	}
 
 	Bool inBlock() const

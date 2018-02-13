@@ -89,11 +89,11 @@ inline T mod(const T x, const T y)
 template<typename T>
 T absolute(const T f);
 
-#define ANKI_SPECIALIZE_ABS(type_)       \
-	template<>                           \
+#define ANKI_SPECIALIZE_ABS(type_) \
+	template<> \
 	inline type_ absolute(const type_ f) \
-	{                                    \
-		return (f < type_(0)) ? -f : f;  \
+	{ \
+		return (f < type_(0)) ? -f : f; \
 	}
 
 ANKI_SPECIALIZE_ABS(I8)
@@ -112,10 +112,10 @@ inline Bool isZero(const T f)
 }
 
 #define ANKI_SPECIALIZE_IS_ZERO_INT(type_) \
-	template<>                             \
-	inline Bool isZero(const type_ x)      \
-	{                                      \
-		return x == type_(0);              \
+	template<> \
+	inline Bool isZero(const type_ x) \
+	{ \
+		return x == type_(0); \
 	}
 
 ANKI_SPECIALIZE_IS_ZERO_INT(I8)

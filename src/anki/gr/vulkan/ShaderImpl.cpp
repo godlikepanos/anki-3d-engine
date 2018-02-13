@@ -11,8 +11,8 @@
 #define ANKI_DUMP_SHADERS ANKI_EXTRA_CHECKS
 
 #if ANKI_DUMP_SHADERS
-#include <anki/util/File.h>
-#include <anki/gr/GrManager.h>
+#	include <anki/util/File.h>
+#	include <anki/gr/GrManager.h>
 #endif
 
 namespace anki

@@ -80,10 +80,10 @@ void GrManager::finish()
 	self.getRenderingThread().syncClientServer();
 }
 
-#define ANKI_SAFE_CONSTRUCT(class_)                \
+#define ANKI_SAFE_CONSTRUCT(class_) \
 	class_* out = class_::newInstance(this, init); \
-	class_##Ptr ptr(out);                          \
-	out->getRefcount().fetchSub(1);                \
+	class_##Ptr ptr(out); \
+	out->getRefcount().fetchSub(1); \
 	return ptr
 
 BufferPtr GrManager::newBuffer(const BufferInitInfo& init)

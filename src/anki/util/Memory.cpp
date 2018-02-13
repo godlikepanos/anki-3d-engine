@@ -51,7 +51,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	ANKI_ASSERT(alignmentBytes > 0);
 
 #if ANKI_POSIX
-#if ANKI_OS != ANKI_OS_ANDROID
+#	if ANKI_OS != ANKI_OS_ANDROID
 	void* out = nullptr;
 	U alignment = getAlignedRoundUp(alignmentBytes, sizeof(void*));
 	int err = posix_memalign(&out, alignment, size);
@@ -68,7 +68,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 
 	return out;
-#else
+#	else
 	void* out = memalign(getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
 
 	if(out)
@@ -82,7 +82,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 
 	return out;
-#endif
+#	endif
 #elif ANKI_OS == ANKI_OS_WINDOWS
 	void* out = _aligned_malloc(size, alignmentBytes);
 
@@ -98,7 +98,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 
 	return out;
 #else
-#error "Unimplemented"
+#	error "Unimplemented"
 #endif
 }
 
@@ -109,7 +109,7 @@ void freeAligned(void* ptr)
 #elif ANKI_OS == ANKI_OS_WINDOWS
 	_aligned_free(ptr);
 #else
-#error "Unimplemented"
+#	error "Unimplemented"
 #endif
 }
 

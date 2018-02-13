@@ -737,11 +737,11 @@ void Exporter::load()
 	m_importer.SetPropertyFloat(AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE, smoothAngle);
 
 	unsigned flags = 0
-		//| aiProcess_FindInstances
-		| aiProcess_JoinIdenticalVertices
-		//| aiProcess_SortByPType
-		| aiProcess_ImproveCacheLocality | aiProcess_OptimizeMeshes | aiProcess_RemoveRedundantMaterials
-		| aiProcess_CalcTangentSpace | aiProcess_GenSmoothNormals;
+					 //| aiProcess_FindInstances
+					 | aiProcess_JoinIdenticalVertices
+					 //| aiProcess_SortByPType
+					 | aiProcess_ImproveCacheLocality | aiProcess_OptimizeMeshes | aiProcess_RemoveRedundantMaterials
+					 | aiProcess_CalcTangentSpace | aiProcess_GenSmoothNormals;
 
 	const aiScene* scene = m_importer.ReadFile(m_inputFilename, flags | aiProcess_Triangulate);
 

@@ -10,11 +10,11 @@
 #include <SDL_syswm.h>
 #include <SDL_vulkan.h>
 #if ANKI_OS == ANKI_OS_LINUX
-#include <X11/Xlib-xcb.h>
+#	include <X11/Xlib-xcb.h>
 #elif ANKI_OS == ANKI_OS_WINDOWS
-#include <Winuser.h>
+#	include <Winuser.h>
 #else
-#error TODO
+#	error TODO
 #endif
 
 namespace anki
@@ -50,7 +50,7 @@ Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 
 	ANKI_VK_CHECK(vkCreateWin32SurfaceKHR(m_instance, &ci, nullptr, &m_surface));
 #else
-#error TODO
+#	error TODO
 #endif
 
 	return Error::NONE;

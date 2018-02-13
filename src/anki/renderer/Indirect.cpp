@@ -803,7 +803,7 @@ Bool Indirect::findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdxAllocated, Bo
 			break;
 		}
 		else if(m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp != m_r->getGlobalTimestamp()
-			&& m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp < cacheEntryIdxToKickMinTimestamp)
+				&& m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp < cacheEntryIdxToKickMinTimestamp)
 		{
 			// Found some with low timestamp
 			cacheEntryIdxToKick = cacheEntryIdx;

@@ -19,11 +19,11 @@ namespace anki
 template<typename T>
 ShaderVariableDataType getShaderVariableTypeFromTypename();
 
-#define ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(typename_, type_)                    \
-	template<>                                                                   \
+#define ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(typename_, type_) \
+	template<> \
 	inline ShaderVariableDataType getShaderVariableTypeFromTypename<typename_>() \
-	{                                                                            \
-		return ShaderVariableDataType::type_;                                    \
+	{ \
+		return ShaderVariableDataType::type_; \
 	}
 
 ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(I32, INT)

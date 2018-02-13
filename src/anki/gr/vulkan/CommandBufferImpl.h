@@ -28,7 +28,7 @@ class CommandBufferInitInfo;
 /// @addtogroup vulkan
 /// @{
 
-#define ANKI_CMD(x_, t_)                        \
+#define ANKI_CMD(x_, t_) \
 	flushBatches(CommandBufferCommandType::t_); \
 	x_;
 

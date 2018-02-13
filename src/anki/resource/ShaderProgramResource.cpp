@@ -653,8 +653,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 		}
 
 		if(var.m_dataType >= ShaderVariableDataType::MATRIX_FIRST
-			&& var.m_dataType <= ShaderVariableDataType::MATRIX_LAST
-			&& var.m_const)
+			&& var.m_dataType <= ShaderVariableDataType::MATRIX_LAST && var.m_const)
 		{
 			ANKI_RESOURCE_LOGE("Matrix input variable %s cannot be constant", &var.m_name[0]);
 			return Error::USER_DATA;
@@ -901,7 +900,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 				}
 			}
 			else if(in.m_dataType == ShaderVariableDataType::VEC2 || in.m_dataType == ShaderVariableDataType::IVEC2
-				|| in.m_dataType == ShaderVariableDataType::UVEC2)
+					|| in.m_dataType == ShaderVariableDataType::UVEC2)
 			{
 				blockInfo.m_arrayStride = sizeof(Vec4);
 
@@ -917,7 +916,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 				}
 			}
 			else if(in.m_dataType == ShaderVariableDataType::VEC3 || in.m_dataType == ShaderVariableDataType::IVEC3
-				|| in.m_dataType == ShaderVariableDataType::UVEC3)
+					|| in.m_dataType == ShaderVariableDataType::UVEC3)
 			{
 				alignRoundUp(sizeof(Vec4), blockInfo.m_offset);
 				blockInfo.m_arrayStride = sizeof(Vec4);
@@ -932,7 +931,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 				}
 			}
 			else if(in.m_dataType == ShaderVariableDataType::VEC4 || in.m_dataType == ShaderVariableDataType::IVEC4
-				|| in.m_dataType == ShaderVariableDataType::UVEC4)
+					|| in.m_dataType == ShaderVariableDataType::UVEC4)
 			{
 				blockInfo.m_arrayStride = sizeof(Vec4);
 				alignRoundUp(sizeof(Vec4), blockInfo.m_offset);

@@ -106,10 +106,10 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 		// Misc
 		m_clearDepth = !!(viewImpl.getSubresource().m_depthStencilAspect & DepthStencilAspectBit::DEPTH)
-			&& att.m_loadOperation == AttachmentLoadOperation::CLEAR;
+					   && att.m_loadOperation == AttachmentLoadOperation::CLEAR;
 
 		m_clearStencil = !!(viewImpl.getSubresource().m_depthStencilAspect & DepthStencilAspectBit::STENCIL)
-			&& att.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR;
+						 && att.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR;
 	}
 
 	// Check completeness
@@ -231,8 +231,7 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 				// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
 				Bool restore = false;
 				if(state.m_colorWriteMasks[i][0] != true || state.m_colorWriteMasks[i][1] != true
-					|| state.m_colorWriteMasks[i][2] != true
-					|| state.m_colorWriteMasks[i][3] != true)
+					|| state.m_colorWriteMasks[i][2] != true || state.m_colorWriteMasks[i][3] != true)
 				{
 					glColorMaski(i, true, true, true, true);
 					restore = true;

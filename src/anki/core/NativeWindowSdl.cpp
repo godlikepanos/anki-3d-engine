@@ -6,7 +6,7 @@
 #include <anki/core/NativeWindowSdl.h>
 #include <anki/util/Logger.h>
 #if ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
-#include <SDL_vulkan.h>
+#	include <SDL_vulkan.h>
 #endif
 
 namespace anki

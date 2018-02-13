@@ -72,11 +72,11 @@ static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{"GR_DRAWC
 	"STAGING_UNIFORMS_SIZE",
 	"STAGING_STORAGE_SIZE"}};
 
-#define ANKI_TRACE_FILE_ERROR()                         \
-	if(err)                                             \
-	{                                                   \
-		ANKI_CORE_LOGE("Error writing the trace file"); \
-	}
+#	define ANKI_TRACE_FILE_ERROR() \
+		if(err) \
+		{ \
+			ANKI_CORE_LOGE("Error writing the trace file"); \
+		}
 
 const U MAX_EVENTS_DEPTH = 20;
 thread_local Second g_traceEventStartTime[MAX_EVENTS_DEPTH];

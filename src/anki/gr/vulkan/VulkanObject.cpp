@@ -20,20 +20,20 @@
 namespace anki
 {
 
-#define ANKI_INSTANTIATE_GR_OBJECT(type_)                                                              \
-	template<>                                                                                         \
-	VkDevice VulkanObject<type_, type_##Impl>::getDevice() const                                       \
-	{                                                                                                  \
-		return getGrManagerImpl().getDevice();                                                         \
-	}                                                                                                  \
-	template<>                                                                                         \
-	GrManagerImpl& VulkanObject<type_, type_##Impl>::getGrManagerImpl()                                \
-	{                                                                                                  \
-		return static_cast<GrManagerImpl&>(static_cast<type_##Impl*>(this)->getManager());             \
-	}                                                                                                  \
-	template<>                                                                                         \
-	const GrManagerImpl& VulkanObject<type_, type_##Impl>::getGrManagerImpl() const                    \
-	{                                                                                                  \
+#define ANKI_INSTANTIATE_GR_OBJECT(type_) \
+	template<> \
+	VkDevice VulkanObject<type_, type_##Impl>::getDevice() const \
+	{ \
+		return getGrManagerImpl().getDevice(); \
+	} \
+	template<> \
+	GrManagerImpl& VulkanObject<type_, type_##Impl>::getGrManagerImpl() \
+	{ \
+		return static_cast<GrManagerImpl&>(static_cast<type_##Impl*>(this)->getManager()); \
+	} \
+	template<> \
+	const GrManagerImpl& VulkanObject<type_, type_##Impl>::getGrManagerImpl() const \
+	{ \
 		return static_cast<const GrManagerImpl&>(static_cast<const type_##Impl*>(this)->getManager()); \
 	}
 

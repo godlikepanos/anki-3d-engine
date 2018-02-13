@@ -50,7 +50,8 @@ const U MAX_IMAGE_BINDINGS = 4;
 const U MAX_TEXTURE_BUFFER_BINDINGS = 4;
 
 const U MAX_BINDINGS_PER_DESCRIPTOR_SET = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
-	+ MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS + MAX_TEXTURE_BUFFER_BINDINGS;
+										  + MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS
+										  + MAX_TEXTURE_BUFFER_BINDINGS;
 
 const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 const U MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
@@ -65,8 +66,8 @@ template<typename T>
 using GrObjectPtr = IntrusivePtr<T, DefaultPtrDeleter<T>>;
 
 #define ANKI_GR_CLASS(x_) \
-	class x_##Impl;       \
-	class x_;             \
+	class x_##Impl; \
+	class x_; \
 	using x_##Ptr = GrObjectPtr<x_>;
 
 ANKI_GR_CLASS(Buffer)
@@ -83,10 +84,10 @@ ANKI_GR_CLASS(RenderGraph)
 
 #undef ANKI_GR_CLASS
 
-#define ANKI_GR_OBJECT           \
-	friend class GrManager;      \
+#define ANKI_GR_OBJECT \
+	friend class GrManager; \
 	template<typename, typename> \
-	friend class IntrusivePtr;   \
+	friend class IntrusivePtr; \
 	template<typename, typename> \
 	friend class GenericPoolAllocator;
 

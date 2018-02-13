@@ -45,9 +45,9 @@ out gl_PerVertex
 layout(location = 0) out highp vec2 out_uv;
 layout(location = 1) out mediump vec3 out_normal;
 layout(location = 2) out mediump vec4 out_tangent;
-#if CALC_BITANGENT_IN_VERT
+#	if CALC_BITANGENT_IN_VERT
 layout(location = 3) out mediump vec3 out_bitangent;
-#endif
+#	endif
 layout(location = 4) out mediump float out_distFromTheCamera; // Parallax
 layout(location = 5) out mediump vec3 out_eyeTangentSpace; // Parallax
 layout(location = 6) out mediump vec3 out_normalTangentSpace; // Parallax
@@ -78,9 +78,9 @@ void positionUvNormalTangent(mat4 mvp, mat3 rotationMat)
 	out_tangent.xyz = rotationMat * g_tangent.xyz;
 	out_tangent.w = g_tangent.w;
 
-#if CALC_BITANGENT_IN_VERT
+#	if CALC_BITANGENT_IN_VERT
 	out_bitangent = cross(out_normal, out_tangent.xyz) * out_tangent.w;
-#endif
+#	endif
 }
 #endif // PASS == PASS_GB_FS
 
@@ -118,18 +118,18 @@ void skinning()
 			float boneWeight = in_boneWeights[i];
 
 			position += (u_boneTransforms[boneIdx] * vec4(g_position * boneWeight, 1.0)).xyz;
-#if PASS == PASS_GB_FS
+#	if PASS == PASS_GB_FS
 			normal += (u_boneTransforms[boneIdx] * vec4(g_normal * boneWeight, 0.0)).xyz;
 			tangent += (u_boneTransforms[boneIdx] * vec4(g_tangent.xyz * boneWeight, 0.0)).xyz;
-#endif
+#	endif
 		}
 	}
 
 	g_position = position;
-#if PASS == PASS_GB_FS
+#	if PASS == PASS_GB_FS
 	g_tangent.xyz = tangent;
 	g_normal = normal;
-#endif
+#	endif
 }
 #endif
 

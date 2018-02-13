@@ -286,29 +286,29 @@ static NativeWindow* win = nullptr;
 static GrManager* gr = nullptr;
 static StagingGpuMemoryManager* stagingMem = nullptr;
 
-#define COMMON_BEGIN()                                                          \
-	stagingMem = new StagingGpuMemoryManager();                                 \
-	Config cfg;                                                                 \
-	cfg.set("width", WIDTH);                                                    \
-	cfg.set("height", HEIGHT);                                                  \
-	cfg.set("window.debugContext", true);                                       \
-	cfg.set("window.vsync", false);                                             \
-	win = createWindow(cfg);                                                    \
-	gr = createGrManager(cfg, win);                                             \
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                    \
-	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator();             \
+#define COMMON_BEGIN() \
+	stagingMem = new StagingGpuMemoryManager(); \
+	Config cfg; \
+	cfg.set("width", WIDTH); \
+	cfg.set("height", HEIGHT); \
+	cfg.set("window.debugContext", true); \
+	cfg.set("window.vsync", false); \
+	win = createWindow(cfg); \
+	gr = createGrManager(cfg, win); \
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config())); \
+	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
 	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, gr, gr->getAllocator())); \
 	{
 
-#define COMMON_END()               \
-	}                              \
-	gr->finish();                  \
-	delete transfAlloc;            \
-	delete stagingMem;             \
+#define COMMON_END() \
+	} \
+	gr->finish(); \
+	delete transfAlloc; \
+	delete stagingMem; \
 	GrManager::deleteInstance(gr); \
-	delete win;                    \
-	win = nullptr;                 \
-	gr = nullptr;                  \
+	delete win; \
+	win = nullptr; \
+	gr = nullptr; \
 	stagingMem = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
@@ -330,23 +330,23 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 #define SET_UNIFORMS(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setUniforms(size_, cmdb_, set_, binding_))
 #define SET_STORAGE(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setStorage(size_, cmdb_, set_, binding_))
 
-#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_)                                        \
-	do                                                                                                      \
-	{                                                                                                       \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                     \
-		void* f = handle_.getMappedMemory();                                                                \
-		memcpy(f, ptr_, size_);                                                                             \
-		TextureViewPtr view = gr->newTextureView(TextureViewInitInfo(tex_, surf_));                         \
+#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_) \
+	do \
+	{ \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_)); \
+		void* f = handle_.getMappedMemory(); \
+		memcpy(f, ptr_, size_); \
+		TextureViewPtr view = gr->newTextureView(TextureViewInitInfo(tex_, surf_)); \
 		cmdb_->copyBufferToTextureView(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view); \
 	} while(0)
 
-#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_)                                             \
-	do                                                                                                      \
-	{                                                                                                       \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_));                                     \
-		void* f = handle_.getMappedMemory();                                                                \
-		memcpy(f, ptr_, size_);                                                                             \
-		TextureViewPtr view = gr->newTextureView(TextureViewInitInfo(tex_, vol_));                          \
+#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_) \
+	do \
+	{ \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc->allocate(size_, handle_)); \
+		void* f = handle_.getMappedMemory(); \
+		memcpy(f, ptr_, size_); \
+		TextureViewPtr view = gr->newTextureView(TextureViewInitInfo(tex_, vol_)); \
 		cmdb_->copyBufferToTextureView(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), view); \
 	} while(0)
 

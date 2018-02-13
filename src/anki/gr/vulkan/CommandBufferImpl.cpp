@@ -468,12 +468,10 @@ void CommandBufferImpl::flushBarriers()
 
 			if(prev && prev->image == crnt.image
 				&& prev->subresourceRange.aspectMask == crnt.subresourceRange.aspectMask
-				&& prev->oldLayout == crnt.oldLayout
-				&& prev->newLayout == crnt.newLayout
-				&& prev->srcAccessMask == crnt.srcAccessMask
-				&& prev->dstAccessMask == crnt.dstAccessMask
+				&& prev->oldLayout == crnt.oldLayout && prev->newLayout == crnt.newLayout
+				&& prev->srcAccessMask == crnt.srcAccessMask && prev->dstAccessMask == crnt.dstAccessMask
 				&& prev->subresourceRange.baseMipLevel + prev->subresourceRange.levelCount
-					== crnt.subresourceRange.baseMipLevel
+					   == crnt.subresourceRange.baseMipLevel
 				&& prev->subresourceRange.baseArrayLayer == crnt.subresourceRange.baseArrayLayer
 				&& prev->subresourceRange.layerCount == crnt.subresourceRange.layerCount)
 			{
@@ -500,14 +498,12 @@ void CommandBufferImpl::flushBarriers()
 
 			if(prev && prev->image == crnt.image
 				&& prev->subresourceRange.aspectMask == crnt.subresourceRange.aspectMask
-				&& prev->oldLayout == crnt.oldLayout
-				&& prev->newLayout == crnt.newLayout
-				&& prev->srcAccessMask == crnt.srcAccessMask
-				&& prev->dstAccessMask == crnt.dstAccessMask
+				&& prev->oldLayout == crnt.oldLayout && prev->newLayout == crnt.newLayout
+				&& prev->srcAccessMask == crnt.srcAccessMask && prev->dstAccessMask == crnt.dstAccessMask
 				&& prev->subresourceRange.baseMipLevel == crnt.subresourceRange.baseMipLevel
 				&& prev->subresourceRange.levelCount == crnt.subresourceRange.levelCount
 				&& prev->subresourceRange.baseArrayLayer + prev->subresourceRange.layerCount
-					== crnt.subresourceRange.baseArrayLayer)
+					   == crnt.subresourceRange.baseArrayLayer)
 			{
 				// Can batch
 				finalImgBarriers[finalImgBarrierCount - 1].subresourceRange.layerCount +=
@@ -714,9 +710,10 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 	else if(!!(tex.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
 	{
 		// Create a new shadow buffer
-		const PtrSize shadowSize = (is3D)
-			? computeVolumeSize(width, height, depth, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
-			: computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
+		const PtrSize shadowSize =
+			(is3D) ? computeVolumeSize(
+						 width, height, depth, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
+				   : computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
 		BufferPtr shadow = getManager().newBuffer(
 			BufferInitInfo(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE, "Workaround"));
 		const VkBuffer shadowHandle = static_cast<const BufferImpl&>(*shadow).getHandle();

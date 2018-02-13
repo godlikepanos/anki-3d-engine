@@ -41,7 +41,7 @@ public:
 	Bool operator==(const DrawElementsIndirectInfo& b) const
 	{
 		return m_count == b.m_count && m_instanceCount == b.m_instanceCount && m_firstIndex == b.m_firstIndex
-			&& m_baseVertex == b.m_baseVertex && m_baseInstance == b.m_baseInstance;
+			   && m_baseVertex == b.m_baseVertex && m_baseInstance == b.m_baseInstance;
 	}
 
 	Bool operator!=(const DrawElementsIndirectInfo& b) const
@@ -74,7 +74,7 @@ public:
 	Bool operator==(const DrawArraysIndirectInfo& b) const
 	{
 		return m_count == b.m_count && m_instanceCount == b.m_instanceCount && m_first == b.m_first
-			&& m_baseInstance == b.m_baseInstance;
+			   && m_baseInstance == b.m_baseInstance;
 	}
 
 	Bool operator!=(const DrawArraysIndirectInfo& b) const

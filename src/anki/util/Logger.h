@@ -96,10 +96,10 @@ private:
 
 typedef Singleton<Logger> LoggerSingleton;
 
-#define ANKI_LOG(subsystem_, t, ...)                                                          \
-	do                                                                                        \
-	{                                                                                         \
-		LoggerSingleton::get().writeFormated(                                                 \
+#define ANKI_LOG(subsystem_, t, ...) \
+	do \
+	{ \
+		LoggerSingleton::get().writeFormated( \
 			ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, Logger::MessageType::t, __VA_ARGS__); \
 	} while(false);
 /// @}

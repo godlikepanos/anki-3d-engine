@@ -103,7 +103,7 @@ public:
 class ResourceManager:
 
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) \
-public                                         \
+public \
 	TypeResourceManager<rsrc_>
 
 #define ANKI_INSTANSIATE_RESOURCE_DELIMITER() ,

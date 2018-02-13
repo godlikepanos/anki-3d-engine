@@ -192,7 +192,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
 	Bool useDedicatedMemory = !!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
-		&& !!(getGrManagerImpl().getExtensions() & VulkanExtensions::NV_DEDICATED_ALLOCATION);
+							  && !!(getGrManagerImpl().getExtensions() & VulkanExtensions::NV_DEDICATED_ALLOCATION);
 
 	// Check if format is supported
 	Bool supported;
@@ -620,13 +620,13 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 		}
 	}
 	else if(depthStencil
-		&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
+			&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
 	{
 		// FB read & shader read
 		out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	}
 	else if(depthStencil
-		&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)))
+			&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)))
 	{
 		// Wild guess: One aspect is shader read and the other is read write
 		out = VK_IMAGE_LAYOUT_GENERAL;

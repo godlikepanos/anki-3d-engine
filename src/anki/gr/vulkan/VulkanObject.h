@@ -30,12 +30,12 @@ public:
 };
 
 // Do this trick to avoid including heavy headers
-#define ANKI_INSTANTIATE_GR_OBJECT(type_)                                \
-	template<>                                                           \
-	VkDevice VulkanObject<type_, type_##Impl>::getDevice() const;        \
-	template<>                                                           \
+#define ANKI_INSTANTIATE_GR_OBJECT(type_) \
+	template<> \
+	VkDevice VulkanObject<type_, type_##Impl>::getDevice() const; \
+	template<> \
 	GrManagerImpl& VulkanObject<type_, type_##Impl>::getGrManagerImpl(); \
-	template<>                                                           \
+	template<> \
 	const GrManagerImpl& VulkanObject<type_, type_##Impl>::getGrManagerImpl() const;
 #define ANKI_INSTANTIATE_GR_OBJECT_DELIMITER()
 #include <anki/gr/common/InstantiationMacros.h>

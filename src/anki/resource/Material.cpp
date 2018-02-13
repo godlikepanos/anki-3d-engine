@@ -514,7 +514,7 @@ const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_, Bo
 	if(variant.m_variant == nullptr)
 	{
 		const U mutatorCount = m_mutations.getSize() + ((m_instanceMutator) ? 1 : 0) + ((m_passMutator) ? 1 : 0)
-			+ ((m_lodMutator) ? 1 : 0) + ((m_bonesMutator) ? 1 : 0);
+							   + ((m_lodMutator) ? 1 : 0) + ((m_bonesMutator) ? 1 : 0);
 
 		DynamicArrayAuto<ShaderProgramResourceMutation> mutations(getTempAllocator());
 		mutations.create(mutatorCount);

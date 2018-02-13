@@ -44,8 +44,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	if(checkFormat(m_header.m_positionsFormat, "positions", true)
 		|| checkFormat(m_header.m_normalsFormat, "normals", true)
 		|| checkFormat(m_header.m_tangentsFormat, "tangents", true)
-		|| checkFormat(m_header.m_colorsFormat, "colors", false)
-		|| checkFormat(m_header.m_uvsFormat, "UVs", true)
+		|| checkFormat(m_header.m_colorsFormat, "colors", false) || checkFormat(m_header.m_uvsFormat, "UVs", true)
 		|| checkFormat(m_header.m_boneWeightsFormat, "bone weights", false)
 		|| checkFormat(m_header.m_boneIndicesFormat, "bone ids", false)
 		|| checkFormat(m_header.m_indicesFormat, "indices format", true))
@@ -140,8 +139,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	// Check indices
 	U indicesPerFace = ((m_header.m_flags & Flag::QUADS) == Flag::QUADS) ? 4 : 3;
 	if(m_header.m_totalIndicesCount < indicesPerFace || (m_header.m_totalIndicesCount % indicesPerFace) != 0
-		|| m_header.m_totalIndicesCount > MAX_U16
-		|| m_header.m_indicesFormat.m_components != ComponentFormat::R16
+		|| m_header.m_totalIndicesCount > MAX_U16 || m_header.m_indicesFormat.m_components != ComponentFormat::R16
 		|| m_header.m_indicesFormat.m_transform != FormatTransform::UINT)
 	{
 		// Only 16bit indices are supported for now
@@ -204,10 +202,10 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	// Read vertices
 	//
 	m_vertSize = 3 * sizeof(F32) // pos
-		+ 1 * sizeof(U32) // norm
-		+ 1 * sizeof(U32) // tang
-		+ 2 * sizeof(U16) // uvs
-		+ ((hasBoneInfo) ? (4 * sizeof(U8) + 4 * sizeof(U16)) : 0);
+				 + 1 * sizeof(U32) // norm
+				 + 1 * sizeof(U32) // tang
+				 + 2 * sizeof(U16) // uvs
+				 + ((hasBoneInfo) ? (4 * sizeof(U8) + 4 * sizeof(U16)) : 0);
 
 	m_verts.create(alloc, m_header.m_totalVerticesCount * m_vertSize);
 	ANKI_CHECK(file->read(&m_verts[0], m_verts.getSizeInBytes()));

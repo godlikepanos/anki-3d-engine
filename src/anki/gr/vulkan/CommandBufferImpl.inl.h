@@ -193,7 +193,7 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	if(vol.m_level > 0)
 	{
 		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
-			&& "This transition happens inside CommandBufferImpl::generateMipmaps");
+					&& "This transition happens inside CommandBufferImpl::generateMipmaps");
 	}
 
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
@@ -428,7 +428,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass());
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
-		|| m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+				|| m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 
 	ANKI_ASSERT(static_cast<const CommandBufferImpl&>(*cmdb).m_finalized);
 
@@ -575,7 +575,7 @@ inline void CommandBufferImpl::commandCommon()
 	}
 
 	ANKI_ASSERT(Thread::getCurrentThreadId() == m_tid
-		&& "Commands must be recorder and flushed by the thread this command buffer was created");
+				&& "Commands must be recorder and flushed by the thread this command buffer was created");
 
 	ANKI_ASSERT(m_handle);
 }
@@ -730,7 +730,7 @@ inline void CommandBufferImpl::copyBufferToBuffer(
 inline Bool CommandBufferImpl::flipViewport() const
 {
 	return static_cast<const FramebufferImpl&>(*m_activeFb).isDefaultFramebuffer()
-		&& !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
+		   && !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
 }
 
 } // end namespace anki

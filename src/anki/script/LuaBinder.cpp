@@ -198,7 +198,7 @@ Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const char* typeName,
 		{
 			// Check using a LUA method again
 			ANKI_ASSERT(luaL_testudata(l, stackIdx, typeName) != nullptr
-				&& "ANKI type check passes but LUA's type check failed");
+						&& "ANKI type check passes but LUA's type check failed");
 		}
 		else
 		{

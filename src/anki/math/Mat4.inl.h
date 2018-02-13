@@ -179,7 +179,7 @@ inline void TMat4F32Base::transpose()
 
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
-#error "TODO"
+#	error "TODO"
 
 #endif
 

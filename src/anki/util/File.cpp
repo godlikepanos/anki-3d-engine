@@ -16,7 +16,7 @@ namespace anki
 #if ANKI_OS == ANKI_OS_ANDROID
 extern android_app* gAndroidApp;
 
-#define ANKI_AFILE reinterpret_cast<AAsset*>(m_file)
+#	define ANKI_AFILE reinterpret_cast<AAsset*>(m_file)
 #endif
 
 #define ANKI_CFILE reinterpret_cast<FILE*>(m_file)
@@ -48,10 +48,10 @@ Error File::open(const CString& filename, FileOpenFlag flags)
 	ANKI_ASSERT(m_file == nullptr && m_flags == FileOpenFlag::NONE && m_type == Type::NONE);
 
 	// Only these flags are accepted
-	ANKI_ASSERT((flags & (FileOpenFlag::READ | FileOpenFlag::WRITE | FileOpenFlag::APPEND | FileOpenFlag::BINARY
-							 | FileOpenFlag::ENDIAN_LITTLE
-							 | FileOpenFlag::ENDIAN_BIG))
-		!= FileOpenFlag::NONE);
+	ANKI_ASSERT((flags
+					& (FileOpenFlag::READ | FileOpenFlag::WRITE | FileOpenFlag::APPEND | FileOpenFlag::BINARY
+						  | FileOpenFlag::ENDIAN_LITTLE | FileOpenFlag::ENDIAN_BIG))
+				!= FileOpenFlag::NONE);
 
 	// Cannot be both
 	ANKI_ASSERT((flags & FileOpenFlag::READ) != (flags & FileOpenFlag::WRITE));
@@ -312,7 +312,7 @@ Error File::readU32(U32& out)
 	ANKI_ASSERT((m_flags & FileOpenFlag::READ) != FileOpenFlag::NONE);
 	ANKI_ASSERT((m_flags & FileOpenFlag::BINARY) != FileOpenFlag::NONE && "Should be binary file");
 	ANKI_ASSERT((m_flags & FileOpenFlag::ENDIAN_BIG) != (m_flags & FileOpenFlag::ENDIAN_LITTLE)
-		&& "One of those 2 should be active");
+				&& "One of those 2 should be active");
 
 	Error err = read(&out, sizeof(out));
 	if(!err)
@@ -320,8 +320,8 @@ Error File::readU32(U32& out)
 		// Copy it
 		FileOpenFlag machineEndianness = getMachineEndianness();
 		FileOpenFlag fileEndianness = ((m_flags & FileOpenFlag::ENDIAN_BIG) != FileOpenFlag::NONE)
-			? FileOpenFlag::ENDIAN_BIG
-			: FileOpenFlag::ENDIAN_LITTLE;
+										  ? FileOpenFlag::ENDIAN_BIG
+										  : FileOpenFlag::ENDIAN_LITTLE;
 
 		if(machineEndianness == fileEndianness)
 		{

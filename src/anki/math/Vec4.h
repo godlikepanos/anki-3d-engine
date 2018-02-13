@@ -225,7 +225,7 @@ TVec4<F32> TVec4<F32>::Base::operator-() const;
 
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
-#error "TODO"
+#	error "TODO"
 
 #endif
 

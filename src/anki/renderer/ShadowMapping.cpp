@@ -308,12 +308,13 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				++numOfFacesThatHaveDrawcalls;
 			}
 		}
-		const Bool allocationFailed = numOfFacesThatHaveDrawcalls == 0 || allocateTilesAndScratchTiles(light->m_uuid,
-																			  numOfFacesThatHaveDrawcalls,
-																			  &timestamps[0],
-																			  &faceIndices[0],
-																			  &tiles[0],
-																			  &scratchTiles[0]);
+		const Bool allocationFailed = numOfFacesThatHaveDrawcalls == 0
+									  || allocateTilesAndScratchTiles(light->m_uuid,
+											 numOfFacesThatHaveDrawcalls,
+											 &timestamps[0],
+											 &faceIndices[0],
+											 &tiles[0],
+											 &scratchTiles[0]);
 
 		if(!allocationFailed)
 		{
@@ -371,12 +372,12 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		// Allocate tiles
 		U32 tileIdx, scratchTileIdx, faceIdx = 0;
 		const Bool allocationFailed = light->m_shadowRenderQueue->m_renderables.getSize() == 0
-			|| allocateTilesAndScratchTiles(light->m_uuid,
-				   1,
-				   &light->m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
-				   &faceIdx,
-				   &tileIdx,
-				   &scratchTileIdx);
+									  || allocateTilesAndScratchTiles(light->m_uuid,
+											 1,
+											 &light->m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
+											 &faceIdx,
+											 &tileIdx,
+											 &scratchTileIdx);
 
 		if(!allocationFailed)
 		{
@@ -650,7 +651,7 @@ Bool ShadowMapping::allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U3
 			break;
 		}
 		else if(m_tiles[tileIdx].m_lastUsedTimestamp != m_r->getGlobalTimestamp()
-			&& m_tiles[tileIdx].m_lastUsedTimestamp < tileToKickMinTimestamp)
+				&& m_tiles[tileIdx].m_lastUsedTimestamp < tileToKickMinTimestamp)
 		{
 			// Found some with low timestamp
 			tileToKick = tileIdx;

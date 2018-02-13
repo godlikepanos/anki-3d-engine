@@ -201,8 +201,8 @@ public:
 		Bool enable = !stencilTestDisabled(
 			m_stencilFail[0], m_stencilPassDepthFail[0], m_stencilPassDepthPass[0], m_stencilCompare[0]);
 		enable = enable
-			|| !stencilTestDisabled(
-				   m_stencilFail[1], m_stencilPassDepthFail[1], m_stencilPassDepthPass[1], m_stencilCompare[1]);
+				 || !stencilTestDisabled(
+						m_stencilFail[1], m_stencilPassDepthFail[1], m_stencilPassDepthPass[1], m_stencilCompare[1]);
 
 		if(enable != m_stencilTestEnabled)
 		{

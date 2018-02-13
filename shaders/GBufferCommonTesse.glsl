@@ -98,8 +98,8 @@ void tessellatePNPositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
 	vec3 pos300 = IN_POS3(2);
 
 	vec3 pos = pos300 * wPow3 + pos030 * uPow3 + pos003 * vPow3 + pnPatch.pos210 * 3.0 * wPow2 * u
-		+ pnPatch.pos120 * 3.0 * w * uPow2 + pnPatch.pos201 * 3.0 * wPow2 * v + pnPatch.pos021 * 3.0 * uPow2 * v
-		+ pnPatch.pos102 * 3.0 * w * vPow2 + pnPatch.pos012 * 3.0 * u * vPow2 + pnPatch.pos111 * 6.0 * w * u * v;
+			   + pnPatch.pos120 * 3.0 * w * uPow2 + pnPatch.pos201 * 3.0 * wPow2 * v + pnPatch.pos021 * 3.0 * uPow2 * v
+			   + pnPatch.pos102 * 3.0 * w * vPow2 + pnPatch.pos012 * 3.0 * u * vPow2 + pnPatch.pos111 * 6.0 * w * u * v;
 
 	gl_Position = mvp * vec4(pos, 1.0);
 }
@@ -128,8 +128,8 @@ void tessellatePhongPositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat
 
 	// phong tesselated pos
 	vec3 phongPos = tc2[0] * inpos[0] + tc2[1] * inpos[1] + tc2[2] * inpos[2]
-		+ gl_TessCoord[0] * gl_TessCoord[1] * termIJ + gl_TessCoord[1] * gl_TessCoord[2] * termJK
-		+ gl_TessCoord[2] * gl_TessCoord[0] * termIK;
+					+ gl_TessCoord[0] * gl_TessCoord[1] * termIJ + gl_TessCoord[1] * gl_TessCoord[2] * termJK
+					+ gl_TessCoord[2] * gl_TessCoord[0] * termIK;
 
 	float tessAlpha = 1.0;
 	vec3 finalPos = (1.0 - tessAlpha) * barPos + tessAlpha * phongPos;

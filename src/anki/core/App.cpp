@@ -26,7 +26,7 @@
 #include <anki/ui/UiManager.h>
 
 #if ANKI_OS == ANKI_OS_ANDROID
-#include <android_native_app_glue.h>
+#	include <android_native_app_glue.h>
 #endif
 
 namespace anki
@@ -678,8 +678,9 @@ void App::injectStatsUiElement(DynamicArrayAuto<UiQueueElement>& newUiElementArr
 		}
 
 		newUiElementArr[count].m_userData = m_statsUi.get();
-		newUiElementArr[count].m_drawCallback = [](
-			CanvasPtr& canvas, void* userData) -> void { static_cast<StatsUi*>(userData)->build(canvas); };
+		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
+			static_cast<StatsUi*>(userData)->build(canvas);
+		};
 
 		rqueue.m_uis = newUiElementArr;
 	}

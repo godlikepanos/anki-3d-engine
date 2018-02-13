@@ -94,11 +94,11 @@ ANKI_TEST(Util, String)
 
 	// Compare
 	{
-#define COMPARE(x_, y_, op_)                                          \
-	a.append(alloc, x_);                                              \
-	b.append(alloc, y_);                                              \
+#define COMPARE(x_, y_, op_) \
+	a.append(alloc, x_); \
+	b.append(alloc, y_); \
 	ANKI_TEST_EXPECT_EQ(a op_ b, std::string(x_) op_ std::string(y_)) \
-	a.destroy(alloc);                                                 \
+	a.destroy(alloc); \
 	b.destroy(alloc);
 
 		String a, b;

@@ -68,9 +68,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 		xml = replaceAllString(xml,
 			"%diff%",
 			"<input shaderInput=\"diffColor\" value=\"" + std::to_string(diffCol[0]) + " " + std::to_string(diffCol[1])
-				+ " "
-				+ std::to_string(diffCol[2])
-				+ "\"/>");
+				+ " " + std::to_string(diffCol[2]) + "\"/>");
 
 		xml = replaceAllString(xml, "%diffTexMutator%", "0");
 	}
@@ -97,9 +95,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 		xml = replaceAllString(xml,
 			"%spec%",
 			"<input shaderInput=\"specColor\" value=\"" + std::to_string(specCol[0]) + " " + std::to_string(specCol[1])
-				+ " "
-				+ std::to_string(specCol[2])
-				+ "\"/>");
+				+ " " + std::to_string(specCol[2]) + "\"/>");
 
 		xml = replaceAllString(xml, "%specTexMutator%", "0");
 	}
@@ -214,10 +210,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 		xml = replaceAllString(xml,
 			"%emission%",
 			"<input shaderInput=\"emission\" value=\"" + std::to_string(emissionCol[0]) + " "
-				+ std::to_string(emissionCol[1])
-				+ " "
-				+ std::to_string(emissionCol[2])
-				+ "\"/>");
+				+ std::to_string(emissionCol[1]) + " " + std::to_string(emissionCol[2]) + "\"/>");
 
 		xml = replaceAllString(xml, "%emissiveTexMutator%", "0");
 	}

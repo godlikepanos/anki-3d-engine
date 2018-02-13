@@ -45,8 +45,8 @@ public:
 		if(m_shaders[ShaderType::COMPUTE])
 		{
 			invalid |= m_shaders[ShaderType::VERTEX] || m_shaders[ShaderType::TESSELLATION_CONTROL]
-				|| m_shaders[ShaderType::TESSELLATION_EVALUATION] || m_shaders[ShaderType::GEOMETRY]
-				|| m_shaders[ShaderType::FRAGMENT];
+					   || m_shaders[ShaderType::TESSELLATION_EVALUATION] || m_shaders[ShaderType::GEOMETRY]
+					   || m_shaders[ShaderType::FRAGMENT];
 		}
 		else
 		{

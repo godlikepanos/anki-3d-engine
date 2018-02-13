@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
 #define NK_IMPLEMENTATION

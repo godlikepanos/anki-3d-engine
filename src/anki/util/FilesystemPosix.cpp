@@ -16,7 +16,7 @@
 
 // Define PATH_MAX if needed
 #ifndef PATH_MAX
-#define PATH_MAX 4096
+#	define PATH_MAX 4096
 #endif
 
 namespace anki

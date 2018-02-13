@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #if 0
-#include <anki/resource/SkelAnim.h>
+#	include <anki/resource/SkelAnim.h>
 
 namespace anki {
 

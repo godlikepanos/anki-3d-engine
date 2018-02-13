@@ -172,20 +172,20 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 /// @name Trace macros.
 /// @{
 #if ANKI_ENABLE_TRACE
-#define ANKI_TRACE_START_EVENT(name_) TraceManagerSingleton::get().startEvent()
-#define ANKI_TRACE_STOP_EVENT(name_) TraceManagerSingleton::get().stopEvent(TraceEventType::name_)
-#define ANKI_TRACE_SCOPED_EVENT(name_) \
-	ScopedTraceManagerEvent _tse##name_(&TraceManagerSingleton::get(), TraceEventType::name_)
-#define ANKI_TRACE_INC_COUNTER(name_, val_) TraceManagerSingleton::get().incCounter(TraceCounterType::name_, val_)
-#define ANKI_TRACE_START_FRAME() TraceManagerSingleton::get().startFrame()
-#define ANKI_TRACE_STOP_FRAME() TraceManagerSingleton::get().stopFrame()
+#	define ANKI_TRACE_START_EVENT(name_) TraceManagerSingleton::get().startEvent()
+#	define ANKI_TRACE_STOP_EVENT(name_) TraceManagerSingleton::get().stopEvent(TraceEventType::name_)
+#	define ANKI_TRACE_SCOPED_EVENT(name_) \
+		ScopedTraceManagerEvent _tse##name_(&TraceManagerSingleton::get(), TraceEventType::name_)
+#	define ANKI_TRACE_INC_COUNTER(name_, val_) TraceManagerSingleton::get().incCounter(TraceCounterType::name_, val_)
+#	define ANKI_TRACE_START_FRAME() TraceManagerSingleton::get().startFrame()
+#	define ANKI_TRACE_STOP_FRAME() TraceManagerSingleton::get().stopFrame()
 #else
-#define ANKI_TRACE_START_EVENT(name_) ((void)0)
-#define ANKI_TRACE_STOP_EVENT(name_) ((void)0)
-#define ANKI_TRACE_SCOPED_EVENT(name_) ((void)0)
-#define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
-#define ANKI_TRACE_START_FRAME() ((void)0)
-#define ANKI_TRACE_STOP_FRAME() ((void)0)
+#	define ANKI_TRACE_START_EVENT(name_) ((void)0)
+#	define ANKI_TRACE_STOP_EVENT(name_) ((void)0)
+#	define ANKI_TRACE_SCOPED_EVENT(name_) ((void)0)
+#	define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
+#	define ANKI_TRACE_START_FRAME() ((void)0)
+#	define ANKI_TRACE_STOP_FRAME() ((void)0)
 #endif
 /// @}
 

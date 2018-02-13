@@ -70,7 +70,7 @@ vec4 textureCatmullRom4Samples(sampler2D tex, vec2 uv, vec2 texSize)
 	w.xz *= halff.x * halff.y > 0.0 ? 1.0 : -1.0;
 
 	return (texture(tex, pos.xy) * w.x + texture(tex, pos.zy) * w.z) * w.y
-		+ (texture(tex, pos.xw) * w.x + texture(tex, pos.zw) * w.z) * w.w;
+		   + (texture(tex, pos.xw) * w.x + texture(tex, pos.zw) * w.z) * w.w;
 }
 
 float rand(vec2 n)
@@ -290,7 +290,7 @@ vec3 readErosion(sampler2D tex, vec2 uv)
 {
 	vec3 minValue = textureLod(tex, uv, 0.0).rgb;
 
-#define ANKI_EROSION(x, y)                                  \
+#define ANKI_EROSION(x, y) \
 	col2 = textureLodOffset(tex, uv, 0.0, ivec2(x, y)).rgb; \
 	minValue = min(col2, minValue);
 

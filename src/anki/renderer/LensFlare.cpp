@@ -191,7 +191,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		sprites[c].m_scale = flareEl.m_firstFlareSize * Vec2(1.0, m_r->getAspectRatio());
 		sprites[c].m_depth = 0.0;
 		F32 alpha = flareEl.m_colorMultiplier.w() * (1.0 - pow(absolute(posNdc.x()), 6.0))
-			* (1.0 - pow(absolute(posNdc.y()), 6.0)); // Fade the flare on the edges
+					* (1.0 - pow(absolute(posNdc.y()), 6.0)); // Fade the flare on the edges
 		sprites[c].m_color = Vec4(flareEl.m_colorMultiplier.xyz(), alpha);
 		++c;
 

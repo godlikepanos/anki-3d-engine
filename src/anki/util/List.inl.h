@@ -10,7 +10,7 @@ namespace detail
 
 template<typename TNodePointer, typename TValuePointer, typename TValueReference, typename TList>
 ListIterator<TNodePointer, TValuePointer, TValueReference, TList>&
-	ListIterator<TNodePointer, TValuePointer, TValueReference, TList>::operator--()
+ListIterator<TNodePointer, TValuePointer, TValueReference, TList>::operator--()
 {
 	ANKI_ASSERT(m_list);
 

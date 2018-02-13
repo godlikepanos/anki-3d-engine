@@ -13,7 +13,7 @@
 #include <anki/util/Functions.h>
 #include <lua.hpp>
 #ifndef ANKI_LUA_HPP
-#error "Wrong LUA header included"
+#	error "Wrong LUA header included"
 #endif
 
 namespace anki

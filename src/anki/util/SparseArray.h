@@ -226,7 +226,7 @@ public:
 				,
 			m_iteratorVer
 #endif
-			);
+		);
 	}
 
 	/// Get begin.
@@ -238,7 +238,7 @@ public:
 				,
 			m_iteratorVer
 #endif
-			);
+		);
 	}
 
 	/// Get end.
@@ -250,7 +250,7 @@ public:
 			,
 			m_iteratorVer
 #endif
-			);
+		);
 	}
 
 	/// Get end.
@@ -262,7 +262,7 @@ public:
 			,
 			m_iteratorVer
 #endif
-			);
+		);
 	}
 
 	/// Get begin.
@@ -318,7 +318,7 @@ public:
 				,
 			m_iteratorVer
 #endif
-			);
+		);
 	}
 
 	/// Get an iterator.
@@ -330,7 +330,7 @@ public:
 				,
 			m_iteratorVer
 #endif
-			);
+		);
 	}
 
 	/// Remove an element.

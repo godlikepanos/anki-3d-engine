@@ -16,7 +16,7 @@ inline Bool stencilTestDisabled(StencilOperation stencilFail,
 	CompareOperation compare)
 {
 	return stencilFail == StencilOperation::KEEP && stencilPassDepthFail == StencilOperation::KEEP
-		&& stencilPassDepthPass == StencilOperation::KEEP && compare == CompareOperation::ALWAYS;
+		   && stencilPassDepthPass == StencilOperation::KEEP && compare == CompareOperation::ALWAYS;
 }
 
 inline Bool blendingDisabled(BlendFactor srcFactorRgb,
@@ -27,9 +27,9 @@ inline Bool blendingDisabled(BlendFactor srcFactorRgb,
 	BlendOperation opA)
 {
 	Bool dontWantBlend = srcFactorRgb == BlendFactor::ONE && dstFactorRgb == BlendFactor::ZERO
-		&& srcFactorA == BlendFactor::ONE && dstFactorA == BlendFactor::ZERO
-		&& (opRgb == BlendOperation::ADD || opRgb == BlendOperation::SUBTRACT)
-		&& (opA == BlendOperation::ADD || opA == BlendOperation::SUBTRACT);
+						 && srcFactorA == BlendFactor::ONE && dstFactorA == BlendFactor::ZERO
+						 && (opRgb == BlendOperation::ADD || opRgb == BlendOperation::SUBTRACT)
+						 && (opA == BlendOperation::ADD || opA == BlendOperation::SUBTRACT);
 	return dontWantBlend;
 }
 

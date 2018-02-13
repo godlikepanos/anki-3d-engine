@@ -58,7 +58,7 @@ Mesh::~Mesh()
 Bool Mesh::isCompatible(const Mesh& other) const
 {
 	return hasBoneWeights() == other.hasBoneWeights() && getSubMeshesCount() == other.getSubMeshesCount()
-		&& m_texChannelsCount == other.m_texChannelsCount;
+		   && m_texChannelsCount == other.m_texChannelsCount;
 }
 
 Error Mesh::load(const ResourceFilename& filename, Bool async)

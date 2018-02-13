@@ -12,7 +12,7 @@
 #include <anki/Math.h>
 #include <tinyxml2.h>
 #if !ANKI_TINYXML2
-#error "Wrong tinyxml2 included"
+#	error "Wrong tinyxml2 included"
 #endif
 
 namespace anki

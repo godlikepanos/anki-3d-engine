@@ -232,7 +232,7 @@ TMat3x4<F32> TMat3x4<F32>::combineTransformations(const TMat3x4<F32>& b) const;
 
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
-#error "TODO"
+#	error "TODO"
 
 #endif
 

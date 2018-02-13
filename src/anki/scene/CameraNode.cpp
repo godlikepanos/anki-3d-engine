@@ -74,13 +74,11 @@ Error CameraNode::init(Frustum* frustum)
 
 	// Frustum component
 	FrustumComponent* frc = newComponent<FrustumComponent>(this, frustum);
-	frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
+	frc->setEnabledVisibilityTests(
+		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
-		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES
-		| FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
-		| FrustumComponentVisibilityTestFlag::OCCLUDERS
-		| FrustumComponentVisibilityTestFlag::DECALS
+		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES | FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
+		| FrustumComponentVisibilityTestFlag::OCCLUDERS | FrustumComponentVisibilityTestFlag::DECALS
 		| FrustumComponentVisibilityTestFlag::EARLY_Z);
 
 	// Feedback component #2

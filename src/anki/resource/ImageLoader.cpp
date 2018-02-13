@@ -333,8 +333,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	}
 
 	if(header.m_width == 0 || !isPowerOfTwo(header.m_width) || header.m_width > 4096 || header.m_height == 0
-		|| !isPowerOfTwo(header.m_height)
-		|| header.m_height > 4096)
+		|| !isPowerOfTwo(header.m_height) || header.m_height > 4096)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect width/height value");
 		return Error::USER_DATA;

@@ -96,14 +96,14 @@ protected:
 };
 
 // Specialize the MaterialVariable::getValue
-#define ANKI_SPECIALIZE_GET_VALUE(t_, var_, shaderType_)                                          \
-	template<>                                                                                    \
-	inline const t_& MaterialVariable::getValue<t_>() const                                       \
-	{                                                                                             \
-		ANKI_ASSERT(m_input);                                                                     \
+#define ANKI_SPECIALIZE_GET_VALUE(t_, var_, shaderType_) \
+	template<> \
+	inline const t_& MaterialVariable::getValue<t_>() const \
+	{ \
+		ANKI_ASSERT(m_input); \
 		ANKI_ASSERT(m_input->getShaderVariableDataType() == ShaderVariableDataType::shaderType_); \
-		ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);                                \
-		return var_;                                                                              \
+		ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE); \
+		return var_; \
 	}
 
 ANKI_SPECIALIZE_GET_VALUE(I32, m_int, INT)
@@ -126,7 +126,7 @@ inline const TextureResourcePtr& MaterialVariable::getValue() const
 {
 	ANKI_ASSERT(m_input);
 	ANKI_ASSERT(m_input->getShaderVariableDataType() >= ShaderVariableDataType::SAMPLERS_FIRST
-		&& m_input->getShaderVariableDataType() <= ShaderVariableDataType::SAMPLERS_LAST);
+				&& m_input->getShaderVariableDataType() <= ShaderVariableDataType::SAMPLERS_LAST);
 	ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);
 	return m_tex;
 }

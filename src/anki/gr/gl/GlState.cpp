@@ -40,9 +40,9 @@ static const GlDbg gldbgseverity[] = {{GL_DEBUG_SEVERITY_LOW, "GL_DEBUG_SEVERITY
 	{GL_DEBUG_SEVERITY_MEDIUM, "GL_DEBUG_SEVERITY_MEDIUM"},
 	{GL_DEBUG_SEVERITY_HIGH, "GL_DEBUG_SEVERITY_HIGH"}};
 
-#if ANKI_OS == ANKI_OS_WINDOWS && ANKI_COMPILER != ANKI_COMPILER_MSVC
+#	if ANKI_OS == ANKI_OS_WINDOWS && ANKI_COMPILER != ANKI_COMPILER_MSVC
 __stdcall
-#endif
+#	endif
 	void
 	oglMessagesCallback(GLenum source,
 		GLenum type,

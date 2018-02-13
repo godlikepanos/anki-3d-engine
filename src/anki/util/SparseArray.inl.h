@@ -58,7 +58,7 @@ typename SparseArray<T, TIndex>::Iterator SparseArray<T, TIndex>::emplace(TAlloc
 			,
 		m_iteratorVer
 #endif
-		);
+	);
 }
 
 template<typename T, typename TIndex>

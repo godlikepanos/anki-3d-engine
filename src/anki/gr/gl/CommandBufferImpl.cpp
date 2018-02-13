@@ -61,7 +61,7 @@ void CommandBufferImpl::destroy()
 	}
 
 	ANKI_ASSERT(m_alloc.getMemoryPool().getUsersCount() == 1
-		&& "Someone is holding a reference to the command buffer's allocator");
+				&& "Someone is holding a reference to the command buffer's allocator");
 
 	m_alloc = CommandBufferAllocator<U8>();
 

@@ -111,7 +111,7 @@ Bool PipelineStateTracker::updateHashes()
 	if(!!m_shaderColorAttachmentWritemask)
 	{
 		ANKI_ASSERT(m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask
-			&& "Shader and fb should have same attachment mask");
+					&& "Shader and fb should have same attachment mask");
 
 		if(m_dirty.m_color)
 		{
@@ -288,7 +288,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 		{
 			dsCi.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 			dsCi.depthTestEnable = m_state.m_depth.m_depthCompareFunction != CompareOperation::ALWAYS
-				|| m_state.m_depth.m_depthWriteEnabled;
+								   || m_state.m_depth.m_depthWriteEnabled;
 			dsCi.depthWriteEnable = m_state.m_depth.m_depthWriteEnabled;
 			dsCi.depthCompareOp = convertCompareOp(m_state.m_depth.m_depthCompareFunction);
 		}
@@ -299,10 +299,10 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 										 m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation,
 										 m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation,
 										 m_state.m_stencil.m_face[0].m_compareFunction)
-				|| !stencilTestDisabled(m_state.m_stencil.m_face[1].m_stencilFailOperation,
-					   m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation,
-					   m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation,
-					   m_state.m_stencil.m_face[1].m_compareFunction);
+									 || !stencilTestDisabled(m_state.m_stencil.m_face[1].m_stencilFailOperation,
+											m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation,
+											m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation,
+											m_state.m_stencil.m_face[1].m_compareFunction);
 
 			dsCi.front.failOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilFailOperation);
 			dsCi.front.passOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation);

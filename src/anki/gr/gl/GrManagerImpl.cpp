@@ -53,8 +53,8 @@ Error GrManagerImpl::init(GrManagerInitInfo& init, GrAllocator<U8> alloc)
 	// Misc
 	m_gpuVendor = m_state->m_gpu;
 	m_capabilities = !!(m_state->m_extensions & GlExtensions::ARB_SHADER_BALLOT)
-		? GpuDeviceCapabilitiesBit::SHADER_BALLOT
-		: GpuDeviceCapabilitiesBit::NONE;
+						 ? GpuDeviceCapabilitiesBit::SHADER_BALLOT
+						 : GpuDeviceCapabilitiesBit::NONE;
 
 	return Error::NONE;
 }

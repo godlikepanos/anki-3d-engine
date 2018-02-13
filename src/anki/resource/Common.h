@@ -52,7 +52,7 @@ using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
 
 // NOTE: Add resources in 3 places
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, name_) \
-	class rsrc_;                                \
+	class rsrc_; \
 	using name_ = ResourcePtr<rsrc_>;
 
 #define ANKI_INSTANSIATE_RESOURCE_DELIMITER()

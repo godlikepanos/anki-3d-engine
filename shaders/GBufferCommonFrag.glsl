@@ -16,9 +16,9 @@
 layout(location = 0) in highp vec2 in_uv;
 layout(location = 1) in mediump vec3 in_normal;
 layout(location = 2) in mediump vec4 in_tangent;
-#if CALC_BITANGENT_IN_VERT
+#	if CALC_BITANGENT_IN_VERT
 layout(location = 3) in mediump vec3 in_bitangent;
-#endif
+#	endif
 layout(location = 4) in mediump float in_distFromTheCamera; // Parallax
 layout(location = 5) in mediump vec3 in_eyeTangentSpace; // Parallax
 layout(location = 6) in mediump vec3 in_normalTangentSpace; // Parallax
@@ -45,11 +45,11 @@ vec3 readNormalFromTexture(sampler2D map, highp vec2 texCoords)
 
 	vec3 n = normalize(in_normal);
 	vec3 t = normalize(in_tangent.xyz);
-#if CALC_BITANGENT_IN_VERT
+#	if CALC_BITANGENT_IN_VERT
 	vec3 b = normalize(in_bitangent.xyz);
-#else
+#	else
 	vec3 b = cross(n, t) * in_tangent.w;
-#endif
+#	endif
 
 	mat3 tbnMat = mat3(t, b, n);
 

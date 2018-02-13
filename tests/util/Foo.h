@@ -8,13 +8,13 @@
 #include <cstdio>
 
 #ifndef ANKI_TESTS_FOO_VERBOSE
-#define ANKI_TESTS_FOO_VERBOSE 0
+#	define ANKI_TESTS_FOO_VERBOSE 0
 #endif
 
 #if ANKI_TESTS_FOO_VERBOSE
-#define ANKI_TESTS_FOO_PRINT() printf("%s\n", __PRETTY_FUNCTION__)
+#	define ANKI_TESTS_FOO_PRINT() printf("%s\n", __PRETTY_FUNCTION__)
 #else
-#define ANKI_TESTS_FOO_PRINT() ((void)0)
+#	define ANKI_TESTS_FOO_PRINT() ((void)0)
 #endif
 
 /// Struct for testing

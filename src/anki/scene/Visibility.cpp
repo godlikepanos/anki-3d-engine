@@ -512,35 +512,35 @@ void CombineResultsTask::combine()
 	}
 	ANKI_ASSERT(m_results->m_shadowRenderablesLastUpdateTimestamp);
 
-#define ANKI_VIS_COMBINE(t_, member_)                                                      \
-	{                                                                                      \
-		Array<TRenderQueueElementStorage<t_>, 64> subStorages;                             \
-		for(U i = 0; i < m_tests.getSize(); ++i)                                           \
-		{                                                                                  \
-			subStorages[i] = m_tests[i].m_result.member_;                                  \
-		}                                                                                  \
-		combineQueueElements<t_>(alloc,                                                    \
+#define ANKI_VIS_COMBINE(t_, member_) \
+	{ \
+		Array<TRenderQueueElementStorage<t_>, 64> subStorages; \
+		for(U i = 0; i < m_tests.getSize(); ++i) \
+		{ \
+			subStorages[i] = m_tests[i].m_result.member_; \
+		} \
+		combineQueueElements<t_>(alloc, \
 			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], m_tests.getSize()), \
-			nullptr,                                                                       \
-			m_results->member_,                                                            \
-			nullptr);                                                                      \
+			nullptr, \
+			m_results->member_, \
+			nullptr); \
 	}
 
-#define ANKI_VIS_COMBINE_AND_PTR(t_, member_, ptrMember_)                                      \
-	{                                                                                          \
-		Array<TRenderQueueElementStorage<t_>, 64> subStorages;                                 \
-		Array<TRenderQueueElementStorage<U32>, 64> ptrSubStorages;                             \
-		for(U i = 0; i < m_tests.getSize(); ++i)                                               \
-		{                                                                                      \
-			subStorages[i] = m_tests[i].m_result.member_;                                      \
-			ptrSubStorages[i] = m_tests[i].m_result.ptrMember_;                                \
-		}                                                                                      \
+#define ANKI_VIS_COMBINE_AND_PTR(t_, member_, ptrMember_) \
+	{ \
+		Array<TRenderQueueElementStorage<t_>, 64> subStorages; \
+		Array<TRenderQueueElementStorage<U32>, 64> ptrSubStorages; \
+		for(U i = 0; i < m_tests.getSize(); ++i) \
+		{ \
+			subStorages[i] = m_tests[i].m_result.member_; \
+			ptrSubStorages[i] = m_tests[i].m_result.ptrMember_; \
+		} \
 		WeakArray<TRenderQueueElementStorage<U32>> arr(&ptrSubStorages[0], m_tests.getSize()); \
-		combineQueueElements<t_>(alloc,                                                        \
-			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], m_tests.getSize()),     \
-			&arr,                                                                              \
-			m_results->member_,                                                                \
-			&m_results->ptrMember_);                                                           \
+		combineQueueElements<t_>(alloc, \
+			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], m_tests.getSize()), \
+			&arr, \
+			m_results->member_, \
+			&m_results->ptrMember_); \
 	}
 
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_renderables);
