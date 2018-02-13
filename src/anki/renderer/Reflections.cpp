@@ -87,7 +87,7 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 
 	struct Unis
 	{
-		Mat4 m_viewProjMat;
+		Mat4 m_projMat;
 		Mat4 m_invViewProjMat;
 		Mat4 m_invProjMat;
 		Mat4 m_viewMat;
@@ -95,7 +95,7 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 	};
 
 	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
-	unis->m_viewProjMat = m_runCtx.m_ctx->m_viewProjMatJitter;
+	unis->m_projMat = m_runCtx.m_ctx->m_projMatJitter;
 	unis->m_invViewProjMat = m_runCtx.m_ctx->m_viewProjMatJitter.getInverse();
 	unis->m_invProjMat = m_runCtx.m_ctx->m_projMatJitter.getInverse();
 	unis->m_viewMat = m_runCtx.m_ctx->m_renderQueue->m_viewMatrix;
