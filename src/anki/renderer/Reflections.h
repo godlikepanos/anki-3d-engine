@@ -36,11 +36,11 @@ anki_internal:
 
 private:
 	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	Array<ShaderProgramPtr, 2> m_grProg;
 
 	RenderTargetDescription m_rtDescr;
 
-	Array<U8, 2> m_workgroupSize = {{32, 32}};
+	Array<U8, 2> m_workgroupSize = {{16, 16}};
 
 	class
 	{

@@ -48,12 +48,19 @@ Error Reflections::initInternal(const ConfigSet& cfg)
 	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
 	consts.add("FB_SIZE", UVec2(width, height));
 	consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
-	consts.add("MAX_STEPS", U32(256));
+	consts.add("MAX_STEPS", U32(128));
 	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
 
+	ShaderProgramResourceMutationInitList<1> mutations(m_prog);
+	mutations.add("VARIANT", 0);
+
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(consts.get(), variant);
-	m_grProg = variant->getProgram();
+	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
+	m_grProg[0] = variant->getProgram();
+
+	mutations[0].m_value = 1;
+	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
+	m_grProg[1] = variant->getProgram();
 
 	return Error::NONE;
 }
@@ -75,7 +82,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	rpass.newConsumer({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	rpass.newConsumer({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
-	rpass.newConsumer({m_r->getDepthDownscale().getHalfDepthColorRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	rpass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
 	rpass.newProducer({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
@@ -92,6 +99,7 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 		Mat4 m_invProjMat;
 		Mat4 m_viewMat;
 		Vec4 m_camPosNear;
+		Vec4 m_unprojParams;
 	};
 
 	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
@@ -102,19 +110,21 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_camPosNear = Vec4(m_runCtx.m_ctx->m_renderQueue->m_cameraTransform.getTranslationPart().xyz(),
 		m_runCtx.m_ctx->m_renderQueue->m_cameraNear + 0.1f);
 
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getLinearSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
+	unis->m_unprojParams = m_runCtx.m_ctx->m_unprojParams;
+
+	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getDownscaleBlur().getRt(), m_r->getTrilinearRepeatSampler());
 
 	TextureSubresourceInfo subresource;
 	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, subresource);
 
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1]);
 
-	cmdb->dispatchCompute((m_r->getWidth() + m_workgroupSize[0] - 1) / m_workgroupSize[0],
-		(m_r->getHeight() + m_workgroupSize[1] - 1) / m_workgroupSize[1],
-		1);
+	const U sizeX = (m_r->getWidth() + m_workgroupSize[0] - 1) / m_workgroupSize[0];
+	const U sizeY = (m_r->getHeight() + m_workgroupSize[1] - 1) / m_workgroupSize[1];
+	cmdb->dispatchCompute(sizeX / 2, sizeY, 1);
 }
 
 } // end namespace anki

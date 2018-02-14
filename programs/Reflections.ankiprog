@@ -5,6 +5,10 @@ Code licensed under the BSD License.
 http://www.anki3d.org/LICENSE
 -->
 <shaderProgram>
+	<mutators>
+		<mutator name="VARIANT" values="0 1"/>
+	</mutators>
+
 	<shaders>
 		<shader type="comp">
 			<inputs>
@@ -34,82 +38,86 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 	mat4 u_invProjMat;
 	mat4 u_viewMat;
 	vec4 u_camPosNear;
+	vec4 u_unprojParams;
 };
 
 #define u_camPos u_camPosNear.xyz
 #define u_near u_camPosNear.w
 #define u_normalMat mat3(u_viewMat)
 
-vec4 doSslr(vec3 r, vec3 worldPos, vec2 uv)
+float unprojZ(float depth)
 {
-	// This func is working in view space
-	vec3 p0 = (u_viewMat * vec4(worldPos, 1.0)).xyz;
-	r = u_normalMat * r;
+	return u_unprojParams.z / (u_unprojParams.w + depth);
+}
+
+// Note: All calculations in view space
+vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth)
+{
+	vec3 p0 = viewPos;
+
+	// Check for view facing reflections [sakibsaikia]
+	vec3 viewDir = normalize(viewPos);
+	float cameraFacingReflectionAttenuation = 1.0 - smoothstep(0.25, 0.5, dot(-viewDir, r));
+	if(cameraFacingReflectionAttenuation <= 0.0)
+	{
+		return vec4(0.0);
+	}
 
 	// Compute an end point p1. This point is supposed to fall in front of the near plane. u_near is a bit bigger than
 	// the actual near.
 	vec3 p1 = p0 + r * (-p0.z - u_near);
 
 	// Project the starting and end points
-	vec2 start = uv;
+	vec3 start = vec3(uv, depth);
 	vec4 end4 = u_projMat * vec4(p1, 1.0);
-	vec2 end = NDC_TO_UV(end4.xy / end4.w);
+	vec3 end = end4.xyz / end4.w;
+	end.xy = NDC_TO_UV(end.xy);
 
 	// Compute the step size
-	vec2 dir = end - start;
-	vec2 texelDims = abs(dir * FB_SIZE); // TODO maybe it should be FB_SIZE/2
-	float stepSize = length(dir) / max(texelDims.x, texelDims.y);
+	vec3 dir = end - start;
+	vec2 texelDims = abs(dir.xy) * (vec2(FB_SIZE) / 4.0); // TODO maybe it should be FB_SIZE/2
+	float stepSize = length(dir.xy) / max(texelDims.x, texelDims.y);
 	dir = normalize(dir);
 
 	// Iterate
-	for(float i = 1.0; i < float(MAX_STEPS); i += 1.0)
+	for(float i = 2.0; i < float(MAX_STEPS); i += 1.0)
 	{
-		vec2 newUv = start + dir * (i * stepSize);
+		vec3 screenPoint = start + dir * (i * stepSize);
 
 		// Check if it's out of the view
-		if(newUv.x < 0.0 || newUv.y < 0.0 || newUv.x > 1.0 || newUv.y > 1.0)
+		if(screenPoint.x <= 0.0 || screenPoint.y <= 0.0 || screenPoint.x >= 1.0 || screenPoint.y >= 1.0)
 		{
-			return vec4(0.0);
+			break;
 		}
 
-		vec2 ndc = UV_TO_NDC(newUv);
+		// Get the viewspace Z from the depth buffer
+		float depth = textureLod(u_depthRt, screenPoint.xy, 0.0).r;
+		float newViewPosZ = unprojZ(depth);
 
-		// 'a' is ray that passes through the eye and into ndc
-		vec4 a4 = u_invProjMat * vec4(ndc, 1.0, 1.0);
-		vec3 a = a4.xyz / a4.w;
-		a = normalize(a);
-		
-		// Compute the intersection between 'a' (before normalization) and r
-		// 'k' is the value to multiply to 'a' to get the intersection
-		// c0 = cross(a, r);
-		// c1 = cross(p0, r);
-		// k = c1.x / c0.x; and the optimized:
-		vec2 tmpv2 = a.yz * r.zy;
-		float c0x = tmpv2.x - tmpv2.y;
-		tmpv2 = p0.yz * r.zy;
-		float c1x = tmpv2.x - tmpv2.y;
-		float k = c1x / c0x;
+		// Calc the viewspace Z of the ray vector
+		float intersectionZ = unprojZ(screenPoint.z);
 
-		float intersectionZ = a.z * k;
-
-		// Read depth and get view space Z
-		float depth = textureLod(u_depthRt, newUv, 0.0).r;
-		vec4 newViewPos4 = u_invProjMat * vec4(ndc, depth, 1.0);
-		float newViewPosZ = newViewPos4.z / newViewPos4.w;
-
-		// Compare depths
+		// Compare
 		float zDiff = newViewPosZ - intersectionZ;
-
-		if(zDiff > 0.1)
+		if(zDiff > 0.5)
 		{
-			float contribution = sin(length(ndc) * PI);
+			/*if(zDiff > 1.0)
+			{
+				break;
+			}*/
+
+			// Compute contribution
+			vec2 ndc = abs(UV_TO_NDC(screenPoint.xy));
+			float contribution = max(ndc.x, ndc.y);
+			contribution = 1.0 - contribution * contribution;
+			contribution *= cameraFacingReflectionAttenuation;
 
 			float roughness;
 			vec3 specular;
-			readRoughnessSpecularFromGBuffer(u_gbufferRt1, newUv, roughness, specular);
+			readRoughnessSpecularFromGBuffer(u_gbufferRt1, screenPoint.xy, roughness, specular);
 
 			float lod = float(LIGHT_BUFFER_MIP_COUNT - 1u) * roughness;
-			vec3 color = textureLod(u_lightBufferRt, newUv, lod).rgb;
+			vec3 color = textureLod(u_lightBufferRt, screenPoint.xy, lod).rgb;
 			return vec4(color, contribution);
 		}
 	}
@@ -119,34 +127,45 @@ vec4 doSslr(vec3 r, vec3 worldPos, vec2 uv)
 
 void main()
 {
-	if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
+	uvec2 realInvocationId = gl_GlobalInvocationID.xy;
+	realInvocationId.x *= 2u;
+#if VARIANT == 0
+	if((realInvocationId.y & 1u) == 0u)
+#else
+	if((realInvocationId.y & 1u) == 1u)
+#endif
+	{
+		realInvocationId.x += 1u;
+	}
+
+	if(realInvocationId.x >= FB_SIZE.x || realInvocationId.y >= FB_SIZE.y)
 	{
 		// Skip threads outside the writable image
 		return;
 	}
 
-	vec2 uv = vec2(gl_GlobalInvocationID.xy) / vec2(FB_SIZE);
+	vec2 uv = vec2(realInvocationId) / vec2(FB_SIZE);
 
 	// Get normal
-	vec3 normal;
-	readNormalFromGBuffer(u_gbufferRt2, uv, normal);
+	vec3 worldNormal;
+	readNormalFromGBuffer(u_gbufferRt2, uv, worldNormal);
 
-	// Get world pos
+	// Get view pos
 	float depth = textureLod(u_depthRt, uv, 0.0).r;
-	vec4 worldPos4 = u_invViewProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
-	vec3 worldPos = worldPos4.xyz / worldPos4.w;
-
-	// Compute reflection vec
-	vec3 viewDir = normalize(worldPos - u_camPos);
-	vec3 reflVec = reflect(viewDir, normal);
+	vec4 viewPos4 = u_invProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
+	vec3 viewPos = viewPos4.xyz / viewPos4.w;
 
 	// Do SSLR
-	vec4 sslr = doSslr(reflVec, worldPos, uv);
+	vec3 viewDir = normalize(viewPos);
+	vec3 viewNormal = u_normalMat * worldNormal;
+	vec3 reflVec = reflect(viewDir, viewNormal);
+
+	vec4 sslr = doSslr(reflVec, viewNormal, viewPos, uv, depth);
 	float sslrFactor = sslr.w;
 	vec3 sslrCol = sslr.xyz;
 
 	// Write it
-	imageStore(u_out, ivec2(gl_GlobalInvocationID.xy), vec4(sslrCol, 0.0));
+	imageStore(u_out, ivec2(realInvocationId), vec4(sslrCol * sslrFactor, 0.0));
 }
 			]]></source>
 		</shader>
