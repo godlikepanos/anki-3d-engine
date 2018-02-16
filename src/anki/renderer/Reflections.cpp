@@ -82,7 +82,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	rpass.newConsumer({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	rpass.newConsumer({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
-	rpass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	rpass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
 	rpass.newProducer({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
@@ -114,11 +114,10 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getDepthDownscale().getHalfDepthColorRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getDepthDownscale().getHiZRt(), m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getDownscaleBlur().getRt(), m_r->getTrilinearRepeatSampler());
 
-	TextureSubresourceInfo subresource;
-	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, subresource);
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
 
 	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1]);
 

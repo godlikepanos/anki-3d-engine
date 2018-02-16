@@ -14,82 +14,60 @@ DepthDownscale::~DepthDownscale()
 {
 }
 
-Error DepthDownscale::initHalf(const ConfigSet&)
+Error DepthDownscale::initInternal(const ConfigSet&)
 {
-	U width = m_r->getWidth() / 2;
-	U height = m_r->getHeight() / 2;
+	const U width = m_r->getWidth() / 2;
+	const U height = m_r->getHeight() / 2;
 
 	// Create RT descrs
-	m_half.m_depthRtDescr = m_r->create2DRenderTargetDescription(width,
+	m_depthRtDescr = m_r->create2DRenderTargetDescription(width,
 		height,
 		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		"Half depth");
-	m_half.m_depthRtDescr.bake();
+	m_depthRtDescr.bake();
 
-	m_half.m_colorRtDescr = m_r->create2DRenderTargetDescription(width,
+	m_hizRtDescr = m_r->create2DRenderTargetDescription(width,
 		height,
 		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-		"Half depth col");
-	m_half.m_colorRtDescr.bake();
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		"HiZ");
+	m_hizRtDescr.m_mipmapCount = HIERARCHICAL_Z_MIPMAP_COUNT;
+	m_hizRtDescr.bake();
 
 	// Create FB descr
-	m_half.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_half.m_fbDescr.m_colorAttachmentCount = 1;
-	m_half.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_half.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
-	m_half.m_fbDescr.bake();
+	m_passes[0].m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_passes[0].m_fbDescr.m_colorAttachmentCount = 1;
+	m_passes[0].m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_passes[0].m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+	m_passes[0].m_fbDescr.bake();
 
-	// Prog
-	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_half.m_prog));
+	for(U i = 1; i < HIERARCHICAL_Z_MIPMAP_COUNT; ++i)
+	{
+		m_passes[i].m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		m_passes[i].m_fbDescr.m_colorAttachments[0].m_surface.m_level = i;
+		m_passes[i].m_fbDescr.m_colorAttachmentCount = 1;
+		m_passes[i].m_fbDescr.bake();
+	}
 
-	ShaderProgramResourceMutationInitList<2> mutations(m_half.m_prog);
-	mutations.add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 0);
+	// Progs
+	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_prog));
 
-	const ShaderProgramResourceVariant* variant;
-	m_half.m_prog->getOrCreateVariant(mutations.get(), variant);
-	m_half.m_grProg = variant->getProgram();
-
-	return Error::NONE;
-}
-
-Error DepthDownscale::initQuarter(const ConfigSet&)
-{
-	U width = m_r->getWidth() / 4;
-	U height = m_r->getHeight() / 4;
-
-	// RT descr
-	m_quarter.m_colorRtDescr = m_r->create2DRenderTargetDescription(width,
-		height,
-		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::SAMPLED_COMPUTE,
-		"quarterdepth");
-	m_quarter.m_colorRtDescr.bake();
-
-	// FB descr
-	m_quarter.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_quarter.m_fbDescr.m_colorAttachmentCount = 1;
-	m_quarter.m_fbDescr.bake();
-
-	// Prog
-	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_quarter.m_prog));
-
-	ShaderProgramResourceMutationInitList<2> mutations(m_quarter.m_prog);
-	mutations.add("TYPE", 1).add("SAMPLE_RESOLVE_TYPE", 0);
+	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
+	mutations.add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 1);
 
 	const ShaderProgramResourceVariant* variant;
-	m_quarter.m_prog->getOrCreateVariant(mutations.get(), variant);
-	m_quarter.m_grProg = variant->getProgram();
+	m_prog->getOrCreateVariant(mutations.get(), variant);
+	m_passes[0].m_grProg = variant->getProgram();
 
-	return Error::NONE;
-}
+	for(U i = 1; i < HIERARCHICAL_Z_MIPMAP_COUNT; ++i)
+	{
+		mutations[0].m_value = 1;
 
-Error DepthDownscale::initInternal(const ConfigSet& cfg)
-{
-	ANKI_CHECK(initHalf(cfg));
-	ANKI_CHECK(initQuarter(cfg));
+		m_prog->getOrCreateVariant(mutations.get(), variant);
+		m_passes[i].m_grProg = variant->getProgram();
+	}
+
 	return Error::NONE;
 }
 
@@ -106,72 +84,87 @@ Error DepthDownscale::init(const ConfigSet& cfg)
 	return err;
 }
 
-void DepthDownscale::runHalf(RenderPassWorkContext& rgraphCtx)
+void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	m_runCtx.m_pass = 0;
+
+	static const Array<CString, 5> passNames = {{"HiZ #0", "HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4"}};
+
+	// Create render targets
+	m_runCtx.m_halfDepthRt = rgraph.newRenderTarget(m_depthRtDescr);
+	m_runCtx.m_hizRt = rgraph.newRenderTarget(m_hizRtDescr);
+
+	// First render pass
+	{
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[0]);
+
+		pass.setFramebufferInfo(m_passes[0].m_fbDescr, {{m_runCtx.m_hizRt}}, m_runCtx.m_halfDepthRt);
+		pass.setWork(runCallback, this, 0);
+
+		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH); // First mip
+
+		pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT, subresource});
+		pass.newConsumer({m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+		pass.newConsumer({m_runCtx.m_hizRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
+
+		pass.newProducer({m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+		pass.newProducer({m_runCtx.m_hizRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	}
+
+	// Rest of the passes
+	for(U i = 1; i < HIERARCHICAL_Z_MIPMAP_COUNT; ++i)
+	{
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
+
+		pass.setFramebufferInfo(m_passes[i].m_fbDescr, {{m_runCtx.m_hizRt}}, {});
+		pass.setWork(runCallback, this, 0);
+
+		TextureSubresourceInfo subresourceRead, subresourceWrite;
+		subresourceRead.m_firstMipmap = i - 1;
+		subresourceWrite.m_firstMipmap = i;
+
+		pass.newConsumer({m_runCtx.m_hizRt, TextureUsageBit::SAMPLED_FRAGMENT, subresourceRead});
+		pass.newConsumer({m_runCtx.m_hizRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresourceWrite});
+
+		pass.newProducer({m_runCtx.m_hizRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresourceWrite});
+	}
+}
+
+void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->bindShaderProgram(m_half.m_grProg);
-	rgraphCtx.bindTextureAndSampler(0,
-		0,
-		m_r->getGBuffer().getDepthRt(),
-		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-		m_r->getLinearSampler());
+	const U passIdx = m_runCtx.m_pass++;
 
-	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
-	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+	cmdb->setViewport(0, 0, m_r->getWidth() >> (passIdx + 1), m_r->getHeight() >> (passIdx + 1));
+
+	if(passIdx == 0)
+	{
+		rgraphCtx.bindTextureAndSampler(0,
+			0,
+			m_r->getGBuffer().getDepthRt(),
+			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
+			m_r->getNearestSampler());
+
+		cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+	}
+	else
+	{
+		TextureSubresourceInfo sampleSubresource;
+		sampleSubresource.m_firstMipmap = passIdx - 1;
+
+		rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_hizRt, sampleSubresource, m_r->getNearestSampler());
+	}
+
+	cmdb->bindShaderProgram(m_passes[passIdx].m_grProg);
 
 	drawQuad(cmdb);
 
 	// Restore state
-	cmdb->setDepthCompareOperation(CompareOperation::LESS);
-}
-
-void DepthDownscale::runQuarter(RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	cmdb->bindShaderProgram(m_quarter.m_grProg);
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_runCtx.m_halfColorRt, m_r->getLinearSampler());
-	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
-
-	drawQuad(cmdb);
-}
-
-void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
-{
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-
-	// Create render targets
-	m_runCtx.m_halfDepthRt = rgraph.newRenderTarget(m_half.m_depthRtDescr);
-	m_runCtx.m_halfColorRt = rgraph.newRenderTarget(m_half.m_colorRtDescr);
-	m_runCtx.m_quarterRt = rgraph.newRenderTarget(m_quarter.m_colorRtDescr);
-
-	// Create half depth render pass
+	if(passIdx == 0)
 	{
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Half depth");
-
-		pass.setFramebufferInfo(m_half.m_fbDescr, {{m_runCtx.m_halfColorRt}}, m_runCtx.m_halfDepthRt);
-		pass.setWork(runHalfCallback, this, 0);
-
-		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
-
-		pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT, subresource});
-		pass.newConsumer({m_runCtx.m_halfColorRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newConsumer({m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
-		pass.newProducer({m_runCtx.m_halfColorRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
-	}
-
-	// Create quarter depth render pass
-	{
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Quarter depth");
-
-		pass.setFramebufferInfo(m_quarter.m_fbDescr, {{m_runCtx.m_quarterRt}}, {});
-		pass.setWork(runQuarterCallback, this, 0);
-
-		pass.newConsumer({m_runCtx.m_halfColorRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newConsumer({m_runCtx.m_quarterRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_quarterRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		cmdb->setDepthCompareOperation(CompareOperation::LESS);
 	}
 }
 

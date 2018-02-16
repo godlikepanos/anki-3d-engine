@@ -34,70 +34,48 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getHalfDepthColorRt() const
-	{
-		return m_runCtx.m_halfColorRt;
-	}
-
-	RenderTargetHandle getHalfDepthDepthRt() const
+	/// Return a depth buffer that is a quarter of the resolution of the renderer.
+	RenderTargetHandle getHalfDepthRt() const
 	{
 		return m_runCtx.m_halfDepthRt;
 	}
 
-	RenderTargetHandle getQuarterColorRt() const
+	/// Return a FP color render target with hierarchical Z (min Z) in it's mips.
+	RenderTargetHandle getHiZRt() const
 	{
-		return m_runCtx.m_quarterRt;
+		return m_runCtx.m_hizRt;
 	}
 
 private:
-	class
+	RenderTargetDescription m_depthRtDescr;
+	RenderTargetDescription m_hizRtDescr;
+	ShaderProgramResourcePtr m_prog;
+
+	class Pass
 	{
 	public:
-		RenderTargetDescription m_depthRtDescr;
-		RenderTargetDescription m_colorRtDescr;
-
 		FramebufferDescription m_fbDescr;
-
-		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-	} m_half; ///< Half depth pass.
+	};
 
-	class
-	{
-	public:
-		RenderTargetDescription m_colorRtDescr;
-
-		FramebufferDescription m_fbDescr;
-
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
-	} m_quarter; ///< Quarter depth pass.
+	Array<Pass, GBUFFER_COLOR_ATTACHMENT_COUNT> m_passes;
 
 	class
 	{
 	public:
 		RenderTargetHandle m_halfDepthRt;
-		RenderTargetHandle m_halfColorRt;
-		RenderTargetHandle m_quarterRt;
+		RenderTargetHandle m_hizRt;
+		U m_pass;
 	} m_runCtx; ///< Run context.
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
-	ANKI_USE_RESULT Error initHalf(const ConfigSet& cfg);
-	ANKI_USE_RESULT Error initQuarter(const ConfigSet& cfg);
 
-	void runHalf(RenderPassWorkContext& rgraphCtx);
-	void runQuarter(RenderPassWorkContext& rgraphCtx);
+	void run(RenderPassWorkContext& rgraphCtx);
 
 	/// A RenderPassWorkCallback for half depth main pass.
-	static void runHalfCallback(RenderPassWorkContext& rgraphCtx)
+	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		scast<DepthDownscale*>(rgraphCtx.m_userData)->runHalf(rgraphCtx);
-	}
-
-	/// A RenderPassWorkCallback for half depth main pass.
-	static void runQuarterCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		scast<DepthDownscale*>(rgraphCtx.m_userData)->runQuarter(rgraphCtx);
+		static_cast<DepthDownscale*>(rgraphCtx.m_userData)->run(rgraphCtx);
 	}
 };
 /// @}

@@ -124,7 +124,9 @@ void Volumetric::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgr
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(
+		0, 0, m_r->getDepthDownscale().getHiZRt(), HIZ_QUARTER_DEPTH, m_r->getLinearSampler());
+
 	cmdb->bindTextureAndSampler(0,
 		1,
 		m_main.m_noiseTex->getGrTextureView(),
@@ -207,7 +209,7 @@ void Volumetric::populateRenderGraph(RenderingContext& ctx)
 		pass.setWork(runMainCallback, this, 0);
 		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToRenderIdx]}}, {});
 
-		pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_QUARTER_DEPTH});
 		pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT});

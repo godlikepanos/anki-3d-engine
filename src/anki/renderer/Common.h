@@ -67,6 +67,12 @@ const U BLOOM_FRACTION = 4;
 /// Volumetric size is rendererSize/VOLUMETRIC_FRACTION.
 const U VOLUMETRIC_FRACTION = 4;
 
+/// Number of mipmaps of the HZ map.
+const U HIERARCHICAL_Z_MIPMAP_COUNT = 3;
+
+const TextureSubresourceInfo HIZ_HALF_DEPTH(TextureSurfaceInfo(0, 0, 0, 0));
+const TextureSubresourceInfo HIZ_QUARTER_DEPTH(TextureSurfaceInfo(1, 0, 0, 0));
+
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal (see shaders)
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 {

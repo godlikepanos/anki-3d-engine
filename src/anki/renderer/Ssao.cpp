@@ -131,7 +131,8 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_main.m_grProg);
 
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(
+		0, 0, m_r->getDepthDownscale().getHiZRt(), HIZ_QUARTER_DEPTH, m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0,
 		2,
@@ -168,7 +169,8 @@ void Ssao::runHBlur(RenderPassWorkContext& rgraphCtx)
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_hblur.m_grProg);
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_runCtx.m_rts[m_r->getFrameCount() & 1], m_r->getLinearSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(
+		0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_QUARTER_DEPTH, m_r->getLinearSampler());
 	drawQuad(cmdb);
 }
 
@@ -179,7 +181,8 @@ void Ssao::runVBlur(RenderPassWorkContext& rgraphCtx)
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_vblur.m_grProg);
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getDepthDownscale().getQuarterColorRt(), m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(
+		0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_QUARTER_DEPTH, m_r->getLinearSampler());
 	drawQuad(cmdb);
 }
 
@@ -206,7 +209,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 		pass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_QUARTER_DEPTH});
 		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
@@ -219,7 +222,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_QUARTER_DEPTH});
 		pass.newProducer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
@@ -232,7 +235,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_QUARTER_DEPTH});
 		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 }
