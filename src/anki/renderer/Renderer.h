@@ -319,11 +319,6 @@ anki_internal:
 		return m_dummyBuff;
 	}
 
-	static constexpr PtrSize getDummyBufferSize()
-	{
-		return 1024;
-	}
-
 	SamplerPtr getNearestSampler() const
 	{
 		return m_nearestSampler;
@@ -337,6 +332,11 @@ anki_internal:
 	SamplerPtr getTrilinearRepeatSampler() const
 	{
 		return m_trilinearRepeatSampler;
+	}
+
+	SamplerPtr getNearestNearestSampler() const
+	{
+		return m_nearesetNearestSampler;
 	}
 
 private:
@@ -397,6 +397,7 @@ private:
 	SamplerPtr m_nearestSampler;
 	SamplerPtr m_linearSampler;
 	SamplerPtr m_trilinearRepeatSampler;
+	SamplerPtr m_nearesetNearestSampler;
 
 	RendererStats m_stats;
 

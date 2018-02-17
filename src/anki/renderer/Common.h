@@ -68,7 +68,7 @@ const U BLOOM_FRACTION = 4;
 const U VOLUMETRIC_FRACTION = 4;
 
 /// Number of mipmaps of the HZ map.
-const U HIERARCHICAL_Z_MIPMAP_COUNT = 3;
+const U HIERARCHICAL_Z_MIPMAP_COUNT = 4;
 
 const TextureSubresourceInfo HIZ_HALF_DEPTH(TextureSurfaceInfo(0, 0, 0, 0));
 const TextureSubresourceInfo HIZ_QUARTER_DEPTH(TextureSurfaceInfo(1, 0, 0, 0));

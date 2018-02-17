@@ -45,11 +45,12 @@ Error Reflections::initInternal(const ConfigSet& cfg)
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource("programs/Reflections.ankiprog", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
+	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("FB_SIZE", UVec2(width, height));
 	consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
-	consts.add("MAX_STEPS", U32(128));
+	consts.add("MAX_STEPS", U32(64));
 	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
+	consts.add("HIZ_MIP_COUNT", U32(HIERARCHICAL_Z_MIPMAP_COUNT));
 
 	ShaderProgramResourceMutationInitList<1> mutations(m_prog);
 	mutations.add("VARIANT", 0);
@@ -114,7 +115,7 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getDepthDownscale().getHiZRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getDepthDownscale().getHiZRt(), m_r->getNearestNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getDownscaleBlur().getRt(), m_r->getTrilinearRepeatSampler());
 
 	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());

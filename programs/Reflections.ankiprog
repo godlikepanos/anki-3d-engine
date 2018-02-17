@@ -16,9 +16,12 @@ http://www.anki3d.org/LICENSE
 				<input name="WORKGROUP_SIZE" type="uvec2" const="1"/>
 				<input name="MAX_STEPS" type="uint" const="1"/>
 				<input name="LIGHT_BUFFER_MIP_COUNT" type="uint" const="1"/>
+				<input name="HIZ_MIP_COUNT" type="uint" const="1"/>
 			</inputs>
 
 			<source><![CDATA[
+#define NO_HIZ 0
+	
 #include "shaders/Functions.glsl"
 #include "shaders/Pack.glsl"
 
@@ -26,7 +29,7 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_gbufferRt1;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_gbufferRt2;
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_depthRt;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_hizRt;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_lightBufferRt;
 
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D u_out;
@@ -50,9 +53,22 @@ float unprojZ(float depth)
 	return u_unprojParams.z / (u_unprojParams.w + depth);
 }
 
-// Note: All calculations in view space
-vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth)
+vec4 returnSslrColor(vec3 raySample, float factor, float roughness)
 {
+	vec2 ndc = abs(UV_TO_NDC(raySample.xy));
+	float contribution = max(ndc.x, ndc.y);
+	contribution = 1.0 - contribution * contribution;
+	contribution *= factor;
+
+	float lod = float(LIGHT_BUFFER_MIP_COUNT - 1u) * roughness;
+	vec3 color = textureLod(u_lightBufferRt, raySample.xy, lod).rgb;
+	return vec4(color, contribution);
+}
+
+// Note: All calculations in view space
+vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth, float roughness)
+{
+	const ivec2 HIZ_SIZE = ivec2(FB_SIZE) >> 1;
 	vec3 p0 = viewPos;
 
 	// Check for view facing reflections [sakibsaikia]
@@ -67,60 +83,111 @@ vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth)
 	// the actual near.
 	vec3 p1 = p0 + r * (-p0.z - u_near);
 
-	// Project the starting and end points
+	// Start point
 	vec3 start = vec3(uv, depth);
+
+	// Project end point
 	vec4 end4 = u_projMat * vec4(p1, 1.0);
 	vec3 end = end4.xyz / end4.w;
 	end.xy = NDC_TO_UV(end.xy);
 
-	// Compute the step size
-	vec3 dir = end - start;
-	vec2 texelDims = abs(dir.xy) * (vec2(FB_SIZE) / 4.0); // TODO maybe it should be FB_SIZE/2
-	float stepSize = length(dir.xy) / max(texelDims.x, texelDims.y);
-	dir = normalize(dir);
+	// Compute the ray
+	vec3 ray = end - start;
+#if NO_HIZ
+	vec2 texelDims = abs(ray.xy) * vec2(HIZ_SIZE);
+#else
+	vec2 texelDims = abs(ray.xy) * vec2(HIZ_SIZE >> (HIZ_MIP_COUNT - 1u));
+#endif
+	float stepSize = length(ray.xy) / max(texelDims.x, texelDims.y);
+	ray = normalize(ray);
+	if(ray.x == 0.0)
+	{
+		ray.x = EPSILON;
+	}
+	if(ray.y == 0.0)
+	{
+		ray.y = EPSILON;
+	}
 
 	// Iterate
-	for(float i = 2.0; i < float(MAX_STEPS); i += 1.0)
+#if NO_HIZ
+	for(uint step = 4u; step < MAX_STEPS; step += 1u)
 	{
-		vec3 screenPoint = start + dir * (i * stepSize);
+		vec3 raySample = start + ray * (float(step) * stepSize);
 
 		// Check if it's out of the view
-		if(screenPoint.x <= 0.0 || screenPoint.y <= 0.0 || screenPoint.x >= 1.0 || screenPoint.y >= 1.0)
+		if(raySample.x <= 0.0 || raySample.y <= 0.0 || raySample.x >= 1.0 || raySample.y >= 1.0)
 		{
-			break;
+			return vec4(0.0);
+		}
+
+		float depth = textureLod(u_hizRt, raySample.xy, float(HIZ_MIP_TO_USE)).r;
+
+		float diff = raySample.z - depth;
+		if(diff >= 0.0)
+		{
+			return returnSslrColor(raySample, cameraFacingReflectionAttenuation, roughness);
+		}
+	}
+#else
+	int mipLevel = int(HIZ_MIP_COUNT - 1);
+	vec3 raySample = start + ray * stepSize;
+	uint stepCount = 0U;
+	while(mipLevel > -1 && stepCount < MAX_STEPS)
+	{
+		// Step through the cell
+		{
+			ivec2 mipSize = ivec2(HIZ_SIZE) >> mipLevel;
+
+			// Move the ray to texture space
+			vec2 mipCellIndex = raySample.xy * vec2(mipSize);
+
+			// Find the closest cell's edge to the ray direction
+			vec2 closestCellEdgeUv;
+			closestCellEdgeUv.x = (ray.x > 0.0) ? ceil(mipCellIndex.x) + 0.1 : floor(mipCellIndex.x) - 0.1;
+			closestCellEdgeUv.y = (ray.y > 0.0) ? ceil(mipCellIndex.y) + 0.1 : floor(mipCellIndex.y) - 0.1;
+			closestCellEdgeUv /= vec2(mipSize);
+
+			// Intersect the ray that starts from the start with direction ray and the 2 lines:
+			// x = closestCellEdgeUv.x
+			// y = closestCellEdgeUv.y
+			vec2 t;
+			t.x = (closestCellEdgeUv.x - raySample.x) / ray.x;
+			t.y = (closestCellEdgeUv.y - raySample.y) / ray.y;
+
+			// Pick the cell intersection that is closer, and march to that cell
+			float mint = min(t.x, t.y);
+			raySample += mint * ray;
+		}
+
+		// Check if it's out of the view
+		if(raySample.x <= 0.0 || raySample.y <= 0.0 || raySample.x >= 1.0 || raySample.y >= 1.0)
+		{
+			return vec4(0.0);
 		}
 
 		// Get the viewspace Z from the depth buffer
-		float depth = textureLod(u_depthRt, screenPoint.xy, 0.0).r;
-		float newViewPosZ = unprojZ(depth);
+		float depth = textureLod(u_hizRt, raySample.xy, float(mipLevel)).r;
 
-		// Calc the viewspace Z of the ray vector
-		float intersectionZ = unprojZ(screenPoint.z);
-
-		// Compare
-		float zDiff = newViewPosZ - intersectionZ;
-		if(zDiff > 0.5)
+		if(raySample.z > depth)
 		{
-			/*if(zDiff > 1.0)
-			{
-				break;
-			}*/
+			// If we intersected, pull back the ray to the point of intersection (for that miplevel)
+			float t = (raySample.z - depth) / ray.z;
+			raySample -= ray * t;
 
-			// Compute contribution
-			vec2 ndc = abs(UV_TO_NDC(screenPoint.xy));
-			float contribution = max(ndc.x, ndc.y);
-			contribution = 1.0 - contribution * contribution;
-			contribution *= cameraFacingReflectionAttenuation;
-
-			float roughness;
-			vec3 specular;
-			readRoughnessSpecularFromGBuffer(u_gbufferRt1, screenPoint.xy, roughness, specular);
-
-			float lod = float(LIGHT_BUFFER_MIP_COUNT - 1u) * roughness;
-			vec3 color = textureLod(u_lightBufferRt, screenPoint.xy, lod).rgb;
-			return vec4(color, contribution);
+			// And, then perform successive test on the next lower mip level.
+			// Once we've got a valid intersection with mip 0, we've found our intersection point
+			--mipLevel;
 		}
+
+		++stepCount;
 	}
+
+	if(mipLevel < 0)
+	{
+		return returnSslrColor(raySample, cameraFacingReflectionAttenuation, roughness);
+	}
+#endif
 
 	return vec4(0.0);
 }
@@ -150,8 +217,13 @@ void main()
 	vec3 worldNormal;
 	readNormalFromGBuffer(u_gbufferRt2, uv, worldNormal);
 
+	// Get roughness
+	float roughness;
+	vec3 specular;
+	readRoughnessSpecularFromGBuffer(u_gbufferRt1, uv, roughness, specular);
+
 	// Get view pos
-	float depth = textureLod(u_depthRt, uv, 0.0).r;
+	float depth = textureLod(u_hizRt, uv, 0.0).r;
 	vec4 viewPos4 = u_invProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
 	vec3 viewPos = viewPos4.xyz / viewPos4.w;
 
@@ -160,7 +232,7 @@ void main()
 	vec3 viewNormal = u_normalMat * worldNormal;
 	vec3 reflVec = reflect(viewDir, viewNormal);
 
-	vec4 sslr = doSslr(reflVec, viewNormal, viewPos, uv, depth);
+	vec4 sslr = doSslr(reflVec, viewNormal, viewPos, uv, depth, roughness);
 	float sslrFactor = sslr.w;
 	vec3 sslrCol = sslr.xyz;
 

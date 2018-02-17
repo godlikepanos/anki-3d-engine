@@ -58,7 +58,7 @@ private:
 		ShaderProgramPtr m_grProg;
 	};
 
-	Array<Pass, GBUFFER_COLOR_ATTACHMENT_COUNT> m_passes;
+	Array<Pass, HIERARCHICAL_Z_MIPMAP_COUNT> m_passes;
 
 	class
 	{

@@ -43,7 +43,7 @@ void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U set, U binding, cons
 	}
 	else
 	{
-		cmdb->bindUniformBuffer(set, binding, m_r->getDummyBuffer(), 0, m_r->getDummyBufferSize());
+		cmdb->bindUniformBuffer(set, binding, m_r->getDummyBuffer(), 0, m_r->getDummyBuffer()->getSize());
 	}
 }
 
@@ -55,7 +55,7 @@ void RendererObject::bindStorage(CommandBufferPtr& cmdb, U set, U binding, const
 	}
 	else
 	{
-		cmdb->bindStorageBuffer(set, binding, m_r->getDummyBuffer(), 0, m_r->getDummyBufferSize());
+		cmdb->bindStorageBuffer(set, binding, m_r->getDummyBuffer(), 0, m_r->getDummyBuffer()->getSize());
 	}
 }
 

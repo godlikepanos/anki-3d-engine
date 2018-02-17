@@ -102,10 +102,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 		m_dummyTexView = getGrManager().newTextureView(viewinit);
 	}
 
-	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(getDummyBufferSize(),
-		BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL,
-		BufferMapAccessBit::NONE,
-		"Dummy"));
+	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
+		1024, BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::NONE, "Dummy"));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_indirect.reset(m_alloc.newInstance<Indirect>(this));
@@ -171,6 +169,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 	sinit.m_mipmapFilter = SamplingFilter::LINEAR;
 	sinit.m_repeat = true;
 	m_trilinearRepeatSampler = m_gr->newSampler(sinit);
+
+	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
+	sinit.m_minMagFilter = SamplingFilter::NEAREST;
+	m_nearesetNearestSampler = m_gr->newSampler(sinit);
 
 	initJitteredMats();
 
