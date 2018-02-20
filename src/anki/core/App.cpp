@@ -102,10 +102,9 @@ public:
 
 		canvas->pushFont(canvas->getDefaultFont(), 16);
 
-		nk_style_push_style_item(
-			ctx, &ctx->style.window.fixed_background, nk_style_item_color(nk_rgba(255, 255, 255, 0)));
+		nk_style_push_style_item(ctx, &ctx->style.window.fixed_background, nk_style_item_color(nk_rgba(0, 0, 0, 128)));
 
-		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 500, 500), 0))
+		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 200, 250), 0))
 		{
 			nk_layout_row_dynamic(ctx, 17, 1);
 

@@ -308,4 +308,27 @@ vec3 readErosion(sampler2D tex, vec2 uv)
 
 	return minValue;
 }
+
+vec3 heatmap(float factor)
+{
+	float intPart;
+	float fractional = modf(factor * 4.0, intPart);
+
+	if(intPart < 1.0)
+	{
+		return mix(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0), fractional);
+	}
+	else if(intPart < 2.0)
+	{
+		return mix(vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 0.0), fractional);
+	}
+	else if(intPart < 3.0)
+	{
+		return mix(vec3(0.0, 1.0, 0.0), vec3(1.0, 1.0, 0.0), fractional);
+	}
+	else
+	{
+		return mix(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), fractional);
+	}
+}
 #endif

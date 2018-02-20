@@ -20,10 +20,10 @@ http://www.anki3d.org/LICENSE
 			</inputs>
 
 			<source><![CDATA[
-#define NO_HIZ 0
-	
 #include "shaders/Functions.glsl"
 #include "shaders/Pack.glsl"
+
+const ivec2 HIZ_SIZE = ivec2(FB_SIZE) >> 1;
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
@@ -68,7 +68,6 @@ vec4 returnSslrColor(vec3 raySample, float factor, float roughness)
 // Note: All calculations in view space
 vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth, float roughness)
 {
-	const ivec2 HIZ_SIZE = ivec2(FB_SIZE) >> 1;
 	vec3 p0 = viewPos;
 
 	// Check for view facing reflections [sakibsaikia]
@@ -91,105 +90,64 @@ vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth, float roughness)
 	vec3 end = end4.xyz / end4.w;
 	end.xy = NDC_TO_UV(end.xy);
 
-	// Compute the ray
+	// Compute the ray and step size
 	vec3 ray = end - start;
-#if NO_HIZ
 	vec2 texelDims = abs(ray.xy) * vec2(HIZ_SIZE);
-#else
-	vec2 texelDims = abs(ray.xy) * vec2(HIZ_SIZE >> (HIZ_MIP_COUNT - 1u));
-#endif
 	float stepSize = length(ray.xy) / max(texelDims.x, texelDims.y);
 	ray = normalize(ray);
-	if(ray.x == 0.0)
-	{
-		ray.x = EPSILON;
-	}
-	if(ray.y == 0.0)
-	{
-		ray.y = EPSILON;
-	}
 
+	// Compute step
+	const uint BIG_STEP_SKIP = 32u;
+	uint stepSkip = BIG_STEP_SKIP;
+
+	uint l = gl_GlobalInvocationID.x & 1u;
+	uint j = gl_GlobalInvocationID.y & 1u;
+	const uint STEPS_ARR[4] = uint[](6u, 25u, 13u, 18u);
+	uint step = STEPS_ARR[l * 2u + j];
+	
 	// Iterate
-#if NO_HIZ
-	for(uint step = 4u; step < MAX_STEPS; step += 1u)
+	bool found = false;
+	vec3 raySample;
+	uint iterations = 0u;
+	for(; iterations < MAX_STEPS; ++iterations)
 	{
-		vec3 raySample = start + ray * (float(step) * stepSize);
+		raySample = start + ray * (float(step) * stepSize);
 
 		// Check if it's out of the view
 		if(raySample.x <= 0.0 || raySample.y <= 0.0 || raySample.x >= 1.0 || raySample.y >= 1.0)
 		{
-			return vec4(0.0);
+			break;
 		}
 
-		float depth = textureLod(u_hizRt, raySample.xy, float(HIZ_MIP_TO_USE)).r;
+		float depth = textureLod(u_hizRt, raySample.xy, 0.0).r;
 
-		float diff = raySample.z - depth;
-		if(diff >= 0.0)
+		bool hit = raySample.z - depth >= 0.0;
+		if(!hit)
 		{
-			return returnSslrColor(raySample, cameraFacingReflectionAttenuation, roughness);
+			step += stepSkip;
+		}
+		else if(stepSkip > 1)
+		{
+			step -= BIG_STEP_SKIP - 1u;
+			stepSkip = 1u;
+		}
+		else
+		{
+			found = true;
+			break;
 		}
 	}
-#else
-	int mipLevel = int(HIZ_MIP_COUNT - 1);
-	vec3 raySample = start + ray * stepSize;
-	uint stepCount = 0U;
-	while(mipLevel > -1 && stepCount < MAX_STEPS)
-	{
-		// Step through the cell
-		{
-			ivec2 mipSize = ivec2(HIZ_SIZE) >> mipLevel;
 
-			// Move the ray to texture space
-			vec2 mipCellIndex = raySample.xy * vec2(mipSize);
+	//return vec4(heatmap(float(iterations) / float(MAX_STEPS)), 1.0);
 
-			// Find the closest cell's edge to the ray direction
-			vec2 closestCellEdgeUv;
-			closestCellEdgeUv.x = (ray.x > 0.0) ? ceil(mipCellIndex.x) + 0.1 : floor(mipCellIndex.x) - 0.1;
-			closestCellEdgeUv.y = (ray.y > 0.0) ? ceil(mipCellIndex.y) + 0.1 : floor(mipCellIndex.y) - 0.1;
-			closestCellEdgeUv /= vec2(mipSize);
-
-			// Intersect the ray that starts from the start with direction ray and the 2 lines:
-			// x = closestCellEdgeUv.x
-			// y = closestCellEdgeUv.y
-			vec2 t;
-			t.x = (closestCellEdgeUv.x - raySample.x) / ray.x;
-			t.y = (closestCellEdgeUv.y - raySample.y) / ray.y;
-
-			// Pick the cell intersection that is closer, and march to that cell
-			float mint = min(t.x, t.y);
-			raySample += mint * ray;
-		}
-
-		// Check if it's out of the view
-		if(raySample.x <= 0.0 || raySample.y <= 0.0 || raySample.x >= 1.0 || raySample.y >= 1.0)
-		{
-			return vec4(0.0);
-		}
-
-		// Get the viewspace Z from the depth buffer
-		float depth = textureLod(u_hizRt, raySample.xy, float(mipLevel)).r;
-
-		if(raySample.z > depth)
-		{
-			// If we intersected, pull back the ray to the point of intersection (for that miplevel)
-			float t = (raySample.z - depth) / ray.z;
-			raySample -= ray * t;
-
-			// And, then perform successive test on the next lower mip level.
-			// Once we've got a valid intersection with mip 0, we've found our intersection point
-			--mipLevel;
-		}
-
-		++stepCount;
-	}
-
-	if(mipLevel < 0)
+	if(found)
 	{
 		return returnSslrColor(raySample, cameraFacingReflectionAttenuation, roughness);
 	}
-#endif
-
-	return vec4(0.0);
+	else
+	{
+		return vec4(0.0);
+	}
 }
 
 void main()

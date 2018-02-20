@@ -12,6 +12,7 @@
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Ssao.h>
+#include <anki/renderer/Reflections.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/UiStage.h>
 #include <anki/util/Logger.h>
