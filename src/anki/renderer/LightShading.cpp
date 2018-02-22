@@ -13,6 +13,7 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/ForwardShading.h>
 #include <anki/renderer/DepthDownscale.h>
+#include <anki/renderer/Reflections.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/collision/Functions.h>
@@ -23,15 +24,19 @@ namespace anki
 /// @note Should match the shader
 struct ShaderCommonUniforms
 {
-	Vec4 m_projectionParams;
+	Vec4 m_unprojectionParams;
 	Vec4 m_rendererSizeTimeNear;
 	Vec4 m_cameraPosFar;
 	ClustererShaderMagicValues m_clustererMagicValues;
 	UVec4 m_tileCount;
+	Mat4 m_viewMat;
 	Mat4 m_invViewMat;
+	Mat4 m_projMat;
+	Mat4 m_invProjMat;
+	Mat4 m_viewProjMat;
 	Mat4 m_invViewProjMat;
 	Mat4 m_prevViewProjMat;
-	Mat4 m_invProjMat;
+	Mat4 m_prevViewProjMatMulInvViewProjMat;
 };
 
 LightShading::LightShading(Renderer* r)
@@ -184,23 +189,31 @@ void LightShading::updateCommonBlock(RenderingContext& ctx)
 		sizeof(ShaderCommonUniforms), m_runCtx.m_resources.m_commonUniformsToken);
 
 	// Start writing
-	blk->m_projectionParams = ctx.m_unprojParams;
-
-	blk->m_invViewMat = ctx.m_renderQueue->m_viewMatrix.getInverse();
+	blk->m_unprojectionParams = ctx.m_unprojParams;
 
 	blk->m_rendererSizeTimeNear =
 		Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), ctx.m_renderQueue->m_cameraNear);
 
 	blk->m_tileCount = UVec4(m_clusterCounts[0], m_clusterCounts[1], m_clusterCounts[2], m_clusterCount);
 
-	blk->m_invViewProjMat = ctx.m_viewProjMatJitter.getInverse();
-	blk->m_prevViewProjMat = ctx.m_prevViewProjMat;
-	blk->m_invProjMat = ctx.m_projMatJitter.getInverse();
-
 	blk->m_cameraPosFar =
 		Vec4(ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz(), ctx.m_renderQueue->m_cameraFar);
 
 	blk->m_clustererMagicValues = m_lightBin->getClusterer().getShaderMagicValues();
+
+	// Matrices
+	blk->m_viewMat = ctx.m_renderQueue->m_viewMatrix;
+	blk->m_invViewMat = ctx.m_renderQueue->m_viewMatrix.getInverse();
+
+	blk->m_projMat = ctx.m_projMatJitter;
+	blk->m_invProjMat = ctx.m_projMatJitter.getInverse();
+
+	blk->m_viewProjMat = ctx.m_viewProjMatJitter;
+	blk->m_invViewProjMat = ctx.m_viewProjMatJitter.getInverse();
+
+	blk->m_prevViewProjMat = ctx.m_prevViewProjMat;
+
+	blk->m_prevViewProjMatMulInvViewProjMat = ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();
 }
 
 void LightShading::populateRenderGraph(RenderingContext& ctx)

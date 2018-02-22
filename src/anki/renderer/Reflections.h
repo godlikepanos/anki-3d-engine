@@ -29,23 +29,30 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getRt() const
+	RenderTargetHandle getReflectionRt() const
 	{
-		return m_runCtx.m_rt;
+		return m_runCtx.m_reflRt;
+	}
+
+	RenderTargetHandle getIrradianceRt() const
+	{
+		return m_runCtx.m_irradianceRt;
 	}
 
 private:
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProg;
 
-	RenderTargetDescription m_rtDescr;
+	TexturePtr m_reflTex;
+	TexturePtr m_irradianceTex;
 
 	Array<U8, 2> m_workgroupSize = {{16, 16}};
 
 	class
 	{
 	public:
-		RenderTargetHandle m_rt;
+		RenderTargetHandle m_reflRt;
+		RenderTargetHandle m_irradianceRt;
 		RenderingContext* m_ctx ANKI_DBG_NULLIFY;
 	} m_runCtx;
 

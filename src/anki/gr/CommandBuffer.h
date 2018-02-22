@@ -166,6 +166,7 @@ public:
 	void setFillMode(FillMode mode);
 
 	/// Set cull mode.
+	/// By default it's FaceSelectionBit::BACK.
 	void setCullMode(FaceSelectionBit mode);
 
 	/// Set depth offset and units. Set zeros to both to disable it.
@@ -203,6 +204,8 @@ public:
 	void setColorChannelWriteMask(U32 attachment, ColorBit mask);
 
 	/// Set blend factors seperate.
+	/// By default the values of srcRgb, dstRgb, srcA and dstA are BlendFactor::ONE, BlendFactor::ONE,
+	/// BlendFactor::ZERO, BlendFactor::ZERO respectively.
 	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA);
 
 	/// Set blend factors.
@@ -212,6 +215,7 @@ public:
 	}
 
 	/// Set the blend operation seperate.
+	/// By default the values of funcRgb and funcA are BlendOperation::ADD, BlendOperation::ADD respectively.
 	void setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA);
 
 	/// Set the blend operation.

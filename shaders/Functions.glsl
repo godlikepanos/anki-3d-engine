@@ -309,6 +309,7 @@ vec3 readErosion(sampler2D tex, vec2 uv)
 	return minValue;
 }
 
+// 5 color heatmap from a factor.
 vec3 heatmap(float factor)
 {
 	float intPart;
@@ -331,4 +332,10 @@ vec3 heatmap(float factor)
 		return mix(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), fractional);
 	}
 }
+
+bool incorrectColor(vec3 c)
+{
+	return isnan(c.x) || isnan(c.y) || isnan(c.z) || isinf(c.x) || isinf(c.y) || isinf(c.z);
+}
+
 #endif

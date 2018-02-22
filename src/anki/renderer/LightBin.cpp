@@ -136,8 +136,8 @@ public:
 
 	Bool operator<(const ClusterProbeIndex& b) const
 	{
-		ANKI_ASSERT(m_probeRadius > 0.0 && b.m_probeRadius > 0.0);
-		return m_probeRadius < b.m_probeRadius;
+		ANKI_ASSERT(m_probeRadius > 0 && b.m_probeRadius > 0);
+		return (m_probeRadius != b.m_probeRadius) ? (m_probeRadius > b.m_probeRadius) : (m_index < b.m_index);
 	}
 
 private:

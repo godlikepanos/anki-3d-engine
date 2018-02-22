@@ -48,6 +48,11 @@ void UiStage::draw(RenderingContext& ctx, CommandBufferPtr& cmdb)
 
 	m_canvas->endBuilding();
 	m_canvas->appendToCommandBuffer(cmdb);
+
+	// UI messes with the state, restore it
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	cmdb->setBlendOperation(0, BlendOperation::ADD);
+	cmdb->setCullMode(FaceSelectionBit::BACK);
 }
 
 } // end namespace anki

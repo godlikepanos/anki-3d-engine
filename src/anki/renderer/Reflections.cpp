@@ -6,9 +6,12 @@
 #include <anki/renderer/Reflections.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/GBuffer.h>
+#include <anki/renderer/Indirect.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/RenderQueue.h>
+#include <anki/renderer/LightShading.h>
+#include <anki/misc/ConfigSet.h>
 
 namespace anki
 {
@@ -33,24 +36,31 @@ Error Reflections::initInternal(const ConfigSet& cfg)
 	U32 height = m_r->getHeight();
 	ANKI_R_LOGI("Initializing reflection pass (%ux%u)", width, height);
 
-	// Create RT descr
-	m_rtDescr = m_r->create2DRenderTargetDescription(width,
+	// Create RTs
+	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(width,
 		height,
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_COMPUTE_WRITE
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		"Refl");
-	m_rtDescr.bake();
+		"Refl_");
+	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+
+	m_reflTex = m_r->createAndClearRenderTarget(texinit);
+	m_irradianceTex = m_r->createAndClearRenderTarget(texinit);
 
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource("programs/Reflections.ankiprog", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
+	ShaderProgramResourceConstantValueInitList<9> consts(m_prog);
 	consts.add("FB_SIZE", UVec2(width, height));
 	consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
 	consts.add("MAX_STEPS", U32(64));
 	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
 	consts.add("HIZ_MIP_COUNT", U32(HIERARCHICAL_Z_MIPMAP_COUNT));
+	consts.add("CLUSTER_COUNT_X", U32(cfg.getNumber("r.clusterSizeX")));
+	consts.add("CLUSTER_COUNT_Y", U32(cfg.getNumber("r.clusterSizeY")));
+	consts.add("CLUSTER_COUNT_Z", U32(cfg.getNumber("r.clusterSizeZ")));
+	consts.add("IR_MIPMAP_COUNT", U32(m_r->getIndirect().getReflectionTextureMipmapCount()));
 
 	ShaderProgramResourceMutationInitList<1> mutations(m_prog);
 	mutations.add("VARIANT", 0);
@@ -73,55 +83,59 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_ctx = &ctx;
 
-	// Create RT
-	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+	// Create RTs
+	m_runCtx.m_reflRt = rgraph.importRenderTarget("Refl", m_reflTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	m_runCtx.m_irradianceRt = rgraph.importRenderTarget("ReflIrr", m_irradianceTex, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Create pass
 	ComputeRenderPassDescription& rpass = ctx.m_renderGraphDescr.newComputeRenderPass("Refl");
 	rpass.setWork(runCallback, this, 0);
 
-	rpass.newConsumer({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+	rpass.newConsumer({m_runCtx.m_reflRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+	rpass.newConsumer({m_runCtx.m_irradianceRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	rpass.newConsumer({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
+	rpass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	rpass.newConsumer({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	rpass.newConsumer({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
-	rpass.newProducer({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+	rpass.newProducer({m_runCtx.m_reflRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+	rpass.newProducer({m_runCtx.m_irradianceRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 }
 
 void Reflections::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	struct Unis
-	{
-		Mat4 m_projMat;
-		Mat4 m_invViewProjMat;
-		Mat4 m_invProjMat;
-		Mat4 m_viewMat;
-		Vec4 m_camPosNear;
-		Vec4 m_unprojParams;
-	};
-
-	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
-	unis->m_projMat = m_runCtx.m_ctx->m_projMatJitter;
-	unis->m_invViewProjMat = m_runCtx.m_ctx->m_viewProjMatJitter.getInverse();
-	unis->m_invProjMat = m_runCtx.m_ctx->m_projMatJitter.getInverse();
-	unis->m_viewMat = m_runCtx.m_ctx->m_renderQueue->m_viewMatrix;
-	unis->m_camPosNear = Vec4(m_runCtx.m_ctx->m_renderQueue->m_cameraTransform.getTranslationPart().xyz(),
-		m_runCtx.m_ctx->m_renderQueue->m_cameraNear + 0.1f);
-
-	unis->m_unprojParams = m_runCtx.m_ctx->m_unprojParams;
+	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1]);
 
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getDepthDownscale().getHiZRt(), m_r->getNearestNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getDownscaleBlur().getRt(), m_r->getTrilinearRepeatSampler());
+	rgraphCtx.bindTextureAndSampler(0,
+		4,
+		m_r->getGBuffer().getDepthRt(),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
+		m_r->getNearestSampler());
 
-	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_reflRt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 1, m_runCtx.m_irradianceRt, TextureSubresourceInfo());
 
-	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1]);
+	// Bind light shading stuff
+	rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
+	cmdb->bindTextureAndSampler(
+		0, 7, m_r->getDummyTextureView(), m_r->getNearestSampler(), TextureUsageBit::SAMPLED_COMPUTE);
 
+	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
+	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
+	bindUniforms(cmdb, 0, 1, rsrc.m_probesToken);
+	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
+
+	// Dispatch
 	const U sizeX = (m_r->getWidth() + m_workgroupSize[0] - 1) / m_workgroupSize[0];
 	const U sizeY = (m_r->getHeight() + m_workgroupSize[1] - 1) / m_workgroupSize[1];
 	cmdb->dispatchCompute(sizeX / 2, sizeY, 1);

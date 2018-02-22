@@ -77,14 +77,6 @@ const float SUBSURFACE_MIN = 0.05;
 	float att = computeAttenuationFactor(light.posRadius.w, frag2Light); \
 	float lambert = nol;
 
-void debugIncorrectColor(inout vec3 c)
-{
-	if(isnan(c.x) || isnan(c.y) || isnan(c.z) || isinf(c.x) || isinf(c.y) || isinf(c.z))
-	{
-		c = vec3(1.0, 0.0, 1.0);
-	}
-}
-
 // Compute the colors of a decal.
 void appendDecalColors(in Decal decal, in vec3 worldPos, inout vec3 diffuseColor, inout float roughness)
 {
@@ -144,7 +136,7 @@ void readIndirect(uint idxOffset, vec3 pos, vec3 r, vec3 n, float lod, out vec3 
 
 void main()
 {
-	float depth = texture(u_msDepthRt, in_uv, 0.0).r;
+	float depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
 	vec2 ndc = UV_TO_NDC(in_uv);
 
 	// Get world position
@@ -190,15 +182,14 @@ void main()
 	}
 
 	// Apply SSAO
-	float ssao = texture(u_ssaoTex, in_uv).r;
+	float ssao = textureLod(u_ssaoTex, in_uv, 0.0).r;
 	diffCol *= ssao;
 
 	// Ambient and emissive color
 	vec3 outC = diffCol * emission;
 
 	// Don't allow zero a2 because we may end up with division with zero
-	float a2 = roughness * 0.95 + 0.05;
-	a2 *= a2 * a2;
+	float a2 = computeRoughnesSquared(roughness);
 
 	// Point lights
 	vec3 viewDir = normalize(u_cameraPos - worldPos);

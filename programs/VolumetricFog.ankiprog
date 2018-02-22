@@ -46,7 +46,7 @@ layout(std140, ANKI_UBO_BINDING(0, 3), row_major) uniform ubo0_
 {
 	vec4 u_linearizeNoiseTexOffsetLayer;
 	vec4 u_fogParticleColorPad1;
-	mat4 u_prevViewProjMatMulInvViewProjMat;
+	mat4 u_prevViewProjMatMulInvViewProjMat2; // TODO Light common ubo has that. Maybe remove it
 };
 
 #define u_linearize readFirstInvocationARB(u_linearizeNoiseTexOffsetLayer.xy)
@@ -114,7 +114,7 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 
 vec3 readHistory(vec3 ndc, out float historyFeedback)
 {
-	vec4 v4 = u_prevViewProjMatMulInvViewProjMat * vec4(ndc, 1.0);
+	vec4 v4 = u_prevViewProjMatMulInvViewProjMat2 * vec4(ndc, 1.0);
 	v4.xy /= v4.w;
 
 	vec2 oldUv = NDC_TO_UV(v4.xy);

@@ -17,11 +17,24 @@ http://www.anki3d.org/LICENSE
 				<input name="MAX_STEPS" type="uint" const="1"/>
 				<input name="LIGHT_BUFFER_MIP_COUNT" type="uint" const="1"/>
 				<input name="HIZ_MIP_COUNT" type="uint" const="1"/>
+				<input name="CLUSTER_COUNT_X" type="uint" const="1"/>
+				<input name="CLUSTER_COUNT_Y" type="uint" const="1"/>
+				<input name="CLUSTER_COUNT_Z" type="uint" const="1"/>
+				<input name="IR_MIPMAP_COUNT" type="uint" const="1"/>
 			</inputs>
 
 			<source><![CDATA[
 #include "shaders/Functions.glsl"
 #include "shaders/Pack.glsl"
+#include "shaders/Clusterer.glsl"
+
+#define LIGHT_SET 0
+#define LIGHT_SS_BINDING 0
+#define LIGHT_UBO_BINDING 0
+#define LIGHT_TEX_BINDING 5
+#define LIGHT_INDIRECT
+#define LIGHT_COMMON_UNIS
+#include "shaders/ClusterLightCommon.glsl"
 
 const ivec2 HIZ_SIZE = ivec2(FB_SIZE) >> 1;
 
@@ -31,30 +44,20 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_gbufferRt1;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_gbufferRt2;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_hizRt;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_lightBufferRt;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_depthRt;
 
-layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D u_out;
+layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_refl;
+layout(ANKI_IMAGE_BINDING(0, 1)) writeonly uniform image2D out_indirect;
 
-layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
-{
-	mat4 u_projMat;
-	mat4 u_invViewProjMat;
-	mat4 u_invProjMat;
-	mat4 u_viewMat;
-	vec4 u_camPosNear;
-	vec4 u_unprojParams;
-};
-
-#define u_camPos u_camPosNear.xyz
-#define u_near u_camPosNear.w
 #define u_normalMat mat3(u_viewMat)
-
-float unprojZ(float depth)
-{
-	return u_unprojParams.z / (u_unprojParams.w + depth);
-}
 
 vec4 returnSslrColor(vec3 raySample, float factor, float roughness)
 {
+	// Re-project previous frame
+	vec4 v4 = u_prevViewProjMatMulInvViewProjMat * vec4(UV_TO_NDC(raySample.xy), raySample.z, 1.0);
+	raySample.xy = NDC_TO_UV(v4.xy / v4.w);
+	raySample.xy = saturate(raySample.xy);
+
 	vec2 ndc = abs(UV_TO_NDC(raySample.xy));
 	float contribution = max(ndc.x, ndc.y);
 	contribution = 1.0 - contribution * contribution;
@@ -78,9 +81,9 @@ vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth, float roughness)
 		return vec4(0.0);
 	}
 
-	// Compute an end point p1. This point is supposed to fall in front of the near plane. u_near is a bit bigger than
-	// the actual near.
-	vec3 p1 = p0 + r * (-p0.z - u_near);
+	// Compute an end point p1. This point is supposed to fall in front of the near plane. Add a small padding to near
+	// to avoid having p1 touching the near plane.
+	vec3 p1 = p0 + r * (-p0.z - (u_near + 0.1));
 
 	// Start point
 	vec3 start = vec3(uv, depth);
@@ -150,6 +153,50 @@ vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth, float roughness)
 	}
 }
 
+// Note: All calculations in world space
+void doProbeReflections(
+	uint idxOffset, vec3 worldPos, vec3 normal, float roughness, out vec3 specIndirect, out vec3 diffIndirect)
+{
+	specIndirect = vec3(0.0);
+	diffIndirect = vec3(0.0);
+
+	vec3 viewDir = normalize(worldPos - u_cameraPos);
+	vec3 reflDir = reflect(viewDir, normal);
+
+	float reflLod = float(IR_MIPMAP_COUNT - 1u) * roughness;
+
+	// Check proxy
+	uint count = u_lightIndices[idxOffset++];
+	while(count-- != 0)
+	{
+		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
+
+		float R2 = probe.positionRadiusSq.w;
+		vec3 center = probe.positionRadiusSq.xyz;
+
+		// Get distance from the center of the probe
+		vec3 f = worldPos - center;
+
+		// Cubemap UV in view space
+		vec3 uv = computeCubemapVecAccurate(reflDir, R2, f);
+
+		// Read!
+		float cubemapIndex = probe.cubemapIndexPad3.x;
+		vec3 c = textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), reflLod).rgb;
+
+		// Combine (lerp) with previous color
+		float d = dot(f, f);
+		float factor = d / R2;
+		factor = min(factor, 1.0);
+		specIndirect = mix(c, specIndirect, factor);
+
+		// Do the same for diffuse
+		uv = computeCubemapVecAccurate(normal, R2, f);
+		vec3 id = textureLod(u_irradianceTex, vec4(uv, cubemapIndex), 0.0).rgb;
+		diffIndirect = mix(id, diffIndirect, factor);
+	}
+}
+
 void main()
 {
 	uvec2 realInvocationId = gl_GlobalInvocationID.xy;
@@ -169,7 +216,7 @@ void main()
 		return;
 	}
 
-	vec2 uv = vec2(realInvocationId) / vec2(FB_SIZE);
+	vec2 uv = (vec2(realInvocationId) + 0.5) / vec2(FB_SIZE);
 
 	// Get normal
 	vec3 worldNormal;
@@ -180,22 +227,64 @@ void main()
 	vec3 specular;
 	readRoughnessSpecularFromGBuffer(u_gbufferRt1, uv, roughness, specular);
 
-	// Get view pos
-	float depth = textureLod(u_hizRt, uv, 0.0).r;
-	vec4 viewPos4 = u_invProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
-	vec3 viewPos = viewPos4.xyz / viewPos4.w;
+	// Get depth
+	float depth = textureLod(u_depthRt, uv, 0.0).r;
 
-	// Do SSLR
-	vec3 viewDir = normalize(viewPos);
-	vec3 viewNormal = u_normalMat * worldNormal;
-	vec3 reflVec = reflect(viewDir, viewNormal);
+	// Try SSR
+	float sslrFactor = 0.0;
+	vec3 sslrCol = vec3(0.0);
+	{
+		// Get view pos
+		vec4 viewPos4 = u_invProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
+		vec3 viewPos = viewPos4.xyz / viewPos4.w;
 
-	vec4 sslr = doSslr(reflVec, viewNormal, viewPos, uv, depth, roughness);
-	float sslrFactor = sslr.w;
-	vec3 sslrCol = sslr.xyz;
+		// Do SSLR
+		vec3 viewDir = normalize(viewPos);
+		vec3 viewNormal = u_normalMat * worldNormal;
+		vec3 reflVec = reflect(viewDir, viewNormal);
 
-	// Write it
-	imageStore(u_out, ivec2(realInvocationId), vec4(sslrCol * sslrFactor, 0.0));
+		vec4 sslr = doSslr(reflVec, viewNormal, viewPos, uv, depth, roughness);
+		sslrFactor = sslr.w;
+		sslrCol = sslr.xyz;
+	}
+
+	// Read probes
+	vec3 probeCol;
+	vec3 indirectCol;
+	{
+		vec2 ndc = UV_TO_NDC(uv);
+
+		// Get world position
+		vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
+		vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+		// Get first light index
+		uint clusterIdx = computeClusterIndex(u_clustererMagic, uv, worldPos, CLUSTER_COUNT_X, CLUSTER_COUNT_Y);
+		uint idxOffset = u_clusters[clusterIdx];
+
+		// Skip decals
+		uint count = u_lightIndices[idxOffset++];
+		idxOffset += count;
+		
+		// Skip point lights
+		count = u_lightIndices[idxOffset++];
+		idxOffset += count;
+
+		// Skip spot lights
+		count = u_lightIndices[idxOffset++];
+		idxOffset += count;
+
+		// Do the probe read
+		doProbeReflections(idxOffset, worldPos, worldNormal, roughness, probeCol, indirectCol);
+	}
+
+	// Combine the SSR and probe reflections and write the result
+	vec3 finalRefl = mix(probeCol, sslrCol, sslrFactor);
+	finalRefl = clamp(finalRefl, 0.0, FLT_MAX); // XXX
+	imageStore(out_refl, ivec2(realInvocationId), vec4(finalRefl, 0.0));
+
+	// Write indirect diffuse
+	imageStore(out_indirect, ivec2(realInvocationId), vec4(indirectCol, 0.0));
 }
 			]]></source>
 		</shader>

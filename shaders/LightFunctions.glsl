@@ -163,4 +163,11 @@ vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f)
 	return r;
 }
 
+float computeRoughnesSquared(float roughness)
+{
+	float a2 = roughness * 0.95 + 0.05;
+	a2 *= a2 * a2;
+	return a2;
+}
+
 #endif
