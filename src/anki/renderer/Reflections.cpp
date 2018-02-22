@@ -88,7 +88,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_irradianceRt = rgraph.importRenderTarget("ReflIrr", m_irradianceTex, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Create pass
-	ComputeRenderPassDescription& rpass = ctx.m_renderGraphDescr.newComputeRenderPass("Refl");
+	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Refl");
 	rpass.setWork(runCallback, this, 0);
 
 	rpass.newConsumer({m_runCtx.m_reflRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
