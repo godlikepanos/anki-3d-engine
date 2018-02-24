@@ -204,8 +204,8 @@ public:
 	void setColorChannelWriteMask(U32 attachment, ColorBit mask);
 
 	/// Set blend factors seperate.
-	/// By default the values of srcRgb, dstRgb, srcA and dstA are BlendFactor::ONE, BlendFactor::ONE,
-	/// BlendFactor::ZERO, BlendFactor::ZERO respectively.
+	/// By default the values of srcRgb, dstRgb, srcA and dstA are BlendFactor::ONE, BlendFactor::ZERO,
+	/// BlendFactor::ONE, BlendFactor::ZERO respectively.
 	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA);
 
 	/// Set blend factors.

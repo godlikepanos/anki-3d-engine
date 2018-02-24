@@ -20,6 +20,7 @@ namespace anki
 // Forward
 class Renderer;
 class GBuffer;
+class GBufferPost;
 class ShadowMapping;
 class LightShading;
 class ForwardShading;

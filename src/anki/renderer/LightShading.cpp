@@ -6,7 +6,6 @@
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/ShadowMapping.h>
-#include <anki/renderer/Ssao.h>
 #include <anki/renderer/Indirect.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/LightBin.h>
@@ -139,41 +138,32 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindShaderProgram(m_progVariant->getProgram());
 
-	rgraphCtx.bindColorTextureAndSampler(1, 0, m_r->getGBuffer().getColorRt(0), m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(1, 1, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(1, 2, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
-	rgraphCtx.bindTextureAndSampler(1,
+	// Bind textures
+	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(0), m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
+	rgraphCtx.bindTextureAndSampler(0,
 		3,
 		m_r->getGBuffer().getDepthRt(),
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(1, 4, m_r->getSsao().getRt(), m_r->getLinearSampler());
 
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getIndirect().getIrradianceRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getIndirect().getIrradianceRt(), m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0,
-		3,
+		7,
 		m_r->getIndirect().getIntegrationLut(),
 		m_r->getIndirect().getIntegrationLutSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTextureAndSampler(0,
-		4,
-		(rsrc.m_diffDecalTexView) ? rsrc.m_diffDecalTexView : m_r->getDummyTextureView(),
-		m_r->getTrilinearRepeatSampler(),
-		TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTextureAndSampler(0,
-		5,
-		(rsrc.m_normRoughnessDecalTexView) ? rsrc.m_normRoughnessDecalTexView : m_r->getDummyTextureView(),
-		m_r->getTrilinearRepeatSampler(),
-		TextureUsageBit::SAMPLED_FRAGMENT);
 
+	// Bind uniforms
 	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
 	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 	bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);
-	bindUniforms(cmdb, 0, 4, rsrc.m_decalsToken);
 
+	// Bind storage
 	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
 	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
 
@@ -237,7 +227,6 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newConsumer({m_r->getGBuffer().getDepthRt(),
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
-	pass.newConsumer({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_FRAGMENT});

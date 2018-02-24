@@ -97,8 +97,8 @@ public:
 	aiMatrix4x4 m_transform;
 	std::string m_diffuseTextureAtlasFilename;
 	std::string m_diffuseSubTextureName;
-	std::string m_normalRoughnessAtlasFilename;
-	std::string m_normalRoughnessSubTextureName;
+	std::string m_specularRoughnessAtlasFilename;
+	std::string m_specularRoughnessSubTextureName;
 	aiVector3D m_size;
 	std::array<float, 2> m_factors = {{1.0, 1.0}};
 };

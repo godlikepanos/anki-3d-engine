@@ -145,11 +145,11 @@ public:
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 	const TextureView* m_diffuseAtlas;
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
-	const TextureView* m_normalRoughnessAtlas;
+	const TextureView* m_specularRoughnessAtlas;
 	Vec4 m_diffuseAtlasUv;
-	Vec4 m_normalRoughnessAtlasUv;
+	Vec4 m_specularRoughnessAtlasUv;
 	F32 m_diffuseAtlasBlendFactor;
-	F32 m_normalRoughnessAtlasBlendFactor;
+	F32 m_specularRoughnessAtlasBlendFactor;
 	Mat4 m_textureMatrix;
 	Vec3 m_obbCenter;
 	Vec3 m_obbExtend;

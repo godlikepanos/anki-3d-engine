@@ -353,6 +353,7 @@ private:
 	UniquePtr<Indirect> m_indirect;
 	UniquePtr<ShadowMapping> m_shadowMapping; ///< Shadow mapping.
 	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage
+	UniquePtr<GBufferPost> m_gbufferPost;
 	UniquePtr<Reflections> m_refl;
 	UniquePtr<LightShading> m_lightShading; ///< Illumination rendering stage
 	UniquePtr<DepthDownscale> m_depth;

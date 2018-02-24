@@ -320,8 +320,8 @@ public:
 
 	TextureViewPtr m_diffDecalTexAtlas;
 	SpinLock m_diffDecalTexAtlasMtx;
-	TextureViewPtr m_normalRoughnessDecalTexAtlas;
-	SpinLock m_normalRoughnessDecalTexAtlasMtx;
+	TextureViewPtr m_specularRoughnessDecalTexAtlas;
+	SpinLock m_specularRoughnessDecalTexAtlasMtx;
 
 	LightBin* m_bin = nullptr;
 };
@@ -494,7 +494,7 @@ Error LightBin::bin(const Mat4& viewMat,
 	ANKI_CHECK(m_threadPool->waitForAllThreadsToFinish());
 
 	out.m_diffDecalTexView = ctx.m_diffDecalTexAtlas;
-	out.m_normRoughnessDecalTexView = ctx.m_normalRoughnessDecalTexAtlas;
+	out.m_specularRoughnessDecalTexView = ctx.m_specularRoughnessDecalTexAtlas;
 
 	return Error::NONE;
 }
@@ -807,20 +807,20 @@ void LightBin::writeAndBinDecal(const DecalQueueElement& decalEl, LightBinContex
 		ctx.m_diffDecalTexAtlas = atlas;
 	}
 
-	atlas.reset(const_cast<TextureView*>(decalEl.m_normalRoughnessAtlas));
-	uv = decalEl.m_normalRoughnessAtlasUv;
+	atlas.reset(const_cast<TextureView*>(decalEl.m_specularRoughnessAtlas));
+	uv = decalEl.m_specularRoughnessAtlasUv;
 	decal.m_normRoughnessUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
-	decal.m_blendFactors[1] = decalEl.m_normalRoughnessAtlasBlendFactor;
+	decal.m_blendFactors[1] = decalEl.m_specularRoughnessAtlasBlendFactor;
 
 	if(atlas)
 	{
-		LockGuard<SpinLock> lock(ctx.m_normalRoughnessDecalTexAtlasMtx);
-		if(ctx.m_normalRoughnessDecalTexAtlas && ctx.m_normalRoughnessDecalTexAtlas != atlas)
+		LockGuard<SpinLock> lock(ctx.m_specularRoughnessDecalTexAtlasMtx);
+		if(ctx.m_specularRoughnessDecalTexAtlas && ctx.m_specularRoughnessDecalTexAtlas != atlas)
 		{
 			ANKI_R_LOGF("All decals should have the same tex atlas");
 		}
 
-		ctx.m_normalRoughnessDecalTexAtlas = atlas;
+		ctx.m_specularRoughnessDecalTexAtlas = atlas;
 	}
 
 	// bias * proj_l * view_

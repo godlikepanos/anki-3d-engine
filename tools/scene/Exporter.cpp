@@ -895,11 +895,11 @@ void Exporter::visitNode(const aiNode* ainode)
 					}
 					else if(pr.first == "decal_normal_roughness_atlas")
 					{
-						decal.m_normalRoughnessAtlasFilename = pr.second;
+						decal.m_specularRoughnessAtlasFilename = pr.second;
 					}
 					else if(pr.first == "decal_normal_roughness_sub_texture")
 					{
-						decal.m_normalRoughnessSubTextureName = pr.second;
+						decal.m_specularRoughnessSubTextureName = pr.second;
 					}
 					else if(pr.first == "decal_normal_roughness_factor")
 					{
@@ -1116,10 +1116,10 @@ void Exporter::exportAll()
 			 << decal.m_diffuseSubTextureName << "\", " << decal.m_factors[0] << ")\n";
 		file << "decalc:updateShape(" << decal.m_size.x << ", " << decal.m_size.y << ", " << decal.m_size.z << ")\n";
 
-		if(!decal.m_normalRoughnessAtlasFilename.empty())
+		if(!decal.m_specularRoughnessAtlasFilename.empty())
 		{
-			file << "decalc:setNormalRoughnessDecal(\"" << decal.m_normalRoughnessAtlasFilename << "\", \""
-				 << decal.m_normalRoughnessSubTextureName << "\", " << decal.m_factors[1] << ")\n";
+			file << "decalc:setSpecularRoughnessDecal(\"" << decal.m_specularRoughnessAtlasFilename << "\", \""
+				 << decal.m_specularRoughnessSubTextureName << "\", " << decal.m_factors[1] << ")\n";
 		}
 
 		++i;
