@@ -13,7 +13,7 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Reflections pass.
+/// Reflections pass. It does SSR and probe reflections and it conbines them with the irradiance as well.
 class Reflections : public RendererObject
 {
 anki_internal:
@@ -29,30 +29,23 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getReflectionRt() const
+	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_reflRt;
-	}
-
-	RenderTargetHandle getIrradianceRt() const
-	{
-		return m_runCtx.m_irradianceRt;
+		return m_runCtx.m_indirectRt;
 	}
 
 private:
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProg;
 
-	TexturePtr m_reflTex;
-	TexturePtr m_irradianceTex;
+	TexturePtr m_indirectTex;
 
 	Array<U8, 2> m_workgroupSize = {{16, 16}};
 
 	class
 	{
 	public:
-		RenderTargetHandle m_reflRt;
-		RenderTargetHandle m_irradianceRt;
+		RenderTargetHandle m_indirectRt;
 		RenderingContext* m_ctx ANKI_DBG_NULLIFY;
 	} m_runCtx;
 

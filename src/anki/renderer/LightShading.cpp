@@ -148,20 +148,14 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());
 
-	rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getIndirect().getIrradianceRt(), m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(0,
-		7,
-		m_r->getIndirect().getIntegrationLut(),
-		m_r->getIndirect().getIntegrationLutSampler(),
-		TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getReflections().getRt(), m_r->getNearestSampler());
+
+	rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
 
 	// Bind uniforms
 	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
 	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
-	bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);
 
 	// Bind storage
 	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
@@ -228,9 +222,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newConsumer({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newConsumer({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getReflections().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
+	// For forward shading
 	pass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH});
 	pass.newConsumer({m_r->getForwardShading().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 

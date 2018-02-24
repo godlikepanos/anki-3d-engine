@@ -46,9 +46,8 @@ void main()
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 4
+#define LIGHT_TEX_BINDING 5
 #define LIGHT_LIGHTS
-#define LIGHT_INDIRECT
 #define LIGHT_COMMON_UNIS
 #include "shaders/ClusterLightCommon.glsl"
 
@@ -56,6 +55,7 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_indirectRt;
 
 layout(location = 0) in vec2 in_uv;
 layout(location = 1) in vec2 in_clusterIJ;
@@ -73,44 +73,6 @@ const float SUBSURFACE_MIN = 0.05;
 	vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb); \
 	float att = computeAttenuationFactor(light.posRadius.w, frag2Light); \
 	float lambert = nol;
-
-void readIndirect(uint idxOffset, vec3 pos, vec3 r, vec3 n, float lod, out vec3 specIndirect, out vec3 diffIndirect)
-{
-	specIndirect = vec3(0.0);
-	diffIndirect = vec3(0.0);
-
-	// Check proxy
-	uint count = u_lightIndices[idxOffset++];
-	while(count-- != 0)
-	{
-		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
-
-		float R2 = probe.positionRadiusSq.w;
-		vec3 center = probe.positionRadiusSq.xyz;
-
-		// Get distance from the center of the probe
-		vec3 f = pos - center;
-
-		// Cubemap UV in view space
-		vec3 uv = computeCubemapVecAccurate(r, R2, f);
-
-		// Read!
-		float cubemapIndex = probe.cubemapIndexPad3.x;
-		vec3 c = textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), lod).rgb;
-
-		// Combine (lerp) with previous color
-		float d = dot(f, f);
-		float factor = d / R2;
-		factor = min(factor, 1.0);
-		specIndirect = mix(c, specIndirect, factor);
-		// Same as: specIndirect = c * (1.0 - factor) + specIndirect * factor
-
-		// Do the same for diffuse
-		uv = computeCubemapVecAccurate(n, R2, f);
-		vec3 id = textureLod(u_irradianceTex, vec4(uv, cubemapIndex), 0.0).rgb;
-		diffIndirect = mix(id, diffIndirect, factor);
-	}
-}
 
 void main()
 {
@@ -204,21 +166,7 @@ void main()
 	}
 
 	// Indirect
-	{
-		vec3 eye = -viewDir;
-		vec3 reflVec = reflect(eye, normal);
-
-		float reflLod = float(IR_MIPMAP_COUNT - 1u) * a2;
-
-		vec3 specIndirect, diffIndirect;
-		readIndirect(idxOffset, worldPos, reflVec, normal, reflLod, specIndirect, diffIndirect);
-
-		float ndotv = dot(normal, viewDir);
-		vec2 envBRDF = texture(u_integrationLut, vec2(a2, ndotv)).xy;
-		vec3 specIndirectTerm = specCol * envBRDF.x + envBRDF.y;
-
-		outC += specIndirect * specIndirectTerm + diffIndirect * diffCol;
-	}
+	outC += textureLod(u_indirectRt, in_uv, 0.0).rgb;
 
 	out_color = outC;
 #if 0

@@ -270,10 +270,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_indirect->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
 	m_depth->populateRenderGraph(ctx);
-	m_refl->populateRenderGraph(ctx);
 	m_vol->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
+	m_refl->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_forwardShading->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);

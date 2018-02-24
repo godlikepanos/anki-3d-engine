@@ -31,7 +31,7 @@ http://www.anki3d.org/LICENSE
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 5
+#define LIGHT_TEX_BINDING 6
 #define LIGHT_INDIRECT
 #define LIGHT_COMMON_UNIS
 #include "shaders/ClusterLightCommon.glsl"
@@ -40,14 +40,14 @@ const ivec2 HIZ_SIZE = ivec2(FB_SIZE) >> 1;
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_gbufferRt1;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_gbufferRt2;
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_hizRt;
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_lightBufferRt;
-layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_depthRt;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_gbufferRt0;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_gbufferRt1;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_gbufferRt2;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_depthRt;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_hizRt;
+layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_lightBufferRt;
 
-layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_refl;
-layout(ANKI_IMAGE_BINDING(0, 1)) writeonly uniform image2D out_indirect;
+layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_reflAndIndirect;
 
 #define u_normalMat mat3(u_viewMat)
 
@@ -154,7 +154,7 @@ vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth, float roughness)
 }
 
 // Note: All calculations in world space
-void doProbeReflections(
+void readReflectionsAndIrradianceFromProbes(
 	uint idxOffset, vec3 worldPos, vec3 normal, float roughness, out vec3 specIndirect, out vec3 diffIndirect)
 {
 	specIndirect = vec3(0.0);
@@ -197,6 +197,17 @@ void doProbeReflections(
 	}
 }
 
+vec3 computeSpecIndirectFactor(vec3 worldPos, vec3 normal, float roughness, vec3 specColor)
+{
+	vec3 viewDir = normalize(u_cameraPos - worldPos);
+	float ndotv = dot(normal, viewDir);
+
+	vec2 envBRDF = texture(u_integrationLut, vec2(roughness, ndotv)).xy;
+	vec3 specIndirectTerm = specColor * envBRDF.x + envBRDF.y;
+
+	return specIndirectTerm;
+}
+
 void main()
 {
 	uvec2 realInvocationId = gl_GlobalInvocationID.xy;
@@ -217,22 +228,29 @@ void main()
 	}
 
 	vec2 uv = (vec2(realInvocationId) + 0.5) / vec2(FB_SIZE);
+	vec2 ndc = UV_TO_NDC(uv);
 
-	// Get normal
-	vec3 worldNormal;
-	readNormalFromGBuffer(u_gbufferRt2, uv, worldNormal);
-
-	// Get roughness
-	float roughness;
-	vec3 specular;
-	readRoughnessSpecularFromGBuffer(u_gbufferRt1, uv, roughness, specular);
+	// Read gbuffer
+	GbufferInfo gbuffer;
+	readGBuffer(u_gbufferRt0, u_gbufferRt1, u_gbufferRt2, uv, 0.0, gbuffer);
 
 	// Get depth
 	float depth = textureLod(u_depthRt, uv, 0.0).r;
 
+	// Get world position
+	vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
+	vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	// Compute how much reflections we need
+	float a2 = computeRoughnesSquared(gbuffer.roughness);
+	vec3 specIndirectTerm = computeSpecIndirectFactor(worldPos, gbuffer.normal, a2, gbuffer.specular);
+	bool runSslr = 
+		max(max(specIndirectTerm.x, specIndirectTerm.y), specIndirectTerm.z) > 0.05;
+
 	// Try SSR
 	float sslrFactor = 0.0;
 	vec3 sslrCol = vec3(0.0);
+	if(runSslr)
 	{
 		// Get view pos
 		vec4 viewPos4 = u_invProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
@@ -240,24 +258,19 @@ void main()
 
 		// Do SSLR
 		vec3 viewDir = normalize(viewPos);
-		vec3 viewNormal = u_normalMat * worldNormal;
+		vec3 viewNormal = u_normalMat * gbuffer.normal;
 		vec3 reflVec = reflect(viewDir, viewNormal);
 
-		vec4 sslr = doSslr(reflVec, viewNormal, viewPos, uv, depth, roughness);
+		vec4 sslr = doSslr(reflVec, viewNormal, viewPos, uv, depth, gbuffer.roughness);
 		sslrFactor = sslr.w;
 		sslrCol = sslr.xyz;
+		sslrCol = clamp(sslrCol, 0.0, FLT_MAX); // XXX
 	}
 
 	// Read probes
-	vec3 probeCol;
-	vec3 indirectCol;
+	vec3 probeCol = vec3(0.0);
+	vec3 indirectCol = vec3(0.0);
 	{
-		vec2 ndc = UV_TO_NDC(uv);
-
-		// Get world position
-		vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
-		vec3 worldPos = worldPos4.xyz / worldPos4.w;
-
 		// Get first light index
 		uint clusterIdx = computeClusterIndex(u_clustererMagic, uv, worldPos, CLUSTER_COUNT_X, CLUSTER_COUNT_Y);
 		uint idxOffset = u_clusters[clusterIdx];
@@ -275,16 +288,23 @@ void main()
 		idxOffset += count;
 
 		// Do the probe read
-		doProbeReflections(idxOffset, worldPos, worldNormal, roughness, probeCol, indirectCol);
+		readReflectionsAndIrradianceFromProbes(
+			idxOffset, worldPos, gbuffer.normal, gbuffer.roughness, probeCol, indirectCol);
 	}
 
-	// Combine the SSR and probe reflections and write the result
-	vec3 finalRefl = mix(probeCol, sslrCol, sslrFactor);
-	finalRefl = clamp(finalRefl, 0.0, FLT_MAX); // XXX
-	imageStore(out_refl, ivec2(realInvocationId), vec4(finalRefl, 0.0));
+	vec3 outColor = indirectCol * gbuffer.diffuse;
 
-	// Write indirect diffuse
-	imageStore(out_indirect, ivec2(realInvocationId), vec4(indirectCol, 0.0));
+	// Combine the SSR and probe reflections and write the result
+	{
+		vec3 finalRefl = mix(probeCol, sslrCol, sslrFactor);
+		finalRefl = specIndirectTerm * finalRefl;
+
+		outColor += finalRefl;
+	}
+	
+	// Done!
+	imageStore(out_reflAndIndirect, ivec2(realInvocationId), vec4(outColor, 0.0));
+	imageStore(out_reflAndIndirect, ivec2(realInvocationId.x + 1, realInvocationId.y), vec4(outColor, 0.0));
 }
 			]]></source>
 		</shader>
