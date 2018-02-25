@@ -264,7 +264,7 @@ void main()
 		vec4 sslr = doSslr(reflVec, viewNormal, viewPos, uv, depth, gbuffer.roughness);
 		sslrFactor = sslr.w;
 		sslrCol = sslr.xyz;
-		sslrCol = clamp(sslrCol, 0.0, FLT_MAX); // XXX
+		sslrCol = clamp(sslrCol, 0.0, FLT_MAX); // Fix the value just in case
 	}
 
 	// Read probes
@@ -304,7 +304,11 @@ void main()
 	
 	// Done!
 	imageStore(out_reflAndIndirect, ivec2(realInvocationId), vec4(outColor, 0.0));
-	imageStore(out_reflAndIndirect, ivec2(realInvocationId.x + 1, realInvocationId.y), vec4(outColor, 0.0));
+
+	// Store the same color in the next pixel as well
+	bool xIsOdd = (realInvocationId.x & 1u) == 0u;
+	realInvocationId.x = (xIsOdd) ? (realInvocationId.x + 1u) : (realInvocationId.x - 1u);
+	imageStore(out_reflAndIndirect, ivec2(realInvocationId), vec4(outColor, 0.0));
 }
 			]]></source>
 		</shader>

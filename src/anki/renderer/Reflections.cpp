@@ -37,15 +37,12 @@ Error Reflections::initInternal(const ConfigSet& cfg)
 	ANKI_R_LOGI("Initializing reflection pass (%ux%u)", width, height);
 
 	// Create RTs
-	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(width,
+	m_rtDescr = m_r->create2DRenderTargetDescription(width,
 		height,
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_COMPUTE_WRITE
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 		"IndirectRes");
-	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-
-	m_indirectTex = m_r->createAndClearRenderTarget(texinit);
+	m_rtDescr.bake();
 
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource("programs/Reflections.ankiprog", m_prog));
@@ -81,7 +78,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 
 	// Create RTs
-	m_runCtx.m_indirectRt = rgraph.importRenderTarget("IndirectRes", m_indirectTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	m_runCtx.m_indirectRt = rgraph.newRenderTarget(m_rtDescr);
 
 	// Create pass
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("IndirectRes");

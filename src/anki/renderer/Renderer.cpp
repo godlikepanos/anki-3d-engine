@@ -343,7 +343,6 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 RenderTargetDescription Renderer::create2DRenderTargetDescription(
 	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name)
 {
-	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	RenderTargetDescription init(name);
 
 	init.m_width = w;

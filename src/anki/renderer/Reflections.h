@@ -38,7 +38,7 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProg;
 
-	TexturePtr m_indirectTex;
+	RenderTargetDescription m_rtDescr;
 
 	Array<U8, 2> m_workgroupSize = {{16, 16}};
 
