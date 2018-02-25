@@ -147,7 +147,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					</args>
 					<return>Error</return>
 				</method>
-				<method name="setNormalRoughnessDecal">
+				<method name="setSpecularRoughnessDecal">
 					<args>
 						<arg>CString</arg>
 						<arg>CString</arg>

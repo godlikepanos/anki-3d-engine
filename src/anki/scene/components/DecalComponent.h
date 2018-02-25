@@ -34,9 +34,9 @@ public:
 		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::DIFFUSE);
 	}
 
-	ANKI_USE_RESULT Error setNormalRoughnessDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
+	ANKI_USE_RESULT Error setSpecularRoughnessDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
 	{
-		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::NORMAL_ROUGHNESS);
+		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::SPECULAR_ROUGHNESS);
 	}
 
 	/// Update the internal structures.
@@ -99,18 +99,18 @@ public:
 		blendFactor = m_layers[LayerType::DIFFUSE].m_blendFactor;
 	}
 
-	void getNormalRoughnessAtlasInfo(Vec4& uv, TexturePtr& tex, F32& blendFactor) const
+	void getSpecularRoughnessAtlasInfo(Vec4& uv, TexturePtr& tex, F32& blendFactor) const
 	{
-		uv = m_layers[LayerType::NORMAL_ROUGHNESS].m_uv;
-		if(m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas)
+		uv = m_layers[LayerType::SPECULAR_ROUGHNESS].m_uv;
+		if(m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas)
 		{
-			tex = m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas->getGrTexture();
+			tex = m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas->getGrTexture();
 		}
 		else
 		{
 			tex.reset(nullptr);
 		}
-		blendFactor = m_layers[LayerType::NORMAL_ROUGHNESS].m_blendFactor;
+		blendFactor = m_layers[LayerType::SPECULAR_ROUGHNESS].m_blendFactor;
 	}
 
 	const Vec3& getVolumeSize() const
@@ -123,13 +123,13 @@ public:
 		el.m_diffuseAtlas = (m_layers[LayerType::DIFFUSE].m_atlas)
 								? m_layers[LayerType::DIFFUSE].m_atlas->getGrTextureView().get()
 								: nullptr;
-		el.m_normalRoughnessAtlas = (m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas)
-										? m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas->getGrTextureView().get()
-										: nullptr;
+		el.m_specularRoughnessAtlas = (m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas)
+										  ? m_layers[LayerType::SPECULAR_ROUGHNESS].m_atlas->getGrTextureView().get()
+										  : nullptr;
 		el.m_diffuseAtlasUv = m_layers[LayerType::DIFFUSE].m_uv;
-		el.m_normalRoughnessAtlasUv = m_layers[LayerType::NORMAL_ROUGHNESS].m_uv;
+		el.m_specularRoughnessAtlasUv = m_layers[LayerType::SPECULAR_ROUGHNESS].m_uv;
 		el.m_diffuseAtlasBlendFactor = m_layers[LayerType::DIFFUSE].m_blendFactor;
-		el.m_normalRoughnessAtlasBlendFactor = m_layers[LayerType::NORMAL_ROUGHNESS].m_blendFactor;
+		el.m_specularRoughnessAtlasBlendFactor = m_layers[LayerType::SPECULAR_ROUGHNESS].m_blendFactor;
 		el.m_textureMatrix = m_biasProjViewMat;
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
@@ -142,7 +142,7 @@ private:
 	enum class LayerType
 	{
 		DIFFUSE,
-		NORMAL_ROUGHNESS,
+		SPECULAR_ROUGHNESS,
 		COUNT
 	};
 

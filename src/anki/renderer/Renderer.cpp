@@ -11,6 +11,7 @@
 
 #include <anki/renderer/Indirect.h>
 #include <anki/renderer/GBuffer.h>
+#include <anki/renderer/GBufferPost.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/FinalComposite.h>
@@ -111,6 +112,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_gbuffer.reset(m_alloc.newInstance<GBuffer>(this));
 	ANKI_CHECK(m_gbuffer->init(config));
+
+	m_gbufferPost.reset(m_alloc.newInstance<GBufferPost>(this));
+	ANKI_CHECK(m_gbufferPost->init(config));
 
 	m_shadowMapping.reset(m_alloc.newInstance<ShadowMapping>(this));
 	ANKI_CHECK(m_shadowMapping->init(config));
@@ -266,9 +270,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_indirect->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
 	m_depth->populateRenderGraph(ctx);
-	m_refl->populateRenderGraph(ctx);
 	m_vol->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
+	m_gbufferPost->populateRenderGraph(ctx);
+	m_refl->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_forwardShading->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
@@ -338,7 +343,6 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 RenderTargetDescription Renderer::create2DRenderTargetDescription(
 	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name)
 {
-	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	RenderTargetDescription init(name);
 
 	init.m_width = w;

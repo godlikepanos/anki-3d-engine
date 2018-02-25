@@ -1218,7 +1218,7 @@ Error RenderGraph::dumpDependencyDotFile(
 			StringAuto barrierLabel(ctx.m_alloc);
 			if(barrier.m_isTexture)
 			{
-				barrierLabel.sprintf("<b>%s</b> (mip,dp,f,l)=(%u,%u,%u,%u)<br/>%s <b>-&gt;</b> %s",
+				barrierLabel.sprintf("<b>%s</b> (mip,dp,f,l)=(%u,%u,%u,%u)<br/>%s <b>to</b> %s",
 					&descr.m_renderTargets[barrier.m_texture.m_idx].m_name[0],
 					barrier.m_texture.m_surface.m_level,
 					barrier.m_texture.m_surface.m_depth,
@@ -1231,7 +1231,7 @@ Error RenderGraph::dumpDependencyDotFile(
 			}
 			else
 			{
-				barrierLabel.sprintf("<b>%s</b><br/>%s <b>-&gt;</b> %s",
+				barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s",
 					&descr.m_buffers[barrier.m_buffer.m_idx].m_name[0],
 					bufferUsageToStr(alloc, barrier.m_buffer.m_usageBefore).cstr(),
 					bufferUsageToStr(alloc, barrier.m_buffer.m_usageAfter).cstr());

@@ -28,7 +28,7 @@ public:
 	StagingGpuMemoryToken m_lightIndicesToken;
 
 	TextureViewPtr m_diffDecalTexView;
-	TextureViewPtr m_normRoughnessDecalTexView;
+	TextureViewPtr m_specularRoughnessDecalTexView;
 };
 
 /// Bins lights and probes to clusters.
