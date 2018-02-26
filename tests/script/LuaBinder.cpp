@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "tests/framework/Framework.h"
-#include "anki/script/ScriptManager.h"
-#include "anki/Math.h"
+#include <tests/framework/Framework.h>
+#include <anki/Script.h>
+#include <anki/Math.h>
 
 static const char* script = R"(
 b = Vec4.new(0, 0, 0, 1.1)
@@ -37,4 +37,31 @@ ANKI_TEST(Script, LuaBinder)
 
 	ANKI_TEST_EXPECT_EQ(v4, Vec4(6, 12, 0, 5.5));
 	ANKI_TEST_EXPECT_EQ(v3, Vec3(1.1, 2.2, 0.1));
+}
+
+ANKI_TEST(Script, LuaBinderThreads)
+{
+	ScriptManager sm;
+	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr, nullptr, nullptr));
+
+	ScriptEnvironmentPtr env;
+	ANKI_TEST_EXPECT_NO_ERR(sm.newScriptEnvironment(env));
+
+	static const char* script = R"(
+vec = Vec4.new(0, 0, 0, 0)
+	
+function myFunc()
+	vec:setX(vec:getX() + 1)
+	logi(string.format("The number is %f", vec:getX()))
+end
+)";
+
+	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script));
+
+	static const char* script1 = R"(
+myFunc()
+)";
+
+	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script1));
+	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script1));
 }

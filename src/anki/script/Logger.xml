@@ -1,0 +1,34 @@
+<glue>
+	<head><![CDATA[// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// WARNING: This file is auto generated.
+
+#include <anki/script/LuaBinder.h>
+
+namespace anki {]]></head>
+	<functions>
+		<function name="logi">
+			<overrideCall>ANKI_SCRIPT_LOGI(arg0);</overrideCall>
+			<args>
+				<arg>const char*</arg>
+			</args>
+		</function>
+		<function name="loge">
+			<overrideCall>ANKI_SCRIPT_LOGE(arg0);</overrideCall>
+			<args>
+				<arg>const char*</arg>
+			</args>
+		</function>
+		<function name="logw">
+			<overrideCall>ANKI_SCRIPT_LOGW(arg0);</overrideCall>
+			<args>
+				<arg>const char*</arg>
+			</args>
+		</function>
+	</functions>
+	<tail><![CDATA[} // end namespace anki]]></tail>
+</glue>
+

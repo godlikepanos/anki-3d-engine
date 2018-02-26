@@ -27,7 +27,7 @@ LuaBinder::~LuaBinder()
 	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0 && "Leaking memory");
 }
 
-Error LuaBinder::create(Allocator<U8>& alloc, void* parent)
+Error LuaBinder::create(ScriptAllocator alloc, void* parent)
 {
 	m_parent = parent;
 	m_alloc = alloc;
@@ -90,21 +90,20 @@ void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrS
 	return out;
 }
 
-Error LuaBinder::evalString(const CString& str)
+Error LuaBinder::evalString(lua_State* state, const CString& str)
 {
 	ANKI_TRACE_SCOPED_EVENT(LUA_EXEC);
 
 	Error err = Error::NONE;
-	int e = luaL_dostring(m_l, &str[0]);
+	int e = luaL_dostring(state, &str[0]);
 	if(e)
 	{
-		ANKI_SCRIPT_LOGE("%s (line:%d)", lua_tostring(m_l, -1));
-		lua_pop(m_l, 1);
+		ANKI_SCRIPT_LOGE("%s (line:%d)", lua_tostring(state, -1));
+		lua_pop(state, 1);
 		err = Error::USER_DATA;
 	}
 
-	lua_gc(m_l, LUA_GCCOLLECT, 0);
-
+	garbageCollect(state);
 	return err;
 }
 
@@ -238,6 +237,28 @@ void LuaBinder::luaFree(lua_State* l, void* ptr)
 	LuaBinder* binder = static_cast<LuaBinder*>(ud);
 
 	binder->m_alloc.getMemoryPool().free(ptr);
+}
+
+LuaThread LuaBinder::newLuaThread()
+{
+	LuaThread out;
+
+	out.m_luaState = lua_newthread(m_l);
+	out.m_reference = luaL_ref(m_l, LUA_REGISTRYINDEX);
+
+	return out;
+}
+
+void LuaBinder::destroyLuaThread(LuaThread& luaThread)
+{
+	if(luaThread.m_luaState)
+	{
+		// Unref it, garbage collector will take care of it
+		luaL_unref(m_l, LUA_REGISTRYINDEX, luaThread.m_reference);
+	}
+
+	luaThread.m_luaState = nullptr;
+	luaThread.m_reference = -1;
 }
 
 } // end namespace anki

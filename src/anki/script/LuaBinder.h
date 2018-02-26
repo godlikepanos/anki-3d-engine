@@ -19,6 +19,9 @@
 namespace anki
 {
 
+/// @addtogroup script
+/// @{
+
 /// LUA userdata.
 class LuaUserData
 {
@@ -89,24 +92,56 @@ private:
 	U64 m_addressOrGarbageCollect = 0; ///< Encodes an address or a flag if it's for garbage collection.
 };
 
+/// An instance of the original lua state with its own state.
+class LuaThread : public NonCopyable
+{
+	friend class LuaBinder;
+
+public:
+	lua_State* m_luaState = nullptr;
+
+	LuaThread() = default;
+
+	LuaThread(LuaThread&& b)
+	{
+		*this = std::move(b);
+	}
+
+	~LuaThread()
+	{
+		ANKI_ASSERT(m_luaState == nullptr && "Forgot to deleteLuaThread");
+	}
+
+	LuaThread& operator=(LuaThread&& b)
+	{
+		ANKI_ASSERT(m_luaState == nullptr);
+		m_luaState = b.m_luaState;
+		b.m_luaState = nullptr;
+
+		m_reference = b.m_reference;
+		b.m_reference = -1;
+		return *this;
+	}
+
+private:
+	int m_reference = -1;
+};
+
 /// Lua binder class. A wrapper on top of LUA
-class LuaBinder
+class LuaBinder : public NonCopyable
 {
 public:
-	template<typename T>
-	using Allocator = ChainAllocator<T>;
-
 	LuaBinder();
 	~LuaBinder();
 
-	ANKI_USE_RESULT Error create(Allocator<U8>& alloc, void* parent);
+	ANKI_USE_RESULT Error create(ScriptAllocator alloc, void* parent);
 
 	lua_State* getLuaState()
 	{
 		return m_l;
 	}
 
-	Allocator<U8> getAllocator() const
+	ScriptAllocator getAllocator() const
 	{
 		return m_alloc;
 	}
@@ -118,10 +153,28 @@ public:
 
 	/// Expose a variable to the lua state
 	template<typename T>
-	void exposeVariable(const char* name, T* y);
+	static void exposeVariable(lua_State* state, CString name, T* y)
+	{
+		void* ptr = lua_newuserdata(state, sizeof(LuaUserData));
+		LuaUserData* ud = static_cast<LuaUserData*>(ptr);
+		ud->initPointed(getWrappedTypeSignature<T>(), y);
+		luaL_setmetatable(state, getWrappedTypeName<T>());
+		lua_setglobal(state, name.cstr());
+	}
 
 	/// Evaluate a string
-	ANKI_USE_RESULT Error evalString(const CString& str);
+	static Error evalString(lua_State* state, const CString& str);
+
+	static void garbageCollect(lua_State* state)
+	{
+		lua_gc(state, LUA_GCCOLLECT, 0);
+	}
+
+	/// New LuaThread.
+	LuaThread newLuaThread();
+
+	/// Destroy a LuaThread.
+	void destroyLuaThread(LuaThread& luaThread);
 
 	/// For debugging purposes
 	static void stackDump(lua_State* l);
@@ -143,7 +196,16 @@ public:
 
 	/// Get a number from the stack.
 	template<typename TNumber>
-	static ANKI_USE_RESULT Error checkNumber(lua_State* l, I stackIdx, TNumber& number);
+	static ANKI_USE_RESULT Error checkNumber(lua_State* l, I stackIdx, TNumber& number)
+	{
+		lua_Number lnum;
+		Error err = checkNumberInternal(l, stackIdx, lnum);
+		if(!err)
+		{
+			number = lnum;
+		}
+		return err;
+	}
 
 	/// Get a string from the stack.
 	static ANKI_USE_RESULT Error checkString(lua_State* l, I32 stackIdx, const char*& out);
@@ -167,7 +229,7 @@ public:
 	static const char* getWrappedTypeName();
 
 private:
-	Allocator<U8> m_alloc;
+	ScriptAllocator m_alloc;
 	lua_State* m_l = nullptr;
 	void* m_parent = nullptr; ///< Point to the ScriptManager
 
@@ -175,28 +237,6 @@ private:
 
 	static ANKI_USE_RESULT Error checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& number);
 };
-
-template<typename TNumber>
-inline Error LuaBinder::checkNumber(lua_State* l, I stackIdx, TNumber& number)
-{
-	lua_Number lnum;
-	Error err = checkNumberInternal(l, stackIdx, lnum);
-	if(!err)
-	{
-		number = lnum;
-	}
-
-	return err;
-}
-
-template<typename T>
-inline void LuaBinder::exposeVariable(const char* name, T* y)
-{
-	void* ptr = lua_newuserdata(m_l, sizeof(LuaUserData));
-	LuaUserData* ud = static_cast<LuaUserData*>(ptr);
-	ud->initPointed(getWrappedTypeSignature<T>(), y);
-	luaL_setmetatable(m_l, getWrappedTypeName<T>());
-	lua_setglobal(m_l, name);
-}
+/// @}
 
 } // end namespace anki
