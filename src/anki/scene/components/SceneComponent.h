@@ -34,6 +34,7 @@ enum class SceneComponentType : U16
 	OCCLUDER,
 	DECAL,
 	SKIN,
+	SCRIPT,
 	PLAYER_CONTROLLER,
 
 	COUNT,

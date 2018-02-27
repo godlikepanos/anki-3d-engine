@@ -57,6 +57,7 @@ public:
 		ResourceManager* resources,
 		StagingGpuMemoryManager* stagingAlloc,
 		Input* input,
+		ScriptManager* scriptManager,
 		const Timestamp* globalTimestamp,
 		const ConfigSet& config);
 
@@ -190,6 +191,12 @@ anki_internal:
 		return *m_physics;
 	}
 
+	ScriptManager& getScriptManager()
+	{
+		ANKI_ASSERT(m_scriptManager);
+		return *m_scriptManager;
+	}
+
 	const PhysicsWorld& getPhysicsWorld() const
 	{
 		return *m_physics;
@@ -239,6 +246,7 @@ private:
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	Input* m_input = nullptr;
+	ScriptManager* m_scriptManager = nullptr;
 	StagingGpuMemoryManager* m_stagingAlloc = nullptr;
 
 	SceneAllocator<U8> m_alloc;

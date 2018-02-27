@@ -26,7 +26,7 @@ ANKI_TEST(Script, LuaBinder)
 {
 	ScriptManager sm;
 
-	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr, nullptr, nullptr));
+	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
 	Vec4 v4(2.0, 3.0, 4.0, 5.0);
 	Vec3 v3(1.1, 2.2, 3.3);
 
@@ -42,7 +42,7 @@ ANKI_TEST(Script, LuaBinder)
 ANKI_TEST(Script, LuaBinderThreads)
 {
 	ScriptManager sm;
-	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr, nullptr, nullptr));
+	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
 
 	ScriptEnvironmentPtr env;
 	ANKI_TEST_EXPECT_NO_ERR(sm.newScriptEnvironment(env));

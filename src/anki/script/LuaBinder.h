@@ -162,6 +162,15 @@ public:
 		lua_setglobal(state, name.cstr());
 	}
 
+	template<typename T>
+	static void pushVariableToTheStack(lua_State* state, T* y)
+	{
+		void* ptr = lua_newuserdata(state, sizeof(LuaUserData));
+		LuaUserData* ud = static_cast<LuaUserData*>(ptr);
+		ud->initPointed(getWrappedTypeSignature<T>(), y);
+		luaL_setmetatable(state, getWrappedTypeName<T>());
+	}
+
 	/// Evaluate a string
 	static Error evalString(lua_State* state, const CString& str);
 

@@ -498,6 +498,12 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 		m_threadpool, m_resources, m_gr, m_stagingMem, m_ui, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
 
 	//
+	// Script
+	//
+	m_script = m_heapAlloc.newInstance<ScriptManager>();
+	ANKI_CHECK(m_script->init(m_allocCb, m_allocCbData));
+
+	//
 	// Scene
 	//
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
@@ -509,15 +515,13 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 		m_resources,
 		m_stagingMem,
 		m_input,
+		m_script,
 		&m_globalTimestamp,
 		config));
 
-	//
-	// Script
-	//
-	m_script = m_heapAlloc.newInstance<ScriptManager>();
-
-	ANKI_CHECK(m_script->init(m_allocCb, m_allocCbData, m_scene, m_renderer));
+	// Inform the script engine about some subsystems
+	m_script->setRenderer(m_renderer);
+	m_script->setSceneGraph(m_scene);
 
 	ANKI_CORE_LOGI("Application initialized");
 	return Error::NONE;

@@ -40,6 +40,12 @@ public:
 		return LuaBinder::evalString(m_thread.m_luaState, str);
 	}
 
+	lua_State& getLuaState()
+	{
+		ANKI_ASSERT(m_thread.m_luaState);
+		return *m_thread.m_luaState;
+	}
+
 private:
 	LuaThread m_thread;
 };

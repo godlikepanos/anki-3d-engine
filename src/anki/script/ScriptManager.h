@@ -25,8 +25,17 @@ public:
 	~ScriptManager();
 
 	/// Create the script manager.
-	ANKI_USE_RESULT Error init(
-		AllocAlignedCallback allocCb, void* allocCbData, SceneGraph* scene, MainRenderer* renderer);
+	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbData);
+
+	void setRenderer(MainRenderer* renderer)
+	{
+		m_r = renderer;
+	}
+
+	void setSceneGraph(SceneGraph* scene)
+	{
+		m_scene = scene;
+	}
 
 	/// Expose a variable to the scripting engine.
 	template<typename T>
@@ -48,11 +57,13 @@ public:
 anki_internal:
 	SceneGraph& getSceneGraph()
 	{
+		ANKI_ASSERT(m_scene);
 		return *m_scene;
 	}
 
 	MainRenderer& getMainRenderer()
 	{
+		ANKI_ASSERT(m_r);
 		return *m_r;
 	}
 

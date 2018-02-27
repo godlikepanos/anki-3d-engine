@@ -70,6 +70,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	ResourceManager* resources,
 	StagingGpuMemoryManager* stagingMem,
 	Input* input,
+	ScriptManager* scriptManager,
 	const Timestamp* globalTimestamp,
 	const ConfigSet& config)
 {
@@ -82,6 +83,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_gr = &m_resources->getGrManager();
 	m_physics = &m_resources->getPhysicsWorld();
 	m_input = input;
+	m_scriptManager = scriptManager;
 
 	m_alloc = SceneAllocator<U8>(allocCb, allocCbData, 1024 * 10, 1.0, 0);
 	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
