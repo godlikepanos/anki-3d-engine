@@ -6,7 +6,7 @@
 #include <tests/framework/Framework.h>
 #include <anki/util/DynamicArray.h>
 #include <vector>
-#include <time.h>
+#include <ctime>
 
 namespace anki
 {
@@ -137,6 +137,120 @@ ANKI_TEST(Util, DynamicArray)
 		arr = DynamicArrayAuto<DynamicArrayFoo>(alloc);
 		vec = std::vector<DynamicArrayFoo>();
 		ANKI_TEST_EXPECT_GT(destructorCount, 0);
+		ANKI_TEST_EXPECT_EQ(
+			constructor0Count + constructor1Count + constructor2Count + constructor3Count, destructorCount);
+	}
+}
+
+ANKI_TEST(Util, DynamicArrayEmplaceAt)
+{
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+
+	// Empty & add to the end
+	{
+		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+
+		arr.emplaceAt(arr.getEnd(), 12);
+		ANKI_TEST_EXPECT_EQ(arr[0].m_x, 12);
+	}
+
+	// 1 element & add to he end
+	{
+		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		arr.emplaceBack(12);
+
+		arr.emplaceAt(arr.getEnd(), 34);
+
+		ANKI_TEST_EXPECT_EQ(arr[0].m_x, 12);
+		ANKI_TEST_EXPECT_EQ(arr[1].m_x, 34);
+	}
+
+	// 1 element & add to 0
+	{
+		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		arr.emplaceBack(12);
+
+		arr.emplaceAt(arr.getBegin(), 34);
+
+		ANKI_TEST_EXPECT_EQ(arr[0].m_x, 34);
+		ANKI_TEST_EXPECT_EQ(arr[1].m_x, 12);
+	}
+
+	// A bit more complex
+	{
+		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+
+		for(U i = 0; i < 10; ++i)
+		{
+			arr.emplaceBack(i);
+		}
+
+		arr.emplaceAt(arr.getBegin() + 4, 666);
+
+		for(I i = 0; i < 10 + 1; ++i)
+		{
+			if(i < 4)
+			{
+				ANKI_TEST_EXPECT_EQ(arr[i].m_x, i);
+			}
+			else if(i == 4)
+			{
+				ANKI_TEST_EXPECT_EQ(arr[i].m_x, 666);
+			}
+			else
+			{
+				ANKI_TEST_EXPECT_EQ(arr[i].m_x, i - 1);
+			}
+		}
+	}
+
+	// Fuzzy
+	{
+		srand(time(nullptr));
+
+		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
+		std::vector<DynamicArrayFoo> vec;
+
+		const I ITERATIONS = 10000;
+		for(I i = 0; i < ITERATIONS; ++i)
+		{
+			I randNum = rand();
+			I op = rand() % 3;
+
+			switch(op)
+			{
+			case 0:
+				// Push back
+				arr.emplaceBack(randNum);
+				vec.emplace_back(randNum);
+				break;
+			case 1:
+				// Insert somewhere
+				if(!arr.isEmpty())
+				{
+					I pos = rand() % arr.getSize();
+					arr.emplaceAt(arr.getBegin() + pos, randNum);
+					vec.emplace(vec.begin() + pos, randNum);
+				}
+				break;
+			default:
+				// Insert at the end
+				arr.emplaceAt(arr.getEnd(), randNum);
+				vec.emplace(vec.end(), randNum);
+				break;
+			}
+		}
+
+		// Check
+		ANKI_TEST_EXPECT_EQ(arr.getSize(), vec.size());
+		for(PtrSize i = 0; i < arr.getSize(); ++i)
+		{
+			ANKI_TEST_EXPECT_EQ(arr[i].m_x, vec[i].m_x);
+		}
+
+		arr.destroy();
+		vec.resize(0);
+
 		ANKI_TEST_EXPECT_EQ(
 			constructor0Count + constructor1Count + constructor2Count + constructor3Count, destructorCount);
 	}

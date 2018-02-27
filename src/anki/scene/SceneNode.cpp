@@ -23,8 +23,8 @@ SceneNode::~SceneNode()
 {
 	auto alloc = getSceneAllocator();
 
-	auto it = m_components.begin();
-	auto end = m_components.begin() + m_componentCount;
+	auto it = m_components.getBegin();
+	auto end = m_components.getEnd();
 	for(; it != end; ++it)
 	{
 		SceneComponent* comp = *it;

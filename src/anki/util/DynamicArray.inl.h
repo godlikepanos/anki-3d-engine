@@ -120,4 +120,75 @@ void DynamicArray<T>::resize(TAllocator alloc, PtrSize newSize)
 	ANKI_ASSERT(m_size == newSize);
 }
 
+template<typename T>
+template<typename TAllocator, typename... TArgs>
+typename DynamicArray<T>::Iterator DynamicArray<T>::emplaceAt(TAllocator alloc, ConstIterator where, TArgs&&... args)
+{
+	const Value* wherePtr = where;
+	PtrSize outIdx = MAX_PTR_SIZE;
+
+	if(wherePtr != nullptr)
+	{
+		// The "where" arg points to an element inside the array or the end.
+
+		// Preconditions
+		ANKI_ASSERT(wherePtr >= m_data);
+		ANKI_ASSERT(wherePtr <= m_data + m_size);
+		ANKI_ASSERT(!isEmpty());
+
+		const PtrSize oldSize = m_size;
+
+		const PtrSize whereIdx = wherePtr - m_data; // Get that before grow the storage
+		ANKI_ASSERT(whereIdx >= 0u && whereIdx <= oldSize);
+
+		// Resize storage
+		resizeStorage(alloc, oldSize + 1u);
+
+		PtrSize elementsToMoveRight = oldSize - whereIdx;
+		if(elementsToMoveRight == 0)
+		{
+			// "where" arg points to the end of the array
+
+			outIdx = oldSize;
+		}
+		else
+		{
+			// Construct the last element because we will move to it
+			::new(&m_data[oldSize]) Value();
+
+			// Move the elements one place to the right
+			while(elementsToMoveRight--)
+			{
+				const PtrSize idx = whereIdx + elementsToMoveRight;
+
+				m_data[idx + 1] = std::move(m_data[idx]);
+			}
+
+			// Even if it's moved, call the destructor
+			m_data[whereIdx].~Value();
+
+			// Construct our object
+			outIdx = whereIdx;
+		}
+	}
+	else
+	{
+		// The "where" arg points to an empty array. Easy to handle
+
+		ANKI_ASSERT(isEmpty());
+
+		resizeStorage(alloc, 1);
+		outIdx = 0;
+	}
+
+	// Construct the new object
+	ANKI_ASSERT(outIdx != MAX_PTR_SIZE);
+	::new(&m_data[outIdx]) Value(std::forward<TArgs>(args)...);
+
+	// Increase the size because resizeStorage will not
+	++m_size;
+
+	return &m_data[outIdx];
+}
+
 } // end namespace anki

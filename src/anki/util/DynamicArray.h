@@ -201,19 +201,26 @@ public:
 	template<typename TAllocator>
 	void resize(TAllocator alloc, PtrSize size, const Value& v);
 
-	/// Grow or create the array. @a T needs to be copyable and moveable.
+	/// Grow or create the array. @a T needs to be copyable, moveable and default constructible.
 	template<typename TAllocator>
 	void resize(TAllocator alloc, PtrSize size);
 
 	/// Push back value.
 	template<typename TAllocator, typename... TArgs>
-	Value& emplaceBack(TAllocator alloc, TArgs&&... args)
+	Iterator emplaceBack(TAllocator alloc, TArgs&&... args)
 	{
 		resizeStorage(alloc, m_size + 1);
 		::new(&m_data[m_size]) Value(std::forward<TArgs>(args)...);
 		++m_size;
-		return m_data[m_size - 1];
+		return &m_data[m_size - 1];
 	}
+
+	/// Emplace a new element at a specific position. @a T needs to be movable and default constructible.
+	/// @param alloc The allocator.
+	/// @param where Points to the position to emplace. Should be less or equal to what getEnd() returns.
+	/// @param args  Constructor arguments.
+	template<typename TAllocator, typename... TArgs>
+	Iterator emplaceAt(TAllocator alloc, ConstIterator where, TArgs&&... args);
 
 	/// Destroy the array.
 	template<typename TAllocator>
@@ -265,9 +272,9 @@ protected:
 	PtrSize m_capacity = 0;
 
 private:
-	/// Resizes the storage but doesn't constructs any elements. Only moves them.
+	/// Resizes the storage but DOESN'T CONSTRUCT ANY ELEMENTS. It only moves or destroys.
 	template<typename TAllocator>
-	void resizeStorage(TAllocator& alloc, PtrSize size);
+	void resizeStorage(TAllocator& alloc, PtrSize newSize);
 };
 
 /// Dynamic array with automatic destruction. It's the same as DynamicArray but it holds the allocator in order to
@@ -281,6 +288,8 @@ public:
 	using Base::m_data;
 	using Base::m_size;
 	using typename Base::Value;
+	using typename Base::Iterator;
+	using typename Base::ConstIterator;
 
 	template<typename TAllocator>
 	DynamicArrayAuto(TAllocator alloc)
@@ -329,6 +338,12 @@ public:
 		Base::create(m_alloc, size, v);
 	}
 
+	/// @copydoc DynamicArray::destroy
+	void destroy()
+	{
+		Base::destroy(m_alloc);
+	}
+
 	/// @copydoc DynamicArray::resize
 	void resize(PtrSize size, const Value& v)
 	{
@@ -337,9 +352,16 @@ public:
 
 	/// @copydoc DynamicArray::emplaceBack
 	template<typename... TArgs>
-	void emplaceBack(TArgs&&... args)
+	Iterator emplaceBack(TArgs&&... args)
 	{
-		Base::emplaceBack(m_alloc, std::forward<TArgs>(args)...);
+		return Base::emplaceBack(m_alloc, std::forward<TArgs>(args)...);
+	}
+
+	/// @copydoc DynamicArray::emplaceAt
+	template<typename... TArgs>
+	Iterator emplaceAt(ConstIterator where, TArgs&&... args)
+	{
+		return Base::emplaceAt(m_alloc, where, std::forward<TArgs>(args)...);
 	}
 
 	/// @copydoc DynamicArray::resize

@@ -495,7 +495,7 @@ public:
 	/// Import an existing render target.
 	RenderTargetHandle importRenderTarget(CString name, TexturePtr tex, TextureUsageBit usage)
 	{
-		RT& rt = m_renderTargets.emplaceBack(m_alloc);
+		RT& rt = *m_renderTargets.emplaceBack(m_alloc);
 		rt.m_importedTex = tex;
 		rt.m_usage = usage;
 		rt.setName(name);
@@ -509,7 +509,7 @@ public:
 	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf)
 	{
 		ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
-		RT& rt = m_renderTargets.emplaceBack(m_alloc);
+		RT& rt = *m_renderTargets.emplaceBack(m_alloc);
 		rt.m_initInfo = initInf;
 		rt.m_hash = initInf.m_hash;
 		rt.m_usage = TextureUsageBit::NONE;
@@ -523,7 +523,7 @@ public:
 	/// Import a buffer.
 	RenderPassBufferHandle importBuffer(CString name, BufferPtr buff, BufferUsageBit usage)
 	{
-		Buffer& b = m_buffers.emplaceBack(m_alloc);
+		Buffer& b = *m_buffers.emplaceBack(m_alloc);
 		b.setName(name);
 		b.m_usage = usage;
 		b.m_importedBuff = buff;
