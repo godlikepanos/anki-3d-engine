@@ -190,7 +190,7 @@ private:
 	/// @name Graphics
 	/// @{
 	U32 m_vertBuffSize = 0;
-	StagingGpuMemoryToken m_vertBuffToken;
+	void* m_verts = nullptr;
 	/// @}
 
 	SimulationType m_simulationType = SimulationType::UNDEFINED;

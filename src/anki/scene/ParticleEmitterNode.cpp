@@ -283,6 +283,12 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 
 	if(!ctx.m_debugDraw)
 	{
+		// Load verts
+		StagingGpuMemoryToken token;
+		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(
+			self.m_aliveParticlesCount * VERTEX_SIZE, StagingGpuMemoryType::VERTEX, token);
+		memcpy(gpuStorage, self.m_verts, self.m_aliveParticlesCount * VERTEX_SIZE);
+
 		// Program
 		ShaderProgramPtr prog;
 		self.m_particleEmitterResource->getRenderingInfo(ctx.m_key.m_lod, prog);
@@ -295,8 +301,7 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 			2, 0, PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT), sizeof(Vec3) + sizeof(F32));
 
 		// Vertex buff
-		cmdb->bindVertexBuffer(
-			0, self.m_vertBuffToken.m_buffer, self.m_vertBuffToken.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);
+		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);
 
 		// Uniforms
 		Array<Mat4, 1> trf = {{Mat4::getIdentity()}};
@@ -377,8 +382,8 @@ Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	Vec4 aabbmax(MIN_F32, MIN_F32, MIN_F32, 0.0f);
 	m_aliveParticlesCount = 0;
 
-	F32* verts = static_cast<F32*>(getSceneGraph().getStagingGpuMemoryManager().allocateFrame(
-		m_vertBuffSize, StagingGpuMemoryType::VERTEX, m_vertBuffToken));
+	F32* verts = reinterpret_cast<F32*>(getFrameAllocator().allocate(m_vertBuffSize));
+	m_verts = verts;
 
 	const F32* verts_base = verts;
 	(void)verts_base;
@@ -447,6 +452,7 @@ Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	else
 	{
 		m_obb = Obb(Vec4(0.0), Mat3x4::getIdentity(), Vec4(0.001));
+		m_verts = nullptr;
 	}
 
 	getComponent<SpatialComponent>().markForUpdate();

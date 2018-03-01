@@ -55,7 +55,6 @@ public:
 		ThreadPool* threadpool,
 		ThreadHive* thraedHive,
 		ResourceManager* resources,
-		StagingGpuMemoryManager* stagingAlloc,
 		Input* input,
 		ScriptManager* scriptManager,
 		const Timestamp* globalTimestamp,
@@ -119,13 +118,6 @@ public:
 	ThreadHive& getThreadHive()
 	{
 		return *m_threadHive;
-	}
-
-	// TODO remove that from here
-	StagingGpuMemoryManager& getStagingGpuMemoryManager()
-	{
-		ANKI_ASSERT(m_stagingAlloc);
-		return *m_stagingAlloc;
 	}
 
 	ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime);
@@ -247,7 +239,6 @@ private:
 	PhysicsWorld* m_physics = nullptr;
 	Input* m_input = nullptr;
 	ScriptManager* m_scriptManager = nullptr;
-	StagingGpuMemoryManager* m_stagingAlloc = nullptr;
 
 	SceneAllocator<U8> m_alloc;
 	SceneFrameAllocator<U8> m_frameAlloc;
