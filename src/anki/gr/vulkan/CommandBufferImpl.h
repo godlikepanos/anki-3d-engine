@@ -47,8 +47,8 @@ class CommandBufferImpl final : public CommandBuffer, public VulkanObject<Comman
 {
 public:
 	/// Default constructor
-	CommandBufferImpl(GrManager* manager)
-		: CommandBuffer(manager)
+	CommandBufferImpl(GrManager* manager, CString name)
+		: CommandBuffer(manager, name)
 	{
 	}
 

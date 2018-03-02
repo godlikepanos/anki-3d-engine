@@ -36,7 +36,7 @@ enum GrObjectType : U16
 class GrObject : public NonCopyable
 {
 public:
-	GrObject(GrManager* manager, GrObjectType type);
+	GrObject(GrManager* manager, GrObjectType type, CString name);
 
 	virtual ~GrObject();
 
@@ -68,11 +68,18 @@ public:
 		return m_uuid;
 	}
 
+	/// Get its name.
+	CString getName() const
+	{
+		return &m_name[0];
+	}
+
 private:
 	Atomic<I32> m_refcount;
 	GrManager* m_manager;
 	U64 m_uuid;
 	GrObjectType m_type;
+	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
 };
 /// @}
 

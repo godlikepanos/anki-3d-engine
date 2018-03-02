@@ -39,7 +39,7 @@ Sampler* Sampler::newInstance(GrManager* manager, const SamplerInitInfo& init)
 		}
 	};
 
-	SamplerImpl* impl = manager->getAllocator().newInstance<SamplerImpl>(manager);
+	SamplerImpl* impl = manager->getAllocator().newInstance<SamplerImpl>(manager, init.getName());
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());

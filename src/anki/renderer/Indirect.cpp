@@ -199,8 +199,8 @@ Error Indirect::initLightShading(const ConfigSet& config)
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_lightShading.m_tileSize,
 			m_lightShading.m_tileSize,
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-				| TextureUsageBit::GENERATE_MIPMAPS,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
+				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::GENERATE_MIPMAPS,
 			"GI refl");
 		texinit.m_mipmapCount = m_lightShading.m_mipCount;
 		texinit.m_type = TextureType::CUBE_ARRAY;
@@ -250,7 +250,8 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_irradiance.m_tileSize,
 			m_irradiance.m_tileSize,
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
+				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			"GI irr");
 
 		texinit.m_layerCount = m_cacheEntries.getSize();

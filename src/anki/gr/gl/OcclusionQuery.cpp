@@ -38,7 +38,7 @@ OcclusionQuery* OcclusionQuery::newInstance(GrManager* manager)
 		}
 	};
 
-	OcclusionQueryImpl* impl = manager->getAllocator().newInstance<OcclusionQueryImpl>(manager);
+	OcclusionQueryImpl* impl = manager->getAllocator().newInstance<OcclusionQueryImpl>(manager, "N/A");
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());

@@ -25,7 +25,7 @@ namespace anki
 
 CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBufferInitInfo& inf)
 {
-	CommandBufferImpl* impl = manager->getAllocator().newInstance<CommandBufferImpl>(manager);
+	CommandBufferImpl* impl = manager->getAllocator().newInstance<CommandBufferImpl>(manager, inf.getName());
 	impl->init(inf);
 	return impl;
 }

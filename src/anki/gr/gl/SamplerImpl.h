@@ -18,8 +18,8 @@ namespace anki
 class SamplerImpl final : public Sampler, public GlObject
 {
 public:
-	SamplerImpl(GrManager* manager)
-		: Sampler(manager)
+	SamplerImpl(GrManager* manager, CString name)
+		: Sampler(manager, name)
 	{
 	}
 

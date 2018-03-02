@@ -54,7 +54,7 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 
 	ANKI_ASSERT(!init.m_binary.isEmpty());
 
-	ShaderImpl* impl = manager->getAllocator().newInstance<ShaderImpl>(manager);
+	ShaderImpl* impl = manager->getAllocator().newInstance<ShaderImpl>(manager, init.getName());
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	// Need to pre-init because some funcs ask for members and we don't want to serialize

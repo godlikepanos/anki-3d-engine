@@ -23,10 +23,6 @@ public:
 	GrManagerImpl& getGrManagerImpl();
 
 	const GrManagerImpl& getGrManagerImpl() const;
-
-	/// Convenience method to allocate and initialize an XXXImpl.
-	template<typename TGrManager, typename... TArgs>
-	static ANKI_USE_RESULT TBaseClass* newInstanceHelper(TGrManager* manager, TArgs&&... args);
 };
 
 // Do this trick to avoid including heavy headers
@@ -44,5 +40,3 @@ public:
 /// @}
 
 } // end namespace anki
-
-#include <anki/gr/vulkan/VulkanObject.inl.h>

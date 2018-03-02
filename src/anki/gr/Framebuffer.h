@@ -91,8 +91,8 @@ public:
 
 protected:
 	/// Construct.
-	Framebuffer(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	Framebuffer(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 

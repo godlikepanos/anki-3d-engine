@@ -55,8 +55,8 @@ public:
 	StateTracker m_state;
 
 	/// Default constructor
-	CommandBufferImpl(GrManager* manager)
-		: CommandBuffer(manager)
+	CommandBufferImpl(GrManager* manager, CString name)
+		: CommandBuffer(manager, name)
 	{
 	}
 

@@ -26,8 +26,8 @@ public:
 	/// TextureView::m_uuid since it creates less unique IDs.
 	U64 m_hash = 0;
 
-	TextureViewImpl(GrManager* manager)
-		: TextureView(manager)
+	TextureViewImpl(GrManager* manager, CString name)
+		: TextureView(manager, name)
 	{
 	}
 

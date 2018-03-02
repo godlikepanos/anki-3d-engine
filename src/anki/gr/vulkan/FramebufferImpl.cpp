@@ -39,7 +39,6 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 	// Init common
 	m_defaultFb = init.refersToDefaultFramebuffer();
-	strcpy(&m_name[0], (init.getName()) ? init.getName().cstr() : "");
 
 	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
@@ -294,7 +293,7 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 			}
 
 			ANKI_VK_CHECKF(vkCreateRenderPass(getDevice(), &ci, nullptr, &out));
-			getGrManagerImpl().trySetVulkanHandleName(&m_name[0], VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, out);
+			getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, out);
 
 			m_noDflt.m_rpasses.emplace(getAllocator(), hash, out);
 		}

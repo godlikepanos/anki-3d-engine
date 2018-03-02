@@ -9,12 +9,21 @@
 namespace anki
 {
 
-GrObject::GrObject(GrManager* manager, GrObjectType type)
+GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
 	: m_refcount(0)
 	, m_manager(manager)
 	, m_uuid(m_manager->getUuidIndex()++)
 	, m_type(type)
 {
+	if(name && name.getLength())
+	{
+		ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
+		memcpy(&m_name[0], &name[0], name.getLength() + 1);
+	}
+	else
+	{
+		m_name[0] = '\0';
+	}
 }
 
 GrObject::~GrObject()

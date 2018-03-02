@@ -255,8 +255,8 @@ protected:
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 
 	/// Construct.
-	Texture(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	Texture(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 

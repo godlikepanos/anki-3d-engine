@@ -12,7 +12,13 @@ namespace anki
 
 CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBufferInitInfo& init)
 {
-	return CommandBufferImpl::newInstanceHelper(manager, init);
+	CommandBufferImpl* impl = manager->getAllocator().newInstance<CommandBufferImpl>(manager, init.getName());
+	Error err = impl->init(init);
+	if(err)
+	{
+		manager->getAllocator().deleteInstance(impl);
+	}
+	return impl;
 }
 
 CommandBufferInitHints CommandBuffer::computeInitHints() const

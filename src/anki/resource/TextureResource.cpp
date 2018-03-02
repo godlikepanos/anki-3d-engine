@@ -68,9 +68,8 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	ImageLoader& loader = ctx->m_loader;
 
 	TextureInitInfo init("RsrcTex");
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION
-				   | TextureUsageBit::TRANSFER_DESTINATION;
-	init.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION;
+	init.m_usage = TextureUsageBit::SAMPLED_ALL | TextureUsageBit::TRANSFER_DESTINATION;
+	init.m_initialUsage = TextureUsageBit::SAMPLED_ALL;
 	U faces = 0;
 
 	ResourceFilePtr file;

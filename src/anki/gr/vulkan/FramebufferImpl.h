@@ -24,8 +24,8 @@ class FramebufferAttachmentInfo;
 class FramebufferImpl final : public Framebuffer, public VulkanObject<Framebuffer, FramebufferImpl>
 {
 public:
-	FramebufferImpl(GrManager* manager)
-		: Framebuffer(manager)
+	FramebufferImpl(GrManager* manager, CString name)
+		: Framebuffer(manager, name)
 	{
 	}
 
@@ -134,8 +134,6 @@ public:
 	}
 
 private:
-	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
-
 	Bool8 m_defaultFb = false;
 
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentMask = {false};

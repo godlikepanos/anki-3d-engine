@@ -21,8 +21,8 @@ class OcclusionQueryImpl final : public OcclusionQuery, public VulkanObject<Occl
 public:
 	QueryAllocationHandle m_handle = {};
 
-	OcclusionQueryImpl(GrManager* manager)
-		: OcclusionQuery(manager)
+	OcclusionQueryImpl(GrManager* manager, CString name)
+		: OcclusionQuery(manager, name)
 	{
 	}
 

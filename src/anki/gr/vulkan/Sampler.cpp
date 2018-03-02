@@ -12,7 +12,13 @@ namespace anki
 
 Sampler* Sampler::newInstance(GrManager* manager, const SamplerInitInfo& init)
 {
-	return SamplerImpl::newInstanceHelper(manager, init);
+	SamplerImpl* impl = manager->getAllocator().newInstance<SamplerImpl>(manager, init.getName());
+	Error err = impl->init(init);
+	if(err)
+	{
+		manager->getAllocator().deleteInstance(impl);
+	}
+	return impl;
 }
 
 } // end namespace anki

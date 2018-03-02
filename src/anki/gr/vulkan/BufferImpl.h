@@ -19,8 +19,8 @@ namespace anki
 class BufferImpl final : public Buffer, public VulkanObject<Buffer, BufferImpl>
 {
 public:
-	BufferImpl(GrManager* manager)
-		: Buffer(manager)
+	BufferImpl(GrManager* manager, CString name)
+		: Buffer(manager, name)
 	{
 	}
 

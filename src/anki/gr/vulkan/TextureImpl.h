@@ -46,8 +46,8 @@ public:
 
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 
-	TextureImpl(GrManager* manager)
-		: Texture(manager)
+	TextureImpl(GrManager* manager, CString name)
+		: Texture(manager, name)
 	{
 	}
 
@@ -145,8 +145,6 @@ private:
 	mutable Mutex m_viewsMapMtx;
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
-
-	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
 
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(const TextureInitInfo& init);
 

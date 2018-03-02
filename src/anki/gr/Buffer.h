@@ -80,8 +80,8 @@ protected:
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
 
 	/// Construct.
-	Buffer(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	Buffer(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 

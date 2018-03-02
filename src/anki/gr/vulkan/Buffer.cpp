@@ -12,7 +12,13 @@ namespace anki
 
 Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& init)
 {
-	return BufferImpl::newInstanceHelper(manager, init);
+	BufferImpl* impl = manager->getAllocator().newInstance<BufferImpl>(manager, init.getName());
+	Error err = impl->init(init);
+	if(err)
+	{
+		manager->getAllocator().deleteInstance(impl);
+	}
+	return impl;
 }
 
 void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)

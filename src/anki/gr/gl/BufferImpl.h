@@ -18,8 +18,8 @@ namespace anki
 class BufferImpl final : public Buffer, public GlObject
 {
 public:
-	BufferImpl(GrManager* manager)
-		: Buffer(manager)
+	BufferImpl(GrManager* manager, CString name)
+		: Buffer(manager, name)
 	{
 	}
 

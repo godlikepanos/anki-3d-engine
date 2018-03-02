@@ -28,8 +28,8 @@ public:
 
 protected:
 	/// Construct.
-	Fence(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	Fence(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 

@@ -21,8 +21,8 @@ public:
 	GLsync m_fence = nullptr;
 	Atomic<Bool> m_signaled = {false};
 
-	FenceImpl(GrManager* gr)
-		: Fence(gr)
+	FenceImpl(GrManager* gr, CString name)
+		: Fence(gr, name)
 	{
 	}
 

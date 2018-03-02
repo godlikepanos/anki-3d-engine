@@ -15,7 +15,7 @@ namespace anki
 /// @{
 
 /// ShaderProgram init info.
-class ShaderProgramInitInfo : GrBaseInitInfo
+class ShaderProgramInitInfo : public GrBaseInitInfo
 {
 public:
 	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders = {};
@@ -72,8 +72,8 @@ public:
 
 protected:
 	/// Construct.
-	ShaderProgram(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	ShaderProgram(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 

@@ -39,7 +39,7 @@ Framebuffer* Framebuffer::newInstance(GrManager* manager, const FramebufferInitI
 		}
 	};
 
-	FramebufferImpl* impl = manager->getAllocator().newInstance<FramebufferImpl>(manager);
+	FramebufferImpl* impl = manager->getAllocator().newInstance<FramebufferImpl>(manager, init.getName());
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());

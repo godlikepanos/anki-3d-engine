@@ -35,8 +35,8 @@ public:
 	U8 m_faceCount = 0; ///< 6 for cubes and 1 for the rest.
 	Bool8 m_compressed = false;
 
-	TextureImpl(GrManager* manager)
-		: Texture(manager)
+	TextureImpl(GrManager* manager, CString name)
+		: Texture(manager, name)
 	{
 	}
 

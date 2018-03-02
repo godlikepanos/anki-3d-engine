@@ -18,8 +18,8 @@ namespace anki
 class ShaderProgramImpl final : public ShaderProgram, public GlObject
 {
 public:
-	ShaderProgramImpl(GrManager* manager)
-		: ShaderProgram(manager)
+	ShaderProgramImpl(GrManager* manager, CString name)
+		: ShaderProgram(manager, name)
 	{
 	}
 

@@ -37,7 +37,7 @@ Buffer* Buffer::newInstance(GrManager* manager, const BufferInitInfo& inf)
 		}
 	};
 
-	BufferImpl* impl = manager->getAllocator().newInstance<BufferImpl>(manager);
+	BufferImpl* impl = manager->getAllocator().newInstance<BufferImpl>(manager, inf.getName());
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	impl->preInit(inf);

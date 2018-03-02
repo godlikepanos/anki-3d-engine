@@ -55,8 +55,8 @@ public:
 
 protected:
 	/// Construct.
-	Sampler(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	Sampler(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 

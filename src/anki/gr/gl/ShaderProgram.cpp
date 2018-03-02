@@ -57,7 +57,7 @@ ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgra
 
 	ANKI_ASSERT(init.isValid());
 
-	ShaderProgramImpl* impl = manager->getAllocator().newInstance<ShaderProgramImpl>(manager);
+	ShaderProgramImpl* impl = manager->getAllocator().newInstance<ShaderProgramImpl>(manager, init.getName());
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());

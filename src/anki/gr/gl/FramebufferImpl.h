@@ -18,8 +18,8 @@ namespace anki
 class FramebufferImpl final : public Framebuffer, public GlObject
 {
 public:
-	FramebufferImpl(GrManager* manager)
-		: Framebuffer(manager)
+	FramebufferImpl(GrManager* manager, CString name)
+		: Framebuffer(manager, name)
 	{
 	}
 

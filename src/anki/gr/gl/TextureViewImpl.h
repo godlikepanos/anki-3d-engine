@@ -22,8 +22,8 @@ public:
 	MicroTextureView m_view = {};
 	TexturePtr m_tex; ///< Hold a reference.
 
-	TextureViewImpl(GrManager* manager)
-		: TextureView(manager)
+	TextureViewImpl(GrManager* manager, CString name)
+		: TextureView(manager, name)
 	{
 	}
 

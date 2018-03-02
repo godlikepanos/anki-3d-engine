@@ -28,8 +28,8 @@ public:
 	BitSet<MAX_DESCRIPTOR_SETS, U8> m_descriptorSetMask = {false};
 	Array<BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U8>, MAX_DESCRIPTOR_SETS> m_activeBindingMask = {{{false}, {false}}};
 
-	ShaderImpl(GrManager* manager)
-		: Shader(manager)
+	ShaderImpl(GrManager* manager, CString name)
+		: Shader(manager, name)
 	{
 	}
 

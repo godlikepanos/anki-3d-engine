@@ -114,7 +114,7 @@ enum class CommandBufferFlag : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag, inline)
 
 /// Command buffer init info.
-class CommandBufferInitInfo
+class CommandBufferInitInfo : public GrBaseInitInfo
 {
 public:
 	FramebufferPtr m_framebuffer; ///< For second level command buffers.
@@ -123,6 +123,11 @@ public:
 	CommandBufferInitHints m_hints;
 
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
+
+	CommandBufferInitInfo(CString name = {})
+		: GrBaseInitInfo(name)
+	{
+	}
 };
 
 /// Command buffer.
@@ -377,8 +382,8 @@ public:
 
 protected:
 	/// Construct.
-	CommandBuffer(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	CommandBuffer(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 

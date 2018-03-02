@@ -40,7 +40,7 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 	gr->getStorageBufferInfo(alignment, maxSize);
 	initBuffer(StagingGpuMemoryType::STORAGE, alignment, maxSize, BufferUsageBit::STORAGE_ALL, *gr);
 
-	initBuffer(StagingGpuMemoryType::VERTEX, 16, MAX_U32, BufferUsageBit::VERTEX, *gr);
+	initBuffer(StagingGpuMemoryType::VERTEX, 16, MAX_U32, BufferUsageBit::VERTEX | BufferUsageBit::INDEX, *gr);
 
 	gr->getTextureBufferInfo(alignment, maxSize);
 	initBuffer(StagingGpuMemoryType::TEXTURE, alignment, maxSize, BufferUsageBit::TEXTURE_ALL, *gr);

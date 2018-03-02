@@ -722,7 +722,7 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 	// Create fence
 	if(outFence)
 	{
-		outFence->reset(getAllocator().newInstance<FenceImpl>(this));
+		outFence->reset(getAllocator().newInstance<FenceImpl>(this, "Flush"));
 		static_cast<FenceImpl&>(**outFence).m_fence = fence;
 	}
 

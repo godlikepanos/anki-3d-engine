@@ -643,7 +643,7 @@ private:
 	BakeContext* m_ctx = nullptr;
 	U64 m_version = 0;
 
-	RenderGraph(GrManager* manager);
+	RenderGraph(GrManager* manager, CString name);
 
 	~RenderGraph();
 

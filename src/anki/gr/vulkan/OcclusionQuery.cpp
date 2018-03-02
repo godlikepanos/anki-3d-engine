@@ -12,7 +12,13 @@ namespace anki
 
 OcclusionQuery* OcclusionQuery::newInstance(GrManager* manager)
 {
-	return OcclusionQueryImpl::newInstanceHelper(manager);
+	OcclusionQueryImpl* impl = manager->getAllocator().newInstance<OcclusionQueryImpl>(manager, "N/A");
+	Error err = impl->init();
+	if(err)
+	{
+		manager->getAllocator().deleteInstance(impl);
+	}
+	return impl;
 }
 
 } // end namespace anki

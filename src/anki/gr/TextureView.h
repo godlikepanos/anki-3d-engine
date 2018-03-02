@@ -100,8 +100,8 @@ protected:
 	TextureSubresourceInfo m_subresource;
 
 	/// Construct.
-	TextureView(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	TextureView(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 		m_subresource.m_depthStencilAspect = DepthStencilAspectBit::NONE;
 

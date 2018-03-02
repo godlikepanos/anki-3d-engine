@@ -21,8 +21,8 @@ class FenceImpl final : public Fence, public VulkanObject<Fence, FenceImpl>
 public:
 	MicroFencePtr m_fence;
 
-	FenceImpl(GrManager* manager)
-		: Fence(manager)
+	FenceImpl(GrManager* manager, CString name)
+		: Fence(manager, name)
 	{
 	}
 

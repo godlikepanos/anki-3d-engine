@@ -217,8 +217,8 @@ void FramebufferDescription::bake()
 	ANKI_ASSERT(m_hash != 0 && m_hash != 1);
 }
 
-RenderGraph::RenderGraph(GrManager* manager)
-	: GrObject(manager, CLASS_TYPE)
+RenderGraph::RenderGraph(GrManager* manager, CString name)
+	: GrObject(manager, CLASS_TYPE, name)
 {
 	ANKI_ASSERT(manager);
 }
@@ -240,7 +240,7 @@ RenderGraph::~RenderGraph()
 
 RenderGraph* RenderGraph::newInstance(GrManager* manager)
 {
-	return manager->getAllocator().newInstance<RenderGraph>(manager);
+	return manager->getAllocator().newInstance<RenderGraph>(manager, "N/A");
 }
 
 void RenderGraph::reset()

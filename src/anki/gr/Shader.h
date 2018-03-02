@@ -144,8 +144,8 @@ protected:
 	ShaderType m_shaderType = ShaderType::COUNT;
 
 	/// Construct.
-	Shader(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	Shader(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 

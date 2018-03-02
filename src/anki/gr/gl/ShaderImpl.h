@@ -23,8 +23,8 @@ class ShaderImpl final : public Shader, public GlObject
 public:
 	GLenum m_glType = 0;
 
-	ShaderImpl(GrManager* manager)
-		: Shader(manager)
+	ShaderImpl(GrManager* manager, CString name)
+		: Shader(manager, name)
 	{
 	}
 

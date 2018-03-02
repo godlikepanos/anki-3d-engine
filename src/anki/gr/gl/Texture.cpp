@@ -39,7 +39,7 @@ Texture* Texture::newInstance(GrManager* manager, const TextureInitInfo& init)
 		}
 	};
 
-	TextureImpl* impl = manager->getAllocator().newInstance<TextureImpl>(manager);
+	TextureImpl* impl = manager->getAllocator().newInstance<TextureImpl>(manager, init.getName());
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	// Need to pre-init because some funcs ask for members and we don't want to serialize

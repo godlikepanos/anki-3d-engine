@@ -87,7 +87,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* fence)
 	if(fence)
 	{
 		FencePtr& f = *fence;
-		FenceImpl* fenceImpl = m_manager->getAllocator().newInstance<FenceImpl>(m_manager.get());
+		FenceImpl* fenceImpl = m_manager->getAllocator().newInstance<FenceImpl>(m_manager.get(), "N/A");
 		f.reset(fenceImpl);
 
 		class CreateFenceCmd final : public GlCommand

@@ -18,8 +18,8 @@ namespace anki
 class OcclusionQueryImpl final : public OcclusionQuery, public GlObject
 {
 public:
-	OcclusionQueryImpl(GrManager* manager)
-		: OcclusionQuery(manager)
+	OcclusionQueryImpl(GrManager* manager, CString name)
+		: OcclusionQuery(manager, name)
 	{
 	}
 

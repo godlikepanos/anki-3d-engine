@@ -21,8 +21,8 @@ class SamplerImpl final : public Sampler, public VulkanObject<Sampler, SamplerIm
 public:
 	MicroSamplerPtr m_sampler;
 
-	SamplerImpl(GrManager* manager)
-		: Sampler(manager)
+	SamplerImpl(GrManager* manager, CString name)
+		: Sampler(manager, name)
 	{
 	}
 

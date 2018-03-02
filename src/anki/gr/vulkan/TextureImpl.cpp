@@ -52,14 +52,6 @@ Error TextureImpl::init(const TextureInitInfo& init_)
 	m_height = init.m_height;
 	m_depth = init.m_depth;
 	m_texType = init.m_type;
-	if(init.getName())
-	{
-		strcpy(&m_name[0], init.getName().cstr());
-	}
-	else
-	{
-		m_name[0] = '\0';
-	}
 
 	if(m_texType == TextureType::_3D)
 	{
@@ -676,7 +668,7 @@ VkImageView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresour
 		VkImageView view = VK_NULL_HANDLE;
 		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &view));
 		getGrManagerImpl().trySetVulkanHandleName(
-			(m_name[0]) ? &m_name[0] : CString(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(view));
+			getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(view));
 
 		m_viewsMap.emplace(getAllocator(), subresource, view);
 

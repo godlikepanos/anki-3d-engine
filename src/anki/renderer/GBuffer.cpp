@@ -38,7 +38,8 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 	m_depthRtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(),
 		m_r->getHeight(),
 		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		"GBuffer depth");
 	m_depthRtDescr.bake();
 
@@ -48,7 +49,8 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 		m_colorRtDescrs[i] = m_r->create2DRenderTargetDescription(m_r->getWidth(),
 			m_r->getHeight(),
 			MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i],
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
+				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 			rtNames[i]);
 		m_colorRtDescrs[i].bake();
 	}

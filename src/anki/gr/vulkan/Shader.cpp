@@ -12,7 +12,13 @@ namespace anki
 
 Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 {
-	return ShaderImpl::newInstanceHelper(manager, init);
+	ShaderImpl* impl = manager->getAllocator().newInstance<ShaderImpl>(manager, init.getName());
+	Error err = impl->init(init);
+	if(err)
+	{
+		manager->getAllocator().deleteInstance(impl);
+	}
+	return impl;
 }
 
 } // end namespace anki

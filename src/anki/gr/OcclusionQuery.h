@@ -23,8 +23,8 @@ public:
 
 protected:
 	/// Construct.
-	OcclusionQuery(GrManager* manager)
-		: GrObject(manager, CLASS_TYPE)
+	OcclusionQuery(GrManager* manager, CString name)
+		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 
