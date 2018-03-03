@@ -3,25 +3,25 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/resource/TextureAtlas.h>
+#include <anki/resource/TextureAtlasResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/misc/Xml.h>
 
 namespace anki
 {
 
-TextureAtlas::TextureAtlas(ResourceManager* manager)
+TextureAtlasResource::TextureAtlasResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-TextureAtlas::~TextureAtlas()
+TextureAtlasResource::~TextureAtlasResource()
 {
 	m_subTexes.destroy(getAllocator());
 	m_subTexNames.destroy(getAllocator());
 }
 
-Error TextureAtlas::load(const ResourceFilename& filename, Bool async)
+Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
@@ -117,7 +117,7 @@ Error TextureAtlas::load(const ResourceFilename& filename, Bool async)
 	return Error::NONE;
 }
 
-Error TextureAtlas::getSubTextureInfo(CString name, F32 uv[4]) const
+Error TextureAtlasResource::getSubTextureInfo(CString name, F32 uv[4]) const
 {
 	for(const SubTex& st : m_subTexes)
 	{

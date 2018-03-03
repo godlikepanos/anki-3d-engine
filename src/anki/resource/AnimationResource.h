@@ -22,7 +22,7 @@ class XmlElement;
 template<typename T>
 class AnimationKeyframe
 {
-	friend class Animation;
+	friend class AnimationResource;
 
 public:
 	F64 getTime() const
@@ -64,12 +64,12 @@ public:
 };
 
 /// Animation consists of keyframe data.
-class Animation : public ResourceObject
+class AnimationResource : public ResourceObject
 {
 public:
-	Animation(ResourceManager* manager);
+	AnimationResource(ResourceManager* manager);
 
-	~Animation();
+	~AnimationResource();
 
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 

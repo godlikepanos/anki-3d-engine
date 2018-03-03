@@ -6,7 +6,7 @@
 #include <anki/scene/components/ScriptComponent.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/resource/Script.h>
+#include <anki/resource/ScriptResource.h>
 #include <anki/script/ScriptManager.h>
 #include <anki/script/ScriptEnvironment.h>
 

@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/event/AnimationEvent.h>
-#include <anki/resource/Animation.h>
+#include <anki/resource/AnimationResource.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/resource/ResourceManager.h>

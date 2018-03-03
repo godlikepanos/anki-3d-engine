@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/components/SkinComponent.h>
-#include <anki/resource/Skeleton.h>
-#include <anki/resource/Animation.h>
+#include <anki/resource/SkeletonResource.h>
+#include <anki/resource/AnimationResource.h>
 #include <anki/util/BitSet.h>
 
 namespace anki

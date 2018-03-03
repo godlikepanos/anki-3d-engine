@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/scene/components/SceneComponent.h>
-#include <anki/resource/TextureAtlas.h>
+#include <anki/resource/TextureAtlasResource.h>
 #include <anki/collision/Obb.h>
 #include <anki/renderer/RenderQueue.h>
 

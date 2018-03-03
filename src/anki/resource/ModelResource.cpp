@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/resource/Model.h>
+#include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/resource/Material.h>
-#include <anki/resource/Mesh.h>
+#include <anki/resource/MaterialResource.h>
+#include <anki/resource/MeshResource.h>
 #include <anki/resource/MeshLoader.h>
 #include <anki/misc/Xml.h>
 #include <anki/util/Logger.h>
@@ -14,7 +14,7 @@
 namespace anki
 {
 
-ModelPatch::ModelPatch(Model* model)
+ModelPatch::ModelPatch(ModelResource* model)
 	: m_model(model)
 {
 }
@@ -29,7 +29,7 @@ void ModelPatch::getRenderingDataSub(
 	// Get the resources
 	RenderingKey meshKey = key;
 	meshKey.m_lod = min<U>(key.m_lod, m_meshCount - 1);
-	const Mesh& mesh = getMesh(meshKey);
+	const MeshResource& mesh = getMesh(meshKey);
 
 	// Get program
 	{
@@ -149,12 +149,12 @@ Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName,
 	return Error::NONE;
 }
 
-Model::Model(ResourceManager* manager)
+ModelResource::ModelResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-Model::~Model()
+ModelResource::~ModelResource()
 {
 	auto alloc = getAllocator();
 
@@ -166,7 +166,7 @@ Model::~Model()
 	m_modelPatches.destroy(alloc);
 }
 
-Error Model::load(const ResourceFilename& filename, Bool async)
+Error ModelResource::load(const ResourceFilename& filename, Bool async)
 {
 	auto alloc = getAllocator();
 

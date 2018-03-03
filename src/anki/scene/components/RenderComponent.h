@@ -7,7 +7,7 @@
 
 #include <anki/scene/Common.h>
 #include <anki/scene/components/SceneComponent.h>
-#include <anki/resource/Material.h>
+#include <anki/resource/MaterialResource.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/renderer/RenderQueue.h>
 
@@ -74,7 +74,7 @@ public:
 	}
 
 	/// Access the material
-	const Material& getMaterial() const
+	const MaterialResource& getMaterial() const
 	{
 		ANKI_ASSERT(m_mtl);
 		return *m_mtl;
@@ -82,7 +82,7 @@ public:
 
 	Bool getCastsShadow() const
 	{
-		const Material& mtl = getMaterial();
+		const MaterialResource& mtl = getMaterial();
 		return mtl.castsShadow();
 	}
 

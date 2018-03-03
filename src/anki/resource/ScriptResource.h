@@ -14,15 +14,15 @@ namespace anki
 /// @{
 
 /// Script resource.
-class Script : public ResourceObject
+class ScriptResource : public ResourceObject
 {
 public:
-	Script(ResourceManager* manager)
+	ScriptResource(ResourceManager* manager)
 		: ResourceObject(manager)
 	{
 	}
 
-	~Script();
+	~ScriptResource();
 
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 

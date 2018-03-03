@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/event/Event.h>
-#include <anki/resource/Animation.h>
+#include <anki/resource/AnimationResource.h>
 
 namespace anki
 {

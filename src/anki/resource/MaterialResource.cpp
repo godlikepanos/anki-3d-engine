@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/resource/Material.h>
+#include <anki/resource/MaterialResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/misc/Xml.h>
 
@@ -37,19 +37,19 @@ MaterialVariable::~MaterialVariable()
 {
 }
 
-Material::Material(ResourceManager* manager)
+MaterialResource::MaterialResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-Material::~Material()
+MaterialResource::~MaterialResource()
 {
 	m_vars.destroy(getAllocator());
 	m_constValues.destroy(getAllocator());
 	m_mutations.destroy(getAllocator());
 }
 
-Error Material::load(const ResourceFilename& filename, Bool async)
+Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlDocument doc;
 	XmlElement el;
@@ -92,7 +92,7 @@ Error Material::load(const ResourceFilename& filename, Bool async)
 	return Error::NONE;
 }
 
-Error Material::parseMutators(XmlElement mutatorsEl)
+Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 {
 	XmlElement mutatorEl;
 	ANKI_CHECK(mutatorsEl.getChildElement("mutator", mutatorEl));
@@ -255,7 +255,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 	return Error::NONE;
 }
 
-Error Material::parseInputs(XmlElement inputsEl, Bool async)
+Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 {
 	// Iterate the program's variables and get counts
 	U constInputCount = 0;
@@ -493,7 +493,7 @@ Error Material::parseInputs(XmlElement inputsEl, Bool async)
 	return Error::NONE;
 }
 
-const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_, Bool skinned) const
+const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& key_, Bool skinned) const
 {
 	RenderingKey key = key_;
 	key.m_lod = min<U>(m_lodCount - 1, key.m_lod);
@@ -562,7 +562,7 @@ const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_, Bo
 	return variant;
 }
 
-U Material::getInstanceGroupIdx(U instanceCount)
+U MaterialResource::getInstanceGroupIdx(U instanceCount)
 {
 	ANKI_ASSERT(instanceCount > 0);
 	instanceCount = nextPowerOfTwo(instanceCount);

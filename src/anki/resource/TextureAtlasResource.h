@@ -32,12 +32,12 @@ namespace anki
 /// 	</subTextures>
 /// </textureAtlas>
 /// @endcode
-class TextureAtlas : public ResourceObject
+class TextureAtlasResource : public ResourceObject
 {
 public:
-	TextureAtlas(ResourceManager* manager);
+	TextureAtlasResource(ResourceManager* manager);
 
-	~TextureAtlas();
+	~TextureAtlasResource();
 
 	/// Load a texture atlas.
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);

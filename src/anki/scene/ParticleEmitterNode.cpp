@@ -6,7 +6,7 @@
 #include <anki/scene/ParticleEmitterNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Misc.h>
-#include <anki/resource/Model.h>
+#include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/util/Functions.h>
 #include <anki/physics/PhysicsWorld.h>

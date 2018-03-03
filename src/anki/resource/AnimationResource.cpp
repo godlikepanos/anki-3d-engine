@@ -3,18 +3,18 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/resource/Animation.h>
+#include <anki/resource/AnimationResource.h>
 #include <anki/misc/Xml.h>
 
 namespace anki
 {
 
-Animation::Animation(ResourceManager* manager)
+AnimationResource::AnimationResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-Animation::~Animation()
+AnimationResource::~AnimationResource()
 {
 	for(AnimationChannel& ch : m_channels)
 	{
@@ -24,7 +24,7 @@ Animation::~Animation()
 	m_channels.destroy(getAllocator());
 }
 
-Error Animation::load(const ResourceFilename& filename, Bool async)
+Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlElement el;
 	I64 tmp;
@@ -226,7 +226,7 @@ Error Animation::load(const ResourceFilename& filename, Bool async)
 	return Error::NONE;
 }
 
-void Animation::interpolate(U channelIndex, F64 time, Vec3& pos, Quat& rot, F32& scale) const
+void AnimationResource::interpolate(U channelIndex, F64 time, Vec3& pos, Quat& rot, F32& scale) const
 {
 	// Audjust time
 	if(m_repeat && time > m_startTime + m_duration)

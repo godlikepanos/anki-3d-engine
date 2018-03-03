@@ -9,10 +9,10 @@
 #include <anki/Gr.h>
 #include <anki/collision/Obb.h>
 #include <anki/resource/RenderingKey.h>
-#include <anki/resource/Mesh.h>
-#include <anki/resource/Material.h>
-#include <anki/resource/Skeleton.h>
-#include <anki/resource/Animation.h>
+#include <anki/resource/MeshResource.h>
+#include <anki/resource/MaterialResource.h>
+#include <anki/resource/SkeletonResource.h>
+#include <anki/resource/AnimationResource.h>
 
 namespace anki
 {
@@ -80,7 +80,7 @@ public:
 class ModelPatch
 {
 public:
-	ModelPatch(Model* model);
+	ModelPatch(ModelResource* model);
 
 	~ModelPatch();
 
@@ -89,12 +89,12 @@ public:
 		return m_mtl;
 	}
 
-	const Mesh& getMesh(const RenderingKey& key) const
+	const MeshResource& getMesh(const RenderingKey& key) const
 	{
 		return *m_meshes[key.m_lod];
 	}
 
-	const Model& getModel() const
+	const ModelResource& getModel() const
 	{
 		ANKI_ASSERT(m_model);
 		return *m_model;
@@ -123,7 +123,7 @@ public:
 	void getRenderingDataSub(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const;
 
 private:
-	Model* m_model ANKI_DBG_NULLIFY;
+	ModelResource* m_model ANKI_DBG_NULLIFY;
 
 	Array<MeshResourcePtr, MAX_LOD_COUNT> m_meshes; ///< One for each LOD
 	U8 m_meshCount = 0;
@@ -160,12 +160,12 @@ private:
 /// - If the materials need texture coords then mesh should have them
 /// - The skeleton and skelAnims are optional
 /// - Its an error to have skelAnims without skeleton
-class Model : public ResourceObject
+class ModelResource : public ResourceObject
 {
 public:
-	Model(ResourceManager* manager);
+	ModelResource(ResourceManager* manager);
 
-	~Model();
+	~ModelResource();
 
 	const DynamicArray<ModelPatch*>& getModelPatches() const
 	{

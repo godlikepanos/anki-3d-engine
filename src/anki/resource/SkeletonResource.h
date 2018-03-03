@@ -20,7 +20,7 @@ const U32 MAX_CHILDREN_PER_BONE = 8;
 /// Skeleton bone
 class Bone
 {
-	friend class Skeleton; ///< For loading
+	friend class SkeletonResource; ///< For loading
 
 public:
 	Bone() = default;
@@ -87,15 +87,15 @@ private:
 /// 	</bones>
 /// </skeleton>
 /// @endcode
-class Skeleton : public ResourceObject
+class SkeletonResource : public ResourceObject
 {
 public:
-	Skeleton(ResourceManager* manager)
+	SkeletonResource(ResourceManager* manager)
 		: ResourceObject(manager)
 	{
 	}
 
-	~Skeleton();
+	~SkeletonResource();
 
 	/// Load file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);

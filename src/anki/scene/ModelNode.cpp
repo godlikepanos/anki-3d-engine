@@ -8,9 +8,9 @@
 #include <anki/scene/components/BodyComponent.h>
 #include <anki/scene/components/SkinComponent.h>
 #include <anki/scene/Misc.h>
-#include <anki/resource/Model.h>
+#include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/resource/Skeleton.h>
+#include <anki/resource/SkeletonResource.h>
 #include <anki/physics/PhysicsWorld.h>
 
 namespace anki

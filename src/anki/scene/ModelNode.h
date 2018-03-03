@@ -9,7 +9,7 @@
 #include <anki/scene/components/RenderComponent.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
-#include <anki/resource/Model.h>
+#include <anki/resource/ModelResource.h>
 #include <anki/collision/Obb.h>
 
 namespace anki
@@ -64,7 +64,7 @@ public:
 
 	ANKI_USE_RESULT Error init(const CString& modelFname);
 
-	const Model& getModel() const
+	const ModelResource& getModel() const
 	{
 		return *m_model;
 	}

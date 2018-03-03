@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/resource/Skeleton.h>
+#include <anki/resource/SkeletonResource.h>
 #include <anki/misc/Xml.h>
 #include <anki/util/StringList.h>
 
 namespace anki
 {
 
-Skeleton::~Skeleton()
+SkeletonResource::~SkeletonResource()
 {
 	for(Bone& b : m_bones)
 	{
@@ -20,7 +20,7 @@ Skeleton::~Skeleton()
 	m_bones.destroy(getAllocator());
 }
 
-Error Skeleton::load(const ResourceFilename& filename, Bool async)
+Error SkeletonResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));

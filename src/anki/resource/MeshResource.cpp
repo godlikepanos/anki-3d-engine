@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/resource/Mesh.h>
+#include <anki/resource/MeshResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/MeshLoader.h>
 #include <anki/resource/AsyncLoader.h>
@@ -13,7 +13,7 @@
 namespace anki
 {
 
-class Mesh::LoadContext
+class MeshResource::LoadContext
 {
 public:
 	ResourceManager* m_manager ANKI_DBG_NULLIFY;
@@ -29,10 +29,10 @@ public:
 };
 
 /// Mesh upload async task.
-class Mesh::LoadTask : public AsyncLoaderTask
+class MeshResource::LoadTask : public AsyncLoaderTask
 {
 public:
-	Mesh::LoadContext m_ctx;
+	MeshResource::LoadContext m_ctx;
 
 	LoadTask(ResourceManager* manager)
 		: m_ctx(manager, manager->getAsyncLoader().getAllocator())
@@ -41,27 +41,27 @@ public:
 
 	Error operator()(AsyncLoaderTaskContext& ctx) final
 	{
-		return Mesh::load(m_ctx);
+		return MeshResource::load(m_ctx);
 	}
 };
 
-Mesh::Mesh(ResourceManager* manager)
+MeshResource::MeshResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-Mesh::~Mesh()
+MeshResource::~MeshResource()
 {
 	m_subMeshes.destroy(getAllocator());
 }
 
-Bool Mesh::isCompatible(const Mesh& other) const
+Bool MeshResource::isCompatible(const MeshResource& other) const
 {
 	return hasBoneWeights() == other.hasBoneWeights() && getSubMeshesCount() == other.getSubMeshesCount()
 		   && m_texChannelsCount == other.m_texChannelsCount;
 }
 
-Error Mesh::load(const ResourceFilename& filename, Bool async)
+Error MeshResource::load(const ResourceFilename& filename, Bool async)
 {
 	LoadTask* task;
 	LoadContext* ctx;
@@ -141,7 +141,7 @@ Error Mesh::load(const ResourceFilename& filename, Bool async)
 	return Error::NONE;
 }
 
-Error Mesh::load(LoadContext& ctx)
+Error MeshResource::load(LoadContext& ctx)
 {
 	GrManager& gr = ctx.m_manager->getGrManager();
 	TransferGpuAllocator& transferAlloc = ctx.m_manager->getTransferGpuAllocator();

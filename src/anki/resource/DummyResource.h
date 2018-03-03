@@ -14,15 +14,15 @@ namespace anki
 /// @{
 
 /// A dummy resource for the unit tests of the ResourceManager
-class DummyRsrc : public ResourceObject
+class DummyResource : public ResourceObject
 {
 public:
-	DummyRsrc(ResourceManager* manager)
+	DummyResource(ResourceManager* manager)
 		: ResourceObject(manager)
 	{
 	}
 
-	~DummyRsrc()
+	~DummyResource()
 	{
 		if(m_memory)
 		{

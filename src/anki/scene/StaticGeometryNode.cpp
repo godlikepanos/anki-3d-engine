@@ -6,7 +6,7 @@
 #include <anki/scene/StaticGeometryNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/resource/Model.h>
+#include <anki/resource/ModelResource.h>
 
 namespace anki
 {

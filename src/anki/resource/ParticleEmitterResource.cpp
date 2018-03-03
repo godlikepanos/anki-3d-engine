@@ -5,7 +5,7 @@
 
 #include <anki/resource/ParticleEmitterResource.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/resource/Model.h>
+#include <anki/resource/ModelResource.h>
 #include <anki/util/StringList.h>
 #include <anki/misc/Xml.h>
 #include <cstring>

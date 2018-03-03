@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "tests/framework/Framework.h"
-#include "anki/resource/DummyRsrc.h"
+#include "anki/resource/DummyResource.h"
 #include "anki/resource/ResourceManager.h"
 #include "anki/core/Config.h"
 

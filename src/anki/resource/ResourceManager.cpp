@@ -5,16 +5,16 @@
 
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/AsyncLoader.h>
-#include <anki/resource/Animation.h>
-#include <anki/resource/Material.h>
-#include <anki/resource/Mesh.h>
-#include <anki/resource/Model.h>
-#include <anki/resource/Script.h>
-#include <anki/resource/DummyRsrc.h>
+#include <anki/resource/AnimationResource.h>
+#include <anki/resource/MaterialResource.h>
+#include <anki/resource/MeshResource.h>
+#include <anki/resource/ModelResource.h>
+#include <anki/resource/ScriptResource.h>
+#include <anki/resource/DummyResource.h>
 #include <anki/resource/ParticleEmitterResource.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/GenericResource.h>
-#include <anki/resource/TextureAtlas.h>
+#include <anki/resource/TextureAtlasResource.h>
 #include <anki/resource/ShaderProgramResource.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>

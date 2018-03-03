@@ -20,13 +20,13 @@ class MeshLoader;
 /// @{
 
 /// Mesh Resource. It contains the geometry packed in GPU buffers.
-class Mesh : public ResourceObject
+class MeshResource : public ResourceObject
 {
 public:
 	/// Default constructor
-	Mesh(ResourceManager* manager);
+	MeshResource(ResourceManager* manager);
 
-	~Mesh();
+	~MeshResource();
 
 	U32 getTextureChannelsCount() const
 	{
@@ -89,7 +89,7 @@ public:
 	}
 
 	/// Helper function for correct loading
-	Bool isCompatible(const Mesh& other) const;
+	Bool isCompatible(const MeshResource& other) const;
 
 	/// Load from a mesh file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
