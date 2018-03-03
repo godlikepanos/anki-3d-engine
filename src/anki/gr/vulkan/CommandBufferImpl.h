@@ -374,6 +374,9 @@ private:
 	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.
 	Array<U32, 2> m_stencilWriteMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
 	Array<U32, 2> m_stencilReferenceMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
+
+	/// Rebind the above dynamic state. Needed after pushing secondary command buffers (they dirty the state).
+	void rebindDynamicState();
 	/// @}
 
 	/// @name barrier_batch

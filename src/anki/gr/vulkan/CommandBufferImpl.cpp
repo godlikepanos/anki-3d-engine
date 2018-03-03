@@ -260,10 +260,11 @@ void CommandBufferImpl::endRenderPass()
 	m_activeFb.reset(nullptr);
 	m_state.endRenderPass();
 
-	// After pushing second level command buffers the state is undefined. Reset the tracker
+	// After pushing second level command buffers the state is undefined. Reset the tracker and rebind the dynamic state
 	if(m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS)
 	{
 		m_state.reset();
+		rebindDynamicState();
 	}
 }
 
@@ -799,6 +800,59 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 
 	m_microCmdb->pushObjectRef(texView);
 	m_microCmdb->pushObjectRef(buff);
+}
+
+void CommandBufferImpl::rebindDynamicState()
+{
+	m_viewportDirty = true;
+	m_lastViewport = {};
+	m_scissorDirty = true;
+	m_lastScissor = {};
+
+	// Rebind the stencil compare mask
+	if(m_stencilCompareMasks[0] == m_stencilCompareMasks[1])
+	{
+		ANKI_CMD(vkCmdSetStencilCompareMask(
+					 m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[0]),
+			ANY_OTHER_COMMAND);
+	}
+	else
+	{
+		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilCompareMasks[0]),
+			ANY_OTHER_COMMAND);
+		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilCompareMasks[1]),
+			ANY_OTHER_COMMAND);
+	}
+
+	// Rebind the stencil write mask
+	if(m_stencilWriteMasks[0] == m_stencilWriteMasks[1])
+	{
+		ANKI_CMD(vkCmdSetStencilWriteMask(
+					 m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[0]),
+			ANY_OTHER_COMMAND);
+	}
+	else
+	{
+		ANKI_CMD(
+			vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilWriteMasks[0]), ANY_OTHER_COMMAND);
+		ANKI_CMD(
+			vkCmdSetStencilWriteMask(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilWriteMasks[1]), ANY_OTHER_COMMAND);
+	}
+
+	// Rebind the stencil reference
+	if(m_stencilReferenceMasks[0] == m_stencilReferenceMasks[1])
+	{
+		ANKI_CMD(vkCmdSetStencilReference(
+					 m_handle, VK_STENCIL_FACE_FRONT_BIT | VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[0]),
+			ANY_OTHER_COMMAND);
+	}
+	else
+	{
+		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_FRONT_BIT, m_stencilReferenceMasks[0]),
+			ANY_OTHER_COMMAND);
+		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[1]),
+			ANY_OTHER_COMMAND);
+	}
 }
 
 } // end namespace anki

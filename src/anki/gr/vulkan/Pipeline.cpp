@@ -31,9 +31,9 @@ Bool PipelineStateTracker::updateHashes()
 	Bool stateDirty = false;
 
 	// Prog
-	if(m_dirty.m_prog)
+	if(!!(m_dirty.m_other & DirtyBit::PROG))
 	{
-		m_dirty.m_prog = false;
+		m_dirty.m_other &= ~DirtyBit::PROG;
 		stateDirty = true;
 		m_hashes.m_prog = m_state.m_prog->getUuid();
 	}
@@ -76,33 +76,33 @@ Bool PipelineStateTracker::updateHashes()
 	}
 
 	// IA
-	if(m_dirty.m_ia)
+	if(!!(m_dirty.m_other & DirtyBit::IA))
 	{
-		m_dirty.m_ia = false;
+		m_dirty.m_other &= ~DirtyBit::IA;
 		m_hashes.m_ia = computeHash(&m_state.m_inputAssembler, sizeof(m_state.m_inputAssembler));
 		stateDirty = true;
 	}
 
 	// Rasterizer
-	if(m_dirty.m_raster)
+	if(!!(m_dirty.m_other & DirtyBit::RASTER))
 	{
-		m_dirty.m_raster = false;
+		m_dirty.m_other &= ~DirtyBit::RASTER;
 		stateDirty = true;
 		m_hashes.m_raster = computeHash(&m_state.m_rasterizer, sizeof(m_state.m_rasterizer));
 	}
 
 	// Depth
-	if(m_fbDepth && m_dirty.m_depth)
+	if(m_fbDepth && !!(m_dirty.m_other & DirtyBit::DEPTH))
 	{
-		m_dirty.m_depth = false;
+		m_dirty.m_other &= ~DirtyBit::DEPTH;
 		stateDirty = true;
 		m_hashes.m_depth = computeHash(&m_state.m_depth, sizeof(m_state.m_depth));
 	}
 
 	// Stencil
-	if(m_fbStencil && m_dirty.m_stencil)
+	if(m_fbStencil && !!(m_dirty.m_other & DirtyBit::STENCIL))
 	{
-		m_dirty.m_stencil = false;
+		m_dirty.m_other &= ~DirtyBit::STENCIL;
 		stateDirty = true;
 		m_hashes.m_stencil = computeHash(&m_state.m_stencil, sizeof(m_state.m_stencil));
 	}
@@ -113,9 +113,9 @@ Bool PipelineStateTracker::updateHashes()
 		ANKI_ASSERT(m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask
 					&& "Shader and fb should have same attachment mask");
 
-		if(m_dirty.m_color)
+		if(!!(m_dirty.m_other & DirtyBit::COLOR))
 		{
-			m_dirty.m_color = false;
+			m_dirty.m_other &= ~DirtyBit::COLOR;
 			m_hashes.m_color = m_state.m_color.m_alphaToCoverageEnabled ? 1 : 2;
 			stateDirty = true;
 		}

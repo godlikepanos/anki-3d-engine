@@ -215,7 +215,7 @@ public:
 		if(m_state.m_inputAssembler.m_primitiveRestartEnabled != enable)
 		{
 			m_state.m_inputAssembler.m_primitiveRestartEnabled = enable;
-			m_dirty.m_ia = true;
+			m_dirty.m_other |= DirtyBit::IA;
 		}
 	}
 
@@ -224,7 +224,7 @@ public:
 		if(m_state.m_rasterizer.m_fillMode != mode)
 		{
 			m_state.m_rasterizer.m_fillMode = mode;
-			m_dirty.m_raster = true;
+			m_dirty.m_other |= DirtyBit::RASTER;
 		}
 	}
 
@@ -233,7 +233,7 @@ public:
 		if(m_state.m_rasterizer.m_cullMode != mode)
 		{
 			m_state.m_rasterizer.m_cullMode = mode;
-			m_dirty.m_raster = true;
+			m_dirty.m_other |= DirtyBit::RASTER;
 		}
 	}
 
@@ -244,7 +244,7 @@ public:
 		{
 			m_state.m_rasterizer.m_depthBiasConstantFactor = factor;
 			m_state.m_rasterizer.m_depthBiasSlopeFactor = units;
-			m_dirty.m_raster = true;
+			m_dirty.m_other |= DirtyBit::RASTER;
 		}
 	}
 
@@ -261,7 +261,7 @@ public:
 			m_state.m_stencil.m_face[0].m_stencilFailOperation = stencilFail;
 			m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation = stencilPassDepthFail;
 			m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation = stencilPassDepthPass;
-			m_dirty.m_stencil = true;
+			m_dirty.m_other |= DirtyBit::STENCIL;
 		}
 
 		if(!!(face & FaceSelectionBit::BACK)
@@ -272,7 +272,7 @@ public:
 			m_state.m_stencil.m_face[1].m_stencilFailOperation = stencilFail;
 			m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation = stencilPassDepthFail;
 			m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation = stencilPassDepthPass;
-			m_dirty.m_stencil = true;
+			m_dirty.m_other |= DirtyBit::STENCIL;
 		}
 	}
 
@@ -281,13 +281,13 @@ public:
 		if(!!(face & FaceSelectionBit::FRONT) && m_state.m_stencil.m_face[0].m_compareFunction != comp)
 		{
 			m_state.m_stencil.m_face[0].m_compareFunction = comp;
-			m_dirty.m_stencil = true;
+			m_dirty.m_other |= DirtyBit::STENCIL;
 		}
 
 		if(!!(face & FaceSelectionBit::BACK) && m_state.m_stencil.m_face[1].m_compareFunction != comp)
 		{
 			m_state.m_stencil.m_face[1].m_compareFunction = comp;
-			m_dirty.m_stencil = true;
+			m_dirty.m_other |= DirtyBit::STENCIL;
 		}
 	}
 
@@ -296,7 +296,7 @@ public:
 		if(m_state.m_depth.m_depthWriteEnabled != enable)
 		{
 			m_state.m_depth.m_depthWriteEnabled = enable;
-			m_dirty.m_depth = true;
+			m_dirty.m_other |= DirtyBit::DEPTH;
 		}
 	}
 
@@ -305,7 +305,7 @@ public:
 		if(m_state.m_depth.m_depthCompareFunction != op)
 		{
 			m_state.m_depth.m_depthCompareFunction = op;
-			m_dirty.m_depth = true;
+			m_dirty.m_other |= DirtyBit::DEPTH;
 		}
 	}
 
@@ -314,7 +314,7 @@ public:
 		if(m_state.m_color.m_alphaToCoverageEnabled != enable)
 		{
 			m_state.m_color.m_alphaToCoverageEnabled = enable;
-			m_dirty.m_color = true;
+			m_dirty.m_other |= DirtyBit::COLOR;
 		}
 	}
 
@@ -360,7 +360,7 @@ public:
 			m_shaderColorAttachmentWritemask = impl.getReflectionInfo().m_colorAttachmentWritemask;
 			m_shaderAttributeMask = impl.getReflectionInfo().m_attributeMask;
 			m_state.m_prog = prog;
-			m_dirty.m_prog = true;
+			m_dirty.m_other |= DirtyBit::PROG;
 		}
 	}
 
@@ -389,7 +389,7 @@ public:
 		if(m_state.m_inputAssembler.m_topology != topology)
 		{
 			m_state.m_inputAssembler.m_topology = topology;
-			m_dirty.m_ia = true;
+			m_dirty.m_other |= DirtyBit::IA;
 		}
 	}
 
@@ -451,18 +451,28 @@ private:
 		}
 	} m_hashes;
 
+	enum class DirtyBit : U8
+	{
+		PROG = 1 << 0,
+		IA = 1 << 1,
+		RASTER = 1 << 2,
+		STENCIL = 1 << 3,
+		DEPTH = 1 << 4,
+		COLOR = 1 << 5,
+
+		NONE = 0,
+		ALL = PROG | IA | RASTER | STENCIL | DEPTH | COLOR
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DirtyBit, friend)
+
 	class DirtyBits
 	{
 	public:
-		Bool8 m_prog = true;
+		DirtyBit m_other = DirtyBit::ALL;
+
 		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attribs = {true};
 		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_vertBindings = {true};
 
-		Bool8 m_ia = true;
-		Bool8 m_raster = true;
-		Bool8 m_stencil = true;
-		Bool8 m_depth = true;
-		Bool8 m_color = true;
 		BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colAttachments = {true};
 	} m_dirty;
 
