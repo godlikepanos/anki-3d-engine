@@ -22,16 +22,17 @@ public:
 	U32 m_depth = 1; //< Relevant only for 3D textures.
 	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
 
+	Format m_format = Format::NONE;
+
 	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
 	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< Its initial usage.
 	TextureType m_type = TextureType::_2D;
 
 	U8 m_mipmapCount = 1;
 
-	PixelFormat m_format;
 	U8 m_samples = 1;
 
-	U8 _m_padding = 0;
+	U8 _m_padding[3] = {0, 0, 0};
 
 	TextureInitInfo() = default;
 
@@ -46,8 +47,9 @@ public:
 		const U8* const last = reinterpret_cast<const U8* const>(&m_samples) + sizeof(m_samples);
 		const U size = last - first;
 		ANKI_ASSERT(size
-					== sizeof(U32) * 4 + sizeof(TextureUsageBit) * 2 + sizeof(TextureType) + sizeof(U8)
-						   + sizeof(PixelFormat) + sizeof(U8));
+					== sizeof(m_width) + sizeof(m_height) + sizeof(m_depth) + sizeof(m_layerCount) + sizeof(m_format)
+						   + sizeof(m_usage) + sizeof(m_initialUsage) + sizeof(m_type) + sizeof(m_mipmapCount)
+						   + sizeof(m_samples));
 		return anki::computeHash(first, size);
 	}
 
@@ -62,6 +64,7 @@ public:
 		} \
 	} while(0)
 
+		ANKI_CHECK_VAL_VALIDITY(m_format != Format::NONE);
 		ANKI_CHECK_VAL_VALIDITY(m_usage != TextureUsageBit::NONE);
 		ANKI_CHECK_VAL_VALIDITY(m_mipmapCount > 0);
 		ANKI_CHECK_VAL_VALIDITY(m_width > 0);
@@ -144,15 +147,14 @@ public:
 		return m_usage;
 	}
 
-	const PixelFormat& getPixelFormat() const
+	Format getFormat() const
 	{
-		ANKI_ASSERT(m_format.isValid());
+		ANKI_ASSERT(m_format != Format::NONE);
 		return m_format;
 	}
 
 	DepthStencilAspectBit getDepthStencilAspect() const
 	{
-		ANKI_ASSERT(m_format.isValid());
 		return m_aspect;
 	}
 
@@ -251,7 +253,7 @@ protected:
 	U32 m_mipCount = 0;
 	TextureType m_texType = TextureType::COUNT;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
-	PixelFormat m_format;
+	Format m_format = Format::NONE;
 	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE;
 
 	/// Construct.

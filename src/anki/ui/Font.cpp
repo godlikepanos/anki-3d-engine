@@ -80,7 +80,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	TextureInitInfo texInit("Font");
 	texInit.m_width = width;
 	texInit.m_height = height;
-	texInit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	texInit.m_format = Format::R8G8B8A8_UNORM;
 	texInit.m_usage =
 		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::GENERATE_MIPMAPS;
 	texInit.m_mipmapCount = 4;

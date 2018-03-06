@@ -275,7 +275,7 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 		{
 			const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
-			if(attrib.m_format.m_components != ComponentFormat::NONE)
+			if(attrib.m_format != Format::NONE)
 			{
 				cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
 			}
@@ -413,7 +413,7 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		self.m_dbgProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
 		cmdb->bindShaderProgram(variant->getProgram());
 
-		cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
+		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
 		cmdb->bindVertexBuffer(0, vertToken.m_buffer, vertToken.m_offset, sizeof(Vec3));
 		cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
 

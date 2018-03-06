@@ -682,11 +682,11 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 	{
 		if(!is3D)
 		{
-			ANKI_ASSERT(range == computeSurfaceSize(width, height, tex.getPixelFormat()));
+			ANKI_ASSERT(range == computeSurfaceSize(width, height, tex.getFormat()));
 		}
 		else
 		{
-			ANKI_ASSERT(range == computeVolumeSize(width, height, depth, tex.getPixelFormat()));
+			ANKI_ASSERT(range == computeVolumeSize(width, height, depth, tex.getFormat()));
 		}
 
 		// Copy
@@ -711,10 +711,8 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 	else if(!!(tex.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
 	{
 		// Create a new shadow buffer
-		const PtrSize shadowSize =
-			(is3D) ? computeVolumeSize(
-						 width, height, depth, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
-				   : computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
+		const PtrSize shadowSize = (is3D) ? computeVolumeSize(width, height, depth, Format::R8G8B8A8_UNORM)
+										  : computeSurfaceSize(width, height, Format::R8G8B8A8_UNORM);
 		BufferPtr shadow = getManager().newBuffer(
 			BufferInitInfo(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE, "Workaround"));
 		const VkBuffer shadowHandle = static_cast<const BufferImpl&>(*shadow).getHandle();

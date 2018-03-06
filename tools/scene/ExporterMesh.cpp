@@ -343,11 +343,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 	}
 
 	// Write vertices
-	aiMatrix3x3 normalMat;
-	if(transform)
-	{
-		normalMat = aiMatrix3x3(*transform);
-	}
+	aiMatrix3x3 normalMat(*transform);
 
 	for(unsigned i = 0; i < mesh.mNumVertices; i++)
 	{

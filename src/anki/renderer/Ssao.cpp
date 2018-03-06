@@ -14,8 +14,6 @@
 namespace anki
 {
 
-const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
-
 Ssao::~Ssao()
 {
 }

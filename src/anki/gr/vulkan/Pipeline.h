@@ -40,7 +40,7 @@ class PPVertexAttributeBinding : public NonCopyable
 {
 public:
 	PtrSize m_offset = 0;
-	PixelFormat m_format;
+	Format m_format = Format::NONE;
 	U8 m_binding = 0;
 
 	Bool operator==(const PPVertexAttributeBinding& b) const
@@ -194,7 +194,7 @@ public:
 		m_set.m_vertBindings.set(binding);
 	}
 
-	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
+	void setVertexAttribute(U32 location, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
 	{
 		PPVertexAttributeBinding b;
 		b.m_binding = buffBinding;

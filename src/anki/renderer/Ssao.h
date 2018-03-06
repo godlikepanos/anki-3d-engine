@@ -19,7 +19,7 @@ namespace anki
 class Ssao : public RendererObject
 {
 anki_internal:
-	static const PixelFormat RT_PIXEL_FORMAT;
+	static const Format RT_PIXEL_FORMAT = Format::R8_UNORM;
 
 	Ssao(Renderer* r)
 		: RendererObject(r)

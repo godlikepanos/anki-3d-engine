@@ -91,7 +91,7 @@ public:
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
+	void setVertexAttribute(U32 location, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
 	{
 		commandCommon();
 		m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset);

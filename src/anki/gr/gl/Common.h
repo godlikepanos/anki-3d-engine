@@ -73,7 +73,7 @@ inline GLenum convertFaceMode(FaceSelectionBit in)
 
 void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, GLenum& minFilter, GLenum& magFilter);
 
-void convertVertexFormat(const PixelFormat& fmt, U& compCount, GLenum& type, Bool& normalized);
+void convertVertexFormat(Format fmt, U& compCount, GLenum& type, Bool& normalized);
 
 inline GLenum convertIndexType(IndexType ak)
 {
@@ -178,7 +178,7 @@ inline GLenum convertPrimitiveTopology(PrimitiveTopology ak)
 	return out;
 }
 
-void convertTextureInformation(const PixelFormat& pf,
+void convertTextureInformation(Format pf,
 	Bool8& compressed,
 	GLenum& format,
 	GLenum& internalFormat,

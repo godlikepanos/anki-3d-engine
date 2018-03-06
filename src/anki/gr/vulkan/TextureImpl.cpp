@@ -127,7 +127,7 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 
 	if(!!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
 	{
-		if(componentFormatIsDepthStencil(init.m_format.m_components))
+		if(formatIsDepthStencil(init.m_format))
 		{
 			flags |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		}
@@ -191,28 +191,30 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	while(!(supported = imageSupported(init)))
 	{
 		// Try to find a fallback
-		if(init.m_format.m_components == ComponentFormat::R8G8B8)
+		if(init.m_format >= Format::R8G8B8_UNORM && init.m_format <= Format::R8G8B8_SRGB)
 		{
 			ANKI_ASSERT(!(init.m_usage & TextureUsageBit::IMAGE_ALL) && "Can't do that ATM");
-			init.m_format.m_components = ComponentFormat::R8G8B8A8;
+			const U idx = U(init.m_format) - U(Format::R8G8B8_UNORM);
+			init.m_format = Format(U(Format::R8G8B8A8_UNORM) + idx);
+			ANKI_ASSERT(init.m_format >= Format::R8G8B8A8_UNORM && init.m_format <= Format::R8G8B8A8_SRGB);
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
 			m_workarounds = TextureImplWorkaround::R8G8B8_TO_R8G8B8A8;
 		}
-		else if(init.m_format.m_components == ComponentFormat::S8)
+		else if(init.m_format == Format::S8_UINT)
 		{
 			ANKI_ASSERT(
 				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ANY)) && "Can't do that ATM");
-			init.m_format = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
+			init.m_format = Format::D24_UNORM_S8_UINT;
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
 			m_workarounds = TextureImplWorkaround::S8_TO_D24S8;
 		}
-		else if(init.m_format.m_components == ComponentFormat::D24S8)
+		else if(init.m_format == Format::D24_UNORM_S8_UINT)
 		{
 			ANKI_ASSERT(
 				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ANY)) && "Can't do that ATM");
-			init.m_format = PixelFormat(ComponentFormat::D32S8, TransformFormat::UNORM);
+			init.m_format = Format::D32_SFLOAT_S8_UINT;
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
 			m_workarounds = TextureImplWorkaround::D24S8_TO_D32S8;
@@ -225,7 +227,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 
 	if(!supported)
 	{
-		ANKI_VK_LOGE("Unsupported texture format: %u %u", U(init.m_format.m_components), U(init.m_format.m_transform));
+		ANKI_VK_LOGE("Unsupported texture format: %u", U(init.m_format));
 		return Error::FUNCTION_FAILED;
 	}
 

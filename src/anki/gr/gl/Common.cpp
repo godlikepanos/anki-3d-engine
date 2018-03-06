@@ -126,71 +126,62 @@ void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, GLenum
 	}
 }
 
-void convertVertexFormat(const PixelFormat& fmt, U& compCount, GLenum& type, Bool& normalized)
+void convertVertexFormat(Format fmt, U& compCount, GLenum& type, Bool& normalized)
 {
-	if(fmt == PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT))
+	switch(fmt)
 	{
+	case Format::R32_SFLOAT:
 		compCount = 1;
 		type = GL_FLOAT;
 		normalized = false;
-	}
-	else if(fmt == PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT))
-	{
+		break;
+	case Format::R32G32_SFLOAT:
 		compCount = 2;
 		type = GL_FLOAT;
 		normalized = false;
-	}
-	else if(fmt == PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT))
-	{
+		break;
+	case Format::R32G32B32_SFLOAT:
 		compCount = 3;
 		type = GL_FLOAT;
 		normalized = false;
-	}
-	else if(fmt == PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT))
-	{
+		break;
+	case Format::R32G32B32A32_SFLOAT:
 		compCount = 4;
 		type = GL_FLOAT;
 		normalized = false;
-	}
-	else if(fmt == PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT))
-	{
+		break;
+	case Format::R16G16_SFLOAT:
 		compCount = 2;
 		type = GL_HALF_FLOAT;
 		normalized = false;
-	}
-	else if(fmt == PixelFormat(ComponentFormat::R16G16, TransformFormat::UNORM))
-	{
+		break;
+	case Format::R16G16_UNORM:
 		compCount = 2;
 		type = GL_UNSIGNED_SHORT;
 		normalized = true;
-	}
-	else if(fmt == PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM))
-	{
+		break;
+	case Format::A2B10G10R10_SNORM_PACK32:
 		compCount = 4;
 		type = GL_INT_2_10_10_10_REV;
 		normalized = true;
-	}
-	else if(fmt == PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
-	{
+		break;
+	case Format::R8G8B8A8_UNORM:
 		compCount = 4;
 		type = GL_UNSIGNED_BYTE;
 		normalized = true;
-	}
-	else if(fmt == PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM))
-	{
+		break;
+	case Format::R8G8B8_UNORM:
 		compCount = 3;
 		type = GL_UNSIGNED_BYTE;
 		normalized = true;
-	}
-	else if(fmt == PixelFormat(ComponentFormat::R16G16B16A16, TransformFormat::UINT))
-	{
+		break;
+	case Format::R16G16B16A16_UINT:
 		compCount = 4;
 		type = GL_UNSIGNED_SHORT;
 		normalized = false;
-	}
-	else
-	{
-		ANKI_ASSERT(0 && "TODO");
+		break;
+	default:
+		ANKI_ASSERT(!"TODO");
 	}
 }
 
@@ -265,303 +256,189 @@ GLenum convertBlendFactor(BlendFactor in)
 	return out;
 }
 
-void convertTextureInformation(const PixelFormat& pf,
-	Bool8& compressed,
-	GLenum& format,
-	GLenum& internalFormat,
-	GLenum& type,
-	DepthStencilAspectBit& dsAspect)
+void convertTextureInformation(
+	Format pf, Bool8& compressed, GLenum& format, GLenum& internalFormat, GLenum& type, DepthStencilAspectBit& dsAspect)
 {
-	compressed =
-		pf.m_components >= ComponentFormat::FIRST_COMPRESSED && pf.m_components <= ComponentFormat::LAST_COMPRESSED;
+	compressed = formatIsCompressed(pf);
+	dsAspect = computeFormatAspect(pf);
+	format = GL_NONE;
+	internalFormat = GL_NONE;
+	type = GL_NONE;
 
-	switch(pf.m_components)
+	switch(pf)
 	{
-#if ANKI_GL == ANKI_GL_DESKTOP
-	case ComponentFormat::R8G8B8_BC1:
+	case Format::BC1_RGB_UNORM_BLOCK:
 		format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
 		break;
-	case ComponentFormat::R8G8B8A8_BC3:
+	case Format::BC3_UNORM_BLOCK:
 		format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
 		break;
-	case ComponentFormat::R16G16B16_BC6:
+	case Format::BC6H_UFLOAT_BLOCK:
 		format = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
 		internalFormat = format;
 		type = GL_FLOAT;
 		break;
-#else
-	case ComponentFormat::R8G8B8_ETC2:
-		format = GL_COMPRESSED_RGB8_ETC2;
-		internalFormat = format;
-		type = GL_UNSIGNED_BYTE;
-		break;
-	case ComponentFormat::R8G8B8A8_ETC2:
-		format = GL_COMPRESSED_RGBA8_ETC2_EAC;
-		internalFormat = format;
-		type = GL_UNSIGNED_BYTE;
-		break;
-#endif
-	case ComponentFormat::R8:
+	case Format::R8_UNORM:
 		format = GL_RED;
-
-		if(pf.m_transform == TransformFormat::UNORM)
-		{
-			internalFormat = GL_R8;
-			type = GL_UNSIGNED_BYTE;
-		}
-		else
-		{
-			ANKI_ASSERT(pf.m_transform == TransformFormat::SNORM);
-			internalFormat = GL_R8_SNORM;
-			type = GL_BYTE;
-		}
+		internalFormat = GL_R8;
+		type = GL_UNSIGNED_BYTE;
 		break;
-	case ComponentFormat::R8G8:
+	case Format::R8_SNORM:
+		format = GL_RED;
+		internalFormat = GL_R8_SNORM;
+		type = GL_BYTE;
+		break;
+	case Format::R8G8_UNORM:
 		format = GL_RG;
-
-		if(pf.m_transform == TransformFormat::UNORM)
-		{
-			internalFormat = GL_RG8;
-			type = GL_UNSIGNED_BYTE;
-		}
-		else
-		{
-			ANKI_ASSERT(pf.m_transform == TransformFormat::SNORM);
-			internalFormat = GL_RG8_SNORM;
-			type = GL_BYTE;
-		}
+		internalFormat = GL_RG8;
+		type = GL_UNSIGNED_BYTE;
 		break;
-	case ComponentFormat::R8G8B8:
+	case Format::R8G8_SNORM:
+		format = GL_RG;
+		internalFormat = GL_RG8_SNORM;
+		type = GL_BYTE;
+		break;
+	case Format::R8G8B8_UNORM:
 		format = GL_RGB;
-
-		if(pf.m_transform == TransformFormat::UNORM)
-		{
-			internalFormat = GL_RGB8;
-			type = GL_UNSIGNED_BYTE;
-		}
-		else if(pf.m_transform == TransformFormat::SNORM)
-		{
-			internalFormat = GL_RGB8_SNORM;
-			type = GL_BYTE;
-		}
-		else if(pf.m_transform == TransformFormat::UINT)
-		{
-			internalFormat = GL_RGB8UI;
-			type = GL_UNSIGNED_BYTE;
-			format = GL_RGB_INTEGER;
-		}
-		else if(pf.m_transform == TransformFormat::SINT)
-		{
-			internalFormat = GL_RGB8I;
-			type = GL_BYTE;
-			format = GL_RGB_INTEGER;
-		}
-		else
-		{
-			ANKI_ASSERT(!"TODO");
-		}
+		internalFormat = GL_RGB8;
+		type = GL_UNSIGNED_BYTE;
 		break;
-	case ComponentFormat::R8G8B8A8:
+	case Format::R8G8B8_SNORM:
+		format = GL_RGB;
+		internalFormat = GL_RGB8_SNORM;
+		type = GL_BYTE;
+		break;
+	case Format::R8G8B8_UINT:
+		format = GL_RGB;
+		internalFormat = GL_RGB8UI;
+		type = GL_RGB_INTEGER;
+		break;
+	case Format::R8G8B8_SINT:
+		format = GL_RGB;
+		internalFormat = GL_RGB8I;
+		type = GL_RGB_INTEGER;
+		break;
+	case Format::R8G8B8A8_UNORM:
 		format = GL_RGBA;
-
-		if(pf.m_transform == TransformFormat::UNORM)
-		{
-			internalFormat = GL_RGBA8;
-			type = GL_UNSIGNED_BYTE;
-		}
-		else
-		{
-			ANKI_ASSERT(pf.m_transform == TransformFormat::SNORM);
-			internalFormat = GL_RGBA8_SNORM;
-			type = GL_BYTE;
-		}
+		internalFormat = GL_RGBA8;
+		type = GL_UNSIGNED_BYTE;
 		break;
-	case ComponentFormat::R16:
-		if(pf.m_transform == TransformFormat::FLOAT)
-		{
-			format = GL_R;
-			internalFormat = GL_R16F;
-			type = GL_FLOAT;
-		}
-		else if(pf.m_transform == TransformFormat::UINT)
-		{
-			format = GL_R;
-			internalFormat = GL_R16UI;
-			type = GL_UNSIGNED_SHORT;
-		}
-		else if(pf.m_transform == TransformFormat::UNORM)
-		{
-			format = GL_R;
-			internalFormat = GL_R16;
-			type = GL_UNSIGNED_SHORT;
-		}
-		else
-		{
-			ANKI_ASSERT(!"TODO");
-		}
+	case Format::R8G8B8A8_SNORM:
+		format = GL_RGBA;
+		internalFormat = GL_RGBA8_SNORM;
+		type = GL_BYTE;
 		break;
-	case ComponentFormat::R16G16B16:
-		if(pf.m_transform == TransformFormat::FLOAT)
-		{
-			format = GL_RGB;
-			internalFormat = GL_RGB16F;
-			type = GL_FLOAT;
-		}
-		else if(pf.m_transform == TransformFormat::UINT)
-		{
-			format = GL_RGB_INTEGER;
-			internalFormat = GL_RGB16UI;
-			type = GL_UNSIGNED_INT;
-		}
-		else
-		{
-			ANKI_ASSERT(0 && "TODO");
-		}
+	case Format::R16_SFLOAT:
+		format = GL_R;
+		internalFormat = GL_R16F;
+		type = GL_FLOAT;
 		break;
-	case ComponentFormat::R16G16B16A16:
-		if(pf.m_transform == TransformFormat::FLOAT)
-		{
-			format = GL_RGBA;
-			internalFormat = GL_RGBA16F;
-			type = GL_FLOAT;
-		}
-		else if(pf.m_transform == TransformFormat::UINT)
-		{
-			format = GL_RGBA;
-			internalFormat = GL_RGBA16UI;
-			type = GL_UNSIGNED_SHORT;
-		}
-		else
-		{
-			ANKI_ASSERT(!"TODO");
-		}
+	case Format::R16_UINT:
+		format = GL_R;
+		internalFormat = GL_R16UI;
+		type = GL_UNSIGNED_SHORT;
 		break;
-	case ComponentFormat::R32:
-		if(pf.m_transform == TransformFormat::FLOAT)
-		{
-			format = GL_R;
-			internalFormat = GL_R32F;
-			type = GL_FLOAT;
-		}
-		else if(pf.m_transform == TransformFormat::UINT)
-		{
-			format = GL_RG_INTEGER;
-			internalFormat = GL_R32UI;
-			type = GL_UNSIGNED_INT;
-		}
-		else
-		{
-			ANKI_ASSERT(0 && "TODO");
-		}
+	case Format::R16_UNORM:
+		format = GL_R;
+		internalFormat = GL_R16;
+		type = GL_UNSIGNED_SHORT;
 		break;
-	case ComponentFormat::R32G32:
-		if(pf.m_transform == TransformFormat::FLOAT)
-		{
-			format = GL_RG;
-			internalFormat = GL_RG32F;
-			type = GL_FLOAT;
-		}
-		else if(pf.m_transform == TransformFormat::UINT)
-		{
-			format = GL_RG_INTEGER;
-			internalFormat = GL_RG32UI;
-			type = GL_UNSIGNED_INT;
-		}
-		else
-		{
-			ANKI_ASSERT(0 && "TODO");
-		}
+	case Format::R16G16B16_SFLOAT:
+		format = GL_RGB;
+		internalFormat = GL_RGB16F;
+		type = GL_FLOAT;
 		break;
-	case ComponentFormat::R32G32B32:
-		if(pf.m_transform == TransformFormat::FLOAT)
-		{
-			format = GL_RGB;
-			internalFormat = GL_RGB32F;
-			type = GL_FLOAT;
-		}
-		else if(pf.m_transform == TransformFormat::UINT)
-		{
-			format = GL_RGB_INTEGER;
-			internalFormat = GL_RGB32UI;
-			type = GL_UNSIGNED_INT;
-		}
-		else
-		{
-			ANKI_ASSERT(!"TODO");
-		}
+	case Format::R16G16B16_UINT:
+		format = GL_RGB_INTEGER;
+		internalFormat = GL_RGB16UI;
+		type = GL_UNSIGNED_INT;
 		break;
-	case ComponentFormat::R32G32B32A32:
-		if(pf.m_transform == TransformFormat::FLOAT)
-		{
-			format = GL_RGBA;
-			internalFormat = GL_RGBA32F;
-			type = GL_FLOAT;
-		}
-		else if(pf.m_transform == TransformFormat::UINT)
-		{
-			format = GL_RGBA_INTEGER;
-			internalFormat = GL_RGBA32UI;
-			type = GL_UNSIGNED_INT;
-		}
-		else
-		{
-			ANKI_ASSERT(!"TODO");
-		}
+	case Format::R16G16B16A16_SFLOAT:
+		format = GL_RGBA;
+		internalFormat = GL_RGBA16F;
+		type = GL_FLOAT;
 		break;
-	case ComponentFormat::R11G11B10:
-		if(pf.m_transform == TransformFormat::FLOAT)
-		{
-			format = GL_RGB;
-			internalFormat = GL_R11F_G11F_B10F;
-			type = GL_FLOAT;
-		}
-		else
-		{
-			ANKI_ASSERT(0 && "TODO");
-		}
+	case Format::R16G16B16A16_UINT:
+		format = GL_RGBA;
+		internalFormat = GL_RGBA16UI;
+		type = GL_UNSIGNED_SHORT;
 		break;
-	case ComponentFormat::R10G10B10A2:
-		if(pf.m_transform == TransformFormat::UNORM)
-		{
-			format = GL_RGBA;
-			internalFormat = GL_RGB10_A2;
-			type = GL_UNSIGNED_INT;
-		}
-		else
-		{
-			ANKI_ASSERT(0 && "TODO");
-		}
+	case Format::R32_SFLOAT:
+		format = GL_R;
+		internalFormat = GL_R32F;
+		type = GL_FLOAT;
 		break;
-	case ComponentFormat::D24S8:
+	case Format::R32_UINT:
+		format = GL_RG_INTEGER;
+		internalFormat = GL_R32UI;
+		type = GL_UNSIGNED_INT;
+		break;
+	case Format::R32G32_SFLOAT:
+		format = GL_RG;
+		internalFormat = GL_RG32F;
+		type = GL_FLOAT;
+		break;
+	case Format::R32G32_UINT:
+		format = GL_RG_INTEGER;
+		internalFormat = GL_RG32UI;
+		type = GL_UNSIGNED_INT;
+		break;
+	case Format::R32G32B32_SFLOAT:
+		format = GL_RGB;
+		internalFormat = GL_RGB32F;
+		type = GL_FLOAT;
+		break;
+	case Format::R32G32B32_UINT:
+		format = GL_RGB_INTEGER;
+		internalFormat = GL_RGB32UI;
+		type = GL_UNSIGNED_INT;
+		break;
+	case Format::R32G32B32A32_SFLOAT:
+		format = GL_RGBA;
+		internalFormat = GL_RGBA32F;
+		type = GL_FLOAT;
+		break;
+	case Format::R32G32B32A32_UINT:
+		format = GL_RGBA_INTEGER;
+		internalFormat = GL_RGBA32UI;
+		type = GL_UNSIGNED_INT;
+		break;
+	case Format::B10G11R11_UFLOAT_PACK32:
+		format = GL_RGB;
+		internalFormat = GL_R11F_G11F_B10F;
+		type = GL_FLOAT;
+		break;
+	case Format::A2B10G10R10_UNORM_PACK32:
+		format = GL_RGBA;
+		internalFormat = GL_RGB10_A2;
+		type = GL_UNSIGNED_INT;
+		break;
+	case Format::D24_UNORM_S8_UINT:
 		format = GL_DEPTH_STENCIL;
 		internalFormat = GL_DEPTH24_STENCIL8;
 		type = GL_UNSIGNED_INT;
-		dsAspect = DepthStencilAspectBit::DEPTH_STENCIL;
 		break;
-	case ComponentFormat::D16:
+	case Format::D16_UNORM_S8_UINT:
 		format = GL_DEPTH_COMPONENT;
 		internalFormat = GL_DEPTH_COMPONENT16;
 		type = GL_UNSIGNED_SHORT;
-		dsAspect = DepthStencilAspectBit::DEPTH;
 		break;
-	case ComponentFormat::D32:
+	case Format::D32_SFLOAT:
 		format = GL_DEPTH_COMPONENT;
 		internalFormat = GL_DEPTH_COMPONENT32;
 		type = GL_UNSIGNED_INT;
-		dsAspect = DepthStencilAspectBit::DEPTH;
 		break;
-	case ComponentFormat::S8:
+	case Format::S8_UINT:
 		format = GL_STENCIL_INDEX;
 		internalFormat = GL_STENCIL_INDEX8;
 		type = GL_BYTE;
-		dsAspect = DepthStencilAspectBit::STENCIL;
 		break;
 	default:
-		ANKI_ASSERT(0);
+		ANKI_ASSERT(!"TODO");
 	}
 }
 

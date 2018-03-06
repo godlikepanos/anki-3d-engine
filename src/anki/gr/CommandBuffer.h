@@ -153,7 +153,7 @@ public:
 		U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate = VertexStepRate::VERTEX);
 
 	/// Setup a vertex attribute.
-	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset);
+	void setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset);
 
 	/// Bind index buffer.
 	void bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type);
@@ -259,7 +259,7 @@ public:
 	void bindImage(U32 set, U32 binding, TextureViewPtr img);
 
 	/// Bind texture buffer.
-	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, PixelFormat fmt);
+	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt);
 
 	/// Bind a program.
 	void bindShaderProgram(ShaderProgramPtr prog);

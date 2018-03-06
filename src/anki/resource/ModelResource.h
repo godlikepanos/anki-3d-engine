@@ -45,7 +45,7 @@ class VertexAttributeInfo
 {
 public:
 	U32 m_bufferBinding;
-	PixelFormat m_format;
+	Format m_format;
 	PtrSize m_relativeOffset;
 
 	Bool operator==(const VertexAttributeInfo& b) const

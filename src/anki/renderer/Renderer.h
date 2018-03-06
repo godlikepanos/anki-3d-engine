@@ -254,11 +254,11 @@ anki_internal:
 
 	/// Create the init info for a 2D texture that will be used as a render target.
 	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(
-		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name = {});
+		U32 w, U32 h, Format format, TextureUsageBit usage, CString name = {});
 
 	/// Create the init info for a 2D texture that will be used as a render target.
 	ANKI_USE_RESULT RenderTargetDescription create2DRenderTargetDescription(
-		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name = {});
+		U32 w, U32 h, Format format, TextureUsageBit usage, CString name = {});
 
 	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(
 		const TextureInitInfo& inf, const ClearValue& clearVal = ClearValue());

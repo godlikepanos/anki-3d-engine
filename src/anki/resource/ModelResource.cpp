@@ -54,12 +54,12 @@ void ModelPatch::getRenderingDataSub(
 		U relativeOffset = 0;
 
 		attribs[0].m_bufferBinding = 0;
-		attribs[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+		attribs[0].m_format = Format::R32G32B32_SFLOAT;
 		attribs[0].m_relativeOffset = relativeOffset;
 		relativeOffset += sizeof(Vec3);
 
 		attribs[1].m_bufferBinding = 0;
-		attribs[1].m_format = PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
+		attribs[1].m_format = Format::R16G16_SFLOAT;
 		attribs[1].m_relativeOffset = relativeOffset;
 		relativeOffset += sizeof(U16) * 2;
 
@@ -68,12 +68,12 @@ void ModelPatch::getRenderingDataSub(
 		if(key.m_pass == Pass::GB_FS)
 		{
 			attribs[2].m_bufferBinding = 0;
-			attribs[2].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+			attribs[2].m_format = Format::A2B10G10R10_SNORM_PACK32;
 			attribs[2].m_relativeOffset = relativeOffset;
 			relativeOffset += sizeof(U32);
 
 			attribs[3].m_bufferBinding = 0;
-			attribs[3].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+			attribs[3].m_format = Format::A2B10G10R10_SNORM_PACK32;
 			attribs[3].m_relativeOffset = relativeOffset;
 			relativeOffset += sizeof(U32);
 
@@ -87,12 +87,12 @@ void ModelPatch::getRenderingDataSub(
 		if(mesh.hasBoneWeights())
 		{
 			attribs[4].m_bufferBinding = 0;
-			attribs[4].m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+			attribs[4].m_format = Format::R8G8B8A8_UNORM;
 			attribs[4].m_relativeOffset = relativeOffset;
 			relativeOffset += sizeof(U8) * 4;
 
 			attribs[5].m_bufferBinding = 0;
-			attribs[5].m_format = PixelFormat(ComponentFormat::R16G16B16A16, TransformFormat::UINT);
+			attribs[5].m_format = Format::R16G16B16A16_UINT;
 			attribs[5].m_relativeOffset = relativeOffset;
 			relativeOffset += sizeof(U16) * 4;
 

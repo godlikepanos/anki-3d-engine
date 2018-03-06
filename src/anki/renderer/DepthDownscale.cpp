@@ -29,7 +29,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 
 	m_hizRtDescr = m_r->create2DRenderTargetDescription(width,
 		height,
-		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
+		Format::R32_SFLOAT,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::SAMPLED_COMPUTE,
 		"HiZ");

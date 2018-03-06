@@ -112,22 +112,20 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// Internal format
-	init.m_format.m_transform = TransformFormat::UNORM;
-
 	if(loader.getColorFormat() == ImageLoader::ColorFormat::RGB8)
 	{
 		switch(loader.getCompression())
 		{
 		case ImageLoader::DataCompression::RAW:
-			init.m_format.m_components = ComponentFormat::R8G8B8;
+			init.m_format = Format::R8G8B8_UNORM;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case ImageLoader::DataCompression::S3TC:
-			init.m_format.m_components = ComponentFormat::R8G8B8_BC1;
+			init.m_format = Format::BC1_RGB_UNORM_BLOCK;
 			break;
 #else
 		case ImageLoader::DataCompression::ETC:
-			init.m_format.m_components = ComponentFormat::R8G8B8_ETC2;
+			ANKI_ASSERT(!"TODO");
 			break;
 #endif
 		default:
@@ -139,15 +137,15 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 		switch(loader.getCompression())
 		{
 		case ImageLoader::DataCompression::RAW:
-			init.m_format.m_components = ComponentFormat::R8G8B8A8;
+			init.m_format = Format::R8G8B8A8_UNORM;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case ImageLoader::DataCompression::S3TC:
-			init.m_format.m_components = ComponentFormat::R8G8B8A8_BC3;
+			init.m_format = Format::BC3_UNORM_BLOCK;
 			break;
 #else
 		case ImageLoader::DataCompression::ETC:
-			init.m_format.m_components = ComponentFormat::R8G8B8A8_ETC2;
+			ANKI_ASSERT(!"TODO");
 			break;
 #endif
 		default:
@@ -255,7 +253,7 @@ Error TextureResource::load(LoadingContext& ctx)
 				allocationSize = computeVolumeSize(ctx.m_tex->getWidth() >> mip,
 					ctx.m_tex->getHeight() >> mip,
 					ctx.m_tex->getDepth() >> mip,
-					ctx.m_tex->getPixelFormat());
+					ctx.m_tex->getFormat());
 			}
 			else
 			{
@@ -264,7 +262,7 @@ Error TextureResource::load(LoadingContext& ctx)
 				surfOrVolData = &surf.m_data[0];
 
 				allocationSize = computeSurfaceSize(
-					ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip, ctx.m_tex->getPixelFormat());
+					ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip, ctx.m_tex->getFormat());
 			}
 
 			ANKI_ASSERT(allocationSize >= surfOrVolSize);

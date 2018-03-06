@@ -295,10 +295,9 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 		cmdb->bindShaderProgram(prog);
 
 		// Vertex attribs
-		cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
-		cmdb->setVertexAttribute(1, 0, PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT), sizeof(Vec3));
-		cmdb->setVertexAttribute(
-			2, 0, PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT), sizeof(Vec3) + sizeof(F32));
+		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+		cmdb->setVertexAttribute(1, 0, Format::R32_SFLOAT, sizeof(Vec3));
+		cmdb->setVertexAttribute(2, 0, Format::R32_SFLOAT, sizeof(Vec3) + sizeof(F32));
 
 		// Vertex buff
 		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);

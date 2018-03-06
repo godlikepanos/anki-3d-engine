@@ -90,7 +90,7 @@ void CommandBuffer::bindVertexBuffer(
 	}
 }
 
-void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
+void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset)
 {
 	class Cmd final : public GlCommand
 	{
@@ -762,8 +762,7 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 	}
 }
 
-void CommandBuffer::bindTextureBuffer(
-	U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, PixelFormat fmt)
+void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt)
 {
 	class Cmd final : public GlCommand
 	{

@@ -95,7 +95,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 		TextureInitInfo texinit;
 		texinit.m_width = texinit.m_height = 4;
 		texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
-		texinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+		texinit.m_format = Format::R8G8B8A8_UNORM;
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		TexturePtr tex = getGrManager().newTexture(texinit);
 
@@ -321,8 +321,7 @@ Vec3 Renderer::unproject(
 	return out.xyz();
 }
 
-TextureInitInfo Renderer::create2DRenderTargetInitInfo(
-	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name)
+TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
 {
 	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	TextureInitInfo init(name);
@@ -341,7 +340,7 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 }
 
 RenderTargetDescription Renderer::create2DRenderTargetDescription(
-	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, CString name)
+	U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
 {
 	RenderTargetDescription init(name);
 
@@ -388,15 +387,15 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
 				TextureUsageBit dsUsage = TextureUsageBit::NONE;
 
-				if(componentFormatIsDepthStencil(inf.m_format.m_components))
+				if(formatIsDepthStencil(inf.m_format))
 				{
 					DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE;
-					if(componentFormatIsDepth(inf.m_format.m_components))
+					if(formatIsDepth(inf.m_format))
 					{
 						aspect |= DepthStencilAspectBit::DEPTH;
 					}
 
-					if(componentFormatIsStencil(inf.m_format.m_components))
+					if(formatIsStencil(inf.m_format))
 					{
 						aspect |= DepthStencilAspectBit::STENCIL;
 					}

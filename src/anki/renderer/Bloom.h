@@ -15,8 +15,6 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-const PixelFormat BLOOM_RT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-
 /// Bloom passes.
 class Bloom : public RendererObject
 {
@@ -45,6 +43,8 @@ anki_internal:
 	}
 
 private:
+	static const Format RT_PIXEL_FORMAT = Format::R8G8B8_UNORM;
+
 	class
 	{
 	public:

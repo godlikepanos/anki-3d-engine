@@ -32,11 +32,7 @@ public:
 		m_faceCount =
 			(tex->getTextureType() == TextureType::CUBE_ARRAY || tex->getTextureType() == TextureType::CUBE) ? 6 : 1;
 
-		const PixelFormat fmt = tex->getPixelFormat();
-		m_depthStencilAspect =
-			(componentFormatIsDepth(fmt.m_components)) ? DepthStencilAspectBit::DEPTH : DepthStencilAspectBit::NONE;
-		m_depthStencilAspect |=
-			(componentFormatIsStencil(fmt.m_components)) ? DepthStencilAspectBit::STENCIL : DepthStencilAspectBit::NONE;
+		m_depthStencilAspect = computeFormatAspect(tex->getFormat());
 	}
 
 	TextureViewInitInfo(CString name = {})

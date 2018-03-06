@@ -22,7 +22,7 @@ public:
 	Error loadColorGradingTexture(CString filename);
 
 anki_internal:
-	static const PixelFormat RT_PIXEL_FORMAT;
+	static const Format RT_PIXEL_FORMAT = Format::R8G8B8_UNORM;
 
 	FinalComposite(Renderer* r);
 	~FinalComposite();

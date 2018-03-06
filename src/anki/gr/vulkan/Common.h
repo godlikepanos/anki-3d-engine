@@ -84,18 +84,23 @@ const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descr
 ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);
 
 /// Convert format.
-ANKI_USE_RESULT VkFormat convertFormat(PixelFormat ak);
+ANKI_USE_RESULT inline VkFormat convertFormat(const Format ak)
+{
+	ANKI_ASSERT(ak != Format::NONE);
+	const VkFormat out = static_cast<VkFormat>(ak);
+	return out;
+}
 
 /// Get format aspect mask.
-ANKI_USE_RESULT inline DepthStencilAspectBit getImageAspectFromFormat(const PixelFormat& ak)
+ANKI_USE_RESULT inline DepthStencilAspectBit getImageAspectFromFormat(const Format ak)
 {
 	DepthStencilAspectBit out = DepthStencilAspectBit::NONE;
-	if(componentFormatIsStencil(ak.m_components))
+	if(formatIsStencil(ak))
 	{
 		out = DepthStencilAspectBit::STENCIL;
 	}
 
-	if(componentFormatIsDepth(ak.m_components))
+	if(formatIsDepth(ak))
 	{
 		out |= DepthStencilAspectBit::DEPTH;
 	}
@@ -159,7 +164,7 @@ ANKI_USE_RESULT VkImageType convertTextureType(TextureType ak);
 
 ANKI_USE_RESULT VkImageViewType convertTextureViewType(TextureType ak);
 
-ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(TextureUsageBit ak, const PixelFormat& format);
+ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format format);
 
 ANKI_USE_RESULT VkStencilOp convertStencilOp(StencilOperation ak);
 

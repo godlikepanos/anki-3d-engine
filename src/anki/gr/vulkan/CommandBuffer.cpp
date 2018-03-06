@@ -50,7 +50,7 @@ void CommandBuffer::bindVertexBuffer(
 	self.bindVertexBuffer(binding, buff, offset, stride, stepRate);
 }
 
-void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
+void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setVertexAttribute(location, buffBinding, fmt, relativeOffset);
@@ -193,8 +193,7 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 	self.bindImage(set, binding, img);
 }
 
-void CommandBuffer::bindTextureBuffer(
-	U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, PixelFormat fmt)
+void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt)
 {
 	ANKI_ASSERT(!"TODO");
 }

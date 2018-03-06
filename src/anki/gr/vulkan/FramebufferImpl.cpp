@@ -173,7 +173,7 @@ void FramebufferImpl::setupAttachmentDescriptor(
 	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc, VkImageLayout layout) const
 {
 	desc = {};
-	desc.format = convertFormat(static_cast<const TextureViewImpl&>(*att.m_textureView).m_tex->getPixelFormat());
+	desc.format = convertFormat(static_cast<const TextureViewImpl&>(*att.m_textureView).m_tex->getFormat());
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);

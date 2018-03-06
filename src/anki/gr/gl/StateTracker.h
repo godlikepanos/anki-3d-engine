@@ -44,13 +44,13 @@ public:
 	{
 	public:
 		U32 m_buffBinding = MAX_U32;
-		PixelFormat m_fmt;
+		Format m_fmt = Format::NONE;
 		PtrSize m_relativeOffset = MAX_PTR_SIZE;
 	};
 
 	Array<VertexAttribute, MAX_VERTEX_ATTRIBUTES> m_attribs;
 
-	Bool setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
+	Bool setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset)
 	{
 		VertexAttribute& attrib = m_attribs[location];
 		if(attrib.m_buffBinding != buffBinding || attrib.m_fmt != fmt || attrib.m_relativeOffset != relativeOffset)

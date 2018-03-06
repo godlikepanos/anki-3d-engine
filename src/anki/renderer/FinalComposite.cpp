@@ -21,8 +21,6 @@
 namespace anki
 {
 
-const PixelFormat FinalComposite::RT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-
 FinalComposite::FinalComposite(Renderer* r)
 	: RendererObject(r)
 {

@@ -59,8 +59,8 @@ void DebugDrawer::prepareFrame(CommandBufferPtr& jobs)
 	m_clientVerts = WeakArray<Vertex>(static_cast<Vertex*>(mapped), MAX_VERTS_PER_FRAME);
 
 	m_cmdb->bindVertexBuffer(0, m_vertBuff[frame], 0, 2 * sizeof(Vec4));
-	m_cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT), 0);
-	m_cmdb->setVertexAttribute(1, 0, PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT), sizeof(Vec4));
+	m_cmdb->setVertexAttribute(0, 0, Format::R32G32B32A32_SFLOAT, 0);
+	m_cmdb->setVertexAttribute(1, 0, Format::R32G32B32A32_SFLOAT, sizeof(Vec4));
 
 	m_cmdb->bindShaderProgram(m_grProg);
 
