@@ -24,6 +24,13 @@ http://www.anki3d.org/LICENSE
 			</inputs>
 
 			<source><![CDATA[
+// if VARIANT==0 then the checkerboard pattern is (render on 'v'):
+// -----
+// |v| |
+// | |v|
+// -----
+
+
 #include "shaders/Functions.glsl"
 #include "shaders/Pack.glsl"
 #include "shaders/Clusterer.glsl"
@@ -48,6 +55,9 @@ layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_hizRt;
 layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_lightBufferRt;
 
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_reflAndIndirect;
+
+// Temp buffer to hold the indirect color
+shared vec3 g_pixels[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 
 #define u_normalMat mat3(u_viewMat)
 
@@ -301,14 +311,40 @@ void main()
 
 		outColor += finalRefl;
 	}
-	
-	// Done!
-	imageStore(out_reflAndIndirect, ivec2(realInvocationId), vec4(outColor, 0.0));
 
-	// Store the same color in the next pixel as well
-	bool xIsOdd = (realInvocationId.x & 1u) == 0u;
-	realInvocationId.x = (xIsOdd) ? (realInvocationId.x + 1u) : (realInvocationId.x - 1u);
+	// Store the color for the resolve
+	g_pixels[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = outColor;
+
+	// Wait for all the threads to store their stuff
+	memoryBarrierShared();
+	barrier();
+
+	// Compute the missing pixel by resolving the right or left neighbour
+	uvec2 readPixel, storePixel;
+	readPixel.y = gl_LocalInvocationID.y;
+	storePixel.y = realInvocationId.y;
+
+#if VARIANT == 0
+	bool pickRight = (realInvocationId.y & 1u) == 1u;
+#else
+	bool pickRight = (realInvocationId.y & 1u) == 0u;
+#endif
+	if(pickRight)
+	{
+		readPixel.x = min(gl_LocalInvocationID.x + 1u, WORKGROUP_SIZE.x - 1u);
+		storePixel.x = realInvocationId.x + 1u;
+	}
+	else
+	{		
+		readPixel.x = (gl_LocalInvocationID.x > 0u) ? gl_LocalInvocationID.x - 1u : 0u;
+		storePixel.x = realInvocationId.x - 1u;
+	}
+
+	vec3 missingColor = (outColor + g_pixels[readPixel.y][readPixel.x]) * 0.5; // average
+
+	// Store both the pixels
 	imageStore(out_reflAndIndirect, ivec2(realInvocationId), vec4(outColor, 0.0));
+	imageStore(out_reflAndIndirect, ivec2(storePixel), vec4(missingColor, 0.0));
 }
 			]]></source>
 		</shader>
