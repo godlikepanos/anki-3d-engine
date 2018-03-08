@@ -15,6 +15,70 @@ namespace anki
 /// @addtogroup resource
 /// @{
 
+/// Information to decode mesh binary files.
+class MeshBinaryFile
+{
+public:
+	static constexpr const char* MAGIC = "ANKIMES4";
+
+	enum class VertexAttrubuteType : U32
+	{
+		POSITION,
+		NORMAL,
+		TANGENT,
+		COLOR,
+		UV,
+		UV2,
+		BONE_WEIGHTS,
+		BONE_INDICES,
+
+		COUNT
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttrubuteType, friend)
+
+	enum class Flag : U32
+	{
+		NONE = 0,
+		QUAD = 1 << 0,
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
+
+	struct VertexBuffer
+	{
+		U32 m_vertexStride;
+	};
+
+	struct VertexAttribute
+	{
+		U32 m_bufferBinding;
+		Format m_format;
+		U32 m_relativeOffset;
+		F32 m_scale;
+	};
+
+	struct SubMesh
+	{
+		U32 m_firstIndex;
+		U32 m_indexCount;
+	};
+
+	struct Header
+	{
+		char m_magic[8]; ///< Magic word.
+		Flag m_flags;
+
+		Array<VertexBuffer, U32(VertexAttrubuteType::COUNT)> m_vertexBuffers;
+
+		Array<VertexAttribute, U32(VertexAttrubuteType::COUNT)> m_vertexAttributes;
+
+		Format m_indicesFormat; ///< Can be R32_UI or R16_UI.
+
+		U32 m_totalIndexCount;
+		U32 m_totalVertexCount;
+		U32 m_subMeshCount;
+	};
+};
+
 /// Mesh data. This class loads the mesh file and the Mesh class loads it to the CPU.
 class MeshLoader
 {

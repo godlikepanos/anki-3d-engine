@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "Exporter.h"
+#include "../../src/anki/resource/MeshLoader.h"
 #include <cmath>
 
 enum class ComponentFormat : uint32_t
