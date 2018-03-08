@@ -57,7 +57,7 @@ layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_lightBufferRt;
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_reflAndIndirect;
 
 // Temp buffer to hold the indirect color
-shared vec3 g_pixels[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
+shared vec3 s_pixels[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 
 #define u_normalMat mat3(u_viewMat)
 
@@ -220,24 +220,22 @@ vec3 computeSpecIndirectFactor(vec3 worldPos, vec3 normal, float roughness, vec3
 
 void main()
 {
-	uvec2 realInvocationId = gl_GlobalInvocationID.xy;
-	realInvocationId.x *= 2u;
+	// Compute a global invocation ID that takes the checkerboard pattern into account
+	ivec2 fixedInvocationId = ivec2(gl_GlobalInvocationID.xy);
+	fixedInvocationId.x *= 2;
 #if VARIANT == 0
-	if((realInvocationId.y & 1u) == 0u)
+	fixedInvocationId.x += ((fixedInvocationId.y + 1) & 1);
 #else
-	if((realInvocationId.y & 1u) == 1u)
+	fixedInvocationId.x += ((fixedInvocationId.y + 0) & 1);
 #endif
-	{
-		realInvocationId.x += 1u;
-	}
 
-	if(realInvocationId.x >= FB_SIZE.x || realInvocationId.y >= FB_SIZE.y)
+	if(fixedInvocationId.x >= int(FB_SIZE.x) || fixedInvocationId.y >= int(FB_SIZE.y))
 	{
 		// Skip threads outside the writable image
 		return;
 	}
 
-	vec2 uv = (vec2(realInvocationId) + 0.5) / vec2(FB_SIZE);
+	vec2 uv = (vec2(fixedInvocationId) + 0.5) / vec2(FB_SIZE);
 	vec2 ndc = UV_TO_NDC(uv);
 
 	// Read gbuffer
@@ -313,38 +311,34 @@ void main()
 	}
 
 	// Store the color for the resolve
-	g_pixels[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = outColor;
+	s_pixels[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = outColor;
 
 	// Wait for all the threads to store their stuff
 	memoryBarrierShared();
 	barrier();
 
-	// Compute the missing pixel by resolving the right or left neighbour
-	uvec2 readPixel, storePixel;
-	readPixel.y = gl_LocalInvocationID.y;
-	storePixel.y = realInvocationId.y;
+	// Compute the missing pixel by resolving with the right or left neighbour
+	ivec2 readPixel, storePixel;
+	readPixel.y = int(gl_LocalInvocationID.y);
+	storePixel.y = fixedInvocationId.y;
 
 #if VARIANT == 0
-	bool pickRight = (realInvocationId.y & 1u) == 1u;
+	bool pickRightNeighbour = (fixedInvocationId.y & 1) == 1;
 #else
-	bool pickRight = (realInvocationId.y & 1u) == 0u;
+	bool pickRightNeighbour = (fixedInvocationId.y & 1) == 0;
 #endif
-	if(pickRight)
-	{
-		readPixel.x = min(gl_LocalInvocationID.x + 1u, WORKGROUP_SIZE.x - 1u);
-		storePixel.x = realInvocationId.x + 1u;
-	}
-	else
-	{		
-		readPixel.x = (gl_LocalInvocationID.x > 0u) ? gl_LocalInvocationID.x - 1u : 0u;
-		storePixel.x = realInvocationId.x - 1u;
-	}
+	int xOffset = (pickRightNeighbour) ? 1 : -1;
+	
+	readPixel.x = int(gl_LocalInvocationID.x) + xOffset;
+	readPixel.x = clamp(readPixel.x, 0, int(WORKGROUP_SIZE.x - 1));
 
-	vec3 missingColor = (outColor + g_pixels[readPixel.y][readPixel.x]) * 0.5; // average
+	storePixel.x = fixedInvocationId.x + xOffset;
+
+	vec3 missingColor = (outColor + s_pixels[readPixel.y][readPixel.x]) * 0.5; // average
 
 	// Store both the pixels
-	imageStore(out_reflAndIndirect, ivec2(realInvocationId), vec4(outColor, 0.0));
-	imageStore(out_reflAndIndirect, ivec2(storePixel), vec4(missingColor, 0.0));
+	imageStore(out_reflAndIndirect, fixedInvocationId, vec4(outColor, 0.0));
+	imageStore(out_reflAndIndirect, storePixel, vec4(missingColor, 0.0));
 }
 			]]></source>
 		</shader>

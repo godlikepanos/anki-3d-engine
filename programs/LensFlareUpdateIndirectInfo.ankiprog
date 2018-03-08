@@ -38,14 +38,14 @@ layout(ANKI_SS_BINDING(0, 1), std430) writeonly buffer ss1_
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthMap;
 
-shared uint g_maxDepth;
+shared uint s_maxDepth;
 
 void main()
 {
-	// Init the g_maxDepth
+	// Init the s_maxDepth
 	if(gl_LocalInvocationIndex == 0)
 	{
-		g_maxDepth = 0;
+		s_maxDepth = 0;
 	}
 	memoryBarrierShared();
 	barrier();
@@ -63,7 +63,7 @@ void main()
 
 	// Sample and store depth
 	float refDepth = textureLod(u_depthMap, uv, 0.0).r;
-	atomicMax(g_maxDepth, uint(refDepth * float(MAX_U32)));
+	atomicMax(s_maxDepth, uint(refDepth * float(MAX_U32)));
 
 	// Sync
 	memoryBarrierShared();
@@ -71,7 +71,7 @@ void main()
 
 	if(gl_LocalInvocationIndex == 0)
 	{
-		float refDepth = float(g_maxDepth) / float(MAX_U32);
+		float refDepth = float(s_maxDepth) / float(MAX_U32);
 		u_indirectInfo[flareIdx].count = (depth > refDepth) ? 0u : 4u;
 
 		u_indirectInfo[flareIdx].instanceCount = 1u;

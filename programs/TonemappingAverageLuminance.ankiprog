@@ -31,7 +31,7 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
 #define TONEMAPPING_RESOURCE_AS_BUFFER 1
 #include "shaders/TonemappingResources.glsl"
 
-shared float g_avgLum[WORKGROUP_SIZE];
+shared float s_avgLum[WORKGROUP_SIZE];
 
 void main()
 {
@@ -54,7 +54,7 @@ void main()
 		}
 	}
 
-	g_avgLum[gl_LocalInvocationIndex] = avgLum;
+	s_avgLum[gl_LocalInvocationIndex] = avgLum;
 
 	memoryBarrierShared();
 	barrier();
@@ -64,7 +64,7 @@ void main()
 	{
 		if(gl_LocalInvocationIndex < s)
 		{
-			g_avgLum[gl_LocalInvocationIndex] += g_avgLum[gl_LocalInvocationIndex + s];
+			s_avgLum[gl_LocalInvocationIndex] += s_avgLum[gl_LocalInvocationIndex + s];
 		}
 
 		memoryBarrierShared();
@@ -75,9 +75,9 @@ void main()
 	if(gl_LocalInvocationIndex == 0)
 	{
 #if LOG_AVG
-		float crntLum = exp(g_avgLum[0] / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y));
+		float crntLum = exp(s_avgLum[0] / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y));
 #else
-		float crntLum = g_avgLum[0] / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y);
+		float crntLum = s_avgLum[0] / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y);
 #endif
 
 #if 1
