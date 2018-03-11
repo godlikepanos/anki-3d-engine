@@ -40,6 +40,7 @@ public:
 
 Error ReflectionProxyNode::init(const CString& proxyMesh)
 {
+#if 0
 	// Move component first
 	newComponent<MoveComponent>(this);
 
@@ -50,13 +51,13 @@ Error ReflectionProxyNode::init(const CString& proxyMesh)
 	MeshLoader loader(&getResourceManager());
 	ANKI_CHECK(loader.load(proxyMesh));
 
-	if((loader.getHeader().m_flags & MeshLoader::Flag::QUADS) == MeshLoader::Flag::NONE)
+	if(!(loader.getHeader().m_flags & MeshBinaryFile::Flag::QUAD))
 	{
 		ANKI_SCENE_LOGE("Expecting quad mesh");
 		return Error::USER_DATA;
 	}
 
-	const U indexCount = loader.getHeader().m_totalIndicesCount;
+	const U indexCount = loader.getHeader().m_totalIndexCount;
 	const U quadCount = indexCount / 4;
 	m_quadsLSpace.create(getSceneAllocator(), quadCount);
 
@@ -91,6 +92,7 @@ Error ReflectionProxyNode::init(const CString& proxyMesh)
 	m_boxWSpace = m_boxLSpace;
 
 	newComponent<SpatialComponent>(this, &m_boxWSpace);
+#endif
 
 	return Error::NONE;
 }

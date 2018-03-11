@@ -17,9 +17,6 @@ MeshLoader::MeshLoader(ResourceManager* manager)
 
 MeshLoader::~MeshLoader()
 {
-	// WARNING: Watch the order of deallocation. Reverse of the deallocation to have successful cleanups
-	m_verts.destroy(m_alloc);
-	m_indices.destroy(m_alloc);
 	m_subMeshes.destroy(m_alloc);
 }
 
@@ -28,220 +25,213 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	auto& alloc = m_alloc;
 
 	// Load header
-	ResourceFilePtr file;
-	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
-	ANKI_CHECK(file->read(&m_header, sizeof(m_header)));
+	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, m_file));
+	ANKI_CHECK(m_file->read(&m_header, sizeof(m_header)));
+	ANKI_CHECK(checkHeader());
 
-	//
-	// Check header
-	//
-	if(memcmp(&m_header.m_magic[0], "ANKIMES3", 8) != 0)
+	// Read submesh info
+	{
+		m_subMeshes.create(alloc, m_header.m_subMeshCount);
+		ANKI_CHECK(m_file->read(&m_subMeshes[0], m_subMeshes.getSizeInBytes()));
+
+		// Checks
+		const U32 indicesPerFace = !!(m_header.m_flags & MeshBinaryFile::Flag::QUAD) ? 4 : 3;
+		U idxSum = 0;
+		for(U i = 0; i < m_subMeshes.getSize(); i++)
+		{
+			const MeshBinaryFile::SubMesh& sm = m_subMeshes[0];
+			if(sm.m_firstIndex != idxSum || (sm.m_indexCount % indicesPerFace) != 0)
+			{
+				ANKI_RESOURCE_LOGE("Incorrect sub mesh info");
+				return Error::USER_DATA;
+			}
+
+			idxSum += sm.m_indexCount;
+		}
+
+		if(idxSum != m_header.m_totalIndexCount)
+		{
+			ANKI_RESOURCE_LOGE("Incorrect sub mesh info");
+			return Error::USER_DATA;
+		}
+	}
+
+	// Read vert buffer info
+	{
+		U32 vertBufferMask = 0;
+		U32 vertBufferCount = 0;
+		for(const MeshBinaryFile::VertexAttribute& attrib : m_header.m_vertexAttributes)
+		{
+			if(attrib.m_format == Format::NONE)
+			{
+				continue;
+			}
+
+			vertBufferCount = max(attrib.m_bufferBinding + 1, vertBufferCount);
+			vertBufferMask |= 1 << attrib.m_bufferBinding;
+		}
+
+		if(U(__builtin_popcount(vertBufferMask)) != vertBufferCount)
+		{
+			ANKI_RESOURCE_LOGE("Problem in vertex buffers");
+			return Error::USER_DATA;
+		}
+
+		m_vertBufferCount = vertBufferCount;
+	}
+
+	// Count and check the file size
+	{
+		U32 totalSize = sizeof(m_header);
+
+		totalSize += sizeof(MeshBinaryFile::SubMesh) * m_header.m_subMeshCount;
+		totalSize += getIndexBufferSize();
+
+		for(U i = 0; i < m_vertBufferCount; ++i)
+		{
+			totalSize += m_header.m_vertexBuffers[i].m_vertexStride * m_header.m_totalVertexCount;
+		}
+
+		if(totalSize != m_file->getSize())
+		{
+			ANKI_RESOURCE_LOGE("Unexpected file size");
+			return Error::USER_DATA;
+		}
+	}
+
+	return Error::NONE;
+}
+
+Error MeshLoader::checkFormat(VertexAttributeLocation type, ConstWeakArray<Format> supportedFormats) const
+{
+	const MeshBinaryFile::VertexAttribute& attrib = m_header.m_vertexAttributes[type];
+
+	// Check format
+	Bool found = false;
+	for(Format fmt : supportedFormats)
+	{
+		if(fmt == attrib.m_format)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if(!found)
+	{
+		ANKI_RESOURCE_LOGE(
+			"Vertex attribute %u has unsupported format %u", U(type), U(m_header.m_vertexAttributes[type].m_format));
+		return Error::USER_DATA;
+	}
+
+	// Scale should be 1.0 for now
+	if(attrib.m_scale != 0.0)
+	{
+		ANKI_RESOURCE_LOGE("Vertex attribute %u should have 1.0 scale", U(type));
+		return Error::USER_DATA;
+	}
+
+	return Error::NONE;
+}
+
+Error MeshLoader::checkHeader() const
+{
+	const MeshBinaryFile::Header& h = m_header;
+
+	// Header
+	if(memcmp(&h.m_magic[0], MeshBinaryFile::MAGIC, 8) != 0)
 	{
 		ANKI_RESOURCE_LOGE("Wrong magic word");
 		return Error::USER_DATA;
 	}
 
-	if(checkFormat(m_header.m_positionsFormat, "positions", true)
-		|| checkFormat(m_header.m_normalsFormat, "normals", true)
-		|| checkFormat(m_header.m_tangentsFormat, "tangents", true)
-		|| checkFormat(m_header.m_colorsFormat, "colors", false) || checkFormat(m_header.m_uvsFormat, "UVs", true)
-		|| checkFormat(m_header.m_boneWeightsFormat, "bone weights", false)
-		|| checkFormat(m_header.m_boneIndicesFormat, "bone ids", false)
-		|| checkFormat(m_header.m_indicesFormat, "indices format", true))
+	// Flags
+	if((h.m_flags & MeshBinaryFile::Flag::ALL) != MeshBinaryFile::Flag::ALL)
 	{
+		ANKI_RESOURCE_LOGE("Wrong header flags");
 		return Error::USER_DATA;
 	}
 
-	// Check positions
-	if(m_header.m_positionsFormat.m_components != ComponentFormat::R32G32B32
-		|| m_header.m_positionsFormat.m_transform != FormatTransform::FLOAT)
+	// Attributes
+	ANKI_CHECK(checkFormat(
+		VertexAttributeLocation::POSITION, Array<Format, 2>{{Format::R16G16B16_SFLOAT, Format::R32G32B32_SFLOAT}}));
+	ANKI_CHECK(checkFormat(VertexAttributeLocation::NORMAL, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}));
+	ANKI_CHECK(checkFormat(VertexAttributeLocation::TANGENT, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}));
+	ANKI_CHECK(
+		checkFormat(VertexAttributeLocation::UV, Array<Format, 2>{{Format::R16G16_UNORM, Format::R16G16_SFLOAT}}));
+	ANKI_CHECK(checkFormat(
+		VertexAttributeLocation::BONE_INDICES, Array<Format, 2>{{Format::NONE, Format::R16G16B16A16_UINT}}));
+	ANKI_CHECK(
+		checkFormat(VertexAttributeLocation::BONE_WEIGHTS, Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}));
+
+	// Indices format
+	if(h.m_indicesFormat != Format::R16_UINT || h.m_indicesFormat != Format::R32_UINT)
 	{
-		ANKI_RESOURCE_LOGE("Incorrect/unsupported positions format");
+		ANKI_RESOURCE_LOGE("Wrong format for indices");
 		return Error::USER_DATA;
 	}
 
-	// Check normals
-	if(m_header.m_normalsFormat.m_components != ComponentFormat::R10G10B10A2
-		|| m_header.m_normalsFormat.m_transform != FormatTransform::SNORM)
+	// m_totalIndexCount
+	const U indicesPerFace = !!(h.m_flags & MeshBinaryFile::Flag::QUAD) ? 4 : 3;
+	if(h.m_totalIndexCount == 0 || (h.m_totalIndexCount % indicesPerFace) != 0)
 	{
-		ANKI_RESOURCE_LOGE("Incorrect/unsupported normals format");
+		ANKI_RESOURCE_LOGE("Wrong index count");
 		return Error::USER_DATA;
 	}
 
-	// Check tangents
-	if(m_header.m_tangentsFormat.m_components != ComponentFormat::R10G10B10A2
-		|| m_header.m_tangentsFormat.m_transform != FormatTransform::SNORM)
+	// m_totalVertexCount
+	if(h.m_totalVertexCount == 0)
 	{
-		ANKI_RESOURCE_LOGE("Incorrect/unsupported tangents format");
+		ANKI_RESOURCE_LOGE("Wrong vertex count");
 		return Error::USER_DATA;
 	}
 
-	// Check colors
-	if(m_header.m_colorsFormat.m_components != ComponentFormat::NONE
-		|| m_header.m_colorsFormat.m_transform != FormatTransform::NONE)
+	// m_subMeshCount
+	if(h.m_subMeshCount == 0)
 	{
-		ANKI_RESOURCE_LOGE("Incorrect/unsupported color format");
+		ANKI_RESOURCE_LOGE("Wrong submesh count");
 		return Error::USER_DATA;
 	}
-
-	// Check UVs
-	if(m_header.m_uvsFormat.m_components != ComponentFormat::R16G16
-		|| m_header.m_uvsFormat.m_transform != FormatTransform::FLOAT)
-	{
-		ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-		return Error::USER_DATA;
-	}
-
-	Bool hasBoneInfo = false;
-	if(m_header.m_boneWeightsFormat.m_components != ComponentFormat::NONE)
-	{
-		// Has bone info
-
-		hasBoneInfo = true;
-
-		// Bone weights
-		if(m_header.m_boneWeightsFormat.m_components != ComponentFormat::R8G8B8A8
-			|| m_header.m_boneWeightsFormat.m_transform != FormatTransform::UNORM)
-		{
-			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-			return Error::USER_DATA;
-		}
-
-		// Bone indices
-		if(m_header.m_boneIndicesFormat.m_components != ComponentFormat::R16G16B16A16
-			|| m_header.m_boneIndicesFormat.m_transform != FormatTransform::UINT)
-		{
-			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-			return Error::USER_DATA;
-		}
-	}
-	else
-	{
-		// No bone info
-
-		// Bone weights
-		if(m_header.m_boneWeightsFormat.m_components != ComponentFormat::NONE
-			|| m_header.m_boneWeightsFormat.m_transform != FormatTransform::NONE)
-		{
-			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-			return Error::USER_DATA;
-		}
-
-		// Bone indices
-		if(m_header.m_boneIndicesFormat.m_components != ComponentFormat::NONE
-			|| m_header.m_boneIndicesFormat.m_transform != FormatTransform::NONE)
-		{
-			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-			return Error::USER_DATA;
-		}
-	}
-
-	// Check indices
-	U indicesPerFace = ((m_header.m_flags & Flag::QUADS) == Flag::QUADS) ? 4 : 3;
-	if(m_header.m_totalIndicesCount < indicesPerFace || (m_header.m_totalIndicesCount % indicesPerFace) != 0
-		|| m_header.m_totalIndicesCount > MAX_U16 || m_header.m_indicesFormat.m_components != ComponentFormat::R16
-		|| m_header.m_indicesFormat.m_transform != FormatTransform::UINT)
-	{
-		// Only 16bit indices are supported for now
-		ANKI_RESOURCE_LOGE("Incorrect/unsuported index info");
-		return Error::USER_DATA;
-	}
-
-	// Check other
-	if(m_header.m_totalVerticesCount == 0)
-	{
-		ANKI_RESOURCE_LOGE("Incorrect/unsuported vertex count");
-		return Error::USER_DATA;
-	}
-
-	if(m_header.m_uvsChannelCount != 1)
-	{
-		ANKI_RESOURCE_LOGE("Incorrect/unsuported UVs channel count");
-		return Error::USER_DATA;
-	}
-
-	if(m_header.m_subMeshCount == 0)
-	{
-		ANKI_RESOURCE_LOGE("Incorrect/unsuported submesh count");
-		return Error::USER_DATA;
-	}
-
-	//
-	// Read submesh info
-	//
-	m_subMeshes.create(alloc, m_header.m_subMeshCount);
-	ANKI_CHECK(file->read(&m_subMeshes[0], m_subMeshes.getSizeInBytes()));
-
-	// Checks
-	U idxSum = 0;
-	for(U i = 0; i < m_subMeshes.getSize(); i++)
-	{
-		const SubMesh& sm = m_subMeshes[0];
-		if(sm.m_firstIndex != idxSum || sm.m_indicesCount < 3)
-		{
-			ANKI_RESOURCE_LOGE("Incorrect sub mesh info");
-			return Error::USER_DATA;
-		}
-
-		idxSum += sm.m_indicesCount;
-	}
-
-	if(idxSum != m_header.m_totalIndicesCount)
-	{
-		ANKI_RESOURCE_LOGE("Incorrect sub mesh info");
-		return Error::USER_DATA;
-	}
-
-	//
-	// Read indices
-	//
-	m_indices.create(alloc, m_header.m_totalIndicesCount * sizeof(U16));
-	ANKI_CHECK(file->read(&m_indices[0], m_indices.getSizeInBytes()));
-
-	//
-	// Read vertices
-	//
-	m_vertSize = 3 * sizeof(F32) // pos
-				 + 1 * sizeof(U32) // norm
-				 + 1 * sizeof(U32) // tang
-				 + 2 * sizeof(U16) // uvs
-				 + ((hasBoneInfo) ? (4 * sizeof(U8) + 4 * sizeof(U16)) : 0);
-
-	m_verts.create(alloc, m_header.m_totalVerticesCount * m_vertSize);
-	ANKI_CHECK(file->read(&m_verts[0], m_verts.getSizeInBytes()));
 
 	return Error::NONE;
 }
 
-Error MeshLoader::checkFormat(const Format& fmt, const CString& attrib, Bool cannotBeEmpty)
+Error MeshLoader::storeIndexBuffer(void* ptr, PtrSize size)
 {
-	if(fmt.m_components >= ComponentFormat::COUNT)
+	ANKI_ASSERT(isLoaded());
+	ANKI_ASSERT(size == getIndexBufferSize());
+	ANKI_ASSERT(m_loadedChunk == 0);
+
+	if(ptr)
 	{
-		ANKI_RESOURCE_LOGE("Incorrect component format for %s", &attrib[0]);
-		return Error::USER_DATA;
+		ANKI_CHECK(m_file->read(ptr, size));
+	}
+	else
+	{
+		ANKI_CHECK(m_file->seek(size, ResourceFile::SeekOrigin::CURRENT));
 	}
 
-	if(fmt.m_transform >= FormatTransform::COUNT)
+	++m_loadedChunk;
+	return Error::NONE;
+}
+
+Error MeshLoader::storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size)
+{
+	ANKI_ASSERT(isLoaded());
+	ANKI_ASSERT(bufferIdx < m_vertBufferCount);
+	ANKI_ASSERT(size == m_header.m_vertexBuffers[bufferIdx].m_vertexStride * m_header.m_totalVertexCount);
+	ANKI_ASSERT(m_loadedChunk == bufferIdx + 1);
+
+	if(ptr)
 	{
-		ANKI_RESOURCE_LOGE("Incorrect format transform for %s", &attrib[0]);
-		return Error::USER_DATA;
+		ANKI_CHECK(m_file->read(ptr, size));
+	}
+	else
+	{
+		ANKI_CHECK(m_file->seek(size, ResourceFile::SeekOrigin::CURRENT));
 	}
 
-	if(cannotBeEmpty)
-	{
-		if(fmt.m_components == ComponentFormat::NONE)
-		{
-			ANKI_RESOURCE_LOGE("Format cannot be zero for %s", &attrib[0]);
-			return Error::USER_DATA;
-		}
-
-		if(fmt.m_transform == FormatTransform::NONE)
-		{
-			ANKI_RESOURCE_LOGE("Transform cannot be zero for %s", &attrib[0]);
-			return Error::USER_DATA;
-		}
-	}
-
+	++m_loadedChunk;
 	return Error::NONE;
 }
 

@@ -81,8 +81,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	MeshLoader& loader = ctx->m_loader;
 	ANKI_CHECK(loader.load(filename));
 
-	const MeshLoader::Header& header = loader.getHeader();
-	m_indicesCount = header.m_totalIndicesCount;
+	const MeshBinaryFile::Header& header = loader.getHeader();
+	m_indicesCount = header.m_totalIndexCount;
 
 	m_vertSize = loader.getVertexSize();
 

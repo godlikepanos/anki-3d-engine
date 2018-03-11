@@ -86,7 +86,7 @@ public:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config, const CString& cacheDir);
 
-	/// Search the path list to find the file. Then open the file for reading.
+	/// Search the path list to find the file. Then open the file for reading. It's thread-safe.
 	ANKI_USE_RESULT Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
 #if !ANKI_TESTS

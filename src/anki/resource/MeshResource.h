@@ -28,6 +28,59 @@ public:
 
 	~MeshResource();
 
+	/// Helper function for correct loading
+	Bool isCompatible(const MeshResource& other) const;
+
+	/// Load from a mesh file
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
+
+	const Obb& getBoundingShape() const
+	{
+		return m_obb;
+	}
+
+	/// Get submesh info.
+	void getSubMeshInfo(U subMeshId, U32& indexOffset, U32& indexCount, Obb* obb) const
+	{
+		const SubMesh& sm = m_subMeshes[subMeshId];
+		indexOffset = sm.m_indicesOffset;
+		indexCount = sm.m_indicesCount;
+		if(obb)
+		{
+			*obb = sm.m_obb;
+		}
+	}
+
+	/// If returns zero then the mesh is a single uniform mesh
+	U32 getSubMeshCount() const
+	{
+		return m_subMeshes.getSize();
+	}
+
+	void getIndexBufferInfo(BufferPtr& buff, U32& buffOffset, U32& indexCount, Format& indexFormat) const
+	{
+		buff = m_indexBuff;
+		buffOffset = 0;
+		indexCount = m_indexCount;
+		indexFormat = m_indexFormat;
+	}
+
+	U32 getVertexBufferCount() const
+	{
+		return m_vertBuffCount;
+	}
+
+	void getVertexBufferInfo(U32 buffIdx, BufferPtr& buff, U32& offset, U32& stride) const
+	{
+		buff = m_vertBuff;
+		// TODO
+	}
+
+	void getVerteAttributeInfo(VertexAttributeLocation attrib, U32& bufferIdx, Format& format, U32& relativeOffset)
+	{
+		// TODO
+	}
+
 	U32 getTextureChannelsCount() const
 	{
 		return m_texChannelsCount;
@@ -37,62 +90,6 @@ public:
 	{
 		return m_weights;
 	}
-
-	/// Used only to clone the VBO
-	U32 getVerticesCount() const
-	{
-		return m_vertsCount;
-	}
-
-	U32 getIndicesCount() const
-	{
-		return m_indicesCount;
-	}
-
-	const Obb& getBoundingShape() const
-	{
-		return m_obb;
-	}
-
-	/// Get indices count and offset of submesh
-	U32 getIndicesCountSub(U subMeshId, U32& offset) const
-	{
-		const SubMesh& sm = m_subMeshes[subMeshId];
-		offset = sm.m_indicesOffset;
-		return sm.m_indicesCount;
-	}
-
-	const Obb& getBoundingShapeSub(U subMeshId) const
-	{
-		return m_subMeshes[subMeshId].m_obb;
-	}
-
-	/// If returns zero then the mesh is a single uniform mesh
-	U32 getSubMeshesCount() const
-	{
-		return m_subMeshes.getSize();
-	}
-
-	BufferPtr getVertexBuffer() const
-	{
-		return m_vertBuff;
-	}
-
-	BufferPtr getIndexBuffer() const
-	{
-		return m_indicesBuff;
-	}
-
-	U32 getVertexSize() const
-	{
-		return m_vertSize;
-	}
-
-	/// Helper function for correct loading
-	Bool isCompatible(const MeshResource& other) const;
-
-	/// Load from a mesh file
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 protected:
 	class LoadTask;
@@ -105,17 +102,22 @@ protected:
 		U32 m_indicesOffset;
 		Obb m_obb;
 	};
-
 	DynamicArray<SubMesh> m_subMeshes;
-	U32 m_indicesCount;
-	U32 m_vertsCount;
-	U32 m_vertSize;
-	Obb m_obb;
-	U8 m_texChannelsCount;
-	Bool8 m_weights;
 
+	// Index stuff
+	U32 m_indexCount = 0;
+	BufferPtr m_indexBuff;
+	Format m_indexFormat = Format::NONE;
+
+	// Vertex stuff
+	U32 m_vertCount = 0;
 	BufferPtr m_vertBuff;
-	BufferPtr m_indicesBuff;
+	U8 m_vertBuffCount = 0;
+	U8 m_texChannelsCount = 0;
+
+	// Other
+	Obb m_obb;
+	Bool8 m_weights = false;
 
 	static ANKI_USE_RESULT Error load(LoadContext& ctx);
 };
