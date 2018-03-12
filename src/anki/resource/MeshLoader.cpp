@@ -46,6 +46,15 @@ Error MeshLoader::load(const ResourceFilename& filename)
 				return Error::USER_DATA;
 			}
 
+			for(U d = 0; d < 3; ++d)
+			{
+				if(sm.m_aabbMin[i] >= sm.m_aabbMax[i])
+				{
+					ANKI_RESOURCE_LOGE("Wrong bounding box");
+					return Error::USER_DATA;
+				}
+			}
+
 			idxSum += sm.m_indexCount;
 		}
 
@@ -77,7 +86,11 @@ Error MeshLoader::load(const ResourceFilename& filename)
 			return Error::USER_DATA;
 		}
 
-		m_vertBufferCount = vertBufferCount;
+		if(vertBufferCount != m_header.m_vertexBufferCount)
+		{
+			ANKI_RESOURCE_LOGE("Wrong vertex buffer count in the header");
+			return Error::USER_DATA;
+		}
 	}
 
 	// Count and check the file size
@@ -87,7 +100,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		totalSize += sizeof(MeshBinaryFile::SubMesh) * m_header.m_subMeshCount;
 		totalSize += getIndexBufferSize();
 
-		for(U i = 0; i < m_vertBufferCount; ++i)
+		for(U i = 0; i < header.m_vertexBufferCount; ++i)
 		{
 			totalSize += m_header.m_vertexBuffers[i].m_vertexStride * m_header.m_totalVertexCount;
 		}
@@ -193,6 +206,16 @@ Error MeshLoader::checkHeader() const
 		return Error::USER_DATA;
 	}
 
+	// AABB
+	for(U d = 0; d < 3; ++d)
+	{
+		if(h.m_aabbMin[i] >= h.m_aabbMax[i])
+		{
+			ANKI_RESOURCE_LOGE("Wrong bounding box");
+			return Error::USER_DATA;
+		}
+	}
+
 	return Error::NONE;
 }
 
@@ -218,7 +241,7 @@ Error MeshLoader::storeIndexBuffer(void* ptr, PtrSize size)
 Error MeshLoader::storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size)
 {
 	ANKI_ASSERT(isLoaded());
-	ANKI_ASSERT(bufferIdx < m_vertBufferCount);
+	ANKI_ASSERT(bufferIdx < m_header.m_vertexBufferCount);
 	ANKI_ASSERT(size == m_header.m_vertexBuffers[bufferIdx].m_vertexStride * m_header.m_totalVertexCount);
 	ANKI_ASSERT(m_loadedChunk == bufferIdx + 1);
 

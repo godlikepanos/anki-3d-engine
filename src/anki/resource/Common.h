@@ -49,7 +49,8 @@ enum class VertexAttributeLocation : U8
 	BONE_WEIGHTS,
 	BONE_INDICES,
 
-	COUNT
+	COUNT,
+	FIRST = POSITION,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeLocation, inline)
 /// @}

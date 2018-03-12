@@ -34,29 +34,30 @@ public:
 	/// Load from a mesh file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
+	/// Get the complete bounding box.
 	const Obb& getBoundingShape() const
 	{
 		return m_obb;
 	}
 
 	/// Get submesh info.
-	void getSubMeshInfo(U subMeshId, U32& indexOffset, U32& indexCount, Obb* obb) const
+	void getSubMeshInfo(U subMeshId, U32& firstIndex, U32& indexCount, Obb* obb) const
 	{
 		const SubMesh& sm = m_subMeshes[subMeshId];
-		indexOffset = sm.m_indicesOffset;
-		indexCount = sm.m_indicesCount;
+		firstIndex = sm.m_firstIndex;
+		indexCount = sm.m_indexCount;
 		if(obb)
 		{
 			*obb = sm.m_obb;
 		}
 	}
 
-	/// If returns zero then the mesh is a single uniform mesh
 	U32 getSubMeshCount() const
 	{
 		return m_subMeshes.getSize();
 	}
 
+	/// Get all info around vertex indices.
 	void getIndexBufferInfo(BufferPtr& buff, U32& buffOffset, U32& indexCount, Format& indexFormat) const
 	{
 		buff = m_indexBuff;
@@ -65,41 +66,59 @@ public:
 		indexFormat = m_indexFormat;
 	}
 
+	/// Get the number of logical vertex buffers.
 	U32 getVertexBufferCount() const
 	{
-		return m_vertBuffCount;
+		return m_vertBufferInfos.getSize();
 	}
 
-	void getVertexBufferInfo(U32 buffIdx, BufferPtr& buff, U32& offset, U32& stride) const
+	/// Get vertex buffer info.
+	void getVertexBufferInfo(const U32 buffIdx, BufferPtr& buff, U32& offset, U32& stride) const
 	{
 		buff = m_vertBuff;
-		// TODO
+		offset = m_vertBufferInfos[buffIdx].m_offset;
+		stride = m_vertBufferInfos[buffIdx].m_stride;
 	}
 
-	void getVerteAttributeInfo(VertexAttributeLocation attrib, U32& bufferIdx, Format& format, U32& relativeOffset)
+	/// Get attribute info. You need to check if the attribute is preset first (isVertexAttributePresent)
+	void getVerteAttributeInfo(
+		const VertexAttributeLocation attrib, U32& bufferIdx, Format& format, U32& relativeOffset) const
 	{
-		// TODO
+		ANKI_ASSERT(!!m_attribs[attrib].m_fmt);
+		bufferIdx = m_attribs[attrib].m_buffIdx;
+		format = m_attribs[attrib].m_fmt;
+		relativeOffset = m_attribs[attrib].m_relativeOffset;
 	}
 
-	U32 getTextureChannelsCount() const
+	/// Check if a vertex attribute is present.
+	Bool isVertexAttributePresent(const VertexAttributeLocation attrib) const
 	{
-		return m_texChannelsCount;
+		return !!m_attribs[attrib].m_fmt;
 	}
 
+	/// Get the number of texture coordinates channels.
+	U32 getTextureChannelCount() const
+	{
+		return m_texChannelCount;
+	}
+
+	/// Return true if it has bone weights.
 	Bool hasBoneWeights() const
 	{
-		return m_weights;
+		return isVertexAttributePresent(VertexAttributeLocation::BONE_WEIGHTS);
 	}
 
 protected:
 	class LoadTask;
 	class LoadContext;
 
-	/// Per sub mesh data
+	static constexpr U VERTEX_BUFFER_ALIGNMENT = 64;
+
+	/// Sub-mesh data
 	struct SubMesh
 	{
-		U32 m_indicesCount;
-		U32 m_indicesOffset;
+		U32 m_firstIndex;
+		U32 m_indexCount;
 		Obb m_obb;
 	};
 	DynamicArray<SubMesh> m_subMeshes;
@@ -111,15 +130,29 @@ protected:
 
 	// Vertex stuff
 	U32 m_vertCount = 0;
+
+	struct VertBuffInfo
+	{
+		U32 m_offset; ///< Offset from the base of m_vertBuff.
+		U32 m_stride;
+	};
+	DynamicArray<VertBuffInfo> m_vertBufferInfos;
+
+	struct AttribInfo
+	{
+		Format m_fmt = Format::NONE;
+		U32 m_relativeOffset = 0;
+		U8 m_buffIdx = 0;
+	};
+	Array<AttribInfo, U(VertexAttributeLocation::COUNT)> m_attribs;
+
 	BufferPtr m_vertBuff;
-	U8 m_vertBuffCount = 0;
-	U8 m_texChannelsCount = 0;
+	U8 m_texChannelCount = 0;
 
 	// Other
 	Obb m_obb;
-	Bool8 m_weights = false;
 
-	static ANKI_USE_RESULT Error load(LoadContext& ctx);
+	ANKI_USE_RESULT Error loadAsync(MeshLoader& loader) const;
 };
 /// @}
 

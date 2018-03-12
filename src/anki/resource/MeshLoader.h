@@ -49,6 +49,8 @@ public:
 	{
 		U32 m_firstIndex;
 		U32 m_indexCount;
+		Vec3 m_aabbMin; ///< Bounding box min.
+		Vec3 m_aabbMax; ///< Bounding box max.
 	};
 
 	struct Header
@@ -57,6 +59,7 @@ public:
 		Flag m_flags;
 
 		Array<VertexBuffer, U32(VertexAttributeLocation::COUNT)> m_vertexBuffers;
+		U32 m_vertexBufferCount;
 
 		Array<VertexAttribute, U32(VertexAttributeLocation::COUNT)> m_vertexAttributes;
 
@@ -65,6 +68,9 @@ public:
 		U32 m_totalIndexCount;
 		U32 m_totalVertexCount;
 		U32 m_subMeshCount;
+
+		Vec3 m_aabbMin; ///< Bounding box min.
+		Vec3 m_aabbMax; ///< Bounding box max.
 	};
 };
 
@@ -100,6 +106,11 @@ public:
 		return m_header.m_vertexAttributes[VertexAttributeLocation::BONE_INDICES].m_format != Format::NONE;
 	}
 
+	ConstWeakArray<MeshBinaryFile::SubMesh> getSubMeshes() const
+	{
+		return ConstWeakArray<MeshBinaryFile::SubMesh>(m_subMeshes);
+	}
+
 private:
 	ResourceManager* m_manager;
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -109,7 +120,6 @@ private:
 	MeshBinaryFile::Header m_header;
 
 	DynamicArray<MeshBinaryFile::SubMesh> m_subMeshes;
-	U32 m_vertBufferCount = 0;
 
 	U32 m_loadedChunk = 0; ///< Because the store methods need to be called in sequence.
 

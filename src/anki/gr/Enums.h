@@ -327,6 +327,7 @@ enum class Format : U32
 	PVRTC2_2BPP_SRGB_BLOCK_IMG = 1000054006,
 	PVRTC2_4BPP_SRGB_BLOCK_IMG = 1000054007,
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format, inline)
 
 inline Bool formatIsDepthStencil(const Format fmt)
 {

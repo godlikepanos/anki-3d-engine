@@ -16,14 +16,12 @@ namespace anki
 class MeshResource::LoadContext
 {
 public:
-	ResourceManager* m_manager ANKI_DBG_NULLIFY;
+	MeshResource* m_mesh;
 	MeshLoader m_loader;
-	BufferPtr m_vertBuff;
-	BufferPtr m_indicesBuff;
 
-	LoadContext(ResourceManager* manager, GenericMemoryPoolAllocator<U8> alloc)
-		: m_manager(manager)
-		, m_loader(manager, alloc)
+	LoadContext(MeshResource* mesh, GenericMemoryPoolAllocator<U8> alloc)
+		: m_mesh(mesh)
+		, m_loader(&mesh->getManager(), alloc)
 	{
 	}
 };
@@ -34,14 +32,14 @@ class MeshResource::LoadTask : public AsyncLoaderTask
 public:
 	MeshResource::LoadContext m_ctx;
 
-	LoadTask(ResourceManager* manager)
-		: m_ctx(manager, manager->getAsyncLoader().getAllocator())
+	LoadTask(MeshResource* mesh)
+		: m_ctx(mesh, mesh->getManager().getAsyncLoader().getAllocator())
 	{
 	}
 
 	Error operator()(AsyncLoaderTaskContext& ctx) final
 	{
-		return MeshResource::load(m_ctx);
+		return m_ctx.m_mesh->loadAsync(m_ctx.m_loader);
 	}
 };
 
@@ -57,19 +55,19 @@ MeshResource::~MeshResource()
 
 Bool MeshResource::isCompatible(const MeshResource& other) const
 {
-	return hasBoneWeights() == other.hasBoneWeights() && getSubMeshesCount() == other.getSubMeshesCount()
-		   && m_texChannelsCount == other.m_texChannelsCount;
+	return hasBoneWeights() == other.hasBoneWeights() && getSubMeshCount() == other.getSubMeshCount()
+		   && m_texChannelCount == other.m_texChannelCount;
 }
 
 Error MeshResource::load(const ResourceFilename& filename, Bool async)
 {
 	LoadTask* task;
 	LoadContext* ctx;
-	LoadContext localCtx(&getManager(), getTempAllocator());
+	LoadContext localCtx(this, getTempAllocator());
 
 	if(async)
 	{
-		task = getManager().getAsyncLoader().newTask<LoadTask>(&getManager());
+		task = getManager().getAsyncLoader().newTask<LoadTask>(this);
 		ctx = &task->m_ctx;
 	}
 	else
@@ -78,74 +76,102 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		ctx = &localCtx;
 	}
 
+	// Open file
 	MeshLoader& loader = ctx->m_loader;
 	ANKI_CHECK(loader.load(filename));
-
 	const MeshBinaryFile::Header& header = loader.getHeader();
-	m_indicesCount = header.m_totalIndexCount;
 
-	m_vertSize = loader.getVertexSize();
+	// Get submeshes
+	m_subMeshes.create(getAllocator(), header.m_subMeshCount);
+	for(U i = 0; i < m_subMeshes.getSize(); ++i)
+	{
+		m_subMeshes[i].m_firstIndex = loader.getSubMeshes()[i].m_firstIndex;
+		m_subMeshes[i].m_indexCount = loader.getSubMeshes()[i].m_indexCount;
 
-	PtrSize vertexSize = loader.getVertexSize();
-	m_obb.setFromPointCloud(
-		loader.getVertexData(), header.m_totalVerticesCount, vertexSize, loader.getVertexDataSize());
-	ANKI_ASSERT(m_indicesCount > 0);
-	ANKI_ASSERT(m_indicesCount % 3 == 0 && "Expecting triangles");
+		const Vec3 obbCenter = (loader.getSubMeshes()[i].m_aabbMax + loader.getSubMeshes()[i].m_aabbMin) / 2.0f;
+		const Vec3 obbExtend = loader.getSubMeshes()[i].m_aabbMax - obbCenter;
+		m_subMeshes[i].m_obb = Obb(obbCenter.xyz0(), Mat3x4::getIdentity(), obbExtend.xyz0());
+	}
 
-	// Set the non-VBO members
-	m_vertsCount = header.m_totalVerticesCount;
-	ANKI_ASSERT(m_vertsCount > 0);
+	// Index stuff
+	m_indexCount = header.m_totalIndexCount;
+	ANKI_ASSERT((m_indexCount % 3) == 0 && "Expecting triangles");
+	m_indexFormat = header.m_indicesFormat;
 
-	m_texChannelsCount = header.m_uvsChannelCount;
-	m_weights = loader.hasBoneInfo();
+	const PtrSize indexBuffSize = m_indexCount * ((m_indexFormat == Format::R32_UINT) ? 4 : 2);
 
-	// Allocate the buffers
-	GrManager& gr = getManager().getGrManager();
-
-	m_vertBuff = gr.newBuffer(BufferInitInfo(loader.getVertexDataSize(),
-		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
-		BufferMapAccessBit::NONE,
-		"MeshVert"));
-
-	m_indicesBuff = gr.newBuffer(BufferInitInfo(loader.getIndexDataSize(),
+	m_indexBuff = getManager().getGrManager().newBuffer(BufferInitInfo(indexBuffSize,
 		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
 		BufferMapAccessBit::NONE,
 		"MeshIdx"));
 
-	// Clear them
+	// Vertex stuff
+	m_vertCount = header.m_totalVertexCount;
+	m_vertBufferInfos.create(getAllocator(), header.m_vertexBufferCount);
+
+	PtrSize totalVertexBuffSize = 0;
+	for(U i = 0; i < header.m_vertexBufferCount; ++i)
+	{
+		m_vertBufferInfos[i].m_offset = getAlignedRoundUp(VERTEX_BUFFER_ALIGNMENT, totalVertexBuffSize);
+		m_vertBufferInfos[i].m_stride = header.m_vertexBuffers[i].m_vertexStride;
+
+		totalVertexBuffSize = m_vertBufferInfos[i].m_offset + m_vertCount;
+	}
+
+	m_vertBuff = getManager().getGrManager().newBuffer(BufferInitInfo(totalVertexBuffSize,
+		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
+		BufferMapAccessBit::NONE,
+		"MeshVert"));
+
+	m_texChannelCount = !!header.m_vertexAttributes[VertexAttributeLocation::UV2].m_format ? 2 : 1;
+
+	for(VertexAttributeLocation attrib = VertexAttributeLocation::FIRST; attrib < VertexAttributeLocation::COUNT;
+		++attrib)
+	{
+		AttribInfo& out = m_attribs[attrib];
+		const MeshBinaryFile::VertexAttribute& in = header.m_vertexAttributes[attrib];
+
+		out.m_fmt = in.m_format;
+		out.m_relativeOffset = in.m_relativeOffset;
+		out.m_buffIdx = in.m_bufferBinding;
+		ANKI_ASSERT(in.m_scale == 1.0f && "Not supported ATM");
+	}
+
+	// Other
+	const Vec3 obbCenter = (header.m_aabbMax + header.m_aabbMin) / 2.0f;
+	const Vec3 obbExtend = header.m_aabbMax - obbCenter;
+	m_obb = Obb(obbCenter.xyz0(), Mat3x4::getIdentity(), obbExtend.xyz0());
+
+	// Clear the buffers
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
+	CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
 
 	cmdb->fillBuffer(m_vertBuff, 0, MAX_PTR_SIZE, 0);
-	cmdb->fillBuffer(m_indicesBuff, 0, MAX_PTR_SIZE, 0);
+	cmdb->fillBuffer(m_indexBuff, 0, MAX_PTR_SIZE, 0);
 
 	cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::FILL, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
-	cmdb->setBufferBarrier(m_indicesBuff, BufferUsageBit::FILL, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::FILL, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
 
 	cmdb->flush();
 
 	// Submit the loading task
-	ctx->m_vertBuff = m_vertBuff;
-	ctx->m_indicesBuff = m_indicesBuff;
-
 	if(async)
 	{
 		getManager().getAsyncLoader().submitTask(task);
 	}
 	else
 	{
-		ANKI_CHECK(load(*ctx));
+		ANKI_CHECK(loadAsync(loader));
 	}
 
 	return Error::NONE;
 }
 
-Error MeshResource::load(LoadContext& ctx)
+Error MeshResource::loadAsync(MeshLoader& loader) const
 {
-	GrManager& gr = ctx.m_manager->getGrManager();
-	TransferGpuAllocator& transferAlloc = ctx.m_manager->getTransferGpuAllocator();
-	const MeshLoader& loader = ctx.m_loader;
+	GrManager& gr = getManager().getGrManager();
+	TransferGpuAllocator& transferAlloc = getManager().getTransferGpuAllocator();
 	Array<TransferGpuAllocatorHandle, 2> handles;
 
 	CommandBufferInitInfo cmdbinit;
@@ -154,43 +180,50 @@ Error MeshResource::load(LoadContext& ctx)
 
 	// Set barriers
 	cmdb->setBufferBarrier(
-		ctx.m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
+		m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
 	cmdb->setBufferBarrier(
-		ctx.m_indicesBuff, BufferUsageBit::INDEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
+		m_indexBuff, BufferUsageBit::INDEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
 
-	// Write vert buff
+	// Write index buffer
 	{
-		ANKI_CHECK(transferAlloc.allocate(loader.getVertexDataSize(), handles[0]));
-		void* data = handles[0].getMappedMemory();
-		ANKI_ASSERT(data);
-
-		memcpy(data, loader.getVertexData(), loader.getVertexDataSize());
-
-		cmdb->copyBufferToBuffer(
-			handles[0].getBuffer(), handles[0].getOffset(), ctx.m_vertBuff, 0, handles[0].getRange());
-	}
-
-	// Create index buffer
-	{
-		ANKI_CHECK(transferAlloc.allocate(loader.getIndexDataSize(), handles[1]));
+		ANKI_CHECK(transferAlloc.allocate(m_indexBuff->getSize(), handles[1]));
 		void* data = handles[1].getMappedMemory();
 		ANKI_ASSERT(data);
 
-		memcpy(data, loader.getIndexData(), loader.getIndexDataSize());
+		ANKI_CHECK(loader.storeIndexBuffer(data, m_indexBuff->getSize()));
 
-		cmdb->copyBufferToBuffer(
-			handles[1].getBuffer(), handles[1].getOffset(), ctx.m_indicesBuff, 0, handles[1].getRange());
+		cmdb->copyBufferToBuffer(handles[1].getBuffer(), handles[1].getOffset(), m_indexBuff, 0, handles[1].getRange());
+	}
+
+	// Write vert buff
+	{
+		ANKI_CHECK(transferAlloc.allocate(m_vertBuff->getSize(), handles[0]));
+		U8* data = static_cast<U8*>(handles[0].getMappedMemory());
+		ANKI_ASSERT(data);
+
+		// Load to staging
+		PtrSize offset = 0;
+		for(U i = 0; i < m_vertBufferInfos.getSize(); ++i)
+		{
+			alignRoundUp(VERTEX_BUFFER_ALIGNMENT, offset);
+			ANKI_CHECK(loader.storeVertexBuffer(i, data + offset, m_vertBufferInfos[i].m_stride * m_vertCount));
+
+			offset += m_vertBufferInfos[i].m_stride * m_vertCount;
+		}
+
+		ANKI_ASSERT(offset == m_vertBuff->getSize());
+
+		// Copy
+		cmdb->copyBufferToBuffer(handles[0].getBuffer(), handles[0].getOffset(), m_vertBuff, 0, handles[0].getRange());
 	}
 
 	// Set barriers
 	cmdb->setBufferBarrier(
-		ctx.m_vertBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
+		m_vertBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
 	cmdb->setBufferBarrier(
-		ctx.m_indicesBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+		m_indexBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
 
-	ctx.m_vertBuff.reset(nullptr);
-	ctx.m_indicesBuff.reset(nullptr);
-
+	// Finalize
 	FencePtr fence;
 	cmdb->flush(&fence);
 

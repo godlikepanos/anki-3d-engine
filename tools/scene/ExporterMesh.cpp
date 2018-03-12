@@ -73,6 +73,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 
 	float maxPositionDistance = 0.0; // Distance of positions from zero
 	float maxUvDistance = -FLT_MAX, minUvDistance = FLT_MAX;
+	anki::Vec3 aabbMin(anki::MAX_F32), aabbMax(anki::MIN_F32);
 
 	{
 		const aiMatrix3x3 normalMat = (transform) ? aiMatrix3x3(*transform) : aiMatrix3x3();
@@ -111,9 +112,12 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 			positions[i * 3 + 0] = pos.x;
 			positions[i * 3 + 1] = pos.y;
 			positions[i * 3 + 2] = pos.z;
-			maxPositionDistance = std::max<float>(maxPositionDistance, fabs(pos.x));
-			maxPositionDistance = std::max<float>(maxPositionDistance, fabs(pos.y));
-			maxPositionDistance = std::max<float>(maxPositionDistance, fabs(pos.z));
+			for(int d = 0; d < 3; ++d)
+			{
+				maxPositionDistance = std::max<float>(maxPositionDistance, fabs(pos[d]));
+				aabbMin[i] = std::min(aabbMin[i], pos[d]);
+				aabbMax[i] = std::max(aabbMax[i], pos[d]);
+			}
 
 			ntVerts[i].m_n[0] = n.x;
 			ntVerts[i].m_n[1] = n.y;
@@ -229,6 +233,8 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 
 	// Arange the attributes into vert buffers
 	{
+		header.m_vertexBufferCount = 2;
+
 		// First buff has positions
 		const auto& posa = header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::POSITION];
 		if(posa.m_format == anki::Format::R32G32B32_SFLOAT)
@@ -247,6 +253,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		if(hasBoneWeights)
 		{
 			header.m_vertexBuffers[2].m_vertexStride = sizeof(WeightVertex);
+			++header.m_vertexBufferCount;
 		}
 	}
 
@@ -258,6 +265,8 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		header.m_totalIndexCount = mesh.mNumFaces * vertCountPerFace;
 		header.m_totalVertexCount = mesh.mNumVertices;
 		header.m_subMeshCount = 1;
+		header.m_aabbMin = aabbMin;
+		header.m_aabbMax = aabbMax;
 	}
 
 	// Open file
@@ -272,6 +281,8 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		anki::MeshBinaryFile::SubMesh smesh;
 		smesh.m_firstIndex = 0;
 		smesh.m_indexCount = header.m_totalIndexCount;
+		smesh.m_aabbMin = aabbMin;
+		smesh.m_aabbMax = aabbMax;
 
 		file.write(reinterpret_cast<char*>(&smesh), sizeof(smesh));
 	}
