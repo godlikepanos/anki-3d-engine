@@ -115,8 +115,8 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 			for(int d = 0; d < 3; ++d)
 			{
 				maxPositionDistance = std::max<float>(maxPositionDistance, fabs(pos[d]));
-				aabbMin[i] = std::min(aabbMin[i], pos[d]);
-				aabbMax[i] = std::max(aabbMax[i], pos[d]);
+				aabbMin[d] = std::min(aabbMin[d], pos[d]);
+				aabbMax[d] = std::max(aabbMax[d], pos[d]);
 			}
 
 			ntVerts[i].m_n[0] = n.x;
