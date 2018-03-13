@@ -75,35 +75,31 @@ Error PortalSectorBase::init(const CString& meshFname, Bool isSector)
 	MeshLoader loader(&getSceneGraph().getResourceManager());
 	ANKI_CHECK(loader.load(meshFname));
 
+	DynamicArrayAuto<U32> indices(getSceneAllocator());
+	DynamicArrayAuto<Vec3> positions(getSceneAllocator());
+
+	ANKI_CHECK(loader.storeIndicesAndPosition(indices, positions));
+
 	// Convert Vec3 positions to Vec4
-	const MeshLoader::Header& header = loader.getHeader();
-	U vertsCount = header.m_totalVerticesCount;
-	PtrSize vertSize = loader.getVertexSize();
+	m_shapeStorageLSpace.create(getSceneAllocator(), positions.getSize());
+	m_shapeStorageWSpace.create(getSceneAllocator(), positions.getSize());
 
-	auto alloc = getSceneAllocator();
-	m_shapeStorageLSpace.create(alloc, vertsCount);
-	m_shapeStorageWSpace.create(alloc, vertsCount);
-
-	for(U i = 0; i < vertsCount; ++i)
+	for(U i = 0; i < positions.getSize(); ++i)
 	{
-		const Vec3& pos = *reinterpret_cast<const Vec3*>(loader.getVertexData() + vertSize * i);
-
-		m_shapeStorageLSpace[i] = Vec4(pos, 0.0);
+		m_shapeStorageLSpace[i] = Vec4(positions[i], 0.0f);
 	}
 
 	// Create shape
-	ConvexHullShape* hull = alloc.newInstance<ConvexHullShape>();
+	ConvexHullShape* hull = getSceneAllocator().newInstance<ConvexHullShape>();
 	m_shape = hull;
-	hull->initStorage(&m_shapeStorageWSpace[0], vertsCount);
+	hull->initStorage(&m_shapeStorageWSpace[0], m_shapeStorageWSpace.getSize());
 	updateTransform(Transform::getIdentity());
 
 	// Store indices
-	ANKI_ASSERT(header.m_totalIndicesCount * sizeof(U16) == loader.getIndexDataSize());
-	m_vertIndices.create(alloc, header.m_totalIndicesCount);
-	const U16* indicesIn = reinterpret_cast<const U16*>(loader.getIndexData());
-	for(U i = 0; i < header.m_totalIndicesCount; ++i)
+	m_vertIndices.create(getSceneAllocator(), indices.getSize());
+	for(U i = 0; i < indices.getSize(); ++i)
 	{
-		m_vertIndices[i] = indicesIn[i];
+		m_vertIndices[i] = indices[i];
 	}
 
 	return Error::NONE;

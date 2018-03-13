@@ -100,7 +100,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		totalSize += sizeof(MeshBinaryFile::SubMesh) * m_header.m_subMeshCount;
 		totalSize += getIndexBufferSize();
 
-		for(U i = 0; i < header.m_vertexBufferCount; ++i)
+		for(U i = 0; i < m_header.m_vertexBufferCount; ++i)
 		{
 			totalSize += m_header.m_vertexBuffers[i].m_vertexStride * m_header.m_totalVertexCount;
 		}
@@ -209,7 +209,7 @@ Error MeshLoader::checkHeader() const
 	// AABB
 	for(U d = 0; d < 3; ++d)
 	{
-		if(h.m_aabbMin[i] >= h.m_aabbMax[i])
+		if(h.m_aabbMin[d] >= h.m_aabbMax[d])
 		{
 			ANKI_RESOURCE_LOGE("Wrong bounding box");
 			return Error::USER_DATA;
@@ -255,6 +255,75 @@ Error MeshLoader::storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size)
 	}
 
 	++m_loadedChunk;
+	return Error::NONE;
+}
+
+Error MeshLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, DynamicArrayAuto<Vec3>& positions)
+{
+	// Store indices
+	{
+		indices.resize(m_header.m_totalIndexCount);
+
+		// Create staging buff
+		const PtrSize idxBufferSize = getIndexBufferSize();
+		DynamicArrayAuto<U8> staging(m_alloc);
+		staging.create(idxBufferSize);
+
+		// Store to staging buff
+		ANKI_CHECK(storeIndexBuffer(&staging[0], staging.getSizeInBytes()));
+
+		// Copy
+		for(U i = 0; i < m_header.m_totalIndexCount; ++i)
+		{
+			if(m_header.m_indicesFormat == Format::R32_UINT)
+			{
+				indices[i] = *reinterpret_cast<U32*>(&staging[i * 4]);
+			}
+			else
+			{
+				ANKI_ASSERT(m_header.m_indicesFormat == Format::R16_UINT);
+				indices[i] = *reinterpret_cast<U16*>(&staging[i * 2]);
+			}
+		}
+	}
+
+	// Store positions
+	{
+		positions.resize(m_header.m_totalVertexCount);
+
+		const MeshBinaryFile::VertexAttribute& attrib = m_header.m_vertexAttributes[VertexAttributeLocation::POSITION];
+		const MeshBinaryFile::VertexBuffer& buffInfo = m_header.m_vertexBuffers[attrib.m_bufferBinding];
+
+		// Create staging buff
+		const PtrSize vertBuffSize = m_header.m_totalVertexCount * buffInfo.m_vertexStride;
+		DynamicArrayAuto<U8> staging(m_alloc);
+		staging.create(vertBuffSize);
+
+		// Store to staging buff
+		ANKI_CHECK(storeVertexBuffer(attrib.m_bufferBinding, &staging[0], staging.getSizeInBytes()));
+
+		// Copy
+		for(U i = 0; i < m_header.m_totalVertexCount; ++i)
+		{
+			Vec3 vert;
+			if(attrib.m_format == Format::R32G32B32_SFLOAT)
+			{
+				vert = *reinterpret_cast<Vec3*>(&staging[i * buffInfo.m_vertexStride + attrib.m_relativeOffset]);
+			}
+			else
+			{
+				ANKI_ASSERT(attrib.m_format == Format::R16G16B16_SFLOAT);
+				F16* f16 = reinterpret_cast<F16*>(&staging[i * buffInfo.m_vertexStride + attrib.m_relativeOffset]);
+
+				vert[0] = f16[0].toF32();
+				vert[1] = f16[1].toF32();
+				vert[2] = f16[2].toF32();
+			}
+
+			positions[i] = vert;
+		}
+	}
+
 	return Error::NONE;
 }
 

@@ -50,7 +50,7 @@ Error PhysicsBox::create(PhysicsCollisionShapeInitInfo& init, const Vec3& extend
 Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
 	const Vec3* positions,
 	U32 positionsStride,
-	const U16* indices,
+	const U32* indices,
 	U32 indicesCount)
 {
 	m_shape = NewtonCreateTreeCollision(m_world->getNewtonWorld(), 0);
@@ -63,7 +63,7 @@ Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
 	NewtonTreeCollisionBeginBuild(m_shape);
 
 	// Iterate index array
-	const U16* indicesEnd = indices + indicesCount;
+	const U32* indicesEnd = indices + indicesCount;
 	for(; indices != indicesEnd; indices += 3)
 	{
 		Array<Vec3, 3> facePos;

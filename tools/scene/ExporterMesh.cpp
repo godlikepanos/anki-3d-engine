@@ -180,28 +180,28 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 	// Chose the formats of the attributes
 	{
 		// Positions
-		auto& posa = header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::POSITION];
+		auto& posa = header.m_vertexAttributes[anki::VertexAttributeLocation::POSITION];
 		posa.m_bufferBinding = 0;
 		posa.m_format = (maxPositionDistance < 2.0) ? anki::Format::R16G16B16_SFLOAT : anki::Format::R32G32B32_SFLOAT;
 		posa.m_relativeOffset = 0;
 		posa.m_scale = 1.0;
 
 		// Normals
-		auto& na = header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::NORMAL];
+		auto& na = header.m_vertexAttributes[anki::VertexAttributeLocation::NORMAL];
 		na.m_bufferBinding = 1;
 		na.m_format = anki::Format::A2B10G10R10_SNORM_PACK32;
 		na.m_relativeOffset = 0;
 		na.m_scale = 1.0;
 
 		// Tangents
-		auto& ta = header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::TANGENT];
+		auto& ta = header.m_vertexAttributes[anki::VertexAttributeLocation::TANGENT];
 		ta.m_bufferBinding = 1;
 		ta.m_format = anki::Format::A2B10G10R10_SNORM_PACK32;
 		ta.m_relativeOffset = sizeof(uint32_t);
 		ta.m_scale = 1.0;
 
 		// UVs
-		auto& uva = header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::UV];
+		auto& uva = header.m_vertexAttributes[anki::VertexAttributeLocation::UV];
 		uva.m_bufferBinding = 1;
 		if(minUvDistance >= 0.0 && maxUvDistance <= 1.0)
 		{
@@ -217,13 +217,13 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		// Bone weight
 		if(hasBoneWeights)
 		{
-			auto& bidxa = header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::BONE_INDICES];
+			auto& bidxa = header.m_vertexAttributes[anki::VertexAttributeLocation::BONE_INDICES];
 			bidxa.m_bufferBinding = 2;
 			bidxa.m_format = anki::Format::R16G16B16A16_UINT;
 			bidxa.m_relativeOffset = 0;
 			bidxa.m_scale = 1.0;
 
-			auto& wa = header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::BONE_WEIGHTS];
+			auto& wa = header.m_vertexAttributes[anki::VertexAttributeLocation::BONE_WEIGHTS];
 			wa.m_bufferBinding = 2;
 			wa.m_format = anki::Format::R8G8B8A8_UNORM;
 			wa.m_relativeOffset = sizeof(uint16_t) * 4;
@@ -236,7 +236,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		header.m_vertexBufferCount = 2;
 
 		// First buff has positions
-		const auto& posa = header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::POSITION];
+		const auto& posa = header.m_vertexAttributes[anki::VertexAttributeLocation::POSITION];
 		if(posa.m_format == anki::Format::R32G32B32_SFLOAT)
 		{
 			header.m_vertexBuffers[0].m_vertexStride = sizeof(float) * 3;
@@ -314,7 +314,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 
 	// Write first vert buffer
 	{
-		const auto& posa = header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::POSITION];
+		const auto& posa = header.m_vertexAttributes[anki::VertexAttributeLocation::POSITION];
 		if(posa.m_format == anki::Format::R32G32B32_SFLOAT)
 		{
 			file.write(reinterpret_cast<char*>(&positions[0]), positions.size() * sizeof(positions[0]));
@@ -358,8 +358,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 				anki::packColorToR10G10B10A2SNorm(inVert.m_t[0], inVert.m_t[1], inVert.m_t[2], inVert.m_t[3]);
 
 			const float uv[2] = {inVert.m_uv[0], inVert.m_uv[1]};
-			const anki::Format uvfmt =
-				header.m_vertexAttributes[anki::MeshBinaryFile::VertexAttributeType::UV].m_format;
+			const anki::Format uvfmt = header.m_vertexAttributes[anki::VertexAttributeLocation::UV].m_format;
 			if(uvfmt == anki::Format::R16G16_UNORM)
 			{
 				assert(uv[0] <= 1.0 && uv[0] >= 0.0 && uv[1] <= 1.0 && uv[1] >= 0.0);

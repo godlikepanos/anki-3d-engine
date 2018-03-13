@@ -45,12 +45,14 @@ class VertexAttributeInfo
 {
 public:
 	U32 m_bufferBinding;
+	VertexAttributeLocation m_location;
 	Format m_format;
 	PtrSize m_relativeOffset;
 
 	Bool operator==(const VertexAttributeInfo& b) const
 	{
-		return m_bufferBinding == b.m_bufferBinding && m_format == b.m_format && m_relativeOffset == b.m_relativeOffset;
+		return m_bufferBinding == b.m_bufferBinding && m_format == b.m_format && m_relativeOffset == b.m_relativeOffset
+			   && m_location == b.m_location;
 	}
 
 	Bool operator!=(const VertexAttributeInfo& b) const
@@ -74,6 +76,8 @@ public:
 	U32 m_vertexAttributeCount;
 
 	BufferPtr m_indexBuffer;
+	Format m_indexBufferFormat;
+	PtrSize m_indexBufferOffset;
 };
 
 /// Model patch interface class. Its very important class and it binds the material with the mesh
@@ -107,12 +111,15 @@ public:
 
 	const Obb& getBoundingShapeSub(U32 subMeshId) const
 	{
-		return m_meshes[0]->getBoundingShapeSub(subMeshId);
+		U32 firstIdx, idxCount;
+		const Obb* obb;
+		m_meshes[0]->getSubMeshInfo(subMeshId, firstIdx, idxCount, obb);
+		return *obb;
 	}
 
-	U32 getSubMeshesCount() const
+	U32 getSubMeshCount() const
 	{
-		return m_meshes[0]->getSubMeshesCount();
+		return m_meshes[0]->getSubMeshCount();
 	}
 
 	ANKI_USE_RESULT Error create(

@@ -76,7 +76,7 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw anywhere
-	ANKI_ASSERT(self.m_modelPatch->getSubMeshesCount() == 0);
+	ANKI_ASSERT(self.m_modelPatch->getSubMeshCount() == 1);
 
 	ModelRenderingInfo modelInf;
 	self.m_modelPatch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
@@ -88,7 +88,8 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 	for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 	{
 		const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
-		cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+		cmdb->setVertexAttribute(
+			U(attrib.m_location), attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
 	}
 
 	// Set vertex buffers
@@ -263,7 +264,7 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 
 		// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw
 		// anywhere
-		ANKI_ASSERT(patch->getSubMeshesCount() == 0);
+		ANKI_ASSERT(patch->getSubMeshCount() == 1);
 
 		ModelRenderingInfo modelInf;
 		patch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);

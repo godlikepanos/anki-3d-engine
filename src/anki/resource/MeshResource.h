@@ -41,15 +41,12 @@ public:
 	}
 
 	/// Get submesh info.
-	void getSubMeshInfo(U subMeshId, U32& firstIndex, U32& indexCount, Obb* obb) const
+	void getSubMeshInfo(U subMeshId, U32& firstIndex, U32& indexCount, const Obb*& obb) const
 	{
 		const SubMesh& sm = m_subMeshes[subMeshId];
 		firstIndex = sm.m_firstIndex;
 		indexCount = sm.m_indexCount;
-		if(obb)
-		{
-			*obb = sm.m_obb;
-		}
+		obb = &sm.m_obb;
 	}
 
 	U32 getSubMeshCount() const
@@ -58,7 +55,7 @@ public:
 	}
 
 	/// Get all info around vertex indices.
-	void getIndexBufferInfo(BufferPtr& buff, U32& buffOffset, U32& indexCount, Format& indexFormat) const
+	void getIndexBufferInfo(BufferPtr& buff, PtrSize& buffOffset, U32& indexCount, Format& indexFormat) const
 	{
 		buff = m_indexBuff;
 		buffOffset = 0;
@@ -73,7 +70,7 @@ public:
 	}
 
 	/// Get vertex buffer info.
-	void getVertexBufferInfo(const U32 buffIdx, BufferPtr& buff, U32& offset, U32& stride) const
+	void getVertexBufferInfo(const U32 buffIdx, BufferPtr& buff, PtrSize& offset, PtrSize& stride) const
 	{
 		buff = m_vertBuff;
 		offset = m_vertBufferInfos[buffIdx].m_offset;
@@ -81,8 +78,8 @@ public:
 	}
 
 	/// Get attribute info. You need to check if the attribute is preset first (isVertexAttributePresent)
-	void getVerteAttributeInfo(
-		const VertexAttributeLocation attrib, U32& bufferIdx, Format& format, U32& relativeOffset) const
+	void getVertexAttributeInfo(
+		const VertexAttributeLocation attrib, U32& bufferIdx, Format& format, PtrSize& relativeOffset) const
 	{
 		ANKI_ASSERT(!!m_attribs[attrib].m_fmt);
 		bufferIdx = m_attribs[attrib].m_buffIdx;

@@ -48,14 +48,15 @@ Error CollisionResource::load(const ResourceFilename& filename, Bool async)
 		CString meshfname;
 		ANKI_CHECK(valEl.getText(meshfname));
 
-		MeshLoader loader(&getManager());
+		MeshLoader loader(&getManager(), getTempAllocator());
 		ANKI_CHECK(loader.load(meshfname));
 
-		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(csInit,
-			reinterpret_cast<const Vec3*>(loader.getVertexData()),
-			loader.getVertexSize(),
-			reinterpret_cast<const U16*>(loader.getIndexData()),
-			loader.getHeader().m_totalIndicesCount);
+		DynamicArrayAuto<U32> indices(getTempAllocator());
+		DynamicArrayAuto<Vec3> positions(getTempAllocator());
+		ANKI_CHECK(loader.storeIndicesAndPosition(indices, positions));
+
+		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(
+			csInit, &positions[0], sizeof(Vec3), &indices[0], indices.getSize());
 	}
 	else
 	{

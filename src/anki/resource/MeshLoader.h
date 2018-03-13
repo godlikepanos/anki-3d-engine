@@ -94,6 +94,9 @@ public:
 
 	ANKI_USE_RESULT Error storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size);
 
+	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
+	ANKI_USE_RESULT Error storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, DynamicArrayAuto<Vec3>& positions);
+
 	const MeshBinaryFile::Header& getHeader() const
 	{
 		ANKI_ASSERT(isLoaded());
@@ -128,7 +131,7 @@ private:
 		return m_file.get() != nullptr;
 	}
 
-	U32 getIndexBufferSize() const
+	PtrSize getIndexBufferSize() const
 	{
 		return m_header.m_totalIndexCount * ((m_header.m_indicesFormat == Format::R16_UINT) ? 2 : 4);
 	}
