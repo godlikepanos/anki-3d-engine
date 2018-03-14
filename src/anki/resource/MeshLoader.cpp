@@ -137,8 +137,14 @@ Error MeshLoader::checkFormat(VertexAttributeLocation type, ConstWeakArray<Forma
 		return Error::USER_DATA;
 	}
 
+	if(!attrib.m_format)
+	{
+		// Attrib is not in use, no more checks
+		return Error::NONE;
+	}
+
 	// Scale should be 1.0 for now
-	if(attrib.m_scale != 0.0)
+	if(attrib.m_scale != 1.0f)
 	{
 		ANKI_RESOURCE_LOGE("Vertex attribute %u should have 1.0 scale", U(type));
 		return Error::USER_DATA;
@@ -159,7 +165,7 @@ Error MeshLoader::checkHeader() const
 	}
 
 	// Flags
-	if((h.m_flags & MeshBinaryFile::Flag::ALL) != MeshBinaryFile::Flag::ALL)
+	if((h.m_flags & ~MeshBinaryFile::Flag::ALL) != MeshBinaryFile::Flag::NONE)
 	{
 		ANKI_RESOURCE_LOGE("Wrong header flags");
 		return Error::USER_DATA;
@@ -178,7 +184,7 @@ Error MeshLoader::checkHeader() const
 		checkFormat(VertexAttributeLocation::BONE_WEIGHTS, Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}));
 
 	// Indices format
-	if(h.m_indicesFormat != Format::R16_UINT || h.m_indicesFormat != Format::R32_UINT)
+	if(h.m_indicesFormat != Format::R16_UINT && h.m_indicesFormat != Format::R32_UINT)
 	{
 		ANKI_RESOURCE_LOGE("Wrong format for indices");
 		return Error::USER_DATA;

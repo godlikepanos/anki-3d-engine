@@ -112,10 +112,12 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	PtrSize totalVertexBuffSize = 0;
 	for(U i = 0; i < header.m_vertexBufferCount; ++i)
 	{
-		m_vertBufferInfos[i].m_offset = getAlignedRoundUp(VERTEX_BUFFER_ALIGNMENT, totalVertexBuffSize);
+		alignRoundUp(VERTEX_BUFFER_ALIGNMENT, totalVertexBuffSize);
+
+		m_vertBufferInfos[i].m_offset = totalVertexBuffSize;
 		m_vertBufferInfos[i].m_stride = header.m_vertexBuffers[i].m_vertexStride;
 
-		totalVertexBuffSize = m_vertBufferInfos[i].m_offset + m_vertCount;
+		totalVertexBuffSize += m_vertCount * m_vertBufferInfos[i].m_stride;
 	}
 
 	m_vertBuff = getManager().getGrManager().newBuffer(BufferInitInfo(totalVertexBuffSize,
@@ -131,10 +133,13 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		AttribInfo& out = m_attribs[attrib];
 		const MeshBinaryFile::VertexAttribute& in = header.m_vertexAttributes[attrib];
 
-		out.m_fmt = in.m_format;
-		out.m_relativeOffset = in.m_relativeOffset;
-		out.m_buffIdx = in.m_bufferBinding;
-		ANKI_ASSERT(in.m_scale == 1.0f && "Not supported ATM");
+		if(!!in.m_format)
+		{
+			out.m_fmt = in.m_format;
+			out.m_relativeOffset = in.m_relativeOffset;
+			out.m_buffIdx = in.m_bufferBinding;
+			ANKI_ASSERT(in.m_scale == 1.0f && "Not supported ATM");
+		}
 	}
 
 	// Other
