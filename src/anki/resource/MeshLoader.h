@@ -63,7 +63,8 @@ public:
 
 		Array<VertexAttribute, U32(VertexAttributeLocation::COUNT)> m_vertexAttributes;
 
-		Format m_indicesFormat; ///< Can be R32_UI or R16_UI.
+		IndexType m_indexType;
+		U8 _padding[3];
 
 		U32 m_totalIndexCount;
 		U32 m_totalVertexCount;
@@ -133,7 +134,7 @@ private:
 
 	PtrSize getIndexBufferSize() const
 	{
-		return m_header.m_totalIndexCount * ((m_header.m_indicesFormat == Format::R16_UINT) ? 2 : 4);
+		return m_header.m_totalIndexCount * ((m_header.m_indexType == IndexType::U16) ? 2 : 4);
 	}
 
 	ANKI_USE_RESULT Error checkHeader() const;

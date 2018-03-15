@@ -89,7 +89,7 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 	{
 		const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
 		cmdb->setVertexAttribute(
-			U(attrib.m_location), attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+			U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
 	}
 
 	// Set vertex buffers
@@ -276,10 +276,9 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 		{
 			const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
-			if(attrib.m_format != Format::NONE)
-			{
-				cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
-			}
+			ANKI_ASSERT(attrib.m_format != Format::NONE);
+			cmdb->setVertexAttribute(
+				U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
 		}
 
 		// Set vertex buffers

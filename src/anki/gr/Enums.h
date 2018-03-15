@@ -599,7 +599,8 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit, inline)
 enum class IndexType : U8
 {
 	U16,
-	U32
+	U32,
+	COUNT
 };
 /// @}
 

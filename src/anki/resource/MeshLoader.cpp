@@ -184,7 +184,7 @@ Error MeshLoader::checkHeader() const
 		checkFormat(VertexAttributeLocation::BONE_WEIGHTS, Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}));
 
 	// Indices format
-	if(h.m_indicesFormat != Format::R16_UINT && h.m_indicesFormat != Format::R32_UINT)
+	if(h.m_indexType != IndexType::U16 && h.m_indexType != IndexType::U32)
 	{
 		ANKI_RESOURCE_LOGE("Wrong format for indices");
 		return Error::USER_DATA;
@@ -281,13 +281,12 @@ Error MeshLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, Dynami
 		// Copy
 		for(U i = 0; i < m_header.m_totalIndexCount; ++i)
 		{
-			if(m_header.m_indicesFormat == Format::R32_UINT)
+			if(m_header.m_indexType == IndexType::U32)
 			{
 				indices[i] = *reinterpret_cast<U32*>(&staging[i * 4]);
 			}
 			else
 			{
-				ANKI_ASSERT(m_header.m_indicesFormat == Format::R16_UINT);
 				indices[i] = *reinterpret_cast<U16*>(&staging[i * 2]);
 			}
 		}

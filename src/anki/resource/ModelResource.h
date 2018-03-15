@@ -76,8 +76,8 @@ public:
 	U32 m_vertexAttributeCount;
 
 	BufferPtr m_indexBuffer;
-	Format m_indexBufferFormat;
 	PtrSize m_indexBufferOffset;
+	IndexType m_indexType;
 };
 
 /// Model patch interface class. Its very important class and it binds the material with the mesh
@@ -123,7 +123,7 @@ public:
 	}
 
 	ANKI_USE_RESULT Error create(
-		WeakArray<CString> meshFNames, const CString& mtlFName, Bool async, ResourceManager* resources);
+		ConstWeakArray<CString> meshFNames, const CString& mtlFName, Bool async, ResourceManager* resources);
 
 	/// Get information for multiDraw rendering. Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts.

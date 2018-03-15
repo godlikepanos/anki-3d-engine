@@ -55,12 +55,12 @@ public:
 	}
 
 	/// Get all info around vertex indices.
-	void getIndexBufferInfo(BufferPtr& buff, PtrSize& buffOffset, U32& indexCount, Format& indexFormat) const
+	void getIndexBufferInfo(BufferPtr& buff, PtrSize& buffOffset, U32& indexCount, IndexType& indexType) const
 	{
 		buff = m_indexBuff;
 		buffOffset = 0;
 		indexCount = m_indexCount;
-		indexFormat = m_indexFormat;
+		indexType = m_indexType;
 	}
 
 	/// Get the number of logical vertex buffers.
@@ -123,7 +123,7 @@ protected:
 	// Index stuff
 	U32 m_indexCount = 0;
 	BufferPtr m_indexBuff;
-	Format m_indexFormat = Format::NONE;
+	IndexType m_indexType = IndexType::COUNT;
 
 	// Vertex stuff
 	U32 m_vertCount = 0;

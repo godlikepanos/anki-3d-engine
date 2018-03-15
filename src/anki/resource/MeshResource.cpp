@@ -51,6 +51,7 @@ MeshResource::MeshResource(ResourceManager* manager)
 MeshResource::~MeshResource()
 {
 	m_subMeshes.destroy(getAllocator());
+	m_vertBufferInfos.destroy(getAllocator());
 }
 
 Bool MeshResource::isCompatible(const MeshResource& other) const
@@ -96,9 +97,9 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	// Index stuff
 	m_indexCount = header.m_totalIndexCount;
 	ANKI_ASSERT((m_indexCount % 3) == 0 && "Expecting triangles");
-	m_indexFormat = header.m_indicesFormat;
+	m_indexType = header.m_indexType;
 
-	const PtrSize indexBuffSize = m_indexCount * ((m_indexFormat == Format::R32_UINT) ? 4 : 2);
+	const PtrSize indexBuffSize = m_indexCount * ((m_indexType == IndexType::U32) ? 4 : 2);
 
 	m_indexBuff = getManager().getGrManager().newBuffer(BufferInitInfo(indexBuffSize,
 		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,

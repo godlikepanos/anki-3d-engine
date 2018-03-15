@@ -48,6 +48,8 @@ void ModelPatch::getRenderingDataSub(
 		{
 			// All attributes
 
+			inf.m_vertexAttributeCount = 0;
+
 			for(VertexAttributeLocation loc = VertexAttributeLocation::FIRST; loc < VertexAttributeLocation::COUNT;
 				++loc)
 			{
@@ -106,10 +108,10 @@ void ModelPatch::getRenderingDataSub(
 
 	// Index buff
 	U32 indexCount;
-	mesh.getIndexBufferInfo(inf.m_indexBuffer, inf.m_indexBufferOffset, indexCount, inf.m_indexBufferFormat);
+	mesh.getIndexBufferInfo(inf.m_indexBuffer, inf.m_indexBufferOffset, indexCount, inf.m_indexType);
 
 	// Other
-	ANKI_ASSERT(subMeshIndicesArray.getSize() == 1 && mesh.getSubMeshCount() == 1 && "Not supported ATM");
+	ANKI_ASSERT(subMeshIndicesArray.getSize() == 0 && mesh.getSubMeshCount() == 1 && "Not supported ATM");
 	inf.m_drawcallCount = 1;
 	inf.m_indicesOffsetArray[0] = 0;
 	inf.m_indicesCountArray[0] = indexCount;
@@ -120,7 +122,8 @@ U ModelPatch::getLodCount() const
 	return max<U>(m_meshCount, getMaterial()->getLodCount());
 }
 
-Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName, Bool async, ResourceManager* manager)
+Error ModelPatch::create(
+	ConstWeakArray<CString> meshFNames, const CString& mtlFName, Bool async, ResourceManager* manager)
 {
 	ANKI_ASSERT(meshFNames.getSize() > 0);
 
@@ -239,12 +242,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(materialEl.getText(cstr));
 		ModelPatch* mpatch = alloc.newInstance<ModelPatch>(this);
 
-		if(mpatch == nullptr)
-		{
-			return Error::OUT_OF_MEMORY;
-		}
-
-		ANKI_CHECK(mpatch->create(WeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async, &getManager()));
+		ANKI_CHECK(mpatch->create(ConstWeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async, &getManager()));
 
 		m_modelPatches[count++] = mpatch;
 

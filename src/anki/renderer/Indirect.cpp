@@ -398,9 +398,10 @@ void Indirect::bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& c
 	cmdb->bindVertexBuffer(0, buff, offset, stride);
 
 	// Idx buff
-	mesh->getIndexBufferInfo(buff, offset, indexCount, fmt);
+	IndexType idxType;
+	mesh->getIndexBufferInfo(buff, offset, indexCount, idxType);
 
-	cmdb->bindIndexBuffer(buff, offset, (fmt == Format::R32_UINT) ? IndexType::U32 : IndexType::U16);
+	cmdb->bindIndexBuffer(buff, offset, idxType);
 }
 
 void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)

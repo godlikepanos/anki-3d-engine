@@ -261,7 +261,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 	{
 		memcpy(&header.m_magic[0], anki::MeshBinaryFile::MAGIC, 8);
 		header.m_flags = (vertCountPerFace == 4) ? anki::MeshBinaryFile::Flag::QUAD : anki::MeshBinaryFile::Flag::NONE;
-		header.m_indicesFormat = anki::Format::R16_UINT;
+		header.m_indexType = anki::IndexType::U16;
 		header.m_totalIndexCount = mesh.mNumFaces * vertCountPerFace;
 		header.m_totalVertexCount = mesh.mNumVertices;
 		header.m_subMeshCount = 1;
