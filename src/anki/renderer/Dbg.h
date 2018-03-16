@@ -8,6 +8,7 @@
 #include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 #include <anki/util/Enum.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
@@ -29,9 +30,35 @@ public:
 		m_enabled = e;
 	}
 
-	Bool getDepthTestEnabled() const;
-	void setDepthTestEnabled(Bool enable);
-	void switchDepthTestEnabled();
+	Bool getDepthTestEnabled() const
+	{
+		return m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	}
+
+	void setDepthTestEnabled(Bool enable)
+	{
+		m_debugDrawFlags.set(RenderQueueDebugDrawFlag::DEPTH_TEST_ON, enable);
+	}
+
+	void switchDepthTestEnabled()
+	{
+		m_debugDrawFlags.flip(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	}
+
+	Bool getDitheredDepthTestEnabled() const
+	{
+		return m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON);
+	}
+
+	void setDitheredDepthTestEnabled(Bool enable)
+	{
+		m_debugDrawFlags.set(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON, enable);
+	}
+
+	void switchDitheredDepthTestEnabled()
+	{
+		m_debugDrawFlags.flip(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON);
+	}
 
 anki_internal:
 	Dbg(Renderer* r);
@@ -53,7 +80,7 @@ private:
 	Bool8 m_initialized = false; ///< Lazily initialize.
 	RenderTargetDescription m_rtDescr;
 	FramebufferDescription m_fbDescr;
-	DebugDrawer* m_drawer = nullptr;
+	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
 
 	class
 	{

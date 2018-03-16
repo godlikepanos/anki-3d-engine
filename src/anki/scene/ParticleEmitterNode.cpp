@@ -446,11 +446,11 @@ Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 		Vec4 max = aabbmax + m_particle.m_size;
 		Vec4 center = (min + max) / 2.0;
 
-		m_obb = Obb(center, Mat3x4::getIdentity(), max - center);
+		m_obb = Obb(center.xyz0(), Mat3x4::getIdentity(), (max - center).xyz0());
 	}
 	else
 	{
-		m_obb = Obb(Vec4(0.0), Mat3x4::getIdentity(), Vec4(0.001));
+		m_obb = Obb(Vec4(0.0), Mat3x4::getIdentity(), Vec4(Vec3(0.001f), 0.0f));
 		m_verts = nullptr;
 	}
 

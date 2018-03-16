@@ -24,6 +24,14 @@ public:
 	Mat4 m_viewProjectionMatrix;
 };
 
+/// Some options that can be used as hints in debug drawcalls.
+enum class RenderQueueDebugDrawFlag : U32
+{
+	DEPTH_TEST_ON,
+	DITHERED_DEPTH_TEST_ON,
+	COUNT
+};
+
 /// Context that contains variables for drawing and will be passed to RenderQueueDrawCallback.
 class RenderQueueDrawContext final : public RenderingMatrices
 {
@@ -32,6 +40,7 @@ public:
 	CommandBufferPtr m_commandBuffer;
 	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DBG_NULLIFY;
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
+	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
 };
 
 /// Draw callback for drawing.

@@ -175,6 +175,9 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 				}
 			}
 		}
+
+		// Bump aabbMax a bit
+		aabbMax += anki::EPSILON * 10.0f;
 	}
 
 	// Chose the formats of the attributes
