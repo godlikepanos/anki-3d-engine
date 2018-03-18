@@ -40,6 +40,7 @@ public:
 		, m_transposedRotation(rotation)
 		, m_extend(extend)
 	{
+		ANKI_ASSERT(m_center.w() == 0.0f && m_extend.w() == 0.0f);
 		m_transposedRotation.transposeRotationPart();
 	}
 

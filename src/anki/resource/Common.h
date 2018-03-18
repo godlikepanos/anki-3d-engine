@@ -36,6 +36,23 @@ const U MAX_LOD_COUNT = 3;
 const U MAX_INSTANCES = 64;
 const U MAX_SUB_DRAWCALLS = 64; ///< @warning If changed don't forget to change MAX_INSTANCE_GROUPS
 const U MAX_INSTANCE_GROUPS = 7; ///< It's log2(MAX_INSTANCES) + 1
+
+/// Standard attribute locations. Should be the same as in Common.glsl.
+enum class VertexAttributeLocation : U8
+{
+	POSITION,
+	UV,
+	UV2,
+	NORMAL,
+	TANGENT,
+	COLOR,
+	BONE_WEIGHTS,
+	BONE_INDICES,
+
+	COUNT,
+	FIRST = POSITION,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeLocation, inline)
 /// @}
 
 /// Deleter for ResourcePtr.

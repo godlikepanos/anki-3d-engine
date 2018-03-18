@@ -146,7 +146,7 @@ inline T toDegrees(const T rad)
 /// @param[in] to Ending value
 /// @param[in] u The percentage from the from "from" value. Values from [0.0, 1.0]
 template<typename Type>
-static Type linearInterpolate(const Type& from, const Type& to, F32 u)
+inline Type linearInterpolate(const Type& from, const Type& to, F32 u)
 {
 	return from * (1.0f - u) + to * u;
 }
@@ -156,7 +156,7 @@ static Type linearInterpolate(const Type& from, const Type& to, F32 u)
 /// @param[in] to Ending value
 /// @param[in] u The percentage from the from "from" value. Values from [0.0, 1.0]
 template<typename Type>
-static Type cosInterpolate(const Type& from, const Type& to, F32 u)
+inline Type cosInterpolate(const Type& from, const Type& to, F32 u)
 {
 	F32 u2 = (1.0f - cos<Type>(u * PI)) / 2.0f;
 	return from * (1.0f - u2) + to * u2;
@@ -169,7 +169,7 @@ static Type cosInterpolate(const Type& from, const Type& to, F32 u)
 /// @param[in] d Point d
 /// @param[in] u The percentage from the from b point to d point. Value from [0.0, 1.0]
 template<typename Type>
-static Type cubicInterpolate(const Type& a, const Type& b, const Type& c, const Type& d, F32 u)
+inline Type cubicInterpolate(const Type& a, const Type& b, const Type& c, const Type& d, F32 u)
 {
 	F32 u2 = u * u;
 	Type a0 = d - c - a + b;
@@ -178,6 +178,30 @@ static Type cubicInterpolate(const Type& a, const Type& b, const Type& c, const 
 	Type a3 = b;
 
 	return (a0 * u * u2 + a1 * u2 + a2 * u + a3);
+}
+
+/// Pack 4 color components to R10G10B10A2 SNORM format.
+inline U32 packColorToR10G10B10A2SNorm(F32 r, F32 g, F32 b, F32 a)
+{
+	union SignedR10G10B10A10
+	{
+		struct
+		{
+			I m_x : 10;
+			I m_y : 10;
+			I m_z : 10;
+			I m_w : 2;
+		} m_unpacked;
+		U32 m_packed;
+	};
+
+	SignedR10G10B10A10 out;
+	out.m_unpacked.m_x = I(round(r * 511.0f));
+	out.m_unpacked.m_y = I(round(g * 511.0f));
+	out.m_unpacked.m_z = I(round(b * 511.0f));
+	out.m_unpacked.m_w = I(round(a * 1.0f));
+
+	return out.m_packed;
 }
 /// @}
 

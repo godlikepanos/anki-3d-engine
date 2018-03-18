@@ -138,7 +138,8 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ANKI_TRACE_STOP_EVENT(VK_BIND_OBJECT);
 
 	m_access = access;
-	m_size = size;
+	m_size = inf.m_size;
+	m_actualSize = size;
 	m_usage = usage;
 	return Error::NONE;
 }

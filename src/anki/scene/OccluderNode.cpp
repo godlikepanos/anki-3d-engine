@@ -48,18 +48,17 @@ Error OccluderNode::init(const CString& meshFname)
 	MeshLoader loader(&getSceneGraph().getResourceManager());
 	ANKI_CHECK(loader.load(meshFname));
 
-	const U16* indices = reinterpret_cast<const U16*>(loader.getIndexData());
-	U indexCount = loader.getIndexDataSize() / sizeof(U16);
-	U vertSize = loader.getVertexSize();
-
+	const U indexCount = loader.getHeader().m_totalIndexCount;
 	m_vertsL.create(getSceneAllocator(), indexCount);
 	m_vertsW.create(getSceneAllocator(), indexCount);
 
-	for(U i = 0; i < indexCount; ++i)
+	DynamicArrayAuto<Vec3> positions(getSceneAllocator());
+	DynamicArrayAuto<U32> indices(getSceneAllocator());
+	ANKI_CHECK(loader.storeIndicesAndPosition(indices, positions));
+
+	for(U i = 0; i < indices.getSize(); ++i)
 	{
-		U idx = indices[i];
-		const Vec3* vert = reinterpret_cast<const Vec3*>(loader.getVertexData() + idx * vertSize);
-		m_vertsL[i] = *vert;
+		m_vertsL[i] = positions[indices[i]];
 	}
 
 	// Create the components

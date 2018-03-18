@@ -45,7 +45,7 @@ Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 	m_modelPatch = modelPatch;
 
 	// Create spatial components
-	for(U i = 1; i < m_modelPatch->getSubMeshesCount(); i++)
+	for(U i = 1; i < m_modelPatch->getSubMeshCount(); i++)
 	{
 		SpatialComponent* spatial = newComponent<SpatialComponent>(this, &m_modelPatch->getBoundingShapeSub(i));
 

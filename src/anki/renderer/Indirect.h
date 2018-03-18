@@ -81,14 +81,10 @@ private:
 		ShaderProgramPtr m_plightGrProg;
 		ShaderProgramPtr m_slightGrProg;
 
-		/// @name Vertex & index buffer of light volumes.
+		/// @name Meshes of light volumes.
 		/// @{
-		BufferPtr m_plightPositions;
-		BufferPtr m_plightIndices;
-		U32 m_plightIdxCount;
-		BufferPtr m_slightPositions;
-		BufferPtr m_slightIndices;
-		U32 m_slightIdxCount;
+		MeshResourcePtr m_plightMesh;
+		MeshResourcePtr m_slightMesh;
 		/// @}
 	} m_lightShading; ///< Light shading.
 
@@ -136,7 +132,6 @@ private:
 	ANKI_USE_RESULT Error initGBuffer(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initLightShading(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
-	ANKI_USE_RESULT Error loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount);
 
 	/// Lazily init the cache entry
 	void initCacheEntry(U32 cacheEntryIdx);
@@ -151,6 +146,7 @@ private:
 	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+	static void bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& cmdb, U32& indexCount);
 
 	// A RenderPassWorkCallback for G-buffer pass
 	static void runGBufferCallback(RenderPassWorkContext& rgraphCtx)

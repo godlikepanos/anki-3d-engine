@@ -117,7 +117,7 @@ public:
 	ANKI_USE_RESULT Error create(PhysicsCollisionShapeInitInfo& init,
 		const Vec3* positions,
 		U32 positionsStride,
-		const U16* indices,
+		const U32* indices,
 		U32 indicesCount);
 };
 /// @}

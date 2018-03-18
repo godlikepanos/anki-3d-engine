@@ -6,8 +6,10 @@
 #pragma once
 
 #include <anki/resource/Common.h>
+#include <anki/resource/ResourceFilesystem.h>
 #include <anki/Math.h>
 #include <anki/util/Enum.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -15,93 +17,68 @@ namespace anki
 /// @addtogroup resource
 /// @{
 
-/// Mesh data. This class loads the mesh file and the Mesh class loads it to the CPU.
-class MeshLoader
+/// Information to decode mesh binary files.
+class MeshBinaryFile
 {
 public:
-	/// Type of the components.
-	enum class ComponentFormat : U32
-	{
-		NONE,
-
-		R8,
-		R8G8,
-		R8G8B8,
-		R8G8B8A8,
-
-		R16,
-		R16G16,
-		R16G16B16,
-		R16G16B16A16,
-
-		R32,
-		R32G32,
-		R32G32B32,
-		R32G32B32A32,
-
-		R10G10B10A2,
-
-		COUNT
-	};
-
-	enum class FormatTransform : U32
-	{
-		NONE,
-
-		UNORM,
-		SNORM,
-		UINT,
-		SINT,
-		FLOAT,
-
-		COUNT
-	};
-
-	struct Format
-	{
-		ComponentFormat m_components = ComponentFormat::NONE;
-		FormatTransform m_transform = FormatTransform::NONE;
-	};
+	static constexpr const char* MAGIC = "ANKIMES4";
 
 	enum class Flag : U32
 	{
 		NONE = 0,
-		QUADS = 1 << 0
+		QUAD = 1 << 0,
+
+		ALL = QUAD,
 	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend);
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
+
+	struct VertexBuffer
+	{
+		U32 m_vertexStride;
+	};
+
+	struct VertexAttribute
+	{
+		U32 m_bufferBinding;
+		Format m_format;
+		U32 m_relativeOffset;
+		F32 m_scale;
+	};
+
+	struct SubMesh
+	{
+		U32 m_firstIndex;
+		U32 m_indexCount;
+		Vec3 m_aabbMin; ///< Bounding box min.
+		Vec3 m_aabbMax; ///< Bounding box max.
+	};
 
 	struct Header
 	{
-		Array<U8, 8> m_magic; ///< Magic word.
-		U32 m_flags;
-		U32 m_flags2;
-		Format m_positionsFormat;
-		Format m_normalsFormat;
-		Format m_tangentsFormat;
-		Format m_colorsFormat; ///< Vertex color.
-		Format m_uvsFormat;
-		Format m_boneWeightsFormat;
-		Format m_boneIndicesFormat;
-		Format m_indicesFormat; ///< Vertex indices.
+		char m_magic[8]; ///< Magic word.
+		Flag m_flags;
 
-		U32 m_totalIndicesCount;
-		U32 m_totalVerticesCount;
-		/// Number of UV sets. Eg one for normal diffuse and another for lightmaps.
-		U32 m_uvsChannelCount;
+		Array<VertexBuffer, U32(VertexAttributeLocation::COUNT)> m_vertexBuffers;
+		U32 m_vertexBufferCount;
+
+		Array<VertexAttribute, U32(VertexAttributeLocation::COUNT)> m_vertexAttributes;
+
+		IndexType m_indexType;
+		U8 _padding[3];
+
+		U32 m_totalIndexCount;
+		U32 m_totalVertexCount;
 		U32 m_subMeshCount;
 
-		U8 m_padding[32];
+		Vec3 m_aabbMin; ///< Bounding box min.
+		Vec3 m_aabbMax; ///< Bounding box max.
 	};
+};
 
-	static_assert(sizeof(Header) == 128, "Check size of struct");
-
-	class SubMesh
-	{
-	public:
-		U32 m_firstIndex = 0;
-		U32 m_indicesCount = 0;
-	};
-
+/// Mesh data. This class loads the mesh file and the Mesh class loads it to the CPU.
+class MeshLoader
+{
+public:
 	MeshLoader(ResourceManager* manager);
 
 	MeshLoader(ResourceManager* manager, GenericMemoryPoolAllocator<U8> alloc)
@@ -114,67 +91,54 @@ public:
 
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
-	const Header& getHeader() const
+	ANKI_USE_RESULT Error storeIndexBuffer(void* ptr, PtrSize size);
+
+	ANKI_USE_RESULT Error storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size);
+
+	/// Instead of calling storeIndexBuffer and storeVertexBuffer use this method to get those buffers into the CPU.
+	ANKI_USE_RESULT Error storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, DynamicArrayAuto<Vec3>& positions);
+
+	const MeshBinaryFile::Header& getHeader() const
 	{
 		ANKI_ASSERT(isLoaded());
 		return m_header;
 	}
 
-	const U8* getVertexData() const
-	{
-		ANKI_ASSERT(isLoaded());
-		return &m_verts[0];
-	}
-
-	PtrSize getVertexDataSize() const
-	{
-		ANKI_ASSERT(isLoaded());
-		return m_verts.getSizeInBytes();
-	}
-
-	PtrSize getVertexSize() const
-	{
-		ANKI_ASSERT(isLoaded());
-		return m_vertSize;
-	}
-
-	const U8* getIndexData() const
-	{
-		ANKI_ASSERT(isLoaded());
-		return &m_indices[0];
-	}
-
-	PtrSize getIndexDataSize() const
-	{
-		ANKI_ASSERT(isLoaded());
-		return m_indices.getSizeInBytes();
-	}
-
 	Bool hasBoneInfo() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return m_header.m_boneWeightsFormat.m_components != ComponentFormat::NONE;
+		return m_header.m_vertexAttributes[VertexAttributeLocation::BONE_INDICES].m_format != Format::NONE;
+	}
+
+	ConstWeakArray<MeshBinaryFile::SubMesh> getSubMeshes() const
+	{
+		return ConstWeakArray<MeshBinaryFile::SubMesh>(m_subMeshes);
 	}
 
 private:
-	template<typename T>
-	using MDynamicArray = DynamicArray<T>;
-
 	ResourceManager* m_manager;
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	Header m_header;
 
-	MDynamicArray<U8> m_verts;
-	MDynamicArray<U8> m_indices;
-	MDynamicArray<SubMesh> m_subMeshes;
-	U8 m_vertSize = 0;
+	ResourceFilePtr m_file;
+
+	MeshBinaryFile::Header m_header;
+
+	DynamicArray<MeshBinaryFile::SubMesh> m_subMeshes;
+
+	U32 m_loadedChunk = 0; ///< Because the store methods need to be called in sequence.
 
 	Bool isLoaded() const
 	{
-		return m_verts.getSize() > 0;
+		return m_file.get() != nullptr;
 	}
 
-	static ANKI_USE_RESULT Error checkFormat(const Format& fmt, const CString& attrib, Bool cannotBeEmpty);
+	PtrSize getIndexBufferSize() const
+	{
+		return m_header.m_totalIndexCount * ((m_header.m_indexType == IndexType::U16) ? 2 : 4);
+	}
+
+	ANKI_USE_RESULT Error checkHeader() const;
+	ANKI_USE_RESULT Error checkFormat(VertexAttributeLocation type, ConstWeakArray<Format> supportedFormats) const;
 };
 /// @}
 

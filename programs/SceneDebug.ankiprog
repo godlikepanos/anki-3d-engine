@@ -7,6 +7,7 @@ http://www.anki3d.org/LICENSE
 <shaderProgram>
 	<mutators>
 		<mutator name="COLOR_TEXTURE" values="0 1"/>
+		<mutator name="DITHERED_DEPTH_TEST" values="0 1"/> 
 	</mutators>
 
 	<inputs>
@@ -24,12 +25,10 @@ layout(location = 1) in vec2 in_uv;
 layout(location = 0) out vec2 out_uv;
 #endif
 
-layout(ANKI_UBO_BINDING(0, 0), row_major) uniform u0_
+layout(ANKI_UBO_BINDING(1, 0), row_major) uniform u0_
 {
 	mat4 u_mvp[INSTANCE_COUNT];
-#if COLOR_TEXTURE == 0
 	vec4 u_color;
-#endif
 };
 
 out gl_PerVertex
@@ -53,21 +52,38 @@ void main()
 
 #if COLOR_TEXTURE == 1
 layout(location = 0) in vec2 in_uv;
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
-#else
-layout(ANKI_UBO_BINDING(0, 0), row_major) uniform u0_
+layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D u_tex;
+#endif
+
+layout(ANKI_UBO_BINDING(1, 0), row_major) uniform u0_
 {
 	mat4 u_mvp[INSTANCE_COUNT];
 	vec4 u_color;
 };
+
+#if DITHERED_DEPTH_TEST == 1
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
 #endif
 
 layout(location = 0) out vec4 out_color;
 
 void main()
 {
+	// Check if we should skip the frag
+#if DITHERED_DEPTH_TEST == 1
+	vec2 uv = gl_FragCoord.xy / vec2(textureSize(u_depthRt, 0));
+	float depthRef = textureLod(u_depthRt, uv, 0.0).r;
+	bool depthTestFailed = gl_FragCoord.z >= depthRef;
+	ivec2 fragCoordi = ivec2(gl_FragCoord.xy);
+	if(depthTestFailed && ((fragCoordi.x + fragCoordi.y) % 8) != 0)
+	{
+		discard;
+	}
+#endif
+
+	// Write the color
 #if COLOR_TEXTURE == 1
-	out_color = texture(u_tex, in_uv);
+	out_color = texture(u_tex, in_uv) * u_color;
 #else
 	out_color = u_color;
 #endif

@@ -47,15 +47,15 @@ public:
 		return m_handle;
 	}
 
-	PtrSize getSize() const
-	{
-		ANKI_ASSERT(m_size);
-		return m_size;
-	}
-
 	Bool usageValid(BufferUsageBit usage) const
 	{
 		return (m_usage & usage) == usage;
+	}
+
+	PtrSize getActualSize() const
+	{
+		ANKI_ASSERT(m_actualSize > 0);
+		return m_actualSize;
 	}
 
 	void computeBarrierInfo(BufferUsageBit before,
@@ -69,6 +69,7 @@ private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryHandle m_memHandle;
 	VkMemoryPropertyFlags m_memoryFlags = 0;
+	PtrSize m_actualSize = 0;
 
 #if ANKI_EXTRA_CHECKS
 	Bool8 m_mapped = false;

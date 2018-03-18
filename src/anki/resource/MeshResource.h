@@ -28,96 +28,128 @@ public:
 
 	~MeshResource();
 
-	U32 getTextureChannelsCount() const
-	{
-		return m_texChannelsCount;
-	}
-
-	Bool hasBoneWeights() const
-	{
-		return m_weights;
-	}
-
-	/// Used only to clone the VBO
-	U32 getVerticesCount() const
-	{
-		return m_vertsCount;
-	}
-
-	U32 getIndicesCount() const
-	{
-		return m_indicesCount;
-	}
-
-	const Obb& getBoundingShape() const
-	{
-		return m_obb;
-	}
-
-	/// Get indices count and offset of submesh
-	U32 getIndicesCountSub(U subMeshId, U32& offset) const
-	{
-		const SubMesh& sm = m_subMeshes[subMeshId];
-		offset = sm.m_indicesOffset;
-		return sm.m_indicesCount;
-	}
-
-	const Obb& getBoundingShapeSub(U subMeshId) const
-	{
-		return m_subMeshes[subMeshId].m_obb;
-	}
-
-	/// If returns zero then the mesh is a single uniform mesh
-	U32 getSubMeshesCount() const
-	{
-		return m_subMeshes.getSize();
-	}
-
-	BufferPtr getVertexBuffer() const
-	{
-		return m_vertBuff;
-	}
-
-	BufferPtr getIndexBuffer() const
-	{
-		return m_indicesBuff;
-	}
-
-	U32 getVertexSize() const
-	{
-		return m_vertSize;
-	}
-
 	/// Helper function for correct loading
 	Bool isCompatible(const MeshResource& other) const;
 
 	/// Load from a mesh file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
+	/// Get the complete bounding box.
+	const Obb& getBoundingShape() const
+	{
+		return m_obb;
+	}
+
+	/// Get submesh info.
+	void getSubMeshInfo(U subMeshId, U32& firstIndex, U32& indexCount, const Obb*& obb) const
+	{
+		const SubMesh& sm = m_subMeshes[subMeshId];
+		firstIndex = sm.m_firstIndex;
+		indexCount = sm.m_indexCount;
+		obb = &sm.m_obb;
+	}
+
+	U32 getSubMeshCount() const
+	{
+		return m_subMeshes.getSize();
+	}
+
+	/// Get all info around vertex indices.
+	void getIndexBufferInfo(BufferPtr& buff, PtrSize& buffOffset, U32& indexCount, IndexType& indexType) const
+	{
+		buff = m_indexBuff;
+		buffOffset = 0;
+		indexCount = m_indexCount;
+		indexType = m_indexType;
+	}
+
+	/// Get the number of logical vertex buffers.
+	U32 getVertexBufferCount() const
+	{
+		return m_vertBufferInfos.getSize();
+	}
+
+	/// Get vertex buffer info.
+	void getVertexBufferInfo(const U32 buffIdx, BufferPtr& buff, PtrSize& offset, PtrSize& stride) const
+	{
+		buff = m_vertBuff;
+		offset = m_vertBufferInfos[buffIdx].m_offset;
+		stride = m_vertBufferInfos[buffIdx].m_stride;
+	}
+
+	/// Get attribute info. You need to check if the attribute is preset first (isVertexAttributePresent)
+	void getVertexAttributeInfo(
+		const VertexAttributeLocation attrib, U32& bufferIdx, Format& format, PtrSize& relativeOffset) const
+	{
+		ANKI_ASSERT(!!m_attribs[attrib].m_fmt);
+		bufferIdx = m_attribs[attrib].m_buffIdx;
+		format = m_attribs[attrib].m_fmt;
+		relativeOffset = m_attribs[attrib].m_relativeOffset;
+	}
+
+	/// Check if a vertex attribute is present.
+	Bool isVertexAttributePresent(const VertexAttributeLocation attrib) const
+	{
+		return !!m_attribs[attrib].m_fmt;
+	}
+
+	/// Get the number of texture coordinates channels.
+	U32 getTextureChannelCount() const
+	{
+		return m_texChannelCount;
+	}
+
+	/// Return true if it has bone weights.
+	Bool hasBoneWeights() const
+	{
+		return isVertexAttributePresent(VertexAttributeLocation::BONE_WEIGHTS);
+	}
+
 protected:
 	class LoadTask;
 	class LoadContext;
 
-	/// Per sub mesh data
+	static constexpr U VERTEX_BUFFER_ALIGNMENT = 64;
+
+	/// Sub-mesh data
 	struct SubMesh
 	{
-		U32 m_indicesCount;
-		U32 m_indicesOffset;
+		U32 m_firstIndex;
+		U32 m_indexCount;
 		Obb m_obb;
 	};
-
 	DynamicArray<SubMesh> m_subMeshes;
-	U32 m_indicesCount;
-	U32 m_vertsCount;
-	U32 m_vertSize;
-	Obb m_obb;
-	U8 m_texChannelsCount;
-	Bool8 m_weights;
+
+	// Index stuff
+	U32 m_indexCount = 0;
+	BufferPtr m_indexBuff;
+	IndexType m_indexType = IndexType::COUNT;
+
+	// Vertex stuff
+	U32 m_vertCount = 0;
+
+	struct VertBuffInfo
+	{
+		U32 m_offset; ///< Offset from the base of m_vertBuff.
+		U32 m_stride;
+	};
+	DynamicArray<VertBuffInfo> m_vertBufferInfos;
+
+	struct AttribInfo
+	{
+		Format m_fmt = Format::NONE;
+		U32 m_relativeOffset = 0;
+		U8 m_buffIdx = 0;
+	};
+	Array<AttribInfo, U(VertexAttributeLocation::COUNT)> m_attribs;
 
 	BufferPtr m_vertBuff;
-	BufferPtr m_indicesBuff;
+	U8 m_texChannelCount = 0;
 
-	static ANKI_USE_RESULT Error load(LoadContext& ctx);
+	// Other
+	Obb m_obb;
+
+	ANKI_USE_RESULT Error loadAsync(MeshLoader& loader) const;
 };
 /// @}
 

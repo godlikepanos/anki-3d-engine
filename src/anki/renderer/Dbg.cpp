@@ -26,10 +26,6 @@ Dbg::Dbg(Renderer* r)
 
 Dbg::~Dbg()
 {
-	if(m_drawer != nullptr)
-	{
-		getAllocator().deleteInstance(m_drawer);
-	}
 }
 
 Error Dbg::init(const ConfigSet& initializer)
@@ -57,26 +53,7 @@ Error Dbg::lazyInit()
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 	m_fbDescr.bake();
 
-	m_drawer = getAllocator().newInstance<DebugDrawer>();
-	ANKI_CHECK(m_drawer->init(m_r));
-
 	return Error::NONE;
-}
-
-Bool Dbg::getDepthTestEnabled() const
-{
-	return m_drawer->getDepthTestEnabled();
-}
-
-void Dbg::setDepthTestEnabled(Bool enable)
-{
-	m_drawer->setDepthTestEnabled(enable);
-}
-
-void Dbg::switchDepthTestEnabled()
-{
-	Bool enabled = m_drawer->getDepthTestEnabled();
-	m_drawer->setDepthTestEnabled(!enabled);
 }
 
 void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
@@ -85,24 +62,17 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	if(!m_initialized)
-	{
-		if(lazyInit())
-		{
-			return;
-		}
-		m_initialized = true;
-	}
-
+	// Set common state
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdb->setDepthWrite(false);
 
-	m_drawer->prepareFrame(cmdb);
-	m_drawer->setViewProjectionMatrix(ctx.m_renderQueue->m_viewProjectionMatrix);
-	m_drawer->setModelMatrix(Mat4::getIdentity());
-	// m_drawer->drawGrid();
+	rgraphCtx.bindTextureAndSampler(0,
+		0,
+		m_r->getGBuffer().getDepthRt(),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
+		m_r->getNearestSampler());
 
-	SceneDebugDrawer sceneDrawer(m_drawer);
-
+	// Set the context
 	RenderQueueDrawContext dctx;
 	dctx.m_viewMatrix = ctx.m_renderQueue->m_viewMatrix;
 	dctx.m_viewProjectionMatrix = ctx.m_renderQueue->m_viewProjectionMatrix;
@@ -112,23 +82,27 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	dctx.m_commandBuffer = cmdb;
 	dctx.m_key = RenderingKey(Pass::GB_FS, 0, 1);
 	dctx.m_debugDraw = true;
+	dctx.m_debugDrawFlags = m_debugDrawFlags;
 
+	// Draw
 	for(const RenderableQueueElement& el : ctx.m_renderQueue->m_renderables)
 	{
 		Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
 		el.m_callback(dctx, {&a[0], 1});
 	}
-
-	for(const PointLightQueueElement& plight : ctx.m_renderQueue->m_pointLights)
-	{
-		sceneDrawer.draw(plight);
-	}
-
-	m_drawer->finishFrame();
 }
 
 void Dbg::populateRenderGraph(RenderingContext& ctx)
 {
+	if(!m_initialized)
+	{
+		if(lazyInit())
+		{
+			return;
+		}
+		m_initialized = true;
+	}
+
 	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 

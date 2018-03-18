@@ -76,7 +76,7 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw anywhere
-	ANKI_ASSERT(self.m_modelPatch->getSubMeshesCount() == 0);
+	ANKI_ASSERT(self.m_modelPatch->getSubMeshCount() == 1);
 
 	ModelRenderingInfo modelInf;
 	self.m_modelPatch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
@@ -88,7 +88,8 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 	for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 	{
 		const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
-		cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+		cmdb->setVertexAttribute(
+			U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
 	}
 
 	// Set vertex buffers
@@ -263,7 +264,7 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 
 		// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw
 		// anywhere
-		ANKI_ASSERT(patch->getSubMeshesCount() == 0);
+		ANKI_ASSERT(patch->getSubMeshCount() == 1);
 
 		ModelRenderingInfo modelInf;
 		patch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
@@ -275,10 +276,9 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 		{
 			const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
-			if(attrib.m_format != Format::NONE)
-			{
-				cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
-			}
+			ANKI_ASSERT(attrib.m_format != Format::NONE);
+			cmdb->setVertexAttribute(
+				U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
 		}
 
 		// Set vertex buffers
@@ -392,10 +392,11 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 			const Vec4 tsl = self2.m_obb.getCenter().xyz1();
 			const Vec3 scale = self2.m_obb.getExtend().xyz();
 
-			// Set non uniform scale
-			rot(0, 0) *= scale.x();
-			rot(0, 1) *= scale.y();
-			rot(0, 2) *= scale.z();
+			// Set non uniform scale. Add a margin to avoid flickering
+			const F32 MARGIN = 1.02;
+			rot(0, 0) *= scale.x() * MARGIN;
+			rot(1, 1) *= scale.y() * MARGIN;
+			rot(2, 2) *= scale.z() * MARGIN;
 
 			*mvps = ctx.m_viewProjectionMatrix * Mat4(tsl, rot, 1.0f);
 			++mvps;
@@ -405,21 +406,38 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		*color = Vec4(1.0f, 0.0f, 1.0f, 1.0f);
 
 		// Setup state
-		ShaderProgramResourceMutationInitList<1> mutators(self.m_dbgProg);
+		ShaderProgramResourceMutationInitList<2> mutators(self.m_dbgProg);
 		mutators.add("COLOR_TEXTURE", 0);
+		mutators.add("DITHERED_DEPTH_TEST", ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON));
 		ShaderProgramResourceConstantValueInitList<1> consts(self.m_dbgProg);
 		consts.add("INSTANCE_COUNT", U32(userData.getSize()));
 		const ShaderProgramResourceVariant* variant;
 		self.m_dbgProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
 		cmdb->bindShaderProgram(variant->getProgram());
 
+		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+		if(enableDepthTest)
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+		}
+		else
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+		}
+
 		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
 		cmdb->bindVertexBuffer(0, vertToken.m_buffer, vertToken.m_offset, sizeof(Vec3));
 		cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
 
-		cmdb->bindUniformBuffer(0, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
+		cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
 		cmdb->drawElements(PrimitiveTopology::LINES, INDEX_COUNT, userData.getSize());
+
+		// Restore state
+		if(!enableDepthTest)
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+		}
 	}
 }
 

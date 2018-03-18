@@ -620,8 +620,9 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 	ANKI_ASSERT(offset < impl.getSize());
 	ANKI_ASSERT((offset % 4) == 0 && "Should be multiple of 4");
 
-	size = (size == MAX_PTR_SIZE) ? (impl.getSize() - offset) : size;
-	ANKI_ASSERT(offset + size <= impl.getSize());
+	size = (size == MAX_PTR_SIZE) ? (impl.getActualSize() - offset) : size;
+	alignRoundUp(4, size); // Needs to be multiple of 4
+	ANKI_ASSERT(offset + size <= impl.getActualSize());
 	ANKI_ASSERT((size % 4) == 0 && "Should be multiple of 4");
 
 	ANKI_CMD(vkCmdFillBuffer(m_handle, impl.getHandle(), offset, size, value), ANY_OTHER_COMMAND);
