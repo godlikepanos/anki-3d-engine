@@ -41,6 +41,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define ANKI_TEX_BINDING(set_, binding_) binding = set_ * %u + binding_
 #	define ANKI_IMAGE_BINDING(set_, binding_) binding = set_ * %u + binding_
 #	define ANKI_SPEC_CONST(binding_, type_, name_) const type_ name_ = _anki_spec_const_ ## binding_
+#	define ANKI_PUSH_CONSTANTS(struct_, name_) layout(location = 0) uniform struct_ name_
 #else
 #	define gl_VertexID gl_VertexIndex
 #	define gl_InstanceID gl_InstanceIndex
@@ -49,6 +50,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define ANKI_SS_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #	define ANKI_IMAGE_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #	define ANKI_SPEC_CONST(binding_, type_, name_) layout(constant_id = binding_) const type_ name_ = type_(0)
+#	define ANKI_PUSH_CONSTANTS(struct_, name_) layout(push_constant) uniform pushConst_ {struct_ name_;}
 #endif
 
 #if %u

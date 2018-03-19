@@ -329,6 +329,8 @@ public:
 
 	void copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range);
 
+	void setPushConstants(const void* data, U32 dataSize);
+
 private:
 	StackAllocator<U8> m_alloc;
 
@@ -342,6 +344,7 @@ private:
 	ThreadId m_tid = ~ThreadId(0);
 #if ANKI_EXTRA_CHECKS
 	U32 m_commandCount = 0;
+	U32 m_setPushConstantsSize = 0;
 #endif
 
 	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.

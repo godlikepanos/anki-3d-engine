@@ -192,6 +192,13 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 
 	// Spec consts
 	specConstIds.m_vec = spvc.get_specialization_constants();
+
+	// Push consts
+	if(rsrc.push_constant_buffers.size() == 1)
+	{
+		U32 blockSize = spvc.get_declared_struct_size(spvc.get_type(rsrcActive.push_constant_buffers[0].base_type_id));
+		m_pushConstantsSize = blockSize;
+	}
 }
 
 } // end namespace anki

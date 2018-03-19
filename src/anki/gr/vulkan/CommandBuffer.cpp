@@ -358,4 +358,10 @@ Bool CommandBuffer::isEmpty() const
 	return self.isEmpty();
 }
 
+void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setPushConstants(data, dataSize);
+}
+
 } // end namespace anki

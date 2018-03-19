@@ -1486,4 +1486,9 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 	self.pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
 }
 
+void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
+{
+	ANKI_ASSERT(!"TODO");
+}
+
 } // end namespace anki

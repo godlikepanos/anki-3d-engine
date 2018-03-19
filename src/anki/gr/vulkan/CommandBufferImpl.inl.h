@@ -306,6 +306,9 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 {
 	ANKI_ASSERT(m_computeProg);
 	ANKI_ASSERT(!!(m_flags & CommandBufferFlag::COMPUTE_WORK));
+	ANKI_ASSERT(m_state.tryGetBoundShaderProgram()->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize
+				&& "Forgot to set pushConstants");
+
 	commandCommon();
 
 	// Bind descriptors
@@ -463,6 +466,9 @@ inline void CommandBufferImpl::drawcallCommon()
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass() || secondLevel());
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM || m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
+	ANKI_ASSERT(m_state.tryGetBoundShaderProgram()->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize
+				&& "Forgot to set pushConstants");
+
 	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
 
 	if(ANKI_UNLIKELY(m_rpCommandCount == 0) && !secondLevel())
@@ -705,6 +711,10 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 	}
 
 	m_microCmdb->pushObjectRef(prog);
+
+#if ANKI_EXTRA_CHECKS
+	m_setPushConstantsSize = 0;
+#endif
 }
 
 inline void CommandBufferImpl::copyBufferToBuffer(
@@ -732,6 +742,22 @@ inline Bool CommandBufferImpl::flipViewport() const
 {
 	return static_cast<const FramebufferImpl&>(*m_activeFb).isDefaultFramebuffer()
 		   && !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
+}
+
+inline void CommandBufferImpl::setPushConstants(const void* data, U32 dataSize)
+{
+	const ShaderProgramImpl* prog = m_state.tryGetBoundShaderProgram();
+	ANKI_ASSERT(prog && "Need have bound the ShaderProgram first");
+	ANKI_ASSERT(prog->getReflectionInfo().m_pushConstantsSize == dataSize
+				&& "The bound program should have push constants equal to the \"dataSize\" parameter");
+
+	ANKI_CMD(
+		vkCmdPushConstants(m_handle, prog->getPipelineLayout().getHandle(), VK_SHADER_STAGE_ALL, 0, dataSize, data),
+		ANY_OTHER_COMMAND);
+
+#if ANKI_EXTRA_CHECKS
+	m_setPushConstantsSize = dataSize;
+#endif
 }
 
 } // end namespace anki

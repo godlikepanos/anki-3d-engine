@@ -27,6 +27,7 @@ public:
 	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attributeMask = {false};
 	BitSet<MAX_DESCRIPTOR_SETS, U8> m_descriptorSetMask = {false};
 	Array<BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U8>, MAX_DESCRIPTOR_SETS> m_activeBindingMask = {{{false}, {false}}};
+	U32 m_pushConstantsSize = 0;
 
 	ShaderImpl(GrManager* manager, CString name)
 		: Shader(manager, name)

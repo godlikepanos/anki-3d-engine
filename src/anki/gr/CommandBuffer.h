@@ -261,6 +261,9 @@ public:
 	/// Bind texture buffer.
 	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt);
 
+	/// Set push constants.
+	void setPushConstants(const void* data, U32 dataSize);
+
 	/// Bind a program.
 	void bindShaderProgram(ShaderProgramPtr prog);
 

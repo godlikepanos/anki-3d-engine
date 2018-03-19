@@ -176,8 +176,6 @@ layout(location = 0) in vec2 in_uv;
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_tex1;
 
-ANKI_USING_FRAG_COORD(768)
-
 void main()
 {
 	if(anki_fragCoord.x < 1024 / 2)
@@ -2034,6 +2032,116 @@ void main()
 
 	cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 	cmdb->bindShaderProgram(prog);
+	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());
+	cmdb->beginRenderPass(createDefaultFb(*gr), {}, {});
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	cmdb->endRenderPass();
+	cmdb->flush();
+
+	gr->swapBuffers();
+	gr->finish();
+
+	// Get the result
+	UVec4* result = static_cast<UVec4*>(resultBuff->map(0, resultBuff->getSize(), BufferMapAccessBit::READ));
+	ANKI_TEST_EXPECT_EQ(result->x(), 2);
+	ANKI_TEST_EXPECT_EQ(result->y(), 2);
+	ANKI_TEST_EXPECT_EQ(result->z(), 2);
+	ANKI_TEST_EXPECT_EQ(result->w(), 2);
+	resultBuff->unmap();
+
+	COMMON_END()
+}
+
+ANKI_TEST(Gr, PushConsts)
+{
+	COMMON_BEGIN()
+
+	static const char* VERT_SRC = R"(
+struct PC
+{
+	vec4 color;
+	vec4 color2;
+};
+ANKI_PUSH_CONSTANTS(PC, regs);
+	
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+	
+layout(location = 0) out vec4 out_color;
+
+void main()
+{
+	vec2 uv = vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
+	vec2 pos = uv * 2.0 - 1.0;
+	gl_Position = vec4(pos, 0.0, 1.0);
+	
+	out_color = regs.color;
+}
+)";
+
+	static const char* FRAG_SRC = R"(
+struct PC
+{
+	vec4 color;
+	vec4 color2;
+};
+ANKI_PUSH_CONSTANTS(PC, regs);
+	
+layout(location = 0) in vec4 in_color;
+layout(location = 0) out vec4 out_color;
+
+layout(ANKI_SS_BINDING(0, 0)) buffer s_
+{
+	uvec4 u_result;
+};
+
+void main()
+{
+	out_color = vec4(1.0);
+
+	if(gl_FragCoord.x == 0.5 && gl_FragCoord.y == 0.5)
+	{
+		if(in_color != vec4(1.0, 0.0, 1.0, 0.0) || regs.color2 != vec4(0.0, 1.0, 0.25, 0.5))
+		{
+			u_result = uvec4(1u);
+		}
+		else
+		{
+			u_result = uvec4(2u);
+		}
+	}
+}
+)";
+
+	ShaderProgramPtr prog = createProgram(VERT_SRC, FRAG_SRC, *gr);
+
+	// Create the result buffer
+	BufferPtr resultBuff = gr->newBuffer(
+		BufferInitInfo(sizeof(UVec4), BufferUsageBit::STORAGE_ALL | BufferUsageBit::FILL, BufferMapAccessBit::READ));
+
+	// Draw
+	gr->beginFrame();
+
+	CommandBufferInitInfo cinit;
+	cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+
+	cmdb->fillBuffer(resultBuff, 0, resultBuff->getSize(), 0);
+	cmdb->setBufferBarrier(
+		resultBuff, BufferUsageBit::FILL, BufferUsageBit::STORAGE_FRAGMENT_WRITE, 0, resultBuff->getSize());
+
+	cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+	cmdb->bindShaderProgram(prog);
+
+	struct PushConstants
+	{
+		Vec4 m_color = Vec4(1.0, 0.0, 1.0, 0.0);
+		Vec4 m_color1 = Vec4(0.0, 1.0, 0.25, 0.5);
+	} pc;
+	cmdb->setPushConstants(&pc, sizeof(pc));
+
 	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());
 	cmdb->beginRenderPass(createDefaultFb(*gr), {}, {});
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
