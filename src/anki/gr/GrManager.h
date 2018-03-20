@@ -42,13 +42,7 @@ public:
 	/// Destroy.
 	static void deleteInstance(GrManager* gr);
 
-	GpuVendor getGpuVendor() const
-	{
-		ANKI_ASSERT(m_gpuVendor != GpuVendor::COUNT);
-		return m_gpuVendor;
-	}
-
-	GpuDeviceCapabilitiesBit getDeviceCapabilities() const
+	const GpuDeviceCapabilities& getDeviceCapabilities() const
 	{
 		return m_capabilities;
 	}
@@ -101,17 +95,16 @@ anki_internal:
 		return m_cacheDir.toCString();
 	}
 
-	U64& getUuidIndex()
+	U64 getNewUuid()
 	{
-		return m_uuidIndex;
+		return m_uuidIndex.fetchAdd(1);
 	}
 
 protected:
 	GrAllocator<U8> m_alloc; ///< Keep it first to get deleted last
 	String m_cacheDir;
-	U64 m_uuidIndex = 1;
-	GpuVendor m_gpuVendor = GpuVendor::COUNT;
-	GpuDeviceCapabilitiesBit m_capabilities = GpuDeviceCapabilitiesBit::NONE;
+	Atomic<U64> m_uuidIndex = {1};
+	GpuDeviceCapabilities m_capabilities;
 
 	GrManager();
 

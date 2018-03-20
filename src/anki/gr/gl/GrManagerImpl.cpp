@@ -51,10 +51,8 @@ Error GrManagerImpl::init(GrManagerInitInfo& init, GrAllocator<U8> alloc)
 	m_thread->syncClientServer();
 
 	// Misc
-	m_gpuVendor = m_state->m_gpu;
-	m_capabilities = !!(m_state->m_extensions & GlExtensions::ARB_SHADER_BALLOT)
-						 ? GpuDeviceCapabilitiesBit::SHADER_BALLOT
-						 : GpuDeviceCapabilitiesBit::NONE;
+	m_capabilities.m_gpuVendor = m_state->m_gpu;
+	m_capabilities.m_shaderSubgroups = !!(m_state->m_extensions & GlExtensions::ARB_SHADER_BALLOT);
 
 	return Error::NONE;
 }

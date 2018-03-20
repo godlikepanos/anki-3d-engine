@@ -201,6 +201,7 @@ void GlState::initRenderThread()
 void GlState::destroy()
 {
 	glDeleteVertexArrays(1, &m_defaultVao);
+	m_crntProg.reset(nullptr);
 }
 
 } // end namespace anki

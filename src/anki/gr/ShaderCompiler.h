@@ -27,8 +27,7 @@ class ShaderCompilerOptions
 public:
 	ShaderLanguage m_outLanguage = ShaderLanguage::COUNT;
 	ShaderType m_shaderType = ShaderType::COUNT;
-	GpuVendor m_gpuVendor = GpuVendor::COUNT;
-	GpuDeviceCapabilitiesBit m_gpuCapabilities = GpuDeviceCapabilitiesBit::NONE;
+	GpuDeviceCapabilities m_gpuCapabilities;
 
 	void setFromGrManager(const GrManager& gr);
 };

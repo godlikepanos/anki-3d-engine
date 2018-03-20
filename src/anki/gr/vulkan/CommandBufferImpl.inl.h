@@ -746,6 +746,7 @@ inline Bool CommandBufferImpl::flipViewport() const
 
 inline void CommandBufferImpl::setPushConstants(const void* data, U32 dataSize)
 {
+	ANKI_ASSERT(data && dataSize && dataSize % 16 == 0);
 	const ShaderProgramImpl* prog = m_state.tryGetBoundShaderProgram();
 	ANKI_ASSERT(prog && "Need have bound the ShaderProgram first");
 	ANKI_ASSERT(prog->getReflectionInfo().m_pushConstantsSize == dataSize

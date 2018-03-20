@@ -2060,7 +2060,9 @@ ANKI_TEST(Gr, PushConsts)
 struct PC
 {
 	vec4 color;
-	vec4 color2;
+	ivec4 icolor;
+	vec4 arr[2];
+	mat4 mat;
 };
 ANKI_PUSH_CONSTANTS(PC, regs);
 	
@@ -2085,7 +2087,9 @@ void main()
 struct PC
 {
 	vec4 color;
-	vec4 color2;
+	ivec4 icolor;
+	vec4 arr[2];
+	mat4 mat;
 };
 ANKI_PUSH_CONSTANTS(PC, regs);
 	
@@ -2103,7 +2107,9 @@ void main()
 
 	if(gl_FragCoord.x == 0.5 && gl_FragCoord.y == 0.5)
 	{
-		if(in_color != vec4(1.0, 0.0, 1.0, 0.0) || regs.color2 != vec4(0.0, 1.0, 0.25, 0.5))
+		if(in_color != vec4(1.0, 0.0, 1.0, 0.0) || regs.icolor != ivec4(-1, 1, 2147483647, -2147483647)
+			|| regs.arr[0] != vec4(1, 2, 3, 4) || regs.arr[1] != vec4(10, 20, 30, 40)
+			|| regs.mat[1][0] != 0.5)
 		{
 			u_result = uvec4(1u);
 		}
@@ -2138,8 +2144,11 @@ void main()
 	struct PushConstants
 	{
 		Vec4 m_color = Vec4(1.0, 0.0, 1.0, 0.0);
-		Vec4 m_color1 = Vec4(0.0, 1.0, 0.25, 0.5);
+		IVec4 m_icolor = IVec4(-1, 1, 2147483647, -2147483647);
+		Vec4 m_arr[2] = {Vec4(1, 2, 3, 4), Vec4(10, 20, 30, 40)};
+		Mat4 m_mat = Mat4(0.0f);
 	} pc;
+	pc.m_mat(0, 1) = 0.5f;
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());

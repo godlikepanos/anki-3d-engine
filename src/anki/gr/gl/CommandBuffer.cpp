@@ -822,8 +822,9 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 		{
 		}
 
-		Error operator()(GlState&)
+		Error operator()(GlState& state)
 		{
+			state.m_crntProg = m_prog;
 			glUseProgram(static_cast<const ShaderProgramImpl&>(*m_prog).getGlName());
 			return Error::NONE;
 		}
@@ -1488,7 +1489,59 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 
 void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 {
-	ANKI_ASSERT(!"TODO");
+	class PushConstants final : public GlCommand
+	{
+	public:
+		DynamicArrayAuto<Vec4> m_data;
+
+		PushConstants(const void* data, U32 dataSize, const CommandBufferAllocator<F32>& alloc)
+			: m_data(alloc)
+		{
+			m_data.create(dataSize / sizeof(Vec4));
+			memcpy(&m_data[0], data, dataSize);
+		}
+
+		Error operator()(GlState& state)
+		{
+			const ShaderProgramImplReflection& refl =
+				static_cast<ShaderProgramImpl&>(*state.m_crntProg).getReflection();
+			ANKI_ASSERT(refl.m_uniformDataSize == m_data.getSizeInBytes());
+
+			for(const ShaderProgramImplReflection::Uniform& uni : refl.m_uniforms)
+			{
+				const U idx = uni.m_location;
+				const U count = uni.m_arrSize;
+				const GLint loc = uni.m_location;
+
+				switch(uni.m_type)
+				{
+				case ShaderVariableDataType::VEC4:
+					glUniform4fv(loc, count, reinterpret_cast<const GLfloat*>(&m_data[idx]));
+					break;
+				case ShaderVariableDataType::IVEC4:
+					glUniform4iv(loc, count, reinterpret_cast<const GLint*>(&m_data[idx]));
+					break;
+				case ShaderVariableDataType::UVEC4:
+					glUniform4uiv(loc, count, reinterpret_cast<const GLuint*>(&m_data[idx]));
+					break;
+				case ShaderVariableDataType::MAT4:
+					glUniformMatrix4fv(loc, count, false, reinterpret_cast<const GLfloat*>(&m_data[idx]));
+					break;
+				default:
+					ANKI_ASSERT(!"TODO");
+				}
+			}
+
+			return Error::NONE;
+		}
+	};
+
+	ANKI_ASSERT(data);
+	ANKI_ASSERT(dataSize);
+	ANKI_ASSERT(dataSize % 16 == 0);
+
+	ANKI_GL_SELF(CommandBufferImpl);
+	self.pushBackNewCommand<PushConstants>(data, dataSize, self.m_alloc);
 }
 
 } // end namespace anki

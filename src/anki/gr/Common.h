@@ -104,12 +104,14 @@ enum class GpuVendor : U8
 
 extern Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR;
 
-enum class GpuDeviceCapabilitiesBit : U8
+/// Device capabilities.
+class GpuDeviceCapabilities
 {
-	NONE = 0,
-	SHADER_BALLOT = 1 << 0,
+public:
+	U32 m_pushConstantsSize = 128;
+	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
+	Bool8 m_shaderSubgroups = false;
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GpuDeviceCapabilitiesBit, inline)
 
 /// The type of the allocator for heap allocations
 template<typename T>

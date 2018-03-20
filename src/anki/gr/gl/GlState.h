@@ -7,6 +7,7 @@
 
 #include <anki/gr/gl/Common.h>
 #include <anki/util/DynamicArray.h>
+#include <anki/gr/ShaderProgram.h>
 
 namespace anki
 {
@@ -26,6 +27,8 @@ public:
 	I32 m_version = -1; ///< Minor major GL version. Something like 430
 	GpuVendor m_gpu = GpuVendor::UNKNOWN;
 	Bool8 m_registerMessages = false;
+
+	ShaderProgramPtr m_crntProg;
 
 	GLuint m_defaultVao = 0;
 

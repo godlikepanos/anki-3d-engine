@@ -12,7 +12,7 @@ namespace anki
 GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
 	: m_refcount(0)
 	, m_manager(manager)
-	, m_uuid(m_manager->getUuidIndex()++)
+	, m_uuid(m_manager->getNewUuid())
 	, m_type(type)
 {
 	if(name && name.getLength())

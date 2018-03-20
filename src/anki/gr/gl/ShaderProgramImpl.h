@@ -14,6 +14,20 @@ namespace anki
 /// @addtogroup opengl
 /// @{
 
+class ShaderProgramImplReflection
+{
+public:
+	struct Uniform
+	{
+		I32 m_location;
+		ShaderVariableDataType m_type;
+		U8 m_arrSize;
+	};
+
+	DynamicArray<Uniform> m_uniforms;
+	U32 m_uniformDataSize = 0;
+};
+
 /// Shader program implementation.
 class ShaderProgramImpl final : public ShaderProgram, public GlObject
 {
@@ -29,8 +43,13 @@ public:
 		ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom, ShaderPtr frag);
 	ANKI_USE_RESULT Error initCompute(ShaderPtr comp);
 
+	// Do that only when is needed to avoid serializing the thread the driver is using for compilation.
+	const ShaderProgramImplReflection& getReflection();
+
 private:
 	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders;
+	ShaderProgramImplReflection m_refl;
+	Bool8 m_reflInitialized = false;
 
 	ANKI_USE_RESULT Error link(GLuint vert, GLuint frag);
 };

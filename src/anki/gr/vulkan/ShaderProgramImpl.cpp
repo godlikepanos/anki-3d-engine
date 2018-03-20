@@ -79,7 +79,15 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 				}
 			}
 
-			m_refl.m_pushConstantsSize = max(m_refl.m_pushConstantsSize, simpl.m_pushConstantsSize);
+			if(simpl.m_pushConstantsSize > 0)
+			{
+				if(m_refl.m_pushConstantsSize > 0)
+				{
+					ANKI_ASSERT(m_refl.m_pushConstantsSize == simpl.m_pushConstantsSize);
+				}
+
+				m_refl.m_pushConstantsSize = max(m_refl.m_pushConstantsSize, simpl.m_pushConstantsSize);
+			}
 		}
 
 		if(counts[set])

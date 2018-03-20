@@ -204,9 +204,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	m_descrFactory.init(getAllocator(), m_device);
 	m_pplineLayoutFactory.init(getAllocator(), m_device);
 
-	m_capabilities |= !!(m_extensions & VulkanExtensions::EXT_SHADER_SUBGROUP_BALLOT)
-						  ? GpuDeviceCapabilitiesBit::SHADER_BALLOT
-						  : GpuDeviceCapabilitiesBit::NONE;
+	m_capabilities.m_shaderSubgroups = !!(m_extensions & VulkanExtensions::EXT_SHADER_SUBGROUP_BALLOT);
 
 	return Error::NONE;
 }
@@ -389,22 +387,22 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	switch(m_devProps.vendorID)
 	{
 	case 0x13B5:
-		m_gpuVendor = GpuVendor::ARM;
+		m_capabilities.m_gpuVendor = GpuVendor::ARM;
 		break;
 	case 0x10DE:
-		m_gpuVendor = GpuVendor::NVIDIA;
+		m_capabilities.m_gpuVendor = GpuVendor::NVIDIA;
 		break;
 	case 0x1002:
 	case 0x1022:
-		m_gpuVendor = GpuVendor::AMD;
+		m_capabilities.m_gpuVendor = GpuVendor::AMD;
 		break;
 	case 0x8086:
-		m_gpuVendor = GpuVendor::INTEL;
+		m_capabilities.m_gpuVendor = GpuVendor::INTEL;
 		break;
 	default:
-		m_gpuVendor = GpuVendor::UNKNOWN;
+		m_capabilities.m_gpuVendor = GpuVendor::UNKNOWN;
 	}
-	ANKI_VK_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_gpuVendor][0]);
+	ANKI_VK_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 
