@@ -1509,7 +1509,8 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 
 			for(const ShaderProgramImplReflection::Uniform& uni : refl.m_uniforms)
 			{
-				const U idx = uni.m_location;
+				ANKI_ASSERT(U(uni.m_location) >= MAX_TEXTURE_BINDINGS);
+				const U idx = uni.m_location - MAX_TEXTURE_BINDINGS;
 				const U count = uni.m_arrSize;
 				const GLint loc = uni.m_location;
 
@@ -1527,6 +1528,15 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 				case ShaderVariableDataType::MAT4:
 					glUniformMatrix4fv(loc, count, false, reinterpret_cast<const GLfloat*>(&m_data[idx]));
 					break;
+				case ShaderVariableDataType::MAT3:
+				{
+					// Remove the padding
+					ANKI_ASSERT(count == 1 && "TODO");
+					const Mat3x4* m34 = reinterpret_cast<const Mat3x4*>(&m_data[idx][0]);
+					Mat3 m3(m34->getRotationPart());
+					glUniformMatrix3fv(loc, count, false, reinterpret_cast<const GLfloat*>(&m3));
+					break;
+				}
 				default:
 					ANKI_ASSERT(!"TODO");
 				}

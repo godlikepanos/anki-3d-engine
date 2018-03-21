@@ -364,18 +364,6 @@ public:
 		}
 	}
 
-	const ShaderProgramImpl* tryGetBoundShaderProgram()
-	{
-		if(m_state.m_prog)
-		{
-			return static_cast<const ShaderProgramImpl*>(m_state.m_prog.get());
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-
 	void beginRenderPass(const FramebufferPtr& fb)
 	{
 		ANKI_ASSERT(m_rpass == VK_NULL_HANDLE);

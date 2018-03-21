@@ -139,6 +139,10 @@ const ShaderProgramImplReflection& ShaderProgramImpl::getReflection()
 				akType = ShaderVariableDataType::MAT4;
 				dataSize = 16 * 4;
 				break;
+			case GL_FLOAT_MAT3:
+				akType = ShaderVariableDataType::MAT3;
+				dataSize = 16 * 3;
+				break;
 			default:
 				ANKI_ASSERT(!"Unsupported type");
 			}

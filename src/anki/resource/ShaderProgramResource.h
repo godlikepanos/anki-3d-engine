@@ -198,6 +198,11 @@ public:
 		return m_uniBlockSize;
 	}
 
+	Bool usePushConstants() const
+	{
+		return m_usesPushConstants;
+	}
+
 	const ShaderVariableBlockInfo& getVariableBlockInfo(const ShaderProgramResourceInputVariable& var) const
 	{
 		ANKI_ASSERT(!var.isTexture() && variableActive(var));
@@ -234,6 +239,7 @@ private:
 	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
 	U32 m_uniBlockSize = 0;
 	DynamicArray<I16> m_texUnits;
+	Bool8 m_usesPushConstants = false;
 };
 
 /// The value of a constant.

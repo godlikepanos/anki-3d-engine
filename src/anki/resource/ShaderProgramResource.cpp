@@ -344,7 +344,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 	// <shader> again
 	inputVarCount = 0;
 	StringListAuto constSrcList(getTempAllocator());
-	StringListAuto blockSrcList(getTempAllocator());
+	StringListAuto uniStructList(getTempAllocator());
 	StringListAuto globalsSrcList(getTempAllocator());
 	StringListAuto definesSrcList(getTempAllocator());
 	ShaderTypeBit presentShaders = ShaderTypeBit::NONE;
@@ -384,7 +384,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 		if(inputsEl)
 		{
 			ANKI_CHECK(
-				parseInputs(inputsEl, inputVarCount, constSrcList, blockSrcList, globalsSrcList, definesSrcList));
+				parseInputs(inputsEl, inputVarCount, constSrcList, uniStructList, globalsSrcList, definesSrcList));
 		}
 
 		// <source>
@@ -398,7 +398,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 	// <inputs>
 	if(inputsEl)
 	{
-		ANKI_CHECK(parseInputs(inputsEl, inputVarCount, constSrcList, blockSrcList, globalsSrcList, definesSrcList));
+		ANKI_CHECK(parseInputs(inputsEl, inputVarCount, constSrcList, uniStructList, globalsSrcList, definesSrcList));
 	}
 
 	ANKI_ASSERT(inputVarCount == m_inputVars.getSize());
@@ -435,10 +435,25 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	StringAuto backedUboSrc(getTempAllocator());
-	if(!blockSrcList.isEmpty())
+	if(!uniStructList.isEmpty())
 	{
-		blockSrcList.pushBack("};\n");
-		blockSrcList.join("", backedUboSrc);
+		// Create the uniform struct
+		uniStructList.pushFront("struct spr_Uniforms_ {\n");
+		uniStructList.pushBack("};\n");
+
+		// Create the uniform block
+		uniStructList.pushBack("#if USE_PUSH_CONSTANTS == 0\n");
+		uniStructList.pushBackSprintf(
+			"layout(ANKI_UBO_BINDING(%u, 0), std140, row_major) uniform spr_Block_ {spr_Uniforms_ spr_unis_;};\n",
+			U(m_descriptorSet));
+
+		// Create the push constants
+		uniStructList.pushBack("#else // if USE_PUSH_CONSTANTS == 0\n");
+		uniStructList.pushBackSprintf("ANKI_PUSH_CONSTANTS(spr_Uniforms_, spr_unis_);\n");
+		uniStructList.pushBack("#endif // if USE_PUSH_CONSTANTS == 0\n");
+
+		// Done
+		uniStructList.join("", backedUboSrc);
 	}
 
 	StringAuto backedGlobalsSrc(getTempAllocator());
@@ -490,7 +505,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 	U& inputVarCount,
 	StringListAuto& constsSrc,
-	StringListAuto& blockSrc,
+	StringListAuto& uniStruct,
 	StringListAuto& globalsSrc,
 	StringListAuto& definesSrc)
 {
@@ -682,35 +697,34 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 		// Append to ubo source
 		if(var.inBlock())
 		{
-			if(blockSrc.isEmpty())
-			{
-				blockSrc.pushBackSprintf(
-					"layout(ANKI_UBO_BINDING(%u, 0), std140, row_major) uniform sprubo00_ {\n", U(m_descriptorSet));
-			}
-
-			blockSrc.pushBackSprintf("#if %s_DEFINED == 1\n", &name[0]);
+			uniStruct.pushBackSprintf("#if %s_DEFINED == 1\n", name.cstr());
+			globalsSrc.pushBackSprintf("#if %s_DEFINED == 1\n", name.cstr());
 
 			if(var.m_instanced)
 			{
-				blockSrc.pushBackSprintf("#if %s > 1\n", &m_instancingMutator->getName()[0]);
-				blockSrc.pushBackSprintf(
-					"%s %s_INSTARR[%s];\n", &typeTxt[0], &name[0], &m_instancingMutator->getName()[0]);
-				blockSrc.pushBack("#else\n");
-				blockSrc.pushBackSprintf("%s %s;\n", &typeTxt[0], &name[0]);
-				blockSrc.pushBack("#endif\n");
+				uniStruct.pushBackSprintf("#if %s > 1\n", &m_instancingMutator->getName()[0]);
+				uniStruct.pushBackSprintf("%s %s[%s];\n", &typeTxt[0], &name[0], &m_instancingMutator->getName()[0]);
+				uniStruct.pushBack("#else\n");
+				uniStruct.pushBackSprintf("%s %s;\n", &typeTxt[0], &name[0]);
+				uniStruct.pushBack("#endif\n");
 
-				globalsSrc.pushBackSprintf("#if defined(ANKI_VERTEX_SHADER) && %s_DEFINED == 1 && %s > 1\n",
-					&name[0],
-					&m_instancingMutator->getName()[0]);
-				globalsSrc.pushBackSprintf("%s %s = %s_INSTARR[gl_InstanceID];\n", &typeTxt[0], &name[0], &name[0]);
-				globalsSrc.pushBack("#else\n// TODO\n#endif\n");
+				globalsSrc.pushBackSprintf("#if %s > 1\n", m_instancingMutator->getName().cstr());
+				globalsSrc.pushBack("#if defined(ANKI_VERTEX_SHADER)\n");
+				globalsSrc.pushBackSprintf("%s %s = spr_unis_.%s[gl_InstanceID];\n", &typeTxt[0], &name[0], &name[0]);
+				globalsSrc.pushBack("#endif\n");
+				globalsSrc.pushBack("#else\n");
+				globalsSrc.pushBackSprintf("%s %s = spr_unis_.%s;\n", typeTxt.cstr(), name.cstr(), name.cstr());
+				globalsSrc.pushBack("#endif\n");
 			}
 			else
 			{
-				blockSrc.pushBackSprintf("%s %s;\n", &typeTxt[0], &name[0]);
+				uniStruct.pushBackSprintf("%s %s;\n", &typeTxt[0], &name[0]);
+
+				globalsSrc.pushBackSprintf("%s %s = spr_unis_.%s;\n", typeTxt.cstr(), name.cstr(), name.cstr());
 			}
 
-			blockSrc.pushBack("#endif\n");
+			uniStruct.pushBack("#endif\n");
+			globalsSrc.pushBack("#endif\n");
 		}
 
 		// Append the textures to global area
@@ -1053,8 +1067,14 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 		}
 	}
 
+	// Check if we can use push constants
+	variant.m_usesPushConstants =
+		instanceCount == 1
+		&& variant.m_uniBlockSize <= getManager().getGrManager().getDeviceCapabilities().m_pushConstantsSize;
+
 	// Write the source header
 	StringListAuto shaderHeaderSrc(getTempAllocator());
+	shaderHeaderSrc.pushBackSprintf("#define USE_PUSH_CONSTANTS %d\n", I(variant.m_usesPushConstants));
 
 	for(const ShaderProgramResourceMutation& m : mutations)
 	{

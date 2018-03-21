@@ -39,11 +39,25 @@ void RenderComponent::allocateAndSetupUniforms(
 	const ShaderProgramResourceVariant& progVariant = variant.getShaderProgramResourceVariant();
 
 	// Allocate uniform memory
-	StagingGpuMemoryToken token;
-	U8* uniforms =
-		static_cast<U8*>(alloc.allocateFrame(variant.getUniformBlockSize(), StagingGpuMemoryType::UNIFORM, token));
-	void* const uniformsBegin = uniforms;
-	const void* const uniformsEnd = uniforms + variant.getUniformBlockSize();
+	U8* uniforms;
+	void* uniformsBegin;
+	const void* uniformsEnd;
+	Array<U8, 256> pushConsts;
+	if(!progVariant.usePushConstants())
+	{
+		StagingGpuMemoryToken token;
+		uniforms =
+			static_cast<U8*>(alloc.allocateFrame(variant.getUniformBlockSize(), StagingGpuMemoryType::UNIFORM, token));
+
+		ctx.m_commandBuffer->bindUniformBuffer(set, 0, token.m_buffer, token.m_offset, token.m_range);
+	}
+	else
+	{
+		uniforms = &pushConsts[0];
+	}
+
+	uniformsBegin = uniforms;
+	uniformsEnd = uniforms + variant.getUniformBlockSize();
 
 	// Iterate variables
 	for(auto it = m_vars.getBegin(); it != m_vars.getEnd(); ++it)
@@ -236,7 +250,10 @@ void RenderComponent::allocateAndSetupUniforms(
 		} // end switch
 	}
 
-	ctx.m_commandBuffer->bindUniformBuffer(set, 0, token.m_buffer, token.m_offset, token.m_range);
+	if(progVariant.usePushConstants())
+	{
+		ctx.m_commandBuffer->setPushConstants(uniformsBegin, variant.getUniformBlockSize());
+	}
 }
 
 } // end namespace anki
