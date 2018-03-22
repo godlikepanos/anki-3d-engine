@@ -296,7 +296,7 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 		MAX_STORAGE_BUFFER_BINDINGS,
 		MAX_TEXTURE_BINDINGS,
 		MAX_IMAGE_BINDINGS,
-		MAX_TEXTURE_BINDINGS, // Push constant location
+		MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS, // Push constant location
 		// VK bindings
 		0,
 		MAX_TEXTURE_BINDINGS,

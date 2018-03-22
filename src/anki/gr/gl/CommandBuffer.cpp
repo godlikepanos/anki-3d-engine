@@ -1509,30 +1509,29 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 
 			for(const ShaderProgramImplReflection::Uniform& uni : refl.m_uniforms)
 			{
-				ANKI_ASSERT(U(uni.m_location) >= MAX_TEXTURE_BINDINGS);
-				const U idx = uni.m_location - MAX_TEXTURE_BINDINGS;
+				const U8* data = reinterpret_cast<const U8*>(&m_data[0]) + uni.m_pushConstantOffset;
 				const U count = uni.m_arrSize;
 				const GLint loc = uni.m_location;
 
 				switch(uni.m_type)
 				{
 				case ShaderVariableDataType::VEC4:
-					glUniform4fv(loc, count, reinterpret_cast<const GLfloat*>(&m_data[idx]));
+					glUniform4fv(loc, count, reinterpret_cast<const GLfloat*>(data));
 					break;
 				case ShaderVariableDataType::IVEC4:
-					glUniform4iv(loc, count, reinterpret_cast<const GLint*>(&m_data[idx]));
+					glUniform4iv(loc, count, reinterpret_cast<const GLint*>(data));
 					break;
 				case ShaderVariableDataType::UVEC4:
-					glUniform4uiv(loc, count, reinterpret_cast<const GLuint*>(&m_data[idx]));
+					glUniform4uiv(loc, count, reinterpret_cast<const GLuint*>(data));
 					break;
 				case ShaderVariableDataType::MAT4:
-					glUniformMatrix4fv(loc, count, false, reinterpret_cast<const GLfloat*>(&m_data[idx]));
+					glUniformMatrix4fv(loc, count, false, reinterpret_cast<const GLfloat*>(data));
 					break;
 				case ShaderVariableDataType::MAT3:
 				{
 					// Remove the padding
 					ANKI_ASSERT(count == 1 && "TODO");
-					const Mat3x4* m34 = reinterpret_cast<const Mat3x4*>(&m_data[idx][0]);
+					const Mat3x4* m34 = reinterpret_cast<const Mat3x4*>(data);
 					Mat3 m3(m34->getRotationPart());
 					glUniformMatrix3fv(loc, count, false, reinterpret_cast<const GLfloat*>(&m3));
 					break;

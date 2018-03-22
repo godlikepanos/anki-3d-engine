@@ -114,34 +114,39 @@ const ShaderProgramImplReflection& ShaderProgramImpl::getReflection()
 			GLint size;
 			Array<char, 128> name;
 			glGetActiveUniform(getGlName(), i, sizeof(name), &len, &size, &type, &name[0]);
-
 			name[len] = '\0';
+
+			if(CString(&name[0]).find("gl_") == 0)
+			{
+				// Builtin, skip
+				continue;
+			}
+
 			GLint location = glGetUniformLocation(getGlName(), &name[0]);
+			if(location < I(MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS))
+			{
+				// It must be a sampled image, skip it
+				continue;
+			}
 
 			// Store those info
 			ShaderVariableDataType akType = ShaderVariableDataType::NONE;
-			U32 dataSize = 0;
 			switch(type)
 			{
 			case GL_FLOAT_VEC4:
 				akType = ShaderVariableDataType::VEC4;
-				dataSize = 16;
 				break;
 			case GL_INT_VEC4:
 				akType = ShaderVariableDataType::IVEC4;
-				dataSize = 16;
 				break;
 			case GL_UNSIGNED_INT_VEC4:
 				akType = ShaderVariableDataType::UVEC4;
-				dataSize = 16;
 				break;
 			case GL_FLOAT_MAT4:
 				akType = ShaderVariableDataType::MAT4;
-				dataSize = 16 * 4;
 				break;
 			case GL_FLOAT_MAT3:
 				akType = ShaderVariableDataType::MAT3;
-				dataSize = 16 * 3;
 				break;
 			default:
 				ANKI_ASSERT(!"Unsupported type");
@@ -153,6 +158,38 @@ const ShaderProgramImplReflection& ShaderProgramImpl::getReflection()
 			uni.m_arrSize = size;
 
 			m_refl.m_uniforms.emplaceBack(getAllocator(), uni);
+		}
+
+		// Sort the uniforms
+		std::sort(m_refl.m_uniforms.getBegin(),
+			m_refl.m_uniforms.getEnd(),
+			[](const ShaderProgramImplReflection::Uniform& a, const ShaderProgramImplReflection::Uniform& b) {
+				return a.m_location < b.m_location;
+			});
+
+		// Now calculate the offset inside the push constant buffer
+		m_refl.m_uniformDataSize = 0;
+		for(ShaderProgramImplReflection::Uniform& uni : m_refl.m_uniforms)
+		{
+			U32 dataSize = 0;
+			switch(uni.m_type)
+			{
+			case ShaderVariableDataType::VEC4:
+			case ShaderVariableDataType::IVEC4:
+			case ShaderVariableDataType::UVEC4:
+				dataSize = sizeof(F32) * 4;
+				break;
+			case ShaderVariableDataType::MAT4:
+				dataSize = sizeof(F32) * 16;
+				break;
+			case ShaderVariableDataType::MAT3:
+				dataSize = sizeof(F32) * 12;
+				break;
+			default:
+				ANKI_ASSERT(!"Unsupported type");
+			}
+
+			uni.m_pushConstantOffset = m_refl.m_uniformDataSize;
 			m_refl.m_uniformDataSize += dataSize * uni.m_arrSize;
 		}
 	}

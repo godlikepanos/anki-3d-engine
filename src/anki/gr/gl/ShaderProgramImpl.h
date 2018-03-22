@@ -20,6 +20,7 @@ public:
 	struct Uniform
 	{
 		I32 m_location;
+		U32 m_pushConstantOffset;
 		ShaderVariableDataType m_type;
 		U8 m_arrSize;
 	};
