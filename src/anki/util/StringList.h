@@ -64,6 +64,17 @@ public:
 		Base::getBack() = std::move(str);
 	}
 
+	/// Push at the beginning of the list a formated string.
+	template<typename... TArgs>
+	void pushFrontSprintf(Allocator alloc, const TArgs&... args)
+	{
+		String str;
+		str.sprintf(alloc, args...);
+
+		Base::emplaceFront(alloc);
+		Base::getFront() = std::move(str);
+	}
+
 	/// Push back plain CString.
 	void pushBack(Allocator alloc, CString cstr)
 	{
@@ -132,6 +143,13 @@ public:
 	void pushBackSprintf(const TArgs&... args)
 	{
 		Base::pushBackSprintf(m_alloc, args...);
+	}
+
+	/// Push at the beginning of the list a formated string
+	template<typename... TArgs>
+	void pushFrontSprintf(const TArgs&... args)
+	{
+		Base::pushFrontSprintf(m_alloc, args...);
 	}
 
 	/// Push back plain CString.
