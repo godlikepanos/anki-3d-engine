@@ -7,6 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Indirect.h>
+#include <anki/renderer/Ssao.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/RenderQueue.h>
@@ -91,6 +92,7 @@ void Reflections::populateRenderGraph(RenderingContext& ctx)
 	rpass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	rpass.newConsumer({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	rpass.newConsumer({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newConsumer({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_COMPUTE});
@@ -115,10 +117,12 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getDepthDownscale().getHiZRt(), m_r->getNearestNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getDownscaleBlur().getRt(), m_r->getTrilinearRepeatSampler());
 
-	rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 7, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getSsao().getRt(), m_r->getLinearSampler());
+
+	rgraphCtx.bindColorTextureAndSampler(0, 7, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 8, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
 	cmdb->bindTextureAndSampler(0,
-		8,
+		9,
 		m_r->getIndirect().getIntegrationLut(),
 		m_r->getIndirect().getIntegrationLutSampler(),
 		TextureUsageBit::SAMPLED_COMPUTE);
