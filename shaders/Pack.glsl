@@ -165,6 +165,11 @@ void readRoughnessSpecularFromGBuffer(in sampler2D rt1, in vec2 uv, out float ro
 	vec4 comp = textureLod(rt1, uv, 0.0);
 	specular = comp.xyz;
 	roughness = comp.w;
+
+	// Fix roughness
+	const float MIN_ROUGHNESS = 0.5;
+	roughness = roughness * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;
+	roughness *= roughness;
 }
 
 // Read from the G buffer
@@ -181,10 +186,6 @@ void readGBuffer(in sampler2D rt0, in sampler2D rt1, in sampler2D rt2, in vec2 u
 	comp = textureLod(rt2, uv, lod);
 	g.normal = signedOctDecode(comp.xyw);
 	g.emission = comp.z * MAX_EMISSION;
-
-	// Fix values
-	g.specular = mix(g.specular, g.diffuse, g.metallic);
-	g.diffuse *= (1.0 - g.metallic);
 }
 
 #endif

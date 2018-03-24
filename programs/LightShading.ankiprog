@@ -69,7 +69,7 @@ const float SUBSURFACE_MIN = 0.05;
 	vec3 frag2Light = light.posRadius.xyz - worldPos; \
 	vec3 l = normalize(frag2Light); \
 	float nol = max(0.0, dot(normal, l)); \
-	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, light.specularColorRadius.rgb, a2, nol); \
+	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, light.specularColorRadius.rgb, roughness, nol); \
 	vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb); \
 	float att = computeAttenuationFactor(light.posRadius.w, frag2Light); \
 	float lambert = nol;
@@ -118,9 +118,6 @@ void main()
 
 	// Ambient and emissive color
 	vec3 outC = diffCol * emission;
-
-	// Don't allow zero a2 because we may end up with division with zero
-	float a2 = computeRoughnesSquared(roughness);
 
 	// Point lights
 	vec3 viewDir = normalize(u_cameraPos - worldPos);

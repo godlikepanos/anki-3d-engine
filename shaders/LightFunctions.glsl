@@ -9,6 +9,7 @@
 #define ANKI_SHADERS_LIGHT_FUNCTIONS_GLSL
 
 #include "shaders/Functions.glsl"
+#include "shaders/Pack.glsl"
 
 const float LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 const uint SHADOW_SAMPLE_COUNT = 16;
@@ -163,11 +164,33 @@ vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f)
 	return r;
 }
 
-float computeRoughnesSquared(float roughness)
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
-	float a2 = roughness * 0.95 + 0.05;
-	a2 *= a2 * a2;
-	return a2;
+	// Make sure that we won't end up with a zero in pow()
+	float a = 1.0 - cosTheta;
+	a = max(a, EPSILON);
+
+	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(a, 5.0);
+}
+
+// Compute the factors that will be used to calculat the final specular and diffuse indirect terms
+void computeSpecAndDiffuseIndirectFactors(
+	vec3 viewDir, GbufferInfo gbuffer, sampler2D integrationLut, out vec3 specIndirectTerm, out vec3 diffIndirectTerm)
+{
+	float ndotv = dot(gbuffer.normal, viewDir);
+
+	// Reflectance
+	vec3 F0 = mix(gbuffer.specular, gbuffer.diffuse, gbuffer.metallic);
+	vec3 F = fresnelSchlickRoughness(max(ndotv, 0.0), F0, gbuffer.roughness);
+
+	vec2 envBRDF = texture(integrationLut, vec2(gbuffer.roughness, ndotv)).xy;
+	specIndirectTerm = F * envBRDF.x + envBRDF.y;
+
+	vec3 kS = F;
+	vec3 kD = 1.0 - kS;
+	kD *= 1.0 - gbuffer.metallic;
+
+	diffIndirectTerm = kD * gbuffer.diffuse;
 }
 
 #endif
