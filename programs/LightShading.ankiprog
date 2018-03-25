@@ -68,11 +68,10 @@ const float SUBSURFACE_MIN = 0.05;
 #define LIGHTING_COMMON_BRDF() \
 	vec3 frag2Light = light.posRadius.xyz - worldPos; \
 	vec3 l = normalize(frag2Light); \
-	float nol = max(0.0, dot(normal, l)); \
-	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, light.specularColorRadius.rgb, roughness, nol); \
-	vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb); \
+	vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l, light.specularColorRadius.rgb); \
+	vec3 diffC = computeDiffuseColor(gbuffer.diffuse, light.diffuseColorShadowmapId.rgb); \
 	float att = computeAttenuationFactor(light.posRadius.w, frag2Light); \
-	float lambert = nol;
+	float lambert = max(0.0, dot(gbuffer.normal, l));
 
 void main()
 {
@@ -84,23 +83,9 @@ void main()
 	vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Decode GBuffer
-	vec3 normal;
-	vec3 diffCol;
-	vec3 specCol;
-	float roughness;
-	float subsurface;
-	float emission;
-	float metallic;
-
 	GbufferInfo gbuffer;
 	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_uv, 0.0, gbuffer);
-	diffCol = gbuffer.diffuse;
-	specCol = gbuffer.specular;
-	normal = gbuffer.normal;
-	roughness = gbuffer.roughness;
-	metallic = gbuffer.metallic;
-	subsurface = max(gbuffer.subsurface, SUBSURFACE_MIN);
-	emission = gbuffer.emission;
+	gbuffer.subsurface = max(gbuffer.subsurface, SUBSURFACE_MIN);
 
 	// Get first light index
 	uint idxOffset;
@@ -117,7 +102,7 @@ void main()
 	idxOffset += count;
 
 	// Ambient and emissive color
-	vec3 outC = diffCol * emission;
+	vec3 outC = gbuffer.diffuse * gbuffer.emission;
 
 	// Point lights
 	vec3 viewDir = normalize(u_cameraPos - worldPos);
@@ -138,7 +123,7 @@ void main()
 			lambert *= shadow;
 		}
 
-		outC += (diffC + specC) * (att * max(subsurface, lambert));
+		outC += (diffC + specC) * (att * max(gbuffer.subsurface, lambert));
 	}
 
 	// Spot lights
@@ -149,7 +134,8 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		float spot = computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
+		float spot = computeSpotFactor(
+			l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
 
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx >= 0.0)
@@ -159,7 +145,7 @@ void main()
 			lambert *= shadow;
 		}
 
-		outC += (diffC + specC) * (att * spot * max(subsurface, lambert));
+		outC += (diffC + specC) * (att * spot * max(gbuffer.subsurface, lambert));
 	}
 
 	// Indirect

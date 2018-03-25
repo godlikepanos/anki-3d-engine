@@ -23,42 +23,66 @@ float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 	return att * att;
 }
 
-// Performs BRDF specular lighting
-vec3 computeSpecularColorBrdf(vec3 v, // view dir
-	vec3 l, // light dir
-	vec3 n, // normal
-	vec3 specCol,
-	vec3 lightSpecCol,
-	float a2, // rougness^2
-	float nol) // N dot L
+vec3 fresnelSchlickRoughness(vec3 F0, float roughness, vec3 normal, vec3 viewDir)
 {
-	vec3 h = normalize(l + v);
+	float cosTheta = max(dot(normal, viewDir), EPSILON);
+	vec3 F = F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 + EPSILON - cosTheta, 5.0);
+	return F;
+}
+
+// Compute the factors that will be used to calculat the final specular and diffuse indirect terms
+void computeSpecAndDiffuseIndirectFactors(
+	vec3 viewDir, GbufferInfo gbuffer, sampler2D integrationLut, out vec3 specIndirectTerm, out vec3 diffIndirectTerm)
+{
+	// Reflectance
+	float roughness2 = gbuffer.roughness * gbuffer.roughness;
+	vec3 F0 = mix(gbuffer.specular, gbuffer.diffuse, gbuffer.metallic);
+	vec3 F = fresnelSchlickRoughness(F0, roughness2, gbuffer.normal, viewDir);
+
+	float ndotv = max(dot(gbuffer.normal, viewDir), EPSILON);
+	vec2 envBRDF = texture(integrationLut, vec2(gbuffer.roughness, ndotv)).xy;
+	specIndirectTerm = F * envBRDF.x + envBRDF.y;
+
+	vec3 kS = F;
+	vec3 kD = 1.0 - kS;
+	kD *= 1.0 - gbuffer.metallic;
+
+	diffIndirectTerm = kD * gbuffer.diffuse;
+}
+
+// Performs BRDF specular lighting
+vec3 computeSpecularColorBrdf(GbufferInfo gbuffer, vec3 viewDir, vec3 frag2Light, vec3 lightSpecCol)
+{
+	float nol = max(0.0, dot(gbuffer.normal, frag2Light));
+	vec3 h = normalize(frag2Light + viewDir);
+	float a2 = gbuffer.roughness * gbuffer.roughness;
 
 	// Fresnel
-	float voh = dot(v, h);
 #if 0
 	// Schlick
-	vec3 F = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
+	vec3 F = gbuffer.specular + (1.0 - gbuffer.specular) * pow((1.0 + EPSILON - loh), 5.0);
 #else
 	// Unreal
-	vec3 F = specCol + (1.0 - specCol) * pow(2.0, (-5.55473 * voh - 6.98316) * voh);
+	float voh = dot(viewDir, h);
+	vec3 F = gbuffer.specular + (1.0 - gbuffer.specular) * pow(2.0, (-5.55473 * voh - 6.98316) * voh);
 #endif
 
 	// D(n,h) aka NDF: GGX Trowbridge-Reitz
-	float noh = dot(n, h);
+	float noh = dot(gbuffer.normal, h);
 	float D = noh * noh * (a2 - 1.0) + 1.0;
 	D = a2 / (PI * D * D);
 
-// G(l,v,h)/(4*dot(n,h)*dot(n,v)) aka Visibility term: Geometric shadowing divided by BRDF denominator
+	// G(frag2Light,viewDir,h)/(4*dot(n,h)*dot(n,viewDir)) aka Visibility term: Geometric shadowing divided by BRDF
+	// denominator
 #if 0
-	float nov = max(EPSILON, dot(n, v));
+	float nov = max(EPSILON, dot(n, viewDir));
 	float V_v = nov + sqrt((nov - nov * a2) * nov + a2);
 	float V_l = nol + sqrt((nol - nol * a2) * nol + a2);
 	float V = 1.0 / (V_l * V_v);
 #else
 	float k = (a2 + 1.0);
 	k = k * k / 8.0;
-	float nov = max(EPSILON, dot(n, v));
+	float nov = max(EPSILON, dot(gbuffer.normal, viewDir));
 	float V_v = nov * (1.0 - k) + k;
 	float V_l = nol * (1.0 - k) + k;
 	float V = 1.0 / (4.0 * V_l * V_v);
@@ -162,35 +186,6 @@ vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f)
 vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f)
 {
 	return r;
-}
-
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
-{
-	// Make sure that we won't end up with a zero in pow()
-	float a = 1.0 - cosTheta;
-	a = max(a, EPSILON);
-
-	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(a, 5.0);
-}
-
-// Compute the factors that will be used to calculat the final specular and diffuse indirect terms
-void computeSpecAndDiffuseIndirectFactors(
-	vec3 viewDir, GbufferInfo gbuffer, sampler2D integrationLut, out vec3 specIndirectTerm, out vec3 diffIndirectTerm)
-{
-	float ndotv = dot(gbuffer.normal, viewDir);
-
-	// Reflectance
-	vec3 F0 = mix(gbuffer.specular, gbuffer.diffuse, gbuffer.metallic);
-	vec3 F = fresnelSchlickRoughness(max(ndotv, 0.0), F0, gbuffer.roughness);
-
-	vec2 envBRDF = texture(integrationLut, vec2(gbuffer.roughness, ndotv)).xy;
-	specIndirectTerm = F * envBRDF.x + envBRDF.y;
-
-	vec3 kS = F;
-	vec3 kD = 1.0 - kS;
-	kD *= 1.0 - gbuffer.metallic;
-
-	diffIndirectTerm = kD * gbuffer.diffuse;
 }
 
 #endif

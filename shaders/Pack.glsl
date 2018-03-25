@@ -169,7 +169,6 @@ void readRoughnessSpecularFromGBuffer(in sampler2D rt1, in vec2 uv, out float ro
 	// Fix roughness
 	const float MIN_ROUGHNESS = 0.5;
 	roughness = roughness * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;
-	roughness *= roughness;
 }
 
 // Read from the G buffer
