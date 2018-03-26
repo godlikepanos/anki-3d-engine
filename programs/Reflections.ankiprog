@@ -239,19 +239,9 @@ void main()
 	vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
 	vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	// Compute how much reflections we need
-	vec3 specIndirectTerm;
-	vec3 diffIndirectTerm;
-	vec3 viewDir = normalize(u_cameraPos - worldPos);
-	computeSpecAndDiffuseIndirectFactors(viewDir, gbuffer, u_integrationLut, specIndirectTerm, diffIndirectTerm);
-	
-	bool runSslr = 
-		max(max(specIndirectTerm.x, specIndirectTerm.y), specIndirectTerm.z) > 0.05;
-
 	// Try SSR
 	float sslrFactor = 0.0;
 	vec3 sslrCol = vec3(0.0);
-	if(runSslr)
 	{
 		// Get view pos
 		vec4 viewPos4 = u_invProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
@@ -297,8 +287,16 @@ void main()
 	vec3 finalRefl = mix(probeCol, sslrCol, sslrFactor);
 
 	// Compute the final color
-	float ssao = textureLod(u_ssaoTex, uv, 0.0).r;
-	vec3 outColor = (indirectCol * diffIndirectTerm + finalRefl * specIndirectTerm) * ssao;
+	vec3 outColor;
+	{
+		vec3 viewDir = normalize(u_cameraPos - worldPos);
+		float NoV = max(EPSILON, dot(gbuffer.normal, viewDir));
+		vec3 env = envBRDF(gbuffer.specular, gbuffer.roughness, u_integrationLut, NoV);
+
+		float ssao = textureLod(u_ssaoTex, uv, 0.0).r;
+
+		outColor = (indirectCol * gbuffer.diffuse + finalRefl * env) * ssao;
+	}
 
 	// Store the color for the resolve
 	s_pixels[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = outColor;

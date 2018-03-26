@@ -122,20 +122,19 @@ void main()
 	vec3 l = normalize(frag2Light);
 	float nol = max(0.0, dot(gbuffer.normal, l));
 
-	vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l, u_lspec);
-
-	vec3 diffC = computeDiffuseColor(gbuffer.diffuse, u_ldiff);
+	vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
+	vec3 diffC = diffuseLambert(gbuffer.diffuse);
 
 	float att = computeAttenuationFactor(u_light.posRadius.w, frag2Light);
 	float lambert = nol;
 
 #if LIGHT_TYPE == POINT_LIGHT_TYPE
-	out_color = (specC + diffC) * (att * max(lambert, gbuffer.subsurface));
+	out_color = (specC + diffC) * u_ldiff * (att * max(lambert, gbuffer.subsurface));
 #else
 	float spot =
 		computeSpotFactor(l, u_light.diffuseColorOuterCos.w, u_light.specularColorInnerCos.w, u_light.lightDirPad1.xyz);
 
-	out_color = (diffC + specC) * (att * spot * max(lambert, gbuffer.subsurface));
+	out_color = (diffC + specC) * u_ldiff * (att * spot * max(lambert, gbuffer.subsurface));
 #endif
 }
 			]]></source>

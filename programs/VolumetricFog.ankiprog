@@ -200,7 +200,7 @@ void main()
 		kNear = kFar;
 	}
 
-	newCol *= u_fogParticleColor;
+	newCol *= diffuseLambert(u_fogParticleColor);
 
 	// Read history
 	float historyFeedback;

@@ -58,7 +58,7 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 	{
 		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
-		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
+		vec3 diffC = diffuseLambert(diffCol) * light.diffuseColorShadowmapId.rgb;
 
 		vec3 frag2Light = light.posRadius.xyz - worldPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
@@ -86,7 +86,7 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 	{
 		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
-		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
+		vec3 diffC = diffuseLambert(diffCol) * light.diffuseColorShadowmapId.rgb;
 
 		vec3 frag2Light = light.posRadius.xyz - worldPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
