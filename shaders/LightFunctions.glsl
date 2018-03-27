@@ -42,8 +42,10 @@ float V_Schlick(float roughness, float NoV, float NoL)
 
 vec3 envBRDF(vec3 specular, float roughness, sampler2D integrationLut, float NoV)
 {
-	vec2 envBRDF = texture(integrationLut, vec2(roughness, NoV)).xy;
-	return specular * envBRDF.x + envBRDF.y;
+	float a = roughness * roughness;
+	float a2 = a * a;
+	vec2 envBRDF = textureLod(integrationLut, vec2(a2, NoV), 0.0).xy;
+	return specular * envBRDF.x + min(1.0, 50.0 * specular.g) * envBRDF.y;
 }
 
 vec3 diffuseLambert(vec3 diffuse)

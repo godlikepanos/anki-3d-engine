@@ -189,7 +189,7 @@ void readGBuffer(in sampler2D rt0, in sampler2D rt1, in sampler2D rt2, in vec2 u
 	g.emission = comp.z * MAX_EMISSION;
 
 	// Fix roughness
-	const float MIN_ROUGHNESS = 0.5;
+	const float MIN_ROUGHNESS = 0.05;
 	g.roughness = g.roughness * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;
 
 	// Compute reflectance
