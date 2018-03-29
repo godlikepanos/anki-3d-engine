@@ -27,7 +27,6 @@ struct Indirect::LightPassPointLightUniforms
 	Vec4 m_camPosPad1;
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorPad1;
-	Vec4 m_specularColorPad1;
 };
 
 struct Indirect::LightPassSpotLightUniforms
@@ -37,8 +36,7 @@ struct Indirect::LightPassSpotLightUniforms
 	Vec4 m_camPosPad1;
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorOuterCos;
-	Vec4 m_specularColorInnerCos;
-	Vec4 m_lightDirPad1;
+	Vec4 m_lightDirInnerCos;
 };
 
 Indirect::Indirect(Renderer* r)
@@ -462,7 +460,6 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 			light->m_posRadius =
 				Vec4(plightEl->m_worldPosition.xyz(), 1.0f / (plightEl->m_radius * plightEl->m_radius));
 			light->m_diffuseColorPad1 = plightEl->m_diffuseColor.xyz0();
-			light->m_specularColorPad1 = plightEl->m_specularColor.xyz0();
 
 			// Draw
 			cmdb->drawElements(PrimitiveTopology::TRIANGLES, indexCount);
@@ -509,10 +506,8 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 
 			light->m_diffuseColorOuterCos = Vec4(splightEl->m_diffuseColor, cos(splightEl->m_outerAngle / 2.0f));
 
-			light->m_specularColorInnerCos = Vec4(splightEl->m_specularColor, cos(splightEl->m_innerAngle / 2.0f));
-
 			Vec3 lightDir = -splightEl->m_worldTransform.getZAxis().xyz();
-			light->m_lightDirPad1 = lightDir.xyz0();
+			light->m_lightDirInnerCos = Vec4(lightDir, cos(splightEl->m_innerAngle / 2.0f));
 
 			// Draw
 			cmdb->drawElements(PrimitiveTopology::TRIANGLES, indexCount);

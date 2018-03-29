@@ -30,7 +30,7 @@ class ShaderPointLight
 public:
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorTileSize;
-	Vec4 m_specularColorRadius;
+	Vec4 m_radiusPad3;
 	UVec4 m_atlasTilesPad2;
 };
 
@@ -39,8 +39,7 @@ class ShaderSpotLight
 public:
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorShadowmapId;
-	Vec4 m_specularColorRadius;
-	Vec4 m_lightDir;
+	Vec4 m_lightDirRadius;
 	Vec4 m_outerCosInnerCos;
 	Mat4 m_texProjectionMat; ///< Texture projection matrix
 };
@@ -669,7 +668,7 @@ void LightBin::writeAndBinPointLight(
 		slight.m_atlasTilesPad2 = UVec4(lightEl.m_atlasTiles.x(), lightEl.m_atlasTiles.y(), 0, 0);
 	}
 
-	slight.m_specularColorRadius = Vec4(lightEl.m_specularColor, lightEl.m_radius);
+	slight.m_radiusPad3 = Vec4(lightEl.m_radius);
 
 	// Now bin it
 	Sphere sphere(lightEl.m_worldPosition.xyz0(), lightEl.m_radius);
@@ -717,12 +716,9 @@ void LightBin::writeAndBinSpotLight(
 	// Diff color and shadowmap ID now
 	light.m_diffuseColorShadowmapId = Vec4(lightEl.m_diffuseColor, shadowmapIndex);
 
-	// Spec color
-	light.m_specularColorRadius = Vec4(lightEl.m_specularColor, lightEl.m_distance);
-
-	// Light dir
+	// Light dir & radius
 	Vec3 lightDir = -lightEl.m_worldTransform.getRotationPart().getZAxis();
-	light.m_lightDir = Vec4(lightDir, 0.0f);
+	light.m_lightDirRadius = Vec4(lightDir, lightEl.m_distance);
 
 	// Angles
 	light.m_outerCosInnerCos = Vec4(cos(lightEl.m_outerAngle / 2.0f), cos(lightEl.m_innerAngle / 2.0f), 1.0f, 1.0f);

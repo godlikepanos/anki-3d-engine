@@ -113,17 +113,17 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		if(light.diffuseColorShadowmapId.w >= 0.0)
+		if(light.diffuseColorTileSize.w >= 0.0)
 		{
 			float shadow = computeShadowFactorOmni(frag2Light, 
-				light.specularColorRadius.w, 
+				light.radiusPad3.x, 
 				light.atlasTilesPad2.xy, 
-				light.diffuseColorShadowmapId.w,
+				light.diffuseColorTileSize.w,
 				u_shadowTex);
 			lambert *= shadow;
 		}
 
-		outC += (diffC + specC) * light.diffuseColorShadowmapId.rgb * (att * max(gbuffer.subsurface, lambert));
+		outC += (diffC + specC) * light.diffuseColorTileSize.rgb * (att * max(gbuffer.subsurface, lambert));
 	}
 
 	// Spot lights
@@ -135,13 +135,13 @@ void main()
 		LIGHTING_COMMON_BRDF();
 
 		float spot = computeSpotFactor(
-			l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
+			l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDirRadius.xyz);
 
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx >= 0.0)
 		{
 			float shadow = computeShadowFactorSpot(
-				light.texProjectionMat, worldPos, light.specularColorRadius.w, u_shadowTex);
+				light.texProjectionMat, worldPos, light.lightDirRadius.w, u_shadowTex);
 			lambert *= shadow;
 		}
 
