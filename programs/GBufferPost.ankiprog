@@ -87,6 +87,11 @@ void main()
 
 	// Process decals
 	uint count = u_lightIndices[idxOffset++];
+	if(count == 0)
+	{
+		discard;
+	}
+
 	while(count-- != 0)
 	{
 		Decal decal = u_decals[u_lightIndices[idxOffset++]];
