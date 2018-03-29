@@ -20,7 +20,7 @@
 		<input shaderInput="diffTex" value="assets/Sponza_Floor_diffuse.ankitex"/>
 		<input shaderInput="specColor" value="0.040000 0.040000 0.040000"/>
 		<input shaderInput="roughnessTex" value="assets/Sponza_Column_b_roughness.ankitex"/>
-		<input shaderInput="metallic" value="0.000000"/>
+		<input shaderInput="metallic" value="0.500000"/>
 		<input shaderInput="normalTex" value="assets/Sponza_Floor_normal.ankitex"/>
 		<input shaderInput="emission" value="0.000000 0.000000 0.000000"/>
 		<input shaderInput="subsurface" value="0.000000"/>
