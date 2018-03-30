@@ -38,7 +38,7 @@ http://www.anki3d.org/LICENSE
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 7
+#define LIGHT_TEX_BINDING 6
 #define LIGHT_INDIRECT
 #define LIGHT_COMMON_UNIS
 #include "shaders/ClusterLightCommon.glsl"
@@ -53,7 +53,6 @@ layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_gbufferRt2;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_depthRt;
 layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_hizRt;
 layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_lightBufferRt;
-layout(ANKI_TEX_BINDING(0, 6)) uniform sampler2D u_ssaoTex;
 
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_reflAndIndirect;
 
@@ -296,11 +295,7 @@ void main()
 	vec3 finalRefl = mix(probeCol, sslrCol, sslrFactor);
 
 	// Compute the final color
-	vec3 outColor;
-	{
-		float ssao = textureLod(u_ssaoTex, uv, 0.0).r;
-		outColor = (indirectCol * gbuffer.diffuse + finalRefl * env) * ssao;
-	}
+	vec3 outColor = indirectCol * gbuffer.diffuse + finalRefl * env;
 
 	// Store the color for the resolve
 	s_pixels[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = outColor;

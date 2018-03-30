@@ -44,12 +44,13 @@ void main()
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 1
+#define LIGHT_TEX_BINDING 2
 #define LIGHT_DECALS
 #define LIGHT_COMMON_UNIS
 #include "shaders/ClusterLightCommon.glsl"
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msDepthRt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_ssaoTex;
 
 layout(location = 0) in vec2 in_uv;
 layout(location = 1) in vec2 in_clusterIJ;
@@ -69,6 +70,10 @@ void main()
 	vec4 outDiffuse = vec4(0.0, 0.0, 0.0, 1.0);
 	vec4 outSpecular = vec4(0.0, 0.0, 0.0, 1.0);
 
+	// Sample SSAO
+	float ssao = textureLod(u_ssaoTex, in_uv, 0.0).r;
+	outDiffuse.a *= ssao;
+
 	// Get worldPos
 	float depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
 	vec2 ndc = UV_TO_NDC(in_uv);
@@ -87,7 +92,7 @@ void main()
 
 	// Process decals
 	uint count = u_lightIndices[idxOffset++];
-	if(count == 0)
+	if(count == 0 && ssao >= (1.0 - EPSILON))
 	{
 		discard;
 	}
