@@ -406,6 +406,14 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 
+	// Set limits
+	m_capabilities.m_uniformBufferBindOffsetAlignment = m_devProps.limits.minUniformBufferOffsetAlignment;
+	m_capabilities.m_uniformBufferMaxRange = m_devProps.limits.maxUniformBufferRange;
+	m_capabilities.m_storageBufferBindOffsetAlignment = m_devProps.limits.minStorageBufferOffsetAlignment;
+	m_capabilities.m_storageBufferMaxRange = m_devProps.limits.maxStorageBufferRange;
+	m_capabilities.m_textureBufferBindOffsetAlignment = m_devProps.limits.minTexelBufferOffsetAlignment;
+	m_capabilities.m_textureBufferMaxRange = MAX_U32;
+
 	return Error::NONE;
 }
 

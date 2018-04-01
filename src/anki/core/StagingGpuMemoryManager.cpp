@@ -31,19 +31,25 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getNumber("core.vertexPerFrameMemorySize");
 	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getNumber("core.textureBufferPerFrameMemorySize");
 
-	U32 alignment;
-	PtrSize maxSize;
+	initBuffer(StagingGpuMemoryType::UNIFORM,
+		gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,
+		gr->getDeviceCapabilities().m_uniformBufferMaxRange,
+		BufferUsageBit::UNIFORM_ALL,
+		*gr);
 
-	gr->getUniformBufferInfo(alignment, maxSize);
-	initBuffer(StagingGpuMemoryType::UNIFORM, alignment, maxSize, BufferUsageBit::UNIFORM_ALL, *gr);
-
-	gr->getStorageBufferInfo(alignment, maxSize);
-	initBuffer(StagingGpuMemoryType::STORAGE, alignment, maxSize, BufferUsageBit::STORAGE_ALL, *gr);
+	initBuffer(StagingGpuMemoryType::STORAGE,
+		gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
+		gr->getDeviceCapabilities().m_storageBufferMaxRange,
+		BufferUsageBit::STORAGE_ALL,
+		*gr);
 
 	initBuffer(StagingGpuMemoryType::VERTEX, 16, MAX_U32, BufferUsageBit::VERTEX | BufferUsageBit::INDEX, *gr);
 
-	gr->getTextureBufferInfo(alignment, maxSize);
-	initBuffer(StagingGpuMemoryType::TEXTURE, alignment, maxSize, BufferUsageBit::TEXTURE_ALL, *gr);
+	initBuffer(StagingGpuMemoryType::TEXTURE,
+		gr->getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
+		gr->getDeviceCapabilities().m_textureBufferMaxRange,
+		BufferUsageBit::TEXTURE_ALL,
+		*gr);
 
 	return Error::NONE;
 }

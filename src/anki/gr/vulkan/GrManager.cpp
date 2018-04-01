@@ -130,25 +130,4 @@ RenderGraphPtr GrManager::newRenderGraph()
 	return RenderGraphPtr(RenderGraph::newInstance(this));
 }
 
-void GrManager::getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const
-{
-	ANKI_VK_SELF_CONST(GrManagerImpl);
-	bindOffsetAlignment = self.getPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
-	maxUniformBlockSize = self.getPhysicalDeviceProperties().limits.maxUniformBufferRange;
-}
-
-void GrManager::getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStorageBlockSize) const
-{
-	ANKI_VK_SELF_CONST(GrManagerImpl);
-	bindOffsetAlignment = self.getPhysicalDeviceProperties().limits.minStorageBufferOffsetAlignment;
-	maxStorageBlockSize = self.getPhysicalDeviceProperties().limits.maxStorageBufferRange;
-}
-
-void GrManager::getTextureBufferInfo(U32& bindOffsetAlignment, PtrSize& maxRange) const
-{
-	ANKI_VK_SELF_CONST(GrManagerImpl);
-	bindOffsetAlignment = self.getPhysicalDeviceProperties().limits.minTexelBufferOffsetAlignment;
-	maxRange = MAX_U32;
-}
-
 } // end namespace anki

@@ -141,34 +141,4 @@ RenderGraphPtr GrManager::newRenderGraph()
 
 #undef ANKI_SAFE_CONSTRUCT
 
-void GrManager::getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const
-{
-	ANKI_GL_SELF_CONST(GrManagerImpl);
-
-	bindOffsetAlignment = self.getState().m_uboAlignment;
-	maxUniformBlockSize = self.getState().m_uniBlockMaxSize;
-
-	ANKI_ASSERT(bindOffsetAlignment > 0 && maxUniformBlockSize > 0);
-}
-
-void GrManager::getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStorageBlockSize) const
-{
-	ANKI_GL_SELF_CONST(GrManagerImpl);
-
-	bindOffsetAlignment = self.getState().m_ssboAlignment;
-	maxStorageBlockSize = self.getState().m_storageBlockMaxSize;
-
-	ANKI_ASSERT(bindOffsetAlignment > 0 && maxStorageBlockSize > 0);
-}
-
-void GrManager::getTextureBufferInfo(U32& bindOffsetAlignment, PtrSize& maxRange) const
-{
-	ANKI_GL_SELF_CONST(GrManagerImpl);
-
-	bindOffsetAlignment = self.getState().m_tboAlignment;
-	maxRange = self.getState().m_tboMaxRange;
-
-	ANKI_ASSERT(bindOffsetAlignment > 0 && maxRange > 0);
-}
-
 } // end namespace anki

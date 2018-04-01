@@ -70,15 +70,6 @@ public:
 	ANKI_USE_RESULT RenderGraphPtr newRenderGraph();
 	/// @}
 
-	/// Get some buffer alignment and size info.
-	void getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const;
-
-	/// Get some buffer alignment info.
-	void getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStorageBlockSize) const;
-
-	/// Get some buffer alignment info.
-	void getTextureBufferInfo(U32& bindOffsetAlignment, PtrSize& maxRange) const;
-
 anki_internal:
 	GrAllocator<U8>& getAllocator()
 	{
