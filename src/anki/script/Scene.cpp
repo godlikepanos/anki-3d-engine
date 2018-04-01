@@ -541,99 +541,6 @@ static int wrapLightComponentgetDiffuseColor(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method LightComponent::setSpecularColor.
-static inline int pwrapLightComponentsetSpecularColor(lua_State* l)
-{
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-
-	LuaBinder::checkArgsCount(l, 2);
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
-	{
-		return -1;
-	}
-
-	LightComponent* self = ud->getData<LightComponent>();
-
-	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
-	{
-		return -1;
-	}
-
-	Vec4* iarg0 = ud->getData<Vec4>();
-	const Vec4& arg0(*iarg0);
-
-	// Call the method
-	self->setSpecularColor(arg0);
-
-	return 0;
-}
-
-/// Wrap method LightComponent::setSpecularColor.
-static int wrapLightComponentsetSpecularColor(lua_State* l)
-{
-	int res = pwrapLightComponentsetSpecularColor(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method LightComponent::getSpecularColor.
-static inline int pwrapLightComponentgetSpecularColor(lua_State* l)
-{
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-
-	LuaBinder::checkArgsCount(l, 1);
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
-	{
-		return -1;
-	}
-
-	LightComponent* self = ud->getData<LightComponent>();
-
-	// Call the method
-	const Vec4& ret = self->getSpecularColor();
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "Vec4");
-	ud->initPointed(6804478823655046386, const_cast<Vec4*>(&ret));
-
-	return 1;
-}
-
-/// Wrap method LightComponent::getSpecularColor.
-static int wrapLightComponentgetSpecularColor(lua_State* l)
-{
-	int res = pwrapLightComponentgetSpecularColor(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
 /// Pre-wrap method LightComponent::setRadius.
 static inline int pwrapLightComponentsetRadius(lua_State* l)
 {
@@ -1080,8 +987,6 @@ static inline void wrapLightComponent(lua_State* l)
 	LuaBinder::createClass(l, classnameLightComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "setDiffuseColor", wrapLightComponentsetDiffuseColor);
 	LuaBinder::pushLuaCFuncMethod(l, "getDiffuseColor", wrapLightComponentgetDiffuseColor);
-	LuaBinder::pushLuaCFuncMethod(l, "setSpecularColor", wrapLightComponentsetSpecularColor);
-	LuaBinder::pushLuaCFuncMethod(l, "getSpecularColor", wrapLightComponentgetSpecularColor);
 	LuaBinder::pushLuaCFuncMethod(l, "setRadius", wrapLightComponentsetRadius);
 	LuaBinder::pushLuaCFuncMethod(l, "getRadius", wrapLightComponentgetRadius);
 	LuaBinder::pushLuaCFuncMethod(l, "setDistance", wrapLightComponentsetDistance);

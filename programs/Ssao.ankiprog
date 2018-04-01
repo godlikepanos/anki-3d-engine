@@ -5,6 +5,10 @@ Code licensed under the BSD License.
 http://www.anki3d.org/LICENSE
 -->
 <shaderProgram>
+	<mutators>
+		<mutator name="USE_NORMAL" values="0 1"/>
+	</mutators>
+
 	<shaders>
 		<shader type="vert">
 			<source><![CDATA[
@@ -19,7 +23,7 @@ http://www.anki3d.org/LICENSE
 				<input name="RADIUS" type="float" const="1"/>
 				<input name="BIAS" type="float" const="1"/>
 				<input name="STRENGTH" type="float" const="1"/>
-				<input name="HISTORY_FEEDBACK" type="float" const="1"/>
+				<input name="SAMPLE_COUNT" type="uint" const="1"/>
 			</inputs>
 
 			<source><![CDATA[
@@ -35,18 +39,16 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _blk
 {
 	vec4 u_unprojectionParams;
 	vec4 u_projectionMat;
-	vec4 u_noiseLayerPad3;
-	mat4 u_prevViewProjMatMulInvViewProjMat;
 	mat3 u_viewRotMat;
 };
 
-#define u_noiseLayer u_noiseLayerPad3.x
-
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_mMsDepthRt;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt;
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2DArray u_noiseMap;
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_prevSsaoRt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2DArray u_noiseMap;
+#if USE_NORMAL
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt;
+#endif
 
+#if USE_NORMAL
 // Get normal
 vec3 readNormal(in vec2 uv)
 {
@@ -55,19 +57,20 @@ vec3 readNormal(in vec2 uv)
 	normal = u_viewRotMat * normal;
 	return normal;
 }
+#endif
 
 // Read the noise tex
-vec3 readRandom(in vec2 uv)
+vec3 readRandom(vec2 uv, float layer)
 {
 	const vec2 tmp = vec2(float(FB_SIZE.x) / float(NOISE_MAP_SIZE), float(FB_SIZE.y) / float(NOISE_MAP_SIZE));
-	vec3 r = texture(u_noiseMap, vec3(tmp * uv, u_noiseLayer)).rgb;
+	vec3 r = texture(u_noiseMap, vec3(tmp * uv, layer)).rgb;
 	return r;
 }
 
 // Returns the Z of the position in view space
 float readZ(in vec2 uv)
 {
-	float depth = texture(u_mMsDepthRt, uv).r;
+	float depth = textureLod(u_mMsDepthRt, uv, 0.0).r;
 	float z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
 	return z;
 }
@@ -77,8 +80,7 @@ vec3 readPosition(in vec2 uv)
 {
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
-
-	fragPosVspace.xy = (2.0 * uv - 1.0) * u_unprojectionParams.xy * fragPosVspace.z;
+	fragPosVspace.xy = UV_TO_NDC(uv) * u_unprojectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
 }
@@ -90,33 +92,16 @@ vec4 project(vec4 point)
 
 void main(void)
 {
-	vec2 ndc = in_uv * 2.0 - 1.0;
-	float depth = texture(u_mMsDepthRt, in_uv).r;
+	vec2 ndc = UV_TO_NDC(in_uv);
 
-	vec3 origin;
-	origin.z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
-	origin.xy = ndc * u_unprojectionParams.xy * origin.z;
+	// Compute origin
+	vec3 origin = readPosition(in_uv);
 
+	// Get normal
+#if USE_NORMAL
 	vec3 normal = readNormal(in_uv);
-
-	// Get rand factors
-	vec3 randFactors = readRandom(in_uv);
-
-	// Get prev SSAO
-	vec4 clip = u_prevViewProjMatMulInvViewProjMat * vec4(vec3(ndc, depth), 1.0);
-	clip.xy /= clip.w;
-	vec2 oldUv = NDC_TO_UV(clip.xy);
-	float prevSsao = textureLod(u_prevSsaoRt, oldUv, 0.0).r;
-
-	// Compute the history blend. If clip falls outside NDC then it's 1.0 (use only current SSAO term) and if it's
-	// inside NDC then use the HISTORY_FEEDBACK value
-#if 0
-	vec2 posNdc = abs(clip.xy);
-	float historyFeedback = max(posNdc.x, posNdc.y);
-	historyFeedback = min(floor(historyFeedback), 1.0 - HISTORY_FEEDBACK);
-	historyFeedback += HISTORY_FEEDBACK;
 #else
-	const float historyFeedback = HISTORY_FEEDBACK;
+	vec3 normal = normalize(cross(dFdx(origin), dFdy(origin)));
 #endif
 
 	// Find the projected radius
@@ -125,23 +110,25 @@ void main(void)
 	vec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
 	float projRadius = length(projSphereLimit2 - ndc);
 
-	// Find a random point around the current NDC. Make sure that the sides fall inside the screen.
-#if 0
-	vec2 startXY = -in_uv; // range [0,-1]
-	startXY += randFactors.xy; // for the left side it's [0,1] for the center [0,0], right [-1,0]
-	vec2 finalDiskPoint = ndc + startXY * projRadius;
-#else
-	vec2 finalDiskPoint = ndc + (randFactors.xy - 0.5) * projRadius;
-#endif
+	// Loop to compute
+	float ssao = 0.0;
+	for(uint i = 0; i < SAMPLE_COUNT; ++i)
+	{
+		// Compute disk
+		vec3 randFactors = readRandom(in_uv, float(i));
+		vec2 dir = normalize(randFactors.xy * 2.0 - 1.0);
+		float radius = projRadius * (randFactors.z * 0.85 + 0.15);
+		vec2 finalDiskPoint = ndc + dir * radius;
 
-	// Compute factor
-	vec3 s = readPosition(NDC_TO_UV(finalDiskPoint));
-	vec3 u = s - origin;
-	float ssao = max(dot(normal, u) + BIAS, 0.0) / max(dot(u, u), EPSILON);
+		// Compute factor
+		vec3 s = readPosition(NDC_TO_UV(finalDiskPoint));
+		vec3 u = s - origin;
+		ssao += max(dot(normal, u) + BIAS, EPSILON) / max(dot(u, u), EPSILON);
+	}
+
+	ssao *= (1.0 / float(SAMPLE_COUNT));
 	ssao = 1.0 - ssao * STRENGTH;
-
-	// Blend
-	out_color = mix(prevSsao, ssao, historyFeedback);
+	out_color = ssao;
 }
 			]]></source>
 		</shader>

@@ -32,7 +32,6 @@ Error LightEvent::init(F32 startTime, F32 duration, SceneNode* light)
 	}
 
 	m_originalDiffColor = lightc.getDiffuseColor();
-	m_originalSpecColor = lightc.getSpecularColor();
 
 	return Error::NONE;
 }
@@ -75,8 +74,6 @@ Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 
 		lightc.setDiffuseColor(outCol);
 	}
-
-	lightc.setSpecularColor(m_originalSpecColor + factor * m_specularIntensityMultiplier);
 
 	return Error::NONE;
 }

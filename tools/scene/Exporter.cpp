@@ -473,14 +473,6 @@ void Exporter::exportLight(const aiLight& light)
 	aiVector3D linear(light.mColorDiffuse[0], light.mColorDiffuse[1], light.mColorDiffuse[2]);
 	file << "lcomp:setDiffuseColor(Vec4.new(" << linear[0] << ", " << linear[1] << ", " << linear[2] << ", 1))\n";
 
-	// linear = computeLightColor(light.mColorSpecular);
-	if(light.mProperties.find("specular_color") != light.mProperties.end())
-	{
-		stringToFloatArray<3>(light.mProperties.at("specular_color"), linear);
-	}
-
-	file << "lcomp:setSpecularColor(Vec4.new(" << linear[0] << ", " << linear[1] << ", " << linear[2] << ", 1))\n";
-
 	// Geometry
 	aiVector3D direction(0.0, 0.0, 1.0);
 

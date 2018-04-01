@@ -55,7 +55,6 @@ struct PointLight
 {
 	vec4 posRadius; // xyz: Light pos in world space. w: The -1/radius
 	vec4 diffuseColorPad1; // xyz: diff color
-	vec4 specularColorPad1; // xyz: spec color
 };
 
 // Spot light
@@ -63,8 +62,7 @@ struct SpotLight
 {
 	vec4 posRadius; // xyz: Light pos in world space. w: The -1/radius
 	vec4 diffuseColorOuterCos; // xyz: diff color, w: outer cosine of spot
-	vec4 specularColorInnerCos; // xyz: spec color, w: inner cosine of spot
-	vec4 lightDirPad1;
+	vec4 lightDirInnerCos; // xyz: light dir, w: inner cosine of spot
 };
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
@@ -82,16 +80,18 @@ layout(ANKI_UBO_BINDING(0, 1), row_major) uniform u1_
 #elif LIGHT_TYPE == SPOT_LIGHT_TYPE
 	SpotLight u_light;
 #else
-#error See file
+#	error See file
 #endif
 };
 
 #if LIGHT_TYPE == POINT_LIGHT_TYPE
-#define u_ldiff u_light.diffuseColorPad1.xyz
-#define u_lspec u_light.specularColorPad1.xyz
+#	define u_ldiff u_light.diffuseColorPad1.xyz
 #else
-#define u_ldiff u_light.diffuseColorOuterCos.xyz
-#define u_lspec u_light.specularColorInnerCos.xyz
+#	define u_ldiff u_light.diffuseColorOuterCos.xyz
+#	define u_lightDir u_light.lightDirInnerCos.xyz
+#	define u_outerCos u_light.diffuseColorOuterCos.w
+#	define u_innerCos u_light.lightDirInnerCos.w
+#	define u_lightDir u_light.lightDirInnerCos.xyz
 #endif
 
 #define u_camPos u_camPosPad1.xyz
@@ -112,7 +112,6 @@ void main()
 	// Decode and process gbuffer
 	GbufferInfo gbuffer;
 	readGBuffer(u_msRt0, u_msRt1, u_msRt2, uvToRead, 0.0, gbuffer);
-	float a2 = pow(gbuffer.roughness, 2.0);
 
 	vec4 worldPos4 = u_invViewProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
 	vec3 worldPos = worldPos4.xyz / worldPos4.w;
@@ -123,20 +122,17 @@ void main()
 	vec3 l = normalize(frag2Light);
 	float nol = max(0.0, dot(gbuffer.normal, l));
 
-	vec3 specC = computeSpecularColorBrdf(viewDir, l, gbuffer.normal, gbuffer.specular, u_lspec, a2, nol);
-
-	vec3 diffC = computeDiffuseColor(gbuffer.diffuse, u_ldiff);
+	vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
+	vec3 diffC = diffuseLambert(gbuffer.diffuse);
 
 	float att = computeAttenuationFactor(u_light.posRadius.w, frag2Light);
 	float lambert = nol;
 
 #if LIGHT_TYPE == POINT_LIGHT_TYPE
-	out_color = (specC + diffC) * (att * max(lambert, gbuffer.subsurface));
+	out_color = (specC + diffC) * u_ldiff * (att * max(lambert, gbuffer.subsurface));
 #else
-	float spot =
-		computeSpotFactor(l, u_light.diffuseColorOuterCos.w, u_light.specularColorInnerCos.w, u_light.lightDirPad1.xyz);
-
-	out_color = (diffC + specC) * (att * spot * max(lambert, gbuffer.subsurface));
+	float spot = computeSpotFactor(l, u_outerCos, u_innerCos, u_lightDir);
+	out_color = (diffC + specC) * u_ldiff * (att * spot * max(lambert, gbuffer.subsurface));
 #endif
 }
 			]]></source>

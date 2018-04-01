@@ -30,9 +30,9 @@ struct LightingUniforms
 // Point light
 struct PointLight
 {
-	vec4 posRadius; // xyz: Light pos in view space. w: The -1/(radius^2)
-	vec4 diffuseColorShadowmapId; // xyz: diff color, w: tile size in the shadow atlas
-	vec4 specularColorRadius; // xyz: spec color, w: radius
+	vec4 posRadius; // xyz: Light pos in world space. w: The 1/(radius^2)
+	vec4 diffuseColorTileSize; // xyz: diff color, w: tile size in the shadow atlas
+	vec4 radiusPad3; // x: radius
 	uvec4 atlasTilesPad2; // x: encodes 6 uints with atlas tile indices in the x dir. y: same for y dir.
 };
 const uint POINT_LIGHT_SIZEOF = (4 * 4) * 4;
@@ -40,14 +40,13 @@ const uint POINT_LIGHT_SIZEOF = (4 * 4) * 4;
 // Spot light
 struct SpotLight
 {
-	vec4 posRadius; // xyz: Light pos in view space. w: The -1/(radius^2)
+	vec4 posRadius; // xyz: Light pos in world space. w: The 1/(radius^2)
 	vec4 diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
-	vec4 specularColorRadius; // xyz: spec color, w: radius
-	vec4 lightDir;
+	vec4 lightDirRadius; // xyz: light direction, w: radius
 	vec4 outerCosInnerCos;
 	mat4 texProjectionMat;
 };
-const uint SPOT_LIGHT_SIZEOF = (5 * 4 + 16) * 4;
+const uint SPOT_LIGHT_SIZEOF = (4 * 4 + 16) * 4;
 
 // Representation of a reflection probe
 struct ReflectionProbe

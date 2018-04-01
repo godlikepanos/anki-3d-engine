@@ -58,7 +58,7 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 	{
 		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
-		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
+		vec3 diffC = diffuseLambert(diffCol) * light.diffuseColorTileSize.rgb;
 
 		vec3 frag2Light = light.posRadius.xyz - worldPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
@@ -67,13 +67,10 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 		const float shadow = 1.0;
 #else
 		float shadow = 1.0;
-		if(light.diffuseColorShadowmapId.w >= 0.0)
+		if(light.diffuseColorTileSize.w >= 0.0)
 		{
-			shadow = computeShadowFactorOmni(frag2Light,
-				light.specularColorRadius.w,
-				light.atlasTilesPad2.xy,
-				light.diffuseColorShadowmapId.w,
-				u_shadowTex);
+			shadow = computeShadowFactorOmni(
+				frag2Light, light.radiusPad3.x, light.atlasTilesPad2.xy, light.diffuseColorTileSize.w, u_shadowTex);
 		}
 #endif
 
@@ -86,14 +83,14 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 	{
 		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
-		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
+		vec3 diffC = diffuseLambert(diffCol) * light.diffuseColorShadowmapId.rgb;
 
 		vec3 frag2Light = light.posRadius.xyz - worldPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
 
 		vec3 l = normalize(frag2Light);
 
-		float spot = computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
+		float spot = computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDirRadius.xyz);
 
 #if LOD > 1
 		const float shadow = 1.0;
@@ -102,8 +99,7 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx >= 0.0)
 		{
-			shadow =
-				computeShadowFactorSpot(light.texProjectionMat, worldPos, light.specularColorRadius.w, u_shadowTex);
+			shadow = computeShadowFactorSpot(light.texProjectionMat, worldPos, light.lightDirRadius.w, u_shadowTex);
 		}
 #endif
 

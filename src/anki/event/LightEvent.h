@@ -42,11 +42,6 @@ public:
 		m_intensityMultiplier = v;
 	}
 
-	void setSpecularIntensityMultiplier(const Vec4& v)
-	{
-		m_specularIntensityMultiplier = v;
-	}
-
 	/// Set the frequency of changes.
 	/// @param freq The higher it is the faster things happen.
 	/// @param deviation Add a randomization to the frequency.
@@ -63,11 +58,9 @@ private:
 	F32 m_freqDeviation = 0.0;
 	F32 m_radiusMultiplier = 0.0;
 	Vec4 m_intensityMultiplier = Vec4(0.0);
-	Vec4 m_specularIntensityMultiplier = Vec4(0.0);
 
 	F32 m_originalRadius;
 	Vec4 m_originalDiffColor;
-	Vec4 m_originalSpecColor;
 };
 /// @}
 

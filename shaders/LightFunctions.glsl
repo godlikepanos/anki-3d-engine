@@ -9,66 +9,65 @@
 #define ANKI_SHADERS_LIGHT_FUNCTIONS_GLSL
 
 #include "shaders/Functions.glsl"
+#include "shaders/Pack.glsl"
 
 const float LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 const uint SHADOW_SAMPLE_COUNT = 16;
 const float ESM_CONSTANT = 40.0;
 
-float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
+// Fresnel term unreal
+vec3 F_Unreal(vec3 specular, float VoH)
 {
-	float fragLightDist = dot(frag2Light, frag2Light);
-	float att = 1.0 - fragLightDist * lightRadius;
-	att = max(0.0, att);
-	return att * att;
+	return specular + (1.0 - specular) * pow(2.0, (-5.55473 * VoH - 6.98316) * VoH);
+}
+
+// D(n,h) aka NDF: GGX Trowbridge-Reitz
+float D_GGX(float roughness, float NoH)
+{
+	float a = roughness * roughness;
+	float a2 = a * a;
+
+	float D = (NoH * a2 - NoH) * NoH + 1.0;
+	return a2 / (PI * D * D);
+}
+
+// Visibility term: Geometric shadowing divided by BRDF denominator
+float V_Schlick(float roughness, float NoV, float NoL)
+{
+	float k = (roughness * roughness) * 0.5;
+	float Vis_SchlickV = NoV * (1.0 - k) + k;
+	float Vis_SchlickL = NoL * (1.0 - k) + k;
+	return 0.25 / (Vis_SchlickV * Vis_SchlickL);
+}
+
+vec3 envBRDF(vec3 specular, float roughness, sampler2D integrationLut, float NoV)
+{
+	float a = roughness * roughness;
+	float a2 = a * a;
+	vec2 envBRDF = textureLod(integrationLut, vec2(a2, NoV), 0.0).xy;
+	return specular * envBRDF.x + min(1.0, 50.0 * specular.g) * envBRDF.y;
+}
+
+vec3 diffuseLambert(vec3 diffuse)
+{
+	return diffuse * (1.0 / PI);
 }
 
 // Performs BRDF specular lighting
-vec3 computeSpecularColorBrdf(vec3 v, // view dir
-	vec3 l, // light dir
-	vec3 n, // normal
-	vec3 specCol,
-	vec3 lightSpecCol,
-	float a2, // rougness^2
-	float nol) // N dot L
+vec3 computeSpecularColorBrdf(GbufferInfo gbuffer, vec3 viewDir, vec3 frag2Light)
 {
-	vec3 h = normalize(l + v);
+	vec3 H = normalize(frag2Light + viewDir);
 
-	// Fresnel
-	float voh = dot(v, h);
-#if 0
-	// Schlick
-	vec3 F = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
-#else
-	// Unreal
-	vec3 F = specCol + (1.0 - specCol) * pow(2.0, (-5.55473 * voh - 6.98316) * voh);
-#endif
+	float NoL = max(EPSILON, dot(gbuffer.normal, frag2Light));
+	float VoH = max(EPSILON, dot(viewDir, H));
+	float NoH = max(EPSILON, dot(gbuffer.normal, H));
+	float NoV = max(EPSILON, dot(gbuffer.normal, viewDir));
 
-	// D(n,h) aka NDF: GGX Trowbridge-Reitz
-	float noh = dot(n, h);
-	float D = noh * noh * (a2 - 1.0) + 1.0;
-	D = a2 / (PI * D * D);
+	vec3 F = F_Unreal(gbuffer.specular, VoH);
+	float D = D_GGX(gbuffer.roughness, NoH);
+	float V = V_Schlick(gbuffer.roughness, NoV, NoL);
 
-// G(l,v,h)/(4*dot(n,h)*dot(n,v)) aka Visibility term: Geometric shadowing divided by BRDF denominator
-#if 0
-	float nov = max(EPSILON, dot(n, v));
-	float V_v = nov + sqrt((nov - nov * a2) * nov + a2);
-	float V_l = nol + sqrt((nol - nol * a2) * nol + a2);
-	float V = 1.0 / (V_l * V_v);
-#else
-	float k = (a2 + 1.0);
-	k = k * k / 8.0;
-	float nov = max(EPSILON, dot(n, v));
-	float V_v = nov * (1.0 - k) + k;
-	float V_l = nol * (1.0 - k) + k;
-	float V = 1.0 / (4.0 * V_l * V_v);
-#endif
-
-	return F * (V * D) * lightSpecCol;
-}
-
-vec3 computeDiffuseColor(vec3 diffCol, vec3 lightDiffCol)
-{
-	return diffCol * lightDiffCol;
+	return F * (V * D);
 }
 
 float computeSpotFactor(vec3 l, float outerCos, float innerCos, vec3 spotDir)
@@ -100,7 +99,9 @@ float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 worldPos, float dist
 
 	float linearDepth = linearizeDepth(texCoords3.z, near, far);
 
-	return clamp(exp(ESM_CONSTANT * (textureLod(spotMapArr, texCoords3.xy, 0.0).r - linearDepth)), 0.0, 1.0);
+	float shadowFactor = textureLod(spotMapArr, texCoords3.xy, 0.0).r;
+
+	return saturate(exp(ESM_CONSTANT * (shadowFactor - linearDepth)));
 }
 
 float computeShadowFactorOmni(vec3 frag2Light, float radius, uvec2 atlasTiles, float tileSize, sampler2D shadowMap)
@@ -132,7 +133,7 @@ float computeShadowFactorOmni(vec3 frag2Light, float radius, uvec2 atlasTiles, f
 		shadowFactor = textureLod(shadowMap, uv, 0.0).r;
 	}
 
-	return clamp(exp(ESM_CONSTANT * (shadowFactor - linearDepth)), 0.0, 1.0);
+	return saturate(exp(ESM_CONSTANT * (shadowFactor - linearDepth)));
 }
 
 // Compute the cubemap texture lookup vector given the reflection vector (r) the radius squared of the probe (R2) and
@@ -163,11 +164,12 @@ vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f)
 	return r;
 }
 
-float computeRoughnesSquared(float roughness)
+float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 {
-	float a2 = roughness * 0.95 + 0.05;
-	a2 *= a2 * a2;
-	return a2;
+	float fragLightDist = dot(frag2Light, frag2Light);
+	float att = 1.0 - fragLightDist * lightRadius;
+	att = max(0.0, att);
+	return att * att;
 }
 
 #endif

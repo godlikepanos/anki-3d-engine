@@ -20,6 +20,8 @@ http://www.anki3d.org/LICENSE
 
 			<source><![CDATA[
 // Compute the irradiance given an environment map
+// It's almost the same as http://www.codinglabs.net/article_physically_based_rendering.aspx
+// It's more bright though
 
 #include "shaders/Functions.glsl"
 
@@ -69,7 +71,7 @@ void main()
 		}
 	}
 
-	out_color = outCol / weight * (2.0 * PI);
+	out_color = outCol / weight * PI;
 }
 			]]></source>
 		</shader>

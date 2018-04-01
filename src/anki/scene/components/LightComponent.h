@@ -55,16 +55,6 @@ public:
 		m_diffColor = x;
 	}
 
-	const Vec4& getSpecularColor() const
-	{
-		return m_specColor;
-	}
-
-	void setSpecularColor(const Vec4& x)
-	{
-		m_specColor = x;
-	}
-
 	void setRadius(F32 x)
 	{
 		m_radius = x;
@@ -140,7 +130,6 @@ public:
 		el.m_worldPosition = m_trf.getOrigin().xyz();
 		el.m_radius = m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_specularColor = m_specColor.xyz();
 		el.m_userData = this;
 		el.m_drawCallback = pointLightDebugDrawCallback;
 	}
@@ -155,7 +144,6 @@ public:
 		el.m_outerAngle = m_outerAngle;
 		el.m_innerAngle = m_innerAngle;
 		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_specularColor = m_specColor.xyz();
 		el.m_userData = this;
 		el.m_drawCallback = spotLightDebugDrawCallback;
 	}
@@ -163,7 +151,6 @@ public:
 private:
 	LightComponentType m_type;
 	Vec4 m_diffColor = Vec4(0.5f);
-	Vec4 m_specColor = Vec4(0.5f);
 	union
 	{
 		F32 m_radius;

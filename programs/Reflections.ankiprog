@@ -207,17 +207,6 @@ void readReflectionsAndIrradianceFromProbes(
 	}
 }
 
-vec3 computeSpecIndirectFactor(vec3 worldPos, vec3 normal, float roughness, vec3 specColor)
-{
-	vec3 viewDir = normalize(u_cameraPos - worldPos);
-	float ndotv = dot(normal, viewDir);
-
-	vec2 envBRDF = texture(u_integrationLut, vec2(roughness, ndotv)).xy;
-	vec3 specIndirectTerm = specColor * envBRDF.x + envBRDF.y;
-
-	return specIndirectTerm;
-}
-
 void main()
 {
 	// Compute a global invocation ID that takes the checkerboard pattern into account
@@ -249,16 +238,18 @@ void main()
 	vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
 	vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	// Compute how much reflections we need
-	float a2 = computeRoughnesSquared(gbuffer.roughness);
-	vec3 specIndirectTerm = computeSpecIndirectFactor(worldPos, gbuffer.normal, a2, gbuffer.specular);
-	bool runSslr = 
-		max(max(specIndirectTerm.x, specIndirectTerm.y), specIndirectTerm.z) > 0.05;
+	// Compute env BRDF
+	vec3 env;
+	{
+		vec3 viewDir = normalize(u_cameraPos - worldPos);
+		float NoV = max(EPSILON, dot(gbuffer.normal, viewDir));
+		env = envBRDF(gbuffer.specular, gbuffer.roughness, u_integrationLut, NoV);
+	}
 
 	// Try SSR
 	float sslrFactor = 0.0;
 	vec3 sslrCol = vec3(0.0);
-	if(runSslr)
+	if(env.g > 0.05)
 	{
 		// Get view pos
 		vec4 viewPos4 = u_invProjMat * vec4(UV_TO_NDC(uv), depth, 1.0);
@@ -300,15 +291,11 @@ void main()
 			idxOffset, worldPos, gbuffer.normal, gbuffer.roughness, probeCol, indirectCol);
 	}
 
-	vec3 outColor = indirectCol * gbuffer.diffuse;
-
 	// Combine the SSR and probe reflections and write the result
-	{
-		vec3 finalRefl = mix(probeCol, sslrCol, sslrFactor);
-		finalRefl = specIndirectTerm * finalRefl;
+	vec3 finalRefl = mix(probeCol, sslrCol, sslrFactor);
 
-		outColor += finalRefl;
-	}
+	// Compute the final color
+	vec3 outColor = indirectCol * gbuffer.diffuse + finalRefl * env;
 
 	// Store the color for the resolve
 	s_pixels[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = outColor;

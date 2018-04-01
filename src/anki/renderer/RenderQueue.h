@@ -67,7 +67,6 @@ public:
 	Vec3 m_worldPosition;
 	F32 m_radius;
 	Vec3 m_diffuseColor;
-	Vec3 m_specularColor;
 	Array<RenderQueue*, 6> m_shadowRenderQueues;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
@@ -95,7 +94,6 @@ public:
 	F32 m_outerAngle;
 	F32 m_innerAngle;
 	Vec3 m_diffuseColor;
-	Vec3 m_specularColor;
 	RenderQueue* m_shadowRenderQueue;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
