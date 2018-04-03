@@ -157,6 +157,12 @@ public:
 	}
 };
 
+class GpuMemoryManager::ClassAllocator : public ClassGpuAllocator
+{
+public:
+	Bool8 m_isDeviceMemory;
+};
+
 GpuMemoryManager::~GpuMemoryManager()
 {
 }
@@ -206,6 +212,11 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	for(U i = 0; i < m_callocs.getSize(); ++i)
 	{
 		m_callocs[i].init(m_alloc, &m_ifaces[i / 2]);
+
+		const U memTypeIdx = i / 2;
+		const U heapIdx = m_memoryProperties.memoryTypes[memTypeIdx].heapIndex;
+		m_callocs[i].m_isDeviceMemory =
+			!!(m_memoryProperties.memoryHeaps[heapIdx].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
 	}
 }
 
@@ -261,6 +272,24 @@ U GpuMemoryManager::findMemoryType(
 	}
 
 	return prefered;
+}
+
+void GpuMemoryManager::getAllocatedMemory(PtrSize& gpuMemory, PtrSize& cpuMemory) const
+{
+	gpuMemory = 0;
+	cpuMemory = 0;
+
+	for(const ClassAllocator& alloc : m_callocs)
+	{
+		if(alloc.m_isDeviceMemory)
+		{
+			gpuMemory += alloc.getAllocatedMemory();
+		}
+		else
+		{
+			cpuMemory += alloc.getAllocatedMemory();
+		}
+	}
 }
 
 } // end namespace anki

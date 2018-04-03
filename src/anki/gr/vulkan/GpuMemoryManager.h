@@ -58,14 +58,18 @@ public:
 	/// Find a suitable memory type.
 	U findMemoryType(U resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const;
 
+	/// Get some statistics.
+	void getAllocatedMemory(PtrSize& gpuMemory, PtrSize& cpuMemory) const;
+
 private:
 	class Memory;
 	class Interface;
+	class ClassAllocator;
 
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev;
 	DynamicArray<Interface> m_ifaces;
-	DynamicArray<ClassGpuAllocator> m_callocs;
+	DynamicArray<ClassAllocator> m_callocs;
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 };
 /// @}

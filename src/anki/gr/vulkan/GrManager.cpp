@@ -80,6 +80,16 @@ void GrManager::finish()
 	self.finish();
 }
 
+GrManagerStats GrManager::getStats() const
+{
+	ANKI_VK_SELF_CONST(GrManagerImpl);
+	GrManagerStats out;
+
+	self.getGpuMemoryManager().getAllocatedMemory(out.m_gpuMemory, out.m_cpuMemory);
+
+	return out;
+}
+
 BufferPtr GrManager::newBuffer(const BufferInitInfo& init)
 {
 	return BufferPtr(Buffer::newInstance(this, init));

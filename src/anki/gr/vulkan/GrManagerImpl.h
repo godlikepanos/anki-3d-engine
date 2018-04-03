@@ -100,6 +100,11 @@ public:
 		return m_gpuMemManager;
 	}
 
+	const GpuMemoryManager& getGpuMemoryManager() const
+	{
+		return m_gpuMemManager;
+	}
+
 	const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const
 	{
 		return m_memoryProperties;

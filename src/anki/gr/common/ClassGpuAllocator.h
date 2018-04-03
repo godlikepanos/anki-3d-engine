@@ -85,6 +85,11 @@ public:
 	/// Free allocated memory.
 	void free(ClassGpuAllocatorHandle& handle);
 
+	PtrSize getAllocatedMemory() const
+	{
+		return m_allocatedMem;
+	}
+
 private:
 	using Class = ClassGpuAllocatorClass;
 	using Chunk = ClassGpuAllocatorChunk;
@@ -94,6 +99,8 @@ private:
 
 	/// The memory classes.
 	DynamicArray<Class> m_classes;
+
+	PtrSize m_allocatedMem = 0; ///< An estimate.
 
 	Class* findClass(PtrSize size, U alignment);
 

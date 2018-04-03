@@ -20,7 +20,7 @@ public:
 	ClassGpuAllocatorMemory* m_mem;
 
 	/// The in use slots mask.
-	BitSet<MAX_SLOTS_PER_CHUNK, U8> m_inUseSlots = {false};
+	BitSet<MAX_SLOTS_PER_CHUNK, U64> m_inUseSlots = {false};
 
 	/// The number of in-use slots.
 	U32 m_inUseSlotCount = 0;
@@ -160,6 +160,8 @@ Error ClassGpuAllocator::createChunk(Class& cl, Chunk*& chunk)
 
 	cl.m_inUseChunks.pushBack(chunk);
 
+	// Update stats
+	m_allocatedMem += cl.m_chunkSize;
 	return Error::NONE;
 }
 
@@ -168,6 +170,10 @@ void ClassGpuAllocator::destroyChunk(Class& cl, Chunk& chunk)
 	cl.m_inUseChunks.erase(&chunk);
 	m_iface->free(chunk.m_mem);
 	m_alloc.deleteInstance(&chunk);
+
+	// Update stats
+	ANKI_ASSERT(m_allocatedMem >= cl.m_chunkSize);
+	m_allocatedMem -= cl.m_chunkSize;
 }
 
 Error ClassGpuAllocator::allocate(PtrSize size, U alignment, ClassGpuAllocatorHandle& handle)

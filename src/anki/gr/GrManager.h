@@ -32,6 +32,14 @@ public:
 	NativeWindow* m_window = nullptr;
 };
 
+/// Graphics statistics.
+class GrManagerStats
+{
+public:
+	PtrSize m_cpuMemory;
+	PtrSize m_gpuMemory;
+};
+
 /// The graphics manager, owner of all graphics objects.
 class GrManager
 {
@@ -69,6 +77,8 @@ public:
 	ANKI_USE_RESULT OcclusionQueryPtr newOcclusionQuery();
 	ANKI_USE_RESULT RenderGraphPtr newRenderGraph();
 	/// @}
+
+	GrManagerStats getStats() const;
 
 anki_internal:
 	GrAllocator<U8>& getAllocator()

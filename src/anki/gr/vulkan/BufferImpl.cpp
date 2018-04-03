@@ -76,7 +76,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: just host
 		if(memIdx == MAX_U32)
 		{
-			ANKI_VK_LOGW("Vulkan: Using a fallback mode for write-only buffer");
+			ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
@@ -101,7 +101,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: Just host
 		if(memIdx == MAX_U32)
 		{
-			ANKI_VK_LOGW("Vulkan: Using a fallback mode for read/write buffer");
+			ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
