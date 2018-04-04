@@ -4,9 +4,38 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/Octree.h>
+#include <anki/collision/Tests.h>
+#include <anki/collision/Aabb.h>
 
 namespace anki
 {
+
+void Octree::init(const Vec3& sceneMin, const Vec3& sceneMax, U32 maxDepth)
+{
+	ANKI_ASSERT(sceneMin < sceneMax);
+	ANKI_ASSERT(maxDepth > 0);
+
+	m_maxDepth = maxDepth;
+
+	OctreeLeaf& root = newLeaf();
+	root.m_aabbMin = sceneMin;
+	root.m_aabbMax = sceneMax;
+	m_rootLeaf = &root;
+}
+
+void Octree::placeElement(const Aabb& volume, OctreeElement& element)
+{
+	ANKI_ASSERT(m_rootLeaf);
+	placeElementRecursive(volume, element, *m_rootLeaf);
+}
+
+void Octree::placeElementRecursive(const Aabb& volume, OctreeElement& element, OctreeLeaf& parent)
+{
+	ANKI_ASSERT(testCollisionShapes(volume, Aabb(Vec4(parent.m_aabbMin, 0.0f), Vec4(parent.m_aabbMax, 0.0f)))
+				&& "Should be inside");
+
+	const Vec3 center = (parent.m_aabbMax + parent.m_aabbMin) / 2.0f;
+}
 
 OctreeLeaf& Octree::newLeaf()
 {

@@ -52,6 +52,8 @@ public:
 
 	~Octree();
 
+	void init(const Vec3& sceneMin, const Vec3& sceneMax, U32 maxDepth);
+
 	/// Place or re-place an element in the tree.
 	/// @note It's thread-safe.
 	void placeElement(const Aabb& volume, OctreeElement& element);
@@ -62,6 +64,7 @@ public:
 
 private:
 	SceneAllocator<U8> m_alloc;
+	U32 m_maxDepth = 0;
 
 	/// Keep the allocations of leafes tight because we want quite alot of them.
 	class LeafStorage
@@ -76,8 +79,12 @@ private:
 
 	DynamicArray<LeafStorage> m_leafStorages;
 
+	OctreeLeaf* m_rootLeaf = nullptr;
+
 	OctreeLeaf& newLeaf();
 	void releaseLeaf(OctreeLeaf* leaf);
+
+	void placeElementRecursive(const Aabb& volume, OctreeElement& element, OctreeLeaf& parent);
 };
 /// @}
 
