@@ -9,6 +9,7 @@
 #include <anki/Math.h>
 #include <anki/collision/Forward.h>
 #include <anki/util/WeakArray.h>
+#include <anki/util/Enum.h>
 
 namespace anki
 {
@@ -22,10 +23,8 @@ class OctreeLeaf;
 /// XXX
 class OctreeElement
 {
-protected:
-	OctreeElement* m_prev = nullptr;
-	OctreeElement* m_next = nullptr;
-	OctreeLeaf* m_leaf = nullptr;
+public:
+	Bool8 m_visited = false;
 };
 
 /// XXX
@@ -37,8 +36,6 @@ public:
 	OctreeElement* m_first;
 	OctreeElement* m_last;
 	Array<OctreeLeaf*, 8> m_leafs;
-	Vec3 m_aabbMin;
-	Vec3 m_aabbMax;
 };
 
 /// Octree for visibility tests.
@@ -52,11 +49,11 @@ public:
 
 	~Octree();
 
-	void init(const Vec3& sceneMin, const Vec3& sceneMax, U32 maxDepth);
+	void init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDepth);
 
 	/// Place or re-place an element in the tree.
 	/// @note It's thread-safe.
-	void placeElement(const Aabb& volume, OctreeElement& element);
+	void placeElement(const Aabb& volume, OctreeElement* element);
 
 	/// Remove an element from the tree.
 	/// @note It's thread-safe.
@@ -65,6 +62,8 @@ public:
 private:
 	SceneAllocator<U8> m_alloc;
 	U32 m_maxDepth = 0;
+	Vec3 m_sceneAabbMin = Vec3(0.0f);
+	Vec3 m_sceneAabbMax = Vec3(0.0f);
 
 	/// Keep the allocations of leafes tight because we want quite alot of them.
 	class LeafStorage
@@ -81,10 +80,28 @@ private:
 
 	OctreeLeaf* m_rootLeaf = nullptr;
 
+	/// P: Stands for positive and N: Negative
+	enum class LeafMask : U8
+	{
+		PX_PY_PZ = 1 << 0,
+		PX_PY_NZ = 1 << 1,
+		PX_NY_PZ = 1 << 2,
+		PX_NY_NZ = 1 << 3,
+		NX_PY_PZ = 1 << 4,
+		NX_PY_NZ = 1 << 5,
+		NX_NY_PZ = 1 << 6,
+		NX_NY_NZ = 1 << 7,
+
+		NONE = 0,
+		ALL = PX_PY_PZ | PX_PY_NZ | PX_NY_PZ | PX_NY_NZ | NX_PY_PZ | NX_PY_NZ | NX_NY_PZ | NX_NY_NZ,
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(LeafMask, friend)
+
 	OctreeLeaf& newLeaf();
 	void releaseLeaf(OctreeLeaf* leaf);
 
-	void placeElementRecursive(const Aabb& volume, OctreeElement& element, OctreeLeaf& parent);
+	void placeElementRecursive(
+		const Aabb& volume, OctreeElement* element, OctreeLeaf& parent, const Vec3& aabbMin, const Vec3& aabbMax);
 };
 /// @}
 
