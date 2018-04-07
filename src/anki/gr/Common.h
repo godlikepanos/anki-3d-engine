@@ -108,15 +108,6 @@ extern Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR;
 class GpuDeviceCapabilities
 {
 public:
-	/// Max push constant size.
-	U32 m_pushConstantsSize = 128;
-
-	/// GPU vendor.
-	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
-
-	/// Device supports subgroup operations.
-	Bool8 m_shaderSubgroups = false;
-
 	/// The alignment of offsets when bounding uniform buffers.
 	PtrSize m_uniformBufferBindOffsetAlignment = MAX_U32;
 
@@ -134,6 +125,18 @@ public:
 
 	/// The max visible range of texture buffers inside the shaders.
 	PtrSize m_textureBufferMaxRange = 0;
+
+	/// Max push constant size.
+	U32 m_pushConstantsSize = 128;
+
+	/// GPU vendor.
+	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
+
+	/// Device supports subgroup operations.
+	Bool8 m_shaderSubgroups = false;
+
+	/// Pad it because valgrind complains.
+	U8 _m_padding[2] = {};
 };
 
 /// The type of the allocator for heap allocations

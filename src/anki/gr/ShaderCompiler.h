@@ -25,9 +25,18 @@ enum class ShaderLanguage : U8
 class ShaderCompilerOptions
 {
 public:
-	ShaderLanguage m_outLanguage = ShaderLanguage::COUNT;
-	ShaderType m_shaderType = ShaderType::COUNT;
+	ShaderLanguage m_outLanguage;
+	ShaderType m_shaderType;
 	GpuDeviceCapabilities m_gpuCapabilities;
+
+	ShaderCompilerOptions()
+	{
+		// Zero it because it will be hashed
+		zeroMemory(*this);
+		m_outLanguage = ShaderLanguage::COUNT;
+		m_shaderType = ShaderType::COUNT;
+		::new(&m_gpuCapabilities) GpuDeviceCapabilities();
+	}
 
 	void setFromGrManager(const GrManager& gr);
 };
