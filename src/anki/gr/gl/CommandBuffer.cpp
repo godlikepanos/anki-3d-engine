@@ -757,7 +757,7 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 
 	if(self.m_state.bindImage(set, binding, img))
 	{
-		binding = binding + set * MAX_IMAGE_BINDINGS;
+		binding = binding + set * MAX_IMAGE_BINDINGS + MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS;
 		self.pushBackNewCommand<Cmd>(binding, img);
 	}
 }

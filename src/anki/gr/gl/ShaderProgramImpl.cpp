@@ -123,7 +123,7 @@ const ShaderProgramImplReflection& ShaderProgramImpl::getReflection()
 			}
 
 			GLint location = glGetUniformLocation(getGlName(), &name[0]);
-			if(location < I(MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS))
+			if(location < I((MAX_TEXTURE_BINDINGS + MAX_IMAGE_BINDINGS) * MAX_DESCRIPTOR_SETS))
 			{
 				// It must be a sampled image, skip it
 				continue;
