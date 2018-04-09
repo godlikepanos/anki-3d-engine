@@ -10,6 +10,7 @@
 #include <anki/collision/Forward.h>
 #include <anki/util/WeakArray.h>
 #include <anki/util/Enum.h>
+#include <anki/util/ObjectAllocator.h>
 
 namespace anki
 {
@@ -65,18 +66,7 @@ private:
 	Vec3 m_sceneAabbMin = Vec3(0.0f);
 	Vec3 m_sceneAabbMax = Vec3(0.0f);
 
-	/// Keep the allocations of leafes tight because we want quite alot of them.
-	class LeafStorage
-	{
-	public:
-		WeakArray<OctreeLeaf> m_leafs;
-		WeakArray<U16> m_unusedLeafsStack;
-		U16 m_unusedLeafCount = MAX_U16;
-	};
-
-	static constexpr U LEAFES_PER_STORAGE = 256;
-
-	DynamicArray<LeafStorage> m_leafStorages;
+	ObjectAllocatorSameType<OctreeLeaf, 256> m_leafAlloc;
 
 	OctreeLeaf* m_rootLeaf = nullptr;
 
@@ -97,8 +87,17 @@ private:
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(LeafMask, friend)
 
-	OctreeLeaf& newLeaf();
-	void releaseLeaf(OctreeLeaf* leaf);
+	OctreeLeaf& newLeaf()
+	{
+		OctreeLeaf* out = m_leafAlloc.newInstance(m_alloc);
+		zeroMemory(*out);
+		return *out;
+	}
+
+	void releaseLeaf(OctreeLeaf* leaf)
+	{
+		m_leafAlloc.deleteInstance(m_alloc, leaf);
+	}
 
 	void placeElementRecursive(
 		const Aabb& volume, OctreeElement* element, OctreeLeaf& parent, const Vec3& aabbMin, const Vec3& aabbMax);

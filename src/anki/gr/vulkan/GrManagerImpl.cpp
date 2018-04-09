@@ -402,7 +402,8 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::UNKNOWN;
 	}
-	ANKI_VK_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
+	ANKI_VK_LOGI(
+		"GPU is %s. Vendor identified a %s", m_devProps.deviceName, &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 

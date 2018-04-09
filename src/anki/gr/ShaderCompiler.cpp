@@ -37,8 +37,8 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #if defined(ANKI_BACKEND_GL) 
 #	define ANKI_UBO_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
 #	define ANKI_SS_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
-#	define ANKI_TEX_BINDING(set_, binding_) location = (set_) * (%u) + (binding_)
-#	define ANKI_IMAGE_BINDING(set_, binding_) location = (set_) * (%u) + (binding_) + (%u)
+#	define ANKI_TEX_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
+#	define ANKI_IMAGE_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
 #	define ANKI_SPEC_CONST(binding_, type_, name_) const type_ name_ = _anki_spec_const_ ## binding_
 #	define ANKI_PUSH_CONSTANTS(struct_, name_) layout(location = (%u)) uniform struct_ name_
 #else
@@ -296,7 +296,6 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 		MAX_STORAGE_BUFFER_BINDINGS,
 		MAX_TEXTURE_BINDINGS,
 		MAX_IMAGE_BINDINGS, // Images
-		MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS, // Images offset
 		(MAX_TEXTURE_BINDINGS + MAX_IMAGE_BINDINGS) * MAX_DESCRIPTOR_SETS, // Push constant location
 		// VK bindings
 		0,
