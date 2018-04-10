@@ -8,11 +8,17 @@
 #ifndef ANKI_SHADERS_COMMON_GLSL
 #define ANKI_SHADERS_COMMON_GLSL
 
-// WORKAROUND
+// WORKAROUNDS
 #if defined(ANKI_VENDOR_NVIDIA)
 #	define NVIDIA_LINK_ERROR_WORKAROUND 1
 #else
 #	define NVIDIA_LINK_ERROR_WORKAROUND 0
+#endif
+
+#if defined(ANKI_VENDOR_AMD) && defined(ANKI_BACKEND_VULKAN)
+#	define AMD_VK_READ_FIRST_INVOCATION_COMPILER_CRASH 1
+#else
+#	define AMD_VK_READ_FIRST_INVOCATION_COMPILER_CRASH 0
 #endif
 
 // Default precision
@@ -60,8 +66,10 @@ const uint UBO_MAX_SIZE = 16384u;
 #define PASS_EZ 2
 
 // Other
-#if !defined(ANKI_ARB_SHADER_BALLOT)
-#	define readFirstInvocationARB(x_) (x_)
+#if defined(ANKI_ARB_SHADER_BALLOT) && AMD_VK_READ_FIRST_INVOCATION_COMPILER_CRASH == 0
+#	define UNIFORM(x_) readFirstInvocationARB(x_)
+#else
+#	define UNIFORM(x_) x_
 #endif
 
 #define CALC_BITANGENT_IN_VERT 1
