@@ -205,8 +205,8 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	// Vert & idx buffers
 	cmdb->bindVertexBuffer(0, vertCtx.m_token.m_buffer, vertCtx.m_token.m_offset, sizeof(Vert));
 	cmdb->setVertexAttribute(0, 0, Format::R32G32_SFLOAT, 0);
-	cmdb->setVertexAttribute(1, 0, Format::R32G32_SFLOAT, sizeof(Vec2));
-	cmdb->setVertexAttribute(2, 0, Format::R8G8B8A8_UNORM, sizeof(Vec2) * 2);
+	cmdb->setVertexAttribute(1, 0, Format::R8G8B8A8_UNORM, sizeof(Vec2) * 2);
+	cmdb->setVertexAttribute(2, 0, Format::R32G32_SFLOAT, sizeof(Vec2));
 
 	cmdb->bindIndexBuffer(idxCtx.m_token.m_buffer, idxCtx.m_token.m_offset, IndexType::U16);
 

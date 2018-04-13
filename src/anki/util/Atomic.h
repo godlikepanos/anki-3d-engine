@@ -81,6 +81,20 @@ public:
 		return m_att.fetch_sub(a, static_cast<std::memory_order>(memOrd));
 	}
 
+	/// Fetch and do bitwise or.
+	template<typename Y>
+	Value fetchOr(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	{
+		return m_att.fetch_or(a, static_cast<std::memory_order>(memOrd));
+	}
+
+	/// Fetch and do bitwise and.
+	template<typename Y>
+	Value fetchAnd(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	{
+		return m_att.fetch_and(a, static_cast<std::memory_order>(memOrd));
+	}
+
 	/// @code
 	/// if(m_val == expected) {
 	/// 	m_val = desired;

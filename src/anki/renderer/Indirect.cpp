@@ -366,12 +366,15 @@ void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
 		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
-		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-			rqueue.m_viewMatrix,
-			rqueue.m_viewProjectionMatrix,
-			cmdb,
-			rqueue.m_renderables.getBegin(),
-			rqueue.m_renderables.getEnd());
+		if(!rqueue.m_renderables.isEmpty())
+		{
+			m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+				rqueue.m_viewMatrix,
+				rqueue.m_viewProjectionMatrix,
+				cmdb,
+				rqueue.m_renderables.getBegin(),
+				rqueue.m_renderables.getEnd());
+		}
 	}
 
 	// Restore state

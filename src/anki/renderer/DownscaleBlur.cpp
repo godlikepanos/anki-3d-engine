@@ -39,6 +39,7 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 			| TextureUsageBit::SAMPLED_COMPUTE,
 		"DownscaleBlur");
 	texinit.m_mipmapCount = m_passCount;
+	texinit.m_initialUsage = TextureUsageBit::SAMPLED_COMPUTE;
 	m_rtTex = m_r->createAndClearRenderTarget(texinit);
 
 	// FB descr
