@@ -104,6 +104,8 @@ public:
 	};
 	DynamicArray<ConsumedTextureInfo> m_consumedTextures;
 
+	Bool8 m_drawsToDefaultFb = false;
+
 	FramebufferPtr& fb()
 	{
 		return m_secondLevelCmdbInitInfo.m_framebuffer;
@@ -116,11 +118,13 @@ public:
 };
 
 /// A batch of render passes. These passes can run in parallel.
+/// @warning It's POD. Destructor won't be called.
 class RenderGraph::Batch
 {
 public:
 	DynamicArray<U32> m_passIndices;
 	DynamicArray<Barrier> m_barriersBefore;
+	CommandBuffer* m_cmdb; ///< Someone else holds the ref already so have a ptr here.
 };
 
 /// The RenderGraph build context.
@@ -134,7 +138,7 @@ public:
 	DynamicArray<RT> m_rts;
 	DynamicArray<Buffer> m_buffers;
 
-	CommandBufferPtr m_cmdb;
+	DynamicArray<CommandBufferPtr> m_graphicsCmdbs;
 
 	BakeContext(const StackAllocator<U8>& alloc)
 		: m_alloc(alloc)
@@ -271,7 +275,7 @@ void RenderGraph::reset()
 		p.m_secondLevelCmdbs.destroy(m_ctx->m_alloc);
 	}
 
-	m_ctx->m_cmdb.reset(nullptr);
+	m_ctx->m_graphicsCmdbs.destroy(m_ctx->m_alloc);
 
 	m_ctx->m_alloc = StackAllocator<U8>();
 	m_ctx = nullptr;
@@ -617,6 +621,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 			if(graphicsPass.hasFramebuffer())
 			{
 				outPass.fb() = getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0]);
+				outPass.m_drawsToDefaultFb = graphicsPass.m_fbDescr.m_defaultFb;
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
 
@@ -691,6 +696,7 @@ void RenderGraph::initBatches()
 	while(passesInBatchCount < passCount)
 	{
 		Batch batch;
+		Bool drawsToDefaultFb = false;
 
 		for(U i = 0; i < passCount; ++i)
 		{
@@ -699,7 +705,24 @@ void RenderGraph::initBatches()
 				// Add to the batch
 				++passesInBatchCount;
 				batch.m_passIndices.emplaceBack(m_ctx->m_alloc, i);
+
+				// Will batch draw to default FB?
+				drawsToDefaultFb = drawsToDefaultFb || m_ctx->m_passes[i].m_drawsToDefaultFb;
 			}
+		}
+
+		// Get or create cmdb for the batch.
+		// Create a new cmdb if the batch is writing to default FB. This will help Vulkan to have a dependency of the
+		// swap chain image acquire to the 2nd command buffer instead of adding it to a single big cmdb.
+		if(m_ctx->m_graphicsCmdbs.isEmpty() || drawsToDefaultFb)
+		{
+			CommandBufferInitInfo cmdbInit;
+			cmdbInit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::GRAPHICS_WORK;
+			CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbInit);
+
+			m_ctx->m_graphicsCmdbs.emplaceBack(m_ctx->m_alloc, cmdb);
+
+			batch.m_cmdb = cmdb.get();
 		}
 
 		// Push back batch
@@ -905,11 +928,6 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllo
 	// Create barriers between batches
 	setBatchBarriers(descr);
 
-	// Create main command buffer
-	CommandBufferInitInfo cmdbInit;
-	cmdbInit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::COMPUTE_WORK;
-	m_ctx->m_cmdb = getManager().newCommandBuffer(cmdbInit);
-
 #if ANKI_DBG_RENDER_GRAPH
 	if(dumpDependencyDotFile(descr, ctx, "./"))
 	{
@@ -964,16 +982,17 @@ void RenderGraph::run() const
 {
 	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
 	ANKI_ASSERT(m_ctx);
-	CommandBufferPtr& cmdb = m_ctx->m_cmdb;
 
 	RenderPassWorkContext ctx;
 	ctx.m_rgraph = this;
 	ctx.m_currentSecondLevelCommandBufferIndex = 0;
 	ctx.m_secondLevelCommandBufferCount = 0;
-	ctx.m_commandBuffer = cmdb;
 
 	for(const Batch& batch : m_ctx->m_batches)
 	{
+		ctx.m_commandBuffer.reset(batch.m_cmdb);
+		CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
 		// Set the barriers
 		for(const Barrier& barrier : batch.m_barriersBefore)
 		{
@@ -1036,7 +1055,10 @@ void RenderGraph::run() const
 
 void RenderGraph::flush()
 {
-	m_ctx->m_cmdb->flush();
+	for(CommandBufferPtr& cmdb : m_ctx->m_graphicsCmdbs)
+	{
+		cmdb->flush();
+	}
 }
 
 void RenderGraph::getCrntUsage(

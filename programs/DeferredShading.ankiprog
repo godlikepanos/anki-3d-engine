@@ -38,7 +38,7 @@ void main()
 
 		<shader type="frag">
 			<inputs>
-				<input name="FB_SIZE" type="uvec2" const="1" />
+				<input name="FB_SIZE" type="uvec2" const="1"/>
 			</inputs>
 
 			<source><![CDATA[

@@ -155,13 +155,13 @@ void GlState::initRenderThread()
 
 	I64 val;
 	glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &val);
-	m_uboAlignment = val;
+	m_uboAlignment = max<U32>(ANKI_SAFE_ALIGNMENT, val); // Some GPU have really low requirements
 
 	glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &val);
-	m_ssboAlignment = val;
+	m_ssboAlignment = max<U32>(ANKI_SAFE_ALIGNMENT, val); // Some GPU have really low requirements
 
 	glGetInteger64v(GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT, &val);
-	m_tboAlignment = val;
+	m_tboAlignment = max<U32>(ANKI_SAFE_ALIGNMENT, val); // Some GPU have really low requirements
 
 	glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &val);
 	m_uniBlockMaxSize = val;

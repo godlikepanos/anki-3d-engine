@@ -185,7 +185,8 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		// Positions
 		auto& posa = header.m_vertexAttributes[anki::VertexAttributeLocation::POSITION];
 		posa.m_bufferBinding = 0;
-		posa.m_format = (maxPositionDistance < 2.0) ? anki::Format::R16G16B16_SFLOAT : anki::Format::R32G32B32_SFLOAT;
+		posa.m_format =
+			(maxPositionDistance < 2.0) ? anki::Format::R16G16B16A16_SFLOAT : anki::Format::R32G32B32_SFLOAT;
 		posa.m_relativeOffset = 0;
 		posa.m_scale = 1.0;
 
@@ -244,9 +245,13 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		{
 			header.m_vertexBuffers[0].m_vertexStride = sizeof(float) * 3;
 		}
+		else if(posa.m_format == anki::Format::R16G16B16A16_SFLOAT)
+		{
+			header.m_vertexBuffers[0].m_vertexStride = sizeof(uint16_t) * 4;
+		}
 		else
 		{
-			header.m_vertexBuffers[0].m_vertexStride = sizeof(uint16_t) * 3;
+			assert(0);
 		}
 
 		// 2nd buff has normal + tangent + texcoords
@@ -322,14 +327,23 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		{
 			file.write(reinterpret_cast<char*>(&positions[0]), positions.size() * sizeof(positions[0]));
 		}
-		else if(posa.m_format == anki::Format::R16G16B16_SFLOAT)
+		else if(posa.m_format == anki::Format::R16G16B16A16_SFLOAT)
 		{
 			std::vector<uint16_t> pos16;
-			pos16.resize(positions.size());
+			pos16.resize(mesh.mNumVertices * 4);
 
-			for(unsigned i = 0; i < positions.size(); ++i)
+			const float* p32 = &positions[0];
+			const float* p32end = p32 + positions.size();
+			uint16_t* p16 = &pos16[0];
+			while(p32 != p32end)
 			{
-				pos16[i] = anki::F16(positions[i]).toU16();
+				p16[0] = anki::F16(p32[0]).toU16();
+				p16[1] = anki::F16(p32[1]).toU16();
+				p16[2] = anki::F16(p32[2]).toU16();
+				p16[3] = anki::F16(0.0f).toU16();
+
+				p32 += 3;
+				p16 += 4;
 			}
 
 			file.write(reinterpret_cast<char*>(&pos16[0]), pos16.size() * sizeof(pos16[0]));

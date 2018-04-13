@@ -173,7 +173,7 @@ Error MeshLoader::checkHeader() const
 
 	// Attributes
 	ANKI_CHECK(checkFormat(
-		VertexAttributeLocation::POSITION, Array<Format, 2>{{Format::R16G16B16_SFLOAT, Format::R32G32B32_SFLOAT}}));
+		VertexAttributeLocation::POSITION, Array<Format, 2>{{Format::R16G16B16A16_SFLOAT, Format::R32G32B32_SFLOAT}}));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::NORMAL, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::TANGENT, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}));
 	ANKI_CHECK(
@@ -315,14 +315,17 @@ Error MeshLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, Dynami
 			{
 				vert = *reinterpret_cast<Vec3*>(&staging[i * buffInfo.m_vertexStride + attrib.m_relativeOffset]);
 			}
-			else
+			else if(attrib.m_format == Format::R16G16B16A16_SFLOAT)
 			{
-				ANKI_ASSERT(attrib.m_format == Format::R16G16B16_SFLOAT);
 				F16* f16 = reinterpret_cast<F16*>(&staging[i * buffInfo.m_vertexStride + attrib.m_relativeOffset]);
 
 				vert[0] = f16[0].toF32();
 				vert[1] = f16[1].toF32();
 				vert[2] = f16[2].toF32();
+			}
+			else
+			{
+				ANKI_ASSERT(0);
 			}
 
 			positions[i] = vert;

@@ -69,7 +69,7 @@ void main()
 	out_color = textureLod(u_isRt, uv, 0.0).rgb;
 #endif
 
-	out_color = tonemap(out_color, readFirstInvocationARB(u_exposureThreshold0));
+	out_color = tonemap(out_color, UNIFORM(u_exposureThreshold0));
 
 #if BLOOM_ENABLED
 	vec3 bloom = textureLod(u_ppsBloomLfRt, uv, 0.0).rgb;

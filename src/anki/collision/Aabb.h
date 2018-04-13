@@ -30,6 +30,7 @@ public:
 		, m_min(min)
 		, m_max(max)
 	{
+		ANKI_ASSERT(min.w() == 0.0f && max.w() == 0.0f);
 		ANKI_ASSERT(m_min.xyz() < m_max.xyz());
 	}
 

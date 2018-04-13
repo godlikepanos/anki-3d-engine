@@ -9,7 +9,7 @@
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/Fence.h>
 #include <anki/gr/vulkan/FenceImpl.h>
-
+#include <anki/util/Functions.h>
 #include <anki/core/Config.h>
 #include <glslang/Public/ShaderLang.h>
 
@@ -402,16 +402,20 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::UNKNOWN;
 	}
-	ANKI_VK_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
+	ANKI_VK_LOGI(
+		"GPU is %s. Vendor identified a %s", m_devProps.deviceName, &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 
 	// Set limits
-	m_capabilities.m_uniformBufferBindOffsetAlignment = m_devProps.limits.minUniformBufferOffsetAlignment;
+	m_capabilities.m_uniformBufferBindOffsetAlignment =
+		max<U32>(ANKI_SAFE_ALIGNMENT, m_devProps.limits.minUniformBufferOffsetAlignment);
 	m_capabilities.m_uniformBufferMaxRange = m_devProps.limits.maxUniformBufferRange;
-	m_capabilities.m_storageBufferBindOffsetAlignment = m_devProps.limits.minStorageBufferOffsetAlignment;
+	m_capabilities.m_storageBufferBindOffsetAlignment =
+		max<U32>(ANKI_SAFE_ALIGNMENT, m_devProps.limits.minStorageBufferOffsetAlignment);
 	m_capabilities.m_storageBufferMaxRange = m_devProps.limits.maxStorageBufferRange;
-	m_capabilities.m_textureBufferBindOffsetAlignment = m_devProps.limits.minTexelBufferOffsetAlignment;
+	m_capabilities.m_textureBufferBindOffsetAlignment =
+		max<U32>(ANKI_SAFE_ALIGNMENT, m_devProps.limits.minTexelBufferOffsetAlignment);
 	m_capabilities.m_textureBufferMaxRange = MAX_U32;
 
 	return Error::NONE;

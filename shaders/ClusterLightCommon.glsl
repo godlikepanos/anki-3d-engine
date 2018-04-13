@@ -81,14 +81,14 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 	LightingUniforms u_lightingUniforms;
 };
 
-#	define u_near readFirstInvocationARB(u_lightingUniforms.rendererSizeTimeNear.w)
-#	define u_far readFirstInvocationARB(u_lightingUniforms.cameraPosFar.w)
-#	define u_cameraPos readFirstInvocationARB(u_lightingUniforms.cameraPosFar.xyz)
-#	define u_clusterCountX readFirstInvocationARB(u_lightingUniforms.tileCount.x)
-#	define u_clusterCountY readFirstInvocationARB(u_lightingUniforms.tileCount.y)
+#	define u_near UNIFORM(u_lightingUniforms.rendererSizeTimeNear.w)
+#	define u_far UNIFORM(u_lightingUniforms.cameraPosFar.w)
+#	define u_cameraPos UNIFORM(u_lightingUniforms.cameraPosFar.xyz)
+#	define u_clusterCountX UNIFORM(u_lightingUniforms.tileCount.x)
+#	define u_clusterCountY UNIFORM(u_lightingUniforms.tileCount.y)
 #	define u_clustererMagic u_lightingUniforms.clustererMagicValues
-#	define u_time readFirstInvocationARB(u_lightingUniforms.rendererSizeTimeNear.z)
-#	define u_unprojectionParams readFirstInvocationARB(u_lightingUniforms.unprojectionParams)
+#	define u_time UNIFORM(u_lightingUniforms.rendererSizeTimeNear.z)
+#	define u_unprojectionParams UNIFORM(u_lightingUniforms.unprojectionParams)
 #	define u_rendererSize u_lightingUniforms.rendererSizeTimeNear.xy
 
 #	define u_viewMat u_lightingUniforms.viewMat

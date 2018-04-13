@@ -122,14 +122,7 @@ const ShaderProgramImplReflection& ShaderProgramImpl::getReflection()
 				continue;
 			}
 
-			GLint location = glGetUniformLocation(getGlName(), &name[0]);
-			if(location < I(MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS))
-			{
-				// It must be a sampled image, skip it
-				continue;
-			}
-
-			// Store those info
+			// Set type
 			ShaderVariableDataType akType = ShaderVariableDataType::NONE;
 			switch(type)
 			{
@@ -149,9 +142,18 @@ const ShaderProgramImplReflection& ShaderProgramImpl::getReflection()
 				akType = ShaderVariableDataType::MAT3;
 				break;
 			default:
-				ANKI_ASSERT(!"Unsupported type");
+				// Unsupported type, skip as well
+				continue;
 			}
 
+			const GLint location = glGetUniformLocation(getGlName(), &name[0]);
+			if(location < 0)
+			{
+				// Uniform block maybe, skip
+				continue;
+			}
+
+			// Store
 			ShaderProgramImplReflection::Uniform uni;
 			uni.m_location = location;
 			uni.m_type = akType;
