@@ -80,6 +80,11 @@ public:
 		return m_cmdbFactory;
 	}
 
+	const CommandBufferFactory& getCommandBufferFactory() const
+	{
+		return m_cmdbFactory;
+	}
+
 	MicroFencePtr newFence()
 	{
 		return m_fences.newInstance();

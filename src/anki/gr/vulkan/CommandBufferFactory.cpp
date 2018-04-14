@@ -86,9 +86,11 @@ void CommandBufferThreadAllocator::destroy()
 	ANKI_ASSERT(m_createdCmdbs.load() == 0 && "Someone still holds references to command buffers");
 }
 
-Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& outPtr)
+Error CommandBufferThreadAllocator::newCommandBuffer(
+	CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& outPtr, Bool& createdNew)
 {
 	cmdbFlags = cmdbFlags & (CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH);
+	createdNew = false;
 
 	const Bool secondLevel = !!(cmdbFlags & CommandBufferFlag::SECOND_LEVEL);
 	const Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::SMALL_BATCH);
@@ -132,7 +134,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 				// Can re-use it
 				if(out)
 				{
-					type.m_readyCmdbs.pushBack(mcmdb);
+					inUseCmdbs.pushBack(mcmdb);
 				}
 				else
 				{
@@ -188,6 +190,8 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		newCmdb->m_flags = cmdbFlags;
 
 		out = newCmdb;
+
+		createdNew = true;
 	}
 	else
 	{
@@ -195,6 +199,8 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 	}
 
 	ANKI_ASSERT(out && out->m_refcount.load() == 0);
+	ANKI_ASSERT(!!(out->m_flags & CommandBufferFlag::SECOND_LEVEL) == secondLevel);
+	ANKI_ASSERT(!!(out->m_flags & CommandBufferFlag::SMALL_BATCH) == smallBatch);
 	outPtr.reset(out);
 	return Error::NONE;
 }
@@ -291,7 +297,12 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 	}
 
 	ANKI_ASSERT(alloc);
-	ANKI_CHECK(alloc->newCommandBuffer(cmdbFlags, ptr));
+	Bool createdNew;
+	ANKI_CHECK(alloc->newCommandBuffer(cmdbFlags, ptr, createdNew));
+	if(createdNew)
+	{
+		m_createdCmdBufferCount.fetchAdd(1);
+	}
 
 	return Error::NONE;
 }

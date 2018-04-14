@@ -36,8 +36,9 @@ public:
 class GrManagerStats
 {
 public:
-	PtrSize m_cpuMemory;
-	PtrSize m_gpuMemory;
+	PtrSize m_cpuMemory = 0;
+	PtrSize m_gpuMemory = 0;
+	U32 m_commandBufferCount = 0;
 };
 
 /// The graphics manager, owner of all graphics objects.

@@ -86,6 +86,7 @@ GrManagerStats GrManager::getStats() const
 	GrManagerStats out;
 
 	self.getGpuMemoryManager().getAllocatedMemory(out.m_gpuMemory, out.m_cpuMemory);
+	out.m_commandBufferCount = self.getCommandBufferFactory().getCreatedCommandBufferCount();
 
 	return out;
 }

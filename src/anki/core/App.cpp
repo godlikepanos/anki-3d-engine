@@ -80,6 +80,7 @@ public:
 
 	U64 m_vkCpuMem = 0;
 	U64 m_vkGpuMem = 0;
+	U32 m_vkCmdbCount = 0;
 
 	static const U32 BUFFERED_FRAMES = 16;
 	U32 m_bufferedFrames = 0;
@@ -107,7 +108,7 @@ public:
 
 		nk_style_push_style_item(ctx, &ctx->style.window.fixed_background, nk_style_item_color(nk_rgba(0, 0, 0, 128)));
 
-		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 230, 290), 0))
+		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 230, 350), 0))
 		{
 			nk_layout_row_dynamic(ctx, 17, 1);
 
@@ -125,6 +126,10 @@ public:
 			labelUint(ctx, m_freeCount, "Total frees");
 			labelBytes(ctx, m_vkCpuMem, "Vulkan CPU");
 			labelBytes(ctx, m_vkGpuMem, "Vulkan GPU");
+
+			nk_label(ctx, " ", NK_TEXT_ALIGN_LEFT);
+			nk_label(ctx, "Vulkan:", NK_TEXT_ALIGN_LEFT);
+			labelUint(ctx, m_vkCmdbCount, "Cmd buffers");
 		}
 
 		nk_style_pop_style_item(ctx);
@@ -666,6 +671,7 @@ Error App::mainLoop()
 			GrManagerStats grStats = m_gr->getStats();
 			statsUi.m_vkCpuMem = grStats.m_cpuMemory;
 			statsUi.m_vkGpuMem = grStats.m_gpuMemory;
+			statsUi.m_vkCmdbCount = grStats.m_commandBufferCount;
 		}
 
 		++m_globalTimestamp;

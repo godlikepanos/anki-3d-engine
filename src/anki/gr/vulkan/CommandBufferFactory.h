@@ -113,7 +113,7 @@ public:
 	GrAllocator<U8>& getAllocator();
 
 	/// Request a new command buffer.
-	ANKI_USE_RESULT Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
+	ANKI_USE_RESULT Error newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr, Bool& createdNew);
 
 	/// It will recycle it.
 	void deleteCommandBuffer(MicroCommandBuffer* ptr);
@@ -161,6 +161,12 @@ public:
 	/// Request a new command buffer.
 	ANKI_USE_RESULT Error newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& ptr);
 
+	/// Stats.
+	U32 getCreatedCommandBufferCount() const
+	{
+		return m_createdCmdBufferCount.load();
+	}
+
 private:
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
@@ -168,6 +174,8 @@ private:
 
 	DynamicArray<CommandBufferThreadAllocator*> m_threadAllocs;
 	SpinLock m_threadAllocMtx;
+
+	Atomic<U32> m_createdCmdBufferCount = {0};
 };
 /// @}
 

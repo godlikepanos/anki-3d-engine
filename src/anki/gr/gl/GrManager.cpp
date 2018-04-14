@@ -141,4 +141,9 @@ RenderGraphPtr GrManager::newRenderGraph()
 
 #undef ANKI_SAFE_CONSTRUCT
 
+GrManagerStats GrManager::getStats() const
+{
+	return GrManagerStats();
+}
+
 } // end namespace anki
