@@ -523,6 +523,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::EXT_SHADER_SUBGROUP_BALLOT;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME;
 			}
+			else if(CString(extensionInfos[extCount].extensionName) == VK_AMD_SHADER_INFO_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::AMD_SHADER_INFO;
+				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_SHADER_INFO_EXTENSION_NAME;
+			}
 		}
 
 		if(!!(m_extensions & VulkanExtensions::KHR_MAINENANCE1))
@@ -556,10 +561,34 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	{
 		m_pfnDebugMarkerSetObjectNameEXT = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
 			vkGetDeviceProcAddr(m_device, "vkDebugMarkerSetObjectNameEXT"));
-
 		if(!m_pfnDebugMarkerSetObjectNameEXT)
 		{
 			ANKI_VK_LOGW("VK_EXT_debug_marker is present but vkDebugMarkerSetObjectNameEXT is not there");
+		}
+
+		m_pfnCmdDebugMarkerBeginEXT =
+			reinterpret_cast<PFN_vkCmdDebugMarkerBeginEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerBeginEXT"));
+		if(!m_pfnCmdDebugMarkerBeginEXT)
+		{
+			ANKI_VK_LOGW("VK_EXT_debug_marker is present but vkCmdDebugMarkerBeginEXT is not there");
+		}
+
+		m_pfnCmdDebugMarkerEndEXT =
+			reinterpret_cast<PFN_vkCmdDebugMarkerEndEXT>(vkGetDeviceProcAddr(m_device, "vkCmdDebugMarkerEndEXT"));
+		if(!m_pfnCmdDebugMarkerEndEXT)
+		{
+			ANKI_VK_LOGW("VK_EXT_debug_marker is present but vkCmdDebugMarkerEndEXT is not there");
+		}
+	}
+
+	// Get VK_AMD_shader_info entry points
+	if(!!(m_extensions & VulkanExtensions::AMD_SHADER_INFO))
+	{
+		m_pfnGetShaderInfoAMD =
+			reinterpret_cast<PFN_vkGetShaderInfoAMD>(vkGetDeviceProcAddr(m_device, "vkGetShaderInfoAMD"));
+		if(!m_pfnGetShaderInfoAMD)
+		{
+			ANKI_VK_LOGW("VK_AMD_shader_info is present but vkGetShaderInfoAMD is not there");
 		}
 	}
 

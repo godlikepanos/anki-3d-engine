@@ -655,7 +655,8 @@ private:
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles);
+	FramebufferPtr getOrCreateFramebuffer(
+		const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name);
 
 	ANKI_HOT Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b) const;
 

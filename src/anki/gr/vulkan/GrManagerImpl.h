@@ -173,6 +173,30 @@ public:
 		return m_queueIdx;
 	}
 
+	/// @name Debug report
+	/// @{
+	void beginMarker(VkCommandBuffer cmdb, CString name) const
+	{
+		ANKI_ASSERT(cmdb);
+		if(m_pfnCmdDebugMarkerBeginEXT)
+		{
+			VkDebugMarkerMarkerInfoEXT markerInfo = {};
+			markerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT;
+			markerInfo.color[0] = 1.0f;
+			markerInfo.pMarkerName = (!name.isEmpty() && name.getLength() > 0) ? name.cstr() : "Unnamed";
+			m_pfnCmdDebugMarkerBeginEXT(cmdb, &markerInfo);
+		}
+	}
+
+	void endMarker(VkCommandBuffer cmdb) const
+	{
+		ANKI_ASSERT(cmdb);
+		if(m_pfnCmdDebugMarkerEndEXT)
+		{
+			m_pfnCmdDebugMarkerEndEXT(cmdb);
+		}
+	}
+
 	void trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const;
 
 	void trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, void* handle) const
@@ -185,6 +209,28 @@ public:
 	StringAuto tryGetVulkanHandleName(void* handle) const
 	{
 		return tryGetVulkanHandleName(U64(ptrToNumber(handle)));
+	}
+	/// @}
+
+	void printPipelineShaderInfo(VkPipeline ppline, CString name) const
+	{
+		if(m_pfnGetShaderInfoAMD)
+		{
+			VkShaderStatisticsInfoAMD stats = {};
+			size_t size = sizeof(stats);
+			VkResult err = m_pfnGetShaderInfoAMD(
+				m_device, ppline, VK_SHADER_STAGE_ALL, VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats);
+
+			if(!err)
+			{
+				ANKI_VK_LOGI("Pipeline \"%s\" stats: VGRPS %u/%u, SGRPS %u/%u",
+					name.cstr(),
+					stats.resourceUsage.numUsedVgprs,
+					stats.numAvailableVgprs,
+					stats.resourceUsage.numUsedSgprs,
+					stats.numAvailableSgprs);
+			}
+		}
 	}
 
 private:
@@ -215,6 +261,9 @@ private:
 	VkPhysicalDeviceFeatures m_devFeatures = {};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
+	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;
+	PFN_vkCmdDebugMarkerEndEXT m_pfnCmdDebugMarkerEndEXT = nullptr;
+	PFN_vkGetShaderInfoAMD m_pfnGetShaderInfoAMD = nullptr;
 
 	/// @name Surface_related
 	/// @{

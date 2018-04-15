@@ -47,6 +47,7 @@ enum class VulkanExtensions : U16
 	NV_DEDICATED_ALLOCATION = 1 << 7,
 	EXT_SHADER_SUBGROUP_BALLOT = 1 << 8,
 	EXT_DEBUG_REPORT = 1 << 9,
+	AMD_SHADER_INFO = 1 << 10,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions, inline)
 

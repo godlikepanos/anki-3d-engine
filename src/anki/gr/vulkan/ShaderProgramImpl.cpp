@@ -180,6 +180,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 		ANKI_VK_CHECK(vkCreateComputePipelines(
 			getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_computePpline));
+		getGrManagerImpl().printPipelineShaderInfo(m_computePpline, getName());
 	}
 
 	return Error::NONE;

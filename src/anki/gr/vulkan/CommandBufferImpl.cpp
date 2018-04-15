@@ -225,6 +225,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 	bi.renderArea.extent.width = m_renderArea[2];
 	bi.renderArea.extent.height = m_renderArea[3];
 
+	getGrManagerImpl().beginMarker(m_handle, impl.getName());
 	ANKI_CMD(vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents), ANY_OTHER_COMMAND);
 }
 
@@ -239,6 +240,7 @@ void CommandBufferImpl::endRenderPass()
 	}
 
 	ANKI_CMD(vkCmdEndRenderPass(m_handle), ANY_OTHER_COMMAND);
+	getGrManagerImpl().endMarker(m_handle);
 
 	// Default FB barrier/transition
 	if(static_cast<const FramebufferImpl&>(*m_activeFb).isDefaultFramebuffer())

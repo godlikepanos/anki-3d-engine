@@ -328,7 +328,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 }
 
 FramebufferPtr RenderGraph::getOrCreateFramebuffer(
-	const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles)
+	const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name)
 {
 	ANKI_ASSERT(rtHandles);
 	U64 hash = fbDescr.m_hash;
@@ -363,7 +363,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 	else
 	{
 		// Create a complete fb init info
-		FramebufferInitInfo fbInit("RenderGraph");
+		FramebufferInitInfo fbInit;
 		if(!defaultFb)
 		{
 			fbInit.m_colorAttachmentCount = fbDescr.m_colorAttachmentCount;
@@ -409,6 +409,14 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 			fbInit.m_colorAttachmentCount = 1;
 		}
 
+		// Set FB name
+		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> cutName;
+		const U cutNameLen = min<U>(name.getLength(), MAX_GR_OBJECT_NAME_LENGTH);
+		memcpy(&cutName[0], &name[0], cutNameLen);
+		cutName[cutNameLen] = '\0';
+		fbInit.setName(&cutName[0]);
+
+		// Create
 		fb = getManager().newFramebuffer(fbInit);
 
 		// TODO: Check why the hell it compiles if you remove the parameter "hash"
@@ -620,7 +628,8 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 
 			if(graphicsPass.hasFramebuffer())
 			{
-				outPass.fb() = getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0]);
+				outPass.fb() =
+					getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0], inPass.m_name.cstr());
 				outPass.m_drawsToDefaultFb = graphicsPass.m_fbDescr.m_defaultFb;
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
