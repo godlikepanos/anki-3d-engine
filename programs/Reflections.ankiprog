@@ -121,8 +121,7 @@ vec4 doSslr(vec3 r, vec3 n, vec3 viewPos, vec2 uv, float depth, float roughness)
 	// Iterate
 	bool found = false;
 	vec3 raySample;
-	uint iterations = 0u;
-	for(; iterations < MAX_STEPS; ++iterations)
+	ANKI_LOOP for(uint iterations = 0u; iterations < MAX_STEPS; ++iterations)
 	{
 		raySample = start + ray * (float(step) * stepSize);
 
@@ -177,7 +176,7 @@ void readReflectionsAndIrradianceFromProbes(
 
 	// Check proxy
 	uint count = u_lightIndices[idxOffset++];
-	while(count-- != 0)
+	ANKI_LOOP while(count-- != 0)
 	{
 		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
 

@@ -41,6 +41,11 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define ANKI_IMAGE_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
 #	define ANKI_SPEC_CONST(binding_, type_, name_) const type_ name_ = _anki_spec_const_ ## binding_
 #	define ANKI_PUSH_CONSTANTS(struct_, name_) layout(location = (%u)) uniform struct_ name_
+
+#	define ANKI_UNROLL
+#	define ANKI_LOOP
+#	define ANKI_BRANCH
+#	define ANKI_FLATTEN
 #else
 #	define gl_VertexID gl_VertexIndex
 #	define gl_InstanceID gl_InstanceIndex
@@ -51,6 +56,12 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define ANKI_SPEC_CONST(binding_, type_, name_) layout(constant_id = (binding_)) const type_ name_ = type_(0)
 #	define ANKI_PUSH_CONSTANTS(struct_, name_) layout(push_constant, row_major, std140) \
 		uniform pushConst_ {struct_ name_;}
+
+#	extension GL_EXT_control_flow_attributes : require
+#	define ANKI_UNROLL [[unroll]]
+#	define ANKI_LOOP [[dont_unroll]]
+#	define ANKI_BRANCH [[branch]]
+#	define ANKI_FLATTEN [[flatten]]
 #endif
 
 #if %u
