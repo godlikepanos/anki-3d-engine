@@ -30,8 +30,8 @@ class ShaderPointLight
 public:
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorTileSize;
-	Vec4 m_radiusPad3;
-	UVec4 m_atlasTilesPad2;
+	Vec2 m_radiusPad1;
+	UVec2 m_atlasTiles;
 };
 
 class ShaderSpotLight
@@ -665,10 +665,10 @@ void LightBin::writeAndBinPointLight(
 	else
 	{
 		slight.m_diffuseColorTileSize.w() = lightEl.m_atlasTileSize;
-		slight.m_atlasTilesPad2 = UVec4(lightEl.m_atlasTiles.x(), lightEl.m_atlasTiles.y(), 0, 0);
+		slight.m_atlasTiles = UVec2(lightEl.m_atlasTiles.x(), lightEl.m_atlasTiles.y());
 	}
 
-	slight.m_radiusPad3 = Vec4(lightEl.m_radius);
+	slight.m_radiusPad1 = Vec2(lightEl.m_radius);
 
 	// Now bin it
 	Sphere sphere(lightEl.m_worldPosition.xyz0(), lightEl.m_radius);

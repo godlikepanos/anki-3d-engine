@@ -220,11 +220,6 @@ anki_internal:
 		return *m_ui;
 	}
 
-	Bool getTessellationEnabled() const
-	{
-		return m_tessellation;
-	}
-
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
 	/// @param modelViewMat The modelview matrix
@@ -374,7 +369,6 @@ private:
 	U32 m_height;
 
 	Array<F32, MAX_LOD_COUNT - 1> m_lodDistances; ///< Distance that used to calculate the LOD
-	Bool8 m_tessellation;
 
 	RenderableDrawer m_sceneDrawer;
 

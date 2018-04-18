@@ -16,8 +16,11 @@ namespace anki
 /// Return true if a file exists
 Bool fileExists(const CString& filename);
 
-/// Get file extension.
-void getFileExtension(const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out);
+/// Get path extension.
+void getFilepathExtension(const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out);
+
+/// Get path filename.
+void getFilepathFilename(const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out);
 
 /// Return true if directory exists?
 Bool directoryExists(const CString& dir);

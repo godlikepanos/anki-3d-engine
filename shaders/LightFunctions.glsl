@@ -21,6 +21,16 @@ vec3 F_Unreal(vec3 specular, float VoH)
 	return specular + (1.0 - specular) * pow(2.0, (-5.55473 * VoH - 6.98316) * VoH);
 }
 
+// Fresnel Schlick: "An Inexpensive BRDF Model for Physically-Based Rendering"
+// It has lower VGRPs than F_Unreal
+vec3 F_Schlick(vec3 specular, float VoH)
+{
+	float a = 1.0 - VoH;
+	float a2 = a * a;
+	float a5 = a2 * a2 * a; // a5 = a^5
+	return /*saturate(50.0 * specular.g) */ a5 + (1.0 - a5) * specular;
+}
+
 // D(n,h) aka NDF: GGX Trowbridge-Reitz
 float D_GGX(float roughness, float NoH)
 {
@@ -45,7 +55,7 @@ vec3 envBRDF(vec3 specular, float roughness, sampler2D integrationLut, float NoV
 	float a = roughness * roughness;
 	float a2 = a * a;
 	vec2 envBRDF = textureLod(integrationLut, vec2(a2, NoV), 0.0).xy;
-	return specular * envBRDF.x + min(1.0, 50.0 * specular.g) * envBRDF.y;
+	return specular * envBRDF.x + /*min(1.0, 50.0 * specular.g) */ envBRDF.y;
 }
 
 vec3 diffuseLambert(vec3 diffuse)
@@ -63,8 +73,17 @@ vec3 computeSpecularColorBrdf(GbufferInfo gbuffer, vec3 viewDir, vec3 frag2Light
 	float NoH = max(EPSILON, dot(gbuffer.normal, H));
 	float NoV = max(EPSILON, dot(gbuffer.normal, viewDir));
 
+	// F
+#if 0
 	vec3 F = F_Unreal(gbuffer.specular, VoH);
+#else
+	vec3 F = F_Schlick(gbuffer.specular, VoH);
+#endif
+
+	// D
 	float D = D_GGX(gbuffer.roughness, NoH);
+
+	// Vis
 	float V = V_Schlick(gbuffer.roughness, NoV, NoL);
 
 	return F * (V * D);

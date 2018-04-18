@@ -204,8 +204,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	m_descrFactory.init(getAllocator(), m_device);
 	m_pplineLayoutFactory.init(getAllocator(), m_device);
 
-	m_capabilities.m_shaderSubgroups = !!(m_extensions & VulkanExtensions::EXT_SHADER_SUBGROUP_BALLOT);
-
 	return Error::NONE;
 }
 
@@ -219,7 +217,8 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	app.applicationVersion = 1;
 	app.pEngineName = "AnKi 3D Engine";
 	app.engineVersion = (ANKI_VERSION_MAJOR << 16) | ANKI_VERSION_MINOR;
-	app.apiVersion = VK_MAKE_VERSION(1, 0, 3);
+	app.apiVersion =
+		VK_MAKE_VERSION(U32(init.m_config->getNumber("gr.vkmajor")), U32(init.m_config->getNumber("gr.vkminor")), 0);
 
 	VkInstanceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -418,6 +417,9 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		max<U32>(ANKI_SAFE_ALIGNMENT, m_devProps.limits.minTexelBufferOffsetAlignment);
 	m_capabilities.m_textureBufferMaxRange = MAX_U32;
 
+	m_capabilities.m_majorApiVersion = init.m_config->getNumber("gr.vkmajor");
+	m_capabilities.m_minorApiVersion = init.m_config->getNumber("gr.vkminor");
+
 	return Error::NONE;
 }
 
@@ -523,7 +525,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::EXT_SHADER_SUBGROUP_BALLOT;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME;
 			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_AMD_SHADER_INFO_EXTENSION_NAME)
+			else if(CString(extensionInfos[extCount].extensionName) == VK_AMD_SHADER_INFO_EXTENSION_NAME
+					&& init.m_config->getNumber("core.displayStats"))
 			{
 				m_extensions |= VulkanExtensions::AMD_SHADER_INFO;
 				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_SHADER_INFO_EXTENSION_NAME;
@@ -883,6 +886,39 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
 	}
 
 	return false;
+}
+
+void GrManagerImpl::printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages) const
+{
+	if(m_pfnGetShaderInfoAMD)
+	{
+		VkShaderStatisticsInfoAMD stats = {};
+		size_t size = sizeof(stats);
+
+		ANKI_VK_LOGI("Pipeline \"%s\" stats:", name.cstr());
+
+		for(ShaderType type = ShaderType::FIRST; type < ShaderType::COUNT; ++type)
+		{
+			ShaderTypeBit stage = stages & ShaderTypeBit(1 << type);
+			if(!stage)
+			{
+				continue;
+			}
+
+			VkResult err = m_pfnGetShaderInfoAMD(
+				m_device, ppline, convertShaderTypeBit(stage), VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats);
+
+			if(!err)
+			{
+				ANKI_VK_LOGI("\tStage %u: VGRPS %u/%u, SGRPS %u/%u",
+					U32(type),
+					stats.resourceUsage.numUsedVgprs,
+					stats.numAvailableVgprs,
+					stats.resourceUsage.numUsedSgprs,
+					stats.numAvailableSgprs);
+			}
+		}
+	}
 }
 
 } // end namespace anki

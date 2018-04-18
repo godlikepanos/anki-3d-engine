@@ -82,8 +82,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_lodDistances[1] = config.getNumber("r.lodDistance1");
 	m_frameCount = 0;
 
-	m_tessellation = config.getNumber("tessellation");
-
 	// A few sanity checks
 	if(m_width < 10 || m_height < 10)
 	{

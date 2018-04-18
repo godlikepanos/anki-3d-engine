@@ -175,6 +175,8 @@ public:
 /// Track changes in the static state.
 class PipelineStateTracker : public NonCopyable
 {
+	friend class PipelineFactory;
+
 public:
 	PipelineStateTracker()
 	{

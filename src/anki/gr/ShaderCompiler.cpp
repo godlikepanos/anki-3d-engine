@@ -31,6 +31,8 @@ static const Array<const char*, U(ShaderType::COUNT)> SHADER_NAME = {
 
 static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_BACKEND_%s 1
+#define ANKI_BACKEND_MINOR %u
+#define ANKI_BACKEND_MAJOR %u
 #define ANKI_VENDOR_%s 1
 #define ANKI_%s_SHADER 1
 
@@ -62,11 +64,10 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define ANKI_LOOP [[dont_unroll]]
 #	define ANKI_BRANCH [[branch]]
 #	define ANKI_FLATTEN [[flatten]]
-#endif
 
-#if %u
-#	extension GL_ARB_shader_ballot : require
-#	define ANKI_ARB_SHADER_BALLOT 1
+#	if ANKI_BACKEND_MAJOR == 1 && ANKI_BACKEND_MINOR >= 1
+#		extension GL_KHR_shader_subgroup_ballot : require
+#	endif
 #endif
 
 %s)";
@@ -228,6 +229,7 @@ static ANKI_USE_RESULT Error genSpirv(const ShaderCompiler::BuildContext& ctx, s
 	glslang::TShader shader(stage);
 	Array<const char*, 1> csrc = {{&ctx.m_src[0]}};
 	shader.setStrings(&csrc[0], 1);
+	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
 		ShaderCompiler::logShaderErrorCode(shader.getInfoLog(), ctx.m_src, ctx.m_alloc);
@@ -300,6 +302,8 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 
 	fullSrc.sprintf(SHADER_HEADER,
 		(options.m_outLanguage == ShaderLanguage::GLSL) ? "GL" : "VULKAN",
+		options.m_gpuCapabilities.m_minorApiVersion,
+		options.m_gpuCapabilities.m_majorApiVersion,
 		&GPU_VENDOR_STR[options.m_gpuCapabilities.m_gpuVendor][0],
 		SHADER_NAME[options.m_shaderType],
 		// GL bindings
@@ -313,8 +317,6 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 		MAX_TEXTURE_BINDINGS,
 		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
 		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS,
-		// Ballot
-		!!(options.m_gpuCapabilities.m_shaderSubgroups) ? 1u : 0u,
 		&source[0]);
 
 	ctx.m_src = fullSrc.toCString();

@@ -41,6 +41,9 @@ const uint MAX_U32 = 0xFFFFFFFFu;
 const float PI = 3.14159265358979323846;
 const uint UBO_MAX_SIZE = 16384u;
 
+const uint SIZEOF_VEC4 = 4 * 4;
+const uint SIZEOF_MAT4 = 4 * SIZEOF_VEC4;
+
 // Macros
 #define UV_TO_NDC(x_) ((x_)*2.0 - 1.0)
 #define NDC_TO_UV(x_) ((x_)*0.5 + 0.5)
@@ -66,8 +69,8 @@ const uint UBO_MAX_SIZE = 16384u;
 #define PASS_EZ 2
 
 // Other
-#if defined(ANKI_ARB_SHADER_BALLOT) && AMD_VK_READ_FIRST_INVOCATION_COMPILER_CRASH == 0
-#	define UNIFORM(x_) readFirstInvocationARB(x_)
+#if defined(ANKI_BACKEND_VULKAN) && ANKI_BACKEND_MAJOR >= 1 && ANKI_BACKEND_MINOR >= 1
+#	define UNIFORM(x_) subgroupBroadcastFirst(x_)
 #else
 #	define UNIFORM(x_) x_
 #endif

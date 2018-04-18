@@ -559,7 +559,7 @@ Error App::initDirs(const ConfigSet& cfg)
 	m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]);
 
 	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
-	if(cfg.getNumber("clearCaches") && cacheDirExists)
+	if(cfg.getNumber("core.clearCaches") && cacheDirExists)
 	{
 		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", &m_cacheDir[0]);
 		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));

@@ -70,7 +70,7 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 		if(light.diffuseColorTileSize.w >= 0.0)
 		{
 			shadow = computeShadowFactorOmni(
-				frag2Light, light.radiusPad3.x, light.atlasTilesPad2.xy, light.diffuseColorTileSize.w, u_shadowTex);
+				frag2Light, light.radiusPad1.x, light.atlasTiles, light.diffuseColorTileSize.w, u_shadowTex);
 		}
 #endif
 

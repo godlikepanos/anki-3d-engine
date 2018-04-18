@@ -45,8 +45,6 @@ Config::Config()
 	// Globals
 	newOption("width", 1280);
 	newOption("height", 768);
-	newOption("tessellation", true);
-	newOption("clearCaches", false);
 
 	// Resource
 	newOption("rsrc.maxTextureSize", 1024 * 1024);
@@ -55,8 +53,6 @@ Config::Config()
 	newOption("rsrc.transferScratchMemorySize", 256_MB);
 
 	// Window
-	newOption("window.glmajor", 4);
-	newOption("window.glminor", 5);
 	newOption("window.fullscreenDesktopResolution", false);
 	newOption("window.debugContext", false);
 	newOption("window.vsync", false);
@@ -64,6 +60,10 @@ Config::Config()
 
 	// GR
 	newOption("gr.diskShaderCacheMaxSize", 10_MB);
+	newOption("gr.vkminor", 0);
+	newOption("gr.vkmajor", 1);
+	newOption("gr.glmajor", 4);
+	newOption("gr.glminor", 5);
 
 	// Core
 	newOption("core.uniformPerFrameMemorySize", 16_MB);
@@ -72,6 +72,7 @@ Config::Config()
 	newOption("core.textureBufferPerFrameMemorySize", 1_MB);
 	newOption("core.mainThreadCount", getCpuCoresCount() / 2);
 	newOption("core.displayStats", false);
+	newOption("core.clearCaches", false);
 }
 
 Config::~Config()

@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/Pipeline.h>
+#include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/common/Misc.h>
 #include <anki/core/Trace.h>
 
@@ -441,6 +442,11 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline,
 
 		m_pplines.emplace(m_alloc, hash, pp);
 		ppline.m_handle = pp.m_handle;
+
+		// Print shader info
+		const ShaderProgramImpl& shaderImpl = static_cast<const ShaderProgramImpl&>(*state.m_state.m_prog);
+		shaderImpl.getGrManagerImpl().printPipelineShaderInfo(
+			pp.m_handle, shaderImpl.getName(), shaderImpl.getStages());
 	}
 }
 

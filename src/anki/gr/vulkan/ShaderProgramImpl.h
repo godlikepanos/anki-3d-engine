@@ -82,8 +82,15 @@ public:
 		return m_computePpline;
 	}
 
+	ShaderTypeBit getStages() const
+	{
+		ANKI_ASSERT(!!m_stages);
+		return m_stages;
+	}
+
 private:
 	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders;
+	ShaderTypeBit m_stages = ShaderTypeBit::NONE;
 
 	Array<VkPipelineShaderStageCreateInfo, U(ShaderType::COUNT) - 1> m_shaderCreateInfos;
 	U32 m_shaderCreateInfoCount = 0;

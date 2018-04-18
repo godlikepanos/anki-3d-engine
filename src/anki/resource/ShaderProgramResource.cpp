@@ -7,6 +7,7 @@
 #include <anki/misc/Xml.h>
 #include <anki/resource/ShaderLoader.h>
 #include <anki/resource/RenderingKey.h>
+#include <anki/util/Filesystem.h>
 
 namespace anki
 {
@@ -1091,8 +1092,17 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 	StringAuto shaderHeader(getTempAllocator());
 	shaderHeaderSrc.join("", shaderHeader);
 
+	// Create the program name
+	StringAuto progName(getTempAllocator());
+	getFilepathFilename(getFilename(), getTempAllocator(), progName);
+	char* cprogName = const_cast<char*>(progName.cstr());
+	if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
+	{
+		cprogName[MAX_GR_OBJECT_NAME_LENGTH] = '\0';
+	}
+
 	// Create the shaders and the program
-	ShaderProgramInitInfo progInf("RsrcProg");
+	ShaderProgramInitInfo progInf(cprogName);
 	for(ShaderType i = ShaderType::FIRST; i < ShaderType::COUNT; ++i)
 	{
 		if(!m_sources[i])
@@ -1117,7 +1127,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 			ANKI_RESOURCE_LOGF("Shader compilation failed");
 		}
 
-		ShaderInitInfo inf("RsrcShader");
+		ShaderInitInfo inf(cprogName);
 		inf.m_shaderType = i;
 		inf.m_binary = ConstWeakArray<U8>(&bin[0], bin.getSize());
 

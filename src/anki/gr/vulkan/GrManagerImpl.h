@@ -212,26 +212,7 @@ public:
 	}
 	/// @}
 
-	void printPipelineShaderInfo(VkPipeline ppline, CString name) const
-	{
-		if(m_pfnGetShaderInfoAMD)
-		{
-			VkShaderStatisticsInfoAMD stats = {};
-			size_t size = sizeof(stats);
-			VkResult err = m_pfnGetShaderInfoAMD(
-				m_device, ppline, VK_SHADER_STAGE_ALL, VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats);
-
-			if(!err)
-			{
-				ANKI_VK_LOGI("Pipeline \"%s\" stats: VGRPS %u/%u, SGRPS %u/%u",
-					name.cstr(),
-					stats.resourceUsage.numUsedVgprs,
-					stats.numAvailableVgprs,
-					stats.resourceUsage.numUsedSgprs,
-					stats.numAvailableSgprs);
-			}
-		}
-	}
+	void printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages) const;
 
 private:
 	U64 m_frame = 0;

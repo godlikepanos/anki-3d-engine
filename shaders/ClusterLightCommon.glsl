@@ -32,10 +32,10 @@ struct PointLight
 {
 	vec4 posRadius; // xyz: Light pos in world space. w: The 1/(radius^2)
 	vec4 diffuseColorTileSize; // xyz: diff color, w: tile size in the shadow atlas
-	vec4 radiusPad3; // x: radius
-	uvec4 atlasTilesPad2; // x: encodes 6 uints with atlas tile indices in the x dir. y: same for y dir.
+	vec2 radiusPad1; // x: radius
+	uvec2 atlasTiles; // x: encodes 6 uints with atlas tile indices in the x dir. y: same for y dir.
 };
-const uint POINT_LIGHT_SIZEOF = (4 * 4) * 4;
+const uint SIZEOF_POINT_LIGHT = 3 * SIZEOF_VEC4;
 
 // Spot light
 struct SpotLight
@@ -46,7 +46,7 @@ struct SpotLight
 	vec4 outerCosInnerCos;
 	mat4 texProjectionMat;
 };
-const uint SPOT_LIGHT_SIZEOF = (4 * 4 + 16) * 4;
+const uint SIZEOF_SPOT_LIGHT = 4 * SIZEOF_VEC4 + SIZEOF_MAT4;
 
 // Representation of a reflection probe
 struct ReflectionProbe
@@ -57,7 +57,7 @@ struct ReflectionProbe
 	// Slice in u_reflectionsTex vector.
 	vec4 cubemapIndexPad3;
 };
-const uint REFLECTION_PROBE_SIZEOF = (2 * 4) * 4;
+const uint SIZEOF_REFLECTION_PROBE = 2 * SIZEOF_VEC4;
 
 // Decal
 struct Decal
@@ -67,7 +67,7 @@ struct Decal
 	mat4 texProjectionMat;
 	vec4 blendFactors;
 };
-const uint DECAL_SIZEOF = (3 * 4 + 16) * 4;
+const uint SIZEOF_DECAL = 3 * SIZEOF_VEC4 + SIZEOF_MAT4;
 
 //
 // Common uniforms
@@ -113,12 +113,12 @@ const uint _NEXT_TEX_BINDING_2 = LIGHT_TEX_BINDING + 1;
 
 layout(ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING), std140) uniform u1_
 {
-	PointLight u_pointLights[UBO_MAX_SIZE / POINT_LIGHT_SIZEOF];
+	PointLight u_pointLights[UBO_MAX_SIZE / SIZEOF_POINT_LIGHT];
 };
 
 layout(ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING + 1), std140, row_major) uniform u2_
 {
-	SpotLight u_spotLights[UBO_MAX_SIZE / SPOT_LIGHT_SIZEOF];
+	SpotLight u_spotLights[UBO_MAX_SIZE / SIZEOF_SPOT_LIGHT];
 };
 
 layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 0)) uniform highp sampler2D u_shadowTex;
@@ -136,7 +136,7 @@ const uint _NEXT_TEX_BINDING_3 = _NEXT_TEX_BINDING_2 + 3;
 
 layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_2)) uniform u3_
 {
-	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / REFLECTION_PROBE_SIZEOF];
+	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / SIZEOF_REFLECTION_PROBE];
 };
 
 layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_2 + 0)) uniform samplerCubeArray u_reflectionsTex;
@@ -153,7 +153,7 @@ const uint _NEXT_TEX_BINDING_3 = _NEXT_TEX_BINDING_2;
 #if defined(LIGHT_DECALS)
 layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_3)) uniform u4_
 {
-	Decal u_decals[UBO_MAX_SIZE / DECAL_SIZEOF];
+	Decal u_decals[UBO_MAX_SIZE / SIZEOF_DECAL];
 };
 
 layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_3 + 0)) uniform sampler2D u_diffDecalTex;

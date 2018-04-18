@@ -52,13 +52,14 @@ Error GrManagerImpl::init(GrManagerInitInfo& init, GrAllocator<U8> alloc)
 
 	// Misc
 	m_capabilities.m_gpuVendor = m_state->m_gpu;
-	m_capabilities.m_shaderSubgroups = !!(m_state->m_extensions & GlExtensions::ARB_SHADER_BALLOT);
 	m_capabilities.m_uniformBufferBindOffsetAlignment = m_state->m_uboAlignment;
 	m_capabilities.m_uniformBufferMaxRange = m_state->m_uniBlockMaxSize;
 	m_capabilities.m_storageBufferBindOffsetAlignment = m_state->m_ssboAlignment;
 	m_capabilities.m_storageBufferMaxRange = m_state->m_storageBlockMaxSize;
 	m_capabilities.m_textureBufferBindOffsetAlignment = m_state->m_tboAlignment;
 	m_capabilities.m_textureBufferMaxRange = m_state->m_tboMaxRange;
+	m_capabilities.m_majorApiVersion = U(init.m_config->getNumber("gr.glmajor"));
+	m_capabilities.m_minorApiVersion = U(init.m_config->getNumber("gr.glmajor"));
 
 	return Error::NONE;
 }

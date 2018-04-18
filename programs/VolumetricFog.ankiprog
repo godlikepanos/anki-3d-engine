@@ -76,8 +76,8 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 		if(light.diffuseColorTileSize.w >= 0.0)
 		{
 			factor *= computeShadowFactorOmni(frag2Light, 
-				light.radiusPad3.x, 
-				light.atlasTilesPad2.xy,
+				light.radiusPad1.x, 
+				light.atlasTiles,
 				light.diffuseColorTileSize.w,
 				u_shadowTex);
 		}

@@ -82,11 +82,6 @@ void main()
 	vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
 	vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	// Decode GBuffer
-	GbufferInfo gbuffer;
-	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_uv, 0.0, gbuffer);
-	gbuffer.subsurface = max(gbuffer.subsurface, SUBSURFACE_MIN);
-
 	// Get first light index
 	uint idxOffset;
 	{
@@ -97,17 +92,26 @@ void main()
 		idxOffset = u_clusters[clusterIdx];
 	}
 
-	// Skip decals
-	uint count = u_lightIndices[idxOffset++];
-	idxOffset += count;
+	// Decode GBuffer
+	GbufferInfo gbuffer;
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_uv, 0.0, gbuffer);
+	gbuffer.subsurface = max(gbuffer.subsurface, SUBSURFACE_MIN);
 
 	// Ambient and emissive color
-	vec3 outC = gbuffer.diffuse * gbuffer.emission;
+	out_color = gbuffer.diffuse * gbuffer.emission;
+
+	// Indirect
+	out_color += textureLod(u_indirectRt, in_uv, 0.0).rgb;
+
+	// Skip decals
+	uint count = u_lightIndices[idxOffset];
+	idxOffset += count + 1u;
 
 	// Point lights
 	vec3 viewDir = normalize(u_cameraPos - worldPos);
 	count = u_lightIndices[idxOffset++];
-	while(count-- != 0)
+	uint idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
 	{
 		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
@@ -116,19 +120,20 @@ void main()
 		if(light.diffuseColorTileSize.w >= 0.0)
 		{
 			float shadow = computeShadowFactorOmni(frag2Light, 
-				light.radiusPad3.x, 
-				light.atlasTilesPad2.xy, 
+				light.radiusPad1.x, 
+				light.atlasTiles, 
 				light.diffuseColorTileSize.w,
 				u_shadowTex);
 			lambert *= shadow;
 		}
 
-		outC += (diffC + specC) * light.diffuseColorTileSize.rgb * (att * max(gbuffer.subsurface, lambert));
+		out_color += (diffC + specC) * light.diffuseColorTileSize.rgb * (att * max(gbuffer.subsurface, lambert));
 	}
 
 	// Spot lights
 	count = u_lightIndices[idxOffset++];
-	while(count-- != 0)
+	idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
 	{
 		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
@@ -145,13 +150,10 @@ void main()
 			lambert *= shadow;
 		}
 
-		outC += (diffC + specC) * light.diffuseColorShadowmapId.rgb * (att * spot * max(gbuffer.subsurface, lambert));
+		out_color += 
+			(diffC + specC) * light.diffuseColorShadowmapId.rgb * (att * spot * max(gbuffer.subsurface, lambert));
 	}
 
-	// Indirect
-	outC += textureLod(u_indirectRt, in_uv, 0.0).rgb;
-
-	out_color = outC;
 #if 0
 	count = scount;
 	if(count == 0)

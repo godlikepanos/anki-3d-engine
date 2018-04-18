@@ -132,11 +132,14 @@ public:
 	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
 
-	/// Device supports subgroup operations.
-	Bool8 m_shaderSubgroups = false;
+	/// API version.
+	U8 m_minorApiVersion = 0;
 
-	/// Pad it because valgrind complains.
-	U8 _m_padding[2] = {};
+	/// API version.
+	U8 m_majorApiVersion = 0;
+
+	// WARNING Remember to pad it because valgrind complains.
+	U8 _m_padding[1];
 };
 
 /// The type of the allocator for heap allocations

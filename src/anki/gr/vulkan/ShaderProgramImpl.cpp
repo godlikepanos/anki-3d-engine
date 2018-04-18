@@ -29,7 +29,6 @@ ShaderProgramImpl::~ShaderProgramImpl()
 Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 {
 	ANKI_ASSERT(inf.isValid());
-	ShaderTypeBit shaderMask = ShaderTypeBit::NONE;
 	m_shaders = inf.m_shaders;
 
 	// Merge bindings
@@ -46,7 +45,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 				continue;
 			}
 
-			shaderMask |= static_cast<ShaderTypeBit>(1 << stype);
+			m_stages |= static_cast<ShaderTypeBit>(1 << stype);
 
 			const ShaderImpl& simpl = *scast<const ShaderImpl*>(m_shaders[stype].get());
 
@@ -116,7 +115,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Get some masks
 	//
-	const Bool graphicsProg = !!(shaderMask & ShaderTypeBit::VERTEX);
+	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::VERTEX);
 	if(graphicsProg)
 	{
 		m_refl.m_attributeMask = scast<const ShaderImpl*>(m_shaders[ShaderType::VERTEX].get())->m_attributeMask;
@@ -180,7 +179,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 		ANKI_VK_CHECK(vkCreateComputePipelines(
 			getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_computePpline));
-		getGrManagerImpl().printPipelineShaderInfo(m_computePpline, getName());
+		getGrManagerImpl().printPipelineShaderInfo(m_computePpline, getName(), ShaderTypeBit::COMPUTE);
 	}
 
 	return Error::NONE;
