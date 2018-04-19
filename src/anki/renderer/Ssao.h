@@ -39,7 +39,10 @@ anki_internal:
 	}
 
 private:
+	static const Bool m_useNormal = false;
+	static const Bool m_useCompute = true;
 	U32 m_width, m_height;
+	Array<U32, 2> m_workgroupSize = {{16, 16}};
 
 	class
 	{
@@ -70,7 +73,7 @@ private:
 		const RenderingContext* m_ctx = nullptr;
 	} m_runCtx; ///< Runtime context.
 
-	RenderTargetDescription m_rtDescr;
+	Array<RenderTargetDescription, 2> m_rtDescrs;
 	FramebufferDescription m_fbDescr;
 
 	ANKI_USE_RESULT Error initMain(const ConfigSet& set);

@@ -47,14 +47,14 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 		m_rtDescr.bake();
 
 		m_fbDescr.m_colorAttachmentCount = 1;
-		m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		m_fbDescr.bake();
 	}
 	else
 	{
 		m_fbDescr.setDefaultFramebuffer();
-		m_fbDescr.bake();
 	}
+
+	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_fbDescr.bake();
 
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
 

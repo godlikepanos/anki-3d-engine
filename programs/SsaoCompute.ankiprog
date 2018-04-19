@@ -10,13 +10,7 @@ http://www.anki3d.org/LICENSE
 	</mutators>
 
 	<shaders>
-		<shader type="vert">
-			<source><![CDATA[
-#include "shaders/QuadVert.glsl"
-			]]></source>
-		</shader>
-
-		<shader type="frag">
+		<shader type="comp">
 			<inputs>
 				<input name="NOISE_MAP_SIZE" type="uint" const="1"/>
 				<input name="FB_SIZE" type="uvec2" const="1"/>
@@ -33,4 +27,5 @@ http://www.anki3d.org/LICENSE
 		</shader>
 	</shaders>
 </shaderProgram>
+
 

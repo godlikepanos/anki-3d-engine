@@ -205,7 +205,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 		bi.renderPass = impl.getRenderPassHandle({}, VK_IMAGE_LAYOUT_MAX_ENUM);
 
 		// Perform the transition
-		setImageBarrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 			0,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,

@@ -407,6 +407,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 		else
 		{
 			fbInit.m_colorAttachmentCount = 1;
+			fbInit.m_colorAttachments[0].m_loadOperation = fbDescr.m_colorAttachments[0].m_loadOperation;
 		}
 
 		// Set FB name
