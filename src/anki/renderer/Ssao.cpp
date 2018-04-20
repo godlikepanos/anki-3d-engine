@@ -33,8 +33,8 @@ Error Ssao::initMain(const ConfigSet& config)
 		ANKI_CHECK(getResourceManager().loadResource("programs/Ssao.ankiprog", m_main.m_prog));
 	}
 
-	ShaderProgramResourceMutationInitList<1> mutators(m_main.m_prog);
-	mutators.add("USE_NORMAL", (m_useNormal) ? 1u : 0u);
+	ShaderProgramResourceMutationInitList<2> mutators(m_main.m_prog);
+	mutators.add("USE_NORMAL", (m_useNormal) ? 1u : 0u).add("SOFT_BLUR", (m_useSoftBlur) ? 1u : 0u);
 
 	ShaderProgramResourceConstantValueInitList<7> consts(m_main.m_prog);
 	consts.add("NOISE_MAP_SIZE", U32(m_main.m_noiseTex->getWidth()))
@@ -42,7 +42,7 @@ Error Ssao::initMain(const ConfigSet& config)
 		.add("RADIUS", 2.5f)
 		.add("BIAS", 0.0f)
 		.add("STRENGTH", 2.5f)
-		.add("SAMPLE_COUNT", 4u)
+		.add("SAMPLE_COUNT", 8u)
 		.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
 	const ShaderProgramResourceVariant* variant;
 	m_main.m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);

@@ -11,12 +11,17 @@
 #include "shaders/Common.glsl"
 #include "shaders/Pack.glsl"
 #include "shaders/Functions.glsl"
+#define KERNEL_SIZE 3
+#include "shaders/GaussianBlurCommon.glsl"
 
 #if defined(ANKI_FRAGMENT_SHADER)
 #	define USE_COMPUTE 0
 #else
 #	define USE_COMPUTE 1
 #endif
+
+// Do a compute soft blur
+#define DO_SOFT_BLUR (USE_COMPUTE && SOFT_BLUR)
 
 #if !USE_COMPUTE
 layout(location = 0) in vec2 in_uv;
@@ -42,8 +47,8 @@ layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt;
 
 // To compute the normals we need some extra work on compute
 #define COMPLEX_NORMALS (!USE_NORMAL && USE_COMPUTE)
-#if COMPLEX_NORMALS
-shared vec3 s_positions[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
+#if COMPLEX_NORMALS || DO_SOFT_BLUR
+shared vec3 s_scratch[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 #endif
 
 #if USE_NORMAL
@@ -88,11 +93,58 @@ vec4 project(vec4 point)
 	return projectPerspective(point, u_projectionMat.x, u_projectionMat.y, u_projectionMat.z, u_projectionMat.w);
 }
 
+// Compute the normal depending on some defines
+vec3 computeNormal(vec2 uv, vec3 origin)
+{
+#if USE_NORMAL
+	vec3 normal = readNormal(uv);
+#elif !COMPLEX_NORMALS
+	vec3 normal = normalize(cross(dFdx(origin), dFdy(origin)));
+#else
+	// Every thread stores its position
+	s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = origin;
+
+	memoryBarrierShared();
+	barrier();
+
+	// Have one thread every quad to compute the normal
+	if((gl_LocalInvocationID.x & 1u) + (gl_LocalInvocationID.y & 1u) == 0u)
+	{
+		// It's the bottom left pixel of the quad
+
+		vec3 center, right, top;
+		center = origin;
+		right = s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x + 1u];
+		top = s_scratch[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 1u];
+
+		vec3 normal = normalize(cross(right - center, top - center));
+
+		// Broadcast the normal
+		s_scratch[gl_LocalInvocationID.y + 0u][gl_LocalInvocationID.x + 0u] = normal;
+		s_scratch[gl_LocalInvocationID.y + 0u][gl_LocalInvocationID.x + 1u] = normal;
+		s_scratch[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 0u] = normal;
+		s_scratch[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 1u] = normal;
+	}
+
+	memoryBarrierShared();
+	barrier();
+
+	vec3 normal = s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x];
+#endif
+
+	return normal;
+}
+
 void main(void)
 {
 #if USE_COMPUTE
 	if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
 	{
+#	if DO_SOFT_BLUR
+		// Store something anyway because alive threads might read it when SOFT_BLUR is enabled
+		s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = vec3(1.0);
+#	endif
+
 		// Skip if it's out of bounds
 		return;
 	}
@@ -108,41 +160,7 @@ void main(void)
 	vec3 origin = readPosition(uv);
 
 	// Get normal
-#if USE_NORMAL
-	vec3 normal = readNormal(uv);
-#elif !COMPLEX_NORMALS
-	vec3 normal = normalize(cross(dFdx(origin), dFdy(origin)));
-#else
-	// Every thread stores its position
-	s_positions[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = origin;
-
-	memoryBarrierShared();
-	barrier();
-
-	// Have one thread every quad to compute the normal
-	if((gl_LocalInvocationID.x & 1u) + (gl_LocalInvocationID.y & 1u) == 0u)
-	{
-		// It's the bottom left pixel of the quad
-
-		vec3 center, right, top;
-		center = origin;
-		right = s_positions[gl_LocalInvocationID.y][gl_LocalInvocationID.x + 1u];
-		top = s_positions[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 1u];
-
-		vec3 normal = normalize(cross(right - center, top - center));
-
-		// Broadcast the normal
-		s_positions[gl_LocalInvocationID.y + 0u][gl_LocalInvocationID.x + 0u] = normal;
-		s_positions[gl_LocalInvocationID.y + 0u][gl_LocalInvocationID.x + 1u] = normal;
-		s_positions[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 0u] = normal;
-		s_positions[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 1u] = normal;
-	}
-
-	memoryBarrierShared();
-	barrier();
-
-	vec3 normal = s_positions[gl_LocalInvocationID.y][gl_LocalInvocationID.x];
-#endif
+	vec3 normal = computeNormal(uv, origin);
 
 	// Find the projected radius
 	vec3 sphereLimit = origin + vec3(RADIUS, 0.0, 0.0);
@@ -156,7 +174,7 @@ void main(void)
 	{
 		// Compute disk
 		vec3 randFactors = readRandom(uv, float(i));
-		vec2 dir = normalize(randFactors.xy * 2.0 - 1.0);
+		vec2 dir = normalize(UV_TO_NDC(randFactors.xy));
 		float radius = projRadius * (randFactors.z * 0.85 + 0.15);
 		vec2 finalDiskPoint = ndc + dir * radius;
 
@@ -168,6 +186,42 @@ void main(void)
 
 	ssao *= (1.0 / float(SAMPLE_COUNT));
 	ssao = 1.0 - ssao * STRENGTH;
+
+	// Maybe do soft blur
+#if DO_SOFT_BLUR
+	// Everyone stores its result
+	s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x].x = ssao;
+
+	// Do some pre-work to find out the neighbours
+	uint left = (gl_LocalInvocationID.x != 0u) ? (gl_LocalInvocationID.x - 1u) : 0u;
+	uint right =
+		(gl_LocalInvocationID.x != WORKGROUP_SIZE.x - 1u) ? (gl_LocalInvocationID.x + 1u) : (WORKGROUP_SIZE.x - 1u);
+	uint bottom = (gl_LocalInvocationID.y != 0u) ? (gl_LocalInvocationID.y - 1u) : 0u;
+	uint top =
+		(gl_LocalInvocationID.y != WORKGROUP_SIZE.y - 1u) ? (gl_LocalInvocationID.y + 1u) : (WORKGROUP_SIZE.y - 1u);
+
+	// Wait for all threads
+	memoryBarrierShared();
+	barrier();
+
+	// Sample neighbours
+	ssao *= BOX_WEIGHTS[0];
+
+	float cross;
+	cross = s_scratch[gl_LocalInvocationID.y][left].x;
+	cross += s_scratch[gl_LocalInvocationID.y][right].x;
+	cross += s_scratch[bottom][gl_LocalInvocationID.x].x;
+	cross += s_scratch[top][gl_LocalInvocationID.x].x;
+
+	ssao += cross * BOX_WEIGHTS[1];
+
+	cross = s_scratch[bottom][left].x;
+	cross += s_scratch[bottom][right].x;
+	cross += s_scratch[top][left].x;
+	cross += s_scratch[top][right].x;
+
+	ssao += cross * BOX_WEIGHTS[2];
+#endif
 
 	// Store the result
 #if USE_COMPUTE
