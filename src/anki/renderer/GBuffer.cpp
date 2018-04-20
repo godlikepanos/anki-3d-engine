@@ -99,6 +99,8 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	const I32 colorStart = max(I32(start) - I32(earlyZCount), 0);
 	const I32 colorEnd = I32(end) - I32(earlyZCount);
 
+	cmdb->setRasterizationOrder(RasterizationOrder::RELAXED);
+
 	// First do early Z (if needed)
 	if(earlyZStart < earlyZEnd)
 	{

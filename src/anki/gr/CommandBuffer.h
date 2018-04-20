@@ -229,6 +229,9 @@ public:
 		setBlendOperation(attachment, func, func);
 	}
 
+	/// Set the rasterizatin order. By default it's RasterizationOrder::ORDERED.
+	void setRasterizationOrder(RasterizationOrder order);
+
 	/// Bind texture and sample.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.

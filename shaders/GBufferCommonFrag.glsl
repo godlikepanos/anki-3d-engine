@@ -106,7 +106,7 @@ vec2 computeTextureCoordParallax(in sampler2D heightMap, in vec2 uv, in float he
 	uint crntSample = 0;
 
 	uint sampleCount = uint(sampleCountf);
-	while(crntSample < sampleCount)
+	ANKI_LOOP while(crntSample < sampleCount)
 	{
 		crntSampledHeight = textureGrad(heightMap, uv + crntOffset, dPdx, dPdy).r;
 

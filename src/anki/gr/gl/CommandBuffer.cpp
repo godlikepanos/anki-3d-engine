@@ -1554,4 +1554,9 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 	self.pushBackNewCommand<PushConstants>(data, dataSize, self.m_alloc);
 }
 
+void CommandBuffer::setRasterizationOrder(RasterizationOrder order)
+{
+	// Nothing for GL
+}
+
 } // end namespace anki

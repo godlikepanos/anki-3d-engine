@@ -271,6 +271,17 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	rastCi.lineWidth = 1.0;
 	ci.pRasterizationState = &rastCi;
 
+	if(m_state.m_rasterizer.m_rasterizationOrder != RasterizationOrder::ORDERED)
+	{
+		VkPipelineRasterizationStateRasterizationOrderAMD& rastOrderCi = m_ci.m_rasterOrder;
+		rastOrderCi = {};
+		rastOrderCi.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_RASTERIZATION_ORDER_AMD;
+		rastOrderCi.rasterizationOrder = convertRasterizationOrder(m_state.m_rasterizer.m_rasterizationOrder);
+
+		ANKI_ASSERT(rastCi.pNext == nullptr);
+		rastCi.pNext = &rastOrderCi;
+	}
+
 	// MS
 	VkPipelineMultisampleStateCreateInfo& msCi = m_ci.m_ms;
 	msCi = {};

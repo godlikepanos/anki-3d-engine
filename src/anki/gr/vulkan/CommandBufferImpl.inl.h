@@ -752,6 +752,8 @@ inline void CommandBufferImpl::setPushConstants(const void* data, U32 dataSize)
 	ANKI_ASSERT(prog->getReflectionInfo().m_pushConstantsSize == dataSize
 				&& "The bound program should have push constants equal to the \"dataSize\" parameter");
 
+	commandCommon();
+
 	ANKI_CMD(
 		vkCmdPushConstants(m_handle, prog->getPipelineLayout().getHandle(), VK_SHADER_STAGE_ALL, 0, dataSize, data),
 		ANY_OTHER_COMMAND);
@@ -759,6 +761,16 @@ inline void CommandBufferImpl::setPushConstants(const void* data, U32 dataSize)
 #if ANKI_EXTRA_CHECKS
 	m_setPushConstantsSize = dataSize;
 #endif
+}
+
+inline void CommandBufferImpl::setRasterizationOrder(RasterizationOrder order)
+{
+	commandCommon();
+
+	if(!!(getGrManagerImpl().getExtensions() & VulkanExtensions::AMD_RASTERIZATION_ORDER))
+	{
+		m_state.setRasterizationOrder(order);
+	}
 }
 
 } // end namespace anki

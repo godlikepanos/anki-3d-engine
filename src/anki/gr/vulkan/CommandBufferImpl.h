@@ -331,6 +331,8 @@ public:
 
 	void setPushConstants(const void* data, U32 dataSize);
 
+	void setRasterizationOrder(RasterizationOrder order);
+
 private:
 	StackAllocator<U8> m_alloc;
 

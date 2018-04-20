@@ -48,6 +48,7 @@ enum class VulkanExtensions : U16
 	EXT_SHADER_SUBGROUP_BALLOT = 1 << 8,
 	EXT_DEBUG_REPORT = 1 << 9,
 	AMD_SHADER_INFO = 1 << 10,
+	AMD_RASTERIZATION_ORDER = 1 << 11,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions, inline)
 
@@ -232,6 +233,25 @@ ANKI_USE_RESULT inline VkIndexType convertIndexType(IndexType ak)
 	default:
 		ANKI_ASSERT(0);
 		out = VK_INDEX_TYPE_MAX_ENUM;
+	}
+
+	return out;
+}
+
+ANKI_USE_RESULT inline VkRasterizationOrderAMD convertRasterizationOrder(RasterizationOrder ak)
+{
+	VkRasterizationOrderAMD out;
+	switch(ak)
+	{
+	case RasterizationOrder::ORDERED:
+		out = VK_RASTERIZATION_ORDER_STRICT_AMD;
+		break;
+	case RasterizationOrder::RELAXED:
+		out = VK_RASTERIZATION_ORDER_RELAXED_AMD;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = VK_RASTERIZATION_ORDER_STRICT_AMD;
 	}
 
 	return out;

@@ -602,6 +602,14 @@ enum class IndexType : U8
 	U32,
 	COUNT
 };
+
+/// Rasterization order.
+enum class RasterizationOrder : U8
+{
+	ORDERED,
+	RELAXED,
+	COUNT
+};
 /// @}
 
 } // end namespace anki

@@ -531,6 +531,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::AMD_SHADER_INFO;
 				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_SHADER_INFO_EXTENSION_NAME;
 			}
+			else if(CString(extensionInfos[extCount].extensionName) == VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::AMD_RASTERIZATION_ORDER;
+				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME;
+			}
 		}
 
 		if(!!(m_extensions & VulkanExtensions::KHR_MAINENANCE1))

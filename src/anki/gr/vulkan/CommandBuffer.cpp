@@ -364,4 +364,10 @@ void CommandBuffer::setPushConstants(const void* data, U32 dataSize)
 	self.setPushConstants(data, dataSize);
 }
 
+void CommandBuffer::setRasterizationOrder(RasterizationOrder order)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setRasterizationOrder(order);
+}
+
 } // end namespace anki
