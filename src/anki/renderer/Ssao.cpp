@@ -57,7 +57,7 @@ Error Ssao::initHBlur(const ConfigSet& config)
 	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/DepthAwareBlur.ankiprog", m_hblur.m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutators(m_hblur.m_prog);
-	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 9).add("COLOR_COMPONENTS", 1);
+	mutators.add("ORIENTATION", 1).add("SAMPLE_COUNT", 9).add("COLOR_COMPONENTS", 1);
 	ShaderProgramResourceConstantValueInitList<1> consts(m_hblur.m_prog);
 	consts.add("TEXTURE_SIZE", UVec2(m_width, m_height));
 
@@ -75,7 +75,7 @@ Error Ssao::initVBlur(const ConfigSet& config)
 	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/DepthAwareBlur.ankiprog", m_vblur.m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutators(m_vblur.m_prog);
-	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 9).add("COLOR_COMPONENTS", 1);
+	mutators.add("ORIENTATION", 0).add("SAMPLE_COUNT", 9).add("COLOR_COMPONENTS", 1);
 	ShaderProgramResourceConstantValueInitList<1> consts(m_vblur.m_prog);
 	consts.add("TEXTURE_SIZE", UVec2(m_width, m_height));
 
