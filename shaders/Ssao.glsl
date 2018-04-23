@@ -149,7 +149,7 @@ void main(void)
 		return;
 	}
 
-	vec2 uv = vec2(gl_GlobalInvocationID.xy) / vec2(FB_SIZE);
+	vec2 uv = (vec2(gl_GlobalInvocationID.xy) + 0.5) / vec2(FB_SIZE);
 #else
 	vec2 uv = in_uv;
 #endif
