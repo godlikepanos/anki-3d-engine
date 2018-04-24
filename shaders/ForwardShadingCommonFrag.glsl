@@ -54,7 +54,8 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 
 	// Point lights
 	count = u_lightIndices[idxOffset++];
-	while(count-- != 0)
+	uint idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
 	{
 		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
@@ -79,7 +80,8 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 
 	// Spot lights
 	count = u_lightIndices[idxOffset++];
-	while(count-- != 0)
+	idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
 	{
 		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 

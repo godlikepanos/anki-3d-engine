@@ -66,7 +66,7 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 	vec3 outColor = vec3(0.0);
 
 	// Point lights
-	while(plightCount-- != 0)
+	ANKI_LOOP while(plightCount-- != 0)
 	{
 		PointLight light = u_pointLights[u_lightIndices[plightIdx++]];
 		vec3 frag2Light = light.posRadius.xyz - fragPos;
@@ -87,7 +87,7 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 	}
 
 	// Spot lights
-	while(slightCount-- != 0)
+	ANKI_LOOP while(slightCount-- != 0)
 	{
 		SpotLight light = u_spotLights[u_lightIndices[slightIdx++]];
 		vec3 frag2Light = light.posRadius.xyz - fragPos;
@@ -150,7 +150,7 @@ void main()
 
 	float kNear = -u_near;
 	vec3 newCol = vec3(0.0);
-	for(uint k = 0u; k < CLUSTER_COUNT.z; ++k)
+	ANKI_LOOP for(uint k = 0u; k < CLUSTER_COUNT.z; ++k)
 	{
 		float kFar = -computeClusterFar(u_clustererMagic, k);
 
@@ -179,11 +179,11 @@ void main()
 		uint slightCount = u_lightIndices[idxOffset++];
 		uint slightIdx = idxOffset;
 
-		for(float factor = start; factor <= 1.0; factor += dist)
+		ANKI_LOOP for(float factor = start; factor <= 1.0; factor += dist)
 		{
 			float zMedian = mix(kNear, kFar, factor);
 
-			if(zMedian < farPos.z)
+			ANKI_BRANCH if(zMedian < farPos.z)
 			{
 				k = CLUSTER_COUNT.z; // Break the outer loop
 				break;
