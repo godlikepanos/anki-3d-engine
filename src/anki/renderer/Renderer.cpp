@@ -211,7 +211,7 @@ void Renderer::initJitteredMats()
 		subSample *= 0.5f; // In [-texSize / 2, texSize / 2]
 
 		m_jitteredMats16x[i] = Mat4::getIdentity();
-		m_jitteredMats16x[i].setTranslationPart(Vec4(subSample, 0.0, 1.0));
+		// m_jitteredMats16x[i].setTranslationPart(Vec4(subSample, 0.0, 1.0));
 	}
 
 	static const Array<Vec2, 8> SAMPLE_LOCS_8 = {{Vec2(-7.0, 1.0),
@@ -234,7 +234,7 @@ void Renderer::initJitteredMats()
 		subSample *= 0.5f; // In [-texSize / 2, texSize / 2]
 
 		m_jitteredMats8x[i] = Mat4::getIdentity();
-		m_jitteredMats8x[i].setTranslationPart(Vec4(subSample, 0.0, 1.0));
+		// m_jitteredMats8x[i].setTranslationPart(Vec4(subSample, 0.0, 1.0));
 	}
 }
 

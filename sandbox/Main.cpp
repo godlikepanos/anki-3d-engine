@@ -214,7 +214,7 @@ Error MyApp::userMainLoop(Bool& quit)
 		quit = true;
 	}
 
-	if(m_profile && getGlobalTimestamp() == 500)
+	if(m_profile && getGlobalTimestamp() == 1000)
 	{
 		quit = true;
 		return Error::NONE;

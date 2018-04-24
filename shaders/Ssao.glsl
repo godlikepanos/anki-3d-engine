@@ -108,14 +108,14 @@ vec3 computeNormal(vec2 uv, vec3 origin)
 	barrier();
 
 	// Have one thread every quad to compute the normal
-	if((gl_LocalInvocationID.x & 1u) + (gl_LocalInvocationID.y & 1u) == 0u)
+	if(((gl_LocalInvocationID.x & 1u) + (gl_LocalInvocationID.y & 1u)) == 0u)
 	{
 		// It's the bottom left pixel of the quad
 
 		vec3 center, right, top;
 		center = origin;
 		right = s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x + 1u];
-		top = s_scratch[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 1u];
+		top = s_scratch[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x];
 
 		vec3 normal = normalize(cross(right - center, top - center));
 
@@ -205,22 +205,17 @@ void main(void)
 	barrier();
 
 	// Sample neighbours
-	ssao *= BOX_WEIGHTS[0];
+	ssao += s_scratch[gl_LocalInvocationID.y][left].x;
+	ssao += s_scratch[gl_LocalInvocationID.y][right].x;
+	ssao += s_scratch[bottom][gl_LocalInvocationID.x].x;
+	ssao += s_scratch[top][gl_LocalInvocationID.x].x;
 
-	float cross;
-	cross = s_scratch[gl_LocalInvocationID.y][left].x;
-	cross += s_scratch[gl_LocalInvocationID.y][right].x;
-	cross += s_scratch[bottom][gl_LocalInvocationID.x].x;
-	cross += s_scratch[top][gl_LocalInvocationID.x].x;
+	ssao += s_scratch[bottom][left].x;
+	ssao += s_scratch[bottom][right].x;
+	ssao += s_scratch[top][left].x;
+	ssao += s_scratch[top][right].x;
 
-	ssao += cross * BOX_WEIGHTS[1];
-
-	cross = s_scratch[bottom][left].x;
-	cross += s_scratch[bottom][right].x;
-	cross += s_scratch[top][left].x;
-	cross += s_scratch[top][right].x;
-
-	ssao += cross * BOX_WEIGHTS[2];
+	ssao *= (1.0 / 9.0);
 #endif
 
 	// Store the result

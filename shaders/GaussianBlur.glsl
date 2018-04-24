@@ -8,16 +8,12 @@
 // COLOR_COMPONENTS
 // WORKGROUP_SIZE (only for compute)
 // TEXTURE_SIZE
-// SAMPLE_COUNT (must be odd number)
+// KERNEL_SIZE (must be odd number)
 
-#ifndef ANKI_SHADERS_DEPTH_AWARE_BLUR_GLSL
-#define ANKI_SHADERS_DEPTH_AWARE_BLUR_GLSL
+#ifndef ANKI_SHADERS_GAUSSIAN_BLUR_GLSL
+#define ANKI_SHADERS_GAUSSIAN_BLUR_GLSL
 
-#include "shaders/Common.glsl"
-
-#if SAMPLE_COUNT < 3
-#	error See file
-#endif
+#include "shaders/GaussianBlurCommon.glsl"
 
 #if defined(ANKI_COMPUTE_SHADER)
 #	define USE_COMPUTE 1
@@ -25,7 +21,7 @@
 #	define USE_COMPUTE 0
 #endif
 
-// Define some macros depending on the number of components
+// Determine color type
 #if COLOR_COMPONENTS == 4
 #	define COL_TYPE vec4
 #	define TEX_FETCH rgba
@@ -42,8 +38,7 @@
 #	error See file
 #endif
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_inTex;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_depthTex;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex; ///< Input texture
 
 #if USE_COMPUTE
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
@@ -52,26 +47,6 @@ layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D u_outImg;
 layout(location = 0) in vec2 in_uv;
 layout(location = 0) out COL_TYPE out_color;
 #endif
-
-float computeDepthWeight(float refDepth, float depth)
-{
-	float diff = abs(refDepth - depth);
-	float weight = 1.0 / (EPSILON + diff);
-	return sqrt(weight);
-}
-
-float readDepth(vec2 uv)
-{
-	return textureLod(u_depthTex, uv, 0.0).r;
-}
-
-void sampleTex(vec2 uv, float refDepth, inout COL_TYPE col, inout float weight)
-{
-	COL_TYPE color = textureLod(u_inTex, uv, 0.0).TEX_FETCH;
-	float w = computeDepthWeight(refDepth, readDepth(uv));
-	col += color * w;
-	weight += w;
-}
 
 void main()
 {
@@ -90,11 +65,6 @@ void main()
 
 	const vec2 TEXEL_SIZE = 1.0 / vec2(TEXTURE_SIZE);
 
-	// Sample
-	COL_TYPE color = textureLod(u_inTex, uv, 0.0).TEX_FETCH;
-	float refDepth = readDepth(uv);
-	float weight = 1.0;
-
 #if !defined(BOX)
 	// Do seperable
 
@@ -104,13 +74,16 @@ void main()
 #		define X_OR_Y y
 #	endif
 
+	COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH * WEIGHTS[0u];
+
 	vec2 uvOffset = vec2(0.0);
 	uvOffset.X_OR_Y = 1.5 * TEXEL_SIZE.X_OR_Y;
 
-	ANKI_UNROLL for(uint i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
+	ANKI_UNROLL for(uint i = 0u; i < STEP_COUNT; ++i)
 	{
-		sampleTex(uv + uvOffset, refDepth, color, weight);
-		sampleTex(uv - uvOffset, refDepth, color, weight);
+		COL_TYPE col =
+			textureLod(u_tex, uv + uvOffset, 0.0).TEX_FETCH + textureLod(u_tex, uv - uvOffset, 0.0).TEX_FETCH;
+		color += WEIGHTS[i + 1u] * col;
 
 		uvOffset.X_OR_Y += 2.0 * TEXEL_SIZE.X_OR_Y;
 	}
@@ -119,17 +92,22 @@ void main()
 
 	const vec2 OFFSET = 1.5 * TEXEL_SIZE;
 
-	sampleTex(uv + vec2(+OFFSET.x, +OFFSET.y), refDepth, color, weight);
-	sampleTex(uv + vec2(+OFFSET.x, -OFFSET.y), refDepth, color, weight);
-	sampleTex(uv + vec2(-OFFSET.x, +OFFSET.y), refDepth, color, weight);
-	sampleTex(uv + vec2(-OFFSET.x, -OFFSET.y), refDepth, color, weight);
+	COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH;
+	/*COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH * BOX_WEIGHTS[0u];
 
-	sampleTex(uv + vec2(OFFSET.x, 0.0), refDepth, color, weight);
-	sampleTex(uv + vec2(0.0, OFFSET.y), refDepth, color, weight);
-	sampleTex(uv + vec2(-OFFSET.x, 0.0), refDepth, color, weight);
-	sampleTex(uv + vec2(0.0, -OFFSET.y), refDepth, color, weight);
+	COL_TYPE col;
+	col = textureLod(u_tex, uv + vec2(OFFSET.x, 0.0), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + vec2(0.0, OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + vec2(-OFFSET.x, 0.0), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + vec2(0.0, -OFFSET.y), 0.0).TEX_FETCH;
+	color += col * BOX_WEIGHTS[1u];
+
+	col = textureLod(u_tex, uv + vec2(+OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + vec2(+OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + vec2(-OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + vec2(-OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
+	color += col * BOX_WEIGHTS[2u];*/
 #endif
-	color = color / weight;
 
 	// Write value
 #if USE_COMPUTE

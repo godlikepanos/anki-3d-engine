@@ -12,15 +12,10 @@ http://www.anki3d.org/LICENSE
 	</mutators>
 
 	<shaders>
-		<shader type="vert">
-			<source><![CDATA[
-#include "shaders/QuadVert.glsl"
-			]]></source>
-		</shader>
-
-		<shader type="frag">
+		<shader type="comp">
 			<inputs>
 				<input name="TEXTURE_SIZE" type="uvec2" const="1"/>
+                <input name="WORKGROUP_SIZE" type="uvec2" const="1"/>
 			</inputs>
 
 			<source><![CDATA[

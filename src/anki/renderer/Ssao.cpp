@@ -56,10 +56,10 @@ Error Ssao::initBlur(const ConfigSet& config)
 	// shader
 	if(m_blurUseCompute)
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("programs/DepthAwareBlurCompute.ankiprog", m_blur.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("programs/GaussianBlurCompute.ankiprog", m_blur.m_prog));
 
 		ShaderProgramResourceMutationInitList<3> mutators(m_blur.m_prog);
-		mutators.add("ORIENTATION", 2).add("SAMPLE_COUNT", 3).add("COLOR_COMPONENTS", 1);
+		mutators.add("ORIENTATION", 2).add("KERNEL_SIZE", 3).add("COLOR_COMPONENTS", 1);
 		ShaderProgramResourceConstantValueInitList<2> consts(m_blur.m_prog);
 		consts.add("TEXTURE_SIZE", UVec2(m_width, m_height))
 			.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
@@ -71,10 +71,10 @@ Error Ssao::initBlur(const ConfigSet& config)
 	}
 	else
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("programs/DepthAwareBlur.ankiprog", m_blur.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("programs/GaussianBlur.ankiprog", m_blur.m_prog));
 
 		ShaderProgramResourceMutationInitList<3> mutators(m_blur.m_prog);
-		mutators.add("ORIENTATION", 2).add("SAMPLE_COUNT", 3).add("COLOR_COMPONENTS", 1);
+		mutators.add("ORIENTATION", 2).add("KERNEL_SIZE", 3).add("COLOR_COMPONENTS", 1);
 		ShaderProgramResourceConstantValueInitList<1> consts(m_blur.m_prog);
 		consts.add("TEXTURE_SIZE", UVec2(m_width, m_height));
 
@@ -184,8 +184,6 @@ void Ssao::runBlur(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindShaderProgram(m_blur.m_grProg);
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_runCtx.m_rts[0], m_r->getLinearSampler());
-	rgraphCtx.bindTextureAndSampler(
-		0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_QUARTER_DEPTH, m_r->getLinearSampler());
 
 	if(m_blurUseCompute)
 	{
@@ -257,8 +255,6 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			pass.setWork(runBlurCallback, this, 0);
 
-			pass.newConsumer(
-				{m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, HIZ_QUARTER_DEPTH});
 			pass.newConsumer({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 			pass.newConsumer({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE});
 			pass.newProducer({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
@@ -272,8 +268,6 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			pass.newConsumer({m_runCtx.m_rts[1], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 			pass.newConsumer({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_FRAGMENT});
-			pass.newConsumer(
-				{m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_QUARTER_DEPTH});
 			pass.newProducer({m_runCtx.m_rts[1], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		}
 	}
