@@ -169,14 +169,25 @@ void main(void)
 	float projRadius = length(projSphereLimit2 - ndc);
 
 	// Loop to compute
+	float randFactor = readRandom(uv, 0.0).r;
 	float ssao = 0.0;
+	const float SAMPLE_COUNTF = float(SAMPLE_COUNT);
 	ANKI_UNROLL for(uint i = 0; i < SAMPLE_COUNT; ++i)
 	{
-		// Compute disk
-		vec3 randFactors = readRandom(uv, float(i));
-		vec2 dir = normalize(UV_TO_NDC(randFactors.xy));
-		float radius = projRadius * (randFactors.z * 0.85 + 0.15);
-		vec2 finalDiskPoint = ndc + dir * radius;
+		// Compute disk. Basically calculate a point in a spiral. See how it looks here
+		// https://shadertoy.com/view/Md3fDr
+		float fi = float(i);
+		const float TURNS = float(SAMPLE_COUNT) / 2.0; // Calculate the number of the spiral turns
+		const float ANG = (PI * 2.0 * TURNS) / (SAMPLE_COUNTF - 1.0); // The angle distance between samples
+		float ang = ANG * fi;
+		ang += randFactor * PI; // Turn the angle a bit
+
+		float radius = (1.0 / SAMPLE_COUNTF) * (fi + 1.0);
+		radius = sqrt(radius); // Move the points a bit away from the center of the spiral
+
+		vec2 point = vec2(cos(ang), sin(ang)) * radius; // In NDC
+
+		vec2 finalDiskPoint = ndc + point * projRadius;
 
 		// Compute factor
 		vec3 s = readPosition(NDC_TO_UV(finalDiskPoint));
