@@ -92,8 +92,7 @@ void main()
 
 	const vec2 OFFSET = 1.5 * TEXEL_SIZE;
 
-	COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH;
-	/*COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH * BOX_WEIGHTS[0u];
+	COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH * BOX_WEIGHTS[0u];
 
 	COL_TYPE col;
 	col = textureLod(u_tex, uv + vec2(OFFSET.x, 0.0), 0.0).TEX_FETCH;
@@ -106,7 +105,7 @@ void main()
 	col += textureLod(u_tex, uv + vec2(+OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
 	col += textureLod(u_tex, uv + vec2(-OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
 	col += textureLod(u_tex, uv + vec2(-OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
-	color += col * BOX_WEIGHTS[2u];*/
+	color += col * BOX_WEIGHTS[2u];
 #endif
 
 	// Write value
