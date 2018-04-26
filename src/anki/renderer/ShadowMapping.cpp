@@ -51,7 +51,6 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 		m_scratchRtDescr = m_r->create2DRenderTargetDescription(m_scratchTileResolution * m_scratchTileCount,
 			m_scratchTileResolution,
 			SHADOW_DEPTH_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 			"Scratch ShadMap");
 		m_scratchRtDescr.bake();
 

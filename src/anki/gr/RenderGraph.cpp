@@ -567,7 +567,18 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 		}
 		else
 		{
-			tex = getOrCreateRenderTarget(descr.m_renderTargets[rtIdx].m_initInfo, descr.m_renderTargets[rtIdx].m_hash);
+			// Need to create new
+
+			// Create a new TextureInitInfo with the derived usage
+			TextureInitInfo initInf = descr.m_renderTargets[rtIdx].m_initInfo;
+			initInf.m_usage = descr.m_renderTargets[rtIdx].m_usageDerivedByDeps;
+			ANKI_ASSERT(initInf.m_usage != TextureUsageBit::NONE);
+
+			// Create the new hash
+			const U64 hash = appendHash(&initInf.m_usage, sizeof(initInf.m_usage), descr.m_renderTargets[rtIdx].m_hash);
+
+			// Get or create the texture
+			tex = getOrCreateRenderTarget(initInf, hash);
 		}
 
 		outRt.m_texture = tex;
@@ -575,8 +586,9 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 		// Init the surfs or volumes
 		const U surfOrVolumeCount =
 			tex->getMipmapCount() * tex->getLayerCount() * (textureTypeIsCube(tex->getTextureType()) ? 6 : 1);
-		outRt.m_surfOrVolUsages.create(
-			alloc, surfOrVolumeCount, (imported) ? descr.m_renderTargets[rtIdx].m_usage : TextureUsageBit::NONE);
+		outRt.m_surfOrVolUsages.create(alloc,
+			surfOrVolumeCount,
+			(imported) ? descr.m_renderTargets[rtIdx].m_importedLastKnownUsage : TextureUsageBit::NONE);
 		outRt.m_lastBatchThatTransitionedIt.create(alloc, surfOrVolumeCount, MAX_U16);
 	}
 

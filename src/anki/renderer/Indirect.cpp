@@ -92,11 +92,8 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 
 	// Create RT descriptions
 	{
-		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(m_gbuffer.m_tileSize * 6,
-			m_gbuffer.m_tileSize,
-			MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			"GI GBuffer");
+		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(
+			m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize, MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0], "GI GBuffer");
 
 		// Create color RT descriptions
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
@@ -108,7 +105,6 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 		}
 
 		// Create depth RT
-		texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 		texinit.m_format = GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT;
 		texinit.setName("GI GBuff Depth");
 		m_gbuffer.m_depthRtDescr = texinit;

@@ -35,23 +35,15 @@ Error GBuffer::init(const ConfigSet& initializer)
 Error GBuffer::initInternal(const ConfigSet& initializer)
 {
 	// RT descrs
-	m_depthRtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(),
-		m_r->getHeight(),
-		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		"GBuffer depth");
+	m_depthRtDescr = m_r->create2DRenderTargetDescription(
+		m_r->getWidth(), m_r->getHeight(), GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT, "GBuffer depth");
 	m_depthRtDescr.bake();
 
 	static const char* rtNames[GBUFFER_COLOR_ATTACHMENT_COUNT] = {"GBuffer rt0", "GBuffer rt1", "GBuffer rt2"};
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		m_colorRtDescrs[i] = m_r->create2DRenderTargetDescription(m_r->getWidth(),
-			m_r->getHeight(),
-			MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i],
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
-				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-			rtNames[i]);
+		m_colorRtDescrs[i] = m_r->create2DRenderTargetDescription(
+			m_r->getWidth(), m_r->getHeight(), MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i], rtNames[i]);
 		m_colorRtDescrs[i].bake();
 	}
 

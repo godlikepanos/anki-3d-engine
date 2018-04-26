@@ -39,11 +39,8 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 
 	if(!m_r->getDrawToDefaultFramebuffer())
 	{
-		m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(),
-			m_r->getHeight(),
-			RT_PIXEL_FORMAT,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-			"Final Composite");
+		m_rtDescr =
+			m_r->create2DRenderTargetDescription(m_r->getWidth(), m_r->getHeight(), RT_PIXEL_FORMAT, "Final Composite");
 		m_rtDescr.bake();
 
 		m_fbDescr.m_colorAttachmentCount = 1;

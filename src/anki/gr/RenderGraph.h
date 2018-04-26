@@ -108,6 +108,8 @@ public:
 	/// Create an internal hash.
 	void bake()
 	{
+		ANKI_ASSERT(m_hash == 0);
+		ANKI_ASSERT(m_usage == TextureUsageBit::NONE && "No need to supply the usage. RenderGraph will find out");
 		m_hash = computeHash();
 	}
 
@@ -257,6 +259,7 @@ private:
 class RenderPassDescriptionBase
 {
 	friend class RenderGraph;
+	friend class RenderGraphDescription;
 
 public:
 	virtual ~RenderPassDescriptionBase()
@@ -497,7 +500,8 @@ public:
 	{
 		RT& rt = *m_renderTargets.emplaceBack(m_alloc);
 		rt.m_importedTex = tex;
-		rt.m_usage = usage;
+		rt.m_importedLastKnownUsage = usage;
+		rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
 		rt.setName(name);
 
 		RenderTargetHandle out;
@@ -509,10 +513,13 @@ public:
 	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf)
 	{
 		ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
+		ANKI_ASSERT(
+			initInf.m_usage == TextureUsageBit::NONE && "Don't need to supply the usage. Render grap will find it");
 		RT& rt = *m_renderTargets.emplaceBack(m_alloc);
 		rt.m_initInfo = initInf;
 		rt.m_hash = initInf.m_hash;
-		rt.m_usage = TextureUsageBit::NONE;
+		rt.m_importedLastKnownUsage = TextureUsageBit::NONE;
+		rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
 		rt.setName(initInf.getName());
 
 		RenderTargetHandle out;
@@ -553,7 +560,8 @@ private:
 		TextureInitInfo m_initInfo;
 		U64 m_hash = 0;
 		TexturePtr m_importedTex;
-		TextureUsageBit m_usage;
+		TextureUsageBit m_importedLastKnownUsage;
+		TextureUsageBit m_usageDerivedByDeps; ///< XXX
 	};
 
 	class Buffer : public Resource

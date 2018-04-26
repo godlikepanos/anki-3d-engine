@@ -31,11 +31,8 @@ Error Bloom::initExposure(const ConfigSet& config)
 	m_exposure.m_scale = config.getNumber("r.bloom.scale");
 
 	// Create RT info
-	m_exposure.m_rtDescr = m_r->create2DRenderTargetDescription(m_exposure.m_width,
-		m_exposure.m_height,
-		RT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		"Bloom Exp");
+	m_exposure.m_rtDescr =
+		m_r->create2DRenderTargetDescription(m_exposure.m_width, m_exposure.m_height, RT_PIXEL_FORMAT, "Bloom Exp");
 	m_exposure.m_rtDescr.bake();
 
 	// Create FB info
@@ -63,11 +60,8 @@ Error Bloom::initUpscale(const ConfigSet& config)
 	m_upscale.m_height = m_r->getHeight() / BLOOM_FRACTION;
 
 	// Create RT descr
-	m_upscale.m_rtDescr = m_r->create2DRenderTargetDescription(m_upscale.m_width,
-		m_upscale.m_height,
-		RT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		"Bloom Upscale");
+	m_upscale.m_rtDescr =
+		m_r->create2DRenderTargetDescription(m_upscale.m_width, m_upscale.m_height, RT_PIXEL_FORMAT, "Bloom Upscale");
 	m_upscale.m_rtDescr.bake();
 
 	// Create FB descr

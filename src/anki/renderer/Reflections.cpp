@@ -37,11 +37,8 @@ Error Reflections::initInternal(const ConfigSet& cfg)
 	ANKI_R_LOGI("Initializing reflection pass (%ux%u)", width, height);
 
 	// Create RTs
-	m_rtDescr = m_r->create2DRenderTargetDescription(width,
-		height,
-		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_COMPUTE_WRITE,
-		"IndirectRes");
+	m_rtDescr =
+		m_r->create2DRenderTargetDescription(width, height, LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "IndirectRes");
 	m_rtDescr.bake();
 
 	// Create shader

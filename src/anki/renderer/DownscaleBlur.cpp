@@ -32,12 +32,10 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	ANKI_R_LOGI("Initializing dowscale blur (passCount: %u)", U(m_passCount));
 
 	// Create the miped texture
-	TextureInitInfo texinit = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2,
-		m_r->getHeight() / 2,
-		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-			| TextureUsageBit::SAMPLED_COMPUTE,
-		"DownscaleBlur");
+	TextureInitInfo texinit = m_r->create2DRenderTargetDescription(
+		m_r->getWidth() / 2, m_r->getHeight() / 2, LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "DownscaleBlur");
+	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
+					  | TextureUsageBit::SAMPLED_COMPUTE;
 	texinit.m_mipmapCount = m_passCount;
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_COMPUTE;
 	m_rtTex = m_r->createAndClearRenderTarget(texinit);

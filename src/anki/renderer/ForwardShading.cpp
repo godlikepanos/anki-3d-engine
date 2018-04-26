@@ -39,11 +39,8 @@ Error ForwardShading::initInternal(const ConfigSet&)
 	m_height = m_r->getHeight() / FS_FRACTION;
 
 	// Create RT descr
-	m_rtDescr = m_r->create2DRenderTargetDescription(m_width,
-		m_height,
-		FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		"forward");
+	m_rtDescr = m_r->create2DRenderTargetDescription(
+		m_width, m_height, FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "forward");
 	m_rtDescr.bake();
 
 	// Create FB descr

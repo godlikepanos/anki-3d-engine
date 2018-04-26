@@ -39,11 +39,8 @@ Error Dbg::lazyInit()
 	ANKI_ASSERT(!m_initialized);
 
 	// RT descr
-	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(),
-		m_r->getHeight(),
-		DBG_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		"Dbg");
+	m_rtDescr = m_r->create2DRenderTargetDescription(
+		m_r->getWidth(), m_r->getHeight(), DBG_COLOR_ATTACHMENT_PIXEL_FORMAT, "Dbg");
 	m_rtDescr.bake();
 
 	// Create FB descr

@@ -20,19 +20,11 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	const U height = m_r->getHeight() / 2;
 
 	// Create RT descrs
-	m_depthRtDescr = m_r->create2DRenderTargetDescription(width,
-		height,
-		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		"Half depth");
+	m_depthRtDescr =
+		m_r->create2DRenderTargetDescription(width, height, GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT, "Half depth");
 	m_depthRtDescr.bake();
 
-	m_hizRtDescr = m_r->create2DRenderTargetDescription(width,
-		height,
-		Format::R32_SFLOAT,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::SAMPLED_COMPUTE,
-		"HiZ");
+	m_hizRtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R32_SFLOAT, "HiZ");
 	m_hizRtDescr.m_mipmapCount = HIERARCHICAL_Z_MIPMAP_COUNT;
 	m_hizRtDescr.bake();
 

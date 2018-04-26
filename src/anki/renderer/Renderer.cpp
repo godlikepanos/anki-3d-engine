@@ -337,8 +337,7 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format form
 	return init;
 }
 
-RenderTargetDescription Renderer::create2DRenderTargetDescription(
-	U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
+RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, Format format, CString name)
 {
 	RenderTargetDescription init(name);
 
@@ -350,7 +349,7 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(
 	init.m_format = format;
 	init.m_mipmapCount = 1;
 	init.m_samples = 1;
-	init.m_usage = usage;
+	init.m_usage = TextureUsageBit::NONE;
 
 	return init;
 }

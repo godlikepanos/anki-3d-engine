@@ -61,6 +61,9 @@ inline void RenderPassDescriptionBase::newConsumer(const RenderPassDependency& d
 	{
 		fixSubresource(m_consumers.getBack());
 		m_consumerRtMask.set(dep.m_texture.m_handle.m_idx);
+
+		// Try to derive the usage by that dep
+		m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx].m_usageDerivedByDeps |= dep.m_texture.m_usage;
 	}
 	else if(dep.m_buffer.m_usage != BufferUsageBit::NONE)
 	{

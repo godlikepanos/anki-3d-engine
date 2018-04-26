@@ -98,11 +98,8 @@ Error LightShading::initInternal(const ConfigSet& config)
 	m_prog->getOrCreateVariant(consts.get(), m_progVariant);
 
 	// Create RT descr
-	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(),
-		m_r->getHeight(),
-		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		"Light Shading");
+	m_rtDescr = m_r->create2DRenderTargetDescription(
+		m_r->getWidth(), m_r->getHeight(), LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "Light Shading");
 	m_rtDescr.bake();
 
 	// Create FB descr
