@@ -28,7 +28,7 @@ void Octree::place(const Aabb& volume, OctreeHandle* handle)
 	ANKI_ASSERT(handle);
 
 	// Remove the handle from the Octree...
-	// TOOD
+	// TODO
 
 	// .. and re-place it
 	placeRecursive(volume, handle, m_rootLeaf, m_sceneAabbMin, m_sceneAabbMax, 0);
@@ -53,7 +53,7 @@ void Octree::placeRecursive(
 
 		// Connect handle and leaf
 		handle->m_leafs.pushBack(newLeafNode(parent));
-		parent->m_handles.pushBack(newHandle(handle));
+		parent->m_handles.pushBack(newHandleNode(handle));
 
 		return;
 	}
@@ -110,31 +110,83 @@ void Octree::placeRecursive(
 		maskZ = LeafMask::ALL;
 	}
 
-	LeafMask maskUnion = maskX & maskY & maskZ;
+	const LeafMask maskUnion = maskX & maskY & maskZ;
 	ANKI_ASSERT(!!maskUnion && "Should be inside at least one leaf");
 
 	for(U i = 0; i < 8; ++i)
 	{
-		const LeafMask crntBit = LeafMask(1 << i);
+		const LeafMask crntBit = LeafMask(1u << i);
 
 		if(!!(maskUnion & crntBit))
 		{
 			// Inside the leaf, move deeper
 
-			// Compute AABB
-			Vec3 aabbMin, aabbMax;
-			if(!!(crntBit & LeafMask::RIGHT))
-			{
-				// TODO
-			}
-
+			// Create the leaf
 			if(parent->m_leafs[i] == nullptr)
 			{
 				parent->m_leafs[i] = newLeaf();
 			}
 
-			// TODO
+			// Compute AABB
+			Vec3 childAabbMin, childAabbMax;
+			computeChildAabb(crntBit, aabbMin, aabbMax, center, childAabbMin, childAabbMax);
+
+			// Move deeper
+			placeRecursive(volume, handle, parent->m_leafs[i], childAabbMin, childAabbMax, depth + 1);
 		}
+	}
+}
+
+void Octree::computeChildAabb(LeafMask child,
+	const Vec3& parentAabbMin,
+	const Vec3& parentAabbMax,
+	const Vec3& parentAabbCenter,
+	Vec3& childAabbMin,
+	Vec3& childAabbMax)
+{
+	ANKI_ASSERT(__builtin_popcount(U32(child)) == 1);
+
+	const Vec3& m = parentAabbMin;
+	const Vec3& M = parentAabbMax;
+	const Vec3& c = parentAabbCenter;
+
+	if(!!(child & LeafMask::RIGHT))
+	{
+		// Right
+		childAabbMin.x() = c.x();
+		childAabbMax.x() = M.x();
+	}
+	else
+	{
+		// Left
+		childAabbMin.x() = m.x();
+		childAabbMax.x() = c.x();
+	}
+
+	if(!!(child & LeafMask::TOP))
+	{
+		// Top
+		childAabbMin.y() = c.y();
+		childAabbMax.y() = M.y();
+	}
+	else
+	{
+		// Bottom
+		childAabbMin.y() = m.y();
+		childAabbMax.y() = c.y();
+	}
+
+	if(!!(child & LeafMask::FRONT))
+	{
+		// Front
+		childAabbMin.z() = c.z();
+		childAabbMax.z() = M.z();
+	}
+	else
+	{
+		// Back
+		childAabbMin.z() = m.z();
+		childAabbMax.z() = c.z();
 	}
 }
 

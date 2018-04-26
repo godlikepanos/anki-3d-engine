@@ -51,22 +51,22 @@ public:
 
 private:
 	/// XXX
-	class Handle : public IntrusiveListEnabled<Handle>
+	class HandleNode : public IntrusiveListEnabled<HandleNode>
 	{
 	public:
 		OctreeHandle* m_handle = nullptr;
 	};
 
-	/// XXX
+	/// Octree leaf.
 	/// @warning Keept its size as small as possible.
 	class Leaf
 	{
 	public:
-		IntrusiveList<Handle> m_handles;
+		IntrusiveList<HandleNode> m_handles;
 		Array<Leaf*, 8> m_leafs = {};
 	};
 
-	/// XXX
+	/// Used so that OctreeHandle knows which leafs it belongs to.
 	class LeafNode : public IntrusiveListEnabled<LeafNode>
 	{
 	public:
@@ -103,7 +103,7 @@ private:
 
 	ObjectAllocatorSameType<Leaf, 256> m_leafAlloc;
 	ObjectAllocatorSameType<LeafNode, 128> m_leafNodeAlloc;
-	ObjectAllocatorSameType<Handle, 256> m_handleAlloc;
+	ObjectAllocatorSameType<HandleNode, 256> m_handleAlloc;
 
 	Leaf* m_rootLeaf = nullptr;
 
@@ -117,15 +117,15 @@ private:
 		m_leafAlloc.deleteInstance(m_alloc, leaf);
 	}
 
-	Handle* newHandle(OctreeHandle* handle)
+	HandleNode* newHandleNode(OctreeHandle* handle)
 	{
 		ANKI_ASSERT(handle);
-		Handle* out = m_handleAlloc.newInstance(m_alloc);
+		HandleNode* out = m_handleAlloc.newInstance(m_alloc);
 		out->m_handle = handle;
 		return out;
 	}
 
-	void releaseHandle(Handle* handle)
+	void releaseHandle(HandleNode* handle)
 	{
 		m_handleAlloc.deleteInstance(m_alloc, handle);
 	}
@@ -145,6 +145,13 @@ private:
 
 	void placeRecursive(
 		const Aabb& volume, OctreeHandle* handle, Leaf* parent, const Vec3& aabbMin, const Vec3& aabbMax, U32 depth);
+
+	void computeChildAabb(LeafMask child,
+		const Vec3& parentAabbMin,
+		const Vec3& parentAabbMax,
+		const Vec3& parentAabbCenter,
+		Vec3& childAabbMin,
+		Vec3& childAabbMax);
 };
 
 /// XXX
