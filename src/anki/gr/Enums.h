@@ -442,6 +442,7 @@ enum class ShaderType : U8
 
 	COUNT,
 	FIRST = VERTEX,
+	LAST = COUNT - 1,
 	FIRST_GRAPHICS = VERTEX,
 	LAST_GRAPHICS = FRAGMENT,
 };

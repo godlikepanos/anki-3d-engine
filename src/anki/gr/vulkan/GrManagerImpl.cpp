@@ -402,7 +402,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		m_capabilities.m_gpuVendor = GpuVendor::UNKNOWN;
 	}
 	ANKI_VK_LOGI(
-		"GPU is %s. Vendor identified a %s", m_devProps.deviceName, &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
+		"GPU is %s. Vendor identified as %s", m_devProps.deviceName, &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 
@@ -893,37 +893,75 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
 	return false;
 }
 
-void GrManagerImpl::printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages) const
+void GrManagerImpl::printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const
+{
+	Error err = printPipelineShaderInfoInternal(ppline, name, stages, hash);
+	if(err)
+	{
+		ANKI_VK_LOGE("Ignoring previous errors");
+	}
+}
+
+Error GrManagerImpl::printPipelineShaderInfoInternal(
+	VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const
 {
 	if(m_pfnGetShaderInfoAMD)
 	{
 		VkShaderStatisticsInfoAMD stats = {};
-		size_t size = sizeof(stats);
 
-		ANKI_VK_LOGI("Pipeline \"%s\" stats:", name.cstr());
+		LockGuard<SpinLock> lock(m_shaderStatsFileMtx);
+
+		// Open the file
+		if(!m_shaderStatsFile.isOpen())
+		{
+			ANKI_CHECK(m_shaderStatsFile.open(
+				StringAuto(getAllocator()).sprintf("%s/../ppline_stats.csv", m_cacheDir.cstr()).toCString(),
+				FileOpenFlag::WRITE));
+
+			ANKI_CHECK(m_shaderStatsFile.writeText("ppline name,hash,"
+												   "stage 0 VGPR,stage 0 SGPR,"
+												   "stage 1 VGPR,stage 1 SGPR,"
+												   "stage 2 VGPR,stage 2 SGPR,"
+												   "stage 3 VGPR,stage 3 SGPR,"
+												   "stage 4 VGPR,stage 4 SGPR,"
+												   "stage 5 VGPR,stage 5 SGPR\n"));
+		}
+
+		ANKI_CHECK(m_shaderStatsFile.writeText("%s,0x%" PRIx64 ",", name.cstr(), hash));
+
+		StringAuto str(getAllocator());
 
 		for(ShaderType type = ShaderType::FIRST; type < ShaderType::COUNT; ++type)
 		{
 			ShaderTypeBit stage = stages & ShaderTypeBit(1 << type);
 			if(!stage)
 			{
+				ANKI_CHECK(m_shaderStatsFile.writeText((type != ShaderType::LAST) ? "0,0," : "0,0\n"));
 				continue;
 			}
 
-			VkResult err = m_pfnGetShaderInfoAMD(
-				m_device, ppline, convertShaderTypeBit(stage), VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats);
+			size_t size = sizeof(stats);
+			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(
+				m_device, ppline, convertShaderTypeBit(stage), VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats));
 
-			if(!err)
-			{
-				ANKI_VK_LOGI("\tStage %u: VGRPS %u/%u, SGRPS %u/%u",
-					U32(type),
-					stats.resourceUsage.numUsedVgprs,
-					stats.numAvailableVgprs,
-					stats.resourceUsage.numUsedSgprs,
-					stats.numAvailableSgprs);
-			}
+			str.append(StringAuto(getAllocator())
+						   .sprintf("Stage %u: VGRPS %02u, SGRPS %02u ",
+							   U32(type),
+							   stats.resourceUsage.numUsedVgprs,
+							   stats.resourceUsage.numUsedSgprs));
+
+			ANKI_CHECK(m_shaderStatsFile.writeText((type != ShaderType::LAST) ? "%u,%u," : "%u,%u\n",
+				stats.resourceUsage.numUsedVgprs,
+				stats.resourceUsage.numUsedSgprs));
 		}
+
+		ANKI_VK_LOGI("Pipeline \"%s\" (0x%016" PRIx64 ") stats: %s", name.cstr(), hash, str.cstr());
+
+		// Flush the file just in case
+		ANKI_CHECK(m_shaderStatsFile.flush());
 	}
+
+	return Error::NONE;
 }
 
 } // end namespace anki

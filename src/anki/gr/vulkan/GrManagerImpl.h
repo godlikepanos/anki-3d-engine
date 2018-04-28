@@ -212,7 +212,7 @@ public:
 	}
 	/// @}
 
-	void printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages) const;
+	void printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash = 0) const;
 
 private:
 	U64 m_frame = 0;
@@ -245,6 +245,8 @@ private:
 	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;
 	PFN_vkCmdDebugMarkerEndEXT m_pfnCmdDebugMarkerEndEXT = nullptr;
 	PFN_vkGetShaderInfoAMD m_pfnGetShaderInfoAMD = nullptr;
+	mutable File m_shaderStatsFile;
+	mutable SpinLock m_shaderStatsFileMtx;
 
 	/// @name Surface_related
 	/// @{
@@ -324,6 +326,9 @@ private:
 		const char* pLayerPrefix,
 		const char* pMessage,
 		void* pUserData);
+
+	ANKI_USE_RESULT Error printPipelineShaderInfoInternal(
+		VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const;
 };
 /// @}
 

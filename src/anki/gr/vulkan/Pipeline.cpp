@@ -457,7 +457,7 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline,
 		// Print shader info
 		const ShaderProgramImpl& shaderImpl = static_cast<const ShaderProgramImpl&>(*state.m_state.m_prog);
 		shaderImpl.getGrManagerImpl().printPipelineShaderInfo(
-			pp.m_handle, shaderImpl.getName(), shaderImpl.getStages());
+			pp.m_handle, shaderImpl.getName(), shaderImpl.getStages(), hash);
 	}
 }
 
