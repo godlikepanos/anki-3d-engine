@@ -17,7 +17,7 @@ namespace anki
 {
 
 // Forward
-class OctreeHandle;
+class OctreePlaceable;
 
 /// @addtogroup scene
 /// @{
@@ -25,7 +25,7 @@ class OctreeHandle;
 /// Octree for visibility tests.
 class Octree
 {
-	friend class OctreeHandle;
+	friend class OctreePlaceable;
 
 public:
 	Octree(SceneAllocator<U8> alloc)
@@ -38,23 +38,33 @@ public:
 	void init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDepth);
 
 	/// Place or re-place an element in the tree.
-	/// @note It's thread-safe.
-	void place(const Aabb& volume, OctreeHandle* handle);
+	/// @note It's thread-safe against place and remove methods.
+	void place(const Aabb& volume, OctreePlaceable* placeable);
 
 	/// Remove an element from the tree.
-	/// @note It's thread-safe.
-	void remove(OctreeHandle& handle);
+	/// @note It's thread-safe against place and remove methods.
+	void remove(OctreePlaceable& placeable);
 
-	/// Gather visible handles.
-	/// @note It's thread-safe.
-	DynamicArray<OctreeHandle*> gatherVisible(GenericMemoryPoolAllocator<U8> alloc, U32 testId);
+	/// Gather visible placeables.
+	/// @note It's thread-safe against other gatherVisible calls.
+	void gatherVisible(const Frustum& frustum, U32 testId, DynamicArrayAuto<OctreePlaceable*>& out)
+	{
+		gatherVisibleRecursive(frustum, testId, m_rootLeaf, out);
+	}
 
 private:
-	/// XXX
-	class HandleNode : public IntrusiveListEnabled<HandleNode>
+	/// List node.
+	class PlaceableNode : public IntrusiveListEnabled<PlaceableNode>
 	{
 	public:
-		OctreeHandle* m_handle = nullptr;
+		OctreePlaceable* m_placeable = nullptr;
+
+#if ANKI_ASSERTS_ENABLED
+		~PlaceableNode()
+		{
+			m_placeable = nullptr;
+		}
+#endif
 	};
 
 	/// Octree leaf.
@@ -62,15 +72,33 @@ private:
 	class Leaf
 	{
 	public:
-		IntrusiveList<HandleNode> m_handles;
+		IntrusiveList<PlaceableNode> m_placeables;
+		Vec3 m_aabbMin;
+		Vec3 m_aabbMax;
 		Array<Leaf*, 8> m_leafs = {};
+
+#if ANKI_ASSERTS_ENABLED
+		~Leaf()
+		{
+			ANKI_ASSERT(m_placeables.isEmpty());
+			m_leafs = {};
+			m_aabbMin = m_aabbMax = Vec3(0.0f);
+		}
+#endif
 	};
 
-	/// Used so that OctreeHandle knows which leafs it belongs to.
+	/// Used so that OctreePlaceable knows which leafs it belongs to.
 	class LeafNode : public IntrusiveListEnabled<LeafNode>
 	{
 	public:
 		Leaf* m_leaf = nullptr;
+
+#if ANKI_ASSERTS_ENABLED
+		~LeafNode()
+		{
+			m_leaf = nullptr;
+		}
+#endif
 	};
 
 	/// P: Stands for positive and N: Negative
@@ -100,10 +128,11 @@ private:
 	U32 m_maxDepth = 0;
 	Vec3 m_sceneAabbMin = Vec3(0.0f);
 	Vec3 m_sceneAabbMax = Vec3(0.0f);
+	Mutex m_globalMtx;
 
 	ObjectAllocatorSameType<Leaf, 256> m_leafAlloc;
 	ObjectAllocatorSameType<LeafNode, 128> m_leafNodeAlloc;
-	ObjectAllocatorSameType<HandleNode, 256> m_handleAlloc;
+	ObjectAllocatorSameType<PlaceableNode, 256> m_placeableNodeAlloc;
 
 	Leaf* m_rootLeaf = nullptr;
 
@@ -117,17 +146,17 @@ private:
 		m_leafAlloc.deleteInstance(m_alloc, leaf);
 	}
 
-	HandleNode* newHandleNode(OctreeHandle* handle)
+	PlaceableNode* newPlaceableNode(OctreePlaceable* placeable)
 	{
-		ANKI_ASSERT(handle);
-		HandleNode* out = m_handleAlloc.newInstance(m_alloc);
-		out->m_handle = handle;
+		ANKI_ASSERT(placeable);
+		PlaceableNode* out = m_placeableNodeAlloc.newInstance(m_alloc);
+		out->m_placeable = placeable;
 		return out;
 	}
 
-	void releaseHandle(HandleNode* handle)
+	void releasePlaceableNode(PlaceableNode* placeable)
 	{
-		m_handleAlloc.deleteInstance(m_alloc, handle);
+		m_placeableNodeAlloc.deleteInstance(m_alloc, placeable);
 	}
 
 	LeafNode* newLeafNode(Leaf* leaf)
@@ -143,19 +172,24 @@ private:
 		m_leafNodeAlloc.deleteInstance(m_alloc, node);
 	}
 
-	void placeRecursive(
-		const Aabb& volume, OctreeHandle* handle, Leaf* parent, const Vec3& aabbMin, const Vec3& aabbMax, U32 depth);
+	void placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf* parent, U32 depth);
 
-	void computeChildAabb(LeafMask child,
+	static void computeChildAabb(LeafMask child,
 		const Vec3& parentAabbMin,
 		const Vec3& parentAabbMax,
 		const Vec3& parentAabbCenter,
 		Vec3& childAabbMin,
 		Vec3& childAabbMax);
+
+	/// Remove a placeable from the tree.
+	void removeInternal(OctreePlaceable& placeable);
+
+	static void gatherVisibleRecursive(
+		const Frustum& frustum, U32 testId, Leaf* leaf, DynamicArrayAuto<OctreePlaceable*>& out);
 };
 
-/// XXX
-class OctreeHandle
+/// An entity that can be placed in octrees.
+class OctreePlaceable
 {
 	friend class Octree;
 
@@ -167,7 +201,16 @@ public:
 
 private:
 	Atomic<U64> m_visitedMask = {0u};
-	IntrusiveList<Octree::LeafNode> m_leafs; ///< A list of leafs this handle belongs.
+	IntrusiveList<Octree::LeafNode> m_leafs; ///< A list of leafs this placeable belongs.
+
+	/// Check if already visited.
+	/// @note It's thread-safe.
+	Bool alreadyVisited(U32 testId)
+	{
+		const U64 testMask = U64(1u) << U64(testId);
+		const U64 prev = m_visitedMask.fetchOr(testMask);
+		return !!(testMask & prev);
+	}
 };
 /// @}
 

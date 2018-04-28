@@ -6,9 +6,14 @@
 #include <anki/scene/Octree.h>
 #include <anki/collision/Tests.h>
 #include <anki/collision/Aabb.h>
+#include <anki/collision/Frustum.h>
 
 namespace anki
 {
+
+Octree::~Octree()
+{
+}
 
 void Octree::init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDepth)
 {
@@ -20,47 +25,65 @@ void Octree::init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDep
 	m_sceneAabbMax = sceneAabbMax;
 
 	m_rootLeaf = newLeaf();
+	m_rootLeaf->m_aabbMin = sceneAabbMin;
+	m_rootLeaf->m_aabbMax = sceneAabbMax;
 }
 
-void Octree::place(const Aabb& volume, OctreeHandle* handle)
+void Octree::place(const Aabb& volume, OctreePlaceable* placeable)
 {
 	ANKI_ASSERT(m_rootLeaf);
-	ANKI_ASSERT(handle);
+	ANKI_ASSERT(placeable);
+	ANKI_ASSERT(testCollisionShapes(
+					volume, Aabb(Vec4(Vec3(m_rootLeaf->m_aabbMin), 0.0f), Vec4(Vec3(m_rootLeaf->m_aabbMax), 0.0f)))
+				&& "volume is outside the scene");
 
-	// Remove the handle from the Octree...
-	// TODO
+	LockGuard<Mutex> lock(m_globalMtx);
+
+	// Remove the placeable from the Octree...
+	removeInternal(*placeable);
 
 	// .. and re-place it
-	placeRecursive(volume, handle, m_rootLeaf, m_sceneAabbMin, m_sceneAabbMax, 0);
+	placeRecursive(volume, placeable, m_rootLeaf, 0);
 }
 
-void Octree::placeRecursive(
-	const Aabb& volume, OctreeHandle* handle, Leaf* parent, const Vec3& aabbMin, const Vec3& aabbMax, U32 depth)
+void Octree::remove(OctreePlaceable& placeable)
 {
-	ANKI_ASSERT(handle);
+	LockGuard<Mutex> lock(m_globalMtx);
+	removeInternal(placeable);
+}
+
+void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf* parent, U32 depth)
+{
+	ANKI_ASSERT(placeable);
 	ANKI_ASSERT(parent);
-	ANKI_ASSERT(testCollisionShapes(volume, Aabb(Vec4(aabbMin, 0.0f), Vec4(aabbMax, 0.0f))) && "Should be inside");
+	ANKI_ASSERT(testCollisionShapes(volume, Aabb(Vec4(parent->m_aabbMin, 0.0f), Vec4(parent->m_aabbMax, 0.0f)))
+				&& "Should be inside");
 
 	if(depth == m_maxDepth)
 	{
-		// Need to stop and bin the handle to the leaf
+		// Need to stop and bin the placeable to the leaf
 
 		// Checks
-		for(const LeafNode& node : handle->m_leafs)
+		for(const LeafNode& node : placeable->m_leafs)
 		{
 			ANKI_ASSERT(node.m_leaf != parent && "Already binned. That's wrong");
 		}
 
-		// Connect handle and leaf
-		handle->m_leafs.pushBack(newLeafNode(parent));
-		parent->m_handles.pushBack(newHandleNode(handle));
+		for(const PlaceableNode& node : parent->m_placeables)
+		{
+			ANKI_ASSERT(node.m_placeable != placeable);
+		}
+
+		// Connect placeable and leaf
+		placeable->m_leafs.pushBack(newLeafNode(parent));
+		parent->m_placeables.pushBack(newPlaceableNode(placeable));
 
 		return;
 	}
 
 	const Vec4& vMin = volume.getMin();
 	const Vec4& vMax = volume.getMax();
-	const Vec3 center = (aabbMax + aabbMin) / 2.0f;
+	const Vec3 center = (parent->m_aabbMax + parent->m_aabbMin) / 2.0f;
 
 	LeafMask maskX;
 	if(vMin.x() > center.x())
@@ -125,14 +148,19 @@ void Octree::placeRecursive(
 			if(parent->m_leafs[i] == nullptr)
 			{
 				parent->m_leafs[i] = newLeaf();
+
+				// Compute AABB
+				Vec3 childAabbMin, childAabbMax;
+				computeChildAabb(crntBit,
+					parent->m_aabbMin,
+					parent->m_aabbMax,
+					center,
+					parent->m_leafs[i]->m_aabbMin,
+					parent->m_leafs[i]->m_aabbMax);
 			}
 
-			// Compute AABB
-			Vec3 childAabbMin, childAabbMax;
-			computeChildAabb(crntBit, aabbMin, aabbMax, center, childAabbMin, childAabbMax);
-
 			// Move deeper
-			placeRecursive(volume, handle, parent->m_leafs[i], childAabbMin, childAabbMax, depth + 1);
+			placeRecursive(volume, placeable, parent->m_leafs[i], depth + 1);
 		}
 	}
 }
@@ -187,6 +215,65 @@ void Octree::computeChildAabb(LeafMask child,
 		// Back
 		childAabbMin.z() = m.z();
 		childAabbMax.z() = c.z();
+	}
+}
+
+void Octree::removeInternal(OctreePlaceable& placeable)
+{
+	// TODO Maybe remove some leafs
+
+	while(!placeable.m_leafs.isEmpty())
+	{
+		// Pop a leaf node
+		LeafNode& leafNode = placeable.m_leafs.getFront();
+		placeable.m_leafs.popFront();
+
+		// Iterate the placeables of the leaf
+		Bool found = false;
+		for(PlaceableNode& placeableNode : leafNode.m_leaf->m_placeables)
+		{
+			if(placeableNode.m_placeable == &placeable)
+			{
+				found = true;
+				leafNode.m_leaf->m_placeables.erase(&placeableNode);
+				releasePlaceableNode(&placeableNode);
+				break;
+			}
+		}
+		ANKI_ASSERT(found);
+
+		// Delete the leaf node
+		releaseLeafNode(&leafNode);
+	}
+}
+
+void Octree::gatherVisibleRecursive(
+	const Frustum& frustum, U32 testId, Leaf* leaf, DynamicArrayAuto<OctreePlaceable*>& out)
+{
+	ANKI_ASSERT(leaf);
+
+	// Add the placeables that belong to that leaf
+	for(PlaceableNode& placeableNode : leaf->m_placeables)
+	{
+		if(!placeableNode.m_placeable->alreadyVisited(testId))
+		{
+			out.emplaceBack(placeableNode.m_placeable);
+		}
+	}
+
+	// Move to children leafs
+	Aabb aabb;
+	for(Leaf* child : leaf->m_leafs)
+	{
+		if(child)
+		{
+			aabb.setMin(Vec4(child->m_aabbMin, 0.0f));
+			aabb.setMax(Vec4(child->m_aabbMax, 0.0f));
+			if(testCollisionShapes(frustum, aabb))
+			{
+				gatherVisibleRecursive(frustum, testId, child, out);
+			}
+		}
 	}
 }
 

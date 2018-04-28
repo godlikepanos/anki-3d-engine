@@ -38,24 +38,24 @@ T* ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TInde
 		// Need to create a new chunk
 
 		// Create the chunk
-		Chunk* newChunk = alloc.template newInstance<Chunk>();
-		newChunk->m_unusedCount = OBJECTS_PER_CHUNK;
+		chunk = alloc.template newInstance<Chunk>();
+		chunk->m_unusedCount = OBJECTS_PER_CHUNK;
 
 		for(U i = 0; i < OBJECTS_PER_CHUNK; ++i)
 		{
-			newChunk->m_unusedStack[i] = OBJECTS_PER_CHUNK - (i + 1);
+			chunk->m_unusedStack[i] = OBJECTS_PER_CHUNK - (i + 1);
 		}
 
 		if(m_chunksTail)
 		{
 			ANKI_ASSERT(m_chunksHead);
-			newChunk->m_prev = m_chunksTail;
-			m_chunksTail->m_next = newChunk;
-			m_chunksTail = newChunk;
+			chunk->m_prev = m_chunksTail;
+			m_chunksTail->m_next = chunk;
+			m_chunksTail = chunk;
 		}
 		else
 		{
-			m_chunksTail = m_chunksHead = newChunk;
+			m_chunksTail = m_chunksHead = chunk;
 		}
 
 		// Allocate one object

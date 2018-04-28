@@ -28,7 +28,7 @@ class DecalComponent;
 
 /// The type of the scene's allocator
 template<typename T>
-using SceneAllocator = ChainAllocator<T>;
+using SceneAllocator = HeapAllocator<T>;
 
 /// The type of the scene's frame allocator
 template<typename T>

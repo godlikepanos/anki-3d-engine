@@ -9,6 +9,19 @@ namespace anki
 {
 
 template<typename T>
+DynamicArray<T>& DynamicArray<T>::operator=(DynamicArrayAuto<T>&& b)
+{
+	ANKI_ASSERT(m_data == nullptr && m_size == 0 && "Cannot move before destroying");
+	T* data;
+	PtrSize size, storageSize;
+	b.moveAndReset(data, size, storageSize);
+	m_data = data;
+	m_size = size;
+	m_capacity = storageSize;
+	return *this;
+}
+
+template<typename T>
 template<typename TAllocator>
 void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
 {

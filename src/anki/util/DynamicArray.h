@@ -11,6 +11,10 @@
 namespace anki
 {
 
+// Forward
+template<typename T>
+class DynamicArrayAuto;
+
 /// @addtogroup util_containers
 /// @{
 
@@ -63,6 +67,9 @@ public:
 		b.m_capacity = 0;
 		return *this;
 	}
+
+	/// Move DynamicArrayAuto to this.
+	DynamicArray& operator=(DynamicArrayAuto<T>&& b);
 
 	// Non-copyable
 	DynamicArray& operator=(const DynamicArray& b) = delete;

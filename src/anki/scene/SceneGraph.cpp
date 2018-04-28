@@ -83,7 +83,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_input = input;
 	m_scriptManager = scriptManager;
 
-	m_alloc = SceneAllocator<U8>(allocCb, allocCbData, 1024 * 10, 1.0, 0);
+	m_alloc = SceneAllocator<U8>(allocCb, allocCbData);
 	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
 
 	m_earlyZDist = config.getNumber("scene.earlyZDistance");
