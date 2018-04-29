@@ -13,6 +13,8 @@ namespace anki
 
 Octree::~Octree()
 {
+	cleanupInternal();
+	ANKI_ASSERT(m_rootLeaf == nullptr);
 }
 
 void Octree::init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDepth)
@@ -23,27 +25,30 @@ void Octree::init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDep
 	m_maxDepth = maxDepth;
 	m_sceneAabbMin = sceneAabbMin;
 	m_sceneAabbMax = sceneAabbMax;
-
-	m_rootLeaf = newLeaf();
-	m_rootLeaf->m_aabbMin = sceneAabbMin;
-	m_rootLeaf->m_aabbMax = sceneAabbMax;
 }
 
 void Octree::place(const Aabb& volume, OctreePlaceable* placeable)
 {
-	ANKI_ASSERT(m_rootLeaf);
 	ANKI_ASSERT(placeable);
-	ANKI_ASSERT(testCollisionShapes(
-					volume, Aabb(Vec4(Vec3(m_rootLeaf->m_aabbMin), 0.0f), Vec4(Vec3(m_rootLeaf->m_aabbMax), 0.0f)))
+	ANKI_ASSERT(testCollisionShapes(volume, Aabb(Vec4(Vec3(m_sceneAabbMin), 0.0f), Vec4(Vec3(m_sceneAabbMax), 0.0f)))
 				&& "volume is outside the scene");
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
-	// Remove the placeable from the Octree...
+	// Remove the placeable from the Octree
 	removeInternal(*placeable);
 
-	// .. and re-place it
+	// Create the root leaf
+	if(!m_rootLeaf)
+	{
+		m_rootLeaf = newLeaf();
+		m_rootLeaf->m_aabbMin = m_sceneAabbMin;
+		m_rootLeaf->m_aabbMax = m_sceneAabbMax;
+	}
+
+	// And re-place it
 	placeRecursive(volume, placeable, m_rootLeaf, 0);
+	++m_placeableCount;
 }
 
 void Octree::remove(OctreePlaceable& placeable)
@@ -145,22 +150,20 @@ void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf
 			// Inside the leaf, move deeper
 
 			// Create the leaf
-			if(parent->m_leafs[i] == nullptr)
+			if(parent->m_children[i] == nullptr)
 			{
-				parent->m_leafs[i] = newLeaf();
+				Leaf* child = newLeaf();
 
 				// Compute AABB
 				Vec3 childAabbMin, childAabbMax;
-				computeChildAabb(crntBit,
-					parent->m_aabbMin,
-					parent->m_aabbMax,
-					center,
-					parent->m_leafs[i]->m_aabbMin,
-					parent->m_leafs[i]->m_aabbMax);
+				computeChildAabb(
+					crntBit, parent->m_aabbMin, parent->m_aabbMax, center, child->m_aabbMin, child->m_aabbMax);
+
+				parent->m_children[i] = child;
 			}
 
 			// Move deeper
-			placeRecursive(volume, placeable, parent->m_leafs[i], depth + 1);
+			placeRecursive(volume, placeable, parent->m_children[i], depth + 1);
 		}
 	}
 }
@@ -220,8 +223,6 @@ void Octree::computeChildAabb(LeafMask child,
 
 void Octree::removeInternal(OctreePlaceable& placeable)
 {
-	// TODO Maybe remove some leafs
-
 	while(!placeable.m_leafs.isEmpty())
 	{
 		// Pop a leaf node
@@ -245,6 +246,15 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 		// Delete the leaf node
 		releaseLeafNode(&leafNode);
 	}
+
+	// Cleanup the tree if there are no placeables
+	ANKI_ASSERT(m_placeableCount > 0);
+	--m_placeableCount;
+	if(m_placeableCount)
+	{
+		cleanupInternal();
+		ANKI_ASSERT(m_rootLeaf == nullptr);
+	}
 }
 
 void Octree::gatherVisibleRecursive(
@@ -263,16 +273,58 @@ void Octree::gatherVisibleRecursive(
 
 	// Move to children leafs
 	Aabb aabb;
-	for(Leaf* child : leaf->m_leafs)
+	for(Leaf* child : leaf->m_children)
 	{
 		if(child)
 		{
 			aabb.setMin(Vec4(child->m_aabbMin, 0.0f));
 			aabb.setMax(Vec4(child->m_aabbMax, 0.0f));
-			if(testCollisionShapes(frustum, aabb))
+			if(frustum.insideFrustum(aabb))
 			{
 				gatherVisibleRecursive(frustum, testId, child, out);
 			}
+		}
+	}
+}
+
+void Octree::cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafUponReturn)
+{
+	ANKI_ASSERT(leaf);
+	canDeleteLeafUponReturn = leaf->m_placeables.getSize() == 0;
+
+	// Do the children
+	for(U i = 0; i < 8; ++i)
+	{
+		Leaf* const child = leaf->m_children[i];
+		if(child)
+		{
+			Bool canDeleteChild;
+			cleanupRecursive(child, canDeleteChild);
+
+			if(canDeleteChild)
+			{
+				releaseLeaf(child);
+				leaf->m_children[i] = nullptr;
+			}
+			else
+			{
+				canDeleteLeafUponReturn = false;
+			}
+		}
+	}
+}
+
+void Octree::cleanupInternal()
+{
+	if(m_rootLeaf)
+	{
+		Bool canDeleteLeaf;
+		cleanupRecursive(m_rootLeaf, canDeleteLeaf);
+
+		if(canDeleteLeaf)
+		{
+			releaseLeaf(m_rootLeaf);
+			m_rootLeaf = nullptr;
 		}
 	}
 }

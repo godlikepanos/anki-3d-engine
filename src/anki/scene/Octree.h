@@ -75,16 +75,23 @@ private:
 		IntrusiveList<PlaceableNode> m_placeables;
 		Vec3 m_aabbMin;
 		Vec3 m_aabbMax;
-		Array<Leaf*, 8> m_leafs = {};
+		Array<Leaf*, 8> m_children = {};
 
 #if ANKI_ASSERTS_ENABLED
 		~Leaf()
 		{
 			ANKI_ASSERT(m_placeables.isEmpty());
-			m_leafs = {};
+			m_children = {};
 			m_aabbMin = m_aabbMax = Vec3(0.0f);
 		}
 #endif
+
+		Bool hasChildren() const
+		{
+			return m_children[0] != nullptr || m_children[1] != nullptr || m_children[2] != nullptr
+				   || m_children[3] != nullptr || m_children[4] != nullptr || m_children[5] != nullptr
+				   || m_children[6] != nullptr || m_children[7] != nullptr;
+		}
 	};
 
 	/// Used so that OctreePlaceable knows which leafs it belongs to.
@@ -135,6 +142,7 @@ private:
 	ObjectAllocatorSameType<PlaceableNode, 256> m_placeableNodeAlloc;
 
 	Leaf* m_rootLeaf = nullptr;
+	U32 m_placeableCount = 0;
 
 	Leaf* newLeaf()
 	{
@@ -186,6 +194,12 @@ private:
 
 	static void gatherVisibleRecursive(
 		const Frustum& frustum, U32 testId, Leaf* leaf, DynamicArrayAuto<OctreePlaceable*>& out);
+
+	/// Remove a leaf.
+	void cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafAfterThat);
+
+	/// Cleanup the tree.
+	void cleanupInternal();
 };
 
 /// An entity that can be placed in octrees.

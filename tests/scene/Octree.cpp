@@ -47,6 +47,13 @@ ANKI_TEST(Scene, Octree)
 			else if(placed.size() > 0)
 			{
 				// Gather
+
+				// Reset the placed
+				for(U32 idx : placed)
+				{
+					placeables[idx].reset();
+				}
+
 				DynamicArrayAuto<OctreePlaceable*> arr(alloc);
 				octree.gatherVisible(frustum, 0, arr);
 
