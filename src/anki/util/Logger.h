@@ -15,7 +15,7 @@ namespace anki
 // Forward
 class File;
 
-/// @addtogroup util_private
+/// @addtogroup util_other
 /// @{
 
 /// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. It's

@@ -23,7 +23,7 @@ class OctreePlaceable;
 /// @{
 
 /// Octree for visibility tests.
-class Octree
+class Octree : public NonCopyable
 {
 	friend class OctreePlaceable;
 
@@ -196,14 +196,14 @@ private:
 		const Frustum& frustum, U32 testId, Leaf* leaf, DynamicArrayAuto<OctreePlaceable*>& out);
 
 	/// Remove a leaf.
-	void cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafAfterThat);
+	void cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafUponReturn);
 
 	/// Cleanup the tree.
 	void cleanupInternal();
 };
 
 /// An entity that can be placed in octrees.
-class OctreePlaceable
+class OctreePlaceable : public NonCopyable
 {
 	friend class Octree;
 

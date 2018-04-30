@@ -210,7 +210,7 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 
 void OrthographicFrustum::recalculate()
 {
-	ANKI_ASSERT(m_left < m_right && m_far < m_near && m_bottom < m_top);
+	ANKI_ASSERT(m_left < m_right && m_far > m_near && m_bottom < m_top);
 
 	// Planes
 	m_planesL[FrustumPlaneType::LEFT] = Plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), m_left);

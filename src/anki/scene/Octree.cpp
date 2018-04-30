@@ -13,6 +13,7 @@ namespace anki
 
 Octree::~Octree()
 {
+	ANKI_ASSERT(m_placeableCount == 0);
 	cleanupInternal();
 	ANKI_ASSERT(m_rootLeaf == nullptr);
 }
@@ -223,37 +224,41 @@ void Octree::computeChildAabb(LeafMask child,
 
 void Octree::removeInternal(OctreePlaceable& placeable)
 {
-	while(!placeable.m_leafs.isEmpty())
+	const Bool isPlaced = !placeable.m_leafs.isEmpty();
+	if(isPlaced)
 	{
-		// Pop a leaf node
-		LeafNode& leafNode = placeable.m_leafs.getFront();
-		placeable.m_leafs.popFront();
-
-		// Iterate the placeables of the leaf
-		Bool found = false;
-		for(PlaceableNode& placeableNode : leafNode.m_leaf->m_placeables)
+		while(!placeable.m_leafs.isEmpty())
 		{
-			if(placeableNode.m_placeable == &placeable)
+			// Pop a leaf node
+			LeafNode& leafNode = placeable.m_leafs.getFront();
+			placeable.m_leafs.popFront();
+
+			// Iterate the placeables of the leaf
+			Bool found = false;
+			for(PlaceableNode& placeableNode : leafNode.m_leaf->m_placeables)
 			{
-				found = true;
-				leafNode.m_leaf->m_placeables.erase(&placeableNode);
-				releasePlaceableNode(&placeableNode);
-				break;
+				if(placeableNode.m_placeable == &placeable)
+				{
+					found = true;
+					leafNode.m_leaf->m_placeables.erase(&placeableNode);
+					releasePlaceableNode(&placeableNode);
+					break;
+				}
 			}
+			ANKI_ASSERT(found);
+
+			// Delete the leaf node
+			releaseLeafNode(&leafNode);
 		}
-		ANKI_ASSERT(found);
 
-		// Delete the leaf node
-		releaseLeafNode(&leafNode);
-	}
-
-	// Cleanup the tree if there are no placeables
-	ANKI_ASSERT(m_placeableCount > 0);
-	--m_placeableCount;
-	if(m_placeableCount)
-	{
-		cleanupInternal();
-		ANKI_ASSERT(m_rootLeaf == nullptr);
+		// Cleanup the tree if there are no placeables
+		ANKI_ASSERT(m_placeableCount > 0);
+		--m_placeableCount;
+		if(m_placeableCount == 0)
+		{
+			cleanupInternal();
+			ANKI_ASSERT(m_rootLeaf == nullptr);
+		}
 	}
 }
 

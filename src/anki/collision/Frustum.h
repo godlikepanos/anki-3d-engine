@@ -308,7 +308,7 @@ public:
 	/// Set all
 	void setAll(F32 left, F32 right, F32 near, F32 far, F32 top, F32 bottom)
 	{
-		ANKI_ASSERT(left < right && far < near && bottom < top);
+		ANKI_ASSERT(left < right && far > near && bottom < top);
 		m_left = left;
 		m_right = right;
 		m_near = near;

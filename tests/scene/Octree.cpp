@@ -19,7 +19,7 @@ ANKI_TEST(Scene, Octree)
 		Octree octree(alloc);
 		octree.init(Vec3(-100.0f), Vec3(100.0f), 4);
 
-		OrthographicFrustum frustum(-200.0f, 200.0f, 200.0f, -200.0f, 200.0f, -200.0f);
+		OrthographicFrustum frustum(-200.0f, 200.0f, -200.0f, 200.0f, 200.0f, -200.0f);
 		frustum.resetTransform(Transform::getIdentity());
 
 		const U ITERATION_COUNT = 1000;
@@ -76,7 +76,7 @@ ANKI_TEST(Scene, Octree)
 		}
 
 		// Remove all
-		while(placed.empty())
+		while(!placed.empty())
 		{
 			octree.remove(placeables[placed.back()]);
 			placed.pop_back();
