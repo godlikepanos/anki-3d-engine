@@ -6,6 +6,8 @@
 #pragma once
 
 #include <anki/util/File.h>
+#include <anki/util/List.h>
+#include <anki/util/ObjectAllocator.h>
 
 namespace anki
 {
@@ -21,23 +23,25 @@ public:
 
 	~Tracer();
 
-	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, const CString& cacheDir);
+	void init(GenericMemoryPoolAllocator<U8> alloc)
+	{
+		m_alloc = alloc;
+	}
 
-	void registerEvent(const char* name);
+	/// Begin a new event.
+	void beginEvent();
 
-	void registerCounter(const char* name);
+	/// End the event that got started with beginEvent().
+	void endEvent(const char* eventName);
 
-	void startEvent();
-
-	void stopEvent(U64 hash);
-
-	void increaseCounter(const char* eventName, U64 hash, U64 value);
-
-	/// Call it to begin the frame.
-	void beginFrame();
+	/// Increase a counter.
+	void increaseCounter(const char* counterName, U64 value);
 
 	/// Call it to end the frame.
-	void endFrame();
+	void endFrame()
+	{
+		m_frame.fetchAdd(1);
+	}
 
 	Bool getEnabled() const
 	{
@@ -49,6 +53,9 @@ public:
 		m_enabled = enable;
 	}
 
+	/// Flush all results to a file. Don't call that more than once.
+	ANKI_USE_RESULT Error flush(CString filename);
+
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
@@ -57,33 +64,43 @@ private:
 	File m_traceFile;
 	File m_counterFile;
 
-	struct Event
+	/// Event.
+	class Event : public IntrusiveListEnabled<Event>
 	{
+	public:
 		const char* m_name;
 		Second m_timestamp;
 		Second m_duration;
-		ThreadId m_tid;
 	};
 
-	struct Counter
+	/// Counter.
+	class Counter : public IntrusiveListEnabled<Counter>
 	{
+	public:
 		const char* m_name;
-		U64 m_hash;
 		U64 m_value;
+		U64 m_frame;
 	};
 
-	class PerThread
+	class ThreadLocal
 	{
 	public:
 		ThreadId m_tid;
-		DynamicArray<Event> m_events;
-		DynamicArray<Counter> m_counters;
+		ObjectAllocatorSameType<Event> m_eventAlloc;
+		ObjectAllocatorSameType<Counter> m_counterAlloc;
+		IntrusiveList<Event> m_events;
+		IntrusiveList<Counter> m_counters;
+		Bool m_tracerKnowsAboutThis = false;
 	};
 
-	static thread_local PerThread* m_perThread;
+	static thread_local ThreadLocal m_threadLocal;
+	DynamicArray<ThreadLocal*> m_allThreadLocal; ///< The Tracer should know about all the ThreadLocal.
+	Mutex m_threadLocalMtx;
 
-	DynamicArray<PerThread> m_perThread;
-	Mutex m_perThreadMtx;
+	Atomic<U64> m_frame = {0};
+
+	/// Get the thread local ThreadLocal structure.
+	ThreadLocal& getThreadLocal();
 };
 /// @}
 
