@@ -37,10 +37,13 @@ public:
 	/// Increase a counter.
 	void increaseCounter(const char* counterName, U64 value);
 
+	/// TODO
+	void beginFrame();
+
 	/// Call it to end the frame.
 	void endFrame()
 	{
-		m_frame.fetchAdd(1);
+		m_frame += 0;
 	}
 
 	Bool getEnabled() const
@@ -68,24 +71,25 @@ private:
 	class Event : public IntrusiveListEnabled<Event>
 	{
 	public:
-		const char* m_name;
-		Second m_timestamp;
-		Second m_duration;
+		const char* m_name ANKI_DBG_NULLIFY;
+		Second m_timestamp ANKI_DBG_NULLIFY;
+		Second m_duration ANKI_DBG_NULLIFY;
 	};
 
 	/// Counter.
 	class Counter : public IntrusiveListEnabled<Counter>
 	{
 	public:
-		const char* m_name;
-		U64 m_value;
-		U64 m_frame;
+		const char* m_name ANKI_DBG_NULLIFY;
+		U64 m_value ANKI_DBG_NULLIFY;
+		U64 m_frame ANKI_DBG_NULLIFY;
+		Second m_startFrameTime;
 	};
 
 	class ThreadLocal
 	{
 	public:
-		ThreadId m_tid;
+		ThreadId m_tid ANKI_DBG_NULLIFY;
 		ObjectAllocatorSameType<Event> m_eventAlloc;
 		ObjectAllocatorSameType<Counter> m_counterAlloc;
 		IntrusiveList<Event> m_events;
@@ -97,10 +101,20 @@ private:
 	DynamicArray<ThreadLocal*> m_allThreadLocal; ///< The Tracer should know about all the ThreadLocal.
 	Mutex m_threadLocalMtx;
 
-	Atomic<U64> m_frame = {0};
+	U64 m_frame = 0;
+	Second m_startFrameTime = 0.0;
 
 	/// Get the thread local ThreadLocal structure.
 	ThreadLocal& getThreadLocal();
+
+	/// TODO
+	void compactCounters(DynamicArrayAuto<Counter>& allCounters);
+
+	/// TODO
+	Error writeCounterCsv(CString filename, const DynamicArrayAuto<Counter>& counters);
+
+	/// TODO
+	Error writeTraceJson(CString filename, const DynamicArrayAuto<Counter>& counters);
 };
 /// @}
 
