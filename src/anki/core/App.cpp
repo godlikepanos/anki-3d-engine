@@ -336,12 +336,22 @@ void App::cleanup()
 		m_window = nullptr;
 	}
 
+#if ANKI_ENABLE_TRACE
+	if(TracerSingleton::get().isInitialized())
+	{
+		StringAuto fname(m_heapAlloc);
+		fname.sprintf("%s/trace", m_settingsDir.cstr());
+		ANKI_CORE_LOGI("Will dump trace files: %s", fname.cstr());
+		if(TracerSingleton::get().flush(fname.toCString()))
+		{
+			ANKI_CORE_LOGE("Ignoring error from the tracer");
+		}
+		TracerSingleton::destroy();
+	}
+#endif
+
 	m_settingsDir.destroy(m_heapAlloc);
 	m_cacheDir.destroy(m_heapAlloc);
-
-#if ANKI_ENABLE_TRACE
-	TraceManagerSingleton::destroy();
-#endif
 }
 
 Error App::init(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData)
@@ -363,6 +373,11 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 	initMemoryCallbacks(allocCb, allocCbUserData);
 	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData);
+
+#if ANKI_ENABLE_TRACE
+	TracerSingleton::get().init(m_heapAlloc);
+	TracerSingleton::get().newFrame(0);
+#endif
 
 	ANKI_CHECK(initDirs(config));
 
@@ -406,10 +421,6 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 		ANKI_CORE_LOGF(
 			"AnKi is built with sse4.2 support but your CPU doesn't support it. Try bulding without SSE support");
 	}
-#endif
-
-#if ANKI_ENABLE_TRACE
-	ANKI_CHECK(TraceManagerSingleton::get().create(m_heapAlloc, m_settingsDir.toCString()));
 #endif
 
 	ANKI_CORE_LOGI("Number of main threads: %u", U(config.getNumber("core.mainThreadCount")));
@@ -533,6 +544,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_script->setSceneGraph(m_scene);
 
 	ANKI_CORE_LOGI("Application initialized");
+
 	return Error::NONE;
 }
 
@@ -606,7 +618,10 @@ Error App::mainLoop()
 
 	while(!quit)
 	{
-		ANKI_TRACE_START_FRAME();
+#if ANKI_ENABLE_TRACE
+		static U64 frame = 1;
+		TracerSingleton::get().newFrame(frame++);
+#endif
 		const Second startTime = HighRezTimer::getCurrentTime();
 
 		prevUpdateTime = crntTime;
@@ -675,8 +690,6 @@ Error App::mainLoop()
 		}
 
 		++m_globalTimestamp;
-
-		ANKI_TRACE_STOP_FRAME();
 	}
 
 	return Error::NONE;

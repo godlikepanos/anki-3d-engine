@@ -14,13 +14,12 @@ ANKI_TEST(Util, Tracer)
 	tracer.init(alloc);
 
 	// 1st frame
-	tracer.beginFrame(0);
-	tracer.endFrame();
+	tracer.newFrame(0);
 	ANKI_TEST_EXPECT_NO_ERR(tracer.flush("./0"));
 
 	// 2nd frame
 	// 2 same events
-	tracer.beginFrame(1);
+	tracer.newFrame(1);
 
 	tracer.beginEvent();
 	HighRezTimer::sleep(0.5);
@@ -29,12 +28,10 @@ ANKI_TEST(Util, Tracer)
 	tracer.beginEvent();
 	HighRezTimer::sleep(0.5);
 	tracer.endEvent("event");
-
-	tracer.endFrame();
 
 	// 4rd frame
 	// 2 different events & non zero counter
-	tracer.beginFrame(3);
+	tracer.newFrame(3);
 
 	tracer.beginEvent();
 	HighRezTimer::sleep(0.5);
@@ -46,13 +43,10 @@ ANKI_TEST(Util, Tracer)
 
 	tracer.increaseCounter("counter", 100);
 
-	tracer.endFrame();
-
 	// 5th frame
-	tracer.beginFrame(4);
+	tracer.newFrame(4);
 	tracer.increaseCounter("counter", 150);
 	HighRezTimer::sleep(0.1);
-	tracer.endFrame();
 
 	ANKI_TEST_EXPECT_NO_ERR(tracer.flush("./1"));
 }

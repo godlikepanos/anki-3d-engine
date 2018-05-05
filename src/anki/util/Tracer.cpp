@@ -66,7 +66,7 @@ Tracer::~Tracer()
 	m_frames.destroy(m_alloc);
 }
 
-void Tracer::beginFrame(U64 frame)
+void Tracer::newFrame(U64 frame)
 {
 #if ANKI_ASSERTS_ENABLED
 	if(m_frames.getSize() > 0)
@@ -75,23 +75,10 @@ void Tracer::beginFrame(U64 frame)
 	}
 #endif
 
-	ANKI_ASSERT(!isInsideBeginEndFrame());
-
 	Frame f;
 	f.m_startFrameTime = HighRezTimer::getCurrentTime();
-	f.m_endFrameTime = 0.0;
 	f.m_frame = frame;
-#if ANKI_ASSERTS_ENABLED
-	f.m_canRecord = true;
-#endif
 	m_frames.emplaceBack(m_alloc, f);
-}
-
-void Tracer::endFrame()
-{
-	ANKI_ASSERT(isInsideBeginEndFrame());
-	m_frames.getBack().m_canRecord = false;
-	m_frames.getBack().m_endFrameTime = HighRezTimer::getCurrentTime();
 }
 
 Tracer::ThreadLocal& Tracer::getThreadLocal()
@@ -110,8 +97,6 @@ Tracer::ThreadLocal& Tracer::getThreadLocal()
 
 void Tracer::beginEvent()
 {
-	ANKI_ASSERT(isInsideBeginEndFrame());
-
 	ThreadLocal& threadLocal = getThreadLocal();
 	Event* event = threadLocal.m_eventAlloc.newInstance(m_alloc);
 	event->m_timestamp = HighRezTimer::getCurrentTime();
@@ -121,7 +106,6 @@ void Tracer::beginEvent()
 void Tracer::endEvent(const char* eventName)
 {
 	ANKI_ASSERT(eventName);
-	ANKI_ASSERT(isInsideBeginEndFrame());
 
 	// Set the time in the event
 	ThreadLocal& threadLocal = getThreadLocal();
@@ -137,7 +121,6 @@ void Tracer::endEvent(const char* eventName)
 void Tracer::increaseCounter(const char* counterName, U64 value)
 {
 	ANKI_ASSERT(counterName);
-	ANKI_ASSERT(isInsideBeginEndFrame());
 
 	ThreadLocal& threadLocal = getThreadLocal();
 	Counter* counter = threadLocal.m_counterAlloc.newInstance(m_alloc);
@@ -342,9 +325,9 @@ Error Tracer::writeTraceJson(const FlushCtx& ctx)
 	{
 		const PerFrameCounters& frame = ctx.m_counters[i];
 		const Second startFrameTime = m_frames[frame.m_frameIdx].m_startFrameTime;
-		const Second endFrameTime = m_frames[frame.m_frameIdx].m_endFrameTime;
 
-		const Array<Second, 2> timestamps = {{startFrameTime, endFrameTime}};
+		// TODO
+		const Array<Second, 2> timestamps = {{startFrameTime, startFrameTime + 1.0}};
 		const U timestampCount = (i < ctx.m_counters.getSize() - 1) ? 1 : 2;
 
 		for(const Counter& counter : frame.m_counters)
@@ -405,7 +388,6 @@ Error Tracer::writeCounterCsv(const FlushCtx& ctx)
 
 Error Tracer::flush(CString filename)
 {
-	ANKI_ASSERT(!isInsideBeginEndFrame());
 	FlushCtx ctx(m_alloc, filename);
 
 	gatherCounters(ctx);

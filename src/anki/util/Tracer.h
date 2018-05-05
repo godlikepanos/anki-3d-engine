@@ -31,6 +31,11 @@ public:
 		m_alloc = alloc;
 	}
 
+	Bool isInitialized() const
+	{
+		return !!m_alloc;
+	}
+
 	/// Begin a new event.
 	void beginEvent();
 
@@ -41,10 +46,7 @@ public:
 	void increaseCounter(const char* counterName, U64 value);
 
 	/// Begin a new frame.
-	void beginFrame(U64 frame);
-
-	/// Call it to end the frame.
-	void endFrame();
+	void newFrame(U64 frame);
 
 	/// Flush all results to a file. Don't call that more than once.
 	ANKI_USE_RESULT Error flush(CString filename);
@@ -57,10 +59,6 @@ private:
 	public:
 		U64 m_frame;
 		Second m_startFrameTime; ///< When the frame started
-		Second m_endFrameTime; ///< When it ended
-#if ANKI_ASSERTS_ENABLED
-		Bool8 m_canRecord;
-#endif
 	};
 
 	DynamicArray<Frame> m_frames;
@@ -102,11 +100,6 @@ private:
 	class FlushCtx;
 	class PerFrameCounters;
 
-	Bool isInsideBeginEndFrame() const
-	{
-		return m_frames.getSize() > 0 && m_frames.getBack().m_canRecord;
-	}
-
 	/// Get the thread local ThreadLocal structure.
 	ThreadLocal& getThreadLocal();
 
@@ -145,16 +138,6 @@ public:
 private:
 	const char* m_name;
 	Tracer* m_tracer;
-};
-
-/// Convenience class to increase a trace counter.
-class TraceIncreaseCounter
-{
-public:
-	TraceIncreaseCounter(const char* name, U64 value)
-	{
-		TracerSingleton::get().increaseCounter(name, value);
-	}
 };
 /// @}
 
