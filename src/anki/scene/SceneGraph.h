@@ -245,7 +245,7 @@ private:
 
 	IntrusiveList<SceneNode> m_nodes;
 	U32 m_nodesCount = 0;
-	HashMap<CString, SceneNode*, CStringHasher> m_nodesDict;
+	HashMap<CString, SceneNode*> m_nodesDict;
 
 	SceneNode* m_mainCam = nullptr;
 	Timestamp m_activeCameraChangeTimestamp = 0;

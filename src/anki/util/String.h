@@ -234,23 +234,19 @@ public:
 	/// Convert to U32.
 	ANKI_USE_RESULT Error toNumber(U32& out) const;
 
+	/// Compute the hash.
+	U32 computeHash() const
+	{
+		checkInit();
+		return anki::computeHash(m_ptr, getLength());
+	}
+
 private:
 	const Char* m_ptr = nullptr;
 
 	void checkInit() const
 	{
 		ANKI_ASSERT(m_ptr != nullptr);
-	}
-};
-
-/// Hasher function for CStrings. Can be used in HashMap.
-class CStringHasher
-{
-public:
-	U64 operator()(CString str)
-	{
-		ANKI_ASSERT(!str.isEmpty());
-		return computeHash(&str[0], str.getLength());
 	}
 };
 
