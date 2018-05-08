@@ -10,7 +10,7 @@
 namespace anki
 {
 
-/// @addtogroup util
+/// @addtogroup util_containers
 /// @{
 
 /// A simple allocator for objects of similar types.

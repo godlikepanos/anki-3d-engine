@@ -118,7 +118,7 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocat
 
 Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& handle)
 {
-	ANKI_TRACE_SCOPED_EVENT(RESOURCE_ALLOCATE_TRANSFER);
+	ANKI_TRACE_SCOPED_EVENT(RSRC_ALLOCATE_TRANSFER);
 
 	const PtrSize frameSize = m_maxAllocSize / FRAME_COUNT;
 

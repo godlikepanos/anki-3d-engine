@@ -125,7 +125,7 @@ Error AsyncLoader::threadWorker()
 			AsyncLoaderTaskContext ctx;
 
 			{
-				ANKI_TRACE_SCOPED_EVENT(RESOURCE_ASYNC_TASK);
+				ANKI_TRACE_SCOPED_EVENT(RSRC_ASYNC_TASK);
 				err = (*task)(ctx);
 			}
 

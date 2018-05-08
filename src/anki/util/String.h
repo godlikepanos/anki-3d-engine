@@ -118,12 +118,12 @@ public:
 	}
 
 	/// Return true if the string is not initialized.
-	Bool isEmpty() const
+	bool isEmpty() const
 	{
 		return m_ptr == nullptr || getLength() == 0;
 	}
 
-	Bool operator==(const CString& b) const
+	bool operator==(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -135,12 +135,12 @@ public:
 		}
 	}
 
-	Bool operator!=(const CString& b) const
+	bool operator!=(const CString& b) const
 	{
 		return !((*this) == b);
 	}
 
-	Bool operator<(const CString& b) const
+	bool operator<(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -152,7 +152,7 @@ public:
 		}
 	}
 
-	Bool operator<=(const CString& b) const
+	bool operator<=(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -164,7 +164,7 @@ public:
 		}
 	}
 
-	Bool operator>(const CString& b) const
+	bool operator>(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -176,7 +176,7 @@ public:
 		}
 	}
 
-	Bool operator>=(const CString& b) const
+	bool operator>=(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -234,23 +234,19 @@ public:
 	/// Convert to U32.
 	ANKI_USE_RESULT Error toNumber(U32& out) const;
 
+	/// Compute the hash.
+	U32 computeHash() const
+	{
+		checkInit();
+		return anki::computeHash(m_ptr, getLength());
+	}
+
 private:
 	const Char* m_ptr = nullptr;
 
 	void checkInit() const
 	{
 		ANKI_ASSERT(m_ptr != nullptr);
-	}
-};
-
-/// Hasher function for CStrings. Can be used in HashMap.
-class CStringHasher
-{
-public:
-	U64 operator()(CString str)
-	{
-		ANKI_ASSERT(!str.isEmpty());
-		return computeHash(&str[0], str.getLength());
 	}
 };
 
@@ -379,7 +375,7 @@ public:
 	}
 
 	/// Return true if strings are equal
-	Bool operator==(const String& b) const
+	bool operator==(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -387,13 +383,13 @@ public:
 	}
 
 	/// Return true if strings are not equal
-	Bool operator!=(const String& b) const
+	bool operator!=(const String& b) const
 	{
 		return !(*this == b);
 	}
 
 	/// Return true if this is less than b
-	Bool operator<(const String& b) const
+	bool operator<(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -401,7 +397,7 @@ public:
 	}
 
 	/// Return true if this is less or equal to b
-	Bool operator<=(const String& b) const
+	bool operator<=(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -409,7 +405,7 @@ public:
 	}
 
 	/// Return true if this is greater than b
-	Bool operator>(const String& b) const
+	bool operator>(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -417,7 +413,7 @@ public:
 	}
 
 	/// Return true if this is greater or equal to b
-	Bool operator>=(const String& b) const
+	bool operator>=(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -425,41 +421,41 @@ public:
 	}
 
 	/// Return true if strings are equal
-	Bool operator==(const CStringType& cstr) const
+	bool operator==(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) == 0;
 	}
 
 	/// Return true if strings are not equal
-	Bool operator!=(const CStringType& cstr) const
+	bool operator!=(const CStringType& cstr) const
 	{
 		return !(*this == cstr);
 	}
 
 	/// Return true if this is less than cstr.
-	Bool operator<(const CStringType& cstr) const
+	bool operator<(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) < 0;
 	}
 
 	/// Return true if this is less or equal to cstr.
-	Bool operator<=(const CStringType& cstr) const
+	bool operator<=(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) <= 0;
 	}
 
 	/// Return true if this is greater than cstr.
-	Bool operator>(const CStringType& cstr) const
+	bool operator>(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) > 0;
 	}
 
 	/// Return true if this is greater or equal to cstr.
-	Bool operator>=(const CStringType& cstr) const
+	bool operator>=(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) >= 0;

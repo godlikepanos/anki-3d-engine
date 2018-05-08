@@ -10,9 +10,6 @@
 namespace anki
 {
 
-// Forward
-class LightBinContext;
-
 /// @addtogroup renderer
 /// @{
 
@@ -62,6 +59,17 @@ public:
 	}
 
 private:
+	class BinContext;
+	class ShaderCluster;
+	class ShaderPointLight;
+	class ShaderSpotLight;
+	class ShaderProbe;
+	class ShaderDecal;
+	class ClusterLightIndex;
+	class ClusterProbeIndex;
+	class ClusterData;
+	class WriteLightsTask;
+
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	Clusterer m_clusterer;
 	U32 m_clusterCount = 0;
@@ -69,18 +77,15 @@ private:
 	StagingGpuMemoryManager* m_stagingMem = nullptr;
 	Barrier m_barrier;
 
-	void binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx);
+	void binLights(U32 threadId, PtrSize threadsCount, BinContext& ctx);
 
-	void writeAndBinPointLight(
-		const PointLightQueueElement& lightEl, LightBinContext& ctx, ClustererTestResult& testResult);
+	void writeAndBinPointLight(const PointLightQueueElement& lightEl, BinContext& ctx, ClustererTestResult& testResult);
 
-	void writeAndBinSpotLight(
-		const SpotLightQueueElement& lightEl, LightBinContext& ctx, ClustererTestResult& testResult);
+	void writeAndBinSpotLight(const SpotLightQueueElement& lightEl, BinContext& ctx, ClustererTestResult& testResult);
 
-	void writeAndBinProbe(
-		const ReflectionProbeQueueElement& probe, LightBinContext& ctx, ClustererTestResult& testResult);
+	void writeAndBinProbe(const ReflectionProbeQueueElement& probe, BinContext& ctx, ClustererTestResult& testResult);
 
-	void writeAndBinDecal(const DecalQueueElement& decal, LightBinContext& ctx, ClustererTestResult& testResult);
+	void writeAndBinDecal(const DecalQueueElement& decal, BinContext& ctx, ClustererTestResult& testResult);
 };
 /// @}
 

@@ -70,7 +70,7 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 
 void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx) const
 {
-	ANKI_TRACE_SCOPED_EVENT(RENDER_MS);
+	ANKI_TRACE_SCOPED_EVENT(R_MS);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const U threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
@@ -136,7 +136,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 
 void GBuffer::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RENDER_MS);
+	ANKI_TRACE_SCOPED_EVENT(R_MS);
 
 	m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;

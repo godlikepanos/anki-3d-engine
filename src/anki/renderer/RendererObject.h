@@ -56,6 +56,15 @@ protected:
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
 	}
 
+	/// Dispatch a compute job equivelent to drawQuad
+	static void dispatchPPCompute(
+		CommandBufferPtr& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 outImageWidth, U32 outImageHeight)
+	{
+		const U sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
+		const U sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;
+		cmdb->dispatchCompute(sizeX, sizeY, 1);
+	}
+
 	template<typename TPtr>
 	TPtr allocateUniforms(PtrSize size, StagingGpuMemoryToken& token)
 	{

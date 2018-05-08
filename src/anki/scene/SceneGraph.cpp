@@ -200,40 +200,43 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	m_frameAlloc.getMemoryPool().reset();
 
 	// Delete stuff
-	ANKI_TRACE_START_EVENT(SCENE_DELETE_STUFF);
-	m_events.deleteEventsMarkedForDeletion();
-	deleteNodesMarkedForDeletion();
-	ANKI_TRACE_STOP_EVENT(SCENE_DELETE_STUFF);
+	{
+		ANKI_TRACE_SCOPED_EVENT(SCENE_MARKED_FOR_DELETION);
+		m_events.deleteEventsMarkedForDeletion();
+		deleteNodesMarkedForDeletion();
+	}
 
 	ThreadPool& threadPool = *m_threadpool;
 	(void)threadPool;
 
 	// Update
-	ANKI_TRACE_START_EVENT(SCENE_PHYSICS_UPDATE);
-	m_physics->updateAsync(crntTime - prevUpdateTime);
-	m_physics->waitUpdate();
-	ANKI_TRACE_STOP_EVENT(SCENE_PHYSICS_UPDATE);
-
-	ANKI_TRACE_START_EVENT(SCENE_NODES_UPDATE);
-	ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
-
-	// Then the rest
-	Array<UpdateSceneNodesTask, ThreadPool::MAX_THREADS> jobs2;
-	UpdateSceneNodesCtx updateCtx;
-	updateCtx.m_scene = this;
-	updateCtx.m_crntNode = m_nodes.getBegin();
-	updateCtx.m_prevUpdateTime = prevUpdateTime;
-	updateCtx.m_crntTime = crntTime;
-
-	for(U i = 0; i < threadPool.getThreadCount(); i++)
 	{
-		UpdateSceneNodesTask& job = jobs2[i];
-		job.m_ctx = &updateCtx;
-		threadPool.assignNewTask(i, &job);
+		ANKI_TRACE_SCOPED_EVENT(SCENE_PHYSICS_UPDATE);
+		m_physics->updateAsync(crntTime - prevUpdateTime);
+		m_physics->waitUpdate();
 	}
 
-	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
-	ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
+	{
+		ANKI_TRACE_SCOPED_EVENT(SCENE_NODES_UPDATE);
+		ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
+
+		// Then the rest
+		Array<UpdateSceneNodesTask, ThreadPool::MAX_THREADS> jobs2;
+		UpdateSceneNodesCtx updateCtx;
+		updateCtx.m_scene = this;
+		updateCtx.m_crntNode = m_nodes.getBegin();
+		updateCtx.m_prevUpdateTime = prevUpdateTime;
+		updateCtx.m_crntTime = crntTime;
+
+		for(U i = 0; i < threadPool.getThreadCount(); i++)
+		{
+			UpdateSceneNodesTask& job = jobs2[i];
+			job.m_ctx = &updateCtx;
+			threadPool.assignNewTask(i, &job);
+		}
+
+		ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
+	}
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime() - m_stats.m_updateTime;
 	return Error::NONE;
@@ -279,7 +282,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
 {
-	ANKI_TRACE_START_EVENT(SCENE_NODES_UPDATE);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_NODES_UPDATE);
 
 	IntrusiveList<SceneNode>::Iterator& it = ctx.m_crntNode;
 	IntrusiveList<SceneNode>::ConstIterator end = m_nodes.getEnd();
@@ -324,7 +327,6 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
 		}
 	}
 
-	ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
 	return err;
 }
 

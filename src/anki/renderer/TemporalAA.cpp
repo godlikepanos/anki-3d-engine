@@ -56,7 +56,8 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 		m_rtTextures[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 			m_r->getHeight(),
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
+				| TextureUsageBit::SAMPLED_COMPUTE,
 			"TemporalAA"));
 	}
 

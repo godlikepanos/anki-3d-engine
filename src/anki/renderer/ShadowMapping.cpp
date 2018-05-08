@@ -143,7 +143,7 @@ Error ShadowMapping::initInternal(const ConfigSet& cfg)
 void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_esmResolveWorkItems.getSize());
-	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
+	ANKI_TRACE_SCOPED_EVENT(R_SM);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -153,7 +153,7 @@ void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 
 	for(const EsmResolveWorkItem& workItem : m_esmResolveWorkItems)
 	{
-		ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 1);
+		ANKI_TRACE_INC_COUNTER(R_SHADOW_PASSES, 1);
 
 		cmdb->setViewport(
 			workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
@@ -174,7 +174,7 @@ void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_scratchWorkItems.getSize());
-	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
+	ANKI_TRACE_SCOPED_EVENT(R_SM);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const U threadIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
@@ -202,7 +202,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 
 void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
+	ANKI_TRACE_SCOPED_EVENT(R_SM);
 
 	// First process the lights
 	U32 threadCountForScratchPass = 0;

@@ -195,11 +195,10 @@ public:
 private:
 	void gather()
 	{
-		ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_ITERATE_SECTORS);
+		ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_ITERATE_SECTORS);
 		U testIdx = m_visCtx->m_testsCount.fetchAdd(1);
 
 		m_visCtx->m_scene->getSectorGroup().findVisibleNodes(*m_frc, testIdx, m_r, m_sectorsCtx);
-		ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_ITERATE_SECTORS);
 	}
 };
 
