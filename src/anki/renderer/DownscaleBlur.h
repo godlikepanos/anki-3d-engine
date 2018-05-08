@@ -53,7 +53,7 @@ anki_internal:
 	}
 
 private:
-	static const Bool m_useCompute = false;
+	static const Bool m_useCompute = true;
 	Array<U32, 2> m_workgroupSize = {{8, 8}};
 
 	U8 m_passCount = 0; ///< It's also the mip count of the m_rtTex.

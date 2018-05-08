@@ -194,7 +194,7 @@ void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
 		sampleSubresource.m_firstMipmap = passIdx;
 		rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, sampleSubresource);
 
-		Vec4 fbSize(vpWidth, vpHeight, 0.0f, 0.0f);
+		UVec4 fbSize(vpWidth, vpHeight, 0, 0);
 		cmdb->setPushConstants(&fbSize, sizeof(fbSize));
 	}
 
