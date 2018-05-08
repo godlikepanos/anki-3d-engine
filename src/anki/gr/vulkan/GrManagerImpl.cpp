@@ -684,14 +684,15 @@ void GrManagerImpl::beginFrame()
 
 	// Get new image
 	uint32_t imageIdx;
-	ANKI_TRACE_START_EVENT(VK_ACQUIRE_IMAGE);
-	ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device,
-		m_crntSwapchain->m_swapchain,
-		UINT64_MAX,
-		frame.m_acquireSemaphore->getHandle(),
-		fence->getHandle(),
-		&imageIdx));
-	ANKI_TRACE_STOP_EVENT(VK_ACQUIRE_IMAGE);
+	{
+		ANKI_TRACE_SCOPED_EVENT(VK_ACQUIRE_IMAGE);
+		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device,
+			m_crntSwapchain->m_swapchain,
+			UINT64_MAX,
+			frame.m_acquireSemaphore->getHandle(),
+			fence->getHandle(),
+			&imageIdx));
+	}
 
 	ANKI_ASSERT(imageIdx < MAX_FRAMES_IN_FLIGHT);
 	m_crntSwapchain->m_currentBackbufferIndex = imageIdx;
@@ -699,6 +700,8 @@ void GrManagerImpl::beginFrame()
 
 void GrManagerImpl::endFrame()
 {
+	ANKI_TRACE_SCOPED_EVENT(VK_PRESENT);
+
 	LockGuard<Mutex> lock(m_globalMtx);
 
 	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
@@ -804,9 +807,10 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 
 	impl.setFence(fence);
 
-	ANKI_TRACE_START_EVENT(VK_QUEUE_SUBMIT);
-	ANKI_VK_CHECKF(vkQueueSubmit(m_queue, 1, &submit, fence->getHandle()));
-	ANKI_TRACE_STOP_EVENT(VK_QUEUE_SUBMIT);
+	{
+		ANKI_TRACE_SCOPED_EVENT(VK_QUEUE_SUBMIT);
+		ANKI_VK_CHECKF(vkQueueSubmit(m_queue, 1, &submit, fence->getHandle()));
+	}
 
 	if(wait)
 	{

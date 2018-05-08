@@ -348,7 +348,7 @@ void Indirect::prepareProbes(
 void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_ctx.m_probe);
-	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_IR);
 	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
 
 	// For each face
@@ -404,7 +404,7 @@ void Indirect::bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& c
 void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx <= 6);
-	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_IR);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -525,7 +525,7 @@ void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& r
 	ANKI_ASSERT(faceIdx < 6);
 	ANKI_ASSERT(m_ctx.m_cacheEntryIdx < m_cacheEntries.getSize());
 
-	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_IR);
 
 	TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, m_ctx.m_cacheEntryIdx));
 	subresource.m_mipmapCount = m_lightShading.m_mipCount;
@@ -541,7 +541,7 @@ void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& r
 void Indirect::runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx < 6);
-	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_IR);
 	const U32 cacheEntryIdx = m_ctx.m_cacheEntryIdx;
 	ANKI_ASSERT(cacheEntryIdx < m_cacheEntries.getSize());
 
@@ -563,7 +563,7 @@ void Indirect::runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 
 void Indirect::populateRenderGraph(RenderingContext& rctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_IR);
 
 #if ANKI_EXTRA_CHECKS
 	m_ctx = {};

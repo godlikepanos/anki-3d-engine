@@ -622,6 +622,7 @@ Error App::mainLoop()
 		static U64 frame = 1;
 		TracerSingleton::get().newFrame(frame++);
 #endif
+		ANKI_TRACE_START_EVENT(FRAME);
 		const Second startTime = HighRezTimer::getCurrentTime();
 
 		prevUpdateTime = crntTime;
@@ -660,6 +661,8 @@ Error App::mainLoop()
 
 		// Now resume the loader
 		m_resources->getAsyncLoader().resume();
+
+		ANKI_TRACE_STOP_EVENT(FRAME);
 
 		// Sleep
 		const Second endTime = HighRezTimer::getCurrentTime();

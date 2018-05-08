@@ -621,14 +621,13 @@ Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
 	Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>& dynamicOffsets,
 	U& dynamicOffsetCount)
 {
-	ANKI_TRACE_START_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);
+	ANKI_TRACE_SCOPED_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);
 
 	U64 hash;
 	state.flush(dirty, hash, dynamicOffsets, dynamicOffsetCount);
 
 	if(!dirty)
 	{
-		ANKI_TRACE_STOP_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);
 		return Error::NONE;
 	}
 
@@ -645,7 +644,6 @@ Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
 	set.m_handle = s->m_handle;
 	ANKI_ASSERT(set.m_handle != VK_NULL_HANDLE);
 
-	ANKI_TRACE_STOP_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);
 	return Error::NONE;
 }
 

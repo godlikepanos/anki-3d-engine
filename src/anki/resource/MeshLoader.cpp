@@ -310,7 +310,7 @@ Error MeshLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, Dynami
 		// Copy
 		for(U i = 0; i < m_header.m_totalVertexCount; ++i)
 		{
-			Vec3 vert;
+			Vec3 vert(0.0f);
 			if(attrib.m_format == Format::R32G32B32_SFLOAT)
 			{
 				vert = *reinterpret_cast<Vec3*>(&staging[i * buffInfo.m_vertexStride + attrib.m_relativeOffset]);

@@ -43,7 +43,7 @@ void CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 void CommandBufferImpl::destroy()
 {
-	ANKI_TRACE_START_EVENT(GL_CMD_BUFFER_DESTROY);
+	ANKI_TRACE_SCOPED_EVENT(GL_CMD_BUFFER_DESTROY);
 
 #if ANKI_EXTRA_CHECKS
 	if(!m_executed && m_firstCommand)
@@ -64,8 +64,6 @@ void CommandBufferImpl::destroy()
 				&& "Someone is holding a reference to the command buffer's allocator");
 
 	m_alloc = CommandBufferAllocator<U8>();
-
-	ANKI_TRACE_STOP_EVENT(GL_CMD_BUFFER_DESTROY);
 }
 
 Error CommandBufferImpl::executeAllCommands()

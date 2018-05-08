@@ -79,7 +79,7 @@ void RenderableDrawer::flushDrawcall(DrawContext& ctx)
 	// Rendered something, reset the cached transforms
 	if(ctx.m_cachedRenderElementCount > 1)
 	{
-		ANKI_TRACE_INC_COUNTER(RENDERER_MERGED_DRAWCALLS, ctx.m_cachedRenderElementCount - 1);
+		ANKI_TRACE_INC_COUNTER(R_MERGED_DRAWCALLS, ctx.m_cachedRenderElementCount - 1);
 	}
 	ctx.m_cachedRenderElementCount = 0;
 }

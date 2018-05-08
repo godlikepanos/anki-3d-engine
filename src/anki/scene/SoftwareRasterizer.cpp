@@ -300,9 +300,8 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 
 Bool SoftwareRasterizer::visibilityTest(const CollisionShape& cs, const Aabb& aabb) const
 {
-	ANKI_TRACE_START_EVENT(SCENE_RASTERIZER_TEST);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_RASTERIZER_TEST);
 	Bool inside = visibilityTestInternal(cs, aabb);
-	ANKI_TRACE_STOP_EVENT(SCENE_RASTERIZER_TEST);
 
 	return inside;
 }

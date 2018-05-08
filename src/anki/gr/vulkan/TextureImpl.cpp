@@ -327,9 +327,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, req.alignment, false, m_memHandle);
 
 		// Bind mem to image
-		ANKI_TRACE_START_EVENT(VK_BIND_OBJECT);
+		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
 		ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
-		ANKI_TRACE_STOP_EVENT(VK_BIND_OBJECT);
 	}
 	else
 	{
@@ -347,9 +346,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		getGrManagerImpl().trySetVulkanHandleName(
 			init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, ptrToNumber(m_dedicatedMem));
 
-		ANKI_TRACE_START_EVENT(VK_BIND_OBJECT);
+		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
 		ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_dedicatedMem, 0));
-		ANKI_TRACE_STOP_EVENT(VK_BIND_OBJECT);
 	}
 
 	return Error::NONE;

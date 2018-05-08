@@ -248,9 +248,11 @@ void RenderingThread::threadLoop()
 			++m_head;
 		}
 
-		ANKI_TRACE_START_EVENT(GL_THREAD);
-		Error err = static_cast<CommandBufferImpl&>(*cmd).executeAllCommands();
-		ANKI_TRACE_STOP_EVENT(GL_THREAD);
+		Error err = Error::NONE;
+		{
+			ANKI_TRACE_SCOPED_EVENT(GL_THREAD);
+			err = static_cast<CommandBufferImpl&>(*cmd).executeAllCommands();
+		}
 
 		if(err)
 		{
@@ -274,7 +276,7 @@ void RenderingThread::syncClientServer()
 
 void RenderingThread::swapBuffersInternal()
 {
-	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);
+	ANKI_TRACE_SCOPED_EVENT(SWAP_BUFFERS);
 
 	// Do the swap buffers
 	m_manager->swapBuffers();
@@ -286,13 +288,11 @@ void RenderingThread::swapBuffersInternal()
 
 		m_frameCondVar.notifyOne();
 	}
-
-	ANKI_TRACE_STOP_EVENT(SWAP_BUFFERS);
 }
 
 void RenderingThread::swapBuffers()
 {
-	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);
+	ANKI_TRACE_SCOPED_EVENT(SWAP_BUFFERS);
 	// Wait for the rendering thread to finish swap buffers...
 	{
 		LockGuard<Mutex> lock(m_frameMtx);
@@ -306,7 +306,6 @@ void RenderingThread::swapBuffers()
 
 	// ...and then flush a new swap buffers
 	flushCommandBuffer(m_swapBuffersCommands, nullptr);
-	ANKI_TRACE_STOP_EVENT(SWAP_BUFFERS);
 }
 
 } // end namespace anki

@@ -21,25 +21,25 @@ ANKI_TEST(Util, Tracer)
 	// 2 same events
 	tracer.newFrame(1);
 
-	tracer.beginEvent();
+	auto handle0 = tracer.beginEvent();
 	HighRezTimer::sleep(0.5);
-	tracer.endEvent("event");
+	tracer.endEvent("event", handle0);
 
-	tracer.beginEvent();
+	auto handle1 = tracer.beginEvent();
 	HighRezTimer::sleep(0.5);
-	tracer.endEvent("event");
+	tracer.endEvent("event", handle1);
 
 	// 4rd frame
 	// 2 different events & non zero counter
 	tracer.newFrame(3);
 
-	tracer.beginEvent();
+	auto handle2 = tracer.beginEvent();
 	HighRezTimer::sleep(0.5);
-	tracer.endEvent("event");
+	tracer.endEvent("event", handle2);
 
-	tracer.beginEvent();
+	auto handle3 = tracer.beginEvent();
 	HighRezTimer::sleep(0.5);
-	tracer.endEvent("event2");
+	tracer.endEvent("event2", handle3);
 
 	tracer.increaseCounter("counter", 100);
 

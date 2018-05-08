@@ -19,13 +19,13 @@ const U SIZE_IDX_COUNT = 4;
 // Shader structs and block representations. All positions and directions in viewspace
 // For documentation see the shaders
 
-class ShaderCluster
+class LightBin::ShaderCluster
 {
 public:
 	U32 m_firstIdx;
 };
 
-class ShaderPointLight
+class LightBin::ShaderPointLight
 {
 public:
 	Vec4 m_posRadius;
@@ -34,7 +34,7 @@ public:
 	UVec2 m_atlasTiles;
 };
 
-class ShaderSpotLight
+class LightBin::ShaderSpotLight
 {
 public:
 	Vec4 m_posRadius;
@@ -44,7 +44,7 @@ public:
 	Mat4 m_texProjectionMat; ///< Texture projection matrix
 };
 
-class ShaderProbe
+class LightBin::ShaderProbe
 {
 public:
 	Vec3 m_pos;
@@ -59,7 +59,7 @@ public:
 	}
 };
 
-class ShaderDecal
+class LightBin::ShaderDecal
 {
 public:
 	Vec4 m_diffUv;
@@ -73,7 +73,7 @@ static const U MAX_PROBES_PER_CLUSTER = 12;
 static const U MAX_DECALS_PER_CLUSTER = 8;
 static const F32 INVALID_TEXTURE_INDEX = -1.0;
 
-class ClusterLightIndex
+class LightBin::ClusterLightIndex
 {
 public:
 	ClusterLightIndex()
@@ -92,23 +92,24 @@ public:
 		m_index = i;
 	}
 
+	friend Bool operator<(const ClusterLightIndex& a, const ClusterLightIndex& b)
+	{
+		return a.getIndex() < b.getIndex();
+	}
+
 private:
 	U16 m_index;
 };
 
-static Bool operator<(const ClusterLightIndex& a, const ClusterLightIndex& b)
-{
-	return a.getIndex() < b.getIndex();
-}
-
 /// Store the probe radius for sorting the indices.
 /// WARNING: Keep it as small as possible, that's why the members are U16
-class ClusterProbeIndex
+class LightBin::ClusterProbeIndex
 {
 public:
 	ClusterProbeIndex()
 	{
 		// Do nothing. No need to initialize
+		static_assert(sizeof(ClusterProbeIndex) == sizeof(U16) * 2, "Because we memcmp");
 	}
 
 	U getIndex() const
@@ -144,10 +145,9 @@ private:
 	U16 m_index;
 	U16 m_probeRadius;
 };
-static_assert(sizeof(ClusterProbeIndex) == sizeof(U16) * 2, "Because we memcmp");
 
 /// WARNING: Keep it as small as possible. The number of clusters is huge
-class alignas(U32) ClusterData
+class alignas(U32) LightBin::ClusterData
 {
 public:
 	Atomic<U8> m_pointCount;
@@ -271,10 +271,10 @@ private:
 };
 
 /// Common data for all tasks.
-class LightBinContext
+class LightBin::BinContext
 {
 public:
-	LightBinContext(StackAllocator<U8> alloc)
+	BinContext(StackAllocator<U8> alloc)
 		: m_alloc(alloc)
 		, m_tempClusters(alloc)
 	{
@@ -326,10 +326,10 @@ public:
 };
 
 /// Write the lights to the GPU buffers.
-class WriteLightsTask : public ThreadPoolTask
+class LightBin::WriteLightsTask : public ThreadPoolTask
 {
 public:
-	LightBinContext* m_ctx = nullptr;
+	BinContext* m_ctx = nullptr;
 
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
@@ -367,7 +367,7 @@ Error LightBin::bin(const Mat4& viewMat,
 	Bool shadowsEnabled,
 	LightBinOut& out)
 {
-	ANKI_TRACE_SCOPED_EVENT(RENDERER_LIGHT_BINNING);
+	ANKI_TRACE_SCOPED_EVENT(R_LIGHT_BINNING);
 
 	// Prepare the clusterer
 	ClustererPrepareInfo pinf;
@@ -387,13 +387,13 @@ Error LightBin::bin(const Mat4& viewMat,
 	const U visibleProbeCount = rqueue.m_reflectionProbes.getSize();
 	const U visibleDecalCount = rqueue.m_decals.getSize();
 
-	ANKI_TRACE_INC_COUNTER(RENDERER_LIGHTS, visiblePointLightsCount + visibleSpotLightsCount);
+	ANKI_TRACE_INC_COUNTER(R_LIGHTS, visiblePointLightsCount + visibleSpotLightsCount);
 
 	//
 	// Write the lights and tiles UBOs
 	//
 	Array<WriteLightsTask, ThreadPool::MAX_THREADS> tasks;
-	LightBinContext ctx(frameAlloc);
+	BinContext ctx(frameAlloc);
 	ctx.m_viewMat = viewMat;
 	ctx.m_viewProjMat = viewProjMat;
 	ctx.m_camTrf = camTrf;
@@ -498,157 +498,163 @@ Error LightBin::bin(const Mat4& viewMat,
 	return Error::NONE;
 }
 
-void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx)
+void LightBin::binLights(U32 threadId, PtrSize threadsCount, BinContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 	U clusterCount = m_clusterCount;
 	PtrSize start, end;
 
 	//
 	// Initialize the temp clusters
 	//
-	ThreadPoolTask::choseStartEnd(threadId, threadsCount, clusterCount, start, end);
-
-	for(U i = start; i < end; ++i)
 	{
-		ctx.m_tempClusters[i].reset();
+		ANKI_TRACE_SCOPED_EVENT(R_LIGHT_BINNING);
+
+		ThreadPoolTask::choseStartEnd(threadId, threadsCount, clusterCount, start, end);
+
+		for(U i = start; i < end; ++i)
+		{
+			ctx.m_tempClusters[i].reset();
+		}
 	}
 
-	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 	m_barrier.wait();
-	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 
 	//
 	// Iterate lights and probes and bin them
 	//
-	ClustererTestResult testResult;
-	m_clusterer.initTestResults(ctx.m_alloc, testResult);
-	U lightCount = ctx.m_vPointLights.getSize() + ctx.m_vSpotLights.getSize();
-	U totalCount = lightCount + ctx.m_vProbes.getSize() + ctx.m_vDecals.getSize();
-
-	const U TO_BIN_COUNT = 1;
-	while((start = ctx.m_count2.fetchAdd(TO_BIN_COUNT)) < totalCount)
 	{
-		end = min<U>(start + TO_BIN_COUNT, totalCount);
+		ANKI_TRACE_SCOPED_EVENT(R_LIGHT_BINNING);
 
-		for(U j = start; j < end; ++j)
+		ClustererTestResult testResult;
+		m_clusterer.initTestResults(ctx.m_alloc, testResult);
+		U lightCount = ctx.m_vPointLights.getSize() + ctx.m_vSpotLights.getSize();
+		U totalCount = lightCount + ctx.m_vProbes.getSize() + ctx.m_vDecals.getSize();
+
+		const U TO_BIN_COUNT = 1;
+		while((start = ctx.m_count2.fetchAdd(TO_BIN_COUNT)) < totalCount)
 		{
-			if(j >= lightCount + ctx.m_vDecals.getSize())
+			end = min<U>(start + TO_BIN_COUNT, totalCount);
+
+			for(U j = start; j < end; ++j)
 			{
-				U i = j - (lightCount + ctx.m_vDecals.getSize());
-				writeAndBinProbe(ctx.m_vProbes[i], ctx, testResult);
-			}
-			else if(j >= ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize())
-			{
-				U i = j - (ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize());
-				writeAndBinSpotLight(ctx.m_vSpotLights[i], ctx, testResult);
-			}
-			else if(j >= ctx.m_vDecals.getSize())
-			{
-				U i = j - ctx.m_vDecals.getSize();
-				writeAndBinPointLight(ctx.m_vPointLights[i], ctx, testResult);
-			}
-			else
-			{
-				U i = j;
-				writeAndBinDecal(ctx.m_vDecals[i], ctx, testResult);
+				if(j >= lightCount + ctx.m_vDecals.getSize())
+				{
+					U i = j - (lightCount + ctx.m_vDecals.getSize());
+					writeAndBinProbe(ctx.m_vProbes[i], ctx, testResult);
+				}
+				else if(j >= ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize())
+				{
+					U i = j - (ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize());
+					writeAndBinSpotLight(ctx.m_vSpotLights[i], ctx, testResult);
+				}
+				else if(j >= ctx.m_vDecals.getSize())
+				{
+					U i = j - ctx.m_vDecals.getSize();
+					writeAndBinPointLight(ctx.m_vPointLights[i], ctx, testResult);
+				}
+				else
+				{
+					U i = j;
+					writeAndBinDecal(ctx.m_vDecals[i], ctx, testResult);
+				}
 			}
 		}
 	}
 
+	m_barrier.wait();
+
 	//
 	// Last thing, update the real clusters
 	//
-	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
-	m_barrier.wait();
-	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 
-	// Run per cluster
-	const U CLUSTER_GROUP = 16;
-	while((start = ctx.m_count.fetchAdd(CLUSTER_GROUP)) < clusterCount)
 	{
-		end = min<U>(start + CLUSTER_GROUP, clusterCount);
+		ANKI_TRACE_SCOPED_EVENT(R_LIGHT_BINNING);
 
-		for(U i = start; i < end; ++i)
+		// Run per cluster
+		const U CLUSTER_GROUP = 16;
+		while((start = ctx.m_count.fetchAdd(CLUSTER_GROUP)) < clusterCount)
 		{
-			auto& cluster = ctx.m_tempClusters[i];
-			cluster.normalizeCounts();
+			end = min<U>(start + CLUSTER_GROUP, clusterCount);
 
-			const U countP = cluster.m_pointCount.get();
-			const U countS = cluster.m_spotCount.get();
-			const U countProbe = cluster.m_probeCount.get();
-			const U countDecal = cluster.m_decalCount.get();
-			const U count = countP + countS + countProbe + countDecal;
-
-			auto& c = ctx.m_clusters[i];
-			c.m_firstIdx = 0; // Point to the first empty indices
-
-			// Early exit
-			if(ANKI_UNLIKELY(count == 0))
+			for(U i = start; i < end; ++i)
 			{
-				continue;
-			}
+				auto& cluster = ctx.m_tempClusters[i];
+				cluster.normalizeCounts();
 
-			// Check if the previous cluster contains the same lights as this one and if yes then merge them. This will
-			// avoid allocating new IDs (and thrashing GPU caches).
-			cluster.sortLightIds();
-			if(i != start)
-			{
-				const auto& clusterB = ctx.m_tempClusters[i - 1];
+				const U countP = cluster.m_pointCount.get();
+				const U countS = cluster.m_spotCount.get();
+				const U countProbe = cluster.m_probeCount.get();
+				const U countDecal = cluster.m_decalCount.get();
+				const U count = countP + countS + countProbe + countDecal;
 
-				if(cluster == clusterB)
+				auto& c = ctx.m_clusters[i];
+				c.m_firstIdx = 0; // Point to the first empty indices
+
+				// Early exit
+				if(ANKI_UNLIKELY(count == 0))
 				{
-					c.m_firstIdx = ctx.m_clusters[i - 1].m_firstIdx;
 					continue;
 				}
-			}
 
-			U offset = ctx.m_lightIdsCount.fetchAdd(count + SIZE_IDX_COUNT);
-			U initialOffset = offset;
-			(void)initialOffset;
-
-			if(offset + count + SIZE_IDX_COUNT <= ctx.m_maxLightIndices)
-			{
-				c.m_firstIdx = offset;
-
-				ctx.m_lightIds[offset++] = countDecal;
-				for(U i = 0; i < countDecal; ++i)
+				// Check if the previous cluster contains the same lights as this one and if yes then merge them. This
+				// will avoid allocating new IDs (and thrashing GPU caches).
+				cluster.sortLightIds();
+				if(i != start)
 				{
-					ctx.m_lightIds[offset++] = cluster.m_decalIds[i].getIndex();
+					const auto& clusterB = ctx.m_tempClusters[i - 1];
+
+					if(cluster == clusterB)
+					{
+						c.m_firstIdx = ctx.m_clusters[i - 1].m_firstIdx;
+						continue;
+					}
 				}
 
-				ctx.m_lightIds[offset++] = countP;
-				for(U i = 0; i < countP; ++i)
+				U offset = ctx.m_lightIdsCount.fetchAdd(count + SIZE_IDX_COUNT);
+				U initialOffset = offset;
+				(void)initialOffset;
+
+				if(offset + count + SIZE_IDX_COUNT <= ctx.m_maxLightIndices)
 				{
-					ctx.m_lightIds[offset++] = cluster.m_pointIds[i].getIndex();
-				}
+					c.m_firstIdx = offset;
 
-				ctx.m_lightIds[offset++] = countS;
-				for(U i = 0; i < countS; ++i)
+					ctx.m_lightIds[offset++] = countDecal;
+					for(U i = 0; i < countDecal; ++i)
+					{
+						ctx.m_lightIds[offset++] = cluster.m_decalIds[i].getIndex();
+					}
+
+					ctx.m_lightIds[offset++] = countP;
+					for(U i = 0; i < countP; ++i)
+					{
+						ctx.m_lightIds[offset++] = cluster.m_pointIds[i].getIndex();
+					}
+
+					ctx.m_lightIds[offset++] = countS;
+					for(U i = 0; i < countS; ++i)
+					{
+						ctx.m_lightIds[offset++] = cluster.m_spotIds[i].getIndex();
+					}
+
+					ctx.m_lightIds[offset++] = countProbe;
+					for(U i = 0; i < countProbe; ++i)
+					{
+						ctx.m_lightIds[offset++] = cluster.m_probeIds[i].getIndex();
+					}
+
+					ANKI_ASSERT(offset - initialOffset == count + SIZE_IDX_COUNT);
+				}
+				else
 				{
-					ctx.m_lightIds[offset++] = cluster.m_spotIds[i].getIndex();
+					ANKI_R_LOGW("Light IDs buffer too small");
 				}
-
-				ctx.m_lightIds[offset++] = countProbe;
-				for(U i = 0; i < countProbe; ++i)
-				{
-					ctx.m_lightIds[offset++] = cluster.m_probeIds[i].getIndex();
-				}
-
-				ANKI_ASSERT(offset - initialOffset == count + SIZE_IDX_COUNT);
-			}
-			else
-			{
-				ANKI_R_LOGW("Light IDs buffer too small");
-			}
-		} // end for
-	} // end while
-
-	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
+			} // end for
+		} // end while
+	} // scope
 }
 
 void LightBin::writeAndBinPointLight(
-	const PointLightQueueElement& lightEl, LightBinContext& ctx, ClustererTestResult& testResult)
+	const PointLightQueueElement& lightEl, BinContext& ctx, ClustererTestResult& testResult)
 {
 	// Get GPU light
 	I idx = ctx.m_pointLightsCount.fetchAdd(1);
@@ -694,7 +700,7 @@ void LightBin::writeAndBinPointLight(
 }
 
 void LightBin::writeAndBinSpotLight(
-	const SpotLightQueueElement& lightEl, LightBinContext& ctx, ClustererTestResult& testResult)
+	const SpotLightQueueElement& lightEl, BinContext& ctx, ClustererTestResult& testResult)
 {
 	I idx = ctx.m_spotLightsCount.fetchAdd(1);
 
@@ -748,7 +754,7 @@ void LightBin::writeAndBinSpotLight(
 }
 
 void LightBin::writeAndBinProbe(
-	const ReflectionProbeQueueElement& probeEl, LightBinContext& ctx, ClustererTestResult& testResult)
+	const ReflectionProbeQueueElement& probeEl, BinContext& ctx, ClustererTestResult& testResult)
 {
 	// Write it
 	ShaderProbe probe;
@@ -783,7 +789,7 @@ void LightBin::writeAndBinProbe(
 	}
 }
 
-void LightBin::writeAndBinDecal(const DecalQueueElement& decalEl, LightBinContext& ctx, ClustererTestResult& testResult)
+void LightBin::writeAndBinDecal(const DecalQueueElement& decalEl, BinContext& ctx, ClustererTestResult& testResult)
 {
 	I idx = ctx.m_decalCount.fetchAdd(1);
 	ShaderDecal& decal = ctx.m_decals[idx];

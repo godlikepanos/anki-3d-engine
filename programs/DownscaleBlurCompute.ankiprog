@@ -6,13 +6,11 @@ http://www.anki3d.org/LICENSE
 -->
 <shaderProgram>
 	<shaders>
-		<shader type="vert">
-			<source><![CDATA[
-#include "shaders/QuadVert.glsl"
-			]]></source>
-		</shader>
+		<shader type="comp">
+			<inputs>
+				<input name="WORKGROUP_SIZE" type="uvec2" const="1"/>
+			</inputs>
 
-		<shader type="frag">
 			<source><![CDATA[
 #include "shaders/DownscaleBlur.glsl"
 			]]></source>

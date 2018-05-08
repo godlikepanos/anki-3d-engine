@@ -133,9 +133,10 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, req.alignment, true, m_memHandle);
 
 	// Bind mem to buffer
-	ANKI_TRACE_START_EVENT(VK_BIND_OBJECT);
-	ANKI_VK_CHECK(vkBindBufferMemory(getDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
-	ANKI_TRACE_STOP_EVENT(VK_BIND_OBJECT);
+	{
+		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
+		ANKI_VK_CHECK(vkBindBufferMemory(getDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
+	}
 
 	m_access = access;
 	m_size = inf.m_size;

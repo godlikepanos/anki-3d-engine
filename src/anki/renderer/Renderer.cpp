@@ -50,7 +50,7 @@ Error Renderer::init(ThreadPool* threadpool,
 	Timestamp* globTimestamp,
 	Bool willDrawToDefaultFbo)
 {
-	ANKI_TRACE_SCOPED_EVENT(RENDERER_INIT);
+	ANKI_TRACE_SCOPED_EVENT(R_INIT);
 
 	m_globTimestamp = globTimestamp;
 	m_threadpool = threadpool;

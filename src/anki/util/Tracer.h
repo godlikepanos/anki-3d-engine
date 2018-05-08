@@ -16,6 +16,9 @@ namespace anki
 /// @addtogroup util_other
 /// @{
 
+/// @memberof Tracer
+using TracerEventHandle = void*;
+
 /// Tracer.
 class Tracer : public NonCopyable
 {
@@ -37,10 +40,10 @@ public:
 	}
 
 	/// Begin a new event.
-	void beginEvent();
+	ANKI_USE_RESULT TracerEventHandle beginEvent();
 
 	/// End the event that got started with beginEvent().
-	void endEvent(const char* eventName);
+	void endEvent(const char* eventName, TracerEventHandle event);
 
 	/// Increase a counter.
 	void increaseCounter(const char* counterName, U64 value);
@@ -52,53 +55,30 @@ public:
 	ANKI_USE_RESULT Error flush(CString filename);
 
 private:
+	static const U32 EVENTS_PER_CHUNK = 256;
+	static const U32 COUNTERS_PER_CHUNK = 512;
+
+	class Event;
+	class EventsChunk;
+	class GatherEvent;
+
+	class Counter;
+	class CountersChunk;
+	class GatherCounter;
+
+	class ThreadLocal;
+	class PerFrameCounters;
+	class FlushCtx;
+
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
-	class Frame
-	{
-	public:
-		U64 m_frame;
-		Second m_startFrameTime; ///< When the frame started
-	};
+	Second m_startFrameTime = 0.0;
+	U64 m_frame = 0;
+	SpinLock m_frameMtx; ///< Protect m_startFrameTime and m_frame.
 
-	DynamicArray<Frame> m_frames;
-
-	/// Event.
-	class Event : public IntrusiveListEnabled<Event>
-	{
-	public:
-		const char* m_name ANKI_DBG_NULLIFY;
-		Second m_timestamp ANKI_DBG_NULLIFY;
-		Second m_duration ANKI_DBG_NULLIFY;
-		ThreadId m_tid ANKI_DBG_NULLIFY;
-	};
-
-	/// Counter.
-	class Counter : public IntrusiveListEnabled<Counter>
-	{
-	public:
-		const char* m_name ANKI_DBG_NULLIFY;
-		U64 m_value ANKI_DBG_NULLIFY;
-		U32 m_frameIdx ANKI_DBG_NULLIFY;
-	};
-
-	class ThreadLocal
-	{
-	public:
-		ThreadId m_tid ANKI_DBG_NULLIFY;
-		ObjectAllocatorSameType<Event> m_eventAlloc;
-		ObjectAllocatorSameType<Counter> m_counterAlloc;
-		IntrusiveList<Event> m_events;
-		IntrusiveList<Counter> m_counters;
-		Bool m_tracerKnowsAboutThis = false;
-	};
-
-	static thread_local ThreadLocal m_threadLocal;
+	static thread_local ThreadLocal* m_threadLocal;
 	DynamicArray<ThreadLocal*> m_allThreadLocal; ///< The Tracer should know about all the ThreadLocal.
 	Mutex m_threadLocalMtx;
-
-	class FlushCtx;
-	class PerFrameCounters;
 
 	/// Get the thread local ThreadLocal structure.
 	ThreadLocal& getThreadLocal();
@@ -114,6 +94,8 @@ private:
 
 	/// Dump the events and the counters to a chrome trace file.
 	Error writeTraceJson(const FlushCtx& ctx);
+
+	static void getSpreadsheetColumnName(U column, Array<char, 3>& arr);
 };
 
 /// Tracer singleton.
@@ -127,16 +109,17 @@ public:
 		: m_name(name)
 		, m_tracer(&TracerSingleton::get())
 	{
-		m_tracer->beginEvent();
+		m_handle = m_tracer->beginEvent();
 	}
 
 	~TraceScopedEvent()
 	{
-		m_tracer->endEvent(m_name);
+		m_tracer->endEvent(m_name, m_handle);
 	}
 
 private:
 	const char* m_name;
+	TracerEventHandle m_handle;
 	Tracer* m_tracer;
 };
 /// @}

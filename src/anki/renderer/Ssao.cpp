@@ -178,10 +178,7 @@ void Ssao::runBlur(RenderPassWorkContext& rgraphCtx)
 	if(m_blurUseCompute)
 	{
 		rgraphCtx.bindImage(0, 0, m_runCtx.m_rts[1], TextureSubresourceInfo());
-
-		const U sizeX = (m_width + m_workgroupSize[0] - 1) / m_workgroupSize[0];
-		const U sizeY = (m_height + m_workgroupSize[1] - 1) / m_workgroupSize[1];
-		cmdb->dispatchCompute(sizeX, sizeY, 1);
+		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_width, m_height);
 	}
 	else
 	{

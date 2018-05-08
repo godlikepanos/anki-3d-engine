@@ -11,8 +11,8 @@
 /// @name Trace macros.
 /// @{
 #if ANKI_ENABLE_TRACE
-#	define ANKI_TRACE_START_EVENT(name_) TracerSingleton::get().beginEvent()
-#	define ANKI_TRACE_STOP_EVENT(name_) TracerSingleton::get().endEvent(#	name_)
+#	define ANKI_TRACE_START_EVENT(name_) TracerEventHandle _teh##name_ = TracerSingleton::get().beginEvent()
+#	define ANKI_TRACE_STOP_EVENT(name_) TracerSingleton::get().endEvent(#	name_, _teh##name_)
 #	define ANKI_TRACE_SCOPED_EVENT(name_) TraceScopedEvent _tse##name_(#	name_)
 #	define ANKI_TRACE_INC_COUNTER(name_, val_) TracerSingleton::get().increaseCounter(#	name_, val_)
 #else
