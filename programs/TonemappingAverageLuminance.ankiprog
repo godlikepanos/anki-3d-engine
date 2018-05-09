@@ -39,9 +39,9 @@ void main()
 	float avgLum = 0.0;
 	uint yStart = gl_LocalInvocationID.y * PIXEL_READ_Y;
 	uint xStart = gl_LocalInvocationID.x * PIXEL_READ_X;
-	for(uint y = 0; y < PIXEL_READ_Y; ++y)
+	ANKI_LOOP for(uint y = 0; y < PIXEL_READ_Y; ++y)
 	{
-		for(uint x = 0; x < PIXEL_READ_X; ++x)
+		ANKI_UNROLL for(uint x = 0; x < PIXEL_READ_X; ++x)
 		{
 			ivec2 uv = ivec2(xStart, yStart) + ivec2(x, y);
 			vec3 color = texelFetch(u_tex, uv, 0).rgb;
@@ -60,7 +60,7 @@ void main()
 	barrier();
 
 	// Gather the results into one
-	for(uint s = WORKGROUP_SIZE / 2u; s > 0u; s >>= 1u)
+	ANKI_LOOP for(uint s = WORKGROUP_SIZE / 2u; s > 0u; s >>= 1u)
 	{
 		if(gl_LocalInvocationIndex < s)
 		{
@@ -72,12 +72,12 @@ void main()
 	}
 
 	// Write the result
-	if(gl_LocalInvocationIndex == 0)
+	ANKI_BRANCH if(gl_LocalInvocationIndex == 0)
 	{
 #if LOG_AVG
-		float crntLum = exp(s_avgLum[0] / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y));
+		float crntLum = exp(s_avgLum[0] * (1.0 / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y)));
 #else
-		float crntLum = s_avgLum[0] / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y);
+		float crntLum = s_avgLum[0] * (1.0 / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y));
 #endif
 
 #if 1

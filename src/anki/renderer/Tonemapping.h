@@ -24,6 +24,8 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
+	void importRenderTargets(RenderingContext& ctx);
+
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 

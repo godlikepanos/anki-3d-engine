@@ -477,7 +477,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 				{
 					for(const RenderPassDependency& producer : b.m_producers)
 					{
-						if(overlappingDependency<true>(producer, consumer))
+						if(producer.m_isTexture && overlappingDependency<true>(producer, consumer))
 						{
 							return true;
 						}
@@ -506,7 +506,7 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 				{
 					for(const RenderPassDependency& producer : b.m_producers)
 					{
-						if(overlappingDependency<false>(producer, consumer))
+						if(!producer.m_isTexture && overlappingDependency<false>(producer, consumer))
 						{
 							return true;
 						}
