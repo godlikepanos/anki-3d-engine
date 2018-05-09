@@ -306,12 +306,6 @@ void App::cleanup()
 		m_stagingMem = nullptr;
 	}
 
-	if(m_gr)
-	{
-		GrManager::deleteInstance(m_gr);
-		m_gr = nullptr;
-	}
-
 	if(m_threadpool)
 	{
 		m_heapAlloc.deleteInstance(m_threadpool);
@@ -322,6 +316,12 @@ void App::cleanup()
 	{
 		m_heapAlloc.deleteInstance(m_threadHive);
 		m_threadHive = nullptr;
+	}
+
+	if(m_gr)
+	{
+		GrManager::deleteInstance(m_gr);
+		m_gr = nullptr;
 	}
 
 	if(m_input)
