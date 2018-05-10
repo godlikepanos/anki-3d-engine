@@ -7,6 +7,7 @@
 #include <anki/scene/CameraNode.h>
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/SectorNode.h>
+#include <anki/scene/Octree.h>
 #include <anki/core/Trace.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/resource/ResourceManager.h>
@@ -61,6 +62,11 @@ SceneGraph::~SceneGraph()
 		m_alloc.deleteInstance(m_sectors);
 		m_sectors = nullptr;
 	}
+
+	if(m_octree)
+	{
+		m_alloc.deleteInstance(m_octree);
+	}
 }
 
 Error SceneGraph::init(AllocAlignedCallback allocCb,
@@ -93,6 +99,9 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_sectors = m_alloc.newInstance<SectorGroup>(this);
 
 	m_maxReflectionProxyDistance = config.getNumber("scene.imageReflectionMaxDistance");
+
+	m_octree = m_alloc.newInstance<Octree>(m_alloc);
+	m_octree->init(Vec3(-1000.0f), Vec3(1000.0f), 5); // TODO
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));

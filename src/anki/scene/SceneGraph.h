@@ -27,6 +27,7 @@ class SectorGroup;
 class ConfigSet;
 class PerspectiveCameraNode;
 class UpdateSceneNodesCtx;
+class Octree;
 
 /// @addtogroup scene
 /// @{
@@ -253,6 +254,8 @@ private:
 
 	EventManager m_events;
 	SectorGroup* m_sectors;
+
+	Octree* m_octree = nullptr;
 
 	Atomic<U32> m_objectsMarkedForDeletionCount;
 
