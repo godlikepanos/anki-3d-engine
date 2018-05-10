@@ -265,8 +265,10 @@ public:
 	virtual ~RenderPassDescriptionBase()
 	{
 		m_name.destroy(m_alloc); // To avoid the assertion
-		m_consumers.destroy(m_alloc);
-		m_producers.destroy(m_alloc);
+		m_rtConsumers.destroy(m_alloc);
+		m_rtProducers.destroy(m_alloc);
+		m_buffConsumers.destroy(m_alloc);
+		m_buffProducers.destroy(m_alloc);
 	}
 
 	void setWork(RenderPassWorkCallback callback, void* userData, U32 secondLeveCmdbCount)
@@ -300,8 +302,10 @@ protected:
 	void* m_userData = nullptr;
 	U32 m_secondLevelCmdbsCount = 0;
 
-	DynamicArray<RenderPassDependency> m_consumers;
-	DynamicArray<RenderPassDependency> m_producers;
+	DynamicArray<RenderPassDependency> m_rtConsumers;
+	DynamicArray<RenderPassDependency> m_rtProducers;
+	DynamicArray<RenderPassDependency> m_buffConsumers;
+	DynamicArray<RenderPassDependency> m_buffProducers;
 
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_consumerRtMask = {false};
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_producerRtMask = {false};

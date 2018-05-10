@@ -55,11 +55,13 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 
 inline void RenderPassDescriptionBase::newConsumer(const RenderPassDependency& dep)
 {
-	m_consumers.emplaceBack(m_alloc, dep);
+	DynamicArray<RenderPassDependency>& consumers = (dep.m_isTexture) ? m_rtConsumers : m_buffConsumers;
+
+	consumers.emplaceBack(m_alloc, dep);
 
 	if(dep.m_isTexture && dep.m_texture.m_usage != TextureUsageBit::NONE)
 	{
-		fixSubresource(m_consumers.getBack());
+		fixSubresource(consumers.getBack());
 		m_consumerRtMask.set(dep.m_texture.m_handle.m_idx);
 
 		// Try to derive the usage by that dep
@@ -74,10 +76,12 @@ inline void RenderPassDescriptionBase::newConsumer(const RenderPassDependency& d
 
 inline void RenderPassDescriptionBase::newProducer(const RenderPassDependency& dep)
 {
-	m_producers.emplaceBack(m_alloc, dep);
+	DynamicArray<RenderPassDependency>& producers = (dep.m_isTexture) ? m_rtProducers : m_buffProducers;
+
+	producers.emplaceBack(m_alloc, dep);
 	if(dep.m_isTexture)
 	{
-		fixSubresource(m_producers.getBack());
+		fixSubresource(producers.getBack());
 		m_producerRtMask.set(dep.m_texture.m_handle.m_idx);
 	}
 	else

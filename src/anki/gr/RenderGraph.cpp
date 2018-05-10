@@ -471,13 +471,13 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 		{
 			// There might be an overlap
 
-			for(const RenderPassDependency& consumer : a.m_consumers)
+			for(const RenderPassDependency& consumer : a.m_rtConsumers)
 			{
-				if(consumer.m_isTexture && fullDep.get(consumer.m_texture.m_handle.m_idx))
+				if(fullDep.get(consumer.m_texture.m_handle.m_idx))
 				{
-					for(const RenderPassDependency& producer : b.m_producers)
+					for(const RenderPassDependency& producer : b.m_rtProducers)
 					{
-						if(producer.m_isTexture && overlappingDependency<true>(producer, consumer))
+						if(overlappingDependency<true>(producer, consumer))
 						{
 							return true;
 						}
@@ -500,13 +500,13 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 		{
 			// There might be an overlap
 
-			for(const RenderPassDependency& consumer : a.m_consumers)
+			for(const RenderPassDependency& consumer : a.m_buffConsumers)
 			{
-				if(!consumer.m_isTexture && fullDep.get(consumer.m_buffer.m_handle.m_idx))
+				if(fullDep.get(consumer.m_buffer.m_handle.m_idx))
 				{
-					for(const RenderPassDependency& producer : b.m_producers)
+					for(const RenderPassDependency& producer : b.m_buffProducers)
 					{
-						if(!producer.m_isTexture && overlappingDependency<false>(producer, consumer))
+						if(overlappingDependency<false>(producer, consumer))
 						{
 							return true;
 						}
@@ -620,17 +620,16 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		outPass.m_userData = inPass.m_userData;
 
 		// Create consumer info
-		for(U consumerIdx = 0; consumerIdx < inPass.m_consumers.getSize(); ++consumerIdx)
+		for(U consumerIdx = 0; consumerIdx < inPass.m_rtConsumers.getSize(); ++consumerIdx)
 		{
-			const RenderPassDependency& inConsumer = inPass.m_consumers[consumerIdx];
-			if(inConsumer.m_isTexture)
-			{
-				outPass.m_consumedTextures.emplaceBack(alloc);
-				Pass::ConsumedTextureInfo& inf = outPass.m_consumedTextures.getBack();
+			const RenderPassDependency& inConsumer = inPass.m_rtConsumers[consumerIdx];
+			ANKI_ASSERT(inConsumer.m_isTexture);
 
-				ANKI_ASSERT(sizeof(inf) == sizeof(inConsumer.m_texture));
-				memcpy(&inf, &inConsumer.m_texture, sizeof(inf));
-			}
+			outPass.m_consumedTextures.emplaceBack(alloc);
+			Pass::ConsumedTextureInfo& inf = outPass.m_consumedTextures.getBack();
+
+			ANKI_ASSERT(sizeof(inf) == sizeof(inConsumer.m_texture));
+			memcpy(&inf, &inConsumer.m_texture, sizeof(inf));
 		}
 
 		// Create command buffers and framebuffer
@@ -848,53 +847,51 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 
 			// For all consumers
-			for(const RenderPassDependency& consumer : pass.m_consumers)
+			for(const RenderPassDependency& consumer : pass.m_rtConsumers)
 			{
-				if(consumer.m_isTexture)
-				{
-					setTextureBarrier(batch, consumer);
-				}
-				else
-				{
-					const U32 buffIdx = consumer.m_buffer.m_handle.m_idx;
-					const BufferUsageBit consumerUsage = consumer.m_buffer.m_usage;
+				setTextureBarrier(batch, consumer);
+			}
 
-					if(consumerUsage != ctx.m_buffers[buffIdx].m_usage)
+			for(const RenderPassDependency& consumer : pass.m_buffConsumers)
+			{
+				const U32 buffIdx = consumer.m_buffer.m_handle.m_idx;
+				const BufferUsageBit consumerUsage = consumer.m_buffer.m_usage;
+
+				if(consumerUsage != ctx.m_buffers[buffIdx].m_usage)
+				{
+					const Bool buffHasBarrier = buffHasBarrierMask.get(buffIdx);
+
+					if(!buffHasBarrier)
 					{
-						const Bool buffHasBarrier = buffHasBarrierMask.get(buffIdx);
+						// Buff hasn't had a barrier in this batch, add a new barrier
 
-						if(!buffHasBarrier)
+						batch.m_barriersBefore.emplaceBack(
+							alloc, buffIdx, ctx.m_buffers[buffIdx].m_usage, consumerUsage);
+
+						ctx.m_buffers[buffIdx].m_usage = consumerUsage;
+						buffHasBarrierMask.set(buffIdx);
+					}
+					else
+					{
+						// Buff already in a barrier, merge the 2 barriers
+
+						Barrier* barrierToMergeTo = nullptr;
+						for(Barrier& b : batch.m_barriersBefore)
 						{
-							// Buff hasn't had a barrier in this batch, add a new barrier
-
-							batch.m_barriersBefore.emplaceBack(
-								alloc, buffIdx, ctx.m_buffers[buffIdx].m_usage, consumerUsage);
-
-							ctx.m_buffers[buffIdx].m_usage = consumerUsage;
-							buffHasBarrierMask.set(buffIdx);
-						}
-						else
-						{
-							// Buff already in a barrier, merge the 2 barriers
-
-							Barrier* barrierToMergeTo = nullptr;
-							for(Barrier& b : batch.m_barriersBefore)
+							if(!b.m_isTexture && b.m_buffer.m_idx == buffIdx)
 							{
-								if(!b.m_isTexture && b.m_buffer.m_idx == buffIdx)
-								{
-									barrierToMergeTo = &b;
-									break;
-								}
+								barrierToMergeTo = &b;
+								break;
 							}
-
-							ANKI_ASSERT(barrierToMergeTo);
-							ANKI_ASSERT(!!barrierToMergeTo->m_buffer.m_usageAfter);
-							barrierToMergeTo->m_buffer.m_usageAfter |= consumerUsage;
-							ctx.m_buffers[buffIdx].m_usage = barrierToMergeTo->m_buffer.m_usageAfter;
 						}
+
+						ANKI_ASSERT(barrierToMergeTo);
+						ANKI_ASSERT(!!barrierToMergeTo->m_buffer.m_usageAfter);
+						barrierToMergeTo->m_buffer.m_usageAfter |= consumerUsage;
+						ctx.m_buffers[buffIdx].m_usage = barrierToMergeTo->m_buffer.m_usageAfter;
 					}
 				}
-			} // For all consumers
+			}
 		} // For all passes
 
 #if ANKI_DBG_RENDER_GRAPH
