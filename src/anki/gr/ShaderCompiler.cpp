@@ -249,6 +249,7 @@ static ANKI_USE_RESULT Error genSpirv(const ShaderCompiler::BuildContext& ctx, s
 	// Gen SPIRV
 	glslang::SpvOptions spvOptions;
 	spvOptions.optimizeSize = true;
+	spvOptions.disableOptimizer = true; // Enabling it crashes RADV
 	glslang::GlslangToSpv(*program.getIntermediate(stage), spirv, &spvOptions);
 
 	return Error::NONE;
