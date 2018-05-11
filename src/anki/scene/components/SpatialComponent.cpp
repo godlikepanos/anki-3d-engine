@@ -17,6 +17,7 @@ SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* shape)
 {
 	ANKI_ASSERT(shape);
 	markForUpdate();
+	m_octreeInfo.m_userData = this;
 }
 
 SpatialComponent::~SpatialComponent()

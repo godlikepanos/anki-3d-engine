@@ -9,6 +9,8 @@
 #include <anki/scene/SectorNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/SoftwareRasterizer.h>
+#include <anki/scene/components/FrustumComponent.h>
+#include <anki/scene/Octree.h>
 #include <anki/util/Thread.h>
 #include <anki/core/Trace.h>
 
@@ -174,6 +176,43 @@ public:
 
 private:
 	void rasterize();
+};
+
+/// ThreadHive task to get visible nodes from the octree.
+class GatherVisiblesFromOctreeTask
+{
+public:
+	VisibilityContext* m_visCtx ANKI_DBG_NULLIFY;
+	FrustumComponent* m_frc ANKI_DBG_NULLIFY; ///< What to test against.
+	WeakArray<OctreePlaceable*> m_octreePlaceables; ///< The results of the task.
+
+	/// Thread hive task.
+	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	{
+		GatherVisiblesFromOctreeTask& self = *static_cast<GatherVisiblesFromOctreeTask*>(ud);
+		self.gather();
+	}
+
+private:
+	void gather()
+	{
+		ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_OCTREE);
+		U testIdx = m_visCtx->m_testsCount.fetchAdd(1);
+
+		DynamicArrayAuto<OctreePlaceable*> arr(m_visCtx->m_scene->getFrameAllocator());
+		m_visCtx->m_scene->getOctree().gatherVisible(m_frc->getFrustum(), testIdx, arr);
+
+		if(arr.getSize() > 0)
+		{
+			OctreePlaceable** data;
+			PtrSize size;
+			PtrSize storage;
+			arr.moveAndReset(data, size, storage);
+
+			ANKI_ASSERT(data && size);
+			m_octreePlaceables = WeakArray<OctreePlaceable*>(data, size);
+		}
+	}
 };
 
 /// ThreadHive task to get visible nodes from sectors.

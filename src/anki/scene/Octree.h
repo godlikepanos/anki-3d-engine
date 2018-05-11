@@ -208,6 +208,8 @@ class OctreePlaceable : public NonCopyable
 	friend class Octree;
 
 public:
+	void* m_userData = nullptr;
+
 	void reset()
 	{
 		m_visitedMask.set(0);
