@@ -228,6 +228,12 @@ anki_internal:
 		return m_earlyZDist;
 	}
 
+	Octree& getOctree()
+	{
+		ANKI_ASSERT(m_octree);
+		return *m_octree;
+	}
+
 private:
 	const Timestamp* m_globalTimestamp = nullptr;
 	Timestamp m_timestamp = 0; ///< Cached timestamp

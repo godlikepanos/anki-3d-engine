@@ -325,8 +325,6 @@ void VisibilityTestTask::test(ThreadHive& hive)
 				// Inside
 				ANKI_ASSERT(spIdx < MAX_U8);
 				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx), sp.getSpatialOrigin()};
-
-				sp.setVisibleByCamera(true);
 			}
 
 			++spIdx;
