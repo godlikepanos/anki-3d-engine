@@ -262,8 +262,12 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 	}
 }
 
-void Octree::gatherVisibleRecursive(
-	const Frustum& frustum, U32 testId, Leaf* leaf, DynamicArrayAuto<OctreePlaceable*>& out)
+void Octree::gatherVisibleRecursive(const Frustum& frustum,
+	U32 testId,
+	OctreeNodeVisibilityTestCallback testCallback,
+	void* testCallbackUserData,
+	Leaf* leaf,
+	DynamicArrayAuto<OctreePlaceable*>& out)
 {
 	ANKI_ASSERT(leaf);
 
@@ -284,9 +288,16 @@ void Octree::gatherVisibleRecursive(
 		{
 			aabb.setMin(Vec4(child->m_aabbMin, 0.0f));
 			aabb.setMax(Vec4(child->m_aabbMax, 0.0f));
-			if(frustum.insideFrustum(aabb))
+
+			Bool inside = frustum.insideFrustum(aabb);
+			if(inside && testCallback != nullptr)
 			{
-				gatherVisibleRecursive(frustum, testId, child, out);
+				inside = testCallback(testCallbackUserData, aabb);
+			}
+
+			if(inside)
+			{
+				gatherVisibleRecursive(frustum, testId, testCallback, testCallbackUserData, child, out);
 			}
 		}
 	}

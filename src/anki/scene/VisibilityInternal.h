@@ -184,6 +184,7 @@ class GatherVisiblesFromOctreeTask
 public:
 	VisibilityContext* m_visCtx ANKI_DBG_NULLIFY;
 	FrustumComponent* m_frc ANKI_DBG_NULLIFY; ///< What to test against.
+	SoftwareRasterizer* m_rasterizer ANKI_DBG_NULLIFY;
 	WeakArray<OctreePlaceable*> m_octreePlaceables; ///< The results of the task.
 
 	/// Thread hive task.
@@ -194,25 +195,7 @@ public:
 	}
 
 private:
-	void gather()
-	{
-		ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_OCTREE);
-		U testIdx = m_visCtx->m_testsCount.fetchAdd(1);
-
-		DynamicArrayAuto<OctreePlaceable*> arr(m_visCtx->m_scene->getFrameAllocator());
-		m_visCtx->m_scene->getOctree().gatherVisible(m_frc->getFrustum(), testIdx, arr);
-
-		if(arr.getSize() > 0)
-		{
-			OctreePlaceable** data;
-			PtrSize size;
-			PtrSize storage;
-			arr.moveAndReset(data, size, storage);
-
-			ANKI_ASSERT(data && size);
-			m_octreePlaceables = WeakArray<OctreePlaceable*>(data, size);
-		}
-	}
+	void gather();
 };
 
 /// ThreadHive task to get visible nodes from sectors.

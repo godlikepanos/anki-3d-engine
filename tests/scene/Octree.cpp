@@ -55,7 +55,7 @@ ANKI_TEST(Scene, Octree)
 				}
 
 				DynamicArrayAuto<OctreePlaceable*> arr(alloc);
-				octree.gatherVisible(frustum, 0, arr);
+				octree.gatherVisible(frustum, 0, nullptr, nullptr, arr);
 
 				ANKI_TEST_EXPECT_EQ(arr.getSize(), placed.size());
 				for(U32 idx : placed)

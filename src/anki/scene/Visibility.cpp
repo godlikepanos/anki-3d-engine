@@ -212,6 +212,36 @@ void RasterizeTrianglesTask::rasterize()
 	}
 }
 
+void GatherVisiblesFromOctreeTask::gather()
+{
+	ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_OCTREE);
+
+	U testIdx = m_visCtx->m_testsCount.fetchAdd(1);
+
+	// Extra tests callback
+	auto testCallback = [](void* rasterizer, const Aabb& box) -> Bool {
+		ANKI_ASSERT(rasterizer);
+		SoftwareRasterizer* r = static_cast<SoftwareRasterizer*>(rasterizer);
+		return r->visibilityTest(box, box);
+	};
+
+	// Test
+	DynamicArrayAuto<OctreePlaceable*> arr(m_visCtx->m_scene->getFrameAllocator());
+	m_visCtx->m_scene->getOctree().gatherVisible(m_frc->getFrustum(), testIdx, testCallback, m_rasterizer, arr);
+
+	// Store results
+	if(arr.getSize() > 0)
+	{
+		OctreePlaceable** data;
+		PtrSize size;
+		PtrSize storage;
+		arr.moveAndReset(data, size, storage);
+
+		ANKI_ASSERT(data && size);
+		m_octreePlaceables = WeakArray<OctreePlaceable*>(data, size);
+	}
+}
+
 void VisibilityTestTask::test(ThreadHive& hive)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_TEST);

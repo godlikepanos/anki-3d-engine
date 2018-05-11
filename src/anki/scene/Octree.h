@@ -22,6 +22,9 @@ class OctreePlaceable;
 /// @addtogroup scene
 /// @{
 
+/// Callback to determine if an octree node is visible.
+using OctreeNodeVisibilityTestCallback = Bool (*)(void* userData, const Aabb& box);
+
 /// Octree for visibility tests.
 class Octree : public NonCopyable
 {
@@ -46,10 +49,20 @@ public:
 	void remove(OctreePlaceable& placeable);
 
 	/// Gather visible placeables.
+	/// @param frustum The frustum to test against.
+	/// @param testId A unique index for this test.
+	/// @param testCallback A ptr to a function that will be used to perform an additional test to the box of the
+	///                     Octree node. Can be nullptr.
+	/// @param testCallbackUserData Parameter to the testCallback. Can be nullptr.
+	/// @param out The output of the tests.
 	/// @note It's thread-safe against other gatherVisible calls.
-	void gatherVisible(const Frustum& frustum, U32 testId, DynamicArrayAuto<OctreePlaceable*>& out)
+	void gatherVisible(const Frustum& frustum,
+		U32 testId,
+		OctreeNodeVisibilityTestCallback testCallback,
+		void* testCallbackUserData,
+		DynamicArrayAuto<OctreePlaceable*>& out)
 	{
-		gatherVisibleRecursive(frustum, testId, m_rootLeaf, out);
+		gatherVisibleRecursive(frustum, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
 	}
 
 private:
@@ -192,8 +205,12 @@ private:
 	/// Remove a placeable from the tree.
 	void removeInternal(OctreePlaceable& placeable);
 
-	static void gatherVisibleRecursive(
-		const Frustum& frustum, U32 testId, Leaf* leaf, DynamicArrayAuto<OctreePlaceable*>& out);
+	static void gatherVisibleRecursive(const Frustum& frustum,
+		U32 testId,
+		OctreeNodeVisibilityTestCallback testCallback,
+		void* testCallbackUserData,
+		Leaf* leaf,
+		DynamicArrayAuto<OctreePlaceable*>& out);
 
 	/// Remove a leaf.
 	void cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafUponReturn);
