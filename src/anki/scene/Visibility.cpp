@@ -105,14 +105,14 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 		}
 	}
 
-	// Gather visibles from sector
-	GatherVisiblesFromSectorsTask* gather = alloc.newInstance<GatherVisiblesFromSectorsTask>();
+	// Gather visibles from octree
+	GatherVisiblesFromOctreeTask* gather = alloc.newInstance<GatherVisiblesFromOctreeTask>();
 	gather->m_visCtx = this;
 	gather->m_frc = &frc;
-	gather->m_r = r;
+	gather->m_rasterizer = r;
 
 	ThreadHiveTask gatherTask;
-	gatherTask.m_callback = GatherVisiblesFromSectorsTask::callback;
+	gatherTask.m_callback = GatherVisiblesFromOctreeTask::callback;
 	gatherTask.m_argument = gather;
 	if(r)
 	{
@@ -131,7 +131,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 		auto& test = tests[i];
 		test.m_visCtx = this;
 		test.m_frc = &frc;
-		test.m_sectorsCtx = &gather->m_sectorsCtx;
+		test.m_octreePlaceables = &gather->m_octreePlaceables;
 		test.m_taskIdx = i;
 		test.m_taskCount = testCount;
 		test.m_r = r;
@@ -227,7 +227,8 @@ void GatherVisiblesFromOctreeTask::gather()
 
 	// Test
 	DynamicArrayAuto<OctreePlaceable*> arr(m_visCtx->m_scene->getFrameAllocator());
-	m_visCtx->m_scene->getOctree().gatherVisible(m_frc->getFrustum(), testIdx, testCallback, m_rasterizer, arr);
+	OctreeNodeVisibilityTestCallback cb = (m_rasterizer) ? testCallback : nullptr;
+	m_visCtx->m_scene->getOctree().gatherVisible(m_frc->getFrustum(), testIdx, cb, m_rasterizer, arr);
 
 	// Store results
 	if(arr.getSize() > 0)
@@ -279,9 +280,13 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 	// Chose the test range and a few other things
 	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(m_taskIdx, m_taskCount, m_sectorsCtx->getVisibleSceneNodeCount(), start, end);
+	ThreadPoolTask::choseStartEnd(m_taskIdx, m_taskCount, m_octreePlaceables->getSize(), start, end);
+	for(U i = start; i < end; ++i)
+	{
+		OctreePlaceable* placeable = (*m_octreePlaceables)[i];
+		SpatialComponent* spatialC = static_cast<SpatialComponent*>(placeable->m_userData);
+		SceneNode& node = spatialC->getSceneNode();
 
-	m_sectorsCtx->iterateVisibleSceneNodes(start, end, [&](SceneNode& node) {
 		// Skip if it is the same
 		if(ANKI_UNLIKELY(&testedNode == &node))
 		{
@@ -523,7 +528,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		// Update timestamp
 		m_timestamp = max(m_timestamp, node.getComponentMaxTimestamp());
-	}); // end for
+	} // end for
 }
 
 void CombineResultsTask::combine()

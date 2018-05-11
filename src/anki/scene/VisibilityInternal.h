@@ -230,7 +230,7 @@ class VisibilityTestTask
 public:
 	WeakPtr<VisibilityContext> m_visCtx;
 	WeakPtr<FrustumComponent> m_frc;
-	WeakPtr<SectorGroupVisibilityTestsContext> m_sectorsCtx;
+	WeakArray<OctreePlaceable*>* m_octreePlaceables ANKI_DBG_NULLIFY;
 	U32 m_taskIdx;
 	U32 m_taskCount;
 	RenderQueueView m_result; ///< Sub result. Will be combined later.
