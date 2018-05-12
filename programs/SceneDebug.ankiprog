@@ -61,7 +61,8 @@ layout(ANKI_UBO_BINDING(1, 0), row_major) uniform u0_
 	vec4 u_color;
 };
 
-#if DITHERED_DEPTH_TEST == 1
+// NOTE: Don't eliminate the binding because it confuses the descriptor set creation
+#if DITHERED_DEPTH_TEST == 1 || 1
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
 #endif
 
