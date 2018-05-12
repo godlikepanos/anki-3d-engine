@@ -25,6 +25,13 @@ class OctreePlaceable;
 /// Callback to determine if an octree node is visible.
 using OctreeNodeVisibilityTestCallback = Bool (*)(void* userData, const Aabb& box);
 
+/// Octree debug drawer.
+class OctreeDebugDrawer
+{
+public:
+	virtual void drawCube(const Aabb& box, const Vec4& color) = 0;
+};
+
 /// Octree for visibility tests.
 class Octree : public NonCopyable
 {
@@ -63,6 +70,13 @@ public:
 		DynamicArrayAuto<OctreePlaceable*>& out)
 	{
 		gatherVisibleRecursive(frustum, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
+	}
+
+	/// Debug draw.
+	void debugDraw(OctreeDebugDrawer& drawer) const
+	{
+		ANKI_ASSERT(m_rootLeaf);
+		debugDrawRecursive(*m_rootLeaf, drawer);
 	}
 
 private:
@@ -217,6 +231,9 @@ private:
 
 	/// Cleanup the tree.
 	void cleanupInternal();
+
+	/// Debug draw.
+	void debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) const;
 };
 
 /// An entity that can be placed in octrees.

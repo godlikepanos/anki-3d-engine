@@ -11,6 +11,30 @@
 namespace anki
 {
 
+/// Return a heatmap color.
+static Vec3 heatmap(F32 factor)
+{
+	F32 intPart;
+	const F32 fractional = modf(factor * 4.0f, intPart);
+
+	if(intPart < 1.0)
+	{
+		return mix(Vec3(0.0, 0.0, 0.0), Vec3(0.0, 0.0, 1.0), fractional);
+	}
+	else if(intPart < 2.0)
+	{
+		return mix(Vec3(0.0, 0.0, 1.0), Vec3(0.0, 1.0, 0.0), fractional);
+	}
+	else if(intPart < 3.0)
+	{
+		return mix(Vec3(0.0, 1.0, 0.0), Vec3(1.0, 1.0, 0.0), fractional);
+	}
+	else
+	{
+		return mix(Vec3(1.0, 1.0, 0.0), Vec3(1.0, 0.0, 0.0), fractional);
+	}
+}
+
 Octree::~Octree()
 {
 	ANKI_ASSERT(m_placeableCount == 0);
@@ -31,8 +55,7 @@ void Octree::init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDep
 void Octree::place(const Aabb& volume, OctreePlaceable* placeable)
 {
 	ANKI_ASSERT(placeable);
-	ANKI_ASSERT(testCollisionShapes(volume, Aabb(Vec4(Vec3(m_sceneAabbMin), 0.0f), Vec4(Vec3(m_sceneAabbMax), 0.0f)))
-				&& "volume is outside the scene");
+	ANKI_ASSERT(testCollisionShapes(volume, Aabb(m_sceneAabbMin, m_sceneAabbMax)) && "volume is outside the scene");
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
@@ -62,8 +85,7 @@ void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf
 {
 	ANKI_ASSERT(placeable);
 	ANKI_ASSERT(parent);
-	ANKI_ASSERT(testCollisionShapes(volume, Aabb(Vec4(parent->m_aabbMin, 0.0f), Vec4(parent->m_aabbMax, 0.0f)))
-				&& "Should be inside");
+	ANKI_ASSERT(testCollisionShapes(volume, Aabb(parent->m_aabbMin, parent->m_aabbMax)) && "Should be inside");
 
 	if(depth == m_maxDepth)
 	{
@@ -288,8 +310,8 @@ void Octree::gatherVisibleRecursive(const Frustum& frustum,
 	{
 		if(child)
 		{
-			aabb.setMin(Vec4(child->m_aabbMin, 0.0f));
-			aabb.setMax(Vec4(child->m_aabbMax, 0.0f));
+			aabb.setMin(child->m_aabbMin);
+			aabb.setMax(child->m_aabbMax);
 
 			Bool inside = frustum.insideFrustum(aabb);
 			if(inside && testCallback != nullptr)
@@ -343,6 +365,24 @@ void Octree::cleanupInternal()
 		{
 			releaseLeaf(m_rootLeaf);
 			m_rootLeaf = nullptr;
+		}
+	}
+}
+
+void Octree::debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) const
+{
+	const U32 placeableCount = leaf.m_placeables.getSize();
+	const Vec3 heat = heatmap(10.0f / placeableCount);
+
+	const Aabb box(leaf.m_aabbMin, leaf.m_aabbMax);
+	drawer.drawCube(box, Vec4(heat, 1.0f));
+
+	for(U i = 0; i < 8; ++i)
+	{
+		Leaf* const child = leaf.m_children[i];
+		if(child)
+		{
+			debugDrawRecursive(*child, drawer);
 		}
 	}
 }
