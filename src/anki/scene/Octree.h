@@ -209,6 +209,8 @@ private:
 
 	void placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf* parent, U32 depth);
 
+	static Bool volumeTotallyInsideLeaf(const Aabb& volume, const Leaf& leaf);
+
 	static void computeChildAabb(LeafMask child,
 		const Vec3& parentAabbMin,
 		const Vec3& parentAabbMax,

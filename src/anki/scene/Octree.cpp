@@ -81,13 +81,31 @@ void Octree::remove(OctreePlaceable& placeable)
 	removeInternal(placeable);
 }
 
+Bool Octree::volumeTotallyInsideLeaf(const Aabb& volume, const Leaf& leaf)
+{
+	const Vec4& amin = volume.getMin();
+	const Vec4& amax = volume.getMax();
+	const Vec3& bmin = leaf.m_aabbMin;
+	const Vec3& bmax = leaf.m_aabbMax;
+
+	Bool superset = true;
+	superset = superset && amin.x() <= bmin.x();
+	superset = superset && amax.x() >= bmax.x();
+	superset = superset && amin.y() <= bmin.y();
+	superset = superset && amax.y() >= bmax.y();
+	superset = superset && amin.z() <= bmin.z();
+	superset = superset && amax.z() >= bmax.z();
+
+	return superset;
+}
+
 void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf* parent, U32 depth)
 {
 	ANKI_ASSERT(placeable);
 	ANKI_ASSERT(parent);
 	ANKI_ASSERT(testCollisionShapes(volume, Aabb(parent->m_aabbMin, parent->m_aabbMax)) && "Should be inside");
 
-	if(depth == m_maxDepth)
+	if(depth == m_maxDepth || volumeTotallyInsideLeaf(volume, *parent))
 	{
 		// Need to stop and bin the placeable to the leaf
 
@@ -372,10 +390,10 @@ void Octree::cleanupInternal()
 void Octree::debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) const
 {
 	const U32 placeableCount = leaf.m_placeables.getSize();
-	const Vec3 heat = heatmap(10.0f / placeableCount);
+	const Vec3 color = (placeableCount > 0) ? heatmap(10.0f / placeableCount) : Vec3(0.25f);
 
 	const Aabb box(leaf.m_aabbMin, leaf.m_aabbMax);
-	drawer.drawCube(box, Vec4(heat, 1.0f));
+	drawer.drawCube(box, Vec4(color, 1.0f));
 
 	for(U i = 0; i < 8; ++i)
 	{

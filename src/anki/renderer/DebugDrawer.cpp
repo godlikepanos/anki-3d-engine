@@ -17,143 +17,69 @@
 namespace anki
 {
 
-DebugDrawer::DebugDrawer()
-{
-}
-
-DebugDrawer::~DebugDrawer()
-{
-}
-
 Error DebugDrawer::init(Renderer* r)
 {
+	ANKI_ASSERT(r);
 	m_r = r;
-	GrManager& gr = r->getGrManager();
 
 	// Create the prog and shaders
-	ANKI_CHECK(r->getResourceManager().loadResource("programs/Dbg.ankiprog", m_prog));
+	ANKI_CHECK(r->getResourceManager().loadResource("programs/SceneDebug.ankiprog", m_prog));
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("INSTANCE_COUNT", 1u);
+	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
+	mutations.add("COLOR_TEXTURE", 0).add("DITHERED_DEPTH_TEST", 0);
+
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variant);
+	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
 	m_grProg = variant->getProgram();
-
-	// Create the vert buffs
-	for(BufferPtr& v : m_vertBuff)
-	{
-		v = gr.newBuffer(BufferInitInfo(
-			sizeof(Vertex) * MAX_VERTS_PER_FRAME, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE, "DbgDrawer"));
-	}
-
-	m_mMat.setIdentity();
-	m_vpMat.setIdentity();
-	m_mvpMat.setIdentity();
 
 	return Error::NONE;
 }
 
-void DebugDrawer::prepareFrame(CommandBufferPtr& jobs)
-{
-	m_cmdb = jobs;
-
-	U frame = m_r->getFrameCount() % MAX_FRAMES_IN_FLIGHT;
-	void* mapped = m_vertBuff[frame]->map(0, MAX_VERTS_PER_FRAME * sizeof(Vertex), BufferMapAccessBit::WRITE);
-	m_clientVerts = WeakArray<Vertex>(static_cast<Vertex*>(mapped), MAX_VERTS_PER_FRAME);
-
-	m_cmdb->bindVertexBuffer(0, m_vertBuff[frame], 0, 2 * sizeof(Vec4));
-	m_cmdb->setVertexAttribute(0, 0, Format::R32G32B32A32_SFLOAT, 0);
-	m_cmdb->setVertexAttribute(1, 0, Format::R32G32B32A32_SFLOAT, sizeof(Vec4));
-
-	m_cmdb->bindShaderProgram(m_grProg);
-
-	m_frameVertCount = 0;
-	m_crntDrawVertCount = 0;
-}
-
-void DebugDrawer::finishFrame()
-{
-	U frame = m_r->getFrameCount() % MAX_FRAMES_IN_FLIGHT;
-	m_vertBuff[frame]->unmap();
-
-	flush();
-
-	// Restore state
-	m_cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
-
-	m_cmdb = CommandBufferPtr(); // Release command buffer
-}
-
-void DebugDrawer::setModelMatrix(const Mat4& m)
-{
-	m_mMat = m;
-	m_mvpMat = m_vpMat * m_mMat;
-}
-
-void DebugDrawer::setViewProjectionMatrix(const Mat4& m)
-{
-	m_vpMat = m;
-	m_mvpMat = m_vpMat * m_mMat;
-}
-
-void DebugDrawer::begin(PrimitiveTopology topology)
-{
-	ANKI_ASSERT(topology == PrimitiveTopology::LINES || topology == PrimitiveTopology::TRIANGLES);
-
-	if(topology != m_primitive)
-	{
-		flush();
-	}
-
-	m_primitive = topology;
-}
-
-void DebugDrawer::end()
-{
-}
-
-void DebugDrawer::pushBackVertex(const Vec3& pos)
-{
-	if(m_frameVertCount < MAX_VERTS_PER_FRAME)
-	{
-		m_clientVerts[m_frameVertCount].m_position = m_mvpMat * Vec4(pos, 1.0);
-		m_clientVerts[m_frameVertCount].m_color = Vec4(m_crntCol, 1.0);
-
-		++m_frameVertCount;
-		++m_crntDrawVertCount;
-	}
-	else
-	{
-		ANKI_R_LOGW("Increase DebugDrawer::MAX_VERTS_PER_FRAME");
-	}
-}
-
 void DebugDrawer::flush()
 {
-	if(m_crntDrawVertCount > 0)
+	if(m_cachedPositionCount > 0)
 	{
-		if(m_primitive == PrimitiveTopology::LINES)
+		m_cmdb->bindShaderProgram(m_grProg);
+
+		// Set vertex state
+		const U32 size = m_cachedPositionCount * sizeof(Vec3);
+
+		StagingGpuMemoryToken token;
+		void* mem = m_r->getStagingGpuMemoryManager().allocateFrame(size, StagingGpuMemoryType::VERTEX, token);
+		memcpy(mem, &m_cachedPositions[0], size);
+
+		m_cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, sizeof(Vec3));
+		m_cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+
+		// Set uniform state
+		struct Uniforms
 		{
-			ANKI_ASSERT((m_crntDrawVertCount % 2) == 0);
-		}
-		else
-		{
-			ANKI_ASSERT((m_crntDrawVertCount % 3) == 0);
-		}
+			Mat4 m_mvp;
+			Vec4 m_color;
+		};
 
-		m_cmdb->setDepthCompareOperation((m_depthTestEnabled) ? CompareOperation::LESS : CompareOperation::ALWAYS);
+		Uniforms* uniforms = static_cast<Uniforms*>(
+			m_r->getStagingGpuMemoryManager().allocateFrame(sizeof(Uniforms), StagingGpuMemoryType::UNIFORM, token));
+		uniforms->m_mvp = m_mvpMat;
+		uniforms->m_color = m_crntCol;
 
-		U firstVert = m_frameVertCount - m_crntDrawVertCount;
-		m_cmdb->drawArrays(m_primitive, m_crntDrawVertCount, 1, firstVert);
+		m_cmdb->bindUniformBuffer(1, 0, token.m_buffer, token.m_offset, token.m_range);
 
-		m_crntDrawVertCount = 0;
+		// Draw
+		m_cmdb->drawArrays(m_topology, m_cachedPositionCount);
+
+		// Other
+		m_cachedPositionCount = 0;
 	}
 }
 
 void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 {
 	setColor(color);
-	begin(PrimitiveTopology::LINES);
+	setTopology(PrimitiveTopology::LINES);
 	pushBackVertex(from);
 	pushBackVertex(to);
-	end();
 }
 
 void DebugDrawer::drawGrid()
@@ -168,8 +94,7 @@ void DebugDrawer::drawGrid()
 	const F32 GRID_HALF_SIZE = ((NUM - 1) * SPACE / 2);
 
 	setColor(col0);
-
-	begin(PrimitiveTopology::LINES);
+	setTopology(PrimitiveTopology::LINES);
 
 	for(I x = -NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
 	{
@@ -211,20 +136,14 @@ void DebugDrawer::drawGrid()
 			pushBackVertex(Vec3(GRID_HALF_SIZE, 0.0, x));
 		}
 	}
-
-	// render
-	end();
 }
 
 void DebugDrawer::drawSphere(F32 radius, I complexity)
 {
-#if 1
 	Mat4 oldMMat = m_mMat;
-	Mat4 oldVpMat = m_vpMat;
 
 	setModelMatrix(m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0), Mat3::getIdentity(), radius));
-
-	begin(PrimitiveTopology::LINES);
+	setTopology(PrimitiveTopology::LINES);
 
 	// Pre-calculate the sphere points5
 	F32 fi = PI / complexity;
@@ -253,11 +172,7 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 		prev = p;
 	}
 
-	end();
-
-	m_mMat = oldMMat;
-	m_vpMat = oldVpMat;
-#endif
+	setModelMatrix(oldMMat);
 }
 
 void DebugDrawer::drawCube(F32 size)
@@ -278,12 +193,11 @@ void DebugDrawer::drawCube(F32 size)
 
 	static const Array<U32, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
-	begin(PrimitiveTopology::LINES);
+	setTopology(PrimitiveTopology::LINES);
 	for(U32 id : indeces)
 	{
 		pushBackVertex(points[id]);
 	}
-	end();
 }
 
 void CollisionDebugDrawer::visit(const Sphere& sphere)
@@ -322,10 +236,9 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 void CollisionDebugDrawer::visit(const LineSegment& ls)
 {
 	m_dbg->setModelMatrix(Mat4::getIdentity());
-	m_dbg->begin(PrimitiveTopology::LINES);
+	m_dbg->setTopology(PrimitiveTopology::LINES);
 	m_dbg->pushBackVertex(ls.getOrigin().xyz());
 	m_dbg->pushBackVertex((ls.getOrigin() + ls.getDirection()).xyz());
-	m_dbg->end();
 }
 
 void CollisionDebugDrawer::visit(const Aabb& aabb)
@@ -372,12 +285,11 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 
 		const U32 indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2, 3, 3, 4, 4, 1};
 
-		m_dbg->begin(PrimitiveTopology::LINES);
+		m_dbg->setTopology(PrimitiveTopology::LINES);
 		for(U32 i = 0; i < sizeof(indeces) / sizeof(U32); i++)
 		{
 			m_dbg->pushBackVertex(points[indeces[i]]);
 		}
-		m_dbg->end();
 		break;
 	}
 	}
@@ -396,7 +308,7 @@ void CollisionDebugDrawer::visit(const CompoundShape& cs)
 void CollisionDebugDrawer::visit(const ConvexHullShape& hull)
 {
 	m_dbg->setModelMatrix(Mat4(hull.getTransform()));
-	m_dbg->begin(PrimitiveTopology::LINES);
+	m_dbg->setTopology(PrimitiveTopology::LINES);
 	const Vec4* points = hull.getPoints() + 1;
 	const Vec4* end = hull.getPoints() + hull.getPointsCount();
 	for(; points != end; ++points)
@@ -404,36 +316,16 @@ void CollisionDebugDrawer::visit(const ConvexHullShape& hull)
 		m_dbg->pushBackVertex(hull.getPoints()->xyz());
 		m_dbg->pushBackVertex(points->xyz());
 	}
-	m_dbg->end();
 }
 
 void PhysicsDebugDrawer::drawLines(const Vec3* lines, const U32 linesCount, const Vec4& color)
 {
-	m_dbg->begin(PrimitiveTopology::LINES);
+	m_dbg->setTopology(PrimitiveTopology::LINES);
 	m_dbg->setColor(color);
 	for(U i = 0; i < linesCount * 2; ++i)
 	{
 		m_dbg->pushBackVertex(lines[i]);
 	}
-	m_dbg->end();
-}
-
-void SceneDebugDrawer::draw(const RenderableQueueElement& r) const
-{
-	// TODO
-}
-
-void SceneDebugDrawer::draw(const PointLightQueueElement& light) const
-{
-	m_dbg->setColor(light.m_diffuseColor);
-	CollisionDebugDrawer coldraw(m_dbg);
-	Sphere sphere(light.m_worldPosition.xyz0(), light.m_radius);
-	sphere.accept(coldraw);
-}
-
-void SceneDebugDrawer::draw(const SpotLightQueueElement& light) const
-{
-	// TODO
 }
 
 } // end namespace anki
