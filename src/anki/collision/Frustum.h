@@ -60,20 +60,22 @@ public:
 	{
 		return m_near;
 	}
+
 	void setNear(const F32 x)
 	{
 		m_near = x;
-		m_frustumDirty = true;
+		update();
 	}
 
 	F32 getFar() const
 	{
 		return m_far;
 	}
+
 	void setFar(const F32 x)
 	{
 		m_far = x;
-		m_frustumDirty = true;
+		update();
 	}
 
 	const Transform& getTransform() const
@@ -124,9 +126,6 @@ protected:
 	/// Keep the transformation.
 	Transform m_trf = Transform::getIdentity();
 
-	/// It's true when the frustum changed
-	Bool8 m_frustumDirty = true;
-
 	/// Called when a viewing variable changes. It recalculates the planes and the other variables.
 	virtual void recalculate() = 0;
 
@@ -134,15 +133,13 @@ protected:
 	virtual void onTransform() = 0;
 
 	/// Update if dirty
-	void update() const;
-	void updateInternal();
+	void update();
 
 	/// Copy
 	Frustum& operator=(const Frustum& b);
 
 private:
 	FrustumType m_type;
-	SpinLock m_lock;
 };
 
 /// Frustum shape for perspective cameras
@@ -174,7 +171,7 @@ public:
 	void setFovX(F32 ang)
 	{
 		m_fovX = ang;
-		m_frustumDirty = true;
+		update();
 	}
 
 	/// Get FOV on Y axis.
@@ -185,7 +182,7 @@ public:
 	void setFovY(F32 ang)
 	{
 		m_fovY = ang;
-		m_frustumDirty = true;
+		update();
 	}
 
 	/// Set all the parameters and recalculate the planes and shape
@@ -199,12 +196,11 @@ public:
 		m_fovY = fovY;
 		m_near = near;
 		m_far = far;
-		m_frustumDirty = true;
+		update();
 	}
 
 	const Array<Vec4, 5>& getPoints() const
 	{
-		update();
 		return m_pointsW;
 	}
 
@@ -269,40 +265,44 @@ public:
 	{
 		return m_left;
 	}
+
 	void setLeft(F32 f)
 	{
 		m_left = f;
-		m_frustumDirty = true;
+		update();
 	}
 
 	F32 getRight() const
 	{
 		return m_right;
 	}
+
 	void setRight(F32 f)
 	{
 		m_right = f;
-		m_frustumDirty = true;
+		update();
 	}
 
 	F32 getTop() const
 	{
 		return m_top;
 	}
+
 	void setTop(F32 f)
 	{
 		m_top = f;
-		m_frustumDirty = true;
+		update();
 	}
 
 	F32 getBottom() const
 	{
 		return m_bottom;
 	}
+
 	void setBottom(F32 f)
 	{
 		m_bottom = f;
-		m_frustumDirty = true;
+		update();
 	}
 
 	/// Set all
@@ -315,13 +315,12 @@ public:
 		m_far = far;
 		m_top = top;
 		m_bottom = bottom;
-		m_frustumDirty = true;
+		update();
 	}
 
 	/// Needed for debug drawing
 	const Obb& getObb() const
 	{
-		update();
 		return m_obbW;
 	}
 
