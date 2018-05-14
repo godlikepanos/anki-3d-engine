@@ -290,7 +290,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 		// Skip if it is the same
 		if(ANKI_UNLIKELY(&testedNode == &node))
 		{
-			return;
+			continue;
 		}
 
 		// Check what components the frustum needs
@@ -340,7 +340,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 		if(ANKI_UNLIKELY(!wantNode))
 		{
 			// Skip node
-			return;
+			continue;
 		}
 
 		// Test all spatial components of that node
@@ -370,7 +370,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		if(ANKI_UNLIKELY(count == 0))
 		{
-			return;
+			continue;
 		}
 
 		ANKI_ASSERT(count == 1 && "TODO: Support sub-spatials");
