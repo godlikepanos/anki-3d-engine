@@ -131,7 +131,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 		auto& test = tests[i];
 		test.m_visCtx = this;
 		test.m_frc = &frc;
-		test.m_octreePlaceables = &gather->m_octreePlaceables;
+		test.m_visibleSpatialComponents = &gather->m_visibleSpatialComponents;
 		test.m_taskIdx = i;
 		test.m_taskCount = testCount;
 		test.m_r = r;
@@ -167,7 +167,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 
 void GatherVisibleTrianglesTask::gather()
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_GATHER_TRIANGLES);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_GATHER_TRIANGLES);
 
 	auto alloc = m_visCtx->m_scene->getFrameAllocator();
 	m_verts.create(alloc, TRIANGLES_INITIAL_SIZE);
@@ -201,7 +201,7 @@ void GatherVisibleTrianglesTask::gather()
 
 void RasterizeTrianglesTask::rasterize()
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_RASTERIZE);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_RASTERIZE);
 
 	const U totalVertCount = m_gatherTask->m_vertCount;
 
@@ -214,7 +214,7 @@ void RasterizeTrianglesTask::rasterize()
 
 void GatherVisiblesFromOctreeTask::gather()
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_OCTREE);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_OCTREE);
 
 	U testIdx = m_visCtx->m_testsCount.fetchAdd(1);
 
@@ -222,30 +222,32 @@ void GatherVisiblesFromOctreeTask::gather()
 	auto testCallback = [](void* rasterizer, const Aabb& box) -> Bool {
 		ANKI_ASSERT(rasterizer);
 		SoftwareRasterizer* r = static_cast<SoftwareRasterizer*>(rasterizer);
-		return r->visibilityTest(box, box);
+		Bool inside = r->visibilityTest(box, box);
+		return inside;
 	};
 
 	// Test
-	DynamicArrayAuto<OctreePlaceable*> arr(m_visCtx->m_scene->getFrameAllocator());
-	OctreeNodeVisibilityTestCallback cb = (m_rasterizer) ? testCallback : nullptr;
+	DynamicArrayAuto<void*> arr(m_visCtx->m_scene->getFrameAllocator());
+	OctreeNodeVisibilityTestCallback cb =
+		(m_rasterizer) ? testCallback : static_cast<OctreeNodeVisibilityTestCallback>(nullptr);
 	m_visCtx->m_scene->getOctree().gatherVisible(m_frc->getFrustum(), testIdx, cb, m_rasterizer, arr);
 
 	// Store results
 	if(arr.getSize() > 0)
 	{
-		OctreePlaceable** data;
+		void** data;
 		PtrSize size;
 		PtrSize storage;
 		arr.moveAndReset(data, size, storage);
 
 		ANKI_ASSERT(data && size);
-		m_octreePlaceables = WeakArray<OctreePlaceable*>(data, size);
+		m_visibleSpatialComponents = WeakArray<void*>(data, size);
 	}
 }
 
 void VisibilityTestTask::test(ThreadHive& hive)
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_TEST);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TEST);
 
 	FrustumComponent& testedFrc = *m_frc;
 	ANKI_ASSERT(testedFrc.anyVisibilityTestEnabled());
@@ -280,11 +282,11 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 	// Chose the test range and a few other things
 	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(m_taskIdx, m_taskCount, m_octreePlaceables->getSize(), start, end);
+	ThreadPoolTask::choseStartEnd(m_taskIdx, m_taskCount, m_visibleSpatialComponents->getSize(), start, end);
 	for(U i = start; i < end; ++i)
 	{
-		OctreePlaceable* placeable = (*m_octreePlaceables)[i];
-		SpatialComponent* spatialC = static_cast<SpatialComponent*>(placeable->m_userData);
+		void* spatialCPtr = (*m_visibleSpatialComponents)[i];
+		SpatialComponent* spatialC = static_cast<SpatialComponent*>(spatialCPtr);
 		SceneNode& node = spatialC->getSceneNode();
 
 		// Skip if it is the same
@@ -533,7 +535,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 void CombineResultsTask::combine()
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_COMBINE_RESULTS);
 
 	auto alloc = m_visCtx->m_scene->getFrameAllocator();
 
@@ -716,7 +718,7 @@ void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
 
 void doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueue& rqueue)
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_TESTS);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TESTS);
 
 	ThreadHive& hive = scene.getThreadHive();
 	scene.getSectorGroup().prepareForVisibilityTests();

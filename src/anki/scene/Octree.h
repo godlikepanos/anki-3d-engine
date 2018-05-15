@@ -67,7 +67,7 @@ public:
 		U32 testId,
 		OctreeNodeVisibilityTestCallback testCallback,
 		void* testCallbackUserData,
-		DynamicArrayAuto<OctreePlaceable*>& out)
+		DynamicArrayAuto<void*>& out)
 	{
 		gatherVisibleRecursive(frustum, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
 	}
@@ -226,7 +226,7 @@ private:
 		OctreeNodeVisibilityTestCallback testCallback,
 		void* testCallbackUserData,
 		Leaf* leaf,
-		DynamicArrayAuto<OctreePlaceable*>& out);
+		DynamicArrayAuto<void*>& out);
 
 	/// Remove a leaf.
 	void cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafUponReturn);

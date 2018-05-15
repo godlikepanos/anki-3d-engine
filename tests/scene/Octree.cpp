@@ -35,6 +35,7 @@ ANKI_TEST(Scene, Octree)
 			if(mode == 0)
 			{
 				// Place
+				placeables[i].m_userData = &placeables[i];
 				octree.place(volume, &placeables[i]);
 				placed.push_back(i);
 			}
@@ -54,16 +55,16 @@ ANKI_TEST(Scene, Octree)
 					placeables[idx].reset();
 				}
 
-				DynamicArrayAuto<OctreePlaceable*> arr(alloc);
+				DynamicArrayAuto<void*> arr(alloc);
 				octree.gatherVisible(frustum, 0, nullptr, nullptr, arr);
 
 				ANKI_TEST_EXPECT_EQ(arr.getSize(), placed.size());
 				for(U32 idx : placed)
 				{
 					Bool found = false;
-					for(OctreePlaceable* placeable : arr)
+					for(void* placeable : arr)
 					{
-						if(&placeables[idx] == placeable)
+						if(&placeables[idx] == static_cast<OctreePlaceable*>(placeable))
 						{
 							found = true;
 							break;

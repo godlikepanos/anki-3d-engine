@@ -321,36 +321,59 @@ Bool SoftwareRasterizer::visibilityTestInternal(const CollisionShape& cs, const 
 	boxPoints[6] = Vec4(maxv.x(), minv.y(), minv.z(), 1.0f);
 	boxPoints[7] = Vec4(maxv.x(), maxv.y(), minv.z(), 1.0f);
 
-	// Compute bounding box
-	const Vec2 windowSize(m_width, m_height);
-
-	Vec2 bboxMin(MAX_F32), bboxMax(MIN_F32);
-	F32 minZ = MAX_F32;
+	// Transform points
 	for(Vec4& p : boxPoints)
 	{
 		p = m_mvp * p;
+	}
+
+	// Check of a point touches the near plane
+	for(const Vec4& p : boxPoints)
+	{
 		if(p.w() <= 0.0f)
 		{
 			// Don't bother clipping. Just mark it as visible.
 			return true;
 		}
-
-		p = p.perspectiveDivide();
-
-		for(U i = 0; i < 2; ++i)
-		{
-			F32 a = (p[i] / 2.0f + 0.5f) * windowSize[i];
-
-			bboxMin[i] = min(bboxMin[i], floorf(a));
-			bboxMin[i] = clamp(bboxMin[i], 0.0f, windowSize[i]);
-
-			bboxMax[i] = max(bboxMax[i], ceilf(a));
-			bboxMax[i] = clamp(bboxMax[i], 0.0f, windowSize[i]);
-		}
-
-		minZ = min(minZ, p.z());
 	}
 
+	// Compute the min and max bounds
+	Vec4 bboxMin(MAX_F32);
+	Vec4 bboxMax(MIN_F32);
+	for(Vec4& p : boxPoints)
+	{
+		// Perspecrive divide
+		p /= p.w();
+
+		// To [0, 1]
+		p *= Vec4(0.5f, 0.5f, 1.0f, 1.0f);
+		p += Vec4(0.5f, 0.5f, 0.0f, 0.0f);
+
+		// To [0, m_width|m_height]
+		p *= Vec4(m_width, m_height, 1.0f, 1.0f);
+
+		// Min
+		bboxMin = bboxMin.min(p);
+
+		// Max
+		bboxMax = bboxMax.max(p);
+	}
+
+	// Fix the bounds
+	bboxMin.x() = floorf(bboxMin.x());
+	bboxMin.x() = clamp(bboxMin.x(), 0.0f, F32(m_width));
+
+	bboxMax.x() = ceilf(bboxMax.x());
+	bboxMax.x() = clamp(bboxMax.x(), 0.0f, F32(m_width));
+
+	bboxMin.y() = floorf(bboxMin.y());
+	bboxMin.y() = clamp(bboxMin.y(), 0.0f, F32(m_height));
+
+	bboxMax.y() = ceilf(bboxMax.y());
+	bboxMax.y() = clamp(bboxMax.y(), 0.0f, F32(m_height));
+
+	// Loop the tiles
+	F32 minZ = bboxMin.z();
 	for(U y = bboxMin.y(); y < bboxMax.y(); y += 1.0f)
 	{
 		for(U x = bboxMin.x(); x < bboxMax.x(); x += 1.0f)

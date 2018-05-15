@@ -277,6 +277,7 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 
 			// Iterate the placeables of the leaf
 			Bool found = false;
+			(void)found;
 			for(PlaceableNode& placeableNode : leafNode.m_leaf->m_placeables)
 			{
 				if(placeableNode.m_placeable == &placeable)
@@ -309,7 +310,7 @@ void Octree::gatherVisibleRecursive(const Frustum& frustum,
 	OctreeNodeVisibilityTestCallback testCallback,
 	void* testCallbackUserData,
 	Leaf* leaf,
-	DynamicArrayAuto<OctreePlaceable*>& out)
+	DynamicArrayAuto<void*>& out)
 {
 	ANKI_ASSERT(leaf);
 
@@ -318,7 +319,8 @@ void Octree::gatherVisibleRecursive(const Frustum& frustum,
 	{
 		if(!placeableNode.m_placeable->alreadyVisited(testId))
 		{
-			out.emplaceBack(placeableNode.m_placeable);
+			ANKI_ASSERT(placeableNode.m_placeable->m_userData);
+			out.emplaceBack(placeableNode.m_placeable->m_userData);
 		}
 	}
 

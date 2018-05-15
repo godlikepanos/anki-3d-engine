@@ -185,7 +185,7 @@ public:
 	VisibilityContext* m_visCtx ANKI_DBG_NULLIFY;
 	FrustumComponent* m_frc ANKI_DBG_NULLIFY; ///< What to test against.
 	SoftwareRasterizer* m_rasterizer ANKI_DBG_NULLIFY;
-	WeakArray<OctreePlaceable*> m_octreePlaceables; ///< The results of the task.
+	WeakArray<void*> m_visibleSpatialComponents; ///< The results of the task.
 
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)
@@ -230,7 +230,7 @@ class VisibilityTestTask
 public:
 	WeakPtr<VisibilityContext> m_visCtx;
 	WeakPtr<FrustumComponent> m_frc;
-	WeakArray<OctreePlaceable*>* m_octreePlaceables ANKI_DBG_NULLIFY;
+	WeakArray<void*>* m_visibleSpatialComponents ANKI_DBG_NULLIFY;
 	U32 m_taskIdx;
 	U32 m_taskCount;
 	RenderQueueView m_result; ///< Sub result. Will be combined later.

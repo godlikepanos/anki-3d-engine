@@ -215,6 +215,12 @@ template<>
 TVec4<F32> TVec4<F32>::cross(const TVec4<F32>& b) const;
 
 template<>
+TVec4<F32> TVec4<F32>::Base::min(const TVec4<F32>& b) const;
+
+template<>
+TVec4<F32> TVec4<F32>::Base::max(const TVec4<F32>& b) const;
+
+template<>
 TVec4<F32> TVec4<F32>::Base::getAbs() const;
 
 template<>
