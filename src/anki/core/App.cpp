@@ -337,16 +337,16 @@ void App::cleanup()
 	}
 
 #if ANKI_ENABLE_TRACE
-	if(TracerSingleton::get().isInitialized())
+	if(CoreTracerSingleton::get().isInitialized())
 	{
 		StringAuto fname(m_heapAlloc);
 		fname.sprintf("%s/trace", m_settingsDir.cstr());
 		ANKI_CORE_LOGI("Will dump trace files: %s", fname.cstr());
-		if(TracerSingleton::get().flush(fname.toCString()))
+		if(CoreTracerSingleton::get().flush(fname.toCString()))
 		{
 			ANKI_CORE_LOGE("Ignoring error from the tracer");
 		}
-		TracerSingleton::destroy();
+		CoreTracerSingleton::destroy();
 	}
 #endif
 
@@ -375,8 +375,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData);
 
 #if ANKI_ENABLE_TRACE
-	TracerSingleton::get().init(m_heapAlloc);
-	TracerSingleton::get().newFrame(0);
+	CoreTracerSingleton::get().init(m_heapAlloc);
+	CoreTracerSingleton::get().newFrame(0);
 #endif
 
 	ANKI_CHECK(initDirs(config));
@@ -620,7 +620,7 @@ Error App::mainLoop()
 	{
 #if ANKI_ENABLE_TRACE
 		static U64 frame = 1;
-		TracerSingleton::get().newFrame(frame++);
+		CoreTracerSingleton::get().newFrame(frame++);
 #endif
 		ANKI_TRACE_START_EVENT(FRAME);
 		const Second startTime = HighRezTimer::getCurrentTime();
