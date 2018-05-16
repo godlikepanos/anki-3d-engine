@@ -29,13 +29,13 @@ public:
 	};
 };
 
-static void decNumber(void* arg, U32, ThreadHive& hive)
+static void decNumber(void* arg, U32, ThreadHive& hive, ThreadHiveSemaphore* sem)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	ctx->m_countAtomic.fetchSub(2);
 }
 
-static void incNumber(void* arg, U32, ThreadHive& hive)
+static void incNumber(void* arg, U32, ThreadHive& hive, ThreadHiveSemaphore* sem)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	ctx->m_countAtomic.fetchAdd(4);
@@ -43,7 +43,7 @@ static void incNumber(void* arg, U32, ThreadHive& hive)
 	hive.submitTask(decNumber, arg);
 }
 
-static void taskToWaitOn(void* arg, U32, ThreadHive& hive)
+static void taskToWaitOn(void* arg, U32, ThreadHive& hive, ThreadHiveSemaphore* sem)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	HighRezTimer::sleep(1.0);
@@ -51,7 +51,7 @@ static void taskToWaitOn(void* arg, U32, ThreadHive& hive)
 	HighRezTimer::sleep(0.1);
 }
 
-static void taskToWait(void* arg, U32 threadId, ThreadHive& hive)
+static void taskToWait(void* arg, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	U prev = ctx->m_countAtomic.fetchAdd(1);
@@ -90,17 +90,20 @@ ANKI_TEST(Util, ThreadHive)
 		ThreadHiveTask task;
 		task.m_callback = taskToWaitOn;
 		task.m_argument = &ctx;
+		task.m_signalSemaphore = hive.newSemaphore(1);
 
 		hive.submitTasks(&task, 1);
 
 		const U DEP_TASKS = 10;
 		ThreadHiveTask dtasks[DEP_TASKS];
+		ThreadHiveSemaphore* sem = hive.newSemaphore(DEP_TASKS);
 
 		for(U i = 0; i < DEP_TASKS; ++i)
 		{
 			dtasks[i].m_callback = taskToWait;
 			dtasks[i].m_argument = &ctx;
-			dtasks[i].m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&task.m_outDependency, 1);
+			dtasks[i].m_waitSemaphore = task.m_signalSemaphore;
+			dtasks[i].m_signalSemaphore = sem;
 		}
 
 		hive.submitTasks(&dtasks[0], DEP_TASKS);
@@ -111,7 +114,7 @@ ANKI_TEST(Util, ThreadHive)
 		{
 			dtasks2[i].m_callback = taskToWait;
 			dtasks2[i].m_argument = &ctx;
-			dtasks2[i].m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&dtasks[i].m_outDependency, 1);
+			dtasks2[i].m_waitSemaphore = sem;
 		}
 
 		hive.submitTasks(&dtasks2[0], DEP_TASKS);
@@ -128,7 +131,7 @@ ANKI_TEST(Util, ThreadHive)
 		ctx.m_count = 0;
 
 		I number = 0;
-		ThreadHiveDependencyHandle dep = 0;
+		ThreadHiveSemaphore* sem = nullptr;
 
 		const U SUBMISSION_COUNT = 100;
 		const U TASK_COUNT = 1000;
@@ -143,21 +146,22 @@ ANKI_TEST(Util, ThreadHive)
 				ThreadHiveTask task;
 				task.m_callback = (cb) ? incNumber : decNumber;
 				task.m_argument = &ctx;
+				task.m_signalSemaphore = hive.newSemaphore(1);
 
-				if((rand() % 3) == 0 && j > 0 && dep)
+				if((rand() % 3) == 0 && j > 0 && sem)
 				{
-					task.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&dep, 1);
+					task.m_waitSemaphore = sem;
 				}
 
 				hive.submitTasks(&task, 1);
 
 				if((rand() % 7) == 0)
 				{
-					dep = task.m_outDependency;
+					sem = task.m_signalSemaphore;
 				}
 			}
 
-			dep = 0;
+			sem = nullptr;
 			hive.waitAllTasks();
 		}
 
@@ -199,7 +203,7 @@ public:
 		}
 	}
 
-	static void callback(void* arg, U32, ThreadHive& hive)
+	static void callback(void* arg, U32, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
 		static_cast<FibTask*>(arg)->doWork(hive);
 	}
@@ -223,7 +227,7 @@ ANKI_TEST(Util, ThreadHiveBench)
 
 	const U32 threadCount = getCpuCoresCount();
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	ThreadHive hive(threadCount, alloc);
+	ThreadHive hive(threadCount, alloc, true);
 
 	StackAllocator<U8> salloc(allocAligned, nullptr, 1024);
 	Atomic<U64> sum = {0};

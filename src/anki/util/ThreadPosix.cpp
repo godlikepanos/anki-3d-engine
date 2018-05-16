@@ -88,7 +88,7 @@ void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
 	I err = pthread_create(thread, &attr, pthreadCallback, this);
 	if(err)
 	{
-		ANKI_UTIL_LOGF("pthread_create() failed");
+		ANKI_UTIL_LOGF("pthread_create() failed: %d", err);
 	}
 	else
 	{

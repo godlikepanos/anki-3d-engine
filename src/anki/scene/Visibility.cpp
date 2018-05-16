@@ -63,7 +63,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 
 	// Software rasterizer tasks
 	SoftwareRasterizer* r = nullptr;
-	Array<ThreadHiveDependencyHandle, ThreadHive::MAX_THREADS> rasterizeDeps;
+	ThreadHiveSemaphore* rasterizeSem = nullptr;
 	if(frc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::OCCLUDERS))
 	{
 		// Gather triangles task
@@ -77,11 +77,13 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 		ThreadHiveTask gatherTask;
 		gatherTask.m_callback = GatherVisibleTrianglesTask::callback;
 		gatherTask.m_argument = gather;
+		gatherTask.m_signalSemaphore = hive.newSemaphore(1);
 
 		hive.submitTasks(&gatherTask, 1);
 
-		// Rasterize triangles task
+		// Rasterize triangles tasks
 		U count = hive.getThreadCount();
+		rasterizeSem = hive.newSemaphore(count);
 		RasterizeTrianglesTask* rasterize = alloc.newArray<RasterizeTrianglesTask>(count);
 
 		Array<ThreadHiveTask, ThreadHive::MAX_THREADS> rastTasks;
@@ -92,20 +94,18 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 			rast.m_taskIdx = count;
 			rast.m_taskCount = hive.getThreadCount();
 
-			rastTasks[count].m_callback = RasterizeTrianglesTask::callback;
-			rastTasks[count].m_argument = &rast;
-			rastTasks[count].m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&gatherTask.m_outDependency, 1);
+			ThreadHiveTask& task = rastTasks[count];
+			task.m_callback = RasterizeTrianglesTask::callback;
+			task.m_argument = &rast;
+			task.m_waitSemaphore = gatherTask.m_signalSemaphore;
+			task.m_signalSemaphore = rasterizeSem;
 		}
 
 		count = hive.getThreadCount();
 		hive.submitTasks(&rastTasks[0], count);
-		while(count--)
-		{
-			rasterizeDeps[count] = rastTasks[count].m_outDependency;
-		}
 	}
 
-	// Gather visibles from octree
+	// Gather visibles from the octree
 	GatherVisiblesFromOctreeTask* gather = alloc.newInstance<GatherVisiblesFromOctreeTask>();
 	gather->m_visCtx = this;
 	gather->m_frc = &frc;
@@ -114,10 +114,8 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 	ThreadHiveTask gatherTask;
 	gatherTask.m_callback = GatherVisiblesFromOctreeTask::callback;
 	gatherTask.m_argument = gather;
-	if(r)
-	{
-		gatherTask.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&rasterizeDeps[0], hive.getThreadCount());
-	}
+	gatherTask.m_signalSemaphore = hive.newSemaphore(1);
+	gatherTask.m_waitSemaphore = rasterizeSem;
 
 	hive.submitTasks(&gatherTask, 1);
 
@@ -125,10 +123,11 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 	U testCount = hive.getThreadCount();
 	WeakArray<VisibilityTestTask> tests(alloc.newArray<VisibilityTestTask>(testCount), testCount);
 	WeakArray<ThreadHiveTask> testTasks(alloc.newArray<ThreadHiveTask>(testCount), testCount);
+	ThreadHiveSemaphore* testSem = hive.newSemaphore(testCount);
 
 	for(U i = 0; i < testCount; ++i)
 	{
-		auto& test = tests[i];
+		VisibilityTestTask& test = tests[i];
 		test.m_visCtx = this;
 		test.m_frc = &frc;
 		test.m_visibleSpatialComponents = &gather->m_visibleSpatialComponents;
@@ -136,10 +135,11 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 		test.m_taskCount = testCount;
 		test.m_r = r;
 
-		auto& task = testTasks[i];
+		ThreadHiveTask& task = testTasks[i];
 		task.m_callback = VisibilityTestTask::callback;
 		task.m_argument = &test;
-		task.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&gatherTask.m_outDependency, 1);
+		task.m_waitSemaphore = gatherTask.m_signalSemaphore;
+		task.m_signalSemaphore = testSem;
 	}
 
 	hive.submitTasks(&testTasks[0], testCount);
@@ -155,12 +155,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 	ThreadHiveTask combineTask;
 	combineTask.m_callback = CombineResultsTask::callback;
 	combineTask.m_argument = combine;
-	combineTask.m_inDependencies =
-		WeakArray<ThreadHiveDependencyHandle>(alloc.newArray<ThreadHiveDependencyHandle>(testCount), testCount);
-	for(U i = 0; i < testCount; ++i)
-	{
-		combineTask.m_inDependencies[i] = testTasks[i].m_outDependency;
-	}
+	combineTask.m_waitSemaphore = testSem;
 
 	hive.submitTasks(&combineTask, 1);
 }

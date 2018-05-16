@@ -20,6 +20,7 @@ namespace anki
 // Forward
 class FrustumComponent;
 class ThreadHive;
+class ThreadHiveSemaphore;
 
 /// @addtogroup scene
 /// @{
@@ -149,7 +150,7 @@ public:
 	Atomic<U32> m_rasterizedVertCount = {0}; ///< That will be used by the RasterizeTrianglesTask.
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
 		GatherVisibleTrianglesTask& self = *static_cast<GatherVisibleTrianglesTask*>(ud);
 		self.gather();
@@ -168,7 +169,7 @@ public:
 	U32 m_taskCount;
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
 		RasterizeTrianglesTask& self = *static_cast<RasterizeTrianglesTask*>(ud);
 		self.rasterize();
@@ -188,7 +189,7 @@ public:
 	WeakArray<void*> m_visibleSpatialComponents; ///< The results of the task.
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
 		GatherVisiblesFromOctreeTask& self = *static_cast<GatherVisiblesFromOctreeTask*>(ud);
 		self.gather();
@@ -208,7 +209,7 @@ public:
 	SoftwareRasterizer* m_r;
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
 		GatherVisiblesFromSectorsTask& self = *static_cast<GatherVisiblesFromSectorsTask*>(ud);
 		self.gather();
@@ -238,7 +239,7 @@ public:
 	SoftwareRasterizer* m_r ANKI_DBG_NULLIFY;
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
 		VisibilityTestTask& self = *static_cast<VisibilityTestTask*>(ud);
 		self.test(hive);
@@ -267,7 +268,7 @@ public:
 	SoftwareRasterizer* m_swRast = nullptr; ///< For cleanup.
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
 		CombineResultsTask& self = *static_cast<CombineResultsTask*>(ud);
 		self.combine();

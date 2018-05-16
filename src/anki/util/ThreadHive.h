@@ -19,11 +19,28 @@ class ThreadHive;
 /// @{
 
 /// Opaque handle that defines a ThreadHive depedency. @memberof ThreadHive
-using ThreadHiveDependencyHandle = void*;
+class ThreadHiveSemaphore
+{
+	friend class ThreadHive;
+
+public:
+	/// Increase the value of the semaphore. It's easy to brake things with that.
+	void increaseSemaphore()
+	{
+		m_atomic.fetchAdd(1);
+	}
+
+private:
+	Atomic<U32> m_atomic;
+
+	// No need to construct it or delete it
+	ThreadHiveSemaphore() = delete;
+	~ThreadHiveSemaphore() = delete;
+};
 
 /// The callback that defines a ThreadHibe task.
 /// @memberof ThreadHive
-using ThreadHiveTaskCallback = void (*)(void*, U32 threadId, ThreadHive& hive);
+using ThreadHiveTaskCallback = void (*)(void*, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
 
 /// Task for the ThreadHive. @memberof ThreadHive
 class ThreadHiveTask
@@ -35,11 +52,12 @@ public:
 	/// Arguments to pass to the m_callback.
 	void* m_argument ANKI_DBG_NULLIFY;
 
-	/// The tasks that this task will depend on.
-	WeakArray<ThreadHiveDependencyHandle> m_inDependencies;
+	/// The task will start when that semaphore reaches zero.
+	ThreadHiveSemaphore* m_waitSemaphore = nullptr;
 
-	/// Will be filled after the submission of the task. Can be used to set dependencies to future tasks.
-	ThreadHiveDependencyHandle m_outDependency;
+	/// When the task is completed that semaphore will be decremented by one. Can be used to set dependencies to future
+	/// tasks.
+	ThreadHiveSemaphore* m_signalSemaphore = nullptr;
 };
 
 /// A scheduler of small tasks. It takes a number of tasks and schedules them in one of the threads. The tasks can
@@ -57,6 +75,18 @@ public:
 	U getThreadCount() const
 	{
 		return m_threadCount;
+	}
+
+	/// Create a new semaphore with some initial value.
+	/// @param initialValue  Can't be zero.
+	ThreadHiveSemaphore* newSemaphore(const U32 initialValue)
+	{
+		ANKI_ASSERT(initialValue > 0);
+		PtrSize alignment = alignof(ThreadHiveSemaphore);
+		ThreadHiveSemaphore* sem =
+			reinterpret_cast<ThreadHiveSemaphore*>(m_alloc.allocate(sizeof(ThreadHiveSemaphore), &alignment));
+		sem->m_atomic.set(initialValue);
+		return sem;
 	}
 
 	/// Submit tasks. The ThreadHiveTaskCallback callbacks can also call this.
@@ -89,8 +119,6 @@ private:
 	Task* m_tail = nullptr; ///< Tail of the task list.
 	Bool m_quit = false;
 	U32 m_pendingTasks = 0;
-	U32 m_allocatedTasks = 0;
-	U32 m_allocatedDeps = 0;
 
 	Mutex m_mtx;
 	ConditionVariable m_cvar;

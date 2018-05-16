@@ -75,7 +75,7 @@ public:
 	Atomic<U32> m_allocCount;
 };
 
-static void doAllocation(void* arg, U32 threadId, ThreadHive& hive)
+static void doAllocation(void* arg, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 {
 	TestContext* ctx = static_cast<TestContext*>(arg);
 
