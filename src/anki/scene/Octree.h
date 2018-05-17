@@ -18,6 +18,8 @@ namespace anki
 
 // Forward
 class OctreePlaceable;
+class ThreadHive;
+class ThreadHiveSemaphore;
 
 /// @addtogroup scene
 /// @{
@@ -72,6 +74,16 @@ public:
 		gatherVisibleRecursive(frustum, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
 	}
 
+	/// Similar to gatherVisible but it spawns ThreadHive tasks.
+	void gatherVisibleParallel(const Frustum* frustum,
+		U32 testId,
+		OctreeNodeVisibilityTestCallback testCallback,
+		void* testCallbackUserData,
+		DynamicArrayAuto<void*>* out,
+		ThreadHive& hive,
+		ThreadHiveSemaphore* waitSemaphore,
+		ThreadHiveSemaphore*& signalSemaphore);
+
 	/// Debug draw.
 	void debugDraw(OctreeDebugDrawer& drawer) const
 	{
@@ -80,6 +92,9 @@ public:
 	}
 
 private:
+	class GatherParallelCtx;
+	class GatherParallelTaskCtx;
+
 	/// List node.
 	class PlaceableNode : public IntrusiveListEnabled<PlaceableNode>
 	{
@@ -228,6 +243,12 @@ private:
 		Leaf* leaf,
 		DynamicArrayAuto<void*>& out);
 
+	/// ThreadHive callback.
+	static void gatherVisibleTaskCallback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem);
+
+	void gatherVisibleParallelTask(
+		U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem, GatherParallelTaskCtx& taskCtx);
+
 	/// Remove a leaf.
 	void cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafUponReturn);
 
@@ -259,6 +280,7 @@ private:
 	/// @note It's thread-safe.
 	Bool alreadyVisited(U32 testId)
 	{
+		ANKI_ASSERT(testId < 64);
 		const U64 testMask = U64(1u) << U64(testId);
 		const U64 prev = m_visitedMask.fetchOr(testMask);
 		return !!(testMask & prev);

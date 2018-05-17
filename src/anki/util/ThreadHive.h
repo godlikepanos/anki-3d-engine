@@ -25,9 +25,10 @@ class ThreadHiveSemaphore
 
 public:
 	/// Increase the value of the semaphore. It's easy to brake things with that.
-	void increaseSemaphore()
+	/// @note It's thread-safe.
+	void increaseSemaphore(U32 increase)
 	{
-		m_atomic.fetchAdd(1);
+		m_atomic.fetchAdd(increase);
 	}
 
 private:
@@ -87,6 +88,18 @@ public:
 			reinterpret_cast<ThreadHiveSemaphore*>(m_alloc.allocate(sizeof(ThreadHiveSemaphore), &alignment));
 		sem->m_atomic.set(initialValue);
 		return sem;
+	}
+
+	/// Allocate some scratch memory. The memory becomes invalid after waitAllTasks() is called.
+	void* allocateScratchMemory(PtrSize size, U32 alignment)
+	{
+		ANKI_ASSERT(size > 0 && alignment > 0);
+		PtrSize align = alignment;
+		void* out = m_alloc.allocate(size, &align);
+#if ANKI_ASSERTS_ENABLED
+		memset(out, 0, size);
+#endif
+		return out;
 	}
 
 	/// Submit tasks. The ThreadHiveTaskCallback callbacks can also call this.
