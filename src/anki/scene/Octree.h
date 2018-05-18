@@ -7,7 +7,7 @@
 
 #include <anki/scene/Common.h>
 #include <anki/Math.h>
-#include <anki/collision/Forward.h>
+#include <anki/collision/Aabb.h>
 #include <anki/util/WeakArray.h>
 #include <anki/util/Enum.h>
 #include <anki/util/ObjectAllocator.h>
@@ -83,6 +83,20 @@ public:
 		ThreadHive& hive,
 		ThreadHiveSemaphore* waitSemaphore,
 		ThreadHiveSemaphore*& signalSemaphore);
+
+	/// Walk the tree.
+	/// @tparam TTestAabbFunc The lambda that will test an Aabb. Signature of lambda: Bool(*)(const Aabb& leafBox)
+	/// @tparam TNewPlaceableFunc The lambda to do something with a visible placeable.
+	///                           Signature: void(*)(void* placeableUserData).
+	/// @param testId The test index.
+	/// @param testFunc See TTestAabbFunc.
+	/// @param newPlaceableFunc See TNewPlaceableFunc.
+	template<typename TTestAabbFunc, typename TNewPlaceableFunc>
+	void walkTree(U32 testId, TTestAabbFunc testFunc, TNewPlaceableFunc newPlaceableFunc)
+	{
+		ANKI_ASSERT(m_rootLeaf);
+		walkTreeInternal(*m_rootLeaf, testId, testFunc, newPlaceableFunc);
+	}
 
 	/// Debug draw.
 	void debugDraw(OctreeDebugDrawer& drawer) const
@@ -257,6 +271,9 @@ private:
 
 	/// Debug draw.
 	void debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) const;
+
+	template<typename TTestAabbFunc, typename TNewPlaceableFunc>
+	void walkTreeInternal(Leaf& leaf, U32 testId, TTestAabbFunc testFunc, TNewPlaceableFunc newPlaceableFunc);
 };
 
 /// An entity that can be placed in octrees.
@@ -286,6 +303,34 @@ private:
 		return !!(testMask & prev);
 	}
 };
+
+template<typename TTestAabbFunc, typename TNewPlaceableFunc>
+inline void Octree::walkTreeInternal(Leaf& leaf, U32 testId, TTestAabbFunc testFunc, TNewPlaceableFunc newPlaceableFunc)
+{
+	// Visit the placeables that belong to that leaf
+	for(PlaceableNode& placeableNode : leaf.m_placeables)
+	{
+		if(!placeableNode.m_placeable->alreadyVisited(testId))
+		{
+			ANKI_ASSERT(placeableNode.m_placeable->m_userData);
+			newPlaceableFunc(placeableNode.m_placeable->m_userData);
+		}
+	}
+
+	Aabb aabb;
+	for(Leaf* child : leaf.m_children)
+	{
+		if(child)
+		{
+			aabb.setMin(child->m_aabbMin);
+			aabb.setMax(child->m_aabbMax);
+			if(testFunc(aabb))
+			{
+				walkTreeInternal(*child, testId, testFunc, newPlaceableFunc);
+			}
+		}
+	}
+}
 /// @}
 
 } // end namespace anki

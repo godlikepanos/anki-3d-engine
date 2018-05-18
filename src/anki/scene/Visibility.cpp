@@ -24,8 +24,10 @@
 namespace anki
 {
 
-void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue, ThreadHive& hive)
+void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& rqueue, ThreadHive& hive)
 {
+	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_SUBMIT_WORK);
+
 	// Check enabled and make sure that the results are null (this can happen on multiple on circular viewing)
 	if(ANKI_UNLIKELY(!frc.anyVisibilityTestEnabled()))
 	{
@@ -58,104 +60,63 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 		m_testedFrcs.pushBack(alloc, &frc);
 	}
 
+	// Prepare the ctx
+	FrustumVisibilityContext* frcCtx = alloc.newInstance<FrustumVisibilityContext>();
+	frcCtx->m_visCtx = this;
+	frcCtx->m_frc = &frc;
+	frcCtx->m_queueViews.create(alloc, hive.getThreadCount());
+	frcCtx->m_visTestsSignalSem = hive.newSemaphore(1);
+	frcCtx->m_renderQueue = &rqueue;
+
 	// Submit new work
 	//
 
 	// Software rasterizer tasks
-	SoftwareRasterizer* r = nullptr;
 	ThreadHiveSemaphore* rasterizeSem = nullptr;
 	if(frc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::OCCLUDERS))
 	{
 		// Gather triangles task
-		GatherVisibleTrianglesTask* gather = alloc.newInstance<GatherVisibleTrianglesTask>();
-		gather->m_visCtx = this;
-		gather->m_frc = &frc;
-		gather->m_vertCount = 0;
-
-		r = &gather->m_r;
-
 		ThreadHiveTask gatherTask;
 		gatherTask.m_callback = GatherVisibleTrianglesTask::callback;
-		gatherTask.m_argument = gather;
+		gatherTask.m_argument = alloc.newInstance<GatherVisibleTrianglesTask>(frcCtx);
 		gatherTask.m_signalSemaphore = hive.newSemaphore(1);
 
 		hive.submitTasks(&gatherTask, 1);
 
 		// Rasterize triangles tasks
-		U count = hive.getThreadCount();
+		const U count = hive.getThreadCount();
 		rasterizeSem = hive.newSemaphore(count);
-		RasterizeTrianglesTask* rasterize = alloc.newArray<RasterizeTrianglesTask>(count);
 
 		Array<ThreadHiveTask, ThreadHive::MAX_THREADS> rastTasks;
-		while(count--)
-		{
-			RasterizeTrianglesTask& rast = rasterize[count];
-			rast.m_gatherTask = gather;
-			rast.m_taskIdx = count;
-			rast.m_taskCount = hive.getThreadCount();
+		ThreadHiveTask& task = rastTasks[0];
+		task.m_callback = RasterizeTrianglesTask::callback;
+		task.m_argument = alloc.newInstance<RasterizeTrianglesTask>(frcCtx);
+		task.m_waitSemaphore = gatherTask.m_signalSemaphore;
+		task.m_signalSemaphore = rasterizeSem;
 
-			ThreadHiveTask& task = rastTasks[count];
-			task.m_callback = RasterizeTrianglesTask::callback;
-			task.m_argument = &rast;
-			task.m_waitSemaphore = gatherTask.m_signalSemaphore;
-			task.m_signalSemaphore = rasterizeSem;
+		for(U i = 1; i < count; ++i)
+		{
+			rastTasks[i] = rastTasks[0];
 		}
 
-		count = hive.getThreadCount();
 		hive.submitTasks(&rastTasks[0], count);
 	}
 
 	// Gather visibles from the octree
-	GatherVisiblesFromOctreeTask* gather = alloc.newInstance<GatherVisiblesFromOctreeTask>();
-	gather->m_visCtx = this;
-	gather->m_frc = &frc;
-	gather->m_rasterizer = r;
-
 	ThreadHiveTask gatherTask;
 	gatherTask.m_callback = GatherVisiblesFromOctreeTask::callback;
-	gatherTask.m_argument = gather;
-	gatherTask.m_signalSemaphore = hive.newSemaphore(1);
+	gatherTask.m_argument = alloc.newInstance<GatherVisiblesFromOctreeTask>(frcCtx);
+	gatherTask.m_signalSemaphore = nullptr; // No need to signal anything because it will spawn new tasks
 	gatherTask.m_waitSemaphore = rasterizeSem;
 
 	hive.submitTasks(&gatherTask, 1);
 
-	// Test tasks
-	U testCount = hive.getThreadCount();
-	WeakArray<VisibilityTestTask> tests(alloc.newArray<VisibilityTestTask>(testCount), testCount);
-	WeakArray<ThreadHiveTask> testTasks(alloc.newArray<ThreadHiveTask>(testCount), testCount);
-	ThreadHiveSemaphore* testSem = hive.newSemaphore(testCount);
-
-	for(U i = 0; i < testCount; ++i)
-	{
-		VisibilityTestTask& test = tests[i];
-		test.m_visCtx = this;
-		test.m_frc = &frc;
-		test.m_visibleSpatialComponents = &gather->m_visibleSpatialComponents;
-		test.m_taskIdx = i;
-		test.m_taskCount = testCount;
-		test.m_r = r;
-
-		ThreadHiveTask& task = testTasks[i];
-		task.m_callback = VisibilityTestTask::callback;
-		task.m_argument = &test;
-		task.m_waitSemaphore = gatherTask.m_signalSemaphore;
-		task.m_signalSemaphore = testSem;
-	}
-
-	hive.submitTasks(&testTasks[0], testCount);
-
 	// Combind results task
-	CombineResultsTask* combine = alloc.newInstance<CombineResultsTask>();
-	combine->m_visCtx = this;
-	combine->m_frc = &frc;
-	combine->m_results = &rqueue;
-	combine->m_tests = tests;
-	combine->m_swRast = r;
-
 	ThreadHiveTask combineTask;
 	combineTask.m_callback = CombineResultsTask::callback;
-	combineTask.m_argument = combine;
-	combineTask.m_waitSemaphore = testSem;
+	combineTask.m_argument = alloc.newInstance<CombineResultsTask>(frcCtx);
+	ANKI_ASSERT(frcCtx->m_visTestsSignalSem);
+	combineTask.m_waitSemaphore = frcCtx->m_visTestsSignalSem;
 
 	hive.submitTasks(&combineTask, 1);
 }
@@ -164,93 +125,124 @@ void GatherVisibleTrianglesTask::gather()
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_GATHER_TRIANGLES);
 
-	auto alloc = m_visCtx->m_scene->getFrameAllocator();
-	m_verts.create(alloc, TRIANGLES_INITIAL_SIZE);
-	SceneComponentLists& lists = m_visCtx->m_scene->getSceneComponentLists();
+	auto alloc = m_frcCtx->m_visCtx->m_scene->getFrameAllocator();
+	SceneComponentLists& lists = m_frcCtx->m_visCtx->m_scene->getSceneComponentLists();
 
-	ANKI_ASSERT(m_vertCount == 0);
 	lists.iterateComponents<OccluderComponent>([&](OccluderComponent& comp) {
-		if(m_frc->insideFrustum(comp.getBoundingVolume()))
+		if(m_frcCtx->m_frc->insideFrustum(comp.getBoundingVolume()))
 		{
 			U32 count, stride;
 			const Vec3* it;
 			comp.getVertices(it, count, stride);
 			while(count--)
 			{
-				// Grow the array
-				if(m_vertCount + 1 > m_verts.getSize())
-				{
-					m_verts.resize(alloc, m_verts.getSize() * 2);
-				}
-
-				m_verts[m_vertCount++] = *it;
-
+				m_frcCtx->m_verts.emplaceBack(alloc, *it);
 				it = reinterpret_cast<const Vec3*>(reinterpret_cast<const U8*>(it) + stride);
 			}
 		}
 	});
 
-	m_r.init(alloc);
-	m_r.prepare(m_frc->getViewMatrix(), m_frc->getProjectionMatrix(), 80, 50);
+	// Init the rasterizer
+	m_frcCtx->m_r = alloc.newInstance<SoftwareRasterizer>();
+	m_frcCtx->m_r->init(alloc);
+	m_frcCtx->m_r->prepare(m_frcCtx->m_frc->getViewMatrix(),
+		m_frcCtx->m_frc->getProjectionMatrix(),
+		SW_RASTERIZER_WIDTH,
+		SW_RASTERIZER_HEIGHT);
 }
 
 void RasterizeTrianglesTask::rasterize()
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_RASTERIZE);
 
-	const U totalVertCount = m_gatherTask->m_vertCount;
+	const U totalVertCount = m_frcCtx->m_verts.getSize();
 
 	U32 idx;
-	while((idx = m_gatherTask->m_rasterizedVertCount.fetchAdd(3)) < totalVertCount)
+	while((idx = m_frcCtx->m_rasterizedVertCount.fetchAdd(3)) < totalVertCount)
 	{
-		m_gatherTask->m_r.draw(&m_gatherTask->m_verts[idx][0], 3, sizeof(Vec3), false);
+		m_frcCtx->m_r->draw(&m_frcCtx->m_verts[idx][0], 3, sizeof(Vec3), false);
 	}
 }
 
-void GatherVisiblesFromOctreeTask::gather()
+void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive, ThreadHiveSemaphore& sem)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_OCTREE);
 
-	U testIdx = m_visCtx->m_testsCount.fetchAdd(1);
+	U testIdx = m_frcCtx->m_visCtx->m_testsCount.fetchAdd(1);
 
-	// Extra tests callback
-	auto testCallback = [](void* rasterizer, const Aabb& box) -> Bool {
-		ANKI_ASSERT(rasterizer);
-		SoftwareRasterizer* r = static_cast<SoftwareRasterizer*>(rasterizer);
-		Bool inside = r->visibilityTest(box, box);
-		return inside;
-	};
+	// Walk the tree
+	m_frcCtx->m_visCtx->m_scene->getOctree().walkTree(testIdx,
+		[&](const Aabb& box) {
+			Bool visible = m_frcCtx->m_frc->insideFrustum(box);
+			if(visible && m_frcCtx->m_r)
+			{
+				visible = m_frcCtx->m_r->visibilityTest(box, box);
+			}
 
-	// Test
-	DynamicArrayAuto<void*> arr(m_visCtx->m_scene->getFrameAllocator());
-	OctreeNodeVisibilityTestCallback cb =
-		(m_rasterizer) ? testCallback : static_cast<OctreeNodeVisibilityTestCallback>(nullptr);
-	m_visCtx->m_scene->getOctree().gatherVisible(m_frc->getFrustum(), testIdx, cb, m_rasterizer, arr);
+			return visible;
+		},
+		[&](void* placeableUserData) {
+			ANKI_ASSERT(placeableUserData);
+			SpatialComponent* scomp = static_cast<SpatialComponent*>(placeableUserData);
 
-	// Store results
-	if(arr.getSize() > 0)
+			ANKI_ASSERT(m_spatialCount < m_spatials.getSize());
+
+			m_spatials[m_spatialCount++] = scomp;
+
+			if(m_spatialCount == m_spatials.getSize())
+			{
+				flush(hive, sem);
+			}
+		});
+
+	// Flush the remaining
+	flush(hive, sem);
+
+	// Fire an additional dummy task to decrease the semaphore to zero
+	ThreadHiveTask task;
+	task.m_callback = dummyCallback;
+	task.m_argument = nullptr;
+	task.m_signalSemaphore = m_frcCtx->m_visTestsSignalSem;
+	hive.submitTasks(&task, 1);
+}
+
+void GatherVisiblesFromOctreeTask::flush(ThreadHive& hive, ThreadHiveSemaphore& sem)
+{
+	if(m_spatialCount)
 	{
-		void** data;
-		PtrSize size;
-		PtrSize storage;
-		arr.moveAndReset(data, size, storage);
+		// Create the task
+		VisibilityTestTask* vis =
+			m_frcCtx->m_visCtx->m_scene->getFrameAllocator().newInstance<VisibilityTestTask>(m_frcCtx);
+		memcpy(&vis->m_spatialsToTest[0], &m_spatials[0], sizeof(m_spatials[0]) * m_spatialCount);
+		vis->m_spatialToTestCount = m_spatialCount;
 
-		ANKI_ASSERT(data && size);
-		m_visibleSpatialComponents = WeakArray<void*>(data, size);
+		// Increase the semaphore to block the CombineResultsTask
+		m_frcCtx->m_visTestsSignalSem->increaseSemaphore(1);
+
+		// Submit task
+		ThreadHiveTask task;
+		task.m_callback = VisibilityTestTask::callback;
+		task.m_argument = vis;
+		task.m_signalSemaphore = m_frcCtx->m_visTestsSignalSem;
+		hive.submitTasks(&task, 1);
+
+		// Clear count
+		m_spatialCount = 0;
 	}
 }
 
-void VisibilityTestTask::test(ThreadHive& hive)
+void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TEST);
 
-	FrustumComponent& testedFrc = *m_frc;
+	const FrustumComponent& testedFrc = *m_frcCtx->m_frc;
 	ANKI_ASSERT(testedFrc.anyVisibilityTestEnabled());
 
-	SceneNode& testedNode = testedFrc.getSceneNode();
-	auto alloc = m_visCtx->m_scene->getFrameAllocator();
+	const SceneNode& testedNode = testedFrc.getSceneNode();
+	auto alloc = m_frcCtx->m_visCtx->m_scene->getFrameAllocator();
 
-	m_timestamp = testedNode.getComponentMaxTimestamp();
+	Timestamp& timestamp = m_frcCtx->m_queueViews[taskId].m_timestamp;
+	timestamp = testedNode.getComponentMaxTimestamp();
 
 	const Bool wantsRenderComponents =
 		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS);
@@ -272,17 +264,16 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 	const Bool wantsDecals = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::DECALS);
 
-	const Bool wantsEarlyZ =
-		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::EARLY_Z) && m_visCtx->m_earlyZDist > 0.0f;
+	const Bool wantsEarlyZ = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::EARLY_Z)
+							 && m_frcCtx->m_visCtx->m_earlyZDist > 0.0f;
 
-	// Chose the test range and a few other things
-	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(m_taskIdx, m_taskCount, m_visibleSpatialComponents->getSize(), start, end);
-	for(U i = start; i < end; ++i)
+	// Iterate
+	RenderQueueView& result = m_frcCtx->m_queueViews[taskId];
+	for(U i = 0; i < m_spatialToTestCount; ++i)
 	{
-		void* spatialCPtr = (*m_visibleSpatialComponents)[i];
-		SpatialComponent* spatialC = static_cast<SpatialComponent*>(spatialCPtr);
-		SceneNode& node = spatialC->getSceneNode();
+		const SpatialComponent* spatialC = m_spatialsToTest[i];
+		ANKI_ASSERT(spatialC);
+		const SceneNode& node = spatialC->getSceneNode();
 
 		// Skip if it is the same
 		if(ANKI_UNLIKELY(&testedNode == &node))
@@ -293,7 +284,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 		// Check what components the frustum needs
 		Bool wantNode = false;
 
-		RenderComponent* rc = node.tryGetComponent<RenderComponent>();
+		const RenderComponent* rc = node.tryGetComponent<RenderComponent>();
 		if(rc && wantsRenderComponents)
 		{
 			wantNode = true;
@@ -304,31 +295,31 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			wantNode = true;
 		}
 
-		LightComponent* lc = node.tryGetComponent<LightComponent>();
+		const LightComponent* lc = node.tryGetComponent<LightComponent>();
 		if(lc && wantsLightComponents)
 		{
 			wantNode = true;
 		}
 
-		LensFlareComponent* lfc = node.tryGetComponent<LensFlareComponent>();
+		const LensFlareComponent* lfc = node.tryGetComponent<LensFlareComponent>();
 		if(lfc && wantsFlareComponents)
 		{
 			wantNode = true;
 		}
 
-		ReflectionProbeComponent* reflc = node.tryGetComponent<ReflectionProbeComponent>();
+		const ReflectionProbeComponent* reflc = node.tryGetComponent<ReflectionProbeComponent>();
 		if(reflc && wantsReflectionProbes)
 		{
 			wantNode = true;
 		}
 
-		ReflectionProxyComponent* proxyc = node.tryGetComponent<ReflectionProxyComponent>();
+		const ReflectionProxyComponent* proxyc = node.tryGetComponent<ReflectionProxyComponent>();
 		if(proxyc && wantsReflectionProxies)
 		{
 			wantNode = true;
 		}
 
-		DecalComponent* decalc = node.tryGetComponent<DecalComponent>();
+		const DecalComponent* decalc = node.tryGetComponent<DecalComponent>();
 		if(decalc && wantsDecals)
 		{
 			wantNode = true;
@@ -393,11 +384,11 @@ void VisibilityTestTask::test(ThreadHive& hive)
 				RenderableQueueElement* el;
 				if(rc->getMaterial().isForwardShading())
 				{
-					el = m_result.m_forwardShadingRenderables.newElement(alloc);
+					el = result.m_forwardShadingRenderables.newElement(alloc);
 				}
 				else
 				{
-					el = m_result.m_renderables.newElement(alloc);
+					el = result.m_renderables.newElement(alloc);
 				}
 
 				rc->setupRenderableQueueElement(*el);
@@ -406,10 +397,10 @@ void VisibilityTestTask::test(ThreadHive& hive)
 				const Plane& nearPlane = testedFrc.getFrustum().getPlanesWorldSpace()[FrustumPlaneType::NEAR];
 				el->m_distanceFromCamera = max(0.0f, sps[0].m_sp->getAabb().testPlane(nearPlane));
 
-				if(wantsEarlyZ && el->m_distanceFromCamera < m_visCtx->m_earlyZDist
+				if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
 					&& !rc->getMaterial().isForwardShading())
 				{
-					RenderableQueueElement* el2 = m_result.m_earlyZRenderables.newElement(alloc);
+					RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
 					*el2 = *el;
 				}
 			}
@@ -421,7 +412,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			{
 			case LightComponentType::POINT:
 			{
-				PointLightQueueElement* el = m_result.m_pointLights.newElement(alloc);
+				PointLightQueueElement* el = result.m_pointLights.newElement(alloc);
 				lc->setupPointLightQueueElement(*el);
 
 				if(lc->getShadowEnabled())
@@ -436,8 +427,8 @@ void VisibilityTestTask::test(ThreadHive& hive)
 					el->m_shadowRenderQueues[4] = &nextQueues[4];
 					el->m_shadowRenderQueues[5] = &nextQueues[5];
 
-					U32* p = m_result.m_shadowPointLights.newElement(alloc);
-					*p = m_result.m_pointLights.m_elementCount - 1;
+					U32* p = result.m_shadowPointLights.newElement(alloc);
+					*p = result.m_pointLights.m_elementCount - 1;
 				}
 				else
 				{
@@ -448,7 +439,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			}
 			case LightComponentType::SPOT:
 			{
-				SpotLightQueueElement* el = m_result.m_spotLights.newElement(alloc);
+				SpotLightQueueElement* el = result.m_spotLights.newElement(alloc);
 				lc->setupSpotLightQueueElement(*el);
 
 				if(lc->getShadowEnabled())
@@ -457,8 +448,8 @@ void VisibilityTestTask::test(ThreadHive& hive)
 					nextQueues = WeakArray<RenderQueue>(a, 1);
 					el->m_shadowRenderQueue = a;
 
-					U32* p = m_result.m_shadowSpotLights.newElement(alloc);
-					*p = m_result.m_spotLights.m_elementCount - 1;
+					U32* p = result.m_shadowSpotLights.newElement(alloc);
+					*p = result.m_spotLights.m_elementCount - 1;
 				}
 				else
 				{
@@ -474,13 +465,13 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		if(lfc && wantsFlareComponents)
 		{
-			LensFlareQueueElement* el = m_result.m_lensFlares.newElement(alloc);
+			LensFlareQueueElement* el = result.m_lensFlares.newElement(alloc);
 			lfc->setupLensFlareQueueElement(*el);
 		}
 
 		if(reflc && wantsReflectionProbes)
 		{
-			ReflectionProbeQueueElement* el = m_result.m_reflectionProbes.newElement(alloc);
+			ReflectionProbeQueueElement* el = result.m_reflectionProbes.newElement(alloc);
 			reflc->setupReflectionProbeQueueElement(*el);
 
 			if(reflc->getMarkedForRendering())
@@ -508,7 +499,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		if(decalc && wantsDecals)
 		{
-			DecalQueueElement* el = m_result.m_decals.newElement(alloc);
+			DecalQueueElement* el = result.m_decals.newElement(alloc);
 			decalc->setupDecalQueueElement(*el);
 		}
 
@@ -517,14 +508,14 @@ void VisibilityTestTask::test(ThreadHive& hive)
 		{
 			count = 0;
 			err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
-				m_visCtx->submitNewWork(frc, nextQueues[count++], hive);
+				m_frcCtx->m_visCtx->submitNewWork(frc, nextQueues[count++], hive);
 				return Error::NONE;
 			});
 			(void)err;
 		}
 
 		// Update timestamp
-		m_timestamp = max(m_timestamp, node.getComponentMaxTimestamp());
+		timestamp = max(timestamp, node.getComponentMaxTimestamp());
 	} // end for
 }
 
@@ -532,27 +523,30 @@ void CombineResultsTask::combine()
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_COMBINE_RESULTS);
 
-	auto alloc = m_visCtx->m_scene->getFrameAllocator();
+	auto alloc = m_frcCtx->m_visCtx->m_scene->getFrameAllocator();
+	RenderQueue& results = *m_frcCtx->m_renderQueue;
 
-	m_results->m_shadowRenderablesLastUpdateTimestamp = 0;
-	for(U i = 0; i < m_tests.getSize(); ++i)
+	// Compute the timestamp
+	const U threadCount = m_frcCtx->m_queueViews.getSize();
+	results.m_shadowRenderablesLastUpdateTimestamp = 0;
+	for(U i = 0; i < threadCount; ++i)
 	{
-		m_results->m_shadowRenderablesLastUpdateTimestamp =
-			max(m_results->m_shadowRenderablesLastUpdateTimestamp, m_tests[i].m_timestamp);
+		results.m_shadowRenderablesLastUpdateTimestamp =
+			max(results.m_shadowRenderablesLastUpdateTimestamp, m_frcCtx->m_queueViews[i].m_timestamp);
 	}
-	ANKI_ASSERT(m_results->m_shadowRenderablesLastUpdateTimestamp);
+	ANKI_ASSERT(results.m_shadowRenderablesLastUpdateTimestamp);
 
 #define ANKI_VIS_COMBINE(t_, member_) \
 	{ \
 		Array<TRenderQueueElementStorage<t_>, 64> subStorages; \
-		for(U i = 0; i < m_tests.getSize(); ++i) \
+		for(U i = 0; i < threadCount; ++i) \
 		{ \
-			subStorages[i] = m_tests[i].m_result.member_; \
+			subStorages[i] = m_frcCtx->m_queueViews[i].member_; \
 		} \
 		combineQueueElements<t_>(alloc, \
-			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], m_tests.getSize()), \
+			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], threadCount), \
 			nullptr, \
-			m_results->member_, \
+			results.member_, \
 			nullptr); \
 	}
 
@@ -560,17 +554,17 @@ void CombineResultsTask::combine()
 	{ \
 		Array<TRenderQueueElementStorage<t_>, 64> subStorages; \
 		Array<TRenderQueueElementStorage<U32>, 64> ptrSubStorages; \
-		for(U i = 0; i < m_tests.getSize(); ++i) \
+		for(U i = 0; i < threadCount; ++i) \
 		{ \
-			subStorages[i] = m_tests[i].m_result.member_; \
-			ptrSubStorages[i] = m_tests[i].m_result.ptrMember_; \
+			subStorages[i] = m_frcCtx->m_queueViews[i].member_; \
+			ptrSubStorages[i] = m_frcCtx->m_queueViews[i].ptrMember_; \
 		} \
-		WeakArray<TRenderQueueElementStorage<U32>> arr(&ptrSubStorages[0], m_tests.getSize()); \
+		WeakArray<TRenderQueueElementStorage<U32>> arr(&ptrSubStorages[0], threadCount); \
 		combineQueueElements<t_>(alloc, \
-			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], m_tests.getSize()), \
+			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], threadCount), \
 			&arr, \
-			m_results->member_, \
-			&m_results->ptrMember_); \
+			results.member_, \
+			&results.ptrMember_); \
 	}
 
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_renderables);
@@ -586,32 +580,32 @@ void CombineResultsTask::combine()
 #undef ANKI_VIS_COMBINE_AND_PTR
 
 #if ANKI_EXTRA_CHECKS
-	for(PointLightQueueElement* light : m_results->m_shadowPointLights)
+	for(PointLightQueueElement* light : results.m_shadowPointLights)
 	{
 		ANKI_ASSERT(light->hasShadow());
 	}
 
-	for(SpotLightQueueElement* light : m_results->m_shadowSpotLights)
+	for(SpotLightQueueElement* light : results.m_shadowSpotLights)
 	{
 		ANKI_ASSERT(light->hasShadow());
 	}
 #endif
 
 	// Sort some of the arrays
-	std::sort(
-		m_results->m_renderables.getBegin(), m_results->m_renderables.getEnd(), MaterialDistanceSortFunctor(20.0f));
+	std::sort(results.m_renderables.getBegin(), results.m_renderables.getEnd(), MaterialDistanceSortFunctor(20.0f));
 
-	std::sort(m_results->m_earlyZRenderables.getBegin(),
-		m_results->m_earlyZRenderables.getEnd(),
+	std::sort(results.m_earlyZRenderables.getBegin(),
+		results.m_earlyZRenderables.getEnd(),
 		DistanceSortFunctor<RenderableQueueElement>());
 
-	std::sort(m_results->m_forwardShadingRenderables.getBegin(),
-		m_results->m_forwardShadingRenderables.getEnd(),
+	std::sort(results.m_forwardShadingRenderables.getBegin(),
+		results.m_forwardShadingRenderables.getEnd(),
 		RevDistanceSortFunctor<RenderableQueueElement>());
 
-	if(m_swRast)
+	// Cleanup
+	if(m_frcCtx->m_r)
 	{
-		m_swRast->~SoftwareRasterizer();
+		m_frcCtx->m_r->~SoftwareRasterizer();
 	}
 }
 
