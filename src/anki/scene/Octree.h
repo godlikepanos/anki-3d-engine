@@ -12,6 +12,7 @@
 #include <anki/util/Enum.h>
 #include <anki/util/ObjectAllocator.h>
 #include <anki/util/List.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -318,6 +319,8 @@ inline void Octree::walkTreeInternal(Leaf& leaf, U32 testId, TTestAabbFunc testF
 	}
 
 	Aabb aabb;
+	U visibleLeafs = 0;
+	(void)visibleLeafs;
 	for(Leaf* child : leaf.m_children)
 	{
 		if(child)
@@ -326,10 +329,13 @@ inline void Octree::walkTreeInternal(Leaf& leaf, U32 testId, TTestAabbFunc testF
 			aabb.setMax(child->m_aabbMax);
 			if(testFunc(aabb))
 			{
+				++visibleLeafs;
 				walkTreeInternal(*child, testId, testFunc, newPlaceableFunc);
 			}
 		}
 	}
+
+	ANKI_TRACE_INC_COUNTER(OCTREE_VISIBLE_LEAFS, visibleLeafs);
 }
 /// @}
 

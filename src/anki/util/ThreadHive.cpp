@@ -105,6 +105,7 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, const U taskCount)
 	Task* const htasks = m_alloc.newArray<Task>(taskCount);
 
 	// Initialize tasks
+	Task* prevTask = nullptr;
 	for(U i = 0; i < taskCount; ++i)
 	{
 		const ThreadHiveTask& inTask = tasks[i];
@@ -115,39 +116,39 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, const U taskCount)
 		outTask.m_arg = inTask.m_argument;
 		outTask.m_waitSemaphore = inTask.m_waitSemaphore;
 		outTask.m_signalSemaphore = inTask.m_signalSemaphore;
+
+		// Connect tasks
+		if(prevTask)
+		{
+			prevTask->m_next = &outTask;
+		}
+		prevTask = &outTask;
 	}
 
 	// Push work
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		for(U i = 0; i < taskCount; ++i)
+		if(m_head != nullptr)
 		{
-			Task& outTask = htasks[i];
-
-			// Push to the list
-			ANKI_HIVE_DEBUG_PRINT(
-				"pushing back %p (udata %p)\n", static_cast<void*>(&outTask), static_cast<void*>(outTask.m_arg));
-			if(m_head != nullptr)
-			{
-				ANKI_ASSERT(m_tail && m_head);
-				m_tail->m_next = &outTask;
-				m_tail = &outTask;
-			}
-			else
-			{
-				ANKI_ASSERT(m_tail == nullptr);
-				m_head = &outTask;
-				m_tail = m_head;
-			}
+			ANKI_ASSERT(m_tail && m_head);
+			m_tail->m_next = &htasks[0];
+			m_tail = &htasks[taskCount - 1];
+		}
+		else
+		{
+			ANKI_ASSERT(m_tail == nullptr);
+			m_head = &htasks[0];
+			m_tail = &htasks[taskCount - 1];
 		}
 
 		m_pendingTasks += taskCount;
 
 		ANKI_HIVE_DEBUG_PRINT("submit tasks\n");
-		// Notify all threads
-		m_cvar.notifyAll();
 	}
+
+	// Notify all threads
+	m_cvar.notifyAll();
 }
 
 void ThreadHive::threadRun(U threadId)
@@ -161,6 +162,10 @@ void ThreadHive::threadRun(U threadId)
 		ANKI_HIVE_DEBUG_PRINT(
 			"tid: %lu will exec %p (udata: %p)\n", threadId, static_cast<void*>(task), static_cast<void*>(task->m_arg));
 		task->m_cb(task->m_arg, threadId, *this, task->m_signalSemaphore);
+
+#if ANKI_EXTRA_CHECKS
+		task->m_cb = nullptr;
+#endif
 
 		// Signal the semaphore as early as possible
 		if(task->m_signalSemaphore)
@@ -184,9 +189,6 @@ Bool ThreadHive::waitForWork(U threadId, Task*& task)
 	// Complete the previous task
 	if(task)
 	{
-#if ANKI_EXTRA_CHECKS
-		task->m_cb = nullptr;
-#endif
 		--m_pendingTasks;
 
 		if(task->m_signalSemaphore || m_pendingTasks == 0)
