@@ -49,7 +49,7 @@ Error Reflections::initInternal(const ConfigSet& cfg)
 	consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
 	consts.add("MAX_STEPS", U32(64));
 	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
-	consts.add("HIZ_MIP_COUNT", U32(HIERARCHICAL_Z_MIPMAP_COUNT));
+	consts.add("HIZ_MIP_COUNT", U32(m_r->getDepthDownscale().getMipmapCount()));
 	consts.add("CLUSTER_COUNT_X", U32(cfg.getNumber("r.clusterSizeX")));
 	consts.add("CLUSTER_COUNT_Y", U32(cfg.getNumber("r.clusterSizeY")));
 	consts.add("CLUSTER_COUNT_Z", U32(cfg.getNumber("r.clusterSizeZ")));

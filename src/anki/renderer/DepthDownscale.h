@@ -46,6 +46,11 @@ anki_internal:
 		return m_runCtx.m_hizRt;
 	}
 
+	U32 getMipmapCount() const
+	{
+		return m_passes.getSize();
+	}
+
 private:
 	RenderTargetDescription m_depthRtDescr;
 	RenderTargetDescription m_hizRtDescr;
@@ -58,7 +63,7 @@ private:
 		ShaderProgramPtr m_grProg;
 	};
 
-	Array<Pass, HIERARCHICAL_Z_MIPMAP_COUNT> m_passes;
+	DynamicArray<Pass> m_passes;
 
 	class
 	{

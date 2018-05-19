@@ -12,6 +12,7 @@ namespace anki
 
 DepthDownscale::~DepthDownscale()
 {
+	m_passes.destroy(getAllocator());
 }
 
 Error DepthDownscale::initInternal(const ConfigSet&)
@@ -19,13 +20,22 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	const U width = m_r->getWidth() / 2;
 	const U height = m_r->getHeight() / 2;
 
+	U mipCount = computeMaxMipmapCount2d(width, height, HIERARCHICAL_Z_MIN_HEIGHT);
+
+	ANKI_R_LOGI("Initializing HiZ. Mip count %u, last mip size %ux%u",
+		mipCount,
+		width >> (mipCount - 1),
+		height >> (mipCount - 1));
+
+	m_passes.create(getAllocator(), mipCount);
+
 	// Create RT descrs
 	m_depthRtDescr =
 		m_r->create2DRenderTargetDescription(width, height, GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT, "Half depth");
 	m_depthRtDescr.bake();
 
 	m_hizRtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R32_SFLOAT, "HiZ");
-	m_hizRtDescr.m_mipmapCount = HIERARCHICAL_Z_MIPMAP_COUNT;
+	m_hizRtDescr.m_mipmapCount = mipCount;
 	m_hizRtDescr.bake();
 
 	// Create FB descr
@@ -35,7 +45,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	m_passes[0].m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 	m_passes[0].m_fbDescr.bake();
 
-	for(U i = 1; i < HIERARCHICAL_Z_MIPMAP_COUNT; ++i)
+	for(U i = 1; i < m_passes.getSize(); ++i)
 	{
 		m_passes[i].m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 		m_passes[i].m_fbDescr.m_colorAttachments[0].m_surface.m_level = i;
@@ -53,7 +63,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	m_prog->getOrCreateVariant(mutations.get(), variant);
 	m_passes[0].m_grProg = variant->getProgram();
 
-	for(U i = 1; i < HIERARCHICAL_Z_MIPMAP_COUNT; ++i)
+	for(U i = 1; i < m_passes.getSize(); ++i)
 	{
 		mutations[0].m_value = 1;
 
@@ -106,7 +116,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Rest of the passes
-	for(U i = 1; i < HIERARCHICAL_Z_MIPMAP_COUNT; ++i)
+	for(U i = 1; i < m_passes.getSize(); ++i)
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
 

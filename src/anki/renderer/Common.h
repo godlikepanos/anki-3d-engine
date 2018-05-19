@@ -68,8 +68,8 @@ const U BLOOM_FRACTION = 4;
 /// Volumetric size is rendererSize/VOLUMETRIC_FRACTION.
 const U VOLUMETRIC_FRACTION = 4;
 
-/// Number of mipmaps of the HZ map.
-const U HIERARCHICAL_Z_MIPMAP_COUNT = 4;
+/// Used to calculate the mipmap count of the HiZ map.
+const U HIERARCHICAL_Z_MIN_HEIGHT = 80;
 
 const TextureSubresourceInfo HIZ_HALF_DEPTH(TextureSurfaceInfo(0, 0, 0, 0));
 const TextureSubresourceInfo HIZ_QUARTER_DEPTH(TextureSurfaceInfo(1, 0, 0, 0));
