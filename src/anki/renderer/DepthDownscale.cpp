@@ -13,6 +13,11 @@ namespace anki
 DepthDownscale::~DepthDownscale()
 {
 	m_passes.destroy(getAllocator());
+
+	if(m_copyToBuff.m_buffAddr)
+	{
+		m_copyToBuff.m_buff->unmap();
+	}
 }
 
 Error DepthDownscale::initInternal(const ConfigSet&)
@@ -20,12 +25,12 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	const U width = m_r->getWidth() / 2;
 	const U height = m_r->getHeight() / 2;
 
-	U mipCount = computeMaxMipmapCount2d(width, height, HIERARCHICAL_Z_MIN_HEIGHT);
+	const U mipCount = computeMaxMipmapCount2d(width, height, HIERARCHICAL_Z_MIN_HEIGHT);
 
-	ANKI_R_LOGI("Initializing HiZ. Mip count %u, last mip size %ux%u",
-		mipCount,
-		width >> (mipCount - 1),
-		height >> (mipCount - 1));
+	const U lastMipWidth = width >> (mipCount - 1);
+	const U lastMipHeight = height >> (mipCount - 1);
+
+	ANKI_R_LOGI("Initializing HiZ. Mip count %u, last mip size %ux%u", mipCount, lastMipWidth, lastMipHeight);
 
 	m_passes.create(getAllocator(), mipCount);
 
@@ -69,6 +74,32 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 
 		m_prog->getOrCreateVariant(mutations.get(), variant);
 		m_passes[i].m_grProg = variant->getProgram();
+	}
+
+	// Copy to buffer
+	{
+		m_copyToBuff.m_lastMipWidth = lastMipWidth;
+		m_copyToBuff.m_lastMipHeight = lastMipHeight;
+
+		// Create program
+		ANKI_CHECK(getResourceManager().loadResource("programs/HiZCopyToClient.ankiprog", m_copyToBuff.m_prog));
+
+		ShaderProgramResourceConstantValueInitList<1> consts(m_copyToBuff.m_prog);
+		consts.add("HIZ_MIP_SIZE", UVec2(lastMipWidth, lastMipHeight));
+
+		const ShaderProgramResourceVariant* variant;
+		m_copyToBuff.m_prog->getOrCreateVariant(consts.get(), variant);
+
+		m_copyToBuff.m_grProg = variant->getProgram();
+
+		// Create buffer
+		BufferInitInfo buffInit("HiZ Client");
+		buffInit.m_access = BufferMapAccessBit::READ;
+		buffInit.m_size = lastMipHeight * lastMipWidth * sizeof(F32);
+		buffInit.m_usage = BufferUsageBit::STORAGE_COMPUTE_WRITE;
+		m_copyToBuff.m_buff = getGrManager().newBuffer(buffInit);
+
+		m_copyToBuff.m_buffAddr = m_copyToBuff.m_buff->map(0, buffInit.m_size, BufferMapAccessBit::READ);
 	}
 
 	return Error::NONE;
@@ -132,6 +163,18 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		pass.newProducer({m_runCtx.m_hizRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresourceWrite});
 	}
+
+	// Copy to buffer pass
+	{
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("HiZ Copy");
+
+		pass.setWork(runCopyToBufferCallback, this, 0);
+
+		TextureSubresourceInfo subresource;
+		subresource.m_firstMipmap = getMipmapCount() - 1;
+
+		pass.newConsumer({m_runCtx.m_hizRt, TextureUsageBit::SAMPLED_COMPUTE, subresource});
+	}
 }
 
 void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
@@ -169,6 +212,20 @@ void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb->setDepthCompareOperation(CompareOperation::LESS);
 	}
+}
+
+void DepthDownscale::runCopyToBuffer(RenderPassWorkContext& rgraphCtx)
+{
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+	TextureSubresourceInfo sampleSubresource;
+	sampleSubresource.m_firstMipmap = getMipmapCount() - 1;
+
+	rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_hizRt, sampleSubresource, m_r->getNearestSampler());
+
+	cmdb->bindStorageBuffer(0, 0, m_copyToBuff.m_buff, 0, m_copyToBuff.m_buff->getSize());
+
+	dispatchPPCompute(cmdb, 8, 8, m_copyToBuff.m_lastMipWidth, m_copyToBuff.m_lastMipHeight);
 }
 
 } // end namespace anki
