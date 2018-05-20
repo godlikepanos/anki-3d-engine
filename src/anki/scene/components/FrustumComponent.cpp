@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/components/FrustumComponent.h>
-#include <anki/scene/Visibility.h>
 
 namespace anki
 {
@@ -20,6 +19,11 @@ FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
 	markTransformForUpdate();
 
 	setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+}
+
+FrustumComponent::~FrustumComponent()
+{
+	m_coverageBuff.m_depthMap.destroy(getAllocator());
 }
 
 Error FrustumComponent::update(SceneNode& node, Second, Second, Bool& updated)

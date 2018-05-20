@@ -254,7 +254,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
 {
 	m_stats.m_visibilityTestsTime = HighRezTimer::getCurrentTime();
-	anki::doVisibilityTests(*m_mainCam, *this, rqueue);
+	doVisibilityTests(*m_mainCam, *this, rqueue);
 	m_stats.m_visibilityTestsTime = HighRezTimer::getCurrentTime() - m_stats.m_visibilityTestsTime;
 }
 

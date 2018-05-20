@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/scene/Visibility.h>
 #include <anki/scene/VisibilityInternal.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/SectorNode.h>
@@ -71,35 +70,25 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	// Submit new work
 	//
 
-	// Software rasterizer tasks
-	ThreadHiveSemaphore* rasterizeSem = nullptr;
-	if(frc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::OCCLUDERS))
+	// Software rasterizer task
+	ThreadHiveSemaphore* prepareRasterizerSem = nullptr;
+	if(frc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::OCCLUDERS) && frc.hasCoverageBuffer())
 	{
 		// Gather triangles task
-		ThreadHiveTask gatherTask;
-		gatherTask.m_callback = GatherVisibleTrianglesTask::callback;
-		gatherTask.m_argument = alloc.newInstance<GatherVisibleTrianglesTask>(frcCtx);
-		gatherTask.m_signalSemaphore = hive.newSemaphore(1);
+		ThreadHiveTask fillDepthTask;
+		fillDepthTask.m_callback = FillRasterizerWithCoverageTask::callback;
+		fillDepthTask.m_argument = alloc.newInstance<FillRasterizerWithCoverageTask>(frcCtx);
+		fillDepthTask.m_signalSemaphore = hive.newSemaphore(1);
 
-		hive.submitTasks(&gatherTask, 1);
+		hive.submitTasks(&fillDepthTask, 1);
 
-		// Rasterize triangles tasks
-		const U count = hive.getThreadCount();
-		rasterizeSem = hive.newSemaphore(count);
+		prepareRasterizerSem = fillDepthTask.m_signalSemaphore;
+	}
 
-		Array<ThreadHiveTask, ThreadHive::MAX_THREADS> rastTasks;
-		ThreadHiveTask& task = rastTasks[0];
-		task.m_callback = RasterizeTrianglesTask::callback;
-		task.m_argument = alloc.newInstance<RasterizeTrianglesTask>(frcCtx);
-		task.m_waitSemaphore = gatherTask.m_signalSemaphore;
-		task.m_signalSemaphore = rasterizeSem;
-
-		for(U i = 1; i < count; ++i)
-		{
-			rastTasks[i] = rastTasks[0];
-		}
-
-		hive.submitTasks(&rastTasks[0], count);
+	if(frc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::OCCLUDERS))
+	{
+		rqueue.m_fillCoverageBufferCallback = FrustumComponent::fillCoverageBufferCallback;
+		rqueue.m_fillCoverageBufferCallbackUserData = static_cast<void*>(const_cast<FrustumComponent*>(&frc));
 	}
 
 	// Gather visibles from the octree
@@ -107,7 +96,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	gatherTask.m_callback = GatherVisiblesFromOctreeTask::callback;
 	gatherTask.m_argument = alloc.newInstance<GatherVisiblesFromOctreeTask>(frcCtx);
 	gatherTask.m_signalSemaphore = nullptr; // No need to signal anything because it will spawn new tasks
-	gatherTask.m_waitSemaphore = rasterizeSem;
+	gatherTask.m_waitSemaphore = prepareRasterizerSem;
 
 	hive.submitTasks(&gatherTask, 1);
 
@@ -121,47 +110,26 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	hive.submitTasks(&combineTask, 1);
 }
 
-void GatherVisibleTrianglesTask::gather()
+void FillRasterizerWithCoverageTask::fill()
 {
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_GATHER_TRIANGLES);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_FILL_DEPTH);
 
 	auto alloc = m_frcCtx->m_visCtx->m_scene->getFrameAllocator();
-	SceneComponentLists& lists = m_frcCtx->m_visCtx->m_scene->getSceneComponentLists();
 
-	lists.iterateComponents<OccluderComponent>([&](OccluderComponent& comp) {
-		if(m_frcCtx->m_frc->insideFrustum(comp.getBoundingVolume()))
-		{
-			U32 count, stride;
-			const Vec3* it;
-			comp.getVertices(it, count, stride);
-			while(count--)
-			{
-				m_frcCtx->m_verts.emplaceBack(alloc, *it);
-				it = reinterpret_cast<const Vec3*>(reinterpret_cast<const U8*>(it) + stride);
-			}
-		}
-	});
+	// Get the C-Buffer
+	ConstWeakArray<F32> depthBuff;
+	U32 width;
+	U32 height;
+	m_frcCtx->m_frc->getCoverageBufferInfo(depthBuff, width, height);
+	ANKI_ASSERT(width > 0 && height > 0 && depthBuff.getSize() > 0);
 
 	// Init the rasterizer
 	m_frcCtx->m_r = alloc.newInstance<SoftwareRasterizer>();
 	m_frcCtx->m_r->init(alloc);
-	m_frcCtx->m_r->prepare(m_frcCtx->m_frc->getViewMatrix(),
-		m_frcCtx->m_frc->getProjectionMatrix(),
-		SW_RASTERIZER_WIDTH,
-		SW_RASTERIZER_HEIGHT);
-}
+	m_frcCtx->m_r->prepare(m_frcCtx->m_frc->getViewMatrix(), m_frcCtx->m_frc->getProjectionMatrix(), width, height);
 
-void RasterizeTrianglesTask::rasterize()
-{
-	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_RASTERIZE);
-
-	const U totalVertCount = m_frcCtx->m_verts.getSize();
-
-	U32 idx;
-	while((idx = m_frcCtx->m_rasterizedVertCount.fetchAdd(3)) < totalVertCount)
-	{
-		m_frcCtx->m_r->draw(&m_frcCtx->m_verts[idx][0], 3, sizeof(Vec3), false);
-	}
+	// Do the work
+	m_frcCtx->m_r->fillDepthBuffer(depthBuff);
 }
 
 void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive, ThreadHiveSemaphore& sem)
@@ -705,7 +673,7 @@ void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
 	}
 }
 
-void doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueue& rqueue)
+void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueue& rqueue)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TESTS);
 

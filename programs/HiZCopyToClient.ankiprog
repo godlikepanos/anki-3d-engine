@@ -28,9 +28,9 @@ void main()
 	uint x = gl_GlobalInvocationID.x;
 	uint y = gl_GlobalInvocationID.y;
 
-	if(x > HIZ_MIP_SIZE.x || y > HIZ_MIP_SIZE.y)
+	if(x >= HIZ_MIP_SIZE.x || y >= HIZ_MIP_SIZE.y)
 	{
-		// Skup if it's out of bounds
+		// Skip if it's out of bounds
 		return;
 	}
 

@@ -300,6 +300,17 @@ void Renderer::finalize(const RenderingContext& ctx)
 	++m_frameCount;
 	m_prevViewProjMat = ctx.m_renderQueue->m_viewProjectionMatrix;
 	m_prevCamTransform = ctx.m_renderQueue->m_cameraTransform;
+
+	// Inform about the HiZ map. Do it as late as possible
+	if(ctx.m_renderQueue->m_fillCoverageBufferCallback)
+	{
+		F32* depthValues;
+		U32 width;
+		U32 height;
+		m_depth->getClientDepthMapInfo(depthValues, width, height);
+		ctx.m_renderQueue->m_fillCoverageBufferCallback(
+			ctx.m_renderQueue->m_fillCoverageBufferCallbackUserData, depthValues, width, height);
+	}
 }
 
 Vec3 Renderer::unproject(

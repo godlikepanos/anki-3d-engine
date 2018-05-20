@@ -16,6 +16,7 @@
 #include <anki/core/NativeWindow.h>
 #include <anki/input/Input.h>
 #include <anki/scene/SceneGraph.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/renderer/MainRenderer.h>
@@ -24,6 +25,7 @@
 #include <anki/resource/AsyncLoader.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/ui/UiManager.h>
+#include <anki/ui/Canvas.h>
 
 #if ANKI_OS == ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>

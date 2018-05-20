@@ -52,6 +52,8 @@ public:
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(SceneNode* node, Frustum* frustum);
 
+	~FrustumComponent();
+
 	Frustum& getFrustum()
 	{
 		return *m_frustum;
@@ -140,6 +142,40 @@ public:
 		return m_flags.getAny(FrustumComponentVisibilityTestFlag::ALL_TESTS);
 	}
 
+	/// The type is FillCoverageBufferCallback.
+	static void fillCoverageBufferCallback(void* userData, F32* depthValues, U32 width, U32 height)
+	{
+		ANKI_ASSERT(userData && depthValues && width > 0 && height > 0);
+		FrustumComponent& self = *static_cast<FrustumComponent*>(userData);
+
+		self.m_coverageBuff.m_depthMap.destroy(self.getAllocator());
+		self.m_coverageBuff.m_depthMap.create(self.getAllocator(), width * height);
+		memcpy(&self.m_coverageBuff.m_depthMap[0], depthValues, self.m_coverageBuff.m_depthMap.getSizeInBytes());
+
+		self.m_coverageBuff.m_depthMapWidth = width;
+		self.m_coverageBuff.m_depthMapHeight = height;
+	}
+
+	Bool hasCoverageBuffer() const
+	{
+		return m_coverageBuff.m_depthMap.getSize() > 0;
+	}
+
+	void getCoverageBufferInfo(ConstWeakArray<F32>& depthBuff, U32& width, U32& height) const
+	{
+		if(m_coverageBuff.m_depthMap.getSize() > 0)
+		{
+			depthBuff = ConstWeakArray<F32>(&m_coverageBuff.m_depthMap[0], m_coverageBuff.m_depthMap.getSize());
+			width = m_coverageBuff.m_depthMapWidth;
+			height = m_coverageBuff.m_depthMapHeight;
+		}
+		else
+		{
+			depthBuff = ConstWeakArray<F32>();
+			width = height = 0;
+		}
+	}
+
 private:
 	enum Flags
 	{
@@ -154,6 +190,14 @@ private:
 	Mat4 m_vpm = Mat4::getIdentity(); ///< View projection matrix
 
 	BitMask<U16> m_flags;
+
+	class
+	{
+	public:
+		DynamicArray<F32> m_depthMap;
+		U32 m_depthMapWidth = 0;
+		U32 m_depthMapHeight = 0;
+	} m_coverageBuff; ///< Coverage buffer for extra visibility tests.
 };
 /// @}
 

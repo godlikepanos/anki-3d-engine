@@ -100,6 +100,9 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 		m_copyToBuff.m_buff = getGrManager().newBuffer(buffInit);
 
 		m_copyToBuff.m_buffAddr = m_copyToBuff.m_buff->map(0, buffInit.m_size, BufferMapAccessBit::READ);
+
+		// Fill the buffer with 1.0f
+		memorySet(static_cast<F32*>(m_copyToBuff.m_buffAddr), 1.0f, lastMipHeight * lastMipWidth);
 	}
 
 	return Error::NONE;
@@ -218,9 +221,10 @@ void DepthDownscale::runCopyToBuffer(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
+	cmdb->bindShaderProgram(m_copyToBuff.m_grProg);
+
 	TextureSubresourceInfo sampleSubresource;
 	sampleSubresource.m_firstMipmap = getMipmapCount() - 1;
-
 	rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_hizRt, sampleSubresource, m_r->getNearestSampler());
 
 	cmdb->bindStorageBuffer(0, 0, m_copyToBuff.m_buff, 0, m_copyToBuff.m_buff->getSize());

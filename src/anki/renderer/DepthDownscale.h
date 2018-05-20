@@ -51,6 +51,14 @@ anki_internal:
 		return m_passes.getSize();
 	}
 
+	void getClientDepthMapInfo(F32*& depthValues, U32& width, U32& height) const
+	{
+		width = m_copyToBuff.m_lastMipWidth;
+		height = m_copyToBuff.m_lastMipHeight;
+		ANKI_ASSERT(m_copyToBuff.m_buffAddr);
+		depthValues = static_cast<F32*>(m_copyToBuff.m_buffAddr);
+	}
+
 private:
 	RenderTargetDescription m_depthRtDescr;
 	RenderTargetDescription m_hizRtDescr;

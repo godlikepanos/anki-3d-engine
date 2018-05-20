@@ -287,8 +287,11 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 				const F32 z1 = ndc[1].z();
 				const F32 z2 = ndc[2].z();
 
-				const F32 depth = z0 * bc[0] + z1 * bc[1] + z2 * bc[2];
+				F32 depth = z0 * bc[0] + z1 * bc[1] + z2 * bc[2];
 				ANKI_ASSERT(depth >= 0.0 && depth <= 1.0);
+
+				// Clamp it to a bit less that 1.0f because 1.0f will produce a 0 depthi
+				depth = min(depth, 1.0f - EPSILON);
 
 				// Store the min of the current value and new one
 				const U32 depthi = depth * MAX_U32;
@@ -389,6 +392,23 @@ Bool SoftwareRasterizer::visibilityTestInternal(const CollisionShape& cs, const 
 	}
 
 	return false;
+}
+
+void SoftwareRasterizer::fillDepthBuffer(ConstWeakArray<F32> depthValues)
+{
+	ANKI_ASSERT(m_zbuffer.getSize() == depthValues.getSize());
+
+	U count = depthValues.getSize();
+	while(count--)
+	{
+		F32 depth = depthValues[count];
+		ANKI_ASSERT(depth >= 0.0f && depth <= 1.0f);
+
+		depth = min(depth, 1.0f - EPSILON); // See a few lines above why is that
+
+		const U32 depthi = depth * MAX_U32;
+		m_zbuffer[count].set(depthi);
+	}
 }
 
 } // end namespace anki

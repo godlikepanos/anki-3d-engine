@@ -7,7 +7,6 @@
 
 #include <anki/scene/Common.h>
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/Visibility.h>
 #include <anki/Math.h>
 #include <anki/util/Singleton.h>
 #include <anki/util/HighRezTimer.h>
@@ -284,6 +283,9 @@ private:
 
 	ANKI_USE_RESULT Error updateNodes(UpdateSceneNodesCtx& ctx) const;
 	ANKI_USE_RESULT static Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
+
+	/// Do visibility tests.
+	static void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, RenderQueue& rqueue);
 };
 
 template<typename Node, typename... Args>

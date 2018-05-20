@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <anki/scene/Visibility.h>
 #include <anki/scene/SectorNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/SoftwareRasterizer.h>
@@ -13,6 +12,7 @@
 #include <anki/scene/Octree.h>
 #include <anki/util/Thread.h>
 #include <anki/core/Trace.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
@@ -156,13 +156,13 @@ public:
 	RenderQueue* m_renderQueue = nullptr;
 };
 
-/// ThreadHive task to gather all visible triangles from the OccluderComponent.
-class GatherVisibleTrianglesTask
+/// ThreadHive task to set the depth map of the S/W rasterizer.
+class FillRasterizerWithCoverageTask
 {
 public:
 	FrustumVisibilityContext* m_frcCtx = nullptr;
 
-	GatherVisibleTrianglesTask(FrustumVisibilityContext* frcCtx)
+	FillRasterizerWithCoverageTask(FrustumVisibilityContext* frcCtx)
 		: m_frcCtx(frcCtx)
 	{
 		ANKI_ASSERT(m_frcCtx);
@@ -171,40 +171,15 @@ public:
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
-		GatherVisibleTrianglesTask& self = *static_cast<GatherVisibleTrianglesTask*>(ud);
-		self.gather();
+		FillRasterizerWithCoverageTask& self = *static_cast<FillRasterizerWithCoverageTask*>(ud);
+		self.fill();
 	}
 
 private:
-	void gather();
+	void fill();
 };
 static_assert(
-	std::is_trivially_destructible<GatherVisibleTrianglesTask>::value == true, "Should be trivially destructible");
-
-/// ThreadHive task to rasterize triangles.
-class RasterizeTrianglesTask
-{
-public:
-	FrustumVisibilityContext* m_frcCtx = nullptr;
-
-	RasterizeTrianglesTask(FrustumVisibilityContext* frcCtx)
-		: m_frcCtx(frcCtx)
-	{
-		ANKI_ASSERT(m_frcCtx);
-	}
-
-	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
-	{
-		RasterizeTrianglesTask& self = *static_cast<RasterizeTrianglesTask*>(ud);
-		self.rasterize();
-	}
-
-private:
-	void rasterize();
-};
-static_assert(
-	std::is_trivially_destructible<RasterizeTrianglesTask>::value == true, "Should be trivially destructible");
+	std::is_trivially_destructible<FillRasterizerWithCoverageTask>::value == true, "Should be trivially destructible");
 
 /// ThreadHive task to get visible nodes from the octree.
 class GatherVisiblesFromOctreeTask

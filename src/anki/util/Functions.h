@@ -184,31 +184,14 @@ struct TypesAreTheSame<T, T>
 };
 
 template<typename T>
-void memorySet(T* dest, T value, const PtrSize count);
-
-#define ANKI_SPECIALISE_MEMORY_SET(T) \
-	template<> \
-	inline void memorySet(T* dest, T value, const PtrSize count) \
-	{ \
-		ANKI_ASSERT(dest); \
-		const T* end = dest + count; \
-		while(dest != end) \
-		{ \
-			memcpy(reinterpret_cast<char*>(dest), &value, sizeof(T)); \
-			++dest; \
-		} \
+void memorySet(T* dest, T value, PtrSize count)
+{
+	ANKI_ASSERT(dest);
+	while(count--)
+	{
+		dest[count] = value;
 	}
-
-ANKI_SPECIALISE_MEMORY_SET(U8)
-ANKI_SPECIALISE_MEMORY_SET(I8)
-ANKI_SPECIALISE_MEMORY_SET(U16)
-ANKI_SPECIALISE_MEMORY_SET(I16)
-ANKI_SPECIALISE_MEMORY_SET(U32)
-ANKI_SPECIALISE_MEMORY_SET(I32)
-ANKI_SPECIALISE_MEMORY_SET(U64)
-ANKI_SPECIALISE_MEMORY_SET(I64)
-
-#undef ANKI_SPECIALISE_MEMORY_SET
+}
 
 /// Zero memory of an object
 template<typename T>

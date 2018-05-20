@@ -8,6 +8,7 @@
 #include <anki/scene/Common.h>
 #include <anki/Math.h>
 #include <anki/collision/Plane.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -42,7 +43,11 @@ public:
 	/// @param vertCount The number of verts to draw.
 	/// @param stride The stride (in bytes) of the next vertex.
 	/// @param backfaceCulling If true it will do backface culling.
+	/// @note It's thread-safe against other draw() invocations only.
 	void draw(const F32* verts, U vertCount, U stride, Bool backfaceCulling);
+
+	/// Fill the depth buffer with some values.
+	void fillDepthBuffer(ConstWeakArray<F32> depthValues);
 
 	/// Perform visibility tests.
 	/// @param cs The collision shape in world space.
