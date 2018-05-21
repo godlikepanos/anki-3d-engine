@@ -62,7 +62,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_prog));
 
 	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
-	mutations.add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 1);
+	mutations.add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 2);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutations.get(), variant);
