@@ -84,8 +84,6 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
 		BufferPtr m_buff;
 		void* m_buffAddr = nullptr;
 		U32 m_lastMipWidth = MAX_U32, m_lastMipHeight = MAX_U32;
@@ -95,17 +93,10 @@ private:
 
 	void run(RenderPassWorkContext& rgraphCtx);
 
-	void runCopyToBuffer(RenderPassWorkContext& rgraphCtx);
-
 	/// A RenderPassWorkCallback for half depth main pass.
 	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
 		static_cast<DepthDownscale*>(rgraphCtx.m_userData)->run(rgraphCtx);
-	}
-
-	static void runCopyToBufferCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		static_cast<DepthDownscale*>(rgraphCtx.m_userData)->runCopyToBuffer(rgraphCtx);
 	}
 };
 /// @}

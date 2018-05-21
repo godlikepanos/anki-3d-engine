@@ -8,6 +8,7 @@ http://www.anki3d.org/LICENSE
 	<mutators>
 		<mutator name="TYPE" values="0 1"/> <!-- 0: write to depth&color, 1: write to depth -->
 		<mutator name="SAMPLE_RESOLVE_TYPE" values="0 1 2"/> <!-- 0: average, 1: min, 2: max -->
+		<mutator name="COPY_TO_CLIENT" values="0 1"/>
 	</mutators>
 
 	<shaders>
@@ -24,6 +25,19 @@ http://www.anki3d.org/LICENSE
 #define AVG 0
 #define MIN 1
 #define MAX 2
+
+#if COPY_TO_CLIENT
+struct PushConsts
+{
+	uvec2 textureSize;
+};
+ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
+
+layout(std430, ANKI_SS_BINDING(0, 0)) writeonly buffer s1_
+{
+	float u_clientBuf[];
+};
+#endif
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
 
@@ -49,6 +63,10 @@ void main()
 
 #if TYPE == 0
 	gl_FragDepth = out_color;
+#endif
+
+#if COPY_TO_CLIENT
+	u_clientBuf[uint(gl_FragCoord.y) * u_regs.textureSize.x + uint(gl_FragCoord.x)] = out_color;
 #endif
 }
 			]]></source>
