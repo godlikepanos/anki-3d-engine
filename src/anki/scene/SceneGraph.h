@@ -7,7 +7,6 @@
 
 #include <anki/scene/Common.h>
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/Visibility.h>
 #include <anki/Math.h>
 #include <anki/util/Singleton.h>
 #include <anki/util/HighRezTimer.h>
@@ -27,6 +26,7 @@ class SectorGroup;
 class ConfigSet;
 class PerspectiveCameraNode;
 class UpdateSceneNodesCtx;
+class Octree;
 
 /// @addtogroup scene
 /// @{
@@ -227,6 +227,12 @@ anki_internal:
 		return m_earlyZDist;
 	}
 
+	Octree& getOctree()
+	{
+		ANKI_ASSERT(m_octree);
+		return *m_octree;
+	}
+
 private:
 	const Timestamp* m_globalTimestamp = nullptr;
 	Timestamp m_timestamp = 0; ///< Cached timestamp
@@ -254,6 +260,8 @@ private:
 	EventManager m_events;
 	SectorGroup* m_sectors;
 
+	Octree* m_octree = nullptr;
+
 	Atomic<U32> m_objectsMarkedForDeletionCount;
 
 	F32 m_maxReflectionProxyDistance = 0.0;
@@ -275,6 +283,9 @@ private:
 
 	ANKI_USE_RESULT Error updateNodes(UpdateSceneNodesCtx& ctx) const;
 	ANKI_USE_RESULT static Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
+
+	/// Do visibility tests.
+	static void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, RenderQueue& rqueue);
 };
 
 template<typename Node, typename... Args>

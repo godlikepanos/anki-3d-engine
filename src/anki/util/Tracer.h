@@ -8,7 +8,6 @@
 #include <anki/util/File.h>
 #include <anki/util/List.h>
 #include <anki/util/ObjectAllocator.h>
-#include <anki/util/Singleton.h>
 
 namespace anki
 {
@@ -96,31 +95,6 @@ private:
 	Error writeTraceJson(const FlushCtx& ctx);
 
 	static void getSpreadsheetColumnName(U column, Array<char, 3>& arr);
-};
-
-/// Tracer singleton.
-using TracerSingleton = Singleton<Tracer>;
-
-/// Convenience class to trace an event.
-class TraceScopedEvent
-{
-public:
-	TraceScopedEvent(const char* name)
-		: m_name(name)
-		, m_tracer(&TracerSingleton::get())
-	{
-		m_handle = m_tracer->beginEvent();
-	}
-
-	~TraceScopedEvent()
-	{
-		m_tracer->endEvent(m_name, m_handle);
-	}
-
-private:
-	const char* m_name;
-	TracerEventHandle m_handle;
-	Tracer* m_tracer;
 };
 /// @}
 

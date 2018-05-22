@@ -85,6 +85,20 @@ inline T mod(const T x, const T y)
 	return x - y * std::floor(x / y);
 }
 
+/// Like GLSL's mix.
+template<typename T, typename Y>
+inline T mix(T x, T y, Y factor)
+{
+	return x * (T(1) - factor) + y * factor;
+}
+
+/// Like GLSL's modf
+template<typename T>
+inline T modf(T x, T& intPart)
+{
+	return std::modf(x, &intPart);
+}
+
 /// The same as abs/fabs. For ints and floats.
 template<typename T>
 T absolute(const T f);

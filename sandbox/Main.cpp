@@ -161,6 +161,11 @@ Error MyApp::userMainLoop(Bool& quit)
 		renderer.getDbg().switchDepthTestEnabled();
 	}
 
+	if(in.getKey(KeyCode::F12) == 1)
+	{
+		CoreTracerSingleton::get().m_enabled = !CoreTracerSingleton::get().m_enabled;
+	}
+
 #if !PLAYER
 	if(in.getKey(KeyCode::UP))
 		mover->rotateLocalX(ang);

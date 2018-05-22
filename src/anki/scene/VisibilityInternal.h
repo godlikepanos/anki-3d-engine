@@ -5,22 +5,24 @@
 
 #pragma once
 
-#include <anki/scene/Visibility.h>
 #include <anki/scene/SectorNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/SoftwareRasterizer.h>
+#include <anki/scene/components/FrustumComponent.h>
+#include <anki/scene/Octree.h>
 #include <anki/util/Thread.h>
 #include <anki/core/Trace.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
 
-// Forward
-class FrustumComponent;
-class ThreadHive;
-
 /// @addtogroup scene
 /// @{
+
+static const U32 MAX_SPATIALS_PER_VIS_TEST = 48; ///< Num of spatials to test in a single ThreadHive task.
+static const U32 SW_RASTERIZER_WIDTH = 80;
+static const U32 SW_RASTERIZER_HEIGHT = 50;
 
 /// Sort objects on distance
 template<typename T>
@@ -112,6 +114,8 @@ public:
 	TRenderQueueElementStorage<ReflectionProbeQueueElement> m_reflectionProbes;
 	TRenderQueueElementStorage<LensFlareQueueElement> m_lensFlares;
 	TRenderQueueElementStorage<DecalQueueElement> m_decals;
+
+	Timestamp m_timestamp = 0;
 };
 
 static_assert(std::is_trivially_destructible<RenderQueueView>::value == true, "Should be trivially destructible");
@@ -125,127 +129,139 @@ public:
 
 	F32 m_earlyZDist = -1.0f; ///< Cache this.
 
-	List<FrustumComponent*> m_testedFrcs;
+	List<const FrustumComponent*> m_testedFrcs;
 	Mutex m_mtx;
 
-	void submitNewWork(FrustumComponent& frc, RenderQueue& result, ThreadHive& hive);
+	void submitNewWork(const FrustumComponent& frc, RenderQueue& result, ThreadHive& hive);
 };
 
-/// ThreadHive task to gather all visible triangles from the OccluderComponent.
-class GatherVisibleTrianglesTask
+/// A context for a specific test of a frustum component.
+/// @note Should be trivially destructible.
+class FrustumVisibilityContext
 {
 public:
-	WeakPtr<VisibilityContext> m_visCtx;
-	WeakPtr<FrustumComponent> m_frc;
+	VisibilityContext* m_visCtx = nullptr;
+	const FrustumComponent* m_frc = nullptr;
 
-	static const U TRIANGLES_INITIAL_SIZE = 10 * 3;
+	// S/W rasterizer members
+	SoftwareRasterizer* m_r = nullptr;
 	DynamicArray<Vec3> m_verts;
-	U32 m_vertCount;
-
-	SoftwareRasterizer m_r;
-
 	Atomic<U32> m_rasterizedVertCount = {0}; ///< That will be used by the RasterizeTrianglesTask.
 
-	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
-	{
-		GatherVisibleTrianglesTask& self = *static_cast<GatherVisibleTrianglesTask*>(ud);
-		self.gather();
-	}
+	// Visibility test members
+	DynamicArray<RenderQueueView> m_queueViews; ///< Sub result. Will be combined later.
+	ThreadHiveSemaphore* m_visTestsSignalSem = nullptr;
 
-private:
-	void gather();
+	// Gather results members
+	RenderQueue* m_renderQueue = nullptr;
 };
 
-/// ThreadHive task to rasterize triangles.
-class RasterizeTrianglesTask
+/// ThreadHive task to set the depth map of the S/W rasterizer.
+class FillRasterizerWithCoverageTask
 {
 public:
-	WeakPtr<GatherVisibleTrianglesTask> m_gatherTask;
-	U32 m_taskIdx;
-	U32 m_taskCount;
+	FrustumVisibilityContext* m_frcCtx = nullptr;
+
+	FillRasterizerWithCoverageTask(FrustumVisibilityContext* frcCtx)
+		: m_frcCtx(frcCtx)
+	{
+		ANKI_ASSERT(m_frcCtx);
+	}
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
-		RasterizeTrianglesTask& self = *static_cast<RasterizeTrianglesTask*>(ud);
-		self.rasterize();
+		FillRasterizerWithCoverageTask& self = *static_cast<FillRasterizerWithCoverageTask*>(ud);
+		self.fill();
 	}
 
 private:
-	void rasterize();
+	void fill();
 };
+static_assert(
+	std::is_trivially_destructible<FillRasterizerWithCoverageTask>::value == true, "Should be trivially destructible");
 
-/// ThreadHive task to get visible nodes from sectors.
-class GatherVisiblesFromSectorsTask
+/// ThreadHive task to get visible nodes from the octree.
+class GatherVisiblesFromOctreeTask
 {
 public:
-	WeakPtr<VisibilityContext> m_visCtx;
-	SectorGroupVisibilityTestsContext m_sectorsCtx;
-	WeakPtr<FrustumComponent> m_frc; ///< What to test against.
-	SoftwareRasterizer* m_r;
+	FrustumVisibilityContext* m_frcCtx = nullptr;
+
+	GatherVisiblesFromOctreeTask(FrustumVisibilityContext* frcCtx)
+		: m_frcCtx(frcCtx)
+	{
+		ANKI_ASSERT(m_frcCtx);
+	}
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
-		GatherVisiblesFromSectorsTask& self = *static_cast<GatherVisiblesFromSectorsTask*>(ud);
-		self.gather();
+		GatherVisiblesFromOctreeTask& self = *static_cast<GatherVisiblesFromOctreeTask*>(ud);
+		self.gather(hive, *sem);
 	}
 
 private:
-	void gather()
-	{
-		ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_ITERATE_SECTORS);
-		U testIdx = m_visCtx->m_testsCount.fetchAdd(1);
+	Array<SpatialComponent*, MAX_SPATIALS_PER_VIS_TEST> m_spatials;
+	U32 m_spatialCount = 0;
 
-		m_visCtx->m_scene->getSectorGroup().findVisibleNodes(*m_frc, testIdx, m_r, m_sectorsCtx);
+	void gather(ThreadHive& hive, ThreadHiveSemaphore& sem);
+
+	/// Submit tasks to test the m_spatials.
+	void flush(ThreadHive& hive, ThreadHiveSemaphore& sem);
+
+	static void dummyCallback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
+	{
 	}
 };
+static_assert(
+	std::is_trivially_destructible<GatherVisiblesFromOctreeTask>::value == true, "Should be trivially destructible");
 
 /// ThreadHive task that does the actual visibility tests.
 class VisibilityTestTask
 {
 public:
-	WeakPtr<VisibilityContext> m_visCtx;
-	WeakPtr<FrustumComponent> m_frc;
-	WeakPtr<SectorGroupVisibilityTestsContext> m_sectorsCtx;
-	U32 m_taskIdx;
-	U32 m_taskCount;
-	RenderQueueView m_result; ///< Sub result. Will be combined later.
-	Timestamp m_timestamp = 0;
-	SoftwareRasterizer* m_r ANKI_DBG_NULLIFY;
+	FrustumVisibilityContext* m_frcCtx = nullptr;
+
+	Array<SpatialComponent*, MAX_SPATIALS_PER_VIS_TEST> m_spatialsToTest;
+	U32 m_spatialToTestCount = 0;
+
+	VisibilityTestTask(FrustumVisibilityContext* frcCtx)
+		: m_frcCtx(frcCtx)
+	{
+		ANKI_ASSERT(m_frcCtx);
+	}
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
 		VisibilityTestTask& self = *static_cast<VisibilityTestTask*>(ud);
-		self.test(hive);
+		self.test(hive, threadId);
 	}
 
 private:
-	void test(ThreadHive& hive);
-	void updateTimestamp(const SceneNode& node);
+	void test(ThreadHive& hive, U32 taskId);
 
 	ANKI_USE_RESULT Bool testAgainstRasterizer(const CollisionShape& cs, const Aabb& aabb) const
 	{
-		return (m_r) ? m_r->visibilityTest(cs, aabb) : true;
+		return (m_frcCtx->m_r) ? m_frcCtx->m_r->visibilityTest(cs, aabb) : true;
 	}
 };
+static_assert(std::is_trivially_destructible<VisibilityTestTask>::value == true, "Should be trivially destructible");
 
 /// Task that combines and sorts the results.
 class CombineResultsTask
 {
 public:
-	WeakPtr<VisibilityContext> m_visCtx;
-	WeakPtr<FrustumComponent> m_frc;
-	WeakArray<VisibilityTestTask> m_tests;
+	FrustumVisibilityContext* m_frcCtx = nullptr;
 
-	WeakPtr<RenderQueue> m_results; ///< Where to store the results.
-
-	SoftwareRasterizer* m_swRast = nullptr; ///< For cleanup.
+	CombineResultsTask(FrustumVisibilityContext* frcCtx)
+		: m_frcCtx(frcCtx)
+	{
+		ANKI_ASSERT(m_frcCtx);
+	}
 
 	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
 	{
 		CombineResultsTask& self = *static_cast<CombineResultsTask*>(ud);
 		self.combine();
@@ -261,6 +277,7 @@ private:
 		WeakArray<T>& combined,
 		WeakArray<T*>* ptrCombined);
 };
+static_assert(std::is_trivially_destructible<CombineResultsTask>::value == true, "Should be trivially destructible");
 /// @}
 
 } // end namespace anki

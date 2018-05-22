@@ -178,6 +178,9 @@ public:
 
 static_assert(std::is_trivially_destructible<UiQueueElement>::value == true, "Should be trivially destructible");
 
+/// A callback to fill a coverage buffer.
+using FillCoverageBufferCallback = void (*)(void* userData, F32* depthValues, U32 width, U32 height);
+
 /// The render queue. This is what the renderer is fed to render.
 class RenderQueue : public RenderingMatrices
 {
@@ -199,6 +202,9 @@ public:
 
 	F32 m_cameraNear;
 	F32 m_cameraFar;
+
+	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;
+	void* m_fillCoverageBufferCallbackUserData = nullptr;
 };
 
 static_assert(std::is_trivially_destructible<RenderQueue>::value == true, "Should be trivially destructible");

@@ -7,20 +7,33 @@
 
 #include <anki/scene/Common.h>
 #include <anki/Math.h>
-#include <anki/collision/Forward.h>
+#include <anki/collision/Aabb.h>
 #include <anki/util/WeakArray.h>
 #include <anki/util/Enum.h>
 #include <anki/util/ObjectAllocator.h>
 #include <anki/util/List.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
 
 // Forward
 class OctreePlaceable;
+class ThreadHive;
+class ThreadHiveSemaphore;
 
 /// @addtogroup scene
 /// @{
+
+/// Callback to determine if an octree node is visible.
+using OctreeNodeVisibilityTestCallback = Bool (*)(void* userData, const Aabb& box);
+
+/// Octree debug drawer.
+class OctreeDebugDrawer
+{
+public:
+	virtual void drawCube(const Aabb& box, const Vec4& color) = 0;
+};
 
 /// Octree for visibility tests.
 class Octree : public NonCopyable
@@ -46,13 +59,57 @@ public:
 	void remove(OctreePlaceable& placeable);
 
 	/// Gather visible placeables.
+	/// @param frustum The frustum to test against.
+	/// @param testId A unique index for this test.
+	/// @param testCallback A ptr to a function that will be used to perform an additional test to the box of the
+	///                     Octree node. Can be nullptr.
+	/// @param testCallbackUserData Parameter to the testCallback. Can be nullptr.
+	/// @param out The output of the tests.
 	/// @note It's thread-safe against other gatherVisible calls.
-	void gatherVisible(const Frustum& frustum, U32 testId, DynamicArrayAuto<OctreePlaceable*>& out)
+	void gatherVisible(const Frustum& frustum,
+		U32 testId,
+		OctreeNodeVisibilityTestCallback testCallback,
+		void* testCallbackUserData,
+		DynamicArrayAuto<void*>& out)
 	{
-		gatherVisibleRecursive(frustum, testId, m_rootLeaf, out);
+		gatherVisibleRecursive(frustum, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
+	}
+
+	/// Similar to gatherVisible but it spawns ThreadHive tasks.
+	void gatherVisibleParallel(const Frustum* frustum,
+		U32 testId,
+		OctreeNodeVisibilityTestCallback testCallback,
+		void* testCallbackUserData,
+		DynamicArrayAuto<void*>* out,
+		ThreadHive& hive,
+		ThreadHiveSemaphore* waitSemaphore,
+		ThreadHiveSemaphore*& signalSemaphore);
+
+	/// Walk the tree.
+	/// @tparam TTestAabbFunc The lambda that will test an Aabb. Signature of lambda: Bool(*)(const Aabb& leafBox)
+	/// @tparam TNewPlaceableFunc The lambda to do something with a visible placeable.
+	///                           Signature: void(*)(void* placeableUserData).
+	/// @param testId The test index.
+	/// @param testFunc See TTestAabbFunc.
+	/// @param newPlaceableFunc See TNewPlaceableFunc.
+	template<typename TTestAabbFunc, typename TNewPlaceableFunc>
+	void walkTree(U32 testId, TTestAabbFunc testFunc, TNewPlaceableFunc newPlaceableFunc)
+	{
+		ANKI_ASSERT(m_rootLeaf);
+		walkTreeInternal(*m_rootLeaf, testId, testFunc, newPlaceableFunc);
+	}
+
+	/// Debug draw.
+	void debugDraw(OctreeDebugDrawer& drawer) const
+	{
+		ANKI_ASSERT(m_rootLeaf);
+		debugDrawRecursive(*m_rootLeaf, drawer);
 	}
 
 private:
+	class GatherParallelCtx;
+	class GatherParallelTaskCtx;
+
 	/// List node.
 	class PlaceableNode : public IntrusiveListEnabled<PlaceableNode>
 	{
@@ -182,6 +239,8 @@ private:
 
 	void placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf* parent, U32 depth);
 
+	static Bool volumeTotallyInsideLeaf(const Aabb& volume, const Leaf& leaf);
+
 	static void computeChildAabb(LeafMask child,
 		const Vec3& parentAabbMin,
 		const Vec3& parentAabbMax,
@@ -192,14 +251,30 @@ private:
 	/// Remove a placeable from the tree.
 	void removeInternal(OctreePlaceable& placeable);
 
-	static void gatherVisibleRecursive(
-		const Frustum& frustum, U32 testId, Leaf* leaf, DynamicArrayAuto<OctreePlaceable*>& out);
+	static void gatherVisibleRecursive(const Frustum& frustum,
+		U32 testId,
+		OctreeNodeVisibilityTestCallback testCallback,
+		void* testCallbackUserData,
+		Leaf* leaf,
+		DynamicArrayAuto<void*>& out);
+
+	/// ThreadHive callback.
+	static void gatherVisibleTaskCallback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem);
+
+	void gatherVisibleParallelTask(
+		U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem, GatherParallelTaskCtx& taskCtx);
 
 	/// Remove a leaf.
 	void cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafUponReturn);
 
 	/// Cleanup the tree.
 	void cleanupInternal();
+
+	/// Debug draw.
+	void debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) const;
+
+	template<typename TTestAabbFunc, typename TNewPlaceableFunc>
+	void walkTreeInternal(Leaf& leaf, U32 testId, TTestAabbFunc testFunc, TNewPlaceableFunc newPlaceableFunc);
 };
 
 /// An entity that can be placed in octrees.
@@ -208,6 +283,8 @@ class OctreePlaceable : public NonCopyable
 	friend class Octree;
 
 public:
+	void* m_userData = nullptr;
+
 	void reset()
 	{
 		m_visitedMask.set(0);
@@ -221,11 +298,45 @@ private:
 	/// @note It's thread-safe.
 	Bool alreadyVisited(U32 testId)
 	{
+		ANKI_ASSERT(testId < 64);
 		const U64 testMask = U64(1u) << U64(testId);
 		const U64 prev = m_visitedMask.fetchOr(testMask);
 		return !!(testMask & prev);
 	}
 };
+
+template<typename TTestAabbFunc, typename TNewPlaceableFunc>
+inline void Octree::walkTreeInternal(Leaf& leaf, U32 testId, TTestAabbFunc testFunc, TNewPlaceableFunc newPlaceableFunc)
+{
+	// Visit the placeables that belong to that leaf
+	for(PlaceableNode& placeableNode : leaf.m_placeables)
+	{
+		if(!placeableNode.m_placeable->alreadyVisited(testId))
+		{
+			ANKI_ASSERT(placeableNode.m_placeable->m_userData);
+			newPlaceableFunc(placeableNode.m_placeable->m_userData);
+		}
+	}
+
+	Aabb aabb;
+	U visibleLeafs = 0;
+	(void)visibleLeafs;
+	for(Leaf* child : leaf.m_children)
+	{
+		if(child)
+		{
+			aabb.setMin(child->m_aabbMin);
+			aabb.setMax(child->m_aabbMax);
+			if(testFunc(aabb))
+			{
+				++visibleLeafs;
+				walkTreeInternal(*child, testId, testFunc, newPlaceableFunc);
+			}
+		}
+	}
+
+	ANKI_TRACE_INC_COUNTER(OCTREE_VISIBLE_LEAFS, visibleLeafs);
+}
 /// @}
 
 } // end namespace anki

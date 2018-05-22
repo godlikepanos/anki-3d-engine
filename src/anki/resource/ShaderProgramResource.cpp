@@ -1134,14 +1134,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 		progInf.m_shaders[i] = getManager().getGrManager().newShader(inf);
 	}
 
-	if(!m_compute)
-	{
-		variant.m_prog = getManager().getGrManager().newShaderProgram(progInf);
-	}
-	else
-	{
-		variant.m_prog = getManager().getGrManager().newShaderProgram(progInf);
-	}
+	variant.m_prog = getManager().getGrManager().newShaderProgram(progInf);
 }
 
 } // end namespace anki

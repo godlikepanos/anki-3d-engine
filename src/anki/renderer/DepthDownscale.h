@@ -46,6 +46,19 @@ anki_internal:
 		return m_runCtx.m_hizRt;
 	}
 
+	U32 getMipmapCount() const
+	{
+		return m_passes.getSize();
+	}
+
+	void getClientDepthMapInfo(F32*& depthValues, U32& width, U32& height) const
+	{
+		width = m_copyToBuff.m_lastMipWidth;
+		height = m_copyToBuff.m_lastMipHeight;
+		ANKI_ASSERT(m_copyToBuff.m_buffAddr);
+		depthValues = static_cast<F32*>(m_copyToBuff.m_buffAddr);
+	}
+
 private:
 	RenderTargetDescription m_depthRtDescr;
 	RenderTargetDescription m_hizRtDescr;
@@ -58,7 +71,7 @@ private:
 		ShaderProgramPtr m_grProg;
 	};
 
-	Array<Pass, HIERARCHICAL_Z_MIPMAP_COUNT> m_passes;
+	DynamicArray<Pass> m_passes;
 
 	class
 	{
@@ -67,6 +80,14 @@ private:
 		RenderTargetHandle m_hizRt;
 		U m_pass;
 	} m_runCtx; ///< Run context.
+
+	class
+	{
+	public:
+		BufferPtr m_buff;
+		void* m_buffAddr = nullptr;
+		U32 m_lastMipWidth = MAX_U32, m_lastMipHeight = MAX_U32;
+	} m_copyToBuff; ///< Copy to buffer members.
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 

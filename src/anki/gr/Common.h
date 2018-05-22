@@ -367,6 +367,7 @@ private:
 /// Compute max number of mipmaps for a 2D texture.
 inline U computeMaxMipmapCount2d(U w, U h, U minSizeOfLastMip = 1)
 {
+	ANKI_ASSERT(w > minSizeOfLastMip && h > minSizeOfLastMip);
 	U s = (w < h) ? w : h;
 	U count = 0;
 	while(s >= minSizeOfLastMip)

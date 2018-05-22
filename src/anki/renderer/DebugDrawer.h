@@ -16,9 +16,6 @@
 namespace anki
 {
 
-// Forward
-class Renderer;
-
 /// @addtogroup renderer
 /// @{
 
@@ -26,84 +23,86 @@ class Renderer;
 class DebugDrawer
 {
 public:
-	DebugDrawer();
-	~DebugDrawer();
-
 	ANKI_USE_RESULT Error init(Renderer* r);
+
+	void prepareFrame(CommandBufferPtr& cmdb)
+	{
+		m_cmdb = cmdb;
+	}
+
+	void finishFrame()
+	{
+		flush();
+		m_cmdb.reset(nullptr);
+	}
 
 	void drawGrid();
 	void drawSphere(F32 radius, I complexity = 8);
 	void drawCube(F32 size = 1.0);
 	void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
-	void prepareFrame(CommandBufferPtr& jobs);
-
-	void finishFrame();
-
-	/// @name Render functions. Imitate the GL 1.1 immediate mode
-	/// @{
-	void begin(PrimitiveTopology topology); ///< Initiates the draw
-
-	void end(); ///< Draws
-
-	void pushBackVertex(const Vec3& pos); ///< Something like glVertex
-
-	/// Something like glColor
-	void setColor(const Vec3& col)
+	void setTopology(PrimitiveTopology topology)
 	{
-		m_crntCol = col;
+		if(topology != m_topology)
+		{
+			flush();
+		}
+		m_topology = topology;
+	}
+
+	void pushBackVertex(const Vec3& pos)
+	{
+		if((m_cachedPositionCount + 3) >= m_cachedPositions.getSize())
+		{
+			flush();
+			ANKI_ASSERT(m_cachedPositionCount == 0);
+		}
+		m_cachedPositions[m_cachedPositionCount++] = pos;
 	}
 
 	/// Something like glColor
 	void setColor(const Vec4& col)
 	{
-		m_crntCol = col.xyz();
+		if(m_crntCol != col)
+		{
+			flush();
+		}
+		m_crntCol = col;
 	}
 
-	void setModelMatrix(const Mat4& m);
-
-	void setViewProjectionMatrix(const Mat4& m);
-	/// @}
-
-	void setDepthTestEnabled(Bool enabled)
+	void setModelMatrix(const Mat4& m)
 	{
-		m_depthTestEnabled = enabled;
+		flush();
+		m_mMat = m;
+		m_mvpMat = m_vpMat * m_mMat;
 	}
 
-	Bool getDepthTestEnabled() const
+	void setViewProjectionMatrix(const Mat4& m)
 	{
-		return m_depthTestEnabled;
+		flush();
+		m_vpMat = m;
+		m_mvpMat = m_vpMat * m_mMat;
 	}
 
 private:
-	class Vertex
-	{
-	public:
-		Vec4 m_position;
-		Vec4 m_color;
-	};
-
-	static const U MAX_VERTS_PER_FRAME = 1024 * 1024;
-
 	Renderer* m_r;
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_vertBuff;
 
 	CommandBufferPtr m_cmdb;
-	WeakArray<Vertex> m_clientVerts;
 
-	Mat4 m_mMat;
-	Mat4 m_vpMat;
-	Mat4 m_mvpMat; ///< Optimization.
-	Vec3 m_crntCol = Vec3(1.0, 0.0, 0.0);
-	PrimitiveTopology m_primitive = PrimitiveTopology::LINES;
-	U32 m_frameVertCount = 0;
-	U32 m_crntDrawVertCount = 0;
+	// State
+	Mat4 m_mMat = Mat4::getIdentity();
+	Mat4 m_vpMat = Mat4::getIdentity();
+	Mat4 m_mvpMat = Mat4::getIdentity(); ///< Optimization.
+	Vec4 m_crntCol = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	PrimitiveTopology m_topology = PrimitiveTopology::LINES;
+
+	static const U MAX_VERTS_BEFORE_FLUSH = 128;
+	Array<Vec3, MAX_VERTS_BEFORE_FLUSH> m_cachedPositions;
+	U32 m_cachedPositionCount = 0;
 
 	DynamicArray<Vec3> m_sphereVerts;
-
-	Bool8 m_depthTestEnabled = true;
 
 	void flush();
 };
@@ -151,25 +150,6 @@ public:
 
 private:
 	DebugDrawer* m_dbg; ///< The debug drawer
-};
-
-/// This is a drawer for some scene nodes that need debug
-class SceneDebugDrawer
-{
-public:
-	SceneDebugDrawer(DebugDrawer* d)
-		: m_dbg(d)
-	{
-	}
-
-	void draw(const RenderableQueueElement& r) const;
-
-	void draw(const PointLightQueueElement& light) const;
-
-	void draw(const SpotLightQueueElement& light) const;
-
-private:
-	DebugDrawer* m_dbg;
 };
 /// @}
 

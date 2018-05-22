@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <anki/scene/Common.h>
 #include <anki/scene/components/SceneComponent.h>
+#include <anki/scene/Octree.h>
 #include <anki/Collision.h>
 #include <anki/util/BitMask.h>
 #include <anki/util/Enum.h>
@@ -66,13 +66,7 @@ public:
 	/// Check if it's confined in a single sector.
 	Bool getSingleSector() const
 	{
-		return m_flags.get(Flag::SINGLE_SECTOR);
-	}
-
-	/// Confine it or not in a single sector.
-	void setSingleSector(Bool yes)
-	{
-		m_flags.set(Flag::SINGLE_SECTOR, yes);
+		return false;
 	}
 
 	/// Used for sorting spatials. In most object the origin is the center of mass but for cameras the origin is the
@@ -91,19 +85,7 @@ public:
 	/// The derived class has to manually call this method when the collision shape got updated.
 	void markForUpdate()
 	{
-		m_flags.set(Flag::MARKED_FOR_UPDATE);
-	}
-
-	/// Set if visible by a camera
-	void setVisibleByCamera(Bool visible)
-	{
-		m_flags.set(Flag::VISIBLE_CAMERA, visible);
-	}
-
-	/// Check if visible by camera
-	Bool getVisibleByCamera() const
-	{
-		return m_flags.get(Flag::VISIBLE_CAMERA);
+		m_markedForUpdate = true;
 	}
 
 	/// @name SceneComponent overrides
@@ -112,23 +94,15 @@ public:
 	/// @}
 
 private:
-	/// Spatial flags
-	enum class Flag : U8
-	{
-		NONE = 0,
-		VISIBLE_CAMERA = 1 << 1,
-		VISIBLE_LIGHT = 1 << 2,
-		VISIBLE_ANY = VISIBLE_CAMERA | VISIBLE_LIGHT,
-		MARKED_FOR_UPDATE = 1 << 3,
-		SINGLE_SECTOR = 1 << 4
-	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
+	Bool8 m_markedForUpdate = false;
+	Bool8 m_placed = false;
 
 	const CollisionShape* m_shape;
-	BitMask<Flag> m_flags;
 	Aabb m_aabb; ///< A faster shape
 	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0);
 	List<SectorNode*> m_sectorInfo;
+
+	OctreePlaceable m_octreeInfo;
 };
 /// @}
 

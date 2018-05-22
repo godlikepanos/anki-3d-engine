@@ -17,24 +17,33 @@ SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* shape)
 {
 	ANKI_ASSERT(shape);
 	markForUpdate();
+	m_octreeInfo.m_userData = this;
 }
 
 SpatialComponent::~SpatialComponent()
 {
 	getSceneGraph().getSectorGroup().spatialDeleted(this);
+
+	if(m_placed)
+	{
+		getSceneGraph().getOctree().remove(m_octreeInfo);
+	}
 }
 
 Error SpatialComponent::update(SceneNode&, Second, Second, Bool& updated)
 {
-	m_flags.unset(Flag::VISIBLE_ANY);
-
-	updated = m_flags.get(Flag::MARKED_FOR_UPDATE);
+	updated = m_markedForUpdate;
 	if(updated)
 	{
 		m_shape->computeAabb(m_aabb);
 		getSceneGraph().getSectorGroup().spatialUpdated(this);
-		m_flags.unset(Flag::MARKED_FOR_UPDATE);
+		m_markedForUpdate = false;
+
+		getSceneGraph().getOctree().place(m_aabb, &m_octreeInfo);
+		m_placed = true;
 	}
+
+	m_octreeInfo.reset();
 
 	return Error::NONE;
 }
