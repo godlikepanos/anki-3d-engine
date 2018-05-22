@@ -69,7 +69,7 @@ void Tonemapping::importRenderTargets(RenderingContext& ctx)
 	// Computation of the AVG luminance will run first in the frame and it will use the m_luminanceBuff as storage
 	// read/write. To skip the barrier import it as read/write as well.
 	m_runCtx.m_buffHandle =
-		ctx.m_renderGraphDescr.importBuffer("Avg lum", m_luminanceBuff, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE);
+		ctx.m_renderGraphDescr.importBuffer(m_luminanceBuff, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE);
 }
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)

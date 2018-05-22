@@ -500,13 +500,13 @@ public:
 	}
 
 	/// Import an existing render target.
-	RenderTargetHandle importRenderTarget(CString name, TexturePtr tex, TextureUsageBit usage)
+	RenderTargetHandle importRenderTarget(TexturePtr tex, TextureUsageBit usage)
 	{
 		RT& rt = *m_renderTargets.emplaceBack(m_alloc);
 		rt.m_importedTex = tex;
 		rt.m_importedLastKnownUsage = usage;
 		rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
-		rt.setName(name);
+		rt.setName(tex->getName());
 
 		RenderTargetHandle out;
 		out.m_idx = m_renderTargets.getSize() - 1;
@@ -532,10 +532,10 @@ public:
 	}
 
 	/// Import a buffer.
-	RenderPassBufferHandle importBuffer(CString name, BufferPtr buff, BufferUsageBit usage)
+	RenderPassBufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage)
 	{
 		Buffer& b = *m_buffers.emplaceBack(m_alloc);
-		b.setName(name);
+		b.setName(buff->getName());
 		b.m_usage = usage;
 		b.m_importedBuff = buff;
 

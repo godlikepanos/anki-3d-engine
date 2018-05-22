@@ -1618,7 +1618,7 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// SM to exponential SM
-	RenderTargetHandle smExpRt = descr.importRenderTarget("ESM", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	RenderTargetHandle smExpRt = descr.importRenderTarget(dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("ESM");
 		pass.newConsumer({smScratchRt, TextureUsageBit::SAMPLED_FRAGMENT});
@@ -1642,7 +1642,7 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// GI light
-	RenderTargetHandle giGiLightRt = descr.importRenderTarget("GI light", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	RenderTargetHandle giGiLightRt = descr.importRenderTarget(dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
@@ -1762,7 +1762,7 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// Light shading
-	RenderTargetHandle lightRt = descr.importRenderTarget("Light", dummyTex, TextureUsageBit::NONE);
+	RenderTargetHandle lightRt = descr.importRenderTarget(dummyTex, TextureUsageBit::NONE);
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Light shading");
 
@@ -1780,8 +1780,8 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// TAA
-	RenderTargetHandle taaHistoryRt = descr.importRenderTarget("TAA hist", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
-	RenderTargetHandle taaRt = descr.importRenderTarget("TAA", dummyTex, TextureUsageBit::NONE);
+	RenderTargetHandle taaHistoryRt = descr.importRenderTarget(dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	RenderTargetHandle taaRt = descr.importRenderTarget(dummyTex, TextureUsageBit::NONE);
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("Temporal AA");
 

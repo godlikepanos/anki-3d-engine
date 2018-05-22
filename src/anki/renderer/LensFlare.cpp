@@ -131,7 +131,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Import buffer
-	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer("LensFl Indirect", m_indirectBuff, BufferUsageBit::NONE);
+	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer(m_indirectBuff, BufferUsageBit::NONE);
 
 	// Update the indirect buffer
 	{

@@ -88,7 +88,7 @@ Error Volumetric::init(const ConfigSet& config)
 			m_height,
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			"volmain");
+			"Volumetric");
 		rtInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		m_rtTextures[i] = m_r->createAndClearRenderTarget(rtInit);
 	}
@@ -196,11 +196,10 @@ void Volumetric::populateRenderGraph(RenderingContext& ctx)
 
 	// Create RTs
 	const U rtToRenderIdx = m_r->getFrameCount() & 1;
-	m_runCtx.m_rts[rtToRenderIdx] =
-		rgraph.importRenderTarget("VOL #1", m_rtTextures[rtToRenderIdx], TextureUsageBit::NONE);
+	m_runCtx.m_rts[rtToRenderIdx] = rgraph.importRenderTarget(m_rtTextures[rtToRenderIdx], TextureUsageBit::NONE);
 	const U rtToReadIdx = !rtToRenderIdx;
 	m_runCtx.m_rts[rtToReadIdx] =
-		rgraph.importRenderTarget("VOL #2", m_rtTextures[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT);
+		rgraph.importRenderTarget(m_rtTextures[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Create main render pass
 	{

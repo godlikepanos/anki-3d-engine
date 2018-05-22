@@ -624,7 +624,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 			// RT
 			m_ctx.m_lightShadingRt =
-				rgraph.importRenderTarget("GI light", m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+				rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
 			// Passes
 			static const Array<CString, 6> passNames = {{"GI LightShad #0",
@@ -689,8 +689,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				runIrradianceCallback<5>}};
 
 			// Rt
-			m_ctx.m_irradianceRt =
-				rgraph.importRenderTarget("GI irradiance", m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+			m_ctx.m_irradianceRt = rgraph.importRenderTarget(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
 			static const Array<CString, 6> passNames = {
 				{"GI Irr/ce #0", "GI Irr/ce #1", "GI Irr/ce #2", "GI Irr/ce #3", "GI Irr/ce #4", "GI Irr/ce #5"}};
@@ -716,10 +715,8 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 	{
 		// Just import
 
-		m_ctx.m_lightShadingRt =
-			rgraph.importRenderTarget("GI light", m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
-		m_ctx.m_irradianceRt =
-			rgraph.importRenderTarget("GI irradiance", m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_ctx.m_irradianceRt = rgraph.importRenderTarget(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 }
 

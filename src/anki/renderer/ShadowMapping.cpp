@@ -237,7 +237,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("ESM");
 
-			m_esmRt = rgraph.importRenderTarget("ESM", m_esmAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
+			m_esmRt = rgraph.importRenderTarget(m_esmAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
 			pass.setFramebufferInfo(m_esmFbDescr, {{m_esmRt}}, {});
 			pass.setWork(runEsmCallback, this, 0);
 
@@ -250,7 +250,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	else
 	{
 		// No need for shadowmapping passes, just import the ESM atlas
-		m_esmRt = rgraph.importRenderTarget("ESM", m_esmAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_esmRt = rgraph.importRenderTarget(m_esmAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 }
 

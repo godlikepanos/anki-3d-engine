@@ -85,7 +85,7 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 void DownscaleBlur::importRenderTargets(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_rt = rgraph.importRenderTarget("Down/Blur", m_rtTex, TextureUsageBit::SAMPLED_COMPUTE);
+	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::SAMPLED_COMPUTE);
 }
 
 void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)

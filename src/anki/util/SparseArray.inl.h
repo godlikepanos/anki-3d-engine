@@ -284,6 +284,7 @@ void SparseArray<T, TIndex>::validate() const
 		if(m_metadata[pos].m_alive)
 		{
 			const Index myDesiredPos = mod(m_metadata[pos].m_idx);
+			(void)myDesiredPos;
 			ANKI_ASSERT(distanceFromDesired(pos, myDesiredPos) < m_probeCount);
 
 			if(prevPos != ~Index(0))

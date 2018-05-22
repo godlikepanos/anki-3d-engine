@@ -97,10 +97,9 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Import RTs
-	m_runCtx.m_historyRt = rgraph.importRenderTarget(
-		"TemporalAA hist", m_rtTextures[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
-	m_runCtx.m_renderRt =
-		rgraph.importRenderTarget("TemporalAA", m_rtTextures[m_r->getFrameCount() & 1], TextureUsageBit::NONE);
+	m_runCtx.m_historyRt =
+		rgraph.importRenderTarget(m_rtTextures[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
+	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[m_r->getFrameCount() & 1], TextureUsageBit::NONE);
 
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("TemporalAA");
