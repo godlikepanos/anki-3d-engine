@@ -1,0 +1,130 @@
+<!-- 
+Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<shaders>
+		<shader type="comp">
+			<inputs>
+				<input name="WORKGROUP_SIZE" type="uvec2" const="1"/>
+			</inputs>
+
+			<source><![CDATA[
+#include "shaders/Functions.glsl"
+
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
+{
+	vec4 u_layerPad3;
+};
+#define u_layer u_layerPad3.x
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform samplerCubeArray u_envTex;
+
+#define SHCoefficients vec4
+#define y00 x // Y l=0 m=0
+#define y1n1 y // Y l=1 m=-1
+#define y10 z  // Y l=1 m=0
+#define y11 w  // Y l=1 m=1
+
+layout(std140, ANKI_SS_BINDING(0, 0)) writeonly buffer _s0
+{
+	vec4 u_SHr;
+	vec4 u_SHg;
+	vec4 u_SHb;
+};
+
+shared SHCoefficients s_scratch[3][WORKGROUP_SIZE.y * WORKGROUP_SIZE.x];
+
+SHCoefficients computeSHCoeffiecients(vec3 dir)
+{
+	const float A = 0.282095;
+	const float B = 0.488603;
+
+	SHCoefficients sh;
+	sh.y00 = A;
+	sh.y1n1 = B * dir.y;
+	sh.y10 = B * dir.z;
+	sh.y11 = B * dir.x;
+	return sh;
+}
+
+// Resolve the cube faces
+void initPass()
+{
+	vec2 ndc = UV_TO_NDC(vec2(gl_LocalInvocationID.xy) / vec2(WORKGROUP_SIZE));
+
+	SHCoefficients SHr = SHCoefficients(0.0);
+	SHCoefficients SHg = SHCoefficients(0.0);
+	SHCoefficients SHb = SHCoefficients(0.0);
+
+	float weight = EPSILON;
+
+	ANKI_LOOP for(uint face = 0u; face < 6u; ++face)
+	{
+		vec3 direction = getCubemapDirection(ndc, face);
+
+		SHCoefficients sh = computeSHCoeffiecients(direction);
+		
+		float lambert = max(0.0, dot(r, ri));
+		weight += lambert;
+
+		vec3 rgb = textureLod(u_envTex, vec4(direction, u_layer), 0.0).rgb;
+		rgb *= lambert;
+
+		SHr += rgb.r * sh;
+		SHg += rgb.g * sh;
+		SHb += rgb.b * sh;
+	}
+
+	uint idx = gl_LocalInvocationID.y * WORKGROUP_SIZE.x + gl_LocalInvocationID.x;
+	s_scratch[0][idx] = SHr / weight * PI;
+	s_scratch[1][idx] = SHg / weight * PI;
+	s_scratch[2][idx] = SHb / weight * PI;
+
+	memoryBarrierShared();
+	barrier();
+}
+
+// Reduce the result to a single vec4 per color component
+void reducePasses()
+{
+	// Gather the results into one
+	for(uint s = WORKGROUP_SIZE / 2u; s > 0u; s >>= 1u)
+	{
+		if(gl_LocalInvocationIndex < s)
+		{
+			s_scratch[0][gl_LocalInvocationIndex] += s_scratch[0][gl_LocalInvocationIndex + s];
+			s_scratch[1][gl_LocalInvocationIndex] += s_scratch[1][gl_LocalInvocationIndex + s];
+			s_scratch[2][gl_LocalInvocationIndex] += s_scratch[2][gl_LocalInvocationIndex + s];
+		}
+
+		memoryBarrierShared();
+		barrier();
+	}
+}
+
+// Compute the final result
+void resolvePass()
+{
+	if(gl_LocalInvocationIndex == 0)
+	{
+		u_SHr = s_scratch[0][0];
+		u_SHg = s_scratch[1][0];
+		u_SHb = s_scratch[2][0];
+	}
+}
+
+void main()
+{
+	initPass();
+	reducePasses();
+	resolvePass();
+}
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>
