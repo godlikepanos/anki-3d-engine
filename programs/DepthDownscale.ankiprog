@@ -29,7 +29,7 @@ http://www.anki3d.org/LICENSE
 #if COPY_TO_CLIENT
 struct PushConsts
 {
-	uvec2 textureSize;
+	uvec4 textureSize;
 };
 ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 

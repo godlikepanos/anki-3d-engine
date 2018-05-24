@@ -97,6 +97,10 @@ private:
 
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
+
+		BufferPtr m_shBuffer;
+		ShaderProgramResourcePtr m_shProg;
+		ShaderProgramPtr m_grShProg;
 	} m_irradiance; ///< Irradiance.
 
 	class CacheEntry
@@ -146,6 +150,7 @@ private:
 	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+	void runIrradianceSH(RenderPassWorkContext& rgraphCtx);
 	static void bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& cmdb, U32& indexCount);
 
 	// A RenderPassWorkCallback for G-buffer pass
@@ -177,6 +182,12 @@ private:
 	{
 		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
 		self->runIrradiance(faceIdx, rgraphCtx);
+	}
+
+	static void runIrradianceSHCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		self->runIrradianceSH(rgraphCtx);
 	}
 };
 /// @}

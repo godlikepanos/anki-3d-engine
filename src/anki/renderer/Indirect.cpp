@@ -211,6 +211,22 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 		m_irradiance.m_grProg = variant->getProgram();
 	}
 
+	m_irradiance.m_shBuffer = getGrManager().newBuffer(BufferInitInfo(sizeof(Vec4) * 3 * m_cacheEntries.getSize(),
+		BufferUsageBit::STORAGE_COMPUTE_WRITE | BufferUsageBit::UNIFORM_FRAGMENT,
+		BufferMapAccessBit::NONE,
+		"SH Irrad"));
+
+	{
+		ANKI_CHECK(m_r->getResourceManager().loadResource("programs/IrradianceSH.ankiprog", m_irradiance.m_shProg));
+
+		ShaderProgramResourceConstantValueInitList<1> consts(m_irradiance.m_shProg);
+		consts.add("WORKGROUP_SIZE", UVec2(m_irradiance.m_tileSize, m_irradiance.m_tileSize));
+
+		const ShaderProgramResourceVariant* variant;
+		m_irradiance.m_shProg->getOrCreateVariant(consts.get(), variant);
+		m_irradiance.m_grShProg = variant->getProgram();
+	}
+
 	return Error::NONE;
 }
 
@@ -561,6 +577,22 @@ void Indirect::runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 	drawQuad(cmdb);
 }
 
+void Indirect::runIrradianceSH(RenderPassWorkContext& rgraphCtx)
+{
+	const U32 cacheEntryIdx = m_ctx.m_cacheEntryIdx;
+
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+	cmdb->bindShaderProgram(m_irradiance.m_grShProg);
+
+	cmdb->bindStorageBuffer(0, 0, m_irradiance.m_shBuffer, 0, m_irradiance.m_shBuffer->getSize());
+
+	UVec4 uniforms(cacheEntryIdx);
+	cmdb->setPushConstants(&uniforms, sizeof(uniforms));
+
+	cmdb->dispatchCompute(1, 1, 1);
+}
+
 void Indirect::populateRenderGraph(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_IR);
@@ -709,6 +741,21 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				pass.newConsumer({m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
 				pass.newProducer({m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
 			}
+		}
+
+		// Irradiance SH
+		{
+			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Irr SH");
+
+			pass.setWork(runIrradianceSHCallback, this, 0);
+
+			TextureSubresourceInfo subresource;
+			subresource.m_firstFace = 0;
+			subresource.m_faceCount = 6;
+			subresource.m_firstMipmap = m_lightShading.m_cubeArr->getMipmapCount() - 1;
+			subresource.m_firstLayer = probeToUpdateCacheEntryIdx;
+			subresource.m_layerCount = 1;
+			pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_COMPUTE, subresource});
 		}
 	}
 	else

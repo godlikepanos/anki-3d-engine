@@ -191,7 +191,7 @@ void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 
 	if(passIdx == m_passes.getSize() - 1)
 	{
-		UVec2 size(m_copyToBuff.m_lastMipWidth, m_copyToBuff.m_lastMipHeight);
+		UVec4 size(m_copyToBuff.m_lastMipWidth, m_copyToBuff.m_lastMipHeight, 0, 0);
 		cmdb->setPushConstants(&size, sizeof(size));
 
 		cmdb->bindStorageBuffer(0, 0, m_copyToBuff.m_buff, 0, m_copyToBuff.m_buff->getSize());

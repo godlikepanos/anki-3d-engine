@@ -16,11 +16,12 @@ http://www.anki3d.org/LICENSE
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
+struct PushConsts
 {
-	vec4 u_layerPad3;
+	uvec4 layerPad3;
 };
-#define u_layer u_layerPad3.x
+ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
+#define u_layer u_regs.layerPad3.x
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform samplerCubeArray u_envTex;
 
@@ -32,10 +33,11 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform samplerCubeArray u_envTex;
 
 layout(std140, ANKI_SS_BINDING(0, 0)) writeonly buffer _s0
 {
-	vec4 u_SHr;
-	vec4 u_SHg;
-	vec4 u_SHb;
+	SHCoefficients u_SH[];
 };
+#define u_SHr u_SH[u_layer * 3u + 0u]
+#define u_SHg u_SH[u_layer * 3u + 1u]
+#define u_SHb u_SH[u_layer * 3u + 2u]
 
 shared SHCoefficients s_scratch[3][WORKGROUP_SIZE.y * WORKGROUP_SIZE.x];
 
@@ -52,6 +54,19 @@ SHCoefficients computeSHCoeffiecients(vec3 dir)
 	return sh;
 }
 
+float areaElement(float x, float y)
+{
+	return atan(x * y, sqrt(x * x + y * y + 1.0));
+}
+
+float cubeCoordSolidAngle(vec2 norm)
+{
+	vec2 invSize = 1.0 / vec2(WORKGROUP_SIZE);
+	vec2 v0 = norm - invSize;
+	vec2 v1 = norm + invSize;
+	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
+}
+
 // Resolve the cube faces
 void initPass()
 {
@@ -61,29 +76,24 @@ void initPass()
 	SHCoefficients SHg = SHCoefficients(0.0);
 	SHCoefficients SHb = SHCoefficients(0.0);
 
-	float weight = EPSILON;
-
 	ANKI_LOOP for(uint face = 0u; face < 6u; ++face)
 	{
-		vec3 direction = getCubemapDirection(ndc, face);
+		vec3 dir = getCubemapDirection(ndc, face);
 
-		SHCoefficients sh = computeSHCoeffiecients(direction);
-		
-		float lambert = max(0.0, dot(r, ri));
-		weight += lambert;
-
-		vec3 rgb = textureLod(u_envTex, vec4(direction, u_layer), 0.0).rgb;
-		rgb *= lambert;
+		SHCoefficients sh = computeSHCoeffiecients(dir);
+		vec3 rgb = textureLod(u_envTex, vec4(dir, 0.0), 0.0).rgb;
 
 		SHr += rgb.r * sh;
 		SHg += rgb.g * sh;
 		SHb += rgb.b * sh;
 	}
 
+	float solidAngle = cubeCoordSolidAngle(ndc);
 	uint idx = gl_LocalInvocationID.y * WORKGROUP_SIZE.x + gl_LocalInvocationID.x;
-	s_scratch[0][idx] = SHr / weight * PI;
-	s_scratch[1][idx] = SHg / weight * PI;
-	s_scratch[2][idx] = SHb / weight * PI;
+
+	s_scratch[0][idx] = SHr * solidAngle;
+	s_scratch[1][idx] = SHg * solidAngle;
+	s_scratch[2][idx] = SHb * solidAngle;
 
 	memoryBarrierShared();
 	barrier();
@@ -93,7 +103,7 @@ void initPass()
 void reducePasses()
 {
 	// Gather the results into one
-	for(uint s = WORKGROUP_SIZE / 2u; s > 0u; s >>= 1u)
+	ANKI_UNROLL for(uint s = (WORKGROUP_SIZE.x * WORKGROUP_SIZE.y) / 2u; s > 0u; s >>= 1u)
 	{
 		if(gl_LocalInvocationIndex < s)
 		{
