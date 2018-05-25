@@ -81,7 +81,11 @@ void initPass()
 		vec3 dir = getCubemapDirection(ndc, face);
 
 		SHCoefficients sh = computeSHCoeffiecients(dir);
-		vec3 rgb = textureLod(u_envTex, vec4(dir, 0.0), 0.0).rgb;
+		vec3 rgb = textureLod(u_envTex, vec4(dir, u_layer), 10.0).rgb;
+
+#if 1
+		rgb = mix(rgb, textureLod(u_envTex, vec4(-dir, u_layer), 10.0).rgb, 0.10);
+#endif
 
 		SHr += rgb.r * sh;
 		SHg += rgb.g * sh;
@@ -91,9 +95,9 @@ void initPass()
 	float solidAngle = cubeCoordSolidAngle(ndc);
 	uint idx = gl_LocalInvocationID.y * WORKGROUP_SIZE.x + gl_LocalInvocationID.x;
 
-	s_scratch[0][idx] = SHr * solidAngle;
-	s_scratch[1][idx] = SHg * solidAngle;
-	s_scratch[2][idx] = SHb * solidAngle;
+	s_scratch[0][idx] = SHr * solidAngle / PI;
+	s_scratch[1][idx] = SHg * solidAngle / PI;
+	s_scratch[2][idx] = SHb * solidAngle / PI;
 
 	memoryBarrierShared();
 	barrier();
@@ -133,6 +137,20 @@ void main()
 	initPass();
 	reducePasses();
 	resolvePass();
+
+	/*if(u_layer == 0)
+		u_SHr = u_SHg = u_SHb = vec4(1.0, 0.0, 0.0, 0.0);
+	else if(u_layer == 1)
+		u_SHr = u_SHg = u_SHb = vec4(0.0, 1.0, 0.0, 0.0);
+	else if(u_layer == 2)
+		u_SHr = u_SHg = u_SHb = vec4(0.0, 0.0, 1.0, 0.0);
+	else
+		u_SHr = u_SHg = u_SHb = vec4(1.0, 0.0, 1.0, 0.0);*/
+
+
+	/*u_SHr = vec4(1, 0, 1, 1);
+		u_SHg = vec4(1, 0, 1, 1);
+		u_SHb = vec4(1, 0, 1, 1);*/
 }
 			]]></source>
 		</shader>

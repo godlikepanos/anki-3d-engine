@@ -37,6 +37,19 @@ layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
 	uvec4 u_faceIdxArrayIdxPad2;
 };
 
+float areaElement(float x, float y)
+{
+	return atan(x * y, sqrt(x * x + y * y + 1.0));
+}
+
+float cubeCoordSolidAngle(vec2 norm)
+{
+	float invSize = 1.0 / float(ENV_TEX_TILE_SIZE);
+	vec2 v0 = norm - vec2(invSize);
+	vec2 v1 = norm + vec2(invSize);
+	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
+}
+
 // Integrate the environment map to compute the irradiance for a single fragment
 void main()
 {
@@ -64,14 +77,15 @@ void main()
 				{
 					vec3 col = textureLod(u_envTex, vec4(r, texArrIdx), ENV_TEX_MIP).rgb;
 
-					outCol += col * lambert;
+					outCol += col * lambert * cubeCoordSolidAngle(UV_TO_NDC(uv));
 					weight += lambert;
 				}
 			}
 		}
 	}
 
-	out_color = outCol / weight * PI;
+	//out_color = outCol / weight * PI;
+	out_color = outCol / PI;
 }
 			]]></source>
 		</shader>

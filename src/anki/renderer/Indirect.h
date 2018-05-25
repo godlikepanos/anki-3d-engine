@@ -56,6 +56,11 @@ anki_internal:
 		return m_ctx.m_irradianceRt;
 	}
 
+	BufferPtr getIrradianceSHBuffer() const
+	{
+		return m_irradiance.m_shBuffer;
+	}
+
 private:
 	struct LightPassVertexUniforms;
 	struct LightPassPointLightUniforms;

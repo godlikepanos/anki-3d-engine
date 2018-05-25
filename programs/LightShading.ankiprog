@@ -103,6 +103,8 @@ void main()
 	// Indirect
 	out_color += textureLod(u_indirectRt, in_uv, 0.0).rgb;
 
+	return;
+
 	// Skip decals
 	uint count = u_lightIndices[idxOffset];
 	idxOffset += count + 1u;

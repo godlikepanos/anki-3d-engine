@@ -130,6 +130,9 @@ void Reflections::run(RenderPassWorkContext& rgraphCtx)
 	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
 	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
 
+	cmdb->bindStorageBuffer(
+		0, 2, m_r->getIndirect().getIrradianceSHBuffer(), 0, m_r->getIndirect().getIrradianceSHBuffer()->getSize());
+
 	// Dispatch
 	const U sizeX = (m_r->getWidth() + m_workgroupSize[0] - 1) / m_workgroupSize[0];
 	const U sizeY = (m_r->getHeight() + m_workgroupSize[1] - 1) / m_workgroupSize[1];

@@ -128,6 +128,7 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext
 
 void ForwardShading::drawUpscale(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
+	return;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	// **WARNING** Remember to update the consumers of the render pass that calls this method

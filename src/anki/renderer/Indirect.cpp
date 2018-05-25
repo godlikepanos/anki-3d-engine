@@ -590,6 +590,15 @@ void Indirect::runIrradianceSH(RenderPassWorkContext& rgraphCtx)
 	UVec4 uniforms(cacheEntryIdx);
 	cmdb->setPushConstants(&uniforms, sizeof(uniforms));
 
+	TextureSubresourceInfo subresource;
+	subresource.m_firstFace = 0;
+	subresource.m_faceCount = 6;
+	subresource.m_firstMipmap = m_lightShading.m_cubeArr->getMipmapCount() - 1;
+	subresource.m_firstLayer = cacheEntryIdx;
+	subresource.m_layerCount = 1;
+	// rgraphCtx.bindTextureAndSampler(0, 0, m_ctx.m_lightShadingRt, subresource, m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 0, m_ctx.m_lightShadingRt, m_r->getLinearSampler());
+
 	cmdb->dispatchCompute(1, 1, 1);
 }
 
@@ -755,7 +764,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 			subresource.m_firstMipmap = m_lightShading.m_cubeArr->getMipmapCount() - 1;
 			subresource.m_firstLayer = probeToUpdateCacheEntryIdx;
 			subresource.m_layerCount = 1;
-			pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_COMPUTE, subresource});
+			pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_COMPUTE /*, subresource*/});
 		}
 	}
 	else

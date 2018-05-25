@@ -56,6 +56,11 @@ layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_lightBufferRt;
 
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_reflAndIndirect;
 
+layout(ANKI_SS_BINDING(0, 2)) buffer b_
+{
+	vec4 u_irradianceSh[];
+};
+
 // Temp buffer to hold the indirect color
 shared vec3 s_pixels[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 
@@ -178,7 +183,8 @@ void readReflectionsAndIrradianceFromProbes(
 	uint count = u_lightIndices[idxOffset++];
 	ANKI_LOOP while(count-- != 0)
 	{
-		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
+		uint probeIdx = u_lightIndices[idxOffset++];
+		ReflectionProbe probe = u_reflectionProbes[probeIdx];
 
 		float R2 = probe.positionRadiusSq.w;
 		vec3 center = probe.positionRadiusSq.xyz;
@@ -200,9 +206,24 @@ void readReflectionsAndIrradianceFromProbes(
 		specIndirect = mix(c, specIndirect, factor);
 
 		// Do the same for diffuse
-		uv = computeCubemapVecAccurate(normal, R2, f);
-		vec3 id = textureLod(u_irradianceTex, vec4(uv, cubemapIndex), 0.0).rgb;
-		diffIndirect = mix(id, diffIndirect, factor);
+		if(gl_GlobalInvocationID.x > 2560. / 2. / 2.)
+		{
+			uv = computeCubemapVecAccurate(normal, R2, f);
+			vec3 id = textureLod(u_irradianceTex, vec4(uv, cubemapIndex), 0.0).rgb;
+			diffIndirect = mix(id, diffIndirect, factor);
+		}
+		else
+		{
+			vec3 nn = normal.yzx;
+			vec3 id;
+			for(uint i = 0u; i < 3u; ++i)
+			{
+				vec4 sh = u_irradianceSh[uint(cubemapIndex) * 3u + i];
+				id[i] = dot(sh, vec4(1.0, nn));
+				//id[i] = sh[i];
+			}
+			diffIndirect = mix(id, diffIndirect, factor);
+		}
 	}
 }
 
@@ -294,7 +315,7 @@ void main()
 	vec3 finalRefl = mix(probeCol, sslrCol, sslrFactor);
 
 	// Compute the final color
-	vec3 outColor = indirectCol * gbuffer.diffuse + finalRefl * env;
+	vec3 outColor = indirectCol /* gbuffer.diffuse + finalRefl * env*/;
 
 	// Store the color for the resolve
 	s_pixels[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = outColor;
