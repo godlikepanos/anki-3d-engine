@@ -8,145 +8,145 @@
 #ifndef ANKI_SHADERS_LIGHT_FUNCTIONS_GLSL
 #define ANKI_SHADERS_LIGHT_FUNCTIONS_GLSL
 
-#include "shaders/Functions.glsl"
-#include "shaders/Pack.glsl"
+#include <shaders/Functions.glsl>
+#include <shaders/Pack.glsl>
 
-const float LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
-const uint SHADOW_SAMPLE_COUNT = 16;
-const float ESM_CONSTANT = 40.0;
+const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
+const U32 SHADOW_SAMPLE_COUNT = 16;
+const F32 ESM_CONSTANT = 40.0;
 
 // Fresnel term unreal
-vec3 F_Unreal(vec3 specular, float VoH)
+Vec3 F_Unreal(Vec3 specular, F32 VoH)
 {
 	return specular + (1.0 - specular) * pow(2.0, (-5.55473 * VoH - 6.98316) * VoH);
 }
 
 // Fresnel Schlick: "An Inexpensive BRDF Model for Physically-Based Rendering"
 // It has lower VGRPs than F_Unreal
-vec3 F_Schlick(vec3 specular, float VoH)
+Vec3 F_Schlick(Vec3 specular, F32 VoH)
 {
-	float a = 1.0 - VoH;
-	float a2 = a * a;
-	float a5 = a2 * a2 * a; // a5 = a^5
+	F32 a = 1.0 - VoH;
+	F32 a2 = a * a;
+	F32 a5 = a2 * a2 * a; // a5 = a^5
 	return /*saturate(50.0 * specular.g) */ a5 + (1.0 - a5) * specular;
 }
 
 // D(n,h) aka NDF: GGX Trowbridge-Reitz
-float D_GGX(float roughness, float NoH)
+F32 D_GGX(F32 roughness, F32 NoH)
 {
-	float a = roughness * roughness;
-	float a2 = a * a;
+	F32 a = roughness * roughness;
+	F32 a2 = a * a;
 
-	float D = (NoH * a2 - NoH) * NoH + 1.0;
+	F32 D = (NoH * a2 - NoH) * NoH + 1.0;
 	return a2 / (PI * D * D);
 }
 
 // Visibility term: Geometric shadowing divided by BRDF denominator
-float V_Schlick(float roughness, float NoV, float NoL)
+F32 V_Schlick(F32 roughness, F32 NoV, F32 NoL)
 {
-	float k = (roughness * roughness) * 0.5;
-	float Vis_SchlickV = NoV * (1.0 - k) + k;
-	float Vis_SchlickL = NoL * (1.0 - k) + k;
+	F32 k = (roughness * roughness) * 0.5;
+	F32 Vis_SchlickV = NoV * (1.0 - k) + k;
+	F32 Vis_SchlickL = NoL * (1.0 - k) + k;
 	return 0.25 / (Vis_SchlickV * Vis_SchlickL);
 }
 
-vec3 envBRDF(vec3 specular, float roughness, sampler2D integrationLut, float NoV)
+Vec3 envBRDF(Vec3 specular, F32 roughness, sampler2D integrationLut, F32 NoV)
 {
-	float a = roughness * roughness;
-	float a2 = a * a;
-	vec2 envBRDF = textureLod(integrationLut, vec2(a2, NoV), 0.0).xy;
+	F32 a = roughness * roughness;
+	F32 a2 = a * a;
+	Vec2 envBRDF = textureLod(integrationLut, Vec2(a2, NoV), 0.0).xy;
 	return specular * envBRDF.x + /*min(1.0, 50.0 * specular.g) */ envBRDF.y;
 }
 
-vec3 diffuseLambert(vec3 diffuse)
+Vec3 diffuseLambert(Vec3 diffuse)
 {
 	return diffuse * (1.0 / PI);
 }
 
 // Performs BRDF specular lighting
-vec3 computeSpecularColorBrdf(GbufferInfo gbuffer, vec3 viewDir, vec3 frag2Light)
+Vec3 computeSpecularColorBrdf(GbufferInfo gbuffer, Vec3 viewDir, Vec3 frag2Light)
 {
-	vec3 H = normalize(frag2Light + viewDir);
+	Vec3 H = normalize(frag2Light + viewDir);
 
-	float NoL = max(EPSILON, dot(gbuffer.normal, frag2Light));
-	float VoH = max(EPSILON, dot(viewDir, H));
-	float NoH = max(EPSILON, dot(gbuffer.normal, H));
-	float NoV = max(EPSILON, dot(gbuffer.normal, viewDir));
+	F32 NoL = max(EPSILON, dot(gbuffer.m_normal, frag2Light));
+	F32 VoH = max(EPSILON, dot(viewDir, H));
+	F32 NoH = max(EPSILON, dot(gbuffer.m_normal, H));
+	F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
 
 	// F
 #if 0
-	vec3 F = F_Unreal(gbuffer.specular, VoH);
+	Vec3 F = F_Unreal(gbuffer.m_specular, VoH);
 #else
-	vec3 F = F_Schlick(gbuffer.specular, VoH);
+	Vec3 F = F_Schlick(gbuffer.m_specular, VoH);
 #endif
 
 	// D
-	float D = D_GGX(gbuffer.roughness, NoH);
+	F32 D = D_GGX(gbuffer.m_roughness, NoH);
 
 	// Vis
-	float V = V_Schlick(gbuffer.roughness, NoV, NoL);
+	F32 V = V_Schlick(gbuffer.m_roughness, NoV, NoL);
 
 	return F * (V * D);
 }
 
-float computeSpotFactor(vec3 l, float outerCos, float innerCos, vec3 spotDir)
+F32 computeSpotFactor(Vec3 l, F32 outerCos, F32 innerCos, Vec3 spotDir)
 {
-	float costheta = -dot(l, spotDir);
-	float spotFactor = smoothstep(outerCos, innerCos, costheta);
+	F32 costheta = -dot(l, spotDir);
+	F32 spotFactor = smoothstep(outerCos, innerCos, costheta);
 	return spotFactor;
 }
 
-uint computeShadowSampleCount(const uint COUNT, float zVSpace)
+U32 computeShadowSampleCount(const U32 COUNT, F32 zVSpace)
 {
-	const float MAX_DISTANCE = 5.0;
+	const F32 MAX_DISTANCE = 5.0;
 
-	float z = max(zVSpace, -MAX_DISTANCE);
-	float sampleCountf = float(COUNT) + z * (float(COUNT) / MAX_DISTANCE);
+	F32 z = max(zVSpace, -MAX_DISTANCE);
+	F32 sampleCountf = F32(COUNT) + z * (F32(COUNT) / MAX_DISTANCE);
 	sampleCountf = max(sampleCountf, 1.0);
-	uint sampleCount = uint(sampleCountf);
+	U32 sampleCount = U32(sampleCountf);
 
 	return sampleCount;
 }
 
-float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 worldPos, float distance, sampler2D spotMapArr)
+F32 computeShadowFactorSpot(Mat4 lightProjectionMat, Vec3 worldPos, F32 distance, sampler2D spotMapArr)
 {
-	vec4 texCoords4 = lightProjectionMat * vec4(worldPos, 1.0);
-	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+	Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
+	Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-	const float near = LIGHT_FRUSTUM_NEAR_PLANE;
-	const float far = distance;
+	const F32 near = LIGHT_FRUSTUM_NEAR_PLANE;
+	const F32 far = distance;
 
-	float linearDepth = linearizeDepth(texCoords3.z, near, far);
+	F32 linearDepth = linearizeDepth(texCoords3.z, near, far);
 
-	float shadowFactor = textureLod(spotMapArr, texCoords3.xy, 0.0).r;
+	F32 shadowFactor = textureLod(spotMapArr, texCoords3.xy, 0.0).r;
 
 	return saturate(exp(ESM_CONSTANT * (shadowFactor - linearDepth)));
 }
 
-float computeShadowFactorOmni(vec3 frag2Light, float radius, uvec2 atlasTiles, float tileSize, sampler2D shadowMap)
+F32 computeShadowFactorOmni(Vec3 frag2Light, F32 radius, UVec2 atlasTiles, F32 tileSize, sampler2D shadowMap)
 {
-	vec3 dir = -frag2Light;
-	vec3 dirabs = abs(dir);
-	float dist = max(dirabs.x, max(dirabs.y, dirabs.z));
+	Vec3 dir = -frag2Light;
+	Vec3 dirabs = abs(dir);
+	F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z));
 
-	const float near = LIGHT_FRUSTUM_NEAR_PLANE;
-	const float far = radius;
+	const F32 near = LIGHT_FRUSTUM_NEAR_PLANE;
+	const F32 far = radius;
 
-	float linearDepth = (dist - near) / (far - near);
+	F32 linearDepth = (dist - near) / (far - near);
 
 	// Read tex
-	float shadowFactor;
+	F32 shadowFactor;
 	{
 		// Convert cube coords
-		uint faceIdxu;
-		vec2 uv = convertCubeUvsu(dir, faceIdxu);
+		U32 faceIdxu;
+		Vec2 uv = convertCubeUvsu(dir, faceIdxu);
 
 		// Compute atlas tile
-		atlasTiles >>= uvec2(faceIdxu * 5u);
-		atlasTiles &= uvec2(31u);
+		atlasTiles >>= UVec2(faceIdxu * 5u);
+		atlasTiles &= UVec2(31u);
 
 		// Compute UV
-		uv = (uv + vec2(atlasTiles)) * tileSize;
+		uv = (uv + Vec2(atlasTiles)) * tileSize;
 
 		// Sample
 		shadowFactor = textureLod(shadowMap, uv, 0.0).r;
@@ -157,36 +157,36 @@ float computeShadowFactorOmni(vec3 frag2Light, float radius, uvec2 atlasTiles, f
 
 // Compute the cubemap texture lookup vector given the reflection vector (r) the radius squared of the probe (R2) and
 // the frag pos in sphere space (f)
-vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f)
+Vec3 computeCubemapVecAccurate(in Vec3 r, in F32 R2, in Vec3 f)
 {
 	// Compute the collision of the r to the inner part of the sphere
 	// From now on we work on the sphere's space
 
 	// Project the center of the sphere (it's zero now since we are in sphere space) in ray "f,r"
-	vec3 p = f - r * dot(f, r);
+	Vec3 p = f - r * dot(f, r);
 
 	// The collision to the sphere is point x where x = p + T * r
 	// Because of the pythagorean theorem: R^2 = dot(p, p) + dot(T * r, T * r)
 	// solving for T, T = R / |p|
 	// then x becomes x = sqrt(R^2 - dot(p, p)) * r + p;
-	float pp = dot(p, p);
+	F32 pp = dot(p, p);
 	pp = min(pp, R2);
-	float sq = sqrt(R2 - pp);
-	vec3 x = p + sq * r;
+	F32 sq = sqrt(R2 - pp);
+	Vec3 x = p + sq * r;
 
 	return x;
 }
 
 // Cheap version of computeCubemapVecAccurate
-vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f)
+Vec3 computeCubemapVecCheap(in Vec3 r, in F32 R2, in Vec3 f)
 {
 	return r;
 }
 
-float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
+F32 computeAttenuationFactor(F32 lightRadius, Vec3 frag2Light)
 {
-	float fragLightDist = dot(frag2Light, frag2Light);
-	float att = 1.0 - fragLightDist * lightRadius;
+	F32 fragLightDist = dot(frag2Light, frag2Light);
+	F32 att = 1.0 - fragLightDist * lightRadius;
 	att = max(0.0, att);
 	return att * att;
 }

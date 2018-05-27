@@ -1,0 +1,142 @@
+<!-- 
+Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<mutators>
+		<mutator name="SHARPEN" values="0 1 2"/> <!-- 0: disabled, 1: vertical, 2: horizontal -->
+		<mutator name="VARIANCE_CLIPPING" values="0 1"/>
+		<mutator name="TONEMAP_FIX" values="0 1"/>
+		<mutator name="YCBCR" values="0 1"/>
+	</mutators>
+
+	<inputs>
+		<input name="VARIANCE_CLIPPING_GAMMA" type="F32" const="1"/>
+		<input name="BLEND_FACTOR" type="F32" const="1"/>
+	</inputs>
+
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include <shaders/QuadVert.glsl>
+			]]></source>
+		</shader>
+
+		<shader type="frag">
+			<source><![CDATA[
+#include <shaders/Functions.glsl>
+#include <shaders/Pack.glsl>
+#include <shaders/Tonemapping.glsl>
+
+layout(location = 0) in Vec2 in_uv;
+
+layout(location = 0) out Vec3 out_color;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_inputRt;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_historyRt;
+
+layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
+{
+	Mat4 u_prevViewProjMatMulInvViewProjMat;
+};
+
+#if TONEMAP_FIX
+#define TONEMAPPING_SET 0
+#define TONEMAPPING_BINDING 1
+#include <shaders/TonemappingResources.glsl>
+#endif
+
+#if YCBCR
+#define sample(s, uv) rgbToYCbCr(textureLod(s, uv, 0.0).rgb)
+#define sampleOffset(s, uv, x, y) rgbToYCbCr(textureLodOffset(s, uv, 0.0, IVec2(x, y)).rgb)
+#else
+#define sample(s, uv) textureLod(s, uv, 0.0).rgb
+#define sampleOffset(s, uv, x, y) textureLodOffset(s, uv, 0.0, IVec2(x, y)).rgb
+#endif
+
+Vec3 sharpen()
+{
+	Vec3 center = sample(u_inputRt, in_uv);
+#if SHARPEN == 1
+	Vec3 near = sampleOffset(u_inputRt, in_uv, 1, 0) + sampleOffset(u_inputRt, in_uv, -1, 0);
+#else
+	Vec3 near = sampleOffset(u_inputRt, in_uv, 0, 1) + sampleOffset(u_inputRt, in_uv, 0, -1);
+#endif
+	near *= 0.5;
+	F32 sharpness = 1.0;
+	return center + (center - near) * sharpness;
+}
+
+void main()
+{
+	F32 depth = textureLod(u_depthRt, in_uv, 0.0).r;
+
+	// Get prev uv coords
+	Vec4 v4 = u_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(in_uv), depth, 1.0);
+	Vec2 oldUv = NDC_TO_UV(v4.xy / v4.w);
+
+	// Read textures
+	Vec3 historyCol = sample(u_historyRt, oldUv);
+#if SHARPEN > 0
+	Vec3 crntCol = sharpen();
+#else
+	Vec3 crntCol = sample(u_inputRt, in_uv);
+#endif
+
+	// Remove ghosting by clamping the history color to neighbour's AABB
+	Vec3 near0 = sampleOffset(u_inputRt, in_uv, 1, 0);
+	Vec3 near1 = sampleOffset(u_inputRt, in_uv, 0, 1);
+	Vec3 near2 = sampleOffset(u_inputRt, in_uv, -1, 0);
+	Vec3 near3 = sampleOffset(u_inputRt, in_uv, 0, -1);
+
+#if VARIANCE_CLIPPING
+	Vec3 m1 = crntCol + near0 + near1 + near2 + near3;
+	Vec3 m2 = crntCol * crntCol + near0 * near0 + near1 * near1 + near2 * near2 + near3 * near3;
+
+	Vec3 mu = m1 / 5.0;
+	Vec3 sigma = sqrt(m2 / 5.0 - mu * mu);
+
+	Vec3 boxMin = mu - VARIANCE_CLIPPING_GAMMA * sigma;
+	Vec3 boxMax = mu + VARIANCE_CLIPPING_GAMMA * sigma;
+#else
+	Vec3 boxMin = min(crntCol, min(near0, min(near1, min(near2, near3))));
+	Vec3 boxMax = max(crntCol, max(near0, max(near1, max(near2, near3))));
+#endif
+
+	historyCol = clamp(historyCol, boxMin, boxMax);
+
+	// Remove jitter (T. Lottes)
+#if YCBCR
+	F32 lum0 = crntCol.r;
+	F32 lum1 = historyCol.r;
+	F32 maxLum = boxMax.r;
+#elif TONEMAP_FIX
+	F32 lum0 = computeLuminance(tonemap(crntCol, u_exposureThreshold0));
+	F32 lum1 = computeLuminance(tonemap(historyCol, u_exposureThreshold0));
+	//F32 maxLum = computeLuminance(tonemap(boxMax, u_exposureThreshold0));
+	F32 maxLum = 1.0;
+#else
+	F32 lum0 = computeLuminance(crntCol);
+	F32 lum1 = computeLuminance(historyCol);
+	F32 maxLum = computeLuminance(boxMax);
+#endif
+
+	F32 diff = abs(lum0 - lum1) / max(lum0, max(lum1, maxLum + EPSILON));
+	diff = 1.0 - diff;
+	diff = diff * diff;
+	F32 feedback = mix(0.0, BLEND_FACTOR, diff);
+
+	// Write result
+#if YCBCR
+	out_color = yCbCrToRgb(mix(historyCol, crntCol, feedback));
+#else
+	out_color = mix(historyCol, crntCol, feedback);
+#endif
+}
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>

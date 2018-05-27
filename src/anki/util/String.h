@@ -206,7 +206,7 @@ public:
 	{
 		checkInit();
 		ANKI_ASSERT(position < getLength());
-		const Char* out = std::strstr(m_ptr, &cstr[0]);
+		const Char* out = std::strstr(m_ptr + position, &cstr[0]);
 		return (out == nullptr) ? NPOS : PtrSize(out - m_ptr);
 	}
 

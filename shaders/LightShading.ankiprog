@@ -1,0 +1,186 @@
+<!-- 
+Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<inputs>
+		<input name="CLUSTER_COUNT_X" type="U32" const="1"/>
+		<input name="CLUSTER_COUNT_Y" type="U32" const="1"/>
+		<input name="CLUSTER_COUNT_Z" type="U32" const="1"/>
+		<input name="CLUSTER_COUNT" type="U32" const="1"/>
+		<input name="IR_MIPMAP_COUNT" type="U32" const="1"/>
+	</inputs>
+
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include <shaders/Common.glsl>
+
+layout(location = 0) out Vec2 out_uv;
+layout(location = 1) out Vec2 out_clusterIJ;
+
+out gl_PerVertex
+{
+	Vec4 gl_Position;
+};
+
+void main()
+{
+	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
+	Vec2 pos = out_uv * 2.0 - 1.0;
+	gl_Position = Vec4(pos, 0.0, 1.0);
+
+	out_clusterIJ = Vec2(CLUSTER_COUNT_X, CLUSTER_COUNT_Y) * out_uv;
+}
+			]]></source>
+		</shader>
+
+		<shader type="frag">
+			<source><![CDATA[
+#include <shaders/Pack.glsl>
+#include <shaders/glsl_cpp_common/Clusterer.h>
+#include <shaders/Functions.glsl>
+
+#define LIGHT_SET 0
+#define LIGHT_SS_BINDING 0
+#define LIGHT_UBO_BINDING 0
+#define LIGHT_TEX_BINDING 5
+#define LIGHT_LIGHTS
+#define LIGHT_COMMON_UNIS
+#include <shaders/ClusterLightCommon.glsl>
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_indirectRt;
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 1) in Vec2 in_clusterIJ;
+
+layout(location = 0) out Vec3 out_color;
+
+const F32 SUBSURFACE_MIN = 0.05;
+
+// Common code for lighting
+#define LIGHTING_COMMON_BRDF() \
+	Vec3 frag2Light = light.m_posRadius.xyz - worldPos; \
+	Vec3 l = normalize(frag2Light); \
+	Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l); \
+	Vec3 diffC = diffuseLambert(gbuffer.m_diffuse); \
+	F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light); \
+	F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
+
+void main()
+{
+	F32 depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
+	Vec2 ndc = UV_TO_NDC(in_uv);
+
+	// Get world position
+	Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	// Get first light index
+	U32 idxOffset;
+	{
+		U32 k = computeClusterK(u_clustererMagic, worldPos);
+		U32 clusterIdx = 
+			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
+
+		idxOffset = u_clusters[clusterIdx];
+	}
+
+	// Decode GBuffer
+	GbufferInfo gbuffer;
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_uv, 0.0, gbuffer);
+	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
+
+	// Ambient and emissive color
+	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
+
+	// Indirect
+	out_color += textureLod(u_indirectRt, in_uv, 0.0).rgb;
+
+	// Skip decals
+	U32 count = u_lightIndices[idxOffset];
+	idxOffset += count + 1u;
+
+	// Point lights
+	Vec3 viewDir = normalize(u_cameraPos - worldPos);
+	count = u_lightIndices[idxOffset++];
+	U32 idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	{
+		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
+
+		LIGHTING_COMMON_BRDF();
+
+		if(light.m_diffuseColorTileSize.w >= 0.0)
+		{
+			F32 shadow = computeShadowFactorOmni(frag2Light, 
+				light.m_radiusPad1.x, 
+				light.m_atlasTiles, 
+				light.m_diffuseColorTileSize.w,
+				u_shadowTex);
+			lambert *= shadow;
+		}
+
+		out_color += (diffC + specC) * light.m_diffuseColorTileSize.rgb * (att * max(gbuffer.m_subsurface, lambert));
+	}
+
+	// Spot lights
+	count = u_lightIndices[idxOffset++];
+	idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	{
+		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
+
+		LIGHTING_COMMON_BRDF();
+
+		F32 spot = computeSpotFactor(
+			l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+
+		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
+		if(shadowmapLayerIdx >= 0.0)
+		{
+			F32 shadow = computeShadowFactorSpot(
+				light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
+			lambert *= shadow;
+		}
+
+		out_color += 
+			(diffC + specC) * light.m_diffuseColorShadowmapId.rgb * (att * spot * max(gbuffer.m_subsurface, lambert));
+	}
+
+#if 0
+	count = scount;
+	if(count == 0)
+	{
+		out_color = Vec3(0.0, 0.0, 0.0);
+	}
+	else if(count == 1)
+	{
+		out_color = Vec3(1.0, 0.0, 0.0);
+	}
+	else if(count == 2)
+	{
+		out_color = Vec3(0.0, 1.0, 0.0);
+	}
+	else if(count == 3)
+	{
+		out_color = Vec3(0.0, 0.0, 1.0);
+	}
+	else
+	{
+		out_color = Vec3(1.0, 1.0, 1.0);
+	}
+#endif
+}
+			]]></source>
+		</shader>
+	</shaders>
+
+</shaderProgram>
+

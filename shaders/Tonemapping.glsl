@@ -6,65 +6,65 @@
 #ifndef ANKI_SHADERS_TONEMAP_GLSL
 #define ANKI_SHADERS_TONEMAP_GLSL
 
-#include "shaders/Common.glsl"
+#include <shaders/Common.glsl>
 
 // A tick to compute log of base 10
-float log10(in float x)
+F32 log10(in F32 x)
 {
 	return log(x) / log(10.0);
 }
 
-float computeLuminance(in vec3 color)
+F32 computeLuminance(in Vec3 color)
 {
-	return max(dot(vec3(0.30, 0.59, 0.11), color), EPSILON);
+	return max(dot(Vec3(0.30, 0.59, 0.11), color), EPSILON);
 }
 
-float computeExposure(float avgLum, float threshold)
+F32 computeExposure(F32 avgLum, F32 threshold)
 {
-	float keyValue = 1.03 - (2.0 / (2.0 + log10(avgLum + 1.0)));
-	float linearExposure = (keyValue / avgLum);
-	float exposure = log2(linearExposure);
+	F32 keyValue = 1.03 - (2.0 / (2.0 + log10(avgLum + 1.0)));
+	F32 linearExposure = (keyValue / avgLum);
+	F32 exposure = log2(linearExposure);
 
 	exposure -= threshold;
 	return exp2(exposure);
 }
 
-vec3 computeExposedColor(in vec3 color, in float avgLum, in float threshold)
+Vec3 computeExposedColor(in Vec3 color, in F32 avgLum, in F32 threshold)
 {
 	return computeExposure(avgLum, threshold) * color;
 }
 
 // Reinhard operator
-vec3 tonemapReinhard(in vec3 color, in float saturation)
+Vec3 tonemapReinhard(in Vec3 color, in F32 saturation)
 {
-	float lum = computeLuminance(color);
-	float toneMappedLuminance = lum / (lum + 1.0);
-	return toneMappedLuminance * pow(color / lum, vec3(saturation));
+	F32 lum = computeLuminance(color);
+	F32 toneMappedLuminance = lum / (lum + 1.0);
+	return toneMappedLuminance * pow(color / lum, Vec3(saturation));
 }
 
 // Uncharted 2 operator
-vec3 tonemapUncharted2(in vec3 color)
+Vec3 tonemapUncharted2(in Vec3 color)
 {
-	const float A = 0.15;
-	const float B = 0.50;
-	const float C = 0.10;
-	const float D = 0.20;
-	const float E = 0.02;
-	const float F = 0.30;
+	const F32 A = 0.15;
+	const F32 B = 0.50;
+	const F32 C = 0.10;
+	const F32 D = 0.20;
+	const F32 E = 0.02;
+	const F32 F = 0.30;
 
 	return ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
 }
 
-vec3 tonemap(vec3 color, float exposure)
+Vec3 tonemap(Vec3 color, F32 exposure)
 {
 	color *= exposure;
-	float saturation = 1.0;
+	F32 saturation = 1.0;
 	return tonemapReinhard(color, saturation);
 }
 
-vec3 tonemap(vec3 color, float avgLum, float threshold)
+Vec3 tonemap(Vec3 color, F32 avgLum, F32 threshold)
 {
-	float exposure = computeExposure(avgLum, threshold);
+	F32 exposure = computeExposure(avgLum, threshold);
 	return tonemap(color, exposure);
 }
 #endif

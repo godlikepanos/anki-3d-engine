@@ -360,7 +360,8 @@ include_directories("src"
 	"thirdparty/khronos"
 	"${CMAKE_CURRENT_BINARY_DIR}"
 	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang"
-	"thirdparty")
+	"thirdparty"
+	${CMAKE_CURRENT_SOURCE_DIR})
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("thirdparty/GLEW/include")

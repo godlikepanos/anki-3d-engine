@@ -59,7 +59,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	}
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.ankiprog", m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutations(m_prog);
 	mutations.add("COPY_TO_CLIENT", 0).add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 2);
@@ -191,7 +191,7 @@ void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 
 	if(passIdx == m_passes.getSize() - 1)
 	{
-		UVec2 size(m_copyToBuff.m_lastMipWidth, m_copyToBuff.m_lastMipHeight);
+		UVec4 size(m_copyToBuff.m_lastMipWidth, m_copyToBuff.m_lastMipHeight, 0, 0);
 		cmdb->setPushConstants(&size, sizeof(size));
 
 		cmdb->bindStorageBuffer(0, 0, m_copyToBuff.m_buff, 0, m_copyToBuff.m_buff->getSize());

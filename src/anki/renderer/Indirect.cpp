@@ -11,6 +11,7 @@
 #include <anki/core/Config.h>
 #include <anki/core/Trace.h>
 #include <anki/resource/MeshResource.h>
+#include <shaders/glsl_cpp_common/TraditionalDeferredShading.h>
 
 namespace anki
 {
@@ -18,25 +19,6 @@ namespace anki
 struct Indirect::LightPassVertexUniforms
 {
 	Mat4 m_mvp;
-};
-
-struct Indirect::LightPassPointLightUniforms
-{
-	Vec4 m_inputTexUvScaleAndOffset;
-	Mat4 m_invViewProjMat;
-	Vec4 m_camPosPad1;
-	Vec4 m_posRadius;
-	Vec4 m_diffuseColorPad1;
-};
-
-struct Indirect::LightPassSpotLightUniforms
-{
-	Vec4 m_inputTexUvScaleAndOffset;
-	Mat4 m_invViewProjMat;
-	Vec4 m_camPosPad1;
-	Vec4 m_posRadius;
-	Vec4 m_diffuseColorOuterCos;
-	Vec4 m_lightDirInnerCos;
 };
 
 Indirect::Indirect(Renderer* r)
@@ -153,7 +135,8 @@ Error Indirect::initLightShading(const ConfigSet& config)
 
 	// Init progs
 	{
-		ANKI_CHECK(getResourceManager().loadResource("programs/DeferredShading.ankiprog", m_lightShading.m_lightProg));
+		ANKI_CHECK(getResourceManager().loadResource(
+			"shaders/TraditionalDeferredShading.ankiprog", m_lightShading.m_lightProg));
 
 		ShaderProgramResourceMutationInitList<1> mutators(m_lightShading.m_lightProg);
 		mutators.add("LIGHT_TYPE", 0);
@@ -197,7 +180,7 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 
 	// Create prog
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("programs/Irradiance.ankiprog", m_irradiance.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Irradiance.ankiprog", m_irradiance.m_prog));
 
 		const F32 envMapReadMip = computeMaxMipmapCount2d(
 			m_lightShading.m_tileSize, m_lightShading.m_tileSize, m_irradiance.m_envMapReadSize);
@@ -450,8 +433,8 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 
 			vert->m_mvp = vpMat * modelM;
 
-			LightPassPointLightUniforms* light =
-				allocateAndBindUniforms<LightPassPointLightUniforms*>(sizeof(LightPassPointLightUniforms), cmdb, 0, 1);
+			DeferredPointLightUniforms* light =
+				allocateAndBindUniforms<DeferredPointLightUniforms*>(sizeof(DeferredPointLightUniforms), cmdb, 0, 1);
 
 			light->m_inputTexUvScaleAndOffset = Vec4(1.0f / 6.0f, 1.0f, faceIdx * (1.0f / 6.0f), 0.0f);
 			light->m_invViewProjMat = invViewProjMat;
@@ -493,8 +476,8 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 			vert->m_mvp = vpMat * modelM;
 
 			// Update fragment uniforms
-			LightPassSpotLightUniforms* light =
-				allocateAndBindUniforms<LightPassSpotLightUniforms*>(sizeof(LightPassSpotLightUniforms), cmdb, 0, 1);
+			DeferredSpotLightUniforms* light =
+				allocateAndBindUniforms<DeferredSpotLightUniforms*>(sizeof(DeferredSpotLightUniforms), cmdb, 0, 1);
 
 			light->m_inputTexUvScaleAndOffset = Vec4(1.0f / 6.0f, 1.0f, faceIdx * (1.0f / 6.0f), 0.0f);
 			light->m_invViewProjMat = invViewProjMat;

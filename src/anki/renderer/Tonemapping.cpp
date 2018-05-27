@@ -28,7 +28,7 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 		computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), AVERAGE_LUMINANCE_RENDER_TARGET_SIZE) - 1;
 
 	// Create program
-	ANKI_CHECK(getResourceManager().loadResource("programs/TonemappingAverageLuminance.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/TonemappingAverageLuminance.ankiprog", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("INPUT_TEX_SIZE",

@@ -1,0 +1,223 @@
+<!-- 
+Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<mutators>
+		<mutator name="ENABLE_SHADOWS" values="0 1"/>
+	</mutators>
+
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include <shaders/QuadVert.glsl>
+			]]></source>
+		</shader>
+
+		<shader type="frag">
+			<inputs>
+				<input name="FB_SIZE" type="UVec2" const="1"/>
+				<input name="CLUSTER_COUNT" type="UVec3" const="1"/>
+				<input name="NOISE_MAP_SIZE" type="U32" const="1"/>
+			</inputs>
+
+			<source><![CDATA[
+#include <shaders/Common.glsl>
+#include <shaders/Functions.glsl>
+#include <shaders/glsl_cpp_common/Clusterer.h>
+
+#define LIGHT_TEX_BINDING 3
+#define LIGHT_UBO_BINDING 0
+#define LIGHT_SS_BINDING 0
+#define LIGHT_SET 0
+#define LIGHT_LIGHTS
+#define LIGHT_COMMON_UNIS
+#include <shaders/ClusterLightCommon.glsl>
+
+layout(location = 0) in Vec2 in_uv;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msDepthRt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2DArray u_noiseTex;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_historyRt;
+
+layout(std140, ANKI_UBO_BINDING(0, 3), row_major) uniform ubo0_
+{
+	Vec4 u_linearizeNoiseTexOffsetLayer;
+	Vec4 u_fogParticleColorPad1;
+	Mat4 u_prevViewProjMatMulInvViewProjMat2; // TODO Light common ubo has that. Maybe remove it
+};
+
+#define u_linearize UNIFORM(u_linearizeNoiseTexOffsetLayer.xy)
+#define u_noiseYOffset UNIFORM(u_linearizeNoiseTexOffsetLayer.z)
+#define u_noiseLayer UNIFORM(u_linearizeNoiseTexOffsetLayer.w)
+#define u_fogParticleColor UNIFORM(u_fogParticleColorPad1.rgb)
+
+layout(location = 0) out Vec3 out_color;
+
+const U32 MAX_SAMPLES_PER_CLUSTER = 4u;
+const F32 DIST_BETWEEN_SAMPLES = 0.25;
+const F32 HISTORY_FEEDBACK = 1.0 / 16.0;
+
+// Return the diffuse color without taking into account the diffuse term of the particles.
+Vec3 computeLightColor(Vec3 fragPos, U32 plightCount, U32 plightIdx, U32 slightCount, U32 slightIdx)
+{
+	Vec3 outColor = Vec3(0.0);
+
+	// Point lights
+	ANKI_LOOP while(plightCount-- != 0)
+	{
+		PointLight light = u_pointLights[u_lightIndices[plightIdx++]];
+		Vec3 frag2Light = light.m_posRadius.xyz - fragPos;
+		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+
+#if ENABLE_SHADOWS
+		if(light.m_diffuseColorTileSize.w >= 0.0)
+		{
+			factor *= computeShadowFactorOmni(frag2Light, 
+				light.m_radiusPad1.x, 
+				light.m_atlasTiles,
+				light.m_diffuseColorTileSize.w,
+				u_shadowTex);
+		}
+#endif
+
+		outColor += light.m_diffuseColorTileSize.rgb * factor;
+	}
+
+	// Spot lights
+	ANKI_LOOP while(slightCount-- != 0)
+	{
+		SpotLight light = u_spotLights[u_lightIndices[slightIdx++]];
+		Vec3 frag2Light = light.m_posRadius.xyz - fragPos;
+		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+
+		Vec3 l = normalize(frag2Light);
+
+		factor *= computeSpotFactor(
+			l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+
+#if ENABLE_SHADOWS
+		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
+		if(shadowmapLayerIdx >= 0.0)
+		{
+			factor *= computeShadowFactorSpot(
+				light.m_texProjectionMat, fragPos, light.m_lightDirRadius.w, u_shadowTex);
+		}
+#endif
+
+		outColor += light.m_diffuseColorShadowmapId.rgb * factor;
+	}
+
+	return outColor;
+}
+
+Vec3 readHistory(Vec3 ndc, out F32 historyFeedback)
+{
+	Vec4 v4 = u_prevViewProjMatMulInvViewProjMat2 * Vec4(ndc, 1.0);
+	v4.xy /= v4.w;
+
+	Vec2 oldUv = NDC_TO_UV(v4.xy);
+	Vec3 history = textureLod(u_historyRt, oldUv, 0.0).rgb;
+
+	// Compute the history blend. If clip falls outside NDC then it's 1.0 (use only current fog term) and if it's
+	// inside NDC then use the HISTORY_FEEDBACK value
+	Vec2 posNdc = abs(v4.xy);
+	historyFeedback = max(posNdc.x, posNdc.y);
+	historyFeedback = min(floor(historyFeedback), 1.0 - HISTORY_FEEDBACK);
+	historyFeedback += HISTORY_FEEDBACK;
+
+	return history;
+}
+
+void main()
+{
+	F32 depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
+
+	Vec3 ndc = Vec3(UV_TO_NDC(in_uv), depth);
+
+	Vec3 farPos;
+	farPos.z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
+	farPos.xy = ndc.xy * u_unprojectionParams.xy * farPos.z;
+	Vec3 viewDir = normalize(farPos);
+
+	U32 i = U32(in_uv.x * F32(CLUSTER_COUNT.x));
+	U32 j = U32(in_uv.y * F32(CLUSTER_COUNT.y));
+	U32 ij = j * CLUSTER_COUNT.x + i;
+
+	Vec3 noiseTexUv = Vec3(Vec2(FB_SIZE) / Vec2(NOISE_MAP_SIZE) * in_uv + Vec2(0.0, u_noiseYOffset), u_noiseLayer);
+	F32 randFactor = clamp(texture(u_noiseTex, noiseTexUv).r, EPSILON, 1.0 - EPSILON);
+
+	F32 kNear = -u_near;
+	Vec3 newCol = Vec3(0.0);
+	ANKI_LOOP for(U32 k = 0u; k < CLUSTER_COUNT.z; ++k)
+	{
+		F32 kFar = -computeClusterFar(u_clustererMagic, k);
+
+		//
+		// Compute sample count
+		//
+		F32 diff = kNear - kFar;
+		F32 samplesf = clamp(diff / DIST_BETWEEN_SAMPLES, 1.0, F32(MAX_SAMPLES_PER_CLUSTER));
+		F32 dist = 1.0 / samplesf;
+		F32 start = dist * randFactor;
+
+		//
+		// Find index ranges
+		//
+		U32 clusterIdx = k * (CLUSTER_COUNT.x * CLUSTER_COUNT.y) + ij;
+		U32 idxOffset = u_clusters[clusterIdx];
+
+		// Skip decals
+		U32 count = u_lightIndices[idxOffset];
+		idxOffset += count + 1;
+
+		U32 plightCount = u_lightIndices[idxOffset++];
+		U32 plightIdx = idxOffset;
+		idxOffset += plightCount;
+
+		U32 slightCount = u_lightIndices[idxOffset++];
+		U32 slightIdx = idxOffset;
+
+		ANKI_LOOP for(F32 factor = start; factor <= 1.0; factor += dist)
+		{
+			F32 zMedian = mix(kNear, kFar, factor);
+
+			ANKI_BRANCH if(zMedian < farPos.z)
+			{
+				k = CLUSTER_COUNT.z; // Break the outer loop
+				break;
+			}
+
+			Vec3 fragPos = viewDir * (zMedian / viewDir.z);
+
+			// Move to world space
+			Vec4 newWorldPos4 = u_invViewMat * Vec4(fragPos, 1.0);
+
+			newCol += computeLightColor(newWorldPos4.xyz, plightCount, plightIdx, slightCount, slightIdx);
+		}
+
+		kNear = kFar;
+	}
+
+	newCol *= diffuseLambert(u_fogParticleColor);
+
+	// Read history
+	F32 historyFeedback;
+	Vec3 history = readHistory(ndc, historyFeedback);
+	
+	// Fix ghosting
+	history = max(history, newCol);
+
+	// Blend
+	out_color = mix(history, newCol, historyFeedback);
+}
+			]]></source>
+		</shader>
+	</shaders>
+
+</shaderProgram>
+
+
+

@@ -6,7 +6,7 @@
 #ifndef ANKI_SHADERS_DOWNSCALE_BLUR_GLSL
 #define ANKI_SHADERS_DOWNSCALE_BLUR_GLSL
 
-#include "shaders/Common.glsl"
+#include <shaders/Common.glsl>
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
 
@@ -16,17 +16,17 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 // Push constants hold the size of the output image
 struct PushConsts
 {
-	uvec4 outImageSizePad2;
+	UVec4 m_outImageSizePad2;
 };
 ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
-#	define u_fbSize (u_regs.outImageSizePad2.xy)
+#	define u_fbSize (u_regs.m_outImageSizePad2.xy)
 
-vec2 in_uv = (vec2(gl_GlobalInvocationID.xy) + 0.5) / vec2(u_fbSize);
+Vec2 in_uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_fbSize);
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
-vec3 out_color;
+Vec3 out_color;
 #else
-layout(location = 0) in vec2 in_uv;
-layout(location = 0) out vec3 out_color;
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_color;
 #endif
 
 void main()
@@ -40,15 +40,15 @@ void main()
 #endif
 
 	out_color = textureLod(u_tex, in_uv, 0.0).rgb;
-	out_color += textureLodOffset(u_tex, in_uv, 0.0, ivec2(+1, +1)).rgb;
-	out_color += textureLodOffset(u_tex, in_uv, 0.0, ivec2(-1, -1)).rgb;
-	out_color += textureLodOffset(u_tex, in_uv, 0.0, ivec2(+1, -1)).rgb;
-	out_color += textureLodOffset(u_tex, in_uv, 0.0, ivec2(-1, +1)).rgb;
+	out_color += textureLodOffset(u_tex, in_uv, 0.0, IVec2(+1, +1)).rgb;
+	out_color += textureLodOffset(u_tex, in_uv, 0.0, IVec2(-1, -1)).rgb;
+	out_color += textureLodOffset(u_tex, in_uv, 0.0, IVec2(+1, -1)).rgb;
+	out_color += textureLodOffset(u_tex, in_uv, 0.0, IVec2(-1, +1)).rgb;
 
 	out_color *= (1.0 / 5.0);
 
 #if defined(ANKI_COMPUTE_SHADER)
-	imageStore(out_img, ivec2(gl_GlobalInvocationID.xy), vec4(out_color, 0.0));
+	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(out_color, 0.0));
 #endif
 }
 

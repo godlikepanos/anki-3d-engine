@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "shaders/MsBsCommon.glsl"
+#include <shaders/MsBsCommon.glsl>
 
 layout(vertices = 3) out;
 
@@ -18,17 +18,17 @@ layout(vertices = 3) out;
 //
 in gl_PerVertex
 {
-	vec4 gl_Position;
+	Vec4 gl_Position;
 }
 gl_in[];
 
-layout(location = 0) in vec2 inTexCoords[];
-layout(location = 1) in mediump vec3 inNormal[];
+layout(location = 0) in Vec2 inTexCoords[];
+layout(location = 1) in mediump Vec3 inNormal[];
 #if PASS == COLOR
-layout(location = 2) in mediump vec4 inTangent[];
+layout(location = 2) in mediump Vec4 inTangent[];
 #endif
 #if INSTANCE_ID_FRAGMENT_SHADER
-layout(location = 3) flat in uint inInstanceId[];
+layout(location = 3) flat in U32 inInstanceId[];
 #endif
 
 //
@@ -37,37 +37,37 @@ layout(location = 3) flat in uint inInstanceId[];
 
 out gl_PerVertex
 {
-	vec4 gl_Position;
+	Vec4 gl_Position;
 }
 gl_out[];
 
-layout(location = 0) out vec2 outTexCoord[];
-layout(location = 1) out vec3 outNormal[];
+layout(location = 0) out Vec2 outTexCoord[];
+layout(location = 1) out Vec3 outNormal[];
 #if PASS == COLOR
-layout(location = 2) out vec4 outTangent[];
+layout(location = 2) out Vec4 outTangent[];
 #endif
 
 #if INSTANCE_ID_FRAGMENT_SHADER
 struct CommonPatch
 {
-	uint instanceId;
+	U32 instanceId;
 };
 #endif
 
 struct PNPatch
 {
-	vec3 pos021;
-	vec3 pos012;
-	vec3 pos102;
-	vec3 pos201;
-	vec3 pos210;
-	vec3 pos120;
-	vec3 pos111;
+	Vec3 pos021;
+	Vec3 pos012;
+	Vec3 pos102;
+	Vec3 pos201;
+	Vec3 pos210;
+	Vec3 pos120;
+	Vec3 pos111;
 };
 
 struct PhongPatch
 {
-	vec3 terms[3];
+	Vec3 terms[3];
 };
 
 out patch PNPatch pnPatch;
@@ -77,11 +77,11 @@ out patch CommonPatch commonPatch;
 #endif
 
 // Project point to plane
-vec3 projectToPlane(vec3 point, vec3 planePoint, vec3 planeNormal)
+Vec3 projectToPlane(Vec3 point, Vec3 planePoint, Vec3 planeNormal)
 {
-	vec3 v = point - planePoint;
-	float pen = dot(v, planeNormal);
-	vec3 d = pen * planeNormal;
+	Vec3 v = point - planePoint;
+	F32 pen = dot(v, planeNormal);
+	Vec3 d = pen * planeNormal;
 	return (point - d);
 }
 
@@ -89,18 +89,18 @@ vec3 projectToPlane(vec3 point, vec3 planePoint, vec3 planeNormal)
 void calcPositions()
 {
 	// The original vertices stay the same
-	vec3 pos030 = IN_POS3(0);
-	vec3 pos003 = IN_POS3(1);
-	vec3 pos300 = IN_POS3(2);
+	Vec3 pos030 = IN_POS3(0);
+	Vec3 pos003 = IN_POS3(1);
+	Vec3 pos300 = IN_POS3(2);
 
 	OUT_POS4(0) = IN_POS4(0);
 	OUT_POS4(1) = IN_POS4(1);
 	OUT_POS4(2) = IN_POS4(2);
 
 	// edges are names according to the opposing vertex
-	vec3 edgeB300 = pos003 - pos030;
-	vec3 edgeB030 = pos300 - pos003;
-	vec3 edgeB003 = pos030 - pos300;
+	Vec3 edgeB300 = pos003 - pos030;
+	Vec3 edgeB030 = pos300 - pos003;
+	Vec3 edgeB003 = pos030 - pos300;
 
 	// Generate two midpoints on each edge
 	pnPatch.pos021 = pos030 + edgeB300 / 3.0;
@@ -118,61 +118,61 @@ void calcPositions()
 	pnPatch.pos120 = projectToPlane(pnPatch.pos120, pos030, outNormal[0]);
 
 	// Handle the center
-	vec3 center = (pos003 + pos030 + pos300) / 3.0;
+	Vec3 center = (pos003 + pos030 + pos300) / 3.0;
 	pnPatch.pos111 =
 		(pnPatch.pos021 + pnPatch.pos012 + pnPatch.pos102 + pnPatch.pos201 + pnPatch.pos210 + pnPatch.pos120) / 6.0;
 	pnPatch.pos111 += (pnPatch.pos111 - center) / 2.0;
 }
 
-vec3 calcFaceNormal(in vec3 v0, in vec3 v1, in vec3 v2)
+Vec3 calcFaceNormal(in Vec3 v0, in Vec3 v1, in Vec3 v2)
 {
 	return normalize(cross(v1 - v0, v2 - v0));
 }
 
-float calcEdgeTessLevel(in vec3 n0, in vec3 n1, in float maxTessLevel)
+F32 calcEdgeTessLevel(in Vec3 n0, in Vec3 n1, in F32 maxTessLevel)
 {
-	vec3 norm = normalize(n0 + n1);
-	float tess = (1.0 - norm.z) * (maxTessLevel - 1.0) + 1.0;
+	Vec3 norm = normalize(n0 + n1);
+	F32 tess = (1.0 - norm.z) * (maxTessLevel - 1.0) + 1.0;
 	return tess;
 }
 
-/*float calcEdgeTessLevel(in vec2 p0, in vec2 p1, in float maxTessLevel)
+/*F32 calcEdgeTessLevel(in Vec2 p0, in Vec2 p1, in F32 maxTessLevel)
 {
-	float dist = distance(p0, p1) * 10.0;
+	F32 dist = distance(p0, p1) * 10.0;
 	return dist * (maxTessLevel - 1.0) + 1.0;
 }*/
 
 // Given the face positions in NDC caclulate if the face is front facing or not
-bool isFaceFrontFacing(in vec2 posNdc[3])
+bool isFaceFrontFacing(in Vec2 posNdc[3])
 {
-	vec2 a = posNdc[1] - posNdc[0];
-	vec2 b = posNdc[2] - posNdc[1];
-	vec2 c = a.xy * b.yx;
+	Vec2 a = posNdc[1] - posNdc[0];
+	Vec2 b = posNdc[2] - posNdc[1];
+	Vec2 c = a.xy * b.yx;
 	return (c.x - c.y) > 0.0;
 }
 
 // Check if a single NDC position is outside the clip space
-bool posOutsideClipSpace(in vec2 posNdc)
+bool posOutsideClipSpace(in Vec2 posNdc)
 {
-	bvec2 compa = lessThan(posNdc, vec2(-1.0));
-	bvec2 compb = greaterThan(posNdc, vec2(1.0));
+	bvec2 compa = lessThan(posNdc, Vec2(-1.0));
+	bvec2 compb = greaterThan(posNdc, Vec2(1.0));
 	return all(bvec4(compa, compb));
 }
 
 // Check if a face in NDC is outside the clip space
-bool isFaceOutsideClipSpace(in vec2 posNdc[3])
+bool isFaceOutsideClipSpace(in Vec2 posNdc[3])
 {
 	return any(bvec3(posOutsideClipSpace(posNdc[0]), posOutsideClipSpace(posNdc[1]), posOutsideClipSpace(posNdc[2])));
 }
 
 // Check if a face is visible
-bool isFaceVisible(in mat4 mvp)
+bool isFaceVisible(in Mat4 mvp)
 {
 	// Calculate clip positions
-	vec2 clip[3];
-	for(int i = 0; i < 3; i++)
+	Vec2 clip[3];
+	for(I32 i = 0; i < 3; i++)
 	{
-		vec4 v = mvp * IN_POS4(i);
+		Vec4 v = mvp * IN_POS4(i);
 		clip[i] = v.xy / (v.w * 0.5 + 0.5);
 	}
 
@@ -180,11 +180,11 @@ bool isFaceVisible(in mat4 mvp)
 	return isFaceFrontFacing(clip) && !isFaceOutsideClipSpace(clip);
 }
 
-void setSilhouetteTessLevels(in mat3 normalMat, in float maxTessLevel)
+void setSilhouetteTessLevels(in Mat3 normalMat, in F32 maxTessLevel)
 {
 	// Calculate the normals in view space
-	vec3 nv[3];
-	for(int i = 0; i < 3; i++)
+	Vec3 nv[3];
+	for(I32 i = 0; i < 3; i++)
 	{
 		nv[i] = normalMat * inNormal[i];
 	}
@@ -195,7 +195,7 @@ void setSilhouetteTessLevels(in mat3 normalMat, in float maxTessLevel)
 	gl_TessLevelInner[0] = (gl_TessLevelOuter[0] + gl_TessLevelOuter[1] + gl_TessLevelOuter[2]) / 3.0;
 }
 
-void setConstantTessLevels(in float maxTessLevel)
+void setConstantTessLevels(in F32 maxTessLevel)
 {
 	gl_TessLevelOuter[0] = maxTessLevel;
 	gl_TessLevelOuter[1] = maxTessLevel;
@@ -212,27 +212,27 @@ void discardPatch()
 }
 
 // Used in phong method
-float calcPhongTerm(int ivId, int i, vec3 q)
+F32 calcPhongTerm(I32 ivId, I32 i, Vec3 q)
 {
-	vec3 qMinusP = q - IN_POS3(i);
+	Vec3 qMinusP = q - IN_POS3(i);
 	return q[ivId] - dot(qMinusP, inNormal[i]) * inNormal[i][ivId];
 }
 
 // This function is part of the point-normal tessellation method
 #define tessellatePNPositionNormalTangentTexCoord_DEFINED
-void tessellatePNPositionNormalTangentTexCoord(in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
+void tessellatePNPositionNormalTangentTexCoord(in F32 maxTessLevel, in Mat4 mvp, in Mat3 normalMat)
 {
-	float tessLevel = 0.0;
+	F32 tessLevel = 0.0;
 
 	// Calculate the face normal in view space
-	vec3 faceNorm = calcFaceNormal(IN_POS3(0), IN_POS3(1), IN_POS3(2));
+	Vec3 faceNorm = calcFaceNormal(IN_POS3(0), IN_POS3(1), IN_POS3(2));
 	faceNorm = (normalMat * faceNorm);
 
 	if(faceNorm.z >= 0.0)
 	{
 		// The face is front facing
 
-		for(int i = 0; i < 3; i++)
+		for(I32 i = 0; i < 3; i++)
 		{
 			outTexCoord[i] = inTexCoords[i];
 			outNormal[i] = inNormal[i];
@@ -256,7 +256,7 @@ void tessellatePNPositionNormalTangentTexCoord(in float maxTessLevel, in mat4 mv
 }
 
 #define tessellatePhongPositionNormalTangentTexCoord_DEFINED
-void tessellatePhongPositionNormalTangentTexCoord(in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
+void tessellatePhongPositionNormalTangentTexCoord(in F32 maxTessLevel, in Mat4 mvp, in Mat3 normalMat)
 {
 	if(IID == 0)
 	{
@@ -289,7 +289,7 @@ void tessellatePhongPositionNormalTangentTexCoord(in float maxTessLevel, in mat4
 }
 
 #define tessellateDispMapPositionNormalTangentTexCoord_DEFINED
-void tessellateDispMapPositionNormalTangentTexCoord(in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
+void tessellateDispMapPositionNormalTangentTexCoord(in F32 maxTessLevel, in Mat4 mvp, in Mat3 normalMat)
 {
 	if(IID == 0)
 	{

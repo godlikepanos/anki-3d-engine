@@ -16,27 +16,10 @@
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/collision/Functions.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
-
-/// @note Should match the shader
-struct ShaderCommonUniforms
-{
-	Vec4 m_unprojectionParams;
-	Vec4 m_rendererSizeTimeNear;
-	Vec4 m_cameraPosFar;
-	ClustererShaderMagicValues m_clustererMagicValues;
-	UVec4 m_tileCount;
-	Mat4 m_viewMat;
-	Mat4 m_invViewMat;
-	Mat4 m_projMat;
-	Mat4 m_invProjMat;
-	Mat4 m_viewProjMat;
-	Mat4 m_invViewProjMat;
-	Mat4 m_prevViewProjMat;
-	Mat4 m_prevViewProjMatMulInvViewProjMat;
-};
 
 LightShading::LightShading(Renderer* r)
 	: RendererObject(r)
@@ -86,7 +69,7 @@ Error LightShading::initInternal(const ConfigSet& config)
 		&m_r->getStagingGpuMemoryManager());
 
 	// Load shaders and programs
-	ANKI_CHECK(getResourceManager().loadResource("programs/LightShading.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShading.ankiprog", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))
@@ -166,8 +149,8 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 
 void LightShading::updateCommonBlock(RenderingContext& ctx)
 {
-	ShaderCommonUniforms* blk = allocateUniforms<ShaderCommonUniforms*>(
-		sizeof(ShaderCommonUniforms), m_runCtx.m_resources.m_commonUniformsToken);
+	LightingUniforms* blk =
+		allocateUniforms<LightingUniforms*>(sizeof(LightingUniforms), m_runCtx.m_resources.m_commonUniformsToken);
 
 	// Start writing
 	blk->m_unprojectionParams = ctx.m_unprojParams;

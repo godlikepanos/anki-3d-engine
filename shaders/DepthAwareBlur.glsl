@@ -13,7 +13,7 @@
 #ifndef ANKI_SHADERS_DEPTH_AWARE_BLUR_GLSL
 #define ANKI_SHADERS_DEPTH_AWARE_BLUR_GLSL
 
-#include "shaders/Common.glsl"
+#include <shaders/Common.glsl>
 
 #if SAMPLE_COUNT < 3
 #	error See file
@@ -27,17 +27,17 @@
 
 // Define some macros depending on the number of components
 #if COLOR_COMPONENTS == 4
-#	define COL_TYPE vec4
+#	define COL_TYPE Vec4
 #	define TEX_FETCH rgba
 #	define TO_VEC4(x_) x_
 #elif COLOR_COMPONENTS == 3
-#	define COL_TYPE vec3
+#	define COL_TYPE Vec3
 #	define TEX_FETCH rgb
-#	define TO_VEC4(x_) vec4(x_, 0.0)
+#	define TO_VEC4(x_) Vec4(x_, 0.0)
 #elif COLOR_COMPONENTS == 1
-#	define COL_TYPE float
+#	define COL_TYPE F32
 #	define TEX_FETCH r
-#	define TO_VEC4(x_) vec4(x_, 0.0, 0.0, 0.0)
+#	define TO_VEC4(x_) Vec4(x_, 0.0, 0.0, 0.0)
 #else
 #	error See file
 #endif
@@ -49,26 +49,26 @@ layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_depthTex;
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D u_outImg;
 #else
-layout(location = 0) in vec2 in_uv;
+layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out COL_TYPE out_color;
 #endif
 
-float computeDepthWeight(float refDepth, float depth)
+F32 computeDepthWeight(F32 refDepth, F32 depth)
 {
-	float diff = abs(refDepth - depth);
-	float weight = 1.0 / (EPSILON + diff);
+	F32 diff = abs(refDepth - depth);
+	F32 weight = 1.0 / (EPSILON + diff);
 	return sqrt(weight);
 }
 
-float readDepth(vec2 uv)
+F32 readDepth(Vec2 uv)
 {
 	return textureLod(u_depthTex, uv, 0.0).r;
 }
 
-void sampleTex(vec2 uv, float refDepth, inout COL_TYPE col, inout float weight)
+void sampleTex(Vec2 uv, F32 refDepth, inout COL_TYPE col, inout F32 weight)
 {
 	COL_TYPE color = textureLod(u_inTex, uv, 0.0).TEX_FETCH;
-	float w = computeDepthWeight(refDepth, readDepth(uv));
+	F32 w = computeDepthWeight(refDepth, readDepth(uv));
 	col += color * w;
 	weight += w;
 }
@@ -83,17 +83,17 @@ void main()
 		return;
 	}
 
-	vec2 uv = (vec2(gl_GlobalInvocationID.xy) + 0.5) / vec2(TEXTURE_SIZE);
+	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(TEXTURE_SIZE);
 #else
-	vec2 uv = in_uv;
+	Vec2 uv = in_uv;
 #endif
 
-	const vec2 TEXEL_SIZE = 1.0 / vec2(TEXTURE_SIZE);
+	const Vec2 TEXEL_SIZE = 1.0 / Vec2(TEXTURE_SIZE);
 
 	// Sample
 	COL_TYPE color = textureLod(u_inTex, uv, 0.0).TEX_FETCH;
-	float refDepth = readDepth(uv);
-	float weight = 1.0;
+	F32 refDepth = readDepth(uv);
+	F32 weight = 1.0;
 
 #if !defined(BOX)
 	// Do seperable
@@ -104,10 +104,10 @@ void main()
 #		define X_OR_Y y
 #	endif
 
-	vec2 uvOffset = vec2(0.0);
+	Vec2 uvOffset = Vec2(0.0);
 	uvOffset.X_OR_Y = 1.5 * TEXEL_SIZE.X_OR_Y;
 
-	ANKI_UNROLL for(uint i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
 	{
 		sampleTex(uv + uvOffset, refDepth, color, weight);
 		sampleTex(uv - uvOffset, refDepth, color, weight);
@@ -117,23 +117,23 @@ void main()
 #else
 	// Do box
 
-	const vec2 OFFSET = 1.5 * TEXEL_SIZE;
+	const Vec2 OFFSET = 1.5 * TEXEL_SIZE;
 
-	sampleTex(uv + vec2(+OFFSET.x, +OFFSET.y), refDepth, color, weight);
-	sampleTex(uv + vec2(+OFFSET.x, -OFFSET.y), refDepth, color, weight);
-	sampleTex(uv + vec2(-OFFSET.x, +OFFSET.y), refDepth, color, weight);
-	sampleTex(uv + vec2(-OFFSET.x, -OFFSET.y), refDepth, color, weight);
+	sampleTex(uv + Vec2(+OFFSET.x, +OFFSET.y), refDepth, color, weight);
+	sampleTex(uv + Vec2(+OFFSET.x, -OFFSET.y), refDepth, color, weight);
+	sampleTex(uv + Vec2(-OFFSET.x, +OFFSET.y), refDepth, color, weight);
+	sampleTex(uv + Vec2(-OFFSET.x, -OFFSET.y), refDepth, color, weight);
 
-	sampleTex(uv + vec2(OFFSET.x, 0.0), refDepth, color, weight);
-	sampleTex(uv + vec2(0.0, OFFSET.y), refDepth, color, weight);
-	sampleTex(uv + vec2(-OFFSET.x, 0.0), refDepth, color, weight);
-	sampleTex(uv + vec2(0.0, -OFFSET.y), refDepth, color, weight);
+	sampleTex(uv + Vec2(OFFSET.x, 0.0), refDepth, color, weight);
+	sampleTex(uv + Vec2(0.0, OFFSET.y), refDepth, color, weight);
+	sampleTex(uv + Vec2(-OFFSET.x, 0.0), refDepth, color, weight);
+	sampleTex(uv + Vec2(0.0, -OFFSET.y), refDepth, color, weight);
 #endif
 	color = color / weight;
 
 	// Write value
 #if USE_COMPUTE
-	imageStore(u_outImg, ivec2(gl_GlobalInvocationID.xy), TO_VEC4(color));
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), TO_VEC4(color));
 #else
 	out_color = color;
 #endif

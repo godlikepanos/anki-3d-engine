@@ -75,24 +75,40 @@ Error ShaderLoader::parseSource(CString src, U depth)
 
 	for(const String& line : lines)
 	{
-		static const CString token = "#include \"";
-
-		if(line.find(token) == 0)
+		// Find if we have an include
+		StringAuto includeFilename(m_alloc);
+		if(line.find("#") == 0)
 		{
-			// - Expect something between the quotes
-			// - Expect the last char to be a quote
-			if(line.getLength() >= token.getLength() + 2 && line[line.getLength() - 1] == '\"')
+			static const CString token0 = "include \"";
+			static const CString token1 = "include <";
+			CString endToken = "\"";
+			PtrSize pos = line.find(token0);
+			if(pos == CString::NPOS)
 			{
-				StringAuto filen(m_alloc);
-				filen.create(line.begin() + token.getLength(), line.end() - 1);
+				endToken = ">";
+				pos = line.find(token1);
+			}
 
-				ANKI_CHECK(parseFileIncludes(filen.toCString(), depth + 1));
-			}
-			else
+			if(pos != CString::NPOS)
 			{
-				ANKI_RESOURCE_LOGE("Malformed #include: %s", &line[0]);
-				return Error::USER_DATA;
+				const PtrSize startPos = pos + token0.getLength();
+				PtrSize endPos = line.find(endToken, startPos);
+				ANKI_ASSERT(endPos >= startPos);
+
+				if(endPos == CString::NPOS || endPos - startPos < 1)
+				{
+					ANKI_RESOURCE_LOGE("Malformed #include: %s", line.cstr());
+					return Error::USER_DATA;
+				}
+
+				includeFilename.create(line.begin() + startPos, line.begin() + endPos);
 			}
+		}
+
+		// Parse new file or append line
+		if(!includeFilename.isEmpty())
+		{
+			ANKI_CHECK(parseFileIncludes(includeFilename.toCString(), depth + 1));
 		}
 		else
 		{

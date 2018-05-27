@@ -16,59 +16,59 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 {
 	Error err = Error::NONE;
 
-	if(str == "int")
+	if(str == "I32")
 	{
 		out = ShaderVariableDataType::INT;
 	}
-	else if(str == "ivec2")
+	else if(str == "IVec2")
 	{
 		out = ShaderVariableDataType::IVEC2;
 	}
-	else if(str == "ivec3")
+	else if(str == "IVec3")
 	{
 		out = ShaderVariableDataType::IVEC3;
 	}
-	else if(str == "ivec4")
+	else if(str == "IVec4")
 	{
 		out = ShaderVariableDataType::IVEC4;
 	}
-	else if(str == "uint")
+	else if(str == "U32")
 	{
 		out = ShaderVariableDataType::UINT;
 	}
-	else if(str == "uvec2")
+	else if(str == "UVec2")
 	{
 		out = ShaderVariableDataType::UVEC2;
 	}
-	else if(str == "uvec3")
+	else if(str == "UVec3")
 	{
 		out = ShaderVariableDataType::UVEC3;
 	}
-	else if(str == "uvec4")
+	else if(str == "UVec4")
 	{
 		out = ShaderVariableDataType::UVEC4;
 	}
-	else if(str == "float")
+	else if(str == "F32")
 	{
 		out = ShaderVariableDataType::FLOAT;
 	}
-	else if(str == "vec2")
+	else if(str == "Vec2")
 	{
 		out = ShaderVariableDataType::VEC2;
 	}
-	else if(str == "vec3")
+	else if(str == "Vec3")
 	{
 		out = ShaderVariableDataType::VEC3;
 	}
-	else if(str == "vec4")
+	else if(str == "Vec4")
 	{
 		out = ShaderVariableDataType::VEC4;
 	}
-	else if(str == "mat3")
+	else if(str == "Mat3")
 	{
 		out = ShaderVariableDataType::MAT3;
 	}
-	else if(str == "mat4")
+	else if(str == "Mat4")
 	{
 		out = ShaderVariableDataType::MAT4;
 	}

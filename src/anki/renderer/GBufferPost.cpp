@@ -32,7 +32,7 @@ Error GBufferPost::initInternal(const ConfigSet& cfg)
 	ANKI_R_LOGI("Initializing GBufferPost pass");
 
 	// Load shaders
-	ANKI_CHECK(getResourceManager().loadResource("programs/GBufferPost.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/GBufferPost.ankiprog", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
 	consts.add("CLUSTER_COUNT_X", U32(cfg.getNumber("r.clusterSizeX")));

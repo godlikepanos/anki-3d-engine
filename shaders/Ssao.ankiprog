@@ -1,0 +1,37 @@
+<!-- 
+Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<mutators>
+		<mutator name="USE_NORMAL" values="0 1"/>
+		<mutator name="SOFT_BLUR" values="0 1"/>
+	</mutators>
+
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include <shaders/QuadVert.glsl>
+			]]></source>
+		</shader>
+
+		<shader type="frag">
+			<inputs>
+				<input name="NOISE_MAP_SIZE" type="U32" const="1"/>
+				<input name="FB_SIZE" type="UVec2" const="1"/>
+				<input name="RADIUS" type="F32" const="1"/>
+				<input name="BIAS" type="F32" const="1"/>
+				<input name="STRENGTH" type="F32" const="1"/>
+				<input name="SAMPLE_COUNT" type="U32" const="1"/>
+				<input name="WORKGROUP_SIZE" type="UVec2" const="1"/>
+			</inputs>
+
+			<source><![CDATA[
+#include <shaders/Ssao.glsl>
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>
+

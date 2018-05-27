@@ -6,7 +6,7 @@
 #ifndef ANKI_SHADERS_GBUFFER_COMMON_VERT_GLSL
 #define ANKI_SHADERS_GBUFFER_COMMON_VERT_GLSL
 
-#include "shaders/Common.glsl"
+#include <shaders/Common.glsl>
 
 //
 // Uniforms
@@ -14,23 +14,23 @@
 #if BONES
 layout(ANKI_SS_BINDING(0, 0), row_major) readonly buffer ss00_
 {
-	mat4 u_boneTransforms[];
+	Mat4 u_boneTransforms[];
 };
 #endif
 
 //
 // Input
 //
-layout(location = POSITION_LOCATION) in highp vec3 in_position;
+layout(location = POSITION_LOCATION) in highp Vec3 in_position;
 #if PASS == PASS_GB_FS
-layout(location = TEXTURE_COORDINATE_LOCATION) in highp vec2 in_uv;
-layout(location = NORMAL_LOCATION) in mediump vec3 in_normal;
-layout(location = TANGENT_LOCATION) in mediump vec4 in_tangent;
+layout(location = TEXTURE_COORDINATE_LOCATION) in highp Vec2 in_uv;
+layout(location = NORMAL_LOCATION) in mediump Vec3 in_normal;
+layout(location = TANGENT_LOCATION) in mediump Vec4 in_tangent;
 #endif
 
 #if BONES
-layout(location = BONE_WEIGHTS_LOCATION) in mediump vec4 in_boneWeights;
-layout(location = BONE_INDICES_LOCATION) in uvec4 in_boneIndices;
+layout(location = BONE_WEIGHTS_LOCATION) in mediump Vec4 in_boneWeights;
+layout(location = BONE_INDICES_LOCATION) in UVec4 in_boneIndices;
 #endif
 
 //
@@ -38,29 +38,29 @@ layout(location = BONE_INDICES_LOCATION) in uvec4 in_boneIndices;
 //
 out gl_PerVertex
 {
-	vec4 gl_Position;
+	Vec4 gl_Position;
 };
 
 #if PASS == PASS_GB_FS
-layout(location = 0) out highp vec2 out_uv;
-layout(location = 1) out mediump vec3 out_normal;
-layout(location = 2) out mediump vec4 out_tangent;
+layout(location = 0) out highp Vec2 out_uv;
+layout(location = 1) out mediump Vec3 out_normal;
+layout(location = 2) out mediump Vec4 out_tangent;
 #	if CALC_BITANGENT_IN_VERT
-layout(location = 3) out mediump vec3 out_bitangent;
+layout(location = 3) out mediump Vec3 out_bitangent;
 #	endif
-layout(location = 4) out mediump float out_distFromTheCamera; // Parallax
-layout(location = 5) out mediump vec3 out_eyeTangentSpace; // Parallax
-layout(location = 6) out mediump vec3 out_normalTangentSpace; // Parallax
+layout(location = 4) out mediump F32 out_distFromTheCamera; // Parallax
+layout(location = 5) out mediump Vec3 out_eyeTangentSpace; // Parallax
+layout(location = 6) out mediump Vec3 out_normalTangentSpace; // Parallax
 #endif
 
 //
 // Globals
 //
-vec3 g_position = in_position;
+Vec3 g_position = in_position;
 #if PASS == PASS_GB_FS
-highp vec2 g_uv = in_uv;
-mediump vec3 g_normal = in_normal;
-mediump vec4 g_tangent = in_tangent;
+highp Vec2 g_uv = in_uv;
+mediump Vec3 g_normal = in_normal;
+mediump Vec4 g_tangent = in_tangent;
 #endif
 
 //
@@ -69,10 +69,10 @@ mediump vec4 g_tangent = in_tangent;
 
 // Common store function
 #if PASS == PASS_GB_FS
-void positionUvNormalTangent(mat4 mvp, mat3 rotationMat)
+void positionUvNormalTangent(Mat4 mvp, Mat3 rotationMat)
 {
 	out_uv = g_uv;
-	gl_Position = mvp * vec4(g_position, 1.0);
+	gl_Position = mvp * Vec4(g_position, 1.0);
 
 	out_normal = rotationMat * g_normal.xyz;
 	out_tangent.xyz = rotationMat * g_tangent.xyz;
@@ -86,16 +86,16 @@ void positionUvNormalTangent(mat4 mvp, mat3 rotationMat)
 
 // Store stuff for parallax mapping
 #if PASS == PASS_GB_FS
-void parallax(mat4 modelViewMat)
+void parallax(Mat4 modelViewMat)
 {
-	vec3 n = in_normal;
-	vec3 t = in_tangent.xyz;
-	vec3 b = cross(n, t) * in_tangent.w;
+	Vec3 n = in_normal;
+	Vec3 t = in_tangent.xyz;
+	Vec3 b = cross(n, t) * in_tangent.w;
 
-	mat3 normalMat = mat3(modelViewMat);
-	mat3 invTbn = transpose(normalMat * mat3(t, b, n));
+	Mat3 normalMat = Mat3(modelViewMat);
+	Mat3 invTbn = transpose(normalMat * Mat3(t, b, n));
 
-	vec3 viewPos = (modelViewMat * vec4(g_position, 1.0)).xyz;
+	Vec3 viewPos = (modelViewMat * Vec4(g_position, 1.0)).xyz;
 	out_distFromTheCamera = viewPos.z;
 
 	out_eyeTangentSpace = invTbn * viewPos;
@@ -107,20 +107,20 @@ void parallax(mat4 modelViewMat)
 #if BONES
 void skinning()
 {
-	vec3 position = vec3(0.0);
-	vec3 normal = vec3(0.0);
-	vec3 tangent = vec3(0.0);
-	for(uint i = 0; i < 4; ++i)
+	Vec3 position = Vec3(0.0);
+	Vec3 normal = Vec3(0.0);
+	Vec3 tangent = Vec3(0.0);
+	for(U32 i = 0; i < 4; ++i)
 	{
-		uint boneIdx = in_boneIndices[i];
+		U32 boneIdx = in_boneIndices[i];
 		if(boneIdx < 0xFFFF)
 		{
-			float boneWeight = in_boneWeights[i];
+			F32 boneWeight = in_boneWeights[i];
 
-			position += (u_boneTransforms[boneIdx] * vec4(g_position * boneWeight, 1.0)).xyz;
+			position += (u_boneTransforms[boneIdx] * Vec4(g_position * boneWeight, 1.0)).xyz;
 #	if PASS == PASS_GB_FS
-			normal += (u_boneTransforms[boneIdx] * vec4(g_normal * boneWeight, 0.0)).xyz;
-			tangent += (u_boneTransforms[boneIdx] * vec4(g_tangent.xyz * boneWeight, 0.0)).xyz;
+			normal += (u_boneTransforms[boneIdx] * Vec4(g_normal * boneWeight, 0.0)).xyz;
+			tangent += (u_boneTransforms[boneIdx] * Vec4(g_tangent.xyz * boneWeight, 0.0)).xyz;
 #	endif
 		}
 	}

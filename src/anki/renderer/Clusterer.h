@@ -8,6 +8,7 @@
 #include <anki/renderer/Common.h>
 #include <anki/Math.h>
 #include <anki/collision/Aabb.h>
+#include <shaders/glsl_cpp_common/Clusterer.h>
 
 namespace anki
 {
@@ -129,13 +130,6 @@ public:
 	F32 m_far;
 };
 
-/// Some transparent valued used by shaders.
-struct ClustererShaderMagicValues
-{
-	Vec4 m_val0;
-	Vec4 m_val1;
-};
-
 /// Collection of clusters for visibility tests.
 class Clusterer
 {
@@ -163,7 +157,7 @@ public:
 
 	/// A value that will be used in shaders to calculate the cluster index. See the code that calculates it for info
 	/// on what it is.
-	const ClustererShaderMagicValues& getShaderMagicValues() const
+	const ClustererMagicValues& getShaderMagicValues() const
 	{
 		return m_shaderMagicVals;
 	}
@@ -218,7 +212,7 @@ private:
 	F32 m_near = 0.0;
 	F32 m_far = 0.0;
 	F32 m_calcNearOpt = 0.0f;
-	ClustererShaderMagicValues m_shaderMagicVals = {Vec4(0.0f), Vec4(0.0f)};
+	ClustererMagicValues m_shaderMagicVals = {Vec4(0.0f), Vec4(0.0f)};
 
 	F32 calcNear(U k) const;
 

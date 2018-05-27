@@ -119,7 +119,7 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 	// Programs and shaders
 	{
 		ANKI_CHECK(
-			getResourceManager().loadResource("programs/ExponentialShadowmappingResolve.ankiprog", m_esmResolveProg));
+			getResourceManager().loadResource("shaders/ExponentialShadowmappingResolve.ankiprog", m_esmResolveProg));
 
 		ShaderProgramResourceConstantValueInitList<1> consts(m_esmResolveProg);
 		consts.add("INPUT_TEXTURE_SIZE", UVec2(m_scratchTileCount * m_scratchTileResolution, m_scratchTileResolution));

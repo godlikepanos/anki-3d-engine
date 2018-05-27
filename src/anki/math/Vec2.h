@@ -59,6 +59,12 @@ public:
 		: Base(arr)
 	{
 	}
+
+	template<typename Y>
+	TVec2(const TVec2<Y>& b)
+		: Base(b.x(), b.y())
+	{
+	}
 	/// @}
 };
 

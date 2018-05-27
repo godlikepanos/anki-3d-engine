@@ -9,18 +9,10 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/Functions.h>
+#include <shaders/glsl_cpp_common/LensFlareSprite.h>
 
 namespace anki
 {
-
-struct Sprite
-{
-	Vec2 m_pos; ///< Position in NDC
-	Vec2 m_scale; ///< Scale of the quad
-	Vec4 m_color;
-	F32 m_depth; ///< Texture depth
-	U32 m_padding[3];
-};
 
 LensFlare::~LensFlare()
 {
@@ -61,7 +53,7 @@ Error LensFlare::initSprite(const ConfigSet& config)
 	m_maxSprites = m_maxSpritesPerFlare * m_maxFlares;
 
 	// Load prog
-	ANKI_CHECK(getResourceManager().loadResource("programs/LensFlareSprite.ankiprog", m_realProg));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/LensFlareSprite.ankiprog", m_realProg));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_realProg);
 	consts.add("MAX_SPRITES", U32(m_maxSprites));
@@ -82,7 +74,7 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 		"LensFlares"));
 
 	ANKI_CHECK(
-		getResourceManager().loadResource("programs/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
+		getResourceManager().loadResource("shaders/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_updateIndirectBuffProg);
 	consts.add("IN_DEPTH_MAP_SIZE", Vec2(m_r->getWidth() / 2 / 2, m_r->getHeight() / 2 / 2));
@@ -181,17 +173,17 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		U spritesCount = max<U>(1, m_maxSpritesPerFlare);
 
 		// Get uniform memory
-		Sprite* tmpSprites = allocateAndBindUniforms<Sprite*>(spritesCount * sizeof(Sprite), cmdb, 0, 0);
-		WeakArray<Sprite> sprites(tmpSprites, spritesCount);
+		LensFlareSprite* tmpSprites =
+			allocateAndBindUniforms<LensFlareSprite*>(spritesCount * sizeof(LensFlareSprite), cmdb, 0, 0);
+		WeakArray<LensFlareSprite> sprites(tmpSprites, spritesCount);
 
 		// misc
 		Vec2 posNdc = posClip.xy() / posClip.w();
 
 		// First flare
-		sprites[c].m_pos = posNdc;
-		sprites[c].m_scale = flareEl.m_firstFlareSize * Vec2(1.0, m_r->getAspectRatio());
-		sprites[c].m_depth = 0.0;
-		F32 alpha = flareEl.m_colorMultiplier.w() * (1.0 - pow(absolute(posNdc.x()), 6.0))
+		sprites[c].m_posScale = Vec4(posNdc, flareEl.m_firstFlareSize * Vec2(1.0f, m_r->getAspectRatio()));
+		sprites[c].m_depthPad3 = Vec4(0.0f);
+		F32 alpha = flareEl.m_colorMultiplier.w() * (1.0 - pow(absolute(posNdc.x()), 6.0f))
 					* (1.0 - pow(absolute(posNdc.y()), 6.0)); // Fade the flare on the edges
 		sprites[c].m_color = Vec4(flareEl.m_colorMultiplier.xyz(), alpha);
 		++c;

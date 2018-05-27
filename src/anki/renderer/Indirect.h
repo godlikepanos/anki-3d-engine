@@ -58,8 +58,6 @@ anki_internal:
 
 private:
 	struct LightPassVertexUniforms;
-	struct LightPassPointLightUniforms;
-	struct LightPassSpotLightUniforms;
 
 	class
 	{

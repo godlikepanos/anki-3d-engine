@@ -70,6 +70,25 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	endif
 #endif
 
+#define F32 float
+#define Vec2 vec2
+#define Vec3 vec3
+#define Vec4 vec4
+
+#define U32 uint
+#define UVec2 uvec2
+#define UVec3 uvec3
+#define UVec4 uvec4
+
+#define I32 int
+#define IVec2 ivec2
+#define IVec3 ivec3
+#define IVec4 ivec4
+
+#define Mat3 mat3
+#define Mat4 mat4
+#define Mat3x4 mat3x4
+
 %s)";
 
 static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)

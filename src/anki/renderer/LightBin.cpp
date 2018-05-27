@@ -9,6 +9,7 @@
 #include <anki/util/ThreadPool.h>
 #include <anki/collision/Sphere.h>
 #include <anki/collision/Frustum.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -23,49 +24,6 @@ class LightBin::ShaderCluster
 {
 public:
 	U32 m_firstIdx;
-};
-
-class LightBin::ShaderPointLight
-{
-public:
-	Vec4 m_posRadius;
-	Vec4 m_diffuseColorTileSize;
-	Vec2 m_radiusPad1;
-	UVec2 m_atlasTiles;
-};
-
-class LightBin::ShaderSpotLight
-{
-public:
-	Vec4 m_posRadius;
-	Vec4 m_diffuseColorShadowmapId;
-	Vec4 m_lightDirRadius;
-	Vec4 m_outerCosInnerCos;
-	Mat4 m_texProjectionMat; ///< Texture projection matrix
-};
-
-class LightBin::ShaderProbe
-{
-public:
-	Vec3 m_pos;
-	F32 m_radiusSq;
-	F32 m_cubemapIndex;
-	U32 _m_pading[3];
-
-	ShaderProbe()
-	{
-		// To avoid warnings
-		_m_pading[0] = _m_pading[1] = _m_pading[2] = 0;
-	}
-};
-
-class LightBin::ShaderDecal
-{
-public:
-	Vec4 m_diffUv;
-	Vec4 m_normRoughnessUv;
-	Mat4 m_texProjectionMat;
-	Vec4 m_blendFactors;
 };
 
 static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 16;
@@ -289,10 +247,10 @@ public:
 	StackAllocator<U8> m_alloc;
 
 	// To fill the light buffers
-	WeakArray<ShaderPointLight> m_pointLights;
-	WeakArray<ShaderSpotLight> m_spotLights;
-	WeakArray<ShaderProbe> m_probes;
-	WeakArray<ShaderDecal> m_decals;
+	WeakArray<PointLight> m_pointLights;
+	WeakArray<SpotLight> m_spotLights;
+	WeakArray<ReflectionProbe> m_probes;
+	WeakArray<Decal> m_decals;
 
 	WeakArray<U32> m_lightIds;
 	WeakArray<ShaderCluster> m_clusters;
@@ -403,10 +361,10 @@ Error LightBin::bin(const Mat4& viewMat,
 
 	if(visiblePointLightsCount)
 	{
-		ShaderPointLight* data = static_cast<ShaderPointLight*>(m_stagingMem->allocateFrame(
-			sizeof(ShaderPointLight) * visiblePointLightsCount, StagingGpuMemoryType::UNIFORM, out.m_pointLightsToken));
+		PointLight* data = static_cast<PointLight*>(m_stagingMem->allocateFrame(
+			sizeof(PointLight) * visiblePointLightsCount, StagingGpuMemoryType::UNIFORM, out.m_pointLightsToken));
 
-		ctx.m_pointLights = WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
+		ctx.m_pointLights = WeakArray<PointLight>(data, visiblePointLightsCount);
 
 		ctx.m_vPointLights =
 			WeakArray<const PointLightQueueElement>(rqueue.m_pointLights.getBegin(), visiblePointLightsCount);
@@ -418,10 +376,10 @@ Error LightBin::bin(const Mat4& viewMat,
 
 	if(visibleSpotLightsCount)
 	{
-		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(m_stagingMem->allocateFrame(
-			sizeof(ShaderSpotLight) * visibleSpotLightsCount, StagingGpuMemoryType::UNIFORM, out.m_spotLightsToken));
+		SpotLight* data = static_cast<SpotLight*>(m_stagingMem->allocateFrame(
+			sizeof(SpotLight) * visibleSpotLightsCount, StagingGpuMemoryType::UNIFORM, out.m_spotLightsToken));
 
-		ctx.m_spotLights = WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
+		ctx.m_spotLights = WeakArray<SpotLight>(data, visibleSpotLightsCount);
 
 		ctx.m_vSpotLights =
 			WeakArray<const SpotLightQueueElement>(rqueue.m_spotLights.getBegin(), visibleSpotLightsCount);
@@ -433,10 +391,10 @@ Error LightBin::bin(const Mat4& viewMat,
 
 	if(visibleProbeCount)
 	{
-		ShaderProbe* data = static_cast<ShaderProbe*>(m_stagingMem->allocateFrame(
-			sizeof(ShaderProbe) * visibleProbeCount, StagingGpuMemoryType::UNIFORM, out.m_probesToken));
+		ReflectionProbe* data = static_cast<ReflectionProbe*>(m_stagingMem->allocateFrame(
+			sizeof(ReflectionProbe) * visibleProbeCount, StagingGpuMemoryType::UNIFORM, out.m_probesToken));
 
-		ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
+		ctx.m_probes = WeakArray<ReflectionProbe>(data, visibleProbeCount);
 
 		ctx.m_vProbes =
 			WeakArray<const ReflectionProbeQueueElement>(rqueue.m_reflectionProbes.getBegin(), visibleProbeCount);
@@ -448,10 +406,10 @@ Error LightBin::bin(const Mat4& viewMat,
 
 	if(visibleDecalCount)
 	{
-		ShaderDecal* data = static_cast<ShaderDecal*>(m_stagingMem->allocateFrame(
-			sizeof(ShaderDecal) * visibleDecalCount, StagingGpuMemoryType::UNIFORM, out.m_decalsToken));
+		Decal* data = static_cast<Decal*>(m_stagingMem->allocateFrame(
+			sizeof(Decal) * visibleDecalCount, StagingGpuMemoryType::UNIFORM, out.m_decalsToken));
 
-		ctx.m_decals = WeakArray<ShaderDecal>(data, visibleDecalCount);
+		ctx.m_decals = WeakArray<Decal>(data, visibleDecalCount);
 
 		ctx.m_vDecals = WeakArray<const DecalQueueElement>(rqueue.m_decals.getBegin(), visibleDecalCount);
 	}
@@ -659,7 +617,7 @@ void LightBin::writeAndBinPointLight(
 	// Get GPU light
 	I idx = ctx.m_pointLightsCount.fetchAdd(1);
 
-	ShaderPointLight& slight = ctx.m_pointLights[idx];
+	PointLight& slight = ctx.m_pointLights[idx];
 
 	slight.m_posRadius = Vec4(lightEl.m_worldPosition.xyz(), 1.0f / (lightEl.m_radius * lightEl.m_radius));
 	slight.m_diffuseColorTileSize = lightEl.m_diffuseColor.xyz0();
@@ -704,7 +662,7 @@ void LightBin::writeAndBinSpotLight(
 {
 	I idx = ctx.m_spotLightsCount.fetchAdd(1);
 
-	ShaderSpotLight& light = ctx.m_spotLights[idx];
+	SpotLight& light = ctx.m_spotLights[idx];
 	F32 shadowmapIndex = INVALID_TEXTURE_INDEX;
 
 	if(lightEl.hasShadow() && ctx.m_shadowsEnabled)
@@ -757,10 +715,9 @@ void LightBin::writeAndBinProbe(
 	const ReflectionProbeQueueElement& probeEl, BinContext& ctx, ClustererTestResult& testResult)
 {
 	// Write it
-	ShaderProbe probe;
-	probe.m_pos = probeEl.m_worldPosition;
-	probe.m_radiusSq = probeEl.m_radius * probeEl.m_radius;
-	probe.m_cubemapIndex = probeEl.m_textureArrayIndex;
+	ReflectionProbe probe;
+	probe.m_positionRadiusSq = Vec4(probeEl.m_worldPosition, probeEl.m_radius * probeEl.m_radius);
+	probe.m_cubemapIndexPad3 = Vec4(probeEl.m_textureArrayIndex, 0.0f, 0.0f, 0.0f);
 
 	U idx = ctx.m_probeCount.fetchAdd(1);
 	ctx.m_probes[idx] = probe;
@@ -792,7 +749,7 @@ void LightBin::writeAndBinProbe(
 void LightBin::writeAndBinDecal(const DecalQueueElement& decalEl, BinContext& ctx, ClustererTestResult& testResult)
 {
 	I idx = ctx.m_decalCount.fetchAdd(1);
-	ShaderDecal& decal = ctx.m_decals[idx];
+	Decal& decal = ctx.m_decals[idx];
 
 	TextureViewPtr atlas(const_cast<TextureView*>(decalEl.m_diffuseAtlas));
 	Vec4 uv = decalEl.m_diffuseAtlasUv;

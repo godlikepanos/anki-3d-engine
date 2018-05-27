@@ -7,9 +7,9 @@
 #define ANKI_SHADERS_FORWARD_SHADING_COMMON_FRAG_GLSL
 
 // Common code for all fragment shaders of BS
-#include "shaders/Common.glsl"
-#include "shaders/Functions.glsl"
-#include "shaders/Clusterer.glsl"
+#include <shaders/Common.glsl>
+#include <shaders/Functions.glsl>
+#include <shaders/glsl_cpp_common/Clusterer.h>
 
 // Global resources
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D anki_msDepthRt;
@@ -19,59 +19,59 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D anki_msDepthRt;
 #define LIGHT_TEX_BINDING 1
 #define LIGHT_LIGHTS
 #define LIGHT_COMMON_UNIS
-#include "shaders/ClusterLightCommon.glsl"
+#include <shaders/ClusterLightCommon.glsl>
 
 #define anki_u_time u_time
 #define RENDERER_SIZE (u_rendererSize * 0.5)
 
-layout(location = 0) out vec4 out_color;
+layout(location = 0) out Vec4 out_color;
 
-void writeGBuffer(in vec4 color)
+void writeGBuffer(in Vec4 color)
 {
-	out_color = vec4(color.rgb, 1.0 - color.a);
+	out_color = Vec4(color.rgb, 1.0 - color.a);
 }
 
-vec4 readAnimatedTextureRgba(sampler2DArray tex, float period, vec2 uv, float time)
+Vec4 readAnimatedTextureRgba(sampler2DArray tex, F32 period, Vec2 uv, F32 time)
 {
-	float layerCount = float(textureSize(tex, 0).z);
-	float layer = mod(time * layerCount / period, layerCount);
-	return texture(tex, vec3(uv, layer));
+	F32 layerCount = F32(textureSize(tex, 0).z);
+	F32 layer = mod(time * layerCount / period, layerCount);
+	return texture(tex, Vec3(uv, layer));
 }
 
-vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
+Vec3 computeLightColor(Vec3 diffCol, Vec3 worldPos)
 {
-	vec3 outColor = vec3(0.0);
+	Vec3 outColor = Vec3(0.0);
 
 	// Find the cluster and then the light counts
-	uint clusterIdx = computeClusterIndex(
+	U32 clusterIdx = computeClusterIndex(
 		u_clustererMagic, gl_FragCoord.xy / RENDERER_SIZE, worldPos, u_clusterCountX, u_clusterCountY);
 
-	uint idxOffset = u_clusters[clusterIdx];
+	U32 idxOffset = u_clusters[clusterIdx];
 
 	// Skip decals
-	uint count = u_lightIndices[idxOffset];
+	U32 count = u_lightIndices[idxOffset];
 	idxOffset += count + 1;
 
 	// Point lights
 	count = u_lightIndices[idxOffset++];
-	uint idxOffsetEnd = idxOffset + count;
+	U32 idxOffsetEnd = idxOffset + count;
 	ANKI_LOOP while(idxOffset < idxOffsetEnd)
 	{
 		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
-		vec3 diffC = diffuseLambert(diffCol) * light.diffuseColorTileSize.rgb;
+		Vec3 diffC = diffuseLambert(diffCol) * light.m_diffuseColorTileSize.rgb;
 
-		vec3 frag2Light = light.posRadius.xyz - worldPos;
-		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
+		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
+		F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
 
 #if LOD > 1
-		const float shadow = 1.0;
+		const F32 shadow = 1.0;
 #else
-		float shadow = 1.0;
-		if(light.diffuseColorTileSize.w >= 0.0)
+		F32 shadow = 1.0;
+		if(light.m_diffuseColorTileSize.w >= 0.0)
 		{
 			shadow = computeShadowFactorOmni(
-				frag2Light, light.radiusPad1.x, light.atlasTiles, light.diffuseColorTileSize.w, u_shadowTex);
+				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
 		}
 #endif
 
@@ -85,23 +85,24 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 	{
 		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
-		vec3 diffC = diffuseLambert(diffCol) * light.diffuseColorShadowmapId.rgb;
+		Vec3 diffC = diffuseLambert(diffCol) * light.m_diffuseColorShadowmapId.rgb;
 
-		vec3 frag2Light = light.posRadius.xyz - worldPos;
-		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
+		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
+		F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
 
-		vec3 l = normalize(frag2Light);
+		Vec3 l = normalize(frag2Light);
 
-		float spot = computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDirRadius.xyz);
+		F32 spot =
+			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
 
 #if LOD > 1
-		const float shadow = 1.0;
+		const F32 shadow = 1.0;
 #else
-		float shadow = 1.0;
-		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
+		F32 shadow = 1.0;
+		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx >= 0.0)
 		{
-			shadow = computeShadowFactorSpot(light.texProjectionMat, worldPos, light.lightDirRadius.w, u_shadowTex);
+			shadow = computeShadowFactorSpot(light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
 		}
 #endif
 
@@ -111,27 +112,27 @@ vec3 computeLightColor(vec3 diffCol, vec3 worldPos)
 	return outColor;
 }
 
-void particleAlpha(vec4 color, vec4 scaleColor, vec4 biasColor)
+void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor)
 {
 	writeGBuffer(color * scaleColor + biasColor);
 }
 
-void fog(vec3 color, float fogAlphaScale, float fogDistanceOfMaxThikness, float zVSpace)
+void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpace)
 {
-	const vec2 screenSize = 1.0 / RENDERER_SIZE;
+	const Vec2 screenSize = 1.0 / RENDERER_SIZE;
 
-	vec2 texCoords = gl_FragCoord.xy * screenSize;
-	float depth = texture(anki_msDepthRt, texCoords).r;
-	float zFeatherFactor;
+	Vec2 texCoords = gl_FragCoord.xy * screenSize;
+	F32 depth = texture(anki_msDepthRt, texCoords).r;
+	F32 zFeatherFactor;
 
-	vec4 fragPosVspace4 = u_invProjMat * vec4(vec3(UV_TO_NDC(texCoords), depth), 1.0);
-	float sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
+	Vec4 fragPosVspace4 = u_invProjMat * Vec4(Vec3(UV_TO_NDC(texCoords), depth), 1.0);
+	F32 sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
-	float diff = max(0.0, zVSpace - sceneZVspace);
+	F32 diff = max(0.0, zVSpace - sceneZVspace);
 
 	zFeatherFactor = min(1.0, diff / fogDistanceOfMaxThikness);
 
-	writeGBuffer(vec4(color, zFeatherFactor * fogAlphaScale));
+	writeGBuffer(Vec4(color, zFeatherFactor * fogAlphaScale));
 }
 
 #endif

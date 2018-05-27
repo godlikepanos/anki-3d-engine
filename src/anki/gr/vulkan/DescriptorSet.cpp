@@ -390,28 +390,18 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 		if(j == poolSizeCount)
 		{
 			m_poolSizesCreateInf[poolSizeCount].type = convertDescriptorType(bindings[i].m_type);
-
-			switch(m_poolSizesCreateInf[poolSizeCount].type)
-			{
-			case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-				m_poolSizesCreateInf[poolSizeCount].descriptorCount = MAX_TEXTURE_BINDINGS;
-				break;
-			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
-				m_poolSizesCreateInf[poolSizeCount].descriptorCount = MAX_UNIFORM_BUFFER_BINDINGS;
-				break;
-			case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
-				m_poolSizesCreateInf[poolSizeCount].descriptorCount = MAX_STORAGE_BUFFER_BINDINGS;
-				break;
-			case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-				m_poolSizesCreateInf[poolSizeCount].descriptorCount = MAX_IMAGE_BINDINGS;
-				break;
-			default:
-				ANKI_ASSERT(0);
-			}
-
 			m_poolSizesCreateInf[poolSizeCount].descriptorCount = 1;
 			++poolSizeCount;
 		}
+	}
+
+	if(poolSizeCount == 0)
+	{
+		// If the poolSizeCount it means that the DS layout has 0 descriptors. Since the pool sizes can't be zero put
+		// something in them
+		m_poolSizesCreateInf[0].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		m_poolSizesCreateInf[0].descriptorCount = 1;
+		++poolSizeCount;
 	}
 
 	ANKI_ASSERT(poolSizeCount > 0);

@@ -31,18 +31,15 @@
 #endif
 
 // Constants
-precision DEFAULT_FLOAT_PRECISION float;
-precision DEFAULT_INT_PRECISION int;
+precision DEFAULT_FLOAT_PRECISION F32;
+precision DEFAULT_INT_PRECISION I32;
 
-const float EPSILON = 0.000001;
-const float FLT_MAX = 3.402823e+38;
-const uint MAX_U32 = 0xFFFFFFFFu;
+const F32 EPSILON = 0.000001;
+const F32 FLT_MAX = 3.402823e+38;
+const U32 MAX_U32 = 0xFFFFFFFFu;
 
-const float PI = 3.14159265358979323846;
-const uint UBO_MAX_SIZE = 16384u;
-
-const uint SIZEOF_VEC4 = 4 * 4;
-const uint SIZEOF_MAT4 = 4 * SIZEOF_VEC4;
+const F32 PI = 3.14159265358979323846;
+const U32 UBO_MAX_SIZE = 16384u;
 
 // Macros
 #define UV_TO_NDC(x_) ((x_)*2.0 - 1.0)

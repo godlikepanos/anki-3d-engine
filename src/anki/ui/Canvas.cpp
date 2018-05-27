@@ -39,7 +39,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	nk_buffer_init(&m_nkCmdsBuff, &alloc, 1_KB);
 
 	// Create program
-	ANKI_CHECK(m_manager->getResourceManager().loadResource("programs/Ui.ankiprog", m_prog));
+	ANKI_CHECK(m_manager->getResourceManager().loadResource("shaders/Ui.ankiprog", m_prog));
 	const ShaderProgramResourceVariant* variant;
 
 	for(U i = 0; i < SHADER_COUNT; ++i)

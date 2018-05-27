@@ -20,7 +20,7 @@ Error Volumetric::initMain(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_main.m_noiseTex));
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("programs/VolumetricFog.ankiprog", m_main.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricFog.ankiprog", m_main.m_prog));
 
 	ShaderProgramResourceMutationInitList<1> mutators(m_main.m_prog);
 	mutators.add("ENABLE_SHADOWS", 1);
@@ -43,7 +43,7 @@ Error Volumetric::initMain(const ConfigSet& config)
 Error Volumetric::initHBlur(const ConfigSet& config)
 {
 	// Progs
-	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/LumaAwareBlur.ankiprog", m_hblur.m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/LumaAwareBlur.ankiprog", m_hblur.m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutators(m_hblur.m_prog);
 	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 11).add("COLOR_COMPONENTS", 3);
@@ -60,7 +60,7 @@ Error Volumetric::initHBlur(const ConfigSet& config)
 Error Volumetric::initVBlur(const ConfigSet& config)
 {
 	// Progs
-	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/LumaAwareBlur.ankiprog", m_vblur.m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/LumaAwareBlur.ankiprog", m_vblur.m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutators(m_vblur.m_prog);
 	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 11).add("COLOR_COMPONENTS", 3);

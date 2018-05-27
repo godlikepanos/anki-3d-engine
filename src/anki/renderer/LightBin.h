@@ -61,10 +61,6 @@ public:
 private:
 	class BinContext;
 	class ShaderCluster;
-	class ShaderPointLight;
-	class ShaderSpotLight;
-	class ShaderProbe;
-	class ShaderDecal;
 	class ClusterLightIndex;
 	class ClusterProbeIndex;
 	class ClusterData;

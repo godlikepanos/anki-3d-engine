@@ -13,7 +13,7 @@
 #ifndef ANKI_SHADERS_GAUSSIAN_BLUR_GLSL
 #define ANKI_SHADERS_GAUSSIAN_BLUR_GLSL
 
-#include "shaders/GaussianBlurCommon.glsl"
+#include <shaders/GaussianBlurCommon.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
 #	define USE_COMPUTE 1
@@ -23,17 +23,17 @@
 
 // Determine color type
 #if COLOR_COMPONENTS == 4
-#	define COL_TYPE vec4
+#	define COL_TYPE Vec4
 #	define TEX_FETCH rgba
 #	define TO_VEC4(x_) x_
 #elif COLOR_COMPONENTS == 3
-#	define COL_TYPE vec3
+#	define COL_TYPE Vec3
 #	define TEX_FETCH rgb
-#	define TO_VEC4(x_) vec4(x_, 0.0)
+#	define TO_VEC4(x_) Vec4(x_, 0.0)
 #elif COLOR_COMPONENTS == 1
-#	define COL_TYPE float
+#	define COL_TYPE F32
 #	define TEX_FETCH r
-#	define TO_VEC4(x_) vec4(x_, 0.0, 0.0, 0.0)
+#	define TO_VEC4(x_) Vec4(x_, 0.0, 0.0, 0.0)
 #else
 #	error See file
 #endif
@@ -44,7 +44,7 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex; ///< Input texture
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D u_outImg;
 #else
-layout(location = 0) in vec2 in_uv;
+layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out COL_TYPE out_color;
 #endif
 
@@ -58,12 +58,12 @@ void main()
 		return;
 	}
 
-	vec2 uv = (vec2(gl_GlobalInvocationID.xy) + 0.5) / vec2(TEXTURE_SIZE);
+	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(TEXTURE_SIZE);
 #else
-	vec2 uv = in_uv;
+	Vec2 uv = in_uv;
 #endif
 
-	const vec2 TEXEL_SIZE = 1.0 / vec2(TEXTURE_SIZE);
+	const Vec2 TEXEL_SIZE = 1.0 / Vec2(TEXTURE_SIZE);
 
 #if !defined(BOX)
 	// Do seperable
@@ -76,10 +76,10 @@ void main()
 
 	COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH * WEIGHTS[0u];
 
-	vec2 uvOffset = vec2(0.0);
+	Vec2 uvOffset = Vec2(0.0);
 	uvOffset.X_OR_Y = 1.5 * TEXEL_SIZE.X_OR_Y;
 
-	ANKI_UNROLL for(uint i = 0u; i < STEP_COUNT; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < STEP_COUNT; ++i)
 	{
 		COL_TYPE col =
 			textureLod(u_tex, uv + uvOffset, 0.0).TEX_FETCH + textureLod(u_tex, uv - uvOffset, 0.0).TEX_FETCH;
@@ -90,27 +90,27 @@ void main()
 #else
 	// Do box
 
-	const vec2 OFFSET = 1.5 * TEXEL_SIZE;
+	const Vec2 OFFSET = 1.5 * TEXEL_SIZE;
 
 	COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH * BOX_WEIGHTS[0u];
 
 	COL_TYPE col;
-	col = textureLod(u_tex, uv + vec2(OFFSET.x, 0.0), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + vec2(0.0, OFFSET.y), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + vec2(-OFFSET.x, 0.0), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + vec2(0.0, -OFFSET.y), 0.0).TEX_FETCH;
+	col = textureLod(u_tex, uv + Vec2(OFFSET.x, 0.0), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + Vec2(0.0, OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + Vec2(-OFFSET.x, 0.0), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + Vec2(0.0, -OFFSET.y), 0.0).TEX_FETCH;
 	color += col * BOX_WEIGHTS[1u];
 
-	col = textureLod(u_tex, uv + vec2(+OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + vec2(+OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + vec2(-OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + vec2(-OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
+	col = textureLod(u_tex, uv + Vec2(+OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + Vec2(+OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + Vec2(-OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, uv + Vec2(-OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
 	color += col * BOX_WEIGHTS[2u];
 #endif
 
 	// Write value
 #if USE_COMPUTE
-	imageStore(u_outImg, ivec2(gl_GlobalInvocationID.xy), TO_VEC4(color));
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), TO_VEC4(color));
 #else
 	out_color = color;
 #endif

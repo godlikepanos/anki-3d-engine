@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<material shaderProgram="programs/ForwardShadingParticles.ankiprog" forwardShading="1" shadow="0">
+<material shaderProgram="shaders/ForwardShadingParticles.ankiprog" forwardShading="1" shadow="0">
 	<mutators>
 		<mutator name="ANIMATED_TEXTURE" value="0"/>
 		<mutator name="LIGHT" value="0"/>
