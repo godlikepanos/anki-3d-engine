@@ -37,10 +37,6 @@ void main()
 		</shader>
 
 		<shader type="frag">
-			<inputs>
-				<input name="FB_SIZE" type="UVec2" const="1"/>
-			</inputs>
-
 			<source><![CDATA[
 #include <shaders/Pack.glsl>
 #include <shaders/LightFunctions.glsl>
@@ -51,10 +47,10 @@ void main()
 
 layout(location = 0) out Vec3 out_color;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
+layout(ANKI_TEX_BINDING(GBUFFER_RT0_BINDING.x, GBUFFER_RT0_BINDING.y)) uniform sampler2D u_msRt0;
+layout(ANKI_TEX_BINDING(GBUFFER_RT1_BINDING.x, GBUFFER_RT1_BINDING.y)) uniform sampler2D u_msRt1;
+layout(ANKI_TEX_BINDING(GBUFFER_RT2_BINDING.x, GBUFFER_RT2_BINDING.y)) uniform sampler2D u_msRt2;
+layout(ANKI_TEX_BINDING(GBUFFER_DEPTH_BINDING.x, GBUFFER_DEPTH_BINDING.y)) uniform sampler2D u_msDepthRt;
 
 layout(ANKI_UBO_BINDING(0, 1), row_major) uniform u1_
 {
@@ -81,11 +77,12 @@ layout(ANKI_UBO_BINDING(0, 1), row_major) uniform u1_
 #define u_camPos u_unis.m_camPosPad1.xyz
 #define u_inputTexUvScaleAndOffset u_unis.m_inputTexUvScaleAndOffset
 #define u_invViewProjMat u_unis.m_invViewProjMat
+#define u_fbSize u_unis.m_fbSizePad2.xy
 
 void main()
 {
 	// Compute UV coordinates
-	Vec2 uv = Vec2(gl_FragCoord.xy) / Vec2(FB_SIZE.x, FB_SIZE.y);
+	Vec2 uv = Vec2(gl_FragCoord.xy) / u_fbSize;
 	Vec2 uvToRead = fma(uv, u_inputTexUvScaleAndOffset.xy, u_inputTexUvScaleAndOffset.zw);
 
 	// Do manual depth test

@@ -16,13 +16,9 @@
 namespace anki
 {
 
-struct Indirect::LightPassVertexUniforms
-{
-	Mat4 m_mvp;
-};
-
 Indirect::Indirect(Renderer* r)
 	: RendererObject(r)
+	, m_lightShading(r)
 {
 }
 
@@ -133,29 +129,8 @@ Error Indirect::initLightShading(const ConfigSet& config)
 		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
 	}
 
-	// Init progs
-	{
-		ANKI_CHECK(getResourceManager().loadResource(
-			"shaders/TraditionalDeferredShading.ankiprog", m_lightShading.m_lightProg));
-
-		ShaderProgramResourceMutationInitList<1> mutators(m_lightShading.m_lightProg);
-		mutators.add("LIGHT_TYPE", 0);
-
-		ShaderProgramResourceConstantValueInitList<1> consts(m_lightShading.m_lightProg);
-		consts.add("FB_SIZE", UVec2(m_lightShading.m_tileSize, m_lightShading.m_tileSize));
-
-		const ShaderProgramResourceVariant* variant;
-		m_lightShading.m_lightProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
-		m_lightShading.m_plightGrProg = variant->getProgram();
-
-		mutators[0].m_value = 1;
-		m_lightShading.m_lightProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
-		m_lightShading.m_slightGrProg = variant->getProgram();
-	}
-
-	// Init meshes
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/Plight.ankimesh", m_lightShading.m_plightMesh, false));
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/Slight.ankimesh", m_lightShading.m_slightMesh, false));
+	// Init deferred
+	ANKI_CHECK(m_lightShading.m_deferred.init());
 
 	return Error::NONE;
 }
@@ -360,30 +335,6 @@ void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 	cmdb->setScissor(0, 0, MAX_U32, MAX_U32);
 }
 
-void Indirect::bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& cmdb, U32& indexCount)
-{
-	// Attrib
-	U32 bufferBinding;
-	Format fmt;
-	PtrSize relativeOffset;
-	mesh->getVertexAttributeInfo(VertexAttributeLocation::POSITION, bufferBinding, fmt, relativeOffset);
-
-	cmdb->setVertexAttribute(0, 0, fmt, relativeOffset);
-
-	// Vert buff
-	BufferPtr buff;
-	PtrSize offset, stride;
-	mesh->getVertexBufferInfo(bufferBinding, buff, offset, stride);
-
-	cmdb->bindVertexBuffer(0, buff, offset, stride);
-
-	// Idx buff
-	IndexType idxType;
-	mesh->getIndexBufferInfo(buff, offset, indexCount, idxType);
-
-	cmdb->bindIndexBuffer(buff, offset, idxType);
-}
-
 void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx <= 6);
@@ -393,114 +344,32 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 
 	ANKI_ASSERT(m_ctx.m_probe);
 	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
+	const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
 	// Set common state for all lights
 	// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-	{
-		rgraphCtx.bindColorTextureAndSampler(0, i, m_ctx.m_gbufferColorRts[i], m_r->getNearestSampler());
-	}
+	rgraphCtx.bindColorTextureAndSampler(
+		GBUFFER_RT0_BINDING.x(), GBUFFER_RT0_BINDING.y(), m_ctx.m_gbufferColorRts[0], m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(
+		GBUFFER_RT1_BINDING.x(), GBUFFER_RT1_BINDING.y(), m_ctx.m_gbufferColorRts[1], m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(
+		GBUFFER_RT2_BINDING.x(), GBUFFER_RT2_BINDING.y(), m_ctx.m_gbufferColorRts[2], m_r->getNearestSampler());
+
 	rgraphCtx.bindTextureAndSampler(0,
 		GBUFFER_COLOR_ATTACHMENT_COUNT,
 		m_ctx.m_gbufferDepthRt,
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());
-	cmdb->setViewport(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
-	cmdb->setCullMode(FaceSelectionBit::FRONT);
 
-	// Render lights
-	{
-		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
-		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
-
-		const Mat4& vpMat = rqueue.m_viewProjectionMatrix;
-		const Mat4 invViewProjMat = rqueue.m_viewProjectionMatrix.getInverse();
-
-		// Do point lights
-		U32 indexCount;
-		bindVertexIndexBuffers(m_lightShading.m_plightMesh, cmdb, indexCount);
-		cmdb->bindShaderProgram(m_lightShading.m_plightGrProg);
-
-		const PointLightQueueElement* plightEl = rqueue.m_pointLights.getBegin();
-		while(plightEl != rqueue.m_pointLights.getEnd())
-		{
-			// Update uniforms
-			LightPassVertexUniforms* vert =
-				allocateAndBindUniforms<LightPassVertexUniforms*>(sizeof(LightPassVertexUniforms), cmdb, 0, 0);
-
-			Mat4 modelM(plightEl->m_worldPosition.xyz1(), Mat3::getIdentity(), plightEl->m_radius);
-
-			vert->m_mvp = vpMat * modelM;
-
-			DeferredPointLightUniforms* light =
-				allocateAndBindUniforms<DeferredPointLightUniforms*>(sizeof(DeferredPointLightUniforms), cmdb, 0, 1);
-
-			light->m_inputTexUvScaleAndOffset = Vec4(1.0f / 6.0f, 1.0f, faceIdx * (1.0f / 6.0f), 0.0f);
-			light->m_invViewProjMat = invViewProjMat;
-			light->m_camPosPad1 = rqueue.m_cameraTransform.getTranslationPart();
-			light->m_posRadius =
-				Vec4(plightEl->m_worldPosition.xyz(), 1.0f / (plightEl->m_radius * plightEl->m_radius));
-			light->m_diffuseColorPad1 = plightEl->m_diffuseColor.xyz0();
-
-			// Draw
-			cmdb->drawElements(PrimitiveTopology::TRIANGLES, indexCount);
-
-			++plightEl;
-		}
-
-		// Do spot lights
-		bindVertexIndexBuffers(m_lightShading.m_slightMesh, cmdb, indexCount);
-		cmdb->bindShaderProgram(m_lightShading.m_slightGrProg);
-
-		const SpotLightQueueElement* splightEl = rqueue.m_spotLights.getBegin();
-		while(splightEl != rqueue.m_spotLights.getEnd())
-		{
-			// Compute the model matrix
-			//
-			Mat4 modelM(splightEl->m_worldTransform.getTranslationPart().xyz1(),
-				splightEl->m_worldTransform.getRotationPart(),
-				1.0f);
-
-			// Calc the scale of the cone
-			Mat4 scaleM(Mat4::getIdentity());
-			scaleM(0, 0) = tan(splightEl->m_outerAngle / 2.0f) * splightEl->m_distance;
-			scaleM(1, 1) = scaleM(0, 0);
-			scaleM(2, 2) = splightEl->m_distance;
-
-			modelM = modelM * scaleM;
-
-			// Update vertex uniforms
-			LightPassVertexUniforms* vert =
-				allocateAndBindUniforms<LightPassVertexUniforms*>(sizeof(LightPassVertexUniforms), cmdb, 0, 0);
-			vert->m_mvp = vpMat * modelM;
-
-			// Update fragment uniforms
-			DeferredSpotLightUniforms* light =
-				allocateAndBindUniforms<DeferredSpotLightUniforms*>(sizeof(DeferredSpotLightUniforms), cmdb, 0, 1);
-
-			light->m_inputTexUvScaleAndOffset = Vec4(1.0f / 6.0f, 1.0f, faceIdx * (1.0f / 6.0f), 0.0f);
-			light->m_invViewProjMat = invViewProjMat;
-			light->m_camPosPad1 = rqueue.m_cameraTransform.getTranslationPart();
-
-			light->m_posRadius = Vec4(splightEl->m_worldTransform.getTranslationPart().xyz(),
-				1.0f / (splightEl->m_distance * splightEl->m_distance));
-
-			light->m_diffuseColorOuterCos = Vec4(splightEl->m_diffuseColor, cos(splightEl->m_outerAngle / 2.0f));
-
-			Vec3 lightDir = -splightEl->m_worldTransform.getZAxis().xyz();
-			light->m_lightDirInnerCos = Vec4(lightDir, cos(splightEl->m_innerAngle / 2.0f));
-
-			// Draw
-			cmdb->drawElements(PrimitiveTopology::TRIANGLES, indexCount);
-
-			++splightEl;
-		}
-	}
-
-	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
-	cmdb->setCullMode(FaceSelectionBit::BACK);
+	m_lightShading.m_deferred.drawLights(rqueue.m_viewProjectionMatrix,
+		rqueue.m_viewProjectionMatrix.getInverse(),
+		rqueue.m_cameraTransform.getTranslationPart(),
+		UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize),
+		Vec2(faceIdx * (1.0f / 6.0f), 0.0f),
+		Vec2((faceIdx + 1) * (1.0f / 6.0f), 1.0f),
+		rqueue.m_pointLights,
+		rqueue.m_spotLights,
+		cmdb);
 }
 
 void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)

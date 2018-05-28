@@ -16,6 +16,10 @@
 #	define ANKI_END_NAMESPACE }
 #	define ANKI_SHADER_FUNC_INLINE inline
 
+#	define ANKI_SHADER_INOUT(type_) type&
+#	define ANKI_SHADER_IN(type_) const type&
+#	define ANKI_SHADER_OUT(type_) type&
+
 ANKI_BEGIN_NAMESPACE
 template<typename T>
 inline F32 dot(const T& a, const T& b)
@@ -35,6 +39,10 @@ ANKI_END_NAMESPACE
 #	define ANKI_BEGIN_NAMESPACE
 #	define ANKI_END_NAMESPACE
 #	define ANKI_SHADER_FUNC_INLINE
+
+#	define ANKI_SHADER_INOUT(type_) inout type
+#	define ANKI_SHADER_IN(type_) in type
+#	define ANKI_SHADER_OUT(type_) out type
 #endif
 
 //

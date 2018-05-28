@@ -15,6 +15,7 @@ struct DeferredPointLightUniforms
 	Vec4 m_inputTexUvScaleAndOffset; // Use this to get the correct face UVs
 	Mat4 m_invViewProjMat;
 	Vec4 m_camPosPad1;
+	Vec4 m_fbSizePad2;
 
 	// Light props
 	Vec4 m_posRadius; // xyz: Light pos in world space. w: The -1/radius
@@ -26,12 +27,23 @@ struct DeferredSpotLightUniforms
 	Vec4 m_inputTexUvScaleAndOffset; // Use this to get the correct face UVs
 	Mat4 m_invViewProjMat;
 	Vec4 m_camPosPad1;
+	Vec4 m_fbSizePad2;
 
 	// Light props
 	Vec4 m_posRadius; // xyz: Light pos in world space. w: The -1/radius
 	Vec4 m_diffuseColorOuterCos; // xyz: diff color, w: outer cosine of spot
 	Vec4 m_lightDirInnerCos; // xyz: light dir, w: inner cosine of spot
 };
+
+struct DeferredVertexUniforms
+{
+	Mat4 m_mvp;
+};
+
+const UVec2 GBUFFER_RT0_BINDING = UVec2(0, 0);
+const UVec2 GBUFFER_RT1_BINDING = UVec2(0, 1);
+const UVec2 GBUFFER_RT2_BINDING = UVec2(0, 2);
+const UVec2 GBUFFER_DEPTH_BINDING = UVec2(0, 3);
 
 ANKI_END_NAMESPACE
 

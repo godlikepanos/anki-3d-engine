@@ -7,6 +7,7 @@
 
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RendererObject.h>
+#include <anki/renderer/TraditionalDeferredShading.h>
 #include <anki/renderer/Clusterer.h>
 #include <anki/resource/TextureResource.h>
 
@@ -57,8 +58,6 @@ anki_internal:
 	}
 
 private:
-	struct LightPassVertexUniforms;
-
 	class
 	{
 	public:
@@ -68,22 +67,19 @@ private:
 		FramebufferDescription m_fbDescr;
 	} m_gbuffer; ///< G-buffer pass.
 
-	class
+	class LS
 	{
 	public:
 		U32 m_tileSize = 0;
 		U32 m_mipCount = 0;
 		TexturePtr m_cubeArr;
 
-		ShaderProgramResourcePtr m_lightProg;
-		ShaderProgramPtr m_plightGrProg;
-		ShaderProgramPtr m_slightGrProg;
+		TraditionalDeferredLightShading m_deferred;
 
-		/// @name Meshes of light volumes.
-		/// @{
-		MeshResourcePtr m_plightMesh;
-		MeshResourcePtr m_slightMesh;
-		/// @}
+		LS(Renderer* r)
+			: m_deferred(r)
+		{
+		}
 	} m_lightShading; ///< Light shading.
 
 	class
@@ -144,7 +140,6 @@ private:
 	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
-	static void bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& cmdb, U32& indexCount);
 
 	// A RenderPassWorkCallback for G-buffer pass
 	static void runGBufferCallback(RenderPassWorkContext& rgraphCtx)
