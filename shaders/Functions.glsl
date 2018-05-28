@@ -262,7 +262,7 @@ Vec3 gammaCorrection(Vec3 gamma, Vec3 col)
 }
 
 // Can use 0.15 for sharpenFactor
-Vec3 readSharpen(sampler2D tex, Vec2 uv, F32 sharpenFactor, bool detailed)
+Vec3 readSharpen(sampler2D tex, Vec2 uv, F32 sharpenFactor, Bool detailed)
 {
 	Vec3 col = textureLod(tex, uv, 0.0).rgb;
 
@@ -333,9 +333,25 @@ Vec3 heatmap(F32 factor)
 	}
 }
 
-bool incorrectColor(Vec3 c)
+Bool incorrectColor(Vec3 c)
 {
 	return isnan(c.x) || isnan(c.y) || isnan(c.z) || isinf(c.x) || isinf(c.y) || isinf(c.z);
+}
+
+F32 areaElement(F32 x, F32 y)
+{
+	return atan(x * y, sqrt(x * x + y * y + 1.0));
+}
+
+/// Compute the solid angle of a cube. Solid angle is the area of a sphere when projected into a cubemap. It's also the
+/// delta omega (dω) in the irradiance integral and other integrals that operate in a sphere.
+/// http://www.rorydriscoll.com/2012/01/15/cubemap-texel-solid-angle/
+F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
+{
+	Vec2 invSize = Vec2(1.0 / cubeFaceSize);
+	Vec2 v0 = norm - invSize;
+	Vec2 v1 = norm + invSize;
+	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
 }
 
 #endif

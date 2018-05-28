@@ -89,6 +89,8 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define Mat4 mat4
 #define Mat3x4 mat3x4
 
+#define Bool bool
+
 %s)";
 
 static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)

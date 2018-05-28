@@ -119,7 +119,7 @@ Vec4 doSslr(Vec3 r, Vec3 n, Vec3 viewPos, Vec2 uv, F32 depth, F32 roughness)
 	U32 step = STEPS_ARR[l * 2u + j];
 	
 	// Iterate
-	bool found = false;
+	Bool found = false;
 	Vec3 raySample;
 	ANKI_LOOP for(U32 iterations = 0u; iterations < MAX_STEPS; ++iterations)
 	{
@@ -133,7 +133,7 @@ Vec4 doSslr(Vec3 r, Vec3 n, Vec3 viewPos, Vec2 uv, F32 depth, F32 roughness)
 
 		F32 depth = textureLod(u_hizRt, raySample.xy, 0.0).r;
 
-		bool hit = raySample.z - depth >= 0.0;
+		Bool hit = raySample.z - depth >= 0.0;
 		if(!hit)
 		{
 			step += stepSkip;
@@ -309,9 +309,9 @@ void main()
 	storePixel.y = fixedInvocationId.y;
 
 #if VARIANT == 0
-	bool pickRightNeighbour = (fixedInvocationId.y & 1) == 1;
+	Bool pickRightNeighbour = (fixedInvocationId.y & 1) == 1;
 #else
-	bool pickRightNeighbour = (fixedInvocationId.y & 1) == 0;
+	Bool pickRightNeighbour = (fixedInvocationId.y & 1) == 0;
 #endif
 	I32 xOffset = (pickRightNeighbour) ? 1 : -1;
 	

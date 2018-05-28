@@ -20,8 +20,6 @@ http://www.anki3d.org/LICENSE
 
 			<source><![CDATA[
 // Compute the irradiance given an environment map
-// It's almost the same as http://www.codinglabs.net/article_physically_based_rendering.aspx
-// It's more bright though
 
 #include <shaders/Functions.glsl>
 
@@ -47,31 +45,30 @@ void main()
 	Vec3 ri = getCubemapDirection(UV_TO_NDC(in_uv), face);
 
 	Vec3 outCol = Vec3(0.0);
-	F32 weight = EPSILON;
 
 	// For all the faces and texels of the environment map calculate a color sum
-	for(U32 f = 0u; f < 6u; ++f)
+	ANKI_LOOP for(U32 f = 0u; f < 6u; ++f)
 	{
-		for(U32 i = 0u; i < ENV_TEX_TILE_SIZE; ++i)
+		ANKI_LOOP for(U32 i = 0u; i < ENV_TEX_TILE_SIZE; ++i)
 		{
-			for(U32 j = 0u; j < ENV_TEX_TILE_SIZE; ++j)
+			ANKI_LOOP for(U32 j = 0u; j < ENV_TEX_TILE_SIZE; ++j)
 			{
 				Vec2 uv = Vec2(j, i) / F32(ENV_TEX_TILE_SIZE);
-				Vec3 r = getCubemapDirection(UV_TO_NDC(uv), f);
+				Vec2 ndc = UV_TO_NDC(uv);
 
+				Vec3 r = getCubemapDirection(ndc, f);
 				F32 lambert = dot(r, ri);
+				
 				if(lambert > 0.0)
 				{
 					Vec3 col = textureLod(u_envTex, Vec4(r, texArrIdx), ENV_TEX_MIP).rgb;
-
-					outCol += col * lambert;
-					weight += lambert;
+					outCol += col * lambert * cubeCoordSolidAngle(ndc, F32(ENV_TEX_TILE_SIZE));
 				}
 			}
 		}
 	}
 
-	out_color = outCol / weight * PI;
+	out_color = outCol / PI;
 }
 			]]></source>
 		</shader>

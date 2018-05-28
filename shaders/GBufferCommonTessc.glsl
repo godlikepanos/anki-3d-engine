@@ -143,7 +143,7 @@ F32 calcEdgeTessLevel(in Vec3 n0, in Vec3 n1, in F32 maxTessLevel)
 }*/
 
 // Given the face positions in NDC caclulate if the face is front facing or not
-bool isFaceFrontFacing(in Vec2 posNdc[3])
+Bool isFaceFrontFacing(in Vec2 posNdc[3])
 {
 	Vec2 a = posNdc[1] - posNdc[0];
 	Vec2 b = posNdc[2] - posNdc[1];
@@ -152,7 +152,7 @@ bool isFaceFrontFacing(in Vec2 posNdc[3])
 }
 
 // Check if a single NDC position is outside the clip space
-bool posOutsideClipSpace(in Vec2 posNdc)
+Bool posOutsideClipSpace(in Vec2 posNdc)
 {
 	bvec2 compa = lessThan(posNdc, Vec2(-1.0));
 	bvec2 compb = greaterThan(posNdc, Vec2(1.0));
@@ -160,13 +160,13 @@ bool posOutsideClipSpace(in Vec2 posNdc)
 }
 
 // Check if a face in NDC is outside the clip space
-bool isFaceOutsideClipSpace(in Vec2 posNdc[3])
+Bool isFaceOutsideClipSpace(in Vec2 posNdc[3])
 {
 	return any(bvec3(posOutsideClipSpace(posNdc[0]), posOutsideClipSpace(posNdc[1]), posOutsideClipSpace(posNdc[2])));
 }
 
 // Check if a face is visible
-bool isFaceVisible(in Mat4 mvp)
+Bool isFaceVisible(in Mat4 mvp)
 {
 	// Calculate clip positions
 	Vec2 clip[3];
