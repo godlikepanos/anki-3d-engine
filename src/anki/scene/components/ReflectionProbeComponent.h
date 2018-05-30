@@ -25,26 +25,30 @@ public:
 	{
 	}
 
-	const Vec4& getPosition() const
+	Vec4 getPosition() const
 	{
-		return m_pos;
+		return m_pos.xyz0();
 	}
 
 	void setPosition(const Vec4& pos)
 	{
-		m_pos = pos.xyz0();
+		m_pos = pos.xyz();
 	}
 
-	F32 getRadius() const
+	void setBoundingBox(const Vec4& min, const Vec4& max)
 	{
-		ANKI_ASSERT(m_radius > 0.0);
-		return m_radius;
+		m_aabbMin = min.xyz();
+		m_aabbMax = max.xyz();
 	}
 
-	void setRadius(F32 radius)
+	Vec4 getBoundingBoxMin() const
 	{
-		ANKI_ASSERT(radius > 0.0);
-		m_radius = radius;
+		return m_aabbMin.xyz0();
+	}
+
+	Vec4 getBoundingBoxMax() const
+	{
+		return m_aabbMax.xyz0();
 	}
 
 	Bool getMarkedForRendering() const
@@ -52,39 +56,25 @@ public:
 		return m_markedForRendering;
 	}
 
-	void setMarkedForRendering(Bool render)
-	{
-		m_markedForRendering = render;
-	}
-
-	void setTextureArrayIndex(U idx)
-	{
-		m_textureArrayIndex = idx;
-	}
-
-	U getTextureArrayIndex() const
-	{
-		ANKI_ASSERT(m_textureArrayIndex < MAX_U16);
-		return m_textureArrayIndex;
-	}
-
 	void setupReflectionProbeQueueElement(ReflectionProbeQueueElement& el) const
 	{
+		ANKI_ASSERT(m_aabbMin < m_aabbMax);
+		ANKI_ASSERT(m_pos > m_aabbMin & m_pos < m_aabbMax);
 		el.m_feedbackCallback = reflectionProbeQueueElementFeedbackCallback;
 		el.m_userData = const_cast<ReflectionProbeComponent*>(this);
 		el.m_uuid = getUuid();
-		el.m_worldPosition = m_pos.xyz();
-		el.m_radius = m_radius;
+		el.m_worldPosition = m_pos;
+		el.m_aabbMin = m_aabbMin;
+		el.m_aabbMax = m_aabbMax;
 		el.m_textureArrayIndex = MAX_U32;
 		el.m_drawCallback = debugDrawCallback;
 	}
 
 private:
-	Vec4 m_pos = Vec4(0.0);
-	F32 m_radius = 0.0;
+	Vec3 m_pos = Vec3(0.0f);
+	Vec3 m_aabbMin = Vec3(+1.0f);
+	Vec3 m_aabbMax = Vec3(-1.0f);
 	Bool8 m_markedForRendering = false;
-
-	U16 m_textureArrayIndex = MAX_U16; ///< Used by the renderer
 
 	static void reflectionProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData)
 	{

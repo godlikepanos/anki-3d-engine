@@ -354,4 +354,16 @@ F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
 }
 
+/// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
+/// intersection point is rayOrigin + rayDir * a
+/// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
+F32 rayAabbIntersectionInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax)
+{
+	Vec3 intersectMaxPointPlanes = (aabbMax - rayOrigin) / rayDir;
+	Vec3 intersectMinPointPlanes = (aabbMin - rayOrigin) / rayDir;
+	Vec3 largestParams = max(intersectMaxPointPlanes, intersectMinPointPlanes);
+	F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
+	return distToIntersect;
+}
+
 #endif

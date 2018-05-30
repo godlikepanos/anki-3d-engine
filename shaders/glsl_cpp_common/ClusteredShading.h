@@ -52,11 +52,9 @@ const U32 SIZEOF_SPOT_LIGHT = 4 * SIZEOF_VEC4 + SIZEOF_MAT4;
 // Representation of a reflection probe
 struct ReflectionProbe
 {
-	// Position of the prove in view space. Radius of probe squared
-	Vec4 m_positionRadiusSq;
-
-	// Slice in u_reflectionsTex vector.
-	Vec4 m_cubemapIndexPad3;
+	Vec4 m_positionCubemapIndex; // xyz: Position of the prove in view space. w: Slice in u_reflectionsTex vector.
+	Vec4 m_aabbMinPad1;
+	Vec4 m_aabbMaxPad1;
 };
 const U32 SIZEOF_REFLECTION_PROBE = 2 * SIZEOF_VEC4;
 
