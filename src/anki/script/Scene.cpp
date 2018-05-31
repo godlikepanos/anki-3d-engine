@@ -3107,7 +3107,7 @@ static inline int pwrapSceneGraphnewReflectionProbeNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 3);
+	LuaBinder::checkArgsCount(l, 4);
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
@@ -3124,14 +3124,24 @@ static inline int pwrapSceneGraphnewReflectionProbeNode(lua_State* l)
 		return -1;
 	}
 
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1))
+	if(LuaBinder::checkUserData(l, 3, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
 
+	Vec4* iarg1 = ud->getData<Vec4>();
+	const Vec4& arg1(*iarg1);
+
+	if(LuaBinder::checkUserData(l, 4, "Vec4", 6804478823655046386, ud))
+	{
+		return -1;
+	}
+
+	Vec4* iarg2 = ud->getData<Vec4>();
+	const Vec4& arg2(*iarg2);
+
 	// Call the method
-	ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0, arg1);
+	ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0, arg1, arg2);
 
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))

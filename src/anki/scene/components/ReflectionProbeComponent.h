@@ -59,7 +59,7 @@ public:
 	void setupReflectionProbeQueueElement(ReflectionProbeQueueElement& el) const
 	{
 		ANKI_ASSERT(m_aabbMin < m_aabbMax);
-		ANKI_ASSERT(m_pos > m_aabbMin & m_pos < m_aabbMax);
+		ANKI_ASSERT(m_pos > m_aabbMin && m_pos < m_aabbMax);
 		el.m_feedbackCallback = reflectionProbeQueueElementFeedbackCallback;
 		el.m_userData = const_cast<ReflectionProbeComponent*>(this);
 		el.m_uuid = getUuid();

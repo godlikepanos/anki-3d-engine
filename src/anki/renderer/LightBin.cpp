@@ -81,27 +81,22 @@ public:
 		m_index = i;
 	}
 
-	F32 getProbeRadius() const
+	void setProbeVolume(F32 v)
 	{
-		return F32(m_probeRadius) / F32(MAX_U16) * F32(MAX_PROBE_RADIUS);
-	}
-
-	void setProbeRadius(F32 r)
-	{
-		ANKI_ASSERT(r < MAX_PROBE_RADIUS);
-		m_probeRadius = r / F32(MAX_PROBE_RADIUS) * F32(MAX_U16);
+		ANKI_ASSERT(v < MAX_PROBE_VOLUME);
+		m_probeVolume = v / F32(MAX_PROBE_VOLUME) * F32(MAX_U16);
 	}
 
 	Bool operator<(const ClusterProbeIndex& b) const
 	{
-		ANKI_ASSERT(m_probeRadius > 0 && b.m_probeRadius > 0);
-		return (m_probeRadius != b.m_probeRadius) ? (m_probeRadius > b.m_probeRadius) : (m_index < b.m_index);
+		ANKI_ASSERT(m_probeVolume > 0 && b.m_probeVolume > 0);
+		return (m_probeVolume != b.m_probeVolume) ? (m_probeVolume > b.m_probeVolume) : (m_index < b.m_index);
 	}
 
 private:
-	static const U MAX_PROBE_RADIUS = 1000;
+	static const U MAX_PROBE_VOLUME = 1000;
 	U16 m_index;
-	U16 m_probeRadius;
+	U16 m_probeVolume;
 };
 
 /// WARNING: Keep it as small as possible. The number of clusters is huge
@@ -716,17 +711,16 @@ void LightBin::writeAndBinProbe(
 {
 	// Write it
 	ReflectionProbe probe;
-	probe.m_positionRadiusSq = Vec4(probeEl.m_worldPosition, probeEl.m_radius * probeEl.m_radius);
-	probe.m_cubemapIndexPad3 = Vec4(probeEl.m_textureArrayIndex, 0.0f, 0.0f, 0.0f);
+	probe.m_positionCubemapIndex = Vec4(probeEl.m_worldPosition, probeEl.m_textureArrayIndex);
+	probe.m_aabbMinPad1 = probeEl.m_aabbMin.xyz0();
+	probe.m_aabbMaxPad1 = probeEl.m_aabbMax.xyz0();
 
 	U idx = ctx.m_probeCount.fetchAdd(1);
 	ctx.m_probes[idx] = probe;
 
 	// Bin it
-	Sphere sphere(probeEl.m_worldPosition.xyz0(), probeEl.m_radius);
-	Aabb box;
-	sphere.computeAabb(box);
-	m_clusterer.bin(sphere, box, testResult);
+	Aabb box(probeEl.m_aabbMin, probeEl.m_aabbMax);
+	m_clusterer.bin(box, box, testResult);
 
 	auto it = testResult.getClustersBegin();
 	auto end = testResult.getClustersEnd();
@@ -742,7 +736,9 @@ void LightBin::writeAndBinProbe(
 
 		i = cluster.m_probeCount.fetchAdd(1) % MAX_PROBES_PER_CLUSTER;
 		cluster.m_probeIds[i].setIndex(idx);
-		cluster.m_probeIds[i].setProbeRadius(probeEl.m_radius);
+
+		Vec3 edges = probeEl.m_aabbMax - probeEl.m_aabbMin;
+		cluster.m_probeIds[i].setProbeVolume(edges.x() * edges.y() * edges.z());
 	}
 }
 

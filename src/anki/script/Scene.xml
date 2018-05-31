@@ -369,10 +369,11 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					<return>ParticleEmitterNode*</return>
 				</method>
 				<method name="newReflectionProbeNode">
-					<overrideCall><![CDATA[ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0, arg1);]]></overrideCall>
+					<overrideCall><![CDATA[ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0, arg1, arg2);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
-						<arg>F32</arg>
+						<arg>const Vec4&amp;</arg>
+						<arg>const Vec4&amp;</arg>
 					</args>
 					<return>ReflectionProbeNode*</return>
 				</method>

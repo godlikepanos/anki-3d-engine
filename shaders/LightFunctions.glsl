@@ -205,7 +205,7 @@ void intersectProbe(Vec3 fragPos, // Ray origin
 {
 	// Compute the intersection point
 	F32 intresectionDist = rayAabbIntersectionInside(fragPos, rayDir, probeAabbMin, probeAabbMax);
-	Vec3 intresectionPoint = fragPos + intresectionDist * rayDir;
+	Vec3 intersectionPoint = fragPos + intresectionDist * rayDir;
 
 	// Compute the cubemap vector
 	cubeTexCoord = intersectionPoint - probeOrigin;
@@ -213,7 +213,7 @@ void intersectProbe(Vec3 fragPos, // Ray origin
 	// Calculate the weight
 	{
 		// Distance between the frag and the AABB bounds
-		F32 fragBoxDist = length(fragPos - intresectionPoint);
+		F32 fragBoxDist = length(fragPos - intersectionPoint);
 
 		// Cap the distance
 		fragBoxDist = min(fragBoxDist, fadeDistance);

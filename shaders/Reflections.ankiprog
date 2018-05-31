@@ -180,6 +180,14 @@ void readReflectionsAndIrradianceFromProbes(
 	{
 		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
 
+		Vec3 cubeCoord;
+		F32 blendWeight;
+		intersectProbe(worldPos, reflDir, probe.m_aabbMinPad1.xyz, probe.m_aabbMinPad1.xyz, 
+			probe.m_positionCubemapIndex.xyz, 0.2, cubeCoord, blendWeight);
+
+		diffIndirect = Vec3(blendWeight);
+
+#if 0
 		F32 R2 = probe.m_positionRadiusSq.w;
 		Vec3 center = probe.m_positionRadiusSq.xyz;
 
@@ -203,6 +211,7 @@ void readReflectionsAndIrradianceFromProbes(
 		uv = computeCubemapVecAccurate(normal, R2, f);
 		Vec3 id = textureLod(u_irradianceTex, Vec4(uv, cubemapIndex), 0.0).rgb;
 		diffIndirect = mix(id, diffIndirect, factor);
+#endif
 	}
 }
 

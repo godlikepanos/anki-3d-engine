@@ -819,9 +819,12 @@ void Exporter::visitNode(const aiNode* ainode)
 				aiMatrix4x4 trf = toAnkiMatrix(ainode->mTransformation);
 				probe.m_position = aiVector3D(trf.a4, trf.b4, trf.c4);
 
-				aiVector3D zAxis(trf.a3, trf.b3, trf.c3);
-				float scale = zAxis.Length();
-				probe.m_radius = scale;
+				aiVector3D scale(trf.a1, trf.b2, trf.c3);
+				assert(scale.x > 0.0f && scale.y > 0.0f && scale.z > 0.0f);
+
+				aiVector3D half = scale / aiVector3D(2.0f, 2.0f, 2.0f);
+				probe.m_aabbMin = probe.m_position - half - probe.m_position;
+				probe.m_aabbMax = probe.m_position + half - probe.m_position;
 
 				m_reflectionProbes.push_back(probe);
 
@@ -1049,7 +1052,9 @@ void Exporter::exportAll()
 	for(const ReflectionProbe& probe : m_reflectionProbes)
 	{
 		std::string name = "reflprobe" + std::to_string(i);
-		file << "\nnode = scene:newReflectionProbeNode(\"" << name << "\", " << probe.m_radius << ")\n";
+		file << "\nnode = scene:newReflectionProbeNode(\"" << name << "\", Vec4.new(" << probe.m_aabbMin.x << ", "
+			 << probe.m_aabbMin.y << ", " << probe.m_aabbMin.z << ", 0), Vec4.new(" << probe.m_aabbMax.x << ", "
+			 << probe.m_aabbMax.y << ", " << probe.m_aabbMax.z << ", 0))\n";
 
 		aiMatrix4x4 trf;
 		aiMatrix4x4::Translation(probe.m_position, trf);
