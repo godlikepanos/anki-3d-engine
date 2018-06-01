@@ -822,7 +822,7 @@ void Exporter::visitNode(const aiNode* ainode)
 				aiVector3D scale(trf.a1, trf.b2, trf.c3);
 				assert(scale.x > 0.0f && scale.y > 0.0f && scale.z > 0.0f);
 
-				aiVector3D half = scale / aiVector3D(2.0f, 2.0f, 2.0f);
+				aiVector3D half = scale;
 				probe.m_aabbMin = probe.m_position - half - probe.m_position;
 				probe.m_aabbMax = probe.m_position + half - probe.m_position;
 
