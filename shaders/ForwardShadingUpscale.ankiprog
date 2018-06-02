@@ -23,7 +23,8 @@ http://www.anki3d.org/LICENSE
 #include <shaders/Common.glsl>
 #include <shaders/Functions.glsl>
 
-#define BLUE_NOISE 1
+#define EXPENSIVE_PASS 0
+#define BLUE_NOISE 0
 
 layout(location = 0) in Vec2 in_uv;
 
@@ -38,13 +39,19 @@ layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2DArray u_noiseTex;
 
 layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
 {
-	Vec4 u_linearizeCfPad2;
+	Vec4 u_linearizeCfFarPad1;
 };
 
 void main()
 {
+#if EXPENSIVE_PASS
 	out_color =
-		bilateralUpsample(u_depthFullTex, u_depthHalfTex, u_fsRt, 1.0 / Vec2(SRC_SIZE), in_uv, u_linearizeCfPad2.xy);
+		bilateralUpsample(u_depthFullTex, u_depthHalfTex, u_fsRt, 1.0 / Vec2(SRC_SIZE), in_uv, u_linearizeCfFarPad1.xy);
+#else
+	const F32 thresholdMeters = 5.0 / 100.0; // 5 centimeters
+	F32 threshold = thresholdMeters / u_linearizeCfFarPad1.z;
+	out_color = nearestDepthUpscale(in_uv, u_depthFullTex, u_depthHalfTex, u_fsRt, u_linearizeCfFarPad1.xy, threshold);
+#endif
 
 #if BLUE_NOISE
 	Vec3 blueNoise = texture(u_noiseTex, Vec3(FB_SIZE / Vec2(NOISE_TEX_SIZE) * in_uv, 0.0), 0.0).rgb;

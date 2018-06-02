@@ -117,7 +117,7 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		if(light.m_diffuseColorTileSize.w >= 0.0)
+		ANKI_BRANCH if(light.m_diffuseColorTileSize.w >= 0.0)
 		{
 			F32 shadow = computeShadowFactorOmni(frag2Light, 
 				light.m_radiusPad1.x, 
@@ -143,7 +143,7 @@ void main()
 			l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
 
 		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
-		if(shadowmapLayerIdx >= 0.0)
+		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
 		{
 			F32 shadow = computeShadowFactorSpot(
 				light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);

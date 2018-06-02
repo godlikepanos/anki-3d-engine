@@ -46,6 +46,12 @@ F32 linearizeDepthOptimal(in F32 depth, in F32 a, in F32 b)
 	return 1.0 / (a + b / depth);
 }
 
+// This is the optimal linearizeDepth where a=(n-f)/n and b=f/n
+Vec4 linearizeDepthOptimal(in Vec4 depths, in F32 a, in F32 b)
+{
+	return 1.0 / (a + b / depths);
+}
+
 // Project a vector by knowing only the non zero values of a perspective matrix
 Vec4 projectPerspective(in Vec4 vec, in F32 m00, in F32 m11, in F32 m22, in F32 m23)
 {
@@ -78,17 +84,22 @@ F32 rand(Vec2 n)
 	return 0.5 + 0.5 * fract(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-Vec3 nearestDepthUpscale(Vec2 uv, sampler2D depthFull, sampler2D depthHalf, sampler2D colorTex, F32 depthThreshold)
+Vec4 nearestDepthUpscale(
+	Vec2 uv, sampler2D depthFull, sampler2D depthHalf, sampler2D colorTex, Vec2 linearDepthCf, F32 depthThreshold)
 {
 	F32 fullDepth = texture(depthFull, uv).r;
+	fullDepth = linearizeDepthOptimal(fullDepth, linearDepthCf.x, linearDepthCf.y);
+
 	Vec4 halfDepths = textureGather(depthHalf, uv, 0);
+	halfDepths = linearizeDepthOptimal(halfDepths, linearDepthCf.x, linearDepthCf.y);
+
 	Vec4 diffs = abs(Vec4(fullDepth) - halfDepths);
-	Vec3 color;
+	Vec4 color;
 
 	if(all(lessThan(diffs, Vec4(depthThreshold))))
 	{
 		// No major discontinuites, sample with bilinear
-		color = texture(colorTex, uv).rgb;
+		color = texture(colorTex, uv);
 	}
 	else
 	{
@@ -96,6 +107,7 @@ Vec3 nearestDepthUpscale(Vec2 uv, sampler2D depthFull, sampler2D depthHalf, samp
 		Vec4 r = textureGather(colorTex, uv, 0);
 		Vec4 g = textureGather(colorTex, uv, 1);
 		Vec4 b = textureGather(colorTex, uv, 2);
+		Vec4 a = textureGather(colorTex, uv, 3);
 
 		F32 minDiff = diffs.x;
 		U32 comp = 0;
@@ -117,7 +129,7 @@ Vec3 nearestDepthUpscale(Vec2 uv, sampler2D depthFull, sampler2D depthHalf, samp
 			comp = 3;
 		}
 
-		color = Vec3(r[comp], g[comp], b[comp]);
+		color = Vec4(r[comp], g[comp], b[comp], a[comp]);
 	}
 
 	return color;
