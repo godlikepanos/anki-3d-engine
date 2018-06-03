@@ -74,7 +74,8 @@ class ReflectionProbe
 {
 public:
 	aiVector3D m_position;
-	float m_radius;
+	aiVector3D m_aabbMin;
+	aiVector3D m_aabbMax;
 };
 
 class ReflectionProxy

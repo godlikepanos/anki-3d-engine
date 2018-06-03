@@ -191,4 +191,37 @@ F32 computeAttenuationFactor(F32 lightRadius, Vec3 frag2Light)
 	return att * att;
 }
 
+// Given the probe properties trace a ray inside the probe and find the cube tex coordinates to sample
+Vec3 intersectProbe(Vec3 fragPos, // Ray origin
+	Vec3 rayDir, // Ray direction
+	Vec3 probeAabbMin,
+	Vec3 probeAabbMax,
+	Vec3 probeOrigin // Cubemap origin
+)
+{
+	// Compute the intersection point
+	F32 intresectionDist = rayAabbIntersectionInside(fragPos, rayDir, probeAabbMin, probeAabbMax);
+	Vec3 intersectionPoint = fragPos + intresectionDist * rayDir;
+
+	// Compute the cubemap vector
+	return intersectionPoint - probeOrigin;
+}
+
+// Compute a weight (factor) of fragPos against some probe's bounds. The weight will be zero when fragPos is close to
+// AABB bounds and 1.0 at fadeDistance and less.
+F32 computeProbeBlendWeight(Vec3 fragPos, // Doesn't need to be inside the AABB
+	Vec3 probeAabbMin,
+	Vec3 probeAabbMax,
+	F32 fadeDistance)
+{
+	// Compute the min distance of fragPos from the edges of the AABB
+	Vec3 distFromMin = fragPos - probeAabbMin;
+	Vec3 distFromMax = probeAabbMax - fragPos;
+	Vec3 minDistVec = min(distFromMin, distFromMax);
+	F32 minDist = min(minDistVec.x, min(minDistVec.y, minDistVec.z));
+
+	// Use saturate because minDist might be negative.
+	return saturate(minDist / fadeDistance);
+}
+
 #endif

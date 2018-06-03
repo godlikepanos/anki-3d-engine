@@ -120,7 +120,8 @@ public:
 	void* m_userData;
 	U64 m_uuid;
 	Vec3 m_worldPosition;
-	F32 m_radius;
+	Vec3 m_aabbMin;
+	Vec3 m_aabbMax;
 	Array<RenderQueue*, 6> m_renderQueues;
 	U32 m_textureArrayIndex; ///< Renderer internal.
 };

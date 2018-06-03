@@ -134,6 +134,7 @@ void ForwardShading::drawUpscale(const RenderingContext& ctx, RenderPassWorkCont
 	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(
 		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
+	linearDepth->z() = ctx.m_renderQueue->m_cameraFar;
 
 	rgraphCtx.bindTextureAndSampler(0,
 		0,
