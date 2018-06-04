@@ -28,18 +28,13 @@ layout(location = 0) out Vec3 out_color;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform samplerCubeArray u_envTex;
 
-layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
-{
-	// x: The face index to render to
-	// y: The array index to read from the u_envTex
-	UVec4 u_faceIdxArrayIdxPad2;
-};
+ANKI_PUSH_CONSTANTS(UVec4, u_faceIdxPad3);
 
 // Integrate the environment map to compute the irradiance for a single fragment
 void main()
 {
-	U32 face = u_faceIdxArrayIdxPad2.x;
-	F32 texArrIdx = F32(u_faceIdxArrayIdxPad2.y);
+	U32 face = u_faceIdxPad3.x;
+	const F32 texArrIdx = 0.0; // The C++ code gives the layer idx using a tex view
 
 	// Get the r coordinate of the current face and fragment
 	Vec3 ri = getCubemapDirection(UV_TO_NDC(in_uv), face);

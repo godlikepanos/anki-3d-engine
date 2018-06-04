@@ -67,7 +67,7 @@ public:
 	ClusterProbeIndex()
 	{
 		// Do nothing. No need to initialize
-		static_assert(sizeof(ClusterProbeIndex) == sizeof(U16) * 2, "Because we memcmp");
+		static_assert(sizeof(ClusterProbeIndex) == sizeof(U16), "Because we memcmp");
 	}
 
 	U getIndex() const
@@ -81,22 +81,13 @@ public:
 		m_index = i;
 	}
 
-	void setProbeVolume(F32 v)
-	{
-		ANKI_ASSERT(v < MAX_PROBE_VOLUME);
-		m_probeVolume = v / F32(MAX_PROBE_VOLUME) * F32(MAX_U16);
-	}
-
 	Bool operator<(const ClusterProbeIndex& b) const
 	{
-		ANKI_ASSERT(m_probeVolume > 0 && b.m_probeVolume > 0);
-		return (m_probeVolume != b.m_probeVolume) ? (m_probeVolume > b.m_probeVolume) : (m_index < b.m_index);
+		return m_index < b.m_index;
 	}
 
 private:
-	static const U MAX_PROBE_VOLUME = 1000;
 	U16 m_index;
-	U16 m_probeVolume;
 };
 
 /// WARNING: Keep it as small as possible. The number of clusters is huge
@@ -736,9 +727,6 @@ void LightBin::writeAndBinProbe(
 
 		i = cluster.m_probeCount.fetchAdd(1) % MAX_PROBES_PER_CLUSTER;
 		cluster.m_probeIds[i].setIndex(idx);
-
-		Vec3 edges = probeEl.m_aabbMax - probeEl.m_aabbMin;
-		cluster.m_probeIds[i].setProbeVolume(edges.x() * edges.y() * edges.z());
 	}
 }
 

@@ -93,6 +93,13 @@ private:
 		ShaderProgramPtr m_grProg;
 	} m_irradiance; ///< Irradiance.
 
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+	} m_irradianceToRefl; ///< Apply irradiance back to the reflection.
+
 	class CacheEntry
 	{
 	public:
@@ -101,6 +108,7 @@ private:
 
 		Array<FramebufferDescription, 6> m_lightShadingFbDescrs;
 		Array<FramebufferDescription, 6> m_irradianceFbDescrs;
+		Array<FramebufferDescription, 6> m_irradianceToReflFbDescrs;
 	};
 
 	DynamicArray<CacheEntry> m_cacheEntries;
@@ -126,6 +134,7 @@ private:
 	ANKI_USE_RESULT Error initGBuffer(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initLightShading(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initIrradianceToRefl(const ConfigSet& cfg);
 
 	/// Lazily init the cache entry
 	void initCacheEntry(U32 cacheEntryIdx);
@@ -140,11 +149,12 @@ private:
 	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+	void runIrradianceToRefl(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 
 	// A RenderPassWorkCallback for G-buffer pass
 	static void runGBufferCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
 		self->runGBuffer(rgraphCtx.m_commandBuffer);
 	}
 
@@ -152,7 +162,7 @@ private:
 	template<U faceIdx>
 	static void runLightShadingCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
 		self->runLightShading(faceIdx, rgraphCtx);
 	}
 
@@ -160,7 +170,7 @@ private:
 	template<U faceIdx>
 	static void runMipmappingOfLightShadingCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
 		self->runMipmappingOfLightShading(faceIdx, rgraphCtx);
 	}
 
@@ -168,8 +178,16 @@ private:
 	template<U faceIdx>
 	static void runIrradianceCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* const self = scast<Indirect*>(rgraphCtx.m_userData);
+		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
 		self->runIrradiance(faceIdx, rgraphCtx);
+	}
+
+	// A RenderPassWorkCallback to apply the irradiance back to the reflection.
+	template<U faceIdx>
+	static void runIrradianceToReflCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
+		self->runIrradianceToRefl(faceIdx, rgraphCtx);
 	}
 };
 /// @}

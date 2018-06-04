@@ -159,7 +159,7 @@ void readNormalFromGBuffer(in sampler2D rt2, in Vec2 uv, out Vec3 normal)
 }
 
 // Read from the G buffer
-void readGBuffer(in sampler2D rt0, in sampler2D rt1, in sampler2D rt2, in Vec2 uv, in F32 lod, out GbufferInfo g)
+void readGBuffer(sampler2D rt0, sampler2D rt1, sampler2D rt2, Vec2 uv, F32 lod, out GbufferInfo g)
 {
 	Vec4 comp = textureLod(rt0, uv, 0.0);
 	g.m_diffuse = comp.xyz;
