@@ -9,7 +9,11 @@
 namespace anki
 {
 
-#define ANKI_MALFORMED() \
+#define ANKI_PP_ERROR(errStr_) \
+	ANKI_RESOURCE_LOGE("%s: " errStr_, fname.cstr()); \
+	return Error::USER_DATA
+
+#define ANKI_PP_ERROR_MALFORMED() \
 	ANKI_RESOURCE_LOGE("%s: Malformed expression: %s", fname.cstr(), line.cstr()); \
 	return Error::USER_DATA
 
@@ -94,34 +98,48 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 	return err;
 }
 
-Error ShaderProgramPrePreprocessor::parse()
+Error ShaderProgramPreprocessor::parse()
 {
 	ANKI_ASSERT(!m_fname.isEmpty());
 	ANKI_ASSERT(m_lines.isEmpty());
+
+	CString fname = m_fname.toCString();
 
 	// Parse recursively
 	ANKI_CHECK(parseFile(m_fname.toCString(), 0));
 
 	// Checks
-	if(m_foundInstancedInput != m_foundInstancedMutator)
+	if(m_foundInstancedInput != (m_instancedMutatorIdx != MAX_U32))
 	{
-		ANKI_RESOURCE_LOGE(
-			"%s: If there is an instanced mutator there should be at least one instanced input", m_fname.cstr());
-		return Error::USER_DATA;
+		ANKI_PP_ERROR("If there is an instanced mutator there should be at least one instanced input");
+	}
+
+	if(!m_shaderTypes)
+	{
+		ANKI_PP_ERROR("Missing \"pragma anki start\"");
+	}
+
+	if(m_insideShader)
+	{
+		ANKI_PP_ERROR("Forgot a \"pragma anki end\"");
 	}
 
 	// Compute the final source
 	{
-		// First the globals
-		if(m_globalsLines.getSize() > 0)
+		if(m_instancedMutatorIdx < MAX_U32)
 		{
-			StringAuto globals(m_alloc);
-			m_globalsLines.join("\n", globals);
-
-			m_finalSource.append(globals.toCString());
+			StringAuto str(m_alloc);
+			str.sprintf("#define GEN_INSTANCE_COUNT_ %s\n", m_mutators[m_instancedMutatorIdx].m_name.cstr());
+			m_finalSource.append(str.toCString());
 		}
 
-		// Then the UBO
+		{
+			StringAuto str(m_alloc);
+			str.sprintf("#define GEN_SET_ %u\n", m_set);
+			m_finalSource.append(str.toCString());
+		}
+
+		// The UBO
 		if(m_uboStructLines.getSize() > 0)
 		{
 			m_uboStructLines.pushFront("struct GenUniforms_ {");
@@ -130,13 +148,23 @@ Error ShaderProgramPrePreprocessor::parse()
 			m_uboStructLines.pushBack("#if USE_PUSH_CONSTANTS");
 			m_uboStructLines.pushBackSprintf("ANKI_PUSH_CONSTANTS(GenUniforms_, gen_unis_);");
 			m_uboStructLines.pushBack("#else");
-			m_uboStructLines.pushBackSprintf(
-				"layout(ANKI_UBO_BINDING(%u, 0)) uniform genubo_ {GenUniforms_ gen_unis_;};", m_set);
-			m_uboStructLines.pushBack("#endif");
+			m_uboStructLines.pushBack(
+				"layout(ANKI_UBO_BINDING(GEN_SET_, 0)) uniform genubo_ {GenUniforms_ gen_unis_;};");
+			m_uboStructLines.pushBack("#endif\n");
 
 			StringAuto ubo(m_alloc);
 			m_uboStructLines.join("\n", ubo);
 			m_finalSource.append(ubo.toCString());
+		}
+
+		// The globals
+		if(m_globalsLines.getSize() > 0)
+		{
+			StringAuto globals(m_alloc);
+			m_globalsLines.pushBack("\n");
+			m_globalsLines.join("\n", globals);
+
+			m_finalSource.append(globals.toCString());
 		}
 
 		// Last is the source
@@ -150,20 +178,19 @@ Error ShaderProgramPrePreprocessor::parse()
 	return Error::NONE;
 }
 
-Error ShaderProgramPrePreprocessor::parseFile(CString filename, U32 depth)
+Error ShaderProgramPreprocessor::parseFile(CString fname, U32 depth)
 {
 	// First check the depth
 	if(depth > MAX_INCLUDE_DEPTH)
 	{
-		ANKI_RESOURCE_LOGE("The include depth is too high. Probably circular includance");
-		return Error::USER_DATA;
+		ANKI_PP_ERROR("The include depth is too high. Probably circular includance");
 	}
 
 	Bool foundPragmaOnce = false;
 
 	// Load file in lines
 	ResourceFilePtr file;
-	ANKI_CHECK(m_fsystem->openFile(filename, file));
+	ANKI_CHECK(m_fsystem->openFile(fname, file));
 	StringAuto txt(m_alloc);
 	ANKI_CHECK(file->readAllText(m_alloc, txt));
 
@@ -171,8 +198,7 @@ Error ShaderProgramPrePreprocessor::parseFile(CString filename, U32 depth)
 	lines.splitString(txt.toCString(), '\n');
 	if(lines.getSize() < 1)
 	{
-		ANKI_RESOURCE_LOGE("Source is empty");
-		return Error::USER_DATA;
+		ANKI_PP_ERROR("Source is empty");
 	}
 
 	// Parse lines
@@ -181,7 +207,7 @@ Error ShaderProgramPrePreprocessor::parseFile(CString filename, U32 depth)
 		if(line.find("pragma") != CString::NPOS || line.find("include") != CString::NPOS)
 		{
 			// Possibly a preprocessor directive we care
-			ANKI_CHECK(parseLine(line.toCString(), filename, foundPragmaOnce, depth));
+			ANKI_CHECK(parseLine(line.toCString(), fname, foundPragmaOnce, depth));
 		}
 		else
 		{
@@ -193,13 +219,13 @@ Error ShaderProgramPrePreprocessor::parseFile(CString filename, U32 depth)
 	if(foundPragmaOnce)
 	{
 		// Append the guard
-		m_lines.pushFront("#endf // End guard");
+		m_lines.pushBack("#endif // Include guard");
 	}
 
 	return Error::NONE;
 }
 
-Error ShaderProgramPrePreprocessor::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth)
+Error ShaderProgramPreprocessor::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth)
 {
 	// Tokenize
 	DynamicArrayAuto<StringAuto> tokens(m_alloc);
@@ -210,36 +236,19 @@ Error ShaderProgramPrePreprocessor::parseLine(CString line, CString fname, Bool&
 	const StringAuto* end = tokens.getEnd();
 
 	// Skip the hash
+	Bool foundAloneHash = false;
 	if(*token == "#")
 	{
 		++token;
+		foundAloneHash = true;
 	}
 
-	if((token < end) && (*token == "include" || *token == "#include"))
+	if((token < end) && ((foundAloneHash && *token == "include") || *token == "#include"))
 	{
 		// We _must_ have an #include
-
-		++token;
-
-		if(token < end && token->getLength() >= 3)
-		{
-			const char firstChar = (*token)[0];
-			const char lastChar = (*token)[token->getLength() - 1];
-
-			if((firstChar == '\"' && lastChar == '\"') || (firstChar == '<' && lastChar == '>'))
-			{
-				StringAuto fname(m_alloc);
-				fname.create(line.begin() + 1, line.begin() + line.getLength() - 1);
-
-				ANKI_CHECK(parseFile(fname.toCString(), depth + 1));
-				return Error::NONE;
-			}
-		}
-
-		// We have an error
-		ANKI_MALFORMED();
+		ANKI_CHECK(parseInclude(token + 1, end, line, fname, depth));
 	}
-	else if((token < end) && (*token == "pragma" || *token == "#pragma"))
+	else if((token < end) && ((foundAloneHash && *token == "pragma") || *token == "#pragma"))
 	{
 		// We may have a #pragma once or a #pragma anki or something else
 
@@ -251,27 +260,24 @@ Error ShaderProgramPrePreprocessor::parseLine(CString line, CString fname, Bool&
 
 			if(foundPragmaOnce)
 			{
-				ANKI_RESOURCE_LOGE("%s: Can't have more than one #pragma once per file", fname.cstr());
-				return Error::USER_DATA;
+				ANKI_PP_ERROR("Can't have more than one #pragma once per file");
 			}
 
-			ANKI_MALFORMED();
+			if(token + 1 != end)
+			{
+				ANKI_PP_ERROR_MALFORMED();
+			}
 
 			// Add the guard unique for this file
 			foundPragmaOnce = true;
 			const U64 hash = fname.computeHash();
-			m_lines.pushBackSprintf("#ifndef GEN_FILE_GUARD_%llu\n#define GEN_FILE_GUARD_%llu 1", hash, hash);
+			m_lines.pushBackSprintf("#ifndef GEN_INCL_GUARD_%llu\n#define GEN_INCL_GUARD_%llu", hash, hash);
 		}
 		else if(*token == "anki")
 		{
 			// Must be a #pragma anki
 
 			++token;
-
-			if(token + 1 >= end)
-			{
-				ANKI_MALFORMED();
-			}
 
 			if(*token == "mutator")
 			{
@@ -289,31 +295,76 @@ Error ShaderProgramPrePreprocessor::parseLine(CString line, CString fname, Bool&
 			{
 				ANKI_CHECK(parsePragmaEnd(token + 1, end, line, fname));
 			}
+			else if(*token == "descriptor_set")
+			{
+				ANKI_CHECK(parsePragmaDescriptorSet(token + 1, end, line, fname));
+			}
 			else
 			{
-				ANKI_MALFORMED();
+				ANKI_PP_ERROR_MALFORMED();
 			}
 		}
 		else
 		{
 			// Ignore
+			m_lines.pushBack(line);
 		}
 	}
 	else
 	{
 		// Ignore
+		m_lines.pushBack(line);
 	}
 
-	// Ignored
-	m_lines.pushBack(line);
 	return Error::NONE;
 }
 
-Error ShaderProgramPrePreprocessor::parsePragmaMutator(
+Error ShaderProgramPreprocessor::parseInclude(
+	const StringAuto* begin, const StringAuto* end, CString line, CString fname, U32 depth)
+{
+	// Gather the path
+	StringAuto path(m_alloc);
+	for(; begin < end; ++begin)
+	{
+		path.append(*begin);
+	}
+
+	if(path.isEmpty())
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	// Check
+	const char firstChar = path[0];
+	const char lastChar = path[path.getLength() - 1];
+
+	if((firstChar == '\"' && lastChar == '\"') || (firstChar == '<' && lastChar == '>'))
+	{
+		StringAuto fname2(m_alloc);
+		fname2.create(path.begin() + 1, path.begin() + path.getLength() - 1);
+
+		if(parseFile(fname2.toCString(), depth + 1))
+		{
+			ANKI_PP_ERROR("Error parsing include. See previous errors");
+		}
+	}
+	else
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	return Error::NONE;
+}
+
+Error ShaderProgramPreprocessor::parsePragmaMutator(
 	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
-	ANKI_ASSERT(begin < end);
+
+	if(begin >= end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
 
 	m_mutators.emplaceBack(m_alloc);
 	Mutator& mutator = m_mutators.getBack();
@@ -325,13 +376,12 @@ Error ShaderProgramPrePreprocessor::parsePragmaMutator(
 			mutator.m_instanced = true;
 
 			// Check
-			if(m_foundInstancedMutator)
+			if(m_instancedMutatorIdx != MAX_U32)
 			{
-				ANKI_RESOURCE_LOGE("%s: Can't have more than one instanced mutators", fname.cstr());
-				return Error::USER_DATA;
+				ANKI_PP_ERROR("Can't have more than one instanced mutators");
 			}
 
-			m_foundInstancedMutator = true;
+			m_instancedMutatorIdx = m_mutators.getSize() - 1;
 			++begin;
 		}
 		else
@@ -345,7 +395,7 @@ Error ShaderProgramPrePreprocessor::parsePragmaMutator(
 		if(begin >= end)
 		{
 			// Need to have a name
-			ANKI_MALFORMED();
+			ANKI_PP_ERROR_MALFORMED();
 		}
 
 		// Check for duplicate mutators
@@ -353,8 +403,7 @@ Error ShaderProgramPrePreprocessor::parsePragmaMutator(
 		{
 			if(m_mutators[i].m_name == *begin)
 			{
-				ANKI_RESOURCE_LOGE("%s: Duplicate mutator %s", fname.cstr(), begin->cstr());
-				return Error::USER_DATA;
+				ANKI_PP_ERROR("Duplicate mutator");
 			}
 		}
 
@@ -370,7 +419,7 @@ Error ShaderProgramPrePreprocessor::parsePragmaMutator(
 			U32 value = 0;
 			if(begin->toNumber(value))
 			{
-				ANKI_MALFORMED();
+				ANKI_PP_ERROR_MALFORMED();
 			}
 
 			mutator.m_values.emplaceBack(value);
@@ -380,7 +429,7 @@ Error ShaderProgramPrePreprocessor::parsePragmaMutator(
 		if(mutator.m_values.getSize() < 2)
 		{
 			// Mutator with less that 2 values doesn't make sense
-			ANKI_MALFORMED();
+			ANKI_PP_ERROR_MALFORMED();
 		}
 
 		std::sort(mutator.m_values.getBegin(), mutator.m_values.getEnd());
@@ -391,24 +440,23 @@ Error ShaderProgramPrePreprocessor::parsePragmaMutator(
 			if(mutator.m_values[i - 1] == mutator.m_values[i])
 			{
 				// Can't have the same value
-				ANKI_MALFORMED();
+				ANKI_PP_ERROR_MALFORMED();
 			}
 		}
-	}
-
-	if(mutator.m_instanced)
-	{
-		m_globalsLines.pushFrontSprintf("#define GEN_INSTANCED_MUTATOR_ %s", mutator.m_name.cstr());
 	}
 
 	return Error::NONE;
 }
 
-Error ShaderProgramPrePreprocessor::parsePragmaInput(
+Error ShaderProgramPreprocessor::parsePragmaInput(
 	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
-	ANKI_ASSERT(begin < end);
+
+	if(begin >= end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
 
 	m_inputs.emplaceBack(m_alloc);
 	Input& input = m_inputs.getBack();
@@ -427,7 +475,7 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 	{
 		if(begin >= end)
 		{
-			ANKI_MALFORMED();
+			ANKI_PP_ERROR_MALFORMED();
 		}
 
 		input.m_instanced = false;
@@ -444,12 +492,12 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 	{
 		if(begin >= end)
 		{
-			ANKI_MALFORMED();
+			ANKI_PP_ERROR_MALFORMED();
 		}
 
 		if(computeShaderVariableDataType(begin->toCString(), input.m_dataType))
 		{
-			ANKI_MALFORMED();
+			ANKI_PP_ERROR_MALFORMED();
 		}
 		++begin;
 	}
@@ -458,7 +506,7 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 	{
 		if(begin >= end)
 		{
-			ANKI_MALFORMED();
+			ANKI_PP_ERROR_MALFORMED();
 		}
 
 		// Check if there are duplicates
@@ -466,7 +514,7 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 		{
 			if(m_inputs[i].m_name == *begin)
 			{
-				ANKI_MALFORMED();
+				ANKI_PP_ERROR("Duplicate input");
 			}
 		}
 
@@ -488,13 +536,13 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 			if(preproc.getLength() < 3)
 			{
 				// Too small
-				ANKI_MALFORMED();
+				ANKI_PP_ERROR_MALFORMED();
 			}
 
 			if(preproc[0] != '\"')
 			{
 				// Should start with "
-				ANKI_MALFORMED();
+				ANKI_PP_ERROR_MALFORMED();
 			}
 
 			preproc[0] = ' ';
@@ -502,17 +550,13 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 			if(preproc[preproc.getLength() - 1] != '\"')
 			{
 				// Should end with "
-				ANKI_MALFORMED();
+				ANKI_PP_ERROR_MALFORMED();
 			}
 
 			preproc[preproc.getLength() - 1] = ' ';
 
 			// Only now create it
 			input.m_preproc.create(preproc.toCString());
-		}
-		else
-		{
-			preproc.append("1");
 		}
 	}
 
@@ -525,19 +569,27 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 	{
 		// Const
 
-		if(isSampler)
+		if(isSampler || input.m_instanced)
 		{
-			// No const samplers
-			ANKI_MALFORMED();
+			// No const samplers or instanced
+			ANKI_PP_ERROR_MALFORMED();
 		}
 
-		m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
+		if(preproc)
+		{
+			m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
+		}
+
 		m_globalsLines.pushBackSprintf("const %s %s = %s(%s_CONSTVAL);",
 			dataTypeStr.cstr(),
 			input.m_name.cstr(),
 			dataTypeStr.cstr(),
 			input.m_name.cstr());
-		m_globalsLines.pushBackSprintf("#endif");
+
+		if(preproc)
+		{
+			m_globalsLines.pushBack("#endif");
+		}
 	}
 	else if(isSampler)
 	{
@@ -546,20 +598,25 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 		if(input.m_instanced)
 		{
 			// Samplers can't be instanced
-			ANKI_MALFORMED();
+			ANKI_PP_ERROR_MALFORMED();
 		}
 
-		m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
+		if(preproc)
+		{
+			m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
+		}
 
-		m_globalsLines.pushBackSprintf("layout(ANKI_TEX_BINDING(%u, %u)) uniform %s %s;",
-			m_set,
+		m_globalsLines.pushBackSprintf("layout(ANKI_TEX_BINDING(GEN_SET_, %u)) uniform %s %s;",
 			m_lastTexBinding,
 			dataTypeStr.cstr(),
 			input.m_name.cstr());
 		input.m_texBinding = m_lastTexBinding;
 		++m_lastTexBinding;
 
-		m_globalsLines.pushBackSprintf("#endif");
+		if(preproc)
+		{
+			m_globalsLines.pushBack("#endif");
+		}
 	}
 	else
 	{
@@ -568,22 +625,25 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 		const char* name = input.m_name.cstr();
 		const char* type = dataTypeStr.cstr();
 
-		m_uboStructLines.pushBackSprintf("#if %s", preproc.cstr());
-		m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
+		if(preproc)
+		{
+			m_uboStructLines.pushBackSprintf("#if %s", preproc.cstr());
+			m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
+		}
 
 		if(input.m_instanced)
 		{
-			m_uboStructLines.pushBackSprintf("#if GEN_INSTANCED_MUTATOR_ > 1");
-			m_uboStructLines.pushBackSprintf("%s gen_uni_%s[GEN_INSTANCED_MUTATOR_];", type, name);
-			m_uboStructLines.pushBackSprintf("#else");
+			m_uboStructLines.pushBack("#if GEN_INSTANCE_COUNT_ > 1");
+			m_uboStructLines.pushBackSprintf("%s gen_uni_%s[GEN_INSTANCE_COUNT_];", type, name);
+			m_uboStructLines.pushBack("#else");
 			m_uboStructLines.pushBackSprintf("%s gen_uni_%s;", type, name);
-			m_uboStructLines.pushBackSprintf("#endif");
+			m_uboStructLines.pushBack("#endif");
 
-			m_globalsLines.pushBackSprintf("#if GEN_INSTANCED_MUTATOR_ > 1");
+			m_globalsLines.pushBack("#if GEN_INSTANCE_COUNT_ > 1");
 			m_globalsLines.pushBackSprintf("%s %s = gen_unis_.gen_uni_%s[gl_InstanceID];", type, name, name);
-			m_globalsLines.pushBackSprintf("#else");
+			m_globalsLines.pushBack("#else");
 			m_globalsLines.pushBackSprintf("%s %s = gen_unis_.gen_uni_%s;", type, name, name);
-			m_globalsLines.pushBackSprintf("#endif");
+			m_globalsLines.pushBack("#endif");
 		}
 		else
 		{
@@ -592,18 +652,25 @@ Error ShaderProgramPrePreprocessor::parsePragmaInput(
 			m_globalsLines.pushBackSprintf("%s %s = gen_unis_.gen_uni_%s;", type, name, name);
 		}
 
-		m_uboStructLines.pushBackSprintf("#endif");
-		m_globalsLines.pushBackSprintf("#endif");
+		if(preproc)
+		{
+			m_uboStructLines.pushBack("#endif");
+			m_globalsLines.pushBack("#endif");
+		}
 	}
 
 	return Error::NONE;
 }
 
-Error ShaderProgramPrePreprocessor::parsePragmaStart(
+Error ShaderProgramPreprocessor::parsePragmaStart(
 	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
-	ANKI_ASSERT(begin < end);
+
+	if(begin >= end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
 
 	ShaderType shaderType = ShaderType::COUNT;
 	if(*begin == "vert")
@@ -638,37 +705,35 @@ Error ShaderProgramPrePreprocessor::parsePragmaStart(
 	}
 	else
 	{
-		ANKI_MALFORMED();
+		ANKI_PP_ERROR_MALFORMED();
 	}
 
 	++begin;
 	if(begin != end)
 	{
 		// Should be the last token
-		ANKI_MALFORMED();
+		ANKI_PP_ERROR_MALFORMED();
 	}
 
 	// Set the mask
 	ShaderTypeBit mask = ShaderTypeBit(1 << U(shaderType));
 	if(!!(mask & m_shaderTypes))
 	{
-		ANKI_RESOURCE_LOGE("%s: Can't have #pragma start <shader> appearing more than once", fname.cstr());
-		return Error::USER_DATA;
+		ANKI_PP_ERROR("Can't have #pragma start <shader> appearing more than once");
 	}
 	m_shaderTypes |= mask;
 
 	// Check bounds
 	if(m_insideShader)
 	{
-		ANKI_RESOURCE_LOGE("%s: Can't have #pragma start before you close the previous pragma start", fname.cstr());
-		return Error::USER_DATA;
+		ANKI_PP_ERROR("Can't have #pragma start before you close the previous pragma start");
 	}
 	m_insideShader = true;
 
 	return Error::NONE;
 }
 
-Error ShaderProgramPrePreprocessor::parsePragmaEnd(
+Error ShaderProgramPreprocessor::parsePragmaEnd(
 	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
 {
 	ANKI_ASSERT(begin && end);
@@ -676,24 +741,38 @@ Error ShaderProgramPrePreprocessor::parsePragmaEnd(
 	// Check tokens
 	if(begin != end)
 	{
-		ANKI_MALFORMED();
+		ANKI_PP_ERROR_MALFORMED();
 	}
 
 	// Check bounds
 	if(!m_insideShader)
 	{
-		ANKI_RESOURCE_LOGE("%s: Can't have #pragma end before you open with a pragma start", fname.cstr());
-		return Error::USER_DATA;
+		ANKI_PP_ERROR("Can't have #pragma end before you open with a pragma start");
 	}
 	m_insideShader = false;
 
 	// Write code
-	m_lines.pushBack("#end // Shader guard");
+	m_lines.pushBack("#endif // Shader guard");
 
 	return Error::NONE;
 }
 
-void ShaderProgramPrePreprocessor::tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens)
+Error ShaderProgramPreprocessor::parsePragmaDescriptorSet(
+	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
+{
+	ANKI_ASSERT(begin && end);
+
+	if(begin >= end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	ANKI_CHECK(begin->toNumber(m_set));
+
+	return Error::NONE;
+}
+
+void ShaderProgramPreprocessor::tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens)
 {
 	ANKI_ASSERT(line.getLength() > 0);
 
@@ -705,7 +784,7 @@ void ShaderProgramPrePreprocessor::tokenizeLine(CString line, DynamicArrayAuto<S
 	{
 		if(c == '\t')
 		{
-			c = '\n';
+			c = ' ';
 		}
 	}
 

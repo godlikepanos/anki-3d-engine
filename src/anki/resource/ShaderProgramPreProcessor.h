@@ -14,18 +14,18 @@ namespace anki
 {
 
 // Forward
-class ShaderProgramPrePreprocessor;
+class ShaderProgramPreprocessor;
 
 /// @addtogroup resource
 /// @{
 
-/// @memberof ShaderProgramPrePreprocessor
-class ShaderProgramPrePreprocessorMutator
+/// @memberof ShaderProgramPreprocessor
+class ShaderProgramPreprocessorMutator
 {
-	friend ShaderProgramPrePreprocessor;
+	friend ShaderProgramPreprocessor;
 
 public:
-	ShaderProgramPrePreprocessorMutator(GenericMemoryPoolAllocator<U8> alloc)
+	ShaderProgramPreprocessorMutator(GenericMemoryPoolAllocator<U8> alloc)
 		: m_name(alloc)
 		, m_values(alloc)
 	{
@@ -48,13 +48,13 @@ private:
 	Bool8 m_const = false;
 };
 
-/// @memberof ShaderProgramPrePreprocessor
-class ShaderProgramPrePreprocessorInput
+/// @memberof ShaderProgramPreprocessor
+class ShaderProgramPreprocessorInput
 {
-	friend ShaderProgramPrePreprocessor;
+	friend ShaderProgramPreprocessor;
 
 public:
-	ShaderProgramPrePreprocessorInput(GenericMemoryPoolAllocator<U8> alloc)
+	ShaderProgramPreprocessorInput(GenericMemoryPoolAllocator<U8> alloc)
 		: m_name(alloc)
 		, m_preproc(alloc)
 	{
@@ -91,18 +91,53 @@ private:
 /// #pragma anki input [const | instanced] TYPE NAME ["preprocessor expression"]
 /// #pragma anki start {vert | tessc | tesse | geom | frag | comp}
 /// #pragma anki end
-class ShaderProgramPrePreprocessor : public NonCopyable
+/// #pragma anki descriptor_set <number>
+class ShaderProgramPreprocessor : public NonCopyable
 {
 public:
-	ShaderProgramPrePreprocessor(CString fname, ResourceFilesystem* fsystem, GenericMemoryPoolAllocator<U8> alloc);
+	ShaderProgramPreprocessor(CString fname, ResourceFilesystem* fsystem, GenericMemoryPoolAllocator<U8> alloc)
+		: m_alloc(alloc)
+		, m_fname(alloc, fname)
+		, m_fsystem(fsystem)
+		, m_lines(alloc)
+		, m_globalsLines(alloc)
+		, m_uboStructLines(alloc)
+		, m_finalSource(alloc)
+		, m_mutators(alloc)
+		, m_inputs(alloc)
+	{
+	}
 
-	~ShaderProgramPrePreprocessor();
+	~ShaderProgramPreprocessor()
+	{
+	}
 
 	ANKI_USE_RESULT Error parse();
 
+	CString getSource() const
+	{
+		ANKI_ASSERT(!m_finalSource.isEmpty());
+		return m_finalSource.toCString();
+	}
+
+	ConstWeakArray<ShaderProgramPreprocessorMutator> getMutators() const
+	{
+		return m_mutators;
+	}
+
+	ConstWeakArray<ShaderProgramPreprocessorInput> getInputs() const
+	{
+		return m_inputs;
+	}
+
+	ShaderTypeBit getShaderStages() const
+	{
+		return m_shaderTypes;
+	}
+
 private:
-	using Mutator = ShaderProgramPrePreprocessorMutator;
-	using Input = ShaderProgramPrePreprocessorInput;
+	using Mutator = ShaderProgramPreprocessorMutator;
+	using Input = ShaderProgramPreprocessorInput;
 
 	static const U32 MAX_INCLUDE_DEPTH = 8;
 
@@ -118,20 +153,24 @@ private:
 	DynamicArrayAuto<Mutator> m_mutators;
 	DynamicArrayAuto<Input> m_inputs;
 
-	ShaderTypeBit m_shaderTypes;
+	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
 	Bool8 m_insideShader = false;
 	U32 m_lastTexBinding = 0;
-	U32 m_set = 0; // TODO
-	Bool8 m_foundInstancedMutator = false;
+	U32 m_set = 0;
+	U32 m_instancedMutatorIdx = MAX_U32;
 	Bool8 m_foundInstancedInput = false;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
+	ANKI_USE_RESULT Error parseInclude(
+		const StringAuto* begin, const StringAuto* end, CString line, CString fname, U32 depth);
 	ANKI_USE_RESULT Error parsePragmaMutator(
 		const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 	ANKI_USE_RESULT Error parsePragmaInput(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 	ANKI_USE_RESULT Error parsePragmaStart(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 	ANKI_USE_RESULT Error parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	ANKI_USE_RESULT Error parsePragmaDescriptorSet(
+		const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens);
 };
