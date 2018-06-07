@@ -270,6 +270,9 @@ message("++ Configuring glslang")
 add_subdirectory(thirdparty/glslang)
 message("++ End configuring glslang")
 
+# tinyexpr
+add_subdirectory(thirdparty/tinyexpr)
+
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
 	add_subdirectory(thirdparty/${TMP})
 endforeach()
@@ -360,6 +363,7 @@ include_directories("src"
 	"thirdparty/khronos"
 	"${CMAKE_CURRENT_BINARY_DIR}"
 	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang"
+	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/tinyexpr"
 	"thirdparty"
 	${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -422,9 +426,7 @@ if(SDL)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} SDL2-static)
 endif()
 
-set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankispirvcross)
-
-set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glslang SPIRV OGLCompiler OSDependent)
+set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankispirvcross glslang SPIRV OGLCompiler OSDependent ankitinyexpr)
 
 # Add anki sub libraries
 set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource misc gr collision math util)
