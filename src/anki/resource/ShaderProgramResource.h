@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/resource/ResourceObject.h>
+#include <anki/resource/ShaderProgramPreProcessor.h>
 #include <anki/Gr.h>
 #include <anki/util/BitSet.h>
 
@@ -14,12 +15,11 @@ namespace anki
 
 // Forward
 class RenderingKey;
-class XmlElement;
 
 /// @addtogroup resource
 /// @{
 
-using ShaderProgramResourceMutatorValue = I32;
+using ShaderProgramResourceMutatorValue = ShaderProgramPreprocessorMutator::ValueType;
 
 /// The means to mutate a shader program.
 class ShaderProgramResourceMutator : public NonCopyable
@@ -99,29 +99,12 @@ public:
 		return m_const;
 	}
 
-	Bool acceptAllMutations(ConstWeakArray<ShaderProgramResourceMutation> mutations) const
-	{
-		for(const ShaderProgramResourceMutation& m : mutations)
-		{
-			if(!acceptMutation(m))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
+	Bool acceptAllMutations(ConstWeakArray<ShaderProgramResourceMutation> mutations) const;
 
 private:
-	/// Information on how this variable will be used by this mutator.
-	class Mutator
-	{
-	public:
-		const ShaderProgramResourceMutator* m_mutator = nullptr;
-		DynamicArray<ShaderProgramResourceMutatorValue> m_values;
-	};
-
+	ShaderProgramResource* m_program = nullptr;
 	String m_name;
-	DynamicArray<Mutator> m_mutators;
+	String m_preprocExpr;
 	U32 m_idx;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 	Bool8 m_const = false;
@@ -136,40 +119,6 @@ private:
 	Bool inBlock() const
 	{
 		return !m_const && !isTexture();
-	}
-
-	const Mutator* tryFindMutator(const ShaderProgramResourceMutator& mutator) const
-	{
-		for(const Mutator& m : m_mutators)
-		{
-			if(m.m_mutator == &mutator)
-			{
-				return &m;
-			}
-		}
-
-		return nullptr;
-	}
-
-	Bool acceptMutation(const ShaderProgramResourceMutation& mutation) const
-	{
-		ANKI_ASSERT(mutation.m_mutator->valueExists(mutation.m_value));
-		const Mutator* m = tryFindMutator(*mutation.m_mutator);
-		if(m)
-		{
-			for(ShaderProgramResourceMutatorValue v : m->m_values)
-			{
-				if(mutation.m_value == v)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-		else
-		{
-			return true;
-		}
 	}
 };
 
@@ -235,7 +184,7 @@ public:
 private:
 	ShaderProgramPtr m_prog;
 
-	BitSet<128> m_activeInputVars = {false};
+	BitSet<128, U64> m_activeInputVars = {false};
 	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
 	U32 m_uniBlockSize = 0;
 	DynamicArray<I16> m_texUnits;
@@ -275,50 +224,7 @@ public:
 
 static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "Need it to be packed");
 
-/// Shader program resource. It defines a custom format for shader programs.
-///
-/// XML file format:
-/// @code
-/// <shaderProgram>
-///		[<descriptorSet index="0 | 1"/>] (4)
-///
-/// 	[<mutators> (1)
-/// 		<mutator name="str" values="array of ints" [instanced="0 | 1"]/>
-/// 	</mutators>]
-///
-///		[<inputs> (3)
-///			<input name="str" type="uint | int | float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
-///				[instanced="0 | 1"] [const="0 | 1"]>
-///				[<mutators> (2)
-///					<mutator name="variant_name" values="array of ints"/>
-///				</mutators>]
-///			</input>
-///		</inputs>]
-///
-///		<shaders>
-///			<shader type="vert | frag | tese | tesc"/>
-///
-///				[<inputs>
-///					<input name="str" type="uint | int | float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
-/// 					[instanced="0 | 1"] [const="0 | 1"]>
-/// 					[<mutators> (2)
-/// 						<mutator name="variant_name" values="array of ints"/>
-/// 					</mutators>]
-///					</input>
-///				</inputs>]
-///
-///				<source>
-///					src
-///				</source>
-///			</shader>
-///		</shaders>
-/// </shaderProgram>
-/// @endcode
-/// (1): This is a variant list. It contains the means to permutate the program.
-/// (2): This lists a subset of mutators and out of these variants a subset of their values. The input variable will
-///      become active only on those mutators. Mutators not listed are implicitly added with all their values.
-/// (3): Global inputs. For all shaders.
-/// (4): By default it's 0 but you can change the set resources are bound in the shader.
+/// Shader program resource. It loads special AnKi programs.
 class ShaderProgramResource : public ResourceObject
 {
 public:
@@ -401,7 +307,7 @@ public:
 	/// Has tessellation shaders.
 	Bool hasTessellation() const
 	{
-		return m_tessellation;
+		return !!(m_shaderStages & ShaderTypeBit::TESSELLATION_EVALUATION);
 	}
 
 	/// Return true if it's instanced.
@@ -423,35 +329,27 @@ public:
 	}
 
 private:
-	DynamicArray<ShaderProgramResourceInputVariable> m_inputVars;
-	DynamicArray<ShaderProgramResourceMutator> m_mutators;
+	using Mutator = ShaderProgramResourceMutator;
+	using Input = ShaderProgramResourceInputVariable;
 
-	Array<String, U(ShaderType::COUNT)> m_sources;
+	DynamicArray<Input> m_inputVars;
+	DynamicArray<Mutator> m_mutators;
+
+	String m_source;
 
 	mutable HashMap<U64, ShaderProgramResourceVariant*> m_variants;
 	mutable Mutex m_mtx;
 
-	Bool8 m_tessellation = false;
-	Bool8 m_compute = false;
 	U8 m_descriptorSet = 0;
-	const ShaderProgramResourceMutator* m_instancingMutator = nullptr;
-
-	/// Parse whatever is inside <inputs>
-	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl,
-		U& inputVarCount,
-		StringListAuto& constsSrc,
-		StringListAuto& blockSrc,
-		StringListAuto& globalsSrc,
-		StringListAuto& definesSrc);
+	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
+	const Mutator* m_instancingMutator = nullptr;
 
 	U64 computeVariantHash(ConstWeakArray<ShaderProgramResourceMutation> mutations,
 		ConstWeakArray<ShaderProgramResourceConstantValue> constants) const;
 
 	void initVariant(ConstWeakArray<ShaderProgramResourceMutation> mutations,
 		ConstWeakArray<ShaderProgramResourceConstantValue> constants,
-		ShaderProgramResourceVariant& v) const;
-
-	void compInputVarDefineString(const ShaderProgramResourceInputVariable& var, StringListAuto& list);
+		ShaderProgramResourceVariant& variant) const;
 };
 
 /// Smart initializer of multiple ShaderProgramResourceConstantValue.

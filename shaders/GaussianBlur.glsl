@@ -4,14 +4,15 @@
 // http://www.anki3d.org/LICENSE
 
 // Defines it needs:
-// HORIZONTAL | VERTICAL | BOX
-// COLOR_COMPONENTS
 // WORKGROUP_SIZE (only for compute)
-// TEXTURE_SIZE
-// KERNEL_SIZE (must be odd number)
 
-#ifndef ANKI_SHADERS_GAUSSIAN_BLUR_GLSL
-#define ANKI_SHADERS_GAUSSIAN_BLUR_GLSL
+#pragma once
+
+#pragma anki mutator ORIENTATION 0 1 2 // 0: VERTICAL, 1: HORIZONTAL, 2: BOX
+#pragma anki mutator KERNEL_SIZE 3 5 7 9 11 13 15
+#pragma anki mutator COLOR_COMPONENTS 4 3 1
+
+#pragma anki input const UVec2 TEXTURE_SIZE
 
 #include <shaders/GaussianBlurCommon.glsl>
 
@@ -115,5 +116,3 @@ void main()
 	out_color = color;
 #endif
 }
-
-#endif

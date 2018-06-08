@@ -41,7 +41,7 @@ Error Bloom::initExposure(const ConfigSet& config)
 	m_exposure.m_fbDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/Bloom.ankiprog", m_exposure.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/Bloom.glslp", m_exposure.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_exposure.m_prog);
 	consts.add(
@@ -70,7 +70,7 @@ Error Bloom::initUpscale(const ConfigSet& config)
 	m_upscale.m_fbDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/BloomUpscale.ankiprog", m_upscale.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/BloomUpscale.glslp", m_upscale.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_upscale.m_prog);
 	consts.add("TEX_SIZE", Vec2(m_upscale.m_width, m_upscale.m_height));
@@ -85,7 +85,7 @@ Error Bloom::initUpscale(const ConfigSet& config)
 Error Bloom::initSslf(const ConfigSet& cfg)
 {
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/LensDirt.ankitex", m_sslf.m_lensDirtTex));
-	ANKI_CHECK(getResourceManager().loadResource("shaders/ScreenSpaceLensFlare.ankiprog", m_sslf.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/ScreenSpaceLensFlare.glslp", m_sslf.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_sslf.m_prog);
 	consts.add("INPUT_TEX_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));

@@ -25,6 +25,8 @@ class ShaderProgramPreprocessorMutator
 	friend ShaderProgramPreprocessor;
 
 public:
+	using ValueType = I32;
+
 	ShaderProgramPreprocessorMutator(GenericMemoryPoolAllocator<U8> alloc)
 		: m_name(alloc)
 		, m_values(alloc)
@@ -36,16 +38,20 @@ public:
 		return m_name.toCString();
 	}
 
-	ConstWeakArray<U32> getValues() const
+	ConstWeakArray<I32> getValues() const
 	{
 		return m_values;
 	}
 
+	Bool isInstanced() const
+	{
+		return m_instanced;
+	}
+
 private:
 	StringAuto m_name;
-	DynamicArrayAuto<U32> m_values;
+	DynamicArrayAuto<I32> m_values;
 	Bool8 m_instanced = false;
-	Bool8 m_const = false;
 };
 
 /// @memberof ShaderProgramPreprocessor
@@ -72,16 +78,25 @@ public:
 
 	CString getPreprocessorCondition() const
 	{
-		return m_preproc.toCString();
+		return (m_preproc) ? m_preproc.toCString() : CString();
+	}
+
+	Bool isInstanced() const
+	{
+		return m_instanced;
+	}
+
+	Bool isConstant() const
+	{
+		return m_const;
 	}
 
 private:
 	StringAuto m_name;
 	StringAuto m_preproc;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
-	Bool8 m_consts = false;
+	Bool8 m_const = false;
 	Bool8 m_instanced = false;
-	U8 m_texBinding = MAX_U8;
 };
 
 /// XXX
@@ -135,6 +150,11 @@ public:
 		return m_shaderTypes;
 	}
 
+	U32 getDescritproSet() const
+	{
+		return m_set;
+	}
+
 private:
 	using Mutator = ShaderProgramPreprocessorMutator;
 	using Input = ShaderProgramPreprocessorInput;
@@ -155,7 +175,6 @@ private:
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
 	Bool8 m_insideShader = false;
-	U32 m_lastTexBinding = 0;
 	U32 m_set = 0;
 	U32 m_instancedMutatorIdx = MAX_U32;
 	Bool8 m_foundInstancedInput = false;
@@ -173,6 +192,11 @@ private:
 		const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens);
+	
+	static Bool tokenIsComment(CString token)
+	{
+		return token.getLength() >= 2 && token[0] == '/' && (token[1] == '/' || token[1] == '*');
+	}
 };
 /// @}
 

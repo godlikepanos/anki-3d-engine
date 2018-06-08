@@ -42,7 +42,7 @@ Error Reflections::initInternal(const ConfigSet& cfg)
 	m_rtDescr.bake();
 
 	// Create shader
-	ANKI_CHECK(getResourceManager().loadResource("shaders/Reflections.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/Reflections.glslp", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<9> consts(m_prog);
 	consts.add("FB_SIZE", UVec2(width, height));

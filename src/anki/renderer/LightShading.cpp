@@ -69,7 +69,7 @@ Error LightShading::initInternal(const ConfigSet& config)
 		&m_r->getStagingGpuMemoryManager());
 
 	// Load shaders and programs
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShading.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShading.glslp", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))

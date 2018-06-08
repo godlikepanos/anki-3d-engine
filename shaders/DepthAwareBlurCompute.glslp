@@ -1,0 +1,23 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator ORIENTATION 0 1 2 // 0: VERTICAL, 1: HORIZONTAL, 2: BOX -->
+#pragma anki mutator SAMPLE_COUNT 3 5 7 9 11 13 15
+#pragma anki mutator COLOR_COMPONENTS 4 3 1
+
+#pragma anki input const UVec2 TEXTURE_SIZE
+#pragma anki input const UVec2 WORKGROUP_SIZE
+
+#pragma anki start comp
+#if ORIENTATION == 0
+#	define VERTICAL 1
+#elif ORIENTATION == 1
+#	define HORIZONTAL 1
+#else
+#	define BOX 1
+#endif
+
+#include <shaders/DepthAwareBlur.glsl>
+#pragma anki end

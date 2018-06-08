@@ -26,7 +26,7 @@ Error TraditionalDeferredLightShading::init()
 {
 	// Init progs
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/TraditionalDeferredShading.ankiprog", m_lightProg));
+		ANKI_CHECK(getResourceManager().loadResource("shaders/TraditionalDeferredShading.glslp", m_lightProg));
 
 		ShaderProgramResourceMutationInitList<1> mutators(m_lightProg);
 		mutators.add("LIGHT_TYPE", 0);

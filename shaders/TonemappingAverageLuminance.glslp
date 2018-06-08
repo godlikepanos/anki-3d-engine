@@ -1,0 +1,94 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki input const UVec2 INPUT_TEX_SIZE
+
+#pragma anki start comp
+#define LOG_AVG 0
+
+#include <shaders/Common.glsl>
+#include <shaders/Tonemapping.glsl>
+
+const U32 WORKGROUP_SIZE_X = 16u;
+const U32 WORKGROUP_SIZE_Y = 16u;
+const U32 WORKGROUP_SIZE = WORKGROUP_SIZE_X * WORKGROUP_SIZE_Y;
+
+layout(local_size_x = WORKGROUP_SIZE_X, local_size_y = WORKGROUP_SIZE_Y, local_size_z = 1) in;
+
+const U32 PIXEL_READ_X = INPUT_TEX_SIZE.x / WORKGROUP_SIZE_X;
+const U32 PIXEL_READ_Y = INPUT_TEX_SIZE.y / WORKGROUP_SIZE_Y;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
+
+#define TONEMAPPING_RESOURCE_AS_BUFFER 1
+#include <shaders/TonemappingResources.glsl>
+
+shared F32 s_avgLum[WORKGROUP_SIZE];
+
+void main()
+{
+	// Gather the log-average luminance of a tile
+	F32 avgLum = 0.0;
+	U32 yStart = gl_LocalInvocationID.y * PIXEL_READ_Y;
+	U32 xStart = gl_LocalInvocationID.x * PIXEL_READ_X;
+	ANKI_LOOP for(U32 y = 0; y < PIXEL_READ_Y; ++y)
+	{
+		ANKI_UNROLL for(U32 x = 0; x < PIXEL_READ_X; ++x)
+		{
+			IVec2 uv = IVec2(xStart, yStart) + IVec2(x, y);
+			Vec3 color = texelFetch(u_tex, uv, 0).rgb;
+			F32 lum = computeLuminance(color);
+#if LOG_AVG
+			avgLum += log(max(EPSILON, lum));
+#else
+			avgLum += lum;
+#endif
+		}
+	}
+
+	s_avgLum[gl_LocalInvocationIndex] = avgLum;
+
+	memoryBarrierShared();
+	barrier();
+
+	// Gather the results into one
+	ANKI_LOOP for(U32 s = WORKGROUP_SIZE / 2u; s > 0u; s >>= 1u)
+	{
+		if(gl_LocalInvocationIndex < s)
+		{
+			s_avgLum[gl_LocalInvocationIndex] += s_avgLum[gl_LocalInvocationIndex + s];
+		}
+
+		memoryBarrierShared();
+		barrier();
+	}
+
+	// Write the result
+	ANKI_BRANCH if(gl_LocalInvocationIndex == 0)
+	{
+#if LOG_AVG
+		F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y)));
+#else
+		F32 crntLum = s_avgLum[0] * (1.0 / F32(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y));
+#endif
+
+#if 1
+		F32 prevLum = u_averageLuminance;
+
+		// Lerp between previous and new L value
+		const F32 INTERPOLATION_FACTOR = 0.05;
+		F32 finalAvgLum = mix(prevLum, crntLum, INTERPOLATION_FACTOR);
+#else
+		F32 finalAvgLum = crntLum;
+#endif
+
+		// This is a workaround because sometimes the avg lum becomes nan
+		finalAvgLum = clamp(finalAvgLum, EPSILON, FLT_MAX);
+
+		u_averageLuminance = finalAvgLum;
+		u_exposureThreshold0 = computeExposure(u_averageLuminance, 0.0);
+	}
+}
+#pragma anki end

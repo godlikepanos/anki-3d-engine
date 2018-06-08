@@ -1,0 +1,65 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator TYPE 0 1 // 0: write to depth&color, 1: write to depth
+#pragma anki mutator SAMPLE_RESOLVE_TYPE 0 1 2 // 0: average, 1: min, 2: max
+#pragma anki mutator COPY_TO_CLIENT 0 1
+	
+#pragma anki start vert
+#include <shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <shaders/Common.glsl>
+
+#define AVG 0
+#define MIN 1
+#define MAX 2
+
+#if COPY_TO_CLIENT
+struct PushConsts
+{
+	UVec4 textureSize;
+};
+ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
+
+layout(std430, ANKI_SS_BINDING(0, 0)) writeonly buffer s1_
+{
+	F32 u_clientBuf[];
+};
+#endif
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
+
+layout(location = 0) in Vec2 in_uv;
+
+layout(location = 0) out F32 out_color;
+
+void main()
+{
+	Vec4 depths = textureGather(u_depthRt, in_uv, 0);
+
+#if SAMPLE_RESOLVE_TYPE == MIN
+	Vec2 mind2 = min(depths.xy, depths.zw);
+	out_color = min(mind2.x, mind2.y);
+#elif SAMPLE_RESOLVE_TYPE == MAX
+	Vec2 max2 = max(depths.xy, depths.zw);
+	out_color = max(max2.x, max2.y);
+#elif SAMPLE_RESOLVE_TYPE == AVG
+	out_color = dot(depths, Vec4(1.0 / 4.0));
+#else
+#	error See file
+#endif
+
+#if TYPE == 0
+	gl_FragDepth = out_color;
+#endif
+
+#if COPY_TO_CLIENT
+	u_clientBuf[U32(gl_FragCoord.y) * u_regs.textureSize.x + U32(gl_FragCoord.x)] = out_color;
+#endif
+}
+
+#pragma anki end

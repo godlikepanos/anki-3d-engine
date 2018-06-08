@@ -114,9 +114,24 @@ Error ShaderProgramPreprocessor::parse()
 		ANKI_PP_ERROR("If there is an instanced mutator there should be at least one instanced input");
 	}
 
-	if(!m_shaderTypes)
+	if(!!(m_shaderTypes & ShaderTypeBit::COMPUTE))
 	{
-		ANKI_PP_ERROR("Missing \"pragma anki start\"");
+		if(m_shaderTypes != ShaderTypeBit::COMPUTE)
+		{
+			ANKI_PP_ERROR("Can't combine compute shader with other types of shaders");
+		}
+	}
+	else
+	{
+		if(!(m_shaderTypes & ShaderTypeBit::VERTEX))
+		{
+			ANKI_PP_ERROR("Missing vertex shader");
+		}
+
+		if(!(m_shaderTypes & ShaderTypeBit::FRAGMENT))
+		{
+			ANKI_PP_ERROR("Missing fragment shader");
+		}
 	}
 
 	if(m_insideShader)
@@ -145,7 +160,7 @@ Error ShaderProgramPreprocessor::parse()
 			m_uboStructLines.pushFront("struct GenUniforms_ {");
 			m_uboStructLines.pushBack("};");
 
-			m_uboStructLines.pushBack("#if USE_PUSH_CONSTANTS");
+			m_uboStructLines.pushBack("#if USE_PUSH_CONSTANTS == 1");
 			m_uboStructLines.pushBackSprintf("ANKI_PUSH_CONSTANTS(GenUniforms_, gen_unis_);");
 			m_uboStructLines.pushBack("#else");
 			m_uboStructLines.pushBack(
@@ -174,6 +189,11 @@ Error ShaderProgramPreprocessor::parse()
 			m_finalSource.append(code.toCString());
 		}
 	}
+
+	// Free some memory
+	m_lines.destroy();
+	m_globalsLines.destroy();
+	m_uboStructLines.destroy();
 
 	return Error::NONE;
 }
@@ -416,7 +436,13 @@ Error ShaderProgramPreprocessor::parsePragmaMutator(
 		// Gather them
 		for(; begin < end; ++begin)
 		{
-			U32 value = 0;
+			Mutator::ValueType value = 0;
+
+			if(tokenIsComment(begin->toCString()))
+			{
+				break;
+			}
+
 			if(begin->toNumber(value))
 			{
 				ANKI_PP_ERROR_MALFORMED();
@@ -463,10 +489,10 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 
 	// const
 	{
-		input.m_consts = false;
+		input.m_const = false;
 		if(*begin == "const")
 		{
-			input.m_consts = true;
+			input.m_const = true;
 			++begin;
 		}
 	}
@@ -565,7 +591,7 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 	const Bool isSampler = input.m_dataType >= ShaderVariableDataType::SAMPLERS_FIRST
 						   && input.m_dataType <= ShaderVariableDataType::SAMPLERS_LAST;
 
-	if(input.m_consts)
+	if(input.m_const)
 	{
 		// Const
 
@@ -578,6 +604,7 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 		if(preproc)
 		{
 			m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED", input.m_name.cstr());
 		}
 
 		m_globalsLines.pushBackSprintf("const %s %s = %s(%s_CONSTVAL);",
@@ -604,14 +631,13 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 		if(preproc)
 		{
 			m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED", input.m_name.cstr());
 		}
 
-		m_globalsLines.pushBackSprintf("layout(ANKI_TEX_BINDING(GEN_SET_, %u)) uniform %s %s;",
-			m_lastTexBinding,
+		m_globalsLines.pushBackSprintf("layout(ANKI_TEX_BINDING(GEN_SET_, %s_TEXUNIT)) uniform %s %s;",
+			input.m_name.cstr(),
 			dataTypeStr.cstr(),
 			input.m_name.cstr());
-		input.m_texBinding = m_lastTexBinding;
-		++m_lastTexBinding;
 
 		if(preproc)
 		{
@@ -629,6 +655,7 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 		{
 			m_uboStructLines.pushBackSprintf("#if %s", preproc.cstr());
 			m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED", input.m_name.cstr());
 		}
 
 		if(input.m_instanced)
@@ -767,7 +794,15 @@ Error ShaderProgramPreprocessor::parsePragmaDescriptorSet(
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	ANKI_CHECK(begin->toNumber(m_set));
+	if(begin->toNumber(m_set))
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	if(m_set >= MAX_DESCRIPTOR_SETS)
+	{
+		ANKI_PP_ERROR("The descriptor set index is too high");
+	}
 
 	return Error::NONE;
 }

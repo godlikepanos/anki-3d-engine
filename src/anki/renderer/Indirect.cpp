@@ -156,7 +156,7 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 
 	// Create prog
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Irradiance.ankiprog", m_irradiance.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Irradiance.glslp", m_irradiance.m_prog));
 
 		const F32 envMapReadMip = computeMaxMipmapCount2d(
 			m_lightShading.m_tileSize, m_lightShading.m_tileSize, m_irradiance.m_envMapReadSize);
@@ -177,7 +177,7 @@ Error Indirect::initIrradianceToRefl(const ConfigSet& cfg)
 {
 	// Create program
 	ANKI_CHECK(m_r->getResourceManager().loadResource(
-		"shaders/ApplyIrradianceToReflection.ankiprog", m_irradianceToRefl.m_prog));
+		"shaders/ApplyIrradianceToReflection.glslp", m_irradianceToRefl.m_prog));
 
 	const ShaderProgramResourceVariant* variant;
 	m_irradianceToRefl.m_prog->getOrCreateVariant(variant);

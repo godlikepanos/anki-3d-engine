@@ -36,7 +36,7 @@ Error TemporalAA::init(const ConfigSet& config)
 
 Error TemporalAA::initInternal(const ConfigSet& config)
 {
-	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/TemporalAAResolve.ankiprog", m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/TemporalAAResolve.glslp", m_prog));
 
 	for(U i = 0; i < 2; ++i)
 	{

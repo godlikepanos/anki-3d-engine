@@ -5,8 +5,18 @@
 
 // Contains the complete code for a SSAO pass. It requires some variables to be defined before this file is included.
 
-#ifndef ANKI_SHADERS_SSAO_GLSL
-#define ANKI_SHADERS_SSAO_GLSL
+#pragma anki mutator USE_NORMAL 0 1
+#pragma anki mutator SOFT_BLUR 0 1
+
+#pragma anki input const U32 NOISE_MAP_SIZE
+#pragma anki input const UVec2 FB_SIZE
+#pragma anki input const F32 RADIUS
+#pragma anki input const F32 BIAS
+#pragma anki input const F32 STRENGTH
+#pragma anki input const U32 SAMPLE_COUNT
+#pragma anki input const UVec2 WORKGROUP_SIZE
+
+#pragma once
 
 #include <shaders/Common.glsl>
 #include <shaders/Pack.glsl>
@@ -236,5 +246,3 @@ void main(void)
 	out_color = ssao;
 #endif
 }
-
-#endif

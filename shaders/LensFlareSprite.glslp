@@ -1,0 +1,57 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki input const U32 MAX_SPRITES
+
+#pragma anki start vert
+#include <shaders/Common.glsl>
+#include <shaders/glsl_cpp_common/LensFlareSprite.h>
+
+// The block contains data for all flares
+layout(std140, ANKI_UBO_BINDING(0, 0)) uniform _blk
+{
+	LensFlareSprite u_sprites[MAX_SPRITES];
+};
+
+layout(location = 0) out Vec3 out_uv;
+layout(location = 1) flat out Vec4 out_color;
+
+out gl_PerVertex
+{
+	Vec4 gl_Position;
+};
+
+void main()
+{
+	Vec2 position = UV_TO_NDC(Vec2(gl_VertexID & 1, gl_VertexID >> 1));
+
+	LensFlareSprite sprite = u_sprites[gl_InstanceID];
+
+	// Write tex coords of the 2D array texture
+	out_uv = Vec3((position * 0.5) + 0.5, sprite.m_depthPad3.x);
+
+	Vec4 posScale = sprite.m_posScale;
+	gl_Position = Vec4(position * posScale.zw + posScale.xy, 0.0, 1.0);
+
+	out_color = sprite.m_color;
+}
+#pragma anki end
+
+#pragma anki start frag
+#include <shaders/Common.glsl>
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2DArray u_tex;
+
+layout(location = 0) in Vec3 in_uv;
+layout(location = 1) flat in Vec4 in_color;
+
+layout(location = 0) out Vec4 out_color;
+
+void main()
+{
+	Vec4 col = texture(u_tex, in_uv);
+	out_color = col * in_color;
+}
+#pragma anki end

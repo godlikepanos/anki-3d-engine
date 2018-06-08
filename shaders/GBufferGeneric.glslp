@@ -1,0 +1,104 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator instanced INSTANCE_COUNT 1 2 4 8 16 32 64
+#pragma anki mutator LOD 0 1 2
+#pragma anki mutator PASS 0 1 2
+#pragma anki mutator DIFFUSE_TEX 0 1
+#pragma anki mutator SPECULAR_TEX 0 1
+#pragma anki mutator ROUGHNESS_TEX 0 1
+#pragma anki mutator METAL_TEX 0 1
+#pragma anki mutator NORMAL_TEX 0 1
+#pragma anki mutator PARALLAX 0 1
+#pragma anki mutator EMISSIVE_TEX 0 1
+#pragma anki mutator BONES 0 1
+
+#pragma anki input instanced Mat4 mvp
+#pragma anki input instanced Mat3 rotationMat "PASS == 0"
+#pragma anki input instanced Mat4 modelViewMat "PASS == 0 && PARALLAX == 1"
+
+#pragma anki input const Vec3 diffColor "DIFFUSE_TEX == 0 && PASS == 0"
+#pragma anki input const Vec3 specColor "SPECULAR_TEX == 0 && PASS == 0"
+#pragma anki input const F32 roughness "ROUGHNESS_TEX == 0 && PASS == 0"
+#pragma anki input const F32 metallic "METAL_TEX == 0 && PASS == 0"
+#pragma anki input const Vec3 emission "EMISSIVE_TEX == 0 && PASS == 0"
+#pragma anki input const F32 heightMapScale "PARALLAX == 1 && PASS == 0 && LOD == 0"
+#pragma anki input const F32 subsurface "PASS == 0"
+#pragma anki input sampler2D diffTex "DIFFUSE_TEX == 1 && PASS == 0"
+#pragma anki input sampler2D specTex "SPECULAR_TEX == 1 && PASS == 0"
+#pragma anki input sampler2D roughnessTex "ROUGHNESS_TEX == 1 && PASS == 0"
+#pragma anki input sampler2D metalTex "METAL_TEX == 1 && PASS == 0"
+#pragma anki input sampler2D normalTex "NORMAL_TEX == 1 && PASS == 0 && LOD < 2"
+#pragma anki input sampler2D heightTex "PARALLAX == 1 && PASS == 0 && LOD == 0"
+#pragma anki input sampler2D emissiveTex "EMISSIVE_TEX == 1 && PASS == 0"
+
+#pragma anki start vert
+#include <shaders/GBufferCommonVert.glsl>
+
+void main() 
+{
+#if BONES
+	skinning();
+#endif
+
+#if PASS == PASS_GB_FS
+	positionUvNormalTangent(mvp, rotationMat);
+	
+#	if PARALLAX
+	parallax(modelViewMat);
+#	endif
+#else
+	gl_Position = mvp * Vec4(g_position, 1.0);
+#endif
+}
+#pragma anki end
+
+#pragma anki start frag
+#include <shaders/GBufferCommonFrag.glsl>
+
+void main()
+{
+#if PASS == PASS_GB_FS
+#	if heightTex_DEFINED
+		Vec2 uv =  computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
+#	else
+		Vec2 uv = in_uv;
+#	endif
+
+#	if diffTex_DEFINED
+		Vec3 diffColor = texture(diffTex, uv).rgb;
+#	endif
+
+#	if specTex_DEFINED
+		Vec3 specColor = texture(specTex, uv).rgb;
+#	endif
+
+#	if roughnessTex_DEFINED
+		F32 roughness = texture(roughnessTex, uv).r;
+#	endif
+
+#	if metalTex_DEFINED
+		F32 metallic = texture(metalTex, uv).r;
+#	endif
+
+#	if normalTex_DEFINED
+		Vec3 normal = readNormalFromTexture(normalTex, uv);
+#	else
+		Vec3 normal = normalize(in_normal);
+#	endif
+
+#	if emissiveTex_DEFINED
+		Vec3 emission = texture(emissiveTex, uv).rgb;
+#	endif
+
+	writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic);
+#elif PASS == PASS_EZ
+	out_msRt0 = Vec4(0.0);
+	out_msRt1 = Vec4(0.0);
+	out_msRt2 = Vec4(0.0);
+#endif
+}
+
+#pragma anki end

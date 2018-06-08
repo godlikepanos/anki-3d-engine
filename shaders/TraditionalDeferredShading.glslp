@@ -1,0 +1,115 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Classic deferred lighting shader
+
+#pragma anki mutator LIGHT_TYPE 0 1
+
+// VERT
+#pragma anki start vert
+#include <shaders/Common.glsl>
+
+layout(location = 0) in Vec3 in_position;
+
+out gl_PerVertex
+{
+	Vec4 gl_Position;
+};
+
+layout(ANKI_UBO_BINDING(0, 0), row_major) uniform u0_
+{
+	Mat4 u_mvp;
+};
+
+void main()
+{
+	gl_Position = u_mvp * Vec4(in_position, 1.0);
+}
+#pragma anki end
+
+// FRAG
+#pragma anki start frag
+#include <shaders/Pack.glsl>
+#include <shaders/LightFunctions.glsl>
+#include <shaders/glsl_cpp_common/TraditionalDeferredShading.h>
+
+#define POINT_LIGHT_TYPE 0
+#define SPOT_LIGHT_TYPE 1
+
+layout(location = 0) out Vec3 out_color;
+
+layout(ANKI_TEX_BINDING(GBUFFER_RT0_BINDING.x, GBUFFER_RT0_BINDING.y)) uniform sampler2D u_msRt0;
+layout(ANKI_TEX_BINDING(GBUFFER_RT1_BINDING.x, GBUFFER_RT1_BINDING.y)) uniform sampler2D u_msRt1;
+layout(ANKI_TEX_BINDING(GBUFFER_RT2_BINDING.x, GBUFFER_RT2_BINDING.y)) uniform sampler2D u_msRt2;
+layout(ANKI_TEX_BINDING(GBUFFER_DEPTH_BINDING.x, GBUFFER_DEPTH_BINDING.y)) uniform sampler2D u_msDepthRt;
+
+layout(ANKI_UBO_BINDING(0, 1), row_major) uniform u1_
+{
+#if LIGHT_TYPE == POINT_LIGHT_TYPE
+	DeferredPointLightUniforms u_unis;
+#elif LIGHT_TYPE == SPOT_LIGHT_TYPE
+	DeferredSpotLightUniforms u_unis;
+#else
+#	error See file
+#endif
+};
+
+#if LIGHT_TYPE == POINT_LIGHT_TYPE
+#	define u_ldiff u_unis.m_diffuseColorPad1.xyz
+#else
+#	define u_ldiff u_unis.m_diffuseColorOuterCos.xyz
+#	define u_lightDir u_unis.m_lightDirInnerCos.xyz
+#	define u_outerCos u_unis.m_diffuseColorOuterCos.w
+#	define u_innerCos u_unis.m_lightDirInnerCos.w
+#endif
+
+#define u_pos u_unis.m_posRadius.xyz
+#define u_radius u_unis.m_posRadius.w
+#define u_camPos u_unis.m_camPosPad1.xyz
+#define u_inputTexUvScaleAndOffset u_unis.m_inputTexUvScaleAndOffset
+#define u_invViewProjMat u_unis.m_invViewProjMat
+#define u_fbSize u_unis.m_fbSizePad2.xy
+
+void main()
+{
+	// Compute UV coordinates
+	Vec2 uv = Vec2(gl_FragCoord.xy) / u_fbSize;
+	Vec2 uvToRead = fma(uv, u_inputTexUvScaleAndOffset.xy, u_inputTexUvScaleAndOffset.zw);
+
+	// Do manual depth test
+	F32 depth = texture(u_msDepthRt, uvToRead).r;
+	if(gl_FragCoord.z < depth)
+	{
+		discard;
+	}
+
+	// Decode and process gbuffer
+	GbufferInfo gbuffer;
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, uvToRead, 0.0, gbuffer);
+
+	Vec4 worldPos4 = u_invViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
+	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	// Calculate the light color
+	Vec3 viewDir = normalize(u_camPos - worldPos);
+	Vec3 frag2Light = u_pos - worldPos;
+	Vec3 l = normalize(frag2Light);
+	F32 nol = max(0.0, dot(gbuffer.m_normal, l));
+
+	Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
+	Vec3 diffC = diffuseLambert(gbuffer.m_diffuse);
+
+	F32 att = computeAttenuationFactor(u_radius, frag2Light);
+	F32 lambert = nol;
+
+#if LIGHT_TYPE == POINT_LIGHT_TYPE
+	out_color = (specC + diffC) * u_ldiff * (att * max(lambert, gbuffer.m_subsurface));
+#else
+	F32 spot = computeSpotFactor(l, u_outerCos, u_innerCos, u_lightDir);
+	out_color = (diffC + specC) * u_ldiff * (att * spot * max(lambert, gbuffer.m_subsurface));
+#endif
+}
+
+#pragma anki end

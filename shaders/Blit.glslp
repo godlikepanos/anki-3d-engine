@@ -1,0 +1,22 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start vert
+#include <shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <shaders/Common.glsl>
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_col;
+
+void main()
+{
+	out_col = textureLod(u_tex, in_uv, 0.0).rgb;
+}
+#pragma anki end
