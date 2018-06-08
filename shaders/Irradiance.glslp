@@ -45,7 +45,7 @@ void main()
 
 				Vec3 r = getCubemapDirection(ndc, f);
 				F32 lambert = dot(r, ri);
-				
+
 				if(lambert > 0.0)
 				{
 					Vec3 col = textureLod(u_envTex, Vec4(r, texArrIdx), ENV_TEX_MIP).rgb;

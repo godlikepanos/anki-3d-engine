@@ -37,7 +37,7 @@
 #pragma anki start vert
 #include <shaders/GBufferCommonVert.glsl>
 
-void main() 
+void main()
 {
 #if BONES
 	skinning();
@@ -45,7 +45,7 @@ void main()
 
 #if PASS == PASS_GB_FS
 	positionUvNormalTangent(mvp, rotationMat);
-	
+
 #	if PARALLAX
 	parallax(modelViewMat);
 #	endif
@@ -62,35 +62,35 @@ void main()
 {
 #if PASS == PASS_GB_FS
 #	if heightTex_DEFINED
-		Vec2 uv =  computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
+	Vec2 uv = computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
 #	else
-		Vec2 uv = in_uv;
+	Vec2 uv = in_uv;
 #	endif
 
 #	if diffTex_DEFINED
-		Vec3 diffColor = texture(diffTex, uv).rgb;
+	Vec3 diffColor = texture(diffTex, uv).rgb;
 #	endif
 
 #	if specTex_DEFINED
-		Vec3 specColor = texture(specTex, uv).rgb;
+	Vec3 specColor = texture(specTex, uv).rgb;
 #	endif
 
 #	if roughnessTex_DEFINED
-		F32 roughness = texture(roughnessTex, uv).r;
+	F32 roughness = texture(roughnessTex, uv).r;
 #	endif
 
 #	if metalTex_DEFINED
-		F32 metallic = texture(metalTex, uv).r;
+	F32 metallic = texture(metalTex, uv).r;
 #	endif
 
 #	if normalTex_DEFINED
-		Vec3 normal = readNormalFromTexture(normalTex, uv);
+	Vec3 normal = readNormalFromTexture(normalTex, uv);
 #	else
-		Vec3 normal = normalize(in_normal);
+	Vec3 normal = normalize(in_normal);
 #	endif
 
 #	if emissiveTex_DEFINED
-		Vec3 emission = texture(emissiveTex, uv).rgb;
+	Vec3 emission = texture(emissiveTex, uv).rgb;
 #	endif
 
 	writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic);

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_FORWARD_SHADING_COMMON_FRAG_GLSL
-#define ANKI_SHADERS_FORWARD_SHADING_COMMON_FRAG_GLSL
+#pragma once
 
 // Common code for all fragment shaders of BS
 #include <shaders/Common.glsl>
@@ -134,5 +133,3 @@ void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpac
 
 	writeGBuffer(Vec4(color, zFeatherFactor * fogAlphaScale));
 }
-
-#endif

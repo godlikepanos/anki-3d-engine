@@ -43,10 +43,10 @@ void main()
 	}
 	memoryBarrierShared();
 	barrier();
-	
+
 	// Project the flare
 	U32 flareIdx = gl_WorkGroupID.x;
-	Vec4 posClip =  u_mvp * u_flarePositions[flareIdx];
+	Vec4 posClip = u_mvp * u_flarePositions[flareIdx];
 	Vec3 posNdc = posClip.xyz / posClip.w;
 	F32 depth = posNdc.z;
 

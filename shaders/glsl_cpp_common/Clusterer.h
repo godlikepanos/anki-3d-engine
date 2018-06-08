@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_GLSL_CPP_COMMON_CLUSTERER_H
-#define ANKI_SHADERS_GLSL_CPP_COMMON_CLUSTERER_H
+#pragma once
 
 #include <shaders/glsl_cpp_common/Common.h>
 
@@ -46,5 +45,3 @@ ANKI_SHADER_FUNC_INLINE F32 computeClusterFar(ClustererMagicValues magic, U32 k)
 }
 
 ANKI_END_NAMESPACE
-
-#endif

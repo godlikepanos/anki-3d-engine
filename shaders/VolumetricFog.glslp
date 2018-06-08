@@ -65,11 +65,8 @@ Vec3 computeLightColor(Vec3 fragPos, U32 plightCount, U32 plightIdx, U32 slightC
 #if ENABLE_SHADOWS
 		if(light.m_diffuseColorTileSize.w >= 0.0)
 		{
-			factor *= computeShadowFactorOmni(frag2Light, 
-				light.m_radiusPad1.x, 
-				light.m_atlasTiles,
-				light.m_diffuseColorTileSize.w,
-				u_shadowTex);
+			factor *= computeShadowFactorOmni(
+				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
 		}
 #endif
 
@@ -85,15 +82,14 @@ Vec3 computeLightColor(Vec3 fragPos, U32 plightCount, U32 plightIdx, U32 slightC
 
 		Vec3 l = normalize(frag2Light);
 
-		factor *= computeSpotFactor(
-			l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+		factor *=
+			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
 
 #if ENABLE_SHADOWS
 		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx >= 0.0)
 		{
-			factor *= computeShadowFactorSpot(
-				light.m_texProjectionMat, fragPos, light.m_lightDirRadius.w, u_shadowTex);
+			factor *= computeShadowFactorSpot(light.m_texProjectionMat, fragPos, light.m_lightDirRadius.w, u_shadowTex);
 		}
 #endif
 
@@ -196,7 +192,7 @@ void main()
 	// Read history
 	F32 historyFeedback;
 	Vec3 history = readHistory(ndc, historyFeedback);
-	
+
 	// Fix ghosting
 	history = max(history, newCol);
 

@@ -71,4 +71,3 @@ void main()
 	out_color += sampleLinearDepth(in_uv + Vec2(-uvOffset.x, -uvOffset.y)) * BOX_WEIGHTS[2u];
 }
 #pragma anki end
-

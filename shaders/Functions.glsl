@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_FUNCTIONS_GLSL
-#define ANKI_SHADERS_FUNCTIONS_GLSL
+#pragma once
 
 #include <shaders/Common.glsl>
 
@@ -377,5 +376,3 @@ F32 rayAabbIntersectionInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aa
 	F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
 	return distToIntersect;
 }
-
-#endif

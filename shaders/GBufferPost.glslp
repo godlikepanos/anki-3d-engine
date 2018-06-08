@@ -76,7 +76,7 @@ void main()
 	U32 idxOffset;
 	{
 		U32 k = computeClusterK(u_clustererMagic, worldPos);
-		U32 clusterIdx = 
+		U32 clusterIdx =
 			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
 
 		idxOffset = u_clusters[clusterIdx];
@@ -105,7 +105,7 @@ void main()
 
 		// Clamp the tex coords. Expect a border in the texture atlas
 		texCoords2 = saturate(texCoords2);
-	
+
 		// Read diffuse
 		Vec2 diffUv = mad(texCoords2, decal.m_diffUv.zw, decal.m_diffUv.xy);
 		Vec4 decalDiff = texture(u_diffDecalTex, diffUv);

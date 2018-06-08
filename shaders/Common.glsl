@@ -5,8 +5,7 @@
 
 // This file contains common code for all shaders. It's optional but it's recomended to include it
 
-#ifndef ANKI_SHADERS_COMMON_GLSL
-#define ANKI_SHADERS_COMMON_GLSL
+#pragma once
 
 // WORKAROUNDS
 #if defined(ANKI_VENDOR_NVIDIA)
@@ -73,5 +72,3 @@ const U32 UBO_MAX_SIZE = 16384u;
 #endif
 
 #define CALC_BITANGENT_IN_VERT 1
-
-#endif

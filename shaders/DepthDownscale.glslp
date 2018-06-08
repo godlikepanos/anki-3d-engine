@@ -6,7 +6,7 @@
 #pragma anki mutator TYPE 0 1 // 0: write to depth&color, 1: write to depth
 #pragma anki mutator SAMPLE_RESOLVE_TYPE 0 1 2 // 0: average, 1: min, 2: max
 #pragma anki mutator COPY_TO_CLIENT 0 1
-	
+
 #pragma anki start vert
 #include <shaders/QuadVert.glsl>
 #pragma anki end

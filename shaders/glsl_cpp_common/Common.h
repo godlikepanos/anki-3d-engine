@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_GLSL_CPP_COMMON_COMMON_H
-#define ANKI_SHADERS_GLSL_CPP_COMMON_COMMON_H
+#pragma once
 
 //
 // Macros & functions
@@ -54,5 +53,3 @@ const U32 SIZEOF_VEC4 = 4u * 4u;
 const U32 SIZEOF_MAT4 = 4u * SIZEOF_VEC4;
 
 ANKI_END_NAMESPACE
-
-#endif

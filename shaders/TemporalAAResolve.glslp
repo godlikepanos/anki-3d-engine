@@ -34,17 +34,17 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 };
 
 #if TONEMAP_FIX
-#define TONEMAPPING_SET 0
-#define TONEMAPPING_BINDING 1
-#include <shaders/TonemappingResources.glsl>
+#	define TONEMAPPING_SET 0
+#	define TONEMAPPING_BINDING 1
+#	include <shaders/TonemappingResources.glsl>
 #endif
 
 #if YCBCR
-#define sample(s, uv) rgbToYCbCr(textureLod(s, uv, 0.0).rgb)
-#define sampleOffset(s, uv, x, y) rgbToYCbCr(textureLodOffset(s, uv, 0.0, IVec2(x, y)).rgb)
+#	define sample(s, uv) rgbToYCbCr(textureLod(s, uv, 0.0).rgb)
+#	define sampleOffset(s, uv, x, y) rgbToYCbCr(textureLodOffset(s, uv, 0.0, IVec2(x, y)).rgb)
 #else
-#define sample(s, uv) textureLod(s, uv, 0.0).rgb
-#define sampleOffset(s, uv, x, y) textureLodOffset(s, uv, 0.0, IVec2(x, y)).rgb
+#	define sample(s, uv) textureLod(s, uv, 0.0).rgb
+#	define sampleOffset(s, uv, x, y) textureLodOffset(s, uv, 0.0, IVec2(x, y)).rgb
 #endif
 
 Vec3 sharpen()
@@ -106,7 +106,7 @@ void main()
 #elif TONEMAP_FIX
 	F32 lum0 = computeLuminance(tonemap(crntCol, u_exposureThreshold0));
 	F32 lum1 = computeLuminance(tonemap(historyCol, u_exposureThreshold0));
-	//F32 maxLum = computeLuminance(tonemap(boxMax, u_exposureThreshold0));
+	// F32 maxLum = computeLuminance(tonemap(boxMax, u_exposureThreshold0));
 	F32 maxLum = 1.0;
 #else
 	F32 lum0 = computeLuminance(crntCol);

@@ -48,7 +48,6 @@ Bool ShaderProgramResourceInputVariable::acceptAllMutations(
 		{
 			// The value is 1
 			varValues[varCount] = 1.0;
-
 		}
 
 		vars[varCount] = {mutator.getName().cstr(), &varValues[varCount], 0, 0};

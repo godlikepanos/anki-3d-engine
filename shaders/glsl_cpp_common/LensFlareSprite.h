@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_GLSL_CPP_COMMON_LENS_FLARE_SPRITE_H
-#define ANKI_SHADERS_GLSL_CPP_COMMON_LENS_FLARE_SPRITE_H
+#pragma once
 
 #include <shaders/glsl_cpp_common/Common.h>
 
@@ -19,5 +18,3 @@ struct LensFlareSprite
 };
 
 ANKI_END_NAMESPACE
-
-#endif

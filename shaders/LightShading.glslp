@@ -78,7 +78,7 @@ void main()
 	U32 idxOffset;
 	{
 		U32 k = computeClusterK(u_clustererMagic, worldPos);
-		U32 clusterIdx = 
+		U32 clusterIdx =
 			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
 
 		idxOffset = u_clusters[clusterIdx];
@@ -111,11 +111,8 @@ void main()
 
 		ANKI_BRANCH if(light.m_diffuseColorTileSize.w >= 0.0)
 		{
-			F32 shadow = computeShadowFactorOmni(frag2Light, 
-				light.m_radiusPad1.x, 
-				light.m_atlasTiles, 
-				light.m_diffuseColorTileSize.w,
-				u_shadowTex);
+			F32 shadow = computeShadowFactorOmni(
+				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
 			lambert *= shadow;
 		}
 
@@ -131,18 +128,18 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		F32 spot = computeSpotFactor(
-			l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+		F32 spot =
+			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
 
 		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
 		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
 		{
-			F32 shadow = computeShadowFactorSpot(
-				light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
+			F32 shadow =
+				computeShadowFactorSpot(light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
 			lambert *= shadow;
 		}
 
-		out_color += 
+		out_color +=
 			(diffC + specC) * light.m_diffuseColorShadowmapId.rgb * (att * spot * max(gbuffer.m_subsurface, lambert));
 	}
 

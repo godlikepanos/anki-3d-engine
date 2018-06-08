@@ -176,8 +176,8 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 Error Indirect::initIrradianceToRefl(const ConfigSet& cfg)
 {
 	// Create program
-	ANKI_CHECK(m_r->getResourceManager().loadResource(
-		"shaders/ApplyIrradianceToReflection.glslp", m_irradianceToRefl.m_prog));
+	ANKI_CHECK(
+		m_r->getResourceManager().loadResource("shaders/ApplyIrradianceToReflection.glslp", m_irradianceToRefl.m_prog));
 
 	const ShaderProgramResourceVariant* variant;
 	m_irradianceToRefl.m_prog->getOrCreateVariant(variant);

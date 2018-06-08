@@ -5,7 +5,6 @@
 
 #pragma anki descriptor_set 1
 
-
 #pragma anki mutator ANIMATED_TEXTURE 0 1
 #pragma anki mutator LIGHT 0 1
 
@@ -28,7 +27,7 @@ layout(location = 0) flat out F32 out_alpha;
 layout(location = 1) out Vec2 out_uv;
 layout(location = 2) out Vec3 out_worldPos;
 
-void main() 
+void main()
 {
 	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1);
 
@@ -46,7 +45,7 @@ layout(location = 0) flat in F32 in_alpha;
 layout(location = 1) in Vec2 in_uv;
 layout(location = 2) in Vec3 in_worldPos;
 
-void main() 
+void main()
 {
 #if ANIMATED_TEXTURE == 1
 	Vec4 texCol = readAnimatedTextureRgba(diffuseMapArr, animationPeriod, in_uv, anki_u_time);
@@ -57,7 +56,7 @@ void main()
 #if LIGHT
 	texCol.rgb = computeLightColor(texCol.rgb, in_worldPos);
 #endif
-	
+
 	Vec4 colScale = colorScale;
 	colScale.a *= in_alpha;
 	particleAlpha(texCol, colScale, colorBias);

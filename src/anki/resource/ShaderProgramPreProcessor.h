@@ -192,7 +192,7 @@ private:
 		const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens);
-	
+
 	static Bool tokenIsComment(CString token)
 	{
 		return token.getLength() >= 2 && token[0] == '/' && (token[1] == '/' || token[1] == '*');

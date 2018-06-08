@@ -10,8 +10,7 @@
 // TEXTURE_SIZE
 // SAMPLE_COUNT (must be odd number)
 
-#ifndef ANKI_SHADERS_DEPTH_AWARE_BLUR_GLSL
-#define ANKI_SHADERS_DEPTH_AWARE_BLUR_GLSL
+#pragma once
 
 #include <shaders/Common.glsl>
 
@@ -138,5 +137,3 @@ void main()
 	out_color = color;
 #endif
 }
-
-#endif

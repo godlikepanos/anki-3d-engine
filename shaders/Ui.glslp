@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-
 #pragma anki mutator TEXTURE_TYPE 0 1 // 0: no tex, 1: rgba tex
 
 #pragma anki start vert

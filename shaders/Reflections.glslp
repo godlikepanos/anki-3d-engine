@@ -108,7 +108,7 @@ Vec4 doSslr(Vec3 r, Vec3 n, Vec3 viewPos, Vec2 uv, F32 depth, F32 roughness)
 	U32 j = gl_GlobalInvocationID.y & 1u;
 	const U32 STEPS_ARR[4] = U32[](6u, 25u, 13u, 18u);
 	U32 step = STEPS_ARR[l * 2u + j];
-	
+
 	// Iterate
 	Bool found = false;
 	Vec3 raySample;
@@ -141,7 +141,7 @@ Vec4 doSslr(Vec3 r, Vec3 n, Vec3 viewPos, Vec2 uv, F32 depth, F32 roughness)
 		}
 	}
 
-	//return Vec4(heatmap(F32(iterations) / F32(MAX_STEPS)), 1.0);
+	// return Vec4(heatmap(F32(iterations) / F32(MAX_STEPS)), 1.0);
 
 	if(found)
 	{
@@ -180,12 +180,12 @@ void readReflectionsAndIrradianceFromProbes(
 		// Compute blend weight
 		F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
 		totalBlendWeight += blendWeight;
-		
+
 		// Sample reflections
 		Vec3 cubeUv = intersectProbe(worldPos, reflDir, aabbMin, aabbMax, probeOrigin);
 		Vec3 c = textureLod(u_reflectionsTex, Vec4(cubeUv, cubemapIndex), reflLod).rgb;
 		specIndirect += c * blendWeight;
-		
+
 		// Sample irradiance
 		cubeUv = intersectProbe(worldPos, normal, aabbMin, aabbMax, probeOrigin);
 		c = textureLod(u_irradianceTex, Vec4(cubeUv, cubemapIndex), 0.0).rgb;
@@ -267,7 +267,7 @@ void main()
 		// Skip decals
 		U32 count = u_lightIndices[idxOffset++];
 		idxOffset += count;
-		
+
 		// Skip point lights
 		count = u_lightIndices[idxOffset++];
 		idxOffset += count;
@@ -305,7 +305,7 @@ void main()
 	Bool pickRightNeighbour = (fixedInvocationId.y & 1) == 0;
 #endif
 	I32 xOffset = (pickRightNeighbour) ? 1 : -1;
-	
+
 	readPixel.x = I32(gl_LocalInvocationID.x) + xOffset;
 	readPixel.x = clamp(readPixel.x, 0, I32(WORKGROUP_SIZE.x - 1));
 
