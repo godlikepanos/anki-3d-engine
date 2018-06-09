@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_GBUFFER_COMMON_VERT_GLSL
-#define ANKI_SHADERS_GBUFFER_COMMON_VERT_GLSL
+#pragma once
 
 #include <shaders/Common.glsl>
 
@@ -131,6 +130,4 @@ void skinning()
 	g_normal = normal;
 #	endif
 }
-#endif
-
 #endif

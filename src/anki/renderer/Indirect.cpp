@@ -120,7 +120,7 @@ Error Indirect::initLightShading(const ConfigSet& config)
 			m_lightShading.m_tileSize,
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
-				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::GENERATE_MIPMAPS,
+				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::GENERATE_MIPMAPS,
 			"GI refl");
 		texinit.m_mipmapCount = m_lightShading.m_mipCount;
 		texinit.m_type = TextureType::CUBE_ARRAY;

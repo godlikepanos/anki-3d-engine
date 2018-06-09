@@ -169,7 +169,7 @@ Error ShaderProgramPreprocessor::parse()
 			m_uboStructLines.pushBackSprintf("ANKI_PUSH_CONSTANTS(GenUniforms_, gen_unis_);");
 			m_uboStructLines.pushBack("#else");
 			m_uboStructLines.pushBack(
-				"layout(ANKI_UBO_BINDING(GEN_SET_, 0)) uniform genubo_ {GenUniforms_ gen_unis_;};");
+				"layout(ANKI_UBO_BINDING(GEN_SET_, 0), row_major) uniform genubo_ {GenUniforms_ gen_unis_;};");
 			m_uboStructLines.pushBack("#endif\n");
 
 			StringAuto ubo(m_alloc);
@@ -609,7 +609,7 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 		if(preproc)
 		{
 			m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
-			m_globalsLines.pushBackSprintf("#define %s_DEFINED", input.m_name.cstr());
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
 		}
 
 		m_globalsLines.pushBackSprintf("const %s %s = %s(%s_CONSTVAL);",
@@ -620,6 +620,8 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 
 		if(preproc)
 		{
+			m_globalsLines.pushBack("#else");
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", input.m_name.cstr());
 			m_globalsLines.pushBack("#endif");
 		}
 	}
@@ -636,7 +638,7 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 		if(preproc)
 		{
 			m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
-			m_globalsLines.pushBackSprintf("#define %s_DEFINED", input.m_name.cstr());
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
 		}
 
 		m_globalsLines.pushBackSprintf("layout(ANKI_TEX_BINDING(GEN_SET_, %s_TEXUNIT)) uniform %s %s;",
@@ -646,6 +648,8 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 
 		if(preproc)
 		{
+			m_globalsLines.pushBack("#else");
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", input.m_name.cstr());
 			m_globalsLines.pushBack("#endif");
 		}
 	}
@@ -660,7 +664,7 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 		{
 			m_uboStructLines.pushBackSprintf("#if %s", preproc.cstr());
 			m_globalsLines.pushBackSprintf("#if %s", preproc.cstr());
-			m_globalsLines.pushBackSprintf("#define %s_DEFINED", input.m_name.cstr());
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
 		}
 
 		if(input.m_instanced)
@@ -689,6 +693,9 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 		if(preproc)
 		{
 			m_uboStructLines.pushBack("#endif");
+
+			m_globalsLines.pushBack("#else");
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", name);
 			m_globalsLines.pushBack("#endif");
 		}
 	}
