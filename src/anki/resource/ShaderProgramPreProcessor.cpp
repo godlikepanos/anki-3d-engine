@@ -120,6 +120,11 @@ Error ShaderProgramPreprocessor::parse()
 		{
 			ANKI_PP_ERROR("Can't combine compute shader with other types of shaders");
 		}
+
+		if(m_instancedMutatorIdx != MAX_U32)
+		{
+			ANKI_PP_ERROR("Can't have instanced mutators in compute programs");
+		}
 	}
 	else
 	{
@@ -666,10 +671,12 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 			m_uboStructLines.pushBackSprintf("%s gen_uni_%s;", type, name);
 			m_uboStructLines.pushBack("#endif");
 
+			m_globalsLines.pushBack("#ifdef ANKI_VERTEX_SHADER");
 			m_globalsLines.pushBack("#if GEN_INSTANCE_COUNT_ > 1");
 			m_globalsLines.pushBackSprintf("%s %s = gen_unis_.gen_uni_%s[gl_InstanceID];", type, name, name);
 			m_globalsLines.pushBack("#else");
 			m_globalsLines.pushBackSprintf("%s %s = gen_unis_.gen_uni_%s;", type, name, name);
+			m_globalsLines.pushBack("#endif");
 			m_globalsLines.pushBack("#endif");
 		}
 		else

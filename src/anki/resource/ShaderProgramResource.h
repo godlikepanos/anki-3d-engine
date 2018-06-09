@@ -10,6 +10,9 @@
 #include <anki/Gr.h>
 #include <anki/util/BitSet.h>
 
+// Forward
+struct te_variable;
+
 namespace anki
 {
 
@@ -99,6 +102,8 @@ public:
 		return m_const;
 	}
 
+	/// Pass a subset of the mutators and check if this input variable is active for this subset. If the mutators are
+	/// not present in mutations and they are part of the expression then they are not taken into account
 	Bool acceptAllMutations(ConstWeakArray<ShaderProgramResourceMutation> mutations) const;
 
 private:
@@ -120,6 +125,14 @@ private:
 	{
 		return !m_const && !isTexture();
 	}
+
+	Bool evalPreproc(ConstWeakArray<te_variable> vars) const;
+
+	Bool recusiveSpin(U32 crntMissingMutatorIdx,
+		WeakArray<const ShaderProgramResourceMutator*> missingMutators,
+		WeakArray<te_variable> vars,
+		WeakArray<F64> varValues,
+		U32 varIdxOffset) const;
 };
 
 /// Shader program resource variant.

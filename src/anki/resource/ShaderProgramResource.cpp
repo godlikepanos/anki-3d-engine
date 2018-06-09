@@ -12,6 +12,57 @@
 namespace anki
 {
 
+Bool ShaderProgramResourceInputVariable::evalPreproc(ConstWeakArray<te_variable> vars) const
+{
+	ANKI_ASSERT(vars.getSize() == m_program->getMutators().getSize());
+
+	int err;
+	te_expr* n = te_compile(m_preprocExpr.cstr(), &vars[0], vars.getSize(), &err);
+
+	if(!n)
+	{
+		ANKI_RESOURCE_LOGF("Error evaluating expression: %s", m_preprocExpr.cstr());
+	}
+
+	F64 evalOut = te_eval(n);
+	if(evalOut != 0.0 && evalOut != 1.0)
+	{
+		ANKI_RESOURCE_LOGF("Wrong result of the expression: %s", m_preprocExpr.cstr());
+	}
+
+	return evalOut != 0.0;
+}
+
+Bool ShaderProgramResourceInputVariable::recusiveSpin(U32 crntMissingMutatorIdx,
+	WeakArray<const ShaderProgramResourceMutator*> missingMutators,
+	WeakArray<te_variable> vars,
+	WeakArray<F64> varValues,
+	U32 varIdxOffset) const
+{
+	for(ShaderProgramResourceMutatorValue val : missingMutators[crntMissingMutatorIdx]->getValues())
+	{
+		const U valIdx = varIdxOffset + crntMissingMutatorIdx;
+		varValues[valIdx] = val;
+		vars[valIdx] = {missingMutators[crntMissingMutatorIdx]->getName().cstr(), &varValues[valIdx], 0, 0};
+
+		if(crntMissingMutatorIdx == missingMutators.getSize() - 1)
+		{
+			// Last missing mutator will eval
+			const Bool accepted = evalPreproc(vars);
+			if(accepted)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return recusiveSpin(crntMissingMutatorIdx + 1, missingMutators, vars, varValues, varIdxOffset);
+		}
+	}
+
+	return false;
+}
+
 Bool ShaderProgramResourceInputVariable::acceptAllMutations(
 	ConstWeakArray<ShaderProgramResourceMutation> mutations) const
 {
@@ -21,11 +72,17 @@ Bool ShaderProgramResourceInputVariable::acceptAllMutations(
 		return true;
 	}
 
-	Array<te_variable, 16> vars;
-	Array<F64, vars.getSize()> varValues;
+	static const U MAX_MUTATORS = 64;
+
+	Array<const ShaderProgramResourceMutator*, MAX_MUTATORS> missingMutators;
+	U missingMutatorCount = 0;
+
+	Array<te_variable, MAX_MUTATORS> vars;
+	Array<F64, MAX_MUTATORS> varValues;
 	U varCount = 0;
 
-	// Iterate all program mutators
+	// - Find the mutators that don't appear in "mutations"
+	// - Fill the vars with the known mutators
 	for(const ShaderProgramResourceMutator& mutator : m_program->getMutators())
 	{
 		const ShaderProgramResourceMutation* foundMutation = nullptr;
@@ -37,38 +94,44 @@ Bool ShaderProgramResourceInputVariable::acceptAllMutations(
 				foundMutation = &mutation;
 				break;
 			}
+			else
+			{
+				ANKI_ASSERT(mutation.m_mutator->getName() != mutator.getName());
+			}
 		}
 
 		if(foundMutation)
 		{
 			// Take the value from the mutation
 			varValues[varCount] = foundMutation->m_value;
+			vars[varCount] = {mutator.getName().cstr(), &varValues[varCount], 0, 0};
+			++varCount;
 		}
 		else
 		{
-			// The value is 1
-			varValues[varCount] = 1.0;
+			missingMutators[missingMutatorCount++] = &mutator;
 		}
-
-		vars[varCount] = {mutator.getName().cstr(), &varValues[varCount], 0, 0};
-		++varCount;
 	}
+	ANKI_ASSERT(missingMutatorCount == m_program->getMutators().getSize() - varCount);
 
-	int err;
-	te_expr* n = te_compile(m_preprocExpr.cstr(), &vars[0], varCount, &err);
-
-	if(!n)
+	// Eval the expression
+	if(missingMutatorCount == 0)
 	{
-		ANKI_RESOURCE_LOGF("Error evaluating expression: %s", m_preprocExpr.cstr());
+		ANKI_ASSERT(varCount == m_program->getMutators().getSize());
+		return evalPreproc(ConstWeakArray<te_variable>(&vars[0], varCount));
 	}
-
-	F64 evalOut = te_eval(n);
-	if(evalOut != 0.0 || evalOut != 1.0)
+	else
 	{
-		ANKI_RESOURCE_LOGF("Error evaluating expression: %s", m_preprocExpr.cstr());
+		// Spin
+		return recusiveSpin(0,
+			WeakArray<const ShaderProgramResourceMutator*>(&missingMutators[0], missingMutatorCount),
+			WeakArray<te_variable>(&vars[0], m_program->getMutators().getSize()),
+			WeakArray<F64>(&varValues[0], m_program->getMutators().getSize()),
+			varCount);
 	}
 
-	return evalOut != 0.0;
+	ANKI_ASSERT(0 && "Shouldn't reach that");
+	return false;
 }
 
 ShaderProgramResource::ShaderProgramResource(ResourceManager* manager)

@@ -99,7 +99,10 @@ private:
 	Bool8 m_instanced = false;
 };
 
-/// XXX
+/// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
+/// in the shader programs.
+/// 
+/// It supports the following expressions
 /// #include {<> | ""}
 /// #pragma once
 /// #pragma anki mutator [instanced] NAME VALUE0 [VALUE1 [VALUE2] ...]
