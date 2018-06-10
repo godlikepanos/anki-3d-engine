@@ -4,143 +4,134 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/resource/ShaderProgramResource.h>
-#include <anki/misc/Xml.h>
-#include <anki/resource/ShaderLoader.h>
 #include <anki/resource/RenderingKey.h>
+#include <anki/resource/ResourceManager.h>
 #include <anki/util/Filesystem.h>
+#include <tinyexpr.h>
 
 namespace anki
 {
 
-static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, ShaderVariableDataType& out)
+Bool ShaderProgramResourceInputVariable::evalPreproc(ConstWeakArray<te_variable> vars) const
 {
-	Error err = Error::NONE;
+	ANKI_ASSERT(vars.getSize() == m_program->getMutators().getSize());
 
-	if(str == "I32")
+	int err;
+	te_expr* n = te_compile(m_preprocExpr.cstr(), &vars[0], vars.getSize(), &err);
+
+	if(!n)
 	{
-		out = ShaderVariableDataType::INT;
-	}
-	else if(str == "IVec2")
-	{
-		out = ShaderVariableDataType::IVEC2;
-	}
-	else if(str == "IVec3")
-	{
-		out = ShaderVariableDataType::IVEC3;
-	}
-	else if(str == "IVec4")
-	{
-		out = ShaderVariableDataType::IVEC4;
-	}
-	else if(str == "U32")
-	{
-		out = ShaderVariableDataType::UINT;
-	}
-	else if(str == "UVec2")
-	{
-		out = ShaderVariableDataType::UVEC2;
-	}
-	else if(str == "UVec3")
-	{
-		out = ShaderVariableDataType::UVEC3;
-	}
-	else if(str == "UVec4")
-	{
-		out = ShaderVariableDataType::UVEC4;
-	}
-	else if(str == "F32")
-	{
-		out = ShaderVariableDataType::FLOAT;
-	}
-	else if(str == "Vec2")
-	{
-		out = ShaderVariableDataType::VEC2;
-	}
-	else if(str == "Vec3")
-	{
-		out = ShaderVariableDataType::VEC3;
-	}
-	else if(str == "Vec4")
-	{
-		out = ShaderVariableDataType::VEC4;
-	}
-	else if(str == "Mat3")
-	{
-		out = ShaderVariableDataType::MAT3;
-	}
-	else if(str == "Mat4")
-	{
-		out = ShaderVariableDataType::MAT4;
-	}
-	else if(str == "sampler2D")
-	{
-		out = ShaderVariableDataType::SAMPLER_2D;
-	}
-	else if(str == "sampler2DArray")
-	{
-		out = ShaderVariableDataType::SAMPLER_2D_ARRAY;
-	}
-	else if(str == "samplerCube")
-	{
-		out = ShaderVariableDataType::SAMPLER_CUBE;
-	}
-	else
-	{
-		ANKI_RESOURCE_LOGE("Incorrect variable type %s", &str[0]);
-		err = Error::USER_DATA;
+		ANKI_RESOURCE_LOGF("Error evaluating expression: %s", m_preprocExpr.cstr());
 	}
 
-	return err;
+	F64 evalOut = te_eval(n);
+	if(evalOut != 0.0 && evalOut != 1.0)
+	{
+		ANKI_RESOURCE_LOGF("Wrong result of the expression: %s", m_preprocExpr.cstr());
+	}
+
+	return evalOut != 0.0;
 }
 
-/// Given a string return info about the shader.
-static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type, ShaderTypeBit& bit, U& idx)
+Bool ShaderProgramResourceInputVariable::recusiveSpin(U32 crntMissingMutatorIdx,
+	WeakArray<const ShaderProgramResourceMutator*> missingMutators,
+	WeakArray<te_variable> vars,
+	WeakArray<F64> varValues,
+	U32 varIdxOffset) const
 {
-	Error err = Error::NONE;
+	for(ShaderProgramResourceMutatorValue val : missingMutators[crntMissingMutatorIdx]->getValues())
+	{
+		const U valIdx = varIdxOffset + crntMissingMutatorIdx;
+		varValues[valIdx] = val;
+		vars[valIdx] = {missingMutators[crntMissingMutatorIdx]->getName().cstr(), &varValues[valIdx], 0, 0};
 
-	if(str == "vert")
-	{
-		type = ShaderType::VERTEX;
-		bit = ShaderTypeBit::VERTEX;
-		idx = 0;
+		if(crntMissingMutatorIdx == missingMutators.getSize() - 1)
+		{
+			// Last missing mutator will eval
+			const Bool accepted = evalPreproc(vars);
+			if(accepted)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return recusiveSpin(crntMissingMutatorIdx + 1, missingMutators, vars, varValues, varIdxOffset);
+		}
 	}
-	else if(str == "tesc")
+
+	return false;
+}
+
+Bool ShaderProgramResourceInputVariable::acceptAllMutations(
+	ConstWeakArray<ShaderProgramResourceMutation> mutations) const
+{
+	if(mutations.getSize() == 0 || !m_preprocExpr)
 	{
-		type = ShaderType::TESSELLATION_CONTROL;
-		bit = ShaderTypeBit::TESSELLATION_CONTROL;
-		idx = 1;
+		// Early exit
+		return true;
 	}
-	else if(str == "tese")
+
+	static const U MAX_MUTATORS = 64;
+
+	Array<const ShaderProgramResourceMutator*, MAX_MUTATORS> missingMutators;
+	U missingMutatorCount = 0;
+
+	Array<te_variable, MAX_MUTATORS> vars;
+	Array<F64, MAX_MUTATORS> varValues;
+	U varCount = 0;
+
+	// - Find the mutators that don't appear in "mutations"
+	// - Fill the vars with the known mutators
+	for(const ShaderProgramResourceMutator& mutator : m_program->getMutators())
 	{
-		type = ShaderType::TESSELLATION_EVALUATION;
-		bit = ShaderTypeBit::TESSELLATION_EVALUATION;
-		idx = 2;
+		const ShaderProgramResourceMutation* foundMutation = nullptr;
+		for(const ShaderProgramResourceMutation& mutation : mutations)
+		{
+			if(mutation.m_mutator == &mutator)
+			{
+				// Found the mutator
+				foundMutation = &mutation;
+				break;
+			}
+			else
+			{
+				ANKI_ASSERT(mutation.m_mutator->getName() != mutator.getName());
+			}
+		}
+
+		if(foundMutation)
+		{
+			// Take the value from the mutation
+			varValues[varCount] = foundMutation->m_value;
+			vars[varCount] = {mutator.getName().cstr(), &varValues[varCount], 0, 0};
+			++varCount;
+		}
+		else
+		{
+			missingMutators[missingMutatorCount++] = &mutator;
+		}
 	}
-	else if(str == "geom")
+	ANKI_ASSERT(missingMutatorCount == m_program->getMutators().getSize() - varCount);
+
+	// Eval the expression
+	if(missingMutatorCount == 0)
 	{
-		type = ShaderType::GEOMETRY;
-		bit = ShaderTypeBit::GEOMETRY;
-		idx = 3;
-	}
-	else if(str == "frag")
-	{
-		type = ShaderType::FRAGMENT;
-		bit = ShaderTypeBit::FRAGMENT;
-		idx = 4;
-	}
-	else if(str == "comp")
-	{
-		type = ShaderType::COMPUTE;
-		bit = ShaderTypeBit::COMPUTE;
-		idx = 5;
+		ANKI_ASSERT(varCount == m_program->getMutators().getSize());
+		return evalPreproc(ConstWeakArray<te_variable>(&vars[0], varCount));
 	}
 	else
 	{
-		ANKI_RESOURCE_LOGE("Incorrect type %s", (str) ? &str[0] : "<empty string>");
-		err = Error::USER_DATA;
+		// Spin
+		return recusiveSpin(0,
+			WeakArray<const ShaderProgramResourceMutator*>(&missingMutators[0], missingMutatorCount),
+			WeakArray<te_variable>(&vars[0], m_program->getMutators().getSize()),
+			WeakArray<F64>(&varValues[0], m_program->getMutators().getSize()),
+			varCount);
 	}
 
-	return err;
+	ANKI_ASSERT(0 && "Shouldn't reach that");
+	return false;
 }
 
 ShaderProgramResource::ShaderProgramResource(ResourceManager* manager)
@@ -163,15 +154,10 @@ ShaderProgramResource::~ShaderProgramResource()
 		alloc.deleteInstance(variant);
 	}
 
-	for(ShaderProgramResourceInputVariable& var : m_inputVars)
+	for(Input& var : m_inputVars)
 	{
-		for(auto& m : var.m_mutators)
-		{
-			m.m_values.destroy(alloc);
-		}
-
-		var.m_mutators.destroy(alloc);
 		var.m_name.destroy(alloc);
+		var.m_preprocExpr.destroy(alloc);
 	}
 	m_inputVars.destroy(alloc);
 
@@ -182,602 +168,75 @@ ShaderProgramResource::~ShaderProgramResource()
 	}
 	m_mutators.destroy(alloc);
 
-	for(String& s : m_sources)
-	{
-		s.destroy(alloc);
-	}
+	m_source.destroy(alloc);
 }
 
 Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 {
-	XmlElement el;
-	XmlDocument doc;
-	ANKI_CHECK(openFileParseXml(filename, doc));
+	// Preprocess
+	ShaderProgramPreprocessor pp(filename, &getManager().getFilesystem(), getTempAllocator());
+	ANKI_CHECK(pp.parse());
 
-	// <shaderProgram>
-	XmlElement rootEl;
-	ANKI_CHECK(doc.getChildElement("shaderProgram", rootEl));
+	// Create the source
+	m_source.create(getAllocator(), pp.getSource());
 
-	// <descriptorSet>
-	XmlElement dsetEl;
-	ANKI_CHECK(rootEl.getChildElementOptional("descriptorSet", dsetEl));
-	if(dsetEl)
+	// Create the mutators
+	U instancedMutatorIdx = MAX_U;
+	if(pp.getMutators().getSize())
 	{
-		ANKI_CHECK(dsetEl.getAttributeNumber("index", m_descriptorSet));
-		if(m_descriptorSet >= MAX_DESCRIPTOR_SETS)
+		m_mutators.create(getAllocator(), pp.getMutators().getSize());
+
+		for(U i = 0; i < m_mutators.getSize(); ++i)
 		{
-			ANKI_RESOURCE_LOGE("<descriptorSet> should be lower than %u", U(MAX_DESCRIPTOR_SETS - 1));
-			return Error::USER_DATA;
-		}
-	}
-	else
-	{
-		m_descriptorSet = 0;
-	}
+			Mutator& out = m_mutators[i];
+			const ShaderProgramPreprocessorMutator& in = pp.getMutators()[i];
 
-	// <mutators>
-	XmlElement mutatorsEl;
-	ANKI_CHECK(rootEl.getChildElementOptional("mutators", mutatorsEl));
-	if(mutatorsEl)
-	{
-		XmlElement mutatorEl;
-		ANKI_CHECK(mutatorsEl.getChildElement("mutator", mutatorEl));
-		U32 count = 0;
-		ANKI_CHECK(mutatorEl.getSiblingElementsCount(count));
-		++count;
-
-		m_mutators.create(getAllocator(), count);
-		count = 0;
-
-		do
-		{
-			// Get name
-			CString name;
-			ANKI_CHECK(mutatorEl.getAttributeText("name", name));
-			if(name.isEmpty())
+			out.m_name.create(getAllocator(), in.getName());
+			out.m_values.create(getAllocator(), in.getValues().getSize());
+			for(U j = 0; j < out.m_values.getSize(); ++j)
 			{
-				ANKI_RESOURCE_LOGE("Mutator name is empty");
-				return Error::USER_DATA;
+				out.m_values[j] = in.getValues()[j];
 			}
 
-			// Check if already there
-			for(U i = 0; i < count; ++i)
+			if(in.isInstanced())
 			{
-				if(m_mutators[i].m_name == name)
-				{
-					ANKI_RESOURCE_LOGE("Mutator aleady present %s", &name[0]);
-					return Error::USER_DATA;
-				}
+				instancedMutatorIdx = i;
 			}
-
-			// Get values
-			DynamicArrayAuto<ShaderProgramResourceMutatorValue> values(getTempAllocator());
-			ANKI_CHECK(mutatorEl.getAttributeNumbers("values", values));
-			if(values.getSize() < 1)
-			{
-				ANKI_RESOURCE_LOGE("Mutator doesn't have any values %s", &name[0]);
-				return Error::USER_DATA;
-			}
-
-			std::sort(values.getBegin(), values.getEnd());
-			for(U i = 1; i < values.getSize(); ++i)
-			{
-				if(values[i - 1] == values[i])
-				{
-					ANKI_RESOURCE_LOGE("Mutator %s has duplicate values %d", &name[0], values[i]);
-					return Error::USER_DATA;
-				}
-			}
-
-			// instanced
-			Bool instancedPresent;
-			U32 instanced = 0;
-			ANKI_CHECK(mutatorEl.getAttributeNumberOptional("instanced", instanced, instancedPresent));
-			if(instanced)
-			{
-				if(m_instancingMutator)
-				{
-					ANKI_RESOURCE_LOGE("Cannot have more than one instancing mutator");
-					return Error::USER_DATA;
-				}
-
-				m_instancingMutator = &m_mutators[count];
-			}
-
-			// Init mutator
-			m_mutators[count].m_name.create(getAllocator(), name);
-			m_mutators[count].m_values.create(getAllocator(), values.getSize());
-			for(U i = 0; i < values.getSize(); ++i)
-			{
-				m_mutators[count].m_values[i] = values[i];
-			}
-
-			++count;
-			ANKI_CHECK(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
-		} while(mutatorEl);
-	}
-
-	// Count the input variables
-	U inputVarCount = 0;
-	XmlElement shadersEl;
-	ANKI_CHECK(rootEl.getChildElement("shaders", shadersEl));
-	XmlElement shaderEl;
-	ANKI_CHECK(shadersEl.getChildElement("shader", shaderEl));
-	do
-	{
-		XmlElement inputsEl;
-		ANKI_CHECK(shaderEl.getChildElementOptional("inputs", inputsEl));
-
-		if(inputsEl)
-		{
-			XmlElement inputEl;
-			ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
-
-			U32 count;
-			ANKI_CHECK(inputEl.getSiblingElementsCount(count));
-			++count;
-
-			inputVarCount += count;
-		}
-
-		ANKI_CHECK(shaderEl.getNextSiblingElement("shader", shaderEl));
-	} while(shaderEl);
-
-	XmlElement inputsEl;
-	ANKI_CHECK(rootEl.getChildElementOptional("inputs", inputsEl));
-	if(inputsEl)
-	{
-		XmlElement inputEl;
-		ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
-
-		U32 count;
-		ANKI_CHECK(inputEl.getSiblingElementsCount(count));
-		++count;
-
-		inputVarCount += count;
-	}
-
-	if(inputVarCount)
-	{
-		m_inputVars.create(getAllocator(), inputVarCount);
-	}
-
-	// <shader> again
-	inputVarCount = 0;
-	StringListAuto constSrcList(getTempAllocator());
-	StringListAuto uniStructList(getTempAllocator());
-	StringListAuto globalsSrcList(getTempAllocator());
-	StringListAuto definesSrcList(getTempAllocator());
-	ShaderTypeBit presentShaders = ShaderTypeBit::NONE;
-	Array<CString, U(ShaderType::COUNT)> shaderSources;
-	ANKI_CHECK(shadersEl.getChildElement("shader", shaderEl));
-	do
-	{
-		// type
-		CString shaderTypeTxt;
-		ANKI_CHECK(shaderEl.getAttributeText("type", shaderTypeTxt));
-		ShaderType shaderType;
-		ShaderTypeBit shaderTypeBit;
-		U shaderIdx;
-		ANKI_CHECK(getShaderInfo(shaderTypeTxt, shaderType, shaderTypeBit, shaderIdx));
-
-		if(!!(presentShaders & shaderTypeBit))
-		{
-			ANKI_RESOURCE_LOGE("Shader is present more than once: %s", &shaderTypeTxt[0]);
-			return Error::USER_DATA;
-		}
-		presentShaders |= shaderTypeBit;
-
-		if(shaderType == ShaderType::TESSELLATION_CONTROL || shaderType == ShaderType::TESSELLATION_EVALUATION)
-		{
-			m_tessellation = true;
-		}
-
-		if(!!(presentShaders & ShaderTypeBit::COMPUTE))
-		{
-			m_compute = true;
-		}
-
-		// <inputs>
-		XmlElement inputsEl;
-		ANKI_CHECK(shaderEl.getChildElementOptional("inputs", inputsEl));
-
-		if(inputsEl)
-		{
-			ANKI_CHECK(
-				parseInputs(inputsEl, inputVarCount, constSrcList, uniStructList, globalsSrcList, definesSrcList));
-		}
-
-		// <source>
-		ANKI_CHECK(shaderEl.getChildElement("source", el));
-		ANKI_CHECK(el.getText(shaderSources[shaderIdx]));
-
-		// Advance
-		ANKI_CHECK(shaderEl.getNextSiblingElement("shader", shaderEl));
-	} while(shaderEl);
-
-	// <inputs>
-	if(inputsEl)
-	{
-		ANKI_CHECK(parseInputs(inputsEl, inputVarCount, constSrcList, uniStructList, globalsSrcList, definesSrcList));
-	}
-
-	ANKI_ASSERT(inputVarCount == m_inputVars.getSize());
-
-	// Sanity checks
-	if(!!(presentShaders & ShaderTypeBit::COMPUTE))
-	{
-		if(presentShaders != ShaderTypeBit::COMPUTE)
-		{
-			ANKI_RESOURCE_LOGE("Can't combine compute shader with other types of shaders");
-			return Error::USER_DATA;
-		}
-	}
-	else
-	{
-		if(!(presentShaders & ShaderTypeBit::VERTEX))
-		{
-			ANKI_RESOURCE_LOGE("Missing vertex shader");
-			return Error::USER_DATA;
-		}
-
-		if(!(presentShaders & ShaderTypeBit::FRAGMENT))
-		{
-			ANKI_RESOURCE_LOGE("Missing fragment shader");
-			return Error::USER_DATA;
 		}
 	}
 
-	// Create sources
-	StringAuto backedConstSrc(getTempAllocator());
-	if(!constSrcList.isEmpty())
+	// Create the inputs
+	if(pp.getInputs().getSize())
 	{
-		constSrcList.join("", backedConstSrc);
-	}
+		m_inputVars.create(getAllocator(), pp.getInputs().getSize());
 
-	StringAuto backedUboSrc(getTempAllocator());
-	if(!uniStructList.isEmpty())
-	{
-		// Create the uniform struct
-		uniStructList.pushFront("struct spr_Uniforms_ {\n");
-		uniStructList.pushBack("};\n");
-
-		// Create the uniform block
-		uniStructList.pushBack("#if USE_PUSH_CONSTANTS == 0\n");
-		uniStructList.pushBackSprintf(
-			"layout(ANKI_UBO_BINDING(%u, 0), std140, row_major) uniform spr_Block_ {spr_Uniforms_ spr_unis_;};\n",
-			U(m_descriptorSet));
-
-		// Create the push constants
-		uniStructList.pushBack("#else // if USE_PUSH_CONSTANTS == 0\n");
-		uniStructList.pushBackSprintf("ANKI_PUSH_CONSTANTS(spr_Uniforms_, spr_unis_);\n");
-		uniStructList.pushBack("#endif // if USE_PUSH_CONSTANTS == 0\n");
-
-		// Done
-		uniStructList.join("", backedUboSrc);
-	}
-
-	StringAuto backedGlobalsSrc(getTempAllocator());
-	if(!globalsSrcList.isEmpty())
-	{
-		globalsSrcList.join("", backedGlobalsSrc);
-	}
-
-	StringAuto backedDefinesSrc(getTempAllocator());
-	if(!definesSrcList.isEmpty())
-	{
-		definesSrcList.join("", backedDefinesSrc);
-	}
-
-	for(U s = 0; s < U(ShaderType::COUNT); ++s)
-	{
-		if(shaderSources[s])
+		for(U i = 0; i < m_inputVars.getSize(); ++i)
 		{
-			ShaderLoader loader(&getManager());
-			ANKI_CHECK(loader.parseSourceString(shaderSources[s]));
+			Input& out = m_inputVars[i];
+			const ShaderProgramPreprocessorInput& in = pp.getInputs()[i];
 
-			if(!backedDefinesSrc.isEmpty())
+			out.m_program = this;
+			out.m_name.create(getAllocator(), in.getName());
+			if(in.getPreprocessorCondition())
 			{
-				m_sources[s].append(getAllocator(), backedDefinesSrc);
+				out.m_preprocExpr.create(getAllocator(), in.getPreprocessorCondition());
 			}
-
-			if(!backedConstSrc.isEmpty())
-			{
-				m_sources[s].append(getAllocator(), backedConstSrc);
-			}
-
-			if(!backedUboSrc.isEmpty())
-			{
-				m_sources[s].append(getAllocator(), backedUboSrc);
-			}
-
-			if(!backedGlobalsSrc.isEmpty())
-			{
-				m_sources[s].append(getAllocator(), backedGlobalsSrc);
-			}
-
-			m_sources[s].append(getAllocator(), loader.getShaderSource());
+			out.m_idx = i;
+			out.m_dataType = in.getDataType();
+			out.m_const = in.isConstant();
+			out.m_instanced = in.isInstanced();
 		}
+	}
+
+	// Set some other vars
+	m_descriptorSet = pp.getDescritproSet();
+	m_shaderStages = pp.getShaderStages();
+	if(instancedMutatorIdx != MAX_U)
+	{
+		m_instancingMutator = &m_mutators[instancedMutatorIdx];
 	}
 
 	return Error::NONE;
-}
-
-Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
-	U& inputVarCount,
-	StringListAuto& constsSrc,
-	StringListAuto& uniStruct,
-	StringListAuto& globalsSrc,
-	StringListAuto& definesSrc)
-{
-	XmlElement inputEl;
-	ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
-	do
-	{
-		ShaderProgramResourceInputVariable& var = m_inputVars[inputVarCount];
-		var.m_idx = inputVarCount;
-
-		// name
-		CString name;
-		ANKI_CHECK(inputEl.getAttributeText("name", name));
-		if(name.isEmpty())
-		{
-			ANKI_RESOURCE_LOGE("Input variable name is empty");
-			return Error::USER_DATA;
-		}
-		var.m_name.create(getAllocator(), name);
-
-		// type
-		CString typeTxt;
-		ANKI_CHECK(inputEl.getAttributeText("type", typeTxt));
-		ANKI_CHECK(computeShaderVariableDataType(typeTxt, var.m_dataType));
-
-		// const
-		Bool present;
-		U32 constant = 0;
-		ANKI_CHECK(inputEl.getAttributeNumberOptional("const", constant, present));
-		var.m_const = constant != 0;
-
-		// <mutators>
-		XmlElement mutatorsEl;
-		ANKI_CHECK(inputEl.getChildElementOptional("mutators", mutatorsEl));
-		if(mutatorsEl)
-		{
-			XmlElement mutatorEl;
-			ANKI_CHECK(mutatorsEl.getChildElement("mutator", mutatorEl));
-
-			U32 mutatorCount;
-			ANKI_CHECK(mutatorEl.getSiblingElementsCount(mutatorCount));
-			++mutatorCount;
-			ANKI_ASSERT(mutatorCount > 0);
-			var.m_mutators.create(getAllocator(), mutatorCount);
-			mutatorCount = 0;
-
-			do
-			{
-				// name
-				CString mutatorName;
-				ANKI_CHECK(mutatorEl.getAttributeText("name", mutatorName));
-				if(mutatorName.isEmpty())
-				{
-					ANKI_RESOURCE_LOGE("Empty mutator name in input variable %s", &name[0]);
-					return Error::USER_DATA;
-				}
-
-				// Find the mutator
-				const ShaderProgramResourceMutator* foundMutator = tryFindMutator(mutatorName);
-				if(!foundMutator)
-				{
-					ANKI_RESOURCE_LOGE("Input variable %s can't link to unknown mutator %s", &name[0], &mutatorName[0]);
-					return Error::USER_DATA;
-				}
-
-				// Get values
-				DynamicArrayAuto<ShaderProgramResourceMutatorValue> vals(getTempAllocator());
-				ANKI_CHECK(mutatorEl.getAttributeNumbers("values", vals));
-				if(vals.getSize() < 1)
-				{
-					ANKI_RESOURCE_LOGE(
-						"Mutator %s doesn't have any values for input variable %s", &mutatorName[0], &name[0]);
-					return Error::USER_DATA;
-				}
-
-				// Sanity check values
-				std::sort(vals.getBegin(), vals.getEnd());
-
-				for(U i = 0; i < vals.getSize(); ++i)
-				{
-					auto val = vals[i];
-					if(i > 0 && vals[i - 1] == val)
-					{
-						ANKI_RESOURCE_LOGE(
-							"Mutator %s for input var %s has duplicate values", &mutatorName[0], &name[0]);
-						return Error::USER_DATA;
-					}
-
-					if(!foundMutator->valueExists(val))
-					{
-						ANKI_RESOURCE_LOGE(
-							"Mutator %s for input variable %s has a value that is not part of the mutator",
-							&mutatorName[0],
-							&name[0]);
-						return Error::USER_DATA;
-					}
-				}
-
-				// Set var
-				var.m_mutators[mutatorCount].m_mutator = foundMutator;
-				var.m_mutators[mutatorCount].m_values.create(getAllocator(), vals.getSize());
-				for(U i = 0; i < vals.getSize(); ++i)
-				{
-					var.m_mutators[mutatorCount].m_values[i] = vals[i];
-				}
-				++mutatorCount;
-
-				// Advance
-				ANKI_CHECK(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
-			} while(mutatorEl);
-
-			ANKI_ASSERT(mutatorCount == var.m_mutators.getSize());
-		} // if(mutatorsEl)
-
-		// instanced
-		U32 instanced = false;
-		Bool found;
-		ANKI_CHECK(inputEl.getAttributeNumberOptional("instanced", instanced, found));
-		if(instanced && !m_instancingMutator)
-		{
-			ANKI_RESOURCE_LOGE("Input variable \"%s\" is instanced but there is no instanced mutator", &name[0]);
-			return Error::USER_DATA;
-		}
-
-		if(instanced && m_compute)
-		{
-			ANKI_RESOURCE_LOGE("Compute program can't be instanced");
-			return Error::USER_DATA;
-		}
-
-		var.m_instanced = instanced != 0;
-
-		// Sanity checks
-		if(var.isTexture() && var.m_const)
-		{
-			ANKI_RESOURCE_LOGE("Can't have a texture to be const: %s", &var.m_name[0]);
-			return Error::USER_DATA;
-		}
-
-		if(var.m_const && var.isInstanced())
-		{
-			ANKI_RESOURCE_LOGE("Can't have input variables that are instanced and const: %s", &var.m_name[0]);
-			return Error::USER_DATA;
-		}
-
-		if(var.isTexture() && var.isInstanced())
-		{
-			ANKI_RESOURCE_LOGE("Can't have texture that is instanced: %s", &var.m_name[0]);
-			return Error::USER_DATA;
-		}
-
-		for(U i = 0; i < inputVarCount; ++i)
-		{
-			const ShaderProgramResourceInputVariable& b = m_inputVars[i];
-			if(b.m_name == var.m_name)
-			{
-				ANKI_RESOURCE_LOGE("Duplicate input variable found: %s", &var.m_name[0]);
-				return Error::USER_DATA;
-			}
-		}
-
-		if(var.m_dataType >= ShaderVariableDataType::MATRIX_FIRST
-			&& var.m_dataType <= ShaderVariableDataType::MATRIX_LAST && var.m_const)
-		{
-			ANKI_RESOURCE_LOGE("Matrix input variable %s cannot be constant", &var.m_name[0]);
-			return Error::USER_DATA;
-		}
-
-		// Write the _DEFINED
-		if(var.m_mutators.getSize())
-		{
-			definesSrc.pushBackSprintf("#define %s_DEFINED (", &name[0]);
-			compInputVarDefineString(var, definesSrc);
-			definesSrc.pushBack(")\n");
-		}
-		else
-		{
-			definesSrc.pushBackSprintf("#define %s_DEFINED 1\n", &name[0]);
-		}
-
-		// Append to consts source
-		if(var.m_const)
-		{
-			constsSrc.pushBackSprintf("#if %s_DEFINED == 1\n", &name[0]);
-			constsSrc.pushBackSprintf("const %s %s = %s(%s_CONSTVAL);\n", &typeTxt[0], &name[0], &typeTxt[0], &name[0]);
-			constsSrc.pushBack("#endif\n");
-		}
-
-		// Append to ubo source
-		if(var.inBlock())
-		{
-			uniStruct.pushBackSprintf("#if %s_DEFINED == 1\n", name.cstr());
-			globalsSrc.pushBackSprintf("#if %s_DEFINED == 1\n", name.cstr());
-
-			if(var.m_instanced)
-			{
-				uniStruct.pushBackSprintf("#if %s > 1\n", &m_instancingMutator->getName()[0]);
-				uniStruct.pushBackSprintf("%s %s[%s];\n", &typeTxt[0], &name[0], &m_instancingMutator->getName()[0]);
-				uniStruct.pushBack("#else\n");
-				uniStruct.pushBackSprintf("%s %s;\n", &typeTxt[0], &name[0]);
-				uniStruct.pushBack("#endif\n");
-
-				globalsSrc.pushBackSprintf("#if %s > 1\n", m_instancingMutator->getName().cstr());
-				globalsSrc.pushBack("#if defined(ANKI_VERTEX_SHADER)\n");
-				globalsSrc.pushBackSprintf("%s %s = spr_unis_.%s[gl_InstanceID];\n", &typeTxt[0], &name[0], &name[0]);
-				globalsSrc.pushBack("#endif\n");
-				globalsSrc.pushBack("#else\n");
-				globalsSrc.pushBackSprintf("%s %s = spr_unis_.%s;\n", typeTxt.cstr(), name.cstr(), name.cstr());
-				globalsSrc.pushBack("#endif\n");
-			}
-			else
-			{
-				uniStruct.pushBackSprintf("%s %s;\n", &typeTxt[0], &name[0]);
-
-				globalsSrc.pushBackSprintf("%s %s = spr_unis_.%s;\n", typeTxt.cstr(), name.cstr(), name.cstr());
-			}
-
-			uniStruct.pushBack("#endif\n");
-			globalsSrc.pushBack("#endif\n");
-		}
-
-		// Append the textures to global area
-		if(var.isTexture())
-		{
-			globalsSrc.pushBackSprintf("#if %s_DEFINED == 1\n", &name[0]);
-			globalsSrc.pushBackSprintf("layout(ANKI_TEX_BINDING(%u, %s_TEXUNIT)) uniform %s %s;\n",
-				U(m_descriptorSet),
-				&name[0],
-				&typeTxt[0],
-				&name[0]);
-			globalsSrc.pushBack("#endif\n");
-		}
-
-		// Advance
-		++inputVarCount;
-		ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
-	} while(inputEl);
-
-	return Error::NONE;
-}
-
-void ShaderProgramResource::compInputVarDefineString(
-	const ShaderProgramResourceInputVariable& var, StringListAuto& list)
-{
-	if(var.m_mutators.getSize() > 0)
-	{
-		for(U mi = 0; mi < var.m_mutators.getSize(); ++mi)
-		{
-			const ShaderProgramResourceInputVariable::Mutator& mutator = var.m_mutators[mi];
-			list.pushBack("(");
-
-			for(U vi = 0; vi < mutator.m_values.getSize(); ++vi)
-			{
-				ShaderProgramResourceMutatorValue val = mutator.m_values[vi];
-
-				if(vi != mutator.m_values.getSize() - 1)
-				{
-					list.pushBackSprintf("%s == %d || ", &mutator.m_mutator->m_name[0], int(val));
-				}
-				else
-				{
-					list.pushBackSprintf("%s == %d)", &mutator.m_mutator->m_name[0], int(val));
-				}
-			}
-
-			if(mi != var.m_mutators.getSize() - 1)
-			{
-				list.pushBack(" && ");
-			}
-		}
-	}
 }
 
 U64 ShaderProgramResource::computeVariantHash(ConstWeakArray<ShaderProgramResourceMutation> mutations,
@@ -880,7 +339,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 	StringListAuto headerSrc(getTempAllocator());
 	U texUnit = 0;
 
-	for(const ShaderProgramResourceInputVariable& in : m_inputVars)
+	for(const Input& in : m_inputVars)
 	{
 		if(!in.acceptAllMutations(mutations))
 		{
@@ -1105,14 +564,14 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 	ShaderProgramInitInfo progInf(cprogName);
 	for(ShaderType i = ShaderType::FIRST; i < ShaderType::COUNT; ++i)
 	{
-		if(!m_sources[i])
+		if(!(m_shaderStages & ShaderTypeBit(1 << U(i))))
 		{
 			continue;
 		}
 
 		StringAuto src(getTempAllocator());
 		src.append(shaderHeader);
-		src.append(m_sources[i]);
+		src.append(m_source);
 
 		// Compile
 		DynamicArrayAuto<U8> bin(getTempAllocator());

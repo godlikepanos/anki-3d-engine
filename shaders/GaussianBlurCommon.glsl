@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_GAUSSIAN_BLUR_COMMON_GLSL
-#define ANKI_SHADERS_GAUSSIAN_BLUR_COMMON_GLSL
+#pragma once
 
 #include <shaders/Common.glsl>
 
@@ -36,5 +35,3 @@ const F32 WEIGHTS[STEP_COUNT + 1u] = {0.198596, 0.175713, 0.121703, 0.065984, 0.
 // It's BOX_WEIGHTS[0] for the a texels. BOX_WEIGHTS[1] for the b texels. BOX_WEIGHTS[2] for the c texels.
 // Note: BOX_WEIGHTS[0] + BOX_WEIGHTS[1] * 4 + BOX_WEIGHTS[2] * 4 == 1.0
 const Vec3 BOX_WEIGHTS = Vec3(0.25, 0.125, 0.0625);
-
-#endif

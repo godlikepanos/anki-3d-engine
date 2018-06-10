@@ -1,0 +1,60 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Compute the irradiance given an environment map
+
+#pragma anki input const U32 ENV_TEX_TILE_SIZE
+#pragma anki input const F32 ENV_TEX_MIP
+
+#pragma anki start vert
+#include <shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <shaders/Functions.glsl>
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_color;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform samplerCubeArray u_envTex;
+
+ANKI_PUSH_CONSTANTS(UVec4, u_faceIdxPad3);
+
+// Integrate the environment map to compute the irradiance for a single fragment
+void main()
+{
+	U32 face = u_faceIdxPad3.x;
+	const F32 texArrIdx = 0.0; // The C++ code gives the layer idx using a tex view
+
+	// Get the r coordinate of the current face and fragment
+	Vec3 ri = getCubemapDirection(UV_TO_NDC(in_uv), face);
+
+	Vec3 outCol = Vec3(0.0);
+
+	// For all the faces and texels of the environment map calculate a color sum
+	ANKI_LOOP for(U32 f = 0u; f < 6u; ++f)
+	{
+		ANKI_LOOP for(U32 i = 0u; i < ENV_TEX_TILE_SIZE; ++i)
+		{
+			ANKI_LOOP for(U32 j = 0u; j < ENV_TEX_TILE_SIZE; ++j)
+			{
+				Vec2 uv = Vec2(j, i) / F32(ENV_TEX_TILE_SIZE);
+				Vec2 ndc = UV_TO_NDC(uv);
+
+				Vec3 r = getCubemapDirection(ndc, f);
+				F32 lambert = dot(r, ri);
+
+				if(lambert > 0.0)
+				{
+					Vec3 col = textureLod(u_envTex, Vec4(r, texArrIdx), ENV_TEX_MIP).rgb;
+					outCol += col * lambert * cubeCoordSolidAngle(ndc, F32(ENV_TEX_TILE_SIZE));
+				}
+			}
+		}
+	}
+
+	out_color = outCol / PI;
+}
+#pragma anki end

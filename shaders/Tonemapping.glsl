@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_TONEMAP_GLSL
-#define ANKI_SHADERS_TONEMAP_GLSL
+#pragma once
 
 #include <shaders/Common.glsl>
 
@@ -67,4 +66,3 @@ Vec3 tonemap(Vec3 color, F32 avgLum, F32 threshold)
 	F32 exposure = computeExposure(avgLum, threshold);
 	return tonemap(color, exposure);
 }
-#endif

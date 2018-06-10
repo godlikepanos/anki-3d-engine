@@ -56,7 +56,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("shaders/FinalComposite.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/FinalComposite.glslp", m_prog));
 
 	ShaderProgramResourceMutationInitList<4> mutations(m_prog);
 	mutations.add("BLUE_NOISE", 1)

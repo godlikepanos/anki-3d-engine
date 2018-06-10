@@ -1,6 +1,6 @@
 #!/bin/bash
 
-files=(`find ./src ./tests ./sandbox ./tools ./shaders ./samples -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.glsl'`)
+files=(`find ./src ./tests ./sandbox ./tools ./shaders ./samples -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.glsl' -o -name '*.glslp'`)
 
 filecount=${#files[@]}
 

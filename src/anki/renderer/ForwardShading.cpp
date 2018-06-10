@@ -61,7 +61,7 @@ Error ForwardShading::initVol()
 {
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_vol.m_noiseTex));
 
-	ANKI_CHECK(getResourceManager().loadResource("shaders/ForwardShadingVolumetricUpscale.ankiprog", m_vol.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/ForwardShadingVolumetricUpscale.glslp", m_vol.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<3> consts(m_vol.m_prog);
 	consts.add("NOISE_TEX_SIZE", U32(m_vol.m_noiseTex->getWidth()))
@@ -80,7 +80,7 @@ Error ForwardShading::initUpscale()
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_upscale.m_noiseTex));
 
 	// Shader
-	ANKI_CHECK(getResourceManager().loadResource("shaders/ForwardShadingUpscale.ankiprog", m_upscale.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/ForwardShadingUpscale.glslp", m_upscale.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<3> consts(m_upscale.m_prog);
 	consts.add("NOISE_TEX_SIZE", U32(m_upscale.m_noiseTex->getWidth()))

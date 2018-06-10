@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_CLUSTER_LIGHT_COMMON_GLSL
-#define ANKI_SHADERS_CLUSTER_LIGHT_COMMON_GLSL
+#pragma once
 
 #include <shaders/LightFunctions.glsl>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
@@ -112,5 +111,3 @@ layout(std430, ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer
 {
 	U32 u_lightIndices[];
 };
-
-#endif

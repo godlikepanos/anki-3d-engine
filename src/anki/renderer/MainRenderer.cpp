@@ -64,7 +64,7 @@ Error MainRenderer::init(ThreadPool* threadpool,
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(resources->loadResource("shaders/Blit.ankiprog", m_blitProg));
+		ANKI_CHECK(resources->loadResource("shaders/Blit.glslp", m_blitProg));
 		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(variant);
 		m_blitGrProg = variant->getProgram();

@@ -5,8 +5,7 @@
 
 // Contains functions for light calculations
 
-#ifndef ANKI_SHADERS_LIGHT_FUNCTIONS_GLSL
-#define ANKI_SHADERS_LIGHT_FUNCTIONS_GLSL
+#pragma once
 
 #include <shaders/Functions.glsl>
 #include <shaders/Pack.glsl>
@@ -223,5 +222,3 @@ F32 computeProbeBlendWeight(Vec3 fragPos, // Doesn't need to be inside the AABB
 	// Use saturate because minDist might be negative.
 	return saturate(minDist / fadeDistance);
 }
-
-#endif

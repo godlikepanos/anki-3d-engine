@@ -1,0 +1,37 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki descriptor_set 1
+
+#pragma anki input Mat4 mvp
+#pragma anki input Mat4 modelView
+
+#pragma anki input const Vec3 fogColor
+#pragma anki input const F32 fogAlphaScale
+#pragma anki input const F32 fogDistanceOfMaxThikness
+
+#pragma anki start vert
+#include <shaders/ForwardShadingCommonVert.glsl>
+
+layout(location = 0) out F32 out_zVSpace;
+
+void main()
+{
+	gl_Position = mvp * Vec4(in_position, 1.0);
+	out_zVSpace = (modelView * Vec4(in_position, 1.0)).z;
+}
+
+#pragma anki end
+
+#pragma anki start frag
+#include <shaders/ForwardShadingCommonFrag.glsl>
+
+layout(location = 0) in F32 in_zVSpace;
+
+void main()
+{
+	fog(fogColor, fogAlphaScale, fogDistanceOfMaxThikness, in_zVSpace);
+}
+#pragma anki end

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_PACK_GLSL
-#define ANKI_SHADERS_PACK_GLSL
+#pragma once
 
 #include <shaders/Common.glsl>
 
@@ -184,5 +183,3 @@ void readGBuffer(sampler2D rt0, sampler2D rt1, sampler2D rt2, Vec2 uv, F32 lod, 
 	// Compute diffuse
 	g.m_diffuse = g.m_diffuse - g.m_diffuse * g.m_metallic;
 }
-
-#endif

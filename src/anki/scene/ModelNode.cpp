@@ -219,7 +219,7 @@ Error ModelNode::init(const CString& modelFname)
 		newComponent<MRenderComponent>(this);
 	}
 
-	ANKI_CHECK(getResourceManager().loadResource("shaders/SceneDebug.ankiprog", m_dbgProg));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/SceneDebug.glslp", m_dbgProg));
 
 	return Error::NONE;
 }

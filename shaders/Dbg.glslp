@@ -1,0 +1,36 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start vert
+#include <shaders/Common.glsl>
+
+layout(location = 0) in Vec4 in_position;
+layout(location = 1) in Vec4 in_color;
+
+layout(location = 0) out Vec4 out_color;
+
+out gl_PerVertex
+{
+	Vec4 gl_Position;
+};
+
+void main()
+{
+	out_color = in_color;
+	gl_Position = in_position;
+}
+#pragma anki end
+
+#pragma anki start frag
+#include <shaders/Common.glsl>
+
+layout(location = 0) in Vec4 in_color;
+layout(location = 0) out Vec4 out_color;
+
+void main()
+{
+	out_color = in_color;
+}
+#pragma anki end

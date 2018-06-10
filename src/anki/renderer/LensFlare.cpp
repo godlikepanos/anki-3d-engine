@@ -53,7 +53,7 @@ Error LensFlare::initSprite(const ConfigSet& config)
 	m_maxSprites = m_maxSpritesPerFlare * m_maxFlares;
 
 	// Load prog
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LensFlareSprite.ankiprog", m_realProg));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/LensFlareSprite.glslp", m_realProg));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_realProg);
 	consts.add("MAX_SPRITES", U32(m_maxSprites));
@@ -74,7 +74,7 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 		"LensFlares"));
 
 	ANKI_CHECK(
-		getResourceManager().loadResource("shaders/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
+		getResourceManager().loadResource("shaders/LensFlareUpdateIndirectInfo.glslp", m_updateIndirectBuffProg));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_updateIndirectBuffProg);
 	consts.add("IN_DEPTH_MAP_SIZE", Vec2(m_r->getWidth() / 2 / 2, m_r->getHeight() / 2 / 2));

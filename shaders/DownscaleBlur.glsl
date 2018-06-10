@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_DOWNSCALE_BLUR_GLSL
-#define ANKI_SHADERS_DOWNSCALE_BLUR_GLSL
+#pragma once
 
 #include <shaders/Common.glsl>
 
@@ -51,5 +50,3 @@ void main()
 	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(out_color, 0.0));
 #endif
 }
-
-#endif

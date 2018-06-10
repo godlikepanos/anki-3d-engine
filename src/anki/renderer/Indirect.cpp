@@ -120,7 +120,7 @@ Error Indirect::initLightShading(const ConfigSet& config)
 			m_lightShading.m_tileSize,
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
-				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::GENERATE_MIPMAPS,
+				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::GENERATE_MIPMAPS,
 			"GI refl");
 		texinit.m_mipmapCount = m_lightShading.m_mipCount;
 		texinit.m_type = TextureType::CUBE_ARRAY;
@@ -156,7 +156,7 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 
 	// Create prog
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Irradiance.ankiprog", m_irradiance.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Irradiance.glslp", m_irradiance.m_prog));
 
 		const F32 envMapReadMip = computeMaxMipmapCount2d(
 			m_lightShading.m_tileSize, m_lightShading.m_tileSize, m_irradiance.m_envMapReadSize);
@@ -176,8 +176,8 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 Error Indirect::initIrradianceToRefl(const ConfigSet& cfg)
 {
 	// Create program
-	ANKI_CHECK(m_r->getResourceManager().loadResource(
-		"shaders/ApplyIrradianceToReflection.ankiprog", m_irradianceToRefl.m_prog));
+	ANKI_CHECK(
+		m_r->getResourceManager().loadResource("shaders/ApplyIrradianceToReflection.glslp", m_irradianceToRefl.m_prog));
 
 	const ShaderProgramResourceVariant* variant;
 	m_irradianceToRefl.m_prog->getOrCreateVariant(variant);

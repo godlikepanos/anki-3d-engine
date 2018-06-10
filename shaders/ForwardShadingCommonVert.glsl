@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_FORWARD_SHADING_COMMON_VERT_GLSL
-#define ANKI_SHADERS_FORWARD_SHADING_COMMON_VERT_GLSL
+#pragma once
 
 // Common code for all vertex shaders of FS
 #include <shaders/Common.glsl>
@@ -27,5 +26,3 @@ out gl_PerVertex
 {
 	Vec4 gl_Position;
 };
-
-#endif

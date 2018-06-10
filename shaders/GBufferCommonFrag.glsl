@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_GBUFFER_COMMON_FRAG_GLSL
-#define ANKI_SHADERS_GBUFFER_COMMON_FRAG_GLSL
+#pragma once
 
 #include <shaders/Pack.glsl>
 #include <shaders/Common.glsl>
@@ -156,5 +155,3 @@ void writeRts(in Vec3 diffColor, // from 0 to 1
 	writeGBuffer(g, out_msRt0, out_msRt1, out_msRt2);
 }
 #endif // PASS == PASS_GB_FS
-
-#endif

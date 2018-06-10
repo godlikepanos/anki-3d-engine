@@ -23,7 +23,7 @@ Error DebugDrawer::init(Renderer* r)
 	m_r = r;
 
 	// Create the prog and shaders
-	ANKI_CHECK(r->getResourceManager().loadResource("shaders/SceneDebug.ankiprog", m_prog));
+	ANKI_CHECK(r->getResourceManager().loadResource("shaders/SceneDebug.glslp", m_prog));
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("INSTANCE_COUNT", 1u);
 	ShaderProgramResourceMutationInitList<2> mutations(m_prog);

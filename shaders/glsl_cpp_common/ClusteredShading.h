@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_GLSL_CPP_COMMON_CLUSTERED_SHADING_H
-#define ANKI_SHADERS_GLSL_CPP_COMMON_CLUSTERED_SHADING_H
+#pragma once
 
 #include <shaders/glsl_cpp_common/Clusterer.h>
 
@@ -69,5 +68,3 @@ struct Decal
 const U32 SIZEOF_DECAL = 3 * SIZEOF_VEC4 + SIZEOF_MAT4;
 
 ANKI_END_NAMESPACE
-
-#endif

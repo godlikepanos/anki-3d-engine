@@ -59,7 +59,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	}
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.glslp", m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutations(m_prog);
 	mutations.add("COPY_TO_CLIENT", 0).add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 2);

@@ -1,0 +1,10 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki input const UVec2 WORKGROUP_SIZE
+
+#pragma anki start comp
+#include <shaders/DownscaleBlur.glsl>
+#pragma anki end

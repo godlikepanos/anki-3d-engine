@@ -26,11 +26,11 @@ Error Ssao::initMain(const ConfigSet& config)
 	// Shader
 	if(m_useCompute)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/SsaoCompute.ankiprog", m_main.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("shaders/SsaoCompute.glslp", m_main.m_prog));
 	}
 	else
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/Ssao.ankiprog", m_main.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("shaders/Ssao.glslp", m_main.m_prog));
 	}
 
 	ShaderProgramResourceMutationInitList<2> mutators(m_main.m_prog);
@@ -56,7 +56,7 @@ Error Ssao::initBlur(const ConfigSet& config)
 	// shader
 	if(m_blurUseCompute)
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlurCompute.ankiprog", m_blur.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlurCompute.glslp", m_blur.m_prog));
 
 		ShaderProgramResourceMutationInitList<3> mutators(m_blur.m_prog);
 		mutators.add("ORIENTATION", 2).add("KERNEL_SIZE", 3).add("COLOR_COMPONENTS", 1);
@@ -71,7 +71,7 @@ Error Ssao::initBlur(const ConfigSet& config)
 	}
 	else
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlur.ankiprog", m_blur.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlur.glslp", m_blur.m_prog));
 
 		ShaderProgramResourceMutationInitList<3> mutators(m_blur.m_prog);
 		mutators.add("ORIENTATION", 2).add("KERNEL_SIZE", 3).add("COLOR_COMPONENTS", 1);

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_GLSL_CPP_COMMON_TRADITIONAL_DEFERRED_SHADING_H
-#define ANKI_SHADERS_GLSL_CPP_COMMON_TRADITIONAL_DEFERRED_SHADING_H
+#pragma once
 
 #include <shaders/glsl_cpp_common/Common.h>
 
@@ -46,5 +45,3 @@ const UVec2 GBUFFER_RT2_BINDING = UVec2(0, 2);
 const UVec2 GBUFFER_DEPTH_BINDING = UVec2(0, 3);
 
 ANKI_END_NAMESPACE
-
-#endif
