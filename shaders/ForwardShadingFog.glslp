@@ -5,12 +5,12 @@
 
 #pragma anki descriptor_set 1
 
-#pragma input Mat4 mvp
-#pragma input Mat4 modelView
+#pragma anki input Mat4 mvp
+#pragma anki input Mat4 modelView
 
-#pragma input const Vec3 fogColor
-#pragma input const F32 fogAlphaScale
-#pragma input const F32 fogDistanceOfMaxThikness
+#pragma anki input const Vec3 fogColor
+#pragma anki input const F32 fogAlphaScale
+#pragma anki input const F32 fogDistanceOfMaxThikness
 
 #pragma anki start vert
 #include <shaders/ForwardShadingCommonVert.glsl>
