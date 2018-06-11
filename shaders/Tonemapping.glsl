@@ -54,11 +54,26 @@ Vec3 tonemapUncharted2(in Vec3 color)
 	return ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
 }
 
+Vec3 tonemapACESFilm(Vec3 x)
+{
+	const F32 a = 2.51;
+	const F32 b = 0.03;
+	const F32 c = 2.43;
+	const F32 d = 0.59;
+	const F32 e = 0.14;
+
+	return saturate((x * (a * x + b)) / (x * (c * x + d) + e));
+}
+
 Vec3 tonemap(Vec3 color, F32 exposure)
 {
 	color *= exposure;
+#if 0
 	F32 saturation = 1.0;
 	return tonemapReinhard(color, saturation);
+#else
+	return tonemapACESFilm(color);
+#endif
 }
 
 Vec3 tonemap(Vec3 color, F32 avgLum, F32 threshold)
