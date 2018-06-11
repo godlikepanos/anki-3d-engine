@@ -22,7 +22,10 @@ GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
 	}
 	else
 	{
-		m_name[0] = '\0';
+		m_name[0] = 'N';
+		m_name[1] = '/';
+		m_name[2] = 'A';
+		m_name[3] = '\0';
 	}
 }
 

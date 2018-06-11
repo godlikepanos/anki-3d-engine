@@ -1,0 +1,26 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// A slow compute program to clear an image with a contant color
+
+#pragma anki start comp
+#include <shaders/Common.glsl>
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+struct PushConsts
+{
+	Vec4 m_clearColor;
+};
+ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
+
+layout(ANKI_IMAGE_BINDING(0, 0)) uniform writeonly image2D u_img;
+
+void main()
+{
+	imageStore(u_img, IVec2(gl_GlobalInvocationID.xy), u_regs.m_clearColor);
+}
+
+#pragma anki end

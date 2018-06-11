@@ -93,6 +93,10 @@ public:
 
 	Bool usageValid(TextureUsageBit usage) const
 	{
+#if ANKI_ASSERTS_ENABLED
+		LockGuard<SpinLock> lock(m_usedForMtx);
+		m_usedFor |= usage;
+#endif
 		return (usage & m_usage) == usage;
 	}
 
@@ -145,6 +149,11 @@ private:
 	mutable Mutex m_viewsMapMtx;
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
+
+#if ANKI_ASSERTS_ENABLED
+	mutable TextureUsageBit m_usedFor = TextureUsageBit::NONE;
+	mutable SpinLock m_usedForMtx;
+#endif
 
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(const TextureInitInfo& init);
 

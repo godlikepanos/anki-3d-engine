@@ -178,6 +178,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	initJitteredMats();
 
+	ANKI_CHECK(m_resources->loadResource("shaders/ClearTextureCompute.glslp", m_clearTexComputeProg));
+
 	return Error::NONE;
 }
 
@@ -372,12 +374,26 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 
 	const U faceCount = (inf.m_type == TextureType::CUBE || inf.m_type == TextureType::CUBE_ARRAY) ? 6 : 1;
 
+	Bool useCompute = false;
+	if(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
+	{
+		useCompute = false;
+	}
+	else if(!!(inf.m_usage & TextureUsageBit::IMAGE_COMPUTE_WRITE))
+	{
+		useCompute = true;
+	}
+	else
+	{
+		ANKI_ASSERT(!"Can't handle that");
+	}
+
 	// Create tex
 	TexturePtr tex = m_gr->newTexture(inf);
 
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+	cmdbinit.m_flags = (useCompute) ? CommandBufferFlag::COMPUTE_WORK : CommandBufferFlag::GRAPHICS_WORK;
 	if((inf.m_mipmapCount * faceCount * inf.m_layerCount * 4) < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
 	{
 		cmdbinit.m_flags |= CommandBufferFlag::SMALL_BATCH;
@@ -392,55 +408,83 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 			{
 				TextureSurfaceInfo surf(mip, 0, face, layer);
 
-				FramebufferInitInfo fbInit("RendererClearRT");
-				Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
-				TextureUsageBit dsUsage = TextureUsageBit::NONE;
-
-				if(formatIsDepthStencil(inf.m_format))
+				if(!useCompute)
 				{
-					DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE;
-					if(formatIsDepth(inf.m_format))
+					FramebufferInitInfo fbInit("RendererClearRT");
+					Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colUsage = {};
+					TextureUsageBit dsUsage = TextureUsageBit::NONE;
+
+					if(formatIsDepthStencil(inf.m_format))
 					{
-						aspect |= DepthStencilAspectBit::DEPTH;
-					}
+						DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE;
+						if(formatIsDepth(inf.m_format))
+						{
+							aspect |= DepthStencilAspectBit::DEPTH;
+						}
 
-					if(formatIsStencil(inf.m_format))
+						if(formatIsStencil(inf.m_format))
+						{
+							aspect |= DepthStencilAspectBit::STENCIL;
+						}
+
+						TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf, aspect));
+
+						fbInit.m_depthStencilAttachment.m_textureView = view;
+						fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+						fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
+						fbInit.m_depthStencilAttachment.m_clearValue = clearVal;
+
+						dsUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+					}
+					else
 					{
-						aspect |= DepthStencilAspectBit::STENCIL;
+						TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
+
+						fbInit.m_colorAttachmentCount = 1;
+						fbInit.m_colorAttachments[0].m_textureView = view;
+						fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+						fbInit.m_colorAttachments[0].m_clearValue = clearVal;
+
+						colUsage[0] = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 					}
+					FramebufferPtr fb = m_gr->newFramebuffer(fbInit);
 
-					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf, aspect));
+					cmdb->setTextureSurfaceBarrier(
+						tex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
 
-					fbInit.m_depthStencilAttachment.m_textureView = view;
-					fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-					fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
-					fbInit.m_depthStencilAttachment.m_clearValue = clearVal;
+					cmdb->beginRenderPass(fb, colUsage, dsUsage);
+					cmdb->endRenderPass();
 
-					dsUsage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+					if(!!inf.m_initialUsage)
+					{
+						cmdb->setTextureSurfaceBarrier(
+							tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, inf.m_initialUsage, surf);
+					}
 				}
 				else
 				{
+					// Compute
+					const ShaderProgramResourceVariant* variant;
+					m_clearTexComputeProg->getOrCreateVariant(variant);
+
+					cmdb->bindShaderProgram(variant->getProgram());
+
+					Vec4 clearColorUni(&clearVal.m_colorf[0]);
+					cmdb->setPushConstants(&clearColorUni, sizeof(clearColorUni));
+
 					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
+					cmdb->bindImage(0, 0, view);
 
-					fbInit.m_colorAttachmentCount = 1;
-					fbInit.m_colorAttachments[0].m_textureView = view;
-					fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-					fbInit.m_colorAttachments[0].m_clearValue = clearVal;
-
-					colUsage[0] = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
-				}
-				FramebufferPtr fb = m_gr->newFramebuffer(fbInit);
-
-				cmdb->setTextureSurfaceBarrier(
-					tex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
-
-				cmdb->beginRenderPass(fb, colUsage, dsUsage);
-				cmdb->endRenderPass();
-
-				if(!!inf.m_initialUsage)
-				{
 					cmdb->setTextureSurfaceBarrier(
-						tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, inf.m_initialUsage, surf);
+						tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, surf);
+
+					cmdb->dispatchCompute(tex->getWidth() >> mip, tex->getHeight() >> mip, 1);
+
+					if(!!inf.m_initialUsage)
+					{
+						cmdb->setTextureSurfaceBarrier(
+							tex, TextureUsageBit::IMAGE_COMPUTE_WRITE, inf.m_initialUsage, surf);
+					}
 				}
 			}
 		}

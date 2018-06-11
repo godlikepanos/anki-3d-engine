@@ -394,6 +394,8 @@ private:
 	SamplerPtr m_trilinearRepeatSampler;
 	SamplerPtr m_nearesetNearestSampler;
 
+	ShaderProgramResourcePtr m_clearTexComputeProg;
+
 	RendererStats m_stats;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
