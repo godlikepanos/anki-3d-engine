@@ -95,10 +95,10 @@ Error Ssao::init(const ConfigSet& config)
 	ANKI_R_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
 
 	// RT
-	m_rtDescrs[0] = m_r->create2DRenderTargetDescription(m_width, m_height, Ssao::RT_PIXEL_FORMAT, "SSAOMain");
+	m_rtDescrs[0] = m_r->create2DRenderTargetDescription(m_width, m_height, RT_PIXEL_FORMAT, "SSAOMain");
 	m_rtDescrs[0].bake();
 
-	m_rtDescrs[1] = m_r->create2DRenderTargetDescription(m_width, m_height, Ssao::RT_PIXEL_FORMAT, "SSAOBlur");
+	m_rtDescrs[1] = m_r->create2DRenderTargetDescription(m_width, m_height, RT_PIXEL_FORMAT, "SSAOBlur");
 	m_rtDescrs[1].bake();
 
 	// FB descr

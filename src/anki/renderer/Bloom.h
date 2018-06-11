@@ -43,7 +43,7 @@ anki_internal:
 	}
 
 private:
-	static const Format RT_PIXEL_FORMAT = Format::R8G8B8_UNORM;
+	static const Format RT_PIXEL_FORMAT = Format::A2B10G10R10_UNORM_PACK32;
 
 	class
 	{
