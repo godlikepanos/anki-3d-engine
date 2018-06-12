@@ -235,7 +235,14 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z newton)
+set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z newton bullet)
+
+# Bullet config
+option(BUILD_BULLET2_DEMOS OFF)
+option(BUILD_BULLET3 OFF)
+option(BUILD_CPU_DEMOS OFF)
+option(BUILD_OPENGL3_DEMOS OFF)
+option(BUILD_EXTRAS OFF)
 
 if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
@@ -364,6 +371,7 @@ include_directories("src"
 	"${CMAKE_CURRENT_BINARY_DIR}"
 	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang"
 	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/tinyexpr"
+	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/bullet/src"
 	"thirdparty"
 	${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -426,7 +434,8 @@ if(SDL)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} SDL2-static)
 endif()
 
-set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankispirvcross glslang SPIRV OGLCompiler OSDependent ankitinyexpr)
+set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankispirvcross glslang SPIRV OGLCompiler OSDependent ankitinyexpr 
+	BulletCollision BulletDynamics BulletSoftBody)
 
 # Add anki sub libraries
 set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource misc gr collision math util)
