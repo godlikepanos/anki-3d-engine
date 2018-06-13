@@ -10,6 +10,13 @@
 #include <anki/util/Ptr.h>
 #include <anki/Math.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winfinite-recursion"
+#define BT_THREADSAFE 0
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+#pragma GCC diagnostic pop
+
 // Have all the newton headers here because they polute the global namespace
 #include <Newton.h>
 #include <dLinearAlgebra.h>
