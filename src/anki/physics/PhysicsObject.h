@@ -30,7 +30,6 @@ public:
 	PhysicsObject(PhysicsObjectType type, PhysicsWorld* world)
 		: m_world(world)
 		, m_type(type)
-		, m_refcount(0)
 	{
 		ANKI_ASSERT(m_world);
 	}
@@ -59,12 +58,14 @@ public:
 		return m_refcount;
 	}
 
+	HeapAllocator<U8> getAllocator() const;
+
 protected:
 	PhysicsWorld* m_world = nullptr;
 
 private:
+	Atomic<I32> m_refcount = {};
 	PhysicsObjectType m_type;
-	Atomic<I32> m_refcount;
 };
 /// @}
 

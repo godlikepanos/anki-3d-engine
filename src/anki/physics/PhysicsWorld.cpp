@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/physics/PhysicsWorld.h>
-#include <anki/physics/PhysicsPlayerController.h>
 #include <anki/physics/PhysicsCollisionShape.h>
 #include <anki/physics/PhysicsBody.h>
+#include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
 namespace anki
 {
@@ -54,9 +54,14 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	// Create objects
 	m_broadphase = m_alloc.newInstance<btDbvtBroadphase>();
 	m_collisionConfig = m_alloc.newInstance<btDefaultCollisionConfiguration>();
+
 	m_dispatcher = m_alloc.newInstance<btCollisionDispatcher>(m_collisionConfig);
+	btGImpactCollisionAlgorithm::registerAlgorithm(m_dispatcher);
+
 	m_solver = m_alloc.newInstance<btSequentialImpulseConstraintSolver>();
 	m_world = m_alloc.newInstance<btDiscreteDynamicsWorld>(m_dispatcher, m_broadphase, m_solver, m_collisionConfig);
+
+	m_world->setGravity(btVector3(0.0f, -9.8f, 0.0f));
 
 	return Error::NONE;
 }

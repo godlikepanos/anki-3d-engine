@@ -5,84 +5,47 @@
 
 #include <anki/physics/PhysicsCollisionShape.h>
 #include <anki/physics/PhysicsWorld.h>
+#include <BulletCollision/Gimpact/btGImpactShape.h>
 
 namespace anki
 {
 
-I32 PhysicsCollisionShape::m_gid = 1;
-
 PhysicsCollisionShape::~PhysicsCollisionShape()
 {
-	if(m_shape)
-	{
-		NewtonDestroyCollision(m_shape);
-	}
+	getAllocator().deleteInstance(m_shape);
 }
 
-Error PhysicsSphere::create(PhysicsCollisionShapeInitInfo& init, F32 radius)
+PhysicsSphere::PhysicsSphere(PhysicsWorld* world, F32 radius)
+	: PhysicsCollisionShape(world)
 {
-	Error err = Error::NONE;
-
-	m_shape = NewtonCreateSphere(m_world->getNewtonWorld(), radius, m_gid++, nullptr);
-	if(!m_shape)
-	{
-		ANKI_PHYS_LOGE("NewtonCreateSphere() failed");
-		err = Error::FUNCTION_FAILED;
-	}
-
-	return err;
+	m_shape = getAllocator().newInstance<btSphereShape>(radius);
 }
 
-Error PhysicsBox::create(PhysicsCollisionShapeInitInfo& init, const Vec3& extend)
+PhysicsBox::PhysicsBox(PhysicsWorld* world, const Vec3& extend)
+	: PhysicsCollisionShape(world)
 {
-	Error err = Error::NONE;
-
-	m_shape = NewtonCreateBox(m_world->getNewtonWorld(), extend.x(), extend.y(), extend.z(), m_gid++, nullptr);
-	if(!m_shape)
-	{
-		ANKI_PHYS_LOGE("NewtonCreateBox() failed");
-		err = Error::FUNCTION_FAILED;
-	}
-
-	return err;
+	m_shape = getAllocator().newInstance<btBoxShape>(toBt(extend));
 }
 
-Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
-	const Vec3* positions,
-	U32 positionsStride,
-	const U32* indices,
-	U32 indicesCount)
+PhysicsTriangleSoup::PhysicsTriangleSoup(
+	PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices)
+	: PhysicsCollisionShape(world)
 {
-	m_shape = NewtonCreateTreeCollision(m_world->getNewtonWorld(), 0);
-	if(!m_shape)
+	ANKI_ASSERT((indices.getSize() % 3) == 0);
+
+	m_mesh = getAllocator().newInstance<btTriangleMesh>();
+	for(U i = 0; i < indices.getSize(); i += 3)
 	{
-		ANKI_PHYS_LOGE("NewtonCreateBox() failed");
-		return Error::FUNCTION_FAILED;
+		m_mesh->addTriangle(
+			toBt(positions[indices[i]]), toBt(positions[indices[i + 1]]), toBt(positions[indices[i + 2]]));
 	}
 
-	NewtonTreeCollisionBeginBuild(m_shape);
+	m_shape = getAllocator().newInstance<btGImpactMeshShape>(m_mesh);
+}
 
-	// Iterate index array
-	const U32* indicesEnd = indices + indicesCount;
-	for(; indices != indicesEnd; indices += 3)
-	{
-		Array<Vec3, 3> facePos;
-
-		for(U i = 0; i < 3; ++i)
-		{
-			U idx = indices[i];
-			const U8* ptr = reinterpret_cast<const U8*>(positions) + positionsStride * idx;
-
-			facePos[i] = *reinterpret_cast<const Vec3*>(ptr);
-		}
-
-		NewtonTreeCollisionAddFace(m_shape, 3, &facePos[0][0], sizeof(Vec3), 0);
-	}
-
-	const I optimize = 1;
-	NewtonTreeCollisionEndBuild(m_shape, optimize);
-
-	return Error::NONE;
+PhysicsTriangleSoup::~PhysicsTriangleSoup()
+{
+	getAllocator().deleteInstance(m_mesh);
 }
 
 } // end namespace anki

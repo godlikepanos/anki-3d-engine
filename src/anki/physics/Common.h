@@ -68,26 +68,14 @@ enum class PhysicsMaterialBit : U16
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit, inline)
 
-ANKI_USE_RESULT inline Vec4 toAnki(const dVector& v)
+ANKI_USE_RESULT inline Vec3 toAnki(const btVector3& v)
 {
-	return Vec4(v.m_x, v.m_y, v.m_z, v.m_w);
+	return Vec3(v.getX(), v.getY(), v.getZ());
 }
 
-ANKI_USE_RESULT inline dVector toNewton(const Vec4& v)
+ANKI_USE_RESULT inline btVector3 toBt(const Vec3& v)
 {
-	return dVector(v.x(), v.y(), v.z(), v.w());
-}
-
-ANKI_USE_RESULT inline Mat4 toAnki(const dMatrix& m)
-{
-	Mat4 ak(*reinterpret_cast<const Mat4*>(&m));
-	return ak.getTransposed();
-}
-
-ANKI_USE_RESULT inline dMatrix toNewton(const Mat4& m)
-{
-	Mat4 transp = m.getTransposed();
-	return dMatrix(&transp(0, 0));
+	return btVector3(v.x(), v.y(), v.z());
 }
 /// @}
 
