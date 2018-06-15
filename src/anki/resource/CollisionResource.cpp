@@ -29,19 +29,18 @@ Error CollisionResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(collEl.getChildElement("value", valEl));
 
 	PhysicsWorld& physics = getManager().getPhysicsWorld();
-	PhysicsCollisionShapeInitInfo csInit;
 
 	if(type == "sphere")
 	{
 		F64 tmp;
 		ANKI_CHECK(valEl.getNumber(tmp));
-		m_physicsShape = physics.newInstance<PhysicsSphere>(csInit, tmp);
+		m_physicsShape = physics.newInstance<PhysicsSphere>(tmp);
 	}
 	else if(type == "box")
 	{
 		Vec3 extend;
 		ANKI_CHECK(valEl.getVec3(extend));
-		m_physicsShape = physics.newInstance<PhysicsBox>(csInit, extend);
+		m_physicsShape = physics.newInstance<PhysicsBox>(extend);
 	}
 	else if(type == "staticMesh")
 	{
@@ -55,8 +54,7 @@ Error CollisionResource::load(const ResourceFilename& filename, Bool async)
 		DynamicArrayAuto<Vec3> positions(getTempAllocator());
 		ANKI_CHECK(loader.storeIndicesAndPosition(indices, positions));
 
-		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(
-			csInit, &positions[0], sizeof(Vec3), &indices[0], indices.getSize());
+		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(positions, indices);
 	}
 	else
 	{

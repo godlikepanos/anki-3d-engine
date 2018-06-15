@@ -40,12 +40,26 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(
 			toBt(positions[indices[i]]), toBt(positions[indices[i + 1]]), toBt(positions[indices[i + 2]]));
 	}
 
-	m_shape = getAllocator().newInstance<btGImpactMeshShape>(m_mesh);
+	// Create the dynamic shape
+	btGImpactMeshShape* shape = getAllocator().newInstance<btGImpactMeshShape>(m_mesh);
+	shape->updateBound();
+	m_shape = shape;
+
+	// And the static one
+	btBvhTriangleMeshShape* triShape = getAllocator().newInstance<btBvhTriangleMeshShape>(m_mesh, true);
+	m_staticShape = triShape;
 }
 
 PhysicsTriangleSoup::~PhysicsTriangleSoup()
 {
+	getAllocator().deleteInstance(m_staticShape);
+	getAllocator().deleteInstance(m_shape);
 	getAllocator().deleteInstance(m_mesh);
+}
+
+btCollisionShape* PhysicsTriangleSoup::getBtShape(Bool forDynamicBodies) const
+{
+	return (forDynamicBodies) ? m_shape : m_staticShape;
 }
 
 } // end namespace anki

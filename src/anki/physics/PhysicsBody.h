@@ -29,11 +29,9 @@ public:
 class PhysicsBody : public PhysicsObject
 {
 public:
-	PhysicsBody(PhysicsWorld* world);
+	PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init);
 
 	~PhysicsBody();
-
-	ANKI_USE_RESULT Error create(const PhysicsBodyInitInfo& init);
 
 	const Transform& getTransform(Bool& updated)
 	{
@@ -42,7 +40,10 @@ public:
 		return m_trf;
 	}
 
-	void setTransform(const Transform& trf);
+	void setTransform(const Transform& trf)
+	{
+		m_trf = trf;
+	}
 
 	F32 getFriction() const
 	{
@@ -70,19 +71,16 @@ public:
 	}
 
 private:
-	NewtonBody* m_body = nullptr;
-	void* m_sceneCollisionProxy = nullptr;
+	class MotionState;
+
+	MotionState* m_motionState = nullptr;
+	btRigidBody* m_body = nullptr;
+
 	Transform m_trf = Transform::getIdentity();
 	F32 m_friction = 0.03f;
 	F32 m_elasticity = 0.1f;
 	PhysicsMaterialBit m_materialBits = PhysicsMaterialBit::ALL;
 	Bool8 m_updated = true;
-
-	/// Newton callback.
-	static void onTransformCallback(const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
-
-	/// Newton callback
-	static void applyGravityForce(const NewtonBody* body, dFloat timestep, int threadIndex);
 };
 /// @}
 

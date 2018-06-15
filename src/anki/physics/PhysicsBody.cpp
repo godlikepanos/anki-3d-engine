@@ -10,119 +10,62 @@
 namespace anki
 {
 
-PhysicsBody::PhysicsBody(PhysicsWorld* world)
+class PhysicsBody::MotionState : public btMotionState
+{
+public:
+	PhysicsBody* m_body = nullptr;
+
+	void getWorldTransform(btTransform& worldTrans) const override
+	{
+		worldTrans = toBt(m_body->m_trf);
+	}
+
+	void setWorldTransform(const btTransform& worldTrans) override
+	{
+		m_body->m_trf = toAnki(worldTrans);
+		m_body->m_updated = true;
+	}
+};
+
+PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	: PhysicsObject(PhysicsObjectType::BODY, world)
 {
+	if(init.m_static)
+	{
+		ANKI_ASSERT(init.m_mass > 0.0f);
+	}
+
+	// Create motion state
+	m_motionState = getAllocator().newInstance<MotionState>();
+	m_motionState->m_body = this;
+
+	// Compute inertia
+	btCollisionShape* shape = init.m_shape->getBtShape(!init.m_static);
+	btVector3 localInertia(0, 0, 0);
+	if(!init.m_static)
+	{
+		shape->calculateLocalInertia(init.m_mass, localInertia);
+	}
+
+	// Create body
+	btRigidBody::btRigidBodyConstructionInfo cInfo(init.m_mass, m_motionState, shape, localInertia);
+	m_body = getAllocator().newInstance<btRigidBody>(cInfo);
+
+	getWorld().getBtWorld()->addRigidBody(m_body);
 }
 
 PhysicsBody::~PhysicsBody()
 {
-	if(m_sceneCollisionProxy)
-	{
-		NewtonCollision* scene = m_world->getNewtonScene();
-		NewtonSceneCollisionBeginAddRemove(scene);
-		NewtonSceneCollisionRemoveSubCollision(scene, m_sceneCollisionProxy);
-		NewtonSceneCollisionEndAddRemove(scene);
-	}
-
 	if(m_body)
 	{
-		NewtonDestroyBody(m_body);
+		getWorld().getBtWorld()->removeRigidBody(m_body);
+		getAllocator().deleteInstance(m_body);
 	}
-}
 
-Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
-{
-	// Create
-	dMatrix trf = toNewton(Mat4(init.m_startTrf));
-
-	if(init.m_static)
+	if(m_motionState)
 	{
-		// Create static collision
-		NewtonCollision* scene = m_world->getNewtonScene();
-
-		NewtonSceneCollisionBeginAddRemove(scene);
-		m_sceneCollisionProxy = NewtonSceneCollisionAddSubCollision(scene, init.m_shape->getNewtonShape());
-		NewtonSceneCollisionEndAddRemove(scene);
-
-		NewtonSceneCollisionSetSubCollisionMatrix(scene, m_sceneCollisionProxy, &trf[0][0]);
-
-		return Error::NONE;
+		getAllocator().deleteInstance(m_motionState);
 	}
-	else if(init.m_kinematic)
-	{
-		ANKI_ASSERT(0 && "TODO");
-	}
-	else
-	{
-		m_body = NewtonCreateDynamicBody(m_world->getNewtonWorld(), init.m_shape->getNewtonShape(), &trf[0][0]);
-	}
-
-	if(!m_body)
-	{
-		ANKI_PHYS_LOGE("NewtonCreateXXBody() failed");
-		return Error::FUNCTION_FAILED;
-	}
-
-	// Material
-	NewtonBodySetMaterialGroupID(m_body, NewtonMaterialGetDefaultGroupID(m_world->getNewtonWorld()));
-
-	// User data & callbacks
-	NewtonBodySetUserData(m_body, this);
-	NewtonBodySetTransformCallback(m_body, onTransformCallback);
-
-	// Set mass
-	NewtonCollision* shape = NewtonBodyGetCollision(m_body);
-	NewtonBodySetMassProperties(m_body, init.m_mass, shape);
-
-	// Set gravity
-	if(init.m_gravity)
-	{
-		NewtonBodySetForceAndTorqueCallback(m_body, applyGravityForce);
-	}
-
-	// Activate
-	NewtonBodySetSimulationState(m_body, true);
-
-	return Error::NONE;
-}
-
-void PhysicsBody::setTransform(const Transform& trf)
-{
-	Mat4 mat(trf);
-	mat.transpose();
-	NewtonBodySetMatrix(m_body, &mat(0, 0));
-}
-
-void PhysicsBody::onTransformCallback(const NewtonBody* const body, const dFloat* const matrix, int threadIndex)
-{
-	ANKI_ASSERT(body);
-	ANKI_ASSERT(matrix);
-
-	void* ud = NewtonBodyGetUserData(body);
-	ANKI_ASSERT(ud);
-	PhysicsBody* self = reinterpret_cast<PhysicsBody*>(ud);
-
-	Mat4 trf;
-	memcpy(&trf, matrix, sizeof(Mat4));
-	trf.transpose();
-	trf(3, 3) = 0.0;
-	self->m_trf = Transform(trf);
-	self->m_updated = true;
-}
-
-void PhysicsBody::applyGravityForce(const NewtonBody* body, dFloat timestep, int threadIndex)
-{
-	dFloat Ixx;
-	dFloat Iyy;
-	dFloat Izz;
-	dFloat mass;
-
-	NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
-
-	const F32 GRAVITY = -9.8f;
-	Vec4 force(0.0f, mass * GRAVITY, 0.0f, 0.0f);
-	NewtonBodySetForce(body, &force[0]);
 }
 
 } // end namespace anki

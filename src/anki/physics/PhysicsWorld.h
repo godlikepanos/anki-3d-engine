@@ -24,10 +24,21 @@ public:
 	ANKI_USE_RESULT Error create(AllocAlignedCallback allocCb, void* allocCbData);
 
 	template<typename T, typename... TArgs>
-	PhysicsPtr<T> newInstance(TArgs&&... args);
+	PhysicsPtr<T> newInstance(TArgs&&... args)
+	{
+		PhysicsPtr<T> out;
+		T* ptr = m_alloc.template newInstance<T>(this, std::forward<TArgs>(args)...);
+		out.reset(ptr);
+		return out;
+	}
 
 	/// Do the update.
 	Error update(Second dt);
+
+	HeapAllocator<U8> getAllocator()
+	{
+		return m_alloc;
+	}
 
 anki_internal:
 	btDynamicsWorld* getBtWorld() const
@@ -59,32 +70,6 @@ private:
 
 	void cleanupMarkedForDeletion();
 };
-
-template<typename T, typename... TArgs>
-inline PhysicsPtr<T> PhysicsWorld::newInstance(TArgs&&... args)
-{
-	Error err = Error::NONE;
-	PhysicsPtr<T> out;
-
-	T* ptr = m_alloc.template newInstance<T>(this);
-	err = ptr->create(std::forward<TArgs>(args)...);
-
-	if(!err)
-	{
-		out.reset(ptr);
-	}
-	else
-	{
-		ANKI_PHYS_LOGE("Failed to create physics object");
-
-		if(ptr)
-		{
-			m_alloc.deleteInstance(ptr);
-		}
-	}
-
-	return out;
-}
 /// @}
 
 } // end namespace anki

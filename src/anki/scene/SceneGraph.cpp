@@ -221,8 +221,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	// Update
 	{
 		ANKI_TRACE_SCOPED_EVENT(SCENE_PHYSICS_UPDATE);
-		m_physics->updateAsync(crntTime - prevUpdateTime);
-		m_physics->waitUpdate();
+		m_physics->update(crntTime - prevUpdateTime);
 	}
 
 	{

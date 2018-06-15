@@ -13,15 +13,10 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winfinite-recursion"
 #define BT_THREADSAFE 0
+#define BT_NO_PROFILE 1
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 #pragma GCC diagnostic pop
-
-// Have all the newton headers here because they polute the global namespace
-#include <Newton.h>
-#include <dLinearAlgebra.h>
-#include <dCustomPlayerControllerManager.h>
-#include <anki/util/CleanupWindows.h>
 
 namespace anki
 {
@@ -76,6 +71,31 @@ ANKI_USE_RESULT inline Vec3 toAnki(const btVector3& v)
 ANKI_USE_RESULT inline btVector3 toBt(const Vec3& v)
 {
 	return btVector3(v.x(), v.y(), v.z());
+}
+
+ANKI_USE_RESULT inline btTransform toBt(const Transform& a)
+{
+	Mat4 mat(a);
+	mat.transpose();
+	btTransform out;
+	out.setFromOpenGLMatrix(&mat(0, 0));
+	return out;
+}
+
+ANKI_USE_RESULT inline Mat3x4 toAnki(const btMatrix3x3& m)
+{
+	Mat3x4 m3;
+	m3.setRows(Vec4(toAnki(m[0]), 0.0f), Vec4(toAnki(m[1]), 0.0f), Vec4(toAnki(m[2]), 0.0f));
+	return m3;
+}
+
+ANKI_USE_RESULT inline Transform toAnki(const btTransform& t)
+{
+	Transform out;
+	out.setRotation(toAnki(t.getBasis()));
+	out.setOrigin(Vec4(toAnki(t.getOrigin()), 0.0f));
+	out.setScale(1.0f);
+	return out;
 }
 /// @}
 

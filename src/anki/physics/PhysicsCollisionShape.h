@@ -26,7 +26,7 @@ public:
 	~PhysicsCollisionShape();
 
 anki_internal:
-	btCollisionShape* getBtShape() const
+	virtual btCollisionShape* getBtShape(Bool forDynamicBodies = false) const
 	{
 		ANKI_ASSERT(m_shape);
 		return m_shape;
@@ -67,6 +67,9 @@ public:
 
 private:
 	btTriangleMesh* m_mesh = nullptr;
+	btCollisionShape* m_staticShape = nullptr;
+
+	btCollisionShape* getBtShape(Bool forDynamicBodies = false) const override;
 };
 /// @}
 
