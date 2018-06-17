@@ -7,7 +7,7 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/components/BodyComponent.h>
 #include <anki/scene/components/SkinComponent.h>
-#include <anki/scene/Misc.h>
+#include <anki/scene/components/RenderComponent.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/SkeletonResource.h>
@@ -17,7 +17,7 @@ namespace anki
 {
 
 /// Render component implementation.
-class ModelPatchNode::MRenderComponent : public RenderComponent
+class ModelPatchNode::MRenderComponent : public MaterialRenderComponent
 {
 public:
 	const ModelPatchNode& getNode() const
@@ -26,7 +26,7 @@ public:
 	}
 
 	MRenderComponent(ModelPatchNode* node)
-		: RenderComponent(node, node->m_modelPatch->getMaterial())
+		: MaterialRenderComponent(node, node->m_modelPatch->getMaterial())
 	{
 	}
 
@@ -111,11 +111,11 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 		trfs[i] = Mat4(self2.getParent()->getComponentAt<MoveComponent>(0).getWorldTransform());
 	}
 
-	self.getComponentAt<RenderComponent>(1).allocateAndSetupUniforms(
-		self.m_modelPatch->getMaterial()->getDescriptorSetIndex(),
-		ctx,
-		ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
-		*ctx.m_stagingGpuAllocator);
+	static_cast<const MaterialRenderComponent&>(self.getComponentAt<RenderComponent>(1))
+		.allocateAndSetupUniforms(self.m_modelPatch->getMaterial()->getDescriptorSetIndex(),
+			ctx,
+			ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
+			*ctx.m_stagingGpuAllocator);
 
 	// Draw
 	cmdb->drawElements(PrimitiveTopology::TRIANGLES,
@@ -150,11 +150,11 @@ public:
 	}
 };
 
-class ModelNode::MRenderComponent : public RenderComponent
+class ModelNode::MRenderComponent : public MaterialRenderComponent
 {
 public:
 	MRenderComponent(ModelNode* node)
-		: RenderComponent(node, node->m_model->getModelPatches()[0]->getMaterial())
+		: MaterialRenderComponent(node, node->m_model->getModelPatches()[0]->getMaterial())
 	{
 	}
 
@@ -300,10 +300,11 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 			trfs[i] = Mat4(self2.getComponent<MoveComponent>().getWorldTransform());
 		}
 
-		self.getComponent<RenderComponent>().allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
-			ctx,
-			ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
-			*ctx.m_stagingGpuAllocator);
+		static_cast<const MaterialRenderComponent&>(self.getComponent<RenderComponent>())
+			.allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
+				ctx,
+				ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
+				*ctx.m_stagingGpuAllocator);
 
 		// Bones storage
 		if(self.m_model->getSkeleton())

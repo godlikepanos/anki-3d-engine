@@ -350,7 +350,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			if(wantsRenderComponents || (wantsShadowCasters && rc->getCastsShadow()))
 			{
 				RenderableQueueElement* el;
-				if(rc->getMaterial().isForwardShading())
+				if(rc->isForwardShading())
 				{
 					el = result.m_forwardShadingRenderables.newElement(alloc);
 				}
@@ -366,7 +366,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				el->m_distanceFromCamera = max(0.0f, sps[0].m_sp->getAabb().testPlane(nearPlane));
 
 				if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
-					&& !rc->getMaterial().isForwardShading())
+					&& !rc->isForwardShading())
 				{
 					RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
 					*el2 = *el;

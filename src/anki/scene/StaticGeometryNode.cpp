@@ -12,13 +12,13 @@ namespace anki
 {
 
 /// The implementation of static geometry node renderable component.
-class StaticGeometryRenderComponent : public RenderComponent
+class StaticGeometryRenderComponent : public MaterialRenderComponent
 {
 public:
 	StaticGeometryPatchNode* m_node;
 
 	StaticGeometryRenderComponent(StaticGeometryPatchNode* node)
-		: RenderComponent(node, node->m_modelPatch->getMaterial())
+		: MaterialRenderComponent(node, node->m_modelPatch->getMaterial())
 		, m_node(node)
 	{
 	}

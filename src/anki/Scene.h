@@ -20,6 +20,7 @@
 #include <anki/scene/OccluderNode.h>
 #include <anki/scene/DecalNode.h>
 #include <anki/scene/Octree.h>
+#include <anki/scene/PhysicsDebugNode.h>
 
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/RenderComponent.h>

@@ -30,19 +30,16 @@ public:
 PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	: PhysicsObject(PhysicsObjectType::BODY, world)
 {
-	if(init.m_static)
-	{
-		ANKI_ASSERT(init.m_mass > 0.0f);
-	}
+	const Bool dynamic = init.m_mass > 0.0f;
 
 	// Create motion state
 	m_motionState = getAllocator().newInstance<MotionState>();
 	m_motionState->m_body = this;
 
 	// Compute inertia
-	btCollisionShape* shape = init.m_shape->getBtShape(!init.m_static);
+	btCollisionShape* shape = init.m_shape->getBtShape(dynamic);
 	btVector3 localInertia(0, 0, 0);
-	if(!init.m_static)
+	if(dynamic)
 	{
 		shape->calculateLocalInertia(init.m_mass, localInertia);
 	}

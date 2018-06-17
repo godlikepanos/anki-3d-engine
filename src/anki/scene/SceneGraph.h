@@ -167,6 +167,16 @@ public:
 		return m_stats;
 	}
 
+	const Vec3& getSceneMin() const
+	{
+		return m_sceneMin;
+	}
+
+	const Vec3& getSceneMax() const
+	{
+		return m_sceneMax;
+	}
+
 anki_internal:
 	ResourceManager& getResourceManager()
 	{
@@ -261,6 +271,9 @@ private:
 	SectorGroup* m_sectors;
 
 	Octree* m_octree = nullptr;
+
+	Vec3 m_sceneMin = {-1000.0f, -200.0f, -1000.0f};
+	Vec3 m_sceneMax = {1000.0f, 200.0f, 1000.0f};
 
 	Atomic<U32> m_objectsMarkedForDeletionCount;
 

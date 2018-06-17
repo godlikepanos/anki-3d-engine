@@ -101,7 +101,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_maxReflectionProxyDistance = config.getNumber("scene.imageReflectionMaxDistance");
 
 	m_octree = m_alloc.newInstance<Octree>(m_alloc);
-	m_octree->init(Vec3(-1000.0f), Vec3(1000.0f), 5); // TODO
+	m_octree->init(m_sceneMin, m_sceneMax, 5); // TODO
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));

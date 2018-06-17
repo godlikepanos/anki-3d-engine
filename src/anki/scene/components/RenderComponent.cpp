@@ -12,8 +12,8 @@
 namespace anki
 {
 
-RenderComponent::RenderComponent(SceneNode* node, MaterialResourcePtr mtl)
-	: SceneComponent(SceneComponentType::RENDER, node)
+MaterialRenderComponent::MaterialRenderComponent(SceneNode* node, MaterialResourcePtr mtl)
+	: RenderComponent(node)
 	, m_mtl(mtl)
 {
 	// Create the material variables
@@ -23,14 +23,17 @@ RenderComponent::RenderComponent(SceneNode* node, MaterialResourcePtr mtl)
 	{
 		m_vars[count++].m_mvar = &mv;
 	}
+
+	m_isForwardShading = mtl->isForwardShading();
+	m_castsShadow = mtl->castsShadow();
 }
 
-RenderComponent::~RenderComponent()
+MaterialRenderComponent::~MaterialRenderComponent()
 {
 	m_vars.destroy(getAllocator());
 }
 
-void RenderComponent::allocateAndSetupUniforms(
+void MaterialRenderComponent::allocateAndSetupUniforms(
 	U set, const RenderQueueDrawContext& ctx, ConstWeakArray<Mat4> transforms, StagingGpuMemoryManager& alloc) const
 {
 	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCES);
@@ -62,7 +65,7 @@ void RenderComponent::allocateAndSetupUniforms(
 	// Iterate variables
 	for(auto it = m_vars.getBegin(); it != m_vars.getEnd(); ++it)
 	{
-		const RenderComponentVariable& var = *it;
+		const MaterialRenderComponentVariable& var = *it;
 		const MaterialVariable& mvar = var.getMaterialVariable();
 		const ShaderProgramResourceInputVariable& progvar = mvar.getShaderProgramResourceInputVariable();
 

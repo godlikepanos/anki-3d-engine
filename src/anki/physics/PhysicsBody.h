@@ -18,11 +18,10 @@ class PhysicsBodyInitInfo
 {
 public:
 	PhysicsCollisionShapePtr m_shape;
-	F32 m_mass = 0.0;
+	F32 m_mass = 0.0f;
 	Transform m_startTrf = Transform::getIdentity();
 	Bool m_kinematic = false;
 	Bool m_gravity = true;
-	Bool m_static = false;
 };
 
 /// Rigid body.

@@ -104,6 +104,19 @@ private:
 
 	OctreePlaceable m_octreeInfo;
 };
+
+/// A class that holds spatial information and implements the SpatialComponent virtuals. You just need to update the
+/// OBB manually
+class ObbSpatialComponent : public SpatialComponent
+{
+public:
+	Obb m_obb;
+
+	ObbSpatialComponent(SceneNode* node)
+		: SpatialComponent(node, &m_obb)
+	{
+	}
+};
 /// @}
 
 } // end namespace anki

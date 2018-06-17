@@ -5,7 +5,9 @@
 
 #include <anki/scene/ParticleEmitterNode.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/Misc.h>
+#include <anki/scene/components/MoveComponent.h>
+#include <anki/scene/components/SpatialComponent.h>
+#include <anki/scene/components/RenderComponent.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/util/Functions.h>
@@ -162,7 +164,7 @@ void Particle::revive(const ParticleEmitterNode& pe,
 #endif
 
 /// The derived render component for particle emitters.
-class ParticleEmitterRenderComponent : public RenderComponent
+class ParticleEmitterRenderComponent : public MaterialRenderComponent
 {
 public:
 	const ParticleEmitterNode& getNode() const
@@ -171,7 +173,7 @@ public:
 	}
 
 	ParticleEmitterRenderComponent(ParticleEmitterNode* node)
-		: RenderComponent(node, node->m_particleEmitterResource->getMaterial())
+		: MaterialRenderComponent(node, node->m_particleEmitterResource->getMaterial())
 	{
 	}
 
@@ -304,11 +306,11 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 
 		// Uniforms
 		Array<Mat4, 1> trf = {{Mat4::getIdentity()}};
-		self.getComponent<RenderComponent>().allocateAndSetupUniforms(
-			self.m_particleEmitterResource->getMaterial()->getDescriptorSetIndex(),
-			ctx,
-			trf,
-			*ctx.m_stagingGpuAllocator);
+		static_cast<const MaterialRenderComponent&>(self.getComponent<RenderComponent>())
+			.allocateAndSetupUniforms(self.m_particleEmitterResource->getMaterial()->getDescriptorSetIndex(),
+				ctx,
+				trf,
+				*ctx.m_stagingGpuAllocator);
 
 		// Draw
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, self.m_aliveParticlesCount, 0, 0);

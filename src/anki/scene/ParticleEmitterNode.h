@@ -6,10 +6,9 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/components/MoveComponent.h>
-#include <anki/scene/components/SpatialComponent.h>
-#include <anki/scene/components/RenderComponent.h>
 #include <anki/resource/ParticleEmitterResource.h>
+#include <anki/renderer/RenderQueue.h>
+#include <anki/collision/Obb.h>
 
 namespace anki
 {

@@ -14,6 +14,7 @@ class FrustumComponent;
 class InstanceComponent;
 class MoveComponent;
 class RenderComponent;
+class MaterialRenderComponent;
 class SpatialComponent;
 class DecalComponent;
 class PortalComponent;

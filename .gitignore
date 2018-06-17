@@ -11,5 +11,7 @@
 !*.md
 !*.txt
 !*.glslp
+!*.anki*
+!*.blend
 !CMakeLists.txt
 build*/*

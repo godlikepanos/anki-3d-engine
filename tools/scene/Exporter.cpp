@@ -1146,22 +1146,28 @@ void Exporter::exportAll()
 		// Write the collision node
 		if(!node.m_collisionMesh.empty())
 		{
-			bool found = false;
 			unsigned i = 0;
-			for(; i < m_scene->mNumMeshes; i++)
+			if(node.m_collisionMesh == "self")
 			{
-				if(m_scene->mMeshes[i]->mName.C_Str() == node.m_collisionMesh)
+				i = model.m_meshIndex;
+			}
+			else
+			{
+				for(; i < m_scene->mNumMeshes; i++)
 				{
-					found = true;
-					break;
+					if(m_scene->mMeshes[i]->mName.C_Str() == node.m_collisionMesh)
+					{
+						break;
+					}
 				}
 			}
 
+			const bool found = i < m_scene->mNumMeshes;
 			if(found)
 			{
 				exportCollisionMesh(i);
 
-				std::string fname = m_rpath + node.m_collisionMesh + ".ankicl";
+				std::string fname = m_rpath + getMeshName(getMeshAt(i)) + ".ankicl";
 				file << "node = scene:newStaticCollisionNode(\"" << nodeName << "_cl\", \"" << fname << "\", trf)\n";
 			}
 			else

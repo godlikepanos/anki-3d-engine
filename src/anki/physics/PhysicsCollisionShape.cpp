@@ -54,6 +54,7 @@ PhysicsTriangleSoup::~PhysicsTriangleSoup()
 {
 	getAllocator().deleteInstance(m_staticShape);
 	getAllocator().deleteInstance(m_shape);
+	m_shape = nullptr;
 	getAllocator().deleteInstance(m_mesh);
 }
 

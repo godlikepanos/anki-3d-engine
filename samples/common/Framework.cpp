@@ -89,10 +89,6 @@ Error SampleApp::userMainLoop(Bool& quit)
 	{
 		// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
 	}
-	if(in.getKey(KeyCode::F6) == 1)
-	{
-		renderer.getDbg().switchDepthTestEnabled();
-	}
 
 	if(in.getKey(KeyCode::UP))
 	{
@@ -124,14 +120,14 @@ Error SampleApp::userMainLoop(Bool& quit)
 		mover->moveLocalX(MOVE_DISTANCE);
 	}
 
-	if(in.getKey(KeyCode::Z))
+	if(in.getKey(KeyCode::C))
 	{
-		mover->moveLocalY(MOVE_DISTANCE);
+		mover->moveLocalY(-MOVE_DISTANCE);
 	}
 
 	if(in.getKey(KeyCode::SPACE))
 	{
-		mover->moveLocalY(-MOVE_DISTANCE);
+		mover->moveLocalY(MOVE_DISTANCE);
 	}
 
 	if(in.getKey(KeyCode::W))
