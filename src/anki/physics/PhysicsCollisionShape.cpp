@@ -19,12 +19,14 @@ PhysicsSphere::PhysicsSphere(PhysicsWorld* world, F32 radius)
 	: PhysicsCollisionShape(world)
 {
 	m_shape = getAllocator().newInstance<btSphereShape>(radius);
+	m_shape->setMargin(getWorld().getCollisionMargin());
 }
 
 PhysicsBox::PhysicsBox(PhysicsWorld* world, const Vec3& extend)
 	: PhysicsCollisionShape(world)
 {
 	m_shape = getAllocator().newInstance<btBoxShape>(toBt(extend));
+	m_shape->setMargin(getWorld().getCollisionMargin());
 }
 
 PhysicsTriangleSoup::PhysicsTriangleSoup(
@@ -42,12 +44,14 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(
 
 	// Create the dynamic shape
 	btGImpactMeshShape* shape = getAllocator().newInstance<btGImpactMeshShape>(m_mesh);
+	shape->setMargin(getWorld().getCollisionMargin());
 	shape->updateBound();
 	m_shape = shape;
 
 	// And the static one
 	btBvhTriangleMeshShape* triShape = getAllocator().newInstance<btBvhTriangleMeshShape>(m_mesh, true);
 	m_staticShape = triShape;
+	m_staticShape->setMargin(getWorld().getCollisionMargin());
 }
 
 PhysicsTriangleSoup::~PhysicsTriangleSoup()

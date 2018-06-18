@@ -46,6 +46,9 @@ Error MyApp::userMainLoop(Bool& quit)
 			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body, "assets/Suzanne.ankicl"));
 		body->getComponent<BodyComponent>().setTransform(camTrf);
 
+		PhysicsBodyPtr pbody = body->getComponent<BodyComponent>().getPhysicsBody();
+		pbody->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));
+
 		body->addChild(monkey);
 	}
 

@@ -53,6 +53,11 @@ anki_internal:
 		m_forDeletion.pushBack(m_alloc, obj);
 	}
 
+	F32 getCollisionMargin() const
+	{
+		return 0.04;
+	}
+
 private:
 	HeapAllocator<U8> m_alloc;
 

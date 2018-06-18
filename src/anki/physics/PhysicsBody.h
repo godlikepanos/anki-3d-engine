@@ -42,6 +42,7 @@ public:
 	void setTransform(const Transform& trf)
 	{
 		m_trf = trf;
+		m_body->setWorldTransform(toBt(trf));
 	}
 
 	F32 getFriction() const
@@ -67,6 +68,11 @@ public:
 	void setMaterialsThatCollide(PhysicsMaterialBit bits)
 	{
 		m_materialBits = bits;
+	}
+
+	void applyForce(const Vec3& force, const Vec3& relPos)
+	{
+		m_body->applyForce(toBt(force), toBt(relPos));
 	}
 
 private:
