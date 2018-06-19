@@ -3,75 +3,103 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/DebugDrawer.h>
-#include <anki/renderer/Renderer.h>
-#include <anki/resource/TextureResource.h>
-#include <anki/renderer/Renderer.h>
-#include <anki/renderer/FinalComposite.h>
-#include <anki/renderer/GBuffer.h>
-#include <anki/util/Logger.h>
+#include <anki/scene/DebugDrawer.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/renderer/RenderQueue.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/Collision.h>
-#include <anki/Scene.h>
 
 namespace anki
 {
 
-Error DebugDrawer::init(Renderer* r)
+Error DebugDrawer::init(ResourceManager* rsrcManager)
 {
-	ANKI_ASSERT(r);
-	m_r = r;
+	ANKI_ASSERT(rsrcManager);
 
 	// Create the prog and shaders
-	ANKI_CHECK(r->getResourceManager().loadResource("shaders/SceneDebug.glslp", m_prog));
-	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("INSTANCE_COUNT", 1u);
-	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
-	mutations.add("COLOR_TEXTURE", 0).add("DITHERED_DEPTH_TEST", 0);
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
-	m_grProg = variant->getProgram();
+	ANKI_CHECK(rsrcManager->loadResource("shaders/SceneDebug.glslp", m_prog));
 
 	return Error::NONE;
 }
 
+void DebugDrawer::prepareFrame(RenderQueueDrawContext* ctx)
+{
+	m_ctx = ctx;
+}
+
 void DebugDrawer::flush()
 {
-	if(m_cachedPositionCount > 0)
+	if(m_cachedPositionCount == 0)
 	{
-		m_cmdb->bindShaderProgram(m_grProg);
+		return;
+	}
 
-		// Set vertex state
+	CommandBufferPtr& cmdb = m_ctx->m_commandBuffer;
+
+	// Bind program
+	{
+		ShaderProgramResourceMutationInitList<2> mutators(m_prog);
+		mutators.add("COLOR_TEXTURE", 0);
+		mutators.add(
+			"DITHERED_DEPTH_TEST", m_ctx->m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON));
+		ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+		consts.add("INSTANCE_COUNT", 1u);
+		const ShaderProgramResourceVariant* variant;
+		m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+		cmdb->bindShaderProgram(variant->getProgram());
+	}
+
+	// Set vertex state
+	{
 		const U32 size = m_cachedPositionCount * sizeof(Vec3);
 
 		StagingGpuMemoryToken token;
-		void* mem = m_r->getStagingGpuMemoryManager().allocateFrame(size, StagingGpuMemoryType::VERTEX, token);
+		void* mem = m_ctx->m_stagingGpuAllocator->allocateFrame(size, StagingGpuMemoryType::VERTEX, token);
 		memcpy(mem, &m_cachedPositions[0], size);
 
-		m_cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, sizeof(Vec3));
-		m_cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, sizeof(Vec3));
+		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+	}
 
-		// Set uniform state
+	// Set uniform state
+	{
 		struct Uniforms
 		{
 			Mat4 m_mvp;
 			Vec4 m_color;
 		};
 
+		StagingGpuMemoryToken token;
 		Uniforms* uniforms = static_cast<Uniforms*>(
-			m_r->getStagingGpuMemoryManager().allocateFrame(sizeof(Uniforms), StagingGpuMemoryType::UNIFORM, token));
+			m_ctx->m_stagingGpuAllocator->allocateFrame(sizeof(Uniforms), StagingGpuMemoryType::UNIFORM, token));
 		uniforms->m_mvp = m_mvpMat;
 		uniforms->m_color = m_crntCol;
 
-		m_cmdb->bindUniformBuffer(1, 0, token.m_buffer, token.m_offset, token.m_range);
-
-		// Draw
-		m_cmdb->drawArrays(m_topology, m_cachedPositionCount);
-
-		// Other
-		m_cachedPositionCount = 0;
+		cmdb->bindUniformBuffer(1, 0, token.m_buffer, token.m_offset, token.m_range);
 	}
+
+	const Bool enableDepthTest = m_ctx->m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	if(enableDepthTest)
+	{
+		cmdb->setDepthCompareOperation(CompareOperation::LESS);
+	}
+	else
+	{
+		cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+	}
+
+	// Draw
+	cmdb->drawArrays(m_topology, m_cachedPositionCount);
+
+	// Restore state
+	if(!enableDepthTest)
+	{
+		cmdb->setDepthCompareOperation(CompareOperation::LESS);
+	}
+
+	// Other
+	m_cachedPositionCount = 0;
 }
 
 void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
@@ -318,11 +346,11 @@ void CollisionDebugDrawer::visit(const ConvexHullShape& hull)
 	}
 }
 
-void PhysicsDebugDrawer::drawLines(const Vec3* lines, const U32 linesCount, const Vec4& color)
+void PhysicsDebugDrawer::drawLines(const Vec3* lines, const U32 vertCount, const Vec4& color)
 {
 	m_dbg->setTopology(PrimitiveTopology::LINES);
 	m_dbg->setColor(color);
-	for(U i = 0; i < linesCount * 2; ++i)
+	for(U i = 0; i < vertCount; ++i)
 	{
 		m_dbg->pushBackVertex(lines[i]);
 	}

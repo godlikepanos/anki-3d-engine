@@ -29,10 +29,7 @@ public:
 class PhysicsPlayerController final : public PhysicsObject
 {
 public:
-	PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init)
-		: PhysicsObject(PhysicsObjectType::PLAYER_CONTROLLER, world)
-	{
-	}
+	PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init);
 
 	~PhysicsPlayerController();
 
@@ -50,7 +47,9 @@ public:
 	}
 
 private:
-	// TODO
+	btPairCachingGhostObject* m_ghostObject = nullptr;
+	btCapsuleShape* m_convexShape = nullptr;
+	btKinematicCharacterController* m_controller = nullptr;
 };
 /// @}
 

@@ -5,6 +5,7 @@
 
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/CameraNode.h>
+#include <anki/scene/PhysicsDebugNode.h>
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/SectorNode.h>
 #include <anki/scene/Octree.h>
@@ -107,6 +108,10 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
 	m_defaultMainCam->setAll(toRad(60.0f), toRad(60.0f), 0.1f, 1000.0f);
 	m_mainCam = m_defaultMainCam;
+
+	// Create a special node for debugging the physics world
+	PhysicsDebugNode* pnode;
+	ANKI_CHECK(newSceneNode<PhysicsDebugNode>("_physicsDebugNode", pnode));
 
 	return Error::NONE;
 }

@@ -16,6 +16,8 @@
 #define BT_NO_PROFILE 1
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
+#include <BulletDynamics/Character/btKinematicCharacterController.h>
 #pragma GCC diagnostic pop
 
 namespace anki

@@ -9,8 +9,19 @@
 namespace anki
 {
 
+PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init)
+	: PhysicsObject(PhysicsObjectType::PLAYER_CONTROLLER, world)
+{
+	m_ghostObject = getAllocator().newInstance<btPairCachingGhostObject>();
+	m_convexShape = getAllocator().newInstance<btCapsuleShape>(init.m_outerRadius, init.m_height);
+
+	m_controller = getAllocator().newInstance<btKinematicCharacterController>(
+		m_ghostObject, m_convexShape, init.m_stepHeight, btVector3(0, 1, 0));
+}
+
 PhysicsPlayerController::~PhysicsPlayerController()
 {
+	// TODO
 }
 
 void PhysicsPlayerController::moveToPosition(const Vec4& position)

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/Common.h>
+#include <anki/scene/Common.h>
 #include <anki/Math.h>
 #include <anki/Gr.h>
 #include <anki/collision/CollisionShape.h>
@@ -16,6 +16,9 @@
 namespace anki
 {
 
+// Forward
+class RenderQueueDrawContext;
+
 /// @addtogroup renderer
 /// @{
 
@@ -23,17 +26,14 @@ namespace anki
 class DebugDrawer
 {
 public:
-	ANKI_USE_RESULT Error init(Renderer* r);
+	ANKI_USE_RESULT Error init(ResourceManager* rsrcManager);
 
-	void prepareFrame(CommandBufferPtr& cmdb)
-	{
-		m_cmdb = cmdb;
-	}
+	void prepareFrame(RenderQueueDrawContext* ctx);
 
 	void finishFrame()
 	{
 		flush();
-		m_cmdb.reset(nullptr);
+		m_ctx = nullptr;
 	}
 
 	void drawGrid();
@@ -85,11 +85,9 @@ public:
 	}
 
 private:
-	Renderer* m_r;
 	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
 
-	CommandBufferPtr m_cmdb;
+	RenderQueueDrawContext* m_ctx = nullptr;
 
 	// State
 	Mat4 m_mMat = Mat4::getIdentity();
@@ -146,7 +144,7 @@ public:
 	{
 	}
 
-	void drawLines(const Vec3* lines, const U32 linesCount, const Vec4& color) final;
+	void drawLines(const Vec3* lines, const U32 vertCount, const Vec4& color) final;
 
 private:
 	DebugDrawer* m_dbg; ///< The debug drawer

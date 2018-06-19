@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/renderer/GBuffer.h>
-#include <anki/renderer/DebugDrawer.h>
 #include <anki/renderer/Common.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/Volumetric.h>

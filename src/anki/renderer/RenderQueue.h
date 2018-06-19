@@ -53,7 +53,7 @@ public:
 	RenderQueueDrawCallback m_callback;
 	const void* m_userData;
 	U64 m_mergeKey;
-	F32 m_distanceFromCamera;
+	F32 m_distanceFromCamera; ///< Don't set this
 };
 
 static_assert(

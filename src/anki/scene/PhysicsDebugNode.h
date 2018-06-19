@@ -14,7 +14,10 @@ namespace anki
 class PhysicsDebugNode : public SceneNode
 {
 public:
-	PhysicsDebugNode(SceneGraph* scene, CString name);
+	PhysicsDebugNode(SceneGraph* scene, CString name)
+		: SceneNode(scene, name)
+	{
+	}
 
 	~PhysicsDebugNode();
 

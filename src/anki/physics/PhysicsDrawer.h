@@ -23,7 +23,7 @@ public:
 	}
 
 	/// Draw a line.
-	virtual void drawLines(const Vec3* lines, const U32 linesCount, const Vec4& color) = 0;
+	virtual void drawLines(const Vec3* lines, const U32 vertCount, const Vec4& color) = 0;
 
 	void drawWorld(const PhysicsWorld& world);
 
@@ -70,8 +70,7 @@ private:
 
 		int getDebugMode() const override
 		{
-			// TODO
-			return 0;
+			return btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawAabb;
 		}
 	};
 
