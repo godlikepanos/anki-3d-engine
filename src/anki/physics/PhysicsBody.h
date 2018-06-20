@@ -22,6 +22,7 @@ public:
 	Transform m_startTrf = Transform::getIdentity();
 	Bool m_kinematic = false;
 	Bool m_gravity = true;
+	F32 m_friction = 0.5f;
 };
 
 /// Rigid body.

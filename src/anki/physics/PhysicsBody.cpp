@@ -46,6 +46,7 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 
 	// Create body
 	btRigidBody::btRigidBodyConstructionInfo cInfo(init.m_mass, m_motionState, shape, localInertia);
+	cInfo.m_friction = init.m_friction;
 	m_body = getAllocator().newInstance<btRigidBody>(cInfo);
 
 	getWorld().getBtWorld()->addRigidBody(m_body);

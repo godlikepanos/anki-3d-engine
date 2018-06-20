@@ -30,6 +30,7 @@ Bool ShaderProgramResourceInputVariable::evalPreproc(ConstWeakArray<te_variable>
 		ANKI_RESOURCE_LOGF("Wrong result of the expression: %s", m_preprocExpr.cstr());
 	}
 
+	te_free(n);
 	return evalOut != 0.0;
 }
 

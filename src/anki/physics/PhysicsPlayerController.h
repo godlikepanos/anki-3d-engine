@@ -36,20 +36,24 @@ public:
 	// Update the state machine
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
 	{
-		// TODO
+		m_controller->setWalkDirection(toBt((forwardDir * forwardSpeed).xyz()));
 	}
 
 	void moveToPosition(const Vec4& position);
 
 	Transform getTransform(Bool& updated)
 	{
-		return Transform();
+		Transform out = toAnki(m_ghostObject->getWorldTransform());
+		updated = m_prevTrf != out;
+		return out;
 	}
 
 private:
 	btPairCachingGhostObject* m_ghostObject = nullptr;
 	btCapsuleShape* m_convexShape = nullptr;
 	btKinematicCharacterController* m_controller = nullptr;
+
+	Transform m_prevTrf = Transform::getIdentity();
 };
 /// @}
 

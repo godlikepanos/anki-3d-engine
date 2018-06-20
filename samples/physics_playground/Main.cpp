@@ -11,20 +11,64 @@ using namespace anki;
 class MyApp : public SampleApp
 {
 public:
-	Error sampleExtraInit() override
-	{
-		ScriptResourcePtr script;
-		ANKI_CHECK(getResourceManager().loadResource("assets/scene.lua", script));
-		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
-		return Error::NONE;
-	}
-
+	Error sampleExtraInit() override;
 	Error userMainLoop(Bool& quit) override;
 };
 
+Error MyApp::sampleExtraInit()
+{
+	ScriptResourcePtr script;
+	ANKI_CHECK(getResourceManager().loadResource("assets/scene.lua", script));
+	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
+
+	SceneNode& cam = getSceneGraph().getActiveCameraNode();
+	cam.getComponent<MoveComponent>().setLocalTransform(
+		Transform(Vec4(0.0, 0.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
+
+	PlayerNode* player;
+	ANKI_CHECK(getSceneGraph().newSceneNode("player", player, Vec4(0.0f, 2.5f, 0.0f, 0.0f)));
+
+	player->addChild(&cam);
+
+	return Error::NONE;
+}
+
 Error MyApp::userMainLoop(Bool& quit)
 {
-	ANKI_CHECK(SampleApp::userMainLoop(quit));
+	// ANKI_CHECK(SampleApp::userMainLoop(quit));
+
+	if(getInput().getKey(KeyCode::ESCAPE))
+	{
+		quit = true;
+	}
+
+	if(getInput().getKey(KeyCode::F1) == 1)
+	{
+		static U mode = 0;
+		mode = (mode + 1) % 3;
+		if(mode == 0)
+		{
+			getMainRenderer().getDbg().setEnabled(false);
+		}
+		else if(mode == 1)
+		{
+			getMainRenderer().getDbg().setEnabled(true);
+			getMainRenderer().getDbg().setDepthTestEnabled(true);
+			getMainRenderer().getDbg().setDitheredDepthTestEnabled(false);
+		}
+		else
+		{
+			getMainRenderer().getDbg().setEnabled(true);
+			getMainRenderer().getDbg().setDepthTestEnabled(false);
+			getMainRenderer().getDbg().setDitheredDepthTestEnabled(true);
+		}
+	}
+
+	if(getInput().getKey(KeyCode::R))
+	{
+		SceneNode& player = getSceneGraph().findSceneNode("player");
+		player.getComponent<PlayerControllerComponent>().moveToPosition(Vec4(0.0f, 2.0f, 0.0f, 0.0f));
+	}
 
 	if(getInput().getMouseButton(MouseButton::LEFT) == 1)
 	{

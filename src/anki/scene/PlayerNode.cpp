@@ -77,7 +77,7 @@ public:
 		MoveComponent& move = node.getComponent<MoveComponent>();
 		const Input& in = node.getSceneGraph().getInput();
 
-		const F32 speed = 3.5;
+		const F32 speed = 0.5;
 
 		Vec4 moveVec(0.0);
 		if(in.getKey(KeyCode::W))

@@ -64,7 +64,7 @@ protected:
 	PhysicsWorld* m_world = nullptr;
 
 private:
-	Atomic<I32> m_refcount = {};
+	Atomic<I32> m_refcount = {0};
 	PhysicsObjectType m_type;
 };
 /// @}

@@ -62,6 +62,8 @@ private:
 	HeapAllocator<U8> m_alloc;
 
 	btBroadphaseInterface* m_broadphase = nullptr;
+	btGhostPairCallback* m_gpc = nullptr;
+
 	btDefaultCollisionConfiguration* m_collisionConfig = nullptr;
 	btCollisionDispatcher* m_dispatcher = nullptr;
 	btSequentialImpulseConstraintSolver* m_solver = nullptr;

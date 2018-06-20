@@ -39,6 +39,7 @@ PhysicsWorld::~PhysicsWorld()
 	m_alloc.deleteInstance(m_dispatcher);
 	m_alloc.deleteInstance(m_collisionConfig);
 	m_alloc.deleteInstance(m_broadphase);
+	m_alloc.deleteInstance(m_gpc);
 
 	gAlloc = nullptr;
 }
@@ -53,14 +54,17 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 
 	// Create objects
 	m_broadphase = m_alloc.newInstance<btDbvtBroadphase>();
+	m_gpc = m_alloc.newInstance<btGhostPairCallback>();
+	m_broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(m_gpc);
+
 	m_collisionConfig = m_alloc.newInstance<btDefaultCollisionConfiguration>();
 
 	m_dispatcher = m_alloc.newInstance<btCollisionDispatcher>(m_collisionConfig);
 	btGImpactCollisionAlgorithm::registerAlgorithm(m_dispatcher);
 
 	m_solver = m_alloc.newInstance<btSequentialImpulseConstraintSolver>();
-	m_world = m_alloc.newInstance<btDiscreteDynamicsWorld>(m_dispatcher, m_broadphase, m_solver, m_collisionConfig);
 
+	m_world = m_alloc.newInstance<btDiscreteDynamicsWorld>(m_dispatcher, m_broadphase, m_solver, m_collisionConfig);
 	m_world->setGravity(btVector3(0.0f, -9.8f, 0.0f));
 
 	return Error::NONE;
