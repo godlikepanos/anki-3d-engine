@@ -27,6 +27,7 @@ public:
 	PhysicsPtr<T> newInstance(TArgs&&... args)
 	{
 		PhysicsPtr<T> out;
+		LockGuard<Mutex> lock(m_mtx);
 		T* ptr = m_alloc.template newInstance<T>(this, std::forward<TArgs>(args)...);
 		out.reset(ptr);
 		return out;
@@ -58,6 +59,11 @@ anki_internal:
 		return 0.04;
 	}
 
+	ANKI_USE_RESULT LockGuard<Mutex> lockWorld() const
+	{
+		return LockGuard<Mutex>(m_mtx);
+	}
+
 private:
 	HeapAllocator<U8> m_alloc;
 
@@ -69,7 +75,7 @@ private:
 	btSequentialImpulseConstraintSolver* m_solver = nullptr;
 	btDiscreteDynamicsWorld* m_world = nullptr;
 
-	Mutex m_mtx;
+	mutable Mutex m_mtx;
 	List<PhysicsObject*> m_forDeletion;
 
 	template<typename T, typename... TArgs>
@@ -77,6 +83,9 @@ private:
 
 	void cleanupMarkedForDeletion();
 };
+
+/// Lock the bullet physics world.
+#define ANKI_LOCK_PHYS_WORLD() auto lock = getWorld().lockWorld()
 /// @}
 
 } // end namespace anki

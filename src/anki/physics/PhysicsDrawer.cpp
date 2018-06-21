@@ -11,6 +11,8 @@ namespace anki
 
 void PhysicsDrawer::drawWorld(const PhysicsWorld& world)
 {
+	auto lock = world.lockWorld();
+
 	btDynamicsWorld& btWorld = *world.getBtWorld();
 
 	btWorld.setDebugDrawer(&m_debugDraw);

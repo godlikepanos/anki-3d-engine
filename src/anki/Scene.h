@@ -36,3 +36,4 @@
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/ReflectionProxyComponent.h>
 #include <anki/scene/components/FrustumComponent.h>
+#include <anki/scene/components/JointComponent.h>

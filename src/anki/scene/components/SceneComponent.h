@@ -35,6 +35,7 @@ enum class SceneComponentType : U16
 	DECAL,
 	SKIN,
 	SCRIPT,
+	JOINT,
 	PLAYER_CONTROLLER,
 
 	COUNT,

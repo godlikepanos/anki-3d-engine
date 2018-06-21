@@ -76,6 +76,13 @@ public:
 		m_body->applyForce(toBt(force), toBt(relPos));
 	}
 
+anki_internal:
+	btRigidBody* getBtBody() const
+	{
+		ANKI_ASSERT(m_body);
+		return m_body;
+	}
+
 private:
 	class MotionState;
 

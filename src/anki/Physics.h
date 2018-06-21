@@ -6,5 +6,9 @@
 #pragma once
 
 #include <anki/physics/PhysicsWorld.h>
+#include <anki/physics/PhysicsBody.h>
+#include <anki/physics/PhysicsCollisionShape.h>
+#include <anki/physics/PhysicsJoint.h>
+#include <anki/physics/PhysicsPlayerController.h>
 
 /// @defgroup physics Physics subsystem

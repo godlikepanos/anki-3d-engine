@@ -21,6 +21,7 @@ Error MyApp::sampleExtraInit()
 	ANKI_CHECK(getResourceManager().loadResource("assets/scene.lua", script));
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
+	// Create the player
 	SceneNode& cam = getSceneGraph().getActiveCameraNode();
 	cam.getComponent<MoveComponent>().setLocalTransform(
 		Transform(Vec4(0.0, 0.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));

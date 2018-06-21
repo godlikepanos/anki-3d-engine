@@ -12,9 +12,9 @@ namespace anki
 PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init)
 	: PhysicsObject(PhysicsObjectType::PLAYER_CONTROLLER, world)
 {
-	btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), 1.0f));
+	const btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), 1.0f));
 
-	m_convexShape = getAllocator().newInstance<btCapsuleShapeZ>(init.m_outerRadius, init.m_height);
+	m_convexShape = getAllocator().newInstance<btCapsuleShape>(init.m_outerRadius, init.m_height);
 
 	m_ghostObject = getAllocator().newInstance<btPairCachingGhostObject>();
 	m_ghostObject->setWorldTransform(trf);
@@ -24,10 +24,15 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 	m_controller = getAllocator().newInstance<btKinematicCharacterController>(
 		m_ghostObject, m_convexShape, init.m_stepHeight, btVector3(0, 1, 0));
 
-	getWorld().getBtWorld()->addCollisionObject(m_ghostObject,
+	btDynamicsWorld* btworld = getWorld().getBtWorld();
+
+	btworld->addCollisionObject(m_ghostObject,
 		btBroadphaseProxy::CharacterFilter,
 		btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
-	getWorld().getBtWorld()->addAction(m_controller);
+	btworld->addAction(m_controller);
+
+	// Need to call this else the player is upside down
+	moveToPosition(init.m_position);
 }
 
 PhysicsPlayerController::~PhysicsPlayerController()
@@ -42,7 +47,13 @@ PhysicsPlayerController::~PhysicsPlayerController()
 
 void PhysicsPlayerController::moveToPosition(const Vec4& position)
 {
-	m_ghostObject->setWorldTransform(toBt(Transform(position, Mat3x4::getIdentity(), 1.0f)));
+	ANKI_LOCK_PHYS_WORLD();
+
+	getWorld().getBtWorld()->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(
+		m_ghostObject->getBroadphaseHandle(), getWorld().getBtWorld()->getDispatcher());
+
+	m_controller->reset(getWorld().getBtWorld());
+	m_controller->warp(toBt(position.xyz()));
 }
 
 } // end namespace anki
