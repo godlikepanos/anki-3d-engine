@@ -272,7 +272,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	Timestamp componentTimestam = 0;
 	err = node.iterateComponents([&](SceneComponent& comp) -> Error {
 		Bool updated = false;
-		Error e = comp.updateReal(node, prevTime, crntTime, updated);
+		Error e = comp.updateReal(prevTime, crntTime, updated);
 		componentTimestam = max(componentTimestam, comp.getTimestamp());
 
 		return e;

@@ -27,7 +27,6 @@ public:
 	PhysicsPtr<T> newInstance(TArgs&&... args)
 	{
 		PhysicsPtr<T> out;
-		LockGuard<Mutex> lock(m_mtx);
 		T* ptr = m_alloc.template newInstance<T>(this, std::forward<TArgs>(args)...);
 		out.reset(ptr);
 		return out;
@@ -36,7 +35,12 @@ public:
 	/// Do the update.
 	Error update(Second dt);
 
-	HeapAllocator<U8> getAllocator()
+	HeapAllocator<U8> getAllocator() const
+	{
+		return m_alloc;
+	}
+
+	HeapAllocator<U8>& getAllocator()
 	{
 		return m_alloc;
 	}
@@ -48,15 +52,9 @@ anki_internal:
 		return m_world;
 	}
 
-	void deleteObjectDeferred(PhysicsObject* obj)
-	{
-		LockGuard<Mutex> lock(m_mtx);
-		m_forDeletion.pushBack(m_alloc, obj);
-	}
-
 	F32 getCollisionMargin() const
 	{
-		return 0.04;
+		return 0.04f;
 	}
 
 	ANKI_USE_RESULT LockGuard<Mutex> lockWorld() const
@@ -66,6 +64,7 @@ anki_internal:
 
 private:
 	HeapAllocator<U8> m_alloc;
+	mutable Mutex m_mtx;
 
 	btBroadphaseInterface* m_broadphase = nullptr;
 	btGhostPairCallback* m_gpc = nullptr;
@@ -75,17 +74,9 @@ private:
 	btSequentialImpulseConstraintSolver* m_solver = nullptr;
 	btDiscreteDynamicsWorld* m_world = nullptr;
 
-	mutable Mutex m_mtx;
-	List<PhysicsObject*> m_forDeletion;
-
 	template<typename T, typename... TArgs>
 	PhysicsPtr<T> newObjectInternal(TArgs&&... args);
-
-	void cleanupMarkedForDeletion();
 };
-
-/// Lock the bullet physics world.
-#define ANKI_LOCK_PHYS_WORLD() auto lock = getWorld().lockWorld()
 /// @}
 
 } // end namespace anki

@@ -12,7 +12,13 @@ namespace anki
 
 void PhysicsPtrDeleter::operator()(PhysicsObject* ptr)
 {
-	ptr->getWorld().deleteObjectDeferred(ptr);
+	if(ptr == nullptr)
+	{
+		return;
+	}
+
+	auto alloc = ptr->getAllocator();
+	alloc.deleteInstance(ptr);
 }
 
 } // end namespace anki

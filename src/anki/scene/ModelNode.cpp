@@ -135,14 +135,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		const MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		const MoveComponent& move = m_node->getComponent<MoveComponent>();
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
-			ModelNode& mnode = static_cast<ModelNode&>(node);
+			ModelNode& mnode = *static_cast<ModelNode*>(m_node);
 			mnode.onMoveComponentUpdate(move);
 		}
 

@@ -32,8 +32,6 @@ PhysicsWorld::PhysicsWorld()
 
 PhysicsWorld::~PhysicsWorld()
 {
-	cleanupMarkedForDeletion();
-
 	m_alloc.deleteInstance(m_world);
 	m_alloc.deleteInstance(m_solver);
 	m_alloc.deleteInstance(m_dispatcher);
@@ -72,30 +70,11 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 
 Error PhysicsWorld::update(Second dt)
 {
-	// Do cleanup of marked for deletion
-	cleanupMarkedForDeletion();
-
 	// Update
-	m_world->stepSimulation(dt, 1, 1.0 / 60.0);
+	auto lock = lockWorld();
+	m_world->stepSimulation(dt, 2, 1.0 / 60.0);
 
 	return Error::NONE;
-}
-
-void PhysicsWorld::cleanupMarkedForDeletion()
-{
-	LockGuard<Mutex> lock(m_mtx);
-
-	while(!m_forDeletion.isEmpty())
-	{
-		auto it = m_forDeletion.getBegin();
-		PhysicsObject* obj = *it;
-
-		// Remove from objects marked for deletion
-		m_forDeletion.erase(m_alloc, it);
-
-		// Finaly, delete it
-		m_alloc.deleteInstance(obj);
-	}
 }
 
 } // end namespace anki

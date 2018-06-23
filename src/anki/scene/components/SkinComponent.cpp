@@ -34,7 +34,7 @@ void SkinComponent::playAnimation(U track, AnimationResourcePtr anim, F64 startT
 	m_tracks[track].m_repeat = repeat;
 }
 
-Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error SkinComponent::update(Second prevTime, Second crntTime, Bool& updated)
 {
 	updated = false;
 	const F64 timeDiff = crntTime - prevTime;

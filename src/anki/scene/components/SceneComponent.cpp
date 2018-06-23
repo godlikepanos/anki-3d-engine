@@ -35,12 +35,12 @@ Timestamp SceneComponent::getGlobalTimestamp() const
 	return m_node->getGlobalTimestamp();
 }
 
-Error SceneComponent::updateReal(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error SceneComponent::updateReal(Second prevTime, Second crntTime, Bool& updated)
 {
-	Error err = update(node, prevTime, crntTime, updated);
+	Error err = update(prevTime, crntTime, updated);
 	if(!err && updated)
 	{
-		err = onUpdate(node, prevTime, crntTime);
+		err = onUpdate(prevTime, crntTime);
 
 		if(!err)
 		{

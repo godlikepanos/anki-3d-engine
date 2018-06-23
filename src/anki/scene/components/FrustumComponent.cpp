@@ -26,7 +26,7 @@ FrustumComponent::~FrustumComponent()
 	m_coverageBuff.m_depthMap.destroy(getAllocator());
 }
 
-Error FrustumComponent::update(SceneNode& node, Second, Second, Bool& updated)
+Error FrustumComponent::update(Second, Second, Bool& updated)
 {
 	updated = false;
 

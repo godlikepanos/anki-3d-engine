@@ -64,24 +64,23 @@ public:
 	Timestamp getGlobalTimestamp() const;
 
 	/// Do some updating
-	/// @param[in,out] node Scene node of this component.
 	/// @param prevTime Previous update time.
 	/// @param crntTime Current update time.
 	/// @param[out] updated true if an update happened.
-	virtual ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+	virtual ANKI_USE_RESULT Error update(Second prevTime, Second crntTime, Bool& updated)
 	{
 		updated = false;
 		return Error::NONE;
 	}
 
 	/// Called if SceneComponent::update returned true.
-	virtual ANKI_USE_RESULT Error onUpdate(SceneNode& node, Second prevTime, Second crntTime)
+	virtual ANKI_USE_RESULT Error onUpdate(Second prevTime, Second crntTime)
 	{
 		return Error::NONE;
 	}
 
 	/// Called only by the SceneGraph
-	ANKI_USE_RESULT Error updateReal(SceneNode& node, Second prevTime, Second crntTime, Bool& updated);
+	ANKI_USE_RESULT Error updateReal(Second prevTime, Second crntTime, Bool& updated);
 
 	U64 getUuid() const
 	{

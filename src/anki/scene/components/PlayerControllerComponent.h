@@ -48,7 +48,7 @@ public:
 		m_player->moveToPosition(pos);
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		m_trf = m_player->getTransform(updated);
 		return Error::NONE;

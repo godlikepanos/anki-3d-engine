@@ -31,6 +31,22 @@ Error MyApp::sampleExtraInit()
 
 	player->addChild(&cam);
 
+	// Create a body component with joint
+	{
+		ModelNode* monkey;
+		ANKI_CHECK(
+			getSceneGraph().newSceneNode<ModelNode>("monkey_p2p", monkey, "assets/SuzanneMaterial-material.ankimdl"));
+
+		BodyNode* body;
+		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankicl"));
+		body->getComponent<BodyComponent>().setTransform(
+			Transform(Vec4(-2.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
+
+		body->addChild(monkey);
+
+		body->getComponent<JointComponent>().newHingeJoint(Vec3(0.2f, 1.0f, 0.0f), Vec3(1, 0, 0));
+	}
+
 	return Error::NONE;
 }
 

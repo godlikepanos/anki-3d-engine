@@ -192,14 +192,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = false; // Don't care about updates for this component
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = m_node->getComponent<MoveComponent>();
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
-			static_cast<ParticleEmitterNode&>(node).onMoveComponentUpdate(move);
+			static_cast<ParticleEmitterNode*>(m_node)->onMoveComponentUpdate(move);
 		}
 
 		return Error::NONE;

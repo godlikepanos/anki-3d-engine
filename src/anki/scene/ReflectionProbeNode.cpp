@@ -26,15 +26,15 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second, Second, Bool& updated) override
+	Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = m_node->getComponent<MoveComponent>();
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
 			// Move updated
-			ReflectionProbeNode& dnode = static_cast<ReflectionProbeNode&>(node);
+			ReflectionProbeNode& dnode = *static_cast<ReflectionProbeNode*>(m_node);
 			dnode.onMoveUpdate(move);
 		}
 

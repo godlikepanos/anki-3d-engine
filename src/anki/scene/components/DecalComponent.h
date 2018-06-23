@@ -74,7 +74,7 @@ public:
 	}
 
 	/// Implements SceneComponent::update.
-	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = m_markedForUpdate;
 

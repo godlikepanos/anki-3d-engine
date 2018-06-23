@@ -21,14 +21,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = m_node->getComponent<MoveComponent>();
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
-			OccluderNode& mnode = static_cast<OccluderNode&>(node);
+			OccluderNode& mnode = *static_cast<OccluderNode*>(m_node);
 			mnode.onMoveComponentUpdate(move);
 		}
 

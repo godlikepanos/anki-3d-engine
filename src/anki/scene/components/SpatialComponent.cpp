@@ -30,7 +30,7 @@ SpatialComponent::~SpatialComponent()
 	}
 }
 
-Error SpatialComponent::update(SceneNode&, Second, Second, Bool& updated)
+Error SpatialComponent::update(Second, Second, Bool& updated)
 {
 	updated = m_markedForUpdate;
 	if(updated)

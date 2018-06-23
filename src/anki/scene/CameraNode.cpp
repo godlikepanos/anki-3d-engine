@@ -19,14 +19,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		MoveComponent& move = m_node->getComponent<MoveComponent>();
 		if(move.getTimestamp() == getGlobalTimestamp())
 		{
-			CameraNode& cam = static_cast<CameraNode&>(node);
+			CameraNode& cam = *static_cast<CameraNode*>(m_node);
 			cam.onMoveComponentUpdate(move);
 		}
 
@@ -43,14 +43,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		FrustumComponent& fr = node.getComponent<FrustumComponent>();
+		FrustumComponent& fr = m_node->getComponent<FrustumComponent>();
 		if(fr.getTimestamp() == getGlobalTimestamp())
 		{
-			CameraNode& cam = static_cast<CameraNode&>(node);
+			CameraNode& cam = *static_cast<CameraNode*>(m_node);
 			cam.onFrustumComponentUpdate(fr);
 		}
 

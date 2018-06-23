@@ -20,9 +20,9 @@ MoveComponent::~MoveComponent()
 {
 }
 
-Error MoveComponent::update(SceneNode& node, Second, Second, Bool& updated)
+Error MoveComponent::update(Second, Second, Bool& updated)
 {
-	updated = updateWorldTransform(node);
+	updated = updateWorldTransform(*m_node);
 	return Error::NONE;
 }
 

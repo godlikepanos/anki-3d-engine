@@ -24,12 +24,15 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 	m_controller = getAllocator().newInstance<btKinematicCharacterController>(
 		m_ghostObject, m_convexShape, init.m_stepHeight, btVector3(0, 1, 0));
 
-	btDynamicsWorld* btworld = getWorld().getBtWorld();
+	{
+		auto lock = getWorld().lockWorld();
+		btDynamicsWorld* btworld = getWorld().getBtWorld();
 
-	btworld->addCollisionObject(m_ghostObject,
-		btBroadphaseProxy::CharacterFilter,
-		btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
-	btworld->addAction(m_controller);
+		btworld->addCollisionObject(m_ghostObject,
+			btBroadphaseProxy::CharacterFilter,
+			btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+		btworld->addAction(m_controller);
+	}
 
 	// Need to call this else the player is upside down
 	moveToPosition(init.m_position);
@@ -37,8 +40,11 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 
 PhysicsPlayerController::~PhysicsPlayerController()
 {
-	getWorld().getBtWorld()->removeAction(m_controller);
-	getWorld().getBtWorld()->removeCollisionObject(m_ghostObject);
+	{
+		auto lock = getWorld().lockWorld();
+		getWorld().getBtWorld()->removeAction(m_controller);
+		getWorld().getBtWorld()->removeCollisionObject(m_ghostObject);
+	}
 
 	getAllocator().deleteInstance(m_controller);
 	getAllocator().deleteInstance(m_ghostObject);
@@ -47,7 +53,7 @@ PhysicsPlayerController::~PhysicsPlayerController()
 
 void PhysicsPlayerController::moveToPosition(const Vec4& position)
 {
-	ANKI_LOCK_PHYS_WORLD();
+	auto lock = getWorld().lockWorld();
 
 	getWorld().getBtWorld()->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(
 		m_ghostObject->getBroadphaseHandle(), getWorld().getBtWorld()->getDispatcher());

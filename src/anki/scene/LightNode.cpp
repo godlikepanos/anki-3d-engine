@@ -21,13 +21,13 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second, Second, Bool& updated) override
+	Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
-		LightNode& lnode = static_cast<LightNode&>(node);
+		LightNode& lnode = *static_cast<LightNode*>(m_node);
 
-		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		const MoveComponent& move = m_node->getComponentAt<MoveComponent>(0);
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
 			// Move updated
 			lnode.onMoveUpdate(move);
@@ -46,13 +46,13 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second, Second, Bool& updated) override
+	Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
-		LightNode& lnode = static_cast<LightNode&>(node);
+		LightNode& lnode = *static_cast<LightNode*>(m_node);
 
-		LightComponent& light = node.getComponentAt<LightComponent>(getIndex() - 1);
-		if(light.getTimestamp() == node.getGlobalTimestamp())
+		LightComponent& light = m_node->getComponentAt<LightComponent>(getIndex() - 1);
+		if(light.getTimestamp() == m_node->getGlobalTimestamp())
 		{
 			// Shape updated
 			lnode.onShapeUpdate(light);

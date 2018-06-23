@@ -43,7 +43,7 @@ public:
 		return m_body;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		m_trf = m_body->getTransform(updated);
 		return Error::NONE;

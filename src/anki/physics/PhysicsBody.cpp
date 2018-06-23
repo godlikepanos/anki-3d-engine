@@ -49,6 +49,8 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	cInfo.m_friction = init.m_friction;
 	m_body = getAllocator().newInstance<btRigidBody>(cInfo);
 
+	// Add to world
+	auto lock = getWorld().lockWorld();
 	getWorld().getBtWorld()->addRigidBody(m_body);
 }
 
@@ -56,14 +58,12 @@ PhysicsBody::~PhysicsBody()
 {
 	if(m_body)
 	{
+		auto lock = getWorld().lockWorld();
 		getWorld().getBtWorld()->removeRigidBody(m_body);
-		getAllocator().deleteInstance(m_body);
 	}
 
-	if(m_motionState)
-	{
-		getAllocator().deleteInstance(m_motionState);
-	}
+	getAllocator().deleteInstance(m_body);
+	getAllocator().deleteInstance(m_motionState);
 }
 
 } // end namespace anki

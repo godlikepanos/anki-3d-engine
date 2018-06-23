@@ -27,7 +27,7 @@ public:
 
 	~SkinComponent();
 
-	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override;
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
 
 	void playAnimation(U track, AnimationResourcePtr anim, F64 startTime, Bool repeat);
 
