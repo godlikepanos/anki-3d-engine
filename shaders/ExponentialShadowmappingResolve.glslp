@@ -5,6 +5,11 @@
 
 #pragma anki input const UVec2 INPUT_TEXTURE_SIZE
 
+const F32 OFFSET = 1.25;
+
+const Vec2 TEXEL_SIZE = 1.0 / Vec2(INPUT_TEXTURE_SIZE);
+const Vec2 HALF_TEXEL_SIZE = TEXEL_SIZE / 2.0;
+
 #pragma anki start vert
 #include <shaders/Common.glsl>
 
@@ -20,6 +25,8 @@ layout(ANKI_UBO_BINDING(0, 0)) uniform u_
 };
 
 layout(location = 0) out Vec2 out_uv;
+layout(location = 1) flat out Vec2 out_maxUv;
+layout(location = 2) flat out Vec2 out_minUv;
 
 void main()
 {
@@ -28,6 +35,10 @@ void main()
 
 	out_uv = fma(out_uv, u_uvScaleAndTranslation.zw, u_uvScaleAndTranslation.xy);
 	gl_Position = Vec4(pos, 0.0, 1.0);
+
+	// Compute the limits
+	out_maxUv = fma(Vec2(1.0), u_uvScaleAndTranslation.zw, u_uvScaleAndTranslation.xy) - HALF_TEXEL_SIZE;
+	out_minUv = fma(Vec2(0.0), u_uvScaleAndTranslation.zw, u_uvScaleAndTranslation.xy) + HALF_TEXEL_SIZE;
 }
 #pragma anki end
 
@@ -36,6 +47,8 @@ void main()
 #include <shaders/Functions.glsl>
 
 layout(location = 0) in Vec2 in_uv;
+layout(location = 1) flat in Vec2 in_maxUv;
+layout(location = 2) flat in Vec2 in_minUv;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_inputTex;
 
@@ -52,22 +65,22 @@ layout(location = 0) out F32 out_color;
 
 F32 sampleLinearDepth(Vec2 uv)
 {
+	uv = clamp(uv, in_minUv, in_maxUv);
 	return linearizeDepth(textureLod(u_inputTex, uv, 0.0).r, u_near, u_far);
 }
 
 void main()
 {
-	const Vec2 TEXEL_SIZE = 1.0 / Vec2(INPUT_TEXTURE_SIZE);
-	Vec2 uvOffset = 1.1 * TEXEL_SIZE;
+	const Vec2 UV_OFFSET = OFFSET * TEXEL_SIZE;
 
 	out_color = sampleLinearDepth(in_uv) * BOX_WEIGHTS[0u];
-	out_color += sampleLinearDepth(in_uv + Vec2(uvOffset.x, 0.0)) * BOX_WEIGHTS[1u];
-	out_color += sampleLinearDepth(in_uv + Vec2(-uvOffset.x, 0.0)) * BOX_WEIGHTS[1u];
-	out_color += sampleLinearDepth(in_uv + Vec2(0.0, uvOffset.y)) * BOX_WEIGHTS[1u];
-	out_color += sampleLinearDepth(in_uv + Vec2(0.0, -uvOffset.y)) * BOX_WEIGHTS[1u];
-	out_color += sampleLinearDepth(in_uv + Vec2(uvOffset.x, uvOffset.y)) * BOX_WEIGHTS[2u];
-	out_color += sampleLinearDepth(in_uv + Vec2(-uvOffset.x, uvOffset.y)) * BOX_WEIGHTS[2u];
-	out_color += sampleLinearDepth(in_uv + Vec2(uvOffset.x, -uvOffset.y)) * BOX_WEIGHTS[2u];
-	out_color += sampleLinearDepth(in_uv + Vec2(-uvOffset.x, -uvOffset.y)) * BOX_WEIGHTS[2u];
+	out_color += sampleLinearDepth(in_uv + Vec2(UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
+	out_color += sampleLinearDepth(in_uv + Vec2(-UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
+	out_color += sampleLinearDepth(in_uv + Vec2(0.0, UV_OFFSET.y)) * BOX_WEIGHTS[1u];
+	out_color += sampleLinearDepth(in_uv + Vec2(0.0, -UV_OFFSET.y)) * BOX_WEIGHTS[1u];
+	out_color += sampleLinearDepth(in_uv + Vec2(UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+	out_color += sampleLinearDepth(in_uv + Vec2(-UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+	out_color += sampleLinearDepth(in_uv + Vec2(UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+	out_color += sampleLinearDepth(in_uv + Vec2(-UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
 }
 #pragma anki end
