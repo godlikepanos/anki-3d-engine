@@ -20,6 +20,7 @@ PhysicsSphere::PhysicsSphere(PhysicsWorld* world, F32 radius)
 {
 	m_shape = getAllocator().newInstance<btSphereShape>(radius);
 	m_shape->setMargin(getWorld().getCollisionMargin());
+	m_shape->setUserPointer(static_cast<PhysicsObject*>(this));
 }
 
 PhysicsBox::PhysicsBox(PhysicsWorld* world, const Vec3& extend)
@@ -27,6 +28,7 @@ PhysicsBox::PhysicsBox(PhysicsWorld* world, const Vec3& extend)
 {
 	m_shape = getAllocator().newInstance<btBoxShape>(toBt(extend));
 	m_shape->setMargin(getWorld().getCollisionMargin());
+	m_shape->setUserPointer(static_cast<PhysicsObject*>(this));
 }
 
 PhysicsTriangleSoup::PhysicsTriangleSoup(
@@ -52,6 +54,8 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(
 	btBvhTriangleMeshShape* triShape = getAllocator().newInstance<btBvhTriangleMeshShape>(m_mesh, true);
 	m_staticShape = triShape;
 	m_staticShape->setMargin(getWorld().getCollisionMargin());
+
+	m_shape->setUserPointer(static_cast<PhysicsObject*>(this));
 }
 
 PhysicsTriangleSoup::~PhysicsTriangleSoup()

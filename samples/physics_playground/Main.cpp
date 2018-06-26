@@ -22,14 +22,17 @@ Error MyApp::sampleExtraInit()
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
 	// Create the player
-	SceneNode& cam = getSceneGraph().getActiveCameraNode();
-	cam.getComponent<MoveComponent>().setLocalTransform(
-		Transform(Vec4(0.0, 0.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
+	if(0)
+	{
+		SceneNode& cam = getSceneGraph().getActiveCameraNode();
+		cam.getComponent<MoveComponent>().setLocalTransform(
+			Transform(Vec4(0.0, 0.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
 
-	PlayerNode* player;
-	ANKI_CHECK(getSceneGraph().newSceneNode("player", player, Vec4(0.0f, 2.5f, 0.0f, 0.0f)));
+		PlayerNode* player;
+		ANKI_CHECK(getSceneGraph().newSceneNode("player", player, Vec4(0.0f, 2.5f, 0.0f, 0.0f)));
 
-	player->addChild(&cam);
+		player->addChild(&cam);
+	}
 
 	// Create a body component with joint
 	{
@@ -40,11 +43,52 @@ Error MyApp::sampleExtraInit()
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankicl"));
 		body->getComponent<BodyComponent>().setTransform(
-			Transform(Vec4(-2.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
+			Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 
 		body->addChild(monkey);
 
 		body->getComponent<JointComponent>().newHingeJoint(Vec3(0.2f, 1.0f, 0.0f), Vec3(1, 0, 0));
+	}
+
+	// Create a chain
+	{
+		const U LINKS = 5;
+
+		BodyNode* prevBody = nullptr;
+		for(U i = 0; i < LINKS; ++i)
+		{
+			ModelNode* monkey;
+			ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
+				StringAuto(getAllocator()).sprintf("monkey_chain%u", i).toCString(),
+				monkey,
+				"assets/SuzanneMaterial-material.ankimdl"));
+
+			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
+			trf.getOrigin().y() -= i * 1.25f;
+			// trf.getOrigin().x() -= i * 0.25f;
+
+			// monkey->getComponent<MoveComponent>().setLocalTransform(trf);
+
+			BodyNode* body;
+			ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
+				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body, "assets/Suzanne.ankicl"));
+			body->getComponent<BodyComponent>().setTransform(trf);
+
+			// Create joint
+			JointComponent& jointc = body->getComponent<JointComponent>();
+			if(prevBody == nullptr)
+			{
+				jointc.newPoint2PointJoint(Vec3(0, 1, 0));
+			}
+			else
+			{
+				prevBody->addChild(body);
+				jointc.newPoint2PointJoint2(Vec3(0, 1.0, 0), Vec3(0, -1.0, 0));
+			}
+
+			body->addChild(monkey);
+			prevBody = body;
+		}
 	}
 
 	return Error::NONE;
@@ -52,7 +96,7 @@ Error MyApp::sampleExtraInit()
 
 Error MyApp::userMainLoop(Bool& quit)
 {
-	// ANKI_CHECK(SampleApp::userMainLoop(quit));
+	ANKI_CHECK(SampleApp::userMainLoop(quit));
 
 	if(getInput().getKey(KeyCode::ESCAPE))
 	{

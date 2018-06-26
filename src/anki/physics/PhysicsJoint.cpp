@@ -29,6 +29,8 @@ PhysicsJoint::~PhysicsJoint()
 void PhysicsJoint::addToWorld()
 {
 	ANKI_ASSERT(m_joint);
+	m_joint->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
+
 	auto lock = getWorld().lockWorld();
 	getWorld().getBtWorld()->addConstraint(m_joint);
 }
@@ -39,6 +41,20 @@ PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBod
 	m_bodyA = bodyA;
 	m_joint = getAllocator().newInstance<btPoint2PointConstraint>(*m_bodyA->getBtBody(), toBt(relPos));
 	m_joint->setUserConstraintPtr(static_cast<PhysicsJoint*>(this));
+
+	addToWorld();
+}
+
+PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(
+	PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB, const Vec3& relPosB)
+	: PhysicsJoint(world)
+{
+	ANKI_ASSERT(bodyA != bodyB);
+	m_bodyA = bodyA;
+	m_bodyB = bodyB;
+
+	m_joint = getAllocator().newInstance<btPoint2PointConstraint>(
+		*m_bodyA->getBtBody(), *m_bodyB->getBtBody(), toBt(relPosA), toBt(relPosB));
 
 	addToWorld();
 }

@@ -26,9 +26,10 @@ public:
 	template<typename T, typename... TArgs>
 	PhysicsPtr<T> newInstance(TArgs&&... args)
 	{
+		void* mem = m_alloc.getMemoryPool().allocate(sizeof(T), alignof(T));
+		::new(mem) T(this, std::forward<TArgs>(args)...);
 		PhysicsPtr<T> out;
-		T* ptr = m_alloc.template newInstance<T>(this, std::forward<TArgs>(args)...);
-		out.reset(ptr);
+		out.reset(static_cast<T*>(mem));
 		return out;
 	}
 

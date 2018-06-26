@@ -28,15 +28,11 @@ public:
 /// Rigid body.
 class PhysicsBody : public PhysicsObject
 {
+	ANKI_PHYSICS_OBJECT
+
 public:
-	PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init);
-
-	~PhysicsBody();
-
-	const Transform& getTransform(Bool& updated)
+	const Transform& getTransform() const
 	{
-		updated = m_updated;
-		m_updated = false;
 		return m_trf;
 	}
 
@@ -86,6 +82,7 @@ anki_internal:
 private:
 	class MotionState;
 
+	PhysicsCollisionShapePtr m_shape;
 	MotionState* m_motionState = nullptr;
 	btRigidBody* m_body = nullptr;
 
@@ -93,7 +90,10 @@ private:
 	F32 m_friction = 0.03f;
 	F32 m_elasticity = 0.1f;
 	PhysicsMaterialBit m_materialBits = PhysicsMaterialBit::ALL;
-	Bool8 m_updated = true;
+
+	PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init);
+
+	~PhysicsBody();
 };
 /// @}
 

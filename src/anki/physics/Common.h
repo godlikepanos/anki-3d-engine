@@ -35,6 +35,7 @@ class PhysicsCollisionShape;
 class PhysicsBody;
 class PhysicsPlayerController;
 class PhysicsJoint;
+class PhysicsTrigger;
 
 /// @addtogroup physics
 /// @{
@@ -54,6 +55,7 @@ using PhysicsCollisionShapePtr = PhysicsPtr<PhysicsCollisionShape>;
 using PhysicsBodyPtr = PhysicsPtr<PhysicsBody>;
 using PhysicsPlayerControllerPtr = PhysicsPtr<PhysicsPlayerController>;
 using PhysicsJointPtr = PhysicsPtr<PhysicsJoint>;
+using PhysicsTriggerPtr = PhysicsPtr<PhysicsTrigger>;
 
 /// Material types.
 enum class PhysicsMaterialBit : U16

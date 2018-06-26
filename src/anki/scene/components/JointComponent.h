@@ -27,18 +27,30 @@ public:
 
 	~JointComponent();
 
+	/// Create a point 2 point joint on the BodyComponent of the SceneNode.
 	void newPoint2PointJoint(const Vec3& relPosFactor, F32 brakingImpulse = MAX_F32);
 
+	/// Create a point 2 point joint on the BodyComponents of the SceneNode and its child node.
+	void newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3& relPosFactorB, F32 brakingImpulse = MAX_F32);
+
+	/// Create a hinge joint on the BodyComponent of the SceneNode.
 	void newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 brakingImpulse = MAX_F32);
 
 	ANKI_USE_RESULT Error update(Second prevTime, Second crntTime, Bool& updated) override;
 
 private:
-	List<PhysicsJointPtr> m_jointList;
+	class JointNode;
+
+	IntrusiveList<JointNode> m_jointList;
 
 	/// Given a 3 coodrinates that lie in [-1.0, +1.0] compute a pivot point that lies into the AABB of the collision
 	/// shape of the body.
 	static Vec3 computeLocalPivotFromFactors(const PhysicsBodyPtr& body, const Vec3& factors);
+
+	void removeAllJoints();
+
+	template<typename TJoint, typename... TArgs>
+	void newJoint(const Vec3& relPosFactor, F32 brakingImpulse, TArgs&&... args);
 };
 /// @}
 

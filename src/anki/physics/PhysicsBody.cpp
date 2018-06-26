@@ -23,7 +23,6 @@ public:
 	void setWorldTransform(const btTransform& worldTrans) override
 	{
 		m_body->m_trf = toAnki(worldTrans);
-		m_body->m_updated = true;
 	}
 };
 
@@ -31,13 +30,14 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	: PhysicsObject(PhysicsObjectType::BODY, world)
 {
 	const Bool dynamic = init.m_mass > 0.0f;
+	m_shape = init.m_shape;
 
 	// Create motion state
 	m_motionState = getAllocator().newInstance<MotionState>();
 	m_motionState->m_body = this;
 
 	// Compute inertia
-	btCollisionShape* shape = init.m_shape->getBtShape(dynamic);
+	btCollisionShape* shape = m_shape->getBtShape(dynamic);
 	btVector3 localInertia(0, 0, 0);
 	if(dynamic)
 	{
@@ -48,6 +48,9 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	btRigidBody::btRigidBodyConstructionInfo cInfo(init.m_mass, m_motionState, shape, localInertia);
 	cInfo.m_friction = init.m_friction;
 	m_body = getAllocator().newInstance<btRigidBody>(cInfo);
+
+	// User pointer
+	m_body->setUserPointer(static_cast<PhysicsObject*>(this));
 
 	// Add to world
 	auto lock = getWorld().lockWorld();

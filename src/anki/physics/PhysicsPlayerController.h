@@ -28,11 +28,9 @@ public:
 /// A player controller that walks the world.
 class PhysicsPlayerController final : public PhysicsObject
 {
+	ANKI_PHYSICS_OBJECT
+
 public:
-	PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init);
-
-	~PhysicsPlayerController();
-
 	// Update the state machine
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
 	{
@@ -54,6 +52,10 @@ private:
 	btKinematicCharacterController* m_controller = nullptr;
 
 	Transform m_prevTrf = Transform::getIdentity();
+
+	PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init);
+
+	~PhysicsPlayerController();
 };
 /// @}
 

@@ -11,9 +11,27 @@
 namespace anki
 {
 
+class JointComponent::JointNode : public IntrusiveListEnabled<JointNode>
+{
+public:
+	PhysicsJointPtr m_joint;
+	SceneNode* m_parentNode = nullptr; ///< Keep track the node that is connected with this node through a joint.
+};
+
 JointComponent::~JointComponent()
 {
-	m_jointList.destroy(getAllocator());
+	removeAllJoints();
+}
+
+void JointComponent::removeAllJoints()
+{
+	while(!m_jointList.isEmpty())
+	{
+		JointNode* node = &m_jointList.getFront();
+		m_jointList.popFront();
+
+		getAllocator().deleteInstance(node);
+	}
 }
 
 Vec3 JointComponent::computeLocalPivotFromFactors(const PhysicsBodyPtr& body, const Vec3& factors)
@@ -37,7 +55,8 @@ Vec3 JointComponent::computeLocalPivotFromFactors(const PhysicsBodyPtr& body, co
 	return out;
 }
 
-void JointComponent::newPoint2PointJoint(const Vec3& relPosFactor, F32 brakingImpulse)
+template<typename TJoint, typename... TArgs>
+void JointComponent::newJoint(const Vec3& relPosFactor, F32 breakingImpulse, TArgs&&... args)
 {
 	BodyComponent* bodyc = m_node->tryGetComponent<BodyComponent>();
 
@@ -45,41 +64,83 @@ void JointComponent::newPoint2PointJoint(const Vec3& relPosFactor, F32 brakingIm
 	{
 		Vec3 relPos = computeLocalPivotFromFactors(bodyc->getPhysicsBody(), relPosFactor);
 
-		PhysicsJointPtr joint =
-			getSceneGraph().getPhysicsWorld().newInstance<PhysicsPoint2PointJoint>(bodyc->getPhysicsBody(), relPos);
-		joint->setBreakingImpulseThreshold(brakingImpulse);
+		PhysicsJointPtr joint = getSceneGraph().getPhysicsWorld().newInstance<TJoint>(
+			bodyc->getPhysicsBody(), relPos, std::forward<TArgs>(args)...);
+		joint->setBreakingImpulseThreshold(breakingImpulse);
 
-		m_jointList.pushBack(getAllocator(), joint);
+		JointNode* newNode = getAllocator().newInstance<JointNode>();
+		newNode->m_joint = joint;
+		m_jointList.pushBack(newNode);
 	}
 	else
 	{
-		ANKI_SCENE_LOGW("Can't create new joint. The node is missing a body component");
+		ANKI_SCENE_LOGW("Can't create new joint. The node is missing a BodyComponent");
 	}
 }
 
-void JointComponent::newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 brakingImpulse)
+void JointComponent::newPoint2PointJoint(const Vec3& relPosFactor, F32 breakingImpulse)
 {
-	BodyComponent* bodyc = m_node->tryGetComponent<BodyComponent>();
+	newJoint<PhysicsPoint2PointJoint>(relPosFactor, breakingImpulse);
+}
 
-	if(bodyc)
+void JointComponent::newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3& relPosFactorB, F32 breakingImpulse)
+{
+	BodyComponent* bodycA = m_node->tryGetComponent<BodyComponent>();
+	BodyComponent* bodycB = nullptr;
+	if(m_node->getParent())
 	{
-		Vec3 relPos = computeLocalPivotFromFactors(bodyc->getPhysicsBody(), relPosFactor);
+		bodycB = m_node->getParent()->tryGetComponent<BodyComponent>();
+	}
 
-		PhysicsJointPtr joint =
-			getSceneGraph().getPhysicsWorld().newInstance<PhysicsHingeJoint>(bodyc->getPhysicsBody(), relPos, axis);
-		joint->setBreakingImpulseThreshold(brakingImpulse);
+	if(bodycA && bodycB)
+	{
+		Vec3 relPosA = computeLocalPivotFromFactors(bodycA->getPhysicsBody(), relPosFactorA);
+		Vec3 relPosB = computeLocalPivotFromFactors(bodycB->getPhysicsBody(), relPosFactorB);
 
-		m_jointList.pushBack(getAllocator(), joint);
+		PhysicsJointPtr joint = getSceneGraph().getPhysicsWorld().newInstance<PhysicsPoint2PointJoint>(
+			bodycA->getPhysicsBody(), relPosA, bodycB->getPhysicsBody(), relPosB);
+		joint->setBreakingImpulseThreshold(breakingImpulse);
+
+		JointNode* newNode = getAllocator().newInstance<JointNode>();
+		newNode->m_joint = joint;
+		newNode->m_parentNode = m_node->getParent();
+		m_jointList.pushBack(newNode);
 	}
 	else
 	{
-		ANKI_SCENE_LOGW("Can't create new joint. The node is missing a body component");
+		ANKI_SCENE_LOGW("Can't create new joint. The node or its parent are missing a BodyComponent");
 	}
+}
+
+void JointComponent::newHingeJoint(const Vec3& relPosFactor, const Vec3& axis, F32 breakingImpulse)
+{
+	newJoint<PhysicsHingeJoint>(relPosFactor, breakingImpulse, axis);
 }
 
 Error JointComponent::update(Second prevTime, Second crntTime, Bool& updated)
 {
-	// TODO
+	// Iterate the joints and check if the connected scene node is not the parent of this node anymore.
+	while(true)
+	{
+		Bool erasedOne = false;
+		for(auto node : m_jointList)
+		{
+			if(node.m_parentNode != m_node->getParent())
+			{
+				m_jointList.erase(&node);
+				getAllocator().deleteInstance(&node);
+				erasedOne = true;
+				updated = true;
+				break;
+			}
+		}
+
+		if(!erasedOne)
+		{
+			break;
+		}
+	}
+
 	return Error::NONE;
 }
 

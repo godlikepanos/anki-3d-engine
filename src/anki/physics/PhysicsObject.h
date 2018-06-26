@@ -20,6 +20,7 @@ enum class PhysicsObjectType : U8
 	BODY,
 	JOINT,
 	PLAYER_CONTROLLER,
+	TRIGGER,
 	COUNT
 };
 
@@ -66,7 +67,12 @@ protected:
 private:
 	Atomic<I32> m_refcount = {0};
 	PhysicsObjectType m_type;
+	void* m_userData = nullptr;
 };
+
+#define ANKI_PHYSICS_OBJECT \
+	friend class PhysicsWorld; \
+	friend class PhysicsPtrDeleter;
 /// @}
 
 } // end namespace anki

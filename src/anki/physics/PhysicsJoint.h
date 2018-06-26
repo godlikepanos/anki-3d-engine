@@ -17,10 +17,6 @@ namespace anki
 class PhysicsJoint : public PhysicsObject
 {
 public:
-	PhysicsJoint(PhysicsWorld* world);
-
-	~PhysicsJoint();
-
 	void setBreakingImpulseThreshold(F32 impulse)
 	{
 		m_joint->setBreakingImpulseThreshold(impulse);
@@ -31,23 +27,40 @@ protected:
 	PhysicsBodyPtr m_bodyA;
 	PhysicsBodyPtr m_bodyB;
 
+	PhysicsJoint(PhysicsWorld* world);
+
+	~PhysicsJoint();
+
 	void addToWorld();
 };
 
 /// Point 2 point joint.
 class PhysicsPoint2PointJoint : public PhysicsJoint
 {
-public:
+	ANKI_PHYSICS_OBJECT
+
+private:
 	PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos);
 
-	PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, PhysicsBodyPtr bodyB);
+	PhysicsPoint2PointJoint(
+		PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB, const Vec3& relPosB);
 };
 
 /// Hinge joint.
 class PhysicsHingeJoint : public PhysicsJoint
 {
-public:
+	ANKI_PHYSICS_OBJECT
+
+private:
 	PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos, const Vec3& axis);
+
+	PhysicsHingeJoint(PhysicsWorld* world,
+		PhysicsBodyPtr bodyA,
+		const Vec3& relPosA,
+		const Vec3& axisA,
+		PhysicsBodyPtr bodyB,
+		const Vec3& relPosB,
+		const Vec3& axisB);
 };
 /// @}
 

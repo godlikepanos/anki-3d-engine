@@ -45,13 +45,15 @@ public:
 
 	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
-		m_trf = m_body->getTransform(updated);
+		Transform newTrf = m_body->getTransform();
+		updated = newTrf != m_trf;
+		m_trf = newTrf;
 		return Error::NONE;
 	}
 
 private:
 	PhysicsBodyPtr m_body;
-	Transform m_trf;
+	Transform m_trf = Transform::getIdentity();
 };
 /// @}
 

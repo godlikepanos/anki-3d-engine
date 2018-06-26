@@ -69,7 +69,7 @@ Error BodyNode::init(const CString& resourceFname)
 	newComponent<BodyFeedbackComponent>(this);
 
 	// Move component
-	newComponent<MoveComponent>(this);
+	newComponent<MoveComponent>(this, MoveComponentFlag::IGNORE_PARENT_TRANSFORM);
 
 	return Error::NONE;
 }
