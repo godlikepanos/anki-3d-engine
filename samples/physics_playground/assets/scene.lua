@@ -5,7 +5,7 @@ local node
 local inst
 local lcomp
 
-node = scene:newReflectionProbeNode("reflprobe0", Vec4.new(-12.6741, -12.6741, -12.6741, 0), Vec4.new(12.6741, 12.6741, 12.6741, 0))
+node = scene:newReflectionProbeNode("reflprobe0", Vec4.new(-13.4112, -13.4112, -13.4112, 0), Vec4.new(13.4112, 13.4112, 13.4112, 0))
 trf = Transform.new()
 trf:setOrigin(Vec4.new(0, 9.1132, 0, 0))
 rot = Mat3x4.new()
