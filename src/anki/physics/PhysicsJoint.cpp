@@ -11,7 +11,7 @@ namespace anki
 {
 
 PhysicsJoint::PhysicsJoint(PhysicsWorld* world)
-	: PhysicsObject(PhysicsObjectType::JOINT, world)
+	: PhysicsObject(CLASS_TYPE, world)
 {
 }
 
@@ -19,7 +19,7 @@ PhysicsJoint::~PhysicsJoint()
 {
 	if(m_joint)
 	{
-		auto lock = getWorld().lockWorld();
+		auto lock = getWorld().lockBtWorld();
 		getWorld().getBtWorld()->removeConstraint(m_joint);
 	}
 
@@ -31,7 +31,7 @@ void PhysicsJoint::addToWorld()
 	ANKI_ASSERT(m_joint);
 	m_joint->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 
-	auto lock = getWorld().lockWorld();
+	auto lock = getWorld().lockBtWorld();
 	getWorld().getBtWorld()->addConstraint(m_joint);
 }
 

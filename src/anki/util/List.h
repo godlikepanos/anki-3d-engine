@@ -532,6 +532,12 @@ public:
 		Base::erase(m_alloc, position);
 	}
 
+	/// Destroy the list.
+	void destroy()
+	{
+		Base::destroy(m_alloc);
+	}
+
 private:
 	GenericMemoryPoolAllocator<T> m_alloc;
 

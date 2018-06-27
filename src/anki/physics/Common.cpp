@@ -17,9 +17,8 @@ void PhysicsPtrDeleter::operator()(PhysicsObject* ptr)
 		return;
 	}
 
-	auto alloc = ptr->getAllocator();
-	ptr->~PhysicsObject();
-	alloc.getMemoryPool().free(ptr);
+	PhysicsWorld& world = ptr->getWorld();
+	world.destroyObject(ptr);
 }
 
 } // end namespace anki

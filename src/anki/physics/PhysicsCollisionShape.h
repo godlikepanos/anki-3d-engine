@@ -17,6 +17,9 @@ namespace anki
 /// The base of all collision shapes.
 class PhysicsCollisionShape : public PhysicsObject
 {
+public:
+	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::COLLISION_SHAPE;
+
 anki_internal:
 	virtual btCollisionShape* getBtShape(Bool forDynamicBodies = false) const
 	{
@@ -28,7 +31,7 @@ protected:
 	btCollisionShape* m_shape = nullptr;
 
 	PhysicsCollisionShape(PhysicsWorld* world)
-		: PhysicsObject(PhysicsObjectType::COLLISION_SHAPE, world)
+		: PhysicsObject(CLASS_TYPE, world)
 	{
 	}
 

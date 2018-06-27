@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/physics/Common.h>
+#include <anki/util/List.h>
 
 namespace anki
 {
@@ -21,11 +22,15 @@ enum class PhysicsObjectType : U8
 	JOINT,
 	PLAYER_CONTROLLER,
 	TRIGGER,
-	COUNT
+
+	COUNT,
+	FIRST = 0,
+	LAST = COUNT - 1
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType, inline)
 
 /// Base of all physics objects.
-class PhysicsObject
+class PhysicsObject : public IntrusiveListEnabled<PhysicsObject>
 {
 public:
 	PhysicsObject(PhysicsObjectType type, PhysicsWorld* world)
@@ -67,7 +72,6 @@ protected:
 private:
 	Atomic<I32> m_refcount = {0};
 	PhysicsObjectType m_type;
-	void* m_userData = nullptr;
 };
 
 #define ANKI_PHYSICS_OBJECT \

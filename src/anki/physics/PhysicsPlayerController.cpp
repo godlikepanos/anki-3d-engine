@@ -10,7 +10,7 @@ namespace anki
 {
 
 PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init)
-	: PhysicsObject(PhysicsObjectType::PLAYER_CONTROLLER, world)
+	: PhysicsObject(CLASS_TYPE, world)
 {
 	const btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), 1.0f));
 
@@ -25,7 +25,7 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 		m_ghostObject, m_convexShape, init.m_stepHeight, btVector3(0, 1, 0));
 
 	{
-		auto lock = getWorld().lockWorld();
+		auto lock = getWorld().lockBtWorld();
 		btDynamicsWorld* btworld = getWorld().getBtWorld();
 
 		btworld->addCollisionObject(m_ghostObject,
@@ -41,7 +41,7 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 PhysicsPlayerController::~PhysicsPlayerController()
 {
 	{
-		auto lock = getWorld().lockWorld();
+		auto lock = getWorld().lockBtWorld();
 		getWorld().getBtWorld()->removeAction(m_controller);
 		getWorld().getBtWorld()->removeCollisionObject(m_ghostObject);
 	}
@@ -53,7 +53,7 @@ PhysicsPlayerController::~PhysicsPlayerController()
 
 void PhysicsPlayerController::moveToPosition(const Vec4& position)
 {
-	auto lock = getWorld().lockWorld();
+	auto lock = getWorld().lockBtWorld();
 
 	getWorld().getBtWorld()->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(
 		m_ghostObject->getBroadphaseHandle(), getWorld().getBtWorld()->getDispatcher());

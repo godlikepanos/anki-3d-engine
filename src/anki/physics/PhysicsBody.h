@@ -31,6 +31,8 @@ class PhysicsBody : public PhysicsObject
 	ANKI_PHYSICS_OBJECT
 
 public:
+	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::BODY;
+
 	const Transform& getTransform() const
 	{
 		return m_trf;

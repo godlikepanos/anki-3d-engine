@@ -11,7 +11,7 @@ namespace anki
 {
 
 PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape)
-	: PhysicsObject(PhysicsObjectType::TRIGGER, world)
+	: PhysicsObject(CLASS_TYPE, world)
 {
 	m_shape = shape;
 
@@ -21,14 +21,14 @@ PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr sha
 
 	m_ghostShape->setUserPointer(static_cast<PhysicsObject*>(this));
 
-	auto lock = getWorld().lockWorld();
+	auto lock = getWorld().lockBtWorld();
 	getWorld().getBtWorld()->addCollisionObject(m_ghostShape);
 }
 
 PhysicsTrigger::~PhysicsTrigger()
 {
 	{
-		auto lock = getWorld().lockWorld();
+		auto lock = getWorld().lockBtWorld();
 		getWorld().getBtWorld()->removeCollisionObject(m_ghostShape);
 	}
 
@@ -37,16 +37,45 @@ PhysicsTrigger::~PhysicsTrigger()
 
 void PhysicsTrigger::processContacts()
 {
-	// TODO
-#if 0
-	for(U i = 0; i < m_ghostShape->getOverlappingPairCache()->getNumOverlappingPairs(); ++i)
+	if(m_filter == nullptr)
 	{
-		btBroadphasePair* collisionPair = &m_ghostShape->getOverlappingPairCache()->getOverlappingPairArray()[i];
-
-		btCollisionObject* obj0 = static_cast<btCollisionObject*>(collisionPair->m_pProxy0->m_clientObject);
-        btCollisionObject* obj1 = static_cast<btCollisionObject*>(collisionPair->m_pProxy1->m_clientObject);
+		return;
 	}
-#endif
+
+	// Process contacts
+	const U pairCount = m_ghostShape->getOverlappingPairCache()->getNumOverlappingPairs();
+	for(U i = 0; i < pairCount; ++i)
+	{
+		btBroadphasePair& collisionPair = m_ghostShape->getOverlappingPairCache()->getOverlappingPairArray()[i];
+
+		btCollisionObject* obj0 = static_cast<btCollisionObject*>(collisionPair.m_pProxy0->m_clientObject);
+		btCollisionObject* obj1 = static_cast<btCollisionObject*>(collisionPair.m_pProxy1->m_clientObject);
+
+		PhysicsObject* aobj0 = static_cast<PhysicsObject*>(obj0->getUserPointer());
+		PhysicsObject* aobj1 = static_cast<PhysicsObject*>(obj1->getUserPointer());
+
+		if(aobj0 == nullptr || aobj1 == nullptr)
+		{
+			continue;
+		}
+
+		PhysicsObject* otherObj;
+		if(aobj0 == static_cast<PhysicsObject*>(this))
+		{
+			otherObj = aobj1;
+		}
+		else
+		{
+			ANKI_ASSERT(aobj1 == static_cast<PhysicsObject*>(this));
+			otherObj = aobj0;
+		}
+
+		PhysicsObjectPtr ptr(otherObj);
+		if(!m_filter->skipContact(ptr))
+		{
+			m_filter->processContact(ptr, ConstWeakArray<PhysicsTriggerContact>());
+		}
+	}
 }
 
 } // end namespace anki

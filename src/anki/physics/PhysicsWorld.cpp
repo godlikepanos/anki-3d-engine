@@ -6,6 +6,7 @@
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/physics/PhysicsCollisionShape.h>
 #include <anki/physics/PhysicsBody.h>
+#include <anki/physics/PhysicsTrigger.h>
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
 namespace anki
@@ -32,6 +33,13 @@ PhysicsWorld::PhysicsWorld()
 
 PhysicsWorld::~PhysicsWorld()
 {
+#if ANKI_ASSERTS_ENABLED
+	for(PhysicsObjectType type = PhysicsObjectType::FIRST; type < PhysicsObjectType::COUNT; ++type)
+	{
+		ANKI_ASSERT(m_objectLists[type].isEmpty() && "Someone is holding refs to some physics objects");
+	}
+#endif
+
 	m_alloc.deleteInstance(m_world);
 	m_alloc.deleteInstance(m_solver);
 	m_alloc.deleteInstance(m_dispatcher);
@@ -45,6 +53,7 @@ PhysicsWorld::~PhysicsWorld()
 Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 {
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbData);
+	m_tmpAlloc = StackAllocator<U8>(allocCb, allocCbData, 1_KB, 2.0f);
 
 	// Set allocators
 	gAlloc = &m_alloc;
@@ -70,11 +79,39 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 
 Error PhysicsWorld::update(Second dt)
 {
-	// Update
-	auto lock = lockWorld();
-	m_world->stepSimulation(dt, 2, 1.0 / 60.0);
+	// Update world
+	{
+		auto lock = lockBtWorld();
+		m_world->stepSimulation(dt, 2, 1.0 / 60.0);
+	}
+
+	// Process trigger contacts
+	{
+		LockGuard<Mutex> lock(m_objectListsMtx);
+
+		for(PhysicsObject& trigger : m_objectLists[PhysicsObjectType::TRIGGER])
+		{
+			static_cast<PhysicsTrigger&>(trigger).processContacts();
+		}
+	}
+
+	// Reset the pool
+	m_tmpAlloc.getMemoryPool().reset();
 
 	return Error::NONE;
+}
+
+void PhysicsWorld::destroyObject(PhysicsObject* obj)
+{
+	ANKI_ASSERT(obj);
+
+	{
+		LockGuard<Mutex> lock(m_objectListsMtx);
+		m_objectLists[obj->getType()].erase(obj);
+	}
+
+	obj->~PhysicsObject();
+	m_alloc.getMemoryPool().free(obj);
 }
 
 } // end namespace anki

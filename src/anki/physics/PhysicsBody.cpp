@@ -27,7 +27,7 @@ public:
 };
 
 PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
-	: PhysicsObject(PhysicsObjectType::BODY, world)
+	: PhysicsObject(CLASS_TYPE, world)
 {
 	const Bool dynamic = init.m_mass > 0.0f;
 	m_shape = init.m_shape;
@@ -53,7 +53,7 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	m_body->setUserPointer(static_cast<PhysicsObject*>(this));
 
 	// Add to world
-	auto lock = getWorld().lockWorld();
+	auto lock = getWorld().lockBtWorld();
 	getWorld().getBtWorld()->addRigidBody(m_body);
 }
 
@@ -61,7 +61,7 @@ PhysicsBody::~PhysicsBody()
 {
 	if(m_body)
 	{
-		auto lock = getWorld().lockWorld();
+		auto lock = getWorld().lockBtWorld();
 		getWorld().getBtWorld()->removeRigidBody(m_body);
 	}
 

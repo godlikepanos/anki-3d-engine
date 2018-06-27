@@ -31,6 +31,8 @@ class PhysicsPlayerController final : public PhysicsObject
 	ANKI_PHYSICS_OBJECT
 
 public:
+	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::PLAYER_CONTROLLER;
+
 	// Update the state machine
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
 	{

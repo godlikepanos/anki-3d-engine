@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/physics/Common.h>
+#include <anki/physics/PhysicsObject.h>
 #include <anki/util/List.h>
 
 namespace anki
@@ -28,9 +29,12 @@ public:
 	{
 		void* mem = m_alloc.getMemoryPool().allocate(sizeof(T), alignof(T));
 		::new(mem) T(this, std::forward<TArgs>(args)...);
-		PhysicsPtr<T> out;
-		out.reset(static_cast<T*>(mem));
-		return out;
+
+		T* obj = static_cast<T*>(mem);
+		LockGuard<Mutex> lock(m_objectListsMtx);
+		m_objectLists[obj->getType()].pushBack(obj);
+
+		return PhysicsPtr<T>(obj);
 	}
 
 	/// Do the update.
@@ -58,14 +62,16 @@ anki_internal:
 		return 0.04f;
 	}
 
-	ANKI_USE_RESULT LockGuard<Mutex> lockWorld() const
+	ANKI_USE_RESULT LockGuard<Mutex> lockBtWorld() const
 	{
-		return LockGuard<Mutex>(m_mtx);
+		return LockGuard<Mutex>(m_btWorldMtx);
 	}
+
+	void destroyObject(PhysicsObject* obj);
 
 private:
 	HeapAllocator<U8> m_alloc;
-	mutable Mutex m_mtx;
+	StackAllocator<U8> m_tmpAlloc;
 
 	btBroadphaseInterface* m_broadphase = nullptr;
 	btGhostPairCallback* m_gpc = nullptr;
@@ -74,9 +80,10 @@ private:
 	btCollisionDispatcher* m_dispatcher = nullptr;
 	btSequentialImpulseConstraintSolver* m_solver = nullptr;
 	btDiscreteDynamicsWorld* m_world = nullptr;
+	mutable Mutex m_btWorldMtx;
 
-	template<typename T, typename... TArgs>
-	PhysicsPtr<T> newObjectInternal(TArgs&&... args);
+	Array<IntrusiveList<PhysicsObject>, U(PhysicsObjectType::COUNT)> m_objectLists;
+	mutable Mutex m_objectListsMtx;
 };
 /// @}
 

@@ -17,6 +17,8 @@ namespace anki
 class PhysicsJoint : public PhysicsObject
 {
 public:
+	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::JOINT;
+
 	void setBreakingImpulseThreshold(F32 impulse)
 	{
 		m_joint->setBreakingImpulseThreshold(impulse);

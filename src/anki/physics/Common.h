@@ -11,7 +11,7 @@
 #include <anki/Math.h>
 
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Winfinite-recursion"
+#pragma GCC diagnostic ignored "-Wall"
 #define BT_THREADSAFE 0
 #define BT_NO_PROFILE 1
 #include <btBulletCollisionCommon.h>
@@ -51,6 +51,7 @@ public:
 template<typename T>
 using PhysicsPtr = IntrusivePtr<T, PhysicsPtrDeleter>;
 
+using PhysicsObjectPtr = PhysicsPtr<PhysicsObject>;
 using PhysicsCollisionShapePtr = PhysicsPtr<PhysicsCollisionShape>;
 using PhysicsBodyPtr = PhysicsPtr<PhysicsBody>;
 using PhysicsPlayerControllerPtr = PhysicsPtr<PhysicsPlayerController>;
