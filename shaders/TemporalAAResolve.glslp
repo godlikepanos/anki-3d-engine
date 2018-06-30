@@ -57,7 +57,7 @@ Vec3 sharpen()
 #endif
 	near *= 0.5;
 	F32 sharpness = 1.0;
-	return center + (center - near) * sharpness;
+	return center + max(Vec3(0.0), center - near) * sharpness;
 }
 
 void main()
