@@ -30,6 +30,7 @@ namespace anki
 
 // Forward
 class PhysicsObject;
+class PhysicsFilteredObject;
 class PhysicsWorld;
 class PhysicsCollisionShape;
 class PhysicsBody;
@@ -59,14 +60,15 @@ using PhysicsJointPtr = PhysicsPtr<PhysicsJoint>;
 using PhysicsTriggerPtr = PhysicsPtr<PhysicsTrigger>;
 
 /// Material types.
-enum class PhysicsMaterialBit : U16
+enum class PhysicsMaterialBit : U64
 {
 	NONE = 0,
 	STATIC_GEOMETRY = 1 << 0,
 	DYNAMIC_GEOMETRY = 1 << 1,
-	RAGDOLL = 1 << 2,
-	PARTICLES = 1 << 3,
-	ALL = MAX_U16
+	TRIGGER = 1 << 2,
+	PLAYER = 1 << 3,
+
+	ALL = MAX_U64
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit, inline)
 

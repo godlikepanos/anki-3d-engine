@@ -54,6 +54,11 @@ public:
 		return Error::NONE;
 	}
 
+	PhysicsPlayerControllerPtr getPhysicsPlayerController() const
+	{
+		return m_player;
+	}
+
 private:
 	PhysicsPlayerControllerPtr m_player;
 	Transform m_trf;

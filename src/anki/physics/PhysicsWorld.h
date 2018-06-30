@@ -70,11 +70,14 @@ anki_internal:
 	void destroyObject(PhysicsObject* obj);
 
 private:
+	class MyOverlapFilterCallback;
+
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_tmpAlloc;
 
 	btBroadphaseInterface* m_broadphase = nullptr;
 	btGhostPairCallback* m_gpc = nullptr;
+	MyOverlapFilterCallback* m_filterCallback = nullptr;
 
 	btDefaultCollisionConfiguration* m_collisionConfig = nullptr;
 	btCollisionDispatcher* m_dispatcher = nullptr;

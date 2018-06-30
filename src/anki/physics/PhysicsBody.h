@@ -20,13 +20,11 @@ public:
 	PhysicsCollisionShapePtr m_shape;
 	F32 m_mass = 0.0f;
 	Transform m_startTrf = Transform::getIdentity();
-	Bool m_kinematic = false;
-	Bool m_gravity = true;
 	F32 m_friction = 0.5f;
 };
 
 /// Rigid body.
-class PhysicsBody : public PhysicsObject
+class PhysicsBody : public PhysicsFilteredObject
 {
 	ANKI_PHYSICS_OBJECT
 

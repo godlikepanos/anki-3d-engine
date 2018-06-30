@@ -27,7 +27,7 @@ public:
 };
 
 PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
-	: PhysicsObject(CLASS_TYPE, world)
+	: PhysicsFilteredObject(CLASS_TYPE, world)
 {
 	const Bool dynamic = init.m_mass > 0.0f;
 	m_shape = init.m_shape;
@@ -51,6 +51,10 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 
 	// User pointer
 	m_body->setUserPointer(static_cast<PhysicsObject*>(this));
+
+	// Other
+	setMaterialGroup(PhysicsMaterialBit::DYNAMIC_GEOMETRY | PhysicsMaterialBit::STATIC_GEOMETRY);
+	setMaterialMask(PhysicsMaterialBit::ALL);
 
 	// Add to world
 	auto lock = getWorld().lockBtWorld();

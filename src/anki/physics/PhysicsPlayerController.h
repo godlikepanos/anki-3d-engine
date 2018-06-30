@@ -26,7 +26,7 @@ public:
 };
 
 /// A player controller that walks the world.
-class PhysicsPlayerController final : public PhysicsObject
+class PhysicsPlayerController final : public PhysicsFilteredObject
 {
 	ANKI_PHYSICS_OBJECT
 

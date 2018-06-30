@@ -33,7 +33,7 @@ public:
 };
 
 /// A trigger that uses a PhysicsShape and its purpose is to collect collision events.
-class PhysicsTrigger : public PhysicsObject
+class PhysicsTrigger : public PhysicsFilteredObject
 {
 	ANKI_PHYSICS_OBJECT
 

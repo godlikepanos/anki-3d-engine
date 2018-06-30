@@ -48,16 +48,16 @@ struct ExtractType<T*>
 
 /// Check if a class is of certain type.
 template<typename TTo, typename TFrom>
-inline Bool isa(TFrom& c)
+inline Bool isa(const TFrom& c)
 {
 	return TTo::classof(c);
 }
 
 /// Check if a class is of certain type.
 template<typename TTo, typename TFrom>
-inline Bool isa(TFrom* c)
+inline Bool isa(const TFrom* c)
 {
-	return TTo::classof(*c);
+	return TTo::classof(c);
 }
 
 /// Custom dynamic cast.

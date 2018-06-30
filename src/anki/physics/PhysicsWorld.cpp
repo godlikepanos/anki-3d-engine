@@ -7,6 +7,7 @@
 #include <anki/physics/PhysicsCollisionShape.h>
 #include <anki/physics/PhysicsBody.h>
 #include <anki/physics/PhysicsTrigger.h>
+#include <anki/util/Rtti.h>
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
 namespace anki
@@ -27,6 +28,60 @@ static void btFree(void* ptr)
 	gAlloc->getMemoryPool().free(ptr);
 }
 
+/// Broad phase collision callback.
+class PhysicsWorld::MyOverlapFilterCallback : public btOverlapFilterCallback
+{
+public:
+	bool needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const override
+	{
+		ANKI_ASSERT(proxy0 && proxy1);
+
+		const btCollisionObject* btObj0 = static_cast<const btCollisionObject*>(proxy0->m_clientObject);
+		const btCollisionObject* btObj1 = static_cast<const btCollisionObject*>(proxy1->m_clientObject);
+		ANKI_ASSERT(btObj0 && btObj1);
+
+		const PhysicsObject* aobj0 = static_cast<const PhysicsObject*>(btObj0->getUserPointer());
+		const PhysicsObject* aobj1 = static_cast<const PhysicsObject*>(btObj1->getUserPointer());
+
+		if(aobj0 == nullptr || aobj1 == nullptr)
+		{
+			return false;
+		}
+
+		const PhysicsFilteredObject* fobj0 = dcast<const PhysicsFilteredObject*>(aobj0);
+		const PhysicsFilteredObject* fobj1 = dcast<const PhysicsFilteredObject*>(aobj1);
+
+		// First check the masks
+		Bool collide = !!(fobj0->getMaterialGroup() & fobj1->getMaterialMask());
+		collide = collide && !!(fobj1->getMaterialGroup() & fobj0->getMaterialMask());
+		if(!collide)
+		{
+			return false;
+		}
+
+		// Detailed tests using callbacks
+		if(fobj0->getBroadPhaseCallback())
+		{
+			collide = fobj0->getBroadPhaseCallback()(*fobj0, *fobj1);
+			if(!collide)
+			{
+				return false;
+			}
+		}
+
+		if(fobj1->getBroadPhaseCallback())
+		{
+			collide = fobj1->getBroadPhaseCallback()(*fobj1, *fobj0);
+			if(!collide)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+};
+
 PhysicsWorld::PhysicsWorld()
 {
 }
@@ -46,6 +101,7 @@ PhysicsWorld::~PhysicsWorld()
 	m_alloc.deleteInstance(m_collisionConfig);
 	m_alloc.deleteInstance(m_broadphase);
 	m_alloc.deleteInstance(m_gpc);
+	m_alloc.deleteInstance(m_filterCallback);
 
 	gAlloc = nullptr;
 }
@@ -63,6 +119,8 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	m_broadphase = m_alloc.newInstance<btDbvtBroadphase>();
 	m_gpc = m_alloc.newInstance<btGhostPairCallback>();
 	m_broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(m_gpc);
+	m_filterCallback = m_alloc.newInstance<MyOverlapFilterCallback>();
+	m_broadphase->getOverlappingPairCache()->setOverlapFilterCallback(m_filterCallback);
 
 	m_collisionConfig = m_alloc.newInstance<btDefaultCollisionConfiguration>();
 

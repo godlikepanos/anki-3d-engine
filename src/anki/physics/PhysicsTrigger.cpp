@@ -11,7 +11,7 @@ namespace anki
 {
 
 PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape)
-	: PhysicsObject(CLASS_TYPE, world)
+	: PhysicsFilteredObject(CLASS_TYPE, world)
 {
 	m_shape = shape;
 
@@ -20,6 +20,9 @@ PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr sha
 	m_ghostShape->setCollisionShape(shape->getBtShape(true));
 
 	m_ghostShape->setUserPointer(static_cast<PhysicsObject*>(this));
+
+	setMaterialGroup(PhysicsMaterialBit::TRIGGER);
+	setMaterialMask(PhysicsMaterialBit::ALL);
 
 	auto lock = getWorld().lockBtWorld();
 	getWorld().getBtWorld()->addCollisionObject(m_ghostShape);

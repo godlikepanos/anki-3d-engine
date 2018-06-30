@@ -22,7 +22,7 @@ Error MyApp::sampleExtraInit()
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
 	// Create the player
-	if(0)
+	if(1)
 	{
 		SceneNode& cam = getSceneGraph().getActiveCameraNode();
 		cam.getComponent<MoveComponent>().setLocalTransform(
@@ -30,6 +30,8 @@ Error MyApp::sampleExtraInit()
 
 		PlayerNode* player;
 		ANKI_CHECK(getSceneGraph().newSceneNode("player", player, Vec4(0.0f, 2.5f, 0.0f, 0.0f)));
+		PlayerControllerComponent& pcomp = player->getComponent<PlayerControllerComponent>();
+		pcomp.getPhysicsPlayerController()->setMaterialMask(PhysicsMaterialBit::STATIC_GEOMETRY);
 
 		player->addChild(&cam);
 	}
@@ -96,7 +98,7 @@ Error MyApp::sampleExtraInit()
 
 Error MyApp::userMainLoop(Bool& quit)
 {
-	ANKI_CHECK(SampleApp::userMainLoop(quit));
+	// ANKI_CHECK(SampleApp::userMainLoop(quit));
 
 	if(getInput().getKey(KeyCode::ESCAPE))
 	{

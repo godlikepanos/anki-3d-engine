@@ -10,7 +10,7 @@ namespace anki
 {
 
 PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init)
-	: PhysicsObject(CLASS_TYPE, world)
+	: PhysicsFilteredObject(CLASS_TYPE, world)
 {
 	const btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), 1.0f));
 
@@ -19,7 +19,9 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 	m_ghostObject = getAllocator().newInstance<btPairCachingGhostObject>();
 	m_ghostObject->setWorldTransform(trf);
 	m_ghostObject->setCollisionShape(m_convexShape);
-	m_ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
+	m_ghostObject->setUserPointer(static_cast<PhysicsObject*>(this));
+	setMaterialGroup(PhysicsMaterialBit::PLAYER);
+	setMaterialMask(PhysicsMaterialBit::ALL);
 
 	m_controller = getAllocator().newInstance<btKinematicCharacterController>(
 		m_ghostObject, m_convexShape, init.m_stepHeight, btVector3(0, 1, 0));
