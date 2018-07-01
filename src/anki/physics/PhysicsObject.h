@@ -80,8 +80,13 @@ private:
 	friend class PhysicsWorld; \
 	friend class PhysicsPtrDeleter;
 
-/// This is a callback that will decide if two filtered objects will be checked for collision.
-using PhysicsBroadPhaseCallback = Bool (*)(const PhysicsFilteredObject& a, const PhysicsFilteredObject& b);
+/// This is a factor that will decide if two filtered objects will be checked for collision.
+/// @memberof PhysicsFilteredObject
+class PhysicsBroadPhaseFilterInterface
+{
+public:
+	virtual Bool needsCollision(const PhysicsFilteredObject& a, const PhysicsFilteredObject& b) = 0;
+};
 
 /// A PhysicsObject that takes part into collision detection. Has functionality to filter the broad phase detection.
 class PhysicsFilteredObject : public PhysicsObject
@@ -126,23 +131,23 @@ public:
 		m_materialMask = bit;
 	}
 
-	/// Get the broadphase callback.
-	PhysicsBroadPhaseCallback getBroadPhaseCallback() const
+	/// Get the broadphase functor.
+	PhysicsBroadPhaseFilterInterface* getPhysicsBroadPhaseFilterInterface() const
 	{
-		return m_broadPhaseCallback;
+		return m_filter;
 	}
 
-	/// Set the broadphase callback.
-	void setBroadPhaseCallback(PhysicsBroadPhaseCallback callback)
+	/// Set the broadphase functor.
+	void setPhysicsBroadPhaseFilterInterface(PhysicsBroadPhaseFilterInterface* f)
 	{
-		m_broadPhaseCallback = callback;
+		m_filter = f;
 	}
 
 private:
 	PhysicsMaterialBit m_materialGroup = PhysicsMaterialBit::ALL;
 	PhysicsMaterialBit m_materialMask = PhysicsMaterialBit::ALL;
 
-	PhysicsBroadPhaseCallback m_broadPhaseCallback = nullptr;
+	PhysicsBroadPhaseFilterInterface* m_filter = nullptr;
 };
 /// @}
 

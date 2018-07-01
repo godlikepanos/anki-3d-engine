@@ -53,6 +53,7 @@ template<typename T>
 using PhysicsPtr = IntrusivePtr<T, PhysicsPtrDeleter>;
 
 using PhysicsObjectPtr = PhysicsPtr<PhysicsObject>;
+using PhysicsFilteredObjectPtr = PhysicsPtr<PhysicsFilteredObject>;
 using PhysicsCollisionShapePtr = PhysicsPtr<PhysicsCollisionShape>;
 using PhysicsBodyPtr = PhysicsPtr<PhysicsBody>;
 using PhysicsPlayerControllerPtr = PhysicsPtr<PhysicsPlayerController>;

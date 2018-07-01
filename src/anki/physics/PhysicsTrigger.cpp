@@ -6,6 +6,7 @@
 #include <anki/physics/PhysicsTrigger.h>
 #include <anki/physics/PhysicsCollisionShape.h>
 #include <anki/physics/PhysicsWorld.h>
+#include <anki/util/Rtti.h>
 
 namespace anki
 {
@@ -40,44 +41,48 @@ PhysicsTrigger::~PhysicsTrigger()
 
 void PhysicsTrigger::processContacts()
 {
-	if(m_filter == nullptr)
+	if(m_contactFunctor == nullptr)
 	{
 		return;
 	}
 
-	// Process contacts
 	const U pairCount = m_ghostShape->getOverlappingPairCache()->getNumOverlappingPairs();
+	if(pairCount < 0)
+	{
+		return;
+	}
+
+	PhysicsTriggerPtr thisPtr(this);
+
+	// Process contacts
 	for(U i = 0; i < pairCount; ++i)
 	{
 		btBroadphasePair& collisionPair = m_ghostShape->getOverlappingPairCache()->getOverlappingPairArray()[i];
 
 		btCollisionObject* obj0 = static_cast<btCollisionObject*>(collisionPair.m_pProxy0->m_clientObject);
 		btCollisionObject* obj1 = static_cast<btCollisionObject*>(collisionPair.m_pProxy1->m_clientObject);
+		ANKI_ASSERT(obj0 && obj1);
 
 		PhysicsObject* aobj0 = static_cast<PhysicsObject*>(obj0->getUserPointer());
 		PhysicsObject* aobj1 = static_cast<PhysicsObject*>(obj1->getUserPointer());
+		ANKI_ASSERT(aobj0 && aobj1);
 
-		if(aobj0 == nullptr || aobj1 == nullptr)
-		{
-			continue;
-		}
+		PhysicsFilteredObject* fobj0 = dcast<PhysicsFilteredObject*>(aobj0);
+		PhysicsFilteredObject* fobj1 = dcast<PhysicsFilteredObject*>(aobj1);
 
-		PhysicsObject* otherObj;
-		if(aobj0 == static_cast<PhysicsObject*>(this))
+		PhysicsFilteredObject* otherObj;
+		if(fobj0 == static_cast<PhysicsFilteredObject*>(this))
 		{
-			otherObj = aobj1;
+			otherObj = fobj1;
 		}
 		else
 		{
-			ANKI_ASSERT(aobj1 == static_cast<PhysicsObject*>(this));
-			otherObj = aobj0;
+			ANKI_ASSERT(fobj1 == static_cast<PhysicsFilteredObject*>(this));
+			otherObj = fobj0;
 		}
 
-		PhysicsObjectPtr ptr(otherObj);
-		if(!m_filter->skipContact(ptr))
-		{
-			m_filter->processContact(ptr, ConstWeakArray<PhysicsTriggerContact>());
-		}
+		PhysicsFilteredObjectPtr ptr(otherObj);
+		m_contactFunctor->processContact(thisPtr, ptr, ConstWeakArray<PhysicsTriggerContact>());
 	}
 }
 

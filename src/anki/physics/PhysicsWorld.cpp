@@ -60,18 +60,18 @@ public:
 		}
 
 		// Detailed tests using callbacks
-		if(fobj0->getBroadPhaseCallback())
+		if(fobj0->getPhysicsBroadPhaseFilterInterface())
 		{
-			collide = fobj0->getBroadPhaseCallback()(*fobj0, *fobj1);
+			collide = fobj0->getPhysicsBroadPhaseFilterInterface()->needsCollision(*fobj0, *fobj1);
 			if(!collide)
 			{
 				return false;
 			}
 		}
 
-		if(fobj1->getBroadPhaseCallback())
+		if(fobj1->getPhysicsBroadPhaseFilterInterface())
 		{
-			collide = fobj1->getBroadPhaseCallback()(*fobj1, *fobj0);
+			collide = fobj1->getPhysicsBroadPhaseFilterInterface()->needsCollision(*fobj1, *fobj0);
 			if(!collide)
 			{
 				return false;

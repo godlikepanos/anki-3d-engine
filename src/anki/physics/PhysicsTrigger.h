@@ -24,12 +24,11 @@ public:
 
 /// An interface to process contacts.
 /// @memberof PhysicsTrigger
-class PhysicsTriggerContactFilter
+class PhysicsTriggerProcessContactInterface
 {
 public:
-	virtual Bool skipContact(const PhysicsObjectPtr& obj) = 0;
-
-	virtual void processContact(const PhysicsObjectPtr& obj, ConstWeakArray<PhysicsTriggerContact> contact) = 0;
+	virtual void processContact(
+		PhysicsTriggerPtr& trigger, PhysicsFilteredObjectPtr& obj, ConstWeakArray<PhysicsTriggerContact> contacts) = 0;
 };
 
 /// A trigger that uses a PhysicsShape and its purpose is to collect collision events.
@@ -45,9 +44,9 @@ public:
 		m_ghostShape->setWorldTransform(toBt(trf));
 	}
 
-	void setContactFilter(PhysicsTriggerContactFilter* filter)
+	void setContactProcess(PhysicsTriggerProcessContactInterface* functor)
 	{
-		m_filter = filter;
+		m_contactFunctor = functor;
 	}
 
 private:
@@ -56,13 +55,11 @@ private:
 	PhysicsCollisionShapePtr m_shape;
 	btPairCachingGhostObject* m_ghostShape = nullptr;
 
-	PhysicsTriggerContactFilter* m_filter = nullptr;
+	PhysicsTriggerProcessContactInterface* m_contactFunctor = nullptr;
 
 	PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape);
 
 	~PhysicsTrigger();
-
-	void cleanupContacts();
 
 	void processContacts();
 };
