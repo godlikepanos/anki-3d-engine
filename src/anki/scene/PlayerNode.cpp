@@ -125,6 +125,7 @@ Error PlayerNode::init(const Vec4& position)
 	PhysicsPlayerControllerInitInfo init;
 	init.m_position = position;
 	m_player = getSceneGraph().getPhysicsWorld().newInstance<PhysicsPlayerController>(init);
+	m_player->setUserData(this);
 
 	// Player controller component
 	newComponent<PlayerControllerComponent>(this, m_player);

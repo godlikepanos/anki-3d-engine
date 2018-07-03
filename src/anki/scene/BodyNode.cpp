@@ -55,9 +55,10 @@ Error BodyNode::init(const CString& resourceFname)
 
 	// Create body
 	PhysicsBodyInitInfo init;
-	init.m_mass = 1.0;
+	init.m_mass = 1.0f;
 	init.m_shape = m_rsrc->getShape();
 	m_body = getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
+	m_body->setUserData(this);
 
 	// Joint component
 	newComponent<JointComponent>(this);

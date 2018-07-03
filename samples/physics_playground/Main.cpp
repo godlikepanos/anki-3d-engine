@@ -8,6 +8,22 @@
 
 using namespace anki;
 
+class RayCast : public PhysicsWorldRayCastCallback
+{
+public:
+	RayCast(Vec3 from, Vec3 to, PhysicsMaterialBit mtl)
+		: PhysicsWorldRayCastCallback(from, to, mtl)
+	{
+	}
+
+	void processResult(PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition)
+	{
+		SceneNode* node = static_cast<SceneNode*>(obj.getUserData());
+		ANKI_ASSERT(node);
+		ANKI_LOGI("Ray hits %s", node->getName().cstr());
+	}
+};
+
 class MyApp : public SampleApp
 {
 public:
@@ -157,6 +173,17 @@ Error MyApp::userMainLoop(Bool& quit)
 		pbody->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));
 
 		body->addChild(monkey);
+	}
+
+	if(getInput().getMouseButton(MouseButton::RIGHT) == 1)
+	{
+		Transform camTrf = getSceneGraph().getActiveCameraNode().getComponent<MoveComponent>().getWorldTransform();
+		Vec3 from = camTrf.getOrigin().xyz();
+		Vec3 to = from + -camTrf.getRotation().getZAxis() * 10.0f;
+
+		RayCast ray(from, to, PhysicsMaterialBit::ALL);
+
+		getPhysicsWorld().rayCast(ray);
 	}
 
 	return Error::NONE;

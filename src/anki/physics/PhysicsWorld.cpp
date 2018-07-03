@@ -222,14 +222,13 @@ void PhysicsWorld::destroyObject(PhysicsObject* obj)
 	m_alloc.getMemoryPool().free(obj);
 }
 
-void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback> rayCasts)
+void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts)
 {
 	MyRaycastCallback callback;
-	for(PhysicsWorldRayCastCallback& cb : rayCasts)
+	for(PhysicsWorldRayCastCallback* cb : rayCasts)
 	{
-		callback.m_raycast = &cb;
-
-		m_world->rayTest(toBt(cb.m_from), toBt(cb.m_to), callback);
+		callback.m_raycast = cb;
+		m_world->rayTest(toBt(cb->m_from), toBt(cb->m_to), callback);
 	}
 }
 

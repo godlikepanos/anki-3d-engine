@@ -33,7 +33,7 @@ public:
 	}
 
 	/// Process a raycast result.
-	virtual Bool processResult(PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition) = 0;
+	virtual void processResult(PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition) = 0;
 };
 
 /// The master container for all physics related stuff.
@@ -71,7 +71,14 @@ public:
 		return m_alloc;
 	}
 
-	void rayCast(WeakArray<PhysicsWorldRayCastCallback> rayCasts);
+	void rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts);
+
+	void rayCast(PhysicsWorldRayCastCallback& raycast)
+	{
+		PhysicsWorldRayCastCallback* ptr = &raycast;
+		WeakArray<PhysicsWorldRayCastCallback*> arr(&ptr, 1);
+		rayCast(arr);
+	}
 
 anki_internal:
 	btDynamicsWorld* getBtWorld() const
