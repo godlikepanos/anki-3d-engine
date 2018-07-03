@@ -50,12 +50,26 @@ struct ExtractType<T*>
 template<typename TTo, typename TFrom>
 inline Bool isa(const TFrom& c)
 {
-	return TTo::classof(c);
+	return TTo::classof(&c);
+}
+
+/// Check if a class is of certain type.
+template<typename TTo, typename TFrom>
+inline Bool isa(TFrom& c)
+{
+	return TTo::classof(&c);
 }
 
 /// Check if a class is of certain type.
 template<typename TTo, typename TFrom>
 inline Bool isa(const TFrom* c)
+{
+	return TTo::classof(c);
+}
+
+/// Check if a class is of certain type.
+template<typename TTo, typename TFrom>
+inline Bool isa(TFrom* c)
 {
 	return TTo::classof(c);
 }

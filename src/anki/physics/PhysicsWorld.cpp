@@ -60,18 +60,18 @@ public:
 		}
 
 		// Detailed tests using callbacks
-		if(fobj0->getPhysicsBroadPhaseFilterInterface())
+		if(fobj0->getPhysicsBroadPhaseFilterCallback())
 		{
-			collide = fobj0->getPhysicsBroadPhaseFilterInterface()->needsCollision(*fobj0, *fobj1);
+			collide = fobj0->getPhysicsBroadPhaseFilterCallback()->needsCollision(*fobj0, *fobj1);
 			if(!collide)
 			{
 				return false;
 			}
 		}
 
-		if(fobj1->getPhysicsBroadPhaseFilterInterface())
+		if(fobj1->getPhysicsBroadPhaseFilterCallback())
 		{
-			collide = fobj1->getPhysicsBroadPhaseFilterInterface()->needsCollision(*fobj1, *fobj0);
+			collide = fobj1->getPhysicsBroadPhaseFilterCallback()->needsCollision(*fobj1, *fobj0);
 			if(!collide)
 			{
 				return false;
@@ -79,6 +79,56 @@ public:
 		}
 
 		return true;
+	}
+};
+
+class PhysicsWorld::MyRaycastCallback : public btCollisionWorld::RayResultCallback
+{
+public:
+	PhysicsWorldRayCastCallback* m_raycast = nullptr;
+
+	bool needsCollision(btBroadphaseProxy* proxy) const override
+	{
+		ANKI_ASSERT(proxy);
+
+		const btCollisionObject* cobj = static_cast<const btCollisionObject*>(proxy->m_clientObject);
+		ANKI_ASSERT(cobj);
+
+		const PhysicsObject* pobj = static_cast<const PhysicsObject*>(cobj->getUserPointer());
+		ANKI_ASSERT(pobj);
+
+		const PhysicsFilteredObject* fobj = dcast<const PhysicsFilteredObject*>(pobj);
+
+		return !!(fobj->getMaterialGroup() & m_raycast->m_materialMask);
+	}
+
+	btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace) final
+	{
+		// No idea why
+		if(m_raycast->m_firstHit)
+		{
+			m_closestHitFraction = rayResult.m_hitFraction;
+		}
+
+		m_collisionObject = rayResult.m_collisionObject;
+		Vec3 worldNormal;
+		if(normalInWorldSpace)
+		{
+			worldNormal = toAnki(rayResult.m_hitNormalLocal);
+		}
+		else
+		{
+			worldNormal = toAnki(m_collisionObject->getWorldTransform().getBasis() * rayResult.m_hitNormalLocal);
+		}
+
+		Vec3 hitPointWorld = mix(m_raycast->m_from, m_raycast->m_to, rayResult.m_hitFraction);
+
+		// Call the callback
+		PhysicsObject* pobj = static_cast<PhysicsObject*>(m_collisionObject->getUserPointer());
+		ANKI_ASSERT(pobj);
+		m_raycast->processResult(dcast<PhysicsFilteredObject&>(*pobj), worldNormal, hitPointWorld);
+
+		return m_closestHitFraction;
 	}
 };
 
@@ -170,6 +220,17 @@ void PhysicsWorld::destroyObject(PhysicsObject* obj)
 
 	obj->~PhysicsObject();
 	m_alloc.getMemoryPool().free(obj);
+}
+
+void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback> rayCasts)
+{
+	MyRaycastCallback callback;
+	for(PhysicsWorldRayCastCallback& cb : rayCasts)
+	{
+		callback.m_raycast = &cb;
+
+		m_world->rayTest(toBt(cb.m_from), toBt(cb.m_to), callback);
+	}
 }
 
 } // end namespace anki

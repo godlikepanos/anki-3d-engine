@@ -24,7 +24,7 @@ public:
 
 /// An interface to process contacts.
 /// @memberof PhysicsTrigger
-class PhysicsTriggerProcessContactInterface
+class PhysicsTriggerProcessContactCallback
 {
 public:
 	virtual void processContact(
@@ -44,7 +44,7 @@ public:
 		m_ghostShape->setWorldTransform(toBt(trf));
 	}
 
-	void setContactProcess(PhysicsTriggerProcessContactInterface* functor)
+	void setContactProcess(PhysicsTriggerProcessContactCallback* functor)
 	{
 		m_contactFunctor = functor;
 	}
@@ -55,7 +55,7 @@ private:
 	PhysicsCollisionShapePtr m_shape;
 	btPairCachingGhostObject* m_ghostShape = nullptr;
 
-	PhysicsTriggerProcessContactInterface* m_contactFunctor = nullptr;
+	PhysicsTriggerProcessContactCallback* m_contactFunctor = nullptr;
 
 	PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape);
 

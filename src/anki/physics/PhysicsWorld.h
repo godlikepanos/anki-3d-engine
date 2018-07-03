@@ -8,12 +8,33 @@
 #include <anki/physics/Common.h>
 #include <anki/physics/PhysicsObject.h>
 #include <anki/util/List.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
 
 /// @addtogroup physics
 /// @{
+
+/// Raycast callback (interface).
+class PhysicsWorldRayCastCallback
+{
+public:
+	Vec3 m_from;
+	Vec3 m_to;
+	PhysicsMaterialBit m_materialMask; ///< Materials to check
+	Bool8 m_firstHit = true;
+
+	PhysicsWorldRayCastCallback(const Vec3& from, const Vec3& to, PhysicsMaterialBit materialMask)
+		: m_from(from)
+		, m_to(to)
+		, m_materialMask(materialMask)
+	{
+	}
+
+	/// Process a raycast result.
+	virtual Bool processResult(PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition) = 0;
+};
 
 /// The master container for all physics related stuff.
 class PhysicsWorld
@@ -50,6 +71,8 @@ public:
 		return m_alloc;
 	}
 
+	void rayCast(WeakArray<PhysicsWorldRayCastCallback> rayCasts);
+
 anki_internal:
 	btDynamicsWorld* getBtWorld() const
 	{
@@ -71,6 +94,7 @@ anki_internal:
 
 private:
 	class MyOverlapFilterCallback;
+	class MyRaycastCallback;
 
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_tmpAlloc;
