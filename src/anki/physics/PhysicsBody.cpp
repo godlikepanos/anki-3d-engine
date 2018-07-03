@@ -31,6 +31,7 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 {
 	const Bool dynamic = init.m_mass > 0.0f;
 	m_shape = init.m_shape;
+	m_mass = init.m_mass;
 
 	// Create motion state
 	m_motionState = getAllocator().newInstance<MotionState>();
@@ -53,7 +54,7 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	m_body->setUserPointer(static_cast<PhysicsObject*>(this));
 
 	// Other
-	setMaterialGroup(PhysicsMaterialBit::DYNAMIC_GEOMETRY | PhysicsMaterialBit::STATIC_GEOMETRY);
+	setMaterialGroup((dynamic) ? PhysicsMaterialBit::DYNAMIC_GEOMETRY : PhysicsMaterialBit::STATIC_GEOMETRY);
 	setMaterialMask(PhysicsMaterialBit::ALL);
 
 	// Add to world
@@ -71,6 +72,16 @@ PhysicsBody::~PhysicsBody()
 
 	getAllocator().deleteInstance(m_body);
 	getAllocator().deleteInstance(m_motionState);
+}
+
+void PhysicsBody::setMass(F32 mass)
+{
+	ANKI_ASSERT(m_mass > 0.0f && "Only relevant for dynamic bodies");
+	ANKI_ASSERT(mass > 0.0f);
+	btVector3 inertia;
+	m_shape->getBtShape(true)->calculateLocalInertia(mass, inertia);
+	m_body->setMassProps(mass, inertia);
+	m_mass = mass;
 }
 
 } // end namespace anki

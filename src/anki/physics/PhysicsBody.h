@@ -42,34 +42,16 @@ public:
 		m_body->setWorldTransform(toBt(trf));
 	}
 
-	F32 getFriction() const
-	{
-		return m_friction;
-	}
-
-	void setFriction(F32 friction)
-	{
-		m_friction = friction;
-	}
-
-	F32 getElasticity() const
-	{
-		return m_elasticity;
-	}
-
-	void setElasticity(F32 elasticity)
-	{
-		m_elasticity = elasticity;
-	}
-
-	void setMaterialsThatCollide(PhysicsMaterialBit bits)
-	{
-		m_materialBits = bits;
-	}
-
 	void applyForce(const Vec3& force, const Vec3& relPos)
 	{
 		m_body->applyForce(toBt(force), toBt(relPos));
+	}
+
+	void setMass(F32 mass);
+
+	F32 getMass() const
+	{
+		return m_mass;
 	}
 
 anki_internal:
@@ -87,9 +69,7 @@ private:
 	btRigidBody* m_body = nullptr;
 
 	Transform m_trf = Transform::getIdentity();
-	F32 m_friction = 0.03f;
-	F32 m_elasticity = 0.1f;
-	PhysicsMaterialBit m_materialBits = PhysicsMaterialBit::ALL;
+	F32 m_mass = 1.0f;
 
 	PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init);
 
