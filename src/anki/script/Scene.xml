@@ -16,8 +16,23 @@ template<typename T, typename... TArgs>
 static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 {
 	T* ptr;
-	Error err = scene->template newSceneNode<T>(
-		name, ptr, args...);
+	Error err = scene->template newSceneNode<T>(name, ptr, std::forward<TArgs>(args)...);
+
+	if(!err)
+	{
+		return ptr;
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+template<typename T, typename... TArgs>
+static T* newEvent(EventManager* eventManager, TArgs... args)
+{
+	T* ptr;
+	Error err = eventManager->template newEvent<T>(ptr, std::forward<TArgs>(args)...);
 
 	if(!err)
 	{
@@ -38,7 +53,13 @@ static SceneGraph* getSceneGraph(lua_State* l)
 		reinterpret_cast<ScriptManager*>(binder->getParent());
 
 	return &scriptManager->getSceneGraph();
-}]]></head>
+}
+
+static EventManager* getEventManager(lua_State* l)
+{
+	return &getSceneGraph(l)->getEventManager();
+}
+]]></head>
 
 	<classes>
 		<class name="MoveComponent">
@@ -407,11 +428,42 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
+
+		<!-- Events -->
+		<class name="LightEvent">
+			<methods>
+				<method name="setIntensityMultiplier">
+					<args><arg>const Vec4&amp;</arg></args>
+				</method>
+				<method name="setFrequency">
+					<args><arg>F32</arg><arg>F32</arg></args>
+				</method>
+			</methods>
+		</class>
+		<class name="EventManager">
+			<methods>
+				<method name="newLightEvent">
+					<overrideCall><![CDATA[LightEvent* ret = newEvent<LightEvent>(self, arg0, arg1, arg2);]]></overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>SceneNode*</arg>
+					</args>
+					<return>LightEvent*</return>
+				</method>
+			</methods>
+		</class>
 	</classes>
 	<functions>
 		<function name="getSceneGraph">
 			<overrideCall>SceneGraph* ret = getSceneGraph(l);</overrideCall>
 			<return>SceneGraph*</return>
+		</function>
+	</functions>
+	<functions>
+		<function name="getEventManager">
+			<overrideCall>EventManager* ret = getEventManager(l);</overrideCall>
+			<return>EventManager*</return>
 		</function>
 	</functions>
 	<tail><![CDATA[} // end namespace anki]]></tail>

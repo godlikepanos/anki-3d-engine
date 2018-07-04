@@ -22,6 +22,8 @@ class SceneGraph;
 class SceneNode;
 class MoveComponent;
 class DecalComponent;
+class EventManager;
+class Event;
 
 /// @addtogroup Scene
 /// @{

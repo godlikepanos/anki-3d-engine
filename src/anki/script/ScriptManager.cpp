@@ -16,7 +16,6 @@ ANKI_SCRIPT_CALL_WRAP(Logger);
 ANKI_SCRIPT_CALL_WRAP(Math);
 ANKI_SCRIPT_CALL_WRAP(Renderer);
 ANKI_SCRIPT_CALL_WRAP(Scene);
-ANKI_SCRIPT_CALL_WRAP(Event);
 #undef ANKI_SCRIPT_CALL_WRAP
 
 ScriptManager::ScriptManager()
@@ -44,7 +43,6 @@ Error ScriptManager::init(AllocAlignedCallback allocCb, void* allocCbData)
 	ANKI_SCRIPT_CALL_WRAP(Math);
 	ANKI_SCRIPT_CALL_WRAP(Renderer);
 	ANKI_SCRIPT_CALL_WRAP(Scene);
-	ANKI_SCRIPT_CALL_WRAP(Event);
 #undef ANKI_SCRIPT_CALL_WRAP
 
 	return Error::NONE;

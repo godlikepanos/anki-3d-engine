@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include <anki/event/Event.h>
+#include <anki/scene/events/Event.h>
 #include <anki/Math.h>
 
 namespace anki
 {
 
-/// @addtogroup event
+/// @addtogroup scene
 /// @{
 
 /// An event for simple movable animations
@@ -24,10 +24,10 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(F32 startTime, F32 duration, SceneNode* movableSceneNode);
+	ANKI_USE_RESULT Error init(Second startTime, Second duration, SceneNode* movableSceneNode);
 
 	/// Implements Event::update
-	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
+	ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime);
 
 	void setPositionLimits(const Vec4& posMin, const Vec4& posMax);
 

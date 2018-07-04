@@ -12,7 +12,7 @@
 #include <anki/util/HighRezTimer.h>
 #include <anki/util/HashMap.h>
 #include <anki/core/App.h>
-#include <anki/event/EventManager.h>
+#include <anki/scene/events/EventManager.h>
 
 namespace anki
 {

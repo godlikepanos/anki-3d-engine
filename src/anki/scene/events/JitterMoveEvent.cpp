@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/event/JitterMoveEvent.h>
+#include <anki/scene/events/JitterMoveEvent.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/util/Functions.h>
@@ -11,10 +11,11 @@
 namespace anki
 {
 
-Error JitterMoveEvent::init(F32 startTime, F32 duration, SceneNode* node)
+Error JitterMoveEvent::init(Second startTime, Second duration, SceneNode* node)
 {
 	ANKI_ASSERT(node);
-	Event::init(startTime, duration, node);
+	Event::init(startTime, duration);
+	m_associatedNodes.emplaceBack(getAllocator(), node);
 
 	const MoveComponent& move = node->getComponent<MoveComponent>();
 
@@ -34,10 +35,9 @@ void JitterMoveEvent::setPositionLimits(const Vec4& posMin, const Vec4& posMax)
 	m_newPos += m_originalPos;
 }
 
-Error JitterMoveEvent::update(F32 prevUpdateTime, F32 crntTime)
+Error JitterMoveEvent::update(Second prevUpdateTime, Second crntTime)
 {
-	SceneNode* node = getSceneNode();
-	ANKI_ASSERT(node);
+	SceneNode* node = m_associatedNodes[0];
 
 	MoveComponent& move = node->getComponent<MoveComponent>();
 

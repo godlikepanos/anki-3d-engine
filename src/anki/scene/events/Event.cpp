@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/event/Event.h>
-#include <anki/event/EventManager.h>
+#include <anki/scene/events/Event.h>
+#include <anki/scene/events/EventManager.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/util/Assert.h>
+#include <anki/util/HighRezTimer.h>
 
 namespace anki
 {
@@ -18,35 +18,34 @@ Event::Event(EventManager* manager)
 
 Event::~Event()
 {
+	m_associatedNodes.destroy(getAllocator());
 }
 
-void Event::init(F32 startTime, F32 duration, SceneNode* snode, Flag flags)
+void Event::init(Second startTime, Second duration)
 {
 	m_startTime = startTime;
-	m_duration = duration;
-	m_node = snode;
-	m_flags = flags;
+	m_duration = (duration < 0.0) ? MAX_SECOND : duration;
 
 	if(duration < 0.0)
 	{
-		m_duration = 1000.0;
-		m_flags |= Flag::REANIMATE;
+		m_reanimate = true;
 	}
+}
+
+SceneAllocator<U8> Event::getAllocator() const
+{
+	return m_manager->getSceneGraph().getAllocator();
 }
 
 void Event::setMarkedForDeletion()
 {
-	if(!getMarkedForDeletion())
-	{
-		m_flags |= Flag::MARKED_FOR_DELETION;
-		m_manager->increaseMarkedForDeletion();
-	}
+	m_manager->markEventForDeletion(this);
 }
 
-F32 Event::getDelta(F32 crntTime) const
+Second Event::getDelta(Second crntTime) const
 {
-	F32 d = crntTime - m_startTime; // delta
-	F32 dp = d / m_duration; // delta as persentage
+	Second d = crntTime - m_startTime; // delta
+	Second dp = d / m_duration; // delta as persentage
 	return dp;
 }
 

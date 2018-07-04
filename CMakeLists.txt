@@ -424,7 +424,7 @@ set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCol
 	ankispirvcross ankitinyxml2 ankilua ankiz glslang SPIRV OGLCompiler OSDependent ankitinyexpr)
 
 # Add anki sub libraries
-set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource misc gr collision math util)
+set(ANKI_SUB_DIRS core script renderer scene ui input physics resource misc gr collision math util)
 foreach(TMP ${ANKI_SUB_DIRS})
 	add_subdirectory(src/anki/${TMP})
 endforeach()

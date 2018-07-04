@@ -24,6 +24,34 @@ public:
 	}
 };
 
+class DestroyBodyEvent : public Event
+{
+public:
+	DestroyBodyEvent(EventManager* events)
+		: Event(events)
+	{
+	}
+
+	Error init(Second duration, SceneNode* node)
+	{
+		Event::init(-1.0, duration);
+		m_associatedNodes.emplaceBack(getAllocator(), node);
+		return Error::NONE;
+	}
+
+	Error update(Second prevTime, Second crntTime) final
+	{
+		return Error::NONE;
+	}
+
+	Error onKilled(Second prevUpdateTime, Second crntTime, Bool& kill) final
+	{
+		m_associatedNodes[0]->setMarkedForDeletion();
+		kill = true;
+		return Error::NONE;
+	}
+};
+
 class MyApp : public SampleApp
 {
 public:
@@ -173,6 +201,10 @@ Error MyApp::userMainLoop(Bool& quit)
 		pbody->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));
 
 		body->addChild(monkey);
+
+		// Create the destruction event
+		DestroyBodyEvent* event;
+		ANKI_CHECK(getSceneGraph().getEventManager().newEvent(event, 10.0, body));
 	}
 
 	if(getInput().getMouseButton(MouseButton::RIGHT) == 1)

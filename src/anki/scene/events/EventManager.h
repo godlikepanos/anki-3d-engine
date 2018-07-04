@@ -5,19 +5,14 @@
 
 #pragma once
 
-#include <anki/event/Event.h>
-#include <anki/util/List.h>
-#include <anki/util/StdTypes.h>
 #include <anki/scene/Common.h>
+#include <anki/util/List.h>
 #include <anki/Math.h>
 
 namespace anki
 {
 
-// Forward
-class SceneGraph;
-
-/// @addtogroup event
+/// @addtogroup scene
 /// @{
 
 /// This manager creates the events ands keeps track of them
@@ -27,7 +22,7 @@ public:
 	EventManager();
 	~EventManager();
 
-	ANKI_USE_RESULT Error create(SceneGraph* scene);
+	ANKI_USE_RESULT Error init(SceneGraph* scene);
 
 	SceneGraph& getSceneGraph()
 	{
@@ -51,57 +46,46 @@ public:
 		auto end = m_events.getEnd();
 		for(; it != end && !err; ++it)
 		{
-			err = func(*(*it));
+			err = func(*it);
 		}
 
 		return err;
 	}
 
 	/// Create a new event
+	/// @note It's thread-safe against itself.
 	template<typename T, typename... Args>
-	T* newEvent(Args... args)
+	ANKI_USE_RESULT Error newEvent(T*& event, Args... args)
 	{
-		T* event = getSceneAllocator().template newInstance<T>(this);
-		if(!event->init(args...))
-		{
-			registerEvent(event);
-		}
-		else
+		event = getSceneAllocator().template newInstance<T>(this);
+		Error err = event->init(std::forward<Args>(args)...);
+		if(err)
 		{
 			getSceneAllocator().deleteInstance(event);
 		}
-		return event;
-	}
-
-	/// Delete an event. It actualy marks it for deletion
-	void deleteEvent(Event* event)
-	{
-		event->setMarkedForDeletion();
+		else
+		{
+			LockGuard<Mutex> lock(m_mtx);
+			m_events.pushBack(event);
+		}
+		return err;
 	}
 
 	/// Update
-	ANKI_USE_RESULT Error updateAllEvents(F32 prevUpdateTime, F32 crntTime);
+	ANKI_USE_RESULT Error updateAllEvents(Second prevUpdateTime, Second crntTime);
 
 	/// Delete events that pending deletion
 	void deleteEventsMarkedForDeletion();
 
-	void increaseMarkedForDeletion()
-	{
-		++m_markedForDeletionCount;
-	}
+	/// @note It's thread-safe against itself.
+	void markEventForDeletion(Event* event);
 
 private:
 	SceneGraph* m_scene = nullptr;
-	List<Event*> m_events;
-	U32 m_markedForDeletionCount = 0;
-	F32 m_prevUpdateTime;
-	F32 m_crntTime;
 
-	/// Add an event to the local container
-	void registerEvent(Event* event);
-
-	/// Remove an event from the container
-	void unregisterEvent(List<Event*>::Iterator it);
+	IntrusiveList<Event> m_events;
+	IntrusiveList<Event> m_eventsMarkedForDeletion;
+	Mutex m_mtx;
 };
 /// @}
 

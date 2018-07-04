@@ -3,26 +3,25 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/event/LightEvent.h>
-#include <anki/scene/LightNode.h>
+#include <anki/scene/events/LightEvent.h>
+#include <anki/scene/components/LightComponent.h>
 #include <anki/scene/components/LensFlareComponent.h>
 
 namespace anki
 {
 
-Error LightEvent::init(F32 startTime, F32 duration, SceneNode* light)
+Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 {
-	Event::init(startTime, duration, light);
+	Event::init(startTime, duration);
+	m_associatedNodes.emplaceBack(getAllocator(), light);
 
 	LightComponent& lightc = light->getComponent<LightComponent>();
 
 	switch(lightc.getLightComponentType())
 	{
 	case LightComponentType::POINT:
-	{
 		m_originalRadius = lightc.getRadius();
-	}
-	break;
+		break;
 	case LightComponentType::SPOT:
 		ANKI_ASSERT("TODO");
 		break;
@@ -36,12 +35,12 @@ Error LightEvent::init(F32 startTime, F32 duration, SceneNode* light)
 	return Error::NONE;
 }
 
-Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
+Error LightEvent::update(Second prevUpdateTime, Second crntTime)
 {
 	F32 freq = randRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
 
 	F32 factor = sin(crntTime * freq * PI) / 2.0 + 0.5;
-	LightComponent& lightc = getSceneNode()->getComponent<LightComponent>();
+	LightComponent& lightc = m_associatedNodes[0]->getComponent<LightComponent>();
 
 	// Update radius
 	if(m_radiusMultiplier != 0.0)
@@ -65,7 +64,7 @@ Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 	{
 		Vec4 outCol = m_originalDiffColor + factor * m_intensityMultiplier;
 
-		LensFlareComponent* lfc = getSceneNode()->tryGetComponent<LensFlareComponent>();
+		LensFlareComponent* lfc = m_associatedNodes[0]->tryGetComponent<LensFlareComponent>();
 
 		if(lfc && lfc->getColorMultiplier().xyz() == lightc.getDiffuseColor().xyz())
 		{

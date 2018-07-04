@@ -95,7 +95,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 
 	m_earlyZDist = config.getNumber("scene.earlyZDistance");
 
-	ANKI_CHECK(m_events.create(this));
+	ANKI_CHECK(m_events.init(this));
 
 	m_sectors = m_alloc.newInstance<SectorGroup>(this);
 

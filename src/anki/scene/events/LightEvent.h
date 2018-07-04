@@ -5,14 +5,11 @@
 
 #pragma once
 
-#include <anki/event/Event.h>
+#include <anki/scene/events/Event.h>
 #include <anki/Math.h>
 
 namespace anki
 {
-
-// Forward
-class Light;
 
 /// @addtogroup event
 /// @{
@@ -27,10 +24,10 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(F32 startTime, F32 duration, SceneNode* light);
+	ANKI_USE_RESULT Error init(Second startTime, Second duration, SceneNode* light);
 
 	/// Implements Event::update
-	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime) override;
 
 	void setRadiusMultiplier(F32 v)
 	{

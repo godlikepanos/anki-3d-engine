@@ -37,3 +37,9 @@
 #include <anki/scene/components/ReflectionProxyComponent.h>
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/components/JointComponent.h>
+
+#include <anki/scene/events/EventManager.h>
+#include <anki/scene/events/Event.h>
+#include <anki/scene/events/AnimationEvent.h>
+#include <anki/scene/events/JitterMoveEvent.h>
+#include <anki/scene/events/LightEvent.h>

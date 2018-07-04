@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/event/AnimationEvent.h>
-#include <anki/resource/AnimationResource.h>
+#include <anki/scene/events/AnimationEvent.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/resource/ResourceManager.h>
@@ -22,19 +21,15 @@ Error AnimationEvent::init(const AnimationResourcePtr& anim, SceneNode* movableS
 	ANKI_ASSERT(movableSceneNode);
 	m_anim = anim;
 
-	Event::init(m_anim->getStartingTime(),
-		m_anim->getDuration(),
-		movableSceneNode,
-		m_anim->getRepeat() ? Flag::REANIMATE : Flag::NONE);
+	Event::init(m_anim->getStartingTime(), m_anim->getDuration());
+	m_reanimate = m_anim->getRepeat();
+	m_associatedNodes.emplaceBack(getAllocator(), movableSceneNode);
 
 	return Error::NONE;
 }
 
-Error AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
+Error AnimationEvent::update(Second prevUpdateTime, Second crntTime)
 {
-	ANKI_ASSERT(getSceneNode());
-	MoveComponent& move = getSceneNode()->getComponent<MoveComponent>();
-
 	Vec3 pos;
 	Quat rot;
 	F32 scale = 1.0;
@@ -44,6 +39,8 @@ Error AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
 	trf.setOrigin(pos.xyz0());
 	trf.setRotation(Mat3x4(rot));
 	trf.setScale(scale);
+
+	MoveComponent& move = m_associatedNodes[0]->getComponent<MoveComponent>();
 	move.setLocalTransform(trf);
 
 	return Error::NONE;

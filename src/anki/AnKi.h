@@ -9,7 +9,6 @@
 #include <anki/Math.h>
 #include <anki/Collision.h>
 #include <anki/Scene.h>
-#include <anki/Event.h>
 #include <anki/Renderer.h>
 #include <anki/Script.h>
 #include <anki/Input.h>
