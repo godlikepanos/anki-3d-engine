@@ -19,7 +19,7 @@ class PhysicsBodyInitInfo
 public:
 	PhysicsCollisionShapePtr m_shape;
 	F32 m_mass = 0.0f;
-	Transform m_startTrf = Transform::getIdentity();
+	Transform m_transform = Transform::getIdentity();
 	F32 m_friction = 0.5f;
 };
 

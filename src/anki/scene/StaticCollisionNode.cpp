@@ -31,7 +31,7 @@ Error StaticCollisionNode::init(const CString& resourceFname, const Transform& t
 	PhysicsBodyInitInfo init;
 	init.m_shape = m_rsrc->getShape();
 	init.m_mass = 0.0f;
-	init.m_startTrf = transform;
+	init.m_transform = transform;
 
 	m_body = getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
 
