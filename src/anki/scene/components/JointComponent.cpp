@@ -125,7 +125,7 @@ Error JointComponent::update(Second prevTime, Second crntTime, Bool& updated)
 		Bool erasedOne = false;
 		for(auto node : m_jointList)
 		{
-			if(node.m_parentNode != m_node->getParent())
+			if(node.m_parentNode != m_node->getParent() || node.m_joint->isBroken())
 			{
 				m_jointList.erase(&node);
 				getAllocator().deleteInstance(&node);

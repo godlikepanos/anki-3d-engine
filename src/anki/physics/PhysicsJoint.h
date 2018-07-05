@@ -19,9 +19,16 @@ class PhysicsJoint : public PhysicsObject
 public:
 	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::JOINT;
 
+	/// Set the breaking impulse.
 	void setBreakingImpulseThreshold(F32 impulse)
 	{
 		m_joint->setBreakingImpulseThreshold(impulse);
+	}
+
+	/// Return true if the joint broke.
+	Bool isBroken() const
+	{
+		return !m_joint->isEnabled();
 	}
 
 protected:
@@ -36,7 +43,7 @@ protected:
 	void addToWorld();
 };
 
-/// Point 2 point joint.
+/// Point to point joint.
 class PhysicsPoint2PointJoint : public PhysicsJoint
 {
 	ANKI_PHYSICS_OBJECT
