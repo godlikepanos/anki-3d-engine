@@ -11,7 +11,7 @@
 namespace anki
 {
 
-/// @addtogroup event
+/// @addtogroup scene
 /// @{
 
 /// An event for light animation

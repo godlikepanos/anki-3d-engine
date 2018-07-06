@@ -59,6 +59,8 @@ static EventManager* getEventManager(lua_State* l)
 {
 	return &getSceneGraph(l)->getEventManager();
 }
+
+using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 ]]></head>
 
 	<classes>
@@ -201,6 +203,7 @@ static EventManager* getEventManager(lua_State* l)
 						<arg>SceneNode*</arg>
 					</args>
 				</method>
+				<method name="setMarkedForDeletion"></method>
 				<method name="tryGetComponent&lt;MoveComponent&gt;" alias="getMoveComponent">
 					<return>MoveComponent*</return>
 				</method>
@@ -430,13 +433,35 @@ static EventManager* getEventManager(lua_State* l)
 		</class>
 
 		<!-- Events -->
+		<class name="WeakArraySceneNodePtr">
+			<methods>
+				<method name="getSize">
+					<return>PtrSize</return>
+				</method>
+				<method name="getAt">
+					<overrideCall><![CDATA[SceneNode* ret = (*self)[arg0];]]></overrideCall>
+					<args><arg>U</arg></args>
+					<return>SceneNode*</return>
+				</method>
+			</methods>
+		</class>
+		<class name="Event">
+			<methods>
+				<method name="getAssociatedSceneNodes">
+					<return>WeakArraySceneNodePtr</return>
+				</method>
+			</methods>
+		</class>
 		<class name="LightEvent">
 			<methods>
 				<method name="setIntensityMultiplier">
 					<args><arg>const Vec4&amp;</arg></args>
 				</method>
 				<method name="setFrequency">
-					<args><arg>F32</arg><arg>F32</arg></args>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
 				</method>
 			</methods>
 		</class>

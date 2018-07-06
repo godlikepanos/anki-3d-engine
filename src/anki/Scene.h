@@ -43,3 +43,4 @@
 #include <anki/scene/events/AnimationEvent.h>
 #include <anki/scene/events/JitterMoveEvent.h>
 #include <anki/scene/events/LightEvent.h>
+#include <anki/scene/events/ScriptEvent.h>

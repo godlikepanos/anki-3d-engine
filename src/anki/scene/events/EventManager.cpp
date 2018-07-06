@@ -99,9 +99,8 @@ Error EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 			}
 			else
 			{
-				Bool kill;
-				err = event.onKilled(prevUpdateTime, crntTime, kill);
-				if(!err && kill)
+				err = event.onKilled(prevUpdateTime, crntTime);
+				if(err || !event.getReanimate())
 				{
 					event.setMarkedForDeletion();
 				}

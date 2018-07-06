@@ -24,34 +24,6 @@ public:
 	}
 };
 
-class DestroyBodyEvent : public Event
-{
-public:
-	DestroyBodyEvent(EventManager* events)
-		: Event(events)
-	{
-	}
-
-	Error init(Second duration, SceneNode* node)
-	{
-		Event::init(-1.0, duration);
-		m_associatedNodes.emplaceBack(getAllocator(), node);
-		return Error::NONE;
-	}
-
-	Error update(Second prevTime, Second crntTime) final
-	{
-		return Error::NONE;
-	}
-
-	Error onKilled(Second prevUpdateTime, Second crntTime, Bool& kill) final
-	{
-		m_associatedNodes[0]->setMarkedForDeletion();
-		kill = true;
-		return Error::NONE;
-	}
-};
-
 class MyApp : public SampleApp
 {
 public:
@@ -203,8 +175,21 @@ Error MyApp::userMainLoop(Bool& quit)
 		body->addChild(monkey);
 
 		// Create the destruction event
-		DestroyBodyEvent* event;
-		ANKI_CHECK(getSceneGraph().getEventManager().newEvent(event, 10.0, body));
+		CString script = R"(
+function update(event, prevTime, crntTime)
+	-- Do nothing
+	return 1
+end
+
+function onKilled(event, prevTime, crntTime)
+	logi("onKilled")
+	event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
+	return 1
+end
+		)";
+		ScriptEvent* event;
+		ANKI_CHECK(getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
+		event->addAssociatedSceneNode(body);
 	}
 
 	if(getInput().getMouseButton(MouseButton::RIGHT) == 1)

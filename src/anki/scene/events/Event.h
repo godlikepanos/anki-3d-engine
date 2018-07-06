@@ -7,6 +7,7 @@
 
 #include <anki/scene/Common.h>
 #include <anki/util/List.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -74,6 +75,19 @@ public:
 		return m_reanimate;
 	}
 
+	WeakArray<SceneNode*> getAssociatedSceneNodes()
+	{
+		return (m_associatedNodes.getSize() == 0)
+				   ? WeakArray<SceneNode*>()
+				   : WeakArray<SceneNode*>(&m_associatedNodes[0], m_associatedNodes.getSize());
+	}
+
+	void addAssociatedSceneNode(SceneNode* node)
+	{
+		ANKI_ASSERT(node);
+		m_associatedNodes.emplaceBack(getAllocator(), node);
+	}
+
 	/// This method should be implemented by the derived classes
 	/// @param prevUpdateTime The time of the previous update (sec)
 	/// @param crntTime The current time (sec)
@@ -82,12 +96,10 @@ public:
 	/// This is called when the event is killed
 	/// @param prevUpdateTime The time of the previous update (sec)
 	/// @param crntTime The current time (sec)
-	/// @param[out] Return false if you don't want to be killed
-	virtual ANKI_USE_RESULT Error onKilled(Second prevUpdateTime, Second crntTime, Bool& kill)
+	virtual ANKI_USE_RESULT Error onKilled(Second prevUpdateTime, Second crntTime)
 	{
 		(void)prevUpdateTime;
 		(void)crntTime;
-		kill = true;
 		return Error::NONE;
 	}
 
