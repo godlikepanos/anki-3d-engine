@@ -56,7 +56,10 @@ Error GrManager::newInstance(GrManagerInitInfo& init, GrManager*& gr)
 
 void GrManager::deleteInstance(GrManager* gr)
 {
-	ANKI_ASSERT(gr);
+	if(gr == nullptr)
+	{
+		return;
+	}
 
 	auto alloc = gr->m_alloc;
 	gr->~GrManager();

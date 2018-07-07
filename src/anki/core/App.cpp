@@ -258,85 +258,20 @@ App::~App()
 
 void App::cleanup()
 {
-	if(m_script)
-	{
-		m_heapAlloc.deleteInstance(m_script);
-		m_script = nullptr;
-	}
-
-	if(m_scene)
-	{
-		m_heapAlloc.deleteInstance(m_scene);
-		m_scene = nullptr;
-	}
-
-	if(m_renderer)
-	{
-		m_heapAlloc.deleteInstance(m_renderer);
-		m_renderer = nullptr;
-	}
-
-	if(m_ui)
-	{
-		m_statsUi.reset(nullptr);
-
-		m_heapAlloc.deleteInstance(m_ui);
-		m_ui = nullptr;
-	}
-
-	if(m_resources)
-	{
-		m_heapAlloc.deleteInstance(m_resources);
-		m_resources = nullptr;
-	}
-
-	if(m_resourceFs)
-	{
-		m_heapAlloc.deleteInstance(m_resourceFs);
-		m_resourceFs = nullptr;
-	}
-
-	if(m_physics)
-	{
-		m_heapAlloc.deleteInstance(m_physics);
-		m_physics = nullptr;
-	}
-
-	if(m_stagingMem)
-	{
-		m_heapAlloc.deleteInstance(m_stagingMem);
-		m_stagingMem = nullptr;
-	}
-
-	if(m_threadpool)
-	{
-		m_heapAlloc.deleteInstance(m_threadpool);
-		m_threadpool = nullptr;
-	}
-
-	if(m_threadHive)
-	{
-		m_heapAlloc.deleteInstance(m_threadHive);
-		m_threadHive = nullptr;
-	}
-
-	if(m_gr)
-	{
-		GrManager::deleteInstance(m_gr);
-		m_gr = nullptr;
-	}
-
-	if(m_input)
-	{
-		m_heapAlloc.deleteInstance(m_input);
-		m_input = nullptr;
-	}
-
-	if(m_window)
-	{
-		m_heapAlloc.deleteInstance(m_window);
-		m_window = nullptr;
-	}
+	m_heapAlloc.deleteInstance(m_scene);
+	m_heapAlloc.deleteInstance(m_script);
+	m_heapAlloc.deleteInstance(m_renderer);
+	m_statsUi.reset(nullptr);
+	m_heapAlloc.deleteInstance(m_ui);
+	m_heapAlloc.deleteInstance(m_resources);
+	m_heapAlloc.deleteInstance(m_resourceFs);
+	m_heapAlloc.deleteInstance(m_physics);
+	m_heapAlloc.deleteInstance(m_stagingMem);
+	m_heapAlloc.deleteInstance(m_threadpool);
+	m_heapAlloc.deleteInstance(m_threadHive);
+	GrManager::deleteInstance(m_gr);
+	m_heapAlloc.deleteInstance(m_input);
+	m_heapAlloc.deleteInstance(m_window);
 
 #if ANKI_ENABLE_TRACE
 	if(CoreTracerSingleton::get().isInitialized())
