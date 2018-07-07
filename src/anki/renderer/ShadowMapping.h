@@ -46,6 +46,7 @@ private:
 	public:
 		U64 m_lastUsedTimestamp = 0;
 		U64 m_lightUuid = 0;
+		U32 m_drawcallCount = 0;
 		U8 m_face = 0;
 		Bool8 m_pinned = false; ///< If true we cannot allocate from it.
 
@@ -81,7 +82,7 @@ private:
 	HashMap<TileKey, U32> m_lightUuidToTileIdx;
 
 	Bool allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U32& tileAllocated, Bool& inTheCache);
-	static Bool shouldRenderTile(U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx);
+	static Bool shouldRenderTile(U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx, U32 drawcallCount);
 
 	class EsmResolveWorkItem
 	{
@@ -149,6 +150,7 @@ private:
 		U32 faceCount,
 		const U64* faceTimestamps,
 		const U32* faceIndices,
+		const U32* drawcallsCount,
 		U32* tileIndices,
 		U32* scratchTileIndices);
 

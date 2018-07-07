@@ -292,6 +292,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Array<U32, 6> scratchTiles;
 		Array<U64, 6> timestamps;
 		Array<U32, 6> faceIndices;
+		Array<U32, 6> drawcallCounts;
 		U numOfFacesThatHaveDrawcalls = 0;
 		for(U face = 0; face < 6; ++face)
 		{
@@ -304,6 +305,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				timestamps[numOfFacesThatHaveDrawcalls] =
 					light->m_shadowRenderQueues[face]->m_shadowRenderablesLastUpdateTimestamp;
 
+				drawcallCounts[numOfFacesThatHaveDrawcalls] =
+					light->m_shadowRenderQueues[face]->m_renderables.getSize();
+
 				++numOfFacesThatHaveDrawcalls;
 			}
 		}
@@ -312,6 +316,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 											 numOfFacesThatHaveDrawcalls,
 											 &timestamps[0],
 											 &faceIndices[0],
+											 &drawcallCounts[0],
 											 &tiles[0],
 											 &scratchTiles[0]);
 
@@ -370,11 +375,13 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 		// Allocate tiles
 		U32 tileIdx, scratchTileIdx, faceIdx = 0;
-		const Bool allocationFailed = light->m_shadowRenderQueue->m_renderables.getSize() == 0
+		U32 drawcallCount = light->m_shadowRenderQueue->m_renderables.getSize();
+		const Bool allocationFailed = drawcallCount == 0
 									  || allocateTilesAndScratchTiles(light->m_uuid,
 											 1,
 											 &light->m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
 											 &faceIdx,
+											 &drawcallCount,
 											 &tileIdx,
 											 &scratchTileIdx);
 
@@ -514,13 +521,14 @@ Bool ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 	U32 faceCount,
 	const U64* faceTimestamps,
 	const U32* faceIndices,
+	const U32* drawcallsCount,
 	U32* tileIndices,
 	U32* scratchTileIndices)
 {
 	ANKI_ASSERT(faceTimestamps);
 	ANKI_ASSERT(lightUuid > 0);
 	ANKI_ASSERT(faceCount > 0 && faceCount <= 6);
-	ANKI_ASSERT(faceIndices && tileIndices && scratchTileIndices);
+	ANKI_ASSERT(faceIndices && tileIndices && scratchTileIndices && drawcallsCount);
 
 	Bool failed = false;
 	Array<Bool, 6> inTheCache;
@@ -549,8 +557,8 @@ Bool ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 		for(U i = 0; i < faceCount && !failed; ++i)
 		{
 			scratchTileIndices[i] = MAX_U32;
-			const Bool shouldRender =
-				shouldRenderTile(faceTimestamps[i], lightUuid, faceIndices[i], m_tiles[tileIndices[i]]);
+			const Bool shouldRender = shouldRenderTile(
+				faceTimestamps[i], lightUuid, faceIndices[i], m_tiles[tileIndices[i]], drawcallsCount[i]);
 			const Bool scratchTileFailed = shouldRender && freeScratchTiles == 0;
 
 			if(scratchTileFailed)
@@ -582,6 +590,7 @@ Bool ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 			tile.m_face = faceIndices[i];
 			tile.m_lightUuid = lightUuid;
 			tile.m_lastUsedTimestamp = m_r->getGlobalTimestamp();
+			tile.m_drawcallCount = drawcallsCount[i];
 
 			// Update the cache
 			if(!inTheCache[i])
@@ -596,13 +605,18 @@ Bool ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 	return failed;
 }
 
-Bool ShadowMapping::shouldRenderTile(U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx)
+Bool ShadowMapping::shouldRenderTile(
+	U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx, U32 drawcallCount)
 {
-	if(tileIdx.m_face == face && tileIdx.m_lightUuid == lightUuid && tileIdx.m_lastUsedTimestamp >= lightTimestamp)
+	if(tileIdx.m_face == face && tileIdx.m_lightUuid == lightUuid && tileIdx.m_lastUsedTimestamp >= lightTimestamp
+		&& tileIdx.m_drawcallCount == drawcallCount)
 	{
 		return false;
 	}
-	return true;
+	else
+	{
+		return true;
+	}
 }
 
 Bool ShadowMapping::allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U32& tileAllocated, Bool& inTheCache)
