@@ -109,6 +109,14 @@ Error MyApp::sampleExtraInit()
 		}
 	}
 
+	// Trigger
+	{
+		TriggerNode* node;
+		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node, 2.0f));
+
+		node->getComponent<MoveComponent>().setLocalOrigin(Vec4(1.0f, 1.0f, 0.0f, 0.0f));
+	}
+
 	return Error::NONE;
 }
 
@@ -201,6 +209,16 @@ end
 		RayCast ray(from, to, PhysicsMaterialBit::ALL);
 
 		getPhysicsWorld().rayCast(ray);
+	}
+
+	{
+		SceneNode& node = getSceneGraph().findSceneNode("trigger");
+		TriggerComponent& comp = node.getComponent<TriggerComponent>();
+
+		for(U i = 0; i < comp.getContactSceneNodes().getSize(); ++i)
+		{
+			ANKI_LOGI("Touching %s", comp.getContactSceneNodes()[i]->getName().cstr());
+		}
 	}
 
 	return Error::NONE;

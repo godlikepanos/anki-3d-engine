@@ -41,7 +41,7 @@ PhysicsTrigger::~PhysicsTrigger()
 
 void PhysicsTrigger::processContacts()
 {
-	if(m_contactFunctor == nullptr)
+	if(m_contactCallback == nullptr)
 	{
 		return;
 	}
@@ -51,8 +51,6 @@ void PhysicsTrigger::processContacts()
 	{
 		return;
 	}
-
-	PhysicsTriggerPtr thisPtr(this);
 
 	// Process contacts
 	for(U i = 0; i < pairCount; ++i)
@@ -81,8 +79,7 @@ void PhysicsTrigger::processContacts()
 			otherObj = fobj0;
 		}
 
-		PhysicsFilteredObjectPtr ptr(otherObj);
-		m_contactFunctor->processContact(thisPtr, ptr, ConstWeakArray<PhysicsTriggerContact>());
+		m_contactCallback->processContact(*this, *otherObj, ConstWeakArray<PhysicsTriggerContact>());
 	}
 }
 

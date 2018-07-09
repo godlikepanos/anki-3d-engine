@@ -36,6 +36,7 @@ enum class SceneComponentType : U16
 	SKIN,
 	SCRIPT,
 	JOINT,
+	TRIGGER,
 	PLAYER_CONTROLLER,
 
 	COUNT,

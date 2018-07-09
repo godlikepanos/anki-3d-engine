@@ -61,6 +61,129 @@ static EventManager* getEventManager(lua_State* l)
 
 using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
+static const char* classnameWeakArraySceneNodePtr = "WeakArraySceneNodePtr";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<WeakArraySceneNodePtr>()
+{
+	return 4158963409681942864;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<WeakArraySceneNodePtr>()
+{
+	return classnameWeakArraySceneNodePtr;
+}
+
+/// Pre-wrap method WeakArraySceneNodePtr::getSize.
+static inline int pwrapWeakArraySceneNodePtrgetSize(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 1);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameWeakArraySceneNodePtr, 4158963409681942864, ud))
+	{
+		return -1;
+	}
+
+	WeakArraySceneNodePtr* self = ud->getData<WeakArraySceneNodePtr>();
+
+	// Call the method
+	PtrSize ret = self->getSize();
+
+	// Push return value
+	lua_pushnumber(l, ret);
+
+	return 1;
+}
+
+/// Wrap method WeakArraySceneNodePtr::getSize.
+static int wrapWeakArraySceneNodePtrgetSize(lua_State* l)
+{
+	int res = pwrapWeakArraySceneNodePtrgetSize(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Pre-wrap method WeakArraySceneNodePtr::getAt.
+static inline int pwrapWeakArraySceneNodePtrgetAt(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 2);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameWeakArraySceneNodePtr, 4158963409681942864, ud))
+	{
+		return -1;
+	}
+
+	WeakArraySceneNodePtr* self = ud->getData<WeakArraySceneNodePtr>();
+
+	// Pop arguments
+	U arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
+
+	// Call the method
+	SceneNode* ret = (*self)[arg0];
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(ret));
+
+	return 1;
+}
+
+/// Wrap method WeakArraySceneNodePtr::getAt.
+static int wrapWeakArraySceneNodePtrgetAt(lua_State* l)
+{
+	int res = pwrapWeakArraySceneNodePtrgetAt(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class WeakArraySceneNodePtr.
+static inline void wrapWeakArraySceneNodePtr(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameWeakArraySceneNodePtr);
+	LuaBinder::pushLuaCFuncMethod(l, "getSize", wrapWeakArraySceneNodePtrgetSize);
+	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapWeakArraySceneNodePtrgetAt);
+	lua_settop(l, 0);
+}
+
 static const char* classnameMoveComponent = "MoveComponent";
 
 template<>
@@ -1358,6 +1481,75 @@ static inline void wrapLensFlareComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
+static const char* classnameTriggerComponent = "TriggerComponent";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<TriggerComponent>()
+{
+	return 7180780522076545145;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<TriggerComponent>()
+{
+	return classnameTriggerComponent;
+}
+
+/// Pre-wrap method TriggerComponent::getContactSceneNodes.
+static inline int pwrapTriggerComponentgetContactSceneNodes(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 1);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameTriggerComponent, 7180780522076545145, ud))
+	{
+		return -1;
+	}
+
+	TriggerComponent* self = ud->getData<TriggerComponent>();
+
+	// Call the method
+	WeakArraySceneNodePtr ret = self->getContactSceneNodes();
+
+	// Push return value
+	size = LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>();
+	voidp = lua_newuserdata(l, size);
+	luaL_setmetatable(l, "WeakArraySceneNodePtr");
+	ud = static_cast<LuaUserData*>(voidp);
+	ud->initGarbageCollected(4158963409681942864);
+	::new(ud->getData<WeakArraySceneNodePtr>()) WeakArraySceneNodePtr(std::move(ret));
+
+	return 1;
+}
+
+/// Wrap method TriggerComponent::getContactSceneNodes.
+static int wrapTriggerComponentgetContactSceneNodes(lua_State* l)
+{
+	int res = pwrapTriggerComponentgetContactSceneNodes(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class TriggerComponent.
+static inline void wrapTriggerComponent(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameTriggerComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "getContactSceneNodes", wrapTriggerComponentgetContactSceneNodes);
+	lua_settop(l, 0);
+}
+
 static const char* classnameSceneNode = "SceneNode";
 
 template<>
@@ -1705,6 +1897,57 @@ static int wrapSceneNodegetDecalComponent(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method SceneNode::tryGetComponent<TriggerComponent>.
+static inline int pwrapSceneNodegetTriggerComponent(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 1);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	{
+		return -1;
+	}
+
+	SceneNode* self = ud->getData<SceneNode>();
+
+	// Call the method
+	TriggerComponent* ret = self->tryGetComponent<TriggerComponent>();
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "TriggerComponent");
+	ud->initPointed(7180780522076545145, const_cast<TriggerComponent*>(ret));
+
+	return 1;
+}
+
+/// Wrap method SceneNode::tryGetComponent<TriggerComponent>.
+static int wrapSceneNodegetTriggerComponent(lua_State* l)
+{
+	int res = pwrapSceneNodegetTriggerComponent(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Wrap class SceneNode.
 static inline void wrapSceneNode(lua_State* l)
 {
@@ -1716,6 +1959,7 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getLightComponent", wrapSceneNodegetLightComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getLensFlareComponent", wrapSceneNodegetLensFlareComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getDecalComponent", wrapSceneNodegetDecalComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "getTriggerComponent", wrapSceneNodegetTriggerComponent);
 	lua_settop(l, 0);
 }
 
@@ -2644,6 +2888,73 @@ static inline void wrapDecalNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
+static const char* classnameTriggerNode = "TriggerNode";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<TriggerNode>()
+{
+	return -3029786875306006141;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<TriggerNode>()
+{
+	return classnameTriggerNode;
+}
+
+/// Pre-wrap method TriggerNode::getSceneNodeBase.
+static inline int pwrapTriggerNodegetSceneNodeBase(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 1);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameTriggerNode, -3029786875306006141, ud))
+	{
+		return -1;
+	}
+
+	TriggerNode* self = ud->getData<TriggerNode>();
+
+	// Call the method
+	SceneNode& ret = *self;
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
+
+	return 1;
+}
+
+/// Wrap method TriggerNode::getSceneNodeBase.
+static int wrapTriggerNodegetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapTriggerNodegetSceneNodeBase(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class TriggerNode.
+static inline void wrapTriggerNode(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameTriggerNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapTriggerNodegetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
 static const char* classnameSceneGraph = "SceneGraph";
 
 template<>
@@ -3420,6 +3731,70 @@ static int wrapSceneGraphnewDecalNode(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method SceneGraph::newTriggerNode.
+static inline int pwrapSceneGraphnewTriggerNode(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 3);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+
+	SceneGraph* self = ud->getData<SceneGraph>();
+
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
+
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, 3, arg1))
+	{
+		return -1;
+	}
+
+	// Call the method
+	TriggerNode* ret = newSceneNode<TriggerNode>(self, arg0, arg1);
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "TriggerNode");
+	ud->initPointed(-3029786875306006141, const_cast<TriggerNode*>(ret));
+
+	return 1;
+}
+
+/// Wrap method SceneGraph::newTriggerNode.
+static int wrapSceneGraphnewTriggerNode(lua_State* l)
+{
+	int res = pwrapSceneGraphnewTriggerNode(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Pre-wrap method SceneGraph::setActiveCameraNode.
 static inline int pwrapSceneGraphsetActiveCameraNode(lua_State* l)
 {
@@ -3484,130 +3859,8 @@ static inline void wrapSceneGraph(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProxyNode", wrapSceneGraphnewReflectionProxyNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newOccluderNode", wrapSceneGraphnewOccluderNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newDecalNode", wrapSceneGraphnewDecalNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newTriggerNode", wrapSceneGraphnewTriggerNode);
 	LuaBinder::pushLuaCFuncMethod(l, "setActiveCameraNode", wrapSceneGraphsetActiveCameraNode);
-	lua_settop(l, 0);
-}
-
-static const char* classnameWeakArraySceneNodePtr = "WeakArraySceneNodePtr";
-
-template<>
-I64 LuaBinder::getWrappedTypeSignature<WeakArraySceneNodePtr>()
-{
-	return 4158963409681942864;
-}
-
-template<>
-const char* LuaBinder::getWrappedTypeName<WeakArraySceneNodePtr>()
-{
-	return classnameWeakArraySceneNodePtr;
-}
-
-/// Pre-wrap method WeakArraySceneNodePtr::getSize.
-static inline int pwrapWeakArraySceneNodePtrgetSize(lua_State* l)
-{
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-
-	LuaBinder::checkArgsCount(l, 1);
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameWeakArraySceneNodePtr, 4158963409681942864, ud))
-	{
-		return -1;
-	}
-
-	WeakArraySceneNodePtr* self = ud->getData<WeakArraySceneNodePtr>();
-
-	// Call the method
-	PtrSize ret = self->getSize();
-
-	// Push return value
-	lua_pushnumber(l, ret);
-
-	return 1;
-}
-
-/// Wrap method WeakArraySceneNodePtr::getSize.
-static int wrapWeakArraySceneNodePtrgetSize(lua_State* l)
-{
-	int res = pwrapWeakArraySceneNodePtrgetSize(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Pre-wrap method WeakArraySceneNodePtr::getAt.
-static inline int pwrapWeakArraySceneNodePtrgetAt(lua_State* l)
-{
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-
-	LuaBinder::checkArgsCount(l, 2);
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameWeakArraySceneNodePtr, 4158963409681942864, ud))
-	{
-		return -1;
-	}
-
-	WeakArraySceneNodePtr* self = ud->getData<WeakArraySceneNodePtr>();
-
-	// Pop arguments
-	U arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
-	{
-		return -1;
-	}
-
-	// Call the method
-	SceneNode* ret = (*self)[arg0];
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(ret));
-
-	return 1;
-}
-
-/// Wrap method WeakArraySceneNodePtr::getAt.
-static int wrapWeakArraySceneNodePtrgetAt(lua_State* l)
-{
-	int res = pwrapWeakArraySceneNodePtrgetAt(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class WeakArraySceneNodePtr.
-static inline void wrapWeakArraySceneNodePtr(lua_State* l)
-{
-	LuaBinder::createClass(l, classnameWeakArraySceneNodePtr);
-	LuaBinder::pushLuaCFuncMethod(l, "getSize", wrapWeakArraySceneNodePtrgetSize);
-	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapWeakArraySceneNodePtrgetAt);
 	lua_settop(l, 0);
 }
 
@@ -3986,10 +4239,12 @@ static int wrapgetEventManager(lua_State* l)
 /// Wrap the module.
 void wrapModuleScene(lua_State* l)
 {
+	wrapWeakArraySceneNodePtr(l);
 	wrapMoveComponent(l);
 	wrapLightComponent(l);
 	wrapDecalComponent(l);
 	wrapLensFlareComponent(l);
+	wrapTriggerComponent(l);
 	wrapSceneNode(l);
 	wrapModelNode(l);
 	wrapPerspectiveCameraNode(l);
@@ -4003,8 +4258,8 @@ void wrapModuleScene(lua_State* l)
 	wrapReflectionProxyNode(l);
 	wrapOccluderNode(l);
 	wrapDecalNode(l);
+	wrapTriggerNode(l);
 	wrapSceneGraph(l);
-	wrapWeakArraySceneNodePtr(l);
 	wrapEvent(l);
 	wrapLightEvent(l);
 	wrapEventManager(l);

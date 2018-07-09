@@ -25,8 +25,8 @@ public:
 		return static_cast<const ModelPatchNode&>(getSceneNode());
 	}
 
-	MRenderComponent(ModelPatchNode* node)
-		: MaterialRenderComponent(node, node->m_modelPatch->getMaterial())
+	MRenderComponent(SceneNode* node)
+		: MaterialRenderComponent(node, static_cast<ModelPatchNode*>(node)->m_modelPatch->getMaterial())
 	{
 	}
 
@@ -52,10 +52,10 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch, U idx, const ModelNode&
 	m_modelPatch = modelPatch;
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, &m_obb);
+	newComponent<SpatialComponent>(&m_obb);
 
 	// Render component
-	newComponent<MRenderComponent>(this);
+	newComponent<MRenderComponent>();
 
 	// Merge key
 	Array<U64, 2> toHash;
@@ -153,8 +153,8 @@ public:
 class ModelNode::MRenderComponent : public MaterialRenderComponent
 {
 public:
-	MRenderComponent(ModelNode* node)
-		: MaterialRenderComponent(node, node->m_model->getModelPatches()[0]->getMaterial())
+	MRenderComponent(SceneNode* node)
+		: MaterialRenderComponent(node, static_cast<ModelNode*>(node)->m_model->getModelPatches()[0]->getMaterial())
 	{
 	}
 
@@ -198,10 +198,10 @@ Error ModelNode::init(const CString& modelFname)
 		}
 
 		// Move component
-		newComponent<MoveComponent>(this);
+		newComponent<MoveComponent>();
 
 		// Feedback component
-		newComponent<MoveFeedbackComponent>(this);
+		newComponent<MoveFeedbackComponent>();
 	}
 	else
 	{
@@ -211,12 +211,12 @@ Error ModelNode::init(const CString& modelFname)
 
 		if(m_model->getSkeleton().isCreated())
 		{
-			newComponent<SkinComponent>(this, m_model->getSkeleton());
+			newComponent<SkinComponent>(m_model->getSkeleton());
 		}
-		newComponent<MoveComponent>(this);
-		newComponent<MoveFeedbackComponent>(this);
-		newComponent<SpatialComponent>(this, &m_obb);
-		newComponent<MRenderComponent>(this);
+		newComponent<MoveComponent>();
+		newComponent<MoveFeedbackComponent>();
+		newComponent<SpatialComponent>(&m_obb);
+		newComponent<MRenderComponent>();
 	}
 
 	ANKI_CHECK(getResourceManager().loadResource("shaders/SceneDebug.glslp", m_dbgProg));

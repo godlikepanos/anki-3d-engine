@@ -652,7 +652,7 @@ void App::injectStatsUiElement(DynamicArrayAuto<UiQueueElement>& newUiElementArr
 			static_cast<StatsUi*>(userData)->build(canvas);
 		};
 
-		rqueue.m_uis = newUiElementArr;
+		rqueue.m_uis = WeakArray<UiQueueElement>(newUiElementArr);
 	}
 }
 

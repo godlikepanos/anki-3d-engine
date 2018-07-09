@@ -128,16 +128,16 @@ Error PlayerNode::init(const Vec4& position)
 	m_player->setUserData(this);
 
 	// Player controller component
-	newComponent<PlayerControllerComponent>(this, m_player);
+	newComponent<PlayerControllerComponent>(m_player);
 
 	// Feedback component
-	newComponent<PlayerNodeFeedbackComponent>(this);
+	newComponent<PlayerNodeFeedbackComponent>();
 
 	// Move component
-	newComponent<MoveComponent>(this);
+	newComponent<MoveComponent>();
 
 	// Feedback component #2
-	newComponent<PlayerNodeFeedbackComponent2>(this);
+	newComponent<PlayerNodeFeedbackComponent2>();
 
 	return Error::NONE;
 }

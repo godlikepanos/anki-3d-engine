@@ -46,7 +46,7 @@ public:
 	{
 	}
 
-	WeakArray(DynamicArray<T>& arr)
+	explicit WeakArray(DynamicArray<T>& arr)
 		: WeakArray()
 	{
 		if(arr.getSize())

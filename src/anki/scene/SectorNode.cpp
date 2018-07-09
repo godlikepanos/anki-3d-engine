@@ -59,16 +59,16 @@ PortalSectorBase::~PortalSectorBase()
 Error PortalSectorBase::init(const CString& meshFname, Bool isSector)
 {
 	// Create move component
-	newComponent<MoveComponent>(this);
+	newComponent<MoveComponent>();
 
 	// Create portal or sector component
 	if(isSector)
 	{
-		newComponent<SectorComponent>(this);
+		newComponent<SectorComponent>();
 	}
 	else
 	{
-		newComponent<PortalComponent>(this);
+		newComponent<PortalComponent>();
 	}
 
 	// Load mesh

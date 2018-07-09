@@ -21,6 +21,7 @@
 #include <anki/scene/DecalNode.h>
 #include <anki/scene/Octree.h>
 #include <anki/scene/PhysicsDebugNode.h>
+#include <anki/scene/TriggerNode.h>
 
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/RenderComponent.h>
@@ -37,6 +38,7 @@
 #include <anki/scene/components/ReflectionProxyComponent.h>
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/components/JointComponent.h>
+#include <anki/scene/components/TriggerComponent.h>
 
 #include <anki/scene/events/EventManager.h>
 #include <anki/scene/events/Event.h>

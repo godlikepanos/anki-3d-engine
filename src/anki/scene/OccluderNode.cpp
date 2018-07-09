@@ -62,9 +62,9 @@ Error OccluderNode::init(const CString& meshFname)
 	}
 
 	// Create the components
-	newComponent<MoveComponent>(this);
-	newComponent<OccluderMoveFeedbackComponent>(this);
-	newComponent<OccluderComponent>(this);
+	newComponent<MoveComponent>();
+	newComponent<OccluderMoveFeedbackComponent>();
+	newComponent<OccluderComponent>();
 
 	return Error::NONE;
 }

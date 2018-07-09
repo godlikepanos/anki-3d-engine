@@ -65,11 +65,11 @@ DecalNode::~DecalNode()
 
 Error DecalNode::init()
 {
-	newComponent<MoveComponent>(this);
-	newComponent<DecalMoveFeedbackComponent>(this);
-	DecalComponent* decalc = newComponent<DecalComponent>(this);
-	newComponent<DecalShapeFeedbackComponent>(this);
-	newComponent<SpatialComponent>(this, &decalc->getBoundingVolume());
+	newComponent<MoveComponent>();
+	newComponent<DecalMoveFeedbackComponent>();
+	DecalComponent* decalc = newComponent<DecalComponent>();
+	newComponent<DecalShapeFeedbackComponent>();
+	newComponent<SpatialComponent>(&decalc->getBoundingVolume());
 
 	return Error::NONE;
 }

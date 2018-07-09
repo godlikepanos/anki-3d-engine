@@ -61,16 +61,16 @@ Error BodyNode::init(const CString& resourceFname)
 	m_body->setUserData(this);
 
 	// Joint component
-	newComponent<JointComponent>(this);
+	newComponent<JointComponent>();
 
 	// Body component
-	newComponent<BodyComponent>(this, m_body);
+	newComponent<BodyComponent>(m_body);
 
 	// Feedback component
-	newComponent<BodyFeedbackComponent>(this);
+	newComponent<BodyFeedbackComponent>();
 
 	// Move component
-	newComponent<MoveComponent>(this, MoveComponentFlag::IGNORE_PARENT_TRANSFORM);
+	newComponent<MoveComponent>(MoveComponentFlag::IGNORE_PARENT_TRANSFORM);
 
 	return Error::NONE;
 }

@@ -66,10 +66,10 @@ PhysicsDebugNode::~PhysicsDebugNode()
 
 Error PhysicsDebugNode::init()
 {
-	MyRenderComponent* rcomp = newComponent<MyRenderComponent>(this);
+	MyRenderComponent* rcomp = newComponent<MyRenderComponent>();
 	ANKI_CHECK(rcomp->init());
 
-	ObbSpatialComponent* scomp = newComponent<ObbSpatialComponent>(this);
+	ObbSpatialComponent* scomp = newComponent<ObbSpatialComponent>();
 	Vec3 center = (getSceneGraph().getSceneMax() + getSceneGraph().getSceneMin()) / 2.0f;
 	scomp->m_obb.setCenter(center.xyz0());
 	scomp->m_obb.setExtend((getSceneGraph().getSceneMax() - center).xyz0());

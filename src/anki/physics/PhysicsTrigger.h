@@ -27,8 +27,12 @@ public:
 class PhysicsTriggerProcessContactCallback
 {
 public:
+	virtual ~PhysicsTriggerProcessContactCallback()
+	{
+	}
+
 	virtual void processContact(
-		PhysicsTriggerPtr& trigger, PhysicsFilteredObjectPtr& obj, ConstWeakArray<PhysicsTriggerContact> contacts) = 0;
+		PhysicsTrigger& trigger, PhysicsFilteredObject& obj, ConstWeakArray<PhysicsTriggerContact> contacts) = 0;
 };
 
 /// A trigger that uses a PhysicsShape and its purpose is to collect collision events.
@@ -44,9 +48,9 @@ public:
 		m_ghostShape->setWorldTransform(toBt(trf));
 	}
 
-	void setContactProcess(PhysicsTriggerProcessContactCallback* functor)
+	void setContactProcessCallback(PhysicsTriggerProcessContactCallback* cb)
 	{
-		m_contactFunctor = functor;
+		m_contactCallback = cb;
 	}
 
 private:
@@ -55,7 +59,7 @@ private:
 	PhysicsCollisionShapePtr m_shape;
 	btPairCachingGhostObject* m_ghostShape = nullptr;
 
-	PhysicsTriggerProcessContactCallback* m_contactFunctor = nullptr;
+	PhysicsTriggerProcessContactCallback* m_contactCallback = nullptr;
 
 	PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape);
 

@@ -222,7 +222,7 @@ protected:
 	template<typename TComponent, typename... TArgs>
 	TComponent* newComponent(TArgs&&... args)
 	{
-		TComponent* comp = getSceneAllocator().newInstance<TComponent>(std::forward<TArgs>(args)...);
+		TComponent* comp = getSceneAllocator().newInstance<TComponent>(this, std::forward<TArgs>(args)...);
 		m_components.emplaceBack(getSceneAllocator(), comp);
 		return comp;
 	}

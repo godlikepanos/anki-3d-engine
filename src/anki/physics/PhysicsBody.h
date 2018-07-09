@@ -39,12 +39,12 @@ public:
 	void setTransform(const Transform& trf)
 	{
 		m_trf = trf;
-		m_body->setWorldTransform(toBt(trf));
+		getBtBody()->setWorldTransform(toBt(trf));
 	}
 
 	void applyForce(const Vec3& force, const Vec3& relPos)
 	{
-		m_body->applyForce(toBt(force), toBt(relPos));
+		getBtBody()->applyForce(toBt(force), toBt(relPos));
 	}
 
 	void setMass(F32 mass);
@@ -55,20 +55,41 @@ public:
 	}
 
 anki_internal:
-	btRigidBody* getBtBody() const
+	const btRigidBody* getBtBody() const
 	{
-		ANKI_ASSERT(m_body);
-		return m_body;
+		return reinterpret_cast<const btRigidBody*>(&m_bodyMem[0]);
+	}
+
+	btRigidBody* getBtBody()
+	{
+		return reinterpret_cast<btRigidBody*>(&m_bodyMem[0]);
 	}
 
 private:
-	class MotionState;
+	class MotionState : public btMotionState
+	{
+	public:
+		PhysicsBody* m_body = nullptr;
 
-	PhysicsCollisionShapePtr m_shape;
-	MotionState* m_motionState = nullptr;
-	btRigidBody* m_body = nullptr;
+		void getWorldTransform(btTransform& worldTrans) const override
+		{
+			worldTrans = toBt(m_body->m_trf);
+		}
+
+		void setWorldTransform(const btTransform& worldTrans) override
+		{
+			m_body->m_trf = toAnki(worldTrans);
+		}
+	};
+
+	/// Store the data of the btRigidBody in place to avoid additional allocations.
+	alignas(alignof(btRigidBody)) Array<U8, sizeof(btRigidBody)> m_bodyMem;
 
 	Transform m_trf = Transform::getIdentity();
+	MotionState m_motionState;
+
+	PhysicsCollisionShapePtr m_shape;
+
 	F32 m_mass = 1.0f;
 
 	PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init);

@@ -64,6 +64,21 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 ]]></head>
 
 	<classes>
+		<!-- Other -->
+		<class name="WeakArraySceneNodePtr">
+			<methods>
+				<method name="getSize">
+					<return>PtrSize</return>
+				</method>
+				<method name="getAt">
+					<overrideCall><![CDATA[SceneNode* ret = (*self)[arg0];]]></overrideCall>
+					<args><arg>U</arg></args>
+					<return>SceneNode*</return>
+				</method>
+			</methods>
+		</class>
+
+		<!-- Components -->
 		<class name="MoveComponent">
 			<methods>
 				<method name="setLocalOrigin">
@@ -193,6 +208,15 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+		<class name="TriggerComponent">
+			<methods>
+				<method name="getContactSceneNodes">
+					<return>WeakArraySceneNodePtr</return>
+				</method>
+			</methods>
+		</class>
+
+		<!-- Nodes -->
 		<class name="SceneNode">
 			<methods>
 				<method name="getName">
@@ -215,6 +239,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="tryGetComponent&lt;DecalComponent&gt;" alias="getDecalComponent">
 					<return>DecalComponent*</return>
+				</method>
+				<method name="tryGetComponent&lt;TriggerComponent&gt;" alias="getTriggerComponent">
+					<return>TriggerComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -328,6 +355,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+		<class name="TriggerNode">
+			<methods>
+				<method name="getSceneNodeBase">
+					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
+					<return>SceneNode&amp;</return>
+				</method>
+			</methods>
+		</class>
 		<class name="SceneGraph">
 			<methods>
 				<method name="newPerspectiveCameraNode">
@@ -424,6 +459,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					</args>
 					<return>DecalNode*</return>
 				</method>
+				<method name="newTriggerNode">
+					<overrideCall><![CDATA[TriggerNode* ret = newSceneNode<TriggerNode>(self, arg0, arg1);]]></overrideCall>
+					<args>
+						<arg>const CString&amp;</arg>
+						<arg>F32</arg>
+					</args>
+					<return>TriggerNode*</return>
+				</method>
 				<method name="setActiveCameraNode">
 					<args>
 						<arg>SceneNode*</arg>
@@ -433,18 +476,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 		</class>
 
 		<!-- Events -->
-		<class name="WeakArraySceneNodePtr">
-			<methods>
-				<method name="getSize">
-					<return>PtrSize</return>
-				</method>
-				<method name="getAt">
-					<overrideCall><![CDATA[SceneNode* ret = (*self)[arg0];]]></overrideCall>
-					<args><arg>U</arg></args>
-					<return>SceneNode*</return>
-				</method>
-			</methods>
-		</class>
 		<class name="Event">
 			<methods>
 				<method name="getAssociatedSceneNodes">

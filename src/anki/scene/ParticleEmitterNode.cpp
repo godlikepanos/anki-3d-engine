@@ -172,8 +172,9 @@ public:
 		return static_cast<const ParticleEmitterNode&>(getSceneNode());
 	}
 
-	ParticleEmitterRenderComponent(ParticleEmitterNode* node)
-		: MaterialRenderComponent(node, node->m_particleEmitterResource->getMaterial())
+	ParticleEmitterRenderComponent(SceneNode* node)
+		: MaterialRenderComponent(
+			  node, static_cast<ParticleEmitterNode*>(node)->m_particleEmitterResource->getMaterial())
 	{
 	}
 
@@ -187,7 +188,7 @@ public:
 class MoveFeedbackComponent : public SceneComponent
 {
 public:
-	MoveFeedbackComponent(ParticleEmitterNode* node)
+	MoveFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
@@ -231,16 +232,16 @@ Error ParticleEmitterNode::init(const CString& filename)
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_particleEmitterResource));
 
 	// Move component
-	newComponent<MoveComponent>(this);
+	newComponent<MoveComponent>();
 
 	// Move component feedback
-	newComponent<MoveFeedbackComponent>(this);
+	newComponent<MoveFeedbackComponent>();
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, &m_obb);
+	newComponent<SpatialComponent>(&m_obb);
 
 	// Render component
-	newComponent<ParticleEmitterRenderComponent>(this);
+	newComponent<ParticleEmitterRenderComponent>();
 
 	// Other
 	m_obb.setCenter(Vec4(0.0));

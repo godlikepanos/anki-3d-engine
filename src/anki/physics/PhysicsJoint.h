@@ -31,6 +31,12 @@ public:
 		return !m_joint->isEnabled();
 	}
 
+	/// Break the joint.
+	void brake()
+	{
+		m_joint->setEnabled(false);
+	}
+
 protected:
 	btTypedConstraint* m_joint = nullptr;
 	PhysicsBodyPtr m_bodyA;
