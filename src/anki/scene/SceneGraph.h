@@ -22,7 +22,6 @@ class MainRenderer;
 class ResourceManager;
 class CameraNode;
 class Input;
-class SectorGroup;
 class ConfigSet;
 class PerspectiveCameraNode;
 class UpdateSceneNodesCtx;
@@ -210,12 +209,6 @@ anki_internal:
 		return *m_input;
 	}
 
-	SectorGroup& getSectorGroup()
-	{
-		ANKI_ASSERT(m_sectors);
-		return *m_sectors;
-	}
-
 	F32 getMaxReflectionProxyDistance() const
 	{
 		ANKI_ASSERT(m_maxReflectionProxyDistance > 0.0);
@@ -268,7 +261,6 @@ private:
 	PerspectiveCameraNode* m_defaultMainCam = nullptr;
 
 	EventManager m_events;
-	SectorGroup* m_sectors;
 
 	Octree* m_octree = nullptr;
 

@@ -792,22 +792,6 @@ void Exporter::visitNode(const aiNode* ainode)
 				m_staticCollisionNodes.push_back(n);
 				special = true;
 			}
-			else if(prop.first == "portal" && prop.second == "true")
-			{
-				Portal portal;
-				portal.m_meshIndex = meshIndex;
-				portal.m_transform = toAnkiMatrix(ainode->mTransformation);
-				m_portals.push_back(portal);
-				special = true;
-			}
-			else if(prop.first == "sector" && prop.second == "true")
-			{
-				Sector sector;
-				sector.m_meshIndex = meshIndex;
-				sector.m_transform = toAnkiMatrix(ainode->mTransformation);
-				m_sectors.push_back(sector);
-				special = true;
-			}
 			else if(prop.first == "lod1")
 			{
 				lod1MeshName = prop.second;
@@ -999,43 +983,9 @@ void Exporter::exportAll()
 	}
 
 	//
-	// Export portals
-	//
-	unsigned i = 0;
-	for(const Portal& portal : m_portals)
-	{
-		uint32_t meshIndex = portal.m_meshIndex;
-		exportMesh(*m_scene->mMeshes[meshIndex], nullptr, 3);
-
-		std::string name = getMeshName(getMeshAt(meshIndex));
-		std::string fname = m_rpath + name + ".ankimesh";
-		file << "\nnode = scene:newPortalNode(\"" << name << i << "\", \"" << fname << "\")\n";
-
-		writeNodeTransform("node", portal.m_transform);
-		++i;
-	}
-
-	//
-	// Export sectors
-	//
-	i = 0;
-	for(const Sector& sector : m_sectors)
-	{
-		uint32_t meshIndex = sector.m_meshIndex;
-		exportMesh(*m_scene->mMeshes[meshIndex], nullptr, 3);
-
-		std::string name = getMeshName(getMeshAt(meshIndex));
-		std::string fname = m_rpath + name + ".ankimesh";
-		file << "\nnode = scene:newSectorNode(\"" << name << i << "\", \"" << fname << "\")\n";
-
-		writeNodeTransform("node", sector.m_transform);
-		++i;
-	}
-
-	//
 	// Export particle emitters
 	//
-	i = 0;
+	int i = 0;
 	for(const ParticleEmitter& p : m_particleEmitters)
 	{
 		std::string name = "particles" + std::to_string(i);

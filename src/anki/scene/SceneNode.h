@@ -93,23 +93,12 @@ public:
 
 	ANKI_USE_RESULT Error frameUpdateComplete(Second prevUpdateTime, Second crntTime, Timestamp maxComponentTimestamp)
 	{
-		m_sectorVisitedBitset.unsetAll();
 		m_maxComponentTimestamp = maxComponentTimestamp;
 		if(m_components.getSize() > 0)
 		{
 			ANKI_ASSERT(maxComponentTimestamp > 0);
 		}
 		return frameUpdate(prevUpdateTime, crntTime);
-	}
-
-	/// Inform if a sector has visited this node.
-	/// @return The previous value.
-	Bool fetchSetSectorVisited(U testId, Bool visited)
-	{
-		LockGuard<SpinLock> lock(m_sectorVisitedBitsetLock);
-		Bool prevValue = m_sectorVisitedBitset.get(testId);
-		m_sectorVisitedBitset.set(testId, visited);
-		return prevValue;
 	}
 
 	/// Iterate all components
@@ -242,10 +231,6 @@ private:
 
 	String m_name; ///< A unique name
 	BitMask<Flag> m_flags;
-
-	/// A mask of bits for each test. If bit set then the node was visited by a sector.
-	BitSet<256> m_sectorVisitedBitset = {false};
-	SpinLock m_sectorVisitedBitsetLock;
 
 	U64 m_uuid;
 

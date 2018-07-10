@@ -47,15 +47,6 @@ struct VertexWeight
 	uint32_t m_bonesCount;
 };
 
-class Portal
-{
-public:
-	uint32_t m_meshIndex;
-	aiMatrix4x4 m_transform;
-};
-
-using Sector = Portal;
-
 class ParticleEmitter
 {
 public:
@@ -126,8 +117,6 @@ public:
 	std::ofstream m_sceneFile;
 
 	std::vector<StaticCollisionNode> m_staticCollisionNodes;
-	std::vector<Portal> m_portals;
-	std::vector<Sector> m_sectors;
 	std::vector<ParticleEmitter> m_particleEmitters;
 	std::vector<ReflectionProbe> m_reflectionProbes;
 	std::vector<ReflectionProxy> m_reflectionProxies;

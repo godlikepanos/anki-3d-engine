@@ -5,7 +5,6 @@
 
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/SectorNode.h>
 #include <anki/scene/SceneGraph.h>
 
 namespace anki
@@ -22,8 +21,6 @@ SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* shape)
 
 SpatialComponent::~SpatialComponent()
 {
-	getSceneGraph().getSectorGroup().spatialDeleted(this);
-
 	if(m_placed)
 	{
 		getSceneGraph().getOctree().remove(m_octreeInfo);
@@ -36,7 +33,6 @@ Error SpatialComponent::update(Second, Second, Bool& updated)
 	if(updated)
 	{
 		m_shape->computeAabb(m_aabb);
-		getSceneGraph().getSectorGroup().spatialUpdated(this);
 		m_markedForUpdate = false;
 
 		getSceneGraph().getOctree().place(m_aabb, &m_octreeInfo);

@@ -7,7 +7,6 @@
 #include <anki/scene/CameraNode.h>
 #include <anki/scene/PhysicsDebugNode.h>
 #include <anki/scene/ModelNode.h>
-#include <anki/scene/SectorNode.h>
 #include <anki/scene/Octree.h>
 #include <anki/core/Trace.h>
 #include <anki/physics/PhysicsWorld.h>
@@ -58,12 +57,6 @@ SceneGraph::~SceneGraph()
 
 	deleteNodesMarkedForDeletion();
 
-	if(m_sectors)
-	{
-		m_alloc.deleteInstance(m_sectors);
-		m_sectors = nullptr;
-	}
-
 	if(m_octree)
 	{
 		m_alloc.deleteInstance(m_octree);
@@ -96,8 +89,6 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_earlyZDist = config.getNumber("scene.earlyZDistance");
 
 	ANKI_CHECK(m_events.init(this));
-
-	m_sectors = m_alloc.newInstance<SectorGroup>(this);
 
 	m_maxReflectionProxyDistance = config.getNumber("scene.imageReflectionMaxDistance");
 

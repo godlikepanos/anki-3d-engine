@@ -299,22 +299,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
-		<class name="PortalNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="SectorNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
 		<class name="ParticleEmitterNode">
 			<methods>
 				<method name="getSceneNodeBase">
@@ -402,22 +386,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>const Transform&amp;</arg>
 					</args>
 					<return>StaticCollisionNode*</return>
-				</method>
-				<method name="newPortalNode">
-					<overrideCall><![CDATA[PortalNode* ret = newSceneNode<PortalNode>(self, arg0, arg1);]]></overrideCall>
-					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const CString&amp;</arg>
-					</args>
-					<return>PortalNode*</return>
-				</method>
-				<method name="newSectorNode">
-					<overrideCall><![CDATA[SectorNode* ret = newSceneNode<SectorNode>(self, arg0, arg1);]]></overrideCall>
-					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const CString&amp;</arg>
-					</args>
-					<return>SectorNode*</return>
 				</method>
 				<method name="newParticleEmitterNode">
 					<overrideCall><![CDATA[ParticleEmitterNode* ret = newSceneNode<ParticleEmitterNode>(self, arg0, arg1);]]></overrideCall>

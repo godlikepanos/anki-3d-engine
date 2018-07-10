@@ -5,7 +5,6 @@
 
 #include <anki/scene/VisibilityInternal.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/SectorNode.h>
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/components/LensFlareComponent.h>
 #include <anki/scene/components/RenderComponent.h>
@@ -678,7 +677,6 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TESTS);
 
 	ThreadHive& hive = scene.getThreadHive();
-	scene.getSectorGroup().prepareForVisibilityTests();
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;

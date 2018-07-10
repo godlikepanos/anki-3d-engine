@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/SectorNode.h>
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/StaticGeometryNode.h>
 #include <anki/scene/ParticleEmitterNode.h>
