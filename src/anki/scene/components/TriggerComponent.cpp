@@ -13,8 +13,7 @@ class TriggerComponent::MyPhysicsTriggerProcessContactCallback : public PhysicsT
 public:
 	TriggerComponent* m_comp = nullptr;
 
-	void processContact(
-		PhysicsTrigger& trigger, PhysicsFilteredObject& obj, ConstWeakArray<PhysicsTriggerContact> contacts) final
+	void processContact(PhysicsTrigger& trigger, PhysicsFilteredObject& obj) final
 	{
 		void* ptr = obj.getUserData();
 		ANKI_ASSERT(ptr);

@@ -112,9 +112,9 @@ Error MyApp::sampleExtraInit()
 	// Trigger
 	{
 		TriggerNode* node;
-		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node, 2.0f));
+		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node, 1.8f));
 
-		node->getComponent<MoveComponent>().setLocalOrigin(Vec4(1.0f, 1.0f, 0.0f, 0.0f));
+		node->getComponent<MoveComponent>().setLocalOrigin(Vec4(1.0f, 0.5f, 0.0f, 0.0f));
 	}
 
 	return Error::NONE;

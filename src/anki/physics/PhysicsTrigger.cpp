@@ -16,7 +16,7 @@ PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr sha
 {
 	m_shape = shape;
 
-	m_ghostShape = getAllocator().newInstance<btPairCachingGhostObject>();
+	m_ghostShape = getAllocator().newInstance<btGhostObject>();
 	m_ghostShape->setWorldTransform(btTransform::getIdentity());
 	m_ghostShape->setCollisionShape(shape->getBtShape(true));
 
@@ -46,40 +46,23 @@ void PhysicsTrigger::processContacts()
 		return;
 	}
 
-	const U pairCount = m_ghostShape->getOverlappingPairCache()->getNumOverlappingPairs();
-	if(pairCount < 0)
+	if(m_ghostShape->getOverlappingPairs().size() < 0)
 	{
 		return;
 	}
 
 	// Process contacts
-	for(U i = 0; i < pairCount; ++i)
+	for(U i = 0; i < U(m_ghostShape->getOverlappingPairs().size()); ++i)
 	{
-		btBroadphasePair& collisionPair = m_ghostShape->getOverlappingPairCache()->getOverlappingPairArray()[i];
+		btCollisionObject* obj = m_ghostShape->getOverlappingPairs()[i];
 
-		btCollisionObject* obj0 = static_cast<btCollisionObject*>(collisionPair.m_pProxy0->m_clientObject);
-		btCollisionObject* obj1 = static_cast<btCollisionObject*>(collisionPair.m_pProxy1->m_clientObject);
-		ANKI_ASSERT(obj0 && obj1);
+		ANKI_ASSERT(obj);
 
-		PhysicsObject* aobj0 = static_cast<PhysicsObject*>(obj0->getUserPointer());
-		PhysicsObject* aobj1 = static_cast<PhysicsObject*>(obj1->getUserPointer());
-		ANKI_ASSERT(aobj0 && aobj1);
+		PhysicsObject* aobj = static_cast<PhysicsObject*>(obj->getUserPointer());
+		ANKI_ASSERT(aobj);
 
-		PhysicsFilteredObject* fobj0 = dcast<PhysicsFilteredObject*>(aobj0);
-		PhysicsFilteredObject* fobj1 = dcast<PhysicsFilteredObject*>(aobj1);
-
-		PhysicsFilteredObject* otherObj;
-		if(fobj0 == static_cast<PhysicsFilteredObject*>(this))
-		{
-			otherObj = fobj1;
-		}
-		else
-		{
-			ANKI_ASSERT(fobj1 == static_cast<PhysicsFilteredObject*>(this));
-			otherObj = fobj0;
-		}
-
-		m_contactCallback->processContact(*this, *otherObj, ConstWeakArray<PhysicsTriggerContact>());
+		PhysicsFilteredObject* fobj = dcast<PhysicsFilteredObject*>(aobj);
+		m_contactCallback->processContact(*this, *fobj);
 	}
 }
 

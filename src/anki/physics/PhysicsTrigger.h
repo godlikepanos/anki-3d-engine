@@ -14,14 +14,6 @@ namespace anki
 /// @addtogroup physics
 /// @{
 
-/// @memberof PhysicsTrigger
-class PhysicsTriggerContact
-{
-public:
-	Vec3 m_contactPoint; ///< In world space.
-	Vec3 m_contactNormal; ///< In world space.
-};
-
 /// An interface to process contacts.
 /// @memberof PhysicsTrigger
 class PhysicsTriggerProcessContactCallback
@@ -31,8 +23,7 @@ public:
 	{
 	}
 
-	virtual void processContact(
-		PhysicsTrigger& trigger, PhysicsFilteredObject& obj, ConstWeakArray<PhysicsTriggerContact> contacts) = 0;
+	virtual void processContact(PhysicsTrigger& trigger, PhysicsFilteredObject& obj) = 0;
 };
 
 /// A trigger that uses a PhysicsShape and its purpose is to collect collision events.
@@ -54,10 +45,8 @@ public:
 	}
 
 private:
-	using Contact = PhysicsTriggerContact;
-
 	PhysicsCollisionShapePtr m_shape;
-	btPairCachingGhostObject* m_ghostShape = nullptr;
+	btGhostObject* m_ghostShape = nullptr;
 
 	PhysicsTriggerProcessContactCallback* m_contactCallback = nullptr;
 
