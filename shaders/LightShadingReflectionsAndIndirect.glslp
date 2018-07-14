@@ -1,0 +1,160 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Apply reflections and indirect lighting
+
+#pragma anki input const U32 CLUSTER_COUNT_X
+#pragma anki input const U32 CLUSTER_COUNT_Y
+#pragma anki input const U32 CLUSTER_COUNT_Z
+#pragma anki input const U32 IR_MIPMAP_COUNT
+
+#pragma anki start vert
+#include <shaders/Common.glsl>
+
+layout(location = 0) out Vec2 out_uv;
+layout(location = 1) out Vec2 out_clusterIJ;
+
+out gl_PerVertex
+{
+	Vec4 gl_Position;
+};
+
+void main()
+{
+	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
+	Vec2 pos = out_uv * 2.0 - 1.0;
+	gl_Position = Vec4(pos, 0.0, 1.0);
+
+	out_clusterIJ = Vec2(CLUSTER_COUNT_X, CLUSTER_COUNT_Y) * out_uv;
+}
+#pragma anki end
+
+#pragma anki start frag
+#include <shaders/Functions.glsl>
+#include <shaders/Pack.glsl>
+#include <shaders/glsl_cpp_common/Clusterer.h>
+
+#define LIGHT_SET 0
+#define LIGHT_SS_BINDING 0
+#define LIGHT_UBO_BINDING 0
+#define LIGHT_TEX_BINDING 5
+#define LIGHT_INDIRECT
+#define LIGHT_COMMON_UNIS
+#include <shaders/ClusterLightCommon.glsl>
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 1) in Vec2 in_clusterIJ;
+layout(location = 0) out Vec3 out_color;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_gbufferRt0;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_gbufferRt1;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_gbufferRt2;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_depthRt;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_ssrRt;
+
+// Note: All calculations in world space
+void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
+	Vec3 worldPos,
+	Vec3 normal,
+	Vec3 viewDir,
+	F32 roughness,
+	out Vec3 specIndirect,
+	out Vec3 diffIndirect)
+{
+	specIndirect = Vec3(0.0);
+	diffIndirect = Vec3(0.0);
+
+	Vec3 reflDir = reflect(viewDir, normal);
+
+	F32 reflLod = F32(IR_MIPMAP_COUNT - 1u) * roughness;
+
+	F32 totalBlendWeight = EPSILON;
+
+	// Check proxy
+	U32 count = u_lightIndices[idxOffset++];
+	ANKI_LOOP while(count-- != 0)
+	{
+		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
+		Vec3 aabbMin = probe.m_aabbMinPad1.xyz;
+		Vec3 aabbMax = probe.m_aabbMaxPad1.xyz;
+		Vec3 probeOrigin = probe.m_positionCubemapIndex.xyz;
+		F32 cubemapIndex = probe.m_positionCubemapIndex.w;
+
+		// Compute blend weight
+		F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
+		totalBlendWeight += blendWeight;
+
+		// Sample reflections
+		Vec3 cubeUv = intersectProbe(worldPos, reflDir, aabbMin, aabbMax, probeOrigin);
+		Vec3 c = textureLod(u_reflectionsTex, Vec4(cubeUv, cubemapIndex), reflLod).rgb;
+		specIndirect += c * blendWeight;
+
+		// Sample irradiance
+		cubeUv = intersectProbe(worldPos, normal, aabbMin, aabbMax, probeOrigin);
+		c = textureLod(u_irradianceTex, Vec4(cubeUv, cubemapIndex), 0.0).rgb;
+		diffIndirect += c * blendWeight;
+	}
+
+	// Normalize the colors
+	specIndirect /= totalBlendWeight;
+	diffIndirect /= totalBlendWeight;
+}
+
+void main()
+{
+	Vec2 uv = in_uv;
+
+	// Compute world position
+	F32 depth = textureLod(u_depthRt, uv, 0.0).r;
+	Vec4 worldPos4 = u_invViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
+	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+	Vec3 viewDir = normalize(u_cameraPos - worldPos);
+
+	// Get first light index
+	U32 idxOffset;
+	{
+		U32 k = computeClusterK(u_clustererMagic, worldPos);
+		U32 clusterIdx =
+			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
+
+		idxOffset = u_clusters[clusterIdx];
+	}
+
+	// Skip decals
+	U32 count = u_lightIndices[idxOffset++];
+	idxOffset += count;
+
+	// Skip point lights
+	count = u_lightIndices[idxOffset++];
+	idxOffset += count;
+
+	// Skip spot lights
+	count = u_lightIndices[idxOffset++];
+	idxOffset += count;
+
+	// Read gbuffer
+	GbufferInfo gbuffer;
+	readGBuffer(u_gbufferRt0, u_gbufferRt1, u_gbufferRt2, uv, 0.0, gbuffer);
+
+	// Do the probe read
+	Vec3 envColor;
+	Vec3 indirectColor;
+	readReflectionsAndIrradianceFromProbes(
+		idxOffset, worldPos, gbuffer.m_normal, viewDir, gbuffer.m_roughness, envColor, indirectColor);
+
+	// Read the SSL result
+	Vec4 ssr = textureLod(u_ssrRt, uv, 0.0);
+
+	// Combine the SSR and probe reflections and write the result
+	Vec3 finalRefl = envColor * (1.0 - ssr.a) + ssr.rgb;
+
+	// Compute env BRDF
+	F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
+	Vec3 env = envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, NoV);
+
+	// Compute the final color
+	out_color = indirectColor * gbuffer.m_diffuse + finalRefl * env;
+}
+#pragma anki end

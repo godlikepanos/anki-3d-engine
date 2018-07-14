@@ -25,8 +25,8 @@
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/TemporalAA.h>
-#include <anki/renderer/Reflections.h>
 #include <anki/renderer/UiStage.h>
+#include <anki/renderer/Ssr.h>
 
 namespace anki
 {
@@ -138,8 +138,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscale->init(config));
 
-	m_refl.reset(m_alloc.newInstance<Reflections>(this));
-	ANKI_CHECK(m_refl->init(config));
+	m_ssr.reset(m_alloc.newInstance<Ssr>(this));
+	ANKI_CHECK(m_ssr->init(config));
 
 	m_tonemapping.reset(getAllocator().newInstance<Tonemapping>(this));
 	ANKI_CHECK(m_tonemapping->init(config));
@@ -277,7 +277,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_forwardShading->populateRenderGraph(ctx);
-	m_refl->populateRenderGraph(ctx);
+	m_ssr->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
 	m_downscale->populateRenderGraph(ctx);

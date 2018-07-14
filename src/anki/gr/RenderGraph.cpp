@@ -17,7 +17,7 @@
 namespace anki
 {
 
-#define ANKI_DBG_RENDER_GRAPH 0
+#define ANKI_DBG_RENDER_GRAPH 1
 
 /// Contains some extra things for render targets.
 class RenderGraph::RT

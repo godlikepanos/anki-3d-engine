@@ -61,14 +61,6 @@ private:
 		TextureResourcePtr m_noiseTex;
 	} m_vol;
 
-	class Upscale
-	{
-	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
-		TextureResourcePtr m_noiseTex;
-	} m_upscale;
-
 	class
 	{
 	public:
@@ -78,7 +70,6 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error initVol();
-	ANKI_USE_RESULT Error initUpscale();
 
 	/// A RenderPassWorkCallback.
 	static void runCallback(RenderPassWorkContext& rgraphCtx)

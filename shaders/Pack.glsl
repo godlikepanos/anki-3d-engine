@@ -126,8 +126,8 @@ Vec2 unpackUnorm1ToUnorm2(in F32 c)
 #endif
 }
 
-// Max emission. Keep as low as possible
-const F32 MAX_EMISSION = 20.0;
+const F32 MAX_EMISSION = 20.0; // Max emission. Keep as low as possible
+const F32 MIN_ROUGHNESS = 0.05;
 
 // G-Buffer structure
 struct GbufferInfo
@@ -142,7 +142,7 @@ struct GbufferInfo
 };
 
 // Populate the G buffer
-void writeGBuffer(in GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2)
+void writeGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2)
 {
 	rt0 = Vec4(g.m_diffuse, g.m_subsurface);
 	rt1 = Vec4(g.m_roughness, g.m_metallic, g.m_specular.x, 0.0);
@@ -152,9 +152,17 @@ void writeGBuffer(in GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2)
 }
 
 // Read from G-buffer
-void readNormalFromGBuffer(in sampler2D rt2, in Vec2 uv, out Vec3 normal)
+Vec3 readNormalFromGBuffer(sampler2D rt2, Vec2 uv)
 {
-	normal = signedOctDecode(texture(rt2, uv).rga);
+	return signedOctDecode(texture(rt2, uv).rga);
+}
+
+// Read the roughness from G-buffer
+F32 readRoughnessFromGBuffer(sampler2D rt1, Vec2 uv)
+{
+	F32 r = textureLod(rt1, uv, 0.0).r;
+	r = r * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;
+	return r;
 }
 
 // Read from the G buffer
@@ -174,7 +182,6 @@ void readGBuffer(sampler2D rt0, sampler2D rt1, sampler2D rt2, Vec2 uv, F32 lod, 
 	g.m_emission = comp.z * MAX_EMISSION;
 
 	// Fix roughness
-	const F32 MIN_ROUGHNESS = 0.05;
 	g.m_roughness = g.m_roughness * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;
 
 	// Compute reflectance

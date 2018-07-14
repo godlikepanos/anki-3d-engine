@@ -52,7 +52,6 @@ Error ForwardShading::initInternal(const ConfigSet&)
 	m_fbDescr.bake();
 
 	ANKI_CHECK(initVol());
-	ANKI_CHECK(initUpscale());
 
 	return Error::NONE;
 }
@@ -71,25 +70,6 @@ Error ForwardShading::initVol()
 	const ShaderProgramResourceVariant* variant;
 	m_vol.m_prog->getOrCreateVariant(consts.get(), variant);
 	m_vol.m_grProg = variant->getProgram();
-
-	return Error::NONE;
-}
-
-Error ForwardShading::initUpscale()
-{
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_upscale.m_noiseTex));
-
-	// Shader
-	ANKI_CHECK(getResourceManager().loadResource("shaders/ForwardShadingUpscale.glslp", m_upscale.m_prog));
-
-	ShaderProgramResourceConstantValueInitList<3> consts(m_upscale.m_prog);
-	consts.add("NOISE_TEX_SIZE", U32(m_upscale.m_noiseTex->getWidth()))
-		.add("SRC_SIZE", Vec2(m_r->getWidth() / FS_FRACTION, m_r->getHeight() / FS_FRACTION))
-		.add("FB_SIZE", Vec2(m_r->getWidth(), m_r->getWidth()));
-
-	const ShaderProgramResourceVariant* variant;
-	m_upscale.m_prog->getOrCreateVariant(consts.get(), variant);
-	m_upscale.m_grProg = variant->getProgram();
 
 	return Error::NONE;
 }
@@ -124,41 +104,6 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 	cmdb->setDepthWrite(true);
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
-}
-
-void ForwardShading::drawUpscale(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
-{
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	// **WARNING** Remember to update the consumers of the render pass that calls this method
-	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
-	computeLinearizeDepthOptimal(
-		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
-	linearDepth->z() = ctx.m_renderQueue->m_cameraFar;
-
-	rgraphCtx.bindTextureAndSampler(0,
-		0,
-		m_r->getGBuffer().getDepthRt(),
-		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-		m_r->getNearestSampler());
-	rgraphCtx.bindTextureAndSampler(
-		0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_runCtx.m_rt, m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(0,
-		3,
-		m_upscale.m_noiseTex->getGrTextureView(),
-		m_r->getTrilinearRepeatSampler(),
-		TextureUsageBit::SAMPLED_FRAGMENT);
-
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
-
-	cmdb->bindShaderProgram(m_upscale.m_grProg);
-	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-
-	drawQuad(cmdb);
-
-	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)

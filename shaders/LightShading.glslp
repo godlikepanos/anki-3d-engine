@@ -7,7 +7,6 @@
 #pragma anki input const U32 CLUSTER_COUNT_Y
 #pragma anki input const U32 CLUSTER_COUNT_Z
 #pragma anki input const U32 CLUSTER_COUNT
-#pragma anki input const U32 IR_MIPMAP_COUNT
 
 #pragma anki start vert
 #include <shaders/Common.glsl>
@@ -38,7 +37,7 @@ void main()
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 5
+#define LIGHT_TEX_BINDING 4
 #define LIGHT_LIGHTS
 #define LIGHT_COMMON_UNIS
 #include <shaders/ClusterLightCommon.glsl>
@@ -47,7 +46,6 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
-layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_indirectRt;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;
@@ -91,9 +89,6 @@ void main()
 
 	// Ambient and emissive color
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
-
-	// Indirect
-	out_color += textureLod(u_indirectRt, in_uv, 0.0).rgb;
 
 	// Skip decals
 	U32 count = u_lightIndices[idxOffset];

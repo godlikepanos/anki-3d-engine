@@ -51,6 +51,7 @@ Error MyApp::init(int argc, char* argv[])
 	{
 		m_profile = true;
 		setTimerTick(0.0);
+		CoreTracerSingleton::get().m_enabled = true;
 	}
 
 // Input

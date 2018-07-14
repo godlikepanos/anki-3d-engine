@@ -65,8 +65,7 @@ shared Vec3 s_scratch[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 // Get normal
 Vec3 readNormal(in Vec2 uv)
 {
-	Vec3 normal;
-	readNormalFromGBuffer(u_msRt, uv, normal);
+	Vec3 normal = readNormalFromGBuffer(u_msRt, uv);
 	normal = u_viewRotMat * normal;
 	return normal;
 }

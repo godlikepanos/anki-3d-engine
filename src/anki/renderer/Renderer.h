@@ -152,14 +152,14 @@ public:
 		return *m_lensFlare;
 	}
 
-	Reflections& getReflections()
-	{
-		return *m_refl;
-	}
-
 	UiStage& getUiStage()
 	{
 		return *m_uiStage;
+	}
+
+	Ssr& getSsr()
+	{
+		return *m_ssr;
 	}
 
 	U32 getWidth() const
@@ -349,7 +349,7 @@ private:
 	UniquePtr<ShadowMapping> m_shadowMapping; ///< Shadow mapping.
 	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage
 	UniquePtr<GBufferPost> m_gbufferPost;
-	UniquePtr<Reflections> m_refl;
+	UniquePtr<Ssr> m_ssr;
 	UniquePtr<LightShading> m_lightShading; ///< Illumination rendering stage
 	UniquePtr<DepthDownscale> m_depth;
 	UniquePtr<ForwardShading> m_forwardShading; ///< Forward shading.

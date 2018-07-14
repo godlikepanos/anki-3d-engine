@@ -250,7 +250,7 @@ static ANKI_USE_RESULT Error genSpirv(const ShaderCompiler::BuildContext& ctx, s
 	glslang::TShader shader(stage);
 	Array<const char*, 1> csrc = {{&ctx.m_src[0]}};
 	shader.setStrings(&csrc[0], 1);
-	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
+	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0); // TODO: Chose the right version
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
 		ShaderCompiler::logShaderErrorCode(shader.getInfoLog(), ctx.m_src, ctx.m_alloc);

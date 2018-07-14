@@ -73,6 +73,21 @@ private:
 	class
 	{
 	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+	} m_reflAndIndirect; ///< Apply reflections drawcall.
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+		TextureResourcePtr m_noiseTex;
+	} m_fs; ///< Apply forward shading.
+
+	class
+	{
+	public:
 		RenderTargetHandle m_rt;
 		RenderingContext* m_ctx;
 		LightShadingResources m_resources;

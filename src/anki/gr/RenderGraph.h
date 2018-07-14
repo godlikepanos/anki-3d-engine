@@ -286,6 +286,12 @@ public:
 	/// Add new producer dependency.
 	void newProducer(const RenderPassDependency& dep);
 
+	void newConsumerAndProducer(const RenderPassDependency& dep)
+	{
+		newConsumer(dep);
+		newProducer(dep);
+	}
+
 protected:
 	enum class Type : U8
 	{
