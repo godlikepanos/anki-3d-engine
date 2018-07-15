@@ -71,11 +71,12 @@ Error LightShading::initInternal(const ConfigSet& config)
 	// Load shaders and programs
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShading.glslp", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
+	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))
 		.add("CLUSTER_COUNT_Y", U32(m_clusterCounts[1]))
 		.add("CLUSTER_COUNT_Z", U32(m_clusterCounts[2]))
-		.add("CLUSTER_COUNT", U32(m_clusterCount));
+		.add("CLUSTER_COUNT", U32(m_clusterCount))
+		.add("IR_MIPMAP_COUNT", U32(m_r->getIndirect().getReflectionTextureMipmapCount()));
 
 	m_prog->getOrCreateVariant(consts.get(), m_progVariant);
 
@@ -88,22 +89,6 @@ Error LightShading::initInternal(const ConfigSet& config)
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fbDescr.bake();
-
-	// Refl & indirect
-	{
-		ANKI_CHECK(getResourceManager().loadResource(
-			"shaders/LightShadingReflectionsAndIndirect.glslp", m_reflAndIndirect.m_prog));
-
-		ShaderProgramResourceConstantValueInitList<4> consts(m_reflAndIndirect.m_prog);
-		consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))
-			.add("CLUSTER_COUNT_Y", U32(m_clusterCounts[1]))
-			.add("CLUSTER_COUNT_Z", U32(m_clusterCounts[2]))
-			.add("IR_MIPMAP_COUNT", U32(m_r->getIndirect().getReflectionTextureMipmapCount()));
-
-		const ShaderProgramResourceVariant* variant;
-		m_reflAndIndirect.m_prog->getOrCreateVariant(consts.get(), variant);
-		m_reflAndIndirect.m_grProg = variant->getProgram();
-	}
 
 	// FS upscale
 	{
@@ -162,42 +147,29 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			m_r->getGBuffer().getDepthRt(),
 			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 			m_r->getNearestSampler());
-
-		rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
-
-		// Bind uniforms
-		bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
-		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
-
-		// Bind storage
-		bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
-
-		drawQuad(cmdb);
-	}
-
-	// Add the reflections & indirect
-	{
-		cmdb->bindShaderProgram(m_reflAndIndirect.m_grProg);
-
-		// Bind textures
 		rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getSsr().getRt(), m_r->getLinearSampler());
+
+		rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
 		rgraphCtx.bindColorTextureAndSampler(
-			0, 5, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
+			0, 6, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
 		rgraphCtx.bindColorTextureAndSampler(
-			0, 6, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
+			0, 7, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
 		cmdb->bindTextureAndSampler(0,
-			7,
+			8,
 			m_r->getIndirect().getIntegrationLut(),
 			m_r->getIndirect().getIntegrationLutSampler(),
 			TextureUsageBit::SAMPLED_FRAGMENT);
 
 		// Bind uniforms
-		bindUniforms(cmdb, 0, 1, rsrc.m_probesToken);
+		bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
+		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
+		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+		bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);
 
-		// State & draw
-		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+		// Bind storage
+		bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
+		bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
+
 		drawQuad(cmdb);
 	}
 

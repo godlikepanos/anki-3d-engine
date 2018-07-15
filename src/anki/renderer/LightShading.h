@@ -75,13 +75,6 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-	} m_reflAndIndirect; ///< Apply reflections drawcall.
-
-	class
-	{
-	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
 		TextureResourcePtr m_noiseTex;
 	} m_fs; ///< Apply forward shading.
 

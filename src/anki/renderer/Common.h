@@ -68,6 +68,9 @@ const U BLOOM_FRACTION = 4;
 /// Volumetric size is rendererSize/VOLUMETRIC_FRACTION.
 const U VOLUMETRIC_FRACTION = 4;
 
+/// SSR size is rendererSize/SSR_FRACTION.
+const U SSR_FRACTION = 2;
+
 /// Used to calculate the mipmap count of the HiZ map.
 const U HIERARCHICAL_Z_MIN_HEIGHT = 80;
 

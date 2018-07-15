@@ -31,8 +31,8 @@ Error Ssr::init(const ConfigSet& cfg)
 
 Error Ssr::initInternal(const ConfigSet& cfg)
 {
-	U32 width = m_r->getWidth() / 2u;
-	U32 height = m_r->getHeight() / 2u;
+	U32 width = m_r->getWidth() / SSR_FRACTION;
+	U32 height = m_r->getHeight() / SSR_FRACTION;
 	ANKI_R_LOGI("Initializing SSR pass (%ux%u)", width, height);
 
 	// Create RTs
@@ -104,7 +104,8 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_normalMat = Mat3x4(ctx.m_renderQueue->m_viewMatrix.getRotationPart());
 
 	// Dispatch
-	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth() / 2u, m_r->getHeight() / 2u);
+	dispatchPPCompute(
+		cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth() / SSR_FRACTION, m_r->getHeight() / SSR_FRACTION);
 }
 
 } // end namespace anki

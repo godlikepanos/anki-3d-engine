@@ -7,6 +7,7 @@
 #pragma anki input const U32 CLUSTER_COUNT_Y
 #pragma anki input const U32 CLUSTER_COUNT_Z
 #pragma anki input const U32 CLUSTER_COUNT
+#pragma anki input const U32 IR_MIPMAP_COUNT
 
 #pragma anki start vert
 #include <shaders/Common.glsl>
@@ -37,7 +38,8 @@ void main()
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 4
+#define LIGHT_TEX_BINDING 5
+#define LIGHT_INDIRECT
 #define LIGHT_LIGHTS
 #define LIGHT_COMMON_UNIS
 #include <shaders/ClusterLightCommon.glsl>
@@ -46,6 +48,7 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_ssrRt;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;
@@ -53,6 +56,53 @@ layout(location = 1) in Vec2 in_clusterIJ;
 layout(location = 0) out Vec3 out_color;
 
 const F32 SUBSURFACE_MIN = 0.05;
+
+// Note: All calculations in world space
+void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
+	Vec3 worldPos,
+	Vec3 normal,
+	Vec3 viewDir,
+	F32 roughness,
+	out Vec3 specIndirect,
+	out Vec3 diffIndirect)
+{
+	specIndirect = Vec3(0.0);
+	diffIndirect = Vec3(0.0);
+
+	Vec3 reflDir = reflect(-viewDir, normal);
+	F32 reflLod = F32(IR_MIPMAP_COUNT - 1u) * roughness;
+	F32 totalBlendWeight = EPSILON;
+
+	// Check proxy
+	U32 count = u_lightIndices[idxOffset++];
+	U32 idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	{
+		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
+		Vec3 aabbMin = probe.m_aabbMinPad1.xyz;
+		Vec3 aabbMax = probe.m_aabbMaxPad1.xyz;
+		Vec3 probeOrigin = probe.m_positionCubemapIndex.xyz;
+		F32 cubemapIndex = probe.m_positionCubemapIndex.w;
+
+		// Compute blend weight
+		F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
+		totalBlendWeight += blendWeight;
+
+		// Sample reflections
+		Vec3 cubeUv = intersectProbe(worldPos, reflDir, aabbMin, aabbMax, probeOrigin);
+		Vec3 c = textureLod(u_reflectionsTex, Vec4(cubeUv, cubemapIndex), reflLod).rgb;
+		specIndirect += c * blendWeight;
+
+		// Sample irradiance
+		cubeUv = intersectProbe(worldPos, normal, aabbMin, aabbMax, probeOrigin);
+		c = textureLod(u_irradianceTex, Vec4(cubeUv, cubemapIndex), 0.0).rgb;
+		diffIndirect += c * blendWeight;
+	}
+
+	// Normalize the colors
+	specIndirect /= totalBlendWeight;
+	diffIndirect /= totalBlendWeight;
+}
 
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF() \
@@ -136,6 +186,30 @@ void main()
 
 		out_color +=
 			(diffC + specC) * light.m_diffuseColorShadowmapId.rgb * (att * spot * max(gbuffer.m_subsurface, lambert));
+	}
+
+	// Refl & indirect
+	{
+		// Do the probe read
+		Vec3 envColor;
+		Vec3 indirectColor;
+		readReflectionsAndIrradianceFromProbes(
+			idxOffset, worldPos, gbuffer.m_normal, viewDir, gbuffer.m_roughness, envColor, indirectColor);
+
+		// Read the SSL result
+		Vec4 ssr = textureLod(u_ssrRt, in_uv, 0.0);
+
+		// Combine the SSR and probe reflections and write the result
+		Vec3 finalRefl = envColor * ssr.a + ssr.rgb;
+
+		// Compute env BRDF
+		F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
+		Vec3 env = envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, NoV);
+
+		out_color += indirectColor * gbuffer.m_diffuse + finalRefl * env;
+
+		// out_color += indirectColor * gbuffer.m_diffuse + ssr.rgb;
+		// out_color = ssr.rgb;
 	}
 
 #if 0
