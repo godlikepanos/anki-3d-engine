@@ -17,10 +17,10 @@
 		<input shaderInput="rotationMat" builtin="ROTATION_MATRIX"/>
 		
 	
-		<input shaderInput="diffColor" value="0.012172 0.367335 0.640000"/>
-		<input shaderInput="specColor" value="0.500000 0.500000 0.500000"/>
-		<input shaderInput="roughness" value="0.097847" />
-		<input shaderInput="metallic" value="0.000000"/>
+		<input shaderInput="diffColor" value="0.078310 0.218610 0.640000"/>
+		<input shaderInput="specColor" value="0.400000 0.400000 0.400000"/>
+		<input shaderInput="roughness" value="0.000000" />
+		<input shaderInput="metallic" value="1.000000"/>
 		
 		<input shaderInput="emission" value="0.000000 0.000000 0.000000"/>
 		<input shaderInput="subsurface" value="0.000000"/>

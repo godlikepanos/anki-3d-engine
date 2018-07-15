@@ -118,19 +118,26 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	}
 	else
 	{
-		float shininess = 0.0;
-		mtl.Get(AI_MATKEY_SHININESS, shininess);
-		const float MAX_SHININESS = 511.0;
-		shininess = std::min(MAX_SHININESS, shininess);
-		if(shininess > MAX_SHININESS)
+		float roughness = 0.0;
+		if(mtl.mAnKiProperties.find("roughness") != mtl.mAnKiProperties.end())
 		{
-			LOGW("Shininness exceeds %f", MAX_SHININESS);
+			roughness = std::stof(mtl.mAnKiProperties.at("roughness"));
+		}
+		else
+		{
+			mtl.Get(AI_MATKEY_SHININESS, roughness);
+			const float MAX_SHININESS = 511.0;
+			roughness = std::min(MAX_SHININESS, roughness);
+			if(roughness > MAX_SHININESS)
+			{
+				LOGW("Shininness exceeds %f", MAX_SHININESS);
+			}
+
+			roughness = roughness / MAX_SHININESS;
 		}
 
-		shininess = shininess / MAX_SHININESS;
-
 		xml = replaceAllString(
-			xml, "%roughness%", "<input shaderInput=\"roughness\" value=\"" + std::to_string(shininess) + "\" />");
+			xml, "%roughness%", "<input shaderInput=\"roughness\" value=\"" + std::to_string(roughness) + "\" />");
 
 		xml = replaceAllString(xml, "%roughnessTexMutator%", "0");
 	}

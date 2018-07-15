@@ -76,7 +76,7 @@ Vec3 raymarch(Vec3 r, Vec3 n, Vec3 viewPos, Vec2 uv, F32 depth)
 	ray = normalize(ray);
 
 	// Compute step
-	const U32 BIG_STEP_SKIP = 32u;
+	const U32 BIG_STEP_SKIP = 16u;
 	U32 stepSkip = BIG_STEP_SKIP;
 
 	const U32 STEP_FRACTION = BIG_STEP_SKIP / (4u + 1u);

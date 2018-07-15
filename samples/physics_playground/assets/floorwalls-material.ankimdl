@@ -3,7 +3,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/floor.ankimesh</mesh>
-			<material>assets/Material-material.ankimtl</material>
+			<material>assets/walls-material.ankimtl</material>
 		</modelPatch>
 	</modelPatches>
 </model>

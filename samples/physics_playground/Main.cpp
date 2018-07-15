@@ -56,7 +56,7 @@ Error MyApp::sampleExtraInit()
 	{
 		ModelNode* monkey;
 		ANKI_CHECK(
-			getSceneGraph().newSceneNode<ModelNode>("monkey_p2p", monkey, "assets/SuzanneMaterial-material.ankimdl"));
+			getSceneGraph().newSceneNode<ModelNode>("monkey_p2p", monkey, "assets/Suzannedynamic-material.ankimdl"));
 
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankicl"));
@@ -79,7 +79,7 @@ Error MyApp::sampleExtraInit()
 			ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
 				StringAuto(getAllocator()).sprintf("monkey_chain%u", i).toCString(),
 				monkey,
-				"assets/SuzanneMaterial-material.ankimdl"));
+				"assets/Suzannedynamic-material.ankimdl"));
 
 			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
 			trf.getOrigin().y() -= i * 1.25f;
@@ -169,7 +169,7 @@ Error MyApp::userMainLoop(Bool& quit)
 		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
 			StringAuto(getAllocator()).sprintf("monkey%u", instance++).toCString(),
 			monkey,
-			"assets/SuzanneMaterial-material.ankimdl"));
+			"assets/Suzannedynamic-material.ankimdl"));
 		// monkey->getComponent<MoveComponent>().setLocalTransform(camTrf);
 
 		BodyNode* body;
