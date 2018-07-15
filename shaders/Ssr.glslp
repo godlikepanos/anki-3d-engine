@@ -3,6 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+// if VARIANT==0 then the checkerboard pattern is (render on 'v'):
+// -----
+// |v| |
+// | |v|
+// -----
+
+#pragma anki mutator VARIANT 0 1
+
 #pragma anki input const UVec2 FB_SIZE
 #pragma anki input const UVec2 WORKGROUP_SIZE
 #pragma anki input const U32 MAX_STEPS
@@ -31,6 +39,9 @@ layout(ANKI_UBO_BINDING(0, 0), row_major) uniform u_
 #define u_projMat u_unis.m_projMat
 #define u_invProjMat u_unis.m_invProjMat
 #define u_normalMat u_unis.m_normalMat
+
+// Temp buffer to hold the indirect color
+shared Vec4 s_pixels[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 
 // Note: All calculations in view space
 // It returns the UV coordinates of the reflection (xy) and the contrubution factor (z)
@@ -125,12 +136,22 @@ Vec3 raymarch(Vec3 r, Vec3 n, Vec3 viewPos, Vec2 uv, F32 depth)
 
 void main()
 {
-	if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
+	// Compute a global invocation ID that takes the checkerboard pattern into account
+	IVec2 fixedInvocationId = IVec2(gl_GlobalInvocationID.xy);
+	fixedInvocationId.x *= 2;
+#if VARIANT == 0
+	fixedInvocationId.x += ((fixedInvocationId.y + 1) & 1);
+#else
+	fixedInvocationId.x += ((fixedInvocationId.y + 0) & 1);
+#endif
+
+	if(fixedInvocationId.x >= I32(FB_SIZE.x) || fixedInvocationId.y >= I32(FB_SIZE.y))
 	{
+		// Skip threads outside the writable image
 		return;
 	}
 
-	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	Vec2 uv = (Vec2(fixedInvocationId.xy) + 0.5) / Vec2(FB_SIZE);
 
 	// Read part of the G-buffer
 	F32 roughness = readRoughnessFromGBuffer(u_gbufferRt1, uv);
@@ -154,20 +175,49 @@ void main()
 	F32 factor = ssr.z;
 
 	// Read the reflection
-	Vec3 reflColor;
-	if(factor > 0.0)
+	Vec4 outColor;
+	ANKI_BRANCH if(factor > 0.0)
 	{
 		// Read the refl
 		F32 lod = F32(LIGHT_BUFFER_MIP_COUNT - 1u) * roughness;
-		reflColor = textureLod(u_lightBufferRt, reflUv, lod).rgb;
-		reflColor = clamp(reflColor, 0.0, FLT_MAX); // Fix the value just in case
+		outColor.rgb = textureLod(u_lightBufferRt, reflUv, lod).rgb;
+		outColor.rgb = clamp(outColor.rgb, 0.0, FLT_MAX); // Fix the value just in case
+		outColor.rgb *= factor;
+		outColor.a = 1.0 - factor;
 	}
 	else
 	{
-		reflColor = Vec3(0.0);
+		outColor = Vec4(0.0, 0.0, 0.0, 1.0);
 	}
 
-	// Store to the image
-	imageStore(out_img, ivec2(gl_GlobalInvocationID.xy), Vec4(reflColor * factor, factor));
+	// Store the color for the resolve
+	s_pixels[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = outColor;
+
+	// Wait for all the threads to store their stuff
+	memoryBarrierShared();
+	barrier();
+
+	// Compute the missing pixel by resolving with the right or left neighbour
+	IVec2 readPixel, storePixel;
+	readPixel.y = I32(gl_LocalInvocationID.y);
+	storePixel.y = fixedInvocationId.y;
+
+#if VARIANT == 0
+	Bool pickRightNeighbour = (fixedInvocationId.y & 1) == 1;
+#else
+	Bool pickRightNeighbour = (fixedInvocationId.y & 1) == 0;
+#endif
+	I32 xOffset = (pickRightNeighbour) ? 1 : -1;
+
+	readPixel.x = I32(gl_LocalInvocationID.x) + xOffset;
+	readPixel.x = clamp(readPixel.x, 0, I32(WORKGROUP_SIZE.x - 1));
+
+	storePixel.x = fixedInvocationId.x + xOffset;
+
+	Vec4 missingColor = (outColor + s_pixels[readPixel.y][readPixel.x]) * 0.5; // average
+
+	// Store both the pixels
+	imageStore(out_img, fixedInvocationId, outColor);
+	imageStore(out_img, storePixel, missingColor);
 }
 #pragma anki end

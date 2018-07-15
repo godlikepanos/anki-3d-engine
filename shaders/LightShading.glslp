@@ -207,9 +207,6 @@ void main()
 		Vec3 env = envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, NoV);
 
 		out_color += indirectColor * gbuffer.m_diffuse + finalRefl * env;
-
-		// out_color += indirectColor * gbuffer.m_diffuse + ssr.rgb;
-		// out_color = ssr.rgb;
 	}
 
 #if 0

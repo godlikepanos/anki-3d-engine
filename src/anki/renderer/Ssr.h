@@ -36,7 +36,7 @@ anki_internal:
 
 private:
 	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
+	Array<ShaderProgramPtr, 2> m_grProg;
 
 	RenderTargetDescription m_rtDescr;
 

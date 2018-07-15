@@ -48,9 +48,16 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	consts.add("MAX_STEPS", U32(64));
 	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
 
+	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
+	mutators.add("VARIANT", 0);
+
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(consts.get(), variant);
-	m_grProg = variant->getProgram();
+	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_grProg[0] = variant->getProgram();
+
+	mutators[0].m_value = 1;
+	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_grProg[1] = variant->getProgram();
 
 	return Error::NONE;
 }
@@ -81,7 +88,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 {
 	RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1u]);
 
 	// Bind textures
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getLinearSampler());
@@ -104,8 +111,9 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_normalMat = Mat3x4(ctx.m_renderQueue->m_viewMatrix.getRotationPart());
 
 	// Dispatch
-	dispatchPPCompute(
-		cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth() / SSR_FRACTION, m_r->getHeight() / SSR_FRACTION);
+	const U sizeX = (m_r->getWidth() / SSR_FRACTION + m_workgroupSize[0] - 1) / m_workgroupSize[0];
+	const U sizeY = (m_r->getHeight() / SSR_FRACTION + m_workgroupSize[1] - 1) / m_workgroupSize[1];
+	cmdb->dispatchCompute(sizeX / 2, sizeY, 1);
 }
 
 } // end namespace anki
