@@ -375,13 +375,13 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 		// Allocate tiles
 		U32 tileIdx, scratchTileIdx, faceIdx = 0;
-		U32 drawcallCount = light->m_shadowRenderQueue->m_renderables.getSize();
-		const Bool allocationFailed = drawcallCount == 0
+		const U32 localDrawcallCount = light->m_shadowRenderQueue->m_renderables.getSize();
+		const Bool allocationFailed = localDrawcallCount == 0
 									  || allocateTilesAndScratchTiles(light->m_uuid,
 											 1,
 											 &light->m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
 											 &faceIdx,
-											 &drawcallCount,
+											 &localDrawcallCount,
 											 &tileIdx,
 											 &scratchTileIdx);
 
