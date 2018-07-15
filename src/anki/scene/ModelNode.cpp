@@ -7,7 +7,7 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/components/BodyComponent.h>
 #include <anki/scene/components/SkinComponent.h>
-#include <anki/scene/Misc.h>
+#include <anki/scene/components/RenderComponent.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/SkeletonResource.h>
@@ -17,7 +17,7 @@ namespace anki
 {
 
 /// Render component implementation.
-class ModelPatchNode::MRenderComponent : public RenderComponent
+class ModelPatchNode::MRenderComponent : public MaterialRenderComponent
 {
 public:
 	const ModelPatchNode& getNode() const
@@ -25,8 +25,8 @@ public:
 		return static_cast<const ModelPatchNode&>(getSceneNode());
 	}
 
-	MRenderComponent(ModelPatchNode* node)
-		: RenderComponent(node, node->m_modelPatch->getMaterial())
+	MRenderComponent(SceneNode* node)
+		: MaterialRenderComponent(node, static_cast<ModelPatchNode*>(node)->m_modelPatch->getMaterial())
 	{
 	}
 
@@ -52,10 +52,10 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch, U idx, const ModelNode&
 	m_modelPatch = modelPatch;
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, &m_obb);
+	newComponent<SpatialComponent>(&m_obb);
 
 	// Render component
-	newComponent<MRenderComponent>(this);
+	newComponent<MRenderComponent>();
 
 	// Merge key
 	Array<U64, 2> toHash;
@@ -111,11 +111,11 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 		trfs[i] = Mat4(self2.getParent()->getComponentAt<MoveComponent>(0).getWorldTransform());
 	}
 
-	self.getComponentAt<RenderComponent>(1).allocateAndSetupUniforms(
-		self.m_modelPatch->getMaterial()->getDescriptorSetIndex(),
-		ctx,
-		ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
-		*ctx.m_stagingGpuAllocator);
+	static_cast<const MaterialRenderComponent&>(self.getComponentAt<RenderComponent>(1))
+		.allocateAndSetupUniforms(self.m_modelPatch->getMaterial()->getDescriptorSetIndex(),
+			ctx,
+			ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
+			*ctx.m_stagingGpuAllocator);
 
 	// Draw
 	cmdb->drawElements(PrimitiveTopology::TRIANGLES,
@@ -135,14 +135,14 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		const MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		const MoveComponent& move = m_node->getComponent<MoveComponent>();
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
-			ModelNode& mnode = static_cast<ModelNode&>(node);
+			ModelNode& mnode = *static_cast<ModelNode*>(m_node);
 			mnode.onMoveComponentUpdate(move);
 		}
 
@@ -150,11 +150,11 @@ public:
 	}
 };
 
-class ModelNode::MRenderComponent : public RenderComponent
+class ModelNode::MRenderComponent : public MaterialRenderComponent
 {
 public:
-	MRenderComponent(ModelNode* node)
-		: RenderComponent(node, node->m_model->getModelPatches()[0]->getMaterial())
+	MRenderComponent(SceneNode* node)
+		: MaterialRenderComponent(node, static_cast<ModelNode*>(node)->m_model->getModelPatches()[0]->getMaterial())
 	{
 	}
 
@@ -198,10 +198,10 @@ Error ModelNode::init(const CString& modelFname)
 		}
 
 		// Move component
-		newComponent<MoveComponent>(this);
+		newComponent<MoveComponent>();
 
 		// Feedback component
-		newComponent<MoveFeedbackComponent>(this);
+		newComponent<MoveFeedbackComponent>();
 	}
 	else
 	{
@@ -211,12 +211,12 @@ Error ModelNode::init(const CString& modelFname)
 
 		if(m_model->getSkeleton().isCreated())
 		{
-			newComponent<SkinComponent>(this, m_model->getSkeleton());
+			newComponent<SkinComponent>(m_model->getSkeleton());
 		}
-		newComponent<MoveComponent>(this);
-		newComponent<MoveFeedbackComponent>(this);
-		newComponent<SpatialComponent>(this, &m_obb);
-		newComponent<MRenderComponent>(this);
+		newComponent<MoveComponent>();
+		newComponent<MoveFeedbackComponent>();
+		newComponent<SpatialComponent>(&m_obb);
+		newComponent<MRenderComponent>();
 	}
 
 	ANKI_CHECK(getResourceManager().loadResource("shaders/SceneDebug.glslp", m_dbgProg));
@@ -300,10 +300,11 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 			trfs[i] = Mat4(self2.getComponent<MoveComponent>().getWorldTransform());
 		}
 
-		self.getComponent<RenderComponent>().allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
-			ctx,
-			ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
-			*ctx.m_stagingGpuAllocator);
+		static_cast<const MaterialRenderComponent&>(self.getComponent<RenderComponent>())
+			.allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
+				ctx,
+				ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
+				*ctx.m_stagingGpuAllocator);
 
 		// Bones storage
 		if(self.m_model->getSkeleton())

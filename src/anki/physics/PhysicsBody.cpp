@@ -10,119 +10,57 @@
 namespace anki
 {
 
-PhysicsBody::PhysicsBody(PhysicsWorld* world)
-	: PhysicsObject(PhysicsObjectType::BODY, world)
+PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
+	: PhysicsFilteredObject(CLASS_TYPE, world)
 {
+	const Bool dynamic = init.m_mass > 0.0f;
+	m_shape = init.m_shape;
+	m_mass = init.m_mass;
+
+	// Create motion state
+	m_motionState.m_body = this;
+
+	// Compute inertia
+	btCollisionShape* shape = m_shape->getBtShape(dynamic);
+	btVector3 localInertia(0, 0, 0);
+	if(dynamic)
+	{
+		shape->calculateLocalInertia(init.m_mass, localInertia);
+	}
+
+	// Create body
+	btRigidBody& body = *getBtBody();
+	btRigidBody::btRigidBodyConstructionInfo cInfo(init.m_mass, &m_motionState, shape, localInertia);
+	cInfo.m_friction = init.m_friction;
+	::new(&body) btRigidBody(cInfo);
+
+	// User pointer
+	body.setUserPointer(static_cast<PhysicsObject*>(this));
+
+	// Other
+	setMaterialGroup((dynamic) ? PhysicsMaterialBit::DYNAMIC_GEOMETRY : PhysicsMaterialBit::STATIC_GEOMETRY);
+	setMaterialMask(PhysicsMaterialBit::ALL);
+	setTransform(init.m_transform);
+
+	// Add to world
+	auto lock = getWorld().lockBtWorld();
+	getWorld().getBtWorld()->addRigidBody(&body);
 }
 
 PhysicsBody::~PhysicsBody()
 {
-	if(m_sceneCollisionProxy)
-	{
-		NewtonCollision* scene = m_world->getNewtonScene();
-		NewtonSceneCollisionBeginAddRemove(scene);
-		NewtonSceneCollisionRemoveSubCollision(scene, m_sceneCollisionProxy);
-		NewtonSceneCollisionEndAddRemove(scene);
-	}
-
-	if(m_body)
-	{
-		NewtonDestroyBody(m_body);
-	}
+	auto lock = getWorld().lockBtWorld();
+	getWorld().getBtWorld()->removeRigidBody(getBtBody());
 }
 
-Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
+void PhysicsBody::setMass(F32 mass)
 {
-	// Create
-	dMatrix trf = toNewton(Mat4(init.m_startTrf));
-
-	if(init.m_static)
-	{
-		// Create static collision
-		NewtonCollision* scene = m_world->getNewtonScene();
-
-		NewtonSceneCollisionBeginAddRemove(scene);
-		m_sceneCollisionProxy = NewtonSceneCollisionAddSubCollision(scene, init.m_shape->getNewtonShape());
-		NewtonSceneCollisionEndAddRemove(scene);
-
-		NewtonSceneCollisionSetSubCollisionMatrix(scene, m_sceneCollisionProxy, &trf[0][0]);
-
-		return Error::NONE;
-	}
-	else if(init.m_kinematic)
-	{
-		ANKI_ASSERT(0 && "TODO");
-	}
-	else
-	{
-		m_body = NewtonCreateDynamicBody(m_world->getNewtonWorld(), init.m_shape->getNewtonShape(), &trf[0][0]);
-	}
-
-	if(!m_body)
-	{
-		ANKI_PHYS_LOGE("NewtonCreateXXBody() failed");
-		return Error::FUNCTION_FAILED;
-	}
-
-	// Material
-	NewtonBodySetMaterialGroupID(m_body, NewtonMaterialGetDefaultGroupID(m_world->getNewtonWorld()));
-
-	// User data & callbacks
-	NewtonBodySetUserData(m_body, this);
-	NewtonBodySetTransformCallback(m_body, onTransformCallback);
-
-	// Set mass
-	NewtonCollision* shape = NewtonBodyGetCollision(m_body);
-	NewtonBodySetMassProperties(m_body, init.m_mass, shape);
-
-	// Set gravity
-	if(init.m_gravity)
-	{
-		NewtonBodySetForceAndTorqueCallback(m_body, applyGravityForce);
-	}
-
-	// Activate
-	NewtonBodySetSimulationState(m_body, true);
-
-	return Error::NONE;
-}
-
-void PhysicsBody::setTransform(const Transform& trf)
-{
-	Mat4 mat(trf);
-	mat.transpose();
-	NewtonBodySetMatrix(m_body, &mat(0, 0));
-}
-
-void PhysicsBody::onTransformCallback(const NewtonBody* const body, const dFloat* const matrix, int threadIndex)
-{
-	ANKI_ASSERT(body);
-	ANKI_ASSERT(matrix);
-
-	void* ud = NewtonBodyGetUserData(body);
-	ANKI_ASSERT(ud);
-	PhysicsBody* self = reinterpret_cast<PhysicsBody*>(ud);
-
-	Mat4 trf;
-	memcpy(&trf, matrix, sizeof(Mat4));
-	trf.transpose();
-	trf(3, 3) = 0.0;
-	self->m_trf = Transform(trf);
-	self->m_updated = true;
-}
-
-void PhysicsBody::applyGravityForce(const NewtonBody* body, dFloat timestep, int threadIndex)
-{
-	dFloat Ixx;
-	dFloat Iyy;
-	dFloat Izz;
-	dFloat mass;
-
-	NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
-
-	const F32 GRAVITY = -9.8f;
-	Vec4 force(0.0f, mass * GRAVITY, 0.0f, 0.0f);
-	NewtonBodySetForce(body, &force[0]);
+	ANKI_ASSERT(m_mass > 0.0f && "Only relevant for dynamic bodies");
+	ANKI_ASSERT(mass > 0.0f);
+	btVector3 inertia;
+	m_shape->getBtShape(true)->calculateLocalInertia(mass, inertia);
+	getBtBody()->setMassProps(mass, inertia);
+	m_mass = mass;
 }
 
 } // end namespace anki

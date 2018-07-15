@@ -6,16 +6,35 @@
 #pragma once
 
 #include <anki/physics/Common.h>
+#include <anki/physics/PhysicsObject.h>
 #include <anki/util/List.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
 
-// Forward
-class CharacterControllerManager;
-
 /// @addtogroup physics
 /// @{
+
+/// Raycast callback (interface).
+class PhysicsWorldRayCastCallback
+{
+public:
+	Vec3 m_from;
+	Vec3 m_to;
+	PhysicsMaterialBit m_materialMask; ///< Materials to check
+	Bool8 m_firstHit = true;
+
+	PhysicsWorldRayCastCallback(const Vec3& from, const Vec3& to, PhysicsMaterialBit materialMask)
+		: m_from(from)
+		, m_to(to)
+		, m_materialMask(materialMask)
+	{
+	}
+
+	/// Process a raycast result.
+	virtual void processResult(PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition) = 0;
+};
 
 /// The master container for all physics related stuff.
 class PhysicsWorld
@@ -27,115 +46,79 @@ public:
 	ANKI_USE_RESULT Error create(AllocAlignedCallback allocCb, void* allocCbData);
 
 	template<typename T, typename... TArgs>
-	PhysicsPtr<T> newInstance(TArgs&&... args);
-
-	/// Start asynchronous update.
-	Error updateAsync(Second dt);
-
-	/// End asynchronous update.
-	void waitUpdate();
-
-	const Vec4& getGravity() const
+	PhysicsPtr<T> newInstance(TArgs&&... args)
 	{
-		return m_gravity;
+		void* mem = m_alloc.getMemoryPool().allocate(sizeof(T), alignof(T));
+		::new(mem) T(this, std::forward<TArgs>(args)...);
+
+		T* obj = static_cast<T*>(mem);
+		LockGuard<Mutex> lock(m_objectListsMtx);
+		m_objectLists[obj->getType()].pushBack(obj);
+
+		return PhysicsPtr<T>(obj);
+	}
+
+	/// Do the update.
+	Error update(Second dt);
+
+	HeapAllocator<U8> getAllocator() const
+	{
+		return m_alloc;
+	}
+
+	HeapAllocator<U8>& getAllocator()
+	{
+		return m_alloc;
+	}
+
+	void rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts);
+
+	void rayCast(PhysicsWorldRayCastCallback& raycast)
+	{
+		PhysicsWorldRayCastCallback* ptr = &raycast;
+		WeakArray<PhysicsWorldRayCastCallback*> arr(&ptr, 1);
+		rayCast(arr);
 	}
 
 anki_internal:
-	NewtonWorld* getNewtonWorld() const
+	btDynamicsWorld* getBtWorld() const
 	{
 		ANKI_ASSERT(m_world);
 		return m_world;
 	}
 
-	/// Used for static collision.
-	NewtonCollision* getNewtonScene() const
+	F32 getCollisionMargin() const
 	{
-		return m_sceneCollision;
+		return 0.04f;
 	}
 
-	Second getDeltaTime() const
+	ANKI_USE_RESULT LockGuard<Mutex> lockBtWorld() const
 	{
-		return m_dt;
+		return LockGuard<Mutex>(m_btWorldMtx);
 	}
 
-	void deleteObjectDeferred(PhysicsObject* obj)
-	{
-		LockGuard<Mutex> lock(m_mtx);
-		m_forDeletion.pushBack(m_alloc, obj);
-	}
-
-	CharacterControllerManager& getCharacterControllerManager()
-	{
-		ANKI_ASSERT(m_playerManager);
-		return *m_playerManager;
-	}
+	void destroyObject(PhysicsObject* obj);
 
 private:
+	class MyOverlapFilterCallback;
+	class MyRaycastCallback;
+
 	HeapAllocator<U8> m_alloc;
-	mutable NewtonWorld* m_world = nullptr;
-	NewtonCollision* m_sceneCollision = nullptr;
-	NewtonBody* m_sceneBody = nullptr;
-	Vec4 m_gravity = Vec4(0.0f, -9.8f, 0.0f, 0.0f);
-	Second m_dt = 0.0;
+	StackAllocator<U8> m_tmpAlloc;
 
-	/// @note Don't delete it. Newton will
-	CharacterControllerManager* m_playerManager = nullptr;
+	btBroadphaseInterface* m_broadphase = nullptr;
+	btGhostPairCallback* m_gpc = nullptr;
+	MyOverlapFilterCallback* m_filterCallback = nullptr;
 
-	Mutex m_mtx;
-	List<PhysicsObject*> m_forDeletion;
+	btDefaultCollisionConfiguration* m_collisionConfig = nullptr;
+	btCollisionDispatcher* m_dispatcher = nullptr;
+	btSequentialImpulseConstraintSolver* m_solver = nullptr;
+	btDiscreteDynamicsWorld* m_world = nullptr;
+	mutable Mutex m_btWorldMtx;
 
-	template<typename T, typename... TArgs>
-	PhysicsPtr<T> newObjectInternal(TArgs&&... args);
-
-	void cleanupMarkedForDeletion();
-
-	static void destroyCallback(const NewtonWorld* const world, void* const listenerUserData)
-	{
-	}
-
-	void registerObject(PhysicsObject* ptr);
-
-	static int onAabbOverlapCallback(const NewtonMaterial* const material,
-		const NewtonBody* const body0,
-		const NewtonBody* const body1,
-		int threadIndex)
-	{
-		(void)material;
-		(void)body0;
-		(void)body1;
-		(void)threadIndex;
-		return 1;
-	}
-
-	static void onContactCallback(const NewtonJoint* contactJoint, F32 timestep, int threadIndex);
+	Array<IntrusiveList<PhysicsObject>, U(PhysicsObjectType::COUNT)> m_objectLists;
+	mutable Mutex m_objectListsMtx;
 };
-
-template<typename T, typename... TArgs>
-inline PhysicsPtr<T> PhysicsWorld::newInstance(TArgs&&... args)
-{
-	Error err = Error::NONE;
-	PhysicsPtr<T> out;
-
-	T* ptr = m_alloc.template newInstance<T>(this);
-	err = ptr->create(std::forward<TArgs>(args)...);
-
-	if(!err)
-	{
-		registerObject(ptr);
-		out.reset(ptr);
-	}
-	else
-	{
-		ANKI_PHYS_LOGE("Failed to create physics object");
-
-		if(ptr)
-		{
-			m_alloc.deleteInstance(ptr);
-		}
-	}
-
-	return out;
-}
 /// @}
 
 } // end namespace anki

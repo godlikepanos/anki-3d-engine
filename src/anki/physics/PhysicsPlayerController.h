@@ -13,21 +13,6 @@ namespace anki
 /// @addtogroup physics
 /// @{
 
-/// The implementation of the Newton manager.
-class CharacterControllerManager : public dCustomPlayerControllerManager
-{
-public:
-	PhysicsWorld* m_world;
-
-	CharacterControllerManager(PhysicsWorld* world);
-
-	~CharacterControllerManager()
-	{
-	}
-
-	void ApplyPlayerMove(dCustomPlayerController* const controller, dFloat timestep);
-};
-
 /// Init info for PhysicsPlayerController.
 class PhysicsPlayerControllerInitInfo
 {
@@ -41,66 +26,38 @@ public:
 };
 
 /// A player controller that walks the world.
-class PhysicsPlayerController final : public PhysicsObject
+class PhysicsPlayerController final : public PhysicsFilteredObject
 {
-	friend class CharacterControllerManager;
+	ANKI_PHYSICS_OBJECT
 
 public:
-	PhysicsPlayerController(PhysicsWorld* world)
-		: PhysicsObject(PhysicsObjectType::PLAYER_CONTROLLER, world)
-	{
-	}
-
-	~PhysicsPlayerController();
-
-	ANKI_USE_RESULT Error create(const PhysicsPlayerControllerInitInfo& init);
+	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::PLAYER_CONTROLLER;
 
 	// Update the state machine
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
 	{
-		m_forwardSpeed = forwardSpeed;
-		m_strafeSpeed = strafeSpeed;
-		m_jumpSpeed = jumpSpeed;
-		m_forwardDir = forwardDir;
+		m_controller->setWalkDirection(toBt((forwardDir * forwardSpeed).xyz()));
 	}
 
 	void moveToPosition(const Vec4& position);
 
-	const Transform& getTransform(Bool& updated)
+	Transform getTransform(Bool& updated)
 	{
-		updated = m_updated;
-		m_updated = false;
-		return m_trf;
+		Transform out = toAnki(m_ghostObject->getWorldTransform());
+		updated = m_prevTrf != out;
+		return out;
 	}
 
 private:
-	dCustomPlayerController* m_newtonPlayer = nullptr;
-	Transform m_trf = Transform::getIdentity();
-	Bool m_updated = true;
+	btPairCachingGhostObject* m_ghostObject = nullptr;
+	btCapsuleShape* m_convexShape = nullptr;
+	btKinematicCharacterController* m_controller = nullptr;
 
-	// State
-	F32 m_forwardSpeed = 0.0;
-	F32 m_strafeSpeed = 0.0;
-	F32 m_jumpSpeed = 0.0;
-	Vec4 m_forwardDir = Vec4(0.0, 0.0, -1.0, 0.0);
+	Transform m_prevTrf = Transform::getIdentity();
 
-	static void onTransformUpdateCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
-	{
-		ANKI_ASSERT(body && matrix);
-		Transform trf = Transform(toAnki(dMatrix(matrix)));
-		void* ud = NewtonBodyGetUserData(body);
-		ANKI_ASSERT(ud);
-		static_cast<PhysicsPlayerController*>(ud)->onTransformUpdate(trf);
-	}
+	PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init);
 
-	void onTransformUpdate(const Transform& trf)
-	{
-		if(trf != m_trf)
-		{
-			m_updated = true;
-			m_trf = trf;
-		}
-	}
+	~PhysicsPlayerController();
 };
 /// @}
 

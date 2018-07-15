@@ -23,19 +23,19 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second, Second, Bool& updated) override
+	Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = node.getComponent<PlayerControllerComponent>();
-		const Input& in = node.getSceneGraph().getInput();
+		PlayerControllerComponent& playerc = m_node->getComponent<PlayerControllerComponent>();
+		const Input& in = m_node->getSceneGraph().getInput();
 		const F32 ang = toRad(7.0);
 
 		F32 y = in.getMousePosition().y();
 		F32 x = in.getMousePosition().x();
-		if(playerc.getTimestamp() == node.getGlobalTimestamp() || y != 0.0 || x != 0.0)
+		if(playerc.getTimestamp() == m_node->getGlobalTimestamp() || y != 0.0 || x != 0.0)
 		{
-			MoveComponent& move = node.getComponent<MoveComponent>();
+			MoveComponent& move = m_node->getComponent<MoveComponent>();
 
 			// Set origin
 			Vec4 origin = playerc.getTransform().getOrigin();
@@ -69,15 +69,15 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second, Second, Bool& updated) override
+	Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = node.getComponent<PlayerControllerComponent>();
-		MoveComponent& move = node.getComponent<MoveComponent>();
-		const Input& in = node.getSceneGraph().getInput();
+		PlayerControllerComponent& playerc = m_node->getComponent<PlayerControllerComponent>();
+		MoveComponent& move = m_node->getComponent<MoveComponent>();
+		const Input& in = m_node->getSceneGraph().getInput();
 
-		const F32 speed = 3.5;
+		const F32 speed = 0.5;
 
 		Vec4 moveVec(0.0);
 		if(in.getKey(KeyCode::W))
@@ -125,18 +125,19 @@ Error PlayerNode::init(const Vec4& position)
 	PhysicsPlayerControllerInitInfo init;
 	init.m_position = position;
 	m_player = getSceneGraph().getPhysicsWorld().newInstance<PhysicsPlayerController>(init);
+	m_player->setUserData(this);
 
 	// Player controller component
-	newComponent<PlayerControllerComponent>(this, m_player);
+	newComponent<PlayerControllerComponent>(m_player);
 
 	// Feedback component
-	newComponent<PlayerNodeFeedbackComponent>(this);
+	newComponent<PlayerNodeFeedbackComponent>();
 
 	// Move component
-	newComponent<MoveComponent>(this);
+	newComponent<MoveComponent>();
 
 	// Feedback component #2
-	newComponent<PlayerNodeFeedbackComponent2>(this);
+	newComponent<PlayerNodeFeedbackComponent2>();
 
 	return Error::NONE;
 }

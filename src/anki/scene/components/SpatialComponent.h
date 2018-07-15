@@ -18,8 +18,7 @@ namespace anki
 /// @addtogroup scene
 /// @{
 
-/// Spatial component for scene nodes. It indicates scene nodes that need to be placed in the a sector and they
-/// participate in the visibility tests.
+/// Spatial component for scene nodes. It is used by scene nodes that need to be placed in the visibility structures.
 class SpatialComponent : public SceneComponent
 {
 public:
@@ -39,16 +38,6 @@ public:
 		return m_aabb;
 	}
 
-	List<SectorNode*>& getSectorInfo()
-	{
-		return m_sectorInfo;
-	}
-
-	const List<SectorNode*>& getSectorInfo() const
-	{
-		return m_sectorInfo;
-	}
-
 	/// Get optimal collision shape for visibility tests
 	const CollisionShape& getVisibilityCollisionShape()
 	{
@@ -61,12 +50,6 @@ public:
 		{
 			return m_aabb;
 		}
-	}
-
-	/// Check if it's confined in a single sector.
-	Bool getSingleSector() const
-	{
-		return false;
 	}
 
 	/// Used for sorting spatials. In most object the origin is the center of mass but for cameras the origin is the
@@ -90,7 +73,7 @@ public:
 
 	/// @name SceneComponent overrides
 	/// @{
-	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override;
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
 	/// @}
 
 private:
@@ -100,9 +83,21 @@ private:
 	const CollisionShape* m_shape;
 	Aabb m_aabb; ///< A faster shape
 	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0);
-	List<SectorNode*> m_sectorInfo;
 
 	OctreePlaceable m_octreeInfo;
+};
+
+/// A class that holds spatial information and implements the SpatialComponent virtuals. You just need to update the
+/// OBB manually
+class ObbSpatialComponent : public SpatialComponent
+{
+public:
+	Obb m_obb;
+
+	ObbSpatialComponent(SceneNode* node)
+		: SpatialComponent(node, &m_obb)
+	{
+	}
 };
 /// @}
 

@@ -5,7 +5,6 @@
 
 #include <anki/scene/VisibilityInternal.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/SectorNode.h>
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/components/LensFlareComponent.h>
 #include <anki/scene/components/RenderComponent.h>
@@ -350,7 +349,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			if(wantsRenderComponents || (wantsShadowCasters && rc->getCastsShadow()))
 			{
 				RenderableQueueElement* el;
-				if(rc->getMaterial().isForwardShading())
+				if(rc->isForwardShading())
 				{
 					el = result.m_forwardShadingRenderables.newElement(alloc);
 				}
@@ -366,7 +365,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				el->m_distanceFromCamera = max(0.0f, sps[0].m_sp->getAabb().testPlane(nearPlane));
 
 				if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
-					&& !rc->getMaterial().isForwardShading())
+					&& !rc->isForwardShading())
 				{
 					RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
 					*el2 = *el;
@@ -678,7 +677,6 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_TESTS);
 
 	ThreadHive& hive = scene.getThreadHive();
-	scene.getSectorGroup().prepareForVisibilityTests();
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;

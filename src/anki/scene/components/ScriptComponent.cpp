@@ -36,7 +36,7 @@ Error ScriptComponent::load(CString fname)
 	return Error::NONE;
 }
 
-Error ScriptComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error ScriptComponent::update(Second prevTime, Second crntTime, Bool& updated)
 {
 	updated = false;
 	lua_State* lua = &m_env->getLuaState();
@@ -45,7 +45,7 @@ Error ScriptComponent::update(SceneNode& node, Second prevTime, Second crntTime,
 	lua_getglobal(lua, "update");
 
 	// Push args
-	LuaBinder::pushVariableToTheStack(lua, &node);
+	LuaBinder::pushVariableToTheStack(lua, m_node);
 	lua_pushnumber(lua, prevTime);
 	lua_pushnumber(lua, crntTime);
 

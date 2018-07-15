@@ -22,15 +22,15 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second, Second, Bool& updated) final
+	Error update(Second, Second, Bool& updated) final
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = m_node->getComponent<MoveComponent>();
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
 			// Move updated
-			ReflectionProxyNode& dnode = static_cast<ReflectionProxyNode&>(node);
+			ReflectionProxyNode& dnode = *static_cast<ReflectionProxyNode*>(m_node);
 			dnode.onMoveUpdate(move);
 		}
 

@@ -5,7 +5,9 @@
 
 #include <anki/scene/ParticleEmitterNode.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/Misc.h>
+#include <anki/scene/components/MoveComponent.h>
+#include <anki/scene/components/SpatialComponent.h>
+#include <anki/scene/components/RenderComponent.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/util/Functions.h>
@@ -162,7 +164,7 @@ void Particle::revive(const ParticleEmitterNode& pe,
 #endif
 
 /// The derived render component for particle emitters.
-class ParticleEmitterRenderComponent : public RenderComponent
+class ParticleEmitterRenderComponent : public MaterialRenderComponent
 {
 public:
 	const ParticleEmitterNode& getNode() const
@@ -170,8 +172,9 @@ public:
 		return static_cast<const ParticleEmitterNode&>(getSceneNode());
 	}
 
-	ParticleEmitterRenderComponent(ParticleEmitterNode* node)
-		: RenderComponent(node, node->m_particleEmitterResource->getMaterial())
+	ParticleEmitterRenderComponent(SceneNode* node)
+		: MaterialRenderComponent(
+			  node, static_cast<ParticleEmitterNode*>(node)->m_particleEmitterResource->getMaterial())
 	{
 	}
 
@@ -185,19 +188,19 @@ public:
 class MoveFeedbackComponent : public SceneComponent
 {
 public:
-	MoveFeedbackComponent(ParticleEmitterNode* node)
+	MoveFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = false; // Don't care about updates for this component
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = m_node->getComponent<MoveComponent>();
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
-			static_cast<ParticleEmitterNode&>(node).onMoveComponentUpdate(move);
+			static_cast<ParticleEmitterNode*>(m_node)->onMoveComponentUpdate(move);
 		}
 
 		return Error::NONE;
@@ -229,16 +232,16 @@ Error ParticleEmitterNode::init(const CString& filename)
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_particleEmitterResource));
 
 	// Move component
-	newComponent<MoveComponent>(this);
+	newComponent<MoveComponent>();
 
 	// Move component feedback
-	newComponent<MoveFeedbackComponent>(this);
+	newComponent<MoveFeedbackComponent>();
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, &m_obb);
+	newComponent<SpatialComponent>(&m_obb);
 
 	// Render component
-	newComponent<ParticleEmitterRenderComponent>(this);
+	newComponent<ParticleEmitterRenderComponent>();
 
 	// Other
 	m_obb.setCenter(Vec4(0.0));
@@ -304,11 +307,11 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 
 		// Uniforms
 		Array<Mat4, 1> trf = {{Mat4::getIdentity()}};
-		self.getComponent<RenderComponent>().allocateAndSetupUniforms(
-			self.m_particleEmitterResource->getMaterial()->getDescriptorSetIndex(),
-			ctx,
-			trf,
-			*ctx.m_stagingGpuAllocator);
+		static_cast<const MaterialRenderComponent&>(self.getComponent<RenderComponent>())
+			.allocateAndSetupUniforms(self.m_particleEmitterResource->getMaterial()->getDescriptorSetIndex(),
+				ctx,
+				trf,
+				*ctx.m_stagingGpuAllocator);
 
 		// Draw
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, self.m_aliveParticlesCount, 0, 0);

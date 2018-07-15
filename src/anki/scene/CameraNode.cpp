@@ -14,19 +14,19 @@ namespace anki
 class CameraMoveFeedbackComponent : public SceneComponent
 {
 public:
-	CameraMoveFeedbackComponent(CameraNode* node)
+	CameraMoveFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		MoveComponent& move = m_node->getComponent<MoveComponent>();
 		if(move.getTimestamp() == getGlobalTimestamp())
 		{
-			CameraNode& cam = static_cast<CameraNode&>(node);
+			CameraNode& cam = *static_cast<CameraNode*>(m_node);
 			cam.onMoveComponentUpdate(move);
 		}
 
@@ -38,19 +38,19 @@ public:
 class CameraFrustumFeedbackComponent : public SceneComponent
 {
 public:
-	CameraFrustumFeedbackComponent(CameraNode* node)
+	CameraFrustumFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		FrustumComponent& fr = node.getComponent<FrustumComponent>();
+		FrustumComponent& fr = m_node->getComponent<FrustumComponent>();
 		if(fr.getTimestamp() == getGlobalTimestamp())
 		{
-			CameraNode& cam = static_cast<CameraNode&>(node);
+			CameraNode& cam = *static_cast<CameraNode*>(m_node);
 			cam.onFrustumComponentUpdate(fr);
 		}
 
@@ -67,13 +67,13 @@ CameraNode::CameraNode(SceneGraph* scene, Type type, CString name)
 Error CameraNode::init(Frustum* frustum)
 {
 	// Move component
-	newComponent<MoveComponent>(this);
+	newComponent<MoveComponent>();
 
 	// Feedback component
-	newComponent<CameraMoveFeedbackComponent>(this);
+	newComponent<CameraMoveFeedbackComponent>();
 
 	// Frustum component
-	FrustumComponent* frc = newComponent<FrustumComponent>(this, frustum);
+	FrustumComponent* frc = newComponent<FrustumComponent>(frustum);
 	frc->setEnabledVisibilityTests(
 		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
@@ -82,10 +82,10 @@ Error CameraNode::init(Frustum* frustum)
 		| FrustumComponentVisibilityTestFlag::EARLY_Z);
 
 	// Feedback component #2
-	newComponent<CameraFrustumFeedbackComponent>(this);
+	newComponent<CameraFrustumFeedbackComponent>();
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, frustum);
+	newComponent<SpatialComponent>(frustum);
 
 	return Error::NONE;
 }

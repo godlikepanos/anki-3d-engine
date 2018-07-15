@@ -12,7 +12,7 @@
 #include <anki/util/HighRezTimer.h>
 #include <anki/util/HashMap.h>
 #include <anki/core/App.h>
-#include <anki/event/EventManager.h>
+#include <anki/scene/events/EventManager.h>
 
 namespace anki
 {
@@ -22,7 +22,6 @@ class MainRenderer;
 class ResourceManager;
 class CameraNode;
 class Input;
-class SectorGroup;
 class ConfigSet;
 class PerspectiveCameraNode;
 class UpdateSceneNodesCtx;
@@ -167,6 +166,16 @@ public:
 		return m_stats;
 	}
 
+	const Vec3& getSceneMin() const
+	{
+		return m_sceneMin;
+	}
+
+	const Vec3& getSceneMax() const
+	{
+		return m_sceneMax;
+	}
+
 anki_internal:
 	ResourceManager& getResourceManager()
 	{
@@ -198,12 +207,6 @@ anki_internal:
 	{
 		ANKI_ASSERT(m_input);
 		return *m_input;
-	}
-
-	SectorGroup& getSectorGroup()
-	{
-		ANKI_ASSERT(m_sectors);
-		return *m_sectors;
 	}
 
 	F32 getMaxReflectionProxyDistance() const
@@ -258,9 +261,11 @@ private:
 	PerspectiveCameraNode* m_defaultMainCam = nullptr;
 
 	EventManager m_events;
-	SectorGroup* m_sectors;
 
 	Octree* m_octree = nullptr;
+
+	Vec3 m_sceneMin = {-1000.0f, -200.0f, -1000.0f};
+	Vec3 m_sceneMax = {1000.0f, 200.0f, 1000.0f};
 
 	Atomic<U32> m_objectsMarkedForDeletionCount;
 

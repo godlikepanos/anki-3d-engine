@@ -8,7 +8,6 @@
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/FinalComposite.h>
-#include <anki/renderer/DebugDrawer.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/Scene.h>
 #include <anki/util/Logger.h>

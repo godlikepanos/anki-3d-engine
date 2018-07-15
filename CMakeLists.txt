@@ -137,21 +137,12 @@ set(CXX_FLAGS "")
 set(COMPILER_FLAGS "")
 set(LINKER_FLAGS "")
 
-add_definitions(-D_NEWTON_STATIC_LIB -D_CUSTOM_JOINTS_STATIC_LIB)
-
 if(NOT MSVC)
 	if(ARCH_64)
 		add_definitions(-D_POSIX_VER_64)
 	else()
 		add_definitions(-D_POSIX_VER_32)
 	endif()
-endif()
-
-# Newton wants that
-if(MINGW AND ARCH_64)
-	add_definitions(-D_MINGW_64_VER)
-elseif(MINGW AND ARCH_32)
-	add_definitions(-D_MINGW_32_VER)
 endif()
 
 if(MINGW)
@@ -235,7 +226,14 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z newton)
+set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z bullet)
+
+# Bullet config
+option(BUILD_BULLET2_DEMOS OFF)
+option(BUILD_BULLET3 OFF)
+option(BUILD_CPU_DEMOS OFF)
+option(BUILD_OPENGL3_DEMOS OFF)
+option(BUILD_EXTRAS OFF)
 
 if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
@@ -355,15 +353,11 @@ include_directories("src"
 	"${SDL2_INCLUDE_DIRS}"
 	"thirdparty/freetype/include"
 	"${CMAKE_CURRENT_BINARY_DIR}/thirdparty/freetype/include/freetype2"
-	"thirdparty/newton/coreLibrary_300/source/newton"
-	"thirdparty/newton/packages/dCustomJoints"
-	"thirdparty/newton/packages/dContainers"
-	"thirdparty/newton/packages/dMath"
-	"thirdparty/newton/packages/thirdParty/timeTracker/"
 	"thirdparty/khronos"
 	"${CMAKE_CURRENT_BINARY_DIR}"
 	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang"
 	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/tinyexpr"
+	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/bullet/src"
 	"thirdparty"
 	${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -426,17 +420,18 @@ if(SDL)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} SDL2-static)
 endif()
 
-set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankispirvcross glslang SPIRV OGLCompiler OSDependent ankitinyexpr)
+set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath 
+	ankispirvcross ankitinyxml2 ankilua ankiz glslang SPIRV OGLCompiler OSDependent ankitinyexpr)
 
 # Add anki sub libraries
-set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource misc gr collision math util)
+set(ANKI_SUB_DIRS core script renderer scene ui input physics resource misc gr collision math util)
 foreach(TMP ${ANKI_SUB_DIRS})
 	add_subdirectory(src/anki/${TMP})
 endforeach()
 
 separate_arguments(AK_SOURCES)
 add_library(anki ${AK_SOURCES})
-target_link_libraries(anki ankitinyxml2 ankilua ankiz ankinewton ${THIRD_PARTY_LIBS})
+target_link_libraries(anki ${THIRD_PARTY_LIBS})
 
 ################################################################################
 # AnKi extra                                                                   #

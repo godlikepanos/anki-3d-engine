@@ -792,22 +792,6 @@ void Exporter::visitNode(const aiNode* ainode)
 				m_staticCollisionNodes.push_back(n);
 				special = true;
 			}
-			else if(prop.first == "portal" && prop.second == "true")
-			{
-				Portal portal;
-				portal.m_meshIndex = meshIndex;
-				portal.m_transform = toAnkiMatrix(ainode->mTransformation);
-				m_portals.push_back(portal);
-				special = true;
-			}
-			else if(prop.first == "sector" && prop.second == "true")
-			{
-				Sector sector;
-				sector.m_meshIndex = meshIndex;
-				sector.m_transform = toAnkiMatrix(ainode->mTransformation);
-				m_sectors.push_back(sector);
-				special = true;
-			}
 			else if(prop.first == "lod1")
 			{
 				lod1MeshName = prop.second;
@@ -999,43 +983,9 @@ void Exporter::exportAll()
 	}
 
 	//
-	// Export portals
-	//
-	unsigned i = 0;
-	for(const Portal& portal : m_portals)
-	{
-		uint32_t meshIndex = portal.m_meshIndex;
-		exportMesh(*m_scene->mMeshes[meshIndex], nullptr, 3);
-
-		std::string name = getMeshName(getMeshAt(meshIndex));
-		std::string fname = m_rpath + name + ".ankimesh";
-		file << "\nnode = scene:newPortalNode(\"" << name << i << "\", \"" << fname << "\")\n";
-
-		writeNodeTransform("node", portal.m_transform);
-		++i;
-	}
-
-	//
-	// Export sectors
-	//
-	i = 0;
-	for(const Sector& sector : m_sectors)
-	{
-		uint32_t meshIndex = sector.m_meshIndex;
-		exportMesh(*m_scene->mMeshes[meshIndex], nullptr, 3);
-
-		std::string name = getMeshName(getMeshAt(meshIndex));
-		std::string fname = m_rpath + name + ".ankimesh";
-		file << "\nnode = scene:newSectorNode(\"" << name << i << "\", \"" << fname << "\")\n";
-
-		writeNodeTransform("node", sector.m_transform);
-		++i;
-	}
-
-	//
 	// Export particle emitters
 	//
-	i = 0;
+	int i = 0;
 	for(const ParticleEmitter& p : m_particleEmitters)
 	{
 		std::string name = "particles" + std::to_string(i);
@@ -1146,22 +1096,28 @@ void Exporter::exportAll()
 		// Write the collision node
 		if(!node.m_collisionMesh.empty())
 		{
-			bool found = false;
 			unsigned i = 0;
-			for(; i < m_scene->mNumMeshes; i++)
+			if(node.m_collisionMesh == "self")
 			{
-				if(m_scene->mMeshes[i]->mName.C_Str() == node.m_collisionMesh)
+				i = model.m_meshIndex;
+			}
+			else
+			{
+				for(; i < m_scene->mNumMeshes; i++)
 				{
-					found = true;
-					break;
+					if(m_scene->mMeshes[i]->mName.C_Str() == node.m_collisionMesh)
+					{
+						break;
+					}
 				}
 			}
 
+			const bool found = i < m_scene->mNumMeshes;
 			if(found)
 			{
 				exportCollisionMesh(i);
 
-				std::string fname = m_rpath + node.m_collisionMesh + ".ankicl";
+				std::string fname = m_rpath + getMeshName(getMeshAt(i)) + ".ankicl";
 				file << "node = scene:newStaticCollisionNode(\"" << nodeName << "_cl\", \"" << fname << "\", trf)\n";
 			}
 			else

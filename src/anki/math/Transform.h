@@ -47,6 +47,30 @@ public:
 	{
 		checkW();
 	}
+
+	explicit TTransform(const TVec4<T>& origin)
+		: m_origin(origin)
+		, m_rotation(Mat3x4::getIdentity())
+		, m_scale(1.0f)
+	{
+		checkW();
+	}
+
+	explicit TTransform(const TMat3x4<T>& rotation)
+		: m_origin(Vec4(0.0f))
+		, m_rotation(rotation)
+		, m_scale(1.0f)
+	{
+		checkW();
+	}
+
+	TTransform(const T scale)
+		: m_origin(Vec4(0.0f))
+		, m_rotation(Mat3x4::getIdentity())
+		, m_scale(scale)
+	{
+		checkW();
+	}
 	/// @}
 
 	/// @name Accessors

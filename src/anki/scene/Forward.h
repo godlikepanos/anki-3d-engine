@@ -14,10 +14,9 @@ class FrustumComponent;
 class InstanceComponent;
 class MoveComponent;
 class RenderComponent;
+class MaterialRenderComponent;
 class SpatialComponent;
 class DecalComponent;
-class PortalComponent;
-class SectorComponent;
 class ReflectionProxyComponent;
 class ReflectionProbeComponent;
 
@@ -27,8 +26,6 @@ class LightNode;
 class PointLightNode;
 class SpotLightNode;
 class CameraNode;
-class SectorNode;
-class PortalNode;
 
 // Other
 class SceneGraph;

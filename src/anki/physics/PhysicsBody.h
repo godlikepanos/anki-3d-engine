@@ -18,71 +18,83 @@ class PhysicsBodyInitInfo
 {
 public:
 	PhysicsCollisionShapePtr m_shape;
-	F32 m_mass = 0.0;
-	Transform m_startTrf = Transform::getIdentity();
-	Bool m_kinematic = false;
-	Bool m_gravity = true;
-	Bool m_static = false;
+	F32 m_mass = 0.0f;
+	Transform m_transform = Transform::getIdentity();
+	F32 m_friction = 0.5f;
 };
 
 /// Rigid body.
-class PhysicsBody : public PhysicsObject
+class PhysicsBody : public PhysicsFilteredObject
 {
+	ANKI_PHYSICS_OBJECT
+
 public:
-	PhysicsBody(PhysicsWorld* world);
+	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::BODY;
 
-	~PhysicsBody();
-
-	ANKI_USE_RESULT Error create(const PhysicsBodyInitInfo& init);
-
-	const Transform& getTransform(Bool& updated)
+	const Transform& getTransform() const
 	{
-		updated = m_updated;
-		m_updated = false;
 		return m_trf;
 	}
 
-	void setTransform(const Transform& trf);
-
-	F32 getFriction() const
+	void setTransform(const Transform& trf)
 	{
-		return m_friction;
+		m_trf = trf;
+		getBtBody()->setWorldTransform(toBt(trf));
 	}
 
-	void setFriction(F32 friction)
+	void applyForce(const Vec3& force, const Vec3& relPos)
 	{
-		m_friction = friction;
+		getBtBody()->applyForce(toBt(force), toBt(relPos));
 	}
 
-	F32 getElasticity() const
+	void setMass(F32 mass);
+
+	F32 getMass() const
 	{
-		return m_elasticity;
+		return m_mass;
 	}
 
-	void setElasticity(F32 elasticity)
+anki_internal:
+	const btRigidBody* getBtBody() const
 	{
-		m_elasticity = elasticity;
+		return reinterpret_cast<const btRigidBody*>(&m_bodyMem[0]);
 	}
 
-	void setMaterialsThatCollide(PhysicsMaterialBit bits)
+	btRigidBody* getBtBody()
 	{
-		m_materialBits = bits;
+		return reinterpret_cast<btRigidBody*>(&m_bodyMem[0]);
 	}
 
 private:
-	NewtonBody* m_body = nullptr;
-	void* m_sceneCollisionProxy = nullptr;
+	class MotionState : public btMotionState
+	{
+	public:
+		PhysicsBody* m_body = nullptr;
+
+		void getWorldTransform(btTransform& worldTrans) const override
+		{
+			worldTrans = toBt(m_body->m_trf);
+		}
+
+		void setWorldTransform(const btTransform& worldTrans) override
+		{
+			m_body->m_trf = toAnki(worldTrans);
+		}
+	};
+
+	/// Store the data of the btRigidBody in place to avoid additional allocations.
+	alignas(alignof(btRigidBody)) Array<U8, sizeof(btRigidBody)> m_bodyMem;
+
 	Transform m_trf = Transform::getIdentity();
-	F32 m_friction = 0.03f;
-	F32 m_elasticity = 0.1f;
-	PhysicsMaterialBit m_materialBits = PhysicsMaterialBit::ALL;
-	Bool8 m_updated = true;
+	MotionState m_motionState;
 
-	/// Newton callback.
-	static void onTransformCallback(const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
+	PhysicsCollisionShapePtr m_shape;
 
-	/// Newton callback
-	static void applyGravityForce(const NewtonBody* body, dFloat timestep, int threadIndex);
+	F32 m_mass = 1.0f;
+
+	PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init);
+
+	~PhysicsBody();
 };
 /// @}
 

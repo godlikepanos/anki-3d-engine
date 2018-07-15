@@ -5,8 +5,8 @@
 
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/CameraNode.h>
+#include <anki/scene/PhysicsDebugNode.h>
 #include <anki/scene/ModelNode.h>
-#include <anki/scene/SectorNode.h>
 #include <anki/scene/Octree.h>
 #include <anki/core/Trace.h>
 #include <anki/physics/PhysicsWorld.h>
@@ -57,12 +57,6 @@ SceneGraph::~SceneGraph()
 
 	deleteNodesMarkedForDeletion();
 
-	if(m_sectors)
-	{
-		m_alloc.deleteInstance(m_sectors);
-		m_sectors = nullptr;
-	}
-
 	if(m_octree)
 	{
 		m_alloc.deleteInstance(m_octree);
@@ -94,19 +88,21 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 
 	m_earlyZDist = config.getNumber("scene.earlyZDistance");
 
-	ANKI_CHECK(m_events.create(this));
-
-	m_sectors = m_alloc.newInstance<SectorGroup>(this);
+	ANKI_CHECK(m_events.init(this));
 
 	m_maxReflectionProxyDistance = config.getNumber("scene.imageReflectionMaxDistance");
 
 	m_octree = m_alloc.newInstance<Octree>(m_alloc);
-	m_octree->init(Vec3(-1000.0f), Vec3(1000.0f), 5); // TODO
+	m_octree->init(m_sceneMin, m_sceneMax, 5); // TODO
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
 	m_defaultMainCam->setAll(toRad(60.0f), toRad(60.0f), 0.1f, 1000.0f);
 	m_mainCam = m_defaultMainCam;
+
+	// Create a special node for debugging the physics world
+	PhysicsDebugNode* pnode;
+	ANKI_CHECK(newSceneNode<PhysicsDebugNode>("_physicsDebugNode", pnode));
 
 	return Error::NONE;
 }
@@ -221,8 +217,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	// Update
 	{
 		ANKI_TRACE_SCOPED_EVENT(SCENE_PHYSICS_UPDATE);
-		m_physics->updateAsync(crntTime - prevUpdateTime);
-		m_physics->waitUpdate();
+		m_physics->update(crntTime - prevUpdateTime);
 	}
 
 	{
@@ -268,7 +263,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	Timestamp componentTimestam = 0;
 	err = node.iterateComponents([&](SceneComponent& comp) -> Error {
 		Bool updated = false;
-		Error e = comp.updateReal(node, prevTime, crntTime, updated);
+		Error e = comp.updateReal(prevTime, crntTime, updated);
 		componentTimestam = max(componentTimestam, comp.getTimestamp());
 
 		return e;

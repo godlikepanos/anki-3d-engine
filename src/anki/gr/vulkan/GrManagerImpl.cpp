@@ -333,7 +333,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		}
 	}
 
-#if ANKI_GR_MANAGER_DEBUG_MEMMORY
+#if 0 && ANKI_GR_MANAGER_DEBUG_MEMMORY
 	m_debugAllocCbs = {};
 	m_debugAllocCbs.pUserData = this;
 	m_debugAllocCbs.pfnAllocation = allocateCallback;

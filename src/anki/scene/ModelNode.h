@@ -6,11 +6,11 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/components/RenderComponent.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/collision/Obb.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {

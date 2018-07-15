@@ -111,11 +111,11 @@ public:
 	/// Update self and children world transform recursively, if root node. Need to call this at every frame.
 	/// @note Don't update if child because we start from roots and go to children and we don't want a child to be
 	///       updated before the parent
-	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override;
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
 
-	ANKI_USE_RESULT Error onUpdate(SceneNode& node, Second prevTime, Second crntTime) final
+	ANKI_USE_RESULT Error onUpdate(Second prevTime, Second crntTime) final
 	{
-		return onMoveComponentUpdate(node, prevTime, crntTime);
+		return onMoveComponentUpdate(*m_node, prevTime, crntTime);
 	}
 	/// @}
 

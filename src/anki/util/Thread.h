@@ -161,10 +161,25 @@ public:
 		m_mtx->lock();
 	}
 
+	LockGuard(const LockGuard& b) = delete;
+
+	LockGuard(LockGuard&& b)
+	{
+		m_mtx = b.m_mtx;
+		b.m_mtx = nullptr;
+	}
+
 	~LockGuard()
 	{
-		m_mtx->unlock();
+		if(m_mtx)
+		{
+			m_mtx->unlock();
+		}
 	}
+
+	LockGuard& operator=(LockGuard&& b) = delete;
+
+	LockGuard& operator=(const LockGuard& b) = delete;
 
 private:
 	TMutex* m_mtx;

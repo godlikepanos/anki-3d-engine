@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <anki/scene/SectorNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/SoftwareRasterizer.h>
 #include <anki/scene/components/FrustumComponent.h>

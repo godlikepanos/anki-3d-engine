@@ -9,74 +9,59 @@
 namespace anki
 {
 
-CharacterControllerManager::CharacterControllerManager(PhysicsWorld* world)
-	: dCustomPlayerControllerManager(world->getNewtonWorld())
-	, m_world(world)
+PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init)
+	: PhysicsFilteredObject(CLASS_TYPE, world)
 {
-}
+	const btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), 1.0f));
 
-void CharacterControllerManager::ApplyPlayerMove(dCustomPlayerController* const controller, dFloat timestep)
-{
-	ANKI_ASSERT(controller);
+	m_convexShape = getAllocator().newInstance<btCapsuleShape>(init.m_outerRadius, init.m_height);
 
-	NewtonBody* body = controller->GetBody();
-	PhysicsPlayerController* player = static_cast<PhysicsPlayerController*>(NewtonBodyGetUserData(body));
-	ANKI_ASSERT(player);
+	m_ghostObject = getAllocator().newInstance<btPairCachingGhostObject>();
+	m_ghostObject->setWorldTransform(trf);
+	m_ghostObject->setCollisionShape(m_convexShape);
+	m_ghostObject->setUserPointer(static_cast<PhysicsObject*>(this));
+	setMaterialGroup(PhysicsMaterialBit::PLAYER);
+	setMaterialMask(PhysicsMaterialBit::ALL);
 
-	dVector gravity = toNewton(player->getWorld().getGravity());
+	m_controller = getAllocator().newInstance<btKinematicCharacterController>(
+		m_ghostObject, m_convexShape, init.m_stepHeight, btVector3(0, 1, 0));
 
-	// Compute the angle the way newton wants it
-	Vec4 forwardDir{player->m_forwardDir.x(), 0.0, player->m_forwardDir.z(), 0.0f};
-	F32 cosTheta = clamp(Vec4(0.0, 0.0, -1.0, 0.0).dot(forwardDir), -1.0f, 1.0f);
-	F32 sign = Vec4(0.0, 0.0, -1.0, 0.0).cross(forwardDir).y();
-	sign = (!isZero(sign)) ? (absolute(sign) / sign) : 1.0f;
-	F32 angle = acos(cosTheta) * sign;
+	{
+		auto lock = getWorld().lockBtWorld();
+		btDynamicsWorld* btworld = getWorld().getBtWorld();
 
-	controller->SetPlayerVelocity(
-		player->m_forwardSpeed, player->m_strafeSpeed, player->m_jumpSpeed, angle, gravity, timestep);
+		btworld->addCollisionObject(m_ghostObject,
+			btBroadphaseProxy::CharacterFilter,
+			btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+		btworld->addAction(m_controller);
+	}
+
+	// Need to call this else the player is upside down
+	moveToPosition(init.m_position);
 }
 
 PhysicsPlayerController::~PhysicsPlayerController()
 {
-	if(m_newtonPlayer)
 	{
-		getWorld().getCharacterControllerManager().DestroyController(m_newtonPlayer);
-	}
-}
-
-Error PhysicsPlayerController::create(const PhysicsPlayerControllerInitInfo& init)
-{
-	dMatrix playerAxis;
-	playerAxis[0] = dVector(0.0f, 1.0f, 0.0f, 0.0f); // the y axis is the character up vector
-	playerAxis[1] = dVector(0.0f, 0.0f, -1.0f, 0.0f); // the x axis is the character front direction
-	playerAxis[2] = playerAxis[0].CrossProduct(playerAxis[1]);
-	playerAxis[3] = dVector(0.0f, 0.0f, 0.0f, 1.0f);
-
-	m_newtonPlayer = getWorld().getCharacterControllerManager().CreatePlayer(
-		init.m_mass, init.m_outerRadius, init.m_innerRadius, init.m_height, init.m_stepHeight, playerAxis);
-
-	if(m_newtonPlayer == nullptr)
-	{
-		return Error::FUNCTION_FAILED;
+		auto lock = getWorld().lockBtWorld();
+		getWorld().getBtWorld()->removeAction(m_controller);
+		getWorld().getBtWorld()->removeCollisionObject(m_ghostObject);
 	}
 
-	// Set some data
-	NewtonBody* body = m_newtonPlayer->GetBody();
-	NewtonBodySetUserData(body, this);
-	NewtonBodySetTransformCallback(body, onTransformUpdateCallback);
-
-	dMatrix location(dGetIdentityMatrix());
-	location.m_posit.m_x = init.m_position.x();
-	location.m_posit.m_y = init.m_position.y();
-	location.m_posit.m_z = init.m_position.z();
-	NewtonBodySetMatrix(body, &location[0][0]);
-
-	return Error::NONE;
+	getAllocator().deleteInstance(m_controller);
+	getAllocator().deleteInstance(m_ghostObject);
+	getAllocator().deleteInstance(m_convexShape);
 }
 
 void PhysicsPlayerController::moveToPosition(const Vec4& position)
 {
-	ANKI_ASSERT(!"TODO");
+	auto lock = getWorld().lockBtWorld();
+
+	getWorld().getBtWorld()->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(
+		m_ghostObject->getBroadphaseHandle(), getWorld().getBtWorld()->getDispatcher());
+
+	m_controller->reset(getWorld().getBtWorld());
+	m_controller->warp(toBt(position.xyz()));
 }
 
 } // end namespace anki

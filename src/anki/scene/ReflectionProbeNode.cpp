@@ -26,15 +26,15 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second, Second, Bool& updated) override
+	Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		MoveComponent& move = m_node->getComponent<MoveComponent>();
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
 			// Move updated
-			ReflectionProbeNode& dnode = static_cast<ReflectionProbeNode&>(node);
+			ReflectionProbeNode& dnode = *static_cast<ReflectionProbeNode*>(m_node);
 			dnode.onMoveUpdate(move);
 		}
 
@@ -49,10 +49,10 @@ ReflectionProbeNode::~ReflectionProbeNode()
 Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLSpace)
 {
 	// Move component first
-	newComponent<MoveComponent>(this);
+	newComponent<MoveComponent>();
 
 	// Feedback component
-	newComponent<ReflectionProbeMoveFeedbackComponent>(this);
+	newComponent<ReflectionProbeMoveFeedbackComponent>();
 
 	// The frustum components
 	const F32 ang = toRad(90.0f);
@@ -81,7 +81,7 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, EFFECTIVE_DISTANCE);
 		m_cubeSides[i].m_frustum.resetTransform(m_cubeSides[i].m_localTrf);
 
-		FrustumComponent* frc = newComponent<FrustumComponent>(this, &m_cubeSides[i].m_frustum);
+		FrustumComponent* frc = newComponent<FrustumComponent>(&m_cubeSides[i].m_frustum);
 
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 	}
@@ -91,10 +91,10 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 	m_aabbMaxLSpace = aabbMaxLSpace.xyz();
 	m_spatialAabb.setMin(aabbMinLSpace);
 	m_spatialAabb.setMax(aabbMaxLSpace);
-	newComponent<SpatialComponent>(this, &m_spatialAabb);
+	newComponent<SpatialComponent>(&m_spatialAabb);
 
 	// Reflection probe comp
-	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>(this);
+	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>();
 	reflc->setPosition(Vec4(0.0f));
 	reflc->setBoundingBox(aabbMinLSpace, aabbMaxLSpace);
 

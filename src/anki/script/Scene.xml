@@ -16,8 +16,23 @@ template<typename T, typename... TArgs>
 static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 {
 	T* ptr;
-	Error err = scene->template newSceneNode<T>(
-		name, ptr, args...);
+	Error err = scene->template newSceneNode<T>(name, ptr, std::forward<TArgs>(args)...);
+
+	if(!err)
+	{
+		return ptr;
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+template<typename T, typename... TArgs>
+static T* newEvent(EventManager* eventManager, TArgs... args)
+{
+	T* ptr;
+	Error err = eventManager->template newEvent<T>(ptr, std::forward<TArgs>(args)...);
 
 	if(!err)
 	{
@@ -38,9 +53,32 @@ static SceneGraph* getSceneGraph(lua_State* l)
 		reinterpret_cast<ScriptManager*>(binder->getParent());
 
 	return &scriptManager->getSceneGraph();
-}]]></head>
+}
+
+static EventManager* getEventManager(lua_State* l)
+{
+	return &getSceneGraph(l)->getEventManager();
+}
+
+using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
+]]></head>
 
 	<classes>
+		<!-- Other -->
+		<class name="WeakArraySceneNodePtr">
+			<methods>
+				<method name="getSize">
+					<return>PtrSize</return>
+				</method>
+				<method name="getAt">
+					<overrideCall><![CDATA[SceneNode* ret = (*self)[arg0];]]></overrideCall>
+					<args><arg>U</arg></args>
+					<return>SceneNode*</return>
+				</method>
+			</methods>
+		</class>
+
+		<!-- Components -->
 		<class name="MoveComponent">
 			<methods>
 				<method name="setLocalOrigin">
@@ -170,6 +208,15 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
+		<class name="TriggerComponent">
+			<methods>
+				<method name="getContactSceneNodes">
+					<return>WeakArraySceneNodePtr</return>
+				</method>
+			</methods>
+		</class>
+
+		<!-- Nodes -->
 		<class name="SceneNode">
 			<methods>
 				<method name="getName">
@@ -180,6 +227,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 						<arg>SceneNode*</arg>
 					</args>
 				</method>
+				<method name="setMarkedForDeletion"></method>
 				<method name="tryGetComponent&lt;MoveComponent&gt;" alias="getMoveComponent">
 					<return>MoveComponent*</return>
 				</method>
@@ -191,6 +239,9 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 				<method name="tryGetComponent&lt;DecalComponent&gt;" alias="getDecalComponent">
 					<return>DecalComponent*</return>
+				</method>
+				<method name="tryGetComponent&lt;TriggerComponent&gt;" alias="getTriggerComponent">
+					<return>TriggerComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -248,22 +299,6 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
-		<class name="PortalNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
-		<class name="SectorNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
 		<class name="ParticleEmitterNode">
 			<methods>
 				<method name="getSceneNodeBase">
@@ -297,6 +332,14 @@ static SceneGraph* getSceneGraph(lua_State* l)
 			</methods>
 		</class>
 		<class name="DecalNode">
+			<methods>
+				<method name="getSceneNodeBase">
+					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
+					<return>SceneNode&amp;</return>
+				</method>
+			</methods>
+		</class>
+		<class name="TriggerNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
@@ -344,22 +387,6 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					</args>
 					<return>StaticCollisionNode*</return>
 				</method>
-				<method name="newPortalNode">
-					<overrideCall><![CDATA[PortalNode* ret = newSceneNode<PortalNode>(self, arg0, arg1);]]></overrideCall>
-					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const CString&amp;</arg>
-					</args>
-					<return>PortalNode*</return>
-				</method>
-				<method name="newSectorNode">
-					<overrideCall><![CDATA[SectorNode* ret = newSceneNode<SectorNode>(self, arg0, arg1);]]></overrideCall>
-					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const CString&amp;</arg>
-					</args>
-					<return>SectorNode*</return>
-				</method>
 				<method name="newParticleEmitterNode">
 					<overrideCall><![CDATA[ParticleEmitterNode* ret = newSceneNode<ParticleEmitterNode>(self, arg0, arg1);]]></overrideCall>
 					<args>
@@ -400,10 +427,53 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					</args>
 					<return>DecalNode*</return>
 				</method>
+				<method name="newTriggerNode">
+					<overrideCall><![CDATA[TriggerNode* ret = newSceneNode<TriggerNode>(self, arg0, arg1);]]></overrideCall>
+					<args>
+						<arg>const CString&amp;</arg>
+						<arg>F32</arg>
+					</args>
+					<return>TriggerNode*</return>
+				</method>
 				<method name="setActiveCameraNode">
 					<args>
 						<arg>SceneNode*</arg>
 					</args>
+				</method>
+			</methods>
+		</class>
+
+		<!-- Events -->
+		<class name="Event">
+			<methods>
+				<method name="getAssociatedSceneNodes">
+					<return>WeakArraySceneNodePtr</return>
+				</method>
+			</methods>
+		</class>
+		<class name="LightEvent">
+			<methods>
+				<method name="setIntensityMultiplier">
+					<args><arg>const Vec4&amp;</arg></args>
+				</method>
+				<method name="setFrequency">
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
+		<class name="EventManager">
+			<methods>
+				<method name="newLightEvent">
+					<overrideCall><![CDATA[LightEvent* ret = newEvent<LightEvent>(self, arg0, arg1, arg2);]]></overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>SceneNode*</arg>
+					</args>
+					<return>LightEvent*</return>
 				</method>
 			</methods>
 		</class>
@@ -412,6 +482,12 @@ static SceneGraph* getSceneGraph(lua_State* l)
 		<function name="getSceneGraph">
 			<overrideCall>SceneGraph* ret = getSceneGraph(l);</overrideCall>
 			<return>SceneGraph*</return>
+		</function>
+	</functions>
+	<functions>
+		<function name="getEventManager">
+			<overrideCall>EventManager* ret = getEventManager(l);</overrideCall>
+			<return>EventManager*</return>
 		</function>
 	</functions>
 	<tail><![CDATA[} // end namespace anki]]></tail>

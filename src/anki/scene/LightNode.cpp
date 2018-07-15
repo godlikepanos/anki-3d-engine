@@ -21,13 +21,13 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second, Second, Bool& updated) override
+	Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
-		LightNode& lnode = static_cast<LightNode&>(node);
+		LightNode& lnode = *static_cast<LightNode*>(m_node);
 
-		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		const MoveComponent& move = m_node->getComponentAt<MoveComponent>(0);
+		if(move.getTimestamp() == m_node->getGlobalTimestamp())
 		{
 			// Move updated
 			lnode.onMoveUpdate(move);
@@ -46,13 +46,13 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, Second, Second, Bool& updated) override
+	Error update(Second, Second, Bool& updated) override
 	{
 		updated = false;
-		LightNode& lnode = static_cast<LightNode&>(node);
+		LightNode& lnode = *static_cast<LightNode*>(m_node);
 
-		LightComponent& light = node.getComponentAt<LightComponent>(getIndex() - 1);
-		if(light.getTimestamp() == node.getGlobalTimestamp())
+		LightComponent& light = m_node->getComponentAt<LightComponent>(getIndex() - 1);
+		if(light.getTimestamp() == m_node->getGlobalTimestamp())
 		{
 			// Shape updated
 			lnode.onShapeUpdate(light);
@@ -74,19 +74,19 @@ LightNode::~LightNode()
 Error LightNode::init(LightComponentType type, CollisionShape* shape)
 {
 	// Move component
-	newComponent<MoveComponent>(this);
+	newComponent<MoveComponent>();
 
 	// Feedback component
-	newComponent<MovedFeedbackComponent>(this);
+	newComponent<MovedFeedbackComponent>();
 
 	// Light component
-	newComponent<LightComponent>(this, type);
+	newComponent<LightComponent>(type);
 
 	// Feedback component
-	newComponent<LightChangedFeedbackComponent>(this);
+	newComponent<LightChangedFeedbackComponent>();
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, shape);
+	newComponent<SpatialComponent>(shape);
 
 	return Error::NONE;
 }
@@ -149,7 +149,7 @@ Error LightNode::loadLensFlare(const CString& filename)
 {
 	ANKI_ASSERT(tryGetComponent<LensFlareComponent>() == nullptr);
 
-	LensFlareComponent* flareComp = newComponent<LensFlareComponent>(this);
+	LensFlareComponent* flareComp = newComponent<LensFlareComponent>();
 
 	Error err = flareComp->init(filename);
 	if(err)
@@ -244,7 +244,7 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 			trf.setOrigin(origin);
 			m_shadowData[i].m_frustum.resetTransform(trf);
 
-			newComponent<FrustumComponent>(this, &m_shadowData[i].m_frustum);
+			newComponent<FrustumComponent>(&m_shadowData[i].m_frustum);
 		}
 	}
 
@@ -262,7 +262,7 @@ Error SpotLightNode::init()
 {
 	ANKI_CHECK(LightNode::init(LightComponentType::SPOT, &m_frustum));
 
-	FrustumComponent* fr = newComponent<FrustumComponent>(this, &m_frustum);
+	FrustumComponent* fr = newComponent<FrustumComponent>(&m_frustum);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 
 	return Error::NONE;

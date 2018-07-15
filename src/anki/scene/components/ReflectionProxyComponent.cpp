@@ -18,7 +18,7 @@ void ReflectionProxyComponent::setQuad(U index, const Vec4& a, const Vec4& b, co
 	m_faces[index].m_vertices[3] = d;
 }
 
-Error ReflectionProxyComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Error ReflectionProxyComponent::update(Second prevTime, Second crntTime, Bool& updated)
 {
 	if(m_dirty)
 	{

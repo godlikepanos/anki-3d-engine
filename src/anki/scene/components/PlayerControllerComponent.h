@@ -43,10 +43,20 @@ public:
 		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override
+	void moveToPosition(Vec4 pos)
+	{
+		m_player->moveToPosition(pos);
+	}
+
+	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
 	{
 		m_trf = m_player->getTransform(updated);
 		return Error::NONE;
+	}
+
+	PhysicsPlayerControllerPtr getPhysicsPlayerController() const
+	{
+		return m_player;
 	}
 
 private:

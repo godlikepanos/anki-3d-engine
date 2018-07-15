@@ -140,6 +140,10 @@ F32 computeShadowFactorOmni(Vec3 frag2Light, F32 radius, UVec2 atlasTiles, F32 t
 		U32 faceIdxu;
 		Vec2 uv = convertCubeUvsu(dir, faceIdxu);
 
+		// Clamp uv to a small value to avoid reading from other tiles due to bilinear filtering. It's not a perfect
+		// solution but it works
+		uv = clamp(uv, Vec2(0.001), Vec2(1.0 - 0.001));
+
 		// Compute atlas tile
 		atlasTiles >>= UVec2(faceIdxu * 5u);
 		atlasTiles &= UVec2(31u);
