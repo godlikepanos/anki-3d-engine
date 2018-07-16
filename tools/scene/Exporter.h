@@ -12,9 +12,12 @@
 #include <fstream>
 #include <vector>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#pragma GCC diagnostic pop
 
 #include "Common.h"
 

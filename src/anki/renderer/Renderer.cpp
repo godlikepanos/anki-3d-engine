@@ -104,6 +104,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
 		1024, BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::NONE, "Dummy"));
 
+	ANKI_CHECK(m_resources->loadResource("shaders/ClearTextureCompute.glslp", m_clearTexComputeProg));
+
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_indirect.reset(m_alloc.newInstance<Indirect>(this));
 	ANKI_CHECK(m_indirect->init(config));
@@ -177,8 +179,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_nearesetNearestSampler = m_gr->newSampler(sinit);
 
 	initJitteredMats();
-
-	ANKI_CHECK(m_resources->loadResource("shaders/ClearTextureCompute.glslp", m_clearTexComputeProg));
 
 	return Error::NONE;
 }
@@ -335,7 +335,8 @@ Vec3 Renderer::unproject(
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
 {
-	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+	ANKI_ASSERT(
+		!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE) || !!(usage & TextureUsageBit::IMAGE_COMPUTE_WRITE));
 	TextureInitInfo init(name);
 
 	init.m_width = w;
@@ -370,7 +371,8 @@ RenderTargetDescription Renderer::create2DRenderTargetDescription(U32 w, U32 h, 
 
 TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, const ClearValue& clearVal)
 {
-	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE)
+				|| !!(inf.m_usage & TextureUsageBit::IMAGE_COMPUTE_WRITE));
 
 	const U faceCount = (inf.m_type == TextureType::CUBE || inf.m_type == TextureType::CUBE_ARRAY) ? 6 : 1;
 

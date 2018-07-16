@@ -45,6 +45,8 @@ anki_internal:
 private:
 	static const Format RT_PIXEL_FORMAT = Format::A2B10G10R10_UNORM_PACK32;
 
+	Array<U32, 2> m_workgroupSize = {{8, 8}};
+
 	class
 	{
 	public:
@@ -56,13 +58,13 @@ private:
 		U32 m_width = 0;
 		U32 m_height = 0;
 
-		FramebufferDescription m_fbDescr;
 		RenderTargetDescription m_rtDescr;
 	} m_exposure;
 
 	class
 	{
 	public:
+		TextureResourcePtr m_lensDirtTex;
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 
@@ -70,16 +72,7 @@ private:
 		U32 m_height = 0;
 
 		RenderTargetDescription m_rtDescr;
-		FramebufferDescription m_fbDescr;
 	} m_upscale;
-
-	class
-	{
-	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
-		TextureResourcePtr m_lensDirtTex;
-	} m_sslf;
 
 	class
 	{
@@ -90,13 +83,11 @@ private:
 
 	ANKI_USE_RESULT Error initExposure(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initUpscale(const ConfigSet& cfg);
-	ANKI_USE_RESULT Error initSslf(const ConfigSet& cfg);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg)
 	{
 		ANKI_CHECK(initExposure(cfg));
 		ANKI_CHECK(initUpscale(cfg));
-		ANKI_CHECK(initSslf(cfg));
 		return Error::NONE;
 	}
 

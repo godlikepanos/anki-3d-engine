@@ -40,8 +40,11 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 
 	for(U i = 0; i < 2; ++i)
 	{
-		ShaderProgramResourceConstantValueInitList<2> consts(m_prog);
-		consts.add("VARIANCE_CLIPPING_GAMMA", 1.7f).add("BLEND_FACTOR", 1.0f / 16.0f);
+		ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
+		consts.add("VARIANCE_CLIPPING_GAMMA", 1.7f)
+			.add("BLEND_FACTOR", 1.0f / 16.0f)
+			.add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()))
+			.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
 
 		ShaderProgramResourceMutationInitList<4> mutations(m_prog);
 		mutations.add("SHARPEN", i + 1).add("VARIANCE_CLIPPING", 1).add("TONEMAP_FIX", 1).add("YCBCR", 0);
@@ -56,14 +59,9 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 		m_rtTextures[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 			m_r->getHeight(),
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-				| TextureUsageBit::SAMPLED_COMPUTE,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"TemporalAA"));
 	}
-
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_fbDescr.bake();
 
 	return Error::NONE;
 }
@@ -71,8 +69,6 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
-	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	cmdb->bindShaderProgram(m_grProgs[m_r->getFrameCount() & 1]);
 	rgraphCtx.bindTextureAndSampler(0,
@@ -88,7 +84,9 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 
 	rgraphCtx.bindUniformBuffer(0, 1, m_r->getTonemapping().getAverageLuminanceBuffer());
 
-	drawQuad(cmdb);
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_renderRt, TextureSubresourceInfo());
+
+	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth(), m_r->getHeight());
 }
 
 void TemporalAA::populateRenderGraph(RenderingContext& ctx)
@@ -102,19 +100,16 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[m_r->getFrameCount() & 1], TextureUsageBit::NONE);
 
 	// Create pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("TemporalAA");
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("TemporalAA");
 
 	pass.setWork(runCallback, this, 0);
-	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_renderRt}}, {});
 
-	pass.newConsumer({m_runCtx.m_renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	pass.newConsumerAndProducer({m_runCtx.m_renderRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newConsumer({m_r->getGBuffer().getDepthRt(),
-		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureUsageBit::SAMPLED_COMPUTE,
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
-	pass.newConsumer({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newConsumer({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_FRAGMENT});
-
-	pass.newProducer({m_runCtx.m_renderRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	pass.newConsumer({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	pass.newConsumer({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE});
 }
 
 } // end namespace anki

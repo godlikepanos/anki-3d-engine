@@ -334,6 +334,8 @@ protected:
 	}
 
 	void fixSubresource(RenderPassDependency& dep) const;
+
+	void validateDep(const RenderPassDependency& dep);
 };
 
 /// Framebuffer attachment info.

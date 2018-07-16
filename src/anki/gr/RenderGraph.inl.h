@@ -53,8 +53,28 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 	}
 }
 
+inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& dep)
+{
+	// Validate dep
+	if(dep.m_isTexture)
+	{
+		TextureUsageBit usage = dep.m_texture.m_usage;
+		(void)usage;
+		if(m_type == Type::GRAPHICS)
+		{
+			ANKI_ASSERT(!(usage & TextureUsageBit::ANY_COMPUTE));
+		}
+		else
+		{
+			ANKI_ASSERT(!(usage & TextureUsageBit::ANY_GRAPHICS));
+		}
+	}
+}
+
 inline void RenderPassDescriptionBase::newConsumer(const RenderPassDependency& dep)
 {
+	validateDep(dep);
+
 	DynamicArray<RenderPassDependency>& consumers = (dep.m_isTexture) ? m_rtConsumers : m_buffConsumers;
 
 	consumers.emplaceBack(m_alloc, dep);
@@ -76,6 +96,8 @@ inline void RenderPassDescriptionBase::newConsumer(const RenderPassDependency& d
 
 inline void RenderPassDescriptionBase::newProducer(const RenderPassDependency& dep)
 {
+	validateDep(dep);
+
 	DynamicArray<RenderPassDependency>& producers = (dep.m_isTexture) ? m_rtProducers : m_buffProducers;
 
 	producers.emplaceBack(m_alloc, dep);

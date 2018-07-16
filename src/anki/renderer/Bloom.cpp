@@ -35,17 +35,12 @@ Error Bloom::initExposure(const ConfigSet& config)
 		m_r->create2DRenderTargetDescription(m_exposure.m_width, m_exposure.m_height, RT_PIXEL_FORMAT, "Bloom Exp");
 	m_exposure.m_rtDescr.bake();
 
-	// Create FB info
-	m_exposure.m_fbDescr.m_colorAttachmentCount = 1;
-	m_exposure.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_exposure.m_fbDescr.bake();
-
 	// init shaders
 	ANKI_CHECK(getResourceManager().loadResource("shaders/Bloom.glslp", m_exposure.m_prog));
 
-	ShaderProgramResourceConstantValueInitList<1> consts(m_exposure.m_prog);
-	consts.add(
-		"TEX_SIZE", Vec2(m_r->getDownscaleBlur().getPassWidth(MAX_U), m_r->getDownscaleBlur().getPassHeight(MAX_U)));
+	ShaderProgramResourceConstantValueInitList<2> consts(m_exposure.m_prog);
+	consts.add("FB_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height))
+		.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
 
 	const ShaderProgramResourceVariant* variant;
 	m_exposure.m_prog->getOrCreateVariant(consts.get(), variant);
@@ -64,35 +59,20 @@ Error Bloom::initUpscale(const ConfigSet& config)
 		m_r->create2DRenderTargetDescription(m_upscale.m_width, m_upscale.m_height, RT_PIXEL_FORMAT, "Bloom Upscale");
 	m_upscale.m_rtDescr.bake();
 
-	// Create FB descr
-	m_upscale.m_fbDescr.m_colorAttachmentCount = 1;
-	m_upscale.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_upscale.m_fbDescr.bake();
-
 	// init shaders
 	ANKI_CHECK(getResourceManager().loadResource("shaders/BloomUpscale.glslp", m_upscale.m_prog));
 
-	ShaderProgramResourceConstantValueInitList<1> consts(m_upscale.m_prog);
-	consts.add("TEX_SIZE", Vec2(m_upscale.m_width, m_upscale.m_height));
+	ShaderProgramResourceConstantValueInitList<3> consts(m_upscale.m_prog);
+	consts.add("FB_SIZE", UVec2(m_upscale.m_width, m_upscale.m_height))
+		.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]))
+		.add("INPUT_TEX_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));
 
 	const ShaderProgramResourceVariant* variant;
 	m_upscale.m_prog->getOrCreateVariant(consts.get(), variant);
 	m_upscale.m_grProg = variant->getProgram();
 
-	return Error::NONE;
-}
-
-Error Bloom::initSslf(const ConfigSet& cfg)
-{
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/LensDirt.ankitex", m_sslf.m_lensDirtTex));
-	ANKI_CHECK(getResourceManager().loadResource("shaders/ScreenSpaceLensFlare.glslp", m_sslf.m_prog));
-
-	ShaderProgramResourceConstantValueInitList<1> consts(m_sslf.m_prog);
-	consts.add("INPUT_TEX_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));
-
-	const ShaderProgramResourceVariant* variant;
-	m_sslf.m_prog->getOrCreateVariant(consts.get(), variant);
-	m_sslf.m_grProg = variant->getProgram();
+	// Textures
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/LensDirt.ankitex", m_upscale.m_lensDirtTex));
 
 	return Error::NONE;
 }
@@ -107,16 +87,14 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_exposureRt = rgraph.newRenderTarget(m_exposure.m_rtDescr);
 
 		// Set the render pass
-		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Main");
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
 		rpass.setWork(runExposureCallback, this, 0);
-		rpass.setFramebufferInfo(m_exposure.m_fbDescr, {{m_runCtx.m_exposureRt}}, {});
 
 		TextureSubresourceInfo inputTexSubresource;
 		inputTexSubresource.m_firstMipmap = m_r->getDownscaleBlur().getMipmapCount() - 1;
-		rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_FRAGMENT, inputTexSubresource});
-		rpass.newConsumer({m_runCtx.m_exposureRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		rpass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::STORAGE_FRAGMENT_READ});
-		rpass.newProducer({m_runCtx.m_exposureRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE, inputTexSubresource});
+		rpass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::STORAGE_COMPUTE_READ});
+		rpass.newConsumerAndProducer({m_runCtx.m_exposureRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	}
 
 	// Upscale & SSLF pass
@@ -125,13 +103,11 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_upscaleRt = rgraph.newRenderTarget(m_upscale.m_rtDescr);
 
 		// Set the render pass
-		GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("Bloom Upscale");
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Upscale");
 		rpass.setWork(runUpscaleAndSslfCallback, this, 0);
-		rpass.setFramebufferInfo(m_upscale.m_fbDescr, {{m_runCtx.m_upscaleRt}}, {});
 
-		rpass.newConsumer({m_runCtx.m_upscaleRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		rpass.newConsumer({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		rpass.newProducer({m_runCtx.m_upscaleRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		rpass.newConsumerAndProducer({m_runCtx.m_upscaleRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+		rpass.newConsumer({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_COMPUTE});
 	}
 }
 
@@ -139,7 +115,6 @@ void Bloom::runExposure(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
 	cmdb->bindShaderProgram(m_exposure.m_grProg);
 
 	TextureSubresourceInfo inputTexSubresource;
@@ -152,31 +127,27 @@ void Bloom::runExposure(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindStorageBuffer(0, 0, m_r->getTonemapping().getAverageLuminanceBuffer());
 
-	drawQuad(cmdb);
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_exposureRt, TextureSubresourceInfo());
+
+	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_exposure.m_width, m_exposure.m_height);
 }
 
 void Bloom::runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	// Upscale
-	cmdb->setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
 	cmdb->bindShaderProgram(m_upscale.m_grProg);
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_runCtx.m_exposureRt, m_r->getLinearSampler());
-	drawQuad(cmdb);
 
-	// SSLF
-	cmdb->bindShaderProgram(m_sslf.m_grProg);
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+	rgraphCtx.bindColorTextureAndSampler(0, 0, m_runCtx.m_exposureRt, m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0,
 		1,
-		m_sslf.m_lensDirtTex->getGrTextureView(),
-		m_sslf.m_lensDirtTex->getSampler(),
-		TextureUsageBit::SAMPLED_FRAGMENT);
-	drawQuad(cmdb);
+		m_upscale.m_lensDirtTex->getGrTextureView(),
+		m_upscale.m_lensDirtTex->getSampler(),
+		TextureUsageBit::SAMPLED_COMPUTE);
 
-	// Retore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
+
+	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_upscale.m_width, m_upscale.m_height);
 }
 
 } // end namespace anki

@@ -10,19 +10,15 @@
 
 #pragma anki input const F32 VARIANCE_CLIPPING_GAMMA
 #pragma anki input const F32 BLEND_FACTOR
+#pragma anki input const UVec2 FB_SIZE
+#pragma anki input const UVec2 WORKGROUP_SIZE
 
-#pragma anki start vert
-#include <shaders/QuadVert.glsl>
-#pragma anki end
-
-#pragma anki start frag
+#pragma anki start comp
 #include <shaders/Functions.glsl>
 #include <shaders/Pack.glsl>
 #include <shaders/Tonemapping.glsl>
 
-layout(location = 0) in Vec2 in_uv;
-
-layout(location = 0) out Vec3 out_color;
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_inputRt;
@@ -32,6 +28,8 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 {
 	Mat4 u_prevViewProjMatMulInvViewProjMat;
 };
+
+layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
 
 #if TONEMAP_FIX
 #	define TONEMAPPING_SET 0
@@ -47,13 +45,13 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 #	define sampleOffset(s, uv, x, y) textureLodOffset(s, uv, 0.0, IVec2(x, y)).rgb
 #endif
 
-Vec3 sharpen()
+Vec3 sharpen(Vec2 uv)
 {
-	Vec3 center = sample(u_inputRt, in_uv);
+	Vec3 center = sample(u_inputRt, uv);
 #if SHARPEN == 1
-	Vec3 near = sampleOffset(u_inputRt, in_uv, 1, 0) + sampleOffset(u_inputRt, in_uv, -1, 0);
+	Vec3 near = sampleOffset(u_inputRt, uv, 1, 0) + sampleOffset(u_inputRt, uv, -1, 0);
 #else
-	Vec3 near = sampleOffset(u_inputRt, in_uv, 0, 1) + sampleOffset(u_inputRt, in_uv, 0, -1);
+	Vec3 near = sampleOffset(u_inputRt, uv, 0, 1) + sampleOffset(u_inputRt, uv, 0, -1);
 #endif
 	near *= 0.5;
 	F32 sharpness = 1.0;
@@ -62,25 +60,34 @@ Vec3 sharpen()
 
 void main()
 {
-	F32 depth = textureLod(u_depthRt, in_uv, 0.0).r;
+	if((FB_SIZE.x % WORKGROUP_SIZE.x) != 0u || (FB_SIZE.y % WORKGROUP_SIZE.y) != 0u) // This check is free
+	{
+		if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
+		{
+			return;
+		}
+	}
+
+	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	F32 depth = textureLod(u_depthRt, uv, 0.0).r;
 
 	// Get prev uv coords
-	Vec4 v4 = u_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(in_uv), depth, 1.0);
+	Vec4 v4 = u_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
 	Vec2 oldUv = NDC_TO_UV(v4.xy / v4.w);
 
 	// Read textures
 	Vec3 historyCol = sample(u_historyRt, oldUv);
 #if SHARPEN > 0
-	Vec3 crntCol = sharpen();
+	Vec3 crntCol = sharpen(uv);
 #else
-	Vec3 crntCol = sample(u_inputRt, in_uv);
+	Vec3 crntCol = sample(u_inputRt, uv);
 #endif
 
 	// Remove ghosting by clamping the history color to neighbour's AABB
-	Vec3 near0 = sampleOffset(u_inputRt, in_uv, 1, 0);
-	Vec3 near1 = sampleOffset(u_inputRt, in_uv, 0, 1);
-	Vec3 near2 = sampleOffset(u_inputRt, in_uv, -1, 0);
-	Vec3 near3 = sampleOffset(u_inputRt, in_uv, 0, -1);
+	Vec3 near0 = sampleOffset(u_inputRt, uv, 1, 0);
+	Vec3 near1 = sampleOffset(u_inputRt, uv, 0, 1);
+	Vec3 near2 = sampleOffset(u_inputRt, uv, -1, 0);
+	Vec3 near3 = sampleOffset(u_inputRt, uv, 0, -1);
 
 #if VARIANCE_CLIPPING
 	Vec3 m1 = crntCol + near0 + near1 + near2 + near3;
@@ -121,10 +128,11 @@ void main()
 
 	// Write result
 #if YCBCR
-	out_color = yCbCrToRgb(mix(historyCol, crntCol, feedback));
+	Vec3 outColor = yCbCrToRgb(mix(historyCol, crntCol, feedback));
 #else
-	out_color = mix(historyCol, crntCol, feedback);
+	Vec3 outColor = mix(historyCol, crntCol, feedback);
 #endif
+	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
 }
 
 #pragma anki end

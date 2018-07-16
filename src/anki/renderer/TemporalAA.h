@@ -32,10 +32,11 @@ public:
 
 private:
 	Array<TexturePtr, 2> m_rtTextures;
-	FramebufferDescription m_fbDescr;
 
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs;
+
+	Array<U32, 2> m_workgroupSize = {{8, 8}};
 
 	class
 	{

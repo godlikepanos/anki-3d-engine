@@ -3,15 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki input const Vec2 TEX_SIZE
+#pragma anki input const UVec2 FB_SIZE
+#pragma anki input const UVec2 WORKGROUP_SIZE
 
-#pragma anki start vert
-#include <shaders/QuadVert.glsl>
-#pragma anki end
-
-#pragma anki start frag
+#pragma anki start comp
 #include <shaders/Common.glsl>
 #include <shaders/Tonemapping.glsl>
+
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 // Vars
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex; ///< Its the IS RT
@@ -26,23 +25,30 @@ layout(ANKI_SS_BINDING(0, 0), std140) readonly buffer ss0_
 	Vec4 u_averageLuminancePad3;
 };
 
-layout(location = 0) in Vec2 in_uv;
-layout(location = 0) out Vec4 out_color;
+layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
 
 void main()
 {
-	const Vec2 TEXEL_SIZE = 1.0 / TEX_SIZE;
+	if((FB_SIZE.x % WORKGROUP_SIZE.x) != 0u || (FB_SIZE.y % WORKGROUP_SIZE.y) != 0u) // This check is free
+	{
+		if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
+		{
+			return;
+		}
+	}
 
-	Vec3 color = textureLod(u_tex, in_uv, 0.0).rgb;
-	color += textureLod(u_tex, in_uv + TEXEL_SIZE, 0.0).rgb;
-	color += textureLod(u_tex, in_uv - TEXEL_SIZE, 0.0).rgb;
-	color += textureLod(u_tex, in_uv + Vec2(TEXEL_SIZE.x, -TEXEL_SIZE.y), 0.0).rgb;
-	color += textureLod(u_tex, in_uv + Vec2(-TEXEL_SIZE.x, TEXEL_SIZE.y), 0.0).rgb;
+	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
 
-	color /= 5.0;
+	Vec3 color = textureLod(u_tex, uv, 0.0).rgb;
+	color += textureLodOffset(u_tex, uv, 0.0, ivec2(+1, +1)).rgb;
+	color += textureLodOffset(u_tex, uv, 0.0, ivec2(-1, -1)).rgb;
+	color += textureLodOffset(u_tex, uv, 0.0, ivec2(-1, +1)).rgb;
+	color += textureLodOffset(u_tex, uv, 0.0, ivec2(+1, -1)).rgb;
+
+	color *= (1.0 / 5.0);
 
 	color = tonemap(color, u_averageLuminancePad3.x, u_thresholdScalePad2.x) * u_thresholdScalePad2.y;
 
-	out_color = Vec4(color, 0.25);
+	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(color, 0.0));
 }
 #pragma anki end
