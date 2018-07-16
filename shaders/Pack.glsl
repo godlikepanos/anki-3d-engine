@@ -59,10 +59,8 @@ Vec3 signedOctDecode(Vec3 n)
 	return outn;
 }
 
-#if GL_ES || __VERSION__ < 400
-
 // Vectorized version. See clean one at <= r1048
-U32 packUnorm4x8(in Vec4 v)
+U32 newPackUnorm4x8(Vec4 v)
 {
 	Vec4 a = clamp(v, 0.0, 1.0) * 255.0;
 	UVec4 b = UVec4(a) << UVec4(0U, 8U, 16U, 24U);
@@ -71,15 +69,13 @@ U32 packUnorm4x8(in Vec4 v)
 }
 
 // Vectorized version. See clean one at <= r1048
-Vec4 unpackUnorm4x8(in highp U32 u)
+Vec4 newUnpackUnorm4x8(highp U32 u)
 {
 	UVec4 a = UVec4(u) >> UVec4(0U, 8U, 16U, 24U);
 	UVec4 b = a & UVec4(0xFFU);
 	Vec4 c = Vec4(b);
-
 	return c * (1.0 / 255.0);
 }
-#endif
 
 // Convert from RGB to YCbCr.
 // The RGB should be in [0, 1] and the output YCbCr will be in [0, 1] as well.

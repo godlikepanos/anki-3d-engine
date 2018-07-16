@@ -11,6 +11,7 @@
 #include <anki/core/Trace.h>
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
+#include <glslang/StandAlone/DirStackFileIncluder.h>
 #include <SPIRV-Cross/spirv_glsl.hpp>
 
 namespace anki
@@ -276,6 +277,26 @@ static ANKI_USE_RESULT Error genSpirv(const ShaderCompiler::BuildContext& ctx, s
 	return Error::NONE;
 }
 
+/// Just run the preprocessor.
+static ANKI_USE_RESULT Error preprocess(const ShaderCompiler::BuildContext& ctx, std::string& src)
+{
+	const EShLanguage stage = ankiToGlslangShaderType(ctx.m_options.m_shaderType);
+
+	glslang::TShader shader(stage);
+	Array<const char*, 1> csrc = {{&ctx.m_src[0]}};
+	shader.setStrings(&csrc[0], 1);
+
+	DirStackFileIncluder includer;
+	EShMessages messages = EShMsgDefault;
+	if(!shader.preprocess(&GLSLANG_LIMITS, 450, ENoProfile, false, false, messages, &src, includer))
+	{
+		ShaderCompiler::logShaderErrorCode(shader.getInfoLog(), ctx.m_src, ctx.m_alloc);
+		return Error::USER_DATA;
+	}
+
+	return Error::NONE;
+}
+
 I32 ShaderCompiler::m_refcount = {0};
 Mutex ShaderCompiler::m_refcountMtx;
 
@@ -358,8 +379,13 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 			memcpy(&bin[0], &newSrc[0], bin.getSize());
 		}
 #else
-		bin.resize(fullSrc.getLength() + 1);
-		memcpy(&bin[0], &fullSrc[0], bin.getSize());
+		// Preprocess the source because MESA sucks and can't do it
+		std::string preprocessedSrc;
+		ANKI_CHECK(preprocess(ctx, preprocessedSrc));
+		ANKI_ASSERT(preprocessedSrc.length() > 0);
+
+		bin.resize(preprocessedSrc.length() + 1);
+		memcpy(&bin[0], &preprocessedSrc[0], bin.getSize());
 #endif
 	}
 	else
