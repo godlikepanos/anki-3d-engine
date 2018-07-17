@@ -267,7 +267,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_tonemapping->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
-	m_tonemapping->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_indirect->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
@@ -281,6 +280,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
 	m_downscale->populateRenderGraph(ctx);
+	m_tonemapping->populateRenderGraph(ctx);
 	m_bloom->populateRenderGraph(ctx);
 
 	if(m_dbg->getEnabled())

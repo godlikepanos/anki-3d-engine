@@ -185,7 +185,6 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	}
 	pass.newConsumer({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::UNIFORM_FRAGMENT});
 }
 
 } // end namespace anki

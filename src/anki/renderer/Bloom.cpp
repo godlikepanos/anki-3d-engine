@@ -93,7 +93,6 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		TextureSubresourceInfo inputTexSubresource;
 		inputTexSubresource.m_firstMipmap = m_r->getDownscaleBlur().getMipmapCount() - 1;
 		rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE, inputTexSubresource});
-		rpass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::STORAGE_COMPUTE_READ});
 		rpass.newConsumerAndProducer({m_runCtx.m_exposureRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	}
 

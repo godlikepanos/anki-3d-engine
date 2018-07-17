@@ -81,13 +81,11 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 
 	pass.setWork(runCallback, this, 0);
 
-	pass.newConsumer({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
+	pass.newConsumerAndProducer({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
 
 	TextureSubresourceInfo inputTexSubresource;
 	inputTexSubresource.m_firstMipmap = m_inputTexMip;
 	pass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE, inputTexSubresource});
-
-	pass.newProducer({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
 }
 
 void Tonemapping::run(RenderPassWorkContext& rgraphCtx)
