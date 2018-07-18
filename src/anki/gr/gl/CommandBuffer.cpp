@@ -741,7 +741,7 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 
 			glBindImageTexture(m_unit,
 				view.m_view.m_glName,
-				m_img->getSubresource().m_firstMipmap,
+				0,
 				GL_TRUE,
 				0,
 				GL_READ_WRITE,
@@ -1376,19 +1376,76 @@ void CommandBuffer::setBufferBarrier(
 void CommandBuffer::setTextureSurfaceBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {
-	// Do nothing
+	TextureSubresourceInfo subresource;
+	setTextureBarrier(tex, prevUsage, nextUsage, subresource);
 }
 
 void CommandBuffer::setTextureVolumeBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
 {
-	// Do nothing
+	TextureSubresourceInfo subresource;
+	setTextureBarrier(tex, prevUsage, nextUsage, subresource);
 }
 
 void CommandBuffer::setTextureBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource)
 {
-	// Do nothing for GL
+	class Cmd final : public GlCommand
+	{
+	public:
+		GLenum m_barrier;
+
+		Cmd(GLenum barrier)
+			: m_barrier(barrier)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glMemoryBarrier(m_barrier);
+			return Error::NONE;
+		}
+	};
+
+	const TextureUsageBit usage = nextUsage;
+	GLenum e = 0;
+
+	if(!!(usage & TextureUsageBit::SAMPLED_ALL))
+	{
+		e |= GL_TEXTURE_FETCH_BARRIER_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::IMAGE_ALL))
+	{
+		e |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::TRANSFER_DESTINATION))
+	{
+		e |= GL_TEXTURE_UPDATE_BARRIER_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
+	{
+
+		e |= GL_FRAMEBUFFER_BARRIER_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::CLEAR))
+	{
+		// No idea
+	}
+
+	if(!!(usage & TextureUsageBit::GENERATE_MIPMAPS))
+	{
+		// No idea
+	}
+
+	if(e != 0)
+	{
+		ANKI_GL_SELF(CommandBufferImpl);
+		self.pushBackNewCommand<Cmd>(e);
+	}
 }
 
 void CommandBuffer::clearTextureView(TextureViewPtr texView, const ClearValue& clearValue)

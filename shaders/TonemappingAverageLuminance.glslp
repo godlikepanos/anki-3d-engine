@@ -11,29 +11,34 @@
 #include <shaders/Common.glsl>
 #include <shaders/Tonemapping.glsl>
 
-const U32 WORKGROUP_SIZE_X = 16u;
-const U32 WORKGROUP_SIZE_Y = 16u;
-const U32 WORKGROUP_SIZE = WORKGROUP_SIZE_X * WORKGROUP_SIZE_Y;
+const UVec2 PREFERABLE_WG_SIZE = UVec2(32u, 32u);
 
-layout(local_size_x = WORKGROUP_SIZE_X, local_size_y = WORKGROUP_SIZE_Y, local_size_z = 1) in;
+// Find a WG size that is dividable to the input tex size
+const UVec2 WORKGROUP_SIZE = INPUT_TEX_SIZE / ((INPUT_TEX_SIZE + PREFERABLE_WG_SIZE - 1u) / PREFERABLE_WG_SIZE);
+const U32 WG_SIZE = WORKGROUP_SIZE.x * WORKGROUP_SIZE.y;
 
-const U32 PIXEL_READ_X = INPUT_TEX_SIZE.x / WORKGROUP_SIZE_X;
-const U32 PIXEL_READ_Y = INPUT_TEX_SIZE.y / WORKGROUP_SIZE_Y;
+const UVec2 TRIMMED_INPUT_TEX_SIZE = (INPUT_TEX_SIZE / WORKGROUP_SIZE) * WORKGROUP_SIZE;
+
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
 
 #define TONEMAPPING_RESOURCE_AS_BUFFER 1
 #include <shaders/TonemappingResources.glsl>
 
-shared F32 s_avgLum[WORKGROUP_SIZE];
+shared F32 s_avgLum[WG_SIZE];
 
 void main()
 {
-	// Gather the log-average luminance of a tile
-	F32 avgLum = 0.0;
+	// Gather the log-average luminance of a tile. It will miss some pixels but not too many
+	const U32 PIXEL_READ_X = TRIMMED_INPUT_TEX_SIZE.x / WORKGROUP_SIZE.x;
+	const U32 PIXEL_READ_Y = TRIMMED_INPUT_TEX_SIZE.y / WORKGROUP_SIZE.y;
+
 	U32 yStart = gl_LocalInvocationID.y * PIXEL_READ_Y;
 	U32 xStart = gl_LocalInvocationID.x * PIXEL_READ_X;
-	ANKI_LOOP for(U32 y = 0; y < PIXEL_READ_Y; ++y)
+
+	F32 avgLum = 0.0;
+	ANKI_UNROLL for(U32 y = 0; y < PIXEL_READ_Y; ++y)
 	{
 		ANKI_UNROLL for(U32 x = 0; x < PIXEL_READ_X; ++x)
 		{
@@ -54,7 +59,7 @@ void main()
 	barrier();
 
 	// Gather the results into one
-	ANKI_LOOP for(U32 s = WORKGROUP_SIZE / 2u; s > 0u; s >>= 1u)
+	ANKI_LOOP for(U32 s = WG_SIZE / 2u; s > 0u; s >>= 1u)
 	{
 		if(gl_LocalInvocationIndex < s)
 		{
@@ -66,12 +71,12 @@ void main()
 	}
 
 	// Write the result
-	ANKI_BRANCH if(gl_LocalInvocationIndex == 0)
+	ANKI_BRANCH if(gl_LocalInvocationIndex == 0u)
 	{
 #if LOG_AVG
-		F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y)));
+		F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(TRIMMED_INPUT_TEX_SIZE.x * TRIMMED_INPUT_TEX_SIZE.y)));
 #else
-		F32 crntLum = s_avgLum[0] * (1.0 / F32(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y));
+		F32 crntLum = s_avgLum[0] * (1.0 / F32(TRIMMED_INPUT_TEX_SIZE.x * TRIMMED_INPUT_TEX_SIZE.y));
 #endif
 
 #if 1

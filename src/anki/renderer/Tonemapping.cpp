@@ -24,8 +24,7 @@ Error Tonemapping::init(const ConfigSet& cfg)
 
 Error Tonemapping::initInternal(const ConfigSet& initializer)
 {
-	m_inputTexMip =
-		computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), AVERAGE_LUMINANCE_RENDER_TARGET_SIZE) - 1;
+	m_inputTexMip = m_r->getDownscaleBlur().getMipmapCount() - 2;
 
 	// Create program
 	ANKI_CHECK(getResourceManager().loadResource("shaders/TonemappingAverageLuminance.glslp", m_prog));
