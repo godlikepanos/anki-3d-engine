@@ -196,8 +196,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	// Push consts
 	if(rsrc.push_constant_buffers.size() == 1)
 	{
-		const U32 blockSize =
-			spvc.get_declared_struct_size(spvc.get_type(rsrcActive.push_constant_buffers[0].base_type_id));
+		const U32 blockSize = spvc.get_declared_struct_size(spvc.get_type(rsrc.push_constant_buffers[0].base_type_id));
 		ANKI_ASSERT(blockSize > 0);
 		ANKI_ASSERT(blockSize % 16 == 0 && "Should be aligned");
 		ANKI_ASSERT(blockSize <= getGrManagerImpl().getDeviceCapabilities().m_pushConstantsSize);

@@ -13,8 +13,8 @@ Config::Config()
 {
 	// Renderer
 	newOption("r.renderingQuality", 1.0, "Rendering quality factor");
-	newOption("r.lodDistance0", 10.0, "Distance that will be used to calculate the LOD 0");
-	newOption("r.lodDistance1", 20.0, "Distance that will be used to calculate the LOD 1");
+	newOption("r.lodDistance0", 20.0, "Distance that will be used to calculate the LOD 0");
+	newOption("r.lodDistance1", 40.0, "Distance that will be used to calculate the LOD 1");
 	newOption("r.clusterSizeX", 32);
 	newOption("r.clusterSizeY", 26);
 	newOption("r.clusterSizeZ", 32);

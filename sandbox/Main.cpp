@@ -183,9 +183,9 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 	if(in.getKey(KeyCode::D))
 		mover->moveLocalX(dist);
-	if(in.getKey(KeyCode::Z))
-		mover->moveLocalY(dist);
 	if(in.getKey(KeyCode::SPACE))
+		mover->moveLocalY(dist);
+	if(in.getKey(KeyCode::C))
 		mover->moveLocalY(-dist);
 	if(in.getKey(KeyCode::W))
 		mover->moveLocalZ(-dist);

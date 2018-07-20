@@ -46,19 +46,26 @@ layout(std140, ANKI_UBO_BINDING(0, 3), row_major) uniform ubo0_
 
 layout(location = 0) out Vec3 out_color;
 
-const U32 MAX_SAMPLES_PER_CLUSTER = 4u;
-const F32 DIST_BETWEEN_SAMPLES = 0.25;
+const U32 MAX_ITERATIONS = 256u;
+const F32 JITTER_DISTANCE = 10.0; // In meters
 const F32 HISTORY_FEEDBACK = 1.0 / 16.0;
 
 // Return the diffuse color without taking into account the diffuse term of the particles.
-Vec3 computeLightColor(Vec3 fragPos, U32 plightCount, U32 plightIdx, U32 slightCount, U32 slightIdx)
+Vec3 computeLightColor(Vec3 fragPos, U32 idxOffset)
 {
-	Vec3 outColor = Vec3(0.0);
+	Vec3 color = Vec3(0.0);
+
+	// Skip decals
+	U32 count = u_lightIndices[idxOffset];
+	idxOffset += count + 1u;
 
 	// Point lights
-	ANKI_LOOP while(plightCount-- != 0)
+	count = u_lightIndices[idxOffset++];
+	U32 idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
 	{
-		PointLight light = u_pointLights[u_lightIndices[plightIdx++]];
+		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
+
 		Vec3 frag2Light = light.m_posRadius.xyz - fragPos;
 		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
 
@@ -70,13 +77,16 @@ Vec3 computeLightColor(Vec3 fragPos, U32 plightCount, U32 plightIdx, U32 slightC
 		}
 #endif
 
-		outColor += light.m_diffuseColorTileSize.rgb * factor;
+		color += light.m_diffuseColorTileSize.rgb * factor;
 	}
 
 	// Spot lights
-	ANKI_LOOP while(slightCount-- != 0)
+	count = u_lightIndices[idxOffset++];
+	idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
 	{
-		SpotLight light = u_spotLights[u_lightIndices[slightIdx++]];
+		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
+
 		Vec3 frag2Light = light.m_posRadius.xyz - fragPos;
 		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
 
@@ -93,23 +103,23 @@ Vec3 computeLightColor(Vec3 fragPos, U32 plightCount, U32 plightIdx, U32 slightC
 		}
 #endif
 
-		outColor += light.m_diffuseColorShadowmapId.rgb * factor;
+		color += light.m_diffuseColorShadowmapId.rgb * factor;
 	}
 
-	return outColor;
+	return color;
 }
 
-Vec3 readHistory(Vec3 ndc, out F32 historyFeedback)
+Vec3 readHistory(Vec3 worldPos, out F32 historyFeedback)
 {
-	Vec4 v4 = u_prevViewProjMatMulInvViewProjMat2 * Vec4(ndc, 1.0);
-	v4.xy /= v4.w;
+	Vec4 v4 = u_prevViewProjMat * Vec4(worldPos, 1.0);
+	Vec2 ndc = v4.xy / v4.w;
 
-	Vec2 oldUv = NDC_TO_UV(v4.xy);
+	Vec2 oldUv = NDC_TO_UV(ndc);
 	Vec3 history = textureLod(u_historyRt, oldUv, 0.0).rgb;
 
 	// Compute the history blend. If clip falls outside NDC then it's 1.0 (use only current fog term) and if it's
 	// inside NDC then use the HISTORY_FEEDBACK value
-	Vec2 posNdc = abs(v4.xy);
+	Vec2 posNdc = abs(ndc);
 	historyFeedback = max(posNdc.x, posNdc.y);
 	historyFeedback = min(floor(historyFeedback), 1.0 - HISTORY_FEEDBACK);
 	historyFeedback += HISTORY_FEEDBACK;
@@ -120,83 +130,65 @@ Vec3 readHistory(Vec3 ndc, out F32 historyFeedback)
 void main()
 {
 	F32 depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
+	Vec2 ndc = UV_TO_NDC(in_uv);
 
-	Vec3 ndc = Vec3(UV_TO_NDC(in_uv), depth);
-
-	Vec3 farPos;
-	farPos.z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
-	farPos.xy = ndc.xy * u_unprojectionParams.xy * farPos.z;
-	Vec3 viewDir = normalize(farPos);
-
+	// Compute some cluster stuff
 	U32 i = U32(in_uv.x * F32(CLUSTER_COUNT.x));
 	U32 j = U32(in_uv.y * F32(CLUSTER_COUNT.y));
 	U32 ij = j * CLUSTER_COUNT.x + i;
 
+	// Get a rand jitter distance
 	Vec3 noiseTexUv = Vec3(Vec2(FB_SIZE) / Vec2(NOISE_MAP_SIZE) * in_uv + Vec2(0.0, u_noiseYOffset), u_noiseLayer);
-	F32 randFactor = clamp(texture(u_noiseTex, noiseTexUv).r, EPSILON, 1.0 - EPSILON);
+	F32 randFactor = texture(u_noiseTex, noiseTexUv).r;
+	F32 randDistance = JITTER_DISTANCE * randFactor;
 
-	F32 kNear = -u_near;
-	Vec3 newCol = Vec3(0.0);
-	ANKI_LOOP for(U32 k = 0u; k < CLUSTER_COUNT.z; ++k)
+	// Get world position
+	Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	// Compute the distances from the camera
+	F32 maxDistFromTheCamera = length(worldPos - u_cameraPos);
+
+	worldPos4 = u_invViewProjMat * Vec4(ndc, EPSILON, 1.0);
+	Vec3 nearWorldPos = worldPos4.xyz / worldPos4.w;
+	F32 minDistFromTheCamera = length(nearWorldPos - u_cameraPos);
+
+	// Ray march
+	Vec3 crntColor = Vec3(0.0);
+	const F32 FRACTION = 1.0 / F32(MAX_ITERATIONS - 1u);
+	ANKI_LOOP for(F32 f = FRACTION; f < 1.0; f += FRACTION)
 	{
-		F32 kFar = -computeClusterFar(u_clustererMagic, k);
+		// Compute new world pos
+		F32 f2 = f * f; // Higher detail closer to the camera
+		F32 distFromTheCamera = (u_far - minDistFromTheCamera - JITTER_DISTANCE) * f;
+		distFromTheCamera += minDistFromTheCamera + randDistance;
 
-		//
-		// Compute sample count
-		//
-		F32 diff = kNear - kFar;
-		F32 samplesf = clamp(diff / DIST_BETWEEN_SAMPLES, 1.0, F32(MAX_SAMPLES_PER_CLUSTER));
-		F32 dist = 1.0 / samplesf;
-		F32 start = dist * randFactor;
-
-		//
-		// Find index ranges
-		//
-		U32 clusterIdx = k * (CLUSTER_COUNT.x * CLUSTER_COUNT.y) + ij;
-		U32 idxOffset = u_clusters[clusterIdx];
-
-		// Skip decals
-		U32 count = u_lightIndices[idxOffset];
-		idxOffset += count + 1;
-
-		U32 plightCount = u_lightIndices[idxOffset++];
-		U32 plightIdx = idxOffset;
-		idxOffset += plightCount;
-
-		U32 slightCount = u_lightIndices[idxOffset++];
-		U32 slightIdx = idxOffset;
-
-		ANKI_LOOP for(F32 factor = start; factor <= 1.0; factor += dist)
+		if(distFromTheCamera >= maxDistFromTheCamera)
 		{
-			F32 zMedian = mix(kNear, kFar, factor);
-
-			ANKI_BRANCH if(zMedian < farPos.z)
-			{
-				k = CLUSTER_COUNT.z; // Break the outer loop
-				break;
-			}
-
-			Vec3 fragPos = viewDir * (zMedian / viewDir.z);
-
-			// Move to world space
-			Vec4 newWorldPos4 = u_invViewMat * Vec4(fragPos, 1.0);
-
-			newCol += computeLightColor(newWorldPos4.xyz, plightCount, plightIdx, slightCount, slightIdx);
+			break;
 		}
 
-		kNear = kFar;
+		Vec3 newWorldPos = u_cameraPos + normalize(worldPos - u_cameraPos) * distFromTheCamera;
+
+		// Compute cluster idx
+		U32 k = computeClusterK(u_clustererMagic, newWorldPos);
+		U32 clusterIdx = k * (CLUSTER_COUNT.x * CLUSTER_COUNT.y) + ij;
+		U32 lightIdxOffset = u_clusters[clusterIdx];
+
+		// Do lighting
+		crntColor += computeLightColor(newWorldPos, lightIdxOffset);
 	}
 
-	newCol *= diffuseLambert(u_fogParticleColor);
+	crntColor *= diffuseLambert(u_fogParticleColor);
 
 	// Read history
 	F32 historyFeedback;
-	Vec3 history = readHistory(ndc, historyFeedback);
+	Vec3 history = readHistory(worldPos, historyFeedback);
 
 	// Fix ghosting
-	history = max(history, newCol);
+	history = max(history, crntColor);
 
 	// Blend
-	out_color = mix(history, newCol, historyFeedback);
+	out_color = mix(history, crntColor, historyFeedback);
 }
 #pragma anki end
