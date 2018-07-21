@@ -36,7 +36,7 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs;
 
-	Array<U32, 2> m_workgroupSize = {{8, 8}};
+	Array<U32, 2> m_workgroupSize = {{16, 16}};
 
 	class
 	{

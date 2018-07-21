@@ -36,7 +36,6 @@ layout(std140, ANKI_UBO_BINDING(0, 3), row_major) uniform ubo0_
 {
 	Vec4 u_linearizeNoiseTexOffsetLayer;
 	Vec4 u_fogParticleColorPad1;
-	Mat4 u_prevViewProjMatMulInvViewProjMat2; // TODO Light common ubo has that. Maybe remove it
 };
 
 #define u_linearize UNIFORM(u_linearizeNoiseTexOffsetLayer.xy)

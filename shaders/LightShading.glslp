@@ -38,7 +38,7 @@ void main()
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 5
+#define LIGHT_TEX_BINDING 6
 #define LIGHT_INDIRECT
 #define LIGHT_LIGHTS
 #define LIGHT_COMMON_UNIS
@@ -49,6 +49,7 @@ layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
 layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_ssrRt;
+layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_ssaoRt;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;
@@ -136,6 +137,10 @@ void main()
 	GbufferInfo gbuffer;
 	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_uv, 0.0, gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
+
+	// SSAO
+	F32 ssao = textureLod(u_ssaoRt, in_uv, 0.0).r;
+	gbuffer.m_diffuse *= ssao;
 
 	// Ambient and emissive color
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;

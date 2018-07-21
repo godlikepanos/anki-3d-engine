@@ -12,6 +12,7 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/ForwardShading.h>
 #include <anki/renderer/DepthDownscale.h>
+#include <anki/renderer/Ssao.h>
 #include <anki/renderer/Ssr.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
@@ -148,14 +149,15 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 			m_r->getNearestSampler());
 		rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getSsr().getRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getSsao().getRt(), m_r->getLinearSampler());
 
-		rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
 		rgraphCtx.bindColorTextureAndSampler(
-			0, 6, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
+			0, 7, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
 		rgraphCtx.bindColorTextureAndSampler(
-			0, 7, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
+			0, 8, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
 		cmdb->bindTextureAndSampler(0,
-			8,
+			9,
 			m_r->getIndirect().getIntegrationLut(),
 			m_r->getIndirect().getIntegrationLutSampler(),
 			TextureUsageBit::SAMPLED_FRAGMENT);
@@ -229,6 +231,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	// Refl & indirect
 	pass.newConsumer({m_r->getSsr().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});

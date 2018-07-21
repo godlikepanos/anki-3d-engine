@@ -144,7 +144,6 @@ void Volumetric::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	{
 		Vec4 m_linearizeNoiseTexOffsetLayer;
 		Vec4 m_fogParticleColorPad1;
-		Mat4 m_prevViewProjMatMulInvViewProjMat;
 	};
 
 	Unis* uniforms = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 3);
@@ -156,8 +155,6 @@ void Volumetric::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	uniforms->m_linearizeNoiseTexOffsetLayer.z() = m_r->getFrameCount() * texelOffset;
 	uniforms->m_linearizeNoiseTexOffsetLayer.w() = m_r->getFrameCount() & (m_main.m_noiseTex->getLayerCount() - 1);
 	uniforms->m_fogParticleColorPad1 = Vec4(m_main.m_fogParticleColor, 0.0);
-	uniforms->m_prevViewProjMatMulInvViewProjMat =
-		ctx.m_prevViewProjMat * ctx.m_renderQueue->m_viewProjectionMatrix.getInverse();
 
 	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
 	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);

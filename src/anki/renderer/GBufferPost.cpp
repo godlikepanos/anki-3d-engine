@@ -6,7 +6,6 @@
 #include <anki/renderer/GBufferPost.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/GBuffer.h>
-#include <anki/renderer/Ssao.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/misc/ConfigSet.h>
 
@@ -69,8 +68,6 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 
-	rpass.newConsumer({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-
 	rpass.newProducer({m_r->getGBuffer().getColorRt(0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 	rpass.newProducer({m_r->getGBuffer().getColorRt(1), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 }
@@ -92,14 +89,13 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 		m_r->getGBuffer().getDepthRt(),
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getSsao().getRt(), m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0,
-		2,
+		1,
 		(rsrc.m_diffDecalTexView) ? rsrc.m_diffDecalTexView : m_r->getDummyTextureView(),
 		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(0,
-		3,
+		2,
 		(rsrc.m_specularRoughnessDecalTexView) ? rsrc.m_specularRoughnessDecalTexView : m_r->getDummyTextureView(),
 		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
