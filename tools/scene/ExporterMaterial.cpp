@@ -22,6 +22,7 @@ const char* MATERIAL_TEMPLATE = R"(<?xml version="1.0" encoding="UTF-8" ?>
 	
 	<inputs>
 		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
+		<input shaderInput="prevMvp" builtin="PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX"/>
 		<input shaderInput="rotationMat" builtin="ROTATION_MATRIX"/>
 		%parallaxInput%
 	

@@ -35,8 +35,9 @@ void ModelPatch::getRenderingDataSub(
 	{
 		RenderingKey mtlKey = key;
 		mtlKey.m_lod = min<U>(key.m_lod, m_mtl->getLodCount() - 1);
+		mtlKey.m_skinned = m_model->getSkeleton().isCreated();
 
-		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey, m_model->getSkeleton().isCreated());
+		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey);
 
 		inf.m_program = variant.getShaderProgram();
 	}

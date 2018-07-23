@@ -21,15 +21,20 @@ layout(location = 3) in mediump Vec3 in_bitangent;
 layout(location = 4) in mediump F32 in_distFromTheCamera; // Parallax
 layout(location = 5) in mediump Vec3 in_eyeTangentSpace; // Parallax
 layout(location = 6) in mediump Vec3 in_normalTangentSpace; // Parallax
+
+#	if VELOCITY
+layout(location = 7) in mediump Vec2 in_velocity; // Velocity
+#	endif
 #endif // PASS == PASS_GB_FS
 
 //
 // Output
 //
 #if PASS == PASS_GB_FS || PASS == PASS_EZ
-layout(location = 0) out Vec4 out_msRt0;
-layout(location = 1) out Vec4 out_msRt1;
-layout(location = 2) out Vec4 out_msRt2;
+layout(location = 0) out Vec4 out_gbuffer0;
+layout(location = 1) out Vec4 out_gbuffer1;
+layout(location = 2) out Vec4 out_gbuffer2;
+layout(location = 3) out Vec2 out_gbuffer3;
 #endif
 
 //
@@ -136,13 +141,14 @@ Vec2 computeTextureCoordParallax(in sampler2D heightMap, in Vec2 uv, in F32 heig
 }
 
 // Write the data to FAIs
-void writeRts(in Vec3 diffColor, // from 0 to 1
-	in Vec3 normal,
-	in Vec3 specularColor,
-	in F32 roughness,
-	in F32 subsurface,
-	in Vec3 emission,
-	in F32 metallic)
+void writeRts(Vec3 diffColor,
+	Vec3 normal,
+	Vec3 specularColor,
+	F32 roughness,
+	F32 subsurface,
+	Vec3 emission,
+	F32 metallic,
+	Vec2 velocity)
 {
 	GbufferInfo g;
 	g.m_diffuse = diffColor;
@@ -152,6 +158,7 @@ void writeRts(in Vec3 diffColor, // from 0 to 1
 	g.m_subsurface = subsurface;
 	g.m_emission = (emission.r + emission.g + emission.b) / 3.0;
 	g.m_metallic = metallic;
-	writeGBuffer(g, out_msRt0, out_msRt1, out_msRt2);
+	g.m_velocity = velocity;
+	writeGBuffer(g, out_gbuffer0, out_gbuffer1, out_gbuffer2, out_gbuffer3);
 }
 #endif // PASS == PASS_GB_FS

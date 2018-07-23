@@ -311,6 +311,7 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 			.allocateAndSetupUniforms(self.m_particleEmitterResource->getMaterial()->getDescriptorSetIndex(),
 				ctx,
 				trf,
+				trf,
 				*ctx.m_stagingGpuAllocator);
 
 		// Draw

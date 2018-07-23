@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/resource/Common.h>
+#include <anki/util/Hash.h>
 
 namespace anki
 {
@@ -26,40 +27,50 @@ public:
 	Pass m_pass;
 	U8 m_lod;
 	U8 m_instanceCount;
+	Bool8 m_skinned;
+	Bool8 m_velocity;
 
-	RenderingKey(Pass pass, U8 lod, U instanceCount)
+	RenderingKey(Pass pass, U8 lod, U instanceCount, Bool8 skinned, Bool8 velocity)
 		: m_pass(pass)
 		, m_lod(lod)
 		, m_instanceCount(instanceCount)
+		, m_skinned(skinned)
+		, m_velocity(velocity)
 	{
 		ANKI_ASSERT(m_instanceCount <= MAX_INSTANCES && m_instanceCount != 0);
 		ANKI_ASSERT(m_lod <= MAX_LOD_COUNT);
 	}
 
 	RenderingKey()
-		: RenderingKey(Pass::GB_FS, 0, 1)
+		: RenderingKey(Pass::GB_FS, 0, 1, false, false)
 	{
 	}
 
 	RenderingKey(const RenderingKey& b)
-		: RenderingKey(b.m_pass, b.m_lod, b.m_instanceCount)
+		: RenderingKey(b.m_pass, b.m_lod, b.m_instanceCount, b.m_skinned, b.m_velocity)
 	{
+	}
+
+	Bool operator==(const RenderingKey& b) const
+	{
+		return m_pass == b.m_pass && m_lod == b.m_lod && m_instanceCount == b.m_instanceCount
+			   && m_skinned == b.m_skinned && m_velocity == b.m_velocity;
 	}
 };
 
 template<>
 constexpr Bool isPacked<RenderingKey>()
 {
-	return sizeof(RenderingKey) == 3;
+	return sizeof(RenderingKey) == 5;
 }
 
 /// The hash function
 class RenderingKeyHasher
 {
 public:
-	PtrSize operator()(const RenderingKey& key) const
+	U64 operator()(const RenderingKey& key) const
 	{
-		return U8(key.m_pass) | (key.m_lod << 8) | (key.m_instanceCount << 16);
+		return computeHash(&key, sizeof(key));
 	}
 };
 
@@ -69,7 +80,7 @@ class RenderingKeyEqual
 public:
 	Bool operator()(const RenderingKey& a, const RenderingKey& b) const
 	{
-		return a.m_pass == b.m_pass && a.m_lod == b.m_lod && a.m_instanceCount == b.m_instanceCount;
+		return a == b;
 	}
 };
 

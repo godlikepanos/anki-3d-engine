@@ -84,7 +84,7 @@ inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 	b = far / near;
 }
 
-const U GBUFFER_COLOR_ATTACHMENT_COUNT = 3;
+const U GBUFFER_COLOR_ATTACHMENT_COUNT = 4;
 
 /// Downsample and blur down to a texture with size DOWNSCALE_BLUR_DOWN_TO
 const U DOWNSCALE_BLUR_DOWN_TO = 32;

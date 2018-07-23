@@ -26,7 +26,8 @@ static const Array<BuiltinVarInfo, U(BuiltinMaterialVariableId::COUNT) - 1> BUIL
 		{"NORMAL_MATRIX", ShaderVariableDataType::MAT3, true},
 		{"ROTATION_MATRIX", ShaderVariableDataType::MAT3, true},
 		{"CAMERA_ROTATION_MATRIX", ShaderVariableDataType::MAT3, false},
-		{"CAMERA_POSITION", ShaderVariableDataType::VEC3, false}}};
+		{"CAMERA_POSITION", ShaderVariableDataType::VEC3, false},
+		{"PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX", ShaderVariableDataType::MAT4, true}}};
 
 MaterialVariable::MaterialVariable()
 {
@@ -117,7 +118,8 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 			return Error::USER_DATA;
 		}
 
-		if(mutatorName == "INSTANCE_COUNT" || mutatorName == "PASS" || mutatorName == "LOD" || mutatorName == "BONES")
+		if(mutatorName == "INSTANCE_COUNT" || mutatorName == "PASS" || mutatorName == "LOD" || mutatorName == "BONES"
+			|| mutatorName == "VELOCITY")
 		{
 			ANKI_RESOURCE_LOGE("Cannot list builtin mutator \"%s\"", &mutatorName[0]);
 			return Error::USER_DATA;
@@ -239,6 +241,27 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 			if(m_bonesMutator->getValues()[i] != I(i))
 			{
 				ANKI_RESOURCE_LOGE("Values of the BONES mutator in the program are not the expected");
+				return Error::USER_DATA;
+			}
+		}
+
+		++builtinMutatorCount;
+	}
+
+	m_velocityMutator = m_prog->tryFindMutator("VELOCITY");
+	if(m_velocityMutator)
+	{
+		if(m_velocityMutator->getValues().getSize() != 2)
+		{
+			ANKI_RESOURCE_LOGE("Mutator VELOCITY should have 2 values in the program");
+			return Error::USER_DATA;
+		}
+
+		for(U i = 0; i < m_velocityMutator->getValues().getSize(); ++i)
+		{
+			if(m_velocityMutator->getValues()[i] != I(i))
+			{
+				ANKI_RESOURCE_LOGE("Values of the VELOCITY mutator in the program are not the expected");
 				return Error::USER_DATA;
 			}
 		}
@@ -493,7 +516,7 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 	return Error::NONE;
 }
 
-const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& key_, Bool skinned) const
+const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& key_) const
 {
 	RenderingKey key = key_;
 	key.m_lod = min<U>(m_lodCount - 1, key.m_lod);
@@ -503,18 +526,19 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		ANKI_ASSERT(key.m_instanceCount == 1);
 	}
 
-	ANKI_ASSERT(!skinned || m_bonesMutator);
+	ANKI_ASSERT(!key.m_skinned || m_bonesMutator);
+	ANKI_ASSERT(!key.m_velocity || m_velocityMutator);
 
 	key.m_instanceCount = 1 << getInstanceGroupIdx(key.m_instanceCount);
 
-	MaterialVariant& variant =
-		m_variantMatrix[U(key.m_pass)][key.m_lod][getInstanceGroupIdx(key.m_instanceCount)][skinned];
+	MaterialVariant& variant = m_variantMatrix[U(key.m_pass)][key.m_lod][getInstanceGroupIdx(key.m_instanceCount)]
+											  [key.m_skinned][key.m_velocity];
 	LockGuard<SpinLock> lock(m_variantMatrixMtx);
 
 	if(variant.m_variant == nullptr)
 	{
 		const U mutatorCount = m_mutations.getSize() + ((m_instanceMutator) ? 1 : 0) + ((m_passMutator) ? 1 : 0)
-							   + ((m_lodMutator) ? 1 : 0) + ((m_bonesMutator) ? 1 : 0);
+							   + ((m_lodMutator) ? 1 : 0) + ((m_bonesMutator) ? 1 : 0) + ((m_velocityMutator) ? 1 : 0);
 
 		DynamicArrayAuto<ShaderProgramResourceMutation> mutations(getTempAllocator());
 		mutations.create(mutatorCount);
@@ -548,7 +572,14 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		if(m_bonesMutator)
 		{
 			mutations[count].m_mutator = m_bonesMutator;
-			mutations[count].m_value = skinned != 0;
+			mutations[count].m_value = key.m_skinned != 0;
+			++count;
+		}
+
+		if(m_velocityMutator)
+		{
+			mutations[count].m_mutator = m_velocityMutator;
+			mutations[count].m_value = key.m_velocity != 0;
 			++count;
 		}
 

@@ -22,6 +22,7 @@ public:
 	Mat4 m_viewMatrix;
 	Mat4 m_projectionMatrix;
 	Mat4 m_viewProjectionMatrix;
+	Mat4 m_previousViewProjectionMatrix;
 };
 
 /// Some options that can be used as hints in debug drawcalls.

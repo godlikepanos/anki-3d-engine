@@ -380,8 +380,8 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTextureAndSampler(
 		GBUFFER_RT2_BINDING.x(), GBUFFER_RT2_BINDING.y(), m_ctx.m_gbufferColorRts[2], m_r->getNearestSampler());
 
-	rgraphCtx.bindTextureAndSampler(0,
-		GBUFFER_COLOR_ATTACHMENT_COUNT,
+	rgraphCtx.bindTextureAndSampler(GBUFFER_DEPTH_BINDING.x(),
+		GBUFFER_DEPTH_BINDING.y(),
 		m_ctx.m_gbufferDepthRt,
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());

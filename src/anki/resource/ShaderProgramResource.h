@@ -16,9 +16,6 @@ struct te_variable;
 namespace anki
 {
 
-// Forward
-class RenderingKey;
-
 /// @addtogroup resource
 /// @{
 

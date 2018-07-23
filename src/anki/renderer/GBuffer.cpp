@@ -39,7 +39,8 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 		m_r->getWidth(), m_r->getHeight(), GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT, "GBuffer depth");
 	m_depthRtDescr.bake();
 
-	static const char* rtNames[GBUFFER_COLOR_ATTACHMENT_COUNT] = {"GBuffer rt0", "GBuffer rt1", "GBuffer rt2"};
+	static const Array<const char*, GBUFFER_COLOR_ATTACHMENT_COUNT> rtNames = {
+		{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
 		m_colorRtDescrs[i] = m_r->create2DRenderTargetDescription(
