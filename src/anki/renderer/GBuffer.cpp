@@ -55,12 +55,11 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 #endif
 
 	m_fbDescr.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = loadop;
-	m_fbDescr.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 0.0, 0.0}};
-	m_fbDescr.m_colorAttachments[1].m_loadOperation = loadop;
-	m_fbDescr.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0, 1.0, 0.0, 0.0}};
-	m_fbDescr.m_colorAttachments[2].m_loadOperation = loadop;
-	m_fbDescr.m_colorAttachments[2].m_clearValue.m_colorf = {{0.0, 0.0, 1.0, 0.0}};
+	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+	{
+		m_fbDescr.m_colorAttachments[i].m_loadOperation = loadop;
+		m_fbDescr.m_colorAttachments[i].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 0.0}};
+	}
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;

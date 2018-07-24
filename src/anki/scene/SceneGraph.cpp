@@ -272,7 +272,8 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	// Update children
 	if(!err)
 	{
-		err = node.visitChildren([&](SceneNode& child) -> Error { return updateNode(prevTime, crntTime, child); });
+		err = node.visitChildrenMaxDepth(
+			0, [&](SceneNode& child) -> Error { return updateNode(prevTime, crntTime, child); });
 	}
 
 	// Frame update
@@ -288,46 +289,46 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_NODES_UPDATE);
 
-	IntrusiveList<SceneNode>::Iterator& it = ctx.m_crntNode;
 	IntrusiveList<SceneNode>::ConstIterator end = m_nodes.getEnd();
-	SpinLock& lock = ctx.m_crntNodeLock;
 
 	Bool quit = false;
 	Error err = Error::NONE;
 	while(!quit && !err)
 	{
-		// Fetch a few scene nodes
-		Array<SceneNode*, NODE_UPDATE_BATCH> nodes = {{
-			nullptr,
-		}};
-		lock.lock();
-		for(SceneNode*& node : nodes)
+		// Fetch a batch of scene nodes that don't have parent
+		Array<SceneNode*, NODE_UPDATE_BATCH> batch;
+		U batchSize = 0;
+
 		{
-			if(it != end)
+			LockGuard<SpinLock> lock(ctx.m_crntNodeLock);
+
+			while(1)
 			{
-				node = &(*it);
-				++it;
+				if(batchSize == batch.getSize())
+				{
+					break;
+				}
+
+				if(ctx.m_crntNode == end)
+				{
+					quit = true;
+					break;
+				}
+
+				SceneNode& node = *ctx.m_crntNode;
+				if(node.getParent() == nullptr)
+				{
+					batch[batchSize++] = &node;
+				}
+
+				++ctx.m_crntNode;
 			}
 		}
-		lock.unlock();
 
 		// Process nodes
-		U count = 0;
-		for(U i = 0; i < nodes.getSize(); ++i)
+		for(U i = 0; i < batchSize && !err; ++i)
 		{
-			if(nodes[i])
-			{
-				if(nodes[i]->getParent() == nullptr)
-				{
-					err = updateNode(ctx.m_prevUpdateTime, ctx.m_crntTime, *nodes[i]);
-				}
-				++count;
-			}
-		}
-
-		if(ANKI_UNLIKELY(count == 0))
-		{
-			quit = true;
+			err = updateNode(ctx.m_prevUpdateTime, ctx.m_crntTime, *batch[i]);
 		}
 	}
 
