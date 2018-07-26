@@ -193,6 +193,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 		m_r->getSceneDrawer().drawRange(Pass::SM,
 			work.m_renderQueue->m_viewMatrix,
 			work.m_renderQueue->m_viewProjectionMatrix,
+			Mat4::getIdentity(), // Don't care about prev matrices here
 			cmdb,
 			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
 			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement

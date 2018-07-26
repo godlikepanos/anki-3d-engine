@@ -135,8 +135,9 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 
 		// Start drawing
 		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-			ctx.m_renderQueue->m_viewMatrix,
-			ctx.m_viewProjMatJitter,
+			ctx.m_matrices.m_view,
+			ctx.m_matrices.m_viewProjectionJitter,
+			ctx.m_prevMatrices.m_viewProjectionJitter,
 			cmdb,
 			ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
 			ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);

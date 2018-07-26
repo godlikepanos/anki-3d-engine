@@ -350,6 +350,7 @@ void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 			m_r->getSceneDrawer().drawRange(Pass::GB_FS,
 				rqueue.m_viewMatrix,
 				rqueue.m_viewProjectionMatrix,
+				Mat4::getIdentity(), // Don't care about prev mats
 				cmdb,
 				rqueue.m_renderables.getBegin(),
 				rqueue.m_renderables.getEnd());

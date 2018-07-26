@@ -35,6 +35,7 @@ public:
 	void drawRange(Pass pass,
 		const Mat4& viewMat,
 		const Mat4& viewProjMat,
+		const Mat4& prevViewProjMat,
 		CommandBufferPtr cmdb,
 		const RenderableQueueElement* begin,
 		const RenderableQueueElement* end);

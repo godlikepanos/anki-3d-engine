@@ -102,7 +102,7 @@ void main()
 #	if VELOCITY
 	Vec2 velocity = in_velocity;
 #	else
-	Vec2 velocity = Vec2(0.0);
+	Vec2 velocity = Vec2(-1.0);
 #	endif
 
 	writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic, velocity);

@@ -242,12 +242,16 @@ void Renderer::initJitteredMats()
 
 Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
-	ctx.m_jitterMat = m_jitteredMats8x[m_frameCount & (8 - 1)];
-	ctx.m_projMatJitter = ctx.m_jitterMat * ctx.m_renderQueue->m_projectionMatrix;
-	ctx.m_viewProjMatJitter = ctx.m_projMatJitter * ctx.m_renderQueue->m_viewMatrix;
+	ctx.m_matrices.m_cameraTransform = ctx.m_renderQueue->m_cameraTransform;
+	ctx.m_matrices.m_view = ctx.m_renderQueue->m_viewMatrix;
+	ctx.m_matrices.m_projection = ctx.m_renderQueue->m_projectionMatrix;
+	ctx.m_matrices.m_viewProjection = ctx.m_renderQueue->m_viewProjectionMatrix;
 
-	ctx.m_prevViewProjMat = m_prevViewProjMat;
-	ctx.m_prevCamTransform = m_prevCamTransform;
+	ctx.m_matrices.m_jitter = m_jitteredMats8x[m_frameCount & (m_jitteredMats8x.getSize() - 1)];
+	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
+	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * ctx.m_matrices.m_view;
+
+	ctx.m_prevMatrices = m_prevMatrices;
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
@@ -300,8 +304,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 void Renderer::finalize(const RenderingContext& ctx)
 {
 	++m_frameCount;
-	m_prevViewProjMat = ctx.m_renderQueue->m_viewProjectionMatrix;
-	m_prevCamTransform = ctx.m_renderQueue->m_cameraTransform;
+
+	m_prevMatrices = ctx.m_matrices;
 
 	// Inform about the HiZ map. Do it as late as possible
 	if(ctx.m_renderQueue->m_fillCoverageBufferCallback)

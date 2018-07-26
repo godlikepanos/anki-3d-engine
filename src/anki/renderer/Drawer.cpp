@@ -41,6 +41,7 @@ RenderableDrawer::~RenderableDrawer()
 void RenderableDrawer::drawRange(Pass pass,
 	const Mat4& viewMat,
 	const Mat4& viewProjMat,
+	const Mat4& prevViewProjMat,
 	CommandBufferPtr cmdb,
 	const RenderableQueueElement* begin,
 	const RenderableQueueElement* end)
@@ -51,6 +52,7 @@ void RenderableDrawer::drawRange(Pass pass,
 	ctx.m_queueCtx.m_viewMatrix = viewMat;
 	ctx.m_queueCtx.m_viewProjectionMatrix = viewProjMat;
 	ctx.m_queueCtx.m_projectionMatrix = Mat4::getIdentity(); // TODO
+	ctx.m_queueCtx.m_previousViewProjectionMatrix = prevViewProjMat;
 	ctx.m_queueCtx.m_cameraTransform = ctx.m_queueCtx.m_viewMatrix.getInverse();
 	ctx.m_queueCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
 	ctx.m_queueCtx.m_commandBuffer = cmdb;
