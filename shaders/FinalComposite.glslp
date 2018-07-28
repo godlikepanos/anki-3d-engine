@@ -78,7 +78,7 @@ void main()
 
 #if 0
 	{
-		out_color = Vec3(u_averageLuminance / 1.0);
+		out_color = textureLod(u_isRt, uv, 0.0).rgb;
 	}
 #endif
 

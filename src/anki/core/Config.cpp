@@ -36,6 +36,8 @@ Config::Config()
 	newOption("r.indirect.reflectionResolution", 128);
 	newOption("r.indirect.maxSimultaneousProbeCount", 32);
 
+	newOption("r.motionBlur.maxSamples", 32);
+
 	newOption("r.dbg.enabled", false);
 
 	// Scene

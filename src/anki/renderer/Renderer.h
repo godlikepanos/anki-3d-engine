@@ -147,6 +147,11 @@ public:
 		return *m_temporalAA;
 	}
 
+	MotionBlur& getMotionBlur()
+	{
+		return *m_motionBlur;
+	}
+
 	DownscaleBlur& getDownscaleBlur()
 	{
 		return *m_downscale;
@@ -367,6 +372,7 @@ private:
 	UniquePtr<LensFlare> m_lensFlare; ///< Forward shading lens flares.
 	UniquePtr<DownscaleBlur> m_downscale;
 	UniquePtr<TemporalAA> m_temporalAA;
+	UniquePtr<MotionBlur> m_motionBlur;
 	UniquePtr<Tonemapping> m_tonemapping;
 	UniquePtr<Ssao> m_ssao;
 	UniquePtr<Bloom> m_bloom;

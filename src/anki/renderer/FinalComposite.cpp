@@ -7,6 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/TemporalAA.h>
+#include <anki/renderer/MotionBlur.h>
 #include <anki/renderer/Tonemapping.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/GBuffer.h>
@@ -109,7 +110,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 
 	// Bind stuff
 	rgraphCtx.bindColorTextureAndSampler(
-		0, 0, m_r->getTemporalAA().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
+		0, 0, m_r->getMotionBlur().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
 
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getBloom().getRt(), m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(
@@ -183,7 +184,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	{
 		pass.newConsumer({m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	}
-	pass.newConsumer({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getMotionBlur().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 }
 

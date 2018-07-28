@@ -27,6 +27,7 @@
 #include <anki/renderer/TemporalAA.h>
 #include <anki/renderer/UiStage.h>
 #include <anki/renderer/Ssr.h>
+#include <anki/renderer/MotionBlur.h>
 
 namespace anki
 {
@@ -148,6 +149,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_temporalAA.reset(getAllocator().newInstance<TemporalAA>(this));
 	ANKI_CHECK(m_temporalAA->init(config));
+
+	m_motionBlur.reset(getAllocator().newInstance<MotionBlur>(this));
+	ANKI_CHECK(m_motionBlur->init(config));
 
 	m_bloom.reset(m_alloc.newInstance<Bloom>(this));
 	ANKI_CHECK(m_bloom->init(config));
@@ -283,6 +287,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_ssr->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
+	m_motionBlur->populateRenderGraph(ctx);
 	m_downscale->populateRenderGraph(ctx);
 	m_tonemapping->populateRenderGraph(ctx);
 	m_bloom->populateRenderGraph(ctx);
