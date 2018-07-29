@@ -14,8 +14,15 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_velocityRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_toBlurRt;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_depthRt;
 
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
+
+struct PushConsts
+{
+	Mat4 m_prevViewProjMatMulInvViewProjMat;
+};
+ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 
 const Vec2 TEXEL_SIZE = 1.0 / Vec2(FB_SIZE);
 
@@ -26,43 +33,41 @@ void main()
 	// Crnt UV
 	Vec2 nowUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
 
-	// UV this frag had previously
+	// Compute previous UV
 	Vec2 pastUv = textureLod(u_velocityRt, nowUv, 0.0).rg;
 
-	// Do the work
-	Vec3 outColor;
-	ANKI_BRANCH if(pastUv.x >= 0.0)
+	ANKI_BRANCH if(pastUv.x < 0.0)
 	{
-		// Dynamic object
+		F32 depth = textureLod(u_depthRt, nowUv, 0.0).r;
 
-		// March direction
-		Vec2 dir = pastUv - nowUv;
-
-		Vec2 slopes = abs(dir);
-
-		Vec2 sampleCount2D = slopes * Vec2(FB_SIZE);
-		F32 sampleCountf = max(sampleCount2D.x, sampleCount2D.y);
-		sampleCountf = clamp(sampleCountf, 1.0, F32(MAX_SAMPLES));
-		sampleCountf = round(sampleCountf);
-
-		outColor = Vec3(0.0);
-		ANKI_LOOP for(F32 s = 0.0; s < sampleCountf; s += 1.0)
-		{
-			F32 f = s / sampleCountf;
-			Vec2 sampleUv = nowUv + dir * f;
-
-			outColor += textureLod(u_toBlurRt, sampleUv, 0.0).rgb;
-		}
-
-		outColor /= sampleCountf;
-	}
-	else
-	{
-		// Static object, ATM camera motion blur is not supported
-
-		outColor = textureLod(u_toBlurRt, nowUv, 0.0).rgb;
+		Vec4 v4 = u_regs.m_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(nowUv), depth, 1.0);
+		pastUv = NDC_TO_UV(v4.xy / v4.w);
 	}
 
+	// March direction
+	Vec2 dir = pastUv - nowUv;
+
+	Vec2 slopes = abs(dir);
+
+	// Compute the sample count
+	Vec2 sampleCount2D = slopes * Vec2(FB_SIZE);
+	F32 sampleCountf = max(sampleCount2D.x, sampleCount2D.y);
+	sampleCountf = clamp(sampleCountf, 1.0, F32(MAX_SAMPLES));
+	sampleCountf = round(sampleCountf);
+
+	// Loop
+	Vec3 outColor = Vec3(0.0);
+	ANKI_LOOP for(F32 s = 0.0; s < sampleCountf; s += 1.0)
+	{
+		F32 f = s / sampleCountf;
+		Vec2 sampleUv = nowUv + dir * f;
+
+		outColor += textureLod(u_toBlurRt, sampleUv, 0.0).rgb;
+	}
+
+	outColor /= sampleCountf;
+
+	// Write the result
 	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
 }
 

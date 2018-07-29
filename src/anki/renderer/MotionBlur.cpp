@@ -62,6 +62,7 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newConsumer({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newConsumer({m_r->getGBuffer().getColorRt(3), TextureUsageBit::SAMPLED_COMPUTE});
+	pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newConsumerAndProducer({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 
 	pass.setWork(runCallback, this, 0);
@@ -70,13 +71,23 @@ void MotionBlur::populateRenderGraph(RenderingContext& ctx)
 void MotionBlur::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const RenderingContext& ctx = *m_runCtx.m_ctx;
 
 	cmdb->bindShaderProgram(m_grProg);
 
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(3), m_r->getNearestSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getTemporalAA().getRt(), m_r->getNearestSampler());
+	rgraphCtx.bindTextureAndSampler(0,
+		2,
+		m_r->getGBuffer().getDepthRt(),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
+		m_r->getNearestSampler());
 
 	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
+
+	Mat4 prevViewProjMatMulInvViewProjMat = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection
+											* ctx.m_matrices.m_viewProjectionJitter.getInverse();
+	cmdb->setPushConstants(&prevViewProjMatMulInvViewProjMat, sizeof(prevViewProjMatMulInvViewProjMat));
 
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth(), m_r->getHeight());
 }
