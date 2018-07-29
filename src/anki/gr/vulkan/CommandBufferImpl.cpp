@@ -70,7 +70,6 @@ void CommandBufferImpl::beginRecording()
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
 		FramebufferImpl& impl = static_cast<FramebufferImpl&>(*m_activeFb);
-		impl.sync();
 
 		// Calc the layouts
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
@@ -90,19 +89,7 @@ void CommandBufferImpl::beginRecording()
 
 		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
 		inheritance.subpass = 0;
-
-		if(!impl.isDefaultFramebuffer())
-		{
-			inheritance.framebuffer = impl.getFramebufferHandle(0);
-		}
-		else
-		{
-			MicroSwapchainPtr swapchain;
-			U32 backbufferIdx;
-			impl.getDefaultFramebufferInfo(swapchain, backbufferIdx);
-
-			inheritance.framebuffer = impl.getFramebufferHandle(backbufferIdx);
-		}
+		inheritance.framebuffer = impl.getFramebufferHandle();
 
 		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
 	}
@@ -125,7 +112,6 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb,
 	m_activeFb = fb;
 
 	FramebufferImpl& fbimpl = static_cast<FramebufferImpl&>(*fb);
-	fbimpl.sync();
 
 	U32 fbWidth, fbHeight;
 	fbimpl.getAttachmentsSize(fbWidth, fbHeight);
@@ -167,53 +153,24 @@ void CommandBufferImpl::beginRenderPassInternal()
 	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	bi.clearValueCount = impl.getAttachmentCount();
 	bi.pClearValues = impl.getClearValues();
+	bi.framebuffer = impl.getFramebufferHandle();
 
-	if(!impl.isDefaultFramebuffer())
+	// Calc the layouts
+	Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
+	for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 	{
-		// Bind a non-default FB
-
-		bi.framebuffer = impl.getFramebufferHandle(0);
-
-		// Calc the layouts
-		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
-		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
-		{
-			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
-			colAttLayouts[i] =
-				static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_colorAttachmentUsages[i], 0);
-		}
-
-		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
-		if(impl.hasDepthStencil())
-		{
-			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getDepthStencilAttachment());
-			dsAttLayout = static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_depthStencilAttachmentUsage, 0);
-		}
-
-		bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
+		colAttLayouts[i] = static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_colorAttachmentUsages[i], 0);
 	}
-	else
+
+	VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
+	if(impl.hasDepthStencil())
 	{
-		// Bind the default FB
-		m_renderedToDefaultFb = true;
-
-		MicroSwapchainPtr swapchain;
-		U32 backbufferIdx;
-		impl.getDefaultFramebufferInfo(swapchain, backbufferIdx);
-
-		bi.framebuffer = impl.getFramebufferHandle(backbufferIdx);
-		bi.renderPass = impl.getRenderPassHandle({}, VK_IMAGE_LAYOUT_MAX_ENUM);
-
-		// Perform the transition
-		setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-			0,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			swapchain->m_images[backbufferIdx],
-			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getDepthStencilAttachment());
+		dsAttLayout = static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_depthStencilAttachmentUsage, 0);
 	}
+
+	bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
 
 	const Bool flipvp = flipViewport();
 	bi.renderArea.offset.x = m_renderArea[0];
@@ -227,6 +184,11 @@ void CommandBufferImpl::beginRenderPassInternal()
 
 	getGrManagerImpl().beginMarker(m_handle, impl.getName());
 	ANKI_CMD(vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents), ANY_OTHER_COMMAND);
+
+	if(impl.hasPresentableTexture())
+	{
+		m_renderedToDefaultFb = true;
+	}
 }
 
 void CommandBufferImpl::endRenderPass()
@@ -241,23 +203,6 @@ void CommandBufferImpl::endRenderPass()
 
 	ANKI_CMD(vkCmdEndRenderPass(m_handle), ANY_OTHER_COMMAND);
 	getGrManagerImpl().endMarker(m_handle);
-
-	// Default FB barrier/transition
-	if(static_cast<const FramebufferImpl&>(*m_activeFb).isDefaultFramebuffer())
-	{
-		MicroSwapchainPtr swapchain;
-		U32 backbufferIdx;
-		static_cast<const FramebufferImpl&>(*m_activeFb).getDefaultFramebufferInfo(swapchain, backbufferIdx);
-
-		setImageBarrier(VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-			VK_ACCESS_MEMORY_READ_BIT,
-			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			swapchain->m_images[backbufferIdx],
-			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-	}
 
 	m_activeFb.reset(nullptr);
 	m_state.endRenderPass();

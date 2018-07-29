@@ -33,7 +33,7 @@ TextureImpl::~TextureImpl()
 
 	m_viewsMap.destroy(getAllocator());
 
-	if(m_imageHandle)
+	if(m_imageHandle && !(m_usage & TextureUsageBit::PRESENT))
 	{
 		vkDestroyImage(getDevice(), m_imageHandle, nullptr);
 	}
@@ -49,10 +49,14 @@ TextureImpl::~TextureImpl()
 	}
 }
 
-Error TextureImpl::init(const TextureInitInfo& init_)
+Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
 	ANKI_ASSERT(init.isValid());
+	if(externalImage)
+	{
+		ANKI_ASSERT(!!(init.m_usage & TextureUsageBit::PRESENT));
+	}
 
 	// Set some stuff
 	m_width = init.m_width;
@@ -77,7 +81,14 @@ Error TextureImpl::init(const TextureInitInfo& init_)
 	m_aspect = getImageAspectFromFormat(m_format);
 	m_usage = init.m_usage;
 
-	ANKI_CHECK(initImage(init));
+	if(externalImage)
+	{
+		m_imageHandle = externalImage;
+	}
+	else
+	{
+		ANKI_CHECK(initImage(init));
+	}
 
 	// Init the template
 	memset(&m_viewCreateInfoTemplate, 0, sizeof(m_viewCreateInfoTemplate)); // memset, it will be used for hashing
@@ -253,32 +264,22 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	case TextureType::_2D:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 1;
-
-		m_surfaceOrVolumeCount = m_mipCount;
 		break;
 	case TextureType::_2D_ARRAY:
 		ci.extent.depth = 1;
 		ci.arrayLayers = init.m_layerCount;
-
-		m_surfaceOrVolumeCount = m_mipCount * m_layerCount;
 		break;
 	case TextureType::CUBE:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 6;
-
-		m_surfaceOrVolumeCount = m_mipCount * 6;
 		break;
 	case TextureType::CUBE_ARRAY:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 6 * init.m_layerCount;
-
-		m_surfaceOrVolumeCount = m_mipCount * 6 * m_layerCount;
 		break;
 	case TextureType::_3D:
 		ci.extent.depth = init.m_depth;
 		ci.arrayLayers = 1;
-
-		m_surfaceOrVolumeCount = m_mipCount;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -580,6 +581,12 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 		dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
+	if(!!(after & TextureUsageBit::PRESENT))
+	{
+		dstStages |= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		dstAccesses |= VK_ACCESS_MEMORY_READ_BIT;
+	}
+
 	ANKI_ASSERT(dstStages);
 }
 
@@ -648,6 +655,10 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	else if(!depthStencil && usage == TextureUsageBit::TRANSFER_DESTINATION)
 	{
 		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	}
+	else if(usage == TextureUsageBit::PRESENT)
+	{
+		out = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	}
 
 	ANKI_ASSERT(out != VK_IMAGE_LAYOUT_MAX_ENUM);

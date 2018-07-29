@@ -49,8 +49,17 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error operator()(GlState&)
+	ANKI_USE_RESULT Error operator()(GlState& state)
 	{
+		// Blit from the fake FB to the real default FB
+		const GrManagerImpl& gr = *static_cast<const GrManagerImpl*>(state.m_manager);
+		const FramebufferImpl& fb = static_cast<FramebufferImpl&>(*gr.m_fakeDefaultFb);
+		const U width = gr.m_fakeFbTex->getWidth();
+		const U height = gr.m_fakeFbTex->getHeight();
+		glBlitNamedFramebuffer(
+			fb.getGlName(), 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+		// Swap buffers
 		m_renderingThread->swapBuffersInternal();
 		return Error::NONE;
 	}

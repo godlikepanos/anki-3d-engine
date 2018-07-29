@@ -57,17 +57,8 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 
 #if ANKI_DUMP_SHADERS
 	{
-		static U32 name = 0;
-		SpinLock m_nameLock;
-
-		U32 newName;
-		{
-			LockGuard<SpinLock> lock(m_nameLock);
-			newName = name++;
-		}
-
 		StringAuto fnameSpirv(getAllocator());
-		fnameSpirv.sprintf("%s/%05u.spv", getManager().getCacheDirectory().cstr(), newName);
+		fnameSpirv.sprintf("%s/%05u.spv", getManager().getCacheDirectory().cstr(), getUuid());
 
 		File fileSpirv;
 		ANKI_CHECK(fileSpirv.open(fnameSpirv.toCString(), FileOpenFlag::BINARY | FileOpenFlag::WRITE));

@@ -124,6 +124,7 @@ void TextureImpl::preInit(const TextureInitInfo& init)
 	m_target = convertTextureType(init.m_type);
 	m_texType = init.m_type;
 	m_format = init.m_format;
+	m_usage = init.m_usage;
 
 	convertTextureInformation(init.m_format, m_compressed, m_glFormat, m_internalFormat, m_glType, m_aspect);
 

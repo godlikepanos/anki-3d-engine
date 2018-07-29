@@ -24,38 +24,15 @@ MicroSwapchain::~MicroSwapchain()
 {
 	const VkDevice dev = m_factory->m_gr->getDevice();
 
-	for(VkFramebuffer& fb : m_framebuffers)
+	for(TexturePtr& tex : m_textures)
 	{
-		if(fb)
-		{
-			vkDestroyFramebuffer(dev, fb, nullptr);
-			fb = {};
-		}
-	}
-
-	for(VkRenderPass& rpass : m_rpasses)
-	{
-		if(rpass)
-		{
-			vkDestroyRenderPass(dev, rpass, nullptr);
-			rpass = {};
-		}
-	}
-
-	for(VkImageView& iview : m_imageViews)
-	{
-		if(iview)
-		{
-			vkDestroyImageView(dev, iview, nullptr);
-			iview = {};
-		}
+		tex.reset(nullptr);
 	}
 
 	if(m_swapchain)
 	{
 		vkDestroySwapchainKHR(dev, m_swapchain, nullptr);
 		m_swapchain = {};
-		m_images = {};
 	}
 }
 
@@ -65,6 +42,7 @@ Error MicroSwapchain::initInternal()
 
 	// Get the surface size
 	VkSurfaceCapabilitiesKHR surfaceProperties;
+	U surfaceWidth = 0, surfaceHeight = 0;
 	{
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
 			m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(), &surfaceProperties));
@@ -74,11 +52,12 @@ Error MicroSwapchain::initInternal()
 			ANKI_VK_LOGE("Wrong surface size");
 			return Error::FUNCTION_FAILED;
 		}
-		m_surfaceWidth = surfaceProperties.currentExtent.width;
-		m_surfaceHeight = surfaceProperties.currentExtent.height;
+		surfaceWidth = surfaceProperties.currentExtent.width;
+		surfaceHeight = surfaceProperties.currentExtent.height;
 	}
 
 	// Get the surface format
+	VkFormat surfaceFormat = VK_FORMAT_END_RANGE;
 	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
 	{
 		uint32_t formatCount;
@@ -94,13 +73,13 @@ Error MicroSwapchain::initInternal()
 		{
 			if(formats[formatCount].format == VK_FORMAT_B8G8R8A8_UNORM)
 			{
-				m_surfaceFormat = formats[formatCount].format;
+				surfaceFormat = formats[formatCount].format;
 				colorspace = formats[formatCount].colorSpace;
 				break;
 			}
 		}
 
-		if(m_surfaceFormat == VK_FORMAT_UNDEFINED)
+		if(surfaceFormat == VK_FORMAT_UNDEFINED)
 		{
 			ANKI_VK_LOGE("Surface format not found");
 			return Error::FUNCTION_FAILED;
@@ -152,7 +131,7 @@ Error MicroSwapchain::initInternal()
 		ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		ci.surface = m_factory->m_gr->getSurface();
 		ci.minImageCount = MAX_FRAMES_IN_FLIGHT;
-		ci.imageFormat = m_surfaceFormat;
+		ci.imageFormat = surfaceFormat;
 		ci.imageColorSpace = colorspace;
 		ci.imageExtent = surfaceProperties.currentExtent;
 		ci.imageArrayLayers = 1;
@@ -183,93 +162,28 @@ Error MicroSwapchain::initInternal()
 		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u",
 			count,
 			presentMode,
-			m_surfaceWidth,
-			m_surfaceHeight,
+			surfaceWidth,
+			surfaceHeight,
 			U32(m_factory->m_vsync));
 
 		Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, &images[0]));
 		for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 		{
-			m_images[i] = images[i];
-			ANKI_ASSERT(images[i]);
+			TextureInitInfo init("SwapchainImg");
+			init.m_width = surfaceWidth;
+			init.m_height = surfaceHeight;
+			init.m_format = Format::B8G8R8A8_UNORM;
+			ANKI_ASSERT(surfaceFormat == VK_FORMAT_B8G8R8A8_UNORM);
+			init.m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+						   | TextureUsageBit::PRESENT;
+			init.m_type = TextureType::_2D;
+
+			TextureImpl* tex =
+				m_factory->m_gr->getAllocator().newInstance<TextureImpl>(m_factory->m_gr, init.getName());
+			m_textures[i].reset(tex);
+			ANKI_CHECK(tex->initExternal(images[i], init));
 		}
-	}
-
-	// Create img views
-	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
-	{
-		VkImageViewCreateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ci.flags = 0;
-		ci.image = m_images[i];
-		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		ci.format = m_surfaceFormat;
-		ci.components = {
-			VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
-		ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		ci.subresourceRange.baseMipLevel = 0;
-		ci.subresourceRange.levelCount = 1;
-		ci.subresourceRange.baseArrayLayer = 0;
-		ci.subresourceRange.layerCount = 1;
-
-		ANKI_VK_CHECK(vkCreateImageView(dev, &ci, nullptr, &m_imageViews[i]));
-		m_factory->m_gr->trySetVulkanHandleName(
-			"DfldImgView", VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, m_imageViews[i]);
-	}
-
-	// Create the render passes
-	static const Array<VkAttachmentLoadOp, RPASS_COUNT> loadOps = {
-		{VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_LOAD_OP_DONT_CARE}};
-	for(U i = 0; i < RPASS_COUNT; ++i)
-	{
-		const VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentDescription desc = {};
-		desc.format = m_surfaceFormat;
-		desc.samples = VK_SAMPLE_COUNT_1_BIT;
-		desc.loadOp = loadOps[i];
-		desc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		desc.initialLayout = layout;
-		desc.finalLayout = layout;
-
-		VkAttachmentReference ref = {0, layout};
-
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &ref;
-		subpass.pDepthStencilAttachment = nullptr;
-
-		VkRenderPassCreateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		ci.attachmentCount = 1;
-		ci.pAttachments = &desc;
-		ci.subpassCount = 1;
-		ci.pSubpasses = &subpass;
-
-		ANKI_VK_CHECK(vkCreateRenderPass(dev, &ci, nullptr, &m_rpasses[i]));
-		m_factory->m_gr->trySetVulkanHandleName(
-			"Dfld Rpass", VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_rpasses[i]);
-	}
-
-	// Create FBs
-	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
-	{
-		VkFramebufferCreateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		ci.renderPass = m_rpasses[0]; // Use that, it's compatible
-		ci.attachmentCount = 1;
-		ci.pAttachments = &m_imageViews[i];
-		ci.width = m_surfaceWidth;
-		ci.height = m_surfaceHeight;
-		ci.layers = 1;
-
-		ANKI_VK_CHECK(vkCreateFramebuffer(dev, &ci, nullptr, &m_framebuffers[i]));
-		m_factory->m_gr->trySetVulkanHandleName(
-			"Dfld FB", VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT, m_framebuffers[i]);
 	}
 
 	return Error::NONE;

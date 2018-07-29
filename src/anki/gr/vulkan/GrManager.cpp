@@ -66,10 +66,10 @@ void GrManager::deleteInstance(GrManager* gr)
 	alloc.deallocate(gr, 1);
 }
 
-void GrManager::beginFrame()
+TexturePtr GrManager::acquireNextPresentableTexture()
 {
 	ANKI_VK_SELF(GrManagerImpl);
-	self.beginFrame();
+	return self.acquireNextPresentableTexture();
 }
 
 void GrManager::swapBuffers()

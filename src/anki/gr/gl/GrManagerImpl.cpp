@@ -8,12 +8,20 @@
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/GlState.h>
 #include <anki/core/Config.h>
+#include <anki/core/NativeWindow.h>
 
 namespace anki
 {
 
+GrManagerImpl::GrManagerImpl()
+{
+}
+
 GrManagerImpl::~GrManagerImpl()
 {
+	m_fakeDefaultFb.reset(nullptr);
+	m_fakeFbTex.reset(nullptr);
+
 	if(m_thread)
 	{
 		m_thread->stop();
@@ -61,7 +69,30 @@ Error GrManagerImpl::init(GrManagerInitInfo& init, GrAllocator<U8> alloc)
 	m_capabilities.m_majorApiVersion = U(init.m_config->getNumber("gr.glmajor"));
 	m_capabilities.m_minorApiVersion = U(init.m_config->getNumber("gr.glmajor"));
 
+	initFakeDefaultFb(init);
+
 	return Error::NONE;
+}
+
+void GrManagerImpl::initFakeDefaultFb(GrManagerInitInfo& init)
+{
+	U32 defaultFbWidth = init.m_window->getWidth();
+	U32 defaultFbHeight = init.m_window->getHeight();
+
+	TextureInitInfo texinit("FB Tex");
+	texinit.m_width = defaultFbWidth;
+	texinit.m_height = defaultFbHeight;
+	texinit.m_format = Format::R8G8B8A8_UNORM;
+	texinit.m_usage =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::PRESENT;
+	m_fakeFbTex = newTexture(texinit);
+
+	TextureViewPtr view = newTextureView(TextureViewInitInfo(m_fakeFbTex, "FB view"));
+
+	FramebufferInitInfo fbinit("Dflt FB");
+	fbinit.m_colorAttachmentCount = 1;
+	fbinit.m_colorAttachments[0].m_textureView = view;
+	m_fakeDefaultFb = newFramebuffer(fbinit);
 }
 
 } // end namespace anki

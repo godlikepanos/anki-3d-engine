@@ -36,6 +36,11 @@ public:
 
 	RenderGraphDescription m_renderGraphDescr;
 
+	/// The render target that the Renderer will populate.
+	RenderTargetHandle m_outRenderTarget;
+	U32 m_outRenderTargetWidth = 0;
+	U32 m_outRenderTargetHeight = 0;
+
 	// Extra matrices
 	Mat4 m_projMatJitter;
 	Mat4 m_viewProjMatJitter;
@@ -44,9 +49,6 @@ public:
 	Mat4 m_prevCamTransform;
 
 	Vec4 m_unprojParams;
-
-	U32 m_outFbWidth = 0;
-	U32 m_outFbHeight = 0;
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
@@ -185,8 +187,7 @@ public:
 		UiManager* ui,
 		HeapAllocator<U8> alloc,
 		const ConfigSet& config,
-		Timestamp* globTimestamp,
-		Bool willDrawToDefaultFbo);
+		Timestamp* globTimestamp);
 
 	/// This function does all the rendering stages and produces a final result.
 	ANKI_USE_RESULT Error populateRenderGraph(RenderingContext& ctx);
@@ -299,11 +300,6 @@ anki_internal:
 		return m_resourcesDirty;
 	}
 
-	Bool getDrawToDefaultFramebuffer() const
-	{
-		return m_willDrawToDefaultFbo;
-	}
-
 	TextureViewPtr getDummyTextureView() const
 	{
 		return m_dummyTexView;
@@ -377,8 +373,6 @@ private:
 	U64 m_prevLoadRequestCount = 0;
 	U64 m_prevAsyncTasksCompleted = 0;
 	Bool m_resourcesDirty = true;
-
-	Bool8 m_willDrawToDefaultFbo = false;
 
 	Mat4 m_prevViewProjMat = Mat4::getIdentity();
 	Mat4 m_prevCamTransform = Mat4::getIdentity();

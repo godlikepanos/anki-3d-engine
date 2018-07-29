@@ -20,15 +20,6 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	ANKI_ASSERT(!isCreated());
 	m_in = init;
 
-	if(init.refersToDefaultFramebuffer())
-	{
-		m_fbSize[0] = m_fbSize[1] = MAX_U16;
-		m_bindDefault = true;
-		return Error::NONE;
-	}
-
-	m_bindDefault = false;
-
 	glGenFramebuffers(1, &m_glName);
 	ANKI_ASSERT(m_glName != 0);
 	const GLenum target = GL_FRAMEBUFFER;
@@ -185,106 +176,85 @@ void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, 
 	height = maxy - miny;
 	glScissor(minx, miny, width, height);
 
-	if(m_bindDefault)
+	ANKI_ASSERT(m_glName != 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_glName);
+
+	// Set the draw buffers
+	if(m_in.m_colorAttachmentCount)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[0];
+		glDrawBuffers(m_in.m_colorAttachmentCount, &m_drawBuffers[0]);
+	}
+
+	// Invalidate
+	if(m_invalidateBuffersCount)
+	{
+		glInvalidateSubFramebuffer(
+			GL_FRAMEBUFFER, m_invalidateBuffersCount, &m_invalidateBuffers[0], minx, miny, width, height);
+	}
+
+	// Clear buffers
+	for(U i = 0; i < m_in.m_colorAttachmentCount; i++)
+	{
+		const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[i];
 
 		if(att.m_loadOperation == AttachmentLoadOperation::CLEAR)
 		{
-			glClearBufferfv(GL_COLOR, 0, &att.m_clearValue.m_colorf[0]);
-		}
-		else
-		{
-			/* For some reason the driver reports error
-			ANKI_ASSERT(
-				att.m_loadOperation == AttachmentLoadOperation::DONT_CARE);
-			GLenum buff = GL_COLOR_ATTACHMENT0;
-			glInvalidateFramebuffer(GL_FRAMEBUFFER, 1, &buff);*/
+			// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
+			Bool restore = false;
+			if(state.m_colorWriteMasks[i][0] != true || state.m_colorWriteMasks[i][1] != true
+				|| state.m_colorWriteMasks[i][2] != true || state.m_colorWriteMasks[i][3] != true)
+			{
+				glColorMaski(i, true, true, true, true);
+				restore = true;
+			}
+
+			glClearBufferfv(GL_COLOR, i, &att.m_clearValue.m_colorf[0]);
+
+			if(restore)
+			{
+				glColorMaski(i,
+					state.m_colorWriteMasks[i][0],
+					state.m_colorWriteMasks[i][1],
+					state.m_colorWriteMasks[i][2],
+					state.m_colorWriteMasks[i][3]);
+			}
 		}
 	}
-	else
+
+	// Clear depth
+	if(m_clearDepth)
 	{
-		ANKI_ASSERT(m_glName != 0);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_glName);
-
-		// Set the draw buffers
-		if(m_in.m_colorAttachmentCount)
+		// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
+		if(state.m_depthWriteMask == false)
 		{
-			glDrawBuffers(m_in.m_colorAttachmentCount, &m_drawBuffers[0]);
+			glDepthMask(true);
 		}
 
-		// Invalidate
-		if(m_invalidateBuffersCount)
+		glClearBufferfv(GL_DEPTH, 0, &m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth);
+
+		if(state.m_depthWriteMask == false)
 		{
-			glInvalidateSubFramebuffer(
-				GL_FRAMEBUFFER, m_invalidateBuffersCount, &m_invalidateBuffers[0], minx, miny, width, height);
+			glDepthMask(false);
+		}
+	}
+
+	// Clear stencil
+	if(m_clearStencil)
+	{
+		// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
+		// From the spec: The clear operation always uses the front stencil write mask when clearing the stencil
+		// buffer
+		if(state.m_stencilWriteMask[0] != MAX_U32)
+		{
+			glStencilMaskSeparate(GL_FRONT, MAX_U32);
 		}
 
-		// Clear buffers
-		for(U i = 0; i < m_in.m_colorAttachmentCount; i++)
+		GLint clearVal = m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_stencil;
+		glClearBufferiv(GL_STENCIL, 0, &clearVal);
+
+		if(state.m_stencilWriteMask[0] != MAX_U32)
 		{
-			const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[i];
-
-			if(att.m_loadOperation == AttachmentLoadOperation::CLEAR)
-			{
-				// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
-				Bool restore = false;
-				if(state.m_colorWriteMasks[i][0] != true || state.m_colorWriteMasks[i][1] != true
-					|| state.m_colorWriteMasks[i][2] != true || state.m_colorWriteMasks[i][3] != true)
-				{
-					glColorMaski(i, true, true, true, true);
-					restore = true;
-				}
-
-				glClearBufferfv(GL_COLOR, i, &att.m_clearValue.m_colorf[0]);
-
-				if(restore)
-				{
-					glColorMaski(i,
-						state.m_colorWriteMasks[i][0],
-						state.m_colorWriteMasks[i][1],
-						state.m_colorWriteMasks[i][2],
-						state.m_colorWriteMasks[i][3]);
-				}
-			}
-		}
-
-		// Clear depth
-		if(m_clearDepth)
-		{
-			// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
-			if(state.m_depthWriteMask == false)
-			{
-				glDepthMask(true);
-			}
-
-			glClearBufferfv(GL_DEPTH, 0, &m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth);
-
-			if(state.m_depthWriteMask == false)
-			{
-				glDepthMask(false);
-			}
-		}
-
-		// Clear stencil
-		if(m_clearStencil)
-		{
-			// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
-			// From the spec: The clear operation always uses the front stencil write mask when clearing the stencil
-			// buffer
-			if(state.m_stencilWriteMask[0] != MAX_U32)
-			{
-				glStencilMaskSeparate(GL_FRONT, MAX_U32);
-			}
-
-			GLint clearVal = m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_stencil;
-			glClearBufferiv(GL_STENCIL, 0, &clearVal);
-
-			if(state.m_stencilWriteMask[0] != MAX_U32)
-			{
-				glStencilMaskSeparate(GL_FRONT, state.m_stencilWriteMask[0]);
-			}
+			glStencilMaskSeparate(GL_FRONT, state.m_stencilWriteMask[0]);
 		}
 	}
 

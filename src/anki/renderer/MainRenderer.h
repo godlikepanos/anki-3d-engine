@@ -47,7 +47,7 @@ public:
 		const ConfigSet& config,
 		Timestamp* globTimestamp);
 
-	ANKI_USE_RESULT Error render(RenderQueue& rqueue);
+	ANKI_USE_RESULT Error render(RenderQueue& rqueue, TexturePtr presentTex);
 
 	Dbg& getDbg();
 
@@ -84,16 +84,30 @@ private:
 	F32 m_renderingQuality = 1.0;
 
 	RenderGraphPtr m_rgraph;
+	RenderTargetDescription m_tmpRtDesc;
 
 	MainRendererStats m_stats;
 
+	class
+	{
+	public:
+		const RenderingContext* m_ctx = nullptr;
+	} m_runCtx;
+
 	void runBlit(RenderPassWorkContext& rgraphCtx);
+	void present(RenderPassWorkContext& rgraphCtx);
 
 	// A RenderPassWorkCallback for blit pass.
 	static void runCallback(RenderPassWorkContext& rgraphCtx)
 	{
 		MainRenderer* const self = scast<MainRenderer*>(rgraphCtx.m_userData);
 		self->runBlit(rgraphCtx);
+	}
+
+	// A RenderPassWorkCallback for present.
+	static void presentCallback(RenderPassWorkContext& rgraphCtx)
+	{
+		// Do nothing. This pass is dummy
 	}
 };
 /// @}

@@ -8,6 +8,8 @@
 #include <anki/gr/gl/Common.h>
 #include <anki/util/DynamicArray.h>
 #include <anki/gr/ShaderProgram.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/Framebuffer.h>
 
 namespace anki
 {

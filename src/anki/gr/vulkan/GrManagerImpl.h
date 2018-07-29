@@ -23,7 +23,8 @@
 namespace anki
 {
 
-#define ANKI_GR_MANAGER_DEBUG_MEMMORY ANKI_EXTRA_CHECKS
+/// @note Disable that because it crashes Intel drivers
+#define ANKI_GR_MANAGER_DEBUG_MEMMORY ANKI_EXTRA_CHECKS && 0
 
 // Forward
 class TextureFallbackUploader;
@@ -54,7 +55,7 @@ public:
 		return m_devProps;
 	}
 
-	void beginFrame();
+	TexturePtr acquireNextPresentableTexture();
 
 	void endFrame();
 
@@ -262,6 +263,7 @@ private:
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 	MicroSwapchainPtr m_crntSwapchain;
+	U8 m_acquiredImageIdx = MAX_U8;
 
 	Array<PerFrame, MAX_FRAMES_IN_FLIGHT> m_perFrame;
 	/// @}

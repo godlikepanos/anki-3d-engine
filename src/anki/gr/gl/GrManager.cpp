@@ -66,9 +66,10 @@ void GrManager::deleteInstance(GrManager* gr)
 	alloc.deallocate(gr, 1);
 }
 
-void GrManager::beginFrame()
+TexturePtr GrManager::acquireNextPresentableTexture()
 {
-	// Nothing for GL
+	ANKI_GL_SELF(GrManagerImpl);
+	return self.m_fakeFbTex;
 }
 
 void GrManager::swapBuffers()
