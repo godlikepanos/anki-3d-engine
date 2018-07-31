@@ -47,8 +47,7 @@ Error Renderer::init(ThreadPool* threadpool,
 	UiManager* ui,
 	HeapAllocator<U8> alloc,
 	const ConfigSet& config,
-	Timestamp* globTimestamp,
-	Bool willDrawToDefaultFbo)
+	Timestamp* globTimestamp)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_INIT);
 
@@ -59,7 +58,6 @@ Error Renderer::init(ThreadPool* threadpool,
 	m_stagingMem = stagingMem;
 	m_ui = ui;
 	m_alloc = alloc;
-	m_willDrawToDefaultFbo = willDrawToDefaultFbo;
 
 	Error err = initInternal(config);
 	if(err)

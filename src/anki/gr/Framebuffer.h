@@ -29,8 +29,7 @@ public:
 	ClearValue m_clearValue;
 };
 
-/// Framebuffer initializer. If you require the default framebuffer then set m_colorAttachmentCount to 1 and don't set a
-/// color texture.
+/// Framebuffer initializer.
 class FramebufferInitInfo : public GrBaseInitInfo
 {
 public:
@@ -70,14 +69,22 @@ public:
 		return *this;
 	}
 
-	Bool refersToDefaultFramebuffer() const
-	{
-		return m_colorAttachmentCount == 1 && !m_colorAttachments[0].m_textureView.isCreated();
-	}
-
 	Bool isValid() const
 	{
-		return m_colorAttachmentCount != 0 || m_depthStencilAttachment.m_textureView.isCreated();
+		for(U i = 0; i < m_colorAttachmentCount; ++i)
+		{
+			if(!m_colorAttachments[i].m_textureView.isCreated())
+			{
+				return false;
+			}
+		}
+
+		if(m_colorAttachmentCount == 0 && !m_depthStencilAttachment.m_textureView.isCreated())
+		{
+			return false;
+		}
+
+		return true;
 	}
 };
 

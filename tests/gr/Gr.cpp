@@ -376,11 +376,16 @@ static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManage
 	return gr.newShaderProgram(ShaderProgramInitInfo(vert, frag));
 }
 
-static FramebufferPtr createDefaultFb(GrManager& gr)
+static FramebufferPtr createColorFb(GrManager& gr, TexturePtr tex)
 {
+	TextureViewInitInfo init;
+	init.m_texture = tex;
+	TextureViewPtr view = gr.newTextureView(init);
+
 	FramebufferInitInfo fbinit;
 	fbinit.m_colorAttachmentCount = 1;
 	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
+	fbinit.m_colorAttachments[0].m_textureView = view;
 
 	return gr.newFramebuffer(fbinit);
 }
@@ -403,6 +408,18 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &idx[0], sizeof(idx));
 	indices->unmap();
+}
+
+static void presentBarrierA(CommandBufferPtr cmdb, TexturePtr presentTex)
+{
+	cmdb->setTextureBarrier(
+		presentTex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSubresourceInfo());
+}
+
+static void presentBarrierB(CommandBufferPtr cmdb, TexturePtr presentTex)
+{
+	cmdb->setTextureBarrier(
+		presentTex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::PRESENT, TextureSubresourceInfo());
 }
 
 ANKI_TEST(Gr, GrManager){COMMON_BEGIN() COMMON_END()}
@@ -430,22 +447,23 @@ ANKI_TEST(Gr, ClearScreen)
 	COMMON_BEGIN()
 	ANKI_TEST_LOGI("Expect to see a magenta background");
 
-	FramebufferPtr fb = createDefaultFb(*gr);
-
 	U iterations = 100;
 	while(iterations--)
 	{
 		HighRezTimer timer;
 		timer.start();
 
-		gr->beginFrame();
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-		cmdb->beginRenderPass(fb, {}, {});
+		presentBarrierA(cmdb, presentTex);
+		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 		cmdb->endRenderPass();
+		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
 		gr->swapBuffers();
@@ -467,7 +485,6 @@ ANKI_TEST(Gr, SimpleDrawcall)
 
 	ANKI_TEST_LOGI("Expect to see a grey triangle");
 	ShaderProgramPtr prog = createProgram(VERT_SRC, FRAG_SRC, *gr);
-	FramebufferPtr fb = createDefaultFb(*gr);
 
 	const U ITERATIONS = 200;
 	for(U i = 0; i < ITERATIONS; ++i)
@@ -475,7 +492,8 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		HighRezTimer timer;
 		timer.start();
 
-		gr->beginFrame();
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
@@ -483,9 +501,11 @@ ANKI_TEST(Gr, SimpleDrawcall)
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb, {}, {});
+		presentBarrierA(cmdb, presentTex);
+		cmdb->beginRenderPass(fb, {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 		cmdb->endRenderPass();
+		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
 		gr->swapBuffers();
@@ -503,6 +523,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 
 ANKI_TEST(Gr, ViewportAndScissor)
 {
+#if 0
 	COMMON_BEGIN()
 
 	ANKI_TEST_LOGI("Expect to see a grey quad appearing in the 4 corners. The clear color will change and affect only"
@@ -567,6 +588,7 @@ ANKI_TEST(Gr, ViewportAndScissor)
 	}
 
 	COMMON_END()
+#endif
 }
 
 ANKI_TEST(Gr, ViewportAndScissorOffscreen)
@@ -613,8 +635,6 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		f = gr->newFramebuffer(fbinit);
 	}
 
-	FramebufferPtr defaultFb = createDefaultFb(*gr);
-
 	SamplerInitInfo samplerInit;
 	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
 	samplerInit.m_mipmapFilter = SamplingFilter::BASE;
@@ -633,7 +653,8 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		HighRezTimer timer;
 		timer.start();
 
-		gr->beginFrame();
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr dfb = createColorFb(*gr, presentTex);
 
 		if(i == 0)
 		{
@@ -688,9 +709,11 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->bindTextureAndSampler(0, 0, texView, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->beginRenderPass(defaultFb, {}, {});
+		presentBarrierA(cmdb, presentTex);
+		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
+		presentBarrierB(cmdb, presentTex);
 
 		cmdb->flush();
 
@@ -749,16 +772,14 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	// Progm
 	ShaderProgramPtr prog = createProgram(VERT_UBO_SRC, FRAG_UBO_SRC, *gr);
 
-	// FB
-	FramebufferPtr fb = createDefaultFb(*gr);
-
 	const U ITERATION_COUNT = 100;
 	U iterations = ITERATION_COUNT;
 	while(iterations--)
 	{
 		HighRezTimer timer;
 		timer.start();
-		gr->beginFrame();
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
@@ -766,7 +787,8 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb, {}, {});
+		presentBarrierA(cmdb, presentTex);
+		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 
 		cmdb->bindUniformBuffer(0, 0, b, 0, MAX_PTR_SIZE);
 
@@ -780,6 +802,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 		cmdb->endRenderPass();
+		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
 		gr->swapBuffers();
@@ -833,16 +856,14 @@ ANKI_TEST(Gr, DrawWithVertex)
 	// Prog
 	ShaderProgramPtr prog = createProgram(VERT_INP_SRC, FRAG_INP_SRC, *gr);
 
-	// FB
-	FramebufferPtr fb = createDefaultFb(*gr);
-
 	U iterations = 100;
 	while(iterations--)
 	{
 		HighRezTimer timer;
 		timer.start();
 
-		gr->beginFrame();
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
@@ -857,9 +878,11 @@ ANKI_TEST(Gr, DrawWithVertex)
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->setPolygonOffset(0.0, 0.0);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb, {}, {});
+		presentBarrierA(cmdb, presentTex);
+		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 		cmdb->endRenderPass();
+		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
 		gr->swapBuffers();
@@ -1065,11 +1088,6 @@ ANKI_TEST(Gr, DrawWithTexture)
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_2TEX_SRC, *gr);
 
 	//
-	// Create FB
-	//
-	FramebufferPtr fb = createDefaultFb(*gr);
-
-	//
 	// Draw
 	//
 	const U ITERATION_COUNT = 200;
@@ -1079,7 +1097,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 		HighRezTimer timer;
 		timer.start();
 
-		gr->beginFrame();
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*gr, presentTex);
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
@@ -1087,12 +1106,14 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb, {}, {});
+		presentBarrierA(cmdb, presentTex);
+		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 
 		cmdb->bindTextureAndSampler(0, 0, aView, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->bindTextureAndSampler(0, 1, bView, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
+		presentBarrierB(cmdb, presentTex);
 		cmdb->flush();
 
 		gr->swapBuffers();
@@ -1198,11 +1219,6 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	FramebufferPtr fb = gr.newFramebuffer(fbinit);
 
 	//
-	// Create default FB
-	//
-	FramebufferPtr dfb = createDefaultFb(gr);
-
-	//
 	// Create buffs
 	//
 	BufferPtr verts, indices;
@@ -1223,7 +1239,6 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	{
 		HighRezTimer timer;
 		timer.start();
-		gr.beginFrame();
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
@@ -1277,13 +1292,18 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			TextureSurfaceInfo(0, 0, 0, 0));
 
 		// Draw quad
-		cmdb->beginRenderPass(dfb, {}, {});
+		TexturePtr presentTex = gr.acquireNextPresentableTexture();
+		FramebufferPtr dfb = createColorFb(gr, presentTex);
+
+		presentBarrierA(cmdb, presentTex);
+		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 		cmdb->bindShaderProgram(resolveProg);
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindTextureAndSampler(0, 0, col0View, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->bindTextureAndSampler(0, 1, col1View, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
+		presentBarrierB(cmdb, presentTex);
 
 		cmdb->flush();
 
@@ -1349,9 +1369,6 @@ ANKI_TEST(Gr, ImageLoadStore)
 	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
 	ShaderProgramPtr compProg = gr->newShaderProgram(sprogInit);
 
-	// FB
-	FramebufferPtr dfb = createDefaultFb(*gr);
-
 	// Write texture data
 	CommandBufferInitInfo cmdbinit;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
@@ -1383,7 +1400,6 @@ ANKI_TEST(Gr, ImageLoadStore)
 	{
 		HighRezTimer timer;
 		timer.start();
-		gr->beginFrame();
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags =
@@ -1408,11 +1424,15 @@ ANKI_TEST(Gr, ImageLoadStore)
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(dfb, {}, {});
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr dfb = createColorFb(*gr, presentTex);
+		presentBarrierA(cmdb, presentTex);
+		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 		cmdb->bindTextureAndSampler(
 			0, 0, gr->newTextureView(TextureViewInitInfo(tex)), sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
+		presentBarrierB(cmdb, presentTex);
 
 		cmdb->flush();
 
@@ -1527,8 +1547,6 @@ ANKI_TEST(Gr, 3DTextures)
 	//
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_TEX3D_SRC, *gr);
 
-	FramebufferPtr dfb = createDefaultFb(*gr);
-
 	static Array<Vec4, 9> TEX_COORDS_LOD = {{Vec4(0, 0, 0, 0),
 		Vec4(1, 0, 0, 0),
 		Vec4(0, 1, 0, 0),
@@ -1545,14 +1563,16 @@ ANKI_TEST(Gr, 3DTextures)
 	{
 		HighRezTimer timer;
 		timer.start();
-		gr->beginFrame();
 
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-		cmdb->beginRenderPass(dfb, {}, {});
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr dfb = createColorFb(*gr, presentTex);
+		presentBarrierA(cmdb, presentTex);
+		cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 
 		cmdb->bindShaderProgram(prog);
 
@@ -1566,6 +1586,7 @@ ANKI_TEST(Gr, 3DTextures)
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 
 		cmdb->endRenderPass();
+		presentBarrierB(cmdb, presentTex);
 
 		cmdb->flush();
 
@@ -2024,7 +2045,6 @@ void main()
 		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::STORAGE_COMPUTE_WRITE, BufferMapAccessBit::READ));
 
 	// Draw
-	gr->beginFrame();
 
 	CommandBufferInitInfo cinit;
 	cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
@@ -2033,9 +2053,13 @@ void main()
 	cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 	cmdb->bindShaderProgram(prog);
 	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());
-	cmdb->beginRenderPass(createDefaultFb(*gr), {}, {});
+	TexturePtr presentTex = gr->acquireNextPresentableTexture();
+	FramebufferPtr dfb = createColorFb(*gr, presentTex);
+	presentBarrierA(cmdb, presentTex);
+	cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 	cmdb->endRenderPass();
+	presentBarrierB(cmdb, presentTex);
 	cmdb->flush();
 
 	gr->swapBuffers();
@@ -2128,8 +2152,6 @@ void main()
 		BufferInitInfo(sizeof(UVec4), BufferUsageBit::STORAGE_ALL | BufferUsageBit::FILL, BufferMapAccessBit::READ));
 
 	// Draw
-	gr->beginFrame();
-
 	CommandBufferInitInfo cinit;
 	cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
@@ -2152,9 +2174,13 @@ void main()
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());
-	cmdb->beginRenderPass(createDefaultFb(*gr), {}, {});
+	TexturePtr presentTex = gr->acquireNextPresentableTexture();
+	FramebufferPtr dfb = createColorFb(*gr, presentTex);
+	presentBarrierA(cmdb, presentTex);
+	cmdb->beginRenderPass(dfb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 	cmdb->endRenderPass();
+	presentBarrierB(cmdb, presentTex);
 	cmdb->flush();
 
 	gr->swapBuffers();

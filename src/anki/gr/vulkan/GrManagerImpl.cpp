@@ -333,7 +333,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		}
 	}
 
-#if 0 && ANKI_GR_MANAGER_DEBUG_MEMMORY
+#if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	m_debugAllocCbs = {};
 	m_debugAllocCbs.pUserData = this;
 	m_debugAllocCbs.pfnAllocation = allocateCallback;
@@ -674,8 +674,12 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 }
 #endif
 
-void GrManagerImpl::beginFrame()
+TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 {
+	ANKI_TRACE_SCOPED_EVENT(VK_ACQUIRE_IMAGE);
+
+	LockGuard<Mutex> lock(m_globalMtx);
+
 	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
 
 	// Create sync objects
@@ -684,8 +688,21 @@ void GrManagerImpl::beginFrame()
 
 	// Get new image
 	uint32_t imageIdx;
+
+	VkResult res = vkAcquireNextImageKHR(m_device,
+		m_crntSwapchain->m_swapchain,
+		UINT64_MAX,
+		frame.m_acquireSemaphore->getHandle(),
+		fence->getHandle(),
+		&imageIdx);
+
+	if(res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		ANKI_TRACE_SCOPED_EVENT(VK_ACQUIRE_IMAGE);
+		ANKI_VK_LOGW("Swapchain is out of date. Will wait for the queue and create a new one");
+		vkQueueWaitIdle(m_queue);
+		m_crntSwapchain = m_swapchainFactory.newInstance();
+
+		// Can't fail a second time
 		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device,
 			m_crntSwapchain->m_swapchain,
 			UINT64_MAX,
@@ -693,9 +710,14 @@ void GrManagerImpl::beginFrame()
 			fence->getHandle(),
 			&imageIdx));
 	}
+	else
+	{
+		ANKI_VK_CHECKF(res);
+	}
 
 	ANKI_ASSERT(imageIdx < MAX_FRAMES_IN_FLIGHT);
-	m_crntSwapchain->m_currentBackbufferIndex = imageIdx;
+	m_acquiredImageIdx = imageIdx;
+	return m_crntSwapchain->m_textures[imageIdx];
 }
 
 void GrManagerImpl::endFrame()
@@ -729,7 +751,7 @@ void GrManagerImpl::endFrame()
 	present.pWaitSemaphores = (frame.m_renderSemaphore) ? &frame.m_renderSemaphore->getHandle() : nullptr;
 	present.swapchainCount = 1;
 	present.pSwapchains = &m_crntSwapchain->m_swapchain;
-	U32 idx = m_crntSwapchain->m_currentBackbufferIndex;
+	U32 idx = m_acquiredImageIdx;
 	present.pImageIndices = &idx;
 	present.pResults = &res;
 
@@ -785,7 +807,8 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence
 	if(impl.renderedToDefaultFramebuffer())
 	{
 		submit.pWaitSemaphores = &frame.m_acquireSemaphore->getHandle();
-		waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+					| VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT; // TODO That depends on how we use the swapchain img
 		submit.pWaitDstStageMask = &waitFlags;
 		submit.waitSemaphoreCount = 1;
 

@@ -38,8 +38,6 @@ public:
 
 	GpuMemoryHandle m_memHandle;
 
-	U32 m_surfaceOrVolumeCount = 0;
-
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
 
 	TextureImplWorkaround m_workarounds = TextureImplWorkaround::NONE;
@@ -53,7 +51,15 @@ public:
 
 	~TextureImpl();
 
-	ANKI_USE_RESULT Error init(const TextureInitInfo& init);
+	ANKI_USE_RESULT Error init(const TextureInitInfo& init)
+	{
+		return initInternal(VK_NULL_HANDLE, init);
+	}
+
+	ANKI_USE_RESULT Error initExternal(VkImage image, const TextureInitInfo& init)
+	{
+		return initInternal(image, init);
+	}
 
 	Bool aspectValid(DepthStencilAspectBit aspect) const
 	{
@@ -175,6 +181,8 @@ private:
 		ANKI_ASSERT(isSubresourceValid(subresource));
 		return (textureTypeIsCube(m_texType) && subresource.m_faceCount != 6) ? TextureType::_2D : m_texType;
 	}
+
+	ANKI_USE_RESULT Error initInternal(VkImage externalImage, const TextureInitInfo& init);
 };
 /// @}
 

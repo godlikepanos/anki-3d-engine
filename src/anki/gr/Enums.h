@@ -420,9 +420,10 @@ enum class TextureUsageBit : U16
 	/// @{
 	GENERATE_MIPMAPS = 1 << 11,
 	CLEAR = 1 << 12, ///< Will be used in CommandBuffer::clearImage.
+	PRESENT = 1 << 13,
 	/// @}
 
-	/// @name Other
+	/// @name Groups
 	/// @{
 	ANY_COMPUTE = SAMPLED_COMPUTE | IMAGE_COMPUTE_READ_WRITE,
 	ANY_GRAPHICS = SAMPLED_ALL_GRAPHICS | FRAMEBUFFER_ATTACHMENT_READ_WRITE,

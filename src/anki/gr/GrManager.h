@@ -56,8 +56,9 @@ public:
 		return m_capabilities;
 	}
 
-	/// Begin frame.
-	void beginFrame();
+	/// Get next presentable image. The returned Texture is valid until the following swapBuffers. After that it might
+	/// dissapear even if you hold the reference.
+	TexturePtr acquireNextPresentableTexture();
 
 	/// Swap buffers
 	void swapBuffers();

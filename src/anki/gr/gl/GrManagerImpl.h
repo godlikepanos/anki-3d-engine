@@ -23,9 +23,11 @@ class GlState;
 class GrManagerImpl final : public GrManager
 {
 public:
-	GrManagerImpl()
-	{
-	}
+	/// Dummy framebuffer texture that emulates functionality vulkan can but GL can't
+	TexturePtr m_fakeFbTex;
+	FramebufferPtr m_fakeDefaultFb;
+
+	GrManagerImpl();
 
 	~GrManagerImpl();
 
@@ -72,6 +74,8 @@ private:
 
 	ANKI_USE_RESULT Error createBackend(GrManagerInitInfo& init);
 	void destroyBackend();
+
+	void initFakeDefaultFb(GrManagerInitInfo& init);
 };
 /// @}
 

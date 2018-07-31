@@ -565,8 +565,6 @@ Error App::mainLoop()
 		prevUpdateTime = crntTime;
 		crntTime = HighRezTimer::getCurrentTime();
 
-		m_gr->beginFrame();
-
 		// Update
 		ANKI_CHECK(m_input->handleEvents());
 
@@ -583,7 +581,8 @@ Error App::mainLoop()
 		injectStatsUiElement(newUiElementArr, rqueue);
 
 		// Render
-		ANKI_CHECK(m_renderer->render(rqueue));
+		TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
+		ANKI_CHECK(m_renderer->render(rqueue, presentableTex));
 
 		// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
 		m_resources->getAsyncLoader().pause();

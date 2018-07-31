@@ -32,16 +32,10 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderTargetHandle getRt() const
-	{
-		return m_runCtx.m_rt;
-	}
-
 private:
 	static const U LUT_SIZE = 16;
 
 	FramebufferDescription m_fbDescr;
-	RenderTargetDescription m_rtDescr;
 
 	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs; ///< One with Dbg and one without
@@ -52,7 +46,6 @@ private:
 	class
 	{
 	public:
-		RenderTargetHandle m_rt;
 		RenderingContext* m_ctx = nullptr;
 	} m_runCtx;
 

@@ -27,17 +27,7 @@ class MicroSwapchain
 public:
 	VkSwapchainKHR m_swapchain = {};
 
-	Array<VkImage, MAX_FRAMES_IN_FLIGHT> m_images = {};
-	Array<VkImageView, MAX_FRAMES_IN_FLIGHT> m_imageViews = {};
-
-	VkFormat m_surfaceFormat = {};
-
-	U32 m_surfaceWidth = 0;
-	U32 m_surfaceHeight = 0;
-
-	Array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> m_framebuffers = {};
-
-	U8 m_currentBackbufferIndex = 0;
+	Array<TexturePtr, MAX_FRAMES_IN_FLIGHT> m_textures;
 
 	MicroSwapchain(SwapchainFactory* factory);
 

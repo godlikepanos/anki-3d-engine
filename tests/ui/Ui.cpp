@@ -13,15 +13,6 @@
 namespace anki
 {
 
-static FramebufferPtr createDefaultFb(GrManager& gr)
-{
-	FramebufferInitInfo fbinit;
-	fbinit.m_colorAttachmentCount = 1;
-	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
-
-	return gr.newFramebuffer(fbinit);
-}
-
 class Label : public UiImmediateModeBuilder
 {
 public:
@@ -87,8 +78,6 @@ ANKI_TEST(Ui, Ui)
 		IntrusivePtr<Label> label;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));
 
-		FramebufferPtr fb = createDefaultFb(*gr);
-
 		Bool done = false;
 		while(!done)
 		{
@@ -106,15 +95,39 @@ ANKI_TEST(Ui, Ui)
 			label->build(canvas);
 			canvas->endBuilding();
 
-			gr->beginFrame();
+			TexturePtr presentTex = gr->acquireNextPresentableTexture();
+			FramebufferPtr fb;
+			{
+				TextureViewInitInfo init;
+				init.m_texture = presentTex;
+				TextureViewPtr view = gr->newTextureView(init);
+
+				FramebufferInitInfo fbinit;
+				fbinit.m_colorAttachmentCount = 1;
+				fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
+				fbinit.m_colorAttachments[0].m_textureView = view;
+
+				fb = gr->newFramebuffer(fbinit);
+			}
 
 			CommandBufferInitInfo cinit;
 			cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-			cmdb->beginRenderPass(fb, {{}}, {});
+			cmdb->setTextureBarrier(presentTex,
+				TextureUsageBit::NONE,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureSubresourceInfo());
+
+			cmdb->beginRenderPass(fb, {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}}, {});
 			canvas->appendToCommandBuffer(cmdb);
 			cmdb->endRenderPass();
+
+			cmdb->setTextureBarrier(presentTex,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureUsageBit::PRESENT,
+				TextureSubresourceInfo());
+
 			cmdb->flush();
 
 			gr->swapBuffers();

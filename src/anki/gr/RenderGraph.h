@@ -364,11 +364,6 @@ public:
 	U32 m_colorAttachmentCount = 0;
 	FramebufferDescriptionAttachment m_depthStencilAttachment;
 
-	void setDefaultFramebuffer()
-	{
-		m_defaultFb = true;
-	}
-
 	/// Calculate the hash for the framebuffer.
 	void bake();
 
@@ -378,8 +373,6 @@ public:
 	}
 
 private:
-	Bool8 m_defaultFb = false;
-
 	U64 m_hash = 0;
 };
 
@@ -404,7 +397,7 @@ public:
 		ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
 		for(U i = 0; i < colorRenderTargetHandles.getSize(); ++i)
 		{
-			if(fbInfo.m_defaultFb || i >= fbInfo.m_colorAttachmentCount)
+			if(i >= fbInfo.m_colorAttachmentCount)
 			{
 				ANKI_ASSERT(!colorRenderTargetHandles[i].isValid());
 			}
@@ -414,7 +407,7 @@ public:
 			}
 		}
 
-		if(fbInfo.m_defaultFb || !fbInfo.m_depthStencilAttachment.m_aspect)
+		if(!fbInfo.m_depthStencilAttachment.m_aspect)
 		{
 			ANKI_ASSERT(!depthStencilRenderTargetHandle.isValid());
 		}
@@ -425,11 +418,8 @@ public:
 #endif
 
 		m_fbDescr = fbInfo;
-		if(!fbInfo.m_defaultFb)
-		{
-			memcpy(&m_rtHandles[0], &colorRenderTargetHandles[0], sizeof(colorRenderTargetHandles));
-			m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
-		}
+		memcpy(&m_rtHandles[0], &colorRenderTargetHandles[0], sizeof(colorRenderTargetHandles));
+		m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
 		m_fbRenderArea = {{minx, miny, maxx, maxy}};
 	}
 
@@ -675,8 +665,10 @@ private:
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(
-		const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name);
+	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr,
+		const RenderTargetHandle* rtHandles,
+		CString name,
+		Bool& drawsToPresentableTex);
 
 	ANKI_HOT Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b) const;
 

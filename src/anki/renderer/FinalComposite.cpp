@@ -36,19 +36,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(loadColorGradingTexture("engine_data/DefaultLut.ankitex"));
 
-	if(!m_r->getDrawToDefaultFramebuffer())
-	{
-		m_rtDescr =
-			m_r->create2DRenderTargetDescription(m_r->getWidth(), m_r->getHeight(), RT_PIXEL_FORMAT, "Final Composite");
-		m_rtDescr.bake();
-
-		m_fbDescr.m_colorAttachmentCount = 1;
-	}
-	else
-	{
-		m_fbDescr.setDefaultFramebuffer();
-	}
-
+	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fbDescr.bake();
 
@@ -99,9 +87,7 @@ Error FinalComposite::loadColorGradingTexture(CString filename)
 void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-
 	const Bool dbgEnabled = m_r->getDbg().getEnabled();
-	const Bool drawToDefaultFb = m_r->getDrawToDefaultFramebuffer();
 
 	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
 
@@ -137,18 +123,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 												 * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 	cmdb->setPushConstants(&pconsts, sizeof(pconsts));
 
-	U width, height;
-	if(drawToDefaultFb)
-	{
-		width = ctx.m_outFbWidth;
-		height = ctx.m_outFbHeight;
-	}
-	else
-	{
-		width = m_r->getWidth();
-		height = m_r->getHeight();
-	}
-	cmdb->setViewport(0, 0, width, height);
+	cmdb->setViewport(0, 0, ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight);
 
 	drawQuad(cmdb);
 
@@ -160,39 +135,22 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_ctx = &ctx;
-	const Bool drawToDefaultFb = m_r->getDrawToDefaultFramebuffer();
-	const Bool dbgEnabled = m_r->getDbg().getEnabled();
-
-	// Maybe create the RT
-	if(!drawToDefaultFb)
-	{
-		m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
-	}
 
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
 	pass.setWork(runCallback, this, 0);
+	pass.setFramebufferInfo(m_fbDescr, {{ctx.m_outRenderTarget}}, {});
 
-	if(drawToDefaultFb)
-	{
-		pass.setFramebufferInfo(m_fbDescr, {}, {});
-	}
-	else
-	{
-		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, {});
-	}
+	pass.newConsumer({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	pass.newProducer({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
-	if(!drawToDefaultFb)
-	{
-		pass.newConsumer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-	}
-
-	if(dbgEnabled)
+	if(m_r->getDbg().getEnabled())
 	{
 		pass.newConsumer({m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	}
+
+	pass.newConsumer({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	pass.newConsumer({m_r->getGBuffer().getColorRt(3), TextureUsageBit::SAMPLED_FRAGMENT});

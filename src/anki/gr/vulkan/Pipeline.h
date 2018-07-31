@@ -385,7 +385,7 @@ public:
 		m_fbDepth = d;
 		m_fbStencil = s;
 		m_rpass = fbimpl.getCompatibleRenderPass();
-		m_defaultFb = fbimpl.isDefaultFramebuffer();
+		m_defaultFb = fbimpl.hasPresentableTexture();
 		m_fb = fb;
 	}
 

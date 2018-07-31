@@ -94,6 +94,8 @@ public:
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorUsages = {}; ///< For beginRender pass
 	TextureUsageBit m_dsUsage = TextureUsageBit::NONE; ///< For beginRender pass
 
+	Bool8 m_drawsToPresentable = false;
+
 	/// WARNING: Should be the same as RenderPassDependency::TextureInfo
 	class ConsumedTextureInfo
 	{
@@ -103,8 +105,6 @@ public:
 		TextureSubresourceInfo m_subresource;
 	};
 	DynamicArray<ConsumedTextureInfo> m_consumedTextures;
-
-	Bool8 m_drawsToDefaultFb = false;
 
 	FramebufferPtr& fb()
 	{
@@ -149,11 +149,6 @@ public:
 void FramebufferDescription::bake()
 {
 	ANKI_ASSERT(m_hash == 0 && "Already baked");
-	if(m_defaultFb)
-	{
-		m_hash = 1;
-		return;
-	}
 
 	m_hash = 0;
 	ANKI_ASSERT(m_colorAttachmentCount > 0 || !!m_depthStencilAttachment.m_aspect);
@@ -328,31 +323,33 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 }
 
 FramebufferPtr RenderGraph::getOrCreateFramebuffer(
-	const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name)
+	const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name, Bool& drawsToPresentable)
 {
 	ANKI_ASSERT(rtHandles);
 	U64 hash = fbDescr.m_hash;
 	ANKI_ASSERT(hash > 0);
 
-	const Bool defaultFb = hash == 1;
+	drawsToPresentable = false;
 
-	if(!defaultFb)
+	// Create a hash that includes the render targets
+	Array<U64, MAX_COLOR_ATTACHMENTS + 1> uuids;
+	U count = 0;
+	for(U i = 0; i < fbDescr.m_colorAttachmentCount; ++i)
 	{
-		// Create a hash that includes the render targets
-		Array<U64, MAX_COLOR_ATTACHMENTS + 1> uuids;
-		U count = 0;
-		for(U i = 0; i < fbDescr.m_colorAttachmentCount; ++i)
-		{
-			uuids[count++] = m_ctx->m_rts[rtHandles[i].m_idx].m_texture->getUuid();
-		}
+		uuids[count++] = m_ctx->m_rts[rtHandles[i].m_idx].m_texture->getUuid();
 
-		if(!!fbDescr.m_depthStencilAttachment.m_aspect)
+		if(!!(m_ctx->m_rts[rtHandles[i].m_idx].m_texture->getTextureUsage() & TextureUsageBit::PRESENT))
 		{
-			uuids[count++] = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture->getUuid();
+			drawsToPresentable = true;
 		}
-
-		hash = appendHash(&uuids[0], sizeof(U64) * count, hash);
 	}
+
+	if(!!fbDescr.m_depthStencilAttachment.m_aspect)
+	{
+		uuids[count++] = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture->getUuid();
+	}
+
+	hash = appendHash(&uuids[0], sizeof(U64) * count, hash);
 
 	FramebufferPtr fb;
 	auto it = m_fbCache.find(hash);
@@ -364,50 +361,42 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 	{
 		// Create a complete fb init info
 		FramebufferInitInfo fbInit;
-		if(!defaultFb)
+		fbInit.m_colorAttachmentCount = fbDescr.m_colorAttachmentCount;
+		for(U i = 0; i < fbInit.m_colorAttachmentCount; ++i)
 		{
-			fbInit.m_colorAttachmentCount = fbDescr.m_colorAttachmentCount;
-			for(U i = 0; i < fbInit.m_colorAttachmentCount; ++i)
-			{
-				FramebufferAttachmentInfo& outAtt = fbInit.m_colorAttachments[i];
-				const FramebufferDescriptionAttachment& inAtt = fbDescr.m_colorAttachments[i];
+			FramebufferAttachmentInfo& outAtt = fbInit.m_colorAttachments[i];
+			const FramebufferDescriptionAttachment& inAtt = fbDescr.m_colorAttachments[i];
 
-				outAtt.m_clearValue = inAtt.m_clearValue;
-				outAtt.m_loadOperation = inAtt.m_loadOperation;
-				outAtt.m_storeOperation = inAtt.m_storeOperation;
+			outAtt.m_clearValue = inAtt.m_clearValue;
+			outAtt.m_loadOperation = inAtt.m_loadOperation;
+			outAtt.m_storeOperation = inAtt.m_storeOperation;
 
-				// Create texture view
-				TextureViewInitInfo viewInit(
-					m_ctx->m_rts[rtHandles[i].m_idx].m_texture, TextureSubresourceInfo(inAtt.m_surface), "RenderGraph");
-				TextureViewPtr view = getManager().newTextureView(viewInit);
+			// Create texture view
+			TextureViewInitInfo viewInit(
+				m_ctx->m_rts[rtHandles[i].m_idx].m_texture, TextureSubresourceInfo(inAtt.m_surface), "RenderGraph");
+			TextureViewPtr view = getManager().newTextureView(viewInit);
 
-				outAtt.m_textureView = view;
-			}
-
-			if(!!fbDescr.m_depthStencilAttachment.m_aspect)
-			{
-				FramebufferAttachmentInfo& outAtt = fbInit.m_depthStencilAttachment;
-				const FramebufferDescriptionAttachment& inAtt = fbDescr.m_depthStencilAttachment;
-
-				outAtt.m_clearValue = inAtt.m_clearValue;
-				outAtt.m_loadOperation = inAtt.m_loadOperation;
-				outAtt.m_storeOperation = inAtt.m_storeOperation;
-				outAtt.m_stencilLoadOperation = inAtt.m_stencilLoadOperation;
-				outAtt.m_stencilStoreOperation = inAtt.m_stencilStoreOperation;
-
-				// Create texture view
-				TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture,
-					TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect),
-					"RenderGraph");
-				TextureViewPtr view = getManager().newTextureView(viewInit);
-
-				outAtt.m_textureView = view;
-			}
+			outAtt.m_textureView = view;
 		}
-		else
+
+		if(!!fbDescr.m_depthStencilAttachment.m_aspect)
 		{
-			fbInit.m_colorAttachmentCount = 1;
-			fbInit.m_colorAttachments[0].m_loadOperation = fbDescr.m_colorAttachments[0].m_loadOperation;
+			FramebufferAttachmentInfo& outAtt = fbInit.m_depthStencilAttachment;
+			const FramebufferDescriptionAttachment& inAtt = fbDescr.m_depthStencilAttachment;
+
+			outAtt.m_clearValue = inAtt.m_clearValue;
+			outAtt.m_loadOperation = inAtt.m_loadOperation;
+			outAtt.m_storeOperation = inAtt.m_storeOperation;
+			outAtt.m_stencilLoadOperation = inAtt.m_stencilLoadOperation;
+			outAtt.m_stencilStoreOperation = inAtt.m_stencilStoreOperation;
+
+			// Create texture view
+			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture,
+				TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect),
+				"RenderGraph");
+			TextureViewPtr view = getManager().newTextureView(viewInit);
+
+			outAtt.m_textureView = view;
 		}
 
 		// Set FB name
@@ -640,37 +629,34 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 
 			if(graphicsPass.hasFramebuffer())
 			{
-				outPass.fb() =
-					getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0], inPass.m_name.cstr());
-				outPass.m_drawsToDefaultFb = graphicsPass.m_fbDescr.m_defaultFb;
+				Bool drawsToPresentable;
+				outPass.fb() = getOrCreateFramebuffer(
+					graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0], inPass.m_name.cstr(), drawsToPresentable);
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
+				outPass.m_drawsToPresentable = drawsToPresentable;
 
 				// Init the usage bits
-				if(graphicsPass.m_fbDescr.m_hash != 1)
+				TextureUsageBit usage;
+				for(U i = 0; i < graphicsPass.m_fbDescr.m_colorAttachmentCount; ++i)
 				{
-					TextureUsageBit usage;
+					getCrntUsage(graphicsPass.m_rtHandles[i],
+						passIdx,
+						TextureSubresourceInfo(graphicsPass.m_fbDescr.m_colorAttachments[i].m_surface),
+						usage);
 
-					for(U i = 0; i < graphicsPass.m_fbDescr.m_colorAttachmentCount; ++i)
-					{
-						getCrntUsage(graphicsPass.m_rtHandles[i],
-							passIdx,
-							TextureSubresourceInfo(graphicsPass.m_fbDescr.m_colorAttachments[i].m_surface),
-							usage);
+					outPass.m_colorUsages[i] = usage;
+				}
 
-						outPass.m_colorUsages[i] = usage;
-					}
+				if(!!graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect)
+				{
+					TextureSubresourceInfo subresource =
+						TextureSubresourceInfo(graphicsPass.m_fbDescr.m_depthStencilAttachment.m_surface,
+							graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect);
 
-					if(!!graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect)
-					{
-						TextureSubresourceInfo subresource =
-							TextureSubresourceInfo(graphicsPass.m_fbDescr.m_depthStencilAttachment.m_surface,
-								graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect);
+					getCrntUsage(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS], passIdx, subresource, usage);
 
-						getCrntUsage(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS], passIdx, subresource, usage);
-
-						outPass.m_dsUsage = usage;
-					}
+					outPass.m_dsUsage = usage;
 				}
 
 				// Do some pre-work for the second level command buffers
@@ -717,7 +703,7 @@ void RenderGraph::initBatches()
 	while(passesInBatchCount < passCount)
 	{
 		Batch batch;
-		Bool drawsToDefaultFb = false;
+		Bool drawsToPresentable = false;
 
 		for(U i = 0; i < passCount; ++i)
 		{
@@ -727,15 +713,15 @@ void RenderGraph::initBatches()
 				++passesInBatchCount;
 				batch.m_passIndices.emplaceBack(m_ctx->m_alloc, i);
 
-				// Will batch draw to default FB?
-				drawsToDefaultFb = drawsToDefaultFb || m_ctx->m_passes[i].m_drawsToDefaultFb;
+				// Will batch draw to the swapchain?
+				drawsToPresentable = drawsToPresentable || m_ctx->m_passes[i].m_drawsToPresentable;
 			}
 		}
 
 		// Get or create cmdb for the batch.
-		// Create a new cmdb if the batch is writing to default FB. This will help Vulkan to have a dependency of the
+		// Create a new cmdb if the batch is writing to swapchain. This will help Vulkan to have a dependency of the
 		// swap chain image acquire to the 2nd command buffer instead of adding it to a single big cmdb.
-		if(m_ctx->m_graphicsCmdbs.isEmpty() || drawsToDefaultFb)
+		if(m_ctx->m_graphicsCmdbs.isEmpty() || drawsToPresentable)
 		{
 			CommandBufferInitInfo cmdbInit;
 			cmdbInit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::GRAPHICS_WORK;

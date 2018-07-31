@@ -740,7 +740,7 @@ inline void CommandBufferImpl::copyBufferToBuffer(
 
 inline Bool CommandBufferImpl::flipViewport() const
 {
-	return static_cast<const FramebufferImpl&>(*m_activeFb).isDefaultFramebuffer()
+	return static_cast<const FramebufferImpl&>(*m_activeFb).hasPresentableTexture()
 		   && !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
 }
 

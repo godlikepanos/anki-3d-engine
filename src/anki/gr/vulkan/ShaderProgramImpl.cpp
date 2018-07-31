@@ -49,7 +49,6 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 			const ShaderImpl& simpl = *scast<const ShaderImpl*>(m_shaders[stype].get());
 
-			m_refl.m_descriptorSetMask |= simpl.m_descriptorSetMask;
 			m_refl.m_activeBindingMask[set] |= simpl.m_activeBindingMask[set];
 
 			for(U i = 0; i < simpl.m_bindings[set].getSize(); ++i)
@@ -89,6 +88,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			}
 		}
 
+		// We may end up with ppline layouts with "empty" dslayouts. That's fine, we want it.
 		if(counts[set])
 		{
 			descriptorSetCount = set + 1;
@@ -104,6 +104,9 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 		ANKI_CHECK(
 			getGrManagerImpl().getDescriptorSetFactory().newDescriptorSetLayout(inf, m_descriptorSetLayouts[set]));
+
+		// Even if the dslayout is empty we will have to list it because we'll have to bind a DS for it.
+		m_refl.m_descriptorSetMask.set(set);
 	}
 
 	// Create the ppline layout
