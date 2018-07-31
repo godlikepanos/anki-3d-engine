@@ -31,8 +31,6 @@ Config::Config()
 	newOption("r.bloom.threshold", 2.5);
 	newOption("r.bloom.scale", 2.5);
 
-	newOption("r.finalComposite.sharpen", false);
-
 	newOption("r.indirect.reflectionResolution", 128);
 	newOption("r.indirect.maxSimultaneousProbeCount", 32);
 
