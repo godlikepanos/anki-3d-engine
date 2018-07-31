@@ -78,11 +78,37 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 	// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw anywhere
 	ANKI_ASSERT(self.m_modelPatch->getSubMeshCount() == 1);
 
+	// Transforms
+	Array<Mat4, MAX_INSTANCES> trfs;
+	Array<Mat4, MAX_INSTANCES> prevTrfs;
+	const MoveComponent& movec = self.getParent()->getComponentAt<MoveComponent>(0);
+	trfs[0] = Mat4(movec.getWorldTransform());
+	prevTrfs[0] = Mat4(movec.getPreviousWorldTransform());
+	Bool moved = trfs[0] != prevTrfs[0]; // If at least one is moved then it's dynamic
+	for(U i = 1; i < userData.getSize(); ++i)
+	{
+		const ModelPatchNode& self2 = *static_cast<const ModelPatchNode*>(userData[i]);
+		const MoveComponent& movec = self2.getParent()->getComponentAt<MoveComponent>(0);
+		trfs[i] = Mat4(movec.getWorldTransform());
+		prevTrfs[i] = Mat4(movec.getPreviousWorldTransform());
+
+		moved = moved || (trfs[i] != prevTrfs[i]);
+	}
+
 	ModelRenderingInfo modelInf;
+	ctx.m_key.m_velocity = moved;
 	self.m_modelPatch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
 
 	// Program
 	cmdb->bindShaderProgram(modelInf.m_program);
+
+	// Uniforms
+	static_cast<const MaterialRenderComponent&>(self.getComponentAt<RenderComponent>(1))
+		.allocateAndSetupUniforms(self.m_modelPatch->getMaterial()->getDescriptorSetIndex(),
+			ctx,
+			ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
+			ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),
+			*ctx.m_stagingGpuAllocator);
 
 	// Set attributes
 	for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
@@ -101,21 +127,6 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 
 	// Index buffer
 	cmdb->bindIndexBuffer(modelInf.m_indexBuffer, 0, IndexType::U16);
-
-	// Uniforms
-	Array<Mat4, MAX_INSTANCES> trfs;
-	trfs[0] = Mat4(self.getParent()->getComponentAt<MoveComponent>(0).getWorldTransform());
-	for(U i = 1; i < userData.getSize(); ++i)
-	{
-		const ModelPatchNode& self2 = *static_cast<const ModelPatchNode*>(userData[i]);
-		trfs[i] = Mat4(self2.getParent()->getComponentAt<MoveComponent>(0).getWorldTransform());
-	}
-
-	static_cast<const MaterialRenderComponent&>(self.getComponentAt<RenderComponent>(1))
-		.allocateAndSetupUniforms(self.m_modelPatch->getMaterial()->getDescriptorSetIndex(),
-			ctx,
-			ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
-			*ctx.m_stagingGpuAllocator);
 
 	// Draw
 	cmdb->drawElements(PrimitiveTopology::TRIANGLES,
@@ -266,11 +277,49 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		// anywhere
 		ANKI_ASSERT(patch->getSubMeshCount() == 1);
 
+		// Transforms
+		Array<Mat4, MAX_INSTANCES> trfs;
+		Array<Mat4, MAX_INSTANCES> prevTrfs;
+		const MoveComponent& movec = self.getComponent<MoveComponent>();
+		trfs[0] = Mat4(movec.getWorldTransform());
+		prevTrfs[0] = Mat4(movec.getPreviousWorldTransform());
+		Bool moved = trfs[0] != prevTrfs[0];
+		for(U i = 1; i < userData.getSize(); ++i)
+		{
+			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
+			const MoveComponent& movec = self2.getComponent<MoveComponent>();
+			trfs[i] = Mat4(movec.getWorldTransform());
+			prevTrfs[i] = Mat4(movec.getPreviousWorldTransform());
+
+			moved = moved || (trfs[i] != prevTrfs[i]);
+		}
+
+		// Bones storage
+		if(self.m_model->getSkeleton())
+		{
+			const SkinComponent& skinc = self.getComponentAt<SkinComponent>(0);
+			StagingGpuMemoryToken token;
+			void* trfs = ctx.m_stagingGpuAllocator->allocateFrame(
+				skinc.getBoneTransforms().getSize() * sizeof(Mat4), StagingGpuMemoryType::STORAGE, token);
+			memcpy(trfs, &skinc.getBoneTransforms()[0], skinc.getBoneTransforms().getSize() * sizeof(Mat4));
+
+			cmdb->bindStorageBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
+		}
+
+		ctx.m_key.m_velocity = moved;
 		ModelRenderingInfo modelInf;
 		patch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
 
 		// Program
 		cmdb->bindShaderProgram(modelInf.m_program);
+
+		// Uniforms
+		static_cast<const MaterialRenderComponent&>(self.getComponent<RenderComponent>())
+			.allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
+				ctx,
+				ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
+				ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),
+				*ctx.m_stagingGpuAllocator);
 
 		// Set attributes
 		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
@@ -290,33 +339,6 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 
 		// Index buffer
 		cmdb->bindIndexBuffer(modelInf.m_indexBuffer, 0, IndexType::U16);
-
-		// Uniforms
-		Array<Mat4, MAX_INSTANCES> trfs;
-		trfs[0] = Mat4(self.getComponent<MoveComponent>().getWorldTransform());
-		for(U i = 1; i < userData.getSize(); ++i)
-		{
-			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
-			trfs[i] = Mat4(self2.getComponent<MoveComponent>().getWorldTransform());
-		}
-
-		static_cast<const MaterialRenderComponent&>(self.getComponent<RenderComponent>())
-			.allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
-				ctx,
-				ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
-				*ctx.m_stagingGpuAllocator);
-
-		// Bones storage
-		if(self.m_model->getSkeleton())
-		{
-			const SkinComponent& skinc = self.getComponentAt<SkinComponent>(0);
-			StagingGpuMemoryToken token;
-			void* trfs = ctx.m_stagingGpuAllocator->allocateFrame(
-				skinc.getBoneTransforms().getSize() * sizeof(Mat4), StagingGpuMemoryType::STORAGE, token);
-			memcpy(trfs, &skinc.getBoneTransforms()[0], skinc.getBoneTransforms().getSize() * sizeof(Mat4));
-
-			cmdb->bindStorageBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
-		}
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES,

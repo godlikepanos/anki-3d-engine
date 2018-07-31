@@ -29,22 +29,23 @@ FrustumComponent::~FrustumComponent()
 Error FrustumComponent::update(Second, Second, Bool& updated)
 {
 	updated = false;
+	m_prevViewProjMat = m_viewProjMat;
 
 	if(m_flags.get(SHAPE_MARKED_FOR_UPDATE))
 	{
 		updated = true;
-		m_pm = m_frustum->calculateProjectionMatrix();
+		m_projMat = m_frustum->calculateProjectionMatrix();
 	}
 
 	if(m_flags.get(TRANSFORM_MARKED_FOR_UPDATE))
 	{
 		updated = true;
-		m_vm = Mat4(m_frustum->getTransform().getInverse());
+		m_viewMat = Mat4(m_frustum->getTransform().getInverse());
 	}
 
 	if(updated)
 	{
-		m_vpm = m_pm * m_vm;
+		m_viewProjMat = m_projMat * m_viewMat;
 		m_flags.unset(SHAPE_MARKED_FOR_UPDATE | TRANSFORM_MARKED_FOR_UPDATE);
 	}
 

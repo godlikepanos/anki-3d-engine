@@ -96,7 +96,7 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 
 	// Write flare info
 	Vec4* flarePositions = allocateAndBindStorage<Vec4*>(sizeof(Mat4) + count * sizeof(Vec4), cmdb, 0, 0);
-	*reinterpret_cast<Mat4*>(flarePositions) = ctx.m_viewProjMatJitter;
+	*reinterpret_cast<Mat4*>(flarePositions) = ctx.m_matrices.m_viewProjectionJitter;
 	flarePositions += 4;
 
 	for(U i = 0; i < count; ++i)

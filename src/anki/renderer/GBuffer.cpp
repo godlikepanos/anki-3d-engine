@@ -39,7 +39,8 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 		m_r->getWidth(), m_r->getHeight(), GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT, "GBuffer depth");
 	m_depthRtDescr.bake();
 
-	static const char* rtNames[GBUFFER_COLOR_ATTACHMENT_COUNT] = {"GBuffer rt0", "GBuffer rt1", "GBuffer rt2"};
+	static const Array<const char*, GBUFFER_COLOR_ATTACHMENT_COUNT> rtNames = {
+		{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
 		m_colorRtDescrs[i] = m_r->create2DRenderTargetDescription(
@@ -54,12 +55,11 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 #endif
 
 	m_fbDescr.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = loadop;
-	m_fbDescr.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 0.0, 0.0}};
-	m_fbDescr.m_colorAttachments[1].m_loadOperation = loadop;
-	m_fbDescr.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0, 1.0, 0.0, 0.0}};
-	m_fbDescr.m_colorAttachments[2].m_loadOperation = loadop;
-	m_fbDescr.m_colorAttachments[2].m_clearValue.m_colorf = {{0.0, 0.0, 1.0, 0.0}};
+	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+	{
+		m_fbDescr.m_colorAttachments[i].m_loadOperation = loadop;
+		m_fbDescr.m_colorAttachments[i].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 0.0}};
+	}
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
@@ -103,8 +103,9 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 
 		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
 		m_r->getSceneDrawer().drawRange(Pass::EZ,
-			ctx.m_renderQueue->m_viewMatrix,
-			ctx.m_viewProjMatJitter,
+			ctx.m_matrices.m_view,
+			ctx.m_matrices.m_viewProjectionJitter,
+			ctx.m_prevMatrices.m_viewProjectionJitter,
 			cmdb,
 			ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
 			ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd);
@@ -126,8 +127,9 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
 		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-			ctx.m_renderQueue->m_viewMatrix,
-			ctx.m_viewProjMatJitter,
+			ctx.m_matrices.m_view,
+			ctx.m_matrices.m_viewProjectionJitter,
+			ctx.m_prevMatrices.m_viewProjectionJitter,
 			cmdb,
 			ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
 			ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);

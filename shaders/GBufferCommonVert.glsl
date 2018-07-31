@@ -50,6 +50,10 @@ layout(location = 3) out mediump Vec3 out_bitangent;
 layout(location = 4) out mediump F32 out_distFromTheCamera; // Parallax
 layout(location = 5) out mediump Vec3 out_eyeTangentSpace; // Parallax
 layout(location = 6) out mediump Vec3 out_normalTangentSpace; // Parallax
+
+#	if VELOCITY
+layout(location = 7) out mediump Vec2 out_velocity; // Velocity
+#	endif
 #endif
 
 //
@@ -129,5 +133,15 @@ void skinning()
 	g_tangent.xyz = tangent;
 	g_normal = normal;
 #	endif
+}
+#endif
+
+#if VELOCITY && PASS == PASS_GB_FS
+void velocity(Mat4 prevMvp)
+{
+	Vec4 v4 = prevMvp * Vec4(g_position, 1.0);
+	Vec2 prevNdc = v4.xy / v4.w;
+
+	out_velocity = NDC_TO_UV(prevNdc);
 }
 #endif

@@ -35,7 +35,6 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	ANKI_ASSERT("Initializing PPS");
 
 	ANKI_CHECK(loadColorGradingTexture("engine_data/DefaultLut.ankitex"));
-	m_sharpenEnabled = config.getNumber("r.finalComposite.sharpen");
 
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
@@ -46,11 +45,8 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	// Progs
 	ANKI_CHECK(getResourceManager().loadResource("shaders/FinalComposite.glslp", m_prog));
 
-	ShaderProgramResourceMutationInitList<4> mutations(m_prog);
-	mutations.add("BLUE_NOISE", 1)
-		.add("SHARPEN_ENABLED", m_sharpenEnabled)
-		.add("BLOOM_ENABLED", 1)
-		.add("DBG_ENABLED", 0);
+	ShaderProgramResourceMutationInitList<3> mutations(m_prog);
+	mutations.add("BLUE_NOISE", 1).add("BLOOM_ENABLED", 1).add("DBG_ENABLED", 0);
 
 	ShaderProgramResourceConstantValueInitList<2> consts(m_prog);
 	consts.add("LUT_SIZE", U32(LUT_SIZE)).add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
@@ -59,7 +55,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
 	m_grProgs[0] = variant->getProgram();
 
-	mutations[3].m_value = 1;
+	mutations[2].m_value = 1;
 	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
 	m_grProgs[1] = variant->getProgram();
 
@@ -93,6 +89,8 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const Bool dbgEnabled = m_r->getDbg().getEnabled();
 
+	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
+
 	// Bind stuff
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getTemporalAA().getRt(), m_r->getLinearSampler());
 
@@ -101,19 +99,32 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		0, 2, m_lut->getGrTextureView(), m_r->getLinearSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(
 		0, 3, m_blueNoise->getGrTextureView(), m_blueNoise->getSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getGBuffer().getColorRt(3), m_r->getNearestSampler());
+	rgraphCtx.bindTextureAndSampler(0,
+		5,
+		m_r->getGBuffer().getDepthRt(),
+		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
+		m_r->getNearestSampler());
+
 	if(dbgEnabled)
 	{
-		rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getDbg().getRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getDbg().getRt(), m_r->getLinearSampler());
 	}
 
 	rgraphCtx.bindUniformBuffer(0, 1, m_r->getTonemapping().getAverageLuminanceBuffer());
 
-	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
-	uniforms->x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());
+	struct PushConsts
+	{
+		Vec4 m_blueNoiseLayerPad3;
+		Mat4 m_prevViewProjMatMulInvViewProjMat;
+	} pconsts;
+	pconsts.m_blueNoiseLayerPad3.x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());
+	pconsts.m_prevViewProjMatMulInvViewProjMat = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection
+												 * ctx.m_matrices.m_viewProjectionJitter.getInverse();
+	cmdb->setPushConstants(&pconsts, sizeof(pconsts));
 
 	cmdb->setViewport(0, 0, ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight);
 
-	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
 	drawQuad(cmdb);
 
 	// Draw UI
@@ -141,6 +152,9 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newConsumer({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+
+	pass.newConsumer({m_r->getGBuffer().getColorRt(3), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 }
 
 } // end namespace anki

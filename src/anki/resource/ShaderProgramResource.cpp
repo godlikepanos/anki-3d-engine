@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/resource/ShaderProgramResource.h>
-#include <anki/resource/RenderingKey.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/util/Filesystem.h>
 #include <tinyexpr.h>

@@ -36,6 +36,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	rqueue.m_viewMatrix = frc.getViewMatrix();
 	rqueue.m_projectionMatrix = frc.getProjectionMatrix();
 	rqueue.m_viewProjectionMatrix = frc.getViewProjectionMatrix();
+	rqueue.m_previousViewProjectionMatrix = frc.getPreviousViewProjectionMatrix();
 	rqueue.m_cameraNear = frc.getFrustum().getNear();
 	rqueue.m_cameraFar = frc.getFrustum().getFar();
 

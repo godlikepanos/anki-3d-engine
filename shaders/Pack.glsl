@@ -135,16 +135,19 @@ struct GbufferInfo
 	F32 m_metallic;
 	F32 m_subsurface;
 	F32 m_emission;
+	Vec2 m_velocity;
 };
 
 // Populate the G buffer
-void writeGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2)
+void writeGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out Vec2 rt3)
 {
 	rt0 = Vec4(g.m_diffuse, g.m_subsurface);
 	rt1 = Vec4(g.m_roughness, g.m_metallic, g.m_specular.x, 0.0);
 
 	Vec3 encNorm = signedOctEncode(g.m_normal);
 	rt2 = Vec4(encNorm.xy, g.m_emission / MAX_EMISSION, encNorm.z);
+
+	rt3 = g.m_velocity;
 }
 
 // Read from G-buffer
@@ -161,7 +164,7 @@ F32 readRoughnessFromGBuffer(sampler2D rt1, Vec2 uv)
 	return r;
 }
 
-// Read from the G buffer
+// Read part of the G-buffer
 void readGBuffer(sampler2D rt0, sampler2D rt1, sampler2D rt2, Vec2 uv, F32 lod, out GbufferInfo g)
 {
 	Vec4 comp = textureLod(rt0, uv, 0.0);
@@ -176,6 +179,8 @@ void readGBuffer(sampler2D rt0, sampler2D rt1, sampler2D rt2, Vec2 uv, F32 lod, 
 	comp = textureLod(rt2, uv, 0.0);
 	g.m_normal = signedOctDecode(comp.xyw);
 	g.m_emission = comp.z * MAX_EMISSION;
+
+	g.m_velocity = Vec2(FLT_MAX); // Put something random
 
 	// Fix roughness
 	g.m_roughness = g.m_roughness * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;

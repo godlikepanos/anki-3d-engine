@@ -354,9 +354,9 @@ F32 areaElement(F32 x, F32 y)
 	return atan(x * y, sqrt(x * x + y * y + 1.0));
 }
 
-/// Compute the solid angle of a cube. Solid angle is the area of a sphere when projected into a cubemap. It's also the
-/// delta omega (dω) in the irradiance integral and other integrals that operate in a sphere.
-/// http://www.rorydriscoll.com/2012/01/15/cubemap-texel-solid-angle/
+// Compute the solid angle of a cube. Solid angle is the area of a sphere when projected into a cubemap. It's also the
+// delta omega (dω) in the irradiance integral and other integrals that operate in a sphere.
+// http://www.rorydriscoll.com/2012/01/15/cubemap-texel-solid-angle/
 F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 {
 	Vec2 invSize = Vec2(1.0 / cubeFaceSize);
@@ -365,9 +365,9 @@ F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
 }
 
-/// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
-/// intersection point is rayOrigin + rayDir * a
-/// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
+// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
+// intersection point is rayOrigin + rayDir * a
+// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
 F32 rayAabbIntersectionInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax)
 {
 	Vec3 intersectMaxPointPlanes = (aabbMax - rayOrigin) / rayDir;
@@ -376,3 +376,13 @@ F32 rayAabbIntersectionInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aa
 	F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
 	return distToIntersect;
 }
+
+// A convenience macro to skip out of bounds invocations on post-process compute shaders.
+#define SKIP_OUT_OF_BOUNDS_INVOCATIONS() \
+	if((FB_SIZE.x % WORKGROUP_SIZE.x) != 0u || (FB_SIZE.y % WORKGROUP_SIZE.y) != 0u) \
+	{ \
+		if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y) \
+		{ \
+			return; \
+		} \
+	}

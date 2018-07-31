@@ -265,15 +265,16 @@ void LightShading::updateCommonBlock(RenderingContext& ctx)
 	blk->m_viewMat = ctx.m_renderQueue->m_viewMatrix;
 	blk->m_invViewMat = ctx.m_renderQueue->m_viewMatrix.getInverse();
 
-	blk->m_projMat = ctx.m_projMatJitter;
-	blk->m_invProjMat = ctx.m_projMatJitter.getInverse();
+	blk->m_projMat = ctx.m_matrices.m_projectionJitter;
+	blk->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 
-	blk->m_viewProjMat = ctx.m_viewProjMatJitter;
-	blk->m_invViewProjMat = ctx.m_viewProjMatJitter.getInverse();
+	blk->m_viewProjMat = ctx.m_matrices.m_viewProjectionJitter;
+	blk->m_invViewProjMat = ctx.m_matrices.m_viewProjectionJitter.getInverse();
 
-	blk->m_prevViewProjMat = ctx.m_prevViewProjMat;
+	blk->m_prevViewProjMat = ctx.m_prevMatrices.m_viewProjectionJitter;
 
-	blk->m_prevViewProjMatMulInvViewProjMat = ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();
+	blk->m_prevViewProjMatMulInvViewProjMat =
+		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 }
 
 } // end namespace anki

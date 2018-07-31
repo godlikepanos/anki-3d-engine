@@ -105,10 +105,11 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	// Bind uniforms
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 0);
 	unis->m_nearPad3 = Vec4(ctx.m_renderQueue->m_cameraNear);
-	unis->m_prevViewProjMatMulInvViewProjMat = ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();
-	unis->m_projMat = ctx.m_projMatJitter;
-	unis->m_invProjMat = ctx.m_projMatJitter.getInverse();
-	unis->m_normalMat = Mat3x4(ctx.m_renderQueue->m_viewMatrix.getRotationPart());
+	unis->m_prevViewProjMatMulInvViewProjMat =
+		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
+	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
+	unis->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
+	unis->m_normalMat = Mat3x4(ctx.m_matrices.m_view.getRotationPart());
 
 	// Dispatch
 	const U sizeX = (m_r->getWidth() / SSR_FRACTION + m_workgroupSize[0] - 1) / m_workgroupSize[0];

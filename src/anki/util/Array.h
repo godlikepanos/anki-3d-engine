@@ -158,6 +158,10 @@ using Array3d = Array<Array<Array<T, K>, J>, I>;
 /// 4D Array. @code Array4d<X, 10, 2, 3, 4> a; @endcode is equivelent to @code X a[10][2][3][4]; @endcode
 template<typename T, PtrSize I, PtrSize J, PtrSize K, PtrSize L>
 using Array4d = Array<Array<Array<Array<T, L>, K>, J>, I>;
+
+/// 5D Array. @code Array5d<X, 10, 2, 3, 4, 5> a; @endcode is equivelent to @code X a[10][2][3][4][5]; @endcode
+template<typename T, PtrSize I, PtrSize J, PtrSize K, PtrSize L, PtrSize M>
+using Array5d = Array<Array<Array<Array<Array<T, M>, L>, K>, J>, I>;
 /// @}
 
 } // end namespace anki

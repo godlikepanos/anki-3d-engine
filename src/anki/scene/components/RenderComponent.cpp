@@ -33,10 +33,14 @@ MaterialRenderComponent::~MaterialRenderComponent()
 	m_vars.destroy(getAllocator());
 }
 
-void MaterialRenderComponent::allocateAndSetupUniforms(
-	U set, const RenderQueueDrawContext& ctx, ConstWeakArray<Mat4> transforms, StagingGpuMemoryManager& alloc) const
+void MaterialRenderComponent::allocateAndSetupUniforms(U set,
+	const RenderQueueDrawContext& ctx,
+	ConstWeakArray<Mat4> transforms,
+	ConstWeakArray<Mat4> prevTransforms,
+	StagingGpuMemoryManager& alloc) const
 {
 	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCES);
+	ANKI_ASSERT(prevTransforms.getSize() == transforms.getSize());
 
 	const MaterialVariant& variant = m_mtl->getOrCreateVariant(ctx.m_key);
 	const ShaderProgramResourceVariant& progVariant = variant.getShaderProgramResourceVariant();
@@ -194,6 +198,22 @@ void MaterialRenderComponent::allocateAndSetupUniforms(
 				}
 
 				progVariant.writeShaderBlockMemory(progvar, &mvp[0], transforms.getSize(), uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX:
+			{
+				ANKI_ASSERT(prevTransforms.getSize() > 0);
+
+				DynamicArrayAuto<Mat4> mvp(getFrameAllocator());
+				mvp.create(prevTransforms.getSize());
+
+				for(U i = 0; i < prevTransforms.getSize(); i++)
+				{
+					mvp[i] = ctx.m_previousViewProjectionMatrix * prevTransforms[i];
+				}
+
+				progVariant.writeShaderBlockMemory(
+					progvar, &mvp[0], prevTransforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::MODEL_VIEW_MATRIX:

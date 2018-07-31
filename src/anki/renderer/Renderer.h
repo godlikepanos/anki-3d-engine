@@ -26,6 +26,20 @@ class UiManager;
 /// @addtogroup renderer
 /// @{
 
+/// Matrices.
+class RenderingContextMatrices
+{
+public:
+	Mat4 m_cameraTransform = Mat4::getIdentity();
+	Mat4 m_view = Mat4::getIdentity();
+	Mat4 m_projection = Mat4::getIdentity();
+	Mat4 m_viewProjection = Mat4::getIdentity();
+
+	Mat4 m_jitter = Mat4::getIdentity();
+	Mat4 m_projectionJitter = Mat4::getIdentity();
+	Mat4 m_viewProjectionJitter = Mat4::getIdentity();
+};
+
 /// Rendering context.
 class RenderingContext
 {
@@ -36,17 +50,13 @@ public:
 
 	RenderGraphDescription m_renderGraphDescr;
 
+	RenderingContextMatrices m_matrices;
+	RenderingContextMatrices m_prevMatrices;
+
 	/// The render target that the Renderer will populate.
 	RenderTargetHandle m_outRenderTarget;
 	U32 m_outRenderTargetWidth = 0;
 	U32 m_outRenderTargetHeight = 0;
-
-	// Extra matrices
-	Mat4 m_projMatJitter;
-	Mat4 m_viewProjMatJitter;
-	Mat4 m_jitterMat;
-	Mat4 m_prevViewProjMat;
-	Mat4 m_prevCamTransform;
 
 	Vec4 m_unprojParams;
 
@@ -374,8 +384,7 @@ private:
 	U64 m_prevAsyncTasksCompleted = 0;
 	Bool m_resourcesDirty = true;
 
-	Mat4 m_prevViewProjMat = Mat4::getIdentity();
-	Mat4 m_prevCamTransform = Mat4::getIdentity();
+	RenderingContextMatrices m_prevMatrices;
 
 	Array<Mat4, 16> m_jitteredMats16x;
 	Array<Mat4, 8> m_jitteredMats8x;

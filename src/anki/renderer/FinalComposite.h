@@ -43,8 +43,6 @@ private:
 	TextureResourcePtr m_lut; ///< Color grading lookup texture.
 	TextureResourcePtr m_blueNoise;
 
-	Bool8 m_sharpenEnabled = false;
-
 	class
 	{
 	public:

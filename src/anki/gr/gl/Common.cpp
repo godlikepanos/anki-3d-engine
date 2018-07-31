@@ -362,6 +362,16 @@ void convertTextureInformation(
 		internalFormat = GL_R16;
 		type = GL_UNSIGNED_SHORT;
 		break;
+	case Format::R16G16_UNORM:
+		format = GL_RG;
+		internalFormat = GL_RG16;
+		type = GL_UNSIGNED_SHORT;
+		break;
+	case Format::R16G16_SNORM:
+		format = GL_RG;
+		internalFormat = GL_RG16_SNORM;
+		type = GL_SHORT;
+		break;
 	case Format::R16G16B16_SFLOAT:
 		format = GL_RGB;
 		internalFormat = GL_RGB16F;

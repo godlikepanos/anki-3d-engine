@@ -40,6 +40,7 @@ enum class BuiltinMaterialVariableId : U8
 	ROTATION_MATRIX,
 	CAMERA_ROTATION_MATRIX,
 	CAMERA_POSITION,
+	PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX,
 	COUNT
 };
 
@@ -236,7 +237,7 @@ public:
 		return m_prog->isInstanced();
 	}
 
-	const MaterialVariant& getOrCreateVariant(const RenderingKey& key, Bool skinned = false) const;
+	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
 	const DynamicArray<MaterialVariable>& getVariables() const
 	{
@@ -265,11 +266,12 @@ private:
 	const ShaderProgramResourceMutator* m_passMutator = nullptr;
 	const ShaderProgramResourceMutator* m_instanceMutator = nullptr;
 	const ShaderProgramResourceMutator* m_bonesMutator = nullptr;
+	const ShaderProgramResourceMutator* m_velocityMutator = nullptr;
 
 	DynamicArray<ShaderProgramResourceMutation> m_mutations;
 
 	/// Matrix of variants.
-	mutable Array4d<MaterialVariant, U(Pass::COUNT), MAX_LOD_COUNT, MAX_INSTANCE_GROUPS, 2> m_variantMatrix;
+	mutable Array5d<MaterialVariant, U(Pass::COUNT), MAX_LOD_COUNT, MAX_INSTANCE_GROUPS, 2, 2> m_variantMatrix;
 	mutable SpinLock m_variantMatrixMtx;
 
 	DynamicArray<MaterialVariable> m_vars; ///< Non-const vars.

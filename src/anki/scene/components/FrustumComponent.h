@@ -66,17 +66,22 @@ public:
 
 	const Mat4& getProjectionMatrix() const
 	{
-		return m_pm;
+		return m_projMat;
 	}
 
 	const Mat4& getViewMatrix() const
 	{
-		return m_vm;
+		return m_viewMat;
 	}
 
 	const Mat4& getViewProjectionMatrix() const
 	{
-		return m_vpm;
+		return m_viewProjMat;
+	}
+
+	const Mat4& getPreviousViewProjectionMatrix() const
+	{
+		return m_prevViewProjMat;
 	}
 
 	/// Get the origin for sorting and visibility tests
@@ -185,9 +190,10 @@ private:
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flags, friend)
 
 	Frustum* m_frustum;
-	Mat4 m_pm = Mat4::getIdentity(); ///< Projection matrix
-	Mat4 m_vm = Mat4::getIdentity(); ///< View matrix
-	Mat4 m_vpm = Mat4::getIdentity(); ///< View projection matrix
+	Mat4 m_projMat = Mat4::getIdentity(); ///< Projection matrix
+	Mat4 m_viewMat = Mat4::getIdentity(); ///< View matrix
+	Mat4 m_viewProjMat = Mat4::getIdentity(); ///< View projection matrix
+	Mat4 m_prevViewProjMat = Mat4::getIdentity();
 
 	BitMask<U16> m_flags;
 
