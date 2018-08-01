@@ -81,6 +81,11 @@ public:
 		return m_idx == b.m_idx;
 	}
 
+	bool operator!=(const RenderPassBufferHandle& b) const
+	{
+		return m_idx != b.m_idx;
+	}
+
 private:
 	U32 m_idx = MAX_U32;
 
@@ -265,10 +270,8 @@ public:
 	virtual ~RenderPassDescriptionBase()
 	{
 		m_name.destroy(m_alloc); // To avoid the assertion
-		m_rtConsumers.destroy(m_alloc);
-		m_rtProducers.destroy(m_alloc);
-		m_buffConsumers.destroy(m_alloc);
-		m_buffProducers.destroy(m_alloc);
+		m_rtDeps.destroy(m_alloc);
+		m_buffDeps.destroy(m_alloc);
 	}
 
 	void setWork(RenderPassWorkCallback callback, void* userData, U32 secondLeveCmdbCount)
@@ -280,17 +283,8 @@ public:
 		m_secondLevelCmdbsCount = secondLeveCmdbCount;
 	}
 
-	/// Add new consumer dependency.
-	void newConsumer(const RenderPassDependency& dep);
-
-	/// Add new producer dependency.
-	void newProducer(const RenderPassDependency& dep);
-
-	void newConsumerAndProducer(const RenderPassDependency& dep)
-	{
-		newConsumer(dep);
-		newProducer(dep);
-	}
+	/// Add a new consumer or producer dependency.
+	void newDependency(const RenderPassDependency& dep);
 
 protected:
 	enum class Type : U8
@@ -308,15 +302,13 @@ protected:
 	void* m_userData = nullptr;
 	U32 m_secondLevelCmdbsCount = 0;
 
-	DynamicArray<RenderPassDependency> m_rtConsumers;
-	DynamicArray<RenderPassDependency> m_rtProducers;
-	DynamicArray<RenderPassDependency> m_buffConsumers;
-	DynamicArray<RenderPassDependency> m_buffProducers;
+	DynamicArray<RenderPassDependency> m_rtDeps;
+	DynamicArray<RenderPassDependency> m_buffDeps;
 
-	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_consumerRtMask = {false};
-	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_producerRtMask = {false};
-	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_consumerBufferMask = {false};
-	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_producerBufferMask = {false};
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_readRtMask = {false};
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_writeRtMask = {false};
+	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_readBuffMask = {false};
+	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_writeBuffMask = {false};
 	Bool8 m_hasBufferDeps = false; ///< Opt.
 
 	String m_name;
@@ -670,12 +662,9 @@ private:
 		CString name,
 		Bool& drawsToPresentableTex);
 
-	ANKI_HOT Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b) const;
+	ANKI_HOT static Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
 
 	static Bool overlappingTextureSubresource(const TextureSubresourceInfo& suba, const TextureSubresourceInfo& subb);
-
-	template<Bool isTexture>
-	ANKI_HOT Bool overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b) const;
 
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 

@@ -131,8 +131,8 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		pass.setFramebufferInfo(fbDescr, {{presentRt}}, {});
 		pass.setWork(runCallback, this, 0);
 
-		pass.newConsumerAndProducer({presentRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newConsumer({ctx.m_outRenderTarget, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newDependency({presentRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::SAMPLED_FRAGMENT});
 	}
 
 	// Create a dummy pass to transition the presentable image to present
@@ -140,7 +140,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Present");
 
 		pass.setWork(presentCallback, nullptr, 0);
-		pass.newConsumerAndProducer({presentRt, TextureUsageBit::PRESENT});
+		pass.newDependency({presentRt, TextureUsageBit::PRESENT});
 	}
 
 	// Bake the render graph

@@ -203,12 +203,11 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			if(m_useNormal)
 			{
-				pass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
+				pass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 			}
 
-			pass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, HIZ_HALF_DEPTH});
-			pass.newConsumer({m_runCtx.m_rts[0], TextureUsageBit::IMAGE_COMPUTE_WRITE});
-			pass.newProducer({m_runCtx.m_rts[0], TextureUsageBit::IMAGE_COMPUTE_WRITE});
+			pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, HIZ_HALF_DEPTH});
+			pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 
 			pass.setWork(runMainCallback, this, 0);
 		}
@@ -220,12 +219,12 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			if(m_useNormal)
 			{
-				pass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
+				pass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
 			}
 
-			pass.newConsumer({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH});
-			pass.newConsumer({m_runCtx.m_rts[0], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-			pass.newProducer({m_runCtx.m_rts[0], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+			pass.newDependency(
+				{m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH});
+			pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
 			pass.setWork(runMainCallback, this, 0);
 		}
@@ -239,9 +238,8 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 
 			pass.setWork(runBlurCallback, this, 0);
 
-			pass.newConsumer({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
-			pass.newConsumer({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE});
-			pass.newProducer({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
+			pass.newDependency({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
+			pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE});
 		}
 		else
 		{
@@ -250,9 +248,8 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 			pass.setWork(runBlurCallback, this, 0);
 			pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[1]}}, {});
 
-			pass.newConsumer({m_runCtx.m_rts[1], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-			pass.newConsumer({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_FRAGMENT});
-			pass.newProducer({m_runCtx.m_rts[1], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+			pass.newDependency({m_runCtx.m_rts[1], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+			pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_FRAGMENT});
 		}
 	}
 }

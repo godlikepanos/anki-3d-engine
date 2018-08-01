@@ -230,8 +230,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			pass.setWork(runShadowmappingCallback, this, threadCountForScratchPass);
 
 			TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
-			pass.newConsumer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
-			pass.newProducer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+			pass.newDependency({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
 		}
 
 		// ESM pass
@@ -242,10 +241,9 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			pass.setFramebufferInfo(m_esmFbDescr, {{m_esmRt}}, {});
 			pass.setWork(runEsmCallback, this, 0);
 
-			pass.newConsumer(
+			pass.newDependency(
 				{m_scratchRt, TextureUsageBit::SAMPLED_FRAGMENT, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
-			pass.newConsumer({m_esmRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-			pass.newProducer({m_esmRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+			pass.newDependency({m_esmRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		}
 	}
 	else

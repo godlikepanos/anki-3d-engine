@@ -163,13 +163,11 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		pass.newConsumer({m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newDependency({m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-	pass.newConsumer({m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
-	pass.newProducer({m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+	pass.newDependency({m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
 }
 
 } // end namespace anki

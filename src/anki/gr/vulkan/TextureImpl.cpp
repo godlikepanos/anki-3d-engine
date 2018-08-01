@@ -222,7 +222,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		else if(init.m_format == Format::S8_UINT)
 		{
 			ANKI_ASSERT(
-				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ANY)) && "Can't do that ATM");
+				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ALL)) && "Can't do that ATM");
 			init.m_format = Format::D24_UNORM_S8_UINT;
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
@@ -231,7 +231,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		else if(init.m_format == Format::D24_UNORM_S8_UINT)
 		{
 			ANKI_ASSERT(
-				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ANY)) && "Can't do that ATM");
+				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ALL)) && "Can't do that ATM");
 			init.m_format = Format::D32_SFLOAT_S8_UINT;
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);

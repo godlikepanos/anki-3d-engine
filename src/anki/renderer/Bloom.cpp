@@ -92,8 +92,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 
 		TextureSubresourceInfo inputTexSubresource;
 		inputTexSubresource.m_firstMipmap = m_r->getDownscaleBlur().getMipmapCount() - 1;
-		rpass.newConsumer({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE, inputTexSubresource});
-		rpass.newConsumerAndProducer({m_runCtx.m_exposureRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+		rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE, inputTexSubresource});
+		rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	}
 
 	// Upscale & SSLF pass
@@ -105,8 +105,8 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Upscale");
 		rpass.setWork(runUpscaleAndSslfCallback, this, 0);
 
-		rpass.newConsumerAndProducer({m_runCtx.m_upscaleRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
-		rpass.newConsumer({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	}
 }
 

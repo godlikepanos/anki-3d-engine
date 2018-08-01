@@ -429,30 +429,14 @@ Bool RenderGraph::overlappingTextureSubresource(const TextureSubresourceInfo& su
 	return overlappingFaces && overlappingLayers && overlappingMips;
 }
 
-template<Bool isTexture>
-Bool RenderGraph::overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b) const
-{
-	ANKI_ASSERT(a.m_isTexture == isTexture && b.m_isTexture == isTexture);
-
-	if(isTexture)
-	{
-		return a.m_texture.m_handle == b.m_texture.m_handle
-			   && overlappingTextureSubresource(a.m_texture.m_subresource, b.m_texture.m_subresource);
-	}
-	else
-	{
-		return a.m_buffer.m_handle == b.m_buffer.m_handle;
-	}
-}
-
-Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b) const
+Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b)
 {
 	// Render targets
 	{
 		// Compute the 3 types of dependencies
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aReadBWrite = a.m_consumerRtMask & b.m_producerRtMask;
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBRead = a.m_producerRtMask & b.m_consumerRtMask;
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBWrite = a.m_producerRtMask & b.m_producerRtMask;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aReadBWrite = a.m_readRtMask & b.m_writeRtMask;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBRead = a.m_writeRtMask & b.m_readRtMask;
+		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBWrite = a.m_writeRtMask & b.m_writeRtMask;
 
 		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
@@ -460,16 +444,29 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 		{
 			// There might be an overlap
 
-			for(const RenderPassDependency& consumer : a.m_rtConsumers)
+			for(const RenderPassDependency& aDep : a.m_rtDeps)
 			{
-				if(fullDep.get(consumer.m_texture.m_handle.m_idx))
+				if(!fullDep.get(aDep.m_texture.m_handle.m_idx))
 				{
-					for(const RenderPassDependency& producer : b.m_rtProducers)
+					continue;
+				}
+
+				for(const RenderPassDependency& bDep : b.m_rtDeps)
+				{
+					if(aDep.m_texture.m_handle != bDep.m_texture.m_handle)
 					{
-						if(overlappingDependency<true>(producer, consumer))
-						{
-							return true;
-						}
+						continue;
+					}
+
+					if(!((aDep.m_texture.m_usage | bDep.m_texture.m_usage) & TextureUsageBit::ALL_WRITE))
+					{
+						// Don't care about read to read deps
+						continue;
+					}
+
+					if(overlappingTextureSubresource(aDep.m_texture.m_subresource, bDep.m_texture.m_subresource))
+					{
+						return true;
 					}
 				}
 			}
@@ -479,9 +476,9 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 	// Buffers
 	if(a.m_hasBufferDeps)
 	{
-		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aReadBWrite = a.m_consumerBufferMask & b.m_producerBufferMask;
-		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBRead = a.m_producerBufferMask & b.m_consumerBufferMask;
-		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBWrite = a.m_producerBufferMask & b.m_producerBufferMask;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aReadBWrite = a.m_readBuffMask & b.m_writeBuffMask;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBRead = a.m_writeBuffMask & b.m_readBuffMask;
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBWrite = a.m_writeBuffMask & b.m_writeBuffMask;
 
 		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
@@ -489,17 +486,28 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 		{
 			// There might be an overlap
 
-			for(const RenderPassDependency& consumer : a.m_buffConsumers)
+			for(const RenderPassDependency& aDep : a.m_buffDeps)
 			{
-				if(fullDep.get(consumer.m_buffer.m_handle.m_idx))
+				if(!fullDep.get(aDep.m_buffer.m_handle.m_idx))
 				{
-					for(const RenderPassDependency& producer : b.m_buffProducers)
+					continue;
+				}
+
+				for(const RenderPassDependency& bDep : b.m_buffDeps)
+				{
+					if(aDep.m_buffer.m_handle != bDep.m_buffer.m_handle)
 					{
-						if(overlappingDependency<false>(producer, consumer))
-						{
-							return true;
-						}
+						continue;
 					}
+
+					if(!((aDep.m_buffer.m_usage | bDep.m_buffer.m_usage) & BufferUsageBit::ALL_WRITE))
+					{
+						// Don't care about read to read deps
+						continue;
+					}
+
+					// TODO: Take into account the ranges
+					return true;
 				}
 			}
 		}
@@ -609,16 +617,16 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		outPass.m_userData = inPass.m_userData;
 
 		// Create consumer info
-		for(U consumerIdx = 0; consumerIdx < inPass.m_rtConsumers.getSize(); ++consumerIdx)
+		for(U depIdx = 0; depIdx < inPass.m_rtDeps.getSize(); ++depIdx)
 		{
-			const RenderPassDependency& inConsumer = inPass.m_rtConsumers[consumerIdx];
-			ANKI_ASSERT(inConsumer.m_isTexture);
+			const RenderPassDependency& inDep = inPass.m_rtDeps[depIdx];
+			ANKI_ASSERT(inDep.m_isTexture);
 
 			outPass.m_consumedTextures.emplaceBack(alloc);
 			Pass::ConsumedTextureInfo& inf = outPass.m_consumedTextures.getBack();
 
-			ANKI_ASSERT(sizeof(inf) == sizeof(inConsumer.m_texture));
-			memcpy(&inf, &inConsumer.m_texture, sizeof(inf));
+			ANKI_ASSERT(sizeof(inf) == sizeof(inDep.m_texture));
+			memcpy(&inf, &inDep.m_texture, sizeof(inf));
 		}
 
 		// Create command buffers and framebuffer
@@ -766,34 +774,34 @@ void RenderGraph::iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubr
 	}
 }
 
-void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& consumer)
+void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& dep)
 {
-	ANKI_ASSERT(consumer.m_isTexture);
+	ANKI_ASSERT(dep.m_isTexture);
 
 	BakeContext& ctx = *m_ctx;
 	const U batchIdx = &batch - &ctx.m_batches[0];
-	const U rtIdx = consumer.m_texture.m_handle.m_idx;
-	const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
+	const U rtIdx = dep.m_texture.m_handle.m_idx;
+	const TextureUsageBit depUsage = dep.m_texture.m_usage;
 	RT& rt = ctx.m_rts[rtIdx];
 
 	iterateSurfsOrVolumes(
-		rt.m_texture, consumer.m_texture.m_subresource, [&](U surfOrVolIdx, const TextureSurfaceInfo& surf) {
+		rt.m_texture, dep.m_texture.m_subresource, [&](U surfOrVolIdx, const TextureSurfaceInfo& surf) {
 			TextureUsageBit& crntUsage = rt.m_surfOrVolUsages[surfOrVolIdx];
-			if(crntUsage != consumerUsage)
+			if(crntUsage != depUsage)
 			{
 				// Check if we can merge barriers
 				if(rt.m_lastBatchThatTransitionedIt[surfOrVolIdx] == batchIdx)
 				{
 					// Will merge the barriers
 
-					crntUsage |= consumerUsage;
+					crntUsage |= depUsage;
 
 					Bool found = false;
 					for(Barrier& b : batch.m_barriersBefore)
 					{
 						if(b.m_isTexture && b.m_texture.m_idx == rtIdx && b.m_texture.m_surface == surf)
 						{
-							b.m_texture.m_usageAfter |= consumerUsage;
+							b.m_texture.m_usageAfter |= depUsage;
 							found = true;
 							break;
 						}
@@ -806,9 +814,9 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& co
 				{
 					// Create a new barrier for this surface
 
-					batch.m_barriersBefore.emplaceBack(ctx.m_alloc, rtIdx, crntUsage, consumerUsage, surf);
+					batch.m_barriersBefore.emplaceBack(ctx.m_alloc, rtIdx, crntUsage, depUsage, surf);
 
-					crntUsage = consumerUsage;
+					crntUsage = depUsage;
 					rt.m_lastBatchThatTransitionedIt[surfOrVolIdx] = batchIdx;
 				}
 			}
@@ -832,18 +840,18 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 		{
 			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 
-			// For all consumers
-			for(const RenderPassDependency& consumer : pass.m_rtConsumers)
+			// For all deps
+			for(const RenderPassDependency& dep : pass.m_rtDeps)
 			{
-				setTextureBarrier(batch, consumer);
+				setTextureBarrier(batch, dep);
 			}
 
-			for(const RenderPassDependency& consumer : pass.m_buffConsumers)
+			for(const RenderPassDependency& dep : pass.m_buffDeps)
 			{
-				const U32 buffIdx = consumer.m_buffer.m_handle.m_idx;
-				const BufferUsageBit consumerUsage = consumer.m_buffer.m_usage;
+				const U32 buffIdx = dep.m_buffer.m_handle.m_idx;
+				const BufferUsageBit depUsage = dep.m_buffer.m_usage;
 
-				if(consumerUsage != ctx.m_buffers[buffIdx].m_usage)
+				if(depUsage != ctx.m_buffers[buffIdx].m_usage)
 				{
 					const Bool buffHasBarrier = buffHasBarrierMask.get(buffIdx);
 
@@ -851,10 +859,9 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 					{
 						// Buff hasn't had a barrier in this batch, add a new barrier
 
-						batch.m_barriersBefore.emplaceBack(
-							alloc, buffIdx, ctx.m_buffers[buffIdx].m_usage, consumerUsage);
+						batch.m_barriersBefore.emplaceBack(alloc, buffIdx, ctx.m_buffers[buffIdx].m_usage, depUsage);
 
-						ctx.m_buffers[buffIdx].m_usage = consumerUsage;
+						ctx.m_buffers[buffIdx].m_usage = depUsage;
 						buffHasBarrierMask.set(buffIdx);
 					}
 					else
@@ -873,7 +880,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 
 						ANKI_ASSERT(barrierToMergeTo);
 						ANKI_ASSERT(!!barrierToMergeTo->m_buffer.m_usageAfter);
-						barrierToMergeTo->m_buffer.m_usageAfter |= consumerUsage;
+						barrierToMergeTo->m_buffer.m_usageAfter |= depUsage;
 						ctx.m_buffers[buffIdx].m_usage = barrierToMergeTo->m_buffer.m_usageAfter;
 					}
 				}
@@ -1105,6 +1112,7 @@ StringAuto RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsag
 	ANKI_TEX_USAGE(TRANSFER_DESTINATION);
 	ANKI_TEX_USAGE(GENERATE_MIPMAPS);
 	ANKI_TEX_USAGE(CLEAR);
+	ANKI_TEX_USAGE(PRESENT);
 
 	if(!usage)
 	{
@@ -1147,12 +1155,12 @@ StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 	ANKI_BUFF_USAGE(STORAGE_FRAGMENT_WRITE);
 	ANKI_BUFF_USAGE(STORAGE_COMPUTE_READ);
 	ANKI_BUFF_USAGE(STORAGE_COMPUTE_WRITE);
-	ANKI_BUFF_USAGE(TEXTURE_VERTEX_READ);
-	ANKI_BUFF_USAGE(TEXTURE_TESSELLATION_EVALUATION_READ);
-	ANKI_BUFF_USAGE(TEXTURE_TESSELLATION_CONTROL_READ);
-	ANKI_BUFF_USAGE(TEXTURE_GEOMETRY_READ);
-	ANKI_BUFF_USAGE(TEXTURE_FRAGMENT_READ);
-	ANKI_BUFF_USAGE(TEXTURE_COMPUTE_READ);
+	ANKI_BUFF_USAGE(TEXTURE_VERTEX);
+	ANKI_BUFF_USAGE(TEXTURE_TESSELLATION_EVALUATION);
+	ANKI_BUFF_USAGE(TEXTURE_TESSELLATION_CONTROL);
+	ANKI_BUFF_USAGE(TEXTURE_GEOMETRY);
+	ANKI_BUFF_USAGE(TEXTURE_FRAGMENT);
+	ANKI_BUFF_USAGE(TEXTURE_COMPUTE);
 	ANKI_BUFF_USAGE(INDEX);
 	ANKI_BUFF_USAGE(VERTEX);
 	ANKI_BUFF_USAGE(INDIRECT);

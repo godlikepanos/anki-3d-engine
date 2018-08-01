@@ -520,13 +520,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 			{
-				pass.newConsumer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-				pass.newProducer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+				pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 			}
 
 			TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-			pass.newConsumer({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
-			pass.newProducer({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+			pass.newDependency(
+				{m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
 		}
 
 		// Light shading passes
@@ -558,14 +557,14 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				pass.setWork(callbacks[faceIdx], this, 0);
 
 				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
-				pass.newProducer({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
+				pass.newDependency(
+					{m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
 
 				for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 				{
-					pass.newConsumer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
+					pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
 				}
-				pass.newConsumer({m_ctx.m_gbufferDepthRt,
+				pass.newDependency({m_ctx.m_gbufferDepthRt,
 					TextureUsageBit::SAMPLED_FRAGMENT,
 					TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 			}
@@ -599,12 +598,10 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				TextureSubresourceInfo readSubresource;
 				readSubresource.m_faceCount = 6;
 				readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
+				pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
 
 				TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-				pass.newConsumer(
-					{m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, writeSubresource});
-				pass.newProducer(
+				pass.newDependency(
 					{m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, writeSubresource});
 			}
 		}
@@ -637,18 +634,16 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 				for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 				{
-					pass.newConsumer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
+					pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
 				}
 
 				TextureSubresourceInfo readSubresource;
 				readSubresource.m_faceCount = 6;
 				readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-				pass.newConsumer({m_ctx.m_irradianceRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
+				pass.newDependency({m_ctx.m_irradianceRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
 
 				TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-				pass.newConsumer(
-					{m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, writeSubresource});
-				pass.newProducer(
+				pass.newDependency(
 					{m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, writeSubresource});
 			}
 		}
@@ -672,8 +667,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 				subresource.m_mipmapCount = m_lightShading.m_mipCount;
 
-				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
-				pass.newProducer({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
+				pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
 			}
 		}
 	}

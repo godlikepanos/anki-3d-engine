@@ -105,12 +105,12 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 
 	pass.setWork(runCallback, this, 0);
 
-	pass.newConsumerAndProducer({m_runCtx.m_renderRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
-	pass.newConsumer({m_r->getGBuffer().getDepthRt(),
+	pass.newDependency({m_runCtx.m_renderRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+	pass.newDependency({m_r->getGBuffer().getDepthRt(),
 		TextureUsageBit::SAMPLED_COMPUTE,
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
-	pass.newConsumer({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
-	pass.newConsumer({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE});
+	pass.newDependency({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	pass.newDependency({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE});
 }
 
 } // end namespace anki
