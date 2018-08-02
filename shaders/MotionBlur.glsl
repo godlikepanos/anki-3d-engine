@@ -7,6 +7,12 @@
 
 #include <shaders/Common.glsl>
 
+// TAA blurs the edges of objects and expands them. The velocity in the edges may be zero (static object) so that will
+// create an outline around those objects
+#if !defined(TAA_FIX)
+#	define TAA_FIX 1
+#endif
+
 // Perform motion blur.
 Vec3 motionBlur(sampler2D velocityTex,
 	sampler2D toBlurTex,
@@ -16,20 +22,35 @@ Vec3 motionBlur(sampler2D velocityTex,
 	U32 maxSamples)
 {
 	// Compute previous UV
-	Vec2 pastUv = textureLod(velocityTex, nowUv, 0.0).rg;
+	Vec2 velocity = textureLod(velocityTex, nowUv, 0.0).rg;
 
-	ANKI_BRANCH if(pastUv.x < 0.0)
+	// Compute the velocity if it's static geometry
+	ANKI_BRANCH if(velocity.x == -1.0)
 	{
-		F32 depth = textureLod(depthTex, nowUv, 0.0).r;
+#if TAA_FIX
+		Vec2 a = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(-2, -2)).rg;
+		Vec2 b = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(2, 2)).rg;
 
-		Vec4 v4 = prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(nowUv), depth, 1.0);
-		pastUv = NDC_TO_UV(v4.xy / v4.w);
+		velocity = max(a, b);
+
+		ANKI_BRANCH if(velocity.x == -1.0)
+#endif
+		{
+			F32 depth = textureLod(depthTex, nowUv, 0.0).r;
+
+			Vec4 v4 = prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(nowUv), depth, 1.0);
+			velocity = NDC_TO_UV(v4.xy / v4.w) - nowUv;
+
+			return Vec3(0);
+		}
+
+		return Vec3(0, 1, 0);
 	}
 
-	// March direction
-	Vec2 dir = pastUv - nowUv;
+	return Vec3(1, 0, 0);
 
-	Vec2 slopes = abs(dir);
+	// March direction
+	Vec2 slopes = abs(velocity);
 
 	// Compute the sample count
 	Vec2 sampleCount2D = slopes * Vec2(FB_SIZE);
@@ -42,7 +63,7 @@ Vec3 motionBlur(sampler2D velocityTex,
 	ANKI_LOOP for(F32 s = 0.0; s < sampleCountf; s += 1.0)
 	{
 		F32 f = s / sampleCountf;
-		Vec2 sampleUv = nowUv + dir * f;
+		Vec2 sampleUv = nowUv + velocity * f;
 
 		outColor += textureLod(toBlurTex, sampleUv, 0.0).rgb;
 	}

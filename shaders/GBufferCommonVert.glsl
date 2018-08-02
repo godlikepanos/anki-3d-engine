@@ -142,6 +142,9 @@ void velocity(Mat4 prevMvp)
 	Vec4 v4 = prevMvp * Vec4(g_position, 1.0);
 	Vec2 prevNdc = v4.xy / v4.w;
 
-	out_velocity = NDC_TO_UV(prevNdc);
+	Vec2 crntNdc = gl_Position.xy / gl_Position.w;
+
+	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
+	out_velocity = (prevNdc - crntNdc) * 0.5;
 }
 #endif
