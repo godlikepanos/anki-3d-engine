@@ -48,8 +48,10 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	ShaderProgramResourceMutationInitList<3> mutations(m_prog);
 	mutations.add("BLUE_NOISE", 1).add("BLOOM_ENABLED", 1).add("DBG_ENABLED", 0);
 
-	ShaderProgramResourceConstantValueInitList<2> consts(m_prog);
-	consts.add("LUT_SIZE", U32(LUT_SIZE)).add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
+	consts.add("LUT_SIZE", U32(LUT_SIZE))
+		.add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()))
+		.add("MOTION_BLUR_SAMPLES", U32(config.getNumber("r.final.motionBlurSamples")));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);

@@ -38,6 +38,8 @@ Config::Config()
 
 	newOption("r.dbg.enabled", false);
 
+	newOption("r.final.motionBlurSamples", 32);
+
 	// Scene
 	newOption("scene.imageReflectionMaxDistance", 30.0);
 	newOption("scene.earlyZDistance", 10.0, "Objects with distance lower than that will be used in early Z");

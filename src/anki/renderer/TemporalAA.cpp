@@ -78,6 +78,7 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 		m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 2, m_runCtx.m_historyRt, m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getGBuffer().getColorRt(3), m_r->getLinearSampler());
 
 	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
 	*unis = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection
@@ -111,6 +112,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newDependency({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newDependency({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE});
+	pass.newDependency({m_r->getGBuffer().getColorRt(3), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
 } // end namespace anki

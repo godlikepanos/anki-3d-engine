@@ -9,6 +9,7 @@
 
 #pragma anki input const U32 LUT_SIZE
 #pragma anki input const UVec2 FB_SIZE
+#pragma anki input const U32 MOTION_BLUR_SAMPLES
 
 #pragma anki start vert
 #include <shaders/QuadVert.glsl>
@@ -58,8 +59,19 @@ void main()
 {
 	Vec2 uv = in_uv.xy;
 
-	out_color =
-		motionBlur(u_velocityRt, u_lightShadingRt, u_depthRt, uv, u_regs.m_prevViewProjMatMulInvViewProjMat, 32u);
+	if(MOTION_BLUR_SAMPLES > 0u)
+	{
+		out_color = motionBlur(u_velocityRt,
+			u_lightShadingRt,
+			u_depthRt,
+			uv,
+			u_regs.m_prevViewProjMatMulInvViewProjMat,
+			MOTION_BLUR_SAMPLES);
+	}
+	else
+	{
+		out_color = textureLod(u_lightShadingRt, uv, 0.0).rgb;
+	}
 
 	out_color = tonemap(out_color, UNIFORM(u_exposureThreshold0));
 

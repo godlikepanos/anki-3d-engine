@@ -23,6 +23,7 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_inputRt;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_historyRt;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_velocityRt;
 
 layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 {
@@ -44,6 +45,8 @@ layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
 #	define sample(s, uv) textureLod(s, uv, 0.0).rgb
 #	define sampleOffset(s, uv, x, y) textureLodOffset(s, uv, 0.0, IVec2(x, y)).rgb
 #endif
+
+#define VELOCITY 0
 
 Vec3 sharpen(Vec2 uv)
 {
@@ -72,8 +75,19 @@ void main()
 	F32 depth = textureLod(u_depthRt, uv, 0.0).r;
 
 	// Get prev uv coords
-	Vec4 v4 = u_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
-	Vec2 oldUv = NDC_TO_UV(v4.xy / v4.w);
+	Vec2 oldUv;
+#if VELOCITY
+	Vec2 velocity = textureLod(u_velocityRt, uv, 0.0).rg;
+	if(velocity.x != -1.0)
+	{
+		oldUv = uv + velocity;
+	}
+	else
+#endif
+	{
+		Vec4 v4 = u_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
+		oldUv = NDC_TO_UV(v4.xy / v4.w);
+	}
 
 	// Read textures
 	Vec3 historyCol = sample(u_historyRt, oldUv);

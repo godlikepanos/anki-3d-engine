@@ -105,7 +105,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		m_r->getSceneDrawer().drawRange(Pass::EZ,
 			ctx.m_matrices.m_view,
 			ctx.m_matrices.m_viewProjectionJitter,
-			ctx.m_prevMatrices.m_viewProjectionJitter,
+			ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection,
 			cmdb,
 			ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
 			ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd);
@@ -129,7 +129,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
 			ctx.m_matrices.m_view,
 			ctx.m_matrices.m_viewProjectionJitter,
-			ctx.m_prevMatrices.m_viewProjectionJitter,
+			ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection,
 			cmdb,
 			ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
 			ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);

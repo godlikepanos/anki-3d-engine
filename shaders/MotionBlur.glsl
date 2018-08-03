@@ -28,10 +28,11 @@ Vec3 motionBlur(sampler2D velocityTex,
 	ANKI_BRANCH if(velocity.x == -1.0)
 	{
 #if TAA_FIX
-		Vec2 a = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(-2, -2)).rg;
+		Vec2 a = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(-2, 2)).rg;
 		Vec2 b = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(2, 2)).rg;
+		Vec2 c = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(0, -2)).rg;
 
-		velocity = max(a, b);
+		velocity = max(max(a, b), c);
 
 		ANKI_BRANCH if(velocity.x == -1.0)
 #endif
@@ -40,14 +41,8 @@ Vec3 motionBlur(sampler2D velocityTex,
 
 			Vec4 v4 = prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(nowUv), depth, 1.0);
 			velocity = NDC_TO_UV(v4.xy / v4.w) - nowUv;
-
-			return Vec3(0);
 		}
-
-		return Vec3(0, 1, 0);
 	}
-
-	return Vec3(1, 0, 0);
 
 	// March direction
 	Vec2 slopes = abs(velocity);
