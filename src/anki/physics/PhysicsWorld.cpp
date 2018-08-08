@@ -224,6 +224,8 @@ void PhysicsWorld::destroyObject(PhysicsObject* obj)
 
 void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts)
 {
+	auto lock = lockBtWorld();
+
 	MyRaycastCallback callback;
 	for(PhysicsWorldRayCastCallback* cb : rayCasts)
 	{

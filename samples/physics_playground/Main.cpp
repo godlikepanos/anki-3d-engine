@@ -8,6 +8,27 @@
 
 using namespace anki;
 
+static Error createDestructionEvent(SceneNode* node)
+{
+	CString script = R"(
+function update(event, prevTime, crntTime)
+-- Do nothing
+return 1
+end
+
+function onKilled(event, prevTime, crntTime)
+logi("onKilled")
+event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
+return 1
+end
+	)";
+	ScriptEvent* event;
+	ANKI_CHECK(node->getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
+	event->addAssociatedSceneNode(node);
+
+	return Error::NONE;
+}
+
 class RayCast : public PhysicsWorldRayCastCallback
 {
 public:
@@ -19,8 +40,37 @@ public:
 	void processResult(PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition)
 	{
 		SceneNode* node = static_cast<SceneNode*>(obj.getUserData());
-		ANKI_ASSERT(node);
+
+		if((m_from - m_to).dot(worldNormal) < 0.0f)
+		{
+			return;
+		}
+
 		ANKI_LOGI("Ray hits %s", node->getName().cstr());
+
+		// Create rotation
+		const Vec3& zAxis = worldNormal;
+		Vec3 yAxis = Vec3(0, 1, 0.5);
+		Vec3 xAxis = yAxis.cross(zAxis).getNormalized();
+		yAxis = zAxis.cross(xAxis);
+
+		Mat3x4 rot = Mat3x4::getIdentity();
+		rot.setXAxis(xAxis);
+		rot.setYAxis(yAxis);
+		rot.setZAxis(zAxis);
+
+		Transform trf(worldPosition.xyz0(), rot, 1.0f);
+
+		// Create an obj
+		static U id = 0;
+		ModelNode* monkey;
+		node->getSceneGraph().newSceneNode<ModelNode>(
+			StringAuto(node->getFrameAllocator()).sprintf("decal%u", id++).toCString(),
+			monkey,
+			"assets/Suzannedynamic-material.ankimdl");
+		monkey->getComponent<MoveComponent>().setLocalTransform(trf);
+
+		createDestructionEvent(monkey);
 	}
 };
 
@@ -183,34 +233,22 @@ Error MyApp::userMainLoop(Bool& quit)
 		body->addChild(monkey);
 
 		// Create the destruction event
-		CString script = R"(
-function update(event, prevTime, crntTime)
-	-- Do nothing
-	return 1
-end
-
-function onKilled(event, prevTime, crntTime)
-	logi("onKilled")
-	event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
-	return 1
-end
-		)";
-		ScriptEvent* event;
-		ANKI_CHECK(getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
-		event->addAssociatedSceneNode(body);
+		createDestructionEvent(body);
 	}
 
 	if(getInput().getMouseButton(MouseButton::RIGHT) == 1)
 	{
 		Transform camTrf = getSceneGraph().getActiveCameraNode().getComponent<MoveComponent>().getWorldTransform();
 		Vec3 from = camTrf.getOrigin().xyz();
-		Vec3 to = from + -camTrf.getRotation().getZAxis() * 10.0f;
+		Vec3 to = from + -camTrf.getRotation().getZAxis() * 100.0f;
 
 		RayCast ray(from, to, PhysicsMaterialBit::ALL);
+		ray.m_firstHit = true;
 
 		getPhysicsWorld().rayCast(ray);
 	}
 
+	if(0)
 	{
 		SceneNode& node = getSceneGraph().findSceneNode("trigger");
 		TriggerComponent& comp = node.getComponent<TriggerComponent>();
