@@ -12,14 +12,14 @@ static Error createDestructionEvent(SceneNode* node)
 {
 	CString script = R"(
 function update(event, prevTime, crntTime)
--- Do nothing
-return 1
+	-- Do nothing
+	return 1
 end
 
 function onKilled(event, prevTime, crntTime)
-logi("onKilled")
-event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
-return 1
+	logi(string.format("Will kill %s", event:getAssociatedSceneNodes():getAt(0):getName()))
+	event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
+	return 1
 end
 	)";
 	ScriptEvent* event;
@@ -32,6 +32,10 @@ end
 class RayCast : public PhysicsWorldRayCastCallback
 {
 public:
+	Vec3 m_hitPosition = Vec3(MAX_F32);
+	Vec3 m_hitNormal;
+	Bool m_hit = false;
+
 	RayCast(Vec3 from, Vec3 to, PhysicsMaterialBit mtl)
 		: PhysicsWorldRayCastCallback(from, to, mtl)
 	{
@@ -39,38 +43,19 @@ public:
 
 	void processResult(PhysicsFilteredObject& obj, const Vec3& worldNormal, const Vec3& worldPosition)
 	{
-		SceneNode* node = static_cast<SceneNode*>(obj.getUserData());
-
 		if((m_from - m_to).dot(worldNormal) < 0.0f)
 		{
 			return;
 		}
 
-		ANKI_LOGI("Ray hits %s", node->getName().cstr());
+		if((worldPosition - m_from).getLengthSquared() > (m_hitPosition - m_from).getLengthSquared())
+		{
+			return;
+		}
 
-		// Create rotation
-		const Vec3& zAxis = worldNormal;
-		Vec3 yAxis = Vec3(0, 1, 0.5);
-		Vec3 xAxis = yAxis.cross(zAxis).getNormalized();
-		yAxis = zAxis.cross(xAxis);
-
-		Mat3x4 rot = Mat3x4::getIdentity();
-		rot.setXAxis(xAxis);
-		rot.setYAxis(yAxis);
-		rot.setZAxis(zAxis);
-
-		Transform trf(worldPosition.xyz0(), rot, 1.0f);
-
-		// Create an obj
-		static U id = 0;
-		ModelNode* monkey;
-		node->getSceneGraph().newSceneNode<ModelNode>(
-			StringAuto(node->getFrameAllocator()).sprintf("decal%u", id++).toCString(),
-			monkey,
-			"assets/Suzannedynamic-material.ankimdl");
-		monkey->getComponent<MoveComponent>().setLocalTransform(trf);
-
-		createDestructionEvent(monkey);
+		m_hitPosition = worldPosition;
+		m_hitNormal = worldNormal;
+		m_hit = true;
 	}
 };
 
@@ -242,10 +227,46 @@ Error MyApp::userMainLoop(Bool& quit)
 		Vec3 from = camTrf.getOrigin().xyz();
 		Vec3 to = from + -camTrf.getRotation().getZAxis() * 100.0f;
 
-		RayCast ray(from, to, PhysicsMaterialBit::ALL);
+		RayCast ray(from, to, PhysicsMaterialBit::ALL & (~PhysicsMaterialBit::PARTICLE));
 		ray.m_firstHit = true;
 
 		getPhysicsWorld().rayCast(ray);
+
+		if(ray.m_hit)
+		{
+			// Create rotation
+			const Vec3& zAxis = ray.m_hitNormal;
+			Vec3 yAxis = Vec3(0, 1, 0.5);
+			Vec3 xAxis = yAxis.cross(zAxis).getNormalized();
+			yAxis = zAxis.cross(xAxis);
+
+			Mat3x4 rot = Mat3x4::getIdentity();
+			rot.setXAxis(xAxis);
+			rot.setYAxis(yAxis);
+			rot.setZAxis(zAxis);
+
+			Transform trf(ray.m_hitPosition.xyz0(), rot, 1.0f);
+
+			// Create an obj
+			static U id = 0;
+			ModelNode* monkey;
+			ANKI_CHECK(getSceneGraph().newSceneNode(
+				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(),
+				monkey,
+				"assets/Suzannedynamic-material.ankimdl"));
+			monkey->getComponent<MoveComponent>().setLocalTransform(trf);
+
+			createDestructionEvent(monkey);
+
+			// Create some particles
+			ParticleEmitterNode* particles;
+			ANKI_CHECK(getSceneGraph().newSceneNode(
+				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("parts%u", id++).toCString(),
+				particles,
+				"assets/smoke.ankipart"));
+			particles->getComponent<MoveComponent>().setLocalTransform(trf);
+			createDestructionEvent(particles);
+		}
 	}
 
 	if(0)

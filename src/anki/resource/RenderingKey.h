@@ -15,8 +15,8 @@ namespace anki
 enum class Pass : U8
 {
 	GB_FS, ///< GBuffer or forward shading.
-	SM,
-	EZ,
+	SM, ///< Shadow mapping.
+	EZ, ///< Early Z.
 	COUNT
 };
 

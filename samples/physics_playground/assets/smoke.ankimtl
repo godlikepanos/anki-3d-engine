@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<material shaderProgram="shaders/ForwardShadingParticles.glslp" forwardShading="1" shadow="0">
+	<mutators>
+		<mutator name="ANIMATED_TEXTURE" value="0"/>
+		<mutator name="LIGHT" value="1"/>
+	</mutators>
+
+	<inputs>
+		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
+		<input shaderInput="cameraRotMat" builtin="CAMERA_ROTATION_MATRIX"/>
+
+		<input shaderInput="diffuseMap" value="assets/smoke.ankitex"/>
+		<input shaderInput="colorScale" value="1.0 1.0 1.0 1.0"/>
+		<input shaderInput="colorBias" value="0 0 0 0"/>
+	</inputs>
+</material>
+

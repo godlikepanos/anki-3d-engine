@@ -54,6 +54,40 @@ public:
 		return m_mass;
 	}
 
+	void activate(Bool activate)
+	{
+		getBtBody()->forceActivationState((activate) ? ACTIVE_TAG : DISABLE_SIMULATION);
+		if(activate)
+		{
+			getBtBody()->activate(true);
+		}
+	}
+
+	void clearForces()
+	{
+		getBtBody()->clearForces();
+	}
+
+	void setLinearVelocity(const Vec3& velocity)
+	{
+		getBtBody()->setLinearVelocity(toBt(velocity));
+	}
+
+	void setAngularVelocity(const Vec3& velocity)
+	{
+		getBtBody()->setAngularVelocity(toBt(velocity));
+	}
+
+	void setGravity(const Vec3& gravity)
+	{
+		getBtBody()->setGravity(toBt(gravity));
+	}
+
+	void setAngularFactor(const Vec3& factor)
+	{
+		getBtBody()->setAngularFactor(toBt(factor));
+	}
+
 anki_internal:
 	const btRigidBody* getBtBody() const
 	{

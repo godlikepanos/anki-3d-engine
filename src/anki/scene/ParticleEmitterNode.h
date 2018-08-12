@@ -9,6 +9,7 @@
 #include <anki/resource/ParticleEmitterResource.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/collision/Obb.h>
+#include <anki/physics/Forward.h>
 
 namespace anki
 {
@@ -18,141 +19,9 @@ class ParticleEmitterNode;
 /// @addtogroup scene
 /// @{
 
-/// Particle base
-class ParticleBase
-{
-	friend class ParticleEmitterNode;
-
-public:
-	ParticleBase()
-	{
-	}
-
-	virtual ~ParticleBase()
-	{
-	}
-
-	Second getTimeOfBirth() const
-	{
-		return m_timeOfBirth;
-	}
-
-	Second& getTimeOfBirth()
-	{
-		return m_timeOfBirth;
-	}
-
-	void setTimeOfBirth(const Second x)
-	{
-		m_timeOfBirth = x;
-	}
-
-	Second getTimeOfDeath() const
-	{
-		return m_timeOfDeath;
-	}
-
-	Second& getTimeOfDeath()
-	{
-		return m_timeOfDeath;
-	}
-
-	void setTimeOfDeath(const Second x)
-	{
-		m_timeOfDeath = x;
-	}
-
-	Bool isDead() const
-	{
-		return m_timeOfDeath < 0.0;
-	}
-
-	/// Kill the particle
-	virtual void kill()
-	{
-		ANKI_ASSERT(m_timeOfDeath > 0.0);
-		m_timeOfDeath = -1.0;
-	}
-
-	/// Revive the particle
-	virtual void revive(const ParticleEmitterNode& pe, const Transform& trf, Second prevUpdateTime, Second crntTime);
-
-	/// Only relevant for non-bullet simulations
-	virtual void simulate(const ParticleEmitterNode& pe, Second prevUpdateTime, Second crntTime)
-	{
-		(void)pe;
-		(void)prevUpdateTime;
-		(void)crntTime;
-	}
-
-	virtual const Vec4& getPosition() const = 0;
-
-protected:
-	Second m_timeOfBirth; ///< Keep the time of birth for nice effects
-	Second m_timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead
-	Second m_size = 1.0;
-	Second m_alpha = 1.0;
-};
-
-/// Simple particle for simple simulation
-class ParticleSimple : public ParticleBase
-{
-public:
-	ParticleSimple()
-	{
-	}
-
-	void revive(const ParticleEmitterNode& pe, const Transform& trf, Second prevUpdateTime, Second crntTime) override;
-
-	void simulate(const ParticleEmitterNode& pe, Second prevUpdateTime, Second crntTime) override;
-
-	const Vec4& getPosition() const override
-	{
-		return m_position;
-	}
-
-private:
-	/// The velocity
-	Vec4 m_velocity = Vec4(0.0);
-	Vec4 m_acceleration = Vec4(0.0);
-	Vec4 m_position;
-};
-
-#if 0
-/// Particle for bullet simulations
-class Particle: public ParticleBase
-{
-public:
-	Particle(
-		const char* name, SceneGraph* scene, // SceneNode
-		// RigidBody
-		PhysicsWorld* masterContainer, const RigidBody::Initializer& init);
-
-	~Particle();
-
-	void kill()
-	{
-		ParticleBase::kill();
-		body->setActivationState(DISABLE_SIMULATION);
-	}
-
-	void revive(const ParticleEmitterNode& pe,
-		F32 prevUpdateTime, F32 crntTime);
-
-private:
-	RigidBody* m_body;
-};
-#endif
-
 /// The particle emitter scene node. This scene node emitts
 class ParticleEmitterNode : public SceneNode, private ParticleEmitterProperties
 {
-	friend class ParticleBase;
-	friend class Particle;
-	friend class ParticleSimple;
-	friend class ParticleEmitterRenderComponent;
-	friend class MoveFeedbackComponent;
-
 public:
 	ParticleEmitterNode(SceneGraph* scene, CString name);
 
@@ -166,6 +35,12 @@ public:
 	/// @}
 
 private:
+	class MyRenderComponent;
+	class MoveFeedbackComponent;
+	class ParticleBase;
+	class ParticleSimple;
+	class PhysParticle;
+
 	enum class SimulationType : U8
 	{
 		UNDEFINED,
@@ -194,7 +69,7 @@ private:
 
 	SimulationType m_simulationType = SimulationType::UNDEFINED;
 
-	void createParticlesSimulation(SceneGraph* scene);
+	void createParticlesPhysicsSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation();
 
 	void onMoveComponentUpdate(MoveComponent& move);

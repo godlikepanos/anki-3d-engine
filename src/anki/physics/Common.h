@@ -68,6 +68,7 @@ enum class PhysicsMaterialBit : U64
 	DYNAMIC_GEOMETRY = 1 << 1,
 	TRIGGER = 1 << 2,
 	PLAYER = 1 << 3,
+	PARTICLE = 1 << 4,
 
 	ALL = MAX_U64
 };

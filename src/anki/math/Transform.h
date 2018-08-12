@@ -192,14 +192,14 @@ public:
 	}
 
 	/// Transform a TVec3
-	TVec3<T> transform(const TVec3<T>& b) const
+	ANKI_USE_RESULT TVec3<T> transform(const TVec3<T>& b) const
 	{
 		checkW();
 		return (m_rotation.getRotationPart() * (b * m_scale)) + m_origin.xyz();
 	}
 
 	/// Transform a TVec4. SIMD optimized
-	TVec4<T> transform(const TVec4<T>& b) const
+	ANKI_USE_RESULT TVec4<T> transform(const TVec4<T>& b) const
 	{
 		checkW();
 		TVec4<T> out = TVec4<T>(m_rotation * (b * m_scale), 0.0) + m_origin;
