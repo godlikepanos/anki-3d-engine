@@ -8,7 +8,7 @@
 		<mutator name="ROUGHNESS_TEX" value="1"/>
 		<mutator name="METAL_TEX" value="0"/>
 		<mutator name="NORMAL_TEX" value="1"/>
-		<mutator name="PARALLAX" value="1"/>
+		<mutator name="PARALLAX" value="0"/>
 		<mutator name="EMISSIVE_TEX" value="0"/>
 	</mutators>
 	
@@ -16,16 +16,15 @@
 		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
 		<input shaderInput="prevMvp" builtin="PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX"/>
 		<input shaderInput="rotationMat" builtin="ROTATION_MATRIX"/>
-		<input shaderInput="modelViewMat" builtin="MODEL_VIEW_MATRIX"/>
+		
 	
-		<input shaderInput="diffTex" value="assets/Asphalt_004_COLOR.ankitex"/>
+		<input shaderInput="diffTex" value="assets/Stone_Wall_007_COLOR.ankitex"/>
 		<input shaderInput="specColor" value="0.400000 0.400000 0.400000"/>
-		<input shaderInput="roughnessTex" value="assets/Asphalt_004_ROUGH.ankitex"/>
+		<input shaderInput="roughnessTex" value="assets/Stone_Wall_007_ROUGH.ankitex"/>
 		<input shaderInput="metallic" value="0.000000"/>
-		<input shaderInput="normalTex" value="assets/Asphalt_004_NRM.ankitex"/>
+		<input shaderInput="normalTex" value="assets/Stone_Wall_007_NORM.ankitex"/>
 		<input shaderInput="emission" value="0.000000 0.000000 0.000000"/>
 		<input shaderInput="subsurface" value="0.000000"/>
-		<input shaderInput="heightTex" value="assets/Asphalt_004_DISP.ankitex"/>
-		<input shaderInput="heightMapScale" value="0.05"/>
+		
 	</inputs>
 </material>
