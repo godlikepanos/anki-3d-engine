@@ -36,6 +36,7 @@ class SceneGraphStats
 public:
 	Second m_updateTime ANKI_DBG_NULLIFY;
 	Second m_visibilityTestsTime ANKI_DBG_NULLIFY;
+	Second m_physicsUpdate ANKI_DBG_NULLIFY;
 };
 
 /// The scene graph that  all the scene entities

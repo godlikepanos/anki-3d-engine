@@ -553,7 +553,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 
 	// Create the program name
 	StringAuto progName(getTempAllocator());
-	getFilepathFilename(getFilename(), getTempAllocator(), progName);
+	getFilepathFilename(getFilename(), progName);
 	char* cprogName = const_cast<char*>(progName.cstr());
 	if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
 	{

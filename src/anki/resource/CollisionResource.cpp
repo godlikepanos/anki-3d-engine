@@ -54,7 +54,9 @@ Error CollisionResource::load(const ResourceFilename& filename, Bool async)
 		DynamicArrayAuto<Vec3> positions(getTempAllocator());
 		ANKI_CHECK(loader.storeIndicesAndPosition(indices, positions));
 
-		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(positions, indices);
+		const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFile::Flag::CONVEX);
+
+		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(positions, indices, convex);
 	}
 	else
 	{

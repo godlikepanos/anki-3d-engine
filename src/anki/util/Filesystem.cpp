@@ -8,9 +8,8 @@
 namespace anki
 {
 
-void getFilepathExtension(const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out)
+void getFilepathExtension(const CString& filename, StringAuto& out)
 {
-	out.destroy(alloc);
 	const char* pc = std::strrchr(filename.cstr(), '.');
 
 	if(pc == nullptr)
@@ -22,14 +21,13 @@ void getFilepathExtension(const CString& filename, GenericMemoryPoolAllocator<U8
 		++pc;
 		if(*pc != '\0')
 		{
-			out.create(alloc, CString(pc));
+			out.create(CString(pc));
 		}
 	}
 }
 
-void getFilepathFilename(const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out)
+void getFilepathFilename(const CString& filename, StringAuto& out)
 {
-	out.destroy(alloc);
 	const char* pc = std::strrchr(filename.cstr(), '/');
 
 	if(pc == nullptr)
@@ -41,7 +39,7 @@ void getFilepathFilename(const CString& filename, GenericMemoryPoolAllocator<U8>
 		++pc;
 		if(*pc != '\0')
 		{
-			out.create(alloc, CString(pc));
+			out.create(CString(pc));
 		}
 	}
 }

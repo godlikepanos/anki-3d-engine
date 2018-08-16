@@ -241,6 +241,16 @@ inline T rcast(Y from)
 	ANKI_ASSERT(from);
 	return reinterpret_cast<T>(from);
 }
+
+#define _ANKI_CONCATENATE(a, b) a##b
+
+/// Concatenate 2 preprocessor tokens.
+#define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
+
+#define _ANKI_STRINGIZE(a) #a
+
+/// Make a preprocessor token a string.
+#define ANKI_STRINGIZE(a) _ANKI_STRINGIZE(a)
 /// @}
 
 } // end namespace anki

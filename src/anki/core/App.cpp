@@ -75,6 +75,7 @@ public:
 	BufferedValue<Second> m_lightBinTime;
 	BufferedValue<Second> m_sceneUpdateTime;
 	BufferedValue<Second> m_visTestsTime;
+	BufferedValue<Second> m_physicsTime;
 
 	PtrSize m_allocatedCpuMem = 0;
 	U64 m_allocCount = 0;
@@ -110,7 +111,7 @@ public:
 
 		nk_style_push_style_item(ctx, &ctx->style.window.fixed_background, nk_style_item_color(nk_rgba(0, 0, 0, 128)));
 
-		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 230, 350), 0))
+		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 230, 380), 0))
 		{
 			nk_layout_row_dynamic(ctx, 17, 1);
 
@@ -120,6 +121,7 @@ public:
 			labelTime(ctx, m_lightBinTime.get(false), "Light bin");
 			labelTime(ctx, m_sceneUpdateTime.get(flush), "Scene update");
 			labelTime(ctx, m_visTestsTime.get(flush), "Visibility");
+			labelTime(ctx, m_physicsTime.get(flush), "Physics");
 
 			nk_label(ctx, " ", NK_TEXT_ALIGN_LEFT);
 			nk_label(ctx, "Memory:", NK_TEXT_ALIGN_LEFT);
@@ -618,6 +620,7 @@ Error App::mainLoop()
 			statsUi.m_lightBinTime.set(m_renderer->getStats().m_lightBinTime);
 			statsUi.m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
 			statsUi.m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
+			statsUi.m_physicsTime.set(m_scene->getStats().m_physicsUpdate);
 			statsUi.m_allocatedCpuMem = m_memStats.m_allocatedMem.load();
 			statsUi.m_allocCount = m_memStats.m_allocCount.load();
 			statsUi.m_freeCount = m_memStats.m_freeCount.load();

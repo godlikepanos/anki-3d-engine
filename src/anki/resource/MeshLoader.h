@@ -27,8 +27,9 @@ public:
 	{
 		NONE = 0,
 		QUAD = 1 << 0,
+		CONVEX = 1 << 1,
 
-		ALL = QUAD,
+		ALL = QUAD | CONVEX,
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
 

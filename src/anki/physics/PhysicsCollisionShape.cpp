@@ -32,28 +32,38 @@ PhysicsBox::PhysicsBox(PhysicsWorld* world, const Vec3& extend)
 }
 
 PhysicsTriangleSoup::PhysicsTriangleSoup(
-	PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices)
+	PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices, Bool convex)
 	: PhysicsCollisionShape(world)
 {
-	ANKI_ASSERT((indices.getSize() % 3) == 0);
-
-	m_mesh = getAllocator().newInstance<btTriangleMesh>();
-	for(U i = 0; i < indices.getSize(); i += 3)
+	if(!convex)
 	{
-		m_mesh->addTriangle(
-			toBt(positions[indices[i]]), toBt(positions[indices[i + 1]]), toBt(positions[indices[i + 2]]));
+		ANKI_ASSERT((indices.getSize() % 3) == 0);
+
+		m_mesh = getAllocator().newInstance<btTriangleMesh>();
+		for(U i = 0; i < indices.getSize(); i += 3)
+		{
+			m_mesh->addTriangle(
+				toBt(positions[indices[i]]), toBt(positions[indices[i + 1]]), toBt(positions[indices[i + 2]]));
+		}
+
+		// Create the dynamic shape
+		btGImpactMeshShape* shape = getAllocator().newInstance<btGImpactMeshShape>(m_mesh);
+		shape->setMargin(getWorld().getCollisionMargin());
+		shape->updateBound();
+		m_shape = shape;
+
+		// And the static one
+		btBvhTriangleMeshShape* triShape = getAllocator().newInstance<btBvhTriangleMeshShape>(m_mesh, true);
+		m_staticShape = triShape;
+		m_staticShape->setMargin(getWorld().getCollisionMargin());
 	}
+	else
+	{
+		btConvexHullShape* shape =
+			getAllocator().newInstance<btConvexHullShape>(&positions[0][0], positions.getSize(), sizeof(Vec3));
 
-	// Create the dynamic shape
-	btGImpactMeshShape* shape = getAllocator().newInstance<btGImpactMeshShape>(m_mesh);
-	shape->setMargin(getWorld().getCollisionMargin());
-	shape->updateBound();
-	m_shape = shape;
-
-	// And the static one
-	btBvhTriangleMeshShape* triShape = getAllocator().newInstance<btBvhTriangleMeshShape>(m_mesh, true);
-	m_staticShape = triShape;
-	m_staticShape->setMargin(getWorld().getCollisionMargin());
+		m_shape = shape;
+	}
 
 	m_shape->setUserPointer(static_cast<PhysicsObject*>(this));
 }
@@ -68,7 +78,14 @@ PhysicsTriangleSoup::~PhysicsTriangleSoup()
 
 btCollisionShape* PhysicsTriangleSoup::getBtShape(Bool forDynamicBodies) const
 {
-	return (forDynamicBodies) ? m_shape : m_staticShape;
+	if(!forDynamicBodies && m_staticShape)
+	{
+		return m_staticShape;
+	}
+	else
+	{
+		return m_shape;
+	}
 }
 
 } // end namespace anki

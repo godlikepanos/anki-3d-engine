@@ -74,7 +74,8 @@ private:
 	btTriangleMesh* m_mesh = nullptr;
 	btCollisionShape* m_staticShape = nullptr;
 
-	PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices);
+	PhysicsTriangleSoup(
+		PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices, Bool convex = false);
 
 	~PhysicsTriangleSoup();
 

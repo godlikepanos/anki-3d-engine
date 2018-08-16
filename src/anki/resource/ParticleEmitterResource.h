@@ -38,59 +38,57 @@ public:
 	class
 	{
 	public:
-		/// Particle life
-		F32 m_life = 10.0;
-		F32 m_lifeDeviation = 0.0;
+		Second m_minLife = 10.0;
+		Second m_maxLife = 10.0;
 
-		/// Particle mass
-		F32 m_mass = 1.0;
-		F32 m_massDeviation = 0.0;
+		F32 m_minMass = 1.0f;
+		F32 m_maxMass = 1.0f;
 
-		/// Particle size. It is the size of the collision shape
-		F32 m_size = 1.0;
-		F32 m_sizeDeviation = 0.0;
-		F32 m_sizeAnimation = 1.0;
+		F32 m_minInitialSize = 1.0f;
+		F32 m_maxInitialSize = 1.0f;
+		F32 m_minFinalSize = 1.0f;
+		F32 m_maxFinalSize = 1.0f;
 
-		/// Alpha factor. If the material supports alpha then multiply with
-		/// this
-		F32 m_alpha = 1.0;
-		F32 m_alphaDeviation = 0.0;
-		Bool8 m_alphaAnimation = false;
+		F32 m_minInitialAlpha = 1.0f;
+		F32 m_maxInitialAlpha = 1.0f;
+		F32 m_minFinalAlpha = 1.0f;
+		F32 m_maxFinalAlpha = 1.0f;
 
-		/// Initial force. If not set only the gravity applies
-		Vec3 m_forceDirection = Vec3(0.0, 1.0, 0.0);
-		Vec3 m_forceDirectionDeviation = Vec3(0.0);
-		F32 m_forceMagnitude = 0.0; ///< Default 0.0
-		F32 m_forceMagnitudeDeviation = 0.0;
+		Vec3 m_minForceDirection = Vec3(0.0f, 1.0f, 0.0f);
+		Vec3 m_maxForceDirection = Vec3(0.0f, 1.0f, 0.0f);
+		F32 m_minForceMagnitude = 0.0f;
+		F32 m_maxForceMagnitude = 0.0f;
 
 		/// If not set then it uses the world's default
-		Vec3 m_gravity = Vec3(0.0);
-		Vec3 m_gravityDeviation = Vec3(0.0);
+		Vec3 m_minGravity = Vec3(MAX_F32);
+		Vec3 m_maxGravity = Vec3(MAX_F32);
 
 		/// This position is relevant to the particle emitter pos
-		Vec3 m_startingPos = Vec3(0.0);
-		Vec3 m_startingPosDeviation = Vec3(0.0);
+		Vec3 m_minStartingPosition = Vec3(0.0);
+		Vec3 m_maxStartingPosition = Vec3(0.0);
 	} m_particle;
 	/// @}
 
 	/// @name Emitter specific properties
 	/// @{
+	U32 m_maxNumOfParticles = 16; ///< The size of the particles vector. Required
 
-	/// The size of the particles vector. Required
-	U32 m_maxNumOfParticles = 16;
-	/// How often the emitter emits new particles. In secs. Required
-	F32 m_emissionPeriod = 1.0;
-	/// How many particles are emitted every emission. Required
-	U32 m_particlesPerEmittion = 1;
-	/// Use bullet for the simulation
-	Bool m_usePhysicsEngine = true;
+	F32 m_emissionPeriod = 1.0; ///< How often the emitter emits new particles. In secs. Required
+
+	U32 m_particlesPerEmission = 1; ///< How many particles are emitted every emission. Required
+
+	Bool8 m_usePhysicsEngine = false; ///< Use bullet for the simulation
 	/// @}
 
-	// Optimization flags
-	Bool m_forceEnabled;
-	Bool m_wordGravityEnabled;
+	Bool forceEnabled() const
+	{
+		return m_particle.m_maxForceMagnitude > 0.0f;
+	}
 
-	void updateFlags();
+	Bool wordGravityEnabled() const
+	{
+		return m_particle.m_maxGravity.x() < MAX_F32;
+	}
 };
 
 /// This is the properties of the particle emitter resource
@@ -122,6 +120,9 @@ private:
 	U8 m_lodCount = 1; ///< Cache the value from the material
 
 	void loadInternal(const XmlElement& el);
+
+	template<typename T>
+	ANKI_USE_RESULT Error readVar(const XmlElement& rootEl, CString varName, T& minVal, T& maxVal, const T* defaultVal);
 };
 /// @}
 

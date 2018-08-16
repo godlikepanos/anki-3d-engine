@@ -217,7 +217,9 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	// Update
 	{
 		ANKI_TRACE_SCOPED_EVENT(SCENE_PHYSICS_UPDATE);
+		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime();
 		m_physics->update(crntTime - prevUpdateTime);
+		m_stats.m_physicsUpdate = HighRezTimer::getCurrentTime() - m_stats.m_physicsUpdate;
 	}
 
 	{

@@ -32,8 +32,8 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	ANKI_CHECK(getSceneGraph().getScriptManager().newScriptEnvironment(m_env));
 
 	// Do the rest
-	String extension;
-	getFilepathExtension(script, getAllocator(), extension);
+	StringAuto extension(getAllocator());
+	getFilepathExtension(script, extension);
 
 	if(!extension.isEmpty() && extension == "lua")
 	{

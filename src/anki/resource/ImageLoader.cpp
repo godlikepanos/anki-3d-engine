@@ -558,7 +558,7 @@ Error ImageLoader::load(ResourceFilePtr file, const CString& filename, U32 maxTe
 {
 	// get the extension
 	StringAuto ext(m_alloc);
-	getFilepathExtension(filename, m_alloc, ext);
+	getFilepathExtension(filename, ext);
 
 	if(ext.isEmpty())
 	{

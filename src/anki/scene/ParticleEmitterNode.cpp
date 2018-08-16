@@ -19,26 +19,19 @@
 namespace anki
 {
 
-static F32 getRandom(F32 initial, F32 deviation)
+static F32 getRandom(F32 min, F32 max)
 {
-	return (deviation == 0.0) ? initial : initial + randFloat(deviation) * 2.0 - deviation;
+	F32 factor = randFloat(1.0f);
+	return mix(min, max, factor);
 }
 
-static Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
+static Vec3 getRandom(const Vec3& min, const Vec3& max)
 {
-	if(deviation == Vec3(0.0))
-	{
-		return initial;
-	}
-	else
-	{
-		Vec3 out;
-		for(U i = 0; i < 3; i++)
-		{
-			out[i] = getRandom(initial[i], deviation[i]);
-		}
-		return out;
-	}
+	Vec3 out;
+	out.x() = mix(min.x(), max.x(), randFloat(1.0f));
+	out.y() = mix(min.y(), max.y(), randFloat(1.0f));
+	out.z() = mix(min.z(), max.z(), randFloat(1.0f));
+	return out;
 }
 
 /// Particle base
@@ -47,8 +40,16 @@ class ParticleEmitterNode::ParticleBase
 public:
 	Second m_timeOfBirth; ///< Keep the time of birth for nice effects
 	Second m_timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead
-	Second m_size = 1.0;
-	Second m_alpha = 1.0;
+
+	F32 m_initialSize;
+	F32 m_finalSize;
+	F32 m_crntSize;
+
+	F32 m_initialAlpha;
+	F32 m_finalAlpha;
+	F32 m_crntAlpha;
+
+	Vec4 m_crntPosition;
 
 	virtual ~ParticleBase()
 	{
@@ -67,25 +68,32 @@ public:
 	}
 
 	/// Revive the particle
-	virtual void revive(const ParticleEmitterNode& pe, const Transform& trf, Second prevUpdateTime, Second crntTime)
+	virtual void revive(
+		const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime, Second crntTime)
 	{
 		ANKI_ASSERT(isDead());
-		const ParticleEmitterProperties& props = pe;
 
 		// life
-		m_timeOfDeath = getRandom(crntTime + props.m_particle.m_life, props.m_particle.m_lifeDeviation);
+		m_timeOfDeath = crntTime + getRandom(props.m_particle.m_minLife, props.m_particle.m_maxLife);
 		m_timeOfBirth = crntTime;
+
+		// Size
+		m_initialSize = getRandom(props.m_particle.m_minInitialSize, props.m_particle.m_maxInitialSize);
+		m_finalSize = getRandom(props.m_particle.m_minFinalSize, props.m_particle.m_maxFinalSize);
+
+		// Alpha
+		m_initialAlpha = getRandom(props.m_particle.m_minInitialAlpha, props.m_particle.m_maxInitialAlpha);
+		m_finalAlpha = getRandom(props.m_particle.m_minFinalAlpha, props.m_particle.m_maxFinalAlpha);
 	}
 
-	/// Only relevant for non-bullet simulations
-	virtual void simulate(const ParticleEmitterNode& pe, Second prevUpdateTime, Second crntTime)
+	/// Common sumulation code
+	virtual void simulate(Second prevUpdateTime, Second crntTime)
 	{
-		(void)pe;
-		(void)prevUpdateTime;
-		(void)crntTime;
-	}
+		const F32 lifeFactor = (crntTime - m_timeOfBirth) / (m_timeOfDeath - m_timeOfBirth);
 
-	virtual const Vec4& getPosition() const = 0;
+		m_crntSize = mix(m_initialSize, m_finalSize, lifeFactor);
+		m_crntAlpha = mix(m_initialAlpha, m_finalAlpha, lifeFactor);
+	}
 };
 
 /// Simple particle for simple simulation
@@ -94,38 +102,34 @@ class ParticleEmitterNode::ParticleSimple : public ParticleEmitterNode::Particle
 public:
 	Vec4 m_velocity = Vec4(0.0);
 	Vec4 m_acceleration = Vec4(0.0);
-	Vec4 m_position;
 
-	void revive(const ParticleEmitterNode& pe, const Transform& trf, Second prevUpdateTime, Second crntTime) override
+	void revive(
+		const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime, Second crntTime) override
 	{
-		ParticleBase::revive(pe, trf, prevUpdateTime, crntTime);
+		ParticleBase::revive(props, trf, prevUpdateTime, crntTime);
 		m_velocity = Vec4(0.0);
 
-		const ParticleEmitterProperties& props = pe;
-
-		m_acceleration = getRandom(props.m_particle.m_gravity, props.m_particle.m_gravityDeviation).xyz0();
+		m_acceleration = getRandom(props.m_particle.m_minGravity, props.m_particle.m_maxGravity).xyz0();
 
 		// Set the initial position
-		m_position = getRandom(props.m_particle.m_startingPos, props.m_particle.m_startingPosDeviation).xyz0();
+		m_crntPosition =
+			getRandom(props.m_particle.m_minStartingPosition, props.m_particle.m_maxStartingPosition).xyz0();
 
-		m_position += trf.getOrigin();
+		m_crntPosition += trf.getOrigin();
 	}
 
-	void simulate(const ParticleEmitterNode& pe, Second prevUpdateTime, Second crntTime) override
+	void simulate(Second prevUpdateTime, Second crntTime) override
 	{
+		ParticleBase::simulate(prevUpdateTime, crntTime);
+
 		Second dt = crntTime - prevUpdateTime;
 
-		Vec4 xp = m_position;
+		Vec4 xp = m_crntPosition;
 		Vec4 xc = m_acceleration * (dt * dt) + m_velocity * dt + xp;
 
-		m_position = xc;
+		m_crntPosition = xc;
 
 		m_velocity += m_acceleration * dt;
-	}
-
-	const Vec4& getPosition() const override
-	{
-		return m_position;
 	}
 };
 
@@ -151,15 +155,14 @@ public:
 		m_body->activate(false);
 	}
 
-	void revive(const ParticleEmitterNode& pe, const Transform& trf, Second prevUpdateTime, Second crntTime) override
+	void revive(
+		const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime, Second crntTime) override
 	{
-		ParticleBase::revive(pe, trf, prevUpdateTime, crntTime);
-
-		const ParticleEmitterProperties& props = pe;
+		ParticleBase::revive(props, trf, prevUpdateTime, crntTime);
 
 		// pre calculate
-		const Bool forceFlag = props.m_forceEnabled;
-		const Bool worldGravFlag = props.m_wordGravityEnabled;
+		const Bool forceFlag = props.forceEnabled();
+		const Bool worldGravFlag = props.wordGravityEnabled();
 
 		// Activate it
 		m_body->activate(true);
@@ -170,44 +173,34 @@ public:
 		// force
 		if(forceFlag)
 		{
-			Vec3 forceDir = getRandom(props.m_particle.m_forceDirection, props.m_particle.m_forceDirectionDeviation);
+			Vec3 forceDir = getRandom(props.m_particle.m_minForceDirection, props.m_particle.m_maxForceDirection);
 			forceDir.normalize();
 
-			if(!pe.m_identityRotation)
-			{
-				// the forceDir depends on the particle emitter rotation
-				forceDir = trf.getRotation().getRotationPart() * forceDir;
-			}
+			// the forceDir depends on the particle emitter rotation
+			forceDir = trf.getRotation().getRotationPart() * forceDir;
 
-			const F32 forceMag =
-				getRandom(props.m_particle.m_forceMagnitude, props.m_particle.m_forceMagnitudeDeviation);
+			const F32 forceMag = getRandom(props.m_particle.m_minForceMagnitude, props.m_particle.m_maxForceMagnitude);
 			m_body->applyForce(forceDir * forceMag, Vec3(0.0f));
 		}
 
 		// gravity
 		if(!worldGravFlag)
 		{
-			m_body->setGravity(getRandom(props.m_particle.m_gravity, props.m_particle.m_gravityDeviation));
+			m_body->setGravity(getRandom(props.m_particle.m_minGravity, props.m_particle.m_maxGravity));
 		}
 
 		// Starting pos. In local space
-		Vec3 pos = getRandom(props.m_particle.m_startingPos, props.m_particle.m_startingPosDeviation);
-
-		if(pe.m_identityRotation)
-		{
-			pos += trf.getOrigin().xyz();
-		}
-		else
-		{
-			pos = trf.transform(pos);
-		}
+		Vec3 pos = getRandom(props.m_particle.m_minStartingPosition, props.m_particle.m_maxStartingPosition);
+		pos = trf.transform(pos);
 
 		m_body->setTransform(Transform(pos.xyz0(), trf.getRotation(), 1.0f));
+		m_crntPosition = pos.xyz0();
 	}
 
-	const Vec4& getPosition() const override
+	void simulate(Second prevUpdateTime, Second crntTime) override
 	{
-		return m_body->getTransform().getOrigin();
+		ParticleBase::simulate(prevUpdateTime, crntTime);
+		m_crntPosition = m_body->getTransform().getOrigin();
 	}
 };
 
@@ -380,7 +373,7 @@ void ParticleEmitterNode::onMoveComponentUpdate(MoveComponent& move)
 void ParticleEmitterNode::createParticlesPhysicsSimulation(SceneGraph* scene)
 {
 	PhysicsCollisionShapePtr collisionShape =
-		getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(m_particle.m_size / 2.0f);
+		getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(m_particle.m_minInitialSize / 2.0f);
 
 	PhysicsBodyInitInfo binit;
 	binit.m_shape = collisionShape;
@@ -389,12 +382,9 @@ void ParticleEmitterNode::createParticlesPhysicsSimulation(SceneGraph* scene)
 
 	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
-		binit.m_mass = getRandom(m_particle.m_mass, m_particle.m_massDeviation);
+		binit.m_mass = getRandom(m_particle.m_minMass, m_particle.m_maxMass);
 
 		PhysParticle* part = getSceneAllocator().newInstance<PhysParticle>(binit, this);
-
-		part->m_size = getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
-		part->m_alpha = getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
 
 		m_particles[i] = part;
 	}
@@ -407,9 +397,6 @@ void ParticleEmitterNode::createParticlesSimpleSimulation()
 	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
 		ParticleSimple* part = getSceneAllocator().newInstance<ParticleSimple>();
-
-		part->m_size = getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
-		part->m_alpha = getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
 
 		m_particles[i] = part;
 	}
@@ -430,6 +417,8 @@ Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 
 	const F32* verts_base = verts;
 	(void)verts_base;
+
+	F32 maxParticleSize = -1.0f;
 
 	for(ParticleBase* p : m_particles)
 	{
@@ -452,32 +441,21 @@ Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 			ANKI_ASSERT((PtrSize(verts) + VERTEX_SIZE - PtrSize(verts_base)) <= m_vertBuffSize);
 
 			// This will calculate a new world transformation
-			p->simulate(*this, prevUpdateTime, crntTime);
+			p->simulate(prevUpdateTime, crntTime);
 
-			const Vec4& origin = p->getPosition();
+			const Vec4& origin = p->m_crntPosition;
 
 			aabbmin = aabbmin.min(origin);
 			aabbmax = aabbmax.max(origin);
-
-			F32 lifePercent = (crntTime - p->m_timeOfBirth) / (p->m_timeOfDeath - p->m_timeOfBirth);
 
 			verts[0] = origin.x();
 			verts[1] = origin.y();
 			verts[2] = origin.z();
 
-			// XXX set a flag for scale
-			verts[3] = p->m_size + (lifePercent * m_particle.m_sizeAnimation);
+			verts[3] = p->m_crntSize;
+			maxParticleSize = max(maxParticleSize, p->m_crntSize);
 
-			// Set alpha
-			if(m_particle.m_alphaAnimation)
-			{
-				verts[4] = sin(lifePercent * PI) * p->m_alpha;
-			}
-			else
-			{
-				verts[4] = p->m_alpha;
-			}
-			verts[4] = clamp(verts[4], 0.0f, 1.0f);
+			verts[4] = clamp(p->m_crntAlpha, 0.0f, 1.0f);
 
 			++m_aliveParticlesCount;
 			verts += 5;
@@ -486,8 +464,9 @@ Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 
 	if(m_aliveParticlesCount != 0)
 	{
-		Vec4 min = aabbmin - m_particle.m_size;
-		Vec4 max = aabbmax + m_particle.m_size;
+		ANKI_ASSERT(maxParticleSize > 0.0f);
+		Vec4 min = aabbmin - maxParticleSize;
+		Vec4 max = aabbmax + maxParticleSize;
 		Vec4 center = (min + max) / 2.0;
 
 		m_obb = Obb(center.xyz0(), Mat3x4::getIdentity(), (max - center).xyz0());
@@ -521,7 +500,7 @@ Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 
 			// do the rest
 			++particlesCount;
-			if(particlesCount >= m_particlesPerEmittion)
+			if(particlesCount >= m_particlesPerEmission)
 			{
 				break;
 			}

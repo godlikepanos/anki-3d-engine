@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <particleEmitter>
-	<life>1.5</life>
-	<lifeDeviation>0.5</lifeDeviation>
-	<mass>1.0</mass>
-	<massDeviation>0.0</massDeviation>
-	<gravity>0.0 0.5 0.0</gravity>
-	<alpha>0.5</alpha>
-	<alphaDeviation>0.5</alphaDeviation>
-	<alphaAnimationEnabled>1</alphaAnimationEnabled>
-	<emissionPeriod>0.05</emissionPeriod>
-	<particlesPerEmission>1</particlesPerEmission>
-	<startingPosition>0.0 0.1 0.0</startingPosition>
-	<startingPositionDeviation>0.04 0.0 0.04</startingPositionDeviation>
-	<material>assets/fire.ankimtl</material>
-	<size>0.80</size>
-	<sizeDeviation>0.02</sizeDeviation>
-	<sizeAnimation>-0.2</sizeAnimation>
-	<usePhysicsEngine>0</usePhysicsEngine>
+	<life min="1" max="2"/>
+	<gravity value="0.0 0.5 0.0"/>
+
+	<initialAlpha min="0.5" max="1"/>
+	<finalAlpha value="0"/>
+
+	<initialSize min="0.78" max="0.82"/>
+	<finalSize min="0.4" max="0.5"/>
+
+	<startingPosition min="-0.04 0.1 -0.04" max="0.04 0.1 0.04"/>
+
+	<maxNumberOfParticles value="10"/>
+	<emissionPeriod value="0.05"/>
+	<particlesPerEmission value="1"/>
+	<material value="assets/fire.ankimtl"/>
 </particleEmitter>
