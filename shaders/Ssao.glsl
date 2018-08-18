@@ -49,7 +49,7 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _blk
 	Mat3 u_viewRotMat;
 };
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_mMsDepthRt;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2DArray u_noiseMap;
 #if USE_NORMAL
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt;
@@ -57,7 +57,7 @@ layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt;
 
 // To compute the normals we need some extra work on compute
 #define COMPLEX_NORMALS (!USE_NORMAL && USE_COMPUTE)
-#if COMPLEX_NORMALS || DO_SOFT_BLUR
+#if DO_SOFT_BLUR
 shared Vec3 s_scratch[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 #endif
 
@@ -79,66 +79,50 @@ Vec3 readRandom(Vec2 uv, F32 layer)
 	return r;
 }
 
-// Returns the Z of the position in view space
-F32 readZ(in Vec2 uv)
-{
-	F32 depth = textureLod(u_mMsDepthRt, uv, 0.0).r;
-	F32 z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
-	return z;
-}
-
-// Read position in view space
-Vec3 readPosition(in Vec2 uv)
-{
-	Vec3 fragPosVspace;
-	fragPosVspace.z = readZ(uv);
-	fragPosVspace.xy = UV_TO_NDC(uv) * u_unprojectionParams.xy * fragPosVspace.z;
-
-	return fragPosVspace;
-}
-
 Vec4 project(Vec4 point)
 {
 	return projectPerspective(point, u_projectionMat.x, u_projectionMat.y, u_projectionMat.z, u_projectionMat.w);
 }
 
+Vec3 unproject(Vec2 ndc, F32 depth)
+{
+	F32 z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
+	Vec2 xy = ndc * u_unprojectionParams.xy * z;
+	return Vec3(xy, z);
+}
+
+F32 smallerDelta(F32 left, F32 mid, F32 right)
+{
+	F32 a = mid - left;
+	F32 b = right - mid;
+
+	return (abs(a) < abs(b)) ? a : b;
+}
+
 // Compute the normal depending on some defines
-Vec3 computeNormal(Vec2 uv, Vec3 origin)
+Vec3 computeNormal(Vec2 uv, Vec3 origin, F32 depth)
 {
 #if USE_NORMAL
 	Vec3 normal = readNormal(uv);
 #elif !COMPLEX_NORMALS
 	Vec3 normal = normalize(cross(dFdx(origin), dFdy(origin)));
 #else
-	// Every thread stores its position
-	s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = origin;
+	F32 depthLeft = textureLodOffset(u_depthRt, uv, 0.0, ivec2(-2, 0)).r;
+	F32 depthRight = textureLodOffset(u_depthRt, uv, 0.0, ivec2(2, 0)).r;
+	F32 depthTop = textureLodOffset(u_depthRt, uv, 0.0, ivec2(0, 2)).r;
+	F32 depthBottom = textureLodOffset(u_depthRt, uv, 0.0, ivec2(0, -2)).r;
 
-	memoryBarrierShared();
-	barrier();
+	F32 ddx = smallerDelta(depthLeft, depth, depthRight);
+	F32 ddy = smallerDelta(depthBottom, depth, depthTop);
 
-	// Have one thread every quad to compute the normal
-	if(((gl_LocalInvocationID.x & 1u) + (gl_LocalInvocationID.y & 1u)) == 0u)
-	{
-		// It's the bottom left pixel of the quad
+	Vec2 ndc = UV_TO_NDC(uv);
+	const Vec2 TEXEL_SIZE = 1.0 / Vec2(FB_SIZE);
+	const Vec2 NDC_TEXEL_SIZE = 2.0 * TEXEL_SIZE;
+	Vec3 right = unproject(ndc + Vec2(NDC_TEXEL_SIZE.x, 0.0), depth + ddx);
+	Vec3 top = unproject(ndc + Vec2(0.0, NDC_TEXEL_SIZE.y), depth + ddy);
 
-		Vec3 center, right, top;
-		center = origin;
-		right = s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x + 1u];
-		top = s_scratch[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x];
-
-		Vec3 normal = normalize(cross(right - center, top - center));
-
-		// Broadcast the normal
-		s_scratch[gl_LocalInvocationID.y + 0u][gl_LocalInvocationID.x + 0u] = normal;
-		s_scratch[gl_LocalInvocationID.y + 0u][gl_LocalInvocationID.x + 1u] = normal;
-		s_scratch[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 0u] = normal;
-		s_scratch[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 1u] = normal;
-	}
-
-	memoryBarrierShared();
-	barrier();
-
-	Vec3 normal = s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x];
+	Vec3 normal = cross(origin - top, right - origin);
+	normal = normalize(normal);
 #endif
 
 	return normal;
@@ -166,10 +150,11 @@ void main(void)
 	Vec2 ndc = UV_TO_NDC(uv);
 
 	// Compute origin
-	Vec3 origin = readPosition(uv);
+	F32 depth = textureLod(u_depthRt, uv, 0.0).r;
+	Vec3 origin = unproject(ndc, depth);
 
 	// Get normal
-	Vec3 normal = computeNormal(uv, origin);
+	Vec3 normal = computeNormal(uv, origin, depth);
 
 	// Find the projected radius
 	Vec3 sphereLimit = origin + Vec3(RADIUS, 0.0, 0.0);
@@ -199,7 +184,7 @@ void main(void)
 		Vec2 finalDiskPoint = ndc + point * projRadius;
 
 		// Compute factor
-		Vec3 s = readPosition(NDC_TO_UV(finalDiskPoint));
+		Vec3 s = unproject(finalDiskPoint, textureLod(u_depthRt, NDC_TO_UV(finalDiskPoint), 0.0).r);
 		Vec3 u = s - origin;
 		ssao += max(dot(normal, u) + BIAS, EPSILON) / max(dot(u, u), EPSILON);
 	}

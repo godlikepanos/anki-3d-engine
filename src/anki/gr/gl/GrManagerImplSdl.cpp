@@ -60,7 +60,7 @@ public:
 		m_context = SDL_GL_CreateContext(m_window);
 		if(m_context == nullptr)
 		{
-			ANKI_GL_LOGE("SDL_GL_CreateContext() failed");
+			ANKI_GL_LOGE("SDL_GL_CreateContext() failed: %s", SDL_GetError());
 			return Error::FUNCTION_FAILED;
 		}
 
