@@ -118,7 +118,7 @@ public:
 		return m_sizes;
 	}
 
-	void setupDecalQueueElement(DecalQueueElement& el) const
+	void setupDecalQueueElement(DecalQueueElement& el)
 	{
 		el.m_diffuseAtlas = (m_layers[LayerType::DIFFUSE].m_atlas)
 								? m_layers[LayerType::DIFFUSE].m_atlas->getGrTextureView().get()

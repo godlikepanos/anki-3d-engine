@@ -9,12 +9,17 @@
 #include <anki/collision/Sphere.h>
 #include <anki/collision/Functions.h>
 #include <anki/collision/Tests.h>
+#include <anki/util/ThreadHive.h>
+#include <anki/core/Config.h>
 
 namespace anki
 {
 
-const U TYPED_OBJECT_COUNT = 4; // Point, spot, decal & probe
+static const U32 TYPED_OBJECT_COUNT = 4; // Point, spot, decal & probe
+static const F32 INVALID_TEXTURE_INDEX = -1.0;
+static const U32 MAX_TYPED_OBJECTS_PER_CLUSTER = 64;
 
+/// Get a view space point.
 static Vec4 unproject(const F32 zVspace, const Vec2& ndc, const Vec4& projParams)
 {
 	Vec4 view;
@@ -27,6 +32,7 @@ static Vec4 unproject(const F32 zVspace, const Vec2& ndc, const Vec4& projParams
 	return view;
 }
 
+/// https://bartwronski.com/2017/04/13/cull-that-cone/
 static Bool testConeVsSphere(
 	const Vec3& coneOrigin, const Vec3& coneDir, F32 coneLength, F32 coneAngle, const Sphere& sphere)
 {
@@ -63,24 +69,34 @@ public:
 	Vec4 m_unprojParams;
 };
 
-ClusterBin::ClusterBin(
-	const GenericMemoryPoolAllocator<U8>& alloc, U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ)
-	: m_alloc(alloc)
-	, m_clusterCounts{{clusterCountX, clusterCountY, clusterCountZ}}
+void ClusterBin::init(U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const Config& cfg)
 {
+	m_clusterCounts[0] = clusterCountX;
+	m_clusterCounts[1] = clusterCountY;
+	m_clusterCounts[2] = clusterCountZ;
+
 	m_totalClusterCount = clusterCountX * clusterCountY * clusterCountZ;
+
+	m_indexCount = m_totalClusterCount * cfg.getNumber("r.avgObjectsPerCluster");
 }
 
-ClusterBin::~ClusterBin()
-{
-}
-
-void ClusterBin::processNextClusterCallback(
+void ClusterBin::binToClustersCallback(
 	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore)
 {
 	ANKI_ASSERT(userData);
 	BinCtx& ctx = *static_cast<BinCtx*>(userData);
-	ctx.m_bin->processNextCluster(ctx);
+
+	while(ctx.m_bin->processNextCluster(ctx))
+	{
+	}
+}
+
+void ClusterBin::writeTypedObjectsToGpuBuffersCallback(
+	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore)
+{
+	ANKI_ASSERT(userData);
+	BinCtx& ctx = *static_cast<BinCtx*>(userData);
+	ctx.m_bin->writeTypedObjectsToGpuBuffers(ctx);
 }
 
 void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
@@ -94,13 +110,35 @@ void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 
 	// Allocate indices
 	U32* indices = static_cast<U32*>(ctx.m_in->m_stagingMem->allocateFrame(
-		ctx.m_in->m_maxLightIndices * sizeof(U32), StagingGpuMemoryType::STORAGE, ctx.m_out->m_indicesToken));
-	ctx.m_lightIds = WeakArray<U32>(indices, ctx.m_in->m_maxLightIndices);
+		m_indexCount * sizeof(U32), StagingGpuMemoryType::STORAGE, ctx.m_out->m_indicesToken));
+	ctx.m_lightIds = WeakArray<U32>(indices, m_indexCount);
+
+	// Reserve some indices for empty clusters
+	for(U i = 0; i < TYPED_OBJECT_COUNT; ++i)
+	{
+		indices[i] = 0;
+	}
 
 	// Allocate clusters
 	U32* clusters = static_cast<U32*>(ctx.m_in->m_stagingMem->allocateFrame(
 		sizeof(U32) * m_totalClusterCount, StagingGpuMemoryType::STORAGE, ctx.m_out->m_clustersToken));
 	ctx.m_clusters = WeakArray<U32>(clusters, m_totalClusterCount);
+
+	// Create task for writing GPU buffers
+	Array<ThreadHiveTask, ThreadHive::MAX_THREADS + 1> tasks;
+	tasks[0].m_callback = writeTypedObjectsToGpuBuffersCallback;
+	tasks[0].m_argument = &ctx;
+
+	// Create tasks for binning
+	for(U threadIdx = 0; threadIdx < in.m_threadHive->getThreadCount(); ++threadIdx)
+	{
+		tasks[threadIdx + 1].m_callback = binToClustersCallback;
+		tasks[threadIdx + 1].m_argument = &ctx;
+	}
+
+	// Submit and wait
+	in.m_threadHive->submitTasks(&tasks[0], in.m_threadHive->getThreadCount() + 1);
+	in.m_threadHive->waitAllTasks();
 }
 
 void ClusterBin::prepare(BinCtx& ctx)
@@ -152,13 +190,13 @@ void ClusterBin::prepare(BinCtx& ctx)
 	ctx.m_unprojParams = ctx.m_in->m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
 }
 
-void ClusterBin::processNextCluster(BinCtx& ctx) const
+Bool ClusterBin::processNextCluster(BinCtx& ctx) const
 {
 	const U clusterIdx = ctx.m_clusterIdxToProcess.fetchAdd(1);
 	if(clusterIdx >= m_totalClusterCount)
 	{
 		// Done
-		return;
+		return false;
 	}
 
 	// Get the cluster indices
@@ -193,7 +231,7 @@ void ClusterBin::processNextCluster(BinCtx& ctx) const
 		clusterEdgesWSpace[i] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[i];
 	}
 
-	// Compute an AABB that contains the cluster
+	// Compute an AABB and a sphere that contains the cluster
 	Vec3 aabbMin(MAX_F32);
 	Vec3 aabbMax(MIN_F32);
 	for(U i = 0; i < 8; ++i)
@@ -208,7 +246,7 @@ void ClusterBin::processNextCluster(BinCtx& ctx) const
 	const Sphere clusterSphere(sphereCenter.xyz0(), (aabbMin - sphereCenter).getLength());
 
 	// Bin decals
-	Array<U32, 32> objectIndices;
+	Array<U32, MAX_TYPED_OBJECTS_PER_CLUSTER> objectIndices;
 	U32* pObjectIndex = &objectIndices[0];
 	const U32* pObjectIndexEnd = &objectIndices[0] + objectIndices.getSize();
 	(void)pObjectIndexEnd;
@@ -305,6 +343,8 @@ void ClusterBin::processNextCluster(BinCtx& ctx) const
 	U firstIndex;
 	if(indexCount > TYPED_OBJECT_COUNT)
 	{
+		// Have some objects to bin
+
 		firstIndex = ctx.m_allocatedIndexCount.fetchAdd(indexCount);
 
 		if(firstIndex + indexCount <= ctx.m_lightIds.getSize())
@@ -313,7 +353,7 @@ void ClusterBin::processNextCluster(BinCtx& ctx) const
 		}
 		else
 		{
-			ANKI_R_LOGW("XXX");
+			ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster");
 			firstIndex = 0;
 			indexCount = TYPED_OBJECT_COUNT;
 		}
@@ -326,28 +366,163 @@ void ClusterBin::processNextCluster(BinCtx& ctx) const
 
 	// Write the cluster
 	ctx.m_clusters[clusterIdx] = firstIndex;
+
+	return true;
 }
 
 void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 {
 	const RenderQueue& rqueue = *ctx.m_in->m_renderQueue;
 
-	// Write point lights
-	const U visiblePointLightsCount = rqueue.m_pointLights.getSize();
-	if(visiblePointLightsCount)
+	// Write the point lights
+	const U visiblePointLightCount = rqueue.m_pointLights.getSize();
+	if(visiblePointLightCount)
 	{
-		PointLight* data =
-			static_cast<PointLight*>(ctx.m_in->m_stagingMem->allocateFrame(sizeof(PointLight) * visiblePointLightsCount,
-				StagingGpuMemoryType::UNIFORM,
-				ctx.m_out->m_pointLightsToken));
+		PointLight* data = static_cast<PointLight*>(ctx.m_in->m_stagingMem->allocateFrame(
+			sizeof(PointLight) * visiblePointLightCount, StagingGpuMemoryType::UNIFORM, ctx.m_out->m_pointLightsToken));
 
-		WeakArray<PointLight> gpuLights(data, visiblePointLightsCount);
+		WeakArray<PointLight> gpuLights(data, visiblePointLightCount);
 
-		// TODO
+		for(U i = 0; i < visiblePointLightCount; ++i)
+		{
+			const PointLightQueueElement& in = rqueue.m_pointLights[i];
+			PointLight& out = gpuLights[i];
+
+			out.m_posRadius = Vec4(in.m_worldPosition.xyz(), 1.0f / (in.m_radius * in.m_radius));
+			out.m_diffuseColorTileSize = in.m_diffuseColor.xyz0();
+
+			if(in.m_shadowRenderQueues[0] == nullptr || !ctx.m_in->m_shadowsEnabled)
+			{
+				out.m_diffuseColorTileSize.w() = INVALID_TEXTURE_INDEX;
+			}
+			else
+			{
+				out.m_diffuseColorTileSize.w() = in.m_atlasTileSize;
+				out.m_atlasTiles = UVec2(in.m_atlasTiles.x(), in.m_atlasTiles.y());
+			}
+
+			out.m_radiusPad1 = Vec2(in.m_radius);
+		}
 	}
 	else
 	{
 		ctx.m_out->m_pointLightsToken.markUnused();
+	}
+
+	// Write the spot lights
+	const U visibleSpotLightCount = rqueue.m_spotLights.getSize();
+	if(visibleSpotLightCount)
+	{
+		SpotLight* data = static_cast<SpotLight*>(ctx.m_in->m_stagingMem->allocateFrame(
+			sizeof(SpotLight) * visibleSpotLightCount, StagingGpuMemoryType::UNIFORM, ctx.m_out->m_spotLightsToken));
+
+		WeakArray<SpotLight> gpuLights(data, visibleSpotLightCount);
+
+		for(U i = 0; i < visibleSpotLightCount; ++i)
+		{
+			const SpotLightQueueElement& in = rqueue.m_spotLights[i];
+			SpotLight& out = gpuLights[i];
+
+			F32 shadowmapIndex = INVALID_TEXTURE_INDEX;
+
+			if(in.hasShadow() && ctx.m_in->m_shadowsEnabled)
+			{
+				// bias * proj_l * view_l
+				out.m_texProjectionMat = in.m_textureMatrix;
+
+				shadowmapIndex = 1.0f; // Just set a value
+			}
+
+			// Pos & dist
+			out.m_posRadius =
+				Vec4(in.m_worldTransform.getTranslationPart().xyz(), 1.0f / (in.m_distance * in.m_distance));
+
+			// Diff color and shadowmap ID now
+			out.m_diffuseColorShadowmapId = Vec4(in.m_diffuseColor, shadowmapIndex);
+
+			// Light dir & radius
+			Vec3 lightDir = -in.m_worldTransform.getRotationPart().getZAxis();
+			out.m_lightDirRadius = Vec4(lightDir, in.m_distance);
+
+			// Angles
+			out.m_outerCosInnerCos = Vec4(cos(in.m_outerAngle / 2.0f), cos(in.m_innerAngle / 2.0f), 1.0f, 1.0f);
+		}
+	}
+	else
+	{
+		ctx.m_out->m_spotLightsToken.markUnused();
+	}
+
+	// Write the decals
+	const U visibleDecalCount = rqueue.m_decals.getSize();
+	if(visibleDecalCount)
+	{
+		Decal* data = static_cast<Decal*>(ctx.m_in->m_stagingMem->allocateFrame(
+			sizeof(Decal) * visibleDecalCount, StagingGpuMemoryType::UNIFORM, ctx.m_out->m_decalsToken));
+
+		WeakArray<Decal> gpuDecals(data, visibleDecalCount);
+		TextureView* diffuseAtlas = nullptr;
+		TextureView* specularRoughnessAtlas = nullptr;
+
+		for(U i = 0; i < visibleDecalCount; ++i)
+		{
+			const DecalQueueElement& in = rqueue.m_decals[i];
+			Decal& out = gpuDecals[i];
+
+			if((diffuseAtlas != nullptr && diffuseAtlas != in.m_diffuseAtlas)
+				|| (specularRoughnessAtlas != nullptr && specularRoughnessAtlas != in.m_specularRoughnessAtlas))
+			{
+				ANKI_R_LOGF("All decals should have the same tex atlas");
+			}
+
+			diffuseAtlas = in.m_diffuseAtlas;
+			specularRoughnessAtlas = in.m_specularRoughnessAtlas;
+
+			// Diff
+			Vec4 uv = in.m_diffuseAtlasUv;
+			out.m_diffUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
+			out.m_blendFactors[0] = in.m_diffuseAtlasBlendFactor;
+
+			// Other
+			uv = in.m_specularRoughnessAtlasUv;
+			out.m_normRoughnessUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
+			out.m_blendFactors[1] = in.m_specularRoughnessAtlasBlendFactor;
+
+			// bias * proj_l * view
+			out.m_texProjectionMat = in.m_textureMatrix;
+		}
+
+		ANKI_ASSERT(diffuseAtlas && specularRoughnessAtlas);
+		ctx.m_out->m_diffDecalTexView.reset(diffuseAtlas);
+		ctx.m_out->m_specularRoughnessDecalTexView.reset(specularRoughnessAtlas);
+	}
+	else
+	{
+		ctx.m_out->m_decalsToken.markUnused();
+	}
+
+	// Write the probes
+	const U visibleProbeCount = rqueue.m_reflectionProbes.getSize();
+	if(visibleProbeCount)
+	{
+		ReflectionProbe* data = static_cast<ReflectionProbe*>(ctx.m_in->m_stagingMem->allocateFrame(
+			sizeof(ReflectionProbe) * visibleProbeCount, StagingGpuMemoryType::UNIFORM, ctx.m_out->m_probesToken));
+
+		WeakArray<ReflectionProbe> gpuProbes(data, visibleProbeCount);
+
+		for(U i = 0; i < visibleProbeCount; ++i)
+		{
+			const ReflectionProbeQueueElement& in = rqueue.m_reflectionProbes[i];
+			ReflectionProbe& out = gpuProbes[i];
+
+			out.m_positionCubemapIndex = Vec4(in.m_worldPosition, in.m_textureArrayIndex);
+			out.m_aabbMinPad1 = in.m_aabbMin.xyz0();
+			out.m_aabbMaxPad1 = in.m_aabbMax.xyz0();
+		}
+	}
+	else
+	{
+		ctx.m_out->m_probesToken.markUnused();
 	}
 }
 

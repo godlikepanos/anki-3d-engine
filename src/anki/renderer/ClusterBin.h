@@ -13,6 +13,7 @@ namespace anki
 
 // Forward
 class ThreadHiveSemaphore;
+class Config;
 
 /// @addtogroup renderer
 /// @{
@@ -25,12 +26,9 @@ public:
 
 	const RenderQueue* m_renderQueue ANKI_DBG_NULLIFY;
 
+	StagingGpuMemoryManager* m_stagingMem ANKI_DBG_NULLIFY;
+
 	Bool m_shadowsEnabled ANKI_DBG_NULLIFY;
-
-	U32 m_maxLightIndices ANKI_DBG_NULLIFY;
-
-	StackAllocator<U8> m_frameAlloc;
-	StagingGpuMemoryManager* m_stagingMem;
 };
 
 /// @memberof ClusterBin
@@ -54,30 +52,27 @@ public:
 class ClusterBin
 {
 public:
-	ClusterBin(const GenericMemoryPoolAllocator<U8>& alloc, U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ);
-
-	~ClusterBin();
+	void init(U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const Config& cfg);
 
 	void bin(ClusterBinIn& in, ClusterBinOut& out);
 
 private:
 	class BinCtx;
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
-
 	Array<U32, 3> m_clusterCounts = {};
 	U32 m_totalClusterCount = 0;
+	U32 m_indexCount = 0;
 
 	void prepare(BinCtx& ctx);
 
-	void processNextCluster(BinCtx& ctx) const;
+	Bool processNextCluster(BinCtx& ctx) const;
 
 	void writeTypedObjectsToGpuBuffers(BinCtx& ctx) const;
 
 	static void writeTypedObjectsToGpuBuffersCallback(
 		void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
 
-	static void processNextClusterCallback(
+	static void binToClustersCallback(
 		void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
 };
 /// @}

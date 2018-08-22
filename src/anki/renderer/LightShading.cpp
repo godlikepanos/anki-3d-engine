@@ -47,7 +47,7 @@ Error LightShading::init(const ConfigSet& config)
 
 Error LightShading::initInternal(const ConfigSet& config)
 {
-	m_maxLightIds = config.getNumber("r.maxLightsPerCluster");
+	m_maxLightIds = config.getNumber("r.avgObjectsPerCluster");
 
 	if(m_maxLightIds == 0)
 	{
