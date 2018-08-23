@@ -6,6 +6,7 @@
 #include <anki/renderer/RendererObject.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/util/Enum.h>
+#include <anki/util/ThreadHive.h>
 
 namespace anki
 {
@@ -61,7 +62,7 @@ void RendererObject::bindStorage(CommandBufferPtr& cmdb, U set, U binding, const
 
 U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const
 {
-	const U drawcallsPerThread = drawcallCount / m_r->getThreadPool().getThreadCount();
+	const U drawcallsPerThread = drawcallCount / m_r->getThreadHive().getThreadCount();
 	U secondLevelCmdbCount;
 	if(drawcallsPerThread < MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER)
 	{
@@ -69,7 +70,7 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 	}
 	else
 	{
-		secondLevelCmdbCount = m_r->getThreadPool().getThreadCount();
+		secondLevelCmdbCount = m_r->getThreadHive().getThreadCount();
 	}
 
 	return secondLevelCmdbCount;

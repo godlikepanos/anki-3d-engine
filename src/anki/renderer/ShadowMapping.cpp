@@ -9,7 +9,7 @@
 #include <anki/core/App.h>
 #include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
-#include <anki/util/ThreadPool.h>
+#include <anki/util/ThreadHive.h>
 
 namespace anki
 {
@@ -226,7 +226,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			m_scratchRt = rgraph.newRenderTarget(m_scratchRtDescr);
 			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt, minx, miny, width, height);
 			ANKI_ASSERT(
-				threadCountForScratchPass && threadCountForScratchPass <= m_r->getThreadPool().getThreadCount());
+				threadCountForScratchPass && threadCountForScratchPass <= m_r->getThreadHive().getThreadCount());
 			pass.setWork(runShadowmappingCallback, this, threadCountForScratchPass);
 
 			TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
@@ -417,7 +417,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		for(U taskId = 0; taskId < threadCount; ++taskId)
 		{
 			PtrSize start, end;
-			ThreadPoolTask::choseStartEnd(taskId, threadCount, drawcallCount, start, end);
+			splitThreadedProblem(taskId, threadCount, drawcallCount, start, end);
 
 			// While there are drawcalls in this task emit new work items
 			U taskDrawcallCount = end - start;

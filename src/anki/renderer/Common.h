@@ -49,6 +49,7 @@ class ReflectionProbeQueueElement;
 class DecalQueueElement;
 
 class ShaderProgramResourceVariant;
+class ClusterBin;
 
 /// @addtogroup renderer
 /// @{

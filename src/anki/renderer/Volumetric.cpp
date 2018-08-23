@@ -8,7 +8,6 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/LightShading.h>
-#include <anki/renderer/LightBin.h>
 #include <anki/renderer/RenderQueue.h>
 
 namespace anki
@@ -27,10 +26,7 @@ Error Volumetric::initMain(const ConfigSet& config)
 
 	ShaderProgramResourceConstantValueInitList<3> consts(m_main.m_prog);
 	consts.add("FB_SIZE", UVec2(m_width, m_height))
-		.add("CLUSTER_COUNT",
-			UVec3(m_r->getLightShading().getLightBin().getClusterer().getClusterCountX(),
-				m_r->getLightShading().getLightBin().getClusterer().getClusterCountY(),
-				m_r->getLightShading().getLightBin().getClusterer().getClusterCountZ()))
+		.add("CLUSTER_COUNT", UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]))
 		.add("NOISE_MAP_SIZE", U32(m_main.m_noiseTex->getWidth()));
 
 	const ShaderProgramResourceVariant* variant;
@@ -135,8 +131,8 @@ void Volumetric::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	rgraphCtx.bindColorTextureAndSampler(0, 2, m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
 
-	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
-	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
+	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
+	bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
 	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 
@@ -157,7 +153,7 @@ void Volumetric::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	uniforms->m_fogParticleColorPad1 = Vec4(m_main.m_fogParticleColor, 0.0);
 
 	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
+	bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
 
 	cmdb->bindShaderProgram(m_main.m_grProg);
 

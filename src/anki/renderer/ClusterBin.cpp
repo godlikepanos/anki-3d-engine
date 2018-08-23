@@ -69,7 +69,7 @@ public:
 	Vec4 m_unprojParams;
 };
 
-void ClusterBin::init(U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const Config& cfg)
+void ClusterBin::init(U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const ConfigSet& cfg)
 {
 	m_clusterCounts[0] = clusterCountX;
 	m_clusterCounts[1] = clusterCountY;
@@ -337,7 +337,7 @@ Bool ClusterBin::processNextCluster(BinCtx& ctx) const
 	*pObjectCount = pObjectIndex - pObjectCount - 1;
 
 	// Allocate and store indices for the cluster
-	U indexCount = pObjectCount - &objectIndices[0];
+	U indexCount = pObjectIndex - &objectIndices[0];
 	ANKI_ASSERT(indexCount >= TYPED_OBJECT_COUNT);
 
 	U firstIndex;

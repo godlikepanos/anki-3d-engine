@@ -226,6 +226,17 @@ inline void unflatten3dArrayIndex(const U sizeA, const U sizeB, const U sizeC, c
 	c = flatIdx % sizeC;
 }
 
+/// Given a threaded problem split it into smaller ones.
+inline void splitThreadedProblem(
+	PtrSize threadId, PtrSize threadCount, PtrSize problemSize, PtrSize& start, PtrSize& end)
+{
+	ANKI_ASSERT(threadCount > 0 && threadId < threadCount);
+	const PtrSize div = problemSize / threadCount;
+	start = threadId * div;
+	end = (threadId == threadCount - 1) ? problemSize : (threadId + 1u) * div;
+	ANKI_ASSERT(!(threadId == threadCount - 1 && end != problemSize));
+}
+
 /// Equivelent to static_cast.
 template<typename T, typename Y>
 inline T scast(Y from)

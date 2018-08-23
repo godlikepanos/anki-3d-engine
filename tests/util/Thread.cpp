@@ -148,7 +148,7 @@ ANKI_TEST(Util, ThreadPool)
 
 	delete tp;
 
-	// Test choseStartEnd()
+	// Test splitThreadedProblem()
 	{
 		const U ITERATIONS = 100000;
 
@@ -160,7 +160,7 @@ ANKI_TEST(Util, ThreadPool)
 			for(U tid = 0; tid < threadCount; ++tid)
 			{
 				PtrSize start, end;
-				ThreadPoolTask::choseStartEnd(tid, threadCount, problemSize, start, end);
+				splitThreadedProblem(tid, threadCount, problemSize, start, end);
 
 				if(tid == 0)
 				{

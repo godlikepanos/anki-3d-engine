@@ -8,7 +8,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RendererObject.h>
 #include <anki/renderer/TraditionalDeferredShading.h>
-#include <anki/renderer/Clusterer.h>
+#include <anki/renderer/ClusterBin.h>
 #include <anki/resource/TextureResource.h>
 
 namespace anki

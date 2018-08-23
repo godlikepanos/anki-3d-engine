@@ -52,7 +52,7 @@ public:
 class ClusterBin
 {
 public:
-	void init(U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const Config& cfg);
+	void init(U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const ConfigSet& cfg);
 
 	void bin(ClusterBinIn& in, ClusterBinOut& out);
 

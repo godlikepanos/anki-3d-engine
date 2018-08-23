@@ -7,11 +7,11 @@
 
 #include <anki/renderer/Common.h>
 #include <anki/renderer/Drawer.h>
+#include <anki/renderer/ClusterBin.h>
 #include <anki/Math.h>
 #include <anki/Gr.h>
 #include <anki/resource/Forward.h>
 #include <anki/core/StagingGpuMemoryManager.h>
-#include <anki/util/ThreadPool.h>
 #include <anki/collision/Forward.h>
 
 namespace anki
@@ -45,7 +45,6 @@ class RenderingContext
 {
 public:
 	StackAllocator<U8> m_tempAllocator;
-
 	RenderQueue* m_renderQueue ANKI_DBG_NULLIFY;
 
 	RenderGraphDescription m_renderGraphDescr;
@@ -59,6 +58,10 @@ public:
 	U32 m_outRenderTargetHeight = 0;
 
 	Vec4 m_unprojParams;
+
+	ClusterBinOut m_clusterBinOut;
+
+	StagingGpuMemoryToken m_lightShadingUniformsToken;
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
@@ -190,7 +193,7 @@ public:
 	}
 
 	/// Init the renderer.
-	ANKI_USE_RESULT Error init(ThreadPool* threadpool,
+	ANKI_USE_RESULT Error init(ThreadHive* hive,
 		ResourceManager* resources,
 		GrManager* gr,
 		StagingGpuMemoryManager* stagingMem,
@@ -274,11 +277,6 @@ anki_internal:
 		return *m_gr;
 	}
 
-	StagingGpuMemoryManager& getStagingGpuMemoryManager()
-	{
-		return *m_stagingMem;
-	}
-
 	HeapAllocator<U8> getAllocator() const
 	{
 		return m_alloc;
@@ -287,11 +285,6 @@ anki_internal:
 	ResourceManager& getResourceManager()
 	{
 		return *m_resources;
-	}
-
-	ThreadPool& getThreadPool()
-	{
-		return *m_threadpool;
 	}
 
 	Timestamp getGlobalTimestamp() const
@@ -340,11 +333,34 @@ anki_internal:
 		return m_nearesetNearestSampler;
 	}
 
+	const Array<U32, 4>& getClusterCount() const
+	{
+		return m_clusterCount;
+	}
+
+	StagingGpuMemoryManager& getStagingGpuMemoryManager()
+	{
+		ANKI_ASSERT(m_stagingMem);
+		return *m_stagingMem;
+	}
+
+	ThreadHive& getThreadHive()
+	{
+		ANKI_ASSERT(m_threadHive);
+		return *m_threadHive;
+	}
+
+	const ThreadHive& getThreadHive() const
+	{
+		ANKI_ASSERT(m_threadHive);
+		return *m_threadHive;
+	}
+
 private:
-	ThreadPool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
-	GrManager* m_gr = nullptr;
+	ThreadHive* m_threadHive = nullptr;
 	StagingGpuMemoryManager* m_stagingMem = nullptr;
+	GrManager* m_gr = nullptr;
 	UiManager* m_ui = nullptr;
 	Timestamp* m_globTimestamp;
 	HeapAllocator<U8> m_alloc;
@@ -370,6 +386,9 @@ private:
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
 	UniquePtr<UiStage> m_uiStage;
 	/// @}
+
+	Array<U32, 4> m_clusterCount;
+	ClusterBin m_clusterBin;
 
 	U32 m_width;
 	U32 m_height;
@@ -404,6 +423,8 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	void initJitteredMats();
+
+	void updateLightShadingUniforms(RenderingContext& ctx) const;
 };
 /// @}
 

@@ -29,16 +29,6 @@ public:
 	}
 
 	virtual Error operator()(U32 taskId, PtrSize threadsCount) = 0;
-
-	/// Chose a starting and end index
-	static void choseStartEnd(U32 taskId, PtrSize threadCount, PtrSize elementCount, PtrSize& start, PtrSize& end)
-	{
-		ANKI_ASSERT(threadCount > 0 && taskId < threadCount);
-		const PtrSize div = elementCount / threadCount;
-		start = taskId * div;
-		end = (taskId == threadCount - 1) ? elementCount : (taskId + 1u) * div;
-		ANKI_ASSERT(!(taskId == threadCount - 1 && end != elementCount));
-	}
 };
 
 /// Parallel task dispatcher. You feed it with tasks and sends them for execution in parallel and then waits for all to

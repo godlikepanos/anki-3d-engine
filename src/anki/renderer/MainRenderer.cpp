@@ -17,6 +17,7 @@
 #include <anki/core/App.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
+#include <anki/util/ThreadHive.h>
 
 namespace anki
 {
@@ -30,7 +31,7 @@ MainRenderer::~MainRenderer()
 	ANKI_R_LOGI("Destroying main renderer");
 }
 
-Error MainRenderer::init(ThreadPool* threadpool,
+Error MainRenderer::init(ThreadHive* hive,
 	ResourceManager* resources,
 	GrManager* gr,
 	StagingGpuMemoryManager* stagingMem,
@@ -58,7 +59,7 @@ Error MainRenderer::init(ThreadPool* threadpool,
 	m_rDrawToDefaultFb = m_renderingQuality == 1.0;
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
-	ANKI_CHECK(m_r->init(threadpool, resources, gr, stagingMem, ui, m_alloc, config2, globTimestamp));
+	ANKI_CHECK(m_r->init(hive, resources, gr, stagingMem, ui, m_alloc, config2, globTimestamp));
 
 	// Init other
 	if(!m_rDrawToDefaultFb)
@@ -94,6 +95,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	// Run renderer
 	RenderingContext ctx(m_frameAlloc);
 	m_runCtx.m_ctx = &ctx;
+	m_runCtx.m_secondaryTaskId.set(0);
 
 	RenderTargetHandle presentRt = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::NONE);
 
@@ -115,7 +117,6 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	}
 
 	ctx.m_renderQueue = &rqueue;
-	ctx.m_unprojParams = ctx.m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
 	ANKI_CHECK(m_r->populateRenderGraph(ctx));
 
 	// Blit renderer's result to default FB if needed
@@ -147,26 +148,14 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_frameAlloc);
 
 	// Populate the 2nd level command buffers
-	class Task : public ThreadPoolTask
+	Array<ThreadHiveTask, ThreadHive::MAX_THREADS> tasks;
+	for(U i = 0; i < m_r->getThreadHive().getThreadCount(); ++i)
 	{
-	public:
-		RenderGraphPtr m_rgraph;
-
-		Error operator()(U32 taskId, PtrSize threadsCount)
-		{
-			m_rgraph->runSecondLevel(taskId);
-			return Error::NONE;
-		}
-	};
-
-	Task task;
-	task.m_rgraph = m_rgraph;
-	for(U i = 0; i < m_r->getThreadPool().getThreadCount(); ++i)
-	{
-		m_r->getThreadPool().assignNewTask(i, &task);
+		tasks[i].m_argument = this;
+		tasks[i].m_callback = executeSecondaryCallback;
 	}
-
-	ANKI_CHECK(m_r->getThreadPool().waitForAllThreadsToFinish());
+	m_r->getThreadHive().submitTasks(&tasks[0], m_r->getThreadHive().getThreadCount());
+	m_r->getThreadHive().waitAllTasks();
 
 	// Populate 1st level command buffers
 	m_rgraph->run();
@@ -174,7 +163,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	// Flush
 	m_rgraph->flush();
 
-	// Reset render pass for the next frame
+	// Reset for the next frame
 	m_rgraph->reset();
 	m_r->finalize(ctx);
 
@@ -183,6 +172,15 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	m_stats.m_renderingTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingTime;
 
 	return Error::NONE;
+}
+
+void MainRenderer::executeSecondaryCallback(
+	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore)
+{
+	MainRenderer& self = *static_cast<MainRenderer*>(userData);
+
+	const U taskId = self.m_runCtx.m_secondaryTaskId.fetchAdd(1);
+	self.m_rgraph->runSecondLevel(taskId);
 }
 
 void MainRenderer::runBlit(RenderPassWorkContext& rgraphCtx)
