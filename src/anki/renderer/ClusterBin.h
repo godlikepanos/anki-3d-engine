@@ -52,20 +52,27 @@ public:
 class ClusterBin
 {
 public:
-	void init(U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const ConfigSet& cfg);
+	~ClusterBin();
+
+	void init(HeapAllocator<U8> alloc, U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const ConfigSet& cfg);
 
 	void bin(ClusterBinIn& in, ClusterBinOut& out);
 
 private:
 	class BinCtx;
 
+	HeapAllocator<U8> m_alloc;
+
 	Array<U32, 3> m_clusterCounts = {};
 	U32 m_totalClusterCount = 0;
 	U32 m_indexCount = 0;
 
+	DynamicArray<Vec4> m_clusterEdgesVSpace; ///< Cache those for opt.
+	Vec4 m_prevUnprojParams = Vec4(0.0f); ///< To check if m_clusterEdgesVSpace is dirty.
+
 	void prepare(BinCtx& ctx);
 
-	Bool processNextCluster(BinCtx& ctx) const;
+	void binCluster(U32 clusterIdx, BinCtx& ctx);
 
 	void writeTypedObjectsToGpuBuffers(BinCtx& ctx) const;
 

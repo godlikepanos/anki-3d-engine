@@ -11,6 +11,7 @@
 #include <anki/collision/Tests.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/core/Config.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -20,23 +21,23 @@ static const F32 INVALID_TEXTURE_INDEX = -1.0;
 static const U32 MAX_TYPED_OBJECTS_PER_CLUSTER = 64;
 
 /// Get a view space point.
-static Vec4 unproject(const F32 zVspace, const Vec2& ndc, const Vec4& projParams)
+static Vec4 unproject(const F32 zVspace, const Vec2& ndc, const Vec4& unprojParams)
 {
 	Vec4 view;
-	Vec2 viewxy = ndc * projParams.xy() * zVspace;
-	view.x() = viewxy.x();
-	view.y() = viewxy.y();
-	view.z() = zVspace;
-	view.w() = 0.0;
+	view.x() = ndc.x() * unprojParams.x();
+	view.y() = ndc.y() * unprojParams.y();
+	view.z() = 1.0f;
+	view.w() = 0.0f;
 
-	return view;
+	return view * zVspace;
 }
 
 /// https://bartwronski.com/2017/04/13/cull-that-cone/
 static Bool testConeVsSphere(
-	const Vec3& coneOrigin, const Vec3& coneDir, F32 coneLength, F32 coneAngle, const Sphere& sphere)
+	const Vec4& coneOrigin, const Vec4& coneDir, F32 coneLength, F32 coneAngle, const Sphere& sphere)
 {
-	const Vec3 V = sphere.getCenter().xyz() - coneOrigin;
+	ANKI_ASSERT(coneOrigin.w() == 0.0f && sphere.getCenter().w() == 0.0f && coneDir.w() == 0.0f);
+	const Vec4 V = sphere.getCenter() - coneOrigin;
 	const F32 VlenSq = V.dot(V);
 	const F32 V1len = V.dot(coneDir);
 	const F32 distanceClosestPoint = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
@@ -67,10 +68,20 @@ public:
 	Atomic<U32> m_allocatedIndexCount = {TYPED_OBJECT_COUNT};
 
 	Vec4 m_unprojParams;
+
+	Bool m_clusterEdgesVSpaceDirty;
 };
 
-void ClusterBin::init(U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const ConfigSet& cfg)
+ClusterBin::~ClusterBin()
 {
+	m_clusterEdgesVSpace.destroy(m_alloc);
+}
+
+void ClusterBin::init(
+	HeapAllocator<U8> alloc, U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const ConfigSet& cfg)
+{
+	m_alloc = alloc;
+
 	m_clusterCounts[0] = clusterCountX;
 	m_clusterCounts[1] = clusterCountY;
 	m_clusterCounts[2] = clusterCountZ;
@@ -78,16 +89,22 @@ void ClusterBin::init(U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, c
 	m_totalClusterCount = clusterCountX * clusterCountY * clusterCountZ;
 
 	m_indexCount = m_totalClusterCount * cfg.getNumber("r.avgObjectsPerCluster");
+
+	m_clusterEdgesVSpace.create(m_alloc, m_totalClusterCount * 8);
 }
 
 void ClusterBin::binToClustersCallback(
 	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore)
 {
 	ANKI_ASSERT(userData);
+
+	ANKI_TRACE_SCOPED_EVENT(R_BIN_TO_CLUSTERS);
 	BinCtx& ctx = *static_cast<BinCtx*>(userData);
 
-	while(ctx.m_bin->processNextCluster(ctx))
+	U clusterIdx;
+	while((clusterIdx = ctx.m_clusterIdxToProcess.fetchAdd(1)) <= ctx.m_bin->m_totalClusterCount)
 	{
+		ctx.m_bin->binCluster(clusterIdx, ctx);
 	}
 }
 
@@ -95,6 +112,8 @@ void ClusterBin::writeTypedObjectsToGpuBuffersCallback(
 	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore)
 {
 	ANKI_ASSERT(userData);
+
+	ANKI_TRACE_SCOPED_EVENT(R_WRITE_LIGHT_BUFFERS);
 	BinCtx& ctx = *static_cast<BinCtx*>(userData);
 	ctx.m_bin->writeTypedObjectsToGpuBuffers(ctx);
 }
@@ -107,6 +126,16 @@ void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 	ctx.m_out = &out;
 
 	prepare(ctx);
+
+	if(ctx.m_unprojParams != m_prevUnprojParams)
+	{
+		ctx.m_clusterEdgesVSpaceDirty = true;
+		m_prevUnprojParams = ctx.m_unprojParams;
+	}
+	else
+	{
+		ctx.m_clusterEdgesVSpaceDirty = false;
+	}
 
 	// Allocate indices
 	U32* indices = static_cast<U32*>(ctx.m_in->m_stagingMem->allocateFrame(
@@ -190,60 +219,60 @@ void ClusterBin::prepare(BinCtx& ctx)
 	ctx.m_unprojParams = ctx.m_in->m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
 }
 
-Bool ClusterBin::processNextCluster(BinCtx& ctx) const
+void ClusterBin::binCluster(U32 clusterIdx, BinCtx& ctx)
 {
-	const U clusterIdx = ctx.m_clusterIdxToProcess.fetchAdd(1);
-	if(clusterIdx >= m_totalClusterCount)
-	{
-		// Done
-		return false;
-	}
-
 	// Get the cluster indices
 	U clusterX, clusterY, clusterZ;
 	unflatten3dArrayIndex(
 		m_clusterCounts[2], m_clusterCounts[1], m_clusterCounts[0], clusterIdx, clusterZ, clusterY, clusterX);
 
 	// Compute the cluster edges in vspace
-	Array<Vec4, 8> clusterEdgesVSpace;
-
-	const F32 zNear = -computeClusterNear(ctx.m_out->m_shaderMagicValues, clusterZ);
-	const F32 zFar = -computeClusterFar(ctx.m_out->m_shaderMagicValues, clusterZ);
-	ANKI_ASSERT(zNear > zFar);
-
-	const Vec2 tileSize = 2.0f / Vec2(m_clusterCounts[0], m_clusterCounts[1]);
-	const Vec2 startNdc = Vec2(F32(clusterX) / m_clusterCounts[0], F32(clusterY) / m_clusterCounts[1]) * 2.0f - 1.0f;
-
-	const Vec4& unprojParams = ctx.m_unprojParams;
-	clusterEdgesVSpace[0] = unproject(zNear, startNdc, unprojParams);
-	clusterEdgesVSpace[1] = unproject(zNear, startNdc + Vec2(tileSize.x(), 0.0f), unprojParams);
-	clusterEdgesVSpace[2] = unproject(zNear, startNdc + Vec2(0.0f, tileSize.y()), unprojParams);
-	clusterEdgesVSpace[3] = unproject(zNear, startNdc + tileSize, unprojParams);
-	clusterEdgesVSpace[4] = unproject(zFar, startNdc, unprojParams);
-	clusterEdgesVSpace[5] = unproject(zFar, startNdc + Vec2(tileSize.x(), 0.0f), unprojParams);
-	clusterEdgesVSpace[6] = unproject(zFar, startNdc + Vec2(0.0f, tileSize.y()), unprojParams);
-	clusterEdgesVSpace[7] = unproject(zFar, startNdc + tileSize, unprojParams);
-
-	// Move the cluster edges to wspace
-	Array<Vec4, 8> clusterEdgesWSpace;
-	for(U i = 0; i < 8; ++i)
+	Vec4* clusterEdgesVSpace = &m_clusterEdgesVSpace[clusterIdx * 8];
+	if(ANKI_UNLIKELY(ctx.m_clusterEdgesVSpaceDirty))
 	{
-		clusterEdgesWSpace[i] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[i];
+		const F32 zNear = -computeClusterNear(ctx.m_out->m_shaderMagicValues, clusterZ);
+		const F32 zFar = -computeClusterFar(ctx.m_out->m_shaderMagicValues, clusterZ);
+		ANKI_ASSERT(zNear > zFar);
+
+		const Vec2 tileSize = 2.0f / Vec2(m_clusterCounts[0], m_clusterCounts[1]);
+		const Vec2 startNdc =
+			Vec2(F32(clusterX) / m_clusterCounts[0], F32(clusterY) / m_clusterCounts[1]) * 2.0f - 1.0f;
+
+		const Vec4& unprojParams = ctx.m_unprojParams;
+		clusterEdgesVSpace[0] = unproject(zNear, startNdc, unprojParams).xyz1();
+		clusterEdgesVSpace[1] = unproject(zNear, startNdc + Vec2(tileSize.x(), 0.0f), unprojParams).xyz1();
+		clusterEdgesVSpace[2] = unproject(zNear, startNdc + Vec2(0.0f, tileSize.y()), unprojParams).xyz1();
+		clusterEdgesVSpace[3] = unproject(zNear, startNdc + tileSize, unprojParams).xyz1();
+		clusterEdgesVSpace[4] = unproject(zFar, startNdc, unprojParams).xyz1();
+		clusterEdgesVSpace[5] = unproject(zFar, startNdc + Vec2(tileSize.x(), 0.0f), unprojParams).xyz1();
+		clusterEdgesVSpace[6] = unproject(zFar, startNdc + Vec2(0.0f, tileSize.y()), unprojParams).xyz1();
+		clusterEdgesVSpace[7] = unproject(zFar, startNdc + tileSize, unprojParams).xyz1();
 	}
 
+	// Transform the cluster edges to wspace
+	Array<Vec4, 8> clusterEdgesWSpace;
+	clusterEdgesWSpace[0] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[0];
+	clusterEdgesWSpace[1] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[1];
+	clusterEdgesWSpace[2] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[2];
+	clusterEdgesWSpace[3] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[3];
+	clusterEdgesWSpace[4] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[4];
+	clusterEdgesWSpace[5] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[5];
+	clusterEdgesWSpace[6] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[6];
+	clusterEdgesWSpace[7] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[7];
+
 	// Compute an AABB and a sphere that contains the cluster
-	Vec3 aabbMin(MAX_F32);
-	Vec3 aabbMax(MIN_F32);
+	Vec4 aabbMin(MAX_F32, MAX_F32, MAX_F32, 0.0f);
+	Vec4 aabbMax(MIN_F32, MIN_F32, MIN_F32, 0.0f);
 	for(U i = 0; i < 8; ++i)
 	{
-		aabbMin = aabbMin.min(clusterEdgesWSpace[i].xyz());
-		aabbMax = aabbMax.max(clusterEdgesWSpace[i].xyz());
+		aabbMin = aabbMin.min(clusterEdgesWSpace[i]);
+		aabbMax = aabbMax.max(clusterEdgesWSpace[i]);
 	}
 
 	const Aabb clusterBox(aabbMin, aabbMax);
 
-	const Vec3 sphereCenter = (aabbMin + aabbMax) / 2.0f;
-	const Sphere clusterSphere(sphereCenter.xyz0(), (aabbMin - sphereCenter).getLength());
+	const Vec4 sphereCenter = (aabbMin + aabbMax) / 2.0f;
+	const Sphere clusterSphere(sphereCenter, (aabbMin - sphereCenter).getLength());
 
 	// Bin decals
 	Array<U32, MAX_TYPED_OBJECTS_PER_CLUSTER> objectIndices;
@@ -299,8 +328,8 @@ Bool ClusterBin::processNextCluster(BinCtx& ctx) const
 	++pObjectIndex;
 	for(const SpotLightQueueElement& slight : ctx.m_in->m_renderQueue->m_spotLights)
 	{
-		if(testConeVsSphere(slight.m_worldTransform.getTranslationPart().xyz(),
-			   slight.m_worldTransform.getZAxis().xyz(),
+		if(testConeVsSphere(slight.m_worldTransform.getTranslationPart(),
+			   -slight.m_worldTransform.getZAxis(),
 			   slight.m_distance,
 			   slight.m_outerAngle,
 			   clusterSphere))
@@ -366,8 +395,6 @@ Bool ClusterBin::processNextCluster(BinCtx& ctx) const
 
 	// Write the cluster
 	ctx.m_clusters[clusterIdx] = firstIndex;
-
-	return true;
 }
 
 void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const

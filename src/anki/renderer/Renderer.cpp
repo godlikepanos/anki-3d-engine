@@ -86,7 +86,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_clusterCount[2] = config.getNumber("r.clusterSizeZ");
 	m_clusterCount[3] = m_clusterCount[0] * m_clusterCount[1] * m_clusterCount[2];
 
-	m_clusterBin.init(m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], config);
+	m_clusterBin.init(m_alloc, m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], config);
 
 	// A few sanity checks
 	if(m_width < 10 || m_height < 10)

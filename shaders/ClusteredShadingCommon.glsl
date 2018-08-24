@@ -111,3 +111,39 @@ layout(std430, ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer
 {
 	U32 u_lightIndices[];
 };
+
+// Debugging function
+Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool slights, Bool probes)
+{
+	U32 count = 0;
+
+	U32 decalCount = u_lightIndices[firstIndex];
+	firstIndex += decalCount + 1u;
+	if(decals)
+	{
+		count += decalCount;
+	}
+
+	U32 pointLightCount = u_lightIndices[firstIndex];
+	firstIndex += pointLightCount + 1u;
+	if(plights)
+	{
+		count += pointLightCount;
+	}
+
+	U32 spotLightCount = u_lightIndices[firstIndex];
+	firstIndex += spotLightCount + 1u;
+	if(slights)
+	{
+		count += spotLightCount;
+	}
+
+	U32 probeCount = u_lightIndices[firstIndex];
+	if(probes)
+	{
+		count += probeCount;
+	}
+
+	F32 factor = min(1.0, F32(count) / F32(maxLights));
+	return heatmap(factor);
+}

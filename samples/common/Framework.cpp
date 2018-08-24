@@ -150,6 +150,11 @@ Error SampleApp::userMainLoop(Bool& quit)
 		mover->rotateLocalZ(-ROTATE_ANGLE);
 	}
 
+	if(in.getKey(KeyCode::F12) == 1)
+	{
+		CoreTracerSingleton::get().m_enabled = !CoreTracerSingleton::get().m_enabled;
+	}
+
 	if(in.getMousePosition() != Vec2(0.0))
 	{
 		F32 angY = -ROTATE_ANGLE * in.getMousePosition().x() * MOUSE_SENSITIVITY * getMainRenderer().getAspectRatio();

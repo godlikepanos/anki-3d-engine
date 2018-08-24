@@ -221,6 +221,7 @@ constexpr Bool isPacked()
 /// indices.
 inline void unflatten3dArrayIndex(const U sizeA, const U sizeB, const U sizeC, const U flatIdx, U& a, U& b, U& c)
 {
+	ANKI_ASSERT(flatIdx < (sizeA * sizeB * sizeC));
 	a = (flatIdx / (sizeB * sizeC)) % sizeA;
 	b = (flatIdx / sizeC) % sizeB;
 	c = flatIdx % sizeC;
