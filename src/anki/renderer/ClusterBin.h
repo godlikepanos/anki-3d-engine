@@ -23,6 +23,7 @@ class ClusterBinIn
 {
 public:
 	ThreadHive* m_threadHive ANKI_DBG_NULLIFY;
+	StackAllocator<U8> m_tempAlloc;
 
 	const RenderQueue* m_renderQueue ANKI_DBG_NULLIFY;
 
@@ -67,12 +68,12 @@ private:
 	U32 m_totalClusterCount = 0;
 	U32 m_indexCount = 0;
 
-	DynamicArray<Vec4> m_clusterEdgesVSpace; ///< Cache those for opt.
-	Vec4 m_prevUnprojParams = Vec4(0.0f); ///< To check if m_clusterEdgesVSpace is dirty.
+	DynamicArray<Vec4> m_clusterEdges; ///< Cache those for opt. [tileCount][K+1][4]
+	Vec4 m_prevUnprojParams = Vec4(0.0f); ///< To check if m_tiles is dirty.
 
 	void prepare(BinCtx& ctx);
 
-	void binCluster(U32 clusterIdx, BinCtx& ctx);
+	void binTile(U32 tileIdx, BinCtx& ctx);
 
 	void writeTypedObjectsToGpuBuffers(BinCtx& ctx) const;
 

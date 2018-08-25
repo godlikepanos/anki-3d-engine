@@ -306,6 +306,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_stats.m_lightBinTime = HighRezTimer::getCurrentTime();
 	ClusterBinIn cin;
 	cin.m_renderQueue = ctx.m_renderQueue;
+	cin.m_tempAlloc = ctx.m_tempAllocator;
 	cin.m_shadowsEnabled = true; // TODO
 	cin.m_stagingMem = m_stagingMem;
 	cin.m_threadHive = m_threadHive;

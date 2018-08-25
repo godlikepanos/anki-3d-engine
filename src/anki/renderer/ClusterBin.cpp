@@ -64,17 +64,17 @@ public:
 	WeakArray<U32> m_lightIds;
 	WeakArray<U32> m_clusters;
 
-	Atomic<U32> m_clusterIdxToProcess = {0};
+	Atomic<U32> m_tileIdxToProcess = {0};
 	Atomic<U32> m_allocatedIndexCount = {TYPED_OBJECT_COUNT};
 
 	Vec4 m_unprojParams;
 
-	Bool m_clusterEdgesVSpaceDirty;
+	Bool m_clusterEdgesDirty;
 };
 
 ClusterBin::~ClusterBin()
 {
-	m_clusterEdgesVSpace.destroy(m_alloc);
+	m_clusterEdges.destroy(m_alloc);
 }
 
 void ClusterBin::init(
@@ -90,7 +90,7 @@ void ClusterBin::init(
 
 	m_indexCount = m_totalClusterCount * cfg.getNumber("r.avgObjectsPerCluster");
 
-	m_clusterEdgesVSpace.create(m_alloc, m_totalClusterCount * 8);
+	m_clusterEdges.create(m_alloc, m_clusterCounts[0] * m_clusterCounts[1] * (m_clusterCounts[2] + 1) * 4);
 }
 
 void ClusterBin::binToClustersCallback(
@@ -101,10 +101,11 @@ void ClusterBin::binToClustersCallback(
 	ANKI_TRACE_SCOPED_EVENT(R_BIN_TO_CLUSTERS);
 	BinCtx& ctx = *static_cast<BinCtx*>(userData);
 
-	U clusterIdx;
-	while((clusterIdx = ctx.m_clusterIdxToProcess.fetchAdd(1)) <= ctx.m_bin->m_totalClusterCount)
+	const U tileCount = ctx.m_bin->m_clusterCounts[0] * ctx.m_bin->m_clusterCounts[1];
+	U tileIdx;
+	while((tileIdx = ctx.m_tileIdxToProcess.fetchAdd(1)) < tileCount)
 	{
-		ctx.m_bin->binCluster(clusterIdx, ctx);
+		ctx.m_bin->binTile(tileIdx, ctx);
 	}
 }
 
@@ -129,12 +130,12 @@ void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 
 	if(ctx.m_unprojParams != m_prevUnprojParams)
 	{
-		ctx.m_clusterEdgesVSpaceDirty = true;
+		ctx.m_clusterEdgesDirty = true;
 		m_prevUnprojParams = ctx.m_unprojParams;
 	}
 	else
 	{
-		ctx.m_clusterEdgesVSpaceDirty = false;
+		ctx.m_clusterEdgesDirty = false;
 	}
 
 	// Allocate indices
@@ -219,182 +220,185 @@ void ClusterBin::prepare(BinCtx& ctx)
 	ctx.m_unprojParams = ctx.m_in->m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
 }
 
-void ClusterBin::binCluster(U32 clusterIdx, BinCtx& ctx)
+void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx)
 {
-	// Get the cluster indices
-	U clusterX, clusterY, clusterZ;
-	unflatten3dArrayIndex(
-		m_clusterCounts[2], m_clusterCounts[1], m_clusterCounts[0], clusterIdx, clusterZ, clusterY, clusterX);
+	ANKI_ASSERT(tileIdx < m_clusterCounts[0] * m_clusterCounts[1]);
+	const U tileX = tileIdx % m_clusterCounts[0];
+	const U tileY = tileIdx / m_clusterCounts[0];
 
-	// Compute the cluster edges in vspace
-	Vec4* clusterEdgesVSpace = &m_clusterEdgesVSpace[clusterIdx * 8];
-	if(ANKI_UNLIKELY(ctx.m_clusterEdgesVSpaceDirty))
+	// Compute the tile's cluster edges in view space
+	Vec4* clusterEdgesVSpace = &m_clusterEdges[tileIdx * (m_clusterCounts[2] + 1) * 4];
+	if(ctx.m_clusterEdgesDirty)
 	{
-		const F32 zNear = -computeClusterNear(ctx.m_out->m_shaderMagicValues, clusterZ);
-		const F32 zFar = -computeClusterFar(ctx.m_out->m_shaderMagicValues, clusterZ);
-		ANKI_ASSERT(zNear > zFar);
-
 		const Vec2 tileSize = 2.0f / Vec2(m_clusterCounts[0], m_clusterCounts[1]);
-		const Vec2 startNdc =
-			Vec2(F32(clusterX) / m_clusterCounts[0], F32(clusterY) / m_clusterCounts[1]) * 2.0f - 1.0f;
-
+		const Vec2 startNdc = Vec2(F32(tileX) / m_clusterCounts[0], F32(tileY) / m_clusterCounts[1]) * 2.0f - 1.0f;
 		const Vec4& unprojParams = ctx.m_unprojParams;
-		clusterEdgesVSpace[0] = unproject(zNear, startNdc, unprojParams).xyz1();
-		clusterEdgesVSpace[1] = unproject(zNear, startNdc + Vec2(tileSize.x(), 0.0f), unprojParams).xyz1();
-		clusterEdgesVSpace[2] = unproject(zNear, startNdc + Vec2(0.0f, tileSize.y()), unprojParams).xyz1();
-		clusterEdgesVSpace[3] = unproject(zNear, startNdc + tileSize, unprojParams).xyz1();
-		clusterEdgesVSpace[4] = unproject(zFar, startNdc, unprojParams).xyz1();
-		clusterEdgesVSpace[5] = unproject(zFar, startNdc + Vec2(tileSize.x(), 0.0f), unprojParams).xyz1();
-		clusterEdgesVSpace[6] = unproject(zFar, startNdc + Vec2(0.0f, tileSize.y()), unprojParams).xyz1();
-		clusterEdgesVSpace[7] = unproject(zFar, startNdc + tileSize, unprojParams).xyz1();
-	}
 
-	// Transform the cluster edges to wspace
-	Array<Vec4, 8> clusterEdgesWSpace;
-	clusterEdgesWSpace[0] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[0];
-	clusterEdgesWSpace[1] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[1];
-	clusterEdgesWSpace[2] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[2];
-	clusterEdgesWSpace[3] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[3];
-	clusterEdgesWSpace[4] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[4];
-	clusterEdgesWSpace[5] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[5];
-	clusterEdgesWSpace[6] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[6];
-	clusterEdgesWSpace[7] = ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[7];
-
-	// Compute an AABB and a sphere that contains the cluster
-	Vec4 aabbMin(MAX_F32, MAX_F32, MAX_F32, 0.0f);
-	Vec4 aabbMax(MIN_F32, MIN_F32, MIN_F32, 0.0f);
-	for(U i = 0; i < 8; ++i)
-	{
-		aabbMin = aabbMin.min(clusterEdgesWSpace[i]);
-		aabbMax = aabbMax.max(clusterEdgesWSpace[i]);
-	}
-
-	const Aabb clusterBox(aabbMin, aabbMax);
-
-	const Vec4 sphereCenter = (aabbMin + aabbMax) / 2.0f;
-	const Sphere clusterSphere(sphereCenter, (aabbMin - sphereCenter).getLength());
-
-	// Bin decals
-	Array<U32, MAX_TYPED_OBJECTS_PER_CLUSTER> objectIndices;
-	U32* pObjectIndex = &objectIndices[0];
-	const U32* pObjectIndexEnd = &objectIndices[0] + objectIndices.getSize();
-	(void)pObjectIndexEnd;
-
-	U idx = 0;
-	Obb decalBox;
-	U32* pObjectCount = pObjectIndex;
-	++pObjectIndex;
-	for(const DecalQueueElement& decal : ctx.m_in->m_renderQueue->m_decals)
-	{
-		decalBox.setCenter(decal.m_obbCenter.xyz0());
-		decalBox.setRotation(Mat3x4(decal.m_obbRotation));
-		decalBox.setExtend(decal.m_obbExtend.xyz0());
-		if(testCollisionShapes(decalBox, clusterBox))
+		for(U clusterZ = 0; clusterZ < m_clusterCounts[2] + 1; ++clusterZ)
 		{
-			ANKI_ASSERT(pObjectIndex < pObjectIndexEnd);
-			*pObjectIndex = idx;
-			++pObjectIndex;
+			const F32 zNear = -computeClusterNear(ctx.m_out->m_shaderMagicValues, clusterZ);
+			const U idx = clusterZ * 4;
+
+			clusterEdgesVSpace[idx + 0] = unproject(zNear, startNdc, unprojParams).xyz1();
+			clusterEdgesVSpace[idx + 1] = unproject(zNear, startNdc + Vec2(tileSize.x(), 0.0f), unprojParams).xyz1();
+			clusterEdgesVSpace[idx + 2] = unproject(zNear, startNdc + tileSize, unprojParams).xyz1();
+			clusterEdgesVSpace[idx + 3] = unproject(zNear, startNdc + Vec2(0.0f, tileSize.y()), unprojParams).xyz1();
+		}
+	}
+
+	// Transform the tile's cluster edges to world space
+	DynamicArrayAuto<Vec4> clusterEdgesWSpace(ctx.m_in->m_tempAlloc);
+	clusterEdgesWSpace.create((m_clusterCounts[2] + 1) * 4);
+	for(U clusterZ = 0; clusterZ < m_clusterCounts[2] + 1; ++clusterZ)
+	{
+		const U idx = clusterZ * 4;
+		clusterEdgesWSpace[idx + 0] = (ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[idx + 0]).xyz0();
+		clusterEdgesWSpace[idx + 1] = (ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[idx + 1]).xyz0();
+		clusterEdgesWSpace[idx + 2] = (ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[idx + 2]).xyz0();
+		clusterEdgesWSpace[idx + 3] = (ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[idx + 3]).xyz0();
+	}
+
+	// For all clusters in the tile
+	for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+	{
+		const U clusterIdx = clusterZ * (m_clusterCounts[0] * m_clusterCounts[1]) + tileY * m_clusterCounts[0] + tileX;
+
+		// Compute an AABB and a sphere that contains the cluster
+		Vec4 aabbMin(MAX_F32, MAX_F32, MAX_F32, 0.0f);
+		Vec4 aabbMax(MIN_F32, MIN_F32, MIN_F32, 0.0f);
+		for(U i = 0; i < 8; ++i)
+		{
+			aabbMin = aabbMin.min(clusterEdgesWSpace[clusterZ * 4 + i]);
+			aabbMax = aabbMax.max(clusterEdgesWSpace[clusterZ * 4 + i]);
 		}
 
-		++idx;
-	}
+		const Aabb clusterBox(aabbMin, aabbMax);
 
-	*pObjectCount = pObjectIndex - pObjectCount - 1;
+		const Vec4 sphereCenter = (aabbMin + aabbMax) / 2.0f;
+		const Sphere clusterSphere(sphereCenter, (aabbMin - sphereCenter).getLength());
 
-	// Bin the point lights
-	idx = 0;
-	Sphere lightSphere;
-	pObjectCount = pObjectIndex;
-	++pObjectIndex;
-	for(const PointLightQueueElement& plight : ctx.m_in->m_renderQueue->m_pointLights)
-	{
-		lightSphere.setCenter(plight.m_worldPosition.xyz0());
-		lightSphere.setRadius(plight.m_radius);
-		if(testCollisionShapes(lightSphere, clusterBox))
+		// Bin decals
+		Array<U32, MAX_TYPED_OBJECTS_PER_CLUSTER> objectIndices;
+		U32* pObjectIndex = &objectIndices[0];
+		const U32* pObjectIndexEnd = &objectIndices[0] + objectIndices.getSize();
+		(void)pObjectIndexEnd;
+
+		U idx = 0;
+		Obb decalBox;
+		U32* pObjectCount = pObjectIndex;
+		++pObjectIndex;
+		for(const DecalQueueElement& decal : ctx.m_in->m_renderQueue->m_decals)
 		{
-			ANKI_ASSERT(pObjectIndex < pObjectIndexEnd);
-			*pObjectIndex = idx;
-			++pObjectIndex;
+			decalBox.setCenter(decal.m_obbCenter.xyz0());
+			decalBox.setRotation(Mat3x4(decal.m_obbRotation));
+			decalBox.setExtend(decal.m_obbExtend.xyz0());
+			if(testCollisionShapes(decalBox, clusterBox))
+			{
+				ANKI_ASSERT(pObjectIndex < pObjectIndexEnd);
+				*pObjectIndex = idx;
+				++pObjectIndex;
+			}
+
+			++idx;
 		}
 
-		++idx;
-	}
+		*pObjectCount = pObjectIndex - pObjectCount - 1;
 
-	*pObjectCount = pObjectIndex - pObjectCount - 1;
-
-	// Bin the spot lights
-	idx = 0;
-	pObjectCount = pObjectIndex;
-	++pObjectIndex;
-	for(const SpotLightQueueElement& slight : ctx.m_in->m_renderQueue->m_spotLights)
-	{
-		if(testConeVsSphere(slight.m_worldTransform.getTranslationPart(),
-			   -slight.m_worldTransform.getZAxis(),
-			   slight.m_distance,
-			   slight.m_outerAngle,
-			   clusterSphere))
+		// Bin the point lights
+		idx = 0;
+		Sphere lightSphere;
+		pObjectCount = pObjectIndex;
+		++pObjectIndex;
+		for(const PointLightQueueElement& plight : ctx.m_in->m_renderQueue->m_pointLights)
 		{
-			ANKI_ASSERT(pObjectIndex < pObjectIndexEnd);
-			*pObjectIndex = idx;
-			++pObjectIndex;
+			lightSphere.setCenter(plight.m_worldPosition.xyz0());
+			lightSphere.setRadius(plight.m_radius);
+			if(testCollisionShapes(lightSphere, clusterBox))
+			{
+				ANKI_ASSERT(pObjectIndex < pObjectIndexEnd);
+				*pObjectIndex = idx;
+				++pObjectIndex;
+			}
+
+			++idx;
 		}
 
-		++idx;
-	}
+		*pObjectCount = pObjectIndex - pObjectCount - 1;
 
-	*pObjectCount = pObjectIndex - pObjectCount - 1;
-
-	// Bin probes
-	idx = 0;
-	Aabb probeBox;
-	pObjectCount = pObjectIndex;
-	++pObjectIndex;
-	for(const ReflectionProbeQueueElement& probe : ctx.m_in->m_renderQueue->m_reflectionProbes)
-	{
-		probeBox.setMin(probe.m_aabbMin);
-		probeBox.setMax(probe.m_aabbMax);
-		if(testCollisionShapes(probeBox, clusterBox))
+		// Bin the spot lights
+		idx = 0;
+		pObjectCount = pObjectIndex;
+		++pObjectIndex;
+		for(const SpotLightQueueElement& slight : ctx.m_in->m_renderQueue->m_spotLights)
 		{
-			ANKI_ASSERT(pObjectIndex < pObjectIndexEnd);
-			*pObjectIndex = idx;
-			++pObjectIndex;
+			if(testConeVsSphere(slight.m_worldTransform.getTranslationPart(),
+				   -slight.m_worldTransform.getZAxis(),
+				   slight.m_distance,
+				   slight.m_outerAngle,
+				   clusterSphere))
+			{
+				ANKI_ASSERT(pObjectIndex < pObjectIndexEnd);
+				*pObjectIndex = idx;
+				++pObjectIndex;
+			}
+
+			++idx;
 		}
 
-		++idx;
-	}
+		*pObjectCount = pObjectIndex - pObjectCount - 1;
 
-	*pObjectCount = pObjectIndex - pObjectCount - 1;
-
-	// Allocate and store indices for the cluster
-	U indexCount = pObjectIndex - &objectIndices[0];
-	ANKI_ASSERT(indexCount >= TYPED_OBJECT_COUNT);
-
-	U firstIndex;
-	if(indexCount > TYPED_OBJECT_COUNT)
-	{
-		// Have some objects to bin
-
-		firstIndex = ctx.m_allocatedIndexCount.fetchAdd(indexCount);
-
-		if(firstIndex + indexCount <= ctx.m_lightIds.getSize())
+		// Bin probes
+		idx = 0;
+		Aabb probeBox;
+		pObjectCount = pObjectIndex;
+		++pObjectIndex;
+		for(const ReflectionProbeQueueElement& probe : ctx.m_in->m_renderQueue->m_reflectionProbes)
 		{
-			memcpy(&ctx.m_lightIds[firstIndex], &objectIndices[0], sizeof(objectIndices[0]) * indexCount);
+			probeBox.setMin(probe.m_aabbMin);
+			probeBox.setMax(probe.m_aabbMax);
+			if(testCollisionShapes(probeBox, clusterBox))
+			{
+				ANKI_ASSERT(pObjectIndex < pObjectIndexEnd);
+				*pObjectIndex = idx;
+				++pObjectIndex;
+			}
+
+			++idx;
+		}
+
+		*pObjectCount = pObjectIndex - pObjectCount - 1;
+
+		// Allocate and store indices for the cluster
+		U indexCount = pObjectIndex - &objectIndices[0];
+		ANKI_ASSERT(indexCount >= TYPED_OBJECT_COUNT);
+
+		U firstIndex;
+		if(indexCount > TYPED_OBJECT_COUNT)
+		{
+			// Have some objects to bin
+
+			firstIndex = ctx.m_allocatedIndexCount.fetchAdd(indexCount);
+
+			if(firstIndex + indexCount <= ctx.m_lightIds.getSize())
+			{
+				memcpy(&ctx.m_lightIds[firstIndex], &objectIndices[0], sizeof(objectIndices[0]) * indexCount);
+			}
+			else
+			{
+				ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster");
+				firstIndex = 0;
+				indexCount = TYPED_OBJECT_COUNT;
+			}
 		}
 		else
 		{
-			ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster");
+			// No typed objects, point to the preallocated cluster
 			firstIndex = 0;
-			indexCount = TYPED_OBJECT_COUNT;
 		}
-	}
-	else
-	{
-		// No typed objects, point to the preallocated cluster
-		firstIndex = 0;
-	}
 
-	// Write the cluster
-	ctx.m_clusters[clusterIdx] = firstIndex;
+		// Write the cluster
+		ctx.m_clusters[clusterIdx] = firstIndex;
+	}
 }
 
 void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
