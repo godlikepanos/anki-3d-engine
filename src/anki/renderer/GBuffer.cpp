@@ -125,7 +125,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		cmdb->setDepthCompareOperation(CompareOperation::LESS_EQUAL);
 
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
-		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+		m_r->getSceneDrawer().drawRange(Pass::GB,
 			ctx.m_matrices.m_view,
 			ctx.m_matrices.m_viewProjectionJitter,
 			ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection,

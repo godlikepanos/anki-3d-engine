@@ -60,9 +60,10 @@ const U32 UBO_MAX_SIZE = 16384u;
 #define ALPHA_LOCATION 2
 
 // Passes
-#define PASS_GB_FS 0
-#define PASS_SM 1
-#define PASS_EZ 2
+#define PASS_GB 0
+#define PASS_FS 1
+#define PASS_SM 2
+#define PASS_EZ 3
 
 // Other
 #if defined(ANKI_BACKEND_VULKAN) && ANKI_BACKEND_MAJOR >= 1 && ANKI_BACKEND_MINOR >= 1

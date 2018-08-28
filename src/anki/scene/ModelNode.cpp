@@ -96,7 +96,7 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<vo
 	}
 
 	ModelRenderingInfo modelInf;
-	ctx.m_key.m_velocity = moved;
+	ctx.m_key.m_velocity = moved && ctx.m_key.m_pass == Pass::GB;
 	self.m_modelPatch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
 
 	// Program
@@ -306,7 +306,7 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 			cmdb->bindStorageBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
 		}
 
-		ctx.m_key.m_velocity = moved;
+		ctx.m_key.m_velocity = moved && ctx.m_key.m_pass == Pass::GB;
 		ModelRenderingInfo modelInf;
 		patch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
 

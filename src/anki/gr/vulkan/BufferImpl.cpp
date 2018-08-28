@@ -209,7 +209,7 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::INDIRECT))
+	if(!!(usage & BufferUsageBit::INDIRECT_ALL))
 	{
 		stageMask |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
 	}
@@ -272,7 +272,7 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 		mask |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::INDIRECT))
+	if(!!(usage & BufferUsageBit::INDIRECT_ALL))
 	{
 		mask |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
 	}

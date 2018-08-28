@@ -134,7 +134,7 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		cmdb->setDepthWrite(false);
 
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+		m_r->getSceneDrawer().drawRange(Pass::FS,
 			ctx.m_matrices.m_view,
 			ctx.m_matrices.m_viewProjectionJitter,
 			ctx.m_prevMatrices.m_viewProjectionJitter,
@@ -181,7 +181,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{
-		pass.newDependency({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::INDIRECT});
+		pass.newDependency({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::INDIRECT_GRAPHICS});
 	}
 }
 

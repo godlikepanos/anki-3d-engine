@@ -14,7 +14,8 @@ namespace anki
 /// The AnKi passes visible to materials.
 enum class Pass : U8
 {
-	GB_FS, ///< GBuffer or forward shading.
+	GB, ///< GBuffer.
+	FS, ///< Forward shading.
 	SM, ///< Shadow mapping.
 	EZ, ///< Early Z.
 	COUNT
@@ -42,7 +43,7 @@ public:
 	}
 
 	RenderingKey()
-		: RenderingKey(Pass::GB_FS, 0, 1, false, false)
+		: RenderingKey(Pass::GB, 0, 1, false, false)
 	{
 	}
 

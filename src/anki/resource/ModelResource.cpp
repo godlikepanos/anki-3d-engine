@@ -45,7 +45,7 @@ void ModelPatch::getRenderingDataSub(
 	// Vertex attributes
 	U32 positionBinding = MAX_U32;
 	{
-		if(key.m_pass == Pass::GB_FS)
+		if(key.m_pass == Pass::GB || key.m_pass == Pass::FS)
 		{
 			// All attributes
 
@@ -84,7 +84,7 @@ void ModelPatch::getRenderingDataSub(
 
 	// Vertex buffers
 	{
-		if(key.m_pass == Pass::GB_FS)
+		if(key.m_pass == Pass::GB || key.m_pass == Pass::FS)
 		{
 			// All attributes
 

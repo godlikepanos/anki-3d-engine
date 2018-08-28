@@ -21,7 +21,7 @@ layout(ANKI_SS_BINDING(0, 0), row_major) readonly buffer ss00_
 // Input
 //
 layout(location = POSITION_LOCATION) in highp Vec3 in_position;
-#if PASS == PASS_GB_FS
+#if PASS == PASS_GB
 layout(location = TEXTURE_COORDINATE_LOCATION) in highp Vec2 in_uv;
 layout(location = NORMAL_LOCATION) in mediump Vec3 in_normal;
 layout(location = TANGENT_LOCATION) in mediump Vec4 in_tangent;
@@ -40,7 +40,7 @@ out gl_PerVertex
 	Vec4 gl_Position;
 };
 
-#if PASS == PASS_GB_FS
+#if PASS == PASS_GB
 layout(location = 0) out highp Vec2 out_uv;
 layout(location = 1) out mediump Vec3 out_normal;
 layout(location = 2) out mediump Vec4 out_tangent;
@@ -60,7 +60,7 @@ layout(location = 7) out mediump Vec2 out_velocity; // Velocity
 // Globals
 //
 Vec3 g_position = in_position;
-#if PASS == PASS_GB_FS
+#if PASS == PASS_GB
 highp Vec2 g_uv = in_uv;
 mediump Vec3 g_normal = in_normal;
 mediump Vec4 g_tangent = in_tangent;
@@ -71,7 +71,7 @@ mediump Vec4 g_tangent = in_tangent;
 //
 
 // Common store function
-#if PASS == PASS_GB_FS
+#if PASS == PASS_GB
 void positionUvNormalTangent(Mat4 mvp, Mat3 rotationMat)
 {
 	out_uv = g_uv;
@@ -85,10 +85,10 @@ void positionUvNormalTangent(Mat4 mvp, Mat3 rotationMat)
 	out_bitangent = cross(out_normal, out_tangent.xyz) * out_tangent.w;
 #	endif
 }
-#endif // PASS == PASS_GB_FS
+#endif // PASS == PASS_GB
 
 // Store stuff for parallax mapping
-#if PASS == PASS_GB_FS
+#if PASS == PASS_GB
 void parallax(Mat4 modelViewMat)
 {
 	Vec3 n = in_normal;
@@ -104,7 +104,7 @@ void parallax(Mat4 modelViewMat)
 	out_eyeTangentSpace = invTbn * viewPos;
 	out_normalTangentSpace = invTbn * n;
 }
-#endif // PASS == PASS_GB_FS
+#endif // PASS == PASS_GB
 
 /// Will compute new position, normal and tangent
 #if BONES
@@ -121,7 +121,7 @@ void skinning()
 			F32 boneWeight = in_boneWeights[i];
 
 			position += (u_boneTransforms[boneIdx] * Vec4(g_position * boneWeight, 1.0)).xyz;
-#	if PASS == PASS_GB_FS
+#	if PASS == PASS_GB
 			normal += (u_boneTransforms[boneIdx] * Vec4(g_normal * boneWeight, 0.0)).xyz;
 			tangent += (u_boneTransforms[boneIdx] * Vec4(g_tangent.xyz * boneWeight, 0.0)).xyz;
 #	endif
@@ -129,14 +129,14 @@ void skinning()
 	}
 
 	g_position = position;
-#	if PASS == PASS_GB_FS
+#	if PASS == PASS_GB
 	g_tangent.xyz = tangent;
 	g_normal = normal;
 #	endif
 }
 #endif
 
-#if VELOCITY && PASS == PASS_GB_FS
+#if VELOCITY && PASS == PASS_GB
 void velocity(Mat4 prevMvp)
 {
 	Vec4 v4 = prevMvp * Vec4(g_position, 1.0);
