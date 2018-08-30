@@ -399,7 +399,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx)
 		{
 			const SpotLightQueueElement& slight = ctx.m_in->m_renderQueue->m_spotLights[i];
 			slightFrustum.setAll(slight.m_outerAngle, slight.m_outerAngle, 0.01f, slight.m_distance);
-			slightFrustum.transform(Transform(slight.m_worldTransform));
+			slightFrustum.resetTransform(Transform(slight.m_worldTransform));
 
 			if(!insideClusterFrustum(frustumPlanes, slightFrustum))
 			{

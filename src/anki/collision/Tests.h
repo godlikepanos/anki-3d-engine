@@ -23,6 +23,7 @@ inline Bool testConeVsSphere(const Vec4& coneOrigin,
 	F32 sphereRadius)
 {
 	ANKI_ASSERT(coneOrigin.w() == 0.0f && sphereCenter.w() == 0.0f && coneDir.w() == 0.0f);
+	coneAngle /= 2.0f;
 	const Vec4 V = sphereCenter - coneOrigin;
 	const F32 VlenSq = V.dot(V);
 	const F32 V1len = V.dot(coneDir);
