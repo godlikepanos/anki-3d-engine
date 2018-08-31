@@ -66,7 +66,7 @@ T* ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TInde
 	ANKI_ASSERT(out);
 
 	// Construct it
-	::new(out) T(std::forward<TArgs>(args)...);
+	alloc.construct(out, std::forward<TArgs>(args)...);
 
 	return out;
 }

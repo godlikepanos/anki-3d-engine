@@ -15,7 +15,7 @@ namespace anki
 /// @{
 
 /// https://bartwronski.com/2017/04/13/cull-that-cone/
-inline Bool testConeVsSphere(const Vec4& coneOrigin,
+inline Bool testConeSphere(const Vec4& coneOrigin,
 	const Vec4& coneDir,
 	F32 coneLength,
 	F32 coneAngle,

@@ -61,6 +61,7 @@ public:
 
 private:
 	class BinCtx;
+	class TileCtx;
 
 	HeapAllocator<U8> m_alloc;
 
@@ -73,7 +74,7 @@ private:
 
 	void prepare(BinCtx& ctx);
 
-	void binTile(U32 tileIdx, BinCtx& ctx);
+	void binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx);
 
 	void writeTypedObjectsToGpuBuffers(BinCtx& ctx) const;
 

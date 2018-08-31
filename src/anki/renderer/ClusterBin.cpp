@@ -70,6 +70,27 @@ public:
 	Bool m_clusterEdgesDirty;
 };
 
+class ClusterBin::TileCtx
+{
+public:
+	TileCtx(StackAllocator<U8>& alloc)
+		: m_clusterEdgesWSpace(alloc)
+		, m_clusterBoxes(alloc)
+		, m_clusterSpheres(alloc)
+		, m_indices(alloc)
+		, m_pIndices(alloc)
+		, m_pCounts(alloc)
+	{
+	}
+
+	DynamicArrayAuto<Vec4> m_clusterEdgesWSpace;
+	DynamicArrayAuto<Aabb> m_clusterBoxes;
+	DynamicArrayAuto<Sphere> m_clusterSpheres;
+	DynamicArrayAuto<U32> m_indices;
+	DynamicArrayAuto<U32*> m_pIndices;
+	DynamicArrayAuto<U32*> m_pCounts;
+};
+
 ClusterBin::~ClusterBin()
 {
 	m_clusterEdges.destroy(m_alloc);
@@ -99,11 +120,21 @@ void ClusterBin::binToClustersCallback(
 	ANKI_TRACE_SCOPED_EVENT(R_BIN_TO_CLUSTERS);
 	BinCtx& ctx = *static_cast<BinCtx*>(userData);
 
+	TileCtx tileCtx(ctx.m_in->m_tempAlloc);
+	const U clusterCountZ = ctx.m_bin->m_clusterCounts[2];
+	const U32 avgIndicesPerCluster = ctx.m_bin->m_indexCount / ctx.m_bin->m_totalClusterCount;
+	tileCtx.m_clusterEdgesWSpace.create((clusterCountZ + 1) * 4);
+	tileCtx.m_clusterBoxes.create(clusterCountZ);
+	tileCtx.m_clusterSpheres.create(clusterCountZ);
+	tileCtx.m_indices.create(clusterCountZ * avgIndicesPerCluster);
+	tileCtx.m_pIndices.create(clusterCountZ);
+	tileCtx.m_pCounts.create(clusterCountZ);
+
 	const U tileCount = ctx.m_bin->m_clusterCounts[0] * ctx.m_bin->m_clusterCounts[1];
 	U tileIdx;
 	while((tileIdx = ctx.m_tileIdxToProcess.fetchAdd(1)) < tileCount)
 	{
-		ctx.m_bin->binTile(tileIdx, ctx);
+		ctx.m_bin->binTile(tileIdx, ctx, tileCtx);
 	}
 }
 
@@ -218,11 +249,12 @@ void ClusterBin::prepare(BinCtx& ctx)
 	ctx.m_unprojParams = ctx.m_in->m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
 }
 
-void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx)
+void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 {
 	ANKI_ASSERT(tileIdx < m_clusterCounts[0] * m_clusterCounts[1]);
 	const U tileX = tileIdx % m_clusterCounts[0];
 	const U tileY = tileIdx / m_clusterCounts[0];
+	const U32 avgIndicesPerCluster = m_indexCount / m_totalClusterCount;
 
 	// Compute the tile's cluster edges in view space
 	WeakArray<Vec4> clusterEdgesVSpace(
@@ -246,8 +278,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx)
 	}
 
 	// Transform the tile's cluster edges to world space
-	DynamicArrayAuto<Vec4> clusterEdgesWSpace(ctx.m_in->m_tempAlloc);
-	clusterEdgesWSpace.create((m_clusterCounts[2] + 1) * 4);
+	DynamicArrayAuto<Vec4>& clusterEdgesWSpace = tileCtx.m_clusterEdgesWSpace;
 	for(U clusterZ = 0; clusterZ < m_clusterCounts[2] + 1; ++clusterZ)
 	{
 		const U idx = clusterZ * 4;
@@ -259,16 +290,24 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx)
 
 	// Compute the tile frustum
 	Array<Plane, 4> frustumPlanes;
-	frustumPlanes[0].setFrom3Points(clusterEdgesWSpace[0], clusterEdgesWSpace[1], clusterEdgesWSpace[5]);
-	frustumPlanes[1].setFrom3Points(clusterEdgesWSpace[2], clusterEdgesWSpace[1], clusterEdgesWSpace[5]);
-	frustumPlanes[2].setFrom3Points(clusterEdgesWSpace[2], clusterEdgesWSpace[3], clusterEdgesWSpace[7]);
-	frustumPlanes[3].setFrom3Points(clusterEdgesWSpace[7], clusterEdgesWSpace[3], clusterEdgesWSpace[0]);
+	const U lastQuartet = clusterEdgesWSpace.getSize() - 1 - 4;
+	const U beforeLastQuartet = lastQuartet - 4;
+	frustumPlanes[0].setFrom3Points(clusterEdgesWSpace[beforeLastQuartet + 0],
+		clusterEdgesWSpace[beforeLastQuartet + 1],
+		clusterEdgesWSpace[lastQuartet + 0]);
+	frustumPlanes[1].setFrom3Points(clusterEdgesWSpace[beforeLastQuartet + 1],
+		clusterEdgesWSpace[beforeLastQuartet + 2],
+		clusterEdgesWSpace[lastQuartet + 2]);
+	frustumPlanes[2].setFrom3Points(clusterEdgesWSpace[beforeLastQuartet + 2],
+		clusterEdgesWSpace[beforeLastQuartet + 3],
+		clusterEdgesWSpace[lastQuartet + 2]);
+	frustumPlanes[3].setFrom3Points(clusterEdgesWSpace[beforeLastQuartet + 3],
+		clusterEdgesWSpace[beforeLastQuartet + 0],
+		clusterEdgesWSpace[lastQuartet + 0]);
 
 	// Compute the cluster AABBs and spheres
-	DynamicArrayAuto<Aabb> clusterBoxes(ctx.m_in->m_tempAlloc);
-	clusterBoxes.create(m_clusterCounts[2]);
-	DynamicArrayAuto<Sphere> clusterSpheres(ctx.m_in->m_tempAlloc);
-	clusterSpheres.create(m_clusterCounts[2]);
+	DynamicArrayAuto<Aabb>& clusterBoxes = tileCtx.m_clusterBoxes;
+	DynamicArrayAuto<Sphere>& clusterSpheres = tileCtx.m_clusterSpheres;
 	for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 	{
 		// Compute an AABB and a sphere that contains the cluster
@@ -286,15 +325,11 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx)
 		clusterSpheres[clusterZ] = Sphere(sphereCenter, (aabbMin - sphereCenter).getLength());
 	}
 
-	// Allocate temp indices for each cluster
-	DynamicArrayAuto<U32> indices(ctx.m_in->m_tempAlloc);
-	const U32 avgIndicesPerCluster = m_indexCount / m_totalClusterCount;
-	indices.create(m_clusterCounts[2] * avgIndicesPerCluster);
+	// Set temp indices for each cluster
+	DynamicArrayAuto<U32>& indices = tileCtx.m_indices;
+	DynamicArrayAuto<U32*>& pIndices = tileCtx.m_pIndices;
+	DynamicArrayAuto<U32*>& pCounts = tileCtx.m_pCounts;
 
-	DynamicArrayAuto<U32*> pIndices(ctx.m_in->m_tempAlloc);
-	pIndices.create(m_clusterCounts[2]);
-	DynamicArrayAuto<U32*> pCounts(ctx.m_in->m_tempAlloc);
-	pCounts.create(m_clusterCounts[2]);
 	for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 	{
 		pIndices[clusterZ] = &indices[clusterZ * avgIndicesPerCluster];
@@ -408,7 +443,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx)
 
 			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
-				if(!testConeVsSphere(slight.m_worldTransform.getTranslationPart().xyz0(),
+				if(!testConeSphere(slight.m_worldTransform.getTranslationPart().xyz0(),
 					   -slight.m_worldTransform.getZAxis(),
 					   slight.m_distance,
 					   slight.m_outerAngle,
