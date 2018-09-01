@@ -146,6 +146,8 @@ void ClusterBin::writeTypedObjectsToGpuBuffersCallback(
 
 void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 {
+	ANKI_TRACE_SCOPED_EVENT(R_BIN_TO_CLUSTERS);
+
 	BinCtx ctx;
 	ctx.m_bin = this;
 	ctx.m_in = &in;
