@@ -194,4 +194,21 @@ Bool Sphere::intersectsRay(
 	}
 }
 
+/// https://bartwronski.com/2017/04/13/cull-that-cone/
+Bool Sphere::intersectsCone(const Vec4& coneOrigin, const Vec4& coneDir, F32 coneLength, F32 coneAngle) const
+{
+	ANKI_ASSERT(coneOrigin.w() == 0.0f && coneDir.w() == 0.0f);
+
+	coneAngle /= 2.0f;
+	const Vec4 V = m_center - coneOrigin;
+	const F32 VlenSq = V.dot(V);
+	const F32 V1len = V.dot(coneDir);
+	const F32 distanceClosestPoint = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
+
+	const Bool angleCull = distanceClosestPoint > m_radius;
+	const Bool frontCull = V1len > m_radius + coneLength;
+	const Bool backCull = V1len < -m_radius;
+	return !(angleCull || frontCull || backCull);
+}
+
 } // end namespace anki

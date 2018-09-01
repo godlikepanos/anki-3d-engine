@@ -15,7 +15,6 @@
 #include <anki/collision/ConvexHullShape.h>
 
 #include <anki/collision/GjkEpa.h>
-#include <anki/collision/Functions.h>
 #include <anki/collision/Tests.h>
 
 /// @defgroup collision Collision detection module

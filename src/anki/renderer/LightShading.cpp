@@ -15,7 +15,6 @@
 #include <anki/renderer/Ssr.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
-#include <anki/collision/Functions.h>
 
 namespace anki
 {

@@ -5,11 +5,7 @@
 
 #include <anki/renderer/ClusterBin.h>
 #include <anki/renderer/RenderQueue.h>
-#include <anki/collision/Plane.h>
-#include <anki/collision/Sphere.h>
-#include <anki/collision/Functions.h>
-#include <anki/collision/Tests.h>
-#include <anki/collision/Plane.h>
+#include <anki/Collision.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/core/Config.h>
 #include <anki/core/Trace.h>
@@ -229,9 +225,7 @@ void ClusterBin::prepare(BinCtx& ctx)
 
 		const Mat4& vp = ctx.m_in->m_renderQueue->m_viewProjectionMatrix;
 		Plane nearPlane;
-		Array<Plane*, U(FrustumPlaneType::COUNT)> planes = {};
-		planes[FrustumPlaneType::NEAR] = &nearPlane;
-		extractClipPlanes(vp, planes);
+		Plane::extractClipPlane(vp, FrustumPlaneType::NEAR, nearPlane);
 
 		Vec3 A = nearPlane.getNormal().xyz() * (m_clusterCounts[2] * m_clusterCounts[2]) / (far - near);
 		F32 B = nearPlane.getOffset() * (m_clusterCounts[2] * m_clusterCounts[2]) / (far - near);
@@ -443,12 +437,10 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
-				if(!testConeSphere(slight.m_worldTransform.getTranslationPart().xyz0(),
+				if(!clusterSpheres[clusterZ].intersectsCone(slight.m_worldTransform.getTranslationPart().xyz0(),
 					   -slight.m_worldTransform.getZAxis(),
 					   slight.m_distance,
-					   slight.m_outerAngle,
-					   clusterSpheres[clusterZ].getCenter(),
-					   clusterSpheres[clusterZ].getRadius()))
+					   slight.m_outerAngle))
 				{
 					continue;
 				}

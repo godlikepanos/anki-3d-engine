@@ -14,6 +14,18 @@ namespace anki
 /// @addtogroup collision
 /// @{
 
+/// The 6 frustum planes
+enum class FrustumPlaneType : U8
+{
+	NEAR,
+	FAR,
+	LEFT,
+	RIGHT,
+	TOP,
+	BOTTOM,
+	COUNT ///< Number of planes
+};
+
 /// The type of the collision temporary allocator
 template<typename T>
 using CollisionTempAllocator = StackAllocator<T>;

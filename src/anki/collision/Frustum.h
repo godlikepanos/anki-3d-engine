@@ -25,18 +25,6 @@ enum class FrustumType : U8
 	ORTHOGRAPHIC
 };
 
-/// The 6 frustum planes
-enum class FrustumPlaneType : U8
-{
-	NEAR,
-	FAR,
-	LEFT,
-	RIGHT,
-	TOP,
-	BOTTOM,
-	COUNT ///< Number of planes
-};
-
 /// Frustum collision shape. This shape consists from 6 planes. The planes are being used to find shapes that are
 /// inside the frustum
 class Frustum : public CompoundShape
