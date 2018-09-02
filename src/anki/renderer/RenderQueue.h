@@ -207,6 +207,8 @@ public:
 
 	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;
 	void* m_fillCoverageBufferCallbackUserData = nullptr;
+
+	U countAllRenderables() const;
 };
 
 static_assert(std::is_trivially_destructible<RenderQueue>::value == true, "Should be trivially destructible");
