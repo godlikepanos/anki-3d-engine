@@ -81,7 +81,7 @@ start:
 
 			meta.m_alive = true;
 			meta.m_idx = idx;
-			::new(&crntVal) Value(std::move(val));
+			alloc.construct(&crntVal, std::move(val));
 
 			return 1;
 		}
@@ -91,7 +91,7 @@ start:
 
 			meta.m_idx = idx;
 			destroyElement(crntVal);
-			::new(&crntVal) Value(std::move(val));
+			alloc.construct(&crntVal, std::move(val));
 
 			return 0;
 		}

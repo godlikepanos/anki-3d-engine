@@ -5,10 +5,9 @@
 
 #pragma once
 
-// Common code for all fragment shaders of BS
+// Common code for all fragment shaders of FS
 #include <shaders/Common.glsl>
 #include <shaders/Functions.glsl>
-#include <shaders/glsl_cpp_common/Clusterer.h>
 
 // Global resources
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D anki_msDepthRt;
@@ -18,7 +17,7 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D anki_msDepthRt;
 #define LIGHT_TEX_BINDING 1
 #define LIGHT_LIGHTS
 #define LIGHT_COMMON_UNIS
-#include <shaders/ClusterLightCommon.glsl>
+#include <shaders/ClusteredShadingCommon.glsl>
 
 #define anki_u_time u_time
 #define RENDERER_SIZE (u_rendererSize * 0.5)

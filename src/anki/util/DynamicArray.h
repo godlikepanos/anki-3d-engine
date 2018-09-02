@@ -217,7 +217,7 @@ public:
 	Iterator emplaceBack(TAllocator alloc, TArgs&&... args)
 	{
 		resizeStorage(alloc, m_size + 1);
-		::new(&m_data[m_size]) Value(std::forward<TArgs>(args)...);
+		alloc.construct(&m_data[m_size], std::forward<TArgs>(args)...);
 		++m_size;
 		return &m_data[m_size - 1];
 	}

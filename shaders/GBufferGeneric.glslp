@@ -5,7 +5,7 @@
 
 #pragma anki mutator instanced INSTANCE_COUNT 1 2 4 8 16 32 64
 #pragma anki mutator LOD 0 1 2
-#pragma anki mutator PASS 0 1 2
+#pragma anki mutator PASS 0 1 2 3
 #pragma anki mutator DIFFUSE_TEX 0 1
 #pragma anki mutator SPECULAR_TEX 0 1
 #pragma anki mutator ROUGHNESS_TEX 0 1
@@ -45,7 +45,7 @@ void main()
 	skinning();
 #endif
 
-#if PASS == PASS_GB_FS
+#if PASS == PASS_GB
 	positionUvNormalTangent(mvp, rotationMat);
 
 #	if PARALLAX
@@ -66,7 +66,7 @@ void main()
 
 void main()
 {
-#if PASS == PASS_GB_FS
+#if PASS == PASS_GB
 #	if heightTex_DEFINED
 	Vec2 uv = computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
 #	else

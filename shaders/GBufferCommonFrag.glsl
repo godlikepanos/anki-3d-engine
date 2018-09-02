@@ -11,7 +11,7 @@
 //
 // Input
 //
-#if PASS == PASS_GB_FS
+#if PASS == PASS_GB
 layout(location = 0) in highp Vec2 in_uv;
 layout(location = 1) in mediump Vec3 in_normal;
 layout(location = 2) in mediump Vec4 in_tangent;
@@ -25,12 +25,12 @@ layout(location = 6) in mediump Vec3 in_normalTangentSpace; // Parallax
 #	if VELOCITY
 layout(location = 7) in mediump Vec2 in_velocity; // Velocity
 #	endif
-#endif // PASS == PASS_GB_FS
+#endif // PASS == PASS_GB
 
 //
 // Output
 //
-#if PASS == PASS_GB_FS || PASS == PASS_EZ
+#if PASS == PASS_GB || PASS == PASS_EZ
 layout(location = 0) out Vec4 out_gbuffer0;
 layout(location = 1) out Vec4 out_gbuffer1;
 layout(location = 2) out Vec4 out_gbuffer2;
@@ -40,7 +40,7 @@ layout(location = 3) out Vec2 out_gbuffer3;
 //
 // Functions
 //
-#if PASS == PASS_GB_FS
+#if PASS == PASS_GB
 // Do normal mapping
 Vec3 readNormalFromTexture(sampler2D map, highp Vec2 texCoords)
 {
@@ -161,4 +161,4 @@ void writeRts(Vec3 diffColor,
 	g.m_velocity = velocity;
 	writeGBuffer(g, out_gbuffer0, out_gbuffer1, out_gbuffer2, out_gbuffer3);
 }
-#endif // PASS == PASS_GB_FS
+#endif // PASS == PASS_GB

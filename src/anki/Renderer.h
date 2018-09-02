@@ -11,7 +11,7 @@
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/ForwardShading.h>
 #include <anki/renderer/FinalComposite.h>
-#include <anki/renderer/LightBin.h>
+#include <anki/renderer/ClusterBin.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/MainRenderer.h>
@@ -25,7 +25,6 @@
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Drawer.h>
-#include <anki/renderer/Clusterer.h>
 #include <anki/renderer/UiStage.h>
 #include <anki/renderer/Tonemapping.h>
 #include <anki/renderer/RendererObject.h>

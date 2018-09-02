@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/SoftwareRasterizer.h>
-#include <anki/collision/Functions.h>
+#include <anki/collision/Aabb.h>
 #include <anki/core/Trace.h>
 
 namespace anki
@@ -16,13 +16,8 @@ void SoftwareRasterizer::prepare(const Mat4& mv, const Mat4& p, U width, U heigh
 	m_p = p;
 	m_mvp = p * mv;
 
-	Array<Plane*, 6> planes = {
-		{&m_planesL[0], &m_planesL[1], &m_planesL[2], &m_planesL[3], &m_planesL[4], &m_planesL[5]}};
-	extractClipPlanes(p, planes);
-
-	Array<Plane*, 6> planes2 = {
-		{&m_planesW[0], &m_planesW[1], &m_planesW[2], &m_planesW[3], &m_planesW[4], &m_planesW[5]}};
-	extractClipPlanes(m_mvp, planes2);
+	Plane::extractClipPlanes(p, m_planesL);
+	Plane::extractClipPlanes(m_mvp, m_planesW);
 
 	// Reset z buffer
 	ANKI_ASSERT(width > 0 && height > 0);

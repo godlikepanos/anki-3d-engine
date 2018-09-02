@@ -103,4 +103,39 @@ Bool Plane::intersectRay(const Vec4& rayOrigin, const Vec4& rayDir, Vec4& inters
 	return intersects;
 }
 
+void Plane::extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane)
+{
+#define ANKI_CASE(i, a, op, b) \
+	case i: \
+	{ \
+		const Vec4 planeEqationCoefs = mvp.getRow(a) op mvp.getRow(b); \
+		const Vec4 n = planeEqationCoefs.xyz0(); \
+		const F32 len = n.getLength(); \
+		plane = Plane(n / len, -planeEqationCoefs.w() / len); \
+		break; \
+	}
+
+	switch(id)
+	{
+		ANKI_CASE(FrustumPlaneType::NEAR, 3, +, 2)
+		ANKI_CASE(FrustumPlaneType::FAR, 3, -, 2)
+		ANKI_CASE(FrustumPlaneType::LEFT, 3, +, 0)
+		ANKI_CASE(FrustumPlaneType::RIGHT, 3, -, 0)
+		ANKI_CASE(FrustumPlaneType::TOP, 3, -, 1)
+		ANKI_CASE(FrustumPlaneType::BOTTOM, 3, +, 1)
+	default:
+		ANKI_ASSERT(0);
+	}
+
+#undef ANKI_CASE
+}
+
+void Plane::extractClipPlanes(const Mat4& mvp, Array<Plane, 6>& planes)
+{
+	for(U i = 0; i < 6; ++i)
+	{
+		extractClipPlane(mvp, static_cast<FrustumPlaneType>(i), planes[i]);
+	}
+}
+
 } // end namespace anki

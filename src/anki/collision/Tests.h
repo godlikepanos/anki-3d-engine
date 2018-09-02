@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/collision/Common.h>
+#include <anki/math/Vec4.h>
 
 namespace anki
 {

@@ -280,7 +280,7 @@ inline void CommandBufferImpl::drawArraysIndirect(
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT_GRAPHICS));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(DrawArraysIndirectInfo) * drawCount) <= impl.getSize());
 
@@ -294,7 +294,7 @@ inline void CommandBufferImpl::drawElementsIndirect(
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT_ALL));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(DrawElementsIndirectInfo) * drawCount) <= impl.getSize());
 

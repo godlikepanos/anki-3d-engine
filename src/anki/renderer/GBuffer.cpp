@@ -8,7 +8,6 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/LensFlare.h>
 #include <anki/util/Logger.h>
-#include <anki/util/ThreadPool.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/core/Trace.h>
 
@@ -80,7 +79,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	const PtrSize earlyZCount = ctx.m_renderQueue->m_earlyZRenderables.getSize();
 	const U problemSize = ctx.m_renderQueue->m_renderables.getSize() + earlyZCount;
 	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
+	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 	ANKI_ASSERT(end != start);
 
 	// Set some state, leave the rest to default
@@ -126,7 +125,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		cmdb->setDepthCompareOperation(CompareOperation::LESS_EQUAL);
 
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
-		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+		m_r->getSceneDrawer().drawRange(Pass::GB,
 			ctx.m_matrices.m_view,
 			ctx.m_matrices.m_viewProjectionJitter,
 			ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection,

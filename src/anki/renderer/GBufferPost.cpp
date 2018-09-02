@@ -71,7 +71,8 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 
 void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 {
-	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
+	const RenderingContext& ctx = *m_runCtx.m_ctx;
+	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
@@ -98,12 +99,12 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 		TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Uniforms
-	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
+	bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
 	bindUniforms(cmdb, 0, 1, rsrc.m_decalsToken);
 
 	// Storage
 	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
+	bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
 
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 

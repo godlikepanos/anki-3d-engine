@@ -18,7 +18,7 @@ Config::Config()
 	newOption("r.clusterSizeX", 32);
 	newOption("r.clusterSizeY", 26);
 	newOption("r.clusterSizeZ", 32);
-	newOption("r.maxLightsPerCluster", 8);
+	newOption("r.avgObjectsPerCluster", 16);
 
 	newOption("r.shadowMapping.enabled", true);
 	newOption("r.shadowMapping.resolution", 512);

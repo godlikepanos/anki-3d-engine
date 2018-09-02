@@ -347,7 +347,7 @@ void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 
 		if(!rqueue.m_renderables.isEmpty())
 		{
-			m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+			m_r->getSceneDrawer().drawRange(Pass::GB,
 				rqueue.m_viewMatrix,
 				rqueue.m_viewProjectionMatrix,
 				Mat4::getIdentity(), // Don't care about prev mats

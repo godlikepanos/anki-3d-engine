@@ -1352,7 +1352,7 @@ void CommandBuffer::setBufferBarrier(
 		d |= GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
 	}
 
-	if(!!(all & BufferUsageBit::INDIRECT))
+	if(!!(all & BufferUsageBit::INDIRECT_ALL))
 	{
 		d |= GL_COMMAND_BARRIER_BIT;
 	}

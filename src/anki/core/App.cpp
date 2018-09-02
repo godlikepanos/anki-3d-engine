@@ -85,6 +85,8 @@ public:
 	U64 m_vkGpuMem = 0;
 	U32 m_vkCmdbCount = 0;
 
+	U32 m_drawableCount = 0;
+
 	static const U32 BUFFERED_FRAMES = 16;
 	U32 m_bufferedFrames = 0;
 
@@ -111,7 +113,7 @@ public:
 
 		nk_style_push_style_item(ctx, &ctx->style.window.fixed_background, nk_style_item_color(nk_rgba(0, 0, 0, 128)));
 
-		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 230, 380), 0))
+		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 230, 450), 0))
 		{
 			nk_layout_row_dynamic(ctx, 17, 1);
 
@@ -134,6 +136,10 @@ public:
 			nk_label(ctx, " ", NK_TEXT_ALIGN_LEFT);
 			nk_label(ctx, "Vulkan:", NK_TEXT_ALIGN_LEFT);
 			labelUint(ctx, m_vkCmdbCount, "Cmd buffers");
+
+			nk_label(ctx, " ", NK_TEXT_ALIGN_LEFT);
+			nk_label(ctx, "Other:", NK_TEXT_ALIGN_LEFT);
+			labelUint(ctx, m_drawableCount, "Drawbles");
 		}
 
 		nk_style_pop_style_item(ctx);
@@ -455,7 +461,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
 
 	ANKI_CHECK(m_renderer->init(
-		m_threadpool, m_resources, m_gr, m_stagingMem, m_ui, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
+		m_threadHive, m_resources, m_gr, m_stagingMem, m_ui, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
 
 	//
 	// Script
@@ -629,6 +635,8 @@ Error App::mainLoop()
 			statsUi.m_vkCpuMem = grStats.m_cpuMemory;
 			statsUi.m_vkGpuMem = grStats.m_gpuMemory;
 			statsUi.m_vkCmdbCount = grStats.m_commandBufferCount;
+
+			statsUi.m_drawableCount = rqueue.countAllRenderables();
 		}
 
 		++m_globalTimestamp;

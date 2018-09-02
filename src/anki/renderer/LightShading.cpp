@@ -8,7 +8,6 @@
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/Indirect.h>
 #include <anki/renderer/GBuffer.h>
-#include <anki/renderer/LightBin.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/ForwardShading.h>
 #include <anki/renderer/DepthDownscale.h>
@@ -16,8 +15,6 @@
 #include <anki/renderer/Ssr.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
-#include <anki/collision/Functions.h>
-#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -29,7 +26,6 @@ LightShading::LightShading(Renderer* r)
 
 LightShading::~LightShading()
 {
-	getAllocator().deleteInstance(m_lightBin);
 }
 
 Error LightShading::init(const ConfigSet& config)
@@ -47,36 +43,14 @@ Error LightShading::init(const ConfigSet& config)
 
 Error LightShading::initInternal(const ConfigSet& config)
 {
-	m_maxLightIds = config.getNumber("r.maxLightsPerCluster");
-
-	if(m_maxLightIds == 0)
-	{
-		ANKI_R_LOGE("Incorrect number of max light indices");
-		return Error::USER_DATA;
-	}
-
-	m_clusterCounts[0] = config.getNumber("r.clusterSizeX");
-	m_clusterCounts[1] = config.getNumber("r.clusterSizeY");
-	m_clusterCounts[2] = config.getNumber("r.clusterSizeZ");
-	m_clusterCount = m_clusterCounts[0] * m_clusterCounts[1] * m_clusterCounts[2];
-
-	m_maxLightIds *= m_clusterCount;
-
-	m_lightBin = getAllocator().newInstance<LightBin>(getAllocator(),
-		m_clusterCounts[0],
-		m_clusterCounts[1],
-		m_clusterCounts[2],
-		&m_r->getThreadPool(),
-		&m_r->getStagingGpuMemoryManager());
-
 	// Load shaders and programs
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShading.glslp", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
-	consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))
-		.add("CLUSTER_COUNT_Y", U32(m_clusterCounts[1]))
-		.add("CLUSTER_COUNT_Z", U32(m_clusterCounts[2]))
-		.add("CLUSTER_COUNT", U32(m_clusterCount))
+	consts.add("CLUSTER_COUNT_X", U32(m_r->getClusterCount()[0]))
+		.add("CLUSTER_COUNT_Y", U32(m_r->getClusterCount()[1]))
+		.add("CLUSTER_COUNT_Z", U32(m_r->getClusterCount()[2]))
+		.add("CLUSTER_COUNT", U32(m_r->getClusterCount()[3]))
 		.add("IR_MIPMAP_COUNT", U32(m_r->getIndirect().getReflectionTextureMipmapCount()));
 
 	m_prog->getOrCreateVariant(consts.get(), m_progVariant);
@@ -111,27 +85,10 @@ Error LightShading::initInternal(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error LightShading::binLights(RenderingContext& ctx)
-{
-	updateCommonBlock(ctx);
-
-	ANKI_CHECK(m_lightBin->bin(ctx.m_renderQueue->m_viewMatrix,
-		ctx.m_renderQueue->m_projectionMatrix,
-		ctx.m_renderQueue->m_viewProjectionMatrix,
-		ctx.m_renderQueue->m_cameraTransform,
-		*ctx.m_renderQueue,
-		ctx.m_tempAllocator,
-		m_maxLightIds,
-		true,
-		m_runCtx.m_resources));
-
-	return Error::NONE;
-}
-
 void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const LightShadingResources& rsrc = m_runCtx.m_resources;
+	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
@@ -163,14 +120,14 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 			TextureUsageBit::SAMPLED_FRAGMENT);
 
 		// Bind uniforms
-		bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
+		bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
 		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 		bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);
 
 		// Bind storage
 		bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
+		bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
 
 		drawQuad(cmdb);
 	}
@@ -241,40 +198,6 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	// For forward shading
 	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH});
 	pass.newDependency({m_r->getForwardShading().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-}
-
-void LightShading::updateCommonBlock(RenderingContext& ctx)
-{
-	LightingUniforms* blk =
-		allocateUniforms<LightingUniforms*>(sizeof(LightingUniforms), m_runCtx.m_resources.m_commonUniformsToken);
-
-	// Start writing
-	blk->m_unprojectionParams = ctx.m_unprojParams;
-
-	blk->m_rendererSizeTimeNear =
-		Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), ctx.m_renderQueue->m_cameraNear);
-
-	blk->m_tileCount = UVec4(m_clusterCounts[0], m_clusterCounts[1], m_clusterCounts[2], m_clusterCount);
-
-	blk->m_cameraPosFar =
-		Vec4(ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz(), ctx.m_renderQueue->m_cameraFar);
-
-	blk->m_clustererMagicValues = m_lightBin->getClusterer().getShaderMagicValues();
-
-	// Matrices
-	blk->m_viewMat = ctx.m_renderQueue->m_viewMatrix;
-	blk->m_invViewMat = ctx.m_renderQueue->m_viewMatrix.getInverse();
-
-	blk->m_projMat = ctx.m_matrices.m_projectionJitter;
-	blk->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
-
-	blk->m_viewProjMat = ctx.m_matrices.m_viewProjectionJitter;
-	blk->m_invViewProjMat = ctx.m_matrices.m_viewProjectionJitter.getInverse();
-
-	blk->m_prevViewProjMat = ctx.m_prevMatrices.m_viewProjectionJitter;
-
-	blk->m_prevViewProjMatMulInvViewProjMat =
-		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 }
 
 } // end namespace anki

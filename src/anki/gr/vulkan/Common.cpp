@@ -278,7 +278,7 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::INDIRECT))
+	if(!!(usageMask & BufferUsageBit::INDIRECT_ALL))
 	{
 		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 	}

@@ -27,6 +27,7 @@
 #include <anki/renderer/TemporalAA.h>
 #include <anki/renderer/UiStage.h>
 #include <anki/renderer/Ssr.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -40,7 +41,7 @@ Renderer::~Renderer()
 {
 }
 
-Error Renderer::init(ThreadPool* threadpool,
+Error Renderer::init(ThreadHive* hive,
 	ResourceManager* resources,
 	GrManager* gl,
 	StagingGpuMemoryManager* stagingMem,
@@ -52,7 +53,7 @@ Error Renderer::init(ThreadPool* threadpool,
 	ANKI_TRACE_SCOPED_EVENT(R_INIT);
 
 	m_globTimestamp = globTimestamp;
-	m_threadpool = threadpool;
+	m_threadHive = hive;
 	m_resources = resources;
 	m_gr = gl;
 	m_stagingMem = stagingMem;
@@ -79,6 +80,13 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_lodDistances[0] = config.getNumber("r.lodDistance0");
 	m_lodDistances[1] = config.getNumber("r.lodDistance1");
 	m_frameCount = 0;
+
+	m_clusterCount[0] = config.getNumber("r.clusterSizeX");
+	m_clusterCount[1] = config.getNumber("r.clusterSizeY");
+	m_clusterCount[2] = config.getNumber("r.clusterSizeZ");
+	m_clusterCount[3] = m_clusterCount[0] * m_clusterCount[1] * m_clusterCount[2];
+
+	m_clusterBin.init(m_alloc, m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], config);
 
 	// A few sanity checks
 	if(m_width < 10 || m_height < 10)
@@ -251,6 +259,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	ctx.m_prevMatrices = m_prevMatrices;
 
+	ctx.m_unprojParams = ctx.m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
+
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
 		|| m_prevAsyncTasksCompleted != m_resources->getAsyncTaskCompletedCount())
@@ -292,8 +302,17 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	m_finalComposite->populateRenderGraph(ctx);
 
+	// Bin lights and update uniforms
 	m_stats.m_lightBinTime = HighRezTimer::getCurrentTime();
-	ANKI_CHECK(m_lightShading->binLights(ctx));
+	ClusterBinIn cin;
+	cin.m_renderQueue = ctx.m_renderQueue;
+	cin.m_tempAlloc = ctx.m_tempAllocator;
+	cin.m_shadowsEnabled = true; // TODO
+	cin.m_stagingMem = m_stagingMem;
+	cin.m_threadHive = m_threadHive;
+	m_clusterBin.bin(cin, ctx.m_clusterBinOut);
+
+	updateLightShadingUniforms(ctx);
 	m_stats.m_lightBinTime = HighRezTimer::getCurrentTime() - m_stats.m_lightBinTime;
 
 	return Error::NONE;
@@ -497,6 +516,40 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 	cmdb->flush();
 
 	return tex;
+}
+
+void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
+{
+	LightingUniforms* blk = static_cast<LightingUniforms*>(m_stagingMem->allocateFrame(
+		sizeof(LightingUniforms), StagingGpuMemoryType::UNIFORM, ctx.m_lightShadingUniformsToken));
+
+	// Start writing
+	blk->m_unprojectionParams = ctx.m_unprojParams;
+
+	blk->m_rendererSizeTimeNear =
+		Vec4(m_width, m_height, HighRezTimer::getCurrentTime(), ctx.m_renderQueue->m_cameraNear);
+
+	blk->m_tileCount = UVec4(m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], m_clusterCount[3]);
+
+	blk->m_cameraPosFar =
+		Vec4(ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz(), ctx.m_renderQueue->m_cameraFar);
+
+	blk->m_clustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
+
+	// Matrices
+	blk->m_viewMat = ctx.m_renderQueue->m_viewMatrix;
+	blk->m_invViewMat = ctx.m_renderQueue->m_viewMatrix.getInverse();
+
+	blk->m_projMat = ctx.m_matrices.m_projectionJitter;
+	blk->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
+
+	blk->m_viewProjMat = ctx.m_matrices.m_viewProjectionJitter;
+	blk->m_invViewProjMat = ctx.m_matrices.m_viewProjectionJitter.getInverse();
+
+	blk->m_prevViewProjMat = ctx.m_prevMatrices.m_viewProjectionJitter;
+
+	blk->m_prevViewProjMatMulInvViewProjMat =
+		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 }
 
 } // end namespace anki

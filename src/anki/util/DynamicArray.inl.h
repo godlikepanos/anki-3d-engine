@@ -38,7 +38,7 @@ void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
 		{
 			for(PtrSize i = 0; i < m_size; ++i)
 			{
-				::new(&newStorage[i]) Value(std::move(m_data[i]));
+				alloc.construct(&newStorage[i], std::move(m_data[i]));
 				m_data[i].~T();
 			}
 
@@ -73,7 +73,7 @@ void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
 
 				for(PtrSize i = 0; i < m_size; ++i)
 				{
-					::new(&newStorage[i]) Value(std::move(m_data[i]));
+					alloc.construct(&newStorage[i], std::move(m_data[i]));
 					m_data[i].~T();
 				}
 
@@ -101,7 +101,7 @@ void DynamicArray<T>::resize(TAllocator alloc, PtrSize newSize, const Value& v)
 		// Fill with new values
 		for(U i = m_size; i < newSize; ++i)
 		{
-			::new(&m_data[i]) Value(v);
+			alloc.construct(&m_data[i], v);
 		}
 
 		m_size = newSize;
@@ -123,7 +123,7 @@ void DynamicArray<T>::resize(TAllocator alloc, PtrSize newSize)
 		// Fill with new values
 		for(U i = m_size; i < newSize; ++i)
 		{
-			::new(&m_data[i]) Value();
+			alloc.construct(&m_data[i]);
 		}
 
 		m_size = newSize;
@@ -167,7 +167,7 @@ typename DynamicArray<T>::Iterator DynamicArray<T>::emplaceAt(TAllocator alloc, 
 		else
 		{
 			// Construct the last element because we will move to it
-			::new(&m_data[oldSize]) Value();
+			alloc.construct(&m_data[oldSize]);
 
 			// Move the elements one place to the right
 			while(elementsToMoveRight--)
@@ -196,7 +196,7 @@ typename DynamicArray<T>::Iterator DynamicArray<T>::emplaceAt(TAllocator alloc, 
 
 	// Construct the new object
 	ANKI_ASSERT(outIdx != MAX_PTR_SIZE);
-	::new(&m_data[outIdx]) Value(std::forward<TArgs>(args)...);
+	alloc.construct(&m_data[outIdx], std::forward<TArgs>(args)...);
 
 	// Increase the size because resizeStorage will not
 	++m_size;

@@ -113,19 +113,19 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	const U threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
 	const U problemSize = ctx.m_renderQueue->m_forwardShadingRenderables.getSize();
 	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
+	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 
 	if(start != end)
 	{
-		const LightShadingResources& rsrc = m_r->getLightShading().getResources();
+		const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 		rgraphCtx.bindTextureAndSampler(
 			0, 0, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getLinearSampler());
 		rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
-		bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
+		bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
 		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 		bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
+		bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
 
 		cmdb->setViewport(0, 0, m_width, m_height);
 		cmdb->setBlendFactors(
@@ -134,7 +134,7 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		cmdb->setDepthWrite(false);
 
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+		m_r->getSceneDrawer().drawRange(Pass::FS,
 			ctx.m_matrices.m_view,
 			ctx.m_matrices.m_viewProjectionJitter,
 			ctx.m_prevMatrices.m_viewProjectionJitter,
@@ -181,7 +181,7 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{
-		pass.newDependency({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::INDIRECT});
+		pass.newDependency({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::INDIRECT_GRAPHICS});
 	}
 }
 

@@ -15,7 +15,6 @@ namespace anki
 // Forward
 class ResourceManager;
 class ConfigSet;
-class ThreadPool;
 class StagingGpuMemoryManager;
 class UiManager;
 
@@ -37,7 +36,7 @@ public:
 
 	~MainRenderer();
 
-	ANKI_USE_RESULT Error init(ThreadPool* threadpool,
+	ANKI_USE_RESULT Error init(ThreadHive* hive,
 		ResourceManager* resources,
 		GrManager* gl,
 		StagingGpuMemoryManager* stagingMem,
@@ -92,6 +91,7 @@ private:
 	{
 	public:
 		const RenderingContext* m_ctx = nullptr;
+		Atomic<U32> m_secondaryTaskId = {0};
 	} m_runCtx;
 
 	void runBlit(RenderPassWorkContext& rgraphCtx);
@@ -109,6 +109,9 @@ private:
 	{
 		// Do nothing. This pass is dummy
 	}
+
+	static void executeSecondaryCallback(
+		void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
 };
 /// @}
 

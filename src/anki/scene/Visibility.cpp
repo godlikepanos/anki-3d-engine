@@ -239,9 +239,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	RenderQueueView& result = m_frcCtx->m_queueViews[taskId];
 	for(U i = 0; i < m_spatialToTestCount; ++i)
 	{
-		const SpatialComponent* spatialC = m_spatialsToTest[i];
+		SpatialComponent* spatialC = m_spatialsToTest[i];
 		ANKI_ASSERT(spatialC);
-		const SceneNode& node = spatialC->getSceneNode();
+		SceneNode& node = spatialC->getSceneNode();
 
 		// Skip if it is the same
 		if(ANKI_UNLIKELY(&testedNode == &node))
@@ -287,7 +287,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			wantNode = true;
 		}
 
-		const DecalComponent* decalc = node.tryGetComponent<DecalComponent>();
+		DecalComponent* decalc = node.tryGetComponent<DecalComponent>();
 		if(decalc && wantsDecals)
 		{
 			wantNode = true;

@@ -152,9 +152,9 @@ public:
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
-	const TextureView* m_diffuseAtlas;
+	TextureView* m_diffuseAtlas;
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
-	const TextureView* m_specularRoughnessAtlas;
+	TextureView* m_specularRoughnessAtlas;
 	Vec4 m_diffuseAtlasUv;
 	Vec4 m_specularRoughnessAtlasUv;
 	F32 m_diffuseAtlasBlendFactor;
@@ -207,6 +207,8 @@ public:
 
 	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;
 	void* m_fillCoverageBufferCallbackUserData = nullptr;
+
+	U countAllRenderables() const;
 };
 
 static_assert(std::is_trivially_destructible<RenderQueue>::value == true, "Should be trivially destructible");

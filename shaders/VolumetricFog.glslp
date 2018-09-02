@@ -16,7 +16,6 @@
 #pragma anki start frag
 #include <shaders/Common.glsl>
 #include <shaders/Functions.glsl>
-#include <shaders/glsl_cpp_common/Clusterer.h>
 
 #define LIGHT_TEX_BINDING 3
 #define LIGHT_UBO_BINDING 0
@@ -24,7 +23,7 @@
 #define LIGHT_SET 0
 #define LIGHT_LIGHTS
 #define LIGHT_COMMON_UNIS
-#include <shaders/ClusterLightCommon.glsl>
+#include <shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) in Vec2 in_uv;
 

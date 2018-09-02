@@ -30,7 +30,6 @@ void main()
 
 #pragma anki start frag
 #include <shaders/Pack.glsl>
-#include <shaders/glsl_cpp_common/Clusterer.h>
 #include <shaders/Functions.glsl>
 
 #define LIGHT_SET 0
@@ -39,7 +38,7 @@ void main()
 #define LIGHT_TEX_BINDING 1
 #define LIGHT_DECALS
 #define LIGHT_COMMON_UNIS
-#include <shaders/ClusterLightCommon.glsl>
+#include <shaders/ClusteredShadingCommon.glsl>
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msDepthRt;
 
