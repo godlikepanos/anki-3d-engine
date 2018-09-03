@@ -13,14 +13,14 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/renderer/MainRenderer.h>
 #include <anki/misc/ConfigSet.h>
-#include <anki/util/ThreadPool.h>
+#include <anki/util/ThreadHive.h>
 
 namespace anki
 {
 
 const U NODE_UPDATE_BATCH = 10;
 
-class UpdateSceneNodesCtx
+class SceneGraph::UpdateSceneNodesCtx
 {
 public:
 	SceneGraph* m_scene = nullptr;
@@ -30,17 +30,6 @@ public:
 
 	Second m_prevUpdateTime;
 	Second m_crntTime;
-};
-
-class UpdateSceneNodesTask : public ThreadPoolTask
-{
-public:
-	UpdateSceneNodesCtx* m_ctx;
-
-	Error operator()(U32 taskId, PtrSize threadsCount)
-	{
-		return m_ctx->m_scene->updateNodes(*m_ctx);
-	}
 };
 
 SceneGraph::SceneGraph()
@@ -65,7 +54,6 @@ SceneGraph::~SceneGraph()
 
 Error SceneGraph::init(AllocAlignedCallback allocCb,
 	void* allocCbData,
-	ThreadPool* threadpool,
 	ThreadHive* threadHive,
 	ResourceManager* resources,
 	Input* input,
@@ -74,7 +62,6 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	const ConfigSet& config)
 {
 	m_globalTimestamp = globalTimestamp;
-	m_threadpool = threadpool;
 	m_threadHive = threadHive;
 	m_resources = resources;
 	m_objectsMarkedForDeletionCount.store(0);
@@ -211,9 +198,6 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		deleteNodesMarkedForDeletion();
 	}
 
-	ThreadPool& threadPool = *m_threadpool;
-	(void)threadPool;
-
 	// Update
 	{
 		ANKI_TRACE_SCOPED_EVENT(SCENE_PHYSICS_UPDATE);
@@ -227,21 +211,29 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 		ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
 
 		// Then the rest
-		Array<UpdateSceneNodesTask, ThreadPool::MAX_THREADS> jobs2;
+		Array<ThreadHiveTask, ThreadHive::MAX_THREADS> tasks;
 		UpdateSceneNodesCtx updateCtx;
 		updateCtx.m_scene = this;
 		updateCtx.m_crntNode = m_nodes.getBegin();
 		updateCtx.m_prevUpdateTime = prevUpdateTime;
 		updateCtx.m_crntTime = crntTime;
 
-		for(U i = 0; i < threadPool.getThreadCount(); i++)
+		for(U i = 0; i < m_threadHive->getThreadCount(); i++)
 		{
-			UpdateSceneNodesTask& job = jobs2[i];
-			job.m_ctx = &updateCtx;
-			threadPool.assignNewTask(i, &job);
+			tasks[i] = ANKI_THREAD_HIVE_TASK(
+				{
+					if(self->m_scene->updateNodes(*self))
+					{
+						ANKI_SCENE_LOGF("Will not recover");
+					}
+				},
+				&updateCtx,
+				nullptr,
+				nullptr);
 		}
 
-		ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
+		m_threadHive->submitTasks(&tasks[0], m_threadHive->getThreadCount());
+		m_threadHive->waitAllTasks();
 	}
 
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime() - m_stats.m_updateTime;

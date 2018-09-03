@@ -52,8 +52,7 @@ public:
 
 	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb,
 		void* allocCbData,
-		ThreadPool* threadpool,
-		ThreadHive* thraedHive,
+		ThreadHive* threadHive,
 		ResourceManager* resources,
 		Input* input,
 		ScriptManager* scriptManager,
@@ -108,11 +107,6 @@ public:
 	const EventManager& getEventManager() const
 	{
 		return m_events;
-	}
-
-	ThreadPool& _getThreadPool()
-	{
-		return *m_threadpool;
 	}
 
 	ThreadHive& getThreadHive()
@@ -238,11 +232,12 @@ anki_internal:
 	}
 
 private:
+	class UpdateSceneNodesCtx;
+
 	const Timestamp* m_globalTimestamp = nullptr;
 	Timestamp m_timestamp = 0; ///< Cached timestamp
 
 	// Sub-systems
-	ThreadPool* m_threadpool = nullptr;
 	ThreadHive* m_threadHive = nullptr;
 	ResourceManager* m_resources = nullptr;
 	GrManager* m_gr = nullptr;

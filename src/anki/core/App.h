@@ -23,7 +23,6 @@ extern android_app* gAndroidApp;
 
 // Forward
 class ConfigSet;
-class ThreadPool;
 class ThreadHive;
 class NativeWindow;
 class Input;
@@ -76,11 +75,6 @@ public:
 	void* getAllocationCallbackData() const
 	{
 		return m_allocCbData;
-	}
-
-	ThreadPool& getThreadPool()
-	{
-		return *m_threadpool;
 	}
 
 	ThreadHive& getThreadHive()
@@ -178,7 +172,6 @@ private:
 	UiImmediateModeBuilderPtr m_statsUi;
 	Bool8 m_displayStats = false;
 	Timestamp m_globalTimestamp = 1;
-	ThreadPool* m_threadpool = nullptr;
 	ThreadHive* m_threadHive = nullptr;
 	String m_settingsDir; ///< The path that holds the configuration
 	String m_cacheDir; ///< This is used as a cache

@@ -41,7 +41,8 @@ private:
 
 /// The callback that defines a ThreadHibe task.
 /// @memberof ThreadHive
-using ThreadHiveTaskCallback = void (*)(void*, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
+using ThreadHiveTaskCallback = void (*)(
+	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
 
 /// Task for the ThreadHive. @memberof ThreadHive
 class ThreadHiveTask
@@ -60,6 +61,16 @@ public:
 	/// tasks.
 	ThreadHiveSemaphore* m_signalSemaphore = nullptr;
 };
+
+/// Initialize a ThreadHiveTask.
+#define ANKI_THREAD_HIVE_TASK(callback_, argument_, waitSemaphore_, signalSemaphore_) \
+	{ \
+		[](void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) { \
+			auto self = static_cast<decltype(argument_)>(ud); \
+			callback_ \
+		}, \
+			argument_, waitSemaphore_, signalSemaphore_ \
+	}
 
 /// A scheduler of small tasks. It takes a number of tasks and schedules them in one of the threads. The tasks can
 /// depend on previously submitted tasks or be completely independent.

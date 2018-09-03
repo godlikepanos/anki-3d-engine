@@ -17,7 +17,6 @@
 #include <anki/renderer/MainRenderer.h>
 #include <anki/util/Logger.h>
 #include <anki/util/ThreadHive.h>
-#include <anki/util/ThreadPool.h>
 
 namespace anki
 {

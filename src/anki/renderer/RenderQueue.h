@@ -55,6 +55,10 @@ public:
 	const void* m_userData;
 	U64 m_mergeKey;
 	F32 m_distanceFromCamera; ///< Don't set this
+
+	RenderableQueueElement()
+	{
+	}
 };
 
 static_assert(
@@ -74,6 +78,10 @@ public:
 
 	UVec2 m_atlasTiles; ///< Renderer internal.
 	F32 m_atlasTileSize; ///< Renderer internal.
+
+	PointLightQueueElement()
+	{
+	}
 
 	Bool hasShadow() const
 	{
@@ -98,6 +106,10 @@ public:
 	RenderQueue* m_shadowRenderQueue;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
+
+	SpotLightQueueElement()
+	{
+	}
 
 	Bool hasShadow() const
 	{
@@ -125,6 +137,10 @@ public:
 	Vec3 m_aabbMax;
 	Array<RenderQueue*, 6> m_renderQueues;
 	U32 m_textureArrayIndex; ///< Renderer internal.
+
+	ReflectionProbeQueueElement()
+	{
+	}
 };
 
 static_assert(
@@ -141,6 +157,10 @@ public:
 	const TextureView* m_textureView;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
+
+	LensFlareQueueElement()
+	{
+	}
 };
 
 static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == true, "Should be trivially destructible");
@@ -163,6 +183,10 @@ public:
 	Vec3 m_obbCenter;
 	Vec3 m_obbExtend;
 	Mat3 m_obbRotation;
+
+	DecalQueueElement()
+	{
+	}
 };
 
 static_assert(std::is_trivially_destructible<DecalQueueElement>::value == true, "Should be trivially destructible");
@@ -176,6 +200,10 @@ class UiQueueElement final
 public:
 	void* m_userData;
 	UiQueueDrawCallback m_drawCallback;
+
+	UiQueueElement()
+	{
+	}
 };
 
 static_assert(std::is_trivially_destructible<UiQueueElement>::value == true, "Should be trivially destructible");

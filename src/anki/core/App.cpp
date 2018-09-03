@@ -9,7 +9,6 @@
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
 #include <anki/util/System.h>
-#include <anki/util/ThreadPool.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/core/Trace.h>
 
@@ -275,7 +274,6 @@ void App::cleanup()
 	m_heapAlloc.deleteInstance(m_resourceFs);
 	m_heapAlloc.deleteInstance(m_physics);
 	m_heapAlloc.deleteInstance(m_stagingMem);
-	m_heapAlloc.deleteInstance(m_threadpool);
 	m_heapAlloc.deleteInstance(m_threadHive);
 	GrManager::deleteInstance(m_gr);
 	m_heapAlloc.deleteInstance(m_input);
@@ -392,7 +390,6 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// ThreadPool
 	//
-	m_threadpool = m_heapAlloc.newInstance<ThreadPool>(config.getNumber("core.mainThreadCount"), true);
 	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(config.getNumber("core.mainThreadCount"), m_heapAlloc, true);
 
 	//
@@ -474,15 +471,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
-	ANKI_CHECK(m_scene->init(m_allocCb,
-		m_allocCbData,
-		m_threadpool,
-		m_threadHive,
-		m_resources,
-		m_input,
-		m_script,
-		&m_globalTimestamp,
-		config));
+	ANKI_CHECK(m_scene->init(
+		m_allocCb, m_allocCbData, m_threadHive, m_resources, m_input, m_script, &m_globalTimestamp, config));
 
 	// Inform the script engine about some subsystems
 	m_script->setRenderer(m_renderer);
