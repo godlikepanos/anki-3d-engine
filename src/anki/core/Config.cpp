@@ -36,6 +36,9 @@ Config::Config()
 
 	newOption("r.motionBlur.maxSamples", 32);
 
+	newOption("r.ssr.maxSteps", 64);
+	newOption("r.ssr.historyBlendFactor", 0.3);
+
 	newOption("r.dbg.enabled", false);
 
 	newOption("r.final.motionBlurSamples", 32);

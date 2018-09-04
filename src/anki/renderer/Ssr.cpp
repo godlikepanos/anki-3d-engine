@@ -36,17 +36,23 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	ANKI_R_LOGI("Initializing SSR pass (%ux%u)", width, height);
 
 	// Create RTs
-	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R16G16B16A16_SFLOAT, "SSR");
-	m_rtDescr.bake();
+	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(width,
+		height,
+		Format::R16G16B16A16_SFLOAT,
+		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		"SSR");
+	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+	m_rt = m_r->createAndClearRenderTarget(texinit);
 
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource("shaders/Ssr.glslp", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
+	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("FB_SIZE", UVec2(width, height));
 	consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
-	consts.add("MAX_STEPS", U32(64));
+	consts.add("MAX_STEPS", U32(cfg.getNumber("r.ssr.maxSteps")));
 	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
+	consts.add("HISTORY_COLOR_BLEND_FACTOR", F32(cfg.getNumber("r.ssr.historyBlendFactor")));
 
 	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
 	mutators.add("VARIANT", 0);
@@ -68,13 +74,13 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 
 	// Create RTs
-	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+	m_runCtx.m_rt = rgraph.importRenderTarget(m_rt, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Create pass
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSR");
 	rpass.setWork(runCallback, this, 0);
 
-	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE});
 	rpass.newDependency({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 

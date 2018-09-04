@@ -34,8 +34,7 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	// Create the miped texture
 	TextureInitInfo texinit = m_r->create2DRenderTargetDescription(
 		m_r->getWidth() / 2, m_r->getHeight() / 2, LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "DownscaleBlur");
-	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
-					  | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE; // TODO remove FB_WRITE
+	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE;
 	if(m_useCompute)
 	{
 		texinit.m_usage |= TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE;

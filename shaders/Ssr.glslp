@@ -15,11 +15,13 @@
 #pragma anki input const UVec2 WORKGROUP_SIZE
 #pragma anki input const U32 MAX_STEPS
 #pragma anki input const U32 LIGHT_BUFFER_MIP_COUNT
+#pragma anki input const F32 HISTORY_COLOR_BLEND_FACTOR
 
 #pragma anki start comp
 #include <shaders/Functions.glsl>
 #include <shaders/Pack.glsl>
 #include <shaders/glsl_cpp_common/Ssr.h>
+#include <shaders/Tonemapping.glsl>
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
@@ -28,7 +30,7 @@ layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_gbufferRt2;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_depthRt;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_lightBufferRt;
 
-layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
+layout(ANKI_IMAGE_BINDING(0, 0), rgba16f) uniform image2D out_img;
 
 layout(ANKI_UBO_BINDING(0, 0), row_major) uniform u_
 {
@@ -188,6 +190,18 @@ void main()
 	else
 	{
 		outColor = Vec4(0.0, 0.0, 0.0, 1.0);
+	}
+
+	// Use the prev color
+	if(HISTORY_COLOR_BLEND_FACTOR > 0.0)
+	{
+		Vec4 v4 = u_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
+		Vec2 oldNdc = v4.xy / v4.w;
+		Vec2 oldUv = saturate(NDC_TO_UV(oldNdc));
+
+		Vec4 prevColor = imageLoad(out_img, ivec2(oldUv * vec2(FB_SIZE)));
+
+		outColor = mix(prevColor, outColor, HISTORY_COLOR_BLEND_FACTOR);
 	}
 
 	// Store the color for the resolve
