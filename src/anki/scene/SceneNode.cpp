@@ -41,7 +41,7 @@ void SceneNode::setMarkedForDeletion()
 	// Mark for deletion only when it's not already marked because we don't want to increase the counter again
 	if(!getMarkedForDeletion())
 	{
-		m_flags.set(Flag::MARKED_FOR_DELETION);
+		m_markedForDeletion = true;
 		m_scene->increaseObjectsMarkedForDeletion();
 	}
 

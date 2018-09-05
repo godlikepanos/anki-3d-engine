@@ -74,10 +74,10 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	if(frc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::OCCLUDERS) && frc.hasCoverageBuffer())
 	{
 		// Gather triangles task
-		ThreadHiveTask fillDepthTask;
-		fillDepthTask.m_callback = FillRasterizerWithCoverageTask::callback;
-		fillDepthTask.m_argument = alloc.newInstance<FillRasterizerWithCoverageTask>(frcCtx);
-		fillDepthTask.m_signalSemaphore = hive.newSemaphore(1);
+		ThreadHiveTask fillDepthTask = ANKI_THREAD_HIVE_TASK({ self->fill(); },
+			alloc.newInstance<FillRasterizerWithCoverageTask>(frcCtx),
+			nullptr,
+			hive.newSemaphore(1));
 
 		hive.submitTasks(&fillDepthTask, 1);
 
@@ -90,22 +90,17 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 		rqueue.m_fillCoverageBufferCallbackUserData = static_cast<void*>(const_cast<FrustumComponent*>(&frc));
 	}
 
-	// Gather visibles from the octree
-	ThreadHiveTask gatherTask;
-	gatherTask.m_callback = GatherVisiblesFromOctreeTask::callback;
-	gatherTask.m_argument = alloc.newInstance<GatherVisiblesFromOctreeTask>(frcCtx);
-	gatherTask.m_signalSemaphore = nullptr; // No need to signal anything because it will spawn new tasks
-	gatherTask.m_waitSemaphore = prepareRasterizerSem;
-
+	// Gather visibles from the octree. No need to signal anything because it will spawn new tasks
+	ThreadHiveTask gatherTask = ANKI_THREAD_HIVE_TASK({ self->gather(hive); },
+		alloc.newInstance<GatherVisiblesFromOctreeTask>(frcCtx),
+		prepareRasterizerSem,
+		nullptr);
 	hive.submitTasks(&gatherTask, 1);
 
 	// Combind results task
-	ThreadHiveTask combineTask;
-	combineTask.m_callback = CombineResultsTask::callback;
-	combineTask.m_argument = alloc.newInstance<CombineResultsTask>(frcCtx);
 	ANKI_ASSERT(frcCtx->m_visTestsSignalSem);
-	combineTask.m_waitSemaphore = frcCtx->m_visTestsSignalSem;
-
+	ThreadHiveTask combineTask = ANKI_THREAD_HIVE_TASK(
+		{ self->combine(); }, alloc.newInstance<CombineResultsTask>(frcCtx), frcCtx->m_visTestsSignalSem, nullptr);
 	hive.submitTasks(&combineTask, 1);
 }
 
@@ -131,7 +126,7 @@ void FillRasterizerWithCoverageTask::fill()
 	m_frcCtx->m_r->fillDepthBuffer(depthBuff);
 }
 
-void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive, ThreadHiveSemaphore& sem)
+void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_OCTREE);
 
@@ -158,22 +153,19 @@ void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive, ThreadHiveSemaphore&
 
 			if(m_spatialCount == m_spatials.getSize())
 			{
-				flush(hive, sem);
+				flush(hive);
 			}
 		});
 
 	// Flush the remaining
-	flush(hive, sem);
+	flush(hive);
 
 	// Fire an additional dummy task to decrease the semaphore to zero
-	ThreadHiveTask task;
-	task.m_callback = dummyCallback;
-	task.m_argument = nullptr;
-	task.m_signalSemaphore = m_frcCtx->m_visTestsSignalSem;
+	ThreadHiveTask task = ANKI_THREAD_HIVE_TASK({}, this, nullptr, m_frcCtx->m_visTestsSignalSem);
 	hive.submitTasks(&task, 1);
 }
 
-void GatherVisiblesFromOctreeTask::flush(ThreadHive& hive, ThreadHiveSemaphore& sem)
+void GatherVisiblesFromOctreeTask::flush(ThreadHive& hive)
 {
 	if(m_spatialCount)
 	{
@@ -187,10 +179,8 @@ void GatherVisiblesFromOctreeTask::flush(ThreadHive& hive, ThreadHiveSemaphore& 
 		m_frcCtx->m_visTestsSignalSem->increaseSemaphore(1);
 
 		// Submit task
-		ThreadHiveTask task;
-		task.m_callback = VisibilityTestTask::callback;
-		task.m_argument = vis;
-		task.m_signalSemaphore = m_frcCtx->m_visTestsSignalSem;
+		ThreadHiveTask task =
+			ANKI_THREAD_HIVE_TASK({ self->test(hive, threadId); }, vis, nullptr, m_frcCtx->m_visTestsSignalSem);
 		hive.submitTasks(&task, 1);
 
 		// Clear count

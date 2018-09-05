@@ -167,14 +167,6 @@ public:
 		ANKI_ASSERT(m_frcCtx);
 	}
 
-	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
-	{
-		FillRasterizerWithCoverageTask& self = *static_cast<FillRasterizerWithCoverageTask*>(ud);
-		self.fill();
-	}
-
-private:
 	void fill();
 };
 static_assert(
@@ -192,25 +184,14 @@ public:
 		ANKI_ASSERT(m_frcCtx);
 	}
 
-	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
-	{
-		GatherVisiblesFromOctreeTask& self = *static_cast<GatherVisiblesFromOctreeTask*>(ud);
-		self.gather(hive, *sem);
-	}
+	void gather(ThreadHive& hive);
 
 private:
 	Array<SpatialComponent*, MAX_SPATIALS_PER_VIS_TEST> m_spatials;
 	U32 m_spatialCount = 0;
 
-	void gather(ThreadHive& hive, ThreadHiveSemaphore& sem);
-
 	/// Submit tasks to test the m_spatials.
-	void flush(ThreadHive& hive, ThreadHiveSemaphore& sem);
-
-	static void dummyCallback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
-	{
-	}
+	void flush(ThreadHive& hive);
 };
 static_assert(
 	std::is_trivially_destructible<GatherVisiblesFromOctreeTask>::value == true, "Should be trivially destructible");
@@ -230,16 +211,9 @@ public:
 		ANKI_ASSERT(m_frcCtx);
 	}
 
-	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
-	{
-		VisibilityTestTask& self = *static_cast<VisibilityTestTask*>(ud);
-		self.test(hive, threadId);
-	}
-
-private:
 	void test(ThreadHive& hive, U32 taskId);
 
+private:
 	ANKI_USE_RESULT Bool testAgainstRasterizer(const CollisionShape& cs, const Aabb& aabb) const
 	{
 		return (m_frcCtx->m_r) ? m_frcCtx->m_r->visibilityTest(cs, aabb) : true;
@@ -259,16 +233,9 @@ public:
 		ANKI_ASSERT(m_frcCtx);
 	}
 
-	/// Thread hive task.
-	static void callback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem)
-	{
-		CombineResultsTask& self = *static_cast<CombineResultsTask*>(ud);
-		self.combine();
-	}
-
-private:
 	void combine();
 
+private:
 	template<typename T>
 	static void combineQueueElements(SceneFrameAllocator<U8>& alloc,
 		WeakArray<TRenderQueueElementStorage<T>> subStorages,

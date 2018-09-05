@@ -59,7 +59,7 @@ public:
 
 	Bool getMarkedForDeletion() const
 	{
-		return m_flags.get(Flag::MARKED_FOR_DELETION);
+		return m_markedForDeletion;
 	}
 
 	void setMarkedForDeletion();
@@ -219,22 +219,15 @@ protected:
 	ResourceManager& getResourceManager();
 
 private:
-	enum class Flag : U8
-	{
-		MARKED_FOR_DELETION = 1 << 0
-	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
-
 	SceneGraph* m_scene = nullptr;
+	U64 m_uuid;
+	String m_name; ///< A unique name
 
 	DynamicArray<SceneComponent*> m_components;
 
-	String m_name; ///< A unique name
-	BitMask<Flag> m_flags;
-
-	U64 m_uuid;
-
 	Timestamp m_maxComponentTimestamp = 0;
+
+	Bool8 m_markedForDeletion = false;
 
 	void cacheImportantComponents();
 };

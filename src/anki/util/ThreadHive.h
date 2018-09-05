@@ -67,6 +67,7 @@ public:
 	{ \
 		[](void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) { \
 			auto self = static_cast<decltype(argument_)>(ud); \
+			(void)self; \
 			callback_ \
 		}, \
 			argument_, waitSemaphore_, signalSemaphore_ \
