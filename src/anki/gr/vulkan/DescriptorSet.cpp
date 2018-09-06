@@ -24,7 +24,7 @@ public:
 };
 
 /// Per thread allocator.
-class DSThreadAllocator : public NonCopyable
+class alignas(ANKI_CACHE_LINE_SIZE) DSThreadAllocator : public NonCopyable
 {
 public:
 	const DSLayoutCacheEntry* m_layoutEntry; ///< Know your father.

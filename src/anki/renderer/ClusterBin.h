@@ -77,12 +77,6 @@ private:
 	void binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx);
 
 	void writeTypedObjectsToGpuBuffers(BinCtx& ctx) const;
-
-	static void writeTypedObjectsToGpuBuffersCallback(
-		void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
-
-	static void binToClustersCallback(
-		void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
 };
 /// @}
 

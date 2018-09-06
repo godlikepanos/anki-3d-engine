@@ -191,4 +191,5 @@
 
 // General config
 #define ANKI_SAFE_ALIGNMENT 16
+#define ANKI_CACHE_LINE_SIZE 64
 /// @}

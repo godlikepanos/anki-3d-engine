@@ -65,3 +65,35 @@ myFunc()
 	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script1));
 	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script1));
 }
+
+ANKI_TEST(Script, LuaBinderThreadsDump)
+{
+	ScriptManager sm;
+	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
+
+	ScriptEnvironmentPtr env;
+	ANKI_TEST_EXPECT_NO_ERR(sm.newScriptEnvironment(env));
+
+	static const char* script = R"(
+num = 123.4
+str = "lala"
+)";
+
+	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script));
+
+	class Callback : public LuaBinderDumpGlobalsCallback
+	{
+	public:
+		void number(CString name, F64 value)
+		{
+			printf("%s = %f\n", name.cstr(), value);
+		}
+
+		void string(CString name, CString value)
+		{
+			printf("%s = %s\n", name.cstr(), value.cstr());
+		}
+	} callback;
+
+	env->dumpGlobals(callback);
+}

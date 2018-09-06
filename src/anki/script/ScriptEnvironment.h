@@ -40,6 +40,11 @@ public:
 		return LuaBinder::evalString(m_thread.m_luaState, str);
 	}
 
+	void dumpGlobals(LuaBinderDumpGlobalsCallback& callback)
+	{
+		LuaBinder::dumpGlobals(m_thread.m_luaState, callback);
+	}
+
 	lua_State& getLuaState()
 	{
 		ANKI_ASSERT(m_thread.m_luaState);

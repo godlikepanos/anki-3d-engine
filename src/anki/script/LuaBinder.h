@@ -127,6 +127,17 @@ private:
 	int m_reference = -1;
 };
 
+/// @memberof LuaBinder
+class LuaBinderDumpGlobalsCallback
+{
+public:
+	virtual void number(CString name, F64 value) = 0;
+
+	virtual void string(CString name, CString value) = 0;
+
+	// virtual void userData(CString name, ) = 0;
+};
+
 /// Lua binder class. A wrapper on top of LUA
 class LuaBinder : public NonCopyable
 {
@@ -202,6 +213,9 @@ public:
 
 	/// Add a new function.
 	static void pushLuaCFunc(lua_State* l, const char* name, lua_CFunction luafunc);
+
+	/// Dump global variables.
+	static void dumpGlobals(lua_State* l, LuaBinderDumpGlobalsCallback& callback);
 
 	/// Get a number from the stack.
 	template<typename TNumber>

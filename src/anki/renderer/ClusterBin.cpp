@@ -108,42 +108,6 @@ void ClusterBin::init(
 	m_clusterEdges.create(m_alloc, m_clusterCounts[0] * m_clusterCounts[1] * (m_clusterCounts[2] + 1) * 4);
 }
 
-void ClusterBin::binToClustersCallback(
-	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore)
-{
-	ANKI_ASSERT(userData);
-
-	ANKI_TRACE_SCOPED_EVENT(R_BIN_TO_CLUSTERS);
-	BinCtx& ctx = *static_cast<BinCtx*>(userData);
-
-	TileCtx tileCtx(ctx.m_in->m_tempAlloc);
-	const U clusterCountZ = ctx.m_bin->m_clusterCounts[2];
-	const U32 avgIndicesPerCluster = ctx.m_bin->m_indexCount / ctx.m_bin->m_totalClusterCount;
-	tileCtx.m_clusterEdgesWSpace.create((clusterCountZ + 1) * 4);
-	tileCtx.m_clusterBoxes.create(clusterCountZ);
-	tileCtx.m_clusterSpheres.create(clusterCountZ);
-	tileCtx.m_indices.create(clusterCountZ * avgIndicesPerCluster);
-	tileCtx.m_pIndices.create(clusterCountZ);
-	tileCtx.m_pCounts.create(clusterCountZ);
-
-	const U tileCount = ctx.m_bin->m_clusterCounts[0] * ctx.m_bin->m_clusterCounts[1];
-	U tileIdx;
-	while((tileIdx = ctx.m_tileIdxToProcess.fetchAdd(1)) < tileCount)
-	{
-		ctx.m_bin->binTile(tileIdx, ctx, tileCtx);
-	}
-}
-
-void ClusterBin::writeTypedObjectsToGpuBuffersCallback(
-	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore)
-{
-	ANKI_ASSERT(userData);
-
-	ANKI_TRACE_SCOPED_EVENT(R_WRITE_LIGHT_BUFFERS);
-	BinCtx& ctx = *static_cast<BinCtx*>(userData);
-	ctx.m_bin->writeTypedObjectsToGpuBuffers(ctx);
-}
-
 void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_BIN_TO_CLUSTERS);
@@ -183,14 +147,45 @@ void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 
 	// Create task for writing GPU buffers
 	Array<ThreadHiveTask, ThreadHive::MAX_THREADS + 1> tasks;
-	tasks[0].m_callback = writeTypedObjectsToGpuBuffersCallback;
-	tasks[0].m_argument = &ctx;
+	tasks[0] = ANKI_THREAD_HIVE_TASK(
+		{
+			ANKI_TRACE_SCOPED_EVENT(R_WRITE_LIGHT_BUFFERS);
+			self->m_bin->writeTypedObjectsToGpuBuffers(*self);
+		},
+		&ctx,
+		nullptr,
+		nullptr);
 
 	// Create tasks for binning
-	for(U threadIdx = 0; threadIdx < in.m_threadHive->getThreadCount(); ++threadIdx)
+	tasks[1] = ANKI_THREAD_HIVE_TASK(
+		{
+			ANKI_TRACE_SCOPED_EVENT(R_BIN_TO_CLUSTERS);
+			BinCtx& ctx = *self;
+
+			TileCtx tileCtx(ctx.m_in->m_tempAlloc);
+			const U clusterCountZ = ctx.m_bin->m_clusterCounts[2];
+			const U32 avgIndicesPerCluster = ctx.m_bin->m_indexCount / ctx.m_bin->m_totalClusterCount;
+			tileCtx.m_clusterEdgesWSpace.create((clusterCountZ + 1) * 4);
+			tileCtx.m_clusterBoxes.create(clusterCountZ);
+			tileCtx.m_clusterSpheres.create(clusterCountZ);
+			tileCtx.m_indices.create(clusterCountZ * avgIndicesPerCluster);
+			tileCtx.m_pIndices.create(clusterCountZ);
+			tileCtx.m_pCounts.create(clusterCountZ);
+
+			const U tileCount = ctx.m_bin->m_clusterCounts[0] * ctx.m_bin->m_clusterCounts[1];
+			U tileIdx;
+			while((tileIdx = ctx.m_tileIdxToProcess.fetchAdd(1)) < tileCount)
+			{
+				ctx.m_bin->binTile(tileIdx, ctx, tileCtx);
+			}
+		},
+		&ctx,
+		nullptr,
+		nullptr);
+
+	for(U threadIdx = 1; threadIdx < in.m_threadHive->getThreadCount(); ++threadIdx)
 	{
-		tasks[threadIdx + 1].m_callback = binToClustersCallback;
-		tasks[threadIdx + 1].m_argument = &ctx;
+		tasks[threadIdx + 1] = tasks[1];
 	}
 
 	// Submit and wait

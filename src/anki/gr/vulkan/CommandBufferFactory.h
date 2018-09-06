@@ -89,7 +89,7 @@ public:
 using MicroCommandBufferPtr = IntrusivePtr<MicroCommandBuffer, MicroCommandBufferPtrDeleter>;
 
 /// Per-thread command buffer allocator.
-class CommandBufferThreadAllocator
+class alignas(ANKI_CACHE_LINE_SIZE) CommandBufferThreadAllocator
 {
 	friend class CommandBufferFactory;
 	friend class MicroCommandBuffer;

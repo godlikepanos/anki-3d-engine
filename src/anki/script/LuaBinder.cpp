@@ -261,4 +261,45 @@ void LuaBinder::destroyLuaThread(LuaThread& luaThread)
 	luaThread.m_reference = -1;
 }
 
+void LuaBinder::dumpGlobals(lua_State* l, LuaBinderDumpGlobalsCallback& callback)
+{
+	ANKI_ASSERT(l);
+
+	lua_pushglobaltable(l);
+	lua_pushnil(l);
+
+	while(lua_next(l, -2) != 0)
+	{
+		// Get type of key and value
+		I keyType = lua_type(l, -2);
+		I valueType = lua_type(l, -1);
+
+		// Only string keys
+		if(keyType != LUA_TSTRING)
+		{
+			lua_pop(l, 1);
+			continue;
+		}
+
+		CString keyString = lua_tostring(l, -2);
+		if(keyString.isEmpty() || keyString.getLength() == 0 || keyString[0] == '_')
+		{
+			lua_pop(l, 1);
+			continue;
+		}
+
+		switch(valueType)
+		{
+		case LUA_TNUMBER:
+			callback.number(keyString, lua_tonumber(l, -1));
+			break;
+		case LUA_TSTRING:
+			callback.string(keyString, lua_tostring(l, -1));
+			break;
+		}
+
+		lua_pop(l, 1);
+	}
+}
+
 } // end namespace anki
