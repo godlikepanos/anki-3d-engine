@@ -11,18 +11,19 @@
 namespace anki
 {
 
-static const char* classnameVec2 = "Vec2";
-
-template<>
-I64 LuaBinder::getWrappedTypeSignature<Vec2>()
+// Type info for Vec2
+static void serializeVec2(LuaUserData& self, void* data, PtrSize& size)
 {
-	return 6804478823655046388;
+	Vec2* obj = self.getData<Vec2>();
+	obj->serialize(data, size);
 }
 
+LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {6804478823655046388, "Vec2", serializeVec2};
+
 template<>
-const char* LuaBinder::getWrappedTypeName<Vec2>()
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec2>()
 {
-	return classnameVec2;
+	return luaUserDataTypeInfoVec2;
 }
 
 /// Pre-wrap constructor for Vec2.
@@ -53,9 +54,10 @@ static inline int pwrapVec2Ctor(lua_State* l)
 	// Create user data
 	size = LuaUserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, classnameVec2);
+	luaL_setmetatable(l, luaUserDataTypeInfoVec2.m_typeName);
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046388);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec2);
 	::new(ud->getData<Vec2>()) Vec2(arg0, arg1);
 
 	return 1;
@@ -85,7 +87,7 @@ static int wrapVec2Dtor(lua_State* l)
 	(void)size;
 
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -112,7 +114,7 @@ static inline int pwrapVec2getX(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -154,7 +156,7 @@ static inline int pwrapVec2getY(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -196,7 +198,7 @@ static inline int pwrapVec2setX(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -242,7 +244,7 @@ static inline int pwrapVec2setY(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -288,7 +290,7 @@ static inline int pwrapVec2setAll(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -340,7 +342,7 @@ static inline int pwrapVec2getAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -389,7 +391,7 @@ static inline int pwrapVec2setAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -441,7 +443,7 @@ static inline int pwrapVec2copy(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -449,7 +451,8 @@ static inline int pwrapVec2copy(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -489,7 +492,7 @@ static inline int pwrapVec2__add(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -497,7 +500,8 @@ static inline int pwrapVec2__add(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -513,7 +517,8 @@ static inline int pwrapVec2__add(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046388);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec2);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
 	return 1;
@@ -545,7 +550,7 @@ static inline int pwrapVec2__sub(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -553,7 +558,8 @@ static inline int pwrapVec2__sub(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -569,7 +575,8 @@ static inline int pwrapVec2__sub(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046388);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec2);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
 	return 1;
@@ -601,7 +608,7 @@ static inline int pwrapVec2__mul(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -609,7 +616,8 @@ static inline int pwrapVec2__mul(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -625,7 +633,8 @@ static inline int pwrapVec2__mul(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046388);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec2);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
 	return 1;
@@ -657,7 +666,7 @@ static inline int pwrapVec2__div(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -665,7 +674,8 @@ static inline int pwrapVec2__div(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -681,7 +691,8 @@ static inline int pwrapVec2__div(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046388);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec2);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
 	return 1;
@@ -713,7 +724,7 @@ static inline int pwrapVec2__eq(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -721,7 +732,8 @@ static inline int pwrapVec2__eq(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -764,7 +776,7 @@ static inline int pwrapVec2getLength(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -806,7 +818,7 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -821,7 +833,8 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec2");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046388);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec2);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
 
 	return 1;
@@ -853,7 +866,7 @@ static inline int pwrapVec2normalize(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -892,7 +905,7 @@ static inline int pwrapVec2dot(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -900,7 +913,8 @@ static inline int pwrapVec2dot(lua_State* l)
 	Vec2* self = ud->getData<Vec2>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud))
 	{
 		return -1;
 	}
@@ -933,8 +947,8 @@ static int wrapVec2dot(lua_State* l)
 /// Wrap class Vec2.
 static inline void wrapVec2(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameVec2);
-	LuaBinder::pushLuaCFuncStaticMethod(l, classnameVec2, "new", wrapVec2Ctor);
+	LuaBinder::createClass(l, luaUserDataTypeInfoVec2.m_typeName);
+	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoVec2.m_typeName, "new", wrapVec2Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec2Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "getX", wrapVec2getX);
 	LuaBinder::pushLuaCFuncMethod(l, "getY", wrapVec2getY);
@@ -956,18 +970,19 @@ static inline void wrapVec2(lua_State* l)
 	lua_settop(l, 0);
 }
 
-static const char* classnameVec3 = "Vec3";
-
-template<>
-I64 LuaBinder::getWrappedTypeSignature<Vec3>()
+// Type info for Vec3
+static void serializeVec3(LuaUserData& self, void* data, PtrSize& size)
 {
-	return 6804478823655046389;
+	Vec3* obj = self.getData<Vec3>();
+	obj->serialize(data, size);
 }
 
+LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {6804478823655046389, "Vec3", serializeVec3};
+
 template<>
-const char* LuaBinder::getWrappedTypeName<Vec3>()
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec3>()
 {
-	return classnameVec3;
+	return luaUserDataTypeInfoVec3;
 }
 
 /// Pre-wrap constructor for Vec3.
@@ -1004,9 +1019,10 @@ static inline int pwrapVec3Ctor(lua_State* l)
 	// Create user data
 	size = LuaUserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, classnameVec3);
+	luaL_setmetatable(l, luaUserDataTypeInfoVec3.m_typeName);
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046389);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
 	::new(ud->getData<Vec3>()) Vec3(arg0, arg1, arg2);
 
 	return 1;
@@ -1036,7 +1052,7 @@ static int wrapVec3Dtor(lua_State* l)
 	(void)size;
 
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1063,7 +1079,7 @@ static inline int pwrapVec3getX(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1105,7 +1121,7 @@ static inline int pwrapVec3getY(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1147,7 +1163,7 @@ static inline int pwrapVec3getZ(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1189,7 +1205,7 @@ static inline int pwrapVec3setX(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1235,7 +1251,7 @@ static inline int pwrapVec3setY(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1281,7 +1297,7 @@ static inline int pwrapVec3setZ(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1327,7 +1343,7 @@ static inline int pwrapVec3setAll(lua_State* l)
 	LuaBinder::checkArgsCount(l, 4);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1385,7 +1401,7 @@ static inline int pwrapVec3getAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1434,7 +1450,7 @@ static inline int pwrapVec3setAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1486,7 +1502,7 @@ static inline int pwrapVec3copy(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1494,7 +1510,8 @@ static inline int pwrapVec3copy(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1534,7 +1551,7 @@ static inline int pwrapVec3__add(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1542,7 +1559,8 @@ static inline int pwrapVec3__add(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1558,7 +1576,8 @@ static inline int pwrapVec3__add(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046389);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
 	return 1;
@@ -1590,7 +1609,7 @@ static inline int pwrapVec3__sub(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1598,7 +1617,8 @@ static inline int pwrapVec3__sub(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1614,7 +1634,8 @@ static inline int pwrapVec3__sub(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046389);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
 	return 1;
@@ -1646,7 +1667,7 @@ static inline int pwrapVec3__mul(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1654,7 +1675,8 @@ static inline int pwrapVec3__mul(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1670,7 +1692,8 @@ static inline int pwrapVec3__mul(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046389);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
 	return 1;
@@ -1702,7 +1725,7 @@ static inline int pwrapVec3__div(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1710,7 +1733,8 @@ static inline int pwrapVec3__div(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1726,7 +1750,8 @@ static inline int pwrapVec3__div(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046389);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
 	return 1;
@@ -1758,7 +1783,7 @@ static inline int pwrapVec3__eq(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1766,7 +1791,8 @@ static inline int pwrapVec3__eq(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1809,7 +1835,7 @@ static inline int pwrapVec3getLength(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1851,7 +1877,7 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1866,7 +1892,8 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec3");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046389);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec3);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
 
 	return 1;
@@ -1898,7 +1925,7 @@ static inline int pwrapVec3normalize(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1937,7 +1964,7 @@ static inline int pwrapVec3dot(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1945,7 +1972,8 @@ static inline int pwrapVec3dot(lua_State* l)
 	Vec3* self = ud->getData<Vec3>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec3, ud))
 	{
 		return -1;
 	}
@@ -1978,8 +2006,8 @@ static int wrapVec3dot(lua_State* l)
 /// Wrap class Vec3.
 static inline void wrapVec3(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameVec3);
-	LuaBinder::pushLuaCFuncStaticMethod(l, classnameVec3, "new", wrapVec3Ctor);
+	LuaBinder::createClass(l, luaUserDataTypeInfoVec3.m_typeName);
+	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoVec3.m_typeName, "new", wrapVec3Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec3Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "getX", wrapVec3getX);
 	LuaBinder::pushLuaCFuncMethod(l, "getY", wrapVec3getY);
@@ -2003,18 +2031,19 @@ static inline void wrapVec3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-static const char* classnameVec4 = "Vec4";
-
-template<>
-I64 LuaBinder::getWrappedTypeSignature<Vec4>()
+// Type info for Vec4
+static void serializeVec4(LuaUserData& self, void* data, PtrSize& size)
 {
-	return 6804478823655046386;
+	Vec4* obj = self.getData<Vec4>();
+	obj->serialize(data, size);
 }
 
+LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {6804478823655046386, "Vec4", serializeVec4};
+
 template<>
-const char* LuaBinder::getWrappedTypeName<Vec4>()
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec4>()
 {
-	return classnameVec4;
+	return luaUserDataTypeInfoVec4;
 }
 
 /// Pre-wrap constructor for Vec4.
@@ -2057,9 +2086,10 @@ static inline int pwrapVec4Ctor(lua_State* l)
 	// Create user data
 	size = LuaUserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, classnameVec4);
+	luaL_setmetatable(l, luaUserDataTypeInfoVec4.m_typeName);
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046386);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
 	::new(ud->getData<Vec4>()) Vec4(arg0, arg1, arg2, arg3);
 
 	return 1;
@@ -2089,7 +2119,7 @@ static int wrapVec4Dtor(lua_State* l)
 	(void)size;
 
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2116,7 +2146,7 @@ static inline int pwrapVec4getX(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2158,7 +2188,7 @@ static inline int pwrapVec4getY(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2200,7 +2230,7 @@ static inline int pwrapVec4getZ(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2242,7 +2272,7 @@ static inline int pwrapVec4getW(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2284,7 +2314,7 @@ static inline int pwrapVec4setX(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2330,7 +2360,7 @@ static inline int pwrapVec4setY(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2376,7 +2406,7 @@ static inline int pwrapVec4setZ(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2422,7 +2452,7 @@ static inline int pwrapVec4setW(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2468,7 +2498,7 @@ static inline int pwrapVec4setAll(lua_State* l)
 	LuaBinder::checkArgsCount(l, 5);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2532,7 +2562,7 @@ static inline int pwrapVec4getAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2581,7 +2611,7 @@ static inline int pwrapVec4setAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2633,7 +2663,7 @@ static inline int pwrapVec4copy(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2641,7 +2671,8 @@ static inline int pwrapVec4copy(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2681,7 +2712,7 @@ static inline int pwrapVec4__add(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2689,7 +2720,8 @@ static inline int pwrapVec4__add(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2705,7 +2737,8 @@ static inline int pwrapVec4__add(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046386);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
 	return 1;
@@ -2737,7 +2770,7 @@ static inline int pwrapVec4__sub(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2745,7 +2778,8 @@ static inline int pwrapVec4__sub(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2761,7 +2795,8 @@ static inline int pwrapVec4__sub(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046386);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
 	return 1;
@@ -2793,7 +2828,7 @@ static inline int pwrapVec4__mul(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2801,7 +2836,8 @@ static inline int pwrapVec4__mul(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2817,7 +2853,8 @@ static inline int pwrapVec4__mul(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046386);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
 	return 1;
@@ -2849,7 +2886,7 @@ static inline int pwrapVec4__div(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2857,7 +2894,8 @@ static inline int pwrapVec4__div(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2873,7 +2911,8 @@ static inline int pwrapVec4__div(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046386);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
 	return 1;
@@ -2905,7 +2944,7 @@ static inline int pwrapVec4__eq(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2913,7 +2952,8 @@ static inline int pwrapVec4__eq(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2956,7 +2996,7 @@ static inline int pwrapVec4getLength(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -2998,7 +3038,7 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -3013,7 +3053,8 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046386);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
 	return 1;
@@ -3045,7 +3086,7 @@ static inline int pwrapVec4normalize(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -3084,7 +3125,7 @@ static inline int pwrapVec4dot(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -3092,7 +3133,8 @@ static inline int pwrapVec4dot(lua_State* l)
 	Vec4* self = ud->getData<Vec4>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -3125,8 +3167,8 @@ static int wrapVec4dot(lua_State* l)
 /// Wrap class Vec4.
 static inline void wrapVec4(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameVec4);
-	LuaBinder::pushLuaCFuncStaticMethod(l, classnameVec4, "new", wrapVec4Ctor);
+	LuaBinder::createClass(l, luaUserDataTypeInfoVec4.m_typeName);
+	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoVec4.m_typeName, "new", wrapVec4Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec4Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "getX", wrapVec4getX);
 	LuaBinder::pushLuaCFuncMethod(l, "getY", wrapVec4getY);
@@ -3152,18 +3194,13 @@ static inline void wrapVec4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-static const char* classnameMat3 = "Mat3";
+// Type info for Mat3
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {6306819796139686981, "Mat3", nullptr};
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<Mat3>()
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()
 {
-	return 6306819796139686981;
-}
-
-template<>
-const char* LuaBinder::getWrappedTypeName<Mat3>()
-{
-	return classnameMat3;
+	return luaUserDataTypeInfoMat3;
 }
 
 /// Pre-wrap constructor for Mat3.
@@ -3181,9 +3218,10 @@ static inline int pwrapMat3Ctor(lua_State* l)
 	// Create user data
 	size = LuaUserData::computeSizeForGarbageCollected<Mat3>();
 	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, classnameMat3);
+	luaL_setmetatable(l, luaUserDataTypeInfoMat3.m_typeName);
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6306819796139686981);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3;
+	ud->initGarbageCollected(&luaUserDataTypeInfoMat3);
 	::new(ud->getData<Mat3>()) Mat3();
 
 	return 1;
@@ -3213,7 +3251,7 @@ static int wrapMat3Dtor(lua_State* l)
 	(void)size;
 
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3, ud))
 	{
 		return -1;
 	}
@@ -3240,7 +3278,7 @@ static inline int pwrapMat3copy(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3, ud))
 	{
 		return -1;
 	}
@@ -3248,7 +3286,8 @@ static inline int pwrapMat3copy(lua_State* l)
 	Mat3* self = ud->getData<Mat3>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Mat3", 6306819796139686981, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3, ud))
 	{
 		return -1;
 	}
@@ -3288,7 +3327,7 @@ static inline int pwrapMat3getAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3, ud))
 	{
 		return -1;
 	}
@@ -3343,7 +3382,7 @@ static inline int pwrapMat3setAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 4);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3, ud))
 	{
 		return -1;
 	}
@@ -3401,7 +3440,7 @@ static inline int pwrapMat3setAll(lua_State* l)
 	LuaBinder::checkArgsCount(l, 10);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3, ud))
 	{
 		return -1;
 	}
@@ -3485,8 +3524,8 @@ static int wrapMat3setAll(lua_State* l)
 /// Wrap class Mat3.
 static inline void wrapMat3(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameMat3);
-	LuaBinder::pushLuaCFuncStaticMethod(l, classnameMat3, "new", wrapMat3Ctor);
+	LuaBinder::createClass(l, luaUserDataTypeInfoMat3.m_typeName);
+	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoMat3.m_typeName, "new", wrapMat3Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapMat3Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapMat3copy);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapMat3getAt);
@@ -3495,18 +3534,13 @@ static inline void wrapMat3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-static const char* classnameMat3x4 = "Mat3x4";
+// Type info for Mat3x4
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {-2654194732934255869, "Mat3x4", nullptr};
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<Mat3x4>()
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3x4>()
 {
-	return -2654194732934255869;
-}
-
-template<>
-const char* LuaBinder::getWrappedTypeName<Mat3x4>()
-{
-	return classnameMat3x4;
+	return luaUserDataTypeInfoMat3x4;
 }
 
 /// Pre-wrap constructor for Mat3x4.
@@ -3524,9 +3558,10 @@ static inline int pwrapMat3x4Ctor(lua_State* l)
 	// Create user data
 	size = LuaUserData::computeSizeForGarbageCollected<Mat3x4>();
 	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, classnameMat3x4);
+	luaL_setmetatable(l, luaUserDataTypeInfoMat3x4.m_typeName);
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(-2654194732934255869);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoMat3x4);
 	::new(ud->getData<Mat3x4>()) Mat3x4();
 
 	return 1;
@@ -3556,7 +3591,7 @@ static int wrapMat3x4Dtor(lua_State* l)
 	(void)size;
 
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3x4, ud))
 	{
 		return -1;
 	}
@@ -3583,7 +3618,7 @@ static inline int pwrapMat3x4copy(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3x4, ud))
 	{
 		return -1;
 	}
@@ -3591,7 +3626,8 @@ static inline int pwrapMat3x4copy(lua_State* l)
 	Mat3x4* self = ud->getData<Mat3x4>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3x4, ud))
 	{
 		return -1;
 	}
@@ -3631,7 +3667,7 @@ static inline int pwrapMat3x4getAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3x4, ud))
 	{
 		return -1;
 	}
@@ -3686,7 +3722,7 @@ static inline int pwrapMat3x4setAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 4);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3x4, ud))
 	{
 		return -1;
 	}
@@ -3744,7 +3780,7 @@ static inline int pwrapMat3x4setAll(lua_State* l)
 	LuaBinder::checkArgsCount(l, 13);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMat3x4, ud))
 	{
 		return -1;
 	}
@@ -3846,8 +3882,8 @@ static int wrapMat3x4setAll(lua_State* l)
 /// Wrap class Mat3x4.
 static inline void wrapMat3x4(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameMat3x4);
-	LuaBinder::pushLuaCFuncStaticMethod(l, classnameMat3x4, "new", wrapMat3x4Ctor);
+	LuaBinder::createClass(l, luaUserDataTypeInfoMat3x4.m_typeName);
+	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoMat3x4.m_typeName, "new", wrapMat3x4Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapMat3x4Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapMat3x4copy);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapMat3x4getAt);
@@ -3856,18 +3892,13 @@ static inline void wrapMat3x4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-static const char* classnameTransform = "Transform";
+// Type info for Transform
+LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {7048620195620777229, "Transform", nullptr};
 
 template<>
-I64 LuaBinder::getWrappedTypeSignature<Transform>()
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Transform>()
 {
-	return 7048620195620777229;
-}
-
-template<>
-const char* LuaBinder::getWrappedTypeName<Transform>()
-{
-	return classnameTransform;
+	return luaUserDataTypeInfoTransform;
 }
 
 /// Pre-wrap constructor for Transform.
@@ -3885,9 +3916,10 @@ static inline int pwrapTransformCtor(lua_State* l)
 	// Create user data
 	size = LuaUserData::computeSizeForGarbageCollected<Transform>();
 	voidp = lua_newuserdata(l, size);
-	luaL_setmetatable(l, classnameTransform);
+	luaL_setmetatable(l, luaUserDataTypeInfoTransform.m_typeName);
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(7048620195620777229);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoTransform;
+	ud->initGarbageCollected(&luaUserDataTypeInfoTransform);
 	::new(ud->getData<Transform>()) Transform();
 
 	return 1;
@@ -3917,7 +3949,7 @@ static int wrapTransformDtor(lua_State* l)
 	(void)size;
 
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTransform, ud))
 	{
 		return -1;
 	}
@@ -3944,7 +3976,7 @@ static inline int pwrapTransformcopy(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTransform, ud))
 	{
 		return -1;
 	}
@@ -3952,7 +3984,8 @@ static inline int pwrapTransformcopy(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Transform", 7048620195620777229, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoTransform;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoTransform, ud))
 	{
 		return -1;
 	}
@@ -3992,7 +4025,7 @@ static inline int pwrapTransformgetOrigin(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTransform, ud))
 	{
 		return -1;
 	}
@@ -4007,7 +4040,8 @@ static inline int pwrapTransformgetOrigin(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Vec4");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(6804478823655046386);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoVec4);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
 
 	return 1;
@@ -4039,7 +4073,7 @@ static inline int pwrapTransformsetOrigin(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTransform, ud))
 	{
 		return -1;
 	}
@@ -4047,7 +4081,8 @@ static inline int pwrapTransformsetOrigin(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
 	{
 		return -1;
 	}
@@ -4087,7 +4122,7 @@ static inline int pwrapTransformgetRotation(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTransform, ud))
 	{
 		return -1;
 	}
@@ -4102,7 +4137,8 @@ static inline int pwrapTransformgetRotation(lua_State* l)
 	voidp = lua_newuserdata(l, size);
 	luaL_setmetatable(l, "Mat3x4");
 	ud = static_cast<LuaUserData*>(voidp);
-	ud->initGarbageCollected(-2654194732934255869);
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
+	ud->initGarbageCollected(&luaUserDataTypeInfoMat3x4);
 	::new(ud->getData<Mat3x4>()) Mat3x4(std::move(ret));
 
 	return 1;
@@ -4134,7 +4170,7 @@ static inline int pwrapTransformsetRotation(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTransform, ud))
 	{
 		return -1;
 	}
@@ -4142,7 +4178,8 @@ static inline int pwrapTransformsetRotation(lua_State* l)
 	Transform* self = ud->getData<Transform>();
 
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud))
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
+	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3x4, ud))
 	{
 		return -1;
 	}
@@ -4182,7 +4219,7 @@ static inline int pwrapTransformgetScale(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTransform, ud))
 	{
 		return -1;
 	}
@@ -4224,7 +4261,7 @@ static inline int pwrapTransformsetScale(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTransform, ud))
 	{
 		return -1;
 	}
@@ -4260,8 +4297,8 @@ static int wrapTransformsetScale(lua_State* l)
 /// Wrap class Transform.
 static inline void wrapTransform(lua_State* l)
 {
-	LuaBinder::createClass(l, classnameTransform);
-	LuaBinder::pushLuaCFuncStaticMethod(l, classnameTransform, "new", wrapTransformCtor);
+	LuaBinder::createClass(l, luaUserDataTypeInfoTransform.m_typeName);
+	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoTransform.m_typeName, "new", wrapTransformCtor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapTransformDtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapTransformcopy);
 	LuaBinder::pushLuaCFuncMethod(l, "getOrigin", wrapTransformgetOrigin);

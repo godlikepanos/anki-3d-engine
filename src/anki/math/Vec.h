@@ -2239,6 +2239,23 @@ public:
 		return out;
 	}
 
+	/// Serialize the structure.
+	void serialize(void* data, PtrSize& size) const
+	{
+		size = sizeof(*this);
+		if(data)
+		{
+			memcpy(data, this, sizeof(*this));
+		}
+	}
+
+	/// De-serialize the structure.
+	void deserialize(const void* data)
+	{
+		ANKI_ASSERT(data);
+		memcpy(this, data, sizeof(*this));
+	}
+
 	template<typename TAlloc>
 	String toString(TAlloc alloc) const
 	{

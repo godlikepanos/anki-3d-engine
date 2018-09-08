@@ -185,7 +185,7 @@ Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
 	return err;
 }
 
-Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature, LuaUserData*& out)
+Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo, LuaUserData*& out)
 {
 	Error err = Error::NONE;
 
@@ -193,10 +193,10 @@ Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const char* typeName,
 	if(p != nullptr)
 	{
 		out = reinterpret_cast<LuaUserData*>(p);
-		if(out->getSig() == typeSignature)
+		if(out->getSig() == typeInfo.m_signature)
 		{
 			// Check using a LUA method again
-			ANKI_ASSERT(luaL_testudata(l, stackIdx, typeName) != nullptr
+			ANKI_ASSERT(luaL_testudata(l, stackIdx, typeInfo.m_typeName) != nullptr
 						&& "ANKI type check passes but LUA's type check failed");
 		}
 		else
@@ -213,7 +213,7 @@ Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const char* typeName,
 
 	if(err)
 	{
-		lua_pushfstring(l, "Userdata of %s expected. Got %s", typeName, luaL_typename(l, stackIdx));
+		lua_pushfstring(l, "Userdata of %s expected. Got %s", typeInfo.m_typeName, luaL_typename(l, stackIdx));
 	}
 
 	return err;
@@ -296,6 +296,33 @@ void LuaBinder::dumpGlobals(lua_State* l, LuaBinderDumpGlobalsCallback& callback
 		case LUA_TSTRING:
 			callback.string(keyString, lua_tostring(l, -1));
 			break;
+		case LUA_TUSERDATA:
+		{
+			LuaUserData* ud = static_cast<LuaUserData*>(lua_touserdata(l, -1));
+			ANKI_ASSERT(ud);
+			LuaUserDataSerializeCallback cb = ud->getDataTypeInfo().m_serializeCallback;
+			if(cb)
+			{
+				Array<U8, 256> buff;
+				PtrSize dumpSize;
+				cb(*ud, nullptr, dumpSize);
+				if(dumpSize <= buff.getSize())
+				{
+					cb(*ud, &buff[0], dumpSize);
+					callback.userData(keyString, ud->getDataTypeInfo(), &buff[0], dumpSize);
+				}
+				else
+				{
+					ANKI_ASSERT(!"TODO");
+				}
+			}
+			else
+			{
+				ANKI_SCRIPT_LOGW("Can't serialize variable %s. No callback provided", keyString.cstr());
+			}
+
+			break;
+		}
 		}
 
 		lua_pop(l, 1);

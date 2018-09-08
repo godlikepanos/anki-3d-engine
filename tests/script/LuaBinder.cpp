@@ -49,7 +49,7 @@ ANKI_TEST(Script, LuaBinderThreads)
 
 	static const char* script = R"(
 vec = Vec4.new(0, 0, 0, 0)
-	
+
 function myFunc()
 	vec:setX(vec:getX() + 1)
 	logi(string.format("The number is %f", vec:getX()))
@@ -77,6 +77,7 @@ ANKI_TEST(Script, LuaBinderThreadsDump)
 	static const char* script = R"(
 num = 123.4
 str = "lala"
+vec = Vec3.new(1, 2, 3)
 )";
 
 	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script));
@@ -92,6 +93,16 @@ str = "lala"
 		void string(CString name, CString value)
 		{
 			printf("%s = %s\n", name.cstr(), value.cstr());
+		}
+
+		void userData(CString name, const LuaUserDataTypeInfo& typeInfo, const void* value, PtrSize valueSize)
+		{
+			if(LuaUserData::getDataTypeInfoFor<Vec3>().m_signature == typeInfo.m_signature)
+			{
+				Vec3 v;
+				v.deserialize(value);
+				printf("%s = %f %f %f\n", name.cstr(), v.x(), v.y(), v.z());
+			}
 		}
 	} callback;
 

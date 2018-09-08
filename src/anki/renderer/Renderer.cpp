@@ -492,8 +492,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 
 					cmdb->bindShaderProgram(variant->getProgram());
 
-					Vec4 clearColorUni(&clearVal.m_colorf[0]);
-					cmdb->setPushConstants(&clearColorUni, sizeof(clearColorUni));
+					cmdb->setPushConstants(&clearVal.m_colorf[0], sizeof(clearVal.m_colorf));
 
 					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
 					cmdb->bindImage(0, 0, view);

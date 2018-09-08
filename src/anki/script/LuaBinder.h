@@ -19,8 +19,23 @@
 namespace anki
 {
 
+// Forward
+class LuaUserData;
+
 /// @addtogroup script
 /// @{
+
+/// @memberof LuaUserData
+using LuaUserDataSerializeCallback = void (*)(LuaUserData& self, void* data, PtrSize& size);
+
+/// @memberof LuaUserData
+class LuaUserDataTypeInfo
+{
+public:
+	I64 m_signature;
+	const char* m_typeName;
+	LuaUserDataSerializeCallback m_serializeCallback;
+};
 
 /// LUA userdata.
 class LuaUserData
@@ -34,15 +49,19 @@ public:
 		return m_sig;
 	}
 
-	void initGarbageCollected(I64 sig)
+	void initGarbageCollected(const LuaUserDataTypeInfo* info)
 	{
-		m_sig = sig;
+		ANKI_ASSERT(info);
+		m_sig = info->m_signature;
+		m_info = info;
 		m_addressOrGarbageCollect = GC_MASK;
 	}
 
-	void initPointed(I64 sig, void* ptrToObject)
+	void initPointed(const LuaUserDataTypeInfo* info, void* ptrToObject)
 	{
-		m_sig = sig;
+		ANKI_ASSERT(info);
+		m_sig = info->m_signature;
+		m_info = info;
 		U64 addr = ptrToNumber(ptrToObject);
 		ANKI_ASSERT((addr & GC_MASK) == 0 && "Address too high, cannot encode a flag");
 		m_addressOrGarbageCollect = addr;
@@ -58,6 +77,7 @@ public:
 	T* getData()
 	{
 		ANKI_ASSERT(m_addressOrGarbageCollect != 0);
+		ANKI_ASSERT(getDataTypeInfoFor<T>().m_signature == m_sig);
 		T* out = nullptr;
 		if(isGarbageCollected())
 		{
@@ -84,12 +104,23 @@ public:
 		return getAlignedRoundUp(alignof(T), sizeof(LuaUserData)) + sizeof(T);
 	}
 
+	const LuaUserDataTypeInfo& getDataTypeInfo() const
+	{
+		ANKI_ASSERT(m_info);
+		return *m_info;
+	}
+
+	template<typename TWrapedType>
+	static const LuaUserDataTypeInfo& getDataTypeInfoFor();
+
 private:
 	static constexpr U64 GC_MASK = U64(1) << U64(63);
 
 	I64 m_sig = 0; ///< Signature to identify the user data.
 
 	U64 m_addressOrGarbageCollect = 0; ///< Encodes an address or a flag if it's for garbage collection.
+
+	const LuaUserDataTypeInfo* m_info = nullptr;
 };
 
 /// An instance of the original lua state with its own state.
@@ -135,7 +166,7 @@ public:
 
 	virtual void string(CString name, CString value) = 0;
 
-	// virtual void userData(CString name, ) = 0;
+	virtual void userData(CString name, const LuaUserDataTypeInfo& typeInfo, const void* value, PtrSize valueSize) = 0;
 };
 
 /// Lua binder class. A wrapper on top of LUA
@@ -168,8 +199,8 @@ public:
 	{
 		void* ptr = lua_newuserdata(state, sizeof(LuaUserData));
 		LuaUserData* ud = static_cast<LuaUserData*>(ptr);
-		ud->initPointed(getWrappedTypeSignature<T>(), y);
-		luaL_setmetatable(state, getWrappedTypeName<T>());
+		ud->initPointed(&LuaUserData::getDataTypeInfoFor<T>(), y);
+		luaL_setmetatable(state, LuaUserData::getDataTypeInfoFor<T>().m_typeName);
 		lua_setglobal(state, name.cstr());
 	}
 
@@ -178,8 +209,8 @@ public:
 	{
 		void* ptr = lua_newuserdata(state, sizeof(LuaUserData));
 		LuaUserData* ud = static_cast<LuaUserData*>(ptr);
-		ud->initPointed(getWrappedTypeSignature<T>(), y);
-		luaL_setmetatable(state, getWrappedTypeName<T>());
+		ud->initPointed(&LuaUserData::getDataTypeInfoFor<T>(), y);
+		luaL_setmetatable(state, LuaUserData::getDataTypeInfoFor<T>().m_typeName);
 	}
 
 	/// Evaluate a string
@@ -237,19 +268,13 @@ public:
 	/// The function uses the type signature to validate the type and not the
 	/// typeName. That is supposed to be faster.
 	static ANKI_USE_RESULT Error checkUserData(
-		lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature, LuaUserData*& out);
+		lua_State* l, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo, LuaUserData*& out);
 
 	/// Allocate memory.
 	static void* luaAlloc(lua_State* l, size_t size, U32 alignment);
 
 	/// Free memory.
 	static void luaFree(lua_State* l, void* ptr);
-
-	template<typename TWrapedType>
-	static I64 getWrappedTypeSignature();
-
-	template<typename TWrapedType>
-	static const char* getWrappedTypeName();
 
 private:
 	ScriptAllocator m_alloc;

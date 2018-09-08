@@ -12,7 +12,7 @@
 namespace anki {]]></head>
 
 	<classes>
-		<class name="Vec2">
+		<class name="Vec2" serialize="true">
 			<constructor>
 				<args>
 					<arg>F32</arg>
@@ -111,7 +111,7 @@ namespace anki {]]></head>
 				</method>
 			</methods>
 		</class>
-		<class name="Vec3">
+		<class name="Vec3" serialize="true">
 			<constructor>
 				<args>
 					<arg>F32</arg>
@@ -223,7 +223,7 @@ namespace anki {]]></head>
 
 			</methods>
 		</class>
-		<class name="Vec4">
+		<class name="Vec4" serialize="true">
 			<constructor>
 				<args>
 					<arg>F32</arg>
