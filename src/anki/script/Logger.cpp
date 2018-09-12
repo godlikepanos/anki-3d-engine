@@ -20,11 +20,14 @@ static inline int pwraplogi(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 1, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 1, arg0)))
 	{
 		return -1;
 	}
@@ -58,11 +61,14 @@ static inline int pwraploge(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 1, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 1, arg0)))
 	{
 		return -1;
 	}
@@ -96,11 +102,14 @@ static inline int pwraplogw(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 1, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 1, arg0)))
 	{
 		return -1;
 	}

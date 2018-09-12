@@ -80,7 +80,10 @@ static inline int pwrapWeakArraySceneNodePtrgetSize(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoWeakArraySceneNodePtr, ud))
@@ -122,7 +125,10 @@ static inline int pwrapWeakArraySceneNodePtrgetAt(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoWeakArraySceneNodePtr, ud))
@@ -134,7 +140,7 @@ static inline int pwrapWeakArraySceneNodePtrgetAt(lua_State* l)
 
 	// Pop arguments
 	U arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -199,7 +205,10 @@ static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
@@ -211,7 +220,7 @@ static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
 	{
 		return -1;
 	}
@@ -248,7 +257,10 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
@@ -294,7 +306,10 @@ static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
@@ -306,7 +321,7 @@ static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3x4, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoMat3x4, ud)))
 	{
 		return -1;
 	}
@@ -343,7 +358,10 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
@@ -389,7 +407,10 @@ static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
@@ -401,7 +422,7 @@ static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -435,7 +456,10 @@ static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
@@ -477,7 +501,10 @@ static inline int pwrapMoveComponentsetLocalTransform(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
@@ -489,7 +516,7 @@ static inline int pwrapMoveComponentsetLocalTransform(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoTransform;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoTransform, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoTransform, ud)))
 	{
 		return -1;
 	}
@@ -526,7 +553,10 @@ static inline int pwrapMoveComponentgetLocalTransform(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMoveComponent, ud))
@@ -596,7 +626,10 @@ static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -608,7 +641,7 @@ static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
 	{
 		return -1;
 	}
@@ -645,7 +678,10 @@ static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -691,7 +727,10 @@ static inline int pwrapLightComponentsetRadius(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -703,7 +742,7 @@ static inline int pwrapLightComponentsetRadius(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -737,7 +776,10 @@ static inline int pwrapLightComponentgetRadius(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -779,7 +821,10 @@ static inline int pwrapLightComponentsetDistance(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -791,7 +836,7 @@ static inline int pwrapLightComponentsetDistance(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -825,7 +870,10 @@ static inline int pwrapLightComponentgetDistance(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -867,7 +915,10 @@ static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -879,7 +930,7 @@ static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -913,7 +964,10 @@ static inline int pwrapLightComponentgetInnerAngle(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -955,7 +1009,10 @@ static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -967,7 +1024,7 @@ static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -1001,7 +1058,10 @@ static inline int pwrapLightComponentgetOuterAngle(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -1043,7 +1103,10 @@ static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -1055,7 +1118,7 @@ static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
 
 	// Pop arguments
 	Bool arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -1089,7 +1152,10 @@ static inline int pwrapLightComponentgetShadowEnabled(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightComponent, ud))
@@ -1159,7 +1225,10 @@ static inline int pwrapDecalComponentsetDiffuseDecal(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 4);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDecalComponent, ud))
@@ -1171,19 +1240,19 @@ static inline int pwrapDecalComponentsetDiffuseDecal(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
 	{
 		return -1;
 	}
 
 	F32 arg2;
-	if(LuaBinder::checkNumber(l, 4, arg2))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 4, arg2)))
 	{
 		return -1;
 	}
@@ -1226,7 +1295,10 @@ static inline int pwrapDecalComponentsetSpecularRoughnessDecal(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 4);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDecalComponent, ud))
@@ -1238,19 +1310,19 @@ static inline int pwrapDecalComponentsetSpecularRoughnessDecal(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
 	{
 		return -1;
 	}
 
 	F32 arg2;
-	if(LuaBinder::checkNumber(l, 4, arg2))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 4, arg2)))
 	{
 		return -1;
 	}
@@ -1293,7 +1365,10 @@ static inline int pwrapDecalComponentupdateShape(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 4);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDecalComponent, ud))
@@ -1305,19 +1380,19 @@ static inline int pwrapDecalComponentupdateShape(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
 	{
 		return -1;
 	}
 
 	F32 arg2;
-	if(LuaBinder::checkNumber(l, 4, arg2))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 4, arg2)))
 	{
 		return -1;
 	}
@@ -1370,7 +1445,10 @@ static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLensFlareComponent, ud))
@@ -1382,7 +1460,7 @@ static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec2;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec2, ud)))
 	{
 		return -1;
 	}
@@ -1419,7 +1497,10 @@ static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLensFlareComponent, ud))
@@ -1431,7 +1512,7 @@ static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
 	{
 		return -1;
 	}
@@ -1486,7 +1567,10 @@ static inline int pwrapTriggerComponentgetContactSceneNodes(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTriggerComponent, ud))
@@ -1551,7 +1635,10 @@ static inline int pwrapSceneNodegetName(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
@@ -1593,7 +1680,10 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
@@ -1605,7 +1695,7 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoSceneNode, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoSceneNode, ud)))
 	{
 		return -1;
 	}
@@ -1642,7 +1732,10 @@ static inline int pwrapSceneNodesetMarkedForDeletion(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
@@ -1681,7 +1774,10 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
@@ -1733,7 +1829,10 @@ static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
@@ -1785,7 +1884,10 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
@@ -1837,7 +1939,10 @@ static inline int pwrapSceneNodegetDecalComponent(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
@@ -1889,7 +1994,10 @@ static inline int pwrapSceneNodegetTriggerComponent(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
@@ -1965,7 +2073,10 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoModelNode, ud))
@@ -2028,7 +2139,10 @@ static inline int pwrapPerspectiveCameraNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoPerspectiveCameraNode, ud))
@@ -2074,7 +2188,10 @@ static inline int pwrapPerspectiveCameraNodesetAll(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 5);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 5)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoPerspectiveCameraNode, ud))
@@ -2086,25 +2203,25 @@ static inline int pwrapPerspectiveCameraNodesetAll(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
 	{
 		return -1;
 	}
 
 	F32 arg2;
-	if(LuaBinder::checkNumber(l, 4, arg2))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 4, arg2)))
 	{
 		return -1;
 	}
 
 	F32 arg3;
-	if(LuaBinder::checkNumber(l, 5, arg3))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 5, arg3)))
 	{
 		return -1;
 	}
@@ -2156,7 +2273,10 @@ static inline int pwrapPointLightNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoPointLightNode, ud))
@@ -2202,7 +2322,10 @@ static inline int pwrapPointLightNodeloadLensFlare(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoPointLightNode, ud))
@@ -2214,7 +2337,7 @@ static inline int pwrapPointLightNodeloadLensFlare(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -2275,7 +2398,10 @@ static inline int pwrapSpotLightNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSpotLightNode, ud))
@@ -2338,7 +2464,10 @@ static inline int pwrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoStaticCollisionNode, ud))
@@ -2401,7 +2530,10 @@ static inline int pwrapParticleEmitterNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoParticleEmitterNode, ud))
@@ -2464,7 +2596,10 @@ static inline int pwrapReflectionProbeNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoReflectionProbeNode, ud))
@@ -2527,7 +2662,10 @@ static inline int pwrapReflectionProxyNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoReflectionProxyNode, ud))
@@ -2590,7 +2728,10 @@ static inline int pwrapOccluderNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoOccluderNode, ud))
@@ -2653,7 +2794,10 @@ static inline int pwrapDecalNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDecalNode, ud))
@@ -2716,7 +2860,10 @@ static inline int pwrapTriggerNodegetSceneNodeBase(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoTriggerNode, ud))
@@ -2779,7 +2926,10 @@ static inline int pwrapSceneGraphnewPerspectiveCameraNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -2791,7 +2941,7 @@ static inline int pwrapSceneGraphnewPerspectiveCameraNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -2838,7 +2988,10 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 3);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -2850,13 +3003,13 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
 	{
 		return -1;
 	}
@@ -2903,7 +3056,10 @@ static inline int pwrapSceneGraphnewPointLightNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -2915,7 +3071,7 @@ static inline int pwrapSceneGraphnewPointLightNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -2962,7 +3118,10 @@ static inline int pwrapSceneGraphnewSpotLightNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -2974,7 +3133,7 @@ static inline int pwrapSceneGraphnewSpotLightNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -3021,7 +3180,10 @@ static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 4);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -3033,19 +3195,19 @@ static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
 	{
 		return -1;
 	}
 
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoTransform;
-	if(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoTransform, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoTransform, ud)))
 	{
 		return -1;
 	}
@@ -3095,7 +3257,10 @@ static inline int pwrapSceneGraphnewParticleEmitterNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 3);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -3107,13 +3272,13 @@ static inline int pwrapSceneGraphnewParticleEmitterNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
 	{
 		return -1;
 	}
@@ -3160,7 +3325,10 @@ static inline int pwrapSceneGraphnewReflectionProbeNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 4);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -3172,13 +3340,13 @@ static inline int pwrapSceneGraphnewReflectionProbeNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 3, luaUserDataTypeInfoVec4, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 3, luaUserDataTypeInfoVec4, ud)))
 	{
 		return -1;
 	}
@@ -3187,7 +3355,7 @@ static inline int pwrapSceneGraphnewReflectionProbeNode(lua_State* l)
 	const Vec4& arg1(*iarg1);
 
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoVec4, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoVec4, ud)))
 	{
 		return -1;
 	}
@@ -3237,7 +3405,10 @@ static inline int pwrapSceneGraphnewReflectionProxyNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 3);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -3249,13 +3420,13 @@ static inline int pwrapSceneGraphnewReflectionProxyNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
 	{
 		return -1;
 	}
@@ -3302,7 +3473,10 @@ static inline int pwrapSceneGraphnewOccluderNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 3);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -3314,13 +3488,13 @@ static inline int pwrapSceneGraphnewOccluderNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
 	{
 		return -1;
 	}
@@ -3367,7 +3541,10 @@ static inline int pwrapSceneGraphnewDecalNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -3379,7 +3556,7 @@ static inline int pwrapSceneGraphnewDecalNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -3426,7 +3603,10 @@ static inline int pwrapSceneGraphnewTriggerNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 3);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -3438,13 +3618,13 @@ static inline int pwrapSceneGraphnewTriggerNode(lua_State* l)
 
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
 	{
 		return -1;
 	}
@@ -3491,7 +3671,10 @@ static inline int pwrapSceneGraphsetActiveCameraNode(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
@@ -3503,7 +3686,7 @@ static inline int pwrapSceneGraphsetActiveCameraNode(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoSceneNode, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoSceneNode, ud)))
 	{
 		return -1;
 	}
@@ -3568,7 +3751,10 @@ static inline int pwrapEventgetAssociatedSceneNodes(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoEvent, ud))
@@ -3633,7 +3819,10 @@ static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightEvent, ud))
@@ -3645,7 +3834,7 @@ static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 
 	// Pop arguments
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
-	if(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
 	{
 		return -1;
 	}
@@ -3682,7 +3871,10 @@ static inline int pwrapLightEventsetFrequency(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 3);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoLightEvent, ud))
@@ -3694,13 +3886,13 @@ static inline int pwrapLightEventsetFrequency(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
 	{
 		return -1;
 	}
@@ -3752,7 +3944,10 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 4);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 4)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoEventManager, ud))
@@ -3764,19 +3959,19 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
 
 	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
 	{
 		return -1;
 	}
 
 	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	if(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoSceneNode, ud))
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 4, luaUserDataTypeInfoSceneNode, ud)))
 	{
 		return -1;
 	}
@@ -3834,7 +4029,10 @@ static inline int pwrapgetSceneGraph(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 0);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
+	{
+		return -1;
+	}
 
 	// Call the function
 	SceneGraph* ret = getSceneGraph(l);
@@ -3878,7 +4076,10 @@ static inline int pwrapgetEventManager(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 0);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
+	{
+		return -1;
+	}
 
 	// Call the function
 	EventManager* ret = getEventManager(l);

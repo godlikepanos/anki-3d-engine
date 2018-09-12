@@ -230,9 +230,6 @@ public:
 	/// For debugging purposes
 	static void stackDump(lua_State* l);
 
-	/// Make sure that the arguments match the argsCount number
-	static void checkArgsCount(lua_State* l, I argsCount);
-
 	/// Create a new LUA class
 	static void createClass(lua_State* l, const char* className);
 
@@ -247,6 +244,9 @@ public:
 
 	/// Dump global variables.
 	static void dumpGlobals(lua_State* l, LuaBinderDumpGlobalsCallback& callback);
+
+	/// Make sure that the arguments match the argsCount number
+	static ANKI_USE_RESULT Error checkArgsCount(lua_State* l, I argsCount);
 
 	/// Get a number from the stack.
 	template<typename TNumber>

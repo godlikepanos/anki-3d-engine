@@ -107,15 +107,6 @@ Error LuaBinder::evalString(lua_State* state, const CString& str)
 	return err;
 }
 
-void LuaBinder::checkArgsCount(lua_State* l, I argsCount)
-{
-	I actualArgsCount = lua_gettop(l);
-	if(argsCount != actualArgsCount)
-	{
-		luaL_error(l, "Expecting %d arguments, got %d", argsCount, actualArgsCount);
-	}
-}
-
 void LuaBinder::createClass(lua_State* l, const char* className)
 {
 	lua_newtable(l); // push new table
@@ -217,6 +208,19 @@ Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataType
 	}
 
 	return err;
+}
+
+Error LuaBinder::checkArgsCount(lua_State* l, I argsCount)
+{
+	const I actualArgsCount = lua_gettop(l);
+
+	if(argsCount != actualArgsCount)
+	{
+		lua_pushfstring(l, "Expecting %d arguments, got %d", argsCount, actualArgsCount);
+		return Error::USER_DATA;
+	}
+
+	return Error::NONE;
 }
 
 void* LuaBinder::luaAlloc(lua_State* l, size_t size, U32 alignment)

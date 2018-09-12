@@ -160,7 +160,7 @@ def arg(arg_txt, stack_index, index):
 
 	if type_is_bool(type) or type_is_number(type):
 		wglue("%s arg%d;" % (type, index))
-		wglue("if(LuaBinder::checkNumber(l, %d, arg%d))" % (stack_index, index))
+		wglue("if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, %d, arg%d)))" % (stack_index, index))
 		wglue("{")
 		ident(1)
 		wglue("return -1;")
@@ -168,7 +168,7 @@ def arg(arg_txt, stack_index, index):
 		wglue("}")
 	elif type == "char" or type == "CString":
 		wglue("const char* arg%d;" % index)
-		wglue("if(LuaBinder::checkString(l, %d, arg%d))" % (stack_index, index))
+		wglue("if(ANKI_UNLIKELY(LuaBinder::checkString(l, %d, arg%d)))" % (stack_index, index))
 		wglue("{")
 		ident(1)
 		wglue("return -1;")
@@ -176,7 +176,7 @@ def arg(arg_txt, stack_index, index):
 		wglue("}")
 	else:
 		wglue("extern LuaUserDataTypeInfo luaUserDataTypeInfo%s;" % type)
-		wglue("if(LuaBinder::checkUserData(l, %d, luaUserDataTypeInfo%s, ud))" % (stack_index, type))
+		wglue("if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, %d, luaUserDataTypeInfo%s, ud)))" % (stack_index, type))
 		wglue("{")
 		ident(1)
 		wglue("return -1;")
@@ -216,18 +216,32 @@ def args(args_el, stack_index):
 
 	return args_str
 
+def count_args(args_el):
+	""" Count the number of arguments """
+
+	if args_el is None:
+		return 0
+
+	count = 0
+	for arg_el in args_el.iter("arg"):
+		count += 1
+
+	return count
+
 def check_args(args_el, bias):
 	""" Check number of args. Call that first because it throws error """
 
-	if args_el is None:
-		wglue("LuaBinder::checkArgsCount(l, %d);" % bias)
+	if args_el is not None:
+		count = bias + count_args(args_el)
 	else:
-		count = 0
-		for arg_el in args_el.iter("arg"):
-			count += 1
+		count = bias
 
-		wglue("LuaBinder::checkArgsCount(l, %d);" % (bias + count))
-
+	wglue("if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, %d)))" % count)
+	wglue("{")
+	ident(1)
+	wglue("return -1;")
+	ident(-1)
+	wglue("}")
 	wglue("")
 
 def get_meth_alias(meth_el):
@@ -403,11 +417,11 @@ def static_method(class_name, meth_el):
 	wglue("}")
 	wglue("")
 
-def constructor(constr_el, class_name):
+def constructor(constr_el, class_name, constructor_idx):
 	""" Handle constructor """
 
 	wglue("/// Pre-wrap constructor for %s." % (class_name))
-	wglue("static inline int pwrap%sCtor(lua_State* l)" % class_name)
+	wglue("static inline int pwrap%sCtor%d(lua_State* l)" % (class_name, constructor_idx))
 	wglue("{")
 	ident(1)
 	write_local_vars()
@@ -435,12 +449,53 @@ def constructor(constr_el, class_name):
 	wglue("}")
 	wglue("")
 
-	# Write the actual function
-	wglue("/// Wrap constructor for %s." % class_name)
+def constructors(constructors_el, class_name):
+	""" Wrap all constructors """
+
+	idx = 0
+	func_names_and_arg_counts = []
+
+	# Create the pre-wrap C functions
+	for constructor_el in constructors_el.iter("constructor"):
+		arg_count = count_args(constructor_el.find("args"))
+
+		# Iterate all arg counts and make sure there are no duplicates
+		for i in range(idx):
+			if func_names_and_arg_counts[i][1] == arg_count:
+				raise Exception("Every constructor overload should have a unique arg count. class: %s" % class_name)
+
+		constructor(constructor_el, class_name, idx)
+		func_names_and_arg_counts.append(["pwrap%sCtor%d" % (class_name, idx), arg_count])
+		idx += 1
+
+	if idx == 0:
+		raise Exception("Found no <constructor>")
+
+	# Create the landing function
+	wglue("/// Wrap constructors for %s." % class_name)
 	wglue("static int wrap%sCtor(lua_State* l)" % class_name)
 	wglue("{")
 	ident(1)
-	wglue("int res = pwrap%sCtor(l);" % class_name)
+	if idx == 1:
+		wglue("int res = pwrap%sCtor0(l);" % class_name)
+	else:
+		wglue("// Chose the right overload")
+		wglue("const int argCount = lua_gettop(l);")
+		wglue("int res = 0;")
+		wglue("switch(argCount)")
+		wglue("{")
+		for name_and_arg_count in func_names_and_arg_counts:
+			func_name = name_and_arg_count[0]
+			arg_count = name_and_arg_count[1]
+			wglue("case %d:" % arg_count)
+			wglue("res = %s(l); break;" % func_name)
+
+		wglue("default:")
+		wglue("lua_pushfstring(l, \"Wrong overloaded new. Wrong number of arguments: %d\", argCount);")
+		wglue("res = -1;")
+		wglue("}")
+	wglue("")
+
 	wglue("if(res >= 0)")
 	wglue("{")
 	ident(1)
@@ -461,10 +516,11 @@ def destructor(class_name):
 	wglue("static int wrap%sDtor(lua_State* l)" % class_name)
 	wglue("{")
 	ident(1)
-	write_local_vars();
+	write_local_vars()
 
-	wglue("LuaBinder::checkArgsCount(l, 1);")
-	wglue("if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfo%s, ud))" % class_name)
+	check_args(None, 1)
+
+	wglue("if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfo%s, ud)))" % class_name)
 	wglue("{")
 	ident(1)
 	wglue("return -1;")
@@ -529,10 +585,10 @@ def class_(class_el):
 
 	# Constructor declarations
 	has_constructor = False
-	constructor_el = class_el.find("constructor")
-	if constructor_el is not None:
-		constructor(constructor_el, class_name)
+	constructors_el = class_el.find("constructors")
+	if constructors_el is not None:
 		has_constructor = True
+		constructors(constructors_el, class_name)
 
 	# Destructor declarations
 	if has_constructor:
@@ -707,4 +763,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-

@@ -41,7 +41,10 @@ static inline int pwrapDbggetEnabled(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDbg, ud))
@@ -83,7 +86,10 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 2);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDbg, ud))
@@ -95,7 +101,7 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 
 	// Pop arguments
 	Bool arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0))
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;
 	}
@@ -147,7 +153,10 @@ static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 1);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
 
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMainRenderer, ud))
@@ -197,7 +206,10 @@ static inline int pwrapgetMainRenderer(lua_State* l)
 	PtrSize size;
 	(void)size;
 
-	LuaBinder::checkArgsCount(l, 0);
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 0)))
+	{
+		return -1;
+	}
 
 	// Call the function
 	MainRenderer* ret = getMainRenderer(l);
