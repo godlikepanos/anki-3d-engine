@@ -40,9 +40,14 @@ public:
 		return LuaBinder::evalString(m_thread.m_luaState, str);
 	}
 
-	void dumpGlobals(LuaBinderDumpGlobalsCallback& callback)
+	void serializeGlobals(LuaBinderSerializeGlobalsCallback& callback)
 	{
-		LuaBinder::dumpGlobals(m_thread.m_luaState, callback);
+		LuaBinder::serializeGlobals(m_thread.m_luaState, callback);
+	}
+
+	void deserializeGlobals(const void* data, PtrSize dataSize)
+	{
+		LuaBinder::deserializeGlobals(m_thread.m_luaState, data, dataSize);
 	}
 
 	lua_State& getLuaState()

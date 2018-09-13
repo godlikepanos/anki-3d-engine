@@ -11,6 +11,7 @@
 #include <anki/util/Allocator.h>
 #include <anki/util/String.h>
 #include <anki/util/Functions.h>
+#include <anki/util/HashMap.h>
 #include <lua.hpp>
 #ifndef ANKI_LUA_HPP
 #	error "Wrong LUA header included"
@@ -29,12 +30,17 @@ class LuaUserData;
 using LuaUserDataSerializeCallback = void (*)(LuaUserData& self, void* data, PtrSize& size);
 
 /// @memberof LuaUserData
+using LuaUserDataDeserializeCallback = void (*)(const void* data, LuaUserData& self);
+
+/// @memberof LuaUserData
 class LuaUserDataTypeInfo
 {
 public:
 	I64 m_signature;
 	const char* m_typeName;
+	PtrSize m_structureSize;
 	LuaUserDataSerializeCallback m_serializeCallback;
+	LuaUserDataDeserializeCallback m_deserializeCallback;
 };
 
 /// LUA userdata.
@@ -159,14 +165,10 @@ private:
 };
 
 /// @memberof LuaBinder
-class LuaBinderDumpGlobalsCallback
+class LuaBinderSerializeGlobalsCallback
 {
 public:
-	virtual void number(CString name, F64 value) = 0;
-
-	virtual void string(CString name, CString value) = 0;
-
-	virtual void userData(CString name, const LuaUserDataTypeInfo& typeInfo, const void* value, PtrSize valueSize) = 0;
+	virtual void write(const void* data, PtrSize dataSize) = 0;
 };
 
 /// Lua binder class. A wrapper on top of LUA
@@ -231,7 +233,7 @@ public:
 	static void stackDump(lua_State* l);
 
 	/// Create a new LUA class
-	static void createClass(lua_State* l, const char* className);
+	static void createClass(lua_State* l, const LuaUserDataTypeInfo* typeInfo);
 
 	/// Add new function in a class that it's already in the stack
 	static void pushLuaCFuncMethod(lua_State* l, const char* name, lua_CFunction luafunc);
@@ -243,7 +245,10 @@ public:
 	static void pushLuaCFunc(lua_State* l, const char* name, lua_CFunction luafunc);
 
 	/// Dump global variables.
-	static void dumpGlobals(lua_State* l, LuaBinderDumpGlobalsCallback& callback);
+	static void serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback& callback);
+
+	/// Deserialize global variables.
+	static void deserializeGlobals(lua_State* l, const void* data, PtrSize dataSize);
 
 	/// Make sure that the arguments match the argsCount number
 	static ANKI_USE_RESULT Error checkArgsCount(lua_State* l, I argsCount);
@@ -280,6 +285,7 @@ private:
 	ScriptAllocator m_alloc;
 	lua_State* m_l = nullptr;
 	void* m_parent = nullptr; ///< Point to the ScriptManager
+	HashMap<I64, const LuaUserDataTypeInfo*> m_userDataSigToDataInfo;
 
 	static void* luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrSize nsize);
 

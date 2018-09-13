@@ -23,6 +23,7 @@ LuaBinder::LuaBinder()
 LuaBinder::~LuaBinder()
 {
 	lua_close(m_l);
+	m_userDataSigToDataInfo.destroy(m_alloc);
 
 	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0 && "Leaking memory");
 }
@@ -107,16 +108,24 @@ Error LuaBinder::evalString(lua_State* state, const CString& str)
 	return err;
 }
 
-void LuaBinder::createClass(lua_State* l, const char* className)
+void LuaBinder::createClass(lua_State* l, const LuaUserDataTypeInfo* typeInfo)
 {
+	ANKI_ASSERT(typeInfo);
 	lua_newtable(l); // push new table
-	lua_setglobal(l, className); // pop and make global
-	luaL_newmetatable(l, className); // push
+	lua_setglobal(l, typeInfo->m_typeName); // pop and make global
+	luaL_newmetatable(l, typeInfo->m_typeName); // push
 	lua_pushstring(l, "__index"); // push
 	lua_pushvalue(l, -2); // pushes copy of the metatable
 	lua_settable(l, -3); // pop*2: metatable.__index = metatable
 
 	// After all these the metatable is in the top of tha stack
+
+	// Now, store the typeInfo
+	void* ud;
+	lua_getallocf(l, &ud);
+	ANKI_ASSERT(ud);
+	LuaBinder& binder = *static_cast<LuaBinder*>(ud);
+	binder.m_userDataSigToDataInfo.emplace(binder.m_alloc, typeInfo->m_signature, typeInfo);
 }
 
 void LuaBinder::pushLuaCFuncMethod(lua_State* l, const char* name, lua_CFunction luafunc)
@@ -265,7 +274,7 @@ void LuaBinder::destroyLuaThread(LuaThread& luaThread)
 	luaThread.m_reference = -1;
 }
 
-void LuaBinder::dumpGlobals(lua_State* l, LuaBinderDumpGlobalsCallback& callback)
+void LuaBinder::serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback& callback)
 {
 	ANKI_ASSERT(l);
 
@@ -295,11 +304,35 @@ void LuaBinder::dumpGlobals(lua_State* l, LuaBinderDumpGlobalsCallback& callback
 		switch(valueType)
 		{
 		case LUA_TNUMBER:
-			callback.number(keyString, lua_tonumber(l, -1));
+		{
+			// Write name
+			callback.write(keyString.cstr(), keyString.getLength() + 1);
+
+			// Write type
+			U32 type = LUA_TNUMBER;
+			callback.write(&type, sizeof(type));
+
+			// Write value
+			F64 val = lua_tonumber(l, -1);
+			callback.write(&val, sizeof(val));
+
 			break;
+		}
 		case LUA_TSTRING:
-			callback.string(keyString, lua_tostring(l, -1));
+		{
+			// Write name
+			callback.write(keyString.cstr(), keyString.getLength() + 1);
+
+			// Write type
+			U32 type = LUA_TSTRING;
+			callback.write(&type, sizeof(type));
+
+			// Write str len
+			CString val = lua_tostring(l, -1);
+			callback.write(val.cstr(), val.getLength() + 1);
+
 			break;
+		}
 		case LUA_TUSERDATA:
 		{
 			LuaUserData* ud = static_cast<LuaUserData*>(lua_touserdata(l, -1));
@@ -313,12 +346,26 @@ void LuaBinder::dumpGlobals(lua_State* l, LuaBinderDumpGlobalsCallback& callback
 				if(dumpSize <= buff.getSize())
 				{
 					cb(*ud, &buff[0], dumpSize);
-					callback.userData(keyString, ud->getDataTypeInfo(), &buff[0], dumpSize);
 				}
 				else
 				{
 					ANKI_ASSERT(!"TODO");
 				}
+
+				// Write name
+				callback.write(keyString.cstr(), keyString.getLength() + 1);
+
+				// Write type
+				U32 type = LUA_TUSERDATA;
+				callback.write(&type, sizeof(type));
+
+				// Write sig
+				callback.write(&ud->getDataTypeInfo().m_signature, sizeof(ud->getDataTypeInfo().m_signature));
+
+				// Write data
+				U32 size = dumpSize;
+				callback.write(&size, sizeof(size));
+				callback.write(&buff[0], dumpSize);
 			}
 			else
 			{
@@ -330,6 +377,78 @@ void LuaBinder::dumpGlobals(lua_State* l, LuaBinderDumpGlobalsCallback& callback
 		}
 
 		lua_pop(l, 1);
+	}
+}
+
+void LuaBinder::deserializeGlobals(lua_State* l, const void* data, PtrSize dataSize)
+{
+	ANKI_ASSERT(dataSize > 0 && data);
+	const U8* ptr = static_cast<const U8*>(data);
+	const U8* end = ptr + dataSize;
+
+	while(ptr < end)
+	{
+		// Get name
+		CString name = reinterpret_cast<const char*>(ptr);
+		U32 len = name.getLength();
+		ANKI_ASSERT(len > 0);
+		ptr += len + 1;
+
+		// Get type
+		I type = *reinterpret_cast<const U32*>(ptr);
+		ptr += sizeof(U32);
+
+		switch(type)
+		{
+		case LUA_TNUMBER:
+		{
+			const F64 val = *reinterpret_cast<const F64*>(ptr);
+			ptr += sizeof(F64);
+			lua_pushnumber(l, val);
+			lua_setglobal(l, name.cstr());
+			break;
+		}
+		case LUA_TSTRING:
+		{
+			CString val = reinterpret_cast<const char*>(ptr);
+			const U len = val.getLength();
+			ptr += len + 1;
+			ANKI_ASSERT(len > 0);
+			lua_pushstring(l, val.cstr());
+			lua_setglobal(l, name.cstr());
+			break;
+		}
+		case LUA_TUSERDATA:
+		{
+			// Get sig
+			const I64 sig = *reinterpret_cast<const I64*>(ptr);
+			ptr += sizeof(sig);
+
+			// Get input data size
+			const U32 dataSize = *reinterpret_cast<const U32*>(ptr);
+			ptr += sizeof(dataSize);
+
+			// Get the type info
+			void* ud;
+			lua_getallocf(l, &ud);
+			ANKI_ASSERT(ud);
+			LuaBinder& binder = *static_cast<LuaBinder*>(ud);
+			auto it = binder.m_userDataSigToDataInfo.find(sig);
+			ANKI_ASSERT(it != binder.m_userDataSigToDataInfo.getEnd());
+			const LuaUserDataTypeInfo* typeInfo = *it;
+
+			// Create user data
+			LuaUserData* userData = static_cast<LuaUserData*>(lua_newuserdata(l, typeInfo->m_structureSize));
+			userData->initGarbageCollected(typeInfo);
+			ANKI_ASSERT(typeInfo->m_deserializeCallback);
+			typeInfo->m_deserializeCallback(ptr, *userData);
+			ptr += dataSize;
+			luaL_setmetatable(l, typeInfo->m_typeName);
+			lua_setglobal(l, name.cstr());
+
+			break;
+		}
+		}
 	}
 }
 

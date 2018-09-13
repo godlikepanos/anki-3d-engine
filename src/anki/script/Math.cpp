@@ -11,14 +11,24 @@
 namespace anki
 {
 
-// Type info for Vec2
+/// Serialize Vec2
 static void serializeVec2(LuaUserData& self, void* data, PtrSize& size)
 {
 	Vec2* obj = self.getData<Vec2>();
 	obj->serialize(data, size);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {6804478823655046388, "Vec2", serializeVec2};
+/// De-serialize Vec2
+static void deserializeVec2(const void* data, LuaUserData& self)
+{
+	ANKI_ASSERT(data);
+	Vec2* obj = self.getData<Vec2>();
+	::new(obj) Vec2();
+	obj->deserialize(data);
+}
+
+LuaUserDataTypeInfo luaUserDataTypeInfoVec2 = {
+	6804478823655046388, "Vec2", LuaUserData::computeSizeForGarbageCollected<Vec2>(), serializeVec2, deserializeVec2};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec2>()
@@ -1047,7 +1057,7 @@ static int wrapVec2dot(lua_State* l)
 /// Wrap class Vec2.
 static inline void wrapVec2(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoVec2.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoVec2);
 	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoVec2.m_typeName, "new", wrapVec2Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec2Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "getX", wrapVec2getX);
@@ -1070,14 +1080,24 @@ static inline void wrapVec2(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Type info for Vec3
+/// Serialize Vec3
 static void serializeVec3(LuaUserData& self, void* data, PtrSize& size)
 {
 	Vec3* obj = self.getData<Vec3>();
 	obj->serialize(data, size);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {6804478823655046389, "Vec3", serializeVec3};
+/// De-serialize Vec3
+static void deserializeVec3(const void* data, LuaUserData& self)
+{
+	ANKI_ASSERT(data);
+	Vec3* obj = self.getData<Vec3>();
+	::new(obj) Vec3();
+	obj->deserialize(data);
+}
+
+LuaUserDataTypeInfo luaUserDataTypeInfoVec3 = {
+	6804478823655046389, "Vec3", LuaUserData::computeSizeForGarbageCollected<Vec3>(), serializeVec3, deserializeVec3};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec3>()
@@ -2249,7 +2269,7 @@ static int wrapVec3dot(lua_State* l)
 /// Wrap class Vec3.
 static inline void wrapVec3(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoVec3.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoVec3);
 	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoVec3.m_typeName, "new", wrapVec3Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec3Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "getX", wrapVec3getX);
@@ -2274,14 +2294,24 @@ static inline void wrapVec3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Type info for Vec4
+/// Serialize Vec4
 static void serializeVec4(LuaUserData& self, void* data, PtrSize& size)
 {
 	Vec4* obj = self.getData<Vec4>();
 	obj->serialize(data, size);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {6804478823655046386, "Vec4", serializeVec4};
+/// De-serialize Vec4
+static void deserializeVec4(const void* data, LuaUserData& self)
+{
+	ANKI_ASSERT(data);
+	Vec4* obj = self.getData<Vec4>();
+	::new(obj) Vec4();
+	obj->deserialize(data);
+}
+
+LuaUserDataTypeInfo luaUserDataTypeInfoVec4 = {
+	6804478823655046386, "Vec4", LuaUserData::computeSizeForGarbageCollected<Vec4>(), serializeVec4, deserializeVec4};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Vec4>()
@@ -3559,7 +3589,7 @@ static int wrapVec4dot(lua_State* l)
 /// Wrap class Vec4.
 static inline void wrapVec4(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoVec4.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoVec4);
 	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoVec4.m_typeName, "new", wrapVec4Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapVec4Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "getX", wrapVec4getX);
@@ -3586,8 +3616,8 @@ static inline void wrapVec4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Type info for Mat3
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {6306819796139686981, "Mat3", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {
+	6306819796139686981, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()
@@ -3984,7 +4014,7 @@ static int wrapMat3setAll(lua_State* l)
 /// Wrap class Mat3.
 static inline void wrapMat3(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoMat3.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoMat3);
 	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoMat3.m_typeName, "new", wrapMat3Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapMat3Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapMat3copy);
@@ -3994,8 +4024,8 @@ static inline void wrapMat3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Type info for Mat3x4
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {-2654194732934255869, "Mat3x4", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3x4 = {
+	-2654194732934255869, "Mat3x4", LuaUserData::computeSizeForGarbageCollected<Mat3x4>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3x4>()
@@ -4410,7 +4440,7 @@ static int wrapMat3x4setAll(lua_State* l)
 /// Wrap class Mat3x4.
 static inline void wrapMat3x4(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoMat3x4.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoMat3x4);
 	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoMat3x4.m_typeName, "new", wrapMat3x4Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapMat3x4Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapMat3x4copy);
@@ -4420,8 +4450,8 @@ static inline void wrapMat3x4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Type info for Transform
-LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {7048620195620777229, "Transform", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoTransform = {
+	7048620195620777229, "Transform", LuaUserData::computeSizeForGarbageCollected<Transform>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Transform>()
@@ -4920,7 +4950,7 @@ static int wrapTransformsetScale(lua_State* l)
 /// Wrap class Transform.
 static inline void wrapTransform(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoTransform.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoTransform);
 	LuaBinder::pushLuaCFuncStaticMethod(l, luaUserDataTypeInfoTransform.m_typeName, "new", wrapTransformCtor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapTransformDtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapTransformcopy);

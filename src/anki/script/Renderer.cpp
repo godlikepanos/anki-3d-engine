@@ -22,8 +22,8 @@ static MainRenderer* getMainRenderer(lua_State* l)
 	return &scriptManager->getMainRenderer();
 }
 
-// Type info for Dbg
-LuaUserDataTypeInfo luaUserDataTypeInfoDbg = {-2784798555522127122, "Dbg", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoDbg = {
+	-2784798555522127122, "Dbg", LuaUserData::computeSizeForGarbageCollected<Dbg>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Dbg>()
@@ -128,14 +128,14 @@ static int wrapDbgsetEnabled(lua_State* l)
 /// Wrap class Dbg.
 static inline void wrapDbg(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoDbg.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoDbg);
 	LuaBinder::pushLuaCFuncMethod(l, "getEnabled", wrapDbggetEnabled);
 	LuaBinder::pushLuaCFuncMethod(l, "setEnabled", wrapDbgsetEnabled);
 	lua_settop(l, 0);
 }
 
-// Type info for MainRenderer
-LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {919289102518575326, "MainRenderer", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {
+	919289102518575326, "MainRenderer", LuaUserData::computeSizeForGarbageCollected<MainRenderer>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MainRenderer>()
@@ -191,7 +191,7 @@ static int wrapMainRenderergetAspectRatio(lua_State* l)
 /// Wrap class MainRenderer.
 static inline void wrapMainRenderer(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoMainRenderer.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoMainRenderer);
 	LuaBinder::pushLuaCFuncMethod(l, "getAspectRatio", wrapMainRenderergetAspectRatio);
 	lua_settop(l, 0);
 }

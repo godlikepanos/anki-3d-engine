@@ -66,7 +66,7 @@ myFunc()
 	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script1));
 }
 
-ANKI_TEST(Script, LuaBinderThreadsDump)
+ANKI_TEST(Script, LuaBinderSerialize)
 {
 	ScriptManager sm;
 	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
@@ -82,29 +82,30 @@ vec = Vec3.new(1, 2, 3)
 
 	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script));
 
-	class Callback : public LuaBinderDumpGlobalsCallback
+	class Callback : public LuaBinderSerializeGlobalsCallback
 	{
 	public:
-		void number(CString name, F64 value)
-		{
-			printf("%s = %f\n", name.cstr(), value);
-		}
+		Array<U8, 1024> m_buff;
+		U32 m_offset = 0;
 
-		void string(CString name, CString value)
+		void write(const void* data, PtrSize dataSize)
 		{
-			printf("%s = %s\n", name.cstr(), value.cstr());
-		}
-
-		void userData(CString name, const LuaUserDataTypeInfo& typeInfo, const void* value, PtrSize valueSize)
-		{
-			if(LuaUserData::getDataTypeInfoFor<Vec3>().m_signature == typeInfo.m_signature)
-			{
-				Vec3 v;
-				v.deserialize(value);
-				printf("%s = %f %f %f\n", name.cstr(), v.x(), v.y(), v.z());
-			}
+			memcpy(&m_buff[m_offset], data, dataSize);
+			m_offset += dataSize;
 		}
 	} callback;
 
-	env->dumpGlobals(callback);
+	env->serializeGlobals(callback);
+	env.reset(nullptr);
+	ANKI_TEST_EXPECT_NO_ERR(sm.newScriptEnvironment(env));
+
+	env->deserializeGlobals(&callback.m_buff[0], callback.m_offset);
+
+	static const char* script2 = R"(
+print(num)
+print(str)
+print(vec:getX(), vec:getY(), vec:getZ())
+)";
+
+	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script2));
 }

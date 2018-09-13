@@ -548,13 +548,13 @@ def class_(class_el):
 
 	class_name = class_el.get("name")
 
-	wglue("// Type info for %s" % class_name)
-
 	# Write serializer
 	serialize = class_el.get("serialize") is not None and class_el.get("serialize") == "true"
 	if serialize:
+		# Serialize
 		serialize_cb_name = "serialize%s" % class_name
-		wglue("static void %s(LuaUserData& self, void* data, PtrSize& size)" % (serialize_cb_name))
+		wglue("/// Serialize %s" % class_name)
+		wglue("static void %s(LuaUserData& self, void* data, PtrSize& size)" % serialize_cb_name)
 		wglue("{")
 		ident(1)
 		wglue("%s* obj = self.getData<%s>();" % (class_name, class_name))
@@ -562,13 +562,29 @@ def class_(class_el):
 		ident(-1)
 		wglue("}")
 		wglue("")
+
+		# Deserialize
+		deserialize_cb_name = "deserialize%s" % class_name
+		wglue("/// De-serialize %s" % class_name)
+		wglue("static void %s(const void* data, LuaUserData& self)" % deserialize_cb_name)
+		wglue("{")
+		ident(1)
+		wglue("ANKI_ASSERT(data);")
+		wglue("%s* obj = self.getData<%s>();" % (class_name, class_name))
+		wglue("::new(obj) %s();" % class_name)
+		wglue("obj->deserialize(data);")
+		ident(-1)
+		wglue("}")
+		wglue("")
 	else:
 		serialize_cb_name = "nullptr"
+		deserialize_cb_name = "nullptr"
 
 	# Write the type info
 	wglue("LuaUserDataTypeInfo luaUserDataTypeInfo%s = {" % class_name)
 	ident(1)
-	wglue("%d, \"%s\", %s" % (type_sig(class_name), class_name, serialize_cb_name))
+	wglue("%d, \"%s\", LuaUserData::computeSizeForGarbageCollected<%s>(), %s, %s"
+			% (type_sig(class_name), class_name, class_name, serialize_cb_name, deserialize_cb_name))
 	ident(-1)
 	wglue("};")
 	wglue("")
@@ -616,7 +632,7 @@ def class_(class_el):
 	wglue("static inline void wrap%s(lua_State* l)" % class_name)
 	wglue("{")
 	ident(1)
-	wglue("LuaBinder::createClass(l, luaUserDataTypeInfo%s.m_typeName);" % class_name)
+	wglue("LuaBinder::createClass(l, &luaUserDataTypeInfo%s);" % class_name)
 
 	# Register constructor
 	if has_constructor:

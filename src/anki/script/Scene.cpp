@@ -61,8 +61,11 @@ static EventManager* getEventManager(lua_State* l)
 
 using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 
-// Type info for WeakArraySceneNodePtr
-LuaUserDataTypeInfo luaUserDataTypeInfoWeakArraySceneNodePtr = {4158963409681942864, "WeakArraySceneNodePtr", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoWeakArraySceneNodePtr = {4158963409681942864,
+	"WeakArraySceneNodePtr",
+	LuaUserData::computeSizeForGarbageCollected<WeakArraySceneNodePtr>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<WeakArraySceneNodePtr>()
@@ -180,14 +183,17 @@ static int wrapWeakArraySceneNodePtrgetAt(lua_State* l)
 /// Wrap class WeakArraySceneNodePtr.
 static inline void wrapWeakArraySceneNodePtr(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoWeakArraySceneNodePtr.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoWeakArraySceneNodePtr);
 	LuaBinder::pushLuaCFuncMethod(l, "getSize", wrapWeakArraySceneNodePtrgetSize);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapWeakArraySceneNodePtrgetAt);
 	lua_settop(l, 0);
 }
 
-// Type info for MoveComponent
-LuaUserDataTypeInfo luaUserDataTypeInfoMoveComponent = {2038493110845313445, "MoveComponent", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMoveComponent = {2038493110845313445,
+	"MoveComponent",
+	LuaUserData::computeSizeForGarbageCollected<MoveComponent>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MoveComponent>()
@@ -595,7 +601,7 @@ static int wrapMoveComponentgetLocalTransform(lua_State* l)
 /// Wrap class MoveComponent.
 static inline void wrapMoveComponent(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoMoveComponent.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoMoveComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "setLocalOrigin", wrapMoveComponentsetLocalOrigin);
 	LuaBinder::pushLuaCFuncMethod(l, "getLocalOrigin", wrapMoveComponentgetLocalOrigin);
 	LuaBinder::pushLuaCFuncMethod(l, "setLocalRotation", wrapMoveComponentsetLocalRotation);
@@ -607,8 +613,11 @@ static inline void wrapMoveComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Type info for LightComponent
-LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {7940823622056993903, "LightComponent", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoLightComponent = {7940823622056993903,
+	"LightComponent",
+	LuaUserData::computeSizeForGarbageCollected<LightComponent>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightComponent>()
@@ -1190,7 +1199,7 @@ static int wrapLightComponentgetShadowEnabled(lua_State* l)
 /// Wrap class LightComponent.
 static inline void wrapLightComponent(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoLightComponent.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoLightComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "setDiffuseColor", wrapLightComponentsetDiffuseColor);
 	LuaBinder::pushLuaCFuncMethod(l, "getDiffuseColor", wrapLightComponentgetDiffuseColor);
 	LuaBinder::pushLuaCFuncMethod(l, "setRadius", wrapLightComponentsetRadius);
@@ -1206,8 +1215,11 @@ static inline void wrapLightComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Type info for DecalComponent
-LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {-1979693900066114370, "DecalComponent", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoDecalComponent = {-1979693900066114370,
+	"DecalComponent",
+	LuaUserData::computeSizeForGarbageCollected<DecalComponent>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<DecalComponent>()
@@ -1419,15 +1431,18 @@ static int wrapDecalComponentupdateShape(lua_State* l)
 /// Wrap class DecalComponent.
 static inline void wrapDecalComponent(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoDecalComponent.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoDecalComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "setDiffuseDecal", wrapDecalComponentsetDiffuseDecal);
 	LuaBinder::pushLuaCFuncMethod(l, "setSpecularRoughnessDecal", wrapDecalComponentsetSpecularRoughnessDecal);
 	LuaBinder::pushLuaCFuncMethod(l, "updateShape", wrapDecalComponentupdateShape);
 	lua_settop(l, 0);
 }
 
-// Type info for LensFlareComponent
-LuaUserDataTypeInfo luaUserDataTypeInfoLensFlareComponent = {-2019248835133422777, "LensFlareComponent", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoLensFlareComponent = {-2019248835133422777,
+	"LensFlareComponent",
+	LuaUserData::computeSizeForGarbageCollected<LensFlareComponent>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LensFlareComponent>()
@@ -1542,14 +1557,17 @@ static int wrapLensFlareComponentsetColorMultiplier(lua_State* l)
 /// Wrap class LensFlareComponent.
 static inline void wrapLensFlareComponent(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoLensFlareComponent.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoLensFlareComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "setFirstFlareSize", wrapLensFlareComponentsetFirstFlareSize);
 	LuaBinder::pushLuaCFuncMethod(l, "setColorMultiplier", wrapLensFlareComponentsetColorMultiplier);
 	lua_settop(l, 0);
 }
 
-// Type info for TriggerComponent
-LuaUserDataTypeInfo luaUserDataTypeInfoTriggerComponent = {7180780522076545145, "TriggerComponent", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoTriggerComponent = {7180780522076545145,
+	"TriggerComponent",
+	LuaUserData::computeSizeForGarbageCollected<TriggerComponent>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<TriggerComponent>()
@@ -1611,13 +1629,13 @@ static int wrapTriggerComponentgetContactSceneNodes(lua_State* l)
 /// Wrap class TriggerComponent.
 static inline void wrapTriggerComponent(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoTriggerComponent.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoTriggerComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getContactSceneNodes", wrapTriggerComponentgetContactSceneNodes);
 	lua_settop(l, 0);
 }
 
-// Type info for SceneNode
-LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode = {-2220074417980276571, "SceneNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode = {
+	-2220074417980276571, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneNode>()
@@ -2042,7 +2060,7 @@ static int wrapSceneNodegetTriggerComponent(lua_State* l)
 /// Wrap class SceneNode.
 static inline void wrapSceneNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoSceneNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoSceneNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getName", wrapSceneNodegetName);
 	LuaBinder::pushLuaCFuncMethod(l, "addChild", wrapSceneNodeaddChild);
 	LuaBinder::pushLuaCFuncMethod(l, "setMarkedForDeletion", wrapSceneNodesetMarkedForDeletion);
@@ -2054,8 +2072,8 @@ static inline void wrapSceneNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Type info for ModelNode
-LuaUserDataTypeInfo luaUserDataTypeInfoModelNode = {-1856316251880904290, "ModelNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoModelNode = {
+	-1856316251880904290, "ModelNode", LuaUserData::computeSizeForGarbageCollected<ModelNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ModelNode>()
@@ -2115,13 +2133,16 @@ static int wrapModelNodegetSceneNodeBase(lua_State* l)
 /// Wrap class ModelNode.
 static inline void wrapModelNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoModelNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoModelNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapModelNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-// Type info for PerspectiveCameraNode
-LuaUserDataTypeInfo luaUserDataTypeInfoPerspectiveCameraNode = {-7590637754681648962, "PerspectiveCameraNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoPerspectiveCameraNode = {-7590637754681648962,
+	"PerspectiveCameraNode",
+	LuaUserData::computeSizeForGarbageCollected<PerspectiveCameraNode>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<PerspectiveCameraNode>()
@@ -2248,14 +2269,17 @@ static int wrapPerspectiveCameraNodesetAll(lua_State* l)
 /// Wrap class PerspectiveCameraNode.
 static inline void wrapPerspectiveCameraNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoPerspectiveCameraNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoPerspectiveCameraNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPerspectiveCameraNodegetSceneNodeBase);
 	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapPerspectiveCameraNodesetAll);
 	lua_settop(l, 0);
 }
 
-// Type info for PointLightNode
-LuaUserDataTypeInfo luaUserDataTypeInfoPointLightNode = {8507789763949195644, "PointLightNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoPointLightNode = {8507789763949195644,
+	"PointLightNode",
+	LuaUserData::computeSizeForGarbageCollected<PointLightNode>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<PointLightNode>()
@@ -2373,14 +2397,17 @@ static int wrapPointLightNodeloadLensFlare(lua_State* l)
 /// Wrap class PointLightNode.
 static inline void wrapPointLightNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoPointLightNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoPointLightNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPointLightNodegetSceneNodeBase);
 	LuaBinder::pushLuaCFuncMethod(l, "loadLensFlare", wrapPointLightNodeloadLensFlare);
 	lua_settop(l, 0);
 }
 
-// Type info for SpotLightNode
-LuaUserDataTypeInfo luaUserDataTypeInfoSpotLightNode = {-9214759951813290587, "SpotLightNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoSpotLightNode = {-9214759951813290587,
+	"SpotLightNode",
+	LuaUserData::computeSizeForGarbageCollected<SpotLightNode>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SpotLightNode>()
@@ -2440,13 +2467,16 @@ static int wrapSpotLightNodegetSceneNodeBase(lua_State* l)
 /// Wrap class SpotLightNode.
 static inline void wrapSpotLightNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoSpotLightNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoSpotLightNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSpotLightNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-// Type info for StaticCollisionNode
-LuaUserDataTypeInfo luaUserDataTypeInfoStaticCollisionNode = {-4376619865753613291, "StaticCollisionNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoStaticCollisionNode = {-4376619865753613291,
+	"StaticCollisionNode",
+	LuaUserData::computeSizeForGarbageCollected<StaticCollisionNode>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<StaticCollisionNode>()
@@ -2506,13 +2536,16 @@ static int wrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 /// Wrap class StaticCollisionNode.
 static inline void wrapStaticCollisionNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoStaticCollisionNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoStaticCollisionNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapStaticCollisionNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-// Type info for ParticleEmitterNode
-LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterNode = {4851204309813771919, "ParticleEmitterNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoParticleEmitterNode = {4851204309813771919,
+	"ParticleEmitterNode",
+	LuaUserData::computeSizeForGarbageCollected<ParticleEmitterNode>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ParticleEmitterNode>()
@@ -2572,13 +2605,16 @@ static int wrapParticleEmitterNodegetSceneNodeBase(lua_State* l)
 /// Wrap class ParticleEmitterNode.
 static inline void wrapParticleEmitterNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoParticleEmitterNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoParticleEmitterNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapParticleEmitterNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-// Type info for ReflectionProbeNode
-LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeNode = {-801309373000950648, "ReflectionProbeNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeNode = {-801309373000950648,
+	"ReflectionProbeNode",
+	LuaUserData::computeSizeForGarbageCollected<ReflectionProbeNode>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ReflectionProbeNode>()
@@ -2638,13 +2674,16 @@ static int wrapReflectionProbeNodegetSceneNodeBase(lua_State* l)
 /// Wrap class ReflectionProbeNode.
 static inline void wrapReflectionProbeNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoReflectionProbeNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoReflectionProbeNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProbeNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-// Type info for ReflectionProxyNode
-LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProxyNode = {2307826176097073810, "ReflectionProxyNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProxyNode = {2307826176097073810,
+	"ReflectionProxyNode",
+	LuaUserData::computeSizeForGarbageCollected<ReflectionProxyNode>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ReflectionProxyNode>()
@@ -2704,13 +2743,16 @@ static int wrapReflectionProxyNodegetSceneNodeBase(lua_State* l)
 /// Wrap class ReflectionProxyNode.
 static inline void wrapReflectionProxyNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoReflectionProxyNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoReflectionProxyNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProxyNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-// Type info for OccluderNode
-LuaUserDataTypeInfo luaUserDataTypeInfoOccluderNode = {-6885028590097645115, "OccluderNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoOccluderNode = {-6885028590097645115,
+	"OccluderNode",
+	LuaUserData::computeSizeForGarbageCollected<OccluderNode>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<OccluderNode>()
@@ -2770,13 +2812,13 @@ static int wrapOccluderNodegetSceneNodeBase(lua_State* l)
 /// Wrap class OccluderNode.
 static inline void wrapOccluderNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoOccluderNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoOccluderNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapOccluderNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-// Type info for DecalNode
-LuaUserDataTypeInfo luaUserDataTypeInfoDecalNode = {1097508121406753350, "DecalNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoDecalNode = {
+	1097508121406753350, "DecalNode", LuaUserData::computeSizeForGarbageCollected<DecalNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<DecalNode>()
@@ -2836,13 +2878,13 @@ static int wrapDecalNodegetSceneNodeBase(lua_State* l)
 /// Wrap class DecalNode.
 static inline void wrapDecalNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoDecalNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoDecalNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapDecalNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-// Type info for TriggerNode
-LuaUserDataTypeInfo luaUserDataTypeInfoTriggerNode = {-3029786875306006141, "TriggerNode", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoTriggerNode = {
+	-3029786875306006141, "TriggerNode", LuaUserData::computeSizeForGarbageCollected<TriggerNode>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<TriggerNode>()
@@ -2902,13 +2944,13 @@ static int wrapTriggerNodegetSceneNodeBase(lua_State* l)
 /// Wrap class TriggerNode.
 static inline void wrapTriggerNode(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoTriggerNode.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoTriggerNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapTriggerNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
-// Type info for SceneGraph
-LuaUserDataTypeInfo luaUserDataTypeInfoSceneGraph = {-7754439619132389154, "SceneGraph", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoSceneGraph = {
+	-7754439619132389154, "SceneGraph", LuaUserData::computeSizeForGarbageCollected<SceneGraph>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<SceneGraph>()
@@ -3716,7 +3758,7 @@ static int wrapSceneGraphsetActiveCameraNode(lua_State* l)
 /// Wrap class SceneGraph.
 static inline void wrapSceneGraph(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoSceneGraph.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoSceneGraph);
 	LuaBinder::pushLuaCFuncMethod(l, "newPerspectiveCameraNode", wrapSceneGraphnewPerspectiveCameraNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newModelNode", wrapSceneGraphnewModelNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newPointLightNode", wrapSceneGraphnewPointLightNode);
@@ -3732,8 +3774,8 @@ static inline void wrapSceneGraph(lua_State* l)
 	lua_settop(l, 0);
 }
 
-// Type info for Event
-LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {1660689530604735101, "Event", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoEvent = {
+	1660689530604735101, "Event", LuaUserData::computeSizeForGarbageCollected<Event>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Event>()
@@ -3795,13 +3837,13 @@ static int wrapEventgetAssociatedSceneNodes(lua_State* l)
 /// Wrap class Event.
 static inline void wrapEvent(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoEvent.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoEvent);
 	LuaBinder::pushLuaCFuncMethod(l, "getAssociatedSceneNodes", wrapEventgetAssociatedSceneNodes);
 	lua_settop(l, 0);
 }
 
-// Type info for LightEvent
-LuaUserDataTypeInfo luaUserDataTypeInfoLightEvent = {840634010629725278, "LightEvent", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoLightEvent = {
+	840634010629725278, "LightEvent", LuaUserData::computeSizeForGarbageCollected<LightEvent>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<LightEvent>()
@@ -3919,14 +3961,17 @@ static int wrapLightEventsetFrequency(lua_State* l)
 /// Wrap class LightEvent.
 static inline void wrapLightEvent(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoLightEvent.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoLightEvent);
 	LuaBinder::pushLuaCFuncMethod(l, "setIntensityMultiplier", wrapLightEventsetIntensityMultiplier);
 	LuaBinder::pushLuaCFuncMethod(l, "setFrequency", wrapLightEventsetFrequency);
 	lua_settop(l, 0);
 }
 
-// Type info for EventManager
-LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {-6959305329499243407, "EventManager", nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoEventManager = {-6959305329499243407,
+	"EventManager",
+	LuaUserData::computeSizeForGarbageCollected<EventManager>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<EventManager>()
@@ -4014,7 +4059,7 @@ static int wrapEventManagernewLightEvent(lua_State* l)
 /// Wrap class EventManager.
 static inline void wrapEventManager(lua_State* l)
 {
-	LuaBinder::createClass(l, luaUserDataTypeInfoEventManager.m_typeName);
+	LuaBinder::createClass(l, &luaUserDataTypeInfoEventManager);
 	LuaBinder::pushLuaCFuncMethod(l, "newLightEvent", wrapEventManagernewLightEvent);
 	lua_settop(l, 0);
 }

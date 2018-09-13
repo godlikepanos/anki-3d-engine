@@ -38,6 +38,23 @@ public:
 	}
 };
 
+/// Specialization for I64 keys.
+template<>
+class DefaultHasher<I64>
+{
+public:
+	U64 operator()(const I64 a) const
+	{
+		union
+		{
+			U64 u64;
+			I64 i64;
+		};
+		i64 = a;
+		return u64;
+	}
+};
+
 /// Hash map template.
 template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>>
 class HashMap
