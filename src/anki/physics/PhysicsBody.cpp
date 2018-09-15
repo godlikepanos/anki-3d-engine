@@ -29,13 +29,12 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	}
 
 	// Create body
-	btRigidBody& body = *getBtBody();
 	btRigidBody::btRigidBodyConstructionInfo cInfo(init.m_mass, &m_motionState, shape, localInertia);
 	cInfo.m_friction = init.m_friction;
-	::new(&body) btRigidBody(cInfo);
+	m_body.init(cInfo);
 
 	// User pointer
-	body.setUserPointer(static_cast<PhysicsObject*>(this));
+	m_body->setUserPointer(static_cast<PhysicsObject*>(this));
 
 	// Other
 	setMaterialGroup((dynamic) ? PhysicsMaterialBit::DYNAMIC_GEOMETRY : PhysicsMaterialBit::STATIC_GEOMETRY);
@@ -44,13 +43,13 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 
 	// Add to world
 	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->addRigidBody(&body);
+	getWorld().getBtWorld()->addRigidBody(m_body.get());
 }
 
 PhysicsBody::~PhysicsBody()
 {
 	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->removeRigidBody(getBtBody());
+	getWorld().getBtWorld()->removeRigidBody(m_body.get());
 }
 
 void PhysicsBody::setMass(F32 mass)
@@ -59,7 +58,7 @@ void PhysicsBody::setMass(F32 mass)
 	ANKI_ASSERT(mass > 0.0f);
 	btVector3 inertia;
 	m_shape->getBtShape(true)->calculateLocalInertia(mass, inertia);
-	getBtBody()->setMassProps(mass, inertia);
+	m_body->setMassProps(mass, inertia);
 	m_mass = mass;
 }
 

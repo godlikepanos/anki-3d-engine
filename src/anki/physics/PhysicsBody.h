@@ -39,12 +39,12 @@ public:
 	void setTransform(const Transform& trf)
 	{
 		m_trf = trf;
-		getBtBody()->setWorldTransform(toBt(trf));
+		m_body->setWorldTransform(toBt(trf));
 	}
 
 	void applyForce(const Vec3& force, const Vec3& relPos)
 	{
-		getBtBody()->applyForce(toBt(force), toBt(relPos));
+		m_body->applyForce(toBt(force), toBt(relPos));
 	}
 
 	void setMass(F32 mass);
@@ -56,47 +56,47 @@ public:
 
 	void activate(Bool activate)
 	{
-		getBtBody()->forceActivationState((activate) ? ACTIVE_TAG : DISABLE_SIMULATION);
+		m_body->forceActivationState((activate) ? ACTIVE_TAG : DISABLE_SIMULATION);
 		if(activate)
 		{
-			getBtBody()->activate(true);
+			m_body->activate(true);
 		}
 	}
 
 	void clearForces()
 	{
-		getBtBody()->clearForces();
+		m_body->clearForces();
 	}
 
 	void setLinearVelocity(const Vec3& velocity)
 	{
-		getBtBody()->setLinearVelocity(toBt(velocity));
+		m_body->setLinearVelocity(toBt(velocity));
 	}
 
 	void setAngularVelocity(const Vec3& velocity)
 	{
-		getBtBody()->setAngularVelocity(toBt(velocity));
+		m_body->setAngularVelocity(toBt(velocity));
 	}
 
 	void setGravity(const Vec3& gravity)
 	{
-		getBtBody()->setGravity(toBt(gravity));
+		m_body->setGravity(toBt(gravity));
 	}
 
 	void setAngularFactor(const Vec3& factor)
 	{
-		getBtBody()->setAngularFactor(toBt(factor));
+		m_body->setAngularFactor(toBt(factor));
 	}
 
 anki_internal:
 	const btRigidBody* getBtBody() const
 	{
-		return reinterpret_cast<const btRigidBody*>(&m_bodyMem[0]);
+		return m_body.get();
 	}
 
 	btRigidBody* getBtBody()
 	{
-		return reinterpret_cast<btRigidBody*>(&m_bodyMem[0]);
+		return m_body.get();
 	}
 
 private:
@@ -117,7 +117,7 @@ private:
 	};
 
 	/// Store the data of the btRigidBody in place to avoid additional allocations.
-	alignas(alignof(btRigidBody)) Array<U8, sizeof(btRigidBody)> m_bodyMem;
+	BtClassWrapper<btRigidBody> m_body;
 
 	Transform m_trf = Transform::getIdentity();
 	MotionState m_motionState;

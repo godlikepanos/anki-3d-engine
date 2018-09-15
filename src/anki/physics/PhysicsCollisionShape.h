@@ -21,21 +21,73 @@ public:
 	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::COLLISION_SHAPE;
 
 anki_internal:
-	virtual btCollisionShape* getBtShape(Bool forDynamicBodies = false) const
+	const btCollisionShape* getBtShape(Bool forDynamicBodies = false) const
 	{
-		ANKI_ASSERT(m_shape);
-		return m_shape;
+		return getBtShapeInternal(forDynamicBodies);
+	}
+
+	btCollisionShape* getBtShape(Bool forDynamicBodies = false)
+	{
+		return const_cast<btCollisionShape*>(getBtShapeInternal(forDynamicBodies));
 	}
 
 protected:
-	btCollisionShape* m_shape = nullptr;
+	enum class ShapeType : U8
+	{
+		BOX,
+		SPHERE,
+		CONVEX,
+		TRI_MESH
+	};
 
-	PhysicsCollisionShape(PhysicsWorld* world)
+	class TriMesh
+	{
+	public:
+		BtClassWrapper<btGImpactMeshShape> m_dynamic;
+		BtClassWrapper<btBvhTriangleMeshShape> m_static;
+	};
+
+	// All shapes
+	union
+	{
+		BtClassWrapper<btBoxShape> m_box;
+		BtClassWrapper<btSphereShape> m_sphere;
+		BtClassWrapper<btConvexHullShape> m_convex;
+		TriMesh m_triMesh;
+	};
+
+	ShapeType m_type;
+
+	PhysicsCollisionShape(PhysicsWorld* world, ShapeType type)
 		: PhysicsObject(CLASS_TYPE, world)
+		, m_type(type)
 	{
 	}
 
-	~PhysicsCollisionShape();
+	const btCollisionShape* getBtShapeInternal(Bool forDynamicBodies) const
+	{
+		switch(m_type)
+		{
+		case ShapeType::BOX:
+			return m_box.get();
+		case ShapeType::SPHERE:
+			return m_sphere.get();
+		case ShapeType::CONVEX:
+			return m_convex.get();
+		case ShapeType::TRI_MESH:
+			if(forDynamicBodies)
+			{
+				return m_triMesh.m_dynamic.get();
+			}
+			else
+			{
+				return m_triMesh.m_static.get();
+			}
+		default:
+			ANKI_ASSERT(0);
+			return nullptr;
+		}
+	}
 };
 
 /// Sphere collision shape.
@@ -45,6 +97,8 @@ class PhysicsSphere final : public PhysicsCollisionShape
 
 private:
 	PhysicsSphere(PhysicsWorld* world, F32 radius);
+
+	~PhysicsSphere();
 };
 
 /// Box collision shape.
@@ -54,6 +108,8 @@ class PhysicsBox final : public PhysicsCollisionShape
 
 private:
 	PhysicsBox(PhysicsWorld* world, const Vec3& extend);
+
+	~PhysicsBox();
 };
 
 /// Convex hull collision shape.
@@ -63,6 +119,8 @@ class PhysicsConvexHull final : public PhysicsCollisionShape
 
 private:
 	PhysicsConvexHull(PhysicsWorld* world, const Vec3* positions, U32 positionsCount, U32 positionsStride);
+
+	~PhysicsConvexHull();
 };
 
 /// Static triangle mesh shape.
@@ -71,15 +129,12 @@ class PhysicsTriangleSoup final : public PhysicsCollisionShape
 	ANKI_PHYSICS_OBJECT
 
 private:
-	btTriangleMesh* m_mesh = nullptr;
-	btCollisionShape* m_staticShape = nullptr;
+	BtClassWrapper<btTriangleMesh> m_mesh;
 
 	PhysicsTriangleSoup(
 		PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices, Bool convex = false);
 
 	~PhysicsTriangleSoup();
-
-	btCollisionShape* getBtShape(Bool forDynamicBodies = false) const override;
 };
 /// @}
 

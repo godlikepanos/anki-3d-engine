@@ -81,10 +81,14 @@ public:
 	}
 
 anki_internal:
-	btDynamicsWorld* getBtWorld() const
+	btDynamicsWorld* getBtWorld()
 	{
-		ANKI_ASSERT(m_world);
-		return m_world;
+		return m_world.get();
+	}
+
+	const btDynamicsWorld* getBtWorld() const
+	{
+		return m_world.get();
 	}
 
 	F32 getCollisionMargin() const
@@ -106,14 +110,14 @@ private:
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_tmpAlloc;
 
-	btBroadphaseInterface* m_broadphase = nullptr;
-	btGhostPairCallback* m_gpc = nullptr;
+	BtClassWrapper<btDbvtBroadphase> m_broadphase;
+	BtClassWrapper<btGhostPairCallback> m_gpc;
 	MyOverlapFilterCallback* m_filterCallback = nullptr;
 
-	btDefaultCollisionConfiguration* m_collisionConfig = nullptr;
-	btCollisionDispatcher* m_dispatcher = nullptr;
-	btSequentialImpulseConstraintSolver* m_solver = nullptr;
-	btDiscreteDynamicsWorld* m_world = nullptr;
+	BtClassWrapper<btDefaultCollisionConfiguration> m_collisionConfig;
+	BtClassWrapper<btCollisionDispatcher> m_dispatcher;
+	BtClassWrapper<btSequentialImpulseConstraintSolver> m_solver;
+	BtClassWrapper<btDiscreteDynamicsWorld> m_world;
 	mutable Mutex m_btWorldMtx;
 
 	Array<IntrusiveList<PhysicsObject>, U(PhysicsObjectType::COUNT)> m_objectLists;

@@ -22,31 +22,67 @@ public:
 	/// Set the breaking impulse.
 	void setBreakingImpulseThreshold(F32 impulse)
 	{
-		m_joint->setBreakingImpulseThreshold(impulse);
+		getJoint()->setBreakingImpulseThreshold(impulse);
 	}
 
 	/// Return true if the joint broke.
 	Bool isBroken() const
 	{
-		return !m_joint->isEnabled();
+		return !getJoint()->isEnabled();
 	}
 
 	/// Break the joint.
 	void brake()
 	{
-		m_joint->setEnabled(false);
+		getJoint()->setEnabled(false);
 	}
 
 protected:
-	btTypedConstraint* m_joint = nullptr;
+	union
+	{
+		BtClassWrapper<btPoint2PointConstraint> m_p2p;
+		BtClassWrapper<btHingeConstraint> m_hinge;
+	};
+
 	PhysicsBodyPtr m_bodyA;
 	PhysicsBodyPtr m_bodyB;
 
-	PhysicsJoint(PhysicsWorld* world);
+	enum class JointType : U8
+	{
+		P2P,
+		HINGE,
+	};
 
-	~PhysicsJoint();
+	JointType m_type;
+
+	PhysicsJoint(PhysicsWorld* world, JointType type);
 
 	void addToWorld();
+	void removeFromWorld();
+
+	const btTypedConstraint* getJoint() const
+	{
+		return getJointInternal();
+	}
+
+	btTypedConstraint* getJoint()
+	{
+		return const_cast<btTypedConstraint*>(getJointInternal());
+	}
+
+	const btTypedConstraint* getJointInternal() const
+	{
+		switch(m_type)
+		{
+		case JointType::P2P:
+			return m_p2p.get();
+		case JointType::HINGE:
+			return m_hinge.get();
+		default:
+			ANKI_ASSERT(0);
+			return nullptr;
+		}
+	}
 };
 
 /// Point to point joint.
@@ -59,6 +95,8 @@ private:
 
 	PhysicsPoint2PointJoint(
 		PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB, const Vec3& relPosB);
+
+	~PhysicsPoint2PointJoint();
 };
 
 /// Hinge joint.
@@ -76,6 +114,8 @@ private:
 		PhysicsBodyPtr bodyB,
 		const Vec3& relPosB,
 		const Vec3& axisB);
+
+	~PhysicsHingeJoint();
 };
 /// @}
 

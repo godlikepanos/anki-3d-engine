@@ -49,9 +49,9 @@ public:
 	}
 
 private:
-	btPairCachingGhostObject* m_ghostObject = nullptr;
-	btCapsuleShape* m_convexShape = nullptr;
-	btKinematicCharacterController* m_controller = nullptr;
+	BtClassWrapper<btPairCachingGhostObject> m_ghostObject;
+	BtClassWrapper<btCapsuleShape> m_convexShape;
+	BtClassWrapper<btKinematicCharacterController> m_controller;
 
 	Transform m_prevTrf = Transform::getIdentity();
 

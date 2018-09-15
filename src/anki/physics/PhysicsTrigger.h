@@ -46,7 +46,7 @@ public:
 
 private:
 	PhysicsCollisionShapePtr m_shape;
-	btGhostObject* m_ghostShape = nullptr;
+	BtClassWrapper<btGhostObject> m_ghostShape;
 
 	PhysicsTriggerProcessContactCallback* m_contactCallback = nullptr;
 

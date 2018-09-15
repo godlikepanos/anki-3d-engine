@@ -145,13 +145,13 @@ PhysicsWorld::~PhysicsWorld()
 	}
 #endif
 
-	m_alloc.deleteInstance(m_world);
-	m_alloc.deleteInstance(m_solver);
-	m_alloc.deleteInstance(m_dispatcher);
-	m_alloc.deleteInstance(m_collisionConfig);
-	m_alloc.deleteInstance(m_broadphase);
-	m_alloc.deleteInstance(m_gpc);
-	m_alloc.deleteInstance(m_filterCallback);
+	m_world.destroy();
+	m_solver.destroy();
+	m_dispatcher.destroy();
+	m_collisionConfig.destroy();
+	m_broadphase.destroy();
+	m_gpc.destroy();
+	m_alloc.destroy(m_filterCallback);
 
 	gAlloc = nullptr;
 }
@@ -166,20 +166,20 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	btAlignedAllocSetCustom(btAlloc, btFree);
 
 	// Create objects
-	m_broadphase = m_alloc.newInstance<btDbvtBroadphase>();
-	m_gpc = m_alloc.newInstance<btGhostPairCallback>();
-	m_broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(m_gpc);
+	m_broadphase.init();
+	m_gpc.init();
+	m_broadphase->getOverlappingPairCache()->setInternalGhostPairCallback(m_gpc.get());
 	m_filterCallback = m_alloc.newInstance<MyOverlapFilterCallback>();
 	m_broadphase->getOverlappingPairCache()->setOverlapFilterCallback(m_filterCallback);
 
-	m_collisionConfig = m_alloc.newInstance<btDefaultCollisionConfiguration>();
+	m_collisionConfig.init();
 
-	m_dispatcher = m_alloc.newInstance<btCollisionDispatcher>(m_collisionConfig);
-	btGImpactCollisionAlgorithm::registerAlgorithm(m_dispatcher);
+	m_dispatcher.init(m_collisionConfig.get());
+	btGImpactCollisionAlgorithm::registerAlgorithm(m_dispatcher.get());
 
-	m_solver = m_alloc.newInstance<btSequentialImpulseConstraintSolver>();
+	m_solver.init();
 
-	m_world = m_alloc.newInstance<btDiscreteDynamicsWorld>(m_dispatcher, m_broadphase, m_solver, m_collisionConfig);
+	m_world.init(m_dispatcher.get(), m_broadphase.get(), m_solver.get(), m_collisionConfig.get());
 	m_world->setGravity(btVector3(0.0f, -9.8f, 0.0f));
 
 	return Error::NONE;

@@ -14,26 +14,25 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 {
 	const btTransform trf = toBt(Transform(init.m_position.xyz0(), Mat3x4::getIdentity(), 1.0f));
 
-	m_convexShape = getAllocator().newInstance<btCapsuleShape>(init.m_outerRadius, init.m_height);
+	m_convexShape.init(init.m_outerRadius, init.m_height);
 
-	m_ghostObject = getAllocator().newInstance<btPairCachingGhostObject>();
+	m_ghostObject.init();
 	m_ghostObject->setWorldTransform(trf);
-	m_ghostObject->setCollisionShape(m_convexShape);
+	m_ghostObject->setCollisionShape(m_convexShape.get());
 	m_ghostObject->setUserPointer(static_cast<PhysicsObject*>(this));
 	setMaterialGroup(PhysicsMaterialBit::PLAYER);
 	setMaterialMask(PhysicsMaterialBit::ALL);
 
-	m_controller = getAllocator().newInstance<btKinematicCharacterController>(
-		m_ghostObject, m_convexShape, init.m_stepHeight, btVector3(0, 1, 0));
+	m_controller.init(m_ghostObject.get(), m_convexShape.get(), init.m_stepHeight, btVector3(0, 1, 0));
 
 	{
 		auto lock = getWorld().lockBtWorld();
 		btDynamicsWorld* btworld = getWorld().getBtWorld();
 
-		btworld->addCollisionObject(m_ghostObject,
+		btworld->addCollisionObject(m_ghostObject.get(),
 			btBroadphaseProxy::CharacterFilter,
 			btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
-		btworld->addAction(m_controller);
+		btworld->addAction(m_controller.get());
 	}
 
 	// Need to call this else the player is upside down
@@ -44,13 +43,13 @@ PhysicsPlayerController::~PhysicsPlayerController()
 {
 	{
 		auto lock = getWorld().lockBtWorld();
-		getWorld().getBtWorld()->removeAction(m_controller);
-		getWorld().getBtWorld()->removeCollisionObject(m_ghostObject);
+		getWorld().getBtWorld()->removeAction(m_controller.get());
+		getWorld().getBtWorld()->removeCollisionObject(m_ghostObject.get());
 	}
 
-	getAllocator().deleteInstance(m_controller);
-	getAllocator().deleteInstance(m_ghostObject);
-	getAllocator().deleteInstance(m_convexShape);
+	m_controller.destroy();
+	m_ghostObject.destroy();
+	m_convexShape.destroy();
 }
 
 void PhysicsPlayerController::moveToPosition(const Vec4& position)

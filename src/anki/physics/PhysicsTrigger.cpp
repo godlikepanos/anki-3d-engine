@@ -16,7 +16,7 @@ PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr sha
 {
 	m_shape = shape;
 
-	m_ghostShape = getAllocator().newInstance<btGhostObject>();
+	m_ghostShape.init();
 	m_ghostShape->setWorldTransform(btTransform::getIdentity());
 	m_ghostShape->setCollisionShape(shape->getBtShape(true));
 
@@ -26,17 +26,17 @@ PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr sha
 	setMaterialMask(PhysicsMaterialBit::ALL);
 
 	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->addCollisionObject(m_ghostShape);
+	getWorld().getBtWorld()->addCollisionObject(m_ghostShape.get());
 }
 
 PhysicsTrigger::~PhysicsTrigger()
 {
 	{
 		auto lock = getWorld().lockBtWorld();
-		getWorld().getBtWorld()->removeCollisionObject(m_ghostShape);
+		getWorld().getBtWorld()->removeCollisionObject(m_ghostShape.get());
 	}
 
-	getAllocator().deleteInstance(m_ghostShape);
+	m_ghostShape.destroy();
 }
 
 void PhysicsTrigger::processContacts()

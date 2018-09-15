@@ -10,63 +10,64 @@
 namespace anki
 {
 
-PhysicsJoint::PhysicsJoint(PhysicsWorld* world)
+PhysicsJoint::PhysicsJoint(PhysicsWorld* world, JointType type)
 	: PhysicsObject(CLASS_TYPE, world)
+	, m_type(type)
 {
-}
-
-PhysicsJoint::~PhysicsJoint()
-{
-	if(m_joint)
-	{
-		auto lock = getWorld().lockBtWorld();
-		getWorld().getBtWorld()->removeConstraint(m_joint);
-	}
-
-	getAllocator().deleteInstance(m_joint);
 }
 
 void PhysicsJoint::addToWorld()
 {
-	ANKI_ASSERT(m_joint);
-	m_joint->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
+	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 
 	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->addConstraint(m_joint);
+	getWorld().getBtWorld()->addConstraint(getJoint());
+}
+
+void PhysicsJoint::removeFromWorld()
+{
+	auto lock = getWorld().lockBtWorld();
+	getWorld().getBtWorld()->removeConstraint(getJoint());
 }
 
 PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos)
-	: PhysicsJoint(world)
+	: PhysicsJoint(world, JointType::P2P)
 {
 	m_bodyA = bodyA;
-	m_joint = getAllocator().newInstance<btPoint2PointConstraint>(*m_bodyA->getBtBody(), toBt(relPos));
-	m_joint->setUserConstraintPtr(static_cast<PhysicsJoint*>(this));
-
+	m_p2p.init(*m_bodyA->getBtBody(), toBt(relPos));
 	addToWorld();
 }
 
 PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(
 	PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB, const Vec3& relPosB)
-	: PhysicsJoint(world)
+	: PhysicsJoint(world, JointType::P2P)
 {
 	ANKI_ASSERT(bodyA != bodyB);
 	m_bodyA = bodyA;
 	m_bodyB = bodyB;
 
-	m_joint = getAllocator().newInstance<btPoint2PointConstraint>(
-		*m_bodyA->getBtBody(), *m_bodyB->getBtBody(), toBt(relPosA), toBt(relPosB));
-
+	m_p2p.init(*m_bodyA->getBtBody(), *m_bodyB->getBtBody(), toBt(relPosA), toBt(relPosB));
 	addToWorld();
 }
 
+PhysicsPoint2PointJoint::~PhysicsPoint2PointJoint()
+{
+	removeFromWorld();
+	m_p2p.destroy();
+}
+
 PhysicsHingeJoint::PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos, const Vec3& axis)
-	: PhysicsJoint(world)
+	: PhysicsJoint(world, JointType::HINGE)
 {
 	m_bodyA = bodyA;
-	m_joint = getAllocator().newInstance<btHingeConstraint>(*m_bodyA->getBtBody(), toBt(relPos), toBt(axis));
-	m_joint->setUserConstraintPtr(static_cast<PhysicsJoint*>(this));
-
+	m_hinge.init(*m_bodyA->getBtBody(), toBt(relPos), toBt(axis));
 	addToWorld();
+}
+
+PhysicsHingeJoint::~PhysicsHingeJoint()
+{
+	removeFromWorld();
+	m_hinge.destroy();
 }
 
 } // end namespace anki
