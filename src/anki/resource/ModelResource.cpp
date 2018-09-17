@@ -14,6 +14,23 @@
 namespace anki
 {
 
+static Bool attributeIsRequired(VertexAttributeLocation loc, Pass pass, Bool hasSkin)
+{
+	if(pass == Pass::GB || pass == Pass::FS)
+	{
+		return true;
+	}
+	else if(!hasSkin)
+	{
+		return loc == VertexAttributeLocation::POSITION;
+	}
+	else
+	{
+		return loc == VertexAttributeLocation::POSITION || loc == VertexAttributeLocation::BONE_INDICES
+			   || loc == VertexAttributeLocation::BONE_WEIGHTS;
+	}
+}
+
 ModelPatch::ModelPatch(ModelResource* model)
 	: m_model(model)
 {
@@ -26,6 +43,8 @@ ModelPatch::~ModelPatch()
 void ModelPatch::getRenderingDataSub(
 	const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const
 {
+	const Bool hasSkin = m_model->getSkeleton().isCreated();
+
 	// Get the resources
 	RenderingKey meshKey = key;
 	meshKey.m_lod = min<U>(key.m_lod, m_meshCount - 1);
@@ -35,76 +54,50 @@ void ModelPatch::getRenderingDataSub(
 	{
 		RenderingKey mtlKey = key;
 		mtlKey.m_lod = min<U>(key.m_lod, m_mtl->getLodCount() - 1);
-		mtlKey.m_skinned = m_model->getSkeleton().isCreated();
+		mtlKey.m_skinned = hasSkin;
 
 		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey);
 
 		inf.m_program = variant.getShaderProgram();
 	}
 
-	// Vertex attributes
-	U32 positionBinding = MAX_U32;
+	// Vertex attributes & bindings
 	{
-		if(key.m_pass == Pass::GB || key.m_pass == Pass::FS)
+		U32 bufferBindingVisitedMask = 0;
+		Array<U32, MAX_VERTEX_ATTRIBUTES> realBufferBindingToVirtual;
+
+		inf.m_vertexAttributeCount = 0;
+		inf.m_vertexBufferBindingCount = 0;
+
+		for(VertexAttributeLocation loc = VertexAttributeLocation::FIRST; loc < VertexAttributeLocation::COUNT; ++loc)
 		{
-			// All attributes
-
-			inf.m_vertexAttributeCount = 0;
-
-			for(VertexAttributeLocation loc = VertexAttributeLocation::FIRST; loc < VertexAttributeLocation::COUNT;
-				++loc)
+			if(!mesh.isVertexAttributePresent(loc) || !attributeIsRequired(loc, key.m_pass, hasSkin))
 			{
-				if(!mesh.isVertexAttributePresent(loc))
-				{
-					continue;
-				}
-
-				VertexAttributeInfo& out = inf.m_vertexAttributes[inf.m_vertexAttributeCount++];
-
-				out.m_location = loc;
-				mesh.getVertexAttributeInfo(loc, out.m_bufferBinding, out.m_format, out.m_relativeOffset);
+				continue;
 			}
-		}
-		else
-		{
-			// Only position
 
-			inf.m_vertexAttributeCount = 1;
+			// Attribute
+			VertexAttributeInfo& attrib = inf.m_vertexAttributes[inf.m_vertexAttributeCount++];
+			attrib.m_location = loc;
+			mesh.getVertexAttributeInfo(loc, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
 
-			VertexAttributeInfo& out = inf.m_vertexAttributes[0];
-			out.m_location = VertexAttributeLocation::POSITION;
-
-			mesh.getVertexAttributeInfo(out.m_location, out.m_bufferBinding, out.m_format, out.m_relativeOffset);
-
-			// Rewrite the binding just so we can keep it in a low binding location
-			positionBinding = out.m_bufferBinding;
-			out.m_bufferBinding = 0;
-		}
-	}
-
-	// Vertex buffers
-	{
-		if(key.m_pass == Pass::GB || key.m_pass == Pass::FS)
-		{
-			// All attributes
-
-			inf.m_vertexBufferBindingCount = mesh.getVertexBufferCount();
-
-			for(U i = 0; i < inf.m_vertexBufferBindingCount; ++i)
+			// Binding. Also, remove any holes in the bindings
+			if(!(bufferBindingVisitedMask & (1 << attrib.m_bufferBinding)))
 			{
-				VertexBufferBinding& out = inf.m_vertexBufferBindings[i];
-				mesh.getVertexBufferInfo(i, out.m_buffer, out.m_offset, out.m_stride);
+				bufferBindingVisitedMask |= 1 << attrib.m_bufferBinding;
+
+				VertexBufferBinding& binding = inf.m_vertexBufferBindings[inf.m_vertexBufferBindingCount];
+				mesh.getVertexBufferInfo(attrib.m_bufferBinding, binding.m_buffer, binding.m_offset, binding.m_stride);
+
+				realBufferBindingToVirtual[attrib.m_bufferBinding] = inf.m_vertexBufferBindingCount;
+				++inf.m_vertexBufferBindingCount;
 			}
-		}
-		else
-		{
-			// Only position
 
-			inf.m_vertexBufferBindingCount = 1;
-
-			VertexBufferBinding& out = inf.m_vertexBufferBindings[0];
-			mesh.getVertexBufferInfo(positionBinding, out.m_buffer, out.m_offset, out.m_stride);
+			// Change the binding of the attrib
+			attrib.m_bufferBinding = realBufferBindingToVirtual[attrib.m_bufferBinding];
 		}
+
+		ANKI_ASSERT(inf.m_vertexAttributeCount != 0 && inf.m_vertexBufferBindingCount != 0);
 	}
 
 	// Index buff

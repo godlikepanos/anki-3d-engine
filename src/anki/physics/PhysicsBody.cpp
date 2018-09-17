@@ -38,7 +38,7 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 
 	// Other
 	setMaterialGroup((dynamic) ? PhysicsMaterialBit::DYNAMIC_GEOMETRY : PhysicsMaterialBit::STATIC_GEOMETRY);
-	setMaterialMask(PhysicsMaterialBit::ALL);
+	setMaterialMask(PhysicsMaterialBit::ALL & (~PhysicsMaterialBit::STATIC_GEOMETRY));
 	setTransform(init.m_transform);
 
 	// Add to world

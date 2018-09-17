@@ -20,7 +20,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 
 	// Init the super class
 	Config config;
-	config.set("window.fullscreenDesktopResolution", true);
+	config.set("window.fullscreen", true);
 	config.set("rsrc.dataPaths", ".:../..");
 	config.set("window.debugContext", 0);
 	ANKI_CHECK(config.setFromCommandLineArguments(argc, argv));

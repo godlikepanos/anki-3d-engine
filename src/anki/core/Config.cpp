@@ -58,7 +58,7 @@ Config::Config()
 	newOption("rsrc.transferScratchMemorySize", 256_MB);
 
 	// Window
-	newOption("window.fullscreenDesktopResolution", false);
+	newOption("window.fullscreen", false);
 	newOption("window.debugContext", false);
 	newOption("window.vsync", false);
 	newOption("window.debugMarkers", false);

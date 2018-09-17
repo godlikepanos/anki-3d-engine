@@ -59,6 +59,13 @@ public:
 			return false;
 		}
 
+		// Reject if they are both static
+		if(ANKI_UNLIKELY(fobj0->getMaterialGroup() == PhysicsMaterialBit::STATIC_GEOMETRY
+						 && fobj1->getMaterialGroup() == PhysicsMaterialBit::STATIC_GEOMETRY))
+		{
+			return false;
+		}
+
 		// Detailed tests using callbacks
 		if(fobj0->getPhysicsBroadPhaseFilterCallback())
 		{

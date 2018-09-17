@@ -404,12 +404,10 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	ANKI_VK_LOGI(
 		"GPU is %s. Vendor identified as %s", m_devProps.deviceName, &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
 
-	VkPhysicalDeviceFeatures devFeatures = m_devFeatures;
-	devFeatures.robustBufferAccess =
+	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
+	m_devFeatures.robustBufferAccess =
 		(init.m_config->getNumber("window.debugContext") && m_devFeatures.robustBufferAccess) ? true : false;
-	ANKI_VK_LOGI("Robust buffer access is %s", (devFeatures.robustBufferAccess) ? "enabled" : "disabled");
-
-	vkGetPhysicalDeviceFeatures(m_physicalDevice, &devFeatures);
+	ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
 
 	// Set limits
 	m_capabilities.m_uniformBufferBindOffsetAlignment =
