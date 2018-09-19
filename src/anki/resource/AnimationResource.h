@@ -25,7 +25,7 @@ class AnimationKeyframe
 	friend class AnimationResource;
 
 public:
-	F64 getTime() const
+	Second getTime() const
 	{
 		return m_time;
 	}
@@ -36,7 +36,7 @@ public:
 	}
 
 private:
-	F64 m_time;
+	Second m_time;
 	T m_value;
 };
 
@@ -80,31 +80,24 @@ public:
 	}
 
 	/// Get the duration of the animation in seconds
-	F64 getDuration() const
+	Second getDuration() const
 	{
 		return m_duration;
 	}
 
 	/// Get the time (in seconds) the animation should start
-	F64 getStartingTime() const
+	Second getStartingTime() const
 	{
 		return m_startTime;
 	}
 
-	/// The animation repeats
-	Bool getRepeat() const
-	{
-		return m_repeat;
-	}
-
 	/// Get the interpolated data
-	void interpolate(U channelIndex, F64 time, Vec3& position, Quat& rotation, F32& scale) const;
+	void interpolate(U channelIndex, Second time, Vec3& position, Quat& rotation, F32& scale) const;
 
 private:
 	DynamicArray<AnimationChannel> m_channels;
-	F64 m_duration;
-	F64 m_startTime;
-	Bool8 m_repeat;
+	Second m_duration;
+	Second m_startTime;
 };
 /// @}
 

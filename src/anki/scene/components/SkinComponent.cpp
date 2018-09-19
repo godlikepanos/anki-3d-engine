@@ -27,7 +27,7 @@ SkinComponent::~SkinComponent()
 	m_boneTrfs.destroy(getAllocator());
 }
 
-void SkinComponent::playAnimation(U track, AnimationResourcePtr anim, F64 startTime, Bool repeat)
+void SkinComponent::playAnimation(U track, AnimationResourcePtr anim, Second startTime, Bool repeat)
 {
 	m_tracks[track].m_anim = anim;
 	m_tracks[track].m_time = startTime;
@@ -37,7 +37,7 @@ void SkinComponent::playAnimation(U track, AnimationResourcePtr anim, F64 startT
 Error SkinComponent::update(Second prevTime, Second crntTime, Bool& updated)
 {
 	updated = false;
-	const F64 timeDiff = crntTime - prevTime;
+	const Second timeDiff = crntTime - prevTime;
 
 	for(Track& track : m_tracks)
 	{
@@ -48,7 +48,7 @@ Error SkinComponent::update(Second prevTime, Second crntTime, Bool& updated)
 
 		updated = true;
 
-		const F64 animTime = track.m_time;
+		const Second animTime = track.m_time;
 		track.m_time += timeDiff;
 
 		// Iterate the animation channels and interpolate

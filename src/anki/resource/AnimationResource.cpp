@@ -28,10 +28,10 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlElement el;
 	I64 tmp;
-	F64 ftmp;
+	Second ftmp;
 
-	m_startTime = MAX_F64;
-	F64 maxTime = MIN_F64;
+	m_startTime = MAX_SECOND;
+	Second maxTime = MIN_SECOND;
 
 	// Document
 	XmlDocument doc;
@@ -44,19 +44,6 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 	U identRotCount = 0;
 	U identScaleCount = 0;
 
-	// <repeat>
-	XmlElement repel;
-	ANKI_CHECK(rootel.getChildElementOptional("repeat", repel));
-	if(repel)
-	{
-		ANKI_CHECK(repel.getNumber(tmp));
-		m_repeat = tmp;
-	}
-	else
-	{
-		m_repeat = false;
-	}
-
 	// <channels>
 	XmlElement channelsEl;
 	ANKI_CHECK(rootel.getChildElement("channels", channelsEl));
@@ -65,6 +52,7 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 
 	U32 channelCount = 0;
 	ANKI_CHECK(chEl.getSiblingElementsCount(channelCount));
+	++channelCount;
 	if(channelCount == 0)
 	{
 		ANKI_RESOURCE_LOGE("Didn't found any channels");
@@ -94,6 +82,7 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
+			++count;
 			ch.m_positions.create(getAllocator(), count);
 
 			count = 0;
@@ -130,7 +119,8 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 			ANKI_CHECK(keysEl.getChildElement("key", keyEl));
 
 			U32 count = 0;
-			ANKI_CHECK(keysEl.getSiblingElementsCount(count));
+			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
+			++count;
 			ch.m_rotations.create(getAllocator(), count);
 
 			count = 0;
@@ -151,6 +141,8 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 				ANKI_CHECK(el.getVec4(tmp2));
 				key.m_value = Quat(tmp2);
 
+				printf("%f\n", key.m_value.getLength());
+
 				// Check ident
 				if(key.m_value == Quat::getIdentity())
 				{
@@ -170,6 +162,7 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
+			++count;
 			ch.m_scales.create(getAllocator(), count);
 
 			count = 0;
@@ -226,10 +219,10 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 	return Error::NONE;
 }
 
-void AnimationResource::interpolate(U channelIndex, F64 time, Vec3& pos, Quat& rot, F32& scale) const
+void AnimationResource::interpolate(U channelIndex, Second time, Vec3& pos, Quat& rot, F32& scale) const
 {
 	// Audjust time
-	if(m_repeat && time > m_startTime + m_duration)
+	if(time > m_startTime + m_duration)
 	{
 		time = mod(time - m_startTime, m_duration) + m_startTime;
 	}
@@ -242,33 +235,33 @@ void AnimationResource::interpolate(U channelIndex, F64 time, Vec3& pos, Quat& r
 	// Position
 	if(channel.m_positions.getSize() > 1)
 	{
-		auto next = channel.m_positions.begin();
-
-		do
+		for(U i = 0; i < channel.m_positions.getSize() - 1; ++i)
 		{
-		} while((next->m_time < time) && (++next != channel.m_positions.end()));
-
-		ANKI_ASSERT(next != channel.m_positions.end());
-		auto prev = next - 1;
-
-		F64 u = (time - prev->m_time) / (next->m_time - prev->m_time);
-		pos = linearInterpolate(prev->m_value, next->m_value, u);
+			const AnimationKeyframe<Vec3>& left = channel.m_positions[i];
+			const AnimationKeyframe<Vec3>& right = channel.m_positions[i + 1];
+			if(time >= left.m_time && time <= right.m_time)
+			{
+				const Second u = (time - left.m_time) / (right.m_time - left.m_time);
+				pos = linearInterpolate(left.m_value, right.m_value, u);
+				break;
+			}
+		}
 	}
 
 	// Rotation
 	if(channel.m_rotations.getSize() > 1)
 	{
-		auto next = channel.m_rotations.begin();
-
-		do
+		for(U i = 0; i < channel.m_rotations.getSize() - 1; ++i)
 		{
-		} while((next->m_time < time) && (++next != channel.m_rotations.end()));
-
-		ANKI_ASSERT(next != channel.m_rotations.end());
-		auto prev = next - 1;
-
-		F64 u = (time - prev->m_time) / (next->m_time - prev->m_time);
-		rot = prev->m_value.slerp(next->m_value, u);
+			const AnimationKeyframe<Quat>& left = channel.m_rotations[i];
+			const AnimationKeyframe<Quat>& right = channel.m_rotations[i + 1];
+			if(time >= left.m_time && time <= right.m_time)
+			{
+				const Second u = (time - left.m_time) / (right.m_time - left.m_time);
+				rot = left.m_value.slerp(right.m_value, u);
+				break;
+			}
+		}
 	}
 }
 

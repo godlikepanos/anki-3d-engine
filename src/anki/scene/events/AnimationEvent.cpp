@@ -22,7 +22,7 @@ Error AnimationEvent::init(const AnimationResourcePtr& anim, SceneNode* movableS
 	m_anim = anim;
 
 	Event::init(m_anim->getStartingTime(), m_anim->getDuration());
-	m_reanimate = m_anim->getRepeat();
+	m_reanimate = true;
 	m_associatedNodes.emplaceBack(getAllocator(), movableSceneNode);
 
 	return Error::NONE;

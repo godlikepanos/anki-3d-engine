@@ -340,7 +340,7 @@ void Exporter::exportSkeleton(const aiMesh& mesh) const
 		// <name>
 		file << "\t\t\t<name>" << bone.mName.C_Str() << "</name>\n";
 
-		// <bontTransform>
+		// <boneTransform>
 		aiMatrix4x4 akMat = toAnkiMatrix(bone.mOffsetMatrix);
 		file << "\t\t\t<boneTransform>";
 		for(unsigned j = 0; j < 4; j++)

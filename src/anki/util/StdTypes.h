@@ -76,6 +76,7 @@ using Bool32 = I32; ///< A 32bit boolean
 
 using Second = F64; ///< The base time unit is second.
 const Second MAX_SECOND = MAX_F64;
+const Second MIN_SECOND = MIN_F64;
 
 using Timestamp = U64; ///< Timestamp type.
 const Timestamp MAX_TIMESTAMP = MAX_U64;

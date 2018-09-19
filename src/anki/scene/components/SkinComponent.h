@@ -29,7 +29,7 @@ public:
 
 	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
 
-	void playAnimation(U track, AnimationResourcePtr anim, F64 startTime, Bool repeat);
+	void playAnimation(U track, AnimationResourcePtr anim, Second startTime, Bool repeat);
 
 	const DynamicArray<Mat4>& getBoneTransforms() const
 	{
