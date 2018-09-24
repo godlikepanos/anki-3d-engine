@@ -141,8 +141,6 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 				ANKI_CHECK(el.getVec4(tmp2));
 				key.m_value = Quat(tmp2);
 
-				printf("%f\n", key.m_value.getLength());
-
 				// Check ident
 				if(key.m_value == Quat::getIdentity())
 				{

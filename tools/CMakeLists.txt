@@ -1,1 +1,2 @@
-ADD_SUBDIRECTORY(scene)
+add_subdirectory(scene)
+add_subdirectory(gltf_exporter)
