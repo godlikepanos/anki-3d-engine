@@ -30,7 +30,10 @@ public:
 	Error exportAll();
 
 private:
-	Error exportMeshes();
+	Error exportMesh(const tinygltf::Mesh& mesh);
+
+	void getAttributeInfo(
+		const tinygltf::Primitive& primitive, CString attribName, const U8*& buff, U32& stride, U32& count) const;
 };
 
 } // end namespace anki
