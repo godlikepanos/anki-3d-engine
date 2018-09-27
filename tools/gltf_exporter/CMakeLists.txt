@@ -2,6 +2,8 @@ include_directories("../../src")
 
 add_definitions("-fexceptions")
 
-add_executable(gltf_exporter Main.cpp Exporter.cpp)
+file(GLOB_RECURSE SOURCES *.cpp)
+
+add_executable(gltf_exporter ${SOURCES})
 target_link_libraries(gltf_exporter anki)
 installExecutable(gltf_exporter)

@@ -40,6 +40,10 @@ private:
 		U32& stride,
 		U32& count,
 		Format& fmt) const;
+
+	Error exportMaterial(const tinygltf::Material& mtl);
+
+	void getTexture(tinygltf::Material& mtl, CString texName, CString& fname) const;
 };
 
 #define EXPORT_ASSERT(expr) \
