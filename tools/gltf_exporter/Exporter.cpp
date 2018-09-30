@@ -6,6 +6,7 @@
 #include "Exporter.h"
 #include <anki/resource/MeshLoader.h>
 #include <anki/util/File.h>
+#include <string>
 
 namespace anki
 {
@@ -16,6 +17,24 @@ public:
 	U16 m_boneIndices[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 	U8 m_weights[4] = {0, 0, 0, 0};
 };
+
+static std::string replaceAllString(const std::string& str, const std::string& from, const std::string& to)
+{
+	if(from.empty())
+	{
+		return str;
+	}
+
+	std::string out = str;
+	size_t start_pos = 0;
+	while((start_pos = out.find(from, start_pos)) != std::string::npos)
+	{
+		out.replace(start_pos, from.length(), to);
+		start_pos += to.length();
+	}
+
+	return out;
+}
 
 Error Exporter::load()
 {
@@ -658,22 +677,179 @@ Error Exporter::exportMesh(const tinygltf::Mesh& mesh)
 	return Error::NONE;
 }
 
-void Exporter::getTexture(tinygltf::Material& mtl, CString texName, CString& fname) const
+Bool Exporter::getTexture(const tinygltf::Material& mtl, CString texName, StringAuto& fname) const
 {
+	fname.destroy();
+
 	if(mtl.values.find(texName.cstr()) != mtl.values.end())
 	{
-		const I textureIdx = mtl.values["baseColorTexture"].TextureIndex();
+		const I textureIdx = mtl.values.find(texName.cstr())->second.TextureIndex();
+		ANKI_ASSERT(textureIdx > -1);
 		const I imageIdx = m_model.textures[textureIdx].source;
-		fname = m_model.images[imageIdx].uri.c_str();
+		fname.sprintf("%s/%s", m_texrpath.cstr(), m_model.images[imageIdx].uri.c_str());
+
+		return true;
 	}
 	else
 	{
-		fname = CString();
+		return false;
+	}
+}
+
+Bool Exporter::getMaterialAttrib(const tinygltf::Material& mtl, CString attribName, Vec4& value) const
+{
+	auto it = mtl.values.find(attribName.cstr());
+	if(it != mtl.values.end())
+	{
+		const tinygltf::Parameter& param = it->second;
+		if(param.has_number_value)
+		{
+			value = Vec4(param.number_value);
+		}
+		else
+		{
+			value =
+				Vec4(param.ColorFactor()[0], param.ColorFactor()[1], param.ColorFactor()[2], param.ColorFactor()[3]);
+		}
+
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 
 Error Exporter::exportMaterial(const tinygltf::Material& mtl)
 {
+	const char* MATERIAL_TEMPLATE = R"(<?xml version="1.0" encoding="UTF-8" ?>
+<!-- This file is auto generated -->
+<material shaderProgram="shaders/GBufferGeneric.glslp">
+	<mutators>
+		<mutator name="DIFFUSE_TEX" value="%diffTexMutator%"/>
+		<mutator name="SPECULAR_TEX" value="%specTexMutator%"/>
+		<mutator name="ROUGHNESS_TEX" value="%roughnessTexMutator%"/>
+		<mutator name="METAL_TEX" value="%metalTexMutator%"/>
+		<mutator name="NORMAL_TEX" value="%normalTexMutator%"/>
+		<mutator name="PARALLAX" value="%parallaxMutator%"/>
+		<mutator name="EMISSIVE_TEX" value="%emissiveTexMutator%"/>
+	</mutators>
+	<inputs>
+		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
+		<input shaderInput="prevMvp" builtin="PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX"/>
+		<input shaderInput="rotationMat" builtin="ROTATION_MATRIX"/>
+		%parallaxInput%
+
+		%diff%
+		%spec%
+		%roughness%
+		%metallic%
+		%normal%
+		%emission%
+		%subsurface%
+		%height%
+	</inputs>
+</material>
+)";
+
+	std::string xml = MATERIAL_TEMPLATE;
+
+	// Diffuse
+	StringAuto fname(m_alloc);
+	Vec4 v4;
+	if(getTexture(mtl, "baseColorTexture", fname))
+	{
+		xml = replaceAllString(xml, "%diffTexMutator%", "1");
+		xml = replaceAllString(
+			xml, "%diff%", "<input shaderInput=\"diffTex\" value=\"" + std::string(fname.cstr()) + "\"/>");
+	}
+	else if(getMaterialAttrib(mtl, "baseColorFactor", v4))
+	{
+		xml = replaceAllString(xml, "%diffTexMutator%", "0");
+		xml = replaceAllString(xml,
+			"%diff%",
+			"<input shaderInput=\"diffColor\" value=\"" + std::to_string(v4[0]) + " " + std::to_string(v4[1]) + " "
+				+ std::to_string(v4[2]) + "\"/>");
+	}
+
+	// Normal
+	if(getTexture(mtl, "normalTexture", fname))
+	{
+		xml = replaceAllString(
+			xml, "%normal%", "<input shaderInput=\"normalTex\" value=\"" + std::string(fname.cstr()) + "\"/>");
+		xml = replaceAllString(xml, "%normalTexMutator%", "1");
+	}
+	else
+	{
+		xml = replaceAllString(xml, "%normal%", "");
+		xml = replaceAllString(xml, "%normalTexMutator%", "0");
+	}
+
+	// Roughness & metallic
+	I metallic = -1;
+	I roughness = -1;
+	if(getTexture(mtl, "metallicRoughnessTexture", fname))
+	{
+		if(fname.find("_rm.") != String::NPOS)
+		{
+			roughness = 0;
+			metallic = 1;
+		}
+		else if(fname.find("_r.") != String::NPOS)
+		{
+			roughness = 0;
+		}
+		else if(fname.find("_m.") != String::NPOS)
+		{
+			metallic = 0;
+		}
+		else
+		{
+			ANKI_LOGE("Can't identify the type of metallicRoughnessTexture by its filename");
+			return Error::USER_DATA;
+		}
+
+		if(metallic > -1)
+		{
+			xml = replaceAllString(
+				xml, "%metallic%", "<input shaderInput=\"metalTex\" value=\"" + std::string(fname.cstr()) + "\"/>");
+			xml = replaceAllString(xml, "%metalTexMutator%", std::to_string(metallic + 1));
+		}
+
+		if(roughness > -1)
+		{
+			xml = replaceAllString(xml,
+				"%roughness%",
+				"<input shaderInput=\"roughnessTex\" value=\"" + std::string(fname.cstr()) + "\"/>");
+			xml = replaceAllString(xml, "%roughnessTexMutator%", std::to_string(roughness + 1));
+		}
+	}
+
+	if(metallic == -1)
+	{
+		EXPORT_ASSERT(getMaterialAttrib(mtl, "metallicFactor", v4));
+		xml = replaceAllString(
+			xml, "%metallic%", "<input shaderInput=\"metallic\" value=\"" + std::to_string(v4.x()) + "\"/>");
+
+		xml = replaceAllString(xml, "%metalTexMutator%", "0");
+	}
+
+	if(roughness == -1)
+	{
+		EXPORT_ASSERT(getMaterialAttrib(mtl, "roughnessFactor", v4));
+
+		xml = replaceAllString(
+			xml, "%roughness%", "<input shaderInput=\"roughness\" value=\"" + std::to_string(v4.x()) + "\" />");
+
+		xml = replaceAllString(xml, "%roughnessTexMutator%", "0");
+	}
+
+	// Replace texture extensions with .anki
+	xml = replaceAllString(xml, ".tga", ".ankitex");
+	xml = replaceAllString(xml, ".png", ".ankitex");
+	xml = replaceAllString(xml, ".jpg", ".ankitex");
+	xml = replaceAllString(xml, ".jpeg", ".ankitex");
+
 	return Error::NONE;
 }
 

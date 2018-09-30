@@ -43,7 +43,8 @@ private:
 
 	Error exportMaterial(const tinygltf::Material& mtl);
 
-	void getTexture(tinygltf::Material& mtl, CString texName, CString& fname) const;
+	Bool getTexture(const tinygltf::Material& mtl, CString texName, StringAuto& fname) const;
+	Bool getMaterialAttrib(const tinygltf::Material& mtl, CString attribName, Vec4& value) const;
 };
 
 #define EXPORT_ASSERT(expr) \
