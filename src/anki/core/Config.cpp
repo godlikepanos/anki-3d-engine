@@ -20,6 +20,8 @@ Config::Config()
 	newOption("r.clusterSizeZ", 32);
 	newOption("r.avgObjectsPerCluster", 16);
 
+	newOption("r.volumetricLightingAccumulationClusterFraction", 2);
+
 	newOption("r.shadowMapping.enabled", true);
 	newOption("r.shadowMapping.resolution", 512);
 	newOption("r.shadowMapping.tileCountPerRowOrColumn", 8);
