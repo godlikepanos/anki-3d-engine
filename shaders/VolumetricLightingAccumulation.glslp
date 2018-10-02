@@ -1,0 +1,144 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// This shader accumulates the lighting for every cluster fraction
+
+#pragma anki mutator ENABLE_SHADOWS 0 1
+
+#pragma anki input const UVec3 VOLUME_SIZE
+#pragma anki input const UVec3 CLUSTER_COUNT
+#pragma anki input const UVec3 WORKGROUP_SIZE
+#pragma anki input const UVec3 NOISE_TEX_SIZE
+
+#pragma anki start comp
+
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
+
+layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image3D out_volume;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler3D u_noiseTex;
+
+layout(ANKI_UBO_BINDING(0, 0)) uniform ub0_
+{
+	Vec4 u_noiseOffsetPad3;
+};
+
+#define u_noiseOffset u_noiseOffsetPad3.x
+
+#define LIGHT_TEX_BINDING 1
+#define LIGHT_UBO_BINDING 0
+#define LIGHT_SS_BINDING 0
+#define LIGHT_SET 0
+#define LIGHT_LIGHTS
+#define LIGHT_COMMON_UNIS
+#include <shaders/ClusteredShadingCommon.glsl>
+
+Vec3 readRand()
+{
+	Vec3 uv = (Vec3(gl_GlobalInvocationID) + 0.5) / Vec3(NOISE_MAP_SIZE);
+	uv.z += u_noiseOffset;
+
+	return textureLod(u_noiseTex, uv, 0.0).rgb;
+}
+
+Vec3 randWPos(U32 clusterK)
+{
+	// Read a rand value
+	Vec3 rand = readRand();
+
+	F32 zVSpaceNear = computeClusterNear(u_clusterMagic, clusterXYZ.z);
+	F32 zVSpaceFar = computeClusterFar(u_clusterMagic, clusterXYZ.z);
+	F32 zVSpace = mix(zVSpaceNear, zVSpaceFar, rand.z);
+
+	Vec2 uvMin = Vec2(gl_GlobalInvocationID.xy) / Vec2(VOLUME_SIZE.xy);
+	Vec2 uvMax = uvMin + 1.0 / Vec2(VOLUME_SIZE.xy);
+	Vec2 uv = mix(uvMin, uvMax, rand.xy);
+	Vec2 ndc = UV_TO_NDC(uv);
+	Vec3 xyZVspace = ndc * u_unprojectionParams.xy * zVSpace;
+
+	Vec4 worldPos4 = u_invViewMat * Vec4(ndc, depth, 1.0);
+	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+}
+
+Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
+{
+	Vec3 color = Vec3(0.0);
+
+	// Get ID offset
+	U32 lightIdxOffset = u_clusters[clusterIdx];
+
+	// Skip decals
+	U32 count = u_lightIndices[idxOffset];
+	idxOffset += count + 1u;
+
+	// Point lights
+	count = u_lightIndices[idxOffset++];
+	U32 idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	{
+		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
+
+		Vec3 frag2Light = light.m_posRadius.xyz - fragPos;
+		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+
+#if ENABLE_SHADOWS
+		if(light.m_diffuseColorTileSize.w >= 0.0)
+		{
+			factor *= computeShadowFactorOmni(
+				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
+		}
+#endif
+
+		color += light.m_diffuseColorTileSize.rgb * factor;
+	}
+
+	// Spot lights
+	count = u_lightIndices[idxOffset++];
+	idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	{
+		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
+
+		Vec3 frag2Light = light.m_posRadius.xyz - fragPos;
+		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+
+		Vec3 l = normalize(frag2Light);
+
+		factor *=
+			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+
+#if ENABLE_SHADOWS
+		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
+		if(shadowmapLayerIdx >= 0.0)
+		{
+			factor *= computeShadowFactorSpot(light.m_texProjectionMat, fragPos, light.m_lightDirRadius.w, u_shadowTex);
+		}
+#endif
+
+		color += light.m_diffuseColorShadowmapId.rgb * factor;
+	}
+
+	return color;
+}
+
+void main()
+{
+	if(any(greaterThan(gl_GlobalInvocationID.xyz, VOLUME_SIZE)))
+	{
+		return;
+	}
+
+	// Find the cluster
+	UVec3 clusterXYZ = gl_GlobalInvocationID / CLUSTER_COUNT;
+	U32 clusterIdx = clusterXYZ.z * (CLUSTER_COUNT.x * CLUSTER_COUNT.y) clusterXYZ.y * CLUSTER_COUNT.x + clusterXYZ.x;
+
+	// Find a random pos inside the cluster
+	Vec3 worldPos = randWPos(clusterXYZ.z);
+
+	// Get lighting
+	Vec3 color = accumulateLights(clusterIdx, worldPos);
+
+	// Write result
+	imageStore(out_volume, IVec3(gl_GlobalInvocationID), Vec4(color, 0.0));
+}
