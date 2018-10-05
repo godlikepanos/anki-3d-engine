@@ -9,6 +9,7 @@
 
 #pragma anki input const UVec3 VOLUME_SIZE
 #pragma anki input const UVec3 CLUSTER_COUNT
+#pragma anki input const U32 FINAL_CLUSTER_Z
 #pragma anki input const UVec3 WORKGROUP_SIZE
 #pragma anki input const UVec3 NOISE_TEX_SIZE
 
@@ -19,12 +20,13 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image3D out_volume;
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler3D u_noiseTex;
 
-layout(ANKI_UBO_BINDING(0, 0)) uniform ub0_
+struct PushConsts
 {
-	Vec4 u_noiseOffsetPad3;
+	Vec4 m_noiseOffsetPad3;
 };
+ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 
-#define u_noiseOffset u_noiseOffsetPad3.x
+#define u_noiseOffset u_regs.m_noiseOffsetPad3.x
 
 #define LIGHT_TEX_BINDING 1
 #define LIGHT_UBO_BINDING 0
@@ -34,31 +36,42 @@ layout(ANKI_UBO_BINDING(0, 0)) uniform ub0_
 #define LIGHT_COMMON_UNIS
 #include <shaders/ClusteredShadingCommon.glsl>
 
+const UVec3 FRACTION = UVec3(VOLUME_SIZE.xy / CLUSTER_COUNT.xy, VOLUME_SIZE.z / (FINAL_CLUSTER_Z + 1));
+Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
+
 Vec3 readRand()
 {
-	Vec3 uv = (Vec3(gl_GlobalInvocationID) + 0.5) / Vec3(NOISE_MAP_SIZE);
+	Vec3 uv = (g_globalInvocationID + 0.5) / Vec3(NOISE_TEX_SIZE);
 	uv.z += u_noiseOffset;
-
 	return textureLod(u_noiseTex, uv, 0.0).rgb;
 }
 
-Vec3 randWPos(U32 clusterK)
+Vec3 randWPos()
 {
 	// Read a rand value
 	Vec3 rand = readRand();
 
-	F32 zVSpaceNear = computeClusterNear(u_clusterMagic, clusterXYZ.z);
-	F32 zVSpaceFar = computeClusterFar(u_clusterMagic, clusterXYZ.z);
-	F32 zVSpace = mix(zVSpaceNear, zVSpaceFar, rand.z);
+	// Compute the cluster Z as float
+	F32 clusterK = g_globalInvocationID.z * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
+	F32 clusterK_1 = (g_globalInvocationID.z + 1.0) * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
 
-	Vec2 uvMin = Vec2(gl_GlobalInvocationID.xy) / Vec2(VOLUME_SIZE.xy);
+	// Get a Z value
+	F32 zVSpaceNear = computeClusterNearf(u_clustererMagic, clusterK);
+	F32 zVSpaceFar = computeClusterNearf(u_clustererMagic, clusterK_1);
+	F32 zVSpace = -mix(zVSpaceNear, zVSpaceFar, rand.z);
+
+	// Get a XY value
+	Vec2 uvMin = g_globalInvocationID.xy / Vec2(VOLUME_SIZE.xy);
 	Vec2 uvMax = uvMin + 1.0 / Vec2(VOLUME_SIZE.xy);
 	Vec2 uv = mix(uvMin, uvMax, rand.xy);
 	Vec2 ndc = UV_TO_NDC(uv);
-	Vec3 xyZVspace = ndc * u_unprojectionParams.xy * zVSpace;
+	Vec2 xyZVspace = ndc * u_unprojectionParams.xy * zVSpace;
 
-	Vec4 worldPos4 = u_invViewMat * Vec4(ndc, depth, 1.0);
-	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+	// Get the pos
+	Vec4 worldPos4 = u_invViewMat * Vec4(xyZVspace, zVSpace, 1.0);
+	Vec3 worldPos = worldPos4.xyz;
+
+	return worldPos;
 }
 
 Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
@@ -66,7 +79,7 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 	Vec3 color = Vec3(0.0);
 
 	// Get ID offset
-	U32 lightIdxOffset = u_clusters[clusterIdx];
+	U32 idxOffset = u_clusters[clusterIdx];
 
 	// Skip decals
 	U32 count = u_lightIndices[idxOffset];
@@ -79,7 +92,7 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 	{
 		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
-		Vec3 frag2Light = light.m_posRadius.xyz - fragPos;
+		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
 
 #if ENABLE_SHADOWS
@@ -100,7 +113,7 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 	{
 		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
-		Vec3 frag2Light = light.m_posRadius.xyz - fragPos;
+		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
 
 		Vec3 l = normalize(frag2Light);
@@ -112,7 +125,8 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx >= 0.0)
 		{
-			factor *= computeShadowFactorSpot(light.m_texProjectionMat, fragPos, light.m_lightDirRadius.w, u_shadowTex);
+			factor *=
+				computeShadowFactorSpot(light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
 		}
 #endif
 
@@ -124,17 +138,17 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 
 void main()
 {
-	if(any(greaterThan(gl_GlobalInvocationID.xyz, VOLUME_SIZE)))
+	if(any(greaterThanEqual(gl_GlobalInvocationID.xyz, VOLUME_SIZE)))
 	{
 		return;
 	}
 
+	// Find a random pos inside the cluster
+	Vec3 worldPos = randWPos();
+
 	// Find the cluster
 	UVec3 clusterXYZ = gl_GlobalInvocationID / CLUSTER_COUNT;
-	U32 clusterIdx = clusterXYZ.z * (CLUSTER_COUNT.x * CLUSTER_COUNT.y) clusterXYZ.y * CLUSTER_COUNT.x + clusterXYZ.x;
-
-	// Find a random pos inside the cluster
-	Vec3 worldPos = randWPos(clusterXYZ.z);
+	U32 clusterIdx = clusterXYZ.z * (CLUSTER_COUNT.x * CLUSTER_COUNT.y) * clusterXYZ.y * CLUSTER_COUNT.x + clusterXYZ.x;
 
 	// Get lighting
 	Vec3 color = accumulateLights(clusterIdx, worldPos);
@@ -142,3 +156,5 @@ void main()
 	// Write result
 	imageStore(out_volume, IVec3(gl_GlobalInvocationID), Vec4(color, 0.0));
 }
+
+#pragma anki end

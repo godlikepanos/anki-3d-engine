@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/VolumetricLightingAccumulation.h>
+#include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/misc/ConfigSet.h>
@@ -23,11 +24,14 @@ VolumetricLightingAccumulation::~VolumetricLightingAccumulation()
 Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 {
 	// Misc
-	const U fraction = config.getNumber("r.volumetricLightingAccumulationClusterFraction");
+	const U fraction = config.getNumber("r.volumetricLightingAccumulation.clusterFraction");
 	ANKI_ASSERT(fraction >= 1);
+	const U finalClusterZ = config.getNumber("r.volumetricLightingAccumulation.finalClusterInZ");
+	ANKI_ASSERT(finalClusterZ > 0 && finalClusterZ < m_r->getClusterCount()[2]);
+
 	m_volumeSize[0] = m_r->getClusterCount()[0] * fraction;
 	m_volumeSize[1] = m_r->getClusterCount()[1] * fraction;
-	m_volumeSize[2] = m_r->getClusterCount()[2] * fraction;
+	m_volumeSize[2] = (finalClusterZ + 1) * fraction;
 	ANKI_R_LOGI("Initializing volumetric lighting accumulation. Size %ux%ux%u",
 		m_volumeSize[0],
 		m_volumeSize[1],
@@ -41,11 +45,12 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
 	mutators.add("ENABLE_SHADOWS", 1);
 
-	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
+	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]))
 		.add("CLUSTER_COUNT", UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]))
-		.add("WORKGROUP_SIZE", UVec3(0, 0, 0)) // TODO
-		.add("NOISE_MAP_SIZE", UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
+		.add("FINAL_CLUSTER_Z", U32(finalClusterZ))
+		.add("WORKGROUP_SIZE", UVec3(m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2]))
+		.add("NOISE_TEX_SIZE", UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
@@ -54,7 +59,7 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	// Create RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_volumeSize[0],
 		m_volumeSize[1],
-		Format::R16G16B16A16_SFLOAT,
+		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
 		"VolLight");
 	texinit.m_depth = m_volumeSize[2];
@@ -67,19 +72,59 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 
 void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 {
+	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
-	pass.setWork(runCallback, this, 0);
+
+	auto callback = [](RenderPassWorkContext& rgraphCtx) -> void {
+		static_cast<VolumetricLightingAccumulation*>(rgraphCtx.m_userData)->run(rgraphCtx);
+	};
+	pass.setWork(callback, this, 0);
 
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE});
+	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
 void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 {
-	// TODO
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	RenderingContext& ctx = *m_runCtx.m_ctx;
+
+	cmdb->bindShaderProgram(m_grProg);
+
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
+
+	cmdb->bindTextureAndSampler(
+		0, 0, m_noiseTex->getGrTextureView(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_COMPUTE);
+
+	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+
+	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
+	bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
+
+	struct PushConsts
+	{
+		Vec4 m_noiseOffsetPad3;
+	} regs;
+	regs.m_noiseOffsetPad3 = Vec4(0.0f);
+	regs.m_noiseOffsetPad3.x() = 1.0f / F32(m_r->getFrameCount() % m_noiseTex->getDepth()) * 0.5f;
+
+	cmdb->setPushConstants(&regs, sizeof(regs));
+
+	dispatchPPCompute(cmdb,
+		m_workgroupSize[0],
+		m_workgroupSize[1],
+		m_workgroupSize[2],
+		m_volumeSize[0],
+		m_volumeSize[1],
+		m_volumeSize[2]);
 }
 
 } // end namespace anki

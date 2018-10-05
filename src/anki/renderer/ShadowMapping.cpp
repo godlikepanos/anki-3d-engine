@@ -76,7 +76,8 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_atlasResolution,
 			m_atlasResolution,
 			SHADOW_COLOR_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
+				| TextureUsageBit::SAMPLED_COMPUTE,
 			"esm");
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		ClearValue clearVal;

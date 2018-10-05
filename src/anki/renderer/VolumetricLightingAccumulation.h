@@ -31,6 +31,7 @@ anki_internal:
 	}
 
 private:
+	Array<U32, 3> m_workgroupSize = {{8, 8, 8}};
 	Array<U32, 3> m_volumeSize;
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
@@ -41,13 +42,9 @@ private:
 	class
 	{
 	public:
+		RenderingContext* m_ctx = nullptr;
 		RenderTargetHandle m_rt;
 	} m_runCtx; ///< Runtime context.
-
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		static_cast<VolumetricLightingAccumulation*>(rgraphCtx.m_userData)->run(rgraphCtx);
-	}
 
 	void run(RenderPassWorkContext& rgraphCtx);
 };

@@ -78,8 +78,7 @@ public:
 	Second m_lightBinTime ANKI_DBG_NULLIFY;
 };
 
-/// Offscreen renderer. It is a class and not a namespace because we may need external renderers for security cameras
-/// for example
+/// Offscreen renderer.
 class Renderer
 {
 public:
@@ -90,6 +89,11 @@ public:
 	Indirect& getIndirect()
 	{
 		return *m_indirect;
+	}
+
+	VolumetricLightingAccumulation& getVolumetricLightingAccumulation()
+	{
+		return *m_volLighting;
 	}
 
 	ShadowMapping& getShadowMapping()
@@ -367,6 +371,7 @@ private:
 
 	/// @name Rendering stages
 	/// @{
+	UniquePtr<VolumetricLightingAccumulation> m_volLighting;
 	UniquePtr<Indirect> m_indirect;
 	UniquePtr<ShadowMapping> m_shadowMapping; ///< Shadow mapping.
 	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage

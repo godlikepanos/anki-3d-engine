@@ -91,15 +91,15 @@ ANKI_SHADER_FUNC_INLINE U32 computeClusterIndex(
 }
 
 // Compute the Z of the near plane given a cluster idx
-ANKI_SHADER_FUNC_INLINE F32 computeClusterNear(ClustererMagicValues magic, U32 k)
+ANKI_SHADER_FUNC_INLINE F32 computeClusterNearf(ClustererMagicValues magic, F32 fk)
 {
-	F32 fk = F32(k);
 	return magic.m_val1.x() * fk * fk + magic.m_val1.y();
 }
 
-ANKI_SHADER_FUNC_INLINE F32 computeClusterFar(ClustererMagicValues magic, U32 k)
+// Compute the Z of the near plane given a cluster idx
+ANKI_SHADER_FUNC_INLINE F32 computeClusterNear(ClustererMagicValues magic, U32 k)
 {
-	return computeClusterNear(magic, k + 1u);
+	return computeClusterNearf(magic, F32(k));
 }
 
 ANKI_END_NAMESPACE

@@ -37,6 +37,7 @@ class DepthDownscale;
 class TemporalAA;
 class UiStage;
 class Ssr;
+class VolumetricLightingAccumulation;
 
 class RenderingContext;
 class DebugDrawer;

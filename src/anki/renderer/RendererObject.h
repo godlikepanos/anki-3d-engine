@@ -65,6 +65,20 @@ protected:
 		cmdb->dispatchCompute(sizeX, sizeY, 1);
 	}
 
+	static void dispatchPPCompute(CommandBufferPtr& cmdb,
+		U32 workgroupSizeX,
+		U32 workgroupSizeY,
+		U32 workgroupSizeZ,
+		U32 outImageWidth,
+		U32 outImageHeight,
+		U32 outImageDepth)
+	{
+		const U sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
+		const U sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;
+		const U sizeZ = (outImageDepth + workgroupSizeZ - 1) / workgroupSizeZ;
+		cmdb->dispatchCompute(sizeX, sizeY, sizeZ);
+	}
+
 	template<typename TPtr>
 	TPtr allocateUniforms(PtrSize size, StagingGpuMemoryToken& token)
 	{
