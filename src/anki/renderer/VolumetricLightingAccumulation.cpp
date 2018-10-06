@@ -24,14 +24,16 @@ VolumetricLightingAccumulation::~VolumetricLightingAccumulation()
 Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 {
 	// Misc
-	const U fraction = config.getNumber("r.volumetricLightingAccumulation.clusterFraction");
-	ANKI_ASSERT(fraction >= 1);
+	const U fractionXY = config.getNumber("r.volumetricLightingAccumulation.clusterFractionXY");
+	ANKI_ASSERT(fractionXY >= 1);
+	const U fractionZ = config.getNumber("r.volumetricLightingAccumulation.clusterFractionZ");
+	ANKI_ASSERT(fractionZ >= 1);
 	const U finalClusterZ = config.getNumber("r.volumetricLightingAccumulation.finalClusterInZ");
 	ANKI_ASSERT(finalClusterZ > 0 && finalClusterZ < m_r->getClusterCount()[2]);
 
-	m_volumeSize[0] = m_r->getClusterCount()[0] * fraction;
-	m_volumeSize[1] = m_r->getClusterCount()[1] * fraction;
-	m_volumeSize[2] = (finalClusterZ + 1) * fraction;
+	m_volumeSize[0] = m_r->getClusterCount()[0] * fractionXY;
+	m_volumeSize[1] = m_r->getClusterCount()[1] * fractionXY;
+	m_volumeSize[2] = (finalClusterZ + 1) * fractionZ;
 	ANKI_R_LOGI("Initializing volumetric lighting accumulation. Size %ux%ux%u",
 		m_volumeSize[0],
 		m_volumeSize[1],
@@ -45,10 +47,11 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
 	mutators.add("ENABLE_SHADOWS", 1);
 
-	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
+	ShaderProgramResourceConstantValueInitList<6> consts(m_prog);
 	consts.add("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]))
 		.add("CLUSTER_COUNT", UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]))
 		.add("FINAL_CLUSTER_Z", U32(finalClusterZ))
+		.add("FRACTION", UVec3(fractionXY, fractionXY, fractionZ))
 		.add("WORKGROUP_SIZE", UVec3(m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2]))
 		.add("NOISE_TEX_SIZE", UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
 
@@ -114,7 +117,8 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 		Vec4 m_noiseOffsetPad3;
 	} regs;
 	regs.m_noiseOffsetPad3 = Vec4(0.0f);
-	regs.m_noiseOffsetPad3.x() = 1.0f / F32(m_r->getFrameCount() % m_noiseTex->getDepth()) * 0.5f;
+	const F32 texelSize = 1.0f / m_noiseTex->getDepth();
+	regs.m_noiseOffsetPad3.x() = texelSize * F32(m_r->getFrameCount() % m_noiseTex->getDepth()) + texelSize / 2.0f;
 
 	cmdb->setPushConstants(&regs, sizeof(regs));
 

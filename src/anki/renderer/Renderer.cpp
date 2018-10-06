@@ -492,8 +492,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				else
 				{
 					// Compute
+					ShaderProgramResourceMutationInitList<1> mutators(m_clearTexComputeProg);
+					mutators.add("IS_2D", U32((inf.m_type != TextureType::_3D) ? 1 : 0));
+
 					const ShaderProgramResourceVariant* variant;
-					m_clearTexComputeProg->getOrCreateVariant(variant);
+					m_clearTexComputeProg->getOrCreateVariant(mutators.get(), variant);
 
 					cmdb->bindShaderProgram(variant->getProgram());
 
@@ -505,7 +508,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					cmdb->setTextureSurfaceBarrier(
 						tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, surf);
 
-					cmdb->dispatchCompute(tex->getWidth() >> mip, tex->getHeight() >> mip, 1);
+					const U wgSizeZ = (inf.m_type == TextureType::_3D) ? (tex->getDepth() >> mip) : 1;
+					cmdb->dispatchCompute(tex->getWidth() >> mip, tex->getHeight() >> mip, wgSizeZ);
 
 					if(!!inf.m_initialUsage)
 					{

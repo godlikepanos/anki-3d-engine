@@ -5,6 +5,8 @@
 
 // A slow compute program to clear an image with a contant color
 
+#pragma anki mutator IS_2D 0 1
+
 #pragma anki start comp
 #include <shaders/Common.glsl>
 
@@ -16,11 +18,19 @@ struct PushConsts
 };
 ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 
+#if IS_2D
 layout(ANKI_IMAGE_BINDING(0, 0)) uniform writeonly image2D u_img;
+#else
+layout(ANKI_IMAGE_BINDING(0, 0)) uniform writeonly image3D u_img;
+#endif
 
 void main()
 {
+#if IS_2D
 	imageStore(u_img, IVec2(gl_GlobalInvocationID.xy), u_regs.m_clearColor);
+#else
+	imageStore(u_img, IVec3(gl_GlobalInvocationID), u_regs.m_clearColor);
+#endif
 }
 
 #pragma anki end
