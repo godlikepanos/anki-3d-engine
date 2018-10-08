@@ -20,13 +20,13 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D anki_msDepthRt;
 #include <shaders/ClusteredShadingCommon.glsl>
 
 #define anki_u_time u_time
-#define RENDERER_SIZE (u_rendererSize * 0.5)
+#define RENDERER_SIZE (u_rendererSize)
 
 layout(location = 0) out Vec4 out_color;
 
 void writeGBuffer(in Vec4 color)
 {
-	out_color = Vec4(color.rgb, 1.0 - color.a);
+	out_color = Vec4(color.rgb, color.a);
 }
 
 Vec4 readAnimatedTextureRgba(sampler2DArray tex, F32 period, Vec2 uv, F32 time)

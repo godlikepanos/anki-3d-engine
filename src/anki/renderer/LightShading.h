@@ -43,14 +43,6 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
-		TextureResourcePtr m_noiseTex;
-	} m_fs; ///< Apply forward shading.
-
-	class
-	{
-	public:
 		RenderTargetHandle m_rt;
 		RenderingContext* m_ctx;
 	} m_runCtx; ///< Run context.
@@ -58,14 +50,7 @@ private:
 	/// Called by init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
-	/// A RenderPassWorkCallback for the light pass.
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		LightShading* const self = scast<LightShading*>(rgraphCtx.m_userData);
-		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
-	}
+	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

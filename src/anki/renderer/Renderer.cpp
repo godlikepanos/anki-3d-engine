@@ -292,7 +292,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_vol->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
-	m_forwardShading->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);

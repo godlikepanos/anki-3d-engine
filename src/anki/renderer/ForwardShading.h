@@ -26,33 +26,11 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
+	void setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass);
 
-	void drawUpscale(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
-	U32 getWidth() const
-	{
-		return m_width;
-	}
-
-	U32 getHeight() const
-	{
-		return m_height;
-	}
-
-	RenderTargetHandle getRt() const
-	{
-		return m_runCtx.m_rt;
-	}
+	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 
 private:
-	U32 m_width;
-	U32 m_height;
-
-	FramebufferDescription m_fbDescr;
-	RenderTargetDescription m_rtDescr;
-
 	class Vol
 	{
 	public:
@@ -61,26 +39,10 @@ private:
 		TextureResourcePtr m_noiseTex;
 	} m_vol;
 
-	class
-	{
-	public:
-		RenderTargetHandle m_rt;
-		RenderingContext* m_ctx = nullptr;
-	} m_runCtx;
-
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error initVol();
 
-	/// A RenderPassWorkCallback.
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		ForwardShading* self = scast<ForwardShading*>(rgraphCtx.m_userData);
-		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
-	}
-
-	void run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
-	void drawVolumetric(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	void drawVolumetric(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

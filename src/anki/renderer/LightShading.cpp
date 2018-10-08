@@ -63,38 +63,26 @@ Error LightShading::initInternal(const ConfigSet& config)
 	// Create FB descr
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
+	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 	m_fbDescr.bake();
-
-	// FS upscale
-	{
-		ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_fs.m_noiseTex));
-
-		// Shader
-		ANKI_CHECK(getResourceManager().loadResource("shaders/ForwardShadingUpscale.glslp", m_fs.m_prog));
-
-		ShaderProgramResourceConstantValueInitList<3> consts(m_fs.m_prog);
-		consts.add("NOISE_TEX_SIZE", U32(m_fs.m_noiseTex->getWidth()))
-			.add("SRC_SIZE", Vec2(m_r->getWidth() / FS_FRACTION, m_r->getHeight() / FS_FRACTION))
-			.add("FB_SIZE", Vec2(m_r->getWidth(), m_r->getWidth()));
-
-		const ShaderProgramResourceVariant* variant;
-		m_fs.m_prog->getOrCreateVariant(consts.get(), variant);
-		m_fs.m_grProg = variant->getProgram();
-	}
 
 	return Error::NONE;
 }
 
-void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void LightShading::run(RenderPassWorkContext& rgraphCtx)
 {
+	const RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	// Do light shading
+	// Do light shading first
+	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
 		cmdb->bindShaderProgram(m_progVariant->getProgram());
+		cmdb->setDepthWrite(false);
 
 		// Bind textures
 		rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(0), m_r->getNearestSampler());
@@ -133,36 +121,7 @@ void LightShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgrap
 	}
 
 	// Forward shading
-	{
-		// Bind textures
-		rgraphCtx.bindTextureAndSampler(0,
-			0,
-			m_r->getGBuffer().getDepthRt(),
-			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-			m_r->getNearestSampler());
-		rgraphCtx.bindTextureAndSampler(
-			0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getNearestSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getForwardShading().getRt(), m_r->getLinearSampler());
-		cmdb->bindTextureAndSampler(0,
-			3,
-			m_fs.m_noiseTex->getGrTextureView(),
-			m_r->getTrilinearRepeatSampler(),
-			TextureUsageBit::SAMPLED_FRAGMENT);
-
-		// Bind uniforms
-		Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
-		computeLinearizeDepthOptimal(
-			ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
-		linearDepth->z() = ctx.m_renderQueue->m_cameraFar;
-
-		// Other state & draw
-		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
-		cmdb->bindShaderProgram(m_fs.m_grProg);
-		drawQuad(cmdb);
-	}
-
-	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	m_r->getForwardShading().run(ctx, rgraphCtx);
 }
 
 void LightShading::populateRenderGraph(RenderingContext& ctx)
@@ -174,10 +133,13 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	// Create pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light Shading");
+	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light&FW Shad.");
 
-	pass.setWork(runCallback, this, 0);
-	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, {});
+	pass.setWork(
+		[](RenderPassWorkContext& rgraphCtx) { static_cast<LightShading*>(rgraphCtx.m_userData)->run(rgraphCtx); },
+		this,
+		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()));
+	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, {m_r->getGBuffer().getDepthRt()});
 
 	// Light shading
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
@@ -185,7 +147,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getGBuffer().getDepthRt(),
-		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
@@ -196,8 +158,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	// For forward shading
-	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH});
-	pass.newDependency({m_r->getForwardShading().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	m_r->getForwardShading().setDependencies(ctx, pass);
 }
 
 } // end namespace anki

@@ -146,11 +146,8 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 
 	cmdb->bindShaderProgram(m_realGrProg);
+	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 	cmdb->setDepthWrite(false);
-	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
-	cmdb->setBlendFactors(
-		0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA, BlendFactor::DST_ALPHA, BlendFactor::ONE);
-	cmdb->setBlendOperation(0, BlendOperation::ADD, BlendOperation::REVERSE_SUBTRACT);
 
 	for(U i = 0; i < count; ++i)
 	{
@@ -181,8 +178,8 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		// First flare
 		sprites[c].m_posScale = Vec4(posNdc, flareEl.m_firstFlareSize * Vec2(1.0f, m_r->getAspectRatio()));
 		sprites[c].m_depthPad3 = Vec4(0.0f);
-		F32 alpha = flareEl.m_colorMultiplier.w() * (1.0 - pow(absolute(posNdc.x()), 6.0f))
-					* (1.0 - pow(absolute(posNdc.y()), 6.0)); // Fade the flare on the edges
+		const F32 alpha = flareEl.m_colorMultiplier.w() * (1.0 - pow(absolute(posNdc.x()), 6.0f))
+						  * (1.0 - pow(absolute(posNdc.y()), 6.0)); // Fade the flare on the edges
 		sprites[c].m_color = Vec4(flareEl.m_colorMultiplier.xyz(), alpha);
 		++c;
 
@@ -199,10 +196,8 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 	}
 
 	// Restore state
-	cmdb->setDepthWrite(true);
-	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
-	cmdb->setBlendOperation(0, BlendOperation::ADD);
+	cmdb->setDepthWrite(true);
 }
 
 } // end namespace anki

@@ -78,7 +78,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE); // TODO
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
 

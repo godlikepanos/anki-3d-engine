@@ -35,22 +35,6 @@ Error ForwardShading::init(const ConfigSet& cfg)
 
 Error ForwardShading::initInternal(const ConfigSet&)
 {
-	m_width = m_r->getWidth() / FS_FRACTION;
-	m_height = m_r->getHeight() / FS_FRACTION;
-
-	// Create RT descr
-	m_rtDescr = m_r->create2DRenderTargetDescription(
-		m_width, m_height, FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "forward");
-	m_rtDescr.bake();
-
-	// Create FB descr
-	m_fbDescr.m_colorAttachmentCount = 1;
-	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	m_fbDescr.m_colorAttachments[0].m_clearValue.m_colorf = {{0.0, 0.0, 0.0, 1.0}};
-	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
-	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
-	m_fbDescr.bake();
-
 	ANKI_CHECK(initVol());
 
 	return Error::NONE;
@@ -65,7 +49,7 @@ Error ForwardShading::initVol()
 	ShaderProgramResourceConstantValueInitList<3> consts(m_vol.m_prog);
 	consts.add("NOISE_TEX_SIZE", U32(m_vol.m_noiseTex->getWidth()))
 		.add("SRC_SIZE", Vec2(m_r->getWidth() / VOLUMETRIC_FRACTION, m_r->getHeight() / VOLUMETRIC_FRACTION))
-		.add("FB_SIZE", Vec2(m_width, m_height));
+		.add("FB_SIZE", Vec2(m_r->getWidth(), m_r->getHeight()));
 
 	const ShaderProgramResourceVariant* variant;
 	m_vol.m_prog->getOrCreateVariant(consts.get(), variant);
@@ -74,16 +58,15 @@ Error ForwardShading::initVol()
 	return Error::NONE;
 }
 
-void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void ForwardShading::drawVolumetric(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	cmdb->setViewport(0, 0, m_width, m_height);
-	cmdb->bindShaderProgram(m_vol.m_grProg);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
-	cmdb->setDepthWrite(false);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+	cmdb->setDepthWrite(false);
 
+	cmdb->bindShaderProgram(m_vol.m_grProg);
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, unis->x(), unis->y());
 
@@ -102,11 +85,11 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, RenderPassWorkContext
 
 	// Restore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
-	cmdb->setDepthWrite(true);
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
+	cmdb->setDepthWrite(true);
 }
 
-void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
+void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const U threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
@@ -117,6 +100,9 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 
 	if(start != end)
 	{
+		cmdb->setDepthWrite(false);
+		cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+
 		const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 		rgraphCtx.bindTextureAndSampler(
 			0, 0, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getLinearSampler());
@@ -127,12 +113,6 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
 		bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
 
-		cmdb->setViewport(0, 0, m_width, m_height);
-		cmdb->setBlendFactors(
-			0, BlendFactor::ONE_MINUS_SRC_ALPHA, BlendFactor::SRC_ALPHA, BlendFactor::DST_ALPHA, BlendFactor::ZERO);
-		cmdb->setBlendOperation(0, BlendOperation::ADD);
-		cmdb->setDepthWrite(false);
-
 		// Start drawing
 		m_r->getSceneDrawer().drawRange(Pass::FS,
 			ctx.m_matrices.m_view,
@@ -141,6 +121,10 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 			cmdb,
 			ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
 			ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);
+
+		// Restore state
+		cmdb->setDepthWrite(true);
+		cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 	}
 
 	if(threadId == threadCount - 1)
@@ -154,30 +138,11 @@ void ForwardShading::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	}
 }
 
-void ForwardShading::populateRenderGraph(RenderingContext& ctx)
+void ForwardShading::setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass)
 {
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_ctx = &ctx;
-
-	// Create RT
-	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
-
-	// Create pass
-	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Forward shading");
-
-	pass.setWork(runCallback,
-		this,
-		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()));
-	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, m_r->getDepthDownscale().getHalfDepthRt());
-
-	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
-	pass.newDependency({m_r->getDepthDownscale().getHalfDepthRt(),
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH});
 	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_QUARTER_DEPTH});
 	pass.newDependency({m_r->getVolumetric().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{
