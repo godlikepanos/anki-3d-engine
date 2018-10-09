@@ -12,6 +12,7 @@
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/LensFlare.h>
+#include <anki/renderer/VolumetricLightingAccumulation.h>
 
 namespace anki
 {
@@ -106,7 +107,9 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 		rgraphCtx.bindTextureAndSampler(
 			0, 0, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getLinearSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(
+			0, 1, m_r->getVolumetricLightingAccumulation().getRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
 		bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
 		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
@@ -143,6 +146,7 @@ void ForwardShading::setDependencies(const RenderingContext& ctx, GraphicsRender
 	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_HALF_DEPTH});
 	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_FRAGMENT, HIZ_QUARTER_DEPTH});
 	pass.newDependency({m_r->getVolumetric().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency({m_r->getVolumetricLightingAccumulation().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{

@@ -28,12 +28,12 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	ANKI_ASSERT(fractionXY >= 1);
 	const U fractionZ = config.getNumber("r.volumetricLightingAccumulation.clusterFractionZ");
 	ANKI_ASSERT(fractionZ >= 1);
-	const U finalClusterZ = config.getNumber("r.volumetricLightingAccumulation.finalClusterInZ");
-	ANKI_ASSERT(finalClusterZ > 0 && finalClusterZ < m_r->getClusterCount()[2]);
+	m_finalClusterZ = config.getNumber("r.volumetricLightingAccumulation.finalClusterInZ");
+	ANKI_ASSERT(m_finalClusterZ > 0 && m_finalClusterZ < m_r->getClusterCount()[2]);
 
 	m_volumeSize[0] = m_r->getClusterCount()[0] * fractionXY;
 	m_volumeSize[1] = m_r->getClusterCount()[1] * fractionXY;
-	m_volumeSize[2] = (finalClusterZ + 1) * fractionZ;
+	m_volumeSize[2] = (m_finalClusterZ + 1) * fractionZ;
 	ANKI_R_LOGI("Initializing volumetric lighting accumulation. Size %ux%ux%u",
 		m_volumeSize[0],
 		m_volumeSize[1],
@@ -50,7 +50,7 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	ShaderProgramResourceConstantValueInitList<6> consts(m_prog);
 	consts.add("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]))
 		.add("CLUSTER_COUNT", UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]))
-		.add("FINAL_CLUSTER_Z", U32(finalClusterZ))
+		.add("FINAL_CLUSTER_Z", U32(m_finalClusterZ))
 		.add("FRACTION", UVec3(fractionXY, fractionXY, fractionZ))
 		.add("WORKGROUP_SIZE", UVec3(m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2]))
 		.add("NOISE_TEX_SIZE", UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
@@ -78,7 +78,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE); // TODO
+	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
 

@@ -30,7 +30,15 @@ anki_internal:
 		return m_runCtx.m_rt;
 	}
 
+	/// Get the last cluster split in Z axis that will be affected by lighting.
+	U32 getFinalClusterInZ() const
+	{
+		return m_finalClusterZ;
+	}
+
 private:
+	U32 m_finalClusterZ = 0;
+
 	Array<U32, 3> m_workgroupSize = {{8, 8, 8}};
 	Array<U32, 3> m_volumeSize;
 	ShaderProgramResourcePtr m_prog;

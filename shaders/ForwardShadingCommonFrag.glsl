@@ -10,11 +10,12 @@
 #include <shaders/Functions.glsl>
 
 // Global resources
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D anki_msDepthRt;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_gbufferDepthRt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler3D u_lightVol;
 #define LIGHT_SET 0
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_SS_BINDING 0
-#define LIGHT_TEX_BINDING 1
+#define LIGHT_TEX_BINDING 2
 #define LIGHT_LIGHTS
 #define LIGHT_COMMON_UNIS
 #include <shaders/ClusteredShadingCommon.glsl>
@@ -110,6 +111,15 @@ Vec3 computeLightColor(Vec3 diffCol, Vec3 worldPos)
 	return outColor;
 }
 
+Vec3 computeLightColor2(Vec3 diffCol, Vec3 worldPos)
+{
+	Vec2 uv = gl_FragCoord.xy / RENDERER_SIZE;
+	Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, uv, worldPos, m_lightVolumeLastCluster);
+
+	Vec3 light = textureLod(u_lightVol, uv3d, 0.0).rgb;
+	return diffuseLambert(diffCol) * light;
+}
+
 void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor)
 {
 	writeGBuffer(color * scaleColor + biasColor);
@@ -120,7 +130,7 @@ void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpac
 	const Vec2 screenSize = 1.0 / RENDERER_SIZE;
 
 	Vec2 texCoords = gl_FragCoord.xy * screenSize;
-	F32 depth = texture(anki_msDepthRt, texCoords).r;
+	F32 depth = texture(u_gbufferDepthRt, texCoords).r;
 	F32 zFeatherFactor;
 
 	Vec4 fragPosVspace4 = u_invProjMat * Vec4(Vec3(UV_TO_NDC(texCoords), depth), 1.0);

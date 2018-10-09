@@ -536,12 +536,14 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	blk->m_rendererSizeTimeNear =
 		Vec4(m_width, m_height, HighRezTimer::getCurrentTime(), ctx.m_renderQueue->m_cameraNear);
 
-	blk->m_tileCount = UVec4(m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], m_clusterCount[3]);
+	blk->m_clusterCount = UVec4(m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], m_clusterCount[3]);
 
 	blk->m_cameraPosFar =
 		Vec4(ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz(), ctx.m_renderQueue->m_cameraFar);
 
 	blk->m_clustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
+
+	blk->m_lightVolumeLastClusterPad3 = UVec4(m_volLighting->getFinalClusterInZ());
 
 	// Matrices
 	blk->m_viewMat = ctx.m_renderQueue->m_viewMatrix;
