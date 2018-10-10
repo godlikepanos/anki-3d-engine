@@ -215,11 +215,6 @@ anki_internal:
 		return m_nodesUuid++;
 	}
 
-	SceneComponentLists& getSceneComponentLists()
-	{
-		return m_componentLists;
-	}
-
 	F32 getEarlyZDistance() const
 	{
 		return m_earlyZDist;
@@ -268,8 +263,6 @@ private:
 	F32 m_maxReflectionProxyDistance = 0.0;
 
 	U64 m_nodesUuid = 0;
-
-	SceneComponentLists m_componentLists;
 
 	F32 m_earlyZDist = -1.0;
 

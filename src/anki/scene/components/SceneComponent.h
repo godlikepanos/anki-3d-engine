@@ -8,7 +8,6 @@
 #include <anki/scene/Common.h>
 #include <anki/util/Functions.h>
 #include <anki/util/BitMask.h>
-#include <anki/util/List.h>
 
 namespace anki
 {
@@ -42,7 +41,7 @@ enum class SceneComponentType : U16
 };
 
 /// Scene node component
-class SceneComponent : public IntrusiveListEnabled<SceneComponent>
+class SceneComponent
 {
 public:
 	/// Construct the scene component.
@@ -69,12 +68,6 @@ public:
 	virtual ANKI_USE_RESULT Error update(Second prevTime, Second crntTime, Bool& updated)
 	{
 		updated = false;
-		return Error::NONE;
-	}
-
-	/// Called if SceneComponent::update returned true.
-	virtual ANKI_USE_RESULT Error onUpdate(Second prevTime, Second crntTime)
-	{
 		return Error::NONE;
 	}
 
@@ -115,42 +108,9 @@ protected:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
 
 private:
-	SceneComponentType m_type;
 	U64 m_uuid;
 	U32 m_idx;
-};
-
-/// Multiple lists of all types of components.
-class SceneComponentLists : public NonCopyable
-{
-anki_internal:
-	SceneComponentLists()
-	{
-	}
-
-	~SceneComponentLists()
-	{
-	}
-
-	void insertNew(SceneComponent* comp);
-
-	void remove(SceneComponent* comp);
-
-	template<typename TSceneComponentType, typename Func>
-	void iterateComponents(Func func)
-	{
-		auto it = m_lists[TSceneComponentType::CLASS_TYPE].getBegin();
-		auto end = m_lists[TSceneComponentType::CLASS_TYPE].getEnd();
-
-		while(it != end)
-		{
-			func(static_cast<TSceneComponentType&>(*it));
-			++it;
-		}
-	}
-
-private:
-	Array<IntrusiveList<SceneComponent>, U(SceneComponentType::COUNT)> m_lists;
+	SceneComponentType m_type;
 };
 /// @}
 

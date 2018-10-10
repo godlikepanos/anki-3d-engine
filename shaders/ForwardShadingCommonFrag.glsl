@@ -37,8 +37,10 @@ Vec4 readAnimatedTextureRgba(sampler2DArray tex, F32 period, Vec2 uv, F32 time)
 	return texture(tex, Vec3(uv, layer));
 }
 
-Vec3 computeLightColor(Vec3 diffCol, Vec3 worldPos)
+// Iterate the clusters to compute the light color
+Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 {
+	diffCol = diffuseLambert(diffCol);
 	Vec3 outColor = Vec3(0.0);
 
 	// Find the cluster and then the light counts
@@ -58,7 +60,7 @@ Vec3 computeLightColor(Vec3 diffCol, Vec3 worldPos)
 	{
 		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
-		Vec3 diffC = diffuseLambert(diffCol) * light.m_diffuseColorTileSize.rgb;
+		Vec3 diffC = diffCol * light.m_diffuseColorTileSize.rgb;
 
 		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
 		F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
@@ -84,7 +86,7 @@ Vec3 computeLightColor(Vec3 diffCol, Vec3 worldPos)
 	{
 		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
-		Vec3 diffC = diffuseLambert(diffCol) * light.m_diffuseColorShadowmapId.rgb;
+		Vec3 diffC = diffCol * light.m_diffuseColorShadowmapId.rgb;
 
 		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
 		F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
@@ -111,7 +113,8 @@ Vec3 computeLightColor(Vec3 diffCol, Vec3 worldPos)
 	return outColor;
 }
 
-Vec3 computeLightColor2(Vec3 diffCol, Vec3 worldPos)
+// Just read the light color from the vol texture
+Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
 {
 	Vec2 uv = gl_FragCoord.xy / RENDERER_SIZE;
 	Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, uv, worldPos, m_lightVolumeLastCluster);

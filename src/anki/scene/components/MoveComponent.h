@@ -112,11 +112,6 @@ public:
 	/// @note Don't update if child because we start from roots and go to children and we don't want a child to be
 	///       updated before the parent
 	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
-
-	ANKI_USE_RESULT Error onUpdate(Second prevTime, Second crntTime) final
-	{
-		return onMoveComponentUpdate(*m_node, prevTime, crntTime);
-	}
 	/// @}
 
 	/// @name Mess with the local transform

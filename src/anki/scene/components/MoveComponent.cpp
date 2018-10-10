@@ -20,9 +20,15 @@ MoveComponent::~MoveComponent()
 {
 }
 
-Error MoveComponent::update(Second, Second, Bool& updated)
+Error MoveComponent::update(Second prevTime, Second crntTime, Bool& updated)
 {
 	updated = updateWorldTransform(*m_node);
+
+	if(updated)
+	{
+		onMoveComponentUpdate(*m_node, prevTime, crntTime);
+	}
+
 	return Error::NONE;
 }
 

@@ -54,7 +54,7 @@ void main()
 #endif
 
 #if LIGHT
-	texCol.rgb = computeLightColor(texCol.rgb, in_worldPos);
+	texCol.rgb = computeLightColorHigh(texCol.rgb, in_worldPos);
 #endif
 
 	Vec4 colScale = colorScale;

@@ -11,23 +11,15 @@ namespace anki
 {
 
 SceneComponent::SceneComponent(SceneComponentType type, SceneNode* node)
-	: m_node(node)
-	, m_type(type)
+	: m_type(type)
+	, m_node(node)
 	, m_uuid(node->getSceneGraph().getNewUuid())
 	, m_idx(node->getComponentCount())
 {
-	if(m_type != SceneComponentType::NONE)
-	{
-		m_node->getSceneGraph().getSceneComponentLists().insertNew(this);
-	}
 }
 
 SceneComponent::~SceneComponent()
 {
-	if(m_type != SceneComponentType::NONE)
-	{
-		m_node->getSceneGraph().getSceneComponentLists().remove(this);
-	}
 }
 
 Timestamp SceneComponent::getGlobalTimestamp() const
@@ -40,12 +32,7 @@ Error SceneComponent::updateReal(Second prevTime, Second crntTime, Bool& updated
 	Error err = update(prevTime, crntTime, updated);
 	if(!err && updated)
 	{
-		err = onUpdate(prevTime, crntTime);
-
-		if(!err)
-		{
-			m_timestamp = getGlobalTimestamp();
-		}
+		m_timestamp = getGlobalTimestamp();
 	}
 
 	return err;
@@ -69,20 +56,6 @@ SceneAllocator<U8> SceneComponent::getAllocator() const
 SceneFrameAllocator<U8> SceneComponent::getFrameAllocator() const
 {
 	return m_node->getFrameAllocator();
-}
-
-void SceneComponentLists::insertNew(SceneComponent* comp)
-{
-	ANKI_ASSERT(comp);
-
-	m_lists[comp->getType()].pushBack(comp);
-}
-
-void SceneComponentLists::remove(SceneComponent* comp)
-{
-	ANKI_ASSERT(comp);
-
-	m_lists[comp->getType()].erase(comp);
 }
 
 } // end namespace anki
