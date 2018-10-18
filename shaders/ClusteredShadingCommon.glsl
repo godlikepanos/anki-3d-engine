@@ -26,10 +26,11 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 #	define u_clusterCountX UNIFORM(u_lightingUniforms.m_clusterCount.x)
 #	define u_clusterCountY UNIFORM(u_lightingUniforms.m_clusterCount.y)
 #	define u_clustererMagic u_lightingUniforms.m_clustererMagicValues
+#	define u_prevClustererMagic u_lightingUniforms.m_prevClustererMagicValues
 #	define u_time UNIFORM(u_lightingUniforms.m_rendererSizeTimeNear.z)
 #	define u_unprojectionParams UNIFORM(u_lightingUniforms.m_unprojectionParams)
 #	define u_rendererSize u_lightingUniforms.m_rendererSizeTimeNear.xy
-#	define m_lightVolumeLastCluster UNIFORM(u_lightingUniforms.m_lightVolumeLastClusterPad3.x)
+#	define u_lightVolumeLastCluster UNIFORM(u_lightingUniforms.m_lightVolumeLastClusterPad3.x)
 
 #	define u_viewMat u_lightingUniforms.m_viewMat
 #	define u_invViewMat u_lightingUniforms.m_invViewMat

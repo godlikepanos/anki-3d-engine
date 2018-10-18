@@ -12,7 +12,9 @@
 
 const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 const U32 SHADOW_SAMPLE_COUNT = 16;
+#if !defined(ESM_CONSTANT)
 const F32 ESM_CONSTANT = 40.0;
+#endif
 
 // Fresnel term unreal
 Vec3 F_Unreal(Vec3 specular, F32 VoH)

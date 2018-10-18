@@ -67,6 +67,7 @@ struct LightingUniforms
 	Vec4 m_rendererSizeTimeNear;
 	Vec4 m_cameraPosFar;
 	ClustererMagicValues m_clustererMagicValues;
+	ClustererMagicValues m_prevClustererMagicValues;
 	UVec4 m_clusterCount;
 	UVec4 m_lightVolumeLastClusterPad3;
 	Mat4 m_viewMat;

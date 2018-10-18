@@ -316,6 +316,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	cin.m_threadHive = m_threadHive;
 	m_clusterBin.bin(cin, ctx.m_clusterBinOut);
 
+	ctx.m_prevClustererMagicValues =
+		(m_frameCount > 0) ? m_prevClustererMagicValues : ctx.m_clusterBinOut.m_shaderMagicValues;
+	m_prevClustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
+
 	updateLightShadingUniforms(ctx);
 	m_stats.m_lightBinTime = HighRezTimer::getCurrentTime() - m_stats.m_lightBinTime;
 
@@ -542,6 +546,7 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 		Vec4(ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz(), ctx.m_renderQueue->m_cameraFar);
 
 	blk->m_clustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
+	blk->m_prevClustererMagicValues = ctx.m_prevClustererMagicValues;
 
 	blk->m_lightVolumeLastClusterPad3 = UVec4(m_volLighting->getFinalClusterInZ());
 

@@ -60,6 +60,7 @@ public:
 	Vec4 m_unprojParams;
 
 	ClusterBinOut m_clusterBinOut;
+	ClustererMagicValues m_prevClustererMagicValues;
 
 	StagingGpuMemoryToken m_lightShadingUniformsToken;
 
@@ -409,6 +410,7 @@ private:
 	Bool m_resourcesDirty = true;
 
 	RenderingContextMatrices m_prevMatrices;
+	ClustererMagicValues m_prevClustererMagicValues;
 
 	Array<Mat4, 16> m_jitteredMats16x;
 	Array<Mat4, 8> m_jitteredMats8x;

@@ -117,7 +117,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
 {
 	Vec2 uv = gl_FragCoord.xy / RENDERER_SIZE;
-	Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, uv, worldPos, m_lightVolumeLastCluster);
+	Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, uv, worldPos, u_lightVolumeLastCluster + 1u);
 
 	Vec3 light = textureLod(u_lightVol, uv3d, 0.0).rgb;
 	return diffuseLambert(diffCol) * light;

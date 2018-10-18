@@ -27,7 +27,7 @@ anki_internal:
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_rt;
+		return m_runCtx.m_rts[1];
 	}
 
 	/// Get the last cluster split in Z axis that will be affected by lighting.
@@ -37,21 +37,22 @@ anki_internal:
 	}
 
 private:
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
+
+	Array<TexturePtr, 2> m_rtTextures;
+	TextureResourcePtr m_noiseTex;
+
 	U32 m_finalClusterZ = 0;
 
 	Array<U32, 3> m_workgroupSize = {{8, 8, 8}};
 	Array<U32, 3> m_volumeSize;
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-
-	TexturePtr m_rtTex;
-	TextureResourcePtr m_noiseTex;
 
 	class
 	{
 	public:
 		RenderingContext* m_ctx = nullptr;
-		RenderTargetHandle m_rt;
+		Array<RenderTargetHandle, 2> m_rts;
 	} m_runCtx; ///< Runtime context.
 
 	void run(RenderPassWorkContext& rgraphCtx);

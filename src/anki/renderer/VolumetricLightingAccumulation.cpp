@@ -39,7 +39,7 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 		m_volumeSize[1],
 		m_volumeSize[2]);
 
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoise_Rgb8_64x64x64_3D.ankitex", m_noiseTex));
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/blue_noise_rgb8_16x16x16_3d.ankitex", m_noiseTex));
 
 	// Shaders
 	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricLightingAccumulation.glslp", m_prog));
@@ -63,12 +63,14 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_volumeSize[0],
 		m_volumeSize[1],
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
+			| TextureUsageBit::SAMPLED_COMPUTE,
 		"VolLight");
 	texinit.m_depth = m_volumeSize[2];
 	texinit.m_type = TextureType::_3D;
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-	m_rtTex = m_r->createAndClearRenderTarget(texinit);
+	m_rtTextures[0] = m_r->createAndClearRenderTarget(texinit);
+	m_rtTextures[1] = m_r->createAndClearRenderTarget(texinit);
 
 	return Error::NONE;
 }
@@ -78,7 +80,10 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-	m_runCtx.m_rt = rgraph.importRenderTarget(m_rtTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	const U readRtIdx = m_r->getFrameCount() & 1;
+
+	m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_rtTextures[readRtIdx], TextureUsageBit::SAMPLED_FRAGMENT);
+	m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_rtTextures[!readRtIdx], TextureUsageBit::NONE);
 
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Vol light");
 
@@ -87,7 +92,8 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	};
 	pass.setWork(callback, this, 0);
 
-	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE});
+	pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE});
+	pass.newDependency({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
@@ -98,12 +104,14 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindShaderProgram(m_grProg);
 
-	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
 	cmdb->bindTextureAndSampler(
 		0, 0, m_noiseTex->getGrTextureView(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_COMPUTE);
 
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 1, m_runCtx.m_rts[0], m_r->getLinearSampler());
+
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
 
 	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 	bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);

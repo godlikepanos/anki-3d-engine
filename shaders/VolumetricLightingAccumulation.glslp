@@ -16,10 +16,14 @@
 
 #pragma anki start comp
 
+// Lower the ESM constant to smooth the shadows
+#define ESM_CONSTANT 20.0
+
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
 
-layout(ANKI_IMAGE_BINDING(0, 0), r11f_g11f_b10f) uniform image3D out_volume;
+layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image3D u_volume;
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler3D u_noiseTex;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler3D u_prevVolume;
 
 struct PushConsts
 {
@@ -29,7 +33,7 @@ ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 
 #define u_noiseOffset u_regs.m_noiseOffsetPad3.x
 
-#define LIGHT_TEX_BINDING 1
+#define LIGHT_TEX_BINDING 2
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_SET 0
@@ -46,15 +50,12 @@ Vec3 readRand()
 	return textureLod(u_noiseTex, uv, 0.0).rgb;
 }
 
-Vec3 randWPos()
+Vec3 worldPosInsideCluster(Vec3 relativePos)
 {
-	// Read a rand value
-	Vec3 rand = readRand();
-
 	// Compute the cluster Z as float
 	F32 clusterKNear = g_globalInvocationID.z * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
 	F32 clusterKFar = (g_globalInvocationID.z + 1.0) * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
-	F32 clusterK = mix(clusterKNear, clusterKFar, rand.z);
+	F32 clusterK = mix(clusterKNear, clusterKFar, relativePos.z);
 
 	// Get a Z value
 	F32 zVSpace = -computeClusterNearf(u_clustererMagic, clusterK);
@@ -62,7 +63,7 @@ Vec3 randWPos()
 	// Get a XY value
 	Vec2 uvMin = g_globalInvocationID.xy / Vec2(VOLUME_SIZE.xy);
 	Vec2 uvMax = uvMin + 1.0 / Vec2(VOLUME_SIZE.xy);
-	Vec2 uv = mix(uvMin, uvMax, rand.xy);
+	Vec2 uv = mix(uvMin, uvMax, relativePos.xy);
 	Vec2 ndc = UV_TO_NDC(uv);
 	Vec2 xyZVspace = ndc * u_unprojectionParams.xy * zVSpace;
 
@@ -147,17 +148,33 @@ void main()
 	U32 clusterIdx = clusterXYZ.z * (CLUSTER_COUNT.x * CLUSTER_COUNT.y) + clusterXYZ.y * CLUSTER_COUNT.x + clusterXYZ.x;
 
 	// Find a random pos inside the cluster
-	Vec3 worldPos = randWPos();
+	Vec3 worldPos = worldPosInsideCluster(readRand());
 
 	// Get lighting
 	Vec3 color = accumulateLights(clusterIdx, worldPos);
 
 	// Read the prev result
-	Vec3 prev = imageLoad(out_volume, IVec3(gl_GlobalInvocationID)).rgb;
-	color = mix(prev, color, 1.0 / 16.0);
+	{
+		// Better get a new world pos in the center of the cluster. Using worldPos creates noisy results
+		Vec3 midWPos = worldPosInsideCluster(Vec3(0.5));
+
+		// Compute UV
+		Vec4 prevClipPos4 = u_prevViewProjMat * Vec4(worldPos, 1.0);
+		Vec2 prevUv = NDC_TO_UV(prevClipPos4.xy / prevClipPos4.w);
+
+		// Compute new Z tex coord
+		F32 k = computeClusterKf(u_prevClustererMagic, midWPos);
+		k /= F32(FINAL_CLUSTER_Z + 1u);
+
+		// Read prev
+		Vec3 prev = textureLod(u_prevVolume, Vec3(prevUv, k), 0.0).rgb;
+
+		// Modulate
+		color = mix(prev, color, 1.0 / 16.0);
+	}
 
 	// Write result
-	imageStore(out_volume, IVec3(gl_GlobalInvocationID), Vec4(color, 0.0));
+	imageStore(u_volume, IVec3(gl_GlobalInvocationID), Vec4(color, 0.0));
 }
 
 #pragma anki end
