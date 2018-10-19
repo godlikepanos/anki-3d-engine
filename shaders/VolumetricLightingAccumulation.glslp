@@ -159,7 +159,7 @@ void main()
 		Vec3 midWPos = worldPosInsideCluster(Vec3(0.5));
 
 		// Compute UV
-		Vec4 prevClipPos4 = u_prevViewProjMat * Vec4(worldPos, 1.0);
+		Vec4 prevClipPos4 = u_prevViewProjMat * Vec4(midWPos, 1.0);
 		Vec2 prevUv = NDC_TO_UV(prevClipPos4.xy / prevClipPos4.w);
 
 		// Compute new Z tex coord
