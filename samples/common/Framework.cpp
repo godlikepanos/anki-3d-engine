@@ -32,7 +32,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	getInput().moveCursor(Vec2(0.0f));
 
 	// Some renderer stuff
-	getMainRenderer().getOffscreenRenderer().getVolumetric().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f) * 0.0001f);
+	getMainRenderer().getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f) * 0.0001f);
 
 	ANKI_CHECK(sampleExtraInit());
 

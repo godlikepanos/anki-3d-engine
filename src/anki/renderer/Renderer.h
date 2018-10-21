@@ -122,9 +122,9 @@ public:
 		return *m_forwardShading;
 	}
 
-	Volumetric& getVolumetric()
+	VolumetricFog& getVolumetricFog()
 	{
-		return *m_vol;
+		return *m_volFog;
 	}
 
 	Tonemapping& getTonemapping()
@@ -381,7 +381,7 @@ private:
 	UniquePtr<LightShading> m_lightShading; ///< Illumination rendering stage
 	UniquePtr<DepthDownscale> m_depth;
 	UniquePtr<ForwardShading> m_forwardShading; ///< Forward shading.
-	UniquePtr<Volumetric> m_vol; ///< Volumetric effects.
+	UniquePtr<VolumetricFog> m_volFog; ///< Volumetric fog.
 	UniquePtr<LensFlare> m_lensFlare; ///< Forward shading lens flares.
 	UniquePtr<DownscaleBlur> m_downscale;
 	UniquePtr<TemporalAA> m_temporalAA;

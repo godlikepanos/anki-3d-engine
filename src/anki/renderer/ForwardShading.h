@@ -29,20 +29,6 @@ anki_internal:
 	void setDependencies(const RenderingContext& ctx, GraphicsRenderPassDescription& pass);
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
-private:
-	class Vol
-	{
-	public:
-		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
-		TextureResourcePtr m_noiseTex;
-	} m_vol;
-
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error initVol();
-
-	void drawVolumetric(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

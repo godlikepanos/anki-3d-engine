@@ -22,7 +22,7 @@
 #include <anki/renderer/LensFlare.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/DownscaleBlur.h>
-#include <anki/renderer/Volumetric.h>
+#include <anki/renderer/VolumetricFog.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/TemporalAA.h>
 #include <anki/renderer/UiStage.h>
@@ -135,8 +135,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_depth.reset(m_alloc.newInstance<DepthDownscale>(this));
 	ANKI_CHECK(m_depth->init(config));
 
-	m_vol.reset(m_alloc.newInstance<Volumetric>(this));
-	ANKI_CHECK(m_vol->init(config));
+	m_volFog.reset(m_alloc.newInstance<VolumetricFog>(this));
+	ANKI_CHECK(m_volFog->init(config));
 
 	m_forwardShading.reset(m_alloc.newInstance<ForwardShading>(this));
 	ANKI_CHECK(m_forwardShading->init(config));
@@ -289,7 +289,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbuffer->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depth->populateRenderGraph(ctx);
-	m_vol->populateRenderGraph(ctx);
+	m_volFog->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
