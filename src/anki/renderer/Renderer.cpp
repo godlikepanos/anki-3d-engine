@@ -129,14 +129,14 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_shadowMapping.reset(m_alloc.newInstance<ShadowMapping>(this));
 	ANKI_CHECK(m_shadowMapping->init(config));
 
+	m_volFog.reset(m_alloc.newInstance<VolumetricFog>(this));
+	ANKI_CHECK(m_volFog->init(config));
+
 	m_lightShading.reset(m_alloc.newInstance<LightShading>(this));
 	ANKI_CHECK(m_lightShading->init(config));
 
 	m_depth.reset(m_alloc.newInstance<DepthDownscale>(this));
 	ANKI_CHECK(m_depth->init(config));
-
-	m_volFog.reset(m_alloc.newInstance<VolumetricFog>(this));
-	ANKI_CHECK(m_volFog->init(config));
 
 	m_forwardShading.reset(m_alloc.newInstance<ForwardShading>(this));
 	ANKI_CHECK(m_forwardShading->init(config));

@@ -45,8 +45,8 @@ Error VolumetricFog::init(const ConfigSet& config)
 	m_grProg = variant->getProgram();
 
 	// RT descr
-	m_rtDescr = m_r->create2DRenderTargetDescription(
-		m_volumeSize[0], m_volumeSize[1], LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT, "Fog");
+	m_rtDescr =
+		m_r->create2DRenderTargetDescription(m_volumeSize[0], m_volumeSize[1], Format::R16G16B16A16_SFLOAT, "Fog");
 	m_rtDescr.m_depth = m_volumeSize[2];
 	m_rtDescr.m_type = TextureType::_3D;
 	m_rtDescr.bake();
@@ -63,7 +63,8 @@ void VolumetricFog::run(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
 
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getVolumetricFog().getRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(
+		0, 0, m_r->getVolumetricLightingAccumulation().getRt(), m_r->getLinearSampler());
 
 	struct PushConsts
 	{

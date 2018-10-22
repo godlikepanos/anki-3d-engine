@@ -22,6 +22,21 @@ public:
 		m_fogDiffuseColor = col;
 	}
 
+	const Vec3& getFogParticleColor() const
+	{
+		return m_fogDiffuseColor;
+	}
+
+	void setParticleDensity(F32 d)
+	{
+		m_fogDensity = d;
+	}
+
+	F32 getParticleDensity() const
+	{
+		return m_fogDensity;
+	}
+
 anki_internal:
 	VolumetricFog(Renderer* r)
 		: RendererObject(r)
@@ -47,6 +62,12 @@ anki_internal:
 		return m_volumeSize;
 	}
 
+	/// Get the last cluster split in Z axis that will be affected by lighting.
+	U32 getFinalClusterInZ() const
+	{
+		return m_finalClusterZ;
+	}
+
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
@@ -59,9 +80,9 @@ private:
 	Array<U32, 3> m_volumeSize;
 
 	Vec3 m_fogDiffuseColor = Vec3(1.0f);
-	F32 m_fogDensity = 0.01f;
-	F32 m_fogScatteringCoeff = 0.1f;
-	F32 m_fogAbsorptionCoeff = 0.2f;
+	F32 m_fogDensity = 0.9f;
+	F32 m_fogScatteringCoeff = 0.01f;
+	F32 m_fogAbsorptionCoeff = 0.02f;
 
 	class
 	{

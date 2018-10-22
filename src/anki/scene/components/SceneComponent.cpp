@@ -11,10 +11,10 @@ namespace anki
 {
 
 SceneComponent::SceneComponent(SceneComponentType type, SceneNode* node)
-	: m_type(type)
-	, m_node(node)
+	: m_node(node)
 	, m_uuid(node->getSceneGraph().getNewUuid())
 	, m_idx(node->getComponentCount())
+	, m_type(type)
 {
 }
 

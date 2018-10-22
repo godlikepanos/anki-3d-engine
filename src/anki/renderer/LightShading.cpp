@@ -84,8 +84,7 @@ Error LightShading::initApplyFog(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShadingApplyFog.glslp", m_applyFog.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_applyFog.m_prog);
-	const auto& volSize = m_r->getVolumetricFog().getVolumeSize();
-	consts.add("VOLUMETRIC_SIZE", UVec3(volSize[0], volSize[1], volSize[2]));
+	consts.add("FOG_LAST_CLASTER", U32(m_r->getVolumetricFog().getFinalClusterInZ()));
 
 	const ShaderProgramResourceVariant* variant;
 	m_applyFog.m_prog->getOrCreateVariant(consts.get(), variant);
@@ -213,6 +212,9 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getSsr().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+
+	// Fog
+	pass.newDependency({m_r->getVolumetricFog().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	// For forward shading
 	m_r->getForwardShading().setDependencies(ctx, pass);
