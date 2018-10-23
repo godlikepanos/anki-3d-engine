@@ -99,7 +99,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	{
 		TextureInitInfo texinit;
 		texinit.m_width = texinit.m_height = 4;
-		texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_usage = TextureUsageBit::SAMPLED_ALL;
 		texinit.m_format = Format::R8G8B8A8_UNORM;
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		TexturePtr tex = getGrManager().newTexture(texinit);

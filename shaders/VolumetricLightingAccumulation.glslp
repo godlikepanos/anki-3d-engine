@@ -17,7 +17,7 @@
 #pragma anki start comp
 
 // Lower the ESM constant to smooth the shadows
-#define ESM_CONSTANT 20.0
+#define ESM_CONSTANT 30.0
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
 
@@ -39,6 +39,7 @@ ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 #define LIGHT_SET 0
 #define LIGHT_LIGHTS
 #define LIGHT_COMMON_UNIS
+#define LIGHT_INDIRECT
 #include <shaders/ClusteredShadingCommon.glsl>
 
 Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
@@ -74,9 +75,23 @@ Vec3 worldPosInsideCluster(Vec3 relativePos)
 	return worldPos;
 }
 
+F32 phaseFunction(Vec3 viewDir, Vec3 lightDir, F32 g)
+{
+	F32 g2 = g * g;
+
+	F32 a = (3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2));
+
+	F32 cosTheta = dot(viewDir, lightDir);
+	F32 cosTheta2 = cosTheta * cosTheta;
+	F32 b = (1.0 + cosTheta2) / pow(1.0 + g2 - 2.0 * g * cosTheta, 3.0 / 2.0);
+
+	return a / b;
+}
+
 Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 {
 	Vec3 color = Vec3(0.0);
+	Vec3 viewDir = normalize(u_cameraPos - worldPos);
 
 	// Get ID offset
 	U32 idxOffset = u_clusters[clusterIdx];
@@ -132,6 +147,30 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 
 		color += light.m_diffuseColorShadowmapId.rgb * factor;
 	}
+
+	// Probes
+	F32 totalBlendWeight = EPSILON;
+	Vec3 diffIndirect = Vec3(0.0);
+	count = u_lightIndices[idxOffset++];
+	idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	{
+		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
+		Vec3 aabbMin = probe.m_aabbMinPad1.xyz;
+		Vec3 aabbMax = probe.m_aabbMaxPad1.xyz;
+		Vec3 probeOrigin = probe.m_positionCubemapIndex.xyz;
+		F32 cubemapIndex = probe.m_positionCubemapIndex.w;
+
+		F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
+		totalBlendWeight += blendWeight;
+
+		Vec3 c = textureLod(u_irradianceTex, Vec4(viewDir, cubemapIndex), 0.0).rgb;
+		c *= PI; // Irradiance is pre-divided with PI so fix it
+		diffIndirect += c * blendWeight;
+	}
+
+	diffIndirect /= totalBlendWeight;
+	color += diffIndirect;
 
 	return color;
 }

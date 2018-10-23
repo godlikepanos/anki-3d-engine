@@ -61,7 +61,7 @@ void main()
 
 		// Read the light value
 		Vec3 light = textureLod(u_lightVolume, Vec3(uv, clusterKFar / F32(FINAL_CLUSTER_Z + 1u)), 0.0).rgb;
-		light *= u_fogDiffuse;
+		light *= u_fogDiffuse / PI;
 
 		// Integrate
 		Vec4 colorAndDensityBack = Vec4(light * scattering, scattering + absorption);

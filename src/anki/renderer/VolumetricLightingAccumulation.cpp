@@ -5,6 +5,7 @@
 
 #include <anki/renderer/VolumetricLightingAccumulation.h>
 #include <anki/renderer/ShadowMapping.h>
+#include <anki/renderer/Indirect.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/misc/ConfigSet.h>
@@ -112,11 +113,17 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_runCtx.m_rts[0], m_r->getLinearSampler());
 
 	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(
+		0, 3, m_r->getDummyTextureView(), m_r->getNearestSampler(), TextureUsageBit::SAMPLED_COMPUTE);
+	rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
+	cmdb->bindTextureAndSampler(
+		0, 5, m_r->getDummyTextureView(), m_r->getNearestSampler(), TextureUsageBit::SAMPLED_COMPUTE);
 
 	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 	bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
 	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+	bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);
 	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
 	bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
 
