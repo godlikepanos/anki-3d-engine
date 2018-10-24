@@ -425,6 +425,18 @@ enum class SamplingFilter : U8
 	BASE ///< Only for mipmaps
 };
 
+enum class SamplingAddressing : U8
+{
+	CLAMP,
+	REPEAT,
+	BLACK,
+	WHITE,
+
+	COUNT,
+	FIRST = 0,
+	LAST = COUNT - 1,
+};
+
 enum class ShaderType : U8
 {
 	VERTEX,

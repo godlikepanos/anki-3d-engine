@@ -59,7 +59,7 @@ Error Indirect::initInternal(const ConfigSet& config)
 	sinit.m_mipmapFilter = SamplingFilter::BASE;
 	sinit.m_minLod = 0.0;
 	sinit.m_maxLod = 1.0;
-	sinit.m_repeat = false;
+	sinit.m_addressing = SamplingAddressing::CLAMP;
 	m_integrationLutSampler = getGrManager().newSampler(sinit);
 
 	return Error::NONE;
@@ -492,191 +492,217 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 	prepareProbes(rctx, probeToUpdate, probeToUpdateCacheEntryIdx);
 
 	// Render a probe if needed
-	if(probeToUpdate)
+	if(!probeToUpdate)
 	{
-		m_ctx.m_cacheEntryIdx = probeToUpdateCacheEntryIdx;
-		m_ctx.m_probe = probeToUpdate;
-
-		if(!m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[0].isBacked())
-		{
-			initCacheEntry(probeToUpdateCacheEntryIdx);
-		}
-
-		// G-buffer pass
-		{
-			// RTs
-			Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
-			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-			{
-				m_ctx.m_gbufferColorRts[i] = rgraph.newRenderTarget(m_gbuffer.m_colorRtDescrs[i]);
-				rts[i] = m_ctx.m_gbufferColorRts[i];
-			}
-			m_ctx.m_gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
-
-			// Pass
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
-			pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
-			pass.setWork(runGBufferCallback, this, 0);
-
-			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-			{
-				pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-			}
-
-			TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-			pass.newDependency(
-				{m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
-		}
-
-		// Light shading passes
-		{
-			Array<RenderPassWorkCallback, 6> callbacks = {{runLightShadingCallback<0>,
-				runLightShadingCallback<1>,
-				runLightShadingCallback<2>,
-				runLightShadingCallback<3>,
-				runLightShadingCallback<4>,
-				runLightShadingCallback<5>}};
-
-			// RT
-			m_ctx.m_lightShadingRt =
-				rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
-
-			// Passes
-			static const Array<CString, 6> passNames = {{"GI LightShad #0",
-				"GI LightShad #1",
-				"GI LightShad #2",
-				"GI LightShad #3",
-				"GI LightShad #4",
-				"GI LightShad #5"}};
-			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
-				pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
-					{{m_ctx.m_lightShadingRt}},
-					{});
-				pass.setWork(callbacks[faceIdx], this, 0);
-
-				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-				pass.newDependency(
-					{m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
-
-				for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-				{
-					pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
-				}
-				pass.newDependency({m_ctx.m_gbufferDepthRt,
-					TextureUsageBit::SAMPLED_FRAGMENT,
-					TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
-			}
-		}
-
-		// Irradiance passes
-		{
-			static const Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceCallback<0>,
-				runIrradianceCallback<1>,
-				runIrradianceCallback<2>,
-				runIrradianceCallback<3>,
-				runIrradianceCallback<4>,
-				runIrradianceCallback<5>}};
-
-			// Rt
-			m_ctx.m_irradianceRt = rgraph.importRenderTarget(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
-
-			static const Array<CString, 6> passNames = {
-				{"GI Irr/ce #0", "GI Irr/ce #1", "GI Irr/ce #2", "GI Irr/ce #3", "GI Irr/ce #4", "GI Irr/ce #5"}};
-			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
-
-				pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceFbDescrs[faceIdx],
-					{{m_ctx.m_irradianceRt}},
-					{});
-
-				pass.setWork(callbacks[faceIdx], this, 0);
-
-				// Read a cube but only one layer and level
-				TextureSubresourceInfo readSubresource;
-				readSubresource.m_faceCount = 6;
-				readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-				pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
-
-				TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-				pass.newDependency(
-					{m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, writeSubresource});
-			}
-		}
-
-		// Write irradiance back to refl
-		{
-			static const Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceToReflCallback<0>,
-				runIrradianceToReflCallback<1>,
-				runIrradianceToReflCallback<2>,
-				runIrradianceToReflCallback<3>,
-				runIrradianceToReflCallback<4>,
-				runIrradianceToReflCallback<5>}};
-
-			// Rt
-			static const Array<CString, 6> passNames = {{"GI Irr2Refl #0",
-				"GI Irr2Refl #1",
-				"GI Irr2Refl #2",
-				"GI Irr2Refl #3",
-				"GI Irr2Refl #4",
-				"GI Irr2Refl #5"}};
-			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
-
-				pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceToReflFbDescrs[faceIdx],
-					{{m_ctx.m_lightShadingRt}},
-					{});
-
-				pass.setWork(callbacks[faceIdx], this, 0);
-
-				for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-				{
-					pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
-				}
-
-				TextureSubresourceInfo readSubresource;
-				readSubresource.m_faceCount = 6;
-				readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-				pass.newDependency({m_ctx.m_irradianceRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
-
-				TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-				pass.newDependency(
-					{m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, writeSubresource});
-			}
-		}
-
-		// Mipmapping "passes"
-		{
-			static const Array<RenderPassWorkCallback, 6> callbacks = {{runMipmappingOfLightShadingCallback<0>,
-				runMipmappingOfLightShadingCallback<1>,
-				runMipmappingOfLightShadingCallback<2>,
-				runMipmappingOfLightShadingCallback<3>,
-				runMipmappingOfLightShadingCallback<4>,
-				runMipmappingOfLightShadingCallback<5>}};
-
-			static const Array<CString, 6> passNames = {
-				{"GI Mip #0", "GI Mip #1", "GI Mip #2", "GI Mip #3", "GI Mip #4", "GI Mip #5"}};
-			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
-				pass.setWork(callbacks[faceIdx], this, 0);
-
-				TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-				subresource.m_mipmapCount = m_lightShading.m_mipCount;
-
-				pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
-			}
-		}
-	}
-	else
-	{
-		// Just import
+		// Just import and exit
 
 		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 		m_ctx.m_irradianceRt = rgraph.importRenderTarget(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+
+		return;
+	}
+
+	m_ctx.m_cacheEntryIdx = probeToUpdateCacheEntryIdx;
+	m_ctx.m_probe = probeToUpdate;
+
+	if(!m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[0].isBacked())
+	{
+		initCacheEntry(probeToUpdateCacheEntryIdx);
+	}
+
+	// G-buffer pass
+	{
+		// RTs
+		Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
+		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		{
+			m_ctx.m_gbufferColorRts[i] = rgraph.newRenderTarget(m_gbuffer.m_colorRtDescrs[i]);
+			rts[i] = m_ctx.m_gbufferColorRts[i];
+		}
+		m_ctx.m_gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
+
+		// Pass
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
+		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
+		pass.setWork(runGBufferCallback, this, 0);
+
+		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		{
+			pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		}
+
+		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
+		pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+	}
+
+	// Light shading passes
+	{
+		Array<RenderPassWorkCallback, 6> callbacks = {{runLightShadingCallback<0>,
+			runLightShadingCallback<1>,
+			runLightShadingCallback<2>,
+			runLightShadingCallback<3>,
+			runLightShadingCallback<4>,
+			runLightShadingCallback<5>}};
+
+		// RT
+		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+
+		// Passes
+		static const Array<CString, 6> passNames = {{"GI LightShad #0",
+			"GI LightShad #1",
+			"GI LightShad #2",
+			"GI LightShad #3",
+			"GI LightShad #4",
+			"GI LightShad #5"}};
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
+			pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
+				{{m_ctx.m_lightShadingRt}},
+				{});
+			pass.setWork(callbacks[faceIdx], this, 0);
+
+			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
+
+			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+			{
+				pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
+			}
+			pass.newDependency({m_ctx.m_gbufferDepthRt,
+				TextureUsageBit::SAMPLED_FRAGMENT,
+				TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
+		}
+	}
+
+	// Irradiance passes
+	{
+		static const Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceCallback<0>,
+			runIrradianceCallback<1>,
+			runIrradianceCallback<2>,
+			runIrradianceCallback<3>,
+			runIrradianceCallback<4>,
+			runIrradianceCallback<5>}};
+
+		// Rt
+		m_ctx.m_irradianceRt = rgraph.importRenderTarget(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+
+		static const Array<CString, 6> passNames = {
+			{"GI Irr/ce #0", "GI Irr/ce #1", "GI Irr/ce #2", "GI Irr/ce #3", "GI Irr/ce #4", "GI Irr/ce #5"}};
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
+
+			pass.setFramebufferInfo(
+				m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceFbDescrs[faceIdx], {{m_ctx.m_irradianceRt}}, {});
+
+			pass.setWork(callbacks[faceIdx], this, 0);
+
+			// Read a cube but only one layer and level
+			TextureSubresourceInfo readSubresource;
+			readSubresource.m_faceCount = 6;
+			readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
+			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
+
+			TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+			pass.newDependency({m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, writeSubresource});
+		}
+	}
+
+	// Write irradiance back to refl
+	{
+		static const Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceToReflCallback<0>,
+			runIrradianceToReflCallback<1>,
+			runIrradianceToReflCallback<2>,
+			runIrradianceToReflCallback<3>,
+			runIrradianceToReflCallback<4>,
+			runIrradianceToReflCallback<5>}};
+
+		// Rt
+		static const Array<CString, 6> passNames = {{"GI Irr2Refl #0",
+			"GI Irr2Refl #1",
+			"GI Irr2Refl #2",
+			"GI Irr2Refl #3",
+			"GI Irr2Refl #4",
+			"GI Irr2Refl #5"}};
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
+
+			pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceToReflFbDescrs[faceIdx],
+				{{m_ctx.m_lightShadingRt}},
+				{});
+
+			pass.setWork(callbacks[faceIdx], this, 0);
+
+			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+			{
+				pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
+			}
+
+			TextureSubresourceInfo readSubresource;
+			readSubresource.m_faceCount = 6;
+			readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
+			pass.newDependency({m_ctx.m_irradianceRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
+
+			TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+			pass.newDependency(
+				{m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, writeSubresource});
+		}
+	}
+
+	// Irradiance passes 2nd bounce
+	{
+		static const Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceCallback<0>,
+			runIrradianceCallback<1>,
+			runIrradianceCallback<2>,
+			runIrradianceCallback<3>,
+			runIrradianceCallback<4>,
+			runIrradianceCallback<5>}};
+
+		static const Array<CString, 6> passNames = {
+			{"GI Irr 2nd #0", "GI Irr 2nd #1", "GI Irr 2nd #2", "GI Irr 2nd #3", "GI Irr 2nd #4", "GI Irr 2nd #5"}};
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
+
+			pass.setFramebufferInfo(
+				m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceFbDescrs[faceIdx], {{m_ctx.m_irradianceRt}}, {});
+
+			pass.setWork(callbacks[faceIdx], this, 0);
+
+			// Read a cube but only one layer and level
+			TextureSubresourceInfo readSubresource;
+			readSubresource.m_faceCount = 6;
+			readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
+			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
+
+			TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+			pass.newDependency({m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, writeSubresource});
+		}
+	}
+
+	// Mipmapping "passes"
+	{
+		static const Array<RenderPassWorkCallback, 6> callbacks = {{runMipmappingOfLightShadingCallback<0>,
+			runMipmappingOfLightShadingCallback<1>,
+			runMipmappingOfLightShadingCallback<2>,
+			runMipmappingOfLightShadingCallback<3>,
+			runMipmappingOfLightShadingCallback<4>,
+			runMipmappingOfLightShadingCallback<5>}};
+
+		static const Array<CString, 6> passNames = {
+			{"GI Mip #0", "GI Mip #1", "GI Mip #2", "GI Mip #3", "GI Mip #4", "GI Mip #5"}};
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
+			pass.setWork(callbacks[faceIdx], this, 0);
+
+			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+			subresource.m_mipmapCount = m_lightShading.m_mipCount;
+
+			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
+		}
 	}
 }
 

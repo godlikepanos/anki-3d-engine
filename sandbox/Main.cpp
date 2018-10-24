@@ -46,7 +46,7 @@ Error MyApp::init(int argc, char* argv[])
 	ResourceManager& resources = getResourceManager();
 
 	renderer.getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0, 0.9, 0.9));
-	renderer.getOffscreenRenderer().getVolumetricFog().setParticleDensity(0.25f);
+	renderer.getOffscreenRenderer().getVolumetricFog().setParticleDensity(1.0f);
 
 	if(getenv("PROFILE"))
 	{

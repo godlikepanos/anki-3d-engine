@@ -19,6 +19,8 @@
 // Lower the ESM constant to smooth the shadows
 #define ESM_CONSTANT 30.0
 
+const F32 PHASE_FUNCTION_ANISOTROPY = 0.3;
+
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
 
 layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image3D u_volume;
@@ -75,17 +77,17 @@ Vec3 worldPosInsideCluster(Vec3 relativePos)
 	return worldPos;
 }
 
+// https://developer.nvidia.com/gpugems/GPUGems2/gpugems2_chapter16.html
 F32 phaseFunction(Vec3 viewDir, Vec3 lightDir, F32 g)
 {
 	F32 g2 = g * g;
+	F32 cosTheta = max(0.0, dot(viewDir, lightDir));
+	F32 cosTheta2 = cosTheta * cosTheta;
 
 	F32 a = (3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2));
-
-	F32 cosTheta = dot(viewDir, lightDir);
-	F32 cosTheta2 = cosTheta * cosTheta;
 	F32 b = (1.0 + cosTheta2) / pow(1.0 + g2 - 2.0 * g * cosTheta, 3.0 / 2.0);
 
-	return a / b;
+	return saturate(a * b);
 }
 
 Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
@@ -109,6 +111,8 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 
 		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+
+		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_posRadius.xyz), PHASE_FUNCTION_ANISOTROPY);
 
 #if ENABLE_SHADOWS
 		if(light.m_diffuseColorTileSize.w >= 0.0)
@@ -135,6 +139,8 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 
 		factor *=
 			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+
+		factor *= phaseFunction(viewDir, light.m_lightDirRadius.xyz, PHASE_FUNCTION_ANISOTROPY);
 
 #if ENABLE_SHADOWS
 		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
@@ -206,10 +212,14 @@ void main()
 		k /= F32(FINAL_CLUSTER_Z + 1u);
 
 		// Read prev
-		Vec3 prev = textureLod(u_prevVolume, Vec3(prevUv, k), 0.0).rgb;
+		Vec3 uvw = Vec3(prevUv, k);
+		if(all(lessThan(abs(uvw), Vec3(1.0))))
+		{
+			Vec3 prev = textureLod(u_prevVolume, uvw, 0.0).rgb;
 
-		// Modulate
-		color = mix(prev, color, 1.0 / 16.0);
+			// Modulate
+			color = mix(prev, color, 1.0 / 16.0);
+		}
 	}
 
 	// Write result

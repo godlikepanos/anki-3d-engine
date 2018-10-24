@@ -172,7 +172,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_uiStage->init(config));
 
 	SamplerInitInfo sinit("Renderer");
-	sinit.m_repeat = false;
+	sinit.m_addressing = SamplingAddressing::CLAMP;
 	sinit.m_mipmapFilter = SamplingFilter::BASE;
 	sinit.m_minMagFilter = SamplingFilter::NEAREST;
 	m_nearestSampler = m_gr->newSampler(sinit);
@@ -181,7 +181,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_linearSampler = m_gr->newSampler(sinit);
 
 	sinit.m_mipmapFilter = SamplingFilter::LINEAR;
-	sinit.m_repeat = true;
+	sinit.m_addressing = SamplingAddressing::REPEAT;
 	m_trilinearRepeatSampler = m_gr->newSampler(sinit);
 
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;

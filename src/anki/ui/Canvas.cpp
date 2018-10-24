@@ -58,7 +58,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	SamplerInitInfo samplerInit("Canvas");
 	samplerInit.m_minMagFilter = SamplingFilter::LINEAR;
 	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
-	samplerInit.m_repeat = true;
+	samplerInit.m_addressing = SamplingAddressing::REPEAT;
 	m_sampler = m_manager->getGrManager().newSampler(samplerInit);
 
 	return Error::NONE;

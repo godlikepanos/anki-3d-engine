@@ -42,13 +42,24 @@ Error MicroSampler::init(const SamplerInitInfo& inf)
 		ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	}
 
-	if(inf.m_repeat)
+	switch(inf.m_addressing)
 	{
-		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	}
-	else
-	{
+	case SamplingAddressing::CLAMP:
 		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		break;
+	case SamplingAddressing::REPEAT:
+		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		break;
+	case SamplingAddressing::BLACK:
+		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		ci.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+		break;
+	case SamplingAddressing::WHITE:
+		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		ci.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+		break;
+	default:
+		ANKI_ASSERT(0);
 	}
 
 	ci.mipLodBias = 0.0;
