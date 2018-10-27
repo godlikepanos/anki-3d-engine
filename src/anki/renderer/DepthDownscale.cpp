@@ -12,8 +12,6 @@ namespace anki
 
 DepthDownscale::~DepthDownscale()
 {
-	m_passes.destroy(getAllocator());
-
 	if(m_copyToBuff.m_buffAddr)
 	{
 		m_copyToBuff.m_buff->unmap();
@@ -22,64 +20,30 @@ DepthDownscale::~DepthDownscale()
 
 Error DepthDownscale::initInternal(const ConfigSet&)
 {
-	const U width = m_r->getWidth() / 2;
-	const U height = m_r->getHeight() / 2;
+	const U width = m_r->getWidth() >> 1;
+	const U height = m_r->getHeight() >> 1;
 
-	const U mipCount = computeMaxMipmapCount2d(width, height, HIERARCHICAL_Z_MIN_HEIGHT);
+	m_mipCount = computeMaxMipmapCount2d(width, height, HIERARCHICAL_Z_MIN_HEIGHT);
 
-	const U lastMipWidth = width >> (mipCount - 1);
-	const U lastMipHeight = height >> (mipCount - 1);
+	const U lastMipWidth = width >> (m_mipCount - 1);
+	const U lastMipHeight = height >> (m_mipCount - 1);
 
-	ANKI_R_LOGI("Initializing HiZ. Mip count %u, last mip size %ux%u", mipCount, lastMipWidth, lastMipHeight);
+	ANKI_R_LOGI("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, lastMipWidth, lastMipHeight);
 
-	m_passes.create(getAllocator(), mipCount);
-
-	// Create RT descrs
-	m_depthRtDescr =
-		m_r->create2DRenderTargetDescription(width, height, GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT, "Half depth");
-	m_depthRtDescr.bake();
-
+	// Create RT descr
 	m_hizRtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R32_SFLOAT, "HiZ");
-	m_hizRtDescr.m_mipmapCount = mipCount;
+	m_hizRtDescr.m_mipmapCount = m_mipCount;
 	m_hizRtDescr.bake();
-
-	// Create FB descr
-	m_passes[0].m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_passes[0].m_fbDescr.m_colorAttachmentCount = 1;
-	m_passes[0].m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_passes[0].m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
-	m_passes[0].m_fbDescr.bake();
-
-	for(U i = 1; i < m_passes.getSize(); ++i)
-	{
-		m_passes[i].m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		m_passes[i].m_fbDescr.m_colorAttachments[0].m_surface.m_level = i;
-		m_passes[i].m_fbDescr.m_colorAttachmentCount = 1;
-		m_passes[i].m_fbDescr.bake();
-	}
 
 	// Progs
 	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.glslp", m_prog));
 
-	ShaderProgramResourceMutationInitList<3> mutations(m_prog);
-	mutations.add("COPY_TO_CLIENT", 0).add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 2);
+	ShaderProgramResourceMutationInitList<1> mutations(m_prog);
+	mutations.add("SAMPLE_RESOLVE_TYPE", 2);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutations.get(), variant);
-	m_passes[0].m_grProg = variant->getProgram();
-
-	for(U i = 1; i < m_passes.getSize(); ++i)
-	{
-		mutations[1].m_value = 1;
-
-		if(i == m_passes.getSize() - 1)
-		{
-			mutations[0].m_value = 1;
-		}
-
-		m_prog->getOrCreateVariant(mutations.get(), variant);
-		m_passes[i].m_grProg = variant->getProgram();
-	}
+	m_grProg = variant->getProgram();
 
 	// Copy to buffer
 	{
@@ -118,42 +82,49 @@ Error DepthDownscale::init(const ConfigSet& cfg)
 void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	m_runCtx.m_pass = 0;
+	m_runCtx.m_mip = 0;
 
 	static const Array<CString, 5> passNames = {{"HiZ #0", "HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4"}};
 
 	// Create render targets
-	m_runCtx.m_halfDepthRt = rgraph.newRenderTarget(m_depthRtDescr);
 	m_runCtx.m_hizRt = rgraph.newRenderTarget(m_hizRtDescr);
 
-	// First render pass
+	// Every pass can do MIPS_WRITTEN_PER_PASS mips
+	for(U i = 0; i < m_mipCount; i += MIPS_WRITTEN_PER_PASS)
 	{
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[0]);
+		const U mipsToFill = (i + 1 < m_mipCount) ? MIPS_WRITTEN_PER_PASS : 1;
 
-		pass.setFramebufferInfo(m_passes[0].m_fbDescr, {{m_runCtx.m_hizRt}}, m_runCtx.m_halfDepthRt);
-		pass.setWork(runCallback, this, 0);
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passNames[i / MIPS_WRITTEN_PER_PASS]);
 
-		TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH); // First mip
+		if(i == 0)
+		{
+			pass.newDependency({m_r->getGBuffer().getDepthRt(),
+				TextureUsageBit::SAMPLED_COMPUTE,
+				TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
+		}
+		else
+		{
+			TextureSubresourceInfo subresource;
+			subresource.m_firstMipmap = i - 1;
 
-		pass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT, subresource});
-		pass.newDependency({m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
-		pass.newDependency({m_runCtx.m_hizRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresource});
-	}
+			pass.newDependency({m_runCtx.m_hizRt, TextureUsageBit::SAMPLED_COMPUTE, subresource});
+		}
 
-	// Rest of the passes
-	for(U i = 1; i < m_passes.getSize(); ++i)
-	{
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
+		TextureSubresourceInfo subresource;
+		subresource.m_firstMipmap = i;
+		pass.newDependency({m_runCtx.m_hizRt, TextureUsageBit::IMAGE_COMPUTE_WRITE, subresource});
 
-		pass.setFramebufferInfo(m_passes[i].m_fbDescr, {{m_runCtx.m_hizRt}}, {});
-		pass.setWork(runCallback, this, 0);
+		if(mipsToFill == MIPS_WRITTEN_PER_PASS)
+		{
+			subresource.m_firstMipmap = i + 1;
+			pass.newDependency({m_runCtx.m_hizRt, TextureUsageBit::IMAGE_COMPUTE_WRITE, subresource});
+		}
 
-		TextureSubresourceInfo subresourceRead, subresourceWrite;
-		subresourceRead.m_firstMipmap = i - 1;
-		subresourceWrite.m_firstMipmap = i;
-
-		pass.newDependency({m_runCtx.m_hizRt, TextureUsageBit::SAMPLED_FRAGMENT, subresourceRead});
-		pass.newDependency({m_runCtx.m_hizRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, subresourceWrite});
+		auto callback = [](RenderPassWorkContext& rgraphCtx) {
+			DepthDownscale* const self = static_cast<DepthDownscale*>(rgraphCtx.m_userData);
+			self->run(rgraphCtx);
+		};
+		pass.setWork(callback, this, 0);
 	}
 }
 
@@ -161,44 +132,60 @@ void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	const U passIdx = m_runCtx.m_pass++;
+	const U level = m_runCtx.m_mip;
+	m_runCtx.m_mip += MIPS_WRITTEN_PER_PASS;
+	const U mipsToFill = (level + 1 < m_mipCount) ? MIPS_WRITTEN_PER_PASS : 1;
+	const U copyToClientLevel = (level + mipsToFill == m_mipCount) ? mipsToFill - 1 : MAX_U;
 
-	cmdb->bindShaderProgram(m_passes[passIdx].m_grProg);
-	cmdb->setViewport(0, 0, m_r->getWidth() >> (passIdx + 1), m_r->getHeight() >> (passIdx + 1));
+	const U level0Width = m_r->getWidth() >> (level + 1);
+	const U level0Height = m_r->getHeight() >> (level + 1);
+	const U level1Width = level0Width >> 1;
+	const U level1Height = level0Height >> 1;
 
-	if(passIdx == 0)
+	cmdb->bindShaderProgram(m_grProg);
+
+	// Uniforms
+	struct PushConsts
+	{
+		UVec4 m_writeImgSizes;
+		UVec4 m_copyToClientLevelWriteLevel1Pad2;
+	} regs;
+
+	regs.m_writeImgSizes = UVec4(level0Width, level0Height, level1Width, level1Height);
+	regs.m_copyToClientLevelWriteLevel1Pad2.x() = copyToClientLevel;
+	regs.m_copyToClientLevelWriteLevel1Pad2.y() = mipsToFill == MIPS_WRITTEN_PER_PASS;
+	cmdb->setPushConstants(&regs, sizeof(regs));
+
+	// Bind input texure
+	if(level == 0)
 	{
 		rgraphCtx.bindTextureAndSampler(0,
 			0,
 			m_r->getGBuffer().getDepthRt(),
 			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 			m_r->getNearestSampler());
-
-		cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 	}
 	else
 	{
-		TextureSubresourceInfo sampleSubresource;
-		sampleSubresource.m_firstMipmap = passIdx - 1;
-
-		rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_hizRt, sampleSubresource, m_r->getNearestSampler());
+		TextureSubresourceInfo subresource;
+		subresource.m_firstMipmap = level - 1;
+		rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_hizRt, subresource, m_r->getNearestSampler());
 	}
 
-	if(passIdx == m_passes.getSize() - 1)
-	{
-		UVec4 size(m_copyToBuff.m_lastMipWidth, m_copyToBuff.m_lastMipHeight, 0, 0);
-		cmdb->setPushConstants(&size, sizeof(size));
+	// 1st level
+	TextureSubresourceInfo subresource;
+	subresource.m_firstMipmap = level;
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_hizRt, subresource);
 
-		cmdb->bindStorageBuffer(0, 0, m_copyToBuff.m_buff, 0, m_copyToBuff.m_buff->getSize());
-	}
+	// 2nd level
+	subresource.m_firstMipmap = (mipsToFill == MIPS_WRITTEN_PER_PASS) ? level + 1 : level; // Bind the next or the same
+	rgraphCtx.bindImage(0, 1, m_runCtx.m_hizRt, subresource);
 
-	drawQuad(cmdb);
+	// Client buffer
+	cmdb->bindStorageBuffer(0, 0, m_copyToBuff.m_buff, 0, m_copyToBuff.m_buff->getSize());
 
-	// Restore state
-	if(passIdx == 0)
-	{
-		cmdb->setDepthCompareOperation(CompareOperation::LESS);
-	}
+	// Done
+	dispatchPPCompute(cmdb, 8, 8, level0Width, level0Height);
 }
 
 } // end namespace anki

@@ -34,12 +34,6 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	/// Return a depth buffer that is a quarter of the resolution of the renderer.
-	RenderTargetHandle getHalfDepthRt() const
-	{
-		return m_runCtx.m_halfDepthRt;
-	}
-
 	/// Return a FP color render target with hierarchical Z (min Z) in it's mips.
 	RenderTargetHandle getHiZRt() const
 	{
@@ -48,7 +42,7 @@ anki_internal:
 
 	U32 getMipmapCount() const
 	{
-		return m_passes.getSize();
+		return m_mipCount;
 	}
 
 	void getClientDepthMapInfo(F32*& depthValues, U32& width, U32& height) const
@@ -60,25 +54,18 @@ anki_internal:
 	}
 
 private:
-	RenderTargetDescription m_depthRtDescr;
+	static const U32 MIPS_WRITTEN_PER_PASS = 2;
+
 	RenderTargetDescription m_hizRtDescr;
 	ShaderProgramResourcePtr m_prog;
-
-	class Pass
-	{
-	public:
-		FramebufferDescription m_fbDescr;
-		ShaderProgramPtr m_grProg;
-	};
-
-	DynamicArray<Pass> m_passes;
+	ShaderProgramPtr m_grProg;
+	U32 m_mipCount = 0;
 
 	class
 	{
 	public:
-		RenderTargetHandle m_halfDepthRt;
 		RenderTargetHandle m_hizRt;
-		U m_pass;
+		U8 m_mip;
 	} m_runCtx; ///< Run context.
 
 	class
@@ -92,12 +79,6 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
 	void run(RenderPassWorkContext& rgraphCtx);
-
-	/// A RenderPassWorkCallback for half depth main pass.
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		static_cast<DepthDownscale*>(rgraphCtx.m_userData)->run(rgraphCtx);
-	}
 };
 /// @}
 

@@ -40,7 +40,7 @@ public:
 		const U size = last - first;
 		ANKI_ASSERT(size
 					== sizeof(F32) * 2 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8)
-						   + sizeof(SamplerInitInfo));
+						   + sizeof(SamplingAddressing));
 		return anki::computeHash(first, size);
 	}
 };
