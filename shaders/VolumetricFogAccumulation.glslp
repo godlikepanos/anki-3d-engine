@@ -1,0 +1,78 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki input const UVec2 WORKGROUP_SIZE
+#pragma anki input const UVec3 VOLUME_SIZE
+#pragma anki input const UVec3 CLUSTER_COUNT
+#pragma anki input const UVec3 FRACTION
+#pragma anki input const U32 FINAL_CLUSTER_Z
+
+#pragma anki start comp
+
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
+#include <shaders/Common.glsl>
+
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler3D u_lightVolume;
+layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image3D u_fogVolume;
+
+struct PushConsts
+{
+	Vec4 m_fogScatteringCoeffFogAbsorptionCoeffDensityPad1;
+	Vec4 m_fogDiffusePad1;
+	ClustererMagicValues m_clustererMagic;
+};
+ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
+#define u_fogScatteringCoeff u_regs.m_fogScatteringCoeffFogAbsorptionCoeffDensityPad1.x
+#define u_fogAbsorptionCoeff u_regs.m_fogScatteringCoeffFogAbsorptionCoeffDensityPad1.y
+#define u_density u_regs.m_fogScatteringCoeffFogAbsorptionCoeffDensityPad1.z
+#define u_fogDiffuse u_regs.m_fogDiffusePad1.xyz
+#define u_clustererMagic u_regs.m_clustererMagic
+
+void main()
+{
+	if(any(greaterThanEqual(gl_GlobalInvocationID.xy, VOLUME_SIZE.xy)))
+	{
+		return;
+	}
+
+	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(VOLUME_SIZE.xy);
+
+	Vec4 colorAndDensityFront = Vec4(0.0);
+	ANKI_LOOP for(U32 i = 0u; i < VOLUME_SIZE.z; ++i)
+	{
+		// Compute the cluster K limits of this cluster fragment
+		F32 clusterKNear = F32(i) * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
+		F32 clusterKFar = F32(i + 1u) * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
+
+		// Compute the min and max Z in view space if this cluster fragment
+		F32 zVSpaceNear = -computeClusterNearf(u_clustererMagic, clusterKNear);
+		F32 zVSpaceFar = -computeClusterNearf(u_clustererMagic, clusterKFar);
+
+		// Compute the thikness of this fragment
+		F32 layerThinkness = abs(zVSpaceNear - zVSpaceFar);
+
+		// Scattering & absorption
+		F32 scattering = u_density * u_fogScatteringCoeff * layerThinkness;
+		F32 absorption = u_density * u_fogAbsorptionCoeff * layerThinkness;
+
+		// Read the light value
+		Vec3 light = textureLod(u_lightVolume, Vec3(uv, clusterKFar / F32(FINAL_CLUSTER_Z + 1u)), 0.0).rgb;
+		light *= u_fogDiffuse / PI;
+
+		// Integrate
+		Vec4 colorAndDensityBack = Vec4(light * scattering, scattering + absorption);
+
+		Vec3 l = colorAndDensityFront.rgb + saturate(exp(-colorAndDensityFront.a)) * colorAndDensityBack.rgb;
+		colorAndDensityFront = Vec4(l.rgb, colorAndDensityFront.a + colorAndDensityBack.a);
+
+		// Write the value
+		Vec4 valToWrite = Vec4(colorAndDensityFront.rgb, saturate(exp(-colorAndDensityFront.a)));
+		imageStore(u_fogVolume, IVec3(UVec3(gl_GlobalInvocationID.xy, i)), valToWrite);
+	}
+}
+
+#pragma anki end

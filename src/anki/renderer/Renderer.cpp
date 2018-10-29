@@ -22,11 +22,12 @@
 #include <anki/renderer/LensFlare.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/DownscaleBlur.h>
-#include <anki/renderer/Volumetric.h>
+#include <anki/renderer/VolumetricFog.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/TemporalAA.h>
 #include <anki/renderer/UiStage.h>
 #include <anki/renderer/Ssr.h>
+#include <anki/renderer/VolumetricLightingAccumulation.h>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
@@ -98,7 +99,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	{
 		TextureInitInfo texinit;
 		texinit.m_width = texinit.m_height = 4;
-		texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_usage = TextureUsageBit::SAMPLED_ALL;
 		texinit.m_format = Format::R8G8B8A8_UNORM;
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		TexturePtr tex = getGrManager().newTexture(texinit);
@@ -113,6 +114,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_resources->loadResource("shaders/ClearTextureCompute.glslp", m_clearTexComputeProg));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
+	m_volLighting.reset(m_alloc.newInstance<VolumetricLightingAccumulation>(this));
+	ANKI_CHECK(m_volLighting->init(config));
+
 	m_indirect.reset(m_alloc.newInstance<Indirect>(this));
 	ANKI_CHECK(m_indirect->init(config));
 
@@ -125,14 +129,14 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_shadowMapping.reset(m_alloc.newInstance<ShadowMapping>(this));
 	ANKI_CHECK(m_shadowMapping->init(config));
 
+	m_volFog.reset(m_alloc.newInstance<VolumetricFog>(this));
+	ANKI_CHECK(m_volFog->init(config));
+
 	m_lightShading.reset(m_alloc.newInstance<LightShading>(this));
 	ANKI_CHECK(m_lightShading->init(config));
 
 	m_depth.reset(m_alloc.newInstance<DepthDownscale>(this));
 	ANKI_CHECK(m_depth->init(config));
-
-	m_vol.reset(m_alloc.newInstance<Volumetric>(this));
-	ANKI_CHECK(m_vol->init(config));
 
 	m_forwardShading.reset(m_alloc.newInstance<ForwardShading>(this));
 	ANKI_CHECK(m_forwardShading->init(config));
@@ -168,7 +172,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_uiStage->init(config));
 
 	SamplerInitInfo sinit("Renderer");
-	sinit.m_repeat = false;
+	sinit.m_addressing = SamplingAddressing::CLAMP;
 	sinit.m_mipmapFilter = SamplingFilter::BASE;
 	sinit.m_minMagFilter = SamplingFilter::NEAREST;
 	m_nearestSampler = m_gr->newSampler(sinit);
@@ -177,7 +181,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_linearSampler = m_gr->newSampler(sinit);
 
 	sinit.m_mipmapFilter = SamplingFilter::LINEAR;
-	sinit.m_repeat = true;
+	sinit.m_addressing = SamplingAddressing::REPEAT;
 	m_trilinearRepeatSampler = m_gr->newSampler(sinit);
 
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
@@ -280,14 +284,14 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Populate render graph. WARNING Watch the order
 	m_shadowMapping->populateRenderGraph(ctx);
+	m_volLighting->populateRenderGraph(ctx);
 	m_indirect->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depth->populateRenderGraph(ctx);
-	m_vol->populateRenderGraph(ctx);
+	m_volFog->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
-	m_forwardShading->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
@@ -311,6 +315,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	cin.m_stagingMem = m_stagingMem;
 	cin.m_threadHive = m_threadHive;
 	m_clusterBin.bin(cin, ctx.m_clusterBinOut);
+
+	ctx.m_prevClustererMagicValues =
+		(m_frameCount > 0) ? m_prevClustererMagicValues : ctx.m_clusterBinOut.m_shaderMagicValues;
+	m_prevClustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
 
 	updateLightShadingUniforms(ctx);
 	m_stats.m_lightBinTime = HighRezTimer::getCurrentTime() - m_stats.m_lightBinTime;
@@ -487,8 +495,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				else
 				{
 					// Compute
+					ShaderProgramResourceMutationInitList<1> mutators(m_clearTexComputeProg);
+					mutators.add("IS_2D", U32((inf.m_type != TextureType::_3D) ? 1 : 0));
+
 					const ShaderProgramResourceVariant* variant;
-					m_clearTexComputeProg->getOrCreateVariant(variant);
+					m_clearTexComputeProg->getOrCreateVariant(mutators.get(), variant);
 
 					cmdb->bindShaderProgram(variant->getProgram());
 
@@ -500,7 +511,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					cmdb->setTextureSurfaceBarrier(
 						tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, surf);
 
-					cmdb->dispatchCompute(tex->getWidth() >> mip, tex->getHeight() >> mip, 1);
+					const U wgSizeZ = (inf.m_type == TextureType::_3D) ? (tex->getDepth() >> mip) : 1;
+					cmdb->dispatchCompute(tex->getWidth() >> mip, tex->getHeight() >> mip, wgSizeZ);
 
 					if(!!inf.m_initialUsage)
 					{
@@ -528,12 +540,15 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	blk->m_rendererSizeTimeNear =
 		Vec4(m_width, m_height, HighRezTimer::getCurrentTime(), ctx.m_renderQueue->m_cameraNear);
 
-	blk->m_tileCount = UVec4(m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], m_clusterCount[3]);
+	blk->m_clusterCount = UVec4(m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], m_clusterCount[3]);
 
 	blk->m_cameraPosFar =
 		Vec4(ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz(), ctx.m_renderQueue->m_cameraFar);
 
 	blk->m_clustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
+	blk->m_prevClustererMagicValues = ctx.m_prevClustererMagicValues;
+
+	blk->m_lightVolumeLastClusterPad3 = UVec4(m_volLighting->getFinalClusterInZ());
 
 	// Matrices
 	blk->m_viewMat = ctx.m_renderQueue->m_viewMatrix;

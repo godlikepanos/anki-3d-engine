@@ -14,17 +14,21 @@ void SamplerImpl::init(const SamplerInitInfo& sinit)
 	glGenSamplers(1, &m_glName);
 	ANKI_ASSERT(m_glName);
 
-	if(sinit.m_repeat)
+	if(sinit.m_addressing == SamplingAddressing::REPEAT)
 	{
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_R, GL_REPEAT);
 	}
-	else
+	else if(sinit.m_addressing == SamplingAddressing::CLAMP)
 	{
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
 	}
 
 	// Set filtering type

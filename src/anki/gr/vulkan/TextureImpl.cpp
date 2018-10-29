@@ -660,6 +660,11 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	}
+	else
+	{
+		// Can't set it to something, chose general
+		out = VK_IMAGE_LAYOUT_GENERAL;
+	}
 
 	ANKI_ASSERT(out != VK_IMAGE_LAYOUT_MAX_ENUM);
 	return out;
@@ -689,6 +694,13 @@ VkImageView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresour
 			getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(view));
 
 		m_viewsMap.emplace(getAllocator(), subresource, view);
+
+#if 0
+		printf("Creating image view %p. Texture %p %s\n",
+		static_cast<void*>(view),
+		static_cast<void*>(m_imageHandle),
+		getName() ? getName().cstr() : "Unnamed");
+#endif
 
 		return view;
 	}

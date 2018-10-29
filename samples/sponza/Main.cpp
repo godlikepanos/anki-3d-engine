@@ -17,7 +17,8 @@ public:
 		ANKI_CHECK(getResourceManager().loadResource("assets/scene.lua", script));
 		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
-		getMainRenderer().getOffscreenRenderer().getVolumetric().setFogParticleColor(Vec3(1.0, 0.9, 0.9) * 0.009);
+		getMainRenderer().getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0, 0.9, 0.9));
+		getMainRenderer().getOffscreenRenderer().getVolumetricFog().setParticleDensity(2.0f);
 		return Error::NONE;
 	}
 };

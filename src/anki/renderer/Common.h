@@ -32,11 +32,12 @@ class FinalComposite;
 class Dbg;
 class Indirect;
 class DownscaleBlur;
-class Volumetric;
+class VolumetricFog;
 class DepthDownscale;
 class TemporalAA;
 class UiStage;
 class Ssr;
+class VolumetricLightingAccumulation;
 
 class RenderingContext;
 class DebugDrawer;

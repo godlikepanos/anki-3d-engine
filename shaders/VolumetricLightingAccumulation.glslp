@@ -1,0 +1,229 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// This shader accumulates the lighting for every cluster fraction
+
+#pragma anki mutator ENABLE_SHADOWS 0 1
+
+#pragma anki input const UVec3 VOLUME_SIZE
+#pragma anki input const UVec3 CLUSTER_COUNT
+#pragma anki input const U32 FINAL_CLUSTER_Z
+#pragma anki input const UVec3 FRACTION
+#pragma anki input const UVec3 WORKGROUP_SIZE
+#pragma anki input const UVec3 NOISE_TEX_SIZE
+
+#pragma anki start comp
+
+// Lower the ESM constant to smooth the shadows
+#define ESM_CONSTANT 30.0
+
+const F32 PHASE_FUNCTION_ANISOTROPY = 0.3;
+
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
+
+layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image3D u_volume;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler3D u_noiseTex;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler3D u_prevVolume;
+
+struct PushConsts
+{
+	Vec4 m_noiseOffsetPad3;
+};
+ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
+
+#define u_noiseOffset u_regs.m_noiseOffsetPad3.x
+
+#define LIGHT_TEX_BINDING 2
+#define LIGHT_UBO_BINDING 0
+#define LIGHT_SS_BINDING 0
+#define LIGHT_SET 0
+#define LIGHT_LIGHTS
+#define LIGHT_COMMON_UNIS
+#define LIGHT_INDIRECT
+#include <shaders/ClusteredShadingCommon.glsl>
+
+Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
+
+Vec3 readRand()
+{
+	Vec3 uv = (g_globalInvocationID + 0.5) / Vec3(NOISE_TEX_SIZE);
+	uv.z += u_noiseOffset;
+	return textureLod(u_noiseTex, uv, 0.0).rgb;
+}
+
+Vec3 worldPosInsideCluster(Vec3 relativePos)
+{
+	// Compute the cluster Z as float
+	F32 clusterKNear = g_globalInvocationID.z * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
+	F32 clusterKFar = (g_globalInvocationID.z + 1.0) * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
+	F32 clusterK = mix(clusterKNear, clusterKFar, relativePos.z);
+
+	// Get a Z value
+	F32 zVSpace = -computeClusterNearf(u_clustererMagic, clusterK);
+
+	// Get a XY value
+	Vec2 uvMin = g_globalInvocationID.xy / Vec2(VOLUME_SIZE.xy);
+	Vec2 uvMax = uvMin + 1.0 / Vec2(VOLUME_SIZE.xy);
+	Vec2 uv = mix(uvMin, uvMax, relativePos.xy);
+	Vec2 ndc = UV_TO_NDC(uv);
+	Vec2 xyZVspace = ndc * u_unprojectionParams.xy * zVSpace;
+
+	// Get the pos
+	Vec4 worldPos4 = u_invViewMat * Vec4(xyZVspace, zVSpace, 1.0);
+	Vec3 worldPos = worldPos4.xyz;
+
+	return worldPos;
+}
+
+// https://developer.nvidia.com/gpugems/GPUGems2/gpugems2_chapter16.html
+F32 phaseFunction(Vec3 viewDir, Vec3 lightDir, F32 g)
+{
+	F32 g2 = g * g;
+	F32 cosTheta = max(0.0, dot(viewDir, lightDir));
+	F32 cosTheta2 = cosTheta * cosTheta;
+
+	F32 a = (3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2));
+	F32 b = (1.0 + cosTheta2) / pow(1.0 + g2 - 2.0 * g * cosTheta, 3.0 / 2.0);
+
+	return saturate(a * b);
+}
+
+Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
+{
+	Vec3 color = Vec3(0.0);
+	Vec3 viewDir = normalize(u_cameraPos - worldPos);
+
+	// Get ID offset
+	U32 idxOffset = u_clusters[clusterIdx];
+
+	// Skip decals
+	U32 count = u_lightIndices[idxOffset];
+	idxOffset += count + 1u;
+
+	// Point lights
+	count = u_lightIndices[idxOffset++];
+	U32 idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	{
+		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
+
+		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
+		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+
+		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_posRadius.xyz), PHASE_FUNCTION_ANISOTROPY);
+
+#if ENABLE_SHADOWS
+		if(light.m_diffuseColorTileSize.w >= 0.0)
+		{
+			factor *= computeShadowFactorOmni(
+				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
+		}
+#endif
+
+		color += light.m_diffuseColorTileSize.rgb * factor;
+	}
+
+	// Spot lights
+	count = u_lightIndices[idxOffset++];
+	idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	{
+		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
+
+		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
+		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+
+		Vec3 l = normalize(frag2Light);
+
+		factor *=
+			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+
+		factor *= phaseFunction(viewDir, light.m_lightDirRadius.xyz, PHASE_FUNCTION_ANISOTROPY);
+
+#if ENABLE_SHADOWS
+		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
+		if(shadowmapLayerIdx >= 0.0)
+		{
+			factor *=
+				computeShadowFactorSpot(light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
+		}
+#endif
+
+		color += light.m_diffuseColorShadowmapId.rgb * factor;
+	}
+
+	// Probes
+	F32 totalBlendWeight = EPSILON;
+	Vec3 diffIndirect = Vec3(0.0);
+	count = u_lightIndices[idxOffset++];
+	idxOffsetEnd = idxOffset + count;
+	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	{
+		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
+		Vec3 aabbMin = probe.m_aabbMinPad1.xyz;
+		Vec3 aabbMax = probe.m_aabbMaxPad1.xyz;
+		Vec3 probeOrigin = probe.m_positionCubemapIndex.xyz;
+		F32 cubemapIndex = probe.m_positionCubemapIndex.w;
+
+		F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
+		totalBlendWeight += blendWeight;
+
+		Vec3 c = textureLod(u_irradianceTex, Vec4(viewDir, cubemapIndex), 0.0).rgb;
+		c *= PI; // Irradiance is pre-divided with PI so fix it
+		diffIndirect += c * blendWeight;
+	}
+
+	diffIndirect /= totalBlendWeight;
+	color += diffIndirect;
+
+	return color;
+}
+
+void main()
+{
+	if(any(greaterThanEqual(gl_GlobalInvocationID.xyz, VOLUME_SIZE)))
+	{
+		return;
+	}
+
+	// Find the cluster
+	UVec3 clusterXYZ = gl_GlobalInvocationID / FRACTION;
+	U32 clusterIdx = clusterXYZ.z * (CLUSTER_COUNT.x * CLUSTER_COUNT.y) + clusterXYZ.y * CLUSTER_COUNT.x + clusterXYZ.x;
+
+	// Find a random pos inside the cluster
+	Vec3 worldPos = worldPosInsideCluster(readRand());
+
+	// Get lighting
+	Vec3 color = accumulateLights(clusterIdx, worldPos);
+
+	// Read the prev result
+	{
+		// Better get a new world pos in the center of the cluster. Using worldPos creates noisy results
+		Vec3 midWPos = worldPosInsideCluster(Vec3(0.5));
+
+		// Compute UV
+		Vec4 prevClipPos4 = u_prevViewProjMat * Vec4(midWPos, 1.0);
+		Vec2 prevUv = NDC_TO_UV(prevClipPos4.xy / prevClipPos4.w);
+
+		// Compute new Z tex coord
+		F32 k = computeClusterKf(u_prevClustererMagic, midWPos);
+		k /= F32(FINAL_CLUSTER_Z + 1u);
+
+		// Read prev
+		Vec3 uvw = Vec3(prevUv, k);
+		if(all(lessThan(abs(uvw), Vec3(1.0))))
+		{
+			Vec3 prev = textureLod(u_prevVolume, uvw, 0.0).rgb;
+
+			// Modulate
+			color = mix(prev, color, 1.0 / 16.0);
+		}
+	}
+
+	// Write result
+	imageStore(u_volume, IVec3(gl_GlobalInvocationID), Vec4(color, 0.0));
+}
+
+#pragma anki end

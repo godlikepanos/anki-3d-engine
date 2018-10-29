@@ -185,7 +185,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	SamplerInitInfo samplerInit("TextureRsrc");
 	samplerInit.m_minMagFilter = SamplingFilter::LINEAR;
 	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
-	samplerInit.m_repeat = true;
+	samplerInit.m_addressing = SamplingAddressing::REPEAT;
 	samplerInit.m_anisotropyLevel = getManager().getTextureAnisotropy();
 	m_sampler = getManager().getGrManager().newSampler(samplerInit);
 

@@ -67,7 +67,7 @@ void main()
 	out_color = u_color[gl_VertexID].rgb;
 
 	const vec2 POSITIONS[3] = vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
-		
+
 	mat2 rot = mat2(
 		u_rotation2d.x, u_rotation2d.y, u_rotation2d.z, u_rotation2d.w);
 	vec2 pos = rot * POSITIONS[gl_VertexID % 3];
@@ -251,7 +251,7 @@ void main()
 	float factor = uv.x;
 	vec3 col0 = texture(u_tex0, uv).rgb;
 	vec3 col1 = texture(u_tex1, uv).rgb;
-	
+
 	out_color = vec4(col1 + col0, 1.0);
 })";
 
@@ -269,12 +269,12 @@ static const char* COMP_WRITE_IMAGE_SRC = R"(
 layout(ANKI_IMAGE_BINDING(0, 0), rgba8) writeonly uniform image2D u_img;
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-	
+
 layout(ANKI_SS_BINDING(1, 0)) buffer ss1_
 {
 	vec4 u_color;
 };
-	
+
 void main()
 {
 	imageStore(u_img, ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y), u_color);
@@ -943,7 +943,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	SamplerInitInfo samplerInit;
 	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
 	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
-	samplerInit.m_repeat = false;
+	samplerInit.m_addressing = SamplingAddressing::CLAMP;
 	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	//
@@ -1457,7 +1457,7 @@ ANKI_TEST(Gr, 3DTextures)
 	SamplerInitInfo samplerInit;
 	samplerInit.m_minMagFilter = SamplingFilter::NEAREST;
 	samplerInit.m_mipmapFilter = SamplingFilter::BASE;
-	samplerInit.m_repeat = false;
+	samplerInit.m_addressing = SamplingAddressing::CLAMP;
 	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	//
@@ -1800,27 +1800,27 @@ ANKI_TEST(Gr, VkWorkarounds)
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 2) in;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform usampler2D u_tex;
-	
+
 layout(ANKI_SS_BINDING(0, 0)) buffer s_
 {
 	uvec4 u_result;
 };
-	
+
 shared uint g_wrong;
-	
+
 void main()
 {
 	g_wrong = 0;
 	memoryBarrierShared();
 	barrier();
-	
+
 	int lod = -1;
 	uint idx;
-	
+
 	if(gl_LocalInvocationID.z == 0)
 	{
 		// First mip
-	
+
 		lod = 0;
 		idx = gl_LocalInvocationID.y * 8 + gl_LocalInvocationID.x;
 	}
@@ -1829,7 +1829,7 @@ void main()
 		lod = 1;
 		idx = gl_LocalInvocationID.y * 4 + gl_LocalInvocationID.x;
 	}
-	
+
 	if(lod != -1)
 	{
 		uvec3 col = texelFetch(u_tex, ivec2(gl_LocalInvocationID.x, gl_LocalInvocationID.y), lod).rgb;
@@ -1838,10 +1838,10 @@ void main()
 			atomicAdd(g_wrong, 1);
 		}
 	}
-	
+
 	memoryBarrierShared();
 	barrier();
-	
+
 	if(g_wrong != 0)
 	{
 		u_result = uvec4(1);
@@ -2063,12 +2063,12 @@ struct PC
 	mat4 mat;
 };
 ANKI_PUSH_CONSTANTS(PC, regs);
-	
+
 out gl_PerVertex
 {
 	vec4 gl_Position;
 };
-	
+
 layout(location = 0) out vec4 out_color;
 
 void main()
@@ -2076,7 +2076,7 @@ void main()
 	vec2 uv = vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
 	vec2 pos = uv * 2.0 - 1.0;
 	gl_Position = vec4(pos, 0.0, 1.0);
-	
+
 	out_color = regs.color;
 }
 )";
@@ -2090,7 +2090,7 @@ struct PC
 	mat4 mat;
 };
 ANKI_PUSH_CONSTANTS(PC, regs);
-	
+
 layout(location = 0) in vec4 in_color;
 layout(location = 0) out vec4 out_color;
 

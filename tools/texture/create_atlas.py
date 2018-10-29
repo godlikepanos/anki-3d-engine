@@ -31,7 +31,7 @@ class Frame:
 	@classmethod
 	def diagonal(self):
 		return sqrt(self.w * self.w + self.h * self.h)
-	
+
 	@classmethod
 	def area(self):
 		return self.w * self.h
@@ -177,7 +177,7 @@ def place_sub_images(ctx):
 		sub_image = ctx.sub_images[unplaced_imgs[0]]
 		unplaced_imgs.pop(0)
 
-		printi("Will try to place image \"%s\" of size %ux%d" % 
+		printi("Will try to place image \"%s\" of size %ux%d" %
 				(sub_image.image_name, sub_image.width, sub_image.height))
 
 		# Find best frame
@@ -288,7 +288,7 @@ def write_xml(ctx):
 def main():
 	""" The main """
 
-	ctx = parse_commandline();
+	ctx = parse_commandline()
 	load_images(ctx)
 	compute_atlas_rough_size(ctx)
 	place_sub_images(ctx)

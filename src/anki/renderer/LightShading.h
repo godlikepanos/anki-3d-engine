@@ -33,20 +33,23 @@ anki_internal:
 	}
 
 private:
-	RenderTargetDescription m_rtDescr;
-	FramebufferDescription m_fbDescr;
+	class
+	{
+	public:
+		RenderTargetDescription m_rtDescr;
+		FramebufferDescription m_fbDescr;
 
-	// Light shaders
-	ShaderProgramResourcePtr m_prog;
-	const ShaderProgramResourceVariant* m_progVariant = nullptr;
+		// Light shaders
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+	} m_lightShading;
 
 	class
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-		TextureResourcePtr m_noiseTex;
-	} m_fs; ///< Apply forward shading.
+	} m_applyFog;
 
 	class
 	{
@@ -55,17 +58,10 @@ private:
 		RenderingContext* m_ctx;
 	} m_runCtx; ///< Run context.
 
-	/// Called by init
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error initLightShading(const ConfigSet& config);
+	ANKI_USE_RESULT Error initApplyFog(const ConfigSet& config);
 
-	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
-	/// A RenderPassWorkCallback for the light pass.
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		LightShading* const self = scast<LightShading*>(rgraphCtx.m_userData);
-		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
-	}
+	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

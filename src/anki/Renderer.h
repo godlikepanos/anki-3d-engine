@@ -8,7 +8,7 @@
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Common.h>
 #include <anki/renderer/LightShading.h>
-#include <anki/renderer/Volumetric.h>
+#include <anki/renderer/VolumetricFog.h>
 #include <anki/renderer/ForwardShading.h>
 #include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/ClusterBin.h>
@@ -29,5 +29,6 @@
 #include <anki/renderer/Tonemapping.h>
 #include <anki/renderer/RendererObject.h>
 #include <anki/renderer/Bloom.h>
+#include <anki/renderer/VolumetricLightingAccumulation.h>
 
 /// @defgroup renderer Renderering system

@@ -15,9 +15,11 @@
 #	define ANKI_END_NAMESPACE }
 #	define ANKI_SHADER_FUNC_INLINE inline
 
-#	define ANKI_SHADER_INOUT(type_) type&
-#	define ANKI_SHADER_IN(type_) const type&
-#	define ANKI_SHADER_OUT(type_) type&
+#	define ANKI_SHADER_INOUT(type_) type_&
+#	define ANKI_SHADER_IN(type_) const type_&
+#	define ANKI_SHADER_OUT(type_) type_&
+
+#	define ANKI_SHADER_STATIC_ASSERT(cond_) static_assert(cond_, "See file");
 
 ANKI_BEGIN_NAMESPACE
 template<typename T>
@@ -39,9 +41,11 @@ ANKI_END_NAMESPACE
 #	define ANKI_END_NAMESPACE
 #	define ANKI_SHADER_FUNC_INLINE
 
-#	define ANKI_SHADER_INOUT(type_) inout type
-#	define ANKI_SHADER_IN(type_) in type
-#	define ANKI_SHADER_OUT(type_) out type
+#	define ANKI_SHADER_INOUT(type_) inout type_
+#	define ANKI_SHADER_IN(type_) in type_
+#	define ANKI_SHADER_OUT(type_) out type_
+
+#	define ANKI_SHADER_STATIC_ASSERT(cond_)
 #endif
 
 //

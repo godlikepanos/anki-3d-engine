@@ -67,6 +67,8 @@ endif()
 # Configuration                                                                #
 ################################################################################
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 option(ANKI_EXTRA_CHECKS "Debugging checks (assertions)" OFF)
 option(ANKI_LTO "LTO compilation" OFF)
 
@@ -264,7 +266,7 @@ add_subdirectory(thirdparty/freetype)
 message("++ End configuring freetype")
 
 # glslang
-message("++ Configuring glslang")	
+message("++ Configuring glslang")
 add_subdirectory(thirdparty/glslang)
 message("++ End configuring glslang")
 
@@ -420,7 +422,7 @@ if(SDL)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} SDL2-static)
 endif()
 
-set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath 
+set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath
 	ankispirvcross ankitinyxml2 ankilua ankiz glslang SPIRV OGLCompiler OSDependent ankitinyexpr)
 
 # Add anki sub libraries

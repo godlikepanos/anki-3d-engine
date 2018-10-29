@@ -23,7 +23,7 @@ public:
 	SamplingFilter m_mipmapFilter = SamplingFilter::BASE;
 	CompareOperation m_compareOperation = CompareOperation::ALWAYS;
 	I8 m_anisotropyLevel = 0;
-	Bool8 m_repeat = true; ///< Repeat or clamp.
+	SamplingAddressing m_addressing = SamplingAddressing::REPEAT;
 	U8 _m_padding[3] = {0, 0, 0};
 
 	SamplerInitInfo() = default;
@@ -36,11 +36,11 @@ public:
 	U64 computeHash() const
 	{
 		const U8* const first = reinterpret_cast<const U8* const>(&m_minLod);
-		const U8* const last = reinterpret_cast<const U8* const>(&m_repeat) + sizeof(m_repeat);
+		const U8* const last = reinterpret_cast<const U8* const>(&m_addressing) + sizeof(m_addressing);
 		const U size = last - first;
-		ANKI_ASSERT(
-			size
-			== sizeof(F32) * 2 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8) + sizeof(Bool8));
+		ANKI_ASSERT(size
+					== sizeof(F32) * 2 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8)
+						   + sizeof(SamplingAddressing));
 		return anki::computeHash(first, size);
 	}
 };

@@ -25,6 +25,7 @@ struct PointLight
 	UVec2 m_atlasTiles; // x: encodes 6 uints with atlas tile indices in the x dir. y: same for y dir.
 };
 const U32 SIZEOF_POINT_LIGHT = 3 * SIZEOF_VEC4;
+ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == SIZEOF_POINT_LIGHT)
 
 // Spot light
 struct SpotLight
@@ -36,6 +37,7 @@ struct SpotLight
 	Mat4 m_texProjectionMat;
 };
 const U32 SIZEOF_SPOT_LIGHT = 4 * SIZEOF_VEC4 + SIZEOF_MAT4;
+ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == SIZEOF_SPOT_LIGHT)
 
 // Representation of a reflection probe
 struct ReflectionProbe
@@ -44,7 +46,8 @@ struct ReflectionProbe
 	Vec4 m_aabbMinPad1;
 	Vec4 m_aabbMaxPad1;
 };
-const U32 SIZEOF_REFLECTION_PROBE = 2 * SIZEOF_VEC4;
+const U32 SIZEOF_REFLECTION_PROBE = 3 * SIZEOF_VEC4;
+ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == SIZEOF_REFLECTION_PROBE)
 
 // Decal
 struct Decal
@@ -55,6 +58,7 @@ struct Decal
 	Vec4 m_blendFactors;
 };
 const U32 SIZEOF_DECAL = 3 * SIZEOF_VEC4 + SIZEOF_MAT4;
+ANKI_SHADER_STATIC_ASSERT(sizeof(Decal) == SIZEOF_DECAL)
 
 // Common uniforms for light shading passes
 struct LightingUniforms
@@ -63,7 +67,9 @@ struct LightingUniforms
 	Vec4 m_rendererSizeTimeNear;
 	Vec4 m_cameraPosFar;
 	ClustererMagicValues m_clustererMagicValues;
-	UVec4 m_tileCount;
+	ClustererMagicValues m_prevClustererMagicValues;
+	UVec4 m_clusterCount;
+	UVec4 m_lightVolumeLastClusterPad3;
 	Mat4 m_viewMat;
 	Mat4 m_invViewMat;
 	Mat4 m_projMat;
@@ -74,11 +80,15 @@ struct LightingUniforms
 	Mat4 m_prevViewProjMatMulInvViewProjMat; // Used to re-project previous frames
 };
 
-ANKI_SHADER_FUNC_INLINE U32 computeClusterK(ClustererMagicValues magic, Vec3 worldPos)
+ANKI_SHADER_FUNC_INLINE F32 computeClusterKf(ClustererMagicValues magic, Vec3 worldPos)
 {
 	F32 fz = sqrt(dot(magic.m_val0.xyz(), worldPos) - magic.m_val0.w());
-	U32 z = U32(fz);
-	return z;
+	return fz;
+}
+
+ANKI_SHADER_FUNC_INLINE U32 computeClusterK(ClustererMagicValues magic, Vec3 worldPos)
+{
+	return U32(computeClusterKf(magic, worldPos));
 }
 
 // Compute cluster index
@@ -86,20 +96,28 @@ ANKI_SHADER_FUNC_INLINE U32 computeClusterIndex(
 	ClustererMagicValues magic, Vec2 uv, Vec3 worldPos, U32 clusterCountX, U32 clusterCountY)
 {
 	UVec2 xy = UVec2(uv * Vec2(clusterCountX, clusterCountY));
+	U32 k = computeClusterK(magic, worldPos);
+	return k * (clusterCountX * clusterCountY) + xy.y() * clusterCountX + xy.x();
+}
 
-	return computeClusterK(magic, worldPos) * (clusterCountX * clusterCountY) + xy.y() * clusterCountX + xy.x();
+// Compute the Z of the near plane given a cluster idx
+ANKI_SHADER_FUNC_INLINE F32 computeClusterNearf(ClustererMagicValues magic, F32 fk)
+{
+	return magic.m_val1.x() * fk * fk + magic.m_val1.y();
 }
 
 // Compute the Z of the near plane given a cluster idx
 ANKI_SHADER_FUNC_INLINE F32 computeClusterNear(ClustererMagicValues magic, U32 k)
 {
-	F32 fk = F32(k);
-	return magic.m_val1.x() * fk * fk + magic.m_val1.y();
+	return computeClusterNearf(magic, F32(k));
 }
 
-ANKI_SHADER_FUNC_INLINE F32 computeClusterFar(ClustererMagicValues magic, U32 k)
+// Compute the UV coordinates of a volume texture that encloses the clusterer
+ANKI_SHADER_FUNC_INLINE Vec3 computeClustererVolumeTextureUvs(
+	ClustererMagicValues magic, Vec2 uv, Vec3 worldPos, U32 clusterCountZ)
 {
-	return computeClusterNear(magic, k + 1u);
+	F32 k = computeClusterKf(magic, worldPos);
+	return Vec3(uv, k / F32(clusterCountZ));
 }
 
 ANKI_END_NAMESPACE

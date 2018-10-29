@@ -1,0 +1,50 @@
+// Copyright (C) 2009-2018, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki input const U32 FOG_LAST_CLASTER
+
+#pragma anki start vert
+#include <shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
+#include <shaders/Common.glsl>
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec4 out_color;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler3D u_fogVolume;
+
+struct PushConsts
+{
+	ClustererMagicValues m_clustererMagic;
+	Mat4 m_invViewProjMat;
+};
+ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
+#define u_clustererMagic u_regs.m_clustererMagic
+#define u_invViewProjMat u_regs.m_invViewProjMat
+
+void main()
+{
+	F32 depth = textureLod(u_depthRt, in_uv, 0.0).r;
+
+	// Get world position
+	Vec4 worldPos4 = u_invViewProjMat * Vec4(UV_TO_NDC(in_uv), depth, 1.0);
+	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	// Read the volume
+	Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, in_uv, worldPos, FOG_LAST_CLASTER + 1u);
+	Vec4 fogVals = textureLod(u_fogVolume, uv3d, 0.0);
+	Vec3 inScattering = fogVals.rgb;
+	F32 transmittance = fogVals.a;
+
+	// Apply the fog
+	out_color = Vec4(inScattering, transmittance);
+}
+
+#pragma anki end

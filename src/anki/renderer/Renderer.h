@@ -60,6 +60,7 @@ public:
 	Vec4 m_unprojParams;
 
 	ClusterBinOut m_clusterBinOut;
+	ClustererMagicValues m_prevClustererMagicValues;
 
 	StagingGpuMemoryToken m_lightShadingUniformsToken;
 
@@ -78,8 +79,7 @@ public:
 	Second m_lightBinTime ANKI_DBG_NULLIFY;
 };
 
-/// Offscreen renderer. It is a class and not a namespace because we may need external renderers for security cameras
-/// for example
+/// Offscreen renderer.
 class Renderer
 {
 public:
@@ -90,6 +90,11 @@ public:
 	Indirect& getIndirect()
 	{
 		return *m_indirect;
+	}
+
+	VolumetricLightingAccumulation& getVolumetricLightingAccumulation()
+	{
+		return *m_volLighting;
 	}
 
 	ShadowMapping& getShadowMapping()
@@ -117,9 +122,9 @@ public:
 		return *m_forwardShading;
 	}
 
-	Volumetric& getVolumetric()
+	VolumetricFog& getVolumetricFog()
 	{
-		return *m_vol;
+		return *m_volFog;
 	}
 
 	Tonemapping& getTonemapping()
@@ -367,6 +372,7 @@ private:
 
 	/// @name Rendering stages
 	/// @{
+	UniquePtr<VolumetricLightingAccumulation> m_volLighting;
 	UniquePtr<Indirect> m_indirect;
 	UniquePtr<ShadowMapping> m_shadowMapping; ///< Shadow mapping.
 	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage
@@ -375,7 +381,7 @@ private:
 	UniquePtr<LightShading> m_lightShading; ///< Illumination rendering stage
 	UniquePtr<DepthDownscale> m_depth;
 	UniquePtr<ForwardShading> m_forwardShading; ///< Forward shading.
-	UniquePtr<Volumetric> m_vol; ///< Volumetric effects.
+	UniquePtr<VolumetricFog> m_volFog; ///< Volumetric fog.
 	UniquePtr<LensFlare> m_lensFlare; ///< Forward shading lens flares.
 	UniquePtr<DownscaleBlur> m_downscale;
 	UniquePtr<TemporalAA> m_temporalAA;
@@ -404,6 +410,7 @@ private:
 	Bool m_resourcesDirty = true;
 
 	RenderingContextMatrices m_prevMatrices;
+	ClustererMagicValues m_prevClustererMagicValues;
 
 	Array<Mat4, 16> m_jitteredMats16x;
 	Array<Mat4, 8> m_jitteredMats8x;
