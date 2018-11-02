@@ -215,6 +215,29 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+		<class name="FogDensityComponent">
+			<methods>
+				<method name="setBoundingBox">
+					<args>
+						<arg>const Vec4&amp;</arg>
+						<arg>const Vec4&amp;</arg>
+					</args>
+				</method>
+				<method name="setSphere">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setDensity">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getDensity">
+					<return>F32</return>
+				</method>
+			</methods>
+		</class>
 
 		<!-- Nodes -->
 		<class name="SceneNode">
@@ -242,6 +265,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="tryGetComponent&lt;TriggerComponent&gt;" alias="getTriggerComponent">
 					<return>TriggerComponent*</return>
+				</method>
+				<method name="tryGetComponent&lt;FogDensityComponent&gt;" alias="getFogDensityComponent">
+					<return>FogDensityComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -340,6 +366,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			</methods>
 		</class>
 		<class name="TriggerNode">
+			<methods>
+				<method name="getSceneNodeBase">
+					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
+					<return>SceneNode&amp;</return>
+				</method>
+			</methods>
+		</class>
+		<class name="FogDensityNode">
 			<methods>
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>

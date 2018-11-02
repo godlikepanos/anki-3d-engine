@@ -1634,6 +1634,233 @@ static inline void wrapTriggerComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
+LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityComponent = {3433641273323722630,
+	"FogDensityComponent",
+	LuaUserData::computeSizeForGarbageCollected<FogDensityComponent>(),
+	nullptr,
+	nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<FogDensityComponent>()
+{
+	return luaUserDataTypeInfoFogDensityComponent;
+}
+
+/// Pre-wrap method FogDensityComponent::setBoundingBox.
+static inline int pwrapFogDensityComponentsetBoundingBox(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFogDensityComponent, ud))
+	{
+		return -1;
+	}
+
+	FogDensityComponent* self = ud->getData<FogDensityComponent>();
+
+	// Pop arguments
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 2, luaUserDataTypeInfoVec4, ud)))
+	{
+		return -1;
+	}
+
+	Vec4* iarg0 = ud->getData<Vec4>();
+	const Vec4& arg0(*iarg0);
+
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoVec4;
+	if(ANKI_UNLIKELY(LuaBinder::checkUserData(l, 3, luaUserDataTypeInfoVec4, ud)))
+	{
+		return -1;
+	}
+
+	Vec4* iarg1 = ud->getData<Vec4>();
+	const Vec4& arg1(*iarg1);
+
+	// Call the method
+	self->setBoundingBox(arg0, arg1);
+
+	return 0;
+}
+
+/// Wrap method FogDensityComponent::setBoundingBox.
+static int wrapFogDensityComponentsetBoundingBox(lua_State* l)
+{
+	int res = pwrapFogDensityComponentsetBoundingBox(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Pre-wrap method FogDensityComponent::setSphere.
+static inline int pwrapFogDensityComponentsetSphere(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFogDensityComponent, ud))
+	{
+		return -1;
+	}
+
+	FogDensityComponent* self = ud->getData<FogDensityComponent>();
+
+	// Pop arguments
+	F32 arg0;
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	{
+		return -1;
+	}
+
+	// Call the method
+	self->setSphere(arg0);
+
+	return 0;
+}
+
+/// Wrap method FogDensityComponent::setSphere.
+static int wrapFogDensityComponentsetSphere(lua_State* l)
+{
+	int res = pwrapFogDensityComponentsetSphere(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Pre-wrap method FogDensityComponent::setDensity.
+static inline int pwrapFogDensityComponentsetDensity(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFogDensityComponent, ud))
+	{
+		return -1;
+	}
+
+	FogDensityComponent* self = ud->getData<FogDensityComponent>();
+
+	// Pop arguments
+	F32 arg0;
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	{
+		return -1;
+	}
+
+	// Call the method
+	self->setDensity(arg0);
+
+	return 0;
+}
+
+/// Wrap method FogDensityComponent::setDensity.
+static int wrapFogDensityComponentsetDensity(lua_State* l)
+{
+	int res = pwrapFogDensityComponentsetDensity(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Pre-wrap method FogDensityComponent::getDensity.
+static inline int pwrapFogDensityComponentgetDensity(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFogDensityComponent, ud))
+	{
+		return -1;
+	}
+
+	FogDensityComponent* self = ud->getData<FogDensityComponent>();
+
+	// Call the method
+	F32 ret = self->getDensity();
+
+	// Push return value
+	lua_pushnumber(l, ret);
+
+	return 1;
+}
+
+/// Wrap method FogDensityComponent::getDensity.
+static int wrapFogDensityComponentgetDensity(lua_State* l)
+{
+	int res = pwrapFogDensityComponentgetDensity(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class FogDensityComponent.
+static inline void wrapFogDensityComponent(lua_State* l)
+{
+	LuaBinder::createClass(l, &luaUserDataTypeInfoFogDensityComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "setBoundingBox", wrapFogDensityComponentsetBoundingBox);
+	LuaBinder::pushLuaCFuncMethod(l, "setSphere", wrapFogDensityComponentsetSphere);
+	LuaBinder::pushLuaCFuncMethod(l, "setDensity", wrapFogDensityComponentsetDensity);
+	LuaBinder::pushLuaCFuncMethod(l, "getDensity", wrapFogDensityComponentgetDensity);
+	lua_settop(l, 0);
+}
+
 LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode = {
 	-2220074417980276571, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(), nullptr, nullptr};
 
@@ -2057,6 +2284,61 @@ static int wrapSceneNodegetTriggerComponent(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method SceneNode::tryGetComponent<FogDensityComponent>.
+static inline int pwrapSceneNodegetFogDensityComponent(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
+	{
+		return -1;
+	}
+
+	SceneNode* self = ud->getData<SceneNode>();
+
+	// Call the method
+	FogDensityComponent* ret = self->tryGetComponent<FogDensityComponent>();
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "FogDensityComponent");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityComponent;
+	ud->initPointed(&luaUserDataTypeInfoFogDensityComponent, const_cast<FogDensityComponent*>(ret));
+
+	return 1;
+}
+
+/// Wrap method SceneNode::tryGetComponent<FogDensityComponent>.
+static int wrapSceneNodegetFogDensityComponent(lua_State* l)
+{
+	int res = pwrapSceneNodegetFogDensityComponent(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Wrap class SceneNode.
 static inline void wrapSceneNode(lua_State* l)
 {
@@ -2069,6 +2351,7 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getLensFlareComponent", wrapSceneNodegetLensFlareComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getDecalComponent", wrapSceneNodegetDecalComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getTriggerComponent", wrapSceneNodegetTriggerComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "getFogDensityComponent", wrapSceneNodegetFogDensityComponent);
 	lua_settop(l, 0);
 }
 
@@ -2946,6 +3229,75 @@ static inline void wrapTriggerNode(lua_State* l)
 {
 	LuaBinder::createClass(l, &luaUserDataTypeInfoTriggerNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapTriggerNodegetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
+LuaUserDataTypeInfo luaUserDataTypeInfoFogDensityNode = {-2463430472135938886,
+	"FogDensityNode",
+	LuaUserData::computeSizeForGarbageCollected<FogDensityNode>(),
+	nullptr,
+	nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<FogDensityNode>()
+{
+	return luaUserDataTypeInfoFogDensityNode;
+}
+
+/// Pre-wrap method FogDensityNode::getSceneNodeBase.
+static inline int pwrapFogDensityNodegetSceneNodeBase(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFogDensityNode, ud))
+	{
+		return -1;
+	}
+
+	FogDensityNode* self = ud->getData<FogDensityNode>();
+
+	// Call the method
+	SceneNode& ret = *self;
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+
+	return 1;
+}
+
+/// Wrap method FogDensityNode::getSceneNodeBase.
+static int wrapFogDensityNodegetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapFogDensityNodegetSceneNodeBase(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class FogDensityNode.
+static inline void wrapFogDensityNode(lua_State* l)
+{
+	LuaBinder::createClass(l, &luaUserDataTypeInfoFogDensityNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapFogDensityNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -4167,6 +4519,7 @@ void wrapModuleScene(lua_State* l)
 	wrapDecalComponent(l);
 	wrapLensFlareComponent(l);
 	wrapTriggerComponent(l);
+	wrapFogDensityComponent(l);
 	wrapSceneNode(l);
 	wrapModelNode(l);
 	wrapPerspectiveCameraNode(l);
@@ -4179,6 +4532,7 @@ void wrapModuleScene(lua_State* l)
 	wrapOccluderNode(l);
 	wrapDecalNode(l);
 	wrapTriggerNode(l);
+	wrapFogDensityNode(l);
 	wrapSceneGraph(l);
 	wrapEvent(l);
 	wrapLightEvent(l);

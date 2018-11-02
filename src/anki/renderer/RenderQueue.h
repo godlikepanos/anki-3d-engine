@@ -252,9 +252,10 @@ public:
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
 	WeakArray<DecalQueueElement> m_decals;
+	WeakArray<FogDensityQueueElement> m_fogDensityVolumes;
 	WeakArray<UiQueueElement> m_uis;
 
-	/// Applies only if the RenderQueue holds shadow casters. It's the timesamp that modified
+	/// Applies only if the RenderQueue holds shadow casters. It's the max timesamp of all shadow casters
 	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;
 
 	F32 m_cameraNear;

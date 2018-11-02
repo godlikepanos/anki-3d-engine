@@ -12,8 +12,9 @@
 #include <anki/scene/components/ReflectionProxyComponent.h>
 #include <anki/scene/components/OccluderComponent.h>
 #include <anki/scene/components/DecalComponent.h>
-#include <anki/scene/LightNode.h>
 #include <anki/scene/components/MoveComponent.h>
+#include <anki/scene/components/FogDensityComponent.h>
+#include <anki/scene/components/LightComponent.h>
 #include <anki/renderer/MainRenderer.h>
 #include <anki/util/Logger.h>
 #include <anki/util/ThreadHive.h>
@@ -221,6 +222,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 	const Bool wantsDecals = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::DECALS);
 
+	const Bool wantsFogDensityComponents =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS);
+
 	const Bool wantsEarlyZ = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::EARLY_Z)
 							 && m_frcCtx->m_visCtx->m_earlyZDist > 0.0f;
 
@@ -241,43 +245,49 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		// Check what components the frustum needs
 		Bool wantNode = false;
 
-		const RenderComponent* rc = node.tryGetComponent<RenderComponent>();
-		if(rc && wantsRenderComponents)
+		const RenderComponent* rc = nullptr;
+		if(wantsRenderComponents && (rc = node.tryGetComponent<RenderComponent>()))
 		{
 			wantNode = true;
 		}
 
-		if(rc && rc->getCastsShadow() && wantsShadowCasters)
+		if(wantsShadowCasters && (rc = node.tryGetComponent<RenderComponent>()) && rc->getCastsShadow())
 		{
 			wantNode = true;
 		}
 
-		const LightComponent* lc = node.tryGetComponent<LightComponent>();
-		if(lc && wantsLightComponents)
+		const LightComponent* lc = nullptr;
+		if(wantsLightComponents && (lc = node.tryGetComponent<LightComponent>()))
 		{
 			wantNode = true;
 		}
 
-		const LensFlareComponent* lfc = node.tryGetComponent<LensFlareComponent>();
-		if(lfc && wantsFlareComponents)
+		const LensFlareComponent* lfc = nullptr;
+		if(wantsFlareComponents && (lfc = node.tryGetComponent<LensFlareComponent>()))
 		{
 			wantNode = true;
 		}
 
-		const ReflectionProbeComponent* reflc = node.tryGetComponent<ReflectionProbeComponent>();
-		if(reflc && wantsReflectionProbes)
+		const ReflectionProbeComponent* reflc = nullptr;
+		if(wantsReflectionProbes && (reflc = node.tryGetComponent<ReflectionProbeComponent>()))
 		{
 			wantNode = true;
 		}
 
-		const ReflectionProxyComponent* proxyc = node.tryGetComponent<ReflectionProxyComponent>();
-		if(proxyc && wantsReflectionProxies)
+		const ReflectionProxyComponent* proxyc = nullptr;
+		if(wantsReflectionProxies && (proxyc = node.tryGetComponent<ReflectionProxyComponent>()))
 		{
 			wantNode = true;
 		}
 
-		DecalComponent* decalc = node.tryGetComponent<DecalComponent>();
-		if(decalc && wantsDecals)
+		DecalComponent* decalc = nullptr;
+		if(wantsDecals && (decalc = node.tryGetComponent<DecalComponent>()))
+		{
+			wantNode = true;
+		}
+
+		const FogDensityComponent* fogc = nullptr;
+		if(wantsFogDensityComponents && (fogc = node.tryGetComponent<FogDensityComponent>()))
 		{
 			wantNode = true;
 		}
@@ -336,34 +346,30 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 		if(rc)
 		{
-			if(wantsRenderComponents || (wantsShadowCasters && rc->getCastsShadow()))
+			RenderableQueueElement* el;
+			if(rc->isForwardShading())
 			{
-				RenderableQueueElement* el;
-				if(rc->isForwardShading())
-				{
-					el = result.m_forwardShadingRenderables.newElement(alloc);
-				}
-				else
-				{
-					el = result.m_renderables.newElement(alloc);
-				}
+				el = result.m_forwardShadingRenderables.newElement(alloc);
+			}
+			else
+			{
+				el = result.m_renderables.newElement(alloc);
+			}
 
-				rc->setupRenderableQueueElement(*el);
+			rc->setupRenderableQueueElement(*el);
 
-				// Compute distance from the frustum
-				const Plane& nearPlane = testedFrc.getFrustum().getPlanesWorldSpace()[FrustumPlaneType::NEAR];
-				el->m_distanceFromCamera = max(0.0f, sps[0].m_sp->getAabb().testPlane(nearPlane));
+			// Compute distance from the frustum
+			const Plane& nearPlane = testedFrc.getFrustum().getPlanesWorldSpace()[FrustumPlaneType::NEAR];
+			el->m_distanceFromCamera = max(0.0f, sps[0].m_sp->getAabb().testPlane(nearPlane));
 
-				if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
-					&& !rc->isForwardShading())
-				{
-					RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
-					*el2 = *el;
-				}
+			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist && !rc->isForwardShading())
+			{
+				RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
+				*el2 = *el;
 			}
 		}
 
-		if(lc && wantsLightComponents)
+		if(lc)
 		{
 			switch(lc->getLightComponentType())
 			{
@@ -420,13 +426,13 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 		}
 
-		if(lfc && wantsFlareComponents)
+		if(lfc)
 		{
 			LensFlareQueueElement* el = result.m_lensFlares.newElement(alloc);
 			lfc->setupLensFlareQueueElement(*el);
 		}
 
-		if(reflc && wantsReflectionProbes)
+		if(reflc)
 		{
 			ReflectionProbeQueueElement* el = result.m_reflectionProbes.newElement(alloc);
 			reflc->setupReflectionProbeQueueElement(*el);
@@ -449,15 +455,21 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 		}
 
-		if(proxyc && wantsReflectionProxies)
+		if(proxyc)
 		{
 			ANKI_ASSERT(!"TODO");
 		}
 
-		if(decalc && wantsDecals)
+		if(decalc)
 		{
 			DecalQueueElement* el = result.m_decals.newElement(alloc);
 			decalc->setupDecalQueueElement(*el);
+		}
+
+		if(fogc)
+		{
+			FogDensityQueueElement* el = result.m_fogDensityVolumes.newElement(alloc);
+			fogc->setupFogDensityQueueElement(*el);
 		}
 
 		// Add more frustums to the list
@@ -532,6 +544,7 @@ void CombineResultsTask::combine()
 	ANKI_VIS_COMBINE(ReflectionProbeQueueElement, m_reflectionProbes);
 	ANKI_VIS_COMBINE(LensFlareQueueElement, m_lensFlares);
 	ANKI_VIS_COMBINE(DecalQueueElement, m_decals);
+	ANKI_VIS_COMBINE(FogDensityQueueElement, m_fogDensityVolumes);
 
 #undef ANKI_VIS_COMBINE
 #undef ANKI_VIS_COMBINE_AND_PTR
