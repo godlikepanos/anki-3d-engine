@@ -92,6 +92,8 @@ const U32 _NEXT_TEX_BINDING_3 = _NEXT_TEX_BINDING_2;
 // Decal uniforms
 //
 #if defined(LIGHT_DECALS)
+const U32 _NEXT_UBO_BINDING_4 = _NEXT_UBO_BINDING_3 + 1u;
+
 layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_3)) uniform u4_
 {
 	Decal u_decals[UBO_MAX_SIZE / SIZEOF_DECAL];
@@ -99,6 +101,18 @@ layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_3)) unif
 
 layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_3 + 0)) uniform sampler2D u_diffDecalTex;
 layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_3 + 1)) uniform sampler2D u_specularRoughnessDecalTex;
+#else
+const U32 _NEXT_UBO_BINDING_4 = _NEXT_UBO_BINDING_3;
+#endif
+
+//
+// Fog density uniforms
+//
+#if defined(LIGHT_FOG_DENSITY_VOLUMES)
+layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_4)) uniform u5_
+{
+	FogDensityVolume u_fogDensityVolumes[UBO_MAX_SIZE / SIZEOF_FOG_DENSITY_VOLUME];
+};
 #endif
 
 //
