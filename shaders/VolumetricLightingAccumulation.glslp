@@ -98,16 +98,11 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 	// Get ID offset
 	U32 idxOffset = u_clusters[clusterIdx];
 
-	// Skip decals
-	U32 count = u_lightIndices[idxOffset];
-	idxOffset += count + 1u;
-
 	// Point lights
-	count = u_lightIndices[idxOffset++];
-	U32 idxOffsetEnd = idxOffset + count;
-	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	U32 idx;
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
+		PointLight light = u_pointLights[idx];
 
 		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
@@ -126,11 +121,9 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 	}
 
 	// Spot lights
-	count = u_lightIndices[idxOffset++];
-	idxOffsetEnd = idxOffset + count;
-	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
+		SpotLight light = u_spotLights[idx];
 
 		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
@@ -157,11 +150,9 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 	// Probes
 	F32 totalBlendWeight = EPSILON;
 	Vec3 diffIndirect = Vec3(0.0);
-	count = u_lightIndices[idxOffset++];
-	idxOffsetEnd = idxOffset + count;
-	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
+		ReflectionProbe probe = u_reflectionProbes[idx];
 		Vec3 aabbMin = probe.m_aabbMinPad1.xyz;
 		Vec3 aabbMax = probe.m_aabbMaxPad1.xyz;
 		Vec3 probeOrigin = probe.m_positionCubemapIndex.xyz;

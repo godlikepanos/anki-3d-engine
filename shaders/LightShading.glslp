@@ -74,11 +74,10 @@ void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
 	F32 totalBlendWeight = EPSILON;
 
 	// Check proxy
-	U32 count = u_lightIndices[idxOffset++];
-	U32 idxOffsetEnd = idxOffset + count;
-	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	U32 idx;
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
+		ReflectionProbe probe = u_reflectionProbes[idx];
 		Vec3 aabbMin = probe.m_aabbMinPad1.xyz;
 		Vec3 aabbMax = probe.m_aabbMaxPad1.xyz;
 		Vec3 probeOrigin = probe.m_positionCubemapIndex.xyz;
@@ -146,17 +145,12 @@ void main()
 	// Ambient and emissive color
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
 
-	// Skip decals
-	U32 count = u_lightIndices[idxOffset];
-	idxOffset += count + 1u;
-
 	// Point lights
 	Vec3 viewDir = normalize(u_cameraPos - worldPos);
-	count = u_lightIndices[idxOffset++];
-	U32 idxOffsetEnd = idxOffset + count;
-	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	U32 idx;
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
+		PointLight light = u_pointLights[idx];
 
 		LIGHTING_COMMON_BRDF();
 
@@ -171,11 +165,9 @@ void main()
 	}
 
 	// Spot lights
-	count = u_lightIndices[idxOffset++];
-	idxOffsetEnd = idxOffset + count;
-	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
+		SpotLight light = u_spotLights[idx];
 
 		LIGHTING_COMMON_BRDF();
 

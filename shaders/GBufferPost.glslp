@@ -66,7 +66,7 @@ void main()
 	Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
 	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	// Get first light index
+	// Get first decal index
 	U32 idxOffset;
 	{
 		U32 k = computeClusterK(u_clustererMagic, worldPos);
@@ -74,18 +74,19 @@ void main()
 			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
 
 		idxOffset = u_clusters[clusterIdx];
+		idxOffset = u_lightIndices[idxOffset - 2u]; // Use the offset metadata
 	}
 
 	// Process decals
-	U32 count = u_lightIndices[idxOffset++];
-	if(count == 0)
+	U32 idx = u_lightIndices[idxOffset];
+	if(idx == MAX_U32)
 	{
 		discard;
 	}
 
-	while(count-- != 0)
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		Decal decal = u_decals[u_lightIndices[idxOffset++]];
+		Decal decal = u_decals[idx];
 
 		// Project pos to decal space
 		Vec4 texCoords4 = decal.m_texProjectionMat * Vec4(worldPos, 1.0);

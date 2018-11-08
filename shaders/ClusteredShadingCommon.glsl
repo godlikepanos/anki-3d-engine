@@ -132,32 +132,26 @@ layout(std430, ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer
 Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool slights, Bool probes)
 {
 	U32 count = 0;
+	U32 idx;
 
-	U32 decalCount = u_lightIndices[firstIndex];
-	firstIndex += decalCount + 1u;
-	if(decals)
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += decalCount;
+		count += (plights) ? 1u : 0u;
 	}
 
-	U32 pointLightCount = u_lightIndices[firstIndex];
-	firstIndex += pointLightCount + 1u;
-	if(plights)
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += pointLightCount;
+		count += (slights) ? 1u : 0u;
 	}
 
-	U32 spotLightCount = u_lightIndices[firstIndex];
-	firstIndex += spotLightCount + 1u;
-	if(slights)
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += spotLightCount;
+		count += (probes) ? 1u : 0u;
 	}
 
-	U32 probeCount = u_lightIndices[firstIndex];
-	if(probes)
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += probeCount;
+		count += (decals) ? 1u : 0u;
 	}
 
 	F32 factor = min(1.0, F32(count) / F32(maxLights));

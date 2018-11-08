@@ -9,6 +9,10 @@
 
 ANKI_BEGIN_NAMESPACE
 
+// Consts
+const U32 TYPED_OBJECT_COUNT = 5u;
+const F32 INVALID_TEXTURE_INDEX = -1.0;
+
 // See the documentation in the ClustererBin class.
 struct ClustererMagicValues
 {

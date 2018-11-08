@@ -68,6 +68,7 @@ private:
 	Array<U32, 3> m_clusterCounts = {};
 	U32 m_totalClusterCount = 0;
 	U32 m_indexCount = 0;
+	U32 m_avgObjectsPerCluster = 0;
 
 	DynamicArray<Vec4> m_clusterEdges; ///< Cache those for opt. [tileCount][K+1][4]
 	Vec4 m_prevUnprojParams = Vec4(0.0f); ///< To check if m_tiles is dirty.
