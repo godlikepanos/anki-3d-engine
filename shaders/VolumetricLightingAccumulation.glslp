@@ -42,6 +42,7 @@ ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 #define LIGHT_LIGHTS
 #define LIGHT_COMMON_UNIS
 #define LIGHT_INDIRECT
+#define LIGHT_FOG_DENSITY_VOLUMES
 #include <shaders/ClusteredShadingCommon.glsl>
 
 Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
@@ -90,7 +91,7 @@ F32 phaseFunction(Vec3 viewDir, Vec3 lightDir, F32 g)
 	return saturate(a * b);
 }
 
-Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
+Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos)
 {
 	Vec3 color = Vec3(0.0);
 	Vec3 viewDir = normalize(u_cameraPos - worldPos);
@@ -169,7 +170,32 @@ Vec3 accumulateLights(U32 clusterIdx, Vec3 worldPos)
 	diffIndirect /= totalBlendWeight;
 	color += diffIndirect;
 
-	return color;
+	// Fog density
+	F32 fogDensity = 0.0;
+	idx = u_lightIndices[clusterIdx];
+	idx = u_lightIndices[idx - 1];
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		FogDensityVolume vol = u_fogDensityVolumes[idx];
+
+		F32 factor;
+		ANKI_BRANCH if(vol.m_isBox != 0u)
+		{
+			factor =
+				computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
+		}
+		else
+		{
+			Vec3 diff = worldPos - vol.m_aabbMinOrSphereCenter;
+			F32 distSq = dot(diff, diff) / vol.m_aabbMaxOrSphereRadiusSquared.x;
+			distSq = min(1.0, distSq);
+			factor = distSq * distSq;
+		}
+
+		fogDensity += vol.m_density * factor;
+	}
+
+	return Vec4(color, fogDensity);
 }
 
 void main()
@@ -187,7 +213,7 @@ void main()
 	Vec3 worldPos = worldPosInsideCluster(readRand());
 
 	// Get lighting
-	Vec3 color = accumulateLights(clusterIdx, worldPos);
+	Vec4 lightAndFog = accumulateLightsAndFog(clusterIdx, worldPos);
 
 	// Read the prev result
 	{
@@ -206,15 +232,15 @@ void main()
 		Vec3 uvw = Vec3(prevUv, k);
 		if(all(lessThan(abs(uvw), Vec3(1.0))))
 		{
-			Vec3 prev = textureLod(u_prevVolume, uvw, 0.0).rgb;
+			Vec4 prev = textureLod(u_prevVolume, uvw, 0.0);
 
 			// Modulate
-			color = mix(prev, color, 1.0 / 16.0);
+			lightAndFog = mix(prev, lightAndFog, 1.0 / 16.0);
 		}
 	}
 
 	// Write result
-	imageStore(u_volume, IVec3(gl_GlobalInvocationID), Vec4(color, 0.0));
+	imageStore(u_volume, IVec3(gl_GlobalInvocationID), lightAndFog);
 }
 
 #pragma anki end

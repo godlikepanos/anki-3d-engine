@@ -120,12 +120,16 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	}};
 	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> descriptors;
 
-	auto func = [&](const std::vector<spirv_cross::Resource>& resources, DescriptorType type) -> void {
+	auto func = [&](const std::vector<spirv_cross::Resource>& resources,
+					DescriptorType type,
+					U minVkBinding,
+					U maxVkBinding) -> void {
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;
 			const U32 set = spvc.get_decoration(id, spv::Decoration::DecorationDescriptorSet);
 			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
+			ANKI_ASSERT(binding >= minVkBinding && binding <= maxVkBinding);
 
 			m_descriptorSetMask.set(set);
 			m_activeBindingMask[set].set(set);
@@ -143,10 +147,19 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 		}
 	};
 
-	func(rsrc.uniform_buffers, DescriptorType::UNIFORM_BUFFER);
-	func(rsrc.sampled_images, DescriptorType::TEXTURE);
-	func(rsrc.storage_buffers, DescriptorType::STORAGE_BUFFER);
-	func(rsrc.storage_images, DescriptorType::IMAGE);
+	func(rsrc.uniform_buffers,
+		DescriptorType::UNIFORM_BUFFER,
+		MAX_TEXTURE_BINDINGS,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS - 1);
+	func(rsrc.sampled_images, DescriptorType::TEXTURE, 0, MAX_TEXTURE_BINDINGS - 1);
+	func(rsrc.storage_buffers,
+		DescriptorType::STORAGE_BUFFER,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS - 1);
+	func(rsrc.storage_images,
+		DescriptorType::IMAGE,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS - 1);
 
 	for(U set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
 	{

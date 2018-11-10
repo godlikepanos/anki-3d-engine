@@ -40,6 +40,7 @@ public:
 	StagingGpuMemoryToken m_spotLightsToken;
 	StagingGpuMemoryToken m_probesToken;
 	StagingGpuMemoryToken m_decalsToken;
+	StagingGpuMemoryToken m_fogDensityVolumesToken;
 	StagingGpuMemoryToken m_clustersToken;
 	StagingGpuMemoryToken m_indicesToken;
 

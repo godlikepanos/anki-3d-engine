@@ -455,7 +455,41 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 	// Fog volumes
 	{
-		// TODO
+		Aabb box;
+		Sphere sphere;
+		for(U i = 0; i < ctx.m_in->m_renderQueue->m_fogDensityVolumes.getSize(); ++i)
+		{
+			const FogDensityQueueElement& fogVol = ctx.m_in->m_renderQueue->m_fogDensityVolumes[i];
+
+			CollisionShape* shape;
+			if(fogVol.m_isBox)
+			{
+				box.setMin(fogVol.m_aabbMin);
+				box.setMax(fogVol.m_aabbMax);
+				shape = &box;
+			}
+			else
+			{
+				sphere.setCenter(fogVol.m_sphereCenter.xyz0());
+				sphere.setRadius(fogVol.m_sphereRadius);
+				shape = &sphere;
+			}
+
+			if(!insideClusterFrustum(frustumPlanes, *shape))
+			{
+				continue;
+			}
+
+			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			{
+				if(!testCollisionShapes(*shape, clusterBoxes[clusterZ]))
+				{
+					continue;
+				}
+
+				ANKI_SET_IDX(4);
+			}
+		}
 	}
 
 	// Upload the indices for all clusters of the tile
@@ -658,6 +692,42 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	else
 	{
 		ctx.m_out->m_probesToken.markUnused();
+	}
+
+	// Fog volumes
+	const U visibleFogVolumeCount = rqueue.m_fogDensityVolumes.getSize();
+	if(visibleFogVolumeCount)
+	{
+		FogDensityVolume* data = static_cast<FogDensityVolume*>(
+			ctx.m_in->m_stagingMem->allocateFrame(sizeof(FogDensityVolume) * visibleFogVolumeCount,
+				StagingGpuMemoryType::UNIFORM,
+				ctx.m_out->m_fogDensityVolumesToken));
+
+		WeakArray<FogDensityVolume> gpuFogVolumes(data, visibleFogVolumeCount);
+
+		for(U i = 0; i < visibleFogVolumeCount; ++i)
+		{
+			const FogDensityQueueElement& in = rqueue.m_fogDensityVolumes[i];
+			FogDensityVolume& out = gpuFogVolumes[i];
+
+			out.m_density = in.m_density;
+			if(in.m_isBox)
+			{
+				out.m_isBox = 1;
+				out.m_aabbMinOrSphereCenter = in.m_aabbMin;
+				out.m_aabbMaxOrSphereRadiusSquared = in.m_aabbMax;
+			}
+			else
+			{
+				out.m_isBox = 0;
+				out.m_aabbMinOrSphereCenter = in.m_sphereCenter;
+				out.m_aabbMaxOrSphereRadiusSquared = Vec3(in.m_sphereRadius * in.m_sphereRadius);
+			}
+		}
+	}
+	else
+	{
+		ctx.m_out->m_fogDensityVolumesToken.markUnused();
 	}
 }
 

@@ -69,8 +69,8 @@ struct FogDensityVolume
 {
 	Vec3 m_aabbMinOrSphereCenter;
 	U32 m_isBox;
-	Vec3 m_aabbMaxOrSphereRadius;
-	U32 m_padding;
+	Vec3 m_aabbMaxOrSphereRadiusSquared;
+	F32 m_density;
 };
 const U32 SIZEOF_FOG_DENSITY_VOLUME = 2 * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == SIZEOF_FOG_DENSITY_VOLUME)

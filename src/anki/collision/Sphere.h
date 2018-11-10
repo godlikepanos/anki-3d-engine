@@ -49,7 +49,13 @@ public:
 
 	void setCenter(const Vec4& x)
 	{
+		ANKI_ASSERT(x.w() == 0.0f);
 		m_center = x;
+	}
+
+	void setCenter(const Vec3& x)
+	{
+		m_center = x.xyz0();
 	}
 
 	F32 getRadius() const
