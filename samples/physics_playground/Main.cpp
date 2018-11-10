@@ -258,6 +258,7 @@ Error MyApp::userMainLoop(Bool& quit)
 
 			createDestructionEvent(monkey);
 
+#if 0
 			// Create some particles
 			ParticleEmitterNode* particles;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
@@ -266,6 +267,28 @@ Error MyApp::userMainLoop(Bool& quit)
 				"assets/smoke.ankipart"));
 			particles->getComponent<MoveComponent>().setLocalTransform(trf);
 			createDestructionEvent(particles);
+#endif
+
+			// Create some fog volumes
+			for(U i = 0; i < 1; ++i)
+			{
+				static int id = 0;
+				StringAuto name(getSceneGraph().getFrameAllocator());
+				name.sprintf("fog%u", id++);
+
+				FogDensityNode* fogNode;
+				ANKI_CHECK(getSceneGraph().newSceneNode(name.toCString(), fogNode));
+				FogDensityComponent& fogComp = fogNode->getComponent<FogDensityComponent>();
+				fogComp.setSphere(2.1f);
+				fogComp.setDensity(15.0f);
+
+				BodyNode* body;
+				name.sprintf("fogbody%u", id++);
+				ANKI_CHECK(getSceneGraph().newSceneNode(name.toCString(), body, "assets/sphere_r2.ankicl"));
+				body->getComponent<BodyComponent>().setTransform(trf);
+
+				body->addChild(fogNode);
+			}
 		}
 	}
 

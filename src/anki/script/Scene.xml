@@ -217,7 +217,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 		</class>
 		<class name="FogDensityComponent">
 			<methods>
-				<method name="setBoundingBox">
+				<method name="setAabb">
 					<args>
 						<arg>const Vec4&amp;</arg>
 						<arg>const Vec4&amp;</arg>

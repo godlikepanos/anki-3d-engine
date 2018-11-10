@@ -1646,8 +1646,8 @@ const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<FogDensityComponent>(
 	return luaUserDataTypeInfoFogDensityComponent;
 }
 
-/// Pre-wrap method FogDensityComponent::setBoundingBox.
-static inline int pwrapFogDensityComponentsetBoundingBox(lua_State* l)
+/// Pre-wrap method FogDensityComponent::setAabb.
+static inline int pwrapFogDensityComponentsetAabb(lua_State* l)
 {
 	LuaUserData* ud;
 	(void)ud;
@@ -1689,15 +1689,15 @@ static inline int pwrapFogDensityComponentsetBoundingBox(lua_State* l)
 	const Vec4& arg1(*iarg1);
 
 	// Call the method
-	self->setBoundingBox(arg0, arg1);
+	self->setAabb(arg0, arg1);
 
 	return 0;
 }
 
-/// Wrap method FogDensityComponent::setBoundingBox.
-static int wrapFogDensityComponentsetBoundingBox(lua_State* l)
+/// Wrap method FogDensityComponent::setAabb.
+static int wrapFogDensityComponentsetAabb(lua_State* l)
 {
-	int res = pwrapFogDensityComponentsetBoundingBox(l);
+	int res = pwrapFogDensityComponentsetAabb(l);
 	if(res >= 0)
 	{
 		return res;
@@ -1854,7 +1854,7 @@ static int wrapFogDensityComponentgetDensity(lua_State* l)
 static inline void wrapFogDensityComponent(lua_State* l)
 {
 	LuaBinder::createClass(l, &luaUserDataTypeInfoFogDensityComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "setBoundingBox", wrapFogDensityComponentsetBoundingBox);
+	LuaBinder::pushLuaCFuncMethod(l, "setAabb", wrapFogDensityComponentsetAabb);
 	LuaBinder::pushLuaCFuncMethod(l, "setSphere", wrapFogDensityComponentsetSphere);
 	LuaBinder::pushLuaCFuncMethod(l, "setDensity", wrapFogDensityComponentsetDensity);
 	LuaBinder::pushLuaCFuncMethod(l, "getDensity", wrapFogDensityComponentgetDensity);

@@ -172,14 +172,14 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos)
 
 	// Fog density
 	F32 fogDensity = 0.0;
-	idx = u_lightIndices[clusterIdx];
-	idx = u_lightIndices[idx - 1];
+	idxOffset = u_clusters[clusterIdx];
+	idxOffset = u_lightIndices[idxOffset - 1u];
 	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
 		FogDensityVolume vol = u_fogDensityVolumes[idx];
 
 		F32 factor;
-		ANKI_BRANCH if(vol.m_isBox != 0u)
+		ANKI_BRANCH if(vol.m_isBox == 1u)
 		{
 			factor =
 				computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
@@ -189,7 +189,7 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos)
 			Vec3 diff = worldPos - vol.m_aabbMinOrSphereCenter;
 			F32 distSq = dot(diff, diff) / vol.m_aabbMaxOrSphereRadiusSquared.x;
 			distSq = min(1.0, distSq);
-			factor = distSq * distSq;
+			factor = 1.0 - distSq;
 		}
 
 		fogDensity += vol.m_density * factor;

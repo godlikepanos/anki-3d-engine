@@ -6,6 +6,7 @@
 #include <anki/scene/FogDensityNode.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/FogDensityComponent.h>
+#include <anki/scene/components/SpatialComponent.h>
 
 namespace anki
 {
@@ -22,11 +23,10 @@ public:
 	{
 		updated = false;
 
-		MoveComponent& movec = m_node->getComponent<MoveComponent>();
+		const MoveComponent& movec = m_node->getComponent<MoveComponent>();
 		if(movec.getTimestamp() == m_node->getGlobalTimestamp())
 		{
-			FogDensityComponent& fogc = m_node->getComponent<FogDensityComponent>();
-			fogc.updatePosition(movec.getWorldTransform().getOrigin());
+			static_cast<FogDensityNode*>(m_node)->moveUpdated(movec);
 		}
 
 		return Error::NONE;
@@ -40,6 +40,44 @@ FogDensityNode::FogDensityNode(SceneGraph* scene, CString name)
 	newComponent<MoveComponent>(MoveComponentFlag::NONE);
 	newComponent<FeedbackComponent>();
 	newComponent<FogDensityComponent>();
+	newComponent<SpatialComponent>(&m_spatialBox);
+}
+
+FogDensityNode::~FogDensityNode()
+{
+}
+
+void FogDensityNode::moveUpdated(const MoveComponent& movec)
+{
+	// Update the fog component
+	FogDensityComponent& fogc = getComponent<FogDensityComponent>();
+	fogc.updatePosition(movec.getWorldTransform().getOrigin());
+
+	// Update the spatial component
+	SpatialComponent& spatialc = getComponent<SpatialComponent>();
+
+	Vec4 min, max;
+	if(fogc.isAabb())
+	{
+		fogc.getAabb(min, max);
+	}
+	else
+	{
+		F32 radius;
+		fogc.getSphere(radius);
+
+		min = Vec4(-radius, -radius, -radius, 0.0f);
+		max = Vec4(radius, radius, radius, 0.0f);
+	}
+
+	min += movec.getWorldTransform().getOrigin();
+	max += movec.getWorldTransform().getOrigin();
+
+	m_spatialBox.setMin(min);
+	m_spatialBox.setMax(max);
+
+	spatialc.setSpatialOrigin(movec.getWorldTransform().getOrigin());
+	spatialc.markForUpdate();
 }
 
 } // end namespace anki

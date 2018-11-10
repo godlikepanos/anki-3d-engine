@@ -27,7 +27,7 @@ public:
 	{
 	}
 
-	void setBoundingBox(const Vec4& aabbMin, const Vec4& aabbMax)
+	void setAabb(const Vec4& aabbMin, const Vec4& aabbMax)
 	{
 		m_aabbMin = aabbMin;
 		m_aabbMax = aabbMax;
@@ -38,6 +38,24 @@ public:
 	{
 		m_sphereRadius = radius;
 		m_box = false;
+	}
+
+	Bool isAabb() const
+	{
+		return m_box == true;
+	}
+
+	void getAabb(Vec4& aabbMin, Vec4& aabbMax) const
+	{
+		ANKI_ASSERT(isAabb());
+		aabbMin = m_aabbMin;
+		aabbMax = m_aabbMax;
+	}
+
+	void getSphere(F32& radius) const
+	{
+		ANKI_ASSERT(!isAabb());
+		radius = m_sphereRadius;
 	}
 
 	void setDensity(F32 d)

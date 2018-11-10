@@ -130,7 +130,7 @@ void main()
 
 		idxOffset = u_clusters[clusterIdx];
 
-		// out_color = lightHeatmap(idxOffset, 5, false, false, true, false); return;
+		// out_color = lightHeatmap(idxOffset, 5, false, false, false, false, true); return;
 	}
 
 	// Decode GBuffer

@@ -129,7 +129,7 @@ layout(std430, ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer
 };
 
 // Debugging function
-Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool slights, Bool probes)
+Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool slights, Bool probes, Bool fogVolumes)
 {
 	U32 count = 0;
 	U32 idx;
@@ -152,6 +152,11 @@ Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
 		count += (decals) ? 1u : 0u;
+	}
+
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	{
+		count += (fogVolumes) ? 1u : 0u;
 	}
 
 	F32 factor = min(1.0, F32(count) / F32(maxLights));

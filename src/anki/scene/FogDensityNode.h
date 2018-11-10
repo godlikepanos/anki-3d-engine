@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
+#include <anki/collision/Aabb.h>
 
 namespace anki
 {
@@ -28,6 +29,10 @@ public:
 
 private:
 	class FeedbackComponent;
+
+	Aabb m_spatialBox;
+
+	void moveUpdated(const MoveComponent& movec);
 };
 /// @}
 
