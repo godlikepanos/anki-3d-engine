@@ -29,6 +29,45 @@ end
 	return Error::NONE;
 }
 
+static Error createFogVolumeFadeEvent(SceneNode* node)
+{
+	CString script = R"(
+density = 15
+radius = 3.5
+
+function update(event, prevTime, crntTime)
+	node = event:getAssociatedSceneNodes():getAt(0)
+	fogComponent = node:getFogDensityComponent()
+
+	dt = crntTime - prevTime
+	density = density - 4.0 * dt
+	radius = radius + 0.5 * dt
+
+	pos = node:getMoveComponent():getLocalOrigin()
+	pos:setY(pos:getY() - 1.1 * dt)
+	node:getMoveComponent():setLocalOrigin(pos)
+
+	if density <= 0.0 or radius <= 0.0 then
+		event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
+	else
+		fogComponent:setSphere(radius)
+		fogComponent:setDensity(density)
+	end
+
+	return 1
+end
+
+function onKilled(event, prevTime, crntTime)
+	return 1
+end
+	)";
+	ScriptEvent* event;
+	ANKI_CHECK(node->getSceneGraph().getEventManager().newEvent(event, -1, 10.0, script));
+	event->addAssociatedSceneNode(node);
+
+	return Error::NONE;
+}
+
 class RayCast : public PhysicsWorldRayCastCallback
 {
 public:
@@ -258,7 +297,7 @@ Error MyApp::userMainLoop(Bool& quit)
 
 			createDestructionEvent(monkey);
 
-#if 0
+#if 1
 			// Create some particles
 			ParticleEmitterNode* particles;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
@@ -282,12 +321,10 @@ Error MyApp::userMainLoop(Bool& quit)
 				fogComp.setSphere(2.1f);
 				fogComp.setDensity(15.0f);
 
-				BodyNode* body;
-				name.sprintf("fogbody%u", id++);
-				ANKI_CHECK(getSceneGraph().newSceneNode(name.toCString(), body, "assets/sphere_r2.ankicl"));
-				body->getComponent<BodyComponent>().setTransform(trf);
+				fogNode->getComponent<MoveComponent>().setLocalTransform(trf);
 
-				body->addChild(fogNode);
+				createDestructionEvent(fogNode);
+				createFogVolumeFadeEvent(fogNode);
 			}
 		}
 	}

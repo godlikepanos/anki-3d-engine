@@ -10,6 +10,24 @@
 namespace anki
 {
 
+// Forward
+#define ANKI_SCRIPT_CALL_WRAP(x_) void wrapModule##x_(lua_State*)
+ANKI_SCRIPT_CALL_WRAP(Logger);
+ANKI_SCRIPT_CALL_WRAP(Math);
+ANKI_SCRIPT_CALL_WRAP(Renderer);
+ANKI_SCRIPT_CALL_WRAP(Scene);
+#undef ANKI_SCRIPT_CALL_WRAP
+
+static void wrapModules(lua_State* l)
+{
+#define ANKI_SCRIPT_CALL_WRAP(x_) wrapModule##x_(l)
+	ANKI_SCRIPT_CALL_WRAP(Logger);
+	ANKI_SCRIPT_CALL_WRAP(Math);
+	ANKI_SCRIPT_CALL_WRAP(Renderer);
+	ANKI_SCRIPT_CALL_WRAP(Scene);
+#undef ANKI_SCRIPT_CALL_WRAP
+}
+
 static int luaPanic(lua_State* l)
 {
 	ANKI_SCRIPT_LOGE("Lua panic attack: %s", lua_tostring(l, -1));
@@ -36,6 +54,8 @@ Error LuaBinder::create(ScriptAllocator alloc, void* parent)
 	m_l = lua_newstate(luaAllocCallback, this);
 	luaL_openlibs(m_l);
 	lua_atpanic(m_l, &luaPanic);
+
+	wrapModules(m_l);
 
 	return Error::NONE;
 }
@@ -256,8 +276,15 @@ LuaThread LuaBinder::newLuaThread()
 {
 	LuaThread out;
 
-	out.m_luaState = lua_newthread(m_l);
-	out.m_reference = luaL_ref(m_l, LUA_REGISTRYINDEX);
+	void* ud;
+	auto allocCallback = lua_getallocf(m_l, &ud);
+	ANKI_ASSERT(ud && allocCallback);
+
+	out.m_luaState = lua_newstate(allocCallback, ud);
+	luaL_openlibs(out.m_luaState);
+	lua_atpanic(out.m_luaState, &luaPanic);
+
+	wrapModules(out.m_luaState);
 
 	return out;
 }
@@ -266,12 +293,10 @@ void LuaBinder::destroyLuaThread(LuaThread& luaThread)
 {
 	if(luaThread.m_luaState)
 	{
-		// Unref it, garbage collector will take care of it
-		luaL_unref(m_l, LUA_REGISTRYINDEX, luaThread.m_reference);
+		lua_close(luaThread.m_luaState);
 	}
 
 	luaThread.m_luaState = nullptr;
-	luaThread.m_reference = -1;
 }
 
 void LuaBinder::serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback& callback)

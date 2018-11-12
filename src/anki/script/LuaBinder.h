@@ -154,14 +154,8 @@ public:
 		ANKI_ASSERT(m_luaState == nullptr);
 		m_luaState = b.m_luaState;
 		b.m_luaState = nullptr;
-
-		m_reference = b.m_reference;
-		b.m_reference = -1;
 		return *this;
 	}
-
-private:
-	int m_reference = -1;
 };
 
 /// @memberof LuaBinder
