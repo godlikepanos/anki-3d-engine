@@ -55,16 +55,17 @@ void main()
 		// Compute the thikness of this fragment
 		F32 layerThinkness = abs(zVSpaceNear - zVSpaceFar);
 
-		// Scattering & absorption
-		F32 scattering = u_density * u_fogScatteringCoeff * layerThinkness;
-		F32 absorption = u_density * u_fogAbsorptionCoeff * layerThinkness;
+		// Read the light value and the fog density from the fog volumes
+		Vec4 lightAndFogDensity = textureLod(u_lightVolume, Vec3(uv, clusterKFar / F32(FINAL_CLUSTER_Z + 1u)), 0.0);
+		lightAndFogDensity.xyz *= u_fogDiffuse / PI;
+		lightAndFogDensity.w += u_density; // Apply the default density
 
-		// Read the light value
-		Vec3 light = textureLod(u_lightVolume, Vec3(uv, clusterKFar / F32(FINAL_CLUSTER_Z + 1u)), 0.0).rgb;
-		light *= u_fogDiffuse / PI;
+		// Scattering & absorption
+		F32 scattering = lightAndFogDensity.w * u_fogScatteringCoeff * layerThinkness;
+		F32 absorption = lightAndFogDensity.w * u_fogAbsorptionCoeff * layerThinkness;
 
 		// Integrate
-		Vec4 colorAndDensityBack = Vec4(light * scattering, scattering + absorption);
+		Vec4 colorAndDensityBack = Vec4(lightAndFogDensity.xyz * scattering, scattering + absorption);
 
 		Vec3 l = colorAndDensityFront.rgb + saturate(exp(-colorAndDensityFront.a)) * colorAndDensityBack.rgb;
 		colorAndDensityFront = Vec4(l.rgb, colorAndDensityFront.a + colorAndDensityBack.a);

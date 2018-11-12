@@ -113,6 +113,7 @@ public:
 	TRenderQueueElementStorage<ReflectionProbeQueueElement> m_reflectionProbes;
 	TRenderQueueElementStorage<LensFlareQueueElement> m_lensFlares;
 	TRenderQueueElementStorage<DecalQueueElement> m_decals;
+	TRenderQueueElementStorage<FogDensityQueueElement> m_fogDensityVolumes;
 
 	Timestamp m_timestamp = 0;
 };

@@ -49,16 +49,11 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 
 	U32 idxOffset = u_clusters[clusterIdx];
 
-	// Skip decals
-	U32 count = u_lightIndices[idxOffset];
-	idxOffset += count + 1;
-
 	// Point lights
-	count = u_lightIndices[idxOffset++];
-	U32 idxOffsetEnd = idxOffset + count;
-	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	U32 idx;
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
+		PointLight light = u_pointLights[idx];
 
 		Vec3 diffC = diffCol * light.m_diffuseColorTileSize.rgb;
 
@@ -80,11 +75,9 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	}
 
 	// Spot lights
-	count = u_lightIndices[idxOffset++];
-	idxOffsetEnd = idxOffset + count;
-	ANKI_LOOP while(idxOffset < idxOffsetEnd)
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
+		SpotLight light = u_spotLights[idx];
 
 		Vec3 diffC = diffCol * light.m_diffuseColorShadowmapId.rgb;
 

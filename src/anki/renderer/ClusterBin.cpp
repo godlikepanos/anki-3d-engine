@@ -13,9 +13,6 @@
 namespace anki
 {
 
-static const U32 TYPED_OBJECT_COUNT = 4; // Point, spot, decal & probe
-static const F32 INVALID_TEXTURE_INDEX = -1.0;
-
 /// Get a view space point.
 static Vec4 unproject(const F32 zVspace, const Vec2& ndc, const Vec4& unprojParams)
 {
@@ -69,22 +66,36 @@ public:
 class ClusterBin::TileCtx
 {
 public:
-	TileCtx(StackAllocator<U8>& alloc)
-		: m_clusterEdgesWSpace(alloc)
-		, m_clusterBoxes(alloc)
-		, m_clusterSpheres(alloc)
-		, m_indices(alloc)
-		, m_pIndices(alloc)
-		, m_pCounts(alloc)
+	struct ClusterMetaInfo
 	{
-	}
+		Array<U16, TYPED_OBJECT_COUNT> m_counts;
+		U16 m_offset;
+	};
 
 	DynamicArrayAuto<Vec4> m_clusterEdgesWSpace;
 	DynamicArrayAuto<Aabb> m_clusterBoxes;
 	DynamicArrayAuto<Sphere> m_clusterSpheres;
+
+	DynamicArrayAuto<ClusterMetaInfo> m_clusterInfos;
 	DynamicArrayAuto<U32> m_indices;
-	DynamicArrayAuto<U32*> m_pIndices;
-	DynamicArrayAuto<U32*> m_pCounts;
+
+	U32 m_clusterCountZ = MAX_U32;
+
+	TileCtx(StackAllocator<U8>& alloc)
+		: m_clusterEdgesWSpace(alloc)
+		, m_clusterBoxes(alloc)
+		, m_clusterSpheres(alloc)
+		, m_clusterInfos(alloc)
+		, m_indices(alloc)
+	{
+	}
+
+	WeakArray<U32> getClusterIndices(const U clusterZ)
+	{
+		ANKI_ASSERT(clusterZ < m_clusterCountZ);
+		const U perClusterCount = m_indices.getSize() / m_clusterCountZ;
+		return WeakArray<U32>(&m_indices[perClusterCount * clusterZ], perClusterCount);
+	}
 };
 
 ClusterBin::~ClusterBin()
@@ -103,7 +114,13 @@ void ClusterBin::init(
 
 	m_totalClusterCount = clusterCountX * clusterCountY * clusterCountZ;
 
-	m_indexCount = m_totalClusterCount * cfg.getNumber("r.avgObjectsPerCluster");
+	m_avgObjectsPerCluster = cfg.getNumber("r.avgObjectsPerCluster");
+
+	// The actual indices per cluster are
+	// - the object indices per cluster
+	// - plus TYPED_OBJECT_COUNT-1 that is the offset per object type minus the first object type
+	// - plus TYPED_OBJECT_COUNT the stopper dummy indices
+	m_indexCount = m_totalClusterCount * (m_avgObjectsPerCluster + TYPED_OBJECT_COUNT - 1 + TYPED_OBJECT_COUNT);
 
 	m_clusterEdges.create(m_alloc, m_clusterCounts[0] * m_clusterCounts[1] * (m_clusterCounts[2] + 1) * 4);
 }
@@ -163,14 +180,13 @@ void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 			BinCtx& ctx = *self;
 
 			TileCtx tileCtx(ctx.m_in->m_tempAlloc);
-			const U clusterCountZ = ctx.m_bin->m_clusterCounts[2];
-			const U32 avgIndicesPerCluster = ctx.m_bin->m_indexCount / ctx.m_bin->m_totalClusterCount;
+			const U32 clusterCountZ = ctx.m_bin->m_clusterCounts[2];
 			tileCtx.m_clusterEdgesWSpace.create((clusterCountZ + 1) * 4);
 			tileCtx.m_clusterBoxes.create(clusterCountZ);
 			tileCtx.m_clusterSpheres.create(clusterCountZ);
-			tileCtx.m_indices.create(clusterCountZ * avgIndicesPerCluster);
-			tileCtx.m_pIndices.create(clusterCountZ);
-			tileCtx.m_pCounts.create(clusterCountZ);
+			tileCtx.m_indices.create(clusterCountZ * ctx.m_bin->m_avgObjectsPerCluster);
+			tileCtx.m_clusterInfos.create(clusterCountZ);
+			tileCtx.m_clusterCountZ = clusterCountZ;
 
 			const U tileCount = ctx.m_bin->m_clusterCounts[0] * ctx.m_bin->m_clusterCounts[1];
 			U tileIdx;
@@ -245,7 +261,6 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	ANKI_ASSERT(tileIdx < m_clusterCounts[0] * m_clusterCounts[1]);
 	const U tileX = tileIdx % m_clusterCounts[0];
 	const U tileY = tileIdx / m_clusterCounts[0];
-	const U32 avgIndicesPerCluster = m_indexCount / m_totalClusterCount;
 
 	// Compute the tile's cluster edges in view space
 	WeakArray<Vec4> clusterEdgesVSpace(
@@ -316,68 +331,22 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		clusterSpheres[clusterZ] = Sphere(sphereCenter, (aabbMin - sphereCenter).getLength());
 	}
 
-	// Set temp indices for each cluster
-	DynamicArrayAuto<U32>& indices = tileCtx.m_indices;
-	DynamicArrayAuto<U32*>& pIndices = tileCtx.m_pIndices;
-	DynamicArrayAuto<U32*>& pCounts = tileCtx.m_pCounts;
+	// Zero the infos
+	memset(&tileCtx.m_clusterInfos[0], 0, tileCtx.m_clusterInfos.getSizeInBytes());
 
-	for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
-	{
-		pIndices[clusterZ] = &indices[clusterZ * avgIndicesPerCluster];
-	}
-
-	// Decals
-	{
-		for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
-		{
-			pCounts[clusterZ] = pIndices[clusterZ];
-			*pCounts[clusterZ] = 0;
-			++pIndices[clusterZ];
-		}
-
-		Obb decalBox;
-		for(U i = 0; i < ctx.m_in->m_renderQueue->m_decals.getSize(); ++i)
-		{
-			const DecalQueueElement& decal = ctx.m_in->m_renderQueue->m_decals[i];
-			decalBox.setCenter(decal.m_obbCenter.xyz0());
-			decalBox.setRotation(Mat3x4(decal.m_obbRotation));
-			decalBox.setExtend(decal.m_obbExtend.xyz0());
-
-			if(!insideClusterFrustum(frustumPlanes, decalBox))
-			{
-				continue;
-			}
-
-			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
-			{
-				if(!testCollisionShapes(decalBox, clusterBoxes[clusterZ]))
-				{
-					continue;
-				}
-
-				const U32 count = pIndices[clusterZ] - &indices[clusterZ * avgIndicesPerCluster];
-				if(ANKI_UNLIKELY(count + 3 >= avgIndicesPerCluster))
-				{
-					ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster");
-					continue;
-				}
-
-				*pIndices[clusterZ] = i;
-				*pCounts[clusterZ] += 1;
-				++pIndices[clusterZ];
-			}
-		}
-	}
+#define ANKI_SET_IDX(typeIdx) \
+	ClusterBin::TileCtx::ClusterMetaInfo& inf = tileCtx.m_clusterInfos[clusterZ]; \
+	if(ANKI_UNLIKELY(inf.m_offset + 1 >= m_avgObjectsPerCluster)) \
+	{ \
+		ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster"); \
+		continue; \
+	} \
+	tileCtx.getClusterIndices(clusterZ)[inf.m_offset++] = i; \
+	++inf.m_counts[typeIdx]; \
+	ANKI_ASSERT(inf.m_counts[typeIdx] <= m_avgObjectsPerCluster)
 
 	// Point lights
 	{
-		for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
-		{
-			pCounts[clusterZ] = pIndices[clusterZ];
-			*pCounts[clusterZ] = 0;
-			++pIndices[clusterZ];
-		}
-
 		Sphere lightSphere;
 		for(U i = 0; i < ctx.m_in->m_renderQueue->m_pointLights.getSize(); ++i)
 		{
@@ -397,29 +366,13 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 					continue;
 				}
 
-				const U32 count = pIndices[clusterZ] - &indices[clusterZ * avgIndicesPerCluster];
-				if(ANKI_UNLIKELY(count + 2 >= avgIndicesPerCluster))
-				{
-					ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster");
-					continue;
-				}
-
-				*pIndices[clusterZ] = i;
-				*pCounts[clusterZ] += 1;
-				++pIndices[clusterZ];
+				ANKI_SET_IDX(0);
 			}
 		}
 	}
 
 	// Spot lights
 	{
-		for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
-		{
-			pCounts[clusterZ] = pIndices[clusterZ];
-			*pCounts[clusterZ] = 0;
-			++pIndices[clusterZ];
-		}
-
 		PerspectiveFrustum slightFrustum;
 		for(U i = 0; i < ctx.m_in->m_renderQueue->m_spotLights.getSize(); ++i)
 		{
@@ -442,29 +395,13 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 					continue;
 				}
 
-				const U32 count = pIndices[clusterZ] - &indices[clusterZ * avgIndicesPerCluster];
-				if(ANKI_UNLIKELY(count + 1 >= avgIndicesPerCluster))
-				{
-					ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster");
-					continue;
-				}
-
-				*pIndices[clusterZ] = i;
-				*pCounts[clusterZ] += 1;
-				++pIndices[clusterZ];
+				ANKI_SET_IDX(1);
 			}
 		}
 	}
 
 	// Probes
 	{
-		for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
-		{
-			pCounts[clusterZ] = pIndices[clusterZ];
-			*pCounts[clusterZ] = 0;
-			++pIndices[clusterZ];
-		}
-
 		Aabb probeBox;
 		for(U i = 0; i < ctx.m_in->m_renderQueue->m_reflectionProbes.getSize(); ++i)
 		{
@@ -484,16 +421,73 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 					continue;
 				}
 
-				const U32 count = pIndices[clusterZ] - &indices[clusterZ * avgIndicesPerCluster];
-				if(ANKI_UNLIKELY(count >= avgIndicesPerCluster))
+				ANKI_SET_IDX(2);
+			}
+		}
+	}
+
+	// Decals
+	{
+		Obb decalBox;
+		for(U i = 0; i < ctx.m_in->m_renderQueue->m_decals.getSize(); ++i)
+		{
+			const DecalQueueElement& decal = ctx.m_in->m_renderQueue->m_decals[i];
+			decalBox.setCenter(decal.m_obbCenter.xyz0());
+			decalBox.setRotation(Mat3x4(decal.m_obbRotation));
+			decalBox.setExtend(decal.m_obbExtend.xyz0());
+
+			if(!insideClusterFrustum(frustumPlanes, decalBox))
+			{
+				continue;
+			}
+
+			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			{
+				if(!testCollisionShapes(decalBox, clusterBoxes[clusterZ]))
 				{
-					ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster");
 					continue;
 				}
 
-				*pIndices[clusterZ] = i;
-				*pCounts[clusterZ] += 1;
-				++pIndices[clusterZ];
+				ANKI_SET_IDX(3);
+			}
+		}
+	}
+
+	// Fog volumes
+	{
+		Aabb box;
+		Sphere sphere;
+		for(U i = 0; i < ctx.m_in->m_renderQueue->m_fogDensityVolumes.getSize(); ++i)
+		{
+			const FogDensityQueueElement& fogVol = ctx.m_in->m_renderQueue->m_fogDensityVolumes[i];
+
+			CollisionShape* shape;
+			if(fogVol.m_isBox)
+			{
+				box.setMin(fogVol.m_aabbMin);
+				box.setMax(fogVol.m_aabbMax);
+				shape = &box;
+			}
+			else
+			{
+				sphere.setCenter(fogVol.m_sphereCenter.xyz0());
+				sphere.setRadius(fogVol.m_sphereRadius);
+				shape = &sphere;
+			}
+
+			if(!insideClusterFrustum(frustumPlanes, *shape))
+			{
+				continue;
+			}
+
+			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			{
+				if(!testCollisionShapes(*shape, clusterBoxes[clusterZ]))
+				{
+					continue;
+				}
+
+				ANKI_SET_IDX(4);
 			}
 		}
 	}
@@ -501,32 +495,47 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	// Upload the indices for all clusters of the tile
 	for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 	{
-		const U indexCount = pIndices[clusterZ] - &indices[clusterZ * avgIndicesPerCluster];
-		ANKI_ASSERT(indexCount <= avgIndicesPerCluster);
-		ANKI_ASSERT(indexCount >= TYPED_OBJECT_COUNT);
+		WeakArray<U32> inIndices = tileCtx.getClusterIndices(clusterZ);
+		const ClusterBin::TileCtx::ClusterMetaInfo& inf = tileCtx.m_clusterInfos[clusterZ];
 
-		U firstIndex;
-		if(indexCount > TYPED_OBJECT_COUNT)
+		const U other = (TYPED_OBJECT_COUNT - 1) + TYPED_OBJECT_COUNT;
+		const U indexCountPlusOther = inf.m_offset + other;
+		ANKI_ASSERT(indexCountPlusOther <= m_avgObjectsPerCluster + other);
+		ANKI_ASSERT(indexCountPlusOther >= other);
+
+		// Write indices
+		const U32 firstIndex = ctx.m_allocatedIndexCount.fetchAdd(indexCountPlusOther);
+		ANKI_ASSERT(firstIndex + indexCountPlusOther <= ctx.m_lightIds.getSize());
+		WeakArray<U32> outIndices(&ctx.m_lightIds[firstIndex], indexCountPlusOther);
+
+		// Write the offsets
+		U offset = firstIndex + TYPED_OBJECT_COUNT - 1;
+		for(U i = 1; i < TYPED_OBJECT_COUNT; ++i)
 		{
-			// Have some objects to bin
-
-			firstIndex = ctx.m_allocatedIndexCount.fetchAdd(indexCount);
-			ANKI_ASSERT(firstIndex + indexCount <= ctx.m_lightIds.getSize());
-
-			memcpy(&ctx.m_lightIds[firstIndex],
-				&indices[clusterZ * avgIndicesPerCluster],
-				sizeof(ctx.m_lightIds[firstIndex]) * indexCount);
+			offset += inf.m_counts[i - 1] + 1; // Count plus the stop
+			outIndices[i - 1] = offset;
 		}
-		else
+
+		// Write indices
+		U outIndicesOffset = TYPED_OBJECT_COUNT - 1;
+		U inIndicesOffset = 0;
+		for(U i = 0; i < TYPED_OBJECT_COUNT; ++i)
 		{
-			// No typed objects, point to the preallocated cluster
-			firstIndex = 0;
+			for(U c = 0; c < inf.m_counts[i]; ++c)
+			{
+				outIndices[outIndicesOffset++] = inIndices[inIndicesOffset++];
+			}
+
+			// Stop
+			outIndices[outIndicesOffset++] = MAX_U32;
 		}
+		ANKI_ASSERT(inIndicesOffset == inf.m_offset);
+		ANKI_ASSERT(outIndicesOffset == indexCountPlusOther);
 
 		// Write the cluster
 		const U clusterIndex =
 			clusterZ * (m_clusterCounts[0] * m_clusterCounts[1]) + tileY * m_clusterCounts[0] + tileX;
-		ctx.m_clusters[clusterIndex] = firstIndex;
+		ctx.m_clusters[clusterIndex] = firstIndex + TYPED_OBJECT_COUNT - 1; // Points to the first object
 	}
 }
 
@@ -683,6 +692,42 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	else
 	{
 		ctx.m_out->m_probesToken.markUnused();
+	}
+
+	// Fog volumes
+	const U visibleFogVolumeCount = rqueue.m_fogDensityVolumes.getSize();
+	if(visibleFogVolumeCount)
+	{
+		FogDensityVolume* data = static_cast<FogDensityVolume*>(
+			ctx.m_in->m_stagingMem->allocateFrame(sizeof(FogDensityVolume) * visibleFogVolumeCount,
+				StagingGpuMemoryType::UNIFORM,
+				ctx.m_out->m_fogDensityVolumesToken));
+
+		WeakArray<FogDensityVolume> gpuFogVolumes(data, visibleFogVolumeCount);
+
+		for(U i = 0; i < visibleFogVolumeCount; ++i)
+		{
+			const FogDensityQueueElement& in = rqueue.m_fogDensityVolumes[i];
+			FogDensityVolume& out = gpuFogVolumes[i];
+
+			out.m_density = in.m_density;
+			if(in.m_isBox)
+			{
+				out.m_isBox = 1;
+				out.m_aabbMinOrSphereCenter = in.m_aabbMin;
+				out.m_aabbMaxOrSphereRadiusSquared = in.m_aabbMax;
+			}
+			else
+			{
+				out.m_isBox = 0;
+				out.m_aabbMinOrSphereCenter = in.m_sphereCenter;
+				out.m_aabbMaxOrSphereRadiusSquared = Vec3(in.m_sphereRadius * in.m_sphereRadius);
+			}
+		}
+	}
+	else
+	{
+		ctx.m_out->m_fogDensityVolumesToken.markUnused();
 	}
 }
 

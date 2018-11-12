@@ -63,7 +63,7 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	// Create RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_volumeSize[0],
 		m_volumeSize[1],
-		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
+		Format::R16G16B16A16_SFLOAT,
 		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::SAMPLED_COMPUTE,
 		"VolLight");
@@ -124,6 +124,7 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 	bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);
+	bindUniforms(cmdb, 0, 4, rsrc.m_fogDensityVolumesToken);
 	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
 	bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
 

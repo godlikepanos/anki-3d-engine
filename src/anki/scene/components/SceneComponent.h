@@ -34,6 +34,7 @@ enum class SceneComponentType : U16
 	SCRIPT,
 	JOINT,
 	TRIGGER,
+	FOG_DENSITY,
 	PLAYER_CONTROLLER,
 
 	COUNT,
@@ -74,6 +75,7 @@ public:
 	/// Called only by the SceneGraph
 	ANKI_USE_RESULT Error updateReal(Second prevTime, Second crntTime, Bool& updated);
 
+	/// Unique ID in the same run.
 	U64 getUuid() const
 	{
 		return m_uuid;

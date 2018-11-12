@@ -208,6 +208,33 @@ public:
 
 static_assert(std::is_trivially_destructible<UiQueueElement>::value == true, "Should be trivially destructible");
 
+/// Fog density queue element.
+class FogDensityQueueElement final
+{
+public:
+	union
+	{
+		Vec3 m_aabbMin;
+		Vec3 m_sphereCenter;
+	};
+
+	union
+	{
+		Vec3 m_aabbMax;
+		F32 m_sphereRadius;
+	};
+
+	F32 m_density;
+	Bool8 m_isBox;
+
+	FogDensityQueueElement()
+	{
+	}
+};
+
+static_assert(
+	std::is_trivially_destructible<FogDensityQueueElement>::value == true, "Should be trivially destructible");
+
 /// A callback to fill a coverage buffer.
 using FillCoverageBufferCallback = void (*)(void* userData, F32* depthValues, U32 width, U32 height);
 
@@ -225,9 +252,10 @@ public:
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
 	WeakArray<DecalQueueElement> m_decals;
+	WeakArray<FogDensityQueueElement> m_fogDensityVolumes;
 	WeakArray<UiQueueElement> m_uis;
 
-	/// Applies only if the RenderQueue holds shadow casters. It's the timesamp that modified
+	/// Applies only if the RenderQueue holds shadow casters. It's the max timesamp of all shadow casters
 	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;
 
 	F32 m_cameraNear;

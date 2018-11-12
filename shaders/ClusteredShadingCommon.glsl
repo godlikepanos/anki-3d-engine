@@ -92,6 +92,8 @@ const U32 _NEXT_TEX_BINDING_3 = _NEXT_TEX_BINDING_2;
 // Decal uniforms
 //
 #if defined(LIGHT_DECALS)
+const U32 _NEXT_UBO_BINDING_4 = _NEXT_UBO_BINDING_3 + 1u;
+
 layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_3)) uniform u4_
 {
 	Decal u_decals[UBO_MAX_SIZE / SIZEOF_DECAL];
@@ -99,6 +101,18 @@ layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_3)) unif
 
 layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_3 + 0)) uniform sampler2D u_diffDecalTex;
 layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_3 + 1)) uniform sampler2D u_specularRoughnessDecalTex;
+#else
+const U32 _NEXT_UBO_BINDING_4 = _NEXT_UBO_BINDING_3;
+#endif
+
+//
+// Fog density uniforms
+//
+#if defined(LIGHT_FOG_DENSITY_VOLUMES)
+layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_4)) uniform u5_
+{
+	FogDensityVolume u_fogDensityVolumes[UBO_MAX_SIZE / SIZEOF_FOG_DENSITY_VOLUME];
+};
 #endif
 
 //
@@ -115,35 +129,34 @@ layout(std430, ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer
 };
 
 // Debugging function
-Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool slights, Bool probes)
+Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool slights, Bool probes, Bool fogVolumes)
 {
 	U32 count = 0;
+	U32 idx;
 
-	U32 decalCount = u_lightIndices[firstIndex];
-	firstIndex += decalCount + 1u;
-	if(decals)
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += decalCount;
+		count += (plights) ? 1u : 0u;
 	}
 
-	U32 pointLightCount = u_lightIndices[firstIndex];
-	firstIndex += pointLightCount + 1u;
-	if(plights)
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += pointLightCount;
+		count += (slights) ? 1u : 0u;
 	}
 
-	U32 spotLightCount = u_lightIndices[firstIndex];
-	firstIndex += spotLightCount + 1u;
-	if(slights)
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += spotLightCount;
+		count += (probes) ? 1u : 0u;
 	}
 
-	U32 probeCount = u_lightIndices[firstIndex];
-	if(probes)
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += probeCount;
+		count += (decals) ? 1u : 0u;
+	}
+
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	{
+		count += (fogVolumes) ? 1u : 0u;
 	}
 
 	F32 factor = min(1.0, F32(count) / F32(maxLights));

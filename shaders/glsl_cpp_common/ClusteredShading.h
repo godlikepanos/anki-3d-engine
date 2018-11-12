@@ -9,6 +9,10 @@
 
 ANKI_BEGIN_NAMESPACE
 
+// Consts
+const U32 TYPED_OBJECT_COUNT = 5u;
+const F32 INVALID_TEXTURE_INDEX = -1.0;
+
 // See the documentation in the ClustererBin class.
 struct ClustererMagicValues
 {
@@ -59,6 +63,17 @@ struct Decal
 };
 const U32 SIZEOF_DECAL = 3 * SIZEOF_VEC4 + SIZEOF_MAT4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(Decal) == SIZEOF_DECAL)
+
+// Fog density volume
+struct FogDensityVolume
+{
+	Vec3 m_aabbMinOrSphereCenter;
+	U32 m_isBox;
+	Vec3 m_aabbMaxOrSphereRadiusSquared;
+	F32 m_density;
+};
+const U32 SIZEOF_FOG_DENSITY_VOLUME = 2 * SIZEOF_VEC4;
+ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == SIZEOF_FOG_DENSITY_VOLUME)
 
 // Common uniforms for light shading passes
 struct LightingUniforms
