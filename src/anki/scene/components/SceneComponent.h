@@ -27,7 +27,6 @@ enum class SceneComponentType : U16
 	LENS_FLARE,
 	BODY,
 	REFLECTION_PROBE,
-	REFLECTION_PROXY,
 	OCCLUDER,
 	DECAL,
 	SKIN,
@@ -46,9 +45,14 @@ class SceneComponent
 {
 public:
 	/// Construct the scene component.
-	SceneComponent(SceneComponentType type, SceneNode* node);
+	SceneComponent(SceneComponentType type)
+		: m_type(type)
+	{
+	}
 
-	virtual ~SceneComponent();
+	virtual ~SceneComponent()
+	{
+	}
 
 	SceneComponentType getType() const
 	{
@@ -60,58 +64,30 @@ public:
 		return m_timestamp;
 	}
 
-	Timestamp getGlobalTimestamp() const;
-
 	/// Do some updating
+	/// @param node The owner node of this component.
 	/// @param prevTime Previous update time.
 	/// @param crntTime Current update time.
 	/// @param[out] updated true if an update happened.
-	virtual ANKI_USE_RESULT Error update(Second prevTime, Second crntTime, Bool& updated)
+	virtual ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
 	{
 		updated = false;
 		return Error::NONE;
 	}
 
 	/// Called only by the SceneGraph
-	ANKI_USE_RESULT Error updateReal(Second prevTime, Second crntTime, Bool& updated);
+	ANKI_USE_RESULT Error updateReal(SceneNode& node, Second prevTime, Second crntTime, Bool& updated);
 
-	/// Unique ID in the same run.
-	U64 getUuid() const
+	/// Don't call it.
+	void setTimestamp(Timestamp timestamp)
 	{
-		return m_uuid;
+		ANKI_ASSERT(timestamp > 0);
+		ANKI_ASSERT(timestamp >= m_timestamp);
+		m_timestamp = timestamp;
 	}
-
-	SceneNode& getSceneNode()
-	{
-		return *m_node;
-	}
-
-	const SceneNode& getSceneNode() const
-	{
-		return *m_node;
-	}
-
-	/// The position in the owner SceneNode.
-	U getIndex() const
-	{
-		return m_idx;
-	}
-
-	SceneAllocator<U8> getAllocator() const;
-
-	SceneFrameAllocator<U8> getFrameAllocator() const;
-
-	SceneGraph& getSceneGraph();
-
-	const SceneGraph& getSceneGraph() const;
-
-protected:
-	SceneNode* m_node = nullptr;
-	Timestamp m_timestamp = 1; ///< Indicates when an update happened
 
 private:
-	U64 m_uuid;
-	U32 m_idx;
+	Timestamp m_timestamp = 1; ///< Indicates when an update happened
 	SceneComponentType m_type;
 };
 /// @}

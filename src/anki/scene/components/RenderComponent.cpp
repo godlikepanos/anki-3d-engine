@@ -13,11 +13,13 @@ namespace anki
 {
 
 MaterialRenderComponent::MaterialRenderComponent(SceneNode* node, MaterialResourcePtr mtl)
-	: RenderComponent(node)
+	: m_node(node)
 	, m_mtl(mtl)
 {
+	ANKI_ASSERT(node);
+
 	// Create the material variables
-	m_vars.create(getAllocator(), m_mtl->getVariables().getSize());
+	m_vars.create(m_node->getAllocator(), m_mtl->getVariables().getSize());
 	U count = 0;
 	for(const MaterialVariable& mv : m_mtl->getVariables())
 	{
@@ -30,7 +32,7 @@ MaterialRenderComponent::MaterialRenderComponent(SceneNode* node, MaterialResour
 
 MaterialRenderComponent::~MaterialRenderComponent()
 {
-	m_vars.destroy(getAllocator());
+	m_vars.destroy(m_node->getAllocator());
 }
 
 void MaterialRenderComponent::allocateAndSetupUniforms(U set,
@@ -134,7 +136,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
-				DynamicArrayAuto<Mat3> normMats(getFrameAllocator());
+				DynamicArrayAuto<Mat3> normMats(m_node->getFrameAllocator());
 				normMats.create(transforms.getSize());
 
 				for(U i = 0; i < transforms.getSize(); i++)
@@ -152,7 +154,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
-				DynamicArrayAuto<Mat3> rots(getFrameAllocator());
+				DynamicArrayAuto<Mat3> rots(m_node->getFrameAllocator());
 				rots.create(transforms.getSize());
 
 				for(U i = 0; i < transforms.getSize(); i++)
@@ -189,7 +191,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
-				DynamicArrayAuto<Mat4> mvp(getFrameAllocator());
+				DynamicArrayAuto<Mat4> mvp(m_node->getFrameAllocator());
 				mvp.create(transforms.getSize());
 
 				for(U i = 0; i < transforms.getSize(); i++)
@@ -204,7 +206,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 			{
 				ANKI_ASSERT(prevTransforms.getSize() > 0);
 
-				DynamicArrayAuto<Mat4> mvp(getFrameAllocator());
+				DynamicArrayAuto<Mat4> mvp(m_node->getFrameAllocator());
 				mvp.create(prevTransforms.getSize());
 
 				for(U i = 0; i < prevTransforms.getSize(); i++)
@@ -220,7 +222,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
-				DynamicArrayAuto<Mat4> mv(getFrameAllocator());
+				DynamicArrayAuto<Mat4> mv(m_node->getFrameAllocator());
 				mv.create(transforms.getSize());
 
 				for(U i = 0; i < transforms.getSize(); i++)

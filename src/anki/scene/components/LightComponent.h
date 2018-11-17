@@ -32,7 +32,7 @@ public:
 	/// WARNING: If you change here update the shaders.
 	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1f / 4.0f;
 
-	LightComponent(SceneNode* node, LightComponentType type);
+	LightComponent(LightComponentType type, U64 uuid);
 
 	LightComponentType getLightComponentType() const
 	{
@@ -121,12 +121,12 @@ public:
 		m_flags.set(SHADOW, x);
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::POINT);
-		el.m_uuid = getUuid();
+		el.m_uuid = m_uuid;
 		el.m_worldPosition = m_trf.getOrigin().xyz();
 		el.m_radius = m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
@@ -137,7 +137,7 @@ public:
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::SPOT);
-		el.m_uuid = getUuid();
+		el.m_uuid = m_uuid;
 		el.m_worldTransform = Mat4(m_trf);
 		el.m_textureMatrix = m_spotTextureMatrix;
 		el.m_distance = m_distance;
@@ -149,6 +149,7 @@ public:
 	}
 
 private:
+	U64 m_uuid;
 	LightComponentType m_type;
 	Vec4 m_diffColor = Vec4(0.5f);
 	union

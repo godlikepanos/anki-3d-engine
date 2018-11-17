@@ -68,17 +68,22 @@ public:
 
 	Timestamp getComponentMaxTimestamp() const
 	{
-		ANKI_ASSERT(m_maxComponentTimestamp > 0);
 		return m_maxComponentTimestamp;
 	}
 
-	SceneAllocator<U8> getSceneAllocator() const;
+	void setComponentMaxTimestamp(Timestamp maxComponentTimestamp)
+	{
+		ANKI_ASSERT(maxComponentTimestamp > 0);
+		m_maxComponentTimestamp = maxComponentTimestamp;
+	}
+
+	SceneAllocator<U8> getAllocator() const;
 
 	SceneFrameAllocator<U8> getFrameAllocator() const;
 
 	void addChild(SceneNode* obj)
 	{
-		Base::addChild(getSceneAllocator(), obj);
+		Base::addChild(getAllocator(), obj);
 	}
 
 	/// This is called by the scene every frame after logic and before rendering. By default it does nothing.
@@ -89,16 +94,6 @@ public:
 		(void)prevUpdateTime;
 		(void)crntTime;
 		return Error::NONE;
-	}
-
-	ANKI_USE_RESULT Error frameUpdateComplete(Second prevUpdateTime, Second crntTime, Timestamp maxComponentTimestamp)
-	{
-		m_maxComponentTimestamp = maxComponentTimestamp;
-		if(m_components.getSize() > 0)
-		{
-			ANKI_ASSERT(maxComponentTimestamp > 0);
-		}
-		return frameUpdate(prevUpdateTime, crntTime);
 	}
 
 	/// Iterate all components
@@ -211,8 +206,8 @@ protected:
 	template<typename TComponent, typename... TArgs>
 	TComponent* newComponent(TArgs&&... args)
 	{
-		TComponent* comp = getSceneAllocator().newInstance<TComponent>(this, std::forward<TArgs>(args)...);
-		m_components.emplaceBack(getSceneAllocator(), comp);
+		TComponent* comp = getAllocator().newInstance<TComponent>(std::forward<TArgs>(args)...);
+		m_components.emplaceBack(getAllocator(), comp);
 		return comp;
 	}
 
@@ -228,8 +223,6 @@ private:
 	Timestamp m_maxComponentTimestamp = 0;
 
 	Bool8 m_markedForDeletion = false;
-
-	void cacheImportantComponents();
 };
 /// @}
 

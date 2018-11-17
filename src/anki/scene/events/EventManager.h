@@ -34,7 +34,7 @@ public:
 		return *m_scene;
 	}
 
-	SceneAllocator<U8> getSceneAllocator() const;
+	SceneAllocator<U8> getAllocator() const;
 	SceneFrameAllocator<U8> getFrameAllocator() const;
 
 	/// Iterate events
@@ -57,11 +57,11 @@ public:
 	template<typename T, typename... Args>
 	ANKI_USE_RESULT Error newEvent(T*& event, Args... args)
 	{
-		event = getSceneAllocator().template newInstance<T>(this);
+		event = getAllocator().template newInstance<T>(this);
 		Error err = event->init(std::forward<Args>(args)...);
 		if(err)
 		{
-			getSceneAllocator().deleteInstance(event);
+			getAllocator().deleteInstance(event);
 		}
 		else
 		{

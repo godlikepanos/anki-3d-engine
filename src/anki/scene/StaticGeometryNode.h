@@ -22,8 +22,6 @@ class ModelPatch;
 /// Static geometry scene node patch
 class StaticGeometryPatchNode : public SceneNode
 {
-	friend class StaticGeometryRenderComponent;
-
 public:
 	StaticGeometryPatchNode(SceneGraph* scene, CString name);
 
@@ -32,6 +30,8 @@ public:
 	ANKI_USE_RESULT Error init(const ModelPatch* modelPatch);
 
 private:
+	class RenderComponent;
+
 	const ModelPatch* m_modelPatch;
 };
 

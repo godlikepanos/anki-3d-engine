@@ -17,9 +17,6 @@ namespace anki
 /// Node that has a decal component.
 class DecalNode : public SceneNode
 {
-	friend class DecalMoveFeedbackComponent;
-	friend class DecalShapeFeedbackComponent;
-
 public:
 	DecalNode(SceneGraph* scene, CString name)
 		: SceneNode(scene, name)
@@ -31,6 +28,9 @@ public:
 	ANKI_USE_RESULT Error init();
 
 private:
+	class MoveFeedbackComponent;
+	class ShapeFeedbackComponent;
+
 	void onMove(MoveComponent& movec);
 	void onDecalUpdated();
 };

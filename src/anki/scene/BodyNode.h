@@ -25,6 +25,8 @@ public:
 	ANKI_USE_RESULT Error init(const CString& resourceFname);
 
 private:
+	class FeedbackComponent;
+
 	CollisionResourcePtr m_rsrc;
 	PhysicsBodyPtr m_body;
 };

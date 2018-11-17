@@ -12,10 +12,10 @@ namespace anki
 {
 
 /// The implementation of static geometry node renderable component.
-class StaticGeometryRenderComponent : public MaterialRenderComponent
+class StaticGeometryPatchNode::RenderComponent : public MaterialRenderComponent
 {
 public:
-	StaticGeometryRenderComponent(SceneNode* node)
+	RenderComponent(SceneNode* node)
 		: MaterialRenderComponent(node, static_cast<StaticGeometryPatchNode*>(node)->m_modelPatch->getMaterial())
 	{
 	}
@@ -44,13 +44,13 @@ Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 	// Create spatial components
 	for(U i = 1; i < m_modelPatch->getSubMeshCount(); i++)
 	{
-		SpatialComponent* spatial = newComponent<SpatialComponent>(&m_modelPatch->getBoundingShapeSub(i));
+		SpatialComponent* spatial = newComponent<SpatialComponent>(this, &m_modelPatch->getBoundingShapeSub(i));
 
 		spatial->setSpatialOrigin(m_modelPatch->getBoundingShapeSub(i).getCenter());
 	}
 
 	// Create render component
-	newComponent<StaticGeometryRenderComponent>();
+	newComponent<RenderComponent>(this);
 
 	return Error::NONE;
 }

@@ -17,20 +17,19 @@ namespace anki
 class TriggerNode::MoveFeedbackComponent : public SceneComponent
 {
 public:
-	MoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	MoveFeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) final
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) final
 	{
 		updated = false;
 
-		const MoveComponent& move = m_node->getComponent<MoveComponent>();
-		if(move.getTimestamp() == m_node->getGlobalTimestamp())
+		const MoveComponent& move = node.getComponent<MoveComponent>();
+		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
-			TriggerNode* node = static_cast<TriggerNode*>(m_node);
-			node->m_trigger->setTransform(move.getWorldTransform());
+			static_cast<TriggerNode&>(node).m_trigger->setTransform(move.getWorldTransform());
 		}
 
 		return Error::NONE;
@@ -54,7 +53,7 @@ Error TriggerNode::init(F32 sphereRadius)
 
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
-	newComponent<TriggerComponent>(m_trigger);
+	newComponent<TriggerComponent>(this, m_trigger);
 
 	return Error::NONE;
 }

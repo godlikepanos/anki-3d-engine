@@ -20,8 +20,8 @@ class PlayerControllerComponent : public SceneComponent
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::PLAYER_CONTROLLER;
 
-	PlayerControllerComponent(SceneNode* node, PhysicsPlayerControllerPtr player)
-		: SceneComponent(CLASS_TYPE, node)
+	PlayerControllerComponent(PhysicsPlayerControllerPtr player)
+		: SceneComponent(CLASS_TYPE)
 		, m_player(player)
 	{
 	}
@@ -48,7 +48,7 @@ public:
 		m_player->moveToPosition(pos);
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		m_trf = m_player->getTransform(updated);
 		return Error::NONE;

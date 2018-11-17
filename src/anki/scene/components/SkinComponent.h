@@ -27,7 +27,7 @@ public:
 
 	~SkinComponent();
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
 	void playAnimation(U track, AnimationResourcePtr anim, Second startTime, Bool repeat);
 
@@ -45,6 +45,7 @@ private:
 		Bool8 m_repeat;
 	};
 
+	SceneNode* m_node;
 	SkeletonResourcePtr m_skeleton;
 	DynamicArray<Mat4> m_boneTrfs;
 	Array<Track, MAX_ANIMATION_TRACKS> m_tracks;

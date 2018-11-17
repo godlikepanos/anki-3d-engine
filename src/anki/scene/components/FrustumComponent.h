@@ -55,6 +55,16 @@ public:
 
 	~FrustumComponent();
 
+	SceneNode& getSceneNode()
+	{
+		return *m_node;
+	}
+
+	const SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+
 	Frustum& getFrustum()
 	{
 		return *m_frustum;
@@ -117,7 +127,7 @@ public:
 
 	/// @name SceneComponent overrides
 	/// @{
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 	/// @}
 
 	void setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits)
@@ -149,18 +159,7 @@ public:
 	}
 
 	/// The type is FillCoverageBufferCallback.
-	static void fillCoverageBufferCallback(void* userData, F32* depthValues, U32 width, U32 height)
-	{
-		ANKI_ASSERT(userData && depthValues && width > 0 && height > 0);
-		FrustumComponent& self = *static_cast<FrustumComponent*>(userData);
-
-		self.m_coverageBuff.m_depthMap.destroy(self.getAllocator());
-		self.m_coverageBuff.m_depthMap.create(self.getAllocator(), width * height);
-		memcpy(&self.m_coverageBuff.m_depthMap[0], depthValues, self.m_coverageBuff.m_depthMap.getSizeInBytes());
-
-		self.m_coverageBuff.m_depthMapWidth = width;
-		self.m_coverageBuff.m_depthMapHeight = height;
-	}
+	static void fillCoverageBufferCallback(void* userData, F32* depthValues, U32 width, U32 height);
 
 	Bool hasCoverageBuffer() const
 	{
@@ -190,6 +189,7 @@ private:
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flags, friend)
 
+	SceneNode* m_node;
 	Frustum* m_frustum;
 	Mat4 m_projMat = Mat4::getIdentity(); ///< Projection matrix
 	Mat4 m_viewMat = Mat4::getIdentity(); ///< View matrix

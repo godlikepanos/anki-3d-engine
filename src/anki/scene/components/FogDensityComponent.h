@@ -22,8 +22,8 @@ class FogDensityComponent : public SceneComponent
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::FOG_DENSITY;
 
-	FogDensityComponent(SceneNode* node)
-		: SceneComponent(CLASS_TYPE, node)
+	FogDensityComponent()
+		: SceneComponent(CLASS_TYPE)
 	{
 	}
 
@@ -88,13 +88,6 @@ public:
 			el.m_sphereCenter = m_worldPos.xyz();
 			el.m_sphereRadius = m_sphereRadius;
 		}
-	}
-
-	/// Implements SceneComponent::update.
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
-	{
-		updated = false;
-		return Error::NONE;
 	}
 
 private:

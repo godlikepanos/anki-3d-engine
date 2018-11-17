@@ -20,8 +20,8 @@ class BodyComponent : public SceneComponent
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::BODY;
 
-	BodyComponent(SceneNode* node, PhysicsBodyPtr body)
-		: SceneComponent(CLASS_TYPE, node)
+	BodyComponent(PhysicsBodyPtr body)
+		: SceneComponent(CLASS_TYPE)
 		, m_body(body)
 	{
 	}
@@ -43,7 +43,7 @@ public:
 		return m_body;
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
 		Transform newTrf = m_body->getTransform();
 		updated = newTrf != m_trf;

@@ -15,27 +15,27 @@ namespace anki
 {
 
 /// Feedback component.
-class PlayerNodeFeedbackComponent final : public SceneComponent
+class PlayerNode::FeedbackComponent final : public SceneComponent
 {
 public:
-	PlayerNodeFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	FeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	Error update(Second, Second, Bool& updated) override
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = m_node->getComponent<PlayerControllerComponent>();
-		const Input& in = m_node->getSceneGraph().getInput();
+		PlayerControllerComponent& playerc = node.getComponent<PlayerControllerComponent>();
+		const Input& in = node.getSceneGraph().getInput();
 		const F32 ang = toRad(7.0);
 
 		F32 y = in.getMousePosition().y();
 		F32 x = in.getMousePosition().x();
-		if(playerc.getTimestamp() == m_node->getGlobalTimestamp() || y != 0.0 || x != 0.0)
+		if(playerc.getTimestamp() == node.getGlobalTimestamp() || y != 0.0 || x != 0.0)
 		{
-			MoveComponent& move = m_node->getComponent<MoveComponent>();
+			MoveComponent& move = node.getComponent<MoveComponent>();
 
 			// Set origin
 			Vec4 origin = playerc.getTransform().getOrigin();
@@ -61,21 +61,21 @@ public:
 };
 
 /// Feedback component.
-class PlayerNodeFeedbackComponent2 final : public SceneComponent
+class PlayerNode::FeedbackComponent2 final : public SceneComponent
 {
 public:
-	PlayerNodeFeedbackComponent2(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	FeedbackComponent2()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	Error update(Second, Second, Bool& updated) override
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = m_node->getComponent<PlayerControllerComponent>();
-		MoveComponent& move = m_node->getComponent<MoveComponent>();
-		const Input& in = m_node->getSceneGraph().getInput();
+		PlayerControllerComponent& playerc = node.getComponent<PlayerControllerComponent>();
+		MoveComponent& move = node.getComponent<MoveComponent>();
+		const Input& in = node.getSceneGraph().getInput();
 
 		const F32 speed = 0.5;
 
@@ -131,13 +131,13 @@ Error PlayerNode::init(const Vec4& position)
 	newComponent<PlayerControllerComponent>(m_player);
 
 	// Feedback component
-	newComponent<PlayerNodeFeedbackComponent>();
+	newComponent<FeedbackComponent>();
 
 	// Move component
 	newComponent<MoveComponent>();
 
 	// Feedback component #2
-	newComponent<PlayerNodeFeedbackComponent2>();
+	newComponent<FeedbackComponent2>();
 
 	return Error::NONE;
 }

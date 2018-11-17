@@ -17,20 +17,22 @@ namespace anki
 class PhysicsDebugNode::MyRenderComponent : public RenderComponent
 {
 public:
+	SceneNode* m_node;
 	DebugDrawer m_dbgDrawer;
 	PhysicsDebugDrawer m_physDbgDrawer;
 
 	MyRenderComponent(SceneNode* node)
-		: RenderComponent(node)
+		: m_node(node)
 		, m_physDbgDrawer(&m_dbgDrawer)
 	{
+		ANKI_ASSERT(node);
 		m_castsShadow = false;
 		m_isForwardShading = false;
 	}
 
 	ANKI_USE_RESULT Error init()
 	{
-		return m_dbgDrawer.init(&getSceneGraph().getResourceManager());
+		return m_dbgDrawer.init(&m_node->getSceneGraph().getResourceManager());
 	}
 
 	void setupRenderableQueueElement(RenderableQueueElement& el) const override
@@ -54,7 +56,7 @@ public:
 			m_dbgDrawer.prepareFrame(&ctx);
 			m_dbgDrawer.setViewProjectionMatrix(ctx.m_viewProjectionMatrix);
 			m_dbgDrawer.setModelMatrix(Mat4::getIdentity());
-			m_physDbgDrawer.drawWorld(getSceneGraph().getPhysicsWorld());
+			m_physDbgDrawer.drawWorld(m_node->getSceneGraph().getPhysicsWorld());
 			m_dbgDrawer.finishFrame();
 		}
 	}
@@ -66,10 +68,10 @@ PhysicsDebugNode::~PhysicsDebugNode()
 
 Error PhysicsDebugNode::init()
 {
-	MyRenderComponent* rcomp = newComponent<MyRenderComponent>();
+	MyRenderComponent* rcomp = newComponent<MyRenderComponent>(this);
 	ANKI_CHECK(rcomp->init());
 
-	ObbSpatialComponent* scomp = newComponent<ObbSpatialComponent>();
+	ObbSpatialComponent* scomp = newComponent<ObbSpatialComponent>(this);
 	Vec3 center = (getSceneGraph().getSceneMax() + getSceneGraph().getSceneMin()) / 2.0f;
 	scomp->m_obb.setCenter(center.xyz0());
 	scomp->m_obb.setExtend((getSceneGraph().getSceneMax() - center).xyz0());

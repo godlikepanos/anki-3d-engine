@@ -15,23 +15,23 @@ namespace anki
 {
 
 /// Body feedback component.
-class BodyFeedbackComponent : public SceneComponent
+class BodyNode::FeedbackComponent : public SceneComponent
 {
 public:
-	BodyFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	FeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
 
-		BodyComponent& bodyc = m_node->getComponent<BodyComponent>();
+		BodyComponent& bodyc = node.getComponent<BodyComponent>();
 
-		if(bodyc.getTimestamp() == m_node->getGlobalTimestamp())
+		if(bodyc.getTimestamp() == node.getGlobalTimestamp())
 		{
-			MoveComponent& move = m_node->getComponent<MoveComponent>();
+			MoveComponent& move = node.getComponent<MoveComponent>();
 			move.setLocalTransform(bodyc.getTransform());
 		}
 
@@ -61,13 +61,13 @@ Error BodyNode::init(const CString& resourceFname)
 	m_body->setUserData(this);
 
 	// Joint component
-	newComponent<JointComponent>();
+	newComponent<JointComponent>(this);
 
 	// Body component
 	newComponent<BodyComponent>(m_body);
 
 	// Feedback component
-	newComponent<BodyFeedbackComponent>();
+	newComponent<FeedbackComponent>();
 
 	// Move component
 	newComponent<MoveComponent>(MoveComponentFlag::IGNORE_PARENT_TRANSFORM);

@@ -17,8 +17,6 @@ namespace anki
 /// Occluder scene node.
 class OccluderNode : public SceneNode
 {
-	friend class OccluderMoveFeedbackComponent;
-
 public:
 	OccluderNode(SceneGraph* scene, CString name)
 		: SceneNode(scene, name)
@@ -30,6 +28,8 @@ public:
 	ANKI_USE_RESULT Error init(const CString& meshFname);
 
 private:
+	class MoveFeedbackComponent;
+
 	DynamicArray<Vec3> m_vertsL; ///< Verts in local space.
 	DynamicArray<Vec3> m_vertsW; ///< Verts in world space.
 

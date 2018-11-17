@@ -15,13 +15,13 @@ SceneNode::SceneNode(SceneGraph* scene, CString name)
 {
 	if(name)
 	{
-		m_name.create(getSceneAllocator(), name);
+		m_name.create(getAllocator(), name);
 	}
 }
 
 SceneNode::~SceneNode()
 {
-	auto alloc = getSceneAllocator();
+	auto alloc = getAllocator();
 
 	auto it = m_components.getBegin();
 	auto end = m_components.getEnd();
@@ -58,7 +58,7 @@ Timestamp SceneNode::getGlobalTimestamp() const
 	return m_scene->getGlobalTimestamp();
 }
 
-SceneAllocator<U8> SceneNode::getSceneAllocator() const
+SceneAllocator<U8> SceneNode::getAllocator() const
 {
 	ANKI_ASSERT(m_scene);
 	return m_scene->getAllocator();

@@ -20,8 +20,9 @@ class ReflectionProbeComponent : public SceneComponent
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::REFLECTION_PROBE;
 
-	ReflectionProbeComponent(SceneNode* node)
-		: SceneComponent(CLASS_TYPE, node)
+	ReflectionProbeComponent(U64 uuid)
+		: SceneComponent(CLASS_TYPE)
+		, m_uuid(uuid)
 	{
 	}
 
@@ -62,7 +63,7 @@ public:
 		ANKI_ASSERT(m_pos > m_aabbMin && m_pos < m_aabbMax);
 		el.m_feedbackCallback = reflectionProbeQueueElementFeedbackCallback;
 		el.m_userData = const_cast<ReflectionProbeComponent*>(this);
-		el.m_uuid = getUuid();
+		el.m_uuid = m_uuid;
 		el.m_worldPosition = m_pos;
 		el.m_aabbMin = m_aabbMin;
 		el.m_aabbMax = m_aabbMax;
@@ -71,6 +72,7 @@ public:
 	}
 
 private:
+	U64 m_uuid;
 	Vec3 m_pos = Vec3(0.0f);
 	Vec3 m_aabbMin = Vec3(+1.0f);
 	Vec3 m_aabbMax = Vec3(-1.0f);

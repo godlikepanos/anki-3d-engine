@@ -9,8 +9,8 @@
 namespace anki
 {
 
-MoveComponent::MoveComponent(SceneNode* node, MoveComponentFlag flags)
-	: SceneComponent(CLASS_TYPE, node)
+MoveComponent::MoveComponent(MoveComponentFlag flags)
+	: SceneComponent(CLASS_TYPE)
 	, m_flags(flags)
 {
 	markForUpdate();
@@ -20,15 +20,9 @@ MoveComponent::~MoveComponent()
 {
 }
 
-Error MoveComponent::update(Second prevTime, Second crntTime, Bool& updated)
+Error MoveComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
 {
-	updated = updateWorldTransform(*m_node);
-
-	if(updated)
-	{
-		onMoveComponentUpdate(*m_node, prevTime, crntTime);
-	}
-
+	updated = updateWorldTransform(node);
 	return Error::NONE;
 }
 

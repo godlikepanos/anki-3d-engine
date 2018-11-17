@@ -18,23 +18,23 @@ const FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
 	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS;
 
 /// Feedback component
-class ReflectionProbeMoveFeedbackComponent : public SceneComponent
+class ReflectionProbeNode::MoveFeedbackComponent : public SceneComponent
 {
 public:
-	ReflectionProbeMoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	MoveFeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	Error update(Second, Second, Bool& updated) override
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = m_node->getComponent<MoveComponent>();
-		if(move.getTimestamp() == m_node->getGlobalTimestamp())
+		MoveComponent& move = node.getComponent<MoveComponent>();
+		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Move updated
-			ReflectionProbeNode& dnode = *static_cast<ReflectionProbeNode*>(m_node);
+			ReflectionProbeNode& dnode = static_cast<ReflectionProbeNode&>(node);
 			dnode.onMoveUpdate(move);
 		}
 
@@ -52,7 +52,7 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 	newComponent<MoveComponent>();
 
 	// Feedback component
-	newComponent<ReflectionProbeMoveFeedbackComponent>();
+	newComponent<MoveFeedbackComponent>();
 
 	// The frustum components
 	const F32 ang = toRad(90.0f);
@@ -81,7 +81,7 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, EFFECTIVE_DISTANCE);
 		m_cubeSides[i].m_frustum.resetTransform(m_cubeSides[i].m_localTrf);
 
-		FrustumComponent* frc = newComponent<FrustumComponent>(&m_cubeSides[i].m_frustum);
+		FrustumComponent* frc = newComponent<FrustumComponent>(this, &m_cubeSides[i].m_frustum);
 
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 	}
@@ -91,10 +91,10 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 	m_aabbMaxLSpace = aabbMaxLSpace.xyz();
 	m_spatialAabb.setMin(aabbMinLSpace);
 	m_spatialAabb.setMax(aabbMaxLSpace);
-	newComponent<SpatialComponent>(&m_spatialAabb);
+	newComponent<SpatialComponent>(this, &m_spatialAabb);
 
 	// Reflection probe comp
-	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>();
+	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>(getSceneGraph().getNewUuid());
 	reflc->setPosition(Vec4(0.0f));
 	reflc->setBoundingBox(aabbMinLSpace, aabbMaxLSpace);
 

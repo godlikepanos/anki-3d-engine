@@ -8,16 +8,18 @@
 namespace anki
 {
 
-LightComponent::LightComponent(SceneNode* node, LightComponentType type)
-	: SceneComponent(CLASS_TYPE, node)
+LightComponent::LightComponent(LightComponentType type, U64 uuid)
+	: SceneComponent(CLASS_TYPE)
+	, m_uuid(uuid)
 	, m_type(type)
 {
+	ANKI_ASSERT(m_uuid > 0);
 	setInnerAngle(toRad(45.0));
 	setOuterAngle(toRad(30.0));
 	m_radius = 1.0;
 }
 
-Error LightComponent::update(Second, Second, Bool& updated)
+Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
 {
 	updated = false;
 

@@ -14,19 +14,19 @@ namespace anki
 class FogDensityNode::FeedbackComponent : public SceneComponent
 {
 public:
-	FeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	FeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
 
-		const MoveComponent& movec = m_node->getComponent<MoveComponent>();
-		if(movec.getTimestamp() == m_node->getGlobalTimestamp())
+		const MoveComponent& movec = node.getComponent<MoveComponent>();
+		if(movec.getTimestamp() == node.getGlobalTimestamp())
 		{
-			static_cast<FogDensityNode*>(m_node)->moveUpdated(movec);
+			static_cast<FogDensityNode&>(node).moveUpdated(movec);
 		}
 
 		return Error::NONE;
@@ -40,7 +40,7 @@ FogDensityNode::FogDensityNode(SceneGraph* scene, CString name)
 	newComponent<MoveComponent>(MoveComponentFlag::NONE);
 	newComponent<FeedbackComponent>();
 	newComponent<FogDensityComponent>();
-	newComponent<SpatialComponent>(&m_spatialBox);
+	newComponent<SpatialComponent>(this, &m_spatialBox);
 }
 
 FogDensityNode::~FogDensityNode()

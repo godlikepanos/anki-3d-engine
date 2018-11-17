@@ -19,8 +19,6 @@ namespace anki
 /// Probe used in realtime reflections.
 class ReflectionProbeNode : public SceneNode
 {
-	friend class ReflectionProbeMoveFeedbackComponent;
-
 public:
 	const F32 FRUSTUM_NEAR_PLANE = 0.1f / 4.0f;
 	const F32 EFFECTIVE_DISTANCE = 256.0f;
@@ -37,6 +35,8 @@ public:
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
+	class MoveFeedbackComponent;
+
 	class CubeSide
 	{
 	public:

@@ -13,22 +13,22 @@ namespace anki
 {
 
 /// Feedback component.
-class OccluderMoveFeedbackComponent : public SceneComponent
+class OccluderNode::MoveFeedbackComponent : public SceneComponent
 {
 public:
-	OccluderMoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	MoveFeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& move = m_node->getComponent<MoveComponent>();
-		if(move.getTimestamp() == m_node->getGlobalTimestamp())
+		MoveComponent& move = node.getComponent<MoveComponent>();
+		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
-			OccluderNode& mnode = *static_cast<OccluderNode*>(m_node);
+			OccluderNode& mnode = static_cast<OccluderNode&>(node);
 			mnode.onMoveComponentUpdate(move);
 		}
 
@@ -38,8 +38,8 @@ public:
 
 OccluderNode::~OccluderNode()
 {
-	m_vertsL.destroy(getSceneAllocator());
-	m_vertsW.destroy(getSceneAllocator());
+	m_vertsL.destroy(getAllocator());
+	m_vertsW.destroy(getAllocator());
 }
 
 Error OccluderNode::init(const CString& meshFname)
@@ -49,11 +49,11 @@ Error OccluderNode::init(const CString& meshFname)
 	ANKI_CHECK(loader.load(meshFname));
 
 	const U indexCount = loader.getHeader().m_totalIndexCount;
-	m_vertsL.create(getSceneAllocator(), indexCount);
-	m_vertsW.create(getSceneAllocator(), indexCount);
+	m_vertsL.create(getAllocator(), indexCount);
+	m_vertsW.create(getAllocator(), indexCount);
 
-	DynamicArrayAuto<Vec3> positions(getSceneAllocator());
-	DynamicArrayAuto<U32> indices(getSceneAllocator());
+	DynamicArrayAuto<Vec3> positions(getAllocator());
+	DynamicArrayAuto<U32> indices(getAllocator());
 	ANKI_CHECK(loader.storeIndicesAndPosition(indices, positions));
 
 	for(U i = 0; i < indices.getSize(); ++i)
@@ -63,7 +63,7 @@ Error OccluderNode::init(const CString& meshFname)
 
 	// Create the components
 	newComponent<MoveComponent>();
-	newComponent<OccluderMoveFeedbackComponent>();
+	newComponent<MoveFeedbackComponent>();
 	newComponent<OccluderComponent>();
 
 	return Error::NONE;

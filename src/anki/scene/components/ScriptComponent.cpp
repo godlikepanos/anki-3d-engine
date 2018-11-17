@@ -14,8 +14,10 @@ namespace anki
 {
 
 ScriptComponent::ScriptComponent(SceneNode* node)
-	: SceneComponent(CLASS_TYPE, node)
+	: SceneComponent(CLASS_TYPE)
+	, m_node(node)
 {
+	ANKI_ASSERT(node);
 }
 
 ScriptComponent::~ScriptComponent()
@@ -25,10 +27,10 @@ ScriptComponent::~ScriptComponent()
 Error ScriptComponent::load(CString fname)
 {
 	// Load
-	ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(fname, m_script));
+	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(fname, m_script));
 
 	// Create the env
-	ANKI_CHECK(getSceneGraph().getScriptManager().newScriptEnvironment(m_env));
+	ANKI_CHECK(m_node->getSceneGraph().getScriptManager().newScriptEnvironment(m_env));
 
 	// Exec the script
 	ANKI_CHECK(m_env->evalString(m_script->getSource()));
@@ -36,8 +38,9 @@ Error ScriptComponent::load(CString fname)
 	return Error::NONE;
 }
 
-Error ScriptComponent::update(Second prevTime, Second crntTime, Bool& updated)
+Error ScriptComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
 {
+	ANKI_ASSERT(&node == m_node);
 	updated = false;
 	lua_State* lua = &m_env->getLuaState();
 
@@ -45,7 +48,7 @@ Error ScriptComponent::update(Second prevTime, Second crntTime, Bool& updated)
 	lua_getglobal(lua, "update");
 
 	// Push args
-	LuaBinder::pushVariableToTheStack(lua, m_node);
+	LuaBinder::pushVariableToTheStack(lua, &node);
 	lua_pushnumber(lua, prevTime);
 	lua_pushnumber(lua, crntTime);
 

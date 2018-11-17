@@ -14,7 +14,6 @@
 #include <anki/scene/StaticCollisionNode.h>
 #include <anki/scene/BodyNode.h>
 #include <anki/scene/ReflectionProbeNode.h>
-#include <anki/scene/ReflectionProxyNode.h>
 #include <anki/scene/PlayerNode.h>
 #include <anki/scene/OccluderNode.h>
 #include <anki/scene/DecalNode.h>
@@ -35,7 +34,6 @@
 #include <anki/scene/components/LightComponent.h>
 #include <anki/scene/components/BodyComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
-#include <anki/scene/components/ReflectionProxyComponent.h>
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/components/JointComponent.h>
 #include <anki/scene/components/TriggerComponent.h>

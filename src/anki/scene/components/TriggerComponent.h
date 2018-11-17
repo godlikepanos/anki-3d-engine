@@ -24,8 +24,6 @@ public:
 
 	~TriggerComponent();
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
-
 	/// Process a contact.
 	virtual void processContact(SceneNode& node);
 
@@ -37,6 +35,7 @@ public:
 private:
 	class MyPhysicsTriggerProcessContactCallback;
 
+	SceneNode* m_node;
 	PhysicsTriggerPtr m_trigger;
 	DynamicArray<SceneNode*> m_contactNodes;
 	Timestamp m_contactNodesArrayTimestamp = 0;

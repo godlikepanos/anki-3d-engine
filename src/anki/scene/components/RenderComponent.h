@@ -23,8 +23,8 @@ class RenderComponent : public SceneComponent
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::RENDER;
 
-	RenderComponent(SceneNode* node)
-		: SceneComponent(CLASS_TYPE, node)
+	RenderComponent()
+		: SceneComponent(CLASS_TYPE)
 	{
 	}
 
@@ -106,6 +106,16 @@ public:
 		return *m_mtl;
 	}
 
+	const SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+
+	SceneNode& getSceneNode()
+	{
+		return *m_node;
+	}
+
 	/// Iterate variables using a lambda
 	template<typename Func>
 	ANKI_USE_RESULT Error iterateVariables(Func func)
@@ -127,6 +137,7 @@ public:
 		StagingGpuMemoryManager& alloc) const;
 
 private:
+	SceneNode* m_node;
 	Variables m_vars;
 	MaterialResourcePtr m_mtl;
 };

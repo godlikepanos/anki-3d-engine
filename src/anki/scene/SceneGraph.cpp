@@ -187,6 +187,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	m_stats.m_updateTime = HighRezTimer::getCurrentTime();
 
 	m_timestamp = *m_globalTimestamp;
+	ANKI_ASSERT(m_timestamp > 0);
 
 	// Reset the framepool
 	m_frameAlloc.getMemoryPool().reset();
@@ -254,11 +255,17 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	Error err = Error::NONE;
 
 	// Components update
-	Timestamp componentTimestam = 0;
+	Timestamp componentTimestamp = 0;
 	err = node.iterateComponents([&](SceneComponent& comp) -> Error {
 		Bool updated = false;
-		Error e = comp.updateReal(prevTime, crntTime, updated);
-		componentTimestam = max(componentTimestam, comp.getTimestamp());
+		Error e = comp.update(node, prevTime, crntTime, updated);
+
+		if(updated)
+		{
+			comp.setTimestamp(node.getSceneGraph().m_timestamp);
+			componentTimestamp = max(componentTimestamp, node.getSceneGraph().m_timestamp);
+			ANKI_ASSERT(componentTimestamp > 0);
+		}
 
 		return e;
 	});
@@ -273,7 +280,16 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	// Frame update
 	if(!err)
 	{
-		err = node.frameUpdateComplete(prevTime, crntTime, componentTimestam);
+		if(componentTimestamp != 0)
+		{
+			node.setComponentMaxTimestamp(componentTimestamp);
+		}
+		else
+		{
+			// No components or nothing updated, don't change the timestamp
+		}
+
+		err = node.frameUpdate(prevTime, crntTime);
 	}
 
 	return err;

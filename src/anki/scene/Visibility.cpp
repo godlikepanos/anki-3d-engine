@@ -9,7 +9,6 @@
 #include <anki/scene/components/LensFlareComponent.h>
 #include <anki/scene/components/RenderComponent.h>
 #include <anki/scene/components/ReflectionProbeComponent.h>
-#include <anki/scene/components/ReflectionProxyComponent.h>
 #include <anki/scene/components/OccluderComponent.h>
 #include <anki/scene/components/DecalComponent.h>
 #include <anki/scene/components/MoveComponent.h>
@@ -217,9 +216,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	const Bool wantsReflectionProbes =
 		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::REFLECTION_PROBES);
 
-	const Bool wantsReflectionProxies =
-		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES);
-
 	const Bool wantsDecals = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::DECALS);
 
 	const Bool wantsFogDensityComponents =
@@ -270,12 +266,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 		const ReflectionProbeComponent* reflc = nullptr;
 		if(wantsReflectionProbes && (reflc = node.tryGetComponent<ReflectionProbeComponent>()))
-		{
-			wantNode = true;
-		}
-
-		const ReflectionProxyComponent* proxyc = nullptr;
-		if(wantsReflectionProxies && (proxyc = node.tryGetComponent<ReflectionProxyComponent>()))
 		{
 			wantNode = true;
 		}
@@ -453,11 +443,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			{
 				el->m_renderQueues = {{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
 			}
-		}
-
-		if(proxyc)
-		{
-			ANKI_ASSERT(!"TODO");
 		}
 
 		if(decalc)

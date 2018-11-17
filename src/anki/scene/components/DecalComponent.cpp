@@ -11,8 +11,10 @@ namespace anki
 {
 
 DecalComponent::DecalComponent(SceneNode* node)
-	: SceneComponent(CLASS_TYPE, node)
+	: SceneComponent(CLASS_TYPE)
+	, m_node(node)
 {
+	ANKI_ASSERT(node);
 }
 
 DecalComponent::~DecalComponent()
@@ -23,7 +25,7 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 {
 	Layer& l = m_layers[type];
 
-	ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(texAtlasFname, l.m_atlas));
+	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(texAtlasFname, l.m_atlas));
 
 	ANKI_CHECK(l.m_atlas->getSubTextureInfo(texAtlasSubtexName, &l.m_uv[0]));
 

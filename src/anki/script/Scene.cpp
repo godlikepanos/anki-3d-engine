@@ -2962,75 +2962,6 @@ static inline void wrapReflectionProbeNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProxyNode = {2307826176097073810,
-	"ReflectionProxyNode",
-	LuaUserData::computeSizeForGarbageCollected<ReflectionProxyNode>(),
-	nullptr,
-	nullptr};
-
-template<>
-const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<ReflectionProxyNode>()
-{
-	return luaUserDataTypeInfoReflectionProxyNode;
-}
-
-/// Pre-wrap method ReflectionProxyNode::getSceneNodeBase.
-static inline int pwrapReflectionProxyNodegetSceneNodeBase(lua_State* l)
-{
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoReflectionProxyNode, ud))
-	{
-		return -1;
-	}
-
-	ReflectionProxyNode* self = ud->getData<ReflectionProxyNode>();
-
-	// Call the method
-	SceneNode& ret = *self;
-
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
-	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
-
-	return 1;
-}
-
-/// Wrap method ReflectionProxyNode::getSceneNodeBase.
-static int wrapReflectionProxyNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapReflectionProxyNodegetSceneNodeBase(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
-/// Wrap class ReflectionProxyNode.
-static inline void wrapReflectionProxyNode(lua_State* l)
-{
-	LuaBinder::createClass(l, &luaUserDataTypeInfoReflectionProxyNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProxyNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
 LuaUserDataTypeInfo luaUserDataTypeInfoOccluderNode = {-6885028590097645115,
 	"OccluderNode",
 	LuaUserData::computeSizeForGarbageCollected<OccluderNode>(),
@@ -3789,74 +3720,6 @@ static int wrapSceneGraphnewReflectionProbeNode(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method SceneGraph::newReflectionProxyNode.
-static inline int pwrapSceneGraphnewReflectionProxyNode(lua_State* l)
-{
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
-	{
-		return -1;
-	}
-
-	SceneGraph* self = ud->getData<SceneGraph>();
-
-	// Pop arguments
-	const char* arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	const char* arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	ReflectionProxyNode* ret = newSceneNode<ReflectionProxyNode>(self, arg0, arg1);
-
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-
-	voidp = lua_newuserdata(l, sizeof(LuaUserData));
-	ud = static_cast<LuaUserData*>(voidp);
-	luaL_setmetatable(l, "ReflectionProxyNode");
-	extern LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProxyNode;
-	ud->initPointed(&luaUserDataTypeInfoReflectionProxyNode, const_cast<ReflectionProxyNode*>(ret));
-
-	return 1;
-}
-
-/// Wrap method SceneGraph::newReflectionProxyNode.
-static int wrapSceneGraphnewReflectionProxyNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewReflectionProxyNode(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
 /// Pre-wrap method SceneGraph::newOccluderNode.
 static inline int pwrapSceneGraphnewOccluderNode(lua_State* l)
 {
@@ -4118,7 +3981,6 @@ static inline void wrapSceneGraph(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newParticleEmitterNode", wrapSceneGraphnewParticleEmitterNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProbeNode", wrapSceneGraphnewReflectionProbeNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProxyNode", wrapSceneGraphnewReflectionProxyNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newOccluderNode", wrapSceneGraphnewOccluderNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newDecalNode", wrapSceneGraphnewDecalNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newTriggerNode", wrapSceneGraphnewTriggerNode);
@@ -4528,7 +4390,6 @@ void wrapModuleScene(lua_State* l)
 	wrapStaticCollisionNode(l);
 	wrapParticleEmitterNode(l);
 	wrapReflectionProbeNode(l);
-	wrapReflectionProxyNode(l);
 	wrapOccluderNode(l);
 	wrapDecalNode(l);
 	wrapTriggerNode(l);

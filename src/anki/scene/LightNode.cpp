@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/LightNode.h>
+#include <anki/scene/SceneGraph.h>
 #include <anki/scene/components/LensFlareComponent.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
@@ -16,18 +17,18 @@ namespace anki
 class LightNode::MovedFeedbackComponent : public SceneComponent
 {
 public:
-	MovedFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	MovedFeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	Error update(Second, Second, Bool& updated) override
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
-		LightNode& lnode = *static_cast<LightNode*>(m_node);
+		LightNode& lnode = static_cast<LightNode&>(node);
 
-		const MoveComponent& move = m_node->getComponentAt<MoveComponent>(0);
-		if(move.getTimestamp() == m_node->getGlobalTimestamp())
+		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
+		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Move updated
 			lnode.onMoveUpdate(move);
@@ -41,18 +42,18 @@ public:
 class LightNode::LightChangedFeedbackComponent : public SceneComponent
 {
 public:
-	LightChangedFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	LightChangedFeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	Error update(Second, Second, Bool& updated) override
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
-		LightNode& lnode = *static_cast<LightNode*>(m_node);
+		LightNode& lnode = static_cast<LightNode&>(node);
 
-		LightComponent& light = m_node->getComponentAt<LightComponent>(getIndex() - 1);
-		if(light.getTimestamp() == m_node->getGlobalTimestamp())
+		LightComponent& light = node.getComponent<LightComponent>();
+		if(light.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Shape updated
 			lnode.onShapeUpdate(light);
@@ -80,13 +81,13 @@ Error LightNode::init(LightComponentType type, CollisionShape* shape)
 	newComponent<MovedFeedbackComponent>();
 
 	// Light component
-	newComponent<LightComponent>(type);
+	newComponent<LightComponent>(type, getSceneGraph().getNewUuid());
 
 	// Feedback component
 	newComponent<LightChangedFeedbackComponent>();
 
 	// Spatial component
-	newComponent<SpatialComponent>(shape);
+	newComponent<SpatialComponent>(this, shape);
 
 	return Error::NONE;
 }
@@ -149,7 +150,7 @@ Error LightNode::loadLensFlare(const CString& filename)
 {
 	ANKI_ASSERT(tryGetComponent<LensFlareComponent>() == nullptr);
 
-	LensFlareComponent* flareComp = newComponent<LensFlareComponent>();
+	LensFlareComponent* flareComp = newComponent<LensFlareComponent>(this);
 
 	Error err = flareComp->init(filename);
 	if(err)
@@ -168,7 +169,7 @@ PointLightNode::PointLightNode(SceneGraph* scene, CString name)
 
 PointLightNode::~PointLightNode()
 {
-	m_shadowData.destroy(getSceneAllocator());
+	m_shadowData.destroy(getAllocator());
 }
 
 Error PointLightNode::init()
@@ -214,7 +215,7 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	if(getComponent<LightComponent>().getShadowEnabled() && m_shadowData.isEmpty())
 	{
-		m_shadowData.create(getSceneAllocator(), 6);
+		m_shadowData.create(getAllocator(), 6);
 
 		const F32 ang = toRad(90.0);
 		const F32 dist = m_sphereW.getRadius();
@@ -244,7 +245,7 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 			trf.setOrigin(origin);
 			m_shadowData[i].m_frustum.resetTransform(trf);
 
-			newComponent<FrustumComponent>(&m_shadowData[i].m_frustum);
+			newComponent<FrustumComponent>(this, &m_shadowData[i].m_frustum);
 		}
 	}
 
@@ -262,7 +263,7 @@ Error SpotLightNode::init()
 {
 	ANKI_CHECK(LightNode::init(LightComponentType::SPOT, &m_frustum));
 
-	FrustumComponent* fr = newComponent<FrustumComponent>(&m_frustum);
+	FrustumComponent* fr = newComponent<FrustumComponent>(this, &m_frustum);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 
 	return Error::NONE;

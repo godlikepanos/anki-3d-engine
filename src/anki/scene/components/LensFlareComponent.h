@@ -73,13 +73,6 @@ public:
 		return m_tex->getGrTexture();
 	}
 
-	/// Implements SceneComponent::update.
-	Error update(Second prevTime, Second crntTime, Bool& updated) override
-	{
-		updated = false;
-		return Error::NONE;
-	}
-
 	void setupLensFlareQueueElement(LensFlareQueueElement& el) const
 	{
 		el.m_worldPosition = m_worldPosition.xyz();
@@ -91,6 +84,7 @@ public:
 	}
 
 private:
+	SceneNode* m_node;
 	TextureResourcePtr m_tex; ///< Array of textures.
 
 	Vec4 m_colorMul = Vec4(1.0); ///< Color multiplier.

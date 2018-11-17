@@ -74,7 +74,7 @@ public:
 	}
 
 	/// Implements SceneComponent::update.
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
 		updated = m_markedForUpdate;
 
@@ -154,6 +154,7 @@ private:
 		F32 m_blendFactor = 0.0f;
 	};
 
+	SceneNode* m_node;
 	Array<Layer, U(LayerType::COUNT)> m_layers;
 	Mat4 m_biasProjViewMat;
 	Vec3 m_sizes = Vec3(1.0f);

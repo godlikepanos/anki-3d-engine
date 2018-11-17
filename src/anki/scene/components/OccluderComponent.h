@@ -22,8 +22,8 @@ public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::OCCLUDER;
 
 	/// @note The component won't own the triangles.
-	OccluderComponent(SceneNode* node)
-		: SceneComponent(CLASS_TYPE, node)
+	OccluderComponent()
+		: SceneComponent(CLASS_TYPE)
 	{
 	}
 

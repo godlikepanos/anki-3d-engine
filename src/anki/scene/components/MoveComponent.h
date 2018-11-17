@@ -39,9 +39,8 @@ public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::MOVE;
 
 	/// The one and only constructor
-	/// @param node The scene node to steal it's allocators
 	/// @param flags The flags
-	MoveComponent(SceneNode* node, MoveComponentFlag flags = MoveComponentFlag::NONE);
+	MoveComponent(MoveComponentFlag flags = MoveComponentFlag::NONE);
 
 	~MoveComponent();
 
@@ -99,20 +98,7 @@ public:
 		return m_prevWTrf;
 	}
 
-	/// Called when there is an update in the world transformation.
-	virtual ANKI_USE_RESULT Error onMoveComponentUpdate(SceneNode& node, Second prevTime, Second crntTime)
-	{
-		return Error::NONE;
-	}
-
-	/// @name SceneComponent overrides
-	/// @{
-
-	/// Update self and children world transform recursively, if root node. Need to call this at every frame.
-	/// @note Don't update if child because we start from roots and go to children and we don't want a child to be
-	///       updated before the parent
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
-	/// @}
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
 	/// @name Mess with the local transform
 	/// @{

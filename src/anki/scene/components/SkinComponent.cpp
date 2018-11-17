@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/components/SkinComponent.h>
+#include <anki/scene/SceneNode.h>
 #include <anki/resource/SkeletonResource.h>
 #include <anki/resource/AnimationResource.h>
 #include <anki/util/BitSet.h>
@@ -12,10 +13,13 @@ namespace anki
 {
 
 SkinComponent::SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton)
-	: SceneComponent(CLASS_TYPE, node)
+	: SceneComponent(CLASS_TYPE)
+	, m_node(node)
 	, m_skeleton(skeleton)
 {
-	m_boneTrfs.create(getAllocator(), m_skeleton->getBones().getSize());
+	ANKI_ASSERT(node);
+
+	m_boneTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize());
 	for(Mat4& trf : m_boneTrfs)
 	{
 		trf.setIdentity();
@@ -24,7 +28,7 @@ SkinComponent::SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton)
 
 SkinComponent::~SkinComponent()
 {
-	m_boneTrfs.destroy(getAllocator());
+	m_boneTrfs.destroy(m_node->getAllocator());
 }
 
 void SkinComponent::playAnimation(U track, AnimationResourcePtr anim, Second startTime, Bool repeat)
@@ -34,8 +38,10 @@ void SkinComponent::playAnimation(U track, AnimationResourcePtr anim, Second sta
 	m_tracks[track].m_repeat = repeat;
 }
 
-Error SkinComponent::update(Second prevTime, Second crntTime, Bool& updated)
+Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
 {
+	ANKI_ASSERT(&node == m_node);
+
 	updated = false;
 	const Second timeDiff = crntTime - prevTime;
 

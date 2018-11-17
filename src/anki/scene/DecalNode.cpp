@@ -12,23 +12,23 @@ namespace anki
 {
 
 /// Decal feedback component.
-class DecalMoveFeedbackComponent : public SceneComponent
+class DecalNode::MoveFeedbackComponent : public SceneComponent
 {
 public:
-	DecalMoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	MoveFeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
 
-		MoveComponent& movec = m_node->getComponent<MoveComponent>();
+		MoveComponent& movec = node.getComponent<MoveComponent>();
 
-		if(movec.getTimestamp() == m_node->getGlobalTimestamp())
+		if(movec.getTimestamp() == node.getGlobalTimestamp())
 		{
-			static_cast<DecalNode*>(m_node)->onMove(movec);
+			static_cast<DecalNode&>(node).onMove(movec);
 		}
 
 		return Error::NONE;
@@ -36,23 +36,23 @@ public:
 };
 
 /// Decal feedback component.
-class DecalShapeFeedbackComponent : public SceneComponent
+class DecalNode::ShapeFeedbackComponent : public SceneComponent
 {
 public:
-	DecalShapeFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	ShapeFeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
 
-		DecalComponent& decalc = m_node->getComponent<DecalComponent>();
+		DecalComponent& decalc = node.getComponent<DecalComponent>();
 
-		if(decalc.getTimestamp() == m_node->getGlobalTimestamp())
+		if(decalc.getTimestamp() == node.getGlobalTimestamp())
 		{
-			static_cast<DecalNode*>(m_node)->onDecalUpdated();
+			static_cast<DecalNode&>(node).onDecalUpdated();
 		}
 
 		return Error::NONE;
@@ -66,10 +66,10 @@ DecalNode::~DecalNode()
 Error DecalNode::init()
 {
 	newComponent<MoveComponent>();
-	newComponent<DecalMoveFeedbackComponent>();
-	DecalComponent* decalc = newComponent<DecalComponent>();
-	newComponent<DecalShapeFeedbackComponent>();
-	newComponent<SpatialComponent>(&decalc->getBoundingVolume());
+	newComponent<MoveFeedbackComponent>();
+	DecalComponent* decalc = newComponent<DecalComponent>(this);
+	newComponent<ShapeFeedbackComponent>();
+	newComponent<SpatialComponent>(this, &decalc->getBoundingVolume());
 
 	return Error::NONE;
 }

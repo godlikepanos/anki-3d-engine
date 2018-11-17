@@ -44,6 +44,9 @@ public:
 	void lookAtPoint(const Vec3& point);
 
 private:
+	class MoveFeedbackComponent;
+	class FrustumFeedbackComponent;
+
 	Type m_type;
 
 	/// Called when moved.

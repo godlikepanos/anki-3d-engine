@@ -158,7 +158,7 @@ PhysicsWorld::~PhysicsWorld()
 	m_collisionConfig.destroy();
 	m_broadphase.destroy();
 	m_gpc.destroy();
-	m_alloc.destroy(m_filterCallback);
+	m_alloc.deleteInstance(m_filterCallback);
 
 	gAlloc = nullptr;
 }

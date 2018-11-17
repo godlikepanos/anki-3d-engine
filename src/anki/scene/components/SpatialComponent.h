@@ -38,6 +38,16 @@ public:
 		return m_aabb;
 	}
 
+	const SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+
+	SceneNode& getSceneNode()
+	{
+		return *m_node;
+	}
+
 	/// Get optimal collision shape for visibility tests
 	const CollisionShape& getVisibilityCollisionShape()
 	{
@@ -73,16 +83,17 @@ public:
 
 	/// @name SceneComponent overrides
 	/// @{
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override;
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 	/// @}
 
 private:
-	Bool8 m_markedForUpdate = false;
-	Bool8 m_placed = false;
-
+	SceneNode* m_node;
 	const CollisionShape* m_shape;
 	Aabb m_aabb; ///< A faster shape
 	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0);
+
+	Bool8 m_markedForUpdate = false;
+	Bool8 m_placed = false;
 
 	OctreePlaceable m_octreeInfo;
 };

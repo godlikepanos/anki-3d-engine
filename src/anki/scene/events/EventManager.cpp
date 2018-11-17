@@ -32,7 +32,7 @@ Error EventManager::init(SceneGraph* scene)
 	return Error::NONE;
 }
 
-SceneAllocator<U8> EventManager::getSceneAllocator() const
+SceneAllocator<U8> EventManager::getAllocator() const
 {
 	return m_scene->getAllocator();
 }
@@ -127,7 +127,7 @@ void EventManager::markEventForDeletion(Event* event)
 
 void EventManager::deleteEventsMarkedForDeletion()
 {
-	SceneAllocator<U8> alloc = getSceneAllocator();
+	SceneAllocator<U8> alloc = getAllocator();
 
 	// Gather events for deletion
 	while(!m_eventsMarkedForDeletion.isEmpty())

@@ -208,11 +208,6 @@ public:
 class ParticleEmitterNode::MyRenderComponent : public MaterialRenderComponent
 {
 public:
-	const ParticleEmitterNode& getNode() const
-	{
-		return static_cast<const ParticleEmitterNode&>(getSceneNode());
-	}
-
 	MyRenderComponent(SceneNode* node)
 		: MaterialRenderComponent(
 			  node, static_cast<ParticleEmitterNode*>(node)->m_particleEmitterResource->getMaterial())
@@ -221,7 +216,7 @@ public:
 
 	void setupRenderableQueueElement(RenderableQueueElement& el) const override
 	{
-		getNode().setupRenderableQueueElement(el);
+		static_cast<const ParticleEmitterNode&>(getSceneNode()).setupRenderableQueueElement(el);
 	}
 };
 
@@ -229,19 +224,19 @@ public:
 class ParticleEmitterNode::MoveFeedbackComponent : public SceneComponent
 {
 public:
-	MoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponentType::NONE, node)
+	MoveFeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
 	{
 	}
 
-	ANKI_USE_RESULT Error update(Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false; // Don't care about updates for this component
 
-		MoveComponent& move = m_node->getComponent<MoveComponent>();
-		if(move.getTimestamp() == m_node->getGlobalTimestamp())
+		MoveComponent& move = node.getComponent<MoveComponent>();
+		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
-			static_cast<ParticleEmitterNode*>(m_node)->onMoveComponentUpdate(move);
+			static_cast<ParticleEmitterNode&>(node).onMoveComponentUpdate(move);
 		}
 
 		return Error::NONE;
@@ -258,10 +253,10 @@ ParticleEmitterNode::~ParticleEmitterNode()
 	// Delete simple particles
 	for(ParticleBase* part : m_particles)
 	{
-		getSceneAllocator().deleteInstance(part);
+		getAllocator().deleteInstance(part);
 	}
 
-	m_particles.destroy(getSceneAllocator());
+	m_particles.destroy(getAllocator());
 }
 
 Error ParticleEmitterNode::init(const CString& filename)
@@ -276,10 +271,10 @@ Error ParticleEmitterNode::init(const CString& filename)
 	newComponent<MoveFeedbackComponent>();
 
 	// Spatial component
-	newComponent<SpatialComponent>(&m_obb);
+	newComponent<SpatialComponent>(this, &m_obb);
 
 	// Render component
-	newComponent<MyRenderComponent>();
+	newComponent<MyRenderComponent>(this);
 
 	// Other
 	m_obb.setCenter(Vec4(0.0));
@@ -378,13 +373,13 @@ void ParticleEmitterNode::createParticlesPhysicsSimulation(SceneGraph* scene)
 	PhysicsBodyInitInfo binit;
 	binit.m_shape = collisionShape;
 
-	m_particles.create(getSceneAllocator(), m_maxNumOfParticles);
+	m_particles.create(getAllocator(), m_maxNumOfParticles);
 
 	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
 		binit.m_mass = getRandom(m_particle.m_minMass, m_particle.m_maxMass);
 
-		PhysParticle* part = getSceneAllocator().newInstance<PhysParticle>(binit, this);
+		PhysParticle* part = getAllocator().newInstance<PhysParticle>(binit, this);
 
 		m_particles[i] = part;
 	}
@@ -392,11 +387,11 @@ void ParticleEmitterNode::createParticlesPhysicsSimulation(SceneGraph* scene)
 
 void ParticleEmitterNode::createParticlesSimpleSimulation()
 {
-	m_particles.create(getSceneAllocator(), m_maxNumOfParticles);
+	m_particles.create(getAllocator(), m_maxNumOfParticles);
 
 	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
-		ParticleSimple* part = getSceneAllocator().newInstance<ParticleSimple>();
+		ParticleSimple* part = getAllocator().newInstance<ParticleSimple>();
 
 		m_particles[i] = part;
 	}
