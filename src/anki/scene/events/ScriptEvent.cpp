@@ -29,7 +29,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 	Event::init(startTime, duration);
 
 	// Create the env
-	ANKI_CHECK(getSceneGraph().getScriptManager().newScriptEnvironment(m_env));
+	ANKI_CHECK(m_env.init(&getSceneGraph().getScriptManager()));
 
 	// Do the rest
 	StringAuto extension(getAllocator());
@@ -41,7 +41,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 		ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(script, m_scriptRsrc));
 
 		// Exec the script
-		ANKI_CHECK(m_env->evalString(m_scriptRsrc->getSource()));
+		ANKI_CHECK(m_env.evalString(m_scriptRsrc->getSource()));
 	}
 	else
 	{
@@ -49,7 +49,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 		m_script.create(getAllocator(), script);
 
 		// Exec the script
-		ANKI_CHECK(m_env->evalString(m_script.toCString()));
+		ANKI_CHECK(m_env.evalString(m_script.toCString()));
 	}
 
 	return Error::NONE;
@@ -57,7 +57,7 @@ Error ScriptEvent::init(Second startTime, Second duration, CString script)
 
 Error ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 {
-	lua_State* lua = &m_env->getLuaState();
+	lua_State* lua = &m_env.getLuaState();
 
 	// Push function name
 	lua_getglobal(lua, "update");
@@ -96,7 +96,7 @@ Error ScriptEvent::update(Second prevUpdateTime, Second crntTime)
 
 Error ScriptEvent::onKilled(Second prevUpdateTime, Second crntTime)
 {
-	lua_State* lua = &m_env->getLuaState();
+	lua_State* lua = &m_env.getLuaState();
 
 	// Push function name
 	lua_getglobal(lua, "onKilled");

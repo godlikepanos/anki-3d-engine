@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <anki/script/ScriptObject.h>
 #include <anki/script/LuaBinder.h>
 
 namespace anki
@@ -15,49 +14,60 @@ namespace anki
 /// @{
 
 /// A sandboxed LUA environment.
-class ScriptEnvironment : public ScriptObject
+class ScriptEnvironment
 {
 public:
-	ScriptEnvironment(ScriptManager* manager)
-		: ScriptObject(manager)
+	ScriptEnvironment()
 	{
 	}
 
-	~ScriptEnvironment();
+	~ScriptEnvironment()
+	{
+	}
 
-	Error init();
+	Error init(ScriptManager* manager);
 
 	/// Expose a variable to the scripting engine.
 	template<typename T>
 	void exposeVariable(const char* name, T* y)
 	{
-		LuaBinder::exposeVariable<T>(m_thread.m_luaState, name, y);
+		ANKI_ASSERT(isCreated());
+		LuaBinder::exposeVariable<T>(m_thread.getLuaState(), name, y);
 	}
 
 	/// Evaluate a string
 	ANKI_USE_RESULT Error evalString(const CString& str)
 	{
-		return LuaBinder::evalString(m_thread.m_luaState, str);
+		ANKI_ASSERT(isCreated());
+		return LuaBinder::evalString(m_thread.getLuaState(), str);
 	}
 
 	void serializeGlobals(LuaBinderSerializeGlobalsCallback& callback)
 	{
-		LuaBinder::serializeGlobals(m_thread.m_luaState, callback);
+		ANKI_ASSERT(isCreated());
+		LuaBinder::serializeGlobals(m_thread.getLuaState(), callback);
 	}
 
 	void deserializeGlobals(const void* data, PtrSize dataSize)
 	{
-		LuaBinder::deserializeGlobals(m_thread.m_luaState, data, dataSize);
+		ANKI_ASSERT(isCreated());
+		LuaBinder::deserializeGlobals(m_thread.getLuaState(), data, dataSize);
 	}
 
 	lua_State& getLuaState()
 	{
-		ANKI_ASSERT(m_thread.m_luaState);
-		return *m_thread.m_luaState;
+		ANKI_ASSERT(isCreated());
+		return *m_thread.getLuaState();
 	}
 
 private:
-	LuaThread m_thread;
+	ScriptManager* m_manager = nullptr;
+	LuaBinder m_thread;
+
+	Bool isCreated() const
+	{
+		return m_manager != nullptr;
+	}
 };
 /// @}
 

@@ -22,6 +22,8 @@ namespace anki
 
 // Forward
 class LuaUserData;
+class SceneGraph;
+class MainRenderer;
 
 /// @addtogroup script
 /// @{
@@ -129,40 +131,20 @@ private:
 	const LuaUserDataTypeInfo* m_info = nullptr;
 };
 
-/// An instance of the original lua state with its own state.
-class LuaThread : public NonCopyable
-{
-	friend class LuaBinder;
-
-public:
-	lua_State* m_luaState = nullptr;
-
-	LuaThread() = default;
-
-	LuaThread(LuaThread&& b)
-	{
-		*this = std::move(b);
-	}
-
-	~LuaThread()
-	{
-		ANKI_ASSERT(m_luaState == nullptr && "Forgot to deleteLuaThread");
-	}
-
-	LuaThread& operator=(LuaThread&& b)
-	{
-		ANKI_ASSERT(m_luaState == nullptr);
-		m_luaState = b.m_luaState;
-		b.m_luaState = nullptr;
-		return *this;
-	}
-};
-
 /// @memberof LuaBinder
 class LuaBinderSerializeGlobalsCallback
 {
 public:
 	virtual void write(const void* data, PtrSize dataSize) = 0;
+};
+
+/// A list of systems that the LuaBinder should be aware of.
+/// @memberof LuaBinder
+class LuaBinderOtherSystems
+{
+public:
+	SceneGraph* m_sceneGraph;
+	MainRenderer* m_renderer;
 };
 
 /// Lua binder class. A wrapper on top of LUA
@@ -172,10 +154,11 @@ public:
 	LuaBinder();
 	~LuaBinder();
 
-	ANKI_USE_RESULT Error create(ScriptAllocator alloc, void* parent);
+	ANKI_USE_RESULT Error init(ScriptAllocator alloc, LuaBinderOtherSystems* otherSystems);
 
 	lua_State* getLuaState()
 	{
+		ANKI_ASSERT(m_l);
 		return m_l;
 	}
 
@@ -184,9 +167,10 @@ public:
 		return m_alloc;
 	}
 
-	void* getParent() const
+	LuaBinderOtherSystems& getOtherSystems()
 	{
-		return m_parent;
+		ANKI_ASSERT(m_otherSystems);
+		return *m_otherSystems;
 	}
 
 	/// Expose a variable to the lua state
@@ -216,12 +200,6 @@ public:
 	{
 		lua_gc(state, LUA_GCCOLLECT, 0);
 	}
-
-	/// New LuaThread.
-	LuaThread newLuaThread();
-
-	/// Destroy a LuaThread.
-	void destroyLuaThread(LuaThread& luaThread);
 
 	/// For debugging purposes
 	static void stackDump(lua_State* l);
@@ -276,9 +254,9 @@ public:
 	static void luaFree(lua_State* l, void* ptr);
 
 private:
+	LuaBinderOtherSystems* m_otherSystems;
 	ScriptAllocator m_alloc;
 	lua_State* m_l = nullptr;
-	void* m_parent = nullptr; ///< Point to the ScriptManager
 	HashMap<I64, const LuaUserDataTypeInfo*> m_userDataSigToDataInfo;
 
 	static void* luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrSize nsize);

@@ -40,15 +40,17 @@ LuaBinder::LuaBinder()
 
 LuaBinder::~LuaBinder()
 {
-	lua_close(m_l);
+	if(m_l)
+	{
+		lua_close(m_l);
+	}
 	m_userDataSigToDataInfo.destroy(m_alloc);
-
-	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0 && "Leaking memory");
 }
 
-Error LuaBinder::create(ScriptAllocator alloc, void* parent)
+Error LuaBinder::init(ScriptAllocator alloc, LuaBinderOtherSystems* otherSystems)
 {
-	m_parent = parent;
+	ANKI_ASSERT(otherSystems);
+	m_otherSystems = otherSystems;
 	m_alloc = alloc;
 
 	m_l = lua_newstate(luaAllocCallback, this);
@@ -270,33 +272,6 @@ void LuaBinder::luaFree(lua_State* l, void* ptr)
 	LuaBinder* binder = static_cast<LuaBinder*>(ud);
 
 	binder->m_alloc.getMemoryPool().free(ptr);
-}
-
-LuaThread LuaBinder::newLuaThread()
-{
-	LuaThread out;
-
-	void* ud;
-	auto allocCallback = lua_getallocf(m_l, &ud);
-	ANKI_ASSERT(ud && allocCallback);
-
-	out.m_luaState = lua_newstate(allocCallback, ud);
-	luaL_openlibs(out.m_luaState);
-	lua_atpanic(out.m_luaState, &luaPanic);
-
-	wrapModules(out.m_luaState);
-
-	return out;
-}
-
-void LuaBinder::destroyLuaThread(LuaThread& luaThread)
-{
-	if(luaThread.m_luaState)
-	{
-		lua_close(luaThread.m_luaState);
-	}
-
-	luaThread.m_luaState = nullptr;
 }
 
 void LuaBinder::serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback& callback)

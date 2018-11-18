@@ -44,8 +44,8 @@ ANKI_TEST(Script, LuaBinderThreads)
 	ScriptManager sm;
 	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
 
-	ScriptEnvironmentPtr env;
-	ANKI_TEST_EXPECT_NO_ERR(sm.newScriptEnvironment(env));
+	ScriptEnvironment env;
+	ANKI_TEST_EXPECT_NO_ERR(env.init(&sm));
 
 	static const char* script = R"(
 vec = Vec4.new(0, 0, 0, 0)
@@ -56,14 +56,14 @@ function myFunc()
 end
 )";
 
-	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script));
+	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script));
 
 	static const char* script1 = R"(
 myFunc()
 )";
 
-	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script1));
-	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script1));
+	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script1));
+	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script1));
 }
 
 ANKI_TEST(Script, LuaBinderSerialize)
@@ -71,8 +71,8 @@ ANKI_TEST(Script, LuaBinderSerialize)
 	ScriptManager sm;
 	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
 
-	ScriptEnvironmentPtr env;
-	ANKI_TEST_EXPECT_NO_ERR(sm.newScriptEnvironment(env));
+	ScriptEnvironment env;
+	ANKI_TEST_EXPECT_NO_ERR(env.init(&sm));
 
 	static const char* script = R"(
 num = 123.4
@@ -80,7 +80,7 @@ str = "lala"
 vec = Vec3.new(1, 2, 3)
 )";
 
-	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script));
+	ANKI_TEST_EXPECT_NO_ERR(env.evalString(script));
 
 	class Callback : public LuaBinderSerializeGlobalsCallback
 	{
@@ -95,11 +95,12 @@ vec = Vec3.new(1, 2, 3)
 		}
 	} callback;
 
-	env->serializeGlobals(callback);
-	env.reset(nullptr);
-	ANKI_TEST_EXPECT_NO_ERR(sm.newScriptEnvironment(env));
+	env.serializeGlobals(callback);
 
-	env->deserializeGlobals(&callback.m_buff[0], callback.m_offset);
+	ScriptEnvironment env2;
+	ANKI_TEST_EXPECT_NO_ERR(env2.init(&sm));
+
+	env2.deserializeGlobals(&callback.m_buff[0], callback.m_offset);
 
 	static const char* script2 = R"(
 print(num)
@@ -107,5 +108,5 @@ print(str)
 print(vec:getX(), vec:getY(), vec:getZ())
 )";
 
-	ANKI_TEST_EXPECT_NO_ERR(env->evalString(script2));
+	ANKI_TEST_EXPECT_NO_ERR(env2.evalString(script2));
 }

@@ -17,10 +17,9 @@ static MainRenderer* getMainRenderer(lua_State* l)
 	LuaBinder* binder = nullptr;
 	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
-	ScriptManager* scriptManager =
-		reinterpret_cast<ScriptManager*>(binder->getParent());
-
-	return &scriptManager->getMainRenderer();
+	MainRenderer* r = binder->getOtherSystems().m_renderer;
+	ANKI_ASSERT(r);
+	return r;
 }	
 ]]></head>
 

@@ -9,15 +9,12 @@
 namespace anki
 {
 
-ScriptEnvironment::~ScriptEnvironment()
+Error ScriptEnvironment::init(ScriptManager* manager)
 {
-	m_manager->destroyLuaThread(m_thread);
-}
-
-Error ScriptEnvironment::init()
-{
-	m_thread = m_manager->newLuaThread();
-	return Error::NONE;
+	ANKI_ASSERT(!isCreated());
+	ANKI_ASSERT(manager);
+	m_manager = manager;
+	return m_thread.init(m_manager->getAllocator(), &m_manager->getOtherSystems());
 }
 
 } // end namespace anki

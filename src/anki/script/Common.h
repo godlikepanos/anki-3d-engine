@@ -14,8 +14,6 @@ namespace anki
 // Forward
 class LuaBinder;
 class ScriptManager;
-
-class ScriptObject;
 class ScriptEnvironment;
 
 #define ANKI_SCRIPT_LOGI(...) ANKI_LOG("SCRI", NORMAL, __VA_ARGS__)
@@ -24,7 +22,5 @@ class ScriptEnvironment;
 #define ANKI_SCRIPT_LOGF(...) ANKI_LOG("SCRI", FATAL, __VA_ARGS__)
 
 using ScriptAllocator = HeapAllocator<U8>;
-
-using ScriptEnvironmentPtr = IntrusivePtr<ScriptEnvironment>;
 
 } // end namespace anki

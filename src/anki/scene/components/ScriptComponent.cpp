@@ -30,10 +30,10 @@ Error ScriptComponent::load(CString fname)
 	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(fname, m_script));
 
 	// Create the env
-	ANKI_CHECK(m_node->getSceneGraph().getScriptManager().newScriptEnvironment(m_env));
+	ANKI_CHECK(m_env.init(&m_node->getSceneGraph().getScriptManager()));
 
 	// Exec the script
-	ANKI_CHECK(m_env->evalString(m_script->getSource()));
+	ANKI_CHECK(m_env.evalString(m_script->getSource()));
 
 	return Error::NONE;
 }
@@ -42,7 +42,7 @@ Error ScriptComponent::update(SceneNode& node, Second prevTime, Second crntTime,
 {
 	ANKI_ASSERT(&node == m_node);
 	updated = false;
-	lua_State* lua = &m_env->getLuaState();
+	lua_State* lua = &m_env.getLuaState();
 
 	// Push function name
 	lua_getglobal(lua, "update");

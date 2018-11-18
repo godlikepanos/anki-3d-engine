@@ -29,12 +29,17 @@ public:
 
 	void setRenderer(MainRenderer* renderer)
 	{
-		m_r = renderer;
+		m_otherSystems.m_renderer = renderer;
 	}
 
 	void setSceneGraph(SceneGraph* scene)
 	{
-		m_scene = scene;
+		m_otherSystems.m_sceneGraph = scene;
+	}
+
+	LuaBinderOtherSystems& getOtherSystems()
+	{
+		return m_otherSystems;
 	}
 
 	/// Expose a variable to the scripting engine.
@@ -52,21 +57,7 @@ public:
 		return LuaBinder::evalString(m_lua.getLuaState(), str);
 	}
 
-	ANKI_USE_RESULT Error newScriptEnvironment(ScriptEnvironmentPtr& out);
-
 anki_internal:
-	SceneGraph& getSceneGraph()
-	{
-		ANKI_ASSERT(m_scene);
-		return *m_scene;
-	}
-
-	MainRenderer& getMainRenderer()
-	{
-		ANKI_ASSERT(m_r);
-		return *m_r;
-	}
-
 	LuaBinder& getLuaBinder()
 	{
 		return m_lua;
@@ -77,21 +68,8 @@ anki_internal:
 		return m_alloc;
 	}
 
-	LuaThread newLuaThread()
-	{
-		LockGuard<Mutex> lock(n_luaMtx);
-		return m_lua.newLuaThread();
-	}
-
-	void destroyLuaThread(LuaThread& thread)
-	{
-		LockGuard<Mutex> lock(n_luaMtx);
-		m_lua.destroyLuaThread(thread);
-	}
-
 private:
-	SceneGraph* m_scene = nullptr;
-	MainRenderer* m_r = nullptr;
+	LuaBinderOtherSystems m_otherSystems;
 	ScriptAllocator m_alloc;
 	LuaBinder m_lua;
 	Mutex n_luaMtx;

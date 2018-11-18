@@ -7,7 +7,7 @@
 
 #include <anki/scene/events/Event.h>
 #include <anki/resource/Forward.h>
-#include <anki/script/Forward.h>
+#include <anki/script/ScriptEnvironment.h>
 
 namespace anki
 {
@@ -44,7 +44,7 @@ public:
 private:
 	ScriptResourcePtr m_scriptRsrc;
 	String m_script;
-	ScriptEnvironmentPtr m_env;
+	ScriptEnvironment m_env;
 };
 /// @}
 

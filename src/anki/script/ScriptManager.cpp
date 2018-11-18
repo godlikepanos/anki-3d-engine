@@ -25,15 +25,9 @@ Error ScriptManager::init(AllocAlignedCallback allocCb, void* allocCbData)
 
 	m_alloc = ScriptAllocator(allocCb, allocCbData);
 
-	ANKI_CHECK(m_lua.create(m_alloc, this));
+	ANKI_CHECK(m_lua.init(m_alloc, &m_otherSystems));
 
 	return Error::NONE;
-}
-
-Error ScriptManager::newScriptEnvironment(ScriptEnvironmentPtr& out)
-{
-	out.reset(m_alloc.newInstance<ScriptEnvironment>(this));
-	return out->init();
 }
 
 } // end namespace anki
