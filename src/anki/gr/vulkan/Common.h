@@ -66,7 +66,7 @@ const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descr
 		VkResult rez; \
 		if((rez = (x)) < 0) \
 		{ \
-			ANKI_VK_LOGF("Vulkan function failed (VkResult: %d): %s", rez, #x); \
+			ANKI_VK_LOGF("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
 		} \
 	} while(0)
 
@@ -77,7 +77,7 @@ const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descr
 		VkResult rez; \
 		if((rez = (x)) < 0) \
 		{ \
-			ANKI_VK_LOGE("Vulkan function failed (VkResult: %d): %s", rez, #x); \
+			ANKI_VK_LOGE("Vulkan function failed (VkResult: %s): %s", vkResultToString(rez), #x); \
 			return Error::FUNCTION_FAILED; \
 		} \
 	} while(0)
@@ -256,6 +256,8 @@ ANKI_USE_RESULT inline VkRasterizationOrderAMD convertRasterizationOrder(Rasteri
 
 	return out;
 }
+
+ANKI_USE_RESULT const char* vkResultToString(VkResult res);
 /// @}
 
 } // end namespace anki

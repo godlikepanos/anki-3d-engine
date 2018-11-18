@@ -211,14 +211,16 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 {
 	// Create the instance
 	//
+	const U32 vulkanMinor = init.m_config->getNumber("gr.vkminor");
+	const U32 vulkanMajor = init.m_config->getNumber("gr.vkmajor");
+
 	VkApplicationInfo app = {};
 	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	app.pApplicationName = "unamed";
 	app.applicationVersion = 1;
 	app.pEngineName = "AnKi 3D Engine";
 	app.engineVersion = (ANKI_VERSION_MAJOR << 16) | ANKI_VERSION_MINOR;
-	app.apiVersion =
-		VK_MAKE_VERSION(U32(init.m_config->getNumber("gr.vkmajor")), U32(init.m_config->getNumber("gr.vkminor")), 0);
+	app.apiVersion = VK_MAKE_VERSION(vulkanMajor, vulkanMinor, 0);
 
 	VkInstanceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -420,8 +422,8 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		max<U32>(ANKI_SAFE_ALIGNMENT, m_devProps.limits.minTexelBufferOffsetAlignment);
 	m_capabilities.m_textureBufferMaxRange = MAX_U32;
 
-	m_capabilities.m_majorApiVersion = init.m_config->getNumber("gr.vkmajor");
-	m_capabilities.m_minorApiVersion = init.m_config->getNumber("gr.vkminor");
+	m_capabilities.m_majorApiVersion = vulkanMajor;
+	m_capabilities.m_minorApiVersion = vulkanMinor;
 
 	return Error::NONE;
 }

@@ -67,7 +67,6 @@ private:
 	class ClassAllocator;
 
 	GrAllocator<U8> m_alloc;
-	VkDevice m_dev;
 	DynamicArray<Interface> m_ifaces;
 	DynamicArray<ClassAllocator> m_callocs;
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;

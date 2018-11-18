@@ -69,7 +69,7 @@ Config::Config()
 
 	// GR
 	newOption("gr.diskShaderCacheMaxSize", 10_MB);
-	newOption("gr.vkminor", 0);
+	newOption("gr.vkminor", 1);
 	newOption("gr.vkmajor", 1);
 	newOption("gr.glmajor", 4);
 	newOption("gr.glminor", 5);

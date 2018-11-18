@@ -37,7 +37,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_VENDOR_%s 1
 #define ANKI_%s_SHADER 1
 
-#if defined(ANKI_BACKEND_GL) 
+#if defined(ANKI_BACKEND_GL)
 #	define ANKI_UBO_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
 #	define ANKI_SS_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
 #	define ANKI_TEX_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
@@ -67,7 +67,10 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define ANKI_FLATTEN [[flatten]]
 
 #	if ANKI_BACKEND_MAJOR == 1 && ANKI_BACKEND_MINOR >= 1
+#		extension GL_KHR_shader_subgroup_vote : require
 #		extension GL_KHR_shader_subgroup_ballot : require
+#		extension GL_KHR_shader_subgroup_shuffle : require
+#		extension GL_KHR_shader_subgroup_arithmetic : require
 #	endif
 #endif
 
@@ -248,10 +251,20 @@ static ANKI_USE_RESULT Error genSpirv(const ShaderCompiler::BuildContext& ctx, s
 	}
 
 	// Setup the shader
+	glslang::EShTargetLanguageVersion langVersion;
+	if(ctx.m_options.m_outLanguage == ShaderLanguage::SPIRV && ctx.m_options.m_gpuCapabilities.m_minorApiVersion > 0)
+	{
+		langVersion = glslang::EShTargetSpv_1_3;
+	}
+	else
+	{
+		langVersion = glslang::EShTargetSpv_1_0;
+	}
+
 	glslang::TShader shader(stage);
 	Array<const char*, 1> csrc = {{&ctx.m_src[0]}};
 	shader.setStrings(&csrc[0], 1);
-	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0); // TODO: Chose the right version
+	shader.setEnvTarget(glslang::EShTargetSpv, langVersion);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
 		ShaderCompiler::logShaderErrorCode(shader.getInfoLog(), ctx.m_src, ctx.m_alloc);
