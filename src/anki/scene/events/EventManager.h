@@ -37,21 +37,6 @@ public:
 	SceneAllocator<U8> getAllocator() const;
 	SceneFrameAllocator<U8> getFrameAllocator() const;
 
-	/// Iterate events
-	template<typename Func>
-	ANKI_USE_RESULT Error iterateEvents(Func func)
-	{
-		Error err = Error::NONE;
-		auto it = m_events.getBegin();
-		auto end = m_events.getEnd();
-		for(; it != end && !err; ++it)
-		{
-			err = func(*it);
-		}
-
-		return err;
-	}
-
 	/// Create a new event
 	/// @note It's thread-safe against itself.
 	template<typename T, typename... Args>

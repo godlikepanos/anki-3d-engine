@@ -16,11 +16,11 @@ EventManager::EventManager()
 
 EventManager::~EventManager()
 {
-	Error err = iterateEvents([&](Event& event) -> Error {
-		event.setMarkedForDeletion();
-		return Error::NONE;
-	});
-	(void)err;
+	while(!m_events.isEmpty())
+	{
+		Event* event = &m_events.getFront();
+		event->setMarkedForDeletion();
+	}
 
 	deleteEventsMarkedForDeletion();
 }
