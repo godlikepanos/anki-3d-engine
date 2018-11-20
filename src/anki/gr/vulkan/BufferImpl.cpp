@@ -57,20 +57,34 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 	if(access == BufferMapAccessBit::WRITE)
 	{
-		// Only write
+		// Only write, probably for uploads
+
+		VkMemoryPropertyFlags preferDeviceLocal;
+		VkMemoryPropertyFlags avoidDeviceLocal;
+		if((usage & (~BufferUsageBit::TRANSFER_ALL)) != BufferUsageBit::NONE)
+		{
+			// Will be used for something other than transfer, try to put it in the device
+			preferDeviceLocal = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			avoidDeviceLocal = 0;
+		}
+		else
+		{
+			// Will be used only for transfers, don't want it in the device
+			preferDeviceLocal = 0;
+			avoidDeviceLocal = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		}
 
 		// Device & host & coherent but not cached
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | preferDeviceLocal,
+			VK_MEMORY_PROPERTY_HOST_CACHED_BIT | avoidDeviceLocal);
 
 		// Fallback: host & coherent and not cached
 		if(memIdx == MAX_U32)
 		{
 			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
+				VK_MEMORY_PROPERTY_HOST_CACHED_BIT | avoidDeviceLocal);
 		}
 
 		// Fallback: just host
