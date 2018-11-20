@@ -56,11 +56,15 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 
 	for(U i = 0; i < 2; ++i)
 	{
-		m_rtTextures[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 			m_r->getHeight(),
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
-			"TemporalAA"));
+			"TemporalAA");
+
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+
+		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit);
 	}
 
 	return Error::NONE;

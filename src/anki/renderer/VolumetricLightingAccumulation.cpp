@@ -96,6 +96,7 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newDependency({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	pass.newDependency({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
 void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)

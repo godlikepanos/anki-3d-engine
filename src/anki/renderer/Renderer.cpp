@@ -284,8 +284,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Populate render graph. WARNING Watch the order
 	m_shadowMapping->populateRenderGraph(ctx);
-	m_volLighting->populateRenderGraph(ctx);
 	m_indirect->populateRenderGraph(ctx);
+	m_volLighting->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depth->populateRenderGraph(ctx);

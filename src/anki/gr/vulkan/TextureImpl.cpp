@@ -697,9 +697,9 @@ VkImageView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresour
 
 #if 0
 		printf("Creating image view %p. Texture %p %s\n",
-		static_cast<void*>(view),
-		static_cast<void*>(m_imageHandle),
-		getName() ? getName().cstr() : "Unnamed");
+			static_cast<void*>(view),
+			static_cast<void*>(m_imageHandle),
+			getName() ? getName().cstr() : "Unnamed");
 #endif
 
 		return view;
