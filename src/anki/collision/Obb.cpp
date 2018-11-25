@@ -153,17 +153,8 @@ void Obb::setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize b
 	Vec4 max = Vec4(Vec3(MIN_F32), 0.0);
 
 	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos) {
-		for(U j = 0; j < 3; j++)
-		{
-			if(pos[j] > max[j])
-			{
-				max[j] = pos[j];
-			}
-			else if(pos[j] < min[j])
-			{
-				min[j] = pos[j];
-			}
-		}
+		max = max.max(pos.xyz0());
+		min = min.min(pos.xyz0());
 	});
 
 	// Set the locals
