@@ -9,8 +9,8 @@
 
 #include <shaders/Functions.glsl>
 #include <shaders/Pack.glsl>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
-const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 const U32 SHADOW_SAMPLE_COUNT = 16;
 #if !defined(ESM_CONSTANT)
 const F32 ESM_CONSTANT = 40.0;

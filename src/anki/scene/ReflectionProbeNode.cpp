@@ -10,6 +10,7 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/renderer/LightShading.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -48,6 +49,12 @@ ReflectionProbeNode::~ReflectionProbeNode()
 
 Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLSpace)
 {
+	// Compute effective distance
+	F32 effectiveDistance = aabbMaxLSpace.x() - aabbMinLSpace.x();
+	effectiveDistance = max(effectiveDistance, aabbMaxLSpace.y() - aabbMinLSpace.y());
+	effectiveDistance = max(effectiveDistance, aabbMaxLSpace.z() - aabbMinLSpace.z());
+	effectiveDistance = max(effectiveDistance, EFFECTIVE_DISTANCE);
+
 	// Move component first
 	newComponent<MoveComponent>();
 
@@ -56,7 +63,7 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 
 	// The frustum components
 	const F32 ang = toRad(90.0f);
-	const F32 zNear = FRUSTUM_NEAR_PLANE;
+	const F32 zNear = LIGHT_FRUSTUM_NEAR_PLANE;
 
 	Mat3 rot;
 
@@ -78,7 +85,7 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 		m_cubeSides[i].m_localTrf.setOrigin(Vec4(0.0f));
 		m_cubeSides[i].m_localTrf.setScale(1.0f);
 
-		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, EFFECTIVE_DISTANCE);
+		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, effectiveDistance);
 		m_cubeSides[i].m_frustum.resetTransform(m_cubeSides[i].m_localTrf);
 
 		FrustumComponent* frc = newComponent<FrustumComponent>(this, &m_cubeSides[i].m_frustum);

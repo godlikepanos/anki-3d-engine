@@ -19,6 +19,7 @@ enum class LightComponentType : U8
 {
 	POINT,
 	SPOT,
+	DIRECTIONAL, ///< Basically the sun.
 	COUNT
 };
 
@@ -27,10 +28,6 @@ class LightComponent : public SceneComponent
 {
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::LIGHT;
-
-	/// The near plane on the shadow map frustums.
-	/// WARNING: If you change here update the shaders.
-	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1f / 4.0f;
 
 	LightComponent(LightComponentType type, U64 uuid);
 

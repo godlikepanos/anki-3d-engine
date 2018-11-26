@@ -21,8 +21,6 @@ class DecalComponent : public SceneComponent
 {
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::DECAL;
-
-	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1f / 4.0f;
 	static constexpr U ATLAS_SUB_TEXTURE_MARGIN = 16;
 
 	DecalComponent(SceneNode* node);

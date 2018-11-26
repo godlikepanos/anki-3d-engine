@@ -6,6 +6,7 @@
 #include <anki/scene/components/DecalComponent.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/resource/ResourceManager.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -56,7 +57,7 @@ void DecalComponent::updateInternal()
 		-m_sizes.x() / 2.0f,
 		m_sizes.y() / 2.0f,
 		-m_sizes.y() / 2.0f,
-		FRUSTUM_NEAR_PLANE,
+		LIGHT_FRUSTUM_NEAR_PLANE,
 		m_sizes.z());
 
 	static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);

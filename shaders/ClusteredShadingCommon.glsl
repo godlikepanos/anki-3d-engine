@@ -6,7 +6,6 @@
 #pragma once
 
 #include <shaders/LightFunctions.glsl>
-#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 //
 // Common uniforms

@@ -20,7 +20,6 @@ namespace anki
 class ReflectionProbeNode : public SceneNode
 {
 public:
-	const F32 FRUSTUM_NEAR_PLANE = 0.1f / 4.0f;
 	const F32 EFFECTIVE_DISTANCE = 256.0f;
 
 	ReflectionProbeNode(SceneGraph* scene, CString name)

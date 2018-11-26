@@ -14,8 +14,6 @@
 #include <anki/util/Enum.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/collision/ConvexHullShape.h>
-#include <anki/scene/DebugDrawer.h>
-#include <anki/Collision.h>
 
 namespace anki
 {
@@ -87,70 +85,6 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
 		el.m_callback(dctx, {&a[0], 1});
-	}
-
-	{
-		DebugDrawer ddrawer;
-
-		ddrawer.init(&m_r->getResourceManager());
-
-		static Mat3 rot(Mat3::getIdentity());
-		rot.rotateXAxis(toRad(0.2f));
-		rot.rotateYAxis(toRad(0.2f));
-		rot.rotateZAxis(toRad(-0.3f));
-		static Vec3 pos(0.0f);
-		pos += Vec3(0.01, 0, 0);
-
-		ddrawer.prepareFrame(&dctx);
-
-		Array<Vec3, 3> frustumPoints;
-		frustumPoints[0] = rot * Vec3(-0.5, 0.2, -0.3) + pos;
-		frustumPoints[1] = rot * Vec3(1.5, -.2, 1.3) + pos;
-		frustumPoints[2] = rot * Vec3(-1.2, 1.9, -1.3) + pos;
-
-		Vec4 color = Vec4(0, 1, 0, 1);
-		ddrawer.setColor(color);
-		ddrawer.setModelMatrix(Mat4::getIdentity());
-		ddrawer.setViewProjectionMatrix(ctx.m_renderQueue->m_viewProjectionMatrix);
-
-		ddrawer.drawLine(frustumPoints[0], frustumPoints[1], color);
-		ddrawer.drawLine(frustumPoints[1], frustumPoints[2], color);
-		ddrawer.drawLine(frustumPoints[2], frustumPoints[0], color);
-
-		Vec3 lightDir(-0.5);
-		ddrawer.drawLine(lightDir * -10.0, lightDir * 10.0, Vec4(1));
-
-		Vec3 zAxis = lightDir;
-		Vec3 yAxis = Vec3(0, 1, 0);
-		Vec3 xAxis = zAxis.cross(yAxis).getNormalized();
-		yAxis = xAxis.cross(zAxis);
-
-		Mat3 viewRotation;
-		viewRotation.setColumns(xAxis, yAxis, zAxis);
-		ddrawer.drawLine(Vec3(0.), xAxis, Vec4(1, 0, 0, 1));
-		ddrawer.drawLine(Vec3(0.), yAxis, Vec4(0, 1, 0, 1));
-		ddrawer.drawLine(Vec3(0.), zAxis, Vec4(0, 0, 1, 1));
-
-		Array<Vec3, 3> frustumPointsLSpace;
-		for(int i = 0; i < 3; ++i)
-		{
-			frustumPointsLSpace[i] = viewRotation.getInverse() * frustumPoints[i];
-		}
-
-		/*ddrawer.drawLine(frustumPointsLSpace[0], frustumPointsLSpace[1], Vec4(1, 1, 0, 1));
-		ddrawer.drawLine(frustumPointsLSpace[1], frustumPointsLSpace[2], Vec4(1, 1, 0, 1));
-		ddrawer.drawLine(frustumPointsLSpace[2], frustumPointsLSpace[0], Vec4(1, 1, 0, 1));*/
-
-		Obb box;
-		box.setFromPointCloud(&frustumPointsLSpace[0], 3, sizeof(Vec3), sizeof(frustumPointsLSpace));
-
-		CollisionDebugDrawer cdrawer(&ddrawer);
-		box.transform(Transform(Vec4(0.), Mat3x4(viewRotation), 1.0));
-		ddrawer.setModelMatrix(Mat4::getIdentity());
-		ddrawer.setColor(Vec4(1, 0, 0, 1));
-		box.accept(cdrawer);
-
-		ddrawer.finishFrame();
 	}
 }
 
