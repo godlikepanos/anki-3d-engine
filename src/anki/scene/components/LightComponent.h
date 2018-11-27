@@ -12,6 +12,9 @@
 namespace anki
 {
 
+// Forward
+class Frustum;
+
 /// @addtogroup scene
 /// @{
 
@@ -54,58 +57,58 @@ public:
 
 	void setRadius(F32 x)
 	{
-		m_radius = x;
+		m_point.m_radius = x;
 		m_flags.set(DIRTY);
 	}
 
 	F32 getRadius() const
 	{
-		return m_radius;
+		return m_point.m_radius;
 	}
 
 	void setDistance(F32 x)
 	{
-		m_distance = x;
+		m_spot.m_distance = x;
 		m_flags.set(DIRTY);
 	}
 
 	F32 getDistance() const
 	{
-		return m_distance;
+		return m_spot.m_distance;
 	}
 
 	void setInnerAngle(F32 ang)
 	{
-		m_innerAngleCos = cos(ang / 2.0);
-		m_innerAngle = ang;
+		m_spot.m_innerAngleCos = cos(ang / 2.0);
+		m_spot.m_innerAngle = ang;
 		m_flags.set(DIRTY);
 	}
 
 	F32 getInnerAngleCos() const
 	{
-		return m_innerAngleCos;
+		return m_spot.m_innerAngleCos;
 	}
 
 	F32 getInnerAngle() const
 	{
-		return m_innerAngle;
+		return m_spot.m_innerAngle;
 	}
 
 	void setOuterAngle(F32 ang)
 	{
-		m_outerAngleCos = cos(ang / 2.0);
-		m_outerAngle = ang;
+		m_spot.m_outerAngleCos = cos(ang / 2.0);
+		m_spot.m_outerAngle = ang;
 		m_flags.set(DIRTY);
 	}
 
 	F32 getOuterAngle() const
 	{
-		return m_outerAngle;
+		return m_spot.m_outerAngle;
 	}
 
 	F32 getOuterAngleCos() const
 	{
-		return m_outerAngleCos;
+		return m_spot.m_outerAngleCos;
 	}
 
 	Bool getShadowEnabled() const
@@ -125,7 +128,7 @@ public:
 		ANKI_ASSERT(m_type == LightComponentType::POINT);
 		el.m_uuid = m_uuid;
 		el.m_worldPosition = m_trf.getOrigin().xyz();
-		el.m_radius = m_radius;
+		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_userData = this;
 		el.m_drawCallback = pointLightDebugDrawCallback;
@@ -136,31 +139,48 @@ public:
 		ANKI_ASSERT(m_type == LightComponentType::SPOT);
 		el.m_uuid = m_uuid;
 		el.m_worldTransform = Mat4(m_trf);
-		el.m_textureMatrix = m_spotTextureMatrix;
-		el.m_distance = m_distance;
-		el.m_outerAngle = m_outerAngle;
-		el.m_innerAngle = m_innerAngle;
+		el.m_textureMatrix = m_spot.m_textureMat;
+		el.m_distance = m_spot.m_distance;
+		el.m_outerAngle = m_spot.m_outerAngle;
+		el.m_innerAngle = m_spot.m_innerAngle;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_userData = this;
 		el.m_drawCallback = spotLightDebugDrawCallback;
 	}
 
+	void setupDirectionalLightQueueElement(const Frustum& frustum, DirectionalLightQueueElement& el) const;
+
 private:
 	U64 m_uuid;
-	LightComponentType m_type;
 	Vec4 m_diffColor = Vec4(0.5f);
-	union
+	Transform m_trf = Transform::getIdentity();
+
+	struct Point
 	{
 		F32 m_radius;
-		F32 m_distance;
 	};
-	F32 m_innerAngleCos;
-	F32 m_outerAngleCos;
-	F32 m_outerAngle;
-	F32 m_innerAngle;
 
-	Transform m_trf = Transform::getIdentity();
-	Mat4 m_spotTextureMatrix = Mat4::getIdentity();
+	struct Spot
+	{
+		Mat4 m_textureMat;
+		F32 m_distance;
+		F32 m_innerAngleCos;
+		F32 m_outerAngleCos;
+		F32 m_outerAngle;
+		F32 m_innerAngle;
+	};
+
+	struct Dir
+	{
+		Vec3 m_dir;
+	};
+
+	union
+	{
+		Point m_point;
+		Spot m_spot;
+		Dir m_dir;
+	};
 
 	enum
 	{
@@ -169,6 +189,7 @@ private:
 		TRF_DIRTY = 1 << 2
 	};
 
+	LightComponentType m_type;
 	BitMask<U8> m_flags = BitMask<U8>(DIRTY | TRF_DIRTY);
 
 	static void pointLightDebugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
@@ -177,6 +198,11 @@ private:
 	}
 
 	static void spotLightDebugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
+	{
+		// TODO
+	}
+
+	static void derectionalLightDebugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 	{
 		// TODO
 	}

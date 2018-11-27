@@ -119,6 +119,27 @@ public:
 
 static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true, "Should be trivially destructible");
 
+const U32 MAX_SHADOW_CASCADES = 4;
+
+/// Directional light render queue element.
+class DirectionalLightQueueElement final
+{
+public:
+	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
+	Array<Mat4, MAX_SHADOW_CASCADES> m_textureMatrices;
+	const void* m_userData;
+	RenderQueueDrawCallback m_drawCallback;
+	Vec3 m_diffuseColor;
+	Vec3 m_direction;
+
+	DirectionalLightQueueElement()
+	{
+	}
+};
+
+static_assert(
+	std::is_trivially_destructible<DirectionalLightQueueElement>::value == true, "Should be trivially destructible");
+
 /// Normally the visibility tests don't perform tests on the reflection probes because probes dont change that often.
 /// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
 /// In that case the probe should fill the render queues.

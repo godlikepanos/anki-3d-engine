@@ -15,9 +15,23 @@ LightComponent::LightComponent(LightComponentType type, U64 uuid)
 	, m_type(type)
 {
 	ANKI_ASSERT(m_uuid > 0);
-	setInnerAngle(toRad(45.0));
-	setOuterAngle(toRad(30.0));
-	m_radius = 1.0;
+
+	switch(type)
+	{
+	case LightComponentType::POINT:
+		m_point.m_radius = 1.0f;
+		break;
+	case LightComponentType::SPOT:
+		setInnerAngle(toRad(45.0));
+		setOuterAngle(toRad(30.0));
+		m_spot.m_distance = 1.0f;
+		m_spot.m_textureMat = Mat4::getIdentity();
+		break;
+	case LightComponentType::DIRECTIONAL:
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
 }
 
 Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
@@ -37,14 +51,24 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 		{
 			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 			Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(
-				m_outerAngle, m_outerAngle, LIGHT_FRUSTUM_NEAR_PLANE, m_distance);
-			m_spotTextureMatrix = biasMat4 * proj * Mat4(m_trf.getInverse());
+				m_spot.m_outerAngle, m_spot.m_outerAngle, LIGHT_FRUSTUM_NEAR_PLANE, m_spot.m_distance);
+			m_spot.m_textureMat = biasMat4 * proj * Mat4(m_trf.getInverse());
 		}
 	}
 
 	m_flags.unset(DIRTY | TRF_DIRTY);
 
 	return Error::NONE;
+}
+
+void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum, DirectionalLightQueueElement& el) const
+{
+	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
+	el.m_userData = this;
+	el.m_drawCallback = derectionalLightDebugDrawCallback;
+	el.m_diffuseColor = m_diffColor.xyz();
+	el.m_direction = m_dir.m_dir;
+	// TODO
 }
 
 } // end namespace anki
