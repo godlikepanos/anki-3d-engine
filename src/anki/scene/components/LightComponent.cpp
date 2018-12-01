@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/components/LightComponent.h>
+#include <anki/collision/Frustum.h>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
@@ -28,6 +29,7 @@ LightComponent::LightComponent(LightComponentType type, U64 uuid)
 		m_spot.m_textureMat = Mat4::getIdentity();
 		break;
 	case LightComponentType::DIRECTIONAL:
+		m_dir.m_cascadeCount = MAX_SHADOW_CASCADES;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -61,14 +63,117 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 	return Error::NONE;
 }
 
-void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum, DirectionalLightQueueElement& el) const
+void LightComponent::setupDirectionalLightQueueElement(
+	const Frustum& frustum, DirectionalLightQueueElement& el, WeakArray<OrthographicFrustum> cascadeFrustums) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
+
 	el.m_userData = this;
 	el.m_drawCallback = derectionalLightDebugDrawCallback;
 	el.m_diffuseColor = m_diffColor.xyz();
-	el.m_direction = m_dir.m_dir;
-	// TODO
+	el.m_direction = m_trf.getRotation().getZAxis().xyz();
+
+	// Compute sub frustum edges
+	const Mat4 lightTrf(m_trf);
+	const Mat4 lightViewMat(lightTrf.getInverse());
+	if(frustum.getType() == FrustumType::PERSPECTIVE)
+	{
+		// Get some stuff
+		const PerspectiveFrustum& pfrustum = static_cast<const PerspectiveFrustum&>(frustum);
+		const F32 fovX = pfrustum.getFovX();
+		const F32 fovY = pfrustum.getFovY();
+		const F32 far = pfrustum.getFar();
+
+		// Gather the edges
+		Array<Vec4, (MAX_SHADOW_CASCADES + 1) * 4> edgesLocalSpaceStorage;
+		WeakArray<Vec4> edgesLocalSpace(&edgesLocalSpaceStorage[0], (m_dir.m_cascadeCount + 1) * 4);
+		edgesLocalSpace[0] = edgesLocalSpace[1] = edgesLocalSpace[2] = edgesLocalSpace[3] = Vec4(0.0f); // Eye
+		for(U i = 0; i < m_dir.m_cascadeCount; ++i)
+		{
+			const F32 clusterFarNearDist = far / F32(m_dir.m_cascadeCount);
+			const F32 clusterFar = F32(i + 1) * clusterFarNearDist;
+
+			const F32 x = clusterFar * tan(fovY / 2.0f) * fovX / fovY;
+			const F32 y = tan(fovY / 2.0f) * clusterFar;
+			const F32 z = -clusterFar;
+
+			U idx = (i + 1) * 4;
+			edgesLocalSpace[idx++] = Vec4(x, y, z, 1.0f); // top right
+			edgesLocalSpace[idx++] = Vec4(-x, y, z, 1.0f); // top left
+			edgesLocalSpace[idx++] = Vec4(-x, -y, z, 1.0f); // bot left
+			edgesLocalSpace[idx++] = Vec4(x, -y, z, 1.0f); // bot right
+		}
+
+		// Transform those edges to light space
+		Array<Vec4, edgesLocalSpaceStorage.getSize()> edgesLightSpaceStorage;
+		WeakArray<Vec4> edgesLightSpace(&edgesLightSpaceStorage[0], edgesLocalSpace.getSize());
+		const Mat4 lspaceMtx = lightViewMat * Mat4(frustum.getTransform());
+		for(U i = 0; i < edgesLightSpace.getSize(); ++i)
+		{
+			edgesLightSpace[i] = lspaceMtx * edgesLocalSpace[i];
+		}
+
+		// Compute the min max per cascade
+		Array2d<Vec3, MAX_SHADOW_CASCADES, 2> minMaxes;
+		for(U i = 0; i < m_dir.m_cascadeCount; ++i)
+		{
+			Vec3 aabbMin(MAX_F32);
+			Vec3 aabbMax(MIN_F32);
+			for(U j = i * 4; j < i * 4 + 8; ++j)
+			{
+				aabbMin = aabbMin.min(edgesLightSpace[j].xyz());
+				aabbMax = aabbMax.min(edgesLightSpace[j].xyz());
+			}
+
+			aabbMax.z() = min(0.0f, aabbMax.z()); // Max can't go behind the light
+			ANKI_ASSERT(aabbMax > aabbMin);
+
+			minMaxes[i][0] = aabbMin;
+			minMaxes[i][1] = aabbMax;
+		}
+
+		// Compute the view and projection matrices per cascade
+		for(U i = 0; i < m_dir.m_cascadeCount; ++i)
+		{
+			const Vec3 halfDistances = (minMaxes[i][1] - minMaxes[i][0]) / 2.0f;
+			ANKI_ASSERT(halfDistances > Vec3(0.0f));
+
+			const Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(halfDistances.x(),
+				halfDistances.x(),
+				halfDistances.y(),
+				-halfDistances.y(),
+				halfDistances.z(),
+				-halfDistances.z());
+
+			Vec4 eye;
+			eye.x() = (minMaxes[i][1].x() + minMaxes[i][0].x()) / 2.0f;
+			eye.y() = (minMaxes[i][1].y() + minMaxes[i][0].y()) / 2.0f;
+			eye.z() = 0.0f;
+			eye.w() = 1.0f;
+			eye = lightTrf * eye;
+
+			Transform cascadeTransform = m_trf;
+			cascadeTransform.setOrigin(eye);
+			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
+
+			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+			el.m_textureMatrices[i] = biasMat4 * cascadeProjMat * cascadeViewMat;
+
+			// Fill the frustum
+			OrthographicFrustum& cascadeFrustum = cascadeFrustums[i];
+			cascadeFrustum.setAll(-halfDistances.x(),
+				halfDistances.x(),
+				-halfDistances.z(),
+				halfDistances.z(),
+				halfDistances.y(),
+				-halfDistances.y());
+			cascadeFrustum.transform(cascadeTransform);
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
+	}
 }
 
 } // end namespace anki

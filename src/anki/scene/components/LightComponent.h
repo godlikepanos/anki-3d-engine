@@ -14,6 +14,7 @@ namespace anki
 
 // Forward
 class Frustum;
+class OrthographicFrustum;
 
 /// @addtogroup scene
 /// @{
@@ -148,7 +149,12 @@ public:
 		el.m_drawCallback = spotLightDebugDrawCallback;
 	}
 
-	void setupDirectionalLightQueueElement(const Frustum& frustum, DirectionalLightQueueElement& el) const;
+	/// Setup a directional queue element.
+	/// @param[in] frustum The frustum that is looking that directional light. Used to calculate the cascades.
+	/// @param[out] el The queue element to fill out.
+	/// @param[out] cascadeFrustums Fill those frustums as well.
+	void setupDirectionalLightQueueElement(
+		const Frustum& frustum, DirectionalLightQueueElement& el, WeakArray<OrthographicFrustum> cascadeFrustums) const;
 
 private:
 	U64 m_uuid;
@@ -172,7 +178,7 @@ private:
 
 	struct Dir
 	{
-		Vec3 m_dir;
+		U32 m_cascadeCount;
 	};
 
 	union

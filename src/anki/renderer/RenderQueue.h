@@ -125,8 +125,8 @@ const U32 MAX_SHADOW_CASCADES = 4;
 class DirectionalLightQueueElement final
 {
 public:
-	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
 	Array<Mat4, MAX_SHADOW_CASCADES> m_textureMatrices;
+	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
 	Vec3 m_diffuseColor;
