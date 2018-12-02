@@ -89,6 +89,20 @@ private:
 	void onMoveUpdate(const MoveComponent& move) override;
 	void onShapeUpdate(LightComponent& light) override;
 };
+
+/// Directional light (the sun).
+class DirectionalLightNode : public SceneNode
+{
+public:
+	DirectionalLightNode(SceneGraph* scene, CString name);
+
+	ANKI_USE_RESULT Error init();
+
+private:
+	class FeedbackComponent;
+
+	Aabb m_boundingBox;
+};
 /// @}
 
 } // end namespace anki

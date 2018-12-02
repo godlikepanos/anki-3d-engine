@@ -316,6 +316,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+		<class name="DirectionalLightNode">
+			<methods>
+				<method name="getSceneNodeBase">
+					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
+					<return>SceneNode&amp;</return>
+				</method>
+			</methods>
+		</class>
 		<class name="StaticCollisionNode">
 			<methods>
 				<method name="getSceneNodeBase">

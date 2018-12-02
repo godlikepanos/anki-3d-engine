@@ -2755,6 +2755,75 @@ static inline void wrapSpotLightNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
+LuaUserDataTypeInfo luaUserDataTypeInfoDirectionalLightNode = {3634924534632382552,
+	"DirectionalLightNode",
+	LuaUserData::computeSizeForGarbageCollected<DirectionalLightNode>(),
+	nullptr,
+	nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<DirectionalLightNode>()
+{
+	return luaUserDataTypeInfoDirectionalLightNode;
+}
+
+/// Pre-wrap method DirectionalLightNode::getSceneNodeBase.
+static inline int pwrapDirectionalLightNodegetSceneNodeBase(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDirectionalLightNode, ud))
+	{
+		return -1;
+	}
+
+	DirectionalLightNode* self = ud->getData<DirectionalLightNode>();
+
+	// Call the method
+	SceneNode& ret = *self;
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+
+	return 1;
+}
+
+/// Wrap method DirectionalLightNode::getSceneNodeBase.
+static int wrapDirectionalLightNodegetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapDirectionalLightNodegetSceneNodeBase(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class DirectionalLightNode.
+static inline void wrapDirectionalLightNode(lua_State* l)
+{
+	LuaBinder::createClass(l, &luaUserDataTypeInfoDirectionalLightNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapDirectionalLightNodegetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
 LuaUserDataTypeInfo luaUserDataTypeInfoStaticCollisionNode = {-4376619865753613291,
 	"StaticCollisionNode",
 	LuaUserData::computeSizeForGarbageCollected<StaticCollisionNode>(),
@@ -4387,6 +4456,7 @@ void wrapModuleScene(lua_State* l)
 	wrapPerspectiveCameraNode(l);
 	wrapPointLightNode(l);
 	wrapSpotLightNode(l);
+	wrapDirectionalLightNode(l);
 	wrapStaticCollisionNode(l);
 	wrapParticleEmitterNode(l);
 	wrapReflectionProbeNode(l);

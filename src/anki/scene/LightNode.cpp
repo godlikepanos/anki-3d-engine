@@ -297,4 +297,40 @@ Error SpotLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	return Error::NONE;
 }
 
+class DirectionalLightNode::FeedbackComponent : public SceneComponent
+{
+public:
+	FeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
+	{
+	}
+
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	{
+		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
+		if(move.getTimestamp() == node.getGlobalTimestamp())
+		{
+			// Move updated
+			LightComponent& lightc = node.getComponent<LightComponent>();
+			lightc.updateWorldTransform(move.getWorldTransform());
+		}
+
+		return Error::NONE;
+	}
+};
+
+Error DirectionalLightNode::init()
+{
+	newComponent<MoveComponent>();
+	newComponent<FeedbackComponent>();
+	newComponent<LightComponent>(LightComponentType::DIRECTIONAL, getSceneGraph().getNewUuid());
+	newComponent<SpatialComponent>(this, &m_boundingBox);
+
+	// Make the bounding box large enough so it will always be visible
+	m_boundingBox.setMin(Vec3(-5000.f));
+	m_boundingBox.setMax(Vec3(+5000.f));
+
+	return Error::NONE;
+}
+
 } // end namespace anki
