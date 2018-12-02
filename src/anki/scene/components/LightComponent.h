@@ -122,6 +122,12 @@ public:
 		m_flags.set(SHADOW, x);
 	}
 
+	U32 getShadowCascadeCount() const
+	{
+		ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
+		return m_dir.m_cascadeCount;
+	}
+
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
 	void setupPointLightQueueElement(PointLightQueueElement& el) const

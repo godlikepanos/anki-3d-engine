@@ -25,8 +25,9 @@ Config::Config()
 	newOption("r.volumetricLightingAccumulation.finalClusterInZ", 26);
 
 	newOption("r.shadowMapping.enabled", true);
-	newOption("r.shadowMapping.resolution", 512);
+	newOption("r.shadowMapping.tileResolution", 512);
 	newOption("r.shadowMapping.tileCountPerRowOrColumn", 8);
+	newOption("r.shadowMapping.dirLightTileCount", 2);
 	newOption("r.shadowMapping.scratchTileCount", 8);
 
 	newOption("r.lensFlare.maxSpritesPerFlare", 8);

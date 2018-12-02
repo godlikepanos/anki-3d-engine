@@ -333,6 +333,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		});
 
 		WeakArray<RenderQueue> nextQueues;
+		WeakArray<FrustumComponent> nextQueueFrustumComponents; // Optional
 
 		if(rc)
 		{
@@ -411,6 +412,46 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 				break;
 			}
+			case LightComponentType::DIRECTIONAL:
+			{
+				ANKI_ASSERT(lc->getShadowEnabled() == true && "Only with shadow for now");
+
+				const U cascadeCount = lc->getShadowCascadeCount();
+				ANKI_ASSERT(cascadeCount > 0 && cascadeCount <= MAX_SHADOW_CASCADES);
+
+				WeakArray<OrthographicFrustum> cascadeFrustums(
+					alloc.newArray<OrthographicFrustum>(cascadeCount), cascadeCount);
+
+				lc->setupDirectionalLightQueueElement(
+					testedFrc.getFrustum(), result.m_directionalLight, cascadeFrustums);
+
+				nextQueues = WeakArray<RenderQueue>(alloc.newArray<RenderQueue>(cascadeCount), cascadeCount);
+				for(U i = 0; i < cascadeCount; ++i)
+				{
+					result.m_directionalLight.m_shadowRenderQueues[i] = &nextQueues[i];
+				}
+
+				// Create some dummy frustum components and manually update them
+				FrustumComponent* cascadeFrustumComponents = reinterpret_cast<FrustumComponent*>(
+					alloc.allocate(cascadeCount * sizeof(FrustumComponent), alignof(FrustumComponent)));
+				for(U i = 0; i < cascadeCount; ++i)
+				{
+					::new(&cascadeFrustumComponents[i]) FrustumComponent(&node, &cascadeFrustums[i]);
+					cascadeFrustumComponents[i].setEnabledVisibilityTests(
+						FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
+					cascadeFrustumComponents[i].markShapeForUpdate();
+					cascadeFrustumComponents[i].markTransformForUpdate();
+					Bool updated;
+					Error err = cascadeFrustumComponents[i].update(node, 0.0f, 1.0f, updated);
+					ANKI_ASSERT(updated == true && !err);
+					(void)err;
+					(void)updated;
+				}
+
+				nextQueueFrustumComponents = WeakArray<FrustumComponent>(cascadeFrustumComponents, cascadeCount);
+
+				break;
+			}
 			default:
 				ANKI_ASSERT(0);
 			}
@@ -461,11 +502,22 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		if(nextQueues.getSize() > 0)
 		{
 			count = 0;
-			err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
-				m_frcCtx->m_visCtx->submitNewWork(frc, nextQueues[count++], hive);
-				return Error::NONE;
-			});
-			(void)err;
+
+			if(ANKI_LIKELY(nextQueueFrustumComponents.getSize() == 0))
+			{
+				err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
+					m_frcCtx->m_visCtx->submitNewWork(frc, nextQueues[count++], hive);
+					return Error::NONE;
+				});
+				(void)err;
+			}
+			else
+			{
+				for(FrustumComponent& frc : nextQueueFrustumComponents)
+				{
+					m_frcCtx->m_visCtx->submitNewWork(frc, nextQueues[count++], hive);
+				}
+			}
 		}
 
 		// Update timestamp

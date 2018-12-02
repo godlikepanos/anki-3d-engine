@@ -131,6 +131,7 @@ public:
 	RenderQueueDrawCallback m_drawCallback;
 	Vec3 m_diffuseColor;
 	Vec3 m_direction;
+	U8 m_shadowCascadeCount;
 
 	DirectionalLightQueueElement()
 	{
@@ -269,6 +270,7 @@ public:
 	WeakArray<PointLightQueueElement> m_pointLights;
 	WeakArray<PointLightQueueElement*> m_shadowPointLights; ///< Points to elements in m_pointLights.
 	WeakArray<SpotLightQueueElement> m_spotLights;
+	DirectionalLightQueueElement m_directionalLight;
 	WeakArray<SpotLightQueueElement*> m_shadowSpotLights; ///< Points to elements in m_spotLights.
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
@@ -284,6 +286,11 @@ public:
 
 	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;
 	void* m_fillCoverageBufferCallbackUserData = nullptr;
+
+	RenderQueue()
+	{
+		zeroMemory(m_directionalLight);
+	}
 
 	U countAllRenderables() const;
 };

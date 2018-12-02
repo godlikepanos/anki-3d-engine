@@ -45,7 +45,7 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 	// Init the shadowmaps and FBs
 	{
 		m_scratchTileCount = cfg.getNumber("r.shadowMapping.scratchTileCount");
-		m_scratchTileResolution = cfg.getNumber("r.shadowMapping.resolution");
+		m_scratchTileResolution = cfg.getNumber("r.shadowMapping.tileResolution");
 
 		// RT
 		m_scratchRtDescr = m_r->create2DRenderTargetDescription(m_scratchTileResolution * m_scratchTileCount,
@@ -68,7 +68,7 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 {
 	// Init RTs and FBs
 	{
-		m_tileResolution = cfg.getNumber("r.shadowMapping.resolution");
+		m_tileResolution = cfg.getNumber("r.shadowMapping.tileResolution");
 		m_tileCountPerRowOrColumn = cfg.getNumber("r.shadowMapping.tileCountPerRowOrColumn");
 		m_atlasResolution = m_tileResolution * m_tileCountPerRowOrColumn;
 

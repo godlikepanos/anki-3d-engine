@@ -110,12 +110,18 @@ public:
 	TRenderQueueElementStorage<U32> m_shadowPointLights;
 	TRenderQueueElementStorage<SpotLightQueueElement> m_spotLights;
 	TRenderQueueElementStorage<U32> m_shadowSpotLights;
+	DirectionalLightQueueElement m_directionalLight;
 	TRenderQueueElementStorage<ReflectionProbeQueueElement> m_reflectionProbes;
 	TRenderQueueElementStorage<LensFlareQueueElement> m_lensFlares;
 	TRenderQueueElementStorage<DecalQueueElement> m_decals;
 	TRenderQueueElementStorage<FogDensityQueueElement> m_fogDensityVolumes;
 
 	Timestamp m_timestamp = 0;
+
+	RenderQueueView()
+	{
+		zeroMemory(m_directionalLight);
+	}
 };
 
 static_assert(std::is_trivially_destructible<RenderQueueView>::value == true, "Should be trivially destructible");
