@@ -43,13 +43,15 @@ private:
 	class Tile
 	{
 	public:
-		U64 m_lastUsedTimestamp = 0;
+		Timestamp m_lightTimestamp = 0; ///< The last timestamp the light got updated
+		Timestamp m_lastUsedTimestamp = 0; ///< The last timestamp this tile was used
 		U64 m_lightUuid = 0;
-		U32 m_drawcallCount = 0;
+		U32 m_lightDrawcallCount = 0;
 		Array<U32, 4> m_viewport = {};
 		Array<U32, 4> m_subTiles = {};
 		U32 m_superTile = 0;
-		U8 m_lastUsedLod = 0;
+		U8 m_lightLod = 0;
+		U8 m_lightFace = 0;
 		Bool8 m_pinned = false; ///< If true we cannot allocate from it.
 	};
 
@@ -87,6 +89,12 @@ private:
 	void updateSubTiles(const Tile& updateFrom);
 
 	void updateSuperTiles(const Tile& updateFrom);
+
+	void updateTileHierarchy(const Tile& updateFrom)
+	{
+		updateSubTiles(updateFrom);
+		updateSuperTiles(updateFrom);
+	}
 };
 /// @}
 

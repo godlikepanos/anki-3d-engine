@@ -10,6 +10,36 @@ namespace anki
 
 void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount)
 {
+	// Preconditions
+	ANKI_ASSERT(tileCountX > 0);
+	ANKI_ASSERT(tileCountY > 0);
+	ANKI_ASSERT(lodCount > 0);
+
+	// Store some stuff
+	m_tileCountX = tileCountX;
+	m_tileCountY = tileCountY;
+	m_lodCount = lodCount;
+	m_lodFirstTileIndex.create(m_alloc, lodCount + 1);
+
+	// Create the tile array & index ranges
+	U tileCount = 0;
+	for(U lod = 0; lod < lodCount; ++lod)
+	{
+		const U lodTileCountX = tileCountX >> lod;
+		const U lodTileCountY = tileCountY >> lod;
+		ANKI_ASSERT((lodTileCountX << lod) == tileCountX && "Every LOD should be power of 2 of its parent LOD");
+		ANKI_ASSERT((lodTileCountY << lod) == tileCountY && "Every LOD should be power of 2 of its parent LOD");
+
+		m_lodFirstTileIndex[lod] = tileCount;
+
+		tileCount += lodTileCountX * lodTileCountY;
+	}
+	ANKI_ASSERT(tileCount >= tileCountX * tileCountY);
+	m_allTiles.create(m_alloc, tileCount);
+	m_lodFirstTileIndex[lodCount] = tileCount - 1;
+
+	// Init the tiles
+
 	// TODO
 }
 
@@ -19,9 +49,12 @@ void TileAllocator::updateSubTiles(const Tile& updateFrom)
 	{
 		if(idx != MAX_U32)
 		{
+			m_allTiles[idx].m_lightTimestamp = updateFrom.m_lightTimestamp;
 			m_allTiles[idx].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
 			m_allTiles[idx].m_lightUuid = updateFrom.m_lightUuid;
-			m_allTiles[idx].m_lastUsedLod = updateFrom.m_lastUsedLod;
+			m_allTiles[idx].m_lightDrawcallCount = updateFrom.m_lightDrawcallCount;
+			m_allTiles[idx].m_lightLod = updateFrom.m_lightLod;
+			m_allTiles[idx].m_lightFace = updateFrom.m_lightFace;
 
 			updateSubTiles(m_allTiles[idx]);
 		}
@@ -33,6 +66,7 @@ void TileAllocator::updateSuperTiles(const Tile& updateFrom)
 	if(updateFrom.m_superTile != MAX_U32)
 	{
 		m_allTiles[updateFrom.m_superTile].m_lightUuid = 0;
+		m_allTiles[updateFrom.m_superTile].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
 		updateSuperTiles(m_allTiles[updateFrom.m_superTile]);
 	}
 }
@@ -47,6 +81,8 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 {
 	// Preconditions
 	ANKI_ASSERT(crntTimestamp > 0);
+	ANKI_ASSERT(lightTimestamp > 0);
+	ANKI_ASSERT(lightTimestamp <= crntTimestamp);
 	ANKI_ASSERT(lightUuid != 0);
 	ANKI_ASSERT(lightFace < 6);
 	ANKI_ASSERT(lod < m_lodCount);
@@ -60,7 +96,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 	{
 		Tile& tile = m_allTiles[*it];
 
-		if(tile.m_lightUuid != lightUuid || tile.m_lastUsedLod != lod)
+		if(tile.m_lightUuid != lightUuid || tile.m_lightLod != lod || tile.m_lightFace != lightFace)
 		{
 			// Cache entry is wrong, remove it
 			m_lightInfoToTileIdx.erase(m_alloc, it);
@@ -69,15 +105,20 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 		{
 			// Same light & lod & face, found the cache entry.
 
-			ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lastUsedLod == lod);
+			ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lightLod == lod && tile.m_lightFace == lightFace);
 
 			tileViewport = tile.m_viewport;
 
-			tile.m_lastUsedTimestamp = crntTimestamp;
-			tile.m_drawcallCount = drawcallCount;
+			const Bool needsReRendering =
+				tile.m_lightDrawcallCount != drawcallCount || tile.m_lightTimestamp != lightTimestamp;
 
-			return (tile.m_drawcallCount != drawcallCount) ? TileAllocatorResult::ALLOCATION_SUCCEDDED
-														   : TileAllocatorResult::CACHED;
+			tile.m_lightTimestamp = lightTimestamp;
+			tile.m_lastUsedTimestamp = crntTimestamp;
+			tile.m_lightDrawcallCount = drawcallCount;
+
+			updateTileHierarchy(tile);
+
+			return (needsReRendering) ? TileAllocatorResult::ALLOCATION_SUCCEDDED : TileAllocatorResult::CACHED;
 		}
 	}
 
@@ -96,17 +137,16 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 			continue;
 		}
 
-		if(tile.m_lightUuid == 0)
+		if(tile.m_lastUsedTimestamp == 0)
 		{
-			// Found an empty
+			// Found empty
 			emptyTileIdx = tileIdx;
-			break;
 		}
 		else if(tile.m_lastUsedTimestamp != crntTimestamp && tile.m_lastUsedTimestamp < tileToKickMinTimestamp)
 		{
 			// Found some with low timestamp
 			toKickTileIdx = tileIdx;
-			tileToKickMinTimestamp = tile.m_lastUsedTimestamp;
+			tileToKickMinTimestamp = tile.m_lightTimestamp;
 		}
 	}
 
@@ -129,15 +169,14 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 
 	// Mark the allocated tile
 	Tile& allocatedTile = m_allTiles[allocatedTileIdx];
+	allocatedTile.m_lightTimestamp = lightTimestamp;
 	allocatedTile.m_lastUsedTimestamp = crntTimestamp;
 	allocatedTile.m_lightUuid = lightUuid;
-	allocatedTile.m_drawcallCount = drawcallCount;
+	allocatedTile.m_lightDrawcallCount = drawcallCount;
+	allocatedTile.m_lightLod = lod;
+	allocatedTile.m_lightFace = lightFace;
 
-	// Mark all sub-tiles as well
-	updateSubTiles(allocatedTile);
-
-	// Mark the super tiles as well
-	updateSuperTiles(allocatedTile);
+	updateTileHierarchy(allocatedTile);
 
 	// Update the cache
 	m_lightInfoToTileIdx.emplace(m_alloc, key, allocatedTileIdx);
