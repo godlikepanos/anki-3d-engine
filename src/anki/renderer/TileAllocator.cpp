@@ -8,6 +8,12 @@
 namespace anki
 {
 
+TileAllocator::~TileAllocator()
+{
+	m_lightInfoToTileIdx.destroy(m_alloc);
+	m_allTiles.destroy(m_alloc);
+}
+
 void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount)
 {
 	// Preconditions
@@ -39,8 +45,47 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 	m_lodFirstTileIndex[lodCount] = tileCount - 1;
 
 	// Init the tiles
+	U tileIdx = 0;
+	for(U lod = 0; lod < lodCount; ++lod)
+	{
+		const U lodTileCountX = tileCountX >> lod;
+		const U lodTileCountY = tileCountY >> lod;
 
-	// TODO
+		for(U y = 0; y < lodTileCountY; ++y)
+		{
+			for(U x = 0; x < lodTileCountX; ++x)
+			{
+				ANKI_ASSERT(tileIdx >= m_lodFirstTileIndex[lod] && tileIdx <= m_lodFirstTileIndex[lod + 1]);
+				Tile& tile = m_allTiles[tileIdx];
+
+				tile.m_viewport[0] = x << lod;
+				tile.m_viewport[1] = y << lod;
+				tile.m_viewport[2] = 1 << lod;
+				tile.m_viewport[3] = 1 << lod;
+
+				if(lod > 0)
+				{
+					// Has sub tiles
+					for(U j = 0; j < 2; ++j)
+					{
+						for(U i = 0; i < 2; ++i)
+						{
+							const U subTileIdx = translateTileIdx(x / 2 + j, y / 2 + j, lod - 1);
+							m_allTiles[subTileIdx].m_superTile = tileIdx;
+
+							tile.m_subTiles[j * 2 + i] = subTileIdx;
+						}
+					}
+				}
+				else
+				{
+					// No sub-tiles
+				}
+
+				++tileIdx;
+			}
+		}
+	}
 }
 
 void TileAllocator::updateSubTiles(const Tile& updateFrom)

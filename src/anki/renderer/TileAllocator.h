@@ -13,24 +13,24 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// XXX
+/// The result of a tile allocation.
 enum class TileAllocatorResult : U32
 {
-	CACHED,
-	ALLOCATION_FAILED,
-	ALLOCATION_SUCCEDDED
+	CACHED, ///< The tile is caches. No need to do anything.
+	ALLOCATION_FAILED, ///< No more available tiles.
+	ALLOCATION_SUCCEDDED ///< Allocation succeded but the tile needs update.
 };
 
-/// XXX
+/// Allocates tiles out of a tilemap suitable for shadow mapping.
 class TileAllocator : public NonCopyable
 {
 public:
 	~TileAllocator();
 
-	/// XXX
+	/// Initialize the allocator.
 	void init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount);
 
-	/// XXX
+	/// Allocate some tiles.
 	TileAllocatorResult allocate(Timestamp crntTimestamp,
 		Timestamp lightTimestamp,
 		U64 lightUuid,
@@ -48,8 +48,8 @@ private:
 		U64 m_lightUuid = 0;
 		U32 m_lightDrawcallCount = 0;
 		Array<U32, 4> m_viewport = {};
-		Array<U32, 4> m_subTiles = {};
-		U32 m_superTile = 0;
+		Array<U32, 4> m_subTiles = {MAX_U32, MAX_U32, MAX_U32, MAX_U32};
+		U32 m_superTile = MAX_U32;
 		U8 m_lightLod = 0;
 		U8 m_lightFace = 0;
 		Bool8 m_pinned = false; ///< If true we cannot allocate from it.
