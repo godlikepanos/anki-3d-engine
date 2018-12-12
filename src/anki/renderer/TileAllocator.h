@@ -40,20 +40,7 @@ public:
 		Array<U32, 4>& tileViewport);
 
 private:
-	class Tile
-	{
-	public:
-		Timestamp m_lightTimestamp = 0; ///< The last timestamp the light got updated
-		Timestamp m_lastUsedTimestamp = 0; ///< The last timestamp this tile was used
-		U64 m_lightUuid = 0;
-		U32 m_lightDrawcallCount = 0;
-		Array<U32, 4> m_viewport = {};
-		Array<U32, 4> m_subTiles = {MAX_U32, MAX_U32, MAX_U32, MAX_U32};
-		U32 m_superTile = MAX_U32;
-		U8 m_lightLod = 0;
-		U8 m_lightFace = 0;
-		Bool8 m_pinned = false; ///< If true we cannot allocate from it.
-	};
+	class Tile;
 
 	/// A HashMap key.
 	class HashMapKey

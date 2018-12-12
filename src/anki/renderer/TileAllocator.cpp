@@ -8,10 +8,26 @@
 namespace anki
 {
 
+class TileAllocator::Tile
+{
+public:
+	Timestamp m_lightTimestamp = 0; ///< The last timestamp the light got updated
+	Timestamp m_lastUsedTimestamp = 0; ///< The last timestamp this tile was used
+	U64 m_lightUuid = 0;
+	U32 m_lightDrawcallCount = 0;
+	Array<U16, 4> m_viewport = {};
+	Array<U16, 4> m_subTiles = {MAX_U16, MAX_U16, MAX_U16, MAX_U16};
+	U16 m_superTile = MAX_U16;
+	U8 m_lightLod = 0;
+	U8 m_lightFace = 0;
+	Bool8 m_pinned = false; ///< If true we cannot allocate from it.
+};
+
 TileAllocator::~TileAllocator()
 {
 	m_lightInfoToTileIdx.destroy(m_alloc);
 	m_allTiles.destroy(m_alloc);
+	m_lodFirstTileIndex.destroy(m_alloc);
 }
 
 void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount)
@@ -25,6 +41,7 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 	m_tileCountX = tileCountX;
 	m_tileCountY = tileCountY;
 	m_lodCount = lodCount;
+	m_alloc = alloc;
 	m_lodFirstTileIndex.create(m_alloc, lodCount + 1);
 
 	// Create the tile array & index ranges
@@ -40,7 +57,7 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 
 		tileCount += lodTileCountX * lodTileCountY;
 	}
-	ANKI_ASSERT(tileCount >= tileCountX * tileCountY);
+	ANKI_ASSERT(tileCount >= tileCountX * tileCountY && tileCount < MAX_U16);
 	m_allTiles.create(m_alloc, tileCount);
 	m_lodFirstTileIndex[lodCount] = tileCount - 1;
 
@@ -70,7 +87,7 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 					{
 						for(U i = 0; i < 2; ++i)
 						{
-							const U subTileIdx = translateTileIdx(x / 2 + j, y / 2 + j, lod - 1);
+							const U subTileIdx = translateTileIdx((x << 1) + i, (y << 1) + j, lod - 1);
 							m_allTiles[subTileIdx].m_superTile = tileIdx;
 
 							tile.m_subTiles[j * 2 + i] = subTileIdx;
@@ -90,25 +107,27 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 
 void TileAllocator::updateSubTiles(const Tile& updateFrom)
 {
-	for(U32 idx : updateFrom.m_subTiles)
+	if(updateFrom.m_subTiles[0] == MAX_U16)
 	{
-		if(idx != MAX_U32)
-		{
-			m_allTiles[idx].m_lightTimestamp = updateFrom.m_lightTimestamp;
-			m_allTiles[idx].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
-			m_allTiles[idx].m_lightUuid = updateFrom.m_lightUuid;
-			m_allTiles[idx].m_lightDrawcallCount = updateFrom.m_lightDrawcallCount;
-			m_allTiles[idx].m_lightLod = updateFrom.m_lightLod;
-			m_allTiles[idx].m_lightFace = updateFrom.m_lightFace;
+		return;
+	}
 
-			updateSubTiles(m_allTiles[idx]);
-		}
+	for(U16 idx : updateFrom.m_subTiles)
+	{
+		m_allTiles[idx].m_lightTimestamp = updateFrom.m_lightTimestamp;
+		m_allTiles[idx].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
+		m_allTiles[idx].m_lightUuid = updateFrom.m_lightUuid;
+		m_allTiles[idx].m_lightDrawcallCount = updateFrom.m_lightDrawcallCount;
+		m_allTiles[idx].m_lightLod = updateFrom.m_lightLod;
+		m_allTiles[idx].m_lightFace = updateFrom.m_lightFace;
+
+		updateSubTiles(m_allTiles[idx]);
 	}
 }
 
 void TileAllocator::updateSuperTiles(const Tile& updateFrom)
 {
-	if(updateFrom.m_superTile != MAX_U32)
+	if(updateFrom.m_superTile != MAX_U16)
 	{
 		m_allTiles[updateFrom.m_superTile].m_lightUuid = 0;
 		m_allTiles[updateFrom.m_superTile].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
@@ -140,6 +159,8 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 	if(it != m_lightInfoToTileIdx.getEnd())
 	{
 		Tile& tile = m_allTiles[*it];
+		ANKI_ASSERT(
+			tile.m_lastUsedTimestamp != crntTimestamp && "Trying to allocate the same thing twice in this timestamp?");
 
 		if(tile.m_lightUuid != lightUuid || tile.m_lightLod != lod || tile.m_lightFace != lightFace)
 		{
@@ -152,7 +173,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 
 			ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lightLod == lod && tile.m_lightFace == lightFace);
 
-			tileViewport = tile.m_viewport;
+			tileViewport = {tile.m_viewport[0], tile.m_viewport[1], tile.m_viewport[2], tile.m_viewport[3]};
 
 			const Bool needsReRendering =
 				tile.m_lightDrawcallCount != drawcallCount || tile.m_lightTimestamp != lightTimestamp;
@@ -186,6 +207,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 		{
 			// Found empty
 			emptyTileIdx = tileIdx;
+			break;
 		}
 		else if(tile.m_lastUsedTimestamp != crntTimestamp && tile.m_lastUsedTimestamp < tileToKickMinTimestamp)
 		{
@@ -225,6 +247,12 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 
 	// Update the cache
 	m_lightInfoToTileIdx.emplace(m_alloc, key, allocatedTileIdx);
+
+	// Return
+	tileViewport = {allocatedTile.m_viewport[0],
+		allocatedTile.m_viewport[1],
+		allocatedTile.m_viewport[2],
+		allocatedTile.m_viewport[3]};
 
 	return TileAllocatorResult::ALLOCATION_SUCCEDDED;
 }
