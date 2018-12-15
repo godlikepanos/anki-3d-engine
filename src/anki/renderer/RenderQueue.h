@@ -76,8 +76,8 @@ public:
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
 
-	UVec2 m_atlasTiles; ///< Renderer internal.
-	F32 m_atlasTileSize; ///< Renderer internal.
+	Array<Vec2, 6> m_atlasTileOffsets; ///< Renderer internal.
+	F32 m_atlasTileScale; ///< Renderer internal.
 
 	PointLightQueueElement()
 	{

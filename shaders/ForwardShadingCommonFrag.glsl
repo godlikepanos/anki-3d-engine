@@ -55,7 +55,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	{
 		PointLight light = u_pointLights[idx];
 
-		Vec3 diffC = diffCol * light.m_diffuseColorTileSize.rgb;
+		Vec3 diffC = diffCol * light.m_diffuseColorAtlasTileScale.rgb;
 
 		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
 		F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
@@ -64,10 +64,13 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 		const F32 shadow = 1.0;
 #else
 		F32 shadow = 1.0;
-		if(light.m_diffuseColorTileSize.w >= 0.0)
+		if(light.m_diffuseColorAtlasTileScale.w >= 0.0)
 		{
-			shadow = computeShadowFactorOmni(
-				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
+			shadow = computeShadowFactorOmni(frag2Light,
+				light.m_radiusPad3.x,
+				light.m_atlasTileOffets,
+				light.m_diffuseColorAtlasTileScale.w,
+				u_shadowTex);
 		}
 #endif
 

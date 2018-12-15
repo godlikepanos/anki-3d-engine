@@ -28,10 +28,10 @@ public:
 	~TileAllocator();
 
 	/// Initialize the allocator.
-	void init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount);
+	void init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount, Bool enableCaching);
 
 	/// Allocate some tiles.
-	TileAllocatorResult allocate(Timestamp crntTimestamp,
+	ANKI_USE_RESULT TileAllocatorResult allocate(Timestamp crntTimestamp,
 		Timestamp lightTimestamp,
 		U64 lightUuid,
 		U32 lightFace,
@@ -43,17 +43,7 @@ private:
 	class Tile;
 
 	/// A HashMap key.
-	class HashMapKey
-	{
-	public:
-		U64 m_lightUuid;
-		U64 m_face;
-
-		U64 computeHash() const
-		{
-			return anki::computeHash(this, sizeof(*this), 693);
-		}
-	};
+	class HashMapKey;
 
 	HeapAllocator<U8> m_alloc;
 	DynamicArray<Tile> m_allTiles;
@@ -64,6 +54,7 @@ private:
 	U16 m_tileCountX = 0; ///< Tile count for LOD 0
 	U16 m_tileCountY = 0; ///< Tile count for LOD 0
 	U8 m_lodCount = 0;
+	Bool8 m_cachingEnabled = false;
 
 	U32 translateTileIdx(U32 x, U32 y, U32 lod) const
 	{

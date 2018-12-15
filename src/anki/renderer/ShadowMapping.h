@@ -8,6 +8,7 @@
 #include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
+#include <anki/renderer/TileAllocator.h>
 
 namespace anki
 {
@@ -37,52 +38,22 @@ anki_internal:
 	}
 
 private:
+	using Viewport = Array<U32, 4>;
+
 	/// @name ESM stuff
 	/// @{
 
-	/// The ESM map consists of tiles.
-	class Tile
-	{
-	public:
-		U64 m_lastUsedTimestamp = 0;
-		U64 m_lightUuid = 0;
-		U32 m_drawcallCount = 0;
-		U8 m_face = 0;
-		Bool8 m_pinned = false; ///< If true we cannot allocate from it.
-
-		Vec4 m_uv;
-		Array<U32, 4> m_viewport;
-	};
-
-	/// A HashMap key.
-	class TileKey
-	{
-	public:
-		U64 m_lightUuid;
-		U64 m_face;
-
-		U64 computeHash() const
-		{
-			return anki::computeHash(this, sizeof(*this), 693);
-		}
-	};
+	TileAllocator m_esmTileAlloc;
 
 	FramebufferDescription m_esmFbDescr; ///< The FB for ESM
-	TexturePtr m_esmAtlas; ///< ESM texture atlas.
+	TexturePtr m_esmAtlas; ///< ESM texture atlas. Size (m_esmTileResolution*m_esmTileCountBothAxis)^2
 	RenderTargetHandle m_esmRt;
 
-	U32 m_tileResolution = 0; ///< Tile resolution.
-	U32 m_atlasResolution = 0; ///< Atlas size is (m_atlasResolution, m_atlasResolution)
-	U32 m_tileCountPerRowOrColumn = 0;
-	DynamicArray<Tile> m_tiles;
+	U32 m_esmTileResolution = 0; ///< Tile resolution.
+	U32 m_esmTileCountBothAxis = 0;
 
 	ShaderProgramResourcePtr m_esmResolveProg;
 	ShaderProgramPtr m_esmResolveGrProg;
-
-	HashMap<TileKey, U32> m_lightUuidToTileIdx;
-
-	Bool allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U32& tileAllocated, Bool& inTheCache);
-	static Bool shouldRenderTile(U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx, U32 drawcallCount);
 
 	class EsmResolveWorkItem
 	{
@@ -96,7 +67,7 @@ private:
 
 	ANKI_USE_RESULT Error initEsm(const ConfigSet& cfg);
 
-	static Mat4 createSpotLightTextureMatrix(const Tile& tile);
+	static Mat4 createSpotLightTextureMatrix(const Viewport& viewport);
 
 	/// A RenderPassWorkCallback for ESM
 	static void runEsmCallback(RenderPassWorkContext& rgraphCtx)
@@ -109,27 +80,22 @@ private:
 
 	/// @name Scratch buffer stuff
 	/// @{
+	TileAllocator m_scratchTileAlloc;
+
 	RenderTargetHandle m_scratchRt; ///< Size of the RT is (m_scratchTileSize * m_scratchTileCount, m_scratchTileSize).
 	FramebufferDescription m_scratchFbDescr; ///< FB info.
 	RenderTargetDescription m_scratchRtDescr; ///< Render target.
 
-	U32 m_scratchTileCount = 0;
+	U32 m_scratchTileCountX = 0;
+	U32 m_scratchTileCountY = 0;
 	U32 m_scratchTileResolution = 0;
-	U32 m_freeScratchTiles = 0;
 
-	class ScratchBufferWorkItem
-	{
-	public:
-		Array<U32, 4> m_viewport;
-		RenderQueue* m_renderQueue;
-		U32 m_firstRenderableElement;
-		U32 m_renderableElementCount;
-		U32 m_threadPoolTaskIdx;
-	};
-
-	struct LightToRenderToScratchInfo;
+	class ScratchBufferWorkItem;
+	class LightToRenderToScratchInfo;
 
 	WeakArray<ScratchBufferWorkItem> m_scratchWorkItems;
+	U32 m_scratchMaxViewportWidth = 0;
+	U32 m_scratchMaxViewportHeight = 0;
 
 	ANKI_USE_RESULT Error initScratch(const ConfigSet& cfg);
 
@@ -145,18 +111,28 @@ private:
 	/// @name Misc & common
 	/// @{
 
+	static const U m_lodCount = 3;
+	static const U m_pointLightsMaxLod = 1;
+
+	/// Find the lod of the light
+	U choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light) const;
+	/// Find the lod of the light
+	U choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light) const;
+
 	/// Try to allocate a number of scratch tiles and regular tiles.
-	Bool allocateTilesAndScratchTiles(U64 lightUuid,
+	TileAllocatorResult allocateTilesAndScratchTiles(U64 lightUuid,
 		U32 faceCount,
 		const U64* faceTimestamps,
 		const U32* faceIndices,
 		const U32* drawcallsCount,
-		U32* tileIndices,
-		U32* scratchTileIndices);
+		U32 lod,
+		Viewport* esmTileViewports,
+		Viewport* scratchTileViewports,
+		TileAllocatorResult* subResults);
 
 	/// Add new work to render to scratch buffer and ESM buffer.
-	void newScratchAndEsmResloveRenderWorkItems(U32 tileIdx,
-		U32 scratchTileIdx,
+	void newScratchAndEsmResloveRenderWorkItems(const Viewport& esmViewport,
+		const Viewport& scratchVewport,
 		RenderQueue* lightRenderQueue,
 		DynamicArrayAuto<LightToRenderToScratchInfo>& scratchWorkItem,
 		DynamicArrayAuto<EsmResolveWorkItem>& esmResolveWorkItem,

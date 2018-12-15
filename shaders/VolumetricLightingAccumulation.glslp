@@ -111,14 +111,17 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos)
 		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_posRadius.xyz), PHASE_FUNCTION_ANISOTROPY);
 
 #if ENABLE_SHADOWS
-		if(light.m_diffuseColorTileSize.w >= 0.0)
+		if(light.m_diffuseColorAtlasTileScale.w >= 0.0)
 		{
-			factor *= computeShadowFactorOmni(
-				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
+			factor *= computeShadowFactorOmni(frag2Light,
+				light.m_radiusPad3.x,
+				light.m_atlasTileOffets,
+				light.m_diffuseColorAtlasTileScale.w,
+				u_shadowTex);
 		}
 #endif
 
-		color += light.m_diffuseColorTileSize.rgb * factor;
+		color += light.m_diffuseColorAtlasTileScale.rgb * factor;
 	}
 
 	// Spot lights

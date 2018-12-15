@@ -25,11 +25,11 @@ struct ClustererMagicValues
 struct PointLight
 {
 	Vec4 m_posRadius; // xyz: Light pos in world space. w: The 1/(radius^2)
-	Vec4 m_diffuseColorTileSize; // xyz: diff color, w: tile size in the shadow atlas
-	Vec2 m_radiusPad1; // x: radius
-	UVec2 m_atlasTiles; // x: encodes 6 uints with atlas tile indices in the x dir. y: same for y dir.
+	Vec4 m_diffuseColorAtlasTileScale; // xyz: diff color, w: UV scale for all tiles
+	Vec4 m_radiusPad3; // x: radius
+	Vec4 m_atlasTileOffets[3u]; // It's a Vec4 because of the std140 limitations
 };
-const U32 SIZEOF_POINT_LIGHT = 3 * SIZEOF_VEC4;
+const U32 SIZEOF_POINT_LIGHT = 2 * SIZEOF_VEC4 + 8 * SIZEOF_VEC2;
 ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == SIZEOF_POINT_LIGHT)
 
 // Spot light

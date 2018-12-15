@@ -124,7 +124,8 @@ F32 computeShadowFactorSpot(Mat4 lightProjectionMat, Vec3 worldPos, F32 distance
 	return saturate(exp(ESM_CONSTANT * (shadowFactor - linearDepth)));
 }
 
-F32 computeShadowFactorOmni(Vec3 frag2Light, F32 radius, UVec2 atlasTiles, F32 tileSize, sampler2D shadowMap)
+F32 computeShadowFactorOmni(
+	Vec3 frag2Light, F32 radius, Vec4 atlasTileOffsets[3u], F32 atlasTileScale, sampler2D shadowMap)
 {
 	Vec3 dir = -frag2Light;
 	Vec3 dirabs = abs(dir);
@@ -142,16 +143,13 @@ F32 computeShadowFactorOmni(Vec3 frag2Light, F32 radius, UVec2 atlasTiles, F32 t
 		U32 faceIdxu;
 		Vec2 uv = convertCubeUvsu(dir, faceIdxu);
 
-		// Clamp uv to a small value to avoid reading from other tiles due to bilinear filtering. It's not a perfect
-		// solution but it works
-		uv = clamp(uv, Vec2(0.001), Vec2(1.0 - 0.001));
-
-		// Compute atlas tile
-		atlasTiles >>= UVec2(faceIdxu * 5u);
-		atlasTiles &= UVec2(31u);
+		// Get the atlas offset
+		Vec2 atlasOffset;
+		atlasOffset.x = atlasTileOffsets[faceIdxu >> 1u][(faceIdxu & 1u) << 1u];
+		atlasOffset.y = atlasTileOffsets[faceIdxu >> 1u][((faceIdxu & 1u) << 1u) + 1u];
 
 		// Compute UV
-		uv = (uv + Vec2(atlasTiles)) * tileSize;
+		uv = fma(uv, Vec2(atlasTileScale), atlasOffset);
 
 		// Sample
 		shadowFactor = textureLod(shadowMap, uv, 0.0).r;

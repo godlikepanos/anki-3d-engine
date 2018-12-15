@@ -20,7 +20,18 @@ public:
 	U16 m_superTile = MAX_U16;
 	U8 m_lightLod = 0;
 	U8 m_lightFace = 0;
-	Bool8 m_pinned = false; ///< If true we cannot allocate from it.
+};
+
+class TileAllocator::HashMapKey
+{
+public:
+	U64 m_lightUuid;
+	U64 m_face;
+
+	U64 computeHash() const
+	{
+		return anki::computeHash(this, sizeof(*this), 693);
+	}
 };
 
 TileAllocator::~TileAllocator()
@@ -30,7 +41,7 @@ TileAllocator::~TileAllocator()
 	m_lodFirstTileIndex.destroy(m_alloc);
 }
 
-void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount)
+void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY, U32 lodCount, Bool enableCaching)
 {
 	// Preconditions
 	ANKI_ASSERT(tileCountX > 0);
@@ -42,6 +53,7 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 	m_tileCountY = tileCountY;
 	m_lodCount = lodCount;
 	m_alloc = alloc;
+	m_cachingEnabled = enableCaching;
 	m_lodFirstTileIndex.create(m_alloc, lodCount + 1);
 
 	// Create the tile array & index ranges
@@ -153,38 +165,41 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 
 	// 1) Search if it's already cached
 	HashMapKey key;
-	key.m_lightUuid = lightUuid;
-	key.m_face = lightFace;
-	auto it = m_lightInfoToTileIdx.find(key);
-	if(it != m_lightInfoToTileIdx.getEnd())
+	if(m_cachingEnabled)
 	{
-		Tile& tile = m_allTiles[*it];
-		ANKI_ASSERT(
-			tile.m_lastUsedTimestamp != crntTimestamp && "Trying to allocate the same thing twice in this timestamp?");
-
-		if(tile.m_lightUuid != lightUuid || tile.m_lightLod != lod || tile.m_lightFace != lightFace)
+		key.m_lightUuid = lightUuid;
+		key.m_face = lightFace;
+		auto it = m_lightInfoToTileIdx.find(key);
+		if(it != m_lightInfoToTileIdx.getEnd())
 		{
-			// Cache entry is wrong, remove it
-			m_lightInfoToTileIdx.erase(m_alloc, it);
-		}
-		else
-		{
-			// Same light & lod & face, found the cache entry.
+			Tile& tile = m_allTiles[*it];
+			ANKI_ASSERT(tile.m_lastUsedTimestamp != crntTimestamp
+						&& "Trying to allocate the same thing twice in this timestamp?");
 
-			ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lightLod == lod && tile.m_lightFace == lightFace);
+			if(tile.m_lightUuid != lightUuid || tile.m_lightLod != lod || tile.m_lightFace != lightFace)
+			{
+				// Cache entry is wrong, remove it
+				m_lightInfoToTileIdx.erase(m_alloc, it);
+			}
+			else
+			{
+				// Same light & lod & face, found the cache entry.
 
-			tileViewport = {tile.m_viewport[0], tile.m_viewport[1], tile.m_viewport[2], tile.m_viewport[3]};
+				ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lightLod == lod && tile.m_lightFace == lightFace);
 
-			const Bool needsReRendering =
-				tile.m_lightDrawcallCount != drawcallCount || tile.m_lightTimestamp != lightTimestamp;
+				tileViewport = {tile.m_viewport[0], tile.m_viewport[1], tile.m_viewport[2], tile.m_viewport[3]};
 
-			tile.m_lightTimestamp = lightTimestamp;
-			tile.m_lastUsedTimestamp = crntTimestamp;
-			tile.m_lightDrawcallCount = drawcallCount;
+				const Bool needsReRendering =
+					tile.m_lightDrawcallCount != drawcallCount || tile.m_lightTimestamp != lightTimestamp;
 
-			updateTileHierarchy(tile);
+				tile.m_lightTimestamp = lightTimestamp;
+				tile.m_lastUsedTimestamp = crntTimestamp;
+				tile.m_lightDrawcallCount = drawcallCount;
 
-			return (needsReRendering) ? TileAllocatorResult::ALLOCATION_SUCCEDDED : TileAllocatorResult::CACHED;
+				updateTileHierarchy(tile);
+
+				return (needsReRendering) ? TileAllocatorResult::ALLOCATION_SUCCEDDED : TileAllocatorResult::CACHED;
+			}
 		}
 	}
 
@@ -197,11 +212,6 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 	for(U tileIdx = firstTileIdx; tileIdx <= lastTileIdx; ++tileIdx)
 	{
 		const Tile& tile = m_allTiles[tileIdx];
-
-		if(tile.m_pinned)
-		{
-			continue;
-		}
 
 		if(tile.m_lastUsedTimestamp == 0)
 		{
@@ -246,7 +256,10 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 	updateTileHierarchy(allocatedTile);
 
 	// Update the cache
-	m_lightInfoToTileIdx.emplace(m_alloc, key, allocatedTileIdx);
+	if(m_cachingEnabled)
+	{
+		m_lightInfoToTileIdx.emplace(m_alloc, key, allocatedTileIdx);
+	}
 
 	// Return
 	tileViewport = {allocatedTile.m_viewport[0],

@@ -154,14 +154,18 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		ANKI_BRANCH if(light.m_diffuseColorTileSize.w >= 0.0)
+		ANKI_BRANCH if(light.m_diffuseColorAtlasTileScale.w >= 0.0)
 		{
-			F32 shadow = computeShadowFactorOmni(
-				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
+			F32 shadow = computeShadowFactorOmni(frag2Light,
+				light.m_radiusPad3.x,
+				light.m_atlasTileOffets,
+				light.m_diffuseColorAtlasTileScale.w,
+				u_shadowTex);
 			lambert *= shadow;
 		}
 
-		out_color += (diffC + specC) * light.m_diffuseColorTileSize.rgb * (att * max(gbuffer.m_subsurface, lambert));
+		out_color +=
+			(diffC + specC) * light.m_diffuseColorAtlasTileScale.rgb * (att * max(gbuffer.m_subsurface, lambert));
 	}
 
 	// Spot lights
