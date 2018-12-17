@@ -67,13 +67,7 @@ private:
 
 	ANKI_USE_RESULT Error initEsm(const ConfigSet& cfg);
 
-	static Mat4 createSpotLightTextureMatrix(const Viewport& viewport);
-
-	/// A RenderPassWorkCallback for ESM
-	static void runEsmCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		scast<ShadowMapping*>(rgraphCtx.m_userData)->runEsm(rgraphCtx);
-	}
+	inline Mat4 createSpotLightTextureMatrix(const Viewport& viewport) const;
 
 	void runEsm(RenderPassWorkContext& rgraphCtx);
 	/// @}
@@ -99,12 +93,6 @@ private:
 
 	ANKI_USE_RESULT Error initScratch(const ConfigSet& cfg);
 
-	/// A RenderPassWorkCallback for shadow passes.
-	static void runShadowmappingCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		scast<ShadowMapping*>(rgraphCtx.m_userData)->runShadowMapping(rgraphCtx);
-	}
-
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 	/// @}
 
@@ -113,6 +101,8 @@ private:
 
 	static const U m_lodCount = 3;
 	static const U m_pointLightsMaxLod = 1;
+
+	Array<F32, m_lodCount - 1> m_lodDistances;
 
 	/// Find the lod of the light
 	U choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light) const;

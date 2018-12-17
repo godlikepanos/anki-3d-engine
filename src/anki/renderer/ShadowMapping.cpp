@@ -126,6 +126,9 @@ Error ShadowMapping::initInternal(const ConfigSet& cfg)
 	ANKI_CHECK(initScratch(cfg));
 	ANKI_CHECK(initEsm(cfg));
 
+	m_lodDistances[0] = cfg.getNumber("r.shadowMapping.lightLodDistance0");
+	m_lodDistances[1] = cfg.getNumber("r.shadowMapping.lightLodDistance1");
+
 	return Error::NONE;
 }
 
@@ -217,7 +220,12 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt, minx, miny, width, height);
 			ANKI_ASSERT(
 				threadCountForScratchPass && threadCountForScratchPass <= m_r->getThreadHive().getThreadCount());
-			pass.setWork(runShadowmappingCallback, this, threadCountForScratchPass);
+			pass.setWork(
+				[](RenderPassWorkContext& rgraphCtx) {
+					static_cast<ShadowMapping*>(rgraphCtx.m_userData)->runShadowMapping(rgraphCtx);
+				},
+				this,
+				threadCountForScratchPass);
 
 			TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
 			pass.newDependency({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
@@ -229,7 +237,12 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 			m_esmRt = rgraph.importRenderTarget(m_esmAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
 			pass.setFramebufferInfo(m_esmFbDescr, {{m_esmRt}}, {});
-			pass.setWork(runEsmCallback, this, 0);
+			pass.setWork(
+				[](RenderPassWorkContext& rgraphCtx) {
+					static_cast<ShadowMapping*>(rgraphCtx.m_userData)->runEsm(rgraphCtx);
+				},
+				this,
+				0);
 
 			pass.newDependency(
 				{m_scratchRt, TextureUsageBit::SAMPLED_FRAGMENT, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
@@ -243,22 +256,59 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-Mat4 ShadowMapping::createSpotLightTextureMatrix(const Viewport& viewport)
+Mat4 ShadowMapping::createSpotLightTextureMatrix(const Viewport& viewport) const
 {
-	return Mat4(
-		viewport[2], 0.0, 0.0, viewport[0], 0.0, viewport[3], 0.0, viewport[1], 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+	const F32 atlasSize = m_esmTileResolution * m_esmTileCountBothAxis;
+	const Vec2 uv(F32(viewport[0]) / atlasSize, F32(viewport[1]) / atlasSize);
+	ANKI_ASSERT(uv >= Vec2(0.0f) && uv <= Vec2(1.0f));
+
+	ANKI_ASSERT(viewport[2] == viewport[3]);
+	const F32 sizeTextureSpace = F32(viewport[2]) / atlasSize;
+
+	return Mat4(sizeTextureSpace,
+		0.0f,
+		0.0f,
+		uv.x(),
+		0.0f,
+		sizeTextureSpace,
+		0.0f,
+		uv.y(),
+		0.0f,
+		0.0f,
+		1.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		1.0f);
 }
 
 U ShadowMapping::choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light) const
 {
-	// TODO
-	return 0;
+	const F32 distFromTheCamera = (cameraOrigin - light.m_worldPosition.xyz0()).getLength() - light.m_radius;
+	if(distFromTheCamera < m_lodDistances[0])
+	{
+		ANKI_ASSERT(m_pointLightsMaxLod == 1);
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 U ShadowMapping::choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light) const
 {
-	// TODO
-	return 1;
+	const Vec4 lightPos = light.m_worldTransform.getTranslationPart().xyz0();
+	const F32 distFromTheCamera = (cameraOrigin - lightPos).getLength() - light.m_distance;
+	if(distFromTheCamera < m_lodDistances[0])
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,

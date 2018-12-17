@@ -29,6 +29,8 @@ Config::Config()
 	newOption("r.shadowMapping.tileCountPerRowOrColumn", 16);
 	newOption("r.shadowMapping.scratchTileCountX", 4 * 5);
 	newOption("r.shadowMapping.scratchTileCountY", 4);
+	newOption("r.shadowMapping.lightLodDistance0", 10.0);
+	newOption("r.shadowMapping.lightLodDistance1", 20.0);
 
 	newOption("r.lensFlare.maxSpritesPerFlare", 8);
 	newOption("r.lensFlare.maxFlares", 16);
