@@ -299,16 +299,32 @@ U ShadowMapping::choseLod(const Vec4& cameraOrigin, const PointLightQueueElement
 
 U ShadowMapping::choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light) const
 {
-	const Vec4 lightPos = light.m_worldTransform.getTranslationPart().xyz0();
-	const F32 distFromTheCamera = (cameraOrigin - lightPos).getLength() - light.m_distance;
+	// Get some data
+	const Vec4 coneOrigin = light.m_worldTransform.getTranslationPart().xyz0();
+	const Vec4 coneDir = -light.m_worldTransform.getZAxis().xyz0();
+	const F32 coneAngle = light.m_outerAngle;
+
+	// Compute the distance from the camera to the light cone
+	const Vec4 V = cameraOrigin - coneOrigin;
+	const F32 VlenSq = V.dot(V);
+	const F32 V1len = V.dot(coneDir);
+	const F32 distFromTheCamera = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
+
+	U lod;
 	if(distFromTheCamera < m_lodDistances[0])
 	{
-		return 1;
+		lod = 2;
+	}
+	else if(distFromTheCamera < m_lodDistances[1])
+	{
+		lod = 1;
 	}
 	else
 	{
-		return 0;
+		lod = 0;
 	}
+
+	return lod;
 }
 
 TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
@@ -431,7 +447,63 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 #endif
 	}
 
-	// Process the point lights first.
+	// Process the directional light first.
+	if(ctx.m_renderQueue->m_directionalLight.m_shadowCascadeCount > 0)
+	{
+		DirectionalLightQueueElement& light = ctx.m_renderQueue->m_directionalLight;
+
+		Array<U64, MAX_SHADOW_CASCADES> timestamps;
+		Array<U32, MAX_SHADOW_CASCADES> cascadeIndices;
+		Array<U32, MAX_SHADOW_CASCADES> drawcallCounts;
+		Array<Viewport, MAX_SHADOW_CASCADES> esmViewports;
+		Array<Viewport, MAX_SHADOW_CASCADES> scratchViewports;
+		Array<TileAllocatorResult, MAX_SHADOW_CASCADES> subResults;
+
+		for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
+		{
+			ANKI_ASSERT(light.m_shadowRenderQueues[cascade]);
+			timestamps[cascade] = m_r->getGlobalTimestamp(); // This light is always updated
+			cascadeIndices[cascade] = cascade;
+			drawcallCounts[cascade] = 1; // Doesn't matter
+		}
+
+		const Bool allocationFailed = allocateTilesAndScratchTiles(light.m_uuid,
+										  light.m_shadowCascadeCount,
+										  &timestamps[0],
+										  &cascadeIndices[0],
+										  &drawcallCounts[0],
+										  m_lodCount - 1, // Always the best quality
+										  &esmViewports[0],
+										  &scratchViewports[0],
+										  &subResults[0])
+									  == TileAllocatorResult::ALLOCATION_FAILED;
+
+		if(!allocationFailed)
+		{
+			for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
+			{
+				// Update the texture matrix to point to the correct region in the atlas
+				light.m_textureMatrices[cascade] =
+					createSpotLightTextureMatrix(esmViewports[cascade]) * light.m_textureMatrices[cascade];
+
+				// Push work
+				newScratchAndEsmResloveRenderWorkItems(esmViewports[cascade],
+					scratchViewports[cascade],
+					light.m_shadowRenderQueues[cascade],
+					lightsToRender,
+					esmWorkItems,
+					drawcallCount);
+			}
+		}
+		else
+		{
+			// Light can't be a caster this frame
+			light.m_shadowCascadeCount = 0;
+			zeroMemory(light.m_shadowRenderQueues);
+		}
+	}
+
+	// Process the point lights.
 	for(PointLightQueueElement* light : ctx.m_renderQueue->m_shadowPointLights)
 	{
 		// Prepare data to allocate tiles and allocate

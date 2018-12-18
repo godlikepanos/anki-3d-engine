@@ -7,6 +7,7 @@
 
 #include <anki/physics/PhysicsObject.h>
 #include <anki/util/WeakArray.h>
+#include <anki/util/ClassWrapper.h>
 
 namespace anki
 {
@@ -46,7 +47,7 @@ public:
 
 private:
 	PhysicsCollisionShapePtr m_shape;
-	BtClassWrapper<btGhostObject> m_ghostShape;
+	ClassWrapper<btGhostObject> m_ghostShape;
 
 	PhysicsTriggerProcessContactCallback* m_contactCallback = nullptr;
 

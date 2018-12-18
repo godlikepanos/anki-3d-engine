@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/physics/PhysicsObject.h>
+#include <anki/util/ClassWrapper.h>
 
 namespace anki
 {
@@ -40,8 +41,8 @@ public:
 protected:
 	union
 	{
-		BtClassWrapper<btPoint2PointConstraint> m_p2p;
-		BtClassWrapper<btHingeConstraint> m_hinge;
+		ClassWrapper<btPoint2PointConstraint> m_p2p;
+		ClassWrapper<btHingeConstraint> m_hinge;
 	};
 
 	PhysicsBodyPtr m_bodyA;

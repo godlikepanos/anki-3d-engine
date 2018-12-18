@@ -9,6 +9,7 @@
 #include <anki/physics/PhysicsObject.h>
 #include <anki/util/List.h>
 #include <anki/util/WeakArray.h>
+#include <anki/util/ClassWrapper.h>
 
 namespace anki
 {
@@ -110,14 +111,14 @@ private:
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_tmpAlloc;
 
-	BtClassWrapper<btDbvtBroadphase> m_broadphase;
-	BtClassWrapper<btGhostPairCallback> m_gpc;
+	ClassWrapper<btDbvtBroadphase> m_broadphase;
+	ClassWrapper<btGhostPairCallback> m_gpc;
 	MyOverlapFilterCallback* m_filterCallback = nullptr;
 
-	BtClassWrapper<btDefaultCollisionConfiguration> m_collisionConfig;
-	BtClassWrapper<btCollisionDispatcher> m_dispatcher;
-	BtClassWrapper<btSequentialImpulseConstraintSolver> m_solver;
-	BtClassWrapper<btDiscreteDynamicsWorld> m_world;
+	ClassWrapper<btDefaultCollisionConfiguration> m_collisionConfig;
+	ClassWrapper<btCollisionDispatcher> m_dispatcher;
+	ClassWrapper<btSequentialImpulseConstraintSolver> m_solver;
+	ClassWrapper<btDiscreteDynamicsWorld> m_world;
 	mutable Mutex m_btWorldMtx;
 
 	Array<IntrusiveList<PhysicsObject>, U(PhysicsObjectType::COUNT)> m_objectLists;

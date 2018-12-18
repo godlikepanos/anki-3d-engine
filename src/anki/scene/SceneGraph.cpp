@@ -64,7 +64,6 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_globalTimestamp = globalTimestamp;
 	m_threadHive = threadHive;
 	m_resources = resources;
-	m_objectsMarkedForDeletionCount.store(0);
 	m_gr = &m_resources->getGrManager();
 	m_physics = &m_resources->getPhysicsWorld();
 	m_input = input;

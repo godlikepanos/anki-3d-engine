@@ -129,6 +129,7 @@ public:
 	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
+	U64 m_uuid;
 	Vec3 m_diffuseColor;
 	Vec3 m_direction;
 	U8 m_shadowCascadeCount;

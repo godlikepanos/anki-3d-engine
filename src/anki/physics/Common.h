@@ -109,60 +109,6 @@ ANKI_USE_RESULT inline Transform toAnki(const btTransform& t)
 	out.setScale(1.0f);
 	return out;
 }
-
-/// A wrapper template to compensate for of the fact that Bullet classes get initialized in the constructor.
-template<typename TBtClass>
-class BtClassWrapper
-{
-public:
-	BtClassWrapper()
-	{
-	}
-
-	template<typename... TArgs>
-	void init(TArgs&&... args)
-	{
-		::new(&m_data[0]) TBtClass(std::forward<TArgs>(args)...);
-	}
-
-	void destroy()
-	{
-		reinterpret_cast<TBtClass*>(&m_data[0])->~TBtClass();
-	}
-
-	TBtClass* operator->()
-	{
-		return reinterpret_cast<TBtClass*>(&m_data[0]);
-	}
-
-	const TBtClass* operator->() const
-	{
-		return reinterpret_cast<const TBtClass*>(&m_data[0]);
-	}
-
-	TBtClass& operator*()
-	{
-		return *reinterpret_cast<TBtClass*>(&m_data[0]);
-	}
-
-	const TBtClass& operator*() const
-	{
-		return *reinterpret_cast<const TBtClass*>(&m_data[0]);
-	}
-
-	TBtClass* get()
-	{
-		return reinterpret_cast<TBtClass*>(&m_data[0]);
-	}
-
-	const TBtClass* get() const
-	{
-		return reinterpret_cast<const TBtClass*>(&m_data[0]);
-	}
-
-private:
-	alignas(alignof(TBtClass)) Array<U8, sizeof(TBtClass)> m_data;
-};
 /// @}
 
 } // end namespace anki

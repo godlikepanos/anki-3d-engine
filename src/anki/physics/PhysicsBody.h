@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/physics/PhysicsObject.h>
+#include <anki/util/ClassWrapper.h>
 
 namespace anki
 {
@@ -117,7 +118,7 @@ private:
 	};
 
 	/// Store the data of the btRigidBody in place to avoid additional allocations.
-	BtClassWrapper<btRigidBody> m_body;
+	ClassWrapper<btRigidBody> m_body;
 
 	Transform m_trf = Transform::getIdentity();
 	MotionState m_motionState;

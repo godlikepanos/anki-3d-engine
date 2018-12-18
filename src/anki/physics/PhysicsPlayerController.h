@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/physics/PhysicsObject.h>
+#include <anki/util/ClassWrapper.h>
 
 namespace anki
 {
@@ -49,9 +50,9 @@ public:
 	}
 
 private:
-	BtClassWrapper<btPairCachingGhostObject> m_ghostObject;
-	BtClassWrapper<btCapsuleShape> m_convexShape;
-	BtClassWrapper<btKinematicCharacterController> m_controller;
+	ClassWrapper<btPairCachingGhostObject> m_ghostObject;
+	ClassWrapper<btCapsuleShape> m_convexShape;
+	ClassWrapper<btKinematicCharacterController> m_controller;
 
 	Transform m_prevTrf = Transform::getIdentity();
 

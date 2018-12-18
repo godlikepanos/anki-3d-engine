@@ -212,7 +212,7 @@ anki_internal:
 
 	U64 getNewUuid()
 	{
-		return m_nodesUuid++;
+		return m_nodesUuid.fetchAdd(1);
 	}
 
 	F32 getEarlyZDistance() const
@@ -258,11 +258,11 @@ private:
 	Vec3 m_sceneMin = {-1000.0f, -200.0f, -1000.0f};
 	Vec3 m_sceneMax = {1000.0f, 200.0f, 1000.0f};
 
-	Atomic<U32> m_objectsMarkedForDeletionCount;
+	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
 
 	F32 m_maxReflectionProxyDistance = 0.0;
 
-	U64 m_nodesUuid = 0;
+	Atomic<U64> m_nodesUuid = {1};
 
 	F32 m_earlyZDist = -1.0;
 
