@@ -32,6 +32,16 @@ public:
 	U32 m_drawcallCount;
 };
 
+class ShadowMapping::EsmResolveWorkItem
+{
+public:
+	Vec4 m_uvIn; ///< UV + size that point to the scratch buffer.
+	Array<U32, 4> m_viewportOut; ///< Viewport in the ESM RT.
+	F32 m_cameraNear;
+	F32 m_cameraFar;
+	Bool8 m_blur;
+};
+
 ShadowMapping::~ShadowMapping()
 {
 }
@@ -158,9 +168,22 @@ void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 		cmdb->setScissor(
 			workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
 
-		Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 0);
-		unis[0] = Vec4(workItem.m_cameraNear, workItem.m_cameraFar, 0.0f, 0.0f);
-		unis[1] = workItem.m_uvIn;
+		struct Uniforms
+		{
+			Vec2 m_uvScale;
+			Vec2 m_uvTranslation;
+			F32 m_near;
+			F32 m_far;
+			U32 m_blur;
+			U32 m_padding;
+		} unis;
+		unis.m_uvScale = workItem.m_uvIn.zw();
+		unis.m_uvTranslation = workItem.m_uvIn.xy();
+		unis.m_near = workItem.m_cameraNear;
+		unis.m_far = workItem.m_cameraFar;
+		unis.m_blur = workItem.m_blur;
+
+		cmdb->setPushConstants(&unis, sizeof(unis));
 
 		drawQuad(cmdb);
 	}
@@ -289,21 +312,23 @@ Mat4 ShadowMapping::createSpotLightTextureMatrix(const Viewport& viewport) const
 		1.0f);
 }
 
-U ShadowMapping::choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light) const
+U ShadowMapping::choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurEsm) const
 {
 	const F32 distFromTheCamera = (cameraOrigin - light.m_worldPosition.xyz0()).getLength() - light.m_radius;
 	if(distFromTheCamera < m_lodDistances[0])
 	{
 		ANKI_ASSERT(m_pointLightsMaxLod == 1);
+		blurEsm = true;
 		return 1;
 	}
 	else
 	{
+		blurEsm = false;
 		return 0;
 	}
 }
 
-U ShadowMapping::choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light) const
+U ShadowMapping::choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurEsm) const
 {
 	// Get some data
 	const Vec4 coneOrigin = light.m_worldTransform.getTranslationPart().xyz0();
@@ -319,14 +344,17 @@ U ShadowMapping::choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement&
 	U lod;
 	if(distFromTheCamera < m_lodDistances[0])
 	{
+		blurEsm = true;
 		lod = 2;
 	}
 	else if(distFromTheCamera < m_lodDistances[1])
 	{
+		blurEsm = false;
 		lod = 1;
 	}
 	else
 	{
+		blurEsm = false;
 		lod = 0;
 	}
 
@@ -495,6 +523,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				// Push work
 				newScratchAndEsmResloveRenderWorkItems(esmViewports[cascade],
 					scratchViewports[cascade],
+					true,
 					light.m_shadowRenderQueues[cascade],
 					lightsToRender,
 					esmWorkItems,
@@ -537,13 +566,16 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				++numOfFacesThatHaveDrawcalls;
 			}
 		}
+
+		Bool blurEsm;
+		const U lod = choseLod(cameraOrigin, *light, blurEsm);
 		const Bool allocationFailed = numOfFacesThatHaveDrawcalls == 0
 									  || allocateTilesAndScratchTiles(light->m_uuid,
 											 numOfFacesThatHaveDrawcalls,
 											 &timestamps[0],
 											 &faceIndices[0],
 											 &drawcallCounts[0],
-											 choseLod(cameraOrigin, *light),
+											 lod,
 											 &esmViewports[0],
 											 &scratchViewports[0],
 											 &subResults[0])
@@ -577,6 +609,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 					{
 						newScratchAndEsmResloveRenderWorkItems(esmViewport,
 							scratchViewport,
+							blurEsm,
 							light->m_shadowRenderQueues[face],
 							lightsToRender,
 							esmWorkItems,
@@ -616,13 +649,16 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Viewport esmViewport;
 		Viewport scratchViewport;
 		const U32 localDrawcallCount = light->m_shadowRenderQueue->m_renderables.getSize();
+
+		Bool blurEsm;
+		const U lod = choseLod(cameraOrigin, *light, blurEsm);
 		const Bool allocationFailed = localDrawcallCount == 0
 									  || allocateTilesAndScratchTiles(light->m_uuid,
 											 1,
 											 &light->m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
 											 &faceIdx,
 											 &localDrawcallCount,
-											 choseLod(cameraOrigin, *light),
+											 lod,
 											 &esmViewport,
 											 &scratchViewport,
 											 &subResult)
@@ -639,6 +675,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			{
 				newScratchAndEsmResloveRenderWorkItems(esmViewport,
 					scratchViewport,
+					blurEsm,
 					light->m_shadowRenderQueue,
 					lightsToRender,
 					esmWorkItems,
@@ -728,6 +765,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 void ShadowMapping::newScratchAndEsmResloveRenderWorkItems(const Viewport& esmViewport,
 	const Viewport& scratchVewport,
+	Bool blurEsm,
 	RenderQueue* lightRenderQueue,
 	DynamicArrayAuto<LightToRenderToScratchInfo>& scratchWorkItem,
 	DynamicArrayAuto<EsmResolveWorkItem>& esmResolveWorkItem,
@@ -756,6 +794,8 @@ void ShadowMapping::newScratchAndEsmResloveRenderWorkItems(const Viewport& esmVi
 
 		esmItem.m_cameraFar = lightRenderQueue->m_cameraFar;
 		esmItem.m_cameraNear = lightRenderQueue->m_cameraNear;
+
+		esmItem.m_blur = blurEsm;
 
 		esmResolveWorkItem.emplaceBack(esmItem);
 	}

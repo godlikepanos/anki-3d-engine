@@ -55,14 +55,7 @@ private:
 	ShaderProgramResourcePtr m_esmResolveProg;
 	ShaderProgramPtr m_esmResolveGrProg;
 
-	class EsmResolveWorkItem
-	{
-	public:
-		Vec4 m_uvIn; ///< UV + size that point to the scratch buffer.
-		Array<U32, 4> m_viewportOut; ///< Viewport in the ESM RT.
-		F32 m_cameraNear;
-		F32 m_cameraFar;
-	};
+	class EsmResolveWorkItem;
 	WeakArray<EsmResolveWorkItem> m_esmResolveWorkItems;
 
 	ANKI_USE_RESULT Error initEsm(const ConfigSet& cfg);
@@ -105,9 +98,9 @@ private:
 	Array<F32, m_lodCount - 1> m_lodDistances;
 
 	/// Find the lod of the light
-	U choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light) const;
+	U choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurEsm) const;
 	/// Find the lod of the light
-	U choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light) const;
+	U choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurEsm) const;
 
 	/// Try to allocate a number of scratch tiles and regular tiles.
 	TileAllocatorResult allocateTilesAndScratchTiles(U64 lightUuid,
@@ -123,6 +116,7 @@ private:
 	/// Add new work to render to scratch buffer and ESM buffer.
 	void newScratchAndEsmResloveRenderWorkItems(const Viewport& esmViewport,
 		const Viewport& scratchVewport,
+		Bool blurEsm,
 		RenderQueue* lightRenderQueue,
 		DynamicArrayAuto<LightToRenderToScratchInfo>& scratchWorkItem,
 		DynamicArrayAuto<EsmResolveWorkItem>& esmResolveWorkItem,
