@@ -91,7 +91,7 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 	}
 
 	// Init the template
-	memset(&m_viewCreateInfoTemplate, 0, sizeof(m_viewCreateInfoTemplate)); // memset, it will be used for hashing
+	zeroMemory(m_viewCreateInfoTemplate); // zero it, it will be used for hashing
 	m_viewCreateInfoTemplate.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	m_viewCreateInfoTemplate.image = m_imageHandle;
 	m_viewCreateInfoTemplate.viewType = convertTextureViewType(init.m_type);

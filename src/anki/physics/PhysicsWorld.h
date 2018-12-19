@@ -49,10 +49,9 @@ public:
 	template<typename T, typename... TArgs>
 	PhysicsPtr<T> newInstance(TArgs&&... args)
 	{
-		void* mem = m_alloc.getMemoryPool().allocate(sizeof(T), alignof(T));
-		::new(mem) T(this, std::forward<TArgs>(args)...);
+		T* obj = static_cast<T*>(m_alloc.getMemoryPool().allocate(sizeof(T), alignof(T)));
+		::new(obj) T(this, std::forward<TArgs>(args)...);
 
-		T* obj = static_cast<T*>(mem);
 		LockGuard<Mutex> lock(m_objectListsMtx);
 		m_objectLists[obj->getType()].pushBack(obj);
 

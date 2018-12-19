@@ -155,7 +155,7 @@ public:
 
 		// Do a special construction. The state will be hashed and the padding may contain garbage. With this trick
 		// zero the padding
-		memset(this, 0, sizeof(*this));
+		zeroMemory(*this);
 
 #define ANKI_CONSTRUCT_AND_ZERO_PADDING(memb_) new(&memb_) decltype(memb_)()
 

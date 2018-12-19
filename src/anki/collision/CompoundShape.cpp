@@ -13,7 +13,7 @@ namespace anki
 CompoundShape::CompoundShape()
 	: CollisionShape(CollisionShapeType::COMPOUND)
 {
-	memset(&m_dflt, 0, sizeof(m_dflt));
+	zeroMemory(m_dflt);
 }
 
 F32 CompoundShape::testPlane(const Plane& p) const

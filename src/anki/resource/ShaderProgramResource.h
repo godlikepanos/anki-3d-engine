@@ -65,7 +65,7 @@ public:
 
 	ShaderProgramResourceMutation()
 	{
-		memset(this, 0, sizeof(*this));
+		zeroMemory(*this);
 	}
 };
 
@@ -228,7 +228,7 @@ public:
 
 	ShaderProgramResourceConstantValue()
 	{
-		memset(this, 0, sizeof(*this));
+		zeroMemory(*this);
 	}
 };
 

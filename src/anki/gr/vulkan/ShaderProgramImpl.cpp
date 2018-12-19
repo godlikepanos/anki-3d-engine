@@ -47,7 +47,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 			m_stages |= static_cast<ShaderTypeBit>(1 << stype);
 
-			const ShaderImpl& simpl = *scast<const ShaderImpl*>(m_shaders[stype].get());
+			const ShaderImpl& simpl = *static_cast<const ShaderImpl*>(m_shaders[stype].get());
 
 			m_refl.m_activeBindingMask[set] |= simpl.m_activeBindingMask[set];
 
@@ -121,9 +121,9 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::VERTEX);
 	if(graphicsProg)
 	{
-		m_refl.m_attributeMask = scast<const ShaderImpl*>(m_shaders[ShaderType::VERTEX].get())->m_attributeMask;
+		m_refl.m_attributeMask = static_cast<const ShaderImpl*>(m_shaders[ShaderType::VERTEX].get())->m_attributeMask;
 		m_refl.m_colorAttachmentWritemask =
-			scast<const ShaderImpl*>(m_shaders[ShaderType::FRAGMENT].get())->m_colorAttachmentWritemask;
+			static_cast<const ShaderImpl*>(m_shaders[ShaderType::FRAGMENT].get())->m_colorAttachmentWritemask;
 
 		const U attachmentCount = m_refl.m_colorAttachmentWritemask.getEnabledBitCount();
 		for(U i = 0; i < attachmentCount; ++i)

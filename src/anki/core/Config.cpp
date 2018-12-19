@@ -25,7 +25,7 @@ Config::Config()
 	newOption("r.volumetricLightingAccumulation.finalClusterInZ", 26);
 
 	newOption("r.shadowMapping.enabled", true);
-	newOption("r.shadowMapping.tileResolution", 64);
+	newOption("r.shadowMapping.tileResolution", 128);
 	newOption("r.shadowMapping.tileCountPerRowOrColumn", 16);
 	newOption("r.shadowMapping.scratchTileCountX", 4 * 5);
 	newOption("r.shadowMapping.scratchTileCountY", 4);

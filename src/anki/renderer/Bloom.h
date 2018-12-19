@@ -91,16 +91,6 @@ private:
 		return Error::NONE;
 	}
 
-	static void runExposureCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		scast<Bloom*>(rgraphCtx.m_userData)->runExposure(rgraphCtx);
-	}
-
-	static void runUpscaleAndSslfCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		scast<Bloom*>(rgraphCtx.m_userData)->runUpscaleAndSslf(rgraphCtx);
-	}
-
 	void runExposure(RenderPassWorkContext& rgraphCtx);
 	void runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx);
 };

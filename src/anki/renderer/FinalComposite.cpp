@@ -141,7 +141,13 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Final Composite");
 
-	pass.setWork(runCallback, this, 0);
+	pass.setWork(
+		[](RenderPassWorkContext& rgraphCtx) {
+			FinalComposite* self = static_cast<FinalComposite*>(rgraphCtx.m_userData);
+			self->run(*self->m_runCtx.m_ctx, rgraphCtx);
+		},
+		this,
+		0);
 	pass.setFramebufferInfo(m_fbDescr, {{ctx.m_outRenderTarget}}, {});
 
 	pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

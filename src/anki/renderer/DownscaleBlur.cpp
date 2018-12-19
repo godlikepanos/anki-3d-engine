@@ -106,7 +106,12 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 		for(U i = 0; i < m_passCount; ++i)
 		{
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passNames[i]);
-			pass.setWork(runCallback, this, 0);
+			pass.setWork(
+				[](RenderPassWorkContext& rgraphCtx) {
+					static_cast<DownscaleBlur*>(rgraphCtx.m_userData)->run(rgraphCtx);
+				},
+				this,
+				0);
 
 			if(i > 0)
 			{
@@ -133,7 +138,12 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 		for(U i = 0; i < m_passCount; ++i)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
-			pass.setWork(runCallback, this, 0);
+			pass.setWork(
+				[](RenderPassWorkContext& rgraphCtx) {
+					static_cast<DownscaleBlur*>(rgraphCtx.m_userData)->run(rgraphCtx);
+				},
+				this,
+				0);
 			pass.setFramebufferInfo(m_fbDescrs[i], {{m_runCtx.m_rt}}, {});
 
 			if(i > 0)

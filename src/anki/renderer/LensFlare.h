@@ -64,13 +64,6 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	void updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
-	/// A RenderPassWorkCallback for updating the indirect info.
-	static void runUpdateIndirectCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		LensFlare* const self = scast<LensFlare*>(rgraphCtx.m_userData);
-		self->updateIndirectInfo(*self->m_runCtx.m_ctx, rgraphCtx);
-	}
 };
 /// @}
 

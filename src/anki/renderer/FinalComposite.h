@@ -52,13 +52,6 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 
 	void run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
-	/// A RenderPassWorkCallback for the composite pass.
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		FinalComposite* self = scast<FinalComposite*>(rgraphCtx.m_userData);
-		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
-	}
 };
 /// @}
 

@@ -524,7 +524,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
-		pass.setWork(runGBufferCallback, this, 0);
+		pass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) {
+				static_cast<Indirect*>(rgraphCtx.m_userData)->runGBuffer(rgraphCtx.m_commandBuffer);
+			},
+			this,
+			0);
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{

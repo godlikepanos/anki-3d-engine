@@ -46,6 +46,12 @@ Error ShadowMapping::init(const ConfigSet& config)
 		ANKI_R_LOGE("Failed to initialize shadowmapping");
 	}
 
+	ANKI_R_LOGI("\tScratch size %ux%u. ESM atlas size %ux%u",
+		m_scratchTileCountX * m_scratchTileResolution,
+		m_scratchTileCountY * m_scratchTileResolution,
+		m_esmTileCountBothAxis * m_esmTileResolution,
+		m_esmTileCountBothAxis * m_esmTileResolution);
+
 	return err;
 }
 
@@ -595,7 +601,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		else
 		{
 			// Light can't be a caster this frame
-			memset(&light->m_shadowRenderQueues[0], 0, sizeof(light->m_shadowRenderQueues));
+			zeroMemory(light->m_shadowRenderQueues);
 		}
 	}
 

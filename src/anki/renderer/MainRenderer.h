@@ -97,19 +97,6 @@ private:
 	void runBlit(RenderPassWorkContext& rgraphCtx);
 	void present(RenderPassWorkContext& rgraphCtx);
 
-	// A RenderPassWorkCallback for blit pass.
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		MainRenderer* const self = scast<MainRenderer*>(rgraphCtx.m_userData);
-		self->runBlit(rgraphCtx);
-	}
-
-	// A RenderPassWorkCallback for present.
-	static void presentCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		// Do nothing. This pass is dummy
-	}
-
 	static void executeSecondaryCallback(
 		void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
 };

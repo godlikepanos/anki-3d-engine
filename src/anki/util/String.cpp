@@ -167,7 +167,7 @@ void String::create(Allocator alloc, Char c, PtrSize length)
 	ANKI_ASSERT(c != '\0');
 	m_data.create(alloc, length + 1);
 
-	std::memset(&m_data[0], c, length);
+	memset(&m_data[0], c, length);
 	m_data[length] = '\0';
 }
 

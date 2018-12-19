@@ -151,13 +151,6 @@ private:
 	void runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradianceToRefl(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 
-	// A RenderPassWorkCallback for G-buffer pass
-	static void runGBufferCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
-		self->runGBuffer(rgraphCtx.m_commandBuffer);
-	}
-
 	// A RenderPassWorkCallback for the light shading pass into a single face.
 	template<U faceIdx>
 	static void runLightShadingCallback(RenderPassWorkContext& rgraphCtx)

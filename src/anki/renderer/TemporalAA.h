@@ -49,13 +49,6 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
 	void run(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
-
-	/// A RenderPassWorkCallback for the AA pass.
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		TemporalAA* const self = scast<TemporalAA*>(rgraphCtx.m_userData);
-		self->run(*self->m_runCtx.m_ctx, rgraphCtx);
-	}
 };
 /// @}
 
