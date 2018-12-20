@@ -39,6 +39,9 @@ public:
 		U32 lod,
 		Array<U32, 4>& tileViewport);
 
+	/// Remove an light from the cache.
+	void invalidateCache(U64 lightUuid, U32 lightFace);
+
 private:
 	class Tile;
 

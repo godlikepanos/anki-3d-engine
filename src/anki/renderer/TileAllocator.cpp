@@ -270,4 +270,20 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 	return TileAllocatorResult::ALLOCATION_SUCCEDDED;
 }
 
+void TileAllocator::invalidateCache(U64 lightUuid, U32 lightFace)
+{
+	ANKI_ASSERT(m_cachingEnabled);
+	ANKI_ASSERT(lightUuid > 0);
+
+	HashMapKey key;
+	key.m_lightUuid = lightUuid;
+	key.m_face = lightFace;
+
+	auto it = m_lightInfoToTileIdx.find(key);
+	if(it != m_lightInfoToTileIdx.getEnd())
+	{
+		m_lightInfoToTileIdx.erase(m_alloc, it);
+	}
+}
+
 } // end namespace anki
