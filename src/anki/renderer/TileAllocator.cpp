@@ -161,17 +161,12 @@ Bool TileAllocator::searchTileRecursively(U crntTileIdx,
 	{
 		// We may have a candidate
 
-		if(tile.m_lastUsedTimestamp == 0)
+		const Bool done =
+			evaluateCandidate(crntTileIdx, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
+
+		if(done)
 		{
-			// Found empty
-			emptyTileIdx = crntTileIdx;
 			return true;
-		}
-		else if(tile.m_lastUsedTimestamp != crntTimestamp && tile.m_lastUsedTimestamp < tileToKickMinTimestamp)
-		{
-			// Found one with low timestamp
-			toKickTileIdx = crntTileIdx;
-			tileToKickMinTimestamp = tile.m_lightTimestamp;
 		}
 	}
 	else if(tile.m_subTiles[0] != MAX_U16)
@@ -192,8 +187,40 @@ Bool TileAllocator::searchTileRecursively(U crntTileIdx,
 
 			if(done)
 			{
-				return done;
+				return true;
 			}
+		}
+	}
+
+	return false;
+}
+
+Bool TileAllocator::evaluateCandidate(
+	U tileIdx, Timestamp crntTimestamp, U& emptyTileIdx, U& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const
+{
+	const Tile& tile = m_allTiles[tileIdx];
+
+	if(m_cachingEnabled)
+	{
+		if(tile.m_lastUsedTimestamp == 0)
+		{
+			// Found empty
+			emptyTileIdx = tileIdx;
+			return true;
+		}
+		else if(tile.m_lastUsedTimestamp != crntTimestamp && tile.m_lastUsedTimestamp < tileToKickMinTimestamp)
+		{
+			// Found one with low timestamp
+			toKickTileIdx = tileIdx;
+			tileToKickMinTimestamp = tile.m_lightTimestamp;
+		}
+	}
+	else
+	{
+		if(tile.m_lastUsedTimestamp != crntTimestamp)
+		{
+			emptyTileIdx = tileIdx;
+			return true;
 		}
 	}
 
@@ -268,19 +295,12 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 
 		for(U tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
 		{
-			const Tile& tile = m_allTiles[tileIdx];
+			const Bool done =
+				evaluateCandidate(tileIdx, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
 
-			if(tile.m_lastUsedTimestamp == 0)
+			if(done)
 			{
-				// Found empty
-				emptyTileIdx = tileIdx;
 				break;
-			}
-			else if(tile.m_lastUsedTimestamp != crntTimestamp && tile.m_lastUsedTimestamp < tileToKickMinTimestamp)
-			{
-				// Found one with low timestamp
-				toKickTileIdx = tileIdx;
-				tileToKickMinTimestamp = tile.m_lightTimestamp;
 			}
 		}
 	}
@@ -292,6 +312,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 		{
 			const Bool done = searchTileRecursively(
 				tileIdx, maxLod, lod, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
+
 			if(done)
 			{
 				break;

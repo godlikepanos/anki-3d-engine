@@ -86,6 +86,9 @@ private:
 		U& emptyTileIdx,
 		U& toKickTileIdx,
 		Timestamp& tileToKickMinTimestamp) const;
+
+	Bool evaluateCandidate(
+		U tileIdx, Timestamp crntTimestamp, U& emptyTileIdx, U& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const;
 };
 /// @}
 
