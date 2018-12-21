@@ -422,7 +422,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 			continue;
 		}
 
-		ANKI_ASSERT(subResults[i] == TileAllocatorResult::ALLOCATION_SUCCEDDED);
+		ANKI_ASSERT(subResults[i] == TileAllocatorResult::ALLOCATION_SUCCEEDED);
 
 		res = m_scratchTileAlloc.allocate(m_r->getGlobalTimestamp(),
 			faceTimestamps[i],
@@ -485,7 +485,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		static Bool firstRun = true;
 		if(firstRun)
 		{
-			ANKI_ASSERT(res == TileAllocatorResult::ALLOCATION_SUCCEDDED);
+			ANKI_ASSERT(res == TileAllocatorResult::ALLOCATION_SUCCEEDED);
 			firstRun = false;
 		}
 		else
@@ -603,7 +603,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			F32 superTileSize = esmViewports[0][2]; // Should be the same for all tiles and faces
 			superTileSize -= 1.0f; // Remove 2 half texels to avoid bilinear filtering bleeding
 
-			light->m_atlasTileScale = superTileSize / atlasResolution;
+			light->m_shadowAtlasTileSize = superTileSize / atlasResolution;
 
 			numOfFacesThatHaveDrawcalls = 0;
 			for(U face = 0; face < 6; ++face)
@@ -616,8 +616,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 					const Viewport& scratchViewport = scratchViewports[numOfFacesThatHaveDrawcalls];
 
 					// Add a half texel to the viewport's start to avoid bilinear filtering bleeding
-					light->m_atlasTileOffsets[face].x() = (F32(esmViewport[0]) + 0.5f) / atlasResolution;
-					light->m_atlasTileOffsets[face].y() = (F32(esmViewport[1]) + 0.5f) / atlasResolution;
+					light->m_shadowAtlasTileOffsets[face].x() = (F32(esmViewport[0]) + 0.5f) / atlasResolution;
+					light->m_shadowAtlasTileOffsets[face].y() = (F32(esmViewport[1]) + 0.5f) / atlasResolution;
 
 					if(subResults[numOfFacesThatHaveDrawcalls] != TileAllocatorResult::CACHED)
 					{
@@ -640,8 +640,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 					esmViewport[2] = superTileSize;
 					esmViewport[3] = superTileSize;
 
-					light->m_atlasTileOffsets[face].x() = (F32(esmViewport[0]) + 0.5f) / atlasResolution;
-					light->m_atlasTileOffsets[face].y() = (F32(esmViewport[1]) + 0.5f) / atlasResolution;
+					light->m_shadowAtlasTileOffsets[face].x() = (F32(esmViewport[0]) + 0.5f) / atlasResolution;
+					light->m_shadowAtlasTileOffsets[face].y() = (F32(esmViewport[1]) + 0.5f) / atlasResolution;
 				}
 			}
 		}

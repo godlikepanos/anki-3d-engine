@@ -313,11 +313,20 @@ public:
 			// Move updated
 			LightComponent& lightc = node.getComponent<LightComponent>();
 			lightc.updateWorldTransform(move.getWorldTransform());
+
+			SpatialComponent& spatialc = node.getComponent<SpatialComponent>();
+			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin());
+			spatialc.markForUpdate();
 		}
 
 		return Error::NONE;
 	}
 };
+
+DirectionalLightNode::DirectionalLightNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
+{
+}
 
 Error DirectionalLightNode::init()
 {

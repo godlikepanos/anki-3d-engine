@@ -588,6 +588,14 @@ void CombineResultsTask::combine()
 	ANKI_VIS_COMBINE(DecalQueueElement, m_decals);
 	ANKI_VIS_COMBINE(FogDensityQueueElement, m_fogDensityVolumes);
 
+	for(U i = 0; i < threadCount; ++i)
+	{
+		if(m_frcCtx->m_queueViews[i].m_directionalLight.m_shadowCascadeCount > 0)
+		{
+			results.m_directionalLight = m_frcCtx->m_queueViews[i].m_directionalLight;
+		}
+	}
+
 #undef ANKI_VIS_COMBINE
 #undef ANKI_VIS_COMBINE_AND_PTR
 

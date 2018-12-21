@@ -70,8 +70,10 @@ void LightComponent::setupDirectionalLightQueueElement(
 
 	el.m_userData = this;
 	el.m_drawCallback = derectionalLightDebugDrawCallback;
+	el.m_uuid = m_uuid;
 	el.m_diffuseColor = m_diffColor.xyz();
 	el.m_direction = m_trf.getRotation().getZAxis().xyz();
+	el.m_shadowCascadeCount = m_dir.m_cascadeCount;
 
 	// Compute sub frustum edges
 	const Mat4 lightTrf(m_trf);
@@ -122,7 +124,7 @@ void LightComponent::setupDirectionalLightQueueElement(
 			for(U j = i * 4; j < i * 4 + 8; ++j)
 			{
 				aabbMin = aabbMin.min(edgesLightSpace[j].xyz());
-				aabbMax = aabbMax.min(edgesLightSpace[j].xyz());
+				aabbMax = aabbMax.max(edgesLightSpace[j].xyz());
 			}
 
 			aabbMax.z() = min(0.0f, aabbMax.z()); // Max can't go behind the light
@@ -153,7 +155,7 @@ void LightComponent::setupDirectionalLightQueueElement(
 			eye = lightTrf * eye;
 
 			Transform cascadeTransform = m_trf;
-			cascadeTransform.setOrigin(eye);
+			cascadeTransform.setOrigin(eye.xyz0());
 			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
 
 			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);

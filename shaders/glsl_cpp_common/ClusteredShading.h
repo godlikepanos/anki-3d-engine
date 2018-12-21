@@ -13,6 +13,7 @@ ANKI_BEGIN_NAMESPACE
 const U32 TYPED_OBJECT_COUNT = 5u;
 const F32 INVALID_TEXTURE_INDEX = -1.0;
 const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0; // The near plane on the shadow map frustums.
+const U32 MAX_SHADOW_CASCADES = 4u;
 
 // See the documentation in the ClustererBin class.
 struct ClustererMagicValues
@@ -25,11 +26,11 @@ struct ClustererMagicValues
 struct PointLight
 {
 	Vec4 m_posRadius; // xyz: Light pos in world space. w: The 1/(radius^2)
-	Vec4 m_diffuseColorAtlasTileScale; // xyz: diff color, w: UV scale for all tiles
+	Vec4 m_diffuseColorShadowAtlasTileScale; // xyz: diff color, w: UV scale for all tiles
 	Vec4 m_radiusPad3; // x: radius
-	Vec4 m_atlasTileOffets[3u]; // It's a Vec4 because of the std140 limitations
+	Vec4 m_shadowAtlasTileOffsets[3u]; // It's a Vec4 because of the std140 limitations
 };
-const U32 SIZEOF_POINT_LIGHT = 2 * SIZEOF_VEC4 + 8 * SIZEOF_VEC2;
+const U32 SIZEOF_POINT_LIGHT = 6 * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == SIZEOF_POINT_LIGHT)
 
 // Spot light
@@ -43,6 +44,18 @@ struct SpotLight
 };
 const U32 SIZEOF_SPOT_LIGHT = 4 * SIZEOF_VEC4 + SIZEOF_MAT4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == SIZEOF_SPOT_LIGHT)
+
+// Directional light (sun)
+struct DirectionalLight
+{
+	Vec3 m_diffuseColor;
+	U32 m_present; // If it's been used or not
+	Vec3 m_dir;
+	U32 m_padding;
+	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES];
+};
+const U32 SIZEOF_DIR_LIGHT = 2 * SIZEOF_VEC4 + MAX_SHADOW_CASCADES * SIZEOF_MAT4;
+ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == SIZEOF_DIR_LIGHT)
 
 // Representation of a reflection probe
 struct ReflectionProbe

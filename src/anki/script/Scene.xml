@@ -411,6 +411,13 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					</args>
 					<return>SpotLightNode*</return>
 				</method>
+				<method name="newDirectionalLightNode">
+					<overrideCall><![CDATA[DirectionalLightNode* ret = newSceneNode<DirectionalLightNode>(self, arg0);]]></overrideCall>
+					<args>
+						<arg>const CString&amp;</arg>
+					</args>
+					<return>DirectionalLightNode*</return>
+				</method>
 				<method name="newStaticCollisionNode">
 					<overrideCall><![CDATA[StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0, arg1, arg2);]]></overrideCall>
 					<args>

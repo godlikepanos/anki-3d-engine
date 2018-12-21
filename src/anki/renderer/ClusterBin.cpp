@@ -558,17 +558,19 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			PointLight& out = gpuLights[i];
 
 			out.m_posRadius = Vec4(in.m_worldPosition.xyz(), 1.0f / (in.m_radius * in.m_radius));
-			out.m_diffuseColorAtlasTileScale = in.m_diffuseColor.xyz0();
+			out.m_diffuseColorShadowAtlasTileScale = in.m_diffuseColor.xyz0();
 
 			if(in.m_shadowRenderQueues[0] == nullptr || !ctx.m_in->m_shadowsEnabled)
 			{
-				out.m_diffuseColorAtlasTileScale.w() = INVALID_TEXTURE_INDEX;
+				out.m_diffuseColorShadowAtlasTileScale.w() = INVALID_TEXTURE_INDEX;
 			}
 			else
 			{
-				out.m_diffuseColorAtlasTileScale.w() = in.m_atlasTileScale;
-				ANKI_ASSERT(sizeof(out.m_atlasTileOffets) == sizeof(in.m_atlasTileOffsets));
-				memcpy(&out.m_atlasTileOffets[0], &in.m_atlasTileOffsets[0], sizeof(in.m_atlasTileOffsets));
+				out.m_diffuseColorShadowAtlasTileScale.w() = in.m_shadowAtlasTileSize;
+				ANKI_ASSERT(sizeof(out.m_shadowAtlasTileOffsets) == sizeof(in.m_shadowAtlasTileOffsets));
+				memcpy(&out.m_shadowAtlasTileOffsets[0],
+					&in.m_shadowAtlasTileOffsets[0],
+					sizeof(in.m_shadowAtlasTileOffsets));
 			}
 
 			out.m_radiusPad3 = Vec4(in.m_radius);

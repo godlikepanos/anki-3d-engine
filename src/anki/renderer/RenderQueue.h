@@ -8,6 +8,7 @@
 #include <anki/renderer/Common.h>
 #include <anki/resource/RenderingKey.h>
 #include <anki/ui/Canvas.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -76,8 +77,8 @@ public:
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
 
-	Array<Vec2, 6> m_atlasTileOffsets; ///< Renderer internal.
-	F32 m_atlasTileScale; ///< Renderer internal.
+	Array<Vec2, 6> m_shadowAtlasTileOffsets; ///< Renderer internal.
+	F32 m_shadowAtlasTileSize; ///< Renderer internal.
 
 	PointLightQueueElement()
 	{
@@ -118,8 +119,6 @@ public:
 };
 
 static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true, "Should be trivially destructible");
-
-const U32 MAX_SHADOW_CASCADES = 4;
 
 /// Directional light render queue element.
 class DirectionalLightQueueElement final

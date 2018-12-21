@@ -147,6 +147,59 @@ void TileAllocator::updateSuperTiles(const Tile& updateFrom)
 	}
 }
 
+Bool TileAllocator::searchTileRecursively(U crntTileIdx,
+	U crntTileLod,
+	U allocationLod,
+	Timestamp crntTimestamp,
+	U& emptyTileIdx,
+	U& toKickTileIdx,
+	Timestamp& tileToKickMinTimestamp) const
+{
+	const Tile& tile = m_allTiles[crntTileIdx];
+
+	if(crntTileLod == allocationLod)
+	{
+		// We may have a candidate
+
+		if(tile.m_lastUsedTimestamp == 0)
+		{
+			// Found empty
+			emptyTileIdx = crntTileIdx;
+			return true;
+		}
+		else if(tile.m_lastUsedTimestamp != crntTimestamp && tile.m_lastUsedTimestamp < tileToKickMinTimestamp)
+		{
+			// Found one with low timestamp
+			toKickTileIdx = crntTileIdx;
+			tileToKickMinTimestamp = tile.m_lightTimestamp;
+		}
+	}
+	else if(tile.m_subTiles[0] != MAX_U16)
+	{
+		// Move down the hierarchy
+
+		ANKI_ASSERT(allocationLod < crntTileLod);
+
+		for(const U16 idx : tile.m_subTiles)
+		{
+			const Bool done = searchTileRecursively(idx,
+				crntTileLod >> 1,
+				allocationLod,
+				crntTimestamp,
+				emptyTileIdx,
+				toKickTileIdx,
+				tileToKickMinTimestamp);
+
+			if(done)
+			{
+				return done;
+			}
+		}
+	}
+
+	return false;
+}
+
 TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 	Timestamp lightTimestamp,
 	U64 lightUuid,
@@ -198,32 +251,51 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 
 				updateTileHierarchy(tile);
 
-				return (needsReRendering) ? TileAllocatorResult::ALLOCATION_SUCCEDDED : TileAllocatorResult::CACHED;
+				return (needsReRendering) ? TileAllocatorResult::ALLOCATION_SUCCEEDED : TileAllocatorResult::CACHED;
 			}
 		}
 	}
 
-	// Start searching for a tile
+	// Start searching for a suitable tile. Do a hieratchical search to end up with better locality and not better
+	// utilization of the atlas' space
 	U emptyTileIdx = MAX_U;
 	U toKickTileIdx = MAX_U;
 	Timestamp tileToKickMinTimestamp = MAX_TIMESTAMP;
-	const U firstTileIdx = m_lodFirstTileIndex[lod];
-	const U lastTileIdx = m_lodFirstTileIndex[lod + 1];
-	for(U tileIdx = firstTileIdx; tileIdx <= lastTileIdx; ++tileIdx)
+	const U maxLod = m_lodCount - 1;
+	if(lod == maxLod)
 	{
-		const Tile& tile = m_allTiles[tileIdx];
+		// This search is simple, iterate the tiles of the max LOD
 
-		if(tile.m_lastUsedTimestamp == 0)
+		for(U tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
 		{
-			// Found empty
-			emptyTileIdx = tileIdx;
-			break;
+			const Tile& tile = m_allTiles[tileIdx];
+
+			if(tile.m_lastUsedTimestamp == 0)
+			{
+				// Found empty
+				emptyTileIdx = tileIdx;
+				break;
+			}
+			else if(tile.m_lastUsedTimestamp != crntTimestamp && tile.m_lastUsedTimestamp < tileToKickMinTimestamp)
+			{
+				// Found one with low timestamp
+				toKickTileIdx = tileIdx;
+				tileToKickMinTimestamp = tile.m_lightTimestamp;
+			}
 		}
-		else if(tile.m_lastUsedTimestamp != crntTimestamp && tile.m_lastUsedTimestamp < tileToKickMinTimestamp)
+	}
+	else
+	{
+		// Need to do a recursive search
+
+		for(U tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
 		{
-			// Found some with low timestamp
-			toKickTileIdx = tileIdx;
-			tileToKickMinTimestamp = tile.m_lightTimestamp;
+			const Bool done = searchTileRecursively(
+				tileIdx, maxLod, lod, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
+			if(done)
+			{
+				break;
+			}
 		}
 	}
 
@@ -267,7 +339,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 		allocatedTile.m_viewport[2],
 		allocatedTile.m_viewport[3]};
 
-	return TileAllocatorResult::ALLOCATION_SUCCEDDED;
+	return TileAllocatorResult::ALLOCATION_SUCCEEDED;
 }
 
 void TileAllocator::invalidateCache(U64 lightUuid, U32 lightFace)

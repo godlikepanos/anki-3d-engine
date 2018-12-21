@@ -16,9 +16,9 @@ namespace anki
 /// The result of a tile allocation.
 enum class TileAllocatorResult : U32
 {
-	CACHED, ///< The tile is caches. No need to do anything.
+	CACHED, ///< The tile is cached. No need to re-render it.
 	ALLOCATION_FAILED, ///< No more available tiles.
-	ALLOCATION_SUCCEDDED ///< Allocation succeded but the tile needs update.
+	ALLOCATION_SUCCEEDED ///< Allocation succeded but the tile needs update.
 };
 
 /// Allocates tiles out of a tilemap suitable for shadow mapping.
@@ -71,11 +71,21 @@ private:
 
 	void updateSuperTiles(const Tile& updateFrom);
 
+	/// Given a tile move the hierarchy up and down to update the hierarchy this tile belongs to.
 	void updateTileHierarchy(const Tile& updateFrom)
 	{
 		updateSubTiles(updateFrom);
 		updateSuperTiles(updateFrom);
 	}
+
+	/// Search for a tile recursively.
+	Bool searchTileRecursively(U crntTileIdx,
+		U crntTileLod,
+		U allocationLod,
+		Timestamp crntTimestamp,
+		U& emptyTileIdx,
+		U& toKickTileIdx,
+		Timestamp& tileToKickMinTimestamp) const;
 };
 /// @}
 
