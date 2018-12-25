@@ -16,7 +16,7 @@ struct Uniforms
 	Vec2 m_uvTranslation;
 	F32 m_near;
 	F32 m_far;
-	U32 m_blur;
+	U32 m_renderingTechnique; // If value is 0: perspective+blur, 1: perspective, 2: ortho+blur, 3: ortho
 	U32 m_padding;
 };
 
@@ -25,7 +25,7 @@ ANKI_PUSH_CONSTANTS(Uniforms, u_regs);
 #define u_uvTranslation u_regs.m_uvTranslation
 #define u_near u_regs.m_near
 #define u_far u_regs.m_far
-#define u_blur (u_regs.m_blur == 1u)
+#define u_renderingTechnique u_regs.m_renderingTechnique
 
 #pragma anki start vert
 #include <shaders/Common.glsl>
@@ -65,31 +65,53 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_inputTex;
 
 layout(location = 0) out F32 out_color;
 
-F32 sampleLinearDepth(Vec2 uv)
+F32 sampleLinearDepthPerspective(Vec2 uv)
 {
 	uv = clamp(uv, in_minUv, in_maxUv);
 	return linearizeDepth(textureLod(u_inputTex, uv, 0.0).r, u_near, u_far);
+}
+
+F32 sampleLinearDepthOrhographic(Vec2 uv)
+{
+	uv = clamp(uv, in_minUv, in_maxUv);
+	return textureLod(u_inputTex, uv, 0.0).r;
 }
 
 void main()
 {
 	const Vec2 UV_OFFSET = OFFSET * TEXEL_SIZE;
 
-	if(u_blur)
+	if(u_renderingTechnique == 0u)
 	{
-		out_color = sampleLinearDepth(in_uv) * BOX_WEIGHTS[0u];
-		out_color += sampleLinearDepth(in_uv + Vec2(UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepth(in_uv + Vec2(-UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepth(in_uv + Vec2(0.0, UV_OFFSET.y)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepth(in_uv + Vec2(0.0, -UV_OFFSET.y)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepth(in_uv + Vec2(UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
-		out_color += sampleLinearDepth(in_uv + Vec2(-UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
-		out_color += sampleLinearDepth(in_uv + Vec2(UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
-		out_color += sampleLinearDepth(in_uv + Vec2(-UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+		out_color = sampleLinearDepthPerspective(in_uv) * BOX_WEIGHTS[0u];
+		out_color += sampleLinearDepthPerspective(in_uv + Vec2(UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
+		out_color += sampleLinearDepthPerspective(in_uv + Vec2(-UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
+		out_color += sampleLinearDepthPerspective(in_uv + Vec2(0.0, UV_OFFSET.y)) * BOX_WEIGHTS[1u];
+		out_color += sampleLinearDepthPerspective(in_uv + Vec2(0.0, -UV_OFFSET.y)) * BOX_WEIGHTS[1u];
+		out_color += sampleLinearDepthPerspective(in_uv + Vec2(UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+		out_color += sampleLinearDepthPerspective(in_uv + Vec2(-UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+		out_color += sampleLinearDepthPerspective(in_uv + Vec2(UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+		out_color += sampleLinearDepthPerspective(in_uv + Vec2(-UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+	}
+	else if(u_renderingTechnique == 1u)
+	{
+		out_color = sampleLinearDepthPerspective(in_uv);
+	}
+	else if(u_renderingTechnique == 2u)
+	{
+		out_color = sampleLinearDepthOrhographic(in_uv) * BOX_WEIGHTS[0u];
+		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
+		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(-UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
+		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(0.0, UV_OFFSET.y)) * BOX_WEIGHTS[1u];
+		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(0.0, -UV_OFFSET.y)) * BOX_WEIGHTS[1u];
+		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(-UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(-UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
 	}
 	else
 	{
-		out_color = sampleLinearDepth(in_uv);
+		out_color = sampleLinearDepthOrhographic(in_uv);
 	}
 }
 #pragma anki end

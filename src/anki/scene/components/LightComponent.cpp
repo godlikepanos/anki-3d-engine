@@ -89,7 +89,8 @@ void LightComponent::setupDirectionalLightQueueElement(
 		// Gather the edges
 		Array<Vec4, (MAX_SHADOW_CASCADES + 1) * 4> edgesLocalSpaceStorage;
 		WeakArray<Vec4> edgesLocalSpace(&edgesLocalSpaceStorage[0], (m_dir.m_cascadeCount + 1) * 4);
-		edgesLocalSpace[0] = edgesLocalSpace[1] = edgesLocalSpace[2] = edgesLocalSpace[3] = Vec4(0.0f); // Eye
+		edgesLocalSpace[0] = edgesLocalSpace[1] = edgesLocalSpace[2] = edgesLocalSpace[3] =
+			Vec4(0.0f, 0.0f, 0.0f, 1.0f); // Eye
 		for(U i = 0; i < m_dir.m_cascadeCount; ++i)
 		{
 			const F32 clusterFarNearDist = far / F32(m_dir.m_cascadeCount);
@@ -127,7 +128,6 @@ void LightComponent::setupDirectionalLightQueueElement(
 				aabbMax = aabbMax.max(edgesLightSpace[j].xyz());
 			}
 
-			aabbMax.z() = min(0.0f, aabbMax.z()); // Max can't go behind the light
 			ANKI_ASSERT(aabbMax > aabbMin);
 
 			minMaxes[i][0] = aabbMin;
@@ -137,19 +137,22 @@ void LightComponent::setupDirectionalLightQueueElement(
 		// Compute the view and projection matrices per cascade
 		for(U i = 0; i < m_dir.m_cascadeCount; ++i)
 		{
-			const Vec3 halfDistances = (minMaxes[i][1] - minMaxes[i][0]) / 2.0f;
-			ANKI_ASSERT(halfDistances > Vec3(0.0f));
+			const Vec3& min = minMaxes[i][0];
+			const Vec3& max = minMaxes[i][1];
+
+			const Vec2 halfDistances = (max.xy() - min.xy()) / 2.0f;
+			ANKI_ASSERT(halfDistances > Vec2(0.0f));
 
 			const Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(halfDistances.x(),
-				halfDistances.x(),
+				-halfDistances.x(),
 				halfDistances.y(),
 				-halfDistances.y(),
-				halfDistances.z(),
-				-halfDistances.z());
+				LIGHT_FRUSTUM_NEAR_PLANE,
+				max.z() - min.z());
 
 			Vec4 eye;
-			eye.x() = (minMaxes[i][1].x() + minMaxes[i][0].x()) / 2.0f;
-			eye.y() = (minMaxes[i][1].y() + minMaxes[i][0].y()) / 2.0f;
+			eye.x() = (max.x() + min.x()) / 2.0f;
+			eye.y() = (max.y() + min.y()) / 2.0f;
 			eye.z() = 0.0f;
 			eye.w() = 1.0f;
 			eye = lightTrf * eye;
@@ -158,15 +161,16 @@ void LightComponent::setupDirectionalLightQueueElement(
 			cascadeTransform.setOrigin(eye.xyz0());
 			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
 
-			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+			static const Mat4 biasMat4(
+				0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 			el.m_textureMatrices[i] = biasMat4 * cascadeProjMat * cascadeViewMat;
 
 			// Fill the frustum
 			OrthographicFrustum& cascadeFrustum = cascadeFrustums[i];
 			cascadeFrustum.setAll(-halfDistances.x(),
 				halfDistances.x(),
-				-halfDistances.z(),
-				halfDistances.z(),
+				LIGHT_FRUSTUM_NEAR_PLANE,
+				max.z() - min.z(),
 				halfDistances.y(),
 				-halfDistances.y());
 			cascadeFrustum.transform(cascadeTransform);

@@ -40,6 +40,7 @@ public:
 	F32 m_cameraNear;
 	F32 m_cameraFar;
 	Bool8 m_blur;
+	Bool8 m_perspectiveProjection;
 };
 
 ShadowMapping::~ShadowMapping()
@@ -174,14 +175,22 @@ void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 			Vec2 m_uvTranslation;
 			F32 m_near;
 			F32 m_far;
-			U32 m_blur;
+			U32 m_renderingTechnique;
 			U32 m_padding;
 		} unis;
 		unis.m_uvScale = workItem.m_uvIn.zw();
 		unis.m_uvTranslation = workItem.m_uvIn.xy();
 		unis.m_near = workItem.m_cameraNear;
 		unis.m_far = workItem.m_cameraFar;
-		unis.m_blur = workItem.m_blur;
+
+		if(workItem.m_perspectiveProjection)
+		{
+			unis.m_renderingTechnique = (workItem.m_blur) ? 0 : 1;
+		}
+		else
+		{
+			unis.m_renderingTechnique = (workItem.m_blur) ? 2 : 3;
+		}
 
 		cmdb->setPushConstants(&unis, sizeof(unis));
 
@@ -538,6 +547,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				newScratchAndEsmResloveRenderWorkItems(esmViewports[cascade],
 					scratchViewports[cascade],
 					true,
+					false,
 					light.m_shadowRenderQueues[cascade],
 					lightsToRender,
 					esmWorkItems,
@@ -624,6 +634,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 						newScratchAndEsmResloveRenderWorkItems(esmViewport,
 							scratchViewport,
 							blurEsm,
+							true,
 							light->m_shadowRenderQueues[face],
 							lightsToRender,
 							esmWorkItems,
@@ -690,6 +701,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				newScratchAndEsmResloveRenderWorkItems(esmViewport,
 					scratchViewport,
 					blurEsm,
+					true,
 					light->m_shadowRenderQueue,
 					lightsToRender,
 					esmWorkItems,
@@ -780,6 +792,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 void ShadowMapping::newScratchAndEsmResloveRenderWorkItems(const Viewport& esmViewport,
 	const Viewport& scratchVewport,
 	Bool blurEsm,
+	Bool perspectiveProjection,
 	RenderQueue* lightRenderQueue,
 	DynamicArrayAuto<LightToRenderToScratchInfo>& scratchWorkItem,
 	DynamicArrayAuto<EsmResolveWorkItem>& esmResolveWorkItem,
@@ -810,6 +823,7 @@ void ShadowMapping::newScratchAndEsmResloveRenderWorkItems(const Viewport& esmVi
 		esmItem.m_cameraNear = lightRenderQueue->m_cameraNear;
 
 		esmItem.m_blur = blurEsm;
+		esmItem.m_perspectiveProjection = perspectiveProjection;
 
 		esmResolveWorkItem.emplaceBack(esmItem);
 	}

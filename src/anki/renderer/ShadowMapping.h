@@ -117,6 +117,7 @@ private:
 	void newScratchAndEsmResloveRenderWorkItems(const Viewport& esmViewport,
 		const Viewport& scratchVewport,
 		Bool blurEsm,
+		Bool perspectiveProjection,
 		RenderQueue* lightRenderQueue,
 		DynamicArrayAuto<LightToRenderToScratchInfo>& scratchWorkItem,
 		DynamicArrayAuto<EsmResolveWorkItem>& esmResolveWorkItem,
