@@ -253,8 +253,6 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 		if(it != m_lightInfoToTileIdx.getEnd())
 		{
 			Tile& tile = m_allTiles[*it];
-			ANKI_ASSERT(tile.m_lastUsedTimestamp != crntTimestamp
-						&& "Trying to allocate the same thing twice in this timestamp?");
 
 			if(tile.m_lightUuid != lightUuid || tile.m_lightLod != lod || tile.m_lightFace != lightFace)
 			{
@@ -264,6 +262,9 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 			else
 			{
 				// Same light & lod & face, found the cache entry.
+
+				ANKI_ASSERT(tile.m_lastUsedTimestamp != crntTimestamp
+							&& "Trying to allocate the same thing twice in this timestamp?");
 
 				ANKI_ASSERT(tile.m_lightUuid == lightUuid && tile.m_lightLod == lod && tile.m_lightFace == lightFace);
 

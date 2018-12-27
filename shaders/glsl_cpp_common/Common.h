@@ -6,7 +6,7 @@
 #pragma once
 
 //
-// Macros & functions
+// Macros & functions C++
 //
 #if defined(__cplusplus)
 #	define ANKI_BEGIN_NAMESPACE \
@@ -29,6 +29,9 @@ inline F32 dot(const T& a, const T& b)
 }
 ANKI_END_NAMESPACE
 
+//
+// Macros & functions GLSL
+//
 #else
 #	define x() x
 #	define y() y

@@ -5,6 +5,8 @@
 
 #include <anki/core/Config.h>
 #include <anki/util/System.h>
+#include <anki/Math.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -27,7 +29,7 @@ Config::Config()
 	newOption("r.shadowMapping.enabled", true);
 	newOption("r.shadowMapping.tileResolution", 128);
 	newOption("r.shadowMapping.tileCountPerRowOrColumn", 16);
-	newOption("r.shadowMapping.scratchTileCountX", 4 * 5);
+	newOption("r.shadowMapping.scratchTileCountX", 4 * (MAX_SHADOW_CASCADES + 2));
 	newOption("r.shadowMapping.scratchTileCountY", 4);
 	newOption("r.shadowMapping.lightLodDistance0", 10.0);
 	newOption("r.shadowMapping.lightLodDistance1", 20.0);

@@ -39,6 +39,7 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 #	define u_invViewProjMat u_lightingUniforms.m_invViewProjMat
 #	define u_prevViewProjMat u_lightingUniforms.m_prevViewProjMat
 #	define u_prevViewProjMatMulInvViewProjMat u_lightingUniforms.m_prevViewProjMatMulInvViewProjMat
+#	define u_dirLight u_lightingUniforms.m_dirLight
 
 #else
 const U32 _NEXT_UBO_BINDING = LIGHT_UBO_BINDING;

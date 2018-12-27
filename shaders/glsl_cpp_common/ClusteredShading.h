@@ -49,7 +49,7 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == SIZEOF_SPOT_LIGHT)
 struct DirectionalLight
 {
 	Vec3 m_diffuseColor;
-	U32 m_present; // If it's been used or not
+	U32 m_cascadeCount; // If it's zero then it's not active
 	Vec3 m_dir;
 	U32 m_padding;
 	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES];
@@ -107,6 +107,7 @@ struct LightingUniforms
 	Mat4 m_invViewProjMat;
 	Mat4 m_prevViewProjMat;
 	Mat4 m_prevViewProjMatMulInvViewProjMat; // Used to re-project previous frames
+	DirectionalLight m_dirLight;
 };
 
 ANKI_SHADER_FUNC_INLINE F32 computeClusterKf(ClustererMagicValues magic, Vec3 worldPos)

@@ -145,6 +145,29 @@ void main()
 	// Ambient and emissive color
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
 
+	// Dir light
+	if(u_dirLight.m_cascadeCount > 0u && false)
+	{
+		F32 linearDepth = linearizeDepth(depth, u_near, u_far);
+
+		F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
+
+		U32 cascadeIdx = U32(linearDepth * cascadeCountf);
+		cascadeIdx = min(cascadeIdx, u_dirLight.m_cascadeCount);
+
+		Mat4 lightProjectionMat = u_dirLight.m_textureMatrices[cascadeIdx];
+
+		Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
+		Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+
+		F32 cascadeLinearDepth = texCoords3.z;
+
+		F32 shadowFactor = textureLod(u_shadowTex, texCoords3.xy, 0.0).r;
+		shadowFactor = saturate(exp(ESM_CONSTANT * (shadowFactor - cascadeLinearDepth)));
+
+		out_color += diffuseLambert(gbuffer.m_diffuse) * u_dirLight.m_diffuseColor * shadowFactor;
+	}
+
 	// Point lights
 	Vec3 viewDir = normalize(u_cameraPos - worldPos);
 	U32 idx;

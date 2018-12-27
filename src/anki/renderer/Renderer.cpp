@@ -564,6 +564,26 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 
 	blk->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
+
+	// Directional light
+	if(ctx.m_renderQueue->m_directionalLight.m_shadowCascadeCount > 0)
+	{
+		DirectionalLight& out = blk->m_dirLight;
+		const DirectionalLightQueueElement& in = ctx.m_renderQueue->m_directionalLight;
+
+		out.m_diffuseColor = in.m_diffuseColor;
+		out.m_cascadeCount = in.m_shadowCascadeCount;
+		out.m_dir = in.m_direction;
+
+		for(U cascade = 0; cascade < in.m_shadowCascadeCount; ++cascade)
+		{
+			out.m_textureMatrices[cascade] = in.m_textureMatrices[cascade];
+		}
+	}
+	else
+	{
+		blk->m_dirLight.m_cascadeCount = 0;
+	}
 }
 
 } // end namespace anki
