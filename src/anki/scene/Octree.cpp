@@ -93,6 +93,10 @@ void Octree::place(const Aabb& volume, OctreePlaceable* placeable)
 	// And re-place it
 	placeRecursive(volume, placeable, m_rootLeaf, 0);
 	++m_placeableCount;
+
+	// Update the actual scene bounds
+	m_actualSceneAabbMin = m_actualSceneAabbMin.min(volume.getMin().xyz());
+	m_actualSceneAabbMax = m_actualSceneAabbMax.max(volume.getMax().xyz());
 }
 
 void Octree::remove(OctreePlaceable& placeable)

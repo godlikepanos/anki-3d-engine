@@ -146,30 +146,26 @@ void main()
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
 
 	// Dir light
-	if(u_dirLight.m_cascadeCount > 0u && false)
+	Vec3 viewDir = normalize(u_cameraPos - worldPos);
+	if(u_dirLight.m_cascadeCount > 0u)
 	{
 		F32 linearDepth = linearizeDepth(depth, u_near, u_far);
-
 		F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
+		U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
 
-		U32 cascadeIdx = U32(linearDepth * cascadeCountf);
-		cascadeIdx = min(cascadeIdx, u_dirLight.m_cascadeCount);
+		F32 shadowFactor = computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex);
 
-		Mat4 lightProjectionMat = u_dirLight.m_textureMatrices[cascadeIdx];
+		Vec3 l = u_dirLight.m_dir;
 
-		Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
-		Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+		F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
 
-		F32 cascadeLinearDepth = texCoords3.z;
+		Vec3 diffC = diffuseLambert(gbuffer.m_diffuse);
+		Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
 
-		F32 shadowFactor = textureLod(u_shadowTex, texCoords3.xy, 0.0).r;
-		shadowFactor = saturate(exp(ESM_CONSTANT * (shadowFactor - cascadeLinearDepth)));
-
-		out_color += diffuseLambert(gbuffer.m_diffuse) * u_dirLight.m_diffuseColor * shadowFactor;
+		out_color += (diffC + specC) * u_dirLight.m_diffuseColor * (shadowFactor * lambert);
 	}
 
 	// Point lights
-	Vec3 viewDir = normalize(u_cameraPos - worldPos);
 	U32 idx;
 	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{

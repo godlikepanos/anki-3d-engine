@@ -108,7 +108,7 @@ private:
 		const U64* faceTimestamps,
 		const U32* faceIndices,
 		const U32* drawcallsCount,
-		U32 lod,
+		const U32* lods,
 		Viewport* esmTileViewports,
 		Viewport* scratchTileViewports,
 		TileAllocatorResult* subResults);

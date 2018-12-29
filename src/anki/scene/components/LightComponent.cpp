@@ -4,6 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/components/LightComponent.h>
+#include <anki/scene/SceneNode.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/scene/Octree.h>
 #include <anki/collision/Frustum.h>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 
@@ -60,6 +63,35 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 
 	m_flags.unset(DIRTY | TRF_DIRTY);
 
+	// Update the scene bounds always
+	if(m_type == LightComponentType::DIRECTIONAL)
+	{
+		// Get some values fro the octree
+		const Vec3& sceneWSpaceMin = node.getSceneGraph().getOctree().getActualSceneMinBound();
+		const Vec3& sceneWSpaceMax = node.getSceneGraph().getOctree().getActualSceneMaxBound();
+
+		// Gather the 8 scene points
+		Array<Vec4, 8> sceneEdgesWSpace;
+		sceneEdgesWSpace[0] = Vec4(sceneWSpaceMin.x(), sceneWSpaceMin.y(), sceneWSpaceMin.z(), 1.0f);
+		sceneEdgesWSpace[1] = Vec4(sceneWSpaceMin.x(), sceneWSpaceMin.y(), sceneWSpaceMax.z(), 1.0f);
+		sceneEdgesWSpace[2] = Vec4(sceneWSpaceMin.x(), sceneWSpaceMax.y(), sceneWSpaceMin.z(), 1.0f);
+		sceneEdgesWSpace[3] = Vec4(sceneWSpaceMin.x(), sceneWSpaceMax.y(), sceneWSpaceMax.z(), 1.0f);
+		sceneEdgesWSpace[4] = Vec4(sceneWSpaceMax.x(), sceneWSpaceMin.y(), sceneWSpaceMin.z(), 1.0f);
+		sceneEdgesWSpace[5] = Vec4(sceneWSpaceMax.x(), sceneWSpaceMin.y(), sceneWSpaceMax.z(), 1.0f);
+		sceneEdgesWSpace[6] = Vec4(sceneWSpaceMax.x(), sceneWSpaceMax.y(), sceneWSpaceMin.z(), 1.0f);
+		sceneEdgesWSpace[7] = Vec4(sceneWSpaceMax.x(), sceneWSpaceMax.y(), sceneWSpaceMax.z(), 1.0f);
+
+		// Transform the 8 scene points to light space
+		m_dir.m_sceneAabbMaxZLightSpace = MIN_F32;
+		const Mat4 viewMat = Mat4(m_trf).getInverse();
+		for(const Vec4& point : sceneEdgesWSpace)
+		{
+			const Vec4 lightSpaceEdge = viewMat * point;
+
+			m_dir.m_sceneAabbMaxZLightSpace = max(m_dir.m_sceneAabbMaxZLightSpace, lightSpaceEdge.z());
+		}
+	}
+
 	return Error::NONE;
 }
 
@@ -93,12 +125,12 @@ void LightComponent::setupDirectionalLightQueueElement(
 			Vec4(0.0f, 0.0f, 0.0f, 1.0f); // Eye
 		for(U i = 0; i < m_dir.m_cascadeCount; ++i)
 		{
-			const F32 clusterFarNearDist = far / F32(m_dir.m_cascadeCount);
-			const F32 clusterFar = F32(i + 1) * clusterFarNearDist;
+			const F32 cascadeFarNearDist = far / F32(m_dir.m_cascadeCount);
+			const F32 cascadeFar = F32(i + 1) * cascadeFarNearDist;
 
-			const F32 x = clusterFar * tan(fovY / 2.0f) * fovX / fovY;
-			const F32 y = tan(fovY / 2.0f) * clusterFar;
-			const F32 z = -clusterFar;
+			const F32 x = cascadeFar * tan(fovY / 2.0f) * fovX / fovY;
+			const F32 y = tan(fovY / 2.0f) * cascadeFar;
+			const F32 z = -cascadeFar;
 
 			U idx = (i + 1) * 4;
 			edgesLocalSpace[idx++] = Vec4(x, y, z, 1.0f); // top right
@@ -128,8 +160,10 @@ void LightComponent::setupDirectionalLightQueueElement(
 				aabbMax = aabbMax.max(edgesLightSpace[j].xyz());
 			}
 
-			ANKI_ASSERT(aabbMax > aabbMin);
+			// Adjust the max to take into account the scene bounds
+			aabbMax.z() = max(aabbMax.z(), m_dir.m_sceneAabbMaxZLightSpace);
 
+			ANKI_ASSERT(aabbMax > aabbMin);
 			minMaxes[i][0] = aabbMin;
 			minMaxes[i][1] = aabbMax;
 		}
@@ -148,12 +182,12 @@ void LightComponent::setupDirectionalLightQueueElement(
 				halfDistances.y(),
 				-halfDistances.y(),
 				LIGHT_FRUSTUM_NEAR_PLANE,
-				max.z() - min.z());
+				max.z() - min.z() - LIGHT_FRUSTUM_NEAR_PLANE);
 
 			Vec4 eye;
 			eye.x() = (max.x() + min.x()) / 2.0f;
 			eye.y() = (max.y() + min.y()) / 2.0f;
-			eye.z() = 0.0f;
+			eye.z() = max.z();
 			eye.w() = 1.0f;
 			eye = lightTrf * eye;
 
@@ -170,7 +204,7 @@ void LightComponent::setupDirectionalLightQueueElement(
 			cascadeFrustum.setAll(-halfDistances.x(),
 				halfDistances.x(),
 				LIGHT_FRUSTUM_NEAR_PLANE,
-				max.z() - min.z(),
+				max.z() - min.z() - LIGHT_FRUSTUM_NEAR_PLANE,
 				halfDistances.y(),
 				-halfDistances.y());
 			cascadeFrustum.transform(cascadeTransform);

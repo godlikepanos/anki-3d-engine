@@ -106,6 +106,20 @@ public:
 		debugDrawRecursive(*m_rootLeaf, drawer);
 	}
 
+	/// Get the min bound of the scene as calculated by the objects that were placed inside the Octree.
+	const Vec3& getActualSceneMinBound() const
+	{
+		ANKI_ASSERT(m_actualSceneAabbMin.x() < MAX_F32);
+		return m_actualSceneAabbMin;
+	}
+
+	/// Get the max bound of the scene as calculated by the objects that were placed inside the Octree.
+	const Vec3& getActualSceneMaxBound() const
+	{
+		ANKI_ASSERT(m_actualSceneAabbMax.x() > MIN_F32);
+		return m_actualSceneAabbMax;
+	}
+
 private:
 	class GatherParallelCtx;
 	class GatherParallelTaskCtx;
@@ -200,6 +214,10 @@ private:
 
 	Leaf* m_rootLeaf = nullptr;
 	U32 m_placeableCount = 0;
+
+	/// Compute the min of the scene bounds based on what is placed inside the octree.
+	Vec3 m_actualSceneAabbMin = Vec3(MAX_F32);
+	Vec3 m_actualSceneAabbMax = Vec3(MIN_F32);
 
 	Leaf* newLeaf()
 	{

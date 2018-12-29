@@ -375,7 +375,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 	const U64* faceTimestamps,
 	const U32* faceIndices,
 	const U32* drawcallsCount,
-	U32 lod,
+	const U32* lods,
 	Viewport* esmTileViewports,
 	Viewport* scratchTileViewports,
 	TileAllocatorResult* subResults)
@@ -385,7 +385,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 	ANKI_ASSERT(faceTimestamps);
 	ANKI_ASSERT(faceIndices);
 	ANKI_ASSERT(drawcallsCount);
-	ANKI_ASSERT(lod < m_lodCount);
+	ANKI_ASSERT(lods);
 
 	TileAllocatorResult res;
 
@@ -397,7 +397,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 			lightUuid,
 			faceIndices[i],
 			drawcallsCount[i],
-			lod,
+			lods[i],
 			esmTileViewports[i]);
 
 		if(res == TileAllocatorResult::ALLOCATION_FAILED)
@@ -438,7 +438,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 			lightUuid,
 			faceIndices[i],
 			drawcallsCount[i],
-			lod,
+			lods[i],
 			scratchTileViewports[i]);
 
 		if(res == TileAllocatorResult::ALLOCATION_FAILED)
@@ -515,6 +515,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Array<Viewport, MAX_SHADOW_CASCADES> esmViewports;
 		Array<Viewport, MAX_SHADOW_CASCADES> scratchViewports;
 		Array<TileAllocatorResult, MAX_SHADOW_CASCADES> subResults;
+		Array<U32, MAX_SHADOW_CASCADES> lods;
 
 		for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
 		{
@@ -522,6 +523,15 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			timestamps[cascade] = m_r->getGlobalTimestamp(); // This light is always updated
 			cascadeIndices[cascade] = cascade;
 			drawcallCounts[cascade] = 1; // Doesn't matter
+
+			if(cascade <= 1)
+			{
+				lods[cascade] = m_lodCount - 1; // Always the best quality
+			}
+			else
+			{
+				lods[cascade] = lods[0] - 1;
+			}
 		}
 
 		const Bool allocationFailed = allocateTilesAndScratchTiles(light.m_uuid,
@@ -529,7 +539,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 										  &timestamps[0],
 										  &cascadeIndices[0],
 										  &drawcallCounts[0],
-										  m_lodCount - 1, // Always the best quality
+										  &lods[0],
 										  &esmViewports[0],
 										  &scratchViewports[0],
 										  &subResults[0])
@@ -572,7 +582,12 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Array<Viewport, 6> esmViewports;
 		Array<Viewport, 6> scratchViewports;
 		Array<TileAllocatorResult, 6> subResults;
+		Array<U32, 6> lods;
 		U numOfFacesThatHaveDrawcalls = 0;
+
+		Bool blurEsm;
+		const U lod = choseLod(cameraOrigin, *light, blurEsm);
+
 		for(U face = 0; face < 6; ++face)
 		{
 			ANKI_ASSERT(light->m_shadowRenderQueues[face]);
@@ -587,19 +602,19 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				drawcallCounts[numOfFacesThatHaveDrawcalls] =
 					light->m_shadowRenderQueues[face]->m_renderables.getSize();
 
+				lods[numOfFacesThatHaveDrawcalls] = lod;
+
 				++numOfFacesThatHaveDrawcalls;
 			}
 		}
 
-		Bool blurEsm;
-		const U lod = choseLod(cameraOrigin, *light, blurEsm);
 		const Bool allocationFailed = numOfFacesThatHaveDrawcalls == 0
 									  || allocateTilesAndScratchTiles(light->m_uuid,
 											 numOfFacesThatHaveDrawcalls,
 											 &timestamps[0],
 											 &faceIndices[0],
 											 &drawcallCounts[0],
-											 lod,
+											 &lods[0],
 											 &esmViewports[0],
 											 &scratchViewports[0],
 											 &subResults[0])
@@ -676,14 +691,14 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		const U32 localDrawcallCount = light->m_shadowRenderQueue->m_renderables.getSize();
 
 		Bool blurEsm;
-		const U lod = choseLod(cameraOrigin, *light, blurEsm);
+		const U32 lod = choseLod(cameraOrigin, *light, blurEsm);
 		const Bool allocationFailed = localDrawcallCount == 0
 									  || allocateTilesAndScratchTiles(light->m_uuid,
 											 1,
 											 &light->m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
 											 &faceIdx,
 											 &localDrawcallCount,
-											 lod,
+											 &lod,
 											 &esmViewport,
 											 &scratchViewport,
 											 &subResult)

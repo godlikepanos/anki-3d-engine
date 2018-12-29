@@ -185,6 +185,7 @@ private:
 	struct Dir
 	{
 		U32 m_cascadeCount;
+		F32 m_sceneAabbMaxZLightSpace;
 	};
 
 	union

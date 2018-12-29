@@ -336,8 +336,8 @@ Error DirectionalLightNode::init()
 	newComponent<SpatialComponent>(this, &m_boundingBox);
 
 	// Make the bounding box large enough so it will always be visible
-	m_boundingBox.setMin(Vec3(-5000.f));
-	m_boundingBox.setMax(Vec3(+5000.f));
+	m_boundingBox.setMin(getSceneGraph().getSceneMin());
+	m_boundingBox.setMax(getSceneGraph().getSceneMax());
 
 	return Error::NONE;
 }
