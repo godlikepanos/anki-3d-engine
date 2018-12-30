@@ -169,7 +169,7 @@ F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 wor
 	F32 cascadeLinearDepth = texCoords3.z;
 
 	F32 shadowFactor = textureLod(shadowMap, texCoords3.xy, 0.0).r;
-	shadowFactor = saturate(exp(ESM_CONSTANT * 50.0 * (shadowFactor - cascadeLinearDepth)));
+	shadowFactor = saturate(exp(ESM_CONSTANT * 100.0 * (shadowFactor - cascadeLinearDepth)));
 
 	return shadowFactor;
 }

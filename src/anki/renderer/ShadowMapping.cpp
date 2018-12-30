@@ -516,6 +516,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Array<Viewport, MAX_SHADOW_CASCADES> scratchViewports;
 		Array<TileAllocatorResult, MAX_SHADOW_CASCADES> subResults;
 		Array<U32, MAX_SHADOW_CASCADES> lods;
+		Array<Bool, MAX_SHADOW_CASCADES> blurEsms;
 
 		for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
 		{
@@ -524,14 +525,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			cascadeIndices[cascade] = cascade;
 			drawcallCounts[cascade] = 1; // Doesn't matter
 
-			if(cascade <= 1)
-			{
-				lods[cascade] = m_lodCount - 1; // Always the best quality
-			}
-			else
-			{
-				lods[cascade] = lods[0] - 1;
-			}
+			// Change the quality per cascade
+			blurEsms[cascade] = (cascade <= 1);
+			lods[cascade] = (cascade <= 1) ? (m_lodCount - 1) : (lods[0] - 1);
 		}
 
 		const Bool allocationFailed = allocateTilesAndScratchTiles(light.m_uuid,
@@ -556,7 +552,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				// Push work
 				newScratchAndEsmResloveRenderWorkItems(esmViewports[cascade],
 					scratchViewports[cascade],
-					true,
+					blurEsms[cascade],
 					false,
 					light.m_shadowRenderQueues[cascade],
 					lightsToRender,

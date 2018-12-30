@@ -163,6 +163,14 @@ void LightComponent::setupDirectionalLightQueueElement(
 			// Adjust the max to take into account the scene bounds
 			aabbMax.z() = max(aabbMax.z(), m_dir.m_sceneAabbMaxZLightSpace);
 
+			// Align it to avoid flickering
+			const PtrSize alignmentMeters = 2;
+			for(U j = 0; j < 3; ++j)
+			{
+				aabbMin[j] = getAlignedRoundDown(alignmentMeters, I32(aabbMin[j]));
+				aabbMax[j] = getAlignedRoundUp(alignmentMeters, I32(aabbMax[j]));
+			}
+
 			ANKI_ASSERT(aabbMax > aabbMin);
 			minMaxes[i][0] = aabbMin;
 			minMaxes[i][1] = aabbMax;
