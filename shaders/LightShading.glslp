@@ -78,10 +78,10 @@ void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
 	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
 		ReflectionProbe probe = u_reflectionProbes[idx];
-		Vec3 aabbMin = probe.m_aabbMinPad1.xyz;
-		Vec3 aabbMax = probe.m_aabbMaxPad1.xyz;
-		Vec3 probeOrigin = probe.m_positionCubemapIndex.xyz;
-		F32 cubemapIndex = probe.m_positionCubemapIndex.w;
+		Vec3 aabbMin = probe.m_aabbMin;
+		Vec3 aabbMax = probe.m_aabbMax;
+		Vec3 probeOrigin = probe.m_position;
+		F32 cubemapIndex = probe.m_cubemapIndex;
 
 		// Compute blend weight
 		F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
@@ -105,11 +105,11 @@ void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
 
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF() \
-	Vec3 frag2Light = light.m_posRadius.xyz - worldPos; \
+	Vec3 frag2Light = light.m_position - worldPos; \
 	Vec3 l = normalize(frag2Light); \
 	Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l); \
 	Vec3 diffC = diffuseLambert(gbuffer.m_diffuse); \
-	F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light); \
+	F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light); \
 	F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
 
 void main()
@@ -173,18 +173,13 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		ANKI_BRANCH if(light.m_diffuseColorShadowAtlasTileScale.w >= 0.0)
+		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			F32 shadow = computeShadowFactorOmni(frag2Light,
-				light.m_radiusPad3.x,
-				light.m_shadowAtlasTileOffsets,
-				light.m_diffuseColorShadowAtlasTileScale.w,
-				u_shadowTex);
+			F32 shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowTex);
 			lambert *= shadow;
 		}
 
-		out_color +=
-			(diffC + specC) * light.m_diffuseColorShadowAtlasTileScale.rgb * (att * max(gbuffer.m_subsurface, lambert));
+		out_color += (diffC + specC) * light.m_diffuseColor * (att * max(gbuffer.m_subsurface, lambert));
 	}
 
 	// Spot lights
@@ -194,19 +189,16 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		F32 spot =
-			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+		F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
 
-		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
+		F32 shadowmapLayerIdx = light.m_shadowmapId;
 		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
 		{
-			F32 shadow =
-				computeShadowFactorSpot(light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
+			F32 shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex);
 			lambert *= shadow;
 		}
 
-		out_color +=
-			(diffC + specC) * light.m_diffuseColorShadowmapId.rgb * (att * spot * max(gbuffer.m_subsurface, lambert));
+		out_color += (diffC + specC) * light.m_diffuseColor * (att * spot * max(gbuffer.m_subsurface, lambert));
 	}
 
 	// Refl & indirect

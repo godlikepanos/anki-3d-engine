@@ -109,13 +109,13 @@ U32 computeShadowSampleCount(const U32 COUNT, F32 zVSpace)
 	return sampleCount;
 }
 
-F32 computeShadowFactorSpot(Mat4 lightProjectionMat, Vec3 worldPos, F32 distance, sampler2D spotMapArr)
+F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, sampler2D spotMapArr)
 {
-	Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
+	Vec4 texCoords4 = light.m_texProjectionMat * Vec4(worldPos, 1.0);
 	Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
 	const F32 near = LIGHT_FRUSTUM_NEAR_PLANE;
-	const F32 far = distance;
+	const F32 far = light.m_radius;
 
 	F32 linearDepth = linearizeDepth(texCoords3.z, near, far);
 
@@ -124,15 +124,15 @@ F32 computeShadowFactorSpot(Mat4 lightProjectionMat, Vec3 worldPos, F32 distance
 	return saturate(exp(ESM_CONSTANT * (shadowFactor - linearDepth)));
 }
 
-F32 computeShadowFactorOmni(
-	Vec3 frag2Light, F32 radius, Vec4 atlasTileOffsets[3u], F32 atlasTileScale, sampler2D shadowMap)
+// Compute the shadow factor of point (omni) lights.
+F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, sampler2D shadowMap)
 {
 	Vec3 dir = -frag2Light;
 	Vec3 dirabs = abs(dir);
 	F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z));
 
 	const F32 near = LIGHT_FRUSTUM_NEAR_PLANE;
-	const F32 far = radius;
+	const F32 far = light.m_radius;
 
 	F32 linearDepth = (dist - near) / (far - near);
 
@@ -145,11 +145,11 @@ F32 computeShadowFactorOmni(
 
 		// Get the atlas offset
 		Vec2 atlasOffset;
-		atlasOffset.x = atlasTileOffsets[faceIdxu >> 1u][(faceIdxu & 1u) << 1u];
-		atlasOffset.y = atlasTileOffsets[faceIdxu >> 1u][((faceIdxu & 1u) << 1u) + 1u];
+		atlasOffset.x = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][(faceIdxu & 1u) << 1u];
+		atlasOffset.y = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][((faceIdxu & 1u) << 1u) + 1u];
 
 		// Compute UV
-		uv = fma(uv, Vec2(atlasTileScale), atlasOffset);
+		uv = fma(uv, Vec2(light.m_shadowAtlasTileScale), atlasOffset);
 
 		// Sample
 		shadowFactor = textureLod(shadowMap, uv, 0.0).r;

@@ -105,23 +105,19 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos)
 	{
 		PointLight light = u_pointLights[idx];
 
-		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
-		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+		Vec3 frag2Light = light.m_position - worldPos;
+		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
 
-		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_posRadius.xyz), PHASE_FUNCTION_ANISOTROPY);
+		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_position), PHASE_FUNCTION_ANISOTROPY);
 
 #if ENABLE_SHADOWS
-		if(light.m_diffuseColorShadowAtlasTileScale.w >= 0.0)
+		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			factor *= computeShadowFactorOmni(frag2Light,
-				light.m_radiusPad3.x,
-				light.m_shadowAtlasTileOffsets,
-				light.m_diffuseColorShadowAtlasTileScale.w,
-				u_shadowTex);
+			factor *= computeShadowFactorPointLight(light, frag2Light, u_shadowTex);
 		}
 #endif
 
-		color += light.m_diffuseColorShadowAtlasTileScale.rgb * factor;
+		color += light.m_diffuseColor * factor;
 	}
 
 	// Spot lights
@@ -129,26 +125,24 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos)
 	{
 		SpotLight light = u_spotLights[idx];
 
-		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
-		F32 factor = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+		Vec3 frag2Light = light.m_position - worldPos;
+		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
 
 		Vec3 l = normalize(frag2Light);
 
-		factor *=
-			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+		factor *= computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
 
-		factor *= phaseFunction(viewDir, light.m_lightDirRadius.xyz, PHASE_FUNCTION_ANISOTROPY);
+		factor *= phaseFunction(viewDir, light.m_dir, PHASE_FUNCTION_ANISOTROPY);
 
 #if ENABLE_SHADOWS
-		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
+		F32 shadowmapLayerIdx = light.m_shadowmapId;
 		if(shadowmapLayerIdx >= 0.0)
 		{
-			factor *=
-				computeShadowFactorSpot(light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
+			factor *= computeShadowFactorSpotLight(light, worldPos, u_shadowTex);
 		}
 #endif
 
-		color += light.m_diffuseColorShadowmapId.rgb * factor;
+		color += light.m_diffuseColor * factor;
 	}
 
 	// Probes
@@ -157,10 +151,10 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos)
 	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
 		ReflectionProbe probe = u_reflectionProbes[idx];
-		Vec3 aabbMin = probe.m_aabbMinPad1.xyz;
-		Vec3 aabbMax = probe.m_aabbMaxPad1.xyz;
-		Vec3 probeOrigin = probe.m_positionCubemapIndex.xyz;
-		F32 cubemapIndex = probe.m_positionCubemapIndex.w;
+		Vec3 aabbMin = probe.m_aabbMin;
+		Vec3 aabbMax = probe.m_aabbMax;
+		Vec3 probeOrigin = probe.m_position;
+		F32 cubemapIndex = probe.m_cubemapIndex;
 
 		F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
 		totalBlendWeight += blendWeight;

@@ -557,23 +557,24 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			const PointLightQueueElement& in = rqueue.m_pointLights[i];
 			PointLight& out = gpuLights[i];
 
-			out.m_posRadius = Vec4(in.m_worldPosition.xyz(), 1.0f / (in.m_radius * in.m_radius));
-			out.m_diffuseColorShadowAtlasTileScale = in.m_diffuseColor.xyz0();
+			out.m_position = in.m_worldPosition;
+			out.m_squareRadiusOverOne = 1.0f / (in.m_radius * in.m_radius);
+			out.m_diffuseColor = in.m_diffuseColor;
 
 			if(in.m_shadowRenderQueues[0] == nullptr || !ctx.m_in->m_shadowsEnabled)
 			{
-				out.m_diffuseColorShadowAtlasTileScale.w() = INVALID_TEXTURE_INDEX;
+				out.m_shadowAtlasTileScale = INVALID_TEXTURE_INDEX;
 			}
 			else
 			{
-				out.m_diffuseColorShadowAtlasTileScale.w() = in.m_shadowAtlasTileSize;
+				out.m_shadowAtlasTileScale = in.m_shadowAtlasTileSize;
 				ANKI_ASSERT(sizeof(out.m_shadowAtlasTileOffsets) == sizeof(in.m_shadowAtlasTileOffsets));
 				memcpy(&out.m_shadowAtlasTileOffsets[0],
 					&in.m_shadowAtlasTileOffsets[0],
 					sizeof(in.m_shadowAtlasTileOffsets));
 			}
 
-			out.m_radiusPad3 = Vec4(in.m_radius);
+			out.m_radius = in.m_radius;
 		}
 	}
 	else
@@ -606,18 +607,21 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			}
 
 			// Pos & dist
-			out.m_posRadius =
-				Vec4(in.m_worldTransform.getTranslationPart().xyz(), 1.0f / (in.m_distance * in.m_distance));
+			out.m_position = in.m_worldTransform.getTranslationPart().xyz();
+			out.m_squareRadiusOverOne = 1.0f / (in.m_distance * in.m_distance);
 
 			// Diff color and shadowmap ID now
-			out.m_diffuseColorShadowmapId = Vec4(in.m_diffuseColor, shadowmapIndex);
+			out.m_diffuseColor = in.m_diffuseColor;
+			out.m_shadowmapId = shadowmapIndex;
 
 			// Light dir & radius
 			Vec3 lightDir = -in.m_worldTransform.getRotationPart().getZAxis();
-			out.m_lightDirRadius = Vec4(lightDir, in.m_distance);
+			out.m_dir = lightDir;
+			out.m_radius = in.m_distance;
 
 			// Angles
-			out.m_outerCosInnerCos = Vec4(cos(in.m_outerAngle / 2.0f), cos(in.m_innerAngle / 2.0f), 1.0f, 1.0f);
+			out.m_outerCos = cos(in.m_outerAngle / 2.0f);
+			out.m_innerCos = cos(in.m_innerAngle / 2.0f);
 		}
 	}
 	else
@@ -687,9 +691,10 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			const ReflectionProbeQueueElement& in = rqueue.m_reflectionProbes[i];
 			ReflectionProbe& out = gpuProbes[i];
 
-			out.m_positionCubemapIndex = Vec4(in.m_worldPosition, in.m_textureArrayIndex);
-			out.m_aabbMinPad1 = in.m_aabbMin.xyz0();
-			out.m_aabbMaxPad1 = in.m_aabbMax.xyz0();
+			out.m_position = in.m_worldPosition;
+			out.m_cubemapIndex = in.m_textureArrayIndex;
+			out.m_aabbMin = in.m_aabbMin;
+			out.m_aabbMax = in.m_aabbMax;
 		}
 	}
 	else

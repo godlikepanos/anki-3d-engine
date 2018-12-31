@@ -25,9 +25,12 @@ struct ClustererMagicValues
 // Point light
 struct PointLight
 {
-	Vec4 m_posRadius; // xyz: Light pos in world space. w: The 1/(radius^2)
-	Vec4 m_diffuseColorShadowAtlasTileScale; // xyz: diff color, w: UV scale for all tiles
-	Vec4 m_radiusPad3; // x: radius
+	Vec3 m_position; // Position in world space
+	F32 m_squareRadiusOverOne; // 1/(radius^2)
+	Vec3 m_diffuseColor;
+	F32 m_shadowAtlasTileScale; // UV scale for all tiles
+	Vec3 m_padding;
+	F32 m_radius; // Radius
 	Vec4 m_shadowAtlasTileOffsets[3u]; // It's a Vec4 because of the std140 limitations
 };
 const U32 SIZEOF_POINT_LIGHT = 6 * SIZEOF_VEC4;
@@ -36,10 +39,16 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == SIZEOF_POINT_LIGHT)
 // Spot light
 struct SpotLight
 {
-	Vec4 m_posRadius; // xyz: Light pos in world space. w: The 1/(radius^2)
-	Vec4 m_diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
-	Vec4 m_lightDirRadius; // xyz: light direction, w: radius
-	Vec4 m_outerCosInnerCos;
+	Vec3 m_position; // Position in world space
+	F32 m_squareRadiusOverOne; // 1/(radius^2)
+	Vec3 m_diffuseColor;
+	F32 m_shadowmapId; // Shadowmap tex ID
+	Vec3 m_dir; // Light direction
+	F32 m_radius; // Max distance
+	F32 m_outerCos;
+	F32 m_innerCos;
+	F32 m_padding0;
+	F32 m_padding1;
 	Mat4 m_texProjectionMat;
 };
 const U32 SIZEOF_SPOT_LIGHT = 4 * SIZEOF_VEC4 + SIZEOF_MAT4;
@@ -60,9 +69,12 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == SIZEOF_DIR_LIGHT)
 // Representation of a reflection probe
 struct ReflectionProbe
 {
-	Vec4 m_positionCubemapIndex; // xyz: Position of the prove in view space. w: Slice in u_reflectionsTex vector.
-	Vec4 m_aabbMinPad1;
-	Vec4 m_aabbMaxPad1;
+	Vec3 m_position; // Position of the probe in world space
+	F32 m_cubemapIndex; // Slice in cubemap array texture
+	Vec3 m_aabbMin;
+	F32 m_padding0;
+	Vec3 m_aabbMax;
+	F32 m_padding1;
 };
 const U32 SIZEOF_REFLECTION_PROBE = 3 * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == SIZEOF_REFLECTION_PROBE)
