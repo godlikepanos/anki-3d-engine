@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+// Mainly contains light related structures. Everything is packed to align with std140
+
 #pragma once
 
 #include <shaders/glsl_cpp_common/Common.h>
@@ -105,12 +107,16 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == SIZEOF_FOG_DENSITY_VOLUME)
 struct LightingUniforms
 {
 	Vec4 m_unprojectionParams;
-	Vec4 m_rendererSizeTimeNear;
-	Vec4 m_cameraPosFar;
+	Vec2 m_rendererSize;
+	F32 m_time;
+	F32 m_near;
+	Vec3 m_cameraPos;
+	F32 m_far;
 	ClustererMagicValues m_clustererMagicValues;
 	ClustererMagicValues m_prevClustererMagicValues;
 	UVec4 m_clusterCount;
-	UVec4 m_lightVolumeLastClusterPad3;
+	Vec3 m_padding;
+	U32 m_lightVolumeLastCluster;
 	Mat4 m_viewMat;
 	Mat4 m_invViewMat;
 	Mat4 m_projMat;
@@ -121,6 +127,8 @@ struct LightingUniforms
 	Mat4 m_prevViewProjMatMulInvViewProjMat; // Used to re-project previous frames
 	DirectionalLight m_dirLight;
 };
+const U32 SIZEOF_LIGHTING_UNIFORMS = 9 * SIZEOF_VEC4 + 8 * SIZEOF_MAT4 + SIZEOF_DIR_LIGHT;
+ANKI_SHADER_STATIC_ASSERT(sizeof(LightingUniforms) == SIZEOF_LIGHTING_UNIFORMS)
 
 ANKI_SHADER_FUNC_INLINE F32 computeClusterKf(ClustererMagicValues magic, Vec3 worldPos)
 {

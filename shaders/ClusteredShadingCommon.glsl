@@ -19,17 +19,17 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 	LightingUniforms u_lightingUniforms;
 };
 
-#	define u_near UNIFORM(u_lightingUniforms.m_rendererSizeTimeNear.w)
-#	define u_far UNIFORM(u_lightingUniforms.m_cameraPosFar.w)
-#	define u_cameraPos UNIFORM(u_lightingUniforms.m_cameraPosFar.xyz)
+#	define u_near UNIFORM(u_lightingUniforms.m_near)
+#	define u_far UNIFORM(u_lightingUniforms.m_far)
+#	define u_cameraPos UNIFORM(u_lightingUniforms.m_cameraPos)
 #	define u_clusterCountX UNIFORM(u_lightingUniforms.m_clusterCount.x)
 #	define u_clusterCountY UNIFORM(u_lightingUniforms.m_clusterCount.y)
 #	define u_clustererMagic u_lightingUniforms.m_clustererMagicValues
 #	define u_prevClustererMagic u_lightingUniforms.m_prevClustererMagicValues
-#	define u_time UNIFORM(u_lightingUniforms.m_rendererSizeTimeNear.z)
+#	define u_time UNIFORM(u_lightingUniforms.m_time)
 #	define u_unprojectionParams UNIFORM(u_lightingUniforms.m_unprojectionParams)
-#	define u_rendererSize u_lightingUniforms.m_rendererSizeTimeNear.xy
-#	define u_lightVolumeLastCluster UNIFORM(u_lightingUniforms.m_lightVolumeLastClusterPad3.x)
+#	define u_rendererSize u_lightingUniforms.m_rendererSize
+#	define u_lightVolumeLastCluster UNIFORM(u_lightingUniforms.m_lightVolumeLastCluster)
 
 #	define u_viewMat u_lightingUniforms.m_viewMat
 #	define u_invViewMat u_lightingUniforms.m_invViewMat
