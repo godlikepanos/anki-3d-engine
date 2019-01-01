@@ -147,13 +147,21 @@ void main()
 
 	// Dir light
 	Vec3 viewDir = normalize(u_cameraPos - worldPos);
-	if(u_dirLight.m_cascadeCount > 0u)
+	if(u_dirLight.m_active != 0u)
 	{
-		F32 linearDepth = linearizeDepth(depth, u_near, u_far);
-		F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
-		U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
+		F32 shadowFactor;
+		if(u_dirLight.m_cascadeCount > 0)
+		{
+			F32 linearDepth = linearizeDepth(depth, u_near, u_far);
+			F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
+			U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
 
-		F32 shadowFactor = computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex);
+			shadowFactor = computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex);
+		}
+		else
+		{
+			shadowFactor = 1.0;
+		}
 
 		Vec3 l = u_dirLight.m_dir;
 

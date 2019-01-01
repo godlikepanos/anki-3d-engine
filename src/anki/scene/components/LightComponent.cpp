@@ -32,7 +32,7 @@ LightComponent::LightComponent(LightComponentType type, U64 uuid)
 		m_spot.m_textureMat = Mat4::getIdentity();
 		break;
 	case LightComponentType::DIRECTIONAL:
-		m_dir.m_cascadeCount = MAX_SHADOW_CASCADES;
+		m_dir.m_sceneAabbMaxZLightSpace = MIN_F32;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -99,15 +99,23 @@ void LightComponent::setupDirectionalLightQueueElement(
 	const Frustum& frustum, DirectionalLightQueueElement& el, WeakArray<OrthographicFrustum> cascadeFrustums) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
+	ANKI_ASSERT(cascadeFrustums.getSize() <= MAX_SHADOW_CASCADES);
+
+	const U shadowCascadeCount = cascadeFrustums.getSize();
 
 	el.m_userData = this;
 	el.m_drawCallback = derectionalLightDebugDrawCallback;
 	el.m_uuid = m_uuid;
 	el.m_diffuseColor = m_diffColor.xyz();
 	el.m_direction = m_trf.getRotation().getZAxis().xyz();
-	el.m_shadowCascadeCount = m_dir.m_cascadeCount;
+	el.m_shadowCascadeCount = shadowCascadeCount;
 
-	// Compute sub frustum edges
+	// Compute the texture matrices
+	if(shadowCascadeCount == 0)
+	{
+		return;
+	}
+
 	const Mat4 lightTrf(m_trf);
 	const Mat4 lightViewMat(lightTrf.getInverse());
 	if(frustum.getType() == FrustumType::PERSPECTIVE)
@@ -120,12 +128,12 @@ void LightComponent::setupDirectionalLightQueueElement(
 
 		// Gather the edges
 		Array<Vec4, (MAX_SHADOW_CASCADES + 1) * 4> edgesLocalSpaceStorage;
-		WeakArray<Vec4> edgesLocalSpace(&edgesLocalSpaceStorage[0], (m_dir.m_cascadeCount + 1) * 4);
+		WeakArray<Vec4> edgesLocalSpace(&edgesLocalSpaceStorage[0], (shadowCascadeCount + 1) * 4);
 		edgesLocalSpace[0] = edgesLocalSpace[1] = edgesLocalSpace[2] = edgesLocalSpace[3] =
 			Vec4(0.0f, 0.0f, 0.0f, 1.0f); // Eye
-		for(U i = 0; i < m_dir.m_cascadeCount; ++i)
+		for(U i = 0; i < shadowCascadeCount; ++i)
 		{
-			const F32 cascadeFarNearDist = far / F32(m_dir.m_cascadeCount);
+			const F32 cascadeFarNearDist = far / F32(shadowCascadeCount);
 			const F32 cascadeFar = F32(i + 1) * cascadeFarNearDist;
 
 			const F32 x = cascadeFar * tan(fovY / 2.0f) * fovX / fovY;
@@ -150,7 +158,7 @@ void LightComponent::setupDirectionalLightQueueElement(
 
 		// Compute the min max per cascade
 		Array2d<Vec3, MAX_SHADOW_CASCADES, 2> minMaxes;
-		for(U i = 0; i < m_dir.m_cascadeCount; ++i)
+		for(U i = 0; i < shadowCascadeCount; ++i)
 		{
 			Vec3 aabbMin(MAX_F32);
 			Vec3 aabbMax(MIN_F32);
@@ -177,7 +185,7 @@ void LightComponent::setupDirectionalLightQueueElement(
 		}
 
 		// Compute the view and projection matrices per cascade
-		for(U i = 0; i < m_dir.m_cascadeCount; ++i)
+		for(U i = 0; i < shadowCascadeCount; ++i)
 		{
 			const Vec3& min = minMaxes[i][0];
 			const Vec3& max = minMaxes[i][1];

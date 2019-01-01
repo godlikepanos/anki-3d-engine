@@ -60,9 +60,9 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == SIZEOF_SPOT_LIGHT)
 struct DirectionalLight
 {
 	Vec3 m_diffuseColor;
-	U32 m_cascadeCount; // If it's zero then it's not active
+	U32 m_cascadeCount; // If it's zero then it doesn't case shadow
 	Vec3 m_dir;
-	U32 m_padding;
+	U32 m_active;
 	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES];
 };
 const U32 SIZEOF_DIR_LIGHT = 2 * SIZEOF_VEC4 + MAX_SHADOW_CASCADES * SIZEOF_MAT4;

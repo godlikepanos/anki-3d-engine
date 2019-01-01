@@ -128,10 +128,10 @@ public:
 	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
-	U64 m_uuid;
+	U64 m_uuid; ///< Zero means that there is no dir light
 	Vec3 m_diffuseColor;
 	Vec3 m_direction;
-	U8 m_shadowCascadeCount;
+	U8 m_shadowCascadeCount; ///< Zero means that it doesn't case any shadows
 
 	DirectionalLightQueueElement()
 	{

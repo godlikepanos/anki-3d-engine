@@ -567,7 +567,7 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 
 	// Directional light
-	if(ctx.m_renderQueue->m_directionalLight.m_shadowCascadeCount > 0)
+	if(ctx.m_renderQueue->m_directionalLight.m_uuid != 0)
 	{
 		DirectionalLight& out = blk->m_dirLight;
 		const DirectionalLightQueueElement& in = ctx.m_renderQueue->m_directionalLight;
@@ -575,6 +575,7 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 		out.m_diffuseColor = in.m_diffuseColor;
 		out.m_cascadeCount = in.m_shadowCascadeCount;
 		out.m_dir = in.m_direction;
+		out.m_active = 1;
 
 		for(U cascade = 0; cascade < in.m_shadowCascadeCount; ++cascade)
 		{
@@ -583,7 +584,7 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	}
 	else
 	{
-		blk->m_dirLight.m_cascadeCount = 0;
+		blk->m_dirLight.m_active = 0;
 	}
 }
 

@@ -122,12 +122,6 @@ public:
 		m_flags.set(SHADOW, x);
 	}
 
-	U32 getShadowCascadeCount() const
-	{
-		ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
-		return m_dir.m_cascadeCount;
-	}
-
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
@@ -158,7 +152,7 @@ public:
 	/// Setup a directional queue element.
 	/// @param[in] frustum The frustum that is looking that directional light. Used to calculate the cascades.
 	/// @param[out] el The queue element to fill out.
-	/// @param[out] cascadeFrustums Fill those frustums as well.
+	/// @param[out] cascadeFrustums Fill those frustums as well. The size of this array is the count of the cascades.
 	void setupDirectionalLightQueueElement(
 		const Frustum& frustum, DirectionalLightQueueElement& el, WeakArray<OrthographicFrustum> cascadeFrustums) const;
 
@@ -184,7 +178,6 @@ private:
 
 	struct Dir
 	{
-		U32 m_cascadeCount;
 		F32 m_sceneAabbMaxZLightSpace;
 	};
 

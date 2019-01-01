@@ -518,46 +518,72 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Array<U32, MAX_SHADOW_CASCADES> lods;
 		Array<Bool, MAX_SHADOW_CASCADES> blurEsms;
 
+		U activeCascades = 0;
+
 		for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
 		{
 			ANKI_ASSERT(light.m_shadowRenderQueues[cascade]);
-			timestamps[cascade] = m_r->getGlobalTimestamp(); // This light is always updated
-			cascadeIndices[cascade] = cascade;
-			drawcallCounts[cascade] = 1; // Doesn't matter
+			if(light.m_shadowRenderQueues[cascade]->m_renderables.getSize() > 0)
+			{
+				// Cascade with drawcalls, will need tiles
 
-			// Change the quality per cascade
-			blurEsms[cascade] = (cascade <= 1);
-			lods[cascade] = (cascade <= 1) ? (m_lodCount - 1) : (lods[0] - 1);
+				timestamps[activeCascades] = m_r->getGlobalTimestamp(); // This light is always updated
+				cascadeIndices[activeCascades] = cascade;
+				drawcallCounts[activeCascades] = 1; // Doesn't matter
+
+				// Change the quality per cascade
+				blurEsms[activeCascades] = (cascade <= 1);
+				lods[activeCascades] = (cascade <= 1) ? (m_lodCount - 1) : (lods[0] - 1);
+
+				++activeCascades;
+			}
 		}
 
-		const Bool allocationFailed = allocateTilesAndScratchTiles(light.m_uuid,
-										  light.m_shadowCascadeCount,
-										  &timestamps[0],
-										  &cascadeIndices[0],
-										  &drawcallCounts[0],
-										  &lods[0],
-										  &esmViewports[0],
-										  &scratchViewports[0],
-										  &subResults[0])
-									  == TileAllocatorResult::ALLOCATION_FAILED;
+		const Bool allocationFailed = activeCascades == 0
+									  || allocateTilesAndScratchTiles(light.m_uuid,
+											 activeCascades,
+											 &timestamps[0],
+											 &cascadeIndices[0],
+											 &drawcallCounts[0],
+											 &lods[0],
+											 &esmViewports[0],
+											 &scratchViewports[0],
+											 &subResults[0])
+											 == TileAllocatorResult::ALLOCATION_FAILED;
 
 		if(!allocationFailed)
 		{
+			activeCascades = 0;
+
 			for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
 			{
-				// Update the texture matrix to point to the correct region in the atlas
-				light.m_textureMatrices[cascade] =
-					createSpotLightTextureMatrix(esmViewports[cascade]) * light.m_textureMatrices[cascade];
+				if(light.m_shadowRenderQueues[cascade]->m_renderables.getSize() > 0)
+				{
+					// Cascade with drawcalls, push some work for it
 
-				// Push work
-				newScratchAndEsmResloveRenderWorkItems(esmViewports[cascade],
-					scratchViewports[cascade],
-					blurEsms[cascade],
-					false,
-					light.m_shadowRenderQueues[cascade],
-					lightsToRender,
-					esmWorkItems,
-					drawcallCount);
+					// Update the texture matrix to point to the correct region in the atlas
+					light.m_textureMatrices[cascade] =
+						createSpotLightTextureMatrix(esmViewports[activeCascades]) * light.m_textureMatrices[cascade];
+
+					// Push work
+					newScratchAndEsmResloveRenderWorkItems(esmViewports[activeCascades],
+						scratchViewports[activeCascades],
+						blurEsms[activeCascades],
+						false,
+						light.m_shadowRenderQueues[cascade],
+						lightsToRender,
+						esmWorkItems,
+						drawcallCount);
+
+					++activeCascades;
+				}
+				else
+				{
+					// Empty cascade, point it to the empty tile
+
+					light.m_textureMatrices[cascade] =
+						createSpotLightTextureMatrix(emptyTileViewport) * light.m_textureMatrices[cascade];
+				}
 			}
 		}
 		else

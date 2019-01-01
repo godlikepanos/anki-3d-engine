@@ -25,16 +25,26 @@ enum class FrustumComponentVisibilityTestFlag : U16
 	RENDER_COMPONENTS = 1 << 0,
 	LIGHT_COMPONENTS = 1 << 1,
 	LENS_FLARE_COMPONENTS = 1 << 2,
-	SHADOW_CASTERS = 1 << 3,
-	REFLECTION_PROBES = 1 << 4,
-	REFLECTION_PROXIES = 1 << 5,
-	OCCLUDERS = 1 << 6,
-	DECALS = 1 << 7,
-	FOG_DENSITY_COMPONENTS = 1 << 8,
-	EARLY_Z = 1 << 9,
+	SHADOW_CASTERS = 1 << 3, ///< Render components that cast shadow
+	POINT_LIGHT_SHADOWS_ENABLED = 1 << 4,
+	SPOT_LIGHT_SHADOWS_ENABLED = 1 << 5,
+	DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES = 1 << 6,
+	DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE = 1 << 7,
+	REFLECTION_PROBES = 1 << 8,
+	REFLECTION_PROXIES = 1 << 9,
+	OCCLUDERS = 1 << 10,
+	DECALS = 1 << 11,
+	FOG_DENSITY_COMPONENTS = 1 << 12,
+	EARLY_Z = 1 << 13,
 
-	ALL_TESTS = RENDER_COMPONENTS | LIGHT_COMPONENTS | LENS_FLARE_COMPONENTS | SHADOW_CASTERS | REFLECTION_PROBES
-				| REFLECTION_PROXIES | DECALS | FOG_DENSITY_COMPONENTS | EARLY_Z
+	LAST = EARLY_Z,
+
+	ALL = RENDER_COMPONENTS | LIGHT_COMPONENTS | LENS_FLARE_COMPONENTS | SHADOW_CASTERS | POINT_LIGHT_SHADOWS_ENABLED
+		  | SPOT_LIGHT_SHADOWS_ENABLED | DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES | DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE
+		  | REFLECTION_PROBES | REFLECTION_PROXIES | OCCLUDERS | DECALS | FOG_DENSITY_COMPONENTS | EARLY_Z,
+
+	ALL_SHADOWS_ENABLED =
+		POINT_LIGHT_SHADOWS_ENABLED | SPOT_LIGHT_SHADOWS_ENABLED | DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag, inline)
 
@@ -132,7 +142,7 @@ public:
 
 	void setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits)
 	{
-		m_flags.unset(FrustumComponentVisibilityTestFlag::ALL_TESTS);
+		m_flags.unset(FrustumComponentVisibilityTestFlag::ALL);
 		m_flags.set(bits, true);
 
 #if ANKI_ASSERTS_ENABLED
@@ -155,7 +165,7 @@ public:
 
 	Bool anyVisibilityTestEnabled() const
 	{
-		return m_flags.getAny(FrustumComponentVisibilityTestFlag::ALL_TESTS);
+		return m_flags.getAny(FrustumComponentVisibilityTestFlag::ALL);
 	}
 
 	/// The type is FillCoverageBufferCallback.
@@ -182,10 +192,10 @@ public:
 	}
 
 private:
-	enum Flags
+	enum Flags : U16
 	{
-		SHAPE_MARKED_FOR_UPDATE = 1 << 10,
-		TRANSFORM_MARKED_FOR_UPDATE = 1 << 12,
+		SHAPE_MARKED_FOR_UPDATE = static_cast<U16>(FrustumComponentVisibilityTestFlag::LAST) << 1,
+		TRANSFORM_MARKED_FOR_UPDATE = static_cast<U16>(FrustumComponentVisibilityTestFlag::LAST) << 2,
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flags, friend)
 

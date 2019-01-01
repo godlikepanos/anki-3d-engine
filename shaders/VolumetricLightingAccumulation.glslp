@@ -107,18 +107,18 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 	U32 idxOffset = u_clusters[clusterIdx];
 
 	// Dir light
-	if(u_dirLight.m_cascadeCount > 0u)
+	if(u_dirLight.m_active != 0u)
 	{
-		F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
-		U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
+		F32 factor = phaseFunction(viewDir, u_dirLight.m_dir, PHASE_FUNCTION_ANISOTROPY);
 
 #if ENABLE_SHADOWS
-		F32 factor = computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex);
-#else
-		F32 factor = 1.0;
+		if(u_dirLight.m_cascadeCount > 0u)
+		{
+			F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
+			U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
+			factor *= computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex);
+		}
 #endif
-
-		factor *= phaseFunction(viewDir, u_dirLight.m_dir, PHASE_FUNCTION_ANISOTROPY);
 
 		color += u_dirLight.m_diffuseColor * factor;
 	}
