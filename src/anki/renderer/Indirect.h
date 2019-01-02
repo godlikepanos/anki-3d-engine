@@ -100,6 +100,13 @@ private:
 		ShaderProgramPtr m_grProg;
 	} m_irradianceToRefl; ///< Apply irradiance back to the reflection.
 
+	class
+	{
+	public:
+		RenderTargetDescription m_rtDescr;
+		FramebufferDescription m_fbDescr;
+	} m_shadowMapping;
+
 	class CacheEntry
 	{
 	public:
@@ -128,6 +135,7 @@ private:
 		RenderTargetHandle m_gbufferDepthRt;
 		RenderTargetHandle m_lightShadingRt;
 		RenderTargetHandle m_irradianceRt;
+		RenderTargetHandle m_shadowMapRt;
 	} m_ctx; ///< Runtime context.
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
@@ -135,6 +143,7 @@ private:
 	ANKI_USE_RESULT Error initLightShading(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIrradianceToRefl(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initShadowMapping(const ConfigSet& cfg);
 
 	/// Lazily init the cache entry
 	void initCacheEntry(U32 cacheEntryIdx);
@@ -146,6 +155,7 @@ private:
 	Bool findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdx, Bool& cacheEntryFound);
 
 	void runGBuffer(CommandBufferPtr& cmdb);
+	void runShadowMapping(CommandBufferPtr& cmdb);
 	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx);

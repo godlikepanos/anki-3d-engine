@@ -42,6 +42,7 @@ Config::Config()
 
 	newOption("r.indirect.reflectionResolution", 128);
 	newOption("r.indirect.maxSimultaneousProbeCount", 32);
+	newOption("r.indirect.shadowMapResolution", 64);
 
 	newOption("r.motionBlur.maxSamples", 32);
 

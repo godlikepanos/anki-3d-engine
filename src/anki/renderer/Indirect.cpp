@@ -50,6 +50,7 @@ Error Indirect::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initLightShading(config));
 	ANKI_CHECK(initIrradiance(config));
 	ANKI_CHECK(initIrradianceToRefl(config));
+	ANKI_CHECK(initShadowMapping(config));
 
 	// Load split sum integration LUT
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/SplitSumIntegration.ankitex", m_integrationLut));
@@ -101,7 +102,7 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 
 		m_gbuffer.m_fbDescr.bake();
 	}
@@ -182,6 +183,26 @@ Error Indirect::initIrradianceToRefl(const ConfigSet& cfg)
 	const ShaderProgramResourceVariant* variant;
 	m_irradianceToRefl.m_prog->getOrCreateVariant(variant);
 	m_irradianceToRefl.m_grProg = variant->getProgram();
+
+	return Error::NONE;
+}
+
+Error Indirect::initShadowMapping(const ConfigSet& cfg)
+{
+	const U resolution = cfg.getNumber("r.indirect.shadowMapResolution");
+	ANKI_ASSERT(resolution > 8);
+
+	// RT descr
+	m_shadowMapping.m_rtDescr =
+		m_r->create2DRenderTargetDescription(resolution, resolution, Format::D16_UNORM, "GI SM");
+	m_shadowMapping.m_rtDescr.bake();
+
+	// FB descr
+	m_shadowMapping.m_fbDescr.m_colorAttachmentCount = 0;
+	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
+	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+	m_shadowMapping.m_fbDescr.bake();
 
 	return Error::NONE;
 }
@@ -540,6 +561,37 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
 	}
 
+	// Shadow pass. Optional
+	if(probeToUpdate->m_renderQueues[0]->m_directionalLight.m_uuid
+		&& probeToUpdate->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0)
+	{
+		for(U i = 0; i < 6; ++i)
+		{
+			ANKI_ASSERT(probeToUpdate->m_renderQueues[i]->m_directionalLight.m_uuid
+						&& probeToUpdate->m_renderQueues[i]->m_directionalLight.m_shadowCascadeCount == 1);
+		}
+
+		// RT
+		m_ctx.m_shadowMapRt = rgraph.newRenderTarget(m_shadowMapping.m_rtDescr);
+
+		// Pass
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI SM");
+		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, m_ctx.m_shadowMapRt);
+		pass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) {
+				static_cast<Indirect*>(rgraphCtx.m_userData)->runShadowMapping(rgraphCtx.m_commandBuffer);
+			},
+			this,
+			0);
+
+		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
+		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+	}
+	else
+	{
+		m_ctx.m_shadowMapRt = {};
+	}
+
 	// Light shading passes
 	{
 		Array<RenderPassWorkCallback, 6> callbacks = {{runLightShadingCallback<0>,
@@ -774,6 +826,11 @@ Bool Indirect::findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdxAllocated, Bo
 	}
 
 	return failed;
+}
+
+void Indirect::runShadowMapping(CommandBufferPtr& cmdb)
+{
+	// TODO
 }
 
 } // end namespace anki
