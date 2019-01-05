@@ -86,7 +86,8 @@ Error CameraNode::init(Frustum* frustum)
 	newComponent<FrustumFeedbackComponent>();
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, frustum);
+	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, frustum);
+	spatialc->setUpdateOctreeBounds(false);
 
 	return Error::NONE;
 }

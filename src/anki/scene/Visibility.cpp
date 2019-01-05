@@ -300,7 +300,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		ANKI_ASSERT(count == 1 && "TODO: Support sub-spatials");
 
 		// Sort sub-spatials
-		Vec4 origin = testedFrc.getFrustumOrigin();
+		const Vec4 origin = testedFrc.getFrustumOrigin();
 		std::sort(sps.begin(), sps.begin() + count, [origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool {
 			const Vec4& spa = a.m_origin;
 			const Vec4& spb = b.m_origin;
@@ -341,6 +341,19 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 		if(lc)
 		{
+			// Check if it casts shadow
+			Bool castsShadow = lc->getShadowEnabled();
+			if(castsShadow)
+			{
+				// Extra check
+
+				// Compute distance from the frustum
+				const Plane& nearPlane = testedFrc.getFrustum().getPlanesWorldSpace()[FrustumPlaneType::NEAR];
+				const F32 distFromFrustum = max(0.0f, sps[0].m_sp->getAabb().testPlane(nearPlane));
+
+				castsShadow = distFromFrustum < testedFrc.getEffectiveShadowDistance();
+			}
+
 			switch(lc->getLightComponentType())
 			{
 			case LightComponentType::POINT:
@@ -348,7 +361,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				PointLightQueueElement* el = result.m_pointLights.newElement(alloc);
 				lc->setupPointLightQueueElement(*el);
 
-				if(lc->getShadowEnabled()
+				if(castsShadow
 					&& testedFrc.visibilityTestsEnabled(
 						   FrustumComponentVisibilityTestFlag::POINT_LIGHT_SHADOWS_ENABLED))
 				{
@@ -377,7 +390,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				SpotLightQueueElement* el = result.m_spotLights.newElement(alloc);
 				lc->setupSpotLightQueueElement(*el);
 
-				if(lc->getShadowEnabled()
+				if(castsShadow
 					&& testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::SPOT_LIGHT_SHADOWS_ENABLED))
 				{
 					RenderQueue* a = alloc.newInstance<RenderQueue>();
@@ -399,27 +412,30 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				ANKI_ASSERT(lc->getShadowEnabled() == true && "Only with shadow for now");
 
 				U cascadeCount;
-				if(testedFrc.visibilityTestsEnabled(
-					   FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE))
+				if(ANKI_UNLIKELY(!castsShadow))
+				{
+					cascadeCount = 0;
+				}
+				else if(testedFrc.visibilityTestsEnabled(
+							FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE))
 				{
 					cascadeCount = 1;
 				}
-				else if(testedFrc.visibilityTestsEnabled(
-							FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES))
-				{
-					cascadeCount = MAX_SHADOW_CASCADES;
-				}
 				else
 				{
-					cascadeCount = 0;
+					ANKI_ASSERT(testedFrc.visibilityTestsEnabled(
+						FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES));
+					cascadeCount = MAX_SHADOW_CASCADES;
 				}
 				ANKI_ASSERT(cascadeCount <= MAX_SHADOW_CASCADES);
 
 				WeakArray<OrthographicFrustum> cascadeFrustums(
 					(cascadeCount) ? alloc.newArray<OrthographicFrustum>(cascadeCount) : nullptr, cascadeCount);
 
-				lc->setupDirectionalLightQueueElement(
-					testedFrc.getFrustum(), result.m_directionalLight, cascadeFrustums);
+				lc->setupDirectionalLightQueueElement(testedFrc.getFrustum(),
+					testedFrc.getEffectiveShadowDistance(),
+					result.m_directionalLight,
+					cascadeFrustums);
 
 				nextQueues = WeakArray<RenderQueue>(
 					(cascadeCount) ? alloc.newArray<RenderQueue>(cascadeCount) : nullptr, cascadeCount);
@@ -732,7 +748,7 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;
-	ctx.m_earlyZDist = scene.getEarlyZDistance();
+	ctx.m_earlyZDist = scene.getLimits().m_earlyZDistance;
 	ctx.submitNewWork(fsn.getComponent<FrustumComponent>(), rqueue, hive);
 
 	hive.waitAllTasks();

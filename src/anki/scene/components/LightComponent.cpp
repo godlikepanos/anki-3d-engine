@@ -95,8 +95,10 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 	return Error::NONE;
 }
 
-void LightComponent::setupDirectionalLightQueueElement(
-	const Frustum& frustum, DirectionalLightQueueElement& el, WeakArray<OrthographicFrustum> cascadeFrustums) const
+void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum,
+	F32 overrideFrustumFar,
+	DirectionalLightQueueElement& el,
+	WeakArray<OrthographicFrustum> cascadeFrustums) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
 	ANKI_ASSERT(cascadeFrustums.getSize() <= MAX_SHADOW_CASCADES);
@@ -124,7 +126,7 @@ void LightComponent::setupDirectionalLightQueueElement(
 		const PerspectiveFrustum& pfrustum = static_cast<const PerspectiveFrustum&>(frustum);
 		const F32 fovX = pfrustum.getFovX();
 		const F32 fovY = pfrustum.getFovY();
-		const F32 far = pfrustum.getFar();
+		const F32 far = (overrideFrustumFar > 0.0f) ? overrideFrustumFar : pfrustum.getFar();
 
 		// Gather the edges
 		Array<Vec4, (MAX_SHADOW_CASCADES + 1) * 4> edgesLocalSpaceStorage;

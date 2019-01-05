@@ -52,7 +52,7 @@ public:
 
 	/// Place or re-place an element in the tree.
 	/// @note It's thread-safe against place and remove methods.
-	void place(const Aabb& volume, OctreePlaceable* placeable);
+	void place(const Aabb& volume, OctreePlaceable* placeable, Bool updateActualSceneBounds);
 
 	/// Remove an element from the tree.
 	/// @note It's thread-safe against place and remove methods.

@@ -194,7 +194,7 @@ Error Indirect::initShadowMapping(const ConfigSet& cfg)
 
 	// RT descr
 	m_shadowMapping.m_rtDescr =
-		m_r->create2DRenderTargetDescription(resolution, resolution, Format::D16_UNORM, "GI SM");
+		m_r->create2DRenderTargetDescription(resolution * 6, resolution, Format::D16_UNORM, "GI SM");
 	m_shadowMapping.m_rtDescr.bake();
 
 	// FB descr
@@ -830,7 +830,34 @@ Bool Indirect::findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdxAllocated, Bo
 
 void Indirect::runShadowMapping(CommandBufferPtr& cmdb)
 {
-	// TODO
+	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	{
+		ANKI_ASSERT(m_ctx.m_probe);
+		ANKI_ASSERT(m_ctx.m_probe->m_renderQueues[faceIdx]);
+		const RenderQueue& faceRenderQueue = *m_ctx.m_probe->m_renderQueues[faceIdx];
+		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_uuid != 0);
+		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowCascadeCount == 1);
+
+		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
+		const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
+
+		if(cascadeRenderQueue.m_renderables.getSize() == 0)
+		{
+			continue;
+		}
+
+		const U rez = m_shadowMapping.m_rtDescr.m_height;
+		cmdb->setViewport(rez * faceIdx, 0, rez, rez);
+		cmdb->setScissor(rez * faceIdx, 0, rez, rez);
+
+		m_r->getSceneDrawer().drawRange(Pass::SM,
+			cascadeRenderQueue.m_viewMatrix,
+			cascadeRenderQueue.m_viewProjectionMatrix,
+			Mat4::getIdentity(), // Don't care about prev matrices here
+			cmdb,
+			cascadeRenderQueue.m_renderables.getBegin(),
+			cascadeRenderQueue.m_renderables.getEnd());
+	}
 }
 
 } // end namespace anki

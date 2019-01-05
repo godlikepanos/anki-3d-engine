@@ -72,11 +72,13 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_alloc = SceneAllocator<U8>(allocCb, allocCbData);
 	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
 
-	m_earlyZDist = config.getNumber("scene.earlyZDistance");
+	// Limits
+	m_limits.m_earlyZDistance = config.getNumber("scene.earlyZDistance");
+	m_limits.m_reflectionProbeEffectiveDistance = config.getNumber("scene.reflectionProbeEffectiveDistance");
+	m_limits.m_reflectionProbeShadowEffectiveDistance =
+		config.getNumber("scene.reflectionProbeShadowEffectiveDistance");
 
 	ANKI_CHECK(m_events.init(this));
-
-	m_maxReflectionProxyDistance = config.getNumber("scene.imageReflectionMaxDistance");
 
 	m_octree = m_alloc.newInstance<Octree>(m_alloc);
 	m_octree->init(m_sceneMin, m_sceneMax, 5); // TODO

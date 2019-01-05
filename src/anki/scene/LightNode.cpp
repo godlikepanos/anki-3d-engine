@@ -333,11 +333,12 @@ Error DirectionalLightNode::init()
 	newComponent<MoveComponent>();
 	newComponent<FeedbackComponent>();
 	newComponent<LightComponent>(LightComponentType::DIRECTIONAL, getSceneGraph().getNewUuid());
-	newComponent<SpatialComponent>(this, &m_boundingBox);
+	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_boundingBox);
 
-	// Make the bounding box large enough so it will always be visible
+	// Make the bounding box large enough so it will always be visible. Because of that don't update the octree bounds
 	m_boundingBox.setMin(getSceneGraph().getSceneMin());
 	m_boundingBox.setMax(getSceneGraph().getSceneMax());
+	spatialc->setUpdateOctreeBounds(false);
 
 	return Error::NONE;
 }

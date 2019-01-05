@@ -39,7 +39,7 @@ Error SpatialComponent::update(SceneNode& node, Second prevTime, Second crntTime
 		m_shape->computeAabb(m_aabb);
 		m_markedForUpdate = false;
 
-		m_node->getSceneGraph().getOctree().place(m_aabb, &m_octreeInfo);
+		m_node->getSceneGraph().getOctree().place(m_aabb, &m_octreeInfo, m_updateOctreeBounds);
 		m_placed = true;
 	}
 

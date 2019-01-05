@@ -54,12 +54,6 @@ class FrustumComponent : public SceneComponent
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::FRUSTUM;
 
-	struct VisibilityStats
-	{
-		U32 m_renderablesCount = 0;
-		U32 m_lightsCount = 0;
-	};
-
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(SceneNode* node, Frustum* frustum);
 
@@ -155,6 +149,8 @@ public:
 				ANKI_ASSERT(0 && "Cannot have them both");
 			}
 		}
+
+		// TODO
 #endif
 	}
 
@@ -191,6 +187,18 @@ public:
 		}
 	}
 
+	/// How far to render shadows for this frustum.
+	F32 getEffectiveShadowDistance() const
+	{
+		return (m_effectiveShadowDist < 0.0f) ? m_frustum->getFar() : m_effectiveShadowDist;
+	}
+
+	/// Set how far to render shadows for this frustum or set to negative if you want to use the m_frustun's far.
+	void setEffectiveShadowDistance(F32 dist)
+	{
+		m_effectiveShadowDist = dist;
+	}
+
 private:
 	enum Flags : U16
 	{
@@ -206,7 +214,8 @@ private:
 	Mat4 m_viewProjMat = Mat4::getIdentity(); ///< View projection matrix
 	Mat4 m_prevViewProjMat = Mat4::getIdentity();
 
-	BitMask<U16> m_flags;
+	/// How far to render shadows for this frustum. If negative it's the m_frustum's far.
+	F32 m_effectiveShadowDist = -1.0f;
 
 	class
 	{
@@ -215,6 +224,8 @@ private:
 		U32 m_depthMapWidth = 0;
 		U32 m_depthMapHeight = 0;
 	} m_coverageBuff; ///< Coverage buffer for extra visibility tests.
+
+	BitMask<U16> m_flags;
 };
 /// @}
 

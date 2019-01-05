@@ -20,8 +20,6 @@ namespace anki
 class ReflectionProbeNode : public SceneNode
 {
 public:
-	const F32 EFFECTIVE_DISTANCE = 256.0f;
-
 	ReflectionProbeNode(SceneGraph* scene, CString name)
 		: SceneNode(scene, name)
 	{

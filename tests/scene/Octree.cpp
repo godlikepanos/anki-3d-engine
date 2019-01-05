@@ -36,7 +36,7 @@ ANKI_TEST(Scene, Octree)
 			{
 				// Place
 				placeables[i].m_userData = &placeables[i];
-				octree.place(volume, &placeables[i]);
+				octree.place(volume, &placeables[i], true);
 				placed.push_back(i);
 			}
 			else if(mode == 1 && placed.size() > 0)

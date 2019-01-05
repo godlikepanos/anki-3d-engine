@@ -81,6 +81,12 @@ public:
 		m_markedForUpdate = true;
 	}
 
+	/// Update the "actual scene bounds" of the octree or not.
+	void setUpdateOctreeBounds(Bool update)
+	{
+		m_updateOctreeBounds = update;
+	}
+
 	/// @name SceneComponent overrides
 	/// @{
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
@@ -90,12 +96,13 @@ private:
 	SceneNode* m_node;
 	const CollisionShape* m_shape;
 	Aabb m_aabb; ///< A faster shape
-	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0);
+	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0f);
+
+	OctreePlaceable m_octreeInfo;
 
 	Bool8 m_markedForUpdate = false;
 	Bool8 m_placed = false;
-
-	OctreePlaceable m_octreeInfo;
+	Bool8 m_updateOctreeBounds = true;
 };
 
 /// A class that holds spatial information and implements the SpatialComponent virtuals. You just need to update the

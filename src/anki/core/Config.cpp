@@ -54,8 +54,9 @@ Config::Config()
 	newOption("r.final.motionBlurSamples", 32);
 
 	// Scene
-	newOption("scene.imageReflectionMaxDistance", 30.0);
 	newOption("scene.earlyZDistance", 10.0, "Objects with distance lower than that will be used in early Z");
+	newOption("scene.reflectionProbeEffectiveDistance", 256.0, "How far reflection probes can look");
+	newOption("scene.reflectionProbeShadowEffectiveDistance", 32.0, "How far to render shadows for reflection probes");
 
 	// Globals
 	newOption("width", 1280);
