@@ -11,27 +11,73 @@ ANKI_BEGIN_NAMESPACE
 
 struct DeferredPointLightUniforms
 {
-	Vec4 m_inputTexUvScaleAndOffset; // Use this to get the correct face UVs
+	// Use these to get the correct face UVs
+	Vec2 m_inputTexUvScale;
+	Vec2 m_inputTexUvOffset;
+
 	Mat4 m_invViewProjMat;
-	Vec4 m_camPosPad1;
-	Vec4 m_fbSizePad2;
+
+	Vec3 m_camPos;
+	F32 m_padding;
+
+	Vec2 m_fbSize;
+	Vec2 m_padding1;
 
 	// Light props
-	Vec4 m_posRadius; // xyz: Light pos in world space. w: The -1/radius
-	Vec4 m_diffuseColorPad1; // xyz: diff color
+	Vec3 m_position;
+	F32 m_oneOverSquareRadius; // 1/radius^2
+
+	Vec3 m_diffuseColor;
+	F32 m_padding2;
 };
 
 struct DeferredSpotLightUniforms
 {
-	Vec4 m_inputTexUvScaleAndOffset; // Use this to get the correct face UVs
+	// Use these to get the correct face UVs
+	Vec2 m_inputTexUvScale;
+	Vec2 m_inputTexUvOffset;
+
 	Mat4 m_invViewProjMat;
-	Vec4 m_camPosPad1;
-	Vec4 m_fbSizePad2;
+
+	Vec3 m_camPos;
+	F32 m_padding;
+
+	Vec2 m_fbSize;
+	Vec2 m_padding1;
 
 	// Light props
-	Vec4 m_posRadius; // xyz: Light pos in world space. w: The -1/radius
-	Vec4 m_diffuseColorOuterCos; // xyz: diff color, w: outer cosine of spot
-	Vec4 m_lightDirInnerCos; // xyz: light dir, w: inner cosine of spot
+	Vec3 m_position;
+	F32 m_oneOverSquareRadius; // 1/radius^2
+
+	Vec3 m_diffuseColor;
+	F32 m_outerCos;
+
+	Vec3 m_lightDir;
+	F32 m_innerCos;
+};
+
+struct DeferredDirectionalLightUniforms
+{
+	// Use these to get the correct face UVs
+	Vec2 m_inputTexUvScale;
+	Vec2 m_inputTexUvOffset;
+
+	Mat4 m_invViewProjMat;
+
+	Vec3 m_camPos;
+	F32 m_padding;
+
+	Vec2 m_fbSize;
+	Vec2 m_padding1;
+
+	// Light props
+	Vec3 m_diffuseColor;
+	F32 m_padding2;
+
+	Vec3 m_lightDir;
+	F32 m_padding3;
+
+	Mat4 m_lightMatrix;
 };
 
 struct DeferredVertexUniforms
@@ -43,5 +89,6 @@ const UVec2 GBUFFER_RT0_BINDING = UVec2(0, 0);
 const UVec2 GBUFFER_RT1_BINDING = UVec2(0, 1);
 const UVec2 GBUFFER_RT2_BINDING = UVec2(0, 2);
 const UVec2 GBUFFER_DEPTH_BINDING = UVec2(0, 3);
+const UVec2 GBUFFER_SHADOW_ATLAS_BINDING = UVec2(0, 4);
 
 ANKI_END_NAMESPACE

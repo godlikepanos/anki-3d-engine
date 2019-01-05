@@ -105,6 +105,7 @@ private:
 	public:
 		RenderTargetDescription m_rtDescr;
 		FramebufferDescription m_fbDescr;
+		SamplerPtr m_shadowSampler;
 	} m_shadowMapping;
 
 	class CacheEntry

@@ -174,6 +174,16 @@ F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 wor
 	return shadowFactor;
 }
 
+// Compute the shadow factor of a directional light
+F32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, sampler2DShadow shadowMap)
+{
+	Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
+	Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+
+	F32 shadowFactor = textureLod(shadowMap, texCoords3, 0.0);
+	return shadowFactor;
+}
+
 // Compute the cubemap texture lookup vector given the reflection vector (r) the radius squared of the probe (R2) and
 // the frag pos in sphere space (f)
 Vec3 computeCubemapVecAccurate(in Vec3 r, in F32 R2, in Vec3 f)

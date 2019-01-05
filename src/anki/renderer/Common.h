@@ -45,6 +45,7 @@ class DebugDrawer;
 class RenderQueue;
 class RenderableQueueElement;
 class PointLightQueueElement;
+class DirectionalLightQueueElement;
 class SpotLightQueueElement;
 class ReflectionProbeQueueElement;
 class DecalQueueElement;
