@@ -82,6 +82,8 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 	const UVec4& viewport,
 	const Vec2& gbufferTexCoordsMin,
 	const Vec2& gbufferTexCoordsMax,
+	F32 cameraNear,
+	F32 cameraFar,
 	DirectionalLightQueueElement* directionalLight,
 	ConstWeakArray<PointLightQueueElement> plights,
 	ConstWeakArray<SpotLightQueueElement> slights,
@@ -119,6 +121,18 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 		unis->m_diffuseColor = directionalLight->m_diffuseColor;
 		unis->m_lightDir = directionalLight->m_direction;
 		unis->m_lightMatrix = directionalLight->m_textureMatrices[0];
+
+		unis->m_near = cameraNear;
+		unis->m_far = cameraFar;
+
+		if(directionalLight->m_shadowCascadeCount > 0)
+		{
+			unis->m_effectiveShadowDistance = directionalLight->m_shadowRenderQueues[0]->m_effectiveShadowDistance;
+		}
+		else
+		{
+			unis->m_effectiveShadowDistance = 0.0f;
+		}
 
 		drawQuad(cmdb);
 	}

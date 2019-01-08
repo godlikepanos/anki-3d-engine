@@ -16,6 +16,7 @@ const U32 TYPED_OBJECT_COUNT = 5u;
 const F32 INVALID_TEXTURE_INDEX = -1.0;
 const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0; // The near plane on the shadow map frustums.
 const U32 MAX_SHADOW_CASCADES = 4u;
+const F32 SUBSURFACE_MIN = 0.05;
 
 // See the documentation in the ClustererBin class.
 struct ClustererMagicValues

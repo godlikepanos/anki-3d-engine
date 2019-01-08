@@ -92,6 +92,7 @@ void main()
 	// Decode and process gbuffer
 	GbufferInfo gbuffer;
 	readGBuffer(u_msRt0, u_msRt1, u_msRt2, uvToRead, 0.0, gbuffer);
+	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN * 8.0);
 
 	Vec4 worldPos4 = u_unis.m_invViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
 	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
@@ -121,7 +122,19 @@ void main()
 	F32 spot = computeSpotFactor(l, u_unis.m_outerCos, u_unis.m_innerCos, u_unis.m_lightDir);
 	F32 factor = att * spot * max(lambert, gbuffer.m_subsurface);
 #else
-	F32 shadowFactor = computeShadowFactorDirLight(u_unis.m_lightMatrix, worldPos, u_shadowMap);
+	F32 linearDepth = linearizeDepth(depth, u_unis.m_near, u_unis.m_far);
+	F32 shadowFactor;
+	if(linearDepth * (u_unis.m_far - u_unis.m_near) < u_unis.m_effectiveShadowDistance)
+	{
+		// Acceptable distance
+
+		shadowFactor = computeShadowFactorDirLight(u_unis.m_lightMatrix, worldPos, u_shadowMap);
+	}
+	else
+	{
+		shadowFactor = 1.0;
+	}
+
 	F32 lambert = dot(l, gbuffer.m_normal);
 	F32 factor = shadowFactor * max(gbuffer.m_subsurface, lambert);
 #endif

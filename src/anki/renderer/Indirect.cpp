@@ -97,7 +97,7 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 
 		for(U j = 0; j < GBUFFER_COLOR_ATTACHMENT_COUNT; ++j)
 		{
-			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::CLEAR;
 		}
 
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
@@ -210,6 +210,7 @@ Error Indirect::initShadowMapping(const ConfigSet& cfg)
 		inf.m_compareOperation = CompareOperation::LESS_EQUAL;
 		inf.m_addressing = SamplingAddressing::CLAMP;
 		inf.m_mipmapFilter = SamplingFilter::BASE;
+		inf.m_minMagFilter = SamplingFilter::LINEAR;
 		m_shadowMapping.m_shadowSampler = getGrManager().newSampler(inf);
 	}
 
@@ -436,6 +437,8 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 		UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize),
 		Vec2(faceIdx * (1.0f / 6.0f), 0.0f),
 		Vec2((faceIdx + 1) * (1.0f / 6.0f), 1.0f),
+		probe.m_renderQueues[faceIdx]->m_cameraNear,
+		probe.m_renderQueues[faceIdx]->m_cameraFar,
 		(hasDirLight) ? &probe.m_renderQueues[faceIdx]->m_directionalLight : nullptr,
 		rqueue.m_pointLights,
 		rqueue.m_spotLights,

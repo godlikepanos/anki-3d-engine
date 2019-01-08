@@ -283,6 +283,7 @@ public:
 
 	F32 m_cameraNear;
 	F32 m_cameraFar;
+	F32 m_effectiveShadowDistance;
 
 	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;
 	void* m_fillCoverageBufferCallbackUserData = nullptr;

@@ -55,8 +55,6 @@ layout(location = 1) in Vec2 in_clusterIJ;
 
 layout(location = 0) out Vec3 out_color;
 
-const F32 SUBSURFACE_MIN = 0.05;
-
 // Note: All calculations in world space
 void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
 	Vec3 worldPos,

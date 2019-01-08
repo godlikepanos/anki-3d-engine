@@ -68,14 +68,15 @@ struct DeferredDirectionalLightUniforms
 	F32 m_padding;
 
 	Vec2 m_fbSize;
-	Vec2 m_padding1;
+	F32 m_near;
+	F32 m_far;
 
 	// Light props
 	Vec3 m_diffuseColor;
 	F32 m_padding2;
 
 	Vec3 m_lightDir;
-	F32 m_padding3;
+	F32 m_effectiveShadowDistance;
 
 	Mat4 m_lightMatrix;
 };

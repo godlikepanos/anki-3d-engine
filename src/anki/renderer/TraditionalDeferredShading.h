@@ -31,6 +31,8 @@ public:
 		const UVec4& viewport,
 		const Vec2& gbufferTexCoordsMin,
 		const Vec2& gbufferTexCoordsMax,
+		F32 cameraNear,
+		F32 cameraFar,
 		DirectionalLightQueueElement* directionalLight,
 		ConstWeakArray<PointLightQueueElement> plights,
 		ConstWeakArray<SpotLightQueueElement> slights,
