@@ -194,7 +194,7 @@ Error Indirect::initShadowMapping(const ConfigSet& cfg)
 
 	// RT descr
 	m_shadowMapping.m_rtDescr =
-		m_r->create2DRenderTargetDescription(resolution * 6, resolution, Format::D16_UNORM, "GI SM");
+		m_r->create2DRenderTargetDescription(resolution * 6, resolution, Format::D32_SFLOAT, "GI SM");
 	m_shadowMapping.m_rtDescr.bake();
 
 	// FB descr
@@ -886,7 +886,7 @@ Bool Indirect::findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdxAllocated, Bo
 
 void Indirect::runShadowMapping(CommandBufferPtr& cmdb)
 {
-	cmdb->setPolygonOffset(7.0f, 5.0f);
+	cmdb->setPolygonOffset(1.0f, 1.0f);
 
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{

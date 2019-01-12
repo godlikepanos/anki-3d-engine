@@ -125,6 +125,19 @@ public:
 	/// Calculate from a set of points
 	void setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize);
 
+	// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
+	// intersection point is rayOrigin + rayDir * a
+	// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
+	F32 intersectRayInside(const Vec3& rayOrigin, const Vec3& rayDir) const
+	{
+		const Vec3 reciprocal = rayDir.reciprocal();
+		const Vec3 intersectMaxPointPlanes = (m_max.xyz() - rayOrigin) * reciprocal;
+		const Vec3 intersectMinPointPlanes = (m_min.xyz() - rayOrigin) * reciprocal;
+		const Vec3 largestParams = intersectMaxPointPlanes.max(intersectMinPointPlanes);
+		const F32 distToIntersect = min(min(largestParams.x(), largestParams.y()), largestParams.z());
+		return distToIntersect;
+	}
+
 private:
 	Vec4 m_min;
 	Vec4 m_max;

@@ -103,7 +103,7 @@ void main()
 	// Compute spec
 	Vec3 viewDir = normalize(u_unis.m_camPos - worldPos);
 #if LIGHT_TYPE == DIR_LIGHT_TYPE
-	Vec3 l = u_unis.m_lightDir;
+	Vec3 l = -u_unis.m_lightDir;
 #else
 	Vec3 frag2Light = u_unis.m_position - worldPos;
 	Vec3 l = normalize(frag2Light);

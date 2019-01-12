@@ -106,18 +106,14 @@ public:
 		debugDrawRecursive(*m_rootLeaf, drawer);
 	}
 
-	/// Get the min bound of the scene as calculated by the objects that were placed inside the Octree.
-	const Vec3& getActualSceneMinBound() const
+	/// Get the bounds of the scene as calculated by the objects that were placed inside the Octree.
+	void getActualSceneBounds(Vec3& min, Vec3& max) const
 	{
+		LockGuard<Mutex> lock(m_globalMtx);
 		ANKI_ASSERT(m_actualSceneAabbMin.x() < MAX_F32);
-		return m_actualSceneAabbMin;
-	}
-
-	/// Get the max bound of the scene as calculated by the objects that were placed inside the Octree.
-	const Vec3& getActualSceneMaxBound() const
-	{
 		ANKI_ASSERT(m_actualSceneAabbMax.x() > MIN_F32);
-		return m_actualSceneAabbMax;
+		min = m_actualSceneAabbMin;
+		max = m_actualSceneAabbMax;
 	}
 
 private:
@@ -206,7 +202,7 @@ private:
 	U32 m_maxDepth = 0;
 	Vec3 m_sceneAabbMin = Vec3(0.0f);
 	Vec3 m_sceneAabbMax = Vec3(0.0f);
-	Mutex m_globalMtx;
+	mutable Mutex m_globalMtx;
 
 	ObjectAllocatorSameType<Leaf, 256> m_leafAlloc;
 	ObjectAllocatorSameType<LeafNode, 128> m_leafNodeAlloc;

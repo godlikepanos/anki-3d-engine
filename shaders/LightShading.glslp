@@ -161,7 +161,7 @@ void main()
 			shadowFactor = 1.0;
 		}
 
-		Vec3 l = u_dirLight.m_dir;
+		Vec3 l = -u_dirLight.m_dir;
 
 		F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
 

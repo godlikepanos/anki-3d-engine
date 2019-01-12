@@ -181,7 +181,8 @@ private:
 
 	struct Dir
 	{
-		F32 m_sceneAabbMaxZLightSpace;
+		Vec3 m_sceneMin;
+		Vec3 m_sceneMax;
 	};
 
 	union
