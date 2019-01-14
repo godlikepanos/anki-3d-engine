@@ -134,7 +134,8 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum,
 			const F32 a = f * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));
-			ANKI_ASSERT(isZero((Vec2(a, -f) - Vec2(0, z)).getLength() - (Vec2(b, -n) - Vec2(0, z)).getLength()));
+			ANKI_ASSERT(absolute((Vec2(a, -f) - Vec2(0, z)).getLength() - (Vec2(b, -n) - Vec2(0, z)).getLength())
+						<= EPSILON * 100.0f);
 
 			Vec3 C(0.0f, 0.0f, z); // Sphere center
 
