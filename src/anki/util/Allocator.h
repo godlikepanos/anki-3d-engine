@@ -159,6 +159,17 @@ public:
 		return static_cast<pointer>(out);
 	}
 
+	/// Allocate memory
+	/// @param n The elements of type T to allocate
+	/// @param alignment The alignment of the allocation.
+	///
+	/// @note It's not part of the STL interface
+	pointer allocate(size_type n, U32 alignment)
+	{
+		PtrSize hint = alignment;
+		return allocate(n, &hint);
+	}
+
 	/// Deallocate memory
 	void deallocate(void* p, size_type n)
 	{

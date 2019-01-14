@@ -5,6 +5,8 @@
 
 #include <anki/core/Config.h>
 #include <anki/util/System.h>
+#include <anki/Math.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -25,9 +27,12 @@ Config::Config()
 	newOption("r.volumetricLightingAccumulation.finalClusterInZ", 26);
 
 	newOption("r.shadowMapping.enabled", true);
-	newOption("r.shadowMapping.resolution", 512);
-	newOption("r.shadowMapping.tileCountPerRowOrColumn", 8);
-	newOption("r.shadowMapping.scratchTileCount", 8);
+	newOption("r.shadowMapping.tileResolution", 128);
+	newOption("r.shadowMapping.tileCountPerRowOrColumn", 16);
+	newOption("r.shadowMapping.scratchTileCountX", 4 * (MAX_SHADOW_CASCADES + 2));
+	newOption("r.shadowMapping.scratchTileCountY", 4);
+	newOption("r.shadowMapping.lightLodDistance0", 10.0);
+	newOption("r.shadowMapping.lightLodDistance1", 20.0);
 
 	newOption("r.lensFlare.maxSpritesPerFlare", 8);
 	newOption("r.lensFlare.maxFlares", 16);
@@ -37,6 +42,7 @@ Config::Config()
 
 	newOption("r.indirect.reflectionResolution", 128);
 	newOption("r.indirect.maxSimultaneousProbeCount", 32);
+	newOption("r.indirect.shadowMapResolution", 64);
 
 	newOption("r.motionBlur.maxSamples", 32);
 
@@ -48,8 +54,9 @@ Config::Config()
 	newOption("r.final.motionBlurSamples", 32);
 
 	// Scene
-	newOption("scene.imageReflectionMaxDistance", 30.0);
 	newOption("scene.earlyZDistance", 10.0, "Objects with distance lower than that will be used in early Z");
+	newOption("scene.reflectionProbeEffectiveDistance", 256.0, "How far reflection probes can look");
+	newOption("scene.reflectionProbeShadowEffectiveDistance", 32.0, "How far to render shadows for reflection probes");
 
 	// Globals
 	newOption("width", 1280);

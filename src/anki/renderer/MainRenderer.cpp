@@ -130,7 +130,13 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		fbDescr.bake();
 
 		pass.setFramebufferInfo(fbDescr, {{presentRt}}, {});
-		pass.setWork(runCallback, this, 0);
+		pass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) {
+				MainRenderer* const self = static_cast<MainRenderer*>(rgraphCtx.m_userData);
+				self->runBlit(rgraphCtx);
+			},
+			this,
+			0);
 
 		pass.newDependency({presentRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::SAMPLED_FRAGMENT});
@@ -140,7 +146,12 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	{
 		ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Present");
 
-		pass.setWork(presentCallback, nullptr, 0);
+		pass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) {
+				// Do nothing. This pass is dummy
+			},
+			nullptr,
+			0);
 		pass.newDependency({presentRt, TextureUsageBit::PRESENT});
 	}
 

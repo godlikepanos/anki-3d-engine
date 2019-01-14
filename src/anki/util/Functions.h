@@ -238,22 +238,6 @@ inline void splitThreadedProblem(
 	ANKI_ASSERT(!(threadId == threadCount - 1 && end != problemSize));
 }
 
-/// Equivelent to static_cast.
-template<typename T, typename Y>
-inline T scast(Y from)
-{
-	ANKI_ASSERT(from);
-	return static_cast<T>(from);
-}
-
-/// Equivelent to reinterpret_cast.
-template<typename T, typename Y>
-inline T rcast(Y from)
-{
-	ANKI_ASSERT(from);
-	return reinterpret_cast<T>(from);
-}
-
 #define _ANKI_CONCATENATE(a, b) a##b
 
 /// Concatenate 2 preprocessor tokens.

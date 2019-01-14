@@ -168,7 +168,7 @@ public:
 
 	ClearValue()
 	{
-		memset(this, 0, sizeof(*this));
+		zeroMemory(*this);
 	}
 
 	ClearValue(const ClearValue& b)
@@ -351,7 +351,7 @@ public:
 	void setName(CString name)
 	{
 		// Zero it because the derived classes may be hashed.
-		memset(&m_name[0], 0, sizeof(m_name));
+		zeroMemory(m_name);
 
 		if(name && name.getLength())
 		{

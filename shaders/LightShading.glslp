@@ -55,8 +55,6 @@ layout(location = 1) in Vec2 in_clusterIJ;
 
 layout(location = 0) out Vec3 out_color;
 
-const F32 SUBSURFACE_MIN = 0.05;
-
 // Note: All calculations in world space
 void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
 	Vec3 worldPos,
@@ -78,10 +76,10 @@ void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
 	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
 		ReflectionProbe probe = u_reflectionProbes[idx];
-		Vec3 aabbMin = probe.m_aabbMinPad1.xyz;
-		Vec3 aabbMax = probe.m_aabbMaxPad1.xyz;
-		Vec3 probeOrigin = probe.m_positionCubemapIndex.xyz;
-		F32 cubemapIndex = probe.m_positionCubemapIndex.w;
+		Vec3 aabbMin = probe.m_aabbMin;
+		Vec3 aabbMax = probe.m_aabbMax;
+		Vec3 probeOrigin = probe.m_position;
+		F32 cubemapIndex = probe.m_cubemapIndex;
 
 		// Compute blend weight
 		F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
@@ -105,11 +103,11 @@ void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
 
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF() \
-	Vec3 frag2Light = light.m_posRadius.xyz - worldPos; \
+	Vec3 frag2Light = light.m_position - worldPos; \
 	Vec3 l = normalize(frag2Light); \
 	Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l); \
 	Vec3 diffC = diffuseLambert(gbuffer.m_diffuse); \
-	F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light); \
+	F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light); \
 	F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
 
 void main()
@@ -145,8 +143,35 @@ void main()
 	// Ambient and emissive color
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
 
-	// Point lights
+	// Dir light
 	Vec3 viewDir = normalize(u_cameraPos - worldPos);
+	if(u_dirLight.m_active != 0u)
+	{
+		F32 shadowFactor;
+		if(u_dirLight.m_cascadeCount > 0)
+		{
+			F32 linearDepth = linearizeDepth(depth, u_near, u_far);
+			F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
+			U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
+
+			shadowFactor = computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex);
+		}
+		else
+		{
+			shadowFactor = 1.0;
+		}
+
+		Vec3 l = -u_dirLight.m_dir;
+
+		F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
+
+		Vec3 diffC = diffuseLambert(gbuffer.m_diffuse);
+		Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
+
+		out_color += (diffC + specC) * u_dirLight.m_diffuseColor * (shadowFactor * lambert);
+	}
+
+	// Point lights
 	U32 idx;
 	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
@@ -154,14 +179,13 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		ANKI_BRANCH if(light.m_diffuseColorTileSize.w >= 0.0)
+		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			F32 shadow = computeShadowFactorOmni(
-				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
+			F32 shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowTex);
 			lambert *= shadow;
 		}
 
-		out_color += (diffC + specC) * light.m_diffuseColorTileSize.rgb * (att * max(gbuffer.m_subsurface, lambert));
+		out_color += (diffC + specC) * light.m_diffuseColor * (att * max(gbuffer.m_subsurface, lambert));
 	}
 
 	// Spot lights
@@ -171,19 +195,16 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		F32 spot =
-			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+		F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
 
-		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
+		F32 shadowmapLayerIdx = light.m_shadowmapId;
 		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
 		{
-			F32 shadow =
-				computeShadowFactorSpot(light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
+			F32 shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex);
 			lambert *= shadow;
 		}
 
-		out_color +=
-			(diffC + specC) * light.m_diffuseColorShadowmapId.rgb * (att * spot * max(gbuffer.m_subsurface, lambert));
+		out_color += (diffC + specC) * light.m_diffuseColor * (att * spot * max(gbuffer.m_subsurface, lambert));
 	}
 
 	// Refl & indirect

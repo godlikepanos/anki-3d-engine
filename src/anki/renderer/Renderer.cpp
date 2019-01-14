@@ -537,18 +537,19 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	// Start writing
 	blk->m_unprojectionParams = ctx.m_unprojParams;
 
-	blk->m_rendererSizeTimeNear =
-		Vec4(m_width, m_height, HighRezTimer::getCurrentTime(), ctx.m_renderQueue->m_cameraNear);
+	blk->m_rendererSize = Vec2(m_width, m_height);
+	blk->m_time = HighRezTimer::getCurrentTime();
+	blk->m_near = ctx.m_renderQueue->m_cameraNear;
 
 	blk->m_clusterCount = UVec4(m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], m_clusterCount[3]);
 
-	blk->m_cameraPosFar =
-		Vec4(ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz(), ctx.m_renderQueue->m_cameraFar);
+	blk->m_cameraPos = ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz();
+	blk->m_far = ctx.m_renderQueue->m_cameraFar;
 
 	blk->m_clustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
 	blk->m_prevClustererMagicValues = ctx.m_prevClustererMagicValues;
 
-	blk->m_lightVolumeLastClusterPad3 = UVec4(m_volLighting->getFinalClusterInZ());
+	blk->m_lightVolumeLastCluster = m_volLighting->getFinalClusterInZ();
 
 	// Matrices
 	blk->m_viewMat = ctx.m_renderQueue->m_viewMatrix;
@@ -564,6 +565,27 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 
 	blk->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
+
+	// Directional light
+	if(ctx.m_renderQueue->m_directionalLight.m_uuid != 0)
+	{
+		DirectionalLight& out = blk->m_dirLight;
+		const DirectionalLightQueueElement& in = ctx.m_renderQueue->m_directionalLight;
+
+		out.m_diffuseColor = in.m_diffuseColor;
+		out.m_cascadeCount = in.m_shadowCascadeCount;
+		out.m_dir = in.m_direction;
+		out.m_active = 1;
+
+		for(U cascade = 0; cascade < in.m_shadowCascadeCount; ++cascade)
+		{
+			out.m_textureMatrices[cascade] = in.m_textureMatrices[cascade];
+		}
+	}
+	else
+	{
+		blk->m_dirLight.m_active = 0;
+	}
 }
 
 } // end namespace anki

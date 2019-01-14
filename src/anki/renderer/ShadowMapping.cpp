@@ -14,17 +14,37 @@
 namespace anki
 {
 
-struct ShadowMapping::LightToRenderToScratchInfo
+class ShadowMapping::ScratchBufferWorkItem
 {
+public:
+	Array<U32, 4> m_viewport;
+	RenderQueue* m_renderQueue;
+	U32 m_firstRenderableElement;
+	U32 m_renderableElementCount;
+	U32 m_threadPoolTaskIdx;
+};
+
+class ShadowMapping::LightToRenderToScratchInfo
+{
+public:
 	Array<U32, 4> m_viewport;
 	RenderQueue* m_renderQueue;
 	U32 m_drawcallCount;
 };
 
+class ShadowMapping::EsmResolveWorkItem
+{
+public:
+	Vec4 m_uvIn; ///< UV + size that point to the scratch buffer.
+	Array<U32, 4> m_viewportOut; ///< Viewport in the ESM RT.
+	F32 m_cameraNear;
+	F32 m_cameraFar;
+	Bool8 m_blur;
+	Bool8 m_perspectiveProjection;
+};
+
 ShadowMapping::~ShadowMapping()
 {
-	m_tiles.destroy(getAllocator());
-	m_lightUuidToTileIdx.destroy(getAllocator());
 }
 
 Error ShadowMapping::init(const ConfigSet& config)
@@ -37,6 +57,12 @@ Error ShadowMapping::init(const ConfigSet& config)
 		ANKI_R_LOGE("Failed to initialize shadowmapping");
 	}
 
+	ANKI_R_LOGI("\tScratch size %ux%u. ESM atlas size %ux%u",
+		m_scratchTileCountX * m_scratchTileResolution,
+		m_scratchTileCountY * m_scratchTileResolution,
+		m_esmTileCountBothAxis * m_esmTileResolution,
+		m_esmTileCountBothAxis * m_esmTileResolution);
+
 	return err;
 }
 
@@ -44,22 +70,25 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 {
 	// Init the shadowmaps and FBs
 	{
-		m_scratchTileCount = cfg.getNumber("r.shadowMapping.scratchTileCount");
-		m_scratchTileResolution = cfg.getNumber("r.shadowMapping.resolution");
+		m_scratchTileCountX = cfg.getNumber("r.shadowMapping.scratchTileCountX");
+		m_scratchTileCountY = cfg.getNumber("r.shadowMapping.scratchTileCountY");
+		m_scratchTileResolution = cfg.getNumber("r.shadowMapping.tileResolution");
 
 		// RT
-		m_scratchRtDescr = m_r->create2DRenderTargetDescription(m_scratchTileResolution * m_scratchTileCount,
-			m_scratchTileResolution,
+		m_scratchRtDescr = m_r->create2DRenderTargetDescription(m_scratchTileResolution * m_scratchTileCountX,
+			m_scratchTileResolution * m_scratchTileCountY,
 			SHADOW_DEPTH_PIXEL_FORMAT,
 			"Scratch ShadMap");
 		m_scratchRtDescr.bake();
 
 		// FB
 		m_scratchFbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-		m_scratchFbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+		m_scratchFbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 		m_scratchFbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 		m_scratchFbDescr.bake();
 	}
+
+	m_scratchTileAlloc.init(getAllocator(), m_scratchTileCountX, m_scratchTileCountY, m_lodCount, false);
 
 	return Error::NONE;
 }
@@ -68,13 +97,12 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 {
 	// Init RTs and FBs
 	{
-		m_tileResolution = cfg.getNumber("r.shadowMapping.resolution");
-		m_tileCountPerRowOrColumn = cfg.getNumber("r.shadowMapping.tileCountPerRowOrColumn");
-		m_atlasResolution = m_tileResolution * m_tileCountPerRowOrColumn;
+		m_esmTileResolution = cfg.getNumber("r.shadowMapping.tileResolution");
+		m_esmTileCountBothAxis = cfg.getNumber("r.shadowMapping.tileCountPerRowOrColumn");
 
 		// RT
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_atlasResolution,
-			m_atlasResolution,
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_esmTileResolution * m_esmTileCountBothAxis,
+			m_esmTileResolution * m_esmTileCountBothAxis,
 			SHADOW_COLOR_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 				| TextureUsageBit::SAMPLED_COMPUTE,
@@ -91,31 +119,7 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 	}
 
 	// Tiles
-	{
-		m_tiles.create(getAllocator(), m_tileCountPerRowOrColumn * m_tileCountPerRowOrColumn);
-
-		for(U y = 0; y < m_tileCountPerRowOrColumn; ++y)
-		{
-			for(U x = 0; x < m_tileCountPerRowOrColumn; ++x)
-			{
-				const U tileIdx = y * m_tileCountPerRowOrColumn + x;
-				Tile& tile = m_tiles[tileIdx];
-
-				tile.m_uv[0] = F32(x) / m_tileCountPerRowOrColumn;
-				tile.m_uv[1] = F32(y) / m_tileCountPerRowOrColumn;
-				tile.m_uv[2] = 1.0f / m_tileCountPerRowOrColumn;
-				tile.m_uv[3] = tile.m_uv[2];
-
-				tile.m_viewport[0] = x * m_tileResolution;
-				tile.m_viewport[1] = y * m_tileResolution;
-				tile.m_viewport[2] = m_tileResolution;
-				tile.m_viewport[3] = m_tileResolution;
-			}
-		}
-
-		// The first tile is always pinned
-		m_tiles[0].m_pinned = true;
-	}
+	m_esmTileAlloc.init(getAllocator(), m_esmTileCountBothAxis, m_esmTileCountBothAxis, m_lodCount, true);
 
 	// Programs and shaders
 	{
@@ -123,7 +127,8 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 			getResourceManager().loadResource("shaders/ExponentialShadowmappingResolve.glslp", m_esmResolveProg));
 
 		ShaderProgramResourceConstantValueInitList<1> consts(m_esmResolveProg);
-		consts.add("INPUT_TEXTURE_SIZE", UVec2(m_scratchTileCount * m_scratchTileResolution, m_scratchTileResolution));
+		consts.add("INPUT_TEXTURE_SIZE",
+			UVec2(m_scratchTileCountX * m_scratchTileResolution, m_scratchTileCountY * m_scratchTileResolution));
 
 		const ShaderProgramResourceVariant* variant;
 		m_esmResolveProg->getOrCreateVariant(consts.get(), variant);
@@ -137,6 +142,9 @@ Error ShadowMapping::initInternal(const ConfigSet& cfg)
 {
 	ANKI_CHECK(initScratch(cfg));
 	ANKI_CHECK(initEsm(cfg));
+
+	m_lodDistances[0] = cfg.getNumber("r.shadowMapping.lightLodDistance0");
+	m_lodDistances[1] = cfg.getNumber("r.shadowMapping.lightLodDistance1");
 
 	return Error::NONE;
 }
@@ -161,9 +169,30 @@ void ShadowMapping::runEsm(RenderPassWorkContext& rgraphCtx)
 		cmdb->setScissor(
 			workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
 
-		Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 0);
-		unis[0] = Vec4(workItem.m_cameraNear, workItem.m_cameraFar, 0.0f, 0.0f);
-		unis[1] = workItem.m_uvIn;
+		struct Uniforms
+		{
+			Vec2 m_uvScale;
+			Vec2 m_uvTranslation;
+			F32 m_near;
+			F32 m_far;
+			U32 m_renderingTechnique;
+			U32 m_padding;
+		} unis;
+		unis.m_uvScale = workItem.m_uvIn.zw();
+		unis.m_uvTranslation = workItem.m_uvIn.xy();
+		unis.m_near = workItem.m_cameraNear;
+		unis.m_far = workItem.m_cameraFar;
+
+		if(workItem.m_perspectiveProjection)
+		{
+			unis.m_renderingTechnique = (workItem.m_blur) ? 0 : 1;
+		}
+		else
+		{
+			unis.m_renderingTechnique = (workItem.m_blur) ? 2 : 3;
+		}
+
+		cmdb->setPushConstants(&unis, sizeof(unis));
 
 		drawQuad(cmdb);
 	}
@@ -219,8 +248,9 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		// Scratch pass
 		{
 			// Compute render area
-			const U32 minx = 0, miny = 0, height = m_scratchTileResolution;
-			const U32 width = m_scratchTileResolution * m_scratchWorkItems.getSize();
+			const U32 minx = 0, miny = 0;
+			const U32 height = m_scratchMaxViewportHeight;
+			const U32 width = m_scratchMaxViewportWidth;
 
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SM scratch");
 
@@ -228,7 +258,12 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt, minx, miny, width, height);
 			ANKI_ASSERT(
 				threadCountForScratchPass && threadCountForScratchPass <= m_r->getThreadHive().getThreadCount());
-			pass.setWork(runShadowmappingCallback, this, threadCountForScratchPass);
+			pass.setWork(
+				[](RenderPassWorkContext& rgraphCtx) {
+					static_cast<ShadowMapping*>(rgraphCtx.m_userData)->runShadowMapping(rgraphCtx);
+				},
+				this,
+				threadCountForScratchPass);
 
 			TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
 			pass.newDependency({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
@@ -240,7 +275,12 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 			m_esmRt = rgraph.importRenderTarget(m_esmAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
 			pass.setFramebufferInfo(m_esmFbDescr, {{m_esmRt}}, {});
-			pass.setWork(runEsmCallback, this, 0);
+			pass.setWork(
+				[](RenderPassWorkContext& rgraphCtx) {
+					static_cast<ShadowMapping*>(rgraphCtx.m_userData)->runEsm(rgraphCtx);
+				},
+				this,
+				0);
 
 			pass.newDependency(
 				{m_scratchRt, TextureUsageBit::SAMPLED_FRAGMENT, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
@@ -254,46 +294,322 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
-Mat4 ShadowMapping::createSpotLightTextureMatrix(const Tile& tile)
+Mat4 ShadowMapping::createSpotLightTextureMatrix(const Viewport& viewport) const
 {
-	return Mat4(tile.m_uv[2],
-		0.0,
-		0.0,
-		tile.m_uv[0],
-		0.0,
-		tile.m_uv[3],
-		0.0,
-		tile.m_uv[1],
-		0.0,
-		0.0,
-		1.0,
-		0.0,
-		0.0,
-		0.0,
-		0.0,
-		1.0);
+	const F32 atlasSize = m_esmTileResolution * m_esmTileCountBothAxis;
+	const Vec2 uv(F32(viewport[0]) / atlasSize, F32(viewport[1]) / atlasSize);
+	ANKI_ASSERT(uv >= Vec2(0.0f) && uv <= Vec2(1.0f));
+
+	ANKI_ASSERT(viewport[2] == viewport[3]);
+	const F32 sizeTextureSpace = F32(viewport[2]) / atlasSize;
+
+	return Mat4(sizeTextureSpace,
+		0.0f,
+		0.0f,
+		uv.x(),
+		0.0f,
+		sizeTextureSpace,
+		0.0f,
+		uv.y(),
+		0.0f,
+		0.0f,
+		1.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		1.0f);
+}
+
+U ShadowMapping::choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurEsm) const
+{
+	const F32 distFromTheCamera = (cameraOrigin - light.m_worldPosition.xyz0()).getLength() - light.m_radius;
+	if(distFromTheCamera < m_lodDistances[0])
+	{
+		ANKI_ASSERT(m_pointLightsMaxLod == 1);
+		blurEsm = true;
+		return 1;
+	}
+	else
+	{
+		blurEsm = false;
+		return 0;
+	}
+}
+
+U ShadowMapping::choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurEsm) const
+{
+	// Get some data
+	const Vec4 coneOrigin = light.m_worldTransform.getTranslationPart().xyz0();
+	const Vec4 coneDir = -light.m_worldTransform.getZAxis().xyz0();
+	const F32 coneAngle = light.m_outerAngle;
+
+	// Compute the distance from the camera to the light cone
+	const Vec4 V = cameraOrigin - coneOrigin;
+	const F32 VlenSq = V.dot(V);
+	const F32 V1len = V.dot(coneDir);
+	const F32 distFromTheCamera = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
+
+	U lod;
+	if(distFromTheCamera < m_lodDistances[0])
+	{
+		blurEsm = true;
+		lod = 2;
+	}
+	else if(distFromTheCamera < m_lodDistances[1])
+	{
+		blurEsm = false;
+		lod = 1;
+	}
+	else
+	{
+		blurEsm = false;
+		lod = 0;
+	}
+
+	return lod;
+}
+
+TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
+	U32 faceCount,
+	const U64* faceTimestamps,
+	const U32* faceIndices,
+	const U32* drawcallsCount,
+	const U32* lods,
+	Viewport* esmTileViewports,
+	Viewport* scratchTileViewports,
+	TileAllocatorResult* subResults)
+{
+	ANKI_ASSERT(lightUuid > 0);
+	ANKI_ASSERT(faceCount > 0);
+	ANKI_ASSERT(faceTimestamps);
+	ANKI_ASSERT(faceIndices);
+	ANKI_ASSERT(drawcallsCount);
+	ANKI_ASSERT(lods);
+
+	TileAllocatorResult res;
+
+	// Allocate ESM tiles first. They may be cached and that will affect how many scratch tiles we'll need
+	for(U i = 0; i < faceCount; ++i)
+	{
+		res = m_esmTileAlloc.allocate(m_r->getGlobalTimestamp(),
+			faceTimestamps[i],
+			lightUuid,
+			faceIndices[i],
+			drawcallsCount[i],
+			lods[i],
+			esmTileViewports[i]);
+
+		if(res == TileAllocatorResult::ALLOCATION_FAILED)
+		{
+			ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. "
+						"Increase the r.shadowMapping.tileCountPerRowOrColumn or decrease the scene's shadow casters");
+
+			// Invalidate cache entries for what we already allocated
+			for(U j = 0; j < i; ++j)
+			{
+				m_esmTileAlloc.invalidateCache(lightUuid, faceIndices[j]);
+			}
+
+			return res;
+		}
+
+		subResults[i] = res;
+
+		// Fix viewport
+		esmTileViewports[i][0] *= m_esmTileResolution;
+		esmTileViewports[i][1] *= m_esmTileResolution;
+		esmTileViewports[i][2] *= m_esmTileResolution;
+		esmTileViewports[i][3] *= m_esmTileResolution;
+	}
+
+	// Allocate scratch tiles
+	for(U i = 0; i < faceCount; ++i)
+	{
+		if(subResults[i] == TileAllocatorResult::CACHED)
+		{
+			continue;
+		}
+
+		ANKI_ASSERT(subResults[i] == TileAllocatorResult::ALLOCATION_SUCCEEDED);
+
+		res = m_scratchTileAlloc.allocate(m_r->getGlobalTimestamp(),
+			faceTimestamps[i],
+			lightUuid,
+			faceIndices[i],
+			drawcallsCount[i],
+			lods[i],
+			scratchTileViewports[i]);
+
+		if(res == TileAllocatorResult::ALLOCATION_FAILED)
+		{
+			ANKI_R_LOGW("Don't have enough space in the scratch shadow mapping buffer. "
+						"If you see this message too often increase r.shadowMapping.scratchTileCountX/Y");
+
+			// Invalidate ESM tiles
+			for(U j = 0; j < faceCount; ++j)
+			{
+				m_esmTileAlloc.invalidateCache(lightUuid, faceIndices[j]);
+			}
+
+			return res;
+		}
+
+		// Fix viewport
+		scratchTileViewports[i][0] *= m_scratchTileResolution;
+		scratchTileViewports[i][1] *= m_scratchTileResolution;
+		scratchTileViewports[i][2] *= m_scratchTileResolution;
+		scratchTileViewports[i][3] *= m_scratchTileResolution;
+
+		// Update the max view width
+		m_scratchMaxViewportWidth =
+			max(m_scratchMaxViewportWidth, scratchTileViewports[i][0] + scratchTileViewports[i][2]);
+		m_scratchMaxViewportHeight =
+			max(m_scratchMaxViewportHeight, scratchTileViewports[i][1] + scratchTileViewports[i][3]);
+	}
+
+	return res;
 }
 
 void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScratchPass)
 {
-	// Reset stuff
-	m_freeScratchTiles = m_scratchTileCount;
+	// Reset the scratch viewport width
+	m_scratchMaxViewportWidth = 0;
+	m_scratchMaxViewportHeight = 0;
 
 	// Vars
+	const Vec4 cameraOrigin = ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz0();
 	DynamicArrayAuto<LightToRenderToScratchInfo> lightsToRender(ctx.m_tempAllocator);
 	U32 drawcallCount = 0;
 	DynamicArrayAuto<EsmResolveWorkItem> esmWorkItems(ctx.m_tempAllocator);
 
-	// Process the point lights first.
+	// First thing, allocate an empty tile for empty faces of point lights
+	Viewport emptyTileViewport;
+	{
+		const TileAllocatorResult res = m_esmTileAlloc.allocate(
+			m_r->getGlobalTimestamp(), 1, MAX_U64, 0, 1, m_pointLightsMaxLod, emptyTileViewport);
+
+		(void)res;
+#if ANKI_ASSERTS_ENABLED
+		static Bool firstRun = true;
+		if(firstRun)
+		{
+			ANKI_ASSERT(res == TileAllocatorResult::ALLOCATION_SUCCEEDED);
+			firstRun = false;
+		}
+		else
+		{
+			ANKI_ASSERT(res == TileAllocatorResult::CACHED);
+		}
+#endif
+	}
+
+	// Process the directional light first.
+	if(ctx.m_renderQueue->m_directionalLight.m_shadowCascadeCount > 0)
+	{
+		DirectionalLightQueueElement& light = ctx.m_renderQueue->m_directionalLight;
+
+		Array<U64, MAX_SHADOW_CASCADES> timestamps;
+		Array<U32, MAX_SHADOW_CASCADES> cascadeIndices;
+		Array<U32, MAX_SHADOW_CASCADES> drawcallCounts;
+		Array<Viewport, MAX_SHADOW_CASCADES> esmViewports;
+		Array<Viewport, MAX_SHADOW_CASCADES> scratchViewports;
+		Array<TileAllocatorResult, MAX_SHADOW_CASCADES> subResults;
+		Array<U32, MAX_SHADOW_CASCADES> lods;
+		Array<Bool, MAX_SHADOW_CASCADES> blurEsms;
+
+		U activeCascades = 0;
+
+		for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
+		{
+			ANKI_ASSERT(light.m_shadowRenderQueues[cascade]);
+			if(light.m_shadowRenderQueues[cascade]->m_renderables.getSize() > 0)
+			{
+				// Cascade with drawcalls, will need tiles
+
+				timestamps[activeCascades] = m_r->getGlobalTimestamp(); // This light is always updated
+				cascadeIndices[activeCascades] = cascade;
+				drawcallCounts[activeCascades] = 1; // Doesn't matter
+
+				// Change the quality per cascade
+				blurEsms[activeCascades] = (cascade <= 1);
+				lods[activeCascades] = (cascade <= 1) ? (m_lodCount - 1) : (lods[0] - 1);
+
+				++activeCascades;
+			}
+		}
+
+		const Bool allocationFailed = activeCascades == 0
+									  || allocateTilesAndScratchTiles(light.m_uuid,
+											 activeCascades,
+											 &timestamps[0],
+											 &cascadeIndices[0],
+											 &drawcallCounts[0],
+											 &lods[0],
+											 &esmViewports[0],
+											 &scratchViewports[0],
+											 &subResults[0])
+											 == TileAllocatorResult::ALLOCATION_FAILED;
+
+		if(!allocationFailed)
+		{
+			activeCascades = 0;
+
+			for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
+			{
+				if(light.m_shadowRenderQueues[cascade]->m_renderables.getSize() > 0)
+				{
+					// Cascade with drawcalls, push some work for it
+
+					// Update the texture matrix to point to the correct region in the atlas
+					light.m_textureMatrices[cascade] =
+						createSpotLightTextureMatrix(esmViewports[activeCascades]) * light.m_textureMatrices[cascade];
+
+					// Push work
+					newScratchAndEsmResloveRenderWorkItems(esmViewports[activeCascades],
+						scratchViewports[activeCascades],
+						blurEsms[activeCascades],
+						false,
+						light.m_shadowRenderQueues[cascade],
+						lightsToRender,
+						esmWorkItems,
+						drawcallCount);
+
+					++activeCascades;
+				}
+				else
+				{
+					// Empty cascade, point it to the empty tile
+
+					light.m_textureMatrices[cascade] =
+						createSpotLightTextureMatrix(emptyTileViewport) * light.m_textureMatrices[cascade];
+				}
+			}
+		}
+		else
+		{
+			// Light can't be a caster this frame
+			light.m_shadowCascadeCount = 0;
+			zeroMemory(light.m_shadowRenderQueues);
+		}
+	}
+
+	// Process the point lights.
 	for(PointLightQueueElement* light : ctx.m_renderQueue->m_shadowPointLights)
 	{
 		// Prepare data to allocate tiles and allocate
-		Array<U32, 6> tiles;
-		Array<U32, 6> scratchTiles;
 		Array<U64, 6> timestamps;
 		Array<U32, 6> faceIndices;
 		Array<U32, 6> drawcallCounts;
+		Array<Viewport, 6> esmViewports;
+		Array<Viewport, 6> scratchViewports;
+		Array<TileAllocatorResult, 6> subResults;
+		Array<U32, 6> lods;
 		U numOfFacesThatHaveDrawcalls = 0;
+
+		Bool blurEsm;
+		const U lod = choseLod(cameraOrigin, *light, blurEsm);
+
 		for(U face = 0; face < 6; ++face)
 		{
 			ANKI_ASSERT(light->m_shadowRenderQueues[face]);
@@ -308,24 +624,33 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				drawcallCounts[numOfFacesThatHaveDrawcalls] =
 					light->m_shadowRenderQueues[face]->m_renderables.getSize();
 
+				lods[numOfFacesThatHaveDrawcalls] = lod;
+
 				++numOfFacesThatHaveDrawcalls;
 			}
 		}
+
 		const Bool allocationFailed = numOfFacesThatHaveDrawcalls == 0
 									  || allocateTilesAndScratchTiles(light->m_uuid,
 											 numOfFacesThatHaveDrawcalls,
 											 &timestamps[0],
 											 &faceIndices[0],
 											 &drawcallCounts[0],
-											 &tiles[0],
-											 &scratchTiles[0]);
+											 &lods[0],
+											 &esmViewports[0],
+											 &scratchViewports[0],
+											 &subResults[0])
+											 == TileAllocatorResult::ALLOCATION_FAILED;
 
 		if(!allocationFailed)
 		{
 			// All good, update the lights
 
-			light->m_atlasTiles = UVec2(0u);
-			light->m_atlasTileSize = 1.0f / m_tileCountPerRowOrColumn;
+			const F32 atlasResolution = F32(m_esmTileResolution * m_esmTileCountBothAxis);
+			F32 superTileSize = esmViewports[0][2]; // Should be the same for all tiles and faces
+			superTileSize -= 1.0f; // Remove 2 half texels to avoid bilinear filtering bleeding
+
+			light->m_shadowAtlasTileSize = superTileSize / atlasResolution;
 
 			numOfFacesThatHaveDrawcalls = 0;
 			for(U face = 0; face < 6; ++face)
@@ -334,17 +659,19 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				{
 					// Has drawcalls, asigned it to a tile
 
-					const U32 tileIdx = tiles[numOfFacesThatHaveDrawcalls];
-					const U32 tileIdxX = tileIdx % m_tileCountPerRowOrColumn;
-					const U32 tileIdxY = tileIdx / m_tileCountPerRowOrColumn;
-					ANKI_ASSERT(tileIdxX <= 31u && tileIdxY <= 31u);
-					light->m_atlasTiles.x() |= tileIdxX << (5u * face);
-					light->m_atlasTiles.y() |= tileIdxY << (5u * face);
+					const Viewport& esmViewport = esmViewports[numOfFacesThatHaveDrawcalls];
+					const Viewport& scratchViewport = scratchViewports[numOfFacesThatHaveDrawcalls];
 
-					if(scratchTiles[numOfFacesThatHaveDrawcalls] != MAX_U32)
+					// Add a half texel to the viewport's start to avoid bilinear filtering bleeding
+					light->m_shadowAtlasTileOffsets[face].x() = (F32(esmViewport[0]) + 0.5f) / atlasResolution;
+					light->m_shadowAtlasTileOffsets[face].y() = (F32(esmViewport[1]) + 0.5f) / atlasResolution;
+
+					if(subResults[numOfFacesThatHaveDrawcalls] != TileAllocatorResult::CACHED)
 					{
-						newScratchAndEsmResloveRenderWorkItems(tiles[numOfFacesThatHaveDrawcalls],
-							scratchTiles[numOfFacesThatHaveDrawcalls],
+						newScratchAndEsmResloveRenderWorkItems(esmViewport,
+							scratchViewport,
+							blurEsm,
+							true,
 							light->m_shadowRenderQueues[face],
 							lightsToRender,
 							esmWorkItems,
@@ -355,16 +682,21 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				}
 				else
 				{
-					// Doesn't have renderables, point the face to the 1st tile (that is pinned)
-					light->m_atlasTiles.x() |= 0u << (5u * face);
-					light->m_atlasTiles.y() |= 0u << (5u * face);
+					// Doesn't have renderables, point the face to the empty tile
+					Viewport esmViewport = emptyTileViewport;
+					ANKI_ASSERT(esmViewport[2] <= superTileSize && esmViewport[3] <= superTileSize);
+					esmViewport[2] = superTileSize;
+					esmViewport[3] = superTileSize;
+
+					light->m_shadowAtlasTileOffsets[face].x() = (F32(esmViewport[0]) + 0.5f) / atlasResolution;
+					light->m_shadowAtlasTileOffsets[face].y() = (F32(esmViewport[1]) + 0.5f) / atlasResolution;
 				}
 			}
 		}
 		else
 		{
 			// Light can't be a caster this frame
-			memset(&light->m_shadowRenderQueues[0], 0, sizeof(light->m_shadowRenderQueues));
+			zeroMemory(light->m_shadowRenderQueues);
 		}
 	}
 
@@ -374,28 +706,43 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		ANKI_ASSERT(light->m_shadowRenderQueue);
 
 		// Allocate tiles
-		U32 tileIdx, scratchTileIdx, faceIdx = 0;
+		U32 faceIdx = 0;
+		TileAllocatorResult subResult;
+		Viewport esmViewport;
+		Viewport scratchViewport;
 		const U32 localDrawcallCount = light->m_shadowRenderQueue->m_renderables.getSize();
+
+		Bool blurEsm;
+		const U32 lod = choseLod(cameraOrigin, *light, blurEsm);
 		const Bool allocationFailed = localDrawcallCount == 0
 									  || allocateTilesAndScratchTiles(light->m_uuid,
 											 1,
 											 &light->m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp,
 											 &faceIdx,
 											 &localDrawcallCount,
-											 &tileIdx,
-											 &scratchTileIdx);
+											 &lod,
+											 &esmViewport,
+											 &scratchViewport,
+											 &subResult)
+											 == TileAllocatorResult::ALLOCATION_FAILED;
 
 		if(!allocationFailed)
 		{
 			// All good, update the light
 
 			// Update the texture matrix to point to the correct region in the atlas
-			light->m_textureMatrix = createSpotLightTextureMatrix(m_tiles[tileIdx]) * light->m_textureMatrix;
+			light->m_textureMatrix = createSpotLightTextureMatrix(esmViewport) * light->m_textureMatrix;
 
-			if(scratchTileIdx != MAX_U32)
+			if(subResult != TileAllocatorResult::CACHED)
 			{
-				newScratchAndEsmResloveRenderWorkItems(
-					tileIdx, scratchTileIdx, light->m_shadowRenderQueue, lightsToRender, esmWorkItems, drawcallCount);
+				newScratchAndEsmResloveRenderWorkItems(esmViewport,
+					scratchViewport,
+					blurEsm,
+					true,
+					light->m_shadowRenderQueue,
+					lightsToRender,
+					esmWorkItems,
+					drawcallCount);
 			}
 		}
 		else
@@ -479,8 +826,10 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	}
 }
 
-void ShadowMapping::newScratchAndEsmResloveRenderWorkItems(U32 tileIdx,
-	U32 scratchTileIdx,
+void ShadowMapping::newScratchAndEsmResloveRenderWorkItems(const Viewport& esmViewport,
+	const Viewport& scratchVewport,
+	Bool blurEsm,
+	Bool perspectiveProjection,
 	RenderQueue* lightRenderQueue,
 	DynamicArrayAuto<LightToRenderToScratchInfo>& scratchWorkItem,
 	DynamicArrayAuto<EsmResolveWorkItem>& esmResolveWorkItem,
@@ -488,214 +837,33 @@ void ShadowMapping::newScratchAndEsmResloveRenderWorkItems(U32 tileIdx,
 {
 	// Scratch work item
 	{
-		Array<U32, 4> viewport;
-		viewport[0] = scratchTileIdx * m_scratchTileResolution;
-		viewport[1] = 0;
-		viewport[2] = m_scratchTileResolution;
-		viewport[3] = m_scratchTileResolution;
-
 		LightToRenderToScratchInfo toRender = {
-			viewport, lightRenderQueue, U32(lightRenderQueue->m_renderables.getSize())};
+			scratchVewport, lightRenderQueue, U32(lightRenderQueue->m_renderables.getSize())};
 		scratchWorkItem.emplaceBack(toRender);
 		drawcallCount += lightRenderQueue->m_renderables.getSize();
 	}
 
 	// ESM resolve work item
 	{
-		EsmResolveWorkItem esmItem;
-		esmItem.m_uvIn[0] = F32(scratchTileIdx) / m_scratchTileCount;
-		esmItem.m_uvIn[1] = 0.0f;
-		esmItem.m_uvIn[2] = 1.0f / m_scratchTileCount;
-		esmItem.m_uvIn[3] = 1.0f;
+		const F32 scratchAtlasWidth = m_scratchTileCountX * m_scratchTileResolution;
+		const F32 scratchAtlasHeight = m_scratchTileCountY * m_scratchTileResolution;
 
-		esmItem.m_viewportOut = m_tiles[tileIdx].m_viewport;
+		EsmResolveWorkItem esmItem;
+		esmItem.m_uvIn[0] = F32(scratchVewport[0]) / scratchAtlasWidth;
+		esmItem.m_uvIn[1] = F32(scratchVewport[1]) / scratchAtlasHeight;
+		esmItem.m_uvIn[2] = F32(scratchVewport[2]) / scratchAtlasWidth;
+		esmItem.m_uvIn[3] = F32(scratchVewport[3]) / scratchAtlasHeight;
+
+		esmItem.m_viewportOut = esmViewport;
 
 		esmItem.m_cameraFar = lightRenderQueue->m_cameraFar;
 		esmItem.m_cameraNear = lightRenderQueue->m_cameraNear;
 
+		esmItem.m_blur = blurEsm;
+		esmItem.m_perspectiveProjection = perspectiveProjection;
+
 		esmResolveWorkItem.emplaceBack(esmItem);
 	}
-}
-
-Bool ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
-	U32 faceCount,
-	const U64* faceTimestamps,
-	const U32* faceIndices,
-	const U32* drawcallsCount,
-	U32* tileIndices,
-	U32* scratchTileIndices)
-{
-	ANKI_ASSERT(faceTimestamps);
-	ANKI_ASSERT(lightUuid > 0);
-	ANKI_ASSERT(faceCount > 0 && faceCount <= 6);
-	ANKI_ASSERT(faceIndices && tileIndices && scratchTileIndices && drawcallsCount);
-
-	Bool failed = false;
-	Array<Bool, 6> inTheCache;
-
-	// Allocate ESM tiles
-	{
-		memset(tileIndices, 0xFF, sizeof(*tileIndices) * faceCount);
-		for(U i = 0; i < faceCount && !failed; ++i)
-		{
-			failed = allocateTile(faceTimestamps[i], lightUuid, faceIndices[i], tileIndices[i], inTheCache[i]);
-		}
-
-		// Unpin the tiles
-		for(U i = 0; i < faceCount; ++i)
-		{
-			if(tileIndices[i] != MAX_U32)
-			{
-				m_tiles[tileIndices[i]].m_pinned = false;
-			}
-		}
-	}
-
-	// Allocate scratch tiles
-	{
-		U32 freeScratchTiles = m_freeScratchTiles;
-		for(U i = 0; i < faceCount && !failed; ++i)
-		{
-			scratchTileIndices[i] = MAX_U32;
-			const Bool shouldRender = shouldRenderTile(
-				faceTimestamps[i], lightUuid, faceIndices[i], m_tiles[tileIndices[i]], drawcallsCount[i]);
-			const Bool scratchTileFailed = shouldRender && freeScratchTiles == 0;
-
-			if(scratchTileFailed)
-			{
-				ANKI_R_LOGW("Don't have enough space in the scratch shadow mapping buffer. "
-							"If you see this message too often increase r.shadowMapping.scratchTileCount");
-				failed = true;
-			}
-			else if(shouldRender)
-			{
-				ANKI_ASSERT(m_scratchTileCount >= freeScratchTiles);
-				scratchTileIndices[i] = m_scratchTileCount - freeScratchTiles;
-				--freeScratchTiles;
-			}
-		}
-
-		if(!failed)
-		{
-			m_freeScratchTiles = freeScratchTiles;
-		}
-	}
-
-	// Update the tiles if everything was successful
-	if(!failed)
-	{
-		for(U i = 0; i < faceCount; ++i)
-		{
-			Tile& tile = m_tiles[tileIndices[i]];
-			tile.m_face = faceIndices[i];
-			tile.m_lightUuid = lightUuid;
-			tile.m_lastUsedTimestamp = m_r->getGlobalTimestamp();
-			tile.m_drawcallCount = drawcallsCount[i];
-
-			// Update the cache
-			if(!inTheCache[i])
-			{
-				TileKey key{lightUuid, faceIndices[i]};
-				ANKI_ASSERT(m_lightUuidToTileIdx.find(key) == m_lightUuidToTileIdx.getEnd());
-				m_lightUuidToTileIdx.emplace(getAllocator(), key, tileIndices[i]);
-			}
-		}
-	}
-
-	return failed;
-}
-
-Bool ShadowMapping::shouldRenderTile(
-	U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx, U32 drawcallCount)
-{
-	if(tileIdx.m_face == face && tileIdx.m_lightUuid == lightUuid && tileIdx.m_lastUsedTimestamp >= lightTimestamp
-		&& tileIdx.m_drawcallCount == drawcallCount)
-	{
-		return false;
-	}
-	else
-	{
-		return true;
-	}
-}
-
-Bool ShadowMapping::allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U32& tileAllocated, Bool& inTheCache)
-{
-	ANKI_ASSERT(lightTimestamp > 0);
-	ANKI_ASSERT(lightUuid > 0);
-	ANKI_ASSERT(face < 6);
-
-	// First, try to see if the light/face is in the cache
-	inTheCache = false;
-	TileKey key = TileKey{lightUuid, U64(face)};
-	auto it = m_lightUuidToTileIdx.find(key);
-	if(it != m_lightUuidToTileIdx.getEnd())
-	{
-		const U32 tileIdx = *it;
-		if(m_tiles[tileIdx].m_lightUuid == lightUuid && m_tiles[tileIdx].m_face == face && !m_tiles[tileIdx].m_pinned)
-		{
-			// Found it
-			tileAllocated = tileIdx;
-			inTheCache = true;
-			return false;
-		}
-		else
-		{
-			// Cache entry is wrong, remove it
-			m_lightUuidToTileIdx.erase(getAllocator(), it);
-		}
-	}
-
-	// 2nd and 3rd choice, find an empty tile or some tile to re-use
-	U32 emptyTile = MAX_U32;
-	U32 tileToKick = MAX_U32;
-	Timestamp tileToKickMinTimestamp = MAX_TIMESTAMP;
-	for(U32 tileIdx = 0; tileIdx < m_tiles.getSize(); ++tileIdx)
-	{
-		if(m_tiles[tileIdx].m_pinned)
-		{
-			continue;
-		}
-
-		if(m_tiles[tileIdx].m_lightUuid == 0)
-		{
-			// Found an empty
-			emptyTile = tileIdx;
-			break;
-		}
-		else if(m_tiles[tileIdx].m_lastUsedTimestamp != m_r->getGlobalTimestamp()
-				&& m_tiles[tileIdx].m_lastUsedTimestamp < tileToKickMinTimestamp)
-		{
-			// Found some with low timestamp
-			tileToKick = tileIdx;
-			tileToKickMinTimestamp = m_tiles[tileIdx].m_lastUsedTimestamp;
-		}
-	}
-
-	Bool failed = false;
-	if(emptyTile != MAX_U32)
-	{
-		tileAllocated = emptyTile;
-	}
-	else if(tileToKick != MAX_U32)
-	{
-		tileAllocated = tileToKick;
-	}
-	else
-	{
-		// We have a problem
-		failed = true;
-		ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. "
-					"Increase the r.shadowMapping.tileCountPerRowOrColumn or decrease the scene's shadow casters");
-	}
-
-	if(!failed)
-	{
-		ANKI_ASSERT(!m_tiles[tileAllocated].m_pinned);
-		m_tiles[tileAllocated].m_pinned = true;
-	}
-
-	return failed;
 }
 
 } // end namespace anki

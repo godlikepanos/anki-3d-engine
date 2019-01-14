@@ -50,13 +50,6 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
 	void run(RenderPassWorkContext& rgraphCtx);
-
-	/// A RenderPassWorkCallback to run the compute pass.
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		Tonemapping* const self = scast<Tonemapping*>(rgraphCtx.m_userData);
-		self->run(rgraphCtx);
-	}
 };
 /// @}
 

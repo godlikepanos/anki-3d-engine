@@ -50,6 +50,7 @@ Error Indirect::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initLightShading(config));
 	ANKI_CHECK(initIrradiance(config));
 	ANKI_CHECK(initIrradianceToRefl(config));
+	ANKI_CHECK(initShadowMapping(config));
 
 	// Load split sum integration LUT
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/SplitSumIntegration.ankitex", m_integrationLut));
@@ -96,12 +97,12 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 
 		for(U j = 0; j < GBUFFER_COLOR_ATTACHMENT_COUNT; ++j)
 		{
-			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::CLEAR;
 		}
 
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 
 		m_gbuffer.m_fbDescr.bake();
 	}
@@ -182,6 +183,36 @@ Error Indirect::initIrradianceToRefl(const ConfigSet& cfg)
 	const ShaderProgramResourceVariant* variant;
 	m_irradianceToRefl.m_prog->getOrCreateVariant(variant);
 	m_irradianceToRefl.m_grProg = variant->getProgram();
+
+	return Error::NONE;
+}
+
+Error Indirect::initShadowMapping(const ConfigSet& cfg)
+{
+	const U resolution = cfg.getNumber("r.indirect.shadowMapResolution");
+	ANKI_ASSERT(resolution > 8);
+
+	// RT descr
+	m_shadowMapping.m_rtDescr =
+		m_r->create2DRenderTargetDescription(resolution * 6, resolution, Format::D32_SFLOAT, "GI SM");
+	m_shadowMapping.m_rtDescr.bake();
+
+	// FB descr
+	m_shadowMapping.m_fbDescr.m_colorAttachmentCount = 0;
+	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
+	m_shadowMapping.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+	m_shadowMapping.m_fbDescr.bake();
+
+	// Shadow sampler
+	{
+		SamplerInitInfo inf;
+		inf.m_compareOperation = CompareOperation::LESS_EQUAL;
+		inf.m_addressing = SamplingAddressing::CLAMP;
+		inf.m_mipmapFilter = SamplingFilter::BASE;
+		inf.m_minMagFilter = SamplingFilter::LINEAR;
+		m_shadowMapping.m_shadowSampler = getGrManager().newSampler(inf);
+	}
 
 	return Error::NONE;
 }
@@ -387,12 +418,28 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());
 
+	// Get shadowmap info
+	const Bool hasDirLight = probe.m_renderQueues[0]->m_directionalLight.m_uuid;
+	if(hasDirLight)
+	{
+		ANKI_ASSERT(m_ctx.m_shadowMapRt.isValid());
+
+		rgraphCtx.bindTextureAndSampler(GBUFFER_SHADOW_ATLAS_BINDING.x(),
+			GBUFFER_SHADOW_ATLAS_BINDING.y(),
+			m_ctx.m_shadowMapRt,
+			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
+			m_shadowMapping.m_shadowSampler);
+	}
+
 	m_lightShading.m_deferred.drawLights(rqueue.m_viewProjectionMatrix,
 		rqueue.m_viewProjectionMatrix.getInverse(),
 		rqueue.m_cameraTransform.getTranslationPart(),
 		UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize),
 		Vec2(faceIdx * (1.0f / 6.0f), 0.0f),
 		Vec2((faceIdx + 1) * (1.0f / 6.0f), 1.0f),
+		probe.m_renderQueues[faceIdx]->m_cameraNear,
+		probe.m_renderQueues[faceIdx]->m_cameraFar,
+		(hasDirLight) ? &probe.m_renderQueues[faceIdx]->m_directionalLight : nullptr,
 		rqueue.m_pointLights,
 		rqueue.m_spotLights,
 		cmdb);
@@ -524,7 +571,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		// Pass
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
-		pass.setWork(runGBufferCallback, this, 0);
+		pass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) {
+				static_cast<Indirect*>(rgraphCtx.m_userData)->runGBuffer(rgraphCtx.m_commandBuffer);
+			},
+			this,
+			0);
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
@@ -533,6 +585,62 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
 		pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+	}
+
+	// Shadow pass. Optional
+	if(probeToUpdate->m_renderQueues[0]->m_directionalLight.m_uuid
+		&& probeToUpdate->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0)
+	{
+		// Update light matrices
+		for(U i = 0; i < 6; ++i)
+		{
+			ANKI_ASSERT(probeToUpdate->m_renderQueues[i]->m_directionalLight.m_uuid
+						&& probeToUpdate->m_renderQueues[i]->m_directionalLight.m_shadowCascadeCount == 1);
+
+			const F32 xScale = 1.0f / 6.0f;
+			const F32 yScale = 1.0f;
+			const F32 xOffset = F32(i) * (1.0f / 6.0f);
+			const F32 yOffset = 0.0f;
+			const Mat4 atlasMtx(xScale,
+				0.0f,
+				0.0f,
+				xOffset,
+				0.0f,
+				yScale,
+				0.0f,
+				yOffset,
+				0.0f,
+				0.0f,
+				1.0f,
+				0.0f,
+				0.0f,
+				0.0f,
+				0.0f,
+				1.0f);
+
+			Mat4& lightMat = probeToUpdate->m_renderQueues[i]->m_directionalLight.m_textureMatrices[0];
+			lightMat = atlasMtx * lightMat;
+		}
+
+		// RT
+		m_ctx.m_shadowMapRt = rgraph.newRenderTarget(m_shadowMapping.m_rtDescr);
+
+		// Pass
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI SM");
+		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, m_ctx.m_shadowMapRt);
+		pass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) {
+				static_cast<Indirect*>(rgraphCtx.m_userData)->runShadowMapping(rgraphCtx.m_commandBuffer);
+			},
+			this,
+			0);
+
+		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
+		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+	}
+	else
+	{
+		m_ctx.m_shadowMapRt = {};
 	}
 
 	// Light shading passes
@@ -572,6 +680,11 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 			pass.newDependency({m_ctx.m_gbufferDepthRt,
 				TextureUsageBit::SAMPLED_FRAGMENT,
 				TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
+
+			if(m_ctx.m_shadowMapRt.isValid())
+			{
+				pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::SAMPLED_FRAGMENT});
+			}
 		}
 	}
 
@@ -769,6 +882,42 @@ Bool Indirect::findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdxAllocated, Bo
 	}
 
 	return failed;
+}
+
+void Indirect::runShadowMapping(CommandBufferPtr& cmdb)
+{
+	cmdb->setPolygonOffset(1.0f, 1.0f);
+
+	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	{
+		ANKI_ASSERT(m_ctx.m_probe);
+		ANKI_ASSERT(m_ctx.m_probe->m_renderQueues[faceIdx]);
+		const RenderQueue& faceRenderQueue = *m_ctx.m_probe->m_renderQueues[faceIdx];
+		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_uuid != 0);
+		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowCascadeCount == 1);
+
+		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
+		const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
+
+		if(cascadeRenderQueue.m_renderables.getSize() == 0)
+		{
+			continue;
+		}
+
+		const U rez = m_shadowMapping.m_rtDescr.m_height;
+		cmdb->setViewport(rez * faceIdx, 0, rez, rez);
+		cmdb->setScissor(rez * faceIdx, 0, rez, rez);
+
+		m_r->getSceneDrawer().drawRange(Pass::SM,
+			cascadeRenderQueue.m_viewMatrix,
+			cascadeRenderQueue.m_viewProjectionMatrix,
+			Mat4::getIdentity(), // Don't care about prev matrices here
+			cmdb,
+			cascadeRenderQueue.m_renderables.getBegin(),
+			cascadeRenderQueue.m_renderables.getEnd());
+	}
+
+	cmdb->setPolygonOffset(0.0f, 0.0f);
 }
 
 } // end namespace anki

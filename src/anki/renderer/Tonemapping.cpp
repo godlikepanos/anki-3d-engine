@@ -78,7 +78,13 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 	// Create the pass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Avg lum");
 
-	pass.setWork(runCallback, this, 0);
+	pass.setWork(
+		[](RenderPassWorkContext& rgraphCtx) {
+			Tonemapping* const self = static_cast<Tonemapping*>(rgraphCtx.m_userData);
+			self->run(rgraphCtx);
+		},
+		this,
+		0);
 
 	pass.newDependency({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
 

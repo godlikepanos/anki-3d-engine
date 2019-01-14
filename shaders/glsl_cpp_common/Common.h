@@ -6,7 +6,7 @@
 #pragma once
 
 //
-// Macros & functions
+// Macros & functions C++
 //
 #if defined(__cplusplus)
 #	define ANKI_BEGIN_NAMESPACE \
@@ -29,6 +29,9 @@ inline F32 dot(const T& a, const T& b)
 }
 ANKI_END_NAMESPACE
 
+//
+// Macros & functions GLSL
+//
 #else
 #	define x() x
 #	define y() y
@@ -53,6 +56,7 @@ ANKI_END_NAMESPACE
 //
 ANKI_BEGIN_NAMESPACE
 
+const U32 SIZEOF_VEC2 = 2u * 4u;
 const U32 SIZEOF_VEC4 = 4u * 4u;
 const U32 SIZEOF_MAT4 = 4u * SIZEOF_VEC4;
 

@@ -297,4 +297,50 @@ Error SpotLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	return Error::NONE;
 }
 
+class DirectionalLightNode::FeedbackComponent : public SceneComponent
+{
+public:
+	FeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
+	{
+	}
+
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	{
+		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
+		if(move.getTimestamp() == node.getGlobalTimestamp())
+		{
+			// Move updated
+			LightComponent& lightc = node.getComponent<LightComponent>();
+			lightc.updateWorldTransform(move.getWorldTransform());
+
+			SpatialComponent& spatialc = node.getComponent<SpatialComponent>();
+			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin());
+			spatialc.markForUpdate();
+		}
+
+		return Error::NONE;
+	}
+};
+
+DirectionalLightNode::DirectionalLightNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
+{
+}
+
+Error DirectionalLightNode::init()
+{
+	newComponent<MoveComponent>();
+	newComponent<FeedbackComponent>();
+	newComponent<LightComponent>(LightComponentType::DIRECTIONAL, getSceneGraph().getNewUuid());
+	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_boundingBox);
+
+	// Make the bounding box large enough so it will always be visible. Because of that don't update the octree bounds
+	m_boundingBox.setMin(getSceneGraph().getSceneMin());
+	m_boundingBox.setMax(getSceneGraph().getSceneMax());
+	spatialc->setUpdateOctreeBounds(false);
+
+	return Error::NONE;
+}
+
 } // end namespace anki

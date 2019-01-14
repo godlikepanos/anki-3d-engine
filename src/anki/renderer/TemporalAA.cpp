@@ -108,7 +108,13 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("TemporalAA");
 
-	pass.setWork(runCallback, this, 0);
+	pass.setWork(
+		[](RenderPassWorkContext& rgraphCtx) {
+			TemporalAA* const self = static_cast<TemporalAA*>(rgraphCtx.m_userData);
+			self->run(*self->m_runCtx.m_ctx, rgraphCtx);
+		},
+		this,
+		0);
 
 	pass.newDependency({m_runCtx.m_renderRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_r->getGBuffer().getDepthRt(),

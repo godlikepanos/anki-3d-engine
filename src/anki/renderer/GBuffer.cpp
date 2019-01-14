@@ -155,7 +155,11 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
 	pass.setFramebufferInfo(m_fbDescr, rts, m_depthRt);
-	pass.setWork(runCallback,
+	pass.setWork(
+		[](RenderPassWorkContext& rgraphCtx) {
+			GBuffer* self = static_cast<GBuffer*>(rgraphCtx.m_userData);
+			self->runInThread(*self->m_ctx, rgraphCtx);
+		},
 		this,
 		computeNumberOfSecondLevelCommandBuffers(
 			ctx.m_renderQueue->m_earlyZRenderables.getSize() + ctx.m_renderQueue->m_renderables.getSize()));

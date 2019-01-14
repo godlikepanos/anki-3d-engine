@@ -55,19 +55,18 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	{
 		PointLight light = u_pointLights[idx];
 
-		Vec3 diffC = diffCol * light.m_diffuseColorTileSize.rgb;
+		Vec3 diffC = diffCol * light.m_diffuseColor;
 
-		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
-		F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+		Vec3 frag2Light = light.m_position - worldPos;
+		F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
 
 #if LOD > 1
 		const F32 shadow = 1.0;
 #else
 		F32 shadow = 1.0;
-		if(light.m_diffuseColorTileSize.w >= 0.0)
+		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			shadow = computeShadowFactorOmni(
-				frag2Light, light.m_radiusPad1.x, light.m_atlasTiles, light.m_diffuseColorTileSize.w, u_shadowTex);
+			shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowTex);
 		}
 #endif
 
@@ -79,24 +78,23 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	{
 		SpotLight light = u_spotLights[idx];
 
-		Vec3 diffC = diffCol * light.m_diffuseColorShadowmapId.rgb;
+		Vec3 diffC = diffCol * light.m_diffuseColor;
 
-		Vec3 frag2Light = light.m_posRadius.xyz - worldPos;
-		F32 att = computeAttenuationFactor(light.m_posRadius.w, frag2Light);
+		Vec3 frag2Light = light.m_position - worldPos;
+		F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
 
 		Vec3 l = normalize(frag2Light);
 
-		F32 spot =
-			computeSpotFactor(l, light.m_outerCosInnerCos.x, light.m_outerCosInnerCos.y, light.m_lightDirRadius.xyz);
+		F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
 
 #if LOD > 1
 		const F32 shadow = 1.0;
 #else
 		F32 shadow = 1.0;
-		F32 shadowmapLayerIdx = light.m_diffuseColorShadowmapId.w;
+		F32 shadowmapLayerIdx = light.m_shadowmapId;
 		if(shadowmapLayerIdx >= 0.0)
 		{
-			shadow = computeShadowFactorSpot(light.m_texProjectionMat, worldPos, light.m_lightDirRadius.w, u_shadowTex);
+			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex);
 		}
 #endif
 

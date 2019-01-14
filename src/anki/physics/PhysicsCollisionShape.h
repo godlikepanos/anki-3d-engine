@@ -7,6 +7,7 @@
 
 #include <anki/physics/PhysicsObject.h>
 #include <anki/util/WeakArray.h>
+#include <anki/util/ClassWrapper.h>
 
 namespace anki
 {
@@ -43,16 +44,16 @@ protected:
 	class TriMesh
 	{
 	public:
-		BtClassWrapper<btGImpactMeshShape> m_dynamic;
-		BtClassWrapper<btBvhTriangleMeshShape> m_static;
+		ClassWrapper<btGImpactMeshShape> m_dynamic;
+		ClassWrapper<btBvhTriangleMeshShape> m_static;
 	};
 
 	// All shapes
 	union
 	{
-		BtClassWrapper<btBoxShape> m_box;
-		BtClassWrapper<btSphereShape> m_sphere;
-		BtClassWrapper<btConvexHullShape> m_convex;
+		ClassWrapper<btBoxShape> m_box;
+		ClassWrapper<btSphereShape> m_sphere;
+		ClassWrapper<btConvexHullShape> m_convex;
 		TriMesh m_triMesh;
 	};
 
@@ -129,7 +130,7 @@ class PhysicsTriangleSoup final : public PhysicsCollisionShape
 	ANKI_PHYSICS_OBJECT
 
 private:
-	BtClassWrapper<btTriangleMesh> m_mesh;
+	ClassWrapper<btTriangleMesh> m_mesh;
 
 	PhysicsTriangleSoup(
 		PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices, Bool convex = false);

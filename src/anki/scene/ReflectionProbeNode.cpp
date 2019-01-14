@@ -16,7 +16,8 @@ namespace anki
 {
 
 const FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
-	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS;
+	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
+	| FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE;
 
 /// Feedback component
 class ReflectionProbeNode::MoveFeedbackComponent : public SceneComponent
@@ -53,7 +54,7 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 	F32 effectiveDistance = aabbMaxLSpace.x() - aabbMinLSpace.x();
 	effectiveDistance = max(effectiveDistance, aabbMaxLSpace.y() - aabbMinLSpace.y());
 	effectiveDistance = max(effectiveDistance, aabbMaxLSpace.z() - aabbMinLSpace.z());
-	effectiveDistance = max(effectiveDistance, EFFECTIVE_DISTANCE);
+	effectiveDistance = max(effectiveDistance, getSceneGraph().getLimits().m_reflectionProbeEffectiveDistance);
 
 	// Move component first
 	newComponent<MoveComponent>();
@@ -89,8 +90,8 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 		m_cubeSides[i].m_frustum.resetTransform(m_cubeSides[i].m_localTrf);
 
 		FrustumComponent* frc = newComponent<FrustumComponent>(this, &m_cubeSides[i].m_frustum);
-
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+		frc->setEffectiveShadowDistance(getSceneGraph().getLimits().m_reflectionProbeShadowEffectiveDistance);
 	}
 
 	// Spatial component
@@ -98,7 +99,8 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 	m_aabbMaxLSpace = aabbMaxLSpace.xyz();
 	m_spatialAabb.setMin(aabbMinLSpace);
 	m_spatialAabb.setMax(aabbMaxLSpace);
-	newComponent<SpatialComponent>(this, &m_spatialAabb);
+	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_spatialAabb);
+	spatialc->setUpdateOctreeBounds(false);
 
 	// Reflection probe comp
 	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>(getSceneGraph().getNewUuid());

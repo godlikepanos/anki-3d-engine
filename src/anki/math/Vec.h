@@ -2239,6 +2239,17 @@ public:
 		return out;
 	}
 
+	/// Get a safe 1 / (*this)
+	TV reciprocal() const
+	{
+		TV out;
+		for(U i = 0; i < N; ++i)
+		{
+			out[i] = T(1) / m_arr[i];
+		}
+		return out;
+	}
+
 	/// Serialize the structure.
 	void serialize(void* data, PtrSize& size) const
 	{

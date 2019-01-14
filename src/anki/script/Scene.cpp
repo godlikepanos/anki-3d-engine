@@ -2755,6 +2755,75 @@ static inline void wrapSpotLightNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
+LuaUserDataTypeInfo luaUserDataTypeInfoDirectionalLightNode = {3634924534632382552,
+	"DirectionalLightNode",
+	LuaUserData::computeSizeForGarbageCollected<DirectionalLightNode>(),
+	nullptr,
+	nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<DirectionalLightNode>()
+{
+	return luaUserDataTypeInfoDirectionalLightNode;
+}
+
+/// Pre-wrap method DirectionalLightNode::getSceneNodeBase.
+static inline int pwrapDirectionalLightNodegetSceneNodeBase(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoDirectionalLightNode, ud))
+	{
+		return -1;
+	}
+
+	DirectionalLightNode* self = ud->getData<DirectionalLightNode>();
+
+	// Call the method
+	SceneNode& ret = *self;
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+
+	return 1;
+}
+
+/// Wrap method DirectionalLightNode::getSceneNodeBase.
+static int wrapDirectionalLightNodegetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapDirectionalLightNodegetSceneNodeBase(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class DirectionalLightNode.
+static inline void wrapDirectionalLightNode(lua_State* l)
+{
+	LuaBinder::createClass(l, &luaUserDataTypeInfoDirectionalLightNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapDirectionalLightNodegetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
 LuaUserDataTypeInfo luaUserDataTypeInfoStaticCollisionNode = {-4376619865753613291,
 	"StaticCollisionNode",
 	LuaUserData::computeSizeForGarbageCollected<StaticCollisionNode>(),
@@ -3495,6 +3564,68 @@ static int wrapSceneGraphnewSpotLightNode(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method SceneGraph::newDirectionalLightNode.
+static inline int pwrapSceneGraphnewDirectionalLightNode(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
+	{
+		return -1;
+	}
+
+	SceneGraph* self = ud->getData<SceneGraph>();
+
+	// Pop arguments
+	const char* arg0;
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	{
+		return -1;
+	}
+
+	// Call the method
+	DirectionalLightNode* ret = newSceneNode<DirectionalLightNode>(self, arg0);
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "DirectionalLightNode");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoDirectionalLightNode;
+	ud->initPointed(&luaUserDataTypeInfoDirectionalLightNode, const_cast<DirectionalLightNode*>(ret));
+
+	return 1;
+}
+
+/// Wrap method SceneGraph::newDirectionalLightNode.
+static int wrapSceneGraphnewDirectionalLightNode(lua_State* l)
+{
+	int res = pwrapSceneGraphnewDirectionalLightNode(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Pre-wrap method SceneGraph::newStaticCollisionNode.
 static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 {
@@ -3978,6 +4109,7 @@ static inline void wrapSceneGraph(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newModelNode", wrapSceneGraphnewModelNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newPointLightNode", wrapSceneGraphnewPointLightNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newSpotLightNode", wrapSceneGraphnewSpotLightNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newDirectionalLightNode", wrapSceneGraphnewDirectionalLightNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newParticleEmitterNode", wrapSceneGraphnewParticleEmitterNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProbeNode", wrapSceneGraphnewReflectionProbeNode);
@@ -4387,6 +4519,7 @@ void wrapModuleScene(lua_State* l)
 	wrapPerspectiveCameraNode(l);
 	wrapPointLightNode(l);
 	wrapSpotLightNode(l);
+	wrapDirectionalLightNode(l);
 	wrapStaticCollisionNode(l);
 	wrapParticleEmitterNode(l);
 	wrapReflectionProbeNode(l);

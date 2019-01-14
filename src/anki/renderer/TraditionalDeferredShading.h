@@ -31,6 +31,9 @@ public:
 		const UVec4& viewport,
 		const Vec2& gbufferTexCoordsMin,
 		const Vec2& gbufferTexCoordsMax,
+		F32 cameraNear,
+		F32 cameraFar,
+		DirectionalLightQueueElement* directionalLight,
 		ConstWeakArray<PointLightQueueElement> plights,
 		ConstWeakArray<SpotLightQueueElement> slights,
 		CommandBufferPtr& cmdb);
@@ -39,6 +42,7 @@ private:
 	ShaderProgramResourcePtr m_lightProg;
 	ShaderProgramPtr m_plightGrProg;
 	ShaderProgramPtr m_slightGrProg;
+	ShaderProgramPtr m_dirLightGrProg;
 
 	/// @name Meshes of light volumes.
 	/// @{

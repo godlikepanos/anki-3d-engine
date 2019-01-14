@@ -52,7 +52,7 @@ public:
 
 	/// Place or re-place an element in the tree.
 	/// @note It's thread-safe against place and remove methods.
-	void place(const Aabb& volume, OctreePlaceable* placeable);
+	void place(const Aabb& volume, OctreePlaceable* placeable, Bool updateActualSceneBounds);
 
 	/// Remove an element from the tree.
 	/// @note It's thread-safe against place and remove methods.
@@ -104,6 +104,16 @@ public:
 	{
 		ANKI_ASSERT(m_rootLeaf);
 		debugDrawRecursive(*m_rootLeaf, drawer);
+	}
+
+	/// Get the bounds of the scene as calculated by the objects that were placed inside the Octree.
+	void getActualSceneBounds(Vec3& min, Vec3& max) const
+	{
+		LockGuard<Mutex> lock(m_globalMtx);
+		ANKI_ASSERT(m_actualSceneAabbMin.x() < MAX_F32);
+		ANKI_ASSERT(m_actualSceneAabbMax.x() > MIN_F32);
+		min = m_actualSceneAabbMin;
+		max = m_actualSceneAabbMax;
 	}
 
 private:
@@ -192,7 +202,7 @@ private:
 	U32 m_maxDepth = 0;
 	Vec3 m_sceneAabbMin = Vec3(0.0f);
 	Vec3 m_sceneAabbMax = Vec3(0.0f);
-	Mutex m_globalMtx;
+	mutable Mutex m_globalMtx;
 
 	ObjectAllocatorSameType<Leaf, 256> m_leafAlloc;
 	ObjectAllocatorSameType<LeafNode, 128> m_leafNodeAlloc;
@@ -200,6 +210,10 @@ private:
 
 	Leaf* m_rootLeaf = nullptr;
 	U32 m_placeableCount = 0;
+
+	/// Compute the min of the scene bounds based on what is placed inside the octree.
+	Vec3 m_actualSceneAabbMin = Vec3(MAX_F32);
+	Vec3 m_actualSceneAabbMax = Vec3(MIN_F32);
 
 	Leaf* newLeaf()
 	{

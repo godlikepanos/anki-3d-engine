@@ -76,20 +76,6 @@ private:
 
 	void runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
 	void runBlur(RenderPassWorkContext& rgraphCtx);
-
-	/// A RenderPassWorkCallback for SSAO main pass.
-	static void runMainCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		Ssao* const self = scast<Ssao*>(rgraphCtx.m_userData);
-		self->runMain(*self->m_runCtx.m_ctx, rgraphCtx);
-	}
-
-	/// A RenderPassWorkCallback for SSAO blur.
-	static void runBlurCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		Ssao* const self = scast<Ssao*>(rgraphCtx.m_userData);
-		self->runBlur(rgraphCtx);
-	}
 };
 /// @}
 

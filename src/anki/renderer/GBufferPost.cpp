@@ -59,7 +59,10 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& rpass = rgraph.newGraphicsRenderPass("GBuffPost");
 
-	rpass.setWork(runCallback, this, 0);
+	rpass.setWork(
+		[](RenderPassWorkContext& rgraphCtx) { static_cast<GBufferPost*>(rgraphCtx.m_userData)->run(rgraphCtx); },
+		this,
+		0);
 	rpass.setFramebufferInfo(m_fbDescr, {{m_r->getGBuffer().getColorRt(0), m_r->getGBuffer().getColorRt(1)}}, {});
 
 	rpass.newDependency({m_r->getGBuffer().getColorRt(0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});

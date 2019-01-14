@@ -72,7 +72,7 @@ void Octree::init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDep
 	m_sceneAabbMax = sceneAabbMax;
 }
 
-void Octree::place(const Aabb& volume, OctreePlaceable* placeable)
+void Octree::place(const Aabb& volume, OctreePlaceable* placeable, Bool updateActualSceneBounds)
 {
 	ANKI_ASSERT(placeable);
 	ANKI_ASSERT(testCollisionShapes(volume, Aabb(m_sceneAabbMin, m_sceneAabbMax)) && "volume is outside the scene");
@@ -93,6 +93,13 @@ void Octree::place(const Aabb& volume, OctreePlaceable* placeable)
 	// And re-place it
 	placeRecursive(volume, placeable, m_rootLeaf, 0);
 	++m_placeableCount;
+
+	// Update the actual scene bounds
+	if(updateActualSceneBounds)
+	{
+		m_actualSceneAabbMin = m_actualSceneAabbMin.min(volume.getMin().xyz());
+		m_actualSceneAabbMax = m_actualSceneAabbMax.max(volume.getMax().xyz());
+	}
 }
 
 void Octree::remove(OctreePlaceable& placeable)

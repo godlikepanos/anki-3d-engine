@@ -8,6 +8,7 @@
 #include <anki/renderer/Common.h>
 #include <anki/resource/RenderingKey.h>
 #include <anki/ui/Canvas.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -76,8 +77,8 @@ public:
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
 
-	UVec2 m_atlasTiles; ///< Renderer internal.
-	F32 m_atlasTileSize; ///< Renderer internal.
+	Array<Vec2, 6> m_shadowAtlasTileOffsets; ///< Renderer internal.
+	F32 m_shadowAtlasTileSize; ///< Renderer internal.
 
 	PointLightQueueElement()
 	{
@@ -118,6 +119,27 @@ public:
 };
 
 static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true, "Should be trivially destructible");
+
+/// Directional light render queue element.
+class DirectionalLightQueueElement final
+{
+public:
+	Array<Mat4, MAX_SHADOW_CASCADES> m_textureMatrices;
+	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
+	const void* m_userData;
+	RenderQueueDrawCallback m_drawCallback;
+	U64 m_uuid; ///< Zero means that there is no dir light
+	Vec3 m_diffuseColor;
+	Vec3 m_direction;
+	U8 m_shadowCascadeCount; ///< Zero means that it doesn't case any shadows
+
+	DirectionalLightQueueElement()
+	{
+	}
+};
+
+static_assert(
+	std::is_trivially_destructible<DirectionalLightQueueElement>::value == true, "Should be trivially destructible");
 
 /// Normally the visibility tests don't perform tests on the reflection probes because probes dont change that often.
 /// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
@@ -248,6 +270,7 @@ public:
 	WeakArray<PointLightQueueElement> m_pointLights;
 	WeakArray<PointLightQueueElement*> m_shadowPointLights; ///< Points to elements in m_pointLights.
 	WeakArray<SpotLightQueueElement> m_spotLights;
+	DirectionalLightQueueElement m_directionalLight;
 	WeakArray<SpotLightQueueElement*> m_shadowSpotLights; ///< Points to elements in m_spotLights.
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
@@ -260,9 +283,15 @@ public:
 
 	F32 m_cameraNear;
 	F32 m_cameraFar;
+	F32 m_effectiveShadowDistance;
 
 	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;
 	void* m_fillCoverageBufferCallbackUserData = nullptr;
+
+	RenderQueue()
+	{
+		zeroMemory(m_directionalLight);
+	}
 
 	U countAllRenderables() const;
 };

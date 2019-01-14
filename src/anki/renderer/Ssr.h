@@ -51,11 +51,6 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
-	static void runCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		static_cast<Ssr*>(rgraphCtx.m_userData)->run(rgraphCtx);
-	}
-
 	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}

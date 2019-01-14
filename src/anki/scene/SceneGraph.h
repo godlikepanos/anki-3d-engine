@@ -39,6 +39,15 @@ public:
 	Second m_physicsUpdate ANKI_DBG_NULLIFY;
 };
 
+/// SceneGraph limits.
+class SceneGraphLimits
+{
+public:
+	F32 m_earlyZDistance = -1.0f; ///< Objects with distance lower than that will be used in early Z.
+	F32 m_reflectionProbeEffectiveDistance = -1.0f; ///< How far reflection probes can look.
+	F32 m_reflectionProbeShadowEffectiveDistance = -1.0f; ///< How far to render shadows for reflection probes.
+};
+
 /// The scene graph that  all the scene entities
 class SceneGraph
 {
@@ -161,6 +170,11 @@ public:
 		return m_stats;
 	}
 
+	const SceneGraphLimits& getLimits() const
+	{
+		return m_limits;
+	}
+
 	const Vec3& getSceneMin() const
 	{
 		return m_sceneMin;
@@ -171,7 +185,6 @@ public:
 		return m_sceneMax;
 	}
 
-anki_internal:
 	ResourceManager& getResourceManager()
 	{
 		return *m_resources;
@@ -204,20 +217,9 @@ anki_internal:
 		return *m_input;
 	}
 
-	F32 getMaxReflectionProxyDistance() const
-	{
-		ANKI_ASSERT(m_maxReflectionProxyDistance > 0.0);
-		return m_maxReflectionProxyDistance;
-	}
-
 	U64 getNewUuid()
 	{
-		return m_nodesUuid++;
-	}
-
-	F32 getEarlyZDistance() const
-	{
-		return m_earlyZDist;
+		return m_nodesUuid.fetchAdd(1);
 	}
 
 	Octree& getOctree()
@@ -258,14 +260,11 @@ private:
 	Vec3 m_sceneMin = {-1000.0f, -200.0f, -1000.0f};
 	Vec3 m_sceneMax = {1000.0f, 200.0f, 1000.0f};
 
-	Atomic<U32> m_objectsMarkedForDeletionCount;
+	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
 
-	F32 m_maxReflectionProxyDistance = 0.0;
+	Atomic<U64> m_nodesUuid = {1};
 
-	U64 m_nodesUuid = 0;
-
-	F32 m_earlyZDist = -1.0;
-
+	SceneGraphLimits m_limits;
 	SceneGraphStats m_stats;
 
 	/// Put a node in the appropriate containers

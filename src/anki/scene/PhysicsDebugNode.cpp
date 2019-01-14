@@ -72,11 +72,12 @@ Error PhysicsDebugNode::init()
 	ANKI_CHECK(rcomp->init());
 
 	ObbSpatialComponent* scomp = newComponent<ObbSpatialComponent>(this);
-	Vec3 center = (getSceneGraph().getSceneMax() + getSceneGraph().getSceneMin()) / 2.0f;
+	const Vec3 center = (getSceneGraph().getSceneMax() + getSceneGraph().getSceneMin()) / 2.0f;
 	scomp->m_obb.setCenter(center.xyz0());
 	scomp->m_obb.setExtend((getSceneGraph().getSceneMax() - center).xyz0());
 	scomp->m_obb.setRotation(Mat3x4::getIdentity());
 	scomp->setSpatialOrigin(Vec4(0.0f));
+	scomp->setUpdateOctreeBounds(false); // Don't mess with the bounds
 
 	return Error::NONE;
 }

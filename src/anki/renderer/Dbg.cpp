@@ -108,7 +108,13 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("DBG");
 
-	pass.setWork(runCallback, this, 0);
+	pass.setWork(
+		[](RenderPassWorkContext& rgraphCtx) {
+			Dbg* self = static_cast<Dbg*>(rgraphCtx.m_userData);
+			self->run(rgraphCtx, *self->m_runCtx.m_ctx);
+		},
+		this,
+		0);
 	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, m_r->getGBuffer().getDepthRt());
 
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

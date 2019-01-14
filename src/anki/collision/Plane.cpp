@@ -26,7 +26,7 @@ void Plane::setFrom3Points(const Vec4& p0, const Vec4& p1, const Vec4& p2)
 	m_normal = u.cross(v);
 
 	// length of normal had better not be zero
-	ANKI_ASSERT(!isZero(m_normal.getLengthSquared()));
+	ANKI_ASSERT(m_normal.getLengthSquared() != 0.0f);
 
 	m_normal.normalize();
 	m_offset = m_normal.dot(p0);

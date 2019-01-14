@@ -36,7 +36,7 @@ void Input::handleEvents()
 	int outEvents;
 	android_poll_source* source;
 
-	memset(&events[0], 0, sizeof(events));
+	zeroMemory(events);
 
 	while((ident = ALooper_pollAll(0, NULL, &outEvents, (void**)&source)) >= 0)
 	{

@@ -33,7 +33,7 @@ void main()
 	GbufferInfo gbuffer;
 	readGBuffer(u_gbufferTex0, u_gbufferTex1, u_gbufferTex2, sampleUv, 0.0, gbuffer);
 
-	// Read the irradiance. Use the layer 0 because the C++ sets an appropriate texture view
+	// Read the irradiance. Use the layer 0 because C++ will set the appropriate texture view
 	Vec3 irradiance = textureLod(u_irradianceTex, Vec4(gbuffer.m_normal, 0.0), 0.0).rgb;
 
 	// Compute the indirect term

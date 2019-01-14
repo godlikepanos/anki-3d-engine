@@ -451,7 +451,8 @@ void Exporter::exportLight(const aiLight& light)
 
 	LOGI("Exporting light %s", light.mName.C_Str());
 
-	if(light.mType != aiLightSource_POINT && light.mType != aiLightSource_SPOT)
+	if(light.mType != aiLightSource_POINT && light.mType != aiLightSource_SPOT
+		&& light.mType != aiLightSource_DIRECTIONAL)
 	{
 		LOGW("Skipping light %s. Unsupported type (0x%x)", light.mName.C_Str(), light.mType);
 		return;
@@ -463,8 +464,24 @@ void Exporter::exportLight(const aiLight& light)
 		return;
 	}
 
-	file << "\nnode = scene:new" << ((light.mType == aiLightSource_POINT) ? "Point" : "Spot") << "LightNode(\""
-		 << light.mName.C_Str() << "\")\n";
+	const char* lightType;
+	switch(light.mType)
+	{
+	case aiLightSource_POINT:
+		lightType = "Point";
+		break;
+	case aiLightSource_SPOT:
+		lightType = "Spot";
+		break;
+	case aiLightSource_DIRECTIONAL:
+		lightType = "Directional";
+		break;
+	default:
+		lightType = nullptr;
+		assert(0);
+	}
+
+	file << "\nnode = scene:new" << lightType << "LightNode(\"" << light.mName.C_Str() << "\")\n";
 
 	file << "lcomp = node:getSceneNodeBase():getLightComponent()\n";
 
@@ -474,15 +491,12 @@ void Exporter::exportLight(const aiLight& light)
 	file << "lcomp:setDiffuseColor(Vec4.new(" << linear[0] << ", " << linear[1] << ", " << linear[2] << ", 1))\n";
 
 	// Geometry
-	aiVector3D direction(0.0, 0.0, 1.0);
-
 	switch(light.mType)
 	{
 	case aiLightSource_POINT:
 	{
 		// At this point I want the radius and have the attenuation factors
-		// att = Ac + Al*d + Aq*d^2. When d = r then att = 0.0. Also if we
-		// assume that Al is 0 then:
+		// att = Ac + Al*d + Aq*d^2. When d = r then att = 0.0. Also if we assume that Al is 0 then:
 		// 0 = Ac + Aq*r^2. Solving by r is easy
 		float r = sqrt(light.mAttenuationConstant / light.mAttenuationQuadratic);
 		file << "lcomp:setRadius(" << r << ")\n";
@@ -502,8 +516,11 @@ void Exporter::exportLight(const aiLight& light)
 		file << "lcomp:setInnerAngle(" << inner << ")\n"
 			 << "lcomp:setOuterAngle(" << outer << ")\n"
 			 << "lcomp:setDistance(" << dist << ")\n";
+		break;
+	}
+	case aiLightSource_DIRECTIONAL:
+	{
 
-		direction = light.mDirection;
 		break;
 	}
 	default:

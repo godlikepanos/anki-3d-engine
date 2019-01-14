@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+// Mainly contains light related structures. Everything is packed to align with std140
+
 #pragma once
 
 #include <shaders/glsl_cpp_common/Common.h>
@@ -13,6 +15,8 @@ ANKI_BEGIN_NAMESPACE
 const U32 TYPED_OBJECT_COUNT = 5u;
 const F32 INVALID_TEXTURE_INDEX = -1.0;
 const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0; // The near plane on the shadow map frustums.
+const U32 MAX_SHADOW_CASCADES = 4u;
+const F32 SUBSURFACE_MIN = 0.05;
 
 // See the documentation in the ClustererBin class.
 struct ClustererMagicValues
@@ -24,32 +28,56 @@ struct ClustererMagicValues
 // Point light
 struct PointLight
 {
-	Vec4 m_posRadius; // xyz: Light pos in world space. w: The 1/(radius^2)
-	Vec4 m_diffuseColorTileSize; // xyz: diff color, w: tile size in the shadow atlas
-	Vec2 m_radiusPad1; // x: radius
-	UVec2 m_atlasTiles; // x: encodes 6 uints with atlas tile indices in the x dir. y: same for y dir.
+	Vec3 m_position; // Position in world space
+	F32 m_squareRadiusOverOne; // 1/(radius^2)
+	Vec3 m_diffuseColor;
+	F32 m_shadowAtlasTileScale; // UV scale for all tiles
+	Vec3 m_padding;
+	F32 m_radius; // Radius
+	Vec4 m_shadowAtlasTileOffsets[3u]; // It's a Vec4 because of the std140 limitations
 };
-const U32 SIZEOF_POINT_LIGHT = 3 * SIZEOF_VEC4;
+const U32 SIZEOF_POINT_LIGHT = 6 * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == SIZEOF_POINT_LIGHT)
 
 // Spot light
 struct SpotLight
 {
-	Vec4 m_posRadius; // xyz: Light pos in world space. w: The 1/(radius^2)
-	Vec4 m_diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
-	Vec4 m_lightDirRadius; // xyz: light direction, w: radius
-	Vec4 m_outerCosInnerCos;
+	Vec3 m_position; // Position in world space
+	F32 m_squareRadiusOverOne; // 1/(radius^2)
+	Vec3 m_diffuseColor;
+	F32 m_shadowmapId; // Shadowmap tex ID
+	Vec3 m_dir; // Light direction
+	F32 m_radius; // Max distance
+	F32 m_outerCos;
+	F32 m_innerCos;
+	F32 m_padding0;
+	F32 m_padding1;
 	Mat4 m_texProjectionMat;
 };
 const U32 SIZEOF_SPOT_LIGHT = 4 * SIZEOF_VEC4 + SIZEOF_MAT4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == SIZEOF_SPOT_LIGHT)
 
+// Directional light (sun)
+struct DirectionalLight
+{
+	Vec3 m_diffuseColor;
+	U32 m_cascadeCount; // If it's zero then it doesn't case shadow
+	Vec3 m_dir;
+	U32 m_active;
+	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES];
+};
+const U32 SIZEOF_DIR_LIGHT = 2 * SIZEOF_VEC4 + MAX_SHADOW_CASCADES * SIZEOF_MAT4;
+ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == SIZEOF_DIR_LIGHT)
+
 // Representation of a reflection probe
 struct ReflectionProbe
 {
-	Vec4 m_positionCubemapIndex; // xyz: Position of the prove in view space. w: Slice in u_reflectionsTex vector.
-	Vec4 m_aabbMinPad1;
-	Vec4 m_aabbMaxPad1;
+	Vec3 m_position; // Position of the probe in world space
+	F32 m_cubemapIndex; // Slice in cubemap array texture
+	Vec3 m_aabbMin;
+	F32 m_padding0;
+	Vec3 m_aabbMax;
+	F32 m_padding1;
 };
 const U32 SIZEOF_REFLECTION_PROBE = 3 * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == SIZEOF_REFLECTION_PROBE)
@@ -80,12 +108,16 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == SIZEOF_FOG_DENSITY_VOLUME)
 struct LightingUniforms
 {
 	Vec4 m_unprojectionParams;
-	Vec4 m_rendererSizeTimeNear;
-	Vec4 m_cameraPosFar;
+	Vec2 m_rendererSize;
+	F32 m_time;
+	F32 m_near;
+	Vec3 m_cameraPos;
+	F32 m_far;
 	ClustererMagicValues m_clustererMagicValues;
 	ClustererMagicValues m_prevClustererMagicValues;
 	UVec4 m_clusterCount;
-	UVec4 m_lightVolumeLastClusterPad3;
+	Vec3 m_padding;
+	U32 m_lightVolumeLastCluster;
 	Mat4 m_viewMat;
 	Mat4 m_invViewMat;
 	Mat4 m_projMat;
@@ -94,7 +126,10 @@ struct LightingUniforms
 	Mat4 m_invViewProjMat;
 	Mat4 m_prevViewProjMat;
 	Mat4 m_prevViewProjMatMulInvViewProjMat; // Used to re-project previous frames
+	DirectionalLight m_dirLight;
 };
+const U32 SIZEOF_LIGHTING_UNIFORMS = 9 * SIZEOF_VEC4 + 8 * SIZEOF_MAT4 + SIZEOF_DIR_LIGHT;
+ANKI_SHADER_STATIC_ASSERT(sizeof(LightingUniforms) == SIZEOF_LIGHTING_UNIFORMS)
 
 ANKI_SHADER_FUNC_INLINE F32 computeClusterKf(ClustererMagicValues magic, Vec3 worldPos)
 {

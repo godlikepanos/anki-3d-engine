@@ -38,6 +38,10 @@ Error TraditionalDeferredLightShading::init()
 		mutators[0].m_value = 1;
 		m_lightProg->getOrCreateVariant(mutators.get(), variant);
 		m_slightGrProg = variant->getProgram();
+
+		mutators[0].m_value = 2;
+		m_lightProg->getOrCreateVariant(mutators.get(), variant);
+		m_dirLightGrProg = variant->getProgram();
 	}
 
 	// Init meshes
@@ -78,6 +82,9 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 	const UVec4& viewport,
 	const Vec2& gbufferTexCoordsMin,
 	const Vec2& gbufferTexCoordsMax,
+	F32 cameraNear,
+	F32 cameraFar,
+	DirectionalLightQueueElement* directionalLight,
 	ConstWeakArray<PointLightQueueElement> plights,
 	ConstWeakArray<SpotLightQueueElement> slights,
 	CommandBufferPtr& cmdb)
@@ -93,8 +100,45 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 
 	// Set common state for all lights
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
-	cmdb->setCullMode(FaceSelectionBit::FRONT);
 	cmdb->setViewport(viewport.x(), viewport.y(), viewport.z(), viewport.w());
+
+	// Dir light
+	if(directionalLight)
+	{
+		ANKI_ASSERT(directionalLight->m_uuid && directionalLight->m_shadowCascadeCount == 1);
+
+		cmdb->bindShaderProgram(m_dirLightGrProg);
+
+		DeferredDirectionalLightUniforms* unis = allocateAndBindUniforms<DeferredDirectionalLightUniforms*>(
+			sizeof(DeferredDirectionalLightUniforms), cmdb, 0, 1);
+
+		unis->m_inputTexUvScale = inputTexUvScaleAndOffset.xy();
+		unis->m_inputTexUvOffset = inputTexUvScaleAndOffset.zw();
+		unis->m_invViewProjMat = invViewProjMat;
+		unis->m_camPos = cameraPosWSpace.xyz();
+		unis->m_fbSize = Vec2(viewport.z(), viewport.w());
+
+		unis->m_diffuseColor = directionalLight->m_diffuseColor;
+		unis->m_lightDir = directionalLight->m_direction;
+		unis->m_lightMatrix = directionalLight->m_textureMatrices[0];
+
+		unis->m_near = cameraNear;
+		unis->m_far = cameraFar;
+
+		if(directionalLight->m_shadowCascadeCount > 0)
+		{
+			unis->m_effectiveShadowDistance = directionalLight->m_shadowRenderQueues[0]->m_effectiveShadowDistance;
+		}
+		else
+		{
+			unis->m_effectiveShadowDistance = 0.0f;
+		}
+
+		drawQuad(cmdb);
+	}
+
+	// Set other light state
+	cmdb->setCullMode(FaceSelectionBit::FRONT);
 
 	// Do point lights
 	U32 indexCount;
@@ -114,12 +158,14 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 		DeferredPointLightUniforms* light =
 			allocateAndBindUniforms<DeferredPointLightUniforms*>(sizeof(DeferredPointLightUniforms), cmdb, 0, 1);
 
-		light->m_inputTexUvScaleAndOffset = inputTexUvScaleAndOffset;
+		light->m_inputTexUvScale = inputTexUvScaleAndOffset.xy();
+		light->m_inputTexUvOffset = inputTexUvScaleAndOffset.zw();
 		light->m_invViewProjMat = invViewProjMat;
-		light->m_camPosPad1 = cameraPosWSpace.xyz0();
-		light->m_fbSizePad2 = Vec4(viewport.z(), viewport.w(), 0.0f, 0.0f);
-		light->m_posRadius = Vec4(plightEl.m_worldPosition.xyz(), 1.0f / (plightEl.m_radius * plightEl.m_radius));
-		light->m_diffuseColorPad1 = plightEl.m_diffuseColor.xyz0();
+		light->m_camPos = cameraPosWSpace.xyz();
+		light->m_fbSize = Vec2(viewport.z(), viewport.w());
+		light->m_position = plightEl.m_worldPosition;
+		light->m_oneOverSquareRadius = 1.0f / (plightEl.m_radius * plightEl.m_radius);
+		light->m_diffuseColor = plightEl.m_diffuseColor;
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES, indexCount);
@@ -153,18 +199,20 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 		DeferredSpotLightUniforms* light =
 			allocateAndBindUniforms<DeferredSpotLightUniforms*>(sizeof(DeferredSpotLightUniforms), cmdb, 0, 1);
 
-		light->m_inputTexUvScaleAndOffset = inputTexUvScaleAndOffset;
+		light->m_inputTexUvScale = inputTexUvScaleAndOffset.xy();
+		light->m_inputTexUvOffset = inputTexUvScaleAndOffset.zw();
 		light->m_invViewProjMat = invViewProjMat;
-		light->m_camPosPad1 = cameraPosWSpace.xyz0();
-		light->m_fbSizePad2 = Vec4(viewport.z(), viewport.w(), 0.0f, 0.0f);
+		light->m_camPos = cameraPosWSpace.xyz();
+		light->m_fbSize = Vec2(viewport.z(), viewport.w());
 
-		light->m_posRadius = Vec4(splightEl.m_worldTransform.getTranslationPart().xyz(),
-			1.0f / (splightEl.m_distance * splightEl.m_distance));
+		light->m_position = splightEl.m_worldTransform.getTranslationPart().xyz();
+		light->m_oneOverSquareRadius = 1.0f / (splightEl.m_distance * splightEl.m_distance);
 
-		light->m_diffuseColorOuterCos = Vec4(splightEl.m_diffuseColor, cos(splightEl.m_outerAngle / 2.0f));
+		light->m_diffuseColor = splightEl.m_diffuseColor;
+		light->m_outerCos = cos(splightEl.m_outerAngle / 2.0f);
 
-		Vec3 lightDir = -splightEl.m_worldTransform.getZAxis().xyz();
-		light->m_lightDirInnerCos = Vec4(lightDir, cos(splightEl.m_innerAngle / 2.0f));
+		light->m_lightDir = -splightEl.m_worldTransform.getZAxis().xyz();
+		light->m_innerCos = cos(splightEl.m_innerAngle / 2.0f);
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES, indexCount);

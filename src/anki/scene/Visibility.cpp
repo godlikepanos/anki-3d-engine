@@ -38,6 +38,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	rqueue.m_previousViewProjectionMatrix = frc.getPreviousViewProjectionMatrix();
 	rqueue.m_cameraNear = frc.getFrustum().getNear();
 	rqueue.m_cameraFar = frc.getFrustum().getFar();
+	rqueue.m_effectiveShadowDistance = frc.getEffectiveShadowDistance();
 
 	auto alloc = m_scene->getFrameAllocator();
 
@@ -242,45 +243,24 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		Bool wantNode = false;
 
 		const RenderComponent* rc = nullptr;
-		if(wantsRenderComponents && (rc = node.tryGetComponent<RenderComponent>()))
-		{
-			wantNode = true;
-		}
+		wantNode |= wantsRenderComponents && (rc = node.tryGetComponent<RenderComponent>());
 
-		if(wantsShadowCasters && (rc = node.tryGetComponent<RenderComponent>()) && rc->getCastsShadow())
-		{
-			wantNode = true;
-		}
+		wantNode |= wantsShadowCasters && (rc = node.tryGetComponent<RenderComponent>()) && rc->getCastsShadow();
 
 		const LightComponent* lc = nullptr;
-		if(wantsLightComponents && (lc = node.tryGetComponent<LightComponent>()))
-		{
-			wantNode = true;
-		}
+		wantNode |= wantsLightComponents && (lc = node.tryGetComponent<LightComponent>());
 
 		const LensFlareComponent* lfc = nullptr;
-		if(wantsFlareComponents && (lfc = node.tryGetComponent<LensFlareComponent>()))
-		{
-			wantNode = true;
-		}
+		wantNode |= wantsFlareComponents && (lfc = node.tryGetComponent<LensFlareComponent>());
 
 		const ReflectionProbeComponent* reflc = nullptr;
-		if(wantsReflectionProbes && (reflc = node.tryGetComponent<ReflectionProbeComponent>()))
-		{
-			wantNode = true;
-		}
+		wantNode |= wantsReflectionProbes && (reflc = node.tryGetComponent<ReflectionProbeComponent>());
 
 		DecalComponent* decalc = nullptr;
-		if(wantsDecals && (decalc = node.tryGetComponent<DecalComponent>()))
-		{
-			wantNode = true;
-		}
+		wantNode |= wantsDecals && (decalc = node.tryGetComponent<DecalComponent>());
 
 		const FogDensityComponent* fogc = nullptr;
-		if(wantsFogDensityComponents && (fogc = node.tryGetComponent<FogDensityComponent>()))
-		{
-			wantNode = true;
-		}
+		wantNode |= wantsFogDensityComponents && (fogc = node.tryGetComponent<FogDensityComponent>());
 
 		if(ANKI_UNLIKELY(!wantNode))
 		{
@@ -321,7 +301,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		ANKI_ASSERT(count == 1 && "TODO: Support sub-spatials");
 
 		// Sort sub-spatials
-		Vec4 origin = testedFrc.getFrustumOrigin();
+		const Vec4 origin = testedFrc.getFrustumOrigin();
 		std::sort(sps.begin(), sps.begin() + count, [origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool {
 			const Vec4& spa = a.m_origin;
 			const Vec4& spb = b.m_origin;
@@ -333,6 +313,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		});
 
 		WeakArray<RenderQueue> nextQueues;
+		WeakArray<FrustumComponent> nextQueueFrustumComponents; // Optional
 
 		if(rc)
 		{
@@ -361,6 +342,19 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 		if(lc)
 		{
+			// Check if it casts shadow
+			Bool castsShadow = lc->getShadowEnabled();
+			if(castsShadow)
+			{
+				// Extra check
+
+				// Compute distance from the frustum
+				const Plane& nearPlane = testedFrc.getFrustum().getPlanesWorldSpace()[FrustumPlaneType::NEAR];
+				const F32 distFromFrustum = max(0.0f, sps[0].m_sp->getAabb().testPlane(nearPlane));
+
+				castsShadow = distFromFrustum < testedFrc.getEffectiveShadowDistance();
+			}
+
 			switch(lc->getLightComponentType())
 			{
 			case LightComponentType::POINT:
@@ -368,7 +362,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				PointLightQueueElement* el = result.m_pointLights.newElement(alloc);
 				lc->setupPointLightQueueElement(*el);
 
-				if(lc->getShadowEnabled())
+				if(castsShadow
+					&& testedFrc.visibilityTestsEnabled(
+						   FrustumComponentVisibilityTestFlag::POINT_LIGHT_SHADOWS_ENABLED))
 				{
 					RenderQueue* a = alloc.newArray<RenderQueue>(6);
 					nextQueues = WeakArray<RenderQueue>(a, 6);
@@ -395,7 +391,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				SpotLightQueueElement* el = result.m_spotLights.newElement(alloc);
 				lc->setupSpotLightQueueElement(*el);
 
-				if(lc->getShadowEnabled())
+				if(castsShadow
+					&& testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::SPOT_LIGHT_SHADOWS_ENABLED))
 				{
 					RenderQueue* a = alloc.newInstance<RenderQueue>();
 					nextQueues = WeakArray<RenderQueue>(a, 1);
@@ -408,6 +405,71 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				{
 					el->m_shadowRenderQueue = nullptr;
 				}
+
+				break;
+			}
+			case LightComponentType::DIRECTIONAL:
+			{
+				ANKI_ASSERT(lc->getShadowEnabled() == true && "Only with shadow for now");
+
+				U cascadeCount;
+				if(ANKI_UNLIKELY(!castsShadow))
+				{
+					cascadeCount = 0;
+				}
+				else if(testedFrc.visibilityTestsEnabled(
+							FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE))
+				{
+					cascadeCount = 1;
+				}
+				else
+				{
+					ANKI_ASSERT(testedFrc.visibilityTestsEnabled(
+						FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES));
+					cascadeCount = MAX_SHADOW_CASCADES;
+				}
+				ANKI_ASSERT(cascadeCount <= MAX_SHADOW_CASCADES);
+
+				WeakArray<OrthographicFrustum> cascadeFrustums(
+					(cascadeCount) ? alloc.newArray<OrthographicFrustum>(cascadeCount) : nullptr, cascadeCount);
+
+				lc->setupDirectionalLightQueueElement(testedFrc.getFrustum(),
+					testedFrc.getEffectiveShadowDistance(),
+					result.m_directionalLight,
+					cascadeFrustums);
+
+				nextQueues = WeakArray<RenderQueue>(
+					(cascadeCount) ? alloc.newArray<RenderQueue>(cascadeCount) : nullptr, cascadeCount);
+				for(U i = 0; i < cascadeCount; ++i)
+				{
+					result.m_directionalLight.m_shadowRenderQueues[i] = &nextQueues[i];
+				}
+
+				// Despite the fact that it's the same light it will have different properties if viewed by different
+				// cameras. If the renderer finds the same UUID it will think it's cached and use wrong shadow tiles.
+				// That's why we need to change its UUID and bind it to the frustum that is currently viewing the light
+				result.m_directionalLight.m_uuid = testedNode.getUuid();
+
+				// Create some dummy frustum components and manually update them
+				FrustumComponent* cascadeFrustumComponents =
+					(cascadeCount) ? reinterpret_cast<FrustumComponent*>(alloc.allocate(
+										 cascadeCount * sizeof(FrustumComponent), alignof(FrustumComponent)))
+								   : nullptr;
+				for(U i = 0; i < cascadeCount; ++i)
+				{
+					::new(&cascadeFrustumComponents[i]) FrustumComponent(&node, &cascadeFrustums[i]);
+					cascadeFrustumComponents[i].setEnabledVisibilityTests(
+						FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
+					cascadeFrustumComponents[i].markShapeForUpdate();
+					cascadeFrustumComponents[i].markTransformForUpdate();
+					Bool updated;
+					Error err = cascadeFrustumComponents[i].update(node, 0.0f, 1.0f, updated);
+					ANKI_ASSERT(updated == true && !err);
+					(void)err;
+					(void)updated;
+				}
+
+				nextQueueFrustumComponents = WeakArray<FrustumComponent>(cascadeFrustumComponents, cascadeCount);
 
 				break;
 			}
@@ -461,11 +523,22 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		if(nextQueues.getSize() > 0)
 		{
 			count = 0;
-			err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
-				m_frcCtx->m_visCtx->submitNewWork(frc, nextQueues[count++], hive);
-				return Error::NONE;
-			});
-			(void)err;
+
+			if(ANKI_LIKELY(nextQueueFrustumComponents.getSize() == 0))
+			{
+				err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
+					m_frcCtx->m_visCtx->submitNewWork(frc, nextQueues[count++], hive);
+					return Error::NONE;
+				});
+				(void)err;
+			}
+			else
+			{
+				for(FrustumComponent& frc : nextQueueFrustumComponents)
+				{
+					m_frcCtx->m_visCtx->submitNewWork(frc, nextQueues[count++], hive);
+				}
+			}
 		}
 
 		// Update timestamp
@@ -530,6 +603,14 @@ void CombineResultsTask::combine()
 	ANKI_VIS_COMBINE(LensFlareQueueElement, m_lensFlares);
 	ANKI_VIS_COMBINE(DecalQueueElement, m_decals);
 	ANKI_VIS_COMBINE(FogDensityQueueElement, m_fogDensityVolumes);
+
+	for(U i = 0; i < threadCount; ++i)
+	{
+		if(m_frcCtx->m_queueViews[i].m_directionalLight.m_uuid != 0)
+		{
+			results.m_directionalLight = m_frcCtx->m_queueViews[i].m_directionalLight;
+		}
+	}
 
 #undef ANKI_VIS_COMBINE
 #undef ANKI_VIS_COMBINE_AND_PTR
@@ -668,7 +749,7 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;
-	ctx.m_earlyZDist = scene.getEarlyZDistance();
+	ctx.m_earlyZDist = scene.getLimits().m_earlyZDistance;
 	ctx.submitNewWork(fsn.getComponent<FrustumComponent>(), rqueue, hive);
 
 	hive.waitAllTasks();
