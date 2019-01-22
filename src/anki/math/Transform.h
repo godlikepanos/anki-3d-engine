@@ -202,7 +202,7 @@ public:
 	ANKI_USE_RESULT TVec4<T> transform(const TVec4<T>& b) const
 	{
 		checkW();
-		TVec4<T> out = TVec4<T>(m_rotation * (b * m_scale), 0.0) + m_origin;
+		TVec4<T> out = TVec4<T>(m_rotation * (b * m_scale), T(0)) + m_origin;
 		return out;
 	}
 

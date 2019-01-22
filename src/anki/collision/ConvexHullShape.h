@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include <anki/collision/ConvexShape.h>
-#include <anki/Math.h>
-#include <anki/util/NonCopyable.h>
+#include <anki/collision/Common.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -16,101 +15,97 @@ namespace anki
 /// @{
 
 /// Convex hull collision shape
-class ConvexHullShape : public NonCopyable, public ConvexShape
+class ConvexHullShape
 {
 public:
-	using Base = ConvexShape;
-
+	/// Will not initialize any memory, nothing.
 	ConvexHullShape()
-		: Base(CollisionShapeType::CONVEX_HULL)
 	{
 	}
 
-	ConvexHullShape(ConvexHullShape&& b)
-		: Base(CollisionShapeType::CONVEX_HULL)
+	ConvexHullShape(const ConvexHullShape& other)
 	{
-		move(b);
+		operator=(other);
 	}
 
-	~ConvexHullShape()
+	/// In initializes the storage that holds the point cloud using a predefined buffer. The convex hull is not the
+	/// owner of the storage.
+	/// @param points The base of the storage buffer. Size should be @a pointCount * sizeof(Vec4)
+	/// @param pointCount The number of points
+	ConvexHullShape(const Vec4* points, U pointCount)
+		: m_trf(Transform::getIdentity())
+		, m_invTrf(Transform::getIdentity())
+		, m_points(points)
+		, m_pointCount(pointCount)
+		, m_trfIdentity(true)
 	{
-		destroy();
+		check();
 	}
 
-	ConvexHullShape& operator=(ConvexHullShape&& b)
+	ConvexHullShape& operator=(const ConvexHullShape& b)
 	{
-		move(b);
+		b.check();
+		m_trf = b.m_trf;
+		m_invTrf = b.m_invTrf;
+		m_points = b.m_points;
+		m_pointCount = b.m_pointCount;
+		m_trfIdentity = b.m_trfIdentity;
 		return *this;
 	}
 
 	/// Get points in local space.
-	const Vec4* getPoints() const
+	ConstWeakArray<Vec4> getPoints() const
 	{
-		ANKI_ASSERT(m_points);
-		return m_points;
+		check();
+		return ConstWeakArray<Vec4>(m_points, m_pointCount);
 	}
 
-	U32 getPointsCount() const
-	{
-		ANKI_ASSERT(m_pointsCount > 0);
-		return m_pointsCount;
-	}
-
+	/// Get current transform.
 	const Transform& getTransform() const
 	{
+		check();
 		return m_trf;
 	}
 
-	/// Calculate from a set of points. You have to call initStorage before calling this method.
-	void setFromPointCloud(const Vec3* buff, U count, PtrSize stride, PtrSize buffSize);
-
-	/// This function initializes the storage that holds the point cloud. This method allocates a storage and the owner
-	/// is the convex hull.
-	/// @param alloc The allocator to use for the point cloud
-	/// @param pointCount The number of points
-	void initStorage(CollisionAllocator<U8>& alloc, U pointCount);
-
-	/// This function initializes the storage that holds the point cloud using a predefined buffer. The convex hull is
-	/// not the owner of the storage.
-	/// @param buffer The base of the storage buffer. Size should be @a pointCount * sizeof(Vec4)
-	/// @param pointCount The number of points
-	void initStorage(void* buffer, U pointCount);
-
-	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v) override
+	const Transform& getInvertTransform() const
 	{
-		v.visit(*this);
-	}
-	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const override
-	{
-		v.visit(*this);
+		check();
+		return m_invTrf;
 	}
 
-	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const override;
+	Bool isTransformIdentity() const
+	{
+		return m_trfIdentity;
+	}
 
-	/// Implements CollisionShape::transform.
-	void transform(const Transform& trf) override;
+	/// Get a transformed.
+	ANKI_USE_RESULT ConvexHullShape getTransformed(const Transform& trf) const;
 
-	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& aabb) const override;
-
-	/// Implements ConvexShape::computeSupport
-	Vec4 computeSupport(const Vec4& dir) const override;
+	/// Compute the GJK support.
+	ANKI_USE_RESULT Vec4 computeSupport(const Vec4& dir) const;
 
 private:
-	Transform m_trf = Transform::getIdentity();
-	Transform m_invTrf = Transform::getIdentity();
-	Vec4* m_points = nullptr;
-	U32 m_pointsCount = 0;
-	CollisionAllocator<Vec4> m_alloc;
-	Bool8 m_ownsTheStorage = false;
-	Bool8 m_trfIdentity = true; ///< Optimization.
+	Transform m_trf;
+	Transform m_invTrf;
 
-	void move(ConvexHullShape& b);
+	const Vec4* m_points
+#if ANKI_ASSERTS_ENABLED
+		= nullptr
+#endif
+		;
 
-	void destroy();
+	U32 m_pointCount
+#if ANKI_ASSERTS_ENABLED
+		= 0
+#endif
+		;
+
+	Bool8 m_trfIdentity; ///< Optimization.
+
+	void check() const
+	{
+		ANKI_ASSERT(m_points && m_pointCount > 0);
+	}
 };
 /// @}
 

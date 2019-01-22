@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include <anki/collision/CollisionShape.h>
-#include <anki/Math.h>
+#include <anki/collision/Common.h>
 
 namespace anki
 {
@@ -15,49 +14,43 @@ namespace anki
 /// @{
 
 /// Plane collision shape
-class Plane : public CollisionShape
+class Plane
 {
 public:
-	using Base = CollisionShape;
-
-	/// Default constructor
+	/// Will not initialize any memory, nothing.
 	Plane()
-		: CollisionShape(CollisionShapeType::PLANE)
 	{
 	}
 
 	/// Copy constructor
 	Plane(const Plane& b)
-		: CollisionShape(CollisionShapeType::PLANE)
 	{
 		operator=(b);
 	}
 
 	/// Constructor
 	Plane(const Vec4& normal, F32 offset)
-		: CollisionShape(CollisionShapeType::PLANE)
-		, m_normal(normal)
+		: m_normal(normal)
 		, m_offset(offset)
 	{
+		check();
 	}
 
 	/// @see setFrom3Points
 	Plane(const Vec4& p0, const Vec4& p1, const Vec4& p2)
-		: CollisionShape(CollisionShapeType::PLANE)
 	{
 		setFrom3Points(p0, p1, p2);
 	}
 
 	/// @see setFromPlaneEquation
 	Plane(F32 a, F32 b, F32 c, F32 d)
-		: CollisionShape(CollisionShapeType::PLANE)
 	{
 		setFromPlaneEquation(a, b, c, d);
 	}
 
 	Plane& operator=(const Plane& b)
 	{
-		Base::operator=(b);
+		b.check();
 		m_normal = b.m_normal;
 		m_offset = b.m_offset;
 		return *this;
@@ -65,12 +58,10 @@ public:
 
 	const Vec4& getNormal() const
 	{
+		check();
 		return m_normal;
 	}
-	Vec4& getNormal()
-	{
-		return m_normal;
-	}
+
 	void setNormal(const Vec4& x)
 	{
 		m_normal = x;
@@ -78,76 +69,13 @@ public:
 
 	F32 getOffset() const
 	{
+		check();
 		return m_offset;
 	}
-	F32& getOffset()
-	{
-		return m_offset;
-	}
+
 	void setOffset(const F32 x)
 	{
 		m_offset = x;
-	}
-
-	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v)
-	{
-		v.visit(*this);
-	}
-	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const
-	{
-		v.visit(*this);
-	}
-
-	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const;
-
-	/// Implements CollisionShape::transform
-	void transform(const Transform& trf)
-	{
-		*this = getTransformed(trf);
-	}
-
-	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& b) const;
-
-	/// Return the transformed
-	Plane getTransformed(const Transform& trf) const;
-
-	/// It gives the distance between a point and a plane. It returns >0 if the point lies in front of the plane, <0
-	/// if it's behind and ==0 when it's co-planar.
-	F32 test(const Vec4& point) const
-	{
-		ANKI_ASSERT(isZero<F32>(point.w()));
-		return m_normal.dot(point) - m_offset;
-	}
-
-	/// Get the distance from a point to this plane
-	F32 getDistance(const Vec4& point) const
-	{
-		return absolute(test(point));
-	}
-
-	/// Returns the perpedicular point of a given point in this plane. Plane's normal and returned-point are
-	/// perpedicular
-	Vec4 getClosestPoint(const Vec4& point) const
-	{
-		return point - m_normal * test(point);
-	}
-
-	/// Find intersection with a vector.
-	Bool intersectVector(const Vec4& p, Vec4& intersection) const;
-
-	/// Find the intersection point of this plane and a ray. If the ray hits the back of the plane then there is no
-	/// intersection.
-	Bool intersectRay(const Vec4& rayOrigin, const Vec4& rayDir, Vec4& intersection) const;
-
-	/// Test a CollisionShape
-	template<typename T>
-	F32 testShape(const T& x) const
-	{
-		return x.testPlane(*this, x);
 	}
 
 	/// Set the plane from 3 points
@@ -156,15 +84,27 @@ public:
 	/// Set from plane equation is ax+by+cz+d
 	void setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d);
 
-	/// Extract the clip planes using an MVP matrix.
-	static void extractClipPlanes(const Mat4& mvp, Array<Plane, 6>& planes);
-
-	/// See extractClipPlanes.
-	static void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane);
+	/// Return the transformed
+	Plane getTransformed(const Transform& trf) const;
 
 private:
-	Vec4 m_normal;
-	F32 m_offset;
+	Vec4 m_normal
+#if ANKI_ASSERTS_ENABLED
+		= Vec4(MAX_F32)
+#endif
+		;
+
+	F32 m_offset
+#if ANKI_ASSERTS_ENABLED
+		= MAX_F32
+#endif
+		;
+
+	void check() const
+	{
+		ANKI_ASSERT(m_normal.w() == 0.0f);
+		ANKI_ASSERT(m_offset != MAX_F32);
+	}
 };
 /// @}
 

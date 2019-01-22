@@ -9,12 +9,11 @@
 #include <anki/collision/Sphere.h>
 #include <anki/collision/Obb.h>
 #include <anki/collision/LineSegment.h>
-#include <anki/collision/Frustum.h>
 #include <anki/collision/Aabb.h>
-#include <anki/collision/CompoundShape.h>
 #include <anki/collision/ConvexHullShape.h>
+#include <anki/collision/Ray.h>
+#include <anki/collision/Cone.h>
 
-#include <anki/collision/GjkEpa.h>
-#include <anki/collision/Tests.h>
+#include <anki/collision/Functions.h>
 
 /// @defgroup collision Collision detection module

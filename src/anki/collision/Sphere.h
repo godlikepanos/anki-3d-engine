@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include <anki/collision/ConvexShape.h>
-#include <anki/Math.h>
+#include <anki/collision/Common.h>
 
 namespace anki
 {
@@ -14,36 +13,46 @@ namespace anki
 /// @addtogroup collision
 /// @{
 
-/// Sphere collision shape
-class Sphere : public ConvexShape
+/// Sphere collision shape.
+class Sphere
 {
 public:
-	using Base = ConvexShape;
-
-	/// Default constructor
+	/// Will not initialize any memory, nothing.
 	Sphere()
-		: Base(CollisionShapeType::SPHERE)
 	{
 	}
 
 	/// Copy constructor
 	Sphere(const Sphere& b)
-		: Base(CollisionShapeType::SPHERE)
 	{
 		operator=(b);
 	}
 
 	/// Constructor
 	Sphere(const Vec4& center, F32 radius)
-		: Base(CollisionShapeType::SPHERE)
-		, m_center(center)
+		: m_center(center)
 		, m_radius(radius)
-		, m_radiusSq(radius * radius)
 	{
+		check();
+	}
+
+	/// Set from point cloud.
+	Sphere(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, PtrSize buffSize)
+	{
+		setFromPointCloud(pointBuffer, pointCount, pointStride, buffSize);
+	}
+
+	Sphere& operator=(const Sphere& b)
+	{
+		b.check();
+		m_center = b.m_center;
+		m_radius = b.m_radius;
+		return *this;
 	}
 
 	const Vec4& getCenter() const
 	{
+		check();
 		return m_center;
 	}
 
@@ -60,76 +69,55 @@ public:
 
 	F32 getRadius() const
 	{
+		check();
 		return m_radius;
-	}
-
-	F32 getRadiusSquared() const
-	{
-		ANKI_ASSERT(m_radiusSq == m_radius * m_radius);
-		return m_radiusSq;
 	}
 
 	void setRadius(const F32 x)
 	{
 		m_radius = x;
-		m_radiusSq = x * x;
 	}
 
-	Sphere& operator=(const Sphere& b)
+	/// Calculate from a set of points
+	void setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, PtrSize buffSize);
+
+	Sphere getTransformed(const Transform& transform) const
 	{
-		Base::operator=(b);
-		m_center = b.m_center;
-		m_radius = b.m_radius;
-		m_radiusSq = b.m_radiusSq;
-		return *this;
+		check();
+		Sphere out;
+		out.m_center = transform.transform(m_center);
+		out.m_radius = m_radius * transform.getScale();
+		return out;
 	}
-
-	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v)
-	{
-		v.visit(*this);
-	}
-	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const
-	{
-		v.visit(*this);
-	}
-
-	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const;
-
-	/// Implements CollisionShape::transform
-	void transform(const Transform& trf)
-	{
-		*this = getTransformed(trf);
-	}
-
-	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& b) const;
-
-	Sphere getTransformed(const Transform& transform) const;
 
 	/// Get the sphere that includes this sphere and the given. See a drawing in the docs dir for more info about the
 	/// algorithm
 	Sphere getCompoundShape(const Sphere& b) const;
 
-	/// Calculate from a set of points
-	void setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize);
-
-	/// Implements CompoundShape::computeSupport
-	Vec4 computeSupport(const Vec4& dir) const;
-
-	/// Intersect a ray with the sphere. It will not return the points that are not part of the ray.
-	Bool intersectsRay(
-		const Vec4& rayDir, const Vec4& rayOrigin, Array<Vec4, 2>& intersectionPoints, U& intersectionPointCount) const;
-
-	/// https://bartwronski.com/2017/04/13/cull-that-cone/
-	Bool intersectsCone(const Vec4& coneOrigin, const Vec4& coneDir, F32 coneLength, F32 coneAngle) const;
+	/// Compute the GJK support.
+	Vec4 computeSupport(const Vec4& dir) const
+	{
+		return m_center + dir.getNormalized() * m_radius;
+	}
 
 private:
-	Vec4 m_center;
-	F32 m_radius;
-	F32 m_radiusSq;
+	Vec4 m_center
+#if ANKI_ASSERTS_ENABLED
+		= Vec4(MAX_F32)
+#endif
+		;
+
+	F32 m_radius
+#if ANKI_ASSERTS_ENABLED
+		= -1.0f
+#endif
+		;
+
+	void check() const
+	{
+		ANKI_ASSERT(m_center.w() == 0.0f);
+		ANKI_ASSERT(m_radius > 0.0f);
+	}
 };
 /// @}
 

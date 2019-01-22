@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/collision/Forward.h>
-#include <anki/util/Allocator.h>
+#include <anki/Math.h>
 
 namespace anki
 {
@@ -14,7 +14,7 @@ namespace anki
 /// @addtogroup collision
 /// @{
 
-/// The 6 frustum planes
+/// The 6 frustum planes.
 enum class FrustumPlaneType : U8
 {
 	NEAR,
@@ -26,12 +26,26 @@ enum class FrustumPlaneType : U8
 	COUNT ///< Number of planes
 };
 
-/// The type of the collision temporary allocator
-template<typename T>
-using CollisionTempAllocator = StackAllocator<T>;
+/// Collision shape type.
+enum class CollisionShapeType : U8
+{
+	PLANE,
+	LINE_SEGMENT,
+	RAY,
+	AABB,
+	SPHERE,
+	OBB,
+	CONVEX_HULL,
+	CONE,
+	COUNT
+};
 
-template<typename T>
-using CollisionAllocator = ChainAllocator<T>;
+/// Frustum type
+enum class FrustumType : U8
+{
+	PERSPECTIVE,
+	ORTHOGRAPHIC
+};
 /// @}
 
 } // end namespace anki

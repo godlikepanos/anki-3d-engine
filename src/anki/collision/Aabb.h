@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include <anki/collision/ConvexShape.h>
-#include <anki/math/Vec3.h>
+#include <anki/collision/Common.h>
 
 namespace anki
 {
@@ -14,46 +13,58 @@ namespace anki
 /// @addtogroup collision
 /// @{
 
-/// Axis align bounding box collision shape
-class Aabb : public ConvexShape
+/// Axis align bounding box collision shape.
+class Aabb
 {
 public:
-	using Base = ConvexShape;
-
+	/// Will not initialize any memory, nothing.
 	Aabb()
-		: Base(CollisionShapeType::AABB)
 	{
 	}
 
 	Aabb(const Vec4& min, const Vec4& max)
-		: Base(CollisionShapeType::AABB)
-		, m_min(min)
+		: m_min(min)
 		, m_max(max)
 	{
-		ANKI_ASSERT(min.w() == 0.0f && max.w() == 0.0f);
-		ANKI_ASSERT(m_min.xyz() < m_max.xyz());
+		check();
 	}
 
 	Aabb(const Vec3& min, const Vec3& max)
 		: Aabb(Vec4(min, 0.0f), Vec4(max, 0.0f))
 	{
-		ANKI_ASSERT(m_min.xyz() < m_max.xyz());
+		check();
 	}
 
+	/// Set from point cloud.
+	Aabb(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, PtrSize buffSize)
+	{
+		setFromPointCloud(pointBuffer, pointCount, pointStride, buffSize);
+	}
+
+	/// Copy.
 	Aabb(const Aabb& b)
-		: Base(CollisionShapeType::AABB)
 	{
 		operator=(b);
 	}
 
+	/// Copy.
+	Aabb& operator=(const Aabb& b)
+	{
+		b.check();
+		m_min = b.m_min;
+		m_max = b.m_max;
+		return *this;
+	}
+
 	const Vec4& getMin() const
 	{
+		check();
 		return m_min;
 	}
 
 	void setMin(const Vec4& x)
 	{
-		ANKI_ASSERT(x.w() == 0.0);
+		ANKI_ASSERT(x.w() == 0.0f);
 		m_min = x;
 	}
 
@@ -64,12 +75,13 @@ public:
 
 	const Vec4& getMax() const
 	{
+		check();
 		return m_max;
 	}
 
 	void setMax(const Vec4& x)
 	{
-		ANKI_ASSERT(x.w() == 0.0);
+		ANKI_ASSERT(x.w() == 0.0f);
 		m_max = x;
 	}
 
@@ -78,43 +90,8 @@ public:
 		setMax(Vec4(x, 0.0f));
 	}
 
-	/// Copy.
-	Aabb& operator=(const Aabb& b)
-	{
-		Base::operator=(b);
-		m_min = b.m_min;
-		m_max = b.m_max;
-		return *this;
-	}
-
-	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v) override
-	{
-		v.visit(*this);
-	}
-	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const override
-	{
-		v.visit(*this);
-	}
-
-	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const override;
-
-	/// Implements CollisionShape::transform
-	void transform(const Transform& trf) override
-	{
-		*this = getTransformed(trf);
-	}
-
-	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& b) const override
-	{
-		b = *this;
-	}
-
-	/// Implements CompoundShape::computeSupport
-	Vec4 computeSupport(const Vec4& dir) const override;
+	/// Compute the GJK support.
+	ANKI_USE_RESULT Vec4 computeSupport(const Vec4& dir) const;
 
 	/// It uses a nice trick to avoid unwanted calculations
 	Aabb getTransformed(const Transform& transform) const;
@@ -123,24 +100,27 @@ public:
 	Aabb getCompoundShape(const Aabb& b) const;
 
 	/// Calculate from a set of points
-	void setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize);
-
-	// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
-	// intersection point is rayOrigin + rayDir * a
-	// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
-	F32 intersectRayInside(const Vec3& rayOrigin, const Vec3& rayDir) const
-	{
-		const Vec3 reciprocal = rayDir.reciprocal();
-		const Vec3 intersectMaxPointPlanes = (m_max.xyz() - rayOrigin) * reciprocal;
-		const Vec3 intersectMinPointPlanes = (m_min.xyz() - rayOrigin) * reciprocal;
-		const Vec3 largestParams = intersectMaxPointPlanes.max(intersectMinPointPlanes);
-		const F32 distToIntersect = min(min(largestParams.x(), largestParams.y()), largestParams.z());
-		return distToIntersect;
-	}
+	void setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, PtrSize buffSize);
 
 private:
-	Vec4 m_min;
-	Vec4 m_max;
+	Vec4 m_min
+#if ANKI_ASSERTS_ENABLED
+		= Vec4(MAX_F32)
+#endif
+		;
+
+	Vec4 m_max
+#if ANKI_ASSERTS_ENABLED
+		= Vec4(MIN_F32)
+#endif
+		;
+
+	void check() const
+	{
+		ANKI_ASSERT(m_min.xyz() < m_max.xyz());
+		ANKI_ASSERT(m_min.w() == 0.0f);
+		ANKI_ASSERT(m_max.w() == 0.0f);
+	}
 };
 /// @}
 
