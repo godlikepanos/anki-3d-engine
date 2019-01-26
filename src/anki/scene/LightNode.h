@@ -34,9 +34,6 @@ protected:
 	/// Called when moved
 	void onMoveUpdateCommon(const MoveComponent& move);
 
-	/// One of the frustums got updated
-	void onShapeUpdateCommon(LightComponent& light);
-
 	void frameUpdateCommon();
 
 	virtual void onMoveUpdate(const MoveComponent& move) = 0;

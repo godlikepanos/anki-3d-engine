@@ -41,7 +41,7 @@ class Octree::GatherParallelCtx
 public:
 	Octree* m_octree = nullptr;
 	SpinLock m_lock;
-	const FrustumComponent* m_frustumComp = nullptr;
+	Array<Plane, 6> m_frustumPlanes;
 	U32 m_testId = MAX_U32;
 	OctreeNodeVisibilityTestCallback m_testCallback = nullptr;
 	void* m_testCallbackUserData = nullptr;
@@ -332,7 +332,7 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 	}
 }
 
-void Octree::gatherVisibleRecursive(const FrustumComponent& frustumComp,
+void Octree::gatherVisibleRecursive(const Plane frustumPlanes[6],
 	U32 testId,
 	OctreeNodeVisibilityTestCallback testCallback,
 	void* testCallbackUserData,
@@ -360,7 +360,16 @@ void Octree::gatherVisibleRecursive(const FrustumComponent& frustumComp,
 			aabb.setMin(child->m_aabbMin);
 			aabb.setMax(child->m_aabbMax);
 
-			Bool inside = frustumComp.insideFrustum(aabb);
+			Bool inside = true;
+			for(U i = 0; i < 6; ++i)
+			{
+				if(testPlane(frustumPlanes[i], aabb) < 0.0f)
+				{
+					inside = false;
+					break;
+				}
+			}
+
 			if(inside && testCallback != nullptr)
 			{
 				inside = testCallback(testCallbackUserData, aabb);
@@ -368,7 +377,7 @@ void Octree::gatherVisibleRecursive(const FrustumComponent& frustumComp,
 
 			if(inside)
 			{
-				gatherVisibleRecursive(frustumComp, testId, testCallback, testCallbackUserData, child, out);
+				gatherVisibleRecursive(frustumPlanes, testId, testCallback, testCallbackUserData, child, out);
 			}
 		}
 	}
@@ -434,7 +443,7 @@ void Octree::debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) con
 	}
 }
 
-void Octree::gatherVisibleParallel(const FrustumComponent* frustumComp,
+void Octree::gatherVisibleParallel(const Plane frustumPlanes[6],
 	U32 testId,
 	OctreeNodeVisibilityTestCallback testCallback,
 	void* testCallbackUserData,
@@ -443,13 +452,13 @@ void Octree::gatherVisibleParallel(const FrustumComponent* frustumComp,
 	ThreadHiveSemaphore* waitSemaphore,
 	ThreadHiveSemaphore*& signalSemaphore)
 {
-	ANKI_ASSERT(out && frustumComp);
+	ANKI_ASSERT(out && frustumPlanes);
 
 	// Create the ctx
 	GatherParallelCtx* ctx = static_cast<GatherParallelCtx*>(
 		hive.allocateScratchMemory(sizeof(GatherParallelCtx), alignof(GatherParallelCtx)));
 	ctx->m_octree = this;
-	ctx->m_frustumComp = frustumComp;
+	memcpy(&ctx->m_frustumPlanes[0], frustumPlanes, sizeof(ctx->m_frustumPlanes));
 	ctx->m_testId = testId;
 	ctx->m_testCallback = testCallback;
 	ctx->m_testCallbackUserData = testCallbackUserData;
@@ -488,7 +497,6 @@ void Octree::gatherVisibleParallelTask(
 	GatherParallelCtx& ctx = *taskCtx.m_ctx;
 
 	Leaf* const leaf = taskCtx.m_leaf;
-	const FrustumComponent& frustumComp = *ctx.m_frustumComp;
 	DynamicArrayAuto<void*>& out = *ctx.m_out;
 	OctreeNodeVisibilityTestCallback testCallback = ctx.m_testCallback;
 	void* testCallbackUserData = ctx.m_testCallbackUserData;
@@ -520,7 +528,16 @@ void Octree::gatherVisibleParallelTask(
 			aabb.setMin(child->m_aabbMin);
 			aabb.setMax(child->m_aabbMax);
 
-			Bool inside = frustumComp.insideFrustum(aabb);
+			Bool inside = true;
+			for(U i = 0; i < 6; ++i)
+			{
+				if(testPlane(taskCtx.m_ctx->m_frustumPlanes[i], aabb) < 0.0f)
+				{
+					inside = false;
+					break;
+				}
+			}
+
 			if(inside && testCallback != nullptr)
 			{
 				inside = testCallback(testCallbackUserData, aabb);

@@ -293,7 +293,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 			pos.y() = positions[j + 1];
 			pos.z() = positions[j + 2];
 
-			F32 test = plane.test(pos.xyz0());
+			F32 test = testPlane(plane, pos.xyz0());
 			if(test > EPSILON)
 			{
 				convex = false;

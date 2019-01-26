@@ -186,8 +186,6 @@ void PointLightNode::onShapeUpdate(LightComponent& light)
 	(void)err;
 
 	m_sphereW.setRadius(light.getRadius());
-
-	onShapeUpdateCommon(light);
 }
 
 Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)

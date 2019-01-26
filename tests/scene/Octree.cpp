@@ -14,6 +14,7 @@ ANKI_TEST(Scene, Octree)
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	// Fuzzy
+#if 0
 	{
 		Octree octree(alloc);
 		octree.init(Vec3(-100.0f), Vec3(100.0f), 4);
@@ -82,6 +83,7 @@ ANKI_TEST(Scene, Octree)
 			placed.pop_back();
 		}
 	}
+#endif
 }
 
 } // end namespace anki
