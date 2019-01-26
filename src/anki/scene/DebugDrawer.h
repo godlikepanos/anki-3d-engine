@@ -8,7 +8,6 @@
 #include <anki/scene/Common.h>
 #include <anki/Math.h>
 #include <anki/Gr.h>
-#include <anki/collision/CollisionShape.h>
 #include <anki/physics/PhysicsDrawer.h>
 #include <anki/util/Array.h>
 #include <anki/resource/ShaderProgramResource.h>
@@ -103,36 +102,6 @@ private:
 	DynamicArray<Vec3> m_sphereVerts;
 
 	void flush();
-};
-
-/// Contains methods to render the collision shapes
-class CollisionDebugDrawer : public CollisionShape::ConstVisitor
-{
-public:
-	/// Constructor
-	CollisionDebugDrawer(DebugDrawer* dbg)
-		: m_dbg(dbg)
-	{
-	}
-
-	void visit(const LineSegment&);
-
-	void visit(const Obb&);
-
-	void visit(const Frustum&);
-
-	void visit(const Plane&);
-
-	void visit(const Sphere&);
-
-	void visit(const Aabb&);
-
-	void visit(const CompoundShape&);
-
-	void visit(const ConvexHullShape&);
-
-private:
-	DebugDrawer* m_dbg; ///< The debug drawer
 };
 
 /// Implement physics debug drawer.

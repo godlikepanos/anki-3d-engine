@@ -59,24 +59,24 @@ public:
 	void remove(OctreePlaceable& placeable);
 
 	/// Gather visible placeables.
-	/// @param frustum The frustum to test against.
+	/// @param frustumComp The frustum to test against.
 	/// @param testId A unique index for this test.
 	/// @param testCallback A ptr to a function that will be used to perform an additional test to the box of the
 	///                     Octree node. Can be nullptr.
 	/// @param testCallbackUserData Parameter to the testCallback. Can be nullptr.
 	/// @param out The output of the tests.
 	/// @note It's thread-safe against other gatherVisible calls.
-	void gatherVisible(const Frustum& frustum,
+	void gatherVisible(const FrustumComponent& frustumComp,
 		U32 testId,
 		OctreeNodeVisibilityTestCallback testCallback,
 		void* testCallbackUserData,
 		DynamicArrayAuto<void*>& out)
 	{
-		gatherVisibleRecursive(frustum, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
+		gatherVisibleRecursive(frustumComp, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
 	}
 
 	/// Similar to gatherVisible but it spawns ThreadHive tasks.
-	void gatherVisibleParallel(const Frustum* frustum,
+	void gatherVisibleParallel(const FrustumComponent* frustumComp,
 		U32 testId,
 		OctreeNodeVisibilityTestCallback testCallback,
 		void* testCallbackUserData,
@@ -265,7 +265,7 @@ private:
 	/// Remove a placeable from the tree.
 	void removeInternal(OctreePlaceable& placeable);
 
-	static void gatherVisibleRecursive(const Frustum& frustum,
+	static void gatherVisibleRecursive(const FrustumComponent& frustumComp,
 		U32 testId,
 		OctreeNodeVisibilityTestCallback testCallback,
 		void* testCallbackUserData,

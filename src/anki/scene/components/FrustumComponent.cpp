@@ -5,23 +5,34 @@
 
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/SceneNode.h>
+#include <anki/scene/components/SpatialComponent.h>
 
 namespace anki
 {
 
-FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
+FrustumComponent::FrustumComponent(SceneNode* node, FrustumType frustumType)
 	: SceneComponent(CLASS_TYPE)
 	, m_node(node)
-	, m_frustum(frustum)
-	, m_flags(0)
+	, m_frustumType(frustumType)
 {
-	// WARNING: Never touch m_frustum in constructor
+	ANKI_ASSERT(&m_perspective.m_far == &m_ortho.m_far);
 	ANKI_ASSERT(node);
-	ANKI_ASSERT(frustum);
-	markShapeForUpdate();
-	markTransformForUpdate();
+	ANKI_ASSERT(frustumType < FrustumType::COUNT);
 
+	m_flags.set(SHAPE_MARKED_FOR_UPDATE | TRANSFORM_MARKED_FOR_UPDATE);
 	setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+
+	// Set some default values
+	if(frustumType == FrustumType::PERSPECTIVE)
+	{
+		setPerspective(0.1f, 100.0f, toRad(45.0f), toRad(45.0f));
+	}
+	else
+	{
+		setOrthographic(0.1f, 100.0f, 5.0f, -5.0f, 5.0f, -5.0f);
+	}
+
+	updateInternal();
 }
 
 FrustumComponent::~FrustumComponent()
@@ -29,32 +40,113 @@ FrustumComponent::~FrustumComponent()
 	m_coverageBuff.m_depthMap.destroy(m_node->getAllocator());
 }
 
-Error FrustumComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+Bool FrustumComponent::updateInternal()
 {
-	ANKI_ASSERT(&node == m_node);
+	ANKI_ASSERT(m_frustumType != FrustumType::COUNT);
 
-	updated = false;
+	Bool updated = false;
 	m_prevViewProjMat = m_viewProjMat;
 
+	// Update the shape
 	if(m_flags.get(SHAPE_MARKED_FOR_UPDATE))
 	{
 		updated = true;
-		m_projMat = m_frustum->calculateProjectionMatrix();
+
+		if(m_frustumType == FrustumType::PERSPECTIVE)
+		{
+			m_projMat = Mat4::calculatePerspectiveProjectionMatrix(
+				m_perspective.m_fovX, m_perspective.m_fovY, m_perspective.m_near, m_perspective.m_far);
+
+			// This came from unprojecting. It works, don't touch it
+			const F32 x =
+				m_perspective.m_far * tan(m_perspective.m_fovY / 2.0f) * m_perspective.m_fovX / m_perspective.m_fovY;
+			const F32 y = tan(m_perspective.m_fovY / 2.0f) * m_perspective.m_far;
+			const F32 z = -m_perspective.m_far;
+
+			m_perspective.m_edgesL[0] = Vec4(x, y, z, 0.0f); // top right
+			m_perspective.m_edgesL[1] = Vec4(-x, y, z, 0.0f); // top left
+			m_perspective.m_edgesL[2] = Vec4(-x, -y, z, 0.0f); // bot left
+			m_perspective.m_edgesL[3] = Vec4(x, -y, z, 0.0f); // bot right
+
+			// Planes
+			F32 c, s; // cos & sine
+
+			sinCos(PI + m_perspective.m_fovX / 2.0f, s, c);
+			// right
+			m_viewPlanesL[FrustumPlaneType::RIGHT] = Plane(Vec4(c, 0.0f, s, 0.0f), 0.0f);
+			// left
+			m_viewPlanesL[FrustumPlaneType::LEFT] = Plane(Vec4(-c, 0.0f, s, 0.0f), 0.0f);
+
+			sinCos((PI + m_perspective.m_fovY) * 0.5f, s, c);
+			// bottom
+			m_viewPlanesL[FrustumPlaneType::BOTTOM] = Plane(Vec4(0.0f, s, c, 0.0f), 0.0f);
+			// top
+			m_viewPlanesL[FrustumPlaneType::TOP] = Plane(Vec4(0.0f, -s, c, 0.0f), 0.0f);
+
+			// near
+			m_viewPlanesL[FrustumPlaneType::NEAR] = Plane(Vec4(0.0f, 0.0f, -1.0, 0.0f), m_perspective.m_near);
+			// far
+			m_viewPlanesL[FrustumPlaneType::FAR] = Plane(Vec4(0.0f, 0.0f, 1.0, 0.0f), -m_perspective.m_far);
+		}
+		else
+		{
+			m_projMat = Mat4::calculateOrthographicProjectionMatrix(
+				m_ortho.m_right, m_ortho.m_left, m_ortho.m_top, m_ortho.m_bottom, m_ortho.m_near, m_ortho.m_far);
+
+			// OBB
+			const Vec4 c((m_ortho.m_right + m_ortho.m_left) * 0.5f,
+				(m_ortho.m_top + m_ortho.m_bottom) * 0.5f,
+				-(m_ortho.m_far + m_ortho.m_near) * 0.5f,
+				0.0f);
+			const Vec4 e = Vec4(m_ortho.m_right, m_ortho.m_top, -m_ortho.m_far, 0.0f) - c;
+
+			m_ortho.m_obbL = Obb(c, Mat3x4::getIdentity(), e);
+
+			// Planes
+			m_viewPlanesL[FrustumPlaneType::LEFT] = Plane(Vec4(1.0f, 0.0f, 0.0f, 0.0f), m_ortho.m_left);
+			m_viewPlanesL[FrustumPlaneType::RIGHT] = Plane(Vec4(-1.0f, 0.0f, 0.0f, 0.0f), -m_ortho.m_right);
+			m_viewPlanesL[FrustumPlaneType::NEAR] = Plane(Vec4(0.0f, 0.0f, -1.0f, 0.0f), m_ortho.m_near);
+			m_viewPlanesL[FrustumPlaneType::FAR] = Plane(Vec4(0.0f, 0.0f, 1.0f, 0.0f), -m_ortho.m_far);
+			m_viewPlanesL[FrustumPlaneType::TOP] = Plane(Vec4(0.0f, -1.0f, 0.0f, 0.0f), -m_ortho.m_top);
+			m_viewPlanesL[FrustumPlaneType::BOTTOM] = Plane(Vec4(0.0f, 1.0f, 0.0f, 0.0f), m_ortho.m_bottom);
+		}
 	}
 
+	// Update transform related things
 	if(m_flags.get(TRANSFORM_MARKED_FOR_UPDATE))
 	{
 		updated = true;
-		m_viewMat = Mat4(m_frustum->getTransform().getInverse());
+		m_viewMat = Mat4(m_trf.getInverse());
 	}
 
+	// Updates that are affected by transform & shape updates
 	if(updated)
 	{
 		m_viewProjMat = m_projMat * m_viewMat;
 		m_flags.unset(SHAPE_MARKED_FOR_UPDATE | TRANSFORM_MARKED_FOR_UPDATE);
+
+		if(m_frustumType == FrustumType::PERSPECTIVE)
+		{
+			m_perspective.m_edgesW[0] = m_trf.getOrigin();
+			m_perspective.m_edgesW[1] = m_trf.transform(m_perspective.m_edgesL[0]);
+			m_perspective.m_edgesW[2] = m_trf.transform(m_perspective.m_edgesL[1]);
+			m_perspective.m_edgesW[3] = m_trf.transform(m_perspective.m_edgesL[2]);
+			m_perspective.m_edgesW[4] = m_trf.transform(m_perspective.m_edgesL[3]);
+
+			m_perspective.m_hull = ConvexHullShape(&m_perspective.m_edgesW[0], m_perspective.m_edgesW.getSize());
+		}
+		else
+		{
+			m_ortho.m_obbW = m_ortho.m_obbL.getTransformed(m_trf);
+		}
+
+		for(FrustumPlaneType planeId = FrustumPlaneType::FIRST; planeId < FrustumPlaneType::COUNT; ++planeId)
+		{
+			m_viewPlanesW[planeId] = m_viewPlanesL[planeId].getTransformed(m_trf);
+		}
 	}
 
-	return Error::NONE;
+	return updated;
 }
 
 void FrustumComponent::fillCoverageBufferCallback(void* userData, F32* depthValues, U32 width, U32 height)
@@ -68,6 +160,26 @@ void FrustumComponent::fillCoverageBufferCallback(void* userData, F32* depthValu
 
 	self.m_coverageBuff.m_depthMapWidth = width;
 	self.m_coverageBuff.m_depthMapHeight = height;
+}
+
+void FrustumComponent::setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits)
+{
+	m_flags.unset(FrustumComponentVisibilityTestFlag::ALL);
+	m_flags.set(bits, true);
+
+#if ANKI_ASSERTS_ENABLED
+	if(m_flags.get(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+		|| m_flags.get(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+	{
+		if(m_flags.get(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+			== m_flags.get(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+		{
+			ANKI_ASSERT(0 && "Cannot have them both");
+		}
+	}
+
+	// TODO
+#endif
 }
 
 } // end namespace anki

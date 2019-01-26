@@ -17,6 +17,8 @@ namespace anki
 class Ray
 {
 public:
+	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::RAY;
+
 	/// Will not initialize any memory, nothing.
 	Ray()
 	{

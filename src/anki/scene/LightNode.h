@@ -25,11 +25,12 @@ public:
 
 	~LightNode();
 
-	ANKI_USE_RESULT Error init(LightComponentType type, CollisionShape* shape);
-
 	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
 
 protected:
+	class MovedFeedbackComponent;
+	class LightChangedFeedbackComponent;
+
 	/// Called when moved
 	void onMoveUpdateCommon(const MoveComponent& move);
 
@@ -41,10 +42,6 @@ protected:
 	virtual void onMoveUpdate(const MoveComponent& move) = 0;
 
 	virtual void onShapeUpdate(LightComponent& light) = 0;
-
-private:
-	class MovedFeedbackComponent;
-	class LightChangedFeedbackComponent;
 };
 
 /// Point light
@@ -62,11 +59,10 @@ private:
 	class ShadowCombo
 	{
 	public:
-		PerspectiveFrustum m_frustum;
 		Transform m_localTrf = Transform::getIdentity();
 	};
 
-	Sphere m_sphereW = Sphere(Vec4(0.0), 1.0);
+	Sphere m_sphereW = Sphere(Vec4(0.0f), 1.0f);
 	DynamicArray<ShadowCombo> m_shadowData;
 
 	void onMoveUpdate(const MoveComponent& move) override;
@@ -84,8 +80,6 @@ public:
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
-	PerspectiveFrustum m_frustum;
-
 	void onMoveUpdate(const MoveComponent& move) override;
 	void onShapeUpdate(LightComponent& light) override;
 };

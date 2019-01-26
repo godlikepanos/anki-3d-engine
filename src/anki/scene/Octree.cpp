@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/Octree.h>
-#include <anki/collision/Tests.h>
+#include <anki/scene/components/FrustumComponent.h>
 #include <anki/collision/Aabb.h>
-#include <anki/collision/Frustum.h>
+#include <anki/collision/Functions.h>
 #include <anki/util/ThreadHive.h>
 
 namespace anki
@@ -41,7 +41,7 @@ class Octree::GatherParallelCtx
 public:
 	Octree* m_octree = nullptr;
 	SpinLock m_lock;
-	const Frustum* m_frustum = nullptr;
+	const FrustumComponent* m_frustumComp = nullptr;
 	U32 m_testId = MAX_U32;
 	OctreeNodeVisibilityTestCallback m_testCallback = nullptr;
 	void* m_testCallbackUserData = nullptr;
@@ -75,7 +75,7 @@ void Octree::init(const Vec3& sceneAabbMin, const Vec3& sceneAabbMax, U32 maxDep
 void Octree::place(const Aabb& volume, OctreePlaceable* placeable, Bool updateActualSceneBounds)
 {
 	ANKI_ASSERT(placeable);
-	ANKI_ASSERT(testCollisionShapes(volume, Aabb(m_sceneAabbMin, m_sceneAabbMax)) && "volume is outside the scene");
+	ANKI_ASSERT(testCollision(volume, Aabb(m_sceneAabbMin, m_sceneAabbMax)) && "volume is outside the scene");
 
 	LockGuard<Mutex> lock(m_globalMtx);
 
@@ -130,7 +130,7 @@ void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf
 {
 	ANKI_ASSERT(placeable);
 	ANKI_ASSERT(parent);
-	ANKI_ASSERT(testCollisionShapes(volume, Aabb(parent->m_aabbMin, parent->m_aabbMax)) && "Should be inside");
+	ANKI_ASSERT(testCollision(volume, Aabb(parent->m_aabbMin, parent->m_aabbMax)) && "Should be inside");
 
 	if(depth == m_maxDepth || volumeTotallyInsideLeaf(volume, *parent))
 	{
@@ -332,7 +332,7 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 	}
 }
 
-void Octree::gatherVisibleRecursive(const Frustum& frustum,
+void Octree::gatherVisibleRecursive(const FrustumComponent& frustumComp,
 	U32 testId,
 	OctreeNodeVisibilityTestCallback testCallback,
 	void* testCallbackUserData,
@@ -360,7 +360,7 @@ void Octree::gatherVisibleRecursive(const Frustum& frustum,
 			aabb.setMin(child->m_aabbMin);
 			aabb.setMax(child->m_aabbMax);
 
-			Bool inside = frustum.insideFrustum(aabb);
+			Bool inside = frustumComp.insideFrustum(aabb);
 			if(inside && testCallback != nullptr)
 			{
 				inside = testCallback(testCallbackUserData, aabb);
@@ -368,7 +368,7 @@ void Octree::gatherVisibleRecursive(const Frustum& frustum,
 
 			if(inside)
 			{
-				gatherVisibleRecursive(frustum, testId, testCallback, testCallbackUserData, child, out);
+				gatherVisibleRecursive(frustumComp, testId, testCallback, testCallbackUserData, child, out);
 			}
 		}
 	}
@@ -434,7 +434,7 @@ void Octree::debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) con
 	}
 }
 
-void Octree::gatherVisibleParallel(const Frustum* frustum,
+void Octree::gatherVisibleParallel(const FrustumComponent* frustumComp,
 	U32 testId,
 	OctreeNodeVisibilityTestCallback testCallback,
 	void* testCallbackUserData,
@@ -443,13 +443,13 @@ void Octree::gatherVisibleParallel(const Frustum* frustum,
 	ThreadHiveSemaphore* waitSemaphore,
 	ThreadHiveSemaphore*& signalSemaphore)
 {
-	ANKI_ASSERT(out && frustum);
+	ANKI_ASSERT(out && frustumComp);
 
 	// Create the ctx
 	GatherParallelCtx* ctx = static_cast<GatherParallelCtx*>(
 		hive.allocateScratchMemory(sizeof(GatherParallelCtx), alignof(GatherParallelCtx)));
 	ctx->m_octree = this;
-	ctx->m_frustum = frustum;
+	ctx->m_frustumComp = frustumComp;
 	ctx->m_testId = testId;
 	ctx->m_testCallback = testCallback;
 	ctx->m_testCallbackUserData = testCallbackUserData;
@@ -488,7 +488,7 @@ void Octree::gatherVisibleParallelTask(
 	GatherParallelCtx& ctx = *taskCtx.m_ctx;
 
 	Leaf* const leaf = taskCtx.m_leaf;
-	const Frustum& frustum = *ctx.m_frustum;
+	const FrustumComponent& frustumComp = *ctx.m_frustumComp;
 	DynamicArrayAuto<void*>& out = *ctx.m_out;
 	OctreeNodeVisibilityTestCallback testCallback = ctx.m_testCallback;
 	void* testCallbackUserData = ctx.m_testCallbackUserData;
@@ -520,7 +520,7 @@ void Octree::gatherVisibleParallelTask(
 			aabb.setMin(child->m_aabbMin);
 			aabb.setMax(child->m_aabbMax);
 
-			Bool inside = frustum.insideFrustum(aabb);
+			Bool inside = frustumComp.insideFrustum(aabb);
 			if(inside && testCallback != nullptr)
 			{
 				inside = testCallback(testCallbackUserData, aabb);

@@ -18,6 +18,8 @@ namespace anki
 class LineSegment
 {
 public:
+	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::LINE_SEGMENT;
+
 	/// Will not initialize any memory, nothing.
 	LineSegment()
 	{

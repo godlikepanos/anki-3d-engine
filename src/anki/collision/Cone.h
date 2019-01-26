@@ -17,6 +17,8 @@ namespace anki
 class Cone
 {
 public:
+	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::CONE;
+
 	/// Will not initialize any memory, nothing.
 	Cone()
 	{

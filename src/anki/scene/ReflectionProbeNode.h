@@ -6,8 +6,8 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/collision/Frustum.h>
 #include <anki/collision/Sphere.h>
+#include <anki/collision/Aabb.h>
 #include <anki/Gr.h>
 
 namespace anki
@@ -37,7 +37,6 @@ private:
 	class CubeSide
 	{
 	public:
-		PerspectiveFrustum m_frustum;
 		Transform m_localTrf;
 	};
 

@@ -50,10 +50,9 @@ public:
 	void fillDepthBuffer(ConstWeakArray<F32> depthValues);
 
 	/// Perform visibility tests.
-	/// @param cs The collision shape in world space.
 	/// @param aabb The Aabb in of the cs in world space.
 	/// @return Return true if it's visible and false otherwise.
-	Bool visibilityTest(const CollisionShape& cs, const Aabb& aabb) const;
+	Bool visibilityTest(const Aabb& aabb) const;
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -75,7 +74,7 @@ private:
 	/// @note Triangles in view space.
 	void clipTriangle(const Vec4* inTriangle, Vec4* outTriangles, U& outTriangleCount) const;
 
-	Bool visibilityTestInternal(const CollisionShape& cs, const Aabb& aabb) const;
+	Bool visibilityTestInternal(const Aabb& aabb) const;
 };
 /// @}
 

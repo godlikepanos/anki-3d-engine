@@ -12,10 +12,6 @@
 namespace anki
 {
 
-// Forward
-class Frustum;
-class OrthographicFrustum;
-
 /// @addtogroup scene
 /// @{
 
@@ -150,14 +146,13 @@ public:
 	}
 
 	/// Setup a directional queue element.
-	/// @param[in] frustum The frustum that is looking that directional light. Used to calculate the cascades.
-	/// @param overrideFrustumFar Override frustum's far or set it to <0.0 to ignore that value.
+	/// @param[in] frustumComp The frustum that is looking that directional light. Used to calculate the cascades.
 	/// @param[out] el The queue element to fill out.
-	/// @param[out] cascadeFrustums Fill those frustums as well. The size of this array is the count of the cascades.
-	void setupDirectionalLightQueueElement(const Frustum& frustum,
-		F32 overrideFrustumFar,
+	/// @param[out] cascadeFrustumComponents Fill those frustums as well. The size of this array is the count of the
+	///             cascades.
+	void setupDirectionalLightQueueElement(const FrustumComponent& frustumComp,
 		DirectionalLightQueueElement& el,
-		WeakArray<OrthographicFrustum> cascadeFrustums) const;
+		WeakArray<FrustumComponent> cascadeFrustumComponents) const;
 
 private:
 	U64 m_uuid;

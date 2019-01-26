@@ -18,24 +18,37 @@ namespace anki
 /// @addtogroup scene
 /// @{
 
-/// Spatial component for scene nodes. It is used by scene nodes that need to be placed in the visibility structures.
+/// Spatial component. It is used by scene nodes that need to be placed inside the visibility structures.
 class SpatialComponent : public SceneComponent
 {
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::SPATIAL;
 
-	SpatialComponent(SceneNode* node, const CollisionShape* shape);
+	SpatialComponent(SceneNode* node, const Obb* obb);
+
+	SpatialComponent(SceneNode* node, const Aabb* aabb);
+
+	SpatialComponent(SceneNode* node, const Sphere* sphere);
+
+	SpatialComponent(SceneNode* node, const ConvexHullShape* hull);
 
 	~SpatialComponent();
 
-	const CollisionShape& getSpatialCollisionShape() const
+	template<typename T>
+	const T& getCollisionShape() const
 	{
-		return *m_shape;
+		ANKI_ASSERT(T::CLASS_TYPE == m_collisionObjectType);
+		return *reinterpret_cast<const T*>(m_shapePtr);
+	}
+
+	CollisionShapeType getCollisionShapeType() const
+	{
+		return m_collisionObjectType;
 	}
 
 	const Aabb& getAabb() const
 	{
-		return m_aabb;
+		return m_derivedAabb;
 	}
 
 	const SceneNode& getSceneNode() const
@@ -46,20 +59,6 @@ public:
 	SceneNode& getSceneNode()
 	{
 		return *m_node;
-	}
-
-	/// Get optimal collision shape for visibility tests
-	const CollisionShape& getVisibilityCollisionShape()
-	{
-		const CollisionShape& cs = getSpatialCollisionShape();
-		if(cs.getType() == CollisionShapeType::SPHERE)
-		{
-			return cs;
-		}
-		else
-		{
-			return m_aabb;
-		}
 	}
 
 	/// Used for sorting spatials. In most object the origin is the center of mass but for cameras the origin is the
@@ -94,8 +93,19 @@ public:
 
 private:
 	SceneNode* m_node;
-	const CollisionShape* m_shape;
-	Aabb m_aabb; ///< A faster shape
+
+	union
+	{
+		const Obb* m_obb;
+		const Aabb* m_aabb;
+		const Sphere* m_sphere;
+		const ConvexHullShape* m_hull;
+		const void* m_shapePtr;
+	};
+
+	CollisionShapeType m_collisionObjectType;
+	Aabb m_derivedAabb; ///< A faster shape
+
 	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0f);
 
 	OctreePlaceable m_octreeInfo;

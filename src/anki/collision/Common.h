@@ -7,6 +7,7 @@
 
 #include <anki/collision/Forward.h>
 #include <anki/Math.h>
+#include <anki/util/Enum.h>
 
 namespace anki
 {
@@ -23,8 +24,11 @@ enum class FrustumPlaneType : U8
 	RIGHT,
 	TOP,
 	BOTTOM,
-	COUNT ///< Number of planes
+
+	COUNT,
+	FIRST = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumPlaneType, inline)
 
 /// Collision shape type.
 enum class CollisionShapeType : U8
@@ -37,15 +41,22 @@ enum class CollisionShapeType : U8
 	OBB,
 	CONVEX_HULL,
 	CONE,
-	COUNT
+
+	COUNT,
+	FIRST = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CollisionShapeType, inline)
 
 /// Frustum type
 enum class FrustumType : U8
 {
 	PERSPECTIVE,
-	ORTHOGRAPHIC
+	ORTHOGRAPHIC,
+
+	COUNT,
+	FIRST = 0
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumType, inline)
 /// @}
 
 } // end namespace anki

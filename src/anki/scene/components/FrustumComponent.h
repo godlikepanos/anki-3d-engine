@@ -5,11 +5,12 @@
 
 #pragma once
 
-#include <anki/collision/Frustum.h>
-#include <anki/scene/components/SpatialComponent.h>
-#include <anki/scene/Common.h>
 #include <anki/scene/components/SceneComponent.h>
 #include <anki/util/BitMask.h>
+#include <anki/util/WeakArray.h>
+#include <anki/collision/Obb.h>
+#include <anki/collision/ConvexHullShape.h>
+#include <anki/collision/Plane.h>
 
 namespace anki
 {
@@ -48,14 +49,13 @@ enum class FrustumComponentVisibilityTestFlag : U16
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag, inline)
 
-/// Frustum component interface for scene nodes. Useful for nodes that are frustums like cameras and lights.
+/// Frustum component. Useful for nodes that take part in visibility tests like cameras and lights.
 class FrustumComponent : public SceneComponent
 {
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::FRUSTUM;
 
-	/// Pass the frustum here so we can avoid the virtuals
-	FrustumComponent(SceneNode* node, Frustum* frustum);
+	FrustumComponent(SceneNode* node, FrustumType frustumType);
 
 	~FrustumComponent();
 
@@ -64,19 +64,99 @@ public:
 		return *m_node;
 	}
 
+	FrustumType getFrustumType() const
+	{
+		return m_frustumType;
+	}
+
+	void setPerspective(F32 near, F32 far, F32 fovX, F32 fovY)
+	{
+		ANKI_ASSERT(near > 0.0f && far > 0.0f && near < far);
+		ANKI_ASSERT(fovX > 0.0f && fovY > 0.0f && fovX < PI / 2.0f && fovY < PI / 2.0f);
+		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		m_perspective.m_near = near;
+		m_perspective.m_far = far;
+		m_perspective.m_fovX = fovX;
+		m_perspective.m_fovY = fovY;
+		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+	}
+
+	void setOrthographic(F32 near, F32 far, F32 right, F32 left, F32 top, F32 bottom)
+	{
+		ANKI_ASSERT(near > 0.0f && far > 0.0f && near < far);
+		ANKI_ASSERT(right > left && top > bottom);
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		m_ortho.m_near = near;
+		m_ortho.m_far = far;
+		m_ortho.m_right = right;
+		m_ortho.m_left = left;
+		m_ortho.m_top = top;
+		m_ortho.m_bottom = bottom;
+		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+	}
+
+	void setNear(F32 near)
+	{
+		m_common.m_near = near;
+		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+	}
+
+	F32 getNear() const
+	{
+		return m_common.m_near;
+	}
+
+	void setFar(F32 far)
+	{
+		m_common.m_far = far;
+		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+	}
+
+	F32 getFar() const
+	{
+		return m_common.m_far;
+	}
+
+	void setFovX(F32 fovx)
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+		m_perspective.m_fovX = fovx;
+	}
+
+	F32 getFovX() const
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		return m_perspective.m_fovX;
+	}
+
+	void setFovY(F32 fovy)
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+		m_perspective.m_fovY = fovy;
+	}
+
+	F32 getFovY() const
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		return m_perspective.m_fovY;
+	}
+
 	const SceneNode& getSceneNode() const
 	{
 		return *m_node;
 	}
 
-	Frustum& getFrustum()
+	const Transform& getTransform() const
 	{
-		return *m_frustum;
+		return m_trf;
 	}
 
-	const Frustum& getFrustum() const
+	void setTransform(const Transform& trf)
 	{
-		return *m_frustum;
+		m_trf = trf;
+		m_flags.set(TRANSFORM_MARKED_FOR_UPDATE);
 	}
 
 	const Mat4& getProjectionMatrix() const
@@ -99,60 +179,29 @@ public:
 		return m_prevViewProjMat;
 	}
 
-	/// Get the origin for sorting and visibility tests
-	const Vec4& getFrustumOrigin() const
+	/// Check if a shape is inside the frustum.
+	template<typename T>
+	Bool insideFrustum(const T& t) const
 	{
-		return m_frustum->getTransform().getOrigin();
-	}
-
-	/// Call when the shape of the frustum got changed.
-	void markShapeForUpdate()
-	{
-		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
-	}
-
-	/// Call when the transformation of the frustum got changed.
-	void markTransformForUpdate()
-	{
-		m_flags.set(TRANSFORM_MARKED_FOR_UPDATE);
-	}
-
-	/// Is a spatial inside the frustum?
-	Bool insideFrustum(const SpatialComponent& sp) const
-	{
-		return m_frustum->insideFrustum(sp.getSpatialCollisionShape());
-	}
-
-	/// Is a collision shape inside the frustum?
-	Bool insideFrustum(const CollisionShape& cs) const
-	{
-		return m_frustum->insideFrustum(cs);
-	}
-
-	/// @name SceneComponent overrides
-	/// @{
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
-	/// @}
-
-	void setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits)
-	{
-		m_flags.unset(FrustumComponentVisibilityTestFlag::ALL);
-		m_flags.set(bits, true);
-
-#if ANKI_ASSERTS_ENABLED
-		if(m_flags.get(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-			|| m_flags.get(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+		for(const Plane& plane : m_viewPlanesW)
 		{
-			if(m_flags.get(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-				== m_flags.get(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+			if(testPlane(plane, t) < 0.0f)
 			{
-				ANKI_ASSERT(0 && "Cannot have them both");
+				return false;
 			}
 		}
 
-		// TODO
-#endif
+		return true;
 	}
+
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	{
+		ANKI_ASSERT(&node == m_node);
+		updated = updateInternal();
+		return Error::NONE;
+	}
+
+	void setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits);
 
 	Bool visibilityTestsEnabled(FrustumComponentVisibilityTestFlag bits) const
 	{
@@ -190,13 +239,31 @@ public:
 	/// How far to render shadows for this frustum.
 	F32 getEffectiveShadowDistance() const
 	{
-		return (m_effectiveShadowDist < 0.0f) ? m_frustum->getFar() : m_effectiveShadowDist;
+		ANKI_ASSERT(m_frustumType != FrustumType::COUNT);
+		return (m_effectiveShadowDist < 0.0f) ? m_perspective.m_far : m_effectiveShadowDist;
 	}
 
 	/// Set how far to render shadows for this frustum or set to negative if you want to use the m_frustun's far.
 	void setEffectiveShadowDistance(F32 dist)
 	{
 		m_effectiveShadowDist = dist;
+	}
+
+	const ConvexHullShape& getPerspectiveBoundingShape() const
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
+		return m_perspective.m_hull;
+	}
+
+	const Obb& getOrthographicBoundingShape() const
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		return m_ortho.m_obbW;
+	}
+
+	const Array<Plane, U(FrustumPlaneType::COUNT)>& getViewPlanes() const
+	{
+		return m_viewPlanesW;
 	}
 
 private:
@@ -207,8 +274,50 @@ private:
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flags, friend)
 
+	class Common
+	{
+	public:
+		F32 m_near;
+		F32 m_far;
+	};
+
+	class Perspective : public Common
+	{
+	public:
+		F32 m_fovX;
+		F32 m_fovY;
+		Array<Vec4, 5> m_edgesW;
+		Array<Vec4, 4> m_edgesL; ///< Don't need the eye point.
+		ConvexHullShape m_hull;
+	};
+
+	class Ortho : public Common
+	{
+	public:
+		F32 m_left;
+		F32 m_right;
+		F32 m_top;
+		F32 m_bottom;
+		Obb m_obbL;
+		Obb m_obbW; ///< Including shape
+	};
+
 	SceneNode* m_node;
-	Frustum* m_frustum;
+
+	FrustumType m_frustumType = FrustumType::COUNT;
+
+	union
+	{
+		Perspective m_perspective;
+		Ortho m_ortho;
+		Common m_common;
+	};
+
+	// View planes
+	Array<Plane, U(FrustumPlaneType::COUNT)> m_viewPlanesL;
+	Array<Plane, U(FrustumPlaneType::COUNT)> m_viewPlanesW;
+
+	Transform m_trf = Transform::getIdentity();
 	Mat4 m_projMat = Mat4::getIdentity(); ///< Projection matrix
 	Mat4 m_viewMat = Mat4::getIdentity(); ///< View matrix
 	Mat4 m_viewProjMat = Mat4::getIdentity(); ///< View projection matrix
@@ -225,7 +334,9 @@ private:
 		U32 m_depthMapHeight = 0;
 	} m_coverageBuff; ///< Coverage buffer for extra visibility tests.
 
-	BitMask<U16> m_flags;
+	BitMask<U16> m_flags = {0};
+
+	Bool updateInternal();
 };
 /// @}
 

@@ -140,6 +140,19 @@ public:
 		m_ltrf.getScale() *= s;
 		markForUpdate();
 	}
+
+	void lookAtPoint(const Vec4& point)
+	{
+		ANKI_ASSERT(point.w() == 0.0f);
+		const Vec4 j = Vec4(0.0f, 1.0f, 0.0f, 0.0f);
+		const Vec4 vdir = (point - m_ltrf.getOrigin()).getNormalized();
+		const Vec4 vup = j - vdir * j.dot(vdir);
+		const Vec4 vside = vdir.cross(vup);
+
+		Mat3x4& rot = m_ltrf.getRotation();
+		rot.setColumns(vside.xyz(), vup.xyz(), (-vdir).xyz());
+		markForUpdate();
+	}
 	/// @}
 
 private:

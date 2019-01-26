@@ -221,9 +221,9 @@ public:
 	void test(ThreadHive& hive, U32 taskId);
 
 private:
-	ANKI_USE_RESULT Bool testAgainstRasterizer(const CollisionShape& cs, const Aabb& aabb) const
+	ANKI_USE_RESULT Bool testAgainstRasterizer(const Aabb& aabb) const
 	{
-		return (m_frcCtx->m_r) ? m_frcCtx->m_r->visibilityTest(cs, aabb) : true;
+		return (m_frcCtx->m_r) ? m_frcCtx->m_r->visibilityTest(aabb) : true;
 	}
 };
 static_assert(std::is_trivially_destructible<VisibilityTestTask>::value == true, "Should be trivially destructible");
