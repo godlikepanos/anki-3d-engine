@@ -236,6 +236,18 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<return>F32</return>
 				</method>
 			</methods>
+		<class name="FrustumComponent">
+			<methods>
+				<method name="setPerspective">
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
 		</class>
 
 		<!-- Nodes -->
@@ -268,6 +280,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="tryGetComponent&lt;FogDensityComponent&gt;" alias="getFogDensityComponent">
 					<return>FogDensityComponent*</return>
 				</method>
+				<method name="tryGetComponent&lt;FrustumComponent&gt;" alias="getFrustumComponent">
+					<return>FrustumComponent*</return>
+				</method>
 			</methods>
 		</class>
 		<class name="ModelNode">
@@ -283,14 +298,6 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="getSceneNodeBase">
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
 					<return>SceneNode&amp;</return>
-				</method>
-				<method name="setAll">
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-					</args>
 				</method>
 			</methods>
 		</class>

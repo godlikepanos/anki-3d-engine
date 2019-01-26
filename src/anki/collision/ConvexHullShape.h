@@ -80,6 +80,8 @@ public:
 		return m_trfIdentity;
 	}
 
+	void setTransform(const Transform& trf);
+
 	/// Get a transformed.
 	ANKI_USE_RESULT ConvexHullShape getTransformed(const Transform& trf) const;
 

@@ -5,7 +5,6 @@
 
 #include <tests/framework/Framework.h>
 #include <anki/scene/Octree.h>
-#include <anki/collision/Frustum.h>
 
 namespace anki
 {

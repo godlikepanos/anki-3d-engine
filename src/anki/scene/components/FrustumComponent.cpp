@@ -57,16 +57,8 @@ Bool FrustumComponent::updateInternal()
 			m_projMat = Mat4::calculatePerspectiveProjectionMatrix(
 				m_perspective.m_fovX, m_perspective.m_fovY, m_perspective.m_near, m_perspective.m_far);
 
-			// This came from unprojecting. It works, don't touch it
-			const F32 x =
-				m_perspective.m_far * tan(m_perspective.m_fovY / 2.0f) * m_perspective.m_fovX / m_perspective.m_fovY;
-			const F32 y = tan(m_perspective.m_fovY / 2.0f) * m_perspective.m_far;
-			const F32 z = -m_perspective.m_far;
-
-			m_perspective.m_edgesL[0] = Vec4(x, y, z, 0.0f); // top right
-			m_perspective.m_edgesL[1] = Vec4(-x, y, z, 0.0f); // top left
-			m_perspective.m_edgesL[2] = Vec4(-x, -y, z, 0.0f); // bot left
-			m_perspective.m_edgesL[3] = Vec4(x, -y, z, 0.0f); // bot right
+			computeEdgesOfFrustum(
+				m_perspective.m_far, m_perspective.m_fovY, m_perspective.m_fovY, &m_perspective.m_edgesL[0]);
 
 			// Planes
 			F32 c, s; // cos & sine

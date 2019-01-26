@@ -1861,6 +1861,93 @@ static inline void wrapFogDensityComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
+LuaUserDataTypeInfo luaUserDataTypeInfoFrustumComponent = {3265476675265865783,
+	"FrustumComponent",
+	LuaUserData::computeSizeForGarbageCollected<FrustumComponent>(),
+	nullptr,
+	nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<FrustumComponent>()
+{
+	return luaUserDataTypeInfoFrustumComponent;
+}
+
+/// Pre-wrap method FrustumComponent::setPerspective.
+static inline int pwrapFrustumComponentsetPerspective(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 5)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoFrustumComponent, ud))
+	{
+		return -1;
+	}
+
+	FrustumComponent* self = ud->getData<FrustumComponent>();
+
+	// Pop arguments
+	F32 arg0;
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	{
+		return -1;
+	}
+
+	F32 arg1;
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
+	{
+		return -1;
+	}
+
+	F32 arg2;
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 4, arg2)))
+	{
+		return -1;
+	}
+
+	F32 arg3;
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 5, arg3)))
+	{
+		return -1;
+	}
+
+	// Call the method
+	self->setPerspective(arg0, arg1, arg2, arg3);
+
+	return 0;
+}
+
+/// Wrap method FrustumComponent::setPerspective.
+static int wrapFrustumComponentsetPerspective(lua_State* l)
+{
+	int res = pwrapFrustumComponentsetPerspective(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class FrustumComponent.
+static inline void wrapFrustumComponent(lua_State* l)
+{
+	LuaBinder::createClass(l, &luaUserDataTypeInfoFrustumComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "setPerspective", wrapFrustumComponentsetPerspective);
+	lua_settop(l, 0);
+}
+
 LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode = {
 	-2220074417980276571, "SceneNode", LuaUserData::computeSizeForGarbageCollected<SceneNode>(), nullptr, nullptr};
 
@@ -2339,6 +2426,61 @@ static int wrapSceneNodegetFogDensityComponent(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method SceneNode::tryGetComponent<FrustumComponent>.
+static inline int pwrapSceneNodegetFrustumComponent(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneNode, ud))
+	{
+		return -1;
+	}
+
+	SceneNode* self = ud->getData<SceneNode>();
+
+	// Call the method
+	FrustumComponent* ret = self->tryGetComponent<FrustumComponent>();
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "FrustumComponent");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoFrustumComponent;
+	ud->initPointed(&luaUserDataTypeInfoFrustumComponent, const_cast<FrustumComponent*>(ret));
+
+	return 1;
+}
+
+/// Wrap method SceneNode::tryGetComponent<FrustumComponent>.
+static int wrapSceneNodegetFrustumComponent(lua_State* l)
+{
+	int res = pwrapSceneNodegetFrustumComponent(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Wrap class SceneNode.
 static inline void wrapSceneNode(lua_State* l)
 {
@@ -2352,6 +2494,7 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getDecalComponent", wrapSceneNodegetDecalComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getTriggerComponent", wrapSceneNodegetTriggerComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getFogDensityComponent", wrapSceneNodegetFogDensityComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "getFrustumComponent", wrapSceneNodegetFrustumComponent);
 	lua_settop(l, 0);
 }
 
@@ -2482,79 +2625,11 @@ static int wrapPerspectiveCameraNodegetSceneNodeBase(lua_State* l)
 	return 0;
 }
 
-/// Pre-wrap method PerspectiveCameraNode::setAll.
-static inline int pwrapPerspectiveCameraNodesetAll(lua_State* l)
-{
-	LuaUserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-
-	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 5)))
-	{
-		return -1;
-	}
-
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoPerspectiveCameraNode, ud))
-	{
-		return -1;
-	}
-
-	PerspectiveCameraNode* self = ud->getData<PerspectiveCameraNode>();
-
-	// Pop arguments
-	F32 arg0;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
-	{
-		return -1;
-	}
-
-	F32 arg1;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 3, arg1)))
-	{
-		return -1;
-	}
-
-	F32 arg2;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 4, arg2)))
-	{
-		return -1;
-	}
-
-	F32 arg3;
-	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 5, arg3)))
-	{
-		return -1;
-	}
-
-	// Call the method
-	self->setAll(arg0, arg1, arg2, arg3);
-
-	return 0;
-}
-
-/// Wrap method PerspectiveCameraNode::setAll.
-static int wrapPerspectiveCameraNodesetAll(lua_State* l)
-{
-	int res = pwrapPerspectiveCameraNodesetAll(l);
-	if(res >= 0)
-	{
-		return res;
-	}
-
-	lua_error(l);
-	return 0;
-}
-
 /// Wrap class PerspectiveCameraNode.
 static inline void wrapPerspectiveCameraNode(lua_State* l)
 {
 	LuaBinder::createClass(l, &luaUserDataTypeInfoPerspectiveCameraNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPerspectiveCameraNodegetSceneNodeBase);
-	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapPerspectiveCameraNodesetAll);
 	lua_settop(l, 0);
 }
 
@@ -4514,6 +4589,7 @@ void wrapModuleScene(lua_State* l)
 	wrapLensFlareComponent(l);
 	wrapTriggerComponent(l);
 	wrapFogDensityComponent(l);
+	wrapFrustumComponent(l);
 	wrapSceneNode(l);
 	wrapModelNode(l);
 	wrapPerspectiveCameraNode(l);

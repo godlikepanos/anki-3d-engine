@@ -30,7 +30,7 @@ static Bool insideClusterFrustum(const Array<Plane, 4>& planeArr, const TShape& 
 {
 	for(const Plane& plane : planeArr)
 	{
-		if(shape.testPlane(plane) < 0.0f)
+		if(testPlane(plane, shape) < 0.0f)
 		{
 			return false;
 		}
@@ -238,7 +238,7 @@ void ClusterBin::prepare(BinCtx& ctx)
 
 		const Mat4& vp = ctx.m_in->m_renderQueue->m_viewProjectionMatrix;
 		Plane nearPlane;
-		Plane::extractClipPlane(vp, FrustumPlaneType::NEAR, nearPlane);
+		extractClipPlane(vp, FrustumPlaneType::NEAR, nearPlane);
 
 		Vec3 A = nearPlane.getNormal().xyz() * (m_clusterCounts[2] * m_clusterCounts[2]) / (far - near);
 		F32 B = nearPlane.getOffset() * (m_clusterCounts[2] * m_clusterCounts[2]) / (far - near);
@@ -361,7 +361,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
-				if(!testCollisionShapes(lightSphere, clusterBoxes[clusterZ]))
+				if(!testCollision(lightSphere, clusterBoxes[clusterZ]))
 				{
 					continue;
 				}
@@ -373,24 +373,29 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 	// Spot lights
 	{
-		PerspectiveFrustum slightFrustum;
+		Array<Vec4, 5> lightEdges;
+		lightEdges[0] = Vec4(0.0f); // Eye
+		ConvexHullShape spotLightShape(&lightEdges[0], lightEdges.getSize());
+
 		for(U i = 0; i < ctx.m_in->m_renderQueue->m_spotLights.getSize(); ++i)
 		{
 			const SpotLightQueueElement& slight = ctx.m_in->m_renderQueue->m_spotLights[i];
-			slightFrustum.setAll(slight.m_outerAngle, slight.m_outerAngle, 0.01f, slight.m_distance);
-			slightFrustum.resetTransform(Transform(slight.m_worldTransform));
 
-			if(!insideClusterFrustum(frustumPlanes, slightFrustum))
+			computeEdgesOfFrustum(slight.m_distance, slight.m_outerAngle, slight.m_outerAngle, &lightEdges[1]);
+			spotLightShape.setTransform(Transform(slight.m_worldTransform));
+
+			if(!insideClusterFrustum(frustumPlanes, spotLightShape))
 			{
 				continue;
 			}
 
 			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
-				if(!clusterSpheres[clusterZ].intersectsCone(slight.m_worldTransform.getTranslationPart().xyz0(),
-					   -slight.m_worldTransform.getZAxis(),
-					   slight.m_distance,
-					   slight.m_outerAngle))
+				if(!testCollision(clusterSpheres[clusterZ],
+					   Cone(slight.m_worldTransform.getTranslationPart().xyz0(),
+						   -slight.m_worldTransform.getZAxis(),
+						   slight.m_distance,
+						   slight.m_outerAngle)))
 				{
 					continue;
 				}
@@ -416,7 +421,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
-				if(!testCollisionShapes(probeBox, clusterBoxes[clusterZ]))
+				if(!testCollision(probeBox, clusterBoxes[clusterZ]))
 				{
 					continue;
 				}
@@ -443,7 +448,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
-				if(!testCollisionShapes(decalBox, clusterBoxes[clusterZ]))
+				if(!testCollision(decalBox, clusterBoxes[clusterZ]))
 				{
 					continue;
 				}
@@ -455,39 +460,51 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 	// Fog volumes
 	{
-		Aabb box;
-		Sphere sphere;
 		for(U i = 0; i < ctx.m_in->m_renderQueue->m_fogDensityVolumes.getSize(); ++i)
 		{
 			const FogDensityQueueElement& fogVol = ctx.m_in->m_renderQueue->m_fogDensityVolumes[i];
 
-			CollisionShape* shape;
 			if(fogVol.m_isBox)
 			{
+				Aabb box;
 				box.setMin(fogVol.m_aabbMin);
 				box.setMax(fogVol.m_aabbMax);
-				shape = &box;
-			}
-			else
-			{
-				sphere.setCenter(fogVol.m_sphereCenter.xyz0());
-				sphere.setRadius(fogVol.m_sphereRadius);
-				shape = &sphere;
-			}
 
-			if(!insideClusterFrustum(frustumPlanes, *shape))
-			{
-				continue;
-			}
-
-			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
-			{
-				if(!testCollisionShapes(*shape, clusterBoxes[clusterZ]))
+				if(!insideClusterFrustum(frustumPlanes, box))
 				{
 					continue;
 				}
 
-				ANKI_SET_IDX(4);
+				for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+				{
+					if(!testCollision(box, clusterBoxes[clusterZ]))
+					{
+						continue;
+					}
+
+					ANKI_SET_IDX(4);
+				}
+			}
+			else
+			{
+				Sphere sphere;
+				sphere.setCenter(fogVol.m_sphereCenter.xyz0());
+				sphere.setRadius(fogVol.m_sphereRadius);
+
+				if(!insideClusterFrustum(frustumPlanes, sphere))
+				{
+					continue;
+				}
+
+				for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+				{
+					if(!testCollision(sphere, clusterBoxes[clusterZ]))
+					{
+						continue;
+					}
+
+					ANKI_SET_IDX(4);
+				}
 			}
 		}
 	}

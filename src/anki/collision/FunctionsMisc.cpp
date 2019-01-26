@@ -43,4 +43,17 @@ void extractClipPlanes(const Mat4& mvp, Array<Plane, 6>& planes)
 	}
 }
 
+void computeEdgesOfFrustum(F32 far, F32 fovX, F32 fovY, Vec4 points[4])
+{
+	// This came from unprojecting. It works, don't touch it
+	const F32 x = far * tan(fovY / 2.0f) * fovX / fovY;
+	const F32 y = tan(fovY / 2.0f) * far;
+	const F32 z = -far;
+
+	points[0] = Vec4(x, y, z, 0.0f); // top right
+	points[1] = Vec4(-x, y, z, 0.0f); // top left
+	points[2] = Vec4(-x, -y, z, 0.0f); // bot left
+	points[3] = Vec4(x, -y, z, 0.0f); // bot right
+}
+
 } // end namespace anki

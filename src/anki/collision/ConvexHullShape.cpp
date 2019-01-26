@@ -22,6 +22,13 @@ ConvexHullShape ConvexHullShape::getTransformed(const Transform& trf) const
 	return out;
 }
 
+void ConvexHullShape::setTransform(const Transform& trf)
+{
+	m_trf = trf;
+	m_invTrf = m_trf.getInverse();
+	m_trfIdentity = false;
+}
+
 Vec4 ConvexHullShape::computeSupport(const Vec4& dir) const
 {
 	check();

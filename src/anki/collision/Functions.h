@@ -16,8 +16,6 @@ namespace anki
 /// @addtogroup collision
 /// @{
 
-//======================================================================================================================
-
 /// It gives the distance between a point and a plane. It returns >0 if the primitive lies in front of the plane, <0
 /// if it's behind and ==0 when it collides the plane.
 F32 testPlane(const Plane& plane, const Aabb& aabb);
@@ -35,18 +33,10 @@ F32 testPlane(const Plane& plane, const ConvexHullShape& hull);
 F32 testPlane(const Plane& plane, const LineSegment& ls);
 
 /// @copydoc testPlane(const Plane&, const Aabb&)
-inline F32 testPlane(const Plane& plane, const Cone& cone)
-{
-	ANKI_ASSERT(!"TODO");
-	return 0.0f;
-}
+F32 testPlane(const Plane& plane, const Cone& cone);
 
 /// @copydoc testPlane(const Plane&, const Aabb&)
-inline F32 testPlane(const Plane& plane, const Ray& ray)
-{
-	ANKI_ASSERT(!"TODO");
-	return 0.0f;
-}
+F32 testPlane(const Plane& plane, const Ray& ray);
 
 /// @copydoc testPlane(const Plane&, const Aabb&)
 inline F32 testPlane(const Plane& plane, const Vec4& point)
@@ -54,8 +44,6 @@ inline F32 testPlane(const Plane& plane, const Vec4& point)
 	ANKI_ASSERT(isZero(point.w()));
 	return plane.getNormal().dot(point) - plane.getOffset();
 }
-
-//======================================================================================================================
 
 /// @copydoc computeAabb(const ConvexHullShape&)
 Aabb computeAabb(const Sphere& sphere);
@@ -70,13 +58,7 @@ Aabb computeAabb(const ConvexHullShape& hull);
 Aabb computeAabb(const LineSegment& ls);
 
 /// @copydoc computeAabb(const ConvexHullShape&)
-Aabb computeAabb(const Cone& cone)
-{
-	ANKI_ASSERT(!"TODO");
-	return Aabb(Vec3(0.0f), Vec3(1.0f));
-}
-
-//======================================================================================================================
+Aabb computeAabb(const Cone& cone);
 
 #define ANKI_DEF_TEST_COLLISION_FUNC(type0, type1) \
 	Bool testCollision(const type0&, const type1&); \
@@ -158,8 +140,6 @@ inline F32 testCollisionInside(const Aabb& aabb, const Ray& ray)
 #undef ANKI_DEF_TEST_COLLISION_FUNC
 #undef ANKI_DEF_TEST_COLLISION_FUNC_PLANE
 
-//======================================================================================================================
-
 /// Get the min distance of a point to a plane.
 inline F32 getPlanePointDistance(const Plane& plane, const Vec4& point)
 {
@@ -177,6 +157,9 @@ void extractClipPlanes(const Mat4& mvp, Array<Plane, 6>& planes);
 
 /// See extractClipPlanes.
 void extractClipPlane(const Mat4& mvp, FrustumPlaneType id, Plane& plane);
+
+/// Compute the edges of the far plane of a frustum
+void computeEdgesOfFrustum(F32 far, F32 fovX, F32 fovY, Vec4 points[4]);
 
 /// @}
 
