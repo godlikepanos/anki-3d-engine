@@ -72,7 +72,7 @@ public:
 	void setPerspective(F32 near, F32 far, F32 fovX, F32 fovY)
 	{
 		ANKI_ASSERT(near > 0.0f && far > 0.0f && near < far);
-		ANKI_ASSERT(fovX > 0.0f && fovY > 0.0f && fovX < PI / 2.0f && fovY < PI / 2.0f);
+		ANKI_ASSERT(fovX > 0.0f && fovY > 0.0f && fovX < PI && fovY < PI);
 		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
 		m_perspective.m_near = near;
 		m_perspective.m_far = far;
