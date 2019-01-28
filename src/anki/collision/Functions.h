@@ -60,63 +60,131 @@ Aabb computeAabb(const LineSegment& ls);
 /// @copydoc computeAabb(const ConvexHullShape&)
 Aabb computeAabb(const Cone& cone);
 
-#define ANKI_DEF_TEST_COLLISION_FUNC(type0, type1) \
-	Bool testCollision(const type0&, const type1&); \
-	inline Bool testCollision(const type1& arg1, const type0& arg0) \
-	{ \
-		return testCollision(arg0, arg1); \
-	}
-
-#define ANKI_DEF_TEST_COLLISION_FUNC_PLANE(type) \
-	inline Bool testCollision(const type& arg0, const Plane& plane) \
-	{ \
-		return testPlane(plane, arg0) == 0.0f; \
-	} \
-	inline Bool testCollision(const Plane& plane, const type& arg0) \
-	{ \
-		return testPlane(plane, arg0) == 0.0f; \
-	}
-
+// Aabb
 Bool testCollision(const Aabb& a, const Aabb& b);
-ANKI_DEF_TEST_COLLISION_FUNC(Aabb, Sphere)
-ANKI_DEF_TEST_COLLISION_FUNC(Aabb, Obb)
-ANKI_DEF_TEST_COLLISION_FUNC(Aabb, ConvexHullShape)
-ANKI_DEF_TEST_COLLISION_FUNC(Aabb, LineSegment)
-ANKI_DEF_TEST_COLLISION_FUNC(Aabb, Cone)
-ANKI_DEF_TEST_COLLISION_FUNC(Aabb, Ray)
-ANKI_DEF_TEST_COLLISION_FUNC_PLANE(Aabb)
+Bool testCollision(const Aabb& a, const Sphere& b);
+Bool testCollision(const Aabb& a, const Obb& b);
+Bool testCollision(const Aabb& a, const ConvexHullShape& b);
+Bool testCollision(const Aabb& a, const LineSegment& b);
+Bool testCollision(const Aabb& a, const Cone& b);
+Bool testCollision(const Aabb& a, const Ray& b);
 
+// Sphere
+inline Bool testCollision(const Sphere& a, const Aabb& b)
+{
+	return testCollision(b, a);
+}
 Bool testCollision(const Sphere& a, const Sphere& b);
-ANKI_DEF_TEST_COLLISION_FUNC(Sphere, Obb)
-ANKI_DEF_TEST_COLLISION_FUNC(Sphere, ConvexHullShape)
-ANKI_DEF_TEST_COLLISION_FUNC(Sphere, LineSegment)
-ANKI_DEF_TEST_COLLISION_FUNC(Sphere, Cone)
-ANKI_DEF_TEST_COLLISION_FUNC(Sphere, Ray)
-ANKI_DEF_TEST_COLLISION_FUNC_PLANE(Sphere)
+Bool testCollision(const Sphere& a, const Obb& b);
+Bool testCollision(const Sphere& a, const ConvexHullShape& b);
+Bool testCollision(const Sphere& a, const LineSegment& b);
+Bool testCollision(const Sphere& a, const Cone& b);
+Bool testCollision(const Sphere& a, const Ray& b);
 
+// Obb
+inline Bool testCollision(const Obb& a, const Aabb& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Obb& a, const Sphere& b)
+{
+	return testCollision(b, a);
+}
 Bool testCollision(const Obb& a, const Obb& b);
-ANKI_DEF_TEST_COLLISION_FUNC(Obb, ConvexHullShape)
-ANKI_DEF_TEST_COLLISION_FUNC(Obb, LineSegment)
-ANKI_DEF_TEST_COLLISION_FUNC(Obb, Cone)
-ANKI_DEF_TEST_COLLISION_FUNC_PLANE(Obb)
+Bool testCollision(const Obb& a, const ConvexHullShape& b);
+Bool testCollision(const Obb& a, const LineSegment& b);
+Bool testCollision(const Obb& a, const Cone& b);
+Bool testCollision(const Obb& a, const Ray& b);
 
+// ConvexHullShape
+inline Bool testCollision(const ConvexHullShape& a, const Aabb& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const ConvexHullShape& a, const Sphere& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const ConvexHullShape& a, const Obb& b)
+{
+	return testCollision(b, a);
+}
 Bool testCollision(const ConvexHullShape& a, const ConvexHullShape& b);
-ANKI_DEF_TEST_COLLISION_FUNC(ConvexHullShape, LineSegment)
-ANKI_DEF_TEST_COLLISION_FUNC(ConvexHullShape, Cone)
-ANKI_DEF_TEST_COLLISION_FUNC(ConvexHullShape, Ray)
-ANKI_DEF_TEST_COLLISION_FUNC_PLANE(ConvexHullShape)
+Bool testCollision(const ConvexHullShape& a, const LineSegment& b);
+Bool testCollision(const ConvexHullShape& a, const Cone& b);
+Bool testCollision(const ConvexHullShape& a, const Ray& b);
 
+// LineSegment
+inline Bool testCollision(const LineSegment& a, const Aabb& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const LineSegment& a, const Sphere& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const LineSegment& a, const Obb& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const LineSegment& a, const ConvexHullShape& b)
+{
+	return testCollision(b, a);
+}
 Bool testCollision(const LineSegment& a, const LineSegment& b);
-ANKI_DEF_TEST_COLLISION_FUNC(LineSegment, Cone)
-ANKI_DEF_TEST_COLLISION_FUNC(LineSegment, Ray)
-ANKI_DEF_TEST_COLLISION_FUNC_PLANE(LineSegment)
+Bool testCollision(const LineSegment& a, const Cone& b);
+Bool testCollision(const LineSegment& a, const Ray& b);
 
+// Cone
+inline Bool testCollision(const Cone& a, const Aabb& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Cone& a, const Sphere& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Cone& a, const Obb& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Cone& a, const ConvexHullShape& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Cone& a, const LineSegment& b)
+{
+	return testCollision(b, a);
+}
 Bool testCollision(const Cone& a, const Cone& b);
-ANKI_DEF_TEST_COLLISION_FUNC(Cone, Ray)
-ANKI_DEF_TEST_COLLISION_FUNC_PLANE(Cone)
+Bool testCollision(const Cone& a, const Ray& b);
 
-Bool testCollision(const Ray& a, const Ray& b);
-ANKI_DEF_TEST_COLLISION_FUNC_PLANE(Ray)
+// Ray
+inline Bool testCollision(const Ray& a, const Aabb& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Ray& a, const Sphere& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Ray& a, const Obb& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Ray& a, const ConvexHullShape& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Ray& a, const LineSegment& b)
+{
+	return testCollision(b, a);
+}
+inline Bool testCollision(const Ray& a, const Cone& b)
+{
+	return testCollision(b, a);
+}
+Bool testCollision(const Cone& a, const Ray& b);
 
 // Extra testCollision functions
 

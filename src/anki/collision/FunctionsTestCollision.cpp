@@ -28,6 +28,16 @@ static Bool testCollisionGjk(const T& a, const Y& b)
 
 Bool testCollision(const Aabb& a, const Aabb& b)
 {
+#if ANKI_SIMD == ANKI_SIMD_SSE
+	const __m128 gt0 = _mm_cmpgt_ps(a.getMin().getSimd(), b.getMax().getSimd());
+	const __m128 gt1 = _mm_cmpgt_ps(b.getMin().getSimd(), a.getMax().getSimd());
+
+	const __m128 combined = _mm_or_ps(gt0, gt1);
+
+	const int res = _mm_movemask_ps(combined); // Will set the first bit of each byte of combined
+
+	return res == 0;
+#else
 	// if separated in x direction
 	if(a.getMin().x() > b.getMax().x() || b.getMin().x() > a.getMax().x())
 	{
@@ -48,6 +58,7 @@ Bool testCollision(const Aabb& a, const Aabb& b)
 
 	// no separation, must be intersecting
 	return true;
+#endif
 }
 
 Bool testCollision(const Aabb& aabb, const Sphere& s)
