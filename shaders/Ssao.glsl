@@ -63,7 +63,7 @@ shared Vec3 s_scratch[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 
 #if USE_NORMAL
 // Get normal
-Vec3 readNormal(in Vec2 uv)
+Vec3 readNormal(Vec2 uv)
 {
 	Vec3 normal = readNormalFromGBuffer(u_msRt, uv);
 	normal = u_viewRotMat * normal;
@@ -75,7 +75,7 @@ Vec3 readNormal(in Vec2 uv)
 Vec3 readRandom(Vec2 uv, F32 layer)
 {
 	const Vec2 tmp = Vec2(F32(FB_SIZE.x) / F32(NOISE_MAP_SIZE), F32(FB_SIZE.y) / F32(NOISE_MAP_SIZE));
-	Vec3 r = texture(u_noiseMap, Vec3(tmp * uv, layer)).rgb;
+	const Vec3 r = texture(u_noiseMap, Vec3(tmp * uv, layer)).rgb;
 	return r;
 }
 
@@ -86,15 +86,15 @@ Vec4 project(Vec4 point)
 
 Vec3 unproject(Vec2 ndc, F32 depth)
 {
-	F32 z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
-	Vec2 xy = ndc * u_unprojectionParams.xy * z;
+	const F32 z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
+	const Vec2 xy = ndc * u_unprojectionParams.xy * z;
 	return Vec3(xy, z);
 }
 
 F32 smallerDelta(F32 left, F32 mid, F32 right)
 {
-	F32 a = mid - left;
-	F32 b = right - mid;
+	const F32 a = mid - left;
+	const F32 b = right - mid;
 
 	return (abs(a) < abs(b)) ? a : b;
 }
@@ -103,23 +103,23 @@ F32 smallerDelta(F32 left, F32 mid, F32 right)
 Vec3 computeNormal(Vec2 uv, Vec3 origin, F32 depth)
 {
 #if USE_NORMAL
-	Vec3 normal = readNormal(uv);
+	const Vec3 normal = readNormal(uv);
 #elif !COMPLEX_NORMALS
-	Vec3 normal = normalize(cross(dFdx(origin), dFdy(origin)));
+	const Vec3 normal = normalize(cross(dFdx(origin), dFdy(origin)));
 #else
-	F32 depthLeft = textureLodOffset(u_depthRt, uv, 0.0, ivec2(-2, 0)).r;
-	F32 depthRight = textureLodOffset(u_depthRt, uv, 0.0, ivec2(2, 0)).r;
-	F32 depthTop = textureLodOffset(u_depthRt, uv, 0.0, ivec2(0, 2)).r;
-	F32 depthBottom = textureLodOffset(u_depthRt, uv, 0.0, ivec2(0, -2)).r;
+	const F32 depthLeft = textureLodOffset(u_depthRt, uv, 0.0, ivec2(-2, 0)).r;
+	const F32 depthRight = textureLodOffset(u_depthRt, uv, 0.0, ivec2(2, 0)).r;
+	const F32 depthTop = textureLodOffset(u_depthRt, uv, 0.0, ivec2(0, 2)).r;
+	const F32 depthBottom = textureLodOffset(u_depthRt, uv, 0.0, ivec2(0, -2)).r;
 
-	F32 ddx = smallerDelta(depthLeft, depth, depthRight);
-	F32 ddy = smallerDelta(depthBottom, depth, depthTop);
+	const F32 ddx = smallerDelta(depthLeft, depth, depthRight);
+	const F32 ddy = smallerDelta(depthBottom, depth, depthTop);
 
-	Vec2 ndc = UV_TO_NDC(uv);
+	const Vec2 ndc = UV_TO_NDC(uv);
 	const Vec2 TEXEL_SIZE = 1.0 / Vec2(FB_SIZE);
 	const Vec2 NDC_TEXEL_SIZE = 2.0 * TEXEL_SIZE;
-	Vec3 right = unproject(ndc + Vec2(NDC_TEXEL_SIZE.x, 0.0), depth + ddx);
-	Vec3 top = unproject(ndc + Vec2(0.0, NDC_TEXEL_SIZE.y), depth + ddy);
+	const Vec3 right = unproject(ndc + Vec2(NDC_TEXEL_SIZE.x, 0.0), depth + ddx);
+	const Vec3 top = unproject(ndc + Vec2(0.0, NDC_TEXEL_SIZE.y), depth + ddy);
 
 	Vec3 normal = cross(origin - top, right - origin);
 	normal = normalize(normal);
@@ -142,35 +142,35 @@ void main(void)
 		return;
 	}
 
-	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
 #else
-	Vec2 uv = in_uv;
+	const Vec2 uv = in_uv;
 #endif
 
-	Vec2 ndc = UV_TO_NDC(uv);
+	const Vec2 ndc = UV_TO_NDC(uv);
 
 	// Compute origin
-	F32 depth = textureLod(u_depthRt, uv, 0.0).r;
-	Vec3 origin = unproject(ndc, depth);
+	const F32 depth = textureLod(u_depthRt, uv, 0.0).r;
+	const Vec3 origin = unproject(ndc, depth);
 
 	// Get normal
-	Vec3 normal = computeNormal(uv, origin, depth);
+	const Vec3 normal = computeNormal(uv, origin, depth);
 
 	// Find the projected radius
-	Vec3 sphereLimit = origin + Vec3(RADIUS, 0.0, 0.0);
-	Vec4 projSphereLimit = project(Vec4(sphereLimit, 1.0));
-	Vec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
-	F32 projRadius = length(projSphereLimit2 - ndc);
+	const Vec3 sphereLimit = origin + Vec3(RADIUS, 0.0, 0.0);
+	const Vec4 projSphereLimit = project(Vec4(sphereLimit, 1.0));
+	const Vec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
+	const F32 projRadius = length(projSphereLimit2 - ndc);
 
 	// Loop to compute
-	F32 randFactor = readRandom(uv, 0.0).r;
+	const F32 randFactor = readRandom(uv, 0.0).r;
 	F32 ssao = 0.0;
 	const F32 SAMPLE_COUNTF = F32(SAMPLE_COUNT);
 	ANKI_UNROLL for(U32 i = 0; i < SAMPLE_COUNT; ++i)
 	{
 		// Compute disk. Basically calculate a point in a spiral. See how it looks here
 		// https://shadertoy.com/view/Md3fDr
-		F32 fi = F32(i);
+		const F32 fi = F32(i);
 		const F32 TURNS = F32(SAMPLE_COUNT) / 2.0; // Calculate the number of the spiral turns
 		const F32 ANG = (PI * 2.0 * TURNS) / (SAMPLE_COUNTF - 1.0); // The angle distance between samples
 		F32 ang = ANG * fi;
@@ -179,13 +179,13 @@ void main(void)
 		F32 radius = (1.0 / SAMPLE_COUNTF) * (fi + 1.0);
 		radius = sqrt(radius); // Move the points a bit away from the center of the spiral
 
-		Vec2 point = Vec2(cos(ang), sin(ang)) * radius; // In NDC
+		const Vec2 point = Vec2(cos(ang), sin(ang)) * radius; // In NDC
 
-		Vec2 finalDiskPoint = ndc + point * projRadius;
+		const Vec2 finalDiskPoint = ndc + point * projRadius;
 
 		// Compute factor
-		Vec3 s = unproject(finalDiskPoint, textureLod(u_depthRt, NDC_TO_UV(finalDiskPoint), 0.0).r);
-		Vec3 u = s - origin;
+		const Vec3 s = unproject(finalDiskPoint, textureLod(u_depthRt, NDC_TO_UV(finalDiskPoint), 0.0).r);
+		const Vec3 u = s - origin;
 		ssao += max(dot(normal, u) + BIAS, EPSILON) / max(dot(u, u), EPSILON);
 	}
 
@@ -198,11 +198,11 @@ void main(void)
 	s_scratch[gl_LocalInvocationID.y][gl_LocalInvocationID.x].x = ssao;
 
 	// Do some pre-work to find out the neighbours
-	U32 left = (gl_LocalInvocationID.x != 0u) ? (gl_LocalInvocationID.x - 1u) : 0u;
-	U32 right =
+	const U32 left = (gl_LocalInvocationID.x != 0u) ? (gl_LocalInvocationID.x - 1u) : 0u;
+	const U32 right =
 		(gl_LocalInvocationID.x != WORKGROUP_SIZE.x - 1u) ? (gl_LocalInvocationID.x + 1u) : (WORKGROUP_SIZE.x - 1u);
-	U32 bottom = (gl_LocalInvocationID.y != 0u) ? (gl_LocalInvocationID.y - 1u) : 0u;
-	U32 top =
+	const U32 bottom = (gl_LocalInvocationID.y != 0u) ? (gl_LocalInvocationID.y - 1u) : 0u;
+	const U32 top =
 		(gl_LocalInvocationID.y != WORKGROUP_SIZE.y - 1u) ? (gl_LocalInvocationID.y + 1u) : (WORKGROUP_SIZE.y - 1u);
 
 	// Wait for all threads

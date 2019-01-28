@@ -37,7 +37,7 @@ void main()
 		}
 	}
 
-	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
 
 	Vec3 color = textureLod(u_tex, uv, 0.0).rgb;
 	color += textureLodOffset(u_tex, uv, 0.0, ivec2(+1, +1)).rgb;

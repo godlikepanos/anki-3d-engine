@@ -45,19 +45,19 @@ ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;
 
-Vec3 colorGrading(in Vec3 color)
+Vec3 colorGrading(Vec3 color)
 {
 	const Vec3 LUT_SCALE = Vec3((F32(LUT_SIZE) - 1.0) / F32(LUT_SIZE));
 	const Vec3 LUT_OFFSET = Vec3(1.0 / (2.0 * F32(LUT_SIZE)));
 
 	color = min(color, Vec3(1.0));
-	Vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
+	const Vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
 	return textureLod(u_lut, lutCoords, 0.0).rgb;
 }
 
 void main()
 {
-	Vec2 uv = in_uv.xy;
+	const Vec2 uv = in_uv.xy;
 
 	if(MOTION_BLUR_SAMPLES > 0u)
 	{
@@ -76,7 +76,7 @@ void main()
 	out_color = tonemap(out_color, UNIFORM(u_exposureThreshold0));
 
 #if BLOOM_ENABLED
-	Vec3 bloom = textureLod(u_ppsBloomLfRt, uv, 0.0).rgb;
+	const Vec3 bloom = textureLod(u_ppsBloomLfRt, uv, 0.0).rgb;
 	out_color += bloom;
 #endif
 

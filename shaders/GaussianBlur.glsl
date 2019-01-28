@@ -59,9 +59,9 @@ void main()
 		return;
 	}
 
-	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(TEXTURE_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(TEXTURE_SIZE);
 #else
-	Vec2 uv = in_uv;
+	const Vec2 uv = in_uv;
 #endif
 
 	const Vec2 TEXEL_SIZE = 1.0 / Vec2(TEXTURE_SIZE);
@@ -82,7 +82,7 @@ void main()
 
 	ANKI_UNROLL for(U32 i = 0u; i < STEP_COUNT; ++i)
 	{
-		COL_TYPE col =
+		const COL_TYPE col =
 			textureLod(u_tex, uv + uvOffset, 0.0).TEX_FETCH + textureLod(u_tex, uv - uvOffset, 0.0).TEX_FETCH;
 		color += WEIGHTS[i + 1u] * col;
 

@@ -36,7 +36,7 @@ void main()
 #endif
 	out_col = in_col;
 
-	Vec2 pos = u_transform.xy * in_pos + u_transform.zw;
+	const Vec2 pos = u_transform.xy * in_pos + u_transform.zw;
 	gl_Position = Vec4(pos, 0.0, 1.0);
 }
 #pragma anki end

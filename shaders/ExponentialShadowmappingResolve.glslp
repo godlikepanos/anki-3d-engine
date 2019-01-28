@@ -42,7 +42,7 @@ layout(location = 2) flat out Vec2 out_minUv;
 void main()
 {
 	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
-	Vec2 pos = out_uv * 2.0 - 1.0;
+	const Vec2 pos = out_uv * 2.0 - 1.0;
 
 	out_uv = fma(out_uv, u_uvScale, u_uvTranslation);
 	gl_Position = Vec4(pos, 0.0, 1.0);

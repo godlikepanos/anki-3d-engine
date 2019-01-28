@@ -34,8 +34,8 @@ void main()
 	const U32 PIXEL_READ_X = TRIMMED_INPUT_TEX_SIZE.x / WORKGROUP_SIZE.x;
 	const U32 PIXEL_READ_Y = TRIMMED_INPUT_TEX_SIZE.y / WORKGROUP_SIZE.y;
 
-	U32 yStart = gl_LocalInvocationID.y * PIXEL_READ_Y;
-	U32 xStart = gl_LocalInvocationID.x * PIXEL_READ_X;
+	const U32 yStart = gl_LocalInvocationID.y * PIXEL_READ_Y;
+	const U32 xStart = gl_LocalInvocationID.x * PIXEL_READ_X;
 
 	F32 avgLum = 0.0;
 	ANKI_UNROLL for(U32 y = 0; y < PIXEL_READ_Y; ++y)
@@ -74,13 +74,13 @@ void main()
 	ANKI_BRANCH if(gl_LocalInvocationIndex == 0u)
 	{
 #if LOG_AVG
-		F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(TRIMMED_INPUT_TEX_SIZE.x * TRIMMED_INPUT_TEX_SIZE.y)));
+		const F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(TRIMMED_INPUT_TEX_SIZE.x * TRIMMED_INPUT_TEX_SIZE.y)));
 #else
-		F32 crntLum = s_avgLum[0] * (1.0 / F32(TRIMMED_INPUT_TEX_SIZE.x * TRIMMED_INPUT_TEX_SIZE.y));
+		const F32 crntLum = s_avgLum[0] * (1.0 / F32(TRIMMED_INPUT_TEX_SIZE.x * TRIMMED_INPUT_TEX_SIZE.y));
 #endif
 
 #if 1
-		F32 prevLum = u_averageLuminance;
+		const F32 prevLum = u_averageLuminance;
 
 		// Lerp between previous and new L value
 		const F32 INTERPOLATION_FACTOR = 0.05;

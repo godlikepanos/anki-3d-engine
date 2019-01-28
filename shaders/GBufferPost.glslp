@@ -21,7 +21,7 @@ out gl_PerVertex
 void main()
 {
 	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
-	Vec2 pos = out_uv * 2.0 - 1.0;
+	const Vec2 pos = out_uv * 2.0 - 1.0;
 	gl_Position = Vec4(pos, 0.0, 1.0);
 
 	out_clusterIJ = Vec2(CLUSTER_COUNT_X, CLUSTER_COUNT_Y) * out_uv;
@@ -61,16 +61,16 @@ void main()
 	Vec4 outSpecular = Vec4(0.0, 0.0, 0.0, 1.0);
 
 	// Get worldPos
-	F32 depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
-	Vec2 ndc = UV_TO_NDC(in_uv);
-	Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
-	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+	const F32 depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
+	const Vec2 ndc = UV_TO_NDC(in_uv);
+	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get first decal index
 	U32 idxOffset;
 	{
-		U32 k = computeClusterK(u_clustererMagic, worldPos);
-		U32 clusterIdx =
+		const U32 k = computeClusterK(u_clustererMagic, worldPos);
+		const U32 clusterIdx =
 			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
 
 		idxOffset = u_clusters[clusterIdx];
@@ -86,10 +86,10 @@ void main()
 
 	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		Decal decal = u_decals[idx];
+		const Decal decal = u_decals[idx];
 
 		// Project pos to decal space
-		Vec4 texCoords4 = decal.m_texProjectionMat * Vec4(worldPos, 1.0);
+		const Vec4 texCoords4 = decal.m_texProjectionMat * Vec4(worldPos, 1.0);
 		if(texCoords4.w <= 0.7)
 		{
 			// Behind the decal, skip
@@ -102,12 +102,12 @@ void main()
 		texCoords2 = saturate(texCoords2);
 
 		// Read diffuse
-		Vec2 diffUv = mad(texCoords2, decal.m_diffUv.zw, decal.m_diffUv.xy);
-		Vec4 decalDiff = texture(u_diffDecalTex, diffUv);
+		const Vec2 diffUv = mad(texCoords2, decal.m_diffUv.zw, decal.m_diffUv.xy);
+		const Vec4 decalDiff = texture(u_diffDecalTex, diffUv);
 
 		// Read roughness
-		Vec2 specUv = mad(texCoords2, decal.m_normRoughnessUv.zw, decal.m_normRoughnessUv.xy);
-		Vec3 spec = texture(u_specularRoughnessDecalTex, specUv).rgb;
+		const Vec2 specUv = mad(texCoords2, decal.m_normRoughnessUv.zw, decal.m_normRoughnessUv.xy);
+		const Vec3 spec = texture(u_specularRoughnessDecalTex, specUv).rgb;
 
 		// Update diffuse
 		F32 f = decalDiff.a * decal.m_blendFactors[0];

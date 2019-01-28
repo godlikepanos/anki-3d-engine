@@ -37,9 +37,9 @@ layout(location = 0) in Vec2 in_uv;
 
 F32 computeLumaWeight(F32 refLuma, COL_TYPE col)
 {
-	F32 l = computeLuminance(col);
-	F32 diff = abs(refLuma - l);
-	F32 weight = 1.0 / (EPSILON + diff);
+	const F32 l = computeLuminance(col);
+	const F32 diff = abs(refLuma - l);
+	const F32 weight = 1.0 / (EPSILON + diff);
 	return weight;
 }
 
@@ -56,7 +56,7 @@ void main()
 
 	COL_TYPE col = texture(u_tex, in_uv).TEX_FETCH;
 	out_color = col;
-	F32 refLuma = computeLuminance(col);
+	const F32 refLuma = computeLuminance(col);
 	F32 weight = 1.0;
 	Vec2 texCoordOffset = 1.5 * TEXEL_SIZE;
 

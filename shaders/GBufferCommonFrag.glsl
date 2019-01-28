@@ -45,25 +45,25 @@ layout(location = 3) out Vec2 out_gbuffer3;
 Vec3 readNormalFromTexture(sampler2D map, highp Vec2 texCoords)
 {
 	// First read the texture
-	Vec3 nAtTangentspace = normalize((texture(map, texCoords).rgb - 0.5) * 2.0);
+	const Vec3 nAtTangentspace = normalize((texture(map, texCoords).rgb - 0.5) * 2.0);
 
-	Vec3 n = normalize(in_normal);
-	Vec3 t = normalize(in_tangent.xyz);
+	const Vec3 n = normalize(in_normal);
+	const Vec3 t = normalize(in_tangent.xyz);
 #	if CALC_BITANGENT_IN_VERT
-	Vec3 b = normalize(in_bitangent.xyz);
+	const Vec3 b = normalize(in_bitangent.xyz);
 #	else
-	Vec3 b = cross(n, t) * in_tangent.w;
+	const Vec3 b = cross(n, t) * in_tangent.w;
 #	endif
 
-	Mat3 tbnMat = Mat3(t, b, n);
+	const Mat3 tbnMat = Mat3(t, b, n);
 
 	return tbnMat * nAtTangentspace;
 }
 
 // Using a 4-channel texture and a tolerance discard the fragment if the texture's alpha is less than the tolerance
-Vec3 readTextureRgbAlphaTesting(sampler2D map, in highp Vec2 texCoords, F32 tolerance)
+Vec3 readTextureRgbAlphaTesting(sampler2D map, highp Vec2 texCoords, F32 tolerance)
 {
-	Vec4 col = Vec4(texture(map, texCoords));
+	const Vec4 col = Vec4(texture(map, texCoords));
 	if(col.a < tolerance)
 	{
 		discard;
@@ -72,33 +72,33 @@ Vec3 readTextureRgbAlphaTesting(sampler2D map, in highp Vec2 texCoords, F32 tole
 	return col.rgb;
 }
 
-Vec2 computeTextureCoordParallax(in sampler2D heightMap, in Vec2 uv, in F32 heightMapScale)
+Vec2 computeTextureCoordParallax(sampler2D heightMap, Vec2 uv, F32 heightMapScale)
 {
 	const U32 MAX_SAMPLES = 25;
 	const U32 MIN_SAMPLES = 1;
 	const F32 MAX_EFFECTIVE_DISTANCE = 32.0;
 
 	// Get that because we are sampling inside a loop
-	Vec2 dPdx = dFdx(uv);
-	Vec2 dPdy = dFdy(uv);
+	const Vec2 dPdx = dFdx(uv);
+	const Vec2 dPdy = dFdy(uv);
 
-	Vec3 eyeTangentSpace = in_eyeTangentSpace;
-	Vec3 normTangentSpace = in_normalTangentSpace;
+	const Vec3 eyeTangentSpace = in_eyeTangentSpace;
+	const Vec3 normTangentSpace = in_normalTangentSpace;
 
 	F32 parallaxLimit = -length(eyeTangentSpace.xy) / eyeTangentSpace.z;
 	parallaxLimit *= heightMapScale;
 
-	Vec2 offsetDir = normalize(eyeTangentSpace.xy);
-	Vec2 maxOffset = offsetDir * parallaxLimit;
+	const Vec2 offsetDir = normalize(eyeTangentSpace.xy);
+	const Vec2 maxOffset = offsetDir * parallaxLimit;
 
-	Vec3 E = normalize(eyeTangentSpace);
+	const Vec3 E = normalize(eyeTangentSpace);
 
-	F32 factor0 = -dot(E, normTangentSpace);
-	F32 factor1 = in_distFromTheCamera / -MAX_EFFECTIVE_DISTANCE;
-	F32 factor = (1.0 - factor0) * (1.0 - factor1);
-	F32 sampleCountf = mix(F32(MIN_SAMPLES), F32(MAX_SAMPLES), factor);
+	const F32 factor0 = -dot(E, normTangentSpace);
+	const F32 factor1 = in_distFromTheCamera / -MAX_EFFECTIVE_DISTANCE;
+	const F32 factor = (1.0 - factor0) * (1.0 - factor1);
+	const F32 sampleCountf = mix(F32(MIN_SAMPLES), F32(MAX_SAMPLES), factor);
 
-	F32 stepSize = 1.0 / sampleCountf;
+	const F32 stepSize = 1.0 / sampleCountf;
 
 	F32 crntRayHeight = 1.0;
 	Vec2 crntOffset = Vec2(0.0);
@@ -109,16 +109,16 @@ Vec2 computeTextureCoordParallax(in sampler2D heightMap, in Vec2 uv, in F32 heig
 
 	U32 crntSample = 0;
 
-	U32 sampleCount = U32(sampleCountf);
+	const U32 sampleCount = U32(sampleCountf);
 	ANKI_LOOP while(crntSample < sampleCount)
 	{
 		crntSampledHeight = textureGrad(heightMap, uv + crntOffset, dPdx, dPdy).r;
 
 		if(crntSampledHeight > crntRayHeight)
 		{
-			F32 delta1 = crntSampledHeight - crntRayHeight;
-			F32 delta2 = (crntRayHeight + stepSize) - lastSampledHeight;
-			F32 ratio = delta1 / (delta1 + delta2);
+			const F32 delta1 = crntSampledHeight - crntRayHeight;
+			const F32 delta2 = (crntRayHeight + stepSize) - lastSampledHeight;
+			const F32 ratio = delta1 / (delta1 + delta2);
 
 			crntOffset = mix(crntOffset, lastOffset, ratio);
 

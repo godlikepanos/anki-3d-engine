@@ -28,27 +28,27 @@ Vec3 motionBlur(sampler2D velocityTex,
 	ANKI_BRANCH if(velocity.x == -1.0)
 	{
 #if TAA_FIX
-		Vec2 a = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(-2, 2)).rg;
-		Vec2 b = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(2, 2)).rg;
-		Vec2 c = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(0, -2)).rg;
+		const Vec2 a = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(-2, 2)).rg;
+		const Vec2 b = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(2, 2)).rg;
+		const Vec2 c = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(0, -2)).rg;
 
 		velocity = max(max(a, b), c);
 
 		ANKI_BRANCH if(velocity.x == -1.0)
 #endif
 		{
-			F32 depth = textureLod(depthTex, nowUv, 0.0).r;
+			const F32 depth = textureLod(depthTex, nowUv, 0.0).r;
 
-			Vec4 v4 = prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(nowUv), depth, 1.0);
+			const Vec4 v4 = prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(nowUv), depth, 1.0);
 			velocity = NDC_TO_UV(v4.xy / v4.w) - nowUv;
 		}
 	}
 
 	// March direction
-	Vec2 slopes = abs(velocity);
+	const Vec2 slopes = abs(velocity);
 
 	// Compute the sample count
-	Vec2 sampleCount2D = slopes * Vec2(FB_SIZE);
+	const Vec2 sampleCount2D = slopes * Vec2(FB_SIZE);
 	F32 sampleCountf = max(sampleCount2D.x, sampleCount2D.y);
 	sampleCountf = clamp(sampleCountf, 1.0, F32(maxSamples));
 	sampleCountf = round(sampleCountf);
@@ -57,8 +57,8 @@ Vec3 motionBlur(sampler2D velocityTex,
 	Vec3 outColor = Vec3(0.0);
 	ANKI_LOOP for(F32 s = 0.0; s < sampleCountf; s += 1.0)
 	{
-		F32 f = s / sampleCountf;
-		Vec2 sampleUv = nowUv + velocity * f;
+		const F32 f = s / sampleCountf;
+		const Vec2 sampleUv = nowUv + velocity * f;
 
 		outColor += textureLod(toBlurTex, sampleUv, 0.0).rgb;
 	}

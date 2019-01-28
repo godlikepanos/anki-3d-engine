@@ -25,15 +25,15 @@ layout(ANKI_TEX_BINDING(0, 1)) uniform sampler3D u_lightVol;
 
 layout(location = 0) out Vec4 out_color;
 
-void writeGBuffer(in Vec4 color)
+void writeGBuffer(Vec4 color)
 {
 	out_color = Vec4(color.rgb, color.a);
 }
 
 Vec4 readAnimatedTextureRgba(sampler2DArray tex, F32 period, Vec2 uv, F32 time)
 {
-	F32 layerCount = F32(textureSize(tex, 0).z);
-	F32 layer = mod(time * layerCount / period, layerCount);
+	const F32 layerCount = F32(textureSize(tex, 0).z);
+	const F32 layer = mod(time * layerCount / period, layerCount);
 	return texture(tex, Vec3(uv, layer));
 }
 
@@ -44,7 +44,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	Vec3 outColor = Vec3(0.0);
 
 	// Find the cluster and then the light counts
-	U32 clusterIdx = computeClusterIndex(
+	const U32 clusterIdx = computeClusterIndex(
 		u_clustererMagic, gl_FragCoord.xy / RENDERER_SIZE, worldPos, u_clusterCountX, u_clusterCountY);
 
 	U32 idxOffset = u_clusters[clusterIdx];
@@ -53,12 +53,12 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	U32 idx;
 	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		PointLight light = u_pointLights[idx];
+		const PointLight light = u_pointLights[idx];
 
-		Vec3 diffC = diffCol * light.m_diffuseColor;
+		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
-		Vec3 frag2Light = light.m_position - worldPos;
-		F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+		const Vec3 frag2Light = light.m_position - worldPos;
+		const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
 
 #if LOD > 1
 		const F32 shadow = 1.0;
@@ -76,22 +76,22 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	// Spot lights
 	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
 	{
-		SpotLight light = u_spotLights[idx];
+		const SpotLight light = u_spotLights[idx];
 
-		Vec3 diffC = diffCol * light.m_diffuseColor;
+		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
-		Vec3 frag2Light = light.m_position - worldPos;
-		F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+		const Vec3 frag2Light = light.m_position - worldPos;
+		const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
 
-		Vec3 l = normalize(frag2Light);
+		const Vec3 l = normalize(frag2Light);
 
-		F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
+		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
 
 #if LOD > 1
 		const F32 shadow = 1.0;
 #else
 		F32 shadow = 1.0;
-		F32 shadowmapLayerIdx = light.m_shadowmapId;
+		const F32 shadowmapLayerIdx = light.m_shadowmapId;
 		if(shadowmapLayerIdx >= 0.0)
 		{
 			shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex);
@@ -107,10 +107,10 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 // Just read the light color from the vol texture
 Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
 {
-	Vec2 uv = gl_FragCoord.xy / RENDERER_SIZE;
-	Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, uv, worldPos, u_lightVolumeLastCluster + 1u);
+	const Vec2 uv = gl_FragCoord.xy / RENDERER_SIZE;
+	const Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, uv, worldPos, u_lightVolumeLastCluster + 1u);
 
-	Vec3 light = textureLod(u_lightVol, uv3d, 0.0).rgb;
+	const Vec3 light = textureLod(u_lightVol, uv3d, 0.0).rgb;
 	return diffuseLambert(diffCol) * light;
 }
 
@@ -123,14 +123,14 @@ void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpac
 {
 	const Vec2 screenSize = 1.0 / RENDERER_SIZE;
 
-	Vec2 texCoords = gl_FragCoord.xy * screenSize;
-	F32 depth = texture(u_gbufferDepthRt, texCoords).r;
+	const Vec2 texCoords = gl_FragCoord.xy * screenSize;
+	const F32 depth = texture(u_gbufferDepthRt, texCoords).r;
 	F32 zFeatherFactor;
 
-	Vec4 fragPosVspace4 = u_invProjMat * Vec4(Vec3(UV_TO_NDC(texCoords), depth), 1.0);
-	F32 sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
+	const Vec4 fragPosVspace4 = u_invProjMat * Vec4(Vec3(UV_TO_NDC(texCoords), depth), 1.0);
+	const F32 sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
-	F32 diff = max(0.0, zVSpace - sceneZVspace);
+	const F32 diff = max(0.0, zVSpace - sceneZVspace);
 
 	zFeatherFactor = min(1.0, diff / fogDistanceOfMaxThikness);
 

@@ -68,41 +68,41 @@ void main()
 {
 #if PASS == PASS_GB
 #	if heightTex_DEFINED
-	Vec2 uv = computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
+	const Vec2 uv = computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
 #	else
-	Vec2 uv = in_uv;
+	const Vec2 uv = in_uv;
 #	endif
 
 #	if diffTex_DEFINED
-	Vec3 diffColor = texture(diffTex, uv).rgb;
+	const Vec3 diffColor = texture(diffTex, uv).rgb;
 #	endif
 
 #	if specTex_DEFINED
-	Vec3 specColor = texture(specTex, uv).rgb;
+	const Vec3 specColor = texture(specTex, uv).rgb;
 #	endif
 
 #	if roughnessTex_DEFINED
-	F32 roughness = texture(roughnessTex, uv).r;
+	const F32 roughness = texture(roughnessTex, uv).r;
 #	endif
 
 #	if metalTex_DEFINED
-	F32 metallic = texture(metalTex, uv).r;
+	const F32 metallic = texture(metalTex, uv).r;
 #	endif
 
 #	if normalTex_DEFINED
-	Vec3 normal = readNormalFromTexture(normalTex, uv);
+	const Vec3 normal = readNormalFromTexture(normalTex, uv);
 #	else
-	Vec3 normal = normalize(in_normal);
+	const Vec3 normal = normalize(in_normal);
 #	endif
 
 #	if emissiveTex_DEFINED
-	Vec3 emission = texture(emissiveTex, uv).rgb;
+	const Vec3 emission = texture(emissiveTex, uv).rgb;
 #	endif
 
 #	if VELOCITY
-	Vec2 velocity = in_velocity;
+	const Vec2 velocity = in_velocity;
 #	else
-	Vec2 velocity = Vec2(-1.0);
+	const Vec2 velocity = Vec2(-1.0);
 #	endif
 
 	writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic, velocity);

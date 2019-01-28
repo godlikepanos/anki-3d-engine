@@ -159,6 +159,6 @@ Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool
 		count += (fogVolumes) ? 1u : 0u;
 	}
 
-	F32 factor = min(1.0, F32(count) / F32(maxLights));
+	const F32 factor = min(1.0, F32(count) / F32(maxLights));
 	return heatmap(factor);
 }

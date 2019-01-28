@@ -54,8 +54,8 @@ layout(location = 0) out COL_TYPE out_color;
 
 F32 computeDepthWeight(F32 refDepth, F32 depth)
 {
-	F32 diff = abs(refDepth - depth);
-	F32 weight = 1.0 / (EPSILON + diff);
+	const F32 diff = abs(refDepth - depth);
+	const F32 weight = 1.0 / (EPSILON + diff);
 	return sqrt(weight);
 }
 
@@ -66,7 +66,7 @@ F32 readDepth(Vec2 uv)
 
 void sampleTex(Vec2 uv, F32 refDepth, inout COL_TYPE col, inout F32 weight)
 {
-	COL_TYPE color = textureLod(u_inTex, uv, 0.0).TEX_FETCH;
+	const COL_TYPE color = textureLod(u_inTex, uv, 0.0).TEX_FETCH;
 	F32 w = computeDepthWeight(refDepth, readDepth(uv));
 	col += color * w;
 	weight += w;
@@ -82,16 +82,16 @@ void main()
 		return;
 	}
 
-	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(TEXTURE_SIZE);
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(TEXTURE_SIZE);
 #else
-	Vec2 uv = in_uv;
+	const Vec2 uv = in_uv;
 #endif
 
 	const Vec2 TEXEL_SIZE = 1.0 / Vec2(TEXTURE_SIZE);
 
 	// Sample
 	COL_TYPE color = textureLod(u_inTex, uv, 0.0).TEX_FETCH;
-	F32 refDepth = readDepth(uv);
+	const F32 refDepth = readDepth(uv);
 	F32 weight = 1.0;
 
 #if !defined(BOX)

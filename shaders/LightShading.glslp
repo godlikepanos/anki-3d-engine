@@ -55,59 +55,13 @@ layout(location = 1) in Vec2 in_clusterIJ;
 
 layout(location = 0) out Vec3 out_color;
 
-// Note: All calculations in world space
-void readReflectionsAndIrradianceFromProbes(U32 idxOffset,
-	Vec3 worldPos,
-	Vec3 normal,
-	Vec3 viewDir,
-	F32 roughness,
-	out Vec3 specIndirect,
-	out Vec3 diffIndirect)
-{
-	specIndirect = Vec3(0.0);
-	diffIndirect = Vec3(0.0);
-
-	Vec3 reflDir = reflect(-viewDir, normal);
-	F32 reflLod = F32(IR_MIPMAP_COUNT - 1u) * roughness;
-	F32 totalBlendWeight = EPSILON;
-
-	// Check proxy
-	U32 idx;
-	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
-	{
-		ReflectionProbe probe = u_reflectionProbes[idx];
-		Vec3 aabbMin = probe.m_aabbMin;
-		Vec3 aabbMax = probe.m_aabbMax;
-		Vec3 probeOrigin = probe.m_position;
-		F32 cubemapIndex = probe.m_cubemapIndex;
-
-		// Compute blend weight
-		F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
-		totalBlendWeight += blendWeight;
-
-		// Sample reflections
-		Vec3 cubeUv = intersectProbe(worldPos, reflDir, aabbMin, aabbMax, probeOrigin);
-		Vec3 c = textureLod(u_reflectionsTex, Vec4(cubeUv, cubemapIndex), reflLod).rgb;
-		specIndirect += c * blendWeight;
-
-		// Sample irradiance
-		cubeUv = intersectProbe(worldPos, normal, aabbMin, aabbMax, probeOrigin);
-		c = textureLod(u_irradianceTex, Vec4(cubeUv, cubemapIndex), 0.0).rgb;
-		diffIndirect += c * blendWeight;
-	}
-
-	// Normalize the colors
-	specIndirect /= totalBlendWeight;
-	diffIndirect /= totalBlendWeight;
-}
-
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF() \
-	Vec3 frag2Light = light.m_position - worldPos; \
-	Vec3 l = normalize(frag2Light); \
-	Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l); \
-	Vec3 diffC = diffuseLambert(gbuffer.m_diffuse); \
-	F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light); \
+	const Vec3 frag2Light = light.m_position - worldPos; \
+	const Vec3 l = normalize(frag2Light); \
+	const Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l); \
+	const Vec3 diffC = diffuseLambert(gbuffer.m_diffuse); \
+	const F32 att = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light); \
 	F32 lambert = max(0.0, dot(gbuffer.m_normal, l));
 
 void main()
@@ -210,22 +164,52 @@ void main()
 	// Refl & indirect
 	{
 		// Do the probe read
-		Vec3 envColor;
-		Vec3 indirectColor;
-		readReflectionsAndIrradianceFromProbes(
-			idxOffset, worldPos, gbuffer.m_normal, viewDir, gbuffer.m_roughness, envColor, indirectColor);
+		Vec3 specIndirect = Vec3(0.0);
+		Vec3 diffIndirect = Vec3(0.0);
+
+		const Vec3 reflDir = reflect(-viewDir, gbuffer.m_normal);
+		const F32 reflLod = F32(IR_MIPMAP_COUNT - 1u) * gbuffer.m_roughness;
+		F32 totalBlendWeight = EPSILON;
+
+		// Loop probes
+		ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+		{
+			const ReflectionProbe probe = u_reflectionProbes[idx];
+			const Vec3 aabbMin = probe.m_aabbMin;
+			const Vec3 aabbMax = probe.m_aabbMax;
+			const Vec3 probeOrigin = probe.m_position;
+			const F32 cubemapIndex = probe.m_cubemapIndex;
+
+			// Compute blend weight
+			const F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
+			totalBlendWeight += blendWeight;
+
+			// Sample reflections
+			Vec3 cubeUv = intersectProbe(worldPos, reflDir, aabbMin, aabbMax, probeOrigin);
+			Vec3 c = textureLod(u_reflectionsTex, Vec4(cubeUv, cubemapIndex), reflLod).rgb;
+			specIndirect += c * blendWeight;
+
+			// Sample irradiance
+			cubeUv = intersectProbe(worldPos, gbuffer.m_normal, aabbMin, aabbMax, probeOrigin);
+			c = textureLod(u_irradianceTex, Vec4(cubeUv, cubemapIndex), 0.0).rgb;
+			diffIndirect += c * blendWeight;
+		}
+
+		// Normalize the colors
+		specIndirect /= totalBlendWeight;
+		diffIndirect /= totalBlendWeight;
 
 		// Read the SSL result
-		Vec4 ssr = textureLod(u_ssrRt, in_uv, 0.0);
+		const Vec4 ssr = textureLod(u_ssrRt, in_uv, 0.0);
 
 		// Combine the SSR and probe reflections and write the result
-		Vec3 finalRefl = envColor * ssr.a + ssr.rgb;
+		const Vec3 finalRefl = specIndirect * ssr.a + ssr.rgb;
 
 		// Compute env BRDF
-		F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
-		Vec3 env = envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, NoV);
+		const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
+		const Vec3 env = envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, NoV);
 
-		out_color += indirectColor * gbuffer.m_diffuse + finalRefl * env;
+		out_color += diffIndirect * gbuffer.m_diffuse + finalRefl * env;
 	}
 }
 #pragma anki end

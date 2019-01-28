@@ -62,10 +62,10 @@ void main()
 {
 	// Check if we should skip the frag
 #if DITHERED_DEPTH_TEST == 1
-	Vec2 uv = gl_FragCoord.xy / Vec2(textureSize(u_depthRt, 0));
-	F32 depthRef = textureLod(u_depthRt, uv, 0.0).r;
-	Bool depthTestFailed = gl_FragCoord.z >= depthRef;
-	IVec2 fragCoordi = IVec2(gl_FragCoord.xy);
+	const Vec2 uv = gl_FragCoord.xy / Vec2(textureSize(u_depthRt, 0));
+	const F32 depthRef = textureLod(u_depthRt, uv, 0.0).r;
+	const Bool depthTestFailed = gl_FragCoord.z >= depthRef;
+	const IVec2 fragCoordi = IVec2(gl_FragCoord.xy);
 	if(depthTestFailed && ((fragCoordi.x + fragCoordi.y) % 8) != 0)
 	{
 		discard;

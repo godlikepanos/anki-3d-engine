@@ -30,10 +30,10 @@ layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_lensDirtTex;
 
 layout(location = 0) out Vec3 out_color;
 
-Vec3 textureDistorted(in sampler2D tex,
-	in Vec2 texcoord,
-	in Vec2 direction, // direction of distortion
-	in Vec3 distortion) // per-channel distortion factor
+Vec3 textureDistorted(sampler2D tex,
+	Vec2 texcoord,
+	Vec2 direction, // direction of distortion
+	Vec3 distortion) // per-channel distortion factor
 {
 #if ENABLE_CHROMATIC_DISTORTION
 	return Vec3(texture(tex, texcoord + direction * distortion.r).r,
@@ -46,9 +46,9 @@ Vec3 textureDistorted(in sampler2D tex,
 
 void main()
 {
-	Vec2 texcoord = Vec2(1.0) - in_texCoord;
+	const Vec2 texcoord = Vec2(1.0) - in_texCoord;
 
-	Vec2 ghostVec = (Vec2(0.5) - texcoord) * GHOST_DISPERSAL;
+	const Vec2 ghostVec = (Vec2(0.5) - texcoord) * GHOST_DISPERSAL;
 
 	const Vec2 texelSize = 1.0 / Vec2(INPUT_TEX_SIZE);
 
@@ -56,14 +56,14 @@ void main()
 
 	const F32 lenOfHalf = length(Vec2(0.5));
 
-	Vec2 direction = normalize(ghostVec);
+	const Vec2 direction = normalize(ghostVec);
 
 	Vec3 result = Vec3(0.0);
 
 	// sample ghosts:
 	for(I32 i = 0; i < MAX_GHOSTS; ++i)
 	{
-		Vec2 offset = fract(texcoord + ghostVec * F32(i));
+		const Vec2 offset = fract(texcoord + ghostVec * F32(i));
 
 		F32 weight = length(Vec2(0.5) - offset) / lenOfHalf;
 		weight = pow(1.0 - weight, 10.0);
@@ -73,7 +73,7 @@ void main()
 
 // sample halo
 #if ENABLE_HALO
-	Vec2 haloVec = normalize(ghostVec) * HALO_WIDTH;
+	const Vec2 haloVec = normalize(ghostVec) * HALO_WIDTH;
 	F32 weight = length(Vec2(0.5) - fract(texcoord + haloVec)) / lenOfHalf;
 	weight = pow(1.0 - weight, 20.0);
 	result += textureDistorted(u_rt, texcoord + haloVec, direction, distortion) * (weight * HALO_OPACITY);

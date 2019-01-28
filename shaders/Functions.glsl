@@ -8,7 +8,7 @@
 #include <shaders/Common.glsl>
 
 #if defined(ANKI_FRAGMENT_SHADER)
-Vec3 dither(in Vec3 col, in F32 C)
+Vec3 dither(Vec3 col, F32 C)
 {
 	Vec3 vDither = Vec3(dot(Vec2(171.0, 231.0), gl_FragCoord.xy));
 	vDither.rgb = fract(vDither.rgb / Vec3(103.0, 71.0, 97.0));
@@ -20,7 +20,7 @@ Vec3 dither(in Vec3 col, in F32 C)
 	return col;
 }
 
-F32 dither(in F32 col, in F32 C)
+F32 dither(F32 col, F32 C)
 {
 	F32 vDither = dot(Vec2(171.0, 231.0), gl_FragCoord.xy);
 	vDither = fract(vDither / 103.0);
@@ -34,25 +34,25 @@ F32 dither(in F32 col, in F32 C)
 #endif
 
 // Convert to linear depth
-F32 linearizeDepth(in F32 depth, in F32 zNear, in F32 zFar)
+F32 linearizeDepth(F32 depth, F32 zNear, F32 zFar)
 {
 	return zNear / ((zNear - zFar) + zFar / depth);
 }
 
 // This is the optimal linearizeDepth where a=(n-f)/n and b=f/n
-F32 linearizeDepthOptimal(in F32 depth, in F32 a, in F32 b)
+F32 linearizeDepthOptimal(F32 depth, F32 a, F32 b)
 {
 	return 1.0 / (a + b / depth);
 }
 
 // This is the optimal linearizeDepth where a=(n-f)/n and b=f/n
-Vec4 linearizeDepthOptimal(in Vec4 depths, in F32 a, in F32 b)
+Vec4 linearizeDepthOptimal(Vec4 depths, F32 a, F32 b)
 {
 	return 1.0 / (a + b / depths);
 }
 
 // Project a vector by knowing only the non zero values of a perspective matrix
-Vec4 projectPerspective(in Vec4 vec, in F32 m00, in F32 m11, in F32 m22, in F32 m23)
+Vec4 projectPerspective(Vec4 vec, F32 m00, F32 m11, F32 m22, F32 m23)
 {
 	Vec4 o;
 	o.x = vec.x * m00;
@@ -65,12 +65,12 @@ Vec4 projectPerspective(in Vec4 vec, in F32 m00, in F32 m11, in F32 m22, in F32 
 // Stolen from shadertoy.com/view/4tyGDD
 Vec4 textureCatmullRom4Samples(sampler2D tex, Vec2 uv, Vec2 texSize)
 {
-	Vec2 halff = 2.0 * fract(0.5 * uv * texSize - 0.25) - 1.0;
-	Vec2 f = fract(halff);
-	Vec2 sum0 = (2.0 * f - 3.5) * f + 0.5;
-	Vec2 sum1 = (2.0 * f - 2.5) * f - 0.5;
+	const Vec2 halff = 2.0 * fract(0.5 * uv * texSize - 0.25) - 1.0;
+	const Vec2 f = fract(halff);
+	const Vec2 sum0 = (2.0 * f - 3.5) * f + 0.5;
+	const Vec2 sum1 = (2.0 * f - 2.5) * f - 0.5;
 	Vec4 w = Vec4(f * sum0 + 1.0, f * sum1);
-	Vec4 pos = Vec4((((-2.0 * f + 3.0) * f + 0.5) * f - 1.5) * f / (w.xy * texSize) + uv,
+	const Vec4 pos = Vec4((((-2.0 * f + 3.0) * f + 0.5) * f - 1.5) * f / (w.xy * texSize) + uv,
 		(((-2.0 * f + 5.0) * f - 2.5) * f - 0.5) / (sum1 * texSize) + uv);
 	w.xz *= halff.x * halff.y > 0.0 ? 1.0 : -1.0;
 
@@ -92,7 +92,7 @@ Vec4 nearestDepthUpscale(
 	Vec4 halfDepths = textureGather(depthHalf, uv, 0);
 	halfDepths = linearizeDepthOptimal(halfDepths, linearDepthCf.x, linearDepthCf.y);
 
-	Vec4 diffs = abs(Vec4(fullDepth) - halfDepths);
+	const Vec4 diffs = abs(Vec4(fullDepth) - halfDepths);
 	Vec4 color;
 
 	if(all(lessThan(diffs, Vec4(depthThreshold))))
@@ -103,10 +103,10 @@ Vec4 nearestDepthUpscale(
 	else
 	{
 		// Some discontinuites, need to use the newUv
-		Vec4 r = textureGather(colorTex, uv, 0);
-		Vec4 g = textureGather(colorTex, uv, 1);
-		Vec4 b = textureGather(colorTex, uv, 2);
-		Vec4 a = textureGather(colorTex, uv, 3);
+		const Vec4 r = textureGather(colorTex, uv, 0);
+		const Vec4 g = textureGather(colorTex, uv, 1);
+		const Vec4 b = textureGather(colorTex, uv, 2);
+		const Vec4 a = textureGather(colorTex, uv, 3);
 
 		F32 minDiff = diffs.x;
 		U32 comp = 0;
@@ -136,8 +136,8 @@ Vec4 nearestDepthUpscale(
 
 F32 _calcDepthWeight(sampler2D depthLow, Vec2 uv, F32 ref, Vec2 linearDepthCf)
 {
-	F32 d = texture(depthLow, uv).r;
-	F32 linearD = linearizeDepthOptimal(d, linearDepthCf.x, linearDepthCf.y);
+	const F32 d = texture(depthLow, uv).r;
+	const F32 linearD = linearizeDepthOptimal(d, linearDepthCf.x, linearDepthCf.y);
 	return 1.0 / (EPSILON + abs(ref - linearD));
 }
 
@@ -152,8 +152,8 @@ Vec4 _sampleAndWeight(sampler2D depthLow,
 	inout F32 normalize)
 {
 	uv += offset * lowInvSize;
-	F32 dw = _calcDepthWeight(depthLow, uv, ref, linearDepthCf);
-	Vec4 v = texture(colorLow, uv);
+	const F32 dw = _calcDepthWeight(depthLow, uv, ref, linearDepthCf);
+	const Vec4 v = texture(colorLow, uv);
 	normalize += weight * dw;
 	return v * dw * weight;
 }
@@ -162,7 +162,7 @@ Vec4 bilateralUpsample(
 	sampler2D depthHigh, sampler2D depthLow, sampler2D colorLow, Vec2 lowInvSize, Vec2 uv, Vec2 linearDepthCf)
 {
 	const Vec3 WEIGHTS = Vec3(0.25, 0.125, 0.0625);
-	F32 depthRef = linearizeDepthOptimal(texture(depthHigh, uv).r, linearDepthCf.x, linearDepthCf.y);
+	const F32 depthRef = linearizeDepthOptimal(texture(depthHigh, uv).r, linearDepthCf.x, linearDepthCf.y);
 	F32 normalize = 0.0;
 
 	Vec4 sum = _sampleAndWeight(
@@ -191,15 +191,16 @@ Vec3 getCubemapDirection(Vec2 norm, U32 faceIdx)
 {
 	Vec3 zDir = Vec3((faceIdx <= 1u) ? 1 : 0, (faceIdx & 2u) >> 1u, (faceIdx & 4u) >> 2u);
 	zDir *= (((faceIdx & 1u) == 1u) ? -1.0 : 1.0);
-	Vec3 yDir = (faceIdx == 2u) ? Vec3(0.0, 0.0, 1.0) : (faceIdx == 3u) ? Vec3(0.0, 0.0, -1.0) : Vec3(0.0, -1.0, 0.0);
-	Vec3 xDir = cross(zDir, yDir);
+	const Vec3 yDir =
+		(faceIdx == 2u) ? Vec3(0.0, 0.0, 1.0) : (faceIdx == 3u) ? Vec3(0.0, 0.0, -1.0) : Vec3(0.0, -1.0, 0.0);
+	const Vec3 xDir = cross(zDir, yDir);
 	return normalize(norm.x * xDir + norm.y * yDir + zDir);
 }
 
 // Convert 3D cubemap coordinates to 2D plus face index. v doesn't need to be normalized.
 Vec2 convertCubeUvs(Vec3 v, out F32 faceIndex)
 {
-	Vec3 absV = abs(v);
+	const Vec3 absV = abs(v);
 	F32 mag;
 	Vec2 uv;
 
@@ -228,7 +229,7 @@ Vec2 convertCubeUvs(Vec3 v, out F32 faceIndex)
 // Same as convertCubeUvs but it returns the faceIndex as unsigned I32.
 Vec2 convertCubeUvsu(Vec3 v, out U32 faceIndex)
 {
-	Vec3 absV = abs(v);
+	const Vec3 absV = abs(v);
 	F32 mag;
 	Vec2 uv;
 
@@ -256,14 +257,14 @@ Vec2 convertCubeUvsu(Vec3 v, out U32 faceIndex)
 
 Vec3 grayScale(Vec3 col)
 {
-	F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
+	const F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
 	return Vec3(grey);
 }
 
 Vec3 saturateColor(Vec3 col, F32 factor)
 {
 	const Vec3 LUM_COEFF = Vec3(0.2125, 0.7154, 0.0721);
-	Vec3 intensity = Vec3(dot(col, LUM_COEFF));
+	const Vec3 intensity = Vec3(dot(col, LUM_COEFF));
 	return mix(intensity, col, factor);
 }
 
@@ -324,7 +325,7 @@ Vec3 readErosion(sampler2D tex, Vec2 uv)
 Vec3 heatmap(F32 factor)
 {
 	F32 intPart;
-	F32 fractional = modf(factor * 4.0, intPart);
+	const F32 fractional = modf(factor * 4.0, intPart);
 
 	if(intPart < 1.0)
 	{
@@ -359,9 +360,9 @@ F32 areaElement(F32 x, F32 y)
 // http://www.rorydriscoll.com/2012/01/15/cubemap-texel-solid-angle/
 F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 {
-	Vec2 invSize = Vec2(1.0 / cubeFaceSize);
-	Vec2 v0 = norm - invSize;
-	Vec2 v1 = norm + invSize;
+	const Vec2 invSize = Vec2(1.0 / cubeFaceSize);
+	const Vec2 v0 = norm - invSize;
+	const Vec2 v1 = norm + invSize;
 	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
 }
 
@@ -370,10 +371,10 @@ F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 // https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
 F32 rayAabbIntersectionInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax)
 {
-	Vec3 intersectMaxPointPlanes = (aabbMax - rayOrigin) / rayDir;
-	Vec3 intersectMinPointPlanes = (aabbMin - rayOrigin) / rayDir;
-	Vec3 largestParams = max(intersectMaxPointPlanes, intersectMinPointPlanes);
-	F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
+	const Vec3 intersectMaxPointPlanes = (aabbMax - rayOrigin) / rayDir;
+	const Vec3 intersectMinPointPlanes = (aabbMin - rayOrigin) / rayDir;
+	const Vec3 largestParams = max(intersectMaxPointPlanes, intersectMinPointPlanes);
+	const F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
 	return distToIntersect;
 }
 

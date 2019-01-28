@@ -45,18 +45,19 @@ void main()
 	barrier();
 
 	// Project the flare
-	U32 flareIdx = gl_WorkGroupID.x;
-	Vec4 posClip = u_mvp * u_flarePositions[flareIdx];
-	Vec3 posNdc = posClip.xyz / posClip.w;
-	F32 depth = posNdc.z;
+	const U32 flareIdx = gl_WorkGroupID.x;
+	const Vec4 posClip = u_mvp * u_flarePositions[flareIdx];
+	const Vec3 posNdc = posClip.xyz / posClip.w;
+	const F32 depth = posNdc.z;
 
 	// Compute the UVs to sample the depth map
-	Vec2 displacement = Vec2(gl_LocalInvocationID.xy) - Vec2(WORKGROUP_SIZE / 2u); // [-WORKGROUP_SIZE, WORKGROUP_SIZE]
+	// Belongs to [-WORKGROUP_SIZE, WORKGROUP_SIZE]
+	const Vec2 displacement = Vec2(gl_LocalInvocationID.xy) - Vec2(WORKGROUP_SIZE / 2u);
 	const Vec2 TEXEL_SIZE = 1.0 / IN_DEPTH_MAP_SIZE;
-	Vec2 uv = NDC_TO_UV(posNdc.xy) + displacement * TEXEL_SIZE;
+	const Vec2 uv = NDC_TO_UV(posNdc.xy) + displacement * TEXEL_SIZE;
 
 	// Sample and store depth
-	F32 refDepth = textureLod(u_depthMap, uv, 0.0).r;
+	const F32 refDepth = textureLod(u_depthMap, uv, 0.0).r;
 	atomicMax(s_maxDepth, U32(refDepth * F32(MAX_U32)));
 
 	// Sync
@@ -65,8 +66,8 @@ void main()
 
 	if(gl_LocalInvocationIndex == 0)
 	{
-		F32 refDepth = F32(s_maxDepth) / F32(MAX_U32);
-		u_indirectInfo[flareIdx].count = (depth > refDepth) ? 0u : 4u;
+		const F32 refDepth2 = F32(s_maxDepth) / F32(MAX_U32);
+		u_indirectInfo[flareIdx].count = (depth > refDepth2) ? 0u : 4u;
 
 		u_indirectInfo[flareIdx].instanceCount = 1u;
 		u_indirectInfo[flareIdx].first = 0u;

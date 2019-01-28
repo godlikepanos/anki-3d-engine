@@ -133,7 +133,7 @@ ANKI_SHADER_STATIC_ASSERT(sizeof(LightingUniforms) == SIZEOF_LIGHTING_UNIFORMS)
 
 ANKI_SHADER_FUNC_INLINE F32 computeClusterKf(ClustererMagicValues magic, Vec3 worldPos)
 {
-	F32 fz = sqrt(dot(magic.m_val0.xyz(), worldPos) - magic.m_val0.w());
+	const F32 fz = sqrt(dot(magic.m_val0.xyz(), worldPos) - magic.m_val0.w());
 	return fz;
 }
 
@@ -146,8 +146,8 @@ ANKI_SHADER_FUNC_INLINE U32 computeClusterK(ClustererMagicValues magic, Vec3 wor
 ANKI_SHADER_FUNC_INLINE U32 computeClusterIndex(
 	ClustererMagicValues magic, Vec2 uv, Vec3 worldPos, U32 clusterCountX, U32 clusterCountY)
 {
-	UVec2 xy = UVec2(uv * Vec2(clusterCountX, clusterCountY));
-	U32 k = computeClusterK(magic, worldPos);
+	const UVec2 xy = UVec2(uv * Vec2(clusterCountX, clusterCountY));
+	const U32 k = computeClusterK(magic, worldPos);
 	return k * (clusterCountX * clusterCountY) + xy.y() * clusterCountX + xy.x();
 }
 
@@ -167,7 +167,7 @@ ANKI_SHADER_FUNC_INLINE F32 computeClusterNear(ClustererMagicValues magic, U32 k
 ANKI_SHADER_FUNC_INLINE Vec3 computeClustererVolumeTextureUvs(
 	ClustererMagicValues magic, Vec2 uv, Vec3 worldPos, U32 clusterCountZ)
 {
-	F32 k = computeClusterKf(magic, worldPos);
+	const F32 k = computeClusterKf(magic, worldPos);
 	return Vec3(uv, k / F32(clusterCountZ));
 }
 

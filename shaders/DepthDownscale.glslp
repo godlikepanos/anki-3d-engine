@@ -57,7 +57,7 @@ F32 resolveDepths(Vec4 depths)
 void main()
 {
 	// Read depth
-	Vec2 readUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_level0WriteImgSize);
+	const Vec2 readUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_level0WriteImgSize);
 	Vec4 depths = textureGather(u_readTex, readUv, 0);
 
 	// Resolve & store the 1st level
@@ -89,14 +89,14 @@ void main()
 
 		depth = resolveDepths(depths);
 
-		UVec2 writeUv = gl_GlobalInvocationID.xy >> 1u;
+		const UVec2 writeUv = gl_GlobalInvocationID.xy >> 1u;
 		if(all(lessThan(writeUv, u_level1WriteImgSize)))
 		{
 			imageStore(u_level1WriteImg, IVec2(writeUv), Vec4(depth));
 
 			if(u_copyToClientLevel == 1u)
 			{
-				U32 idx = writeUv.y * u_level1WriteImgSize.x + writeUv.x;
+				const U32 idx = writeUv.y * u_level1WriteImgSize.x + writeUv.x;
 				u_clientBuf[idx] = depth;
 			}
 		}

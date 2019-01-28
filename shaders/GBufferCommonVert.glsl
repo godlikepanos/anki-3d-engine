@@ -91,14 +91,14 @@ void positionUvNormalTangent(Mat4 mvp, Mat3 rotationMat)
 #if PASS == PASS_GB
 void parallax(Mat4 modelViewMat)
 {
-	Vec3 n = in_normal;
-	Vec3 t = in_tangent.xyz;
-	Vec3 b = cross(n, t) * in_tangent.w;
+	const Vec3 n = in_normal;
+	const Vec3 t = in_tangent.xyz;
+	const Vec3 b = cross(n, t) * in_tangent.w;
 
-	Mat3 normalMat = Mat3(modelViewMat);
-	Mat3 invTbn = transpose(normalMat * Mat3(t, b, n));
+	const Mat3 normalMat = Mat3(modelViewMat);
+	const Mat3 invTbn = transpose(normalMat * Mat3(t, b, n));
 
-	Vec3 viewPos = (modelViewMat * Vec4(g_position, 1.0)).xyz;
+	const Vec3 viewPos = (modelViewMat * Vec4(g_position, 1.0)).xyz;
 	out_distFromTheCamera = viewPos.z;
 
 	out_eyeTangentSpace = invTbn * viewPos;
@@ -115,10 +115,10 @@ void skinning()
 	Vec3 tangent = Vec3(0.0);
 	for(U32 i = 0; i < 4; ++i)
 	{
-		U32 boneIdx = in_boneIndices[i];
+		const U32 boneIdx = in_boneIndices[i];
 		if(boneIdx < 0xFFFF)
 		{
-			F32 boneWeight = in_boneWeights[i];
+			const F32 boneWeight = in_boneWeights[i];
 
 			position += (u_boneTransforms[boneIdx] * Vec4(g_position * boneWeight, 1.0)).xyz;
 #	if PASS == PASS_GB
@@ -139,10 +139,10 @@ void skinning()
 #if VELOCITY && PASS == PASS_GB
 void velocity(Mat4 prevMvp)
 {
-	Vec4 v4 = prevMvp * Vec4(g_position, 1.0);
-	Vec2 prevNdc = v4.xy / v4.w;
+	const Vec4 v4 = prevMvp * Vec4(g_position, 1.0);
+	const Vec2 prevNdc = v4.xy / v4.w;
 
-	Vec2 crntNdc = gl_Position.xy / gl_Position.w;
+	const Vec2 crntNdc = gl_Position.xy / gl_Position.w;
 
 	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
 	out_velocity = (prevNdc - crntNdc) * 0.5;
