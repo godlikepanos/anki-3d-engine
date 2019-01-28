@@ -4,12 +4,11 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/components/LightComponent.h>
+#include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Octree.h>
-#include <anki/collision/Frustum.h>
-#include <anki/collision/Sphere.h>
-#include <anki/collision/Plane.h>
+#include <anki/Collision.h>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
@@ -75,15 +74,14 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 	return Error::NONE;
 }
 
-void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum,
-	F32 overrideFrustumFar,
+void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& frustumComp,
 	DirectionalLightQueueElement& el,
-	WeakArray<OrthographicFrustum> cascadeFrustums) const
+	WeakArray<FrustumComponent> cascadeFrustumComponents) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
-	ANKI_ASSERT(cascadeFrustums.getSize() <= MAX_SHADOW_CASCADES);
+	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= MAX_SHADOW_CASCADES);
 
-	const U shadowCascadeCount = cascadeFrustums.getSize();
+	const U shadowCascadeCount = cascadeFrustumComponents.getSize();
 
 	el.m_userData = this;
 	el.m_drawCallback = derectionalLightDebugDrawCallback;
@@ -99,13 +97,12 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum,
 	}
 
 	const Mat4 lightTrf(m_trf);
-	if(frustum.getType() == FrustumType::PERSPECTIVE)
+	if(frustumComp.getFrustumType() == FrustumType::PERSPECTIVE)
 	{
 		// Get some stuff
-		const PerspectiveFrustum& pfrustum = static_cast<const PerspectiveFrustum&>(frustum);
-		const F32 fovX = pfrustum.getFovX();
-		const F32 fovY = pfrustum.getFovY();
-		const F32 far = (overrideFrustumFar > 0.0f) ? overrideFrustumFar : pfrustum.getFar();
+		const F32 fovX = frustumComp.getFovX();
+		const F32 fovY = frustumComp.getFovY();
+		const F32 far = frustumComp.getEffectiveShadowDistance();
 
 		// Compute a sphere per cascade
 		Array<Sphere, MAX_SHADOW_CASCADES> boundingSpheres;
@@ -130,7 +127,7 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum,
 			//           |
 			// The square distance of A-C is equal to B-C. Solve the equation to find the z.
 			const F32 f = F32(i + 1) * cascadeFarNearDist; // Cascade far
-			const F32 n = max(frustum.getNear(), F32(i) * cascadeFarNearDist); // Cascade near
+			const F32 n = max(frustumComp.getNear(), F32(i) * cascadeFarNearDist); // Cascade near
 			const F32 a = f * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));
@@ -145,7 +142,7 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum,
 
 			// Set the sphere
 			boundingSpheres[i].setRadius(r);
-			boundingSpheres[i].setCenter(frustum.getTransform().transform(C));
+			boundingSpheres[i].setCenter(frustumComp.getTransform().transform(C));
 		}
 
 		// Compute the matrices
@@ -164,7 +161,7 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum,
 			{
 				// Inside the scene bounds
 				const Aabb sceneBox(sceneMin, sceneMax);
-				const F32 t = sceneBox.intersectRayInside(sphereCenter, -lightDir);
+				const F32 t = testCollisionInside(sceneBox, Ray(sphereCenter, -lightDir));
 				eye = sphereCenter + t * (-lightDir);
 			}
 			else
@@ -188,10 +185,10 @@ void LightComponent::setupDirectionalLightQueueElement(const Frustum& frustum,
 			el.m_textureMatrices[i] = biasMat4 * cascadeProjMat * cascadeViewMat;
 
 			// Fill the frustum
-			OrthographicFrustum& cascadeFrustum = cascadeFrustums[i];
-			cascadeFrustum.setAll(
-				-sphereRadius, sphereRadius, LIGHT_FRUSTUM_NEAR_PLANE, far, sphereRadius, -sphereRadius);
-			cascadeFrustum.transform(cascadeTransform);
+			FrustumComponent& cascadeFrustumComp = cascadeFrustumComponents[i];
+			cascadeFrustumComp.setOrthographic(
+				LIGHT_FRUSTUM_NEAR_PLANE, far, sphereRadius, -sphereRadius, sphereRadius, -sphereRadius);
+			cascadeFrustumComp.setTransform(cascadeTransform);
 		}
 	}
 	else

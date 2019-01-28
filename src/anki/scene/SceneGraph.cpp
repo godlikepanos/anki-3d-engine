@@ -8,6 +8,7 @@
 #include <anki/scene/PhysicsDebugNode.h>
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/Octree.h>
+#include <anki/scene/components/FrustumComponent.h>
 #include <anki/core/Trace.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/resource/ResourceManager.h>
@@ -85,7 +86,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
-	m_defaultMainCam->setAll(toRad(60.0f), toRad(60.0f), 0.1f, 1000.0f);
+	m_defaultMainCam->getComponent<FrustumComponent>().setPerspective(0.1f, 1000.0f, toRad(60.0f), toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
 	// Create a special node for debugging the physics world

@@ -721,9 +721,11 @@ void Exporter::exportCamera(const aiCamera& cam)
 
 	file << "scene:setActiveCameraNode(node:getSceneNodeBase())\n";
 
-	file << "node:setAll(" << cam.mHorizontalFOV << ", "
-		 << "1.0 / getMainRenderer():getAspectRatio() * " << cam.mHorizontalFOV << ", " << cam.mClipPlaneNear << ", "
-		 << cam.mClipPlaneFar << ")\n";
+	file << "frustumc = node:getSceneNodeBase():getFrustumComponent()\n";
+
+	file << "frustumc:setPerspective(" << cam.mClipPlaneNear << ", " << cam.mClipPlaneFar << ", " << cam.mHorizontalFOV
+		 << ", "
+		 << "1.0 / getMainRenderer():getAspectRatio() * " << cam.mHorizontalFOV << ")\n";
 
 	// Find the node
 	const aiNode* node = findNodeWithName(cam.mName.C_Str(), m_scene->mRootNode);

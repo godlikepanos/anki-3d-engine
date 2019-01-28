@@ -6,8 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/Math.h>
-#include <anki/collision/Frustum.h>
+#include <anki/collision/Common.h>
 
 namespace anki
 {
@@ -18,36 +17,17 @@ namespace anki
 /// Camera SceneNode interface class
 class CameraNode : public SceneNode
 {
-	friend class CameraMoveFeedbackComponent;
-	friend class CameraFrustumFeedbackComponent;
-
 public:
-	/// @note Don't EVER change the order
-	enum class Type : U8
-	{
-		PERSPECTIVE,
-		ORTHOGRAPHIC,
-		COUNT
-	};
+	CameraNode(SceneGraph* scene, CString name);
 
-	CameraNode(SceneGraph* scene, Type type, CString name);
+	~CameraNode();
 
-	virtual ~CameraNode();
-
-	ANKI_USE_RESULT Error init(Frustum* frustum);
-
-	Type getCameraType() const
-	{
-		return m_type;
-	}
-
-	void lookAtPoint(const Vec3& point);
+protected:
+	ANKI_USE_RESULT Error init(FrustumType frustumType);
 
 private:
 	class MoveFeedbackComponent;
 	class FrustumFeedbackComponent;
-
-	Type m_type;
 
 	/// Called when moved.
 	void onMoveComponentUpdate(MoveComponent& move);
@@ -66,13 +46,8 @@ public:
 
 	ANKI_USE_RESULT Error init()
 	{
-		return CameraNode::init(&m_frustum);
+		return CameraNode::init(FrustumType::PERSPECTIVE);
 	}
-
-	void setAll(F32 fovX, F32 fovY, F32 near, F32 far);
-
-private:
-	PerspectiveFrustum m_frustum;
 };
 
 /// Orthographic camera
@@ -85,11 +60,8 @@ public:
 
 	ANKI_USE_RESULT Error init()
 	{
-		return CameraNode::init(&m_frustum);
+		return CameraNode::init(FrustumType::ORTHOGRAPHIC);
 	}
-
-private:
-	OrthographicFrustum m_frustum;
 };
 /// @}
 

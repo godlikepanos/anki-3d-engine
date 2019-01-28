@@ -5,107 +5,94 @@
 
 #pragma once
 
-#include <anki/collision/CollisionShape.h>
-#include <anki/math/Vec3.h>
+#include <anki/collision/Common.h>
+#include <anki/Math.h>
 
 namespace anki
 {
 
-/// @addtogroup Collision
+/// @addtogroup collision
 /// @{
 
 /// Line segment. Line from a point to a point. P0 = origin and P1 = direction + origin
-class LineSegment : public CollisionShape
+class LineSegment
 {
 public:
-	using Base = CollisionShape;
+	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::LINE_SEGMENT;
 
+	/// Will not initialize any memory, nothing.
 	LineSegment()
-		: Base(CollisionShapeType::LINE_SEG)
-		, m_origin(0.0)
-		, m_dir(0.0)
 	{
 	}
 
 	LineSegment(const Vec4& origin, const Vec4& direction)
-		: Base(CollisionShapeType::LINE_SEG)
-		, m_origin(origin)
+		: m_origin(origin)
 		, m_dir(direction)
 	{
+		check();
 	}
 
 	LineSegment(const LineSegment& b)
-		: Base(CollisionShapeType::LINE_SEG)
 	{
 		operator=(b);
 	}
 
-	const Vec4& getOrigin() const
-	{
-		return m_origin;
-	}
-
-	Vec4& getOrigin()
-	{
-		return m_origin;
-	}
-
-	void setOrigin(const Vec4& x)
-	{
-		m_origin = x;
-	}
-
-	const Vec4& getDirection() const
-	{
-		return m_dir;
-	}
-
-	Vec4& getDirection()
-	{
-		return m_dir;
-	}
-
-	void setDirection(const Vec4& x)
-	{
-		m_dir = x;
-	}
-
 	LineSegment& operator=(const LineSegment& b)
 	{
-		Base::operator=(b);
+		b.check();
 		m_origin = b.m_origin;
 		m_dir = b.m_dir;
 		return *this;
 	}
 
-	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v)
+	const Vec4& getOrigin() const
 	{
-		v.visit(*this);
-	}
-	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const
-	{
-		v.visit(*this);
+		check();
+		return m_origin;
 	}
 
-	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const;
-
-	/// Implements CollisionShape::transform
-	void transform(const Transform& trf)
+	void setOrigin(const Vec4& origin)
 	{
-		*this = getTransformed(trf);
+		m_origin = origin;
 	}
 
-	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& b) const;
+	const Vec4& getDirection() const
+	{
+		check();
+		return m_dir;
+	}
 
-	LineSegment getTransformed(const Transform& transform) const;
+	void setDirection(const Vec4& dir)
+	{
+		m_dir = dir;
+	}
+
+	LineSegment getTransformed(const Transform& trf) const
+	{
+		check();
+		LineSegment out;
+		out.m_origin = trf.transform(m_origin);
+		out.m_dir = Vec4(trf.getRotation() * (m_dir * trf.getScale()), 0.0f);
+		return out;
+	}
 
 private:
-	Vec4 m_origin; ///< P0
-	Vec4 m_dir; ///< P1 = origin+dir so dir = P1-origin
+	Vec4 m_origin ///< P0
+#if ANKI_ASSERTS_ENABLED
+		= Vec4(MAX_F32)
+#endif
+		;
+
+	Vec4 m_dir ///< P1 = origin+dir so dir = P1-origin
+#if ANKI_ASSERTS_ENABLED
+		= Vec4(MAX_F32)
+#endif
+		;
+
+	void check() const
+	{
+		ANKI_ASSERT(m_origin.w() != 0.0f && m_dir.w() != 0.0f);
+	}
 };
 /// @}
 

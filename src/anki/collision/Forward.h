@@ -8,15 +8,13 @@
 namespace anki
 {
 
-class CollisionShape;
-
 class LineSegment;
 class Obb;
-class Frustum;
 class Plane;
 class Sphere;
 class Aabb;
-class CompoundShape;
 class ConvexHullShape;
+class Ray;
+class Cone;
 
 } // end namespace anki

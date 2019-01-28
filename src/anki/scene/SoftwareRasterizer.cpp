@@ -5,6 +5,7 @@
 
 #include <anki/scene/SoftwareRasterizer.h>
 #include <anki/collision/Aabb.h>
+#include <anki/collision/Functions.h>
 #include <anki/core/Trace.h>
 
 namespace anki
@@ -16,8 +17,8 @@ void SoftwareRasterizer::prepare(const Mat4& mv, const Mat4& p, U width, U heigh
 	m_p = p;
 	m_mvp = p * mv;
 
-	Plane::extractClipPlanes(p, m_planesL);
-	Plane::extractClipPlanes(m_mvp, m_planesW);
+	extractClipPlanes(p, m_planesL);
+	extractClipPlanes(m_mvp, m_planesW);
 
 	// Reset z buffer
 	ANKI_ASSERT(width > 0 && height > 0);
@@ -88,7 +89,7 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 		Vec4 rayDir = (inVerts[next].xyz0() - rayOrigin).getNormalized();
 
 		Vec4 intersection0;
-		Bool intersects = plane.intersectRay(rayOrigin, rayDir, intersection0);
+		Bool intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection0);
 		(void)intersects;
 		ANKI_ASSERT(intersects);
 
@@ -96,7 +97,7 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 		rayDir = (inVerts[prev].xyz0() - rayOrigin).getNormalized();
 
 		Vec4 intersection1;
-		intersects = plane.intersectRay(rayOrigin, rayDir, intersection1);
+		intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection1);
 		(void)intersects;
 		ANKI_ASSERT(intersects);
 
@@ -136,7 +137,7 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 		Vec4 rayDir = (inVerts[out].xyz0() - rayOrigin).getNormalized();
 
 		Vec4 intersection0;
-		Bool intersects = plane.intersectRay(rayOrigin, rayDir, intersection0);
+		Bool intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection0);
 		(void)intersects;
 		ANKI_ASSERT(intersects);
 
@@ -145,7 +146,7 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 		rayDir = (inVerts[out].xyz0() - rayOrigin).getNormalized();
 
 		Vec4 intersection1;
-		intersects = plane.intersectRay(rayOrigin, rayDir, intersection1);
+		intersects = testCollision(plane, Ray(rayOrigin, rayDir), intersection1);
 		(void)intersects;
 		ANKI_ASSERT(intersects);
 
@@ -296,15 +297,15 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 	}
 }
 
-Bool SoftwareRasterizer::visibilityTest(const CollisionShape& cs, const Aabb& aabb) const
+Bool SoftwareRasterizer::visibilityTest(const Aabb& aabb) const
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_RASTERIZER_TEST);
-	Bool inside = visibilityTestInternal(cs, aabb);
+	Bool inside = visibilityTestInternal(aabb);
 
 	return inside;
 }
 
-Bool SoftwareRasterizer::visibilityTestInternal(const CollisionShape& cs, const Aabb& aabb) const
+Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 {
 	// Set the AABB points
 	const Vec4& minv = aabb.getMin();

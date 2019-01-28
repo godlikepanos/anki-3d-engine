@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include <anki/collision/ConvexShape.h>
-#include <anki/collision/Aabb.h>
+#include <anki/collision/Common.h>
 #include <anki/Math.h>
 #include <anki/util/Array.h>
 
@@ -16,136 +15,124 @@ namespace anki
 /// @addtogroup collision
 /// @{
 
-/// Object oriented bounding box
-class Obb : public ConvexShape
+/// Object oriented bounding box.
+class Obb
 {
 public:
-	using Base = ConvexShape;
+	static constexpr CollisionShapeType CLASS_TYPE = CollisionShapeType::OBB;
 
+	/// Will not initialize any memory, nothing.
 	Obb()
-		: Base(CollisionShapeType::OBB)
 	{
 	}
 
 	Obb(const Obb& b)
-		: Base(CollisionShapeType::OBB)
 	{
 		operator=(b);
 	}
 
 	Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
-		: Base(CollisionShapeType::OBB)
-		, m_center(center)
-		, m_rotation(rotation)
-		, m_transposedRotation(rotation)
+		: m_center(center)
 		, m_extend(extend)
+		, m_rotation(rotation)
 	{
-		ANKI_ASSERT(m_center.w() == 0.0f && m_extend.w() == 0.0f);
-		m_transposedRotation.transposeRotationPart();
+		check();
+	}
+
+	/// Set from point cloud.
+	Obb(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, PtrSize buffSize)
+	{
+		setFromPointCloud(pointBuffer, pointCount, pointStride, buffSize);
 	}
 
 	Obb& operator=(const Obb& b)
 	{
 		m_center = b.m_center;
 		m_rotation = b.m_rotation;
-		m_transposedRotation = b.m_transposedRotation;
 		m_extend = b.m_extend;
-		m_cache = b.m_cache;
 		return *this;
 	}
 
 	const Vec4& getCenter() const
 	{
+		check();
 		return m_center;
 	}
 
 	void setCenter(const Vec4& x)
 	{
-		makeDirty();
 		m_center = x;
 	}
 
 	const Mat3x4& getRotation() const
 	{
+		check();
 		return m_rotation;
 	}
 
 	void setRotation(const Mat3x4& x)
 	{
-		makeDirty();
 		m_rotation = x;
-		m_transposedRotation = x;
-		m_transposedRotation.transposeRotationPart();
 	}
 
 	const Vec4& getExtend() const
 	{
+		check();
 		return m_extend;
 	}
 
 	void setExtend(const Vec4& x)
 	{
-		makeDirty();
 		m_extend = x;
 	}
 
-	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v) override
+	Obb getTransformed(const Transform& trf) const
 	{
-		v.visit(*this);
+		check();
+		Obb out;
+		out.m_extend = m_extend * trf.getScale();
+		out.m_center = trf.transform(m_center);
+		out.m_rotation = trf.getRotation().combineTransformations(m_rotation);
+		return out;
 	}
-	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const override
-	{
-		v.visit(*this);
-	}
-
-	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const override;
-
-	/// Implements CollisionShape::transform
-	void transform(const Transform& trf) override
-	{
-		*this = getTransformed(trf);
-	}
-
-	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& aabb) const override;
-
-	Obb getTransformed(const Transform& transform) const;
 
 	/// Get a collision shape that includes this and the given. It's not very accurate.
 	Obb getCompoundShape(const Obb& b) const;
 
-	/// Calculate from a set of points
-	void setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize);
+	/// Calculate from a set of points.
+	void setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, PtrSize buffSize);
 
 	/// Get extreme points in 3D space
 	void getExtremePoints(Array<Vec4, 8>& points) const;
 
-	/// Implements ConvexShape::computeSupport
-	Vec4 computeSupport(const Vec4& dir) const override;
+	/// Compute the GJK support.
+	ANKI_USE_RESULT Vec4 computeSupport(const Vec4& dir) const;
 
 private:
-	Vec4 m_center = Vec4(0.0f);
-	Mat3x4 m_rotation = Mat3x4::getIdentity();
-	Mat3x4 m_transposedRotation = Mat3x4::getIdentity(); ///< Used for visibility tests
-	/// With identity rotation this points to max (front, right, top in our case)
-	Vec4 m_extend = Vec4(Vec3(EPSILON), 0.0);
+	Vec4 m_center
+#if ANKI_ASSERTS_ENABLED
+		= Vec4(MAX_F32)
+#endif
+		;
 
-	class
-	{
-	public:
-		mutable Aabb m_aabb;
-		mutable Array<Vec4, 8> m_extremePoints;
-		mutable Bool8 m_dirtyAabb = true;
-		mutable Bool8 m_dirtyExtremePoints = true;
-	} m_cache;
+	Vec4 m_extend /// With identity rotation this points to max (front, right, top in our case)
+#if ANKI_ASSERTS_ENABLED
+		= Vec4(MAX_F32)
+#endif
+		;
 
-	void makeDirty()
+	Mat3x4 m_rotation
+#if ANKI_ASSERTS_ENABLED
+		= Mat3x4(MAX_F32)
+#endif
+		;
+
+	void check() const
 	{
-		m_cache.m_dirtyAabb = true;
-		m_cache.m_dirtyExtremePoints = true;
+		ANKI_ASSERT(m_center != Vec4(MAX_F32));
+		ANKI_ASSERT(m_extend != Vec4(MAX_F32));
+		ANKI_ASSERT(m_rotation != Mat3x4(MAX_F32));
+		ANKI_ASSERT(m_center.w() == 0.0f && m_extend.w() == 0.0f);
 	}
 };
 

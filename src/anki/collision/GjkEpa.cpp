@@ -5,65 +5,86 @@
 // Inspired by http://vec3.ca/gjk/implementation/
 
 #include <anki/collision/GjkEpa.h>
-#include <anki/collision/ConvexShape.h>
 
 namespace anki
 {
+
+/// GJK support
+class GjkSupport
+{
+public:
+	Vec4 m_v;
+	Vec4 m_v0;
+	Vec4 m_v1;
+
+	Bool operator==(const GjkSupport& b) const
+	{
+		return m_v == b.m_v && m_v0 == b.m_v0 && m_v1 == b.m_v1;
+	}
+};
+
+class GjkContext
+{
+public:
+	const void* m_shape0;
+	const void* m_shape1;
+	GjkSupportCallback m_shape0Callback;
+	GjkSupportCallback m_shape1Callback;
+
+	Array<GjkSupport, 4> m_simplex;
+	U32 m_count; ///< Simplex count
+	Vec4 m_dir;
+};
 
 /// Helper of (axb)xa
 static Vec4 crossAba(const Vec4& a, const Vec4& b)
 {
 	// We need to calculate the (axb)xa but we can use the triple product property ax(bxc) = b(a.c) - c(a.b) to make it
 	// faster Vec4 out = b * (a.dot(a)) - a * (a.dot(b));
-	Vec4 out = a.cross(b.cross(a));
-	// printf("+%f %f %f %f\n", out.x(), out.y(), out.z(), out.w());
-	// out = b * (a.dot(a)) - a * (a.dot(b));
-	// printf("-%f %f %f %f\n", out.x(), out.y(), out.z(), out.w());
-
-	return out;
+	return a.cross(b.cross(a));
 }
 
-void Gjk::support(const ConvexShape& shape0, const ConvexShape& shape1, const Vec4& dir, Support& support)
+static void support(const GjkContext& ctx, GjkSupport& support)
 {
-	support.m_v0 = shape0.computeSupport(dir);
-	support.m_v1 = shape1.computeSupport(-dir);
+	support.m_v0 = ctx.m_shape0Callback(ctx.m_shape0, ctx.m_dir);
+	support.m_v1 = ctx.m_shape0Callback(ctx.m_shape1, -ctx.m_dir);
 	support.m_v = support.m_v0 - support.m_v1;
 }
 
-Bool Gjk::update(const Support& a)
+static Bool update(GjkContext& ctx, const GjkSupport& a)
 {
-	if(m_count == 2)
+	if(ctx.m_count == 2)
 	{
 		Vec4 ao = -a.m_v;
 
 		// Compute the vectors parallel to the edges we'll test
-		Vec4 ab = m_simplex[1].m_v - a.m_v;
-		Vec4 ac = m_simplex[2].m_v - a.m_v;
+		const Vec4 ab = ctx.m_simplex[1].m_v - a.m_v;
+		const Vec4 ac = ctx.m_simplex[2].m_v - a.m_v;
 
 		// Compute the triangle's normal
-		Vec4 abc = ab.cross(ac);
+		const Vec4 abc = ab.cross(ac);
 
 		// Compute a vector within the plane of the triangle, Pointing away from the edge ab
-		Vec4 abp = ab.cross(abc);
+		const Vec4 abp = ab.cross(abc);
 
 		if(abp.dot(ao) > 0.0)
 		{
 			// The origin lies outside the triangle, near the edge ab
-			m_simplex[2] = m_simplex[1];
-			m_simplex[1] = a;
+			ctx.m_simplex[2] = ctx.m_simplex[1];
+			ctx.m_simplex[1] = a;
 
-			m_dir = crossAba(ab, ao);
+			ctx.m_dir = crossAba(ab, ao);
 
 			return false;
 		}
 
 		// Perform a similar test for the edge ac
-		Vec4 acp = abc.cross(ac);
+		const Vec4 acp = abc.cross(ac);
 
 		if(acp.dot(ao) > 0.0)
 		{
-			m_simplex[1] = a;
-			m_dir = crossAba(ac, ao);
+			ctx.m_simplex[1] = a;
+			ctx.m_dir = crossAba(ac, ao);
 
 			return false;
 		}
@@ -72,31 +93,31 @@ Bool Gjk::update(const Support& a)
 		// test
 		if(abc.dot(ao) > 0.0)
 		{
-			m_simplex[3] = m_simplex[2];
-			m_simplex[2] = m_simplex[1];
-			m_simplex[1] = a;
+			ctx.m_simplex[3] = ctx.m_simplex[2];
+			ctx.m_simplex[2] = ctx.m_simplex[1];
+			ctx.m_simplex[1] = a;
 
-			m_dir = abc;
+			ctx.m_dir = abc;
 		}
 		else
 		{
-			m_simplex[3] = m_simplex[1];
-			m_simplex[1] = a;
+			ctx.m_simplex[3] = ctx.m_simplex[1];
+			ctx.m_simplex[1] = a;
 
-			m_dir = -abc;
+			ctx.m_dir = -abc;
 		}
 
-		m_count = 3;
+		ctx.m_count = 3;
 
 		// Again, need a tetrahedron to enclose the origin
 		return false;
 	}
-	else if(m_count == 3)
+	else if(ctx.m_count == 3)
 	{
-		Vec4 ao = -a.m_v;
+		const Vec4 ao = -a.m_v;
 
-		Vec4 ab = m_simplex[1].m_v - a.m_v;
-		Vec4 ac = m_simplex[2].m_v - a.m_v;
+		Vec4 ab = ctx.m_simplex[1].m_v - a.m_v;
+		Vec4 ac = ctx.m_simplex[2].m_v - a.m_v;
 
 		Vec4 abc = ab.cross(ac);
 
@@ -108,14 +129,14 @@ Bool Gjk::update(const Support& a)
 			goto check_face;
 		}
 
-		ad = m_simplex[3].m_v - a.m_v;
+		ad = ctx.m_simplex[3].m_v - a.m_v;
 		acd = ac.cross(ad);
 
 		if(acd.dot(ao) > 0.0)
 		{
 			// In front of triangle ACD
-			m_simplex[1] = m_simplex[2];
-			m_simplex[2] = m_simplex[3];
+			ctx.m_simplex[1] = ctx.m_simplex[2];
+			ctx.m_simplex[2] = ctx.m_simplex[3];
 
 			ab = ac;
 			ac = ad;
@@ -130,8 +151,8 @@ Bool Gjk::update(const Support& a)
 		{
 			// In front of triangle ADB
 
-			m_simplex[2] = m_simplex[1];
-			m_simplex[1] = m_simplex[3];
+			ctx.m_simplex[2] = ctx.m_simplex[1];
+			ctx.m_simplex[1] = ctx.m_simplex[3];
 
 			ac = ab;
 			ab = ad;
@@ -141,8 +162,8 @@ Bool Gjk::update(const Support& a)
 		}
 
 		// Behind all three faces, the origin is in the tetrahedron, we're done
-		m_simplex[0] = a;
-		m_count = 4;
+		ctx.m_simplex[0] = a;
+		ctx.m_count = 4;
 		return true;
 
 	check_face:
@@ -150,37 +171,37 @@ Bool Gjk::update(const Support& a)
 		// We have a CCW wound triangle ABC the point is in front of this triangle
 		// it is NOT "below" edge BC
 		// it is NOT "above" the plane through A that's parallel to BC
-		Vec4 abp = ab.cross(abc);
+		const Vec4 abp = ab.cross(abc);
 
 		if(abp.dot(ao) > 0.0)
 		{
-			m_simplex[2] = m_simplex[1];
-			m_simplex[1] = a;
+			ctx.m_simplex[2] = ctx.m_simplex[1];
+			ctx.m_simplex[1] = a;
 
-			m_dir = crossAba(ab, ao);
+			ctx.m_dir = crossAba(ab, ao);
 
-			m_count = 2;
+			ctx.m_count = 2;
 			return false;
 		}
 
-		Vec4 acp = abc.cross(ac);
+		const Vec4 acp = abc.cross(ac);
 
 		if(acp.dot(ao) > 0.0)
 		{
-			m_simplex[1] = a;
+			ctx.m_simplex[1] = a;
 
-			m_dir = crossAba(ac, ao);
+			ctx.m_dir = crossAba(ac, ao);
 
-			m_count = 2;
+			ctx.m_count = 2;
 			return false;
 		}
 
-		m_simplex[3] = m_simplex[2];
-		m_simplex[2] = m_simplex[1];
-		m_simplex[1] = a;
+		ctx.m_simplex[3] = ctx.m_simplex[2];
+		ctx.m_simplex[2] = ctx.m_simplex[1];
+		ctx.m_simplex[1] = a;
 
-		m_dir = abc;
-		m_count = 3;
+		ctx.m_dir = abc;
+		ctx.m_count = 3;
 
 		return false;
 	}
@@ -189,41 +210,50 @@ Bool Gjk::update(const Support& a)
 	return true;
 }
 
-Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
+Bool gjkIntersection(
+	const void* shape0, GjkSupportCallback shape0Callback, const void* shape1, GjkSupportCallback shape1Callback)
 {
+	ANKI_ASSERT(shape0 && shape0Callback && shape1 && shape1Callback);
+
+	GjkContext ctx;
+	ctx.m_shape0 = shape0;
+	ctx.m_shape1 = shape1;
+	ctx.m_shape0Callback = shape0Callback;
+	ctx.m_shape1Callback = shape1Callback;
+
 	// Chose random direction
-	m_dir = Vec4(1.0, 0.0, 0.0, 0.0);
+	ctx.m_dir = Vec4(1.0, 0.0, 0.0, 0.0);
 
 	// Do cases 1, 2
-	support(shape0, shape1, m_dir, m_simplex[2]);
-	if(m_simplex[2].m_v.dot(m_dir) < 0.0)
+	support(ctx, ctx.m_simplex[2]);
+	if(ctx.m_simplex[2].m_v.dot(ctx.m_dir) < 0.0)
 	{
 		return false;
 	}
 
-	m_dir = -m_simplex[2].m_v;
-	support(shape0, shape1, m_dir, m_simplex[1]);
+	ctx.m_dir = -ctx.m_simplex[2].m_v;
+	support(ctx, ctx.m_simplex[1]);
 
-	if(m_simplex[1].m_v.dot(m_dir) < 0.0)
+	if(ctx.m_simplex[1].m_v.dot(ctx.m_dir) < 0.0)
 	{
 		return false;
 	}
 
-	m_dir = crossAba(m_simplex[2].m_v - m_simplex[1].m_v, -m_simplex[1].m_v);
-	m_count = 2;
+	ctx.m_dir = crossAba(ctx.m_simplex[2].m_v - ctx.m_simplex[1].m_v, -ctx.m_simplex[1].m_v);
+	ctx.m_count = 2;
 
 	U iterations = 20;
 	while(iterations--)
 	{
-		Support a;
-		support(shape0, shape1, m_dir, a);
+		GjkSupport a;
+		support(ctx, a);
 
-		if(a.m_v.dot(m_dir) < 0.0)
+		if(a.m_v.dot(ctx.m_dir) < 0.0)
 		{
 			return false;
 		}
 
-		if(update(a))
+		if(update(ctx, a))
 		{
 			return true;
 		}

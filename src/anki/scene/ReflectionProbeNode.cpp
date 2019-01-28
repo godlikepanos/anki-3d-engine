@@ -7,6 +7,7 @@
 #include <anki/scene/components/ReflectionProbeComponent.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/FrustumComponent.h>
+#include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/renderer/LightShading.h>
@@ -86,10 +87,9 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 		m_cubeSides[i].m_localTrf.setOrigin(Vec4(0.0f));
 		m_cubeSides[i].m_localTrf.setScale(1.0f);
 
-		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, effectiveDistance);
-		m_cubeSides[i].m_frustum.resetTransform(m_cubeSides[i].m_localTrf);
-
-		FrustumComponent* frc = newComponent<FrustumComponent>(this, &m_cubeSides[i].m_frustum);
+		FrustumComponent* frc = newComponent<FrustumComponent>(this, FrustumType::PERSPECTIVE);
+		frc->setPerspective(zNear, effectiveDistance, ang, ang);
+		frc->setTransform(m_cubeSides[i].m_localTrf);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 		frc->setEffectiveShadowDistance(getSceneGraph().getLimits().m_reflectionProbeShadowEffectiveDistance);
 	}
@@ -118,8 +118,7 @@ void ReflectionProbeNode::onMoveUpdate(MoveComponent& move)
 		Transform trf = m_cubeSides[count].m_localTrf;
 		trf.setOrigin(move.getWorldTransform().getOrigin());
 
-		frc.getFrustum().resetTransform(trf);
-		frc.markTransformForUpdate();
+		frc.setTransform(trf);
 		++count;
 
 		return Error::NONE;

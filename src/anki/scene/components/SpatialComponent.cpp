@@ -10,15 +10,52 @@
 namespace anki
 {
 
-SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* shape)
+SpatialComponent::SpatialComponent(SceneNode* node, const Obb* obb)
 	: SceneComponent(CLASS_TYPE)
 	, m_node(node)
-	, m_shape(shape)
 {
 	ANKI_ASSERT(node);
-	ANKI_ASSERT(shape);
+	ANKI_ASSERT(obb);
 	markForUpdate();
 	m_octreeInfo.m_userData = this;
+	m_obb = obb;
+	m_collisionObjectType = obb->CLASS_TYPE;
+}
+
+SpatialComponent::SpatialComponent(SceneNode* node, const Aabb* aabb)
+	: SceneComponent(CLASS_TYPE)
+	, m_node(node)
+{
+	ANKI_ASSERT(node);
+	ANKI_ASSERT(aabb);
+	markForUpdate();
+	m_octreeInfo.m_userData = this;
+	m_aabb = aabb;
+	m_collisionObjectType = aabb->CLASS_TYPE;
+}
+
+SpatialComponent::SpatialComponent(SceneNode* node, const Sphere* sphere)
+	: SceneComponent(CLASS_TYPE)
+	, m_node(node)
+{
+	ANKI_ASSERT(node);
+	ANKI_ASSERT(sphere);
+	markForUpdate();
+	m_octreeInfo.m_userData = this;
+	m_sphere = sphere;
+	m_collisionObjectType = sphere->CLASS_TYPE;
+}
+
+SpatialComponent::SpatialComponent(SceneNode* node, const ConvexHullShape* hull)
+	: SceneComponent(CLASS_TYPE)
+	, m_node(node)
+{
+	ANKI_ASSERT(node);
+	ANKI_ASSERT(hull);
+	markForUpdate();
+	m_octreeInfo.m_userData = this;
+	m_hull = hull;
+	m_collisionObjectType = hull->CLASS_TYPE;
 }
 
 SpatialComponent::~SpatialComponent()
@@ -36,10 +73,28 @@ Error SpatialComponent::update(SceneNode& node, Second prevTime, Second crntTime
 	updated = m_markedForUpdate;
 	if(updated)
 	{
-		m_shape->computeAabb(m_aabb);
+		// Compute the AABB
+		switch(m_collisionObjectType)
+		{
+		case CollisionShapeType::AABB:
+			m_derivedAabb = *m_aabb;
+			break;
+		case CollisionShapeType::OBB:
+			m_derivedAabb = computeAabb(*m_obb);
+			break;
+		case CollisionShapeType::SPHERE:
+			m_derivedAabb = computeAabb(*m_sphere);
+			break;
+		case CollisionShapeType::CONVEX_HULL:
+			m_derivedAabb = computeAabb(*m_hull);
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+
 		m_markedForUpdate = false;
 
-		m_node->getSceneGraph().getOctree().place(m_aabb, &m_octreeInfo, m_updateOctreeBounds);
+		m_node->getSceneGraph().getOctree().place(m_derivedAabb, &m_octreeInfo, m_updateOctreeBounds);
 		m_placed = true;
 	}
 

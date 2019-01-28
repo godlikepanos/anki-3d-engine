@@ -26,13 +26,12 @@ public:
 	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
-		LightNode& lnode = static_cast<LightNode&>(node);
 
 		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Move updated
-			lnode.onMoveUpdate(move);
+			static_cast<LightNode&>(node).onMoveUpdate(move);
 		}
 
 		return Error::NONE;
@@ -51,13 +50,12 @@ public:
 	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
-		LightNode& lnode = static_cast<LightNode&>(node);
 
 		LightComponent& light = node.getComponent<LightComponent>();
 		if(light.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Shape updated
-			lnode.onShapeUpdate(light);
+			static_cast<LightNode&>(node).onShapeUpdate(light);
 		}
 
 		return Error::NONE;
@@ -73,31 +71,11 @@ LightNode::~LightNode()
 {
 }
 
-Error LightNode::init(LightComponentType type, CollisionShape* shape)
-{
-	// Move component
-	newComponent<MoveComponent>();
-
-	// Feedback component
-	newComponent<MovedFeedbackComponent>();
-
-	// Light component
-	newComponent<LightComponent>(type, getSceneGraph().getNewUuid());
-
-	// Feedback component
-	newComponent<LightChangedFeedbackComponent>();
-
-	// Spatial component
-	newComponent<SpatialComponent>(this, shape);
-
-	return Error::NONE;
-}
-
 void LightNode::frameUpdateCommon()
 {
 	// Update frustum comps shadow info
 	const LightComponent& lc = getComponent<LightComponent>();
-	Bool castsShadow = lc.getShadowEnabled();
+	const Bool castsShadow = lc.getShadowEnabled();
 
 	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
 		if(castsShadow)
@@ -132,21 +110,6 @@ void LightNode::onMoveUpdateCommon(const MoveComponent& move)
 	getComponent<LightComponent>().updateWorldTransform(move.getWorldTransform());
 }
 
-void LightNode::onShapeUpdateCommon(LightComponent& light)
-{
-	// Update the frustums
-	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
-		fr.markShapeForUpdate();
-		return Error::NONE;
-	});
-
-	(void)err;
-
-	// Mark the spatial for update
-	SpatialComponent& sp = getComponent<SpatialComponent>();
-	sp.markForUpdate();
-}
-
 Error LightNode::loadLensFlare(const CString& filename)
 {
 	ANKI_ASSERT(tryGetComponent<LensFlareComponent>() == nullptr);
@@ -175,7 +138,22 @@ PointLightNode::~PointLightNode()
 
 Error PointLightNode::init()
 {
-	return LightNode::init(LightComponentType::POINT, &m_sphereW);
+	// Move component
+	newComponent<MoveComponent>();
+
+	// Feedback component
+	newComponent<MovedFeedbackComponent>();
+
+	// Light component
+	newComponent<LightComponent>(LightComponentType::POINT, getSceneGraph().getNewUuid());
+
+	// Feedback component
+	newComponent<LightChangedFeedbackComponent>();
+
+	// Spatial component
+	newComponent<SpatialComponent>(this, &m_sphereW);
+
+	return Error::NONE;
 }
 
 void PointLightNode::onMoveUpdate(const MoveComponent& move)
@@ -188,8 +166,7 @@ void PointLightNode::onMoveUpdate(const MoveComponent& move)
 		Transform trf = m_shadowData[count].m_localTrf;
 		trf.setOrigin(move.getWorldTransform().getOrigin());
 
-		fr.getFrustum().resetTransform(trf);
-		fr.markTransformForUpdate();
+		fr.setTransform(trf);
 		++count;
 
 		return Error::NONE;
@@ -202,14 +179,13 @@ void PointLightNode::onMoveUpdate(const MoveComponent& move)
 
 void PointLightNode::onShapeUpdate(LightComponent& light)
 {
-	for(ShadowCombo& c : m_shadowData)
-	{
-		c.m_frustum.setFar(light.getRadius());
-	}
+	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
+		fr.setFar(light.getRadius());
+		return Error::NONE;
+	});
+	(void)err;
 
 	m_sphereW.setRadius(light.getRadius());
-
-	onShapeUpdateCommon(light);
 }
 
 Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
@@ -240,13 +216,12 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 		const Vec4& origin = getComponent<MoveComponent>().getWorldTransform().getOrigin();
 		for(U i = 0; i < 6; i++)
 		{
-			m_shadowData[i].m_frustum.setAll(ang, ang, zNear, dist);
-
 			Transform trf = m_shadowData[i].m_localTrf;
 			trf.setOrigin(origin);
-			m_shadowData[i].m_frustum.resetTransform(trf);
 
-			newComponent<FrustumComponent>(this, &m_shadowData[i].m_frustum);
+			FrustumComponent* frc = newComponent<FrustumComponent>(this, FrustumType::PERSPECTIVE);
+			frc->setPerspective(zNear, dist, ang, ang);
+			frc->setTransform(trf);
 		}
 	}
 
@@ -262,10 +237,24 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 
 Error SpotLightNode::init()
 {
-	ANKI_CHECK(LightNode::init(LightComponentType::SPOT, &m_frustum));
+	// Move component
+	newComponent<MoveComponent>();
 
-	FrustumComponent* fr = newComponent<FrustumComponent>(this, &m_frustum);
+	// Feedback component
+	newComponent<MovedFeedbackComponent>();
+
+	// Light component
+	newComponent<LightComponent>(LightComponentType::POINT, getSceneGraph().getNewUuid());
+
+	// Feedback component
+	newComponent<LightChangedFeedbackComponent>();
+
+	// Frustum component
+	FrustumComponent* fr = newComponent<FrustumComponent>(this, FrustumType::PERSPECTIVE);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
+
+	// Spatial component
+	newComponent<SpatialComponent>(this, &fr->getPerspectiveBoundingShape());
 
 	return Error::NONE;
 }
@@ -274,9 +263,7 @@ void SpotLightNode::onMoveUpdate(const MoveComponent& move)
 {
 	// Update the frustums
 	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
-		fr.markTransformForUpdate();
-		fr.getFrustum().resetTransform(move.getWorldTransform());
-
+		fr.setTransform(move.getWorldTransform());
 		return Error::NONE;
 	});
 
@@ -287,8 +274,13 @@ void SpotLightNode::onMoveUpdate(const MoveComponent& move)
 
 void SpotLightNode::onShapeUpdate(LightComponent& light)
 {
-	onShapeUpdateCommon(light);
-	m_frustum.setAll(light.getOuterAngle(), light.getOuterAngle(), LIGHT_FRUSTUM_NEAR_PLANE, light.getDistance());
+	// Update the frustum first
+	FrustumComponent& frc = getComponent<FrustumComponent>();
+	frc.setPerspective(LIGHT_FRUSTUM_NEAR_PLANE, light.getDistance(), light.getOuterAngle(), light.getOuterAngle());
+
+	// Mark the spatial for update
+	SpatialComponent& sp = getComponent<SpatialComponent>();
+	sp.markForUpdate();
 }
 
 Error SpotLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)

@@ -452,7 +452,7 @@ Error Exporter::exportMesh(const tinygltf::Mesh& mesh)
 		{
 			const Vec3& pos = positions[j];
 
-			F32 test = plane.test(pos.xyz0());
+			F32 test = testPlane(plane, pos.xyz0());
 			if(test > EPSILON)
 			{
 				convex = false;
