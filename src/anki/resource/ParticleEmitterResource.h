@@ -77,7 +77,7 @@ public:
 
 	U32 m_particlesPerEmission = 1; ///< How many particles are emitted every emission. Required
 
-	Bool8 m_usePhysicsEngine = false; ///< Use bullet for the simulation
+	Bool m_usePhysicsEngine = false; ///< Use bullet for the simulation
 	/// @}
 
 	Bool forceEnabled() const

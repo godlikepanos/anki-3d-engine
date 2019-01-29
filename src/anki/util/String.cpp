@@ -135,6 +135,14 @@ Error CString::toNumber(U8& out) const
 	return Error::NONE;
 }
 
+Error CString::toNumber(Bool& out) const
+{
+	I32 i;
+	ANKI_CHECK(toNumber(i));
+	out = i != 0;
+	return Error::NONE;
+}
+
 String& String::operator=(StringAuto&& b)
 {
 	m_data = std::move(b.m_data);

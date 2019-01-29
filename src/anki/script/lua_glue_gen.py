@@ -50,7 +50,7 @@ def ident(number):
 def type_is_bool(type):
 	""" Check if a type is boolean """
 
-	return type == "Bool" or type == "Bool8" or type == "bool"
+	return type == "Bool" or type == "bool"
 
 def type_is_number(type):
 	""" Check if a type is number """

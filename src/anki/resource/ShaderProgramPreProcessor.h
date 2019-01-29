@@ -51,7 +51,7 @@ public:
 private:
 	StringAuto m_name;
 	DynamicArrayAuto<I32> m_values;
-	Bool8 m_instanced = false;
+	Bool m_instanced = false;
 };
 
 /// @memberof ShaderProgramPreprocessor
@@ -95,8 +95,8 @@ private:
 	StringAuto m_name;
 	StringAuto m_preproc;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
-	Bool8 m_const = false;
-	Bool8 m_instanced = false;
+	Bool m_const = false;
+	Bool m_instanced = false;
 };
 
 /// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
@@ -177,10 +177,10 @@ private:
 	DynamicArrayAuto<Input> m_inputs;
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
-	Bool8 m_insideShader = false;
+	Bool m_insideShader = false;
 	U32 m_set = 0;
 	U32 m_instancedMutatorIdx = MAX_U32;
-	Bool8 m_foundInstancedInput = false;
+	Bool m_foundInstancedInput = false;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);

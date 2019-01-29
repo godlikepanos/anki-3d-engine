@@ -130,7 +130,7 @@ public:
 		return !getAny();
 	}
 
-	operator bool() const
+	operator Bool() const
 	{
 		return getAny();
 	}

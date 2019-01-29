@@ -102,7 +102,7 @@ private:
 	Vec4 m_worldPos{0.0f};
 
 	F32 m_density = 1.0f;
-	Bool8 m_box = false;
+	Bool m_box = false;
 };
 
 } // end namespace anki

@@ -109,8 +109,8 @@ protected:
 	Second m_startTime = 0.0;
 	Second m_duration = 0.0;
 
-	Bool8 m_markedForDeletion = false;
-	Bool8 m_reanimate = false;
+	Bool m_markedForDeletion = false;
+	Bool m_reanimate = false;
 
 	DynamicArray<SceneNode*> m_associatedNodes;
 

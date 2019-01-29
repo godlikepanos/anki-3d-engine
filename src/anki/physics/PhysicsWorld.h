@@ -24,7 +24,7 @@ public:
 	Vec3 m_from;
 	Vec3 m_to;
 	PhysicsMaterialBit m_materialMask; ///< Materials to check
-	Bool8 m_firstHit = true;
+	Bool m_firstHit = true;
 
 	PhysicsWorldRayCastCallback(const Vec3& from, const Vec3& to, PhysicsMaterialBit materialMask)
 		: m_from(from)

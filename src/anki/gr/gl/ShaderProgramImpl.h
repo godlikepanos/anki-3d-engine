@@ -50,7 +50,7 @@ public:
 private:
 	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders;
 	ShaderProgramImplReflection m_refl;
-	Bool8 m_reflInitialized = false;
+	Bool m_reflInitialized = false;
 
 	ANKI_USE_RESULT Error link(GLuint vert, GLuint frag);
 };

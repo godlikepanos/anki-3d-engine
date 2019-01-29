@@ -65,7 +65,7 @@ class PPInputAssemblerStateInfo : public NonCopyable
 {
 public:
 	PrimitiveTopology m_topology = PrimitiveTopology::TRIANGLES;
-	Bool8 m_primitiveRestartEnabled = false;
+	Bool m_primitiveRestartEnabled = false;
 };
 
 class PPTessellationStateInfo : public NonCopyable
@@ -77,7 +77,7 @@ public:
 class PPViewportStateInfo : public NonCopyable
 {
 public:
-	Bool8 m_scissorEnabled = false;
+	Bool m_scissorEnabled = false;
 };
 
 class PPRasterizerStateInfo : public NonCopyable
@@ -93,7 +93,7 @@ public:
 class PPDepthStateInfo : public NonCopyable
 {
 public:
-	Bool8 m_depthWriteEnabled = true;
+	Bool m_depthWriteEnabled = true;
 	CompareOperation m_depthCompareFunction = CompareOperation::LESS;
 };
 
@@ -127,7 +127,7 @@ public:
 class PPColorStateInfo : public NonCopyable
 {
 public:
-	Bool8 m_alphaToCoverageEnabled = false;
+	Bool m_alphaToCoverageEnabled = false;
 	Array<PPColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
 };
 
@@ -500,9 +500,9 @@ private:
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_shaderColorAttachmentWritemask = {false};
 
 	// Renderpass info
-	Bool8 m_fbDepth = false;
-	Bool8 m_fbStencil = false;
-	Bool8 m_defaultFb = false;
+	Bool m_fbDepth = false;
+	Bool m_fbStencil = false;
+	Bool m_defaultFb = false;
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_fbColorAttachmentMask = {false};
 	VkRenderPass m_rpass = VK_NULL_HANDLE;
 	FramebufferPtr m_fb; ///< Hold the reference.

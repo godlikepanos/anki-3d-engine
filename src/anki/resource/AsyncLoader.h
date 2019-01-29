@@ -92,9 +92,9 @@ private:
 	Mutex m_mtx;
 	ConditionVariable m_condVar;
 	IntrusiveList<AsyncLoaderTask> m_taskQueue;
-	Bool8 m_quit = false;
-	Bool8 m_paused = false;
-	Bool8 m_sync = false;
+	Bool m_quit = false;
+	Bool m_paused = false;
+	Bool m_sync = false;
 
 	Atomic<U64> m_completedTaskCount = {0};
 

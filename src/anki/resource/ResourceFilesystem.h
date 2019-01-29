@@ -97,8 +97,8 @@ private:
 	public:
 		StringList m_files; ///< Files inside the directory.
 		String m_path; ///< A directory or an archive.
-		Bool8 m_isArchive = false;
-		Bool8 m_isCache = false;
+		Bool m_isArchive = false;
+		Bool m_isCache = false;
 
 		Path() = default;
 

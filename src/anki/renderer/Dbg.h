@@ -76,8 +76,8 @@ anki_internal:
 	}
 
 private:
-	Bool8 m_enabled = false;
-	Bool8 m_initialized = false; ///< Lazily initialize.
+	Bool m_enabled = false;
+	Bool m_initialized = false; ///< Lazily initialize.
 	RenderTargetDescription m_rtDescr;
 	FramebufferDescription m_fbDescr;
 	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};

@@ -67,7 +67,7 @@ private:
 	CommandBufferPtr m_swapBuffersCommands;
 	ConditionVariable m_frameCondVar;
 	Mutex m_frameMtx;
-	Bool8 m_frameWait = false;
+	Bool m_frameWait = false;
 	/// @}
 
 	ThreadId m_serverThreadId;

@@ -39,8 +39,8 @@ public:
 	Array<U32, 4> m_viewportOut; ///< Viewport in the ESM RT.
 	F32 m_cameraNear;
 	F32 m_cameraFar;
-	Bool8 m_blur;
-	Bool8 m_perspectiveProjection;
+	Bool m_blur;
+	Bool m_perspectiveProjection;
 };
 
 ShadowMapping::~ShadowMapping()

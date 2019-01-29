@@ -170,7 +170,7 @@ private:
 
 	// Misc
 	UiImmediateModeBuilderPtr m_statsUi;
-	Bool8 m_displayStats = false;
+	Bool m_displayStats = false;
 	Timestamp m_globalTimestamp = 1;
 	ThreadHive* m_threadHive = nullptr;
 	String m_settingsDir; ///< The path that holds the configuration

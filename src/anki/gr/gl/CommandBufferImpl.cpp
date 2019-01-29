@@ -236,7 +236,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 	class DepthTestCmd final : public GlCommand
 	{
 	public:
-		Bool8 m_enable;
+		Bool m_enable;
 
 		DepthTestCmd(Bool enable)
 			: m_enable(enable)
@@ -265,7 +265,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 	class StencilTestCmd final : public GlCommand
 	{
 	public:
-		Bool8 m_enable;
+		Bool m_enable;
 
 		StencilTestCmd(Bool enable)
 			: m_enable(enable)

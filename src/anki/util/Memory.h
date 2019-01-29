@@ -252,7 +252,7 @@ private:
 	PtrSize m_nextChunkBias = 0;
 
 	/// Ignore deallocation errors.
-	Bool8 m_ignoreDeallocationErrors = false;
+	Bool m_ignoreDeallocationErrors = false;
 
 	/// The current chunk. Chose the more strict memory order to avoid compiler
 	/// re-ordering of instructions

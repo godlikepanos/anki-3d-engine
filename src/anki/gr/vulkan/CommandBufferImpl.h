@@ -339,10 +339,10 @@ private:
 	MicroCommandBufferPtr m_microCmdb;
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
-	Bool8 m_renderedToDefaultFb = false;
-	Bool8 m_finalized = false;
-	Bool8 m_empty = true;
-	Bool8 m_beganRecording = false;
+	Bool m_renderedToDefaultFb = false;
+	Bool m_finalized = false;
+	Bool m_empty = true;
+	Bool m_beganRecording = false;
 	ThreadId m_tid = ~ThreadId(0);
 #if ANKI_EXTRA_CHECKS
 	U32 m_commandCount = 0;
@@ -372,9 +372,9 @@ private:
 	/// @{
 	Array<U32, 4> m_viewport = {{0, 0, 0, 0}};
 	Array<U32, 4> m_scissor = {{0, 0, MAX_U32, MAX_U32}};
-	Bool8 m_viewportDirty = true;
+	Bool m_viewportDirty = true;
 	VkViewport m_lastViewport = {};
-	Bool8 m_scissorDirty = true;
+	Bool m_scissorDirty = true;
 	VkRect2D m_lastScissor = {{-1, -1}, {MAX_U32, MAX_U32}};
 	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.
 	Array<U32, 2> m_stencilWriteMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};

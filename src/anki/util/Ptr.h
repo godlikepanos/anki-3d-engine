@@ -55,7 +55,7 @@ public:
 
 	/// @name Compare operators
 	/// @{
-	operator bool() const
+	operator Bool() const
 	{
 		return isCreated();
 	}

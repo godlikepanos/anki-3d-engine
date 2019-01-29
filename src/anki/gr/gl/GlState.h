@@ -28,7 +28,7 @@ public:
 	GlExtensions m_extensions = GlExtensions::NONE;
 	I32 m_version = -1; ///< Minor major GL version. Something like 430
 	GpuVendor m_gpu = GpuVendor::UNKNOWN;
-	Bool8 m_registerMessages = false;
+	Bool m_registerMessages = false;
 
 	ShaderProgramPtr m_crntProg;
 
@@ -48,7 +48,7 @@ public:
 		{{true, true, true, true}},
 		{{true, true, true, true}}}};
 
-	Bool8 m_depthWriteMask = true;
+	Bool m_depthWriteMask = true;
 
 	Array<U32, 2> m_stencilWriteMask = {{MAX_U32, MAX_U32}};
 	/// @}

@@ -158,7 +158,7 @@ private:
 	Vec3 m_sizes = Vec3(1.0f);
 	Transform m_trf = Transform::getIdentity();
 	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
-	Bool8 m_markedForUpdate = true;
+	Bool m_markedForUpdate = true;
 
 	ANKI_USE_RESULT Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
 

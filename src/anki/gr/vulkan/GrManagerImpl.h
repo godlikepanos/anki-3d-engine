@@ -294,9 +294,9 @@ private:
 
 	PipelineCache m_pplineCache;
 
-	Bool8 m_r8g8b8ImagesSupported = false;
-	Bool8 m_s8ImagesSupported = false;
-	Bool8 m_d24S8ImagesSupported = false;
+	Bool m_r8g8b8ImagesSupported = false;
+	Bool m_s8ImagesSupported = false;
+	Bool m_d24S8ImagesSupported = false;
 
 	mutable HashMap<U64, StringAuto> m_vkHandleToName;
 	mutable SpinLock m_vkHandleToNameLock;

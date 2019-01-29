@@ -41,8 +41,8 @@ public:
 	virtual void setupRenderableQueueElement(RenderableQueueElement& el) const = 0;
 
 protected:
-	Bool8 m_castsShadow = false;
-	Bool8 m_isForwardShading = false;
+	Bool m_castsShadow = false;
+	Bool m_isForwardShading = false;
 };
 
 /// A wrapper on top of MaterialVariable

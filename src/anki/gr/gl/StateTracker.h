@@ -136,7 +136,7 @@ public:
 	/// @name scissor_state
 	/// @{
 	Array<GLsizei, 4> m_scissor = {{0, 0, MAX_I32, MAX_I32}};
-	Bool8 m_scissorSet = false;
+	Bool m_scissorSet = false;
 
 	Bool setScissor(GLsizei minx, GLsizei miny, GLsizei width, GLsizei height)
 	{
@@ -245,7 +245,7 @@ public:
 		return changed;
 	}
 
-	Array<Bool8, 2> m_glStencilFuncSeparateDirty = {{false, false}};
+	Array<Bool, 2> m_glStencilFuncSeparateDirty = {{false, false}};
 	Array<CompareOperation, 2> m_stencilCompare = {{CompareOperation::COUNT, CompareOperation::COUNT}};
 
 	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
@@ -374,7 +374,7 @@ public:
 	{
 	public:
 		ColorBit m_writeMask = INVALID_COLOR_MASK;
-		Bool8 m_enableBlend = 2;
+		Bool m_enableBlend = 2;
 		BlendFactor m_blendSrcFactorRgb = BlendFactor::COUNT;
 		BlendFactor m_blendDstFactorRgb = BlendFactor::COUNT;
 		BlendFactor m_blendSrcFactorA = BlendFactor::COUNT;

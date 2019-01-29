@@ -89,7 +89,7 @@ private:
 	List<IntrusivePtr<UiObject>> m_references;
 
 #if ANKI_EXTRA_CHECKS
-	Bool8 m_building = false;
+	Bool m_building = false;
 #endif
 
 	void reset();

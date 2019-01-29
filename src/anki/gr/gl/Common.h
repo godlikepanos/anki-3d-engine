@@ -178,12 +178,8 @@ inline GLenum convertPrimitiveTopology(PrimitiveTopology ak)
 	return out;
 }
 
-void convertTextureInformation(Format pf,
-	Bool8& compressed,
-	GLenum& format,
-	GLenum& internalFormat,
-	GLenum& type,
-	DepthStencilAspectBit& dsAspect);
+void convertTextureInformation(
+	Format pf, Bool& compressed, GLenum& format, GLenum& internalFormat, GLenum& type, DepthStencilAspectBit& dsAspect);
 /// @}
 
 } // end namespace anki

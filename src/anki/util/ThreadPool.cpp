@@ -22,7 +22,7 @@ public:
 	Thread m_thread; ///< Runs the workingFunc
 	ThreadPoolTask* m_task; ///< Its NULL if there is no pending task
 	ThreadPool* m_threadpool;
-	Bool8 m_quit = false;
+	Bool m_quit = false;
 
 	/// Constructor
 	ThreadPoolThread(U32 id, ThreadPool* threadpool, Bool pinToCore)

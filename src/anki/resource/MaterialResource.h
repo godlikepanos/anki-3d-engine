@@ -257,8 +257,8 @@ public:
 private:
 	ShaderProgramResourcePtr m_prog;
 
-	Bool8 m_shadow = true;
-	Bool8 m_forwardShading = false;
+	Bool m_shadow = true;
+	Bool m_forwardShading = false;
 	U8 m_lodCount = 1;
 	U8 m_descriptorSetIdx = 0; ///< Cache the value from the m_prog;
 

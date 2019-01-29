@@ -32,7 +32,7 @@ static void btFree(void* ptr)
 class PhysicsWorld::MyOverlapFilterCallback : public btOverlapFilterCallback
 {
 public:
-	bool needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const override
+	Bool needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const override
 	{
 		ANKI_ASSERT(proxy0 && proxy1);
 
@@ -94,7 +94,7 @@ class PhysicsWorld::MyRaycastCallback : public btCollisionWorld::RayResultCallba
 public:
 	PhysicsWorldRayCastCallback* m_raycast = nullptr;
 
-	bool needsCollision(btBroadphaseProxy* proxy) const override
+	Bool needsCollision(btBroadphaseProxy* proxy) const override
 	{
 		ANKI_ASSERT(proxy);
 
@@ -109,7 +109,7 @@ public:
 		return !!(fobj->getMaterialGroup() & m_raycast->m_materialMask);
 	}
 
-	btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace) final
+	btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, Bool normalInWorldSpace) final
 	{
 		// No idea why
 		if(m_raycast->m_firstHit)

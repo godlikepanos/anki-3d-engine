@@ -72,7 +72,7 @@ private:
 	PtrSize m_actualSize = 0;
 
 #if ANKI_EXTRA_CHECKS
-	Bool8 m_mapped = false;
+	Bool m_mapped = false;
 #endif
 
 	Bool isCreated() const

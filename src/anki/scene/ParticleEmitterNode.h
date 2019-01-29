@@ -57,7 +57,7 @@ private:
 	Obb m_obb;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitterNode's rotation is the identity
-	Bool8 m_identityRotation = true;
+	Bool m_identityRotation = true;
 
 	U32 m_aliveParticlesCount = 0;
 

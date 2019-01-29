@@ -222,7 +222,7 @@ private:
 
 	Timestamp m_maxComponentTimestamp = 0;
 
-	Bool8 m_markedForDeletion = false;
+	Bool m_markedForDeletion = false;
 };
 /// @}
 

@@ -31,7 +31,7 @@ public:
 private:
 	ClassGpuAllocatorHandle m_classHandle;
 	U8 m_memTypeIdx = MAX_U8;
-	Bool8 m_linear = false;
+	Bool m_linear = false;
 };
 
 /// Dynamic GPU memory allocator for all types.

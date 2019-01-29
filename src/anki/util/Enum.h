@@ -92,7 +92,7 @@ constexpr inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 	}
 
 #define _ANKI_ENUM_NEGATIVE_OPERATOR(enum_, qualifier_) \
-	qualifier_ bool operator!(const enum_& a) \
+	qualifier_ Bool operator!(const enum_& a) \
 	{ \
 		using Int = EnumUnderlyingType<enum_>::Type; \
 		return static_cast<Int>(a) == 0; \

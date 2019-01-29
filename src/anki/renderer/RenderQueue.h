@@ -247,7 +247,7 @@ public:
 	};
 
 	F32 m_density;
-	Bool8 m_isBox;
+	Bool m_isBox;
 
 	FogDensityQueueElement()
 	{

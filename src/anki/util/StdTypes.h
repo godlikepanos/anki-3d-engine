@@ -70,9 +70,8 @@ using F64 = double; ///< Floating point 64bit
 const F64 MAX_F64 = std::numeric_limits<F64>::max();
 const F64 MIN_F64 = -std::numeric_limits<F64>::max();
 
-using Bool = int; ///< Fast boolean type
-using Bool8 = I8; ///< Small 8bit boolean type
-using Bool32 = I32; ///< A 32bit boolean
+using Bool = bool; ///< 1 byte boolean type. The same as C++'s bool.
+static_assert(sizeof(bool) == 1, "Wrong size for bool");
 
 using Second = F64; ///< The base time unit is second.
 const Second MAX_SECOND = MAX_F64;
@@ -145,7 +144,7 @@ public:
 	/// Check if it is an error.
 	operator Bool() const
 	{
-		return m_code != NONE;
+		return ANKI_UNLIKELY(m_code != NONE);
 	}
 
 	/// @privatesection
@@ -165,7 +164,7 @@ private:
 	do \
 	{ \
 		Error error = x_; \
-		if(ANKI_UNLIKELY(error)) \
+		if(error) \
 		{ \
 			return error; \
 		} \

@@ -119,7 +119,7 @@ public:
 	}
 
 	/// Check if it's initialized.
-	operator bool() const
+	operator Bool() const
 	{
 		return m_pool != nullptr;
 	}

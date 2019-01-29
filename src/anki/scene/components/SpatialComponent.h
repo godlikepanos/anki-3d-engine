@@ -110,9 +110,9 @@ private:
 
 	OctreePlaceable m_octreeInfo;
 
-	Bool8 m_markedForUpdate = false;
-	Bool8 m_placed = false;
-	Bool8 m_updateOctreeBounds = true;
+	Bool m_markedForUpdate = false;
+	Bool m_placed = false;
+	Bool m_updateOctreeBounds = true;
 };
 
 /// A class that holds spatial information and implements the SpatialComponent virtuals. You just need to update the

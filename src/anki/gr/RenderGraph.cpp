@@ -61,7 +61,7 @@ public:
 		BufferInfo m_buffer;
 	};
 
-	Bool8 m_isTexture;
+	Bool m_isTexture;
 
 	Barrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceInfo& surf)
 		: m_texture({rtIdx, usageBefore, usageAfter, surf})
@@ -94,7 +94,7 @@ public:
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorUsages = {}; ///< For beginRender pass
 	TextureUsageBit m_dsUsage = TextureUsageBit::NONE; ///< For beginRender pass
 
-	Bool8 m_drawsToPresentable = false;
+	Bool m_drawsToPresentable = false;
 
 	/// WARNING: Should be the same as RenderPassDependency::TextureInfo
 	class ConsumedTextureInfo

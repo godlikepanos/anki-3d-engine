@@ -57,7 +57,7 @@ private:
 	U16 m_tileCountX = 0; ///< Tile count for LOD 0
 	U16 m_tileCountY = 0; ///< Tile count for LOD 0
 	U8 m_lodCount = 0;
-	Bool8 m_cachingEnabled = false;
+	Bool m_cachingEnabled = false;
 
 	U32 translateTileIdx(U32 x, U32 y, U32 lod) const
 	{

@@ -76,7 +76,7 @@ private:
 	Vec3 m_pos = Vec3(0.0f);
 	Vec3 m_aabbMin = Vec3(+1.0f);
 	Vec3 m_aabbMax = Vec3(-1.0f);
-	Bool8 m_markedForRendering = false;
+	Bool m_markedForRendering = false;
 
 	static void reflectionProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData)
 	{

@@ -29,7 +29,7 @@ public:
 	U32 m_samplesCount = 0;
 	static const Bool m_doubleBuffer = true;
 	/// Create a fullscreen window with the desktop's resolution
-	Bool8 m_fullscreenDesktopRez = false;
+	Bool m_fullscreenDesktopRez = false;
 
 	CString m_title = "Untitled window";
 };

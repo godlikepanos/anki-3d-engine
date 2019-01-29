@@ -160,7 +160,7 @@ public:
 class GpuMemoryManager::ClassAllocator : public ClassGpuAllocator
 {
 public:
-	Bool8 m_isDeviceMemory;
+	Bool m_isDeviceMemory;
 };
 
 GpuMemoryManager::~GpuMemoryManager()

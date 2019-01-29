@@ -102,7 +102,7 @@ public:
 
 private:
 	GrManagerImpl* m_gr = nullptr;
-	Bool8 m_vsync = false;
+	Bool m_vsync = false;
 	MicroObjectRecycler<MicroSwapchain> m_recycler;
 };
 /// @}

@@ -45,11 +45,11 @@ public:
 	GlCommand* m_firstCommand = nullptr;
 	GlCommand* m_lastCommand = nullptr;
 	CommandBufferAllocator<U8> m_alloc;
-	Bool8 m_immutable = false;
+	Bool m_immutable = false;
 	CommandBufferFlag m_flags;
 
 #if ANKI_EXTRA_CHECKS
-	Bool8 m_executed = false;
+	Bool m_executed = false;
 #endif
 
 	StateTracker m_state;

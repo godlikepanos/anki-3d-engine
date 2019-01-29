@@ -33,7 +33,7 @@ public:
 	GLenum m_glType = GL_NONE;
 	U32 m_surfaceCountPerLevel = 0;
 	U8 m_faceCount = 0; ///< 6 for cubes and 1 for the rest.
-	Bool8 m_compressed = false;
+	Bool m_compressed = false;
 
 	TextureImpl(GrManager* manager, CString name)
 		: Texture(manager, name)

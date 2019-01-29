@@ -110,7 +110,7 @@ private:
 
 	U32 m_width = 0;
 	U32 m_height = 0;
-	Bool8 m_presentableTex = false;
+	Bool m_presentableTex = false;
 
 	Array<TextureViewPtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
 

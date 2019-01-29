@@ -41,12 +41,12 @@ class RenderTargetHandle
 	friend class RenderPassDescriptionBase;
 
 public:
-	bool operator==(const RenderTargetHandle& b) const
+	Bool operator==(const RenderTargetHandle& b) const
 	{
 		return m_idx == b.m_idx;
 	}
 
-	bool operator!=(const RenderTargetHandle& b) const
+	Bool operator!=(const RenderTargetHandle& b) const
 	{
 		return m_idx != b.m_idx;
 	}
@@ -76,12 +76,12 @@ class RenderPassBufferHandle
 public:
 	operator BufferPtr() const;
 
-	bool operator==(const RenderPassBufferHandle& b) const
+	Bool operator==(const RenderPassBufferHandle& b) const
 	{
 		return m_idx == b.m_idx;
 	}
 
-	bool operator!=(const RenderPassBufferHandle& b) const
+	Bool operator!=(const RenderPassBufferHandle& b) const
 	{
 		return m_idx != b.m_idx;
 	}
@@ -257,7 +257,7 @@ private:
 		BufferInfo m_buffer;
 	};
 
-	Bool8 m_isTexture;
+	Bool m_isTexture;
 };
 
 /// The base of compute/transfer and graphics renderpasses for RenderGraph.
@@ -309,7 +309,7 @@ protected:
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_writeRtMask = {false};
 	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_readBuffMask = {false};
 	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_writeBuffMask = {false};
-	Bool8 m_hasBufferDeps = false; ///< Opt.
+	Bool m_hasBufferDeps = false; ///< Opt.
 
 	String m_name;
 

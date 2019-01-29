@@ -72,7 +72,7 @@ private:
 	StackAllocator<U8> m_frameAlloc;
 
 	UniquePtr<Renderer> m_r;
-	Bool8 m_rDrawToDefaultFb = false;
+	Bool m_rDrawToDefaultFb = false;
 
 	ShaderProgramResourcePtr m_blitProg;
 	ShaderProgramPtr m_blitGrProg;

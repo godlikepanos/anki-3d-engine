@@ -49,8 +49,8 @@ private:
 	Array<GLenum, MAX_COLOR_ATTACHMENTS> m_drawBuffers;
 	Array<GLenum, MAX_COLOR_ATTACHMENTS + 1> m_invalidateBuffers;
 	U8 m_invalidateBuffersCount = 0;
-	Bool8 m_clearDepth = false;
-	Bool8 m_clearStencil = false;
+	Bool m_clearDepth = false;
+	Bool m_clearStencil = false;
 
 	/// Attach a texture
 	static void attachTextureInternal(

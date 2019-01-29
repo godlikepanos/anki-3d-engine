@@ -176,8 +176,8 @@ private:
 
 	Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindings;
 
-	Bool8 m_anyBindingDirty = true;
-	Bool8 m_layoutDirty = true;
+	Bool m_anyBindingDirty = true;
+	Bool m_layoutDirty = true;
 	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET> m_dynamicOffsetDirty = {true};
 	U64 m_lastHash = 0;
 

@@ -121,7 +121,7 @@ private:
 
 	Array<U8, static_cast<U>(InputEvent::COUNT)> m_events;
 
-	Bool8 m_lockCurs = false;
+	Bool m_lockCurs = false;
 
 	/// Initialize the platform's input system
 	ANKI_USE_RESULT Error initInternal(NativeWindow* nativeWindow);

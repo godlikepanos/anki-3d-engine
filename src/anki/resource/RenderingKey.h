@@ -28,10 +28,10 @@ public:
 	Pass m_pass;
 	U8 m_lod;
 	U8 m_instanceCount;
-	Bool8 m_skinned;
-	Bool8 m_velocity;
+	Bool m_skinned;
+	Bool m_velocity;
 
-	RenderingKey(Pass pass, U8 lod, U instanceCount, Bool8 skinned, Bool8 velocity)
+	RenderingKey(Pass pass, U8 lod, U instanceCount, Bool skinned, Bool velocity)
 		: m_pass(pass)
 		, m_lod(lod)
 		, m_instanceCount(instanceCount)

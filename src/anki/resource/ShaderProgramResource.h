@@ -109,8 +109,8 @@ private:
 	String m_preprocExpr;
 	U32 m_idx;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
-	Bool8 m_const = false;
-	Bool8 m_instanced = false;
+	Bool m_const = false;
+	Bool m_instanced = false;
 
 	Bool isTexture() const
 	{
@@ -198,7 +198,7 @@ private:
 	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
 	U32 m_uniBlockSize = 0;
 	DynamicArray<I16> m_texUnits;
-	Bool8 m_usesPushConstants = false;
+	Bool m_usesPushConstants = false;
 };
 
 /// The value of a constant.

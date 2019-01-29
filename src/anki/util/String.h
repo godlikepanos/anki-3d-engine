@@ -118,12 +118,12 @@ public:
 	}
 
 	/// Return true if the string is not initialized.
-	bool isEmpty() const
+	Bool isEmpty() const
 	{
 		return m_ptr == nullptr || getLength() == 0;
 	}
 
-	bool operator==(const CString& b) const
+	Bool operator==(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -135,12 +135,12 @@ public:
 		}
 	}
 
-	bool operator!=(const CString& b) const
+	Bool operator!=(const CString& b) const
 	{
 		return !((*this) == b);
 	}
 
-	bool operator<(const CString& b) const
+	Bool operator<(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -152,7 +152,7 @@ public:
 		}
 	}
 
-	bool operator<=(const CString& b) const
+	Bool operator<=(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -164,7 +164,7 @@ public:
 		}
 	}
 
-	bool operator>(const CString& b) const
+	Bool operator>(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -176,7 +176,7 @@ public:
 		}
 	}
 
-	bool operator>=(const CString& b) const
+	Bool operator>=(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -233,6 +233,9 @@ public:
 
 	/// Convert to U32.
 	ANKI_USE_RESULT Error toNumber(U32& out) const;
+
+	/// Convert to Bool.
+	ANKI_USE_RESULT Error toNumber(Bool& out) const;
 
 	/// Compute the hash.
 	U32 computeHash() const
@@ -375,7 +378,7 @@ public:
 	}
 
 	/// Return true if strings are equal
-	bool operator==(const String& b) const
+	Bool operator==(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -383,13 +386,13 @@ public:
 	}
 
 	/// Return true if strings are not equal
-	bool operator!=(const String& b) const
+	Bool operator!=(const String& b) const
 	{
 		return !(*this == b);
 	}
 
 	/// Return true if this is less than b
-	bool operator<(const String& b) const
+	Bool operator<(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -397,7 +400,7 @@ public:
 	}
 
 	/// Return true if this is less or equal to b
-	bool operator<=(const String& b) const
+	Bool operator<=(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -405,7 +408,7 @@ public:
 	}
 
 	/// Return true if this is greater than b
-	bool operator>(const String& b) const
+	Bool operator>(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -413,7 +416,7 @@ public:
 	}
 
 	/// Return true if this is greater or equal to b
-	bool operator>=(const String& b) const
+	Bool operator>=(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -421,41 +424,41 @@ public:
 	}
 
 	/// Return true if strings are equal
-	bool operator==(const CStringType& cstr) const
+	Bool operator==(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) == 0;
 	}
 
 	/// Return true if strings are not equal
-	bool operator!=(const CStringType& cstr) const
+	Bool operator!=(const CStringType& cstr) const
 	{
 		return !(*this == cstr);
 	}
 
 	/// Return true if this is less than cstr.
-	bool operator<(const CStringType& cstr) const
+	Bool operator<(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) < 0;
 	}
 
 	/// Return true if this is less or equal to cstr.
-	bool operator<=(const CStringType& cstr) const
+	Bool operator<=(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) <= 0;
 	}
 
 	/// Return true if this is greater than cstr.
-	bool operator>(const CStringType& cstr) const
+	Bool operator>(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) > 0;
 	}
 
 	/// Return true if this is greater or equal to cstr.
-	bool operator>=(const CStringType& cstr) const
+	Bool operator>=(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) >= 0;
@@ -572,6 +575,12 @@ public:
 
 	/// Convert to U8.
 	ANKI_USE_RESULT Error toNumber(U8& out) const
+	{
+		return toCString().toNumber(out);
+	}
+
+	/// Convert to Bool.
+	ANKI_USE_RESULT Error toNumber(Bool& out) const
 	{
 		return toCString().toNumber(out);
 	}

@@ -104,7 +104,7 @@ private:
 #endif
 		;
 
-	Bool8 m_trfIdentity; ///< Optimization.
+	Bool m_trfIdentity; ///< Optimization.
 
 	void check() const
 	{

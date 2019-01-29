@@ -37,7 +37,7 @@ private:
 	List<String> m_q;
 	Mutex m_mtx; ///< Protect the queue
 	Thread m_thrd; ///< The thread
-	Bool8 m_quit = false;
+	Bool m_quit = false;
 
 	static Error workingFunc(ThreadCallbackInfo& info); ///< The thread function
 };

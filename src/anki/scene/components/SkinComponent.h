@@ -42,7 +42,7 @@ private:
 	public:
 		AnimationResourcePtr m_anim;
 		F64 m_time;
-		Bool8 m_repeat;
+		Bool m_repeat;
 	};
 
 	SceneNode* m_node;

@@ -61,7 +61,7 @@ void CommandBuffer::bindVertexBuffer(
 		U32 m_binding;
 		PtrSize m_offset;
 		PtrSize m_stride;
-		Bool8 m_instanced;
+		Bool m_instanced;
 
 		Cmd(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, Bool instanced)
 			: m_buff(buff)
@@ -99,7 +99,7 @@ void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, Format fmt
 		U32 m_buffBinding;
 		U8 m_compSize;
 		GLenum m_fmt;
-		Bool8 m_normalized;
+		Bool m_normalized;
 		PtrSize m_relativeOffset;
 
 		Cmd(U32 location, U32 buffBinding, U8 compSize, GLenum fmt, Bool normalized, PtrSize relativeOffset)
@@ -167,7 +167,7 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 	class Cmd final : public GlCommand
 	{
 	public:
-		Bool8 m_enable;
+		Bool m_enable;
 
 		Cmd(Bool enable)
 			: m_enable(enable)
@@ -455,7 +455,7 @@ void CommandBuffer::setDepthWrite(Bool enable)
 	class Cmd final : public GlCommand
 	{
 	public:
-		Bool8 m_enable;
+		Bool m_enable;
 
 		Cmd(Bool enable)
 			: m_enable(enable)
@@ -795,7 +795,7 @@ void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 		}
 	};
 
-	Bool8 compressed;
+	Bool compressed;
 	GLenum format;
 	GLenum internalFormat;
 	GLenum type;
