@@ -122,7 +122,7 @@ Vec2 unpackUnorm1ToUnorm2(F32 c)
 #endif
 }
 
-const F32 MAX_EMISSION = 20.0; // Max emission. Keep as low as possible
+const F32 MAX_EMISSION = 30.0; // Max emission. Keep as low as possible
 const F32 MIN_ROUGHNESS = 0.05;
 
 // G-Buffer structure
