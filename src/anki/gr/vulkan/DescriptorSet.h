@@ -65,23 +65,23 @@ private:
 class TextureBinding
 {
 public:
-	const TextureViewImpl* m_texView = nullptr;
-	const MicroSampler* m_sampler = nullptr;
-	VkImageLayout m_layout = VK_IMAGE_LAYOUT_MAX_ENUM;
+	const TextureViewImpl* m_texView;
+	const MicroSampler* m_sampler;
+	VkImageLayout m_layout;
 };
 
 class BufferBinding
 {
 public:
-	const BufferImpl* m_buff = nullptr;
-	PtrSize m_offset = MAX_PTR_SIZE;
-	PtrSize m_range = 0;
+	const BufferImpl* m_buff;
+	PtrSize m_offset;
+	PtrSize m_range;
 };
 
 class ImageBinding
 {
 public:
-	const TextureViewImpl* m_texView = nullptr;
+	const TextureViewImpl* m_texView;
 };
 
 class AnyBinding
@@ -90,9 +90,12 @@ public:
 	DescriptorType m_type = DescriptorType::COUNT;
 	Array<U64, 2> m_uuids = {};
 
-	TextureBinding m_tex;
-	BufferBinding m_buff;
-	ImageBinding m_image;
+	union
+	{
+		TextureBinding m_tex;
+		BufferBinding m_buff;
+		ImageBinding m_image;
+	};
 };
 
 /// A state tracker of descriptors.

@@ -22,7 +22,7 @@ namespace anki
 class PPVertexBufferBinding : public NonCopyable
 {
 public:
-	PtrSize m_stride = MAX_PTR_SIZE; ///< Vertex stride.
+	U32 m_stride = MAX_U32; ///< Vertex stride.
 	VertexStepRate m_stepRate = VertexStepRate::VERTEX;
 
 	Bool operator==(const PPVertexBufferBinding& b) const
@@ -442,27 +442,6 @@ public:
 private:
 	PipelineInfoState m_state;
 
-	class Hashes
-	{
-	public:
-		U64 m_prog;
-		Array<U64, MAX_VERTEX_ATTRIBUTES> m_vertexAttribs;
-		U64 m_ia;
-		U64 m_raster;
-		U64 m_depth;
-		U64 m_stencil;
-		U64 m_color;
-		Array<U64, MAX_COLOR_ATTACHMENTS> m_colAttachments;
-
-		U64 m_superHash;
-		U64 m_lastSuperHash;
-
-		Hashes()
-		{
-			zeroMemory(*this);
-		}
-	} m_hashes;
-
 	enum class DirtyBit : U8
 	{
 		PROG = 1 << 0,
@@ -500,12 +479,33 @@ private:
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_shaderColorAttachmentWritemask = {false};
 
 	// Renderpass info
+	VkRenderPass m_rpass = VK_NULL_HANDLE;
+	FramebufferPtr m_fb; ///< Hold the reference.
 	Bool m_fbDepth = false;
 	Bool m_fbStencil = false;
 	Bool m_defaultFb = false;
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_fbColorAttachmentMask = {false};
-	VkRenderPass m_rpass = VK_NULL_HANDLE;
-	FramebufferPtr m_fb; ///< Hold the reference.
+
+	class Hashes
+	{
+	public:
+		U64 m_prog;
+		Array<U64, MAX_VERTEX_ATTRIBUTES> m_vertexAttribs;
+		U64 m_ia;
+		U64 m_raster;
+		U64 m_depth;
+		U64 m_stencil;
+		U64 m_color;
+		Array<U64, MAX_COLOR_ATTACHMENTS> m_colAttachments;
+
+		U64 m_superHash;
+		U64 m_lastSuperHash;
+
+		Hashes()
+		{
+			zeroMemory(*this);
+		}
+	} m_hashes;
 
 	// Create info
 	class CreateInfo

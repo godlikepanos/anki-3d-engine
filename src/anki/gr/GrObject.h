@@ -71,15 +71,15 @@ public:
 	/// Get its name.
 	CString getName() const
 	{
-		return &m_name[0];
+		return m_name;
 	}
 
 private:
-	Atomic<I32> m_refcount;
 	GrManager* m_manager;
+	CString m_name;
 	U64 m_uuid;
+	Atomic<I32> m_refcount;
 	GrObjectType m_type;
-	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
 };
 /// @}
 

@@ -338,21 +338,21 @@ private:
 
 	MicroCommandBufferPtr m_microCmdb;
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;
+	ThreadId m_tid = ~ThreadId(0);
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 	Bool m_renderedToDefaultFb = false;
 	Bool m_finalized = false;
 	Bool m_empty = true;
 	Bool m_beganRecording = false;
-	ThreadId m_tid = ~ThreadId(0);
 #if ANKI_EXTRA_CHECKS
 	U32 m_commandCount = 0;
 	U32 m_setPushConstantsSize = 0;
 #endif
 
-	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	FramebufferPtr m_activeFb;
 	Array<U32, 4> m_renderArea = {{0, 0, MAX_U32, MAX_U32}};
 	Array<U32, 2> m_fbSize = {{0, 0}};
+	U32 m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
 	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
 
@@ -419,7 +419,6 @@ private:
 	};
 
 	DynamicArray<WriteQueryAtom> m_writeQueryAtoms;
-	U16 m_writeQueryAtomCount = 0;
 	/// @}
 
 	/// @name push_second_level_batch

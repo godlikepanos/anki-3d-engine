@@ -539,13 +539,13 @@ void CommandBufferImpl::flushQueryResets()
 
 void CommandBufferImpl::flushWriteQueryResults()
 {
-	if(m_writeQueryAtomCount == 0)
+	if(m_writeQueryAtoms.getSize() == 0)
 	{
 		return;
 	}
 
 	std::sort(&m_writeQueryAtoms[0],
-		&m_writeQueryAtoms[0] + m_writeQueryAtomCount,
+		&m_writeQueryAtoms[0] + m_writeQueryAtoms.getSize(),
 		[](const WriteQueryAtom& a, const WriteQueryAtom& b) -> Bool {
 			if(a.m_pool != b.m_pool)
 			{
@@ -571,7 +571,7 @@ void CommandBufferImpl::flushWriteQueryResults()
 	VkQueryPool pool = m_writeQueryAtoms[0].m_pool;
 	PtrSize offset = m_writeQueryAtoms[0].m_offset;
 	VkBuffer buff = m_writeQueryAtoms[0].m_buffer;
-	for(U i = 1; i < m_writeQueryAtomCount; ++i)
+	for(U i = 1; i < m_writeQueryAtoms.getSize(); ++i)
 	{
 		const WriteQueryAtom& crnt = m_writeQueryAtoms[i];
 		const WriteQueryAtom& prev = m_writeQueryAtoms[i - 1];
@@ -599,7 +599,7 @@ void CommandBufferImpl::flushWriteQueryResults()
 	vkCmdCopyQueryPoolResults(
 		m_handle, pool, firstQuery, queryCount, buff, offset, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT);
 
-	m_writeQueryAtomCount = 0;
+	m_writeQueryAtoms.resize(m_alloc, 0);
 }
 
 void CommandBufferImpl::copyBufferToTextureViewInternal(

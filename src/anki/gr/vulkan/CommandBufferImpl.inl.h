@@ -652,18 +652,13 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 #if ANKI_BATCH_COMMANDS
 	flushBatches(CommandBufferCommandType::WRITE_QUERY_RESULT);
 
-	if(m_writeQueryAtoms.getSize() <= m_writeQueryAtomCount)
-	{
-		m_writeQueryAtoms.resize(m_alloc, max<U>(2, m_writeQueryAtomCount * 2));
-	}
-
 	WriteQueryAtom atom;
 	atom.m_pool = q.m_handle.m_pool;
 	atom.m_queryIdx = q.m_handle.m_queryIndex;
 	atom.m_buffer = impl.getHandle();
 	atom.m_offset = offset;
 
-	m_writeQueryAtoms[m_writeQueryAtomCount++] = atom;
+	m_writeQueryAtoms.emplaceBack(m_alloc, atom);
 #else
 	ANKI_CMD(vkCmdCopyQueryPoolResults(m_handle,
 				 q.m_handle.m_pool,

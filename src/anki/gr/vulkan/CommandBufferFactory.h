@@ -64,15 +64,17 @@ public:
 	}
 
 private:
-	CommandBufferThreadAllocator* m_threadAlloc;
-	Atomic<I32> m_refcount = {0};
 	StackAllocator<U8> m_fastAlloc;
 	VkCommandBuffer m_handle = {};
 
-	DynamicArray<IntrusivePtr<GrObject>> m_objectRefs;
-	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
-
 	MicroFencePtr m_fence;
+	DynamicArray<IntrusivePtr<GrObject>> m_objectRefs;
+
+	// Cacheline boundary
+
+	CommandBufferThreadAllocator* m_threadAlloc;
+	Atomic<I32> m_refcount = {0};
+	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 
 	void destroy();
 	void reset();

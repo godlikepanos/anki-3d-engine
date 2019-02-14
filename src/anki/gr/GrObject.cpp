@@ -10,27 +10,27 @@ namespace anki
 {
 
 GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
-	: m_refcount(0)
-	, m_manager(manager)
+	: m_manager(manager)
 	, m_uuid(m_manager->getNewUuid())
+	, m_refcount(0)
 	, m_type(type)
 {
-	if(name && name.getLength())
+	if(!name || name.getLength() == 0)
 	{
-		ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
-		memcpy(&m_name[0], &name[0], name.getLength() + 1);
+		name = "N/A";
 	}
-	else
-	{
-		m_name[0] = 'N';
-		m_name[1] = '/';
-		m_name[2] = 'A';
-		m_name[3] = '\0';
-	}
+
+	m_name = static_cast<char*>(manager->getAllocator().getMemoryPool().allocate(name.getLength() + 1, alignof(char)));
+	memcpy(const_cast<char*>(&m_name[0]), &name[0], name.getLength() + 1);
 }
 
 GrObject::~GrObject()
 {
+	if(m_name)
+	{
+		char* ptr = const_cast<char*>(&m_name[0]);
+		m_manager->getAllocator().getMemoryPool().free(ptr);
+	}
 }
 
 GrAllocator<U8> GrObject::getAllocator() const

@@ -412,6 +412,24 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 		}
 	}
 
+#if 0
+	// Dump
+	{
+		static I id = 0;
+
+		String homeDir;
+		ANKI_CHECK(getHomeDirectory(m_alloc, homeDir));
+
+		File file;
+		ANKI_CHECK(
+			file.open(StringAuto(m_alloc).sprintf("%s/.anki/cache/%d.dump.glsl", homeDir.cstr(), id++).toCString(),
+				FileOpenFlag::WRITE));
+		ANKI_CHECK(file.write(&fullSrc[0], fullSrc.getLength() + 1));
+
+		homeDir.destroy(m_alloc);
+	}
+#endif
+
 	return err;
 }
 
