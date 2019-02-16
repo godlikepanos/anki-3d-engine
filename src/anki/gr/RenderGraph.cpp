@@ -82,7 +82,18 @@ class RenderGraph::Pass
 public:
 	// WARNING!!!!!: Whatever you put here needs manual destruction in RenderGraph::reset()
 
+	/// WARNING: Should be the same as RenderPassDependency::TextureInfo
+	class ConsumedTextureInfo
+	{
+	public:
+		RenderTargetHandle m_handle;
+		TextureUsageBit m_usage;
+		TextureSubresourceInfo m_subresource;
+	};
+
 	DynamicArray<U32> m_dependsOn;
+
+	DynamicArray<ConsumedTextureInfo> m_consumedTextures;
 
 	RenderPassWorkCallback m_callback;
 	void* m_userData;
@@ -95,16 +106,6 @@ public:
 	TextureUsageBit m_dsUsage = TextureUsageBit::NONE; ///< For beginRender pass
 
 	Bool m_drawsToPresentable = false;
-
-	/// WARNING: Should be the same as RenderPassDependency::TextureInfo
-	class ConsumedTextureInfo
-	{
-	public:
-		RenderTargetHandle m_handle;
-		TextureUsageBit m_usage;
-		TextureSubresourceInfo m_subresource;
-	};
-	DynamicArray<ConsumedTextureInfo> m_consumedTextures;
 
 	FramebufferPtr& fb()
 	{

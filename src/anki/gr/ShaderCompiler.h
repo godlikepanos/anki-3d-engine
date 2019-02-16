@@ -11,6 +11,9 @@
 namespace anki
 {
 
+// Forward
+class StringList;
+
 /// @addtogroup graphics
 /// @{
 
@@ -45,8 +48,6 @@ public:
 class ShaderCompiler
 {
 public:
-	class BuildContext;
-
 	ShaderCompiler(GenericMemoryPoolAllocator<U8> alloc);
 
 	~ShaderCompiler();
@@ -58,6 +59,9 @@ public:
 	ANKI_USE_RESULT Error compile(
 		CString source, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const;
 
+	ANKI_USE_RESULT Error preprocess(
+		CString source, const ShaderCompilerOptions& options, const StringList& defines, StringAuto& out) const;
+
 anki_internal:
 	static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc);
 
@@ -65,6 +69,11 @@ private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	static I32 m_refcount;
 	static Mutex m_refcountMtx;
+
+	ANKI_USE_RESULT Error genSpirv(
+		CString src, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& spirv) const;
+
+	ANKI_USE_RESULT Error preprocessCommon(CString in, const ShaderCompilerOptions& options, StringAuto& out) const;
 };
 
 /// Like ShaderCompiler but on steroids. It uses a cache to avoid compiling shaders else it calls

@@ -83,15 +83,6 @@ public:
 	}
 };
 
-/// Command buffer initialization hints. They are used to optimize the allocators of a command buffer.
-class CommandBufferInitHints
-{
-	friend class CommandBufferImpl;
-
-private:
-	PtrSize m_chunkSize = 1024 * 1024;
-};
-
 /// Command buffer initialization flags.
 enum class CommandBufferFlag : U8
 {
@@ -120,7 +111,6 @@ public:
 	FramebufferPtr m_framebuffer; ///< For second level command buffers.
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
 	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
-	CommandBufferInitHints m_hints;
 
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 
@@ -137,9 +127,6 @@ class CommandBuffer : public GrObject
 
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
-
-	/// Compute initialization hints.
-	CommandBufferInitHints computeInitHints() const;
 
 	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
 	/// @param[out] fence Optionaly create fence.

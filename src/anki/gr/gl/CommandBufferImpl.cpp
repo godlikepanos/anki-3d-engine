@@ -90,14 +90,6 @@ Error CommandBufferImpl::executeAllCommands()
 	return err;
 }
 
-CommandBufferImpl::InitHints CommandBufferImpl::computeInitHints() const
-{
-	InitHints out;
-	out.m_chunkSize = m_alloc.getMemoryPool().getMemoryCapacity();
-
-	return out;
-}
-
 void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 {
 	ANKI_ASSERT(!!(m_flags & CommandBufferFlag::GRAPHICS_WORK));

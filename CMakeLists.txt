@@ -108,7 +108,7 @@ else()
 	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually")
 endif()
 
-set(ANKI_GR_BACKEND "GL" CACHE STRING "The graphics API (GL or VULKAN)")
+set(ANKI_GR_BACKEND "VULKAN" CACHE STRING "The graphics API (VULKAN or GL)")
 
 if(${ANKI_GR_BACKEND} STREQUAL "GL")
 	set(GL TRUE)

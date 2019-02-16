@@ -9,10 +9,18 @@
 #include <anki/util/StringList.h>
 #include <anki/util/Filesystem.h>
 #include <anki/core/Trace.h>
+
+#if defined(__GNUC__)
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wundef"
+#endif
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include <glslang/StandAlone/DirStackFileIncluder.h>
 #include <SPIRV-Cross/spirv_glsl.hpp>
+#if defined(__GNUC__)
+#	pragma GCC diagnostic pop
+#endif
 
 namespace anki
 {
@@ -231,83 +239,27 @@ static TBuiltInResource setLimits()
 
 static const TBuiltInResource GLSLANG_LIMITS = setLimits();
 
-class ShaderCompiler::BuildContext
+static void preappendAnkiSpecific(CString source, const ShaderCompilerOptions& options, StringAuto& out)
 {
-public:
-	CString m_originalSrc;
-	CString m_src;
-	ShaderCompilerOptions m_options;
-	GenericMemoryPoolAllocator<U8> m_alloc;
-};
-
-static ANKI_USE_RESULT Error genSpirv(const ShaderCompiler::BuildContext& ctx, std::vector<unsigned int>& spirv)
-{
-	const EShLanguage stage = ankiToGlslangShaderType(ctx.m_options.m_shaderType);
-
-	EShMessages messages = EShMsgSpvRules;
-	if(ctx.m_options.m_outLanguage == ShaderLanguage::SPIRV)
-	{
-		messages = static_cast<EShMessages>(messages | EShMsgVulkanRules);
-	}
-
-	// Setup the shader
-	glslang::EShTargetLanguageVersion langVersion;
-	if(ctx.m_options.m_outLanguage == ShaderLanguage::SPIRV && ctx.m_options.m_gpuCapabilities.m_minorApiVersion > 0)
-	{
-		langVersion = glslang::EShTargetSpv_1_3;
-	}
-	else
-	{
-		langVersion = glslang::EShTargetSpv_1_0;
-	}
-
-	glslang::TShader shader(stage);
-	Array<const char*, 1> csrc = {{&ctx.m_src[0]}};
-	shader.setStrings(&csrc[0], 1);
-	shader.setEnvTarget(glslang::EShTargetSpv, langVersion);
-	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
-	{
-		ShaderCompiler::logShaderErrorCode(shader.getInfoLog(), ctx.m_src, ctx.m_alloc);
-		return Error::USER_DATA;
-	}
-
-	// Setup the program
-	glslang::TProgram program;
-	program.addShader(&shader);
-
-	if(!program.link(messages))
-	{
-		ANKI_GR_LOGE("glslang failed to link a shader");
-		return Error::USER_DATA;
-	}
-
-	// Gen SPIRV
-	glslang::SpvOptions spvOptions;
-	spvOptions.optimizeSize = true;
-	spvOptions.disableOptimizer = false;
-	glslang::GlslangToSpv(*program.getIntermediate(stage), spirv, &spvOptions);
-
-	return Error::NONE;
-}
-
-/// Just run the preprocessor.
-static ANKI_USE_RESULT Error preprocess(const ShaderCompiler::BuildContext& ctx, std::string& src)
-{
-	const EShLanguage stage = ankiToGlslangShaderType(ctx.m_options.m_shaderType);
-
-	glslang::TShader shader(stage);
-	Array<const char*, 1> csrc = {{&ctx.m_src[0]}};
-	shader.setStrings(&csrc[0], 1);
-
-	DirStackFileIncluder includer;
-	EShMessages messages = EShMsgDefault;
-	if(!shader.preprocess(&GLSLANG_LIMITS, 450, ENoProfile, false, false, messages, &src, includer))
-	{
-		ShaderCompiler::logShaderErrorCode(shader.getInfoLog(), ctx.m_src, ctx.m_alloc);
-		return Error::USER_DATA;
-	}
-
-	return Error::NONE;
+	// Gen the new source
+	out.sprintf(SHADER_HEADER,
+		(options.m_outLanguage == ShaderLanguage::GLSL) ? "GL" : "VULKAN",
+		options.m_gpuCapabilities.m_minorApiVersion,
+		options.m_gpuCapabilities.m_majorApiVersion,
+		&GPU_VENDOR_STR[options.m_gpuCapabilities.m_gpuVendor][0],
+		SHADER_NAME[options.m_shaderType],
+		// GL bindings
+		MAX_UNIFORM_BUFFER_BINDINGS,
+		MAX_STORAGE_BUFFER_BINDINGS,
+		MAX_TEXTURE_BINDINGS,
+		MAX_IMAGE_BINDINGS, // Images
+		(MAX_TEXTURE_BINDINGS + MAX_IMAGE_BINDINGS) * MAX_DESCRIPTOR_SETS, // Push constant location
+		// VK bindings
+		0,
+		MAX_TEXTURE_BINDINGS,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS,
+		&source[0]);
 }
 
 I32 ShaderCompiler::m_refcount = {0};
@@ -340,6 +292,116 @@ ShaderCompiler::~ShaderCompiler()
 	}
 }
 
+Error ShaderCompiler::preprocessCommon(CString in, const ShaderCompilerOptions& options, StringAuto& out) const
+{
+	const EShLanguage stage = ankiToGlslangShaderType(options.m_shaderType);
+
+	glslang::TShader shader(stage);
+	Array<const char*, 1> csrc = {{&in[0]}};
+	shader.setStrings(&csrc[0], 1);
+
+	DirStackFileIncluder includer;
+	EShMessages messages = EShMsgDefault;
+	std::string glslangOut;
+	if(!shader.preprocess(&GLSLANG_LIMITS, 450, ENoProfile, false, false, messages, &glslangOut, includer))
+	{
+		ShaderCompiler::logShaderErrorCode(shader.getInfoLog(), in, m_alloc);
+		return Error::USER_DATA;
+	}
+
+	out.append(glslangOut.c_str());
+
+	return Error::NONE;
+}
+
+Error ShaderCompiler::genSpirv(CString src, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& spirv) const
+{
+	const EShLanguage stage = ankiToGlslangShaderType(options.m_shaderType);
+
+	EShMessages messages = EShMsgSpvRules;
+	if(options.m_outLanguage == ShaderLanguage::SPIRV)
+	{
+		messages = static_cast<EShMessages>(messages | EShMsgVulkanRules);
+	}
+
+	// Setup the shader
+	glslang::EShTargetLanguageVersion langVersion;
+	if(options.m_outLanguage == ShaderLanguage::SPIRV && options.m_gpuCapabilities.m_minorApiVersion > 0)
+	{
+		langVersion = glslang::EShTargetSpv_1_3;
+	}
+	else
+	{
+		langVersion = glslang::EShTargetSpv_1_0;
+	}
+
+	glslang::TShader shader(stage);
+	Array<const char*, 1> csrc = {{&src[0]}};
+	shader.setStrings(&csrc[0], 1);
+	shader.setEnvTarget(glslang::EShTargetSpv, langVersion);
+	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
+	{
+		ShaderCompiler::logShaderErrorCode(shader.getInfoLog(), src, m_alloc);
+		return Error::USER_DATA;
+	}
+
+	// Setup the program
+	glslang::TProgram program;
+	program.addShader(&shader);
+
+	if(!program.link(messages))
+	{
+		ANKI_GR_LOGE("glslang failed to link a shader");
+		return Error::USER_DATA;
+	}
+
+	// Gen SPIRV
+	glslang::SpvOptions spvOptions;
+	spvOptions.optimizeSize = true;
+	spvOptions.disableOptimizer = false;
+	std::vector<unsigned int> glslangSpirv;
+	glslang::GlslangToSpv(*program.getIntermediate(stage), glslangSpirv, &spvOptions);
+
+	// Store
+	spirv.resize(glslangSpirv.size() * sizeof(unsigned int));
+	memcpy(&spirv[0], &glslangSpirv[0], spirv.getSizeInBytes());
+
+	return Error::NONE;
+}
+
+Error ShaderCompiler::preprocess(
+	CString source, const ShaderCompilerOptions& options, const StringList& defines, StringAuto& out) const
+{
+	ANKI_ASSERT(!source.isEmpty() && source.getLength() > 0);
+
+	ANKI_TRACE_SCOPED_EVENT(GR_SHADER_COMPILE);
+
+	// Append defines
+	StringAuto newSource(m_alloc);
+	auto it = defines.getBegin();
+	auto end = defines.getEnd();
+	while(it != end)
+	{
+		newSource.append("#define ");
+		newSource.append(it->toCString());
+		newSource.append(" = (");
+		++it;
+		ANKI_ASSERT(it != end);
+		newSource.append(it->toCString());
+		newSource.append(")\n");
+	}
+	newSource.append(source);
+
+	// Add the extra code
+	StringAuto fullSrc(m_alloc);
+	preappendAnkiSpecific(newSource.toCString(), options, fullSrc);
+
+	// Do the work
+	ANKI_CHECK(preprocessCommon(fullSrc.toCString(), options, out));
+
+	return Error::NONE;
+}
+
 Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const
 {
 	ANKI_ASSERT(!source.isEmpty() && source.getLength() > 0);
@@ -348,34 +410,8 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 	ANKI_TRACE_SCOPED_EVENT(GR_SHADER_COMPILE);
 
 	// Create the context
-	BuildContext ctx;
-	ctx.m_originalSrc = source;
-	ctx.m_options = options;
-	ctx.m_alloc = m_alloc;
-
-	// Gen the new source
-	StringAuto fullSrc(m_alloc);
-
-	fullSrc.sprintf(SHADER_HEADER,
-		(options.m_outLanguage == ShaderLanguage::GLSL) ? "GL" : "VULKAN",
-		options.m_gpuCapabilities.m_minorApiVersion,
-		options.m_gpuCapabilities.m_majorApiVersion,
-		&GPU_VENDOR_STR[options.m_gpuCapabilities.m_gpuVendor][0],
-		SHADER_NAME[options.m_shaderType],
-		// GL bindings
-		MAX_UNIFORM_BUFFER_BINDINGS,
-		MAX_STORAGE_BUFFER_BINDINGS,
-		MAX_TEXTURE_BINDINGS,
-		MAX_IMAGE_BINDINGS, // Images
-		(MAX_TEXTURE_BINDINGS + MAX_IMAGE_BINDINGS) * MAX_DESCRIPTOR_SETS, // Push constant location
-		// VK bindings
-		0,
-		MAX_TEXTURE_BINDINGS,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS,
-		&source[0]);
-
-	ctx.m_src = fullSrc.toCString();
+	StringAuto finalSrc(m_alloc);
+	preappendAnkiSpecific(source, options, finalSrc);
 
 	// Compile
 	if(options.m_outLanguage == ShaderLanguage::GLSL)
@@ -393,23 +429,16 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 		}
 #else
 		// Preprocess the source because MESA sucks and can't do it
-		std::string preprocessedSrc;
-		ANKI_CHECK(preprocess(ctx, preprocessedSrc));
-		ANKI_ASSERT(preprocessedSrc.length() > 0);
+		StringAuto out(m_alloc);
+		ANKI_CHECK(preprocessCommon(finalSrc.toCString(), options, out));
 
-		bin.resize(preprocessedSrc.length() + 1);
-		memcpy(&bin[0], &preprocessedSrc[0], bin.getSize());
+		bin.resize(out.getLength() + 1);
+		memcpy(&bin[0], &out[0], bin.getSizeInBytes());
 #endif
 	}
 	else
 	{
-		std::vector<unsigned int> spv;
-		err = genSpirv(ctx, spv);
-		if(!err)
-		{
-			bin.resize(spv.size() * sizeof(unsigned int));
-			memcpy(&bin[0], &spv[0], bin.getSize());
-		}
+		ANKI_CHECK(genSpirv(finalSrc.toCString(), options, bin));
 	}
 
 #if 0

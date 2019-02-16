@@ -1268,12 +1268,6 @@ void CommandBuffer::generateMipmaps3d(TextureViewPtr tex)
 	ANKI_ASSERT(!!"TODO");
 }
 
-CommandBufferInitHints CommandBuffer::computeInitHints() const
-{
-	ANKI_GL_SELF_CONST(CommandBufferImpl);
-	return self.computeInitHints();
-}
-
 void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 {
 	class ExecCmdbCommand final : public GlCommand

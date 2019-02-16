@@ -40,8 +40,6 @@ public:
 class CommandBufferImpl final : public CommandBuffer
 {
 public:
-	using InitHints = CommandBufferInitHints;
-
 	GlCommand* m_firstCommand = nullptr;
 	GlCommand* m_lastCommand = nullptr;
 	CommandBufferAllocator<U8> m_alloc;
@@ -73,9 +71,6 @@ public:
 	{
 		return m_alloc;
 	}
-
-	/// Compute initialization hints.
-	InitHints computeInitHints() const;
 
 	/// Create a new command and add it to the chain.
 	template<typename TCommand, typename... TArgs>

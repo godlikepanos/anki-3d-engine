@@ -21,13 +21,6 @@ CommandBuffer* CommandBuffer::newInstance(GrManager* manager, const CommandBuffe
 	return impl;
 }
 
-CommandBufferInitHints CommandBuffer::computeInitHints() const
-{
-	// TODO
-	CommandBufferInitHints hints;
-	return hints;
-}
-
 void CommandBuffer::flush(FencePtr* fence)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
