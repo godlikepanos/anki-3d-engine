@@ -16,7 +16,7 @@ namespace anki
 
 /// 2D vector
 template<typename T>
-class TVec2 : public TVec<T, 2, Array<T, 2>, TVec2<T>>
+class TVec2 : public TVec<T, 2, TVec2<T>>
 {
 	/// @name Friends
 	/// @{
@@ -31,7 +31,7 @@ class TVec2 : public TVec<T, 2, Array<T, 2>, TVec2<T>>
 	///@}
 
 public:
-	using Base = TVec<T, 2, Array<T, 2>, TVec2<T>>;
+	using Base = TVec<T, 2, TVec2<T>>;
 
 	/// @name Constructors
 	/// @{

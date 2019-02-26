@@ -16,10 +16,10 @@ namespace anki
 
 /// Quaternion. Used in rotations
 template<typename T>
-class alignas(16) TQuat : public TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>
+class alignas(16) TQuat : public TVec<T, 4, TQuat<T>>
 {
 public:
-	using Base = TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>;
+	using Base = TVec<T, 4, TQuat<T>>;
 
 	using Base::x;
 	using Base::y;

@@ -17,7 +17,7 @@ namespace anki
 /// 3x3 Matrix. Mainly used for rotations. It includes many helpful member functions. Its row major. The columns are
 /// the x,y,z axis @note TMat3*TMat3: 27 muls 18 adds
 template<typename T>
-class TMat3 : public TMat<T, 3, 3, Array<T, 9>, TMat3<T>, TVec3<T>, TVec3<T>>
+class TMat3 : public TMat<T, 3, 3, TMat3<T>, TVec3<T>, TVec3<T>>
 {
 	/// @name Friends
 	/// @{
@@ -32,61 +32,10 @@ class TMat3 : public TMat<T, 3, 3, Array<T, 9>, TMat3<T>, TVec3<T>, TVec3<T>>
 	/// @}
 
 public:
-	using Base = TMat<T, 3, 3, Array<T, 9>, TMat3<T>, TVec3<T>, TVec3<T>>;
+	using Base = TMat<T, 3, 3, TMat3<T>, TVec3<T>, TVec3<T>>;
 
 	using Base::setRotationPart;
-
-	/// @name Constructors
-	/// @{
-	TMat3()
-		: Base()
-	{
-	}
-
-	TMat3(const TMat3& b)
-		: Base(b)
-	{
-	}
-
-	TMat3(T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22)
-	{
-		TMat3& m = *this;
-		m(0, 0) = m00;
-		m(0, 1) = m01;
-		m(0, 2) = m02;
-		m(1, 0) = m10;
-		m(1, 1) = m11;
-		m(1, 2) = m12;
-		m(2, 0) = m20;
-		m(2, 1) = m21;
-		m(2, 2) = m22;
-	}
-
-	explicit TMat3(const T f)
-		: Base(f)
-	{
-	}
-
-	explicit TMat3(const T arr[])
-		: Base(arr)
-	{
-	}
-
-	explicit TMat3(const TQuat<T>& q)
-	{
-		setRotationPart(q);
-	}
-
-	explicit TMat3(const TEuler<T>& e)
-	{
-		setRotationPart(e);
-	}
-
-	explicit TMat3(const TAxisang<T>& axisang)
-	{
-		setRotationPart(axisang);
-	}
-	/// @}
+	using Base::Base;
 
 	/// @name Other
 	/// @{
@@ -132,23 +81,6 @@ public:
 	void invert()
 	{
 		(*this) = getInverse();
-	}
-
-	void setIdentity()
-	{
-		(*this) = getIdentity();
-	}
-
-	static const TMat3& getZero()
-	{
-		static const TMat3 zero(0.0);
-		return zero;
-	}
-
-	static const TMat3& getIdentity()
-	{
-		static const TMat3 ident(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-		return ident;
 	}
 	/// @}
 };

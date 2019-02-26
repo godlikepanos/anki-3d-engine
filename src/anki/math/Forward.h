@@ -12,7 +12,7 @@ namespace anki
 
 class F16;
 
-template<typename T, U N, typename TSimd, typename TV>
+template<typename T, U N, typename TV>
 class TVec;
 template<typename T>
 class TVec2;
@@ -21,7 +21,7 @@ class TVec3;
 template<typename T>
 class TVec4;
 
-template<typename T, U J, U I, typename TSimd, typename TM, typename TVJ, typename TVI>
+template<typename T, U J, U I, typename TM, typename TVJ, typename TVI>
 class TMat;
 template<typename T>
 class TMat3;

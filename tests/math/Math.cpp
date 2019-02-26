@@ -12,7 +12,7 @@ using namespace anki;
 template<typename Vec>
 void operatorsSame()
 {
-	const U size = Vec::SIZE;
+	const U size = Vec::COMPONENT_COUNT;
 	using T = typename Vec::Scalar;
 
 	Vec a, b;
@@ -63,7 +63,7 @@ void operatorsSame()
 template<typename Vec>
 void dot()
 {
-	const U size = Vec::SIZE;
+	const U size = Vec::COMPONENT_COUNT;
 	using T = typename Vec::Scalar;
 	T res = 0;
 	Vec vec;
@@ -84,7 +84,7 @@ template<typename Vec>
 void length()
 {
 	using T = typename Vec::Scalar;
-	U size = Vec::SIZE;
+	U size = Vec::COMPONENT_COUNT;
 	Vec vec;
 	T res = 0;
 
@@ -117,7 +117,7 @@ void length()
 template<typename Vec>
 void comparision()
 {
-	U size = Vec::SIZE;
+	U size = Vec::COMPONENT_COUNT;
 	Vec a, a1, b;
 
 	for(U i = 0; i < size; i++)

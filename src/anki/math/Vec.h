@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/math/CommonIncludes.h>
-#include <type_traits>
 
 namespace anki
 {
@@ -15,14 +14,15 @@ namespace anki
 /// @{
 
 /// Common code for all vectors
-template<typename T, U N, typename TSimd, typename TV>
+template<typename T, U N, typename TV>
 class TVec
 {
 public:
 	using Scalar = T;
-	using Simd = TSimd;
-	static constexpr U SIZE = N;
+	using Simd = typename MathSimd<T, N>::Type;
+	static constexpr U COMPONENT_COUNT = N;
 	static constexpr Bool IS_INTEGER = std::is_integral<T>::value;
+	static constexpr Bool HAS_VEC4_SIMD = N == 4 && std::is_same<T, F32>::value && ANKI_SIMD == ANKI_SIMD_SSE;
 
 	/// @name Constructors
 	/// @{
@@ -30,6 +30,7 @@ public:
 	{
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TVec(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -38,30 +39,43 @@ public:
 		}
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TVec(const TVec& b)
+	{
+		m_simd = b.m_simd;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 2)
 	TVec(const T x_, const T y_)
 	{
-		static_assert(N == 2, "Wrong vector");
 		x() = x_;
 		y() = y_;
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(N == 3)
 	TVec(const T x_, const T y_, const T z_)
 	{
-		static_assert(N == 3, "Wrong vector");
 		x() = x_;
 		y() = y_;
 		z() = z_;
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(N == 4 && !HAS_VEC4_SIMD)
 	TVec(const T x_, const T y_, const T z_, const T w_)
 	{
-		static_assert(N == 4, "Wrong vector");
 		x() = x_;
 		y() = y_;
 		z() = z_;
 		w() = w_;
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TVec(const T x_, const T y_, const T z_, const T w_)
+	{
+		m_simd = _mm_set_ps(w_, z_, y_, x_);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	explicit TVec(const T f)
 	{
 		for(U i = 0; i < N; ++i)
@@ -70,12 +84,25 @@ public:
 		}
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	explicit TVec(const T f)
+	{
+		m_simd = _mm_set1_ps(f);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	explicit TVec(const T arr[])
 	{
 		for(U i = 0; i < N; ++i)
 		{
 			m_arr[i] = arr[i];
 		}
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	explicit TVec(const T arr[])
+	{
+		m_simd = _mm_load_ps(arr);
 	}
 
 	explicit TVec(const Simd& simd)
@@ -106,27 +133,27 @@ public:
 		return m_arr[1];
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
 	T& z()
 	{
-		static_assert(N > 2, "Wrong vector");
 		return m_arr[2];
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
 	T z() const
 	{
-		static_assert(N > 2, "Wrong vector");
 		return m_arr[2];
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
 	T& w()
 	{
-		static_assert(N > 3, "Wrong vector");
 		return m_arr[3];
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
 	T w() const
 	{
-		static_assert(N > 3, "Wrong vector");
 		return m_arr[3];
 	}
 
@@ -1876,12 +1903,12 @@ public:
 		return m_arr[i];
 	}
 
-	TSimd& getSimd()
+	Simd& getSimd()
 	{
 		return m_simd;
 	}
 
-	const TSimd& getSimd() const
+	const Simd& getSimd() const
 	{
 		return m_simd;
 	}
@@ -1889,13 +1916,21 @@ public:
 
 	/// @name Operators with same type
 	/// @{
-	TVec& operator=(const TVec& b)
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
+	TV& operator=(const TV& b)
 	{
 		for(U i = 0; i < N; i++)
 		{
 			m_arr[i] = b.m_arr[i];
 		}
-		return *this;
+		return static_cast<TV&>(*this);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV& operator=(const TV& b)
+	{
+		m_simd = b.m_simd;
+		return static_cast<TV&>(*this);
 	}
 
 	TV& operator=(const TV& b)
@@ -1907,6 +1942,7 @@ public:
 		return static_cast<TV&>(*this);
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV operator+(const TV& b) const
 	{
 		TV out;
@@ -1917,6 +1953,13 @@ public:
 		return out;
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV operator+(const TV& b) const
+	{
+		return TV(_mm_add_ps(m_simd, b.m_simd));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV& operator+=(const TV& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -1926,6 +1969,14 @@ public:
 		return static_cast<TV&>(*this);
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV& operator+=(const TV& b)
+	{
+		m_simd = _mm_add_ps(m_simd, b.m_simd);
+		return static_cast<TVec4<F32>&>(*this);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV operator-(const TV& b) const
 	{
 		TV out;
@@ -1936,6 +1987,13 @@ public:
 		return out;
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV operator-(const TV& b) const
+	{
+		return TV(_mm_sub_ps(m_simd, b.m_simd));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV& operator-=(const TV& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -1945,6 +2003,14 @@ public:
 		return static_cast<TV&>(*this);
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV& operator-=(const TV& b)
+	{
+		m_simd = _mm_sub_ps(m_simd, b.m_simd);
+		return static_cast<TV&>(*this);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV operator*(const TV& b) const
 	{
 		TV out;
@@ -1955,6 +2021,13 @@ public:
 		return out;
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV operator*(const TV& b) const
+	{
+		return TV(_mm_mul_ps(m_simd, b.m_simd));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV& operator*=(const TV& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -1964,6 +2037,14 @@ public:
 		return static_cast<TV&>(*this);
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV& operator*=(const TV& b)
+	{
+		m_simd = _mm_mul_ps(m_simd, b.m_simd);
+		return static_cast<TV&>(*this);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV operator/(const TV& b) const
 	{
 		TV out;
@@ -1975,6 +2056,13 @@ public:
 		return out;
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV operator/(const TV& b) const
+	{
+		return TV(_mm_div_ps(m_simd, b.m_simd));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV& operator/=(const TV& b)
 	{
 		for(U i = 0; i < N; i++)
@@ -1985,6 +2073,14 @@ public:
 		return static_cast<TV&>(*this);
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV& operator/=(const TV& b)
+	{
+		m_simd = _mm_div_ps(m_simd, b.m_simd);
+		return static_cast<TV&>(*this);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV operator-() const
 	{
 		TV out;
@@ -1993,6 +2089,12 @@ public:
 			out.m_arr[i] = -m_arr[i];
 		}
 		return out;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV operator-() const
+	{
+		return TV(_mm_xor_ps(m_simd, _mm_set1_ps(-0.0)));
 	}
 
 	Bool operator==(const TV& b) const
@@ -2110,9 +2212,10 @@ public:
 
 	/// @name Other
 	/// @{
-	T dot(const TV& b) const
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
+	ANKI_USE_RESULT T dot(const TV& b) const
 	{
-		T out = 0.0;
+		T out = T(0);
 		for(U i = 0; i < N; i++)
 		{
 			out += m_arr[i] * b.m_arr[i];
@@ -2120,9 +2223,89 @@ public:
 		return out;
 	}
 
-	T getLengthSquared() const
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	ANKI_USE_RESULT T dot(const TV& b) const
 	{
-		T out = 0.0;
+		T o;
+		_mm_store_ss(&o, _mm_dp_ps(m_simd, b.m_simd, 0xF1));
+		return o;
+	}
+
+	/// 6 muls, 3 adds
+	ANKI_ENABLE_IF_EXPRESSION(N == 3)
+	ANKI_USE_RESULT TV cross(const TV& b) const
+	{
+		return TV(y() * b.z() - z() * b.y(), z() * b.x() - x() * b.z(), x() * b.y() - y() * b.x());
+	}
+
+	/// It's like calculating the cross of a 3 component TVec.
+	ANKI_ENABLE_IF_EXPRESSION(N == 4 && !HAS_VEC4_SIMD)
+	ANKI_USE_RESULT TV cross(const TV& b) const
+	{
+		ANKI_ASSERT(w() == T(0));
+		ANKI_ASSERT(b.w() == T(0));
+		return TV(xyz().cross(b.xyz()), T(0));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 4 && HAS_VEC4_SIMD)
+	ANKI_USE_RESULT TV cross(const TV& b) const
+	{
+		ANKI_ASSERT(w() == T(0));
+		ANKI_ASSERT(b.w() == T(0));
+		const auto& a = *this;
+		const int mask0 = _MM_SHUFFLE(3, 0, 2, 1);
+		const int mask1 = _MM_SHUFFLE(3, 1, 0, 2);
+
+		__m128 tmp0 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask0), _mm_shuffle_ps(b.m_simd, b.m_simd, mask1));
+		__m128 tmp1 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask1), _mm_shuffle_ps(b.m_simd, b.m_simd, mask0));
+
+		return TV(_mm_sub_ps(tmp0, tmp1));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 3)
+	ANKI_USE_RESULT TV projectTo(const TV& toThis) const
+	{
+		return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 2)
+	ANKI_USE_RESULT TV projectTo(const TV& toThis) const
+	{
+		ANKI_ASSERT(w() == T(0));
+		return (toThis * ((*this).dot(toThis) / (toThis.dot(toThis)))).xyz0();
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 3)
+	ANKI_USE_RESULT TV projectTo(const TV& rayOrigin, const TV& rayDir) const
+	{
+		const auto& a = *this;
+		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	ANKI_USE_RESULT TV projectTo(const TV& rayOrigin, const TV& rayDir) const
+	{
+		ANKI_ASSERT(w() == T(0));
+		ANKI_ASSERT(rayOrigin.w() == T(0));
+		ANKI_ASSERT(rayDir.w() == T(0));
+		const auto& a = *this;
+		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
+	}
+
+	/// Perspective divide. Divide the xyzw of this to the w of this. This method will handle some edge cases.
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	ANKI_USE_RESULT TV perspectiveDivide() const
+	{
+		auto invw = T(1) / w(); // This may become (+-)inf
+		invw = (invw > 1e+11) ? 1e+11 : invw; // Clamp
+		invw = (invw < -1e+11) ? -1e+11 : invw; // Clamp
+		return (*this) * invw;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
+	ANKI_USE_RESULT T getLengthSquared() const
+	{
+		T out = T(0);
 		for(U i = 0; i < N; i++)
 		{
 			out += m_arr[i] * m_arr[i];
@@ -2130,29 +2313,53 @@ public:
 		return out;
 	}
 
-	T getLength() const
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	ANKI_USE_RESULT T getLengthSquared() const
+	{
+		T o;
+		_mm_store_ss(&o, _mm_dp_ps(m_simd, m_simd, 0xF1));
+		return o;
+	}
+
+	ANKI_USE_RESULT T getLength() const
 	{
 		return sqrt<T>(getLengthSquared());
 	}
 
-	T getDistanceSquared(const TV& b) const
+	ANKI_USE_RESULT T getDistanceSquared(const TV& b) const
 	{
 		return ((*this) - b).getLengthSquared();
 	}
 
-	T getDistance(const TV& b) const
+	ANKI_USE_RESULT T getDistance(const TV& b) const
 	{
 		return sqrt<T>(getDistance(b));
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	void normalize()
 	{
 		(*this) /= getLength();
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	void normalize()
+	{
+		__m128 inverseNorm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
+		m_simd = _mm_mul_ps(m_simd, inverseNorm);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV getNormalized() const
 	{
 		return (*this) / getLength();
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV getNormalized() const
+	{
+		__m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
+		return TV(_mm_mul_ps(m_simd, inverse_norm));
 	}
 
 	/// Return lerp(this, v1, t)
@@ -2161,6 +2368,7 @@ public:
 		return ((*this) * (1.0 - t)) + (v1 * t);
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV getAbs() const
 	{
 		TV out;
@@ -2169,6 +2377,13 @@ public:
 			out[i] = absolute<T>(m_arr[i]);
 		}
 		return out;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV getAbs() const
+	{
+		static const __m128 signMask = _mm_set1_ps(-0.0f);
+		return TV(_mm_andnot_ps(signMask, m_simd));
 	}
 
 	/// Clamp between two values.
@@ -2196,17 +2411,7 @@ public:
 	}
 
 	/// Get the min of all components.
-	TV min(const T& b) const
-	{
-		TV out;
-		for(U i = 0; i < N; ++i)
-		{
-			out[i] = anki::min<T>(m_arr[i], b);
-		}
-		return out;
-	}
-
-	/// Get the min of all components.
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV min(const TV& b) const
 	{
 		TV out;
@@ -2217,7 +2422,21 @@ public:
 		return out;
 	}
 
+	/// Get the min of all components.
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV min(const TV& b) const
+	{
+		return TV(_mm_min_ps(m_simd, b.m_simd));
+	}
+
+	/// Get the min of all components.
+	TV min(const T b) const
+	{
+		return min(TV(b));
+	}
+
 	/// Get the max of all components.
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
 	TV max(const TV& b) const
 	{
 		TV out;
@@ -2229,14 +2448,16 @@ public:
 	}
 
 	/// Get the max of all components.
-	TV max(const T& b) const
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TV max(const TV& b) const
 	{
-		TV out;
-		for(U i = 0; i < N; ++i)
-		{
-			out[i] = anki::max<T>(m_arr[i], b);
-		}
-		return out;
+		return TV(_mm_max_ps(m_simd, b.m_simd));
+	}
+
+	/// Get the max of all components.
+	TV max(const T b) const
+	{
+		return max(TV(b));
 	}
 
 	/// Get a safe 1 / (*this)
@@ -2281,7 +2502,7 @@ protected:
 	union
 	{
 		Array<T, N> m_arr;
-		TSimd m_simd;
+		Simd m_simd;
 	};
 	/// @}
 };

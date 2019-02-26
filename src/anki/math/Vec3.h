@@ -16,7 +16,7 @@ namespace anki
 
 /// 3D vector template. One of the most used classes
 template<typename T>
-class TVec3 : public TVec<T, 3, Array<T, 3>, TVec3<T>>
+class TVec3 : public TVec<T, 3, TVec3<T>>
 {
 	/// @name Friends
 	/// @{
@@ -31,7 +31,7 @@ class TVec3 : public TVec<T, 3, Array<T, 3>, TVec3<T>>
 	/// @}
 
 public:
-	using Base = TVec<T, 3, Array<T, 3>, TVec3<T>>;
+	using Base = TVec<T, 3, TVec3<T>>;
 
 	using Base::x;
 	using Base::y;
@@ -68,27 +68,6 @@ public:
 	TVec3(const TVec2<T>& v, const T z_)
 		: Base(v.x(), v.y(), z_)
 	{
-	}
-	/// @}
-
-	/// @name Other
-	/// @{
-
-	/// 6 muls, 3 adds
-	TVec3 cross(const TVec3& b) const
-	{
-		return TVec3(y() * b.z() - z() * b.y(), z() * b.x() - x() * b.z(), x() * b.y() - y() * b.x());
-	}
-
-	TVec3 projectTo(const TVec3& toThis) const
-	{
-		return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
-	}
-
-	TVec3 projectTo(const TVec3& rayOrigin, const TVec3& rayDir) const
-	{
-		const auto& a = *this;
-		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
 	}
 	/// @}
 };

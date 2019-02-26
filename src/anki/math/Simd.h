@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/Config.h>
+#include <anki/util/StdTypes.h>
 
 #if ANKI_SIMD == ANKI_SIMD_SSE
 #	include <smmintrin.h>
@@ -16,3 +16,34 @@
 #else
 #	error "See file"
 #endif
+
+namespace anki
+{
+
+/// Template class XXX
+template<typename T, U N>
+class MathSimd
+{
+public:
+	using Type = T[N];
+};
+
+#if ANKI_SIMD == ANKI_SIMD_SSE
+// Specialize for F32
+template<>
+class MathSimd<F32, 4>
+{
+public:
+	using Type = __m128;
+};
+#elif ANKI_SIMD == ANKI_SIMD_NEON
+// Specialize for F32
+template<>
+class MathSimd<F32, 4>
+{
+public:
+	using Type = float32x4_t;
+};
+#endif
+
+} // end namespace anki
