@@ -42,8 +42,8 @@ public:
 	{
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
-	TMat(const TMat& b)
+	/// Copy.
+	TMat(ANKI_ENABLE_TYPE(const TMat&, !HAS_SIMD) b)
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -51,8 +51,8 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
-	TMat(const TMat& b)
+	/// Copy.
+	TMat(ANKI_ENABLE_TYPE(const TMat&, HAS_SIMD) b)
 	{
 		for(U i = 0; i < J; i++)
 		{
@@ -60,7 +60,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
+	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	explicit TMat(const T f)
 	{
 		for(T& x : m_arr1)
@@ -69,7 +69,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
+	ANKI_ENABLE_METHOD(HAS_SIMD)
 	explicit TMat(const T f)
 	{
 		for(U i = 0; i < J; i++)
@@ -88,7 +88,7 @@ public:
 
 	// 3x3 specific constructors
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 3)
+	ANKI_ENABLE_METHOD(J == 3 && I == 3)
 	TMat(T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22)
 	{
 		auto& m = *this;
@@ -103,19 +103,19 @@ public:
 		m(2, 2) = m22;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 3)
+	ANKI_ENABLE_METHOD(J == 3 && I == 3)
 	explicit TMat(const TQuat<T>& q)
 	{
 		setRotationPart(q);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 3)
+	ANKI_ENABLE_METHOD(J == 3 && I == 3)
 	explicit TMat(const TEuler<T>& e)
 	{
 		setRotationPart(e);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 3)
+	ANKI_ENABLE_METHOD(J == 3 && I == 3)
 	explicit TMat(const TAxisang<T>& axisang)
 	{
 		setRotationPart(axisang);
@@ -123,7 +123,7 @@ public:
 
 	// 4x4 specific constructors
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(J == 4 && I == 4)
 	TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23, T m30, T m31, T m32, T m33)
 	{
 		auto& m = *this;
@@ -145,7 +145,7 @@ public:
 		m(3, 3) = m33;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(J == 4 && I == 4)
 	explicit TMat(const TMat<T, 3, 3>& m3)
 	{
 		auto& m = *this;
@@ -167,7 +167,7 @@ public:
 		m(3, 3) = 1.0;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(J == 4 && I == 4)
 	explicit TMat(const TVec<T, 4>& v)
 	{
 		auto& m = *this;
@@ -189,13 +189,13 @@ public:
 		m(3, 3) = v.w();
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(J == 4 && I == 4)
 	explicit TMat(const TVec<T, 3>& v)
 		: TMat(v.xyz1())
 	{
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(J == 4 && I == 4)
 	TMat(const TVec<T, 4>& transl, const TMat<T, 3, 3>& rot)
 	{
 		setRotationPart(rot);
@@ -204,7 +204,7 @@ public:
 		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(J == 4 && I == 4)
 	TMat(const TVec<T, 4>& transl, const TMat<T, 3, 3>& rot, const T scale)
 	{
 		if(isZero<T>(scale - 1.0))
@@ -222,7 +222,7 @@ public:
 		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	ANKI_ENABLE_METHOD(J == 4 && I == 4)
 	explicit TMat(const TTransform<T>& t)
 		: TMat<T, 4, 4>(t.getOrigin().xyz1(), t.getRotation().getRotationPart(), t.getScale())
 	{
@@ -230,7 +230,7 @@ public:
 
 	// 3x4 specific constructors
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	TMat(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23)
 	{
 		auto& m = *this;
@@ -248,7 +248,7 @@ public:
 		m(2, 3) = m23;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TMat<T, 3, 3>& m3)
 	{
 		auto& m = *this;
@@ -266,7 +266,7 @@ public:
 		m(2, 3) = 0.0;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TMat<T, 4, 4>& m4)
 	{
 		auto& m = *this;
@@ -284,7 +284,7 @@ public:
 		m(2, 3) = m4(2, 3);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TVec<T, 3>& v)
 	{
 		auto& m = *this;
@@ -302,35 +302,35 @@ public:
 		m(2, 3) = v.z();
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TQuat<T>& q)
 	{
 		setRotationPart(TMat<T, 3, 3>(q));
 		setTranslationPart(TVec<T, 3>(0.0));
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TEuler<T>& b)
 	{
 		setRotationPart(TMat<T, 3, 3>(b));
 		setTranslationPart(TVec<T, 3>(0.0));
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TAxisang<T>& b)
 	{
 		setRotationPart(TAxisang<T>(b));
 		setTranslationPart(TVec<T, 3>(0.0));
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	TMat(const TVec<T, 3>& transl, const TMat<T, 3, 3>& rot)
 	{
 		setRotationPart(rot);
 		setTranslationPart(transl);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	TMat(const TVec<T, 3>& transl, const TMat<T, 3, 3>& rot, const T scale)
 	{
 		if(isZero<T>(scale - 1.0))
@@ -345,7 +345,7 @@ public:
 		setTranslationPart(transl);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TTransform<T>& t)
 	{
 		(*this) = TMat(t.getOrigin(), t.getRotation(), t.getScale());
@@ -377,8 +377,9 @@ public:
 
 	/// @name Operators with same type
 	/// @{
-	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
-	TMat& operator=(const TMat& b)
+
+	/// Copy.
+	TMat& operator=(ANKI_ENABLE_TYPE(const TMat&, !HAS_SIMD) b)
 	{
 		for(U n = 0; n < N; n++)
 		{
@@ -387,8 +388,8 @@ public:
 		return static_cast<TMat&>(*this);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
-	TMat& operator=(const TMat& b)
+	/// Copy.
+	TMat& operator=(ANKI_ENABLE_TYPE(const TMat&, HAS_SIMD) b)
 	{
 		for(U i = 0; i < J; i++)
 		{
@@ -397,7 +398,7 @@ public:
 		return static_cast<TMat&>(*this);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
+	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	TMat operator+(const TMat& b) const
 	{
 		TMat c;
@@ -408,7 +409,7 @@ public:
 		return c;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
+	ANKI_ENABLE_METHOD(HAS_SIMD)
 	TMat operator+(const TMat& b) const
 	{
 		TMat c;
@@ -419,7 +420,7 @@ public:
 		return c;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
+	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	TMat& operator+=(const TMat& b)
 	{
 		for(U n = 0; n < N; n++)
@@ -429,7 +430,7 @@ public:
 		return static_cast<TMat&>(*this);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
+	ANKI_ENABLE_METHOD(HAS_SIMD)
 	TMat& operator+=(const TMat& b)
 	{
 		for(U i = 0; i < J; i++)
@@ -439,7 +440,7 @@ public:
 		return static_cast<TMat&>(*this);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
+	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	TMat operator-(const TMat& b) const
 	{
 		TMat c;
@@ -450,7 +451,7 @@ public:
 		return c;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
+	ANKI_ENABLE_METHOD(HAS_SIMD)
 	TMat operator-(const TMat& b) const
 	{
 		TMat c;
@@ -461,7 +462,7 @@ public:
 		return c;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
+	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	TMat& operator-=(const TMat& b)
 	{
 		for(U n = 0; n < N; n++)
@@ -471,7 +472,7 @@ public:
 		return static_cast<TMat&>(*this);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
+	ANKI_ENABLE_METHOD(HAS_SIMD)
 	TMat& operator-=(const TMat& b)
 	{
 		for(U i = 0; i < J; i++)
@@ -481,7 +482,7 @@ public:
 		return static_cast<TMat&>(*this);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == I && !HAS_MAT4_SIMD)
+	ANKI_ENABLE_METHOD(J == I && !HAS_MAT4_SIMD)
 	TMat operator*(const TMat& b) const
 	{
 		TMat out;
@@ -500,7 +501,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_MAT4_SIMD)
+	ANKI_ENABLE_METHOD(HAS_MAT4_SIMD)
 	TMat operator*(const TMat& b) const
 	{
 		TMat out;
@@ -639,7 +640,7 @@ public:
 
 	/// @name Operators with other types
 	/// @{
-	ANKI_ENABLE_IF_EXPRESSION(!HAS_MAT3X4_SIMD)
+	ANKI_ENABLE_METHOD(!HAS_MAT3X4_SIMD)
 	ColumnVec operator*(const RowVec& v) const
 	{
 		const TMat& m = *this;
@@ -656,7 +657,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_MAT3X4_SIMD)
+	ANKI_ENABLE_METHOD(HAS_MAT3X4_SIMD)
 	ColumnVec operator*(const RowVec& v) const
 	{
 		ColumnVec out;
@@ -670,7 +671,7 @@ public:
 
 	/// @name Other
 	/// @{
-	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
+	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	void setRow(const U j, const RowVec& v)
 	{
 		for(U i = 0; i < I; i++)
@@ -679,7 +680,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
+	ANKI_ENABLE_METHOD(HAS_SIMD)
 	void setRow(const U j, const RowVec& v)
 	{
 		m_simd[j] = v.getSimd();
@@ -692,7 +693,7 @@ public:
 		setRow(2, c);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J > 3)
+	ANKI_ENABLE_METHOD(J > 3)
 	void setRows(const RowVec& a, const RowVec& b, const RowVec& c, const RowVec& d)
 	{
 		setRows(a, b, c);
@@ -1079,7 +1080,7 @@ public:
 		setColumns(xAxis, yAxis, zAxis);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == I && !HAS_SIMD)
+	ANKI_ENABLE_METHOD(J == I && !HAS_SIMD)
 	void transpose()
 	{
 		for(U j = 0; j < J; j++)
@@ -1093,7 +1094,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == I && HAS_SIMD)
+	ANKI_ENABLE_METHOD(J == I && HAS_SIMD)
 	void transpose()
 	{
 		_MM_TRANSPOSE4_PS(m_simd[0], m_simd[1], m_simd[2], m_simd[3]);
@@ -1112,7 +1113,7 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(I == J)
+	ANKI_ENABLE_METHOD(I == J)
 	TMat getTransposed() const
 	{
 		TMat out;
@@ -1126,7 +1127,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(I == 3 && J == 3)
+	ANKI_ENABLE_METHOD(I == 3 && J == 3)
 	T getDet() const
 	{
 		const auto& m = *this;
@@ -1135,7 +1136,7 @@ public:
 			   + m(0, 2) * (m(0, 1) * m(2, 1) - m(1, 1) * m(2, 0));
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	T getDet() const
 	{
 		const auto& t = *this;
@@ -1153,7 +1154,7 @@ public:
 			   - t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) + t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(I == 3 && J == 3)
+	ANKI_ENABLE_METHOD(I == 3 && J == 3)
 	TMat getInverse() const
 	{
 		// Using Gramer's method Inv(A) = (1 / getDet(A)) * Adj(A)
@@ -1186,7 +1187,7 @@ public:
 	}
 
 	/// Invert using Cramer's rule
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	TMat getInverse() const
 	{
 		Array<T, 12> tmp;
@@ -1262,14 +1263,14 @@ public:
 	}
 
 	/// See getInverse
-	ANKI_ENABLE_IF_EXPRESSION((I == 4 && J == 4) || (I == 3 && J == 3))
+	ANKI_ENABLE_METHOD((I == 4 && J == 4) || (I == 3 && J == 3))
 	void invert()
 	{
 		(*this) = getInverse();
 	}
 
 	/// 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching the 4rth row and allot faster
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	static TMat combineTransformations(const TMat& m0, const TMat& m1)
 	{
 		// See the clean code in < r664
@@ -1303,7 +1304,7 @@ public:
 	}
 
 	/// Create a new matrix that is equivalent to Mat4(this)*Mat4(b)
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4 && !HAS_SIMD)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4 && !HAS_SIMD)
 	TMat combineTransformations(const TMat& b) const
 	{
 		const auto& a = *this;
@@ -1328,7 +1329,7 @@ public:
 		return c;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4 && HAS_SIMD)
+	ANKI_ENABLE_METHOD(J == 3 && I == 4 && HAS_SIMD)
 	TMat combineTransformations(const TMat& b) const
 	{
 		TMat c;
@@ -1355,7 +1356,7 @@ public:
 	}
 
 	/// Calculate a perspective projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	static ANKI_USE_RESULT TMat calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far)
 	{
 		ANKI_ASSERT(fovX > T(0) && fovY > T(0) && near > T(0) && far > T(0));
@@ -1384,7 +1385,7 @@ public:
 	}
 
 	/// Calculate an orthographic projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	static ANKI_USE_RESULT TMat calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far)
 	{
 		ANKI_ASSERT(right != T(0) && left != T(0) && top != T(0) && bottom != T(0) && near != T(0) && far != T(0));
@@ -1424,7 +1425,7 @@ public:
 	/// Vec2 xy = ndc.xy() * unprojParams.xy() * z;
 	/// Vec3 posViewSpace(xy, z);
 	/// @endcode
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	static TVec<T, 4> calculatePerspectiveUnprojectionParams(T fovX, T fovY, T near, T far)
 	{
 		TVec<T, 4> out;
@@ -1457,7 +1458,7 @@ public:
 
 	/// Assuming this is a projection matrix extract the unprojection parameters. See
 	/// calculatePerspectiveUnprojectionParams for more info.
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	TVec<T, 4> extractPerspectiveUnprojectionParams() const
 	{
 		TVec<T, 4> out;
@@ -1470,7 +1471,7 @@ public:
 	}
 
 	/// If we suppose this matrix represents a transformation, return the inverted transformation
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	TMat getInverseTransformation() const
 	{
 		TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
@@ -1480,7 +1481,7 @@ public:
 	}
 
 	/// @note 9 muls, 9 adds
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	TVec<T, 3> transform(const TVec<T, 3>& v) const
 	{
 		const auto& m = *this;
@@ -1505,21 +1506,21 @@ public:
 		*this = getZero();
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(I == 3 && J == 3)
+	ANKI_ENABLE_METHOD(I == 3 && J == 3)
 	static const TMat& getIdentity()
 	{
 		static const TMat ident(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 		return ident;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	static const TMat& getIdentity()
 	{
 		static const TMat ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 		return ident;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 3)
+	ANKI_ENABLE_METHOD(I == 4 && J == 3)
 	static const TMat& getIdentity()
 	{
 		static const TMat ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);

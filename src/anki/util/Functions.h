@@ -248,29 +248,32 @@ inline void splitThreadedProblem(
 /// Make a preprocessor token a string.
 #define ANKI_STRINGIZE(a) _ANKI_STRINGIZE(a)
 
-/// Use it to enable a method based on a type.
-/// @code
-/// template<typename T> class Foo {
-/// 	ANKI_ENABLE_IF_TYPE(T, int)
-/// 	void foo() {}
-///	};
-/// @endcode
-#define ANKI_ENABLE_IF_TYPE(TemplateType, EqualToType) \
-	template<bool dependOn = true, \
-		typename std::enable_if<std::is_same<TemplateType, EqualToType>::value && dependOn, int>::type = 0>
-
 /// Use it to enable a method based on a constant expression.
 /// @code
 /// template<int N> class Foo {
-/// 	ANKI_ENABLE_IF_EXPRESSION(N == 10)
+/// 	ANKI_ENABLE_METHOD(N == 10)
 /// 	void foo() {}
 ///	};
 /// @endcode
-#define ANKI_ENABLE_IF_EXPRESSION(expression) \
+#define ANKI_ENABLE_METHOD(expression) \
 	template<bool dependOn = true, \
 		typename std::enable_if< \
 			(std::is_same<typename std::conditional<(expression) && dependOn, int, double>::type, int>::value), \
 			int>::type = 0>
+
+template<typename T, int LINE>
+struct DummyType
+{
+};
+
+/// Use it to enable a method based on a constant expression.
+/// @code
+/// template<int N> class Foo {
+/// 	void foo(ANKI_ENABLE_TYPE(Boo) b) {}
+///	};
+/// @endcode
+#define ANKI_ENABLE_TYPE(type_, expression) \
+	typename std::conditional<(expression), type_, DummyType<type_, __LINE__>>::type
 /// @}
 
 } // end namespace anki
