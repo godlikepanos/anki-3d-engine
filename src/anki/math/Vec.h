@@ -2466,6 +2466,111 @@ public:
 		return TVec(_mm_xor_ps(m_simd, _mm_set1_ps(-0.0)));
 	}
 
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator<<(const TVec& b) const
+	{
+		TVec out;
+		for(U i = 0; i < N; i++)
+		{
+			out.m_carr[i] = m_carr[i] << b.m_carr[i];
+		}
+		return out;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator<<=(const TVec& b)
+	{
+		for(U i = 0; i < N; i++)
+		{
+			m_carr[i] <<= b.m_carr[i];
+		}
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator>>(const TVec& b) const
+	{
+		TVec out;
+		for(U i = 0; i < N; i++)
+		{
+			out.m_carr[i] = m_carr[i] >> b.m_carr[i];
+		}
+		return out;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator>>=(const TVec& b)
+	{
+		for(U i = 0; i < N; i++)
+		{
+			m_carr[i] >>= b.m_carr[i];
+		}
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator&(const TVec& b) const
+	{
+		TVec out;
+		for(U i = 0; i < N; i++)
+		{
+			out.m_carr[i] = m_carr[i] & b.m_carr[i];
+		}
+		return out;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator&=(const TVec& b)
+	{
+		for(U i = 0; i < N; i++)
+		{
+			m_carr[i] &= b.m_carr[i];
+		}
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator|(const TVec& b) const
+	{
+		TVec out;
+		for(U i = 0; i < N; i++)
+		{
+			out.m_carr[i] = m_carr[i] | b.m_carr[i];
+		}
+		return out;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator|=(const TVec& b)
+	{
+		for(U i = 0; i < N; i++)
+		{
+			m_carr[i] |= b.m_carr[i];
+		}
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator^(const TVec& b) const
+	{
+		TVec out;
+		for(U i = 0; i < N; i++)
+		{
+			out.m_carr[i] = m_carr[i] ^ b.m_carr[i];
+		}
+		return out;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator^=(const TVec& b)
+	{
+		for(U i = 0; i < N; i++)
+		{
+			m_carr[i] ^= b.m_carr[i];
+		}
+		return *this;
+	}
+
 	Bool operator==(const TVec& b) const
 	{
 		for(U i = 0; i < N; i++)
@@ -2575,6 +2680,71 @@ public:
 	TVec& operator/=(const T f)
 	{
 		(*this) /= TVec(f);
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator<<(const T f) const
+	{
+		return (*this) << TVec(f);
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator<<=(const T f)
+	{
+		(*this) <<= TVec(f);
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator>>(const T f) const
+	{
+		return (*this) >> TVec(f);
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator>>=(const T f)
+	{
+		(*this) >>= TVec(f);
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator&(const T f) const
+	{
+		return (*this) & TVec(f);
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator&=(const T f)
+	{
+		(*this) &= TVec(f);
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator|(const T f) const
+	{
+		return (*this) | TVec(f);
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator|=(const T f)
+	{
+		(*this) |= TVec(f);
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec operator^(const T f) const
+	{
+		return (*this) ^ TVec(f);
+	}
+
+	ANKI_ENABLE_METHOD(IS_INTEGER)
+	TVec& operator^=(const T f)
+	{
+		(*this) ^= TVec(f);
 		return *this;
 	}
 	/// @}
