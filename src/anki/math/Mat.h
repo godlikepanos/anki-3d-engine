@@ -19,7 +19,7 @@ namespace anki
 /// @tparam J The number of rows.
 /// @tparam I The number of columns.
 template<typename T, U J, U I>
-class TMat
+class alignas(MathSimd<T, I>::ALIGNMENT) TMat
 {
 public:
 	using Scalar = T;

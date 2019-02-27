@@ -51,7 +51,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 	U8* uniforms;
 	void* uniformsBegin;
 	const void* uniformsEnd;
-	Array<U8, 256> pushConsts;
+	Array<Vec4, 256 / sizeof(Vec4)> pushConsts; // Use Vec4 so it will be aligned
 	if(!progVariant.usePushConstants())
 	{
 		StagingGpuMemoryToken token;
@@ -62,7 +62,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 	}
 	else
 	{
-		uniforms = &pushConsts[0];
+		uniforms = reinterpret_cast<U8*>(&pushConsts[0]);
 	}
 
 	uniformsBegin = uniforms;

@@ -20,12 +20,13 @@
 namespace anki
 {
 
-/// Template class XXX
+/// Template class that holds SIMD info for the math classes.
 template<typename T, U N>
 class MathSimd
 {
 public:
 	using Type = T[N];
+	static constexpr U ALIGNMENT = alignof(T);
 };
 
 #if ANKI_SIMD == ANKI_SIMD_SSE
@@ -35,6 +36,7 @@ class MathSimd<F32, 4>
 {
 public:
 	using Type = __m128;
+	static constexpr U ALIGNMENT = 16;
 };
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 // Specialize for F32
@@ -43,6 +45,7 @@ class MathSimd<F32, 4>
 {
 public:
 	using Type = float32x4_t;
+	static constexpr U ALIGNMENT = 16;
 };
 #endif
 

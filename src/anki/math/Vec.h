@@ -14,8 +14,10 @@ namespace anki
 /// @{
 
 /// Common code for all vectors
+/// @tparam T The scalar type. Eg float.
+/// @tparam N The number of the vector components (2, 3 or 4).
 template<typename T, U N>
-class TVec
+class alignas(MathSimd<T, N>::ALIGNMENT) TVec
 {
 public:
 	using Scalar = T;
