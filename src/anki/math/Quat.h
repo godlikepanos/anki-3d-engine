@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <anki/math/CommonIncludes.h>
-#include <anki/math/Vec4.h>
+#include <anki/math/Common.h>
+#include <anki/math/Vec.h>
 
 namespace anki
 {
@@ -16,10 +16,10 @@ namespace anki
 
 /// Quaternion. Used in rotations
 template<typename T>
-class alignas(16) TQuat : public TVec<T, 4, TQuat<T>>
+class alignas(16) TQuat : public TVec<T, 4>
 {
 public:
-	using Base = TVec<T, 4, TQuat<T>>;
+	using Base = TVec<T, 4>;
 
 	using Base::x;
 	using Base::y;
@@ -27,6 +27,8 @@ public:
 	using Base::w;
 	using Base::normalize; // Shortcut
 	using Base::getLengthSquared; // Shortcut
+	using Base::operator-;
+	using Base::operator=;
 
 	/// @name Constructors
 	/// @{
@@ -60,24 +62,24 @@ public:
 	{
 	}
 
-	TQuat(const TVec2<T>& v, const T z_, const T w_)
+	TQuat(const TVec<T, 2>& v, const T z_, const T w_)
 		: Base(v, z_, w_)
 	{
 	}
 
-	TQuat(const TVec3<T>& v, const T w_)
+	TQuat(const TVec<T, 3>& v, const T w_)
 		: Base(v, w_)
 	{
 	}
 
-	explicit TQuat(const TVec4<T>& v)
+	explicit TQuat(const TVec<T, 4>& v)
 		: Base(v.x(), v.y(), v.z(), v.w())
 	{
 	}
 
-	explicit TQuat(const TMat3<T>& m3)
+	explicit TQuat(const TMat<T, 3, 3>& m3)
 	{
-		T trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
+		const T trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
 		if(trace > EPSILON)
 		{
 			T s = 0.5 / sqrt<T>(trace);
@@ -115,7 +117,7 @@ public:
 		}
 	}
 
-	explicit TQuat(const TMat3x4<T>& m)
+	explicit TQuat(const TMat<T, 3, 4>& m)
 		: TQuat(m.getRotationPart())
 	{
 		ANKI_ASSERT(isZero<T>(m(0, 3)) && isZero<T>(m(1, 3)) && isZero<T>(m(2, 3)));
@@ -142,7 +144,7 @@ public:
 
 	explicit TQuat(const TAxisang<T>& axisang)
 	{
-		T lengthsq = axisang.getAxis().getLengthSquared();
+		const T lengthsq = axisang.getAxis().getLengthSquared();
 		if(isZero<T>(lengthsq))
 		{
 			(*this) = getIdentity();
@@ -167,9 +169,9 @@ public:
 	/// @{
 
 	/// Calculates the rotation from TVec3 "from" to "to"
-	void setFrom2Vec3(const TVec3<T>& from, const TVec3<T>& to)
+	void setFrom2Vec3(const TVec<T, 3>& from, const TVec<T, 3>& to)
 	{
-		TVec3<T> axis(from.cross(to));
+		TVec<T, 3> axis(from.cross(to));
 		*this = TQuat(axis.x(), axis.y(), axis.z(), from.dot(to));
 		normalize();
 		w() += 1.0;
@@ -232,16 +234,16 @@ public:
 			return TQuat(q0);
 		}
 
-		T halfTheta = acos<T>(cosHalfTheta);
-		T sinHalfTheta = sqrt<T>(1.0 - cosHalfTheta * cosHalfTheta);
+		const T halfTheta = acos<T>(cosHalfTheta);
+		const T sinHalfTheta = sqrt<T>(1.0 - cosHalfTheta * cosHalfTheta);
 
 		if(absolute<T>(sinHalfTheta) < 0.001)
 		{
 			return TQuat((q0 + q1) * 0.5);
 		}
 
-		T ratioA = sin<T>((1.0 - t) * halfTheta) / sinHalfTheta;
-		T ratioB = sin<T>(t * halfTheta) / sinHalfTheta;
+		const T ratioA = sin<T>((1.0 - t) * halfTheta) / sinHalfTheta;
+		const T ratioB = sin<T>(t * halfTheta) / sinHalfTheta;
 		TQuat tmp, tmp1, sum;
 		tmp = q0 * ratioA;
 		tmp1 = q1 * ratioB;
@@ -263,10 +265,10 @@ public:
 	}
 
 	/// Returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
-	TVec3<T> rotate(const TVec3<T>& v) const
+	TVec<T, 3> rotate(const TVec<T, 3>& v) const
 	{
 		ANKI_ASSERT(isZero<T>(1.0 - Base::getLength())); // Not normalized quat
-		TVec3<T> qXyz(Base::xyz());
+		TVec<T, 3> qXyz(Base::xyz());
 		return v + qXyz.cross(qXyz.cross(v) + v * Base::w()) * 2.0;
 	}
 
@@ -284,6 +286,9 @@ public:
 
 /// F32 quaternion
 using Quat = TQuat<F32>;
+
+/// F64 quaternion
+using DQuat = TQuat<F64>;
 /// @}
 
 } // end namespace anki

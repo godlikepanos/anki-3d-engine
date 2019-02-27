@@ -470,7 +470,7 @@ Error Exporter::exportMesh(const tinygltf::Mesh& mesh)
 	MeshBinaryFile::Header header = {};
 	{
 		// Positions
-		Vec3 dist3d = aabbMin.getAbs().max(aabbMax.getAbs());
+		Vec3 dist3d = aabbMin.abs().max(aabbMax.abs());
 		const F32 maxPositionDistance = max(max(dist3d.x(), dist3d.y()), dist3d.z());
 		auto& posa = header.m_vertexAttributes[VertexAttributeLocation::POSITION];
 		posa.m_bufferBinding = 0;

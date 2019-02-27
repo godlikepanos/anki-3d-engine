@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/math/CommonIncludes.h>
+#include <anki/math/Common.h>
 #include <anki/math/Vec.h>
 
 namespace anki
@@ -14,20 +14,20 @@ namespace anki
 /// @addtogroup math
 /// @{
 
-/// Common code for all matrices
+/// Matrix type.
 /// @tparam T The scalar type. Eg float.
 /// @tparam J The number of rows.
 /// @tparam I The number of columns.
-/// @tparam TM The type of the derived class. Eg TMat3.
-/// @tparam TVJ The vector type of the row.
-/// @tparam TVI The vector type of the column.
-template<typename T, U J, U I, typename TM, typename TVJ, typename TVI>
+template<typename T, U J, U I>
 class TMat
 {
 public:
 	using Scalar = T;
 	using Simd = typename MathSimd<T, I>::Type;
 	using SimdArray = Array<Simd, J>;
+	using RowVec = TVec<T, I>;
+	using ColumnVec = TVec<T, J>;
+
 	static constexpr U ROW_SIZE = J; ///< Number of rows
 	static constexpr U COLUMN_SIZE = I; ///< Number of columns
 	static constexpr U SIZE = J * I; ///< Number of total elements
@@ -145,6 +145,89 @@ public:
 		m(3, 3) = m33;
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	explicit TMat(const TMat<T, 3, 3>& m3)
+	{
+		auto& m = *this;
+		m(0, 0) = m3(0, 0);
+		m(0, 1) = m3(0, 1);
+		m(0, 2) = m3(0, 2);
+		m(0, 3) = 0.0;
+		m(1, 0) = m3(1, 0);
+		m(1, 1) = m3(1, 1);
+		m(1, 2) = m3(1, 2);
+		m(1, 3) = 0.0;
+		m(2, 0) = m3(2, 0);
+		m(2, 1) = m3(2, 1);
+		m(2, 2) = m3(2, 2);
+		m(2, 3) = 0.0;
+		m(3, 0) = 0.0;
+		m(3, 1) = 0.0;
+		m(3, 2) = 0.0;
+		m(3, 3) = 1.0;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	explicit TMat(const TVec<T, 4>& v)
+	{
+		auto& m = *this;
+		m(0, 0) = 1.0;
+		m(0, 1) = 0.0;
+		m(0, 2) = 0.0;
+		m(0, 3) = v.x();
+		m(1, 0) = 0.0;
+		m(1, 1) = 1.0;
+		m(1, 2) = 0.0;
+		m(1, 3) = v.y();
+		m(2, 0) = 0.0;
+		m(2, 1) = 0.0;
+		m(2, 2) = 1.0;
+		m(2, 3) = v.z();
+		m(3, 0) = 0.0;
+		m(3, 1) = 0.0;
+		m(3, 2) = 0.0;
+		m(3, 3) = v.w();
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	explicit TMat(const TVec<T, 3>& v)
+		: TMat(v.xyz1())
+	{
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	TMat(const TVec<T, 4>& transl, const TMat<T, 3, 3>& rot)
+	{
+		setRotationPart(rot);
+		setTranslationPart(transl);
+		auto& m = *this;
+		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	TMat(const TVec<T, 4>& transl, const TMat<T, 3, 3>& rot, const T scale)
+	{
+		if(isZero<T>(scale - 1.0))
+		{
+			setRotationPart(rot);
+		}
+		else
+		{
+			setRotationPart(rot * scale);
+		}
+
+		setTranslationPart(transl);
+
+		auto& m = *this;
+		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 4 && I == 4)
+	explicit TMat(const TTransform<T>& t)
+		: TMat<T, 4, 4>(t.getOrigin().xyz1(), t.getRotation().getRotationPart(), t.getScale())
+	{
+	}
+
 	// 3x4 specific constructors
 
 	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
@@ -163,6 +246,109 @@ public:
 		m(2, 1) = m21;
 		m(2, 2) = m22;
 		m(2, 3) = m23;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	explicit TMat(const TMat<T, 3, 3>& m3)
+	{
+		auto& m = *this;
+		m(0, 0) = m3(0, 0);
+		m(0, 1) = m3(0, 1);
+		m(0, 2) = m3(0, 2);
+		m(0, 3) = 0.0;
+		m(1, 0) = m3(1, 0);
+		m(1, 1) = m3(1, 1);
+		m(1, 2) = m3(1, 2);
+		m(1, 3) = 0.0;
+		m(2, 0) = m3(2, 0);
+		m(2, 1) = m3(2, 1);
+		m(2, 2) = m3(2, 2);
+		m(2, 3) = 0.0;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	explicit TMat(const TMat<T, 4, 4>& m4)
+	{
+		auto& m = *this;
+		m(0, 0) = m4(0, 0);
+		m(0, 1) = m4(0, 1);
+		m(0, 2) = m4(0, 2);
+		m(0, 3) = m4(0, 3);
+		m(1, 0) = m4(1, 0);
+		m(1, 1) = m4(1, 1);
+		m(1, 2) = m4(1, 2);
+		m(1, 3) = m4(1, 3);
+		m(2, 0) = m4(2, 0);
+		m(2, 1) = m4(2, 1);
+		m(2, 2) = m4(2, 2);
+		m(2, 3) = m4(2, 3);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	explicit TMat(const TVec<T, 3>& v)
+	{
+		auto& m = *this;
+		m(0, 0) = 1.0;
+		m(0, 1) = 0.0;
+		m(0, 2) = 0.0;
+		m(0, 3) = v.x();
+		m(1, 0) = 0.0;
+		m(1, 1) = 1.0;
+		m(1, 2) = 0.0;
+		m(1, 3) = v.y();
+		m(2, 0) = 0.0;
+		m(2, 1) = 0.0;
+		m(2, 2) = 1.0;
+		m(2, 3) = v.z();
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	explicit TMat(const TQuat<T>& q)
+	{
+		setRotationPart(TMat<T, 3, 3>(q));
+		setTranslationPart(TVec<T, 3>(0.0));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	explicit TMat(const TEuler<T>& b)
+	{
+		setRotationPart(TMat<T, 3, 3>(b));
+		setTranslationPart(TVec<T, 3>(0.0));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	explicit TMat(const TAxisang<T>& b)
+	{
+		setRotationPart(TAxisang<T>(b));
+		setTranslationPart(TVec<T, 3>(0.0));
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	TMat(const TVec<T, 3>& transl, const TMat<T, 3, 3>& rot)
+	{
+		setRotationPart(rot);
+		setTranslationPart(transl);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	TMat(const TVec<T, 3>& transl, const TMat<T, 3, 3>& rot, const T scale)
+	{
+		if(isZero<T>(scale - 1.0))
+		{
+			setRotationPart(rot);
+		}
+		else
+		{
+			setRotationPart(rot * scale);
+		}
+
+		setTranslationPart(transl);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4)
+	explicit TMat(const TTransform<T>& t)
+	{
+		(*this) = TMat(t.getOrigin(), t.getRotation(), t.getScale());
 	}
 	/// @}
 
@@ -192,29 +378,29 @@ public:
 	/// @name Operators with same type
 	/// @{
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
-	TM& operator=(const TM& b)
+	TMat& operator=(const TMat& b)
 	{
 		for(U n = 0; n < N; n++)
 		{
 			m_arr1[n] = b.m_arr1[n];
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
-	TM& operator=(const TM& b)
+	TMat& operator=(const TMat& b)
 	{
 		for(U i = 0; i < J; i++)
 		{
 			m_simd[i] = b.m_simd[i];
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
-	TM operator+(const TM& b) const
+	TMat operator+(const TMat& b) const
 	{
-		TM c;
+		TMat c;
 		for(U n = 0; n < N; n++)
 		{
 			c.m_arr1[n] = m_arr1[n] + b.m_arr1[n];
@@ -223,9 +409,9 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
-	TM operator+(const TM& b) const
+	TMat operator+(const TMat& b) const
 	{
-		TM c;
+		TMat c;
 		for(U i = 0; i < J; i++)
 		{
 			c.m_simd[i] = _mm_add_ps(m_simd[i], b.m_simd[i]);
@@ -234,29 +420,29 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
-	TM& operator+=(const TM& b)
+	TMat& operator+=(const TMat& b)
 	{
 		for(U n = 0; n < N; n++)
 		{
 			m_arr1[n] += b.m_arr1[n];
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
-	TM& operator+=(const TM& b)
+	TMat& operator+=(const TMat& b)
 	{
 		for(U i = 0; i < J; i++)
 		{
 			m_simd[i] = _mm_add_ps(m_simd[i], b.m_simd[i]);
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
-	TM operator-(const TM& b) const
+	TMat operator-(const TMat& b) const
 	{
-		TM c;
+		TMat c;
 		for(U n = 0; n < N; n++)
 		{
 			c.m_arr1[n] = m_arr1[n] - b.m_arr1[n];
@@ -265,9 +451,9 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
-	TM operator-(const TM& b) const
+	TMat operator-(const TMat& b) const
 	{
-		TM c;
+		TMat c;
 		for(U i = 0; i < J; i++)
 		{
 			c.m_simd[i] = _mm_sub_ps(m_simd[i], b.m_simd[i]);
@@ -276,29 +462,29 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
-	TM& operator-=(const TM& b)
+	TMat& operator-=(const TMat& b)
 	{
 		for(U n = 0; n < N; n++)
 		{
 			m_arr1[n] -= b.m_arr1[n];
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
-	TM& operator-=(const TM& b)
+	TMat& operator-=(const TMat& b)
 	{
 		for(U i = 0; i < J; i++)
 		{
 			m_simd[i] = _mm_sub_ps(m_simd[i], b.m_simd[i]);
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(J == I && !HAS_MAT4_SIMD)
-	TM operator*(const TM& b) const
+	TMat operator*(const TMat& b) const
 	{
-		TM out;
+		TMat out;
 		const TMat& a = *this;
 		for(U j = 0; j < J; j++)
 		{
@@ -315,9 +501,9 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_MAT4_SIMD)
-	TM operator*(const TM& b) const
+	TMat operator*(const TMat& b) const
 	{
-		TM out;
+		TMat out;
 		const auto& m = *this;
 
 		for(U i = 0; i < 4; i++)
@@ -339,13 +525,13 @@ public:
 		return out;
 	}
 
-	TM& operator*=(const TM& b)
+	TMat& operator*=(const TMat& b)
 	{
 		(*this) = (*this) * b;
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
-	Bool operator==(const TM& b) const
+	Bool operator==(const TMat& b) const
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -357,7 +543,7 @@ public:
 		return true;
 	}
 
-	Bool operator!=(const TM& b) const
+	Bool operator!=(const TMat& b) const
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -372,9 +558,9 @@ public:
 
 	/// @name Operators with T
 	/// @{
-	TM operator+(const T f) const
+	TMat operator+(const T f) const
 	{
-		TM out;
+		TMat out;
 		for(U i = 0; i < N; i++)
 		{
 			out.m_arr1[i] = m_arr1[i] + f;
@@ -382,18 +568,18 @@ public:
 		return out;
 	}
 
-	TM& operator+=(const T f)
+	TMat& operator+=(const T f)
 	{
 		for(U i = 0; i < N; i++)
 		{
 			m_arr1[i] += f;
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
-	TM operator-(const T f) const
+	TMat operator-(const T f) const
 	{
-		TM out;
+		TMat out;
 		for(U i = 0; i < N; i++)
 		{
 			out.m_arr1[i] = m_arr1[i] - f;
@@ -401,18 +587,18 @@ public:
 		return out;
 	}
 
-	TM& operator-=(const T f)
+	TMat& operator-=(const T f)
 	{
 		for(U i = 0; i < N; i++)
 		{
 			m_arr1[i] -= f;
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
-	TM operator*(const T f) const
+	TMat operator*(const T f) const
 	{
-		TM out;
+		TMat out;
 		for(U i = 0; i < N; i++)
 		{
 			out.m_arr1[i] = m_arr1[i] * f;
@@ -420,19 +606,19 @@ public:
 		return out;
 	}
 
-	TM& operator*=(const T f)
+	TMat& operator*=(const T f)
 	{
 		for(U i = 0; i < N; i++)
 		{
 			m_arr1[i] *= f;
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 
-	TM operator/(const T f) const
+	TMat operator/(const T f) const
 	{
 		ANKI_ASSERT(f != T(0));
-		TM out;
+		TMat out;
 		for(U i = 0; i < N; i++)
 		{
 			out.m_arr1[i] = m_arr1[i] / f;
@@ -440,23 +626,24 @@ public:
 		return out;
 	}
 
-	TM& operator/=(const T f)
+	TMat& operator/=(const T f)
 	{
 		ANKI_ASSERT(f != T(0));
 		for(U i = 0; i < N; i++)
 		{
 			m_arr1[i] /= f;
 		}
-		return static_cast<TM&>(*this);
+		return static_cast<TMat&>(*this);
 	}
 	/// @}
 
 	/// @name Operators with other types
 	/// @{
-	TVI operator*(const TVJ& v) const
+	ANKI_ENABLE_IF_EXPRESSION(!HAS_MAT3X4_SIMD)
+	ColumnVec operator*(const RowVec& v) const
 	{
 		const TMat& m = *this;
-		TVI out;
+		ColumnVec out;
 		for(U j = 0; j < J; j++)
 		{
 			T sum = 0.0;
@@ -468,12 +655,23 @@ public:
 		}
 		return out;
 	}
+
+	ANKI_ENABLE_IF_EXPRESSION(HAS_MAT3X4_SIMD)
+	ColumnVec operator*(const RowVec& v) const
+	{
+		ColumnVec out;
+		for(U i = 0; i < J; i++)
+		{
+			_mm_store_ss(&out[i], _mm_dp_ps(m_simd[i], v.getSimd(), 0xF1));
+		}
+		return out;
+	}
 	/// @}
 
 	/// @name Other
 	/// @{
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_SIMD)
-	void setRow(const U j, const TVJ& v)
+	void setRow(const U j, const RowVec& v)
 	{
 		for(U i = 0; i < I; i++)
 		{
@@ -482,12 +680,12 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_SIMD)
-	void setRow(const U j, const TVJ& v)
+	void setRow(const U j, const RowVec& v)
 	{
 		m_simd[j] = v.getSimd();
 	}
 
-	void setRows(const TVJ& a, const TVJ& b, const TVJ& c)
+	void setRows(const RowVec& a, const RowVec& b, const RowVec& c)
 	{
 		setRow(0, a);
 		setRow(1, b);
@@ -495,15 +693,15 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(J > 3)
-	void setRows(const TVJ& a, const TVJ& b, const TVJ& c, const TVJ& d)
+	void setRows(const RowVec& a, const RowVec& b, const RowVec& c, const RowVec& d)
 	{
 		setRows(a, b, c);
 		setRow(3, d);
 	}
 
-	TVJ getRow(const U j) const
+	RowVec getRow(const U j) const
 	{
-		TVJ out;
+		RowVec out;
 		for(U i = 0; i < I; i++)
 		{
 			out[i] = m_arr2[j][i];
@@ -511,21 +709,21 @@ public:
 		return out;
 	}
 
-	void getRows(TVJ& a, TVJ& b, TVJ& c) const
+	void getRows(RowVec& a, RowVec& b, RowVec& c) const
 	{
 		a = getRow(0);
 		b = getRow(1);
 		c = getRow(2);
 	}
 
-	void getRows(TVJ& a, TVJ& b, TVJ& c, TVJ& d) const
+	void getRows(RowVec& a, RowVec& b, RowVec& c, RowVec& d) const
 	{
 		static_assert(J > 3, "Wrong matrix");
 		getRows(a, b, c);
 		d = getRow(3);
 	}
 
-	void setColumn(const U i, const TVI& v)
+	void setColumn(const U i, const ColumnVec& v)
 	{
 		for(U j = 0; j < J; j++)
 		{
@@ -533,23 +731,23 @@ public:
 		}
 	}
 
-	void setColumns(const TVI& a, const TVI& b, const TVI& c)
+	void setColumns(const ColumnVec& a, const ColumnVec& b, const ColumnVec& c)
 	{
 		setColumn(0, a);
 		setColumn(1, b);
 		setColumn(2, c);
 	}
 
-	void setColumns(const TVI& a, const TVI& b, const TVI& c, const TVI& d)
+	void setColumns(const ColumnVec& a, const ColumnVec& b, const ColumnVec& c, const ColumnVec& d)
 	{
 		static_assert(I > 3, "Check column number");
 		setColumns(a, b, c);
 		setColumn(3, d);
 	}
 
-	TVI getColumn(const U i) const
+	ColumnVec getColumn(const U i) const
 	{
-		TVI out;
+		ColumnVec out;
 		for(U j = 0; j < J; j++)
 		{
 			out[j] = m_arr2[j][i];
@@ -557,14 +755,14 @@ public:
 		return out;
 	}
 
-	void getColumns(TVI& a, TVI& b, TVI& c) const
+	void getColumns(ColumnVec& a, ColumnVec& b, ColumnVec& c) const
 	{
 		a = getColumn(0);
 		b = getColumn(1);
 		c = getColumn(2);
 	}
 
-	void getColumns(TVI& a, TVI& b, TVI& c, TVI& d) const
+	void getColumns(ColumnVec& a, ColumnVec& b, ColumnVec& c, ColumnVec& d) const
 	{
 		static_assert(I > 3, "Check column number");
 		getColumns(a, b, c);
@@ -572,37 +770,37 @@ public:
 	}
 
 	/// Get 1st column
-	TVI getXAxis() const
+	ColumnVec getXAxis() const
 	{
 		return getColumn(0);
 	}
 
 	/// Get 2nd column
-	TVI getYAxis() const
+	ColumnVec getYAxis() const
 	{
 		return getColumn(1);
 	}
 
 	/// Get 3rd column
-	TVI getZAxis() const
+	ColumnVec getZAxis() const
 	{
 		return getColumn(2);
 	}
 
 	/// Set 1st column
-	void setXAxis(const TVI& v)
+	void setXAxis(const ColumnVec& v)
 	{
 		setColumn(0, v);
 	}
 
 	/// Set 2nd column
-	void setYAxis(const TVI& v)
+	void setYAxis(const ColumnVec& v)
 	{
 		setColumn(1, v);
 	}
 
 	/// Set 3rd column
-	void setZAxis(const TVI& v)
+	void setZAxis(const ColumnVec& v)
 	{
 		setColumn(2, v);
 	}
@@ -740,7 +938,7 @@ public:
 		m(2, 1) = m(0, 2) * m(1, 0) - m(1, 2) * m(0, 0);
 	}
 
-	void setRotationPart(const TMat3<T>& m3)
+	void setRotationPart(const TMat<T, 3, 3>& m3)
 	{
 		TMat& m = *this;
 		for(U j = 0; j < 3; j++)
@@ -815,7 +1013,7 @@ public:
 		sinCos(axisang.getAngle(), s, c);
 		T t = 1.0 - c;
 
-		const TVec3<T>& axis = axisang.getAxis();
+		const TVec<T, 3>& axis = axisang.getAxis();
 		m(0, 0) = c + axis.x() * axis.x() * t;
 		m(1, 1) = c + axis.y() * axis.y() * t;
 		m(2, 2) = c + axis.z() * axis.z() * t;
@@ -834,10 +1032,10 @@ public:
 		m(1, 2) = tmp1 - tmp2;
 	}
 
-	TMat3<T> getRotationPart() const
+	TMat<T, 3, 3> getRotationPart() const
 	{
 		const TMat& m = *this;
-		TMat3<T> m3;
+		TMat<T, 3, 3> m3;
 		m3(0, 0) = m(0, 0);
 		m3(0, 1) = m(0, 1);
 		m3(0, 2) = m(0, 2);
@@ -850,16 +1048,16 @@ public:
 		return m3;
 	}
 
-	void setTranslationPart(const TVI& v)
+	void setTranslationPart(const ColumnVec& v)
 	{
 		if(ROW_SIZE == 4)
 		{
-			ANKI_ASSERT(isZero<T>(v[3] - static_cast<T>(1)) && "w should be 1");
+			ANKI_ASSERT(isZero<T>(v[3] - 1.0) && "w should be 1");
 		}
 		setColumn(3, v);
 	}
 
-	TVI getTranslationPart() const
+	ColumnVec getTranslationPart() const
 	{
 		return getColumn(3);
 	}
@@ -868,7 +1066,7 @@ public:
 	{
 		// There are 2 methods, the standard and the Gram-Schmidt method with a twist for zAxis. This uses the 2nd. For
 		// the first see < r664
-		TVI xAxis, yAxis, zAxis;
+		ColumnVec xAxis, yAxis, zAxis;
 		getColumns(xAxis, yAxis, zAxis);
 
 		xAxis.normalize();
@@ -915,9 +1113,9 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(I == J)
-	TM getTransposed() const
+	TMat getTransposed() const
 	{
-		TM out;
+		TMat out;
 		for(U j = 0; j < J; j++)
 		{
 			for(U i = 0; i < I; i++)
@@ -926,6 +1124,15 @@ public:
 			}
 		}
 		return out;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(I == 3 && J == 3)
+	T getDet() const
+	{
+		const auto& m = *this;
+		// For the accurate method see < r664
+		return m(0, 0) * (m(1, 1) * m(2, 2) - m(1, 2) * m(2, 1)) - m(0, 1) * (m(1, 0) * m(2, 2) - m(1, 2) * m(2, 0))
+			   + m(0, 2) * (m(0, 1) * m(2, 1) - m(1, 1) * m(2, 0));
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
@@ -946,13 +1153,45 @@ public:
 			   - t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) + t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
 	}
 
+	ANKI_ENABLE_IF_EXPRESSION(I == 3 && J == 3)
+	TMat getInverse() const
+	{
+		// Using Gramer's method Inv(A) = (1 / getDet(A)) * Adj(A)
+		const TMat& m = *this;
+		TMat r;
+
+		// compute determinant
+		const T cofactor0 = m(1, 1) * m(2, 2) - m(1, 2) * m(2, 1);
+		const T cofactor3 = m(0, 2) * m(2, 1) - m(0, 1) * m(2, 2);
+		const T cofactor6 = m(0, 1) * m(1, 2) - m(0, 2) * m(1, 1);
+		const T det = m(0, 0) * cofactor0 + m(1, 0) * cofactor3 + m(2, 0) * cofactor6;
+
+		ANKI_ASSERT(!isZero<T>(det)); // Cannot invert det == 0
+
+		// create adjoint matrix and multiply by 1/det to get inverse
+		const T invDet = 1.0 / det;
+		r(0, 0) = invDet * cofactor0;
+		r(0, 1) = invDet * cofactor3;
+		r(0, 2) = invDet * cofactor6;
+
+		r(1, 0) = invDet * (m(1, 2) * m(2, 0) - m(1, 0) * m(2, 2));
+		r(1, 1) = invDet * (m(0, 0) * m(2, 2) - m(0, 2) * m(2, 0));
+		r(1, 2) = invDet * (m(0, 2) * m(1, 0) - m(0, 0) * m(1, 2));
+
+		r(2, 0) = invDet * (m(1, 0) * m(2, 1) - m(1, 1) * m(2, 0));
+		r(2, 1) = invDet * (m(0, 1) * m(2, 0) - m(0, 0) * m(2, 1));
+		r(2, 2) = invDet * (m(0, 0) * m(1, 1) - m(0, 1) * m(1, 0));
+
+		return r;
+	}
+
 	/// Invert using Cramer's rule
 	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
-	TM getInverse() const
+	TMat getInverse() const
 	{
 		Array<T, 12> tmp;
 		const auto& in = (*this);
-		TM m4;
+		TMat m4;
 
 		tmp[0] = in(2, 2) * in(3, 3);
 		tmp[1] = in(3, 2) * in(2, 3);
@@ -1023,7 +1262,7 @@ public:
 	}
 
 	/// See getInverse
-	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	ANKI_ENABLE_IF_EXPRESSION((I == 4 && J == 4) || (I == 3 && J == 3))
 	void invert()
 	{
 		(*this) = getInverse();
@@ -1031,7 +1270,7 @@ public:
 
 	/// 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching the 4rth row and allot faster
 	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
-	static TM combineTransformations(const TMat& m0, const TMat& m1)
+	static TMat combineTransformations(const TMat& m0, const TMat& m1)
 	{
 		// See the clean code in < r664
 
@@ -1039,7 +1278,7 @@ public:
 		ANKI_ASSERT(isZero<T>(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3) - 1.0)
 					&& isZero<T>(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3) - 1.0));
 
-		TM m4;
+		TMat m4;
 
 		m4(0, 0) = m0(0, 0) * m1(0, 0) + m0(0, 1) * m1(1, 0) + m0(0, 2) * m1(2, 0);
 		m4(0, 1) = m0(0, 0) * m1(0, 1) + m0(0, 1) * m1(1, 1) + m0(0, 2) * m1(2, 1);
@@ -1065,10 +1304,10 @@ public:
 
 	/// Create a new matrix that is equivalent to Mat4(this)*Mat4(b)
 	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4 && !HAS_SIMD)
-	TM combineTransformations(const TM& b) const
+	TMat combineTransformations(const TMat& b) const
 	{
 		const auto& a = *this;
-		TM c;
+		TMat c;
 
 		c(0, 0) = a(0, 0) * b(0, 0) + a(0, 1) * b(1, 0) + a(0, 2) * b(2, 0);
 		c(0, 1) = a(0, 0) * b(0, 1) + a(0, 1) * b(1, 1) + a(0, 2) * b(2, 1);
@@ -1090,9 +1329,9 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(J == 3 && I == 4 && HAS_SIMD)
-	TM combineTransformations(const TM& b) const
+	TMat combineTransformations(const TMat& b) const
 	{
-		TM c;
+		TMat c;
 		const auto& a = *this;
 
 		for(U i = 0; i < 3; i++)
@@ -1106,7 +1345,7 @@ public:
 			t1 = _mm_set1_ps(a(i, 2));
 			t2 = _mm_add_ps(_mm_mul_ps(b.m_simd[2], t1), t2);
 
-			TVec4<F32> v4(0.0, 0.0, 0.0, a(i, 3));
+			TVec<T, 4> v4(0.0, 0.0, 0.0, a(i, 3));
 			t2 = _mm_add_ps(v4.getSimd(), t2);
 
 			c.m_simd[i] = t2;
@@ -1117,13 +1356,13 @@ public:
 
 	/// Calculate a perspective projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
 	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
-	static ANKI_USE_RESULT TM calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far)
+	static ANKI_USE_RESULT TMat calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far)
 	{
 		ANKI_ASSERT(fovX > T(0) && fovY > T(0) && near > T(0) && far > T(0));
 		const T g = near - far;
 		const T f = T(1) / tan(fovY / T(2)); // f = cot(fovY/2)
 
-		TM proj;
+		TMat proj;
 		proj(0, 0) = f * (fovY / fovX); // = f/aspectRatio;
 		proj(0, 1) = T(0);
 		proj(0, 2) = T(0);
@@ -1146,7 +1385,7 @@ public:
 
 	/// Calculate an orthographic projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
 	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
-	static ANKI_USE_RESULT TM calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far)
+	static ANKI_USE_RESULT TMat calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far)
 	{
 		ANKI_ASSERT(right != T(0) && left != T(0) && top != T(0) && bottom != T(0) && near != T(0) && far != T(0));
 		const T difx = right - left;
@@ -1155,7 +1394,7 @@ public:
 		const T tx = -(right + left) / difx;
 		const T ty = -(top + bottom) / dify;
 		const T tz = -near / difz;
-		TM m;
+		TMat m;
 
 		m(0, 0) = T(2) / difx;
 		m(0, 1) = T(0);
@@ -1177,14 +1416,87 @@ public:
 		return m;
 	}
 
+	/// Given the parameters that construct a projection matrix extract 4 values that can be used to unproject a point
+	/// from NDC to view space.
+	/// @code
+	/// Vec4 unprojParams = calculatePerspectiveUnprojectionParams(...);
+	/// F32 z = unprojParams.z() / (unprojParams.w() + depth);
+	/// Vec2 xy = ndc.xy() * unprojParams.xy() * z;
+	/// Vec3 posViewSpace(xy, z);
+	/// @endcode
+	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	static TVec<T, 4> calculatePerspectiveUnprojectionParams(T fovX, T fovY, T near, T far)
+	{
+		TVec<T, 4> out;
+		const T g = near - far;
+		const T f = T(1) / tan(fovY / T(2)); // f = cot(fovY/2)
+
+		const T m00 = f * (fovY / fovX);
+		const T m11 = f;
+		const T m22 = far / g;
+		const T m23 = (far * near) / g;
+
+		// First, clip = (m * Pv) where Pv is the view space position.
+		// ndc.z = clip.z / clip.w = (m22 * Pv.z + m23) / -Pv.z. Note that ndc.z == depth in zero_to_one projection.
+		// Solving that for Pv.z we get
+		// Pv.z = A / (depth + B)
+		// where A = -m23 and B = m22
+		// so we save the A and B in the projection params vector
+		out.z() = -m23;
+		out.w() = m22;
+
+		// Using the same logic the Pv.x = x' * w / m00
+		// so Pv.x = x' * Pv.z * (-1 / m00)
+		out.x() = -T(1.0) / m00;
+
+		// Same for y
+		out.y() = -T(1.0) / m11;
+
+		return out;
+	}
+
+	/// Assuming this is a projection matrix extract the unprojection parameters. See
+	/// calculatePerspectiveUnprojectionParams for more info.
+	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	TVec<T, 4> extractPerspectiveUnprojectionParams() const
+	{
+		TVec<T, 4> out;
+		const auto& m = *this;
+		out.z() = -m(2, 3);
+		out.w() = m(2, 2);
+		out.x() = -T(1.0) / m(0, 0);
+		out.y() = -T(1.0) / m(1, 1);
+		return out;
+	}
+
+	/// If we suppose this matrix represents a transformation, return the inverted transformation
+	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	TMat getInverseTransformation() const
+	{
+		TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
+		TVec<T, 3> invertedTsl = getTranslationPart().xyz();
+		invertedTsl = -(invertedRot * invertedTsl);
+		return TMat(invertedTsl.xyz0(), invertedRot);
+	}
+
+	/// @note 9 muls, 9 adds
+	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
+	TVec<T, 3> transform(const TVec<T, 3>& v) const
+	{
+		const auto& m = *this;
+		return TVec<T, 3>(m(0, 0) * v.x() + m(0, 1) * v.y() + m(0, 2) * v.z() + m(0, 3),
+			m(1, 0) * v.x() + m(1, 1) * v.y() + m(1, 2) * v.z() + m(1, 3),
+			m(2, 0) * v.x() + m(2, 1) * v.y() + m(2, 2) * v.z() + m(2, 3));
+	}
+
 	TMat lerp(const TMat& b, T t) const
 	{
 		return ((*this) * (1.0 - t)) + (b * t);
 	}
 
-	static const TM& getZero()
+	static const TMat& getZero()
 	{
-		static const TM zero(0.0);
+		static const TMat zero(0.0);
 		return zero;
 	}
 
@@ -1194,37 +1506,29 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(I == 3 && J == 3)
-	static const TM& getIdentity()
+	static const TMat& getIdentity()
 	{
-		static const TM ident(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+		static const TMat ident(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 		return ident;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 4)
-	static const TM& getIdentity()
+	static const TMat& getIdentity()
 	{
-		static const TM ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+		static const TMat ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 		return ident;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(I == 4 && J == 3)
-	static const TM& getIdentity()
+	static const TMat& getIdentity()
 	{
-		static const TM ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		static const TMat ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 		return ident;
 	}
 
 	void setIdentity()
 	{
 		(*this) = getIdentity();
-	}
-
-	template<typename TAlloc>
-	String toString(TAlloc alloc) const
-	{
-		// TODO
-		ANKI_ASSERT(0 && "TODO");
-		return String();
 	}
 	/// @}
 
@@ -1243,6 +1547,69 @@ protected:
 	};
 	/// @}
 };
+
+/// @memberof TMat
+template<typename T, U J, U I>
+TMat<T, J, I> operator+(const T f, const TMat<T, J, I>& m)
+{
+	return m + f;
+}
+
+/// @memberof TMat
+template<typename T, U J, U I>
+TMat<T, J, I> operator-(const T f, const TMat<T, J, I>& m)
+{
+	TMat<T, J, I> out;
+	for(U i = 0; i < J * I; i++)
+	{
+		out[i] = f - m[i];
+	}
+	return out;
+}
+
+/// @memberof TMat
+template<typename T, U J, U I>
+TMat<T, J, I> operator*(const T f, const TMat<T, J, I>& m)
+{
+	return m * f;
+}
+
+/// @memberof TMat
+template<typename T, U J, U I>
+TMat<T, J, I> operator/(const T f, const TMat<T, 3, 3>& m3)
+{
+	TMat<T, J, I> out;
+	for(U i = 0; i < J * I; i++)
+	{
+		ANKI_ASSERT(m3[i] != T(0));
+		out[i] = f / m3[i];
+	}
+	return out;
+}
+
+/// F32 3x3 matrix
+using Mat3 = TMat<F32, 3, 3>;
+static_assert(sizeof(Mat3) == sizeof(F32) * 3 * 3, "Incorrect size");
+
+/// F64 3x3 matrix
+using DMat3 = TMat<F64, 3, 3>;
+static_assert(sizeof(DMat3) == sizeof(F64) * 3 * 3, "Incorrect size");
+
+/// F32 4x4 matrix
+using Mat4 = TMat<F32, 4, 4>;
+static_assert(sizeof(Mat4) == sizeof(F32) * 4 * 4, "Incorrect size");
+
+/// F64 4x4 matrix
+using DMat4 = TMat<F64, 4, 4>;
+static_assert(sizeof(DMat4) == sizeof(F64) * 4 * 4, "Incorrect size");
+
+/// F32 3x4 matrix
+using Mat3x4 = TMat<F32, 3, 4>;
+static_assert(sizeof(Mat3x4) == sizeof(F32) * 3 * 4, "Incorrect size");
+
+/// F64 3x4 matrix
+using DMat3x4 = TMat<F64, 3, 4>;
+static_assert(sizeof(DMat3x4) == sizeof(F64) * 3 * 4, "Incorrect size");
 /// @}
 
 } // end namespace anki

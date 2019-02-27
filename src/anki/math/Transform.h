@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/math/CommonIncludes.h>
+#include <anki/math/Common.h>
 
 namespace anki
 {
@@ -32,15 +32,15 @@ public:
 		checkW();
 	}
 
-	explicit TTransform(const TMat4<T>& m4)
+	explicit TTransform(const TMat<T, 4, 4>& m4)
 	{
-		m_rotation = TMat3x4<T>(m4.getRotationPart());
+		m_rotation = TMat<T, 3, 4>(m4.getRotationPart());
 		m_origin = m4.getTranslationPart().xyz0();
 		m_scale = 1.0;
 		checkW();
 	}
 
-	TTransform(const TVec4<T>& origin, const TMat3x4<T>& rotation, const T scale)
+	TTransform(const TVec<T, 4>& origin, const TMat<T, 3, 4>& rotation, const T scale)
 		: m_origin(origin)
 		, m_rotation(rotation)
 		, m_scale(scale)
@@ -48,24 +48,24 @@ public:
 		checkW();
 	}
 
-	explicit TTransform(const TVec4<T>& origin)
+	explicit TTransform(const TVec<T, 4>& origin)
 		: m_origin(origin)
 		, m_rotation(Mat3x4::getIdentity())
-		, m_scale(1.0f)
+		, m_scale(1.0)
 	{
 		checkW();
 	}
 
-	explicit TTransform(const TMat3x4<T>& rotation)
-		: m_origin(Vec4(0.0f))
+	explicit TTransform(const TMat<T, 3, 4>& rotation)
+		: m_origin(Vec4(0.0))
 		, m_rotation(rotation)
-		, m_scale(1.0f)
+		, m_scale(1.0)
 	{
 		checkW();
 	}
 
 	TTransform(const T scale)
-		: m_origin(Vec4(0.0f))
+		: m_origin(Vec4(0.0))
 		, m_rotation(Mat3x4::getIdentity())
 		, m_scale(scale)
 	{
@@ -75,33 +75,33 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const TVec4<T>& getOrigin() const
+	const TVec<T, 4>& getOrigin() const
 	{
 		return m_origin;
 	}
 
-	TVec4<T>& getOrigin()
+	TVec<T, 4>& getOrigin()
 	{
 		return m_origin;
 	}
 
-	void setOrigin(const TVec4<T>& o)
+	void setOrigin(const TVec<T, 4>& o)
 	{
 		m_origin = o;
 		checkW();
 	}
 
-	const TMat3x4<T>& getRotation() const
+	const TMat<T, 3, 4>& getRotation() const
 	{
 		return m_rotation;
 	}
 
-	TMat3x4<T>& getRotation()
+	TMat<T, 3, 4>& getRotation()
 	{
 		return m_rotation;
 	}
 
-	void setRotation(const TMat3x4<T>& r)
+	void setRotation(const TMat<T, 3, 4>& r)
 	{
 		m_rotation = r;
 	}
@@ -153,7 +153,7 @@ public:
 
 	static const TTransform& getIdentity()
 	{
-		static const TTransform ident(TVec4<T>(0.0), TMat3x4<T>::getIdentity(), 1.0);
+		static const TTransform ident(TVec<T, 4>(0.0), TMat<T, 3, 4>::getIdentity(), 1.0);
 		return ident;
 	}
 
@@ -164,7 +164,7 @@ public:
 		const TTransform& a = *this;
 		TTransform out;
 
-		out.m_origin = TVec4<T>(a.m_rotation * (b.m_origin * a.m_scale), 0.0) + a.m_origin;
+		out.m_origin = TVec<T, 4>(a.m_rotation * (b.m_origin * a.m_scale), 0.0) + a.m_origin;
 
 		out.m_rotation = a.m_rotation.combineTransformations(b.m_rotation);
 		out.m_scale = a.m_scale * b.m_scale;
@@ -192,33 +192,26 @@ public:
 	}
 
 	/// Transform a TVec3
-	ANKI_USE_RESULT TVec3<T> transform(const TVec3<T>& b) const
+	TVec<T, 3> transform(const TVec<T, 3>& b) const
 	{
 		checkW();
 		return (m_rotation.getRotationPart() * (b * m_scale)) + m_origin.xyz();
 	}
 
 	/// Transform a TVec4. SIMD optimized
-	ANKI_USE_RESULT TVec4<T> transform(const TVec4<T>& b) const
+	TVec<T, 4> transform(const TVec<T, 4>& b) const
 	{
 		checkW();
-		TVec4<T> out = TVec4<T>(m_rotation * (b * m_scale), T(0)) + m_origin;
+		TVec<T, 4> out = TVec<T, 4>(m_rotation * (b * m_scale), T(0)) + m_origin;
 		return out;
-	}
-
-	template<typename TAlloc>
-	String toString(TAlloc alloc) const
-	{
-		ANKI_ASSERT(0 && "TODO");
-		return String();
 	}
 	/// @}
 
 private:
 	/// @name Data
 	/// @{
-	TVec4<T> m_origin; ///< The rotation
-	TMat3x4<T> m_rotation; ///< The translation
+	TVec<T, 4> m_origin; ///< The rotation
+	TMat<T, 3, 4> m_rotation; ///< The translation
 	T m_scale; ///< The uniform scaling
 	/// @}
 
@@ -230,6 +223,9 @@ private:
 
 /// F32 transformation
 using Transform = TTransform<F32>;
+
+/// F64 transformation
+using DTransform = TTransform<F64>;
 /// @}
 
 } // end namespace anki

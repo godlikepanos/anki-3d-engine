@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/math/CommonIncludes.h>
+#include <anki/math/Common.h>
 
 namespace anki
 {
@@ -21,8 +21,6 @@ public:
 	/// @name Constructors
 	/// @{
 	TAxisang()
-		: m_ang(0.0)
-		, m_axis(0.0)
 	{
 	}
 
@@ -32,7 +30,7 @@ public:
 	{
 	}
 
-	TAxisang(const T rad, const TVec3<T>& axis)
+	TAxisang(const T rad, const TVec<T, 3>& axis)
 		: m_ang(rad)
 		, m_axis(axis)
 	{
@@ -45,15 +43,15 @@ public:
 		if(!isZero<T>(length))
 		{
 			length = 1.0 / length;
-			m_axis = TVec3<T>(q.x() * length, q.y() * length, q.z() * length);
+			m_axis = TVec<T, 3>(q.x() * length, q.y() * length, q.z() * length);
 		}
 		else
 		{
-			m_axis = TVec3<T>(0.0);
+			m_axis = TVec<T, 3>(0.0);
 		}
 	}
 
-	explicit TAxisang(const TMat3<T>& m3)
+	explicit TAxisang(const TMat<T, 3, 3>& m3)
 	{
 		if(isZero<T>(m3(0, 1) - m3(1, 0)) && isZero<T>(m3(0, 2) - m3(2, 0)) && isZero<T>(m3(1, 2) - m3(2, 1)))
 		{
@@ -61,7 +59,7 @@ public:
 			if((absolute<T>(m3(0, 1) + m3(1, 0)) < 0.1) && (absolute<T>(m3(0, 2) + m3(2, 0)) < 0.1)
 				&& (absolute<T>(m3(1, 2) + m3(2, 1)) < 0.1) && (absolute<T>(m3(0, 0) + m3(1, 1) + m3(2, 2)) - 3) < 0.1)
 			{
-				m_axis = TVec3<T>(1.0, 0.0, 0.0);
+				m_axis = TVec<T, 3>(1.0, 0.0, 0.0);
 				m_ang = 0.0;
 				return;
 			}
@@ -159,17 +157,17 @@ public:
 		m_ang = a;
 	}
 
-	const TVec3<T>& getAxis() const
+	const TVec<T, 3>& getAxis() const
 	{
 		return m_axis;
 	}
 
-	TVec3<T>& getAxis()
+	TVec<T, 3>& getAxis()
 	{
 		return m_axis;
 	}
 
-	void setAxis(const TVec3<T>& a)
+	void setAxis(const TVec<T, 3>& a)
 	{
 		m_axis = a;
 	}
@@ -185,28 +183,19 @@ public:
 	}
 	/// @}
 
-	/// @name Other
-	/// @{
-	template<typename TAlloc>
-	String toString(TAlloc alloc) const
-	{
-		String s;
-		Error err = s.sprintf("axis: %f %f %f, angle: %f", m_axis[0], m_axis[1], m_axis[2], m_ang);
-		(void)err;
-		return s;
-	}
-	/// @}
-
 private:
 	/// @name Data
 	/// @{
 	T m_ang;
-	TVec3<T> m_axis;
+	TVec<T, 3> m_axis;
 	/// @}
 };
 
 /// F32 Axisang
 using Axisang = TAxisang<F32>;
+
+/// F64 Axisang
+using DAxisang = TAxisang<F64>;
 /// @}
 
 } // end namespace anki

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/math/CommonIncludes.h>
+#include <anki/math/Common.h>
 
 namespace anki
 {
@@ -14,7 +14,7 @@ namespace anki
 /// @{
 
 /// Common code for all vectors
-template<typename T, U N, typename TV>
+template<typename T, U N>
 class TVec
 {
 public:
@@ -45,34 +45,13 @@ public:
 		m_simd = b.m_simd;
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(N == 2)
-	TVec(const T x_, const T y_)
+	template<typename Y>
+	TVec(const TVec<Y, N>& b)
 	{
-		x() = x_;
-		y() = y_;
-	}
-
-	ANKI_ENABLE_IF_EXPRESSION(N == 3)
-	TVec(const T x_, const T y_, const T z_)
-	{
-		x() = x_;
-		y() = y_;
-		z() = z_;
-	}
-
-	ANKI_ENABLE_IF_EXPRESSION(N == 4 && !HAS_VEC4_SIMD)
-	TVec(const T x_, const T y_, const T z_, const T w_)
-	{
-		x() = x_;
-		y() = y_;
-		z() = z_;
-		w() = w_;
-	}
-
-	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TVec(const T x_, const T y_, const T z_, const T w_)
-	{
-		m_simd = _mm_set_ps(w_, z_, y_, x_);
+		for(U i = 0; i < N; i++)
+		{
+			m_arr[i] = b[i];
+		}
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
@@ -108,6 +87,110 @@ public:
 	explicit TVec(const Simd& simd)
 	{
 		m_simd = simd;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 2)
+	TVec(const T x_, const T y_)
+	{
+		x() = x_;
+		y() = y_;
+	}
+
+	// Vec3 specific
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 3)
+	TVec(const T x_, const T y_, const T z_)
+	{
+		x() = x_;
+		y() = y_;
+		z() = z_;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 3)
+	TVec(const TVec<T, 2>& a, const T z_)
+	{
+		x() = a.x();
+		y() = a.y();
+		z() = z_;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 3)
+	TVec(const T x_, const TVec<T, 2>& a)
+	{
+		x() = x_;
+		y() = a.x();
+		z() = a.y();
+	}
+
+	// Vec4 specific
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 4 && !HAS_VEC4_SIMD)
+	TVec(const T x_, const T y_, const T z_, const T w_)
+	{
+		x() = x_;
+		y() = y_;
+		z() = z_;
+		w() = w_;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
+	TVec(const T x_, const T y_, const T z_, const T w_)
+	{
+		m_simd = _mm_set_ps(w_, z_, y_, x_);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	TVec(const TVec<T, 3>& a, const T w_)
+	{
+		x() = a.x();
+		y() = a.y();
+		z() = a.z();
+		w() = w_;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	TVec(const T x_, const TVec<T, 3>& a)
+	{
+		x() = x_;
+		y() = a.x();
+		z() = a.y();
+		w() = a.z();
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	TVec(const TVec<T, 2>& a, const T z_, const T w_)
+	{
+		x() = a.x();
+		y() = a.y();
+		z() = z_;
+		w() = w_;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	TVec(const T x_, const TVec<T, 2>& a, const T w_)
+	{
+		x() = x_;
+		y() = a.x();
+		z() = a.y();
+		w() = w_;
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	TVec(const T x_, const T y_, const TVec<T, 2>& a)
+	{
+		x() = x_;
+		y() = y_;
+		z() = a.x();
+		w() = a.y();
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	TVec(const TVec<T, 2>& a, const TVec<T, 2>& b)
+	{
+		x() = a.x();
+		y() = a.y();
+		z() = b.x();
+		w() = b.y();
 	}
 	/// @}
 
@@ -157,1740 +240,16 @@ public:
 		return m_arr[3];
 	}
 
-	TVec2<T> xx() const
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xyz1() const
 	{
-		return TVec2<T>(x(), x());
+		return TVec<T, 4>(x(), y(), z(), T(1));
 	}
 
-	TVec2<T> yy() const
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xyz0() const
 	{
-		return TVec2<T>(y(), y());
-	}
-
-	TVec2<T> xy() const
-	{
-		return TVec2<T>(x(), y());
-	}
-
-	TVec2<T> yx() const
-	{
-		return TVec2<T>(y(), x());
-	}
-
-	TVec2<T> zw() const
-	{
-		static_assert(N == 4, "Wrong vector");
-		return TVec2<T>(z(), w());
-	}
-
-	TVec3<T> xxx() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(x(), x(), x());
-	}
-
-	TVec3<T> xxy() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(x(), x(), y());
-	}
-
-	TVec3<T> xxz() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(x(), x(), z());
-	}
-
-	TVec3<T> xyx() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(x(), y(), x());
-	}
-
-	TVec3<T> xyy() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(x(), y(), y());
-	}
-
-	TVec3<T> xyz() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(x(), y(), z());
-	}
-
-	TVec3<T> xzx() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(x(), z(), x());
-	}
-
-	TVec3<T> xzy() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(x(), z(), y());
-	}
-
-	TVec3<T> xzz() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(x(), z(), z());
-	}
-
-	TVec3<T> yxx() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(y(), x(), x());
-	}
-
-	TVec3<T> yxy() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(y(), x(), y());
-	}
-
-	TVec3<T> yxz() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(y(), x(), z());
-	}
-
-	TVec3<T> yyx() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(y(), y(), x());
-	}
-
-	TVec3<T> yyy() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(y(), y(), y());
-	}
-
-	TVec3<T> yyz() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(y(), y(), z());
-	}
-
-	TVec3<T> yzx() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(y(), z(), x());
-	}
-
-	TVec3<T> yzy() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(y(), z(), y());
-	}
-
-	TVec3<T> yzz() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(y(), z(), z());
-	}
-
-	TVec3<T> zxx() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(z(), x(), x());
-	}
-
-	TVec3<T> zxy() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(z(), x(), y());
-	}
-
-	TVec3<T> zxz() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(z(), x(), z());
-	}
-
-	TVec3<T> zyx() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(z(), y(), x());
-	}
-
-	TVec3<T> zyy() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(z(), y(), y());
-	}
-
-	TVec3<T> zyz() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(z(), y(), z());
-	}
-
-	TVec3<T> zzx() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(z(), z(), x());
-	}
-
-	TVec3<T> zzy() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(z(), z(), y());
-	}
-
-	TVec3<T> zzz() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec3<T>(z(), z(), z());
-	}
-
-	TVec4<T> xxxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), x(), x());
-	}
-
-	TVec4<T> xxxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), x(), y());
-	}
-
-	TVec4<T> xxxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), x(), z());
-	}
-
-	TVec4<T> xxxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), x(), w());
-	}
-
-	TVec4<T> xxyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), y(), x());
-	}
-
-	TVec4<T> xxyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), y(), y());
-	}
-
-	TVec4<T> xxyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), y(), z());
-	}
-
-	TVec4<T> xxyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), y(), w());
-	}
-
-	TVec4<T> xxzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), z(), x());
-	}
-
-	TVec4<T> xxzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), z(), y());
-	}
-
-	TVec4<T> xxzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), z(), z());
-	}
-
-	TVec4<T> xxzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), z(), w());
-	}
-
-	TVec4<T> xxwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), w(), x());
-	}
-
-	TVec4<T> xxwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), w(), y());
-	}
-
-	TVec4<T> xxwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), w(), z());
-	}
-
-	TVec4<T> xxww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), x(), w(), w());
-	}
-
-	TVec4<T> xyxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), x(), x());
-	}
-
-	TVec4<T> xyxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), x(), y());
-	}
-
-	TVec4<T> xyxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), x(), z());
-	}
-
-	TVec4<T> xyxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), x(), w());
-	}
-
-	TVec4<T> xyyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), y(), x());
-	}
-
-	TVec4<T> xyyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), y(), y());
-	}
-
-	TVec4<T> xyyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), y(), z());
-	}
-
-	TVec4<T> xyyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), y(), w());
-	}
-
-	TVec4<T> xyzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), z(), x());
-	}
-
-	TVec4<T> xyzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), z(), y());
-	}
-
-	TVec4<T> xyzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), z(), z());
-	}
-
-	TVec4<T> xyzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), z(), w());
-	}
-
-	TVec4<T> xywx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), w(), x());
-	}
-
-	TVec4<T> xywy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), w(), y());
-	}
-
-	TVec4<T> xywz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), w(), z());
-	}
-
-	TVec4<T> xyww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), y(), w(), w());
-	}
-
-	TVec4<T> xzxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), x(), x());
-	}
-
-	TVec4<T> xzxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), x(), y());
-	}
-
-	TVec4<T> xzxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), x(), z());
-	}
-
-	TVec4<T> xzxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), x(), w());
-	}
-
-	TVec4<T> xzyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), y(), x());
-	}
-
-	TVec4<T> xzyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), y(), y());
-	}
-
-	TVec4<T> xzyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), y(), z());
-	}
-
-	TVec4<T> xzyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), y(), w());
-	}
-
-	TVec4<T> xzzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), z(), x());
-	}
-
-	TVec4<T> xzzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), z(), y());
-	}
-
-	TVec4<T> xzzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), z(), z());
-	}
-
-	TVec4<T> xzzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), z(), w());
-	}
-
-	TVec4<T> xzwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), w(), x());
-	}
-
-	TVec4<T> xzwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), w(), y());
-	}
-
-	TVec4<T> xzwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), w(), z());
-	}
-
-	TVec4<T> xzww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), z(), w(), w());
-	}
-
-	TVec4<T> xwxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), x(), x());
-	}
-
-	TVec4<T> xwxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), x(), y());
-	}
-
-	TVec4<T> xwxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), x(), z());
-	}
-
-	TVec4<T> xwxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), x(), w());
-	}
-
-	TVec4<T> xwyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), y(), x());
-	}
-
-	TVec4<T> xwyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), y(), y());
-	}
-
-	TVec4<T> xwyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), y(), z());
-	}
-
-	TVec4<T> xwyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), y(), w());
-	}
-
-	TVec4<T> xwzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), z(), x());
-	}
-
-	TVec4<T> xwzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), z(), y());
-	}
-
-	TVec4<T> xwzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), z(), z());
-	}
-
-	TVec4<T> xwzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), z(), w());
-	}
-
-	TVec4<T> xwwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), w(), x());
-	}
-
-	TVec4<T> xwwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), w(), y());
-	}
-
-	TVec4<T> xwwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), w(), z());
-	}
-
-	TVec4<T> xwww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(x(), w(), w(), w());
-	}
-
-	TVec4<T> yxxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), x(), x());
-	}
-
-	TVec4<T> yxxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), x(), y());
-	}
-
-	TVec4<T> yxxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), x(), z());
-	}
-
-	TVec4<T> yxxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), x(), w());
-	}
-
-	TVec4<T> yxyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), y(), x());
-	}
-
-	TVec4<T> yxyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), y(), y());
-	}
-
-	TVec4<T> yxyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), y(), z());
-	}
-
-	TVec4<T> yxyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), y(), w());
-	}
-
-	TVec4<T> yxzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), z(), x());
-	}
-
-	TVec4<T> yxzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), z(), y());
-	}
-
-	TVec4<T> yxzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), z(), z());
-	}
-
-	TVec4<T> yxzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), z(), w());
-	}
-
-	TVec4<T> yxwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), w(), x());
-	}
-
-	TVec4<T> yxwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), w(), y());
-	}
-
-	TVec4<T> yxwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), w(), z());
-	}
-
-	TVec4<T> yxww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), x(), w(), w());
-	}
-
-	TVec4<T> yyxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), x(), x());
-	}
-
-	TVec4<T> yyxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), x(), y());
-	}
-
-	TVec4<T> yyxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), x(), z());
-	}
-
-	TVec4<T> yyxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), x(), w());
-	}
-
-	TVec4<T> yyyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), y(), x());
-	}
-
-	TVec4<T> yyyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), y(), y());
-	}
-
-	TVec4<T> yyyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), y(), z());
-	}
-
-	TVec4<T> yyyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), y(), w());
-	}
-
-	TVec4<T> yyzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), z(), x());
-	}
-
-	TVec4<T> yyzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), z(), y());
-	}
-
-	TVec4<T> yyzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), z(), z());
-	}
-
-	TVec4<T> yyzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), z(), w());
-	}
-
-	TVec4<T> yywx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), w(), x());
-	}
-
-	TVec4<T> yywy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), w(), y());
-	}
-
-	TVec4<T> yywz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), w(), z());
-	}
-
-	TVec4<T> yyww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), y(), w(), w());
-	}
-
-	TVec4<T> yzxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), x(), x());
-	}
-
-	TVec4<T> yzxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), x(), y());
-	}
-
-	TVec4<T> yzxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), x(), z());
-	}
-
-	TVec4<T> yzxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), x(), w());
-	}
-
-	TVec4<T> yzyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), y(), x());
-	}
-
-	TVec4<T> yzyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), y(), y());
-	}
-
-	TVec4<T> yzyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), y(), z());
-	}
-
-	TVec4<T> yzyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), y(), w());
-	}
-
-	TVec4<T> yzzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), z(), x());
-	}
-
-	TVec4<T> yzzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), z(), y());
-	}
-
-	TVec4<T> yzzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), z(), z());
-	}
-
-	TVec4<T> yzzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), z(), w());
-	}
-
-	TVec4<T> yzwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), w(), x());
-	}
-
-	TVec4<T> yzwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), w(), y());
-	}
-
-	TVec4<T> yzwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), w(), z());
-	}
-
-	TVec4<T> yzww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), z(), w(), w());
-	}
-
-	TVec4<T> ywxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), x(), x());
-	}
-
-	TVec4<T> ywxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), x(), y());
-	}
-
-	TVec4<T> ywxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), x(), z());
-	}
-
-	TVec4<T> ywxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), x(), w());
-	}
-
-	TVec4<T> ywyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), y(), x());
-	}
-
-	TVec4<T> ywyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), y(), y());
-	}
-
-	TVec4<T> ywyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), y(), z());
-	}
-
-	TVec4<T> ywyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), y(), w());
-	}
-
-	TVec4<T> ywzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), z(), x());
-	}
-
-	TVec4<T> ywzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), z(), y());
-	}
-
-	TVec4<T> ywzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), z(), z());
-	}
-
-	TVec4<T> ywzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), z(), w());
-	}
-
-	TVec4<T> ywwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), w(), x());
-	}
-
-	TVec4<T> ywwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), w(), y());
-	}
-
-	TVec4<T> ywwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), w(), z());
-	}
-
-	TVec4<T> ywww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(y(), w(), w(), w());
-	}
-
-	TVec4<T> zxxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), x(), x());
-	}
-
-	TVec4<T> zxxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), x(), y());
-	}
-
-	TVec4<T> zxxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), x(), z());
-	}
-
-	TVec4<T> zxxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), x(), w());
-	}
-
-	TVec4<T> zxyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), y(), x());
-	}
-
-	TVec4<T> zxyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), y(), y());
-	}
-
-	TVec4<T> zxyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), y(), z());
-	}
-
-	TVec4<T> zxyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), y(), w());
-	}
-
-	TVec4<T> zxzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), z(), x());
-	}
-
-	TVec4<T> zxzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), z(), y());
-	}
-
-	TVec4<T> zxzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), z(), z());
-	}
-
-	TVec4<T> zxzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), z(), w());
-	}
-
-	TVec4<T> zxwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), w(), x());
-	}
-
-	TVec4<T> zxwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), w(), y());
-	}
-
-	TVec4<T> zxwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), w(), z());
-	}
-
-	TVec4<T> zxww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), x(), w(), w());
-	}
-
-	TVec4<T> zyxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), x(), x());
-	}
-
-	TVec4<T> zyxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), x(), y());
-	}
-
-	TVec4<T> zyxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), x(), z());
-	}
-
-	TVec4<T> zyxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), x(), w());
-	}
-
-	TVec4<T> zyyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), y(), x());
-	}
-
-	TVec4<T> zyyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), y(), y());
-	}
-
-	TVec4<T> zyyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), y(), z());
-	}
-
-	TVec4<T> zyyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), y(), w());
-	}
-
-	TVec4<T> zyzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), z(), x());
-	}
-
-	TVec4<T> zyzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), z(), y());
-	}
-
-	TVec4<T> zyzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), z(), z());
-	}
-
-	TVec4<T> zyzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), z(), w());
-	}
-
-	TVec4<T> zywx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), w(), x());
-	}
-
-	TVec4<T> zywy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), w(), y());
-	}
-
-	TVec4<T> zywz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), w(), z());
-	}
-
-	TVec4<T> zyww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), y(), w(), w());
-	}
-
-	TVec4<T> zzxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), x(), x());
-	}
-
-	TVec4<T> zzxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), x(), y());
-	}
-
-	TVec4<T> zzxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), x(), z());
-	}
-
-	TVec4<T> zzxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), x(), w());
-	}
-
-	TVec4<T> zzyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), y(), x());
-	}
-
-	TVec4<T> zzyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), y(), y());
-	}
-
-	TVec4<T> zzyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), y(), z());
-	}
-
-	TVec4<T> zzyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), y(), w());
-	}
-
-	TVec4<T> zzzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), z(), x());
-	}
-
-	TVec4<T> zzzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), z(), y());
-	}
-
-	TVec4<T> zzzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), z(), z());
-	}
-
-	TVec4<T> zzzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), z(), w());
-	}
-
-	TVec4<T> zzwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), w(), x());
-	}
-
-	TVec4<T> zzwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), w(), y());
-	}
-
-	TVec4<T> zzwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), w(), z());
-	}
-
-	TVec4<T> zzww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), z(), w(), w());
-	}
-
-	TVec4<T> zwxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), x(), x());
-	}
-
-	TVec4<T> zwxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), x(), y());
-	}
-
-	TVec4<T> zwxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), x(), z());
-	}
-
-	TVec4<T> zwxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), x(), w());
-	}
-
-	TVec4<T> zwyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), y(), x());
-	}
-
-	TVec4<T> zwyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), y(), y());
-	}
-
-	TVec4<T> zwyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), y(), z());
-	}
-
-	TVec4<T> zwyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), y(), w());
-	}
-
-	TVec4<T> zwzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), z(), x());
-	}
-
-	TVec4<T> zwzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), z(), y());
-	}
-
-	TVec4<T> zwzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), z(), z());
-	}
-
-	TVec4<T> zwzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), z(), w());
-	}
-
-	TVec4<T> zwwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), w(), x());
-	}
-
-	TVec4<T> zwwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), w(), y());
-	}
-
-	TVec4<T> zwwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), w(), z());
-	}
-
-	TVec4<T> zwww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(z(), w(), w(), w());
-	}
-
-	TVec4<T> wxxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), x(), x());
-	}
-
-	TVec4<T> wxxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), x(), y());
-	}
-
-	TVec4<T> wxxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), x(), z());
-	}
-
-	TVec4<T> wxxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), x(), w());
-	}
-
-	TVec4<T> wxyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), y(), x());
-	}
-
-	TVec4<T> wxyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), y(), y());
-	}
-
-	TVec4<T> wxyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), y(), z());
-	}
-
-	TVec4<T> wxyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), y(), w());
-	}
-
-	TVec4<T> wxzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), z(), x());
-	}
-
-	TVec4<T> wxzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), z(), y());
-	}
-
-	TVec4<T> wxzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), z(), z());
-	}
-
-	TVec4<T> wxzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), z(), w());
-	}
-
-	TVec4<T> wxwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), w(), x());
-	}
-
-	TVec4<T> wxwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), w(), y());
-	}
-
-	TVec4<T> wxwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), w(), z());
-	}
-
-	TVec4<T> wxww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), x(), w(), w());
-	}
-
-	TVec4<T> wyxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), x(), x());
-	}
-
-	TVec4<T> wyxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), x(), y());
-	}
-
-	TVec4<T> wyxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), x(), z());
-	}
-
-	TVec4<T> wyxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), x(), w());
-	}
-
-	TVec4<T> wyyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), y(), x());
-	}
-
-	TVec4<T> wyyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), y(), y());
-	}
-
-	TVec4<T> wyyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), y(), z());
-	}
-
-	TVec4<T> wyyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), y(), w());
-	}
-
-	TVec4<T> wyzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), z(), x());
-	}
-
-	TVec4<T> wyzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), z(), y());
-	}
-
-	TVec4<T> wyzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), z(), z());
-	}
-
-	TVec4<T> wyzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), z(), w());
-	}
-
-	TVec4<T> wywx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), w(), x());
-	}
-
-	TVec4<T> wywy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), w(), y());
-	}
-
-	TVec4<T> wywz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), w(), z());
-	}
-
-	TVec4<T> wyww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), y(), w(), w());
-	}
-
-	TVec4<T> wzxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), x(), x());
-	}
-
-	TVec4<T> wzxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), x(), y());
-	}
-
-	TVec4<T> wzxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), x(), z());
-	}
-
-	TVec4<T> wzxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), x(), w());
-	}
-
-	TVec4<T> wzyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), y(), x());
-	}
-
-	TVec4<T> wzyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), y(), y());
-	}
-
-	TVec4<T> wzyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), y(), z());
-	}
-
-	TVec4<T> wzyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), y(), w());
-	}
-
-	TVec4<T> wzzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), z(), x());
-	}
-
-	TVec4<T> wzzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), z(), y());
-	}
-
-	TVec4<T> wzzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), z(), z());
-	}
-
-	TVec4<T> wzzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), z(), w());
-	}
-
-	TVec4<T> wzwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), w(), x());
-	}
-
-	TVec4<T> wzwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), w(), y());
-	}
-
-	TVec4<T> wzwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), w(), z());
-	}
-
-	TVec4<T> wzww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), z(), w(), w());
-	}
-
-	TVec4<T> wwxx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), x(), x());
-	}
-
-	TVec4<T> wwxy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), x(), y());
-	}
-
-	TVec4<T> wwxz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), x(), z());
-	}
-
-	TVec4<T> wwxw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), x(), w());
-	}
-
-	TVec4<T> wwyx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), y(), x());
-	}
-
-	TVec4<T> wwyy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), y(), y());
-	}
-
-	TVec4<T> wwyz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), y(), z());
-	}
-
-	TVec4<T> wwyw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), y(), w());
-	}
-
-	TVec4<T> wwzx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), z(), x());
-	}
-
-	TVec4<T> wwzy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), z(), y());
-	}
-
-	TVec4<T> wwzz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), z(), z());
-	}
-
-	TVec4<T> wwzw() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), z(), w());
-	}
-
-	TVec4<T> wwwx() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), w(), x());
-	}
-
-	TVec4<T> wwwy() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), w(), y());
-	}
-
-	TVec4<T> wwwz() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), w(), z());
-	}
-
-	TVec4<T> wwww() const
-	{
-		static_assert(N > 3, "Wrong vector");
-		return TVec4<T>(w(), w(), w(), w());
-	}
-
-	TVec4<T> xyz1() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec4<T>(x(), y(), z(), static_cast<T>(1));
-	}
-
-	TVec4<T> xyz0() const
-	{
-		static_assert(N > 2, "Wrong vector");
-		return TVec4<T>(x(), y(), z(), static_cast<T>(0));
+		return TVec<T, 4>(x(), y(), z(), T(0));
 	}
 
 	T& operator[](const U i)
@@ -1912,40 +271,2049 @@ public:
 	{
 		return m_simd;
 	}
+
+	// Swizzled accessors
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 0)
+	TVec<T, 2> xx() const
+	{
+		return TVec<T, 2>(m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 2> xy() const
+	{
+		return TVec<T, 2>(m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 2> xz() const
+	{
+		return TVec<T, 2>(m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 2> xw() const
+	{
+		return TVec<T, 2>(m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 2> yx() const
+	{
+		return TVec<T, 2>(m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 2> yy() const
+	{
+		return TVec<T, 2>(m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 2> yz() const
+	{
+		return TVec<T, 2>(m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 2> yw() const
+	{
+		return TVec<T, 2>(m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 2> zx() const
+	{
+		return TVec<T, 2>(m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 2> zy() const
+	{
+		return TVec<T, 2>(m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 2> zz() const
+	{
+		return TVec<T, 2>(m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 2> zw() const
+	{
+		return TVec<T, 2>(m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 2> wx() const
+	{
+		return TVec<T, 2>(m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 2> wy() const
+	{
+		return TVec<T, 2>(m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 2> wz() const
+	{
+		return TVec<T, 2>(m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 2> ww() const
+	{
+		return TVec<T, 2>(m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 0)
+	TVec<T, 3> xxx() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 3> xxy() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> xxz() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> xxw() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 3> xyx() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 3> xyy() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> xyz() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> xyw() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> xzx() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> xzy() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> xzz() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> xzw() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> xwx() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> xwy() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> xwz() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> xww() const
+	{
+		return TVec<T, 3>(m_carr[0], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 3> yxx() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 3> yxy() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> yxz() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> yxw() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 3> yyx() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 3> yyy() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> yyz() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> yyw() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> yzx() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> yzy() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> yzz() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> yzw() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> ywx() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> ywy() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> ywz() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> yww() const
+	{
+		return TVec<T, 3>(m_carr[1], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> zxx() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> zxy() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> zxz() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> zxw() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> zyx() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> zyy() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> zyz() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> zyw() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> zzx() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> zzy() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 3> zzz() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> zzw() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> zwx() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> zwy() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> zwz() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> zww() const
+	{
+		return TVec<T, 3>(m_carr[2], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wxx() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wxy() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wxz() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wxw() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wyx() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wyy() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wyz() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wyw() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wzx() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wzy() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wzz() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wzw() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wwx() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wwy() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> wwz() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 3> www() const
+	{
+		return TVec<T, 3>(m_carr[3], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 0)
+	TVec<T, 4> xxxx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> xxxy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xxxz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xxxw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> xxyx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> xxyy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xxyz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xxyw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xxzx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xxzy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xxzz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xxzw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xxwx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xxwy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xxwz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xxww() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[0], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> xyxx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> xyxy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xyxz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xyxw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> xyyx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> xyyy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xyyz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xyyw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xyzx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xyzy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xyzz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xyzw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xywx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xywy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xywz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xyww() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[1], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xzxx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xzxy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xzxz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xzxw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xzyx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xzyy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xzyz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xzyw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xzzx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xzzy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> xzzz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xzzw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xzwx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xzwy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xzwz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xzww() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[2], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwxx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwxy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwxz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwxw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwyx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwyy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwyz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwyw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwzx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwzy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwzz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwzw() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwwx() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwwy() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwwz() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> xwww() const
+	{
+		return TVec<T, 4>(m_carr[0], m_carr[3], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> yxxx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> yxxy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yxxz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yxxw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> yxyx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> yxyy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yxyz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yxyw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yxzx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yxzy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yxzz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yxzw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yxwx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yxwy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yxwz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yxww() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[0], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> yyxx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> yyxy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yyxz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yyxw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> yyyx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 1)
+	TVec<T, 4> yyyy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yyyz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yyyw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yyzx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yyzy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yyzz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yyzw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yywx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yywy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yywz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yyww() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[1], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yzxx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yzxy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yzxz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yzxw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yzyx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yzyy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yzyz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yzyw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yzzx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yzzy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> yzzz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yzzw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yzwx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yzwy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yzwz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> yzww() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[2], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywxx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywxy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywxz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywxw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywyx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywyy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywyz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywyw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywzx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywzy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywzz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywzw() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywwx() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywwy() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywwz() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> ywww() const
+	{
+		return TVec<T, 4>(m_carr[1], m_carr[3], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zxxx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zxxy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zxxz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zxxw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zxyx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zxyy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zxyz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zxyw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zxzx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zxzy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zxzz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zxzw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zxwx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zxwy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zxwz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zxww() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[0], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zyxx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zyxy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zyxz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zyxw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zyyx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zyyy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zyyz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zyyw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zyzx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zyzy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zyzz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zyzw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zywx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zywy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zywz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zyww() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[1], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zzxx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zzxy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zzxz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zzxw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zzyx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zzyy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zzyz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zzyw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zzzx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zzzy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 2)
+	TVec<T, 4> zzzz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zzzw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zzwx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zzwy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zzwz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zzww() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[2], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwxx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwxy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwxz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwxw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwyx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwyy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwyz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwyw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwzx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwzy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwzz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwzw() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwwx() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwwy() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwwz() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> zwww() const
+	{
+		return TVec<T, 4>(m_carr[2], m_carr[3], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxxx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxxy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxxz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxxw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxyx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxyy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxyz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxyw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxzx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxzy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxzz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxzw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxwx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxwy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxwz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wxww() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[0], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyxx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyxy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyxz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyxw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyyx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyyy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyyz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyyw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyzx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyzy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyzz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyzw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wywx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wywy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wywz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wyww() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[1], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzxx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzxy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzxz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzxw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzyx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzyy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzyz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzyw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzzx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzzy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzzz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzzw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzwx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzwy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzwz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wzww() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[2], m_carr[3], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwxx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[0], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwxy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[0], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwxz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[0], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwxw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[0], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwyx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[1], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwyy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[1], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwyz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[1], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwyw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[1], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwzx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[2], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwzy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[2], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwzz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[2], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwzw() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[2], m_carr[3]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwwx() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[3], m_carr[0]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwwy() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[3], m_carr[1]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwwz() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[3], m_carr[2]);
+	}
+
+	ANKI_ENABLE_IF_EXPRESSION(N > 3)
+	TVec<T, 4> wwww() const
+	{
+		return TVec<T, 4>(m_carr[3], m_carr[3], m_carr[3], m_carr[3]);
+	}
 	/// @}
 
 	/// @name Operators with same type
 	/// @{
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV& operator=(const TV& b)
+	TVec& operator=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
 		{
 			m_arr[i] = b.m_arr[i];
 		}
-		return static_cast<TV&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV& operator=(const TV& b)
+	TVec& operator=(const TVec& b)
 	{
 		m_simd = b.m_simd;
-		return static_cast<TV&>(*this);
-	}
-
-	TV& operator=(const TV& b)
-	{
-		for(U i = 0; i < N; i++)
-		{
-			m_arr[i] = b.m_arr[i];
-		}
-		return static_cast<TV&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV operator+(const TV& b) const
+	TVec operator+(const TVec& b) const
 	{
-		TV out;
+		TVec out;
 		for(U i = 0; i < N; i++)
 		{
 			out.m_arr[i] = m_arr[i] + b.m_arr[i];
@@ -1954,32 +2322,32 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV operator+(const TV& b) const
+	TVec operator+(const TVec& b) const
 	{
-		return TV(_mm_add_ps(m_simd, b.m_simd));
+		return TVec(_mm_add_ps(m_simd, b.m_simd));
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV& operator+=(const TV& b)
+	TVec& operator+=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
 		{
 			m_arr[i] += b.m_arr[i];
 		}
-		return static_cast<TV&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV& operator+=(const TV& b)
+	TVec& operator+=(const TVec& b)
 	{
 		m_simd = _mm_add_ps(m_simd, b.m_simd);
-		return static_cast<TVec4<F32>&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV operator-(const TV& b) const
+	TVec operator-(const TVec& b) const
 	{
-		TV out;
+		TVec out;
 		for(U i = 0; i < N; i++)
 		{
 			out.m_arr[i] = m_arr[i] - b.m_arr[i];
@@ -1988,32 +2356,32 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV operator-(const TV& b) const
+	TVec operator-(const TVec& b) const
 	{
-		return TV(_mm_sub_ps(m_simd, b.m_simd));
+		return TVec(_mm_sub_ps(m_simd, b.m_simd));
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV& operator-=(const TV& b)
+	TVec& operator-=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
 		{
 			m_arr[i] -= b.m_arr[i];
 		}
-		return static_cast<TV&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV& operator-=(const TV& b)
+	TVec& operator-=(const TVec& b)
 	{
 		m_simd = _mm_sub_ps(m_simd, b.m_simd);
-		return static_cast<TV&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV operator*(const TV& b) const
+	TVec operator*(const TVec& b) const
 	{
-		TV out;
+		TVec out;
 		for(U i = 0; i < N; i++)
 		{
 			out.m_arr[i] = m_arr[i] * b.m_arr[i];
@@ -2022,32 +2390,32 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV operator*(const TV& b) const
+	TVec operator*(const TVec& b) const
 	{
-		return TV(_mm_mul_ps(m_simd, b.m_simd));
+		return TVec(_mm_mul_ps(m_simd, b.m_simd));
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV& operator*=(const TV& b)
+	TVec& operator*=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
 		{
 			m_arr[i] *= b.m_arr[i];
 		}
-		return static_cast<TV&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV& operator*=(const TV& b)
+	TVec& operator*=(const TVec& b)
 	{
 		m_simd = _mm_mul_ps(m_simd, b.m_simd);
-		return static_cast<TV&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV operator/(const TV& b) const
+	TVec operator/(const TVec& b) const
 	{
-		TV out;
+		TVec out;
 		for(U i = 0; i < N; i++)
 		{
 			ANKI_ASSERT(b.m_arr[i] != 0.0);
@@ -2057,33 +2425,33 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV operator/(const TV& b) const
+	TVec operator/(const TVec& b) const
 	{
-		return TV(_mm_div_ps(m_simd, b.m_simd));
+		return TVec(_mm_div_ps(m_simd, b.m_simd));
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV& operator/=(const TV& b)
+	TVec& operator/=(const TVec& b)
 	{
 		for(U i = 0; i < N; i++)
 		{
 			ANKI_ASSERT(b.m_arr[i] != 0.0);
 			m_arr[i] /= b.m_arr[i];
 		}
-		return static_cast<TV&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV& operator/=(const TV& b)
+	TVec& operator/=(const TVec& b)
 	{
 		m_simd = _mm_div_ps(m_simd, b.m_simd);
-		return static_cast<TV&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV operator-() const
+	TVec operator-() const
 	{
-		TV out;
+		TVec out;
 		for(U i = 0; i < N; i++)
 		{
 			out.m_arr[i] = -m_arr[i];
@@ -2092,12 +2460,12 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV operator-() const
+	TVec operator-() const
 	{
-		return TV(_mm_xor_ps(m_simd, _mm_set1_ps(-0.0)));
+		return TVec(_mm_xor_ps(m_simd, _mm_set1_ps(-0.0)));
 	}
 
-	Bool operator==(const TV& b) const
+	Bool operator==(const TVec& b) const
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -2109,12 +2477,12 @@ public:
 		return true;
 	}
 
-	Bool operator!=(const TV& b) const
+	Bool operator!=(const TVec& b) const
 	{
 		return !operator==(b);
 	}
 
-	Bool operator<(const TV& b) const
+	Bool operator<(const TVec& b) const
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -2126,7 +2494,7 @@ public:
 		return true;
 	}
 
-	Bool operator<=(const TV& b) const
+	Bool operator<=(const TVec& b) const
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -2138,7 +2506,7 @@ public:
 		return true;
 	}
 
-	Bool operator>(const TV& b) const
+	Bool operator>(const TVec& b) const
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -2150,7 +2518,7 @@ public:
 		return true;
 	}
 
-	Bool operator>=(const TV& b) const
+	Bool operator>=(const TVec& b) const
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -2165,55 +2533,69 @@ public:
 
 	/// @name Operators with T
 	/// @{
-	TV operator+(const T f) const
+	TVec operator+(const T f) const
 	{
-		return (*this) + TV(f);
+		return (*this) + TVec(f);
 	}
 
-	TV& operator+=(const T f)
+	TVec& operator+=(const T f)
 	{
-		(*this) += TV(f);
-		return static_cast<TV&>(*this);
+		(*this) += TVec(f);
+		return *this;
 	}
 
-	TV operator-(const T f) const
+	TVec operator-(const T f) const
 	{
-		return (*this) - TV(f);
+		return (*this) - TVec(f);
 	}
 
-	TV& operator-=(const T f)
+	TVec& operator-=(const T f)
 	{
-		(*this) -= TV(f);
-		return static_cast<TV&>(*this);
+		(*this) -= TVec(f);
+		return *this;
 	}
 
-	TV operator*(const T f) const
+	TVec operator*(const T f) const
 	{
-		return (*this) * TV(f);
+		return (*this) * TVec(f);
 	}
 
-	TV& operator*=(const T f)
+	TVec& operator*=(const T f)
 	{
-		(*this) *= TV(f);
-		return static_cast<TV&>(*this);
+		(*this) *= TVec(f);
+		return *this;
 	}
 
-	TV operator/(const T f) const
+	TVec operator/(const T f) const
 	{
-		return (*this) / TV(f);
+		return (*this) / TVec(f);
 	}
 
-	TV& operator/=(const T f)
+	TVec& operator/=(const T f)
 	{
-		(*this) /= TV(f);
-		return static_cast<TV&>(*this);
+		(*this) /= TVec(f);
+		return *this;
+	}
+	/// @}
+
+	/// @name Operators with other
+	/// @{
+
+	/// @note 16 muls 12 adds
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	TVec operator*(const TMat<T, 4, 4>& m4) const
+	{
+		return TVec(x() * m4(0, 0) + y() * m4(1, 0) + z() * m4(2, 0) + w() * m4(3, 0),
+			x() * m4(0, 1) + y() * m4(1, 1) + z() * m4(2, 1) + w() * m4(3, 1),
+			x() * m4(0, 2) + y() * m4(1, 2) + z() * m4(2, 2) + w() * m4(3, 2),
+			x() * m4(0, 3) + y() * m4(1, 3) + z() * m4(2, 3) + w() * m4(3, 3));
 	}
 	/// @}
 
 	/// @name Other
 	/// @{
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	ANKI_USE_RESULT T dot(const TV& b) const
+	T dot(const TVec& b) const
 	{
 		T out = T(0);
 		for(U i = 0; i < N; i++)
@@ -2224,7 +2606,7 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	ANKI_USE_RESULT T dot(const TV& b) const
+	T dot(const TVec& b) const
 	{
 		T o;
 		_mm_store_ss(&o, _mm_dp_ps(m_simd, b.m_simd, 0xF1));
@@ -2233,22 +2615,22 @@ public:
 
 	/// 6 muls, 3 adds
 	ANKI_ENABLE_IF_EXPRESSION(N == 3)
-	ANKI_USE_RESULT TV cross(const TV& b) const
+	TVec cross(const TVec& b) const
 	{
-		return TV(y() * b.z() - z() * b.y(), z() * b.x() - x() * b.z(), x() * b.y() - y() * b.x());
+		return TVec(y() * b.z() - z() * b.y(), z() * b.x() - x() * b.z(), x() * b.y() - y() * b.x());
 	}
 
 	/// It's like calculating the cross of a 3 component TVec.
 	ANKI_ENABLE_IF_EXPRESSION(N == 4 && !HAS_VEC4_SIMD)
-	ANKI_USE_RESULT TV cross(const TV& b) const
+	TVec cross(const TVec& b) const
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(b.w() == T(0));
-		return TV(xyz().cross(b.xyz()), T(0));
+		return TVec(xyz().cross(b.xyz()), T(0));
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(N == 4 && HAS_VEC4_SIMD)
-	ANKI_USE_RESULT TV cross(const TV& b) const
+	TVec cross(const TVec& b) const
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(b.w() == T(0));
@@ -2259,31 +2641,31 @@ public:
 		__m128 tmp0 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask0), _mm_shuffle_ps(b.m_simd, b.m_simd, mask1));
 		__m128 tmp1 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask1), _mm_shuffle_ps(b.m_simd, b.m_simd, mask0));
 
-		return TV(_mm_sub_ps(tmp0, tmp1));
+		return TVec(_mm_sub_ps(tmp0, tmp1));
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(N == 3)
-	ANKI_USE_RESULT TV projectTo(const TV& toThis) const
+	TVec projectTo(const TVec& toThis) const
 	{
 		return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
 	}
 
-	ANKI_ENABLE_IF_EXPRESSION(N == 2)
-	ANKI_USE_RESULT TV projectTo(const TV& toThis) const
+	ANKI_ENABLE_IF_EXPRESSION(N == 4)
+	TVec projectTo(const TVec& toThis) const
 	{
 		ANKI_ASSERT(w() == T(0));
 		return (toThis * ((*this).dot(toThis) / (toThis.dot(toThis)))).xyz0();
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(N == 3)
-	ANKI_USE_RESULT TV projectTo(const TV& rayOrigin, const TV& rayDir) const
+	TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const
 	{
 		const auto& a = *this;
 		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(N == 4)
-	ANKI_USE_RESULT TV projectTo(const TV& rayOrigin, const TV& rayDir) const
+	TVec projectTo(const TVec& rayOrigin, const TVec& rayDir) const
 	{
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(rayOrigin.w() == T(0));
@@ -2294,7 +2676,7 @@ public:
 
 	/// Perspective divide. Divide the xyzw of this to the w of this. This method will handle some edge cases.
 	ANKI_ENABLE_IF_EXPRESSION(N == 4)
-	ANKI_USE_RESULT TV perspectiveDivide() const
+	TVec perspectiveDivide() const
 	{
 		auto invw = T(1) / w(); // This may become (+-)inf
 		invw = (invw > 1e+11) ? 1e+11 : invw; // Clamp
@@ -2303,7 +2685,7 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	ANKI_USE_RESULT T getLengthSquared() const
+	T getLengthSquared() const
 	{
 		T out = T(0);
 		for(U i = 0; i < N; i++)
@@ -2314,24 +2696,24 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	ANKI_USE_RESULT T getLengthSquared() const
+	T getLengthSquared() const
 	{
 		T o;
 		_mm_store_ss(&o, _mm_dp_ps(m_simd, m_simd, 0xF1));
 		return o;
 	}
 
-	ANKI_USE_RESULT T getLength() const
+	T getLength() const
 	{
 		return sqrt<T>(getLengthSquared());
 	}
 
-	ANKI_USE_RESULT T getDistanceSquared(const TV& b) const
+	T getDistanceSquared(const TVec& b) const
 	{
 		return ((*this) - b).getLengthSquared();
 	}
 
-	ANKI_USE_RESULT T getDistance(const TV& b) const
+	T getDistance(const TVec& b) const
 	{
 		return sqrt<T>(getDistance(b));
 	}
@@ -2350,28 +2732,28 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV getNormalized() const
+	TVec getNormalized() const
 	{
 		return (*this) / getLength();
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV getNormalized() const
+	TVec getNormalized() const
 	{
 		__m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
-		return TV(_mm_mul_ps(m_simd, inverse_norm));
+		return TVec(_mm_mul_ps(m_simd, inverse_norm));
 	}
 
 	/// Return lerp(this, v1, t)
-	TV lerp(const TV& v1, T t) const
+	TVec lerp(const TVec& v1, T t) const
 	{
 		return ((*this) * (1.0 - t)) + (v1 * t);
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV getAbs() const
+	TVec abs() const
 	{
-		TV out;
+		TVec out;
 		for(U i = 0; i < N; ++i)
 		{
 			out[i] = absolute<T>(m_arr[i]);
@@ -2380,41 +2762,29 @@ public:
 	}
 
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV getAbs() const
+	TVec abs() const
 	{
 		static const __m128 signMask = _mm_set1_ps(-0.0f);
-		return TV(_mm_andnot_ps(signMask, m_simd));
-	}
-
-	/// Clamp between two values.
-	void clamp(const T& minv, const T& maxv)
-	{
-		*this = max(TV(minv)).min(TV(maxv));
+		return TVec(_mm_andnot_ps(signMask, m_simd));
 	}
 
 	/// Get clamped between two values.
-	TV getClamped(const T& minv, const T& maxv) const
+	TVec clamp(const T minv, const T maxv) const
 	{
-		return max(TV(minv)).min(TV(maxv));
-	}
-
-	/// Clamp between two vectors.
-	void clamp(const TV& minv, const TV& maxv)
-	{
-		*this = max(minv).min(maxv);
+		return max(TVec(minv)).min(TVec(maxv));
 	}
 
 	/// Get clamped between two vectors.
-	TV getClamped(const TV& minv, const TV& maxv) const
+	TVec clamp(const TVec& minv, const TVec& maxv) const
 	{
 		return max(minv).min(maxv);
 	}
 
 	/// Get the min of all components.
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV min(const TV& b) const
+	TVec min(const TVec& b) const
 	{
-		TV out;
+		TVec out;
 		for(U i = 0; i < N; ++i)
 		{
 			out[i] = anki::min<T>(m_arr[i], b[i]);
@@ -2424,22 +2794,22 @@ public:
 
 	/// Get the min of all components.
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV min(const TV& b) const
+	TVec min(const TVec& b) const
 	{
-		return TV(_mm_min_ps(m_simd, b.m_simd));
+		return TVec(_mm_min_ps(m_simd, b.m_simd));
 	}
 
 	/// Get the min of all components.
-	TV min(const T b) const
+	TVec min(const T b) const
 	{
-		return min(TV(b));
+		return min(TVec(b));
 	}
 
 	/// Get the max of all components.
 	ANKI_ENABLE_IF_EXPRESSION(!HAS_VEC4_SIMD)
-	TV max(const TV& b) const
+	TVec max(const TVec& b) const
 	{
-		TV out;
+		TVec out;
 		for(U i = 0; i < N; ++i)
 		{
 			out[i] = anki::max<T>(m_arr[i], b[i]);
@@ -2449,21 +2819,21 @@ public:
 
 	/// Get the max of all components.
 	ANKI_ENABLE_IF_EXPRESSION(HAS_VEC4_SIMD)
-	TV max(const TV& b) const
+	TVec max(const TVec& b) const
 	{
-		return TV(_mm_max_ps(m_simd, b.m_simd));
+		return TVec(_mm_max_ps(m_simd, b.m_simd));
 	}
 
 	/// Get the max of all components.
-	TV max(const T b) const
+	TVec max(const T b) const
 	{
-		return max(TV(b));
+		return max(TVec(b));
 	}
 
 	/// Get a safe 1 / (*this)
-	TV reciprocal() const
+	TVec reciprocal() const
 	{
-		TV out;
+		TVec out;
 		for(U i = 0; i < N; ++i)
 		{
 			out[i] = T(1) / m_arr[i];
@@ -2487,25 +2857,88 @@ public:
 		ANKI_ASSERT(data);
 		memcpy(this, data, sizeof(*this));
 	}
-
-	template<typename TAlloc>
-	String toString(TAlloc alloc) const
-	{
-		ANKI_ASSERT(0 && "TODO");
-		return String();
-	}
 	/// @}
 
-protected:
+private:
 	/// @name Data
 	/// @{
 	union
 	{
 		Array<T, N> m_arr;
+		T m_carr[N]; ///< To avoid bound checks on debug builds.
 		Simd m_simd;
 	};
 	/// @}
 };
+
+/// @memberof TVec
+template<typename T, U N>
+TVec<T, N> operator+(const T f, const TVec<T, N>& v)
+{
+	return v + f;
+}
+
+/// @memberof TVec
+template<typename T, U N>
+TVec<T, N> operator-(const T f, const TVec<T, N>& v)
+{
+	return TVec<T, N>(f) - v;
+}
+
+/// @memberof TVec
+template<typename T, U N>
+TVec<T, N> operator*(const T f, const TVec<T, N>& v)
+{
+	return v * f;
+}
+
+/// @memberof TVec
+template<typename T, U N>
+TVec<T, N> operator/(const T f, const TVec<T, N>& v)
+{
+	return TVec<T, N>(f) / v;
+}
+
+// Types
+
+/// F32 2D vector
+using Vec2 = TVec<F32, 2>;
+static_assert(sizeof(Vec2) == sizeof(F32) * 2, "Incorrect size");
+
+/// Half float 2D vector
+using HVec2 = TVec<F16, 2>;
+
+/// 32bit signed integer 2D vector
+using IVec2 = TVec<I32, 2>;
+
+/// 32bit unsigned integer 2D vector
+using UVec2 = TVec<U32, 2>;
+
+/// F32 3D vector
+using Vec3 = TVec<F32, 3>;
+static_assert(sizeof(Vec3) == sizeof(F32) * 3, "Incorrect size");
+
+/// Half float 3D vector
+using HVec3 = TVec<F16, 3>;
+
+/// 32bit signed integer 3D vector
+using IVec3 = TVec<I32, 3>;
+
+/// 32bit unsigned integer 3D vector
+using UVec3 = TVec<U32, 3>;
+
+/// F32 4D vector
+using Vec4 = TVec<F32, 4>;
+static_assert(sizeof(Vec4) == sizeof(F32) * 4, "Incorrect size");
+
+/// Half float 4D vector
+using HVec4 = TVec<F16, 4>;
+
+/// 32bit signed integer 4D vector
+using IVec4 = TVec<I32, 4>;
+
+/// 32bit unsigned integer 4D vector
+using UVec4 = TVec<U32, 4>;
 /// @}
 
 } // end namespace anki

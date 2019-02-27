@@ -5,8 +5,14 @@
 
 #pragma once
 
-#include <anki/math/CommonIncludes.h>
-#include <anki/math/CommonSrc.h>
+#include <anki/math/Vec.h>
+#include <anki/math/Mat.h>
+#include <anki/math/Quat.h>
+#include <anki/math/Euler.h>
+#include <anki/math/Axisang.h>
+#include <anki/math/Transform.h>
+#include <anki/math/F16.h>
+
 #include <anki/math/Functions.h>
 
 /// @defgroup math Math library

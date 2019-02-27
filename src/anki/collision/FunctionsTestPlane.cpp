@@ -94,7 +94,7 @@ F32 testPlane(const Plane& plane, const Obb& obb)
 
 	// maximum extent in direction of plane normal
 	const Vec4 rv = obb.getExtend() * xNormal;
-	const Vec4 rvabs = rv.getAbs();
+	const Vec4 rvabs = rv.abs();
 	const F32 r = rvabs.x() + rvabs.y() + rvabs.z();
 
 	// signed distance between box center and plane

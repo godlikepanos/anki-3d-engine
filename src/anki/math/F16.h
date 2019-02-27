@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/math/CommonIncludes.h>
+#include <anki/math/Common.h>
 
 namespace anki
 {
@@ -29,6 +29,7 @@ public:
 	/// @{
 	F16()
 	{
+		static_assert(sizeof(F16) == 2, "Incorrect size");
 	}
 
 	F16(const F16& b)
@@ -193,30 +194,29 @@ private:
 	static F16 toF16(F32 f);
 };
 
-/// @name F16 friends
-/// @{
+/// @memberof F16
 inline F32 operator+(const F32 f, const F16 h)
 {
 	return f + h.toF32();
 }
 
+/// @memberof F16
 inline F32 operator-(const F32 f, const F16 h)
 {
 	return f - h.toF32();
 }
 
+/// @memberof F16
 inline F32 operator*(const F32 f, const F16 h)
 {
 	return f * h.toF32();
 }
 
+/// @memberof F16
 inline F32 operator/(const F32 f, const F16 h)
 {
 	return f / h.toF32();
 }
 /// @}
-/// @}
-
-static_assert(sizeof(F16) == 2, "Incorrect size");
 
 } // end namespace anki

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/math/CommonIncludes.h>
+#include <anki/math/Common.h>
 
 namespace anki
 {
@@ -22,7 +22,6 @@ public:
 	/// @{
 	TEuler()
 	{
-		x() = y() = z() = 0.0;
 	}
 
 	TEuler(const T x_, const T y_, const T z_)
@@ -41,7 +40,7 @@ public:
 
 	explicit TEuler(const TQuat<T>& q)
 	{
-		T test = q.x() * q.y() + q.z() * q.w();
+		const T test = q.x() * q.y() + q.z() * q.w();
 		if(test > 0.499)
 		{
 			y() = 2.0 * atan2<T>(q.x(), q.w());
@@ -65,7 +64,7 @@ public:
 		x() = atan2<T>(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(), 1.0 - 2.0 * sqx - 2.0 * sqz);
 	}
 
-	explicit TEuler(const TMat3<T>& m3)
+	explicit TEuler(const TMat<T, 3, 3>& m3)
 	{
 		T cx, sx;
 		T cy, sy;
@@ -151,18 +150,6 @@ public:
 	}
 	/// @}
 
-	/// @name Other
-	/// @{
-	template<typename TAlloc>
-	String toString(TAlloc alloc) const
-	{
-		String s;
-		Error err = s.sprintf("%f %f %f", x(), y(), z());
-		(void)err;
-		return s;
-	}
-	/// @}
-
 private:
 	/// @name Data
 	/// @{
@@ -181,6 +168,9 @@ private:
 
 /// F32 Euler angles
 using Euler = TEuler<F32>;
+
+/// F64 Euler angles
+using DEuler = TEuler<F64>;
 /// @}
 
 } // end namespace anki
