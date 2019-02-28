@@ -244,7 +244,7 @@ Error SpotLightNode::init()
 	newComponent<MovedFeedbackComponent>();
 
 	// Light component
-	newComponent<LightComponent>(LightComponentType::POINT, getSceneGraph().getNewUuid());
+	newComponent<LightComponent>(LightComponentType::SPOT, getSceneGraph().getNewUuid());
 
 	// Feedback component
 	newComponent<LightChangedFeedbackComponent>();
