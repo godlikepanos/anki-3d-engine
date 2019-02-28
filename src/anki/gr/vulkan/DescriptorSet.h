@@ -57,6 +57,16 @@ public:
 		return m_handle != VK_NULL_HANDLE;
 	}
 
+	Bool operator==(const DescriptorSetLayout& b) const
+	{
+		return m_entry == b.m_entry;
+	}
+
+	Bool operator!=(const DescriptorSetLayout& b) const
+	{
+		return !operator==(b);
+	}
+
 private:
 	VkDescriptorSetLayout m_handle = VK_NULL_HANDLE;
 	DSLayoutCacheEntry* m_entry = nullptr;
@@ -106,8 +116,16 @@ class DescriptorSetState
 public:
 	void setLayout(const DescriptorSetLayout& layout)
 	{
+		if(layout.isCreated())
+		{
+			m_layoutDirty = m_layout != layout;
+		}
+		else
+		{
+			m_layoutDirty = true;
+		}
+
 		m_layout = layout;
-		m_layoutDirty = true;
 	}
 
 	void bindTextureAndSampler(U binding, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)

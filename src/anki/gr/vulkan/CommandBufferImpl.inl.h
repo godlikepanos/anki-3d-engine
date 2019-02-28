@@ -703,6 +703,12 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 		{
 			m_dsetState[i].setLayout(impl.getDescriptorSetLayout(i));
 		}
+		else
+		{
+			// According to the spec the bound DS may be disturbed if the ppline layout is not combatible. Play it safe
+			// and dirty the slot. That will force rebind of the DS at drawcall time.
+			m_dsetState[i].setLayout(DescriptorSetLayout());
+		}
 	}
 
 	m_microCmdb->pushObjectRef(prog);

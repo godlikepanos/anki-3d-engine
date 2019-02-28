@@ -516,7 +516,7 @@ void DescriptorSetState::flush(Bool& stateDirty,
 
 	hash = (toHashCount == 1) ? toHash[0] : computeHash(&toHash[0], toHashCount * sizeof(U64));
 
-	if(hash != m_lastHash || dynamicOffsetsDirty)
+	if(hash != m_lastHash || dynamicOffsetsDirty || m_layoutDirty)
 	{
 		m_lastHash = hash;
 		stateDirty = true;
