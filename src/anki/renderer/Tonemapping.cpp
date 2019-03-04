@@ -98,7 +98,7 @@ void Tonemapping::run(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->bindShaderProgram(m_grProg);
-	rgraphCtx.bindStorageBuffer(0, 0, m_runCtx.m_buffHandle);
+	rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_buffHandle);
 
 	TextureSubresourceInfo inputTexSubresource;
 	inputTexSubresource.m_firstMipmap = m_inputTexMip;

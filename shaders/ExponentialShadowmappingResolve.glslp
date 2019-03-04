@@ -61,7 +61,7 @@ layout(location = 0) in Vec2 in_uv;
 layout(location = 1) flat in Vec2 in_maxUv;
 layout(location = 2) flat in Vec2 in_minUv;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_inputTex;
+layout(set = 0, binding = 0) uniform sampler2D u_inputTex;
 
 layout(location = 0) out F32 out_color;
 

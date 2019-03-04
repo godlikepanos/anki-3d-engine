@@ -195,7 +195,8 @@ public:
 
 private:
 	const RenderGraph* m_rgraph ANKI_DBG_NULLIFY;
-	U32 m_passIdx ANKI_DBG_NULLIFY;
+	U32 m_passIdx ANKI_DEBUG_CODE(= MAX_U32);
+	U32 m_batchIdx ANKI_DEBUG_CODE(= MAX_U32);
 
 	TexturePtr getTexture(RenderTargetHandle handle) const;
 };
@@ -654,6 +655,7 @@ private:
 	BakeContext* newContext(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
 	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
 	void initBatches();
+	void initGraphicsPasses(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
@@ -674,7 +676,7 @@ private:
 	static void iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubresourceInfo& subresource, TFunc func);
 
 	void getCrntUsage(RenderTargetHandle handle,
-		U32 passIdx,
+		U32 batchIdx,
 		const TextureSubresourceInfo& subresource,
 		TextureUsageBit& usage) const;
 

@@ -84,31 +84,31 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA, BlendFactor::ZERO, BlendFactor::ONE);
 	cmdb->setBlendFactors(1, BlendFactor::ONE, BlendFactor::SRC_ALPHA, BlendFactor::ZERO, BlendFactor::ONE);
 
-	// Bind textures
+	// Bind all
 	rgraphCtx.bindTextureAndSampler(0,
 		0,
 		m_r->getGBuffer().getDepthRt(),
 		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 		m_r->getNearestSampler());
+
+	bindUniforms(cmdb, 0, 1, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 2, rsrc.m_decalsToken);
+
 	cmdb->bindTextureAndSampler(0,
-		1,
+		3,
 		(rsrc.m_diffDecalTexView) ? rsrc.m_diffDecalTexView : m_r->getDummyTextureView(),
 		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(0,
-		2,
+		4,
 		(rsrc.m_specularRoughnessDecalTexView) ? rsrc.m_specularRoughnessDecalTexView : m_r->getDummyTextureView(),
 		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 
-	// Uniforms
-	bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
-	bindUniforms(cmdb, 0, 1, rsrc.m_decalsToken);
+	bindStorage(cmdb, 0, 5, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 6, rsrc.m_indicesToken);
 
-	// Storage
-	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
-
+	// Draw
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 
 	// Restore state

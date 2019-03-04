@@ -11,7 +11,7 @@
 // Uniforms
 //
 #if BONES
-layout(ANKI_SS_BINDING(0, 0), row_major) readonly buffer ss00_
+layout(set = 0, binding = BINDING_COUNT, row_major) readonly buffer ss00_
 {
 	Mat4 u_boneTransforms[];
 };

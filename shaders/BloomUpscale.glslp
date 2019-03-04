@@ -12,10 +12,10 @@
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_lensDirtTex;
+layout(set = 0, binding = 0) uniform sampler2D u_tex;
+layout(set = 0, binding = 1) uniform sampler2D u_lensDirtTex;
 
-layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
+layout(set = 0, binding = 2) writeonly uniform image2D out_img;
 
 // Constants
 const U32 MAX_GHOSTS = 4u;

@@ -41,12 +41,12 @@
 #	error See file
 #endif
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_inTex;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_depthTex;
+layout(set = 0, binding = 0) uniform sampler2D u_inTex;
+layout(set = 0, binding = 1) uniform sampler2D u_depthTex;
 
 #if USE_COMPUTE
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
-layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 2) writeonly uniform image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out COL_TYPE out_color;

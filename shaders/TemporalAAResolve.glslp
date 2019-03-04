@@ -20,21 +20,21 @@
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_inputRt;
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_historyRt;
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_velocityRt;
+layout(set = 0, binding = 0) uniform sampler2D u_depthRt;
+layout(set = 0, binding = 1) uniform sampler2D u_inputRt;
+layout(set = 0, binding = 2) uniform sampler2D u_historyRt;
+layout(set = 0, binding = 3) uniform sampler2D u_velocityRt;
 
-layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
+layout(set = 0, binding = 4, std140, row_major) uniform u0_
 {
 	Mat4 u_prevViewProjMatMulInvViewProjMat;
 };
 
-layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
+layout(set = 0, binding = 5) writeonly uniform image2D out_img;
 
 #if TONEMAP_FIX
 #	define TONEMAPPING_SET 0
-#	define TONEMAPPING_BINDING 1
+#	define TONEMAPPING_BINDING 6
 #	include <shaders/TonemappingResources.glsl>
 #endif
 

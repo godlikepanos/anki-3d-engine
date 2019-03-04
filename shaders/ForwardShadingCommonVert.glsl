@@ -10,14 +10,10 @@
 
 // Global resources
 #define LIGHT_SET 0
-#define LIGHT_SS_BINDING 0
-#define LIGHT_TEX_BINDING 1
-#define LIGHT_UBO_BINDING 0
-#define LIGHT_MINIMAL
+#define LIGHT_COMMON_UNIS_BINDING 2
+#define LIGHT_LIGHTS_BINDING 3
+#define LIGHT_CLUSTERS_BINDING 6
 #include <shaders/ClusteredShadingCommon.glsl>
-#undef LIGHT_SET
-#undef LIGHT_SS_BINDING
-#undef LIGHT_TEX_BINDING
 
 // In/out
 layout(location = POSITION_LOCATION) in Vec3 in_position;

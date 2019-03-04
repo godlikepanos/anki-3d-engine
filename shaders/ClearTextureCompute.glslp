@@ -19,9 +19,9 @@ struct PushConsts
 ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 
 #if IS_2D
-layout(ANKI_IMAGE_BINDING(0, 0)) uniform writeonly image2D u_img;
+layout(set = 0, binding = 0) uniform writeonly image2D u_img;
 #else
-layout(ANKI_IMAGE_BINDING(0, 0)) uniform writeonly image3D u_img;
+layout(set = 0, binding = 0) uniform writeonly image3D u_img;
 #endif
 
 void main()

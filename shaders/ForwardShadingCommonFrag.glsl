@@ -10,14 +10,12 @@
 #include <shaders/Functions.glsl>
 
 // Global resources
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_gbufferDepthRt;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler3D u_lightVol;
+layout(set = 0, binding = 0) uniform sampler2D u_gbufferDepthRt;
+layout(set = 0, binding = 1) uniform sampler3D u_lightVol;
 #define LIGHT_SET 0
-#define LIGHT_UBO_BINDING 0
-#define LIGHT_SS_BINDING 0
-#define LIGHT_TEX_BINDING 2
-#define LIGHT_LIGHTS
-#define LIGHT_COMMON_UNIS
+#define LIGHT_COMMON_UNIS_BINDING 2
+#define LIGHT_LIGHTS_BINDING 3
+#define LIGHT_CLUSTERS_BINDING 6
 #include <shaders/ClusteredShadingCommon.glsl>
 
 #define anki_u_time u_time

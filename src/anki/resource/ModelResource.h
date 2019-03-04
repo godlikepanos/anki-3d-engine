@@ -78,6 +78,8 @@ public:
 	BufferPtr m_indexBuffer;
 	PtrSize m_indexBufferOffset;
 	IndexType m_indexType;
+
+	U8 m_bindingCount;
 };
 
 /// Model patch interface class. Its very important class and it binds the material with the mesh

@@ -16,7 +16,7 @@ inline void RenderPassWorkContext::getBufferState(RenderPassBufferHandle handle,
 inline void RenderPassWorkContext::getRenderTargetState(
 	RenderTargetHandle handle, const TextureSubresourceInfo& subresource, TexturePtr& tex, TextureUsageBit& usage) const
 {
-	m_rgraph->getCrntUsage(handle, m_passIdx, subresource, usage);
+	m_rgraph->getCrntUsage(handle, m_batchIdx, subresource, usage);
 	tex = m_rgraph->getTexture(handle);
 }
 

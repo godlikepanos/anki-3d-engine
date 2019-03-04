@@ -17,8 +17,8 @@
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec4 out_color;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler3D u_fogVolume;
+layout(set = 0, binding = 0) uniform sampler2D u_depthRt;
+layout(set = 0, binding = 1) uniform sampler3D u_fogVolume;
 
 struct PushConsts
 {

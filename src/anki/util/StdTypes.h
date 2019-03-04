@@ -187,6 +187,12 @@ private:
 #	define ANKI_DBG_NULLIFY
 #endif
 
+#if ANKI_EXTRA_CHECKS
+#	define ANKI_DEBUG_CODE(x) x
+#else
+#	define ANKI_DEBUG_CODE(x)
+#endif
+
 /// @name Size user literals
 /// @{
 static constexpr unsigned long long int operator""_B(unsigned long long int x)

@@ -46,24 +46,11 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_%s_SHADER 1
 
 #if defined(ANKI_BACKEND_GL)
-#	define ANKI_UBO_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
-#	define ANKI_SS_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
-#	define ANKI_TEX_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
-#	define ANKI_IMAGE_BINDING(set_, binding_) binding = (set_) * (%u) + (binding_)
-#	define ANKI_SPEC_CONST(binding_, type_, name_) const type_ name_ = _anki_spec_const_ ## binding_
-#	define ANKI_PUSH_CONSTANTS(struct_, name_) layout(location = (%u)) uniform struct_ name_
-
-#	define ANKI_UNROLL
-#	define ANKI_LOOP
-#	define ANKI_BRANCH
-#	define ANKI_FLATTEN
+#	error GL is Deprecated
 #else
 #	define gl_VertexID gl_VertexIndex
 #	define gl_InstanceID gl_InstanceIndex
-#	define ANKI_TEX_BINDING(set_, binding_) set = (set_), binding = (%u) + (binding_)
-#	define ANKI_UBO_BINDING(set_, binding_) set = (set_), binding = (%u) + (binding_)
-#	define ANKI_SS_BINDING(set_, binding_) set = (set_), binding = (%u) + (binding_)
-#	define ANKI_IMAGE_BINDING(set_, binding_) set = (set_), binding = (%u) + (binding_)
+#
 #	define ANKI_SPEC_CONST(binding_, type_, name_) layout(constant_id = (binding_)) const type_ name_ = type_(0)
 #	define ANKI_PUSH_CONSTANTS(struct_, name_) layout(push_constant, row_major, std140) \
 		uniform pushConst_ {struct_ name_;}
@@ -248,17 +235,6 @@ static void preappendAnkiSpecific(CString source, const ShaderCompilerOptions& o
 		options.m_gpuCapabilities.m_majorApiVersion,
 		&GPU_VENDOR_STR[options.m_gpuCapabilities.m_gpuVendor][0],
 		SHADER_NAME[options.m_shaderType],
-		// GL bindings
-		MAX_UNIFORM_BUFFER_BINDINGS,
-		MAX_STORAGE_BUFFER_BINDINGS,
-		MAX_TEXTURE_BINDINGS,
-		MAX_IMAGE_BINDINGS, // Images
-		(MAX_TEXTURE_BINDINGS + MAX_IMAGE_BINDINGS) * MAX_DESCRIPTOR_SETS, // Push constant location
-		// VK bindings
-		0,
-		MAX_TEXTURE_BINDINGS,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS,
 		&source[0]);
 }
 

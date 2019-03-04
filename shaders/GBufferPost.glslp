@@ -32,15 +32,13 @@ void main()
 #include <shaders/Pack.glsl>
 #include <shaders/Functions.glsl>
 
-#define LIGHT_SET 0
-#define LIGHT_SS_BINDING 0
-#define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 1
-#define LIGHT_DECALS
-#define LIGHT_COMMON_UNIS
-#include <shaders/ClusteredShadingCommon.glsl>
+layout(set = 0, binding = 0) uniform sampler2D u_msDepthRt;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msDepthRt;
+#define LIGHT_SET 0
+#define LIGHT_COMMON_UNIS_BINDING 1
+#define LIGHT_DECALS_BINDING 2
+#define LIGHT_CLUSTERS_BINDING 5
+#include <shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;

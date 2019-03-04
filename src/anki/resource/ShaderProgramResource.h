@@ -191,13 +191,19 @@ public:
 		return U(m_texUnits[var.m_idx]);
 	}
 
+	U getBindingCount() const
+	{
+		return m_bindingCount;
+	}
+
 private:
 	ShaderProgramPtr m_prog;
 
 	BitSet<128, U64> m_activeInputVars = {false};
 	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
-	U32 m_uniBlockSize = 0;
 	DynamicArray<I16> m_texUnits;
+	U32 m_uniBlockSize = 0;
+	U8 m_bindingCount = 0;
 	Bool m_usesPushConstants = false;
 };
 

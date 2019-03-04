@@ -10,11 +10,9 @@
 //
 // Common uniforms
 //
-#if defined(LIGHT_COMMON_UNIS)
+#if defined(LIGHT_COMMON_UNIS_BINDING)
 
-const U32 _NEXT_UBO_BINDING = LIGHT_UBO_BINDING + 1;
-
-layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) uniform lu0_
+layout(set = LIGHT_SET, binding = LIGHT_COMMON_UNIS_BINDING, std140, row_major) uniform lu0_
 {
 	LightingUniforms u_lightingUniforms;
 };
@@ -40,76 +38,57 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 #	define u_prevViewProjMat u_lightingUniforms.m_prevViewProjMat
 #	define u_prevViewProjMatMulInvViewProjMat u_lightingUniforms.m_prevViewProjMatMulInvViewProjMat
 #	define u_dirLight u_lightingUniforms.m_dirLight
-
-#else
-const U32 _NEXT_UBO_BINDING = LIGHT_UBO_BINDING;
 #endif
 
 //
-// Light uniforms
+// Light uniforms (3)
 //
-#if defined(LIGHT_LIGHTS)
-const U32 _NEXT_UBO_BINDING_2 = _NEXT_UBO_BINDING + 2;
-const U32 _NEXT_TEX_BINDING_2 = LIGHT_TEX_BINDING + 1;
-
-layout(ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING), std140) uniform u1_
+#if defined(LIGHT_LIGHTS_BINDING)
+layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING, std140) uniform u1_
 {
 	PointLight u_pointLights[UBO_MAX_SIZE / SIZEOF_POINT_LIGHT];
 };
 
-layout(ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING + 1), std140, row_major) uniform u2_
+layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 1, std140, row_major) uniform u2_
 {
 	SpotLight u_spotLights[UBO_MAX_SIZE / SIZEOF_SPOT_LIGHT];
 };
 
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 0)) uniform highp sampler2D u_shadowTex;
-#else
-const U32 _NEXT_UBO_BINDING_2 = _NEXT_UBO_BINDING;
-const U32 _NEXT_TEX_BINDING_2 = LIGHT_TEX_BINDING;
+layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 2) uniform highp sampler2D u_shadowTex;
 #endif
 
 //
-// Indirect uniforms
+// Indirect uniforms (4)
 //
-#if defined(LIGHT_INDIRECT)
-const U32 _NEXT_UBO_BINDING_3 = _NEXT_UBO_BINDING_2 + 1;
-const U32 _NEXT_TEX_BINDING_3 = _NEXT_TEX_BINDING_2 + 3;
-
-layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_2)) uniform u3_
+#if defined(LIGHT_INDIRECT_BINDING)
+layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING) uniform u3_
 {
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / SIZEOF_REFLECTION_PROBE];
 };
 
-layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_2 + 0)) uniform samplerCubeArray u_reflectionsTex;
-layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_2 + 1)) uniform samplerCubeArray u_irradianceTex;
-layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_2 + 2)) uniform sampler2D u_integrationLut;
-#else
-const U32 _NEXT_UBO_BINDING_3 = _NEXT_UBO_BINDING_2;
-const U32 _NEXT_TEX_BINDING_3 = _NEXT_TEX_BINDING_2;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 1) uniform samplerCubeArray u_reflectionsTex;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 2) uniform samplerCubeArray u_irradianceTex;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 3) uniform sampler2D u_integrationLut;
 #endif
 
 //
 // Decal uniforms
 //
-#if defined(LIGHT_DECALS)
-const U32 _NEXT_UBO_BINDING_4 = _NEXT_UBO_BINDING_3 + 1u;
-
-layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_3)) uniform u4_
+#if defined(LIGHT_DECALS_BINDING)
+layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_DECALS_BINDING) uniform u4_
 {
 	Decal u_decals[UBO_MAX_SIZE / SIZEOF_DECAL];
 };
 
-layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_3 + 0)) uniform sampler2D u_diffDecalTex;
-layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_3 + 1)) uniform sampler2D u_specularRoughnessDecalTex;
-#else
-const U32 _NEXT_UBO_BINDING_4 = _NEXT_UBO_BINDING_3;
+layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 1) uniform sampler2D u_diffDecalTex;
+layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 2) uniform sampler2D u_specularRoughnessDecalTex;
 #endif
 
 //
 // Fog density uniforms
 //
-#if defined(LIGHT_FOG_DENSITY_VOLUMES)
-layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_4)) uniform u5_
+#if defined(LIGHT_FOG_DENSITY_VOLUMES_BINDING)
+layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_FOG_DENSITY_VOLUMES_BINDING) uniform u5_
 {
 	FogDensityVolume u_fogDensityVolumes[UBO_MAX_SIZE / SIZEOF_FOG_DENSITY_VOLUME];
 };
@@ -118,15 +97,17 @@ layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_4)) unif
 //
 // Cluster uniforms
 //
-layout(ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0), std430) readonly buffer s0_
+#if defined(LIGHT_CLUSTERS_BINDING)
+layout(set = LIGHT_SET, binding = LIGHT_CLUSTERS_BINDING, std430) readonly buffer s0_
 {
 	U32 u_clusters[];
 };
 
-layout(std430, ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer s1_
+layout(set = LIGHT_SET, binding = LIGHT_CLUSTERS_BINDING + 1, std430) readonly buffer s1_
 {
 	U32 u_lightIndices[];
 };
+#endif
 
 // Debugging function
 Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool slights, Bool probes, Bool fogVolumes)

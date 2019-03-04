@@ -10,7 +10,7 @@
 #pragma anki start frag
 #include <shaders/Common.glsl>
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
+layout(set = 0, binding = 0) uniform sampler2D u_tex;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_col;

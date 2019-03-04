@@ -25,14 +25,14 @@ ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 #define u_copyToClientLevel u_regs.m_copyToClientLevelWriteLevel1Pad2.x
 #define u_writeLevel1 (u_regs.m_copyToClientLevelWriteLevel1Pad2.y == 1u)
 
-layout(std430, ANKI_SS_BINDING(0, 0)) writeonly buffer s1_
+layout(set = 0, binding = 0) uniform sampler2D u_readTex;
+layout(set = 0, binding = 1) writeonly uniform image2D u_level0WriteImg;
+layout(set = 0, binding = 2) writeonly uniform image2D u_level1WriteImg;
+
+layout(std430, set = 0, binding = 3) writeonly buffer s1_
 {
 	F32 u_clientBuf[];
 };
-
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_readTex;
-layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D u_level0WriteImg;
-layout(ANKI_IMAGE_BINDING(0, 1)) writeonly uniform image2D u_level1WriteImg;
 
 shared F32 s_depths[gl_WorkGroupSize.y][gl_WorkGroupSize.x];
 

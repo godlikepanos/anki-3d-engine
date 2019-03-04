@@ -129,12 +129,12 @@ void Bloom::runExposure(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindTextureAndSampler(
 		0, 0, m_r->getDownscaleBlur().getRt(), inputTexSubresource, m_r->getLinearSampler());
 
-	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
-	*uniforms = Vec4(m_exposure.m_threshold, m_exposure.m_scale, 0.0, 0.0);
+	Vec4 uniforms(m_exposure.m_threshold, m_exposure.m_scale, 0.0f, 0.0f);
+	cmdb->setPushConstants(&uniforms, sizeof(uniforms));
 
-	rgraphCtx.bindStorageBuffer(0, 0, m_r->getTonemapping().getAverageLuminanceBuffer());
+	rgraphCtx.bindStorageBuffer(0, 1, m_r->getTonemapping().getAverageLuminanceBuffer());
 
-	rgraphCtx.bindImage(0, 0, m_runCtx.m_exposureRt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 2, m_runCtx.m_exposureRt, TextureSubresourceInfo());
 
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_exposure.m_width, m_exposure.m_height);
 }
@@ -152,7 +152,7 @@ void Bloom::runUpscaleAndSslf(RenderPassWorkContext& rgraphCtx)
 		m_upscale.m_lensDirtTex->getSampler(),
 		TextureUsageBit::SAMPLED_COMPUTE);
 
-	rgraphCtx.bindImage(0, 0, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 2, m_runCtx.m_upscaleRt, TextureSubresourceInfo());
 
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_upscale.m_width, m_upscale.m_height);
 }

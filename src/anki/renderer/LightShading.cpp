@@ -107,39 +107,39 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		cmdb->bindShaderProgram(m_lightShading.m_grProg);
 		cmdb->setDepthWrite(false);
 
-		// Bind textures
-		rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(0), m_r->getNearestSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
-		rgraphCtx.bindTextureAndSampler(0,
-			3,
-			m_r->getGBuffer().getDepthRt(),
-			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-			m_r->getNearestSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getSsr().getRt(), m_r->getLinearSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getSsao().getRt(), m_r->getLinearSampler());
+		// Bind all
+		bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
 
-		rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
+		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+		rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+
+		bindUniforms(cmdb, 0, 4, rsrc.m_probesToken);
 		rgraphCtx.bindColorTextureAndSampler(
-			0, 7, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
+			0, 5, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
 		rgraphCtx.bindColorTextureAndSampler(
-			0, 8, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
+			0, 6, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
 		cmdb->bindTextureAndSampler(0,
-			9,
+			7,
 			m_r->getIndirect().getIntegrationLut(),
 			m_r->getIndirect().getIntegrationLutSampler(),
 			TextureUsageBit::SAMPLED_FRAGMENT);
 
-		// Bind uniforms
-		bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
-		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
-		bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);
+		bindStorage(cmdb, 0, 8, rsrc.m_clustersToken);
+		bindStorage(cmdb, 0, 9, rsrc.m_indicesToken);
 
-		// Bind storage
-		bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
+		rgraphCtx.bindColorTextureAndSampler(0, 10, m_r->getGBuffer().getColorRt(0), m_r->getNearestSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 11, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 12, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
+		rgraphCtx.bindTextureAndSampler(0,
+			13,
+			m_r->getGBuffer().getDepthRt(),
+			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
+			m_r->getNearestSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 14, m_r->getSsr().getRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 15, m_r->getSsao().getRt(), m_r->getLinearSampler());
 
+		// Draw
 		drawQuad(cmdb);
 	}
 

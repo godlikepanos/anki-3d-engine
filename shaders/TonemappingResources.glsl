@@ -9,22 +9,14 @@
 
 #include <shaders/Common.glsl>
 
-#ifndef TONEMAPPING_SET
-#	define TONEMAPPING_SET 0
-#endif
-
-#ifndef TONEMAPPING_BINDING
-#	define TONEMAPPING_BINDING 0
-#endif
-
 #ifndef TONEMAPPING_RESOURCE_AS_BUFFER
 #	define TONEMAPPING_RESOURCE_AS_BUFFER 0
 #endif
 
 #if TONEMAPPING_RESOURCE_AS_BUFFER
-layout(std140, ANKI_SS_BINDING(TONEMAPPING_SET, TONEMAPPING_BINDING)) buffer tmss0_
+layout(std140, set = TONEMAPPING_SET, binding = TONEMAPPING_BINDING) buffer tmss0_
 #else
-layout(std140, ANKI_UBO_BINDING(TONEMAPPING_SET, TONEMAPPING_BINDING)) uniform tmu0_
+layout(std140, set = TONEMAPPING_SET, binding = TONEMAPPING_BINDING) uniform tmu0_
 #endif
 {
 	Vec4 u_averageLuminanceExposurePad2;

@@ -105,6 +105,7 @@ public:
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorUsages = {}; ///< For beginRender pass
 	TextureUsageBit m_dsUsage = TextureUsageBit::NONE; ///< For beginRender pass
 
+	U32 m_batchIdx ANKI_DEBUG_CODE(= MAX_U32);
 	Bool m_drawsToPresentable = false;
 
 	FramebufferPtr& fb()
@@ -618,13 +619,13 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		outPass.m_userData = inPass.m_userData;
 
 		// Create consumer info
+		outPass.m_consumedTextures.resize(alloc, inPass.m_rtDeps.getSize());
 		for(U depIdx = 0; depIdx < inPass.m_rtDeps.getSize(); ++depIdx)
 		{
 			const RenderPassDependency& inDep = inPass.m_rtDeps[depIdx];
 			ANKI_ASSERT(inDep.m_isTexture);
 
-			outPass.m_consumedTextures.emplaceBack(alloc);
-			Pass::ConsumedTextureInfo& inf = outPass.m_consumedTextures.getBack();
+			Pass::ConsumedTextureInfo& inf = outPass.m_consumedTextures[depIdx];
 
 			ANKI_ASSERT(sizeof(inf) == sizeof(inDep.m_texture));
 			memcpy(&inf, &inDep.m_texture, sizeof(inf));
@@ -644,13 +645,109 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
 				outPass.m_drawsToPresentable = drawsToPresentable;
+			}
+			else
+			{
+				ANKI_ASSERT(inPass.m_secondLevelCmdbsCount == 0 && "Can't have second level cmdbs");
+			}
+		}
+		else
+		{
+			ANKI_ASSERT(inPass.m_secondLevelCmdbsCount == 0 && "Can't have second level cmdbs");
+		}
 
+		// Set dependencies by checking all previous subpasses.
+		U prevPassIdx = passIdx;
+		while(prevPassIdx--)
+		{
+			const RenderPassDescriptionBase& prevPass = *descr.m_passes[prevPassIdx];
+			if(passADependsOnB(inPass, prevPass))
+			{
+				outPass.m_dependsOn.emplaceBack(alloc, prevPassIdx);
+			}
+		}
+	}
+}
+
+void RenderGraph::initBatches()
+{
+	ANKI_ASSERT(m_ctx);
+
+	U passesAssignedToBatchCount = 0;
+	const U passCount = m_ctx->m_passes.getSize();
+	ANKI_ASSERT(passCount > 0);
+	while(passesAssignedToBatchCount < passCount)
+	{
+		m_ctx->m_batches.emplaceBack(m_ctx->m_alloc);
+		Batch& batch = m_ctx->m_batches.getBack();
+
+		Bool drawsToPresentable = false;
+
+		for(U i = 0; i < passCount; ++i)
+		{
+			if(!m_ctx->m_passIsInBatch.get(i) && !passHasUnmetDependencies(*m_ctx, i))
+			{
+				// Add to the batch
+				++passesAssignedToBatchCount;
+				batch.m_passIndices.emplaceBack(m_ctx->m_alloc, i);
+
+				// Will batch draw to the swapchain?
+				drawsToPresentable = drawsToPresentable || m_ctx->m_passes[i].m_drawsToPresentable;
+			}
+		}
+
+		// Get or create cmdb for the batch.
+		// Create a new cmdb if the batch is writing to swapchain. This will help Vulkan to have a dependency of the
+		// swap chain image acquire to the 2nd command buffer instead of adding it to a single big cmdb.
+		if(m_ctx->m_graphicsCmdbs.isEmpty() || drawsToPresentable)
+		{
+			CommandBufferInitInfo cmdbInit;
+			cmdbInit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::GRAPHICS_WORK;
+			CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbInit);
+
+			m_ctx->m_graphicsCmdbs.emplaceBack(m_ctx->m_alloc, cmdb);
+
+			batch.m_cmdb = cmdb.get();
+		}
+		else
+		{
+			batch.m_cmdb = m_ctx->m_graphicsCmdbs.getBack().get();
+		}
+
+		// Mark batch's passes done
+		for(U32 passIdx : m_ctx->m_batches.getBack().m_passIndices)
+		{
+			m_ctx->m_passIsInBatch.set(passIdx);
+			m_ctx->m_passes[passIdx].m_batchIdx = m_ctx->m_batches.getSize() - 1;
+		}
+	}
+}
+
+void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
+{
+	BakeContext& ctx = *m_ctx;
+	const U passCount = descr.m_passes.getSize();
+	ANKI_ASSERT(passCount > 0);
+
+	for(U passIdx = 0; passIdx < passCount; ++passIdx)
+	{
+		const RenderPassDescriptionBase& inPass = *descr.m_passes[passIdx];
+		Pass& outPass = ctx.m_passes[passIdx];
+
+		// Create command buffers and framebuffer
+		if(inPass.m_type == RenderPassDescriptionBase::Type::GRAPHICS)
+		{
+			const GraphicsRenderPassDescription& graphicsPass =
+				static_cast<const GraphicsRenderPassDescription&>(inPass);
+
+			if(graphicsPass.hasFramebuffer())
+			{
 				// Init the usage bits
 				TextureUsageBit usage;
 				for(U i = 0; i < graphicsPass.m_fbDescr.m_colorAttachmentCount; ++i)
 				{
 					getCrntUsage(graphicsPass.m_rtHandles[i],
-						passIdx,
+						outPass.m_batchIdx,
 						TextureSubresourceInfo(graphicsPass.m_fbDescr.m_colorAttachments[i].m_surface),
 						usage);
 
@@ -663,7 +760,8 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 						TextureSubresourceInfo(graphicsPass.m_fbDescr.m_depthStencilAttachment.m_surface,
 							graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect);
 
-					getCrntUsage(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS], passIdx, subresource, usage);
+					getCrntUsage(
+						graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS], outPass.m_batchIdx, subresource, usage);
 
 					outPass.m_dsUsage = usage;
 				}
@@ -687,67 +785,6 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		else
 		{
 			ANKI_ASSERT(inPass.m_secondLevelCmdbsCount == 0 && "Can't have second level cmdbs");
-		}
-
-		// Set dependencies
-		U j = passIdx;
-		while(j--)
-		{
-			const RenderPassDescriptionBase& prevPass = *descr.m_passes[j];
-			if(passADependsOnB(inPass, prevPass))
-			{
-				outPass.m_dependsOn.emplaceBack(alloc, j);
-			}
-		}
-	}
-}
-
-void RenderGraph::initBatches()
-{
-	ANKI_ASSERT(m_ctx);
-
-	U passesInBatchCount = 0;
-	const U passCount = m_ctx->m_passes.getSize();
-	ANKI_ASSERT(passCount > 0);
-	while(passesInBatchCount < passCount)
-	{
-		Batch batch;
-		Bool drawsToPresentable = false;
-
-		for(U i = 0; i < passCount; ++i)
-		{
-			if(!m_ctx->m_passIsInBatch.get(i) && !passHasUnmetDependencies(*m_ctx, i))
-			{
-				// Add to the batch
-				++passesInBatchCount;
-				batch.m_passIndices.emplaceBack(m_ctx->m_alloc, i);
-
-				// Will batch draw to the swapchain?
-				drawsToPresentable = drawsToPresentable || m_ctx->m_passes[i].m_drawsToPresentable;
-			}
-		}
-
-		// Get or create cmdb for the batch.
-		// Create a new cmdb if the batch is writing to swapchain. This will help Vulkan to have a dependency of the
-		// swap chain image acquire to the 2nd command buffer instead of adding it to a single big cmdb.
-		if(m_ctx->m_graphicsCmdbs.isEmpty() || drawsToPresentable)
-		{
-			CommandBufferInitInfo cmdbInit;
-			cmdbInit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::GRAPHICS_WORK;
-			CommandBufferPtr cmdb = getManager().newCommandBuffer(cmdbInit);
-
-			m_ctx->m_graphicsCmdbs.emplaceBack(m_ctx->m_alloc, cmdb);
-
-			batch.m_cmdb = cmdb.get();
-		}
-
-		// Push back batch
-		m_ctx->m_batches.emplaceBack(m_ctx->m_alloc, std::move(batch));
-
-		// Mark batch's passes done
-		for(U32 passIdx : m_ctx->m_batches.getBack().m_passIndices)
-		{
-			m_ctx->m_passIsInBatch.set(passIdx);
 		}
 	}
 }
@@ -938,6 +975,9 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllo
 	// Walk the graph and create pass batches
 	initBatches();
 
+	// Now that we know the batches every pass belongs init the graphics passes
+	initGraphicsPasses(descr, alloc);
+
 	// Create barriers between batches
 	setBatchBarriers(descr);
 
@@ -981,6 +1021,7 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 			ctx.m_commandBuffer = p.m_secondLevelCmdbs[threadIdx];
 			ctx.m_secondLevelCommandBufferCount = size;
 			ctx.m_passIdx = &p - &m_ctx->m_passes[0];
+			ctx.m_batchIdx = p.m_batchIdx;
 			ctx.m_userData = p.m_userData;
 
 			ANKI_ASSERT(ctx.m_commandBuffer.isCreated());
@@ -1047,6 +1088,7 @@ void RenderGraph::run() const
 			{
 				ctx.m_userData = pass.m_userData;
 				ctx.m_passIdx = passIdx;
+				ctx.m_batchIdx = pass.m_batchIdx;
 
 				pass.m_callback(ctx);
 			}
@@ -1075,16 +1117,20 @@ void RenderGraph::flush()
 }
 
 void RenderGraph::getCrntUsage(
-	RenderTargetHandle handle, U32 passIdx, const TextureSubresourceInfo& subresource, TextureUsageBit& usage) const
+	RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource, TextureUsageBit& usage) const
 {
 	usage = TextureUsageBit::NONE;
+	const Batch& batch = m_ctx->m_batches[batchIdx];
 
-	for(const Pass::ConsumedTextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
+	for(U passIdx : batch.m_passIndices)
 	{
-		if(consumer.m_handle == handle && overlappingTextureSubresource(subresource, consumer.m_subresource))
+		for(const Pass::ConsumedTextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
 		{
-			usage = consumer.m_usage;
-			break;
+			if(consumer.m_handle == handle && overlappingTextureSubresource(subresource, consumer.m_subresource))
+			{
+				usage |= consumer.m_usage;
+				break;
+			}
 		}
 	}
 }

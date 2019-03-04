@@ -19,18 +19,18 @@ struct DrawArraysIndirectInfo
 	U32 baseInstance;
 };
 
-layout(ANKI_SS_BINDING(0, 0), std430, row_major) readonly buffer ss0_
+layout(set = 0, binding = 0, std430, row_major) readonly buffer ss0_
 {
 	Mat4 u_mvp;
 	Vec4 u_flarePositions[];
 };
 
-layout(ANKI_SS_BINDING(0, 1), std430) writeonly buffer ss1_
+layout(set = 0, binding = 1, std430) writeonly buffer ss1_
 {
 	DrawArraysIndirectInfo u_indirectInfo[];
 };
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthMap;
+layout(set = 0, binding = 2) uniform sampler2D u_depthMap;
 
 shared U32 s_maxDepth;
 

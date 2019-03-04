@@ -45,12 +45,13 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 			0, 0, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getLinearSampler());
 		rgraphCtx.bindColorTextureAndSampler(
 			0, 1, m_r->getVolumetricLightingAccumulation().getRt(), m_r->getLinearSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
-		bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
-		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
-		bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
+
+		bindUniforms(cmdb, 0, 2, ctx.m_lightShadingUniformsToken);
+		bindUniforms(cmdb, 0, 3, rsrc.m_pointLightsToken);
+		bindUniforms(cmdb, 0, 4, rsrc.m_spotLightsToken);
+		rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+		bindStorage(cmdb, 0, 6, rsrc.m_clustersToken);
+		bindStorage(cmdb, 0, 7, rsrc.m_indicesToken);
 
 		// Start drawing
 		m_r->getSceneDrawer().drawRange(Pass::FS,

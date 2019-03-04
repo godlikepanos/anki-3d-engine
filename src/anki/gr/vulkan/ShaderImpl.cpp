@@ -120,16 +120,23 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	}};
 	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> descriptors;
 
-	auto func = [&](const std::vector<spirv_cross::Resource>& resources,
-					DescriptorType type,
-					U minVkBinding,
-					U maxVkBinding) -> void {
+	auto func = [&](const std::vector<spirv_cross::Resource>& resources, DescriptorType type) -> void {
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;
 			const U32 set = spvc.get_decoration(id, spv::Decoration::DecorationDescriptorSet);
+			ANKI_ASSERT(set < MAX_DESCRIPTOR_SETS);
 			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
-			ANKI_ASSERT(binding >= minVkBinding && binding <= maxVkBinding);
+			ANKI_ASSERT(binding < MAX_BINDINGS_PER_DESCRIPTOR_SET);
+
+			const spirv_cross::SPIRType& typeInfo = spvc.get_type(r.type_id);
+			U arraySize = 1;
+			if(typeInfo.array.size() != 0)
+			{
+				ANKI_ASSERT(typeInfo.array.size() == 1 && "Only 1D arrays are supported");
+				arraySize = typeInfo.array[0];
+				ANKI_ASSERT(arraySize > 0 && arraySize < MAX_U8);
+			}
 
 			m_descriptorSetMask.set(set);
 			m_activeBindingMask[set].set(set);
@@ -137,29 +144,21 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			// Check that there are no other descriptors with the same binding
 			for(U i = 0; i < counts[set]; ++i)
 			{
-				ANKI_ASSERT(descriptors[set][i].m_binding != binding);
+				ANKI_ASSERT(descriptors[set][i].m_binding != binding && "Found 2 descriptors with the same binding");
 			}
 
 			DescriptorBinding& descriptor = descriptors[set][counts[set]++];
 			descriptor.m_binding = binding;
 			descriptor.m_type = type;
 			descriptor.m_stageMask = static_cast<ShaderTypeBit>(1 << m_shaderType);
+			descriptor.m_arraySize = arraySize;
 		}
 	};
 
-	func(rsrc.uniform_buffers,
-		DescriptorType::UNIFORM_BUFFER,
-		MAX_TEXTURE_BINDINGS,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS - 1);
-	func(rsrc.sampled_images, DescriptorType::TEXTURE, 0, MAX_TEXTURE_BINDINGS - 1);
-	func(rsrc.storage_buffers,
-		DescriptorType::STORAGE_BUFFER,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS - 1);
-	func(rsrc.storage_images,
-		DescriptorType::IMAGE,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS - 1);
+	func(rsrc.uniform_buffers, DescriptorType::UNIFORM_BUFFER);
+	func(rsrc.sampled_images, DescriptorType::TEXTURE);
+	func(rsrc.storage_buffers, DescriptorType::STORAGE_BUFFER);
+	func(rsrc.storage_images, DescriptorType::IMAGE);
 
 	for(U set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
 	{

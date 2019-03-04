@@ -97,7 +97,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1u]);
 
-	// Bind textures
+	// Bind all
 	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getLinearSampler());
 	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
 
@@ -106,11 +106,10 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getDownscaleBlur().getRt(), m_r->getTrilinearRepeatSampler());
 
-	// Bind image
-	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 4, m_runCtx.m_rt, TextureSubresourceInfo());
 
 	// Bind uniforms
-	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 0);
+	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 5);
 	unis->m_nearPad3 = Vec4(ctx.m_renderQueue->m_cameraNear);
 	unis->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();

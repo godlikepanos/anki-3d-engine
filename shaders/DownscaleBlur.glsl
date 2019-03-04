@@ -7,7 +7,7 @@
 
 #include <shaders/Common.glsl>
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
+layout(set = 0, binding = 0) uniform sampler2D u_tex;
 
 #if defined(ANKI_COMPUTE_SHADER)
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
@@ -21,7 +21,7 @@ ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 #	define u_fbSize (u_regs.m_outImageSizePad2.xy)
 
 Vec2 in_uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_fbSize);
-layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
+layout(set = 0, binding = 1) writeonly uniform image2D out_img;
 Vec3 out_color;
 #else
 layout(location = 0) in Vec2 in_uv;

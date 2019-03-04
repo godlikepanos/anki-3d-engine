@@ -405,18 +405,12 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 
 	// Set common state for all lights
 	// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-	rgraphCtx.bindColorTextureAndSampler(
-		GBUFFER_RT0_BINDING.x(), GBUFFER_RT0_BINDING.y(), m_ctx.m_gbufferColorRts[0], m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(
-		GBUFFER_RT1_BINDING.x(), GBUFFER_RT1_BINDING.y(), m_ctx.m_gbufferColorRts[1], m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(
-		GBUFFER_RT2_BINDING.x(), GBUFFER_RT2_BINDING.y(), m_ctx.m_gbufferColorRts[2], m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_ctx.m_gbufferColorRts[0], m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 3, m_ctx.m_gbufferColorRts[1], m_r->getNearestSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 4, m_ctx.m_gbufferColorRts[2], m_r->getNearestSampler());
 
-	rgraphCtx.bindTextureAndSampler(GBUFFER_DEPTH_BINDING.x(),
-		GBUFFER_DEPTH_BINDING.y(),
-		m_ctx.m_gbufferDepthRt,
-		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-		m_r->getNearestSampler());
+	rgraphCtx.bindTextureAndSampler(
+		0, 5, m_ctx.m_gbufferDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH), m_r->getNearestSampler());
 
 	// Get shadowmap info
 	const Bool hasDirLight = probe.m_renderQueues[0]->m_directionalLight.m_uuid;
@@ -424,8 +418,8 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 	{
 		ANKI_ASSERT(m_ctx.m_shadowMapRt.isValid());
 
-		rgraphCtx.bindTextureAndSampler(GBUFFER_SHADOW_ATLAS_BINDING.x(),
-			GBUFFER_SHADOW_ATLAS_BINDING.y(),
+		rgraphCtx.bindTextureAndSampler(0,
+			6,
 			m_ctx.m_shadowMapRt,
 			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
 			m_shadowMapping.m_shadowSampler);

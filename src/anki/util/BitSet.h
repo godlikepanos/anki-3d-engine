@@ -220,6 +220,23 @@ public:
 		return count;
 	}
 
+	/// Get the most significant bit that is enabled. Or MAX_U if all is zero.
+	U getMostSignificantBit() const
+	{
+		U i = CHUNK_COUNT;
+		while(i--)
+		{
+			const U64 bits = U64(m_chunks[i]);
+			if(bits != 0)
+			{
+				const U msb = U(__builtin_clzll(bits));
+				return (63 - msb) + (i * CHUNK_BIT_COUNT);
+			}
+		}
+
+		return MAX_U;
+	}
+
 protected:
 	using ChunkType = TChunkType;
 

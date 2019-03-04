@@ -127,16 +127,16 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 
 	cmdb->bindShaderProgram(m_main.m_grProg);
 
-	rgraphCtx.bindTextureAndSampler(0, 0, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getLinearSampler());
+	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0,
-		1,
+		2,
 		m_main.m_noiseTex->getGrTextureView(),
 		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 
 	if(m_useNormal)
 	{
-		rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
+		rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
 	}
 
 	struct Unis
@@ -154,7 +154,7 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 
 	if(m_useCompute)
 	{
-		rgraphCtx.bindImage(0, 0, m_runCtx.m_rts[0], TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 4, m_runCtx.m_rts[0], TextureSubresourceInfo());
 
 		const U sizeX = (m_width + m_workgroupSize[0] - 1) / m_workgroupSize[0];
 		const U sizeY = (m_height + m_workgroupSize[1] - 1) / m_workgroupSize[1];
@@ -176,7 +176,7 @@ void Ssao::runBlur(RenderPassWorkContext& rgraphCtx)
 
 	if(m_blurUseCompute)
 	{
-		rgraphCtx.bindImage(0, 0, m_runCtx.m_rts[1], TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 1, m_runCtx.m_rts[1], TextureSubresourceInfo());
 		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_width, m_height);
 	}
 	else

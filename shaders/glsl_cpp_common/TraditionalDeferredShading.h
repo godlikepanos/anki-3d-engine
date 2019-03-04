@@ -86,10 +86,4 @@ struct DeferredVertexUniforms
 	Mat4 m_mvp;
 };
 
-const UVec2 GBUFFER_RT0_BINDING = UVec2(0, 0);
-const UVec2 GBUFFER_RT1_BINDING = UVec2(0, 1);
-const UVec2 GBUFFER_RT2_BINDING = UVec2(0, 2);
-const UVec2 GBUFFER_DEPTH_BINDING = UVec2(0, 3);
-const UVec2 GBUFFER_SHADOW_ATLAS_BINDING = UVec2(0, 4);
-
 ANKI_END_NAMESPACE

@@ -50,12 +50,12 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
-layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
+layout(set = 0, binding = 0) uniform u0_
 {
 	vec4 u_color[3];
 };
 
-layout(ANKI_UBO_BINDING(0, 1)) uniform u1_
+layout(set = 0, binding = 1) uniform u1_
 {
 	vec4 u_rotation2d;
 };
@@ -122,7 +122,7 @@ out gl_PerVertex
 
 layout(location = 0) in vec3 in_pos;
 
-layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
+layout(set = 0, binding = 0, std140, row_major) uniform u0_
 {
 	mat4 u_mvp;
 };
@@ -162,7 +162,7 @@ static const char* FRAG_TEX_SRC = R"(layout (location = 0) out vec4 out_color;
 
 layout(location = 0) in vec2 in_uv;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
+layout(set = 0, binding = 0) uniform sampler2D u_tex0;
 
 void main()
 {
@@ -173,14 +173,14 @@ static const char* FRAG_2TEX_SRC = R"(layout (location = 0) out vec4 out_color;
 
 layout(location = 0) in vec2 in_uv;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_tex1;
+layout(set = 0, binding = 0) uniform sampler2D u_tex0;
+layout(set = 0, binding = 1) uniform sampler2D u_tex1;
 
 void main()
 {
-	if(anki_fragCoord.x < 1024 / 2)
+	if(gl_FragCoord.x < 1024 / 2)
 	{
-		if(anki_fragCoord.y < 768 / 2)
+		if(gl_FragCoord.y < 768 / 2)
 		{
 			vec2 uv = in_uv * 2.0;
 			out_color = textureLod(u_tex0, uv, 0.0);
@@ -193,7 +193,7 @@ void main()
 	}
 	else
 	{
-		if(anki_fragCoord.y < 768 / 2)
+		if(gl_FragCoord.y < 768 / 2)
 		{
 			vec2 uv = in_uv * 2.0 - vec2(1.0, 0.0);
 			out_color = textureLod(u_tex1, uv, 0.0);
@@ -208,12 +208,12 @@ void main()
 
 static const char* FRAG_TEX3D_SRC = R"(layout (location = 0) out vec4 out_color;
 
-layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
+layout(set = 0, binding = 0) uniform u0_
 {
 	vec4 u_uv;
 };
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler3D u_tex;
+layout(set = 0, binding = 1) uniform sampler3D u_tex;
 
 void main()
 {
@@ -223,7 +223,7 @@ void main()
 static const char* FRAG_MRT_SRC = R"(layout (location = 0) out vec4 out_color0;
 layout (location = 1) out vec4 out_color1;
 
-layout(ANKI_UBO_BINDING(0, 1), std140) uniform u1_
+layout(set = 0, binding = 1, std140) uniform u1_
 {
 	vec4 u_color0;
 	vec4 u_color1;
@@ -239,8 +239,8 @@ static const char* FRAG_MRT2_SRC = R"(layout (location = 0) out vec4 out_color;
 
 layout(location = 0) in vec2 in_uv;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_tex1;
+layout(set = 0, binding = 0) uniform sampler2D u_tex0;
+layout(set = 0, binding = 2) uniform sampler2D u_tex1;
 
 void main()
 {
@@ -258,7 +258,7 @@ void main()
 static const char* FRAG_SIMPLE_TEX_SRC = R"(
 layout (location = 0) out vec4 out_color;
 layout(location = 0) in vec2 in_uv;
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
+layout(set = 0, binding = 0) uniform sampler2D u_tex0;
 
 void main()
 {
@@ -266,11 +266,11 @@ void main()
 })";
 
 static const char* COMP_WRITE_IMAGE_SRC = R"(
-layout(ANKI_IMAGE_BINDING(0, 0), rgba8) writeonly uniform image2D u_img;
+layout(set = 0, binding = 0, rgba8) writeonly uniform image2D u_img;
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout(ANKI_SS_BINDING(1, 0)) buffer ss1_
+layout(set = 1, binding = 0) buffer ss1_
 {
 	vec4 u_color;
 };
@@ -1300,7 +1300,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		cmdb->bindShaderProgram(resolveProg);
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindTextureAndSampler(0, 0, col0View, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->bindTextureAndSampler(0, 1, col1View, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTextureAndSampler(0, 2, col1View, sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();
 		presentBarrierB(cmdb, presentTex);
@@ -1582,7 +1582,7 @@ ANKI_TEST(Gr, 3DTextures)
 		*uv = TEX_COORDS_LOD[idx];
 
 		cmdb->bindTextureAndSampler(
-			0, 0, gr->newTextureView(TextureViewInitInfo(a)), sampler, TextureUsageBit::SAMPLED_FRAGMENT);
+			0, 1, gr->newTextureView(TextureViewInitInfo(a)), sampler, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 
 		cmdb->endRenderPass();
@@ -1799,9 +1799,9 @@ ANKI_TEST(Gr, VkWorkarounds)
 	static const char* COMP_SRC = R"(
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 2) in;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform usampler2D u_tex;
+layout(set = 0, binding = 0) uniform usampler2D u_tex;
 
-layout(ANKI_SS_BINDING(0, 0)) buffer s_
+layout(set = 0, binding = 1) buffer s_
 {
 	uvec4 u_result;
 };
@@ -1918,7 +1918,7 @@ void main()
 	cmdb->setTextureBarrier(tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_COMPUTE, subresource);
 	cmdb->bindShaderProgram(prog);
 	cmdb->bindTextureAndSampler(0, 0, texView, sampler, TextureUsageBit::SAMPLED_COMPUTE);
-	cmdb->bindStorageBuffer(0, 0, resultBuff, 0, resultBuff->getSize());
+	cmdb->bindStorageBuffer(0, 1, resultBuff, 0, resultBuff->getSize());
 	cmdb->dispatchCompute(1, 1, 1);
 
 	cmdb->setBufferBarrier(resultBuff,
@@ -1978,7 +1978,7 @@ layout(location = 1) flat in float in_const1;
 
 layout(location = 0) out vec4 out_color;
 
-layout(ANKI_SS_BINDING(0, 0)) buffer s_
+layout(set = 0, binding = 0) buffer s_
 {
 	uvec4 u_result;
 };
@@ -2094,7 +2094,7 @@ ANKI_PUSH_CONSTANTS(PC, regs);
 layout(location = 0) in vec4 in_color;
 layout(location = 0) out vec4 out_color;
 
-layout(ANKI_SS_BINDING(0, 0)) buffer s_
+layout(set = 0, binding = 0) buffer s_
 {
 	uvec4 u_result;
 };

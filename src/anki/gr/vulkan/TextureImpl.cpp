@@ -625,8 +625,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 			out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
 	}
-	else if(depthStencil
-			&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
+	else if(depthStencil && !(usage & ~(TextureUsageBit::SAMPLED_ALL | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
 	{
 		// FB read & shader read
 		out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;

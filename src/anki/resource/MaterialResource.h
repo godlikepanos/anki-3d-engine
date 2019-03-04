@@ -172,6 +172,11 @@ public:
 		return m_variant->getUniformBlockSize();
 	}
 
+	U getBindingCount() const
+	{
+		return m_variant->getBindingCount();
+	}
+
 private:
 	const ShaderProgramResourceVariant* m_variant = nullptr;
 };

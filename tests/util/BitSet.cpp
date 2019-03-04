@@ -51,4 +51,24 @@ ANKI_TEST(Util, BitSet)
 			a.set(r, false);
 		}
 	}
+
+	{
+		const U N = 256;
+		BitSet<N, U64> a = {false};
+
+		ANKI_TEST_EXPECT_EQ(a.getMostSignificantBit(), MAX_U);
+
+		a.set(32);
+		ANKI_TEST_EXPECT_EQ(a.getMostSignificantBit(), 32);
+
+		a.set(33);
+		ANKI_TEST_EXPECT_EQ(a.getMostSignificantBit(), 33);
+
+		a.set(68);
+		ANKI_TEST_EXPECT_EQ(a.getMostSignificantBit(), 68);
+
+		a.unsetAll();
+		a.set(255);
+		ANKI_TEST_EXPECT_EQ(a.getMostSignificantBit(), 255);
+	}
 }

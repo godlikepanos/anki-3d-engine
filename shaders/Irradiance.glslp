@@ -18,7 +18,7 @@
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform samplerCubeArray u_envTex;
+layout(set = 0, binding = 0) uniform samplerCubeArray u_envTex;
 
 ANKI_PUSH_CONSTANTS(UVec4, u_faceIdxPad3);
 

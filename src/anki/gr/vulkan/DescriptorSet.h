@@ -29,7 +29,7 @@ public:
 	DescriptorType m_type = DescriptorType::COUNT;
 	ShaderTypeBit m_stageMask = ShaderTypeBit::NONE;
 	U8 m_binding = MAX_U8;
-	U8 _m_padding = 0;
+	U8 m_arraySize = 0;
 };
 
 static_assert(sizeof(DescriptorBinding) == 4, "See file");
@@ -205,7 +205,7 @@ private:
 	/// Only DescriptorSetFactory should call this.
 	void flush(Bool& stateDirty,
 		U64& hash,
-		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>& dynamicOffsets,
+		Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
 		U& dynamicOffsetCount);
 };
 
@@ -247,7 +247,7 @@ public:
 		DescriptorSetState& state,
 		DescriptorSet& set,
 		Bool& dirty,
-		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>& dynamicOffsets,
+		Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
 		U& dynamicOffsetCount);
 
 	void endFrame()

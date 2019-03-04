@@ -260,9 +260,9 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 	Array<VkWriteDescriptorSet, MAX_BINDINGS_PER_DESCRIPTOR_SET> writes;
 	U writeCount = 0;
 
-	Array<VkDescriptorImageInfo, MAX_TEXTURE_BINDINGS + MAX_IMAGE_BINDINGS> tex;
+	Array<VkDescriptorImageInfo, MAX_BINDINGS_PER_DESCRIPTOR_SET> tex;
 	U texCount = 0;
-	Array<VkDescriptorBufferInfo, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> buff;
+	Array<VkDescriptorBufferInfo, MAX_BINDINGS_PER_DESCRIPTOR_SET> buff;
 	U buffCount = 0;
 
 	VkWriteDescriptorSet writeTemplate = {};
@@ -460,10 +460,8 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 	return Error::NONE;
 }
 
-void DescriptorSetState::flush(Bool& stateDirty,
-	U64& hash,
-	Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>& dynamicOffsets,
-	U& dynamicOffsetCount)
+void DescriptorSetState::flush(
+	Bool& stateDirty, U64& hash, Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets, U& dynamicOffsetCount)
 {
 	dynamicOffsetCount = 0;
 
@@ -608,7 +606,7 @@ Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
 	DescriptorSetState& state,
 	DescriptorSet& set,
 	Bool& dirty,
-	Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>& dynamicOffsets,
+	Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
 	U& dynamicOffsetCount)
 {
 	ANKI_TRACE_SCOPED_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);

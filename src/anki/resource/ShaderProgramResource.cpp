@@ -521,7 +521,12 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 
 		if(in.isTexture())
 		{
-			headerSrc.pushBackSprintf("#define %s_TEXUNIT %u\n", &in.m_name[0], texUnit);
+			headerSrc.pushBackSprintf(
+				"#if USE_PUSH_CONSTANTS\n#define %s_TEXUNIT %u\n#else\n#define %s_TEXUNIT %u\n#endif\n",
+				in.m_name.cstr(),
+				texUnit,
+				in.m_name.cstr(),
+				texUnit + 1);
 			variant.m_texUnits[in.m_idx] = texUnit;
 			++texUnit;
 		}
@@ -532,9 +537,26 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 		instanceCount == 1
 		&& variant.m_uniBlockSize <= getManager().getGrManager().getDeviceCapabilities().m_pushConstantsSize;
 
+	// If there is a UBO then it takes the 0 binding. Shift the bindings of textures.
+	if(!variant.m_usesPushConstants)
+	{
+		for(I16& unit : variant.m_texUnits)
+		{
+			if(unit >= 0)
+			{
+				++unit;
+			}
+		}
+	}
+
+	// Compute the binding count
+	variant.m_bindingCount = (!variant.m_usesPushConstants) + texUnit;
+
 	// Write the source header
 	StringListAuto shaderHeaderSrc(getTempAllocator());
-	shaderHeaderSrc.pushBackSprintf("#define USE_PUSH_CONSTANTS %d\n", I(variant.m_usesPushConstants));
+	shaderHeaderSrc.pushBackSprintf("#define USE_PUSH_CONSTANTS %d\n#define BINDING_COUNT %u\n",
+		I(variant.m_usesPushConstants),
+		U(variant.m_bindingCount));
 
 	for(const ShaderProgramResourceMutation& m : mutations)
 	{

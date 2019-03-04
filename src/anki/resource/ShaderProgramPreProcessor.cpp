@@ -169,7 +169,7 @@ Error ShaderProgramPreprocessor::parse()
 			m_uboStructLines.pushBackSprintf("ANKI_PUSH_CONSTANTS(GenUniforms_, gen_unis_);");
 			m_uboStructLines.pushBack("#else");
 			m_uboStructLines.pushBack(
-				"layout(ANKI_UBO_BINDING(GEN_SET_, 0), row_major) uniform genubo_ {GenUniforms_ gen_unis_;};");
+				"layout(set = GEN_SET_, binding = 0, row_major) uniform genubo_ {GenUniforms_ gen_unis_;};");
 			m_uboStructLines.pushBack("#endif\n");
 
 			StringAuto ubo(m_alloc);
@@ -641,7 +641,7 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
 		}
 
-		m_globalsLines.pushBackSprintf("layout(ANKI_TEX_BINDING(GEN_SET_, %s_TEXUNIT)) uniform %s %s;",
+		m_globalsLines.pushBackSprintf("layout(set = GEN_SET_, binding = %s_TEXUNIT) uniform %s %s;",
 			input.m_name.cstr(),
 			dataTypeStr.cstr(),
 			input.m_name.cstr());

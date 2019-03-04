@@ -223,13 +223,12 @@ public:
 		U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler, TextureUsageBit usage)
 	{
 		commandCommon();
-		const U realBinding = binding;
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
 		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
 		const VkImageLayout lay = tex.computeLayout(usage, 0);
 
-		m_dsetState[set].bindTextureAndSampler(realBinding, &view, sampler.get(), lay);
+		m_dsetState[set].bindTextureAndSampler(binding, &view, sampler.get(), lay);
 
 		m_microCmdb->pushObjectRef(texView);
 		m_microCmdb->pushObjectRef(sampler);
@@ -238,9 +237,7 @@ public:
 	void bindImage(U32 set, U32 binding, TextureViewPtr& img)
 	{
 		commandCommon();
-		const U realBinding =
-			binding + MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS;
-		m_dsetState[set].bindImage(realBinding, img.get());
+		m_dsetState[set].bindImage(binding, img.get());
 		m_microCmdb->pushObjectRef(img);
 	}
 
@@ -312,16 +309,14 @@ public:
 	void bindUniformBuffer(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
 	{
 		commandCommon();
-		const U realBinding = MAX_TEXTURE_BINDINGS + binding;
-		m_dsetState[set].bindUniformBuffer(realBinding, buff.get(), offset, range);
+		m_dsetState[set].bindUniformBuffer(binding, buff.get(), offset, range);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
 	void bindStorageBuffer(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
 	{
 		commandCommon();
-		const U realBinding = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + binding;
-		m_dsetState[set].bindStorageBuffer(realBinding, buff.get(), offset, range);
+		m_dsetState[set].bindStorageBuffer(binding, buff.get(), offset, range);
 		m_microCmdb->pushObjectRef(buff);
 	}
 

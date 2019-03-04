@@ -318,7 +318,7 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 		{
 			DescriptorSet dset;
 			Bool dirty;
-			Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> dynamicOffsets;
+			Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsets;
 			U dynamicOffsetCount;
 			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
 				   m_tid, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))
@@ -496,7 +496,7 @@ inline void CommandBufferImpl::drawcallCommon()
 		{
 			DescriptorSet dset;
 			Bool dirty;
-			Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> dynamicOffsets;
+			Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsets;
 			U dynamicOffsetCount;
 			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
 				   m_tid, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))

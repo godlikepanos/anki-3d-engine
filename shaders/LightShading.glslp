@@ -35,20 +35,18 @@ void main()
 #include <shaders/Functions.glsl>
 
 #define LIGHT_SET 0
-#define LIGHT_SS_BINDING 0
-#define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 6
-#define LIGHT_INDIRECT
-#define LIGHT_LIGHTS
-#define LIGHT_COMMON_UNIS
+#define LIGHT_COMMON_UNIS_BINDING 0
+#define LIGHT_LIGHTS_BINDING 1
+#define LIGHT_INDIRECT_BINDING 4
+#define LIGHT_CLUSTERS_BINDING 8
 #include <shaders/ClusteredShadingCommon.glsl>
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
-layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_ssrRt;
-layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_ssaoRt;
+layout(set = 0, binding = 10) uniform sampler2D u_msRt0;
+layout(set = 0, binding = 11) uniform sampler2D u_msRt1;
+layout(set = 0, binding = 12) uniform sampler2D u_msRt2;
+layout(set = 0, binding = 13) uniform sampler2D u_msDepthRt;
+layout(set = 0, binding = 14) uniform sampler2D u_ssrRt;
+layout(set = 0, binding = 15) uniform sampler2D u_ssaoRt;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;

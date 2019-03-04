@@ -39,20 +39,20 @@ layout(location = 0) out F32 out_color;
 #else
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(ANKI_IMAGE_BINDING(0, 0)) writeonly uniform image2D out_img;
+layout(set = 0, binding = 4) writeonly uniform image2D out_img;
 #endif
 
-layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _blk
+layout(set = 0, binding = 0, std140, row_major) uniform _blk
 {
 	Vec4 u_unprojectionParams;
 	Vec4 u_projectionMat;
 	Mat3 u_viewRotMat;
 };
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2DArray u_noiseMap;
+layout(set = 0, binding = 1) uniform sampler2D u_depthRt;
+layout(set = 0, binding = 2) uniform sampler2DArray u_noiseMap;
 #if USE_NORMAL
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt;
+layout(set = 0, binding = 3) uniform sampler2D u_msRt;
 #endif
 
 // To compute the normals we need some extra work on compute

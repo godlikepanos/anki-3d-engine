@@ -151,6 +151,10 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			moved = moved || (trfs[i] != prevTrfs[i]);
 		}
 
+		ctx.m_key.m_velocity = moved && ctx.m_key.m_pass == Pass::GB;
+		ModelRenderingInfo modelInf;
+		patch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
+
 		// Bones storage
 		if(m_model->getSkeleton())
 		{
@@ -160,12 +164,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 				skinc.getBoneTransforms().getSize() * sizeof(Mat4), StagingGpuMemoryType::STORAGE, token);
 			memcpy(trfs, &skinc.getBoneTransforms()[0], skinc.getBoneTransforms().getSize() * sizeof(Mat4));
 
-			cmdb->bindStorageBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
+			cmdb->bindStorageBuffer(0, modelInf.m_bindingCount, token.m_buffer, token.m_offset, token.m_range);
 		}
-
-		ctx.m_key.m_velocity = moved && ctx.m_key.m_pass == Pass::GB;
-		ModelRenderingInfo modelInf;
-		patch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
 
 		// Program
 		cmdb->bindShaderProgram(modelInf.m_program);

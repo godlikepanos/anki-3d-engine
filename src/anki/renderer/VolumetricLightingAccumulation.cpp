@@ -103,31 +103,33 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	RenderingContext& ctx = *m_runCtx.m_ctx;
+	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 
 	cmdb->bindShaderProgram(m_grProg);
 
+	// Bind all
 	rgraphCtx.bindImage(0, 0, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
 	cmdb->bindTextureAndSampler(
-		0, 0, m_noiseTex->getGrTextureView(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_COMPUTE);
+		0, 1, m_noiseTex->getGrTextureView(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_COMPUTE);
 
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_runCtx.m_rts[0], m_r->getLinearSampler());
+	rgraphCtx.bindColorTextureAndSampler(0, 2, m_runCtx.m_rts[0], m_r->getLinearSampler());
 
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+	bindUniforms(cmdb, 0, 3, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 4, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 5, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+
+	bindUniforms(cmdb, 0, 7, rsrc.m_probesToken);
 	cmdb->bindTextureAndSampler(
-		0, 3, m_r->getDummyTextureView(), m_r->getNearestSampler(), TextureUsageBit::SAMPLED_COMPUTE);
-	rgraphCtx.bindColorTextureAndSampler(0, 4, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
+		0, 8, m_r->getDummyTextureView(), m_r->getNearestSampler(), TextureUsageBit::SAMPLED_COMPUTE);
+	rgraphCtx.bindColorTextureAndSampler(0, 9, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
 	cmdb->bindTextureAndSampler(
-		0, 5, m_r->getDummyTextureView(), m_r->getNearestSampler(), TextureUsageBit::SAMPLED_COMPUTE);
+		0, 10, m_r->getDummyTextureView(), m_r->getNearestSampler(), TextureUsageBit::SAMPLED_COMPUTE);
 
-	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
-	bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
-	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
-	bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);
-	bindUniforms(cmdb, 0, 4, rsrc.m_fogDensityVolumesToken);
-	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 1, rsrc.m_indicesToken);
+	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
+	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 13, rsrc.m_indicesToken);
 
 	struct PushConsts
 	{

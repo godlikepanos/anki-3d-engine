@@ -59,6 +59,8 @@ void ModelPatch::getRenderingDataSub(
 		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey);
 
 		inf.m_program = variant.getShaderProgram();
+
+		inf.m_bindingCount = variant.getBindingCount();
 	}
 
 	// Vertex attributes & bindings
