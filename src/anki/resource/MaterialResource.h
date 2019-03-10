@@ -126,8 +126,8 @@ template<>
 inline const TextureResourcePtr& MaterialVariable::getValue() const
 {
 	ANKI_ASSERT(m_input);
-	ANKI_ASSERT(m_input->getShaderVariableDataType() >= ShaderVariableDataType::SAMPLERS_FIRST
-				&& m_input->getShaderVariableDataType() <= ShaderVariableDataType::SAMPLERS_LAST);
+	ANKI_ASSERT(m_input->getShaderVariableDataType() >= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_FIRST
+				&& m_input->getShaderVariableDataType() <= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_LAST);
 	ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);
 	return m_tex;
 }

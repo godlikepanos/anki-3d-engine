@@ -234,6 +234,26 @@ public:
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
+	void bindTextureInternal(U32 set, U32 binding, TextureViewPtr& texView, TextureUsageBit usage)
+	{
+		commandCommon();
+		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
+		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
+		const VkImageLayout lay = tex.computeLayout(usage, 0);
+
+		m_dsetState[set].bindTexture(binding, &view, lay);
+
+		m_microCmdb->pushObjectRef(texView);
+	}
+
+	void bindSamplerInternal(U32 set, U32 binding, SamplerPtr& sampler)
+	{
+		commandCommon();
+		m_dsetState[set].bindSampler(binding, sampler.get());
+		m_microCmdb->pushObjectRef(sampler);
+	}
+
 	void bindImage(U32 set, U32 binding, TextureViewPtr& img)
 	{
 		commandCommon();

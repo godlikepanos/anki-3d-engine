@@ -299,7 +299,9 @@ public:
 
 enum class DescriptorType : U8
 {
+	COMBINED_TEXTURE_SAMPLER,
 	TEXTURE,
+	SAMPLER,
 	UNIFORM_BUFFER,
 	STORAGE_BUFFER,
 	IMAGE,

@@ -156,7 +156,9 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	};
 
 	func(rsrc.uniform_buffers, DescriptorType::UNIFORM_BUFFER);
-	func(rsrc.sampled_images, DescriptorType::TEXTURE);
+	func(rsrc.sampled_images, DescriptorType::COMBINED_TEXTURE_SAMPLER);
+	func(rsrc.separate_images, DescriptorType::TEXTURE);
+	func(rsrc.separate_samplers, DescriptorType::SAMPLER);
 	func(rsrc.storage_buffers, DescriptorType::STORAGE_BUFFER);
 	func(rsrc.storage_images, DescriptorType::IMAGE);
 

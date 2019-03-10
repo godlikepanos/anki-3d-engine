@@ -168,6 +168,18 @@ void CommandBuffer::bindTextureAndSampler(
 	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, usage);
 }
 
+void CommandBuffer::bindTexture(U32 set, U32 binding, TextureViewPtr texView, TextureUsageBit usage)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindTextureInternal(set, binding, texView, usage);
+}
+
+void CommandBuffer::bindSampler(U32 set, U32 binding, SamplerPtr sampler)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindSamplerInternal(set, binding, sampler);
+}
+
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
 	ANKI_VK_SELF(CommandBufferImpl);

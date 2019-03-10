@@ -199,8 +199,14 @@ ANKI_USE_RESULT inline VkDescriptorType convertDescriptorType(DescriptorType ak)
 	VkDescriptorType out;
 	switch(ak)
 	{
-	case DescriptorType::TEXTURE:
+	case DescriptorType::COMBINED_TEXTURE_SAMPLER:
 		out = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		break;
+	case DescriptorType::TEXTURE:
+		out = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		break;
+	case DescriptorType::SAMPLER:
+		out = VK_DESCRIPTOR_TYPE_SAMPLER;
 		break;
 	case DescriptorType::UNIFORM_BUFFER:
 		out = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;

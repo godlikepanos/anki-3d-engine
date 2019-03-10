@@ -258,10 +258,10 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 
 			break;
 		}
-		case ShaderVariableDataType::SAMPLER_2D:
-		case ShaderVariableDataType::SAMPLER_2D_ARRAY:
-		case ShaderVariableDataType::SAMPLER_3D:
-		case ShaderVariableDataType::SAMPLER_CUBE:
+		case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D:
+		case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D_ARRAY:
+		case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_3D:
+		case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_CUBE:
 		{
 			ctx.m_commandBuffer->bindTextureAndSampler(set,
 				progVariant.getTextureUnit(progvar),

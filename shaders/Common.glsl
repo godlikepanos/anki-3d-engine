@@ -73,3 +73,34 @@ const U32 UBO_MAX_SIZE = 16384u;
 #endif
 
 #define CALC_BITANGENT_IN_VERT 1
+
+// Convenience functions to combine image and samplers
+sampler2D combineImageSampler(texture2D tex, sampler sampl)
+{
+	return sampler2D(tex, sampl);
+}
+
+sampler3D combineImageSampler(texture3D tex, sampler sampl)
+{
+	return sampler3D(tex, sampl);
+}
+
+samplerCube combineImageSampler(textureCube tex, sampler sampl)
+{
+	return samplerCube(tex, sampl);
+}
+
+sampler2DArray combineImageSampler(texture2DArray tex, sampler sampl)
+{
+	return sampler2DArray(tex, sampl);
+}
+
+samplerCubeArray combineImageSampler(textureCubeArray tex, sampler sampl)
+{
+	return samplerCubeArray(tex, sampl);
+}
+
+sampler2DShadow combineImageSampler(texture2D tex, samplerShadow sampl)
+{
+	return sampler2DShadow(tex, sampl);
+}

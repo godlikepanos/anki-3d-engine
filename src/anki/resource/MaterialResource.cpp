@@ -479,10 +479,10 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 				case ShaderVariableDataType::MAT4:
 					ANKI_CHECK(inputEl.getAttributeMatrix("value", mtlVar.m_mat4));
 					break;
-				case ShaderVariableDataType::SAMPLER_2D:
-				case ShaderVariableDataType::SAMPLER_2D_ARRAY:
-				case ShaderVariableDataType::SAMPLER_3D:
-				case ShaderVariableDataType::SAMPLER_CUBE:
+				case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D:
+				case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D_ARRAY:
+				case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_3D:
+				case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_CUBE:
 				{
 					CString texfname;
 					ANKI_CHECK(inputEl.getAttributeText("value", texfname));

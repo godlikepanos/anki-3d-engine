@@ -72,12 +72,25 @@ private:
 	DSLayoutCacheEntry* m_entry = nullptr;
 };
 
-class TextureBinding
+class TextureSamplerBinding
 {
 public:
 	const TextureViewImpl* m_texView;
 	const MicroSampler* m_sampler;
 	VkImageLayout m_layout;
+};
+
+class TextureBinding
+{
+public:
+	const TextureViewImpl* m_texView;
+	VkImageLayout m_layout;
+};
+
+class SamplerBinding
+{
+public:
+	const MicroSampler* m_sampler;
 };
 
 class BufferBinding
@@ -102,7 +115,9 @@ public:
 
 	union
 	{
+		TextureSamplerBinding m_texAndSampler;
 		TextureBinding m_tex;
+		SamplerBinding m_sampler;
 		BufferBinding m_buff;
 		ImageBinding m_image;
 	};
@@ -135,13 +150,40 @@ public:
 
 		AnyBinding& b = m_bindings[binding];
 		b = {};
-		b.m_type = DescriptorType::TEXTURE;
+		b.m_type = DescriptorType::COMBINED_TEXTURE_SAMPLER;
 		b.m_uuids[0] = viewImpl.m_hash;
-		b.m_uuids[1] = sampler->getUuid();
+		b.m_uuids[1] = ptrToNumber(static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle());
+
+		b.m_texAndSampler.m_texView = &viewImpl;
+		b.m_texAndSampler.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
+		b.m_texAndSampler.m_layout = layout;
+
+		m_anyBindingDirty = true;
+	}
+
+	void bindTexture(U binding, const TextureView* texView, VkImageLayout layout)
+	{
+		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
+		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForSampling(viewImpl.getSubresource()));
+
+		AnyBinding& b = m_bindings[binding];
+		b = {};
+		b.m_type = DescriptorType::TEXTURE;
+		b.m_uuids[0] = b.m_uuids[1] = viewImpl.m_hash;
 
 		b.m_tex.m_texView = &viewImpl;
-		b.m_tex.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
 		b.m_tex.m_layout = layout;
+
+		m_anyBindingDirty = true;
+	}
+
+	void bindSampler(U binding, const Sampler* sampler)
+	{
+		AnyBinding& b = m_bindings[binding];
+		b = {};
+		b.m_type = DescriptorType::SAMPLER;
+		b.m_uuids[0] = b.m_uuids[1] = ptrToNumber(static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle());
+		b.m_sampler.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
 
 		m_anyBindingDirty = true;
 	}

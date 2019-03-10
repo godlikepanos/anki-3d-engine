@@ -284,10 +284,28 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 
 			switch(b.m_type)
 			{
+			case DescriptorType::COMBINED_TEXTURE_SAMPLER:
+				tex[texCount].sampler = b.m_texAndSampler.m_sampler->getHandle();
+				tex[texCount].imageView = b.m_texAndSampler.m_texView->m_handle;
+				tex[texCount].imageLayout = b.m_texAndSampler.m_layout;
+
+				w.pImageInfo = &tex[texCount];
+
+				++texCount;
+				break;
 			case DescriptorType::TEXTURE:
-				tex[texCount].sampler = b.m_tex.m_sampler->getHandle();
+				tex[texCount].sampler = VK_NULL_HANDLE;
 				tex[texCount].imageView = b.m_tex.m_texView->m_handle;
 				tex[texCount].imageLayout = b.m_tex.m_layout;
+
+				w.pImageInfo = &tex[texCount];
+
+				++texCount;
+				break;
+			case DescriptorType::SAMPLER:
+				tex[texCount].sampler = b.m_sampler.m_sampler->getHandle();
+				tex[texCount].imageView = VK_NULL_HANDLE;
+				tex[texCount].imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 				w.pImageInfo = &tex[texCount];
 
@@ -492,9 +510,9 @@ void DescriptorSetState::flush(
 
 			switch(entry.m_bindingType[i])
 			{
-			case DescriptorType::TEXTURE:
+			case DescriptorType::COMBINED_TEXTURE_SAMPLER:
 				toHash[toHashCount++] = m_bindings[i].m_uuids[1];
-				toHash[toHashCount++] = U64(m_bindings[i].m_tex.m_layout);
+				toHash[toHashCount++] = U64(m_bindings[i].m_texAndSampler.m_layout);
 				break;
 			case DescriptorType::UNIFORM_BUFFER:
 			case DescriptorType::STORAGE_BUFFER:

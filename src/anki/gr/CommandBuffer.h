@@ -227,6 +227,19 @@ public:
 	/// @param usage The state the tex is in.
 	void bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage);
 
+	/// Bind sampler.
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param sampler The sampler to override the default sampler of the tex.
+	void bindSampler(U32 set, U32 binding, SamplerPtr sampler);
+
+	/// Bind a texture.
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param texView The texture view to bind.
+	/// @param usage The state the tex is in.
+	void bindTexture(U32 set, U32 binding, TextureViewPtr texView, TextureUsageBit usage);
+
 	/// Bind uniform buffer.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.

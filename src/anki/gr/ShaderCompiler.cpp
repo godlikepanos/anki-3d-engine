@@ -66,6 +66,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #		extension GL_KHR_shader_subgroup_ballot : require
 #		extension GL_KHR_shader_subgroup_shuffle : require
 #		extension GL_KHR_shader_subgroup_arithmetic : require
+#		extension GL_EXT_samplerless_texture_functions : require
 #	endif
 #endif
 

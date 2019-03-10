@@ -79,15 +79,15 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 	}
 	else if(str == "sampler2D")
 	{
-		out = ShaderVariableDataType::SAMPLER_2D;
+		out = ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D;
 	}
 	else if(str == "sampler2DArray")
 	{
-		out = ShaderVariableDataType::SAMPLER_2D_ARRAY;
+		out = ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D_ARRAY;
 	}
 	else if(str == "samplerCube")
 	{
-		out = ShaderVariableDataType::SAMPLER_CUBE;
+		out = ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_CUBE;
 	}
 	else
 	{
@@ -593,8 +593,8 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 
 	// Append to source
 
-	const Bool isSampler = input.m_dataType >= ShaderVariableDataType::SAMPLERS_FIRST
-						   && input.m_dataType <= ShaderVariableDataType::SAMPLERS_LAST;
+	const Bool isSampler = input.m_dataType >= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_FIRST
+						   && input.m_dataType <= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_LAST;
 
 	if(input.m_const)
 	{
