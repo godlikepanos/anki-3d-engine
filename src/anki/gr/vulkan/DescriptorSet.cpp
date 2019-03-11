@@ -511,18 +511,32 @@ void DescriptorSetState::flush(
 			switch(entry.m_bindingType[i])
 			{
 			case DescriptorType::COMBINED_TEXTURE_SAMPLER:
+				ANKI_ASSERT(
+					m_bindings[i].m_type == DescriptorType::COMBINED_TEXTURE_SAMPLER && "Have bound the wrong type");
 				toHash[toHashCount++] = m_bindings[i].m_uuids[1];
 				toHash[toHashCount++] = U64(m_bindings[i].m_texAndSampler.m_layout);
 				break;
+			case DescriptorType::TEXTURE:
+				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::TEXTURE && "Have bound the wrong type");
+				toHash[toHashCount] = U64(m_bindings[i].m_tex.m_layout);
+				break;
+			case DescriptorType::SAMPLER:
+				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::SAMPLER && "Have bound the wrong type");
+				break;
 			case DescriptorType::UNIFORM_BUFFER:
-			case DescriptorType::STORAGE_BUFFER:
+				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::UNIFORM_BUFFER && "Have bound the wrong type");
 				toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
-
+				dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
+				dynamicOffsetsDirty = dynamicOffsetsDirty || m_dynamicOffsetDirty.get(i);
+				break;
+			case DescriptorType::STORAGE_BUFFER:
+				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::STORAGE_BUFFER && "Have bound the wrong type");
+				toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
 				dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
 				dynamicOffsetsDirty = dynamicOffsetsDirty || m_dynamicOffsetDirty.get(i);
 				break;
 			case DescriptorType::IMAGE:
-				// Nothing
+				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::IMAGE && "Have bound the wrong type");
 				break;
 			default:
 				ANKI_ASSERT(0);

@@ -188,6 +188,22 @@ Error Renderer::initInternal(const ConfigSet& config)
 	sinit.m_minMagFilter = SamplingFilter::NEAREST;
 	m_nearesetNearestSampler = m_gr->newSampler(sinit);
 
+	// Init samplers
+	{
+		SamplerInitInfo sinit("Renderer");
+		sinit.m_addressing = SamplingAddressing::CLAMP;
+		sinit.m_mipmapFilter = SamplingFilter::NEAREST;
+		sinit.m_minMagFilter = SamplingFilter::NEAREST;
+		m_samplers.m_nearestNearestClamp = m_gr->newSampler(sinit);
+
+		sinit.m_minMagFilter = SamplingFilter::LINEAR;
+		sinit.m_mipmapFilter = SamplingFilter::LINEAR;
+		m_samplers.m_trilinearClamp = m_gr->newSampler(sinit);
+
+		sinit.m_addressing = SamplingAddressing::REPEAT;
+		m_samplers.m_trilinearRepeat = m_gr->newSampler(sinit);
+	}
+
 	initJitteredMats();
 
 	return Error::NONE;

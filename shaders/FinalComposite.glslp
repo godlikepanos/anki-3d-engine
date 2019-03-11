@@ -21,27 +21,29 @@
 #include <shaders/Functions.glsl>
 #include <shaders/MotionBlur.glsl>
 
-layout(set = 0, binding = 1) uniform sampler2D u_lightShadingRt;
-layout(set = 0, binding = 2) uniform sampler2D u_ppsBloomLfRt;
-layout(set = 0, binding = 3) uniform sampler3D u_lut;
-layout(set = 0, binding = 4) uniform sampler2DArray u_blueNoise;
-layout(set = 0, binding = 5) uniform sampler2D u_velocityRt;
-layout(set = 0, binding = 6) uniform sampler2D u_depthRt;
-#if DBG_ENABLED
-layout(set = 0, binding = 7) uniform sampler2D u_dbgRt;
-#endif
-
-struct PushConsts
-{
-	Vec4 m_blueNoiseLayerPad3;
-	Mat4 m_prevViewProjMatMulInvViewProjMat;
-};
-
-ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
-
 #define TONEMAPPING_BINDING 0
 #define TONEMAPPING_SET 0
 #include <shaders/TonemappingResources.glsl>
+
+layout(set = 0, binding = 1) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 2) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 3) uniform sampler u_trilinearRepeatSampler;
+
+layout(set = 0, binding = 4) uniform texture2D u_lightShadingRt;
+layout(set = 0, binding = 5) uniform texture2D u_ppsBloomLfRt;
+layout(set = 0, binding = 6) uniform texture3D u_lut;
+layout(set = 0, binding = 7) uniform texture2DArray u_blueNoise;
+layout(set = 0, binding = 8) uniform texture2D u_velocityRt;
+layout(set = 0, binding = 9) uniform texture2D u_depthRt;
+#if DBG_ENABLED
+layout(set = 0, binding = 10) uniform texture2D u_dbgRt;
+#endif
+
+layout(push_constant, row_major, std430) uniform pc_
+{
+	Vec4 u_blueNoiseLayerPad3;
+	Mat4 u_prevViewProjMatMulInvViewProjMat;
+};
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;
@@ -53,7 +55,7 @@ Vec3 colorGrading(Vec3 color)
 
 	color = min(color, Vec3(1.0));
 	const Vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
-	return textureLod(u_lut, lutCoords, 0.0).rgb;
+	return textureLod(combineImageSampler(u_lut, u_trilinearRepeatSampler), lutCoords, 0.0).rgb;
 }
 
 void main()
@@ -63,28 +65,32 @@ void main()
 	if(MOTION_BLUR_SAMPLES > 0u)
 	{
 		out_color = motionBlur(u_velocityRt,
+			u_nearestAnyClampSampler,
 			u_lightShadingRt,
+			u_linearAnyClampSampler,
 			u_depthRt,
+			u_nearestAnyClampSampler,
 			uv,
-			u_regs.m_prevViewProjMatMulInvViewProjMat,
+			u_prevViewProjMatMulInvViewProjMat,
 			MOTION_BLUR_SAMPLES);
 	}
 	else
 	{
-		out_color = textureLod(u_lightShadingRt, uv, 0.0).rgb;
+		out_color = textureLod(combineImageSampler(u_lightShadingRt, u_linearAnyClampSampler), uv, 0.0).rgb;
 	}
 
-	out_color = tonemap(out_color, UNIFORM(u_exposureThreshold0));
+	out_color = tonemap(out_color, u_exposureThreshold0);
 
 #if BLOOM_ENABLED
-	const Vec3 bloom = textureLod(u_ppsBloomLfRt, uv, 0.0).rgb;
+	const Vec3 bloom = textureLod(combineImageSampler(u_ppsBloomLfRt, u_linearAnyClampSampler), uv, 0.0).rgb;
 	out_color += bloom;
 #endif
 
 	out_color = colorGrading(out_color);
 
 #if BLUE_NOISE
-	Vec3 blueNoise = textureLod(u_blueNoise, Vec3(FB_SIZE / Vec2(64.0) * uv, u_regs.m_blueNoiseLayerPad3.x), 0.0).rgb;
+	const Vec3 bnUvw = Vec3(FB_SIZE / Vec2(64.0) * uv, u_blueNoiseLayerPad3.x);
+	Vec3 blueNoise = textureLod(combineImageSampler(u_blueNoise, u_trilinearRepeatSampler), bnUvw, 0.0).rgb;
 	blueNoise = blueNoise * 2.0 - 1.0;
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
 
@@ -93,12 +99,12 @@ void main()
 
 #if 0
 	{
-		out_color = textureLod(u_lightShadingRt, uv, 0.0).rgb;
+		out_color = textureLod(combineImageSampler(u_lightShadingRt, u_linearAnyClampSampler), uv, 0.0).rgb;
 	}
 #endif
 
 #if DBG_ENABLED
-	out_color += textureLod(u_dbgRt, uv, 0.0).rgb;
+	out_color += textureLod(combineImageSampler(u_dbgRt, u_linearAnyClampSampler), uv, 0.0).rgb;
 #endif
 }
 

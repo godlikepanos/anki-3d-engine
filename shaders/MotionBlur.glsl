@@ -14,30 +14,36 @@
 #endif
 
 // Perform motion blur.
-Vec3 motionBlur(sampler2D velocityTex,
-	sampler2D toBlurTex,
-	sampler2D depthTex,
+Vec3 motionBlur(texture2D velocityTex,
+	sampler velocityTexSampler,
+	texture2D toBlurTex,
+	sampler toBlurTexSampler,
+	texture2D depthTex,
+	sampler depthTexSampler,
 	Vec2 nowUv,
 	Mat4 prevViewProjMatMulInvViewProjMat,
 	U32 maxSamples)
 {
 	// Compute previous UV
-	Vec2 velocity = textureLod(velocityTex, nowUv, 0.0).rg;
+	Vec2 velocity = textureLod(combineImageSampler(velocityTex, velocityTexSampler), nowUv, 0.0).rg;
 
 	// Compute the velocity if it's static geometry
 	ANKI_BRANCH if(velocity.x == -1.0)
 	{
 #if TAA_FIX
-		const Vec2 a = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(-2, 2)).rg;
-		const Vec2 b = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(2, 2)).rg;
-		const Vec2 c = textureLodOffset(velocityTex, nowUv, 0.0, ivec2(0, -2)).rg;
+		const Vec2 a =
+			textureLodOffset(combineImageSampler(velocityTex, velocityTexSampler), nowUv, 0.0, ivec2(-2, 2)).rg;
+		const Vec2 b =
+			textureLodOffset(combineImageSampler(velocityTex, velocityTexSampler), nowUv, 0.0, ivec2(2, 2)).rg;
+		const Vec2 c =
+			textureLodOffset(combineImageSampler(velocityTex, velocityTexSampler), nowUv, 0.0, ivec2(0, -2)).rg;
 
 		velocity = max(max(a, b), c);
 
 		ANKI_BRANCH if(velocity.x == -1.0)
 #endif
 		{
-			const F32 depth = textureLod(depthTex, nowUv, 0.0).r;
+			const F32 depth = textureLod(combineImageSampler(depthTex, depthTexSampler), nowUv, 0.0).r;
 
 			const Vec4 v4 = prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(nowUv), depth, 1.0);
 			velocity = NDC_TO_UV(v4.xy / v4.w) - nowUv;
@@ -60,7 +66,7 @@ Vec3 motionBlur(sampler2D velocityTex,
 		const F32 f = s / sampleCountf;
 		const Vec2 sampleUv = nowUv + velocity * f;
 
-		outColor += textureLod(toBlurTex, sampleUv, 0.0).rgb;
+		outColor += textureLod(combineImageSampler(toBlurTex, toBlurTexSampler), sampleUv, 0.0).rgb;
 	}
 
 	outColor /= sampleCountf;

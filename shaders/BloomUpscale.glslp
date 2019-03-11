@@ -12,10 +12,11 @@
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) uniform sampler2D u_tex;
-layout(set = 0, binding = 1) uniform sampler2D u_lensDirtTex;
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_tex;
+layout(set = 0, binding = 2) uniform texture2D u_lensDirtTex;
 
-layout(set = 0, binding = 2) writeonly uniform image2D out_img;
+layout(set = 0, binding = 3) writeonly uniform image2D out_img;
 
 // Constants
 const U32 MAX_GHOSTS = 4u;
@@ -26,15 +27,16 @@ const F32 CHROMATIC_DISTORTION = 3.0;
 #define ENABLE_HALO 1
 const F32 HALO_OPACITY = 0.5;
 
-Vec3 textureDistorted(sampler2D tex,
+Vec3 textureDistorted(texture2D tex,
+	sampler sampl,
 	Vec2 uv,
 	Vec2 direction, // direction of DISTORTION
 	Vec3 DISTORTION) // per-channel DISTORTION factor
 {
 #if ENABLE_CHROMATIC_DISTORTION
-	return Vec3(textureLod(tex, uv + direction * DISTORTION.r, 0.0).r,
-		textureLod(tex, uv + direction * DISTORTION.g, 0.0).g,
-		textureLod(tex, uv + direction * DISTORTION.b, 0.0).b);
+	return Vec3(textureLod(combineImageSampler(tex, sampl), uv + direction * DISTORTION.r, 0.0).r,
+		textureLod(combineImageSampler(tex, sampl), uv + direction * DISTORTION.g, 0.0).g,
+		textureLod(combineImageSampler(tex, sampl), uv + direction * DISTORTION.b, 0.0).b);
 #else
 	return textureLod(tex, uv, 0.0).rgb;
 #endif
@@ -61,7 +63,7 @@ Vec3 ssLensFlare(Vec2 uv)
 		F32 weight = length(Vec2(0.5) - offset) / LEN_OF_HALF;
 		weight = pow(1.0 - weight, 10.0);
 
-		result += textureDistorted(u_tex, offset, direction, DISTORTION) * weight;
+		result += textureDistorted(u_tex, u_linearAnyClampSampler, offset, direction, DISTORTION) * weight;
 	}
 
 	// Sample halo
@@ -69,22 +71,23 @@ Vec3 ssLensFlare(Vec2 uv)
 	const Vec2 haloVec = normalize(ghostVec) * HALO_WIDTH;
 	F32 weight = length(Vec2(0.5) - fract(flipUv + haloVec)) / LEN_OF_HALF;
 	weight = pow(1.0 - weight, 20.0);
-	result += textureDistorted(u_tex, flipUv + haloVec, direction, DISTORTION) * (weight * HALO_OPACITY);
+	result += textureDistorted(u_tex, u_linearAnyClampSampler, flipUv + haloVec, direction, DISTORTION)
+			  * (weight * HALO_OPACITY);
 #endif
 
 	// Lens dirt
-	result *= textureLod(u_lensDirtTex, uv, 0.0).rgb;
+	result *= textureLod(combineImageSampler(u_lensDirtTex, u_linearAnyClampSampler), uv, 0.0).rgb;
 
 	return result;
 }
 
 Vec3 upscale(Vec2 uv)
 {
-	Vec3 result = textureLod(u_tex, uv, 0.0).rgb;
-	result += textureLodOffset(u_tex, uv, 0.0, ivec2(+1, +1)).rgb;
-	result += textureLodOffset(u_tex, uv, 0.0, ivec2(+1, -1)).rgb;
-	result += textureLodOffset(u_tex, uv, 0.0, ivec2(-1, -1)).rgb;
-	result += textureLodOffset(u_tex, uv, 0.0, ivec2(-1, +1)).rgb;
+	Vec3 result = textureLod(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0).rgb;
+	result += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, +1)).rgb;
+	result += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, -1)).rgb;
+	result += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, -1)).rgb;
+	result += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, +1)).rgb;
 
 	result *= (1.0 / 5.0);
 	return result;

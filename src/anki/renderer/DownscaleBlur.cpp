@@ -178,22 +178,24 @@ void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
 	const U vpWidth = m_rtTex->getWidth() >> passIdx;
 	const U vpHeight = m_rtTex->getHeight() >> passIdx;
 
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+
 	if(passIdx > 0)
 	{
 		TextureSubresourceInfo sampleSubresource;
 		sampleSubresource.m_firstMipmap = passIdx - 1;
-		rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_rt, sampleSubresource, m_r->getLinearSampler());
+		rgraphCtx.bindTexture(0, 1, m_runCtx.m_rt, sampleSubresource);
 	}
 	else
 	{
-		rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getTemporalAA().getRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTexture(0, 1, m_r->getTemporalAA().getRt());
 	}
 
 	if(m_useCompute)
 	{
 		TextureSubresourceInfo sampleSubresource;
 		sampleSubresource.m_firstMipmap = passIdx;
-		rgraphCtx.bindImage(0, 1, m_runCtx.m_rt, sampleSubresource);
+		rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, sampleSubresource);
 
 		UVec4 fbSize(vpWidth, vpHeight, 0, 0);
 		cmdb->setPushConstants(&fbSize, sizeof(fbSize));

@@ -94,26 +94,24 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
 
 	// Bind stuff
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getTemporalAA().getRt(), m_r->getLinearSampler());
+	rgraphCtx.bindUniformBuffer(0, 0, m_r->getTonemapping().getAverageLuminanceBuffer());
 
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_r->getBloom().getRt(), m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(
-		0, 3, m_lut->getGrTextureView(), m_r->getLinearSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTextureAndSampler(
-		0, 4, m_blueNoise->getGrTextureView(), m_blueNoise->getSampler(), TextureUsageBit::SAMPLED_FRAGMENT);
-	rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getGBuffer().getColorRt(3), m_r->getNearestSampler());
-	rgraphCtx.bindTextureAndSampler(0,
-		6,
-		m_r->getGBuffer().getDepthRt(),
-		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-		m_r->getNearestSampler());
+	cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearRepeat);
+
+	rgraphCtx.bindColorTexture(0, 4, m_r->getTemporalAA().getRt());
+
+	rgraphCtx.bindColorTexture(0, 5, m_r->getBloom().getRt());
+	cmdb->bindTexture(0, 6, m_lut->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTexture(0, 7, m_blueNoise->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
+	rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(3));
+	rgraphCtx.bindTexture(0, 9, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
 	if(dbgEnabled)
 	{
-		rgraphCtx.bindColorTextureAndSampler(0, 7, m_r->getDbg().getRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTexture(0, 10, m_r->getDbg().getRt());
 	}
-
-	rgraphCtx.bindUniformBuffer(0, 0, m_r->getTonemapping().getAverageLuminanceBuffer());
 
 	struct PushConsts
 	{

@@ -79,6 +79,14 @@ public:
 	Second m_lightBinTime ANKI_DBG_NULLIFY;
 };
 
+class RendererPrecreatedSamplers
+{
+public:
+	SamplerPtr m_nearestNearestClamp;
+	SamplerPtr m_trilinearClamp;
+	SamplerPtr m_trilinearRepeat;
+};
+
 /// Offscreen renderer.
 class Renderer
 {
@@ -318,6 +326,11 @@ anki_internal:
 		return m_dummyBuff;
 	}
 
+	const RendererPrecreatedSamplers& getSamplers() const
+	{
+		return m_samplers;
+	}
+
 	SamplerPtr getNearestSampler() const
 	{
 		return m_nearestSampler;
@@ -422,6 +435,7 @@ private:
 	SamplerPtr m_linearSampler;
 	SamplerPtr m_trilinearRepeatSampler;
 	SamplerPtr m_nearesetNearestSampler;
+	RendererPrecreatedSamplers m_samplers;
 
 	ShaderProgramResourcePtr m_clearTexComputeProg;
 

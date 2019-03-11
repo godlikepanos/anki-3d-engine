@@ -156,33 +156,32 @@ void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 	regs.m_copyToClientLevelWriteLevel1Pad2.y() = mipsToFill == MIPS_WRITTEN_PER_PASS;
 	cmdb->setPushConstants(&regs, sizeof(regs));
 
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+
 	// Bind input texure
 	if(level == 0)
 	{
-		rgraphCtx.bindTextureAndSampler(0,
-			0,
-			m_r->getGBuffer().getDepthRt(),
-			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-			m_r->getNearestSampler());
+		rgraphCtx.bindTexture(
+			0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	}
 	else
 	{
 		TextureSubresourceInfo subresource;
 		subresource.m_firstMipmap = level - 1;
-		rgraphCtx.bindTextureAndSampler(0, 0, m_runCtx.m_hizRt, subresource, m_r->getNearestSampler());
+		rgraphCtx.bindTexture(0, 1, m_runCtx.m_hizRt, subresource);
 	}
 
 	// 1st level
 	TextureSubresourceInfo subresource;
 	subresource.m_firstMipmap = level;
-	rgraphCtx.bindImage(0, 1, m_runCtx.m_hizRt, subresource);
+	rgraphCtx.bindImage(0, 2, m_runCtx.m_hizRt, subresource);
 
 	// 2nd level
 	subresource.m_firstMipmap = (mipsToFill == MIPS_WRITTEN_PER_PASS) ? level + 1 : level; // Bind the next or the same
-	rgraphCtx.bindImage(0, 2, m_runCtx.m_hizRt, subresource);
+	rgraphCtx.bindImage(0, 3, m_runCtx.m_hizRt, subresource);
 
 	// Client buffer
-	cmdb->bindStorageBuffer(0, 3, m_copyToBuff.m_buff, 0, m_copyToBuff.m_buff->getSize());
+	cmdb->bindStorageBuffer(0, 4, m_copyToBuff.m_buff, 0, m_copyToBuff.m_buff->getSize());
 
 	// Done
 	dispatchPPCompute(cmdb, 8, 8, level0Width, level0Height);

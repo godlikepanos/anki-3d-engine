@@ -25,11 +25,12 @@ ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 #define u_copyToClientLevel u_regs.m_copyToClientLevelWriteLevel1Pad2.x
 #define u_writeLevel1 (u_regs.m_copyToClientLevelWriteLevel1Pad2.y == 1u)
 
-layout(set = 0, binding = 0) uniform sampler2D u_readTex;
-layout(set = 0, binding = 1) writeonly uniform image2D u_level0WriteImg;
-layout(set = 0, binding = 2) writeonly uniform image2D u_level1WriteImg;
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_readTex;
+layout(set = 0, binding = 2) writeonly uniform image2D u_level0WriteImg;
+layout(set = 0, binding = 3) writeonly uniform image2D u_level1WriteImg;
 
-layout(std430, set = 0, binding = 3) writeonly buffer s1_
+layout(std430, set = 0, binding = 4) writeonly buffer s1_
 {
 	F32 u_clientBuf[];
 };
@@ -58,7 +59,7 @@ void main()
 {
 	// Read depth
 	const Vec2 readUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_level0WriteImgSize);
-	Vec4 depths = textureGather(u_readTex, readUv, 0);
+	Vec4 depths = textureGather(combineImageSampler(u_readTex, u_nearestAnyClampSampler), readUv, 0);
 
 	// Resolve & store the 1st level
 	F32 depth = resolveDepths(depths);
