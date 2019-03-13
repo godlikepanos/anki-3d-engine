@@ -45,7 +45,7 @@ class RenderingContext
 {
 public:
 	StackAllocator<U8> m_tempAllocator;
-	RenderQueue* m_renderQueue ANKI_DBG_NULLIFY;
+	RenderQueue* m_renderQueue ANKI_DEBUG_CODE(= nullptr);
 
 	RenderGraphDescription m_renderGraphDescr;
 
@@ -75,8 +75,8 @@ public:
 class RendererStats
 {
 public:
-	U32 m_drawcallCount ANKI_DBG_NULLIFY;
-	Second m_lightBinTime ANKI_DBG_NULLIFY;
+	U32 m_drawcallCount ANKI_DEBUG_CODE(= 0);
+	Second m_lightBinTime ANKI_DEBUG_CODE(= 0.0);
 };
 
 class RendererPrecreatedSamplers

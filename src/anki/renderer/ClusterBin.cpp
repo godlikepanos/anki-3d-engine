@@ -43,9 +43,9 @@ static Bool insideClusterFrustum(const Array<Plane, 4>& planeArr, const TShape& 
 class ClusterBin::BinCtx
 {
 public:
-	ClusterBin* m_bin ANKI_DBG_NULLIFY;
-	ClusterBinIn* m_in ANKI_DBG_NULLIFY;
-	ClusterBinOut* m_out ANKI_DBG_NULLIFY;
+	ClusterBin* m_bin ANKI_DEBUG_CODE(= nullptr);
+	ClusterBinIn* m_in ANKI_DEBUG_CODE(= nullptr);
+	ClusterBinOut* m_out ANKI_DEBUG_CODE(= nullptr);
 
 	WeakArray<PointLight> m_pointLights;
 	WeakArray<SpotLight> m_spotLights;

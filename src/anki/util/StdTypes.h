@@ -180,13 +180,6 @@ private:
 		} \
 	} while(0)
 
-/// Macro to nuliffy a pointer on debug builds.
-#if ANKI_EXTRA_CHECKS
-#	define ANKI_DBG_NULLIFY = {}
-#else
-#	define ANKI_DBG_NULLIFY
-#endif
-
 #if ANKI_EXTRA_CHECKS
 #	define ANKI_DEBUG_CODE(x) x
 #else

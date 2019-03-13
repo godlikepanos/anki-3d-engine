@@ -40,7 +40,7 @@ class RenderQueueDrawContext final : public RenderingMatrices
 public:
 	RenderingKey m_key;
 	CommandBufferPtr m_commandBuffer;
-	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DBG_NULLIFY;
+	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
 	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
 };

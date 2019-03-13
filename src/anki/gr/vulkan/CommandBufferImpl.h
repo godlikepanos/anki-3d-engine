@@ -371,13 +371,13 @@ private:
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
 	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
 
-	ShaderProgramImpl* m_graphicsProg ANKI_DBG_NULLIFY; ///< Last bound graphics program
+	ShaderProgramImpl* m_graphicsProg ANKI_DEBUG_CODE(= nullptr); ///< Last bound graphics program
 
 	PipelineStateTracker m_state;
 
 	Array<DescriptorSetState, MAX_DESCRIPTOR_SETS> m_dsetState;
 
-	ShaderProgramImpl* m_computeProg ANKI_DBG_NULLIFY;
+	ShaderProgramImpl* m_computeProg ANKI_DEBUG_CODE(= nullptr);
 
 	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 

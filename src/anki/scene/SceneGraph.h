@@ -34,9 +34,9 @@ class Octree;
 class SceneGraphStats
 {
 public:
-	Second m_updateTime ANKI_DBG_NULLIFY;
-	Second m_visibilityTestsTime ANKI_DBG_NULLIFY;
-	Second m_physicsUpdate ANKI_DBG_NULLIFY;
+	Second m_updateTime ANKI_DEBUG_CODE(= 0.0);
+	Second m_visibilityTestsTime ANKI_DEBUG_CODE(= 0.0);
+	Second m_physicsUpdate ANKI_DEBUG_CODE(= 0.0);
 };
 
 /// SceneGraph limits.

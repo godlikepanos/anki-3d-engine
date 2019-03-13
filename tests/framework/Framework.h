@@ -180,7 +180,9 @@ extern void deleteTesterSingleton();
 #define ANKI_TEST_EXPECT_NEAR_IMPL(file_, line_, func_, x, y, epsilon_) \
 	do \
 	{ \
-		if(absolute((x) - (y)) > (epsilon_)) \
+		auto maxVal = ((x) > (y)) ? (x) : (y); \
+		auto minVal = ((x) < (y)) ? (x) : (y); \
+		if((maxVal - minVal) > (epsilon_)) \
 		{ \
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " != " << #y << " (" << file_ << ":" << line_ << ")"; \

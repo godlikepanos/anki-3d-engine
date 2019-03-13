@@ -128,10 +128,10 @@ class RenderPassWorkContext
 	friend class RenderGraph;
 
 public:
-	void* m_userData ANKI_DBG_NULLIFY; ///< The userData passed in RenderPassDescriptionBase::setWork
+	void* m_userData ANKI_DEBUG_CODE(= nullptr); ///< The userData passed in RenderPassDescriptionBase::setWork
 	CommandBufferPtr m_commandBuffer;
-	U32 m_currentSecondLevelCommandBufferIndex ANKI_DBG_NULLIFY;
-	U32 m_secondLevelCommandBufferCount ANKI_DBG_NULLIFY;
+	U32 m_currentSecondLevelCommandBufferIndex ANKI_DEBUG_CODE(= 0);
+	U32 m_secondLevelCommandBufferCount ANKI_DEBUG_CODE(= 0);
 
 	void getBufferState(RenderPassBufferHandle handle, BufferPtr& buff) const;
 
@@ -216,7 +216,7 @@ public:
 	}
 
 private:
-	const RenderGraph* m_rgraph ANKI_DBG_NULLIFY;
+	const RenderGraph* m_rgraph ANKI_DEBUG_CODE(= nullptr);
 	U32 m_passIdx ANKI_DEBUG_CODE(= MAX_U32);
 	U32 m_batchIdx ANKI_DEBUG_CODE(= MAX_U32);
 

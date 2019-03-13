@@ -17,8 +17,8 @@ public:
 	ImageLoader m_loader;
 	U m_faces = 0;
 	U m_layerCount = 0;
-	GrManager* m_gr ANKI_DBG_NULLIFY;
-	TransferGpuAllocator* m_trfAlloc ANKI_DBG_NULLIFY;
+	GrManager* m_gr ANKI_DEBUG_CODE(= nullptr);
+	TransferGpuAllocator* m_trfAlloc ANKI_DEBUG_CODE(= nullptr);
 	TextureType m_texType;
 	TexturePtr m_tex;
 

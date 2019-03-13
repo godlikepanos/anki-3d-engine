@@ -46,7 +46,7 @@ private:
 	{
 	public:
 		RenderTargetHandle m_rt;
-		RenderingContext* m_ctx ANKI_DBG_NULLIFY;
+		RenderingContext* m_ctx ANKI_DEBUG_CODE(= nullptr);
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);

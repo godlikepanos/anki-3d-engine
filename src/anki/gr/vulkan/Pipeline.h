@@ -544,7 +544,7 @@ public:
 	}
 
 private:
-	VkPipeline m_handle ANKI_DBG_NULLIFY;
+	VkPipeline m_handle ANKI_DEBUG_CODE(= 0);
 };
 
 /// Given some state it creates/hashes pipelines.

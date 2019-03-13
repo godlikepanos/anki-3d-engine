@@ -22,14 +22,14 @@ class Config;
 class ClusterBinIn
 {
 public:
-	ThreadHive* m_threadHive ANKI_DBG_NULLIFY;
+	ThreadHive* m_threadHive ANKI_DEBUG_CODE(= nullptr);
 	StackAllocator<U8> m_tempAlloc;
 
-	const RenderQueue* m_renderQueue ANKI_DBG_NULLIFY;
+	const RenderQueue* m_renderQueue ANKI_DEBUG_CODE(= nullptr);
 
-	StagingGpuMemoryManager* m_stagingMem ANKI_DBG_NULLIFY;
+	StagingGpuMemoryManager* m_stagingMem ANKI_DEBUG_CODE(= nullptr);
 
-	Bool m_shadowsEnabled ANKI_DBG_NULLIFY;
+	Bool m_shadowsEnabled ANKI_DEBUG_CODE(= false);
 };
 
 /// @memberof ClusterBin

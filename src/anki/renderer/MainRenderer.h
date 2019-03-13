@@ -25,7 +25,7 @@ class UiManager;
 class MainRendererStats : public RendererStats
 {
 public:
-	Second m_renderingTime ANKI_DBG_NULLIFY;
+	Second m_renderingTime ANKI_DEBUG_CODE(= 0.0);
 };
 
 /// Main onscreen renderer

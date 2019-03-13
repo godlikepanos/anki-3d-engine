@@ -100,48 +100,26 @@ inline T modf(T x, T& intPart)
 }
 
 /// The same as abs/fabs. For ints and floats.
-template<typename T>
-T absolute(const T f);
-
-#define ANKI_SPECIALIZE_ABS(type_) \
-	template<> \
-	inline type_ absolute(const type_ f) \
-	{ \
-		return (f < type_(0)) ? -f : f; \
-	}
-
-ANKI_SPECIALIZE_ABS(I8)
-ANKI_SPECIALIZE_ABS(I16)
-ANKI_SPECIALIZE_ABS(I32)
-ANKI_SPECIALIZE_ABS(I64)
-ANKI_SPECIALIZE_ABS(F32)
-ANKI_SPECIALIZE_ABS(F64)
-
-#undef ANKI_SPECIALIZE_ABS
-
-template<typename T>
-inline Bool isZero(const T f)
+template<typename T,
+	typename std::enable_if<std::is_floating_point<T>::value
+								|| (std::is_integral<T>::value && std::is_signed<T>::value),
+		int>::type = 0>
+inline T absolute(const T f)
 {
-	return absolute<T>(f) < EPSILON;
+	return (f < T(0)) ? -f : f;
 }
 
-#define ANKI_SPECIALIZE_IS_ZERO_INT(type_) \
-	template<> \
-	inline Bool isZero(const type_ x) \
-	{ \
-		return x == type_(0); \
-	}
+template<typename T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
+inline Bool isZero(const T f, const T e = EPSILON)
+{
+	return absolute<T>(f) < e;
+}
 
-ANKI_SPECIALIZE_IS_ZERO_INT(I8)
-ANKI_SPECIALIZE_IS_ZERO_INT(I16)
-ANKI_SPECIALIZE_IS_ZERO_INT(I32)
-ANKI_SPECIALIZE_IS_ZERO_INT(I64)
-ANKI_SPECIALIZE_IS_ZERO_INT(U8)
-ANKI_SPECIALIZE_IS_ZERO_INT(U16)
-ANKI_SPECIALIZE_IS_ZERO_INT(U32)
-ANKI_SPECIALIZE_IS_ZERO_INT(U64)
-
-#undef ANKI_SPECIALIZE_IS_ZERO_INT
+template<typename T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
+inline Bool isZero(const T f)
+{
+	return f == 0;
+}
 
 template<typename T>
 inline T toRad(const T degrees)

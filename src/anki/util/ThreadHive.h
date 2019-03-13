@@ -49,10 +49,10 @@ class ThreadHiveTask
 {
 public:
 	/// What this task will do.
-	ThreadHiveTaskCallback m_callback ANKI_DBG_NULLIFY;
+	ThreadHiveTaskCallback m_callback ANKI_DEBUG_CODE(= nullptr);
 
 	/// Arguments to pass to the m_callback.
-	void* m_argument ANKI_DBG_NULLIFY;
+	void* m_argument ANKI_DEBUG_CODE(= nullptr);
 
 	/// The task will start when that semaphore reaches zero.
 	ThreadHiveSemaphore* m_waitSemaphore = nullptr;

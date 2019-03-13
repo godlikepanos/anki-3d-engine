@@ -67,7 +67,7 @@ public:
 class Tracer::ThreadLocal
 {
 public:
-	ThreadId m_tid ANKI_DBG_NULLIFY;
+	ThreadId m_tid ANKI_DEBUG_CODE(= 0);
 
 	IntrusiveList<CountersChunk> m_counterChunks;
 	IntrusiveList<EventsChunk> m_eventChunks;
