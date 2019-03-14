@@ -228,7 +228,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z bullet)
+set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z bullet imgui)
 
 # Bullet config
 option(BUILD_BULLET2_DEMOS OFF)
@@ -351,6 +351,7 @@ configure_file("src/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Confi
 include_directories("src"
 	"thirdparty/tinyxml2/include"
 	"thirdparty/lua"
+	"thirdparty/imgui"
 	"thirdparty/z"
 	"${SDL2_INCLUDE_DIRS}"
 	"thirdparty/freetype/include"
@@ -423,7 +424,7 @@ if(SDL)
 endif()
 
 set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath
-	ankispirvcross ankitinyxml2 ankilua ankiz glslang SPIRV OGLCompiler OSDependent ankitinyexpr)
+	ankispirvcross ankitinyxml2 ankilua ankiz glslang SPIRV OGLCompiler OSDependent ankitinyexpr ankiimgui)
 
 # Add anki sub libraries
 set(ANKI_SUB_DIRS core script renderer scene ui input physics resource misc gr collision math util)
