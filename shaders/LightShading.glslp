@@ -41,12 +41,15 @@ void main()
 #define LIGHT_CLUSTERS_BINDING 8
 #include <shaders/ClusteredShadingCommon.glsl>
 
-layout(set = 0, binding = 10) uniform sampler2D u_msRt0;
-layout(set = 0, binding = 11) uniform sampler2D u_msRt1;
-layout(set = 0, binding = 12) uniform sampler2D u_msRt2;
-layout(set = 0, binding = 13) uniform sampler2D u_msDepthRt;
-layout(set = 0, binding = 14) uniform sampler2D u_ssrRt;
-layout(set = 0, binding = 15) uniform sampler2D u_ssaoRt;
+layout(set = 0, binding = 10) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 11) uniform sampler u_trilinearClampSampler;
+
+layout(set = 0, binding = 12) uniform texture2D u_msRt0;
+layout(set = 0, binding = 13) uniform texture2D u_msRt1;
+layout(set = 0, binding = 14) uniform texture2D u_msRt2;
+layout(set = 0, binding = 15) uniform texture2D u_msDepthRt;
+layout(set = 0, binding = 16) uniform texture2D u_ssrRt;
+layout(set = 0, binding = 17) uniform texture2D u_ssaoRt;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;
@@ -64,7 +67,7 @@ layout(location = 0) out Vec3 out_color;
 
 void main()
 {
-	F32 depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
+	F32 depth = textureLod(u_msDepthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
 	Vec2 ndc = UV_TO_NDC(in_uv);
 
 	// Get world position
@@ -80,16 +83,16 @@ void main()
 
 		idxOffset = u_clusters[clusterIdx];
 
-		// out_color = lightHeatmap(idxOffset, 5, false, false, false, false, true); return;
+		// out_color = lightHeatmap(idxOffset, 5, false, true, false, false, false); return;
 	}
 
 	// Decode GBuffer
 	GbufferInfo gbuffer;
-	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_uv, 0.0, gbuffer);
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, u_nearestAnyClampSampler, in_uv, 0.0, gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
 
 	// SSAO
-	F32 ssao = textureLod(u_ssaoRt, in_uv, 0.0).r;
+	const F32 ssao = textureLod(u_ssaoRt, u_trilinearClampSampler, in_uv, 0.0).r;
 	gbuffer.m_diffuse *= ssao;
 
 	// Ambient and emissive color
@@ -106,7 +109,8 @@ void main()
 			F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
 			U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
 
-			shadowFactor = computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex);
+			shadowFactor =
+				computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex, u_trilinearClampSampler);
 		}
 		else
 		{
@@ -133,7 +137,7 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			F32 shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowTex);
+			F32 shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowTex, u_trilinearClampSampler);
 			lambert *= shadow;
 		}
 
@@ -152,7 +156,7 @@ void main()
 		F32 shadowmapLayerIdx = light.m_shadowmapId;
 		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
 		{
-			F32 shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex);
+			F32 shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex, u_trilinearClampSampler);
 			lambert *= shadow;
 		}
 
@@ -184,12 +188,14 @@ void main()
 
 			// Sample reflections
 			Vec3 cubeUv = intersectProbe(worldPos, reflDir, aabbMin, aabbMax, probeOrigin);
-			Vec3 c = textureLod(u_reflectionsTex, Vec4(cubeUv, cubemapIndex), reflLod).rgb;
+			Vec4 cubeArrUv = Vec4(cubeUv, cubemapIndex);
+			Vec3 c = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
 			specIndirect += c * blendWeight;
 
 			// Sample irradiance
 			cubeUv = intersectProbe(worldPos, gbuffer.m_normal, aabbMin, aabbMax, probeOrigin);
-			c = textureLod(u_irradianceTex, Vec4(cubeUv, cubemapIndex), 0.0).rgb;
+			cubeArrUv = Vec4(cubeUv, cubemapIndex);
+			c = textureLod(u_irradianceTex, u_trilinearClampSampler, cubeArrUv, 0.0).rgb;
 			diffIndirect += c * blendWeight;
 		}
 
@@ -198,14 +204,15 @@ void main()
 		diffIndirect /= totalBlendWeight;
 
 		// Read the SSL result
-		const Vec4 ssr = textureLod(u_ssrRt, in_uv, 0.0);
+		const Vec4 ssr = textureLod(u_ssrRt, u_trilinearClampSampler, in_uv, 0.0);
 
 		// Combine the SSR and probe reflections and write the result
 		const Vec3 finalRefl = specIndirect * ssr.a + ssr.rgb;
 
 		// Compute env BRDF
 		const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
-		const Vec3 env = envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, NoV);
+		const Vec3 env =
+			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
 		out_color += diffIndirect * gbuffer.m_diffuse + finalRefl * env;
 	}

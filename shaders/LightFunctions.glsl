@@ -51,11 +51,11 @@ F32 V_Schlick(F32 roughness, F32 NoV, F32 NoL)
 	return 0.25 / (Vis_SchlickV * Vis_SchlickL);
 }
 
-Vec3 envBRDF(Vec3 specular, F32 roughness, sampler2D integrationLut, F32 NoV)
+Vec3 envBRDF(Vec3 specular, F32 roughness, texture2D integrationLut, sampler integrationLutSampler, F32 NoV)
 {
 	const F32 a = roughness * roughness;
 	const F32 a2 = a * a;
-	const Vec2 envBRDF = textureLod(integrationLut, Vec2(a2, NoV), 0.0).xy;
+	const Vec2 envBRDF = textureLod(integrationLut, integrationLutSampler, Vec2(a2, NoV), 0.0).xy;
 	return specular * envBRDF.x + /*min(1.0, 50.0 * specular.g) */ envBRDF.y;
 }
 
@@ -109,7 +109,7 @@ U32 computeShadowSampleCount(const U32 COUNT, F32 zVSpace)
 	return sampleCount;
 }
 
-F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, sampler2D spotMapArr)
+F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
 {
 	const Vec4 texCoords4 = light.m_texProjectionMat * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
@@ -119,13 +119,13 @@ F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, sampler2D spotM
 
 	const F32 linearDepth = linearizeDepth(texCoords3.z, near, far);
 
-	const F32 shadowFactor = textureLod(spotMapArr, texCoords3.xy, 0.0).r;
+	const F32 shadowFactor = textureLod(spotMap, spotMapSampler, texCoords3.xy, 0.0).r;
 
 	return saturate(exp(ESM_CONSTANT * (shadowFactor - linearDepth)));
 }
 
 // Compute the shadow factor of point (omni) lights.
-F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, sampler2D shadowMap)
+F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D shadowMap, sampler shadowMapSampler)
 {
 	const Vec3 dir = -frag2Light;
 	const Vec3 dirabs = abs(dir);
@@ -152,14 +152,15 @@ F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, sampler2D s
 		uv = fma(uv, Vec2(light.m_shadowAtlasTileScale), atlasOffset);
 
 		// Sample
-		shadowFactor = textureLod(shadowMap, uv, 0.0).r;
+		shadowFactor = textureLod(shadowMap, shadowMapSampler, uv, 0.0).r;
 	}
 
 	return saturate(exp(ESM_CONSTANT * (shadowFactor - linearDepth)));
 }
 
 // Compute the shadow factor of a directional light
-F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, sampler2D shadowMap)
+F32 computeShadowFactorDirLight(
+	DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap, sampler shadowMapSampler)
 {
 	const Mat4 lightProjectionMat = light.m_textureMatrices[cascadeIdx];
 
@@ -168,19 +169,20 @@ F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 wor
 
 	const F32 cascadeLinearDepth = texCoords3.z;
 
-	F32 shadowFactor = textureLod(shadowMap, texCoords3.xy, 0.0).r;
+	F32 shadowFactor = textureLod(shadowMap, shadowMapSampler, texCoords3.xy, 0.0).r;
 	shadowFactor = saturate(exp(ESM_CONSTANT * 3.0 * (shadowFactor - cascadeLinearDepth)));
 
 	return shadowFactor;
 }
 
 // Compute the shadow factor of a directional light
-F32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, sampler2DShadow shadowMap)
+F32 computeShadowFactorDirLight(
+	Mat4 lightProjectionMat, Vec3 worldPos, texture2D shadowMap, samplerShadow shadowMapSampler)
 {
 	const Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-	const F32 shadowFactor = textureLod(shadowMap, texCoords3, 0.0);
+	const F32 shadowFactor = textureLod(shadowMap, shadowMapSampler, texCoords3, 0.0);
 	return shadowFactor;
 }
 

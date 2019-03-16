@@ -10,9 +10,9 @@
 
 // Global resources
 #define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 2
-#define LIGHT_LIGHTS_BINDING 3
-#define LIGHT_CLUSTERS_BINDING 6
+#define LIGHT_COMMON_UNIS_BINDING 3
+#define LIGHT_LIGHTS_BINDING 4
+#define LIGHT_CLUSTERS_BINDING 7
 #include <shaders/ClusteredShadingCommon.glsl>
 
 // In/out

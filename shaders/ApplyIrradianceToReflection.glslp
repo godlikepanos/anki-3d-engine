@@ -14,27 +14,34 @@ layout(location = 0) in Vec2 in_uv;
 
 layout(location = 0) out Vec3 out_color;
 
-layout(set = 0, binding = 0) uniform sampler2D u_gbufferTex0;
-layout(set = 0, binding = 1) uniform sampler2D u_gbufferTex1;
-layout(set = 0, binding = 2) uniform sampler2D u_gbufferTex2;
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
 
-layout(set = 0, binding = 3) uniform samplerCubeArray u_irradianceTex;
+layout(set = 0, binding = 2) uniform texture2D u_gbufferTex0;
+layout(set = 0, binding = 3) uniform texture2D u_gbufferTex1;
+layout(set = 0, binding = 4) uniform texture2D u_gbufferTex2;
 
-ANKI_PUSH_CONSTANTS(Vec4, u_faceIdxPad3);
+layout(set = 0, binding = 5) uniform textureCubeArray u_irradianceTex;
+
+layout(push_constant, std430) uniform pc_
+{
+	Vec3 u_padding;
+	F32 u_faceIdx;
+};
 
 void main()
 {
 	// Compute the UVs to read the gbuffer from
 	Vec2 sampleUv = in_uv;
 	sampleUv.x *= (1.0 / 6.0);
-	sampleUv.x += (1.0 / 6.0) * u_faceIdxPad3.x;
+	sampleUv.x += (1.0 / 6.0) * u_faceIdx;
 
 	// Read the gbuffer
 	GbufferInfo gbuffer;
-	readGBuffer(u_gbufferTex0, u_gbufferTex1, u_gbufferTex2, sampleUv, 0.0, gbuffer);
+	readGBuffer(u_gbufferTex0, u_gbufferTex1, u_gbufferTex2, u_nearestAnyClampSampler, sampleUv, 0.0, gbuffer);
 
 	// Read the irradiance. Use the layer 0 because C++ will set the appropriate texture view
-	const Vec3 irradiance = textureLod(u_irradianceTex, Vec4(gbuffer.m_normal, 0.0), 0.0).rgb;
+	const Vec3 irradiance = textureLod(u_irradianceTex, u_linearAnyClampSampler, Vec4(gbuffer.m_normal, 0.0), 0.0).rgb;
 
 	// Compute the indirect term
 	const Vec3 indirect = gbuffer.m_diffuse * irradiance;

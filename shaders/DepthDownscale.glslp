@@ -59,7 +59,7 @@ void main()
 {
 	// Read depth
 	const Vec2 readUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_level0WriteImgSize);
-	Vec4 depths = textureGather(combineImageSampler(u_readTex, u_nearestAnyClampSampler), readUv, 0);
+	Vec4 depths = textureGather(sampler2D(u_readTex, u_nearestAnyClampSampler), readUv, 0);
 
 	// Resolve & store the 1st level
 	F32 depth = resolveDepths(depths);

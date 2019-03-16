@@ -32,12 +32,14 @@ void main()
 #include <shaders/Pack.glsl>
 #include <shaders/Functions.glsl>
 
-layout(set = 0, binding = 0) uniform sampler2D u_msDepthRt;
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_msDepthRt;
 
+layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
 #define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 1
-#define LIGHT_DECALS_BINDING 2
-#define LIGHT_CLUSTERS_BINDING 5
+#define LIGHT_COMMON_UNIS_BINDING 3
+#define LIGHT_DECALS_BINDING 4
+#define LIGHT_CLUSTERS_BINDING 7
 #include <shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) in Vec2 in_uv;
@@ -59,7 +61,7 @@ void main()
 	Vec4 outSpecular = Vec4(0.0, 0.0, 0.0, 1.0);
 
 	// Get worldPos
-	const F32 depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
+	const F32 depth = textureLod(u_msDepthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
 	const Vec2 ndc = UV_TO_NDC(in_uv);
 	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
@@ -101,11 +103,11 @@ void main()
 
 		// Read diffuse
 		const Vec2 diffUv = mad(texCoords2, decal.m_diffUv.zw, decal.m_diffUv.xy);
-		const Vec4 decalDiff = texture(u_diffDecalTex, diffUv);
+		const Vec4 decalDiff = texture(u_diffDecalTex, u_trilinearRepeatSampler, diffUv);
 
 		// Read roughness
 		const Vec2 specUv = mad(texCoords2, decal.m_normRoughnessUv.zw, decal.m_normRoughnessUv.xy);
-		const Vec3 spec = texture(u_specularRoughnessDecalTex, specUv).rgb;
+		const Vec3 spec = texture(u_specularRoughnessDecalTex, u_trilinearRepeatSampler, specUv).rgb;
 
 		// Update diffuse
 		F32 f = decalDiff.a * decal.m_blendFactors[0];

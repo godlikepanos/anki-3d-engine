@@ -54,7 +54,7 @@ layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 1, std140, row_major) u
 	SpotLight u_spotLights[UBO_MAX_SIZE / SIZEOF_SPOT_LIGHT];
 };
 
-layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 2) uniform highp sampler2D u_shadowTex;
+layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 2) uniform highp texture2D u_shadowTex;
 #endif
 
 //
@@ -66,13 +66,13 @@ layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING) uni
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / SIZEOF_REFLECTION_PROBE];
 };
 
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 1) uniform samplerCubeArray u_reflectionsTex;
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 2) uniform samplerCubeArray u_irradianceTex;
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 3) uniform sampler2D u_integrationLut;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 2) uniform textureCubeArray u_irradianceTex;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 3) uniform texture2D u_integrationLut;
 #endif
 
 //
-// Decal uniforms
+// Decal uniforms (3)
 //
 #if defined(LIGHT_DECALS_BINDING)
 layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_DECALS_BINDING) uniform u4_
@@ -80,8 +80,8 @@ layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_DECALS_BINDING) unifo
 	Decal u_decals[UBO_MAX_SIZE / SIZEOF_DECAL];
 };
 
-layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 1) uniform sampler2D u_diffDecalTex;
-layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 2) uniform sampler2D u_specularRoughnessDecalTex;
+layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 1) uniform texture2D u_diffDecalTex;
+layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 2) uniform texture2D u_specularRoughnessDecalTex;
 #endif
 
 //

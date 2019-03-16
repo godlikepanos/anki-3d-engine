@@ -38,11 +38,11 @@ void main()
 	}
 #endif
 
-	out_color = textureLod(combineImageSampler(u_tex, u_linearAnyClampSampler), in_uv, 0.0).rgb;
-	out_color += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(+1, +1)).rgb;
-	out_color += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(-1, -1)).rgb;
-	out_color += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(+1, -1)).rgb;
-	out_color += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(-1, +1)).rgb;
+	out_color = textureLod(u_tex, u_linearAnyClampSampler, in_uv, 0.0).rgb;
+	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(+1, +1)).rgb;
+	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(-1, -1)).rgb;
+	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(+1, -1)).rgb;
+	out_color += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), in_uv, 0.0, IVec2(-1, +1)).rgb;
 
 	out_color *= (1.0 / 5.0);
 

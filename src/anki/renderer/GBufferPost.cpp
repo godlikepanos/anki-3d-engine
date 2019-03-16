@@ -85,28 +85,26 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->setBlendFactors(1, BlendFactor::ONE, BlendFactor::SRC_ALPHA, BlendFactor::ZERO, BlendFactor::ONE);
 
 	// Bind all
-	rgraphCtx.bindTextureAndSampler(0,
-		0,
-		m_r->getGBuffer().getDepthRt(),
-		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-		m_r->getNearestSampler());
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 
-	bindUniforms(cmdb, 0, 1, ctx.m_lightShadingUniformsToken);
-	bindUniforms(cmdb, 0, 2, rsrc.m_decalsToken);
+	rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
-	cmdb->bindTextureAndSampler(0,
-		3,
+	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeat);
+
+	bindUniforms(cmdb, 0, 3, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 4, rsrc.m_decalsToken);
+
+	cmdb->bindTexture(0,
+		5,
 		(rsrc.m_diffDecalTexView) ? rsrc.m_diffDecalTexView : m_r->getDummyTextureView(),
-		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTextureAndSampler(0,
-		4,
+	cmdb->bindTexture(0,
+		6,
 		(rsrc.m_specularRoughnessDecalTexView) ? rsrc.m_specularRoughnessDecalTexView : m_r->getDummyTextureView(),
-		m_r->getTrilinearRepeatSampler(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 
-	bindStorage(cmdb, 0, 5, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 6, rsrc.m_indicesToken);
+	bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 8, rsrc.m_indicesToken);
 
 	// Draw
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);

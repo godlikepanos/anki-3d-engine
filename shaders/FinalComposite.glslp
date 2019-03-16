@@ -55,7 +55,7 @@ Vec3 colorGrading(Vec3 color)
 
 	color = min(color, Vec3(1.0));
 	const Vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
-	return textureLod(combineImageSampler(u_lut, u_trilinearRepeatSampler), lutCoords, 0.0).rgb;
+	return textureLod(u_lut, u_trilinearRepeatSampler, lutCoords, 0.0).rgb;
 }
 
 void main()
@@ -76,13 +76,13 @@ void main()
 	}
 	else
 	{
-		out_color = textureLod(combineImageSampler(u_lightShadingRt, u_linearAnyClampSampler), uv, 0.0).rgb;
+		out_color = textureLod(u_lightShadingRt, u_linearAnyClampSampler, uv, 0.0).rgb;
 	}
 
 	out_color = tonemap(out_color, u_exposureThreshold0);
 
 #if BLOOM_ENABLED
-	const Vec3 bloom = textureLod(combineImageSampler(u_ppsBloomLfRt, u_linearAnyClampSampler), uv, 0.0).rgb;
+	const Vec3 bloom = textureLod(u_ppsBloomLfRt, u_linearAnyClampSampler, uv, 0.0).rgb;
 	out_color += bloom;
 #endif
 
@@ -90,7 +90,7 @@ void main()
 
 #if BLUE_NOISE
 	const Vec3 bnUvw = Vec3(FB_SIZE / Vec2(64.0) * uv, u_blueNoiseLayerPad3.x);
-	Vec3 blueNoise = textureLod(combineImageSampler(u_blueNoise, u_trilinearRepeatSampler), bnUvw, 0.0).rgb;
+	Vec3 blueNoise = textureLod(u_blueNoise, u_trilinearRepeatSampler, bnUvw, 0.0).rgb;
 	blueNoise = blueNoise * 2.0 - 1.0;
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
 
@@ -99,12 +99,12 @@ void main()
 
 #if 0
 	{
-		out_color = textureLod(combineImageSampler(u_lightShadingRt, u_linearAnyClampSampler), uv, 0.0).rgb;
+		out_color = textureLod(u_lightShadingRt, u_linearAnyClampSampler, uv, 0.0).rgb;
 	}
 #endif
 
 #if DBG_ENABLED
-	out_color += textureLod(combineImageSampler(u_dbgRt, u_linearAnyClampSampler), uv, 0.0).rgb;
+	out_color += textureLod(u_dbgRt, u_linearAnyClampSampler, uv, 0.0).rgb;
 #endif
 }
 

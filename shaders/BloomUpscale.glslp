@@ -34,9 +34,9 @@ Vec3 textureDistorted(texture2D tex,
 	Vec3 DISTORTION) // per-channel DISTORTION factor
 {
 #if ENABLE_CHROMATIC_DISTORTION
-	return Vec3(textureLod(combineImageSampler(tex, sampl), uv + direction * DISTORTION.r, 0.0).r,
-		textureLod(combineImageSampler(tex, sampl), uv + direction * DISTORTION.g, 0.0).g,
-		textureLod(combineImageSampler(tex, sampl), uv + direction * DISTORTION.b, 0.0).b);
+	return Vec3(textureLod(tex, sampl, uv + direction * DISTORTION.r, 0.0).r,
+		textureLod(tex, sampl, uv + direction * DISTORTION.g, 0.0).g,
+		textureLod(tex, sampl, uv + direction * DISTORTION.b, 0.0).b);
 #else
 	return textureLod(tex, uv, 0.0).rgb;
 #endif
@@ -76,18 +76,18 @@ Vec3 ssLensFlare(Vec2 uv)
 #endif
 
 	// Lens dirt
-	result *= textureLod(combineImageSampler(u_lensDirtTex, u_linearAnyClampSampler), uv, 0.0).rgb;
+	result *= textureLod(u_lensDirtTex, u_linearAnyClampSampler, uv, 0.0).rgb;
 
 	return result;
 }
 
 Vec3 upscale(Vec2 uv)
 {
-	Vec3 result = textureLod(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0).rgb;
-	result += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, +1)).rgb;
-	result += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, -1)).rgb;
-	result += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, -1)).rgb;
-	result += textureLodOffset(combineImageSampler(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, +1)).rgb;
+	Vec3 result = textureLod(u_tex, u_linearAnyClampSampler, uv, 0.0).rgb;
+	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, +1)).rgb;
+	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(+1, -1)).rgb;
+	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, -1)).rgb;
+	result += textureLodOffset(sampler2D(u_tex, u_linearAnyClampSampler), uv, 0.0, ivec2(-1, +1)).rgb;
 
 	result *= (1.0 / 5.0);
 	return result;

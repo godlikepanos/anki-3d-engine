@@ -98,18 +98,20 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1u]);
 
 	// Bind all
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_r->getGBuffer().getColorRt(1), m_r->getLinearSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+
+	rgraphCtx.bindColorTexture(0, 1, m_r->getGBuffer().getColorRt(1));
+	rgraphCtx.bindColorTexture(0, 2, m_r->getGBuffer().getColorRt(2));
 
 	TextureSubresourceInfo hizSubresource; // Only first mip
-	rgraphCtx.bindTextureAndSampler(0, 2, m_r->getDepthDownscale().getHiZRt(), hizSubresource, m_r->getLinearSampler());
+	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
 
-	rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getDownscaleBlur().getRt(), m_r->getTrilinearRepeatSampler());
+	rgraphCtx.bindColorTexture(0, 4, m_r->getDownscaleBlur().getRt());
 
-	rgraphCtx.bindImage(0, 4, m_runCtx.m_rt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 5, m_runCtx.m_rt, TextureSubresourceInfo());
 
 	// Bind uniforms
-	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 5);
+	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 6);
 	unis->m_nearPad3 = Vec4(ctx.m_renderQueue->m_cameraNear);
 	unis->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();

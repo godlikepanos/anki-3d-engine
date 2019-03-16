@@ -63,13 +63,15 @@ layout(set = 0, binding = 1, row_major) uniform u1_
 #endif
 };
 
-layout(set = 0, binding = 2) uniform sampler2D u_msRt0;
-layout(set = 0, binding = 3) uniform sampler2D u_msRt1;
-layout(set = 0, binding = 4) uniform sampler2D u_msRt2;
-layout(set = 0, binding = 5) uniform sampler2D u_msDepthRt;
+layout(set = 0, binding = 2) uniform sampler u_msSampler;
+layout(set = 0, binding = 3) uniform texture2D u_msRt0;
+layout(set = 0, binding = 4) uniform texture2D u_msRt1;
+layout(set = 0, binding = 5) uniform texture2D u_msRt2;
+layout(set = 0, binding = 6) uniform texture2D u_msDepthRt;
 
 #if LIGHT_TYPE == DIR_LIGHT_TYPE
-layout(set = 0, binding = 6) uniform sampler2DShadow u_shadowMap;
+layout(set = 0, binding = 7) uniform samplerShadow u_shadowMapSampler;
+layout(set = 0, binding = 8) uniform texture2D u_shadowMap;
 #endif
 
 void main()
@@ -78,7 +80,7 @@ void main()
 	const Vec2 uv = Vec2(gl_FragCoord.xy) / u_unis.m_fbSize;
 	const Vec2 uvToRead = fma(uv, u_unis.m_inputTexUvScale, u_unis.m_inputTexUvOffset);
 
-	const F32 depth = texture(u_msDepthRt, uvToRead).r;
+	const F32 depth = textureLod(u_msDepthRt, u_msSampler, uvToRead, 0.0).r;
 
 #if LIGHT_TYPE != DIR_LIGHT_TYPE
 	// Do manual depth test
@@ -90,7 +92,7 @@ void main()
 
 	// Decode and process gbuffer
 	GbufferInfo gbuffer;
-	readGBuffer(u_msRt0, u_msRt1, u_msRt2, uvToRead, 0.0, gbuffer);
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, u_msSampler, uvToRead, 0.0, gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN * 8.0);
 
 	const Vec4 worldPos4 = u_unis.m_invViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
@@ -127,7 +129,7 @@ void main()
 	{
 		// Acceptable distance
 
-		shadowFactor = computeShadowFactorDirLight(u_unis.m_lightMatrix, worldPos, u_shadowMap);
+		shadowFactor = computeShadowFactorDirLight(u_unis.m_lightMatrix, worldPos, u_shadowMap, u_shadowMapSampler);
 	}
 	else
 	{

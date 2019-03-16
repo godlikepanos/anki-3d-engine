@@ -405,12 +405,13 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 
 	// Set common state for all lights
 	// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_ctx.m_gbufferColorRts[0], m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 3, m_ctx.m_gbufferColorRts[1], m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 4, m_ctx.m_gbufferColorRts[2], m_r->getNearestSampler());
+	cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
 
-	rgraphCtx.bindTextureAndSampler(
-		0, 5, m_ctx.m_gbufferDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH), m_r->getNearestSampler());
+	rgraphCtx.bindColorTexture(0, 3, m_ctx.m_gbufferColorRts[0]);
+	rgraphCtx.bindColorTexture(0, 4, m_ctx.m_gbufferColorRts[1]);
+	rgraphCtx.bindColorTexture(0, 5, m_ctx.m_gbufferColorRts[2]);
+
+	rgraphCtx.bindTexture(0, 6, m_ctx.m_gbufferDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
 	// Get shadowmap info
 	const Bool hasDirLight = probe.m_renderQueues[0]->m_directionalLight.m_uuid;
@@ -418,11 +419,9 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 	{
 		ANKI_ASSERT(m_ctx.m_shadowMapRt.isValid());
 
-		rgraphCtx.bindTextureAndSampler(0,
-			6,
-			m_ctx.m_shadowMapRt,
-			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-			m_shadowMapping.m_shadowSampler);
+		cmdb->bindSampler(0, 7, m_shadowMapping.m_shadowSampler);
+
+		rgraphCtx.bindTexture(0, 8, m_ctx.m_shadowMapRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	}
 
 	m_lightShading.m_deferred.drawLights(rqueue.m_viewProjectionMatrix,
@@ -499,14 +498,18 @@ void Indirect::runIrradianceToRefl(U32 faceIdx, RenderPassWorkContext& rgraphCtx
 
 	cmdb->bindShaderProgram(m_irradianceToRefl.m_grProg);
 
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_ctx.m_gbufferColorRts[0], m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 1, m_ctx.m_gbufferColorRts[1], m_r->getNearestSampler());
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_ctx.m_gbufferColorRts[2], m_r->getNearestSampler());
+	// Bind resources
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+
+	rgraphCtx.bindColorTexture(0, 2, m_ctx.m_gbufferColorRts[0]);
+	rgraphCtx.bindColorTexture(0, 3, m_ctx.m_gbufferColorRts[1]);
+	rgraphCtx.bindColorTexture(0, 4, m_ctx.m_gbufferColorRts[2]);
 
 	TextureSubresourceInfo subresource;
 	subresource.m_faceCount = 6;
 	subresource.m_firstLayer = cacheEntryIdx;
-	rgraphCtx.bindTextureAndSampler(0, 3, m_ctx.m_irradianceRt, subresource, m_r->getLinearSampler());
+	rgraphCtx.bindTexture(0, 5, m_ctx.m_irradianceRt, subresource);
 
 	Vec4 pushConsts(faceIdx);
 	cmdb->setPushConstants(&pushConsts, sizeof(pushConsts));

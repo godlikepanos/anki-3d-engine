@@ -108,36 +108,36 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_grProg);
 
 	// Bind all
-	rgraphCtx.bindImage(0, 0, m_runCtx.m_rts[1], TextureSubresourceInfo());
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
+	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 
-	cmdb->bindTextureAndSampler(
-		0, 1, m_noiseTex->getGrTextureView(), m_r->getTrilinearRepeatSampler(), TextureUsageBit::SAMPLED_COMPUTE);
+	rgraphCtx.bindImage(0, 2, m_runCtx.m_rts[1], TextureSubresourceInfo());
 
-	rgraphCtx.bindColorTextureAndSampler(0, 2, m_runCtx.m_rts[0], m_r->getLinearSampler());
+	cmdb->bindTexture(0, 3, m_noiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
 
-	bindUniforms(cmdb, 0, 3, ctx.m_lightShadingUniformsToken);
-	bindUniforms(cmdb, 0, 4, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 5, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTextureAndSampler(0, 6, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_rts[0]);
 
-	bindUniforms(cmdb, 0, 7, rsrc.m_probesToken);
-	cmdb->bindTextureAndSampler(
-		0, 8, m_r->getDummyTextureView(), m_r->getNearestSampler(), TextureUsageBit::SAMPLED_COMPUTE);
-	rgraphCtx.bindColorTextureAndSampler(0, 9, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
-	cmdb->bindTextureAndSampler(
-		0, 10, m_r->getDummyTextureView(), m_r->getNearestSampler(), TextureUsageBit::SAMPLED_COMPUTE);
+	bindUniforms(cmdb, 0, 5, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 6, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 7, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(0, 8, m_r->getShadowMapping().getShadowmapRt());
 
-	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
-	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 13, rsrc.m_indicesToken);
+	bindUniforms(cmdb, 0, 9, rsrc.m_probesToken);
+	cmdb->bindTexture(0, 10, m_r->getDummyTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
+	rgraphCtx.bindColorTexture(0, 11, m_r->getIndirect().getIrradianceRt());
+	cmdb->bindTexture(0, 12, m_r->getDummyTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
+
+	bindUniforms(cmdb, 0, 13, rsrc.m_fogDensityVolumesToken);
+	bindStorage(cmdb, 0, 14, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 15, rsrc.m_indicesToken);
 
 	struct PushConsts
 	{
-		Vec4 m_noiseOffsetPad3;
+		Vec3 m_padding;
+		F32 m_noiseOffset;
 	} regs;
-	regs.m_noiseOffsetPad3 = Vec4(0.0f);
 	const F32 texelSize = 1.0f / m_noiseTex->getDepth();
-	regs.m_noiseOffsetPad3.x() = texelSize * F32(m_r->getFrameCount() % m_noiseTex->getDepth()) + texelSize / 2.0f;
+	regs.m_noiseOffset = texelSize * F32(m_r->getFrameCount() % m_noiseTex->getDepth()) + texelSize / 2.0f;
 
 	cmdb->setPushConstants(&regs, sizeof(regs));
 

@@ -151,32 +151,32 @@ void writeGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out V
 }
 
 // Read from G-buffer
-Vec3 readNormalFromGBuffer(sampler2D rt2, Vec2 uv)
+Vec3 readNormalFromGBuffer(texture2D rt2, sampler sampl, Vec2 uv)
 {
-	return signedOctDecode(texture(rt2, uv).rga);
+	return signedOctDecode(textureLod(rt2, sampl, uv, 0.0).rga);
 }
 
 // Read the roughness from G-buffer
-F32 readRoughnessFromGBuffer(sampler2D rt1, Vec2 uv)
+F32 readRoughnessFromGBuffer(texture2D rt1, sampler sampl, Vec2 uv)
 {
-	F32 r = textureLod(rt1, uv, 0.0).r;
+	F32 r = textureLod(rt1, sampl, uv, 0.0).r;
 	r = r * (1.0 - MIN_ROUGHNESS) + MIN_ROUGHNESS;
 	return r;
 }
 
 // Read part of the G-buffer
-void readGBuffer(sampler2D rt0, sampler2D rt1, sampler2D rt2, Vec2 uv, F32 lod, out GbufferInfo g)
+void readGBuffer(texture2D rt0, texture2D rt1, texture2D rt2, sampler sampl, Vec2 uv, F32 lod, out GbufferInfo g)
 {
-	Vec4 comp = textureLod(rt0, uv, 0.0);
+	Vec4 comp = textureLod(rt0, sampl, uv, 0.0);
 	g.m_diffuse = comp.xyz;
 	g.m_subsurface = comp.w;
 
-	comp = textureLod(rt1, uv, 0.0);
+	comp = textureLod(rt1, sampl, uv, 0.0);
 	g.m_roughness = comp.x;
 	g.m_metallic = comp.y;
 	g.m_specular = Vec3(comp.z);
 
-	comp = textureLod(rt2, uv, 0.0);
+	comp = textureLod(rt2, sampl, uv, 0.0);
 	g.m_normal = signedOctDecode(comp.xyw);
 	g.m_emission = comp.z * MAX_EMISSION;
 

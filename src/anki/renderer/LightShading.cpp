@@ -112,32 +112,25 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 
 		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
-		rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
+		rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 
 		bindUniforms(cmdb, 0, 4, rsrc.m_probesToken);
-		rgraphCtx.bindColorTextureAndSampler(
-			0, 5, m_r->getIndirect().getReflectionRt(), m_r->getTrilinearRepeatSampler());
-		rgraphCtx.bindColorTextureAndSampler(
-			0, 6, m_r->getIndirect().getIrradianceRt(), m_r->getTrilinearRepeatSampler());
-		cmdb->bindTextureAndSampler(0,
-			7,
-			m_r->getIndirect().getIntegrationLut(),
-			m_r->getIndirect().getIntegrationLutSampler(),
-			TextureUsageBit::SAMPLED_FRAGMENT);
+		rgraphCtx.bindColorTexture(0, 5, m_r->getIndirect().getReflectionRt());
+		rgraphCtx.bindColorTexture(0, 6, m_r->getIndirect().getIrradianceRt());
+		cmdb->bindTexture(0, 7, m_r->getIndirect().getIntegrationLut(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 		bindStorage(cmdb, 0, 8, rsrc.m_clustersToken);
 		bindStorage(cmdb, 0, 9, rsrc.m_indicesToken);
 
-		rgraphCtx.bindColorTextureAndSampler(0, 10, m_r->getGBuffer().getColorRt(0), m_r->getNearestSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 11, m_r->getGBuffer().getColorRt(1), m_r->getNearestSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 12, m_r->getGBuffer().getColorRt(2), m_r->getNearestSampler());
-		rgraphCtx.bindTextureAndSampler(0,
-			13,
-			m_r->getGBuffer().getDepthRt(),
-			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-			m_r->getNearestSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 14, m_r->getSsr().getRt(), m_r->getLinearSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 15, m_r->getSsao().getRt(), m_r->getLinearSampler());
+		cmdb->bindSampler(0, 10, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 11, m_r->getSamplers().m_trilinearRepeat);
+		rgraphCtx.bindColorTexture(0, 12, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(2));
+		rgraphCtx.bindTexture(
+			0, 15, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindColorTexture(0, 16, m_r->getSsr().getRt());
+		rgraphCtx.bindColorTexture(0, 17, m_r->getSsao().getRt());
 
 		// Draw
 		drawQuad(cmdb);

@@ -430,7 +430,7 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 		ANKI_CHECK(
 			file.open(StringAuto(m_alloc).sprintf("%s/.anki/cache/%d.dump.glsl", homeDir.cstr(), id++).toCString(),
 				FileOpenFlag::WRITE));
-		ANKI_CHECK(file.write(&fullSrc[0], fullSrc.getLength() + 1));
+		ANKI_CHECK(file.write(finalSrc.cstr(), finalSrc.getLength() + 1));
 
 		homeDir.destroy(m_alloc);
 	}

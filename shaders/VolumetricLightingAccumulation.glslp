@@ -23,24 +23,25 @@ const F32 PHASE_FUNCTION_ANISOTROPY = 0.3;
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
 
-layout(set = 0, binding = 0) writeonly uniform image3D u_volume;
-layout(set = 0, binding = 1) uniform sampler3D u_noiseTex;
-layout(set = 0, binding = 2) uniform sampler3D u_prevVolume;
+layout(set = 0, binding = 0) uniform sampler u_linearAnyRepeatSampler;
+layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
 
-struct PushConsts
+layout(set = 0, binding = 2) writeonly uniform image3D u_volume;
+layout(set = 0, binding = 3) uniform texture3D u_noiseTex;
+layout(set = 0, binding = 4) uniform texture3D u_prevVolume;
+
+layout(push_constant, std430) uniform pc_
 {
-	Vec4 m_noiseOffsetPad3;
+	Vec3 u_padding;
+	F32 u_noiseOffset;
 };
-ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
-
-#define u_noiseOffset u_regs.m_noiseOffsetPad3.x
 
 #define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 3
-#define LIGHT_LIGHTS_BINDING 4
-#define LIGHT_INDIRECT_BINDING 7
-#define LIGHT_FOG_DENSITY_VOLUMES_BINDING 11
-#define LIGHT_CLUSTERS_BINDING 12
+#define LIGHT_COMMON_UNIS_BINDING 5
+#define LIGHT_LIGHTS_BINDING 6
+#define LIGHT_INDIRECT_BINDING 9
+#define LIGHT_FOG_DENSITY_VOLUMES_BINDING 13
+#define LIGHT_CLUSTERS_BINDING 14
 #include <shaders/ClusteredShadingCommon.glsl>
 
 Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
@@ -49,7 +50,7 @@ Vec3 readRand()
 {
 	Vec3 uv = (g_globalInvocationID + 0.5) / Vec3(NOISE_TEX_SIZE);
 	uv.z += u_noiseOffset;
-	return textureLod(u_noiseTex, uv, 0.0).rgb;
+	return textureLod(u_noiseTex, u_linearAnyRepeatSampler, uv, 0.0).rgb;
 }
 
 Vec3 worldPosInsideClusterAndZViewSpace(Vec3 relativePos, out F32 negativeZViewSpace)
@@ -114,7 +115,8 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 		{
 			const F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
 			const U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
-			factor *= computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex);
+			factor *=
+				computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex, u_linearAnyClampSampler);
 		}
 #endif
 
@@ -135,7 +137,7 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 #if ENABLE_SHADOWS
 		if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			factor *= computeShadowFactorPointLight(light, frag2Light, u_shadowTex);
+			factor *= computeShadowFactorPointLight(light, frag2Light, u_shadowTex, u_linearAnyClampSampler);
 		}
 #endif
 
@@ -160,7 +162,7 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 		const F32 shadowmapLayerIdx = light.m_shadowmapId;
 		if(shadowmapLayerIdx >= 0.0)
 		{
-			factor *= computeShadowFactorSpotLight(light, worldPos, u_shadowTex);
+			factor *= computeShadowFactorSpotLight(light, worldPos, u_shadowTex, u_linearAnyClampSampler);
 		}
 #endif
 
@@ -181,7 +183,7 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 		const F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
 		totalBlendWeight += blendWeight;
 
-		Vec3 c = textureLod(u_irradianceTex, Vec4(viewDir, cubemapIndex), 0.0).rgb;
+		Vec3 c = textureLod(u_irradianceTex, u_linearAnyClampSampler, Vec4(viewDir, cubemapIndex), 0.0).rgb;
 		c *= PI; // Irradiance is pre-divided with PI so fix it
 		diffIndirect += c * blendWeight;
 	}
@@ -254,7 +256,7 @@ void main()
 		const Vec3 uvw = Vec3(prevUv, k);
 		if(all(lessThan(abs(uvw), Vec3(1.0))))
 		{
-			const Vec4 prev = textureLod(u_prevVolume, uvw, 0.0);
+			const Vec4 prev = textureLod(u_prevVolume, u_linearAnyClampSampler, uvw, 0.0);
 
 			// Modulate
 			lightAndFog = mix(prev, lightAndFog, 1.0 / 16.0);

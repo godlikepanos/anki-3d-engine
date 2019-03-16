@@ -41,17 +41,17 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 
 		const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
-		rgraphCtx.bindTextureAndSampler(
-			0, 0, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getLinearSampler());
-		rgraphCtx.bindColorTextureAndSampler(
-			0, 1, m_r->getVolumetricLightingAccumulation().getRt(), m_r->getLinearSampler());
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 
-		bindUniforms(cmdb, 0, 2, ctx.m_lightShadingUniformsToken);
-		bindUniforms(cmdb, 0, 3, rsrc.m_pointLightsToken);
-		bindUniforms(cmdb, 0, 4, rsrc.m_spotLightsToken);
-		rgraphCtx.bindColorTextureAndSampler(0, 5, m_r->getShadowMapping().getShadowmapRt(), m_r->getLinearSampler());
-		bindStorage(cmdb, 0, 6, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 7, rsrc.m_indicesToken);
+		rgraphCtx.bindTexture(0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
+		rgraphCtx.bindColorTexture(0, 2, m_r->getVolumetricLightingAccumulation().getRt());
+
+		bindUniforms(cmdb, 0, 3, ctx.m_lightShadingUniformsToken);
+		bindUniforms(cmdb, 0, 4, rsrc.m_pointLightsToken);
+		bindUniforms(cmdb, 0, 5, rsrc.m_spotLightsToken);
+		rgraphCtx.bindColorTexture(0, 6, m_r->getShadowMapping().getShadowmapRt());
+		bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
+		bindStorage(cmdb, 0, 8, rsrc.m_indicesToken);
 
 		// Start drawing
 		m_r->getSceneDrawer().drawRange(Pass::FS,
