@@ -10,22 +10,15 @@ const F32 OFFSET = 1.25;
 const Vec2 TEXEL_SIZE = 1.0 / Vec2(INPUT_TEXTURE_SIZE);
 const Vec2 HALF_TEXEL_SIZE = TEXEL_SIZE / 2.0;
 
-struct Uniforms
+layout(push_constant, std430) uniform pc_
 {
-	Vec2 m_uvScale;
-	Vec2 m_uvTranslation;
-	F32 m_near;
-	F32 m_far;
-	U32 m_renderingTechnique; // If value is 0: perspective+blur, 1: perspective, 2: ortho+blur, 3: ortho
-	U32 m_padding;
+	Vec2 u_uvScale;
+	Vec2 u_uvTranslation;
+	F32 u_near;
+	F32 u_far;
+	U32 u_renderingTechnique; // If value is 0: perspective+blur, 1: perspective, 2: ortho+blur, 3: ortho
+	U32 u_padding;
 };
-
-ANKI_PUSH_CONSTANTS(Uniforms, u_regs);
-#define u_uvScale u_regs.m_uvScale
-#define u_uvTranslation u_regs.m_uvTranslation
-#define u_near u_regs.m_near
-#define u_far u_regs.m_far
-#define u_renderingTechnique u_regs.m_renderingTechnique
 
 #pragma anki start vert
 #include <shaders/Common.glsl>
@@ -61,20 +54,21 @@ layout(location = 0) in Vec2 in_uv;
 layout(location = 1) flat in Vec2 in_maxUv;
 layout(location = 2) flat in Vec2 in_minUv;
 
-layout(set = 0, binding = 0) uniform sampler2D u_inputTex;
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_inputTex;
 
 layout(location = 0) out F32 out_color;
 
 F32 sampleLinearDepthPerspective(Vec2 uv)
 {
 	uv = clamp(uv, in_minUv, in_maxUv);
-	return linearizeDepth(textureLod(u_inputTex, uv, 0.0).r, u_near, u_far);
+	return linearizeDepth(textureLod(u_inputTex, u_linearAnyClampSampler, uv, 0.0).r, u_near, u_far);
 }
 
 F32 sampleLinearDepthOrhographic(Vec2 uv)
 {
 	uv = clamp(uv, in_minUv, in_maxUv);
-	return textureLod(u_inputTex, uv, 0.0).r;
+	return textureLod(u_inputTex, u_linearAnyClampSampler, uv, 0.0).r;
 }
 
 void main()

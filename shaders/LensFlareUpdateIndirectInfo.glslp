@@ -30,7 +30,8 @@ layout(set = 0, binding = 1, std430) writeonly buffer ss1_
 	DrawArraysIndirectInfo u_indirectInfo[];
 };
 
-layout(set = 0, binding = 2) uniform sampler2D u_depthMap;
+layout(set = 0, binding = 2) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 3) uniform texture2D u_depthMap;
 
 shared U32 s_maxDepth;
 
@@ -57,7 +58,7 @@ void main()
 	const Vec2 uv = NDC_TO_UV(posNdc.xy) + displacement * TEXEL_SIZE;
 
 	// Sample and store depth
-	const F32 refDepth = textureLod(u_depthMap, uv, 0.0).r;
+	const F32 refDepth = textureLod(u_depthMap, u_nearestAnyClampSampler, uv, 0.0).r;
 	atomicMax(s_maxDepth, U32(refDepth * F32(MAX_U32)));
 
 	// Sync

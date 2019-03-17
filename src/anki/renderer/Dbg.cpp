@@ -62,11 +62,9 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->setDepthWrite(false);
 
-	rgraphCtx.bindTextureAndSampler(0,
-		0,
-		m_r->getGBuffer().getDepthRt(),
-		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-		m_r->getNearestSampler());
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+
+	rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
 	// Set the context
 	RenderQueueDrawContext dctx;

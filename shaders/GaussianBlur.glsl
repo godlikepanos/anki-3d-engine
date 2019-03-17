@@ -39,11 +39,12 @@
 #	error See file
 #endif
 
-layout(set = 0, binding = 0) uniform sampler2D u_tex; ///< Input texture
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_tex; ///< Input texture
 
 #if USE_COMPUTE
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
-layout(set = 0, binding = 1) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 2) writeonly uniform image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out COL_TYPE out_color;
@@ -75,15 +76,15 @@ void main()
 #		define X_OR_Y y
 #	endif
 
-	COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH * WEIGHTS[0u];
+	COL_TYPE color = textureLod(u_tex, u_linearAnyClampSampler, uv, 0.0).TEX_FETCH * WEIGHTS[0u];
 
 	Vec2 uvOffset = Vec2(0.0);
 	uvOffset.X_OR_Y = 1.5 * TEXEL_SIZE.X_OR_Y;
 
 	ANKI_UNROLL for(U32 i = 0u; i < STEP_COUNT; ++i)
 	{
-		const COL_TYPE col =
-			textureLod(u_tex, uv + uvOffset, 0.0).TEX_FETCH + textureLod(u_tex, uv - uvOffset, 0.0).TEX_FETCH;
+		COL_TYPE col = textureLod(u_tex, u_linearAnyClampSampler, uv + uvOffset, 0.0).TEX_FETCH;
+		col += textureLod(u_tex, u_linearAnyClampSampler, uv - uvOffset, 0.0).TEX_FETCH;
 		color += WEIGHTS[i + 1u] * col;
 
 		uvOffset.X_OR_Y += 2.0 * TEXEL_SIZE.X_OR_Y;
@@ -93,19 +94,19 @@ void main()
 
 	const Vec2 OFFSET = 1.5 * TEXEL_SIZE;
 
-	COL_TYPE color = textureLod(u_tex, uv, 0.0).TEX_FETCH * BOX_WEIGHTS[0u];
+	COL_TYPE color = textureLod(u_tex, u_linearAnyClampSampler, uv, 0.0).TEX_FETCH * BOX_WEIGHTS[0u];
 
 	COL_TYPE col;
-	col = textureLod(u_tex, uv + Vec2(OFFSET.x, 0.0), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + Vec2(0.0, OFFSET.y), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + Vec2(-OFFSET.x, 0.0), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + Vec2(0.0, -OFFSET.y), 0.0).TEX_FETCH;
+	col = textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(OFFSET.x, 0.0), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(0.0, OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(-OFFSET.x, 0.0), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(0.0, -OFFSET.y), 0.0).TEX_FETCH;
 	color += col * BOX_WEIGHTS[1u];
 
-	col = textureLod(u_tex, uv + Vec2(+OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + Vec2(+OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + Vec2(-OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
-	col += textureLod(u_tex, uv + Vec2(-OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
+	col = textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(+OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(+OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(-OFFSET.x, +OFFSET.y), 0.0).TEX_FETCH;
+	col += textureLod(u_tex, u_linearAnyClampSampler, uv + Vec2(-OFFSET.x, -OFFSET.y), 0.0).TEX_FETCH;
 	color += col * BOX_WEIGHTS[2u];
 #endif
 

@@ -39,20 +39,23 @@ layout(location = 0) out F32 out_color;
 #else
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(set = 0, binding = 4) writeonly uniform image2D out_img;
+layout(set = 0, binding = 5) writeonly uniform image2D out_img;
 #endif
 
-layout(set = 0, binding = 0, std140, row_major) uniform _blk
+layout(push_constant, std140, row_major) uniform _pc
 {
 	Vec4 u_unprojectionParams;
 	Vec4 u_projectionMat;
 	Mat3 u_viewRotMat;
 };
 
-layout(set = 0, binding = 1) uniform sampler2D u_depthRt;
-layout(set = 0, binding = 2) uniform sampler2DArray u_noiseMap;
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform sampler u_trilinearRepeatSampler;
+
+layout(set = 0, binding = 2) uniform texture2D u_depthRt;
+layout(set = 0, binding = 3) uniform texture2DArray u_noiseMap;
 #if USE_NORMAL
-layout(set = 0, binding = 3) uniform sampler2D u_msRt;
+layout(set = 0, binding = 4) uniform texture2D u_msRt;
 #endif
 
 // To compute the normals we need some extra work on compute
@@ -65,7 +68,7 @@ shared Vec3 s_scratch[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 // Get normal
 Vec3 readNormal(Vec2 uv)
 {
-	Vec3 normal = readNormalFromGBuffer(u_msRt, uv);
+	Vec3 normal = readNormalFromGBuffer(u_msRt, u_linearAnyClampSampler, uv);
 	normal = u_viewRotMat * normal;
 	return normal;
 }
@@ -75,7 +78,7 @@ Vec3 readNormal(Vec2 uv)
 Vec3 readRandom(Vec2 uv, F32 layer)
 {
 	const Vec2 tmp = Vec2(F32(FB_SIZE.x) / F32(NOISE_MAP_SIZE), F32(FB_SIZE.y) / F32(NOISE_MAP_SIZE));
-	const Vec3 r = texture(u_noiseMap, Vec3(tmp * uv, layer)).rgb;
+	const Vec3 r = textureLod(u_noiseMap, u_trilinearRepeatSampler, Vec3(tmp * uv, layer), 0.0).rgb;
 	return r;
 }
 
@@ -107,10 +110,10 @@ Vec3 computeNormal(Vec2 uv, Vec3 origin, F32 depth)
 #elif !COMPLEX_NORMALS
 	const Vec3 normal = normalize(cross(dFdx(origin), dFdy(origin)));
 #else
-	const F32 depthLeft = textureLodOffset(u_depthRt, uv, 0.0, ivec2(-2, 0)).r;
-	const F32 depthRight = textureLodOffset(u_depthRt, uv, 0.0, ivec2(2, 0)).r;
-	const F32 depthTop = textureLodOffset(u_depthRt, uv, 0.0, ivec2(0, 2)).r;
-	const F32 depthBottom = textureLodOffset(u_depthRt, uv, 0.0, ivec2(0, -2)).r;
+	const F32 depthLeft = textureLodOffset(sampler2D(u_depthRt, u_linearAnyClampSampler), uv, 0.0, ivec2(-2, 0)).r;
+	const F32 depthRight = textureLodOffset(sampler2D(u_depthRt, u_linearAnyClampSampler), uv, 0.0, ivec2(2, 0)).r;
+	const F32 depthTop = textureLodOffset(sampler2D(u_depthRt, u_linearAnyClampSampler), uv, 0.0, ivec2(0, 2)).r;
+	const F32 depthBottom = textureLodOffset(sampler2D(u_depthRt, u_linearAnyClampSampler), uv, 0.0, ivec2(0, -2)).r;
 
 	const F32 ddx = smallerDelta(depthLeft, depth, depthRight);
 	const F32 ddy = smallerDelta(depthBottom, depth, depthTop);
@@ -150,7 +153,7 @@ void main(void)
 	const Vec2 ndc = UV_TO_NDC(uv);
 
 	// Compute origin
-	const F32 depth = textureLod(u_depthRt, uv, 0.0).r;
+	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
 	const Vec3 origin = unproject(ndc, depth);
 
 	// Get normal
@@ -184,7 +187,8 @@ void main(void)
 		const Vec2 finalDiskPoint = ndc + point * projRadius;
 
 		// Compute factor
-		const Vec3 s = unproject(finalDiskPoint, textureLod(u_depthRt, NDC_TO_UV(finalDiskPoint), 0.0).r);
+		const Vec3 s =
+			unproject(finalDiskPoint, textureLod(u_depthRt, u_linearAnyClampSampler, NDC_TO_UV(finalDiskPoint), 0.0).r);
 		const Vec3 u = s - origin;
 		ssao += max(dot(normal, u) + BIAS, EPSILON) / max(dot(u, u), EPSILON);
 	}

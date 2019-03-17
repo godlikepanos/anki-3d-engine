@@ -17,21 +17,20 @@
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec4 out_color;
 
-layout(set = 0, binding = 0) uniform sampler2D u_depthRt;
-layout(set = 0, binding = 1) uniform sampler3D u_fogVolume;
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 2) uniform texture2D u_depthRt;
+layout(set = 0, binding = 3) uniform texture3D u_fogVolume;
 
-struct PushConsts
+layout(push_constant, std140, row_major) uniform pc_
 {
-	ClustererMagicValues m_clustererMagic;
-	Mat4 m_invViewProjMat;
+	ClustererMagicValues u_clustererMagic;
+	Mat4 u_invViewProjMat;
 };
-ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
-#define u_clustererMagic u_regs.m_clustererMagic
-#define u_invViewProjMat u_regs.m_invViewProjMat
 
 void main()
 {
-	const F32 depth = textureLod(u_depthRt, in_uv, 0.0).r;
+	const F32 depth = textureLod(u_depthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
 
 	// Get world position
 	const Vec4 worldPos4 = u_invViewProjMat * Vec4(UV_TO_NDC(in_uv), depth, 1.0);
@@ -39,7 +38,7 @@ void main()
 
 	// Read the volume
 	const Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, in_uv, worldPos, FOG_LAST_CLASTER + 1u);
-	const Vec4 fogVals = textureLod(u_fogVolume, uv3d, 0.0);
+	const Vec4 fogVals = textureLod(u_fogVolume, u_linearAnyClampSampler, uv3d, 0.0);
 	const Vec3 inScattering = fogVals.rgb;
 	const F32 transmittance = fogVals.a;
 

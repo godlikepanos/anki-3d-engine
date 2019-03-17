@@ -107,8 +107,8 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 
 	rgraphCtx.bindStorageBuffer(0, 1, m_runCtx.m_indirectBuffHandle);
 	// Bind neareset because you don't need high quality
-	rgraphCtx.bindTextureAndSampler(
-		0, 2, m_r->getDepthDownscale().getHiZRt(), HIZ_QUARTER_DEPTH, m_r->getNearestSampler());
+	cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
+	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), HIZ_QUARTER_DEPTH);
 	cmdb->dispatchCompute(count, 1, 1);
 }
 
@@ -191,11 +191,9 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 
 		// Render
 		ANKI_ASSERT(flareEl.m_textureView);
-		cmdb->bindTextureAndSampler(0,
-			1,
-			TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)),
-			m_r->getTrilinearRepeatSampler(),
-			TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
+		cmdb->bindTexture(
+			0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)), TextureUsageBit::SAMPLED_FRAGMENT);
 
 		cmdb->drawArraysIndirect(
 			PrimitiveTopology::TRIANGLE_STRIP, 1, i * sizeof(DrawArraysIndirectInfo), m_indirectBuff);

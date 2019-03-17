@@ -141,15 +141,14 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 	{
 		cmdb->bindShaderProgram(m_applyFog.m_grProg);
 
-		// Bind textures
-		rgraphCtx.bindTextureAndSampler(0,
-			0,
-			m_r->getGBuffer().getDepthRt(),
-			TextureSubresourceInfo(DepthStencilAspectBit::DEPTH),
-			m_r->getNearestSampler());
-		rgraphCtx.bindColorTextureAndSampler(0, 1, m_r->getVolumetricFog().getRt(), m_r->getLinearSampler());
+		// Bind all
+		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 
-		// Uniforms
+		rgraphCtx.bindTexture(
+			0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindColorTexture(0, 3, m_r->getVolumetricFog().getRt());
+
 		struct PushConsts
 		{
 			ClustererMagicValues m_clustererMagic;

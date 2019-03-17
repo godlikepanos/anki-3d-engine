@@ -16,8 +16,9 @@
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) uniform sampler3D u_lightVolume;
-layout(set = 0, binding = 1) writeonly uniform image3D u_fogVolume;
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture3D u_lightVolume;
+layout(set = 0, binding = 2) writeonly uniform image3D u_fogVolume;
 
 struct PushConsts
 {
@@ -56,7 +57,8 @@ void main()
 		const F32 layerThinkness = abs(zVSpaceNear - zVSpaceFar);
 
 		// Read the light value and the fog density from the fog volumes
-		Vec4 lightAndFogDensity = textureLod(u_lightVolume, Vec3(uv, clusterKFar / F32(FINAL_CLUSTER_Z + 1u)), 0.0);
+		Vec4 lightAndFogDensity =
+			textureLod(u_lightVolume, u_linearAnyClampSampler, Vec3(uv, clusterKFar / F32(FINAL_CLUSTER_Z + 1u)), 0.0);
 		lightAndFogDensity.xyz *= u_fogDiffuse / PI;
 		lightAndFogDensity.w += u_density; // Apply the default density
 

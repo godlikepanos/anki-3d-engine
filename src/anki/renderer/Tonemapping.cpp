@@ -102,8 +102,7 @@ void Tonemapping::run(RenderPassWorkContext& rgraphCtx)
 
 	TextureSubresourceInfo inputTexSubresource;
 	inputTexSubresource.m_firstMipmap = m_inputTexMip;
-	rgraphCtx.bindTextureAndSampler(
-		0, 0, m_r->getDownscaleBlur().getRt(), inputTexSubresource, m_r->getLinearSampler());
+	rgraphCtx.bindTexture(0, 0, m_r->getDownscaleBlur().getRt(), inputTexSubresource);
 
 	cmdb->dispatchCompute(1, 1, 1);
 }

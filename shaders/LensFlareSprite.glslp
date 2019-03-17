@@ -42,7 +42,8 @@ void main()
 #pragma anki start frag
 #include <shaders/Common.glsl>
 
-layout(set = 0, binding = 1) uniform sampler2DArray u_tex;
+layout(set = 0, binding = 1) uniform sampler u_trilinearRepeatSampler;
+layout(set = 0, binding = 2) uniform texture2DArray u_tex;
 
 layout(location = 0) in Vec3 in_uv;
 layout(location = 1) flat in Vec4 in_color;
@@ -51,7 +52,7 @@ layout(location = 0) out Vec4 out_color;
 
 void main()
 {
-	const Vec4 col = texture(u_tex, in_uv);
+	const Vec4 col = texture(u_tex, u_trilinearRepeatSampler, in_uv);
 	out_color = col * in_color;
 }
 #pragma anki end

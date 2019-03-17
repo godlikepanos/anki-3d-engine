@@ -127,16 +127,16 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 
 	cmdb->bindShaderProgram(m_main.m_grProg);
 
-	rgraphCtx.bindTextureAndSampler(0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH, m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(0,
-		2,
-		m_main.m_noiseTex->getGrTextureView(),
-		m_r->getTrilinearRepeatSampler(),
-		TextureUsageBit::SAMPLED_FRAGMENT);
+	// Bind resources
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
+
+	rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
+	cmdb->bindTexture(0, 3, m_main.m_noiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 	if(m_useNormal)
 	{
-		rgraphCtx.bindColorTextureAndSampler(0, 3, m_r->getGBuffer().getColorRt(2), m_r->getLinearSampler());
+		rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
 	}
 
 	struct Unis
@@ -144,17 +144,17 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 		Vec4 m_unprojectionParams;
 		Vec4 m_projectionMat;
 		Mat3x4 m_viewRotMat;
-	};
+	} unis;
 
-	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
 	const Mat4& pmat = ctx.m_renderQueue->m_projectionMatrix;
-	unis->m_unprojectionParams = ctx.m_unprojParams;
-	unis->m_projectionMat = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
-	unis->m_viewRotMat = Mat3x4(ctx.m_renderQueue->m_viewMatrix.getRotationPart());
+	unis.m_unprojectionParams = ctx.m_unprojParams;
+	unis.m_projectionMat = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
+	unis.m_viewRotMat = Mat3x4(ctx.m_renderQueue->m_viewMatrix.getRotationPart());
+	cmdb->setPushConstants(&unis, sizeof(unis));
 
 	if(m_useCompute)
 	{
-		rgraphCtx.bindImage(0, 4, m_runCtx.m_rts[0], TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 5, m_runCtx.m_rts[0], TextureSubresourceInfo());
 
 		const U sizeX = (m_width + m_workgroupSize[0] - 1) / m_workgroupSize[0];
 		const U sizeY = (m_height + m_workgroupSize[1] - 1) / m_workgroupSize[1];
@@ -172,11 +172,13 @@ void Ssao::runBlur(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->bindShaderProgram(m_blur.m_grProg);
-	rgraphCtx.bindColorTextureAndSampler(0, 0, m_runCtx.m_rts[0], m_r->getLinearSampler());
+
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_rts[0]);
 
 	if(m_blurUseCompute)
 	{
-		rgraphCtx.bindImage(0, 1, m_runCtx.m_rts[1], TextureSubresourceInfo());
+		rgraphCtx.bindImage(0, 2, m_runCtx.m_rts[1], TextureSubresourceInfo());
 		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_width, m_height);
 	}
 	else

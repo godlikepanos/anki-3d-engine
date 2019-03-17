@@ -18,7 +18,8 @@
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out Vec3 out_color;
 
-layout(set = 0, binding = 0) uniform samplerCubeArray u_envTex;
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform textureCubeArray u_envTex;
 
 ANKI_PUSH_CONSTANTS(UVec4, u_faceIdxPad3);
 
@@ -48,7 +49,7 @@ void main()
 
 				if(lambert > 0.0)
 				{
-					const Vec3 col = textureLod(u_envTex, Vec4(r, texArrIdx), ENV_TEX_MIP).rgb;
+					const Vec3 col = textureLod(u_envTex, u_linearAnyClampSampler, Vec4(r, texArrIdx), ENV_TEX_MIP).rgb;
 					outCol += col * lambert * cubeCoordSolidAngle(ndc, F32(ENV_TEX_TILE_SIZE));
 				}
 			}

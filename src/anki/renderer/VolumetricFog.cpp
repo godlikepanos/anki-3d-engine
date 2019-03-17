@@ -61,10 +61,10 @@ void VolumetricFog::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindShaderProgram(m_grProg);
 
-	rgraphCtx.bindColorTextureAndSampler(
-		0, 0, m_r->getVolumetricLightingAccumulation().getRt(), m_r->getLinearSampler());
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	rgraphCtx.bindColorTexture(0, 1, m_r->getVolumetricLightingAccumulation().getRt());
 
-	rgraphCtx.bindImage(0, 1, m_runCtx.m_rt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 2, m_runCtx.m_rt, TextureSubresourceInfo());
 
 	struct PushConsts
 	{

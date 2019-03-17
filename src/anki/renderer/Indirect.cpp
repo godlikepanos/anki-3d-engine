@@ -469,10 +469,12 @@ void Indirect::runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 	cmdb->setViewport(0, 0, m_irradiance.m_tileSize, m_irradiance.m_tileSize);
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
 
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+
 	TextureSubresourceInfo subresource;
 	subresource.m_faceCount = 6;
 	subresource.m_firstLayer = cacheEntryIdx;
-	rgraphCtx.bindTextureAndSampler(0, 0, m_ctx.m_lightShadingRt, subresource, m_r->getLinearSampler());
+	rgraphCtx.bindTexture(0, 1, m_ctx.m_lightShadingRt, subresource);
 
 	// Set uniforms
 	UVec4 pushConsts(faceIdx);
