@@ -27,7 +27,8 @@ static const Array<BuiltinVarInfo, U(BuiltinMaterialVariableId::COUNT) - 1> BUIL
 		{"ROTATION_MATRIX", ShaderVariableDataType::MAT3, true},
 		{"CAMERA_ROTATION_MATRIX", ShaderVariableDataType::MAT3, false},
 		{"CAMERA_POSITION", ShaderVariableDataType::VEC3, false},
-		{"PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX", ShaderVariableDataType::MAT4, true}}};
+		{"PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX", ShaderVariableDataType::MAT4, true},
+		{"GLOBAL_SAMPLER", ShaderVariableDataType::SAMPLER, false}}};
 
 MaterialVariable::MaterialVariable()
 {
@@ -479,10 +480,10 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 				case ShaderVariableDataType::MAT4:
 					ANKI_CHECK(inputEl.getAttributeMatrix("value", mtlVar.m_mat4));
 					break;
-				case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D:
-				case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D_ARRAY:
-				case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_3D:
-				case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_CUBE:
+				case ShaderVariableDataType::TEXTURE_2D:
+				case ShaderVariableDataType::TEXTURE_2D_ARRAY:
+				case ShaderVariableDataType::TEXTURE_3D:
+				case ShaderVariableDataType::TEXTURE_CUBE:
 				{
 					CString texfname;
 					ANKI_CHECK(inputEl.getAttributeText("value", texfname));

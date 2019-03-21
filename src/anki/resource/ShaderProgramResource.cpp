@@ -150,7 +150,7 @@ ShaderProgramResource::~ShaderProgramResource()
 		m_variants.erase(getAllocator(), it);
 
 		variant->m_blockInfos.destroy(alloc);
-		variant->m_texUnits.destroy(alloc);
+		variant->m_bindings.destroy(alloc);
 		alloc.deleteInstance(variant);
 	}
 
@@ -312,10 +312,10 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 {
 	variant.m_activeInputVars.unsetAll();
 	variant.m_blockInfos.create(getAllocator(), m_inputVars.getSize());
-	variant.m_texUnits.create(getAllocator(), m_inputVars.getSize());
+	variant.m_bindings.create(getAllocator(), m_inputVars.getSize());
 	if(m_inputVars.getSize() > 0)
 	{
-		memorySet<I16>(&variant.m_texUnits[0], -1, variant.m_texUnits.getSize());
+		memorySet<I16>(&variant.m_bindings[0], -1, variant.m_bindings.getSize());
 	}
 
 	// Get instance count, one mutation has it
@@ -337,7 +337,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 	// - Activate vars
 	// - Compute varius strings
 	StringListAuto headerSrc(getTempAllocator());
-	U texUnit = 0;
+	U binding = 0;
 
 	for(const Input& in : m_inputVars)
 	{
@@ -519,16 +519,19 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 			}
 		}
 
-		if(in.isTexture())
+		if(in.isTexture() || in.isSampler())
 		{
-			headerSrc.pushBackSprintf(
-				"#if USE_PUSH_CONSTANTS\n#define %s_TEXUNIT %u\n#else\n#define %s_TEXUNIT %u\n#endif\n",
+			headerSrc.pushBackSprintf("#if USE_PUSH_CONSTANTS\n"
+									  "#define %s_BINDING %u\n"
+									  "#else\n"
+									  "#define %s_BINDING %u\n"
+									  "#endif\n",
 				in.m_name.cstr(),
-				texUnit,
+				binding,
 				in.m_name.cstr(),
-				texUnit + 1);
-			variant.m_texUnits[in.m_idx] = texUnit;
-			++texUnit;
+				binding + 1);
+			variant.m_bindings[in.m_idx] = binding;
+			++binding;
 		}
 	}
 
@@ -540,17 +543,17 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 	// If there is a UBO then it takes the 0 binding. Shift the bindings of textures.
 	if(!variant.m_usesPushConstants)
 	{
-		for(I16& unit : variant.m_texUnits)
+		for(I16& binding : variant.m_bindings)
 		{
-			if(unit >= 0)
+			if(binding >= 0)
 			{
-				++unit;
+				++binding;
 			}
 		}
 	}
 
 	// Compute the binding count
-	variant.m_bindingCount = (!variant.m_usesPushConstants) + texUnit;
+	variant.m_bindingCount = (!variant.m_usesPushConstants) + binding;
 
 	// Write the source header
 	StringListAuto shaderHeaderSrc(getTempAllocator());

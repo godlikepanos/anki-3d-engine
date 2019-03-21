@@ -74,6 +74,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	dctx.m_cameraTransform = ctx.m_renderQueue->m_viewMatrix.getInverse();
 	dctx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
 	dctx.m_commandBuffer = cmdb;
+	dctx.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
 	dctx.m_key = RenderingKey(Pass::FS, 0, 1, false, false);
 	dctx.m_debugDraw = true;
 	dctx.m_debugDrawFlags = m_debugDrawFlags;

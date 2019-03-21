@@ -85,6 +85,7 @@ public:
 	SamplerPtr m_nearestNearestClamp;
 	SamplerPtr m_trilinearClamp;
 	SamplerPtr m_trilinearRepeat;
+	SamplerPtr m_trilinearRepeatAniso;
 };
 
 /// Offscreen renderer.
@@ -331,26 +332,6 @@ anki_internal:
 		return m_samplers;
 	}
 
-	SamplerPtr getNearestSampler() const
-	{
-		return m_nearestSampler;
-	}
-
-	SamplerPtr getLinearSampler() const
-	{
-		return m_linearSampler;
-	}
-
-	SamplerPtr getTrilinearRepeatSampler() const
-	{
-		return m_trilinearRepeatSampler;
-	}
-
-	SamplerPtr getNearestNearestSampler() const
-	{
-		return m_nearesetNearestSampler;
-	}
-
 	const Array<U32, 4>& getClusterCount() const
 	{
 		return m_clusterCount;
@@ -431,10 +412,6 @@ private:
 	TextureViewPtr m_dummyTexView;
 	BufferPtr m_dummyBuff;
 
-	SamplerPtr m_nearestSampler;
-	SamplerPtr m_linearSampler;
-	SamplerPtr m_trilinearRepeatSampler;
-	SamplerPtr m_nearesetNearestSampler;
 	RendererPrecreatedSamplers m_samplers;
 
 	ShaderProgramResourcePtr m_clearTexComputeProg;

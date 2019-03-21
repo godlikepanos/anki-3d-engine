@@ -29,11 +29,11 @@ void writeGBuffer(Vec4 color)
 	out_color = Vec4(color.rgb, color.a);
 }
 
-Vec4 readAnimatedTextureRgba(sampler2DArray tex, F32 period, Vec2 uv, F32 time)
+Vec4 readAnimatedTextureRgba(texture2DArray tex, sampler sampl, F32 period, Vec2 uv, F32 time)
 {
 	const F32 layerCount = F32(textureSize(tex, 0).z);
 	const F32 layer = mod(time * layerCount / period, layerCount);
-	return texture(tex, Vec3(uv, layer));
+	return texture(tex, sampl, Vec3(uv, layer));
 }
 
 // Iterate the clusters to compute the light color

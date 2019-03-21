@@ -41,6 +41,7 @@ enum class BuiltinMaterialVariableId : U8
 	CAMERA_ROTATION_MATRIX,
 	CAMERA_POSITION,
 	PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX,
+	GLOBAL_SAMPLER,
 	COUNT
 };
 
@@ -126,8 +127,8 @@ template<>
 inline const TextureResourcePtr& MaterialVariable::getValue() const
 {
 	ANKI_ASSERT(m_input);
-	ANKI_ASSERT(m_input->getShaderVariableDataType() >= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_FIRST
-				&& m_input->getShaderVariableDataType() <= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_LAST);
+	ANKI_ASSERT(m_input->getShaderVariableDataType() >= ShaderVariableDataType::TEXTURE_FIRST
+				&& m_input->getShaderVariableDataType() <= ShaderVariableDataType::TEXTURE_LAST);
 	ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);
 	return m_tex;
 }

@@ -383,6 +383,7 @@ void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 				rqueue.m_viewProjectionMatrix,
 				Mat4::getIdentity(), // Don't care about prev mats
 				cmdb,
+				m_r->getSamplers().m_trilinearRepeatAniso,
 				rqueue.m_renderables.getBegin(),
 				rqueue.m_renderables.getEnd());
 		}
@@ -912,6 +913,7 @@ void Indirect::runShadowMapping(CommandBufferPtr& cmdb)
 			cascadeRenderQueue.m_viewProjectionMatrix,
 			Mat4::getIdentity(), // Don't care about prev matrices here
 			cmdb,
+			m_r->getSamplers().m_trilinearRepeatAniso,
 			cascadeRenderQueue.m_renderables.getBegin(),
 			cascadeRenderQueue.m_renderables.getEnd());
 	}

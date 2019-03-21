@@ -41,12 +41,13 @@
 #	error See file
 #endif
 
-layout(set = 0, binding = 0) uniform sampler2D u_inTex;
-layout(set = 0, binding = 1) uniform sampler2D u_depthTex;
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_inTex;
+layout(set = 0, binding = 2) uniform texture2D u_depthTex;
 
 #if USE_COMPUTE
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
-layout(set = 0, binding = 2) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 3) writeonly uniform image2D u_outImg;
 #else
 layout(location = 0) in Vec2 in_uv;
 layout(location = 0) out COL_TYPE out_color;
@@ -61,12 +62,12 @@ F32 computeDepthWeight(F32 refDepth, F32 depth)
 
 F32 readDepth(Vec2 uv)
 {
-	return textureLod(u_depthTex, uv, 0.0).r;
+	return textureLod(u_depthTex, u_linearAnyClampSampler, uv, 0.0).r;
 }
 
 void sampleTex(Vec2 uv, F32 refDepth, inout COL_TYPE col, inout F32 weight)
 {
-	const COL_TYPE color = textureLod(u_inTex, uv, 0.0).TEX_FETCH;
+	const COL_TYPE color = textureLod(u_inTex, u_linearAnyClampSampler, uv, 0.0).TEX_FETCH;
 	F32 w = computeDepthWeight(refDepth, readDepth(uv));
 	col += color * w;
 	weight += w;
@@ -90,7 +91,7 @@ void main()
 	const Vec2 TEXEL_SIZE = 1.0 / Vec2(TEXTURE_SIZE);
 
 	// Sample
-	COL_TYPE color = textureLod(u_inTex, uv, 0.0).TEX_FETCH;
+	COL_TYPE color = textureLod(u_inTex, u_linearAnyClampSampler, uv, 0.0).TEX_FETCH;
 	const F32 refDepth = readDepth(uv);
 	F32 weight = 1.0;
 

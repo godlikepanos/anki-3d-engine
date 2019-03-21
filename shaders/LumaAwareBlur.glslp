@@ -17,7 +17,8 @@
 #include <shaders/GaussianBlurCommon.glsl>
 #include <shaders/Tonemapping.glsl>
 
-layout(set = 0, binding = 0) uniform sampler2D u_tex; ///< Input FAI
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_tex;
 
 layout(location = 0) in Vec2 in_uv;
 
@@ -54,7 +55,7 @@ void main()
 	const Vec2 TEXEL_SIZE = Vec2(0.0, 1.0 / F32(TEXTURE_SIZE.y));
 #endif
 
-	COL_TYPE col = texture(u_tex, in_uv).TEX_FETCH;
+	COL_TYPE col = textureLod(u_tex, u_linearAnyClampSampler in_uv, 0.0).TEX_FETCH;
 	out_color = col;
 	const F32 refLuma = computeLuminance(col);
 	F32 weight = 1.0;
@@ -62,12 +63,12 @@ void main()
 
 	for(U32 i = 0u; i < STEP_COUNT; ++i)
 	{
-		COL_TYPE col = texture(u_tex, in_uv + texCoordOffset).TEX_FETCH;
+		COL_TYPE col = textureLod(u_tex, u_linearAnyClampSampler, in_uv + texCoordOffset, 0.0).TEX_FETCH;
 		F32 w = computeLumaWeight(refLuma, col);
 		out_color += col * w;
 		weight += w;
 
-		col = texture(u_tex, in_uv - texCoordOffset).TEX_FETCH;
+		col = textureLod(u_tex, u_linearAnyClampSampler, in_uv - texCoordOffset, 0.0).TEX_FETCH;
 		w = computeLumaWeight(refLuma, col);
 		out_color += col * w;
 		weight += w;

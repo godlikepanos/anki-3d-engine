@@ -109,7 +109,8 @@ private:
 
 	void check() const
 	{
-		ANKI_ASSERT(m_origin.w() == 0.0f && m_dir.w() == 0.0f && isZero(m_dir.getLengthSquared() - 1.0f));
+		ANKI_ASSERT(
+			m_origin.w() == 0.0f && m_dir.w() == 0.0f && isZero(m_dir.getLengthSquared() - 1.0f, EPSILON * 100.0f));
 	}
 };
 /// @}

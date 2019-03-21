@@ -114,13 +114,18 @@ private:
 
 	Bool isTexture() const
 	{
-		return m_dataType >= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_FIRST
-			   && m_dataType <= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_LAST;
+		return m_dataType >= ShaderVariableDataType::TEXTURE_FIRST
+			   && m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
+	}
+
+	Bool isSampler() const
+	{
+		return m_dataType == ShaderVariableDataType::SAMPLER;
 	}
 
 	Bool inBlock() const
 	{
-		return !m_const && !isTexture();
+		return !m_const && !isTexture() && !isSampler();
 	}
 
 	Bool evalPreproc(ConstWeakArray<te_variable> vars) const;
@@ -164,7 +169,7 @@ public:
 
 	const ShaderVariableBlockInfo& getVariableBlockInfo(const ShaderProgramResourceInputVariable& var) const
 	{
-		ANKI_ASSERT(!var.isTexture() && variableActive(var));
+		ANKI_ASSERT(!var.isTexture() && !var.isSampler() && variableActive(var));
 		return m_blockInfos[var.m_idx];
 	}
 
@@ -185,10 +190,10 @@ public:
 		return m_prog;
 	}
 
-	U getTextureUnit(const ShaderProgramResourceInputVariable& var) const
+	U getBinding(const ShaderProgramResourceInputVariable& var) const
 	{
-		ANKI_ASSERT(m_texUnits[var.m_idx] >= 0);
-		return U(m_texUnits[var.m_idx]);
+		ANKI_ASSERT(m_bindings[var.m_idx] >= 0);
+		return U(m_bindings[var.m_idx]);
 	}
 
 	U getBindingCount() const
@@ -201,7 +206,7 @@ private:
 
 	BitSet<128, U64> m_activeInputVars = {false};
 	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
-	DynamicArray<I16> m_texUnits;
+	DynamicArray<I16> m_bindings;
 	U32 m_uniBlockSize = 0;
 	U8 m_bindingCount = 0;
 	Bool m_usesPushConstants = false;

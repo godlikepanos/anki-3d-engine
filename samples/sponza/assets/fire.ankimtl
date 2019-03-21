@@ -8,6 +8,7 @@
 	<inputs>
 		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
 		<input shaderInput="cameraRotMat" builtin="CAMERA_ROTATION_MATRIX"/>
+		<input shaderInput="globalSampler" builtin="GLOBAL_SAMPLER"/>
 
 		<input shaderInput="diffuseMap" value="assets/ember_mid.ankitex"/>
 		<input shaderInput="colorScale" value="3 3 3 1.0"/>

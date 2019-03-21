@@ -133,11 +133,6 @@ anki_internal:
 		return m_maxTextureSize;
 	}
 
-	U32 getTextureAnisotropy() const
-	{
-		return m_textureAnisotropy;
-	}
-
 	ResourceAllocator<U8>& getAllocator()
 	{
 		return m_alloc;
@@ -222,7 +217,6 @@ private:
 	TempResourceAllocator<U8> m_tmpAlloc;
 	String m_cacheDir;
 	U32 m_maxTextureSize;
-	U32 m_textureAnisotropy;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;

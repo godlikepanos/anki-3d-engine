@@ -21,6 +21,7 @@ Config::Config()
 	newOption("r.clusterSizeY", 26);
 	newOption("r.clusterSizeZ", 32);
 	newOption("r.avgObjectsPerCluster", 16);
+	newOption("r.textureAnisotropy", 8);
 
 	newOption("r.volumetricLightingAccumulation.clusterFractionXY", 4);
 	newOption("r.volumetricLightingAccumulation.clusterFractionZ", 4);
@@ -64,7 +65,6 @@ Config::Config()
 
 	// Resource
 	newOption("rsrc.maxTextureSize", 1024 * 1024);
-	newOption("rsrc.textureAnisotropy", 8);
 	newOption("rsrc.dataPaths", ".", "The engine loads assets only in from these paths. Separate them with :");
 	newOption("rsrc.transferScratchMemorySize", 256_MB);
 

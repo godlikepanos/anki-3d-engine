@@ -42,10 +42,10 @@ layout(location = 3) out Vec2 out_gbuffer3;
 //
 #if PASS == PASS_GB
 // Do normal mapping
-Vec3 readNormalFromTexture(sampler2D map, highp Vec2 texCoords)
+Vec3 readNormalFromTexture(texture2D map, sampler sampl, highp Vec2 texCoords)
 {
 	// First read the texture
-	const Vec3 nAtTangentspace = normalize((texture(map, texCoords).rgb - 0.5) * 2.0);
+	const Vec3 nAtTangentspace = normalize((texture(map, sampl, texCoords).rgb - 0.5) * 2.0);
 
 	const Vec3 n = normalize(in_normal);
 	const Vec3 t = normalize(in_tangent.xyz);
@@ -61,9 +61,9 @@ Vec3 readNormalFromTexture(sampler2D map, highp Vec2 texCoords)
 }
 
 // Using a 4-channel texture and a tolerance discard the fragment if the texture's alpha is less than the tolerance
-Vec3 readTextureRgbAlphaTesting(sampler2D map, highp Vec2 texCoords, F32 tolerance)
+Vec3 readTextureRgbAlphaTesting(texture2D map, sampler sampl, highp Vec2 texCoords, F32 tolerance)
 {
-	const Vec4 col = Vec4(texture(map, texCoords));
+	const Vec4 col = Vec4(texture(map, sampl, texCoords));
 	if(col.a < tolerance)
 	{
 		discard;
@@ -72,7 +72,7 @@ Vec3 readTextureRgbAlphaTesting(sampler2D map, highp Vec2 texCoords, F32 toleran
 	return col.rgb;
 }
 
-Vec2 computeTextureCoordParallax(sampler2D heightMap, Vec2 uv, F32 heightMapScale)
+Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F32 heightMapScale)
 {
 	const U32 MAX_SAMPLES = 25;
 	const U32 MIN_SAMPLES = 1;
@@ -112,7 +112,7 @@ Vec2 computeTextureCoordParallax(sampler2D heightMap, Vec2 uv, F32 heightMapScal
 	const U32 sampleCount = U32(sampleCountf);
 	ANKI_LOOP while(crntSample < sampleCount)
 	{
-		crntSampledHeight = textureGrad(heightMap, uv + crntOffset, dPdx, dPdy).r;
+		crntSampledHeight = textureGrad(heightMap, sampl, uv + crntOffset, dPdx, dPdy).r;
 
 		if(crntSampledHeight > crntRayHeight)
 		{

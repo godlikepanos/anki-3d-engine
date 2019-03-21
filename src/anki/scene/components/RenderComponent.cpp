@@ -258,16 +258,28 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 
 			break;
 		}
-		case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D:
-		case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D_ARRAY:
-		case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_3D:
-		case ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_CUBE:
+		case ShaderVariableDataType::TEXTURE_2D:
+		case ShaderVariableDataType::TEXTURE_2D_ARRAY:
+		case ShaderVariableDataType::TEXTURE_3D:
+		case ShaderVariableDataType::TEXTURE_CUBE:
 		{
-			ctx.m_commandBuffer->bindTextureAndSampler(set,
-				progVariant.getTextureUnit(progvar),
+			ctx.m_commandBuffer->bindTexture(set,
+				progVariant.getBinding(progvar),
 				mvar.getValue<TextureResourcePtr>()->getGrTextureView(),
-				mvar.getValue<TextureResourcePtr>()->getSampler(),
 				TextureUsageBit::SAMPLED_FRAGMENT);
+			break;
+		}
+		case ShaderVariableDataType::SAMPLER:
+		{
+			switch(mvar.getBuiltin())
+			{
+			case BuiltinMaterialVariableId::GLOBAL_SAMPLER:
+				ctx.m_commandBuffer->bindSampler(set, progVariant.getBinding(progvar), ctx.m_sampler);
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
+
 			break;
 		}
 		default:

@@ -43,12 +43,6 @@ public:
 		return m_texView;
 	}
 
-	/// Get the sampler.
-	const SamplerPtr& getSampler() const
-	{
-		return m_sampler;
-	}
-
 	U getWidth() const
 	{
 		ANKI_ASSERT(m_size.x());
@@ -81,7 +75,6 @@ private:
 
 	TexturePtr m_tex;
 	TextureViewPtr m_texView;
-	SamplerPtr m_sampler;
 	UVec3 m_size = UVec3(0u);
 	U32 m_layerCount = 0;
 

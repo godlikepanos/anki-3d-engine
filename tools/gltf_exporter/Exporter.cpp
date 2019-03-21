@@ -738,6 +738,7 @@ Error Exporter::exportMaterial(const tinygltf::Material& mtl)
 		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
 		<input shaderInput="prevMvp" builtin="PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX"/>
 		<input shaderInput="rotationMat" builtin="ROTATION_MATRIX"/>
+		<input shaderInput="globalSampler" builtin="GLOBAL_SAMPLER"/>
 		%parallaxInput%
 
 		%diff%

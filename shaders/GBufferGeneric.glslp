@@ -28,13 +28,14 @@
 #pragma anki input const Vec3 emission "EMISSIVE_TEX == 0 && PASS == 0"
 #pragma anki input const F32 heightMapScale "PARALLAX == 1 && PASS == 0 && LOD == 0"
 #pragma anki input const F32 subsurface "PASS == 0"
-#pragma anki input sampler2D diffTex "DIFFUSE_TEX == 1 && PASS == 0"
-#pragma anki input sampler2D specTex "SPECULAR_TEX == 1 && PASS == 0"
-#pragma anki input sampler2D roughnessTex "ROUGHNESS_TEX == 1 && PASS == 0"
-#pragma anki input sampler2D metalTex "METAL_TEX == 1 && PASS == 0"
-#pragma anki input sampler2D normalTex "NORMAL_TEX == 1 && PASS == 0 && LOD < 2"
-#pragma anki input sampler2D heightTex "PARALLAX == 1 && PASS == 0 && LOD == 0"
-#pragma anki input sampler2D emissiveTex "EMISSIVE_TEX == 1 && PASS == 0"
+#pragma anki input sampler globalSampler
+#pragma anki input texture2D diffTex "DIFFUSE_TEX == 1 && PASS == 0"
+#pragma anki input texture2D specTex "SPECULAR_TEX == 1 && PASS == 0"
+#pragma anki input texture2D roughnessTex "ROUGHNESS_TEX == 1 && PASS == 0"
+#pragma anki input texture2D metalTex "METAL_TEX == 1 && PASS == 0"
+#pragma anki input texture2D normalTex "NORMAL_TEX == 1 && PASS == 0 && LOD < 2"
+#pragma anki input texture2D heightTex "PARALLAX == 1 && PASS == 0 && LOD == 0"
+#pragma anki input texture2D emissiveTex "EMISSIVE_TEX == 1 && PASS == 0"
 
 #pragma anki start vert
 #include <shaders/GBufferCommonVert.glsl>
@@ -68,35 +69,35 @@ void main()
 {
 #if PASS == PASS_GB
 #	if heightTex_DEFINED
-	const Vec2 uv = computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
+	const Vec2 uv = computeTextureCoordParallax(heightTex, globalSampler, in_uv, heightMapScale);
 #	else
 	const Vec2 uv = in_uv;
 #	endif
 
 #	if diffTex_DEFINED
-	const Vec3 diffColor = texture(diffTex, uv).rgb;
+	const Vec3 diffColor = texture(diffTex, globalSampler, uv).rgb;
 #	endif
 
 #	if specTex_DEFINED
-	const Vec3 specColor = texture(specTex, uv).rgb;
+	const Vec3 specColor = texture(specTex, globalSampler, uv).rgb;
 #	endif
 
 #	if roughnessTex_DEFINED
-	const F32 roughness = texture(roughnessTex, uv).r;
+	const F32 roughness = texture(roughnessTex, globalSampler, uv).r;
 #	endif
 
 #	if metalTex_DEFINED
-	const F32 metallic = texture(metalTex, uv).r;
+	const F32 metallic = texture(metalTex, globalSampler, uv).r;
 #	endif
 
 #	if normalTex_DEFINED
-	const Vec3 normal = readNormalFromTexture(normalTex, uv);
+	const Vec3 normal = readNormalFromTexture(normalTex, globalSampler, uv);
 #	else
 	const Vec3 normal = normalize(in_normal);
 #	endif
 
 #	if emissiveTex_DEFINED
-	const Vec3 emission = texture(emissiveTex, uv).rgb;
+	const Vec3 emission = texture(emissiveTex, globalSampler, uv).rgb;
 #	endif
 
 #	if VELOCITY

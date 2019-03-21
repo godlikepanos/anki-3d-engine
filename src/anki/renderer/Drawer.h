@@ -37,6 +37,7 @@ public:
 		const Mat4& viewProjMat,
 		const Mat4& prevViewProjMat,
 		CommandBufferPtr cmdb,
+		SamplerPtr sampler,
 		const RenderableQueueElement* begin,
 		const RenderableQueueElement* end);
 

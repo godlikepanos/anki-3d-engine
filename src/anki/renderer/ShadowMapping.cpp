@@ -226,6 +226,7 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 			work.m_renderQueue->m_viewProjectionMatrix,
 			Mat4::getIdentity(), // Don't care about prev matrices here
 			cmdb,
+			m_r->getSamplers().m_trilinearRepeatAniso,
 			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
 			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
 				+ work.m_renderableElementCount);

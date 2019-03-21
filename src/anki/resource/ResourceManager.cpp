@@ -47,12 +47,9 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_cacheDir.create(m_alloc, init.m_cacheDir);
 
 	// Init some constants
-	//
 	m_maxTextureSize = init.m_config->getNumber("rsrc.maxTextureSize");
-	m_textureAnisotropy = init.m_config->getNumber("rsrc.textureAnisotropy");
 
-// Init type resource managers
-//
+	// Init type resource managers
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) TypeResourceManager<rsrc_>::init(m_alloc);
 
 #define ANKI_INSTANSIATE_RESOURCE_DELIMITER()

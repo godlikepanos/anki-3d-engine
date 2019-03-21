@@ -171,23 +171,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_uiStage.reset(m_alloc.newInstance<UiStage>(this));
 	ANKI_CHECK(m_uiStage->init(config));
 
-	SamplerInitInfo sinit("Renderer");
-	sinit.m_addressing = SamplingAddressing::CLAMP;
-	sinit.m_mipmapFilter = SamplingFilter::BASE;
-	sinit.m_minMagFilter = SamplingFilter::NEAREST;
-	m_nearestSampler = m_gr->newSampler(sinit);
-
-	sinit.m_minMagFilter = SamplingFilter::LINEAR;
-	m_linearSampler = m_gr->newSampler(sinit);
-
-	sinit.m_mipmapFilter = SamplingFilter::LINEAR;
-	sinit.m_addressing = SamplingAddressing::REPEAT;
-	m_trilinearRepeatSampler = m_gr->newSampler(sinit);
-
-	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
-	sinit.m_minMagFilter = SamplingFilter::NEAREST;
-	m_nearesetNearestSampler = m_gr->newSampler(sinit);
-
 	// Init samplers
 	{
 		SamplerInitInfo sinit("Renderer");
@@ -202,6 +185,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 		sinit.m_addressing = SamplingAddressing::REPEAT;
 		m_samplers.m_trilinearRepeat = m_gr->newSampler(sinit);
+
+		sinit.m_anisotropyLevel = config.getNumber("r.textureAnisotropy");
+		m_samplers.m_trilinearRepeatAniso = m_gr->newSampler(sinit);
 	}
 
 	initJitteredMats();

@@ -62,8 +62,9 @@ Vec4 projectPerspective(Vec4 vec, F32 m00, F32 m11, F32 m22, F32 m23)
 	return o;
 }
 
+#if defined(ANKI_FRAGMENT_SHADER)
 // Stolen from shadertoy.com/view/4tyGDD
-Vec4 textureCatmullRom4Samples(sampler2D tex, Vec2 uv, Vec2 texSize)
+Vec4 textureCatmullRom4Samples(texture2D tex, sampler sampl, Vec2 uv, Vec2 texSize)
 {
 	const Vec2 halff = 2.0 * fract(0.5 * uv * texSize - 0.25) - 1.0;
 	const Vec2 f = fract(halff);
@@ -74,22 +75,28 @@ Vec4 textureCatmullRom4Samples(sampler2D tex, Vec2 uv, Vec2 texSize)
 		(((-2.0 * f + 5.0) * f - 2.5) * f - 0.5) / (sum1 * texSize) + uv);
 	w.xz *= halff.x * halff.y > 0.0 ? 1.0 : -1.0;
 
-	return (texture(tex, pos.xy) * w.x + texture(tex, pos.zy) * w.z) * w.y
-		   + (texture(tex, pos.xw) * w.x + texture(tex, pos.zw) * w.z) * w.w;
+	return (texture(tex, sampl, pos.xy) * w.x + texture(tex, sampl, pos.zy) * w.z) * w.y
+		   + (texture(tex, sampl, pos.xw) * w.x + texture(tex, sampl, pos.zw) * w.z) * w.w;
 }
+#endif
 
 F32 rand(Vec2 n)
 {
 	return 0.5 + 0.5 * fract(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-Vec4 nearestDepthUpscale(
-	Vec2 uv, sampler2D depthFull, sampler2D depthHalf, sampler2D colorTex, Vec2 linearDepthCf, F32 depthThreshold)
+Vec4 nearestDepthUpscale(Vec2 uv,
+	texture2D depthFull,
+	texture2D depthHalf,
+	texture2D colorTex,
+	sampler linearAnyClampSampler,
+	Vec2 linearDepthCf,
+	F32 depthThreshold)
 {
-	F32 fullDepth = texture(depthFull, uv).r;
+	F32 fullDepth = textureLod(depthFull, linearAnyClampSampler, uv, 0.0).r; // Sampler not important.
 	fullDepth = linearizeDepthOptimal(fullDepth, linearDepthCf.x, linearDepthCf.y);
 
-	Vec4 halfDepths = textureGather(depthHalf, uv, 0);
+	Vec4 halfDepths = textureGather(sampler2D(depthHalf, linearAnyClampSampler), uv, 0); // Sampler not important.
 	halfDepths = linearizeDepthOptimal(halfDepths, linearDepthCf.x, linearDepthCf.y);
 
 	const Vec4 diffs = abs(Vec4(fullDepth) - halfDepths);
@@ -98,15 +105,15 @@ Vec4 nearestDepthUpscale(
 	if(all(lessThan(diffs, Vec4(depthThreshold))))
 	{
 		// No major discontinuites, sample with bilinear
-		color = texture(colorTex, uv);
+		color = textureLod(colorTex, linearAnyClampSampler, uv, 0.0);
 	}
 	else
 	{
 		// Some discontinuites, need to use the newUv
-		const Vec4 r = textureGather(colorTex, uv, 0);
-		const Vec4 g = textureGather(colorTex, uv, 1);
-		const Vec4 b = textureGather(colorTex, uv, 2);
-		const Vec4 a = textureGather(colorTex, uv, 3);
+		const Vec4 r = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 0);
+		const Vec4 g = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 1);
+		const Vec4 b = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 2);
+		const Vec4 a = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 3);
 
 		F32 minDiff = diffs.x;
 		U32 comp = 0;
@@ -134,60 +141,150 @@ Vec4 nearestDepthUpscale(
 	return color;
 }
 
-F32 _calcDepthWeight(sampler2D depthLow, Vec2 uv, F32 ref, Vec2 linearDepthCf)
+F32 _calcDepthWeight(texture2D depthLow, sampler nearestAnyClamp, Vec2 uv, F32 ref, Vec2 linearDepthCf)
 {
-	const F32 d = texture(depthLow, uv).r;
+	const F32 d = textureLod(depthLow, nearestAnyClamp, uv, 0.0).r;
 	const F32 linearD = linearizeDepthOptimal(d, linearDepthCf.x, linearDepthCf.y);
 	return 1.0 / (EPSILON + abs(ref - linearD));
 }
 
-Vec4 _sampleAndWeight(sampler2D depthLow,
-	sampler2D colorLow,
-	Vec2 lowInvSize,
+Vec4 _sampleAndWeight(texture2D depthLow,
+	texture2D colorLow,
+	sampler linearAnyClamp,
+	sampler nearestAnyClamp,
+	const Vec2 lowInvSize,
 	Vec2 uv,
-	Vec2 offset,
-	F32 ref,
-	F32 weight,
-	Vec2 linearDepthCf,
+	const Vec2 offset,
+	const F32 ref,
+	const F32 weight,
+	const Vec2 linearDepthCf,
 	inout F32 normalize)
 {
 	uv += offset * lowInvSize;
-	const F32 dw = _calcDepthWeight(depthLow, uv, ref, linearDepthCf);
-	const Vec4 v = texture(colorLow, uv);
+	const F32 dw = _calcDepthWeight(depthLow, nearestAnyClamp, uv, ref, linearDepthCf);
+	const Vec4 v = textureLod(colorLow, linearAnyClamp, uv, 0.0);
 	normalize += weight * dw;
 	return v * dw * weight;
 }
 
-Vec4 bilateralUpsample(
-	sampler2D depthHigh, sampler2D depthLow, sampler2D colorLow, Vec2 lowInvSize, Vec2 uv, Vec2 linearDepthCf)
+Vec4 bilateralUpsample(texture2D depthHigh,
+	texture2D depthLow,
+	texture2D colorLow,
+	sampler linearAnyClamp,
+	sampler nearestAnyClamp,
+	const Vec2 lowInvSize,
+	const Vec2 uv,
+	const Vec2 linearDepthCf)
 {
 	const Vec3 WEIGHTS = Vec3(0.25, 0.125, 0.0625);
-	const F32 depthRef = linearizeDepthOptimal(texture(depthHigh, uv).r, linearDepthCf.x, linearDepthCf.y);
+	const F32 depthRef =
+		linearizeDepthOptimal(textureLod(depthHigh, nearestAnyClamp, uv, 0.0).r, linearDepthCf.x, linearDepthCf.y);
 	F32 normalize = 0.0;
 
-	Vec4 sum = _sampleAndWeight(
-		depthLow, colorLow, lowInvSize, uv, Vec2(0.0, 0.0), depthRef, WEIGHTS.x, linearDepthCf, normalize);
-	sum += _sampleAndWeight(
-		depthLow, colorLow, lowInvSize, uv, Vec2(-1.0, 0.0), depthRef, WEIGHTS.y, linearDepthCf, normalize);
-	sum += _sampleAndWeight(
-		depthLow, colorLow, lowInvSize, uv, Vec2(0.0, -1.0), depthRef, WEIGHTS.y, linearDepthCf, normalize);
-	sum += _sampleAndWeight(
-		depthLow, colorLow, lowInvSize, uv, Vec2(1.0, 0.0), depthRef, WEIGHTS.y, linearDepthCf, normalize);
-	sum += _sampleAndWeight(
-		depthLow, colorLow, lowInvSize, uv, Vec2(0.0, 1.0), depthRef, WEIGHTS.y, linearDepthCf, normalize);
-	sum += _sampleAndWeight(
-		depthLow, colorLow, lowInvSize, uv, Vec2(1.0, 1.0), depthRef, WEIGHTS.z, linearDepthCf, normalize);
-	sum += _sampleAndWeight(
-		depthLow, colorLow, lowInvSize, uv, Vec2(1.0, -1.0), depthRef, WEIGHTS.z, linearDepthCf, normalize);
-	sum += _sampleAndWeight(
-		depthLow, colorLow, lowInvSize, uv, Vec2(-1.0, 1.0), depthRef, WEIGHTS.z, linearDepthCf, normalize);
-	sum += _sampleAndWeight(
-		depthLow, colorLow, lowInvSize, uv, Vec2(-1.0, -1.0), depthRef, WEIGHTS.z, linearDepthCf, normalize);
+	Vec4 sum = _sampleAndWeight(depthLow,
+		colorLow,
+		linearAnyClamp,
+		nearestAnyClamp,
+		lowInvSize,
+		uv,
+		Vec2(0.0, 0.0),
+		depthRef,
+		WEIGHTS.x,
+		linearDepthCf,
+		normalize);
+	sum += _sampleAndWeight(depthLow,
+		colorLow,
+		linearAnyClamp,
+		nearestAnyClamp,
+		lowInvSize,
+		uv,
+		Vec2(-1.0, 0.0),
+		depthRef,
+		WEIGHTS.y,
+		linearDepthCf,
+		normalize);
+	sum += _sampleAndWeight(depthLow,
+		colorLow,
+		linearAnyClamp,
+		nearestAnyClamp,
+		lowInvSize,
+		uv,
+		Vec2(0.0, -1.0),
+		depthRef,
+		WEIGHTS.y,
+		linearDepthCf,
+		normalize);
+	sum += _sampleAndWeight(depthLow,
+		colorLow,
+		linearAnyClamp,
+		nearestAnyClamp,
+		lowInvSize,
+		uv,
+		Vec2(1.0, 0.0),
+		depthRef,
+		WEIGHTS.y,
+		linearDepthCf,
+		normalize);
+	sum += _sampleAndWeight(depthLow,
+		colorLow,
+		linearAnyClamp,
+		nearestAnyClamp,
+		lowInvSize,
+		uv,
+		Vec2(0.0, 1.0),
+		depthRef,
+		WEIGHTS.y,
+		linearDepthCf,
+		normalize);
+	sum += _sampleAndWeight(depthLow,
+		colorLow,
+		linearAnyClamp,
+		nearestAnyClamp,
+		lowInvSize,
+		uv,
+		Vec2(1.0, 1.0),
+		depthRef,
+		WEIGHTS.z,
+		linearDepthCf,
+		normalize);
+	sum += _sampleAndWeight(depthLow,
+		colorLow,
+		linearAnyClamp,
+		nearestAnyClamp,
+		lowInvSize,
+		uv,
+		Vec2(1.0, -1.0),
+		depthRef,
+		WEIGHTS.z,
+		linearDepthCf,
+		normalize);
+	sum += _sampleAndWeight(depthLow,
+		colorLow,
+		linearAnyClamp,
+		nearestAnyClamp,
+		lowInvSize,
+		uv,
+		Vec2(-1.0, 1.0),
+		depthRef,
+		WEIGHTS.z,
+		linearDepthCf,
+		normalize);
+	sum += _sampleAndWeight(depthLow,
+		colorLow,
+		linearAnyClamp,
+		nearestAnyClamp,
+		lowInvSize,
+		uv,
+		Vec2(-1.0, -1.0),
+		depthRef,
+		WEIGHTS.z,
+		linearDepthCf,
+		normalize);
 
 	return sum / normalize;
 }
 
-Vec3 getCubemapDirection(Vec2 norm, U32 faceIdx)
+Vec3 getCubemapDirection(const Vec2 norm, const U32 faceIdx)
 {
 	Vec3 zDir = Vec3((faceIdx <= 1u) ? 1 : 0, (faceIdx & 2u) >> 1u, (faceIdx & 4u) >> 2u);
 	zDir *= (((faceIdx & 1u) == 1u) ? -1.0 : 1.0);
@@ -198,7 +295,7 @@ Vec3 getCubemapDirection(Vec2 norm, U32 faceIdx)
 }
 
 // Convert 3D cubemap coordinates to 2D plus face index. v doesn't need to be normalized.
-Vec2 convertCubeUvs(Vec3 v, out F32 faceIndex)
+Vec2 convertCubeUvs(const Vec3 v, out F32 faceIndex)
 {
 	const Vec3 absV = abs(v);
 	F32 mag;
@@ -227,7 +324,7 @@ Vec2 convertCubeUvs(Vec3 v, out F32 faceIndex)
 }
 
 // Same as convertCubeUvs but it returns the faceIndex as unsigned I32.
-Vec2 convertCubeUvsu(Vec3 v, out U32 faceIndex)
+Vec2 convertCubeUvsu(const Vec3 v, out U32 faceIndex)
 {
 	const Vec3 absV = abs(v);
 	F32 mag;
@@ -255,13 +352,13 @@ Vec2 convertCubeUvsu(Vec3 v, out U32 faceIndex)
 	return 0.5 / mag * uv + 0.5;
 }
 
-Vec3 grayScale(Vec3 col)
+Vec3 grayScale(const Vec3 col)
 {
 	const F32 grey = (col.r + col.g + col.b) * (1.0 / 3.0);
 	return Vec3(grey);
 }
 
-Vec3 saturateColor(Vec3 col, F32 factor)
+Vec3 saturateColor(const Vec3 col, const F32 factor)
 {
 	const Vec3 LUM_COEFF = Vec3(0.2125, 0.7154, 0.0721);
 	const Vec3 intensity = Vec3(dot(col, LUM_COEFF));
@@ -274,22 +371,22 @@ Vec3 gammaCorrection(Vec3 gamma, Vec3 col)
 }
 
 // Can use 0.15 for sharpenFactor
-Vec3 readSharpen(sampler2D tex, Vec2 uv, F32 sharpenFactor, Bool detailed)
+Vec3 readSharpen(texture2D tex, sampler sampl, Vec2 uv, F32 sharpenFactor, Bool detailed)
 {
-	Vec3 col = textureLod(tex, uv, 0.0).rgb;
+	Vec3 col = textureLod(tex, sampl, uv, 0.0).rgb;
 
-	Vec3 col2 = textureLodOffset(tex, uv, 0.0, IVec2(1, 1)).rgb;
-	col2 += textureLodOffset(tex, uv, 0.0, IVec2(-1, -1)).rgb;
-	col2 += textureLodOffset(tex, uv, 0.0, IVec2(1, -1)).rgb;
-	col2 += textureLodOffset(tex, uv, 0.0, IVec2(-1, 1)).rgb;
+	Vec3 col2 = textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(1, 1)).rgb;
+	col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(-1, -1)).rgb;
+	col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(1, -1)).rgb;
+	col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(-1, 1)).rgb;
 
 	F32 f = 4.0;
 	if(detailed)
 	{
-		col2 += textureLodOffset(tex, uv, 0.0, IVec2(0, 1)).rgb;
-		col2 += textureLodOffset(tex, uv, 0.0, IVec2(1, 0)).rgb;
-		col2 += textureLodOffset(tex, uv, 0.0, IVec2(-1, 0)).rgb;
-		col2 += textureLodOffset(tex, uv, 0.0, IVec2(0, -1)).rgb;
+		col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(0, 1)).rgb;
+		col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(1, 0)).rgb;
+		col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(-1, 0)).rgb;
+		col2 += textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(0, -1)).rgb;
 
 		f = 8.0;
 	}
@@ -298,12 +395,12 @@ Vec3 readSharpen(sampler2D tex, Vec2 uv, F32 sharpenFactor, Bool detailed)
 	return max(Vec3(0.0), col);
 }
 
-Vec3 readErosion(sampler2D tex, Vec2 uv)
+Vec3 readErosion(texture2D tex, sampler sampl, const Vec2 uv)
 {
-	Vec3 minValue = textureLod(tex, uv, 0.0).rgb;
+	Vec3 minValue = textureLod(tex, sampl, uv, 0.0).rgb;
 
 #define ANKI_EROSION(x, y) \
-	col2 = textureLodOffset(tex, uv, 0.0, IVec2(x, y)).rgb; \
+	col2 = textureLodOffset(sampler2D(tex, sampl), uv, 0.0, IVec2(x, y)).rgb; \
 	minValue = min(col2, minValue);
 
 	Vec3 col2;

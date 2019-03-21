@@ -11,8 +11,9 @@
 #pragma anki input Mat4 mvp
 #pragma anki input Mat3 cameraRotMat
 
-#pragma anki input sampler2D diffuseMap "ANIMATED_TEXTURE == 0"
-#pragma anki input sampler2DArray diffuseMapArr "ANIMATED_TEXTURE == 1"
+#pragma anki input sampler globalSampler
+#pragma anki input texture2D diffuseMap "ANIMATED_TEXTURE == 0"
+#pragma anki input texture2DArray diffuseMapArr "ANIMATED_TEXTURE == 1"
 #pragma anki input const F32 animationPeriod "ANIMATED_TEXTURE == 1"
 #pragma anki input const Vec4 colorScale
 #pragma anki input const Vec4 colorBias
@@ -48,9 +49,9 @@ layout(location = 2) in Vec3 in_worldPos;
 void main()
 {
 #if ANIMATED_TEXTURE == 1
-	Vec4 texCol = readAnimatedTextureRgba(diffuseMapArr, animationPeriod, in_uv, anki_u_time);
+	Vec4 texCol = readAnimatedTextureRgba(diffuseMapArr, globalSampler, animationPeriod, in_uv, anki_u_time);
 #else
-	Vec4 texCol = texture(diffuseMap, in_uv);
+	Vec4 texCol = texture(diffuseMap, globalSampler, in_uv);
 #endif
 
 #if LIGHT

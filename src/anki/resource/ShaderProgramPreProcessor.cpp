@@ -77,17 +77,21 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 	{
 		out = ShaderVariableDataType::MAT4;
 	}
-	else if(str == "sampler2D")
+	else if(str == "texture2D")
 	{
-		out = ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D;
+		out = ShaderVariableDataType::TEXTURE_2D;
 	}
-	else if(str == "sampler2DArray")
+	else if(str == "texture2DArray")
 	{
-		out = ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_2D_ARRAY;
+		out = ShaderVariableDataType::TEXTURE_2D_ARRAY;
 	}
-	else if(str == "samplerCube")
+	else if(str == "textureCube")
 	{
-		out = ShaderVariableDataType::COMBINED_TEXTURE_SAMPLER_CUBE;
+		out = ShaderVariableDataType::TEXTURE_CUBE;
+	}
+	else if(str == "sampler")
+	{
+		out = ShaderVariableDataType::SAMPLER;
 	}
 	else
 	{
@@ -593,14 +597,15 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 
 	// Append to source
 
-	const Bool isSampler = input.m_dataType >= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_FIRST
-						   && input.m_dataType <= ShaderVariableDataType::COMBINED_TEXTURE_SAMPLERS_LAST;
+	const Bool isSampler = input.m_dataType == ShaderVariableDataType::SAMPLER;
+	const Bool isTexture = input.m_dataType >= ShaderVariableDataType::TEXTURE_FIRST
+						   && input.m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
 
 	if(input.m_const)
 	{
 		// Const
 
-		if(isSampler || input.m_instanced)
+		if(isSampler || isTexture || input.m_instanced)
 		{
 			// No const samplers or instanced
 			ANKI_PP_ERROR_MALFORMED();
@@ -625,13 +630,13 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 			m_globalsLines.pushBack("#endif");
 		}
 	}
-	else if(isSampler)
+	else if(isSampler || isTexture)
 	{
-		// Sampler
+		// Sampler or texture
 
 		if(input.m_instanced)
 		{
-			// Samplers can't be instanced
+			// Samplers and textures can't be instanced
 			ANKI_PP_ERROR_MALFORMED();
 		}
 
@@ -641,7 +646,7 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
 		}
 
-		m_globalsLines.pushBackSprintf("layout(set = GEN_SET_, binding = %s_TEXUNIT) uniform %s %s;",
+		m_globalsLines.pushBackSprintf("layout(set = GEN_SET_, binding = %s_BINDING) uniform %s %s;",
 			input.m_name.cstr(),
 			dataTypeStr.cstr(),
 			input.m_name.cstr());
