@@ -48,6 +48,8 @@ GrManagerImpl::~GrManagerImpl()
 	m_pplineLayoutFactory.destroy();
 	m_descrFactory.destroy();
 
+	m_bindlessDset.destroy();
+
 	m_pplineCache.destroy(m_device, m_physicalDevice, getAllocator());
 
 	m_fences.destroy();
@@ -203,6 +205,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	m_descrFactory.init(getAllocator(), m_device);
 	m_pplineLayoutFactory.init(getAllocator(), m_device);
+
+	// Bindless descriptors
+	ANKI_CHECK(m_bindlessDset.init(m_alloc, m_device));
 
 	return Error::NONE;
 }
@@ -508,22 +513,16 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_MAINENANCE1;
 				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_MAINTENANCE1_EXTENSION_NAME;
 			}
-			else if(CString(&extensionInfos[extCount].extensionName[0])
-					== VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME)
-			{
-				m_extensions |= VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT;
-				// Don't add it just yet. Can't enable it at the same time with VK_KHR_maintenance1
-			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME
 					&& init.m_config->getNumber("window.debugMarkers"))
 			{
 				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;
 			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_NV_DEDICATED_ALLOCATION_EXTENSION_NAME)
+			else if(CString(extensionInfos[extCount].extensionName) == VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME)
 			{
-				m_extensions |= VulkanExtensions::NV_DEDICATED_ALLOCATION;
-				extensionsToEnable[extensionsToEnableCount++] = VK_NV_DEDICATED_ALLOCATION_EXTENSION_NAME;
+				m_extensions |= VulkanExtensions::KHR_DEDICATED_ALLOCATION;
+				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME;
 			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME)
 			{
@@ -541,20 +540,28 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::AMD_RASTERIZATION_ORDER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME;
 			}
+			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::EXT_DESCRIPTOR_INDEXING;
+				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME;
+			}
 		}
 
-		if(!!(m_extensions & VulkanExtensions::KHR_MAINENANCE1))
+		// Check required extensions.
+		if(!(m_extensions & VulkanExtensions::KHR_MAINENANCE1))
 		{
-			m_extensions = m_extensions & ~VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT;
+			ANKI_VK_LOGE("%s is required", VK_KHR_MAINTENANCE1_EXTENSION_NAME);
+			return Error::FUNCTION_FAILED;
 		}
-		else if(!!(m_extensions & VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT))
+		if(!(m_extensions & VulkanExtensions::EXT_DESCRIPTOR_INDEXING))
 		{
-			extensionsToEnable[extensionsToEnableCount++] = VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME;
+			ANKI_VK_LOGE("%s is required", VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+			return Error::FUNCTION_FAILED;
 		}
 		else
 		{
-			ANKI_VK_LOGE("VK_KHR_maintenance1 or VK_AMD_negative_viewport_height required");
-			return Error::FUNCTION_FAILED;
+			ANKI_CHECK(BindlessDescriptorSet::initDeviceFeatures(m_physicalDevice, m_descriptorIndexingFeatures));
+			ci.pNext = &m_descriptorIndexingFeatures;
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");

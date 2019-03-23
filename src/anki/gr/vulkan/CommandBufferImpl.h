@@ -254,11 +254,16 @@ public:
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindImage(U32 set, U32 binding, TextureViewPtr& img)
+	void bindImageInternal(U32 set, U32 binding, TextureViewPtr& img)
 	{
 		commandCommon();
 		m_dsetState[set].bindImage(binding, img.get());
 		m_microCmdb->pushObjectRef(img);
+	}
+
+	void bindBindlessInternal(U32 set)
+	{
+		ANKI_ASSERT(!"TODO");
 	}
 
 	void beginRenderPass(FramebufferPtr fb,
@@ -326,14 +331,14 @@ public:
 
 	void bindShaderProgram(ShaderProgramPtr& prog);
 
-	void bindUniformBuffer(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
+	void bindUniformBufferInternal(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
 	{
 		commandCommon();
 		m_dsetState[set].bindUniformBuffer(binding, buff.get(), offset, range);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void bindStorageBuffer(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
+	void bindStorageBufferInternal(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
 	{
 		commandCommon();
 		m_dsetState[set].bindStorageBuffer(binding, buff.get(), offset, range);

@@ -18,6 +18,7 @@
 #include <anki/gr/vulkan/SwapchainFactory.h>
 #include <anki/gr/vulkan/PipelineLayout.h>
 #include <anki/gr/vulkan/PipelineCache.h>
+#include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -215,6 +216,11 @@ public:
 
 	void printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash = 0) const;
 
+	const BindlessDescriptorSet& getBindlessDescriptorSet() const
+	{
+		return m_bindlessDset;
+	}
+
 private:
 	U64 m_frame = 0;
 
@@ -241,6 +247,7 @@ private:
 
 	VkPhysicalDeviceProperties m_devProps = {};
 	VkPhysicalDeviceFeatures m_devFeatures = {};
+	VkPhysicalDeviceDescriptorIndexingFeaturesEXT m_descriptorIndexingFeatures = {};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
 	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;
@@ -293,6 +300,8 @@ private:
 	QueryAllocator m_queryAlloc;
 
 	PipelineCache m_pplineCache;
+
+	BindlessDescriptorSet m_bindlessDset;
 
 	Bool m_r8g8b8ImagesSupported = false;
 	Bool m_s8ImagesSupported = false;

@@ -264,6 +264,9 @@ public:
 	/// Bind texture buffer.
 	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt);
 
+	/// Bind the bindless descriptor set into a slot.
+	void bindBindless(U32 set);
+
 	/// Set push constants.
 	void setPushConstants(const void* data, U32 dataSize);
 

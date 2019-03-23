@@ -183,24 +183,30 @@ void CommandBuffer::bindSampler(U32 set, U32 binding, SamplerPtr sampler)
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindUniformBuffer(set, binding, buff, offset, range);
+	self.bindUniformBufferInternal(set, binding, buff, offset, range);
 }
 
 void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindStorageBuffer(set, binding, buff, offset, range);
+	self.bindStorageBufferInternal(set, binding, buff, offset, range);
 }
 
 void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindImage(set, binding, img);
+	self.bindImageInternal(set, binding, img);
 }
 
 void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt)
 {
 	ANKI_ASSERT(!"TODO");
+}
+
+void CommandBuffer::bindBindless(U32 set)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindBindlessInternal(set);
 }
 
 void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)

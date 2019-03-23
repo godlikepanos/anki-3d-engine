@@ -39,11 +39,10 @@ class CommandBufferInitInfo;
 // Some constants
 const U MAX_VERTEX_ATTRIBUTES = 8;
 const U MAX_COLOR_ATTACHMENTS = 4;
-const U MAX_MIPMAPS = 16;
-const U MAX_TEXTURE_LAYERS = 32;
-const U MAX_SPECIALIZED_CONSTS = 64;
 const U MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
 const U MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
+const U MAX_BINDLESS_TEXTURES = 256;
+const U MAX_BINDLESS_IMAGES = 32;
 
 const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 

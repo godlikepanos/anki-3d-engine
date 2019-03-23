@@ -129,6 +129,11 @@ class DescriptorSetState
 	friend class DescriptorSetFactory;
 
 public:
+	void makeDirty()
+	{
+		m_anyBindingDirty = true;
+	}
+
 	void setLayout(const DescriptorSetLayout& layout)
 	{
 		if(layout.isCreated())
@@ -255,6 +260,7 @@ private:
 class DescriptorSet
 {
 	friend class DescriptorSetFactory;
+	friend class BindlessDescriptorSet;
 
 public:
 	VkDescriptorSet getHandle() const
@@ -304,6 +310,59 @@ private:
 
 	DynamicArray<DSLayoutCacheEntry*> m_caches;
 	SpinLock m_cachesMtx; ///< Not a mutex because after a while there will be no reason to lock
+};
+
+/// Wraps a global descriptor set that is used to store bindless textures.
+class BindlessDescriptorSet
+{
+public:
+	~BindlessDescriptorSet();
+
+	Error init(const GrAllocator<U8>& alloc, VkDevice dev);
+
+	void destroy();
+
+	static Error initDeviceFeatures(VkPhysicalDevice pdev, VkPhysicalDeviceDescriptorIndexingFeaturesEXT& features);
+
+	/// Bind a sampled image.
+	U32 bindTexture(const VkImageView view, const VkImageLayout layout);
+
+	/// Bind a storage image.
+	U32 bindImage(const VkImageView view);
+
+	void unbindTexture(U32 idx)
+	{
+		unbindCommon(idx, m_freeTexIndices, m_freeTexIndexCount);
+	}
+
+	void unbindImage(U32 idx)
+	{
+		unbindCommon(idx, m_freeImgIndices, m_freeImgIndexCount);
+	}
+
+	DescriptorSet getDescriptorSet() const
+	{
+		ANKI_ASSERT(m_dset);
+		DescriptorSet out;
+		out.m_handle = m_dset;
+		return out;
+	}
+
+private:
+	GrAllocator<U8> m_alloc;
+	VkDevice m_dev = VK_NULL_HANDLE;
+	VkDescriptorSetLayout m_layout = VK_NULL_HANDLE;
+	VkDescriptorPool m_pool = VK_NULL_HANDLE;
+	VkDescriptorSet m_dset = VK_NULL_HANDLE;
+	Mutex m_mtx;
+
+	DynamicArray<U16> m_freeTexIndices;
+	DynamicArray<U16> m_freeImgIndices;
+
+	U16 m_freeTexIndexCount ANKI_DEBUG_CODE(= MAX_U16);
+	U16 m_freeImgIndexCount ANKI_DEBUG_CODE(= MAX_U16);
+
+	void unbindCommon(U32 idx, DynamicArray<U16>& freeIndices, U16& freeIndexCount);
 };
 /// @}
 

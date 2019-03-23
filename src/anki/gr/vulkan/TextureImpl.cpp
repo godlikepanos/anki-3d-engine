@@ -202,7 +202,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
 	Bool useDedicatedMemory = !!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
-							  && !!(getGrManagerImpl().getExtensions() & VulkanExtensions::NV_DEDICATED_ALLOCATION);
+							  && !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_DEDICATED_ALLOCATION);
 
 	// Check if format is supported
 	Bool supported;
