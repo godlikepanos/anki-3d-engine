@@ -203,10 +203,22 @@ void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::bindBindless(U32 set)
+void CommandBuffer::bindAllBindless(U32 set)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindBindlessInternal(set);
+	self.bindAllBindlessInternal(set);
+}
+
+U32 CommandBuffer::bindBindlessTexture(TextureViewPtr tex, TextureUsageBit usage)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	return self.bindBindlessTextureInternal(tex, usage);
+}
+
+U32 CommandBuffer::bindBindlessImage(TextureViewPtr img)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	return self.bindBindlessImageInternal(img);
 }
 
 void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)

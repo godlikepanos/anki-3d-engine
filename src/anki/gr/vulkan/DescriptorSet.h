@@ -123,17 +123,30 @@ public:
 	};
 };
 
+/// Descriptor set thin wraper.
+class DescriptorSet
+{
+	friend class DescriptorSetFactory;
+	friend class BindlessDescriptorSet;
+	friend class DescriptorSetState;
+
+public:
+	VkDescriptorSet getHandle() const
+	{
+		ANKI_ASSERT(m_handle);
+		return m_handle;
+	}
+
+private:
+	VkDescriptorSet m_handle = VK_NULL_HANDLE;
+};
+
 /// A state tracker of descriptors.
 class DescriptorSetState
 {
 	friend class DescriptorSetFactory;
 
 public:
-	void makeDirty()
-	{
-		m_anyBindingDirty = true;
-	}
-
 	void setLayout(const DescriptorSetLayout& layout)
 	{
 		if(layout.isCreated())
@@ -163,7 +176,8 @@ public:
 		b.m_texAndSampler.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
 		b.m_texAndSampler.m_layout = layout;
 
-		m_anyBindingDirty = true;
+		m_dirtyBindings.set(binding);
+		unbindCustomDSet();
 	}
 
 	void bindTexture(U binding, const TextureView* texView, VkImageLayout layout)
@@ -179,7 +193,8 @@ public:
 		b.m_tex.m_texView = &viewImpl;
 		b.m_tex.m_layout = layout;
 
-		m_anyBindingDirty = true;
+		m_dirtyBindings.set(binding);
+		unbindCustomDSet();
 	}
 
 	void bindSampler(U binding, const Sampler* sampler)
@@ -190,7 +205,8 @@ public:
 		b.m_uuids[0] = b.m_uuids[1] = ptrToNumber(static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle());
 		b.m_sampler.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
 
-		m_anyBindingDirty = true;
+		m_dirtyBindings.set(binding);
+		unbindCustomDSet();
 	}
 
 	void bindUniformBuffer(U binding, const Buffer* buff, PtrSize offset, PtrSize range)
@@ -204,8 +220,8 @@ public:
 		b.m_buff.m_offset = offset;
 		b.m_buff.m_range = range;
 
-		m_anyBindingDirty = true;
-		m_dynamicOffsetDirty.set(binding);
+		m_dirtyBindings.set(binding);
+		unbindCustomDSet();
 	}
 
 	void bindStorageBuffer(U binding, const Buffer* buff, PtrSize offset, PtrSize range)
@@ -219,8 +235,8 @@ public:
 		b.m_buff.m_offset = offset;
 		b.m_buff.m_range = range;
 
-		m_anyBindingDirty = true;
-		m_dynamicOffsetDirty.set(binding);
+		m_dirtyBindings.set(binding);
+		unbindCustomDSet();
 	}
 
 	void bindImage(U binding, const TextureView* texView)
@@ -236,41 +252,40 @@ public:
 		b.m_uuids[0] = b.m_uuids[1] = impl->m_hash;
 		b.m_image.m_texView = impl;
 
-		m_anyBindingDirty = true;
+		m_dirtyBindings.set(binding);
+		unbindCustomDSet();
+	}
+
+	void bindCustumDescriptorSet(const DescriptorSet& dset)
+	{
+		ANKI_ASSERT(dset.m_handle);
+		m_customDSet = dset;
+		m_customDSetDirty = true;
 	}
 
 private:
 	DescriptorSetLayout m_layout;
 
 	Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindings;
+	DescriptorSet m_customDSet;
 
-	Bool m_anyBindingDirty = true;
-	Bool m_layoutDirty = true;
-	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET> m_dynamicOffsetDirty = {true};
 	U64 m_lastHash = 0;
 
+	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_dirtyBindings = {true};
+	Bool m_layoutDirty = true;
+	Bool m_customDSetDirty = true;
+
 	/// Only DescriptorSetFactory should call this.
-	void flush(Bool& stateDirty,
-		U64& hash,
+	/// @param hash If hash is zero then the DS doesn't need rebind.
+	void flush(U64& hash,
 		Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
-		U& dynamicOffsetCount);
-};
+		U& dynamicOffsetCount,
+		DescriptorSet& customDSet);
 
-/// Descriptor set thin wraper.
-class DescriptorSet
-{
-	friend class DescriptorSetFactory;
-	friend class BindlessDescriptorSet;
-
-public:
-	VkDescriptorSet getHandle() const
+	void unbindCustomDSet()
 	{
-		ANKI_ASSERT(m_handle);
-		return m_handle;
+		m_customDSet = {};
 	}
-
-private:
-	VkDescriptorSet m_handle = VK_NULL_HANDLE;
 };
 
 /// Creates new descriptor set layouts and descriptor sets.

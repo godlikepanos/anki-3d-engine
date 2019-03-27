@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/CommandBufferImpl.h>
-#include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>

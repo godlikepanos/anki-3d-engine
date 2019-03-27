@@ -15,6 +15,7 @@
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
 #include <anki/gr/vulkan/Pipeline.h>
+#include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/util/List.h>
 
 namespace anki
@@ -261,9 +262,22 @@ public:
 		m_microCmdb->pushObjectRef(img);
 	}
 
-	void bindBindlessInternal(U32 set)
+	void bindAllBindlessInternal(U32 set)
+	{
+		commandCommon();
+		m_dsetState[set].bindCustumDescriptorSet(getGrManagerImpl().getBindlessDescriptorSet().getDescriptorSet());
+	}
+
+	U32 bindBindlessTextureInternal(TextureViewPtr tex, TextureUsageBit usage)
 	{
 		ANKI_ASSERT(!"TODO");
+		return 0;
+	}
+
+	U32 bindBindlessImageInternal(TextureViewPtr img)
+	{
+		ANKI_ASSERT(!"TODO");
+		return 0;
 	}
 
 	void beginRenderPass(FramebufferPtr fb,

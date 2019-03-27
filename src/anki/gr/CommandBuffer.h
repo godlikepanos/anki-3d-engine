@@ -265,7 +265,18 @@ public:
 	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt);
 
 	/// Bind the bindless descriptor set into a slot.
-	void bindBindless(U32 set);
+	void bindAllBindless(U32 set);
+
+	/// Bind a texture as bindless. It's very lightweight and doesn't translate to a GPU operation.
+	/// @param tex The texture view to bind.
+	/// @param usage The state the tex is in.
+	/// @return The index to use to access the texture.
+	U32 bindBindlessTexture(TextureViewPtr tex, TextureUsageBit usage);
+
+	/// Bind an image as bindless. It's very lightweight and doesn't translate to a GPU operation.
+	/// @param img The image to bind.
+	/// @return The index to use to access the image.
+	U32 bindBindlessImage(TextureViewPtr img);
 
 	/// Set push constants.
 	void setPushConstants(const void* data, U32 dataSize);

@@ -91,9 +91,6 @@ public:
 		return m_subresource;
 	}
 
-	/// Generate an index that can be used to index the view from the global bindless descriptor set.
-	U32 generateBindlessIndex(TextureUsageBit usages);
-
 protected:
 	TextureType m_texType = TextureType::COUNT;
 	TextureSubresourceInfo m_subresource;

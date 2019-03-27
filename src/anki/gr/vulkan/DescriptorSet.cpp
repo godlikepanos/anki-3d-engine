@@ -76,7 +76,7 @@ public:
 
 	U64 m_hash = 0; ///< Layout hash.
 	VkDescriptorSetLayout m_layoutHandle = {};
-	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U8> m_activeBindings = {false};
+	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_activeBindings = {false};
 	Array<DescriptorType, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingType = {};
 	U32 m_minBinding = MAX_U32;
 	U32 m_maxBinding = 0;
@@ -478,87 +478,111 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 	return Error::NONE;
 }
 
-void DescriptorSetState::flush(
-	Bool& stateDirty, U64& hash, Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets, U& dynamicOffsetCount)
+void DescriptorSetState::flush(U64& hash,
+	Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
+	U& dynamicOffsetCount,
+	DescriptorSet& customDSet)
 {
+	// Set some values
+	hash = 0;
 	dynamicOffsetCount = 0;
+	customDSet = {};
 
-	// Get cache entry
-	ANKI_ASSERT(m_layout.m_entry);
-	const DSLayoutCacheEntry& entry = *m_layout.m_entry;
-
-	// Early out if nothing happened
-	if(!m_anyBindingDirty && !m_layoutDirty)
+	if(m_customDSet.m_handle == VK_NULL_HANDLE)
 	{
-		stateDirty = false;
-		return;
-	}
+		// Get cache entry
+		ANKI_ASSERT(m_layout.m_entry);
+		const DSLayoutCacheEntry& entry = *m_layout.m_entry;
 
-	Bool dynamicOffsetsDirty = false;
-
-	// Compute the hash
-	Array<U64, MAX_BINDINGS_PER_DESCRIPTOR_SET * 2 * 2> toHash;
-	U toHashCount = 0;
-
-	const U minBinding = entry.m_minBinding;
-	const U maxBinding = entry.m_maxBinding;
-	for(U i = minBinding; i <= maxBinding; ++i)
-	{
-		if(entry.m_activeBindings.get(i))
+		// Early out if nothing happened
+		const Bool anyActiveBindingDirty = !!(entry.m_activeBindings & m_dirtyBindings);
+		if(!anyActiveBindingDirty && !m_layoutDirty)
 		{
-			toHash[toHashCount++] = m_bindings[i].m_uuids[0];
+			return;
+		}
 
-			switch(entry.m_bindingType[i])
+		Bool dynamicOffsetsDirty = false;
+
+		// Compute the hash
+		Array<U64, MAX_BINDINGS_PER_DESCRIPTOR_SET * 2 * 2> toHash;
+		U toHashCount = 0;
+
+		const U minBinding = entry.m_minBinding;
+		const U maxBinding = entry.m_maxBinding;
+		for(U i = minBinding; i <= maxBinding; ++i)
+		{
+			if(entry.m_activeBindings.get(i))
 			{
-			case DescriptorType::COMBINED_TEXTURE_SAMPLER:
-				ANKI_ASSERT(
-					m_bindings[i].m_type == DescriptorType::COMBINED_TEXTURE_SAMPLER && "Have bound the wrong type");
-				toHash[toHashCount++] = m_bindings[i].m_uuids[1];
-				toHash[toHashCount++] = U64(m_bindings[i].m_texAndSampler.m_layout);
-				break;
-			case DescriptorType::TEXTURE:
-				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::TEXTURE && "Have bound the wrong type");
-				toHash[toHashCount] = U64(m_bindings[i].m_tex.m_layout);
-				break;
-			case DescriptorType::SAMPLER:
-				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::SAMPLER && "Have bound the wrong type");
-				break;
-			case DescriptorType::UNIFORM_BUFFER:
-				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::UNIFORM_BUFFER && "Have bound the wrong type");
-				toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
-				dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
-				dynamicOffsetsDirty = dynamicOffsetsDirty || m_dynamicOffsetDirty.get(i);
-				break;
-			case DescriptorType::STORAGE_BUFFER:
-				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::STORAGE_BUFFER && "Have bound the wrong type");
-				toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
-				dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
-				dynamicOffsetsDirty = dynamicOffsetsDirty || m_dynamicOffsetDirty.get(i);
-				break;
-			case DescriptorType::IMAGE:
-				ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::IMAGE && "Have bound the wrong type");
-				break;
-			default:
-				ANKI_ASSERT(0);
+				const Bool crntBindingDirty = m_dirtyBindings.get(i);
+				m_dirtyBindings.unset(i);
+
+				toHash[toHashCount++] = m_bindings[i].m_uuids[0];
+
+				switch(entry.m_bindingType[i])
+				{
+				case DescriptorType::COMBINED_TEXTURE_SAMPLER:
+					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::COMBINED_TEXTURE_SAMPLER
+								&& "Have bound the wrong type");
+					toHash[toHashCount++] = m_bindings[i].m_uuids[1];
+					toHash[toHashCount++] = U64(m_bindings[i].m_texAndSampler.m_layout);
+					break;
+				case DescriptorType::TEXTURE:
+					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::TEXTURE && "Have bound the wrong type");
+					toHash[toHashCount] = U64(m_bindings[i].m_tex.m_layout);
+					break;
+				case DescriptorType::SAMPLER:
+					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::SAMPLER && "Have bound the wrong type");
+					break;
+				case DescriptorType::UNIFORM_BUFFER:
+					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::UNIFORM_BUFFER && "Have bound the wrong type");
+					toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
+					dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
+					dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
+					break;
+				case DescriptorType::STORAGE_BUFFER:
+					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::STORAGE_BUFFER && "Have bound the wrong type");
+					toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
+					dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
+					dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
+					break;
+				case DescriptorType::IMAGE:
+					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::IMAGE && "Have bound the wrong type");
+					break;
+				default:
+					ANKI_ASSERT(0);
+				}
 			}
 		}
-	}
 
-	hash = (toHashCount == 1) ? toHash[0] : computeHash(&toHash[0], toHashCount * sizeof(U64));
+		const U64 newHash = computeHash(&toHash[0], toHashCount * sizeof(U64));
 
-	if(hash != m_lastHash || dynamicOffsetsDirty || m_layoutDirty)
-	{
-		m_lastHash = hash;
-		stateDirty = true;
+		if(newHash != m_lastHash || dynamicOffsetsDirty || m_layoutDirty)
+		{
+			// DS needs rebind
+			m_lastHash = newHash;
+			hash = newHash;
+		}
+		else
+		{
+			// All clean, keep hash equal to 0
+		}
+
+		m_layoutDirty = false;
 	}
 	else
 	{
-		stateDirty = false;
-	}
+		// Custom set
 
-	m_anyBindingDirty = false;
-	m_layoutDirty = false;
-	m_dynamicOffsetDirty.unsetAll();
+		if(!m_customDSetDirty && !m_layoutDirty)
+		{
+			return;
+		}
+
+		customDSet = m_customDSet;
+		hash = 1;
+		m_customDSetDirty = false;
+		m_layoutDirty = false;
+	}
 }
 
 DescriptorSetFactory::~DescriptorSetFactory()
@@ -644,25 +668,38 @@ Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
 	ANKI_TRACE_SCOPED_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);
 
 	U64 hash;
-	state.flush(dirty, hash, dynamicOffsets, dynamicOffsetCount);
+	DescriptorSet customDSet;
+	state.flush(hash, dynamicOffsets, dynamicOffsetCount, customDSet);
 
-	if(!dirty)
+	if(hash == 0)
 	{
+		dirty = false;
 		return Error::NONE;
 	}
+	else
+	{
+		dirty = true;
 
-	DescriptorSetLayout layout = state.m_layout;
-	DSLayoutCacheEntry& entry = *layout.m_entry;
+		if(customDSet.m_handle == VK_NULL_HANDLE)
+		{
+			DescriptorSetLayout layout = state.m_layout;
+			DSLayoutCacheEntry& entry = *layout.m_entry;
 
-	// Get thread allocator
-	DSThreadAllocator* alloc;
-	ANKI_CHECK(entry.getOrCreateThreadAllocator(tid, alloc));
+			// Get thread allocator
+			DSThreadAllocator* alloc;
+			ANKI_CHECK(entry.getOrCreateThreadAllocator(tid, alloc));
 
-	// Finally, allocate
-	const DS* s;
-	ANKI_CHECK(alloc->getOrCreateSet(hash, state.m_bindings, s));
-	set.m_handle = s->m_handle;
-	ANKI_ASSERT(set.m_handle != VK_NULL_HANDLE);
+			// Finally, allocate
+			const DS* s;
+			ANKI_CHECK(alloc->getOrCreateSet(hash, state.m_bindings, s));
+			set.m_handle = s->m_handle;
+			ANKI_ASSERT(set.m_handle != VK_NULL_HANDLE);
+		}
+		else
+		{
+			set = customDSet;
+		}
+	}
 
 	return Error::NONE;
 }
