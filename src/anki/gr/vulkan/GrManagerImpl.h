@@ -221,6 +221,11 @@ public:
 		return m_bindlessDset;
 	}
 
+	BindlessDescriptorSet& getBindlessDescriptorSet()
+	{
+		return m_bindlessDset;
+	}
+
 private:
 	U64 m_frame = 0;
 

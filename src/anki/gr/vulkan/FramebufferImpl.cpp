@@ -114,10 +114,10 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	{
 		const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*att.m_textureView);
-		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForFramebufferAttachment(view.getSubresource()));
 
-		imgViews[count++] = view.m_handle;
+		imgViews[count++] = view.getHandle();
 
 		if(m_width == 0)
 		{
@@ -137,10 +137,10 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	{
 		const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*att.m_textureView);
-		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForFramebufferAttachment(view.getSubresource()));
 
-		imgViews[count++] = view.m_handle;
+		imgViews[count++] = view.getHandle();
 
 		if(m_width == 0)
 		{
@@ -167,7 +167,7 @@ void FramebufferImpl::setupAttachmentDescriptor(
 	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc, VkImageLayout layout) const
 {
 	desc = {};
-	desc.format = convertFormat(static_cast<const TextureViewImpl&>(*att.m_textureView).m_tex->getFormat());
+	desc.format = convertFormat(static_cast<const TextureViewImpl&>(*att.m_textureView).getTextureImpl().getFormat());
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);

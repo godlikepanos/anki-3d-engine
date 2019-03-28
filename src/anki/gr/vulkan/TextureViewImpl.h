@@ -19,13 +19,6 @@ namespace anki
 class TextureViewImpl final : public TextureView, public VulkanObject<TextureView, TextureViewImpl>
 {
 public:
-	VkImageView m_handle = {};
-	TexturePtr m_tex; ///< Hold a reference.
-
-	/// This is a hash that depends on the Texture and the VkImageView. It's used as a replacement of
-	/// TextureView::m_uuid since it creates less unique IDs.
-	U64 m_hash = 0;
-
 	TextureViewImpl(GrManager* manager, CString name)
 		: TextureView(manager, name)
 	{
@@ -41,6 +34,38 @@ public:
 		static_cast<const TextureImpl&>(*m_tex).computeVkImageSubresourceRange(getSubresource(), out);
 		return out;
 	}
+
+	VkImageView getHandle() const
+	{
+		ANKI_ASSERT(m_handle);
+		return m_handle;
+	}
+
+	U64 getHash() const
+	{
+		ANKI_ASSERT(m_hash);
+		return m_hash;
+	}
+
+	const TextureImpl& getTextureImpl() const
+	{
+		return static_cast<const TextureImpl&>(*m_tex);
+	}
+
+	/// @param resourceType Texture or image.
+	/// @note It's thread-safe.
+	U32 getOrCreateBindlessIndex(VkImageLayout layout, DescriptorType resourceType);
+
+private:
+	VkImageView m_handle = {}; /// Cache the handle.
+
+	/// This is a hash that depends on the Texture and the VkImageView. It's used as a replacement of
+	/// TextureView::m_uuid since it creates less unique IDs.
+	U64 m_hash = 0;
+
+	const MicroImageView* m_microImageView = nullptr;
+
+	TexturePtr m_tex; ///< Hold a reference.
 };
 /// @}
 

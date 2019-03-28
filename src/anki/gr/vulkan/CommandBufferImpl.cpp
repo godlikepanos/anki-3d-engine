@@ -76,15 +76,14 @@ void CommandBufferImpl::beginRecording()
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
 			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
-			colAttLayouts[i] =
-				static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_colorAttachmentUsages[i], 0);
+			colAttLayouts[i] = view.getTextureImpl().computeLayout(m_colorAttachmentUsages[i], 0);
 		}
 
 		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
 			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getDepthStencilAttachment());
-			dsAttLayout = static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_depthStencilAttachmentUsage, 0);
+			dsAttLayout = view.getTextureImpl().computeLayout(m_depthStencilAttachmentUsage, 0);
 		}
 
 		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
@@ -160,14 +159,14 @@ void CommandBufferImpl::beginRenderPassInternal()
 	for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 	{
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getColorAttachment(i));
-		colAttLayouts[i] = static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_colorAttachmentUsages[i], 0);
+		colAttLayouts[i] = view.getTextureImpl().computeLayout(m_colorAttachmentUsages[i], 0);
 	}
 
 	VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 	if(impl.hasDepthStencil())
 	{
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*impl.getDepthStencilAttachment());
-		dsAttLayout = static_cast<const TextureImpl&>(*view.m_tex).computeLayout(m_depthStencilAttachmentUsage, 0);
+		dsAttLayout = view.getTextureImpl().computeLayout(m_depthStencilAttachmentUsage, 0);
 	}
 
 	bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
@@ -248,7 +247,7 @@ void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 	commandCommon();
 
 	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-	const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+	const TextureImpl& tex = view.getTextureImpl();
 	ANKI_ASSERT(tex.getTextureType() != TextureType::_3D && "Not for 3D");
 	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.getSubresource()));
 
@@ -608,7 +607,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 	commandCommon();
 
 	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-	const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+	const TextureImpl& tex = view.getTextureImpl();
 	ANKI_ASSERT(tex.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
 	ANKI_ASSERT(tex.isSubresourceGoodForCopyFromBuffer(view.getSubresource()));
 	const VkImageLayout layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;

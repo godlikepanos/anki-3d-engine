@@ -30,6 +30,39 @@ enum class TextureImplWorkaround : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
 
+/// A Vulkan image view with some extra data.
+class MicroImageView
+{
+public:
+	VkImageView m_handle = {};
+
+	/// Index 0: Sampled image with SHADER_READ_ONLY layout
+	/// Index 1: Sampled image with GENERAL layout
+	/// Index 2: Storage image with ofcource GENERAL layout.
+	mutable Array<U32, 3> m_bindlessIndices = {{MAX_U32, MAX_U32, MAX_U32}};
+
+	/// Protect the m_bindlessIndices.
+	mutable SpinLock m_lock;
+
+	/// Because for example a single surface view of a cube texture will be a 2D view.
+	TextureType m_derivedTextureType = TextureType::COUNT;
+
+	MicroImageView() = default;
+
+	MicroImageView(const MicroImageView& b)
+	{
+		*this = std::move(b);
+	}
+
+	MicroImageView& operator=(const MicroImageView& b)
+	{
+		m_handle = b.m_handle;
+		m_bindlessIndices = b.m_bindlessIndices;
+		m_derivedTextureType = b.m_derivedTextureType;
+		return *this;
+	}
+};
+
 /// Texture container.
 class TextureImpl final : public Texture, public VulkanObject<Texture, TextureImpl>
 {
@@ -148,10 +181,10 @@ public:
 		}
 	}
 
-	VkImageView getOrCreateView(const TextureSubresourceInfo& subresource, TextureType& newTexType) const;
+	const MicroImageView& getOrCreateView(const TextureSubresourceInfo& subresource) const;
 
 private:
-	mutable HashMap<TextureSubresourceInfo, VkImageView> m_viewsMap;
+	mutable HashMap<TextureSubresourceInfo, MicroImageView> m_viewsMap;
 	mutable Mutex m_viewsMapMtx;
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;

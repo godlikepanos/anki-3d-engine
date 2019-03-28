@@ -25,9 +25,9 @@ TextureImpl::~TextureImpl()
 
 	for(auto it : m_viewsMap)
 	{
-		if(it != VK_NULL_HANDLE)
+		if(it.m_handle != VK_NULL_HANDLE)
 		{
-			vkDestroyImageView(getDevice(), it, nullptr);
+			vkDestroyImageView(getDevice(), it.m_handle, nullptr);
 		}
 	}
 
@@ -669,40 +669,43 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	return out;
 }
 
-VkImageView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresource, TextureType& newTexType) const
+const MicroImageView& TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresource) const
 {
 	LockGuard<Mutex> lock(m_viewsMapMtx);
 	auto it = m_viewsMap.find(subresource);
 
 	if(it != m_viewsMap.getEnd())
 	{
-		// Fixup the image view type
-		newTexType = computeNewTexTypeOfSubresource(subresource);
-
-		return *it;
+		// Found, do nothing
 	}
 	else
 	{
+		VkImageView handle = VK_NULL_HANDLE;
+		TextureType viewTexType = TextureType::COUNT;
+
 		// Compute the VkImageViewCreateInfo
 		VkImageViewCreateInfo viewCi;
-		computeVkImageViewCreateInfo(subresource, viewCi, newTexType);
+		computeVkImageViewCreateInfo(subresource, viewCi, viewTexType);
+		ANKI_ASSERT(viewTexType != TextureType::COUNT);
 
-		VkImageView view = VK_NULL_HANDLE;
-		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &view));
+		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &handle));
 		getGrManagerImpl().trySetVulkanHandleName(
-			getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(view));
+			getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(handle));
 
-		m_viewsMap.emplace(getAllocator(), subresource, view);
+		it = m_viewsMap.emplace(getAllocator(), subresource);
+		it->m_handle = handle;
+		it->m_derivedTextureType = viewTexType;
 
 #if 0
 		printf("Creating image view %p. Texture %p %s\n",
-			static_cast<void*>(view),
+			static_cast<void*>(handle),
 			static_cast<void*>(m_imageHandle),
 			getName() ? getName().cstr() : "Unnamed");
 #endif
-
-		return view;
 	}
+
+	ANKI_ASSERT(&(*m_viewsMap.find(subresource)) == &(*it));
+	return *it;
 }
 
 } // end namespace anki

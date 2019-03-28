@@ -5,6 +5,7 @@
 
 #include <anki/gr/vulkan/TextureViewImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/vulkan/GrManagerImpl.h>
 
 namespace anki
 {
@@ -24,16 +25,55 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 	const TextureImpl& tex = static_cast<const TextureImpl&>(*m_tex);
 	ANKI_ASSERT(tex.isSubresourceValid(inf));
 
-	m_texType = tex.getTextureType();
-
 	// Ask the texture for a view
-	m_handle = tex.getOrCreateView(inf, m_texType);
+	m_microImageView = &tex.getOrCreateView(inf);
+	m_handle = m_microImageView->m_handle;
+	m_texType = m_microImageView->m_derivedTextureType;
 
 	// Create the hash
 	Array<U64, 2> toHash = {{tex.getUuid(), ptrToNumber(m_handle)}};
 	m_hash = computeHash(&toHash[0], sizeof(toHash));
 
 	return Error::NONE;
+}
+
+U32 TextureViewImpl::getOrCreateBindlessIndex(VkImageLayout layout, DescriptorType resourceType)
+{
+	ANKI_ASSERT(layout == VK_IMAGE_LAYOUT_GENERAL || layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	ANKI_ASSERT(resourceType == DescriptorType::TEXTURE || resourceType == DescriptorType::IMAGE);
+	if(resourceType == DescriptorType::IMAGE)
+	{
+		ANKI_ASSERT(layout == VK_IMAGE_LAYOUT_GENERAL);
+	}
+
+	ANKI_ASSERT(m_microImageView);
+
+	const U arrayIdx = (resourceType == DescriptorType::IMAGE) ? 2 : ((layout == VK_IMAGE_LAYOUT_GENERAL) ? 1 : 0);
+
+	LockGuard<SpinLock> lock(m_microImageView->m_lock);
+
+	U32 outIdx;
+	if(m_microImageView->m_bindlessIndices[arrayIdx] != MAX_U32)
+	{
+		outIdx = m_microImageView->m_bindlessIndices[arrayIdx];
+	}
+	else
+	{
+		// Needs binding to the bindless descriptor set
+
+		if(resourceType == DescriptorType::TEXTURE)
+		{
+			outIdx = getGrManagerImpl().getBindlessDescriptorSet().bindTexture(m_handle, layout);
+		}
+		else
+		{
+			outIdx = getGrManagerImpl().getBindlessDescriptorSet().bindImage(m_handle);
+		}
+
+		m_microImageView->m_bindlessIndices[arrayIdx] = outIdx;
+	}
+
+	return outIdx;
 }
 
 } // end namespace anki

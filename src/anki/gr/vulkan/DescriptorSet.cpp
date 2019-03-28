@@ -286,7 +286,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 			{
 			case DescriptorType::COMBINED_TEXTURE_SAMPLER:
 				tex[texCount].sampler = b.m_texAndSampler.m_sampler->getHandle();
-				tex[texCount].imageView = b.m_texAndSampler.m_texView->m_handle;
+				tex[texCount].imageView = b.m_texAndSampler.m_texView->getHandle();
 				tex[texCount].imageLayout = b.m_texAndSampler.m_layout;
 
 				w.pImageInfo = &tex[texCount];
@@ -295,7 +295,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 				break;
 			case DescriptorType::TEXTURE:
 				tex[texCount].sampler = VK_NULL_HANDLE;
-				tex[texCount].imageView = b.m_tex.m_texView->m_handle;
+				tex[texCount].imageView = b.m_tex.m_texView->getHandle();
 				tex[texCount].imageLayout = b.m_tex.m_layout;
 
 				w.pImageInfo = &tex[texCount];
@@ -323,7 +323,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 				break;
 			case DescriptorType::IMAGE:
 				tex[texCount].sampler = VK_NULL_HANDLE;
-				tex[texCount].imageView = b.m_image.m_texView->m_handle;
+				tex[texCount].imageView = b.m_image.m_texView->getHandle();
 				tex[texCount].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 				w.pImageInfo = &tex[texCount];
@@ -822,6 +822,8 @@ void BindlessDescriptorSet::destroy()
 
 U32 BindlessDescriptorSet::bindTexture(const VkImageView view, const VkImageLayout layout)
 {
+	ANKI_ASSERT(layout == VK_IMAGE_LAYOUT_GENERAL || layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
 	ANKI_ASSERT(view);
 	LockGuard<Mutex> lock(m_mtx);
 	ANKI_ASSERT(m_freeTexIndexCount > 0 && "Out of indices");

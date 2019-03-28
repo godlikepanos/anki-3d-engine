@@ -404,7 +404,7 @@ inline void CommandBufferImpl::clearTextureView(TextureViewPtr texView, const Cl
 	commandCommon();
 
 	const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-	const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+	const TextureImpl& tex = view.getTextureImpl();
 
 	VkClearColorValue vclear;
 	static_assert(sizeof(vclear) == sizeof(clearValue), "See file");

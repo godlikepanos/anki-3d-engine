@@ -225,7 +225,7 @@ public:
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
 		const VkImageLayout lay = tex.computeLayout(usage, 0);
 
@@ -239,7 +239,7 @@ public:
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
-		const TextureImpl& tex = static_cast<const TextureImpl&>(*view.m_tex);
+		const TextureImpl& tex = view.getTextureImpl();
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
 		const VkImageLayout lay = tex.computeLayout(usage, 0);
 
@@ -270,14 +270,19 @@ public:
 
 	U32 bindBindlessTextureInternal(TextureViewPtr tex, TextureUsageBit usage)
 	{
-		ANKI_ASSERT(!"TODO");
-		return 0;
+		TextureViewImpl& view = static_cast<TextureViewImpl&>(*tex);
+		const VkImageLayout layout = view.getTextureImpl().computeLayout(usage, 0);
+		const U32 idx = view.getOrCreateBindlessIndex(layout, DescriptorType::TEXTURE);
+		m_microCmdb->pushObjectRef(tex);
+		return idx;
 	}
 
 	U32 bindBindlessImageInternal(TextureViewPtr img)
 	{
-		ANKI_ASSERT(!"TODO");
-		return 0;
+		TextureViewImpl& view = static_cast<TextureViewImpl&>(*img);
+		const U32 idx = view.getOrCreateBindlessIndex(VK_IMAGE_LAYOUT_GENERAL, DescriptorType::IMAGE);
+		m_microCmdb->pushObjectRef(img);
+		return idx;
 	}
 
 	void beginRenderPass(FramebufferPtr fb,

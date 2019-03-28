@@ -164,12 +164,12 @@ public:
 	void bindTextureAndSampler(U binding, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
 	{
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
-		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForSampling(viewImpl.getSubresource()));
+		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
 
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::COMBINED_TEXTURE_SAMPLER;
-		b.m_uuids[0] = viewImpl.m_hash;
+		b.m_uuids[0] = viewImpl.getHash();
 		b.m_uuids[1] = ptrToNumber(static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle());
 
 		b.m_texAndSampler.m_texView = &viewImpl;
@@ -183,12 +183,12 @@ public:
 	void bindTexture(U binding, const TextureView* texView, VkImageLayout layout)
 	{
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
-		ANKI_ASSERT(viewImpl.m_tex->isSubresourceGoodForSampling(viewImpl.getSubresource()));
+		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
 
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::TEXTURE;
-		b.m_uuids[0] = b.m_uuids[1] = viewImpl.m_hash;
+		b.m_uuids[0] = b.m_uuids[1] = viewImpl.getHash();
 
 		b.m_tex.m_texView = &viewImpl;
 		b.m_tex.m_layout = layout;
@@ -243,13 +243,13 @@ public:
 	{
 		ANKI_ASSERT(texView);
 		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);
-		ANKI_ASSERT(impl->m_tex->isSubresourceGoodForImageLoadStore(impl->getSubresource()));
+		ANKI_ASSERT(impl->getTextureImpl().isSubresourceGoodForImageLoadStore(impl->getSubresource()));
 
 		AnyBinding& b = m_bindings[binding];
 		b = {};
 		b.m_type = DescriptorType::IMAGE;
-		ANKI_ASSERT(impl->m_hash);
-		b.m_uuids[0] = b.m_uuids[1] = impl->m_hash;
+		ANKI_ASSERT(impl->getHash());
+		b.m_uuids[0] = b.m_uuids[1] = impl->getHash();
 		b.m_image.m_texView = impl;
 
 		m_dirtyBindings.set(binding);
@@ -340,16 +340,20 @@ public:
 	static Error initDeviceFeatures(VkPhysicalDevice pdev, VkPhysicalDeviceDescriptorIndexingFeaturesEXT& features);
 
 	/// Bind a sampled image.
+	/// @note It's thread-safe.
 	U32 bindTexture(const VkImageView view, const VkImageLayout layout);
 
 	/// Bind a storage image.
+	/// @note It's thread-safe.
 	U32 bindImage(const VkImageView view);
 
+	/// @note It's thread-safe.
 	void unbindTexture(U32 idx)
 	{
 		unbindCommon(idx, m_freeTexIndices, m_freeTexIndexCount);
 	}
 
+	/// @note It's thread-safe.
 	void unbindImage(U32 idx)
 	{
 		unbindCommon(idx, m_freeImgIndices, m_freeImgIndexCount);
