@@ -162,43 +162,44 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 }
 
 void CommandBuffer::bindTextureAndSampler(
-	U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage)
+	U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, usage);
+	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, usage, arrayIdx);
 }
 
-void CommandBuffer::bindTexture(U32 set, U32 binding, TextureViewPtr texView, TextureUsageBit usage)
+void CommandBuffer::bindTexture(U32 set, U32 binding, TextureViewPtr texView, TextureUsageBit usage, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindTextureInternal(set, binding, texView, usage);
+	self.bindTextureInternal(set, binding, texView, usage, arrayIdx);
 }
 
-void CommandBuffer::bindSampler(U32 set, U32 binding, SamplerPtr sampler)
+void CommandBuffer::bindSampler(U32 set, U32 binding, SamplerPtr sampler, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindSamplerInternal(set, binding, sampler);
+	self.bindSamplerInternal(set, binding, sampler, arrayIdx);
 }
 
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
+void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindUniformBufferInternal(set, binding, buff, offset, range);
+	self.bindUniformBufferInternal(set, binding, buff, offset, range, arrayIdx);
 }
 
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
+void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindStorageBufferInternal(set, binding, buff, offset, range);
+	self.bindStorageBufferInternal(set, binding, buff, offset, range, arrayIdx);
 }
 
-void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
+void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.bindImageInternal(set, binding, img);
+	self.bindImageInternal(set, binding, img, arrayIdx);
 }
 
-void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt)
+void CommandBuffer::bindTextureBuffer(
+	U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }

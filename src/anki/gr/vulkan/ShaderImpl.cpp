@@ -135,23 +135,39 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			{
 				ANKI_ASSERT(typeInfo.array.size() == 1 && "Only 1D arrays are supported");
 				arraySize = typeInfo.array[0];
-				ANKI_ASSERT(arraySize > 0 && arraySize < MAX_U8);
+				ANKI_ASSERT(arraySize > 0 && (arraySize - 1) <= MAX_U8);
 			}
 
 			m_descriptorSetMask.set(set);
 			m_activeBindingMask[set].set(set);
 
 			// Check that there are no other descriptors with the same binding
+			U foundIdx = MAX_U;
 			for(U i = 0; i < counts[set]; ++i)
 			{
-				ANKI_ASSERT(descriptors[set][i].m_binding != binding && "Found 2 descriptors with the same binding");
+				if(descriptors[set][i].m_binding == binding)
+				{
+					foundIdx = i;
+					break;
+				}
 			}
 
-			DescriptorBinding& descriptor = descriptors[set][counts[set]++];
-			descriptor.m_binding = binding;
-			descriptor.m_type = type;
-			descriptor.m_stageMask = static_cast<ShaderTypeBit>(1 << m_shaderType);
-			descriptor.m_arraySize = arraySize;
+			if(foundIdx == MAX_U)
+			{
+				// New binding, init it
+				DescriptorBinding& descriptor = descriptors[set][counts[set]++];
+				descriptor.m_binding = binding;
+				descriptor.m_type = type;
+				descriptor.m_stageMask = static_cast<ShaderTypeBit>(1 << m_shaderType);
+				descriptor.m_arraySizeMinusOne = arraySize - 1;
+			}
+			else
+			{
+				// Same binding, make sure the type is compatible
+				ANKI_ASSERT(type == descriptors[set][foundIdx].m_type && "Same binding different type");
+				ANKI_ASSERT(arraySize - 1 == descriptors[set][foundIdx].m_arraySizeMinusOne
+							&& "Same binding different array size");
+			}
 		}
 	};
 

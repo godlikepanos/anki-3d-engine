@@ -221,7 +221,7 @@ public:
 	}
 
 	void bindTextureAndSamplerInternal(
-		U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler, TextureUsageBit usage)
+		U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler, TextureUsageBit usage, U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
@@ -229,13 +229,13 @@ public:
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
 		const VkImageLayout lay = tex.computeLayout(usage, 0);
 
-		m_dsetState[set].bindTextureAndSampler(binding, &view, sampler.get(), lay);
+		m_dsetState[set].bindTextureAndSampler(binding, arrayIdx, &view, sampler.get(), lay);
 
 		m_microCmdb->pushObjectRef(texView);
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindTextureInternal(U32 set, U32 binding, TextureViewPtr& texView, TextureUsageBit usage)
+	void bindTextureInternal(U32 set, U32 binding, TextureViewPtr& texView, TextureUsageBit usage, U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
@@ -243,22 +243,22 @@ public:
 		ANKI_ASSERT(tex.isSubresourceGoodForSampling(view.getSubresource()));
 		const VkImageLayout lay = tex.computeLayout(usage, 0);
 
-		m_dsetState[set].bindTexture(binding, &view, lay);
+		m_dsetState[set].bindTexture(binding, arrayIdx, &view, lay);
 
 		m_microCmdb->pushObjectRef(texView);
 	}
 
-	void bindSamplerInternal(U32 set, U32 binding, SamplerPtr& sampler)
+	void bindSamplerInternal(U32 set, U32 binding, SamplerPtr& sampler, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindSampler(binding, sampler.get());
+		m_dsetState[set].bindSampler(binding, arrayIdx, sampler.get());
 		m_microCmdb->pushObjectRef(sampler);
 	}
 
-	void bindImageInternal(U32 set, U32 binding, TextureViewPtr& img)
+	void bindImageInternal(U32 set, U32 binding, TextureViewPtr& img, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindImage(binding, img.get());
+		m_dsetState[set].bindImage(binding, arrayIdx, img.get());
 		m_microCmdb->pushObjectRef(img);
 	}
 
@@ -350,17 +350,17 @@ public:
 
 	void bindShaderProgram(ShaderProgramPtr& prog);
 
-	void bindUniformBufferInternal(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
+	void bindUniformBufferInternal(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindUniformBuffer(binding, buff.get(), offset, range);
+		m_dsetState[set].bindUniformBuffer(binding, arrayIdx, buff.get(), offset, range);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
-	void bindStorageBufferInternal(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
+	void bindStorageBufferInternal(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range, U32 arrayIdx)
 	{
 		commandCommon();
-		m_dsetState[set].bindStorageBuffer(binding, buff.get(), offset, range);
+		m_dsetState[set].bindStorageBuffer(binding, arrayIdx, buff.get(), offset, range);
 		m_microCmdb->pushObjectRef(buff);
 	}
 

@@ -53,6 +53,11 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		m_state.beginRenderPass(m_activeFb);
 	}
 
+	for(DescriptorSetState& state : m_dsetState)
+	{
+		state.init(m_alloc);
+	}
+
 	return Error::NONE;
 }
 

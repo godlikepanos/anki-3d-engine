@@ -29,7 +29,7 @@ public:
 	DescriptorType m_type = DescriptorType::COUNT;
 	ShaderTypeBit m_stageMask = ShaderTypeBit::NONE;
 	U8 m_binding = MAX_U8;
-	U8 m_arraySize = 0;
+	U8 m_arraySizeMinusOne = 0;
 };
 
 static_assert(sizeof(DescriptorBinding) == 4, "See file");
@@ -75,28 +75,28 @@ private:
 class TextureSamplerBinding
 {
 public:
-	const TextureViewImpl* m_texView;
-	const MicroSampler* m_sampler;
+	VkImageView m_imgViewHandle;
+	VkSampler m_samplerHandle;
 	VkImageLayout m_layout;
 };
 
 class TextureBinding
 {
 public:
-	const TextureViewImpl* m_texView;
+	VkImageView m_imgViewHandle;
 	VkImageLayout m_layout;
 };
 
 class SamplerBinding
 {
 public:
-	const MicroSampler* m_sampler;
+	VkSampler m_samplerHandle;
 };
 
 class BufferBinding
 {
 public:
-	const BufferImpl* m_buff;
+	VkBuffer m_buffHandle;
 	PtrSize m_offset;
 	PtrSize m_range;
 };
@@ -104,14 +104,13 @@ public:
 class ImageBinding
 {
 public:
-	const TextureViewImpl* m_texView;
+	VkImageView m_imgViewHandle;
 };
 
 class AnyBinding
 {
 public:
-	DescriptorType m_type = DescriptorType::COUNT;
-	Array<U64, 2> m_uuids = {};
+	Array<U64, 2> m_uuids;
 
 	union
 	{
@@ -121,7 +120,23 @@ public:
 		BufferBinding m_buff;
 		ImageBinding m_image;
 	};
+
+	DescriptorType m_type;
 };
+static_assert(std::is_trivial<AnyBinding>::value, "Shouldn't have constructor for perf reasons");
+
+class AnyBindingExtended
+{
+public:
+	union
+	{
+		AnyBinding m_single;
+		AnyBinding* m_array;
+	};
+
+	U32 m_arraySize;
+};
+static_assert(std::is_trivial<AnyBindingExtended>::value, "Shouldn't have constructor for perf reasons");
 
 /// Descriptor set thin wraper.
 class DescriptorSet
@@ -147,6 +162,11 @@ class DescriptorSetState
 	friend class DescriptorSetFactory;
 
 public:
+	void init(StackAllocator<U8>& alloc)
+	{
+		m_alloc = alloc;
+	}
+
 	void setLayout(const DescriptorSetLayout& layout)
 	{
 		if(layout.isCreated())
@@ -161,62 +181,63 @@ public:
 		m_layout = layout;
 	}
 
-	void bindTextureAndSampler(U binding, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
+	void bindTextureAndSampler(
+		U binding, U arrayIdx, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
 	{
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
 		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
 
-		AnyBinding& b = m_bindings[binding];
+		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
 		b.m_type = DescriptorType::COMBINED_TEXTURE_SAMPLER;
 		b.m_uuids[0] = viewImpl.getHash();
 		b.m_uuids[1] = ptrToNumber(static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle());
 
-		b.m_texAndSampler.m_texView = &viewImpl;
-		b.m_texAndSampler.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
+		b.m_texAndSampler.m_imgViewHandle = viewImpl.getHandle();
+		b.m_texAndSampler.m_samplerHandle = static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle();
 		b.m_texAndSampler.m_layout = layout;
 
 		m_dirtyBindings.set(binding);
 		unbindCustomDSet();
 	}
 
-	void bindTexture(U binding, const TextureView* texView, VkImageLayout layout)
+	void bindTexture(U binding, U arrayIdx, const TextureView* texView, VkImageLayout layout)
 	{
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
 		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
 
-		AnyBinding& b = m_bindings[binding];
+		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
 		b.m_type = DescriptorType::TEXTURE;
 		b.m_uuids[0] = b.m_uuids[1] = viewImpl.getHash();
 
-		b.m_tex.m_texView = &viewImpl;
+		b.m_tex.m_imgViewHandle = viewImpl.getHandle();
 		b.m_tex.m_layout = layout;
 
 		m_dirtyBindings.set(binding);
 		unbindCustomDSet();
 	}
 
-	void bindSampler(U binding, const Sampler* sampler)
+	void bindSampler(U binding, U arrayIdx, const Sampler* sampler)
 	{
-		AnyBinding& b = m_bindings[binding];
+		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
 		b.m_type = DescriptorType::SAMPLER;
 		b.m_uuids[0] = b.m_uuids[1] = ptrToNumber(static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle());
-		b.m_sampler.m_sampler = static_cast<const SamplerImpl*>(sampler)->m_sampler.get();
+		b.m_sampler.m_samplerHandle = static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle();
 
 		m_dirtyBindings.set(binding);
 		unbindCustomDSet();
 	}
 
-	void bindUniformBuffer(U binding, const Buffer* buff, PtrSize offset, PtrSize range)
+	void bindUniformBuffer(U binding, U arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
-		AnyBinding& b = m_bindings[binding];
+		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
 		b.m_type = DescriptorType::UNIFORM_BUFFER;
 		b.m_uuids[0] = b.m_uuids[1] = buff->getUuid();
 
-		b.m_buff.m_buff = static_cast<const BufferImpl*>(buff);
+		b.m_buff.m_buffHandle = static_cast<const BufferImpl*>(buff)->getHandle();
 		b.m_buff.m_offset = offset;
 		b.m_buff.m_range = range;
 
@@ -224,14 +245,14 @@ public:
 		unbindCustomDSet();
 	}
 
-	void bindStorageBuffer(U binding, const Buffer* buff, PtrSize offset, PtrSize range)
+	void bindStorageBuffer(U binding, U arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
-		AnyBinding& b = m_bindings[binding];
+		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
 		b.m_type = DescriptorType::STORAGE_BUFFER;
 		b.m_uuids[0] = b.m_uuids[1] = buff->getUuid();
 
-		b.m_buff.m_buff = static_cast<const BufferImpl*>(buff);
+		b.m_buff.m_buffHandle = static_cast<const BufferImpl*>(buff)->getHandle();
 		b.m_buff.m_offset = offset;
 		b.m_buff.m_range = range;
 
@@ -239,18 +260,18 @@ public:
 		unbindCustomDSet();
 	}
 
-	void bindImage(U binding, const TextureView* texView)
+	void bindImage(U binding, U arrayIdx, const TextureView* texView)
 	{
 		ANKI_ASSERT(texView);
 		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);
 		ANKI_ASSERT(impl->getTextureImpl().isSubresourceGoodForImageLoadStore(impl->getSubresource()));
 
-		AnyBinding& b = m_bindings[binding];
+		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
 		b.m_type = DescriptorType::IMAGE;
 		ANKI_ASSERT(impl->getHash());
 		b.m_uuids[0] = b.m_uuids[1] = impl->getHash();
-		b.m_image.m_texView = impl;
+		b.m_image.m_imgViewHandle = impl->getHandle();
 
 		m_dirtyBindings.set(binding);
 		unbindCustomDSet();
@@ -264,14 +285,16 @@ public:
 	}
 
 private:
+	StackAllocator<U8> m_alloc;
 	DescriptorSetLayout m_layout;
 
-	Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindings;
+	Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindings;
 	DescriptorSet m_customDSet;
 
 	U64 m_lastHash = 0;
 
 	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_dirtyBindings = {true};
+	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_bindingSet = {false};
 	Bool m_layoutDirty = true;
 	Bool m_customDSetDirty = true;
 
@@ -285,6 +308,56 @@ private:
 	void unbindCustomDSet()
 	{
 		m_customDSet = {};
+	}
+
+	AnyBinding& getBindingToPopulate(U32 bindingIdx, U32 arrayIdx)
+	{
+		ANKI_ASSERT(bindingIdx < MAX_BINDINGS_PER_DESCRIPTOR_SET);
+
+		AnyBindingExtended& extended = m_bindings[bindingIdx];
+		AnyBinding* out;
+		const Bool bindingIsSet = m_bindingSet.get(bindingIdx);
+		m_bindingSet.set(bindingIdx);
+		extended.m_arraySize = (!bindingIsSet) ? 0 : extended.m_arraySize;
+
+		if(ANKI_LIKELY(arrayIdx == 0 && extended.m_arraySize <= 1))
+		{
+			// Array idx is zero, most common case
+			out = &extended.m_single;
+			extended.m_arraySize = 1;
+		}
+		else if(arrayIdx < extended.m_arraySize)
+		{
+			// It's (or was) an array and there enough space in thar array
+			out = &extended.m_array[arrayIdx];
+		}
+		else
+		{
+			// Need to grow
+			const U32 newSize = max(extended.m_arraySize * 2, arrayIdx + 1);
+			AnyBinding* newArr = m_alloc.newArray<AnyBinding>(newSize);
+
+			if(extended.m_arraySize == 1)
+			{
+				newArr[0] = extended.m_single;
+			}
+			else if(extended.m_arraySize > 1)
+			{
+				// Copy old to new.
+				memcpy(newArr, extended.m_array, sizeof(AnyBinding) * extended.m_arraySize);
+			}
+
+			// Zero the rest
+			memset(newArr + extended.m_arraySize, 0, sizeof(AnyBinding) * (newSize - extended.m_arraySize));
+			extended.m_arraySize = newSize;
+			extended.m_array = newArr;
+
+			// Return
+			out = &extended.m_array[arrayIdx];
+		}
+
+		ANKI_ASSERT(out);
+		return *out;
 	}
 };
 
@@ -307,6 +380,7 @@ public:
 
 	/// @note Obviously not thread-safe.
 	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid,
+		StackAllocator<U8>& tmpAlloc,
 		DescriptorSetState& state,
 		DescriptorSet& set,
 		Bool& dirty,

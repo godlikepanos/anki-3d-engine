@@ -2171,4 +2171,194 @@ void main()
 	COMMON_END()
 }
 
+ANKI_TEST(Gr, BindingWithArray)
+{
+	COMMON_BEGIN()
+
+	// Create result buffer
+	BufferPtr resBuff =
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::ALL_COMPUTE, BufferMapAccessBit::READ));
+
+	Array<BufferPtr, 4> uniformBuffers;
+	F32 count = 1.0f;
+	for(BufferPtr& ptr : uniformBuffers)
+	{
+		ptr = gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::ALL_COMPUTE, BufferMapAccessBit::WRITE));
+
+		Vec4* mapped = static_cast<Vec4*>(ptr->map(0, sizeof(Vec4), BufferMapAccessBit::WRITE));
+		*mapped = Vec4(count, count + 1.0f, count + 2.0f, count + 3.0f);
+		count += 4.0f;
+		ptr->unmap();
+	}
+
+	// Create program
+	static const char* PROG_SRC = R"(
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform u_
+{
+	vec4 m_vec;
+} u_ubos[4];
+
+layout(set = 0, binding = 1) writeonly buffer ss_
+{
+	vec4 u_result;
+};
+
+void main()
+{
+	u_result = u_ubos[0].m_vec + u_ubos[1].m_vec + u_ubos[2].m_vec + u_ubos[3].m_vec;
+})";
+
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
+	ShaderProgramInitInfo sprogInit;
+	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
+	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
+
+	// Run
+	CommandBufferInitInfo cinit;
+	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+
+	for(U i = 0; i < uniformBuffers.getSize(); ++i)
+	{
+		cmdb->bindUniformBuffer(0, 0, uniformBuffers[i], 0, MAX_PTR_SIZE, i);
+	}
+
+	cmdb->bindStorageBuffer(0, 1, resBuff, 0, MAX_PTR_SIZE);
+
+	cmdb->bindShaderProgram(prog);
+	cmdb->dispatchCompute(1, 1, 1);
+
+	cmdb->flush();
+	gr->finish();
+
+	// Check result
+	Vec4* res = static_cast<Vec4*>(resBuff->map(0, sizeof(Vec4), BufferMapAccessBit::READ));
+
+	ANKI_TEST_EXPECT_EQ(res->x(), 28.0f);
+	ANKI_TEST_EXPECT_EQ(res->y(), 32.0f);
+	ANKI_TEST_EXPECT_EQ(res->z(), 36.0f);
+	ANKI_TEST_EXPECT_EQ(res->w(), 40.0f);
+
+	resBuff->unmap();
+
+	COMMON_END();
+}
+
+ANKI_TEST(Gr, Bindless)
+{
+	COMMON_BEGIN()
+
+	// Create texture A
+	TextureInitInfo texInit;
+	texInit.m_width = 1;
+	texInit.m_height = 1;
+	texInit.m_format = Format::R32G32B32A32_UINT;
+	texInit.m_usage = TextureUsageBit::ALL_COMPUTE | TextureUsageBit::TRANSFER_ALL;
+	texInit.m_mipmapCount = 1;
+
+	TexturePtr texA = gr->newTexture(texInit);
+
+	// Create texture B
+	TexturePtr texB = gr->newTexture(texInit);
+
+	// Create sampler
+	SamplerInitInfo samplerInit;
+	SamplerPtr sampler = gr->newSampler(samplerInit);
+
+	// Create views
+	TextureViewPtr viewA = gr->newTextureView(TextureViewInitInfo(texA, TextureSurfaceInfo()));
+	TextureViewPtr viewB = gr->newTextureView(TextureViewInitInfo(texB, TextureSurfaceInfo()));
+
+	// Create result buffer
+	BufferPtr resBuff =
+		gr->newBuffer(BufferInitInfo(sizeof(UVec4), BufferUsageBit::ALL_COMPUTE, BufferMapAccessBit::READ));
+
+	// Create program A
+	static const char* PROG_SRC = R"(
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform utexture2D u_bindlessTextures[ANKI_MAX_BINDLESS_TEXTURES];
+layout(set = 0, binding = 1) uniform readonly uimage2D u_bindlessImages[ANKI_MAX_BINDLESS_IMAGES];
+
+layout(set = 1, binding = 0) writeonly buffer ss_
+{
+	uvec4 u_result;
+};
+
+layout(set = 1, binding = 1) uniform sampler u_sampler;
+
+layout(push_constant) uniform pc_
+{
+	uvec4 u_texIndices;
+};
+
+void main()
+{
+	uvec4 val0 = imageLoad(u_bindlessImages[u_texIndices[0]], ivec2(0));
+	uvec4 val1 = texelFetch(usampler2D(u_bindlessTextures[u_texIndices[1]], u_sampler), ivec2(0), 0);
+
+	u_result = val0 + val1;
+})";
+
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
+	ShaderProgramInitInfo sprogInit;
+	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
+	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
+
+	// Run
+	CommandBufferInitInfo cinit;
+	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+
+	cmdb->setTextureSurfaceBarrier(
+		texA, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureSurfaceInfo());
+	cmdb->setTextureSurfaceBarrier(
+		texB, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureSurfaceInfo());
+
+	TransferGpuAllocatorHandle handle0, handle1;
+	const UVec4 mip0 = UVec4(1, 2, 3, 4);
+	UPLOAD_TEX_SURFACE(cmdb, texA, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0), handle0);
+	const UVec4 mip1 = UVec4(10, 20, 30, 40);
+	UPLOAD_TEX_SURFACE(cmdb, texB, TextureSurfaceInfo(0, 0, 0, 0), &mip1[0], sizeof(mip1), handle1);
+
+	cmdb->setTextureSurfaceBarrier(
+		texA, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::IMAGE_COMPUTE_READ, TextureSurfaceInfo());
+	cmdb->setTextureSurfaceBarrier(
+		texB, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_COMPUTE, TextureSurfaceInfo());
+
+	cmdb->bindStorageBuffer(1, 0, resBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindSampler(1, 1, sampler);
+	cmdb->bindShaderProgram(prog);
+
+	const U32 idx0 = cmdb->bindBindlessImage(viewA);
+	const U32 idx1 = cmdb->bindBindlessTexture(viewB, TextureUsageBit::SAMPLED_COMPUTE);
+	UVec4 pc(idx0, idx1, 0, 0);
+	cmdb->setPushConstants(&pc, sizeof(pc));
+
+	cmdb->bindAllBindless(0);
+
+	cmdb->dispatchCompute(1, 1, 1);
+
+	// Read result
+	FencePtr fence;
+	cmdb->flush(&fence);
+	transfAlloc->release(handle0, fence);
+	transfAlloc->release(handle1, fence);
+	gr->finish();
+
+	// Check result
+	UVec4* res = static_cast<UVec4*>(resBuff->map(0, sizeof(UVec4), BufferMapAccessBit::READ));
+
+	ANKI_TEST_EXPECT_EQ(res->x(), 11);
+	ANKI_TEST_EXPECT_EQ(res->y(), 22);
+	ANKI_TEST_EXPECT_EQ(res->z(), 33);
+	ANKI_TEST_EXPECT_EQ(res->w(), 44);
+
+	resBuff->unmap();
+
+	COMMON_END()
+}
+
 } // end namespace anki

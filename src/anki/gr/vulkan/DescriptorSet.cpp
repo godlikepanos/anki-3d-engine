@@ -49,13 +49,15 @@ public:
 	ANKI_USE_RESULT Error init();
 	ANKI_USE_RESULT Error createNewPool();
 
-	ANKI_USE_RESULT Error getOrCreateSet(
-		U64 hash, const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS*& out)
+	ANKI_USE_RESULT Error getOrCreateSet(U64 hash,
+		const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+		StackAllocator<U8>& tmpAlloc,
+		const DS*& out)
 	{
 		out = tryFindSet(hash);
 		if(out == nullptr)
 		{
-			ANKI_CHECK(newSet(hash, bindings, out));
+			ANKI_CHECK(newSet(hash, bindings, tmpAlloc, out));
 		}
 
 		return Error::NONE;
@@ -63,9 +65,13 @@ public:
 
 private:
 	ANKI_USE_RESULT const DS* tryFindSet(U64 hash);
-	ANKI_USE_RESULT Error newSet(
-		U64 hash, const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS*& out);
-	void writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set);
+	ANKI_USE_RESULT Error newSet(U64 hash,
+		const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+		StackAllocator<U8>& tmpAlloc,
+		const DS*& out);
+	void writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+		const DS& set,
+		StackAllocator<U8>& tmpAlloc);
 };
 
 /// Cache entry. It's built around a specific descriptor set layout.
@@ -77,6 +83,7 @@ public:
 	U64 m_hash = 0; ///< Layout hash.
 	VkDescriptorSetLayout m_layoutHandle = {};
 	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_activeBindings = {false};
+	Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingArraySize = {};
 	Array<DescriptorType, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingType = {};
 	U32 m_minBinding = MAX_U32;
 	U32 m_maxBinding = 0;
@@ -183,8 +190,10 @@ const DS* DSThreadAllocator::tryFindSet(U64 hash)
 	}
 }
 
-Error DSThreadAllocator::newSet(
-	U64 hash, const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS*& out_)
+Error DSThreadAllocator::newSet(U64 hash,
+	const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+	StackAllocator<U8>& tmpAlloc,
+	const DS*& out_)
 {
 	DS* out = nullptr;
 
@@ -249,21 +258,83 @@ Error DSThreadAllocator::newSet(
 	out->m_hash = hash;
 
 	// Finally, write it
-	writeSet(bindings, *out);
+	writeSet(bindings, *out, tmpAlloc);
 
 	out_ = out;
 	return Error::NONE;
 }
 
-void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set)
+void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings,
+	const DS& set,
+	StackAllocator<U8>& tmpAlloc)
 {
-	Array<VkWriteDescriptorSet, MAX_BINDINGS_PER_DESCRIPTOR_SET> writes;
-	U writeCount = 0;
+	DynamicArrayAuto<VkWriteDescriptorSet> writeInfos(tmpAlloc);
+	DynamicArrayAuto<VkDescriptorImageInfo> texInfos(tmpAlloc);
+	DynamicArrayAuto<VkDescriptorBufferInfo> buffInfos(tmpAlloc);
 
-	Array<VkDescriptorImageInfo, MAX_BINDINGS_PER_DESCRIPTOR_SET> tex;
-	U texCount = 0;
-	Array<VkDescriptorBufferInfo, MAX_BINDINGS_PER_DESCRIPTOR_SET> buff;
-	U buffCount = 0;
+	// First pass: Populate the VkDescriptorImageInfo and VkDescriptorBufferInfo
+	for(U bindingIdx = m_layoutEntry->m_minBinding; bindingIdx <= m_layoutEntry->m_maxBinding; ++bindingIdx)
+	{
+		if(m_layoutEntry->m_activeBindings.get(bindingIdx))
+		{
+			for(U arrIdx = 0; arrIdx < bindings[bindingIdx].m_arraySize; ++arrIdx)
+			{
+				const AnyBinding& b = (bindings[bindingIdx].m_arraySize == 1) ? bindings[bindingIdx].m_single
+																			  : bindings[bindingIdx].m_array[arrIdx];
+
+				switch(b.m_type)
+				{
+				case DescriptorType::COMBINED_TEXTURE_SAMPLER:
+				{
+					VkDescriptorImageInfo& info = *texInfos.emplaceBack();
+					info.sampler = b.m_texAndSampler.m_samplerHandle;
+					info.imageView = b.m_texAndSampler.m_imgViewHandle;
+					info.imageLayout = b.m_texAndSampler.m_layout;
+					break;
+				}
+				case DescriptorType::TEXTURE:
+				{
+					VkDescriptorImageInfo& info = *texInfos.emplaceBack();
+					info.sampler = VK_NULL_HANDLE;
+					info.imageView = b.m_tex.m_imgViewHandle;
+					info.imageLayout = b.m_tex.m_layout;
+					break;
+				}
+				case DescriptorType::SAMPLER:
+				{
+					VkDescriptorImageInfo& info = *texInfos.emplaceBack();
+					info.sampler = b.m_sampler.m_samplerHandle;
+					info.imageView = VK_NULL_HANDLE;
+					info.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+					break;
+				}
+				case DescriptorType::UNIFORM_BUFFER:
+				case DescriptorType::STORAGE_BUFFER:
+				{
+					VkDescriptorBufferInfo& info = *buffInfos.emplaceBack();
+					info.buffer = b.m_buff.m_buffHandle;
+					info.offset = 0;
+					info.range = (b.m_buff.m_range == MAX_PTR_SIZE) ? VK_WHOLE_SIZE : b.m_buff.m_range;
+					break;
+				}
+				case DescriptorType::IMAGE:
+				{
+					VkDescriptorImageInfo& info = *texInfos.emplaceBack();
+					info.sampler = VK_NULL_HANDLE;
+					info.imageView = b.m_image.m_imgViewHandle;
+					info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+					break;
+				}
+				default:
+					ANKI_ASSERT(0);
+				}
+			}
+		}
+	}
+
+	// Second pass: Populate the VkWriteDescriptorSet with VkDescriptorImageInfo and VkDescriptorBufferInfo
+	U texCounter = 0;
+	U buffCounter = 0;
 
 	VkWriteDescriptorSet writeTemplate = {};
 	writeTemplate.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -271,72 +342,42 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 	writeTemplate.dstSet = set.m_handle;
 	writeTemplate.descriptorCount = 1;
 
-	for(U i = m_layoutEntry->m_minBinding; i <= m_layoutEntry->m_maxBinding; ++i)
+	for(U bindingIdx = m_layoutEntry->m_minBinding; bindingIdx <= m_layoutEntry->m_maxBinding; ++bindingIdx)
 	{
-		if(m_layoutEntry->m_activeBindings.get(i))
+		if(m_layoutEntry->m_activeBindings.get(bindingIdx))
 		{
-			const AnyBinding& b = bindings[i];
-
-			VkWriteDescriptorSet& w = writes[writeCount++];
-			w = writeTemplate;
-			w.dstBinding = i;
-			w.descriptorType = convertDescriptorType(b.m_type);
-
-			switch(b.m_type)
+			for(U arrIdx = 0; arrIdx < bindings[bindingIdx].m_arraySize; ++arrIdx)
 			{
-			case DescriptorType::COMBINED_TEXTURE_SAMPLER:
-				tex[texCount].sampler = b.m_texAndSampler.m_sampler->getHandle();
-				tex[texCount].imageView = b.m_texAndSampler.m_texView->getHandle();
-				tex[texCount].imageLayout = b.m_texAndSampler.m_layout;
+				const AnyBinding& b = (bindings[bindingIdx].m_arraySize == 1) ? bindings[bindingIdx].m_single
+																			  : bindings[bindingIdx].m_array[arrIdx];
 
-				w.pImageInfo = &tex[texCount];
+				VkWriteDescriptorSet& writeInfo = *writeInfos.emplaceBack(writeTemplate);
+				writeInfo.descriptorType = convertDescriptorType(b.m_type);
+				writeInfo.dstArrayElement = arrIdx;
+				writeInfo.dstBinding = bindingIdx;
 
-				++texCount;
-				break;
-			case DescriptorType::TEXTURE:
-				tex[texCount].sampler = VK_NULL_HANDLE;
-				tex[texCount].imageView = b.m_tex.m_texView->getHandle();
-				tex[texCount].imageLayout = b.m_tex.m_layout;
-
-				w.pImageInfo = &tex[texCount];
-
-				++texCount;
-				break;
-			case DescriptorType::SAMPLER:
-				tex[texCount].sampler = b.m_sampler.m_sampler->getHandle();
-				tex[texCount].imageView = VK_NULL_HANDLE;
-				tex[texCount].imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-				w.pImageInfo = &tex[texCount];
-
-				++texCount;
-				break;
-			case DescriptorType::UNIFORM_BUFFER:
-			case DescriptorType::STORAGE_BUFFER:
-				buff[buffCount].buffer = b.m_buff.m_buff->getHandle();
-				buff[buffCount].offset = 0;
-				buff[buffCount].range = (b.m_buff.m_range == MAX_PTR_SIZE) ? VK_WHOLE_SIZE : b.m_buff.m_range;
-
-				w.pBufferInfo = &buff[buffCount];
-
-				++buffCount;
-				break;
-			case DescriptorType::IMAGE:
-				tex[texCount].sampler = VK_NULL_HANDLE;
-				tex[texCount].imageView = b.m_image.m_texView->getHandle();
-				tex[texCount].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-
-				w.pImageInfo = &tex[texCount];
-
-				++texCount;
-				break;
-			default:
-				ANKI_ASSERT(0);
+				switch(b.m_type)
+				{
+				case DescriptorType::COMBINED_TEXTURE_SAMPLER:
+				case DescriptorType::TEXTURE:
+				case DescriptorType::SAMPLER:
+				case DescriptorType::IMAGE:
+					writeInfo.pImageInfo = &texInfos[texCounter++];
+					break;
+				case DescriptorType::UNIFORM_BUFFER:
+				case DescriptorType::STORAGE_BUFFER:
+					writeInfo.pBufferInfo = &buffInfos[buffCounter++];
+					break;
+				default:
+					ANKI_ASSERT(0);
+				}
 			}
 		}
 	}
 
-	vkUpdateDescriptorSets(m_layoutEntry->m_factory->m_dev, writeCount, &writes[0], 0, nullptr);
+	// Write
+	ANKI_ASSERT(writeInfos.getSize() > 0);
+	vkUpdateDescriptorSets(m_layoutEntry->m_factory->m_dev, writeInfos.getSize(), &writeInfos[0], 0, nullptr);
 }
 
 DSLayoutCacheEntry::~DSLayoutCacheEntry()
@@ -374,7 +415,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 		const DescriptorBinding& ak = bindings[i];
 
 		vk.binding = ak.m_binding;
-		vk.descriptorCount = 1;
+		vk.descriptorCount = ak.m_arraySizeMinusOne + 1;
 		vk.descriptorType = convertDescriptorType(ak.m_type);
 		vk.pImmutableSamplers = nullptr;
 		vk.stageFlags = convertShaderTypeBit(ak.m_stageMask);
@@ -382,6 +423,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 		ANKI_ASSERT(m_activeBindings.get(ak.m_binding) == false);
 		m_activeBindings.set(ak.m_binding);
 		m_bindingType[ak.m_binding] = ak.m_type;
+		m_bindingArraySize[ak.m_binding] = ak.m_arraySizeMinusOne + 1;
 		m_minBinding = min<U32>(m_minBinding, ak.m_binding);
 		m_maxBinding = max<U32>(m_maxBinding, ak.m_binding);
 	}
@@ -513,43 +555,60 @@ void DescriptorSetState::flush(U64& hash,
 		{
 			if(entry.m_activeBindings.get(i))
 			{
+				ANKI_ASSERT(m_bindingSet.get(i) && "Forgot to bind");
+				ANKI_ASSERT(m_bindings[i].m_arraySize >= entry.m_bindingArraySize[i] && "Bound less");
+
 				const Bool crntBindingDirty = m_dirtyBindings.get(i);
 				m_dirtyBindings.unset(i);
 
-				toHash[toHashCount++] = m_bindings[i].m_uuids[0];
-
-				switch(entry.m_bindingType[i])
+				for(U arrIdx = 0; arrIdx < entry.m_bindingArraySize[i]; ++arrIdx)
 				{
-				case DescriptorType::COMBINED_TEXTURE_SAMPLER:
-					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::COMBINED_TEXTURE_SAMPLER
-								&& "Have bound the wrong type");
-					toHash[toHashCount++] = m_bindings[i].m_uuids[1];
-					toHash[toHashCount++] = U64(m_bindings[i].m_texAndSampler.m_layout);
-					break;
-				case DescriptorType::TEXTURE:
-					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::TEXTURE && "Have bound the wrong type");
-					toHash[toHashCount] = U64(m_bindings[i].m_tex.m_layout);
-					break;
-				case DescriptorType::SAMPLER:
-					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::SAMPLER && "Have bound the wrong type");
-					break;
-				case DescriptorType::UNIFORM_BUFFER:
-					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::UNIFORM_BUFFER && "Have bound the wrong type");
-					toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
-					dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
-					dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
-					break;
-				case DescriptorType::STORAGE_BUFFER:
-					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::STORAGE_BUFFER && "Have bound the wrong type");
-					toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
-					dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
-					dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
-					break;
-				case DescriptorType::IMAGE:
-					ANKI_ASSERT(m_bindings[i].m_type == DescriptorType::IMAGE && "Have bound the wrong type");
-					break;
-				default:
-					ANKI_ASSERT(0);
+					ANKI_ASSERT(arrIdx < m_bindings[i].m_arraySize);
+					if(arrIdx > 1)
+					{
+						ANKI_ASSERT(m_bindings[i].m_array[arrIdx].m_type == m_bindings[i].m_array[arrIdx - 1].m_type);
+					}
+
+					const AnyBinding& anyBinding =
+						(m_bindings[i].m_arraySize == 1) ? m_bindings[i].m_single : m_bindings[i].m_array[arrIdx];
+
+					ANKI_ASSERT(anyBinding.m_uuids[0] != 0 && "Forgot to bind");
+
+					toHash[toHashCount++] = anyBinding.m_uuids[0];
+
+					switch(entry.m_bindingType[i])
+					{
+					case DescriptorType::COMBINED_TEXTURE_SAMPLER:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::COMBINED_TEXTURE_SAMPLER
+									&& "Have bound the wrong type");
+						toHash[toHashCount++] = anyBinding.m_uuids[1];
+						toHash[toHashCount++] = U64(anyBinding.m_texAndSampler.m_layout);
+						break;
+					case DescriptorType::TEXTURE:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::TEXTURE && "Have bound the wrong type");
+						toHash[toHashCount] = U64(anyBinding.m_tex.m_layout);
+						break;
+					case DescriptorType::SAMPLER:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::SAMPLER && "Have bound the wrong type");
+						break;
+					case DescriptorType::UNIFORM_BUFFER:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::UNIFORM_BUFFER && "Have bound the wrong type");
+						toHash[toHashCount++] = anyBinding.m_buff.m_range;
+						dynamicOffsets[dynamicOffsetCount++] = anyBinding.m_buff.m_offset;
+						dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
+						break;
+					case DescriptorType::STORAGE_BUFFER:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::STORAGE_BUFFER && "Have bound the wrong type");
+						toHash[toHashCount++] = anyBinding.m_buff.m_range;
+						dynamicOffsets[dynamicOffsetCount++] = anyBinding.m_buff.m_offset;
+						dynamicOffsetsDirty = dynamicOffsetsDirty || crntBindingDirty;
+						break;
+					case DescriptorType::IMAGE:
+						ANKI_ASSERT(anyBinding.m_type == DescriptorType::IMAGE && "Have bound the wrong type");
+						break;
+					default:
+						ANKI_ASSERT(0);
+					}
 				}
 			}
 		}
@@ -659,6 +718,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 }
 
 Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
+	StackAllocator<U8>& tmpAlloc,
 	DescriptorSetState& state,
 	DescriptorSet& set,
 	Bool& dirty,
@@ -691,7 +751,7 @@ Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
 
 			// Finally, allocate
 			const DS* s;
-			ANKI_CHECK(alloc->getOrCreateSet(hash, state.m_bindings, s));
+			ANKI_CHECK(alloc->getOrCreateSet(hash, state.m_bindings, tmpAlloc, s));
 			set.m_handle = s->m_handle;
 			ANKI_ASSERT(set.m_handle != VK_NULL_HANDLE);
 		}

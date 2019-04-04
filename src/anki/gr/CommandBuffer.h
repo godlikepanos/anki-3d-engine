@@ -225,20 +225,24 @@ public:
 	/// @param texView The texture view to bind.
 	/// @param sampler The sampler to override the default sampler of the tex.
 	/// @param usage The state the tex is in.
-	void bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage);
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindTextureAndSampler(
+		U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage, U32 arrayIdx = 0);
 
 	/// Bind sampler.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.
 	/// @param sampler The sampler to override the default sampler of the tex.
-	void bindSampler(U32 set, U32 binding, SamplerPtr sampler);
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindSampler(U32 set, U32 binding, SamplerPtr sampler, U32 arrayIdx = 0);
 
 	/// Bind a texture.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.
 	/// @param texView The texture view to bind.
 	/// @param usage The state the tex is in.
-	void bindTexture(U32 set, U32 binding, TextureViewPtr texView, TextureUsageBit usage);
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindTexture(U32 set, U32 binding, TextureViewPtr texView, TextureUsageBit usage, U32 arrayIdx = 0);
 
 	/// Bind uniform buffer.
 	/// @param set The set to bind to.
@@ -247,7 +251,8 @@ public:
 	/// @param offset The base of the binding.
 	/// @param range The bytes to bind starting from the offset. If it's MAX_PTR_SIZE then map from offset to the end
 	///              of the buffer.
-	void bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range);
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
 
 	/// Bind storage buffer.
 	/// @param set The set to bind to.
@@ -256,13 +261,27 @@ public:
 	/// @param offset The base of the binding.
 	/// @param range The bytes to bind starting from the offset. If it's MAX_PTR_SIZE then map from offset to the end
 	///              of the buffer.
-	void bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range);
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, U32 arrayIdx = 0);
 
 	/// Bind load/store image.
-	void bindImage(U32 set, U32 binding, TextureViewPtr img);
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param img The view to bind.
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindImage(U32 set, U32 binding, TextureViewPtr img, U32 arrayIdx = 0);
 
 	/// Bind texture buffer.
-	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt);
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param[in,out] buff The buffer to bind.
+	/// @param offset The base of the binding.
+	/// @param range The bytes to bind starting from the offset. If it's MAX_PTR_SIZE then map from offset to the end
+	///              of the buffer.
+	/// @param fmt The format of the buffer.
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindTextureBuffer(
+		U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx = 0);
 
 	/// Bind the bindless descriptor set into a slot.
 	void bindAllBindless(U32 set);

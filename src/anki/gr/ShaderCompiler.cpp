@@ -66,8 +66,12 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #		extension GL_KHR_shader_subgroup_ballot : require
 #		extension GL_KHR_shader_subgroup_shuffle : require
 #		extension GL_KHR_shader_subgroup_arithmetic : require
-#		extension GL_EXT_samplerless_texture_functions : require
 #	endif
+#	extension GL_EXT_samplerless_texture_functions : require
+#	extension GL_EXT_shader_image_load_formatted : require
+
+#	define ANKI_MAX_BINDLESS_TEXTURES %u
+#	define ANKI_MAX_BINDLESS_IMAGES %u
 #endif
 
 #define F32 float
@@ -236,6 +240,8 @@ static void preappendAnkiSpecific(CString source, const ShaderCompilerOptions& o
 		options.m_gpuCapabilities.m_majorApiVersion,
 		&GPU_VENDOR_STR[options.m_gpuCapabilities.m_gpuVendor][0],
 		SHADER_NAME[options.m_shaderType],
+		MAX_BINDLESS_TEXTURES,
+		MAX_BINDLESS_IMAGES,
 		&source[0]);
 }
 

@@ -320,7 +320,7 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 			Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsets;
 			U dynamicOffsetCount;
 			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))
+				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}
@@ -498,7 +498,7 @@ inline void CommandBufferImpl::drawcallCommon()
 			Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsets;
 			U dynamicOffsetCount;
 			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))
+				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}
