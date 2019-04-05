@@ -147,13 +147,18 @@ void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 	// Uniforms
 	struct PushConsts
 	{
-		UVec4 m_writeImgSizes;
-		UVec4 m_copyToClientLevelWriteLevel1Pad2;
+		UVec2 m_level0WriteImgSize;
+		UVec2 m_level1WriteImgSize;
+		U32 m_copyToClientLevel;
+		U32 m_writeLevel1;
+		U32 m_padding0;
+		U32 m_padding1;
 	} regs;
 
-	regs.m_writeImgSizes = UVec4(level0Width, level0Height, level1Width, level1Height);
-	regs.m_copyToClientLevelWriteLevel1Pad2.x() = copyToClientLevel;
-	regs.m_copyToClientLevelWriteLevel1Pad2.y() = mipsToFill == MIPS_WRITTEN_PER_PASS;
+	regs.m_level0WriteImgSize = UVec2(level0Width, level0Height);
+	regs.m_level1WriteImgSize = UVec2(level1Width, level1Height);
+	regs.m_copyToClientLevel = copyToClientLevel;
+	regs.m_writeLevel1 = mipsToFill == MIPS_WRITTEN_PER_PASS;
 	cmdb->setPushConstants(&regs, sizeof(regs));
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);

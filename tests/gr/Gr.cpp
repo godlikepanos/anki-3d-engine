@@ -1946,8 +1946,8 @@ ANKI_TEST(Gr, SpecConsts)
 	COMMON_BEGIN()
 
 	static const char* VERT_SRC = R"(
-ANKI_SPEC_CONST(0, int, const0);
-ANKI_SPEC_CONST(2, float, const1);
+layout(constant_id = 0) const int const0 = 0;
+layout(constant_id = 2) const float const1 = 0.0;
 
 out gl_PerVertex
 {
@@ -1970,8 +1970,8 @@ void main()
 )";
 
 	static const char* FRAG_SRC = R"(
-ANKI_SPEC_CONST(0, int, const0);
-ANKI_SPEC_CONST(1, float, const1);
+layout(constant_id = 0) const int const0 = 0;
+layout(constant_id = 1) const float const1 = 0.0;
 
 layout(location = 0) flat in int in_const0;
 layout(location = 1) flat in float in_const1;
@@ -2062,7 +2062,10 @@ struct PC
 	vec4 arr[2];
 	mat4 mat;
 };
-ANKI_PUSH_CONSTANTS(PC, regs);
+layout(push_constant, std140) uniform pc_
+{
+	PC regs;
+};
 
 out gl_PerVertex
 {
@@ -2089,7 +2092,10 @@ struct PC
 	vec4 arr[2];
 	mat4 mat;
 };
-ANKI_PUSH_CONSTANTS(PC, regs);
+layout(push_constant, std140) uniform pc_
+{
+	PC regs;
+};
 
 layout(location = 0) in vec4 in_color;
 layout(location = 0) out vec4 out_color;

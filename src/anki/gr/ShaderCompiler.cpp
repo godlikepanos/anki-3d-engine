@@ -51,16 +51,12 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define gl_VertexID gl_VertexIndex
 #	define gl_InstanceID gl_InstanceIndex
 #
-#	define ANKI_SPEC_CONST(binding_, type_, name_) layout(constant_id = (binding_)) const type_ name_ = type_(0)
-#	define ANKI_PUSH_CONSTANTS(struct_, name_) layout(push_constant, row_major, std140) \
-		uniform pushConst_ {struct_ name_;}
-
 #	extension GL_EXT_control_flow_attributes : require
 #	define ANKI_UNROLL [[unroll]]
 #	define ANKI_LOOP [[dont_unroll]]
 #	define ANKI_BRANCH [[branch]]
 #	define ANKI_FLATTEN [[flatten]]
-
+#
 #	if ANKI_BACKEND_MAJOR == 1 && ANKI_BACKEND_MINOR >= 1
 #		extension GL_KHR_shader_subgroup_vote : require
 #		extension GL_KHR_shader_subgroup_ballot : require
@@ -69,7 +65,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	endif
 #	extension GL_EXT_samplerless_texture_functions : require
 #	extension GL_EXT_shader_image_load_formatted : require
-
+#
 #	define ANKI_MAX_BINDLESS_TEXTURES %u
 #	define ANKI_MAX_BINDLESS_IMAGES %u
 #endif

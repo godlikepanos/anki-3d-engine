@@ -170,7 +170,8 @@ Error ShaderProgramPreprocessor::parse()
 			m_uboStructLines.pushBack("};");
 
 			m_uboStructLines.pushBack("#if USE_PUSH_CONSTANTS == 1");
-			m_uboStructLines.pushBackSprintf("ANKI_PUSH_CONSTANTS(GenUniforms_, gen_unis_);");
+			m_uboStructLines.pushBackSprintf(
+				"layout(push_constant, std140, row_major) uniform pc_ {GenUniforms_ gen_unis_;};");
 			m_uboStructLines.pushBack("#else");
 			m_uboStructLines.pushBack(
 				"layout(set = GEN_SET_, binding = 0, row_major) uniform genubo_ {GenUniforms_ gen_unis_;};");

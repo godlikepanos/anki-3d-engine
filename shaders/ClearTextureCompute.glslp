@@ -12,11 +12,10 @@
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-struct PushConsts
+layout(push_constant) uniform pc_
 {
-	Vec4 m_clearColor;
+	Vec4 u_clearColor;
 };
-ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
 
 #if IS_2D
 layout(set = 0, binding = 0) uniform writeonly image2D u_img;
@@ -27,9 +26,9 @@ layout(set = 0, binding = 0) uniform writeonly image3D u_img;
 void main()
 {
 #if IS_2D
-	imageStore(u_img, IVec2(gl_GlobalInvocationID.xy), u_regs.m_clearColor);
+	imageStore(u_img, IVec2(gl_GlobalInvocationID.xy), u_clearColor);
 #else
-	imageStore(u_img, IVec3(gl_GlobalInvocationID), u_regs.m_clearColor);
+	imageStore(u_img, IVec3(gl_GlobalInvocationID), u_clearColor);
 #endif
 }
 

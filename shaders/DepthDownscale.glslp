@@ -14,16 +14,15 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 #define MIN 1
 #define MAX 2
 
-struct PushConsts
+layout(push_constant, std430) uniform pc_
 {
-	UVec4 m_writeImgSizes;
-	UVec4 m_copyToClientLevelWriteLevel1Pad2;
+	UVec2 u_level0WriteImgSize;
+	UVec2 u_level1WriteImgSize;
+	U32 u_copyToClientLevel;
+	U32 u_writeLevel1;
+	U32 u_padding0;
+	U32 u_padding1;
 };
-ANKI_PUSH_CONSTANTS(PushConsts, u_regs);
-#define u_level0WriteImgSize u_regs.m_writeImgSizes.xy
-#define u_level1WriteImgSize u_regs.m_writeImgSizes.zw
-#define u_copyToClientLevel u_regs.m_copyToClientLevelWriteLevel1Pad2.x
-#define u_writeLevel1 (u_regs.m_copyToClientLevelWriteLevel1Pad2.y == 1u)
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_readTex;
@@ -81,7 +80,7 @@ void main()
 	barrier();
 
 	// Resolve 2nd level
-	if(u_writeLevel1 && all(equal(gl_LocalInvocationID.xy & UVec2(1u), UVec2(0u))))
+	if(u_writeLevel1 == 1u && all(equal(gl_LocalInvocationID.xy & UVec2(1u), UVec2(0u))))
 	{
 		depths.x = depth;
 		depths.y = s_depths[gl_LocalInvocationID.y + 0u][gl_LocalInvocationID.x + 1u];

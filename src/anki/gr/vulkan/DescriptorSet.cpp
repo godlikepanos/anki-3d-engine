@@ -376,8 +376,11 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 	}
 
 	// Write
-	ANKI_ASSERT(writeInfos.getSize() > 0);
-	vkUpdateDescriptorSets(m_layoutEntry->m_factory->m_dev, writeInfos.getSize(), &writeInfos[0], 0, nullptr);
+	vkUpdateDescriptorSets(m_layoutEntry->m_factory->m_dev,
+		writeInfos.getSize(),
+		(writeInfos.getSize() > 0) ? &writeInfos[0] : nullptr,
+		0,
+		nullptr);
 }
 
 DSLayoutCacheEntry::~DSLayoutCacheEntry()
@@ -902,6 +905,7 @@ U32 BindlessDescriptorSet::bindTexture(const VkImageView view, const VkImageLayo
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	write.pNext = nullptr;
 	write.dstSet = m_dset;
+	write.dstBinding = 0;
 	write.descriptorCount = 1;
 	write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 	write.dstArrayElement = idx;
@@ -932,6 +936,7 @@ U32 BindlessDescriptorSet::bindImage(const VkImageView view)
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	write.pNext = nullptr;
 	write.dstSet = m_dset;
+	write.dstBinding = 1;
 	write.descriptorCount = 1;
 	write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 	write.dstArrayElement = idx;

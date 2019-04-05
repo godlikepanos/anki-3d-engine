@@ -16,7 +16,10 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_tex; ///< Its the IS RT
 
-ANKI_PUSH_CONSTANTS(Vec4, u_thresholdScalePad2);
+layout(push_constant) uniform pc_
+{
+	Vec4 u_thresholdScalePad2;
+};
 
 layout(set = 0, binding = 2, std140) readonly buffer ss0_
 {

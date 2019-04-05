@@ -68,13 +68,19 @@ void VolumetricFog::run(RenderPassWorkContext& rgraphCtx)
 
 	struct PushConsts
 	{
-		Vec4 m_fogScatteringCoeffFogAbsorptionCoeffDensityPad1;
-		Vec4 m_fogDiffusePad1;
+		F32 m_fogScatteringCoeff;
+		F32 m_fogAbsorptionCoeff;
+		F32 m_density;
+		F32 m_padding0;
+		Vec3 m_fogDiffuse;
+		U32 m_padding1;
 		ClustererMagicValues m_clustererMagic;
 	} regs;
-	regs.m_fogScatteringCoeffFogAbsorptionCoeffDensityPad1 =
-		Vec4(m_fogScatteringCoeff, m_fogAbsorptionCoeff, m_fogDensity, 0.0f);
-	regs.m_fogDiffusePad1 = Vec4(m_fogDiffuseColor, 0.0f);
+
+	regs.m_fogScatteringCoeff = m_fogScatteringCoeff;
+	regs.m_fogAbsorptionCoeff = m_fogAbsorptionCoeff;
+	regs.m_density = m_fogDensity;
+	regs.m_fogDiffuse = m_fogDiffuseColor;
 	regs.m_clustererMagic = ctx.m_clusterBinOut.m_shaderMagicValues;
 
 	cmdb->setPushConstants(&regs, sizeof(regs));
