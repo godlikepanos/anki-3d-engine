@@ -6,6 +6,11 @@
 #pragma once
 
 #include <anki/ui/NuklearConfig.h>
+
+// Include ImGUI
+#include <anki/ui/ImGuiConfig.h>
+#include <imgui/imgui.h>
+
 #include <anki/util/Allocator.h>
 
 namespace anki

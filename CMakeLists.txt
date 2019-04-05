@@ -155,6 +155,9 @@ add_definitions(-DGLEW_NO_GLU)
 add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 add_definitions(-DANKI_BUILD)
 
+# ImGUI
+add_definitions(-DIMGUI_USER_CONFIG=<anki/ui/ImGuiConfig.h>)
+
 if(NOT MSVC)
 	# When building AnKi define this special flag
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -fPIC ")

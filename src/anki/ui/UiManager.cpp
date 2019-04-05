@@ -8,6 +8,8 @@
 namespace anki
 {
 
+thread_local ImGuiContext* g_imguiTlsCtx = nullptr;
+
 UiManager::UiManager()
 {
 }
