@@ -17,50 +17,52 @@ namespace anki
 
 Font::~Font()
 {
-	nk_font_atlas_clear(&m_atlas);
+	setImAllocator();
+	m_imFontAtlas.destroy();
+	unsetImAllocator();
+
 	m_fonts.destroy(getAllocator());
+	m_fontData.destroy(getAllocator());
 }
 
 Error Font::init(const CString& filename, const std::initializer_list<U32>& fontHeights)
 {
+	setImAllocator();
+	m_imFontAtlas.init();
+
 	// Load font in memory
 	ResourceFilePtr file;
 	ANKI_CHECK(m_manager->getResourceManager().getFilesystem().openFile(filename, file));
-	DynamicArrayAuto<U8> fontData(getAllocator());
-	fontData.create(file->getSize());
-	ANKI_CHECK(file->read(&fontData[0], file->getSize()));
+	m_fontData.create(getAllocator(), file->getSize());
+	ANKI_CHECK(file->read(&m_fontData[0], file->getSize()));
 
 	m_fonts.create(getAllocator(), fontHeights.size());
 
 	// Bake font
-	nk_allocator nkAlloc = makeNkAllocator(&getAllocator().getMemoryPool());
-	nk_font_atlas_init_custom(&m_atlas, &nkAlloc, &nkAlloc);
-	nk_font_atlas_begin(&m_atlas);
-
+	ImFontConfig cfg;
+	cfg.FontDataOwnedByAtlas = false;
 	U count = 0;
 	for(U32 height : fontHeights)
 	{
-		struct nk_font_config cfg = nk_font_config(height);
-		cfg.oversample_h = 4;
-		cfg.oversample_v = 4;
-		m_fonts[count].m_font = nk_font_atlas_add_from_memory(&m_atlas, &fontData[0], fontData.getSize(), height, &cfg);
+		cfg.SizePixels = height;
+
+		m_fonts[count].m_imFont =
+			m_imFontAtlas->AddFontFromMemoryTTF(&m_fontData[0], m_fontData.getSize(), height, &cfg);
 		m_fonts[count].m_height = height;
 		++count;
 	}
 
-	int width, height;
-	const void* img = nk_font_atlas_bake(&m_atlas, &width, &height, NK_FONT_ATLAS_RGBA32);
+	const Bool ok = m_imFontAtlas->Build();
+	ANKI_ASSERT(ok);
+	(void)ok;
 
 	// Create the texture
+	U8* img;
+	int width, height;
+	m_imFontAtlas->GetTexDataAsRGBA32(&img, &width, &height);
 	createTexture(img, width, height);
 
-	// End building
-	nk_handle texHandle;
-	texHandle.ptr = numberToPtr<void*>(ptrToNumber(m_texView.get()) | FONT_TEXTURE_MASK);
-	nk_font_atlas_end(&m_atlas, texHandle, nullptr);
-
-	nk_font_atlas_cleanup(&m_atlas);
-
+	unsetImAllocator();
 	return Error::NONE;
 }
 
@@ -83,12 +85,13 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	texInit.m_format = Format::R8G8B8A8_UNORM;
 	texInit.m_usage =
 		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::GENERATE_MIPMAPS;
-	texInit.m_mipmapCount = 4;
+	texInit.m_mipmapCount = 1; // No mips because it creates will appear blurry with trilinear filtering
 
 	m_tex = m_manager->getGrManager().newTexture(texInit);
 
 	// Create the whole texture view
 	m_texView = m_manager->getGrManager().newTextureView(TextureViewInitInfo(m_tex, "Font"));
+	m_imFontAtlas->SetTexID(m_texView.get());
 
 	// Do the copy
 	static const TextureSurfaceInfo surf(0, 0, 0, 0);

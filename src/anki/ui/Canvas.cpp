@@ -20,23 +20,19 @@ Canvas::Canvas(UiManager* manager)
 
 Canvas::~Canvas()
 {
-	nk_free(&m_nkCtx);
-	nk_buffer_free(&m_nkCmdsBuff);
+	if(m_imCtx)
+	{
+		setImAllocator();
+		ImGui::DestroyContext(m_imCtx);
+		unsetImAllocator();
+	}
 }
 
 Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 {
 	m_font = font;
+	m_dfltFontHeight = fontHeight;
 	resize(width, height);
-
-	nk_allocator alloc = makeNkAllocator(&getAllocator().getMemoryPool());
-	if(!nk_init(&m_nkCtx, &alloc, &m_font->getFont(fontHeight)))
-	{
-		ANKI_UI_LOGE("nk_init() failed");
-		return Error::FUNCTION_FAILED;
-	}
-
-	nk_buffer_init(&m_nkCmdsBuff, &alloc, 1_KB);
 
 	// Create program
 	ANKI_CHECK(m_manager->getResourceManager().loadResource("shaders/Ui.glslp", m_prog));
@@ -50,224 +46,208 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 		m_grProgs[i] = variant->getProgram();
 	}
 
-	// Other
-	m_stackAlloc = StackAllocator<U8>(getAllocator().getMemoryPool().getAllocationCallback(),
-		getAllocator().getMemoryPool().getAllocationCallbackUserData(),
-		512_B);
-
+	// Sampler
 	SamplerInitInfo samplerInit("Canvas");
 	samplerInit.m_minMagFilter = SamplingFilter::LINEAR;
 	samplerInit.m_mipmapFilter = SamplingFilter::LINEAR;
 	samplerInit.m_addressing = SamplingAddressing::REPEAT;
 	m_sampler = m_manager->getGrManager().newSampler(samplerInit);
 
+	// Allocator
+	m_stackAlloc = StackAllocator<U8>(getAllocator().getMemoryPool().getAllocationCallback(),
+		getAllocator().getMemoryPool().getAllocationCallbackUserData(),
+		512_B);
+
+	// Create the context
+	setImAllocator();
+	m_imCtx = ImGui::CreateContext(font->getImFontAtlas());
+	ImGui::SetCurrentContext(m_imCtx);
+	ImGui::GetIO().IniFilename = nullptr;
+	ImGui::GetIO().LogFilename = nullptr;
+	ImGui::StyleColorsLight();
+	ImGui::SetCurrentContext(nullptr);
+	unsetImAllocator();
+
 	return Error::NONE;
-}
-
-void Canvas::reset()
-{
-	m_references.destroy(m_stackAlloc);
-	m_stackAlloc.getMemoryPool().reset();
-
-	nk_clear(&m_nkCtx);
 }
 
 void Canvas::handleInput()
 {
-	// Start
 	const Input& in = m_manager->getInput();
-	nk_input_begin(&m_nkCtx);
 
-	Array<U32, 4> viewport = {{0, 0, m_width, m_height}};
+	// Begin
+	setImAllocator();
+	ImGui::SetCurrentContext(m_imCtx);
+	ImGuiIO& io = ImGui::GetIO();
 
 	// Handle mouse
+	Array<U32, 4> viewport = {{0, 0, m_width, m_height}};
 	Vec2 mousePosf = in.getMousePosition() / 2.0f + 0.5f;
 	mousePosf.y() = 1.0f - mousePosf.y();
-	UVec2 mousePos(mousePosf.x() * viewport[2], mousePosf.y() * viewport[3]);
+	const UVec2 mousePos(mousePosf.x() * viewport[2], mousePosf.y() * viewport[3]);
 
-	nk_input_motion(&m_nkCtx, mousePos.x(), mousePos.y());
-	nk_input_button(&m_nkCtx, NK_BUTTON_LEFT, mousePos.x(), mousePos.y(), in.getMouseButton(MouseButton::LEFT) > 1);
-	nk_input_button(&m_nkCtx, NK_BUTTON_RIGHT, mousePos.x(), mousePos.y(), in.getMouseButton(MouseButton::RIGHT) > 1);
+	io.MousePos.x = mousePos.x();
+	io.MousePos.y = mousePos.y();
 
-	// Done
-	nk_input_end(&m_nkCtx);
+	io.MouseClicked[0] = in.getMouseButton(MouseButton::LEFT) == 1;
+	io.MouseDown[0] = in.getMouseButton(MouseButton::LEFT) > 0;
+
+	// End
+	ImGui::SetCurrentContext(nullptr);
+	unsetImAllocator();
 }
 
 void Canvas::beginBuilding()
 {
-#if ANKI_EXTRA_CHECKS
-	ANKI_ASSERT(!m_building);
-	m_building = true;
-#endif
-}
+	setImAllocator();
+	ImGui::SetCurrentContext(m_imCtx);
 
-void Canvas::endBuilding()
-{
-#if ANKI_EXTRA_CHECKS
-	ANKI_ASSERT(m_building);
-	m_building = false;
-#endif
+	ImGuiIO& io = ImGui::GetIO();
+	io.DeltaTime = 1.0f / 60.0f;
+	io.DisplaySize = ImVec2(m_width, m_height);
+
+	ImGui::NewFrame();
+	ImGui::PushFont(&m_font->getImFont(m_dfltFontHeight));
 }
 
 void Canvas::pushFont(const FontPtr& font, U32 fontHeight)
 {
-	ANKI_ASSERT(m_building);
 	m_references.pushBack(m_stackAlloc, IntrusivePtr<UiObject>(const_cast<Font*>(font.get())));
-	nk_style_push_font(&m_nkCtx, &font->getFont(fontHeight));
+	ImGui::PushFont(&font->getImFont(fontHeight));
 }
 
 void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 {
-	Array<U32, 4> viewport = {{0, 0, m_width, m_height}};
+	appendToCommandBufferInternal(cmdb);
 
-	//
-	// Allocate vertex data
-	//
-	struct Vert
+	// Done
+	ImGui::SetCurrentContext(nullptr);
+
+	m_references.destroy(m_stackAlloc);
+	m_stackAlloc.getMemoryPool().reset();
+}
+
+void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
+{
+	ImGui::PopFont();
+	ImGui::Render();
+	ImDrawData& drawData = *ImGui::GetDrawData();
+
+	// Allocate index and vertex buffers
+	StagingGpuMemoryToken vertsToken, indicesToken;
 	{
-		Vec2 m_pos;
-		Vec2 m_uv;
-		Array<U8, 4> m_col;
-	};
+		const U32 verticesSize = drawData.TotalVtxCount * sizeof(ImDrawVert);
+		const U32 indicesSize = drawData.TotalIdxCount * sizeof(ImDrawIdx);
 
-	static const struct nk_draw_vertex_layout_element VERT_LAYOUT[] = {
-		{NK_VERTEX_POSITION, NK_FORMAT_FLOAT, NK_OFFSETOF(Vert, m_pos)},
-		{NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, NK_OFFSETOF(Vert, m_uv)},
-		{NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, NK_OFFSETOF(Vert, m_col)},
-		{NK_VERTEX_LAYOUT_END}};
+		if(verticesSize == 0 || indicesSize == 0)
+		{
+			return;
+		}
 
-	struct GpuAllocCtx
-	{
-		StagingGpuMemoryManager* m_alloc;
-		StagingGpuMemoryToken m_token;
-	};
+		ImDrawVert* verts = static_cast<ImDrawVert*>(m_manager->getStagingGpuMemoryManager().allocateFrame(
+			verticesSize, StagingGpuMemoryType::VERTEX, vertsToken));
+		ImDrawIdx* indices = static_cast<ImDrawIdx*>(m_manager->getStagingGpuMemoryManager().allocateFrame(
+			indicesSize, StagingGpuMemoryType::VERTEX, indicesToken));
 
-	auto allocVertDataCallback = [](nk_handle handle, void* old, nk_size size) -> void* {
-		GpuAllocCtx* ctx = static_cast<GpuAllocCtx*>(handle.ptr);
-		void* out = ctx->m_alloc->allocateFrame(size, StagingGpuMemoryType::VERTEX, ctx->m_token);
-		ANKI_ASSERT(out);
-		return out;
-	};
+		for(I n = 0; n < drawData.CmdListsCount; ++n)
+		{
+			const ImDrawList& cmdList = *drawData.CmdLists[n];
+			memcpy(verts, cmdList.VtxBuffer.Data, cmdList.VtxBuffer.Size * sizeof(ImDrawVert));
+			memcpy(indices, cmdList.IdxBuffer.Data, cmdList.IdxBuffer.Size * sizeof(ImDrawIdx));
+			verts += cmdList.VtxBuffer.Size;
+			indices += cmdList.IdxBuffer.Size;
+		}
+	}
 
-	auto freeVertDataCallback = [](nk_handle, void*) -> void {
-		// Do nothing
-	};
+	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+	cmdb->setCullMode(FaceSelectionBit::FRONT);
 
-	GpuAllocCtx idxCtx;
-	idxCtx.m_alloc = &m_manager->getStagingGpuMemoryManager();
-	nk_allocator idxAlloc;
-	idxAlloc.userdata.ptr = &idxCtx;
-	idxAlloc.alloc = allocVertDataCallback;
-	idxAlloc.free = freeVertDataCallback;
+	const U fbWidth = drawData.DisplaySize.x * drawData.FramebufferScale.x;
+	const U fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
+	cmdb->setViewport(0, 0, fbWidth, fbHeight);
 
-	nk_buffer idxBuff = {};
-	nk_buffer_init(&idxBuff, &idxAlloc, 1_KB);
-
-	GpuAllocCtx vertCtx;
-	vertCtx.m_alloc = &m_manager->getStagingGpuMemoryManager();
-	nk_allocator vertAlloc;
-	vertAlloc.userdata.ptr = &vertCtx;
-	vertAlloc.alloc = allocVertDataCallback;
-	vertAlloc.free = freeVertDataCallback;
-
-	nk_buffer vertBuff = {};
-	nk_buffer_init(&vertBuff, &vertAlloc, 1_KB);
-
-	nk_convert_config config = {};
-	config.vertex_layout = VERT_LAYOUT;
-	config.vertex_size = sizeof(Vert);
-	config.vertex_alignment = NK_ALIGNOF(Vert);
-	config.null.texture.ptr = nullptr;
-	config.null.uv = {0, 0};
-	config.circle_segment_count = 22;
-	config.curve_segment_count = 22;
-	config.arc_segment_count = 22;
-	config.global_alpha = 1.0f;
-	config.shape_AA = NK_ANTI_ALIASING_OFF;
-	config.line_AA = NK_ANTI_ALIASING_OFF;
-
-	nk_convert(&m_nkCtx, &m_nkCmdsBuff, &vertBuff, &idxBuff, &config);
-
-	//
-	// Draw
-	//
-
-	// Uniforms
-	StagingGpuMemoryToken uboToken;
-	Vec4* trf = static_cast<Vec4*>(
-		m_manager->getStagingGpuMemoryManager().allocateFrame(sizeof(Vec4), StagingGpuMemoryType::UNIFORM, uboToken));
-	trf->x() = 2.0f / (viewport[2] - viewport[0]);
-	trf->y() = -2.0f / (viewport[3] - viewport[1]);
-	trf->z() = -1.0f;
-	trf->w() = 1.0f;
-	cmdb->bindUniformBuffer(0, 0, uboToken.m_buffer, uboToken.m_offset, uboToken.m_range);
-
-	// Vert & idx buffers
-	cmdb->bindVertexBuffer(0, vertCtx.m_token.m_buffer, vertCtx.m_token.m_offset, sizeof(Vert));
+	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(ImDrawVert));
 	cmdb->setVertexAttribute(0, 0, Format::R32G32_SFLOAT, 0);
 	cmdb->setVertexAttribute(1, 0, Format::R8G8B8A8_UNORM, sizeof(Vec2) * 2);
 	cmdb->setVertexAttribute(2, 0, Format::R32G32_SFLOAT, sizeof(Vec2));
 
-	cmdb->bindIndexBuffer(idxCtx.m_token.m_buffer, idxCtx.m_token.m_offset, IndexType::U16);
+	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
 
-	cmdb->setViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+	cmdb->bindSampler(0, 0, m_sampler);
 
-	// Prog & tex
-	ShaderProgramPtr boundProg;
+	// Will project scissor/clipping rectangles into framebuffer space
+	const Vec2 clipOff = drawData.DisplayPos; // (0,0) unless using multi-viewports
+	const Vec2 clipScale = drawData.FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
-	const nk_draw_command* cmd = nullptr;
-	U offset = 0;
-	nk_draw_foreach(cmd, &m_nkCtx, &m_nkCmdsBuff)
+	// Render
+	U vertOffset = 0;
+	U idxOffset = 0;
+	for(I n = 0; n < drawData.CmdListsCount; n++)
 	{
-		if(!cmd->elem_count)
+		const ImDrawList& cmdList = *drawData.CmdLists[n];
+		for(I i = 0; i < cmdList.CmdBuffer.Size; i++)
 		{
-			continue;
+			const ImDrawCmd& pcmd = cmdList.CmdBuffer[i];
+			if(pcmd.UserCallback)
+			{
+				// User callback (registered via ImDrawList::AddCallback)
+				pcmd.UserCallback(&cmdList, &pcmd);
+			}
+			else
+			{
+				// Project scissor/clipping rectangles into framebuffer space. Flip Y
+				Vec4 clipRect;
+				clipRect.x() = (pcmd.ClipRect.x - clipOff.x()) * clipScale.x();
+				clipRect.y() = (fbHeight - pcmd.ClipRect.w - clipOff.y()) * clipScale.y();
+				clipRect.z() = (pcmd.ClipRect.z - clipOff.x()) * clipScale.x();
+				clipRect.w() = (fbHeight - pcmd.ClipRect.y - clipOff.y()) * clipScale.y();
+
+				if(clipRect.x() < fbWidth && clipRect.y() < fbHeight && clipRect.z() >= 0.0f && clipRect.w() >= 0.0f)
+				{
+					// Negative offsets are illegal for vkCmdSetScissor
+					if(clipRect.x() < 0.0f)
+					{
+						clipRect.x() = 0.0f;
+					}
+					if(clipRect.y() < 0.0f)
+					{
+						clipRect.y() = 0.0f;
+					}
+
+					// Apply scissor/clipping rectangle
+					cmdb->setScissor(
+						clipRect.x(), clipRect.y(), clipRect.z() - clipRect.x(), clipRect.w() - clipRect.y());
+
+					if(pcmd.TextureId)
+					{
+						cmdb->bindShaderProgram(m_grProgs[RGBA_TEX]);
+
+						TextureView* view = static_cast<TextureView*>(pcmd.TextureId);
+						cmdb->bindTexture(0, 1, TextureViewPtr(view), TextureUsageBit::SAMPLED_FRAGMENT);
+					}
+					else
+					{
+						cmdb->bindShaderProgram(m_grProgs[NO_TEX]);
+					}
+
+					// Push constants. TODO: Set them once
+					Vec4 transform;
+					transform.x() = 2.0f / drawData.DisplaySize.x;
+					transform.y() = -2.0f / drawData.DisplaySize.y;
+					transform.z() = (drawData.DisplayPos.x / drawData.DisplaySize.x) * 2.0f - 1.0f;
+					transform.w() = -((drawData.DisplayPos.y / drawData.DisplaySize.y) * 2.0f - 1.0f);
+					cmdb->setPushConstants(&transform, sizeof(transform));
+
+					// Draw
+					cmdb->drawElements(PrimitiveTopology::TRIANGLES, pcmd.ElemCount, 1, idxOffset, vertOffset);
+				}
+			}
+			idxOffset += pcmd.ElemCount;
 		}
-
-		// Set texture and program
-		ShaderProgramPtr progToBind;
-		if(cmd->texture.ptr == nullptr)
-		{
-			progToBind = m_grProgs[NO_TEX];
-		}
-		else if(ptrToNumber(cmd->texture.ptr) & FONT_TEXTURE_MASK)
-		{
-			progToBind = m_grProgs[RGBA_TEX];
-
-			TextureView* t = numberToPtr<TextureView*>(ptrToNumber(cmd->texture.ptr) & ~FONT_TEXTURE_MASK);
-			cmdb->bindSampler(0, 1, m_sampler);
-			cmdb->bindTexture(0, 2, TextureViewPtr(t), TextureUsageBit::SAMPLED_FRAGMENT);
-		}
-		else
-		{
-			ANKI_ASSERT(!"TODO");
-		}
-
-		if(boundProg != progToBind)
-		{
-			cmdb->bindShaderProgram(progToBind);
-			boundProg = progToBind;
-		}
-
-		// Other state
-		cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
-		cmdb->setDepthWrite(false);
-		cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
-		cmdb->setCullMode(FaceSelectionBit::FRONT);
-
-		// TODO set scissor
-
-		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, cmd->elem_count, 1, offset);
-
-		// Advance
-		offset += cmd->elem_count;
+		vertOffset += cmdList.VtxBuffer.Size;
 	}
 
-	//
-	// Done
-	//
-	reset();
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 } // end namespace anki

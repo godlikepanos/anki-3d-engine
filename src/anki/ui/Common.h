@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <anki/ui/NuklearConfig.h>
-
 // Include ImGUI
 #include <anki/ui/ImGuiConfig.h>
 #include <imgui/imgui.h>
@@ -36,39 +34,7 @@ using UiAllocator = HeapAllocator<U8>;
 ANKI_UI_OBJECT_FW(Font)
 ANKI_UI_OBJECT_FW(Canvas)
 ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
-
 #undef ANKI_UI_OBJECT
-
-const PtrSize FONT_TEXTURE_MASK = 1llu << (sizeof(PtrSize) * 8llu - 1llu);
-
-/// Initialize a nk_allocator.
-template<typename TMemPool>
-inline nk_allocator makeNkAllocator(TMemPool* alloc)
-{
-	nk_allocator nkAlloc;
-	nkAlloc.userdata.ptr = alloc;
-
-	auto allocCallback = [](nk_handle handle, void*, nk_size size) -> void* {
-		ANKI_ASSERT(handle.ptr);
-		TMemPool* al = static_cast<TMemPool*>(handle.ptr);
-		return al->allocate(size, 16);
-	};
-
-	nkAlloc.alloc = allocCallback;
-
-	auto freeCallback = [](nk_handle handle, void* ptr) -> void {
-		ANKI_ASSERT(handle.ptr);
-		if(ptr)
-		{
-			TMemPool* al = static_cast<TMemPool*>(handle.ptr);
-			al->free(ptr);
-		}
-	};
-
-	nkAlloc.free = freeCallback;
-
-	return nkAlloc;
-}
 /// @}
 
 } // end namespace anki

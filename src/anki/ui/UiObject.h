@@ -32,6 +32,33 @@ public:
 		return m_refcount;
 	}
 
+	/// Set the global IMGUI allocator.
+	void setImAllocator(BaseMemoryPool* pool = nullptr)
+	{
+		pool = (pool) ? pool : &getAllocator().getMemoryPool();
+
+		auto allocCallback = [](size_t size, void* userData) -> void* {
+			BaseMemoryPool* pool = static_cast<BaseMemoryPool*>(userData);
+			return pool->allocate(size, 16);
+		};
+
+		auto freeCallback = [](void* ptr, void* userData) -> void {
+			if(ptr)
+			{
+				BaseMemoryPool* pool = static_cast<BaseMemoryPool*>(userData);
+				pool->free(ptr);
+			}
+		};
+
+		ImGui::SetAllocatorFunctions(allocCallback, freeCallback, pool);
+	}
+
+	/// Unset the global IMGUI allocator.
+	static void unsetImAllocator()
+	{
+		ImGui::SetAllocatorFunctions(nullptr, nullptr, nullptr);
+	}
+
 protected:
 	UiManager* m_manager;
 	Atomic<I32> m_refcount = {0};

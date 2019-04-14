@@ -106,54 +106,53 @@ public:
 		}
 
 		// Start drawing the UI
-		nk_context* ctx = &canvas->getNkContext();
-
 		canvas->pushFont(canvas->getDefaultFont(), 16);
 
-		nk_style_push_style_item(ctx, &ctx->style.window.fixed_background, nk_style_item_color(nk_rgba(0, 0, 0, 128)));
+		const Vec4 oldWindowColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
+		ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w = 0.3f;
 
-		if(nk_begin(ctx, "Stats", nk_rect(5, 5, 230, 450), 0))
+		if(ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			nk_layout_row_dynamic(ctx, 17, 1);
+			ImGui::SetWindowPos(Vec2(5.0f, 5.0f));
+			ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
 
-			nk_label(ctx, "Time:", NK_TEXT_ALIGN_LEFT);
-			labelTime(ctx, m_frameTime.get(flush), "Total frame");
-			labelTime(ctx, m_renderTime.get(flush) - m_lightBinTime.get(flush), "Renderer");
-			labelTime(ctx, m_lightBinTime.get(false), "Light bin");
-			labelTime(ctx, m_sceneUpdateTime.get(flush), "Scene update");
-			labelTime(ctx, m_visTestsTime.get(flush), "Visibility");
-			labelTime(ctx, m_physicsTime.get(flush), "Physics");
+			ImGui::Text("Time:");
+			labelTime(m_frameTime.get(flush), "Total frame");
+			labelTime(m_renderTime.get(flush) - m_lightBinTime.get(flush), "Renderer");
+			labelTime(m_lightBinTime.get(false), "Light bin");
+			labelTime(m_sceneUpdateTime.get(flush), "Scene update");
+			labelTime(m_visTestsTime.get(flush), "Visibility");
+			labelTime(m_physicsTime.get(flush), "Physics");
 
-			nk_label(ctx, " ", NK_TEXT_ALIGN_LEFT);
-			nk_label(ctx, "Memory:", NK_TEXT_ALIGN_LEFT);
-			labelBytes(ctx, m_allocatedCpuMem, "Total CPU");
-			labelUint(ctx, m_allocCount, "Total allocations");
-			labelUint(ctx, m_freeCount, "Total frees");
-			labelBytes(ctx, m_vkCpuMem, "Vulkan CPU");
-			labelBytes(ctx, m_vkGpuMem, "Vulkan GPU");
+			ImGui::Text("----");
+			ImGui::Text("Memory:");
+			labelBytes(m_allocatedCpuMem, "Total CPU");
+			labelUint(m_allocCount, "Total allocations");
+			labelUint(m_freeCount, "Total frees");
+			labelBytes(m_vkCpuMem, "Vulkan CPU");
+			labelBytes(m_vkGpuMem, "Vulkan GPU");
 
-			nk_label(ctx, " ", NK_TEXT_ALIGN_LEFT);
-			nk_label(ctx, "Vulkan:", NK_TEXT_ALIGN_LEFT);
-			labelUint(ctx, m_vkCmdbCount, "Cmd buffers");
+			ImGui::Text("----");
+			ImGui::Text("Vulkan:");
+			labelUint(m_vkCmdbCount, "Cmd buffers");
 
-			nk_label(ctx, " ", NK_TEXT_ALIGN_LEFT);
-			nk_label(ctx, "Other:", NK_TEXT_ALIGN_LEFT);
-			labelUint(ctx, m_drawableCount, "Drawbles");
+			ImGui::Text("----");
+			ImGui::Text("Other:");
+			labelUint(m_drawableCount, "Drawbles");
 		}
 
-		nk_style_pop_style_item(ctx);
-		nk_end(ctx);
+		ImGui::End();
+		ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;
+
 		canvas->popFont();
 	}
 
-	void labelTime(nk_context* ctx, Second val, CString name)
+	void labelTime(Second val, CString name)
 	{
-		StringAuto timestamp(getAllocator());
-		timestamp.sprintf("%s: %fms", name.cstr(), val * 1000.0);
-		nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
+		ImGui::Text("%s: %fms", name.cstr(), val * 1000.0);
 	}
 
-	void labelBytes(nk_context* ctx, PtrSize val, CString name)
+	void labelBytes(PtrSize val, CString name)
 	{
 		U gb, mb, kb, b;
 
@@ -185,14 +184,12 @@ public:
 		{
 			timestamp.sprintf("%s: %4u", name.cstr(), b);
 		}
-		nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
+		ImGui::TextUnformatted(timestamp.cstr());
 	}
 
-	void labelUint(nk_context* ctx, U64 val, CString name)
+	void labelUint(U64 val, CString name)
 	{
-		StringAuto timestamp(getAllocator());
-		timestamp.sprintf("%s: %llu", name.cstr(), val);
-		nk_label(ctx, timestamp.cstr(), NK_TEXT_ALIGN_LEFT);
+		ImGui::Text("%s: %lu", name.cstr(), val);
 	}
 };
 

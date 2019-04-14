@@ -8,6 +8,7 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/ui/Font.h>
 #include <anki/ui/UiManager.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -38,6 +39,8 @@ void UiStage::draw(RenderingContext& ctx, CommandBufferPtr& cmdb)
 		return;
 	}
 
+	ANKI_TRACE_SCOPED_EVENT(UI_RENDER);
+
 	m_canvas->handleInput();
 	m_canvas->beginBuilding();
 
@@ -46,7 +49,6 @@ void UiStage::draw(RenderingContext& ctx, CommandBufferPtr& cmdb)
 		el.m_drawCallback(m_canvas, el.m_userData);
 	}
 
-	m_canvas->endBuilding();
 	m_canvas->appendToCommandBuffer(cmdb);
 
 	// UI messes with the state, restore it

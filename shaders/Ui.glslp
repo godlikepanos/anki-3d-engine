@@ -24,7 +24,7 @@ out gl_PerVertex
 	Vec4 gl_Position;
 };
 
-layout(set = 0, binding = 0) uniform u_
+layout(push_constant) uniform u_
 {
 	Vec4 u_transform; // x: x scale, y: y scale, z: x transl, w: y transl
 };
@@ -52,8 +52,8 @@ layout(location = 1) in Vec4 in_col;
 layout(location = 0) out Vec4 out_col;
 
 #if TEXTURE_TYPE > 0
-layout(set = 0, binding = 1) uniform sampler u_trilinearRepeatSampler;
-layout(set = 0, binding = 2) uniform texture2D u_tex;
+layout(set = 0, binding = 0) uniform sampler u_trilinearRepeatSampler;
+layout(set = 0, binding = 1) uniform texture2D u_tex;
 #endif
 
 void main()

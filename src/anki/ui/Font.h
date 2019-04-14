@@ -7,6 +7,7 @@
 
 #include <anki/ui/UiObject.h>
 #include <anki/gr/Texture.h>
+#include <anki/util/ClassWrapper.h>
 #include <initializer_list>
 
 namespace anki
@@ -36,30 +37,42 @@ anki_internal:
 		return m_texView;
 	}
 
-	const nk_user_font& getFont(U32 fontHeight) const
+	const ImFont& getImFont(U32 fontHeight) const
 	{
-		for(const NkFont& f : m_fonts)
+		for(const FontEntry& f : m_fonts)
 		{
 			if(f.m_height == fontHeight)
 			{
-				return f.m_font->handle;
+				return *f.m_imFont;
 			}
 		}
 
 		ANKI_ASSERT(0);
-		return m_fonts[0].m_font->handle;
+		return *m_fonts[0].m_imFont;
+	}
+
+	const ImFont& getFirstImFont() const
+	{
+		return *m_fonts[0].m_imFont;
+	}
+
+	ImFontAtlas* getImFontAtlas()
+	{
+		return m_imFontAtlas.get();
 	}
 
 private:
-	nk_font_atlas m_atlas = {};
+	ClassWrapper<ImFontAtlas> m_imFontAtlas;
+	DynamicArray<U8> m_fontData;
 
-	struct NkFont
+	class FontEntry
 	{
-		nk_font* m_font;
+	public:
+		ImFont* m_imFont;
 		U32 m_height;
 	};
 
-	DynamicArray<NkFont> m_fonts;
+	DynamicArray<FontEntry> m_fonts;
 
 	TexturePtr m_tex;
 	TextureViewPtr m_texView; ///< Whole texture view
