@@ -67,7 +67,9 @@ private:
 	public:
 		U64 m_probUuid;
 		Timestamp m_lastUsedTimestamp = 0; ///< When it was rendered.
-		TexturePtr m_volumeTex;
+		Array<TexturePtr, 6> m_volumeTextures; ///< One for the 6 directions of the ambient dice.
+		UVec3 m_volumeSize;
+		U32 m_renderedCells;
 	};
 
 	DynamicArray<CacheEntry> m_cacheEntries;
@@ -80,6 +82,9 @@ private:
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initGBuffer(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initLightShading(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
 
 	void run(RenderPassWorkContext& rgraphCtx);
 };
