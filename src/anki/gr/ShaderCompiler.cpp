@@ -65,6 +65,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	endif
 #	extension GL_EXT_samplerless_texture_functions : require
 #	extension GL_EXT_shader_image_load_formatted : require
+#	extension GL_EXT_nonuniform_qualifier : enable
 #
 #	define ANKI_MAX_BINDLESS_TEXTURES %u
 #	define ANKI_MAX_BINDLESS_IMAGES %u

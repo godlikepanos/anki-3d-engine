@@ -111,8 +111,8 @@ private:
 	class CacheEntry
 	{
 	public:
-		U64 m_probeUuid;
-		Timestamp m_lastUsedTimestamp = 0; ///< When it was rendered.
+		U64 m_uuid; ///< Probe UUID.
+		Timestamp m_lastUsedTimestamp = 0; ///< When it was last seen by the renderer.
 
 		Array<FramebufferDescription, 6> m_lightShadingFbDescrs;
 		Array<FramebufferDescription, 6> m_irradianceFbDescrs;
@@ -151,9 +151,6 @@ private:
 
 	void prepareProbes(
 		RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate, U32& probeToUpdateCacheEntryIdx);
-
-	/// Find or allocate a new cache entry.
-	Bool findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdx, Bool& cacheEntryFound);
 
 	void runGBuffer(CommandBufferPtr& cmdb);
 	void runShadowMapping(CommandBufferPtr& cmdb);

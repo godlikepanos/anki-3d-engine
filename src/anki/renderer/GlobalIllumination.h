@@ -11,6 +11,9 @@
 namespace anki
 {
 
+// Forward
+class GiProbeQueueElement;
+
 /// @addtogroup renderer
 /// @{
 
@@ -41,6 +44,14 @@ private:
 		U32 m_tileSize = 0;
 	} m_gbuffer; ///< G-buffer pass.
 
+	class
+	{
+	public:
+		RenderTargetDescription m_rtDescr;
+		FramebufferDescription m_fbDescr;
+		SamplerPtr m_shadowSampler;
+	} m_shadowMapping;
+
 	class LS
 	{
 	public:
@@ -65,11 +76,12 @@ private:
 	class CacheEntry
 	{
 	public:
-		U64 m_probUuid;
-		Timestamp m_lastUsedTimestamp = 0; ///< When it was rendered.
+		U64 m_uuid; ///< Probe UUID.
+		Timestamp m_lastUsedTimestamp = 0; ///< When it was last seen by the renderer.
 		Array<TexturePtr, 6> m_volumeTextures; ///< One for the 6 directions of the ambient dice.
-		UVec3 m_volumeSize;
-		U32 m_renderedCells;
+		UVec3 m_volumeSize = UVec3(0u);
+		U32 m_renderedCells = 0;
+		Array<RenderTargetHandle, 6> m_rtHandles;
 	};
 
 	DynamicArray<CacheEntry> m_cacheEntries;
@@ -79,14 +91,27 @@ private:
 	{
 	public:
 		RenderingContext* m_ctx ANKI_DEBUG_CODE(= nullptr);
-	} m_runCtx;
+		GiProbeQueueElement* m_probe ANKI_DEBUG_CODE(= nullptr);
+		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
+		RenderTargetHandle m_gbufferDepthRt;
+		RenderTargetHandle m_shadowsRt;
+	} m_ctx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initGBuffer(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initShadowMapping(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initLightShading(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
 
-	void run(RenderPassWorkContext& rgraphCtx);
+	void runGBufferInThread(RenderPassWorkContext& rgraphCtx) const;
+	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx) const;
+	void runLightShading(RenderPassWorkContext& rgraphCtx);
+	void runIrradiance(RenderPassWorkContext& rgraphCtx) const;
+
+	void prepareProbes(RenderingContext& rctx,
+		GiProbeQueueElement*& probeToUpdateThisFrame,
+		U32& probeToUpdateThisFrameCacheEntryIdx,
+		Vec4& cellWorldPosition);
 };
 /// @}
 

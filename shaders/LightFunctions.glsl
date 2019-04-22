@@ -254,3 +254,20 @@ F32 computeProbeBlendWeight(Vec3 fragPos, // Doesn't need to be inside the AABB
 	// Use saturate because minDist might be negative.
 	return saturate(minDist / fadeDistance);
 }
+
+// Given the value of the 6 faces of the dice and a normal, sample the correct weighted value.
+// https://www.shadertoy.com/view/XtcBDB
+Vec3 sampleAmbientDice(Vec3 posx, Vec3 negx, Vec3 posy, Vec3 negy, Vec3 posz, Vec3 negz, Vec3 normal)
+{
+	const Vec3 axisWeights = abs(normal);
+	const Vec3 uv = NDC_TO_UV(normal);
+
+	Vec3 col = mix(negx, posx, uv.x) * axisWeights.x;
+	col += mix(negy, posy, uv.y) * axisWeights.y;
+	col += mix(negz, posz, uv.z) * axisWeights.z;
+
+	// Divide by weight
+	col /= axisWeights.x + axisWeights.y + axisWeights.z + EPSILON;
+
+	return col;
+}

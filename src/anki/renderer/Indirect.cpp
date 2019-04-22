@@ -73,12 +73,12 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 	// Create RT descriptions
 	{
 		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(
-			m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize, MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0], "GI GBuffer");
+			m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize, GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[0], "GI GBuffer");
 
 		// Create color RT descriptions
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
-			texinit.m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
+			texinit.m_format = GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
 			m_gbuffer.m_colorRtDescrs[i].setName(StringAuto(getAllocator()).sprintf("GI GBuff Col #%u", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
@@ -258,11 +258,12 @@ void Indirect::initCacheEntry(U32 cacheEntryIdx)
 	}
 }
 
-void Indirect::prepareProbes(
-	RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate, U32& probeToUpdateCacheEntryIdx)
+void Indirect::prepareProbes(RenderingContext& ctx,
+	ReflectionProbeQueueElement*& probeToUpdateThisFrame,
+	U32& probeToUpdateThisFrameCacheEntryIdx)
 {
-	probeToUpdate = nullptr;
-	probeToUpdateCacheEntryIdx = MAX_U32;
+	probeToUpdateThisFrame = nullptr;
+	probeToUpdateThisFrameCacheEntryIdx = MAX_U32;
 
 	if(ANKI_UNLIKELY(ctx.m_renderQueue->m_reflectionProbes.getSize() == 0))
 	{
@@ -276,44 +277,55 @@ void Indirect::prepareProbes(
 	DynamicArray<ReflectionProbeQueueElement> newListOfProbes;
 	newListOfProbes.create(ctx.m_tempAllocator, ctx.m_renderQueue->m_reflectionProbes.getSize());
 	U newListOfProbeCount = 0;
-
-	Bool foundProbeToRenderNextFrame = false;
+	Bool foundProbeToUpdateNextFrame = false;
 	for(U32 probeIdx = 0; probeIdx < ctx.m_renderQueue->m_reflectionProbes.getSize(); ++probeIdx)
 	{
 		ReflectionProbeQueueElement& probe = ctx.m_renderQueue->m_reflectionProbes[probeIdx];
 
 		// Find cache entry
-		U32 cacheEntryIdx = MAX_U32;
-		Bool cacheEntryFoundInCache;
-		const Bool allocFailed = findBestCacheEntry(probe.m_uuid, cacheEntryIdx, cacheEntryFoundInCache);
-		if(ANKI_UNLIKELY(allocFailed))
+		const U32 cacheEntryIdx = findBestCacheEntry(
+			probe.m_uuid, m_r->getGlobalTimestamp(), m_cacheEntries, m_probeUuidToCacheEntryIdx, getAllocator());
+		if(ANKI_UNLIKELY(cacheEntryIdx == MAX_U32))
 		{
+			// Failed
+			ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
+						"Increase the r.indirect.maxSimultaneousProbeCount or decrease the scene's probes");
 			continue;
 		}
 
-		// Check if we _should_ and _can_ update the probe
-		const Bool probeNeedsUpdate = m_cacheEntries[cacheEntryIdx].m_probeUuid != probe.m_uuid;
-		if(ANKI_UNLIKELY(probeNeedsUpdate))
-		{
-			const Bool updateFailed = probeToUpdate != nullptr || probe.m_renderQueues[0] == nullptr;
+		const Bool probeFoundInCache = m_cacheEntries[cacheEntryIdx].m_uuid == probe.m_uuid;
 
-			if(updateFailed && !foundProbeToRenderNextFrame)
+		// Check if we _should_ and _can_ update the probe
+		const Bool needsUpdate = !probeFoundInCache;
+		if(ANKI_UNLIKELY(needsUpdate))
+		{
+			const Bool canUpdateThisFrame = probeToUpdateThisFrame == nullptr && probe.m_renderQueues[0] != nullptr;
+			const Bool canUpdateNextFrame = !foundProbeToUpdateNextFrame;
+
+			if(!canUpdateThisFrame && canUpdateNextFrame)
 			{
 				// Probe will be updated next frame
-				foundProbeToRenderNextFrame = true;
+				foundProbeToUpdateNextFrame = true;
 				probe.m_feedbackCallback(true, probe.m_userData);
-			}
-
-			if(updateFailed)
-			{
 				continue;
+			}
+			else if(!canUpdateThisFrame)
+			{
+				// Can't be updated this frame so remove it from the list
+				continue;
+			}
+			else
+			{
+				// Can be updated this frame so continue with it
+				probeToUpdateThisFrameCacheEntryIdx = cacheEntryIdx;
+				probeToUpdateThisFrame = &newListOfProbes[newListOfProbeCount];
 			}
 		}
 
 		// All good, can use this probe in this frame
 
 		// Update the cache entry
-		m_cacheEntries[cacheEntryIdx].m_probeUuid = probe.m_uuid;
+		m_cacheEntries[cacheEntryIdx].m_uuid = probe.m_uuid;
 		m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp = m_r->getGlobalTimestamp();
 
 		// Update the probe
@@ -323,7 +335,7 @@ void Indirect::prepareProbes(
 		newListOfProbes[newListOfProbeCount++] = probe;
 
 		// Update cache map
-		if(!cacheEntryFoundInCache)
+		if(!probeFoundInCache)
 		{
 			m_probeUuidToCacheEntryIdx.emplace(getAllocator(), probe.m_uuid, cacheEntryIdx);
 		}
@@ -332,15 +344,6 @@ void Indirect::prepareProbes(
 		if(probe.m_renderQueues[0] != nullptr)
 		{
 			probe.m_feedbackCallback(false, probe.m_userData);
-		}
-
-		// Inform about the probe to update this frame
-		if(probeNeedsUpdate)
-		{
-			ANKI_ASSERT(probe.m_renderQueues[0] != nullptr && probeToUpdate == nullptr);
-
-			probeToUpdateCacheEntryIdx = cacheEntryIdx;
-			probeToUpdate = &newListOfProbes[newListOfProbeCount - 1];
 		}
 	}
 
@@ -817,71 +820,6 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, subresource});
 		}
 	}
-}
-
-Bool Indirect::findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdxAllocated, Bool& cacheEntryFound)
-{
-	ANKI_ASSERT(probeUuid > 0);
-
-	// First, try to see if the probe is in the cache
-	auto it = m_probeUuidToCacheEntryIdx.find(probeUuid);
-	if(it != m_probeUuidToCacheEntryIdx.getEnd())
-	{
-		const U32 cacheEntryIdx = *it;
-		if(m_cacheEntries[cacheEntryIdx].m_probeUuid == probeUuid)
-		{
-			// Found it
-			cacheEntryIdxAllocated = cacheEntryIdx;
-			cacheEntryFound = true;
-			return false;
-		}
-		else
-		{
-			// Cache entry is wrong, remove it
-			m_probeUuidToCacheEntryIdx.erase(getAllocator(), it);
-		}
-	}
-	cacheEntryFound = false;
-
-	// 2nd and 3rd choice, find an empty entry or some entry to re-use
-	U32 emptyCacheEntryIdx = MAX_U32;
-	U32 cacheEntryIdxToKick = MAX_U32;
-	Timestamp cacheEntryIdxToKickMinTimestamp = MAX_TIMESTAMP;
-	for(U32 cacheEntryIdx = 0; cacheEntryIdx < m_cacheEntries.getSize(); ++cacheEntryIdx)
-	{
-		if(m_cacheEntries[cacheEntryIdx].m_probeUuid == 0)
-		{
-			// Found an empty
-			emptyCacheEntryIdx = cacheEntryIdx;
-			break;
-		}
-		else if(m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp != m_r->getGlobalTimestamp()
-				&& m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp < cacheEntryIdxToKickMinTimestamp)
-		{
-			// Found some with low timestamp
-			cacheEntryIdxToKick = cacheEntryIdx;
-			cacheEntryIdxToKickMinTimestamp = m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp;
-		}
-	}
-
-	Bool failed = false;
-	if(emptyCacheEntryIdx != MAX_U32)
-	{
-		cacheEntryIdxAllocated = emptyCacheEntryIdx;
-	}
-	else if(cacheEntryIdxToKick != MAX_U32)
-	{
-		cacheEntryIdxAllocated = cacheEntryIdxToKick;
-	}
-	else
-	{
-		// We have a problem
-		failed = true;
-		ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
-					"Increase the r.indirect.maxSimultaneousProbeCount or decrease the scene's probes");
-	}
-
-	return failed;
 }
 
 void Indirect::runShadowMapping(CommandBufferPtr& cmdb)

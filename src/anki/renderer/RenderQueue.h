@@ -144,7 +144,7 @@ static_assert(
 
 /// Normally the visibility tests don't perform tests on the reflection probes because probes dont change that often.
 /// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
-/// In that case the probe should fill the render queues.
+/// In that case the visibility tests should fill the render queues of the probe.
 using ReflectionProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData);
 
 /// Reflection probe render queue element.
@@ -168,6 +168,31 @@ public:
 
 static_assert(
 	std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true, "Should be trivially destructible");
+
+/// See ReflectionProbeQueueElementFeedbackCallback for its purpose.
+using GiProbeQueueElementFeedbackCallback = void (*)(
+	Bool fillRenderQueuesOnNextFrame, void* userData, const Vec4& eyeWorldPosition);
+
+// Probe for global illumination.
+class GiProbeQueueElement final
+{
+public:
+	U64 m_uuid;
+	GiProbeQueueElementFeedbackCallback m_feedbackCallback;
+	void* m_userData;
+	Array<RenderQueue*, 6> m_renderQueues;
+	Vec3 m_aabbMin;
+	Vec3 m_aabbMax;
+	UVec3 m_cellCounts;
+	U32 m_totalCellCount;
+	U32 m_textureIndex; ///< Renderer internal.
+
+	GiProbeQueueElement()
+	{
+	}
+};
+
+static_assert(std::is_trivially_destructible<GiProbeQueueElement>::value == true, "Should be trivially destructible");
 
 /// Lens flare render queue element.
 class LensFlareQueueElement final
@@ -274,6 +299,7 @@ public:
 	DirectionalLightQueueElement m_directionalLight;
 	WeakArray<SpotLightQueueElement*> m_shadowSpotLights; ///< Points to elements in m_spotLights.
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
+	WeakArray<GiProbeQueueElement> m_giProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
 	WeakArray<DecalQueueElement> m_decals;
 	WeakArray<FogDensityQueueElement> m_fogDensityVolumes;
