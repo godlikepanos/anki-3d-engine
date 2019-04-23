@@ -170,29 +170,30 @@ static_assert(
 	std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true, "Should be trivially destructible");
 
 /// See ReflectionProbeQueueElementFeedbackCallback for its purpose.
-using GiProbeQueueElementFeedbackCallback = void (*)(
+using GlobalIlluminationProbeQueueElementFeedbackCallback = void (*)(
 	Bool fillRenderQueuesOnNextFrame, void* userData, const Vec4& eyeWorldPosition);
 
 // Probe for global illumination.
-class GiProbeQueueElement final
+class GlobalIlluminationProbeQueueElement final
 {
 public:
 	U64 m_uuid;
-	GiProbeQueueElementFeedbackCallback m_feedbackCallback;
+	GlobalIlluminationProbeQueueElementFeedbackCallback m_feedbackCallback;
 	void* m_userData;
 	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
 	UVec3 m_cellCounts;
 	U32 m_totalCellCount;
-	U32 m_textureIndex; ///< Renderer internal.
+	U32 m_cacheEntryIndex; ///< Renderer internal.
 
-	GiProbeQueueElement()
+	GlobalIlluminationProbeQueueElement()
 	{
 	}
 };
 
-static_assert(std::is_trivially_destructible<GiProbeQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement>::value == true,
+	"Should be trivially destructible");
 
 /// Lens flare render queue element.
 class LensFlareQueueElement final
@@ -299,7 +300,7 @@ public:
 	DirectionalLightQueueElement m_directionalLight;
 	WeakArray<SpotLightQueueElement*> m_shadowSpotLights; ///< Points to elements in m_spotLights.
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
-	WeakArray<GiProbeQueueElement> m_giProbes;
+	WeakArray<GlobalIlluminationProbeQueueElement> m_giProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
 	WeakArray<DecalQueueElement> m_decals;
 	WeakArray<FogDensityQueueElement> m_fogDensityVolumes;

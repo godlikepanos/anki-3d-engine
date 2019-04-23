@@ -7,12 +7,10 @@
 
 #include <anki/renderer/RendererObject.h>
 #include <anki/renderer/TraditionalDeferredShading.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
-
-// Forward
-class GiProbeQueueElement;
 
 /// @addtogroup renderer
 /// @{
@@ -34,14 +32,37 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
+	/// Given a probe return a volume render target that contains the irradiance.
+	const Array<RenderTargetHandle, 6>& getProbeVolumeRenderTargets(
+		const GlobalIlluminationProbeQueueElement& probe) const
+	{
+		const CacheEntry& entry = m_cacheEntries[probe.m_cacheEntryIndex];
+		ANKI_ASSERT(entry.m_uuid == probe.m_uuid);
+		return entry.m_rtHandles;
+	}
+
 private:
+	class InternalContext;
+
+	class CacheEntry
+	{
+	public:
+		U64 m_uuid; ///< Probe UUID.
+		Timestamp m_lastUsedTimestamp = 0; ///< When it was last seen by the renderer.
+		Array<TexturePtr, 6> m_volumeTextures; ///< One for the 6 directions of the ambient dice.
+		UVec3 m_volumeSize = UVec3(0u);
+		Vec3 m_probeAabbMin = Vec3(0.0f);
+		Vec3 m_probeAabbMax = Vec3(0.0f);
+		U32 m_renderedCells = 0;
+		Array<RenderTargetHandle, 6> m_rtHandles;
+	};
+
 	class
 	{
 	public:
 		Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
 		RenderTargetDescription m_depthRtDescr;
 		FramebufferDescription m_fbDescr;
-		U32 m_tileSize = 0;
 	} m_gbuffer; ///< G-buffer pass.
 
 	class
@@ -58,7 +79,6 @@ private:
 		RenderTargetDescription m_rtDescr;
 		FramebufferDescription m_fbDescr;
 		TraditionalDeferredLightShading m_deferred;
-		U32 m_tileSize = 0;
 
 		LS(Renderer* r)
 			: m_deferred(r)
@@ -73,29 +93,9 @@ private:
 		ShaderProgramPtr m_grProg;
 	} m_irradiance; ///< Irradiance.
 
-	class CacheEntry
-	{
-	public:
-		U64 m_uuid; ///< Probe UUID.
-		Timestamp m_lastUsedTimestamp = 0; ///< When it was last seen by the renderer.
-		Array<TexturePtr, 6> m_volumeTextures; ///< One for the 6 directions of the ambient dice.
-		UVec3 m_volumeSize = UVec3(0u);
-		U32 m_renderedCells = 0;
-		Array<RenderTargetHandle, 6> m_rtHandles;
-	};
-
 	DynamicArray<CacheEntry> m_cacheEntries;
 	HashMap<U64, U32> m_probeUuidToCacheEntryIdx;
-
-	class
-	{
-	public:
-		RenderingContext* m_ctx ANKI_DEBUG_CODE(= nullptr);
-		GiProbeQueueElement* m_probe ANKI_DEBUG_CODE(= nullptr);
-		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
-		RenderTargetHandle m_gbufferDepthRt;
-		RenderTargetHandle m_shadowsRt;
-	} m_ctx;
+	U32 m_tileSize = 0;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initGBuffer(const ConfigSet& cfg);
@@ -103,15 +103,14 @@ private:
 	ANKI_USE_RESULT Error initLightShading(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
 
-	void runGBufferInThread(RenderPassWorkContext& rgraphCtx) const;
-	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx) const;
-	void runLightShading(RenderPassWorkContext& rgraphCtx);
-	void runIrradiance(RenderPassWorkContext& rgraphCtx) const;
+	void runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
+	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
+	void runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
+	void runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
 
 	void prepareProbes(RenderingContext& rctx,
-		GiProbeQueueElement*& probeToUpdateThisFrame,
-		U32& probeToUpdateThisFrameCacheEntryIdx,
-		Vec4& cellWorldPosition);
+		GlobalIlluminationProbeQueueElement*& probeToUpdateThisFrame,
+		UVec3& probeToUpdateThisFrameCell);
 };
 /// @}
 

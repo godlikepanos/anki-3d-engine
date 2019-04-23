@@ -189,14 +189,15 @@ public:
 	}
 
 	/// Convenience method.
-	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource)
+	void bindImage(
+		U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U arrayIdx = 0)
 	{
 		TexturePtr tex;
 		TextureUsageBit usage;
 		getRenderTargetState(handle, subresource, tex, usage);
 		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
 		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
-		m_commandBuffer->bindImage(set, binding, view);
+		m_commandBuffer->bindImage(set, binding, view, arrayIdx);
 	}
 
 	/// Convenience method.

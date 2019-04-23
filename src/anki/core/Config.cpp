@@ -45,6 +45,10 @@ Config::Config()
 	newOption("r.indirect.maxSimultaneousProbeCount", 32);
 	newOption("r.indirect.shadowMapResolution", 64);
 
+	newOption("r.gi.tileResolution", 64);
+	newOption("r.gi.maxSimultaneousProbeCount", 16);
+	newOption("r.gi.shadowMapResolution", 128);
+
 	newOption("r.motionBlur.maxSamples", 32);
 
 	newOption("r.ssr.maxSteps", 64);

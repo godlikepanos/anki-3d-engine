@@ -32,7 +32,7 @@ Error Indirect::init(const ConfigSet& config)
 {
 	ANKI_R_LOGI("Initializing image reflections");
 
-	Error err = initInternal(config);
+	const Error err = initInternal(config);
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize image reflections");

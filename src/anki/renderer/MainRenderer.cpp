@@ -163,7 +163,12 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	for(U i = 0; i < m_r->getThreadHive().getThreadCount(); ++i)
 	{
 		tasks[i].m_argument = this;
-		tasks[i].m_callback = executeSecondaryCallback;
+		tasks[i].m_callback = [](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+			MainRenderer& self = *static_cast<MainRenderer*>(userData);
+
+			const U taskId = self.m_runCtx.m_secondaryTaskId.fetchAdd(1);
+			self.m_rgraph->runSecondLevel(taskId);
+		};
 	}
 	m_r->getThreadHive().submitTasks(&tasks[0], m_r->getThreadHive().getThreadCount());
 	m_r->getThreadHive().waitAllTasks();
@@ -183,15 +188,6 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	m_stats.m_renderingTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingTime;
 
 	return Error::NONE;
-}
-
-void MainRenderer::executeSecondaryCallback(
-	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore)
-{
-	MainRenderer& self = *static_cast<MainRenderer*>(userData);
-
-	const U taskId = self.m_runCtx.m_secondaryTaskId.fetchAdd(1);
-	self.m_rgraph->runSecondLevel(taskId);
 }
 
 void MainRenderer::runBlit(RenderPassWorkContext& rgraphCtx)
