@@ -14,33 +14,25 @@ namespace anki
 /// @addtogroup scene
 /// @{
 
-/// Probe used in realtime reflections.
-class ReflectionProbeNode : public SceneNode
+/// Probe used in global illumination.
+class GlobalIlluminationProbeNode : public SceneNode
 {
 public:
-	ReflectionProbeNode(SceneGraph* scene, CString name)
+	GlobalIlluminationProbeNode(SceneGraph* scene, CString name)
 		: SceneNode(scene, name)
 	{
 	}
 
-	~ReflectionProbeNode();
+	~GlobalIlluminationProbeNode();
 
-	ANKI_USE_RESULT Error init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLSpace);
+	ANKI_USE_RESULT Error init();
 
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	class MoveFeedbackComponent;
 
-	class CubeSide
-	{
-	public:
-		Transform m_localTrf;
-	};
-
-	Array<CubeSide, 6> m_cubeSides;
-	Vec3 m_aabbMinLSpace = Vec3(+1.0f);
-	Vec3 m_aabbMaxLSpace = Vec3(-1.0f);
+	Array<Transform, 6> m_cubeFaceTransforms;
 	Aabb m_spatialAabb;
 
 	void onMoveUpdate(MoveComponent& move);

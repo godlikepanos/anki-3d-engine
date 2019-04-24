@@ -32,7 +32,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 	const U threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 	const U threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
 	const U problemSize = ctx.m_renderQueue->m_forwardShadingRenderables.getSize();
-	PtrSize start, end;
+	U start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 
 	if(start != end)
