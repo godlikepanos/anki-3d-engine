@@ -31,11 +31,14 @@ public:
 
 private:
 	class MoveFeedbackComponent;
+	class ShapeFeedbackComponent;
 
 	Array<Transform, 6> m_cubeFaceTransforms;
-	Aabb m_spatialAabb;
+	Aabb m_spatialAabb = Aabb(Vec3(-1.0f), Vec3(1.0f));
+	Vec4 m_previousPosition = Vec4(0.0f);
 
 	void onMoveUpdate(MoveComponent& move);
+	void onShapeUpdateOrProbeNeedsRendering();
 };
 /// @}
 
