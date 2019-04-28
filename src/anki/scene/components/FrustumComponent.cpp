@@ -19,9 +19,6 @@ FrustumComponent::FrustumComponent(SceneNode* node, FrustumType frustumType)
 	ANKI_ASSERT(node);
 	ANKI_ASSERT(frustumType < FrustumType::COUNT);
 
-	m_flags.set(SHAPE_MARKED_FOR_UPDATE | TRANSFORM_MARKED_FOR_UPDATE);
-	setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
-
 	// Set some default values
 	if(frustumType == FrustumType::PERSPECTIVE)
 	{
@@ -48,7 +45,7 @@ Bool FrustumComponent::updateInternal()
 	m_prevViewProjMat = m_viewProjMat;
 
 	// Update the shape
-	if(m_flags.get(SHAPE_MARKED_FOR_UPDATE))
+	if(m_shapeMarkedForUpdate)
 	{
 		updated = true;
 
@@ -105,7 +102,7 @@ Bool FrustumComponent::updateInternal()
 	}
 
 	// Update transform related things
-	if(m_flags.get(TRANSFORM_MARKED_FOR_UPDATE))
+	if(m_trfMarkedForUpdate)
 	{
 		updated = true;
 		m_viewMat = Mat4(m_trf.getInverse());
@@ -115,7 +112,8 @@ Bool FrustumComponent::updateInternal()
 	if(updated)
 	{
 		m_viewProjMat = m_projMat * m_viewMat;
-		m_flags.unset(SHAPE_MARKED_FOR_UPDATE | TRANSFORM_MARKED_FOR_UPDATE);
+		m_shapeMarkedForUpdate = false;
+		m_trfMarkedForUpdate = false;
 
 		if(m_frustumType == FrustumType::PERSPECTIVE)
 		{
@@ -156,15 +154,15 @@ void FrustumComponent::fillCoverageBufferCallback(void* userData, F32* depthValu
 
 void FrustumComponent::setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits)
 {
-	m_flags.unset(FrustumComponentVisibilityTestFlag::ALL);
-	m_flags.set(bits, true);
+	m_flags = FrustumComponentVisibilityTestFlag::NONE;
+	m_flags |= bits;
 
 #if ANKI_ASSERTS_ENABLED
-	if(m_flags.get(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-		|| m_flags.get(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+	if(!!(m_flags & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+		|| !!(m_flags & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
 	{
-		if(m_flags.get(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-			== m_flags.get(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+		if((m_flags & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+			== (m_flags & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
 		{
 			ANKI_ASSERT(0 && "Cannot have them both");
 		}

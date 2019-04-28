@@ -30,7 +30,7 @@ public:
 	/// Set the bounding box in world coordinates.
 	void setBoundingBox(const Vec4& min, const Vec4& max)
 	{
-		ANKI_ASSERT(min < max);
+		ANKI_ASSERT(min.xyz() < max.xyz());
 		m_aabbMin = min.xyz();
 		m_aabbMax = max.xyz();
 		updateMembers();

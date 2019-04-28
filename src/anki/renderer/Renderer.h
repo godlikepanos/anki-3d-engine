@@ -367,6 +367,7 @@ private:
 	/// @name Rendering stages
 	/// @{
 	UniquePtr<VolumetricLightingAccumulation> m_volLighting;
+	UniquePtr<GlobalIllumination> m_gi;
 	UniquePtr<Indirect> m_indirect;
 	UniquePtr<ShadowMapping> m_shadowMapping; ///< Shadow mapping.
 	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage

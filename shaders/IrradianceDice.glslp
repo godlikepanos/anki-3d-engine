@@ -3,13 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// Compute the irradiance given an environment map. The irradiance will be stored in an ambient dice.
+// Compute the irradiance given a light shading result. The irradiance will be stored in an ambient dice.
 
-#pragma anki input const U32 ENV_TEX_TILE_SIZE
+#pragma anki input const U32 INPUT_TEXTURES_HEIGHT
 
 #pragma anki start comp
 
 #include <shaders/Functions.glsl>
+#include <shaders/Pack.glsl>
+#include <shaders/LightFunctions.glsl>
 
 layout(local_size_x = 6, local_size_y = 1, local_size_z = 1) in;
 
@@ -30,7 +32,7 @@ shared Vec3 s_diceColors[6];
 
 void main()
 {
-	const F32 ENV_TEX_TILE_SIZE_F = F32(ENV_TEX_TILE_SIZE);
+	const F32 INPUT_TEXTURES_HEIGHT_F = F32(INPUT_TEXTURES_HEIGHT);
 	const U32 diceFace = gl_LocalInvocationID.x;
 
 	// Get the r coordinate of the current direction of the dice
@@ -40,12 +42,12 @@ void main()
 	Vec3 irradiance = Vec3(0.0);
 	ANKI_LOOP for(U32 f = 0u; f < 6u; ++f)
 	{
-		ANKI_LOOP for(U32 i = 0u; i < ENV_TEX_TILE_SIZE; ++i)
+		ANKI_LOOP for(U32 i = 0u; i < INPUT_TEXTURES_HEIGHT; ++i)
 		{
-			ANKI_LOOP for(U32 j = 0u; j < ENV_TEX_TILE_SIZE; ++j)
+			ANKI_LOOP for(U32 j = 0u; j < INPUT_TEXTURES_HEIGHT; ++j)
 			{
-				const Vec2 uv =
-					Vec2(j + f * ENV_TEX_TILE_SIZE_F, i) / Vec2(6.0 * ENV_TEX_TILE_SIZE_F, ENV_TEX_TILE_SIZE_F);
+				const Vec2 uv = Vec2(j + f * INPUT_TEXTURES_HEIGHT_F, i)
+								/ Vec2(6.0 * INPUT_TEXTURES_HEIGHT_F, INPUT_TEXTURES_HEIGHT_F);
 				const Vec2 ndc = UV_TO_NDC(uv);
 
 				const Vec3 r = getCubemapDirection(ndc, f);
@@ -54,7 +56,7 @@ void main()
 				if(lambert > 0.0)
 				{
 					const Vec3 lightShading = textureLod(u_lightShadingTex, u_nearestAnyClampSampler, uv, 0.0).rgb;
-					irradiance += lightShading * lambert * cubeCoordSolidAngle(ndc, ENV_TEX_TILE_SIZE_F);
+					irradiance += lightShading * lambert * cubeCoordSolidAngle(ndc, INPUT_TEXTURES_HEIGHT_F);
 				}
 			}
 		}
@@ -68,12 +70,12 @@ void main()
 	irradiance = Vec3(0.0);
 	ANKI_LOOP for(U32 f = 0u; f < 6u; ++f)
 	{
-		ANKI_LOOP for(U32 i = 0u; i < ENV_TEX_TILE_SIZE; ++i)
+		ANKI_LOOP for(U32 i = 0u; i < INPUT_TEXTURES_HEIGHT; ++i)
 		{
-			ANKI_LOOP for(U32 j = 0u; j < ENV_TEX_TILE_SIZE; ++j)
+			ANKI_LOOP for(U32 j = 0u; j < INPUT_TEXTURES_HEIGHT; ++j)
 			{
-				const Vec2 uv =
-					Vec2(j + f * ENV_TEX_TILE_SIZE_F, i) / Vec2(6.0 * ENV_TEX_TILE_SIZE_F, ENV_TEX_TILE_SIZE_F);
+				const Vec2 uv = Vec2(j + f * INPUT_TEXTURES_HEIGHT_F, i)
+								/ Vec2(6.0 * INPUT_TEXTURES_HEIGHT_F, INPUT_TEXTURES_HEIGHT_F);
 				const Vec2 ndc = UV_TO_NDC(uv);
 
 				const Vec3 r = getCubemapDirection(ndc, f);
@@ -98,8 +100,8 @@ void main()
 
 					// Compute 2nd bounce
 					const Vec3 lightShading = textureLod(u_lightShadingTex, u_nearestAnyClampSampler, uv, 0.0).rgb;
-					irradiance +=
-						firstBounceIrradiance + lightShading * lambert * cubeCoordSolidAngle(ndc, ENV_TEX_TILE_SIZE_F);
+					irradiance += firstBounceIrradiance
+								  + lightShading * lambert * cubeCoordSolidAngle(ndc, INPUT_TEXTURES_HEIGHT_F);
 				}
 			}
 		}
@@ -109,7 +111,7 @@ void main()
 	irradiance *= (1.0 / PI);
 
 	// Store the result
-	imageStore(u_irradianceVolumes[nonUniformEXT(diceFace)], u_volumeTexel, Vec4(irradiance, 0.0));
+	imageStore(u_irradianceVolumes[nonuniformEXT(diceFace)], u_volumeTexel, Vec4(irradiance, 0.0));
 }
 
 #pragma anki end

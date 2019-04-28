@@ -30,5 +30,6 @@
 #include <anki/renderer/RendererObject.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/VolumetricLightingAccumulation.h>
+#include <anki/renderer/GlobalIllumination.h>
 
 /// @defgroup renderer Renderering system

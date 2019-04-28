@@ -38,6 +38,7 @@ class TemporalAA;
 class UiStage;
 class Ssr;
 class VolumetricLightingAccumulation;
+class GlobalIllumination;
 
 class RenderingContext;
 class DebugDrawer;

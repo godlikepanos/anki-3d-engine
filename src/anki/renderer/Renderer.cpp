@@ -28,6 +28,7 @@
 #include <anki/renderer/UiStage.h>
 #include <anki/renderer/Ssr.h>
 #include <anki/renderer/VolumetricLightingAccumulation.h>
+#include <anki/renderer/GlobalIllumination.h>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
@@ -116,6 +117,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_volLighting.reset(m_alloc.newInstance<VolumetricLightingAccumulation>(this));
 	ANKI_CHECK(m_volLighting->init(config));
+
+	m_gi.reset(m_alloc.newInstance<GlobalIllumination>(this));
+	ANKI_CHECK(m_gi->init(config));
 
 	m_indirect.reset(m_alloc.newInstance<Indirect>(this));
 	ANKI_CHECK(m_indirect->init(config));
@@ -286,6 +290,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Populate render graph. WARNING Watch the order
 	m_shadowMapping->populateRenderGraph(ctx);
+	m_gi->populateRenderGraph(ctx);
 	m_indirect->populateRenderGraph(ctx);
 	m_volLighting->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);

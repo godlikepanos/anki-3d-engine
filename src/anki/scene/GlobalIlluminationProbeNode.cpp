@@ -139,7 +139,8 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 {
 	GlobalIlluminationProbeComponent& gic = getComponent<GlobalIlluminationProbeComponent>();
 
-	// Update the frustum component if the shape was updated or the probe needs rendering
+	// Update the frustum component if the shape needs rendering
+	if(gic.getMarkedForRendering())
 	{
 		// Compute effective distance
 		F32 effectiveDistance = gic.getAlignedBoundingBoxMax().x() - gic.getAlignedBoundingBoxMin().x();

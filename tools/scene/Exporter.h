@@ -72,6 +72,8 @@ public:
 	aiVector3D m_aabbMax;
 };
 
+using GiProbe = ReflectionProbe;
+
 class ReflectionProxy
 {
 public:
@@ -122,6 +124,7 @@ public:
 	std::vector<StaticCollisionNode> m_staticCollisionNodes;
 	std::vector<ParticleEmitter> m_particleEmitters;
 	std::vector<ReflectionProbe> m_reflectionProbes;
+	std::vector<GiProbe> m_giProbes;
 	std::vector<ReflectionProxy> m_reflectionProxies;
 	std::vector<OccluderNode> m_occluders;
 	std::vector<DecalNode> m_decals;

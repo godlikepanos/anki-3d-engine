@@ -29,7 +29,8 @@ static Vec3 computeProbeCellPosition(U cellIdx, const GlobalIlluminationProbeQue
 	const Vec3 cellSize = (probe.m_aabbMax - probe.m_aabbMin)
 						  / Vec3(probe.m_cellCounts.x(), probe.m_cellCounts.y(), probe.m_cellCounts.z());
 	const Vec3 halfCellSize = cellSize / 2.0f;
-	const Vec3 cellPos = Vec3(cellCoords.x(), cellCoords.y(), cellCoords.z()) * cellSize + halfCellSize;
+	const Vec3 cellPos =
+		Vec3(cellCoords.x(), cellCoords.y(), cellCoords.z()) * cellSize + halfCellSize + probe.m_aabbMin;
 
 	return cellPos;
 }
@@ -48,6 +49,12 @@ public:
 	RenderTargetHandle m_shadowsRt;
 	RenderTargetHandle m_lightShadingRt;
 };
+
+GlobalIllumination::~GlobalIllumination()
+{
+	m_cacheEntries.destroy(getAllocator());
+	m_probeUuidToCacheEntryIdx.destroy(getAllocator());
+}
 
 Error GlobalIllumination::init(const ConfigSet& cfg)
 {
@@ -174,7 +181,7 @@ Error GlobalIllumination::initIrradiance(const ConfigSet& cfg)
 	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.glslp", m_irradiance.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_irradiance.m_prog);
-	consts.add("INPUT_TEXTURES_SIZE", U32(m_tileSize));
+	consts.add("INPUT_TEXTURES_HEIGHT", U32(m_tileSize));
 
 	const ShaderProgramResourceVariant* variant;
 	m_irradiance.m_prog->getOrCreateVariant(consts.get(), variant);
@@ -450,9 +457,9 @@ void GlobalIllumination::prepareProbes(RenderingContext& ctx,
 			TextureInitInfo texInit;
 			texInit.m_type = TextureType::_3D;
 			texInit.m_format = Format::B10G11R11_UFLOAT_PACK32;
-			texInit.m_width = probeToUpdateThisFrame->m_cellCounts.x();
-			texInit.m_height = probeToUpdateThisFrame->m_cellCounts.y();
-			texInit.m_depth = probeToUpdateThisFrame->m_cellCounts.z();
+			texInit.m_width = probe.m_cellCounts.x();
+			texInit.m_height = probe.m_cellCounts.y();
+			texInit.m_depth = probe.m_cellCounts.z();
 			texInit.m_usage = TextureUsageBit::ALL_COMPUTE | TextureUsageBit::SAMPLED_ALL;
 			texInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 
@@ -461,9 +468,6 @@ void GlobalIllumination::prepareProbes(RenderingContext& ctx,
 				entry.m_volumeTextures[i] = m_r->createAndClearRenderTarget(texInit);
 			}
 		}
-
-		// Inform the caller
-		probeToUpdateThisFrame = &newListOfProbes[newListOfProbeCount];
 
 		// Compute the render position
 		const U cellToRender = entry.m_renderedCells++;
@@ -491,6 +495,7 @@ void GlobalIllumination::prepareProbes(RenderingContext& ctx,
 		}
 
 		// Push the probe to the new list
+		probeToUpdateThisFrame = &newListOfProbes[newListOfProbeCount];
 		newListOfProbes[newListOfProbeCount++] = probe;
 
 		for(U i = 0; i < 6; i++)
@@ -643,6 +648,8 @@ void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, Interna
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	ANKI_ASSERT(giCtx.m_probe);
 	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probe;
+
+	cmdb->bindShaderProgram(m_irradiance.m_grProg);
 
 	// Bind resources
 	U binding = 0;

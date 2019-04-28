@@ -115,6 +115,7 @@ public:
 	TRenderQueueElementStorage<LensFlareQueueElement> m_lensFlares;
 	TRenderQueueElementStorage<DecalQueueElement> m_decals;
 	TRenderQueueElementStorage<FogDensityQueueElement> m_fogDensityVolumes;
+	TRenderQueueElementStorage<GlobalIlluminationProbeQueueElement> m_giProbes;
 
 	Timestamp m_timestamp = 0;
 
