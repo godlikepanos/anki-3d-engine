@@ -72,21 +72,24 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 
 	// Create RT descriptions
 	{
-		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(
-			m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize, GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[0], "GI GBuffer");
+		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(m_gbuffer.m_tileSize * 6,
+			m_gbuffer.m_tileSize,
+			GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
+			"CubeRefl GBuffer");
 
 		// Create color RT descriptions
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
 			texinit.m_format = GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
-			m_gbuffer.m_colorRtDescrs[i].setName(StringAuto(getAllocator()).sprintf("GI GBuff Col #%u", i).toCString());
+			m_gbuffer.m_colorRtDescrs[i].setName(
+				StringAuto(getAllocator()).sprintf("CubeRefl GBuff Col #%u", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
 		// Create depth RT
 		texinit.m_format = GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-		texinit.setName("GI GBuff Depth");
+		texinit.setName("CubeRefl GBuff Depth");
 		m_gbuffer.m_depthRtDescr = texinit;
 		m_gbuffer.m_depthRtDescr.bake();
 	}
@@ -122,7 +125,7 @@ Error Indirect::initLightShading(const ConfigSet& config)
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
 				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::GENERATE_MIPMAPS,
-			"GI refl");
+			"CubeRefl refl");
 		texinit.m_mipmapCount = m_lightShading.m_mipCount;
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_layerCount = m_cacheEntries.getSize();
@@ -146,7 +149,7 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
 				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			"GI irr");
+			"CubeRefl irr");
 
 		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_type = TextureType::CUBE_ARRAY;
@@ -194,7 +197,7 @@ Error Indirect::initShadowMapping(const ConfigSet& cfg)
 
 	// RT descr
 	m_shadowMapping.m_rtDescr =
-		m_r->create2DRenderTargetDescription(resolution * 6, resolution, Format::D32_SFLOAT, "GI SM");
+		m_r->create2DRenderTargetDescription(resolution * 6, resolution, Format::D32_SFLOAT, "CubeRefl SM");
 	m_shadowMapping.m_rtDescr.bake();
 
 	// FB descr
@@ -572,7 +575,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
 
 		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl gbuff");
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
@@ -629,7 +632,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_shadowMapRt = rgraph.newRenderTarget(m_shadowMapping.m_rtDescr);
 
 		// Pass
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI SM");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("CubeRefl SM");
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, m_ctx.m_shadowMapRt);
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
@@ -659,12 +662,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
 		// Passes
-		static const Array<CString, 6> passNames = {{"GI LightShad #0",
-			"GI LightShad #1",
-			"GI LightShad #2",
-			"GI LightShad #3",
-			"GI LightShad #4",
-			"GI LightShad #5"}};
+		static const Array<CString, 6> passNames = {{"CubeRefl LightShad #0",
+			"CubeRefl LightShad #1",
+			"CubeRefl LightShad #2",
+			"CubeRefl LightShad #3",
+			"CubeRefl LightShad #4",
+			"CubeRefl LightShad #5"}};
 		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
@@ -703,8 +706,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		// Rt
 		m_ctx.m_irradianceRt = rgraph.importRenderTarget(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
-		static const Array<CString, 6> passNames = {
-			{"GI Irr/ce #0", "GI Irr/ce #1", "GI Irr/ce #2", "GI Irr/ce #3", "GI Irr/ce #4", "GI Irr/ce #5"}};
+		static const Array<CString, 6> passNames = {{"CubeRefl Irr/ce #0",
+			"CubeRefl Irr/ce #1",
+			"CubeRefl Irr/ce #2",
+			"CubeRefl Irr/ce #3",
+			"CubeRefl Irr/ce #4",
+			"CubeRefl Irr/ce #5"}};
 		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
@@ -735,12 +742,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 			runIrradianceToReflCallback<5>}};
 
 		// Rt
-		static const Array<CString, 6> passNames = {{"GI Irr2Refl #0",
-			"GI Irr2Refl #1",
-			"GI Irr2Refl #2",
-			"GI Irr2Refl #3",
-			"GI Irr2Refl #4",
-			"GI Irr2Refl #5"}};
+		static const Array<CString, 6> passNames = {{"CubeRefl Irr2Refl #0",
+			"CubeRefl Irr2Refl #1",
+			"CubeRefl Irr2Refl #2",
+			"CubeRefl Irr2Refl #3",
+			"CubeRefl Irr2Refl #4",
+			"CubeRefl Irr2Refl #5"}};
 		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
@@ -776,8 +783,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 			runIrradianceCallback<4>,
 			runIrradianceCallback<5>}};
 
-		static const Array<CString, 6> passNames = {
-			{"GI Irr 2nd #0", "GI Irr 2nd #1", "GI Irr 2nd #2", "GI Irr 2nd #3", "GI Irr 2nd #4", "GI Irr 2nd #5"}};
+		static const Array<CString, 6> passNames = {{"CubeRefl Irr 2nd #0",
+			"CubeRefl Irr 2nd #1",
+			"CubeRefl Irr 2nd #2",
+			"CubeRefl Irr 2nd #3",
+			"CubeRefl Irr 2nd #4",
+			"CubeRefl Irr 2nd #5"}};
 		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
@@ -807,8 +818,12 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 			runMipmappingOfLightShadingCallback<4>,
 			runMipmappingOfLightShadingCallback<5>}};
 
-		static const Array<CString, 6> passNames = {
-			{"GI Mip #0", "GI Mip #1", "GI Mip #2", "GI Mip #3", "GI Mip #4", "GI Mip #5"}};
+		static const Array<CString, 6> passNames = {{"CubeRefl Mip #0",
+			"CubeRefl Mip #1",
+			"CubeRefl Mip #2",
+			"CubeRefl Mip #3",
+			"CubeRefl Mip #4",
+			"CubeRefl Mip #5"}};
 		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
