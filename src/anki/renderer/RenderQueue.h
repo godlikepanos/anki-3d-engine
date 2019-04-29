@@ -179,6 +179,7 @@ class GlobalIlluminationProbeQueueElement final
 public:
 	U64 m_uuid;
 	GlobalIlluminationProbeQueueElementFeedbackCallback m_feedbackCallback;
+	RenderQueueDrawCallback m_debugDrawCallback;
 	void* m_userData;
 	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_aabbMin;

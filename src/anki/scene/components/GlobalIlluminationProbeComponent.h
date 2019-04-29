@@ -27,6 +27,8 @@ public:
 		ANKI_ASSERT(uuid > 0);
 	}
 
+	ANKI_USE_RESULT Error init(ResourceManager& rsrc);
+
 	/// Set the bounding box in world coordinates.
 	void setBoundingBox(const Vec4& min, const Vec4& max)
 	{
@@ -79,6 +81,7 @@ public:
 	{
 		el.m_uuid = m_uuid;
 		el.m_feedbackCallback = giProbeQueueElementFeedbackCallback;
+		el.m_debugDrawCallback = debugDrawCallback;
 		el.m_userData = this;
 		el.m_renderQueues = {};
 		el.m_aabbMin = m_aabbMin;
@@ -96,6 +99,7 @@ public:
 	}
 
 private:
+	ShaderProgramResourcePtr m_dbgProg;
 	U64 m_uuid;
 	Vec3 m_aabbMin = Vec3(-1.0f);
 	Vec3 m_aabbMax = Vec3(+1.0f);
@@ -117,8 +121,10 @@ private:
 
 	static void debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 	{
-		// TODO
+		debugDraw(ctx, userData);
 	}
+
+	static void debugDraw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 
 	/// Recalc come values.
 	void updateMembers()

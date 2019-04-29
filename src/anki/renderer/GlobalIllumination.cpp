@@ -641,7 +641,7 @@ void GlobalIllumination::runLightShading(RenderPassWorkContext& rgraphCtx, Inter
 		cmdb);
 }
 
-void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
+void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
 
@@ -666,6 +666,10 @@ void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, Interna
 		rgraphCtx.bindImage(
 			0, binding, m_cacheEntries[probe.m_cacheEntryIndex].m_rtHandles[i], TextureSubresourceInfo(), i);
 	}
+	++binding;
+
+	// Bind temporary memory
+	allocateAndBindStorage<Vec3*>(sizeof(Vec3) * 6 * m_tileSize * m_tileSize, cmdb, 0, binding);
 
 	const IVec4 volumeTexel = IVec4(giCtx.m_cell.x(), giCtx.m_cell.y(), giCtx.m_cell.z(), 0);
 	cmdb->setPushConstants(&volumeTexel, sizeof(volumeTexel));

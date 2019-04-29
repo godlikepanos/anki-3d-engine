@@ -214,8 +214,7 @@ void main()
 		const Vec3 env =
 			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
-		//out_color += diffIndirect * gbuffer.m_diffuse + finalRefl * env;
-		out_color = diffIndirect;
+		out_color += diffIndirect * gbuffer.m_diffuse + finalRefl * env;
 	}
 }
 #pragma anki end

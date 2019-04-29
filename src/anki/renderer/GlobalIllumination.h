@@ -106,7 +106,7 @@ private:
 	void runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
 	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
 	void runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
-	void runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
+	void runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
 
 	void prepareProbes(RenderingContext& rctx,
 		GlobalIlluminationProbeQueueElement*& probeToUpdateThisFrame,

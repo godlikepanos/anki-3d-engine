@@ -82,6 +82,7 @@ Error GlobalIlluminationProbeNode::init()
 	// GI probe comp
 	GlobalIlluminationProbeComponent* giprobec =
 		newComponent<GlobalIlluminationProbeComponent>(getSceneGraph().getNewUuid());
+	ANKI_CHECK(giprobec->init(getResourceManager()));
 	giprobec->setBoundingBox(m_spatialAabb.getMin(), m_spatialAabb.getMax());
 
 	// Second feedback component

@@ -45,7 +45,7 @@ Config::Config()
 	newOption("r.indirect.maxSimultaneousProbeCount", 32);
 	newOption("r.indirect.shadowMapResolution", 64);
 
-	newOption("r.gi.tileResolution", 64);
+	newOption("r.gi.tileResolution", 32);
 	newOption("r.gi.maxSimultaneousProbeCount", 16);
 	newOption("r.gi.shadowMapResolution", 128);
 

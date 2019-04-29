@@ -5,6 +5,7 @@
 
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/SceneGraph.h>
+#include <anki/scene/DebugDrawer.h>
 #include <anki/scene/components/BodyComponent.h>
 #include <anki/scene/components/SkinComponent.h>
 #include <anki/scene/components/RenderComponent.h>
@@ -126,7 +127,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	if(!ctx.m_debugDraw)
+	if(ANKI_LIKELY(!ctx.m_debugDraw))
 	{
 		const ModelPatch* patch = m_model->getModelPatches()[m_modelPatchIdx];
 
@@ -210,54 +211,9 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		// Draw the bounding volumes
 
 		// Allocate staging memory
-		StagingGpuMemoryToken vertToken;
-		Vec3* verts = static_cast<Vec3*>(
-			ctx.m_stagingGpuAllocator->allocateFrame(sizeof(Vec3) * 8, StagingGpuMemoryType::VERTEX, vertToken));
-
-		const F32 SIZE = 1.0f;
-		verts[0] = Vec3(SIZE, SIZE, SIZE); // front top right
-		verts[1] = Vec3(-SIZE, SIZE, SIZE); // front top left
-		verts[2] = Vec3(-SIZE, -SIZE, SIZE); // front bottom left
-		verts[3] = Vec3(SIZE, -SIZE, SIZE); // front bottom right
-		verts[4] = Vec3(SIZE, SIZE, -SIZE); // back top right
-		verts[5] = Vec3(-SIZE, SIZE, -SIZE); // back top left
-		verts[6] = Vec3(-SIZE, -SIZE, -SIZE); // back bottom left
-		verts[7] = Vec3(SIZE, -SIZE, -SIZE); // back bottom right
-
-		StagingGpuMemoryToken indicesToken;
-		const U INDEX_COUNT = 12 * 2;
-		U16* indices = static_cast<U16*>(ctx.m_stagingGpuAllocator->allocateFrame(
-			sizeof(U16) * INDEX_COUNT, StagingGpuMemoryType::VERTEX, indicesToken));
-
-		U c = 0;
-		indices[c++] = 0;
-		indices[c++] = 1;
-		indices[c++] = 1;
-		indices[c++] = 2;
-		indices[c++] = 2;
-		indices[c++] = 3;
-		indices[c++] = 3;
-		indices[c++] = 0;
-
-		indices[c++] = 4;
-		indices[c++] = 5;
-		indices[c++] = 5;
-		indices[c++] = 6;
-		indices[c++] = 6;
-		indices[c++] = 7;
-		indices[c++] = 7;
-		indices[c++] = 4;
-
-		indices[c++] = 0;
-		indices[c++] = 4;
-		indices[c++] = 1;
-		indices[c++] = 5;
-		indices[c++] = 2;
-		indices[c++] = 6;
-		indices[c++] = 3;
-		indices[c++] = 7;
-
-		ANKI_ASSERT(c == INDEX_COUNT);
+		StagingGpuMemoryToken vertToken, indicesToken;
+		U32 indexCount;
+		allocateAndPopulateDebugBox(*ctx.m_stagingGpuAllocator, vertToken, indicesToken, indexCount);
 
 		// Set the uniforms
 		StagingGpuMemoryToken unisToken;
@@ -311,7 +267,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
-		cmdb->drawElements(PrimitiveTopology::LINES, INDEX_COUNT, userData.getSize());
+		cmdb->drawElements(PrimitiveTopology::LINES, indexCount, userData.getSize());
 
 		// Restore state
 		if(!enableDepthTest)
