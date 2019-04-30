@@ -603,7 +603,6 @@ void GlobalIllumination::runLightShading(RenderPassWorkContext& rgraphCtx, Inter
 	const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
 	const U rez = m_tileSize;
-	cmdb->setViewport(rez * faceIdx, 0, rez, rez);
 	cmdb->setScissor(rez * faceIdx, 0, rez, rez);
 
 	// Set common state for all lights
@@ -630,7 +629,7 @@ void GlobalIllumination::runLightShading(RenderPassWorkContext& rgraphCtx, Inter
 	m_lightShading.m_deferred.drawLights(rqueue.m_viewProjectionMatrix,
 		rqueue.m_viewProjectionMatrix.getInverse(),
 		rqueue.m_cameraTransform.getTranslationPart(),
-		UVec4(0, 0, m_tileSize, m_tileSize),
+		UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize),
 		Vec2(faceIdx * (1.0f / 6.0f), 0.0f),
 		Vec2((faceIdx + 1) * (1.0f / 6.0f), 1.0f),
 		probe.m_renderQueues[faceIdx]->m_cameraNear,
