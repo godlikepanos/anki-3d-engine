@@ -32,7 +32,7 @@ void GlobalIlluminationProbeComponent::debugDraw(RenderQueueDrawContext& ctx, Co
 			*static_cast<const GlobalIlluminationProbeComponent*>(userData[i]);
 
 		const Vec3 tsl = (self.m_aabbMin + self.m_aabbMax) / 2.0f;
-		const Vec3 scale = (tsl - self.m_aabbMin) / 2.0f;
+		const Vec3 scale = (tsl - self.m_aabbMin);
 
 		// Set non uniform scale.
 		Mat3 rot = Mat3::getIdentity();
