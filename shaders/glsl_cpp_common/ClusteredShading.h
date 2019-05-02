@@ -104,6 +104,15 @@ struct FogDensityVolume
 const U32 SIZEOF_FOG_DENSITY_VOLUME = 2 * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == SIZEOF_FOG_DENSITY_VOLUME)
 
+// Global illumination probe
+struct GlobalIlluminationProbe
+{
+	Vec3 m_aabbMin;
+	F32 m_cellSize;
+	Vec3 m_aabbMax;
+	U32 m_textureIndex;
+};
+
 // Common uniforms for light shading passes
 struct LightingUniforms
 {

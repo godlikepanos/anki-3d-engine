@@ -1,0 +1,59 @@
+// Copyright (C) 2009-2019, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Populates a clipmap with the irradiance values of probes.
+
+#pragma anki input const U32 CLIPMAP_COUNT
+#pragma anki input const UVec3 WORKGROUP_SIZE
+
+#pragma anki start comp
+
+#include <shaders/ClusteredShading.h>
+
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
+
+layout(set = 0, binding = 0) buffer ssbo_
+{
+	GlobalIlluminationProbe u_probes[];
+};
+
+layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 2) uniform texture3D u_irradianceTextures[6];
+
+struct Clipmap
+{
+	Vec3 m_aabbMin;
+	F32 m_padding0;
+	Vec3 m_aabbMax;
+	F32 m_padding1;
+	UVec3 m_cellCounts;
+	U32 m_padding2;
+};
+
+layout(set = 0, binding = 3, std140) uniform ubo_
+{
+	Clipmap u_clipmaps[CLIPMAP_COUNT];
+	Vec3 u_cameraPos;
+	F32 u_padding;
+};
+
+void main()
+{
+	// Populate all clipmaps
+	ANKI_UNROLL for(U32 clipmapIdx = 0u; clipmapIdx < CLIPMAP_COUNT; ++clipmapIdx)
+	{
+		Clipmap clipmap = u_clipmaps[clipmapIdx];
+
+		// Check bounds
+		if(any(greaterThanEqual(gl_GlobalInvocationID, clipmap.m_cellCounts)))
+		{
+			continue;
+		}
+
+		// TODO
+	}
+}
+
+#pragma anki end

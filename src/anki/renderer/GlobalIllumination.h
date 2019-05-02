@@ -19,6 +19,8 @@ namespace anki
 class GlobalIllumination : public RendererObject
 {
 anki_internal:
+	static constexpr U CLIPMAP_CASCADE_COUNT = 2;
+
 	GlobalIllumination(Renderer* r)
 		: RendererObject(r)
 		, m_lightShading(r)
@@ -93,6 +95,16 @@ private:
 		ShaderProgramPtr m_grProg;
 	} m_irradiance; ///< Irradiance.
 
+	class
+	{
+	public:
+		Array2d<RenderTargetDescription, CLIPMAP_CASCADE_COUNT, 6> m_rtDescrs;
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+		Array<UVec3, CLIPMAP_CASCADE_COUNT> m_volumeSizes;
+		Array<F32, CLIPMAP_CASCADE_COUNT> m_cellSizes;
+	} m_clipmap; ///< Clipmap population.
+
 	DynamicArray<CacheEntry> m_cacheEntries;
 	HashMap<U64, U32> m_probeUuidToCacheEntryIdx;
 	U32 m_tileSize = 0;
@@ -102,6 +114,7 @@ private:
 	ANKI_USE_RESULT Error initShadowMapping(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initLightShading(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initClipmap(const ConfigSet& cfg);
 
 	void runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
 	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
