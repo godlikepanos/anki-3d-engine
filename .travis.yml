@@ -20,18 +20,6 @@ addons:
 
 matrix:
   include:
-    - os: linux
-      dist: xenial
-      compiler: gcc
-      env:
-        - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
-        - GENERATOR="Unix Makefiles" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
-    - os: linux
-      dist: xenial
-      compiler: clang
-      env:
-        - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
-        - GENERATOR="Unix Makefiles" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
     - os: windows
       before_install:
         - choco install python3
@@ -42,6 +30,18 @@ matrix:
       env:
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
+#    - os: linux
+#      dist: xenial
+#      compiler: gcc
+#      env:
+#        - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
+#        - GENERATOR="Unix Makefiles" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
+#    - os: linux
+#      dist: xenial
+#      compiler: clang
+#      env:
+#        - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
+#        - GENERATOR="Unix Makefiles" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
 
 script:
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PYTHON3=$(which python); fi

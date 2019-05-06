@@ -181,6 +181,7 @@
 #ifdef _MSC_VER
 #	include <intrin.h>
 #	define __builtin_popcount __popcnt
+#	define __builtin_clzll(x) ((int)__lzcnt64(x))
 #endif
 
 #ifdef ANKI_BUILD
