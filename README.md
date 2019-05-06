@@ -15,7 +15,8 @@ See `LICENSE` file for more info.
 2 Building AnKi
 ===============
 
-Build Status (Linux & Windows): [![Build Status](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine)
+Build Status, Linux and Windows
+[![Build Status](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine)
 
 To checkout the source including the submodules type:
 
