@@ -13,6 +13,7 @@ packages:
   - cmake
   - libvulkan-dev
   - libegl1-mesa-dev
+  - libx11-xcb-dev
 
 matrix:
   include:

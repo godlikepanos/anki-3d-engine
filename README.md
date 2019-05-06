@@ -60,6 +60,8 @@ Prerequisites:
 - Cmake 3.0 and up
 - VulkanSDK version 1.1.x and up
 	- Add an environment variable named `VULKAN_SDK` that points to the installation path of VulkanSDK
+- Python 3.0 and up
+	- Make sure that the python executable's location is in `PATH` environment variable
 - Microsoft Visual Studio 2017 and up
 
 To build the release version open `PowerShell` and type:
