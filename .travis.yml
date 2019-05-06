@@ -7,13 +7,14 @@ python: 3.7
 cache:
   apt: true
 
-packages:
-  - gcc-6
-  - g++-6
-  - cmake
-  - libvulkan-dev
-  - libegl1-mesa-dev
-  - libx11-xcb-dev
+addons:
+  apt:
+    packages:
+      - cmake
+      - g++-6
+      - clang-4.0
+      - libvulkan-dev
+      - libegl1-mesa-dev
 
 matrix:
   include:
