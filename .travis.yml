@@ -1,45 +1,48 @@
-# Linux build configuration for Travis
+language:
+  - cpp
+  - python
 
-language: cpp
-sudo: false
-dist: trusty
-os: linux
+python: 3.7
 
-env:
-  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=g++-6 CC_=gcc-6 GR_BACKEND=VULKAN
-  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=g++-6 CC_=gcc-6 GR_BACKEND=VULKAN
-  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=clang++-4.0 CC_=clang-4.0 GR_BACKEND=VULKAN
-  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=clang++-4.0 CC_=clang-4.0 GR_BACKEND=VULKAN
-
-cache:
-  apt: true
-
-addons:
-  apt:
-    sources:
-      - llvm-toolchain-trusty-4.0
-      - sourceline: 'ppa:ubuntu-toolchain-r/test'
-      - sourceline: 'ppa:graphics-drivers/ppa'
-    packages:
-      - cmake
-      - g++-6
-      - clang-4.0
-      - libvulkan-dev
-      - libegl1-mesa-dev
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      compiler: gcc
+      env:
+        - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
+        - GENERATOR="Unix Makefiles" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
+      packages:
+        - cmake
+        - libvulkan-dev
+        - libegl1-mesa-dev
+    - os: linux
+      dist: trusty
+      compiler: clang
+      env:
+        - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
+        - GENERATOR="Unix Makefiles" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
+      packages:
+        - cmake
+        - libvulkan-dev
+        - libegl1-mesa-dev
+    - os: windows
+      before_install:
+        - choco install python3
+        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - curl --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/1.1.106.0/windows/VulkanSDK-1.1.106.0-Installer.exe
+        - .\VulkanSDK.exe /S
+        - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.0.51.0/x86_64
+      env:
+        - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
+        - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
 
 script:
-  - mkdir build 
-  - cd build
-  - export CC=${CC_}
-  - export CXX=${CXX_}
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PYTHON3=$(which python); fi
+  - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then PYTHON3=$(which python3); fi
   - $CC --version
   - $CXX --version
-  - cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DANKI_EXTRA_CHECKS=${EXTRA_CHECKS} -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_TRACE=${TRACE} -DANKI_GR_BACKEND=${GR_BACKEND}
-  - make -j 2
-
-branches:
-  only:
-    - master
-
-notifications:
-  email: false
+  - mkdir build
+  - cd build
+  - cmake .. -G "${GENERATOR}" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DANKI_EXTRA_CHECKS=${EXTRA_CHECKS} -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_TRACE=${TRACE} -DPYTHON_EXECUTABLE:FILEPATH="${PYTHON3}"
+  - cmake --build .
