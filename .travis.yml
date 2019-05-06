@@ -9,6 +9,8 @@ cache:
 
 addons:
   apt:
+    sources:
+      - sourceline: 'ppa:graphics-drivers/ppa'
     packages:
       - cmake
       - g++-6
@@ -35,7 +37,8 @@ matrix:
         - choco install python3
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
         - curl -v --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.106.0/windows/VulkanSDK-1.1.106.0-Installer.exe
-        - .\VulkanSDK.exe /S
+        - file VulkanSDK.exe
+        - powershell -Command "./VulkanSDK.exe /S"
         - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.1.106.0/x86_64
       env:
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
