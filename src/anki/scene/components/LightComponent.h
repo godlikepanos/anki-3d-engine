@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <anki/scene/components/SceneComponent.h>
-#include <anki/renderer/RenderQueue.h>
 #include <anki/Math.h>
+#include <anki/renderer/RenderQueue.h>
+#include <anki/scene/components/SceneComponent.h>
 
 namespace anki
 {
@@ -30,6 +30,10 @@ public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::LIGHT;
 
 	LightComponent(LightComponentType type, U64 uuid);
+
+	~LightComponent()
+	{
+	}
 
 	LightComponentType getLightComponentType() const
 	{

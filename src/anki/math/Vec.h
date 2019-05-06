@@ -33,7 +33,7 @@ public:
 	}
 
 	// Copy
-	TVec(ANKI_ENABLE_TYPE(const TVec&, !HAS_VEC4_SIMD) b)
+	TVec(ANKI_ENABLE_ARG(const TVec&, !HAS_VEC4_SIMD) b)
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -42,7 +42,7 @@ public:
 	}
 
 	// Copy
-	TVec(ANKI_ENABLE_TYPE(const TVec&, HAS_VEC4_SIMD) b)
+	TVec(ANKI_ENABLE_ARG(const TVec&, HAS_VEC4_SIMD) b)
 	{
 		m_simd = b.m_simd;
 	}
@@ -2297,7 +2297,7 @@ public:
 	/// @{
 
 	// Copy
-	TVec& operator=(ANKI_ENABLE_TYPE(const TVec&, !HAS_VEC4_SIMD) b)
+	TVec& operator=(ANKI_ENABLE_ARG(const TVec&, !HAS_VEC4_SIMD) b)
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -2307,7 +2307,7 @@ public:
 	}
 
 	// Copy
-	TVec& operator=(ANKI_ENABLE_TYPE(const TVec&, HAS_VEC4_SIMD) b)
+	TVec& operator=(ANKI_ENABLE_ARG(const TVec&, HAS_VEC4_SIMD) b)
 	{
 		m_simd = b.m_simd;
 		return *this;
