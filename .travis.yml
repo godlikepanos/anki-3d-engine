@@ -4,6 +4,20 @@ language:
 
 python: 3.7
 
+cache:
+  apt: true
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-6
+      - g++-6
+      - cmake
+      - libvulkan-dev
+      - libegl1-mesa-dev
+
 matrix:
   include:
     - os: linux
@@ -12,27 +26,19 @@ matrix:
       env:
         - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
         - GENERATOR="Unix Makefiles" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
-      packages:
-        - cmake
-        - libvulkan-dev
-        - libegl1-mesa-dev
     - os: linux
       dist: trusty
       compiler: clang
       env:
         - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
         - GENERATOR="Unix Makefiles" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
-      packages:
-        - cmake
-        - libvulkan-dev
-        - libegl1-mesa-dev
     - os: windows
       before_install:
         - choco install python3
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-        - curl --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/1.1.106.0/windows/VulkanSDK-1.1.106.0-Installer.exe
+        - curl --silent --show-error --output VulkanSDK.exe https://vulkan.lunarg.com/sdk/download/1.1.106.0/windows/VulkanSDK-1.1.106.0-Installer.exe
         - .\VulkanSDK.exe /S
-        - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.0.51.0/x86_64
+        - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.1.106.0/x86_64
       env:
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF
@@ -42,6 +48,7 @@ script:
   - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then PYTHON3=$(which python3); fi
   - $CC --version
   - $CXX --version
+  - echo "VULKAN_SDK ENV" $VULKAN_SDK
   - mkdir build
   - cd build
   - cmake .. -G "${GENERATOR}" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DANKI_EXTRA_CHECKS=${EXTRA_CHECKS} -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_TRACE=${TRACE} -DPYTHON_EXECUTABLE:FILEPATH="${PYTHON3}"
