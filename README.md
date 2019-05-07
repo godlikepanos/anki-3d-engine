@@ -15,10 +15,8 @@ See `LICENSE` file for more info.
 2 Building AnKi
 ===============
 
-| OS      | Master Branch Build Status                                                                                                                                    |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Linux   | [![Build Status Linux](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine)               |
-| Windows | [![Build status Windows](https://ci.appveyor.com/api/projects/status/waij29m7o8ajjoqh?svg=true)](https://ci.appveyor.com/project/godlikepanos/anki-3d-engine) |
+Build Status, Linux and Windows
+[![Build Status](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine)
 
 To checkout the source including the submodules type:
 
@@ -32,8 +30,8 @@ external dependencies are almost none.
 
 Prerequisites:
 
-- Cmake 2.8 and up
-- GCC 5.0 and up or Clang 3.7 and up
+- Cmake 3.0 and up
+- GCC 5.0 and up or Clang 6.0 and up
 - libx11-dev installed
 - libxrandr-dev installed
 - libx11-xcb-dev installed
@@ -59,22 +57,28 @@ This will open an interface with all the available options.
 
 Prerequisites:
 
-- CMake 2.8 and up
-	- Make sure you add cmake.exe to your PATH environment variable (The installer asks, press yes)
-- MinGW-w64 5.0 and up
-	- MinGW has many variants. You need the POSIX version plus SEH (eg x86_64-posix-seh)
-	- Install to a path without spaces (eg C:/mingw-w64)
-	- Append the path where mingw's binaries are located (eg C:/mingw-w64/bin) to the PATH environment variable
+- Cmake 3.0 and up
+- VulkanSDK version 1.1.x and up
+	- Add an environment variable named `VULKAN_SDK` that points to the installation path of VulkanSDK
+- Python 3.0 and up
+	- Make sure that the python executable's location is in `PATH` environment variable
+- Microsoft Visual Studio 2017 and up
 
 To build the release version open `PowerShell` and type:
 
 	$cd path/to/anki
 	$mkdir build
 	$cd build
-	$cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-	$mingw32-make
+	$cmake .. -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release
+	$cmake --build .
 
-> NOTE: If you have a better way to build on Windows please let us know.
+Alternatively, recent Visual Studio versions support building CMake projects from inside the IDE:
+
+- Open Visual Studio
+- Choose the "open folder" option and navigate to AnKi's checkout
+- Visual Studio will automatically understand that AnKi is a CMake project and it will populate the CMake cache
+- Press "build all"
+
 
 3 Next steps
 ============

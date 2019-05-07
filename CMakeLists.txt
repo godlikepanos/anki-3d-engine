@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
 PROJECT(anki)
 
@@ -135,10 +135,6 @@ endif()
 # Compiler & linker flags                                                      #
 ################################################################################
 
-set(CXX_FLAGS "")
-set(COMPILER_FLAGS "")
-set(LINKER_FLAGS "")
-
 if(NOT MSVC)
 	if(ARCH_64)
 		add_definitions(-D_POSIX_VER_64)
@@ -160,61 +156,45 @@ add_definitions(-DIMGUI_USER_CONFIG=<anki/ui/ImGuiConfig.h>)
 
 if(NOT MSVC)
 	# When building AnKi define this special flag
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -fPIC ")
+	add_definitions("-fPIC")
 
-	if(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
-		set(LINKER_FLAGS "${LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
-	endif()
-
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -fno-exceptions ")
+	add_definitions("-fno-exceptions")
 
 	if(GCC AND NOT CLANG)
-		set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
+		add_definitions("-static-libstdc++")
 	endif()
 
 	if(LINUX OR MACOS OR WINDOWS)
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -msse4 ")
+		add_definitions("-msse4")
 	else()
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -mfpu=neon ")
+		add_definitions("-mfpu=neon")
 	endif()
 
 	if(ANKI_LTO)
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -flto ")
+		add_definitions("-flto ")
 		set(LINKER_FLAGS "${LINKER_FLAGS} -flto ")
 	endif()
 
 	if(ANKI_STRIP)
 		set(LINKER_FLAGS "${LINKER_FLAGS} -s ")
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -s ")
+		add_definitions("-s")
 	endif()
 
 	if(ANKI_ADDRESS_SANITIZER)
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -fsanitize=address ")
+		add_definitions("-fsanitize=address ")
 	endif()
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -O3 -DNDEBUG ")
-
-		set(CMAKE_CXX_FLAGS_RELEASE "")
-		set(CMAKE_C_FLAGS_RELEASE "")
+		add_definitions("-O3 -DNDEBUG")
 	elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -O3 -g3 ")
-
-		set(CMAKE_CXX_FLAGS_RELWITHDBGINFO "")
-		set(CMAKE_C_FLAGS_RELWITHDBGINFO "")
+		add_definitions("-O3 -g3")
 	elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -O0 -g3 ")
-
-		set(CMAKE_CXX_FLAGS_DEBUG "")
-		set(CMAKE_C_FLAGS_DEBUG "")
+		add_definitions("-O0 -g3")
 	else()
 		message(FATAL_ERROR "Wrong CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 	endif()
 
 	# Set the flags to cmake now
-	set(CMAKE_CXX_FLAGS "${CXX_FLAGS} ${COMPILER_FLAGS}")
-	set(CMAKE_C_FLAGS "${COMPILER_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 endif()
 
@@ -379,9 +359,9 @@ endif()
 
 # AnKi compiler flags (Mainly warnings)
 if(NOT MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result -std=c++14")
+	add_definitions("-pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result -std=c++14")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4996 /wd4244 /wd4262 /wd4267")
+	add_definitions("/wd4996 /wd4244 /wd4262 /wd4267")
 endif()
 
 # Set platform specific
@@ -413,7 +393,7 @@ elseif(WINDOWS)
 			message(FATAL_ERROR "You need to have VULKAN SDK installed and the VULKAN_SDK env variable set")
 		endif()
 
-		link_directories($ENV{VULKAN_SDK}/Bin)
+		link_directories($ENV{VULKAN_SDK}/Lib)
 		set(THIRD_PARTY_LIBS vulkan-1)
 	endif()
 

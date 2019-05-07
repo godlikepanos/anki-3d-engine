@@ -43,7 +43,7 @@ public:
 	}
 
 	/// Copy.
-	TMat(ANKI_ENABLE_TYPE(const TMat&, !HAS_SIMD) b)
+	TMat(ANKI_ENABLE_ARG(const TMat&, !HAS_SIMD) b)
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -52,7 +52,7 @@ public:
 	}
 
 	/// Copy.
-	TMat(ANKI_ENABLE_TYPE(const TMat&, HAS_SIMD) b)
+	TMat(ANKI_ENABLE_ARG(const TMat&, HAS_SIMD) b)
 	{
 		for(U i = 0; i < J; i++)
 		{
@@ -379,7 +379,7 @@ public:
 	/// @{
 
 	/// Copy.
-	TMat& operator=(ANKI_ENABLE_TYPE(const TMat&, !HAS_SIMD) b)
+	TMat& operator=(ANKI_ENABLE_ARG(const TMat&, !HAS_SIMD) b)
 	{
 		for(U n = 0; n < N; n++)
 		{
@@ -389,7 +389,7 @@ public:
 	}
 
 	/// Copy.
-	TMat& operator=(ANKI_ENABLE_TYPE(const TMat&, HAS_SIMD) b)
+	TMat& operator=(ANKI_ENABLE_ARG(const TMat&, HAS_SIMD) b)
 	{
 		for(U i = 0; i < J; i++)
 		{

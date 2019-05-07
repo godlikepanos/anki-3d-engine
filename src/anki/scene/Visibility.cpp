@@ -185,7 +185,8 @@ void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)
 	flush(hive);
 
 	// Fire an additional dummy task to decrease the semaphore to zero
-	ThreadHiveTask task = ANKI_THREAD_HIVE_TASK({}, this, nullptr, m_frcCtx->m_visTestsSignalSem);
+	GatherVisiblesFromOctreeTask* pself = this; // MSVC workaround
+	ThreadHiveTask task = ANKI_THREAD_HIVE_TASK({}, pself, nullptr, m_frcCtx->m_visTestsSignalSem);
 	hive.submitTasks(&task, 1);
 }
 

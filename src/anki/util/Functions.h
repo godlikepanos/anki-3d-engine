@@ -248,6 +248,48 @@ inline void splitThreadedProblem(
 /// Make a preprocessor token a string.
 #define ANKI_STRINGIZE(a) _ANKI_STRINGIZE(a)
 
+// ANKI_ENABLE_METHOD & ANKI_ENABLE_ARG trickery copied from Tick library
+template<bool B>
+struct RequiresBool
+{
+	static constexpr bool VALUE = B;
+};
+
+template<typename T, int N>
+struct RequiresUnwrap : T
+{
+};
+
+template<int N>
+struct PrivateEnum
+{
+	enum class Type
+	{
+		NA
+	};
+};
+
+template<typename T, int N>
+struct DummyType
+{
+};
+
+#if defined(_MSC_VER)
+#	define ANKI_REQUIRES_BOOL(line, ...) RequiresUnwrap<decltype(RequiresBool<(__VA_ARGS__)>{}), line>::VALUE
+
+#	define ANKI_ENABLE_METHOD_INTERNAL(line, ...) \
+		typename PrivateEnum<line>::Type ANKI_CONCATENATE( \
+			TickPrivateEnum, line) = PrivateEnum<line>::Type::NA, \
+							 bool ANKI_CONCATENATE(privateBool, line) = true, \
+							 typename = typename std::enable_if_t<( \
+								 ANKI_CONCATENATE(privateBool, line) && ANKI_REQUIRES_BOOL(line, __VA_ARGS__))>
+#else
+
+#	define ANKI_ENABLE_METHOD_INTERNAL(line, ...) \
+		bool privateBool##line = true, typename std::enable_if_t<(privateBool##line && __VA_ARGS__), int> = 0
+
+#endif
+
 /// Use it to enable a method based on a constant expression.
 /// @code
 /// template<int N> class Foo {
@@ -255,24 +297,15 @@ inline void splitThreadedProblem(
 /// 	void foo() {}
 ///	};
 /// @endcode
-#define ANKI_ENABLE_METHOD(expression) \
-	template<bool dependOn = true, \
-		typename std::enable_if< \
-			(std::is_same<typename std::conditional<(expression) && dependOn, int, double>::type, int>::value), \
-			int>::type = 0>
-
-template<typename T, int LINE>
-struct DummyType
-{
-};
+#define ANKI_ENABLE_METHOD(...) template<ANKI_ENABLE_METHOD_INTERNAL(__LINE__, __VA_ARGS__)>
 
 /// Use it to enable a method based on a constant expression.
 /// @code
-/// template<int N> class Foo {
-/// 	void foo(ANKI_ENABLE_TYPE(Boo) b) {}
+/// class Foo {
+/// 	void foo(ANKI_ENABLE_ARG(Boo, expr) b) {}
 ///	};
 /// @endcode
-#define ANKI_ENABLE_TYPE(type_, expression) \
+#define ANKI_ENABLE_ARG(type_, expression) \
 	typename std::conditional<(expression), type_, DummyType<type_, __LINE__>>::type
 /// @}
 
