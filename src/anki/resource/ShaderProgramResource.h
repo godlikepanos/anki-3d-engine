@@ -407,6 +407,11 @@ public:
 		return ConstWeakArray<ShaderProgramResourceConstantValue>(&m_constantValues[0], m_count);
 	}
 
+	ShaderProgramResourceConstantValue& operator[](U idx)
+	{
+		return m_constantValues[idx];
+	}
+
 private:
 	ShaderProgramResourcePtr m_ptr;
 	U m_count = 0;

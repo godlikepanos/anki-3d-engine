@@ -5,8 +5,9 @@
 
 // Populates a clipmap with the irradiance values of probes.
 
-#pragma anki input const U32 CLIPMAP_COUNT
+#pragma anki input const U32 CLIPMAP_LEVEL_COUNT
 #pragma anki input const UVec3 WORKGROUP_SIZE
+#pragma anki input const U32 PROBE_COUNT
 
 #pragma anki start comp
 
@@ -20,31 +21,45 @@ layout(set = 0, binding = 0) buffer ssbo_
 };
 
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 2) uniform texture3D u_irradianceTextures[6];
+layout(set = 0, binding = 2) uniform texture3D u_probeIrradianceTextures[6u * PROBE_COUNT];
+layout(set = 0, binding = 3) uniform writeonly image3D u_clipmapImages[6u * CLIPMAP_LEVEL_COUNT];
 
 struct Clipmap
 {
 	Vec3 m_aabbMin;
-	F32 m_padding0;
+	F32 m_cellSize;
 	Vec3 m_aabbMax;
-	F32 m_padding1;
+	F32 m_padding0;
 	UVec3 m_cellCounts;
 	U32 m_padding2;
 };
 
-layout(set = 0, binding = 3, std140) uniform ubo_
+layout(set = 0, binding = 4, std140) uniform ubo_
 {
-	Clipmap u_clipmaps[CLIPMAP_COUNT];
+	Clipmap u_clipmaps[CLIPMAP_LEVEL_COUNT];
 	Vec3 u_cameraPos;
-	F32 u_padding;
+	U32 u_padding;
 };
+
+Bool aabbsOverlap(const Clipmap clipmap, const GlobalIlluminationProbe probe)
+{
+	return aabbsOverlap(clipmap.m_aabbMin, clipmap.m_aabbMax, probe.m_aabbMin, probe.m_aabbMax);
+}
+
+// Compute the texture coordinates inside a probe
+Vec3 computeUvwCoordsInsideProbe(const GlobalIlluminationProbe probe, const Vec3 positionInsideTheProbe)
+{
+	const Vec3 probeSize = probe.m_aabbMax - probe.m_aabbMin;
+	const Vec3 uvw = (positionInsideTheProbe - probe.m_aabbMin) / probeSize;
+	return uvw;
+}
 
 void main()
 {
 	// Populate all clipmaps
-	ANKI_UNROLL for(U32 clipmapIdx = 0u; clipmapIdx < CLIPMAP_COUNT; ++clipmapIdx)
+	ANKI_UNROLL for(U32 clipmapIdx = 0u; clipmapIdx < CLIPMAP_LEVEL_COUNT; ++clipmapIdx)
 	{
-		Clipmap clipmap = u_clipmaps[clipmapIdx];
+		const Clipmap clipmap = u_clipmaps[clipmapIdx];
 
 		// Check bounds
 		if(any(greaterThanEqual(gl_GlobalInvocationID, clipmap.m_cellCounts)))
@@ -52,7 +67,46 @@ void main()
 			continue;
 		}
 
-		// TODO
+		// For all probes
+		F32 weight = EPSILON;
+		Vec3 accumulatedIrradiance[6u] = Vec3[](Vec3(0.0), Vec3(0.0), Vec3(0.0), Vec3(0.0), Vec3(0.0), Vec3(0.0));
+		ANKI_UNROLL for(U32 probeIdx = 0u; probeIdx < PROBE_COUNT; ++probeIdx)
+		{
+			const GlobalIlluminationProbe probe = u_probes[probeIdx];
+
+			ANKI_FLATTEN if(aabbsOverlap(clipmap, probe))
+			{
+				// Compute the world position of the cell in the clipmap
+				Vec3 cellPosition = Vec3(gl_GlobalInvocationID) * clipmap.m_cellSize;
+				cellPosition += clipmap.m_cellSize / 2.0; // Move to the center of the cell
+				cellPosition += clipmap.m_aabbMin;
+
+				// Compute the UVW coords
+				const Vec3 texCoordsInProbe = computeUvwCoordsInsideProbe(probe, cellPosition);
+
+				// Read the texture
+				ANKI_UNROLL for(U32 dirIdx = 0u; dirIdx < 6u; ++dirIdx)
+				{
+					// Read the color from the probe
+					const U32 inputTexIdx = propeIdx * 6u + dirIdx;
+					const Vec3 inColor = textureLod(
+						u_probeIrradianceTextures[inputTexIdx], u_linearAnyClampSampler, texCoordsInProbe, 0.0);
+
+					accumulatedIrradiance[dirIdx] += inColor;
+				}
+
+				weight += 1.0;
+			}
+		}
+
+		// Write the result
+		ANKI_UNROLL for(U32 dirIdx = 0u; dirIdx < 6u; ++dirIdx)
+		{
+			const U32 clipmapImageIdx = clipmapIdx * 6u + dirIdx;
+
+			const Vec3 storedColor = accumulatedIrradiance[dirIdx] / weight;
+			imageStore(u_clipmapImages[clipmapImageIdx], IVec3(gl_GlobalInvocationID), Vec4(storedColor, 0.0));
+		}
 	}
 }
 

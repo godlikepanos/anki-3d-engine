@@ -8,6 +8,8 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/core/Trace.h>
+#include <anki/collision/Aabb.h>
+#include <anki/collision/Functions.h>
 
 namespace anki
 {
@@ -44,16 +46,23 @@ public:
 	GlobalIlluminationProbeQueueElement* m_probe ANKI_DEBUG_CODE(= nullptr);
 	UVec3 m_cell ANKI_DEBUG_CODE(= UVec3(MAX_U32));
 
+	Array<RenderTargetDescription, CLIPMAP_LEVEL_COUNT> m_clipmapRtDescriptors;
+
 	Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
 	RenderTargetHandle m_gbufferDepthRt;
 	RenderTargetHandle m_shadowsRt;
 	RenderTargetHandle m_lightShadingRt;
+	Array2d<RenderTargetHandle, CLIPMAP_LEVEL_COUNT, 6> m_clipmapRts;
+
+	Array<Aabb, CLIPMAP_LEVEL_COUNT> m_clipmapLevelAabbs; ///< AABBs in world space.
+	UVec3 m_maxClipmapVolumeSize = UVec3(0u);
 };
 
 GlobalIllumination::~GlobalIllumination()
 {
 	m_cacheEntries.destroy(getAllocator());
 	m_probeUuidToCacheEntryIdx.destroy(getAllocator());
+	m_clipmap.m_grProgs.destroy(getAllocator());
 }
 
 Error GlobalIllumination::init(const ConfigSet& cfg)
@@ -72,12 +81,14 @@ Error GlobalIllumination::init(const ConfigSet& cfg)
 Error GlobalIllumination::initInternal(const ConfigSet& cfg)
 {
 	m_tileSize = cfg.getNumber("r.gi.tileResolution");
-	m_cacheEntries.create(getAllocator(), cfg.getNumber("r.gi.maxSimultaneousProbeCount"));
+	m_cacheEntries.create(getAllocator(), cfg.getNumber("r.gi.maxCachedProbes"));
+	m_maxVisibleProbes = cfg.getNumber("r.gi.maxVisibleProbes");
 
 	ANKI_CHECK(initGBuffer(cfg));
 	ANKI_CHECK(initLightShading(cfg));
 	ANKI_CHECK(initShadowMapping(cfg));
 	ANKI_CHECK(initIrradiance(cfg));
+	ANKI_CHECK(initClipmap(cfg));
 
 	return Error::NONE;
 }
@@ -186,6 +197,37 @@ Error GlobalIllumination::initIrradiance(const ConfigSet& cfg)
 	const ShaderProgramResourceVariant* variant;
 	m_irradiance.m_prog->getOrCreateVariant(consts.get(), variant);
 	m_irradiance.m_grProg = variant->getProgram();
+
+	return Error::NONE;
+}
+
+Error GlobalIllumination::initClipmap(const ConfigSet& cfg)
+{
+	// Init the program
+	ANKI_CHECK(
+		m_r->getResourceManager().loadResource("shaders/GlobalIlluminationClimpamPopulation.glslp", m_clipmap.m_prog));
+
+	m_clipmap.m_grProgs.create(getAllocator(), m_maxVisibleProbes + 1);
+
+	ShaderProgramResourceConstantValueInitList<3> consts(m_clipmap.m_prog);
+	consts.add("CLIPMAP_LEVEL_COUNT", U32(CLIPMAP_LEVEL_COUNT));
+	consts.add("WORKGROUP_SIZE",
+		UVec3(m_clipmap.m_workgroupSize[0], m_clipmap.m_workgroupSize[1], m_clipmap.m_workgroupSize[2]));
+	consts.add("PROBE_COUNT", U32(0));
+
+	for(U probeCount = 0; probeCount < m_clipmap.m_grProgs.getSize(); ++probeCount)
+	{
+		const ShaderProgramResourceVariant* variant;
+		consts[2].m_uint = U32(probeCount);
+		m_clipmap.m_prog->getOrCreateVariant(consts.get(), variant);
+		m_clipmap.m_grProgs[probeCount] = variant->getProgram();
+	}
+
+	// Init more
+	static_assert(CLIPMAP_LEVEL_COUNT == 2, "The following line assume that");
+	m_clipmap.m_cellSizes[0] = cfg.getNumber("r.gi.firstClipmapLevelCellSize");
+	m_clipmap.m_cellSizes[1] = cfg.getNumber("r.gi.secondClipmapLevelCellSize");
+	m_clipmap.m_levelMaxDistances[0] = cfg.getNumber("r.gi.firstClipmapMaxDistance");
 
 	return Error::NONE;
 }
@@ -351,6 +393,9 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 				TextureUsageBit::IMAGE_COMPUTE_WRITE});
 		}
 	}
+
+	// Clipmap population
+	populateRenderGraphClipmap(*giCtx);
 }
 
 void GlobalIllumination::prepareProbes(RenderingContext& ctx,
@@ -374,6 +419,14 @@ void GlobalIllumination::prepareProbes(RenderingContext& ctx,
 	Bool foundProbeToUpdateNextFrame = false;
 	for(U32 probeIdx = 0; probeIdx < ctx.m_renderQueue->m_giProbes.getSize(); ++probeIdx)
 	{
+		if(probeIdx == m_maxVisibleProbes)
+		{
+			ANKI_R_LOGW("Can't have more that %u visible probes. Increase the r.gi.maxVisibleProbes or (somehow) "
+						"decrease the visible probes",
+				m_maxVisibleProbes);
+			break;
+		}
+
 		GlobalIlluminationProbeQueueElement& probe = ctx.m_renderQueue->m_giProbes[probeIdx];
 
 		// Find cache entry
@@ -383,7 +436,7 @@ void GlobalIllumination::prepareProbes(RenderingContext& ctx,
 		{
 			// Failed
 			ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
-						"Increase the r.gi.maxSimultaneousProbeCount or (somehow) decrease the visible probes");
+						"Increase the r.gi.maxCachedProbes or (somehow) decrease the visible probes");
 			continue;
 		}
 
@@ -402,7 +455,7 @@ void GlobalIllumination::prepareProbes(RenderingContext& ctx,
 			for(U i = 0; i < 6; i++)
 			{
 				entry.m_rtHandles[i] = ctx.m_renderGraphDescr.importRenderTarget(
-					entry.m_volumeTextures[i], TextureUsageBit::SAMPLED_FRAGMENT);
+					entry.m_volumeTextures[i], TextureUsageBit::SAMPLED_COMPUTE);
 			}
 
 			probe.m_cacheEntryIndex = cacheEntryIdx;
@@ -675,6 +728,203 @@ void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, Interna
 
 	// Dispatch
 	cmdb->dispatchCompute(1, 1, 1);
+}
+
+void GlobalIllumination::runClipmapPopulation(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)
+{
+	ANKI_TRACE_SCOPED_EVENT(R_GI);
+
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+
+	// Allocate and bin the probes
+	GlobalIlluminationProbe* probes = allocateAndBindStorage<GlobalIlluminationProbe*>(
+		sizeof(GlobalIlluminationProbe) * giCtx.m_ctx->m_renderQueue->m_giProbes.getSize(), cmdb, 0, 0);
+	for(U i = 0; i < giCtx.m_ctx->m_renderQueue->m_giProbes.getSize(); ++i)
+	{
+		const GlobalIlluminationProbeQueueElement& in = giCtx.m_ctx->m_renderQueue->m_giProbes[i];
+		GlobalIlluminationProbe& out = probes[i];
+
+		out.m_aabbMin = in.m_aabbMin;
+		out.m_aabbMax = in.m_aabbMax;
+		out.m_cellSize = in.m_cellSize;
+	}
+
+	// Bind sampler
+	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
+
+	// Bind input textures
+	for(U i = 0; i < giCtx.m_ctx->m_renderQueue->m_giProbes.getSize(); ++i)
+	{
+		const GlobalIlluminationProbeQueueElement& element = giCtx.m_ctx->m_renderQueue->m_giProbes[i];
+
+		for(U dir = 0; dir < 6; ++dir)
+		{
+			const RenderTargetHandle& rt = m_cacheEntries[element.m_cacheEntryIndex].m_rtHandles[dir];
+
+			rgraphCtx.bindColorTexture(0, 2, rt, i * 6 + dir);
+		}
+	}
+
+	// Bind out textures
+	for(U level = 0; level < CLIPMAP_LEVEL_COUNT; ++level)
+	{
+		for(U dir = 0; dir < 6; ++dir)
+		{
+			rgraphCtx.bindColorTexture(0, 3, giCtx.m_clipmapRts[level][dir], level * 6 + dir);
+		}
+	}
+
+	// Allocate and bin uniforms
+	struct Clipmap
+	{
+		Vec3 m_aabbMin;
+		F32 m_cellSize;
+		Vec3 m_aabbMax;
+		F32 m_padding0;
+		UVec3 m_cellCounts;
+		U32 m_padding2;
+	};
+
+	struct Unis
+	{
+		Clipmap m_clipmaps[CLIPMAP_LEVEL_COUNT];
+		Vec3 m_cameraPos;
+		U32 m_padding;
+	};
+	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 4);
+
+	for(U level = 0; level < CLIPMAP_LEVEL_COUNT; ++level)
+	{
+		unis->m_clipmaps[level].m_aabbMin = giCtx.m_clipmapLevelAabbs[level].getMin().xyz();
+		unis->m_clipmaps[level].m_cellSize = m_clipmap.m_cellSizes[level];
+		unis->m_clipmaps[level].m_aabbMax = giCtx.m_clipmapLevelAabbs[level].getMax().xyz();
+		unis->m_clipmaps[level].m_cellCounts = UVec3(giCtx.m_clipmapRtDescriptors[level].m_width,
+			giCtx.m_clipmapRtDescriptors[level].m_height,
+			giCtx.m_clipmapRtDescriptors[level].m_depth);
+	}
+	unis->m_cameraPos = giCtx.m_ctx->m_renderQueue->m_cameraTransform.getTranslationPart().xyz();
+
+	// Bind the program
+	cmdb->bindShaderProgram(m_clipmap.m_grProgs[giCtx.m_ctx->m_renderQueue->m_giProbes.getSize()]);
+
+	// Dispatch
+	dispatchPPCompute(cmdb,
+		m_clipmap.m_workgroupSize[0],
+		m_clipmap.m_workgroupSize[1],
+		m_clipmap.m_workgroupSize[2],
+		giCtx.m_maxClipmapVolumeSize[0],
+		giCtx.m_maxClipmapVolumeSize[1],
+		giCtx.m_maxClipmapVolumeSize[2]);
+}
+
+void GlobalIllumination::populateRenderGraphClipmap(InternalContext& giCtx)
+{
+	RenderGraphDescription& rgraph = giCtx.m_ctx->m_renderGraphDescr;
+	const RenderQueue& rqueue = *giCtx.m_ctx->m_renderQueue;
+
+	// Compute the size of the clipmap levels
+	for(U level = 0; level < CLIPMAP_LEVEL_COUNT; ++level)
+	{
+		UVec3 clipmapVolumeSize;
+
+		// Get the edges of the sub frustum in local space
+		const F32 near = (level == 0) ? EPSILON : m_clipmap.m_levelMaxDistances[level - 1];
+		const F32 far = (level != CLIPMAP_LEVEL_COUNT - 1) ? m_clipmap.m_levelMaxDistances[level] : rqueue.m_cameraFar;
+		Array<Vec4, 8> frustumEdges;
+		computeEdgesOfFrustum(near, rqueue.m_cameraFovX, rqueue.m_cameraFovY, &frustumEdges[0]);
+		computeEdgesOfFrustum(far, rqueue.m_cameraFovX, rqueue.m_cameraFovY, &frustumEdges[4]);
+
+		// Transform the edges to world space
+		for(Vec4& edge : frustumEdges)
+		{
+			edge = rqueue.m_cameraTransform * edge.xyz1();
+		}
+
+		// Compute the AABB
+		giCtx.m_clipmapLevelAabbs[level].setFromPointCloud(reinterpret_cast<Vec3*>(&frustumEdges[0]),
+			frustumEdges.getSize(),
+			sizeof(frustumEdges[0]),
+			sizeof(frustumEdges));
+
+		// Align the AABB to the cell grid
+		Vec4 min(0.0f), max(0.0f);
+		for(U comp = 0; comp < 3; ++comp)
+		{
+			min[comp] =
+				getAlignedRoundDown(m_clipmap.m_cellSizes[level], giCtx.m_clipmapLevelAabbs[level].getMin()[comp]);
+
+			max[comp] =
+				getAlignedRoundUp(m_clipmap.m_cellSizes[level], giCtx.m_clipmapLevelAabbs[level].getMax()[comp]);
+		}
+
+		giCtx.m_clipmapLevelAabbs[level].setMin(min);
+		giCtx.m_clipmapLevelAabbs[level].setMax(max);
+
+		// Compute the volume sizes
+		for(U comp = 0; comp < 3; ++comp)
+		{
+			const Vec4& min = giCtx.m_clipmapLevelAabbs[level].getMin();
+			const Vec4& max = giCtx.m_clipmapLevelAabbs[level].getMax();
+			clipmapVolumeSize[comp] = U32((max[comp] - min[comp]) / m_clipmap.m_cellSizes[level]);
+			ANKI_ASSERT(clipmapVolumeSize[comp] >= m_clipmap.m_cellSizes[level]);
+		}
+
+		giCtx.m_maxClipmapVolumeSize = giCtx.m_maxClipmapVolumeSize.max(clipmapVolumeSize);
+
+		// Maximize the size of the volumes to avoid creating new RTs every frame
+		m_clipmap.m_volumeSizes[level] = clipmapVolumeSize.max(m_clipmap.m_volumeSizes[level]);
+	}
+
+	// Create a few RT descriptors
+	for(U level = 0; level < CLIPMAP_LEVEL_COUNT; ++level)
+	{
+		RenderTargetDescription& descr = giCtx.m_clipmapRtDescriptors[level];
+
+		descr = m_r->create2DRenderTargetDescription(m_clipmap.m_volumeSizes[level][0],
+			m_clipmap.m_volumeSizes[level][1],
+			Format::B10G11R11_UFLOAT_PACK32,
+			"GI clipmap");
+		descr.m_depth = m_clipmap.m_volumeSizes[level][2];
+		descr.m_type = TextureType::_3D;
+		descr.bake();
+	}
+
+	// Ask for render targets
+	for(U level = 0; level < CLIPMAP_LEVEL_COUNT; ++level)
+	{
+		for(U dir = 0; dir < 6; ++dir)
+		{
+			giCtx.m_clipmapRts[level][dir] = rgraph.newRenderTarget(giCtx.m_clipmapRtDescriptors[level]);
+		}
+	}
+
+	// Create the pass
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("GI clipmap");
+
+	pass.setWork(
+		[](RenderPassWorkContext& rgraphCtx) {
+			InternalContext* giCtx = static_cast<InternalContext*>(rgraphCtx.m_userData);
+			giCtx->m_gi->runClipmapPopulation(rgraphCtx, *giCtx);
+		},
+		&giCtx,
+		0);
+
+	for(const GlobalIlluminationProbeQueueElement& probe : giCtx.m_ctx->m_renderQueue->m_giProbes)
+	{
+		const CacheEntry& entry = m_cacheEntries[probe.m_cacheEntryIndex];
+		for(U i = 0; i < 6; ++i)
+		{
+			pass.newDependency({entry.m_rtHandles[i], TextureUsageBit::SAMPLED_COMPUTE});
+		}
+	}
+
+	for(U level = 0; level < CLIPMAP_LEVEL_COUNT; ++level)
+	{
+		for(U i = 0; i < 6; ++i)
+		{
+			pass.newDependency({giCtx.m_clipmapRts[level][i], TextureUsageBit::IMAGE_COMPUTE_WRITE});
+		}
+	}
 }
 
 } // end namespace anki

@@ -19,8 +19,6 @@ namespace anki
 class GlobalIllumination : public RendererObject
 {
 anki_internal:
-	static constexpr U CLIPMAP_CASCADE_COUNT = 2;
-
 	GlobalIllumination(Renderer* r)
 		: RendererObject(r)
 		, m_lightShading(r)
@@ -44,6 +42,7 @@ anki_internal:
 	}
 
 private:
+	static constexpr U CLIPMAP_LEVEL_COUNT = 2;
 	class InternalContext;
 
 	class CacheEntry
@@ -98,16 +97,18 @@ private:
 	class
 	{
 	public:
-		Array2d<RenderTargetDescription, CLIPMAP_CASCADE_COUNT, 6> m_rtDescrs;
 		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
-		Array<UVec3, CLIPMAP_CASCADE_COUNT> m_volumeSizes;
-		Array<F32, CLIPMAP_CASCADE_COUNT> m_cellSizes;
+		DynamicArray<ShaderProgramPtr> m_grProgs; ///< One program for a number of probe counts.
+		Array<UVec3, CLIPMAP_LEVEL_COUNT> m_volumeSizes; ///< This is dynamic.
+		Array<F32, CLIPMAP_LEVEL_COUNT> m_cellSizes;
+		Array<U8, 3> m_workgroupSize = {{8, 8, 8}};
+		Array<F32, CLIPMAP_LEVEL_COUNT - 1> m_levelMaxDistances;
 	} m_clipmap; ///< Clipmap population.
 
 	DynamicArray<CacheEntry> m_cacheEntries;
 	HashMap<U64, U32> m_probeUuidToCacheEntryIdx;
 	U32 m_tileSize = 0;
+	U32 m_maxVisibleProbes = 0;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initGBuffer(const ConfigSet& cfg);
@@ -116,10 +117,13 @@ private:
 	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initClipmap(const ConfigSet& cfg);
 
+	void populateRenderGraphClipmap(InternalContext& ctx);
+
 	void runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
 	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
 	void runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
+	void runClipmapPopulation(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
 
 	void prepareProbes(RenderingContext& rctx,
 		GlobalIlluminationProbeQueueElement*& probeToUpdateThisFrame,

@@ -110,7 +110,7 @@ struct GlobalIlluminationProbe
 	Vec3 m_aabbMin;
 	F32 m_cellSize;
 	Vec3 m_aabbMax;
-	U32 m_textureIndex;
+	F32 m_padding;
 };
 
 // Common uniforms for light shading passes

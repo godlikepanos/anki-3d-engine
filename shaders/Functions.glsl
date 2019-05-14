@@ -475,6 +475,12 @@ F32 rayAabbIntersectionInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aa
 	return distToIntersect;
 }
 
+// Return true if to AABBs overlap
+Bool aabbsOverlap(const Vec3 aMin, const Vec3 aMax, const Vec3 bMin, const Vec3 bMax)
+{
+	return all(lessThan(aMin, bMax)) && all(lessThan(bMin, aMax));
+}
+
 // A convenience macro to skip out of bounds invocations on post-process compute shaders.
 #define SKIP_OUT_OF_BOUNDS_INVOCATIONS() \
 	if((FB_SIZE.x % WORKGROUP_SIZE.x) != 0u || (FB_SIZE.y % WORKGROUP_SIZE.y) != 0u) \

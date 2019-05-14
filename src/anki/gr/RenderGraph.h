@@ -178,14 +178,14 @@ public:
 	}
 
 	/// Convenience method to bind the whole texture as color.
-	void bindColorTexture(U32 set, U32 binding, RenderTargetHandle handle)
+	void bindColorTexture(U32 set, U32 binding, RenderTargetHandle handle, U arrayIdx = 0)
 	{
 		TexturePtr tex = getTexture(handle);
 		TextureViewInitInfo viewInit(tex); // Use the whole texture
 		TextureUsageBit usage;
 		getRenderTargetState(handle, viewInit, tex, usage);
 		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
-		m_commandBuffer->bindTexture(set, binding, view, usage);
+		m_commandBuffer->bindTexture(set, binding, view, usage, arrayIdx);
 	}
 
 	/// Convenience method.

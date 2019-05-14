@@ -186,6 +186,7 @@ public:
 	Vec3 m_aabbMax;
 	UVec3 m_cellCounts;
 	U32 m_totalCellCount;
+	F32 m_cellSize;
 	U32 m_cacheEntryIndex; ///< Renderer internal.
 
 	GlobalIlluminationProbeQueueElement()
@@ -312,6 +313,8 @@ public:
 
 	F32 m_cameraNear;
 	F32 m_cameraFar;
+	F32 m_cameraFovX;
+	F32 m_cameraFovY;
 	F32 m_effectiveShadowDistance;
 
 	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;
