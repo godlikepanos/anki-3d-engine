@@ -13,6 +13,8 @@
 #include <shaders/Pack.glsl>
 #include <shaders/LightFunctions.glsl>
 
+#define DEBUG_MODE 0 // 0: disable, 1: different color per dice face, 2: different color per cell
+
 layout(local_size_x = INPUT_TEXTURES_HEIGHT, local_size_y = INPUT_TEXTURES_HEIGHT, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
@@ -152,8 +154,40 @@ void main()
 	{
 		ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
 		{
+#if DEBUG_MODE == 0
 			Vec3 irradiance = u_integrationResults[f][0];
 			irradiance /= PI; // Pre-divide
+			const Vec3 toStoreValue = irradiance;
+#elif DEBUG_MODE == 1
+			Vec3 toStoreValue;
+			switch(f)
+			{
+			case 0:
+				toStoreValue = Vec3(1.0, 0.0, 0.0);
+				break;
+			case 1:
+				toStoreValue = Vec3(0.5, 0.0, 0.0);
+				break;
+			case 2:
+				toStoreValue = Vec3(0.0, 1.0, 0.0);
+				break;
+			case 3:
+				toStoreValue = Vec3(0.0, 0.5, 0.0);
+				break;
+			case 4:
+				toStoreValue = Vec3(0.0, 0.0, 1.0);
+				break;
+			default:
+				toStoreValue = Vec3(0.0, 0.0, 0.5);
+			}
+#else
+			const UVec3 volumeSize = UVec3(imageSize(u_irradianceVolumes[0]));
+			const U32 cellIdx =
+				u_volumeTexel.z * volumeSize.x * volumeSize.y + u_volumeTexel.y * volumeSize.x + u_volumeTexel.x;
+			const F32 headmapFactor = F32(cellIdx) / F32(volumeSize.x * volumeSize.y * volumeSize.z);
+			const Vec3 toStoreValue = heatmap(headmapFactor);
+#endif
+
 			imageStore(u_irradianceVolumes[f], u_volumeTexel, Vec4(irradiance, 0.0));
 		}
 	}

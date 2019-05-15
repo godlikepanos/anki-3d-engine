@@ -62,8 +62,15 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	rqueue.m_previousViewProjectionMatrix = frc.getPreviousViewProjectionMatrix();
 	rqueue.m_cameraNear = frc.getNear();
 	rqueue.m_cameraFar = frc.getFar();
-	rqueue.m_cameraFovX = frc.getFovX();
-	rqueue.m_cameraFovY = frc.getFovY();
+	if(frc.getFrustumType() == FrustumType::PERSPECTIVE)
+	{
+		rqueue.m_cameraFovX = frc.getFovX();
+		rqueue.m_cameraFovY = frc.getFovY();
+	}
+	else
+	{
+		rqueue.m_cameraFovX = rqueue.m_cameraFovY = 0.0f;
+	}
 	rqueue.m_effectiveShadowDistance = frc.getEffectiveShadowDistance();
 
 	auto alloc = m_scene->getFrameAllocator();

@@ -15,9 +15,14 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Global illumination.
+/// Ambient global illumination passes.
+///
+/// It builds a volume clipmap with ambient GI information.
 class GlobalIllumination : public RendererObject
 {
+private:
+	static constexpr U CLIPMAP_LEVEL_COUNT = 2;
+
 anki_internal:
 	GlobalIllumination(Renderer* r)
 		: RendererObject(r)
@@ -32,17 +37,15 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	/// Given a probe return a volume render target that contains the irradiance.
-	const Array<RenderTargetHandle, 6>& getProbeVolumeRenderTargets(
-		const GlobalIlluminationProbeQueueElement& probe) const
+	/// Return a number of volume render targets.
+	const Array2d<RenderTargetHandle, CLIPMAP_LEVEL_COUNT, 6>& getClipmapVolumeRenderTargets() const;
+
+	static constexpr U getClipmapLevelCount()
 	{
-		const CacheEntry& entry = m_cacheEntries[probe.m_cacheEntryIndex];
-		ANKI_ASSERT(entry.m_uuid == probe.m_uuid);
-		return entry.m_rtHandles;
+		return CLIPMAP_LEVEL_COUNT;
 	}
 
 private:
-	static constexpr U CLIPMAP_LEVEL_COUNT = 2;
 	class InternalContext;
 
 	class CacheEntry
@@ -105,6 +108,7 @@ private:
 		Array<F32, CLIPMAP_LEVEL_COUNT - 1> m_levelMaxDistances;
 	} m_clipmap; ///< Clipmap population.
 
+	InternalContext* m_giCtx = nullptr;
 	DynamicArray<CacheEntry> m_cacheEntries;
 	HashMap<U64, U32> m_probeUuidToCacheEntryIdx;
 	U32 m_tileSize = 0;

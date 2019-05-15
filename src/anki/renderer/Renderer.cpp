@@ -102,11 +102,17 @@ Error Renderer::initInternal(const ConfigSet& config)
 		texinit.m_width = texinit.m_height = 4;
 		texinit.m_usage = TextureUsageBit::SAMPLED_ALL;
 		texinit.m_format = Format::R8G8B8A8_UNORM;
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_ALL;
 		TexturePtr tex = getGrManager().newTexture(texinit);
 
 		TextureViewInitInfo viewinit(tex);
-		m_dummyTexView = getGrManager().newTextureView(viewinit);
+		m_dummyTexView2d = getGrManager().newTextureView(viewinit);
+
+		texinit.m_depth = 4;
+		texinit.m_type = TextureType::_3D;
+		tex = getGrManager().newTexture(texinit);
+		viewinit = TextureViewInitInfo(tex);
+		m_dummyTexView3d = getGrManager().newTextureView(viewinit);
 	}
 
 	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(

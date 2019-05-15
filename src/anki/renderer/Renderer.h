@@ -317,9 +317,14 @@ anki_internal:
 		return m_resourcesDirty;
 	}
 
-	TextureViewPtr getDummyTextureView() const
+	TextureViewPtr getDummyTextureView2d() const
 	{
-		return m_dummyTexView;
+		return m_dummyTexView2d;
+	}
+
+	TextureViewPtr getDummyTextureView3d() const
+	{
+		return m_dummyTexView3d;
 	}
 
 	BufferPtr getDummyBuffer() const
@@ -410,7 +415,8 @@ private:
 	Array<Mat4, 16> m_jitteredMats16x;
 	Array<Mat4, 8> m_jitteredMats8x;
 
-	TextureViewPtr m_dummyTexView;
+	TextureViewPtr m_dummyTexView2d;
+	TextureViewPtr m_dummyTexView3d;
 	BufferPtr m_dummyBuff;
 
 	RendererPrecreatedSamplers m_samplers;

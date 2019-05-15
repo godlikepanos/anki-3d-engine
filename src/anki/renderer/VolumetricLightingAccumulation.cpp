@@ -123,9 +123,9 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 8, m_r->getShadowMapping().getShadowmapRt());
 
 	bindUniforms(cmdb, 0, 9, rsrc.m_probesToken);
-	cmdb->bindTexture(0, 10, m_r->getDummyTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
+	cmdb->bindTexture(0, 10, m_r->getDummyTextureView2d(), TextureUsageBit::SAMPLED_COMPUTE);
 	rgraphCtx.bindColorTexture(0, 11, m_r->getIndirect().getIrradianceRt());
-	cmdb->bindTexture(0, 12, m_r->getDummyTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
+	cmdb->bindTexture(0, 12, m_r->getDummyTextureView2d(), TextureUsageBit::SAMPLED_COMPUTE);
 
 	bindUniforms(cmdb, 0, 13, rsrc.m_fogDensityVolumesToken);
 	bindStorage(cmdb, 0, 14, rsrc.m_clustersToken);

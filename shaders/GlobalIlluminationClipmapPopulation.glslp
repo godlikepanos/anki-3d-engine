@@ -8,21 +8,14 @@
 #pragma anki input const U32 CLIPMAP_LEVEL_COUNT
 #pragma anki input const UVec3 WORKGROUP_SIZE
 #pragma anki input const U32 PROBE_COUNT
+#pragma anki mutator HAS_PROBES 0 1
 
 #pragma anki start comp
 
-#include <shaders/ClusteredShading.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
+#include <shaders/Functions.glsl>
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
-
-layout(set = 0, binding = 0) buffer ssbo_
-{
-	GlobalIlluminationProbe u_probes[];
-};
-
-layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 2) uniform texture3D u_probeIrradianceTextures[6u * PROBE_COUNT];
-layout(set = 0, binding = 3) uniform writeonly image3D u_clipmapImages[6u * CLIPMAP_LEVEL_COUNT];
 
 struct Clipmap
 {
@@ -34,12 +27,24 @@ struct Clipmap
 	U32 m_padding2;
 };
 
-layout(set = 0, binding = 4, std140) uniform ubo_
+layout(set = 0, binding = 0, std140) uniform ubo_
 {
 	Clipmap u_clipmaps[CLIPMAP_LEVEL_COUNT];
 	Vec3 u_cameraPos;
 	U32 u_padding;
 };
+
+layout(set = 0, binding = 1) uniform writeonly image3D u_clipmapImages[6u * CLIPMAP_LEVEL_COUNT];
+
+#if HAS_PROBES
+layout(set = 0, binding = 2) buffer ssbo_
+{
+	GlobalIlluminationProbe u_probes[];
+};
+
+layout(set = 0, binding = 3) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 4) uniform texture3D u_probeIrradianceTextures[6u * PROBE_COUNT];
+#endif
 
 Bool aabbsOverlap(const Clipmap clipmap, const GlobalIlluminationProbe probe)
 {
@@ -67,6 +72,7 @@ void main()
 			continue;
 		}
 
+#if HAS_PROBES
 		// For all probes
 		F32 weight = EPSILON;
 		Vec3 accumulatedIrradiance[6u] = Vec3[](Vec3(0.0), Vec3(0.0), Vec3(0.0), Vec3(0.0), Vec3(0.0), Vec3(0.0));
@@ -88,9 +94,10 @@ void main()
 				ANKI_UNROLL for(U32 dirIdx = 0u; dirIdx < 6u; ++dirIdx)
 				{
 					// Read the color from the probe
-					const U32 inputTexIdx = propeIdx * 6u + dirIdx;
+					const U32 inputTexIdx = probeIdx * 6u + dirIdx;
 					const Vec3 inColor = textureLod(
-						u_probeIrradianceTextures[inputTexIdx], u_linearAnyClampSampler, texCoordsInProbe, 0.0);
+						u_probeIrradianceTextures[inputTexIdx], u_linearAnyClampSampler, texCoordsInProbe, 0.0)
+											 .rgb;
 
 					accumulatedIrradiance[dirIdx] += inColor;
 				}
@@ -98,13 +105,18 @@ void main()
 				weight += 1.0;
 			}
 		}
+#endif
 
 		// Write the result
 		ANKI_UNROLL for(U32 dirIdx = 0u; dirIdx < 6u; ++dirIdx)
 		{
 			const U32 clipmapImageIdx = clipmapIdx * 6u + dirIdx;
 
+#if HAS_PROBES
 			const Vec3 storedColor = accumulatedIrradiance[dirIdx] / weight;
+#else
+			const Vec3 storedColor = Vec3(0.0);
+#endif
 			imageStore(u_clipmapImages[clipmapImageIdx], IVec3(gl_GlobalInvocationID), Vec4(storedColor, 0.0));
 		}
 	}

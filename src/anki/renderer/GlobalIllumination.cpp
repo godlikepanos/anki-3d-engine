@@ -20,19 +20,18 @@ static Vec3 computeProbeCellPosition(U cellIdx, const GlobalIlluminationProbeQue
 	ANKI_ASSERT(cellIdx < probe.m_totalCellCount);
 
 	UVec3 cellCoords;
-	unflatten3dArrayIndex(probe.m_cellCounts.x(),
+	unflatten3dArrayIndex(probe.m_cellCounts.z(),
 		probe.m_cellCounts.y(),
-		probe.m_cellCounts.z(),
+		probe.m_cellCounts.x(),
 		cellIdx,
-		cellCoords.x(),
+		cellCoords.z(),
 		cellCoords.y(),
-		cellCoords.z());
+		cellCoords.x());
 
-	const Vec3 cellSize = (probe.m_aabbMax - probe.m_aabbMin)
-						  / Vec3(probe.m_cellCounts.x(), probe.m_cellCounts.y(), probe.m_cellCounts.z());
-	const Vec3 halfCellSize = cellSize / 2.0f;
+	const F32 halfCellSize = probe.m_cellSize / 2.0f;
 	const Vec3 cellPos =
-		Vec3(cellCoords.x(), cellCoords.y(), cellCoords.z()) * cellSize + halfCellSize + probe.m_aabbMin;
+		Vec3(cellCoords.x(), cellCoords.y(), cellCoords.z()) * probe.m_cellSize + halfCellSize + probe.m_aabbMin;
+	ANKI_ASSERT(cellPos < probe.m_aabbMax);
 
 	return cellPos;
 }
@@ -56,6 +55,11 @@ public:
 
 	Array<Aabb, CLIPMAP_LEVEL_COUNT> m_clipmapLevelAabbs; ///< AABBs in world space.
 	UVec3 m_maxClipmapVolumeSize = UVec3(0u);
+
+	static void foo()
+	{
+		static_assert(std::is_trivially_destructible<InternalContext>::value, "See file");
+	}
 };
 
 GlobalIllumination::~GlobalIllumination()
@@ -63,6 +67,13 @@ GlobalIllumination::~GlobalIllumination()
 	m_cacheEntries.destroy(getAllocator());
 	m_probeUuidToCacheEntryIdx.destroy(getAllocator());
 	m_clipmap.m_grProgs.destroy(getAllocator());
+}
+
+const Array2d<RenderTargetHandle, GlobalIllumination::CLIPMAP_LEVEL_COUNT, 6>&
+GlobalIllumination::getClipmapVolumeRenderTargets() const
+{
+	ANKI_ASSERT(m_giCtx);
+	return m_giCtx->m_clipmapRts;
 }
 
 Error GlobalIllumination::init(const ConfigSet& cfg)
@@ -83,6 +94,7 @@ Error GlobalIllumination::initInternal(const ConfigSet& cfg)
 	m_tileSize = cfg.getNumber("r.gi.tileResolution");
 	m_cacheEntries.create(getAllocator(), cfg.getNumber("r.gi.maxCachedProbes"));
 	m_maxVisibleProbes = cfg.getNumber("r.gi.maxVisibleProbes");
+	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
 
 	ANKI_CHECK(initGBuffer(cfg));
 	ANKI_CHECK(initLightShading(cfg));
@@ -205,25 +217,30 @@ Error GlobalIllumination::initClipmap(const ConfigSet& cfg)
 {
 	// Init the program
 	ANKI_CHECK(
-		m_r->getResourceManager().loadResource("shaders/GlobalIlluminationClimpamPopulation.glslp", m_clipmap.m_prog));
+		m_r->getResourceManager().loadResource("shaders/GlobalIlluminationClipmapPopulation.glslp", m_clipmap.m_prog));
 
 	m_clipmap.m_grProgs.create(getAllocator(), m_maxVisibleProbes + 1);
 
 	ShaderProgramResourceConstantValueInitList<3> consts(m_clipmap.m_prog);
+	consts.add("PROBE_COUNT", U32(0));
 	consts.add("CLIPMAP_LEVEL_COUNT", U32(CLIPMAP_LEVEL_COUNT));
 	consts.add("WORKGROUP_SIZE",
 		UVec3(m_clipmap.m_workgroupSize[0], m_clipmap.m_workgroupSize[1], m_clipmap.m_workgroupSize[2]));
-	consts.add("PROBE_COUNT", U32(0));
+
+	ShaderProgramResourceMutationInitList<1> mutations(m_clipmap.m_prog);
+	mutations.add("HAS_PROBES", 0);
 
 	for(U probeCount = 0; probeCount < m_clipmap.m_grProgs.getSize(); ++probeCount)
 	{
 		const ShaderProgramResourceVariant* variant;
-		consts[2].m_uint = U32(probeCount);
-		m_clipmap.m_prog->getOrCreateVariant(consts.get(), variant);
+		consts[0].m_uint = U32(probeCount);
+		mutations[0].m_value = (probeCount > 0);
+		m_clipmap.m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
 		m_clipmap.m_grProgs[probeCount] = variant->getProgram();
 	}
 
 	// Init more
+	zeroMemory(m_clipmap.m_volumeSizes);
 	static_assert(CLIPMAP_LEVEL_COUNT == 2, "The following line assume that");
 	m_clipmap.m_cellSizes[0] = cfg.getNumber("r.gi.firstClipmapLevelCellSize");
 	m_clipmap.m_cellSizes[1] = cfg.getNumber("r.gi.secondClipmapLevelCellSize");
@@ -240,6 +257,7 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 	giCtx->m_gi = this;
 	giCtx->m_ctx = &rctx;
 	RenderGraphDescription& rgraph = rctx.m_renderGraphDescr;
+	m_giCtx = giCtx;
 
 	// Prepare the probes
 	prepareProbes(rctx, giCtx->m_probe, giCtx->m_cell);
@@ -736,44 +754,6 @@ void GlobalIllumination::runClipmapPopulation(RenderPassWorkContext& rgraphCtx, 
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	// Allocate and bin the probes
-	GlobalIlluminationProbe* probes = allocateAndBindStorage<GlobalIlluminationProbe*>(
-		sizeof(GlobalIlluminationProbe) * giCtx.m_ctx->m_renderQueue->m_giProbes.getSize(), cmdb, 0, 0);
-	for(U i = 0; i < giCtx.m_ctx->m_renderQueue->m_giProbes.getSize(); ++i)
-	{
-		const GlobalIlluminationProbeQueueElement& in = giCtx.m_ctx->m_renderQueue->m_giProbes[i];
-		GlobalIlluminationProbe& out = probes[i];
-
-		out.m_aabbMin = in.m_aabbMin;
-		out.m_aabbMax = in.m_aabbMax;
-		out.m_cellSize = in.m_cellSize;
-	}
-
-	// Bind sampler
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
-
-	// Bind input textures
-	for(U i = 0; i < giCtx.m_ctx->m_renderQueue->m_giProbes.getSize(); ++i)
-	{
-		const GlobalIlluminationProbeQueueElement& element = giCtx.m_ctx->m_renderQueue->m_giProbes[i];
-
-		for(U dir = 0; dir < 6; ++dir)
-		{
-			const RenderTargetHandle& rt = m_cacheEntries[element.m_cacheEntryIndex].m_rtHandles[dir];
-
-			rgraphCtx.bindColorTexture(0, 2, rt, i * 6 + dir);
-		}
-	}
-
-	// Bind out textures
-	for(U level = 0; level < CLIPMAP_LEVEL_COUNT; ++level)
-	{
-		for(U dir = 0; dir < 6; ++dir)
-		{
-			rgraphCtx.bindColorTexture(0, 3, giCtx.m_clipmapRts[level][dir], level * 6 + dir);
-		}
-	}
-
 	// Allocate and bin uniforms
 	struct Clipmap
 	{
@@ -791,7 +771,7 @@ void GlobalIllumination::runClipmapPopulation(RenderPassWorkContext& rgraphCtx, 
 		Vec3 m_cameraPos;
 		U32 m_padding;
 	};
-	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 4);
+	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
 
 	for(U level = 0; level < CLIPMAP_LEVEL_COUNT; ++level)
 	{
@@ -803,6 +783,48 @@ void GlobalIllumination::runClipmapPopulation(RenderPassWorkContext& rgraphCtx, 
 			giCtx.m_clipmapRtDescriptors[level].m_depth);
 	}
 	unis->m_cameraPos = giCtx.m_ctx->m_renderQueue->m_cameraTransform.getTranslationPart().xyz();
+
+	// Bind out images
+	for(U level = 0; level < CLIPMAP_LEVEL_COUNT; ++level)
+	{
+		for(U dir = 0; dir < 6; ++dir)
+		{
+			rgraphCtx.bindImage(0, 1, giCtx.m_clipmapRts[level][dir], TextureSubresourceInfo(), level * 6 + dir);
+		}
+	}
+
+	const U probeCount = giCtx.m_ctx->m_renderQueue->m_giProbes.getSize();
+	if(probeCount > 0)
+	{
+		// Allocate and bin the probes
+		GlobalIlluminationProbe* probes =
+			allocateAndBindStorage<GlobalIlluminationProbe*>(sizeof(GlobalIlluminationProbe) * probeCount, cmdb, 0, 2);
+		for(U i = 0; i < probeCount; ++i)
+		{
+			const GlobalIlluminationProbeQueueElement& in = giCtx.m_ctx->m_renderQueue->m_giProbes[i];
+			GlobalIlluminationProbe& out = probes[i];
+
+			out.m_aabbMin = in.m_aabbMin;
+			out.m_aabbMax = in.m_aabbMax;
+			out.m_cellSize = in.m_cellSize;
+		}
+
+		// Bind sampler
+		cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
+
+		// Bind input textures
+		for(U i = 0; i < probeCount; ++i)
+		{
+			const GlobalIlluminationProbeQueueElement& element = giCtx.m_ctx->m_renderQueue->m_giProbes[i];
+
+			for(U dir = 0; dir < 6; ++dir)
+			{
+				const RenderTargetHandle& rt = m_cacheEntries[element.m_cacheEntryIndex].m_rtHandles[dir];
+
+				rgraphCtx.bindColorTexture(0, 4, rt, i * 6 + dir);
+			}
+		}
+	}
 
 	// Bind the program
 	cmdb->bindShaderProgram(m_clipmap.m_grProgs[giCtx.m_ctx->m_renderQueue->m_giProbes.getSize()]);
@@ -872,7 +894,7 @@ void GlobalIllumination::populateRenderGraphClipmap(InternalContext& giCtx)
 		giCtx.m_maxClipmapVolumeSize = giCtx.m_maxClipmapVolumeSize.max(clipmapVolumeSize);
 
 		// Maximize the size of the volumes to avoid creating new RTs every frame
-		m_clipmap.m_volumeSizes[level] = clipmapVolumeSize.max(m_clipmap.m_volumeSizes[level]);
+		m_clipmap.m_volumeSizes[level] = m_clipmap.m_volumeSizes[level].max(clipmapVolumeSize);
 	}
 
 	// Create a few RT descriptors
