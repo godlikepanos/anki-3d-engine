@@ -14,6 +14,7 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Ssr.h>
+#include <anki/renderer/GlobalIllumination.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 
@@ -122,15 +123,24 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		bindStorage(cmdb, 0, 8, rsrc.m_clustersToken);
 		bindStorage(cmdb, 0, 9, rsrc.m_indicesToken);
 
-		cmdb->bindSampler(0, 10, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 11, m_r->getSamplers().m_trilinearRepeat);
-		rgraphCtx.bindColorTexture(0, 12, m_r->getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(2));
+		const auto& arr = m_r->getGlobalIllumination().getClipmapVolumeRenderTargets();
+		for(U level = 0; level < GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT; ++level)
+		{
+			for(U dir = 0; dir < 6; ++dir)
+			{
+				rgraphCtx.bindColorTexture(0, 10, arr[level][dir], level * 6 + dir);
+			}
+		}
+
+		cmdb->bindSampler(0, 11, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 12, m_r->getSamplers().m_trilinearRepeat);
+		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 15, m_r->getGBuffer().getColorRt(2));
 		rgraphCtx.bindTexture(
-			0, 15, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-		rgraphCtx.bindColorTexture(0, 16, m_r->getSsr().getRt());
-		rgraphCtx.bindColorTexture(0, 17, m_r->getSsao().getRt());
+			0, 16, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindColorTexture(0, 17, m_r->getSsr().getRt());
+		rgraphCtx.bindColorTexture(0, 18, m_r->getSsao().getRt());
 
 		// Draw
 		drawQuad(cmdb);
@@ -204,6 +214,15 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getSsr().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+
+	const auto& arr = m_r->getGlobalIllumination().getClipmapVolumeRenderTargets();
+	for(U level = 0; level < GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT; ++level)
+	{
+		for(U dir = 0; dir < 6; ++dir)
+		{
+			pass.newDependency({arr[level][dir], TextureUsageBit::SAMPLED_FRAGMENT});
+		}
+	}
 
 	// Fog
 	pass.newDependency({m_r->getVolumetricFog().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});

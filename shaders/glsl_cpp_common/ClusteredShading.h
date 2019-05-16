@@ -17,6 +17,7 @@ const F32 INVALID_TEXTURE_INDEX = -1.0f;
 const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; // The near plane on the shadow map frustums.
 const U32 MAX_SHADOW_CASCADES = 4u;
 const F32 SUBSURFACE_MIN = 0.05f;
+const U32 GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT = 2u; // Global illumination clipmap count.
 
 // See the documentation in the ClustererBin class.
 struct ClustererMagicValues
@@ -113,20 +114,35 @@ struct GlobalIlluminationProbe
 	F32 m_padding;
 };
 
+// Clipmap volume info
+struct ClipmapLevelInfo
+{
+	Vec3 m_min;
+	F32 m_padding0;
+	Vec3 m_max;
+	F32 m_padding1;
+};
+
 // Common uniforms for light shading passes
 struct LightingUniforms
 {
 	Vec4 m_unprojectionParams;
+
 	Vec2 m_rendererSize;
 	F32 m_time;
 	F32 m_near;
+
 	Vec3 m_cameraPos;
 	F32 m_far;
+
 	ClustererMagicValues m_clustererMagicValues;
 	ClustererMagicValues m_prevClustererMagicValues;
+
 	UVec4 m_clusterCount;
+
 	Vec3 m_padding;
 	U32 m_lightVolumeLastCluster;
+
 	Mat4 m_viewMat;
 	Mat4 m_invViewMat;
 	Mat4 m_projMat;
@@ -135,9 +151,13 @@ struct LightingUniforms
 	Mat4 m_invViewProjMat;
 	Mat4 m_prevViewProjMat;
 	Mat4 m_prevViewProjMatMulInvViewProjMat; // Used to re-project previous frames
+
 	DirectionalLight m_dirLight;
+
+	ClipmapLevelInfo m_globalIlluminationClipmapLevels[GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT];
 };
-const U32 SIZEOF_LIGHTING_UNIFORMS = 9 * SIZEOF_VEC4 + 8 * SIZEOF_MAT4 + SIZEOF_DIR_LIGHT;
+const U32 SIZEOF_LIGHTING_UNIFORMS =
+	9 * SIZEOF_VEC4 + 8 * SIZEOF_MAT4 + SIZEOF_DIR_LIGHT + SIZEOF_VEC4 * 2u * GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT;
 ANKI_SHADER_STATIC_ASSERT(sizeof(LightingUniforms) == SIZEOF_LIGHTING_UNIFORMS)
 
 ANKI_SHADER_FUNC_INLINE F32 computeClusterKf(ClustererMagicValues magic, Vec3 worldPos)

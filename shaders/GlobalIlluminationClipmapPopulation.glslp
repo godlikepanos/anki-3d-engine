@@ -5,7 +5,6 @@
 
 // Populates a clipmap with the irradiance values of probes.
 
-#pragma anki input const U32 CLIPMAP_LEVEL_COUNT
 #pragma anki input const UVec3 WORKGROUP_SIZE
 #pragma anki input const U32 PROBE_COUNT
 #pragma anki mutator HAS_PROBES 0 1
@@ -14,6 +13,8 @@
 
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 #include <shaders/Functions.glsl>
+
+#define DEBUG_MODE 0 // 0: disabled, 1: draw different shade per dir per level, 2 draw differend shade per cell
 
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
 
@@ -29,12 +30,12 @@ struct Clipmap
 
 layout(set = 0, binding = 0, std140) uniform ubo_
 {
-	Clipmap u_clipmaps[CLIPMAP_LEVEL_COUNT];
+	Clipmap u_clipmaps[GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT];
 	Vec3 u_cameraPos;
 	U32 u_padding;
 };
 
-layout(set = 0, binding = 1) uniform writeonly image3D u_clipmapImages[6u * CLIPMAP_LEVEL_COUNT];
+layout(set = 0, binding = 1) uniform writeonly image3D u_clipmapImages[6u * GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT];
 
 #if HAS_PROBES
 layout(set = 0, binding = 2) buffer ssbo_
@@ -62,7 +63,7 @@ Vec3 computeUvwCoordsInsideProbe(const GlobalIlluminationProbe probe, const Vec3
 void main()
 {
 	// Populate all clipmaps
-	ANKI_UNROLL for(U32 clipmapIdx = 0u; clipmapIdx < CLIPMAP_LEVEL_COUNT; ++clipmapIdx)
+	ANKI_UNROLL for(U32 clipmapIdx = 0u; clipmapIdx < GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT; ++clipmapIdx)
 	{
 		const Clipmap clipmap = u_clipmaps[clipmapIdx];
 
@@ -112,7 +113,16 @@ void main()
 		{
 			const U32 clipmapImageIdx = clipmapIdx * 6u + dirIdx;
 
-#if HAS_PROBES
+#if DEBUG_MODE == 1
+			const Vec3 dirColor = colorPerCubeFace(dirIdx);
+			const F32 clipmapFactor = F32(GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT - clipmapIdx)
+									  / F32(GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT);
+			const Vec3 storedColor = dirColor * clipmapFactor;
+#elif DEBUG_MODE == 2
+			const F32 factor =
+				F32(gl_LocalInvocationIndex) / F32(WORKGROUP_SIZE.x * WORKGROUP_SIZE.y * WORKGROUP_SIZE.z);
+			const Vec3 storedColor = heatmap(factor);
+#elif HAS_PROBES
 			const Vec3 storedColor = accumulatedIrradiance[dirIdx] / weight;
 #else
 			const Vec3 storedColor = Vec3(0.0);

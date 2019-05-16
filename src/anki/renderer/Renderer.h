@@ -181,6 +181,11 @@ public:
 		return *m_lensFlare;
 	}
 
+	const GlobalIllumination& getGlobalIllumination() const
+	{
+		return *m_gi;
+	}
+
 	UiStage& getUiStage()
 	{
 		return *m_uiStage;

@@ -105,7 +105,7 @@ private:
 	Vec3 m_aabbMin = Vec3(-1.0f);
 	Vec3 m_aabbMax = Vec3(+1.0f);
 	Vec3 m_renderPosition = Vec3(0.0f);
-	F32 m_cellSize = 2.0f; ///< Cell size in meters.
+	F32 m_cellSize = 4.0f; ///< Cell size in meters.
 	UVec3 m_cellCounts = UVec3(2u);
 	Bool m_markedForRendering = false;
 	Bool m_dirty = true;

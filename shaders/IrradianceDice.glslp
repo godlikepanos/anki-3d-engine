@@ -22,12 +22,12 @@ layout(set = 0, binding = 1) uniform texture2D u_lightShadingTex;
 layout(set = 0, binding = 2) uniform texture2D u_gbufferTex0;
 layout(set = 0, binding = 3) uniform texture2D u_gbufferTex1;
 layout(set = 0, binding = 4) uniform texture2D u_gbufferTex2;
-layout(set = 0, binding = 5) uniform writeonly image3D u_irradianceVolumes[6];
+layout(set = 0, binding = 5) uniform writeonly image3D u_irradianceVolumes[6u];
 
 // This is a temporary buffer used instead of shared memory because it's too large
 layout(set = 0, binding = 6) buffer ssbo_
 {
-	Vec3 u_integrationResults[6][INPUT_TEXTURES_HEIGHT * INPUT_TEXTURES_HEIGHT];
+	Vec3 u_integrationResults[6u][INPUT_TEXTURES_HEIGHT * INPUT_TEXTURES_HEIGHT];
 };
 
 layout(push_constant, std430) uniform pc_
@@ -36,7 +36,7 @@ layout(push_constant, std430) uniform pc_
 	I32 u_padding;
 };
 
-shared Vec3 s_diceIrradiance[6];
+shared Vec3 s_diceIrradiance[6u];
 
 void main()
 {
@@ -44,7 +44,7 @@ void main()
 	const Vec2 INPUT_TEXTURES_SIZE = Vec2(INPUT_TEXTURES_HEIGHT * 6u, INPUT_TEXTURES_HEIGHT);
 
 	// Compute the NDC used in cubeCoordSolidAngle
-	const Vec2 faceUv = (Vec2(gl_LocalInvocationID.x, gl_LocalInvocationID.y) + 0.5) / INPUT_TEXTURES_HEIGHT_F;
+	const Vec2 faceUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / INPUT_TEXTURES_HEIGHT_F;
 	const Vec2 ndc = UV_TO_NDC(faceUv);
 
 	// Initialize
@@ -159,27 +159,7 @@ void main()
 			irradiance /= PI; // Pre-divide
 			const Vec3 toStoreValue = irradiance;
 #elif DEBUG_MODE == 1
-			Vec3 toStoreValue;
-			switch(f)
-			{
-			case 0:
-				toStoreValue = Vec3(1.0, 0.0, 0.0);
-				break;
-			case 1:
-				toStoreValue = Vec3(0.5, 0.0, 0.0);
-				break;
-			case 2:
-				toStoreValue = Vec3(0.0, 1.0, 0.0);
-				break;
-			case 3:
-				toStoreValue = Vec3(0.0, 0.5, 0.0);
-				break;
-			case 4:
-				toStoreValue = Vec3(0.0, 0.0, 1.0);
-				break;
-			default:
-				toStoreValue = Vec3(0.0, 0.0, 0.5);
-			}
+			const Vec3 toStoreValue = colorPerCubeFace(f);
 #else
 			const UVec3 volumeSize = UVec3(imageSize(u_irradianceVolumes[0]));
 			const U32 cellIdx =
@@ -188,7 +168,7 @@ void main()
 			const Vec3 toStoreValue = heatmap(headmapFactor);
 #endif
 
-			imageStore(u_irradianceVolumes[f], u_volumeTexel, Vec4(irradiance, 0.0));
+			imageStore(u_irradianceVolumes[f], u_volumeTexel, Vec4(toStoreValue, 0.0));
 		}
 	}
 }

@@ -8,6 +8,7 @@
 #include <anki/renderer/RendererObject.h>
 #include <anki/renderer/TraditionalDeferredShading.h>
 #include <anki/renderer/RenderQueue.h>
+#include <anki/collision/Forward.h>
 
 namespace anki
 {
@@ -21,7 +22,7 @@ namespace anki
 class GlobalIllumination : public RendererObject
 {
 private:
-	static constexpr U CLIPMAP_LEVEL_COUNT = 2;
+	static constexpr U GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT = 2;
 
 anki_internal:
 	GlobalIllumination(Renderer* r)
@@ -38,12 +39,11 @@ anki_internal:
 	void populateRenderGraph(RenderingContext& ctx);
 
 	/// Return a number of volume render targets.
-	const Array2d<RenderTargetHandle, CLIPMAP_LEVEL_COUNT, 6>& getClipmapVolumeRenderTargets() const;
+	const Array2d<RenderTargetHandle, GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT, 6>&
+	getClipmapVolumeRenderTargets() const;
 
-	static constexpr U getClipmapLevelCount()
-	{
-		return CLIPMAP_LEVEL_COUNT;
-	}
+	/// Return the clipmap AABB.
+	const Aabb& getClipmapAabb(U clipmapLevel) const;
 
 private:
 	class InternalContext;
@@ -102,10 +102,10 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		DynamicArray<ShaderProgramPtr> m_grProgs; ///< One program for a number of probe counts.
-		Array<UVec3, CLIPMAP_LEVEL_COUNT> m_volumeSizes; ///< This is dynamic.
-		Array<F32, CLIPMAP_LEVEL_COUNT> m_cellSizes;
+		Array<UVec3, GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT> m_volumeSizes; ///< This is dynamic.
+		Array<F32, GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT> m_cellSizes;
 		Array<U8, 3> m_workgroupSize = {{8, 8, 8}};
-		Array<F32, CLIPMAP_LEVEL_COUNT - 1> m_levelMaxDistances;
+		Array<F32, GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT - 1> m_levelMaxDistances;
 	} m_clipmap; ///< Clipmap population.
 
 	InternalContext* m_giCtx = nullptr;

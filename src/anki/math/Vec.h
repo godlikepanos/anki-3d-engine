@@ -28,11 +28,13 @@ public:
 
 	/// @name Constructors
 	/// @{
+
+	/// Defaut constructor. IT WILL NOT INITIALIZE ANYTHING.
 	TVec()
 	{
 	}
 
-	// Copy
+	/// Copy.
 	TVec(ANKI_ENABLE_ARG(const TVec&, !HAS_VEC4_SIMD) b)
 	{
 		for(U i = 0; i < N; i++)
@@ -41,14 +43,15 @@ public:
 		}
 	}
 
-	// Copy
+	/// Copy.
 	TVec(ANKI_ENABLE_ARG(const TVec&, HAS_VEC4_SIMD) b)
 	{
 		m_simd = b.m_simd;
 	}
 
-	template<typename Y>
-	TVec(const TVec<Y, N>& b)
+	/// Convert from another type.
+	template<typename Y, ANKI_ENABLE(!std::is_same<Y, T>::value)>
+	explicit TVec(const TVec<Y, N>& b)
 	{
 		for(U i = 0; i < N; i++)
 		{
