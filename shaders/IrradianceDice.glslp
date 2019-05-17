@@ -14,6 +14,7 @@
 #include <shaders/LightFunctions.glsl>
 
 #define DEBUG_MODE 0 // 0: disable, 1: different color per dice face, 2: different color per cell
+#define SECOND_BOUNCE 0
 
 layout(local_size_x = INPUT_TEXTURES_HEIGHT, local_size_y = INPUT_TEXTURES_HEIGHT, local_size_z = 1) in;
 
@@ -25,9 +26,9 @@ layout(set = 0, binding = 4) uniform texture2D u_gbufferTex2;
 layout(set = 0, binding = 5) uniform writeonly image3D u_irradianceVolumes[6u];
 
 // This is a temporary buffer used instead of shared memory because it's too large
-layout(set = 0, binding = 6) buffer ssbo_
+layout(set = 0, binding = 6, std430) buffer ssbo_
 {
-	Vec3 u_integrationResults[6u][INPUT_TEXTURES_HEIGHT * INPUT_TEXTURES_HEIGHT];
+	Vec4 u_integrationResults[6u][INPUT_TEXTURES_HEIGHT * INPUT_TEXTURES_HEIGHT];
 };
 
 layout(push_constant, std430) uniform pc_
@@ -64,34 +65,39 @@ void main()
 		const Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, INPUT_TEXTURES_HEIGHT_F);
 
 		// Store
-		u_integrationResults[f][gl_LocalInvocationID.y * INPUT_TEXTURES_HEIGHT + gl_LocalInvocationID.x] = irradiance;
+		u_integrationResults[f][gl_LocalInvocationID.y * INPUT_TEXTURES_HEIGHT + gl_LocalInvocationID.x] =
+			irradiance.xyzx;
 	}
 
 	memoryBarrierBuffer();
 	barrier();
 
 	// Reduce using prefix sum
-	ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+	const U32 WG_SIZE = INPUT_TEXTURES_HEIGHT * INPUT_TEXTURES_HEIGHT;
+	ANKI_LOOP for(U32 s = WG_SIZE / 2u; s > 0u; s >>= 1u)
 	{
-		const U32 WG_SIZE = INPUT_TEXTURES_HEIGHT * INPUT_TEXTURES_HEIGHT;
-		ANKI_LOOP for(U32 s = WG_SIZE / 2u; s > 0u; s >>= 1u)
+		if(gl_LocalInvocationIndex < s)
 		{
-			if(gl_LocalInvocationIndex < s)
+			ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
 			{
 				u_integrationResults[f][gl_LocalInvocationIndex] +=
 					u_integrationResults[f][gl_LocalInvocationIndex + s];
 			}
-
-			memoryBarrierBuffer();
-			barrier();
 		}
 
-		s_diceIrradiance[f] = u_integrationResults[f][0];
+		memoryBarrierBuffer();
+		barrier();
+	}
+
+	if(gl_LocalInvocationIndex < 6u)
+	{
+		s_diceIrradiance[gl_LocalInvocationIndex] = u_integrationResults[gl_LocalInvocationIndex][0].xyz;
 	}
 
 	memoryBarrierShared();
 	barrier();
 
+#if SECOND_BOUNCE == 1
 	// Initialize again for the 2nd bounce
 	ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
 	{
@@ -126,28 +132,29 @@ void main()
 			firstBounceIrradiance + lightShading * lambert * cubeCoordSolidAngle(ndc, INPUT_TEXTURES_HEIGHT_F);
 
 		// Store
-		u_integrationResults[f][gl_LocalInvocationID.y * INPUT_TEXTURES_HEIGHT + gl_LocalInvocationID.x] = irradiance;
+		u_integrationResults[f][gl_LocalInvocationID.y * INPUT_TEXTURES_HEIGHT + gl_LocalInvocationID.x] =
+			irradiance.xyzx;
 	}
 
 	memoryBarrierBuffer();
 	barrier();
 
 	// Reduce using prefix sum again
-	ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+	ANKI_LOOP for(U32 s = WG_SIZE / 2u; s > 0u; s >>= 1u)
 	{
-		const U32 WG_SIZE = INPUT_TEXTURES_HEIGHT * INPUT_TEXTURES_HEIGHT;
-		ANKI_LOOP for(U32 s = WG_SIZE / 2u; s > 0u; s >>= 1u)
+		if(gl_LocalInvocationIndex < s)
 		{
-			if(gl_LocalInvocationIndex < s)
+			ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
 			{
 				u_integrationResults[f][gl_LocalInvocationIndex] +=
 					u_integrationResults[f][gl_LocalInvocationIndex + s];
 			}
-
-			memoryBarrierBuffer();
-			barrier();
 		}
+
+		memoryBarrierBuffer();
+		barrier();
 	}
+#endif
 
 	// Store the results
 	ANKI_BRANCH if(gl_LocalInvocationIndex == 0u)
@@ -155,7 +162,11 @@ void main()
 		ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
 		{
 #if DEBUG_MODE == 0
-			Vec3 irradiance = u_integrationResults[f][0];
+#	if SECOND_BOUNCE == 1
+			Vec3 irradiance = u_integrationResults[f][0].xyz;
+#	else
+			Vec3 irradiance = s_diceIrradiance[f];
+#	endif
 			irradiance /= PI; // Pre-divide
 			const Vec3 toStoreValue = irradiance;
 #elif DEBUG_MODE == 1

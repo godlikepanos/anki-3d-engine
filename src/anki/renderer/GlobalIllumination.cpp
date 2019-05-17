@@ -743,7 +743,7 @@ void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, Interna
 	++binding;
 
 	// Bind temporary memory
-	allocateAndBindStorage<Vec3*>(sizeof(Vec3) * 6 * m_tileSize * m_tileSize, cmdb, 0, binding);
+	allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_tileSize * m_tileSize, cmdb, 0, binding);
 
 	const IVec4 volumeTexel = IVec4(giCtx.m_cell.x(), giCtx.m_cell.y(), giCtx.m_cell.z(), 0);
 	cmdb->setPushConstants(&volumeTexel, sizeof(volumeTexel));
