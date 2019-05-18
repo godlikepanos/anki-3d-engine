@@ -80,8 +80,10 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 	const Mat4& invViewProjMat,
 	const Vec4& cameraPosWSpace,
 	const UVec4& viewport,
-	const Vec2& gbufferTexCoordsMin,
-	const Vec2& gbufferTexCoordsMax,
+	const Vec2& gbufferTexCoordsScale,
+	const Vec2& gbufferTexCoordsBias,
+	const Vec2& lightbufferTexCoordsScale,
+	const Vec2& lightbufferTexCoordsBias,
 	F32 cameraNear,
 	F32 cameraFar,
 	DirectionalLightQueueElement* directionalLight,
@@ -89,15 +91,6 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 	ConstWeakArray<SpotLightQueueElement> slights,
 	CommandBufferPtr& cmdb)
 {
-	ANKI_ASSERT(gbufferTexCoordsMin < gbufferTexCoordsMax);
-
-	// Compute coords
-	Vec4 inputTexUvScaleAndOffset;
-	inputTexUvScaleAndOffset.x() = gbufferTexCoordsMax.x() - gbufferTexCoordsMin.x();
-	inputTexUvScaleAndOffset.y() = gbufferTexCoordsMax.y() - gbufferTexCoordsMin.y();
-	inputTexUvScaleAndOffset.z() = gbufferTexCoordsMin.x();
-	inputTexUvScaleAndOffset.w() = gbufferTexCoordsMin.y();
-
 	// Set common state for all lights
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->setViewport(viewport.x(), viewport.y(), viewport.z(), viewport.w());
@@ -112,11 +105,12 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 		DeferredDirectionalLightUniforms* unis = allocateAndBindUniforms<DeferredDirectionalLightUniforms*>(
 			sizeof(DeferredDirectionalLightUniforms), cmdb, 0, 1);
 
-		unis->m_inputTexUvScale = inputTexUvScaleAndOffset.xy();
-		unis->m_inputTexUvOffset = inputTexUvScaleAndOffset.zw();
+		unis->m_inputTexUvScale = gbufferTexCoordsScale;
+		unis->m_inputTexUvBias = gbufferTexCoordsBias;
+		unis->m_fbUvScale = lightbufferTexCoordsScale;
+		unis->m_fbUvBias = lightbufferTexCoordsBias;
 		unis->m_invViewProjMat = invViewProjMat;
 		unis->m_camPos = cameraPosWSpace.xyz();
-		unis->m_fbSize = Vec2(viewport.z(), viewport.w());
 
 		unis->m_diffuseColor = directionalLight->m_diffuseColor;
 		unis->m_lightDir = directionalLight->m_direction;
@@ -158,11 +152,12 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 		DeferredPointLightUniforms* light =
 			allocateAndBindUniforms<DeferredPointLightUniforms*>(sizeof(DeferredPointLightUniforms), cmdb, 0, 1);
 
-		light->m_inputTexUvScale = inputTexUvScaleAndOffset.xy();
-		light->m_inputTexUvOffset = inputTexUvScaleAndOffset.zw();
+		light->m_inputTexUvScale = gbufferTexCoordsScale;
+		light->m_inputTexUvBias = gbufferTexCoordsBias;
+		light->m_fbUvScale = lightbufferTexCoordsScale;
+		light->m_fbUvBias = lightbufferTexCoordsBias;
 		light->m_invViewProjMat = invViewProjMat;
 		light->m_camPos = cameraPosWSpace.xyz();
-		light->m_fbSize = Vec2(viewport.z(), viewport.w());
 		light->m_position = plightEl.m_worldPosition;
 		light->m_oneOverSquareRadius = 1.0f / (plightEl.m_radius * plightEl.m_radius);
 		light->m_diffuseColor = plightEl.m_diffuseColor;
@@ -199,11 +194,12 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 		DeferredSpotLightUniforms* light =
 			allocateAndBindUniforms<DeferredSpotLightUniforms*>(sizeof(DeferredSpotLightUniforms), cmdb, 0, 1);
 
-		light->m_inputTexUvScale = inputTexUvScaleAndOffset.xy();
-		light->m_inputTexUvOffset = inputTexUvScaleAndOffset.zw();
+		light->m_inputTexUvScale = gbufferTexCoordsScale;
+		light->m_inputTexUvBias = gbufferTexCoordsBias;
+		light->m_fbUvScale = lightbufferTexCoordsScale;
+		light->m_fbUvBias = lightbufferTexCoordsBias;
 		light->m_invViewProjMat = invViewProjMat;
 		light->m_camPos = cameraPosWSpace.xyz();
-		light->m_fbSize = Vec2(viewport.z(), viewport.w());
 
 		light->m_position = splightEl.m_worldTransform.getTranslationPart().xyz();
 		light->m_oneOverSquareRadius = 1.0f / (splightEl.m_distance * splightEl.m_distance);

@@ -13,15 +13,15 @@ struct DeferredPointLightUniforms
 {
 	// Use these to get the correct face UVs
 	Vec2 m_inputTexUvScale;
-	Vec2 m_inputTexUvOffset;
+	Vec2 m_inputTexUvBias;
+
+	Vec2 m_fbUvScale;
+	Vec2 m_fbUvBias;
 
 	Mat4 m_invViewProjMat;
 
 	Vec3 m_camPos;
 	F32 m_padding;
-
-	Vec2 m_fbSize;
-	Vec2 m_padding1;
 
 	// Light props
 	Vec3 m_position;
@@ -35,15 +35,15 @@ struct DeferredSpotLightUniforms
 {
 	// Use these to get the correct face UVs
 	Vec2 m_inputTexUvScale;
-	Vec2 m_inputTexUvOffset;
+	Vec2 m_inputTexUvBias;
+
+	Vec2 m_fbUvScale;
+	Vec2 m_fbUvBias;
 
 	Mat4 m_invViewProjMat;
 
 	Vec3 m_camPos;
 	F32 m_padding;
-
-	Vec2 m_fbSize;
-	Vec2 m_padding1;
 
 	// Light props
 	Vec3 m_position;
@@ -60,20 +60,19 @@ struct DeferredDirectionalLightUniforms
 {
 	// Use these to get the correct face UVs
 	Vec2 m_inputTexUvScale;
-	Vec2 m_inputTexUvOffset;
+	Vec2 m_inputTexUvBias;
+
+	Vec2 m_fbUvScale;
+	Vec2 m_fbUvBias;
 
 	Mat4 m_invViewProjMat;
 
 	Vec3 m_camPos;
-	F32 m_padding;
-
-	Vec2 m_fbSize;
 	F32 m_near;
-	F32 m_far;
 
 	// Light props
 	Vec3 m_diffuseColor;
-	F32 m_padding2;
+	F32 m_far;
 
 	Vec3 m_lightDir;
 	F32 m_effectiveShadowDistance;
