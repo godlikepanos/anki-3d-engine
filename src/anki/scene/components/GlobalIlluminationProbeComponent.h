@@ -88,8 +88,7 @@ public:
 		el.m_aabbMax = m_aabbMax;
 		el.m_cellCounts = m_cellCounts;
 		el.m_totalCellCount = m_cellCounts.x() * m_cellCounts.y() * m_cellCounts.z();
-		el.m_cellSize = m_cellSize;
-		ANKI_DEBUG_CODE(el.m_cacheEntryIndex = MAX_U32);
+		el.m_cellSizes = (m_aabbMax - m_aabbMin) / Vec3(m_cellCounts);
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
@@ -132,14 +131,11 @@ private:
 	{
 		for(U i = 0; i < 3; ++i)
 		{
-			// Align the box
-			alignRoundDown(m_cellSize, m_aabbMin[i]);
-			alignRoundUp(m_cellSize, m_aabbMax[i]);
 			ANKI_ASSERT(m_aabbMax[i] > m_aabbMin[i]);
 
-			// Compute the counts
-			const F32 epsilon = m_cellSize / 100.0f;
-			m_cellCounts[i] = U32((m_aabbMax[i] - m_aabbMin[i] + epsilon) / m_cellSize);
+			const F32 dist = m_aabbMax[i] - m_aabbMin[i];
+			m_cellCounts[i] = U32(ceil(dist / m_cellSize));
+			ANKI_ASSERT(m_cellCounts[i] > 0);
 		}
 	}
 };

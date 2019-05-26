@@ -23,7 +23,7 @@ layout(set = 0, binding = 1) uniform texture2D u_lightShadingTex;
 layout(set = 0, binding = 2) uniform texture2D u_gbufferTex0;
 layout(set = 0, binding = 3) uniform texture2D u_gbufferTex1;
 layout(set = 0, binding = 4) uniform texture2D u_gbufferTex2;
-layout(set = 0, binding = 5) uniform writeonly image3D u_irradianceVolumes[6u];
+layout(set = 0, binding = 5) uniform writeonly image3D u_irradianceVolume;
 
 // This is a temporary buffer used instead of shared memory because it's too large
 layout(set = 0, binding = 6, std430) buffer ssbo_
@@ -34,7 +34,7 @@ layout(set = 0, binding = 6, std430) buffer ssbo_
 layout(push_constant, std430) uniform pc_
 {
 	IVec3 u_volumeTexel;
-	I32 u_padding;
+	I32 u_nextTexelOffsetInU;
 };
 
 shared Vec3 s_diceIrradiance[6u];
@@ -157,7 +157,7 @@ void main()
 #endif
 
 	// Store the results
-	ANKI_BRANCH if(gl_LocalInvocationIndex == 0u)
+	if(gl_LocalInvocationIndex == 0u)
 	{
 		ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
 		{
@@ -172,14 +172,17 @@ void main()
 #elif DEBUG_MODE == 1
 			const Vec3 toStoreValue = colorPerCubeFace(f);
 #else
-			const UVec3 volumeSize = UVec3(imageSize(u_irradianceVolumes[0]));
-			const U32 cellIdx =
-				u_volumeTexel.z * volumeSize.x * volumeSize.y + u_volumeTexel.y * volumeSize.x + u_volumeTexel.x;
-			const F32 headmapFactor = F32(cellIdx) / F32(volumeSize.x * volumeSize.y * volumeSize.z);
+			const UVec3 volumeSize = UVec3(imageSize(u_irradianceVolume));
+			const UVec3 subvolumeSize = UVec3(volumeSize.x / 6u, volumeSize.y, volumeSize.z);
+			const U32 cellIdx = u_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + u_volumeTexel.y * subvolumeSize.x
+								+ u_volumeTexel.x;
+			const F32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
 			const Vec3 toStoreValue = heatmap(headmapFactor);
 #endif
 
-			imageStore(u_irradianceVolumes[f], u_volumeTexel, Vec4(toStoreValue, 0.0));
+			const IVec3 storeUvw =
+				IVec3(u_volumeTexel.x + I32(f) * u_nextTexelOffsetInU, u_volumeTexel.y, u_volumeTexel.z);
+			imageStore(u_irradianceVolume, storeUvw, Vec4(toStoreValue, 0.0));
 		}
 	}
 }

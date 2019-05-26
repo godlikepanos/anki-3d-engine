@@ -74,7 +74,7 @@ void main()
 			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
 
 		idxOffset = u_clusters[clusterIdx];
-		idxOffset = u_lightIndices[idxOffset - 2u]; // Use the offset metadata
+		idxOffset = u_lightIndices[idxOffset - 3u]; // Use the offset metadata
 	}
 
 	// Process decals

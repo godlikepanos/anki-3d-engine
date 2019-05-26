@@ -95,11 +95,16 @@ layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_FOG_DENSITY_VOLUMES_B
 #endif
 
 //
-// GI clipmap
+// GI (2)
 //
 #if defined(LIGHT_GLOBAL_ILLUMINATION_BINDING)
 layout(set = LIGHT_SET, binding = LIGHT_GLOBAL_ILLUMINATION_BINDING) uniform texture3D
-	u_globalIlluminationTex[GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT * 6u];
+	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
+
+layout(set = LIGHT_SET, binding = LIGHT_GLOBAL_ILLUMINATION_BINDING + 1) uniform ugi_
+{
+	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
+};
 #endif
 
 //

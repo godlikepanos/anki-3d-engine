@@ -21,9 +21,6 @@ namespace anki
 /// It builds a volume clipmap with ambient GI information.
 class GlobalIllumination : public RendererObject
 {
-private:
-	static constexpr U GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT = 2;
-
 anki_internal:
 	GlobalIllumination(Renderer* r)
 		: RendererObject(r)
@@ -38,12 +35,8 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	/// Return a number of volume render targets.
-	const Array2d<RenderTargetHandle, GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT, 6>&
-	getClipmapVolumeRenderTargets() const;
-
-	/// Return the clipmap AABB.
-	const Aabb& getClipmapAabb(U clipmapLevel) const;
+	/// Return the volume RT given a cache entry index.
+	const RenderTargetHandle& getVolumeRenderTarget(const GlobalIlluminationProbeQueueElement& probe) const;
 
 private:
 	class InternalContext;
@@ -53,12 +46,11 @@ private:
 	public:
 		U64 m_uuid; ///< Probe UUID.
 		Timestamp m_lastUsedTimestamp = 0; ///< When it was last seen by the renderer.
-		Array<TexturePtr, 6> m_volumeTextures; ///< One for the 6 directions of the ambient dice.
+		TexturePtr m_volumeTex; ///< Contains the 6 directions.
 		UVec3 m_volumeSize = UVec3(0u);
 		Vec3 m_probeAabbMin = Vec3(0.0f);
 		Vec3 m_probeAabbMax = Vec3(0.0f);
 		U32 m_renderedCells = 0;
-		Array<RenderTargetHandle, 6> m_rtHandles;
 	};
 
 	class
@@ -97,17 +89,6 @@ private:
 		ShaderProgramPtr m_grProg;
 	} m_irradiance; ///< Irradiance.
 
-	class
-	{
-	public:
-		ShaderProgramResourcePtr m_prog;
-		DynamicArray<ShaderProgramPtr> m_grProgs; ///< One program for a number of probe counts.
-		Array<UVec3, GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT> m_volumeSizes; ///< This is dynamic.
-		Array<F32, GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT> m_cellSizes;
-		Array<U8, 3> m_workgroupSize = {{8, 8, 8}};
-		Array<F32, GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT - 1> m_levelMaxDistances;
-	} m_clipmap; ///< Clipmap population.
-
 	InternalContext* m_giCtx = nullptr;
 	DynamicArray<CacheEntry> m_cacheEntries;
 	HashMap<U64, U32> m_probeUuidToCacheEntryIdx;
@@ -119,19 +100,13 @@ private:
 	ANKI_USE_RESULT Error initShadowMapping(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initLightShading(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
-	ANKI_USE_RESULT Error initClipmap(const ConfigSet& cfg);
-
-	void populateRenderGraphClipmap(InternalContext& ctx);
 
 	void runGBufferInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
 	void runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const;
 	void runLightShading(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
-	void runClipmapPopulation(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx);
 
-	void prepareProbes(RenderingContext& rctx,
-		GlobalIlluminationProbeQueueElement*& probeToUpdateThisFrame,
-		UVec3& probeToUpdateThisFrameCell);
+	void prepareProbes(InternalContext& giCtx);
 };
 /// @}
 

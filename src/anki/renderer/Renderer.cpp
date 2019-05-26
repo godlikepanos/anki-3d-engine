@@ -600,14 +600,6 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	{
 		blk->m_dirLight.m_active = 0;
 	}
-
-	// GI clipmap
-	for(U level = 0; level < GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT; ++level)
-	{
-		const Aabb& box = m_gi->getClipmapAabb(level);
-		blk->m_globalIlluminationClipmapLevels[level].m_min = box.getMin().xyz();
-		blk->m_globalIlluminationClipmapLevels[level].m_max = box.getMax().xyz();
-	}
 }
 
 } // end namespace anki

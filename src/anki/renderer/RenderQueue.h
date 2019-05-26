@@ -186,8 +186,7 @@ public:
 	Vec3 m_aabbMax;
 	UVec3 m_cellCounts;
 	U32 m_totalCellCount;
-	F32 m_cellSize;
-	U32 m_cacheEntryIndex; ///< Renderer internal.
+	Vec3 m_cellSizes; ///< The cells might not be cubes.
 
 	GlobalIlluminationProbeQueueElement()
 	{

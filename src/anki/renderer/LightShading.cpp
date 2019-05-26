@@ -120,27 +120,32 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindColorTexture(0, 6, m_r->getIndirect().getIrradianceRt());
 		cmdb->bindTexture(0, 7, m_r->getIndirect().getIntegrationLut(), TextureUsageBit::SAMPLED_FRAGMENT);
 
-		bindStorage(cmdb, 0, 8, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 9, rsrc.m_indicesToken);
-
-		const auto& arr = m_r->getGlobalIllumination().getClipmapVolumeRenderTargets();
-		for(U level = 0; level < GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT; ++level)
+		for(U idx = 0; idx < MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES; ++idx)
 		{
-			for(U dir = 0; dir < 6; ++dir)
+			if(idx < ctx.m_renderQueue->m_giProbes.getSize())
 			{
-				rgraphCtx.bindColorTexture(0, 10, arr[level][dir], level * 6 + dir);
+				rgraphCtx.bindColorTexture(
+					0, 8, m_r->getGlobalIllumination().getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]), idx);
+			}
+			else
+			{
+				cmdb->bindTexture(0, 8, m_r->getDummyTextureView3d(), TextureUsageBit::SAMPLED_FRAGMENT, idx);
 			}
 		}
+		bindUniforms(cmdb, 0, 9, rsrc.m_globalIlluminationProbesToken);
 
-		cmdb->bindSampler(0, 11, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 12, m_r->getSamplers().m_trilinearRepeat);
-		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 15, m_r->getGBuffer().getColorRt(2));
+		bindStorage(cmdb, 0, 10, rsrc.m_clustersToken);
+		bindStorage(cmdb, 0, 11, rsrc.m_indicesToken);
+
+		cmdb->bindSampler(0, 12, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 13, m_r->getSamplers().m_trilinearRepeat);
+		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 15, m_r->getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 16, m_r->getGBuffer().getColorRt(2));
 		rgraphCtx.bindTexture(
-			0, 16, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-		rgraphCtx.bindColorTexture(0, 17, m_r->getSsr().getRt());
-		rgraphCtx.bindColorTexture(0, 18, m_r->getSsao().getRt());
+			0, 17, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindColorTexture(0, 18, m_r->getSsr().getRt());
+		rgraphCtx.bindColorTexture(0, 19, m_r->getSsao().getRt());
 
 		// Draw
 		drawQuad(cmdb);
@@ -215,13 +220,10 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
-	const auto& arr = m_r->getGlobalIllumination().getClipmapVolumeRenderTargets();
-	for(U level = 0; level < GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT; ++level)
+	for(U idx = 0; idx < ctx.m_renderQueue->m_giProbes.getSize(); ++idx)
 	{
-		for(U dir = 0; dir < 6; ++dir)
-		{
-			pass.newDependency({arr[level][dir], TextureUsageBit::SAMPLED_FRAGMENT});
-		}
+		pass.newDependency({m_r->getGlobalIllumination().getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]),
+			TextureUsageBit::SAMPLED_FRAGMENT});
 	}
 
 	// Fog

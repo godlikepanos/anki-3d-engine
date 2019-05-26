@@ -458,6 +458,32 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		}
 	}
 
+	// GI probes
+	{
+		Aabb probeBox;
+		for(U i = 0; i < ctx.m_in->m_renderQueue->m_giProbes.getSize(); ++i)
+		{
+			const GlobalIlluminationProbeQueueElement& probe = ctx.m_in->m_renderQueue->m_giProbes[i];
+			probeBox.setMin(probe.m_aabbMin);
+			probeBox.setMax(probe.m_aabbMax);
+
+			if(!insideClusterFrustum(frustumPlanes, probeBox))
+			{
+				continue;
+			}
+
+			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			{
+				if(!testCollision(probeBox, clusterBoxes[clusterZ]))
+				{
+					continue;
+				}
+
+				ANKI_SET_IDX(4);
+			}
+		}
+	}
+
 	// Fog volumes
 	{
 		for(U i = 0; i < ctx.m_in->m_renderQueue->m_fogDensityVolumes.getSize(); ++i)
@@ -482,7 +508,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 						continue;
 					}
 
-					ANKI_SET_IDX(4);
+					ANKI_SET_IDX(5);
 				}
 			}
 			else
@@ -503,7 +529,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 						continue;
 					}
 
-					ANKI_SET_IDX(4);
+					ANKI_SET_IDX(5);
 				}
 			}
 		}
@@ -753,6 +779,33 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	else
 	{
 		ctx.m_out->m_fogDensityVolumesToken.markUnused();
+	}
+
+	// Write the probes
+	const U visibleGiProbeCount = rqueue.m_giProbes.getSize();
+	if(visibleGiProbeCount)
+	{
+		GlobalIlluminationProbe* data = static_cast<GlobalIlluminationProbe*>(
+			ctx.m_in->m_stagingMem->allocateFrame(sizeof(GlobalIlluminationProbe) * visibleGiProbeCount,
+				StagingGpuMemoryType::UNIFORM,
+				ctx.m_out->m_globalIlluminationProbesToken));
+
+		WeakArray<GlobalIlluminationProbe> gpuProbes(data, visibleGiProbeCount);
+
+		for(U i = 0; i < visibleGiProbeCount; ++i)
+		{
+			const GlobalIlluminationProbeQueueElement& in = rqueue.m_giProbes[i];
+			GlobalIlluminationProbe& out = gpuProbes[i];
+
+			out.m_aabbMin = in.m_aabbMin;
+			out.m_aabbMax = in.m_aabbMax;
+			out.m_textureIndex = &in - &rqueue.m_giProbes.getFront();
+			out.m_halfTexelSize = 1.0f / Vec3(in.m_cellCounts.x(), in.m_cellCounts.y(), in.m_cellCounts.z()) * 0.5f;
+		}
+	}
+	else
+	{
+		ctx.m_out->m_globalIlluminationProbesToken.markUnused();
 	}
 }
 
