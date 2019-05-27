@@ -12,7 +12,7 @@
 ANKI_BEGIN_NAMESPACE
 
 // Consts
-const U32 TYPED_OBJECT_COUNT = 6u; // Point lights, spot lights, refl probes, decals, GI probes and fog volumes
+const U32 TYPED_OBJECT_COUNT = 6u; // Point lights, spot lights, refl probes, GI probes, decals and fog volumes
 const F32 INVALID_TEXTURE_INDEX = -1.0f;
 const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; // The near plane on the shadow map frustums.
 const U32 MAX_SHADOW_CASCADES = 4u;
@@ -112,10 +112,10 @@ struct GlobalIlluminationProbe
 	U32 m_textureIndex;
 
 	Vec3 m_aabbMax;
-	F32 m_padding0;
+	F32 m_volumeSizeUOver6; // textureSize(texArr[m_textureIndex]).x / 6
 
-	Vec3 m_halfTexelSize; // (1.0 / giVolumeTextureSize) / 2.0
-	F32 m_padding1;
+	Vec3 m_padding0;
+	F32 m_halfTexelSizeU; // (1.0 / textureSize(texArr[m_textureIndex]).x) / 2.0
 };
 const U32 SIZEOF_GLOBAL_ILLUMINATION_PROBE = 3u * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == SIZEOF_GLOBAL_ILLUMINATION_PROBE)

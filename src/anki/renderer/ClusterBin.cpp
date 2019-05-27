@@ -431,6 +431,32 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		}
 	}
 
+	// GI probes
+	{
+		Aabb probeBox;
+		for(U i = 0; i < ctx.m_in->m_renderQueue->m_giProbes.getSize(); ++i)
+		{
+			const GlobalIlluminationProbeQueueElement& probe = ctx.m_in->m_renderQueue->m_giProbes[i];
+			probeBox.setMin(probe.m_aabbMin);
+			probeBox.setMax(probe.m_aabbMax);
+
+			if(!insideClusterFrustum(frustumPlanes, probeBox))
+			{
+				continue;
+			}
+
+			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			{
+				if(!testCollision(probeBox, clusterBoxes[clusterZ]))
+				{
+					continue;
+				}
+
+				ANKI_SET_IDX(3);
+			}
+		}
+	}
+
 	// Decals
 	{
 		Obb decalBox;
@@ -449,32 +475,6 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
 				if(!testCollision(decalBox, clusterBoxes[clusterZ]))
-				{
-					continue;
-				}
-
-				ANKI_SET_IDX(3);
-			}
-		}
-	}
-
-	// GI probes
-	{
-		Aabb probeBox;
-		for(U i = 0; i < ctx.m_in->m_renderQueue->m_giProbes.getSize(); ++i)
-		{
-			const GlobalIlluminationProbeQueueElement& probe = ctx.m_in->m_renderQueue->m_giProbes[i];
-			probeBox.setMin(probe.m_aabbMin);
-			probeBox.setMax(probe.m_aabbMax);
-
-			if(!insideClusterFrustum(frustumPlanes, probeBox))
-			{
-				continue;
-			}
-
-			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
-			{
-				if(!testCollision(probeBox, clusterBoxes[clusterZ]))
 				{
 					continue;
 				}
@@ -800,7 +800,8 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			out.m_aabbMin = in.m_aabbMin;
 			out.m_aabbMax = in.m_aabbMax;
 			out.m_textureIndex = &in - &rqueue.m_giProbes.getFront();
-			out.m_halfTexelSize = 1.0f / Vec3(in.m_cellCounts.x(), in.m_cellCounts.y(), in.m_cellCounts.z()) * 0.5f;
+			out.m_volumeSizeUOver6 = F32(in.m_cellCounts.x()) / 6.0f;
+			out.m_halfTexelSizeU = 1.0f / in.m_cellCounts.x() / 2.0f;
 		}
 	}
 	else

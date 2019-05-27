@@ -452,19 +452,19 @@ Vec3 colorPerCubeFace(const U32 dir)
 		color = Vec3(1.0, 0.0, 0.0);
 		break;
 	case 1:
-		color = Vec3(0.5, 0.0, 0.0);
+		color = Vec3(0.25, 0.0, 0.0);
 		break;
 	case 2:
 		color = Vec3(0.0, 1.0, 0.0);
 		break;
 	case 3:
-		color = Vec3(0.0, 0.5, 0.0);
+		color = Vec3(0.0, 0.25, 0.0);
 		break;
 	case 4:
 		color = Vec3(0.0, 0.0, 1.0);
 		break;
 	default:
-		color = Vec3(0.0, 0.0, 0.5);
+		color = Vec3(0.0, 0.0, 0.25);
 	}
 	return color;
 }

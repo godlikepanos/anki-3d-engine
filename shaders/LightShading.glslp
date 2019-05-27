@@ -217,5 +217,32 @@ void main()
 
 		out_color += diffIndirect * gbuffer.m_diffuse + finalRefl * env;
 	}
+
+	// Read GI
+	{
+		Vec3 diffIndirect = Vec3(0.0);
+		F32 totalBlendWeight = EPSILON;
+
+		// Loop probes
+		ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+		{
+			GlobalIlluminationProbe probe = u_giProbes[idx];
+
+			// Compute blend weight
+			const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
+			totalBlendWeight += blendWeight;
+
+			// Sample
+			const Vec3 c = sampleGlobalIllumination(
+				worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures, u_trilinearClampSampler);
+			diffIndirect += c * blendWeight;
+		}
+
+		// Normalize
+		diffIndirect /= totalBlendWeight;
+
+		//out_color += diffIndirect * gbuffer.m_diffuse;
+		out_color = diffIndirect;
+	}
 }
 #pragma anki end
