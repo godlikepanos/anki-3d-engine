@@ -164,11 +164,10 @@ void main()
 		out_color += (diffC + specC) * light.m_diffuseColor * (att * spot * max(gbuffer.m_subsurface, lambert));
 	}
 
-	// Refl & indirect
+	// Indirect specular
 	{
 		// Do the probe read
 		Vec3 specIndirect = Vec3(0.0);
-		Vec3 diffIndirect = Vec3(0.0);
 
 		const Vec3 reflDir = reflect(-viewDir, gbuffer.m_normal);
 		const F32 reflLod = F32(IR_MIPMAP_COUNT - 1u) * gbuffer.m_roughness;
@@ -192,17 +191,10 @@ void main()
 			Vec4 cubeArrUv = Vec4(cubeUv, cubemapIndex);
 			Vec3 c = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
 			specIndirect += c * blendWeight;
-
-			// Sample irradiance
-			cubeUv = intersectProbe(worldPos, gbuffer.m_normal, aabbMin, aabbMax, probeOrigin);
-			cubeArrUv = Vec4(cubeUv, cubemapIndex);
-			c = textureLod(u_irradianceTex, u_trilinearClampSampler, cubeArrUv, 0.0).rgb;
-			diffIndirect += c * blendWeight;
 		}
 
 		// Normalize the colors
 		specIndirect /= totalBlendWeight;
-		diffIndirect /= totalBlendWeight;
 
 		// Read the SSL result
 		const Vec4 ssr = textureLod(u_ssrRt, u_trilinearClampSampler, in_uv, 0.0);
@@ -215,10 +207,10 @@ void main()
 		const Vec3 env =
 			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
-		out_color += diffIndirect * gbuffer.m_diffuse + finalRefl * env;
+		out_color += finalRefl * env;
 	}
 
-	// Read GI
+	// Indirect diffuse
 	{
 		Vec3 diffIndirect = Vec3(0.0);
 		F32 totalBlendWeight = EPSILON;
@@ -241,8 +233,7 @@ void main()
 		// Normalize
 		diffIndirect /= totalBlendWeight;
 
-		//out_color += diffIndirect * gbuffer.m_diffuse;
-		out_color = diffIndirect;
+		out_color += diffIndirect * gbuffer.m_diffuse;
 	}
 }
 #pragma anki end

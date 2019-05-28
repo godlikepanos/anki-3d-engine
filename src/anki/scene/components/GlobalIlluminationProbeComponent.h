@@ -129,14 +129,9 @@ private:
 	/// Recalc come values.
 	void updateMembers()
 	{
-		for(U i = 0; i < 3; ++i)
-		{
-			ANKI_ASSERT(m_aabbMax[i] > m_aabbMin[i]);
-
-			const F32 dist = m_aabbMax[i] - m_aabbMin[i];
-			m_cellCounts[i] = U32(ceil(dist / m_cellSize));
-			ANKI_ASSERT(m_cellCounts[i] > 0);
-		}
+		const Vec3 dist = m_aabbMax - m_aabbMin;
+		m_cellCounts = UVec3(dist / m_cellSize);
+		m_cellCounts = m_cellCounts.max(UVec3(1));
 	}
 };
 /// @}

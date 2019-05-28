@@ -112,12 +112,9 @@ struct GlobalIlluminationProbe
 	U32 m_textureIndex;
 
 	Vec3 m_aabbMax;
-	F32 m_volumeSizeUOver6; // textureSize(texArr[m_textureIndex]).x / 6
-
-	Vec3 m_padding0;
 	F32 m_halfTexelSizeU; // (1.0 / textureSize(texArr[m_textureIndex]).x) / 2.0
 };
-const U32 SIZEOF_GLOBAL_ILLUMINATION_PROBE = 3u * SIZEOF_VEC4;
+const U32 SIZEOF_GLOBAL_ILLUMINATION_PROBE = 2u * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == SIZEOF_GLOBAL_ILLUMINATION_PROBE)
 
 // Common uniforms for light shading passes

@@ -138,7 +138,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		bindStorage(cmdb, 0, 11, rsrc.m_indicesToken);
 
 		cmdb->bindSampler(0, 12, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 13, m_r->getSamplers().m_trilinearRepeat);
+		cmdb->bindSampler(0, 13, m_r->getSamplers().m_trilinearClamp);
 		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(0));
 		rgraphCtx.bindColorTexture(0, 15, m_r->getGBuffer().getColorRt(1));
 		rgraphCtx.bindColorTexture(0, 16, m_r->getGBuffer().getColorRt(2));

@@ -294,7 +294,7 @@ Vec3 sampleGlobalIllumination(const Vec3 worldPos,
 	{
 		// Point to the correct UV
 		Vec3 shiftedUVw = uvw;
-		shiftedUVw.x += probe.m_volumeSizeUOver6 * F32(dir);
+		shiftedUVw.x += (1.0 / 6.0) * F32(dir);
 
 		irradiancePerDir[dir] =
 			textureLod(textures[nonuniformEXT(probe.m_textureIndex)], linearAnyClampSampler, shiftedUVw, 0.0).rgb;
