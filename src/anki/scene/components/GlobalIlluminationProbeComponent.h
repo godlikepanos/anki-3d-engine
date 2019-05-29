@@ -63,6 +63,17 @@ public:
 		return m_aabbMax.xyz0();
 	}
 
+	F32 getFadeDistance() const
+	{
+		return m_fadeDistance;
+	}
+
+	void setFadeDistance(F32 dist)
+	{
+		ANKI_ASSERT(dist >= 0.0f);
+		m_fadeDistance = dist;
+	}
+
 	/// Returns true if it's marked for update this frame.
 	Bool getMarkedForRendering() const
 	{
@@ -89,6 +100,7 @@ public:
 		el.m_cellCounts = m_cellCounts;
 		el.m_totalCellCount = m_cellCounts.x() * m_cellCounts.y() * m_cellCounts.z();
 		el.m_cellSizes = (m_aabbMax - m_aabbMin) / Vec3(m_cellCounts);
+		el.m_fadeDistance = m_fadeDistance;
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
@@ -104,8 +116,9 @@ private:
 	Vec3 m_aabbMin = Vec3(-1.0f);
 	Vec3 m_aabbMax = Vec3(+1.0f);
 	Vec3 m_renderPosition = Vec3(0.0f);
-	F32 m_cellSize = 4.0f; ///< Cell size in meters.
 	UVec3 m_cellCounts = UVec3(2u);
+	F32 m_cellSize = 4.0f; ///< Cell size in meters.
+	F32 m_fadeDistance = 0.2f;
 	Bool m_markedForRendering = false;
 	Bool m_dirty = true;
 

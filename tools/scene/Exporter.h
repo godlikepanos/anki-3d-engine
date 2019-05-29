@@ -72,7 +72,15 @@ public:
 	aiVector3D m_aabbMax;
 };
 
-using GiProbe = ReflectionProbe;
+class GiProbe
+{
+public:
+	aiVector3D m_position;
+	aiVector3D m_aabbMin;
+	aiVector3D m_aabbMax;
+	float m_fadeDistance = -1.0f;
+	float m_cellSize = -1.0f;
+};
 
 class ReflectionProxy
 {

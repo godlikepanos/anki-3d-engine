@@ -113,8 +113,14 @@ struct GlobalIlluminationProbe
 
 	Vec3 m_aabbMax;
 	F32 m_halfTexelSizeU; // (1.0 / textureSize(texArr[m_textureIndex]).x) / 2.0
+
+	// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at m_fadeDistance and less.
+	F32 m_fadeDistance;
+	F32 m_padding0;
+	F32 m_padding1;
+	F32 m_padding2;
 };
-const U32 SIZEOF_GLOBAL_ILLUMINATION_PROBE = 2u * SIZEOF_VEC4;
+const U32 SIZEOF_GLOBAL_ILLUMINATION_PROBE = 3u * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == SIZEOF_GLOBAL_ILLUMINATION_PROBE)
 
 // Common uniforms for light shading passes

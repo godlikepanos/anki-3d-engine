@@ -122,7 +122,7 @@ index d33ce725e58..bf36943b324 100644
  	ep.addProfileElements();
  	bool twoSided = false;
 diff --git a/source/blender/collada/GeometryExporter.cpp b/source/blender/collada/GeometryExporter.cpp
-index 4b693332715..b554d7e2422 100644
+index 4b693332715..04fb3ee71f3 100644
 --- a/source/blender/collada/GeometryExporter.cpp
 +++ b/source/blender/collada/GeometryExporter.cpp
 @@ -47,6 +47,7 @@ extern "C" {
@@ -133,7 +133,7 @@ index 4b693332715..b554d7e2422 100644
  }
  
  #include "collada_internal.h"
-@@ -154,12 +155,133 @@ void GeometryExporter::operator()(Object *ob)
+@@ -154,12 +155,135 @@ void GeometryExporter::operator()(Object *ob)
  		}
  	}
  
@@ -148,6 +148,8 @@ index 4b693332715..b554d7e2422 100644
 +			"skip",
 +			"reflection_probe",
 +			"gi_probe",
++			"gi_probe_fade_distance",
++			"gi_probe_cell_size",
 +			"reflection_proxy",
 +			"occluder",
 +			"collision_mesh",

@@ -793,6 +793,8 @@ void Exporter::visitNode(const aiNode* ainode)
 		std::string lod1MeshName;
 		std::string collisionMesh;
 		bool special = false;
+		GiProbe giProbe;
+		bool isGiProbe = false;
 		for(const auto& prop : m_scene->mMeshes[meshIndex]->mProperties)
 		{
 			if(prop.first == "particles")
@@ -835,7 +837,7 @@ void Exporter::visitNode(const aiNode* ainode)
 			}
 			else if(prop.first == "gi_probe" && prop.second == "true")
 			{
-				GiProbe probe;
+				GiProbe& probe = giProbe;
 				aiMatrix4x4 trf = toAnkiMatrix(ainode->mTransformation);
 				probe.m_position = aiVector3D(trf.a4, trf.b4, trf.c4);
 
@@ -846,9 +848,16 @@ void Exporter::visitNode(const aiNode* ainode)
 				probe.m_aabbMin = probe.m_position - half - probe.m_position;
 				probe.m_aabbMax = probe.m_position + half - probe.m_position;
 
-				m_giProbes.push_back(probe);
-
+				isGiProbe = true;
 				special = true;
+			}
+			else if(prop.first == "gi_probe_fade_distance")
+			{
+				giProbe.m_fadeDistance = std::strtof(prop.second.c_str(), nullptr);
+			}
+			else if(prop.first == "gi_probe_cell_size")
+			{
+				giProbe.m_cellSize = std::strtof(prop.second.c_str(), nullptr);
 			}
 			else if(prop.first == "reflection_proxy" && prop.second == "true")
 			{
@@ -936,6 +945,11 @@ void Exporter::visitNode(const aiNode* ainode)
 				special = true;
 				break;
 			}
+		}
+
+		if(isGiProbe)
+		{
+			m_giProbes.push_back(giProbe);
 		}
 
 		if(special)
@@ -1062,6 +1076,16 @@ void Exporter::exportAll()
 		file << "comp:setBoundingBox(Vec4.new(" << probe.m_aabbMin.x << ", " << probe.m_aabbMin.y << ", "
 			 << probe.m_aabbMin.z << ", 0), Vec4.new(" << probe.m_aabbMax.x << ", " << probe.m_aabbMax.y << ", "
 			 << probe.m_aabbMax.z << ", 0))\n";
+
+		if(probe.m_fadeDistance >= 0.0f)
+		{
+			file << "comp:setFadeDistance(" << probe.m_fadeDistance << ")\n";
+		}
+
+		if(probe.m_cellSize > 0.0f)
+		{
+			file << "comp:setCellSize(" << probe.m_cellSize << ")\n";
+		}
 
 		aiMatrix4x4 trf;
 		aiMatrix4x4::Translation(probe.m_position, trf);

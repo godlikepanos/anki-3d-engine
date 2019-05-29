@@ -278,6 +278,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				<method name="getCellSize">
 					<return>F32</return>
 				</method>
+				<method name="setFadeDistance">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getFadeDistance">
+					<return>F32</return>
+				</method>
 			</methods>
 		</class>
 

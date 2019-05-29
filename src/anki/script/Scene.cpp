@@ -2217,6 +2217,100 @@ static int wrapGlobalIlluminationProbeComponentgetCellSize(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method GlobalIlluminationProbeComponent::setFadeDistance.
+static inline int pwrapGlobalIlluminationProbeComponentsetFadeDistance(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoGlobalIlluminationProbeComponent, ud))
+	{
+		return -1;
+	}
+
+	GlobalIlluminationProbeComponent* self = ud->getData<GlobalIlluminationProbeComponent>();
+
+	// Pop arguments
+	F32 arg0;
+	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
+	{
+		return -1;
+	}
+
+	// Call the method
+	self->setFadeDistance(arg0);
+
+	return 0;
+}
+
+/// Wrap method GlobalIlluminationProbeComponent::setFadeDistance.
+static int wrapGlobalIlluminationProbeComponentsetFadeDistance(lua_State* l)
+{
+	int res = pwrapGlobalIlluminationProbeComponentsetFadeDistance(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Pre-wrap method GlobalIlluminationProbeComponent::getFadeDistance.
+static inline int pwrapGlobalIlluminationProbeComponentgetFadeDistance(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoGlobalIlluminationProbeComponent, ud))
+	{
+		return -1;
+	}
+
+	GlobalIlluminationProbeComponent* self = ud->getData<GlobalIlluminationProbeComponent>();
+
+	// Call the method
+	F32 ret = self->getFadeDistance();
+
+	// Push return value
+	lua_pushnumber(l, ret);
+
+	return 1;
+}
+
+/// Wrap method GlobalIlluminationProbeComponent::getFadeDistance.
+static int wrapGlobalIlluminationProbeComponentgetFadeDistance(lua_State* l)
+{
+	int res = pwrapGlobalIlluminationProbeComponentgetFadeDistance(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Wrap class GlobalIlluminationProbeComponent.
 static inline void wrapGlobalIlluminationProbeComponent(lua_State* l)
 {
@@ -2228,6 +2322,8 @@ static inline void wrapGlobalIlluminationProbeComponent(lua_State* l)
 		l, "getAlignedBoundingBoxMax", wrapGlobalIlluminationProbeComponentgetAlignedBoundingBoxMax);
 	LuaBinder::pushLuaCFuncMethod(l, "setCellSize", wrapGlobalIlluminationProbeComponentsetCellSize);
 	LuaBinder::pushLuaCFuncMethod(l, "getCellSize", wrapGlobalIlluminationProbeComponentgetCellSize);
+	LuaBinder::pushLuaCFuncMethod(l, "setFadeDistance", wrapGlobalIlluminationProbeComponentsetFadeDistance);
+	LuaBinder::pushLuaCFuncMethod(l, "getFadeDistance", wrapGlobalIlluminationProbeComponentgetFadeDistance);
 	lua_settop(l, 0);
 }
 

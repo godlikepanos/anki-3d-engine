@@ -186,7 +186,8 @@ public:
 	Vec3 m_aabbMax;
 	UVec3 m_cellCounts;
 	U32 m_totalCellCount;
-	Vec3 m_cellSizes; ///< The cells might not be cubes.
+	Vec3 m_cellSizes; ///< The cells might not be cubes so have different sizes per dimension.
+	F32 m_fadeDistance;
 
 	GlobalIlluminationProbeQueueElement()
 	{
