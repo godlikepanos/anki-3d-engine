@@ -115,23 +115,12 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 		rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 
-		bindUniforms(cmdb, 0, 4, rsrc.m_probesToken);
+		bindUniforms(cmdb, 0, 4, rsrc.m_reflectionProbesToken);
 		rgraphCtx.bindColorTexture(0, 5, m_r->getIndirect().getReflectionRt());
 		rgraphCtx.bindColorTexture(0, 6, m_r->getIndirect().getIrradianceRt());
 		cmdb->bindTexture(0, 7, m_r->getIndirect().getIntegrationLut(), TextureUsageBit::SAMPLED_FRAGMENT);
 
-		for(U idx = 0; idx < MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES; ++idx)
-		{
-			if(idx < ctx.m_renderQueue->m_giProbes.getSize())
-			{
-				rgraphCtx.bindColorTexture(
-					0, 8, m_r->getGlobalIllumination().getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]), idx);
-			}
-			else
-			{
-				cmdb->bindTexture(0, 8, m_r->getDummyTextureView3d(), TextureUsageBit::SAMPLED_FRAGMENT, idx);
-			}
-		}
+		m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 8);
 		bindUniforms(cmdb, 0, 9, rsrc.m_globalIlluminationProbesToken);
 
 		bindStorage(cmdb, 0, 10, rsrc.m_clustersToken);
@@ -220,11 +209,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
-	for(U idx = 0; idx < ctx.m_renderQueue->m_giProbes.getSize(); ++idx)
-	{
-		pass.newDependency({m_r->getGlobalIllumination().getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]),
-			TextureUsageBit::SAMPLED_FRAGMENT});
-	}
+	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Fog
 	pass.newDependency({m_r->getVolumetricFog().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});

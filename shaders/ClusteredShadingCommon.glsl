@@ -60,15 +60,15 @@ layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 2) uniform highp textur
 //
 // Indirect uniforms (4)
 //
-#if defined(LIGHT_INDIRECT_BINDING)
-layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING) uniform u3_
+#if defined(LIGHT_INDIRECT_SPECULAR_BINDING)
+layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING) uniform u3_
 {
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / SIZEOF_REFLECTION_PROBE];
 };
 
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 2) uniform textureCubeArray u_irradianceTex;
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 3) uniform texture2D u_integrationLut;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 2) uniform textureCubeArray u_irradianceTex;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 3) uniform texture2D u_integrationLut;
 #endif
 
 //
@@ -85,7 +85,7 @@ layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 2) uniform texture2D u_
 #endif
 
 //
-// Fog density uniforms
+// Fog density uniforms (1)
 //
 #if defined(LIGHT_FOG_DENSITY_VOLUMES_BINDING)
 layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_FOG_DENSITY_VOLUMES_BINDING) uniform u5_

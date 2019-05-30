@@ -151,14 +151,14 @@ using ReflectionProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueu
 class ReflectionProbeQueueElement final
 {
 public:
+	U64 m_uuid;
 	ReflectionProbeQueueElementFeedbackCallback m_feedbackCallback;
 	RenderQueueDrawCallback m_drawCallback;
 	void* m_userData;
-	U64 m_uuid;
+	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_worldPosition;
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
-	Array<RenderQueue*, 6> m_renderQueues;
 	U32 m_textureArrayIndex; ///< Renderer internal.
 
 	ReflectionProbeQueueElement()
@@ -192,6 +192,18 @@ public:
 	GlobalIlluminationProbeQueueElement()
 	{
 	}
+
+	Bool operator<(const GlobalIlluminationProbeQueueElement& b) const
+	{
+		if(m_cellSizes.x() != b.m_cellSizes.x())
+		{
+			return m_cellSizes.x() < b.m_cellSizes.x();
+		}
+		else
+		{
+			return m_totalCellCount < b.m_totalCellCount;
+		}
+	}
 };
 
 static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement>::value == true,
@@ -201,13 +213,13 @@ static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement
 class LensFlareQueueElement final
 {
 public:
-	Vec3 m_worldPosition;
-	Vec2 m_firstFlareSize;
-	Vec4 m_colorMultiplier;
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 	const TextureView* m_textureView;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
+	Vec3 m_worldPosition;
+	Vec2 m_firstFlareSize;
+	Vec4 m_colorMultiplier;
 
 	LensFlareQueueElement()
 	{

@@ -38,6 +38,13 @@ anki_internal:
 	/// Return the volume RT given a cache entry index.
 	const RenderTargetHandle& getVolumeRenderTarget(const GlobalIlluminationProbeQueueElement& probe) const;
 
+	/// Set the render graph dependencies.
+	void setRenderGraphDependencies(
+		RenderingContext& ctx, RenderPassDescriptionBase& pass, TextureUsageBit usage) const;
+
+	/// Bind the volume textures to a command buffer.
+	void bindVolumeTextures(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, U32 set, U32 binding) const;
+
 private:
 	class InternalContext;
 

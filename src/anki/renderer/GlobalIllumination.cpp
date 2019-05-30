@@ -73,6 +73,32 @@ const RenderTargetHandle& GlobalIllumination::getVolumeRenderTarget(
 	return m_giCtx->m_irradianceProbeRts[idx];
 }
 
+void GlobalIllumination::setRenderGraphDependencies(
+	RenderingContext& ctx, RenderPassDescriptionBase& pass, TextureUsageBit usage) const
+{
+	for(U idx = 0; idx < ctx.m_renderQueue->m_giProbes.getSize(); ++idx)
+	{
+		pass.newDependency({getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]), usage});
+	}
+}
+
+void GlobalIllumination::bindVolumeTextures(
+	const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, U32 set, U32 binding) const
+{
+	for(U idx = 0; idx < MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES; ++idx)
+	{
+		if(idx < ctx.m_renderQueue->m_giProbes.getSize())
+		{
+			rgraphCtx.bindColorTexture(set, binding, getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]), idx);
+		}
+		else
+		{
+			rgraphCtx.m_commandBuffer->bindTexture(
+				set, binding, m_r->getDummyTextureView3d(), TextureUsageBit::SAMPLED_ALL, idx);
+		}
+	}
+}
+
 Error GlobalIllumination::init(const ConfigSet& cfg)
 {
 	ANKI_R_LOGI("Initializing global illumination");

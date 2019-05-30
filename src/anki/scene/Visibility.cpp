@@ -700,6 +700,8 @@ void CombineResultsTask::combine()
 		results.m_forwardShadingRenderables.getEnd(),
 		RevDistanceSortFunctor<RenderableQueueElement>());
 
+	std::sort(results.m_giProbes.getBegin(), results.m_giProbes.getEnd());
+
 	// Cleanup
 	if(m_frcCtx->m_r)
 	{

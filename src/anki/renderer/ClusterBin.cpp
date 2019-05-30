@@ -724,8 +724,10 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	const U visibleProbeCount = rqueue.m_reflectionProbes.getSize();
 	if(visibleProbeCount)
 	{
-		ReflectionProbe* data = static_cast<ReflectionProbe*>(ctx.m_in->m_stagingMem->allocateFrame(
-			sizeof(ReflectionProbe) * visibleProbeCount, StagingGpuMemoryType::UNIFORM, ctx.m_out->m_probesToken));
+		ReflectionProbe* data = static_cast<ReflectionProbe*>(
+			ctx.m_in->m_stagingMem->allocateFrame(sizeof(ReflectionProbe) * visibleProbeCount,
+				StagingGpuMemoryType::UNIFORM,
+				ctx.m_out->m_reflectionProbesToken));
 
 		WeakArray<ReflectionProbe> gpuProbes(data, visibleProbeCount);
 
@@ -742,7 +744,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	}
 	else
 	{
-		ctx.m_out->m_probesToken.markUnused();
+		ctx.m_out->m_reflectionProbesToken.markUnused();
 	}
 
 	// Fog volumes
