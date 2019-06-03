@@ -5,7 +5,10 @@
 
 // Compute the irradiance given a light shading result. The irradiance will be stored in an ambient dice.
 
-#pragma anki input const U32 INPUT_TEXTURES_HEIGHT
+#pragma anki input const U32 WORKGROUP_SIZE
+#pragma anki mutator LIGHT_SHADING_TEX 0 1 // 0: texture2D, 1: textureCubeArray
+#pragma anki mutator STORE_LOCATION 0 1 // 0: in a 3D texture, 1: In an SSBO
+#pragma anki mutator SECOND_BOUNCE 0 1
 
 #pragma anki start comp
 
@@ -14,46 +17,72 @@
 #include <shaders/LightFunctions.glsl>
 
 #define DEBUG_MODE 0 // 0: disable, 1: different color per dice face, 2: different color per cell
-#define SECOND_BOUNCE 1
 
-layout(local_size_x = INPUT_TEXTURES_HEIGHT, local_size_y = INPUT_TEXTURES_HEIGHT, local_size_z = 1) in;
+layout(local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+#if LIGHT_SHADING_TEX == 0
 layout(set = 0, binding = 1) uniform texture2D u_lightShadingTex;
-layout(set = 0, binding = 2) uniform texture2D u_gbufferTex0;
-layout(set = 0, binding = 3) uniform texture2D u_gbufferTex1;
-layout(set = 0, binding = 4) uniform texture2D u_gbufferTex2;
-layout(set = 0, binding = 5) uniform writeonly image3D u_irradianceVolume;
+#else
+layout(set = 0, binding = 1) uniform textureCubeArray u_lightShadingTex;
+#endif
 
-// This is a temporary buffer used instead of shared memory because it's too large
-layout(set = 0, binding = 6, std430) buffer ssbo_
+#if SECOND_BOUNCE == 1
+layout(set = 0, binding = 2) uniform texture2D u_gbufferTex[3u];
+#endif
+
+// This is a temporary buffer used instead of shared memory because the needs are too large
+layout(set = 0, binding = 3, std430) buffer ssbo_
 {
-	Vec4 u_integrationResults[6u][INPUT_TEXTURES_HEIGHT * INPUT_TEXTURES_HEIGHT];
+	Vec4 u_integrationResults[6u][WORKGROUP_SIZE * WORKGROUP_SIZE];
 };
+
+#if STORE_LOCATION == 0
+layout(set = 0, binding = 4) uniform writeonly image3D u_irradianceVolume;
 
 layout(push_constant, std430) uniform pc_
 {
 	IVec3 u_volumeTexel;
 	I32 u_nextTexelOffsetInU;
 };
+#else
+layout(set = 0, binding = 4, std430) writeonly buffer ssbo1_
+{
+	Vec4 u_irradianceDisceResults[6u];
+};
+#endif
 
 shared Vec3 s_diceIrradiance[6u];
 
+Vec3 sampleLightShadingTexture(const U32 face)
+{
+#if LIGHT_SHADING_TEX == 0
+	const Vec2 INPUT_TEXTURES_SIZE = Vec2(WORKGROUP_SIZE * 6u, WORKGROUP_SIZE);
+	const Vec2 uv =
+		(Vec2(gl_LocalInvocationID.x + WORKGROUP_SIZE * face, gl_LocalInvocationID.y) + 0.5) / INPUT_TEXTURES_SIZE;
+
+	return textureLod(u_lightShadingTex, u_nearestAnyClampSampler, uv, 0.0).rgb;
+#else
+	const Vec2 uv = (Vec2(gl_LocalInvocationID.x, gl_LocalInvocationID.y) + 0.5) / F32(WORKGROUP_SIZE);
+	const Vec2 ndc = UV_TO_NDC(uv);
+	const Vec3 cubeUvw = getCubemapDirection(ndc, face);
+	const F32 layerIdx = 0.0; // The C++ code sets the right layer in the view.
+
+	return textureLod(u_lightShadingTex, u_nearestAnyClampSampler, Vec4(cubeUvw, 0.0), 0.0).rgb;
+#endif
+}
+
 void main()
 {
-	const F32 INPUT_TEXTURES_HEIGHT_F = F32(INPUT_TEXTURES_HEIGHT);
-	const Vec2 INPUT_TEXTURES_SIZE = Vec2(INPUT_TEXTURES_HEIGHT * 6u, INPUT_TEXTURES_HEIGHT);
+	const F32 WORKGROUP_SIZE_F = F32(WORKGROUP_SIZE);
 
 	// Compute the NDC used in cubeCoordSolidAngle
-	const Vec2 faceUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / INPUT_TEXTURES_HEIGHT_F;
+	const Vec2 faceUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / WORKGROUP_SIZE_F;
 	const Vec2 ndc = UV_TO_NDC(faceUv);
 
 	// Initialize
 	ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
 	{
-		const Vec2 uv = (Vec2(gl_LocalInvocationID.x + INPUT_TEXTURES_HEIGHT_F * f, gl_LocalInvocationID.y) + 0.5)
-						/ INPUT_TEXTURES_SIZE;
-
 		// Get the direction of the dice face
 		const Vec3 diceDir = getCubemapDirection(Vec2(0.0), f);
 
@@ -61,19 +90,18 @@ void main()
 
 		// Compute integral part
 		const F32 lambert = max(0.0, dot(r, diceDir));
-		const Vec3 lightShading = textureLod(u_lightShadingTex, u_nearestAnyClampSampler, uv, 0.0).rgb;
-		const Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, INPUT_TEXTURES_HEIGHT_F);
+		const Vec3 lightShading = sampleLightShadingTexture(f);
+		const Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_F);
 
 		// Store
-		u_integrationResults[f][gl_LocalInvocationID.y * INPUT_TEXTURES_HEIGHT + gl_LocalInvocationID.x] =
-			irradiance.xyzx;
+		u_integrationResults[f][gl_LocalInvocationID.y * WORKGROUP_SIZE + gl_LocalInvocationID.x] = irradiance.xyzx;
 	}
 
 	memoryBarrierBuffer();
 	barrier();
 
 	// Reduce using prefix sum
-	const U32 WG_SIZE = INPUT_TEXTURES_HEIGHT * INPUT_TEXTURES_HEIGHT;
+	const U32 WG_SIZE = WORKGROUP_SIZE * WORKGROUP_SIZE;
 	ANKI_LOOP for(U32 s = WG_SIZE / 2u; s > 0u; s >>= 1u)
 	{
 		if(gl_LocalInvocationIndex < s)
@@ -101,9 +129,6 @@ void main()
 	// Initialize again for the 2nd bounce
 	ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
 	{
-		const Vec2 uv = (Vec2(gl_LocalInvocationID.x + INPUT_TEXTURES_HEIGHT_F * f, gl_LocalInvocationID.y) + 0.5)
-						/ INPUT_TEXTURES_SIZE;
-
 		// Get the direction of the dice face
 		const Vec3 diceDir = getCubemapDirection(Vec2(0.0), f);
 
@@ -113,8 +138,11 @@ void main()
 		const F32 lambert = max(0.0, dot(r, diceDir));
 
 		// Read the gbuffer
+		Vec2 gbufferUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / WORKGROUP_SIZE_F;
+		gbufferUv.x *= 1.0 / 6.0;
+		gbufferUv.x += (1.0 / 6.0) * F32(f);
 		GbufferInfo gbuffer;
-		readGBuffer(u_gbufferTex0, u_gbufferTex1, u_gbufferTex2, u_nearestAnyClampSampler, uv, 0.0, gbuffer);
+		readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0, gbuffer);
 
 		// Sample irradiance
 		Vec3 firstBounceIrradiance = sampleAmbientDice(s_diceIrradiance[0],
@@ -127,13 +155,12 @@ void main()
 		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance / PI;
 
 		// Compute 2nd bounce
-		const Vec3 lightShading = textureLod(u_lightShadingTex, u_nearestAnyClampSampler, uv, 0.0).rgb;
+		const Vec3 lightShading = sampleLightShadingTexture(f);
 		const Vec3 irradiance =
-			(firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, INPUT_TEXTURES_HEIGHT_F);
+			(firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_F);
 
 		// Store
-		u_integrationResults[f][gl_LocalInvocationID.y * INPUT_TEXTURES_HEIGHT + gl_LocalInvocationID.x] =
-			irradiance.xyzx;
+		u_integrationResults[f][gl_LocalInvocationID.y * WORKGROUP_SIZE + gl_LocalInvocationID.x] = irradiance.xyzx;
 	}
 
 	memoryBarrierBuffer();
@@ -157,33 +184,35 @@ void main()
 #endif
 
 	// Store the results
-	if(gl_LocalInvocationIndex == 0u)
+	if(gl_LocalInvocationIndex < 6u)
 	{
-		ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
-		{
+		const U32 f = gl_LocalInvocationIndex;
+
 #if DEBUG_MODE == 0
 #	if SECOND_BOUNCE == 1
-			Vec3 irradiance = u_integrationResults[f][0].xyz;
+		Vec3 irradiance = u_integrationResults[f][0].xyz;
 #	else
-			Vec3 irradiance = s_diceIrradiance[f];
+		Vec3 irradiance = s_diceIrradiance[f];
 #	endif
-			irradiance /= PI; // Pre-divide
-			const Vec3 toStoreValue = irradiance;
+		irradiance /= PI / 2.0; // Pre-divide. Don't use PI because we integraded only PI/2
+		const Vec3 toStoreValue = irradiance;
 #elif DEBUG_MODE == 1
-			const Vec3 toStoreValue = colorPerCubeFace(f);
+		const Vec3 toStoreValue = colorPerCubeFace(f);
 #else
-			const UVec3 volumeSize = UVec3(imageSize(u_irradianceVolume));
-			const UVec3 subvolumeSize = UVec3(volumeSize.x / 6u, volumeSize.y, volumeSize.z);
-			const U32 cellIdx = u_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + u_volumeTexel.y * subvolumeSize.x
-								+ u_volumeTexel.x;
-			const F32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
-			const Vec3 toStoreValue = heatmap(headmapFactor);
+		const UVec3 volumeSize = UVec3(imageSize(u_irradianceVolume));
+		const UVec3 subvolumeSize = UVec3(volumeSize.x / 6u, volumeSize.y, volumeSize.z);
+		const U32 cellIdx =
+			u_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + u_volumeTexel.y * subvolumeSize.x + u_volumeTexel.x;
+		const F32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
+		const Vec3 toStoreValue = heatmap(headmapFactor);
 #endif
 
-			const IVec3 storeUvw =
-				IVec3(u_volumeTexel.x + I32(f) * u_nextTexelOffsetInU, u_volumeTexel.y, u_volumeTexel.z);
-			imageStore(u_irradianceVolume, storeUvw, Vec4(toStoreValue, 0.0));
-		}
+#if STORE_LOCATION == 0
+		const IVec3 storeUvw = IVec3(u_volumeTexel.x + I32(f) * u_nextTexelOffsetInU, u_volumeTexel.y, u_volumeTexel.z);
+		imageStore(u_irradianceVolume, storeUvw, Vec4(toStoreValue, 0.0));
+#else
+		u_irradianceDisceResults[f] = toStoreValue.xyzx;
+#endif
 	}
 }
 

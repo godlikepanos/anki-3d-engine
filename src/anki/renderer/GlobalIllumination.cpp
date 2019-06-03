@@ -227,10 +227,15 @@ Error GlobalIllumination::initIrradiance(const ConfigSet& cfg)
 	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.glslp", m_irradiance.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_irradiance.m_prog);
-	consts.add("INPUT_TEXTURES_HEIGHT", U32(m_tileSize));
+	consts.add("WORKGROUP_SIZE", U32(m_tileSize));
+
+	ShaderProgramResourceMutationInitList<3> mutations(m_irradiance.m_prog);
+	mutations.add("LIGHT_SHADING_TEX", 0);
+	mutations.add("STORE_LOCATION", 0);
+	mutations.add("SECOND_BOUNCE", 1);
 
 	const ShaderProgramResourceVariant* variant;
-	m_irradiance.m_prog->getOrCreateVariant(consts.get(), variant);
+	m_irradiance.m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
 	m_irradiance.m_grProg = variant->getProgram();
 
 	return Error::NONE;
@@ -700,19 +705,18 @@ void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, Interna
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
 
 	// Bind resources
-	U binding = 0;
-	cmdb->bindSampler(0, binding++, m_r->getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindColorTexture(0, binding++, giCtx.m_lightShadingRt);
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
+	rgraphCtx.bindColorTexture(0, 1, giCtx.m_lightShadingRt);
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
 	{
-		rgraphCtx.bindColorTexture(0, binding++, giCtx.m_gbufferColorRts[i]);
+		rgraphCtx.bindColorTexture(0, 2, giCtx.m_gbufferColorRts[i], i);
 	}
 
-	rgraphCtx.bindImage(0, binding++, giCtx.m_irradianceProbeRts[probeIdx], TextureSubresourceInfo());
-
 	// Bind temporary memory
-	allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_tileSize * m_tileSize, cmdb, 0, binding);
+	allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_tileSize * m_tileSize, cmdb, 0, 3);
+
+	rgraphCtx.bindImage(0, 4, giCtx.m_irradianceProbeRts[probeIdx], TextureSubresourceInfo());
 
 	struct
 	{

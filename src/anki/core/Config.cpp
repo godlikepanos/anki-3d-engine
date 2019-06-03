@@ -42,6 +42,7 @@ Config::Config()
 	newOption("r.bloom.scale", 2.5);
 
 	newOption("r.indirect.reflectionResolution", 128);
+	newOption("r.indirect.irradianceResolution", 16);
 	newOption("r.indirect.maxSimultaneousProbeCount", 32);
 	newOption("r.indirect.shadowMapResolution", 64);
 

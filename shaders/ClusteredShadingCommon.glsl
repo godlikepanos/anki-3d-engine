@@ -58,7 +58,7 @@ layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 2) uniform highp textur
 #endif
 
 //
-// Indirect uniforms (4)
+// Indirect uniforms (3)
 //
 #if defined(LIGHT_INDIRECT_SPECULAR_BINDING)
 layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING) uniform u3_
@@ -67,8 +67,7 @@ layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BIN
 };
 
 layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 2) uniform textureCubeArray u_irradianceTex;
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 3) uniform texture2D u_integrationLut;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 2) uniform texture2D u_integrationLut;
 #endif
 
 //

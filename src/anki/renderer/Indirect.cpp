@@ -124,7 +124,8 @@ Error Indirect::initLightShading(const ConfigSet& config)
 			m_lightShading.m_tileSize,
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
-				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::GENERATE_MIPMAPS,
+				| TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+				| TextureUsageBit::GENERATE_MIPMAPS,
 			"CubeRefl refl");
 		texinit.m_mipmapCount = m_lightShading.m_mipCount;
 		texinit.m_type = TextureType::CUBE_ARRAY;
@@ -142,36 +143,31 @@ Error Indirect::initLightShading(const ConfigSet& config)
 
 Error Indirect::initIrradiance(const ConfigSet& config)
 {
-	// Init atlas
-	{
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_irradiance.m_tileSize,
-			m_irradiance.m_tileSize,
-			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
-				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			"CubeRefl irr");
-
-		texinit.m_layerCount = m_cacheEntries.getSize();
-		texinit.m_type = TextureType::CUBE_ARRAY;
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-
-		m_irradiance.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
-	}
+	m_irradiance.m_workgroupSize = config.getNumber("r.indirect.irradianceResolution");
 
 	// Create prog
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Irradiance.glslp", m_irradiance.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.glslp", m_irradiance.m_prog));
 
-		const F32 envMapReadMip = computeMaxMipmapCount2d(
-			m_lightShading.m_tileSize, m_lightShading.m_tileSize, m_irradiance.m_envMapReadSize);
+		ShaderProgramResourceConstantValueInitList<1> consts(m_irradiance.m_prog);
+		consts.add("WORKGROUP_SIZE", U32(m_irradiance.m_workgroupSize));
 
-		ShaderProgramResourceConstantValueInitList<2> consts(m_irradiance.m_prog);
-		consts.add("ENV_TEX_TILE_SIZE", U32(m_irradiance.m_envMapReadSize));
-		consts.add("ENV_TEX_MIP", envMapReadMip);
+		ShaderProgramResourceMutationInitList<3> mutations(m_irradiance.m_prog);
+		mutations.add("LIGHT_SHADING_TEX", 1);
+		mutations.add("STORE_LOCATION", 1);
+		mutations.add("SECOND_BOUNCE", 0);
 
 		const ShaderProgramResourceVariant* variant;
-		m_irradiance.m_prog->getOrCreateVariant(consts.get(), variant);
+		m_irradiance.m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
 		m_irradiance.m_grProg = variant->getProgram();
+	}
+
+	// Create buff
+	{
+		BufferInitInfo init;
+		init.m_usage = BufferUsageBit::STORAGE_ALL;
+		init.m_size = 6 * sizeof(Vec4);
+		m_irradiance.m_diceValuesBuff = getGrManager().newBuffer(init);
 	}
 
 	return Error::NONE;
@@ -227,37 +223,13 @@ void Indirect::initCacheEntry(U32 cacheEntryIdx)
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		// Light pass FB
-		{
-			FramebufferDescription& fbDescr = cacheEntry.m_lightShadingFbDescrs[faceIdx];
-			ANKI_ASSERT(!fbDescr.isBacked());
-			fbDescr.m_colorAttachmentCount = 1;
-			fbDescr.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
-			fbDescr.m_colorAttachments[0].m_surface.m_face = faceIdx;
-			fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-			fbDescr.bake();
-		}
-
-		// Irradiance FB
-		{
-			FramebufferDescription& fbDescr = cacheEntry.m_irradianceFbDescrs[faceIdx];
-			ANKI_ASSERT(!fbDescr.isBacked());
-			fbDescr.m_colorAttachmentCount = 1;
-			fbDescr.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
-			fbDescr.m_colorAttachments[0].m_surface.m_face = faceIdx;
-			fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-			fbDescr.bake();
-		}
-
-		// Irradiance to Refl FB
-		{
-			FramebufferDescription& fbDescr = cacheEntry.m_irradianceToReflFbDescrs[faceIdx];
-			ANKI_ASSERT(!fbDescr.isBacked());
-			fbDescr.m_colorAttachmentCount = 1;
-			fbDescr.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
-			fbDescr.m_colorAttachments[0].m_surface.m_face = faceIdx;
-			fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
-			fbDescr.bake();
-		}
+		FramebufferDescription& fbDescr = cacheEntry.m_lightShadingFbDescrs[faceIdx];
+		ANKI_ASSERT(!fbDescr.isBacked());
+		fbDescr.m_colorAttachmentCount = 1;
+		fbDescr.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
+		fbDescr.m_colorAttachments[0].m_surface.m_face = faceIdx;
+		fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+		fbDescr.bake();
 	}
 }
 
@@ -365,34 +337,30 @@ void Indirect::prepareProbes(RenderingContext& ctx,
 	}
 }
 
-void Indirect::runGBuffer(CommandBufferPtr& cmdb)
+void Indirect::runGBuffer(U32 faceIdx, CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_ctx.m_probe);
-	ANKI_TRACE_SCOPED_EVENT(R_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
 
-	// For each face
-	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	const U32 viewportX = faceIdx * m_gbuffer.m_tileSize;
+	cmdb->setViewport(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
+	cmdb->setScissor(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
+
+	// Draw
+	ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
+	const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
+
+	if(!rqueue.m_renderables.isEmpty())
 	{
-		const U32 viewportX = faceIdx * m_gbuffer.m_tileSize;
-		cmdb->setViewport(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
-		cmdb->setScissor(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
-
-		/// Draw
-		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
-		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
-
-		if(!rqueue.m_renderables.isEmpty())
-		{
-			m_r->getSceneDrawer().drawRange(Pass::GB,
-				rqueue.m_viewMatrix,
-				rqueue.m_viewProjectionMatrix,
-				Mat4::getIdentity(), // Don't care about prev mats
-				cmdb,
-				m_r->getSamplers().m_trilinearRepeatAniso,
-				rqueue.m_renderables.getBegin(),
-				rqueue.m_renderables.getEnd());
-		}
+		m_r->getSceneDrawer().drawRange(Pass::GB,
+			rqueue.m_viewMatrix,
+			rqueue.m_viewProjectionMatrix,
+			Mat4::getIdentity(), // Don't care about prev mats
+			cmdb,
+			m_r->getSamplers().m_trilinearRepeatAniso,
+			rqueue.m_renderables.getBegin(),
+			rqueue.m_renderables.getEnd());
 	}
 
 	// Restore state
@@ -402,7 +370,7 @@ void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx <= 6);
-	ANKI_TRACE_SCOPED_EVENT(R_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
@@ -452,7 +420,7 @@ void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& r
 	ANKI_ASSERT(faceIdx < 6);
 	ANKI_ASSERT(m_ctx.m_cacheEntryIdx < m_cacheEntries.getSize());
 
-	ANKI_TRACE_SCOPED_EVENT(R_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 
 	TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, m_ctx.m_cacheEntryIdx));
 	subresource.m_mipmapCount = m_lightShading.m_mipCount;
@@ -465,76 +433,64 @@ void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& r
 	rgraphCtx.m_commandBuffer->generateMipmaps2d(getGrManager().newTextureView(viewInit));
 }
 
-void Indirect::runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
+void Indirect::runIrradiance(RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_ASSERT(faceIdx < 6);
-	ANKI_TRACE_SCOPED_EVENT(R_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 	const U32 cacheEntryIdx = m_ctx.m_cacheEntryIdx;
 	ANKI_ASSERT(cacheEntryIdx < m_cacheEntries.getSize());
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	// Set state
-	cmdb->setViewport(0, 0, m_irradiance.m_tileSize, m_irradiance.m_tileSize);
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	// Bind stuff
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 
 	TextureSubresourceInfo subresource;
 	subresource.m_faceCount = 6;
 	subresource.m_firstLayer = cacheEntryIdx;
 	rgraphCtx.bindTexture(0, 1, m_ctx.m_lightShadingRt, subresource);
 
-	// Set uniforms
-	UVec4 pushConsts(faceIdx);
-	cmdb->setPushConstants(&pushConsts, sizeof(pushConsts));
+	allocateAndBindStorage<void*>(
+		sizeof(Vec4) * 6 * m_irradiance.m_workgroupSize * m_irradiance.m_workgroupSize, cmdb, 0, 3);
+
+	cmdb->bindStorageBuffer(0, 4, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	// Draw
-	drawQuad(cmdb);
+	cmdb->dispatchCompute(1, 1, 1);
 }
 
-void Indirect::runIrradianceToRefl(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
+void Indirect::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 {
-	ANKI_ASSERT(faceIdx < 6);
-	ANKI_TRACE_SCOPED_EVENT(R_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 
 	const U32 cacheEntryIdx = m_ctx.m_cacheEntryIdx;
 	ANKI_ASSERT(cacheEntryIdx < m_cacheEntries.getSize());
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	// Set state
-	cmdb->setViewport(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
-
 	cmdb->bindShaderProgram(m_irradianceToRefl.m_grProg);
 
 	// Bind resources
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 
-	rgraphCtx.bindColorTexture(0, 2, m_ctx.m_gbufferColorRts[0]);
-	rgraphCtx.bindColorTexture(0, 3, m_ctx.m_gbufferColorRts[1]);
-	rgraphCtx.bindColorTexture(0, 4, m_ctx.m_gbufferColorRts[2]);
+	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[0], 0);
+	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[1], 1);
+	rgraphCtx.bindColorTexture(0, 1, m_ctx.m_gbufferColorRts[2], 2);
+
+	cmdb->bindStorageBuffer(0, 2, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
 
 	TextureSubresourceInfo subresource;
 	subresource.m_faceCount = 6;
 	subresource.m_firstLayer = cacheEntryIdx;
-	rgraphCtx.bindTexture(0, 5, m_ctx.m_irradianceRt, subresource);
+	rgraphCtx.bindImage(0, 3, m_ctx.m_lightShadingRt, subresource);
 
-	Vec4 pushConsts(faceIdx);
-	cmdb->setPushConstants(&pushConsts, sizeof(pushConsts));
-
-	// Draw
-	drawQuad(cmdb);
-
-	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	dispatchPPCompute(cmdb, 8, 8, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 }
 
 void Indirect::populateRenderGraph(RenderingContext& rctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(R_IR);
+	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 
 #if ANKI_EXTRA_CHECKS
 	m_ctx = {};
@@ -552,8 +508,6 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		// Just import and exit
 
 		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
-		m_ctx.m_irradianceRt = rgraph.importRenderTarget(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
-
 		return;
 	}
 
@@ -581,10 +535,11 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<Indirect*>(rgraphCtx.m_userData)->runGBuffer(rgraphCtx.m_commandBuffer);
+				static_cast<Indirect*>(rgraphCtx.m_userData)
+					->runGBuffer(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_commandBuffer);
 			},
 			this,
-			0);
+			6);
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
@@ -638,10 +593,11 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, m_ctx.m_shadowMapRt);
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<Indirect*>(rgraphCtx.m_userData)->runShadowMapping(rgraphCtx.m_commandBuffer);
+				static_cast<Indirect*>(rgraphCtx.m_userData)
+					->runShadowMapping(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_commandBuffer);
 			},
 			this,
-			0);
+			6);
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
 		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
@@ -698,117 +654,49 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 	// Irradiance passes
 	{
-		static const Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceCallback<0>,
-			runIrradianceCallback<1>,
-			runIrradianceCallback<2>,
-			runIrradianceCallback<3>,
-			runIrradianceCallback<4>,
-			runIrradianceCallback<5>}};
+		m_ctx.m_irradianceDiceValuesBuffHandle =
+			rgraph.importBuffer(m_irradiance.m_diceValuesBuff, BufferUsageBit::NONE);
 
-		// Rt
-		m_ctx.m_irradianceRt = rgraph.importRenderTarget(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl Irradiance");
 
-		static const Array<CString, 6> passNames = {{"CubeRefl Irr/ce #0",
-			"CubeRefl Irr/ce #1",
-			"CubeRefl Irr/ce #2",
-			"CubeRefl Irr/ce #3",
-			"CubeRefl Irr/ce #4",
-			"CubeRefl Irr/ce #5"}};
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
+		pass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) {
+				static_cast<Indirect*>(rgraphCtx.m_userData)->runIrradiance(rgraphCtx);
+			},
+			this,
+			0);
 
-			pass.setFramebufferInfo(
-				m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceFbDescrs[faceIdx], {{m_ctx.m_irradianceRt}}, {});
+		// Read a cube but only one layer and level
+		TextureSubresourceInfo readSubresource;
+		readSubresource.m_faceCount = 6;
+		readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
+		pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_COMPUTE, readSubresource});
 
-			pass.setWork(callbacks[faceIdx], this, 0);
-
-			// Read a cube but only one layer and level
-			TextureSubresourceInfo readSubresource;
-			readSubresource.m_faceCount = 6;
-			readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
-
-			TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-			pass.newDependency({m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, writeSubresource});
-		}
+		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
 	}
 
 	// Write irradiance back to refl
 	{
-		static const Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceToReflCallback<0>,
-			runIrradianceToReflCallback<1>,
-			runIrradianceToReflCallback<2>,
-			runIrradianceToReflCallback<3>,
-			runIrradianceToReflCallback<4>,
-			runIrradianceToReflCallback<5>}};
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("CubeRefl apply indirect");
 
-		// Rt
-		static const Array<CString, 6> passNames = {{"CubeRefl Irr2Refl #0",
-			"CubeRefl Irr2Refl #1",
-			"CubeRefl Irr2Refl #2",
-			"CubeRefl Irr2Refl #3",
-			"CubeRefl Irr2Refl #4",
-			"CubeRefl Irr2Refl #5"}};
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		pass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) {
+				static_cast<Indirect*>(rgraphCtx.m_userData)->runIrradianceToRefl(rgraphCtx);
+			},
+			this,
+			0);
+
+		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
 		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
-
-			pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceToReflFbDescrs[faceIdx],
-				{{m_ctx.m_lightShadingRt}},
-				{});
-
-			pass.setWork(callbacks[faceIdx], this, 0);
-
-			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-			{
-				pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
-			}
-
-			TextureSubresourceInfo readSubresource;
-			readSubresource.m_faceCount = 6;
-			readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-			pass.newDependency({m_ctx.m_irradianceRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
-
-			TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-			pass.newDependency(
-				{m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, writeSubresource});
+			pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_COMPUTE});
 		}
-	}
 
-	// Irradiance passes 2nd bounce
-	{
-		static const Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceCallback<0>,
-			runIrradianceCallback<1>,
-			runIrradianceCallback<2>,
-			runIrradianceCallback<3>,
-			runIrradianceCallback<4>,
-			runIrradianceCallback<5>}};
+		TextureSubresourceInfo subresource;
+		subresource.m_faceCount = 6;
+		subresource.m_firstLayer = probeToUpdateCacheEntryIdx;
+		pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE, subresource});
 
-		static const Array<CString, 6> passNames = {{"CubeRefl Irr 2nd #0",
-			"CubeRefl Irr 2nd #1",
-			"CubeRefl Irr 2nd #2",
-			"CubeRefl Irr 2nd #3",
-			"CubeRefl Irr 2nd #4",
-			"CubeRefl Irr 2nd #5"}};
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
-
-			pass.setFramebufferInfo(
-				m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceFbDescrs[faceIdx], {{m_ctx.m_irradianceRt}}, {});
-
-			pass.setWork(callbacks[faceIdx], this, 0);
-
-			// Read a cube but only one layer and level
-			TextureSubresourceInfo readSubresource;
-			readSubresource.m_faceCount = 6;
-			readSubresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-			pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT, readSubresource});
-
-			TextureSubresourceInfo writeSubresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-			pass.newDependency({m_ctx.m_irradianceRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, writeSubresource});
-		}
+		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::STORAGE_COMPUTE_READ});
 	}
 
 	// Mipmapping "passes"
@@ -839,39 +727,36 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 	}
 }
 
-void Indirect::runShadowMapping(CommandBufferPtr& cmdb)
+void Indirect::runShadowMapping(U32 faceIdx, CommandBufferPtr& cmdb)
 {
 	cmdb->setPolygonOffset(1.0f, 1.0f);
 
-	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	ANKI_ASSERT(m_ctx.m_probe);
+	ANKI_ASSERT(m_ctx.m_probe->m_renderQueues[faceIdx]);
+	const RenderQueue& faceRenderQueue = *m_ctx.m_probe->m_renderQueues[faceIdx];
+	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_uuid != 0);
+	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowCascadeCount == 1);
+
+	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
+	const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
+
+	if(cascadeRenderQueue.m_renderables.getSize() == 0)
 	{
-		ANKI_ASSERT(m_ctx.m_probe);
-		ANKI_ASSERT(m_ctx.m_probe->m_renderQueues[faceIdx]);
-		const RenderQueue& faceRenderQueue = *m_ctx.m_probe->m_renderQueues[faceIdx];
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_uuid != 0);
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowCascadeCount == 1);
-
-		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
-		const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
-
-		if(cascadeRenderQueue.m_renderables.getSize() == 0)
-		{
-			continue;
-		}
-
-		const U rez = m_shadowMapping.m_rtDescr.m_height;
-		cmdb->setViewport(rez * faceIdx, 0, rez, rez);
-		cmdb->setScissor(rez * faceIdx, 0, rez, rez);
-
-		m_r->getSceneDrawer().drawRange(Pass::SM,
-			cascadeRenderQueue.m_viewMatrix,
-			cascadeRenderQueue.m_viewProjectionMatrix,
-			Mat4::getIdentity(), // Don't care about prev matrices here
-			cmdb,
-			m_r->getSamplers().m_trilinearRepeatAniso,
-			cascadeRenderQueue.m_renderables.getBegin(),
-			cascadeRenderQueue.m_renderables.getEnd());
+		return;
 	}
+
+	const U rez = m_shadowMapping.m_rtDescr.m_height;
+	cmdb->setViewport(rez * faceIdx, 0, rez, rez);
+	cmdb->setScissor(rez * faceIdx, 0, rez, rez);
+
+	m_r->getSceneDrawer().drawRange(Pass::SM,
+		cascadeRenderQueue.m_viewMatrix,
+		cascadeRenderQueue.m_viewProjectionMatrix,
+		Mat4::getIdentity(), // Don't care about prev matrices here
+		cmdb,
+		m_r->getSamplers().m_trilinearRepeatAniso,
+		cascadeRenderQueue.m_renderables.getBegin(),
+		cascadeRenderQueue.m_renderables.getEnd());
 
 	cmdb->setPolygonOffset(0.0f, 0.0f);
 }

@@ -38,19 +38,19 @@ void main()
 #define LIGHT_COMMON_UNIS_BINDING 0
 #define LIGHT_LIGHTS_BINDING 1
 #define LIGHT_INDIRECT_SPECULAR_BINDING 4
-#define LIGHT_GLOBAL_ILLUMINATION_BINDING 8
-#define LIGHT_CLUSTERS_BINDING 10
+#define LIGHT_GLOBAL_ILLUMINATION_BINDING 7
+#define LIGHT_CLUSTERS_BINDING 9
 #include <shaders/ClusteredShadingCommon.glsl>
 
-layout(set = 0, binding = 12) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 13) uniform sampler u_trilinearClampSampler;
+layout(set = 0, binding = 11) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 12) uniform sampler u_trilinearClampSampler;
 
-layout(set = 0, binding = 14) uniform texture2D u_msRt0;
-layout(set = 0, binding = 15) uniform texture2D u_msRt1;
-layout(set = 0, binding = 16) uniform texture2D u_msRt2;
-layout(set = 0, binding = 17) uniform texture2D u_msDepthRt;
-layout(set = 0, binding = 18) uniform texture2D u_ssrRt;
-layout(set = 0, binding = 19) uniform texture2D u_ssaoRt;
+layout(set = 0, binding = 13) uniform texture2D u_msRt0;
+layout(set = 0, binding = 14) uniform texture2D u_msRt1;
+layout(set = 0, binding = 15) uniform texture2D u_msRt2;
+layout(set = 0, binding = 16) uniform texture2D u_msDepthRt;
+layout(set = 0, binding = 17) uniform texture2D u_ssrRt;
+layout(set = 0, binding = 18) uniform texture2D u_ssaoRt;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;

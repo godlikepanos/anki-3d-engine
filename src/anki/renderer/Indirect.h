@@ -52,11 +52,6 @@ anki_internal:
 		return m_ctx.m_lightShadingRt;
 	}
 
-	RenderTargetHandle getIrradianceRt() const
-	{
-		return m_ctx.m_irradianceRt;
-	}
-
 private:
 	class
 	{
@@ -85,12 +80,10 @@ private:
 	class
 	{
 	public:
-		U32 m_tileSize = 8;
-		U32 m_envMapReadSize = 16; ///< This controls the iterations that will be used to calculate the irradiance.
-		TexturePtr m_cubeArr;
-
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
+		BufferPtr m_diceValuesBuff;
+		U32 m_workgroupSize = 16;
 	} m_irradiance; ///< Irradiance.
 
 	class
@@ -115,8 +108,6 @@ private:
 		Timestamp m_lastUsedTimestamp = 0; ///< When it was last seen by the renderer.
 
 		Array<FramebufferDescription, 6> m_lightShadingFbDescrs;
-		Array<FramebufferDescription, 6> m_irradianceFbDescrs;
-		Array<FramebufferDescription, 6> m_irradianceToReflFbDescrs;
 	};
 
 	DynamicArray<CacheEntry> m_cacheEntries;
@@ -135,7 +126,7 @@ private:
 		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
 		RenderTargetHandle m_gbufferDepthRt;
 		RenderTargetHandle m_lightShadingRt;
-		RenderTargetHandle m_irradianceRt;
+		RenderPassBufferHandle m_irradianceDiceValuesBuffHandle;
 		RenderTargetHandle m_shadowMapRt;
 	} m_ctx; ///< Runtime context.
 
@@ -152,12 +143,12 @@ private:
 	void prepareProbes(
 		RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate, U32& probeToUpdateCacheEntryIdx);
 
-	void runGBuffer(CommandBufferPtr& cmdb);
-	void runShadowMapping(CommandBufferPtr& cmdb);
+	void runGBuffer(U32 faceIdx, CommandBufferPtr& cmdb);
+	void runShadowMapping(U32 faceIdx, CommandBufferPtr& cmdb);
 	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
-	void runIrradiance(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
-	void runIrradianceToRefl(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
+	void runIrradiance(RenderPassWorkContext& rgraphCtx);
+	void runIrradianceToRefl(RenderPassWorkContext& rgraphCtx);
 
 	// A RenderPassWorkCallback for the light shading pass into a single face.
 	template<U faceIdx>
@@ -173,22 +164,6 @@ private:
 	{
 		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
 		self->runMipmappingOfLightShading(faceIdx, rgraphCtx);
-	}
-
-	// A RenderPassWorkCallback for the irradiance calculation of a single cube face.
-	template<U faceIdx>
-	static void runIrradianceCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
-		self->runIrradiance(faceIdx, rgraphCtx);
-	}
-
-	// A RenderPassWorkCallback to apply the irradiance back to the reflection.
-	template<U faceIdx>
-	static void runIrradianceToReflCallback(RenderPassWorkContext& rgraphCtx)
-	{
-		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
-		self->runIrradianceToRefl(faceIdx, rgraphCtx);
 	}
 };
 /// @}

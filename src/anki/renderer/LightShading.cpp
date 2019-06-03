@@ -117,24 +117,23 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 
 		bindUniforms(cmdb, 0, 4, rsrc.m_reflectionProbesToken);
 		rgraphCtx.bindColorTexture(0, 5, m_r->getIndirect().getReflectionRt());
-		rgraphCtx.bindColorTexture(0, 6, m_r->getIndirect().getIrradianceRt());
-		cmdb->bindTexture(0, 7, m_r->getIndirect().getIntegrationLut(), TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 6, m_r->getIndirect().getIntegrationLut(), TextureUsageBit::SAMPLED_FRAGMENT);
 
-		m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 8);
-		bindUniforms(cmdb, 0, 9, rsrc.m_globalIlluminationProbesToken);
+		m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 7);
+		bindUniforms(cmdb, 0, 8, rsrc.m_globalIlluminationProbesToken);
 
-		bindStorage(cmdb, 0, 10, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 11, rsrc.m_indicesToken);
+		bindStorage(cmdb, 0, 9, rsrc.m_clustersToken);
+		bindStorage(cmdb, 0, 10, rsrc.m_indicesToken);
 
-		cmdb->bindSampler(0, 12, m_r->getSamplers().m_nearestNearestClamp);
-		cmdb->bindSampler(0, 13, m_r->getSamplers().m_trilinearClamp);
-		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(0));
-		rgraphCtx.bindColorTexture(0, 15, m_r->getGBuffer().getColorRt(1));
-		rgraphCtx.bindColorTexture(0, 16, m_r->getGBuffer().getColorRt(2));
+		cmdb->bindSampler(0, 11, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 12, m_r->getSamplers().m_trilinearClamp);
+		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(0));
+		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(1));
+		rgraphCtx.bindColorTexture(0, 15, m_r->getGBuffer().getColorRt(2));
 		rgraphCtx.bindTexture(
-			0, 17, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-		rgraphCtx.bindColorTexture(0, 18, m_r->getSsr().getRt());
-		rgraphCtx.bindColorTexture(0, 19, m_r->getSsao().getRt());
+			0, 16, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindColorTexture(0, 17, m_r->getSsr().getRt());
+		rgraphCtx.bindColorTexture(0, 18, m_r->getSsao().getRt());
 
 		// Draw
 		drawQuad(cmdb);
@@ -207,7 +206,6 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	// Refl & indirect
 	pass.newDependency({m_r->getSsr().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_FRAGMENT);
 
