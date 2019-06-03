@@ -336,7 +336,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 #define ANKI_SET_IDX(typeIdx) \
 	ClusterBin::TileCtx::ClusterMetaInfo& inf = tileCtx.m_clusterInfos[clusterZ]; \
-	if(ANKI_UNLIKELY(inf.m_offset + 1 >= m_avgObjectsPerCluster)) \
+	if(ANKI_UNLIKELY(U32(inf.m_offset) + 1 >= m_avgObjectsPerCluster)) \
 	{ \
 		ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster"); \
 		continue; \

@@ -96,9 +96,9 @@ public:
 
 	~Renderer();
 
-	Indirect& getIndirect()
+	ProbeReflections& getProbeReflections()
 	{
-		return *m_indirect;
+		return *m_probeReflections;
 	}
 
 	VolumetricLightingAccumulation& getVolumetricLightingAccumulation()
@@ -378,7 +378,7 @@ private:
 	/// @{
 	UniquePtr<VolumetricLightingAccumulation> m_volLighting;
 	UniquePtr<GlobalIllumination> m_gi;
-	UniquePtr<Indirect> m_indirect;
+	UniquePtr<ProbeReflections> m_probeReflections;
 	UniquePtr<ShadowMapping> m_shadowMapping; ///< Shadow mapping.
 	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage
 	UniquePtr<GBufferPost> m_gbufferPost;

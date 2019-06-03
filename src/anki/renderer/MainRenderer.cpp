@@ -8,7 +8,6 @@
 #include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/GBuffer.h>
-#include <anki/renderer/Indirect.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/util/Logger.h>
 #include <anki/util/File.h>

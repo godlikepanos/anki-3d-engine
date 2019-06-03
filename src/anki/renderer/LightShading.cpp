@@ -6,7 +6,7 @@
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/ShadowMapping.h>
-#include <anki/renderer/Indirect.h>
+#include <anki/renderer/ProbeReflections.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/ForwardShading.h>
@@ -58,7 +58,7 @@ Error LightShading::initLightShading(const ConfigSet& config)
 		.add("CLUSTER_COUNT_Y", U32(m_r->getClusterCount()[1]))
 		.add("CLUSTER_COUNT_Z", U32(m_r->getClusterCount()[2]))
 		.add("CLUSTER_COUNT", U32(m_r->getClusterCount()[3]))
-		.add("IR_MIPMAP_COUNT", U32(m_r->getIndirect().getReflectionTextureMipmapCount()));
+		.add("IR_MIPMAP_COUNT", U32(m_r->getProbeReflections().getReflectionTextureMipmapCount()));
 
 	const ShaderProgramResourceVariant* variant;
 	m_lightShading.m_prog->getOrCreateVariant(consts.get(), variant);
@@ -116,8 +116,8 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 
 		bindUniforms(cmdb, 0, 4, rsrc.m_reflectionProbesToken);
-		rgraphCtx.bindColorTexture(0, 5, m_r->getIndirect().getReflectionRt());
-		cmdb->bindTexture(0, 6, m_r->getIndirect().getIntegrationLut(), TextureUsageBit::SAMPLED_FRAGMENT);
+		rgraphCtx.bindColorTexture(0, 5, m_r->getProbeReflections().getReflectionRt());
+		cmdb->bindTexture(0, 6, m_r->getProbeReflections().getIntegrationLut(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 		m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 7);
 		bindUniforms(cmdb, 0, 8, rsrc.m_globalIlluminationProbesToken);
@@ -205,7 +205,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	// Refl & indirect
 	pass.newDependency({m_r->getSsr().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency({m_r->getProbeReflections().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_FRAGMENT);
 

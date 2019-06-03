@@ -10,7 +10,7 @@
 #include <anki/util/HighRezTimer.h>
 #include <anki/collision/Aabb.h>
 
-#include <anki/renderer/Indirect.h>
+#include <anki/renderer/ProbeReflections.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/GBufferPost.h>
 #include <anki/renderer/LightShading.h>
@@ -128,8 +128,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_gi.reset(m_alloc.newInstance<GlobalIllumination>(this));
 	ANKI_CHECK(m_gi->init(config));
 
-	m_indirect.reset(m_alloc.newInstance<Indirect>(this));
-	ANKI_CHECK(m_indirect->init(config));
+	m_probeReflections.reset(m_alloc.newInstance<ProbeReflections>(this));
+	ANKI_CHECK(m_probeReflections->init(config));
 
 	m_gbuffer.reset(m_alloc.newInstance<GBuffer>(this));
 	ANKI_CHECK(m_gbuffer->init(config));
@@ -298,7 +298,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	// Populate render graph. WARNING Watch the order
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_gi->populateRenderGraph(ctx);
-	m_indirect->populateRenderGraph(ctx);
+	m_probeReflections->populateRenderGraph(ctx);
 	m_volLighting->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);

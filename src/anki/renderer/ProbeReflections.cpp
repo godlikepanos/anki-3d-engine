@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Indirect.h>
+#include <anki/renderer/ProbeReflections.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/GBuffer.h>
@@ -16,19 +16,19 @@
 namespace anki
 {
 
-Indirect::Indirect(Renderer* r)
+ProbeReflections::ProbeReflections(Renderer* r)
 	: RendererObject(r)
 	, m_lightShading(r)
 {
 }
 
-Indirect::~Indirect()
+ProbeReflections::~ProbeReflections()
 {
 	m_cacheEntries.destroy(getAllocator());
 	m_probeUuidToCacheEntryIdx.destroy(getAllocator());
 }
 
-Error Indirect::init(const ConfigSet& config)
+Error ProbeReflections::init(const ConfigSet& config)
 {
 	ANKI_R_LOGI("Initializing image reflections");
 
@@ -41,7 +41,7 @@ Error Indirect::init(const ConfigSet& config)
 	return err;
 }
 
-Error Indirect::initInternal(const ConfigSet& config)
+Error ProbeReflections::initInternal(const ConfigSet& config)
 {
 	// Init cache entries
 	m_cacheEntries.create(getAllocator(), config.getNumber("r.indirect.maxSimultaneousProbeCount"));
@@ -66,7 +66,7 @@ Error Indirect::initInternal(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error Indirect::initGBuffer(const ConfigSet& config)
+Error ProbeReflections::initGBuffer(const ConfigSet& config)
 {
 	m_gbuffer.m_tileSize = config.getNumber("r.indirect.reflectionResolution");
 
@@ -113,7 +113,7 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error Indirect::initLightShading(const ConfigSet& config)
+Error ProbeReflections::initLightShading(const ConfigSet& config)
 {
 	m_lightShading.m_tileSize = config.getNumber("r.indirect.reflectionResolution");
 	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
@@ -141,7 +141,7 @@ Error Indirect::initLightShading(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error Indirect::initIrradiance(const ConfigSet& config)
+Error ProbeReflections::initIrradiance(const ConfigSet& config)
 {
 	m_irradiance.m_workgroupSize = config.getNumber("r.indirect.irradianceResolution");
 
@@ -173,7 +173,7 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 	return Error::NONE;
 }
 
-Error Indirect::initIrradianceToRefl(const ConfigSet& cfg)
+Error ProbeReflections::initIrradianceToRefl(const ConfigSet& cfg)
 {
 	// Create program
 	ANKI_CHECK(
@@ -186,7 +186,7 @@ Error Indirect::initIrradianceToRefl(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-Error Indirect::initShadowMapping(const ConfigSet& cfg)
+Error ProbeReflections::initShadowMapping(const ConfigSet& cfg)
 {
 	const U resolution = cfg.getNumber("r.indirect.shadowMapResolution");
 	ANKI_ASSERT(resolution > 8);
@@ -216,7 +216,7 @@ Error Indirect::initShadowMapping(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-void Indirect::initCacheEntry(U32 cacheEntryIdx)
+void ProbeReflections::initCacheEntry(U32 cacheEntryIdx)
 {
 	CacheEntry& cacheEntry = m_cacheEntries[cacheEntryIdx];
 
@@ -233,7 +233,7 @@ void Indirect::initCacheEntry(U32 cacheEntryIdx)
 	}
 }
 
-void Indirect::prepareProbes(RenderingContext& ctx,
+void ProbeReflections::prepareProbes(RenderingContext& ctx,
 	ReflectionProbeQueueElement*& probeToUpdateThisFrame,
 	U32& probeToUpdateThisFrameCacheEntryIdx)
 {
@@ -337,7 +337,7 @@ void Indirect::prepareProbes(RenderingContext& ctx,
 	}
 }
 
-void Indirect::runGBuffer(U32 faceIdx, CommandBufferPtr& cmdb)
+void ProbeReflections::runGBuffer(U32 faceIdx, CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_ctx.m_probe);
 	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
@@ -367,7 +367,7 @@ void Indirect::runGBuffer(U32 faceIdx, CommandBufferPtr& cmdb)
 	cmdb->setScissor(0, 0, MAX_U32, MAX_U32);
 }
 
-void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
+void ProbeReflections::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx <= 6);
 	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
@@ -415,7 +415,7 @@ void Indirect::runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 		cmdb);
 }
 
-void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
+void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(faceIdx < 6);
 	ANKI_ASSERT(m_ctx.m_cacheEntryIdx < m_cacheEntries.getSize());
@@ -433,7 +433,7 @@ void Indirect::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& r
 	rgraphCtx.m_commandBuffer->generateMipmaps2d(getGrManager().newTextureView(viewInit));
 }
 
-void Indirect::runIrradiance(RenderPassWorkContext& rgraphCtx)
+void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 	const U32 cacheEntryIdx = m_ctx.m_cacheEntryIdx;
@@ -460,7 +460,7 @@ void Indirect::runIrradiance(RenderPassWorkContext& rgraphCtx)
 	cmdb->dispatchCompute(1, 1, 1);
 }
 
-void Indirect::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
+void ProbeReflections::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 
@@ -488,7 +488,7 @@ void Indirect::runIrradianceToRefl(RenderPassWorkContext& rgraphCtx)
 	dispatchPPCompute(cmdb, 8, 8, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 }
 
-void Indirect::populateRenderGraph(RenderingContext& rctx)
+void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_CUBE_REFL);
 
@@ -535,7 +535,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<Indirect*>(rgraphCtx.m_userData)
+				static_cast<ProbeReflections*>(rgraphCtx.m_userData)
 					->runGBuffer(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_commandBuffer);
 			},
 			this,
@@ -593,7 +593,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 		pass.setFramebufferInfo(m_shadowMapping.m_fbDescr, {}, m_ctx.m_shadowMapRt);
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<Indirect*>(rgraphCtx.m_userData)
+				static_cast<ProbeReflections*>(rgraphCtx.m_userData)
 					->runShadowMapping(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_commandBuffer);
 			},
 			this,
@@ -661,7 +661,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<Indirect*>(rgraphCtx.m_userData)->runIrradiance(rgraphCtx);
+				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runIrradiance(rgraphCtx);
 			},
 			this,
 			0);
@@ -681,7 +681,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
-				static_cast<Indirect*>(rgraphCtx.m_userData)->runIrradianceToRefl(rgraphCtx);
+				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runIrradianceToRefl(rgraphCtx);
 			},
 			this,
 			0);
@@ -727,7 +727,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 	}
 }
 
-void Indirect::runShadowMapping(U32 faceIdx, CommandBufferPtr& cmdb)
+void ProbeReflections::runShadowMapping(U32 faceIdx, CommandBufferPtr& cmdb)
 {
 	cmdb->setPolygonOffset(1.0f, 1.0f);
 

@@ -17,15 +17,15 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Probe reflections and irradiance.
-class Indirect : public RendererObject
+/// Probe reflections.
+class ProbeReflections : public RendererObject
 {
 	friend class IrTask;
 
 anki_internal:
-	Indirect(Renderer* r);
+	ProbeReflections(Renderer* r);
 
-	~Indirect();
+	~ProbeReflections();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
@@ -154,7 +154,7 @@ private:
 	template<U faceIdx>
 	static void runLightShadingCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
+		ProbeReflections* const self = static_cast<ProbeReflections*>(rgraphCtx.m_userData);
 		self->runLightShading(faceIdx, rgraphCtx);
 	}
 
@@ -162,7 +162,7 @@ private:
 	template<U faceIdx>
 	static void runMipmappingOfLightShadingCallback(RenderPassWorkContext& rgraphCtx)
 	{
-		Indirect* const self = static_cast<Indirect*>(rgraphCtx.m_userData);
+		ProbeReflections* const self = static_cast<ProbeReflections*>(rgraphCtx.m_userData);
 		self->runMipmappingOfLightShading(faceIdx, rgraphCtx);
 	}
 };

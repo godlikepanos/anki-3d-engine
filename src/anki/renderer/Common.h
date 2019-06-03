@@ -30,7 +30,7 @@ class Tonemapping;
 class Bloom;
 class FinalComposite;
 class Dbg;
-class Indirect;
+class ProbeReflections;
 class DownscaleBlur;
 class VolumetricFog;
 class DepthDownscale;
