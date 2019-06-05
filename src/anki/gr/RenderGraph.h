@@ -646,6 +646,8 @@ public:
 	/// @}
 
 private:
+	static constexpr U PERIODIC_CLEANUP_EVERY = 60; ///< How many frames between cleanups
+
 	/// Render targets of the same type+size+format.
 	class RenderTargetCacheEntry
 	{
@@ -686,6 +688,9 @@ private:
 		const RenderTargetHandle* rtHandles,
 		CString name,
 		Bool& drawsToPresentableTex);
+
+	/// Every N number of frames clean unused cached items.
+	void periodicCleanup();
 
 	ANKI_HOT static Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
 

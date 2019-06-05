@@ -246,9 +246,17 @@ RenderGraph* RenderGraph::newInstance(GrManager* manager)
 
 void RenderGraph::reset()
 {
+	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_RESET);
+
 	if(!m_ctx)
 	{
 		return;
+	}
+
+	if((m_version % PERIODIC_CLEANUP_EVERY) == 0)
+	{
+		// Do cleanup
+		periodicCleanup();
 	}
 
 	for(RT& rt : m_ctx->m_rts)
@@ -963,7 +971,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 
 void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
+	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_COMPILE);
 
 	// Init the context
 	BakeContext& ctx = *newContext(descr, alloc);
@@ -1003,7 +1011,7 @@ BufferPtr RenderGraph::getBuffer(RenderPassBufferHandle handle) const
 
 void RenderGraph::runSecondLevel(U32 threadIdx)
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
+	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_2ND_LEVEL);
 	ANKI_ASSERT(m_ctx);
 
 	RenderPassWorkContext ctx;
@@ -1025,7 +1033,11 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 			ctx.m_userData = p.m_userData;
 
 			ANKI_ASSERT(ctx.m_commandBuffer.isCreated());
-			p.m_callback(ctx);
+
+			{
+				ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_CALLBACK);
+				p.m_callback(ctx);
+			}
 
 			ctx.m_commandBuffer->flush();
 		}
@@ -1034,7 +1046,7 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 
 void RenderGraph::run() const
 {
-	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH);
+	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_RUN);
 	ANKI_ASSERT(m_ctx);
 
 	RenderPassWorkContext ctx;
@@ -1090,6 +1102,7 @@ void RenderGraph::run() const
 				ctx.m_passIdx = passIdx;
 				ctx.m_batchIdx = pass.m_batchIdx;
 
+				ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_CALLBACK);
 				pass.m_callback(ctx);
 			}
 			else
@@ -1110,6 +1123,8 @@ void RenderGraph::run() const
 
 void RenderGraph::flush()
 {
+	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_FLUSH);
+
 	for(CommandBufferPtr& cmdb : m_ctx->m_graphicsCmdbs)
 	{
 		cmdb->flush();
@@ -1132,6 +1147,44 @@ void RenderGraph::getCrntUsage(
 				break;
 			}
 		}
+	}
+}
+
+void RenderGraph::periodicCleanup()
+{
+	U rtsCleanedCount = 0;
+	for(RenderTargetCacheEntry& entry : m_renderTargetCache)
+	{
+		if(entry.m_texturesInUse < entry.m_textures.getSize())
+		{
+			// Should cleanup
+
+			rtsCleanedCount += entry.m_textures.getSize() - entry.m_texturesInUse;
+
+			// New array
+			DynamicArray<TexturePtr> newArray;
+			if(entry.m_texturesInUse > 0)
+			{
+				newArray.create(getAllocator(), entry.m_texturesInUse);
+			}
+
+			// Populate the new array
+			for(U i = 0; i < newArray.getSize(); ++i)
+			{
+				newArray[i] = std::move(entry.m_textures[i]);
+			}
+
+			// Destroy the old array and the rest of the textures
+			entry.m_textures.destroy(getAllocator());
+
+			// Move new array
+			entry.m_textures = std::move(newArray);
+		}
+	}
+
+	if(rtsCleanedCount > 0)
+	{
+		ANKI_GR_LOGI("Cleaned %u render targets", rtsCleanedCount);
 	}
 }
 
