@@ -174,11 +174,7 @@ public:
 
 		// Fixup the image view type
 		newTextureType = computeNewTexTypeOfSubresource(subresource);
-		if(newTextureType == TextureType::_2D)
-		{
-			// Change that anyway
-			viewCi.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		}
+		viewCi.viewType = convertTextureViewType(newTextureType);
 	}
 
 	const MicroImageView& getOrCreateView(const TextureSubresourceInfo& subresource) const;
@@ -209,11 +205,7 @@ private:
 	void updateUsageState(TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
 
 	/// Compute the new type of a texture view.
-	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const
-	{
-		ANKI_ASSERT(isSubresourceValid(subresource));
-		return (textureTypeIsCube(m_texType) && subresource.m_faceCount != 6) ? TextureType::_2D : m_texType;
-	}
+	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const;
 
 	ANKI_USE_RESULT Error initInternal(VkImage externalImage, const TextureInitInfo& init);
 };

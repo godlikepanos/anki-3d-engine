@@ -708,4 +708,22 @@ const MicroImageView& TextureImpl::getOrCreateView(const TextureSubresourceInfo&
 	return *it;
 }
 
+TextureType TextureImpl::computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const
+{
+	ANKI_ASSERT(isSubresourceValid(subresource));
+	if(textureTypeIsCube(m_texType))
+	{
+		if(subresource.m_faceCount != 6)
+		{
+			ANKI_ASSERT(subresource.m_faceCount == 1);
+			return (subresource.m_layerCount > 1) ? TextureType::_2D_ARRAY : TextureType::_2D;
+		}
+		else if(subresource.m_layerCount == 1)
+		{
+			return TextureType::CUBE;
+		}
+	}
+	return m_texType;
+}
+
 } // end namespace anki
