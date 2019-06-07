@@ -24,7 +24,7 @@ layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 #if LIGHT_SHADING_TEX == 0
 layout(set = 0, binding = 1) uniform texture2D u_lightShadingTex;
 #else
-layout(set = 0, binding = 1) uniform textureCubeArray u_lightShadingTex;
+layout(set = 0, binding = 1) uniform textureCube u_lightShadingTex;
 #endif
 
 #if SECOND_BOUNCE == 1
@@ -66,9 +66,8 @@ Vec3 sampleLightShadingTexture(const U32 face)
 	const Vec2 uv = (Vec2(gl_LocalInvocationID.x, gl_LocalInvocationID.y) + 0.5) / F32(WORKGROUP_SIZE);
 	const Vec2 ndc = UV_TO_NDC(uv);
 	const Vec3 cubeUvw = getCubemapDirection(ndc, face);
-	const F32 layerIdx = 0.0; // The C++ code sets the right layer in the view.
 
-	return textureLod(u_lightShadingTex, u_nearestAnyClampSampler, Vec4(cubeUvw, 0.0), 0.0).rgb;
+	return textureLod(u_lightShadingTex, u_nearestAnyClampSampler, cubeUvw, 0.0).rgb;
 #endif
 }
 
@@ -142,7 +141,8 @@ void main()
 		gbufferUv.x *= 1.0 / 6.0;
 		gbufferUv.x += (1.0 / 6.0) * F32(f);
 		GbufferInfo gbuffer;
-		readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0, gbuffer);
+		readGBuffer(
+			u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0, gbuffer);
 
 		// Sample irradiance
 		Vec3 firstBounceIrradiance = sampleAmbientDice(s_diceIrradiance[0],

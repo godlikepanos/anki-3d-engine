@@ -525,8 +525,12 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					cmdb->setTextureSurfaceBarrier(
 						tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, surf);
 
-					const U wgSizeZ = (inf.m_type == TextureType::_3D) ? (tex->getDepth() >> mip) : 1;
-					cmdb->dispatchCompute(tex->getWidth() >> mip, tex->getHeight() >> mip, wgSizeZ);
+					UVec3 wgSize;
+					wgSize.x() = (8 - 1 + (tex->getWidth() >> mip)) / 8;
+					wgSize.y() = (8 - 1 + (tex->getHeight() >> mip)) / 8;
+					wgSize.z() = (inf.m_type == TextureType::_3D) ? ((8 - 1 + (tex->getDepth() >> mip)) / 8) : 1;
+
+					cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
 
 					if(!!inf.m_initialUsage)
 					{

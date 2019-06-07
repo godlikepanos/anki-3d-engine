@@ -404,40 +404,10 @@ public:
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
 		const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
 		RenderTargetHandle depthStencilRenderTargetHandle,
-		U32 minx = 0,
-		U32 miny = 0,
-		U32 maxx = MAX_U32,
-		U32 maxy = MAX_U32)
-	{
-#if ANKI_EXTRA_CHECKS
-		ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
-		for(U i = 0; i < colorRenderTargetHandles.getSize(); ++i)
-		{
-			if(i >= fbInfo.m_colorAttachmentCount)
-			{
-				ANKI_ASSERT(!colorRenderTargetHandles[i].isValid());
-			}
-			else
-			{
-				ANKI_ASSERT(colorRenderTargetHandles[i].isValid());
-			}
-		}
-
-		if(!fbInfo.m_depthStencilAttachment.m_aspect)
-		{
-			ANKI_ASSERT(!depthStencilRenderTargetHandle.isValid());
-		}
-		else
-		{
-			ANKI_ASSERT(depthStencilRenderTargetHandle.isValid());
-		}
-#endif
-
-		m_fbDescr = fbInfo;
-		memcpy(&m_rtHandles[0], &colorRenderTargetHandles[0], sizeof(colorRenderTargetHandles));
-		m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
-		m_fbRenderArea = {{minx, miny, maxx, maxy}};
-	}
+		U32 minx,
+		U32 miny,
+		U32 maxx,
+		U32 maxy);
 
 private:
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;
@@ -482,81 +452,26 @@ public:
 	{
 	}
 
-	~RenderGraphDescription()
-	{
-		for(RenderPassDescriptionBase* pass : m_passes)
-		{
-			m_alloc.deleteInstance(pass);
-		}
-		m_passes.destroy(m_alloc);
-		m_renderTargets.destroy(m_alloc);
-		m_buffers.destroy(m_alloc);
-	}
+	~RenderGraphDescription();
 
 	/// Create a new graphics render pass.
-	GraphicsRenderPassDescription& newGraphicsRenderPass(CString name)
-	{
-		GraphicsRenderPassDescription* pass = m_alloc.newInstance<GraphicsRenderPassDescription>(this);
-		pass->m_alloc = m_alloc;
-		pass->setName(name);
-		m_passes.emplaceBack(m_alloc, pass);
-		return *pass;
-	}
+	GraphicsRenderPassDescription& newGraphicsRenderPass(CString name);
 
 	/// Create a new compute render pass.
-	ComputeRenderPassDescription& newComputeRenderPass(CString name)
-	{
-		ComputeRenderPassDescription* pass = m_alloc.newInstance<ComputeRenderPassDescription>(this);
-		pass->m_alloc = m_alloc;
-		pass->setName(name);
-		m_passes.emplaceBack(m_alloc, pass);
-		return *pass;
-	}
+	ComputeRenderPassDescription& newComputeRenderPass(CString name);
 
-	/// Import an existing render target.
-	RenderTargetHandle importRenderTarget(TexturePtr tex, TextureUsageBit usage)
-	{
-		RT& rt = *m_renderTargets.emplaceBack(m_alloc);
-		rt.m_importedTex = tex;
-		rt.m_importedLastKnownUsage = usage;
-		rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
-		rt.setName(tex->getName());
+	/// Import an existing render target and let the render graph know about it's up-to-date usage.
+	RenderTargetHandle importRenderTarget(TexturePtr tex, TextureUsageBit usage);
 
-		RenderTargetHandle out;
-		out.m_idx = m_renderTargets.getSize() - 1;
-		return out;
-	}
+	/// Import an existing render target and let the render graph find it's current usage by looking at the previous
+	/// frame.
+	RenderTargetHandle importRenderTarget(TexturePtr tex);
 
 	/// Get or create a new render target.
-	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf)
-	{
-		ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
-		ANKI_ASSERT(
-			initInf.m_usage == TextureUsageBit::NONE && "Don't need to supply the usage. Render grap will find it");
-		RT& rt = *m_renderTargets.emplaceBack(m_alloc);
-		rt.m_initInfo = initInf;
-		rt.m_hash = initInf.m_hash;
-		rt.m_importedLastKnownUsage = TextureUsageBit::NONE;
-		rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
-		rt.setName(initInf.getName());
-
-		RenderTargetHandle out;
-		out.m_idx = m_renderTargets.getSize() - 1;
-		return out;
-	}
+	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf);
 
 	/// Import a buffer.
-	RenderPassBufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage)
-	{
-		Buffer& b = *m_buffers.emplaceBack(m_alloc);
-		b.setName(buff->getName());
-		b.m_usage = usage;
-		b.m_importedBuff = buff;
-
-		RenderPassBufferHandle out;
-		out.m_idx = m_buffers.getSize() - 1;
-		return out;
-	}
+	RenderPassBufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage);
 
 private:
 	class Resource
@@ -579,7 +494,8 @@ private:
 		U64 m_hash = 0;
 		TexturePtr m_importedTex;
 		TextureUsageBit m_importedLastKnownUsage;
-		TextureUsageBit m_usageDerivedByDeps; ///< XXX
+		TextureUsageBit m_usageDerivedByDeps; ///< Derived by the deps of this RT and will be used to set its usage.
+		Bool m_importedAndUndefinedUsage = false;
 	};
 
 	class Buffer : public Resource
@@ -646,7 +562,15 @@ public:
 	/// @}
 
 private:
-	static constexpr U PERIODIC_CLEANUP_EVERY = 60; ///< How many frames between cleanups
+	static constexpr U PERIODIC_CLEANUP_EVERY = 60; ///< How many frames between cleanups.
+
+	// Forward declarations of internal classes.
+	class BakeContext;
+	class Pass;
+	class Batch;
+	class RT;
+	class Buffer;
+	class Barrier;
 
 	/// Render targets of the same type+size+format.
 	class RenderTargetCacheEntry
@@ -656,17 +580,16 @@ private:
 		U32 m_texturesInUse = 0;
 	};
 
+	/// Info on imported render targets that are kept between runs.
+	class ImportedRenderTargetInfo
+	{
+	public:
+		DynamicArray<TextureUsageBit> m_surfOrVolLastUsages; ///< Last TextureUsageBit of the imported RT.
+	};
+
 	HashMap<U64, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
-
 	HashMap<U64, FramebufferPtr> m_fbCache; ///< Framebuffer cache.
-
-	// Forward declarations
-	class BakeContext;
-	class Pass;
-	class Batch;
-	class RT;
-	class Buffer;
-	class Barrier;
+	HashMap<U64, ImportedRenderTargetInfo> m_importedRenderTargets;
 
 	BakeContext* m_ctx = nullptr;
 	U64 m_version = 0;

@@ -26,6 +26,7 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 			if(!(x)) \
 			{ \
 				anki::akassert(#x, ANKI_FILE, __LINE__, ANKI_FUNC); \
+				ANKI_UNREACHABLE(); \
 			} \
 		} while(0)
 #	define ANKI_ASSERTS_ENABLED 1
