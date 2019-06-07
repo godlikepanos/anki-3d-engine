@@ -152,7 +152,7 @@ void main()
 			s_diceIrradiance[4],
 			s_diceIrradiance[5],
 			gbuffer.m_normal);
-		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance / PI;
+		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance;
 
 		// Compute 2nd bounce
 		const Vec3 lightShading = sampleLightShadingTexture(f);
@@ -194,7 +194,6 @@ void main()
 #	else
 		Vec3 irradiance = s_diceIrradiance[f];
 #	endif
-		irradiance /= PI / 2.0; // Pre-divide. Don't use PI because we integraded only PI/2
 		const Vec3 toStoreValue = irradiance;
 #elif DEBUG_MODE == 1
 		const Vec3 toStoreValue = colorPerCubeFace(f);
