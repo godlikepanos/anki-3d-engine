@@ -28,20 +28,24 @@ Error TraditionalDeferredLightShading::init()
 	{
 		ANKI_CHECK(getResourceManager().loadResource("shaders/TraditionalDeferredShading.glslp", m_lightProg));
 
-		ShaderProgramResourceMutationInitList<1> mutators(m_lightProg);
-		mutators.add("LIGHT_TYPE", 0);
+		for(U32 specular = 0; specular <= 1; ++specular)
+		{
+			ShaderProgramResourceMutationInitList<2> mutators(m_lightProg);
+			mutators.add("LIGHT_TYPE", 0);
+			mutators.add("SPECULAR", specular);
 
-		const ShaderProgramResourceVariant* variant;
-		m_lightProg->getOrCreateVariant(mutators.get(), variant);
-		m_plightGrProg = variant->getProgram();
+			const ShaderProgramResourceVariant* variant;
+			m_lightProg->getOrCreateVariant(mutators.get(), variant);
+			m_plightGrProg[specular] = variant->getProgram();
 
-		mutators[0].m_value = 1;
-		m_lightProg->getOrCreateVariant(mutators.get(), variant);
-		m_slightGrProg = variant->getProgram();
+			mutators[0].m_value = 1;
+			m_lightProg->getOrCreateVariant(mutators.get(), variant);
+			m_slightGrProg[specular] = variant->getProgram();
 
-		mutators[0].m_value = 2;
-		m_lightProg->getOrCreateVariant(mutators.get(), variant);
-		m_dirLightGrProg = variant->getProgram();
+			mutators[0].m_value = 2;
+			m_lightProg->getOrCreateVariant(mutators.get(), variant);
+			m_dirLightGrProg[specular] = variant->getProgram();
+		}
 	}
 
 	// Init meshes
@@ -76,52 +80,41 @@ void TraditionalDeferredLightShading::bindVertexIndexBuffers(
 	cmdb->bindIndexBuffer(buff, offset, idxType);
 }
 
-void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
-	const Mat4& invViewProjMat,
-	const Vec4& cameraPosWSpace,
-	const UVec4& viewport,
-	const Vec2& gbufferTexCoordsScale,
-	const Vec2& gbufferTexCoordsBias,
-	const Vec2& lightbufferTexCoordsScale,
-	const Vec2& lightbufferTexCoordsBias,
-	F32 cameraNear,
-	F32 cameraFar,
-	DirectionalLightQueueElement* directionalLight,
-	ConstWeakArray<PointLightQueueElement> plights,
-	ConstWeakArray<SpotLightQueueElement> slights,
-	CommandBufferPtr& cmdb)
+void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShadingDrawInfo& info)
 {
 	// Set common state for all lights
+	CommandBufferPtr& cmdb = info.m_commandBuffer;
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
-	cmdb->setViewport(viewport.x(), viewport.y(), viewport.z(), viewport.w());
+	cmdb->setViewport(info.m_viewport.x(), info.m_viewport.y(), info.m_viewport.z(), info.m_viewport.w());
 
 	// Dir light
-	if(directionalLight)
+	if(info.m_directionalLight)
 	{
-		ANKI_ASSERT(directionalLight->m_uuid && directionalLight->m_shadowCascadeCount == 1);
+		ANKI_ASSERT(info.m_directionalLight->m_uuid && info.m_directionalLight->m_shadowCascadeCount == 1);
 
-		cmdb->bindShaderProgram(m_dirLightGrProg);
+		cmdb->bindShaderProgram(m_dirLightGrProg[info.m_computeSpecular]);
 
 		DeferredDirectionalLightUniforms* unis = allocateAndBindUniforms<DeferredDirectionalLightUniforms*>(
 			sizeof(DeferredDirectionalLightUniforms), cmdb, 0, 1);
 
-		unis->m_inputTexUvScale = gbufferTexCoordsScale;
-		unis->m_inputTexUvBias = gbufferTexCoordsBias;
-		unis->m_fbUvScale = lightbufferTexCoordsScale;
-		unis->m_fbUvBias = lightbufferTexCoordsBias;
-		unis->m_invViewProjMat = invViewProjMat;
-		unis->m_camPos = cameraPosWSpace.xyz();
+		unis->m_inputTexUvScale = info.m_gbufferTexCoordsScale;
+		unis->m_inputTexUvBias = info.m_gbufferTexCoordsBias;
+		unis->m_fbUvScale = info.m_lightbufferTexCoordsScale;
+		unis->m_fbUvBias = info.m_lightbufferTexCoordsBias;
+		unis->m_invViewProjMat = info.m_invViewProjectionMatrix;
+		unis->m_camPos = info.m_cameraPosWSpace.xyz();
 
-		unis->m_diffuseColor = directionalLight->m_diffuseColor;
-		unis->m_lightDir = directionalLight->m_direction;
-		unis->m_lightMatrix = directionalLight->m_textureMatrices[0];
+		unis->m_diffuseColor = info.m_directionalLight->m_diffuseColor;
+		unis->m_lightDir = info.m_directionalLight->m_direction;
+		unis->m_lightMatrix = info.m_directionalLight->m_textureMatrices[0];
 
-		unis->m_near = cameraNear;
-		unis->m_far = cameraFar;
+		unis->m_near = info.m_cameraNear;
+		unis->m_far = info.m_cameraFar;
 
-		if(directionalLight->m_shadowCascadeCount > 0)
+		if(info.m_directionalLight->m_shadowCascadeCount > 0)
 		{
-			unis->m_effectiveShadowDistance = directionalLight->m_shadowRenderQueues[0]->m_effectiveShadowDistance;
+			unis->m_effectiveShadowDistance =
+				info.m_directionalLight->m_shadowRenderQueues[0]->m_effectiveShadowDistance;
 		}
 		else
 		{
@@ -137,9 +130,9 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 	// Do point lights
 	U32 indexCount;
 	bindVertexIndexBuffers(m_plightMesh, cmdb, indexCount);
-	cmdb->bindShaderProgram(m_plightGrProg);
+	cmdb->bindShaderProgram(m_plightGrProg[info.m_computeSpecular]);
 
-	for(const PointLightQueueElement& plightEl : plights)
+	for(const PointLightQueueElement& plightEl : info.m_pointLights)
 	{
 		// Update uniforms
 		DeferredVertexUniforms* vert =
@@ -147,17 +140,17 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 
 		Mat4 modelM(plightEl.m_worldPosition.xyz1(), Mat3::getIdentity(), plightEl.m_radius);
 
-		vert->m_mvp = vpMat * modelM;
+		vert->m_mvp = info.m_viewProjectionMatrix * modelM;
 
 		DeferredPointLightUniforms* light =
 			allocateAndBindUniforms<DeferredPointLightUniforms*>(sizeof(DeferredPointLightUniforms), cmdb, 0, 1);
 
-		light->m_inputTexUvScale = gbufferTexCoordsScale;
-		light->m_inputTexUvBias = gbufferTexCoordsBias;
-		light->m_fbUvScale = lightbufferTexCoordsScale;
-		light->m_fbUvBias = lightbufferTexCoordsBias;
-		light->m_invViewProjMat = invViewProjMat;
-		light->m_camPos = cameraPosWSpace.xyz();
+		light->m_inputTexUvScale = info.m_gbufferTexCoordsScale;
+		light->m_inputTexUvBias = info.m_gbufferTexCoordsBias;
+		light->m_fbUvScale = info.m_lightbufferTexCoordsScale;
+		light->m_fbUvBias = info.m_lightbufferTexCoordsBias;
+		light->m_invViewProjMat = info.m_invViewProjectionMatrix;
+		light->m_camPos = info.m_cameraPosWSpace.xyz();
 		light->m_position = plightEl.m_worldPosition;
 		light->m_oneOverSquareRadius = 1.0f / (plightEl.m_radius * plightEl.m_radius);
 		light->m_diffuseColor = plightEl.m_diffuseColor;
@@ -168,9 +161,9 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 
 	// Do spot lights
 	bindVertexIndexBuffers(m_slightMesh, cmdb, indexCount);
-	cmdb->bindShaderProgram(m_slightGrProg);
+	cmdb->bindShaderProgram(m_slightGrProg[info.m_computeSpecular]);
 
-	for(const SpotLightQueueElement& splightEl : slights)
+	for(const SpotLightQueueElement& splightEl : info.m_spotLights)
 	{
 		// Compute the model matrix
 		//
@@ -188,18 +181,18 @@ void TraditionalDeferredLightShading::drawLights(const Mat4& vpMat,
 		// Update vertex uniforms
 		DeferredVertexUniforms* vert =
 			allocateAndBindUniforms<DeferredVertexUniforms*>(sizeof(DeferredVertexUniforms), cmdb, 0, 0);
-		vert->m_mvp = vpMat * modelM;
+		vert->m_mvp = info.m_viewProjectionMatrix * modelM;
 
 		// Update fragment uniforms
 		DeferredSpotLightUniforms* light =
 			allocateAndBindUniforms<DeferredSpotLightUniforms*>(sizeof(DeferredSpotLightUniforms), cmdb, 0, 1);
 
-		light->m_inputTexUvScale = gbufferTexCoordsScale;
-		light->m_inputTexUvBias = gbufferTexCoordsBias;
-		light->m_fbUvScale = lightbufferTexCoordsScale;
-		light->m_fbUvBias = lightbufferTexCoordsBias;
-		light->m_invViewProjMat = invViewProjMat;
-		light->m_camPos = cameraPosWSpace.xyz();
+		light->m_inputTexUvScale = info.m_gbufferTexCoordsScale;
+		light->m_inputTexUvBias = info.m_gbufferTexCoordsBias;
+		light->m_fbUvScale = info.m_lightbufferTexCoordsScale;
+		light->m_fbUvBias = info.m_lightbufferTexCoordsBias;
+		light->m_invViewProjMat = info.m_invViewProjectionMatrix;
+		light->m_camPos = info.m_cameraPosWSpace.xyz();
 
 		light->m_position = splightEl.m_worldTransform.getTranslationPart().xyz();
 		light->m_oneOverSquareRadius = 1.0f / (splightEl.m_distance * splightEl.m_distance);

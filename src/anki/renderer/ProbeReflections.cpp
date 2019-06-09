@@ -399,20 +399,24 @@ void ProbeReflections::runLightShading(U32 faceIdx, RenderPassWorkContext& rgrap
 		rgraphCtx.bindTexture(0, 8, m_ctx.m_shadowMapRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	}
 
-	m_lightShading.m_deferred.drawLights(rqueue.m_viewProjectionMatrix,
-		rqueue.m_viewProjectionMatrix.getInverse(),
-		rqueue.m_cameraTransform.getTranslationPart(),
-		UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize),
-		Vec2(1.0f / F32(m_lightShading.m_tileSize * 6), 1.0f / F32(m_lightShading.m_tileSize)),
-		Vec2(F32(faceIdx) * (1.0f / 6.0f), 0.0f),
-		Vec2(1.0f / F32(m_lightShading.m_tileSize), 1.0f / F32(m_lightShading.m_tileSize)),
-		Vec2(0.0f, 0.0f),
-		probe.m_renderQueues[faceIdx]->m_cameraNear,
-		probe.m_renderQueues[faceIdx]->m_cameraFar,
-		(hasDirLight) ? &probe.m_renderQueues[faceIdx]->m_directionalLight : nullptr,
-		rqueue.m_pointLights,
-		rqueue.m_spotLights,
-		cmdb);
+	TraditionalDeferredLightShadingDrawInfo dsInfo;
+	dsInfo.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
+	dsInfo.m_invViewProjectionMatrix = rqueue.m_viewProjectionMatrix.getInverse();
+	dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart();
+	dsInfo.m_viewport = UVec4(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
+	dsInfo.m_gbufferTexCoordsScale =
+		Vec2(1.0f / F32(m_lightShading.m_tileSize * 6), 1.0f / F32(m_lightShading.m_tileSize));
+	dsInfo.m_gbufferTexCoordsBias = Vec2(F32(faceIdx) * (1.0f / 6.0f), 0.0f);
+	dsInfo.m_lightbufferTexCoordsScale =
+		Vec2(1.0f / F32(m_lightShading.m_tileSize), 1.0f / F32(m_lightShading.m_tileSize));
+	dsInfo.m_lightbufferTexCoordsBias = Vec2(0.0f, 0.0f);
+	dsInfo.m_cameraNear = probe.m_renderQueues[faceIdx]->m_cameraNear;
+	dsInfo.m_cameraFar = probe.m_renderQueues[faceIdx]->m_cameraFar;
+	dsInfo.m_directionalLight = (hasDirLight) ? &probe.m_renderQueues[faceIdx]->m_directionalLight : nullptr;
+	dsInfo.m_pointLights = rqueue.m_pointLights;
+	dsInfo.m_spotLights = rqueue.m_spotLights;
+	dsInfo.m_commandBuffer = cmdb;
+	m_lightShading.m_deferred.drawLights(dsInfo);
 }
 
 void ProbeReflections::runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx)

@@ -6,6 +6,7 @@
 // Classic deferred lighting shader
 
 #pragma anki mutator LIGHT_TYPE 0 1 2
+#pragma anki mutator SPECULAR 0 1
 
 #define POINT_LIGHT_TYPE 0
 #define SPOT_LIGHT_TYPE 1
@@ -110,7 +111,12 @@ void main()
 	const Vec3 l = normalize(frag2Light);
 	const F32 nol = max(0.0, dot(gbuffer.m_normal, l));
 #endif
+
+#if SPECULAR == 1
 	const Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
+#else
+	const Vec3 specC = Vec3(0.0);
+#endif
 
 	// Compute factors
 #if LIGHT_TYPE == POINT_LIGHT_TYPE

@@ -13,6 +13,27 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
+/// Parameters to be passed to TraditionalDeferredLightShading::drawLights.
+class TraditionalDeferredLightShadingDrawInfo
+{
+public:
+	Mat4 m_viewProjectionMatrix;
+	Mat4 m_invViewProjectionMatrix;
+	Vec4 m_cameraPosWSpace;
+	UVec4 m_viewport;
+	Vec2 m_gbufferTexCoordsScale;
+	Vec2 m_gbufferTexCoordsBias;
+	Vec2 m_lightbufferTexCoordsScale;
+	Vec2 m_lightbufferTexCoordsBias;
+	F32 m_cameraNear;
+	F32 m_cameraFar;
+	DirectionalLightQueueElement* m_directionalLight ANKI_DEBUG_CODE(= numberToPtr<DirectionalLightQueueElement*>(1));
+	ConstWeakArray<PointLightQueueElement> m_pointLights;
+	ConstWeakArray<SpotLightQueueElement> m_spotLights;
+	CommandBufferPtr m_commandBuffer;
+	Bool m_computeSpecular = false;
+};
+
 /// Helper for drawing using traditional deferred shading.
 class TraditionalDeferredLightShading : public RendererObject
 {
@@ -25,26 +46,13 @@ public:
 
 	/// Run the light shading. It will iterate over the lights and draw them. It doesn't bind anything related to
 	/// GBuffer or the output buffer.
-	void drawLights(const Mat4& vpMat,
-		const Mat4& invViewProjMat,
-		const Vec4& cameraPosWSpace,
-		const UVec4& viewport,
-		const Vec2& gbufferTexCoordsScale,
-		const Vec2& gbufferTexCoordsBias,
-		const Vec2& lightbufferTexCoordsScale,
-		const Vec2& lightbufferTexCoordsBias,
-		F32 cameraNear,
-		F32 cameraFar,
-		DirectionalLightQueueElement* directionalLight,
-		ConstWeakArray<PointLightQueueElement> plights,
-		ConstWeakArray<SpotLightQueueElement> slights,
-		CommandBufferPtr& cmdb);
+	void drawLights(TraditionalDeferredLightShadingDrawInfo& info);
 
 private:
 	ShaderProgramResourcePtr m_lightProg;
-	ShaderProgramPtr m_plightGrProg;
-	ShaderProgramPtr m_slightGrProg;
-	ShaderProgramPtr m_dirLightGrProg;
+	Array<ShaderProgramPtr, 2> m_plightGrProg;
+	Array<ShaderProgramPtr, 2> m_slightGrProg;
+	Array<ShaderProgramPtr, 2> m_dirLightGrProg;
 
 	/// @name Meshes of light volumes.
 	/// @{

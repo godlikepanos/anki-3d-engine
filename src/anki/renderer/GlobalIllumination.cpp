@@ -677,20 +677,22 @@ void GlobalIllumination::runLightShading(RenderPassWorkContext& rgraphCtx, Inter
 		rgraphCtx.bindTexture(0, 8, giCtx.m_shadowsRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	}
 
-	m_lightShading.m_deferred.drawLights(rqueue.m_viewProjectionMatrix,
-		rqueue.m_viewProjectionMatrix.getInverse(),
-		rqueue.m_cameraTransform.getTranslationPart(),
-		UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize),
-		Vec2(1.0f / F32(m_tileSize * 6), 1.0f / F32(m_tileSize)),
-		Vec2(0.0f, 0.0f),
-		Vec2(1.0f / F32(m_tileSize), 1.0f / F32(m_tileSize)),
-		Vec2(-F32(faceIdx), 0.0f),
-		probe.m_renderQueues[faceIdx]->m_cameraNear,
-		probe.m_renderQueues[faceIdx]->m_cameraFar,
-		(hasDirLight) ? &probe.m_renderQueues[faceIdx]->m_directionalLight : nullptr,
-		rqueue.m_pointLights,
-		rqueue.m_spotLights,
-		cmdb);
+	TraditionalDeferredLightShadingDrawInfo dsInfo;
+	dsInfo.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
+	dsInfo.m_invViewProjectionMatrix = rqueue.m_viewProjectionMatrix.getInverse();
+	dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart();
+	dsInfo.m_viewport = UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize);
+	dsInfo.m_gbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize * 6), 1.0f / F32(m_tileSize));
+	dsInfo.m_gbufferTexCoordsBias = Vec2(0.0f, 0.0f);
+	dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize), 1.0f / F32(m_tileSize));
+	dsInfo.m_lightbufferTexCoordsBias = Vec2(-F32(faceIdx), 0.0f);
+	dsInfo.m_cameraNear = probe.m_renderQueues[faceIdx]->m_cameraNear;
+	dsInfo.m_cameraFar = probe.m_renderQueues[faceIdx]->m_cameraFar;
+	dsInfo.m_directionalLight = (hasDirLight) ? &probe.m_renderQueues[faceIdx]->m_directionalLight : nullptr;
+	dsInfo.m_pointLights = rqueue.m_pointLights;
+	dsInfo.m_spotLights = rqueue.m_spotLights;
+	dsInfo.m_commandBuffer = cmdb;
+	m_lightShading.m_deferred.drawLights(dsInfo);
 }
 
 void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)

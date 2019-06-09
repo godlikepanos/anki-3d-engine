@@ -523,6 +523,7 @@ Error ShaderCompilerCache::compileInternal(
 	}
 	else
 	{
+		ANKI_GR_LOGI("%s not found in cache. Will compile", fname.cstr());
 		ANKI_CHECK(m_compiler.compile(source, options, bin));
 
 		File file;
