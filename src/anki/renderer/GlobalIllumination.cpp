@@ -598,7 +598,8 @@ void GlobalIllumination::runGBufferInThread(RenderPassWorkContext& rgraphCtx, In
 			cmdb,
 			m_r->getSamplers().m_trilinearRepeat,
 			rqueue.m_renderables.getBegin(),
-			rqueue.m_renderables.getEnd());
+			rqueue.m_renderables.getEnd(),
+			MAX_LOD_COUNT - 1);
 	}
 
 	// It's secondary, no need to restore the state
@@ -634,7 +635,8 @@ void GlobalIllumination::runShadowmappingInThread(RenderPassWorkContext& rgraphC
 			cmdb,
 			m_r->getSamplers().m_trilinearRepeatAniso,
 			cascadeRenderQueue.m_renderables.getBegin(),
-			cascadeRenderQueue.m_renderables.getEnd());
+			cascadeRenderQueue.m_renderables.getEnd(),
+			MAX_LOD_COUNT - 1);
 	}
 
 	// It's secondary, no need to restore the state

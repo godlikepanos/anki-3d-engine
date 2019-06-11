@@ -360,7 +360,8 @@ void ProbeReflections::runGBuffer(U32 faceIdx, CommandBufferPtr& cmdb)
 			cmdb,
 			m_r->getSamplers().m_trilinearRepeatAniso,
 			rqueue.m_renderables.getBegin(),
-			rqueue.m_renderables.getEnd());
+			rqueue.m_renderables.getEnd(),
+			MAX_LOD_COUNT - 1);
 	}
 
 	// Restore state
@@ -760,7 +761,8 @@ void ProbeReflections::runShadowMapping(U32 faceIdx, CommandBufferPtr& cmdb)
 		cmdb,
 		m_r->getSamplers().m_trilinearRepeatAniso,
 		cascadeRenderQueue.m_renderables.getBegin(),
-		cascadeRenderQueue.m_renderables.getEnd());
+		cascadeRenderQueue.m_renderables.getEnd(),
+		MAX_LOD_COUNT - 1);
 
 	cmdb->setPolygonOffset(0.0f, 0.0f);
 }

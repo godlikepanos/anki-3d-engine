@@ -95,7 +95,7 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 
 	const F32 factor0 = -dot(E, normTangentSpace);
 	const F32 factor1 = in_distFromTheCamera / -MAX_EFFECTIVE_DISTANCE;
-	const F32 factor = (1.0 - factor0) * (1.0 - factor1);
+	const F32 factor = saturate((1.0 - factor0) * (1.0 - factor1));
 	const F32 sampleCountf = mix(F32(MIN_SAMPLES), F32(MAX_SAMPLES), factor);
 
 	const F32 stepSize = 1.0 / sampleCountf;

@@ -26,6 +26,7 @@ public:
 	Array<U8, MAX_INSTANCES> m_cachedRenderElementLods;
 	Array<const void*, MAX_INSTANCES> m_userData;
 	U m_cachedRenderElementCount = 0;
+	U m_minLod = 0;
 };
 
 /// Check if the drawcalls can be merged.
@@ -45,7 +46,8 @@ void RenderableDrawer::drawRange(Pass pass,
 	CommandBufferPtr cmdb,
 	SamplerPtr sampler,
 	const RenderableQueueElement* begin,
-	const RenderableQueueElement* end)
+	const RenderableQueueElement* end,
+	U minLod)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -60,6 +62,9 @@ void RenderableDrawer::drawRange(Pass pass,
 	ctx.m_queueCtx.m_sampler = sampler;
 	ctx.m_queueCtx.m_key = RenderingKey(pass, 0, 1, false, false);
 	ctx.m_queueCtx.m_debugDraw = false;
+
+	ANKI_ASSERT(minLod < MAX_LOD_COUNT);
+	ctx.m_minLod = minLod;
 
 	for(; begin != end; ++begin)
 	{
@@ -97,15 +102,8 @@ void RenderableDrawer::drawSingle(DrawContext& ctx)
 
 	const RenderableQueueElement& rqel = *ctx.m_renderableElement;
 
-	U8 lod;
-	if(ctx.m_queueCtx.m_key.m_pass == Pass::SM)
-	{
-		lod = MAX_LOD_COUNT - 1;
-	}
-	else
-	{
-		lod = min<U8>(m_r->calculateLod(rqel.m_distanceFromCamera), MAX_LOD_COUNT - 1);
-	}
+	U8 lod = min<U8>(m_r->calculateLod(rqel.m_distanceFromCamera), MAX_LOD_COUNT - 1);
+	lod = max<U8>(lod, ctx.m_minLod);
 
 	const Bool shouldFlush =
 		ctx.m_cachedRenderElementCount > 0
