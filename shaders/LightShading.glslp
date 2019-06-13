@@ -84,7 +84,7 @@ void main()
 
 		idxOffset = u_clusters[clusterIdx];
 
-		// out_color = lightHeatmap(idxOffset, 5, false, true, false, false, false); return;
+		// out_color = lightHeatmap(idxOffset, 5, 1u << 3); return;
 	}
 
 	// Decode GBuffer
@@ -227,13 +227,15 @@ void main()
 
 	// Indirect diffuse
 	{
-		Vec3 diffIndirect = Vec3(0.0);
+		Vec3 diffIndirect;
 
-		if(subgroupAll(u_lightIndices[idxOffset] != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
+		const U32 crntProbeIdx = u_lightIndices[idxOffset];
+		if(subgroupAllEqual(crntProbeIdx)
+			&& subgroupAll(crntProbeIdx != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
 		{
-			// Only one probe, do a fast path without blend weight
+			// All sugroups point to the same probe and there is only one probe, do a fast path without blend weight
 
-			GlobalIlluminationProbe probe = u_giProbes[u_lightIndices[idxOffset]];
+			GlobalIlluminationProbe probe = u_giProbes[subgroupBroadcastFirst(crntProbeIdx)]; // It should be uniform
 			idxOffset += 2u;
 
 			// Sample
@@ -245,21 +247,33 @@ void main()
 			// Zero or more than one probes, do a slow path that blends them together
 
 			F32 totalBlendWeight = EPSILON;
+			diffIndirect = Vec3(0.0);
 
-			// Loop probes
-			ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+			UVec4 execMask = UVec4(0u);
+			ANKI_LOOP while((execMask & gl_SubgroupEqMask) == UVec4(0u))
 			{
-				GlobalIlluminationProbe probe = u_giProbes[idx];
+				U32 uniformIdxOffset = subgroupBroadcastFirst(idxOffset); // Should be uniform
+				const UVec4 laneMask = subgroupBallot(uniformIdxOffset == idxOffset);
+				execMask |= laneMask;
 
-				// Compute blend weight
-				const F32 blendWeight =
-					computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
-				totalBlendWeight += blendWeight;
+				if(uniformIdxOffset == idxOffset)
+				{
+					// Loop probes
+					ANKI_LOOP while((idx = u_lightIndices[uniformIdxOffset++]) != MAX_U32)
+					{
+						GlobalIlluminationProbe probe = u_giProbes[idx];
 
-				// Sample
-				const Vec3 c = sampleGlobalIllumination(
-					worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures, u_trilinearClampSampler);
-				diffIndirect += c * blendWeight;
+						// Compute blend weight
+						const F32 blendWeight =
+							computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
+						totalBlendWeight += blendWeight;
+
+						// Sample
+						const Vec3 c = sampleGlobalIllumination(
+							worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures, u_trilinearClampSampler);
+						diffIndirect += c * blendWeight;
+					}
+				}
 			}
 
 			// Normalize

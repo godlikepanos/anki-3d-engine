@@ -122,36 +122,41 @@ layout(set = LIGHT_SET, binding = LIGHT_CLUSTERS_BINDING + 1, std430) readonly b
 #endif
 
 // Debugging function
-Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool slights, Bool probes, Bool fogVolumes)
+Vec3 lightHeatmap(U32 firstIndex, U32 maxObjects, U32 typeMask)
 {
 	U32 count = 0;
 	U32 idx;
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (plights) ? 1u : 0u;
+		count += ((typeMask & (1u << 0u)) != 0u) ? 1u : 0u;
 	}
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (slights) ? 1u : 0u;
+		count += ((typeMask & (1u << 1u)) != 0u) ? 1u : 0u;
 	}
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (probes) ? 1u : 0u;
+		count += ((typeMask & (1u << 2u)) != 0u) ? 1u : 0u;
 	}
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (decals) ? 1u : 0u;
+		count += ((typeMask & (1u << 3u)) != 0u) ? 1u : 0u;
 	}
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (fogVolumes) ? 1u : 0u;
+		count += ((typeMask & (1u << 4u)) != 0u) ? 1u : 0u;
 	}
 
-	const F32 factor = min(1.0, F32(count) / F32(maxLights));
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	{
+		count += ((typeMask & (1u << 5u)) != 0u) ? 1u : 0u;
+	}
+
+	const F32 factor = min(1.0, F32(count) / F32(maxObjects));
 	return heatmap(factor);
 }

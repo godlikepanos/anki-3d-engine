@@ -49,7 +49,7 @@ Config::Config()
 	newOption("r.gi.tileResolution", 32);
 	newOption("r.gi.shadowMapResolution", 128);
 	newOption("r.gi.maxCachedProbes", 16);
-	newOption("r.gi.maxVisibleProbes", 4);
+	newOption("r.gi.maxVisibleProbes", 8);
 	newOption("r.gi.firstClipmapLevelCellSize", 1.0);
 	newOption("r.gi.secondClipmapLevelCellSize", 8.0);
 	newOption("r.gi.firstClipmapMaxDistance", 20.0);
