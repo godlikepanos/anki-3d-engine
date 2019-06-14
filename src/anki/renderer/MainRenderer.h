@@ -96,9 +96,6 @@ private:
 
 	void runBlit(RenderPassWorkContext& rgraphCtx);
 	void present(RenderPassWorkContext& rgraphCtx);
-
-	static void executeSecondaryCallback(
-		void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
 };
 /// @}
 

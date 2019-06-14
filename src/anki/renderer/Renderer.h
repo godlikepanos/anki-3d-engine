@@ -96,9 +96,9 @@ public:
 
 	~Renderer();
 
-	Indirect& getIndirect()
+	ProbeReflections& getProbeReflections()
 	{
-		return *m_indirect;
+		return *m_probeReflections;
 	}
 
 	VolumetricLightingAccumulation& getVolumetricLightingAccumulation()
@@ -179,6 +179,11 @@ public:
 	const LensFlare& getLensFlare() const
 	{
 		return *m_lensFlare;
+	}
+
+	const GlobalIllumination& getGlobalIllumination() const
+	{
+		return *m_gi;
 	}
 
 	UiStage& getUiStage()
@@ -317,9 +322,14 @@ anki_internal:
 		return m_resourcesDirty;
 	}
 
-	TextureViewPtr getDummyTextureView() const
+	TextureViewPtr getDummyTextureView2d() const
 	{
-		return m_dummyTexView;
+		return m_dummyTexView2d;
+	}
+
+	TextureViewPtr getDummyTextureView3d() const
+	{
+		return m_dummyTexView3d;
 	}
 
 	BufferPtr getDummyBuffer() const
@@ -367,7 +377,8 @@ private:
 	/// @name Rendering stages
 	/// @{
 	UniquePtr<VolumetricLightingAccumulation> m_volLighting;
-	UniquePtr<Indirect> m_indirect;
+	UniquePtr<GlobalIllumination> m_gi;
+	UniquePtr<ProbeReflections> m_probeReflections;
 	UniquePtr<ShadowMapping> m_shadowMapping; ///< Shadow mapping.
 	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage
 	UniquePtr<GBufferPost> m_gbufferPost;
@@ -409,7 +420,8 @@ private:
 	Array<Mat4, 16> m_jitteredMats16x;
 	Array<Mat4, 8> m_jitteredMats8x;
 
-	TextureViewPtr m_dummyTexView;
+	TextureViewPtr m_dummyTexView2d;
+	TextureViewPtr m_dummyTexView3d;
 	BufferPtr m_dummyBuff;
 
 	RendererPrecreatedSamplers m_samplers;

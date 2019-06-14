@@ -27,7 +27,6 @@ AnimationResource::~AnimationResource()
 Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlElement el;
-	I64 tmp;
 	Second ftmp;
 
 	m_startTime = MAX_SECOND;

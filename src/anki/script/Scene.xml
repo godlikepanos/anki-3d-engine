@@ -114,6 +114,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+
 		<class name="LightComponent">
 			<methods>
 				<method name="setDiffuseColor">
@@ -166,6 +167,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+
 		<class name="DecalComponent">
 			<methods>
 				<method name="setDiffuseDecal">
@@ -193,6 +195,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+
 		<class name="LensFlareComponent">
 			<methods>
 				<method name="setFirstFlareSize">
@@ -207,6 +210,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+
 		<class name="TriggerComponent">
 			<methods>
 				<method name="getContactSceneNodes">
@@ -214,6 +218,7 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+
 		<class name="FogDensityComponent">
 			<methods>
 				<method name="setAabb">
@@ -236,6 +241,8 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<return>F32</return>
 				</method>
 			</methods>
+		</class>
+
 		<class name="FrustumComponent">
 			<methods>
 				<method name="setPerspective">
@@ -248,6 +255,38 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+
+		<class name="GlobalIlluminationProbeComponent">
+			<methods>
+				<method name="setBoundingBox">
+					<args>
+						<arg>const Vec4&amp;</arg>
+						<arg>const Vec4&amp;</arg>
+					</args>
+				</method>
+				<method name="getAlignedBoundingBoxMin">
+					<return>Vec4</return>
+				</method>
+				<method name="getAlignedBoundingBoxMax">
+					<return>Vec4</return>
+				</method>
+				<method name="setCellSize">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getCellSize">
+					<return>F32</return>
+				</method>
+				<method name="setFadeDistance">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getFadeDistance">
+					<return>F32</return>
+				</method>
+			</methods>
 		</class>
 
 		<!-- Nodes -->
@@ -282,6 +321,9 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 				<method name="tryGetComponent&lt;FrustumComponent&gt;" alias="getFrustumComponent">
 					<return>FrustumComponent*</return>
+				</method>
+				<method name="tryGetComponent&lt;GlobalIlluminationProbeComponent&gt;" alias="getGlobalIlluminationProbeComponent">
+					<return>GlobalIlluminationProbeComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -387,6 +429,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+		<class name="GlobalIlluminationProbeNode">
+			<methods>
+				<method name="getSceneNodeBase">
+					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
+					<return>SceneNode&amp;</return>
+				</method>
+			</methods>
+		</class>
 		<class name="SceneGraph">
 			<methods>
 				<method name="newPerspectiveCameraNode">
@@ -473,6 +523,13 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>F32</arg>
 					</args>
 					<return>TriggerNode*</return>
+				</method>
+				<method name="newGlobalIlluminationProbeNode">
+					<overrideCall><![CDATA[GlobalIlluminationProbeNode* ret = newSceneNode<GlobalIlluminationProbeNode>(self, arg0);]]></overrideCall>
+					<args>
+						<arg>const CString&amp;</arg>
+					</args>
+					<return>GlobalIlluminationProbeNode*</return>
 				</method>
 				<method name="setActiveCameraNode">
 					<args>

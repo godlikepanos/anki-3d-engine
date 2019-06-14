@@ -65,6 +65,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	endif
 #	extension GL_EXT_samplerless_texture_functions : require
 #	extension GL_EXT_shader_image_load_formatted : require
+#	extension GL_EXT_nonuniform_qualifier : enable
 #
 #	define ANKI_MAX_BINDLESS_TEXTURES %u
 #	define ANKI_MAX_BINDLESS_IMAGES %u
@@ -381,7 +382,10 @@ Error ShaderCompiler::preprocess(
 	return Error::NONE;
 }
 
-Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const
+Error ShaderCompiler::compile(CString source,
+	const ShaderCompilerOptions& options,
+	DynamicArrayAuto<U8>& bin,
+	CString finalSourceDumpFilename) const
 {
 	ANKI_ASSERT(!source.isEmpty() && source.getLength() > 0);
 	Error err = Error::NONE;
@@ -420,23 +424,13 @@ Error ShaderCompiler::compile(CString source, const ShaderCompilerOptions& optio
 		ANKI_CHECK(genSpirv(finalSrc.toCString(), options, bin));
 	}
 
-#if 0
 	// Dump
+	if(finalSourceDumpFilename)
 	{
-		static I id = 0;
-
-		String homeDir;
-		ANKI_CHECK(getHomeDirectory(m_alloc, homeDir));
-
 		File file;
-		ANKI_CHECK(
-			file.open(StringAuto(m_alloc).sprintf("%s/.anki/cache/%d.dump.glsl", homeDir.cstr(), id++).toCString(),
-				FileOpenFlag::WRITE));
-		ANKI_CHECK(file.write(finalSrc.cstr(), finalSrc.getLength() + 1));
-
-		homeDir.destroy(m_alloc);
+		ANKI_CHECK(file.open(finalSourceDumpFilename, FileOpenFlag::WRITE));
+		ANKI_CHECK(file.write(finalSrc.cstr(), finalSrc.getLength() - 1));
 	}
-#endif
 
 	return err;
 }
@@ -477,10 +471,13 @@ void ShaderCompiler::logShaderErrorCode(CString error, CString source, GenericMe
 		&error[0]);
 }
 
-Error ShaderCompilerCache::compile(
-	CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const
+Error ShaderCompilerCache::compile(CString source,
+	U64* hash,
+	const ShaderCompilerOptions& options,
+	DynamicArrayAuto<U8>& bin,
+	Bool dumpShaderSource) const
 {
-	Error err = compileInternal(source, hash, options, bin);
+	const Error err = compileInternal(source, hash, options, bin, dumpShaderSource);
 	if(err)
 	{
 		ANKI_GR_LOGE("Failed to compile or retrieve shader from the cache");
@@ -489,8 +486,11 @@ Error ShaderCompilerCache::compile(
 	return err;
 }
 
-Error ShaderCompilerCache::compileInternal(
-	CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const
+Error ShaderCompilerCache::compileInternal(CString source,
+	U64* hash,
+	const ShaderCompilerOptions& options,
+	DynamicArrayAuto<U8>& bin,
+	Bool dumpShaderSource) const
 {
 	ANKI_ASSERT(!source.isEmpty() && source.getLength() > 0);
 
@@ -522,11 +522,18 @@ Error ShaderCompilerCache::compileInternal(
 	}
 	else
 	{
-		ANKI_CHECK(m_compiler.compile(source, options, bin));
+		ANKI_GR_LOGI("%s not found in cache. Will compile", fname.cstr());
+
+		StringAuto dumpSrcFname(m_alloc);
+		if(dumpShaderSource)
+		{
+			dumpSrcFname.sprintf("%s/%llu.glsl", m_cacheDir.cstr(), fhash);
+		}
+
+		ANKI_CHECK(m_compiler.compile(source, options, bin, (dumpSrcFname) ? dumpSrcFname.toCString() : CString()));
 
 		File file;
 		ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE | FileOpenFlag::BINARY));
-
 		ANKI_CHECK(file.write(&bin[0], bin.getSize()));
 	}
 

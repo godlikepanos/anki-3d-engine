@@ -336,7 +336,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 #define ANKI_SET_IDX(typeIdx) \
 	ClusterBin::TileCtx::ClusterMetaInfo& inf = tileCtx.m_clusterInfos[clusterZ]; \
-	if(ANKI_UNLIKELY(inf.m_offset + 1 >= m_avgObjectsPerCluster)) \
+	if(ANKI_UNLIKELY(U32(inf.m_offset) + 1 >= m_avgObjectsPerCluster)) \
 	{ \
 		ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster"); \
 		continue; \
@@ -431,6 +431,32 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		}
 	}
 
+	// GI probes
+	{
+		Aabb probeBox;
+		for(U i = 0; i < ctx.m_in->m_renderQueue->m_giProbes.getSize(); ++i)
+		{
+			const GlobalIlluminationProbeQueueElement& probe = ctx.m_in->m_renderQueue->m_giProbes[i];
+			probeBox.setMin(probe.m_aabbMin);
+			probeBox.setMax(probe.m_aabbMax);
+
+			if(!insideClusterFrustum(frustumPlanes, probeBox))
+			{
+				continue;
+			}
+
+			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			{
+				if(!testCollision(probeBox, clusterBoxes[clusterZ]))
+				{
+					continue;
+				}
+
+				ANKI_SET_IDX(3);
+			}
+		}
+	}
+
 	// Decals
 	{
 		Obb decalBox;
@@ -453,7 +479,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 					continue;
 				}
 
-				ANKI_SET_IDX(3);
+				ANKI_SET_IDX(4);
 			}
 		}
 	}
@@ -482,7 +508,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 						continue;
 					}
 
-					ANKI_SET_IDX(4);
+					ANKI_SET_IDX(5);
 				}
 			}
 			else
@@ -503,7 +529,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 						continue;
 					}
 
-					ANKI_SET_IDX(4);
+					ANKI_SET_IDX(5);
 				}
 			}
 		}
@@ -698,8 +724,10 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	const U visibleProbeCount = rqueue.m_reflectionProbes.getSize();
 	if(visibleProbeCount)
 	{
-		ReflectionProbe* data = static_cast<ReflectionProbe*>(ctx.m_in->m_stagingMem->allocateFrame(
-			sizeof(ReflectionProbe) * visibleProbeCount, StagingGpuMemoryType::UNIFORM, ctx.m_out->m_probesToken));
+		ReflectionProbe* data = static_cast<ReflectionProbe*>(
+			ctx.m_in->m_stagingMem->allocateFrame(sizeof(ReflectionProbe) * visibleProbeCount,
+				StagingGpuMemoryType::UNIFORM,
+				ctx.m_out->m_reflectionProbesToken));
 
 		WeakArray<ReflectionProbe> gpuProbes(data, visibleProbeCount);
 
@@ -716,7 +744,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	}
 	else
 	{
-		ctx.m_out->m_probesToken.markUnused();
+		ctx.m_out->m_reflectionProbesToken.markUnused();
 	}
 
 	// Fog volumes
@@ -753,6 +781,34 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	else
 	{
 		ctx.m_out->m_fogDensityVolumesToken.markUnused();
+	}
+
+	// Write the probes
+	const U visibleGiProbeCount = rqueue.m_giProbes.getSize();
+	if(visibleGiProbeCount)
+	{
+		GlobalIlluminationProbe* data = static_cast<GlobalIlluminationProbe*>(
+			ctx.m_in->m_stagingMem->allocateFrame(sizeof(GlobalIlluminationProbe) * visibleGiProbeCount,
+				StagingGpuMemoryType::UNIFORM,
+				ctx.m_out->m_globalIlluminationProbesToken));
+
+		WeakArray<GlobalIlluminationProbe> gpuProbes(data, visibleGiProbeCount);
+
+		for(U i = 0; i < visibleGiProbeCount; ++i)
+		{
+			const GlobalIlluminationProbeQueueElement& in = rqueue.m_giProbes[i];
+			GlobalIlluminationProbe& out = gpuProbes[i];
+
+			out.m_aabbMin = in.m_aabbMin;
+			out.m_aabbMax = in.m_aabbMax;
+			out.m_textureIndex = &in - &rqueue.m_giProbes.getFront();
+			out.m_halfTexelSizeU = 1.0f / in.m_cellCounts.x() / 2.0f;
+			out.m_fadeDistance = in.m_fadeDistance;
+		}
+	}
+	else
+	{
+		ctx.m_out->m_globalIlluminationProbesToken.markUnused();
 	}
 }
 

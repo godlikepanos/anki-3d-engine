@@ -8,8 +8,9 @@
 #include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
+#include <anki/collision/Aabb.h>
 
-#include <anki/renderer/Indirect.h>
+#include <anki/renderer/ProbeReflections.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/GBufferPost.h>
 #include <anki/renderer/LightShading.h>
@@ -28,6 +29,7 @@
 #include <anki/renderer/UiStage.h>
 #include <anki/renderer/Ssr.h>
 #include <anki/renderer/VolumetricLightingAccumulation.h>
+#include <anki/renderer/GlobalIllumination.h>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
@@ -101,11 +103,17 @@ Error Renderer::initInternal(const ConfigSet& config)
 		texinit.m_width = texinit.m_height = 4;
 		texinit.m_usage = TextureUsageBit::SAMPLED_ALL;
 		texinit.m_format = Format::R8G8B8A8_UNORM;
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_ALL;
 		TexturePtr tex = getGrManager().newTexture(texinit);
 
 		TextureViewInitInfo viewinit(tex);
-		m_dummyTexView = getGrManager().newTextureView(viewinit);
+		m_dummyTexView2d = getGrManager().newTextureView(viewinit);
+
+		texinit.m_depth = 4;
+		texinit.m_type = TextureType::_3D;
+		tex = getGrManager().newTexture(texinit);
+		viewinit = TextureViewInitInfo(tex);
+		m_dummyTexView3d = getGrManager().newTextureView(viewinit);
 	}
 
 	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
@@ -117,8 +125,11 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_volLighting.reset(m_alloc.newInstance<VolumetricLightingAccumulation>(this));
 	ANKI_CHECK(m_volLighting->init(config));
 
-	m_indirect.reset(m_alloc.newInstance<Indirect>(this));
-	ANKI_CHECK(m_indirect->init(config));
+	m_gi.reset(m_alloc.newInstance<GlobalIllumination>(this));
+	ANKI_CHECK(m_gi->init(config));
+
+	m_probeReflections.reset(m_alloc.newInstance<ProbeReflections>(this));
+	ANKI_CHECK(m_probeReflections->init(config));
 
 	m_gbuffer.reset(m_alloc.newInstance<GBuffer>(this));
 	ANKI_CHECK(m_gbuffer->init(config));
@@ -286,7 +297,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Populate render graph. WARNING Watch the order
 	m_shadowMapping->populateRenderGraph(ctx);
-	m_indirect->populateRenderGraph(ctx);
+	m_gi->populateRenderGraph(ctx);
+	m_probeReflections->populateRenderGraph(ctx);
 	m_volLighting->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
@@ -513,8 +525,12 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					cmdb->setTextureSurfaceBarrier(
 						tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, surf);
 
-					const U wgSizeZ = (inf.m_type == TextureType::_3D) ? (tex->getDepth() >> mip) : 1;
-					cmdb->dispatchCompute(tex->getWidth() >> mip, tex->getHeight() >> mip, wgSizeZ);
+					UVec3 wgSize;
+					wgSize.x() = (8 - 1 + (tex->getWidth() >> mip)) / 8;
+					wgSize.y() = (8 - 1 + (tex->getHeight() >> mip)) / 8;
+					wgSize.z() = (inf.m_type == TextureType::_3D) ? ((8 - 1 + (tex->getDepth() >> mip)) / 8) : 1;
+
+					cmdb->dispatchCompute(wgSize.x(), wgSize.y(), wgSize.z());
 
 					if(!!inf.m_initialUsage)
 					{

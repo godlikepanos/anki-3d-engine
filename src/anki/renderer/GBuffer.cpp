@@ -43,7 +43,7 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
 		m_colorRtDescrs[i] = m_r->create2DRenderTargetDescription(
-			m_r->getWidth(), m_r->getHeight(), MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i], rtNames[i]);
+			m_r->getWidth(), m_r->getHeight(), GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[i], rtNames[i]);
 		m_colorRtDescrs[i].bake();
 	}
 

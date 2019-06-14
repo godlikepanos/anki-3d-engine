@@ -36,13 +36,15 @@ enum class FrustumComponentVisibilityTestFlag : U16
 	OCCLUDERS = 1 << 10,
 	DECALS = 1 << 11,
 	FOG_DENSITY_COMPONENTS = 1 << 12,
-	EARLY_Z = 1 << 13,
+	GLOBAL_ILLUMINATION_PROBES = 1 << 13,
+	EARLY_Z = 1 << 14,
 
 	LAST = EARLY_Z,
 
 	ALL = RENDER_COMPONENTS | LIGHT_COMPONENTS | LENS_FLARE_COMPONENTS | SHADOW_CASTERS | POINT_LIGHT_SHADOWS_ENABLED
 		  | SPOT_LIGHT_SHADOWS_ENABLED | DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES | DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE
-		  | REFLECTION_PROBES | REFLECTION_PROXIES | OCCLUDERS | DECALS | FOG_DENSITY_COMPONENTS | EARLY_Z,
+		  | REFLECTION_PROBES | REFLECTION_PROXIES | OCCLUDERS | DECALS | FOG_DENSITY_COMPONENTS
+		  | GLOBAL_ILLUMINATION_PROBES | EARLY_Z,
 
 	ALL_SHADOWS_ENABLED =
 		POINT_LIGHT_SHADOWS_ENABLED | SPOT_LIGHT_SHADOWS_ENABLED | DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES
@@ -78,7 +80,7 @@ public:
 		m_perspective.m_far = far;
 		m_perspective.m_fovX = fovX;
 		m_perspective.m_fovY = fovY;
-		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+		m_shapeMarkedForUpdate = true;
 	}
 
 	void setOrthographic(F32 near, F32 far, F32 right, F32 left, F32 top, F32 bottom)
@@ -92,13 +94,13 @@ public:
 		m_ortho.m_left = left;
 		m_ortho.m_top = top;
 		m_ortho.m_bottom = bottom;
-		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+		m_shapeMarkedForUpdate = true;
 	}
 
 	void setNear(F32 near)
 	{
 		m_common.m_near = near;
-		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+		m_shapeMarkedForUpdate = true;
 	}
 
 	F32 getNear() const
@@ -109,7 +111,7 @@ public:
 	void setFar(F32 far)
 	{
 		m_common.m_far = far;
-		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+		m_shapeMarkedForUpdate = true;
 	}
 
 	F32 getFar() const
@@ -120,7 +122,7 @@ public:
 	void setFovX(F32 fovx)
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
-		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+		m_shapeMarkedForUpdate = true;
 		m_perspective.m_fovX = fovx;
 	}
 
@@ -133,7 +135,7 @@ public:
 	void setFovY(F32 fovy)
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
-		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
+		m_shapeMarkedForUpdate = true;
 		m_perspective.m_fovY = fovy;
 	}
 
@@ -156,7 +158,7 @@ public:
 	void setTransform(const Transform& trf)
 	{
 		m_trf = trf;
-		m_flags.set(TRANSFORM_MARKED_FOR_UPDATE);
+		m_trfMarkedForUpdate = true;
 	}
 
 	const Mat4& getProjectionMatrix() const
@@ -205,12 +207,12 @@ public:
 
 	Bool visibilityTestsEnabled(FrustumComponentVisibilityTestFlag bits) const
 	{
-		return m_flags.get(bits);
+		return !!(m_flags & bits);
 	}
 
 	Bool anyVisibilityTestEnabled() const
 	{
-		return m_flags.getAny(FrustumComponentVisibilityTestFlag::ALL);
+		return !!(m_flags & FrustumComponentVisibilityTestFlag::ALL);
 	}
 
 	/// The type is FillCoverageBufferCallback.
@@ -267,13 +269,6 @@ public:
 	}
 
 private:
-	enum Flags : U16
-	{
-		SHAPE_MARKED_FOR_UPDATE = static_cast<U16>(FrustumComponentVisibilityTestFlag::LAST) << 1,
-		TRANSFORM_MARKED_FOR_UPDATE = static_cast<U16>(FrustumComponentVisibilityTestFlag::LAST) << 2,
-	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flags, friend)
-
 	class Common
 	{
 	public:
@@ -334,7 +329,9 @@ private:
 		U32 m_depthMapHeight = 0;
 	} m_coverageBuff; ///< Coverage buffer for extra visibility tests.
 
-	BitMask<U16> m_flags = {0};
+	FrustumComponentVisibilityTestFlag m_flags = FrustumComponentVisibilityTestFlag::NONE;
+	Bool m_shapeMarkedForUpdate = true;
+	Bool m_trfMarkedForUpdate = true;
 
 	Bool updateInternal();
 };

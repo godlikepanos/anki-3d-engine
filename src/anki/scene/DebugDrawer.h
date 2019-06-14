@@ -17,6 +17,8 @@ namespace anki
 
 // Forward
 class RenderQueueDrawContext;
+class StagingGpuMemoryManager;
+class StagingGpuMemoryToken;
 
 /// @addtogroup renderer
 /// @{
@@ -118,6 +120,12 @@ public:
 private:
 	DebugDrawer* m_dbg; ///< The debug drawer
 };
+
+/// Allocate memory for a line cube and populate it.
+void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator,
+	StagingGpuMemoryToken& vertsToken,
+	StagingGpuMemoryToken& indicesToken,
+	U32& indexCount);
 /// @}
 
 } // end namespace anki

@@ -70,7 +70,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	RenderQueueDrawContext dctx;
 	dctx.m_viewMatrix = ctx.m_renderQueue->m_viewMatrix;
 	dctx.m_viewProjectionMatrix = ctx.m_renderQueue->m_viewProjectionMatrix;
-	dctx.m_projectionMatrix = Mat4::getIdentity(); // TODO
+	dctx.m_projectionMatrix = ctx.m_renderQueue->m_projectionMatrix;
 	dctx.m_cameraTransform = ctx.m_renderQueue->m_viewMatrix.getInverse();
 	dctx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
 	dctx.m_commandBuffer = cmdb;
@@ -79,11 +79,28 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	dctx.m_debugDraw = true;
 	dctx.m_debugDrawFlags = m_debugDrawFlags;
 
-	// Draw
-	for(const RenderableQueueElement& el : ctx.m_renderQueue->m_renderables)
+	// Draw renderables
+	const U threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
+	const U threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
+	const U problemSize = ctx.m_renderQueue->m_renderables.getSize();
+	U32 start, end;
+	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
+
+	for(U i = start; i < end; ++i)
 	{
+		const RenderableQueueElement& el = ctx.m_renderQueue->m_renderables[i];
 		Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
-		el.m_callback(dctx, {&a[0], 1});
+		el.m_callback(dctx, a);
+	}
+
+	// Draw probes
+	if(threadId == 0)
+	{
+		for(const GlobalIlluminationProbeQueueElement& el : ctx.m_renderQueue->m_giProbes)
+		{
+			Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
+			el.m_debugDrawCallback(dctx, a);
+		}
 	}
 }
 
@@ -113,7 +130,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 			self->run(rgraphCtx, *self->m_runCtx.m_ctx);
 		},
 		this,
-		0);
+		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_renderables.getSize()));
 	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, m_r->getGBuffer().getDepthRt());
 
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

@@ -72,6 +72,16 @@ public:
 	aiVector3D m_aabbMax;
 };
 
+class GiProbe
+{
+public:
+	aiVector3D m_position;
+	aiVector3D m_aabbMin;
+	aiVector3D m_aabbMax;
+	float m_fadeDistance = -1.0f;
+	float m_cellSize = -1.0f;
+};
+
 class ReflectionProxy
 {
 public:
@@ -122,6 +132,7 @@ public:
 	std::vector<StaticCollisionNode> m_staticCollisionNodes;
 	std::vector<ParticleEmitter> m_particleEmitters;
 	std::vector<ReflectionProbe> m_reflectionProbes;
+	std::vector<GiProbe> m_giProbes;
 	std::vector<ReflectionProxy> m_reflectionProxies;
 	std::vector<OccluderNode> m_occluders;
 	std::vector<DecalNode> m_decals;

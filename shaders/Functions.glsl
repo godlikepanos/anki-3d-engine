@@ -419,7 +419,7 @@ Vec3 readErosion(texture2D tex, sampler sampl, const Vec2 uv)
 }
 
 // 5 color heatmap from a factor.
-Vec3 heatmap(F32 factor)
+Vec3 heatmap(const F32 factor)
 {
 	F32 intPart;
 	const F32 fractional = modf(factor * 4.0, intPart);
@@ -442,12 +442,39 @@ Vec3 heatmap(F32 factor)
 	}
 }
 
-Bool incorrectColor(Vec3 c)
+// Return a color per cubemap face. The +X is red, -X dark red, +Y green, -Y dark green, +Z blue, -Z dark blue
+Vec3 colorPerCubeFace(const U32 dir)
+{
+	Vec3 color;
+	switch(dir)
+	{
+	case 0:
+		color = Vec3(1.0, 0.0, 0.0);
+		break;
+	case 1:
+		color = Vec3(0.25, 0.0, 0.0);
+		break;
+	case 2:
+		color = Vec3(0.0, 1.0, 0.0);
+		break;
+	case 3:
+		color = Vec3(0.0, 0.25, 0.0);
+		break;
+	case 4:
+		color = Vec3(0.0, 0.0, 1.0);
+		break;
+	default:
+		color = Vec3(0.0, 0.0, 0.25);
+	}
+	return color;
+}
+
+Bool incorrectColor(const Vec3 c)
 {
 	return isnan(c.x) || isnan(c.y) || isnan(c.z) || isinf(c.x) || isinf(c.y) || isinf(c.z);
 }
 
-F32 areaElement(F32 x, F32 y)
+F32 areaElement(const F32 x, const F32 y)
 {
 	return atan(x * y, sqrt(x * x + y * y + 1.0));
 }
@@ -473,6 +500,12 @@ F32 rayAabbIntersectionInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aa
 	const Vec3 largestParams = max(intersectMaxPointPlanes, intersectMinPointPlanes);
 	const F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
 	return distToIntersect;
+}
+
+// Return true if to AABBs overlap
+Bool aabbsOverlap(const Vec3 aMin, const Vec3 aMax, const Vec3 bMin, const Vec3 bMax)
+{
+	return all(lessThan(aMin, bMax)) && all(lessThan(bMin, aMax));
 }
 
 // A convenience macro to skip out of bounds invocations on post-process compute shaders.

@@ -189,5 +189,5 @@ void readGBuffer(texture2D rt0, texture2D rt1, texture2D rt2, sampler sampl, Vec
 	g.m_specular = mix(g.m_specular, g.m_diffuse, g.m_metallic);
 
 	// Compute diffuse
-	g.m_diffuse = g.m_diffuse - g.m_diffuse * g.m_metallic;
+	g.m_diffuse *= 1.0 - g.m_metallic;
 }

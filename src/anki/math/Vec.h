@@ -28,11 +28,13 @@ public:
 
 	/// @name Constructors
 	/// @{
+
+	/// Defaut constructor. IT WILL NOT INITIALIZE ANYTHING.
 	TVec()
 	{
 	}
 
-	// Copy
+	/// Copy.
 	TVec(ANKI_ENABLE_ARG(const TVec&, !HAS_VEC4_SIMD) b)
 	{
 		for(U i = 0; i < N; i++)
@@ -41,14 +43,15 @@ public:
 		}
 	}
 
-	// Copy
+	/// Copy.
 	TVec(ANKI_ENABLE_ARG(const TVec&, HAS_VEC4_SIMD) b)
 	{
 		m_simd = b.m_simd;
 	}
 
-	template<typename Y>
-	TVec(const TVec<Y, N>& b)
+	/// Convert from another type.
+	template<typename Y, ANKI_ENABLE(!std::is_same<Y, T>::value)>
+	explicit TVec(const TVec<Y, N>& b)
 	{
 		for(U i = 0; i < N; i++)
 		{
@@ -2808,11 +2811,13 @@ public:
 		ANKI_ASSERT(w() == T(0));
 		ANKI_ASSERT(b.w() == T(0));
 		const auto& a = *this;
-		const int mask0 = _MM_SHUFFLE(3, 0, 2, 1);
-		const int mask1 = _MM_SHUFFLE(3, 1, 0, 2);
+		constexpr unsigned int mask0 = _MM_SHUFFLE(3, 0, 2, 1);
+		constexpr unsigned int mask1 = _MM_SHUFFLE(3, 1, 0, 2);
 
-		__m128 tmp0 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask0), _mm_shuffle_ps(b.m_simd, b.m_simd, mask1));
-		__m128 tmp1 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask1), _mm_shuffle_ps(b.m_simd, b.m_simd, mask0));
+		const __m128 tmp0 =
+			_mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask0)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask1)));
+		const __m128 tmp1 =
+			_mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, U8(mask1)), _mm_shuffle_ps(b.m_simd, b.m_simd, U8(mask0)));
 
 		return TVec(_mm_sub_ps(tmp0, tmp1));
 	}

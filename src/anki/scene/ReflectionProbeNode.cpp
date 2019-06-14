@@ -147,10 +147,10 @@ Error ReflectionProbeNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	// Check the reflection probe component and if it's marked for rendering enable the frustum components
 	const ReflectionProbeComponent& reflc = getComponent<ReflectionProbeComponent>();
 
-	FrustumComponentVisibilityTestFlag testFlags =
+	const FrustumComponentVisibilityTestFlag testFlags =
 		reflc.getMarkedForRendering() ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
 
-	Error err = iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) -> Error {
+	const Error err = iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) -> Error {
 		frc.setEnabledVisibilityTests(testFlags);
 		return Error::NONE;
 	});

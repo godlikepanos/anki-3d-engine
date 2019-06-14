@@ -229,7 +229,8 @@ void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 			m_r->getSamplers().m_trilinearRepeatAniso,
 			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement,
 			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
-				+ work.m_renderableElementCount);
+				+ work.m_renderableElementCount,
+			MAX_LOD_COUNT - 1);
 	}
 }
 

@@ -39,9 +39,9 @@ layout(push_constant, std430) uniform pc_
 #define LIGHT_SET 0
 #define LIGHT_COMMON_UNIS_BINDING 5
 #define LIGHT_LIGHTS_BINDING 6
-#define LIGHT_INDIRECT_BINDING 9
-#define LIGHT_FOG_DENSITY_VOLUMES_BINDING 13
-#define LIGHT_CLUSTERS_BINDING 14
+#define LIGHT_GLOBAL_ILLUMINATION_BINDING 9
+#define LIGHT_FOG_DENSITY_VOLUMES_BINDING 11
+#define LIGHT_CLUSTERS_BINDING 12
 #include <shaders/ClusteredShadingCommon.glsl>
 
 Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
@@ -169,51 +169,79 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 		color += light.m_diffuseColor * factor;
 	}
 
-	// Probes
-	F32 totalBlendWeight = EPSILON;
-	Vec3 diffIndirect = Vec3(0.0);
-	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	// Indirect diffuse GI
 	{
-		const ReflectionProbe probe = u_reflectionProbes[idx];
-		const Vec3 aabbMin = probe.m_aabbMin;
-		const Vec3 aabbMax = probe.m_aabbMax;
-		const Vec3 probeOrigin = probe.m_position;
-		const F32 cubemapIndex = probe.m_cubemapIndex;
+		idxOffset = u_clusters[clusterIdx];
+		idxOffset = u_lightIndices[idxOffset - 3u];
+		Vec3 diffIndirect;
 
-		const F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
-		totalBlendWeight += blendWeight;
-
-		Vec3 c = textureLod(u_irradianceTex, u_linearAnyClampSampler, Vec4(viewDir, cubemapIndex), 0.0).rgb;
-		c *= PI; // Irradiance is pre-divided with PI so fix it
-		diffIndirect += c * blendWeight;
-	}
-
-	diffIndirect /= totalBlendWeight;
-	color += diffIndirect;
-
-	// Fog density
-	F32 fogDensity = 0.0;
-	idxOffset = u_clusters[clusterIdx];
-	idxOffset = u_lightIndices[idxOffset - 1u];
-	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
-	{
-		const FogDensityVolume vol = u_fogDensityVolumes[idx];
-
-		F32 factor;
-		ANKI_BRANCH if(vol.m_isBox == 1u)
+		if(subgroupAll(u_lightIndices[idxOffset] != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
 		{
-			factor =
-				computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
+			// Only one probe, do a fast path without blend weight
+
+			GlobalIlluminationProbe probe = u_giProbes[u_lightIndices[idxOffset]];
+
+			// Sample
+			diffIndirect = sampleGlobalIllumination(
+				worldPos, viewDir, probe, u_globalIlluminationTextures, u_linearAnyClampSampler);
 		}
 		else
 		{
-			const Vec3 diff = worldPos - vol.m_aabbMinOrSphereCenter;
-			F32 distSq = dot(diff, diff) / vol.m_aabbMaxOrSphereRadiusSquared.x;
-			distSq = min(1.0, distSq);
-			factor = 1.0 - distSq;
+			// Zero or more than one probes, do a slow path that blends them together
+
+			F32 totalBlendWeight = EPSILON;
+			diffIndirect = Vec3(0.0);
+
+			// Loop probes
+			ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+			{
+				GlobalIlluminationProbe probe = u_giProbes[idx];
+
+				// Compute blend weight
+				const F32 blendWeight =
+					computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
+				totalBlendWeight += blendWeight;
+
+				// Sample
+				const Vec3 c = sampleGlobalIllumination(
+					worldPos, viewDir, probe, u_globalIlluminationTextures, u_linearAnyClampSampler);
+				diffIndirect += c * blendWeight;
+			}
+
+			// Normalize
+			diffIndirect /= totalBlendWeight;
 		}
 
-		fogDensity += vol.m_density * factor;
+		diffIndirect *= PI; // Irradiance is pre-divided with PI so fix it
+
+		color += diffIndirect;
+	}
+
+	// Fog density
+	F32 fogDensity = 0.0;
+	{
+		idxOffset = u_clusters[clusterIdx];
+		idxOffset = u_lightIndices[idxOffset - 1u];
+		ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+		{
+			const FogDensityVolume vol = u_fogDensityVolumes[idx];
+
+			F32 factor;
+			ANKI_BRANCH if(vol.m_isBox == 1u)
+			{
+				factor = computeProbeBlendWeight(
+					worldPos, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
+			}
+			else
+			{
+				const Vec3 diff = worldPos - vol.m_aabbMinOrSphereCenter;
+				F32 distSq = dot(diff, diff) / vol.m_aabbMaxOrSphereRadiusSquared.x;
+				distSq = min(1.0, distSq);
+				factor = 1.0 - distSq;
+			}
+
+			fogDensity += vol.m_density * factor;
+		}
 	}
 
 	return Vec4(color, fogDensity);

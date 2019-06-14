@@ -605,7 +605,8 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 		compileOptions.setFromGrManager(getManager().getGrManager());
 		compileOptions.m_shaderType = i;
 
-		Error err = getManager().getShaderCompiler().compile(src.toCString(), nullptr, compileOptions, bin);
+		const Error err = getManager().getShaderCompiler().compile(
+			src.toCString(), nullptr, compileOptions, bin, getManager().getDumpShaderSource());
 		if(err)
 		{
 			ANKI_RESOURCE_LOGF("Shader compilation failed");

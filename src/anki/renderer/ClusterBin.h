@@ -38,9 +38,10 @@ class ClusterBinOut
 public:
 	StagingGpuMemoryToken m_pointLightsToken;
 	StagingGpuMemoryToken m_spotLightsToken;
-	StagingGpuMemoryToken m_probesToken;
+	StagingGpuMemoryToken m_reflectionProbesToken;
 	StagingGpuMemoryToken m_decalsToken;
 	StagingGpuMemoryToken m_fogDensityVolumesToken;
+	StagingGpuMemoryToken m_globalIlluminationProbesToken;
 	StagingGpuMemoryToken m_clustersToken;
 	StagingGpuMemoryToken m_indicesToken;
 

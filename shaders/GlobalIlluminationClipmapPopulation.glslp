@@ -1,0 +1,135 @@
+// Copyright (C) 2009-2019, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Populates a clipmap with the irradiance values of probes.
+
+#pragma anki input const UVec3 WORKGROUP_SIZE
+#pragma anki input const U32 PROBE_COUNT
+#pragma anki mutator HAS_PROBES 0 1
+
+#pragma anki start comp
+
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
+#include <shaders/Functions.glsl>
+
+#define DEBUG_MODE 0 // 0: disabled, 1: draw different shade per dir per level, 2 draw differend shade per cell
+
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
+
+struct Clipmap
+{
+	Vec3 m_aabbMin;
+	F32 m_cellSize;
+	Vec3 m_aabbMax;
+	F32 m_padding0;
+	UVec3 m_cellCounts;
+	U32 m_padding2;
+};
+
+layout(set = 0, binding = 0, std140) uniform ubo_
+{
+	Clipmap u_clipmaps[GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT];
+	Vec3 u_cameraPos;
+	U32 u_padding;
+};
+
+layout(set = 0, binding = 1) uniform writeonly image3D u_clipmapImages[6u * GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT];
+
+#if HAS_PROBES
+layout(set = 0, binding = 2) buffer ssbo_
+{
+	GlobalIlluminationProbe u_probes[];
+};
+
+layout(set = 0, binding = 3) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 4) uniform texture3D u_probeIrradianceTextures[6u * PROBE_COUNT];
+#endif
+
+Bool aabbsOverlap(const Clipmap clipmap, const GlobalIlluminationProbe probe)
+{
+	return aabbsOverlap(clipmap.m_aabbMin, clipmap.m_aabbMax, probe.m_aabbMin, probe.m_aabbMax);
+}
+
+// Compute the texture coordinates inside a probe
+Vec3 computeUvwCoordsInsideProbe(const GlobalIlluminationProbe probe, const Vec3 positionInsideTheProbe)
+{
+	const Vec3 probeSize = probe.m_aabbMax - probe.m_aabbMin;
+	const Vec3 uvw = (positionInsideTheProbe - probe.m_aabbMin) / probeSize;
+	return uvw;
+}
+
+void main()
+{
+	// Populate all clipmaps
+	ANKI_UNROLL for(U32 clipmapIdx = 0u; clipmapIdx < GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT; ++clipmapIdx)
+	{
+		const Clipmap clipmap = u_clipmaps[clipmapIdx];
+
+		// Check bounds
+		if(any(greaterThanEqual(gl_GlobalInvocationID, clipmap.m_cellCounts)))
+		{
+			continue;
+		}
+
+#if HAS_PROBES
+		// For all probes
+		F32 weight = EPSILON;
+		Vec3 accumulatedIrradiance[6u] = Vec3[](Vec3(0.0), Vec3(0.0), Vec3(0.0), Vec3(0.0), Vec3(0.0), Vec3(0.0));
+		ANKI_UNROLL for(U32 probeIdx = 0u; probeIdx < PROBE_COUNT; ++probeIdx)
+		{
+			const GlobalIlluminationProbe probe = u_probes[probeIdx];
+
+			ANKI_FLATTEN if(aabbsOverlap(clipmap, probe))
+			{
+				// Compute the world position of the cell in the clipmap
+				Vec3 cellPosition = Vec3(gl_GlobalInvocationID) * clipmap.m_cellSize;
+				cellPosition += clipmap.m_cellSize / 2.0; // Move to the center of the cell
+				cellPosition += clipmap.m_aabbMin;
+
+				// Compute the UVW coords
+				const Vec3 texCoordsInProbe = computeUvwCoordsInsideProbe(probe, cellPosition);
+
+				// Read the texture
+				ANKI_UNROLL for(U32 dirIdx = 0u; dirIdx < 6u; ++dirIdx)
+				{
+					// Read the color from the probe
+					const U32 inputTexIdx = probeIdx * 6u + dirIdx;
+					const Vec3 inColor = textureLod(
+						u_probeIrradianceTextures[inputTexIdx], u_linearAnyClampSampler, texCoordsInProbe, 0.0)
+											 .rgb;
+
+					accumulatedIrradiance[dirIdx] += inColor;
+				}
+
+				weight += 1.0;
+			}
+		}
+#endif
+
+		// Write the result
+		ANKI_UNROLL for(U32 dirIdx = 0u; dirIdx < 6u; ++dirIdx)
+		{
+			const U32 clipmapImageIdx = clipmapIdx * 6u + dirIdx;
+
+#if DEBUG_MODE == 1
+			const Vec3 dirColor = colorPerCubeFace(dirIdx);
+			const F32 clipmapFactor = F32(GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT - clipmapIdx)
+									  / F32(GLOBAL_ILLUMINATION_CLIPMAP_LEVEL_COUNT);
+			const Vec3 storedColor = dirColor * clipmapFactor;
+#elif DEBUG_MODE == 2
+			const F32 factor =
+				F32(gl_LocalInvocationIndex) / F32(WORKGROUP_SIZE.x * WORKGROUP_SIZE.y * WORKGROUP_SIZE.z);
+			const Vec3 storedColor = heatmap(factor);
+#elif HAS_PROBES
+			const Vec3 storedColor = accumulatedIrradiance[dirIdx] / weight;
+#else
+			const Vec3 storedColor = Vec3(0.0);
+#endif
+			imageStore(u_clipmapImages[clipmapImageIdx], IVec3(gl_GlobalInvocationID), Vec4(storedColor, 0.0));
+		}
+	}
+}
+
+#pragma anki end

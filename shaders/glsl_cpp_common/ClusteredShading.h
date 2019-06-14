@@ -12,11 +12,12 @@
 ANKI_BEGIN_NAMESPACE
 
 // Consts
-const U32 TYPED_OBJECT_COUNT = 5u;
+const U32 TYPED_OBJECT_COUNT = 6u; // Point lights, spot lights, refl probes, GI probes, decals and fog volumes
 const F32 INVALID_TEXTURE_INDEX = -1.0f;
 const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; // The near plane on the shadow map frustums.
 const U32 MAX_SHADOW_CASCADES = 4u;
 const F32 SUBSURFACE_MIN = 0.05f;
+const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES = 8u; // Global illumination clipmap count.
 
 // See the documentation in the ClustererBin class.
 struct ClustererMagicValues
@@ -101,23 +102,47 @@ struct FogDensityVolume
 	Vec3 m_aabbMaxOrSphereRadiusSquared;
 	F32 m_density;
 };
-const U32 SIZEOF_FOG_DENSITY_VOLUME = 2 * SIZEOF_VEC4;
+const U32 SIZEOF_FOG_DENSITY_VOLUME = 2u * SIZEOF_VEC4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == SIZEOF_FOG_DENSITY_VOLUME)
+
+// Global illumination probe
+struct GlobalIlluminationProbe
+{
+	Vec3 m_aabbMin;
+	U32 m_textureIndex;
+
+	Vec3 m_aabbMax;
+	F32 m_halfTexelSizeU; // (1.0 / textureSize(texArr[m_textureIndex]).x) / 2.0
+
+	// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at m_fadeDistance and less.
+	F32 m_fadeDistance;
+	F32 m_padding0;
+	F32 m_padding1;
+	F32 m_padding2;
+};
+const U32 SIZEOF_GLOBAL_ILLUMINATION_PROBE = 3u * SIZEOF_VEC4;
+ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == SIZEOF_GLOBAL_ILLUMINATION_PROBE)
 
 // Common uniforms for light shading passes
 struct LightingUniforms
 {
 	Vec4 m_unprojectionParams;
+
 	Vec2 m_rendererSize;
 	F32 m_time;
 	F32 m_near;
+
 	Vec3 m_cameraPos;
 	F32 m_far;
+
 	ClustererMagicValues m_clustererMagicValues;
 	ClustererMagicValues m_prevClustererMagicValues;
+
 	UVec4 m_clusterCount;
+
 	Vec3 m_padding;
 	U32 m_lightVolumeLastCluster;
+
 	Mat4 m_viewMat;
 	Mat4 m_invViewMat;
 	Mat4 m_projMat;
@@ -126,9 +151,10 @@ struct LightingUniforms
 	Mat4 m_invViewProjMat;
 	Mat4 m_prevViewProjMat;
 	Mat4 m_prevViewProjMatMulInvViewProjMat; // Used to re-project previous frames
+
 	DirectionalLight m_dirLight;
 };
-const U32 SIZEOF_LIGHTING_UNIFORMS = 9 * SIZEOF_VEC4 + 8 * SIZEOF_MAT4 + SIZEOF_DIR_LIGHT;
+const U32 SIZEOF_LIGHTING_UNIFORMS = 9u * SIZEOF_VEC4 + 8u * SIZEOF_MAT4 + SIZEOF_DIR_LIGHT;
 ANKI_SHADER_STATIC_ASSERT(sizeof(LightingUniforms) == SIZEOF_LIGHTING_UNIFORMS)
 
 ANKI_SHADER_FUNC_INLINE F32 computeClusterKf(ClustererMagicValues magic, Vec3 worldPos)

@@ -83,7 +83,8 @@ Error CameraNode::init(FrustumType frustumType)
 		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES | FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
 		| FrustumComponentVisibilityTestFlag::OCCLUDERS | FrustumComponentVisibilityTestFlag::DECALS
-		| FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS | FrustumComponentVisibilityTestFlag::EARLY_Z
+		| FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS
+		| FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES | FrustumComponentVisibilityTestFlag::EARLY_Z
 		| FrustumComponentVisibilityTestFlag::ALL_SHADOWS_ENABLED);
 
 	// Feedback component #2

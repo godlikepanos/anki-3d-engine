@@ -46,7 +46,7 @@ const U MAX_BINDLESS_IMAGES = 32;
 
 const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 
-const U MAX_GR_OBJECT_NAME_LENGTH = 15;
+const U MAX_GR_OBJECT_NAME_LENGTH = 31;
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
 const U COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;

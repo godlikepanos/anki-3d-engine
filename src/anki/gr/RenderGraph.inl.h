@@ -128,4 +128,131 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 }
 
+inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
+	const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
+	RenderTargetHandle depthStencilRenderTargetHandle,
+	U32 minx = 0,
+	U32 miny = 0,
+	U32 maxx = MAX_U32,
+	U32 maxy = MAX_U32)
+{
+#if ANKI_ASSERTS_ENABLED
+	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
+	for(U i = 0; i < colorRenderTargetHandles.getSize(); ++i)
+	{
+		if(i >= fbInfo.m_colorAttachmentCount)
+		{
+			ANKI_ASSERT(!colorRenderTargetHandles[i].isValid());
+		}
+		else
+		{
+			ANKI_ASSERT(colorRenderTargetHandles[i].isValid());
+		}
+	}
+
+	if(!fbInfo.m_depthStencilAttachment.m_aspect)
+	{
+		ANKI_ASSERT(!depthStencilRenderTargetHandle.isValid());
+	}
+	else
+	{
+		ANKI_ASSERT(depthStencilRenderTargetHandle.isValid());
+	}
+#endif
+
+	m_fbDescr = fbInfo;
+	memcpy(&m_rtHandles[0], &colorRenderTargetHandles[0], sizeof(colorRenderTargetHandles));
+	m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
+	m_fbRenderArea = {{minx, miny, maxx, maxy}};
+}
+
+inline RenderGraphDescription::~RenderGraphDescription()
+{
+	for(RenderPassDescriptionBase* pass : m_passes)
+	{
+		m_alloc.deleteInstance(pass);
+	}
+	m_passes.destroy(m_alloc);
+	m_renderTargets.destroy(m_alloc);
+	m_buffers.destroy(m_alloc);
+}
+
+inline GraphicsRenderPassDescription& RenderGraphDescription::newGraphicsRenderPass(CString name)
+{
+	GraphicsRenderPassDescription* pass = m_alloc.newInstance<GraphicsRenderPassDescription>(this);
+	pass->m_alloc = m_alloc;
+	pass->setName(name);
+	m_passes.emplaceBack(m_alloc, pass);
+	return *pass;
+}
+
+inline ComputeRenderPassDescription& RenderGraphDescription::newComputeRenderPass(CString name)
+{
+	ComputeRenderPassDescription* pass = m_alloc.newInstance<ComputeRenderPassDescription>(this);
+	pass->m_alloc = m_alloc;
+	pass->setName(name);
+	m_passes.emplaceBack(m_alloc, pass);
+	return *pass;
+}
+
+inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr tex, TextureUsageBit usage)
+{
+	for(const RT& rt : m_renderTargets)
+	{
+		(void)rt;
+		ANKI_ASSERT(rt.m_importedTex != tex && "Already imported");
+	}
+
+	RT& rt = *m_renderTargets.emplaceBack(m_alloc);
+	rt.m_importedTex = tex;
+	rt.m_importedLastKnownUsage = usage;
+	rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
+	rt.setName(tex->getName());
+
+	RenderTargetHandle out;
+	out.m_idx = m_renderTargets.getSize() - 1;
+	return out;
+}
+
+inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr tex)
+{
+	RenderTargetHandle out = importRenderTarget(tex, TextureUsageBit::NONE);
+	m_renderTargets.getBack().m_importedAndUndefinedUsage = true;
+	return out;
+}
+
+inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTargetDescription& initInf)
+{
+	ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
+	ANKI_ASSERT(initInf.m_usage == TextureUsageBit::NONE && "Don't need to supply the usage. Render grap will find it");
+	RT& rt = *m_renderTargets.emplaceBack(m_alloc);
+	rt.m_initInfo = initInf;
+	rt.m_hash = initInf.m_hash;
+	rt.m_importedLastKnownUsage = TextureUsageBit::NONE;
+	rt.m_usageDerivedByDeps = TextureUsageBit::NONE;
+	rt.setName(initInf.getName());
+
+	RenderTargetHandle out;
+	out.m_idx = m_renderTargets.getSize() - 1;
+	return out;
+}
+
+inline RenderPassBufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferUsageBit usage)
+{
+	for(const Buffer& bb : m_buffers)
+	{
+		(void)bb;
+		ANKI_ASSERT(bb.m_importedBuff != buff && "Already imported");
+	}
+
+	Buffer& b = *m_buffers.emplaceBack(m_alloc);
+	b.setName(buff->getName());
+	b.m_usage = usage;
+	b.m_importedBuff = buff;
+
+	RenderPassBufferHandle out;
+	out.m_idx = m_buffers.getSize() - 1;
+	return out;
+}
+
 } // end namespace anki

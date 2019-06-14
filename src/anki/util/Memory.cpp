@@ -726,7 +726,9 @@ void* ChainMemoryPool::allocateFromChunk(Chunk* ch, PtrSize size, PtrSize alignm
 	ANKI_ASSERT(ch->m_top <= ch->m_memory + ch->m_memsize);
 
 	U8* mem = ch->m_top;
-	alignRoundUp(m_alignmentBytes, mem);
+	PtrSize memV = ptrToNumber(mem);
+	alignRoundUp(m_alignmentBytes, memV);
+	mem = numberToPtr<U8*>(memV);
 	U8* newTop = mem + m_headerSize + size;
 
 	if(newTop <= ch->m_memory + ch->m_memsize)

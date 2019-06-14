@@ -21,7 +21,7 @@
 #include <anki/renderer/TemporalAA.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/Ssr.h>
-#include <anki/renderer/Indirect.h>
+#include <anki/renderer/ProbeReflections.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Drawer.h>
@@ -30,5 +30,6 @@
 #include <anki/renderer/RendererObject.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/VolumetricLightingAccumulation.h>
+#include <anki/renderer/GlobalIllumination.h>
 
 /// @defgroup renderer Renderering system

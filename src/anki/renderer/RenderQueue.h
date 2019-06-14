@@ -144,21 +144,21 @@ static_assert(
 
 /// Normally the visibility tests don't perform tests on the reflection probes because probes dont change that often.
 /// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
-/// In that case the probe should fill the render queues.
+/// In that case the visibility tests should fill the render queues of the probe.
 using ReflectionProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData);
 
 /// Reflection probe render queue element.
 class ReflectionProbeQueueElement final
 {
 public:
+	U64 m_uuid;
 	ReflectionProbeQueueElementFeedbackCallback m_feedbackCallback;
 	RenderQueueDrawCallback m_drawCallback;
 	void* m_userData;
-	U64 m_uuid;
+	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_worldPosition;
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
-	Array<RenderQueue*, 6> m_renderQueues;
 	U32 m_textureArrayIndex; ///< Renderer internal.
 
 	ReflectionProbeQueueElement()
@@ -169,17 +169,57 @@ public:
 static_assert(
 	std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true, "Should be trivially destructible");
 
+/// See ReflectionProbeQueueElementFeedbackCallback for its purpose.
+using GlobalIlluminationProbeQueueElementFeedbackCallback = void (*)(
+	Bool fillRenderQueuesOnNextFrame, void* userData, const Vec4& eyeWorldPosition);
+
+// Probe for global illumination.
+class GlobalIlluminationProbeQueueElement final
+{
+public:
+	U64 m_uuid;
+	GlobalIlluminationProbeQueueElementFeedbackCallback m_feedbackCallback;
+	RenderQueueDrawCallback m_debugDrawCallback;
+	void* m_userData;
+	Array<RenderQueue*, 6> m_renderQueues;
+	Vec3 m_aabbMin;
+	Vec3 m_aabbMax;
+	UVec3 m_cellCounts;
+	U32 m_totalCellCount;
+	Vec3 m_cellSizes; ///< The cells might not be cubes so have different sizes per dimension.
+	F32 m_fadeDistance;
+
+	GlobalIlluminationProbeQueueElement()
+	{
+	}
+
+	Bool operator<(const GlobalIlluminationProbeQueueElement& b) const
+	{
+		if(m_cellSizes.x() != b.m_cellSizes.x())
+		{
+			return m_cellSizes.x() < b.m_cellSizes.x();
+		}
+		else
+		{
+			return m_totalCellCount < b.m_totalCellCount;
+		}
+	}
+};
+
+static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement>::value == true,
+	"Should be trivially destructible");
+
 /// Lens flare render queue element.
 class LensFlareQueueElement final
 {
 public:
-	Vec3 m_worldPosition;
-	Vec2 m_firstFlareSize;
-	Vec4 m_colorMultiplier;
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 	const TextureView* m_textureView;
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
+	Vec3 m_worldPosition;
+	Vec2 m_firstFlareSize;
+	Vec4 m_colorMultiplier;
 
 	LensFlareQueueElement()
 	{
@@ -274,6 +314,7 @@ public:
 	DirectionalLightQueueElement m_directionalLight;
 	WeakArray<SpotLightQueueElement*> m_shadowSpotLights; ///< Points to elements in m_spotLights.
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
+	WeakArray<GlobalIlluminationProbeQueueElement> m_giProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
 	WeakArray<DecalQueueElement> m_decals;
 	WeakArray<FogDensityQueueElement> m_fogDensityVolumes;
@@ -284,6 +325,8 @@ public:
 
 	F32 m_cameraNear;
 	F32 m_cameraFar;
+	F32 m_cameraFovX;
+	F32 m_cameraFovY;
 	F32 m_effectiveShadowDistance;
 
 	FillCoverageBufferCallback m_fillCoverageBufferCallback = nullptr;

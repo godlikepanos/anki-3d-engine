@@ -37,19 +37,20 @@ void main()
 #define LIGHT_SET 0
 #define LIGHT_COMMON_UNIS_BINDING 0
 #define LIGHT_LIGHTS_BINDING 1
-#define LIGHT_INDIRECT_BINDING 4
-#define LIGHT_CLUSTERS_BINDING 8
+#define LIGHT_INDIRECT_SPECULAR_BINDING 4
+#define LIGHT_GLOBAL_ILLUMINATION_BINDING 7
+#define LIGHT_CLUSTERS_BINDING 9
 #include <shaders/ClusteredShadingCommon.glsl>
 
-layout(set = 0, binding = 10) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 11) uniform sampler u_trilinearClampSampler;
+layout(set = 0, binding = 11) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 12) uniform sampler u_trilinearClampSampler;
 
-layout(set = 0, binding = 12) uniform texture2D u_msRt0;
-layout(set = 0, binding = 13) uniform texture2D u_msRt1;
-layout(set = 0, binding = 14) uniform texture2D u_msRt2;
-layout(set = 0, binding = 15) uniform texture2D u_msDepthRt;
-layout(set = 0, binding = 16) uniform texture2D u_ssrRt;
-layout(set = 0, binding = 17) uniform texture2D u_ssaoRt;
+layout(set = 0, binding = 13) uniform texture2D u_msRt0;
+layout(set = 0, binding = 14) uniform texture2D u_msRt1;
+layout(set = 0, binding = 15) uniform texture2D u_msRt2;
+layout(set = 0, binding = 16) uniform texture2D u_msDepthRt;
+layout(set = 0, binding = 17) uniform texture2D u_ssrRt;
+layout(set = 0, binding = 18) uniform texture2D u_ssaoRt;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;
@@ -83,7 +84,7 @@ void main()
 
 		idxOffset = u_clusters[clusterIdx];
 
-		// out_color = lightHeatmap(idxOffset, 5, false, true, false, false, false); return;
+		// out_color = lightHeatmap(idxOffset, 5, 1u << 3); return;
 	}
 
 	// Decode GBuffer
@@ -117,12 +118,12 @@ void main()
 			shadowFactor = 1.0;
 		}
 
-		Vec3 l = -u_dirLight.m_dir;
+		const Vec3 l = -u_dirLight.m_dir;
 
-		F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
+		const F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
 
-		Vec3 diffC = diffuseLambert(gbuffer.m_diffuse);
-		Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
+		const Vec3 diffC = diffuseLambert(gbuffer.m_diffuse);
+		const Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
 
 		out_color += (diffC + specC) * u_dirLight.m_diffuseColor * (shadowFactor * lambert);
 	}
@@ -137,7 +138,7 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			F32 shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowTex, u_trilinearClampSampler);
+			const F32 shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowTex, u_trilinearClampSampler);
 			lambert *= shadow;
 		}
 
@@ -151,70 +152,134 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
+		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
 
-		F32 shadowmapLayerIdx = light.m_shadowmapId;
+		const F32 shadowmapLayerIdx = light.m_shadowmapId;
 		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
 		{
-			F32 shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex, u_trilinearClampSampler);
+			const F32 shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex, u_trilinearClampSampler);
 			lambert *= shadow;
 		}
 
 		out_color += (diffC + specC) * light.m_diffuseColor * (att * spot * max(gbuffer.m_subsurface, lambert));
 	}
 
-	// Refl & indirect
+	// Indirect specular
 	{
 		// Do the probe read
 		Vec3 specIndirect = Vec3(0.0);
-		Vec3 diffIndirect = Vec3(0.0);
 
 		const Vec3 reflDir = reflect(-viewDir, gbuffer.m_normal);
 		const F32 reflLod = F32(IR_MIPMAP_COUNT - 1u) * gbuffer.m_roughness;
-		F32 totalBlendWeight = EPSILON;
 
-		// Loop probes
-		ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+		if(subgroupAll(u_lightIndices[idxOffset] != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
 		{
-			const ReflectionProbe probe = u_reflectionProbes[idx];
-			const Vec3 aabbMin = probe.m_aabbMin;
-			const Vec3 aabbMax = probe.m_aabbMax;
-			const Vec3 probeOrigin = probe.m_position;
-			const F32 cubemapIndex = probe.m_cubemapIndex;
+			// Only one probe, do a fast path without blend weight
 
-			// Compute blend weight
-			const F32 blendWeight = computeProbeBlendWeight(worldPos, aabbMin, aabbMax, 0.2);
-			totalBlendWeight += blendWeight;
+			const ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset]];
+			idxOffset += 2u;
 
-			// Sample reflections
-			Vec3 cubeUv = intersectProbe(worldPos, reflDir, aabbMin, aabbMax, probeOrigin);
-			Vec4 cubeArrUv = Vec4(cubeUv, cubemapIndex);
-			Vec3 c = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
-			specIndirect += c * blendWeight;
-
-			// Sample irradiance
-			cubeUv = intersectProbe(worldPos, gbuffer.m_normal, aabbMin, aabbMax, probeOrigin);
-			cubeArrUv = Vec4(cubeUv, cubemapIndex);
-			c = textureLod(u_irradianceTex, u_trilinearClampSampler, cubeArrUv, 0.0).rgb;
-			diffIndirect += c * blendWeight;
+			// Sample
+			const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+			const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
+			specIndirect = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
 		}
+		else
+		{
+			// Zero or more than one probes, do a slow path that blends them together
 
-		// Normalize the colors
-		specIndirect /= totalBlendWeight;
-		diffIndirect /= totalBlendWeight;
+			F32 totalBlendWeight = EPSILON;
+
+			// Loop probes
+			ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+			{
+				const ReflectionProbe probe = u_reflectionProbes[idx];
+
+				// Compute blend weight
+				const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
+				totalBlendWeight += blendWeight;
+
+				// Sample reflections
+				const Vec3 cubeUv =
+					intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
+				const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
+				Vec3 c = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+				specIndirect += c * blendWeight;
+			}
+
+			// Normalize the colors
+			specIndirect /= totalBlendWeight;
+		}
 
 		// Read the SSL result
 		const Vec4 ssr = textureLod(u_ssrRt, u_trilinearClampSampler, in_uv, 0.0);
 
 		// Combine the SSR and probe reflections and write the result
-		const Vec3 finalRefl = specIndirect * ssr.a + ssr.rgb;
+		const Vec3 finalSpecIndirect = specIndirect * ssr.a + ssr.rgb;
 
 		// Compute env BRDF
 		const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
 		const Vec3 env =
 			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
 
-		out_color += diffIndirect * gbuffer.m_diffuse + finalRefl * env;
+		out_color += finalSpecIndirect * env;
+	}
+
+	// Indirect diffuse
+	{
+		Vec3 diffIndirect;
+
+		const U32 crntProbeIdx = u_lightIndices[idxOffset];
+		if(subgroupAllEqual(crntProbeIdx)
+			&& subgroupAll(crntProbeIdx != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
+		{
+			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
+
+			GlobalIlluminationProbe probe = u_giProbes[subgroupBroadcastFirst(crntProbeIdx)]; // It should be uniform
+
+			// Sample
+			diffIndirect = sampleGlobalIllumination(
+				worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures, u_trilinearClampSampler);
+		}
+		else
+		{
+			// Zero or more than one probes, do a slow path that blends them together
+
+			F32 totalBlendWeight = EPSILON;
+			diffIndirect = Vec3(0.0);
+
+			UVec4 execMask = UVec4(0u);
+			ANKI_LOOP while((execMask & gl_SubgroupEqMask) == UVec4(0u))
+			{
+				U32 uniformIdxOffset = subgroupBroadcastFirst(idxOffset); // Should be uniform
+				const UVec4 laneMask = subgroupBallot(uniformIdxOffset == idxOffset);
+				execMask |= laneMask;
+
+				if(uniformIdxOffset == idxOffset)
+				{
+					// Loop probes
+					ANKI_LOOP while((idx = u_lightIndices[uniformIdxOffset++]) != MAX_U32)
+					{
+						GlobalIlluminationProbe probe = u_giProbes[idx];
+
+						// Compute blend weight
+						const F32 blendWeight =
+							computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
+						totalBlendWeight += blendWeight;
+
+						// Sample
+						const Vec3 c = sampleGlobalIllumination(
+							worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures, u_trilinearClampSampler);
+						diffIndirect += c * blendWeight;
+					}
+				}
+			}
+
+			// Normalize
+			diffIndirect /= totalBlendWeight;
+		}
+
+		out_color += diffIndirect * gbuffer.m_diffuse;
 	}
 }
 #pragma anki end

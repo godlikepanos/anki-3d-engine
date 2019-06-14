@@ -48,6 +48,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 
 	// Init some constants
 	m_maxTextureSize = init.m_config->getNumber("rsrc.maxTextureSize");
+	m_dumpShaderSource = init.m_config->getNumber("rsrc.dumpShaderSources");
 
 	// Init type resource managers
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) TypeResourceManager<rsrc_>::init(m_alloc);

@@ -133,6 +133,11 @@ anki_internal:
 		return m_maxTextureSize;
 	}
 
+	Bool getDumpShaderSource() const
+	{
+		return m_dumpShaderSource;
+	}
+
 	ResourceAllocator<U8>& getAllocator()
 	{
 		return m_alloc;
@@ -222,6 +227,7 @@ private:
 	U64 m_loadRequestCount = 0;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
 	ShaderCompilerCache* m_shaderCompiler = nullptr;
+	Bool m_dumpShaderSource = false;
 };
 /// @}
 

@@ -42,8 +42,17 @@ Config::Config()
 	newOption("r.bloom.scale", 2.5);
 
 	newOption("r.indirect.reflectionResolution", 128);
+	newOption("r.indirect.irradianceResolution", 16);
 	newOption("r.indirect.maxSimultaneousProbeCount", 32);
 	newOption("r.indirect.shadowMapResolution", 64);
+
+	newOption("r.gi.tileResolution", 32);
+	newOption("r.gi.shadowMapResolution", 128);
+	newOption("r.gi.maxCachedProbes", 16);
+	newOption("r.gi.maxVisibleProbes", 8);
+	newOption("r.gi.firstClipmapLevelCellSize", 1.0);
+	newOption("r.gi.secondClipmapLevelCellSize", 8.0);
+	newOption("r.gi.firstClipmapMaxDistance", 20.0);
 
 	newOption("r.motionBlur.maxSamples", 32);
 
@@ -65,6 +74,7 @@ Config::Config()
 
 	// Resource
 	newOption("rsrc.maxTextureSize", 1024 * 1024);
+	newOption("rsrc.dumpShaderSources", false);
 	newOption("rsrc.dataPaths", ".", "The engine loads assets only in from these paths. Separate them with :");
 	newOption("rsrc.transferScratchMemorySize", 256_MB);
 

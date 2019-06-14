@@ -58,17 +58,16 @@ layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 2) uniform highp textur
 #endif
 
 //
-// Indirect uniforms (4)
+// Indirect uniforms (3)
 //
-#if defined(LIGHT_INDIRECT_BINDING)
-layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING) uniform u3_
+#if defined(LIGHT_INDIRECT_SPECULAR_BINDING)
+layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING) uniform u3_
 {
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / SIZEOF_REFLECTION_PROBE];
 };
 
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 2) uniform textureCubeArray u_irradianceTex;
-layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_BINDING + 3) uniform texture2D u_integrationLut;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
+layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 2) uniform texture2D u_integrationLut;
 #endif
 
 //
@@ -85,12 +84,25 @@ layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 2) uniform texture2D u_
 #endif
 
 //
-// Fog density uniforms
+// Fog density uniforms (1)
 //
 #if defined(LIGHT_FOG_DENSITY_VOLUMES_BINDING)
 layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_FOG_DENSITY_VOLUMES_BINDING) uniform u5_
 {
 	FogDensityVolume u_fogDensityVolumes[UBO_MAX_SIZE / SIZEOF_FOG_DENSITY_VOLUME];
+};
+#endif
+
+//
+// GI (2)
+//
+#if defined(LIGHT_GLOBAL_ILLUMINATION_BINDING)
+layout(set = LIGHT_SET, binding = LIGHT_GLOBAL_ILLUMINATION_BINDING) uniform texture3D
+	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
+
+layout(set = LIGHT_SET, binding = LIGHT_GLOBAL_ILLUMINATION_BINDING + 1) uniform ugi_
+{
+	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 };
 #endif
 
@@ -110,36 +122,41 @@ layout(set = LIGHT_SET, binding = LIGHT_CLUSTERS_BINDING + 1, std430) readonly b
 #endif
 
 // Debugging function
-Vec3 lightHeatmap(U32 firstIndex, U32 maxLights, Bool decals, Bool plights, Bool slights, Bool probes, Bool fogVolumes)
+Vec3 lightHeatmap(U32 firstIndex, U32 maxObjects, U32 typeMask)
 {
 	U32 count = 0;
 	U32 idx;
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (plights) ? 1u : 0u;
+		count += ((typeMask & (1u << 0u)) != 0u) ? 1u : 0u;
 	}
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (slights) ? 1u : 0u;
+		count += ((typeMask & (1u << 1u)) != 0u) ? 1u : 0u;
 	}
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (probes) ? 1u : 0u;
+		count += ((typeMask & (1u << 2u)) != 0u) ? 1u : 0u;
 	}
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (decals) ? 1u : 0u;
+		count += ((typeMask & (1u << 3u)) != 0u) ? 1u : 0u;
 	}
 
 	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
 	{
-		count += (fogVolumes) ? 1u : 0u;
+		count += ((typeMask & (1u << 4u)) != 0u) ? 1u : 0u;
 	}
 
-	const F32 factor = min(1.0, F32(count) / F32(maxLights));
+	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	{
+		count += ((typeMask & (1u << 5u)) != 0u) ? 1u : 0u;
+	}
+
+	const F32 factor = min(1.0, F32(count) / F32(maxObjects));
 	return heatmap(factor);
 }

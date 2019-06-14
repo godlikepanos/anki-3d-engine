@@ -156,7 +156,9 @@
 #	define ANKI_UNUSED __attribute__((__unused__))
 #	define ANKI_COLD __attribute__((cold, optimize("Os")))
 #	define ANKI_HOT __attribute__ ((hot))
-#else
+#	define ANKI_UNREACHABLE() __builtin_unreachable()
+#	define ANKI_PREFETCH_MEMORY(addr) __builtin_prefetch(addr)
+#elif defined(_MSC_VER)
 #	define ANKI_LIKELY(x) ((x) == 1)
 #	define ANKI_UNLIKELY(x) ((x) == 1)
 #	define ANKI_RESTRICT
@@ -166,6 +168,10 @@
 #	define ANKI_UNUSED
 #	define ANKI_COLD
 #	define ANKI_HOT
+#	define ANKI_UNREACHABLE() __assume(false)
+#	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
+#else
+#	error Unsupported compiler
 #endif
 
 // Pack structs

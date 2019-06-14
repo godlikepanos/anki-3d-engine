@@ -277,8 +277,9 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 	{
 		if(m_layoutEntry->m_activeBindings.get(bindingIdx))
 		{
-			for(U arrIdx = 0; arrIdx < bindings[bindingIdx].m_arraySize; ++arrIdx)
+			for(U arrIdx = 0; arrIdx < m_layoutEntry->m_bindingArraySize[bindingIdx]; ++arrIdx)
 			{
+				ANKI_ASSERT(bindings[bindingIdx].m_arraySize >= m_layoutEntry->m_bindingArraySize[bindingIdx]);
 				const AnyBinding& b = (bindings[bindingIdx].m_arraySize == 1) ? bindings[bindingIdx].m_single
 																			  : bindings[bindingIdx].m_array[arrIdx];
 
@@ -346,7 +347,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 	{
 		if(m_layoutEntry->m_activeBindings.get(bindingIdx))
 		{
-			for(U arrIdx = 0; arrIdx < bindings[bindingIdx].m_arraySize; ++arrIdx)
+			for(U arrIdx = 0; arrIdx < m_layoutEntry->m_bindingArraySize[bindingIdx]; ++arrIdx)
 			{
 				const AnyBinding& b = (bindings[bindingIdx].m_arraySize == 1) ? bindings[bindingIdx].m_single
 																			  : bindings[bindingIdx].m_array[arrIdx];
@@ -445,7 +446,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 		{
 			if(m_poolSizesCreateInf[j].type == convertDescriptorType(bindings[i].m_type))
 			{
-				++m_poolSizesCreateInf[j].descriptorCount;
+				m_poolSizesCreateInf[j].descriptorCount += bindings[i].m_arraySizeMinusOne + 1;
 				break;
 			}
 		}
@@ -453,7 +454,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 		if(j == poolSizeCount)
 		{
 			m_poolSizesCreateInf[poolSizeCount].type = convertDescriptorType(bindings[i].m_type);
-			m_poolSizesCreateInf[poolSizeCount].descriptorCount = 1;
+			m_poolSizesCreateInf[poolSizeCount].descriptorCount = bindings[i].m_arraySizeMinusOne + 1;
 			++poolSizeCount;
 		}
 	}
@@ -978,6 +979,13 @@ Error BindlessDescriptorSet::initDeviceFeatures(
 	features.pNext = &indexingFeatures;
 
 	vkGetPhysicalDeviceFeatures2(pdev, &features);
+
+	if(!indexingFeatures.shaderSampledImageArrayNonUniformIndexing
+		|| !indexingFeatures.shaderStorageImageArrayNonUniformIndexing)
+	{
+		ANKI_VK_LOGE("Non uniform indexing is not supported by the device");
+		return Error::FUNCTION_FAILED;
+	}
 
 	if(!indexingFeatures.descriptorBindingSampledImageUpdateAfterBind
 		|| !indexingFeatures.descriptorBindingStorageImageUpdateAfterBind)

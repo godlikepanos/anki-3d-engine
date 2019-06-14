@@ -39,7 +39,8 @@ public:
 		CommandBufferPtr cmdb,
 		SamplerPtr sampler,
 		const RenderableQueueElement* begin,
-		const RenderableQueueElement* end);
+		const RenderableQueueElement* end,
+		U minLod = 0);
 
 private:
 	Renderer* m_r;

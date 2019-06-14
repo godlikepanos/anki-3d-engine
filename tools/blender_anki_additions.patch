@@ -1,8 +1,21 @@
+diff --git a/build_files/build_environment/install_deps.sh b/build_files/build_environment/install_deps.sh
+index 6cd725494b3..6ce61b8c7d6 100755
+--- a/build_files/build_environment/install_deps.sh
++++ b/build_files/build_environment/install_deps.sh
+@@ -340,7 +340,7 @@ LLVM_FORCE_REBUILD=false
+ LLVM_SKIP=false
+ 
+ # OSL needs to be compiled for now!
+-OSL_VERSION="1.7.5"
++OSL_VERSION="1.8.10"
+ OSL_VERSION_MIN=$OSL_VERSION
+ OSL_FORCE_BUILD=false
+ OSL_FORCE_REBUILD=false
 diff --git a/source/blender/collada/EffectExporter.cpp b/source/blender/collada/EffectExporter.cpp
-index 76b5114..11ea02e 100644
+index d33ce725e58..bf36943b324 100644
 --- a/source/blender/collada/EffectExporter.cpp
 +++ b/source/blender/collada/EffectExporter.cpp
-@@ -47,7 +47,9 @@ extern "C" {
+@@ -46,7 +46,9 @@ extern "C" {
  	#include "BKE_customdata.h"
  	#include "BKE_mesh.h"
  	#include "BKE_material.h"
@@ -10,9 +23,9 @@ index 76b5114..11ea02e 100644
  }
 +#include <sstream>
  
- // OB_MESH is assumed
- static std::string getActiveUVLayerName(Object *ob)
-@@ -170,6 +172,26 @@ void EffectsExporter::writeTextures(COLLADASW::EffectProfile &ep,
+ EffectsExporter::EffectsExporter(COLLADASW::StreamWriter *sw, const ExportSettings *export_settings) : COLLADASW::LibraryEffects(sw), export_settings(export_settings) {
+ }
+@@ -196,6 +198,26 @@ void EffectsExporter::writeTextures(
  		texture.setChildElementName("bump");
  		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
  	}
@@ -22,7 +35,7 @@ index 76b5114..11ea02e 100644
 +		texture.setTexcoord(uvname);
 +		texture.setSampler(*sampler);
 +		texture.setProfileName("blender");
-+		texture.setChildElementName("roughness");
++		texture.setChildElementName("roughness_tex");
 +		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
 +	}
 +	if (t->mapto & MAP_DISPLACE) {
@@ -39,8 +52,8 @@ index 76b5114..11ea02e 100644
  }
  
  void EffectsExporter::operator()(Material *ma, Object *ob)
-@@ -398,6 +420,68 @@ void EffectsExporter::operator()(Material *ma, Object *ob)
- 		}
+@@ -358,6 +380,68 @@ void EffectsExporter::operator()(Material *ma, Object *ob)
+ 		writeTextures(ep, key, sampler, t, ima, uvname);
  	}
  
 +	// AnKi: Export extra properties
@@ -109,7 +122,7 @@ index 76b5114..11ea02e 100644
  	ep.addProfileElements();
  	bool twoSided = false;
 diff --git a/source/blender/collada/GeometryExporter.cpp b/source/blender/collada/GeometryExporter.cpp
-index 7c7c57f..b02ba47 100644
+index 4b693332715..04fb3ee71f3 100644
 --- a/source/blender/collada/GeometryExporter.cpp
 +++ b/source/blender/collada/GeometryExporter.cpp
 @@ -47,6 +47,7 @@ extern "C" {
@@ -120,12 +133,10 @@ index 7c7c57f..b02ba47 100644
  }
  
  #include "collada_internal.h"
-@@ -143,13 +144,133 @@ void GeometryExporter::operator()(Object *ob)
- 			createPolylist(0, has_uvs, has_color, ob, me, geom_id, norind);
+@@ -154,12 +155,135 @@ void GeometryExporter::operator()(Object *ob)
  		}
  	}
--	
-+
+ 
 +	// AnKi: Export mesh properties
 +	{
 +		static const char *property_names[] = {
@@ -136,6 +147,9 @@ index 7c7c57f..b02ba47 100644
 +			"lod1",
 +			"skip",
 +			"reflection_probe",
++			"gi_probe",
++			"gi_probe_fade_distance",
++			"gi_probe_cell_size",
 +			"reflection_proxy",
 +			"occluder",
 +			"collision_mesh",
@@ -204,7 +218,7 @@ index 7c7c57f..b02ba47 100644
 +	}
 +
  	closeMesh();
- 	
+ 
  	if (me->flag & ME_TWOSIDED) {
  		mSW->appendTextBlock("<extra><technique profile=\"MAYA\"><double_sided>1</double_sided></technique></extra>");
  	}
@@ -256,7 +270,7 @@ index 7c7c57f..b02ba47 100644
  
  	if (this->export_settings->include_shapekeys) {
 diff --git a/source/blender/collada/LightExporter.cpp b/source/blender/collada/LightExporter.cpp
-index ff50abf..205f687 100644
+index 02c5438ec47..6db17d8d082 100644
 --- a/source/blender/collada/LightExporter.cpp
 +++ b/source/blender/collada/LightExporter.cpp
 @@ -31,6 +31,9 @@
@@ -277,12 +291,10 @@ index ff50abf..205f687 100644
  		addLight(cla);
  	}
  	// lamp
-@@ -190,6 +194,49 @@ bool LightsExporter::exportBlenderProfile(COLLADASW::Light &cla, Lamp *la)
- 	cla.addExtraTechniqueParameter("blender", "skyblendfac", la->skyblendfac);
+@@ -191,5 +195,48 @@ bool LightsExporter::exportBlenderProfile(COLLADASW::Light &cla, Lamp *la)
  	cla.addExtraTechniqueParameter("blender", "sky_exposure", la->sky_exposure);
  	cla.addExtraTechniqueParameter("blender", "sky_colorspace", la->sky_colorspace);
--	
-+
+ 
 +	// AnKi: Export properties
 +	static const char *property_names[] = {
 +		"lens_flare",
@@ -329,7 +341,7 @@ index ff50abf..205f687 100644
  	return true;
  }
 diff --git a/source/blender/collada/SceneExporter.cpp b/source/blender/collada/SceneExporter.cpp
-index 30cd6dd..17563dd 100644
+index 4e08548449f..4eb2580dd6b 100644
 --- a/source/blender/collada/SceneExporter.cpp
 +++ b/source/blender/collada/SceneExporter.cpp
 @@ -28,6 +28,7 @@ extern "C" {
@@ -340,7 +352,7 @@ index 30cd6dd..17563dd 100644
  }
  
  #include "SceneExporter.h"
-@@ -234,6 +235,14 @@ void SceneExporter::writeNodes(Object *ob, Scene *sce)
+@@ -232,6 +233,14 @@ void SceneExporter::writeNodes(bContext *C, Object *ob, Scene *sce)
  		}
  	}
  

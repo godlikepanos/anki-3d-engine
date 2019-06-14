@@ -15,6 +15,7 @@
 #include <anki/scene/components/FogDensityComponent.h>
 #include <anki/scene/components/LightComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
+#include <anki/scene/components/GlobalIlluminationProbeComponent.h>
 #include <anki/renderer/MainRenderer.h>
 #include <anki/util/Logger.h>
 #include <anki/util/ThreadHive.h>
@@ -61,6 +62,15 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	rqueue.m_previousViewProjectionMatrix = frc.getPreviousViewProjectionMatrix();
 	rqueue.m_cameraNear = frc.getNear();
 	rqueue.m_cameraFar = frc.getFar();
+	if(frc.getFrustumType() == FrustumType::PERSPECTIVE)
+	{
+		rqueue.m_cameraFovX = frc.getFovX();
+		rqueue.m_cameraFovY = frc.getFovY();
+	}
+	else
+	{
+		rqueue.m_cameraFovX = rqueue.m_cameraFovY = 0.0f;
+	}
 	rqueue.m_effectiveShadowDistance = frc.getEffectiveShadowDistance();
 
 	auto alloc = m_scene->getFrameAllocator();
@@ -246,6 +256,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	const Bool wantsFogDensityComponents =
 		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS);
 
+	const Bool wantsGiProbeCoponents =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES);
+
 	const Bool wantsEarlyZ = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::EARLY_Z)
 							 && m_frcCtx->m_visCtx->m_earlyZDist > 0.0f;
 
@@ -285,6 +298,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 		const FogDensityComponent* fogc = nullptr;
 		wantNode |= wantsFogDensityComponents && (fogc = node.tryGetComponent<FogDensityComponent>());
+
+		GlobalIlluminationProbeComponent* giprobec = nullptr;
+		wantNode |= wantsGiProbeCoponents && (giprobec = node.tryGetComponent<GlobalIlluminationProbeComponent>());
 
 		if(ANKI_UNLIKELY(!wantNode))
 		{
@@ -541,6 +557,29 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			fogc->setupFogDensityQueueElement(*el);
 		}
 
+		if(giprobec)
+		{
+			GlobalIlluminationProbeQueueElement* el = result.m_giProbes.newElement(alloc);
+			giprobec->setupGlobalIlluminationProbeQueueElement(*el);
+
+			if(giprobec->getMarkedForRendering())
+			{
+				RenderQueue* a = alloc.newArray<RenderQueue>(6);
+				nextQueues = WeakArray<RenderQueue>(a, 6);
+
+				el->m_renderQueues[0] = &nextQueues[0];
+				el->m_renderQueues[1] = &nextQueues[1];
+				el->m_renderQueues[2] = &nextQueues[2];
+				el->m_renderQueues[3] = &nextQueues[3];
+				el->m_renderQueues[4] = &nextQueues[4];
+				el->m_renderQueues[5] = &nextQueues[5];
+			}
+			else
+			{
+				el->m_renderQueues = {{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
+			}
+		}
+
 		// Add more frustums to the list
 		if(nextQueues.getSize() > 0)
 		{
@@ -625,6 +664,7 @@ void CombineResultsTask::combine()
 	ANKI_VIS_COMBINE(LensFlareQueueElement, m_lensFlares);
 	ANKI_VIS_COMBINE(DecalQueueElement, m_decals);
 	ANKI_VIS_COMBINE(FogDensityQueueElement, m_fogDensityVolumes);
+	ANKI_VIS_COMBINE(GlobalIlluminationProbeQueueElement, m_giProbes);
 
 	for(U i = 0; i < threadCount; ++i)
 	{
@@ -659,6 +699,8 @@ void CombineResultsTask::combine()
 	std::sort(results.m_forwardShadingRenderables.getBegin(),
 		results.m_forwardShadingRenderables.getEnd(),
 		RevDistanceSortFunctor<RenderableQueueElement>());
+
+	std::sort(results.m_giProbes.getBegin(), results.m_giProbes.getEnd());
 
 	// Cleanup
 	if(m_frcCtx->m_r)

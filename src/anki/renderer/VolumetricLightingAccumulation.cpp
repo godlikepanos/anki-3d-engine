@@ -5,7 +5,7 @@
 
 #include <anki/renderer/VolumetricLightingAccumulation.h>
 #include <anki/renderer/ShadowMapping.h>
-#include <anki/renderer/Indirect.h>
+#include <anki/renderer/GlobalIllumination.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/misc/ConfigSet.h>
@@ -96,7 +96,8 @@ void VolumetricLightingAccumulation::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newDependency({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE});
-	pass.newDependency({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_COMPUTE});
+
+	m_r->getGlobalIllumination().setRenderGraphDependencies(ctx, pass, TextureUsageBit::SAMPLED_COMPUTE);
 }
 
 void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
@@ -122,14 +123,12 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 	bindUniforms(cmdb, 0, 7, rsrc.m_spotLightsToken);
 	rgraphCtx.bindColorTexture(0, 8, m_r->getShadowMapping().getShadowmapRt());
 
-	bindUniforms(cmdb, 0, 9, rsrc.m_probesToken);
-	cmdb->bindTexture(0, 10, m_r->getDummyTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
-	rgraphCtx.bindColorTexture(0, 11, m_r->getIndirect().getIrradianceRt());
-	cmdb->bindTexture(0, 12, m_r->getDummyTextureView(), TextureUsageBit::SAMPLED_COMPUTE);
+	m_r->getGlobalIllumination().bindVolumeTextures(ctx, rgraphCtx, 0, 9);
+	bindUniforms(cmdb, 0, 10, rsrc.m_globalIlluminationProbesToken);
 
-	bindUniforms(cmdb, 0, 13, rsrc.m_fogDensityVolumesToken);
-	bindStorage(cmdb, 0, 14, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 15, rsrc.m_indicesToken);
+	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
+	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 13, rsrc.m_indicesToken);
 
 	struct PushConsts
 	{

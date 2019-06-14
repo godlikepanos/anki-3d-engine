@@ -96,11 +96,11 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindTexture(0,
 		5,
-		(rsrc.m_diffDecalTexView) ? rsrc.m_diffDecalTexView : m_r->getDummyTextureView(),
+		(rsrc.m_diffDecalTexView) ? rsrc.m_diffDecalTexView : m_r->getDummyTextureView2d(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(0,
 		6,
-		(rsrc.m_specularRoughnessDecalTexView) ? rsrc.m_specularRoughnessDecalTexView : m_r->getDummyTextureView(),
+		(rsrc.m_specularRoughnessDecalTexView) ? rsrc.m_specularRoughnessDecalTexView : m_r->getDummyTextureView2d(),
 		TextureUsageBit::SAMPLED_FRAGMENT);
 
 	bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
