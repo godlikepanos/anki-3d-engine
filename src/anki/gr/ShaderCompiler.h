@@ -56,8 +56,11 @@ public:
 	/// @param source The source in GLSL.
 	/// @param options Compile options.
 	/// @param bin The output binary.
-	ANKI_USE_RESULT Error compile(
-		CString source, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const;
+	/// @param finalSourceDumpFilename Write the final source to this filename if it's not empty.
+	ANKI_USE_RESULT Error compile(CString source,
+		const ShaderCompilerOptions& options,
+		DynamicArrayAuto<U8>& bin,
+		CString finalSourceDumpFilename = {}) const;
 
 	ANKI_USE_RESULT Error preprocess(
 		CString source, const ShaderCompilerOptions& options, const StringList& defines, StringAuto& out) const;
@@ -99,16 +102,23 @@ public:
 	/// @param sourceHash Optional hash of the source. If it's nullptr then the @a source will be hashed.
 	/// @param options Compile options.
 	/// @param bin The output binary.
-	ANKI_USE_RESULT Error compile(
-		CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const;
+	/// @param dumpShaderSource If true dump the shaders' source as well.
+	ANKI_USE_RESULT Error compile(CString source,
+		U64* hash,
+		const ShaderCompilerOptions& options,
+		DynamicArrayAuto<U8>& bin,
+		Bool dumpShaderSource = false) const;
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	ShaderCompiler m_compiler;
 	String m_cacheDir;
 
-	ANKI_USE_RESULT Error compileInternal(
-		CString source, U64* hash, const ShaderCompilerOptions& options, DynamicArrayAuto<U8>& bin) const;
+	ANKI_USE_RESULT Error compileInternal(CString source,
+		U64* hash,
+		const ShaderCompilerOptions& options,
+		DynamicArrayAuto<U8>& bin,
+		Bool dumpShaderSource) const;
 };
 /// @}
 

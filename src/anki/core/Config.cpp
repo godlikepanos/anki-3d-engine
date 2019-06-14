@@ -74,6 +74,7 @@ Config::Config()
 
 	// Resource
 	newOption("rsrc.maxTextureSize", 1024 * 1024);
+	newOption("rsrc.dumpShaderSources", false);
 	newOption("rsrc.dataPaths", ".", "The engine loads assets only in from these paths. Separate them with :");
 	newOption("rsrc.transferScratchMemorySize", 256_MB);
 

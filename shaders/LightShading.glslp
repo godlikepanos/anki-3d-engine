@@ -233,10 +233,9 @@ void main()
 		if(subgroupAllEqual(crntProbeIdx)
 			&& subgroupAll(crntProbeIdx != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
 		{
-			// All sugroups point to the same probe and there is only one probe, do a fast path without blend weight
+			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
 
 			GlobalIlluminationProbe probe = u_giProbes[subgroupBroadcastFirst(crntProbeIdx)]; // It should be uniform
-			idxOffset += 2u;
 
 			// Sample
 			diffIndirect = sampleGlobalIllumination(
