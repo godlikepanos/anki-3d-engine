@@ -106,9 +106,9 @@ void main()
 		F32 shadowFactor;
 		if(u_dirLight.m_cascadeCount > 0)
 		{
-			F32 linearDepth = linearizeDepth(depth, u_near, u_far);
-			F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
-			U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
+			const F32 linearDepth = linearizeDepth(depth, u_near, u_far);
+			const F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
+			const U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
 
 			shadowFactor =
 				computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex, u_trilinearClampSampler);

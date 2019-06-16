@@ -34,55 +34,65 @@ anki_internal:
 
 	RenderTargetHandle getShadowmapRt() const
 	{
-		return m_esmRt;
+		return m_atlas.m_rt;
 	}
 
 private:
 	using Viewport = Array<U32, 4>;
 
-	/// @name ESM stuff
+	/// @name Atlas stuff
 	/// @{
 
-	TileAllocator m_esmTileAlloc;
+	class Atlas
+	{
+	public:
+		class ResolveWorkItem;
 
-	FramebufferDescription m_esmFbDescr; ///< The FB for ESM
-	TexturePtr m_esmAtlas; ///< ESM texture atlas. Size (m_esmTileResolution*m_esmTileCountBothAxis)^2
-	RenderTargetHandle m_esmRt;
+		TileAllocator m_tileAlloc;
 
-	U32 m_esmTileResolution = 0; ///< Tile resolution.
-	U32 m_esmTileCountBothAxis = 0;
+		FramebufferDescription m_fbDescr;
+		TexturePtr m_tex; ///<  Size (m_tileResolution*m_tileCountBothAxis)^2
+		RenderTargetHandle m_rt;
 
-	ShaderProgramResourcePtr m_esmResolveProg;
-	ShaderProgramPtr m_esmResolveGrProg;
+		U32 m_tileResolution = 0; ///< Tile resolution.
+		U32 m_tileCountBothAxis = 0;
 
-	class EsmResolveWorkItem;
-	WeakArray<EsmResolveWorkItem> m_esmResolveWorkItems;
+		ShaderProgramResourcePtr m_resolveProg;
+		ShaderProgramPtr m_resolveGrProg;
 
-	ANKI_USE_RESULT Error initEsm(const ConfigSet& cfg);
+		WeakArray<ResolveWorkItem> m_resolveWorkItems;
+	} m_atlas;
+
+	ANKI_USE_RESULT Error initAtlas(const ConfigSet& cfg);
 
 	inline Mat4 createSpotLightTextureMatrix(const Viewport& viewport) const;
 
-	void runEsm(RenderPassWorkContext& rgraphCtx);
+	void runAtlas(RenderPassWorkContext& rgraphCtx);
 	/// @}
 
 	/// @name Scratch buffer stuff
 	/// @{
-	TileAllocator m_scratchTileAlloc;
 
-	RenderTargetHandle m_scratchRt; ///< Size of the RT is (m_scratchTileSize * m_scratchTileCount, m_scratchTileSize).
-	FramebufferDescription m_scratchFbDescr; ///< FB info.
-	RenderTargetDescription m_scratchRtDescr; ///< Render target.
+	class Scratch
+	{
+	public:
+		class WorkItem;
+		class LightToRenderToScratchInfo;
 
-	U32 m_scratchTileCountX = 0;
-	U32 m_scratchTileCountY = 0;
-	U32 m_scratchTileResolution = 0;
+		TileAllocator m_tileAlloc;
 
-	class ScratchBufferWorkItem;
-	class LightToRenderToScratchInfo;
+		RenderTargetHandle m_rt; ///< Size of the RT is (m_tileSize * m_tileCount, m_tileSize).
+		FramebufferDescription m_fbDescr; ///< FB info.
+		RenderTargetDescription m_rtDescr; ///< Render target.
 
-	WeakArray<ScratchBufferWorkItem> m_scratchWorkItems;
-	U32 m_scratchMaxViewportWidth = 0;
-	U32 m_scratchMaxViewportHeight = 0;
+		U32 m_tileCountX = 0;
+		U32 m_tileCountY = 0;
+		U32 m_tileResolution = 0;
+
+		WeakArray<WorkItem> m_workItems;
+		U32 m_maxViewportWidth = 0;
+		U32 m_maxViewportHeight = 0;
+	} m_scratch;
 
 	ANKI_USE_RESULT Error initScratch(const ConfigSet& cfg);
 
@@ -98,9 +108,9 @@ private:
 	Array<F32, m_lodCount - 1> m_lodDistances;
 
 	/// Find the lod of the light
-	U choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurEsm) const;
+	U choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurAtlas) const;
 	/// Find the lod of the light
-	U choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurEsm) const;
+	U choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurAtlas) const;
 
 	/// Try to allocate a number of scratch tiles and regular tiles.
 	TileAllocatorResult allocateTilesAndScratchTiles(U64 lightUuid,
@@ -109,18 +119,18 @@ private:
 		const U32* faceIndices,
 		const U32* drawcallsCount,
 		const U32* lods,
-		Viewport* esmTileViewports,
+		Viewport* atlasTileViewports,
 		Viewport* scratchTileViewports,
 		TileAllocatorResult* subResults);
 
-	/// Add new work to render to scratch buffer and ESM buffer.
-	void newScratchAndEsmResloveRenderWorkItems(const Viewport& esmViewport,
+	/// Add new work to render to scratch buffer and atlas buffer.
+	void newScratchAndAtlasResloveRenderWorkItems(const Viewport& atlasViewport,
 		const Viewport& scratchVewport,
-		Bool blurEsm,
+		Bool blurAtlas,
 		Bool perspectiveProjection,
 		RenderQueue* lightRenderQueue,
-		DynamicArrayAuto<LightToRenderToScratchInfo>& scratchWorkItem,
-		DynamicArrayAuto<EsmResolveWorkItem>& esmResolveWorkItem,
+		DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
+		DynamicArrayAuto<Atlas::ResolveWorkItem>& atlasResolveWorkItem,
 		U32& drawcallCount) const;
 
 	/// Iterate lights and create work items.

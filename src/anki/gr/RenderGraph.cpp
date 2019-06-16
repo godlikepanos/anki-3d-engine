@@ -243,6 +243,13 @@ RenderGraph::~RenderGraph()
 	}
 
 	m_fbCache.destroy(getAllocator());
+
+	for(auto& it : m_importedRenderTargets)
+	{
+		it.m_surfOrVolLastUsages.destroy(getAllocator());
+	}
+
+	m_importedRenderTargets.destroy(getAllocator());
 }
 
 RenderGraph* RenderGraph::newInstance(GrManager* manager)
