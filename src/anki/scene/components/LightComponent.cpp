@@ -171,7 +171,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 			// Projection
 			const F32 far = (eye - sphereCenter).getLength() + sphereRadius;
-			const Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(
+			Mat4 cascadeProjMat = Mat4::calculateOrthographicProjectionMatrix(
 				sphereRadius, -sphereRadius, sphereRadius, -sphereRadius, LIGHT_FRUSTUM_NEAR_PLANE, far);
 
 			// View
@@ -179,15 +179,45 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 			cascadeTransform.setOrigin(eye.xyz0());
 			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
 
+			// Now it's time to stabilize the shadows by aligning the projection matrix
+			{
+				// Project a random fixed point to the light matrix
+				const Vec4 randomPointAlmostLightSpace = (cascadeProjMat * cascadeViewMat) * Vec3(0.0f).xyz1();
+
+				// Chose a random low shadowmap size and align the random point
+				const F32 shadowmapSize = 128.0f;
+				const F32 shadowmapSize2 = shadowmapSize / 2.0f; // Div with 2 because the projected point is in NDC
+				const F32 alignedX = round(randomPointAlmostLightSpace.x() * shadowmapSize2) / shadowmapSize2;
+				const F32 alignedY = round(randomPointAlmostLightSpace.y() * shadowmapSize2) / shadowmapSize2;
+
+				const F32 dx = alignedX - randomPointAlmostLightSpace.x();
+				const F32 dy = alignedY - randomPointAlmostLightSpace.y();
+
+				// Fix the projection matrix by applying an offset
+				Mat4 correctionTranslationMat = Mat4::getIdentity();
+				correctionTranslationMat.setTranslationPart(Vec4(dx, dy, 0, 1.0f));
+
+				cascadeProjMat = correctionTranslationMat * cascadeProjMat;
+			}
+
 			// Light matrix
 			static const Mat4 biasMat4(
 				0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 			el.m_textureMatrices[i] = biasMat4 * cascadeProjMat * cascadeViewMat;
 
-			// Fill the frustum
+			// Fill the frustum with the fixed projection parameters from the fixed projection matrix
+			Plane plane;
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::LEFT, plane);
+			const F32 left = plane.getOffset();
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::RIGHT, plane);
+			const F32 right = -plane.getOffset();
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::TOP, plane);
+			const F32 top = -plane.getOffset();
+			extractClipPlane(cascadeProjMat, FrustumPlaneType::BOTTOM, plane);
+			const F32 bottom = plane.getOffset();
+
 			FrustumComponent& cascadeFrustumComp = cascadeFrustumComponents[i];
-			cascadeFrustumComp.setOrthographic(
-				LIGHT_FRUSTUM_NEAR_PLANE, far, sphereRadius, -sphereRadius, sphereRadius, -sphereRadius);
+			cascadeFrustumComp.setOrthographic(LIGHT_FRUSTUM_NEAR_PLANE, far, right, left, top, bottom);
 			cascadeFrustumComp.setTransform(cascadeTransform);
 		}
 	}
