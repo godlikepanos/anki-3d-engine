@@ -282,7 +282,8 @@ void main()
 
 		// Read prev
 		const Vec3 uvw = Vec3(prevUv, k);
-		if(all(lessThan(abs(uvw), Vec3(1.0))))
+		const Vec3 ndc = UV_TO_NDC(uvw);
+		if(all(lessThan(abs(ndc), Vec3(1.0))))
 		{
 			const Vec4 prev = textureLod(u_prevVolume, u_linearAnyClampSampler, uvw, 0.0);
 
