@@ -5,10 +5,13 @@
 
 #pragma anki input const UVec2 INPUT_TEXTURE_SIZE
 
-const F32 OFFSET = 1.25;
+#pragma anki start comp
+#include <shaders/GaussianBlurCommon.glsl>
+#include <shaders/Functions.glsl>
 
-const Vec2 TEXEL_SIZE = 1.0 / Vec2(INPUT_TEXTURE_SIZE);
-const Vec2 HALF_TEXEL_SIZE = TEXEL_SIZE / 2.0;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+const F32 OFFSET = 1.25;
 
 layout(push_constant, std430) uniform pc_
 {
@@ -18,92 +21,80 @@ layout(push_constant, std430) uniform pc_
 	F32 u_far;
 	U32 u_renderingTechnique; // If value is 0: perspective+blur, 1: perspective, 2: ortho+blur, 3: ortho
 	U32 u_padding;
+	UVec4 u_viewport;
 };
-
-#pragma anki start vert
-#include <shaders/Common.glsl>
-
-out gl_PerVertex
-{
-	Vec4 gl_Position;
-};
-
-layout(location = 0) out Vec2 out_uv;
-layout(location = 1) flat out Vec2 out_maxUv;
-layout(location = 2) flat out Vec2 out_minUv;
-
-void main()
-{
-	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
-	const Vec2 pos = out_uv * 2.0 - 1.0;
-
-	out_uv = fma(out_uv, u_uvScale, u_uvTranslation);
-	gl_Position = Vec4(pos, 0.0, 1.0);
-
-	// Compute the limits
-	out_maxUv = fma(Vec2(1.0), u_uvScale, u_uvTranslation) - HALF_TEXEL_SIZE;
-	out_minUv = fma(Vec2(0.0), u_uvScale, u_uvTranslation) + HALF_TEXEL_SIZE;
-}
-#pragma anki end
-
-#pragma anki start frag
-#include <shaders/GaussianBlurCommon.glsl>
-#include <shaders/Functions.glsl>
-
-layout(location = 0) in Vec2 in_uv;
-layout(location = 1) flat in Vec2 in_maxUv;
-layout(location = 2) flat in Vec2 in_minUv;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_inputTex;
 
-layout(location = 0) out F32 out_color;
+layout(set = 0, binding = 2) uniform image2D u_outImg;
 
 F32 sampleLinearDepthPerspective(Vec2 uv)
 {
-	uv = clamp(uv, in_minUv, in_maxUv);
 	return linearizeDepth(textureLod(u_inputTex, u_linearAnyClampSampler, uv, 0.0).r, u_near, u_far);
 }
 
 F32 sampleLinearDepthOrhographic(Vec2 uv)
 {
-	uv = clamp(uv, in_minUv, in_maxUv);
 	return textureLod(u_inputTex, u_linearAnyClampSampler, uv, 0.0).r;
 }
 
 void main()
 {
-	const Vec2 UV_OFFSET = OFFSET * TEXEL_SIZE;
+	if(gl_GlobalInvocationID.x >= u_viewport.z || gl_GlobalInvocationID.y >= u_viewport.w)
+	{
+		// Skip if it's out of bounds
+		return;
+	}
 
+	// Compute the read UV
+	Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_viewport.zw);
+	uv = uv * u_uvScale + u_uvTranslation;
+
+	// Compute the UV limits. We can't sample beyond those
+	const Vec2 TEXEL_SIZE = 1.0 / Vec2(INPUT_TEXTURE_SIZE);
+	const Vec2 HALF_TEXEL_SIZE = TEXEL_SIZE / 2.0;
+	const Vec2 maxUv = (Vec2(1.0) * u_uvScale + u_uvTranslation) - HALF_TEXEL_SIZE;
+	const Vec2 minUv = (Vec2(0.0) * u_uvScale + u_uvTranslation) + HALF_TEXEL_SIZE;
+
+	// Sample
+	const Vec2 UV_OFFSET = OFFSET * TEXEL_SIZE;
+	const F32 w0 = BOX_WEIGHTS[0u];
+	const F32 w1 = BOX_WEIGHTS[1u];
+	const F32 w2 = BOX_WEIGHTS[2u];
+	F32 outDepth;
 	switch(u_renderingTechnique)
 	{
 	case 0u:
-		out_color = sampleLinearDepthPerspective(in_uv) * BOX_WEIGHTS[0u];
-		out_color += sampleLinearDepthPerspective(in_uv + Vec2(UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepthPerspective(in_uv + Vec2(-UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepthPerspective(in_uv + Vec2(0.0, UV_OFFSET.y)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepthPerspective(in_uv + Vec2(0.0, -UV_OFFSET.y)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepthPerspective(in_uv + Vec2(UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
-		out_color += sampleLinearDepthPerspective(in_uv + Vec2(-UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
-		out_color += sampleLinearDepthPerspective(in_uv + Vec2(UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
-		out_color += sampleLinearDepthPerspective(in_uv + Vec2(-UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+		outDepth = sampleLinearDepthPerspective(uv) * w0;
+		outDepth += sampleLinearDepthPerspective(clamp(uv + Vec2(UV_OFFSET.x, 0.0), minUv, maxUv)) * w1;
+		outDepth += sampleLinearDepthPerspective(clamp(uv + Vec2(-UV_OFFSET.x, 0.0), minUv, maxUv)) * w1;
+		outDepth += sampleLinearDepthPerspective(clamp(uv + Vec2(0.0, UV_OFFSET.y), minUv, maxUv)) * w1;
+		outDepth += sampleLinearDepthPerspective(clamp(uv + Vec2(0.0, -UV_OFFSET.y), minUv, maxUv)) * w1;
+		outDepth += sampleLinearDepthPerspective(clamp(uv + Vec2(UV_OFFSET.x, UV_OFFSET.y), minUv, maxUv)) * w2;
+		outDepth += sampleLinearDepthPerspective(clamp(uv + Vec2(-UV_OFFSET.x, UV_OFFSET.y), minUv, maxUv)) * w2;
+		outDepth += sampleLinearDepthPerspective(clamp(uv + Vec2(UV_OFFSET.x, -UV_OFFSET.y), minUv, maxUv)) * w2;
+		outDepth += sampleLinearDepthPerspective(clamp(uv + Vec2(-UV_OFFSET.x, -UV_OFFSET.y), minUv, maxUv)) * w2;
 		break;
 	case 1u:
-		out_color = sampleLinearDepthPerspective(in_uv);
+		outDepth = sampleLinearDepthPerspective(uv);
 		break;
 	case 2u:
-		out_color = sampleLinearDepthOrhographic(in_uv) * BOX_WEIGHTS[0u];
-		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(-UV_OFFSET.x, 0.0)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(0.0, UV_OFFSET.y)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(0.0, -UV_OFFSET.y)) * BOX_WEIGHTS[1u];
-		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
-		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(-UV_OFFSET.x, UV_OFFSET.y)) * BOX_WEIGHTS[2u];
-		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
-		out_color += sampleLinearDepthOrhographic(in_uv + Vec2(-UV_OFFSET.x, -UV_OFFSET.y)) * BOX_WEIGHTS[2u];
+		outDepth = sampleLinearDepthOrhographic(uv) * w0;
+		outDepth += sampleLinearDepthOrhographic(clamp(uv + Vec2(UV_OFFSET.x, 0.0), minUv, maxUv)) * w1;
+		outDepth += sampleLinearDepthOrhographic(clamp(uv + Vec2(-UV_OFFSET.x, 0.0), minUv, maxUv)) * w1;
+		outDepth += sampleLinearDepthOrhographic(clamp(uv + Vec2(0.0, UV_OFFSET.y), minUv, maxUv)) * w1;
+		outDepth += sampleLinearDepthOrhographic(clamp(uv + Vec2(0.0, -UV_OFFSET.y), minUv, maxUv)) * w1;
+		outDepth += sampleLinearDepthOrhographic(clamp(uv + Vec2(UV_OFFSET.x, UV_OFFSET.y), minUv, maxUv)) * w2;
+		outDepth += sampleLinearDepthOrhographic(clamp(uv + Vec2(-UV_OFFSET.x, UV_OFFSET.y), minUv, maxUv)) * w2;
+		outDepth += sampleLinearDepthOrhographic(clamp(uv + Vec2(UV_OFFSET.x, -UV_OFFSET.y), minUv, maxUv)) * w2;
+		outDepth += sampleLinearDepthOrhographic(clamp(uv + Vec2(-UV_OFFSET.x, -UV_OFFSET.y), minUv, maxUv)) * w2;
 		break;
 	default:
-		out_color = sampleLinearDepthOrhographic(in_uv);
+		outDepth = sampleLinearDepthOrhographic(uv);
 	}
+
+	// Write the results
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy) + IVec2(u_viewport.xy), Vec4(outDepth));
 }
 #pragma anki end

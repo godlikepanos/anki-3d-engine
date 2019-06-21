@@ -95,28 +95,22 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 
 Error ShadowMapping::initAtlas(const ConfigSet& cfg)
 {
-	// Init RTs and FBs
+	// Init RT
 	{
 		m_atlas.m_tileResolution = cfg.getNumber("r.shadowMapping.tileResolution");
 		m_atlas.m_tileCountBothAxis = cfg.getNumber("r.shadowMapping.tileCountPerRowOrColumn");
 
 		// RT
-		TextureInitInfo texinit =
-			m_r->create2DRenderTargetInitInfo(m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis,
-				m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis,
-				SHADOW_COLOR_PIXEL_FORMAT,
-				TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-					| TextureUsageBit::SAMPLED_COMPUTE,
-				"SM atlas");
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
+			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis,
+			m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis,
+			SHADOW_COLOR_PIXEL_FORMAT,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::SAMPLED_COMPUTE,
+			"SM atlas");
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
 		m_atlas.m_tex = m_r->createAndClearRenderTarget(texinit, clearVal);
-
-		// FB
-		m_atlas.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
-		m_atlas.m_fbDescr.m_colorAttachmentCount = 1;
-		m_atlas.m_fbDescr.bake();
 	}
 
 	// Tiles
@@ -163,15 +157,11 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindTexture(0, 1, m_scratch.m_rt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindImage(0, 2, m_atlas.m_rt, {});
 
 	for(const Atlas::ResolveWorkItem& workItem : m_atlas.m_resolveWorkItems)
 	{
 		ANKI_TRACE_INC_COUNTER(R_SHADOW_PASSES, 1);
-
-		cmdb->setViewport(
-			workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
-		cmdb->setScissor(
-			workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
 
 		struct Uniforms
 		{
@@ -181,11 +171,14 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 			F32 m_far;
 			U32 m_renderingTechnique;
 			U32 m_padding;
+			UVec4 m_viewport;
 		} unis;
 		unis.m_uvScale = workItem.m_uvIn.zw();
 		unis.m_uvTranslation = workItem.m_uvIn.xy();
 		unis.m_near = workItem.m_cameraNear;
 		unis.m_far = workItem.m_cameraFar;
+		unis.m_viewport = UVec4(
+			workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
 
 		if(workItem.m_perspectiveProjection)
 		{
@@ -198,11 +191,8 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 
 		cmdb->setPushConstants(&unis, sizeof(unis));
 
-		drawQuad(cmdb);
+		dispatchPPCompute(cmdb, 8, 8, workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
 	}
-
-	// Restore GR state
-	cmdb->setScissor(0, 0, MAX_U32, MAX_U32);
 }
 
 void ShadowMapping::runShadowMapping(RenderPassWorkContext& rgraphCtx)
@@ -277,10 +267,9 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 		// Atlas pass
 		{
-			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SM atlas");
+			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("SM atlas");
 
 			m_atlas.m_rt = rgraph.importRenderTarget(m_atlas.m_tex, TextureUsageBit::SAMPLED_FRAGMENT);
-			pass.setFramebufferInfo(m_atlas.m_fbDescr, {{m_atlas.m_rt}}, {});
 			pass.setWork(
 				[](RenderPassWorkContext& rgraphCtx) {
 					static_cast<ShadowMapping*>(rgraphCtx.m_userData)->runAtlas(rgraphCtx);
@@ -289,9 +278,9 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 				0);
 
 			pass.newDependency({m_scratch.m_rt,
-				TextureUsageBit::SAMPLED_FRAGMENT,
+				TextureUsageBit::SAMPLED_COMPUTE,
 				TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
-			pass.newDependency({m_atlas.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+			pass.newDependency({m_atlas.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 		}
 	}
 	else

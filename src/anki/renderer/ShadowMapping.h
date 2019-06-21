@@ -50,7 +50,6 @@ private:
 
 		TileAllocator m_tileAlloc;
 
-		FramebufferDescription m_fbDescr;
 		TexturePtr m_tex; ///<  Size (m_tileResolution*m_tileCountBothAxis)^2
 		RenderTargetHandle m_rt;
 
