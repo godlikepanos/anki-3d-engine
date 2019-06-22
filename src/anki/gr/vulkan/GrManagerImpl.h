@@ -12,7 +12,7 @@
 #include <anki/gr/vulkan/DeferredBarrierFactory.h>
 #include <anki/gr/vulkan/FenceFactory.h>
 #include <anki/gr/vulkan/SamplerFactory.h>
-#include <anki/gr/vulkan/QueryExtra.h>
+#include <anki/gr/vulkan/QueryFactory.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/gr/vulkan/CommandBufferFactory.h>
 #include <anki/gr/vulkan/SwapchainFactory.h>
@@ -118,7 +118,7 @@ public:
 	}
 	/// @}
 
-	QueryAllocator& getQueryAllocator()
+	QueryFactory& getQueryAllocator()
 	{
 		return m_queryAlloc;
 	}
@@ -302,7 +302,7 @@ private:
 
 	DescriptorSetFactory m_descrFactory;
 
-	QueryAllocator m_queryAlloc;
+	QueryFactory m_queryAlloc;
 
 	PipelineCache m_pplineCache;
 

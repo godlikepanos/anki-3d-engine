@@ -13,7 +13,7 @@ namespace anki
 {
 
 // Forward
-class QueryAllocatorChunk;
+class QueryFactoryChunk;
 
 /// @addtogroup vulkan
 /// @{
@@ -21,13 +21,23 @@ class QueryAllocatorChunk;
 const U MAX_SUB_ALLOCATIONS_PER_QUERY_CHUNK = 64;
 
 /// The return handle of a query allocation.
-class QueryAllocationHandle
+class MicroQuery
 {
-	friend class QueryAllocator;
+	friend class QueryFactory;
 
 public:
-	VkQueryPool m_pool = VK_NULL_HANDLE;
-	U32 m_queryIndex = MAX_U32;
+	VkQueryPool getQueryPool() const
+	{
+		ANKI_ASSERT(m_pool != VK_NULL_HANDLE);
+		return m_pool;
+	}
+
+	/// Get the index of the query inside the query pool.
+	U32 getQueryIndex() const
+	{
+		ANKI_ASSERT(m_queryIndex != MAX_U32);
+		return m_queryIndex;
+	}
 
 	operator Bool() const
 	{
@@ -35,13 +45,15 @@ public:
 	}
 
 private:
-	QueryAllocatorChunk* m_chunk = nullptr;
+	VkQueryPool m_pool = VK_NULL_HANDLE;
+	U32 m_queryIndex = MAX_U32;
+	QueryFactoryChunk* m_chunk = nullptr;
 };
 
 /// An allocation chunk.
-class QueryAllocatorChunk : public IntrusiveListEnabled<QueryAllocatorChunk>
+class QueryFactoryChunk : public IntrusiveListEnabled<QueryFactoryChunk>
 {
-	friend class QueryAllocator;
+	friend class QueryFactory;
 
 private:
 	VkQueryPool m_pool = VK_NULL_HANDLE;
@@ -50,14 +62,14 @@ private:
 };
 
 /// Batch allocator of queries.
-class QueryAllocator : public NonCopyable
+class QueryFactory : public NonCopyable
 {
 public:
-	QueryAllocator()
+	QueryFactory()
 	{
 	}
 
-	~QueryAllocator();
+	~QueryFactory();
 
 	void init(GrAllocator<U8> alloc, VkDevice dev)
 	{
@@ -65,12 +77,14 @@ public:
 		m_dev = dev;
 	}
 
-	ANKI_USE_RESULT Error newQuery(QueryAllocationHandle& handle);
+	/// @note It's thread-safe.
+	ANKI_USE_RESULT Error newQuery(MicroQuery& handle);
 
-	void deleteQuery(QueryAllocationHandle& handle);
+	/// @note It's thread-safe.
+	void deleteQuery(MicroQuery& handle);
 
 private:
-	using Chunk = QueryAllocatorChunk;
+	using Chunk = QueryFactoryChunk;
 
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev;

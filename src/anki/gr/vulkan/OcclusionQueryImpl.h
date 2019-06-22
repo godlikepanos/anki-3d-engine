@@ -7,7 +7,7 @@
 
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/vulkan/VulkanObject.h>
-#include <anki/gr/vulkan/QueryExtra.h>
+#include <anki/gr/vulkan/QueryFactory.h>
 
 namespace anki
 {
@@ -19,7 +19,7 @@ namespace anki
 class OcclusionQueryImpl final : public OcclusionQuery, public VulkanObject<OcclusionQuery, OcclusionQueryImpl>
 {
 public:
-	QueryAllocationHandle m_handle = {};
+	MicroQuery m_handle = {};
 
 	OcclusionQueryImpl(GrManager* manager, CString name)
 		: OcclusionQuery(manager, name)

@@ -349,8 +349,8 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_pool;
-	U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_queryIndex;
+	VkQueryPool handle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.getQueryPool();
+	U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.getQueryIndex();
 	ANKI_ASSERT(handle);
 
 #if ANKI_BATCH_COMMANDS
@@ -377,8 +377,8 @@ inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_pool;
-	U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_queryIndex;
+	const VkQueryPool handle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.getQueryPool();
+	const U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.getQueryIndex();
 	ANKI_ASSERT(handle);
 
 	ANKI_CMD(vkCmdBeginQuery(m_handle, handle, idx, 0), ANY_OTHER_COMMAND);
@@ -390,8 +390,8 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_pool;
-	U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.m_queryIndex;
+	const VkQueryPool handle = static_cast<const OcclusionQueryImpl&>(*query).m_handle.getQueryPool();
+	const U32 idx = static_cast<const OcclusionQueryImpl&>(*query).m_handle.getQueryIndex();
 	ANKI_ASSERT(handle);
 
 	ANKI_CMD(vkCmdEndQuery(m_handle, handle, idx), ANY_OTHER_COMMAND);
@@ -652,8 +652,8 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 	flushBatches(CommandBufferCommandType::WRITE_QUERY_RESULT);
 
 	WriteQueryAtom atom;
-	atom.m_pool = q.m_handle.m_pool;
-	atom.m_queryIdx = q.m_handle.m_queryIndex;
+	atom.m_pool = q.m_handle.getQueryPool();
+	atom.m_queryIdx = q.m_handle.getQueryIndex();
 	atom.m_buffer = impl.getHandle();
 	atom.m_offset = offset;
 

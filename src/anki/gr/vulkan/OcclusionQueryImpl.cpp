@@ -30,8 +30,8 @@ OcclusionQueryResult OcclusionQueryImpl::getResult() const
 
 	VkResult res;
 	ANKI_VK_CHECKF(res = vkGetQueryPoolResults(getDevice(),
-					   m_handle.m_pool,
-					   m_handle.m_queryIndex,
+					   m_handle.getQueryPool(),
+					   m_handle.getQueryIndex(),
 					   1,
 					   sizeof(out),
 					   &out,

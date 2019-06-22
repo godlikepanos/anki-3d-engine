@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/vulkan/QueryExtra.h>
+#include <anki/gr/vulkan/QueryFactory.h>
 
 namespace anki
 {
 
-QueryAllocator::~QueryAllocator()
+QueryFactory::~QueryFactory()
 {
 	if(!m_chunks.isEmpty())
 	{
@@ -16,7 +16,7 @@ QueryAllocator::~QueryAllocator()
 	}
 }
 
-Error QueryAllocator::newQuery(QueryAllocationHandle& handle)
+Error QueryFactory::newQuery(MicroQuery& handle)
 {
 	ANKI_ASSERT(!handle);
 
@@ -77,7 +77,7 @@ Error QueryAllocator::newQuery(QueryAllocationHandle& handle)
 	return Error::NONE;
 }
 
-void QueryAllocator::deleteQuery(QueryAllocationHandle& handle)
+void QueryFactory::deleteQuery(MicroQuery& handle)
 {
 	ANKI_ASSERT(handle.m_pool && handle.m_queryIndex != MAX_U32 && handle.m_chunk);
 
