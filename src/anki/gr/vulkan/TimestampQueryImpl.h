@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/OcclusionQuery.h>
+#include <anki/gr/TimestampQuery.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/QueryFactory.h>
 
@@ -16,23 +16,23 @@ namespace anki
 /// @{
 
 /// Occlusion query.
-class OcclusionQueryImpl final : public OcclusionQuery, public VulkanObject<OcclusionQuery, OcclusionQueryImpl>
+class TimestampQueryImpl final : public TimestampQuery, public VulkanObject<TimestampQuery, TimestampQueryImpl>
 {
 public:
 	MicroQuery m_handle = {};
 
-	OcclusionQueryImpl(GrManager* manager, CString name)
-		: OcclusionQuery(manager, name)
+	TimestampQueryImpl(GrManager* manager, CString name)
+		: TimestampQuery(manager, name)
 	{
 	}
 
-	~OcclusionQueryImpl();
+	~TimestampQueryImpl();
 
 	/// Create the query.
 	ANKI_USE_RESULT Error init();
 
 	/// Get query result.
-	OcclusionQueryResult getResultInternal() const;
+	TimestampQueryResult getResultInternal(U64& timestamp) const;
 };
 /// @}
 

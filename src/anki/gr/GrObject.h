@@ -16,12 +16,13 @@ namespace anki
 /// @{
 
 /// Graphics object type.
-enum GrObjectType : U16
+enum GrObjectType : U8
 {
 	BUFFER,
 	COMMAND_BUFFER,
 	FRAMEBUFFER,
 	OCCLUSION_QUERY,
+	TIMESTAMP_QUERY,
 	SAMPLER,
 	SHADER,
 	TEXTURE,

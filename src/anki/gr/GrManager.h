@@ -77,6 +77,7 @@ public:
 	ANKI_USE_RESULT CommandBufferPtr newCommandBuffer(const CommandBufferInitInfo& init);
 	ANKI_USE_RESULT FramebufferPtr newFramebuffer(const FramebufferInitInfo& init);
 	ANKI_USE_RESULT OcclusionQueryPtr newOcclusionQuery();
+	ANKI_USE_RESULT TimestampQueryPtr newTimestampQuery();
 	ANKI_USE_RESULT RenderGraphPtr newRenderGraph();
 	/// @}
 

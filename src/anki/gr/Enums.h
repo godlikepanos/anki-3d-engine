@@ -526,6 +526,13 @@ enum class OcclusionQueryResult : U8
 	NOT_VISIBLE
 };
 
+/// Timestamp query result.
+enum class TimestampQueryResult : U8
+{
+	NOT_AVAILABLE,
+	AVAILABLE
+};
+
 /// Attachment load operation.
 enum class AttachmentLoadOperation : U8
 {

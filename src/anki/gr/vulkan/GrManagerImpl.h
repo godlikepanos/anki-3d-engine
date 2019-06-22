@@ -118,9 +118,14 @@ public:
 	}
 	/// @}
 
-	QueryFactory& getQueryAllocator()
+	QueryFactory& getOcclusionQueryFactory()
 	{
-		return m_queryAlloc;
+		return m_occlusionQueryFactory;
+	}
+
+	QueryFactory& getTimestampQueryFactory()
+	{
+		return m_timestampQueryFactory;
 	}
 
 	Bool getR8g8b8ImagesSupported() const
@@ -302,7 +307,8 @@ private:
 
 	DescriptorSetFactory m_descrFactory;
 
-	QueryFactory m_queryAlloc;
+	QueryFactory m_occlusionQueryFactory;
+	QueryFactory m_timestampQueryFactory;
 
 	PipelineCache m_pplineCache;
 

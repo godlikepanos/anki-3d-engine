@@ -13,17 +13,17 @@ OcclusionQueryImpl::~OcclusionQueryImpl()
 {
 	if(m_handle)
 	{
-		getGrManagerImpl().getQueryAllocator().deleteQuery(m_handle);
+		getGrManagerImpl().getOcclusionQueryFactory().deleteQuery(m_handle);
 	}
 }
 
 Error OcclusionQueryImpl::init()
 {
-	ANKI_CHECK(getGrManagerImpl().getQueryAllocator().newQuery(m_handle));
+	ANKI_CHECK(getGrManagerImpl().getOcclusionQueryFactory().newQuery(m_handle));
 	return Error::NONE;
 }
 
-OcclusionQueryResult OcclusionQueryImpl::getResult() const
+OcclusionQueryResult OcclusionQueryImpl::getResultInternal() const
 {
 	ANKI_ASSERT(m_handle);
 	U64 out = 0;

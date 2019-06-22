@@ -15,6 +15,7 @@
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/OcclusionQuery.h>
+#include <anki/gr/TimestampQuery.h>
 #include <anki/gr/RenderGraph.h>
 
 namespace anki
@@ -138,6 +139,11 @@ FramebufferPtr GrManager::newFramebuffer(const FramebufferInitInfo& init)
 OcclusionQueryPtr GrManager::newOcclusionQuery()
 {
 	return OcclusionQueryPtr(OcclusionQuery::newInstance(this));
+}
+
+TimestampQueryPtr GrManager::newTimestampQuery()
+{
+	return TimestampQueryPtr(TimestampQuery::newInstance(this));
 }
 
 RenderGraphPtr GrManager::newRenderGraph()

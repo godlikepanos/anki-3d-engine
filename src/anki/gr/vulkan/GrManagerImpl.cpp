@@ -129,7 +129,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	m_semaphores.init(getAllocator(), m_device);
 	m_samplerFactory.init(this);
 	m_barrierFactory.init(getAllocator(), m_device);
-	m_queryAlloc.init(getAllocator(), m_device);
+	m_occlusionQueryFactory.init(getAllocator(), m_device, VK_QUERY_TYPE_OCCLUSION);
+	m_timestampQueryFactory.init(getAllocator(), m_device, VK_QUERY_TYPE_TIMESTAMP);
 
 	// Set m_r8g8b8ImagesSupported
 	{

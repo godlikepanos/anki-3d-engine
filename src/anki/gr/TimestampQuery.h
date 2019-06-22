@@ -13,32 +13,32 @@ namespace anki
 /// @addtogroup graphics
 /// @{
 
-/// Occlusion query.
-class OcclusionQuery : public GrObject
+/// Timestamp query.
+class TimestampQuery : public GrObject
 {
 	ANKI_GR_OBJECT
 
 public:
-	static const GrObjectType CLASS_TYPE = GrObjectType::OCCLUSION_QUERY;
+	static const GrObjectType CLASS_TYPE = GrObjectType::TIMESTAMP_QUERY;
 
 protected:
 	/// Construct.
-	OcclusionQuery(GrManager* manager, CString name)
+	TimestampQuery(GrManager* manager, CString name)
 		: GrObject(manager, CLASS_TYPE, name)
 	{
 	}
 
 	/// Destroy.
-	~OcclusionQuery()
+	~TimestampQuery()
 	{
 	}
 
-	/// Get the occlusion query result. It won't block.
-	OcclusionQueryResult getResult() const;
+	/// Get the result if it's available. It won't block.
+	TimestampQueryResult getResult(U64& timestamp) const;
 
 private:
 	/// Allocate and initialize new instance.
-	static ANKI_USE_RESULT OcclusionQuery* newInstance(GrManager* manager);
+	static ANKI_USE_RESULT TimestampQuery* newInstance(GrManager* manager);
 };
 /// @}
 

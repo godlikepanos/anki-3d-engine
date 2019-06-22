@@ -14,6 +14,7 @@
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/OcclusionQuery.h>
+#include <anki/gr/TimestampQuery.h>
 #include <anki/gr/Fence.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/RenderGraph.h>

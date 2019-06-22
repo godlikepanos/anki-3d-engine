@@ -15,6 +15,7 @@
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/vulkan/FramebufferImpl.h>
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>
+#include <anki/gr/vulkan/TimestampQueryImpl.h>
 #include <anki/gr/vulkan/FenceImpl.h>
 
 namespace anki

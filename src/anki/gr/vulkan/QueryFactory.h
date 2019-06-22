@@ -71,10 +71,11 @@ public:
 
 	~QueryFactory();
 
-	void init(GrAllocator<U8> alloc, VkDevice dev)
+	void init(GrAllocator<U8> alloc, VkDevice dev, VkQueryType poolType)
 	{
 		m_alloc = alloc;
 		m_dev = dev;
+		m_poolType = poolType;
 	}
 
 	/// @note It's thread-safe.
@@ -90,6 +91,7 @@ private:
 	VkDevice m_dev;
 	IntrusiveList<Chunk> m_chunks;
 	Mutex m_mtx;
+	VkQueryType m_poolType = VK_QUERY_TYPE_MAX_ENUM;
 };
 /// @}
 
