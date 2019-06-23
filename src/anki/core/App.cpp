@@ -75,6 +75,7 @@ public:
 	BufferedValue<Second> m_sceneUpdateTime;
 	BufferedValue<Second> m_visTestsTime;
 	BufferedValue<Second> m_physicsTime;
+	BufferedValue<Second> m_gpuTime;
 
 	PtrSize m_allocatedCpuMem = 0;
 	U64 m_allocCount = 0;
@@ -116,13 +117,17 @@ public:
 			ImGui::SetWindowPos(Vec2(5.0f, 5.0f));
 			ImGui::SetWindowSize(Vec2(230.0f, 450.0f));
 
-			ImGui::Text("Time:");
+			ImGui::Text("CPU Time:");
 			labelTime(m_frameTime.get(flush), "Total frame");
 			labelTime(m_renderTime.get(flush) - m_lightBinTime.get(flush), "Renderer");
 			labelTime(m_lightBinTime.get(false), "Light bin");
 			labelTime(m_sceneUpdateTime.get(flush), "Scene update");
 			labelTime(m_visTestsTime.get(flush), "Visibility");
 			labelTime(m_physicsTime.get(flush), "Physics");
+
+			ImGui::Text("----");
+			ImGui::Text("GPU Time:");
+			labelTime(m_gpuTime.get(flush), "Total frame");
 
 			ImGui::Text("----");
 			ImGui::Text("Memory:");
@@ -577,6 +582,7 @@ Error App::mainLoop()
 
 		// Render
 		TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
+		m_renderer->setStatsEnabled(m_displayStats);
 		ANKI_CHECK(m_renderer->render(rqueue, presentableTex));
 
 		// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
@@ -609,11 +615,12 @@ Error App::mainLoop()
 		{
 			StatsUi& statsUi = static_cast<StatsUi&>(*m_statsUi);
 			statsUi.m_frameTime.set(frameTime);
-			statsUi.m_renderTime.set(m_renderer->getStats().m_renderingTime);
+			statsUi.m_renderTime.set(m_renderer->getStats().m_renderingCpuTime);
 			statsUi.m_lightBinTime.set(m_renderer->getStats().m_lightBinTime);
 			statsUi.m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
 			statsUi.m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
 			statsUi.m_physicsTime.set(m_scene->getStats().m_physicsUpdate);
+			statsUi.m_gpuTime.set(m_renderer->getStats().m_renderingGpuTime);
 			statsUi.m_allocatedCpuMem = m_memStats.m_allocatedMem.load();
 			statsUi.m_allocCount = m_memStats.m_allocCount.load();
 			statsUi.m_freeCount = m_memStats.m_freeCount.load();

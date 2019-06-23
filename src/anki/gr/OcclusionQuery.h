@@ -21,6 +21,9 @@ class OcclusionQuery : public GrObject
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::OCCLUSION_QUERY;
 
+	/// Get the occlusion query result. It won't block.
+	OcclusionQueryResult getResult() const;
+
 protected:
 	/// Construct.
 	OcclusionQuery(GrManager* manager, CString name)
@@ -32,9 +35,6 @@ protected:
 	~OcclusionQuery()
 	{
 	}
-
-	/// Get the occlusion query result. It won't block.
-	OcclusionQueryResult getResult() const;
 
 private:
 	/// Allocate and initialize new instance.

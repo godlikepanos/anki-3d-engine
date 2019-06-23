@@ -32,7 +32,10 @@ public:
 	ANKI_USE_RESULT Error init();
 
 	/// Get query result.
-	TimestampQueryResult getResultInternal(U64& timestamp) const;
+	TimestampQueryResult getResultInternal(Second& timestamp) const;
+
+private:
+	U64 m_timestampPeriod = 0;
 };
 /// @}
 

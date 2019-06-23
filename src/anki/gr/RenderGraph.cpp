@@ -148,6 +148,8 @@ public:
 
 	DynamicArray<CommandBufferPtr> m_graphicsCmdbs;
 
+	Bool m_gatherStatistics = false;
+
 	BakeContext(const StackAllocator<U8>& alloc)
 		: m_alloc(alloc)
 	{
@@ -673,6 +675,8 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 		ctx->m_buffers[buffIdx].m_buffer = descr.m_buffers[buffIdx].m_importedBuff;
 	}
 
+	ctx->m_gatherStatistics = descr.m_gatherStatistics;
+
 	return ctx;
 }
 
@@ -749,6 +753,7 @@ void RenderGraph::initBatches()
 	U passesAssignedToBatchCount = 0;
 	const U passCount = m_ctx->m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
+	Bool setTimestamp = m_ctx->m_gatherStatistics;
 	while(passesAssignedToBatchCount < passCount)
 	{
 		m_ctx->m_batches.emplaceBack(m_ctx->m_alloc);
@@ -781,6 +786,17 @@ void RenderGraph::initBatches()
 			m_ctx->m_graphicsCmdbs.emplaceBack(m_ctx->m_alloc, cmdb);
 
 			batch.m_cmdb = cmdb.get();
+
+			// Maybe write a timestamp
+			if(ANKI_UNLIKELY(setTimestamp))
+			{
+				setTimestamp = false;
+				TimestampQueryPtr query = getManager().newTimestampQuery();
+				cmdb->writeTimestamp(query);
+
+				m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
+				m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2] = query;
+			}
 		}
 		else
 		{
@@ -1190,9 +1206,19 @@ void RenderGraph::flush()
 {
 	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_FLUSH);
 
-	for(CommandBufferPtr& cmdb : m_ctx->m_graphicsCmdbs)
+	for(U i = 0; i < m_ctx->m_graphicsCmdbs.getSize(); ++i)
 	{
-		cmdb->flush();
+		// Maybe write a timestamp before flush
+		if(ANKI_UNLIKELY(m_ctx->m_gatherStatistics && i == m_ctx->m_graphicsCmdbs.getSize() - 1))
+		{
+			TimestampQueryPtr query = getManager().newTimestampQuery();
+			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(query);
+
+			m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2 + 1] = query;
+		}
+
+		// Flush
+		m_ctx->m_graphicsCmdbs[i]->flush();
 	}
 }
 
@@ -1250,6 +1276,28 @@ void RenderGraph::periodicCleanup()
 	if(rtsCleanedCount > 0)
 	{
 		ANKI_GR_LOGI("Cleaned %u render targets", rtsCleanedCount);
+	}
+}
+
+void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
+{
+	const U oldFrame = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
+
+	if(m_statistics.m_timestamps[oldFrame * 2] && m_statistics.m_timestamps[oldFrame * 2 + 1])
+	{
+		Second start, end;
+		TimestampQueryResult res = m_statistics.m_timestamps[oldFrame * 2]->getResult(start);
+		ANKI_ASSERT(res == TimestampQueryResult::AVAILABLE);
+
+		res = m_statistics.m_timestamps[oldFrame * 2 + 1]->getResult(end);
+		ANKI_ASSERT(res == TimestampQueryResult::AVAILABLE);
+
+		const Second diff = end - start;
+		statistics.m_gpuTime = diff;
+	}
+	else
+	{
+		statistics.m_gpuTime = -1.0;
 	}
 }
 

@@ -7,6 +7,8 @@
 #include <anki/gr/vulkan/TextureImpl.h>
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>
+#include <anki/gr/TimestampQuery.h>
+#include <anki/gr/vulkan/TimestampQueryImpl.h>
 #include <anki/core/Trace.h>
 
 namespace anki
@@ -395,6 +397,18 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 	ANKI_ASSERT(handle);
 
 	ANKI_CMD(vkCmdEndQuery(m_handle, handle, idx), ANY_OTHER_COMMAND);
+
+	m_microCmdb->pushObjectRef(query);
+}
+
+inline void CommandBufferImpl::writeTimestampInternal(TimestampQueryPtr& query)
+{
+	commandCommon();
+
+	const VkQueryPool handle = static_cast<const TimestampQueryImpl&>(*query).m_handle.getQueryPool();
+	const U32 idx = static_cast<const TimestampQueryImpl&>(*query).m_handle.getQueryIndex();
+
+	ANKI_CMD(vkCmdWriteTimestamp(m_handle, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, handle, idx), ANY_OTHER_COMMAND);
 
 	m_microCmdb->pushObjectRef(query);
 }

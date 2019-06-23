@@ -49,7 +49,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 
 		VkQueryPoolCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
-		ci.queryType = VK_QUERY_TYPE_OCCLUSION;
+		ci.queryType = m_poolType;
 		ci.queryCount = MAX_SUB_ALLOCATIONS_PER_QUERY_CHUNK;
 
 		ANKI_VK_CHECK(vkCreateQueryPool(m_dev, &ci, nullptr, &chunk->m_pool));

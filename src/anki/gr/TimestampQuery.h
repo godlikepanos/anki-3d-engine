@@ -21,6 +21,9 @@ class TimestampQuery : public GrObject
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::TIMESTAMP_QUERY;
 
+	/// Get the result if it's available. It won't block.
+	TimestampQueryResult getResult(Second& timestamp) const;
+
 protected:
 	/// Construct.
 	TimestampQuery(GrManager* manager, CString name)
@@ -32,9 +35,6 @@ protected:
 	~TimestampQuery()
 	{
 	}
-
-	/// Get the result if it's available. It won't block.
-	TimestampQueryResult getResult(U64& timestamp) const;
 
 private:
 	/// Allocate and initialize new instance.

@@ -321,7 +321,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_finalComposite->populateRenderGraph(ctx);
 
 	// Bin lights and update uniforms
-	m_stats.m_lightBinTime = HighRezTimer::getCurrentTime();
+	m_stats.m_lightBinTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
 	ClusterBinIn cin;
 	cin.m_renderQueue = ctx.m_renderQueue;
 	cin.m_tempAlloc = ctx.m_tempAllocator;
@@ -335,7 +335,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_prevClustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
 
 	updateLightShadingUniforms(ctx);
-	m_stats.m_lightBinTime = HighRezTimer::getCurrentTime() - m_stats.m_lightBinTime;
+	m_stats.m_lightBinTime = (m_statsEnabled) ? (HighRezTimer::getCurrentTime() - m_stats.m_lightBinTime) : -1.0;
 
 	return Error::NONE;
 }

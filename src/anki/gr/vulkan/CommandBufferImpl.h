@@ -312,6 +312,8 @@ public:
 
 	void endOcclusionQuery(OcclusionQueryPtr query);
 
+	void writeTimestampInternal(TimestampQueryPtr& query);
+
 	void generateMipmaps2d(TextureViewPtr texView);
 
 	void clearTextureView(TextureViewPtr texView, const ClearValue& clearValue);

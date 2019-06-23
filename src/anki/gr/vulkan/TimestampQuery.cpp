@@ -21,7 +21,7 @@ TimestampQuery* TimestampQuery::newInstance(GrManager* manager)
 	return impl;
 }
 
-TimestampQueryResult TimestampQuery::getResult(U64& timestamp) const
+TimestampQueryResult TimestampQuery::getResult(Second& timestamp) const
 {
 	return static_cast<const TimestampQueryImpl*>(this)->getResultInternal(timestamp);
 }

@@ -376,6 +376,12 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 	self.pushSecondLevelCommandBuffer(cmdb);
 }
 
+void CommandBuffer::writeTimestamp(TimestampQueryPtr query)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.writeTimestampInternal(query);
+}
+
 Bool CommandBuffer::isEmpty() const
 {
 	ANKI_VK_SELF_CONST(CommandBufferImpl);

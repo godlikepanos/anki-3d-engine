@@ -413,6 +413,9 @@ public:
 	/// End query.
 	void endOcclusionQuery(OcclusionQueryPtr query);
 
+	/// Write a timestamp.
+	void writeTimestamp(TimestampQueryPtr query);
+
 	/// Append a second level command buffer.
 	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 

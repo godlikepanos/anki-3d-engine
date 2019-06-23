@@ -25,7 +25,8 @@ class UiManager;
 class MainRendererStats : public RendererStats
 {
 public:
-	Second m_renderingTime ANKI_DEBUG_CODE(= 0.0);
+	Second m_renderingCpuTime ANKI_DEBUG_CODE(= -1.0);
+	Second m_renderingGpuTime ANKI_DEBUG_CODE(= -1.0);
 };
 
 /// Main onscreen renderer
@@ -62,6 +63,11 @@ public:
 		return *m_r;
 	}
 
+	void setStatsEnabled(Bool enabled)
+	{
+		m_statsEnabled = enabled;
+	}
+
 	const MainRendererStats& getStats() const
 	{
 		return m_stats;
@@ -86,6 +92,7 @@ private:
 	RenderTargetDescription m_tmpRtDesc;
 
 	MainRendererStats m_stats;
+	Bool m_statsEnabled = false;
 
 	class
 	{

@@ -11,6 +11,7 @@
 #include <anki/gr/Buffer.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/Framebuffer.h>
+#include <anki/gr/TimestampQuery.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/util/HashMap.h>
 #include <anki/util/BitSet.h>
@@ -473,6 +474,12 @@ public:
 	/// Import a buffer.
 	RenderPassBufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage);
 
+	/// Gather statistics.
+	void setStatisticsEnabled(Bool gather)
+	{
+		m_gatherStatistics = gather;
+	}
+
 private:
 	class Resource
 	{
@@ -509,6 +516,14 @@ private:
 	DynamicArray<RenderPassDescriptionBase*> m_passes;
 	DynamicArray<RT> m_renderTargets;
 	DynamicArray<Buffer> m_buffers;
+	Bool m_gatherStatistics = false;
+};
+
+/// Statistics.
+class RenderGraphStatistics
+{
+public:
+	Second m_gpuTime; ///< Time spent in the GPU.
 };
 
 /// Accepts a descriptor of the frame's render passes and sets the dependencies between them.
@@ -561,6 +576,13 @@ public:
 	void reset();
 	/// @}
 
+	/// @name 5th step methods [OPTIONAL]
+	/// @{
+
+	/// Get some statistics.
+	void getStatistics(RenderGraphStatistics& statistics) const;
+	/// @}
+
 private:
 	static constexpr U PERIODIC_CLEANUP_EVERY = 60; ///< How many frames between cleanups.
 
@@ -593,6 +615,14 @@ private:
 
 	BakeContext* m_ctx = nullptr;
 	U64 m_version = 0;
+
+	static constexpr U MAX_TIMESTAMPS_BUFFERED = MAX_FRAMES_IN_FLIGHT + 1;
+	class
+	{
+	public:
+		Array<TimestampQueryPtr, MAX_TIMESTAMPS_BUFFERED * 2> m_timestamps;
+		U8 m_nextTimestamp = 0;
+	} m_statistics;
 
 	RenderGraph(GrManager* manager, CString name);
 

@@ -75,8 +75,7 @@ public:
 class RendererStats
 {
 public:
-	U32 m_drawcallCount ANKI_DEBUG_CODE(= 0);
-	Second m_lightBinTime ANKI_DEBUG_CODE(= 0.0);
+	Second m_lightBinTime ANKI_DEBUG_CODE(= -1.0);
 };
 
 class RendererPrecreatedSamplers
@@ -225,6 +224,11 @@ public:
 	ANKI_USE_RESULT Error populateRenderGraph(RenderingContext& ctx);
 
 	void finalize(const RenderingContext& ctx);
+
+	void setStatsEnabled(Bool enable)
+	{
+		m_statsEnabled = enable;
+	}
 
 	const RendererStats& getStats() const
 	{
@@ -429,6 +433,7 @@ private:
 	ShaderProgramResourcePtr m_clearTexComputeProg;
 
 	RendererStats m_stats;
+	Bool m_statsEnabled = false;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

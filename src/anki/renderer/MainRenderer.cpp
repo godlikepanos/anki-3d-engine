@@ -86,7 +86,8 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER);
 
-	m_stats.m_renderingTime = HighRezTimer::getCurrentTime();
+	m_r->setStatsEnabled(m_statsEnabled);
+	m_stats.m_renderingCpuTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
 
 	// First thing, reset the temp mem pool
 	m_frameAlloc.getMemoryPool().reset();
@@ -95,6 +96,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	RenderingContext ctx(m_frameAlloc);
 	m_runCtx.m_ctx = &ctx;
 	m_runCtx.m_secondaryTaskId.set(0);
+	ctx.m_renderGraphDescr.setStatisticsEnabled(m_statsEnabled);
 
 	RenderTargetHandle presentRt = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::NONE);
 
@@ -183,8 +185,15 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	m_r->finalize(ctx);
 
 	// Stats
-	static_cast<RendererStats&>(m_stats) = m_r->getStats();
-	m_stats.m_renderingTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingTime;
+	if(m_statsEnabled)
+	{
+		static_cast<RendererStats&>(m_stats) = m_r->getStats();
+		m_stats.m_renderingCpuTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingGpuTime;
+
+		RenderGraphStatistics rgraphStats;
+		m_rgraph->getStatistics(rgraphStats);
+		m_stats.m_renderingGpuTime = rgraphStats.m_gpuTime;
+	}
 
 	return Error::NONE;
 }
