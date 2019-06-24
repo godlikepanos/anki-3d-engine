@@ -1,0 +1,52 @@
+// Copyright (C) 2009-2019, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include <anki/renderer/GenericCompute.h>
+#include <anki/renderer/Renderer.h>
+#include <anki/renderer/DepthDownscale.h>
+#include <anki/renderer/RenderQueue.h>
+
+namespace anki
+{
+
+GenericCompute::~GenericCompute()
+{
+}
+
+void GenericCompute::populateRenderGraph(RenderingContext& ctx)
+{
+	if(ctx.m_renderQueue->m_genericGpuComputeJobs.getSize() == 0)
+	{
+		return;
+	}
+
+	m_runCtx.m_ctx = &ctx;
+
+	ComputeRenderPassDescription& pass = ctx.m_renderGraphDescr.newComputeRenderPass("Generic compute");
+
+	pass.setWork(
+		[](RenderPassWorkContext& rgraphCtx) {
+			GenericCompute* const self = static_cast<GenericCompute*>(rgraphCtx.m_userData);
+			self->run(rgraphCtx);
+		},
+		this,
+		0);
+}
+
+void GenericCompute::run(RenderPassWorkContext& rgraphCtx)
+{
+	ANKI_ASSERT(m_runCtx.m_ctx->m_renderQueue->m_genericGpuComputeJobs.getSize() > 0);
+
+	// Bind some state
+	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getHiZRt(), TextureSubresourceInfo());
+
+	for(const GenericGpuComputeJobQueueElement& element : m_runCtx.m_ctx->m_renderQueue->m_genericGpuComputeJobs)
+	{
+		ANKI_ASSERT(element.m_callback);
+		element.m_callback(element.m_userData);
+	}
+}
+
+} // end namespace anki

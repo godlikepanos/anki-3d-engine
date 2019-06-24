@@ -294,6 +294,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	// Import RTs first
 	m_downscale->importRenderTargets(ctx);
 	m_tonemapping->importRenderTargets(ctx);
+	m_depth->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
 	m_shadowMapping->populateRenderGraph(ctx);

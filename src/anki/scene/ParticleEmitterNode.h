@@ -14,8 +14,6 @@
 namespace anki
 {
 
-class ParticleEmitterNode;
-
 /// @addtogroup scene
 /// @{
 

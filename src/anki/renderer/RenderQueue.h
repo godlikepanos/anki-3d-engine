@@ -66,6 +66,24 @@ public:
 static_assert(
 	std::is_trivially_destructible<RenderableQueueElement>::value == true, "Should be trivially destructible");
 
+/// Callback for GenericGpuComputeJobQueueElement.
+using GenericGpuComputeJobQueueElementCallback = void (*)(const void* userData);
+
+/// It has enough info to execute generic compute on the GPU.
+class GenericGpuComputeJobQueueElement final
+{
+public:
+	GenericGpuComputeJobQueueElementCallback m_callback;
+	const void* m_userData;
+
+	GenericGpuComputeJobQueueElement()
+	{
+	}
+};
+
+static_assert(std::is_trivially_destructible<GenericGpuComputeJobQueueElement>::value == true,
+	"Should be trivially destructible");
+
 /// Point light render queue element.
 class PointLightQueueElement final
 {
@@ -319,6 +337,7 @@ public:
 	WeakArray<DecalQueueElement> m_decals;
 	WeakArray<FogDensityQueueElement> m_fogDensityVolumes;
 	WeakArray<UiQueueElement> m_uis;
+	WeakArray<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
 
 	/// Applies only if the RenderQueue holds shadow casters. It's the max timesamp of all shadow casters
 	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;

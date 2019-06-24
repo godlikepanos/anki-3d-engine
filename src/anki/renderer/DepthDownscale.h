@@ -12,9 +12,6 @@
 namespace anki
 {
 
-// Forward
-class DepthDownscale;
-
 /// @addtogroup renderer
 /// @{
 
@@ -30,6 +27,9 @@ anki_internal:
 	~DepthDownscale();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+
+	/// Import render targets
+	void importRenderTargets(RenderingContext& ctx);
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
@@ -56,7 +56,8 @@ anki_internal:
 private:
 	static const U32 MIPS_WRITTEN_PER_PASS = 2;
 
-	RenderTargetDescription m_hizRtDescr;
+	TexturePtr m_hizTex;
+	Bool m_hizTexImportedOnce = false;
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	U32 m_mipCount = 0;
