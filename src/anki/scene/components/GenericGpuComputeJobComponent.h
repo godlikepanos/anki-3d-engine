@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/scene/components/SceneComponent.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {

@@ -39,13 +39,17 @@ void GenericCompute::run(RenderPassWorkContext& rgraphCtx)
 {
 	ANKI_ASSERT(m_runCtx.m_ctx->m_renderQueue->m_genericGpuComputeJobs.getSize() > 0);
 
+	GenericGpuComputeJobQueueElementContext elementCtx;
+	elementCtx.m_commandBuffer = rgraphCtx.m_commandBuffer;
+	elementCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
+
 	// Bind some state
 	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getHiZRt(), TextureSubresourceInfo());
 
 	for(const GenericGpuComputeJobQueueElement& element : m_runCtx.m_ctx->m_renderQueue->m_genericGpuComputeJobs)
 	{
 		ANKI_ASSERT(element.m_callback);
-		element.m_callback(element.m_userData);
+		element.m_callback(elementCtx, element.m_userData);
 	}
 }
 

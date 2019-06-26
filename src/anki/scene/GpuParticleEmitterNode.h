@@ -7,9 +7,7 @@
 
 #include <anki/scene/SceneNode.h>
 #include <anki/resource/ParticleEmitterResource.h>
-#include <anki/renderer/RenderQueue.h>
-#include <anki/collision/Obb.h>
-#include <anki/physics/Forward.h>
+#include <anki/collision/Aabb.h>
 
 namespace anki
 {
@@ -28,6 +26,24 @@ public:
 	ANKI_USE_RESULT Error init(const CString& filename);
 
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
+
+private:
+	class MoveFeedbackComponent;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
+
+	ParticleEmitterResourcePtr m_emitterRsrc;
+
+	BufferPtr m_propsBuff; ///< Constant buffer with particle properties.
+	BufferPtr m_particlesBuff; ///< Particles buffer.
+
+	Aabb m_spatialVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
+	F32 m_maxDistanceAParticleCanGo = -1.0f;
+
+	void onMoveComponentUpdate(const MoveComponent& movec);
+
+	void simulate(CommandBufferPtr& cmdb) const;
 };
 /// @}
 

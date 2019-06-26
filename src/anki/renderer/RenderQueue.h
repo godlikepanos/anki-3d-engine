@@ -66,8 +66,17 @@ public:
 static_assert(
 	std::is_trivially_destructible<RenderableQueueElement>::value == true, "Should be trivially destructible");
 
+/// Context that contains variables for the GenericGpuComputeJobQueueElement.
+class GenericGpuComputeJobQueueElementContext final
+{
+public:
+	CommandBufferPtr m_commandBuffer;
+	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
+};
+
 /// Callback for GenericGpuComputeJobQueueElement.
-using GenericGpuComputeJobQueueElementCallback = void (*)(const void* userData);
+using GenericGpuComputeJobQueueElementCallback = void (*)(
+	GenericGpuComputeJobQueueElementContext& ctx, const void* userData);
 
 /// It has enough info to execute generic compute on the GPU.
 class GenericGpuComputeJobQueueElement final
