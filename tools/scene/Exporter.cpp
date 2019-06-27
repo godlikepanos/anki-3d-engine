@@ -795,15 +795,20 @@ void Exporter::visitNode(const aiNode* ainode)
 		bool special = false;
 		GiProbe giProbe;
 		bool isGiProbe = false;
+		ParticleEmitter particleEmitter;
+		bool isParticleEmitter = false;
 		for(const auto& prop : m_scene->mMeshes[meshIndex]->mProperties)
 		{
 			if(prop.first == "particles")
 			{
-				ParticleEmitter p;
-				p.m_filename = prop.second;
-				p.m_transform = toAnkiMatrix(ainode->mTransformation);
-				m_particleEmitters.push_back(p);
+				particleEmitter.m_filename = prop.second;
+				particleEmitter.m_transform = toAnkiMatrix(ainode->mTransformation);
 				special = true;
+				isParticleEmitter = true;
+			}
+			else if(prop.first == "gpu_particles" && prop.second == "true")
+			{
+				particleEmitter.m_gpu = true;
 			}
 			else if(prop.first == "collision" && prop.second == "true")
 			{
@@ -952,6 +957,11 @@ void Exporter::visitNode(const aiNode* ainode)
 			m_giProbes.push_back(giProbe);
 		}
 
+		if(isParticleEmitter)
+		{
+			m_particleEmitters.push_back(particleEmitter);
+		}
+
 		if(special)
 		{
 			continue;
@@ -1039,7 +1049,8 @@ void Exporter::exportAll()
 	for(const ParticleEmitter& p : m_particleEmitters)
 	{
 		std::string name = "particles" + std::to_string(i);
-		file << "\nnode = scene:newParticleEmitterNode(\"" << name << "\", \"" << p.m_filename << "\")\n";
+		file << "\nnode = scene:new" << (p.m_gpu ? "Gpu" : "") << "ParticleEmitterNode(\"" << name << "\", \""
+			 << p.m_filename << "\")\n";
 
 		writeNodeTransform("node", p.m_transform);
 		++i;

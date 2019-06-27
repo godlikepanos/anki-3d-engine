@@ -12,6 +12,11 @@
 namespace anki
 {
 
+// Forward
+class GenericGpuComputeJobQueueElementContext;
+class RenderableQueueElement;
+class RenderQueueDrawContext;
+
 /// @addtogroup scene
 /// @{
 
@@ -25,10 +30,18 @@ public:
 
 	ANKI_USE_RESULT Error init(const CString& filename);
 
-	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override
+	{
+		m_dt = crntTime - prevUpdateTime;
+		return Error::NONE;
+	}
 
 private:
+	static constexpr U COMPUTE_SHADER_WORKGROUP_SIZE_X = 64;
+	static constexpr U MAX_RAND_FACTORS = 32;
+
 	class MoveFeedbackComponent;
+	class MyRenderComponent;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
@@ -37,13 +50,21 @@ private:
 
 	BufferPtr m_propsBuff; ///< Constant buffer with particle properties.
 	BufferPtr m_particlesBuff; ///< Particles buffer.
+	BufferPtr m_randFactorsBuff; ///< Contains flots with random values. Values in range [0.0, 1.0].
 
 	Aabb m_spatialVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	F32 m_maxDistanceAParticleCanGo = -1.0f;
+	U32 m_particleCount = 0;
+	F32 m_dt = 0.0f;
+	Vec3 m_worldPosition = Vec3(0.0f); //< Cache it.
 
 	void onMoveComponentUpdate(const MoveComponent& movec);
 
-	void simulate(CommandBufferPtr& cmdb) const;
+	void simulate(GenericGpuComputeJobQueueElementContext& ctx) const;
+
+	void setupRenderableQueueElement(RenderableQueueElement& el) const;
+
+	void draw(RenderQueueDrawContext& ctx) const;
 };
 /// @}
 

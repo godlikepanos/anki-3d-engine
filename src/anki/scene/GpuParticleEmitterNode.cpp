@@ -8,6 +8,7 @@
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/GenericGpuComputeJobComponent.h>
+#include <anki/scene/components/RenderComponent.h>
 #include <anki/resource/ResourceManager.h>
 #include <shaders/glsl_cpp_common/GpuParticles.h>
 
@@ -37,12 +38,37 @@ public:
 	}
 };
 
+class GpuParticleEmitterNode::MyRenderComponent : public MaterialRenderComponent
+{
+public:
+	MyRenderComponent(SceneNode* node)
+		: MaterialRenderComponent(node, static_cast<GpuParticleEmitterNode*>(node)->m_emitterRsrc->getMaterial())
+	{
+	}
+
+	void setupRenderableQueueElement(RenderableQueueElement& el) const override
+	{
+		static_cast<const GpuParticleEmitterNode&>(getSceneNode()).setupRenderableQueueElement(el);
+	}
+};
+
+GpuParticleEmitterNode::GpuParticleEmitterNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
+{
+}
+
+GpuParticleEmitterNode::~GpuParticleEmitterNode()
+{
+}
+
 Error GpuParticleEmitterNode::init(const CString& filename)
 {
 	// Create program
-	ANKI_CHECK(getResourceManager().loadResource("shaders/GpuParticles.glslp", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/GpuParticlesSimulation.glslp", m_prog));
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variant);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("WORKGROUP_SIZE_X", U32(COMPUTE_SHADER_WORKGROUP_SIZE_X));
+	m_prog->getOrCreateVariant(consts.get(), variant);
 	m_grProg = variant->getProgram();
 
 	// Load particle props
@@ -70,11 +96,14 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 
 	m_propsBuff->unmap();
 
+	m_particleCount = inProps.m_maxNumOfParticles;
+
 	// Create the particle buffer
 	buffInit.m_access = BufferMapAccessBit::WRITE;
 	buffInit.m_usage = BufferUsageBit::STORAGE_ALL;
 	buffInit.m_size = sizeof(GpuParticle) * inProps.m_maxNumOfParticles;
 	m_particlesBuff = getSceneGraph().getGrManager().newBuffer(buffInit);
+
 	GpuParticle* particle = static_cast<GpuParticle*>(m_particlesBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
 	const GpuParticle* end = particle + inProps.m_maxNumOfParticles;
 	for(; particle < end; ++particle)
@@ -83,6 +112,23 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 	}
 
 	m_particlesBuff->unmap();
+
+	// Create the rand buffer
+	buffInit.m_size = sizeof(U32) + MAX_RAND_FACTORS * sizeof(F32);
+	m_randFactorsBuff = getSceneGraph().getGrManager().newBuffer(buffInit);
+
+	F32* randFactors = static_cast<F32*>(m_randFactorsBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+
+	*reinterpret_cast<U32*>(randFactors) = MAX_RAND_FACTORS;
+	++randFactors;
+
+	const F32* randFactorsEnd = randFactors + MAX_RAND_FACTORS;
+	for(; randFactors < randFactorsEnd; ++randFactors)
+	{
+		*randFactors = randRange(0.0f, 1.0f);
+	}
+
+	m_randFactorsBuff->unmap();
 
 	// Find the extend of the particles
 	{
@@ -104,16 +150,74 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 	GenericGpuComputeJobComponent* gpuComp = newComponent<GenericGpuComputeJobComponent>();
 	gpuComp->setCallback(
 		[](GenericGpuComputeJobQueueElementContext& ctx, const void* userData) {
-			static_cast<const GpuParticleEmitterNode*>(userData)->simulate(ctx.m_commandBuffer);
+			static_cast<const GpuParticleEmitterNode*>(userData)->simulate(ctx);
 		},
 		this);
 
 	return Error::NONE;
 }
 
-void GpuParticleEmitterNode::simulate(CommandBufferPtr& cmdb) const
+void GpuParticleEmitterNode::onMoveComponentUpdate(const MoveComponent& movec)
 {
-	// TODO
+	const Vec4& pos = movec.getWorldTransform().getOrigin();
+
+	// Update the AABB
+	m_spatialVolume.setMin(pos - m_maxDistanceAParticleCanGo);
+	m_spatialVolume.setMax(pos + m_maxDistanceAParticleCanGo);
+	getComponent<SpatialComponent>().markForUpdate();
+
+	// Stash the position
+	m_worldPosition = pos.xyz();
+}
+
+void GpuParticleEmitterNode::simulate(GenericGpuComputeJobQueueElementContext& ctx) const
+{
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	// Bind resources
+	cmdb->bindStorageBuffer(1, 0, m_particlesBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindUniformBuffer(1, 1, m_propsBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(1, 2, m_randFactorsBuff, 0, MAX_PTR_SIZE);
+
+	GpuParticleSimulationState pc;
+	pc.m_viewProjMat = ctx.m_viewProjectionMatrix;
+	pc.m_randomIndex = rand();
+	pc.m_dt = m_dt;
+	pc.m_emitterPosition = m_worldPosition;
+	cmdb->setPushConstants(&pc, sizeof(pc));
+
+	// Dispatch
+	const U workgroupCount = (m_particleCount + COMPUTE_SHADER_WORKGROUP_SIZE_X - 1) / COMPUTE_SHADER_WORKGROUP_SIZE_X;
+	cmdb->dispatchCompute(workgroupCount, 1, 1);
+}
+
+void GpuParticleEmitterNode::setupRenderableQueueElement(RenderableQueueElement& el) const
+{
+	el.m_callback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+		ANKI_ASSERT(userData.getSize() == 1);
+		static_cast<const GpuParticleEmitterNode*>(userData[0])->draw(ctx);
+	};
+	el.m_mergeKey = 0; // No merging
+	el.m_userData = this;
+}
+
+void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
+{
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	if(!ctx.m_debugDraw)
+	{
+		// Program
+		ShaderProgramPtr prog;
+		m_emitterRsrc->getRenderingInfo(ctx.m_key.m_lod, prog);
+		cmdb->bindShaderProgram(prog);
+
+		// TODO
+	}
+	else
+	{
+		// TODO
+	}
 }
 
 } // end namespace anki

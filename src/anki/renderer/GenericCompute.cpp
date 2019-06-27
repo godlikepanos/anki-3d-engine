@@ -42,6 +42,11 @@ void GenericCompute::run(RenderPassWorkContext& rgraphCtx)
 	GenericGpuComputeJobQueueElementContext elementCtx;
 	elementCtx.m_commandBuffer = rgraphCtx.m_commandBuffer;
 	elementCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
+	elementCtx.m_viewMatrix = m_runCtx.m_ctx->m_matrices.m_view;
+	elementCtx.m_viewProjectionMatrix = m_runCtx.m_ctx->m_matrices.m_viewProjection;
+	elementCtx.m_projectionMatrix = m_runCtx.m_ctx->m_matrices.m_projection;
+	elementCtx.m_previousViewProjectionMatrix = m_runCtx.m_ctx->m_prevMatrices.m_viewProjection;
+	elementCtx.m_cameraTransform = m_runCtx.m_ctx->m_matrices.m_cameraTransform;
 
 	// Bind some state
 	rgraphCtx.bindTexture(0, 0, m_r->getDepthDownscale().getHiZRt(), TextureSubresourceInfo());

@@ -3474,6 +3474,75 @@ static inline void wrapParticleEmitterNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
+LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterNode = {-3652396348144519688,
+	"GpuParticleEmitterNode",
+	LuaUserData::computeSizeForGarbageCollected<GpuParticleEmitterNode>(),
+	nullptr,
+	nullptr};
+
+template<>
+const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<GpuParticleEmitterNode>()
+{
+	return luaUserDataTypeInfoGpuParticleEmitterNode;
+}
+
+/// Pre-wrap method GpuParticleEmitterNode::getSceneNodeBase.
+static inline int pwrapGpuParticleEmitterNodegetSceneNodeBase(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 1)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoGpuParticleEmitterNode, ud))
+	{
+		return -1;
+	}
+
+	GpuParticleEmitterNode* self = ud->getData<GpuParticleEmitterNode>();
+
+	// Call the method
+	SceneNode& ret = *self;
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoSceneNode;
+	ud->initPointed(&luaUserDataTypeInfoSceneNode, const_cast<SceneNode*>(&ret));
+
+	return 1;
+}
+
+/// Wrap method GpuParticleEmitterNode::getSceneNodeBase.
+static int wrapGpuParticleEmitterNodegetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapGpuParticleEmitterNodegetSceneNodeBase(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class GpuParticleEmitterNode.
+static inline void wrapGpuParticleEmitterNode(lua_State* l)
+{
+	LuaBinder::createClass(l, &luaUserDataTypeInfoGpuParticleEmitterNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapGpuParticleEmitterNodegetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
 LuaUserDataTypeInfo luaUserDataTypeInfoReflectionProbeNode = {-801309373000950648,
 	"ReflectionProbeNode",
 	LuaUserData::computeSizeForGarbageCollected<ReflectionProbeNode>(),
@@ -4352,6 +4421,74 @@ static int wrapSceneGraphnewParticleEmitterNode(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method SceneGraph::newGpuParticleEmitterNode.
+static inline int pwrapSceneGraphnewGpuParticleEmitterNode(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 3)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoSceneGraph, ud))
+	{
+		return -1;
+	}
+
+	SceneGraph* self = ud->getData<SceneGraph>();
+
+	// Pop arguments
+	const char* arg0;
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	{
+		return -1;
+	}
+
+	const char* arg1;
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 3, arg1)))
+	{
+		return -1;
+	}
+
+	// Call the method
+	GpuParticleEmitterNode* ret = newSceneNode<GpuParticleEmitterNode>(self, arg0, arg1);
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(LuaUserData));
+	ud = static_cast<LuaUserData*>(voidp);
+	luaL_setmetatable(l, "GpuParticleEmitterNode");
+	extern LuaUserDataTypeInfo luaUserDataTypeInfoGpuParticleEmitterNode;
+	ud->initPointed(&luaUserDataTypeInfoGpuParticleEmitterNode, const_cast<GpuParticleEmitterNode*>(ret));
+
+	return 1;
+}
+
+/// Wrap method SceneGraph::newGpuParticleEmitterNode.
+static int wrapSceneGraphnewGpuParticleEmitterNode(lua_State* l)
+{
+	int res = pwrapSceneGraphnewGpuParticleEmitterNode(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Pre-wrap method SceneGraph::newReflectionProbeNode.
 static inline int pwrapSceneGraphnewReflectionProbeNode(lua_State* l)
 {
@@ -4755,6 +4892,7 @@ static inline void wrapSceneGraph(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newDirectionalLightNode", wrapSceneGraphnewDirectionalLightNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newParticleEmitterNode", wrapSceneGraphnewParticleEmitterNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newGpuParticleEmitterNode", wrapSceneGraphnewGpuParticleEmitterNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProbeNode", wrapSceneGraphnewReflectionProbeNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newOccluderNode", wrapSceneGraphnewOccluderNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newDecalNode", wrapSceneGraphnewDecalNode);
@@ -5168,6 +5306,7 @@ void wrapModuleScene(lua_State* l)
 	wrapDirectionalLightNode(l);
 	wrapStaticCollisionNode(l);
 	wrapParticleEmitterNode(l);
+	wrapGpuParticleEmitterNode(l);
 	wrapReflectionProbeNode(l);
 	wrapOccluderNode(l);
 	wrapDecalNode(l);

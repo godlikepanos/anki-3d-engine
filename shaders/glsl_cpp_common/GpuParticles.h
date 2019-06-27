@@ -41,10 +41,22 @@ struct GpuParticle
 	F32 m_life;
 
 	Vec3 m_acceleration;
-	F32 m_padding1;
+	F32 m_padding0;
 
 	Vec3 m_velocity;
-	F32 m_padding2;
+	F32 m_padding1;
+};
+
+struct GpuParticleSimulationState
+{
+	Mat4 m_viewProjMat;
+
+	Vec2 m_padding0;
+	U32 m_randomIndex;
+	F32 m_dt;
+
+	Vec3 m_emitterPosition;
+	F32 m_padding1;
 };
 
 ANKI_END_NAMESPACE

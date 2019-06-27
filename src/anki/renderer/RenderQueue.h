@@ -55,7 +55,11 @@ class RenderableQueueElement final
 public:
 	RenderQueueDrawCallback m_callback;
 	const void* m_userData;
+
+	/// Elements with the same m_mergeKey and same m_callback may be merged and the m_callback will be called once.
+	/// Unless m_mergeKey is zero.
 	U64 m_mergeKey;
+
 	F32 m_distanceFromCamera; ///< Don't set this
 
 	RenderableQueueElement()
@@ -67,7 +71,7 @@ static_assert(
 	std::is_trivially_destructible<RenderableQueueElement>::value == true, "Should be trivially destructible");
 
 /// Context that contains variables for the GenericGpuComputeJobQueueElement.
-class GenericGpuComputeJobQueueElementContext final
+class GenericGpuComputeJobQueueElementContext final : public RenderingMatrices
 {
 public:
 	CommandBufferPtr m_commandBuffer;
