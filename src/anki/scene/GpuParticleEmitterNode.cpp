@@ -212,7 +212,23 @@ void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 		m_emitterRsrc->getRenderingInfo(ctx.m_key.m_lod, prog);
 		cmdb->bindShaderProgram(prog);
 
-		// TODO
+		// Resources
+		cmdb->bindStorageBuffer(0, 0, m_particlesBuff, 0, MAX_PTR_SIZE);
+
+		struct PC
+		{
+			Mat4 m_mvp;
+			Vec3 m_minusCameraZ;
+			U32 m_particleCount;
+		} pc;
+
+		pc.m_mvp = ctx.m_viewProjectionMatrix;
+		pc.m_minusCameraZ = ctx.m_cameraTransform.getColumn(2).xyz();
+		pc.m_particleCount = m_particleCount;
+		cmdb->setPushConstants(&pc, sizeof(pc));
+
+		// Draw
+		cmdb->drawArrays(PrimitiveTopology::LINES, m_particleCount * 2);
 	}
 	else
 	{

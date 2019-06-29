@@ -31,12 +31,12 @@ void main()
 {
 	const Particle part = u_particles[gl_VertexID / 2];
 
-	const Vec4 clipPos = u_mvp * Vec4(part.m_newWorldPosition, 1.0);
+	const Vec4 crntClipPos = u_mvp * Vec4(part.m_newWorldPosition, 1.0);
 	const Vec4 prevClipPos = u_mvp * Vec4(part.m_oldWorldPosition, 1.0);
 
-	gl_Position = ((gl_VertexID & 1) == 0) ? clipPos : prevClipPos;
+	gl_Position = ((gl_VertexID & 1) == 0) ? crntClipPos : prevClipPos;
 
-	const Vec2 crntNdc = clipPos.xy / clipPos.w;
+	const Vec2 crntNdc = crntClipPos.xy / crntClipPos.w;
 	const Vec2 prevNdc = prevClipPos.xy / prevClipPos.w;
 
 	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
