@@ -21,7 +21,7 @@ layout(set = 1, binding = 0) buffer ssbo_
 	GpuParticle u_particles[];
 };
 
-layout(set = 1, binding = 1) buffer ubo_
+layout(set = 1, binding = 1) uniform ubo_
 {
 	GpuParticleEmitterProperties u_props;
 };
@@ -32,15 +32,15 @@ layout(set = 1, binding = 2) readonly buffer ubo1_
 	F32 u_randomFactors[];
 };
 
-layout(std430, push_constant, row_major) pc_
+layout(std430, push_constant, row_major) uniform pc_
 {
 	GpuParticleSimulationState u_regs;
 };
 
 F32 readDepth(Vec2 uv)
 {
-	const Vec2 texSize = Vec2(textureSize(u_depthMap));
-	IVec2 textureSpaceUv = IVec2(uv * texSize);
+	const IVec2 texSize = textureSize(u_depthMap, 0);
+	IVec2 textureSpaceUv = IVec2(uv * Vec2(texSize));
 	textureSpaceUv = clamp(textureSpaceUv, IVec2(0), texSize - 1);
 	return texelFetch(u_depthMap, textureSpaceUv, 0).r;
 }
@@ -66,7 +66,7 @@ void initParticle(out GpuParticle p)
 
 void main()
 {
-	const u32 particleIdx = gl_GlobalInvocationID.x;
+	const U32 particleIdx = gl_GlobalInvocationID.x;
 	if(particleIdx >= u_props.m_particleCount)
 	{
 		return;
@@ -85,13 +85,15 @@ void main()
 	{
 		// Simulate
 
+		particle.m_life -= dt;
+
 		const Vec3 xp = particle.m_oldWorldPosition;
 		const Vec3 xc = particle.m_acceleration * (dt * dt) + u_particles[particleIdx].m_velocity * dt + xp;
 
 		// Project the point
 		const Vec4 proj4 = u_regs.m_viewProjMat * Vec4(xc, 1.0);
 		const Vec3 proj3 = proj4.xyz / proj4.w;
-		if(proj3.xy > Vec2(-1.0) && proj3.xy < Vec2(1.0))
+		if(all(greaterThan(proj3.xy, Vec2(-1.0))) && all(greaterThan(proj3.xy, Vec2(1.0))))
 		{
 			// It's visible, test against the depth buffer
 
@@ -101,7 +103,7 @@ void main()
 			if(testDepth >= refDepth)
 			{
 				// Collides, change its direction
-				p.m_velocity = -p.m_velocity;
+				particle.m_velocity = -particle.m_velocity;
 			}
 		}
 

@@ -400,4 +400,10 @@ void CommandBuffer::setRasterizationOrder(RasterizationOrder order)
 	self.setRasterizationOrder(order);
 }
 
+void CommandBuffer::setLineWidth(F32 width)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setLineWidth(width);
+}
+
 } // end namespace anki

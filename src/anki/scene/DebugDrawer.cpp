@@ -90,6 +90,7 @@ void DebugDrawer::flush()
 	}
 
 	// Draw
+	cmdb->setLineWidth(1.0f);
 	cmdb->drawArrays(m_topology, m_cachedPositionCount);
 
 	// Restore state

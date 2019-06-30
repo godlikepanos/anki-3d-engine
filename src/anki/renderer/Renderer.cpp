@@ -30,6 +30,7 @@
 #include <anki/renderer/Ssr.h>
 #include <anki/renderer/VolumetricLightingAccumulation.h>
 #include <anki/renderer/GlobalIllumination.h>
+#include <anki/renderer/GenericCompute.h>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
@@ -122,6 +123,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_resources->loadResource("shaders/ClearTextureCompute.glslp", m_clearTexComputeProg));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
+	m_genericCompute.reset(m_alloc.newInstance<GenericCompute>(this));
+	ANKI_CHECK(m_genericCompute->init(config));
+
 	m_volLighting.reset(m_alloc.newInstance<VolumetricLightingAccumulation>(this));
 	ANKI_CHECK(m_volLighting->init(config));
 
@@ -297,6 +301,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_depth->importRenderTargets(ctx);
 
 	// Populate render graph. WARNING Watch the order
+	m_genericCompute->populateRenderGraph(ctx);
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_gi->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);

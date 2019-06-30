@@ -76,6 +76,7 @@ void GlobalIlluminationProbeComponent::debugDraw(RenderQueueDrawContext& ctx, Co
 
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
+	cmdb->setLineWidth(1.0f);
 	cmdb->drawElements(PrimitiveTopology::LINES, indexCount, userData.getSize());
 
 	// Restore state

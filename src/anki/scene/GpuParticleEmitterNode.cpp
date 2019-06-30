@@ -153,6 +153,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 			static_cast<const GpuParticleEmitterNode*>(userData)->simulate(ctx);
 		},
 		this);
+	newComponent<MyRenderComponent>(this);
 
 	return Error::NONE;
 }
@@ -162,9 +163,11 @@ void GpuParticleEmitterNode::onMoveComponentUpdate(const MoveComponent& movec)
 	const Vec4& pos = movec.getWorldTransform().getOrigin();
 
 	// Update the AABB
-	m_spatialVolume.setMin(pos - m_maxDistanceAParticleCanGo);
-	m_spatialVolume.setMax(pos + m_maxDistanceAParticleCanGo);
-	getComponent<SpatialComponent>().markForUpdate();
+	m_spatialVolume.setMin((pos - m_maxDistanceAParticleCanGo).xyz());
+	m_spatialVolume.setMax((pos + m_maxDistanceAParticleCanGo).xyz());
+	SpatialComponent& spatialc = getComponent<SpatialComponent>();
+	spatialc.markForUpdate();
+	spatialc.setSpatialOrigin(pos);
 
 	// Stash the position
 	m_worldPosition = pos.xyz();
@@ -173,6 +176,8 @@ void GpuParticleEmitterNode::onMoveComponentUpdate(const MoveComponent& movec)
 void GpuParticleEmitterNode::simulate(GenericGpuComputeJobQueueElementContext& ctx) const
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	cmdb->bindShaderProgram(m_grProg);
 
 	// Bind resources
 	cmdb->bindStorageBuffer(1, 0, m_particlesBuff, 0, MAX_PTR_SIZE);
@@ -228,6 +233,7 @@ void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
 		// Draw
+		cmdb->setLineWidth(8.0f);
 		cmdb->drawArrays(PrimitiveTopology::LINES, m_particleCount * 2);
 	}
 	else

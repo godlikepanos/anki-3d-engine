@@ -116,6 +116,7 @@ public:
 	TRenderQueueElementStorage<DecalQueueElement> m_decals;
 	TRenderQueueElementStorage<FogDensityQueueElement> m_fogDensityVolumes;
 	TRenderQueueElementStorage<GlobalIlluminationProbeQueueElement> m_giProbes;
+	TRenderQueueElementStorage<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
 
 	Timestamp m_timestamp = 0;
 

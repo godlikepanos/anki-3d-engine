@@ -165,6 +165,11 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 	ANKI_ASSERT(access != BufferMapAccessBit::NONE);
 	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::NONE);
 	ANKI_ASSERT(!m_mapped);
+	ANKI_ASSERT(offset < m_size);
+	if(range == MAX_PTR_SIZE)
+	{
+		range = m_size - offset;
+	}
 	ANKI_ASSERT(offset + range <= m_size);
 
 	void* ptr = getGrManagerImpl().getGpuMemoryManager().getMappedAddress(m_memHandle);

@@ -86,8 +86,8 @@ public:
 	FillMode m_fillMode = FillMode::SOLID;
 	FaceSelectionBit m_cullMode = FaceSelectionBit::BACK;
 	RasterizationOrder m_rasterizationOrder = RasterizationOrder::ORDERED;
-	F32 m_depthBiasConstantFactor = 0.0;
-	F32 m_depthBiasSlopeFactor = 0.0;
+	F32 m_depthBiasConstantFactor = 0.0f;
+	F32 m_depthBiasSlopeFactor = 0.0f;
 };
 
 class PPDepthStateInfo : public NonCopyable
@@ -403,6 +403,11 @@ public:
 			m_state.m_inputAssembler.m_topology = topology;
 			m_dirty.m_other |= DirtyBit::IA;
 		}
+	}
+
+	PrimitiveTopology getPrimitiveTopology() const
+	{
+		return m_state.m_inputAssembler.m_topology;
 	}
 
 	/// Flush state
