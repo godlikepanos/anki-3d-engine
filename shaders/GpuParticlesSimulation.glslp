@@ -93,7 +93,7 @@ void main()
 		// Project the point
 		const Vec4 proj4 = u_regs.m_viewProjMat * Vec4(xc, 1.0);
 		const Vec3 proj3 = proj4.xyz / proj4.w;
-		if(all(greaterThan(proj3.xy, Vec2(-1.0))) && all(greaterThan(proj3.xy, Vec2(1.0))))
+		if(all(greaterThan(proj3.xy, Vec2(-1.0))) && all(lessThan(proj3.xy, Vec2(1.0))))
 		{
 			// It's visible, test against the depth buffer
 
@@ -104,11 +104,20 @@ void main()
 			{
 				// Collides, change its direction
 				particle.m_velocity = -particle.m_velocity;
+
+				particle.m_oldWorldPosition = particle.m_newWorldPosition;
+			}
+			else
+			{
+				particle.m_oldWorldPosition = particle.m_newWorldPosition;
+				particle.m_newWorldPosition = xc;
 			}
 		}
-
-		particle.m_oldWorldPosition = particle.m_newWorldPosition;
-		particle.m_newWorldPosition = xc;
+		else
+		{
+			particle.m_oldWorldPosition = particle.m_newWorldPosition;
+			particle.m_newWorldPosition = xc;
+		}
 	}
 
 	// Write back the particle

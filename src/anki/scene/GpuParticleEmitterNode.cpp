@@ -92,6 +92,8 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 	props->m_minLife = inProps.m_particle.m_minLife;
 	props->m_maxForce = inProps.m_particle.m_maxForceDirection * inProps.m_particle.m_maxForceMagnitude;
 	props->m_maxLife = inProps.m_particle.m_maxLife;
+	props->m_minStartingPosition = inProps.m_particle.m_minStartingPosition;
+	props->m_maxStartingPosition = inProps.m_particle.m_maxStartingPosition;
 	props->m_particleCount = inProps.m_maxNumOfParticles;
 
 	m_propsBuff->unmap();

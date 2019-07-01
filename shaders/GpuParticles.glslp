@@ -25,7 +25,7 @@ layout(set = 0, binding = 0) buffer ssbo_
 
 #pragma anki start vert
 
-layout(location = 0) flat out Vec2 out_velocity;
+layout(location = 0) out Vec2 out_velocity;
 
 void main()
 {
@@ -40,7 +40,7 @@ void main()
 	const Vec2 prevNdc = prevClipPos.xy / prevClipPos.w;
 
 	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
-	out_velocity = (prevNdc - crntNdc) * 0.5;
+	out_velocity = ((gl_VertexID & 1) == 0) ? Vec2(0.0) : (prevNdc - crntNdc) * 0.5;
 }
 #pragma anki end
 
@@ -52,7 +52,7 @@ layout(location = 1) out Vec4 out_gbuffer1;
 layout(location = 2) out Vec4 out_gbuffer2;
 layout(location = 3) out Vec2 out_gbuffer3;
 
-layout(location = 0) flat in Vec2 in_velocity;
+layout(location = 0) in Vec2 in_velocity;
 
 void main()
 {
