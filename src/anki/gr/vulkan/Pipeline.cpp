@@ -378,10 +378,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 		VK_DYNAMIC_STATE_STENCIL_REFERENCE,
 		VK_DYNAMIC_STATE_LINE_WIDTH}};
 
-	dynCi.dynamicStateCount = (m_state.m_inputAssembler.m_topology != PrimitiveTopology::LINES
-								  && m_state.m_inputAssembler.m_topology != PrimitiveTopology::LINE_STRIP)
-								  ? DYN.getSize() - 1
-								  : DYN.getSize();
+	dynCi.dynamicStateCount = DYN.getSize();
 	dynCi.pDynamicStates = &DYN[0];
 	ci.pDynamicState = &dynCi;
 

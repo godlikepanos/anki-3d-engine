@@ -33,6 +33,8 @@ void GenericCompute::populateRenderGraph(RenderingContext& ctx)
 		},
 		this,
 		0);
+
+	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
 void GenericCompute::run(RenderPassWorkContext& rgraphCtx)
