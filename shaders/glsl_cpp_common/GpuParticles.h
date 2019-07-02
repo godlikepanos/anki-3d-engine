@@ -51,12 +51,20 @@ struct GpuParticleSimulationState
 {
 	Mat4 m_viewProjMat;
 
+	Vec4 m_unprojectionParams;
+
 	Vec2 m_padding0;
 	U32 m_randomIndex;
 	F32 m_dt;
 
 	Vec3 m_emitterPosition;
 	F32 m_padding1;
+
+#if defined(__cplusplus)
+	Mat3x4 m_emitterRotation;
+#else
+	Mat3 m_emitterRotation;
+#endif
 };
 
 ANKI_END_NAMESPACE

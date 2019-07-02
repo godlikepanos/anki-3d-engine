@@ -132,6 +132,14 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 
 	m_randFactorsBuff->unmap();
 
+	// Create the sampler
+	{
+		SamplerInitInfo sinit;
+		sinit.m_addressing = SamplingAddressing::CLAMP;
+
+		m_nearestAnyClampSampler = getSceneGraph().getGrManager().newSampler(sinit);
+	}
+
 	// Find the extend of the particles
 	{
 		const Vec3 maxForce = inProps.m_particle.m_maxForceDirection * inProps.m_particle.m_maxForceMagnitude;
@@ -173,6 +181,7 @@ void GpuParticleEmitterNode::onMoveComponentUpdate(const MoveComponent& movec)
 
 	// Stash the position
 	m_worldPosition = pos.xyz();
+	m_worldRotation = movec.getWorldTransform().getRotation();
 }
 
 void GpuParticleEmitterNode::simulate(GenericGpuComputeJobQueueElementContext& ctx) const
@@ -185,13 +194,20 @@ void GpuParticleEmitterNode::simulate(GenericGpuComputeJobQueueElementContext& c
 	cmdb->bindStorageBuffer(1, 0, m_particlesBuff, 0, MAX_PTR_SIZE);
 	cmdb->bindUniformBuffer(1, 1, m_propsBuff, 0, MAX_PTR_SIZE);
 	cmdb->bindStorageBuffer(1, 2, m_randFactorsBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindSampler(1, 3, m_nearestAnyClampSampler);
 
-	GpuParticleSimulationState pc;
-	pc.m_viewProjMat = ctx.m_viewProjectionMatrix;
-	pc.m_randomIndex = rand();
-	pc.m_dt = m_dt;
-	pc.m_emitterPosition = m_worldPosition;
-	cmdb->setPushConstants(&pc, sizeof(pc));
+	StagingGpuMemoryToken token;
+	GpuParticleSimulationState* unis =
+		static_cast<GpuParticleSimulationState*>(ctx.m_stagingGpuAllocator->allocateFrame(
+			sizeof(GpuParticleSimulationState), StagingGpuMemoryType::UNIFORM, token));
+
+	unis->m_viewProjMat = ctx.m_viewProjectionMatrix;
+	unis->m_unprojectionParams = ctx.m_projectionMatrix.extractPerspectiveUnprojectionParams();
+	unis->m_randomIndex = rand();
+	unis->m_dt = m_dt;
+	unis->m_emitterPosition = m_worldPosition;
+	unis->m_emitterRotation = m_worldRotation;
+	cmdb->bindUniformBuffer(1, 4, token.m_buffer, token.m_offset, token.m_range);
 
 	// Dispatch
 	const U workgroupCount = (m_particleCount + COMPUTE_SHADER_WORKGROUP_SIZE_X - 1) / COMPUTE_SHADER_WORKGROUP_SIZE_X;

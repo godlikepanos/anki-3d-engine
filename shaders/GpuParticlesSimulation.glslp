@@ -14,14 +14,14 @@
 
 layout(local_size_x = WORKGROUP_SIZE_X, local_size_y = 1, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) uniform texture2D u_depthMap;
+layout(set = 0, binding = 0) uniform texture2D u_depthRt;
 
 layout(set = 1, binding = 0) buffer ssbo_
 {
 	GpuParticle u_particles[];
 };
 
-layout(set = 1, binding = 1) uniform ubo_
+layout(set = 1, binding = 1, std140) uniform ubo_
 {
 	GpuParticleEmitterProperties u_props;
 };
@@ -32,25 +32,58 @@ layout(set = 1, binding = 2) readonly buffer ubo1_
 	F32 u_randomFactors[];
 };
 
-layout(std430, push_constant, row_major) uniform pc_
+layout(set = 1, binding = 3) uniform sampler u_nearestAnyClampSampler;
+
+layout(set = 1, binding = 4, std140, row_major) uniform ubo1_
 {
-	GpuParticleSimulationState u_regs;
+	GpuParticleSimulationState u_state;
 };
 
-F32 readDepth(Vec2 uv)
+F32 smallerDelta(F32 left, F32 mid, F32 right)
 {
-	const IVec2 texSize = textureSize(u_depthMap, 0);
-	IVec2 textureSpaceUv = IVec2(uv * Vec2(texSize));
-	textureSpaceUv = clamp(textureSpaceUv, IVec2(0), texSize - 1);
-	return texelFetch(u_depthMap, textureSpaceUv, 0).r;
+	const F32 a = mid - left;
+	const F32 b = right - mid;
+
+	return (abs(a) < abs(b)) ? a : b;
+}
+
+Vec3 unproject(Vec2 ndc, F32 depth)
+{
+	const F32 z = u_state.m_unprojectionParams.z / (u_state.m_unprojectionParams.w + depth);
+	const Vec2 xy = ndc * u_state.m_unprojectionParams.xy * z;
+	return Vec3(xy, z);
+}
+
+// Compute the normal using the depth buffer
+Vec3 computeNormal(const Vec2 uv, const F32 depth)
+{
+	const F32 depthLeft = textureLodOffset(sampler2D(u_depthRt, u_nearestAnyClampSampler), uv, 0.0, ivec2(-2, 0)).r;
+	const F32 depthRight = textureLodOffset(sampler2D(u_depthRt, u_nearestAnyClampSampler), uv, 0.0, ivec2(2, 0)).r;
+	const F32 depthTop = textureLodOffset(sampler2D(u_depthRt, u_nearestAnyClampSampler), uv, 0.0, ivec2(0, 2)).r;
+	const F32 depthBottom = textureLodOffset(sampler2D(u_depthRt, u_nearestAnyClampSampler), uv, 0.0, ivec2(0, -2)).r;
+
+	const F32 ddx = smallerDelta(depthLeft, depth, depthRight);
+	const F32 ddy = smallerDelta(depthBottom, depth, depthTop);
+
+	const Vec2 ndc = UV_TO_NDC(uv);
+	const Vec2 TEXEL_SIZE = 1.0 / Vec2(textureSize(u_depthRt, 0));
+	const Vec2 NDC_TEXEL_SIZE = 2.0 * TEXEL_SIZE;
+	const Vec3 right = unproject(ndc + Vec2(NDC_TEXEL_SIZE.x, 0.0), depth + ddx);
+	const Vec3 top = unproject(ndc + Vec2(0.0, NDC_TEXEL_SIZE.y), depth + ddy);
+
+	const Vec3 origin = unproject(ndc, depth);
+	Vec3 normal = cross(origin - top, right - origin);
+	normal = normalize(normal);
+
+	return normal;
 }
 
 void initParticle(out GpuParticle p)
 {
-	const F32 randFactor = u_randomFactors[(gl_GlobalInvocationID.x + u_regs.m_randomIndex) % u_randomFactorCount];
+	const F32 randFactor = u_randomFactors[(gl_GlobalInvocationID.x + u_state.m_randomIndex) % u_randomFactorCount];
 
 	p.m_newWorldPosition =
-		mix(u_props.m_minStartingPosition, u_props.m_maxStartingPosition, randFactor) + u_regs.m_emitterPosition;
+		mix(u_props.m_minStartingPosition, u_props.m_maxStartingPosition, randFactor) + u_state.m_emitterPosition;
 	p.m_oldWorldPosition = p.m_newWorldPosition;
 
 	p.m_mass = mix(u_props.m_minMass, u_props.m_maxMass, randFactor);
@@ -58,10 +91,10 @@ void initParticle(out GpuParticle p)
 	p.m_acceleration = mix(u_props.m_minGravity, u_props.m_maxGravity, randFactor);
 
 	// Calculate the initial velocity
-	const Vec3 initialForce = mix(u_props.m_minForce, u_props.m_maxForce, randFactor);
+	const Vec3 initialForce = u_state.m_emitterRotation * mix(u_props.m_minForce, u_props.m_maxForce, randFactor);
 	const Vec3 totalForce = (p.m_acceleration * p.m_mass) + initialForce;
 	const Vec3 acceleration = totalForce / p.m_mass;
-	p.m_velocity = acceleration * u_regs.m_dt;
+	p.m_velocity = acceleration * u_state.m_dt;
 }
 
 void main()
@@ -73,7 +106,7 @@ void main()
 	}
 
 	GpuParticle particle = u_particles[particleIdx];
-	const F32 dt = u_regs.m_dt;
+	const F32 dt = u_state.m_dt;
 
 	// Check if it's dead
 	if(particle.m_life - dt <= 0.0)
@@ -91,19 +124,20 @@ void main()
 		const Vec3 xc = particle.m_acceleration * (dt * dt) + u_particles[particleIdx].m_velocity * dt + xp;
 
 		// Project the point
-		const Vec4 proj4 = u_regs.m_viewProjMat * Vec4(xc, 1.0);
+		const Vec4 proj4 = u_state.m_viewProjMat * Vec4(xc, 1.0);
 		const Vec3 proj3 = proj4.xyz / proj4.w;
 		if(all(greaterThan(proj3.xy, Vec2(-1.0))) && all(lessThan(proj3.xy, Vec2(1.0))))
 		{
 			// It's visible, test against the depth buffer
 
-			const F32 refDepth = readDepth(NDC_TO_UV(proj3.xy));
+			const F32 refDepth = textureLod(u_depthRt, u_nearestAnyClampSampler, NDC_TO_UV(proj3.xy), 0.0).r;
 			const F32 testDepth = proj3.z;
 
 			if(testDepth >= refDepth)
 			{
 				// Collides, change its direction
-				particle.m_velocity = -particle.m_velocity;
+				const Vec3 normal = computeNormal(NDC_TO_UV(proj3.xy), refDepth);
+				particle.m_velocity = reflect(-particle.m_velocity, normal);
 
 				particle.m_oldWorldPosition = particle.m_newWorldPosition;
 			}

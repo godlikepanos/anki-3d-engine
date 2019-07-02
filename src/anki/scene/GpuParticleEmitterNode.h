@@ -52,11 +52,14 @@ private:
 	BufferPtr m_particlesBuff; ///< Particles buffer.
 	BufferPtr m_randFactorsBuff; ///< Contains flots with random values. Values in range [0.0, 1.0].
 
+	SamplerPtr m_nearestAnyClampSampler;
+
 	Aabb m_spatialVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	F32 m_maxDistanceAParticleCanGo = -1.0f;
 	U32 m_particleCount = 0;
 	F32 m_dt = 0.0f;
 	Vec3 m_worldPosition = Vec3(0.0f); //< Cache it.
+	Mat3x4 m_worldRotation = Mat3x4::getIdentity();
 
 	void onMoveComponentUpdate(const MoveComponent& movec);
 
