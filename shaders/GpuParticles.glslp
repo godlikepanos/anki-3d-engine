@@ -45,6 +45,7 @@ void main()
 #pragma anki end
 
 #pragma anki start frag
+#define MAX_EMISSION 1024.0
 #include <shaders/Pack.glsl>
 
 layout(location = 0) out Vec4 out_gbuffer0;

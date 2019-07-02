@@ -5,7 +5,7 @@
 		<input shaderInput="specColor" value="0.04 0.04 0.04"/>
 		<input shaderInput="roughness" value="9.0"/>
 		<input shaderInput="metallic" value="0.0"/>
-		<input shaderInput="emission" value="1000 1000 1000"/>
+		<input shaderInput="emission" value="1024 1024 1024"/>
 	</inputs>
 </material>
 
