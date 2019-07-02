@@ -23,7 +23,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
-	void draw(RenderingContext& ctx, CommandBufferPtr& cmdb);
+	void draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPtr& cmdb);
 
 private:
 	FontPtr m_font;
