@@ -72,10 +72,10 @@ Vec3 computeNormal(const Vec2 uv, const F32 depth)
 	const Vec3 top = unproject(ndc + Vec2(0.0, NDC_TEXEL_SIZE.y), depth + ddy);
 
 	const Vec3 origin = unproject(ndc, depth);
-	Vec3 normal = cross(origin - top, right - origin);
-	normal = normalize(normal);
+	Vec3 normalVSpace = cross(origin - top, right - origin);
+	normalVSpace = normalize(normalVSpace);
 
-	return normal;
+	return u_state.m_invViewRotation * normalVSpace;
 }
 
 void initParticle(out GpuParticle p)
@@ -137,7 +137,7 @@ void main()
 			{
 				// Collides, change its direction
 				const Vec3 normal = computeNormal(NDC_TO_UV(proj3.xy), refDepth);
-				particle.m_velocity = reflect(-particle.m_velocity, normal);
+				particle.m_velocity = reflect(particle.m_velocity, normal);
 
 				particle.m_oldWorldPosition = particle.m_newWorldPosition;
 			}

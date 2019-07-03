@@ -65,6 +65,12 @@ struct GpuParticleSimulationState
 #else
 	Mat3 m_emitterRotation;
 #endif
+
+#if defined(__cplusplus)
+	Mat3x4 m_invViewRotation;
+#else
+	Mat3 m_invViewRotation;
+#endif
 };
 
 ANKI_END_NAMESPACE

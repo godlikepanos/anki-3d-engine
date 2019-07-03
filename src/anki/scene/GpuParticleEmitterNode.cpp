@@ -202,6 +202,7 @@ void GpuParticleEmitterNode::simulate(GenericGpuComputeJobQueueElementContext& c
 	unis->m_dt = m_dt;
 	unis->m_emitterPosition = m_worldPosition;
 	unis->m_emitterRotation = m_worldRotation;
+	unis->m_invViewRotation = Mat3x4(ctx.m_cameraTransform.getRotationPart());
 	cmdb->bindUniformBuffer(1, 4, token.m_buffer, token.m_offset, token.m_range);
 
 	// Dispatch
