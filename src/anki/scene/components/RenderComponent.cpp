@@ -26,8 +26,10 @@ MaterialRenderComponent::MaterialRenderComponent(SceneNode* node, MaterialResour
 		m_vars[count++].m_mvar = &mv;
 	}
 
-	m_isForwardShading = mtl->isForwardShading();
-	m_castsShadow = mtl->castsShadow();
+	RenderComponentFlag flags =
+		(mtl->isForwardShading()) ? RenderComponentFlag::FORWARD_SHADING : RenderComponentFlag::NONE;
+	flags |= (mtl->castsShadow()) ? RenderComponentFlag::CASTS_SHADOW : RenderComponentFlag::NONE;
+	setFlags(flags);
 }
 
 MaterialRenderComponent::~MaterialRenderComponent()

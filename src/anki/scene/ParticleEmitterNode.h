@@ -33,7 +33,6 @@ public:
 	/// @}
 
 private:
-	class MyRenderComponent;
 	class MoveFeedbackComponent;
 	class ParticleBase;
 	class ParticleSimple;
@@ -71,13 +70,6 @@ private:
 	void createParticlesSimpleSimulation();
 
 	void onMoveComponentUpdate(MoveComponent& move);
-
-	void setupRenderableQueueElement(RenderableQueueElement& el) const
-	{
-		el.m_callback = drawCallback;
-		el.m_mergeKey = 0;
-		el.m_userData = this;
-	}
 
 	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 };

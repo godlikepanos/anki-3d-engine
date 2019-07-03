@@ -38,20 +38,6 @@ public:
 	}
 };
 
-class GpuParticleEmitterNode::MyRenderComponent : public MaterialRenderComponent
-{
-public:
-	MyRenderComponent(SceneNode* node)
-		: MaterialRenderComponent(node, static_cast<GpuParticleEmitterNode*>(node)->m_emitterRsrc->getMaterial())
-	{
-	}
-
-	void setupRenderableQueueElement(RenderableQueueElement& el) const override
-	{
-		static_cast<const GpuParticleEmitterNode&>(getSceneNode()).setupRenderableQueueElement(el);
-	}
-};
-
 GpuParticleEmitterNode::GpuParticleEmitterNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
@@ -163,7 +149,16 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 			static_cast<const GpuParticleEmitterNode*>(userData)->simulate(ctx);
 		},
 		this);
-	newComponent<MyRenderComponent>(this);
+	MaterialRenderComponent* rcomp = newComponent<MaterialRenderComponent>(this, m_emitterRsrc->getMaterial());
+	rcomp->setup(
+		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+			ANKI_ASSERT(userData.getSize() == 1);
+			static_cast<const GpuParticleEmitterNode*>(userData[0])->draw(ctx);
+		},
+		this,
+		0 // No merging
+	);
+	rcomp->setFlags(rcomp->getFlags() | RenderComponentFlag::SORT_LAST);
 
 	return Error::NONE;
 }
@@ -214,16 +209,6 @@ void GpuParticleEmitterNode::simulate(GenericGpuComputeJobQueueElementContext& c
 	cmdb->dispatchCompute(workgroupCount, 1, 1);
 }
 
-void GpuParticleEmitterNode::setupRenderableQueueElement(RenderableQueueElement& el) const
-{
-	el.m_callback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
-		ANKI_ASSERT(userData.getSize() == 1);
-		static_cast<const GpuParticleEmitterNode*>(userData[0])->draw(ctx);
-	};
-	el.m_mergeKey = 0; // No merging
-	el.m_userData = this;
-}
-
 void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
@@ -252,7 +237,9 @@ void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 
 		// Draw
 		cmdb->setLineWidth(8.0f);
+		cmdb->setDepthWrite(false);
 		cmdb->drawArrays(PrimitiveTopology::LINES, m_particleCount * 2);
+		cmdb->setDepthWrite(true);
 	}
 	else
 	{

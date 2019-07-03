@@ -41,7 +41,6 @@ private:
 	static constexpr U MAX_RAND_FACTORS = 32;
 
 	class MoveFeedbackComponent;
-	class MyRenderComponent;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
@@ -64,8 +63,6 @@ private:
 	void onMoveComponentUpdate(const MoveComponent& movec);
 
 	void simulate(GenericGpuComputeJobQueueElementContext& ctx) const;
-
-	void setupRenderableQueueElement(RenderableQueueElement& el) const;
 
 	void draw(RenderQueueDrawContext& ctx) const;
 };

@@ -204,22 +204,6 @@ public:
 	}
 };
 
-/// The derived render component for particle emitters.
-class ParticleEmitterNode::MyRenderComponent : public MaterialRenderComponent
-{
-public:
-	MyRenderComponent(SceneNode* node)
-		: MaterialRenderComponent(
-			  node, static_cast<ParticleEmitterNode*>(node)->m_particleEmitterResource->getMaterial())
-	{
-	}
-
-	void setupRenderableQueueElement(RenderableQueueElement& el) const override
-	{
-		static_cast<const ParticleEmitterNode&>(getSceneNode()).setupRenderableQueueElement(el);
-	}
-};
-
 /// Feedback component
 class ParticleEmitterNode::MoveFeedbackComponent : public SceneComponent
 {
@@ -274,7 +258,9 @@ Error ParticleEmitterNode::init(const CString& filename)
 	newComponent<SpatialComponent>(this, &m_obb);
 
 	// Render component
-	newComponent<MyRenderComponent>(this);
+	MaterialRenderComponent* rcomp =
+		newComponent<MaterialRenderComponent>(this, m_particleEmitterResource->getMaterial());
+	rcomp->setup(drawCallback, this, 0); // No merging
 
 	// Other
 	m_obb.setCenter(Vec4(0.0));

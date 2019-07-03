@@ -286,7 +286,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		const RenderComponent* rc = nullptr;
 		wantNode |= wantsRenderComponents && (rc = node.tryGetComponent<RenderComponent>());
 
-		wantNode |= wantsShadowCasters && (rc = node.tryGetComponent<RenderComponent>()) && rc->getCastsShadow();
+		wantNode |= wantsShadowCasters && (rc = node.tryGetComponent<RenderComponent>())
+					&& !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
 
 		const LightComponent* lc = nullptr;
 		wantNode |= wantsLightComponents && (lc = node.tryGetComponent<LightComponent>());
@@ -366,7 +367,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		if(rc)
 		{
 			RenderableQueueElement* el;
-			if(rc->isForwardShading())
+			if(!!(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
 			{
 				el = result.m_forwardShadingRenderables.newElement(alloc);
 			}
@@ -379,9 +380,12 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			// Compute distance from the frustum
 			const Plane& nearPlane = testedFrc.getViewPlanes()[FrustumPlaneType::NEAR];
-			el->m_distanceFromCamera = max(0.0f, testPlane(nearPlane, sps[0].m_sp->getAabb()));
+			el->m_distanceFromCamera = !!(rc->getFlags() & RenderComponentFlag::SORT_LAST)
+										   ? testedFrc.getFar()
+										   : max(0.0f, testPlane(nearPlane, sps[0].m_sp->getAabb()));
 
-			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist && !rc->isForwardShading())
+			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
+				&& !(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
 			{
 				RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
 				*el2 = *el;

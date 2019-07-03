@@ -11,21 +11,6 @@
 namespace anki
 {
 
-/// The implementation of static geometry node renderable component.
-class StaticGeometryPatchNode::RenderComponent : public MaterialRenderComponent
-{
-public:
-	RenderComponent(SceneNode* node)
-		: MaterialRenderComponent(node, static_cast<StaticGeometryPatchNode*>(node)->m_modelPatch->getMaterial())
-	{
-	}
-
-	void setupRenderableQueueElement(RenderableQueueElement& el) const override
-	{
-		ANKI_ASSERT(!"TODO");
-	}
-};
-
 StaticGeometryPatchNode::StaticGeometryPatchNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
@@ -50,7 +35,8 @@ Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 	}
 
 	// Create render component
-	newComponent<RenderComponent>(this);
+	MaterialRenderComponent* rcomp = newComponent<MaterialRenderComponent>(this, m_modelPatch->getMaterial());
+	rcomp->setup([](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) { ANKI_ASSERT(!"TODO"); }, this, 0);
 
 	return Error::NONE;
 }
