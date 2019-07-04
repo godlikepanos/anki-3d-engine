@@ -41,7 +41,7 @@ struct GpuParticle
 	F32 m_life;
 
 	Vec3 m_acceleration;
-	F32 m_padding0;
+	F32 m_startingLife; // The original max life
 
 	Vec3 m_velocity;
 	F32 m_padding1;

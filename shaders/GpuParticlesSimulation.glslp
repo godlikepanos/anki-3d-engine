@@ -87,7 +87,8 @@ void initParticle(out GpuParticle p)
 	p.m_oldWorldPosition = p.m_newWorldPosition;
 
 	p.m_mass = mix(u_props.m_minMass, u_props.m_maxMass, randFactor);
-	p.m_life = mix(u_props.m_minLife, u_props.m_maxLife, randFactor);
+	p.m_startingLife = mix(u_props.m_minLife, u_props.m_maxLife, randFactor);
+	p.m_life = p.m_startingLife;
 	p.m_acceleration = mix(u_props.m_minGravity, u_props.m_maxGravity, randFactor);
 
 	// Calculate the initial velocity

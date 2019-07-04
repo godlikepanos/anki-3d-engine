@@ -41,12 +41,12 @@ F32 resolveDepths(Vec4 depths)
 {
 #if SAMPLE_RESOLVE_TYPE == MIN
 	Vec2 mind2 = min(depths.xy, depths.zw);
-	F32 depth = min(mind2.x, mind2.y);
+	const F32 depth = min(mind2.x, mind2.y);
 #elif SAMPLE_RESOLVE_TYPE == MAX
 	Vec2 max2 = max(depths.xy, depths.zw);
-	F32 depth = max(max2.x, max2.y);
+	const F32 depth = max(max2.x, max2.y);
 #elif SAMPLE_RESOLVE_TYPE == AVG
-	F32 depth = dot(depths, Vec4(1.0 / 4.0));
+	const F32 depth = dot(depths, Vec4(1.0 / 4.0));
 #else
 #	error See file
 #endif
@@ -70,7 +70,7 @@ void main()
 
 		if(u_copyToClientLevel == 0u)
 		{
-			U32 idx = gl_GlobalInvocationID.y * u_level0WriteImgSize.x + gl_GlobalInvocationID.x;
+			const U32 idx = gl_GlobalInvocationID.y * u_level0WriteImgSize.x + gl_GlobalInvocationID.x;
 			u_clientBuf[idx] = depth;
 		}
 	}

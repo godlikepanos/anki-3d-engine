@@ -7,7 +7,8 @@
 #pragma anki input const Vec3 specColor
 #pragma anki input const F32 roughness
 #pragma anki input const F32 metallic
-#pragma anki input const Vec3 emission
+#pragma anki input const Vec3 initialEmission
+#pragma anki input const Vec3 finalEmission
 
 #include <shaders/glsl_cpp_common/GpuParticles.h>
 
@@ -25,7 +26,10 @@ layout(set = 0, binding = 0) buffer ssbo_
 
 #pragma anki start vert
 
+#include <shaders/Common.glsl>
+
 layout(location = 0) out Vec2 out_velocity;
+layout(location = 1) flat out F32 out_lifeFactor;
 
 void main()
 {
@@ -41,6 +45,8 @@ void main()
 
 	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
 	out_velocity = ((gl_VertexID & 1) == 0) ? Vec2(0.0) : (prevNdc - crntNdc) * 0.5;
+
+	out_lifeFactor = saturate(1.0 - (part.m_life / part.m_startingLife));
 }
 #pragma anki end
 
@@ -54,6 +60,7 @@ layout(location = 2) out Vec4 out_gbuffer2;
 layout(location = 3) out Vec2 out_gbuffer3;
 
 layout(location = 0) in Vec2 in_velocity;
+layout(location = 1) flat in F32 in_lifeFactor;
 
 void main()
 {
@@ -63,6 +70,7 @@ void main()
 	g.m_specular = specColor;
 	g.m_roughness = roughness;
 	g.m_subsurface = 0.0;
+	const Vec3 emission = mix(initialEmission, finalEmission, in_lifeFactor);
 	g.m_emission = (emission.r + emission.g + emission.b) / 3.0;
 	g.m_metallic = metallic;
 	g.m_velocity = in_velocity;

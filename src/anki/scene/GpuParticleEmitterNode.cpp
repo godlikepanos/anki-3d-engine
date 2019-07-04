@@ -158,7 +158,6 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 		this,
 		0 // No merging
 	);
-	rcomp->setFlags(rcomp->getFlags() | RenderComponentFlag::SORT_LAST);
 
 	return Error::NONE;
 }
@@ -238,9 +237,7 @@ void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 
 		// Draw
 		cmdb->setLineWidth(8.0f);
-		cmdb->setDepthWrite(false);
 		cmdb->drawArrays(PrimitiveTopology::LINES, m_particleCount * 2);
-		cmdb->setDepthWrite(true);
 	}
 	else
 	{
