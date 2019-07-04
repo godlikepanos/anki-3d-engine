@@ -400,6 +400,7 @@ private:
 	UniquePtr<FinalComposite> m_finalComposite; ///< Postprocessing rendering stage
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
 	UniquePtr<UiStage> m_uiStage;
+	UniquePtr<GenericCompute> m_genericCompute;
 	/// @}
 
 	Array<U32, 4> m_clusterCount;

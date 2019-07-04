@@ -55,6 +55,7 @@ class ParticleEmitter
 public:
 	std::string m_filename;
 	aiMatrix4x4 m_transform;
+	bool m_gpu = false;
 };
 
 class StaticCollisionNode

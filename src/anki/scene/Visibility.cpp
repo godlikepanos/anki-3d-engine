@@ -16,6 +16,7 @@
 #include <anki/scene/components/LightComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/GlobalIlluminationProbeComponent.h>
+#include <anki/scene/components/GenericGpuComputeJobComponent.h>
 #include <anki/renderer/MainRenderer.h>
 #include <anki/util/Logger.h>
 #include <anki/util/ThreadHive.h>
@@ -262,6 +263,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	const Bool wantsEarlyZ = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::EARLY_Z)
 							 && m_frcCtx->m_visCtx->m_earlyZDist > 0.0f;
 
+	const Bool wantsGenericComputeJobCoponents =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS);
+
 	// Iterate
 	RenderQueueView& result = m_frcCtx->m_queueViews[taskId];
 	for(U i = 0; i < m_spatialToTestCount; ++i)
@@ -282,7 +286,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		const RenderComponent* rc = nullptr;
 		wantNode |= wantsRenderComponents && (rc = node.tryGetComponent<RenderComponent>());
 
-		wantNode |= wantsShadowCasters && (rc = node.tryGetComponent<RenderComponent>()) && rc->getCastsShadow();
+		wantNode |= wantsShadowCasters && (rc = node.tryGetComponent<RenderComponent>())
+					&& !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
 
 		const LightComponent* lc = nullptr;
 		wantNode |= wantsLightComponents && (lc = node.tryGetComponent<LightComponent>());
@@ -301,6 +306,10 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 		GlobalIlluminationProbeComponent* giprobec = nullptr;
 		wantNode |= wantsGiProbeCoponents && (giprobec = node.tryGetComponent<GlobalIlluminationProbeComponent>());
+
+		GenericGpuComputeJobComponent* computec = nullptr;
+		wantNode |=
+			wantsGenericComputeJobCoponents && (computec = node.tryGetComponent<GenericGpuComputeJobComponent>());
 
 		if(ANKI_UNLIKELY(!wantNode))
 		{
@@ -358,7 +367,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		if(rc)
 		{
 			RenderableQueueElement* el;
-			if(rc->isForwardShading())
+			if(!!(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
 			{
 				el = result.m_forwardShadingRenderables.newElement(alloc);
 			}
@@ -371,9 +380,12 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 			// Compute distance from the frustum
 			const Plane& nearPlane = testedFrc.getViewPlanes()[FrustumPlaneType::NEAR];
-			el->m_distanceFromCamera = max(0.0f, testPlane(nearPlane, sps[0].m_sp->getAabb()));
+			el->m_distanceFromCamera = !!(rc->getFlags() & RenderComponentFlag::SORT_LAST)
+										   ? testedFrc.getFar()
+										   : max(0.0f, testPlane(nearPlane, sps[0].m_sp->getAabb()));
 
-			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist && !rc->isForwardShading())
+			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
+				&& !(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
 			{
 				RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
 				*el2 = *el;
@@ -580,6 +592,12 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 		}
 
+		if(computec)
+		{
+			GenericGpuComputeJobQueueElement* el = result.m_genericGpuComputeJobs.newElement(alloc);
+			computec->setupGenericGpuComputeJobQueueElement(*el);
+		}
+
 		// Add more frustums to the list
 		if(nextQueues.getSize() > 0)
 		{
@@ -665,6 +683,7 @@ void CombineResultsTask::combine()
 	ANKI_VIS_COMBINE(DecalQueueElement, m_decals);
 	ANKI_VIS_COMBINE(FogDensityQueueElement, m_fogDensityVolumes);
 	ANKI_VIS_COMBINE(GlobalIlluminationProbeQueueElement, m_giProbes);
+	ANKI_VIS_COMBINE(GenericGpuComputeJobQueueElement, m_genericGpuComputeJobs);
 
 	for(U i = 0; i < threadCount; ++i)
 	{

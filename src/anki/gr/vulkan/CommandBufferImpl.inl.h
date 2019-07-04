@@ -574,6 +574,15 @@ inline void CommandBufferImpl::drawcallCommon()
 		m_scissorDirty = false;
 	}
 
+	// Some checks
+#if ANKI_ASSERTS_ENABLED
+	if(m_state.getPrimitiveTopology() == PrimitiveTopology::LINES
+		|| m_state.getPrimitiveTopology() == PrimitiveTopology::LINE_STRIP)
+	{
+		ANKI_ASSERT(m_lineWidthSet == true);
+	}
+#endif
+
 	ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 }
 
@@ -785,6 +794,16 @@ inline void CommandBufferImpl::setRasterizationOrder(RasterizationOrder order)
 	{
 		m_state.setRasterizationOrder(order);
 	}
+}
+
+inline void CommandBufferImpl::setLineWidth(F32 width)
+{
+	commandCommon();
+	vkCmdSetLineWidth(m_handle, width);
+
+#if ANKI_ASSERTS_ENABLED
+	m_lineWidthSet = true;
+#endif
 }
 
 } // end namespace anki

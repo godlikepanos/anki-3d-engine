@@ -39,6 +39,7 @@ class UiStage;
 class Ssr;
 class VolumetricLightingAccumulation;
 class GlobalIllumination;
+class GenericCompute;
 
 class RenderingContext;
 class DebugDrawer;

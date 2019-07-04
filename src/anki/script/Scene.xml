@@ -389,6 +389,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 				</method>
 			</methods>
 		</class>
+		<class name="GpuParticleEmitterNode">
+			<methods>
+				<method name="getSceneNodeBase">
+					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
+					<return>SceneNode&amp;</return>
+				</method>
+			</methods>
+		</class>
 		<class name="ReflectionProbeNode">
 			<methods>
 				<method name="getSceneNodeBase">
@@ -491,6 +499,14 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>const CString&amp;</arg>
 					</args>
 					<return>ParticleEmitterNode*</return>
+				</method>
+				<method name="newGpuParticleEmitterNode">
+					<overrideCall><![CDATA[GpuParticleEmitterNode* ret = newSceneNode<GpuParticleEmitterNode>(self, arg0, arg1);]]></overrideCall>
+					<args>
+						<arg>const CString&amp;</arg>
+						<arg>const CString&amp;</arg>
+					</args>
+					<return>GpuParticleEmitterNode*</return>
 				</method>
 				<method name="newReflectionProbeNode">
 					<overrideCall><![CDATA[ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0, arg1, arg2);]]></overrideCall>

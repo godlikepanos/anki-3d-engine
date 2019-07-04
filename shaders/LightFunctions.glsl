@@ -162,7 +162,26 @@ F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D s
 F32 computeShadowFactorDirLight(
 	DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap, sampler shadowMapSampler)
 {
+#if defined(ANKI_VENDOR_NVIDIA)
+	// Assumes MAX_SHADOW_CASCADES is 4
+	Mat4 lightProjectionMat;
+	switch(cascadeIdx)
+	{
+	case 0:
+		lightProjectionMat = light.m_textureMatrices[0];
+		break;
+	case 1:
+		lightProjectionMat = light.m_textureMatrices[1];
+		break;
+	case 2:
+		lightProjectionMat = light.m_textureMatrices[2];
+		break;
+	default:
+		lightProjectionMat = light.m_textureMatrices[3];
+	}
+#else
 	const Mat4 lightProjectionMat = light.m_textureMatrices[cascadeIdx];
+#endif
 
 	const Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;

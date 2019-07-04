@@ -26,26 +26,16 @@ public:
 		, m_physDbgDrawer(&m_dbgDrawer)
 	{
 		ANKI_ASSERT(node);
-		m_castsShadow = false;
-		m_isForwardShading = false;
+		setFlags(RenderComponentFlag::NONE);
+		setup([](RenderQueueDrawContext& ctx,
+				  ConstWeakArray<void*> userData) { static_cast<MyRenderComponent*>(userData[0])->draw(ctx); },
+			this,
+			0);
 	}
 
 	ANKI_USE_RESULT Error init()
 	{
 		return m_dbgDrawer.init(&m_node->getSceneGraph().getResourceManager());
-	}
-
-	void setupRenderableQueueElement(RenderableQueueElement& el) const override
-	{
-		el.m_callback = drawCallback;
-		el.m_mergeKey = 1;
-		el.m_userData = this;
-	}
-
-	/// RenderableQueueElement draw callback.
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-	{
-		static_cast<MyRenderComponent*>(userData[0])->draw(ctx);
 	}
 
 	/// Draw the world.

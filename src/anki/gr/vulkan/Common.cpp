@@ -55,7 +55,7 @@ VkPrimitiveTopology convertTopology(PrimitiveTopology ak)
 	case LINES:
 		out = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		break;
-	case LINE_STIP:
+	case LINE_STRIP:
 		out = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 		break;
 	case TRIANGLES:

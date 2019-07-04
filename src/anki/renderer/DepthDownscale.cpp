@@ -31,9 +31,14 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	ANKI_R_LOGI("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, lastMipWidth, lastMipHeight);
 
 	// Create RT descr
-	m_hizRtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R32_SFLOAT, "HiZ");
-	m_hizRtDescr.m_mipmapCount = m_mipCount;
-	m_hizRtDescr.bake();
+	TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(width,
+		height,
+		Format::R32_SFLOAT,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
+		"HiZ");
+	texInit.m_mipmapCount = m_mipCount;
+	texInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+	m_hizTex = m_r->createAndClearRenderTarget(texInit);
 
 	// Progs
 	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.glslp", m_prog));
@@ -79,15 +84,28 @@ Error DepthDownscale::init(const ConfigSet& cfg)
 	return err;
 }
 
+void DepthDownscale::importRenderTargets(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
+	// Import RT
+	if(m_hizTexImportedOnce)
+	{
+		m_runCtx.m_hizRt = rgraph.importRenderTarget(m_hizTex);
+	}
+	else
+	{
+		m_runCtx.m_hizRt = rgraph.importRenderTarget(m_hizTex, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_hizTexImportedOnce = true;
+	}
+}
+
 void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_mip = 0;
 
 	static const Array<CString, 5> passNames = {{"HiZ #0", "HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4"}};
-
-	// Create render targets
-	m_runCtx.m_hizRt = rgraph.newRenderTarget(m_hizRtDescr);
 
 	// Every pass can do MIPS_WRITTEN_PER_PASS mips
 	for(U i = 0; i < m_mipCount; i += MIPS_WRITTEN_PER_PASS)

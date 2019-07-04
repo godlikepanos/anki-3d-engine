@@ -219,6 +219,9 @@ public:
 	/// Set the rasterizatin order. By default it's RasterizationOrder::ORDERED.
 	void setRasterizationOrder(RasterizationOrder order);
 
+	/// Set the line width. By default it's undefined.
+	void setLineWidth(F32 lineWidth);
+
 	/// Bind texture and sample.
 	/// @param set The set to bind to.
 	/// @param binding The binding to bind to.

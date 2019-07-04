@@ -69,6 +69,9 @@ public:
 	}
 
 	/// Map the buffer.
+	/// @param offset The starting offset.
+	/// @param range The range to map or MAX_PTR_SIZE to map until the end.
+	/// @param access The access to the buffer.
 	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
 	/// Unmap the buffer.

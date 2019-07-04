@@ -41,20 +41,6 @@ public:
 	}
 };
 
-class ModelNode::MyRenderComponent : public MaterialRenderComponent
-{
-public:
-	MyRenderComponent(ModelNode* node)
-		: MaterialRenderComponent(node, node->m_model->getModelPatches()[node->m_modelPatchIdx]->getMaterial())
-	{
-	}
-
-	void setupRenderableQueueElement(RenderableQueueElement& el) const override
-	{
-		static_cast<const ModelNode&>(getSceneNode()).setupRenderableQueueElement(el);
-	}
-};
-
 ModelNode::ModelNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
@@ -86,7 +72,15 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
 	newComponent<SpatialComponent>(this, &m_obb);
-	newComponent<MyRenderComponent>(this);
+	MaterialRenderComponent* rcomp =
+		newComponent<MaterialRenderComponent>(this, m_model->getModelPatches()[m_modelPatchIdx]->getMaterial());
+	rcomp->setup(
+		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+			const ModelNode& self = *static_cast<const ModelNode*>(userData[0]);
+			self.draw(ctx, userData);
+		},
+		this,
+		m_mergeKey);
 
 	return Error::NONE;
 }
@@ -267,6 +261,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
+		cmdb->setLineWidth(1.0f);
 		cmdb->drawElements(PrimitiveTopology::LINES, indexCount, userData.getSize());
 
 		// Restore state

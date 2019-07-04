@@ -122,7 +122,13 @@ Vec2 unpackUnorm1ToUnorm2(F32 c)
 #endif
 }
 
-const F32 MAX_EMISSION = 30.0; // Max emission. Keep as low as possible
+const F32 ABSOLUTE_MAX_EMISSION = 1024.0;
+#if !defined(MAX_EMISSION)
+const F32 MAX_EMISSION = 30.0; // Max emission. Keep as low as possible and less than ABSOLUTE_MAX_EMISSION
+#endif
+// Round the MAX_EMISSION to fit a U8_UNORM
+const F32 FIXED_MAX_EMISSION = F32(U32(MAX_EMISSION / ABSOLUTE_MAX_EMISSION * 255.0)) / 255.0 * ABSOLUTE_MAX_EMISSION;
+
 const F32 MIN_ROUGHNESS = 0.05;
 
 // G-Buffer structure
@@ -142,10 +148,10 @@ struct GbufferInfo
 void writeGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out Vec2 rt3)
 {
 	rt0 = Vec4(g.m_diffuse, g.m_subsurface);
-	rt1 = Vec4(g.m_roughness, g.m_metallic, g.m_specular.x, 0.0);
+	rt1 = Vec4(g.m_roughness, g.m_metallic, g.m_specular.x, FIXED_MAX_EMISSION / ABSOLUTE_MAX_EMISSION);
 
 	const Vec3 encNorm = signedOctEncode(g.m_normal);
-	rt2 = Vec4(encNorm.xy, g.m_emission / MAX_EMISSION, encNorm.z);
+	rt2 = Vec4(g.m_emission / FIXED_MAX_EMISSION, encNorm);
 
 	rt3 = g.m_velocity;
 }
@@ -175,10 +181,11 @@ void readGBuffer(texture2D rt0, texture2D rt1, texture2D rt2, sampler sampl, Vec
 	g.m_roughness = comp.x;
 	g.m_metallic = comp.y;
 	g.m_specular = Vec3(comp.z);
+	const F32 maxEmission = comp.w * ABSOLUTE_MAX_EMISSION;
 
 	comp = textureLod(rt2, sampl, uv, 0.0);
-	g.m_normal = signedOctDecode(comp.xyw);
-	g.m_emission = comp.z * MAX_EMISSION;
+	g.m_normal = signedOctDecode(comp.yzw);
+	g.m_emission = comp.x * maxEmission;
 
 	g.m_velocity = Vec2(FLT_MAX); // Put something random
 

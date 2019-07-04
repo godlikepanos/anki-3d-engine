@@ -128,7 +128,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	drawQuad(cmdb);
 
 	// Draw UI
-	m_r->getUiStage().draw(ctx, cmdb);
+	m_r->getUiStage().draw(ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight, ctx, cmdb);
 }
 
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)

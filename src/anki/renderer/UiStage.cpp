@@ -31,7 +31,7 @@ Error UiStage::init(const ConfigSet&)
 	return Error::NONE;
 }
 
-void UiStage::draw(RenderingContext& ctx, CommandBufferPtr& cmdb)
+void UiStage::draw(U32 width, U32 height, RenderingContext& ctx, CommandBufferPtr& cmdb)
 {
 	// Early exit
 	if(ctx.m_renderQueue->m_uis.getSize() == 0)
@@ -43,6 +43,7 @@ void UiStage::draw(RenderingContext& ctx, CommandBufferPtr& cmdb)
 
 	m_canvas->handleInput();
 	m_canvas->beginBuilding();
+	m_canvas->resize(width, height);
 
 	for(UiQueueElement& el : ctx.m_renderQueue->m_uis)
 	{

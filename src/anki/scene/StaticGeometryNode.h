@@ -30,8 +30,6 @@ public:
 	ANKI_USE_RESULT Error init(const ModelPatch* modelPatch);
 
 private:
-	class RenderComponent;
-
 	const ModelPatch* m_modelPatch;
 };
 

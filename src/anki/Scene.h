@@ -9,6 +9,7 @@
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/StaticGeometryNode.h>
 #include <anki/scene/ParticleEmitterNode.h>
+#include <anki/scene/GpuParticleEmitterNode.h>
 #include <anki/scene/CameraNode.h>
 #include <anki/scene/LightNode.h>
 #include <anki/scene/StaticCollisionNode.h>
@@ -40,6 +41,7 @@
 #include <anki/scene/components/TriggerComponent.h>
 #include <anki/scene/components/FogDensityComponent.h>
 #include <anki/scene/components/GlobalIlluminationProbeComponent.h>
+#include <anki/scene/components/GenericGpuComputeJobComponent.h>
 
 #include <anki/scene/events/EventManager.h>
 #include <anki/scene/events/Event.h>

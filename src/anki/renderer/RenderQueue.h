@@ -55,7 +55,11 @@ class RenderableQueueElement final
 public:
 	RenderQueueDrawCallback m_callback;
 	const void* m_userData;
+
+	/// Elements with the same m_mergeKey and same m_callback may be merged and the m_callback will be called once.
+	/// Unless m_mergeKey is zero.
 	U64 m_mergeKey;
+
 	F32 m_distanceFromCamera; ///< Don't set this
 
 	RenderableQueueElement()
@@ -65,6 +69,33 @@ public:
 
 static_assert(
 	std::is_trivially_destructible<RenderableQueueElement>::value == true, "Should be trivially destructible");
+
+/// Context that contains variables for the GenericGpuComputeJobQueueElement.
+class GenericGpuComputeJobQueueElementContext final : public RenderingMatrices
+{
+public:
+	CommandBufferPtr m_commandBuffer;
+	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
+};
+
+/// Callback for GenericGpuComputeJobQueueElement.
+using GenericGpuComputeJobQueueElementCallback = void (*)(
+	GenericGpuComputeJobQueueElementContext& ctx, const void* userData);
+
+/// It has enough info to execute generic compute on the GPU.
+class GenericGpuComputeJobQueueElement final
+{
+public:
+	GenericGpuComputeJobQueueElementCallback m_callback;
+	const void* m_userData;
+
+	GenericGpuComputeJobQueueElement()
+	{
+	}
+};
+
+static_assert(std::is_trivially_destructible<GenericGpuComputeJobQueueElement>::value == true,
+	"Should be trivially destructible");
 
 /// Point light render queue element.
 class PointLightQueueElement final
@@ -319,6 +350,7 @@ public:
 	WeakArray<DecalQueueElement> m_decals;
 	WeakArray<FogDensityQueueElement> m_fogDensityVolumes;
 	WeakArray<UiQueueElement> m_uis;
+	WeakArray<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
 
 	/// Applies only if the RenderQueue holds shadow casters. It's the max timesamp of all shadow casters
 	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;

@@ -39,7 +39,6 @@ public:
 
 private:
 	class MoveFeedbackComponent;
-	class MyRenderComponent;
 
 	ModelResourcePtr m_model; ///< The resource
 
@@ -52,19 +51,6 @@ private:
 	void onMoveComponentUpdate(const MoveComponent& move);
 
 	void draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) const;
-
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-	{
-		const ModelNode& self = *static_cast<const ModelNode*>(userData[0]);
-		self.draw(ctx, userData);
-	}
-
-	void setupRenderableQueueElement(RenderableQueueElement& el) const
-	{
-		el.m_callback = drawCallback;
-		el.m_userData = this;
-		el.m_mergeKey = m_mergeKey;
-	}
 };
 /// @}
 

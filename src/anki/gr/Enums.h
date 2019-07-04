@@ -29,7 +29,7 @@ enum PrimitiveTopology : U8
 {
 	POINTS,
 	LINES,
-	LINE_STIP,
+	LINE_STRIP,
 	TRIANGLES,
 	TRIANGLE_STRIP,
 	PATCHES

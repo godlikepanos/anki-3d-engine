@@ -374,6 +374,8 @@ public:
 
 	void setRasterizationOrder(RasterizationOrder order);
 
+	void setLineWidth(F32 width);
+
 private:
 	StackAllocator<U8> m_alloc;
 
@@ -420,6 +422,9 @@ private:
 	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.
 	Array<U32, 2> m_stencilWriteMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
 	Array<U32, 2> m_stencilReferenceMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
+#if ANKI_ASSERTS_ENABLED
+	Bool m_lineWidthSet = false;
+#endif
 
 	/// Rebind the above dynamic state. Needed after pushing secondary command buffers (they dirty the state).
 	void rebindDynamicState();
