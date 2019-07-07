@@ -52,6 +52,8 @@ void DeveloperConsole::build(CanvasPtr ctx)
 		false,
 		ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
 
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, Vec2(4.0f, 1.0f)); // Tighten spacing
+
 	for(const LogItem& item : m_logItems)
 	{
 		switch(item.m_type)
@@ -71,9 +73,9 @@ void DeveloperConsole::build(CanvasPtr ctx)
 		}
 
 		static const Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {{"I", "E", "W", "F"}};
-		ImGui::Text("[%s][%s] %s (%s:%d %s)",
+		ImGui::TextWrapped("[%s][%s] %s (%s:%d %s)",
 			MSG_TEXT[static_cast<U>(item.m_type)],
-			item.m_subsystem,
+			(item.m_subsystem) ? item.m_subsystem : "N/A ",
 			item.m_msg.cstr(),
 			item.m_file,
 			item.m_line,
@@ -81,24 +83,20 @@ void DeveloperConsole::build(CanvasPtr ctx)
 
 		ImGui::PopStyleColor();
 	}
-	ImGui::EndChild();
 	ImGui::SetScrollHereY(1.0f);
+	ImGui::PopStyleVar();
+	ImGui::EndChild();
 
 	// Commands
 	ImGui::Separator();
-	if(ImGui::InputText("",
-		   &m_inputText[0],
-		   m_inputText.getSizeInBytes(),
-		   ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion
-			   | ImGuiInputTextFlags_CallbackHistory,
-		   [](ImGuiInputTextCallbackData* data) -> int {
-			   // TODO
-			   return 0;
-		   },
-		   this))
+	if(ImGui::InputText(
+		   "", &m_inputText[0], m_inputText.getSizeInBytes(), ImGuiInputTextFlags_EnterReturnsTrue, nullptr, nullptr))
 	{
-		printf("lala\n");
+		ANKI_LOGI("Command: %s", &m_inputText[0]);
+		m_inputText[0] = '\0';
 	}
+
+	ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
 
 	ImGui::End();
 	ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = oldWindowColor;

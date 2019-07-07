@@ -16,6 +16,7 @@ void Input::reset()
 	m_mousePosNdc = Vec2(-1.0f);
 	m_mousePosWin = UVec2(0u);
 	zeroMemory(m_events);
+	zeroMemory(m_textInput);
 }
 
 } // end namespace anki

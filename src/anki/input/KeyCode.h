@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <anki/util/Enum.h>
+
 namespace anki
 {
 
@@ -261,16 +263,21 @@ enum class KeyCode
 	EJECT,
 	SLEEP,
 
-	COUNT
+	COUNT,
+	FIRST = 0,
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(KeyCode, inline)
 
 enum class MouseButton
 {
 	LEFT,
 	MIDDLE,
 	RIGHT,
+	SCROLL_UP,
+	SCROLL_DOWN,
 
 	COUNT
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MouseButton, inline)
 
 } // end namespace anki
