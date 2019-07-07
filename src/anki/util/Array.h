@@ -145,6 +145,11 @@ public:
 	{
 		return N;
 	}
+
+	static constexpr PtrSize getSizeInBytes()
+	{
+		return N * sizeof(Value);
+	}
 };
 
 /// 2D Array. @code Array2d<X, 10, 2> a; @endcode is equivelent to @code X a[10][2]; @endcode

@@ -11,7 +11,7 @@
 #include <anki/util/System.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/core/Trace.h>
-
+#include <anki/core/DeveloperConsole.h>
 #include <anki/core/NativeWindow.h>
 #include <anki/input/Input.h>
 #include <anki/scene/SceneGraph.h>
@@ -95,7 +95,7 @@ public:
 	{
 	}
 
-	void build(CanvasPtr canvas)
+	void build(CanvasPtr canvas) override
 	{
 		// Misc
 		++m_bufferedFrames;
@@ -271,6 +271,7 @@ void App::cleanup()
 	m_heapAlloc.deleteInstance(m_script);
 	m_heapAlloc.deleteInstance(m_renderer);
 	m_statsUi.reset(nullptr);
+	m_console.reset(nullptr);
 	m_heapAlloc.deleteInstance(m_ui);
 	m_heapAlloc.deleteInstance(m_resources);
 	m_heapAlloc.deleteInstance(m_resourceFs);
@@ -447,6 +448,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	ANKI_CHECK(m_ui->init(m_allocCb, m_allocCbData, m_resources, m_gr, m_stagingMem, m_input));
 
 	ANKI_CHECK(m_ui->newInstance<StatsUi>(m_statsUi));
+	ANKI_CHECK(m_ui->newInstance<DeveloperConsole>(m_console, m_allocCb, m_allocCbData));
 
 	//
 	// Renderer
@@ -578,7 +580,7 @@ Error App::mainLoop()
 
 		// Inject stats UI
 		DynamicArrayAuto<UiQueueElement> newUiElementArr(m_heapAlloc);
-		injectStatsUiElement(newUiElementArr, rqueue);
+		injectUiElements(newUiElementArr, rqueue);
 
 		// Render
 		TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
@@ -639,24 +641,39 @@ Error App::mainLoop()
 	return Error::NONE;
 }
 
-void App::injectStatsUiElement(DynamicArrayAuto<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
+void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
 {
-	if(m_displayStats)
+	const U originalCount = rqueue.m_uis.getSize();
+	if(m_displayStats || m_consoleEnabled)
 	{
-		U count = rqueue.m_uis.getSize();
-		newUiElementArr.create(count + 1u);
+		const U extraElements = (m_displayStats != 0) + (m_consoleEnabled != 0);
+		newUiElementArr.create(originalCount + extraElements);
 
-		if(count)
+		if(originalCount > 0)
 		{
 			memcpy(&newUiElementArr[0], &rqueue.m_uis[0], rqueue.m_uis.getSizeInBytes());
 		}
 
+		rqueue.m_uis = WeakArray<UiQueueElement>(newUiElementArr);
+	}
+
+	U count = originalCount;
+	if(m_displayStats)
+	{
 		newUiElementArr[count].m_userData = m_statsUi.get();
 		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
 			static_cast<StatsUi*>(userData)->build(canvas);
 		};
+		++count;
+	}
 
-		rqueue.m_uis = WeakArray<UiQueueElement>(newUiElementArr);
+	if(m_consoleEnabled)
+	{
+		newUiElementArr[count].m_userData = m_console.get();
+		newUiElementArr[count].m_drawCallback = [](CanvasPtr& canvas, void* userData) -> void {
+			static_cast<DeveloperConsole*>(userData)->build(canvas);
+		};
+		++count;
 	}
 }
 

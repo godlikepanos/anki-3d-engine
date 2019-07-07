@@ -1,4 +1,4 @@
-set(SOURCES App.cpp Config.cpp StagingGpuMemoryManager.cpp)
+set(SOURCES App.cpp Config.cpp StagingGpuMemoryManager.cpp DeveloperConsole.cpp)
 
 if(SDL)
 	set(SOURCES ${SOURCES} NativeWindowSdl.cpp)

@@ -18,6 +18,34 @@ class File;
 /// @addtogroup util_other
 /// @{
 
+/// Logger message type.
+/// @memberof Logger
+enum class LoggerMessageType : U8
+{
+	NORMAL,
+	ERROR,
+	WARNING,
+	FATAL,
+	COUNT
+};
+
+/// Used as parammeter when emitting the signal.
+/// @memberof Logger
+class LoggerMessageInfo
+{
+public:
+	const char* m_file;
+	I32 m_line;
+	const char* m_func;
+	LoggerMessageType m_type;
+	const char* m_msg;
+	const char* m_subsystem;
+};
+
+/// The message handler callback.
+/// @memberof Logger
+using LoggerMessageHandlerCallback = void (*)(void*, const LoggerMessageInfo& info);
+
 /// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. It's
 /// thread safe.
 /// To add a new signal:
@@ -25,61 +53,45 @@ class File;
 class Logger
 {
 public:
-	/// Logger message type
-	enum class MessageType : U8
-	{
-		NORMAL,
-		ERROR,
-		WARNING,
-		FATAL,
-		COUNT
-	};
-
-	/// Used as parammeter when emitting the signal
-	class Info
-	{
-	public:
-		const char* m_file;
-		I32 m_line;
-		const char* m_func;
-		MessageType m_type;
-		const char* m_msg;
-		const char* m_subsystem;
-	};
-
-	/// The message handler callback
-	using MessageHandlerCallback = void (*)(void*, const Info& info);
-
 	/// Initialize the logger and add the default message handler
 	Logger();
 
 	~Logger();
 
 	/// Add a new message handler
-	void addMessageHandler(void* data, MessageHandlerCallback callback);
+	void addMessageHandler(void* data, LoggerMessageHandlerCallback callback);
+
+	/// Remove a message handler.
+	void removeMessageHandler(void* data, LoggerMessageHandlerCallback callback);
 
 	/// Add file message handler.
 	void addFileMessageHandler(File* file);
 
 	/// Send a message
-	void write(const char* file, int line, const char* func, const char* subsystem, MessageType type, const char* msg);
+	void write(
+		const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type, const char* msg);
 
 	/// Send a formated message
-	void writeFormated(
-		const char* file, int line, const char* func, const char* subsystem, MessageType type, const char* fmt, ...);
+	void writeFormated(const char* file,
+		int line,
+		const char* func,
+		const char* subsystem,
+		LoggerMessageType type,
+		const char* fmt,
+		...);
 
 private:
 	class Handler
 	{
 	public:
 		void* m_data = nullptr;
-		MessageHandlerCallback m_callback = nullptr;
+		LoggerMessageHandlerCallback m_callback = nullptr;
 
 		Handler() = default;
 
 		Handler(const Handler&) = default;
 
-		Handler(void* data, MessageHandlerCallback callback)
+		Handler(void* data, LoggerMessageHandlerCallback callback)
 			: m_data(data)
 			, m_callback(callback)
 		{
@@ -90,8 +102,8 @@ private:
 	Array<Handler, 4> m_handlers;
 	U32 m_handlersCount = 0;
 
-	static void defaultSystemMessageHandler(void*, const Info& info);
-	static void fileMessageHandler(void* file, const Info& info);
+	static void defaultSystemMessageHandler(void*, const LoggerMessageInfo& info);
+	static void fileMessageHandler(void* file, const LoggerMessageInfo& info);
 };
 
 typedef Singleton<Logger> LoggerSingleton;
@@ -100,7 +112,7 @@ typedef Singleton<Logger> LoggerSingleton;
 	do \
 	{ \
 		LoggerSingleton::get().writeFormated( \
-			ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, Logger::MessageType::t, __VA_ARGS__); \
+			ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, LoggerMessageType::t, __VA_ARGS__); \
 	} while(false);
 /// @}
 

@@ -56,6 +56,11 @@ Error SampleApp::userMainLoop(Bool& quit)
 		return Error::NONE;
 	}
 
+	if(in.getKey(KeyCode::BACKQUOTE) == 1)
+	{
+		setDisplayDeveloperConsole(!getDisplayDeveloperConsole());
+	}
+
 	// move the camera
 	static MoveComponent* mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
 
