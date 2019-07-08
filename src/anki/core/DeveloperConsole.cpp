@@ -106,7 +106,7 @@ void DeveloperConsole::build(CanvasPtr ctx)
 		const Error err = m_scriptEnv.evalString(&m_inputText[0]);
 		if(!err)
 		{
-			ANKI_CORE_LOGI("Script run without errors");
+			ANKI_CORE_LOGI("Script ran without errors");
 		}
 		m_inputText[0] = '\0';
 	}
