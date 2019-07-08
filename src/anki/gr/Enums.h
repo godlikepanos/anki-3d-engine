@@ -45,6 +45,7 @@ enum class FillMode : U8
 
 enum class FaceSelectionBit : U8
 {
+	NONE = 0,
 	FRONT = 1 << 0,
 	BACK = 1 << 1,
 	FRONT_AND_BACK = FRONT | BACK

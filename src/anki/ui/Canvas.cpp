@@ -227,7 +227,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	}
 
 	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
-	cmdb->setCullMode(FaceSelectionBit::FRONT);
+	cmdb->setCullMode(FaceSelectionBit::NONE);
 
 	const U fbWidth = drawData.DisplaySize.x * drawData.FramebufferScale.x;
 	const U fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
@@ -314,7 +314,9 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 		vertOffset += cmdList.VtxBuffer.Size;
 	}
 
+	// Restore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	cmdb->setCullMode(FaceSelectionBit::BACK);
 }
 
 } // end namespace anki

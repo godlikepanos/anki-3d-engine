@@ -21,7 +21,7 @@ DeveloperConsole::~DeveloperConsole()
 	}
 }
 
-Error DeveloperConsole::init(AllocAlignedCallback allocCb, void* allocCbUserData)
+Error DeveloperConsole::init(AllocAlignedCallback allocCb, void* allocCbUserData, ScriptManager* scriptManager)
 {
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	zeroMemory(m_inputText);
@@ -30,6 +30,8 @@ Error DeveloperConsole::init(AllocAlignedCallback allocCb, void* allocCbUserData
 
 	// Add a new callback to the logger
 	LoggerSingleton::get().addMessageHandler(this, loggerCallback);
+
+	ANKI_CHECK(m_scriptEnv.init(scriptManager));
 
 	return Error::NONE;
 }
@@ -83,18 +85,32 @@ void DeveloperConsole::build(CanvasPtr ctx)
 
 		ImGui::PopStyleColor();
 	}
-	ImGui::SetScrollHereY(1.0f);
+
+	const U32 timestamp = m_logItemsTimestamp.get();
+	const Bool scrollToLast = m_logItemsTimestampConsumed < timestamp;
+
+	if(scrollToLast)
+	{
+		ImGui::SetScrollHereY(1.0f);
+		++m_logItemsTimestampConsumed;
+	}
 	ImGui::PopStyleVar();
 	ImGui::EndChild();
 
 	// Commands
 	ImGui::Separator();
+	ImGui::PushItemWidth(-1.0f); // Use the whole size
 	if(ImGui::InputText(
 		   "", &m_inputText[0], m_inputText.getSizeInBytes(), ImGuiInputTextFlags_EnterReturnsTrue, nullptr, nullptr))
 	{
-		ANKI_LOGI("Command: %s", &m_inputText[0]);
+		const Error err = m_scriptEnv.evalString(&m_inputText[0]);
+		if(!err)
+		{
+			ANKI_CORE_LOGI("Script run without errors");
+		}
 		m_inputText[0] = '\0';
 	}
+	ImGui::PopItemWidth();
 
 	ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
 
@@ -135,6 +151,8 @@ void DeveloperConsole::newLogItem(const LoggerMessageInfo& inf)
 	// Push it back
 	m_logItems.pushBack(newLogItem);
 	++m_logItemCount;
+
+	m_logItemsTimestamp.fetchAdd(1);
 }
 
 } // end namespace anki

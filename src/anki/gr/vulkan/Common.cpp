@@ -100,6 +100,9 @@ VkCullModeFlags convertCullMode(FaceSelectionBit ak)
 	VkCullModeFlags out = 0;
 	switch(ak)
 	{
+	case FaceSelectionBit::NONE:
+		out = VK_CULL_MODE_NONE;
+		break;
 	case FaceSelectionBit::FRONT:
 		out = VK_CULL_MODE_FRONT_BIT;
 		break;

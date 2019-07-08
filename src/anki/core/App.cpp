@@ -267,11 +267,12 @@ App::~App()
 
 void App::cleanup()
 {
+	m_statsUi.reset(nullptr);
+	m_console.reset(nullptr);
+
 	m_heapAlloc.deleteInstance(m_scene);
 	m_heapAlloc.deleteInstance(m_script);
 	m_heapAlloc.deleteInstance(m_renderer);
-	m_statsUi.reset(nullptr);
-	m_console.reset(nullptr);
 	m_heapAlloc.deleteInstance(m_ui);
 	m_heapAlloc.deleteInstance(m_resources);
 	m_heapAlloc.deleteInstance(m_resourceFs);
@@ -447,9 +448,6 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_ui = m_heapAlloc.newInstance<UiManager>();
 	ANKI_CHECK(m_ui->init(m_allocCb, m_allocCbData, m_resources, m_gr, m_stagingMem, m_input));
 
-	ANKI_CHECK(m_ui->newInstance<StatsUi>(m_statsUi));
-	ANKI_CHECK(m_ui->newInstance<DeveloperConsole>(m_console, m_allocCb, m_allocCbData));
-
 	//
 	// Renderer
 	//
@@ -481,6 +479,12 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	// Inform the script engine about some subsystems
 	m_script->setRenderer(m_renderer);
 	m_script->setSceneGraph(m_scene);
+
+	//
+	// Misc
+	//
+	ANKI_CHECK(m_ui->newInstance<StatsUi>(m_statsUi));
+	ANKI_CHECK(m_ui->newInstance<DeveloperConsole>(m_console, m_allocCb, m_allocCbData, m_script));
 
 	ANKI_CORE_LOGI("Application initialized");
 

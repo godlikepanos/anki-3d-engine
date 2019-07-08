@@ -6,7 +6,9 @@
 #pragma once
 
 #include <anki/Ui.h>
+#include <anki/core/Common.h>
 #include <anki/util/List.h>
+#include <anki/script/ScriptEnvironment.h>
 
 namespace anki
 {
@@ -25,7 +27,7 @@ public:
 
 	~DeveloperConsole();
 
-	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbUserData);
+	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbUserData, ScriptManager* scriptManager);
 
 	void build(CanvasPtr ctx) override;
 
@@ -48,6 +50,11 @@ private:
 	IntrusiveList<LogItem> m_logItems;
 	U32 m_logItemCount = 0;
 	Array<char, 256> m_inputText;
+
+	Atomic<U32> m_logItemsTimestamp = {1};
+	U32 m_logItemsTimestampConsumed = 0;
+
+	ScriptEnvironment m_scriptEnv;
 
 	void newLogItem(const LoggerMessageInfo& inf);
 
