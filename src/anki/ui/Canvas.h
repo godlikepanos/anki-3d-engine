@@ -38,6 +38,16 @@ public:
 		m_height = height;
 	}
 
+	U32 getWidth() const
+	{
+		return m_width;
+	}
+
+	U32 getHeight() const
+	{
+		return m_height;
+	}
+
 	/// @name building commands. The order matters.
 	/// @{
 

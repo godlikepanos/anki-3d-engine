@@ -147,6 +147,16 @@ public:
 		return m_displayStats;
 	}
 
+	void setDisplayDeveloperConsole(Bool display)
+	{
+		m_consoleEnabled = display;
+	}
+
+	Bool getDisplayDeveloperConsole() const
+	{
+		return m_consoleEnabled;
+	}
+
 private:
 	class StatsUi;
 
@@ -171,6 +181,8 @@ private:
 	// Misc
 	UiImmediateModeBuilderPtr m_statsUi;
 	Bool m_displayStats = false;
+	UiImmediateModeBuilderPtr m_console;
+	Bool m_consoleEnabled = false;
 	Timestamp m_globalTimestamp = 1;
 	ThreadHive* m_threadHive = nullptr;
 	String m_settingsDir; ///< The path that holds the configuration
@@ -198,8 +210,8 @@ private:
 	ANKI_USE_RESULT Error initDirs(const ConfigSet& cfg);
 	void cleanup();
 
-	/// Inject a new UI element in the render queue for displaying stats.
-	void injectStatsUiElement(DynamicArrayAuto<UiQueueElement>& elements, RenderQueue& rqueue);
+	/// Inject a new UI element in the render queue for displaying various stuff.
+	void injectUiElements(DynamicArrayAuto<UiQueueElement>& elements, RenderQueue& rqueue);
 };
 
 } // end namespace anki

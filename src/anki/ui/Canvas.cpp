@@ -65,6 +65,34 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	ImGui::GetIO().IniFilename = nullptr;
 	ImGui::GetIO().LogFilename = nullptr;
 	ImGui::StyleColorsLight();
+
+#define ANKI_HANDLE(ak, im) ImGui::GetIO().KeyMap[im] = static_cast<int>(ak);
+
+	ANKI_HANDLE(KeyCode::TAB, ImGuiKey_Tab)
+	ANKI_HANDLE(KeyCode::LEFT, ImGuiKey_LeftArrow)
+	ANKI_HANDLE(KeyCode::RIGHT, ImGuiKey_RightArrow)
+	ANKI_HANDLE(KeyCode::UP, ImGuiKey_UpArrow)
+	ANKI_HANDLE(KeyCode::DOWN, ImGuiKey_DownArrow)
+	ANKI_HANDLE(KeyCode::PAGEUP, ImGuiKey_PageUp)
+	ANKI_HANDLE(KeyCode::PAGEDOWN, ImGuiKey_PageDown)
+	ANKI_HANDLE(KeyCode::HOME, ImGuiKey_Home)
+	ANKI_HANDLE(KeyCode::END, ImGuiKey_End)
+	ANKI_HANDLE(KeyCode::INSERT, ImGuiKey_Insert)
+	ANKI_HANDLE(KeyCode::DELETE, ImGuiKey_Delete)
+	ANKI_HANDLE(KeyCode::BACKSPACE, ImGuiKey_Backspace)
+	ANKI_HANDLE(KeyCode::SPACE, ImGuiKey_Space)
+	ANKI_HANDLE(KeyCode::RETURN, ImGuiKey_Enter)
+	// ANKI_HANDLE(KeyCode::RETURN2, ImGuiKey_Enter)
+	ANKI_HANDLE(KeyCode::ESCAPE, ImGuiKey_Escape)
+	ANKI_HANDLE(KeyCode::A, ImGuiKey_A)
+	ANKI_HANDLE(KeyCode::C, ImGuiKey_C)
+	ANKI_HANDLE(KeyCode::V, ImGuiKey_V)
+	ANKI_HANDLE(KeyCode::X, ImGuiKey_X)
+	ANKI_HANDLE(KeyCode::Y, ImGuiKey_Y)
+	ANKI_HANDLE(KeyCode::Z, ImGuiKey_Z)
+
+#undef ANKI_HANDLE
+
 	ImGui::SetCurrentContext(nullptr);
 	unsetImAllocator();
 
@@ -91,6 +119,45 @@ void Canvas::handleInput()
 
 	io.MouseClicked[0] = in.getMouseButton(MouseButton::LEFT) == 1;
 	io.MouseDown[0] = in.getMouseButton(MouseButton::LEFT) > 0;
+
+	if(in.getMouseButton(MouseButton::SCROLL_UP) == 1)
+	{
+		io.MouseWheel = in.getMouseButton(MouseButton::SCROLL_UP);
+	}
+	else if(in.getMouseButton(MouseButton::SCROLL_DOWN) == 1)
+	{
+		io.MouseWheel = -I32(in.getMouseButton(MouseButton::SCROLL_DOWN));
+	}
+
+// Handle keyboard
+#define ANKI_HANDLE(ak) io.KeysDown[static_cast<int>(ak)] = (in.getKey(ak) == 1);
+
+	ANKI_HANDLE(KeyCode::TAB)
+	ANKI_HANDLE(KeyCode::LEFT)
+	ANKI_HANDLE(KeyCode::RIGHT)
+	ANKI_HANDLE(KeyCode::UP)
+	ANKI_HANDLE(KeyCode::DOWN)
+	ANKI_HANDLE(KeyCode::PAGEUP)
+	ANKI_HANDLE(KeyCode::PAGEDOWN)
+	ANKI_HANDLE(KeyCode::HOME)
+	ANKI_HANDLE(KeyCode::END)
+	ANKI_HANDLE(KeyCode::INSERT)
+	ANKI_HANDLE(KeyCode::DELETE)
+	ANKI_HANDLE(KeyCode::BACKSPACE)
+	ANKI_HANDLE(KeyCode::SPACE)
+	ANKI_HANDLE(KeyCode::RETURN)
+	// ANKI_HANDLE(KeyCode::RETURN2)
+	ANKI_HANDLE(KeyCode::ESCAPE)
+	ANKI_HANDLE(KeyCode::A)
+	ANKI_HANDLE(KeyCode::C)
+	ANKI_HANDLE(KeyCode::V)
+	ANKI_HANDLE(KeyCode::X)
+	ANKI_HANDLE(KeyCode::Y)
+	ANKI_HANDLE(KeyCode::Z)
+
+#undef ANKI_HANDLE
+
+	io.AddInputCharactersUTF8(in.getTextInput().cstr());
 
 	// End
 	ImGui::SetCurrentContext(nullptr);
@@ -160,7 +227,7 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	}
 
 	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
-	cmdb->setCullMode(FaceSelectionBit::FRONT);
+	cmdb->setCullMode(FaceSelectionBit::NONE);
 
 	const U fbWidth = drawData.DisplaySize.x * drawData.FramebufferScale.x;
 	const U fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
@@ -247,7 +314,9 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 		vertOffset += cmdList.VtxBuffer.Size;
 	}
 
+	// Restore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	cmdb->setCullMode(FaceSelectionBit::BACK);
 }
 
 } // end namespace anki

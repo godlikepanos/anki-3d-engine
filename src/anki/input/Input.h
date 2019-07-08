@@ -99,6 +99,24 @@ public:
 		++m_events[static_cast<U>(eventId)];
 	}
 
+	template<typename TFunc>
+	void iteratePressedKeys(TFunc func) const
+	{
+		for(KeyCode i = KeyCode::FIRST; i < KeyCode::COUNT; ++i)
+		{
+			if(m_keys[i] > 0)
+			{
+				func(i, m_keys[i]);
+			}
+		}
+	}
+
+	/// Get some easy to digest input from the keyboard.
+	CString getTextInput() const
+	{
+		return &m_textInput[0];
+	}
+
 private:
 	InputImpl* m_impl = nullptr;
 	NativeWindow* m_nativeWindow = nullptr;
@@ -120,6 +138,9 @@ private:
 	UVec2 m_mousePosWin = UVec2(0u);
 
 	Array<U8, static_cast<U>(InputEvent::COUNT)> m_events;
+
+	/// The keybord input as ascii.
+	Array<char, static_cast<U>(KeyCode::COUNT)> m_textInput;
 
 	Bool m_lockCurs = false;
 

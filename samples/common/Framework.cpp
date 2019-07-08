@@ -56,111 +56,128 @@ Error SampleApp::userMainLoop(Bool& quit)
 		return Error::NONE;
 	}
 
-	// move the camera
-	static MoveComponent* mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
-
-	if(in.getKey(KeyCode::_1) == 1)
+	if(in.getKey(KeyCode::BACKQUOTE) == 1)
 	{
-		mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
+		setDisplayDeveloperConsole(!getDisplayDeveloperConsole());
 	}
 
-	if(in.getKey(KeyCode::F1) == 1)
+	if(!getDisplayDeveloperConsole())
 	{
-		static U mode = 0;
-		mode = (mode + 1) % 3;
-		if(mode == 0)
+		in.hideCursor(true);
+		in.lockCursor(true);
+
+		// move the camera
+		static MoveComponent* mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
+
+		if(in.getKey(KeyCode::_1) == 1)
 		{
-			renderer.getDbg().setEnabled(false);
+			mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
 		}
-		else if(mode == 1)
+
+		if(in.getKey(KeyCode::F1) == 1)
 		{
-			renderer.getDbg().setEnabled(true);
-			renderer.getDbg().setDepthTestEnabled(true);
-			renderer.getDbg().setDitheredDepthTestEnabled(false);
+			static U mode = 0;
+			mode = (mode + 1) % 3;
+			if(mode == 0)
+			{
+				renderer.getDbg().setEnabled(false);
+			}
+			else if(mode == 1)
+			{
+				renderer.getDbg().setEnabled(true);
+				renderer.getDbg().setDepthTestEnabled(true);
+				renderer.getDbg().setDitheredDepthTestEnabled(false);
+			}
+			else
+			{
+				renderer.getDbg().setEnabled(true);
+				renderer.getDbg().setDepthTestEnabled(false);
+				renderer.getDbg().setDitheredDepthTestEnabled(true);
+			}
 		}
-		else
+		if(in.getKey(KeyCode::F2) == 1)
 		{
-			renderer.getDbg().setEnabled(true);
-			renderer.getDbg().setDepthTestEnabled(false);
-			renderer.getDbg().setDitheredDepthTestEnabled(true);
+			// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
+		}
+
+		if(in.getKey(KeyCode::UP))
+		{
+			mover->rotateLocalX(ROTATE_ANGLE);
+		}
+
+		if(in.getKey(KeyCode::DOWN))
+		{
+			mover->rotateLocalX(-ROTATE_ANGLE);
+		}
+
+		if(in.getKey(KeyCode::LEFT))
+		{
+			mover->rotateLocalY(ROTATE_ANGLE);
+		}
+
+		if(in.getKey(KeyCode::RIGHT))
+		{
+			mover->rotateLocalY(-ROTATE_ANGLE);
+		}
+
+		if(in.getKey(KeyCode::A))
+		{
+			mover->moveLocalX(-MOVE_DISTANCE);
+		}
+
+		if(in.getKey(KeyCode::D))
+		{
+			mover->moveLocalX(MOVE_DISTANCE);
+		}
+
+		if(in.getKey(KeyCode::C))
+		{
+			mover->moveLocalY(-MOVE_DISTANCE);
+		}
+
+		if(in.getKey(KeyCode::SPACE))
+		{
+			mover->moveLocalY(MOVE_DISTANCE);
+		}
+
+		if(in.getKey(KeyCode::W))
+		{
+			mover->moveLocalZ(-MOVE_DISTANCE);
+		}
+
+		if(in.getKey(KeyCode::S))
+		{
+			mover->moveLocalZ(MOVE_DISTANCE);
+		}
+
+		if(in.getKey(KeyCode::Q))
+		{
+			mover->rotateLocalZ(ROTATE_ANGLE);
+		}
+
+		if(in.getKey(KeyCode::E))
+		{
+			mover->rotateLocalZ(-ROTATE_ANGLE);
+		}
+
+		if(in.getKey(KeyCode::F12) == 1)
+		{
+			CoreTracerSingleton::get().m_enabled = !CoreTracerSingleton::get().m_enabled;
+		}
+
+		if(in.getMousePosition() != Vec2(0.0))
+		{
+			F32 angY =
+				-ROTATE_ANGLE * in.getMousePosition().x() * MOUSE_SENSITIVITY * getMainRenderer().getAspectRatio();
+
+			mover->rotateLocalY(angY);
+			mover->rotateLocalX(ROTATE_ANGLE * in.getMousePosition().y() * MOUSE_SENSITIVITY);
 		}
 	}
-	if(in.getKey(KeyCode::F2) == 1)
+	else
 	{
-		// renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
-	}
-
-	if(in.getKey(KeyCode::UP))
-	{
-		mover->rotateLocalX(ROTATE_ANGLE);
-	}
-
-	if(in.getKey(KeyCode::DOWN))
-	{
-		mover->rotateLocalX(-ROTATE_ANGLE);
-	}
-
-	if(in.getKey(KeyCode::LEFT))
-	{
-		mover->rotateLocalY(ROTATE_ANGLE);
-	}
-
-	if(in.getKey(KeyCode::RIGHT))
-	{
-		mover->rotateLocalY(-ROTATE_ANGLE);
-	}
-
-	if(in.getKey(KeyCode::A))
-	{
-		mover->moveLocalX(-MOVE_DISTANCE);
-	}
-
-	if(in.getKey(KeyCode::D))
-	{
-		mover->moveLocalX(MOVE_DISTANCE);
-	}
-
-	if(in.getKey(KeyCode::C))
-	{
-		mover->moveLocalY(-MOVE_DISTANCE);
-	}
-
-	if(in.getKey(KeyCode::SPACE))
-	{
-		mover->moveLocalY(MOVE_DISTANCE);
-	}
-
-	if(in.getKey(KeyCode::W))
-	{
-		mover->moveLocalZ(-MOVE_DISTANCE);
-	}
-
-	if(in.getKey(KeyCode::S))
-	{
-		mover->moveLocalZ(MOVE_DISTANCE);
-	}
-
-	if(in.getKey(KeyCode::Q))
-	{
-		mover->rotateLocalZ(ROTATE_ANGLE);
-	}
-
-	if(in.getKey(KeyCode::E))
-	{
-		mover->rotateLocalZ(-ROTATE_ANGLE);
-	}
-
-	if(in.getKey(KeyCode::F12) == 1)
-	{
-		CoreTracerSingleton::get().m_enabled = !CoreTracerSingleton::get().m_enabled;
-	}
-
-	if(in.getMousePosition() != Vec2(0.0))
-	{
-		F32 angY = -ROTATE_ANGLE * in.getMousePosition().x() * MOUSE_SENSITIVITY * getMainRenderer().getAspectRatio();
-
-		mover->rotateLocalY(angY);
-		mover->rotateLocalX(ROTATE_ANGLE * in.getMousePosition().y() * MOUSE_SENSITIVITY);
+		in.hideCursor(false);
+		in.lockCursor(false);
 	}
 
 	return Error::NONE;

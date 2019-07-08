@@ -301,6 +301,8 @@ Error Input::handleEvents()
 {
 	ANKI_ASSERT(m_nativeWindow != nullptr);
 
+	m_textInput[0] = '\0';
+
 	// add the times a key is being pressed
 	for(auto& k : m_keys)
 	{
@@ -350,6 +352,10 @@ Error Input::handleEvents()
 			}
 			break;
 		}
+		case SDL_MOUSEWHEEL:
+			m_mouseBtns[MouseButton::SCROLL_UP] = event.wheel.y > 0;
+			m_mouseBtns[MouseButton::SCROLL_DOWN] = event.wheel.y < 0;
+			break;
 		case SDL_MOUSEMOTION:
 			m_mousePosWin.x() = event.button.x;
 			m_mousePosWin.y() = event.button.y;
@@ -360,6 +366,7 @@ Error Input::handleEvents()
 			addEvent(InputEvent::WINDOW_CLOSED);
 			break;
 		case SDL_TEXTINPUT:
+			std::strncpy(&m_textInput[0], event.text.text, m_textInput.getSize() - 1);
 			break;
 		}
 	} // end while events

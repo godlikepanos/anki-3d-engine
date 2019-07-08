@@ -17,7 +17,7 @@
 namespace anki
 {
 
-static const Array<const char*, static_cast<U>(Logger::MessageType::COUNT)> MSG_TEXT = {{"I", "E", "W", "F"}};
+static const Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {{"I", "E", "W", "F"}};
 
 Logger::Logger()
 {
@@ -28,17 +28,41 @@ Logger::~Logger()
 {
 }
 
-void Logger::addMessageHandler(void* data, MessageHandlerCallback callback)
+void Logger::addMessageHandler(void* data, LoggerMessageHandlerCallback callback)
 {
+	LockGuard<Mutex> lock(m_mutex);
 	m_handlers[m_handlersCount++] = Handler(data, callback);
 }
 
+void Logger::removeMessageHandler(void* data, LoggerMessageHandlerCallback callback)
+{
+	LockGuard<Mutex> lock(m_mutex);
+
+	U i;
+	for(i = 0; i < m_handlersCount; ++i)
+	{
+		if(m_handlers[i].m_callback == callback && m_handlers[i].m_data == data)
+		{
+			break;
+		}
+	}
+
+	if(i < m_handlersCount)
+	{
+		for(U j = i + 1; j < m_handlersCount; ++j)
+		{
+			m_handlers[j - 1] = m_handlers[j];
+		}
+		--m_handlersCount;
+	}
+}
+
 void Logger::write(
-	const char* file, int line, const char* func, const char* subsystem, MessageType type, const char* msg)
+	const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type, const char* msg)
 {
 	m_mutex.lock();
 
-	Info inf = {file, line, func, type, msg, subsystem};
+	LoggerMessageInfo inf = {file, line, func, type, msg, subsystem};
 
 	U count = m_handlersCount;
 	while(count-- != 0)
@@ -48,14 +72,14 @@ void Logger::write(
 
 	m_mutex.unlock();
 
-	if(type == MessageType::FATAL)
+	if(type == LoggerMessageType::FATAL)
 	{
 		abort();
 	}
 }
 
 void Logger::writeFormated(
-	const char* file, int line, const char* func, const char* subsystem, MessageType type, const char* fmt, ...)
+	const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type, const char* fmt, ...)
 {
 	char buffer[1024 * 10];
 	va_list args;
@@ -90,7 +114,7 @@ void Logger::writeFormated(
 	}
 }
 
-void Logger::defaultSystemMessageHandler(void*, const Info& info)
+void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 {
 #if ANKI_OS == ANKI_OS_LINUX
 	FILE* out = nullptr;
@@ -100,22 +124,22 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 
 	switch(info.m_type)
 	{
-	case Logger::MessageType::NORMAL:
+	case LoggerMessageType::NORMAL:
 		out = stdout;
 		terminalColor = "\033[0;32m";
 		terminalColorBg = "\033[1;42;37m";
 		break;
-	case Logger::MessageType::ERROR:
+	case LoggerMessageType::ERROR:
 		out = stderr;
 		terminalColor = "\033[0;31m";
 		terminalColorBg = "\033[1;41;37m";
 		break;
-	case Logger::MessageType::WARNING:
+	case LoggerMessageType::WARNING:
 		out = stderr;
 		terminalColor = "\033[2;33m";
 		terminalColorBg = "\033[1;43;37m";
 		break;
-	case Logger::MessageType::FATAL:
+	case LoggerMessageType::FATAL:
 		out = stderr;
 		terminalColor = "\033[0;31m";
 		terminalColorBg = "\033[1;41;37m";
@@ -149,16 +173,16 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 
 	switch(info.m_type)
 	{
-	case Logger::MessageType::NORMAL:
+	case LoggerMessageType::NORMAL:
 		andMsgType = ANDROID_LOG_INFO;
 		break;
-	case Logger::MessageType::ERROR:
+	case LoggerMessageType::ERROR:
 		andMsgType = ANDROID_LOG_ERROR;
 		break;
-	case Logger::MessageType::WARNING:
+	case LoggerMessageType::WARNING:
 		andMsgType = ANDROID_LOG_WARN;
 		break;
-	case Logger::MessageType::FATAL:
+	case LoggerMessageType::FATAL:
 		andMsgType = ANDROID_LOG_ERROR;
 		break;
 	default:
@@ -173,16 +197,16 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 
 	switch(info.m_type)
 	{
-	case Logger::MessageType::NORMAL:
+	case LoggerMessageType::NORMAL:
 		out = stdout;
 		break;
-	case Logger::MessageType::ERROR:
+	case LoggerMessageType::ERROR:
 		out = stderr;
 		break;
-	case Logger::MessageType::WARNING:
+	case LoggerMessageType::WARNING:
 		out = stderr;
 		break;
-	case Logger::MessageType::FATAL:
+	case LoggerMessageType::FATAL:
 		out = stderr;
 		break;
 	default:
@@ -202,7 +226,7 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 #endif
 }
 
-void Logger::fileMessageHandler(void* pfile, const Info& info)
+void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 {
 	File* file = reinterpret_cast<File*>(pfile);
 
