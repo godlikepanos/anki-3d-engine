@@ -122,6 +122,17 @@ public:
 		m_flags.set(SHADOW, x);
 	}
 
+	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
+	{
+		m_drawCallback = callback;
+		m_drawCallbackUserData = userData;
+	}
+
+	const Transform& getTransform() const
+	{
+		return m_trf;
+	}
+
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
@@ -131,8 +142,8 @@ public:
 		el.m_worldPosition = m_trf.getOrigin().xyz();
 		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_userData = this;
-		el.m_drawCallback = pointLightDebugDrawCallback;
+		el.m_debugDrawCallback = m_drawCallback;
+		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
 	}
 
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
@@ -145,8 +156,8 @@ public:
 		el.m_outerAngle = m_spot.m_outerAngle;
 		el.m_innerAngle = m_spot.m_innerAngle;
 		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_userData = this;
-		el.m_drawCallback = spotLightDebugDrawCallback;
+		el.m_debugDrawCallback = m_drawCallback;
+		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
 	}
 
 	/// Setup a directional queue element.
@@ -162,6 +173,8 @@ private:
 	U64 m_uuid;
 	Vec4 m_diffColor = Vec4(0.5f);
 	Transform m_trf = Transform::getIdentity();
+	RenderQueueDrawCallback m_drawCallback = nullptr;
+	const void* m_drawCallbackUserData = nullptr;
 
 	struct Point
 	{
@@ -200,21 +213,6 @@ private:
 
 	LightComponentType m_type;
 	BitMask<U8> m_flags = BitMask<U8>(DIRTY | TRF_DIRTY);
-
-	static void pointLightDebugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-	{
-		// TODO
-	}
-
-	static void spotLightDebugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-	{
-		// TODO
-	}
-
-	static void derectionalLightDebugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-	{
-		// TODO
-	}
 };
 /// @}
 

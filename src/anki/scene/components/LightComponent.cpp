@@ -83,8 +83,8 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 	const U shadowCascadeCount = cascadeFrustumComponents.getSize();
 
-	el.m_userData = this;
-	el.m_drawCallback = derectionalLightDebugDrawCallback;
+	el.m_drawCallback = m_drawCallback;
+	el.m_drawCallbackUserData = m_drawCallbackUserData;
 	el.m_uuid = m_uuid;
 	el.m_diffuseColor = m_diffColor.xyz();
 	el.m_direction = -m_trf.getRotation().getZAxis().xyz();

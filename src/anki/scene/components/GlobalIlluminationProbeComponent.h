@@ -27,7 +27,10 @@ public:
 		ANKI_ASSERT(uuid > 0);
 	}
 
-	ANKI_USE_RESULT Error init(ResourceManager& rsrc);
+	ANKI_USE_RESULT Error init()
+	{
+		return Error::NONE;
+	}
 
 	/// Set the bounding box in world coordinates.
 	void setBoundingBox(const Vec4& min, const Vec4& max)
@@ -88,12 +91,19 @@ public:
 		return m_renderPosition.xyz0();
 	}
 
+	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
+	{
+		m_drawCallback = callback;
+		m_drawCallbackUserData = userData;
+	}
+
 	void setupGlobalIlluminationProbeQueueElement(GlobalIlluminationProbeQueueElement& el)
 	{
 		el.m_uuid = m_uuid;
 		el.m_feedbackCallback = giProbeQueueElementFeedbackCallback;
-		el.m_debugDrawCallback = debugDrawCallback;
-		el.m_userData = this;
+		el.m_feedbackCallbackUserData = this;
+		el.m_debugDrawCallback = m_drawCallback;
+		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
 		el.m_renderQueues = {};
 		el.m_aabbMin = m_aabbMin;
 		el.m_aabbMax = m_aabbMax;
@@ -111,7 +121,8 @@ public:
 	}
 
 private:
-	ShaderProgramResourcePtr m_dbgProg;
+	RenderQueueDrawCallback m_drawCallback = nullptr;
+	const void* m_drawCallbackUserData = nullptr;
 	U64 m_uuid;
 	Vec3 m_aabbMin = Vec3(-1.0f);
 	Vec3 m_aabbMax = Vec3(+1.0f);
@@ -131,13 +142,6 @@ private:
 		self.m_markedForRendering = fillRenderQueuesOnNextFrame;
 		self.m_renderPosition = eyeWorldPosition.xyz();
 	}
-
-	static void debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-	{
-		debugDraw(ctx, userData);
-	}
-
-	static void debugDraw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 
 	/// Recalc come values.
 	void updateMembers()

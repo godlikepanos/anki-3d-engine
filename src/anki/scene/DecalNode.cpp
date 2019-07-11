@@ -7,6 +7,7 @@
 #include <anki/scene/components/DecalComponent.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
+#include <anki/resource/ResourceManager.h>
 
 namespace anki
 {
@@ -68,8 +69,12 @@ Error DecalNode::init()
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
 	DecalComponent* decalc = newComponent<DecalComponent>(this);
+	decalc->setDrawCallback(drawCallback, this);
 	newComponent<ShapeFeedbackComponent>();
 	newComponent<SpatialComponent>(this, &decalc->getBoundingVolume());
+
+	ANKI_CHECK(m_dbgDrawer.init(&getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/GreenDecal.ankitex", m_dbgTex));
 
 	return Error::NONE;
 }
@@ -88,6 +93,64 @@ void DecalNode::onDecalUpdated()
 {
 	SpatialComponent& sc = getComponent<SpatialComponent>();
 	sc.markForUpdate();
+}
+
+void DecalNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
+{
+	Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(userData.getSize());
+	Vec3* const positions = ctx.m_frameAllocator.newArray<Vec3>(userData.getSize());
+	for(U i = 0; i < userData.getSize(); ++i)
+	{
+		const DecalNode& self = *static_cast<const DecalNode*>(userData[i]);
+		const DecalComponent& decalComp = self.getComponent<DecalComponent>();
+
+		Mat3 rot = decalComp.getBoundingVolume().getRotation().getRotationPart();
+		const Vec4 tsl = decalComp.getBoundingVolume().getCenter().xyz1();
+		const Vec3 scale = decalComp.getBoundingVolume().getExtend().xyz();
+
+		rot(0, 0) *= scale.x();
+		rot(1, 1) *= scale.y();
+		rot(2, 2) *= scale.z();
+
+		mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl, rot, 1.0f);
+		positions[i] = tsl.xyz();
+	}
+
+	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	if(enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+	}
+	else
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+	}
+
+	const DecalNode& self = *static_cast<const DecalNode*>(userData[0]);
+	self.m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()),
+		Vec4(0.0f, 1.0f, 0.0f, 1.0f),
+		1.0f,
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+		2.0f,
+		*ctx.m_stagingGpuAllocator,
+		ctx.m_commandBuffer);
+
+	self.m_dbgDrawer.drawBillboardTextures(ctx.m_projectionMatrix,
+		ctx.m_viewMatrix,
+		ConstWeakArray<Vec3>(positions, userData.getSize()),
+		Vec4(1.0f),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+		self.m_dbgTex->getGrTextureView(),
+		ctx.m_sampler,
+		Vec2(0.75f),
+		*ctx.m_stagingGpuAllocator,
+		ctx.m_commandBuffer);
+
+	// Restore state
+	if(!enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+	}
 }
 
 } // end namespace anki

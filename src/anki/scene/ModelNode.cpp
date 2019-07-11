@@ -54,7 +54,7 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 {
 	ANKI_ASSERT(modelPatchIdx < resource->getModelPatches().getSize());
 
-	ANKI_CHECK(getResourceManager().loadResource("shaders/SceneDebug.glslp", m_dbgProg));
+	ANKI_CHECK(m_dbgDrawer.init(&getResourceManager()));
 	m_model = resource;
 	m_modelPatchIdx = modelPatchIdx;
 
@@ -204,16 +204,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 	{
 		// Draw the bounding volumes
 
-		// Allocate staging memory
-		StagingGpuMemoryToken vertToken, indicesToken;
-		U32 indexCount;
-		allocateAndPopulateDebugBox(*ctx.m_stagingGpuAllocator, vertToken, indicesToken, indexCount);
-
-		// Set the uniforms
-		StagingGpuMemoryToken unisToken;
-		Mat4* mvps = static_cast<Mat4*>(ctx.m_stagingGpuAllocator->allocateFrame(
-			sizeof(Mat4) * userData.getSize() + sizeof(Vec4), StagingGpuMemoryType::UNIFORM, unisToken));
-
+		Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(userData.getSize());
 		for(U i = 0; i < userData.getSize(); ++i)
 		{
 			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
@@ -228,22 +219,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			rot(1, 1) *= scale.y() * MARGIN;
 			rot(2, 2) *= scale.z() * MARGIN;
 
-			*mvps = ctx.m_viewProjectionMatrix * Mat4(tsl, rot, 1.0f);
-			++mvps;
+			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl, rot, 1.0f);
 		}
-
-		Vec4* color = reinterpret_cast<Vec4*>(mvps);
-		*color = Vec4(1.0f, 0.0f, 1.0f, 1.0f);
-
-		// Setup state
-		ShaderProgramResourceMutationInitList<2> mutators(m_dbgProg);
-		mutators.add("COLOR_TEXTURE", 0);
-		mutators.add("DITHERED_DEPTH_TEST", ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON));
-		ShaderProgramResourceConstantValueInitList<1> consts(m_dbgProg);
-		consts.add("INSTANCE_COUNT", U32(userData.getSize()));
-		const ShaderProgramResourceVariant* variant;
-		m_dbgProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
-		cmdb->bindShaderProgram(variant->getProgram());
 
 		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
 		if(enableDepthTest)
@@ -255,14 +232,13 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 		}
 
-		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
-		cmdb->bindVertexBuffer(0, vertToken.m_buffer, vertToken.m_offset, sizeof(Vec3));
-		cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
-
-		cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
-
-		cmdb->setLineWidth(1.0f);
-		cmdb->drawElements(PrimitiveTopology::LINES, indexCount, userData.getSize());
+		m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()),
+			Vec4(1.0f, 0.0f, 1.0f, 1.0f),
+			1.0f,
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+			2.0f,
+			*ctx.m_stagingGpuAllocator,
+			cmdb);
 
 		// Restore state
 		if(!enableDepthTest)

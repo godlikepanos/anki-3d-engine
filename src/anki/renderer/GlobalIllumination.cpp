@@ -478,7 +478,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 
 			const U cellToRender = (cacheEntryDirty) ? 0 : entry.m_renderedCells;
 			const Vec3 cellPos = computeProbeCellPosition(cellToRender, probe);
-			probe.m_feedbackCallback(true, probe.m_userData, cellPos.xyz0());
+			probe.m_feedbackCallback(true, probe.m_feedbackCallbackUserData, cellPos.xyz0());
 			continue;
 		}
 		else if(!canUpdateThisFrame)
@@ -533,14 +533,14 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 		if(entry.m_renderedCells == probe.m_totalCellCount)
 		{
 			// Don't gather renderables next frame if it's done
-			probe.m_feedbackCallback(false, probe.m_userData, Vec4(0.0f));
+			probe.m_feedbackCallback(false, probe.m_feedbackCallbackUserData, Vec4(0.0f));
 		}
 		else if(!foundProbeToUpdateNextFrame)
 		{
 			// Gather rendederables from the same probe next frame
 			foundProbeToUpdateNextFrame = true;
 			const Vec3 cellPos = computeProbeCellPosition(entry.m_renderedCells, probe);
-			probe.m_feedbackCallback(true, probe.m_userData, cellPos.xyz0());
+			probe.m_feedbackCallback(true, probe.m_feedbackCallbackUserData, cellPos.xyz0());
 		}
 
 		// Push the probe to the new list

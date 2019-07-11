@@ -8,6 +8,7 @@
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
+#include <anki/scene/DebugDrawer.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/collision/Obb.h>
 #include <anki/renderer/RenderQueue.h>
@@ -46,7 +47,7 @@ private:
 	U64 m_mergeKey = 0;
 	U32 m_modelPatchIdx = 0;
 
-	ShaderProgramResourcePtr m_dbgProg;
+	DebugDrawer2 m_dbgDrawer;
 
 	void onMoveComponentUpdate(const MoveComponent& move);
 

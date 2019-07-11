@@ -126,6 +126,70 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator,
 	StagingGpuMemoryToken& vertsToken,
 	StagingGpuMemoryToken& indicesToken,
 	U32& indexCount);
+
+/// Debug drawer.
+class DebugDrawer2
+{
+public:
+	ANKI_USE_RESULT Error init(ResourceManager* rsrcManager);
+
+	void drawCubes(ConstWeakArray<Mat4> mvps,
+		const Vec4& color,
+		F32 lineSize,
+		Bool ditherFailedDepth,
+		F32 cubeSideSize,
+		StagingGpuMemoryManager& stagingGpuAllocator,
+		CommandBufferPtr& cmdb) const;
+
+	void drawCube(const Mat4& mvp,
+		const Vec4& color,
+		F32 lineSize,
+		Bool ditherFailedDepth,
+		F32 cubeSideSize,
+		StagingGpuMemoryManager& stagingGpuAllocator,
+		CommandBufferPtr& cmdb) const
+	{
+		drawCubes(
+			ConstWeakArray<Mat4>(&mvp, 1), color, lineSize, ditherFailedDepth, cubeSideSize, stagingGpuAllocator, cmdb);
+	}
+
+	void drawBillboardTextures(const Mat4& projMat,
+		const Mat4& viewMat,
+		ConstWeakArray<Vec3> positions,
+		const Vec4& color,
+		Bool ditherFailedDepth,
+		TextureViewPtr tex,
+		SamplerPtr sampler,
+		Vec2 billboardSize,
+		StagingGpuMemoryManager& stagingGpuAllocator,
+		CommandBufferPtr& cmdb) const;
+
+	void drawBillboardTexture(const Mat4& projMat,
+		const Mat4& viewMat,
+		Vec3 position,
+		const Vec4& color,
+		Bool ditherFailedDepth,
+		TextureViewPtr tex,
+		SamplerPtr sampler,
+		Vec2 billboardSize,
+		StagingGpuMemoryManager& stagingGpuAllocator,
+		CommandBufferPtr& cmdb) const
+	{
+		drawBillboardTextures(projMat,
+			viewMat,
+			ConstWeakArray<Vec3>(&position, 1),
+			color,
+			ditherFailedDepth,
+			tex,
+			sampler,
+			billboardSize,
+			stagingGpuAllocator,
+			cmdb);
+	}
+
+private:
+	ShaderProgramResourcePtr m_prog;
+};
 /// @}
 
 } // end namespace anki

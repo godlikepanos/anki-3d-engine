@@ -42,6 +42,7 @@ public:
 	CommandBufferPtr m_commandBuffer;
 	SamplerPtr m_sampler; ///< A trilinear sampler with anisotropy.
 	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DEBUG_CODE(= nullptr);
+	StackAllocator<U8> m_frameAllocator;
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
 	BitSet<U(RenderQueueDebugDrawFlag::COUNT), U32> m_debugDrawFlags = {false};
 };
@@ -106,8 +107,8 @@ public:
 	F32 m_radius;
 	Vec3 m_diffuseColor;
 	Array<RenderQueue*, 6> m_shadowRenderQueues;
-	const void* m_userData;
-	RenderQueueDrawCallback m_drawCallback;
+	RenderQueueDrawCallback m_debugDrawCallback;
+	const void* m_debugDrawCallbackUserData;
 
 	Array<Vec2, 6> m_shadowAtlasTileOffsets; ///< Renderer internal.
 	F32 m_shadowAtlasTileSize; ///< Renderer internal.
@@ -137,8 +138,8 @@ public:
 	F32 m_innerAngle;
 	Vec3 m_diffuseColor;
 	RenderQueue* m_shadowRenderQueue;
-	const void* m_userData;
-	RenderQueueDrawCallback m_drawCallback;
+	RenderQueueDrawCallback m_debugDrawCallback;
+	const void* m_debugDrawCallbackUserData;
 
 	SpotLightQueueElement()
 	{
@@ -158,8 +159,8 @@ class DirectionalLightQueueElement final
 public:
 	Array<Mat4, MAX_SHADOW_CASCADES> m_textureMatrices;
 	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
-	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
+	const void* m_drawCallbackUserData;
 	U64 m_uuid; ///< Zero means that there is no dir light
 	Vec3 m_diffuseColor;
 	Vec3 m_direction;
@@ -210,8 +211,9 @@ class GlobalIlluminationProbeQueueElement final
 public:
 	U64 m_uuid;
 	GlobalIlluminationProbeQueueElementFeedbackCallback m_feedbackCallback;
+	void* m_feedbackCallbackUserData;
 	RenderQueueDrawCallback m_debugDrawCallback;
-	void* m_userData;
+	const void* m_debugDrawCallbackUserData;
 	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
@@ -263,8 +265,8 @@ static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == tr
 class DecalQueueElement final
 {
 public:
-	const void* m_userData;
-	RenderQueueDrawCallback m_drawCallback;
+	RenderQueueDrawCallback m_debugDrawCallback;
+	const void* m_debugDrawCallbackUserData;
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 	TextureView* m_diffuseAtlas;
 	/// Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.

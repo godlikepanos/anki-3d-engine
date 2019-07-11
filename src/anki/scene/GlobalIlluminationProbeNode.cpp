@@ -82,8 +82,9 @@ Error GlobalIlluminationProbeNode::init()
 	// GI probe comp
 	GlobalIlluminationProbeComponent* giprobec =
 		newComponent<GlobalIlluminationProbeComponent>(getSceneGraph().getNewUuid());
-	ANKI_CHECK(giprobec->init(getResourceManager()));
+	ANKI_CHECK(giprobec->init());
 	giprobec->setBoundingBox(m_spatialAabb.getMin(), m_spatialAabb.getMax());
+	giprobec->setDrawCallback(debugDrawCallback, this);
 
 	// Second feedback component
 	newComponent<ShapeFeedbackComponent>();
@@ -122,6 +123,8 @@ Error GlobalIlluminationProbeNode::init()
 	// Spatial component
 	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_spatialAabb);
 	spatialc->setUpdateOctreeBounds(false);
+
+	ANKI_CHECK(m_dbgDrawer.init(&getResourceManager()));
 
 	return Error::NONE;
 }
@@ -197,6 +200,52 @@ Error GlobalIlluminationProbeNode::frameUpdate(Second prevUpdateTime, Second crn
 	(void)err;
 
 	return Error::NONE;
+}
+
+void GlobalIlluminationProbeNode::debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
+{
+	Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(userData.getSize());
+	for(U i = 0; i < userData.getSize(); ++i)
+	{
+		const GlobalIlluminationProbeNode& self = *static_cast<const GlobalIlluminationProbeNode*>(userData[i]);
+		const GlobalIlluminationProbeComponent& giComp = self.getComponent<GlobalIlluminationProbeComponent>();
+
+		const Vec3 tsl = (giComp.getAlignedBoundingBoxMin().xyz() + giComp.getAlignedBoundingBoxMax().xyz()) / 2.0f;
+		const Vec3 scale = (tsl - giComp.getAlignedBoundingBoxMin().xyz());
+
+		// Set non uniform scale.
+		Mat3 rot = Mat3::getIdentity();
+		rot(0, 0) *= scale.x();
+		rot(1, 1) *= scale.y();
+		rot(2, 2) *= scale.z();
+
+		mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), rot, 1.0f);
+	}
+
+	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	if(enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+	}
+	else
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+	}
+
+	static_cast<const GlobalIlluminationProbeNode*>(userData[0])
+		->m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()),
+			Vec4(0.729f, 0.635f, 0.196f, 1.0f),
+			1.0f,
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+			2.0f,
+			*ctx.m_stagingGpuAllocator,
+			ctx.m_commandBuffer);
+
+	// Restore state
+	if(!enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+	}
 }
 
 } // end namespace anki

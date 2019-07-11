@@ -71,6 +71,12 @@ public:
 		m_markedForUpdate = true;
 	}
 
+	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
+	{
+		m_drawCallback = callback;
+		m_drawCallbackUserData = userData;
+	}
+
 	/// Implements SceneComponent::update.
 	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
@@ -132,8 +138,8 @@ public:
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
 		el.m_obbRotation = m_obb.getRotation().getRotationPart();
-		el.m_userData = this;
-		el.m_drawCallback = debugDrawCallback;
+		el.m_debugDrawCallback = m_drawCallback;
+		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
 	}
 
 private:
@@ -153,6 +159,8 @@ private:
 	};
 
 	SceneNode* m_node;
+	RenderQueueDrawCallback m_drawCallback = nullptr;
+	const void* m_drawCallbackUserData = nullptr;
 	Array<Layer, U(LayerType::COUNT)> m_layers;
 	Mat4 m_biasProjViewMat;
 	Vec3 m_sizes = Vec3(1.0f);
@@ -163,11 +171,6 @@ private:
 	ANKI_USE_RESULT Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
 
 	void updateInternal();
-
-	static void debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-	{
-		// TODO
-	}
 };
 /// @}
 

@@ -104,7 +104,8 @@ void main()
 #endif
 
 #if DBG_ENABLED
-	out_color += textureLod(u_dbgRt, u_linearAnyClampSampler, uv, 0.0).rgb;
+	const Vec4 dbg = textureLod(u_dbgRt, u_linearAnyClampSampler, uv, 0.0);
+	out_color = mix(out_color, dbg.rgb, dbg.a);
 #endif
 }
 

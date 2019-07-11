@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
+#include <anki/scene/DebugDrawer.h>
 #include <anki/collision/Obb.h>
 
 namespace anki
@@ -31,8 +32,13 @@ private:
 	class MoveFeedbackComponent;
 	class ShapeFeedbackComponent;
 
+	DebugDrawer2 m_dbgDrawer;
+	TextureResourcePtr m_dbgTex;
+
 	void onMove(MoveComponent& movec);
 	void onDecalUpdated();
+
+	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 };
 /// @}
 

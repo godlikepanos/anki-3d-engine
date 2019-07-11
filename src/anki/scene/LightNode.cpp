@@ -9,6 +9,7 @@
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/FrustumComponent.h>
+#include <anki/resource/ResourceManager.h>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
@@ -71,6 +72,25 @@ LightNode::~LightNode()
 {
 }
 
+Error LightNode::initCommon(LightComponentType lightType)
+{
+	CString texFname;
+	switch(lightType)
+	{
+	case LightComponentType::POINT:
+		texFname = "engine_data/LightBulb.ankitex";
+		break;
+	case LightComponentType::SPOT:
+		texFname = "engine_data/SpotLight.ankitex";
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+	ANKI_CHECK(getResourceManager().loadResource(texFname, m_dbgTex));
+
+	return m_dbgDrawer.init(&getResourceManager());
+}
+
 void LightNode::frameUpdateCommon()
 {
 	// Update frustum comps shadow info
@@ -126,6 +146,45 @@ Error LightNode::loadLensFlare(const CString& filename)
 	return Error::NONE;
 }
 
+void LightNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
+{
+	for(const void* plight : userData)
+	{
+		const LightNode& self = *static_cast<const LightNode*>(plight);
+		const LightComponent& lcomp = self.getComponent<LightComponent>();
+
+		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+		if(enableDepthTest)
+		{
+			ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		}
+		else
+		{
+			ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+		}
+
+		Vec3 color = lcomp.getDiffuseColor().xyz();
+		color /= max(max(color.x(), color.y()), color.z());
+
+		self.m_dbgDrawer.drawBillboardTexture(ctx.m_projectionMatrix,
+			ctx.m_viewMatrix,
+			lcomp.getTransform().getOrigin().xyz(),
+			color.xyz1(),
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+			self.m_dbgTex->getGrTextureView(),
+			ctx.m_sampler,
+			Vec2(0.75f),
+			*ctx.m_stagingGpuAllocator,
+			ctx.m_commandBuffer);
+
+		// Restore state
+		if(!enableDepthTest)
+		{
+			ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+		}
+	}
+}
+
 PointLightNode::PointLightNode(SceneGraph* scene, CString name)
 	: LightNode(scene, name)
 {
@@ -138,6 +197,8 @@ PointLightNode::~PointLightNode()
 
 Error PointLightNode::init()
 {
+	ANKI_CHECK(initCommon(LightComponentType::POINT));
+
 	// Move component
 	newComponent<MoveComponent>();
 
@@ -145,7 +206,8 @@ Error PointLightNode::init()
 	newComponent<MovedFeedbackComponent>();
 
 	// Light component
-	newComponent<LightComponent>(LightComponentType::POINT, getSceneGraph().getNewUuid());
+	LightComponent* lc = newComponent<LightComponent>(LightComponentType::POINT, getSceneGraph().getNewUuid());
+	lc->setDrawCallback(drawCallback, static_cast<LightNode*>(this));
 
 	// Feedback component
 	newComponent<LightChangedFeedbackComponent>();
@@ -237,6 +299,8 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 
 Error SpotLightNode::init()
 {
+	ANKI_CHECK(initCommon(LightComponentType::SPOT));
+
 	// Move component
 	newComponent<MoveComponent>();
 
@@ -244,7 +308,8 @@ Error SpotLightNode::init()
 	newComponent<MovedFeedbackComponent>();
 
 	// Light component
-	newComponent<LightComponent>(LightComponentType::SPOT, getSceneGraph().getNewUuid());
+	LightComponent* lc = newComponent<LightComponent>(LightComponentType::SPOT, getSceneGraph().getNewUuid());
+	lc->setDrawCallback(drawCallback, static_cast<LightNode*>(this));
 
 	// Feedback component
 	newComponent<LightChangedFeedbackComponent>();
@@ -324,7 +389,10 @@ Error DirectionalLightNode::init()
 {
 	newComponent<MoveComponent>();
 	newComponent<FeedbackComponent>();
-	newComponent<LightComponent>(LightComponentType::DIRECTIONAL, getSceneGraph().getNewUuid());
+
+	LightComponent* lc = newComponent<LightComponent>(LightComponentType::DIRECTIONAL, getSceneGraph().getNewUuid());
+	lc->setDrawCallback(drawCallback, this);
+
 	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_boundingBox);
 
 	// Make the bounding box large enough so it will always be visible. Because of that don't update the octree bounds

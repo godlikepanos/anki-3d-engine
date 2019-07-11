@@ -66,6 +66,8 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 
 	rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
+	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+
 	// Set the context
 	RenderQueueDrawContext dctx;
 	dctx.m_viewMatrix = ctx.m_renderQueue->m_viewMatrix;
@@ -73,6 +75,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	dctx.m_projectionMatrix = ctx.m_renderQueue->m_projectionMatrix;
 	dctx.m_cameraTransform = ctx.m_renderQueue->m_viewMatrix.getInverse();
 	dctx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
+	dctx.m_frameAllocator = ctx.m_tempAllocator;
 	dctx.m_commandBuffer = cmdb;
 	dctx.m_sampler = m_r->getSamplers().m_trilinearRepeatAniso;
 	dctx.m_key = RenderingKey(Pass::FS, 0, 1, false, false);
@@ -90,7 +93,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		const RenderableQueueElement& el = ctx.m_renderQueue->m_renderables[i];
 		Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
-		el.m_callback(dctx, a);
+		// el.m_callback(dctx, a);
 	}
 
 	// Draw probes
@@ -98,7 +101,35 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		for(const GlobalIlluminationProbeQueueElement& el : ctx.m_renderQueue->m_giProbes)
 		{
-			Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
+			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			el.m_debugDrawCallback(dctx, a);
+		}
+	}
+
+	// Draw lights
+	if(threadId == 0)
+	{
+		U count = ctx.m_renderQueue->m_pointLights.getSize();
+		while(count--)
+		{
+			const PointLightQueueElement& el = ctx.m_renderQueue->m_pointLights[count];
+			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			el.m_debugDrawCallback(dctx, a);
+		}
+
+		for(const SpotLightQueueElement& el : ctx.m_renderQueue->m_spotLights)
+		{
+			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			el.m_debugDrawCallback(dctx, a);
+		}
+	}
+
+	// Decals
+	if(threadId == 0)
+	{
+		for(const DecalQueueElement& el : ctx.m_renderQueue->m_decals)
+		{
+			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
 			el.m_debugDrawCallback(dctx, a);
 		}
 	}

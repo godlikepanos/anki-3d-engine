@@ -293,4 +293,172 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator,
 	indexCount = INDEX_COUNT;
 }
 
+Error DebugDrawer2::init(ResourceManager* rsrcManager)
+{
+	return rsrcManager->loadResource("shaders/SceneDebug.glslp", m_prog);
+}
+
+void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
+	const Vec4& color,
+	F32 lineSize,
+	Bool ditherFailedDepth,
+	F32 cubeSideSize,
+	StagingGpuMemoryManager& stagingGpuAllocator,
+	CommandBufferPtr& cmdb) const
+{
+	StagingGpuMemoryToken vertsToken;
+	StagingGpuMemoryToken indicesToken;
+
+	Vec3* verts = static_cast<Vec3*>(
+		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 8, StagingGpuMemoryType::VERTEX, vertsToken));
+
+	const F32 size = cubeSideSize / 2.0f;
+	verts[0] = Vec3(size, size, size); // front top right
+	verts[1] = Vec3(-size, size, size); // front top left
+	verts[2] = Vec3(-size, -size, size); // front bottom left
+	verts[3] = Vec3(size, -size, size); // front bottom right
+	verts[4] = Vec3(size, size, -size); // back top right
+	verts[5] = Vec3(-size, size, -size); // back top left
+	verts[6] = Vec3(-size, -size, -size); // back bottom left
+	verts[7] = Vec3(size, -size, -size); // back bottom right
+
+	const U INDEX_COUNT = 12 * 2;
+	U16* indices = static_cast<U16*>(
+		stagingGpuAllocator.allocateFrame(sizeof(U16) * INDEX_COUNT, StagingGpuMemoryType::VERTEX, indicesToken));
+
+	U indexCount = 0;
+	indices[indexCount++] = 0;
+	indices[indexCount++] = 1;
+	indices[indexCount++] = 1;
+	indices[indexCount++] = 2;
+	indices[indexCount++] = 2;
+	indices[indexCount++] = 3;
+	indices[indexCount++] = 3;
+	indices[indexCount++] = 0;
+
+	indices[indexCount++] = 4;
+	indices[indexCount++] = 5;
+	indices[indexCount++] = 5;
+	indices[indexCount++] = 6;
+	indices[indexCount++] = 6;
+	indices[indexCount++] = 7;
+	indices[indexCount++] = 7;
+	indices[indexCount++] = 4;
+
+	indices[indexCount++] = 0;
+	indices[indexCount++] = 4;
+	indices[indexCount++] = 1;
+	indices[indexCount++] = 5;
+	indices[indexCount++] = 2;
+	indices[indexCount++] = 6;
+	indices[indexCount++] = 3;
+	indices[indexCount++] = 7;
+
+	// Set the uniforms
+	StagingGpuMemoryToken unisToken;
+	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(
+		sizeof(Mat4) * mvps.getSize() + sizeof(Vec4), StagingGpuMemoryType::UNIFORM, unisToken));
+
+	memcpy(pmvps, &mvps[0], mvps.getSizeInBytes());
+
+	Vec4* pcolor = reinterpret_cast<Vec4*>(pmvps + mvps.getSize());
+	*pcolor = color;
+
+	// Setup state
+	ShaderProgramResourceMutationInitList<2> mutators(m_prog);
+	mutators.add("COLOR_TEXTURE", 0);
+	mutators.add("DITHERED_DEPTH_TEST", U(ditherFailedDepth != 0));
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("INSTANCE_COUNT", U32(mvps.getSize()));
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	cmdb->bindShaderProgram(variant->getProgram());
+
+	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(Vec3));
+	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
+
+	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
+
+	cmdb->setLineWidth(lineSize);
+	cmdb->drawElements(PrimitiveTopology::LINES, indexCount, mvps.getSize());
+}
+
+void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
+	const Mat4& viewMat,
+	ConstWeakArray<Vec3> positions,
+	const Vec4& color,
+	Bool ditherFailedDepth,
+	TextureViewPtr tex,
+	SamplerPtr sampler,
+	Vec2 billboardSize,
+	StagingGpuMemoryManager& stagingGpuAllocator,
+	CommandBufferPtr& cmdb) const
+{
+	StagingGpuMemoryToken positionsToken;
+	Vec3* verts = static_cast<Vec3*>(
+		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 4, StagingGpuMemoryType::VERTEX, positionsToken));
+
+	verts[0] = Vec3(-0.5f, -0.5f, 0.0f);
+	verts[1] = Vec3(+0.5f, -0.5f, 0.0f);
+	verts[2] = Vec3(-0.5f, +0.5f, 0.0f);
+	verts[3] = Vec3(+0.5f, +0.5f, 0.0f);
+
+	StagingGpuMemoryToken uvsToken;
+	Vec2* uvs =
+		static_cast<Vec2*>(stagingGpuAllocator.allocateFrame(sizeof(Vec2) * 4, StagingGpuMemoryType::VERTEX, uvsToken));
+
+	uvs[0] = Vec2(0.0f, 0.0f);
+	uvs[1] = Vec2(1.0f, 0.0f);
+	uvs[2] = Vec2(0.0f, 1.0f);
+	uvs[3] = Vec2(1.0f, 1.0f);
+
+	// Set the uniforms
+	StagingGpuMemoryToken unisToken;
+	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(
+		sizeof(Mat4) * positions.getSize() + sizeof(Vec4), StagingGpuMemoryType::UNIFORM, unisToken));
+
+	const Mat4 camTrf = viewMat.getInverse();
+	const Vec3 zAxis = camTrf.getZAxis().xyz().getNormalized();
+	Vec3 yAxis = Vec3(0.0f, 1.0f, 0.0f);
+	const Vec3 xAxis = yAxis.cross(zAxis).getNormalized();
+	yAxis = zAxis.cross(xAxis).getNormalized();
+	Mat3 rot;
+	rot.setColumns(xAxis, yAxis, zAxis);
+
+	for(const Vec3& pos : positions)
+	{
+		Mat3 scale = Mat3::getIdentity();
+		scale(0, 0) *= billboardSize.x();
+		scale(1, 1) *= billboardSize.y();
+
+		*pmvps = projMat * viewMat * Mat4(pos.xyz1(), rot * scale, 1.0f);
+		++pmvps;
+	}
+
+	Vec4* pcolor = reinterpret_cast<Vec4*>(pmvps);
+	*pcolor = color;
+
+	// Setup state
+	ShaderProgramResourceMutationInitList<2> mutators(m_prog);
+	mutators.add("COLOR_TEXTURE", 1);
+	mutators.add("DITHERED_DEPTH_TEST", U(ditherFailedDepth != 0));
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("INSTANCE_COUNT", U32(positions.getSize()));
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	cmdb->bindShaderProgram(variant->getProgram());
+
+	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+	cmdb->setVertexAttribute(1, 1, Format::R32G32_SFLOAT, 0);
+	cmdb->bindVertexBuffer(0, positionsToken.m_buffer, positionsToken.m_offset, sizeof(Vec3));
+	cmdb->bindVertexBuffer(1, uvsToken.m_buffer, uvsToken.m_offset, sizeof(Vec2));
+
+	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
+	cmdb->bindSampler(1, 1, sampler);
+	cmdb->bindTexture(1, 2, tex, TextureUsageBit::SAMPLED_FRAGMENT);
+
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, positions.getSize());
+}
+
 } // end namespace anki

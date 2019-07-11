@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
+#include <anki/scene/DebugDrawer.h>
 #include <anki/collision/Aabb.h>
 
 namespace anki
@@ -36,9 +37,12 @@ private:
 	Array<Transform, 6> m_cubeFaceTransforms;
 	Aabb m_spatialAabb = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	Vec4 m_previousPosition = Vec4(0.0f);
+	DebugDrawer2 m_dbgDrawer;
 
 	void onMoveUpdate(MoveComponent& move);
 	void onShapeUpdateOrProbeNeedsRendering();
+
+	static void debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 };
 /// @}
 
