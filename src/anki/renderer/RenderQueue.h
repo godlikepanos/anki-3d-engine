@@ -185,8 +185,9 @@ class ReflectionProbeQueueElement final
 public:
 	U64 m_uuid;
 	ReflectionProbeQueueElementFeedbackCallback m_feedbackCallback;
-	RenderQueueDrawCallback m_drawCallback;
-	void* m_userData;
+	void* m_feedbackCallbackUserData;
+	RenderQueueDrawCallback m_debugDrawCallback;
+	const void* m_debugDrawCallbackUserData;
 	Array<RenderQueue*, 6> m_renderQueues;
 	Vec3 m_worldPosition;
 	Vec3 m_aabbMin;

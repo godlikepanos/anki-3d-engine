@@ -7,6 +7,7 @@
 
 #include <anki/scene/SceneNode.h>
 #include <anki/collision/Aabb.h>
+#include <anki/scene/DebugDrawer.h>
 
 namespace anki
 {
@@ -43,7 +44,12 @@ private:
 	Vec3 m_aabbMaxLSpace = Vec3(-1.0f);
 	Aabb m_spatialAabb;
 
+	DebugDrawer2 m_dbgDrawer;
+	TextureResourcePtr m_dbgTex;
+
 	void onMoveUpdate(MoveComponent& move);
+
+	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 };
 /// @}
 

@@ -93,7 +93,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		const RenderableQueueElement& el = ctx.m_renderQueue->m_renderables[i];
 		Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
-		// el.m_callback(dctx, a);
+		el.m_callback(dctx, a);
 	}
 
 	// Draw probes
@@ -128,6 +128,26 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	if(threadId == 0)
 	{
 		for(const DecalQueueElement& el : ctx.m_renderQueue->m_decals)
+		{
+			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			el.m_debugDrawCallback(dctx, a);
+		}
+	}
+
+	// Reflection probes
+	if(threadId == 0)
+	{
+		for(const ReflectionProbeQueueElement& el : ctx.m_renderQueue->m_reflectionProbes)
+		{
+			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			el.m_debugDrawCallback(dctx, a);
+		}
+	}
+
+	// GI probes
+	if(threadId == 0)
+	{
+		for(const GlobalIlluminationProbeQueueElement& el : ctx.m_renderQueue->m_giProbes)
 		{
 			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
 			el.m_debugDrawCallback(dctx, a);

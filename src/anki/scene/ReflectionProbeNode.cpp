@@ -106,6 +106,11 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>(getSceneGraph().getNewUuid());
 	reflc->setPosition(Vec4(0.0f));
 	reflc->setBoundingBox(aabbMinLSpace, aabbMaxLSpace);
+	reflc->setDrawCallback(drawCallback, this);
+
+	// Misc
+	ANKI_CHECK(m_dbgDrawer.init(&getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/Mirror.ankitex", m_dbgTex));
 
 	return Error::NONE;
 }
@@ -157,6 +162,68 @@ Error ReflectionProbeNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	(void)err;
 
 	return Error::NONE;
+}
+
+void ReflectionProbeNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
+{
+	Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(userData.getSize());
+	Vec3* const positions = ctx.m_frameAllocator.newArray<Vec3>(userData.getSize());
+	for(U i = 0; i < userData.getSize(); ++i)
+	{
+		const ReflectionProbeNode& self = *static_cast<const ReflectionProbeNode*>(userData[i]);
+		const ReflectionProbeComponent& rComp = self.getComponent<ReflectionProbeComponent>();
+
+		const Vec3 tsl = (rComp.getBoundingBoxMin().xyz() + rComp.getBoundingBoxMax().xyz()) / 2.0f;
+		const Vec3 scale = (tsl - rComp.getBoundingBoxMin().xyz());
+
+		// Set non uniform scale.
+		Mat3 rot = Mat3::getIdentity();
+		rot(0, 0) *= scale.x();
+		rot(1, 1) *= scale.y();
+		rot(2, 2) *= scale.z();
+
+		mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), rot, 1.0f);
+		positions[i] = tsl.xyz();
+	}
+
+	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	if(enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+	}
+	else
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+	}
+
+	const ReflectionProbeNode& self = *static_cast<const ReflectionProbeNode*>(userData[0]);
+	self.m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()),
+		Vec4(0.0f, 0.0f, 1.0f, 1.0f),
+		1.0f,
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+		2.0f,
+		*ctx.m_stagingGpuAllocator,
+		ctx.m_commandBuffer);
+
+	self.m_dbgDrawer.drawBillboardTextures(ctx.m_projectionMatrix,
+		ctx.m_viewMatrix,
+		ConstWeakArray<Vec3>(positions, userData.getSize()),
+		Vec4(1.0f),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+		self.m_dbgTex->getGrTextureView(),
+		ctx.m_sampler,
+		Vec2(0.75f),
+		*ctx.m_stagingGpuAllocator,
+		ctx.m_commandBuffer);
+
+	ctx.m_frameAllocator.deleteArray(positions, userData.getSize());
+	ctx.m_frameAllocator.deleteArray(mvps, userData.getSize());
+
+	// Restore state
+	if(!enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+	}
 }
 
 } // end namespace anki

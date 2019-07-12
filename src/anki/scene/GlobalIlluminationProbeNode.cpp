@@ -9,6 +9,8 @@
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/GlobalIlluminationProbeComponent.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/resource/TextureResource.h>
 
 namespace anki
 {
@@ -124,7 +126,9 @@ Error GlobalIlluminationProbeNode::init()
 	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_spatialAabb);
 	spatialc->setUpdateOctreeBounds(false);
 
+	// Misc
 	ANKI_CHECK(m_dbgDrawer.init(&getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/GiProbe.ankitex", m_dbgTex));
 
 	return Error::NONE;
 }
@@ -205,6 +209,7 @@ Error GlobalIlluminationProbeNode::frameUpdate(Second prevUpdateTime, Second crn
 void GlobalIlluminationProbeNode::debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 {
 	Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(userData.getSize());
+	Vec3* const positions = ctx.m_frameAllocator.newArray<Vec3>(userData.getSize());
 	for(U i = 0; i < userData.getSize(); ++i)
 	{
 		const GlobalIlluminationProbeNode& self = *static_cast<const GlobalIlluminationProbeNode*>(userData[i]);
@@ -220,6 +225,7 @@ void GlobalIlluminationProbeNode::debugDrawCallback(RenderQueueDrawContext& ctx,
 		rot(2, 2) *= scale.z();
 
 		mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), rot, 1.0f);
+		positions[i] = tsl.xyz();
 	}
 
 	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
@@ -232,14 +238,28 @@ void GlobalIlluminationProbeNode::debugDrawCallback(RenderQueueDrawContext& ctx,
 		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
 	}
 
-	static_cast<const GlobalIlluminationProbeNode*>(userData[0])
-		->m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()),
-			Vec4(0.729f, 0.635f, 0.196f, 1.0f),
-			1.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-			2.0f,
-			*ctx.m_stagingGpuAllocator,
-			ctx.m_commandBuffer);
+	const GlobalIlluminationProbeNode& self = *static_cast<const GlobalIlluminationProbeNode*>(userData[0]);
+	self.m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()),
+		Vec4(0.729f, 0.635f, 0.196f, 1.0f),
+		1.0f,
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+		2.0f,
+		*ctx.m_stagingGpuAllocator,
+		ctx.m_commandBuffer);
+
+	self.m_dbgDrawer.drawBillboardTextures(ctx.m_projectionMatrix,
+		ctx.m_viewMatrix,
+		ConstWeakArray<Vec3>(positions, userData.getSize()),
+		Vec4(1.0f),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+		self.m_dbgTex->getGrTextureView(),
+		ctx.m_sampler,
+		Vec2(0.75f),
+		*ctx.m_stagingGpuAllocator,
+		ctx.m_commandBuffer);
+
+	ctx.m_frameAllocator.deleteArray(positions, userData.getSize());
+	ctx.m_frameAllocator.deleteArray(mvps, userData.getSize());
 
 	// Restore state
 	if(!enableDepthTest)

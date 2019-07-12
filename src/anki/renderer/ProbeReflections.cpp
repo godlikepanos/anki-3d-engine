@@ -281,7 +281,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx,
 			{
 				// Probe will be updated next frame
 				foundProbeToUpdateNextFrame = true;
-				probe.m_feedbackCallback(true, probe.m_userData);
+				probe.m_feedbackCallback(true, probe.m_feedbackCallbackUserData);
 				continue;
 			}
 			else if(!canUpdateThisFrame)
@@ -318,7 +318,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx,
 		// Don't gather renderables next frame
 		if(probe.m_renderQueues[0] != nullptr)
 		{
-			probe.m_feedbackCallback(false, probe.m_userData);
+			probe.m_feedbackCallback(false, probe.m_feedbackCallbackUserData);
 		}
 	}
 

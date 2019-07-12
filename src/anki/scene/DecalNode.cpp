@@ -104,15 +104,16 @@ void DecalNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		const DecalNode& self = *static_cast<const DecalNode*>(userData[i]);
 		const DecalComponent& decalComp = self.getComponent<DecalComponent>();
 
-		Mat3 rot = decalComp.getBoundingVolume().getRotation().getRotationPart();
+		const Mat3 rot = decalComp.getBoundingVolume().getRotation().getRotationPart();
 		const Vec4 tsl = decalComp.getBoundingVolume().getCenter().xyz1();
 		const Vec3 scale = decalComp.getBoundingVolume().getExtend().xyz();
 
-		rot(0, 0) *= scale.x();
-		rot(1, 1) *= scale.y();
-		rot(2, 2) *= scale.z();
+		Mat3 nonUniScale = Mat3::getZero();
+		nonUniScale(0, 0) = scale.x();
+		nonUniScale(1, 1) = scale.y();
+		nonUniScale(2, 2) = scale.z();
 
-		mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl, rot, 1.0f);
+		mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl, rot * nonUniScale, 1.0f);
 		positions[i] = tsl.xyz();
 	}
 
@@ -145,6 +146,9 @@ void DecalNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		Vec2(0.75f),
 		*ctx.m_stagingGpuAllocator,
 		ctx.m_commandBuffer);
+
+	ctx.m_frameAllocator.deleteArray(positions, userData.getSize());
+	ctx.m_frameAllocator.deleteArray(mvps, userData.getSize());
 
 	// Restore state
 	if(!enableDepthTest)

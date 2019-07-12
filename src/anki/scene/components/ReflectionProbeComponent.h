@@ -57,22 +57,31 @@ public:
 		return m_markedForRendering;
 	}
 
+	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
+	{
+		m_drawCallback = callback;
+		m_drawCallbackUserData = userData;
+	}
+
 	void setupReflectionProbeQueueElement(ReflectionProbeQueueElement& el) const
 	{
 		ANKI_ASSERT(m_aabbMin < m_aabbMax);
 		ANKI_ASSERT(m_pos > m_aabbMin && m_pos < m_aabbMax);
 		el.m_feedbackCallback = reflectionProbeQueueElementFeedbackCallback;
-		el.m_userData = const_cast<ReflectionProbeComponent*>(this);
+		el.m_feedbackCallbackUserData = const_cast<ReflectionProbeComponent*>(this);
 		el.m_uuid = m_uuid;
 		el.m_worldPosition = m_pos;
 		el.m_aabbMin = m_aabbMin;
 		el.m_aabbMax = m_aabbMax;
 		el.m_textureArrayIndex = MAX_U32;
-		el.m_drawCallback = debugDrawCallback;
+		el.m_debugDrawCallback = m_drawCallback;
+		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
 	}
 
 private:
 	U64 m_uuid;
+	RenderQueueDrawCallback m_drawCallback = nullptr;
+	const void* m_drawCallbackUserData = nullptr;
 	Vec3 m_pos = Vec3(0.0f);
 	Vec3 m_aabbMin = Vec3(+1.0f);
 	Vec3 m_aabbMax = Vec3(-1.0f);
@@ -82,11 +91,6 @@ private:
 	{
 		ANKI_ASSERT(userData);
 		static_cast<ReflectionProbeComponent*>(userData)->m_markedForRendering = fillRenderQueuesOnNextFrame;
-	}
-
-	static void debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-	{
-		// TODO
 	}
 };
 /// @}

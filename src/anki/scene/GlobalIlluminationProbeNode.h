@@ -37,7 +37,9 @@ private:
 	Array<Transform, 6> m_cubeFaceTransforms;
 	Aabb m_spatialAabb = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	Vec4 m_previousPosition = Vec4(0.0f);
+
 	DebugDrawer2 m_dbgDrawer;
+	TextureResourcePtr m_dbgTex;
 
 	void onMoveUpdate(MoveComponent& move);
 	void onShapeUpdateOrProbeNeedsRendering();

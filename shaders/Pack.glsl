@@ -159,7 +159,7 @@ void writeGBuffer(GbufferInfo g, out Vec4 rt0, out Vec4 rt1, out Vec4 rt2, out V
 // Read from G-buffer
 Vec3 readNormalFromGBuffer(texture2D rt2, sampler sampl, Vec2 uv)
 {
-	return signedOctDecode(textureLod(rt2, sampl, uv, 0.0).rga);
+	return signedOctDecode(textureLod(rt2, sampl, uv, 0.0).gba);
 }
 
 // Read the roughness from G-buffer

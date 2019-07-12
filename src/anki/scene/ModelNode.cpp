@@ -209,17 +209,18 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		{
 			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
 
-			Mat3 rot = self2.m_obb.getRotation().getRotationPart();
+			const Mat3 rot = self2.m_obb.getRotation().getRotationPart();
 			const Vec4 tsl = self2.m_obb.getCenter().xyz1();
 			const Vec3 scale = self2.m_obb.getExtend().xyz();
 
 			// Set non uniform scale. Add a margin to avoid flickering
+			Mat3 nonUniScale = Mat3::getZero();
 			const F32 MARGIN = 1.02;
-			rot(0, 0) *= scale.x() * MARGIN;
-			rot(1, 1) *= scale.y() * MARGIN;
-			rot(2, 2) *= scale.z() * MARGIN;
+			nonUniScale(0, 0) = scale.x() * MARGIN;
+			nonUniScale(1, 1) = scale.y() * MARGIN;
+			nonUniScale(2, 2) = scale.z() * MARGIN;
 
-			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl, rot, 1.0f);
+			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl, rot * nonUniScale, 1.0f);
 		}
 
 		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
@@ -239,6 +240,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			2.0f,
 			*ctx.m_stagingGpuAllocator,
 			cmdb);
+
+		ctx.m_frameAllocator.deleteArray(mvps, userData.getSize());
 
 		// Restore state
 		if(!enableDepthTest)

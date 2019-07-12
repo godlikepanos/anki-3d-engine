@@ -47,7 +47,7 @@ static Vec4 crossAba(const Vec4& a, const Vec4& b)
 static void support(const GjkContext& ctx, GjkSupport& support)
 {
 	support.m_v0 = ctx.m_shape0Callback(ctx.m_shape0, ctx.m_dir);
-	support.m_v1 = ctx.m_shape0Callback(ctx.m_shape1, -ctx.m_dir);
+	support.m_v1 = ctx.m_shape1Callback(ctx.m_shape1, -ctx.m_dir);
 	support.m_v = support.m_v0 - support.m_v1;
 }
 
