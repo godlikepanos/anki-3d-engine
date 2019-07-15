@@ -1400,7 +1400,7 @@ StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 Error RenderGraph::dumpDependencyDotFile(
 	const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const
 {
-	static const Array<const char*, 6> COLORS = {{"red", "green", "blue", "magenta", "yellow", "cyan"}};
+	static const Array<const char*, 5> COLORS = {{"red", "green", "blue", "magenta", "cyan"}};
 	auto alloc = ctx.m_alloc;
 	StringListAuto slist(alloc);
 
@@ -1424,7 +1424,7 @@ Error RenderGraph::dumpDependencyDotFile(
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=%s,shape=box];\n",
 				passName.cstr(),
-				COLORS[batchIdx % 6],
+				COLORS[batchIdx % COLORS.getSize()],
 				(descr.m_passes[passIdx]->m_type == RenderPassDescriptionBase::Type::GRAPHICS) ? "bold" : "dashed");
 
 			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
@@ -1444,7 +1444,8 @@ Error RenderGraph::dumpDependencyDotFile(
 	slist.pushBackSprintf("subgraph cluster_0 {\n");
 	for(U rtIdx = 0; rtIdx < descr.m_renderTargets.getSize(); ++rtIdx)
 	{
-		slist.pushBackSprintf("\t\"%s\"[color=%s];\n", &descr.m_renderTargets[rtIdx].m_name[0], COLORS[rtIdx % 6]);
+		slist.pushBackSprintf(
+			"\t\"%s\"[color=%s];\n", &descr.m_renderTargets[rtIdx].m_name[0], COLORS[rtIdx % COLORS.getSize()]);
 	}
 	slist.pushBackSprintf("}\n");
 #	endif
@@ -1490,7 +1491,7 @@ Error RenderGraph::dumpDependencyDotFile(
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n",
 				barrierName.cstr(),
-				COLORS[batchIdx % 6],
+				COLORS[batchIdx % COLORS.getSize()],
 				barrierLabel.cstr());
 			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), barrierName.cstr());
 
@@ -1502,7 +1503,8 @@ Error RenderGraph::dumpDependencyDotFile(
 			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 			StringAuto passName(alloc);
 			passName.sprintf("%s pass", pass.m_name.cstr());
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold];\n", passName.cstr(), COLORS[batchIdx % 6]);
+			slist.pushBackSprintf(
+				"\t\"%s\"[color=%s,style=bold];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()]);
 			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), passName.cstr());
 
 			prevBubble = passName;
