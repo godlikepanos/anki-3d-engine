@@ -8,6 +8,11 @@
 namespace anki
 {
 
+Importer::Importer()
+{
+	m_hive = m_alloc.newInstance<ThreadHive>(getCpuCoresCount(), m_alloc, true);
+}
+
 Importer::~Importer()
 {
 	if(m_gltf)
@@ -15,6 +20,8 @@ Importer::~Importer()
 		cgltf_free(m_gltf);
 		m_gltf = nullptr;
 	}
+
+	m_alloc.deleteInstance(m_hive);
 }
 
 Error Importer::load(CString inputFname, CString outDir)

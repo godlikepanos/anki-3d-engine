@@ -15,6 +15,8 @@ namespace anki
 class Importer
 {
 public:
+	Importer();
+
 	~Importer();
 
 	Error load(CString inputFname, CString outDir);
@@ -28,6 +30,10 @@ private:
 	StringAuto m_outDir = {m_alloc};
 
 	cgltf_data* m_gltf = nullptr;
+
+	F32 m_normalsMergeCosAngle = cos(toRad(30.0f));
+
+	ThreadHive* m_hive = nullptr;
 
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh);
 };
