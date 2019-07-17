@@ -54,8 +54,8 @@ static U calcImplicitStride(const cgltf_attribute& attrib)
 	return cgltfComponentCount(attrib.data->type) * cgltfComponentSize(attrib.data->component_type);
 }
 
-template<typename T>
-static Error appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>& out)
+template<typename T, typename TFunc>
+static Error appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>& out, TFunc func)
 {
 	if(cgltfComponentCount(attrib.data->type) != T::COMPONENT_COUNT)
 	{
@@ -83,6 +83,7 @@ static Error appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>&
 		const U8* ptr = base + stride * i;
 		T val;
 		memcpy(&val, ptr, sizeof(T)); // Memcpy because it might not be aligned
+		func(val);
 		out.emplaceBack(val);
 	}
 
@@ -96,7 +97,13 @@ public:
 	DynamicArrayAuto<Vec3> m_normals;
 	DynamicArrayAuto<Vec4> m_tangents;
 	DynamicArrayAuto<Vec2> m_uvs;
-	DynamicArrayAuto<U32> m_indices;
+	DynamicArrayAuto<U16> m_indices;
+
+	Vec3 m_aabbMin{MAX_F32};
+	Vec3 m_aabbMax{MIN_F32};
+
+	U32 m_firstIdx = MAX_U32;
+	U32 m_idxCount = MAX_U32;
 
 	SubMesh(HeapAllocator<U8>& alloc)
 		: m_positions(alloc)
@@ -116,6 +123,11 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 
 	DynamicArrayAuto<SubMesh> submeshes(m_alloc);
 	U totalVertCount = 0;
+	U totalIndexCount = 0;
+	Vec3 aabbMin(MAX_F32);
+	Vec3 aabbMax(MIN_F32);
+	F32 maxUvDistance = MIN_F32;
+	F32 minUvDistance = MAX_F32;
 
 	// Iterate primitives. Every primitive is a submesh
 	for(const cgltf_primitive* primitive = mesh.primitives; primitive < mesh.primitives + mesh.primitives_count;
@@ -138,21 +150,30 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		{
 			if(attrib->type == cgltf_attribute_type_position)
 			{
-				appendAttribute(*attrib, submesh.m_positions);
+				appendAttribute(*attrib, submesh.m_positions, [&](const Vec3& pos) {
+					submesh.m_aabbMin = submesh.m_aabbMin.min(pos);
+					submesh.m_aabbMax = submesh.m_aabbMax.min(pos);
+				});
 			}
 			else if(attrib->type == cgltf_attribute_type_normal)
 			{
-				appendAttribute(*attrib, submesh.m_normals);
+				appendAttribute(*attrib, submesh.m_normals, [](const Vec3&) {});
 			}
 			else if(attrib->type == cgltf_attribute_type_texcoord)
 			{
-				appendAttribute(*attrib, submesh.m_uvs);
+				appendAttribute(*attrib, submesh.m_uvs, [&](const Vec2& uv) {
+					maxUvDistance = max(maxUvDistance, max(uv.x(), uv.y()));
+					minUvDistance = min(minUvDistance, min(uv.x(), uv.y()));
+				});
 			}
 			else
 			{
 				ANKI_GLTF_LOGW("Ignoring attribute: %s", attrib->name);
 			}
 		}
+
+		aabbMin = aabbMin.min(submesh.m_aabbMin);
+		aabbMax = aabbMax.min(submesh.m_aabbMax);
 
 		const U vertCount = submesh.m_positions.getSize();
 		if(submesh.m_positions.getSize() == 0)
@@ -222,19 +243,27 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 							 + primitive->indices->offset + primitive->indices->buffer_view->offset;
 			for(U i = 0; i < primitive->indices->count; ++i)
 			{
+				U idx;
 				if(primitive->indices->component_type == cgltf_component_type_r_32u)
 				{
-					submesh.m_indices[i] = totalVertCount + *reinterpret_cast<const U32*>(base + sizeof(U32) * i);
+					idx = totalVertCount + *reinterpret_cast<const U32*>(base + sizeof(U32) * i);
 				}
 				else if(primitive->indices->component_type == cgltf_component_type_r_16u)
 				{
-					submesh.m_indices[i] = totalVertCount + *reinterpret_cast<const U16*>(base + sizeof(U16) * i);
+					idx = totalVertCount + *reinterpret_cast<const U16*>(base + sizeof(U16) * i);
 				}
 				else
 				{
 					ANKI_ASSERT(0);
 				}
+
+				ANKI_ASSERT(idx < MAX_U16);
+				submesh.m_indices[i] = idx;
 			}
+
+			submesh.m_firstIdx = totalIndexCount;
+			submesh.m_idxCount = primitive->indices->count;
+			totalIndexCount += primitive->indices->count;
 		}
 
 		//
@@ -312,8 +341,235 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		totalVertCount += vertCount;
 	}
 
-	// Time to write the mesh
-	// TODO
+	// Find if it's a convex shape
+	Bool convex = true;
+	for(const SubMesh& submesh : submeshes)
+	{
+		for(U i = 0; i < submesh.m_indices.getSize(); i += 3)
+		{
+			const U i0 = submesh.m_indices[i + 0];
+			const U i1 = submesh.m_indices[i + 1];
+			const U i2 = submesh.m_indices[i + 2];
+
+			const Vec3& v0 = submesh.m_positions[i0];
+			const Vec3& v1 = submesh.m_positions[i1];
+			const Vec3& v2 = submesh.m_positions[i2];
+
+			if(computeTriangleArea(v0, v1, v2) <= EPSILON)
+			{
+				continue;
+			}
+
+			// Check that all positions are behind the plane
+			const Plane plane(v0.xyz0(), v1.xyz0(), v2.xyz0());
+
+			for(const SubMesh& submeshB : submeshes)
+			{
+				for(const Vec3& posB : submeshB.m_positions)
+				{
+					const F32 test = testPlane(plane, posB.xyz0());
+					if(test > EPSILON)
+					{
+						convex = false;
+						break;
+					}
+				}
+
+				if(!convex)
+				{
+					break;
+				}
+			}
+
+			if(!convex)
+			{
+				break;
+			}
+		}
+	}
+
+	// Chose the formats of the attributes
+	MeshBinaryFile::Header header = {};
+	{
+		// Positions
+		const Vec3 dist3d = aabbMin.abs().max(aabbMax.abs());
+		const F32 maxPositionDistance = max(max(dist3d.x(), dist3d.y()), dist3d.z());
+		MeshBinaryFile::VertexAttribute& posa = header.m_vertexAttributes[VertexAttributeLocation::POSITION];
+		posa.m_bufferBinding = 0;
+		posa.m_format = (maxPositionDistance < 2.0) ? Format::R16G16B16A16_SFLOAT : Format::R32G32B32_SFLOAT;
+		posa.m_relativeOffset = 0;
+		posa.m_scale = 1.0f;
+
+		// Normals
+		MeshBinaryFile::VertexAttribute& na = header.m_vertexAttributes[VertexAttributeLocation::NORMAL];
+		na.m_bufferBinding = 1;
+		na.m_format = Format::A2B10G10R10_SNORM_PACK32;
+		na.m_relativeOffset = 0;
+		na.m_scale = 1.0f;
+
+		// Tangents
+		MeshBinaryFile::VertexAttribute& ta = header.m_vertexAttributes[VertexAttributeLocation::TANGENT];
+		ta.m_bufferBinding = 1;
+		ta.m_format = Format::A2B10G10R10_SNORM_PACK32;
+		ta.m_relativeOffset = sizeof(U32);
+		ta.m_scale = 1.0;
+
+		// UVs
+		MeshBinaryFile::VertexAttribute& uva = header.m_vertexAttributes[VertexAttributeLocation::UV];
+		uva.m_bufferBinding = 1;
+		if(minUvDistance >= 0.0 && maxUvDistance <= 1.0)
+		{
+			uva.m_format = Format::R16G16_UNORM;
+		}
+		else
+		{
+			uva.m_format = Format::R16G16_SFLOAT;
+		}
+		uva.m_relativeOffset = sizeof(U32) * 2;
+		uva.m_scale = 1.0;
+	}
+
+	// Arange the attributes into vert buffers
+	{
+		header.m_vertexBufferCount = 2;
+
+		// First buff has positions
+		const MeshBinaryFile::VertexAttribute& posa = header.m_vertexAttributes[VertexAttributeLocation::POSITION];
+		if(posa.m_format == Format::R32G32B32_SFLOAT)
+		{
+			header.m_vertexBuffers[0].m_vertexStride = sizeof(F32) * 3;
+		}
+		else if(posa.m_format == Format::R16G16B16A16_SFLOAT)
+		{
+			header.m_vertexBuffers[0].m_vertexStride = sizeof(U16) * 4;
+		}
+		else
+		{
+			ANKI_ASSERT(0);
+		}
+
+		// 2nd buff has normal + tangent + texcoords
+		header.m_vertexBuffers[1].m_vertexStride = sizeof(U32) * 2 + sizeof(U16) * 2;
+	}
+
+	// Write some other header stuff
+	{
+		memcpy(&header.m_magic[0], MeshBinaryFile::MAGIC, 8);
+		header.m_flags = MeshBinaryFile::Flag::NONE;
+		if(convex)
+		{
+			header.m_flags |= MeshBinaryFile::Flag::CONVEX;
+		}
+		header.m_indexType = IndexType::U16;
+		header.m_totalIndexCount = totalIndexCount;
+		header.m_totalVertexCount = totalVertCount;
+		header.m_subMeshCount = submeshes.getSize();
+		header.m_aabbMin = aabbMin;
+		header.m_aabbMax = aabbMax;
+	}
+
+	// Open file
+	File file;
+	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE | FileOpenFlag::BINARY));
+
+	// Write header
+	ANKI_CHECK(file.write(&header, sizeof(header)));
+
+	// Write sub meshes
+	for(const SubMesh& in : submeshes)
+	{
+		MeshBinaryFile::SubMesh out;
+		out.m_firstIndex = in.m_firstIdx;
+		out.m_indexCount = in.m_idxCount;
+		out.m_aabbMin = in.m_aabbMin;
+		out.m_aabbMax = in.m_aabbMax;
+
+		ANKI_CHECK(file.write(&out, sizeof(out)));
+	}
+
+	// Write indices
+	for(const SubMesh& submesh : submeshes)
+	{
+		ANKI_CHECK(file.write(&submesh.m_indices[0], submesh.m_indices.getSizeInBytes()));
+	}
+
+	// Write first vert buffer
+	for(const SubMesh& submesh : submeshes)
+	{
+		const MeshBinaryFile::VertexAttribute& posa = header.m_vertexAttributes[VertexAttributeLocation::POSITION];
+		if(posa.m_format == Format::R32G32B32_SFLOAT)
+		{
+			ANKI_CHECK(file.write(&submesh.m_positions[0], submesh.m_positions.getSizeInBytes()));
+		}
+		else if(posa.m_format == Format::R16G16B16A16_SFLOAT)
+		{
+			DynamicArrayAuto<F16> pos16(m_alloc);
+			pos16.create(submesh.m_positions.getSize() * 4);
+
+			const Vec3* p32 = &submesh.m_positions[0];
+			const Vec3* p32end = p32 + submesh.m_positions.getSize();
+			F16* p16 = &pos16[0];
+			while(p32 != p32end)
+			{
+				p16[0] = F16(p32->x());
+				p16[1] = F16(p32->y());
+				p16[2] = F16(p32->z());
+				p16[3] = F16(0.0f);
+
+				p32 += 1;
+				p16 += 4;
+			}
+
+			ANKI_CHECK(file.write(&pos16[0], pos16.getSizeInBytes()));
+		}
+		else
+		{
+			ANKI_ASSERT(0);
+		}
+	}
+
+	// Write the 2nd vert buffer
+	for(const SubMesh& submesh : submeshes)
+	{
+		struct Vert
+		{
+			U32 m_n;
+			U32 m_t;
+			U16 m_uv[2];
+		};
+
+		DynamicArrayAuto<Vert> verts(m_alloc);
+		verts.create(submesh.m_positions.getSize());
+
+		for(U i = 0; i < verts.getSize(); ++i)
+		{
+			const Vec3& normal = submesh.m_normals[i];
+			const Vec4& tangent = submesh.m_tangents[i];
+			const Vec2& uv = submesh.m_uvs[i];
+
+			verts[i].m_n = packColorToR10G10B10A2SNorm(normal.x(), normal.y(), normal.z(), 0.0f);
+			verts[i].m_t = packColorToR10G10B10A2SNorm(tangent.x(), tangent.y(), tangent.z(), tangent.w());
+
+			const Format uvfmt = header.m_vertexAttributes[VertexAttributeLocation::UV].m_format;
+			if(uvfmt == Format::R16G16_UNORM)
+			{
+				assert(uv[0] <= 1.0 && uv[0] >= 0.0 && uv[1] <= 1.0 && uv[1] >= 0.0);
+				verts[i].m_uv[0] = uv[0] * 0xFFFF;
+				verts[i].m_uv[1] = uv[1] * 0xFFFF;
+			}
+			else if(uvfmt == Format::R16G16_SFLOAT)
+			{
+				verts[i].m_uv[0] = F16(uv[0]).toU16();
+				verts[i].m_uv[1] = F16(uv[1]).toU16();
+			}
+			else
+			{
+				ANKI_ASSERT(0);
+			}
+		}
+
+		ANKI_CHECK(file.write(&verts[0], verts.getSizeInBytes()));
+	}
 
 	return Error::NONE;
 }

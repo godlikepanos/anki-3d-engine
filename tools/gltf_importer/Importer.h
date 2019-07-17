@@ -36,6 +36,7 @@ private:
 	ThreadHive* m_hive = nullptr;
 
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh);
+	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);
 };
 
 #define ANKI_GLTF_LOGI(...) ANKI_LOG("GLTF", NORMAL, __VA_ARGS__)

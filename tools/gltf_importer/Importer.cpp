@@ -55,6 +55,12 @@ Error Importer::writeAll()
 		ANKI_CHECK(writeMesh(m_gltf->meshes[i]));
 	}
 
+	// Export materials
+	for(U i = 0; i < m_gltf->materials_count; ++i)
+	{
+		ANKI_CHECK(writeMaterial(m_gltf->materials[i]));
+	}
+
 	return Error::NONE;
 }
 

@@ -20,6 +20,8 @@
 #include <anki/resource/ShaderProgramResource.h>
 #include <anki/resource/CollisionResource.h>
 
+#include <anki/resource/MeshLoader.h>
+
 /// @defgroup resource Collection of resources and management
 
 /// @defgroup resource_private Private resource interfaces. Other modules should not use them.

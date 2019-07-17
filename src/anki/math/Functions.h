@@ -195,6 +195,16 @@ inline U32 packColorToR10G10B10A2SNorm(F32 r, F32 g, F32 b, F32 a)
 
 	return out.m_packed;
 }
+
+/// Compute the abs triangle area.
+template<typename TVec>
+inline F32 computeTriangleArea(const TVec& a, const TVec& b, const TVec& c)
+{
+	const TVec ab = b - a;
+	const TVec ac = c - a;
+	const F32 area = ab.cross(ac).getLength() / 2.0f;
+	return absolute(area);
+}
 /// @}
 
 } // end namespace anki
