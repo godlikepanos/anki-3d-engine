@@ -102,7 +102,10 @@ int main(int argc, char** argv)
 	}
 
 	Importer importer;
-	if(importer.load(info.m_inputFname.toCString(), info.m_outDir.toCString()))
+	if(importer.load(info.m_inputFname.toCString(),
+		   info.m_outDir.toCString(),
+		   info.m_rpath.toCString(),
+		   info.m_texRpath.toCString()))
 	{
 		return 1;
 	}

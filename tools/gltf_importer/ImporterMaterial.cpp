@@ -14,8 +14,7 @@ const char* MATERIAL_TEMPLATE = R"(<?xml version="1.0" encoding="UTF-8" ?>
 	<mutators>
 		<mutator name="DIFFUSE_TEX" value="%diffTexMutator%"/>
 		<mutator name="SPECULAR_TEX" value="%specTexMutator%"/>
-		<mutator name="ROUGHNESS_TEX" value="%roughnessTexMutator%"/>
-		<mutator name="METAL_TEX" value="%metalTexMutator%"/>
+		<mutator name="METALLIC_ROUGHNESS_TEX" value="%metallicRoughnessTexMutator%"/>
 		<mutator name="NORMAL_TEX" value="%normalTexMutator%"/>
 		<mutator name="PARALLAX" value="%parallaxMutator%"/>
 		<mutator name="EMISSIVE_TEX" value="%emissiveTexMutator%"/>
@@ -30,8 +29,7 @@ const char* MATERIAL_TEMPLATE = R"(<?xml version="1.0" encoding="UTF-8" ?>
 
 		%diff%
 		%spec%
-		%roughness%
-		%metallic%
+		%metallicRoughness%
 		%normal%
 		%emission%
 		%subsurface%
@@ -84,7 +82,7 @@ Error Importer::writeMaterial(const cgltf_material& mtl)
 	if(mtl.pbr_metallic_roughness.base_color_texture.texture)
 	{
 		StringAuto uri(m_alloc);
-		uri.sprintf("%s%s", "TODO", getTextureUri(mtl.pbr_metallic_roughness.base_color_texture).cstr());
+		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.pbr_metallic_roughness.base_color_texture).cstr());
 
 		xml = replaceAllString(
 			xml, "%diff%", "<input shaderInput=\"diffTex\" value=\"" + std::string(uri.cstr()) + "\"/>");
@@ -101,6 +99,119 @@ Error Importer::writeMaterial(const cgltf_material& mtl)
 
 		xml = replaceAllString(xml, "%diffTexMutator%", "0");
 	}
+
+	// Specular color (freshnel)
+	// TODO
+	{
+		xml = replaceAllString(xml, "%spec%", "<input shaderInput=\"specColor\" value=\"0.04 0.04 0.04\"/>");
+		xml = replaceAllString(xml, "%specTexMutator%", "0");
+	}
+
+	// Roughness & metallic
+	if(mtl.pbr_metallic_roughness.metallic_roughness_texture.texture)
+	{
+		StringAuto uri(m_alloc);
+		uri.sprintf(
+			"%s%s", m_texrpath.cstr(), getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
+
+		xml = replaceAllString(xml,
+			"%metallicRoughness%",
+			"<input shaderInput=\"metallicRoughnessTex\" value=\"" + std::string(uri.cstr()) + "\"/>");
+
+		xml = replaceAllString(xml, "%metallicRoughnessTexMutator%", "1");
+	}
+	else
+	{
+		const F32 roughness = mtl.pbr_metallic_roughness.roughness_factor;
+		const F32 metallic = mtl.pbr_metallic_roughness.metallic_factor;
+
+		xml = replaceAllString(xml,
+			"%metallicRoughness%",
+			"<input shaderInput=\"metallic\" value=\"" + std::to_string(metallic) + "\"/>\n"
+				+ "<input shaderInput=\"roughness\" value=\"" + std::to_string(roughness) + "\"/>");
+
+		xml = replaceAllString(xml, "%metallicRoughnessTexMutator%", "0");
+	}
+
+	// Normal texture
+	if(mtl.normal_texture.texture)
+	{
+		StringAuto uri(m_alloc);
+		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.normal_texture).cstr());
+
+		xml = replaceAllString(
+			xml, "%normal%", "<input shaderInput=\"normalTex\" value=\"" + std::string(uri.cstr()) + "\"/>");
+
+		xml = replaceAllString(xml, "%normalTexMutator%", "1");
+	}
+	else
+	{
+		xml = replaceAllString(xml, "%normal%", "");
+		xml = replaceAllString(xml, "%normalTexMutator%", "0");
+	}
+
+	// Emissive texture
+	if(mtl.emissive_texture.texture)
+	{
+		StringAuto uri(m_alloc);
+		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.emissive_texture).cstr());
+
+		xml = replaceAllString(
+			xml, "%emission%", "<input shaderInput=\"emissiveTex\" value=\"" + std::string(uri.cstr()) + "\"/>");
+
+		xml = replaceAllString(xml, "%emissiveTexMutator%", "1");
+	}
+	else
+	{
+		const F32* emissionCol = &mtl.emissive_factor[0];
+
+		xml = replaceAllString(xml,
+			"%emission%",
+			"<input shaderInput=\"emission\" value=\"" + std::to_string(emissionCol[0]) + " "
+				+ std::to_string(emissionCol[1]) + " " + std::to_string(emissionCol[2]) + "\"/>");
+
+		xml = replaceAllString(xml, "%emissiveTexMutator%", "0");
+	}
+
+	// Subsurface
+	// TODO
+	{
+		F32 subsurface = 0.0f;
+
+		xml = replaceAllString(
+			xml, "%subsurface%", "<input shaderInput=\"subsurface\" value=\"" + std::to_string(subsurface) + "\"/>");
+	}
+
+	// Height texture
+	// TODO Add native support and not use occlusion map
+	if(mtl.occlusion_texture.texture)
+	{
+		StringAuto uri(m_alloc);
+		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.occlusion_texture).cstr());
+
+		xml = replaceAllString(xml,
+			"%height%",
+			"<input shaderInput=\"heightTex\" value=\"" + std::string(uri.cstr())
+				+ "\"/>\n"
+				  "\t\t<input shaderInput=\"heightMapScale\" value=\"0.05\"/>");
+
+		xml = replaceAllString(
+			xml, "%parallaxInput%", "<input shaderInput=\"modelViewMat\" builtin=\"MODEL_VIEW_MATRIX\"/>");
+
+		xml = replaceAllString(xml, "%parallaxMutator%", "1");
+	}
+	else
+	{
+		xml = replaceAllString(xml, "%height%", "");
+		xml = replaceAllString(xml, "%parallaxInput%", "");
+		xml = replaceAllString(xml, "%parallaxMutator%", "0");
+	}
+
+	// Replace texture extensions with .anki
+	xml = replaceAllString(xml, ".tga", ".ankitex");
+	xml = replaceAllString(xml, ".png", ".ankitex");
+	xml = replaceAllString(xml, ".jpg", ".ankitex");
+	xml = replaceAllString(xml, ".jpeg", ".ankitex");
 
 	// Write file
 	File file;

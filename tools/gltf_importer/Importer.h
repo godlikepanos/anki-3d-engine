@@ -19,7 +19,7 @@ public:
 
 	~Importer();
 
-	Error load(CString inputFname, CString outDir);
+	Error load(CString inputFname, CString outDir, CString rpath, CString texrpath);
 
 	Error writeAll();
 
@@ -28,6 +28,8 @@ private:
 
 	StringAuto m_inputFname = {m_alloc};
 	StringAuto m_outDir = {m_alloc};
+	StringAuto m_rpath = {m_alloc};
+	StringAuto m_texrpath = {m_alloc};
 
 	cgltf_data* m_gltf = nullptr;
 
@@ -35,8 +37,13 @@ private:
 
 	ThreadHive* m_hive = nullptr;
 
+	File m_sceneFile;
+
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh);
 	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);
+
+	ANKI_USE_RESULT Error visitNode(const cgltf_node& node);
+	ANKI_USE_RESULT Error writeLight(const cgltf_node& node);
 };
 
 #define ANKI_GLTF_LOGI(...) ANKI_LOG("GLTF", NORMAL, __VA_ARGS__)

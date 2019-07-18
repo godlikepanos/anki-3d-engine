@@ -24,10 +24,12 @@ Importer::~Importer()
 	m_alloc.deleteInstance(m_hive);
 }
 
-Error Importer::load(CString inputFname, CString outDir)
+Error Importer::load(CString inputFname, CString outDir, CString rpath, CString texrpath)
 {
 	m_inputFname.create(inputFname);
 	m_outDir.create(outDir);
+	m_rpath.create(rpath);
+	m_texrpath.create(texrpath);
 
 	cgltf_options options = {};
 	cgltf_result res = cgltf_parse_file(&options, inputFname.cstr(), &m_gltf);
@@ -60,6 +62,61 @@ Error Importer::writeAll()
 	{
 		ANKI_CHECK(writeMaterial(m_gltf->materials[i]));
 	}
+
+	StringAuto sceneFname(m_alloc);
+	sceneFname.sprintf("%sscene.lua", m_outDir.cstr());
+	ANKI_CHECK(m_sceneFile.open(sceneFname.toCString(), FileOpenFlag::WRITE));
+
+	// Nodes
+	for(const cgltf_scene* scene = m_gltf->scenes; scene < m_gltf->scenes + m_gltf->scenes_count; ++scene)
+	{
+		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count; ++node)
+		{
+			ANKI_CHECK(visitNode(*(*node)));
+		}
+	}
+
+	return Error::NONE;
+}
+
+Error Importer::visitNode(const cgltf_node& node)
+{
+	if(node.light)
+	{
+		ANKI_CHECK(writeLight(node));
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
+	}
+
+	return Error::NONE;
+}
+
+Error Importer::writeLight(const cgltf_node& node)
+{
+	const cgltf_light& light = *node.light;
+	ANKI_GLTF_LOGI("Exporting light %s", light.name);
+
+	CString lightTypeStr;
+	switch(light.type)
+	{
+	case cgltf_light_type_point:
+		lightTypeStr = "Point";
+		break;
+	case cgltf_light_type_spot:
+		lightTypeStr = "Spot";
+		break;
+	case cgltf_light_type_directional:
+		lightTypeStr = "Directional";
+		break;
+	default:
+		ANKI_GLTF_LOGE("Unsupporter light type %d", light.type);
+		return Error::USER_DATA;
+	}
+
+	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:new%sLightNode(\"%s\")\n", lightTypeStr.cstr(), light.name));
+	ANKI_CHECK(m_sceneFile.writeText("lcomp = node:getSceneNodeBase():getLightComponent()\n"));
 
 	return Error::NONE;
 }
