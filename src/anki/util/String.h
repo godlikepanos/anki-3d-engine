@@ -585,6 +585,13 @@ public:
 		return toCString().toNumber(out);
 	}
 
+	/// Compute the hash.
+	U32 computeHash() const
+	{
+		checkInit();
+		return anki::computeHash(&m_data[0], m_data.getSize());
+	}
+
 protected:
 	DynamicArray<Char> m_data;
 

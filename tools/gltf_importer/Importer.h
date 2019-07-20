@@ -39,11 +39,27 @@ private:
 
 	File m_sceneFile;
 
+	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<StringAuto, StringAuto>& out);
+	ANKI_USE_RESULT Error parseArrayOfNumbers(
+		CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize = nullptr);
+
+	static F32 computeLightRadius(const Vec3 color)
+	{
+		// Based on the attenuation equation: att = 1 - fragLightDist^2 / lightRadius^2
+		const F32 minAtt = 0.01f;
+		const F32 maxIntensity = max(max(color.x(), color.y()), color.z());
+		return sqrt(maxIntensity / minAtt);
+	}
+
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh);
 	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);
+	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh);
 
 	ANKI_USE_RESULT Error visitNode(const cgltf_node& node);
+	ANKI_USE_RESULT Error writeTransform(const cgltf_node& node);
 	ANKI_USE_RESULT Error writeLight(const cgltf_node& node);
+	ANKI_USE_RESULT Error writeCamera(const cgltf_node& node);
+	ANKI_USE_RESULT Error writeModelNode(const cgltf_node& node);
 };
 
 #define ANKI_GLTF_LOGI(...) ANKI_LOG("GLTF", NORMAL, __VA_ARGS__)
