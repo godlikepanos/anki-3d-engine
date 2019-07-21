@@ -68,7 +68,7 @@ static Error appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>&
 	const U8* base = static_cast<const U8*>(attrib.data->buffer_view->buffer->data) + attrib.data->offset
 					 + attrib.data->buffer_view->offset;
 
-	const PtrSize stride = (attrib.data->stride == 0) ? calcImplicitStride(attrib) : attrib.data->stride == 0;
+	const PtrSize stride = (attrib.data->stride == 0) ? calcImplicitStride(attrib) : attrib.data->stride;
 
 	const U count = attrib.data->count;
 
@@ -152,7 +152,7 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 			{
 				appendAttribute(*attrib, submesh.m_positions, [&](const Vec3& pos) {
 					submesh.m_aabbMin = submesh.m_aabbMin.min(pos);
-					submesh.m_aabbMax = submesh.m_aabbMax.min(pos);
+					submesh.m_aabbMax = submesh.m_aabbMax.max(pos);
 				});
 			}
 			else if(attrib->type == cgltf_attribute_type_normal)
@@ -173,7 +173,7 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		}
 
 		aabbMin = aabbMin.min(submesh.m_aabbMin);
-		aabbMax = aabbMax.min(submesh.m_aabbMax);
+		aabbMax = aabbMax.max(submesh.m_aabbMax);
 
 		const U vertCount = submesh.m_positions.getSize();
 		if(submesh.m_positions.getSize() == 0)
@@ -215,8 +215,8 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 
 				// Check angle of the normals
 				Vec3& otherNormal = submesh.m_normals[prevV];
-				const F32 cosAng = otherNormal.dot(normal);
-				if(cosAng > m_normalsMergeCosAngle)
+				const F32 ang = acos(otherNormal.dot(normal));
+				if(ang > m_normalsMergeAngle)
 				{
 					continue;
 				}

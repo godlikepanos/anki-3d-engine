@@ -33,7 +33,7 @@ private:
 
 	cgltf_data* m_gltf = nullptr;
 
-	F32 m_normalsMergeCosAngle = cos(toRad(30.0f));
+	F32 m_normalsMergeAngle = toRad(30.0f);
 
 	ThreadHive* m_hive = nullptr;
 
@@ -55,8 +55,9 @@ private:
 	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);
 	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh);
 
-	ANKI_USE_RESULT Error visitNode(const cgltf_node& node);
-	ANKI_USE_RESULT Error writeTransform(const cgltf_node& node);
+	// Scene
+	ANKI_USE_RESULT Error writeTransform(const Transform& trf);
+	ANKI_USE_RESULT Error visitNode(const cgltf_node& node, const Transform& parentTrf);
 	ANKI_USE_RESULT Error writeLight(const cgltf_node& node);
 	ANKI_USE_RESULT Error writeCamera(const cgltf_node& node);
 	ANKI_USE_RESULT Error writeModelNode(const cgltf_node& node);
