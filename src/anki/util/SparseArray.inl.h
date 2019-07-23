@@ -332,4 +332,37 @@ TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
 	return MAX_U32;
 }
 
+template<typename T, typename TIndex>
+template<typename TAlloc>
+void SparseArray<T, TIndex>::clone(TAlloc& alloc, SparseArray& b) const
+{
+	ANKI_ASSERT(b.m_elements == nullptr && b.m_metadata == nullptr);
+	if(m_capacity == 0)
+	{
+		return;
+	}
+
+	// Allocate memory
+	b.m_elements = static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
+	b.m_metadata =
+		static_cast<Metadata*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
+	memcpy(b.m_metadata, m_metadata, m_capacity * sizeof(Metadata));
+
+	for(U i = 0; i < m_capacity; ++i)
+	{
+		if(m_metadata[i].m_alive)
+		{
+			::new(&b.m_elements[i]) Value(m_elements[i]);
+		}
+	}
+
+	// Set the rest
+	b.m_elementCount = m_elementCount;
+	b.m_capacity = m_capacity;
+	b.m_initialStorageSize = m_initialStorageSize;
+	b.m_probeCount = m_probeCount;
+	b.m_maxLoadFactor = m_maxLoadFactor;
+	b.invalidateIterators();
+}
+
 } // end namespace anki

@@ -5,6 +5,9 @@
 
 #include "Importer.h"
 
+#define CGLTF_IMPLEMENTATION
+#include <cgltf/cgltf.h>
+
 namespace anki
 {
 
@@ -146,14 +149,14 @@ Error Importer::writeAll()
 	{
 		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count; ++node)
 		{
-			ANKI_CHECK(visitNode(*(*node), Transform::getIdentity()));
+			ANKI_CHECK(visitNode(*(*node), Transform::getIdentity(), HashMapAuto<CString, StringAuto>(m_alloc)));
 		}
 	}
 
 	return Error::NONE;
 }
 
-Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<StringAuto, StringAuto>& out)
+Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out)
 {
 	cgltf_size extrasSize;
 	cgltf_copy_extras_json(m_gltf, &extras, nullptr, &extrasSize);
@@ -173,7 +176,53 @@ Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<StringAuto, St
 
 	json[json.getSize() - 1] = '\0';
 
-	printf("%s\n", &json[0]);
+	// Get token count
+	CString jsonTxt(&json[0]);
+	jsmn_parser parser;
+	jsmn_init(&parser);
+	const I tokenCount = jsmn_parse(&parser, jsonTxt.cstr(), jsonTxt.getLength(), nullptr, 0);
+	if(tokenCount < 1)
+	{
+		return Error::NONE;
+	}
+
+	DynamicArrayAuto<jsmntok_t> tokens(m_alloc);
+	tokens.create(tokenCount);
+
+	// Get tokens
+	jsmn_init(&parser);
+	jsmn_parse(&parser, jsonTxt.cstr(), jsonTxt.getLength(), &tokens[0], tokens.getSize());
+
+	StringListAuto tokenStrings(m_alloc);
+	for(const jsmntok_t& token : tokens)
+	{
+		if(token.type != JSMN_STRING)
+		{
+			continue;
+		}
+
+		StringAuto tokenStr(m_alloc);
+		tokenStr.create(&jsonTxt[token.start], &jsonTxt[token.end]);
+		tokenStrings.pushBack(tokenStr.toCString());
+	}
+
+	if((tokenStrings.getSize() % 2) != 0)
+	{
+		ANKI_GLTF_LOGE("Unable to parse: %s", jsonTxt.cstr());
+		return Error::FUNCTION_FAILED;
+	}
+
+	// Write them to the map
+	auto it = tokenStrings.getBegin();
+	while(it != tokenStrings.getEnd())
+	{
+		auto it2 = it;
+		++it2;
+
+		out.emplace(it->toCString(), StringAuto(m_alloc, it2->toCString()));
+		++it;
+		++it;
+	}
 
 	return Error::NONE;
 }
@@ -209,46 +258,44 @@ Error Importer::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, con
 	return Error::NONE;
 }
 
-Error Importer::visitNode(const cgltf_node& node, const Transform& parentTrf)
+Error Importer::visitNode(
+	const cgltf_node& node, const Transform& parentTrf, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
-	Transform localTrf;
-	ANKI_CHECK(getNodeTransform(node, localTrf));
-	const Transform finalTrf = parentTrf.combineTransformations(localTrf);
-
-	Transform newParentTrf = Transform::getIdentity();
-	HashMapAuto<StringAuto, StringAuto> parentExtras(m_alloc);
-	Bool writeTrf = true;
+	HashMapAuto<CString, StringAuto> outExtras(m_alloc);
+	Bool dummyNode = false;
 	if(node.light)
 	{
-		ANKI_CHECK(writeLight(node));
+		ANKI_CHECK(writeLight(node, parentExtras));
 	}
 	else if(node.camera)
 	{
-		ANKI_CHECK(writeCamera(node));
+		ANKI_CHECK(writeCamera(node, parentExtras));
 	}
 	else if(node.mesh)
 	{
 		ANKI_CHECK(writeModel(*node.mesh));
-		ANKI_CHECK(writeModelNode(node));
+		ANKI_CHECK(writeModelNode(node, parentExtras));
 	}
 	else
 	{
 		ANKI_GLTF_LOGW("Ignoring node %s. Assuming transform node", node.name);
-		newParentTrf = finalTrf;
-		ANKI_CHECK(getExtras(node.extras, parentExtras));
-		writeTrf = false;
+		ANKI_CHECK(getExtras(node.extras, outExtras));
+		dummyNode = true;
 	}
 
 	// Write transform
-	if(writeTrf)
+	Transform localTrf;
+	ANKI_CHECK(getNodeTransform(node, localTrf));
+	Transform trf = parentTrf.combineTransformations(localTrf);
+	if(!dummyNode)
 	{
-		ANKI_CHECK(writeTransform(finalTrf));
+		ANKI_CHECK(writeTransform(trf));
 	}
 
 	// Visit children
 	for(cgltf_node* const* c = node.children; c < node.children + node.children_count; ++c)
 	{
-		ANKI_CHECK(visitNode(*(*c), newParentTrf));
+		ANKI_CHECK(visitNode(*(*c), (dummyNode) ? trf : Transform::getIdentity(), outExtras));
 	}
 
 	return Error::NONE;
@@ -287,7 +334,7 @@ Error Importer::writeModel(const cgltf_mesh& mesh)
 		return Error::USER_DATA;
 	}
 
-	HashMapAuto<StringAuto, StringAuto> extras(m_alloc);
+	HashMapAuto<CString, StringAuto> extras(m_alloc);
 	ANKI_CHECK(getExtras(mesh.extras, extras));
 
 	File file;
@@ -300,13 +347,13 @@ Error Importer::writeModel(const cgltf_mesh& mesh)
 
 	ANKI_CHECK(file.writeText("\t\t\t<mesh>%s%s.ankimesh</mesh>\n", m_rpath.cstr(), mesh.name));
 
-	auto lod1 = extras.find(StringAuto(m_alloc, "lod1"));
+	auto lod1 = extras.find("lod1");
 	if(lod1 != extras.getEnd())
 	{
 		ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s</mesh1>\n", m_rpath.cstr(), lod1->cstr()));
 	}
 
-	auto mtlOverride = extras.find(StringAuto(m_alloc, "material_override"));
+	auto mtlOverride = extras.find("material_override");
 	if(mtlOverride != extras.getEnd())
 	{
 		ANKI_CHECK(file.writeText("\t\t\t<material>%s%s</material>\n", m_rpath.cstr(), mtlOverride->cstr()));
@@ -327,12 +374,12 @@ Error Importer::writeModel(const cgltf_mesh& mesh)
 	return Error::NONE;
 }
 
-Error Importer::writeLight(const cgltf_node& node)
+Error Importer::writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	const cgltf_light& light = *node.light;
 	ANKI_GLTF_LOGI("Exporting light %s", light.name);
 
-	HashMapAuto<StringAuto, StringAuto> extras(m_alloc);
+	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(node.extras, extras));
 
 	CString lightTypeStr;
@@ -360,7 +407,7 @@ Error Importer::writeLight(const cgltf_node& node)
 	ANKI_CHECK(
 		m_sceneFile.writeText("lcomp:setDiffuseColor(Vec4.new(%f, %f, %f, 1))\n", color.x(), color.y(), color.z()));
 
-	auto shadow = extras.find(StringAuto(m_alloc, "shadow"));
+	auto shadow = extras.find("shadow");
 	if(shadow != extras.getEnd())
 	{
 		if(*shadow == "true")
@@ -384,13 +431,13 @@ Error Importer::writeLight(const cgltf_node& node)
 		ANKI_CHECK(m_sceneFile.writeText("lcomp:setInnerAngle(%f)\n", light.spot_inner_cone_angle));
 	}
 
-	auto lensFlaresFname = extras.find(StringAuto(m_alloc, "lens_flare"));
+	auto lensFlaresFname = extras.find("lens_flare");
 	if(lensFlaresFname != extras.getEnd())
 	{
 		ANKI_CHECK(m_sceneFile.writeText("node:loadLensFlare(\"%s\")\n", lensFlaresFname->cstr()));
 
-		auto lsSpriteSize = extras.find(StringAuto(m_alloc, "lens_flare_first_sprite_size"));
-		auto lsColor = extras.find(StringAuto(m_alloc, "lens_flare_color"));
+		auto lsSpriteSize = extras.find("lens_flare_first_sprite_size");
+		auto lsColor = extras.find("lens_flare_color");
 
 		if(lsSpriteSize != extras.getEnd() || lsColor != extras.getEnd())
 		{
@@ -420,8 +467,8 @@ Error Importer::writeLight(const cgltf_node& node)
 		}
 	}
 
-	auto lightEventIntensity = extras.find(StringAuto(m_alloc, "lens_flare"));
-	auto lightEventFrequency = extras.find(StringAuto(m_alloc, "light_event_frequency"));
+	auto lightEventIntensity = extras.find("lens_flare");
+	auto lightEventFrequency = extras.find("light_event_frequency");
 	if(lightEventIntensity != extras.getEnd() || lightEventFrequency != extras.getEnd())
 	{
 		ANKI_CHECK(m_sceneFile.writeText("event = events:newLightEvent(0.0, -1.0, node:getSceneNodeBase())\n"));
@@ -450,7 +497,7 @@ Error Importer::writeLight(const cgltf_node& node)
 	return Error::NONE;
 }
 
-Error Importer::writeCamera(const cgltf_node& node)
+Error Importer::writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{
@@ -474,9 +521,12 @@ Error Importer::writeCamera(const cgltf_node& node)
 	return Error::NONE;
 }
 
-Error Importer::writeModelNode(const cgltf_node& node)
+Error Importer::writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	ANKI_GLTF_LOGI("Exporting model node %s", node.name);
+
+	HashMapAuto<CString, StringAuto> extras(parentExtras);
+	ANKI_CHECK(getExtras(node.extras, extras));
 
 	StringAuto modelFname(m_alloc);
 	modelFname.sprintf("%s%s_%s.ankimdl", m_rpath.cstr(), node.mesh->name, node.mesh->primitives[0].material->name);

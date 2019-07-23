@@ -39,7 +39,7 @@ private:
 
 	File m_sceneFile;
 
-	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<StringAuto, StringAuto>& out);
+	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
 	ANKI_USE_RESULT Error parseArrayOfNumbers(
 		CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize = nullptr);
 
@@ -57,10 +57,11 @@ private:
 
 	// Scene
 	ANKI_USE_RESULT Error writeTransform(const Transform& trf);
-	ANKI_USE_RESULT Error visitNode(const cgltf_node& node, const Transform& parentTrf);
-	ANKI_USE_RESULT Error writeLight(const cgltf_node& node);
-	ANKI_USE_RESULT Error writeCamera(const cgltf_node& node);
-	ANKI_USE_RESULT Error writeModelNode(const cgltf_node& node);
+	ANKI_USE_RESULT Error visitNode(
+		const cgltf_node& node, const Transform& parentTrf, const HashMapAuto<CString, StringAuto>& parentExtras);
+	ANKI_USE_RESULT Error writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
+	ANKI_USE_RESULT Error writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
+	ANKI_USE_RESULT Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
 };
 
 #define ANKI_GLTF_LOGI(...) ANKI_LOG("GLTF", NORMAL, __VA_ARGS__)

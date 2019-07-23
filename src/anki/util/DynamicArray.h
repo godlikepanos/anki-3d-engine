@@ -317,6 +317,21 @@ public:
 		Base::destroy(m_alloc);
 	}
 
+	/// Copy.
+	DynamicArrayAuto(const DynamicArrayAuto& b)
+		: Base()
+		, m_alloc(b.m_alloc)
+	{
+		if(b.getSize())
+		{
+			create(b.getSize());
+			for(PtrSize i = 0; i < b.getSize(); ++i)
+			{
+				(*this)[i] = b[i];
+			}
+		}
+	}
+
 	/// Move.
 	DynamicArrayAuto& operator=(DynamicArrayAuto&& b)
 	{
@@ -330,6 +345,21 @@ public:
 		b.m_capacity = 0;
 		m_alloc = b.m_alloc;
 		b.m_alloc = {};
+		return *this;
+	}
+
+	/// Copy.
+	DynamicArrayAuto& operator=(const DynamicArrayAuto& b)
+	{
+		destroy();
+		if(b.getSize())
+		{
+			create(b.getSize());
+			for(PtrSize i = 0; i < b.getSize(); ++i)
+			{
+				(*this)[i] = b[i];
+			}
+		}
 		return *this;
 	}
 

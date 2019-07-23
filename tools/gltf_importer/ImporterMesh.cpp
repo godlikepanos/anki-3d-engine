@@ -215,7 +215,7 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 
 				// Check angle of the normals
 				Vec3& otherNormal = submesh.m_normals[prevV];
-				const F32 ang = acos(otherNormal.dot(normal));
+				const F32 ang = acos(clamp(otherNormal.dot(normal), -1.0f, 1.0f));
 				if(ang > m_normalsMergeAngle)
 				{
 					continue;
