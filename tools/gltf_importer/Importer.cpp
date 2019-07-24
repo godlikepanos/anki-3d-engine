@@ -45,40 +45,62 @@ static void removeScale(Mat4& m)
 	m.setRotationPart(rot);
 }
 
-static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform& trf)
+static void getNodeTransform(const cgltf_node& node, Vec3& tsl, Mat3& rot, Vec3& scale)
 {
-	trf = Transform::getIdentity();
 	if(node.has_matrix)
 	{
-		Mat4 mat = Mat4(node.matrix).getTransposed();
-		F32 scale;
-		ANKI_CHECK(getUniformScale(mat, scale));
-		removeScale(mat);
-		trf = Transform(mat);
+		ANKI_ASSERT(!"TODO");
 	}
 	else
 	{
 		if(node.has_translation)
 		{
-			trf.setOrigin(Vec4(node.translation[0], node.translation[1], node.translation[2], 0.0f));
+			tsl = Vec3(node.translation[0], node.translation[1], node.translation[2]);
+		}
+		else
+		{
+			tsl = Vec3(0.0f);
 		}
 
 		if(node.has_rotation)
 		{
-			trf.setRotation(Mat3x4(Quat(node.rotation[0], node.rotation[1], node.rotation[2], node.rotation[3])));
+			rot = Mat3(Quat(node.rotation[0], node.rotation[1], node.rotation[2], node.rotation[3]));
+		}
+		else
+		{
+			rot = Mat3::getIdentity();
 		}
 
 		if(node.has_scale)
 		{
-			if(node.scale[0] != node.scale[1] || node.scale[0] != node.scale[2])
-			{
-				ANKI_GLTF_LOGE("Expecting uniform scale");
-				return Error::USER_DATA;
-			}
-
-			trf.setScale(node.scale[0]);
+			ANKI_ASSERT(node.scale[0] > 0.0f);
+			ANKI_ASSERT(node.scale[1] > 0.0f);
+			ANKI_ASSERT(node.scale[2] > 0.0f);
+			scale = Vec3(node.scale[0], node.scale[1], node.scale[2]);
+		}
+		else
+		{
+			scale = Vec3(1.0f);
 		}
 	}
+}
+
+static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform& trf)
+{
+	Vec3 tsl;
+	Mat3 rot;
+	Vec3 scale;
+	getNodeTransform(node, tsl, rot, scale);
+
+	if(scale[0] != scale[1] || scale[0] != scale[2])
+	{
+		ANKI_GLTF_LOGE("Expecting uniform scale");
+		return Error::USER_DATA;
+	}
+
+	trf.setOrigin(tsl.xyz0());
+	trf.setRotation(Mat3x4(rot));
+	trf.setScale(scale[0]);
 
 	return Error::NONE;
 }
@@ -261,6 +283,9 @@ Error Importer::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, con
 Error Importer::visitNode(
 	const cgltf_node& node, const Transform& parentTrf, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
+	Transform localTrf;
+	ANKI_CHECK(getNodeTransform(node, localTrf));
+
 	HashMapAuto<CString, StringAuto> outExtras(m_alloc);
 	Bool dummyNode = false;
 	if(node.light)
@@ -273,8 +298,182 @@ Error Importer::visitNode(
 	}
 	else if(node.mesh)
 	{
-		ANKI_CHECK(writeModel(*node.mesh));
-		ANKI_CHECK(writeModelNode(node, parentExtras));
+		// Handle special nodes
+		HashMapAuto<CString, StringAuto> extras(parentExtras);
+		ANKI_CHECK(getExtras(node.extras, extras));
+
+		HashMapAuto<CString, StringAuto>::Iterator it;
+		if((it = extras.find("particles")) != extras.getEnd())
+		{
+			const StringAuto& fname = *it;
+
+			Bool gpuParticles = false;
+			if((it = extras.find("gpu_particles")) != extras.getEnd() && *it == "true")
+			{
+				gpuParticles = true;
+			}
+
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:new%sModelNode(\"%s\", \"%s%s\")\n",
+				(gpuParticles) ? "Gpu" : "",
+				node.name,
+				m_rpath.cstr(),
+				fname.cstr()));
+		}
+		else if((it = extras.find("collision")) != extras.getEnd() && *it == "true")
+		{
+			// Write colission mesh
+			{
+				StringAuto fname(m_alloc);
+				fname.sprintf("%s%s.ankicl", m_outDir.cstr(), node.mesh->name);
+				File file;
+				ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
+
+				ANKI_CHECK(file.writeText("<collisionShape>\n\t<type>staticMesh</type>\n\t<value>%s%s.ankimesh"
+										  "</value>\n</collisionShape>\n",
+					m_rpath.cstr(),
+					node.mesh->name));
+			}
+
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newStaticCollisionNode(\"%s\", \"%s%s.ankicl\")\n",
+				node.name,
+				m_rpath.cstr(),
+				node.mesh->name));
+		}
+		else if((it = extras.find("reflection_probe")) != extras.getEnd() && *it == "true")
+		{
+			Vec3 tsl;
+			Mat3 rot;
+			Vec3 scale;
+			getNodeTransform(node, tsl, rot, scale);
+
+			const Vec3 half = scale;
+			const Vec3 aabbMin = tsl - half - tsl;
+			const Vec3 aabbMax = tsl + half - tsl;
+
+			localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
+
+			ANKI_CHECK(m_sceneFile.writeText(
+				"\nnode = scene:newReflectionProbeNode(\"%s\", Vec4.new(%f, %f, %f, 0), Vec4.new(%f, %f, %f, 0))\n",
+				node.name,
+				aabbMin.x(),
+				aabbMin.y(),
+				aabbMin.z(),
+				aabbMax.x(),
+				aabbMax.y(),
+				aabbMax.z()));
+		}
+		else if((it = extras.find("gi_probe")) != extras.getEnd() && *it == "true")
+		{
+			Vec3 tsl;
+			Mat3 rot;
+			Vec3 scale;
+			getNodeTransform(node, tsl, rot, scale);
+
+			const Vec3 half = scale;
+			const Vec3 aabbMin = tsl - half - tsl;
+			const Vec3 aabbMax = tsl + half - tsl;
+
+			localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
+
+			F32 fadeDistance = -1.0f;
+			if((it = extras.find("gi_probe_fade_distance")) != extras.getEnd())
+			{
+				ANKI_CHECK(it->toNumber(fadeDistance));
+			}
+
+			F32 cellSize = -1.0f;
+			if((it = extras.find("gi_probe_cell_size")) != extras.getEnd())
+			{
+				ANKI_CHECK(it->toNumber(cellSize));
+			}
+
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newGlobalIlluminationProbeNode(\"%s\")\n", node.name));
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getGlobalIlluminationProbeComponent()\n"));
+
+			ANKI_CHECK(m_sceneFile.writeText("comp:setBoundingBox(Vec4.new(%f, %f, %f, 0), Vec4.new(%f, %f, %f, 0))\n",
+				aabbMin.x(),
+				aabbMin.y(),
+				aabbMin.z(),
+				aabbMax.x(),
+				aabbMax.y(),
+				aabbMax.z()));
+
+			if(fadeDistance > 0.0f)
+			{
+				ANKI_CHECK(m_sceneFile.writeText("comp:setFadeDistance(%f)\n", fadeDistance));
+			}
+
+			if(cellSize > 0.0f)
+			{
+				ANKI_CHECK(m_sceneFile.writeText("comp:setCellSize(%f)\n", cellSize));
+			}
+		}
+		else if((it = extras.find("decal")) != extras.getEnd() && *it == "true")
+		{
+			Vec3 tsl;
+			Mat3 rot;
+			Vec3 scale;
+			getNodeTransform(node, tsl, rot, scale);
+
+			StringAuto diffuseAtlas(m_alloc);
+			if((it = extras.find("decal_diffuse_atlas")) != extras.getEnd())
+			{
+				diffuseAtlas.create(it->toCString());
+			}
+
+			StringAuto diffuseSubtexture(m_alloc);
+			if((it = extras.find("decal_diffuse_sub_texture")) != extras.getEnd())
+			{
+				diffuseSubtexture.create(it->toCString());
+			}
+
+			F32 diffuseFactor = -1.0f;
+			if((it = extras.find("decal_diffuse_factor")) != extras.getEnd())
+			{
+				ANKI_CHECK(it->toNumber(diffuseFactor));
+			}
+
+			StringAuto specularRougnessMetallicAtlas(m_alloc);
+			if((it = extras.find("decal_specular_roughness_metallic_atlas")) != extras.getEnd())
+			{
+				specularRougnessMetallicAtlas.create(it->toCString());
+			}
+
+			StringAuto specularRougnessMetallicSubtexture(m_alloc);
+			if((it = extras.find("decal_specular_roughness_metallic_sub_texture")) != extras.getEnd())
+			{
+				specularRougnessMetallicSubtexture.create(it->toCString());
+			}
+
+			F32 specularRougnessMetallicFactor = -1.0f;
+			if((it = extras.find("decal_specular_roughness_metallic_factor")) != extras.getEnd())
+			{
+				ANKI_CHECK(it->toNumber(specularRougnessMetallicFactor));
+			}
+
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newDecalNode(\"%s\")\n", node.name));
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getDecalComponent()\n"));
+			if(diffuseAtlas)
+			{
+				ANKI_CHECK(m_sceneFile.writeText("comp:setDiffuseDecal(\"%s\", \"%s\", %f)\n",
+					diffuseAtlas.cstr(),
+					diffuseSubtexture.cstr(),
+					diffuseFactor));
+			}
+
+			if(specularRougnessMetallicAtlas)
+			{
+				ANKI_CHECK(m_sceneFile.writeText("comp:setSpecularRoughnessDecal(\"%s\", \"%s\", %f)\n",
+					specularRougnessMetallicAtlas.cstr(),
+					specularRougnessMetallicSubtexture.cstr(),
+					specularRougnessMetallicFactor));
+			}
+		}
+		else
+		{
+			ANKI_CHECK(writeModel(*node.mesh));
+			ANKI_CHECK(writeModelNode(node, parentExtras));
+		}
 	}
 	else
 	{
@@ -284,8 +483,6 @@ Error Importer::visitNode(
 	}
 
 	// Write transform
-	Transform localTrf;
-	ANKI_CHECK(getNodeTransform(node, localTrf));
 	Transform trf = parentTrf.combineTransformations(localTrf);
 	if(!dummyNode)
 	{
