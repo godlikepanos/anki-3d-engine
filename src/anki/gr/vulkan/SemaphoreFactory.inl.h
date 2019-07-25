@@ -57,7 +57,7 @@ inline MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence)
 		out->m_fence = fence;
 	}
 
-	ANKI_ASSERT(out->m_refcount.get() == 0);
+	ANKI_ASSERT(out->m_refcount.getNonAtomically() == 0);
 	return MicroSemaphorePtr(out);
 }
 

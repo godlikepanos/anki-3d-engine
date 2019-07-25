@@ -56,7 +56,7 @@ MicroFence* FenceFactory::newFence()
 		out = m_alloc.newInstance<MicroFence>(this);
 	}
 
-	ANKI_ASSERT(out->m_refcount.get() == 0);
+	ANKI_ASSERT(out->m_refcount.getNonAtomically() == 0);
 	return out;
 }
 

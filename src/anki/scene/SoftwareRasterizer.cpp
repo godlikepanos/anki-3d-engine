@@ -377,9 +377,9 @@ Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 	{
 		for(U x = bboxMin.x(); x < bboxMax.x(); x += 1.0f)
 		{
-			U idx = U(y) * m_width + U(x);
-			U32 depthi = m_zbuffer[idx].get();
-			F32 depthf = depthi / F32(MAX_U32);
+			const U idx = U(y) * m_width + U(x);
+			const U32 depthi = m_zbuffer[idx].getNonAtomically();
+			const F32 depthf = depthi / F32(MAX_U32);
 			if(minZ < depthf)
 			{
 				return true;
@@ -403,7 +403,7 @@ void SoftwareRasterizer::fillDepthBuffer(ConstWeakArray<F32> depthValues)
 		depth = min(depth, 1.0f - EPSILON); // See a few lines above why is that
 
 		const U32 depthi = depth * MAX_U32;
-		m_zbuffer[count].set(depthi);
+		m_zbuffer[count].setNonAtomically(depthi);
 	}
 }
 

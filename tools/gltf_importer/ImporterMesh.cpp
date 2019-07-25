@@ -41,6 +41,9 @@ static U cgltfComponentSize(cgltf_component_type type)
 	case cgltf_component_type_r_32f:
 		out = sizeof(F32);
 		break;
+	case cgltf_component_type_r_16u:
+		out = sizeof(U16);
+		break;
 	default:
 		ANKI_ASSERT(!"TODO");
 		out = 0;
@@ -60,6 +63,12 @@ static Error appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>&
 	if(cgltfComponentCount(attrib.data->type) != T::COMPONENT_COUNT)
 	{
 		ANKI_GLTF_LOGE("Wrong component count for attribute: %s", attrib.name);
+		return Error::USER_DATA;
+	}
+
+	if(cgltfComponentSize(attrib.data->component_type) != sizeof(typename T::Scalar))
+	{
+		ANKI_GLTF_LOGE("Incompatible type: %s", attrib.name);
 		return Error::USER_DATA;
 	}
 
@@ -97,6 +106,8 @@ public:
 	DynamicArrayAuto<Vec3> m_normals;
 	DynamicArrayAuto<Vec4> m_tangents;
 	DynamicArrayAuto<Vec2> m_uvs;
+	DynamicArrayAuto<U16Vec4> m_boneIds;
+	DynamicArrayAuto<Vec4> m_boneWeights;
 	DynamicArrayAuto<U16> m_indices;
 
 	Vec3 m_aabbMin{MAX_F32};
@@ -110,16 +121,24 @@ public:
 		, m_normals(alloc)
 		, m_tangents(alloc)
 		, m_uvs(alloc)
+		, m_boneIds(alloc)
+		, m_boneWeights(alloc)
 		, m_indices(alloc)
 	{
 	}
+};
+
+struct WeightVertex
+{
+	U16Vec4 m_boneIndices{MAX_U16};
+	U8Vec4 m_weights{0_U8};
 };
 
 Error Importer::writeMesh(const cgltf_mesh& mesh)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankimesh", m_outDir.cstr(), mesh.name);
-	ANKI_GLTF_LOGI("Exporting %s", fname.cstr());
+	ANKI_GLTF_LOGI("Importing mesh %s", fname.cstr());
 
 	DynamicArrayAuto<SubMesh> submeshes(m_alloc);
 	U totalVertCount = 0;
@@ -128,6 +147,7 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 	Vec3 aabbMax(MIN_F32);
 	F32 maxUvDistance = MIN_F32;
 	F32 minUvDistance = MAX_F32;
+	Bool hasBoneWeights = false;
 
 	// Iterate primitives. Every primitive is a submesh
 	for(const cgltf_primitive* primitive = mesh.primitives; primitive < mesh.primitives + mesh.primitives_count;
@@ -166,6 +186,15 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 					minUvDistance = min(minUvDistance, min(uv.x(), uv.y()));
 				});
 			}
+			else if(attrib->type == cgltf_attribute_type_joints)
+			{
+				appendAttribute(*attrib, submesh.m_boneIds, [](const U16Vec4&) {});
+				hasBoneWeights = true;
+			}
+			else if(attrib->type == cgltf_attribute_type_weights)
+			{
+				appendAttribute(*attrib, submesh.m_boneWeights, [](const Vec4&) {});
+			}
 			else
 			{
 				ANKI_GLTF_LOGW("Ignoring attribute: %s", attrib->name);
@@ -194,8 +223,21 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 			return Error::USER_DATA;
 		}
 
+		if(submesh.m_boneIds.getSize() != 0 && submesh.m_boneIds.getSize() != vertCount)
+		{
+			ANKI_GLTF_LOGE("Bone IDs count is incorrect. Is %u, should be %u", submesh.m_boneIds.getSize(), vertCount);
+			return Error::USER_DATA;
+		}
+
+		if(submesh.m_boneWeights.getSize() != 0 && submesh.m_boneWeights.getSize() != vertCount)
+		{
+			ANKI_GLTF_LOGE(
+				"Bone weights count is incorrect. Is %u, should be %u", submesh.m_boneWeights.getSize(), vertCount);
+			return Error::USER_DATA;
+		}
+
 		//
-		// Fix normals. If normal A and normal B have the same position then merge them
+		// Fix normals. If normal A and normal B have the same position then try to merge them
 		//
 		for(U v = 0; v < vertCount; ++v)
 		{
@@ -426,13 +468,27 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 			uva.m_format = Format::R16G16_SFLOAT;
 		}
 		uva.m_relativeOffset = sizeof(U32) * 2;
-		uva.m_scale = 1.0;
+		uva.m_scale = 1.0f;
+
+		// Bone weight
+		if(hasBoneWeights)
+		{
+			MeshBinaryFile::VertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeLocation::BONE_INDICES];
+			bidxa.m_bufferBinding = 2;
+			bidxa.m_format = Format::R16G16B16A16_UINT;
+			bidxa.m_relativeOffset = 0;
+			bidxa.m_scale = 1.0f;
+
+			MeshBinaryFile::VertexAttribute& wa = header.m_vertexAttributes[VertexAttributeLocation::BONE_WEIGHTS];
+			wa.m_bufferBinding = 2;
+			wa.m_format = Format::R8G8B8A8_UNORM;
+			wa.m_relativeOffset = sizeof(U16Vec4);
+			wa.m_scale = 1.0f;
+		}
 	}
 
 	// Arange the attributes into vert buffers
 	{
-		header.m_vertexBufferCount = 2;
-
 		// First buff has positions
 		const MeshBinaryFile::VertexAttribute& posa = header.m_vertexAttributes[VertexAttributeLocation::POSITION];
 		if(posa.m_format == Format::R32G32B32_SFLOAT)
@@ -447,9 +503,18 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		{
 			ANKI_ASSERT(0);
 		}
+		++header.m_vertexBufferCount;
 
 		// 2nd buff has normal + tangent + texcoords
 		header.m_vertexBuffers[1].m_vertexStride = sizeof(U32) * 2 + sizeof(U16) * 2;
+		++header.m_vertexBufferCount;
+
+		// 3rd has bone weights
+		if(hasBoneWeights)
+		{
+			header.m_vertexBuffers[2].m_vertexStride = sizeof(WeightVertex);
+			++header.m_vertexBufferCount;
+		}
 	}
 
 	// Write some other header stuff
@@ -569,6 +634,31 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		}
 
 		ANKI_CHECK(file.write(&verts[0], verts.getSizeInBytes()));
+	}
+
+	// Write 3rd vert buffer
+	if(hasBoneWeights)
+	{
+		for(const SubMesh& submesh : submeshes)
+		{
+			DynamicArrayAuto<WeightVertex> verts(m_alloc);
+			verts.create(submesh.m_boneIds.getSize());
+
+			for(U i = 0; i < verts.getSize(); ++i)
+			{
+				WeightVertex vert;
+
+				for(U c = 0; c < 4; ++c)
+				{
+					vert.m_boneIndices[c] = submesh.m_boneIds[i][c];
+					vert.m_weights[c] = submesh.m_boneWeights[i][c];
+				}
+
+				verts[i] = vert;
+			}
+
+			ANKI_CHECK(file.write(&verts[0], verts.getSizeInBytes()));
+		}
 	}
 
 	return Error::NONE;

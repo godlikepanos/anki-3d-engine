@@ -11,6 +11,15 @@
 namespace anki
 {
 
+static F32 computeLightRadius(const Vec3 color)
+{
+	// Based on the attenuation equation: att = 1 - fragLightDist^2 / lightRadius^2
+	const F32 minAtt = 0.01f;
+	const F32 maxIntensity = max(max(color.x(), color.y()), color.z());
+	return sqrt(maxIntensity / minAtt);
+}
+
+#if 0
 static ANKI_USE_RESULT Error getUniformScale(const Mat4& m, F32& out)
 {
 	const F32 SCALE_THRESHOLD = 0.01f; // 1 cm
@@ -29,6 +38,7 @@ static ANKI_USE_RESULT Error getUniformScale(const Mat4& m, F32& out)
 	out = scale;
 	return Error::NONE;
 }
+#endif
 
 static void removeScale(Mat4& m)
 {
@@ -49,7 +59,17 @@ static void getNodeTransform(const cgltf_node& node, Vec3& tsl, Mat3& rot, Vec3&
 {
 	if(node.has_matrix)
 	{
-		ANKI_ASSERT(!"TODO");
+		Mat4 trf = Mat4(node.matrix);
+
+		Vec3 xAxis = trf.getColumn(0).xyz();
+		Vec3 yAxis = trf.getColumn(1).xyz();
+		Vec3 zAxis = trf.getColumn(2).xyz();
+
+		scale = Vec3(xAxis.getLength(), yAxis.getLength(), zAxis.getLength());
+
+		removeScale(trf);
+		rot = trf.getRotationPart();
+		tsl = trf.getTranslationPart().xyz();
 	}
 	else
 	{
@@ -92,7 +112,8 @@ static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform&
 	Vec3 scale;
 	getNodeTransform(node, tsl, rot, scale);
 
-	if(scale[0] != scale[1] || scale[0] != scale[2])
+	const F32 scaleEpsilon = 0.0001f;
+	if(absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon)
 	{
 		ANKI_GLTF_LOGE("Expecting uniform scale");
 		return Error::USER_DATA;
@@ -148,22 +169,16 @@ Error Importer::load(CString inputFname, CString outDir, CString rpath, CString 
 
 Error Importer::writeAll()
 {
-	// Export meshes
-	for(U i = 0; i < m_gltf->meshes_count; ++i)
-	{
-		ANKI_CHECK(writeMesh(m_gltf->meshes[i]));
-	}
+	populateNodePtrToIdx();
 
-	// Export materials
-	for(U i = 0; i < m_gltf->materials_count; ++i)
+	for(const cgltf_animation* anim = m_gltf->animations; anim < m_gltf->animations + m_gltf->animations_count; ++anim)
 	{
-		ANKI_CHECK(writeMaterial(m_gltf->materials[i]));
+		ANKI_CHECK(writeAnimation(*anim));
 	}
 
 	StringAuto sceneFname(m_alloc);
 	sceneFname.sprintf("%sscene.lua", m_outDir.cstr());
 	ANKI_CHECK(m_sceneFile.open(sceneFname.toCString(), FileOpenFlag::WRITE));
-
 	ANKI_CHECK(m_sceneFile.writeText("local scene = getSceneGraph()\nlocal events = getEventManager()\n"));
 
 	// Nodes
@@ -173,6 +188,16 @@ Error Importer::writeAll()
 		{
 			ANKI_CHECK(visitNode(*(*node), Transform::getIdentity(), HashMapAuto<CString, StringAuto>(m_alloc)));
 		}
+	}
+
+	m_hive->waitAllTasks();
+
+	// Check error
+	const Error threadErr = m_errorInThread.load();
+	if(threadErr)
+	{
+		ANKI_GLTF_LOGE("Error happened in a thread");
+		return threadErr;
 	}
 
 	return Error::NONE;
@@ -249,6 +274,47 @@ Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<CString, Strin
 	return Error::NONE;
 }
 
+void Importer::populateNodePtrToIdx(const cgltf_node& node, U& idx)
+{
+	m_nodePtrToIdx.emplace(&node, idx++);
+
+	for(cgltf_node* const* c = node.children; c < node.children + node.children_count; ++c)
+	{
+		populateNodePtrToIdx(**c, idx);
+	}
+}
+
+void Importer::populateNodePtrToIdx()
+{
+	U idx = 0;
+
+	for(const cgltf_scene* scene = m_gltf->scenes; scene < m_gltf->scenes + m_gltf->scenes_count; ++scene)
+	{
+		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count; ++node)
+		{
+			populateNodePtrToIdx(**node, idx);
+		}
+	}
+}
+
+StringAuto Importer::getNodeName(const cgltf_node& node)
+{
+	StringAuto out{m_alloc};
+
+	if(node.name)
+	{
+		out.create(node.name);
+	}
+	else
+	{
+		auto it = m_nodePtrToIdx.find(&node);
+		ANKI_ASSERT(it != m_nodePtrToIdx.getEnd());
+		out.sprintf("unnamed_node_%u", *it);
+	}
+
+	return out;
+}
+
 Error Importer::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize)
 {
 	StringListAuto list(m_alloc);
@@ -283,6 +349,14 @@ Error Importer::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, con
 Error Importer::visitNode(
 	const cgltf_node& node, const Transform& parentTrf, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
+	// Check error from a thread
+	const Error threadErr = m_errorInThread.load();
+	if(threadErr)
+	{
+		ANKI_GLTF_LOGE("Error happened in a thread");
+		return threadErr;
+	}
+
 	Transform localTrf;
 	ANKI_CHECK(getNodeTransform(node, localTrf));
 
@@ -315,7 +389,7 @@ Error Importer::visitNode(
 
 			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:new%sModelNode(\"%s\", \"%s%s\")\n",
 				(gpuParticles) ? "Gpu" : "",
-				node.name,
+				getNodeName(node).cstr(),
 				m_rpath.cstr(),
 				fname.cstr()));
 		}
@@ -335,7 +409,7 @@ Error Importer::visitNode(
 			}
 
 			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newStaticCollisionNode(\"%s\", \"%s%s.ankicl\")\n",
-				node.name,
+				getNodeName(node).cstr(),
 				m_rpath.cstr(),
 				node.mesh->name));
 		}
@@ -354,7 +428,7 @@ Error Importer::visitNode(
 
 			ANKI_CHECK(m_sceneFile.writeText(
 				"\nnode = scene:newReflectionProbeNode(\"%s\", Vec4.new(%f, %f, %f, 0), Vec4.new(%f, %f, %f, 0))\n",
-				node.name,
+				getNodeName(node).cstr(),
 				aabbMin.x(),
 				aabbMin.y(),
 				aabbMin.z(),
@@ -387,7 +461,8 @@ Error Importer::visitNode(
 				ANKI_CHECK(it->toNumber(cellSize));
 			}
 
-			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newGlobalIlluminationProbeNode(\"%s\")\n", node.name));
+			ANKI_CHECK(m_sceneFile.writeText(
+				"\nnode = scene:newGlobalIlluminationProbeNode(\"%s\")\n", getNodeName(node).cstr()));
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getGlobalIlluminationProbeComponent()\n"));
 
 			ANKI_CHECK(m_sceneFile.writeText("comp:setBoundingBox(Vec4.new(%f, %f, %f, 0), Vec4.new(%f, %f, %f, 0))\n",
@@ -414,6 +489,8 @@ Error Importer::visitNode(
 			Mat3 rot;
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
+
+			localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
 
 			StringAuto diffuseAtlas(m_alloc);
 			if((it = extras.find("decal_diffuse_atlas")) != extras.getEnd())
@@ -451,7 +528,7 @@ Error Importer::visitNode(
 				ANKI_CHECK(it->toNumber(specularRougnessMetallicFactor));
 			}
 
-			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newDecalNode(\"%s\")\n", node.name));
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newDecalNode(\"%s\")\n", getNodeName(node).cstr()));
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getDecalComponent()\n"));
 			if(diffuseAtlas)
 			{
@@ -471,13 +548,39 @@ Error Importer::visitNode(
 		}
 		else
 		{
+			// Async because it's slow
+			struct Ctx
+			{
+				Importer* m_importer;
+				cgltf_mesh* m_mesh;
+			};
+			Ctx* ctx = m_alloc.newInstance<Ctx>();
+			ctx->m_importer = this;
+			ctx->m_mesh = node.mesh;
+
+			m_hive->submitTask(
+				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+					Ctx& self = *static_cast<Ctx*>(userData);
+
+					const Error err = self.m_importer->writeMesh(*self.m_mesh);
+					if(err)
+					{
+						self.m_importer->m_errorInThread.store(err._getCode());
+					}
+
+					self.m_importer->m_alloc.deleteInstance(&self);
+				},
+				ctx);
+
+			ANKI_CHECK(writeMaterial(*node.mesh->primitives[0].material));
 			ANKI_CHECK(writeModel(*node.mesh));
+
 			ANKI_CHECK(writeModelNode(node, parentExtras));
 		}
 	}
 	else
 	{
-		ANKI_GLTF_LOGW("Ignoring node %s. Assuming transform node", node.name);
+		ANKI_GLTF_LOGW("Ignoring node %s. Assuming transform node", getNodeName(node).cstr());
 		ANKI_CHECK(getExtras(node.extras, outExtras));
 		dummyNode = true;
 	}
@@ -523,7 +626,7 @@ Error Importer::writeModel(const cgltf_mesh& mesh)
 {
 	StringAuto modelFname(m_alloc);
 	modelFname.sprintf("%s%s_%s.ankimdl", m_outDir.cstr(), mesh.name, mesh.primitives[0].material->name);
-	ANKI_GLTF_LOGI("Exporting model %s", modelFname.cstr());
+	ANKI_GLTF_LOGI("Importing model %s", modelFname.cstr());
 
 	if(mesh.primitives_count != 1)
 	{
@@ -571,10 +674,39 @@ Error Importer::writeModel(const cgltf_mesh& mesh)
 	return Error::NONE;
 }
 
+Error Importer::writeAnimation(const cgltf_animation& anim)
+{
+	StringAuto fname(m_alloc);
+	fname.sprintf("%s%s.ankianim", m_outDir.cstr(), anim.name);
+	ANKI_GLTF_LOGI("Importing animation %s", fname.cstr());
+
+	File file;
+	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
+
+	ANKI_CHECK(file.writeText("<animation>\n"));
+	ANKI_CHECK(file.writeText("\t<channels>\n"));
+
+	for(U i = 0; i < anim.channels_count; ++i)
+	{
+		const cgltf_animation_channel& channel = anim.channels[i];
+
+		ANKI_CHECK(file.writeText("\t\t<channel>\n"));
+
+		ANKI_CHECK(file.writeText("\t\t\t<name>%s</name>\n", getNodeName(*channel.target_node).cstr()));
+
+		ANKI_CHECK(file.writeText("\t\t<channel>\n"));
+	}
+
+	ANKI_CHECK(file.writeText("\t</channels>\n"));
+	ANKI_CHECK(file.writeText("</animation>\n"));
+
+	return Error::NONE;
+}
+
 Error Importer::writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	const cgltf_light& light = *node.light;
-	ANKI_GLTF_LOGI("Exporting light %s", light.name);
+	ANKI_GLTF_LOGI("Importing light %s", light.name);
 
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(node.extras, extras));
@@ -698,14 +830,14 @@ Error Importer::writeCamera(const cgltf_node& node, const HashMapAuto<CString, S
 {
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{
-		ANKI_GLTF_LOGW("Unsupported camera type: %s", node.name);
+		ANKI_GLTF_LOGW("Unsupported camera type: %s", getNodeName(node).cstr());
 		return Error::NONE;
 	}
 
 	const cgltf_camera_perspective& cam = node.camera->perspective;
-	ANKI_GLTF_LOGI("Exporting camera %s", node.name);
+	ANKI_GLTF_LOGI("Importing camera %s", getNodeName(node).cstr());
 
-	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newPerspectiveCameraNode(\"%s\")\n", node.name));
+	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newPerspectiveCameraNode(\"%s\")\n", getNodeName(node).cstr()));
 	ANKI_CHECK(m_sceneFile.writeText("scene:setActiveCameraNode(node:getSceneNodeBase())\n"));
 	ANKI_CHECK(m_sceneFile.writeText("frustumc = node:getSceneNodeBase():getFrustumComponent()\n"));
 
@@ -720,7 +852,7 @@ Error Importer::writeCamera(const cgltf_node& node, const HashMapAuto<CString, S
 
 Error Importer::writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
-	ANKI_GLTF_LOGI("Exporting model node %s", node.name);
+	ANKI_GLTF_LOGI("Importing model node %s", getNodeName(node).cstr());
 
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(node.extras, extras));
@@ -728,7 +860,8 @@ Error Importer::writeModelNode(const cgltf_node& node, const HashMapAuto<CString
 	StringAuto modelFname(m_alloc);
 	modelFname.sprintf("%s%s_%s.ankimdl", m_rpath.cstr(), node.mesh->name, node.mesh->primitives[0].material->name);
 
-	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newModelNode(\"%s\", \"%s\")\n", node.name, modelFname.cstr()));
+	ANKI_CHECK(m_sceneFile.writeText(
+		"\nnode = scene:newModelNode(\"%s\", \"%s\")\n", getNodeName(node).cstr(), modelFname.cstr()));
 
 	// TODO: collision mesh
 

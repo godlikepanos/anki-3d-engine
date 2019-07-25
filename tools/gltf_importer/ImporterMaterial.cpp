@@ -70,7 +70,7 @@ Error Importer::writeMaterial(const cgltf_material& mtl)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankimtl", m_outDir.cstr(), mtl.name);
-	ANKI_GLTF_LOGI("Exporting %s", fname.cstr());
+	ANKI_GLTF_LOGI("Importing material %s", fname.cstr());
 
 	if(!mtl.has_pbr_metallic_roughness)
 	{

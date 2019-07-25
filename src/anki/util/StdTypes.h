@@ -80,6 +80,29 @@ const Second MIN_SECOND = MIN_F64;
 using Timestamp = U64; ///< Timestamp type.
 const Timestamp MAX_TIMESTAMP = MAX_U64;
 
+/// @name AnKi type literals.
+/// @{
+inline constexpr U8 operator"" _U8(unsigned long long arg) noexcept
+{
+	return static_cast<U8>(arg);
+}
+
+inline constexpr U16 operator"" _U16(unsigned long long arg) noexcept
+{
+	return static_cast<U16>(arg);
+}
+
+inline constexpr U32 operator"" _U32(unsigned long long arg) noexcept
+{
+	return static_cast<U32>(arg);
+}
+
+inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
+{
+	return static_cast<U64>(arg);
+}
+/// @}
+
 /// Representation of error and a wrapper on top of error codes.
 class Error
 {

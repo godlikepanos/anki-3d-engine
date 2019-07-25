@@ -39,21 +39,30 @@ private:
 
 	File m_sceneFile;
 
+	Atomic<I32> m_errorInThread{0};
+
+	class PtrHasher
+	{
+	public:
+		U64 operator()(const void* ptr)
+		{
+			return computeHash(&ptr, sizeof(ptr));
+		}
+	};
+
+	HashMapAuto<const void*, U32, PtrHasher> m_nodePtrToIdx{m_alloc}; ///< Need an index for the unnamed nodes.
+
 	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
 	ANKI_USE_RESULT Error parseArrayOfNumbers(
 		CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize = nullptr);
-
-	static F32 computeLightRadius(const Vec3 color)
-	{
-		// Based on the attenuation equation: att = 1 - fragLightDist^2 / lightRadius^2
-		const F32 minAtt = 0.01f;
-		const F32 maxIntensity = max(max(color.x(), color.y()), color.z());
-		return sqrt(maxIntensity / minAtt);
-	}
+	void populateNodePtrToIdx();
+	void populateNodePtrToIdx(const cgltf_node& node, U& idx);
+	StringAuto getNodeName(const cgltf_node& node);
 
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh);
 	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);
 	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh);
+	ANKI_USE_RESULT Error writeAnimation(const cgltf_animation& anim);
 
 	// Scene
 	ANKI_USE_RESULT Error writeTransform(const Transform& trf);

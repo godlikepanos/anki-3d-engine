@@ -86,7 +86,7 @@ void DeveloperConsole::build(CanvasPtr ctx)
 		ImGui::PopStyleColor();
 	}
 
-	const U32 timestamp = m_logItemsTimestamp.get();
+	const U32 timestamp = m_logItemsTimestamp.getNonAtomically();
 	const Bool scrollToLast = m_logItemsTimestampConsumed < timestamp;
 
 	if(scrollToLast)
