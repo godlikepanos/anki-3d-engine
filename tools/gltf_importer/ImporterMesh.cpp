@@ -52,13 +52,15 @@ static U cgltfComponentSize(cgltf_component_type type)
 	return out;
 }
 
+#if 0
 static U calcImplicitStride(const cgltf_attribute& attrib)
 {
 	return cgltfComponentCount(attrib.data->type) * cgltfComponentSize(attrib.data->component_type);
 }
+#endif
 
 template<typename T, typename TFunc>
-static Error appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>& out, TFunc func)
+Error Importer::appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>& out, TFunc func)
 {
 	if(cgltfComponentCount(attrib.data->type) != T::COMPONENT_COUNT)
 	{
@@ -73,28 +75,14 @@ static Error appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>&
 	}
 
 	ANKI_ASSERT(attrib.data);
-
-	const U8* base = static_cast<const U8*>(attrib.data->buffer_view->buffer->data) + attrib.data->offset
-					 + attrib.data->buffer_view->offset;
-
-	const PtrSize stride = (attrib.data->stride == 0) ? calcImplicitStride(attrib) : attrib.data->stride;
-
 	const U count = attrib.data->count;
-
 	if(count == 0)
 	{
 		ANKI_GLTF_LOGE("Zero vertex count");
 		return Error::USER_DATA;
 	}
 
-	for(U i = 0; i < count; ++i)
-	{
-		const U8* ptr = base + stride * i;
-		T val;
-		memcpy(&val, ptr, sizeof(T)); // Memcpy because it might not be aligned
-		func(val);
-		out.emplaceBack(val);
-	}
+	readAccessor(*attrib.data, out, func);
 
 	return Error::NONE;
 }

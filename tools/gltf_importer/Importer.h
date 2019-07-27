@@ -11,6 +11,18 @@
 namespace anki
 {
 
+#define ANKI_GLTF_LOGI(...) ANKI_LOG("GLTF", NORMAL, __VA_ARGS__)
+#define ANKI_GLTF_LOGE(...) ANKI_LOG("GLTF", ERROR, __VA_ARGS__)
+#define ANKI_GLTF_LOGW(...) ANKI_LOG("GLTF", WARNING, __VA_ARGS__)
+#define ANKI_GLTF_LOGF(...) ANKI_LOG("GLTF", FATAL, __VA_ARGS__)
+
+#define ANKI_GLTF_ASSERT(expr) \
+	if(!(expr)) \
+	{ \
+		ANKI_GLTF_LOGE(#expr); \
+		return Error::USER_DATA; \
+	}
+
 /// Import GLTF and spit AnKi scenes.
 class Importer
 {
@@ -24,6 +36,8 @@ public:
 	Error writeAll();
 
 private:
+	static const char* XML_HEADER;
+
 	HeapAllocator<U8> m_alloc{allocAligned, nullptr};
 
 	StringAuto m_inputFname = {m_alloc};
@@ -52,6 +66,7 @@ private:
 
 	HashMapAuto<const void*, U32, PtrHasher> m_nodePtrToIdx{m_alloc}; ///< Need an index for the unnamed nodes.
 
+	// Misc
 	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
 	ANKI_USE_RESULT Error parseArrayOfNumbers(
 		CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize = nullptr);
@@ -59,10 +74,23 @@ private:
 	void populateNodePtrToIdx(const cgltf_node& node, U& idx);
 	StringAuto getNodeName(const cgltf_node& node);
 
+	template<typename T, typename TFunc>
+	static void readAccessor(const cgltf_accessor& accessor, DynamicArrayAuto<T>& out, TFunc func);
+
+	template<typename T>
+	static void readAccessor(const cgltf_accessor& accessor, DynamicArrayAuto<T>& out)
+	{
+		readAccessor(accessor, out, [](const T&) {});
+	}
+
+	// Resources
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh);
 	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);
-	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh);
+	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh, CString skinName);
 	ANKI_USE_RESULT Error writeAnimation(const cgltf_animation& anim);
+	ANKI_USE_RESULT Error writeSkeleton(const cgltf_skin& skin);
+	template<typename T, typename TFunc>
+	static Error appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>& out, TFunc func);
 
 	// Scene
 	ANKI_USE_RESULT Error writeTransform(const Transform& trf);
@@ -73,9 +101,30 @@ private:
 	ANKI_USE_RESULT Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
 };
 
-#define ANKI_GLTF_LOGI(...) ANKI_LOG("GLTF", NORMAL, __VA_ARGS__)
-#define ANKI_GLTF_LOGE(...) ANKI_LOG("GLTF", ERROR, __VA_ARGS__)
-#define ANKI_GLTF_LOGW(...) ANKI_LOG("GLTF", WARNING, __VA_ARGS__)
-#define ANKI_GLTF_LOGF(...) ANKI_LOG("GLTF", FATAL, __VA_ARGS__)
+template<typename T, typename TFunc>
+void Importer::readAccessor(const cgltf_accessor& accessor, DynamicArrayAuto<T>& out, TFunc func)
+{
+	const U8* base =
+		static_cast<const U8*>(accessor.buffer_view->buffer->data) + accessor.offset + accessor.buffer_view->offset;
+
+	PtrSize stride = accessor.buffer_view->stride;
+	if(stride == 0)
+	{
+		stride = accessor.stride;
+	}
+	ANKI_ASSERT(stride);
+	ANKI_ASSERT(stride >= sizeof(T));
+
+	const U count = accessor.count;
+
+	for(U i = 0; i < count; ++i)
+	{
+		const U8* ptr = base + stride * i;
+		T val;
+		memcpy(&val, ptr, sizeof(T)); // Memcpy because it might not be aligned
+		func(val);
+		out.emplaceBack(val);
+	}
+}
 
 } // end namespace anki

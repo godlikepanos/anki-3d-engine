@@ -126,6 +126,8 @@ static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform&
 	return Error::NONE;
 }
 
+const char* Importer::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
+
 Importer::Importer()
 {
 	m_hive = m_alloc.newInstance<ThreadHive>(getCpuCoresCount(), m_alloc, true);
@@ -573,7 +575,11 @@ Error Importer::visitNode(
 				ctx);
 
 			ANKI_CHECK(writeMaterial(*node.mesh->primitives[0].material));
-			ANKI_CHECK(writeModel(*node.mesh));
+			ANKI_CHECK(writeModel(*node.mesh, (node.skin) ? node.skin->name : CString()));
+			if(node.skin)
+			{
+				ANKI_CHECK(writeSkeleton(*node.skin));
+			}
 
 			ANKI_CHECK(writeModelNode(node, parentExtras));
 		}
@@ -622,7 +628,7 @@ Error Importer::writeTransform(const Transform& trf)
 	return Error::NONE;
 }
 
-Error Importer::writeModel(const cgltf_mesh& mesh)
+Error Importer::writeModel(const cgltf_mesh& mesh, CString skinName)
 {
 	StringAuto modelFname(m_alloc);
 	modelFname.sprintf("%s%s_%s.ankimdl", m_outDir.cstr(), mesh.name, mesh.primitives[0].material->name);
@@ -666,9 +672,13 @@ Error Importer::writeModel(const cgltf_mesh& mesh)
 
 	ANKI_CHECK(file.writeText("\t\t</modelPatch>\n"));
 
-	// TODO: Skeleton
-
 	ANKI_CHECK(file.writeText("\t</modelPatches>\n"));
+
+	if(skinName)
+	{
+		ANKI_CHECK(file.writeText("\t<skeleton>%s%s.ankiskel</skeleton>\n", m_rpath.cstr(), skinName.cstr()));
+	}
+
 	ANKI_CHECK(file.writeText("</model>\n"));
 
 	return Error::NONE;
@@ -680,25 +690,191 @@ Error Importer::writeAnimation(const cgltf_animation& anim)
 	fname.sprintf("%s%s.ankianim", m_outDir.cstr(), anim.name);
 	ANKI_GLTF_LOGI("Importing animation %s", fname.cstr());
 
-	File file;
-	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
-
-	ANKI_CHECK(file.writeText("<animation>\n"));
-	ANKI_CHECK(file.writeText("\t<channels>\n"));
+	// Gather the channels
+	HashMapAuto<CString, Array<const cgltf_animation_channel*, 3>> channelMap(m_alloc);
 
 	for(U i = 0; i < anim.channels_count; ++i)
 	{
 		const cgltf_animation_channel& channel = anim.channels[i];
+		StringAuto channelName = getNodeName(*channel.target_node);
 
-		ANKI_CHECK(file.writeText("\t\t<channel>\n"));
+		U idx;
+		switch(channel.target_path)
+		{
+		case cgltf_animation_path_type_translation:
+			idx = 0;
+			break;
+		case cgltf_animation_path_type_rotation:
+			idx = 1;
+			break;
+		case cgltf_animation_path_type_scale:
+			idx = 2;
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
 
-		ANKI_CHECK(file.writeText("\t\t\t<name>%s</name>\n", getNodeName(*channel.target_node).cstr()));
+		auto it = channelMap.find(channelName.toCString());
+		if(it != channelMap.getEnd())
+		{
+			(*it)[idx] = &channel;
+		}
+		else
+		{
+			Array<const cgltf_animation_channel*, 3> arr = {};
+			arr[idx] = &channel;
+			channelMap.emplace(channelName.toCString(), arr);
+		}
+	}
 
-		ANKI_CHECK(file.writeText("\t\t<channel>\n"));
+	// Write file
+	File file;
+	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
+
+	ANKI_CHECK(file.writeText("%s\n<animation>\n", XML_HEADER));
+	ANKI_CHECK(file.writeText("\t<channels>\n"));
+
+	for(auto it = channelMap.getBegin(); it != channelMap.getEnd(); ++it)
+	{
+		Array<const cgltf_animation_channel*, 3> arr = *it;
+		const cgltf_animation_channel& channel = (arr[0]) ? *arr[0] : ((arr[1]) ? *arr[1] : *arr[2]);
+		StringAuto channelName = getNodeName(*channel.target_node);
+
+		ANKI_CHECK(file.writeText("\t\t<channel name=\"%s\">\n", channelName.cstr()));
+
+		// Positions
+		ANKI_CHECK(file.writeText("\t\t\t<positionKeys>\n"));
+		if(arr[0])
+		{
+			const cgltf_animation_channel& channel = *arr[0];
+			DynamicArrayAuto<F32> keys(m_alloc);
+			readAccessor(*channel.sampler->input, keys);
+			DynamicArrayAuto<Vec3> positions(m_alloc);
+			readAccessor(*channel.sampler->output, positions);
+			ANKI_GLTF_ASSERT(keys.getSize() == positions.getSize());
+
+			for(U i = 0; i < keys.getSize(); ++i)
+			{
+				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n",
+					keys[i],
+					positions[i].x(),
+					positions[i].y(),
+					positions[i].z()));
+			}
+		}
+		ANKI_CHECK(file.writeText("\t\t\t</positionKeys>\n"));
+
+		// Rotations
+		ANKI_CHECK(file.writeText("\t\t\t<rotationKeys>\n"));
+		if(arr[1])
+		{
+			const cgltf_animation_channel& channel = *arr[1];
+			DynamicArrayAuto<F32> keys(m_alloc);
+			readAccessor(*channel.sampler->input, keys);
+			DynamicArrayAuto<Quat> rotations(m_alloc);
+			readAccessor(*channel.sampler->output, rotations);
+			ANKI_GLTF_ASSERT(keys.getSize() == rotations.getSize());
+
+			for(U i = 0; i < keys.getSize(); ++i)
+			{
+				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n",
+					keys[i],
+					rotations[i].x(),
+					rotations[i].y(),
+					rotations[i].z(),
+					rotations[i].w()));
+			}
+		}
+		ANKI_CHECK(file.writeText("\t\t\t</rotationKeys>\n"));
+
+		// Scales
+		ANKI_CHECK(file.writeText("\t\t\t<scaleKeys>\n"));
+		if(arr[2])
+		{
+			const cgltf_animation_channel& channel = *arr[2];
+			DynamicArrayAuto<F32> keys(m_alloc);
+			readAccessor(*channel.sampler->input, keys);
+			DynamicArrayAuto<Vec3> scales(m_alloc);
+			readAccessor(*channel.sampler->output, scales);
+			ANKI_GLTF_ASSERT(keys.getSize() == scales.getSize());
+
+			for(U i = 0; i < keys.getSize(); ++i)
+			{
+				const F32 scaleEpsilon = 0.0001f;
+				if(absolute(scales[i][0] - scales[i][1]) > scaleEpsilon
+					|| absolute(scales[i][0] - scales[i][2]) > scaleEpsilon)
+				{
+					ANKI_GLTF_LOGE("Expecting uniform scale");
+					return Error::USER_DATA;
+				}
+
+				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f</key>\n", keys[i], scales[i].x()));
+			}
+		}
+		ANKI_CHECK(file.writeText("\t\t\t</scaleKeys>\n"));
+
+		ANKI_CHECK(file.writeText("\t\t</channel>\n"));
 	}
 
 	ANKI_CHECK(file.writeText("\t</channels>\n"));
 	ANKI_CHECK(file.writeText("</animation>\n"));
+
+	return Error::NONE;
+}
+
+Error Importer::writeSkeleton(const cgltf_skin& skin)
+{
+	StringAuto fname(m_alloc);
+	fname.sprintf("%s%s.ankiskel", m_outDir.cstr(), skin.name);
+	ANKI_GLTF_LOGI("Importing skeleton %s", fname.cstr());
+
+	// Get matrices
+	DynamicArrayAuto<Mat4> boneMats(m_alloc);
+	readAccessor(*skin.inverse_bind_matrices, boneMats);
+	ANKI_GLTF_ASSERT(boneMats.getSize() == skin.joints_count);
+
+	// Write file
+	File file;
+	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
+
+	ANKI_CHECK(file.writeText("%s\n<skeleton>\n", XML_HEADER));
+
+	for(U i = 0; i < skin.joints_count; ++i)
+	{
+		const cgltf_node& boneNode = *skin.joints[i];
+
+		StringAuto parent(m_alloc);
+
+		// Name & parent
+		ANKI_CHECK(file.writeText("\t<bone name=\"%s\" ", getNodeName(boneNode).cstr()));
+		if(boneNode.parent)
+		{
+			ANKI_CHECK(file.writeText("parent=\"%s\" ", getNodeName(*boneNode.parent).cstr()));
+		}
+
+		// Bone transform
+		ANKI_CHECK(file.writeText("boneTransform=\""));
+		for(U j = 0; j < 16; j++)
+		{
+			ANKI_CHECK(file.writeText("%f ", boneMats[i][j]));
+		}
+		ANKI_CHECK(file.writeText("\" "));
+
+		// Transform
+		Transform trf;
+		ANKI_CHECK(getNodeTransform(boneNode, trf));
+		Mat4 mat{trf};
+		ANKI_CHECK(file.writeText("tansform=\""));
+		for(U j = 0; j < 16; j++)
+		{
+			ANKI_CHECK(file.writeText("%f ", mat[j]));
+		}
+		ANKI_CHECK(file.writeText("\" "));
+
+		ANKI_CHECK(file.writeText("/>\n"));
+	}
+
+	ANKI_CHECK(file.writeText("</skeleton>\n"));
 
 	return Error::NONE;
 }
