@@ -360,27 +360,29 @@ Error Importer::visitNode(
 	}
 
 	Transform localTrf;
-	ANKI_CHECK(getNodeTransform(node, localTrf));
-
 	HashMapAuto<CString, StringAuto> outExtras(m_alloc);
 	Bool dummyNode = false;
 	if(node.light)
 	{
+		ANKI_CHECK(getNodeTransform(node, localTrf));
 		ANKI_CHECK(writeLight(node, parentExtras));
 	}
 	else if(node.camera)
 	{
+		ANKI_CHECK(getNodeTransform(node, localTrf));
 		ANKI_CHECK(writeCamera(node, parentExtras));
 	}
 	else if(node.mesh)
 	{
 		// Handle special nodes
 		HashMapAuto<CString, StringAuto> extras(parentExtras);
-		ANKI_CHECK(getExtras(node.extras, extras));
+		ANKI_CHECK(getExtras(node.mesh->extras, extras));
 
 		HashMapAuto<CString, StringAuto>::Iterator it;
 		if((it = extras.find("particles")) != extras.getEnd())
 		{
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+
 			const StringAuto& fname = *it;
 
 			Bool gpuParticles = false;
@@ -397,6 +399,8 @@ Error Importer::visitNode(
 		}
 		else if((it = extras.find("collision")) != extras.getEnd() && *it == "true")
 		{
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+
 			// Write colission mesh
 			{
 				StringAuto fname(m_alloc);
@@ -550,6 +554,10 @@ Error Importer::visitNode(
 		}
 		else
 		{
+			// Model node
+
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+
 			// Async because it's slow
 			struct Ctx
 			{
