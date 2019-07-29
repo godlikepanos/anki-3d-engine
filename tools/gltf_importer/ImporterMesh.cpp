@@ -59,8 +59,8 @@ static U calcImplicitStride(const cgltf_attribute& attrib)
 }
 #endif
 
-template<typename T, typename TFunc>
-Error Importer::appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>& out, TFunc func)
+template<typename T>
+Error checkAttribute(const cgltf_attribute& attrib)
 {
 	if(cgltfComponentCount(attrib.data->type) != T::COMPONENT_COUNT)
 	{
@@ -82,20 +82,31 @@ Error Importer::appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<
 		return Error::USER_DATA;
 	}
 
-	readAccessor(*attrib.data, out, func);
-
 	return Error::NONE;
 }
+
+class TempVertex
+{
+public:
+	Vec4 m_tangent;
+	Vec4 m_boneWeights;
+	Vec3 m_position;
+	Vec3 m_normal;
+	Vec2 m_uv;
+	U16Vec4 m_boneIds;
+	F32 m_padding[2];
+
+	TempVertex()
+	{
+		zeroMemory(*this);
+	}
+};
+static_assert(sizeof(TempVertex) == 5 * sizeof(Vec4), "Will be hashed");
 
 class SubMesh
 {
 public:
-	DynamicArrayAuto<Vec3> m_positions;
-	DynamicArrayAuto<Vec3> m_normals;
-	DynamicArrayAuto<Vec4> m_tangents;
-	DynamicArrayAuto<Vec2> m_uvs;
-	DynamicArrayAuto<U16Vec4> m_boneIds;
-	DynamicArrayAuto<Vec4> m_boneWeights;
+	DynamicArrayAuto<TempVertex> m_verts;
 	DynamicArrayAuto<U16> m_indices;
 
 	Vec3 m_aabbMin{MAX_F32};
@@ -105,12 +116,7 @@ public:
 	U32 m_idxCount = MAX_U32;
 
 	SubMesh(HeapAllocator<U8>& alloc)
-		: m_positions(alloc)
-		, m_normals(alloc)
-		, m_tangents(alloc)
-		, m_uvs(alloc)
-		, m_boneIds(alloc)
-		, m_boneWeights(alloc)
+		: m_verts(alloc)
 		, m_indices(alloc)
 	{
 	}
@@ -149,6 +155,25 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 
 		SubMesh& submesh = *submeshes.emplaceBack(m_alloc);
 
+		U minVertCount = MAX_U;
+		U maxVertCount = MIN_U;
+		for(const cgltf_attribute* attrib = primitive->attributes;
+			attrib < primitive->attributes + primitive->attributes_count;
+			++attrib)
+		{
+			minVertCount = min(minVertCount, U(attrib->data->count));
+			maxVertCount = max(maxVertCount, U(attrib->data->count));
+		}
+
+		if(maxVertCount == 0 || minVertCount != maxVertCount)
+		{
+			ANKI_GLTF_LOGE("Wrong number of vertices");
+			return Error::USER_DATA;
+		}
+
+		const U vertCount = primitive->attributes[0].data->count;
+		submesh.m_verts.create(vertCount);
+
 		//
 		// Gather positions + normals + UVs
 		//
@@ -158,30 +183,45 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		{
 			if(attrib->type == cgltf_attribute_type_position)
 			{
-				appendAttribute(*attrib, submesh.m_positions, [&](const Vec3& pos) {
+				U count = 0;
+				ANKI_CHECK(checkAttribute<Vec3>(*attrib));
+				visitAccessor<Vec3>(*attrib->data, [&](const Vec3& pos) {
 					submesh.m_aabbMin = submesh.m_aabbMin.min(pos);
 					submesh.m_aabbMax = submesh.m_aabbMax.max(pos);
+					submesh.m_verts[count++].m_position = pos;
 				});
 			}
 			else if(attrib->type == cgltf_attribute_type_normal)
 			{
-				appendAttribute(*attrib, submesh.m_normals, [](const Vec3&) {});
+				U count = 0;
+				ANKI_CHECK(checkAttribute<Vec3>(*attrib));
+				visitAccessor<Vec3>(
+					*attrib->data, [&](const Vec3& normal) { submesh.m_verts[count++].m_normal = normal; });
 			}
 			else if(attrib->type == cgltf_attribute_type_texcoord)
 			{
-				appendAttribute(*attrib, submesh.m_uvs, [&](const Vec2& uv) {
+				U count = 0;
+				ANKI_CHECK(checkAttribute<Vec2>(*attrib));
+				visitAccessor<Vec2>(*attrib->data, [&](const Vec2& uv) {
 					maxUvDistance = max(maxUvDistance, max(uv.x(), uv.y()));
 					minUvDistance = min(minUvDistance, min(uv.x(), uv.y()));
+					submesh.m_verts[count++].m_uv = uv;
 				});
 			}
 			else if(attrib->type == cgltf_attribute_type_joints)
 			{
-				appendAttribute(*attrib, submesh.m_boneIds, [](const U16Vec4&) {});
+				U count = 0;
+				ANKI_CHECK(checkAttribute<U16Vec4>(*attrib));
+				visitAccessor<U16Vec4>(
+					*attrib->data, [&](const U16Vec4& x) { submesh.m_verts[count++].m_boneIds = x; });
 				hasBoneWeights = true;
 			}
 			else if(attrib->type == cgltf_attribute_type_weights)
 			{
-				appendAttribute(*attrib, submesh.m_boneWeights, [](const Vec4&) {});
+				U count = 0;
+				ANKI_CHECK(checkAttribute<Vec4>(*attrib));
+				visitAccessor<Vec4>(
+					*attrib->data, [&](const Vec4& bw) { submesh.m_verts[count++].m_boneWeights = bw; });
 			}
 			else
 			{
@@ -192,49 +232,17 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		aabbMin = aabbMin.min(submesh.m_aabbMin);
 		aabbMax = aabbMax.max(submesh.m_aabbMax);
 
-		const U vertCount = submesh.m_positions.getSize();
-		if(submesh.m_positions.getSize() == 0)
-		{
-			ANKI_GLTF_LOGE("Zero size of positions");
-			return Error::USER_DATA;
-		}
-
-		if(submesh.m_normals.getSize() != vertCount)
-		{
-			ANKI_GLTF_LOGE("Normal count is incorrect. Is %u, should be %u", submesh.m_normals.getSize(), vertCount);
-			return Error::USER_DATA;
-		}
-
-		if(submesh.m_uvs.getSize() != vertCount)
-		{
-			ANKI_GLTF_LOGE("UV count is incorrect. Is %u, should be %u", submesh.m_uvs.getSize(), vertCount);
-			return Error::USER_DATA;
-		}
-
-		if(submesh.m_boneIds.getSize() != 0 && submesh.m_boneIds.getSize() != vertCount)
-		{
-			ANKI_GLTF_LOGE("Bone IDs count is incorrect. Is %u, should be %u", submesh.m_boneIds.getSize(), vertCount);
-			return Error::USER_DATA;
-		}
-
-		if(submesh.m_boneWeights.getSize() != 0 && submesh.m_boneWeights.getSize() != vertCount)
-		{
-			ANKI_GLTF_LOGE(
-				"Bone weights count is incorrect. Is %u, should be %u", submesh.m_boneWeights.getSize(), vertCount);
-			return Error::USER_DATA;
-		}
-
 		//
 		// Fix normals. If normal A and normal B have the same position then try to merge them
 		//
 		for(U v = 0; v < vertCount; ++v)
 		{
-			const Vec3& pos = submesh.m_positions[v];
-			Vec3& normal = submesh.m_normals[v];
+			const Vec3& pos = submesh.m_verts[v].m_position;
+			Vec3& normal = submesh.m_verts[v].m_normal;
 
 			for(U prevV = 0; prevV < v; ++prevV)
 			{
-				const Vec3& otherPos = submesh.m_positions[prevV];
+				const Vec3& otherPos = submesh.m_verts[prevV].m_position;
 
 				// Check the positions dist
 				const F32 posDist = (otherPos - pos).getLengthSquared();
@@ -244,7 +252,7 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 				}
 
 				// Check angle of the normals
-				Vec3& otherNormal = submesh.m_normals[prevV];
+				Vec3& otherNormal = submesh.m_verts[prevV].m_normal;
 				const F32 ang = acos(clamp(otherNormal.dot(normal), -1.0f, 1.0f));
 				if(ang > m_normalsMergeAngle)
 				{
@@ -301,8 +309,6 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		//
 		{
 			DynamicArrayAuto<Vec3> bitangents(m_alloc);
-
-			submesh.m_tangents.create(vertCount, Vec4(0.0f));
 			bitangents.create(vertCount, Vec3(0.0f));
 
 			for(U i = 0; i < submesh.m_indices.getSize(); i += 3)
@@ -311,14 +317,14 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 				const U i1 = submesh.m_indices[i + 1];
 				const U i2 = submesh.m_indices[i + 2];
 
-				const Vec3& v0 = submesh.m_positions[i0];
-				const Vec3& v1 = submesh.m_positions[i1];
-				const Vec3& v2 = submesh.m_positions[i2];
+				const Vec3& v0 = submesh.m_verts[i0].m_position;
+				const Vec3& v1 = submesh.m_verts[i1].m_position;
+				const Vec3& v2 = submesh.m_verts[i2].m_position;
 				const Vec3 edge01 = v1 - v0;
 				const Vec3 edge02 = v2 - v0;
 
-				const Vec2 uvedge01 = submesh.m_uvs[i1] - submesh.m_uvs[i0];
-				const Vec2 uvedge02 = submesh.m_uvs[i2] - submesh.m_uvs[i0];
+				const Vec2 uvedge01 = submesh.m_verts[i1].m_uv - submesh.m_verts[i0].m_uv;
+				const Vec2 uvedge02 = submesh.m_verts[i2].m_uv - submesh.m_verts[i0].m_uv;
 
 				F32 det = (uvedge01.y() * uvedge02.x()) - (uvedge01.x() * uvedge02.y());
 				det = (isZero(det)) ? 0.0001f : (1.0f / det);
@@ -344,9 +350,9 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 					b.normalize();
 				}
 
-				submesh.m_tangents[i0] += Vec4(t, 0.0f);
-				submesh.m_tangents[i1] += Vec4(t, 0.0f);
-				submesh.m_tangents[i2] += Vec4(t, 0.0f);
+				submesh.m_verts[i0].m_tangent += Vec4(t, 0.0f);
+				submesh.m_verts[i1].m_tangent += Vec4(t, 0.0f);
+				submesh.m_verts[i2].m_tangent += Vec4(t, 0.0f);
 
 				bitangents[i0] += b;
 				bitangents[i1] += b;
@@ -355,15 +361,15 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 
 			for(U i = 0; i < vertCount; ++i)
 			{
-				Vec3 t = Vec3(submesh.m_tangents[i].xyz());
-				const Vec3& n = submesh.m_normals[i];
+				Vec3 t = Vec3(submesh.m_verts[i].m_tangent.xyz());
+				const Vec3& n = submesh.m_verts[i].m_normal;
 				Vec3& b = bitangents[i];
 
 				t.normalize();
 				b.normalize();
 
 				const F32 w = ((n.cross(t)).dot(b) < 0.0f) ? 1.0f : -1.0f;
-				submesh.m_tangents[i] = Vec4(t, w);
+				submesh.m_verts[i].m_tangent = Vec4(t, w);
 			}
 		}
 
@@ -381,9 +387,9 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 			const U i1 = submesh.m_indices[i + 1];
 			const U i2 = submesh.m_indices[i + 2];
 
-			const Vec3& v0 = submesh.m_positions[i0];
-			const Vec3& v1 = submesh.m_positions[i1];
-			const Vec3& v2 = submesh.m_positions[i2];
+			const Vec3& v0 = submesh.m_verts[i0].m_position;
+			const Vec3& v1 = submesh.m_verts[i1].m_position;
+			const Vec3& v2 = submesh.m_verts[i2].m_position;
 
 			if(computeTriangleArea(v0, v1, v2) <= EPSILON)
 			{
@@ -395,9 +401,9 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 
 			for(const SubMesh& submeshB : submeshes)
 			{
-				for(const Vec3& posB : submeshB.m_positions)
+				for(const TempVertex& vertB : submeshB.m_verts)
 				{
-					const F32 test = testPlane(plane, posB.xyz0());
+					const F32 test = testPlane(plane, vertB.m_position.xyz0());
 					if(test > EPSILON)
 					{
 						convex = false;
@@ -552,25 +558,25 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		const MeshBinaryFile::VertexAttribute& posa = header.m_vertexAttributes[VertexAttributeLocation::POSITION];
 		if(posa.m_format == Format::R32G32B32_SFLOAT)
 		{
-			ANKI_CHECK(file.write(&submesh.m_positions[0], submesh.m_positions.getSizeInBytes()));
+			DynamicArrayAuto<Vec3> positions(m_alloc);
+			positions.create(submesh.m_verts.getSize());
+			for(U v = 0; v < submesh.m_verts.getSize(); ++v)
+			{
+				positions[v] = submesh.m_verts[v].m_position;
+			}
+			ANKI_CHECK(file.write(&positions[0], positions.getSizeInBytes()));
 		}
 		else if(posa.m_format == Format::R16G16B16A16_SFLOAT)
 		{
-			DynamicArrayAuto<F16> pos16(m_alloc);
-			pos16.create(submesh.m_positions.getSize() * 4);
+			DynamicArrayAuto<HVec4> pos16(m_alloc);
+			pos16.create(submesh.m_verts.getSize());
 
-			const Vec3* p32 = &submesh.m_positions[0];
-			const Vec3* p32end = p32 + submesh.m_positions.getSize();
-			F16* p16 = &pos16[0];
-			while(p32 != p32end)
+			for(U v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
-				p16[0] = F16(p32->x());
-				p16[1] = F16(p32->y());
-				p16[2] = F16(p32->z());
-				p16[3] = F16(0.0f);
-
-				p32 += 1;
-				p16 += 4;
+				pos16[v] = HVec4(F16(submesh.m_verts[v].m_position.x()),
+					F16(submesh.m_verts[v].m_position.y()),
+					F16(submesh.m_verts[v].m_position.z()),
+					F16(0.0f));
 			}
 
 			ANKI_CHECK(file.write(&pos16[0], pos16.getSizeInBytes()));
@@ -592,13 +598,13 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		};
 
 		DynamicArrayAuto<Vert> verts(m_alloc);
-		verts.create(submesh.m_positions.getSize());
+		verts.create(submesh.m_verts.getSize());
 
 		for(U i = 0; i < verts.getSize(); ++i)
 		{
-			const Vec3& normal = submesh.m_normals[i];
-			const Vec4& tangent = submesh.m_tangents[i];
-			const Vec2& uv = submesh.m_uvs[i];
+			const Vec3& normal = submesh.m_verts[i].m_normal;
+			const Vec4& tangent = submesh.m_verts[i].m_tangent;
+			const Vec2& uv = submesh.m_verts[i].m_uv;
 
 			verts[i].m_n = packColorToR10G10B10A2SNorm(normal.x(), normal.y(), normal.z(), 0.0f);
 			verts[i].m_t = packColorToR10G10B10A2SNorm(tangent.x(), tangent.y(), tangent.z(), tangent.w());
@@ -630,7 +636,7 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		for(const SubMesh& submesh : submeshes)
 		{
 			DynamicArrayAuto<WeightVertex> verts(m_alloc);
-			verts.create(submesh.m_boneIds.getSize());
+			verts.create(submesh.m_verts.getSize());
 
 			for(U i = 0; i < verts.getSize(); ++i)
 			{
@@ -638,8 +644,8 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 
 				for(U c = 0; c < 4; ++c)
 				{
-					vert.m_boneIndices[c] = submesh.m_boneIds[i][c];
-					vert.m_weights[c] = submesh.m_boneWeights[i][c];
+					vert.m_boneIndices[c] = submesh.m_verts[i].m_boneIds[c];
+					vert.m_weights[c] = submesh.m_verts[i].m_boneWeights[c];
 				}
 
 				verts[i] = vert;

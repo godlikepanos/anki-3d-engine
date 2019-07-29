@@ -73,7 +73,7 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 	newComponent<MoveFeedbackComponent>();
 	newComponent<SpatialComponent>(this, &m_obb);
 	MaterialRenderComponent* rcomp =
-		newComponent<MaterialRenderComponent>(this, m_model->getModelPatches()[m_modelPatchIdx]->getMaterial());
+		newComponent<MaterialRenderComponent>(this, m_model->getModelPatches()[m_modelPatchIdx].getMaterial());
 	rcomp->setup(
 		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
 			const ModelNode& self = *static_cast<const ModelNode*>(userData[0]);
@@ -107,7 +107,7 @@ Error ModelNode::init(const CString& modelFname)
 
 void ModelNode::onMoveComponentUpdate(const MoveComponent& move)
 {
-	m_obb = m_model->getModelPatches()[m_modelPatchIdx]->getBoundingShape().getTransformed(move.getWorldTransform());
+	m_obb = m_model->getModelPatches()[m_modelPatchIdx].getBoundingShape().getTransformed(move.getWorldTransform());
 
 	SpatialComponent& sp = getComponent<SpatialComponent>();
 	sp.markForUpdate();
@@ -123,11 +123,11 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 	if(ANKI_LIKELY(!ctx.m_debugDraw))
 	{
-		const ModelPatch* patch = m_model->getModelPatches()[m_modelPatchIdx];
+		const ModelPatch& patch = m_model->getModelPatches()[m_modelPatchIdx];
 
 		// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw
 		// anywhere
-		ANKI_ASSERT(patch->getSubMeshCount() == 1);
+		ANKI_ASSERT(patch.getSubMeshCount() == 1);
 
 		// Transforms
 		Array<Mat4, MAX_INSTANCES> trfs;
@@ -148,7 +148,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		ctx.m_key.m_velocity = moved && ctx.m_key.m_pass == Pass::GB;
 		ModelRenderingInfo modelInf;
-		patch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
+		patch.getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
 
 		// Bones storage
 		if(m_model->getSkeleton())
@@ -167,7 +167,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		// Uniforms
 		static_cast<const MaterialRenderComponent&>(getComponent<RenderComponent>())
-			.allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
+			.allocateAndSetupUniforms(patch.getMaterial()->getDescriptorSetIndex(),
 				ctx,
 				ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
 				ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),

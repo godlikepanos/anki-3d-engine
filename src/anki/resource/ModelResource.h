@@ -85,11 +85,9 @@ public:
 /// Model patch interface class. Its very important class and it binds the material with the mesh
 class ModelPatch
 {
+	friend class ModelResource;
+
 public:
-	ModelPatch(ModelResource* model);
-
-	~ModelPatch();
-
 	MaterialResourcePtr getMaterial() const
 	{
 		return m_mtl;
@@ -124,9 +122,6 @@ public:
 		return m_meshes[0]->getSubMeshCount();
 	}
 
-	ANKI_USE_RESULT Error create(
-		ConstWeakArray<CString> meshFNames, const CString& mtlFName, Bool async, ResourceManager* resources);
-
 	/// Get information for multiDraw rendering. Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts.
 	void getRenderingDataSub(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const;
@@ -140,6 +135,12 @@ private:
 
 	/// Return the maximum number of LODs
 	U getLodCount() const;
+
+	ANKI_USE_RESULT Error init(ModelResource* model,
+		ConstWeakArray<CString> meshFNames,
+		const CString& mtlFName,
+		Bool async,
+		ResourceManager* resources);
 };
 
 /// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.
@@ -176,7 +177,7 @@ public:
 
 	~ModelResource();
 
-	const DynamicArray<ModelPatch*>& getModelPatches() const
+	const DynamicArray<ModelPatch>& getModelPatches() const
 	{
 		return m_modelPatches;
 	}
@@ -194,7 +195,7 @@ public:
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 private:
-	DynamicArray<ModelPatch*> m_modelPatches;
+	DynamicArray<ModelPatch> m_modelPatches;
 	Obb m_visibilityShape;
 	SkeletonResourcePtr m_skeleton;
 	DynamicArray<AnimationResourcePtr> m_animations;

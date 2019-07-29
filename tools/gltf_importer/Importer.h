@@ -83,14 +83,15 @@ private:
 		readAccessor(accessor, out, [](const T&) {});
 	}
 
+	template<typename T, typename TFunc>
+	static void visitAccessor(const cgltf_accessor& accessor, TFunc func);
+
 	// Resources
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh);
 	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);
 	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh, CString skinName);
 	ANKI_USE_RESULT Error writeAnimation(const cgltf_animation& anim);
 	ANKI_USE_RESULT Error writeSkeleton(const cgltf_skin& skin);
-	template<typename T, typename TFunc>
-	static Error appendAttribute(const cgltf_attribute& attrib, DynamicArrayAuto<T>& out, TFunc func);
 
 	// Scene
 	ANKI_USE_RESULT Error writeTransform(const Transform& trf);
@@ -124,6 +125,31 @@ void Importer::readAccessor(const cgltf_accessor& accessor, DynamicArrayAuto<T>&
 		memcpy(&val, ptr, sizeof(T)); // Memcpy because it might not be aligned
 		func(val);
 		out.emplaceBack(val);
+	}
+}
+
+template<typename T, typename TFunc>
+void Importer::visitAccessor(const cgltf_accessor& accessor, TFunc func)
+{
+	const U8* base =
+		static_cast<const U8*>(accessor.buffer_view->buffer->data) + accessor.offset + accessor.buffer_view->offset;
+
+	PtrSize stride = accessor.buffer_view->stride;
+	if(stride == 0)
+	{
+		stride = accessor.stride;
+	}
+	ANKI_ASSERT(stride);
+	ANKI_ASSERT(stride >= sizeof(T));
+
+	const U count = accessor.count;
+
+	for(U i = 0; i < count; ++i)
+	{
+		const U8* ptr = base + stride * i;
+		T val;
+		memcpy(&val, ptr, sizeof(T)); // Memcpy because it might not be aligned
+		func(val);
 	}
 }
 

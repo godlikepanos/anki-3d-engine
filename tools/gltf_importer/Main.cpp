@@ -50,6 +50,10 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				{
 					info.m_texRpath.sprintf("%s/", argv[i]);
 				}
+				else
+				{
+					info.m_texRpath.sprintf("");
+				}
 			}
 			else
 			{
@@ -66,6 +70,10 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				if(std::strlen(argv[i]) > 0)
 				{
 					info.m_rpath.sprintf("%s/", argv[i]);
+				}
+				else
+				{
+					info.m_rpath.sprintf("");
 				}
 			}
 			else

@@ -86,7 +86,8 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
-	m_defaultMainCam->getComponent<FrustumComponent>().setPerspective(0.1f, 1000.0f, toRad(60.0f), toRad(60.0f));
+	m_defaultMainCam->getComponent<FrustumComponent>().setPerspective(
+		0.1f, 1000.0f, toRad(60.0f), (1920.0f / 1080.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
 	// Create a special node for debugging the physics world

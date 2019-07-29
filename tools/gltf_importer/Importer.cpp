@@ -245,7 +245,7 @@ Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<CString, Strin
 	StringListAuto tokenStrings(m_alloc);
 	for(const jsmntok_t& token : tokens)
 	{
-		if(token.type != JSMN_STRING)
+		if(token.type != JSMN_STRING && token.type != JSMN_PRIMITIVE)
 		{
 			continue;
 		}
@@ -391,10 +391,9 @@ Error Importer::visitNode(
 				gpuParticles = true;
 			}
 
-			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:new%sModelNode(\"%s\", \"%s%s\")\n",
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:new%sParticleEmitterNode(\"%s\", \"%s\")\n",
 				(gpuParticles) ? "Gpu" : "",
 				getNodeName(node).cstr(),
-				m_rpath.cstr(),
 				fname.cstr()));
 		}
 		else if((it = extras.find("collision")) != extras.getEnd() && *it == "true")
@@ -563,16 +562,36 @@ Error Importer::visitNode(
 			{
 				Importer* m_importer;
 				cgltf_mesh* m_mesh;
+				cgltf_material* m_mtl;
+				cgltf_skin* m_skin;
 			};
 			Ctx* ctx = m_alloc.newInstance<Ctx>();
 			ctx->m_importer = this;
 			ctx->m_mesh = node.mesh;
+			ctx->m_mtl = node.mesh->primitives[0].material;
+			ctx->m_skin = node.skin;
 
 			m_hive->submitTask(
 				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
 					Ctx& self = *static_cast<Ctx*>(userData);
 
-					const Error err = self.m_importer->writeMesh(*self.m_mesh);
+					Error err = self.m_importer->writeMesh(*self.m_mesh);
+
+					if(!err)
+					{
+						err = self.m_importer->writeMaterial(*self.m_mtl);
+					}
+
+					if(!err)
+					{
+						err = self.m_importer->writeModel(*self.m_mesh, (self.m_skin) ? self.m_skin->name : CString());
+					}
+
+					if(!err && self.m_skin)
+					{
+						err = self.m_importer->writeSkeleton(*self.m_skin);
+					}
+
 					if(err)
 					{
 						self.m_importer->m_errorInThread.store(err._getCode());
@@ -581,13 +600,6 @@ Error Importer::visitNode(
 					self.m_importer->m_alloc.deleteInstance(&self);
 				},
 				ctx);
-
-			ANKI_CHECK(writeMaterial(*node.mesh->primitives[0].material));
-			ANKI_CHECK(writeModel(*node.mesh, (node.skin) ? node.skin->name : CString()));
-			if(node.skin)
-			{
-				ANKI_CHECK(writeSkeleton(*node.skin));
-			}
 
 			ANKI_CHECK(writeModelNode(node, parentExtras));
 		}

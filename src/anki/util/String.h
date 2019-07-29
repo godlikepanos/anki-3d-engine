@@ -120,7 +120,7 @@ public:
 	/// Return true if the string is not initialized.
 	Bool isEmpty() const
 	{
-		return m_ptr == nullptr || getLength() == 0;
+		return m_ptr == nullptr;
 	}
 
 	Bool operator==(const CString& b) const
@@ -597,7 +597,7 @@ protected:
 
 	void checkInit() const
 	{
-		ANKI_ASSERT(m_data.getSize() > 1);
+		ANKI_ASSERT(m_data.getSize() > 0);
 	}
 
 	/// Append to this string.

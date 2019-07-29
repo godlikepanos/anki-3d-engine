@@ -152,12 +152,9 @@ String& String::operator=(StringAuto&& b)
 void String::create(Allocator alloc, const CStringType& cstr)
 {
 	auto len = cstr.getLength();
-	if(len > 0)
-	{
-		auto size = len + 1;
-		m_data.create(alloc, size);
-		std::memcpy(&m_data[0], &cstr[0], sizeof(Char) * size);
-	}
+	auto size = len + 1;
+	m_data.create(alloc, size);
+	std::memcpy(&m_data[0], &cstr[0], sizeof(Char) * size);
 }
 
 void String::create(Allocator alloc, ConstIterator first, ConstIterator last)
