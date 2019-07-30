@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "Importer.h"
+#include <meshoptimizer/meshoptimizer.h>
 
 namespace anki
 {
@@ -88,13 +89,14 @@ Error checkAttribute(const cgltf_attribute& attrib)
 class TempVertex
 {
 public:
+	Vec3 m_position;
+	F32 m_padding0;
 	Vec4 m_tangent;
 	Vec4 m_boneWeights;
-	Vec3 m_position;
 	Vec3 m_normal;
 	Vec2 m_uv;
 	U16Vec4 m_boneIds;
-	F32 m_padding[2];
+	F32 m_padding1;
 
 	TempVertex()
 	{
@@ -107,7 +109,7 @@ class SubMesh
 {
 public:
 	DynamicArrayAuto<TempVertex> m_verts;
-	DynamicArrayAuto<U16> m_indices;
+	DynamicArrayAuto<U32> m_indices;
 
 	Vec3 m_aabbMin{MAX_F32};
 	Vec3 m_aabbMax{MIN_F32};
@@ -128,15 +130,94 @@ struct WeightVertex
 	U8Vec4 m_weights{0_U8};
 };
 
+/// Optimize a submesh using meshoptimizer.
+static void optimizeSubmesh(SubMesh& submesh, HeapAllocator<U8> alloc)
+{
+	const PtrSize vertSize = sizeof(submesh.m_verts[0]);
+
+	// Re-index
+	{
+		DynamicArrayAuto<U32> remap(alloc);
+		remap.create(submesh.m_verts.getSize(), 0);
+
+		const PtrSize vertCount = meshopt_generateVertexRemap(&remap[0],
+			&submesh.m_indices[0],
+			submesh.m_indices.getSize(),
+			&submesh.m_verts[0],
+			submesh.m_verts.getSize(),
+			vertSize);
+
+		DynamicArrayAuto<U32> newIdxArray(alloc);
+		newIdxArray.create(submesh.m_indices.getSize(), 0);
+		DynamicArrayAuto<TempVertex> newVertArray(alloc);
+		newVertArray.create(vertCount);
+
+		meshopt_remapIndexBuffer(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &remap[0]);
+		meshopt_remapVertexBuffer(
+			&newVertArray[0], &submesh.m_verts[0], submesh.m_verts.getSize(), vertSize, &remap[0]);
+
+		submesh.m_indices = std::move(newIdxArray);
+		submesh.m_verts = std::move(newVertArray);
+	}
+
+	// Vert cache
+	{
+		DynamicArrayAuto<U32> newIdxArray(alloc);
+		newIdxArray.create(submesh.m_indices.getSize(), 0);
+
+		meshopt_optimizeVertexCache(
+			&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), submesh.m_verts.getSize());
+
+		submesh.m_indices = std::move(newIdxArray);
+	}
+
+	// Overdraw
+	{
+		DynamicArrayAuto<U32> newIdxArray(alloc);
+		newIdxArray.create(submesh.m_indices.getSize(), 0);
+
+		meshopt_optimizeOverdraw(&newIdxArray[0],
+			&submesh.m_indices[0],
+			submesh.m_indices.getSize(),
+			&submesh.m_verts[0].m_position.x(),
+			submesh.m_verts.getSize(),
+			vertSize,
+			1.05f);
+
+		submesh.m_indices = std::move(newIdxArray);
+	}
+
+	// Vert fetch
+	{
+		DynamicArrayAuto<TempVertex> newVertArray(alloc);
+		newVertArray.create(submesh.m_verts.getSize());
+
+		const PtrSize newVertCount = meshopt_optimizeVertexFetch(&newVertArray[0],
+			&submesh.m_indices[0], // Inplace
+			submesh.m_indices.getSize(),
+			&submesh.m_verts[0],
+			submesh.m_verts.getSize(),
+			vertSize);
+
+		if(newVertCount != submesh.m_verts.getSize())
+		{
+			newVertArray.resize(newVertCount);
+		}
+		ANKI_ASSERT(newVertArray.getSize() == newVertCount);
+
+		submesh.m_verts = std::move(newVertArray);
+	}
+}
+
 Error Importer::writeMesh(const cgltf_mesh& mesh)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankimesh", m_outDir.cstr(), mesh.name);
-	ANKI_GLTF_LOGI("Importing mesh %s", fname.cstr());
+	ANKI_GLTF_LOGI("Importing mesh%s%s", (m_optimizeMeshes) ? " (will also optimize) " : " ", fname.cstr());
 
-	DynamicArrayAuto<SubMesh> submeshes(m_alloc);
-	U totalVertCount = 0;
+	ListAuto<SubMesh> submeshes(m_alloc);
 	U totalIndexCount = 0;
+	U totalVertexCount = 0;
 	Vec3 aabbMin(MAX_F32);
 	Vec3 aabbMax(MIN_F32);
 	F32 maxUvDistance = MIN_F32;
@@ -230,6 +311,8 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		}
 
 		aabbMin = aabbMin.min(submesh.m_aabbMin);
+		// Bump aabbMax a bit
+		submesh.m_aabbMax += EPSILON + 10.0f;
 		aabbMax = aabbMax.max(submesh.m_aabbMax);
 
 		//
@@ -284,24 +367,19 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 				U idx;
 				if(primitive->indices->component_type == cgltf_component_type_r_32u)
 				{
-					idx = totalVertCount + *reinterpret_cast<const U32*>(base + sizeof(U32) * i);
+					idx = *reinterpret_cast<const U32*>(base + sizeof(U32) * i);
 				}
 				else if(primitive->indices->component_type == cgltf_component_type_r_16u)
 				{
-					idx = totalVertCount + *reinterpret_cast<const U16*>(base + sizeof(U16) * i);
+					idx = *reinterpret_cast<const U16*>(base + sizeof(U16) * i);
 				}
 				else
 				{
 					ANKI_ASSERT(0);
 				}
 
-				ANKI_ASSERT(idx < MAX_U16);
 				submesh.m_indices[i] = idx;
 			}
-
-			submesh.m_firstIdx = totalIndexCount;
-			submesh.m_idxCount = primitive->indices->count;
-			totalIndexCount += primitive->indices->count;
 		}
 
 		//
@@ -373,8 +451,32 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 			}
 		}
 
+		// Optimize
+		if(m_optimizeMeshes)
+		{
+			optimizeSubmesh(submesh, m_alloc);
+		}
+
 		// Finalize
-		totalVertCount += vertCount;
+		if(submesh.m_indices.getSize() == 0 || submesh.m_verts.getSize() == 0)
+		{
+			// Digenerate
+			submeshes.popBack();
+		}
+		else
+		{
+			// Finalize
+			submesh.m_firstIdx = totalIndexCount;
+			submesh.m_idxCount = submesh.m_indices.getSize();
+			totalIndexCount += submesh.m_idxCount;
+			totalVertexCount += submesh.m_verts.getSize();
+		}
+	}
+
+	if(submeshes.getSize() == 0)
+	{
+		ANKI_GLTF_LOGE("Mesh contains degenerate geometry");
+		return Error::USER_DATA;
 	}
 
 	// Find if it's a convex shape
@@ -521,7 +623,7 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		}
 		header.m_indexType = IndexType::U16;
 		header.m_totalIndexCount = totalIndexCount;
-		header.m_totalVertexCount = totalVertCount;
+		header.m_totalVertexCount = totalVertexCount;
 		header.m_subMeshCount = submeshes.getSize();
 		header.m_aabbMin = aabbMin;
 		header.m_aabbMax = aabbMax;
@@ -549,7 +651,23 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 	// Write indices
 	for(const SubMesh& submesh : submeshes)
 	{
-		ANKI_CHECK(file.write(&submesh.m_indices[0], submesh.m_indices.getSizeInBytes()));
+		DynamicArrayAuto<U16> indices(m_alloc);
+		indices.create(submesh.m_indices.getSize());
+		U vertCount = 0;
+		for(U i = 0; i < indices.getSize(); ++i)
+		{
+			const U idx = submesh.m_indices[i] + vertCount;
+			if(idx > MAX_U16)
+			{
+				ANKI_GLTF_LOGE("Only supports 16bit indices for now");
+				return Error::USER_DATA;
+			}
+
+			indices[i] = idx;
+		}
+
+		ANKI_CHECK(file.write(&indices[0], indices.getSizeInBytes()));
+		vertCount += submesh.m_verts.getSize();
 	}
 
 	// Write first vert buffer

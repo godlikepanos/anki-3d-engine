@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/arc_2.ankimesh</mesh>
+			<material>assets/arch.001.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

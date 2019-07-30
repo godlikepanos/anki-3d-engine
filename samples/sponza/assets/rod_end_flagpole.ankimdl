@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/rod_end.ankimesh</mesh>
+			<material>assets/flagpole.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

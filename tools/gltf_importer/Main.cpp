@@ -9,8 +9,9 @@ using namespace anki;
 
 static const char* USAGE = R"(Usage: %s in_file out_dir [options]
 Options:
--rpath <string>     : Replace all absolute paths of assets with that path
--texrpath <string>  : Same as rpath but for textures
+-rpath <string>        : Replace all absolute paths of assets with that path
+-texrpath <string>     : Same as rpath but for textures
+-optimize-meshes <0|1> : Optimize meshes. Default is 1
 )";
 
 class CmdLineArgs
@@ -21,6 +22,7 @@ public:
 	StringAuto m_outDir = {m_alloc};
 	StringAuto m_rpath = {m_alloc};
 	StringAuto m_texRpath = {m_alloc};
+	Bool m_optimizeMeshes = true;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -81,6 +83,21 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::USER_DATA;
 			}
 		}
+		else if(strcmp(argv[i], "-optimize-meshes") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				I optimize = 1;
+				ANKI_CHECK(CString(argv[i]).toNumber(optimize));
+				info.m_optimizeMeshes = optimize != 0;
+			}
+			else
+			{
+				return Error::USER_DATA;
+			}
+		}
 		else
 		{
 			return Error::USER_DATA;
@@ -110,10 +127,11 @@ int main(int argc, char** argv)
 	}
 
 	Importer importer;
-	if(importer.load(info.m_inputFname.toCString(),
+	if(importer.init(info.m_inputFname.toCString(),
 		   info.m_outDir.toCString(),
 		   info.m_rpath.toCString(),
-		   info.m_texRpath.toCString()))
+		   info.m_texRpath.toCString(),
+		   info.m_optimizeMeshes))
 	{
 		return 1;
 	}

@@ -335,6 +335,8 @@ private:
 	using Node = detail::ListNode<T>;
 
 public:
+	using typename Base::Iterator;
+
 	/// Default constructor.
 	List()
 		: Base()
@@ -367,50 +369,56 @@ public:
 
 	/// Copy an element at the end of the list.
 	template<typename TAllocator>
-	void pushBack(TAllocator alloc, const T& x)
+	Iterator pushBack(TAllocator alloc, const T& x)
 	{
 		Node* node = alloc.template newInstance<Node>(x);
 		Base::pushBackNode(node);
+		return Iterator(node, this);
 	}
 
 	/// Construct an element at the end of the list.
 	template<typename TAllocator, typename... TArgs>
-	void emplaceBack(TAllocator alloc, TArgs&&... args)
+	Iterator emplaceBack(TAllocator alloc, TArgs&&... args)
 	{
 		Node* node = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 		Base::pushBackNode(node);
+		return Iterator(node, this);
 	}
 
 	/// Copy an element at the beginning of the list.
 	template<typename TAllocator>
-	void pushFront(TAllocator alloc, const T& x)
+	Iterator pushFront(TAllocator alloc, const T& x)
 	{
 		Node* node = alloc.template newInstance<Node>(x);
 		Base::pushFrontNode(node);
+		return Iterator(node, this);
 	}
 
 	/// Construct element at the beginning of the list.
 	template<typename TAllocator, typename... TArgs>
-	void emplaceFront(TAllocator alloc, TArgs&&... args)
+	Iterator emplaceFront(TAllocator alloc, TArgs&&... args)
 	{
 		Node* node = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 		Base::pushFrontNode(node);
+		return Iterator(node, this);
 	}
 
 	/// Copy an element at the given position of the list.
 	template<typename TAllocator>
-	void insert(TAllocator alloc, typename Base::Iterator pos, const T& x)
+	Iterator insert(TAllocator alloc, Iterator pos, const T& x)
 	{
 		Node* node = alloc.template newInstance<Node>(x);
 		Base::insertNode(pos.m_node, node);
+		return Iterator(node, this);
 	}
 
 	/// Construct element at the the given position.
 	template<typename TAllocator, typename... TArgs>
-	void emplace(TAllocator alloc, typename Base::Iterator pos, TArgs&&... args)
+	Iterator emplace(TAllocator alloc, Iterator pos, TArgs&&... args)
 	{
 		Node* node = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 		Base::insertNode(pos.m_node, node);
+		return Iterator(node, this);
 	}
 
 	/// Pop a value from the back of the list.
@@ -435,7 +443,7 @@ public:
 
 	/// Erase an element.
 	template<typename TAllocator>
-	void erase(TAllocator alloc, typename Base::Iterator pos)
+	void erase(TAllocator alloc, Iterator pos)
 	{
 		ANKI_ASSERT(pos.m_node);
 		ANKI_ASSERT(pos.m_list == this);
@@ -488,30 +496,30 @@ public:
 	}
 
 	/// Copy an element at the end of the list.
-	void pushBack(const Value& x)
+	Iterator pushBack(const Value& x)
 	{
-		Base::pushBack(m_alloc, x);
+		return Base::pushBack(m_alloc, x);
 	}
 
 	/// Construct an element at the end of the list.
 	template<typename... TArgs>
-	void emplaceBack(TArgs&&... args)
+	Iterator emplaceBack(TArgs&&... args)
 	{
-		Base::emplaceBack(m_alloc, std::forward<TArgs>(args)...);
+		return Base::emplaceBack(m_alloc, std::forward<TArgs>(args)...);
 	}
 
 	/// Construct element at the beginning of the list.
 	template<typename... TArgs>
-	void emplaceFront(TArgs&&... args)
+	Iterator emplaceFront(TArgs&&... args)
 	{
-		Base::emplaceFront(m_alloc, std::forward<TArgs>(args)...);
+		return Base::emplaceFront(m_alloc, std::forward<TArgs>(args)...);
 	}
 
 	/// Construct element at the the given position.
 	template<typename... TArgs>
-	void emplace(Iterator pos, TArgs&&... args)
+	Iterator emplace(Iterator pos, TArgs&&... args)
 	{
-		Base::emplace(m_alloc, pos, std::forward(args)...);
+		return Base::emplace(m_alloc, pos, std::forward(args)...);
 	}
 
 	/// Pop a value from the back of the list.
@@ -598,6 +606,8 @@ private:
 	using Base = detail::ListBase<T, T>;
 
 public:
+	using typename Base::Iterator;
+
 	/// Default constructor.
 	IntrusiveList()
 		: Base()
@@ -621,37 +631,44 @@ public:
 	}
 
 	/// Copy an element at the end of the list.
-	void pushBack(T* x)
+	Iterator pushBack(T* x)
 	{
 		Base::pushBackNode(x);
+		return Iterator(x, this);
 	}
 
 	/// Copy an element at the beginning of the list.
-	void pushFront(T* x)
+	Iterator pushFront(T* x)
 	{
 		Base::pushFrontNode(x);
+		return Iterator(x, this);
 	}
 
 	/// Copy an element at the given position of the list.
-	void insert(typename Base::Iterator pos, T* x)
+	Iterator insert(Iterator pos, T* x)
 	{
 		Base::insertNode(pos.m_node, x);
+		return Iterator(x, this);
 	}
 
 	/// Pop a value from the back of the list.
-	void popBack()
+	T* popBack()
 	{
+		T* tail = Base::m_tail;
 		Base::popBack();
+		return tail;
 	}
 
 	/// Pop a value from the front of the list.
-	void popFront()
+	T* popFront()
 	{
+		T* head = Base::m_head;
 		Base::popFront();
+		return head;
 	}
 
 	/// Erase an element.
-	void erase(typename Base::Iterator pos)
+	void erase(Iterator pos)
 	{
 		Base::removeNode(pos.m_node);
 	}

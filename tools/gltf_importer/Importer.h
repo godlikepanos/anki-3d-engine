@@ -16,13 +16,6 @@ namespace anki
 #define ANKI_GLTF_LOGW(...) ANKI_LOG("GLTF", WARNING, __VA_ARGS__)
 #define ANKI_GLTF_LOGF(...) ANKI_LOG("GLTF", FATAL, __VA_ARGS__)
 
-#define ANKI_GLTF_ASSERT(expr) \
-	if(!(expr)) \
-	{ \
-		ANKI_GLTF_LOGE(#expr); \
-		return Error::USER_DATA; \
-	}
-
 /// Import GLTF and spit AnKi scenes.
 class Importer
 {
@@ -31,11 +24,22 @@ public:
 
 	~Importer();
 
-	Error load(CString inputFname, CString outDir, CString rpath, CString texrpath);
+	ANKI_USE_RESULT Error init(
+		CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes);
 
-	Error writeAll();
+	ANKI_USE_RESULT Error writeAll();
 
 private:
+	class PtrHasher
+	{
+	public:
+		U64 operator()(const void* ptr)
+		{
+			return computeHash(&ptr, sizeof(ptr));
+		}
+	};
+
+	// Data
 	static const char* XML_HEADER;
 
 	HeapAllocator<U8> m_alloc{allocAligned, nullptr};
@@ -55,36 +59,26 @@ private:
 
 	Atomic<I32> m_errorInThread{0};
 
-	class PtrHasher
-	{
-	public:
-		U64 operator()(const void* ptr)
-		{
-			return computeHash(&ptr, sizeof(ptr));
-		}
-	};
-
 	HashMapAuto<const void*, U32, PtrHasher> m_nodePtrToIdx{m_alloc}; ///< Need an index for the unnamed nodes.
+
+	Bool m_optimizeMeshes = false;
 
 	// Misc
 	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
 	ANKI_USE_RESULT Error parseArrayOfNumbers(
 		CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize = nullptr);
 	void populateNodePtrToIdx();
-	void populateNodePtrToIdx(const cgltf_node& node, U& idx);
+	void populateNodePtrToIdxInternal(const cgltf_node& node, U& idx);
 	StringAuto getNodeName(const cgltf_node& node);
 
 	template<typename T, typename TFunc>
-	static void readAccessor(const cgltf_accessor& accessor, DynamicArrayAuto<T>& out, TFunc func);
+	static void visitAccessor(const cgltf_accessor& accessor, TFunc func);
 
 	template<typename T>
 	static void readAccessor(const cgltf_accessor& accessor, DynamicArrayAuto<T>& out)
 	{
-		readAccessor(accessor, out, [](const T&) {});
+		visitAccessor<T>(accessor, [&](const T& val) { out.emplaceBack(val); });
 	}
-
-	template<typename T, typename TFunc>
-	static void visitAccessor(const cgltf_accessor& accessor, TFunc func);
 
 	// Resources
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh);
@@ -101,32 +95,6 @@ private:
 	ANKI_USE_RESULT Error writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
 	ANKI_USE_RESULT Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
 };
-
-template<typename T, typename TFunc>
-void Importer::readAccessor(const cgltf_accessor& accessor, DynamicArrayAuto<T>& out, TFunc func)
-{
-	const U8* base =
-		static_cast<const U8*>(accessor.buffer_view->buffer->data) + accessor.offset + accessor.buffer_view->offset;
-
-	PtrSize stride = accessor.buffer_view->stride;
-	if(stride == 0)
-	{
-		stride = accessor.stride;
-	}
-	ANKI_ASSERT(stride);
-	ANKI_ASSERT(stride >= sizeof(T));
-
-	const U count = accessor.count;
-
-	for(U i = 0; i < count; ++i)
-	{
-		const U8* ptr = base + stride * i;
-		T val;
-		memcpy(&val, ptr, sizeof(T)); // Memcpy because it might not be aligned
-		func(val);
-		out.emplaceBack(val);
-	}
-}
 
 template<typename T, typename TFunc>
 void Importer::visitAccessor(const cgltf_accessor& accessor, TFunc func)
@@ -148,7 +116,7 @@ void Importer::visitAccessor(const cgltf_accessor& accessor, TFunc func)
 	{
 		const U8* ptr = base + stride * i;
 		T val;
-		memcpy(&val, ptr, sizeof(T)); // Memcpy because it might not be aligned
+		memcpy(&val, ptr, sizeof(T)); // Memcpy because the input buffer might not be aligned
 		func(val);
 	}
 }

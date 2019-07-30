@@ -144,12 +144,13 @@ Importer::~Importer()
 	m_alloc.deleteInstance(m_hive);
 }
 
-Error Importer::load(CString inputFname, CString outDir, CString rpath, CString texrpath)
+Error Importer::init(CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes)
 {
 	m_inputFname.create(inputFname);
 	m_outDir.create(outDir);
 	m_rpath.create(rpath);
 	m_texrpath.create(texrpath);
+	m_optimizeMeshes = optimizeMeshes;
 
 	cgltf_options options = {};
 	cgltf_result res = cgltf_parse_file(&options, inputFname.cstr(), &m_gltf);
@@ -276,13 +277,13 @@ Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<CString, Strin
 	return Error::NONE;
 }
 
-void Importer::populateNodePtrToIdx(const cgltf_node& node, U& idx)
+void Importer::populateNodePtrToIdxInternal(const cgltf_node& node, U& idx)
 {
 	m_nodePtrToIdx.emplace(&node, idx++);
 
 	for(cgltf_node* const* c = node.children; c < node.children + node.children_count; ++c)
 	{
-		populateNodePtrToIdx(**c, idx);
+		populateNodePtrToIdxInternal(**c, idx);
 	}
 }
 
@@ -294,7 +295,7 @@ void Importer::populateNodePtrToIdx()
 	{
 		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count; ++node)
 		{
-			populateNodePtrToIdx(**node, idx);
+			populateNodePtrToIdxInternal(**node, idx);
 		}
 	}
 }
@@ -608,6 +609,7 @@ Error Importer::visitNode(
 	{
 		ANKI_GLTF_LOGW("Ignoring node %s. Assuming transform node", getNodeName(node).cstr());
 		ANKI_CHECK(getExtras(node.extras, outExtras));
+		ANKI_CHECK(getNodeTransform(node, localTrf));
 		dummyNode = true;
 	}
 
@@ -771,7 +773,11 @@ Error Importer::writeAnimation(const cgltf_animation& anim)
 			readAccessor(*channel.sampler->input, keys);
 			DynamicArrayAuto<Vec3> positions(m_alloc);
 			readAccessor(*channel.sampler->output, positions);
-			ANKI_GLTF_ASSERT(keys.getSize() == positions.getSize());
+			if(keys.getSize() != positions.getSize())
+			{
+				ANKI_GLTF_LOGE("Position count should match they keyframes");
+				return Error::USER_DATA;
+			}
 
 			for(U i = 0; i < keys.getSize(); ++i)
 			{
@@ -793,7 +799,11 @@ Error Importer::writeAnimation(const cgltf_animation& anim)
 			readAccessor(*channel.sampler->input, keys);
 			DynamicArrayAuto<Quat> rotations(m_alloc);
 			readAccessor(*channel.sampler->output, rotations);
-			ANKI_GLTF_ASSERT(keys.getSize() == rotations.getSize());
+			if(keys.getSize() != rotations.getSize())
+			{
+				ANKI_GLTF_LOGE("Rotation count should match they keyframes");
+				return Error::USER_DATA;
+			}
 
 			for(U i = 0; i < keys.getSize(); ++i)
 			{
@@ -816,7 +826,11 @@ Error Importer::writeAnimation(const cgltf_animation& anim)
 			readAccessor(*channel.sampler->input, keys);
 			DynamicArrayAuto<Vec3> scales(m_alloc);
 			readAccessor(*channel.sampler->output, scales);
-			ANKI_GLTF_ASSERT(keys.getSize() == scales.getSize());
+			if(keys.getSize() != scales.getSize())
+			{
+				ANKI_GLTF_LOGE("Scale count should match they keyframes");
+				return Error::USER_DATA;
+			}
 
 			for(U i = 0; i < keys.getSize(); ++i)
 			{
@@ -851,7 +865,11 @@ Error Importer::writeSkeleton(const cgltf_skin& skin)
 	// Get matrices
 	DynamicArrayAuto<Mat4> boneMats(m_alloc);
 	readAccessor(*skin.inverse_bind_matrices, boneMats);
-	ANKI_GLTF_ASSERT(boneMats.getSize() == skin.joints_count);
+	if(boneMats.getSize() != skin.joints_count)
+	{
+		ANKI_GLTF_LOGE("Bone matrices should match the joint count");
+		return Error::USER_DATA;
+	}
 
 	// Write file
 	File file;
@@ -902,7 +920,8 @@ Error Importer::writeSkeleton(const cgltf_skin& skin)
 Error Importer::writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	const cgltf_light& light = *node.light;
-	ANKI_GLTF_LOGI("Importing light %s", light.name);
+	StringAuto nodeName = getNodeName(node);
+	ANKI_GLTF_LOGI("Importing light %s", nodeName.cstr());
 
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
 	ANKI_CHECK(getExtras(node.extras, extras));
@@ -924,7 +943,7 @@ Error Importer::writeLight(const cgltf_node& node, const HashMapAuto<CString, St
 		return Error::USER_DATA;
 	}
 
-	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:new%sLightNode(\"%s\")\n", lightTypeStr.cstr(), light.name));
+	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:new%sLightNode(\"%s\")\n", lightTypeStr.cstr(), nodeName.cstr()));
 	ANKI_CHECK(m_sceneFile.writeText("lcomp = node:getSceneNodeBase():getLightComponent()\n"));
 
 	Vec3 color(light.color[0], light.color[1], light.color[2]);

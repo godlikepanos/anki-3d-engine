@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/column_c.ankimesh</mesh>
+			<material>assets/column_c.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

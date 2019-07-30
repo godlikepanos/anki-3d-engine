@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/small_window_inner.ankimesh</mesh>
+			<material>assets/ceiling.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

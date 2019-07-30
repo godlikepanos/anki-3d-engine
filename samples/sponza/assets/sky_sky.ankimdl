@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/sky.ankimesh</mesh>
+			<material>assets/sky.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>
