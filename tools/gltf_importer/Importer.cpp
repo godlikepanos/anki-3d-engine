@@ -366,11 +366,13 @@ Error Importer::visitNode(
 	if(node.light)
 	{
 		ANKI_CHECK(getNodeTransform(node, localTrf));
+		localTrf.setScale(1.0f); // Remove scale
 		ANKI_CHECK(writeLight(node, parentExtras));
 	}
 	else if(node.camera)
 	{
 		ANKI_CHECK(getNodeTransform(node, localTrf));
+		localTrf.setScale(1.0f); // Remove scale
 		ANKI_CHECK(writeCamera(node, parentExtras));
 	}
 	else if(node.mesh)
