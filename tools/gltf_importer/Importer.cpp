@@ -968,11 +968,13 @@ Error Importer::writeLight(const cgltf_node& node, const HashMapAuto<CString, St
 
 	if(light.type == cgltf_light_type_point)
 	{
-		ANKI_CHECK(m_sceneFile.writeText("lcomp:setRadius(%f)\n", computeLightRadius(color)));
+		ANKI_CHECK(m_sceneFile.writeText(
+			"lcomp:setRadius(%f)\n", (light.range > 0.0f) ? light.range : computeLightRadius(color)));
 	}
 	else if(light.type == cgltf_light_type_spot)
 	{
-		ANKI_CHECK(m_sceneFile.writeText("lcomp:setDistance(%f)\n", computeLightRadius(color)));
+		ANKI_CHECK(m_sceneFile.writeText(
+			"lcomp:setDistance(%f)\n", (light.range > 0.0f) ? light.range : computeLightRadius(color)));
 		ANKI_CHECK(m_sceneFile.writeText("lcomp:setOuterAngle(%f)\n", light.spot_outer_cone_angle));
 		ANKI_CHECK(m_sceneFile.writeText("lcomp:setInnerAngle(%f)\n", light.spot_inner_cone_angle));
 	}
