@@ -51,6 +51,9 @@ public:
 	RenderTargetHandle m_lightShadingRt;
 	WeakArray<RenderTargetHandle> m_irradianceProbeRts;
 
+	U32 m_gbufferDrawcallCount ANKI_DEBUG_CODE(= MAX_U32);
+	U32 m_smDrawcallCount ANKI_DEBUG_CODE(= MAX_U32);
+
 	static void foo()
 	{
 		static_assert(std::is_trivially_destructible<InternalContext>::value, "See file");
@@ -260,6 +263,26 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 		return;
 	}
 
+	// Compute task counts for some of the passes
+	U gbufferTaskCount, smTaskCount;
+	{
+		giCtx->m_gbufferDrawcallCount = 0;
+		giCtx->m_smDrawcallCount = 0;
+		for(const RenderQueue* rq : giCtx->m_probeToUpdateThisFrame->m_renderQueues)
+		{
+			ANKI_ASSERT(rq);
+			giCtx->m_gbufferDrawcallCount += rq->m_renderables.getSize();
+
+			if(rq->m_directionalLight.hasShadow())
+			{
+				giCtx->m_smDrawcallCount += rq->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize();
+			}
+		}
+
+		gbufferTaskCount = computeNumberOfSecondLevelCommandBuffers(giCtx->m_gbufferDrawcallCount);
+		smTaskCount = computeNumberOfSecondLevelCommandBuffers(giCtx->m_smDrawcallCount);
+	}
+
 	// GBuffer
 	{
 		// RTs
@@ -278,7 +301,7 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 				giCtx->m_gi->runGBufferInThread(rgraphCtx, *giCtx);
 			},
 			giCtx,
-			6);
+			gbufferTaskCount);
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
@@ -338,7 +361,7 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 				giCtx->m_gi->runShadowmappingInThread(rgraphCtx, *giCtx);
 			},
 			giCtx,
-			6);
+			smTaskCount);
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
 		pass.newDependency({giCtx->m_shadowsRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
@@ -362,7 +385,7 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 				giCtx->m_gi->runLightShading(rgraphCtx, *giCtx);
 			},
 			giCtx,
-			6);
+			1);
 
 		pass.newDependency({giCtx->m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
@@ -576,67 +599,97 @@ void GlobalIllumination::runGBufferInThread(RenderPassWorkContext& rgraphCtx, In
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
 
-	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
-	const U faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
-	ANKI_ASSERT(faceIdx < 6);
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
 
-	const U32 viewportX = faceIdx * m_tileSize;
-	cmdb->setViewport(viewportX, 0, m_tileSize, m_tileSize);
-	cmdb->setScissor(viewportX, 0, m_tileSize, m_tileSize);
+	I start, end;
+	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex,
+		rgraphCtx.m_secondLevelCommandBufferCount,
+		giCtx.m_gbufferDrawcallCount,
+		start,
+		end);
 
-	/// Draw
-	ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
-	const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
-
-	if(!rqueue.m_renderables.isEmpty())
+	I drawcallCount = 0;
+	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
-		m_r->getSceneDrawer().drawRange(Pass::GB,
-			rqueue.m_viewMatrix,
-			rqueue.m_viewProjectionMatrix,
-			Mat4::getIdentity(), // Don't care about prev mats since we don't care about velocity
-			cmdb,
-			m_r->getSamplers().m_trilinearRepeat,
-			rqueue.m_renderables.getBegin(),
-			rqueue.m_renderables.getEnd(),
-			MAX_LOD_COUNT - 1);
+		const I faceDrawcallCount = I(probe.m_renderQueues[faceIdx]->m_renderables.getSize());
+		const I localStart = max(I(0), start - drawcallCount);
+		const I localEnd = min(faceDrawcallCount, end - drawcallCount);
+
+		if(localStart < localEnd)
+		{
+			const U32 viewportX = faceIdx * m_tileSize;
+			cmdb->setViewport(viewportX, 0, m_tileSize, m_tileSize);
+			cmdb->setScissor(viewportX, 0, m_tileSize, m_tileSize);
+
+			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
+
+			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
+			m_r->getSceneDrawer().drawRange(Pass::GB,
+				rqueue.m_viewMatrix,
+				rqueue.m_viewProjectionMatrix,
+				Mat4::getIdentity(), // Don't care about prev mats since we don't care about velocity
+				cmdb,
+				m_r->getSamplers().m_trilinearRepeat,
+				rqueue.m_renderables.getBegin() + localStart,
+				rqueue.m_renderables.getBegin() + localEnd,
+				MAX_LOD_COUNT - 1);
+		}
+
+		drawcallCount += faceDrawcallCount;
 	}
+	ANKI_ASSERT(giCtx.m_gbufferDrawcallCount == drawcallCount);
 
 	// It's secondary, no need to restore the state
 }
 
 void GlobalIllumination::runShadowmappingInThread(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx) const
 {
-	const U faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
-	ANKI_ASSERT(faceIdx < 6);
+	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
+	ANKI_TRACE_SCOPED_EVENT(R_GI);
+
+	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
+
+	I start, end;
+	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex,
+		rgraphCtx.m_secondLevelCommandBufferCount,
+		giCtx.m_smDrawcallCount,
+		start,
+		end);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->setPolygonOffset(1.0f, 1.0f);
 
-	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
-	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame->m_renderQueues[faceIdx]);
-	const RenderQueue& faceRenderQueue = *giCtx.m_probeToUpdateThisFrame->m_renderQueues[faceIdx];
-	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_uuid != 0);
-	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowCascadeCount == 1);
-
-	ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
-	const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
-
-	if(cascadeRenderQueue.m_renderables.getSize() != 0)
+	I drawcallCount = 0;
+	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
-		const U rez = m_shadowMapping.m_rtDescr.m_height;
-		cmdb->setViewport(rez * faceIdx, 0, rez, rez);
-		cmdb->setScissor(rez * faceIdx, 0, rez, rez);
+		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
+		const RenderQueue& faceRenderQueue = *probe.m_renderQueues[faceIdx];
+		ANKI_ASSERT(faceRenderQueue.m_directionalLight.hasShadow());
+		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
+		const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
 
-		m_r->getSceneDrawer().drawRange(Pass::SM,
-			cascadeRenderQueue.m_viewMatrix,
-			cascadeRenderQueue.m_viewProjectionMatrix,
-			Mat4::getIdentity(), // Don't care about prev matrices here
-			cmdb,
-			m_r->getSamplers().m_trilinearRepeatAniso,
-			cascadeRenderQueue.m_renderables.getBegin(),
-			cascadeRenderQueue.m_renderables.getEnd(),
-			MAX_LOD_COUNT - 1);
+		const I faceDrawcallCount = I(cascadeRenderQueue.m_renderables.getSize());
+		const I localStart = max(I(0), start - drawcallCount);
+		const I localEnd = min(faceDrawcallCount, end - drawcallCount);
+
+		if(localStart < localEnd)
+		{
+			const U rez = m_shadowMapping.m_rtDescr.m_height;
+			cmdb->setViewport(rez * faceIdx, 0, rez, rez);
+			cmdb->setScissor(rez * faceIdx, 0, rez, rez);
+
+			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
+			m_r->getSceneDrawer().drawRange(Pass::SM,
+				cascadeRenderQueue.m_viewMatrix,
+				cascadeRenderQueue.m_viewProjectionMatrix,
+				Mat4::getIdentity(), // Don't care about prev matrices here
+				cmdb,
+				m_r->getSamplers().m_trilinearRepeatAniso,
+				cascadeRenderQueue.m_renderables.getBegin() + localStart,
+				cascadeRenderQueue.m_renderables.getBegin() + localEnd,
+				MAX_LOD_COUNT - 1);
+		}
 	}
 
 	// It's secondary, no need to restore the state
@@ -646,55 +699,60 @@ void GlobalIllumination::runLightShading(RenderPassWorkContext& rgraphCtx, Inter
 {
 	ANKI_TRACE_SCOPED_EVENT(R_GI);
 
-	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
-	const U faceIdx = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
-	ANKI_ASSERT(faceIdx < 6);
 
-	ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
-	const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
-
-	const U rez = m_tileSize;
-	cmdb->setScissor(rez * faceIdx, 0, rez, rez);
-
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	// Set common state for all lights
-	// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
-	cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
-
-	rgraphCtx.bindColorTexture(0, 3, giCtx.m_gbufferColorRts[0]);
-	rgraphCtx.bindColorTexture(0, 4, giCtx.m_gbufferColorRts[1]);
-	rgraphCtx.bindColorTexture(0, 5, giCtx.m_gbufferColorRts[2]);
-
-	rgraphCtx.bindTexture(0, 6, giCtx.m_gbufferDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-
-	// Get shadowmap info
-	const Bool hasDirLight = probe.m_renderQueues[0]->m_directionalLight.m_uuid;
-	if(hasDirLight)
 	{
-		ANKI_ASSERT(giCtx.m_shadowsRt.isValid());
+		// NOTE: Use nearest sampler because we don't want the result to sample the near tiles
+		cmdb->bindSampler(0, 2, m_r->getSamplers().m_nearestNearestClamp);
 
-		cmdb->bindSampler(0, 7, m_shadowMapping.m_shadowSampler);
+		rgraphCtx.bindColorTexture(0, 3, giCtx.m_gbufferColorRts[0]);
+		rgraphCtx.bindColorTexture(0, 4, giCtx.m_gbufferColorRts[1]);
+		rgraphCtx.bindColorTexture(0, 5, giCtx.m_gbufferColorRts[2]);
 
-		rgraphCtx.bindTexture(0, 8, giCtx.m_shadowsRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindTexture(0, 6, giCtx.m_gbufferDepthRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+
+		// Get shadowmap info
+		if(probe.m_renderQueues[0]->m_directionalLight.isEnabled())
+		{
+			ANKI_ASSERT(giCtx.m_shadowsRt.isValid());
+
+			cmdb->bindSampler(0, 7, m_shadowMapping.m_shadowSampler);
+
+			rgraphCtx.bindTexture(0, 8, giCtx.m_shadowsRt, TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		}
 	}
 
-	TraditionalDeferredLightShadingDrawInfo dsInfo;
-	dsInfo.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
-	dsInfo.m_invViewProjectionMatrix = rqueue.m_viewProjectionMatrix.getInverse();
-	dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart();
-	dsInfo.m_viewport = UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize);
-	dsInfo.m_gbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize * 6), 1.0f / F32(m_tileSize));
-	dsInfo.m_gbufferTexCoordsBias = Vec2(0.0f, 0.0f);
-	dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize), 1.0f / F32(m_tileSize));
-	dsInfo.m_lightbufferTexCoordsBias = Vec2(-F32(faceIdx), 0.0f);
-	dsInfo.m_cameraNear = probe.m_renderQueues[faceIdx]->m_cameraNear;
-	dsInfo.m_cameraFar = probe.m_renderQueues[faceIdx]->m_cameraFar;
-	dsInfo.m_directionalLight = (hasDirLight) ? &probe.m_renderQueues[faceIdx]->m_directionalLight : nullptr;
-	dsInfo.m_pointLights = rqueue.m_pointLights;
-	dsInfo.m_spotLights = rqueue.m_spotLights;
-	dsInfo.m_commandBuffer = cmdb;
-	m_lightShading.m_deferred.drawLights(dsInfo);
+	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	{
+		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
+		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
+
+		const U rez = m_tileSize;
+		cmdb->setScissor(rez * faceIdx, 0, rez, rez);
+		cmdb->setViewport(rez * faceIdx, 0, rez, rez);
+
+		TraditionalDeferredLightShadingDrawInfo dsInfo;
+		dsInfo.m_viewProjectionMatrix = rqueue.m_viewProjectionMatrix;
+		dsInfo.m_invViewProjectionMatrix = rqueue.m_viewProjectionMatrix.getInverse();
+		dsInfo.m_cameraPosWSpace = rqueue.m_cameraTransform.getTranslationPart();
+		dsInfo.m_viewport = UVec4(faceIdx * m_tileSize, 0, m_tileSize, m_tileSize);
+		dsInfo.m_gbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize * 6), 1.0f / F32(m_tileSize));
+		dsInfo.m_gbufferTexCoordsBias = Vec2(0.0f, 0.0f);
+		dsInfo.m_lightbufferTexCoordsScale = Vec2(1.0f / F32(m_tileSize), 1.0f / F32(m_tileSize));
+		dsInfo.m_lightbufferTexCoordsBias = Vec2(-F32(faceIdx), 0.0f);
+		dsInfo.m_cameraNear = probe.m_renderQueues[faceIdx]->m_cameraNear;
+		dsInfo.m_cameraFar = probe.m_renderQueues[faceIdx]->m_cameraFar;
+		dsInfo.m_directionalLight = (probe.m_renderQueues[faceIdx]->m_directionalLight.isEnabled())
+										? &probe.m_renderQueues[faceIdx]->m_directionalLight
+										: nullptr;
+		dsInfo.m_pointLights = rqueue.m_pointLights;
+		dsInfo.m_spotLights = rqueue.m_spotLights;
+		dsInfo.m_commandBuffer = cmdb;
+		m_lightShading.m_deferred.drawLights(dsInfo);
+	}
 }
 
 void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, InternalContext& giCtx)

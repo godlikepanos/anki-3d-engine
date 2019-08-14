@@ -169,6 +169,16 @@ public:
 	DirectionalLightQueueElement()
 	{
 	}
+
+	ANKI_USE_RESULT Bool isEnabled() const
+	{
+		return m_uuid != 0;
+	}
+
+	ANKI_USE_RESULT Bool hasShadow() const
+	{
+		return isEnabled() && m_shadowCascadeCount > 0;
+	}
 };
 
 static_assert(
