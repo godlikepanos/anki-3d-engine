@@ -13,8 +13,9 @@
 #	include <X11/Xlib-xcb.h>
 #elif ANKI_OS == ANKI_OS_WINDOWS
 #	include <Winuser.h>
+#	include <anki/util/CleanupWindows.h>
 #else
-#	error TODO
+#	error Not supported
 #endif
 
 namespace anki
