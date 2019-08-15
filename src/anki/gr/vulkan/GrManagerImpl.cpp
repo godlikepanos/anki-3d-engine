@@ -215,6 +215,10 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 {
+	// Init VOLK
+	//
+	ANKI_VK_CHECK(volkInitialize());
+
 	// Create the instance
 	//
 	const U32 vulkanMinor = init.m_config->getNumber("gr.vkminor");
@@ -348,6 +352,10 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 #endif
 
 	ANKI_VK_CHECK(vkCreateInstance(&ci, pallocCbs, &m_instance));
+
+	// Get symbolx
+	//
+	volkLoadInstance(m_instance);
 
 	// Set debug callbacks
 	//

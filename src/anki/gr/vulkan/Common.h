@@ -14,7 +14,7 @@
 #else
 #	error TODO
 #endif
-#include <vulkan/vulkan.h>
+#include <volk/volk.h>
 #include <anki/util/CleanupWindows.h> // Clean global namespace
 
 namespace anki
