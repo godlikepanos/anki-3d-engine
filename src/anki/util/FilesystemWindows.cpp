@@ -31,7 +31,7 @@ Bool directoryExists(const CString& filename)
 	return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-Error removeDirectory(const CString& dirname)
+Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> alloc)
 {
 	// For some reason dirname should be double null terminated
 	if(dirname.getLength() > MAX_PATH - 2)
