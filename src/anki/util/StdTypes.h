@@ -260,14 +260,16 @@ static constexpr long double operator""_ns(long double x)
 	using _SelfRef = decltype(((_selfFn*)0)()); \
 	using Self = std::remove_reference<_SelfRef>::type;
 
+#if ANKI_COMPILER_GCC_COMPATIBLE
 /// Redefine the sizeof because the default returns size_t and that will require casting when used with U32 for example.
-#define _ANKI_SIZEOF(type) ((anki::U32)(sizeof(type)))
-#define sizeof(type) _ANKI_SIZEOF(type)
+#	define _ANKI_SIZEOF(type) ((anki::U32)(sizeof(type)))
+#	define sizeof(type) _ANKI_SIZEOF(type)
 
 /// Redefine the alignof because the default returns size_t and that will require casting when used with U32 for
 /// example.
-#define _ANKI_ALIGNOF(type) ((anki::U32)(alignof(type)))
-#define alignof(type) _ANKI_ALIGNOF(type)
+#	define _ANKI_ALIGNOF(type) ((anki::U32)(alignof(type)))
+#	define alignof(type) _ANKI_ALIGNOF(type)
+#endif
 /// @}
 
 } // end namespace anki

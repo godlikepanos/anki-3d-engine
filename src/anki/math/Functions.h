@@ -107,9 +107,7 @@ inline T modf(T x, T& intPart)
 
 /// The same as abs/fabs. For ints and floats.
 template<typename T,
-	typename std::enable_if<std::is_floating_point<T>::value
-								|| (std::is_integral<T>::value && std::is_signed<T>::value),
-		int>::type = 0>
+	ANKI_ENABLE(std::is_floating_point<T>::value || (std::is_integral<T>::value && std::is_signed<T>::value))>
 inline T absolute(const T f)
 {
 	return (f < T(0)) ? -f : f;
@@ -119,6 +117,12 @@ template<typename T>
 inline T pow(const T x, const T power)
 {
 	return T(std::pow(x, power));
+}
+
+template<typename T>
+inline T log2(const T x)
+{
+	return T(std::log2(x));
 }
 
 template<typename T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
