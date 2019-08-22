@@ -114,7 +114,7 @@ void ClusterBin::init(
 
 	m_totalClusterCount = clusterCountX * clusterCountY * clusterCountZ;
 
-	m_avgObjectsPerCluster = cfg.getNumber("r.avgObjectsPerCluster");
+	m_avgObjectsPerCluster = cfg.getNumberU32("r.avgObjectsPerCluster");
 
 	// The actual indices per cluster are
 	// - the object indices per cluster
@@ -188,8 +188,8 @@ void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 			tileCtx.m_clusterInfos.create(clusterCountZ);
 			tileCtx.m_clusterCountZ = clusterCountZ;
 
-			const U tileCount = ctx.m_bin->m_clusterCounts[0] * ctx.m_bin->m_clusterCounts[1];
-			U tileIdx;
+			const U32 tileCount = ctx.m_bin->m_clusterCounts[0] * ctx.m_bin->m_clusterCounts[1];
+			U32 tileIdx;
 			while((tileIdx = ctx.m_tileIdxToProcess.fetchAdd(1)) < tileCount)
 			{
 				ctx.m_bin->binTile(tileIdx, ctx, tileCtx);
@@ -214,7 +214,7 @@ void ClusterBin::prepare(BinCtx& ctx)
 	const F32 near = ctx.m_in->m_renderQueue->m_cameraNear;
 	const F32 far = ctx.m_in->m_renderQueue->m_cameraFar;
 
-	const F32 calcNearOpt = (far - near) / (m_clusterCounts[2] * m_clusterCounts[2]);
+	const F32 calcNearOpt = (far - near) / F32(m_clusterCounts[2] * m_clusterCounts[2]);
 
 	// Compute magic val 0
 	// It's been used to calculate the 'k' of a cluster given the world position
@@ -240,8 +240,8 @@ void ClusterBin::prepare(BinCtx& ctx)
 		Plane nearPlane;
 		extractClipPlane(vp, FrustumPlaneType::NEAR, nearPlane);
 
-		Vec3 A = nearPlane.getNormal().xyz() * (m_clusterCounts[2] * m_clusterCounts[2]) / (far - near);
-		F32 B = nearPlane.getOffset() * (m_clusterCounts[2] * m_clusterCounts[2]) / (far - near);
+		Vec3 A = nearPlane.getNormal().xyz() * F32(m_clusterCounts[2] * m_clusterCounts[2]) / (far - near);
+		F32 B = nearPlane.getOffset() * F32(m_clusterCounts[2] * m_clusterCounts[2]) / (far - near);
 
 		ctx.m_out->m_shaderMagicValues.m_val0 = Vec4(A, B);
 	}
@@ -267,11 +267,12 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		&m_clusterEdges[tileIdx * (m_clusterCounts[2] + 1) * 4], (m_clusterCounts[2] + 1) * 4);
 	if(ctx.m_clusterEdgesDirty)
 	{
-		const Vec2 tileSize = 2.0f / Vec2(m_clusterCounts[0], m_clusterCounts[1]);
-		const Vec2 startNdc = Vec2(F32(tileX) / m_clusterCounts[0], F32(tileY) / m_clusterCounts[1]) * 2.0f - 1.0f;
+		const Vec2 tileSize = 2.0f / Vec2(F32(m_clusterCounts[0]), F32(m_clusterCounts[1]));
+		const Vec2 startNdc =
+			Vec2(F32(tileX) / F32(m_clusterCounts[0]), F32(tileY) / F32(m_clusterCounts[1])) * 2.0f - 1.0f;
 		const Vec4& unprojParams = ctx.m_unprojParams;
 
-		for(U clusterZ = 0; clusterZ < m_clusterCounts[2] + 1; ++clusterZ)
+		for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2] + 1; ++clusterZ)
 		{
 			const F32 zNear = -computeClusterNear(ctx.m_out->m_shaderMagicValues, clusterZ);
 			const U idx = clusterZ * 4;
@@ -348,7 +349,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	// Point lights
 	{
 		Sphere lightSphere;
-		for(U i = 0; i < ctx.m_in->m_renderQueue->m_pointLights.getSize(); ++i)
+		for(U32 i = 0; i < ctx.m_in->m_renderQueue->m_pointLights.getSize(); ++i)
 		{
 			const PointLightQueueElement& plight = ctx.m_in->m_renderQueue->m_pointLights[i];
 			lightSphere.setCenter(plight.m_worldPosition.xyz0());
@@ -377,7 +378,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		lightEdges[0] = Vec4(0.0f); // Eye
 		ConvexHullShape spotLightShape(&lightEdges[0], lightEdges.getSize());
 
-		for(U i = 0; i < ctx.m_in->m_renderQueue->m_spotLights.getSize(); ++i)
+		for(U32 i = 0; i < ctx.m_in->m_renderQueue->m_spotLights.getSize(); ++i)
 		{
 			const SpotLightQueueElement& slight = ctx.m_in->m_renderQueue->m_spotLights[i];
 
@@ -408,7 +409,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	// Probes
 	{
 		Aabb probeBox;
-		for(U i = 0; i < ctx.m_in->m_renderQueue->m_reflectionProbes.getSize(); ++i)
+		for(U32 i = 0; i < ctx.m_in->m_renderQueue->m_reflectionProbes.getSize(); ++i)
 		{
 			const ReflectionProbeQueueElement& probe = ctx.m_in->m_renderQueue->m_reflectionProbes[i];
 			probeBox.setMin(probe.m_aabbMin);
@@ -434,7 +435,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	// GI probes
 	{
 		Aabb probeBox;
-		for(U i = 0; i < ctx.m_in->m_renderQueue->m_giProbes.getSize(); ++i)
+		for(U32 i = 0; i < ctx.m_in->m_renderQueue->m_giProbes.getSize(); ++i)
 		{
 			const GlobalIlluminationProbeQueueElement& probe = ctx.m_in->m_renderQueue->m_giProbes[i];
 			probeBox.setMin(probe.m_aabbMin);
@@ -460,7 +461,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	// Decals
 	{
 		Obb decalBox;
-		for(U i = 0; i < ctx.m_in->m_renderQueue->m_decals.getSize(); ++i)
+		for(U32 i = 0; i < ctx.m_in->m_renderQueue->m_decals.getSize(); ++i)
 		{
 			const DecalQueueElement& decal = ctx.m_in->m_renderQueue->m_decals[i];
 			decalBox.setCenter(decal.m_obbCenter.xyz0());
@@ -486,7 +487,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 	// Fog volumes
 	{
-		for(U i = 0; i < ctx.m_in->m_renderQueue->m_fogDensityVolumes.getSize(); ++i)
+		for(U32 i = 0; i < ctx.m_in->m_renderQueue->m_fogDensityVolumes.getSize(); ++i)
 		{
 			const FogDensityQueueElement& fogVol = ctx.m_in->m_renderQueue->m_fogDensityVolumes[i];
 
@@ -541,8 +542,8 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		WeakArray<U32> inIndices = tileCtx.getClusterIndices(clusterZ);
 		const ClusterBin::TileCtx::ClusterMetaInfo& inf = tileCtx.m_clusterInfos[clusterZ];
 
-		const U other = (TYPED_OBJECT_COUNT - 1) + TYPED_OBJECT_COUNT;
-		const U indexCountPlusOther = inf.m_offset + other;
+		const U32 other = (TYPED_OBJECT_COUNT - 1) + TYPED_OBJECT_COUNT;
+		const U32 indexCountPlusOther = inf.m_offset + other;
 		ANKI_ASSERT(indexCountPlusOther <= m_avgObjectsPerCluster + other);
 		ANKI_ASSERT(indexCountPlusOther >= other);
 
@@ -552,7 +553,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		WeakArray<U32> outIndices(&ctx.m_lightIds[firstIndex], indexCountPlusOther);
 
 		// Write the offsets
-		U offset = firstIndex + TYPED_OBJECT_COUNT - 1;
+		U32 offset = firstIndex + TYPED_OBJECT_COUNT - 1;
 		for(U i = 1; i < TYPED_OBJECT_COUNT; ++i)
 		{
 			offset += inf.m_counts[i - 1] + 1; // Count plus the stop
@@ -737,7 +738,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			ReflectionProbe& out = gpuProbes[i];
 
 			out.m_position = in.m_worldPosition;
-			out.m_cubemapIndex = in.m_textureArrayIndex;
+			out.m_cubemapIndex = F32(in.m_textureArrayIndex);
 			out.m_aabbMin = in.m_aabbMin;
 			out.m_aabbMax = in.m_aabbMax;
 		}
@@ -801,8 +802,8 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 
 			out.m_aabbMin = in.m_aabbMin;
 			out.m_aabbMax = in.m_aabbMax;
-			out.m_textureIndex = &in - &rqueue.m_giProbes.getFront();
-			out.m_halfTexelSizeU = 1.0f / in.m_cellCounts.x() / 2.0f;
+			out.m_textureIndex = U32(&in - &rqueue.m_giProbes.getFront());
+			out.m_halfTexelSizeU = 1.0f / F32(in.m_cellCounts.x()) / 2.0f;
 			out.m_fadeDistance = in.m_fadeDistance;
 		}
 	}

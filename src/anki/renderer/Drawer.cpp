@@ -25,8 +25,8 @@ public:
 	Array<RenderableQueueElement, MAX_INSTANCES> m_cachedRenderElements;
 	Array<U8, MAX_INSTANCES> m_cachedRenderElementLods;
 	Array<const void*, MAX_INSTANCES> m_userData;
-	U m_cachedRenderElementCount = 0;
-	U m_minLod = 0;
+	U32 m_cachedRenderElementCount = 0;
+	U32 m_minLod = 0;
 };
 
 /// Check if the drawcalls can be merged.
@@ -47,7 +47,7 @@ void RenderableDrawer::drawRange(Pass pass,
 	SamplerPtr sampler,
 	const RenderableQueueElement* begin,
 	const RenderableQueueElement* end,
-	U minLod)
+	U32 minLod)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -79,8 +79,8 @@ void RenderableDrawer::drawRange(Pass pass,
 
 void RenderableDrawer::flushDrawcall(DrawContext& ctx)
 {
-	ctx.m_queueCtx.m_key.m_lod = ctx.m_cachedRenderElementLods[0];
-	ctx.m_queueCtx.m_key.m_instanceCount = ctx.m_cachedRenderElementCount;
+	ctx.m_queueCtx.m_key.setLod(ctx.m_cachedRenderElementLods[0]);
+	ctx.m_queueCtx.m_key.setInstanceCount(ctx.m_cachedRenderElementCount);
 
 	ctx.m_cachedRenderElements[0].m_callback(
 		ctx.m_queueCtx, ConstWeakArray<void*>(const_cast<void**>(&ctx.m_userData[0]), ctx.m_cachedRenderElementCount));
@@ -102,8 +102,8 @@ void RenderableDrawer::drawSingle(DrawContext& ctx)
 
 	const RenderableQueueElement& rqel = *ctx.m_renderableElement;
 
-	U8 lod = min<U8>(m_r->calculateLod(rqel.m_distanceFromCamera), MAX_LOD_COUNT - 1);
-	lod = max<U8>(lod, ctx.m_minLod);
+	U32 lod = min(m_r->calculateLod(rqel.m_distanceFromCamera), MAX_LOD_COUNT - 1);
+	lod = max(lod, ctx.m_minLod);
 
 	const Bool shouldFlush =
 		ctx.m_cachedRenderElementCount > 0
@@ -117,7 +117,7 @@ void RenderableDrawer::drawSingle(DrawContext& ctx)
 
 	// Cache the new one
 	ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount] = rqel;
-	ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount] = lod;
+	ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount] = U8(lod);
 	ctx.m_userData[ctx.m_cachedRenderElementCount] = rqel.m_userData;
 	++ctx.m_cachedRenderElementCount;
 }

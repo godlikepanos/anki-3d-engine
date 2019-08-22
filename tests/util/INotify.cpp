@@ -34,6 +34,6 @@ ANKI_TEST(Util, INotify)
 			ANKI_TEST_EXPECT_EQ(modified, true);
 		}
 
-		ANKI_TEST_EXPECT_NO_ERR(removeDirectory(dir));
+		ANKI_TEST_EXPECT_NO_ERR(removeDirectory(dir, alloc));
 	}
 }

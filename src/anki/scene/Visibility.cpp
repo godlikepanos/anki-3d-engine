@@ -165,7 +165,7 @@ void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_OCTREE);
 
-	U testIdx = m_frcCtx->m_visCtx->m_testsCount.fetchAdd(1);
+	U32 testIdx = m_frcCtx->m_visCtx->m_testsCount.fetchAdd(1);
 
 	// Walk the tree
 	m_frcCtx->m_visCtx->m_scene->getOctree().walkTree(testIdx,

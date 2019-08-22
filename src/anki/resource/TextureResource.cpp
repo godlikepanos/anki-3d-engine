@@ -15,8 +15,8 @@ class TextureResource::LoadingContext
 {
 public:
 	ImageLoader m_loader;
-	U m_faces = 0;
-	U m_layerCount = 0;
+	U32 m_faces = 0;
+	U32 m_layerCount = 0;
 	GrManager* m_gr ANKI_DEBUG_CODE(= nullptr);
 	TransferGpuAllocator* m_trfAlloc ANKI_DEBUG_CODE(= nullptr);
 	TextureType m_texType;
@@ -70,7 +70,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	TextureInitInfo init("RsrcTex");
 	init.m_usage = TextureUsageBit::SAMPLED_ALL | TextureUsageBit::TRANSFER_DESTINATION;
 	init.m_initialUsage = TextureUsageBit::SAMPLED_ALL;
-	U faces = 0;
+	U32 faces = 0;
 
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
@@ -119,15 +119,9 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 		case ImageLoader::DataCompression::RAW:
 			init.m_format = Format::R8G8B8_UNORM;
 			break;
-#if ANKI_GL == ANKI_GL_DESKTOP
 		case ImageLoader::DataCompression::S3TC:
 			init.m_format = Format::BC1_RGB_UNORM_BLOCK;
 			break;
-#else
-		case ImageLoader::DataCompression::ETC:
-			ANKI_ASSERT(!"TODO");
-			break;
-#endif
 		default:
 			ANKI_ASSERT(0);
 		}
@@ -139,15 +133,9 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 		case ImageLoader::DataCompression::RAW:
 			init.m_format = Format::R8G8B8A8_UNORM;
 			break;
-#if ANKI_GL == ANKI_GL_DESKTOP
 		case ImageLoader::DataCompression::S3TC:
 			init.m_format = Format::BC3_UNORM_BLOCK;
 			break;
-#else
-		case ImageLoader::DataCompression::ETC:
-			ANKI_ASSERT(!"TODO");
-			break;
-#endif
 		default:
 			ANKI_ASSERT(0);
 		}
@@ -158,7 +146,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// mipmapsCount
-	init.m_mipmapCount = loader.getMipLevelsCount();
+	init.m_mipmapCount = U8(loader.getMipLevelsCount());
 
 	// Create the texture
 	m_tex = getManager().getGrManager().newTexture(init);
@@ -193,21 +181,21 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 
 Error TextureResource::load(LoadingContext& ctx)
 {
-	const U copyCount = ctx.m_layerCount * ctx.m_faces * ctx.m_loader.getMipLevelsCount();
+	const U32 copyCount = ctx.m_layerCount * ctx.m_faces * ctx.m_loader.getMipLevelsCount();
 
-	for(U b = 0; b < copyCount; b += MAX_COPIES_BEFORE_FLUSH)
+	for(U32 b = 0; b < copyCount; b += MAX_COPIES_BEFORE_FLUSH)
 	{
-		const U begin = b;
-		const U end = min(copyCount, b + MAX_COPIES_BEFORE_FLUSH);
+		const U32 begin = b;
+		const U32 end = min(copyCount, b + MAX_COPIES_BEFORE_FLUSH);
 
 		CommandBufferInitInfo ci;
 		ci.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = ctx.m_gr->newCommandBuffer(ci);
 
 		// Set the barriers of the batch
-		for(U i = begin; i < end; ++i)
+		for(U32 i = begin; i < end; ++i)
 		{
-			U mip, layer, face;
+			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipLevelsCount(), i, layer, face, mip);
 
 			if(ctx.m_texType == TextureType::_3D)
@@ -226,10 +214,10 @@ Error TextureResource::load(LoadingContext& ctx)
 
 		// Do the copies
 		Array<TransferGpuAllocatorHandle, MAX_COPIES_BEFORE_FLUSH> handles;
-		U handleCount = 0;
-		for(U i = begin; i < end; ++i)
+		U32 handleCount = 0;
+		for(U32 i = begin; i < end; ++i)
 		{
-			U mip, layer, face;
+			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipLevelsCount(), i, layer, face, mip);
 
 			PtrSize surfOrVolSize;
@@ -282,9 +270,9 @@ Error TextureResource::load(LoadingContext& ctx)
 		}
 
 		// Set the barriers of the batch
-		for(U i = begin; i < end; ++i)
+		for(U32 i = begin; i < end; ++i)
 		{
-			U mip, layer, face;
+			U32 mip, layer, face;
 			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipLevelsCount(), i, layer, face, mip);
 
 			if(ctx.m_texType == TextureType::_3D)

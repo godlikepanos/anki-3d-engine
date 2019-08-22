@@ -525,10 +525,10 @@ private:
 		ANKI_ASSERT(miny + height <= fbHeight);
 
 		VkViewport s = {};
-		s.x = minx;
-		s.y = (flipvp) ? (fbHeight - miny) : miny; // Move to the bottom;
-		s.width = width;
-		s.height = (flipvp) ? -F32(height) : height;
+		s.x = F32(minx);
+		s.y = (flipvp) ? F32(fbHeight - miny) : F32(miny); // Move to the bottom;
+		s.width = F32(width);
+		s.height = (flipvp) ? -F32(height) : F32(height);
 		s.minDepth = 0.0f;
 		s.maxDepth = 1.0f;
 		return s;

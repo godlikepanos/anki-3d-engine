@@ -35,7 +35,7 @@ using WalkDirectoryTreeCallback = Error (*)(const CString& filename, void* userD
 ANKI_USE_RESULT Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback);
 
 /// Equivalent to: rm -rf dir
-ANKI_USE_RESULT Error removeDirectory(const CString& dir);
+ANKI_USE_RESULT Error removeDirectory(const CString& dir, GenericMemoryPoolAllocator<U8> alloc);
 
 /// Equivalent to: mkdir dir
 ANKI_USE_RESULT Error createDirectory(const CString& dir);

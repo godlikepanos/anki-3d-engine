@@ -10,7 +10,7 @@ namespace anki
 
 F32 testPlane(const Plane& plane, const Aabb& aabb)
 {
-#if ANKI_SIMD == ANKI_SIMD_SSE
+#if ANKI_SIMD_SSE
 	__m128 gezero = _mm_cmpge_ps(plane.getNormal().getSimd(), _mm_setzero_ps());
 
 	Vec4 diagMin;
@@ -42,7 +42,7 @@ F32 testPlane(const Plane& plane, const Aabb& aabb)
 		return test;
 	}
 
-#if ANKI_SIMD == ANKI_SIMD_SSE
+#if ANKI_SIMD_SSE
 	Vec4 diagMax;
 	diagMax.getSimd() =
 		_mm_or_ps(_mm_and_ps(gezero, aabb.getMax().getSimd()), _mm_andnot_ps(gezero, aabb.getMin().getSimd()));

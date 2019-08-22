@@ -100,7 +100,7 @@ static inline int pwrapWeakArraySceneNodePtrgetSize(lua_State* l)
 	PtrSize ret = self->getSize();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -479,7 +479,7 @@ static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
 	F32 ret = self->getLocalScale();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -802,7 +802,7 @@ static inline int pwrapLightComponentgetRadius(lua_State* l)
 	F32 ret = self->getRadius();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -896,7 +896,7 @@ static inline int pwrapLightComponentgetDistance(lua_State* l)
 	F32 ret = self->getDistance();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -990,7 +990,7 @@ static inline int pwrapLightComponentgetInnerAngle(lua_State* l)
 	F32 ret = self->getInnerAngle();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -1084,7 +1084,7 @@ static inline int pwrapLightComponentgetOuterAngle(lua_State* l)
 	F32 ret = self->getOuterAngle();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -1279,7 +1279,7 @@ static inline int pwrapDecalComponentsetDiffuseDecal(lua_State* l)
 		return -1;
 	}
 
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -1349,7 +1349,7 @@ static inline int pwrapDecalComponentsetSpecularRoughnessDecal(lua_State* l)
 		return -1;
 	}
 
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -1832,7 +1832,7 @@ static inline int pwrapFogDensityComponentgetDensity(lua_State* l)
 	F32 ret = self->getDensity();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -2199,7 +2199,7 @@ static inline int pwrapGlobalIlluminationProbeComponentgetCellSize(lua_State* l)
 	F32 ret = self->getCellSize();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -2293,7 +2293,7 @@ static inline int pwrapGlobalIlluminationProbeComponentgetFadeDistance(lua_State
 	F32 ret = self->getFadeDistance();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -3171,7 +3171,7 @@ static inline int pwrapPointLightNodeloadLensFlare(lua_State* l)
 		return -1;
 	}
 
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }

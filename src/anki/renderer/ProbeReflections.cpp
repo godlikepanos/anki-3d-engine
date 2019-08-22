@@ -44,7 +44,7 @@ Error ProbeReflections::init(const ConfigSet& config)
 Error ProbeReflections::initInternal(const ConfigSet& config)
 {
 	// Init cache entries
-	m_cacheEntries.create(getAllocator(), config.getNumber("r.indirect.maxSimultaneousProbeCount"));
+	m_cacheEntries.create(getAllocator(), config.getNumberU32("r.indirect.maxSimultaneousProbeCount"));
 
 	ANKI_CHECK(initGBuffer(config));
 	ANKI_CHECK(initLightShading(config));
@@ -68,7 +68,7 @@ Error ProbeReflections::initInternal(const ConfigSet& config)
 
 Error ProbeReflections::initGBuffer(const ConfigSet& config)
 {
-	m_gbuffer.m_tileSize = config.getNumber("r.indirect.reflectionResolution");
+	m_gbuffer.m_tileSize = config.getNumberU32("r.indirect.reflectionResolution");
 
 	// Create RT descriptions
 	{
@@ -115,7 +115,7 @@ Error ProbeReflections::initGBuffer(const ConfigSet& config)
 
 Error ProbeReflections::initLightShading(const ConfigSet& config)
 {
-	m_lightShading.m_tileSize = config.getNumber("r.indirect.reflectionResolution");
+	m_lightShading.m_tileSize = config.getNumberU32("r.indirect.reflectionResolution");
 	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
 
 	// Init cube arr
@@ -127,9 +127,9 @@ Error ProbeReflections::initLightShading(const ConfigSet& config)
 				| TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 				| TextureUsageBit::GENERATE_MIPMAPS,
 			"CubeRefl refl");
-		texinit.m_mipmapCount = m_lightShading.m_mipCount;
+		texinit.m_mipmapCount = U8(m_lightShading.m_mipCount);
 		texinit.m_type = TextureType::CUBE_ARRAY;
-		texinit.m_layerCount = m_cacheEntries.getSize();
+		texinit.m_layerCount = U32(m_cacheEntries.getSize());
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 
 		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
@@ -143,7 +143,7 @@ Error ProbeReflections::initLightShading(const ConfigSet& config)
 
 Error ProbeReflections::initIrradiance(const ConfigSet& config)
 {
-	m_irradiance.m_workgroupSize = config.getNumber("r.indirect.irradianceResolution");
+	m_irradiance.m_workgroupSize = config.getNumberU32("r.indirect.irradianceResolution");
 
 	// Create prog
 	{
@@ -188,7 +188,7 @@ Error ProbeReflections::initIrradianceToRefl(const ConfigSet& cfg)
 
 Error ProbeReflections::initShadowMapping(const ConfigSet& cfg)
 {
-	const U resolution = cfg.getNumber("r.indirect.shadowMapResolution");
+	const U32 resolution = cfg.getNumberU32("r.indirect.shadowMapResolution");
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -220,7 +220,7 @@ void ProbeReflections::initCacheEntry(U32 cacheEntryIdx)
 {
 	CacheEntry& cacheEntry = m_cacheEntries[cacheEntryIdx];
 
-	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		// Light pass FB
 		FramebufferDescription& fbDescr = cacheEntry.m_lightShadingFbDescrs[faceIdx];
@@ -631,7 +631,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			"CubeRefl LightShad #3",
 			"CubeRefl LightShad #4",
 			"CubeRefl LightShad #5"}};
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 			pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
@@ -719,7 +719,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			"CubeRefl Mip #3",
 			"CubeRefl Mip #4",
 			"CubeRefl Mip #5"}};
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 			pass.setWork(callbacks[faceIdx], this, 0);
@@ -750,7 +750,7 @@ void ProbeReflections::runShadowMapping(U32 faceIdx, CommandBufferPtr& cmdb)
 		return;
 	}
 
-	const U rez = m_shadowMapping.m_rtDescr.m_height;
+	const U32 rez = m_shadowMapping.m_rtDescr.m_height;
 	cmdb->setViewport(rez * faceIdx, 0, rez, rez);
 	cmdb->setScissor(rez * faceIdx, 0, rez, rez);
 

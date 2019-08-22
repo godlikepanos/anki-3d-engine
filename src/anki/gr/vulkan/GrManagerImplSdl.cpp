@@ -9,9 +9,9 @@
 #include <anki/core/NativeWindowSdl.h>
 #include <SDL_syswm.h>
 #include <SDL_vulkan.h>
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 #	include <X11/Xlib-xcb.h>
-#elif ANKI_OS == ANKI_OS_WINDOWS
+#elif ANKI_OS_WINDOWS
 #	include <Winuser.h>
 #	include <anki/util/CleanupWindows.h>
 #else

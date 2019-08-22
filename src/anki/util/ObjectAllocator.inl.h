@@ -41,7 +41,7 @@ T* ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TInde
 		chunk = alloc.template newInstance<Chunk>();
 		chunk->m_unusedCount = OBJECTS_PER_CHUNK;
 
-		for(U i = 0; i < OBJECTS_PER_CHUNK; ++i)
+		for(U32 i = 0; i < OBJECTS_PER_CHUNK; ++i)
 		{
 			chunk->m_unusedStack[i] = OBJECTS_PER_CHUNK - (i + 1);
 		}
@@ -93,7 +93,7 @@ void ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TIn
 			// Found it, remove it from the chunk and maybe delete the chunk
 
 			ANKI_ASSERT(chunk->m_unusedCount < OBJECTS_PER_CHUNK);
-			const U idx = mem - begin;
+			const U32 idx = U32(mem - begin);
 
 			// Destroy the object
 			obj->~T();

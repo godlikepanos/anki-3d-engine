@@ -227,13 +227,13 @@ public:
 
 	/// Get a number from the stack.
 	template<typename TNumber>
-	static ANKI_USE_RESULT Error checkNumber(lua_State* l, I stackIdx, TNumber& number)
+	static ANKI_USE_RESULT Error checkNumber(lua_State* l, I32 stackIdx, TNumber& number)
 	{
 		lua_Number lnum;
 		Error err = checkNumberInternal(l, stackIdx, lnum);
 		if(!err)
 		{
-			number = lnum;
+			number = TNumber(lnum);
 		}
 		return err;
 	}

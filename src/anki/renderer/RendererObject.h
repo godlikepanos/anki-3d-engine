@@ -60,8 +60,8 @@ protected:
 	static void dispatchPPCompute(
 		CommandBufferPtr& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 outImageWidth, U32 outImageHeight)
 	{
-		const U sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
-		const U sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;
+		const U32 sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
+		const U32 sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;
 		cmdb->dispatchCompute(sizeX, sizeY, 1);
 	}
 
@@ -73,9 +73,9 @@ protected:
 		U32 outImageHeight,
 		U32 outImageDepth)
 	{
-		const U sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
-		const U sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;
-		const U sizeZ = (outImageDepth + workgroupSizeZ - 1) / workgroupSizeZ;
+		const U32 sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
+		const U32 sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;
+		const U32 sizeZ = (outImageDepth + workgroupSizeZ - 1) / workgroupSizeZ;
 		cmdb->dispatchCompute(sizeX, sizeY, sizeZ);
 	}
 
@@ -85,10 +85,10 @@ protected:
 		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::UNIFORM, token));
 	}
 
-	void bindUniforms(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token) const;
+	void bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const;
 
 	template<typename TPtr>
-	TPtr allocateAndBindUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
+	TPtr allocateAndBindUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 	{
 		StagingGpuMemoryToken token;
 		TPtr ptr = allocateUniforms<TPtr>(size, token);
@@ -102,10 +102,10 @@ protected:
 		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::STORAGE, token));
 	}
 
-	void bindStorage(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token) const;
+	void bindStorage(CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const;
 
 	template<typename TPtr>
-	TPtr allocateAndBindStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
+	TPtr allocateAndBindStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 	{
 		StagingGpuMemoryToken token;
 		TPtr ptr = allocateStorage<TPtr>(size, token);

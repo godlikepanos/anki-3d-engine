@@ -117,15 +117,15 @@ void DebugDrawer::drawGrid()
 	Vec4 col1(0.0, 0.0, 1.0, 1.0);
 	Vec4 col2(1.0, 0.0, 0.0, 1.0);
 
-	const F32 SPACE = 1.0; // space between lines
-	const I NUM = 57; // lines number. must be odd
+	const F32 SPACE = 1.0f; // space between lines
+	const F32 NUM = 57.0f; // lines number. must be odd
 
-	const F32 GRID_HALF_SIZE = ((NUM - 1) * SPACE / 2);
+	const F32 GRID_HALF_SIZE = ((NUM - 1.0f) * SPACE / 2.0f);
 
 	setColor(col0);
 	setTopology(PrimitiveTopology::LINES);
 
-	for(I x = -NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
+	for(F32 x = -NUM / 2.0f * SPACE; x < NUM / 2 * SPACE; x += SPACE)
 	{
 		setColor(col0);
 
@@ -175,7 +175,7 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 	setTopology(PrimitiveTopology::LINES);
 
 	// Pre-calculate the sphere points5
-	F32 fi = PI / complexity;
+	F32 fi = PI / F32(complexity);
 
 	Vec3 prev(1.0, 0.0, 0.0);
 	for(F32 th = fi; th < PI * 2.0 + fi; th += fi)
@@ -206,8 +206,8 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 
 void DebugDrawer::drawCube(F32 size)
 {
-	Vec3 maxPos = Vec3(0.5 * size);
-	Vec3 minPos = Vec3(-0.5 * size);
+	const Vec3 maxPos = Vec3(0.5f * size);
+	const Vec3 minPos = Vec3(-0.5f * size);
 
 	Array<Vec3, 8> points = {{
 		Vec3(maxPos.x(), maxPos.y(), maxPos.z()), // right top front
@@ -326,7 +326,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
 	U16* indices = static_cast<U16*>(
 		stagingGpuAllocator.allocateFrame(sizeof(U16) * INDEX_COUNT, StagingGpuMemoryType::VERTEX, indicesToken));
 
-	U indexCount = 0;
+	U32 indexCount = 0;
 	indices[indexCount++] = 0;
 	indices[indexCount++] = 1;
 	indices[indexCount++] = 1;
@@ -381,7 +381,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
-	cmdb->drawElements(PrimitiveTopology::LINES, indexCount, mvps.getSize());
+	cmdb->drawElements(PrimitiveTopology::LINES, indexCount, U32(mvps.getSize()));
 }
 
 void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
@@ -458,7 +458,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
 	cmdb->bindSampler(1, 1, sampler);
 	cmdb->bindTexture(1, 2, tex, TextureUsageBit::SAMPLED_FRAGMENT);
 
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, positions.getSize());
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, U32(positions.getSize()));
 }
 
 } // end namespace anki

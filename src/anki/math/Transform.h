@@ -179,7 +179,7 @@ public:
 		TTransform o;
 		o.m_rotation = m_rotation;
 		o.m_rotation.transposeRotationPart();
-		o.m_scale = 1.0 / m_scale;
+		o.m_scale = T(1) / m_scale;
 		o.m_origin = -(o.m_rotation * (o.m_scale * m_origin)).xyz0();
 		return o;
 	}

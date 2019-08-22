@@ -66,7 +66,7 @@ private:
 	{
 	public:
 		RenderTargetHandle m_hizRt;
-		U8 m_mip;
+		U32 m_mip;
 	} m_runCtx; ///< Run context.
 
 	class

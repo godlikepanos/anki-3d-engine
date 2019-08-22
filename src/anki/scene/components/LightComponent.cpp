@@ -18,6 +18,9 @@ LightComponent::LightComponent(LightComponentType type, U64 uuid)
 	: SceneComponent(CLASS_TYPE)
 	, m_uuid(uuid)
 	, m_type(type)
+	, m_shadow(false)
+	, m_componentDirty(true)
+	, m_trfDirty(true)
 {
 	ANKI_ASSERT(m_uuid > 0);
 
@@ -27,8 +30,8 @@ LightComponent::LightComponent(LightComponentType type, U64 uuid)
 		m_point.m_radius = 1.0f;
 		break;
 	case LightComponentType::SPOT:
-		setInnerAngle(toRad(45.0));
-		setOuterAngle(toRad(30.0));
+		setInnerAngle(toRad(45.0f));
+		setOuterAngle(toRad(30.0f));
 		m_spot.m_distance = 1.0f;
 		m_spot.m_textureMat = Mat4::getIdentity();
 		break;
@@ -45,12 +48,12 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 {
 	updated = false;
 
-	if(m_flags.get(DIRTY))
+	if(m_componentDirty)
 	{
 		updated = true;
 	}
 
-	if(m_flags.get(TRF_DIRTY))
+	if(m_trfDirty)
 	{
 		updated = true;
 
@@ -63,7 +66,8 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 		}
 	}
 
-	m_flags.unset(DIRTY | TRF_DIRTY);
+	m_trfDirty = false;
+	m_componentDirty = false;
 
 	// Update the scene bounds always
 	if(m_type == LightComponentType::DIRECTIONAL)
@@ -81,14 +85,14 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
 	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= MAX_SHADOW_CASCADES);
 
-	const U shadowCascadeCount = cascadeFrustumComponents.getSize();
+	const U32 shadowCascadeCount = U32(cascadeFrustumComponents.getSize());
 
 	el.m_drawCallback = m_drawCallback;
 	el.m_drawCallbackUserData = m_drawCallbackUserData;
 	el.m_uuid = m_uuid;
 	el.m_diffuseColor = m_diffColor.xyz();
 	el.m_direction = -m_trf.getRotation().getZAxis().xyz();
-	el.m_shadowCascadeCount = shadowCascadeCount;
+	el.m_shadowCascadeCount = U8(shadowCascadeCount);
 
 	// Compute the texture matrices
 	if(shadowCascadeCount == 0)
@@ -187,8 +191,8 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 				// Chose a random low shadowmap size and align the random point
 				const F32 shadowmapSize = 128.0f;
 				const F32 shadowmapSize2 = shadowmapSize / 2.0f; // Div with 2 because the projected point is in NDC
-				const F32 alignedX = round(randomPointAlmostLightSpace.x() * shadowmapSize2) / shadowmapSize2;
-				const F32 alignedY = round(randomPointAlmostLightSpace.y() * shadowmapSize2) / shadowmapSize2;
+				const F32 alignedX = std::round(randomPointAlmostLightSpace.x() * shadowmapSize2) / shadowmapSize2;
+				const F32 alignedY = std::round(randomPointAlmostLightSpace.y() * shadowmapSize2) / shadowmapSize2;
 
 				const F32 dx = alignedX - randomPointAlmostLightSpace.x();
 				const F32 dy = alignedY - randomPointAlmostLightSpace.y();

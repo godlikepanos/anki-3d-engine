@@ -53,7 +53,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	// Get mem requirements
 	VkMemoryRequirements req;
 	vkGetBufferMemoryRequirements(getDevice(), m_handle, &req);
-	U memIdx = MAX_U32;
+	U32 memIdx = MAX_U32;
 
 	if(access == BufferMapAccessBit::WRITE)
 	{
@@ -144,7 +144,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
 	// Allocate
-	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, req.alignment, true, m_memHandle);
+	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, U32(req.alignment), true, m_memHandle);
 
 	// Bind mem to buffer
 	{

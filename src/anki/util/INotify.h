@@ -45,7 +45,7 @@ public:
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	String m_path;
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 	int m_fd = -1;
 	int m_watch = -1;
 #endif

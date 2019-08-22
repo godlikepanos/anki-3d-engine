@@ -20,13 +20,13 @@ DepthDownscale::~DepthDownscale()
 
 Error DepthDownscale::initInternal(const ConfigSet&)
 {
-	const U width = m_r->getWidth() >> 1;
-	const U height = m_r->getHeight() >> 1;
+	const U32 width = m_r->getWidth() >> 1;
+	const U32 height = m_r->getHeight() >> 1;
 
 	m_mipCount = computeMaxMipmapCount2d(width, height, HIERARCHICAL_Z_MIN_HEIGHT);
 
-	const U lastMipWidth = width >> (m_mipCount - 1);
-	const U lastMipHeight = height >> (m_mipCount - 1);
+	const U32 lastMipWidth = width >> (m_mipCount - 1);
+	const U32 lastMipHeight = height >> (m_mipCount - 1);
 
 	ANKI_R_LOGI("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, lastMipWidth, lastMipHeight);
 
@@ -36,7 +36,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 		Format::R32_SFLOAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 		"HiZ");
-	texInit.m_mipmapCount = m_mipCount;
+	texInit.m_mipmapCount = U8(m_mipCount);
 	texInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	m_hizTex = m_r->createAndClearRenderTarget(texInit);
 
@@ -108,7 +108,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 	static const Array<CString, 5> passNames = {{"HiZ #0", "HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4"}};
 
 	// Every pass can do MIPS_WRITTEN_PER_PASS mips
-	for(U i = 0; i < m_mipCount; i += MIPS_WRITTEN_PER_PASS)
+	for(U32 i = 0; i < m_mipCount; i += MIPS_WRITTEN_PER_PASS)
 	{
 		const U mipsToFill = (i + 1 < m_mipCount) ? MIPS_WRITTEN_PER_PASS : 1;
 
@@ -150,15 +150,15 @@ void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	const U level = m_runCtx.m_mip;
+	const U32 level = m_runCtx.m_mip;
 	m_runCtx.m_mip += MIPS_WRITTEN_PER_PASS;
-	const U mipsToFill = (level + 1 < m_mipCount) ? MIPS_WRITTEN_PER_PASS : 1;
-	const U copyToClientLevel = (level + mipsToFill == m_mipCount) ? mipsToFill - 1 : MAX_U;
+	const U32 mipsToFill = (level + 1 < m_mipCount) ? MIPS_WRITTEN_PER_PASS : 1;
+	const U32 copyToClientLevel = (level + mipsToFill == m_mipCount) ? mipsToFill - 1 : MAX_U32;
 
-	const U level0Width = m_r->getWidth() >> (level + 1);
-	const U level0Height = m_r->getHeight() >> (level + 1);
-	const U level1Width = level0Width >> 1;
-	const U level1Height = level0Height >> 1;
+	const U32 level0Width = m_r->getWidth() >> (level + 1);
+	const U32 level0Height = m_r->getHeight() >> (level + 1);
+	const U32 level1Width = level0Width >> 1;
+	const U32 level1Height = level0Height >> 1;
 
 	cmdb->bindShaderProgram(m_grProg);
 

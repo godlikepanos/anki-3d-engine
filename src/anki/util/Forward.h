@@ -12,7 +12,7 @@
 namespace anki
 {
 
-template<U N, typename TChunkType>
+template<U32 N, typename TChunkType>
 class BitSet;
 
 template<typename T>

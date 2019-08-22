@@ -411,7 +411,7 @@ Error ShaderProgramPreprocessor::parsePragmaMutator(
 				ANKI_PP_ERROR("Can't have more than one instanced mutators");
 			}
 
-			m_instancedMutatorIdx = m_mutators.getSize() - 1;
+			m_instancedMutatorIdx = U32(m_mutators.getSize() - 1);
 			++begin;
 		}
 		else

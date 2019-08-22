@@ -15,7 +15,7 @@ Error PipelineCache::init(
 	VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, const ConfigSet& cfg, GrAllocator<U8> alloc)
 {
 	ANKI_ASSERT(cacheDir && dev && pdev);
-	m_dumpSize = cfg.getNumber("gr.diskShaderCacheMaxSize");
+	m_dumpSize = cfg.getNumberU32("gr.diskShaderCacheMaxSize");
 	m_dumpFilename.sprintf(alloc, "%s/vk_pipeline_cache", &cacheDir[0]);
 
 	// Try read the pipeline cache file.

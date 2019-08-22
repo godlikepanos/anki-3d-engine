@@ -149,16 +149,16 @@ ANKI_TEST(Util, SparseArray)
 		SparseArray<SAFoo, U32> arr;
 		std::vector<int> numbers;
 
-		srand(time(nullptr));
+		srand(U32(time(nullptr)));
 
 		// Insert random
 		for(U i = 0; i < MAX; ++i)
 		{
-			U num;
+			I32 num;
 			while(1)
 			{
 				num = rand();
-				if(std::find(numbers.begin(), numbers.end(), int(num)) == numbers.end())
+				if(std::find(numbers.begin(), numbers.end(), num) == numbers.end())
 				{
 					// Not found
 					ANKI_TEST_EXPECT_EQ(arr.find(num), arr.getEnd());
@@ -211,7 +211,7 @@ ANKI_TEST(Util, SparseArray)
 
 			if(insert)
 			{
-				const I idx = rand();
+				const I32 idx = rand();
 
 				if(map.find(idx) != map.end())
 				{
@@ -249,7 +249,7 @@ ANKI_TEST(Util, SparseArray)
 				auto it = arr.getBegin();
 				while(it != arr.getEnd())
 				{
-					I key = it->m_x - 1;
+					I32 key = it->m_x - 1;
 
 					auto it2 = bMap.find(key);
 					ANKI_TEST_EXPECT_NEQ(it2, bMap.end());
@@ -274,7 +274,7 @@ static ANKI_DONT_INLINE void* allocAlignedAk(void* userData, void* ptr, PtrSize 
 {
 	if(ptr == nullptr)
 	{
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 		akAllocSize += size;
 		akMaxAllocSize = max(akMaxAllocSize, akAllocSize);
 #endif
@@ -282,7 +282,7 @@ static ANKI_DONT_INLINE void* allocAlignedAk(void* userData, void* ptr, PtrSize 
 	}
 	else
 	{
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 		PtrSize s = malloc_usable_size(ptr);
 		akAllocSize -= s;
 #endif
@@ -297,7 +297,7 @@ static ANKI_DONT_INLINE void* allocAlignedStl(void* userData, void* ptr, PtrSize
 {
 	if(ptr == nullptr)
 	{
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 		stlAllocSize += size;
 		stlMaxAllocSize = max(stlMaxAllocSize, stlAllocSize);
 #endif
@@ -305,7 +305,7 @@ static ANKI_DONT_INLINE void* allocAlignedStl(void* userData, void* ptr, PtrSize
 	}
 	else
 	{
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 		PtrSize s = malloc_usable_size(ptr);
 		stlAllocSize -= s;
 #endif
@@ -409,7 +409,7 @@ ANKI_TEST(Util, SparseArrayBench)
 	ANKI_TEST_LOGI("Max mem usage: STL %lli AnKi %lli | %f%% (At any given time what was the max mem usage)",
 		stlMemUsage,
 		akMemUsage,
-		F64(stlMemUsage) / akMemUsage * 100.0);
+		F64(stlMemUsage) / F32(akMemUsage) * 100.0f);
 
 	// Deletes
 	{

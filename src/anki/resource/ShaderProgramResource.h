@@ -157,7 +157,7 @@ public:
 		return m_activeInputVars.get(var.m_idx);
 	}
 
-	U getUniformBlockSize() const
+	U32 getUniformBlockSize() const
 	{
 		return m_uniBlockSize;
 	}
@@ -190,13 +190,13 @@ public:
 		return m_prog;
 	}
 
-	U getBinding(const ShaderProgramResourceInputVariable& var) const
+	U32 getBinding(const ShaderProgramResourceInputVariable& var) const
 	{
 		ANKI_ASSERT(m_bindings[var.m_idx] >= 0);
-		return U(m_bindings[var.m_idx]);
+		return U32(m_bindings[var.m_idx]);
 	}
 
-	U getBindingCount() const
+	U32 getBindingCount() const
 	{
 		return m_bindingCount;
 	}
@@ -344,7 +344,7 @@ public:
 	}
 
 	/// The value of attribute "index" in <descriptorSet> tag.
-	U getDescriptorSetIndex() const
+	U32 getDescriptorSetIndex() const
 	{
 		return m_descriptorSet;
 	}

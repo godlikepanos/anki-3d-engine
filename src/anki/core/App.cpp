@@ -26,14 +26,14 @@
 #include <anki/ui/UiManager.h>
 #include <anki/ui/Canvas.h>
 
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
 #endif
 
 namespace anki
 {
 
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 /// The one and only android hack
 android_app* gAndroidApp = nullptr;
 #endif
@@ -85,7 +85,7 @@ public:
 	U64 m_vkGpuMem = 0;
 	U32 m_vkCmdbCount = 0;
 
-	U32 m_drawableCount = 0;
+	PtrSize m_drawableCount = 0;
 
 	static const U32 BUFFERED_FRAMES = 16;
 	U32 m_bufferedFrames = 0;
@@ -316,7 +316,7 @@ Error App::init(const ConfigSet& config, AllocAlignedCallback allocCb, void* all
 Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	ConfigSet config = config_;
-	m_displayStats = config.getNumber("core.displayStats");
+	m_displayStats = config.getNumberU32("core.displayStats");
 
 	initMemoryCallbacks(allocCb, allocCbUserData);
 	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData);
@@ -362,7 +362,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
 // Check SIMD support
-#if ANKI_SIMD == ANKI_SIMD_SSE && ANKI_COMPILER != ANKI_COMPILER_MSVC
+#if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE
 	if(!__builtin_cpu_supports("sse4.2"))
 	{
 		ANKI_CORE_LOGF(
@@ -370,17 +370,17 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	}
 #endif
 
-	ANKI_CORE_LOGI("Number of main threads: %u", U(config.getNumber("core.mainThreadCount")));
+	ANKI_CORE_LOGI("Number of main threads: %u", U(config.getNumberU32("core.mainThreadCount")));
 
 	//
 	// Window
 	//
 	NativeWindowInitInfo nwinit;
-	nwinit.m_width = config.getNumber("width");
-	nwinit.m_height = config.getNumber("height");
+	nwinit.m_width = config.getNumberU32("width");
+	nwinit.m_height = config.getNumberU32("height");
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = config.getNumber("window.fullscreen");
+	nwinit.m_fullscreenDesktopRez = config.getBool("window.fullscreen");
 	m_window = m_heapAlloc.newInstance<NativeWindow>();
 
 	ANKI_CHECK(m_window->init(nwinit, m_heapAlloc));
@@ -394,7 +394,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// ThreadPool
 	//
-	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(config.getNumber("core.mainThreadCount"), m_heapAlloc, true);
+	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(config.getNumberU32("core.mainThreadCount"), m_heapAlloc, true);
 
 	//
 	// Graphics API
@@ -493,7 +493,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 Error App::initDirs(const ConfigSet& cfg)
 {
-#if ANKI_OS != ANKI_OS_ANDROID
+#if !ANKI_OS_ANDROID
 	// Settings path
 	StringAuto home(m_heapAlloc);
 	ANKI_CHECK(getHomeDirectory(m_heapAlloc, home));
@@ -514,10 +514,10 @@ Error App::initDirs(const ConfigSet& cfg)
 	m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]);
 
 	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
-	if(cfg.getNumber("core.clearCaches") && cacheDirExists)
+	if(cfg.getBool("core.clearCaches") && cacheDirExists)
 	{
 		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", &m_cacheDir[0]);
-		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
+		ANKI_CHECK(removeDirectory(m_cacheDir.toCString(), m_heapAlloc));
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 	else if(!cacheDirExists)

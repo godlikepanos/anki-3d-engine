@@ -683,11 +683,11 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
 {
 	BakeContext& ctx = *m_ctx;
-	const U passCount = descr.m_passes.getSize();
+	const U32 passCount = U32(descr.m_passes.getSize());
 	ANKI_ASSERT(passCount > 0);
 
 	ctx.m_passes.create(alloc, passCount);
-	for(U passIdx = 0; passIdx < passCount; ++passIdx)
+	for(U32 passIdx = 0; passIdx < passCount; ++passIdx)
 	{
 		const RenderPassDescriptionBase& inPass = *descr.m_passes[passIdx];
 		Pass& outPass = ctx.m_passes[passIdx];
@@ -734,7 +734,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		}
 
 		// Set dependencies by checking all previous subpasses.
-		U prevPassIdx = passIdx;
+		U32 prevPassIdx = passIdx;
 		while(prevPassIdx--)
 		{
 			const RenderPassDescriptionBase& prevPass = *descr.m_passes[prevPassIdx];
@@ -761,7 +761,7 @@ void RenderGraph::initBatches()
 
 		Bool drawsToPresentable = false;
 
-		for(U i = 0; i < passCount; ++i)
+		for(U32 i = 0; i < passCount; ++i)
 		{
 			if(!m_ctx->m_passIsInBatch.get(i) && !passHasUnmetDependencies(*m_ctx, i))
 			{
@@ -807,7 +807,7 @@ void RenderGraph::initBatches()
 		for(U32 passIdx : m_ctx->m_batches.getBack().m_passIndices)
 		{
 			m_ctx->m_passIsInBatch.set(passIdx);
-			m_ctx->m_passes[passIdx].m_batchIdx = m_ctx->m_batches.getSize() - 1;
+			m_ctx->m_passes[passIdx].m_batchIdx = U32(m_ctx->m_batches.getSize() - 1);
 		}
 	}
 }
@@ -881,15 +881,15 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackA
 template<typename TFunc>
 void RenderGraph::iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubresourceInfo& subresource, TFunc func)
 {
-	for(U mip = subresource.m_firstMipmap; mip < subresource.m_firstMipmap + subresource.m_mipmapCount; ++mip)
+	for(U32 mip = subresource.m_firstMipmap; mip < subresource.m_firstMipmap + subresource.m_mipmapCount; ++mip)
 	{
-		for(U layer = subresource.m_firstLayer; layer < subresource.m_firstLayer + subresource.m_layerCount; ++layer)
+		for(U32 layer = subresource.m_firstLayer; layer < subresource.m_firstLayer + subresource.m_layerCount; ++layer)
 		{
-			for(U face = subresource.m_firstFace; face < subresource.m_firstFace + subresource.m_faceCount; ++face)
+			for(U32 face = subresource.m_firstFace; face < subresource.m_firstFace + subresource.m_faceCount; ++face)
 			{
 				// Compute surf or vol idx
-				const U faceCount = textureTypeIsCube(tex->getTextureType()) ? 6 : 1;
-				const U idx = (faceCount * tex->getLayerCount()) * mip + faceCount * layer + face;
+				const U32 faceCount = textureTypeIsCube(tex->getTextureType()) ? 6 : 1;
+				const U32 idx = (faceCount * tex->getLayerCount()) * mip + faceCount * layer + face;
 				const TextureSurfaceInfo surf(mip, 0, face, layer);
 
 				if(!func(idx, surf))
@@ -906,8 +906,8 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 	ANKI_ASSERT(dep.m_isTexture);
 
 	BakeContext& ctx = *m_ctx;
-	const U batchIdx = &batch - &ctx.m_batches[0];
-	const U rtIdx = dep.m_texture.m_handle.m_idx;
+	const U32 batchIdx = U32(&batch - &ctx.m_batches[0]);
+	const U32 rtIdx = dep.m_texture.m_handle.m_idx;
 	const TextureUsageBit depUsage = dep.m_texture.m_usage;
 	RT& rt = ctx.m_rts[rtIdx];
 
@@ -944,7 +944,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 					batch.m_barriersBefore.emplaceBack(ctx.m_alloc, rtIdx, crntUsage, depUsage, surf);
 
 					crntUsage = depUsage;
-					rt.m_lastBatchThatTransitionedIt[surfOrVolIdx] = batchIdx;
+					rt.m_lastBatchThatTransitionedIt[surfOrVolIdx] = U16(batchIdx);
 				}
 			}
 
@@ -1101,7 +1101,7 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 
 	for(Pass& p : m_ctx->m_passes)
 	{
-		const U size = p.m_secondLevelCmdbs.getSize();
+		const U32 size = U32(p.m_secondLevelCmdbs.getSize());
 		if(threadIdx < size)
 		{
 			ANKI_ASSERT(!p.m_secondLevelCmdbs[threadIdx].isCreated());
@@ -1109,7 +1109,7 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 
 			ctx.m_commandBuffer = p.m_secondLevelCmdbs[threadIdx];
 			ctx.m_secondLevelCommandBufferCount = size;
-			ctx.m_passIdx = &p - &m_ctx->m_passes[0];
+			ctx.m_passIdx = U32(&p - &m_ctx->m_passes[0]);
 			ctx.m_batchIdx = p.m_batchIdx;
 			ctx.m_userData = p.m_userData;
 
@@ -1161,7 +1161,7 @@ void RenderGraph::run() const
 		}
 
 		// Call the passes
-		for(U passIdx : batch.m_passIndices)
+		for(U32 passIdx : batch.m_passIndices)
 		{
 			const Pass& pass = m_ctx->m_passes[passIdx];
 

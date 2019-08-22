@@ -11,7 +11,7 @@
 namespace anki
 {
 
-void SoftwareRasterizer::prepare(const Mat4& mv, const Mat4& p, U width, U height)
+void SoftwareRasterizer::prepare(const Mat4& mv, const Mat4& p, U32 width, U32 height)
 {
 	m_mv = mv;
 	m_p = p;
@@ -233,7 +233,7 @@ Bool SoftwareRasterizer::computeBarycetrinc(const Vec2& a, const Vec2& b, const 
 	Bool skip = false;
 	if(!isZero(k.z()))
 	{
-		uvw = Vec3(1.0 - (k.x() + k.y()) / k.z(), k.y() / k.z(), k.x() / k.z());
+		uvw = Vec3(1.0f - (k.x() + k.y()) / k.z(), k.y() / k.z(), k.x() / k.z());
 
 		if(uvw.x() < 0.0f || uvw.y() < 0.0f || uvw.z() < 0.0f)
 		{
@@ -252,28 +252,28 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 {
 	ANKI_ASSERT(tri);
 
-	const Vec2 windowSize(m_width, m_height);
+	const Vec2 windowSize{F32(m_width), F32(m_height)};
 	Array<Vec3, 3> ndc;
 	Array<Vec2, 3> window;
 	Vec2 bboxMin(MAX_F32), bboxMax(MIN_F32);
 	for(U i = 0; i < 3; i++)
 	{
 		ndc[i] = tri[i].xyz() / tri[i].w();
-		window[i] = (ndc[i].xy() / 2.0 + 0.5) * windowSize;
+		window[i] = (ndc[i].xy() / 2.0f + 0.5f) * windowSize;
 
 		for(U j = 0; j < 2; j++)
 		{
-			bboxMin[j] = floor(min(bboxMin[j], window[i][j]));
+			bboxMin[j] = std::floor(min(bboxMin[j], window[i][j]));
 			bboxMin[j] = clamp(bboxMin[j], 0.0f, windowSize[j]);
 
-			bboxMax[j] = ceil(max(bboxMax[j], window[i][j]));
+			bboxMax[j] = std::ceil(max(bboxMax[j], window[i][j]));
 			bboxMax[j] = clamp(bboxMax[j], 0.0f, windowSize[j]);
 		}
 	}
 
-	for(F32 y = bboxMin.y() + 0.5; y < bboxMax.y() + 0.5; y += 1.0)
+	for(F32 y = bboxMin.y() + 0.5f; y < bboxMax.y() + 0.5f; y += 1.0f)
 	{
-		for(F32 x = bboxMin.x() + 0.5; x < bboxMax.x() + 0.5; x += 1.0)
+		for(F32 x = bboxMin.x() + 0.5f; x < bboxMax.x() + 0.5f; x += 1.0f)
 		{
 			Vec2 p(x, y);
 			Vec3 bc;
@@ -290,8 +290,8 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 				depth = min(depth, 1.0f - EPSILON);
 
 				// Store the min of the current value and new one
-				const U32 depthi = depth * MAX_U32;
-				m_zbuffer[U(y) * m_width + U(x)].min(depthi);
+				const U32 depthi = U32(depth * F32(MAX_U32));
+				m_zbuffer[U32(y) * m_width + U32(x)].min(depthi);
 			}
 		}
 	}
@@ -349,7 +349,7 @@ Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 		p += Vec4(0.5f, 0.5f, 0.0f, 0.0f);
 
 		// To [0, m_width|m_height]
-		p *= Vec4(m_width, m_height, 1.0f, 1.0f);
+		p *= Vec4(F32(m_width), F32(m_height), 1.0f, 1.0f);
 
 		// Min
 		bboxMin = bboxMin.min(p);
@@ -373,13 +373,13 @@ Bool SoftwareRasterizer::visibilityTestInternal(const Aabb& aabb) const
 
 	// Loop the tiles
 	F32 minZ = bboxMin.z();
-	for(U y = bboxMin.y(); y < bboxMax.y(); y += 1.0f)
+	for(F32 y = bboxMin.y(); y < bboxMax.y(); y += 1.0f)
 	{
-		for(U x = bboxMin.x(); x < bboxMax.x(); x += 1.0f)
+		for(F32 x = bboxMin.x(); x < bboxMax.x(); x += 1.0f)
 		{
-			U idx = U(y) * m_width + U(x);
+			U32 idx = U32(y) * m_width + U32(x);
 			U32 depthi = m_zbuffer[idx].get();
-			F32 depthf = depthi / F32(MAX_U32);
+			F32 depthf = F32(depthi) / F32(MAX_U32);
 			if(minZ < depthf)
 			{
 				return true;
@@ -402,7 +402,7 @@ void SoftwareRasterizer::fillDepthBuffer(ConstWeakArray<F32> depthValues)
 
 		depth = min(depth, 1.0f - EPSILON); // See a few lines above why is that
 
-		const U32 depthi = depth * MAX_U32;
+		const U32 depthi = U32(depth * F32(MAX_U32));
 		m_zbuffer[count].set(depthi);
 	}
 }

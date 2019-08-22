@@ -66,7 +66,7 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(
 	{
 		m_type = ShapeType::CONVEX; // Fake the type
 
-		m_convex.init(&positions[0][0], positions.getSize(), sizeof(Vec3));
+		m_convex.init(&positions[0][0], I32(positions.getSize()), sizeof(Vec3));
 		m_convex->setMargin(getWorld().getCollisionMargin());
 		m_convex->setUserPointer(static_cast<PhysicsObject*>(this));
 	}

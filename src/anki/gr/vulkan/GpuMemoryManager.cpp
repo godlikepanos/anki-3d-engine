@@ -9,7 +9,7 @@
 namespace anki
 {
 
-const U CLASS_COUNT = 7;
+constexpr U32 CLASS_COUNT = 7;
 
 class ClassInf
 {
@@ -47,7 +47,7 @@ public:
 	VkDevice m_dev = VK_NULL_HANDLE;
 	U8 m_memTypeIdx = MAX_U8;
 
-	Error allocate(U classIdx, ClassGpuAllocatorMemory*& cmem)
+	Error allocate(U32 classIdx, ClassGpuAllocatorMemory*& cmem) override
 	{
 		Memory* mem;
 
@@ -70,7 +70,7 @@ public:
 			ci.memoryTypeIndex = m_memTypeIdx;
 			ANKI_VK_CHECKF(vkAllocateMemory(m_dev, &ci, nullptr, &mem->m_handle));
 
-			mem->m_classIdx = classIdx;
+			mem->m_classIdx = U8(classIdx);
 		}
 
 		ANKI_ASSERT(mem);
@@ -82,7 +82,7 @@ public:
 		return Error::NONE;
 	}
 
-	void free(ClassGpuAllocatorMemory* cmem)
+	void free(ClassGpuAllocatorMemory* cmem) override
 	{
 		ANKI_ASSERT(cmem);
 
@@ -100,12 +100,12 @@ public:
 		}
 	}
 
-	U getClassCount() const
+	U32 getClassCount() const override
 	{
 		return CLASS_COUNT;
 	}
 
-	void getClassInfo(U classIdx, PtrSize& slotSize, PtrSize& chunkSize) const
+	void getClassInfo(U32 classIdx, PtrSize& slotSize, PtrSize& chunkSize) const override
 	{
 		slotSize = CLASSES[classIdx].m_slotSize;
 		chunkSize = CLASSES[classIdx].m_chunkSize;
@@ -204,7 +204,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 
 		iface.m_alloc = alloc;
 		iface.m_dev = dev;
-		iface.m_memTypeIdx = i;
+		iface.m_memTypeIdx = U8(i);
 	}
 
 	// One allocator per type per linear/non-linear resources
@@ -221,7 +221,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 }
 
 void GpuMemoryManager::allocateMemory(
-	U memTypeIdx, PtrSize size, U alignment, Bool linearResource, GpuMemoryHandle& handle)
+	U32 memTypeIdx, PtrSize size, U32 alignment, Bool linearResource, GpuMemoryHandle& handle)
 {
 	ClassGpuAllocator& calloc = m_callocs[memTypeIdx * 2 + ((linearResource) ? 0 : 1)];
 	Error err = calloc.allocate(size, alignment, handle.m_classHandle);
@@ -230,7 +230,7 @@ void GpuMemoryManager::allocateMemory(
 	handle.m_memory = static_cast<Memory*>(handle.m_classHandle.m_memory)->m_handle;
 	handle.m_offset = handle.m_classHandle.m_offset;
 	handle.m_linear = linearResource;
-	handle.m_memTypeIdx = memTypeIdx;
+	handle.m_memTypeIdx = U8(memTypeIdx);
 }
 
 void GpuMemoryManager::freeMemory(GpuMemoryHandle& handle)
@@ -252,13 +252,13 @@ void* GpuMemoryManager::getMappedAddress(GpuMemoryHandle& handle)
 	return static_cast<void*>(out + handle.m_offset);
 }
 
-U GpuMemoryManager::findMemoryType(
-	U resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const
+U32 GpuMemoryManager::findMemoryType(
+	U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const
 {
-	U prefered = MAX_U32;
+	U32 prefered = MAX_U32;
 
 	// Iterate all mem types
-	for(U i = 0; i < m_memoryProperties.memoryTypeCount; i++)
+	for(U32 i = 0; i < m_memoryProperties.memoryTypeCount; i++)
 	{
 		if(resourceMemTypeBits & (1u << i))
 		{

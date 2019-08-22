@@ -8,7 +8,7 @@
 
 #include <anki/Config.h>
 
-#if ANKI_OS == ANKI_OS_WINDOWS
+#if ANKI_OS_WINDOWS
 
 #	ifdef near
 #		undef near

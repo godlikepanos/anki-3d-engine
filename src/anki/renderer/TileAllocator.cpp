@@ -15,9 +15,9 @@ public:
 	Timestamp m_lastUsedTimestamp = 0; ///< The last timestamp this tile was used
 	U64 m_lightUuid = 0;
 	U32 m_lightDrawcallCount = 0;
-	Array<U16, 4> m_viewport = {};
-	Array<U16, 4> m_subTiles = {{MAX_U16, MAX_U16, MAX_U16, MAX_U16}};
-	U16 m_superTile = MAX_U16;
+	Array<U32, 4> m_viewport = {};
+	Array<U32, 4> m_subTiles = {{MAX_U32, MAX_U32, MAX_U32, MAX_U32}};
+	U32 m_superTile = MAX_U32;
 	U8 m_lightLod = 0;
 	U8 m_lightFace = 0;
 };
@@ -49,19 +49,19 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 	ANKI_ASSERT(lodCount > 0);
 
 	// Store some stuff
-	m_tileCountX = tileCountX;
-	m_tileCountY = tileCountY;
-	m_lodCount = lodCount;
+	m_tileCountX = U16(tileCountX);
+	m_tileCountY = U16(tileCountY);
+	m_lodCount = U8(lodCount);
 	m_alloc = alloc;
 	m_cachingEnabled = enableCaching;
 	m_lodFirstTileIndex.create(m_alloc, lodCount + 1);
 
 	// Create the tile array & index ranges
-	U tileCount = 0;
-	for(U lod = 0; lod < lodCount; ++lod)
+	U32 tileCount = 0;
+	for(U32 lod = 0; lod < lodCount; ++lod)
 	{
-		const U lodTileCountX = tileCountX >> lod;
-		const U lodTileCountY = tileCountY >> lod;
+		const U32 lodTileCountX = tileCountX >> lod;
+		const U32 lodTileCountY = tileCountY >> lod;
 		ANKI_ASSERT((lodTileCountX << lod) == tileCountX && "Every LOD should be power of 2 of its parent LOD");
 		ANKI_ASSERT((lodTileCountY << lod) == tileCountY && "Every LOD should be power of 2 of its parent LOD");
 
@@ -69,20 +69,20 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 
 		tileCount += lodTileCountX * lodTileCountY;
 	}
-	ANKI_ASSERT(tileCount >= tileCountX * tileCountY && tileCount < MAX_U16);
+	ANKI_ASSERT(tileCount >= tileCountX * tileCountY);
 	m_allTiles.create(m_alloc, tileCount);
 	m_lodFirstTileIndex[lodCount] = tileCount - 1;
 
 	// Init the tiles
-	U tileIdx = 0;
-	for(U lod = 0; lod < lodCount; ++lod)
+	U32 tileIdx = 0;
+	for(U32 lod = 0; lod < lodCount; ++lod)
 	{
-		const U lodTileCountX = tileCountX >> lod;
-		const U lodTileCountY = tileCountY >> lod;
+		const U32 lodTileCountX = tileCountX >> lod;
+		const U32 lodTileCountY = tileCountY >> lod;
 
-		for(U y = 0; y < lodTileCountY; ++y)
+		for(U32 y = 0; y < lodTileCountY; ++y)
 		{
-			for(U x = 0; x < lodTileCountX; ++x)
+			for(U32 x = 0; x < lodTileCountX; ++x)
 			{
 				ANKI_ASSERT(tileIdx >= m_lodFirstTileIndex[lod] && tileIdx <= m_lodFirstTileIndex[lod + 1]);
 				Tile& tile = m_allTiles[tileIdx];
@@ -95,11 +95,11 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 				if(lod > 0)
 				{
 					// Has sub tiles
-					for(U j = 0; j < 2; ++j)
+					for(U32 j = 0; j < 2; ++j)
 					{
-						for(U i = 0; i < 2; ++i)
+						for(U32 i = 0; i < 2; ++i)
 						{
-							const U subTileIdx = translateTileIdx((x << 1) + i, (y << 1) + j, lod - 1);
+							const U32 subTileIdx = translateTileIdx((x << 1) + i, (y << 1) + j, lod - 1);
 							m_allTiles[subTileIdx].m_superTile = tileIdx;
 
 							tile.m_subTiles[j * 2 + i] = subTileIdx;
@@ -119,12 +119,12 @@ void TileAllocator::init(HeapAllocator<U8> alloc, U32 tileCountX, U32 tileCountY
 
 void TileAllocator::updateSubTiles(const Tile& updateFrom)
 {
-	if(updateFrom.m_subTiles[0] == MAX_U16)
+	if(updateFrom.m_subTiles[0] == MAX_U32)
 	{
 		return;
 	}
 
-	for(U16 idx : updateFrom.m_subTiles)
+	for(U32 idx : updateFrom.m_subTiles)
 	{
 		m_allTiles[idx].m_lightTimestamp = updateFrom.m_lightTimestamp;
 		m_allTiles[idx].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
@@ -139,7 +139,7 @@ void TileAllocator::updateSubTiles(const Tile& updateFrom)
 
 void TileAllocator::updateSuperTiles(const Tile& updateFrom)
 {
-	if(updateFrom.m_superTile != MAX_U16)
+	if(updateFrom.m_superTile != MAX_U32)
 	{
 		m_allTiles[updateFrom.m_superTile].m_lightUuid = 0;
 		m_allTiles[updateFrom.m_superTile].m_lastUsedTimestamp = updateFrom.m_lastUsedTimestamp;
@@ -147,12 +147,12 @@ void TileAllocator::updateSuperTiles(const Tile& updateFrom)
 	}
 }
 
-Bool TileAllocator::searchTileRecursively(U crntTileIdx,
-	U crntTileLod,
-	U allocationLod,
+Bool TileAllocator::searchTileRecursively(U32 crntTileIdx,
+	U32 crntTileLod,
+	U32 allocationLod,
 	Timestamp crntTimestamp,
-	U& emptyTileIdx,
-	U& toKickTileIdx,
+	U32& emptyTileIdx,
+	U32& toKickTileIdx,
 	Timestamp& tileToKickMinTimestamp) const
 {
 	const Tile& tile = m_allTiles[crntTileIdx];
@@ -169,13 +169,13 @@ Bool TileAllocator::searchTileRecursively(U crntTileIdx,
 			return true;
 		}
 	}
-	else if(tile.m_subTiles[0] != MAX_U16)
+	else if(tile.m_subTiles[0] != MAX_U32)
 	{
 		// Move down the hierarchy
 
 		ANKI_ASSERT(allocationLod < crntTileLod);
 
-		for(const U16 idx : tile.m_subTiles)
+		for(const U32 idx : tile.m_subTiles)
 		{
 			const Bool done = searchTileRecursively(idx,
 				crntTileLod >> 1,
@@ -195,8 +195,11 @@ Bool TileAllocator::searchTileRecursively(U crntTileIdx,
 	return false;
 }
 
-Bool TileAllocator::evaluateCandidate(
-	U tileIdx, Timestamp crntTimestamp, U& emptyTileIdx, U& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const
+Bool TileAllocator::evaluateCandidate(U32 tileIdx,
+	Timestamp crntTimestamp,
+	U32& emptyTileIdx,
+	U32& toKickTileIdx,
+	Timestamp& tileToKickMinTimestamp) const
 {
 	const Tile& tile = m_allTiles[tileIdx];
 
@@ -286,15 +289,15 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 
 	// Start searching for a suitable tile. Do a hieratchical search to end up with better locality and not better
 	// utilization of the atlas' space
-	U emptyTileIdx = MAX_U;
-	U toKickTileIdx = MAX_U;
+	U32 emptyTileIdx = MAX_U32;
+	U32 toKickTileIdx = MAX_U32;
 	Timestamp tileToKickMinTimestamp = MAX_TIMESTAMP;
-	const U maxLod = m_lodCount - 1;
+	const U32 maxLod = m_lodCount - 1;
 	if(lod == maxLod)
 	{
 		// This search is simple, iterate the tiles of the max LOD
 
-		for(U tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
+		for(U32 tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
 		{
 			const Bool done =
 				evaluateCandidate(tileIdx, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
@@ -309,7 +312,7 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 	{
 		// Need to do a recursive search
 
-		for(U tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
+		for(U32 tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
 		{
 			const Bool done = searchTileRecursively(
 				tileIdx, maxLod, lod, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
@@ -321,12 +324,12 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 		}
 	}
 
-	U allocatedTileIdx;
-	if(emptyTileIdx != MAX_U)
+	U32 allocatedTileIdx;
+	if(emptyTileIdx != MAX_U32)
 	{
 		allocatedTileIdx = emptyTileIdx;
 	}
-	else if(toKickTileIdx != MAX_U)
+	else if(toKickTileIdx != MAX_U32)
 	{
 		allocatedTileIdx = toKickTileIdx;
 	}
@@ -344,8 +347,8 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 	allocatedTile.m_lastUsedTimestamp = crntTimestamp;
 	allocatedTile.m_lightUuid = lightUuid;
 	allocatedTile.m_lightDrawcallCount = drawcallCount;
-	allocatedTile.m_lightLod = lod;
-	allocatedTile.m_lightFace = lightFace;
+	allocatedTile.m_lightLod = U8(lod);
+	allocatedTile.m_lightFace = U8(lightFace);
 
 	updateTileHierarchy(allocatedTile);
 

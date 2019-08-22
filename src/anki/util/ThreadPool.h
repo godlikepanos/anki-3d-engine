@@ -82,8 +82,8 @@ private:
 
 	Barrier m_barrier; ///< Synchronization barrier
 	detail::ThreadPoolThread* m_threads = nullptr; ///< Threads array
-	U m_tasksAssigned = 0;
-	U8 m_threadsCount = 0;
+	U32 m_tasksAssigned = 0;
+	U32 m_threadsCount = 0;
 	Error m_err = Error::NONE;
 	static DummyTask m_dummyTask;
 };

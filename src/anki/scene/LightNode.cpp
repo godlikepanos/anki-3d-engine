@@ -256,7 +256,7 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	{
 		m_shadowData.create(getAllocator(), 6);
 
-		const F32 ang = toRad(90.0);
+		const F32 ang = toRad(90.0f);
 		const F32 dist = m_sphereW.getRadius();
 		const F32 zNear = LIGHT_FRUSTUM_NEAR_PLANE;
 

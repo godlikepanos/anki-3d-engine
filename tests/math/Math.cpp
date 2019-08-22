@@ -19,8 +19,8 @@ void operatorsSame()
 	Array<T, size> add, sub, mul, div;
 	for(U i = 0; i < size; i++)
 	{
-		T v0 = T(i * 10) / 2 + 1;
-		T v1 = T(i * 1000) / 5.123 + 1;
+		T v0 = T(F64(i * 10) / 2.0 + 1.0);
+		T v1 = T(F64(i * 1000) / 5.123 + 1.0);
 
 		a[i] = v0;
 		b[i] = v1;
@@ -70,7 +70,7 @@ void dot()
 
 	for(U i = 0; i < size; i++)
 	{
-		T x = i * 666 + 1;
+		T x = T(i * 666 + 1);
 
 		vec[i] = x;
 		res += x * x;
@@ -90,13 +90,13 @@ void length()
 
 	for(U i = 0; i < size; i++)
 	{
-		T x = i * 666;
+		T x = T(i * 666);
 
 		vec[i] = x;
 		res += x * x;
 	}
 
-	res = sqrt(F64(res));
+	res = T(sqrt(F32(res)));
 	ANKI_TEST_EXPECT_EQ(vec.getLength(), res);
 
 	if(Vec::IS_INTEGER)
@@ -118,11 +118,12 @@ template<typename Vec>
 void comparision()
 {
 	U size = Vec::COMPONENT_COUNT;
+	using Scalar = typename Vec::Scalar;
 	Vec a, a1, b;
 
 	for(U i = 0; i < size; i++)
 	{
-		a[i] = i * 666;
+		a[i] = Scalar(i * 666);
 		a1[i] = a[i];
 		b[i] = a[i] + 1;
 	}
@@ -184,8 +185,8 @@ void matOperatorsSame()
 	Array<T, size> add, sub;
 	for(U i = 0; i < size; i++)
 	{
-		T v0 = T(i * 10) / 2;
-		T v1 = T(i * 1000) / 5.123;
+		T v0 = T(i * 10 / 2);
+		T v1 = T(F64(i * 1000) / 5.123);
 
 		a[i] = v0;
 		b[i] = v1;
@@ -220,7 +221,7 @@ Mat getNonEmptyMat(typename Mat::Scalar offset = 0)
 
 	for(U i = 0; i < Mat::SIZE; i++)
 	{
-		out[i] = i + offset;
+		out[i] = typename Mat::Scalar(i) + offset;
 	}
 
 	return out;

@@ -25,21 +25,15 @@ enum class Pass : U8
 class RenderingKey
 {
 public:
-	Pass m_pass;
-	U8 m_lod;
-	U8 m_instanceCount;
-	Bool m_skinned;
-	Bool m_velocity;
-
-	RenderingKey(Pass pass, U8 lod, U instanceCount, Bool skinned, Bool velocity)
+	RenderingKey(Pass pass, U32 lod, U32 instanceCount, Bool skinned, Bool velocity)
 		: m_pass(pass)
-		, m_lod(lod)
-		, m_instanceCount(instanceCount)
+		, m_lod(U8(lod))
+		, m_instanceCount(U8(instanceCount))
 		, m_skinned(skinned)
 		, m_velocity(velocity)
 	{
-		ANKI_ASSERT(m_instanceCount <= MAX_INSTANCES && m_instanceCount != 0);
-		ANKI_ASSERT(m_lod <= MAX_LOD_COUNT);
+		ANKI_ASSERT(instanceCount <= MAX_INSTANCES && instanceCount != 0);
+		ANKI_ASSERT(lod <= MAX_LOD_COUNT);
 	}
 
 	RenderingKey()
@@ -57,6 +51,65 @@ public:
 		return m_pass == b.m_pass && m_lod == b.m_lod && m_instanceCount == b.m_instanceCount
 			   && m_skinned == b.m_skinned && m_velocity == b.m_velocity;
 	}
+
+	Pass getPass() const
+	{
+		return m_pass;
+	}
+
+	void setPass(Pass p)
+	{
+		m_pass = p;
+	}
+
+	U32 getLod() const
+	{
+		return m_lod;
+	}
+
+	void setLod(U32 lod)
+	{
+		ANKI_ASSERT(lod < MAX_LOD_COUNT);
+		m_lod = U8(lod);
+	}
+
+	U32 getInstanceCount() const
+	{
+		return m_instanceCount;
+	}
+
+	void setInstanceCount(U32 instanceCount)
+	{
+		ANKI_ASSERT(instanceCount < MAX_INSTANCES && instanceCount > 0);
+		m_instanceCount = U8(instanceCount);
+	}
+
+	Bool isSkinned() const
+	{
+		return m_skinned;
+	}
+
+	void setSkinned(Bool is)
+	{
+		m_skinned = is;
+	}
+
+	Bool hasVelocity() const
+	{
+		return m_velocity;
+	}
+
+	void setVelocity(Bool v)
+	{
+		m_velocity = v;
+	}
+
+private:
+	Pass m_pass;
+	U8 m_lod;
+	U8 m_instanceCount;
+	Bool m_skinned : 1;
+	Bool m_velocity : 1;
 };
 
 template<>

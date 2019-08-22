@@ -66,13 +66,13 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 
 	if(m_texType == TextureType::_3D)
 	{
-		m_mipCount = min<U>(init.m_mipmapCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
+		m_mipCount = min<U32>(init.m_mipmapCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
 	else
 	{
-		m_mipCount = min<U>(init.m_mipmapCount, computeMaxMipmapCount2d(m_width, m_height));
+		m_mipCount = min<U32>(init.m_mipmapCount, computeMaxMipmapCount2d(m_width, m_height));
 	}
-	init.m_mipmapCount = m_mipCount;
+	init.m_mipmapCount = U8(m_mipCount);
 
 	m_layerCount = init.m_layerCount;
 
@@ -317,7 +317,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	VkMemoryRequirements req = {};
 	vkGetImageMemoryRequirements(getDevice(), m_imageHandle, &req);
 
-	U memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
+	U32 memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 		req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
@@ -332,7 +332,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	if(!useDedicatedMemory)
 	{
 		// Allocate
-		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, req.alignment, false, m_memHandle);
+		getGrManagerImpl().getGpuMemoryManager().allocateMemory(
+			memIdx, req.size, U32(req.alignment), false, m_memHandle);
 
 		// Bind mem to image
 		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);

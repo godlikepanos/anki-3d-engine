@@ -168,12 +168,12 @@ public:
 		return m_variant->getProgram();
 	}
 
-	U getUniformBlockSize() const
+	U32 getUniformBlockSize() const
 	{
 		return m_variant->getUniformBlockSize();
 	}
 
-	U getBindingCount() const
+	U32 getBindingCount() const
 	{
 		return m_variant->getBindingCount();
 	}
@@ -218,7 +218,7 @@ public:
 	/// Load a material file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
-	U getLodCount() const
+	U32 getLodCount() const
 	{
 		return m_lodCount;
 	}
@@ -255,7 +255,7 @@ public:
 		return m_prog;
 	}
 
-	U getDescriptorSetIndex() const
+	U32 getDescriptorSetIndex() const
 	{
 		return m_descriptorSetIdx;
 	}
@@ -283,7 +283,7 @@ private:
 	DynamicArray<MaterialVariable> m_vars; ///< Non-const vars.
 	DynamicArray<ShaderProgramResourceConstantValue> m_constValues;
 
-	static U getInstanceGroupIdx(U instanceCount);
+	static U32 getInstanceGroupIdx(U32 instanceCount);
 
 	/// Parse whatever is inside the <inputs> tag.
 	ANKI_USE_RESULT Error parseInputs(XmlElement inputsEl, Bool async);

@@ -37,19 +37,19 @@ class CommandBufferInitInfo;
 #define ANKI_GR_LOGF(...) ANKI_LOG("GR  ", FATAL, __VA_ARGS__)
 
 // Some constants
-const U MAX_VERTEX_ATTRIBUTES = 8;
-const U MAX_COLOR_ATTACHMENTS = 4;
-const U MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
-const U MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
-const U MAX_BINDLESS_TEXTURES = 256;
-const U MAX_BINDLESS_IMAGES = 32;
+const U32 MAX_VERTEX_ATTRIBUTES = 8;
+const U32 MAX_COLOR_ATTACHMENTS = 4;
+const U32 MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
+const U32 MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
+const U32 MAX_BINDLESS_TEXTURES = 256;
+const U32 MAX_BINDLESS_IMAGES = 32;
 
-const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
+const U32 MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 
-const U MAX_GR_OBJECT_NAME_LENGTH = 31;
+const U32 MAX_GR_OBJECT_NAME_LENGTH = 31;
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
-const U COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
+const U32 COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
 
 /// Smart pointer for resources.
 template<typename T>
@@ -100,25 +100,25 @@ class GpuDeviceCapabilities
 {
 public:
 	/// The alignment of offsets when bounding uniform buffers.
-	PtrSize m_uniformBufferBindOffsetAlignment = MAX_U32;
+	U32 m_uniformBufferBindOffsetAlignment = MAX_U32;
 
 	/// The max visible range of uniform buffers inside the shaders.
 	PtrSize m_uniformBufferMaxRange = 0;
 
 	/// The alignment of offsets when bounding storage buffers.
-	PtrSize m_storageBufferBindOffsetAlignment = MAX_U32;
+	U32 m_storageBufferBindOffsetAlignment = MAX_U32;
 
 	/// The max visible range of storage buffers inside the shaders.
 	PtrSize m_storageBufferMaxRange = 0;
 
 	/// The alignment of offsets when bounding texture buffers.
-	PtrSize m_textureBufferBindOffsetAlignment = MAX_U32;
+	U32 m_textureBufferBindOffsetAlignment = MAX_U32;
 
 	/// The max visible range of texture buffers inside the shaders.
 	PtrSize m_textureBufferMaxRange = 0;
 
 	/// Max push constant size.
-	U32 m_pushConstantsSize = 128;
+	PtrSize m_pushConstantsSize = 128;
 
 	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
@@ -128,9 +128,6 @@ public:
 
 	/// API version.
 	U8 m_majorApiVersion = 0;
-
-	// WARNING Remember to pad it because valgrind complains.
-	U8 _m_padding[1];
 };
 
 /// The type of the allocator for heap allocations
@@ -187,7 +184,7 @@ public:
 
 	TextureSurfaceInfo(const TextureSurfaceInfo&) = default;
 
-	TextureSurfaceInfo(U level, U depth, U face, U layer)
+	TextureSurfaceInfo(U32 level, U32 depth, U32 face, U32 layer)
 		: m_level(level)
 		, m_depth(depth)
 		, m_face(face)
@@ -226,7 +223,7 @@ public:
 
 	TextureVolumeInfo(const TextureVolumeInfo&) = default;
 
-	TextureVolumeInfo(U level)
+	TextureVolumeInfo(U32 level)
 		: m_level(level)
 	{
 	}
@@ -261,7 +258,7 @@ public:
 		, m_mipmapCount(1)
 		, m_firstLayer(surf.m_layer)
 		, m_layerCount(1)
-		, m_firstFace(surf.m_face)
+		, m_firstFace(U8(surf.m_face))
 		, m_faceCount(1)
 		, m_depthStencilAspect(aspect)
 	{
@@ -358,11 +355,11 @@ private:
 };
 
 /// Compute max number of mipmaps for a 2D texture.
-inline U computeMaxMipmapCount2d(U w, U h, U minSizeOfLastMip = 1)
+inline U32 computeMaxMipmapCount2d(U32 w, U32 h, U32 minSizeOfLastMip = 1)
 {
 	ANKI_ASSERT(w >= minSizeOfLastMip && h >= minSizeOfLastMip);
-	U s = (w < h) ? w : h;
-	U count = 0;
+	U32 s = (w < h) ? w : h;
+	U32 count = 0;
 	while(s >= minSizeOfLastMip)
 	{
 		s /= 2;
@@ -373,11 +370,11 @@ inline U computeMaxMipmapCount2d(U w, U h, U minSizeOfLastMip = 1)
 }
 
 /// Compute max number of mipmaps for a 3D texture.
-inline U computeMaxMipmapCount3d(U w, U h, U d)
+inline U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d)
 {
-	U s = (w < h) ? w : h;
+	U32 s = (w < h) ? w : h;
 	s = (s < d) ? s : d;
-	U count = 0;
+	U32 count = 0;
 	while(s)
 	{
 		s /= 2;

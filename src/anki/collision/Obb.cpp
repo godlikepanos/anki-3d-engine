@@ -37,7 +37,7 @@ void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 	check();
 
 	// L: left, R: right, T: top, B: bottom, F: front, B: back
-	enum
+	enum : U8
 	{
 		RTF,
 		LTF,

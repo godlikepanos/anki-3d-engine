@@ -74,10 +74,10 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
 
 	// Limits
-	m_limits.m_earlyZDistance = config.getNumber("scene.earlyZDistance");
-	m_limits.m_reflectionProbeEffectiveDistance = config.getNumber("scene.reflectionProbeEffectiveDistance");
+	m_limits.m_earlyZDistance = config.getNumberF32("scene.earlyZDistance");
+	m_limits.m_reflectionProbeEffectiveDistance = config.getNumberF32("scene.reflectionProbeEffectiveDistance");
 	m_limits.m_reflectionProbeShadowEffectiveDistance =
-		config.getNumber("scene.reflectionProbeShadowEffectiveDistance");
+		config.getNumberF32("scene.reflectionProbeShadowEffectiveDistance");
 
 	ANKI_CHECK(m_events.init(this));
 

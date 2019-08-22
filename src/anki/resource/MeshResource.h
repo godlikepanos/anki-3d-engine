@@ -51,7 +51,7 @@ public:
 
 	U32 getSubMeshCount() const
 	{
-		return m_subMeshes.getSize();
+		return U32(m_subMeshes.getSize());
 	}
 
 	/// Get all info around vertex indices.
@@ -66,7 +66,7 @@ public:
 	/// Get the number of logical vertex buffers.
 	U32 getVertexBufferCount() const
 	{
-		return m_vertBufferInfos.getSize();
+		return U32(m_vertBufferInfos.getSize());
 	}
 
 	/// Get vertex buffer info.

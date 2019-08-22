@@ -130,7 +130,7 @@ public:
 	{
 		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
 
-		I64 readSize = unzReadCurrentFile(m_archive, buff, size);
+		I64 readSize = unzReadCurrentFile(m_archive, buff, U32(size));
 
 		if(I64(size) != readSize)
 		{
@@ -178,7 +178,7 @@ public:
 		Array<char, 128> buff;
 		while(offset != 0)
 		{
-			PtrSize toRead = min(offset, sizeof(buff));
+			PtrSize toRead = min<PtrSize>(offset, sizeof(buff));
 			ANKI_CHECK(read(&buff[0], toRead));
 			offset -= toRead;
 		}

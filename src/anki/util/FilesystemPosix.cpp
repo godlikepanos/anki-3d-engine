@@ -3,6 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+// Some defines for extra posix features
+#define _XOPEN_SOURCE 700
+#define _LARGEFILE64_SOURCE
+#define _FILE_OFFSET_BITS 64
+
 #include <anki/util/Filesystem.h>
 #include <anki/util/Assert.h>
 #include <anki/util/Thread.h>
@@ -11,8 +16,12 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <cerrno>
-#include <fts.h> // For walkDirectoryTree
+#include <ftw.h> // For walkDirectoryTree
 #include <cstdlib>
+
+#ifndef USE_FDS
+#	define USE_FDS 15
+#endif
 
 // Define PATH_MAX if needed
 #ifndef PATH_MAX
@@ -25,7 +34,7 @@ namespace anki
 Bool fileExists(const CString& filename)
 {
 	struct stat s;
-	if(stat(filename.get(), &s) == 0)
+	if(stat(filename.cstr(), &s) == 0)
 	{
 		return S_ISREG(s.st_mode);
 	}
@@ -38,7 +47,7 @@ Bool fileExists(const CString& filename)
 Bool directoryExists(const CString& filename)
 {
 	struct stat s;
-	if(stat(filename.get(), &s) == 0)
+	if(stat(filename.cstr(), &s) == 0)
 	{
 		return S_ISDIR(s.st_mode);
 	}
@@ -48,77 +57,88 @@ Bool directoryExists(const CString& filename)
 	}
 }
 
+class WalkDirectoryTreeCallbackContext
+{
+public:
+	WalkDirectoryTreeCallback m_callback = nullptr;
+	void* m_userData = nullptr;
+	U32 m_prefixLen;
+	Error m_err = {Error::NONE};
+};
+
+static thread_local WalkDirectoryTreeCallbackContext g_walkDirectoryTreeContext;
+
+static int walkDirectoryTreeCallback(
+	const char* filepath, const struct stat* info, const int typeflag, struct FTW* pathinfo)
+{
+	Bool isDir;
+	Bool ignored = true;
+	if(typeflag == FTW_F)
+	{
+		isDir = false;
+		ignored = false;
+	}
+	else if(typeflag == FTW_D || typeflag == FTW_DP)
+	{
+		isDir = true;
+		ignored = false;
+	}
+
+	if(!ignored)
+	{
+		WalkDirectoryTreeCallbackContext& ctx = g_walkDirectoryTreeContext;
+		ANKI_ASSERT(ctx.m_callback);
+
+		if(ctx.m_err || strlen(filepath) <= ctx.m_prefixLen)
+		{
+			return 0;
+		}
+
+		ctx.m_err = ctx.m_callback(filepath + ctx.m_prefixLen, ctx.m_userData, isDir);
+	}
+
+	return 0;
+}
+
 Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
 {
 	ANKI_ASSERT(callback != nullptr);
 	ANKI_ASSERT(dir.getLength() > 0);
-
-	char* const dirs[] = {const_cast<char*>(&dir[0]), nullptr};
+	Error err = Error::NONE;
 
 	// Compute how long it will be the prefix fts_read will add
-	U prefixLen = dir.getLength();
+	U32 prefixLen = dir.getLength();
 	if(dir[prefixLen - 1] != '/')
 	{
 		++prefixLen;
 	}
 
-	// FTS_NOCHDIR and FTS_NOSTAT are opts. FTS_LOGICAL will follow symlics
-	FTS* tree = fts_open(&dirs[0], FTS_NOCHDIR | FTS_LOGICAL | FTS_NOSTAT, nullptr);
+	WalkDirectoryTreeCallbackContext& ctx = g_walkDirectoryTreeContext;
+	ctx.m_callback = callback;
+	ctx.m_userData = userData;
+	ctx.m_prefixLen = prefixLen;
+	ctx.m_err = Error::NONE;
 
-	if(!tree)
+	const int result = nftw(dir.cstr(), walkDirectoryTreeCallback, USE_FDS, FTW_PHYS);
+	if(result != 0)
 	{
-		ANKI_UTIL_LOGE("fts_open() failed");
-		return Error::FUNCTION_FAILED;
-	}
-
-	Error err = Error::NONE;
-	FTSENT* node;
-	while((node = fts_read(tree)) && !err)
-	{
-		if(node->fts_info & FTS_DP)
-		{
-			// Skip if already visited
-			continue;
-		}
-
-		const char* fname = node->fts_path;
-		U len = strlen(fname);
-		if(len <= prefixLen)
-		{
-			continue;
-		}
-
-		const char* newPath = fname + prefixLen;
-
-		Bool isFile = (node->fts_info & FTS_F) == FTS_F;
-		err = callback(newPath, userData, !isFile);
-	}
-
-	if(errno)
-	{
-		ANKI_UTIL_LOGE("fts_read() failed: %s", strerror(errno));
+		ANKI_UTIL_LOGE("nftw() failed");
 		err = Error::FUNCTION_FAILED;
 	}
-
-	if(fts_close(tree))
+	else
 	{
-		ANKI_UTIL_LOGE("fts_close() failed");
-		err = Error::FUNCTION_FAILED;
+		err = ctx.m_err;
 	}
 
 	return err;
 }
 
-// To avoid having the g_removeDirectoryPath in stack or having to allocate it, make it global.
-static char g_removeDirectoryPath[PATH_MAX];
-static Mutex g_removeDirectoryLock;
-
-static Error removeDirectoryInternal(const CString& dirname)
+static Error removeDirectoryInternal(const CString& dirname, GenericMemoryPoolAllocator<U8>& alloc)
 {
 	DIR* dir;
 	struct dirent* entry;
 
-	dir = opendir(dirname.get());
+	dir = opendir(dirname.cstr());
 	if(dir == nullptr)
 	{
 		ANKI_UTIL_LOGE("opendir() failed");
@@ -129,11 +149,12 @@ static Error removeDirectoryInternal(const CString& dirname)
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
 		{
-			std::snprintf(g_removeDirectoryPath, size_t(PATH_MAX), "%s/%s", dirname.get(), entry->d_name);
+			StringAuto path(alloc);
+			path.sprintf("%s/%s", dirname.cstr(), entry->d_name);
 
 			if(entry->d_type == DT_DIR)
 			{
-				Error err = removeDirectoryInternal(CString(g_removeDirectoryPath));
+				Error err = removeDirectoryInternal(path.toCString(), alloc);
 				if(err)
 				{
 					return err;
@@ -141,21 +162,20 @@ static Error removeDirectoryInternal(const CString& dirname)
 			}
 			else
 			{
-				remove(g_removeDirectoryPath);
+				remove(path.cstr());
 			}
 		}
 	}
 
 	closedir(dir);
-	remove(dirname.get());
+	remove(dirname.cstr());
 
 	return Error::NONE;
 }
 
-Error removeDirectory(const CString& dirname)
+Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> alloc)
 {
-	LockGuard<Mutex> lock(g_removeDirectoryLock);
-	return removeDirectoryInternal(dirname);
+	return removeDirectoryInternal(dirname, alloc);
 }
 
 Error createDirectory(const CString& dir)
@@ -166,9 +186,9 @@ Error createDirectory(const CString& dir)
 	}
 
 	Error err = Error::NONE;
-	if(mkdir(dir.get(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+	if(mkdir(dir.cstr(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
 	{
-		ANKI_UTIL_LOGE("%s : %s", strerror(errno), dir.get());
+		ANKI_UTIL_LOGE("%s : %s", strerror(errno), dir.cstr());
 		err = Error::FUNCTION_FAILED;
 	}
 

@@ -13,7 +13,7 @@ class StackGpuAllocatorChunk
 public:
 	StackGpuAllocatorChunk* m_next;
 	StackGpuAllocatorMemory* m_mem;
-	Atomic<U32> m_offset;
+	Atomic<PtrSize> m_offset;
 	PtrSize m_size;
 };
 
@@ -91,7 +91,7 @@ Error StackGpuAllocator::allocate(PtrSize size, StackGpuAllocatorHandle& handle)
 					if(crntChunk)
 					{
 						crntChunk->m_next = newChunk;
-						newChunk->m_size = crntChunk->m_size * m_scale + m_bias;
+						newChunk->m_size = PtrSize(F32(crntChunk->m_size) * m_scale + F32(m_bias));
 					}
 					else
 					{

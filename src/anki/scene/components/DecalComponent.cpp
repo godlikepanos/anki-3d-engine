@@ -37,7 +37,7 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 		return Error::USER_DATA;
 	}
 
-	Vec2 marginf = F32(ATLAS_SUB_TEXTURE_MARGIN / 2) / Vec2(l.m_atlas->getWidth(), l.m_atlas->getHeight());
+	Vec2 marginf = F32(ATLAS_SUB_TEXTURE_MARGIN / 2) / Vec2(F32(l.m_atlas->getWidth()), F32(l.m_atlas->getHeight()));
 	Vec2 minUv = l.m_uv.xy() - marginf;
 	Vec2 sizeUv = (l.m_uv.zw() - l.m_uv.xy()) + 2.0f * marginf;
 	l.m_uv = Vec4(minUv.x(), minUv.y(), minUv.x() + sizeUv.x(), minUv.y() + sizeUv.y());

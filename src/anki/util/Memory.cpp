@@ -25,8 +25,8 @@ using Signature = U32;
 static Signature computeSignature(void* ptr)
 {
 	ANKI_ASSERT(ptr);
-	PtrSize sig64 = reinterpret_cast<PtrSize>(ptr);
-	Signature sig = sig64;
+	PtrSize sig64 = ptrToNumber(ptr);
+	Signature sig = Signature(sig64);
 	sig ^= 0x5bd1e995;
 	sig ^= sig << 24;
 	ANKI_ASSERT(sig != 0);
@@ -51,7 +51,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	ANKI_ASSERT(alignmentBytes > 0);
 
 #if ANKI_POSIX
-#	if ANKI_OS != ANKI_OS_ANDROID
+#	if !ANKI_OS_ANDROID
 	void* out = nullptr;
 	U alignment = getAlignedRoundUp(alignmentBytes, sizeof(void*));
 	int err = posix_memalign(&out, alignment, size);
@@ -83,7 +83,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 
 	return out;
 #	endif
-#elif ANKI_OS == ANKI_OS_WINDOWS
+#elif ANKI_OS_WINDOWS
 	void* out = _aligned_malloc(size, alignmentBytes);
 
 	if(out)
@@ -106,7 +106,7 @@ void freeAligned(void* ptr)
 {
 #if ANKI_POSIX
 	::free(ptr);
-#elif ANKI_OS == ANKI_OS_WINDOWS
+#elif ANKI_OS_WINDOWS
 	_aligned_free(ptr);
 #else
 #	error "Unimplemented"
@@ -387,7 +387,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 				{
 					// Need to create a new chunk
 
-					PtrSize newChunkSize = oldChunkSize * m_nextChunkScale + m_nextChunkBias;
+					PtrSize newChunkSize = PtrSize(F32(oldChunkSize) * m_nextChunkScale) + m_nextChunkBias;
 					alignRoundUp(m_alignmentBytes, newChunkSize);
 
 					void* mem = m_allocCb(m_allocCbUserData, nullptr, newChunkSize, m_alignmentBytes);
@@ -533,7 +533,7 @@ void ChainMemoryPool::create(AllocAlignedCallback allocCb,
 	m_initSize = initialChunkSize;
 	m_scale = nextChunkScale;
 	m_bias = nextChunkBias;
-	m_headerSize = max(m_alignmentBytes, sizeof(Chunk*));
+	m_headerSize = max<PtrSize>(m_alignmentBytes, sizeof(Chunk*));
 
 	m_lock = reinterpret_cast<SpinLock*>(m_allocCb(m_allocCbUserData, nullptr, sizeof(SpinLock), alignof(SpinLock)));
 	if(!m_lock)
@@ -659,7 +659,7 @@ PtrSize ChainMemoryPool::computeNewChunkSize(PtrSize size) const
 		crntMaxSize = m_tailChunk->m_memsize;
 
 		// Compute new size
-		crntMaxSize = F32(crntMaxSize) * m_scale + m_bias;
+		crntMaxSize = PtrSize(F32(crntMaxSize) * m_scale) + m_bias;
 	}
 	else
 	{

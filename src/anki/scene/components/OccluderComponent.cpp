@@ -8,7 +8,7 @@
 namespace anki
 {
 
-void OccluderComponent::setVertices(const Vec3* begin, U count, U stride)
+void OccluderComponent::setVertices(const Vec3* begin, U32 count, U32 stride)
 {
 	ANKI_ASSERT(begin);
 	ANKI_ASSERT(count > 0 && (count % 3) == 0);

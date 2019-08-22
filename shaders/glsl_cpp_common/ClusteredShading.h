@@ -172,7 +172,7 @@ ANKI_SHADER_FUNC_INLINE U32 computeClusterK(ClustererMagicValues magic, Vec3 wor
 ANKI_SHADER_FUNC_INLINE U32 computeClusterIndex(
 	ClustererMagicValues magic, Vec2 uv, Vec3 worldPos, U32 clusterCountX, U32 clusterCountY)
 {
-	const UVec2 xy = UVec2(uv * Vec2(clusterCountX, clusterCountY));
+	const UVec2 xy = UVec2(uv * Vec2(F32(clusterCountX), F32(clusterCountY)));
 	const U32 k = computeClusterK(magic, worldPos);
 	return k * (clusterCountX * clusterCountY) + xy.y() * clusterCountX + xy.x();
 }

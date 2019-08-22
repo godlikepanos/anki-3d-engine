@@ -7,9 +7,7 @@
 #include <anki/util/Assert.h>
 #include <anki/util/Logger.h>
 #include <windows.h>
-
-// Someone pollutes the global namespace
-#undef ERROR
+#include <anki/util/CleanupWindows.h>
 
 namespace anki
 {

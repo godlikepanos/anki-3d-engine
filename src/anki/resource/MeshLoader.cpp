@@ -98,7 +98,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		U32 totalSize = sizeof(m_header);
 
 		totalSize += sizeof(MeshBinaryFile::SubMesh) * m_header.m_subMeshCount;
-		totalSize += getIndexBufferSize();
+		totalSize += U32(getIndexBufferSize());
 
 		for(U i = 0; i < m_header.m_vertexBufferCount; ++i)
 		{

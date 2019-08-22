@@ -79,7 +79,7 @@ void OccluderNode::onMoveComponentUpdate(MoveComponent& movec)
 		m_vertsW[count] = trf.transform(m_vertsL[count]);
 	}
 
-	getComponent<OccluderComponent>().setVertices(&m_vertsW[0], m_vertsW.getSize(), sizeof(m_vertsW[0]));
+	getComponent<OccluderComponent>().setVertices(&m_vertsW[0], U32(m_vertsW.getSize()), sizeof(m_vertsW[0]));
 }
 
 } // end namespace anki

@@ -28,7 +28,7 @@ ANKI_TEST(Script, LuaBinder)
 
 	ANKI_TEST_EXPECT_NO_ERR(sm.init(allocAligned, nullptr));
 	Vec4 v4(2.0, 3.0, 4.0, 5.0);
-	Vec3 v3(1.1, 2.2, 3.3);
+	Vec3 v3(1.1f, 2.2f, 3.3f);
 
 	sm.exposeVariable("v4", &v4);
 	sm.exposeVariable("v3", &v3);
@@ -36,7 +36,7 @@ ANKI_TEST(Script, LuaBinder)
 	ANKI_TEST_EXPECT_NO_ERR(sm.evalString(script));
 
 	ANKI_TEST_EXPECT_EQ(v4, Vec4(6, 12, 0, 5.5));
-	ANKI_TEST_EXPECT_EQ(v3, Vec3(1.1, 2.2, 0.1));
+	ANKI_TEST_EXPECT_EQ(v3, Vec3(1.1f, 2.2f, 0.1f));
 }
 
 ANKI_TEST(Script, LuaBinderThreads)
@@ -91,7 +91,7 @@ vec = Vec3.new(1, 2, 3)
 		void write(const void* data, PtrSize dataSize)
 		{
 			memcpy(&m_buff[m_offset], data, dataSize);
-			m_offset += dataSize;
+			m_offset += U32(dataSize);
 		}
 	} callback;
 

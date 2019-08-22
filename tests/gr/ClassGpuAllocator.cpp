@@ -49,7 +49,7 @@ public:
 		m_classes.push_back(Class(128 * 1024 * 1024, 256 * 1024 * 1024));
 	}
 
-	ANKI_USE_RESULT Error allocate(U classIdx, ClassGpuAllocatorMemory*& mem)
+	ANKI_USE_RESULT Error allocate(U32 classIdx, ClassGpuAllocatorMemory*& mem)
 	{
 		PtrSize size = m_classes[classIdx].m_clusterSize;
 
@@ -80,12 +80,12 @@ public:
 		delete m;
 	}
 
-	U getClassCount() const
+	U32 getClassCount() const
 	{
-		return m_classes.size();
+		return U32(m_classes.size());
 	}
 
-	void getClassInfo(U classIdx, PtrSize& slotSize, PtrSize& chunkSize) const
+	void getClassInfo(U32 classIdx, PtrSize& slotSize, PtrSize& chunkSize) const
 	{
 		slotSize = m_classes[classIdx].m_slotSize;
 		chunkSize = m_classes[classIdx].m_clusterSize;
@@ -117,7 +117,7 @@ ANKI_TEST(Gr, ClassGpuAllocator)
 	std::discrete_distribution<U> dis(16 * SHIFT, 0.0, F32(SHIFT), [](F32 c) { return exp2(-0.5 * c); });
 
 	auto nextAllocSize = [&]() -> U {
-		U size = U(256.0 * exp2(dis(gen) / 16.0));
+		U size = U(256.0 * exp2(F64(dis(gen)) / 16.0));
 		return size;
 	};
 
@@ -155,23 +155,23 @@ ANKI_TEST(Gr, ClassGpuAllocator)
 		}
 
 		// The heap should be roughly half-full now, so test fragmentation.
-		U freeSize = iface.m_maxSize - iface.m_crntSize;
-		U baseFreeSize = floorPow2(freeSize);
+		U32 freeSize = U32(iface.m_maxSize - iface.m_crntSize);
+		U32 baseFreeSize = floorPow2(freeSize);
 
-		const U BASE_SIZE = 256;
+		const U32 BASE_SIZE = 256;
 		const F32 BIAS = 0.0;
-		const F32 POWER = 1.2;
-		const F32 OFFSET = -1.0;
+		const F32 POWER = 1.2f;
+		const F32 OFFSET = -1.0f;
 
 		F32 bestCase = 0.0;
 		{
 			// Best case is when we can allocate once for every bit that is set in the pow2 structure.
-			U freeBits = freeSize / BASE_SIZE;
-			for(U bit = 0; bit < 32; bit++)
+			U32 freeBits = freeSize / BASE_SIZE;
+			for(U32 bit = 0; bit < 32; bit++)
 			{
 				if(freeBits & (1u << bit))
 				{
-					bestCase += (pow(POWER, F32(BIAS + bit)) + OFFSET) * (BASE_SIZE << bit);
+					bestCase += (pow(POWER, F32(BIAS + F32(bit))) + OFFSET) * F32(BASE_SIZE << bit);
 				}
 			}
 		}
@@ -183,7 +183,7 @@ ANKI_TEST(Gr, ClassGpuAllocator)
 			ClassGpuAllocatorHandle handle;
 			while(calloc.allocate(baseFreeSize, 1, handle) == Error::NONE)
 			{
-				score += (pow(POWER, (log2(F32(baseFreeSize / BASE_SIZE)) + BIAS)) + OFFSET) * baseFreeSize;
+				score += (pow(POWER, (log2(F32(baseFreeSize / BASE_SIZE)) + BIAS)) + OFFSET) * F32(baseFreeSize);
 				handles.push_back(handle);
 				handle = {};
 			}

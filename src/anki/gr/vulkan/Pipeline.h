@@ -186,7 +186,7 @@ public:
 	void bindVertexBuffer(U32 binding, PtrSize stride, VertexStepRate stepRate)
 	{
 		PPVertexBufferBinding b;
-		b.m_stride = stride;
+		b.m_stride = U32(stride);
 		b.m_stepRate = stepRate;
 		if(m_state.m_vertex.m_bindings[binding] != b)
 		{
@@ -200,12 +200,12 @@ public:
 	void setVertexAttribute(U32 location, U32 buffBinding, const Format fmt, PtrSize relativeOffset)
 	{
 		PPVertexAttributeBinding b;
-		b.m_binding = buffBinding;
+		b.m_binding = U8(buffBinding);
 		b.m_format = fmt;
 		b.m_offset = relativeOffset;
 		if(m_state.m_vertex.m_attributes[location] != b)
 		{
-			m_state.m_vertex.m_attributes[location].m_binding = buffBinding;
+			m_state.m_vertex.m_attributes[location].m_binding = U8(buffBinding);
 			m_state.m_vertex.m_attributes[location].m_format = fmt;
 			m_state.m_vertex.m_attributes[location].m_offset = relativeOffset;
 			m_dirty.m_attribs.set(location);

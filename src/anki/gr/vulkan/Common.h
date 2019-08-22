@@ -7,9 +7,9 @@
 
 #include <anki/gr/Common.h>
 
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 #	define VK_USE_PLATFORM_XCB_KHR 1
-#elif ANKI_OS == ANKI_OS_WINDOWS
+#elif ANKI_OS_WINDOWS
 #	define VK_USE_PLATFORM_WIN32_KHR 1
 #else
 #	error TODO

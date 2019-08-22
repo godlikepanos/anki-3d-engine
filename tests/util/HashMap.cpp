@@ -105,11 +105,11 @@ ANKI_TEST(Util, HashMap)
 		// Insert random
 		for(U i = 0; i < MAX; ++i)
 		{
-			U num;
+			I32 num;
 			while(1)
 			{
 				num = rand();
-				if(std::find(numbers.begin(), numbers.end(), int(num)) == numbers.end())
+				if(std::find(numbers.begin(), numbers.end(), num) == numbers.end())
 				{
 					// Not found
 					ANKI_TEST_EXPECT_EQ(akMap.find(num), akMap.getEnd());

@@ -59,25 +59,25 @@ class ClusterBin;
 /// @{
 
 /// Don't create second level command buffers if they contain more drawcalls than this constant.
-const U MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER = 16;
+constexpr U32 MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER = 16;
 
 /// FS size is rendererSize/FS_FRACTION.
-const U FS_FRACTION = 2;
+constexpr U32 FS_FRACTION = 2;
 
 /// SSAO size is rendererSize/SSAO_FRACTION.
-const U SSAO_FRACTION = 2;
+constexpr U32 SSAO_FRACTION = 2;
 
 /// Bloom size is rendererSize/BLOOM_FRACTION.
-const U BLOOM_FRACTION = 4;
+constexpr U32 BLOOM_FRACTION = 4;
 
 /// Volumetric size is rendererSize/VOLUMETRIC_FRACTION.
-const U VOLUMETRIC_FRACTION = 4;
+constexpr U32 VOLUMETRIC_FRACTION = 4;
 
 /// SSR size is rendererSize/SSR_FRACTION.
-const U SSR_FRACTION = 2;
+constexpr U32 SSR_FRACTION = 2;
 
 /// Used to calculate the mipmap count of the HiZ map.
-const U HIERARCHICAL_Z_MIN_HEIGHT = 80;
+constexpr U32 HIERARCHICAL_Z_MIN_HEIGHT = 80;
 
 const TextureSubresourceInfo HIZ_HALF_DEPTH(TextureSurfaceInfo(0, 0, 0, 0));
 const TextureSubresourceInfo HIZ_QUARTER_DEPTH(TextureSurfaceInfo(1, 0, 0, 0));
@@ -89,26 +89,26 @@ inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 	b = far / near;
 }
 
-const U GBUFFER_COLOR_ATTACHMENT_COUNT = 4;
+constexpr U32 GBUFFER_COLOR_ATTACHMENT_COUNT = 4;
 
 /// Downsample and blur down to a texture with size DOWNSCALE_BLUR_DOWN_TO
-const U DOWNSCALE_BLUR_DOWN_TO = 32;
+constexpr U32 DOWNSCALE_BLUR_DOWN_TO = 32;
 
 /// Use this size of render target for the avg lum calculation.
-const U AVERAGE_LUMINANCE_RENDER_TARGET_SIZE = 128;
+constexpr U32 AVERAGE_LUMINANCE_RENDER_TARGET_SIZE = 128;
 
 extern const Array<Format, GBUFFER_COLOR_ATTACHMENT_COUNT> GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS;
 
-const Format GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT = Format::D32_SFLOAT;
+constexpr Format GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT = Format::D32_SFLOAT;
 
-const Format LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::B10G11R11_UFLOAT_PACK32;
+constexpr Format LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::B10G11R11_UFLOAT_PACK32;
 
-const Format FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::R16G16B16A16_SFLOAT;
+constexpr Format FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::R16G16B16A16_SFLOAT;
 
-const Format DBG_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::R8G8B8A8_UNORM;
+constexpr Format DBG_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::R8G8B8A8_UNORM;
 
-const Format SHADOW_DEPTH_PIXEL_FORMAT = Format::D32_SFLOAT;
-const Format SHADOW_COLOR_PIXEL_FORMAT = Format::R16_UNORM;
+constexpr Format SHADOW_DEPTH_PIXEL_FORMAT = Format::D32_SFLOAT;
+constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R16_UNORM;
 
 /// A convenience function to find empty cache entries. Used for various probes.
 template<typename THashMap, typename TCacheEntryArray, typename TAlloc>

@@ -22,7 +22,7 @@ public:
 	SamplingFilter m_minMagFilter = SamplingFilter::NEAREST;
 	SamplingFilter m_mipmapFilter = SamplingFilter::BASE;
 	CompareOperation m_compareOperation = CompareOperation::ALWAYS;
-	I8 m_anisotropyLevel = 0;
+	U8 m_anisotropyLevel = 0;
 	SamplingAddressing m_addressing = SamplingAddressing::REPEAT;
 	U8 _m_padding[3] = {0, 0, 0};
 

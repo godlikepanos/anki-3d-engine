@@ -156,8 +156,8 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	{
 		rgraphCtx.bindImage(0, 5, m_runCtx.m_rts[0], TextureSubresourceInfo());
 
-		const U sizeX = (m_width + m_workgroupSize[0] - 1) / m_workgroupSize[0];
-		const U sizeY = (m_height + m_workgroupSize[1] - 1) / m_workgroupSize[1];
+		const U32 sizeX = (m_width + m_workgroupSize[0] - 1) / m_workgroupSize[0];
+		const U32 sizeY = (m_height + m_workgroupSize[1] - 1) / m_workgroupSize[1];
 		cmdb->dispatchCompute(sizeX, sizeY, 1);
 	}
 	else

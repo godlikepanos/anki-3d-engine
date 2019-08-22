@@ -43,7 +43,7 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	{
 		texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	}
-	texinit.m_mipmapCount = m_passCount;
+	texinit.m_mipmapCount = U8(m_passCount);
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_COMPUTE;
 	m_rtTex = m_r->createAndClearRenderTarget(texinit);
 
@@ -51,7 +51,7 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	if(!m_useCompute)
 	{
 		m_fbDescrs.create(getAllocator(), m_passCount);
-		for(U pass = 0; pass < m_passCount; ++pass)
+		for(U32 pass = 0; pass < m_passCount; ++pass)
 		{
 			m_fbDescrs[pass].m_colorAttachmentCount = 1;
 			m_fbDescrs[pass].m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
@@ -103,7 +103,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 		"Down/Blur #7"}};
 	if(m_useCompute)
 	{
-		for(U i = 0; i < m_passCount; ++i)
+		for(U32 i = 0; i < m_passCount; ++i)
 		{
 			ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass(passNames[i]);
 			pass.setWork(
@@ -135,7 +135,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	}
 	else
 	{
-		for(U i = 0; i < m_passCount; ++i)
+		for(U32 i = 0; i < m_passCount; ++i)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
 			pass.setWork(
@@ -174,9 +174,9 @@ void DownscaleBlur::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindShaderProgram(m_grProg);
 
-	const U passIdx = m_runCtx.m_crntPassIdx++;
-	const U vpWidth = m_rtTex->getWidth() >> passIdx;
-	const U vpHeight = m_rtTex->getHeight() >> passIdx;
+	const U32 passIdx = m_runCtx.m_crntPassIdx++;
+	const U32 vpWidth = m_rtTex->getWidth() >> passIdx;
+	const U32 vpHeight = m_rtTex->getHeight() >> passIdx;
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 

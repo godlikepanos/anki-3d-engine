@@ -66,7 +66,7 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 	CString fname;
 	ANKI_CHECK(rootEl.getAttributeText("shaderProgram", fname));
 	ANKI_CHECK(getManager().loadResource(fname, m_prog, async));
-	m_descriptorSetIdx = m_prog->getDescriptorSetIndex();
+	m_descriptorSetIdx = U8(m_prog->getDescriptorSetIndex());
 
 	// shadow
 	ANKI_CHECK(rootEl.getAttributeNumberOptional("shadow", m_shadow, present));
@@ -224,7 +224,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 			}
 		}
 
-		m_lodCount = m_lodMutator->getValues().getSize();
+		m_lodCount = U8(m_lodMutator->getValues().getSize());
 		++builtinMutatorCount;
 	}
 
@@ -520,20 +520,20 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& key_) const
 {
 	RenderingKey key = key_;
-	key.m_lod = min<U>(m_lodCount - 1, key.m_lod);
+	key.setLod(min<U32>(m_lodCount - 1, key.getLod()));
 
 	if(!isInstanced())
 	{
-		ANKI_ASSERT(key.m_instanceCount == 1);
+		ANKI_ASSERT(key.getInstanceCount() == 1);
 	}
 
-	ANKI_ASSERT(!key.m_skinned || m_bonesMutator);
-	ANKI_ASSERT(!key.m_velocity || m_velocityMutator);
+	ANKI_ASSERT(!key.isSkinned() || m_bonesMutator);
+	ANKI_ASSERT(!key.hasVelocity() || m_velocityMutator);
 
-	key.m_instanceCount = 1 << getInstanceGroupIdx(key.m_instanceCount);
+	key.setInstanceCount(1 << getInstanceGroupIdx(key.getInstanceCount()));
 
-	MaterialVariant& variant = m_variantMatrix[U(key.m_pass)][key.m_lod][getInstanceGroupIdx(key.m_instanceCount)]
-											  [key.m_skinned][key.m_velocity];
+	MaterialVariant& variant = m_variantMatrix[key.getPass()][key.getLod()][getInstanceGroupIdx(key.getInstanceCount())]
+											  [key.isSkinned()][key.hasVelocity()];
 	LockGuard<SpinLock> lock(m_variantMatrixMtx);
 
 	if(variant.m_variant == nullptr)
@@ -552,35 +552,35 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		if(m_instanceMutator)
 		{
 			mutations[count].m_mutator = m_instanceMutator;
-			mutations[count].m_value = key.m_instanceCount;
+			mutations[count].m_value = key.getInstanceCount();
 			++count;
 		}
 
 		if(m_passMutator)
 		{
 			mutations[count].m_mutator = m_passMutator;
-			mutations[count].m_value = I(key.m_pass);
+			mutations[count].m_value = I(key.getPass());
 			++count;
 		}
 
 		if(m_lodMutator)
 		{
 			mutations[count].m_mutator = m_lodMutator;
-			mutations[count].m_value = I(key.m_lod);
+			mutations[count].m_value = I(key.getLod());
 			++count;
 		}
 
 		if(m_bonesMutator)
 		{
 			mutations[count].m_mutator = m_bonesMutator;
-			mutations[count].m_value = key.m_skinned != 0;
+			mutations[count].m_value = key.isSkinned() != 0;
 			++count;
 		}
 
 		if(m_velocityMutator)
 		{
 			mutations[count].m_mutator = m_velocityMutator;
-			mutations[count].m_value = key.m_velocity != 0;
+			mutations[count].m_value = key.hasVelocity() != 0;
 			++count;
 		}
 
@@ -594,12 +594,12 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	return variant;
 }
 
-U MaterialResource::getInstanceGroupIdx(U instanceCount)
+U32 MaterialResource::getInstanceGroupIdx(U32 instanceCount)
 {
 	ANKI_ASSERT(instanceCount > 0);
 	instanceCount = nextPowerOfTwo(instanceCount);
 	ANKI_ASSERT(instanceCount <= MAX_INSTANCES);
-	return log2(instanceCount);
+	return U32(std::log2(F32(instanceCount)));
 }
 
 } // end namespace anki

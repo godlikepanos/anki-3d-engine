@@ -31,17 +31,17 @@ public:
 	}
 
 	/// Allocate memory. Should be thread safe.
-	virtual ANKI_USE_RESULT Error allocate(U classIdx, ClassGpuAllocatorMemory*& mem) = 0;
+	virtual ANKI_USE_RESULT Error allocate(U32 classIdx, ClassGpuAllocatorMemory*& mem) = 0;
 
 	/// Free memory. Should be thread safe.
 	virtual void free(ClassGpuAllocatorMemory* mem) = 0;
 
 	/// Get the number of classes.
-	virtual U getClassCount() const = 0;
+	virtual U32 getClassCount() const = 0;
 
 	/// Get info for a class. Each chunk will be chunkSize size and it can host chunkSize/slotSize sub-allocations in
 	/// it.
-	virtual void getClassInfo(U classIdx, PtrSize& slotSize, PtrSize& chunkSize) const = 0;
+	virtual void getClassInfo(U32 classIdx, PtrSize& slotSize, PtrSize& chunkSize) const = 0;
 };
 
 /// The output of an allocation.
@@ -51,7 +51,7 @@ class ClassGpuAllocatorHandle
 
 public:
 	ClassGpuAllocatorMemory* m_memory = nullptr;
-	PtrSize m_offset = 0;
+	PtrSize m_offset = 0; ///< Relative offset inside m_memory
 
 	operator Bool() const
 	{

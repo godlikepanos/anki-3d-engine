@@ -37,7 +37,7 @@ public:
 	}
 
 	/// Point the component to the vertex positions in world space. You are not supposed to call this often.
-	void setVertices(const Vec3* begin, U count, U stride);
+	void setVertices(const Vec3* begin, U32 count, U32 stride);
 
 	const Aabb& getBoundingVolume() const
 	{

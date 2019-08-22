@@ -197,7 +197,7 @@ Error PhysicsWorld::update(Second dt)
 	// Update world
 	{
 		auto lock = lockBtWorld();
-		m_world->stepSimulation(dt, 1, 1.0 / 60.0);
+		m_world->stepSimulation(F32(dt), 1, 1.0f / 60.0f);
 	}
 
 	// Process trigger contacts

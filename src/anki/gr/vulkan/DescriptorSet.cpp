@@ -102,7 +102,7 @@ public:
 
 	~DSLayoutCacheEntry();
 
-	ANKI_USE_RESULT Error init(const DescriptorBinding* bindings, U bindingCount, U64 hash);
+	ANKI_USE_RESULT Error init(const DescriptorBinding* bindings, U32 bindingCount, U64 hash);
 
 	ANKI_USE_RESULT Error getOrCreateThreadAllocator(ThreadId tid, DSThreadAllocator*& alloc);
 };
@@ -136,8 +136,8 @@ Error DSThreadAllocator::init()
 
 Error DSThreadAllocator::createNewPool()
 {
-	m_lastPoolDSCount =
-		(m_lastPoolDSCount != 0) ? (m_lastPoolDSCount * DESCRIPTOR_POOL_SIZE_SCALE) : DESCRIPTOR_POOL_INITIAL_SIZE;
+	m_lastPoolDSCount = (m_lastPoolDSCount != 0) ? U32(F32(m_lastPoolDSCount) * DESCRIPTOR_POOL_SIZE_SCALE)
+												 : DESCRIPTOR_POOL_INITIAL_SIZE;
 	m_lastPoolFreeDSCount = m_lastPoolDSCount;
 
 	// Set the create info
@@ -343,11 +343,11 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 	writeTemplate.dstSet = set.m_handle;
 	writeTemplate.descriptorCount = 1;
 
-	for(U bindingIdx = m_layoutEntry->m_minBinding; bindingIdx <= m_layoutEntry->m_maxBinding; ++bindingIdx)
+	for(U32 bindingIdx = m_layoutEntry->m_minBinding; bindingIdx <= m_layoutEntry->m_maxBinding; ++bindingIdx)
 	{
 		if(m_layoutEntry->m_activeBindings.get(bindingIdx))
 		{
-			for(U arrIdx = 0; arrIdx < m_layoutEntry->m_bindingArraySize[bindingIdx]; ++arrIdx)
+			for(U32 arrIdx = 0; arrIdx < m_layoutEntry->m_bindingArraySize[bindingIdx]; ++arrIdx)
 			{
 				const AnyBinding& b = (bindings[bindingIdx].m_arraySize == 1) ? bindings[bindingIdx].m_single
 																			  : bindings[bindingIdx].m_array[arrIdx];
@@ -378,7 +378,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 
 	// Write
 	vkUpdateDescriptorSets(m_layoutEntry->m_factory->m_dev,
-		writeInfos.getSize(),
+		U32(writeInfos.getSize()),
 		(writeInfos.getSize() > 0) ? &writeInfos[0] : nullptr,
 		0,
 		nullptr);
@@ -401,7 +401,7 @@ DSLayoutCacheEntry::~DSLayoutCacheEntry()
 	}
 }
 
-Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount, U64 hash)
+Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U32 bindingCount, U64 hash)
 {
 	ANKI_ASSERT(bindings);
 	ANKI_ASSERT(hash > 0);
@@ -438,7 +438,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 	ANKI_VK_CHECK(vkCreateDescriptorSetLayout(m_factory->m_dev, &ci, nullptr, &m_layoutHandle));
 
 	// Create the pool info
-	U poolSizeCount = 0;
+	U32 poolSizeCount = 0;
 	for(U i = 0; i < bindingCount; ++i)
 	{
 		U j;
@@ -525,8 +525,8 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 }
 
 void DescriptorSetState::flush(U64& hash,
-	Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
-	U& dynamicOffsetCount,
+	Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
+	U32& dynamicOffsetCount,
 	DescriptorSet& customDSet)
 {
 	// Set some values
@@ -672,7 +672,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 {
 	// Compute the hash for the layout
 	Array<DescriptorBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> bindings;
-	U bindingCount = init.m_bindings.getSize();
+	U32 bindingCount = U32(init.m_bindings.getSize());
 	U64 hash;
 
 	if(init.m_bindings.getSize() > 0)
@@ -726,8 +726,8 @@ Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
 	DescriptorSetState& state,
 	DescriptorSet& set,
 	Bool& dirty,
-	Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
-	U& dynamicOffsetCount)
+	Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
+	U32& dynamicOffsetCount)
 {
 	ANKI_TRACE_SCOPED_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);
 
@@ -846,19 +846,19 @@ Error BindlessDescriptorSet::init(const GrAllocator<U8>& alloc, VkDevice dev)
 	// Init the free arrays
 	{
 		m_freeTexIndices.create(m_alloc, MAX_BINDLESS_TEXTURES);
-		m_freeTexIndexCount = m_freeTexIndices.getSize();
+		m_freeTexIndexCount = U16(m_freeTexIndices.getSize());
 
 		for(U i = 0; i < m_freeTexIndices.getSize(); ++i)
 		{
-			m_freeTexIndices[i] = m_freeTexIndices.getSize() - i - 1;
+			m_freeTexIndices[i] = U16(m_freeTexIndices.getSize() - i - 1);
 		}
 
 		m_freeImgIndices.create(m_alloc, MAX_BINDLESS_IMAGES);
-		m_freeImgIndexCount = m_freeImgIndices.getSize();
+		m_freeImgIndexCount = U16(m_freeImgIndices.getSize());
 
 		for(U i = 0; i < m_freeImgIndices.getSize(); ++i)
 		{
-			m_freeImgIndices[i] = m_freeImgIndices.getSize() - i - 1;
+			m_freeImgIndices[i] = U16(m_freeImgIndices.getSize() - i - 1);
 		}
 	}
 
@@ -894,7 +894,7 @@ U32 BindlessDescriptorSet::bindTexture(const VkImageView view, const VkImageLayo
 
 	// Get the index
 	--m_freeTexIndexCount;
-	const U idx = m_freeTexIndices[m_freeTexIndexCount];
+	const U16 idx = m_freeTexIndices[m_freeTexIndexCount];
 	ANKI_ASSERT(idx < MAX_BINDLESS_TEXTURES);
 
 	// Update the set
@@ -925,7 +925,7 @@ U32 BindlessDescriptorSet::bindImage(const VkImageView view)
 
 	// Get the index
 	--m_freeImgIndexCount;
-	const U idx = m_freeImgIndices[m_freeImgIndexCount];
+	const U32 idx = m_freeImgIndices[m_freeImgIndexCount];
 	ANKI_ASSERT(idx < MAX_BINDLESS_IMAGES);
 
 	// Update the set
@@ -955,7 +955,7 @@ void BindlessDescriptorSet::unbindCommon(U32 idx, DynamicArray<U16>& freeIndices
 	LockGuard<Mutex> lock(m_mtx);
 	ANKI_ASSERT(freeIndexCount < freeIndices.getSize());
 
-	freeIndices[freeIndexCount] = idx;
+	freeIndices[freeIndexCount] = U16(idx);
 	++freeIndexCount;
 
 	// Sort the free indices to minimize fragmentation

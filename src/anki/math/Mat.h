@@ -31,10 +31,9 @@ public:
 	static constexpr U ROW_SIZE = J; ///< Number of rows
 	static constexpr U COLUMN_SIZE = I; ///< Number of columns
 	static constexpr U SIZE = J * I; ///< Number of total elements
-	static constexpr Bool HAS_SIMD = I == 4 && std::is_same<T, F32>::value && ANKI_SIMD == ANKI_SIMD_SSE;
-	static constexpr Bool HAS_MAT4_SIMD = J == 4 && I == 4 && std::is_same<T, F32>::value && ANKI_SIMD == ANKI_SIMD_SSE;
-	static constexpr Bool HAS_MAT3X4_SIMD =
-		J == 3 && I == 4 && std::is_same<T, F32>::value && ANKI_SIMD == ANKI_SIMD_SSE;
+	static constexpr Bool HAS_SIMD = I == 4 && std::is_same<T, F32>::value && ANKI_SIMD_SSE;
+	static constexpr Bool HAS_MAT4_SIMD = J == 4 && I == 4 && std::is_same<T, F32>::value && ANKI_SIMD_SSE;
+	static constexpr Bool HAS_MAT3X4_SIMD = J == 3 && I == 4 && std::is_same<T, F32>::value && ANKI_SIMD_SSE;
 
 	/// @name Constructors
 	/// @{
@@ -201,13 +200,13 @@ public:
 		setRotationPart(rot);
 		setTranslationPart(transl);
 		auto& m = *this;
-		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
+		m(3, 0) = m(3, 1) = m(3, 2) = T(0);
 	}
 
 	ANKI_ENABLE_METHOD(J == 4 && I == 4)
 	TMat(const TVec<T, 4>& transl, const TMat<T, 3, 3>& rot, const T scale)
 	{
-		if(isZero<T>(scale - 1.0))
+		if(isZero<T>(scale - T(1)))
 		{
 			setRotationPart(rot);
 		}
@@ -219,7 +218,7 @@ public:
 		setTranslationPart(transl);
 
 		auto& m = *this;
-		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
+		m(3, 0) = m(3, 1) = m(3, 2) = T(0);
 	}
 
 	ANKI_ENABLE_METHOD(J == 4 && I == 4)
@@ -972,17 +971,17 @@ public:
 		yz = q.y() * zs;
 		zz = q.z() * zs;
 
-		m(0, 0) = 1.0 - (yy + zz);
+		m(0, 0) = T(1) - (yy + zz);
 		m(0, 1) = xy - wz;
 		m(0, 2) = xz + wy;
 
 		m(1, 0) = xy + wz;
-		m(1, 1) = 1.0 - (xx + zz);
+		m(1, 1) = T(1) - (xx + zz);
 		m(1, 2) = yz - wx;
 
 		m(2, 0) = xz - wy;
 		m(2, 1) = yz + wx;
-		m(2, 2) = 1.0 - (xx + yy);
+		m(2, 2) = T(1) - (xx + yy);
 	}
 
 	void setRotationPart(const TEuler<T>& e)
@@ -1053,7 +1052,7 @@ public:
 	{
 		if(ROW_SIZE == 4)
 		{
-			ANKI_ASSERT(isZero<T>(v[3] - 1.0) && "w should be 1");
+			ANKI_ASSERT(isZero<T>(v[3] - T(1)) && "w should be 1");
 		}
 		setColumn(3, v);
 	}
@@ -1257,7 +1256,7 @@ public:
 		T det = in(0, 0) * m4(0, 0) + in(1, 0) * m4(0, 1) + in(2, 0) * m4(0, 2) + in(3, 0) * m4(0, 3);
 
 		ANKI_ASSERT(!isZero<T>(det)); // Cannot invert, det == 0
-		det = 1.0 / det;
+		det = T(1) / det;
 		m4 *= det;
 		return m4;
 	}

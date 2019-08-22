@@ -22,15 +22,14 @@ public:
 
 	/// Default contructor. Will zero the mask.
 	BitMask()
-		: m_bitmask(static_cast<Value>(0))
+		: m_bitmask(0)
 	{
 	}
 
 	/// Construcor.
 	/// @param mask The bits to enable.
-	template<typename TInt>
-	BitMask(TInt mask)
-		: m_bitmask(static_cast<Value>(mask))
+	BitMask(Value mask)
+		: m_bitmask(mask)
 	{
 	}
 
@@ -41,44 +40,33 @@ public:
 	BitMask& operator=(const BitMask& b) = default;
 
 	/// Set or unset a bit at the given position.
-	template<typename TInt>
-	void set(TInt mask, Bool setBits = true)
+	void set(Value mask, Bool setBits = true)
 	{
-		Value maski = static_cast<Value>(mask);
-		m_bitmask = (setBits) ? (m_bitmask | maski) : (m_bitmask & ~maski);
+		m_bitmask = (setBits) ? (m_bitmask | mask) : (m_bitmask & ~mask);
 	}
 
 	/// Unset a bit (set to zero) at the given position.
-	template<typename TInt>
-	void unset(TInt mask)
+	void unset(Value mask)
 	{
-		Value maski = static_cast<Value>(mask);
-		m_bitmask &= ~maski;
+		m_bitmask &= ~mask;
 	}
 
-	/// Flip the bits at the given position. It will go from 1 to 0 or from 0 to
-	/// 1.
-	template<typename TInt>
-	void flip(TInt mask)
+	/// Flip the bits at the given position. It will go from 1 to 0 or from 0 to 1.
+	void flip(Value mask)
 	{
-		Value maski = static_cast<Value>(mask);
-		m_bitmask ^= maski;
+		m_bitmask ^= mask;
 	}
 
 	/// Return true if the bit is set or false if it's not.
-	template<typename TInt>
-	Bool get(TInt mask) const
+	Bool get(Value mask) const
 	{
-		Value maski = static_cast<Value>(mask);
-		return (m_bitmask & maski) == maski;
+		return (m_bitmask & mask) == mask;
 	}
 
 	/// Given a mask check if any are enabled.
-	template<typename TInt>
-	Bool getAny(TInt mask) const
+	Bool getAny(Value mask) const
 	{
-		Value maski = static_cast<Value>(mask);
-		return (m_bitmask & maski) != static_cast<Value>(0);
+		return (m_bitmask & mask) != 0;
 	}
 
 protected:

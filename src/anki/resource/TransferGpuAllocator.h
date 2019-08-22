@@ -88,7 +88,7 @@ class TransferGpuAllocator
 	friend class TransferGpuAllocatorHandle;
 
 public:
-	static const U FRAME_COUNT = 3;
+	static const U32 FRAME_COUNT = 3;
 	static const PtrSize CHUNK_INITIAL_SIZE = 64_MB;
 	static constexpr Second MAX_FENCE_WAIT_TIME = 500.0_ms;
 
