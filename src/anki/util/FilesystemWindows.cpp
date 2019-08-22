@@ -26,7 +26,7 @@ Bool fileExists(const CString& filename)
 
 Bool directoryExists(const CString& filename)
 {
-	DWORD dwAttrib = GetFileAttributes(filename.get());
+	DWORD dwAttrib = GetFileAttributes(filename.cstr());
 
 	return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
@@ -61,9 +61,9 @@ Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> all
 Error createDirectory(const CString& dir)
 {
 	Error err = Error::NONE;
-	if(CreateDirectory(dir.get(), NULL) == 0)
+	if(CreateDirectory(dir.cstr(), NULL) == 0)
 	{
-		ANKI_UTIL_LOGE("Failed to create directory %s", dir.get());
+		ANKI_UTIL_LOGE("Failed to create directory %s", dir.cstr());
 		err = Error::FUNCTION_FAILED;
 	}
 

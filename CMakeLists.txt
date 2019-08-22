@@ -365,7 +365,7 @@ endif()
 if(NOT MSVC)
 	add_definitions("-pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable "
 		"-Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result"
-		"-Wconversion -Wfatal-errors -std=c++14")
+		"-Wconversion -std=c++14")
 else()
 	add_definitions("/wd4996 /wd4244 /wd4262 /wd4267")
 endif()

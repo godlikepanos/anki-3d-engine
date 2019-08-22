@@ -107,7 +107,7 @@ U64 getRandom();
 template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
 T getRandomRange(T min, T max)
 {
-	ANKI_ASSERT(min < max);
+	ANKI_ASSERT(min <= max);
 	const F64 r = F64(getRandom()) / F64(MAX_U64);
 	return T(min + r * (max - min));
 }
@@ -115,7 +115,7 @@ T getRandomRange(T min, T max)
 template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
 T getRandomRange(T min, T max)
 {
-	ANKI_ASSERT(min < max);
+	ANKI_ASSERT(min <= max);
 	const U64 r = getRandom();
 	return T(r % U64(max - min + 1)) + min;
 }

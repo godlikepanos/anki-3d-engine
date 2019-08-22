@@ -80,7 +80,7 @@ public:
 
 	void setInstanceCount(U32 instanceCount)
 	{
-		ANKI_ASSERT(instanceCount < MAX_INSTANCES && instanceCount > 0);
+		ANKI_ASSERT(instanceCount <= MAX_INSTANCES && instanceCount > 0);
 		m_instanceCount = U8(instanceCount);
 	}
 
