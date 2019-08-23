@@ -7,6 +7,7 @@
 #include <anki/util/Assert.h>
 #include <anki/util/Logger.h>
 #include <windows.h>
+#include <Shlobj.h>
 #include <anki/util/CleanupWindows.h>
 
 namespace anki
@@ -70,28 +71,16 @@ Error createDirectory(const CString& dir)
 	return err;
 }
 
-Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
+Error getHomeDirectory(StringAuto& out)
 {
-	const char* homed = getenv("HOMEDRIVE");
-	const char* homep = getenv("HOMEPATH");
-
-	if(homed == nullptr || homep == nullptr)
+	char path[MAX_PATH];
+	if(SHGetFolderPath(NULL, CSIDL_PROFILE, nullptr, 0, path) != S_OK)
 	{
-		ANKI_UTIL_LOGE("HOME environment variables not set");
+		ANKI_UTIL_LOGE("SHGetFolderPath() failed");
 		return Error::FUNCTION_FAILED;
 	}
 
-	out.sprintf(alloc, "%s/%s", homed, homep);
-
-	// Convert to Unix path
-	for(char& c : out)
-	{
-		if(c == '\\')
-		{
-			c = '/';
-		}
-	}
-
+	out.create(path);
 	return Error::NONE;
 }
 

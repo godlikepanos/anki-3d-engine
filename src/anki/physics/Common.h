@@ -16,6 +16,10 @@
 #	pragma GCC diagnostic ignored "-Wconversion"
 #	pragma GCC diagnostic ignored "-Wfloat-conversion"
 #endif
+#if ANKI_COMPILER_MSVC
+#	pragma warning(push)
+#	pragma warning(disable : 4305)
+#endif
 #define BT_THREADSAFE 0
 #define BT_NO_PROFILE 1
 #include <btBulletCollisionCommon.h>
@@ -25,6 +29,9 @@
 #include <BulletCollision/Gimpact/btGImpactShape.h>
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic pop
+#endif
+#if ANKI_COMPILER_MSVC
+#	pragma warning(pop)
 #endif
 
 namespace anki

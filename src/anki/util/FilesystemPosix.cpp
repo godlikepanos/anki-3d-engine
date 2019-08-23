@@ -195,7 +195,7 @@ Error createDirectory(const CString& dir)
 	return err;
 }
 
-Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
+Error getHomeDirectory(StringAuto& out)
 {
 	const char* home = getenv("HOME");
 	if(home == nullptr)
@@ -204,7 +204,7 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 		return Error::FUNCTION_FAILED;
 	}
 
-	out.create(alloc, home);
+	out.create(home);
 	return Error::NONE;
 }
 

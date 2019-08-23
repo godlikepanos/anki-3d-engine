@@ -58,7 +58,7 @@ ANKI_TEST(Util, HomeDir)
 	HeapAllocator<char> alloc(allocAligned, nullptr);
 	StringAuto out(alloc);
 
-	ANKI_TEST_EXPECT_NO_ERR(getHomeDirectory(alloc, out));
+	ANKI_TEST_EXPECT_NO_ERR(getHomeDirectory(out));
 	printf("home dir %s\n", &out[0]);
 	ANKI_TEST_EXPECT_GT(out.getLength(), 0);
 }

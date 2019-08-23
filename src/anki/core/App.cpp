@@ -496,7 +496,7 @@ Error App::initDirs(const ConfigSet& cfg)
 #if !ANKI_OS_ANDROID
 	// Settings path
 	StringAuto home(m_heapAlloc);
-	ANKI_CHECK(getHomeDirectory(m_heapAlloc, home));
+	ANKI_CHECK(getHomeDirectory(home));
 
 	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]);
 
