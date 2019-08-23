@@ -189,7 +189,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork(
 		[](RenderPassWorkContext& rgraphCtx) { static_cast<LightShading*>(rgraphCtx.m_userData)->run(rgraphCtx); },
 		this,
-		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()));
+		computeNumberOfSecondLevelCommandBuffers(U32(ctx.m_renderQueue->m_forwardShadingRenderables.getSize())));
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{m_runCtx.m_rt}}, {m_r->getGBuffer().getDepthRt()});
 
 	// Light shading

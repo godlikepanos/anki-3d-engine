@@ -10,8 +10,16 @@
 #include <anki/util/Ptr.h>
 #include <anki/Math.h>
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wall"
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wall"
+#	pragma GCC diagnostic ignored "-Wconversion"
+#	pragma GCC diagnostic ignored "-Wfloat-conversion"
+#endif
+#if ANKI_COMPILER_MSVC
+#	pragma warning(push)
+#	pragma warning(disable : 4305)
+#endif
 #define BT_THREADSAFE 0
 #define BT_NO_PROFILE 1
 #include <btBulletCollisionCommon.h>
@@ -19,7 +27,12 @@
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <BulletDynamics/Character/btKinematicCharacterController.h>
 #include <BulletCollision/Gimpact/btGImpactShape.h>
-#pragma GCC diagnostic pop
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
+#if ANKI_COMPILER_MSVC
+#	pragma warning(pop)
+#endif
 
 namespace anki
 {

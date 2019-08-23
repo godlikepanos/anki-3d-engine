@@ -47,7 +47,7 @@ public:
 	void destroy();
 
 	/// Allocate memory.
-	void allocateMemory(U memTypeIdx, PtrSize size, U alignment, Bool linearResource, GpuMemoryHandle& handle);
+	void allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, Bool linearResource, GpuMemoryHandle& handle);
 
 	/// Free memory.
 	void freeMemory(GpuMemoryHandle& handle);
@@ -56,7 +56,8 @@ public:
 	ANKI_USE_RESULT void* getMappedAddress(GpuMemoryHandle& handle);
 
 	/// Find a suitable memory type.
-	U findMemoryType(U resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const;
+	U32 findMemoryType(
+		U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const;
 
 	/// Get some statistics.
 	void getAllocatedMemory(PtrSize& gpuMemory, PtrSize& cpuMemory) const;

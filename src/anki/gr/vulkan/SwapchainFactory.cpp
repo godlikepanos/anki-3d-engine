@@ -42,7 +42,7 @@ Error MicroSwapchain::initInternal()
 
 	// Get the surface size
 	VkSurfaceCapabilitiesKHR surfaceProperties;
-	U surfaceWidth = 0, surfaceHeight = 0;
+	U32 surfaceWidth = 0, surfaceHeight = 0;
 	{
 		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
 			m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(), &surfaceProperties));

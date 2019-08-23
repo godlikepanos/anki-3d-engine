@@ -159,7 +159,7 @@ public:
 		return err;
 	}
 
-	void allocateAndSetupUniforms(U set,
+	void allocateAndSetupUniforms(U32 set,
 		const RenderQueueDrawContext& ctx,
 		ConstWeakArray<Mat4> transforms,
 		ConstWeakArray<Mat4> prevTransforms,

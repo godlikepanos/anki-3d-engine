@@ -36,7 +36,7 @@ public:
 	}
 
 	/// Prepare for rendering. Call it before every draw.
-	void prepare(const Mat4& mv, const Mat4& p, U width, U height);
+	void prepare(const Mat4& mv, const Mat4& p, U32 width, U32 height);
 
 	/// Render some verts.
 	/// @param[in] verts Pointer to the first vertex to draw.

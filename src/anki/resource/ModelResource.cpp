@@ -47,20 +47,20 @@ void ModelPatch::getRenderingDataSub(
 
 	// Get the resources
 	RenderingKey meshKey = key;
-	meshKey.m_lod = min<U>(key.m_lod, m_meshCount - 1);
+	meshKey.setLod(min<U32>(key.getLod(), m_meshCount - 1));
 	const MeshResource& mesh = getMesh(meshKey);
 
 	// Get program
 	{
 		RenderingKey mtlKey = key;
-		mtlKey.m_lod = min<U>(key.m_lod, m_mtl->getLodCount() - 1);
-		mtlKey.m_skinned = hasSkin;
+		mtlKey.setLod(min(key.getLod(), m_mtl->getLodCount() - 1));
+		mtlKey.setSkinned(hasSkin);
 
 		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey);
 
 		inf.m_program = variant.getShaderProgram();
 
-		inf.m_bindingCount = variant.getBindingCount();
+		inf.m_bindingCount = U8(variant.getBindingCount());
 	}
 
 	// Vertex attributes & bindings
@@ -73,7 +73,7 @@ void ModelPatch::getRenderingDataSub(
 
 		for(VertexAttributeLocation loc = VertexAttributeLocation::FIRST; loc < VertexAttributeLocation::COUNT; ++loc)
 		{
-			if(!mesh.isVertexAttributePresent(loc) || !attributeIsRequired(loc, key.m_pass, hasSkin))
+			if(!mesh.isVertexAttributePresent(loc) || !attributeIsRequired(loc, key.getPass(), hasSkin))
 			{
 				continue;
 			}
@@ -113,9 +113,9 @@ void ModelPatch::getRenderingDataSub(
 	inf.m_indicesCountArray[0] = indexCount;
 }
 
-U ModelPatch::getLodCount() const
+U32 ModelPatch::getLodCount() const
 {
-	return max<U>(m_meshCount, getMaterial()->getLodCount());
+	return max<U32>(m_meshCount, getMaterial()->getLodCount());
 }
 
 Error ModelPatch::create(
@@ -258,7 +258,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 
 	// Calculate compound bounding volume
 	RenderingKey key;
-	key.m_lod = 0;
+	key.setLod(0);
 	m_visibilityShape = m_modelPatches[0]->getMesh(key).getBoundingShape();
 
 	for(auto it = m_modelPatches.begin() + 1; it != m_modelPatches.end(); ++it)

@@ -27,7 +27,7 @@ ANKI_TEST(Util, StackAllocator)
 	// With vector
 	{
 		using All = StackAllocator<Foo>;
-		All alloc(allocAligned, nullptr, (sizeof(Foo) + 1) * 10, alignof(Foo));
+		All alloc(allocAligned, nullptr, (sizeof(Foo) + 1) * 10);
 		std::vector<Foo, All> vec(alloc);
 
 		vec.reserve(10);
@@ -36,7 +36,7 @@ ANKI_TEST(Util, StackAllocator)
 		for(U i = 0; i < 10; i++)
 		{
 			std::cout << "pushing" << std::endl;
-			vec.push_back(Foo(10 * i));
+			vec.push_back(Foo(10 * I32(i)));
 			sumi += 10 * i;
 		}
 
@@ -52,11 +52,11 @@ ANKI_TEST(Util, StackAllocator)
 
 	// Copy around
 	{
-		typedef StackAllocator<Foo> Alloc;
+		using Alloc = StackAllocator<Foo>;
 
-		Alloc a(allocAligned, nullptr, (sizeof(Foo) + 1) * 10, alignof(Foo));
+		Alloc a(allocAligned, nullptr, (sizeof(Foo) + 1) * 10);
 
-		Alloc b(allocAligned, nullptr, (sizeof(Foo) + 1) * 10, alignof(Foo));
+		Alloc b(allocAligned, nullptr, (sizeof(Foo) + 1) * 10);
 
 		a = b;
 		ANKI_TEST_EXPECT_EQ(a.getMemoryPool().getUsersCount(), 2);

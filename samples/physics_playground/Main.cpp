@@ -156,7 +156,7 @@ Error MyApp::sampleExtraInit()
 				"assets/Suzannedynamic-material.ankimdl"));
 
 			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
-			trf.getOrigin().y() -= i * 1.25f;
+			trf.getOrigin().y() -= F32(i) * 1.25f;
 			// trf.getOrigin().x() -= i * 0.25f;
 
 			// monkey->getComponent<MoveComponent>().setLocalTransform(trf);

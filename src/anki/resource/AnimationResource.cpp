@@ -177,7 +177,7 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 				// <value>
 				ANKI_CHECK(keyEl.getChildElement("value", el));
 				ANKI_CHECK(el.getNumber(ftmp));
-				key.m_value = ftmp;
+				key.m_value = F32(ftmp);
 
 				// Check ident
 				if(isZero(key.m_value - 1.0))
@@ -239,7 +239,7 @@ void AnimationResource::interpolate(U channelIndex, Second time, Vec3& pos, Quat
 			if(time >= left.m_time && time <= right.m_time)
 			{
 				const Second u = (time - left.m_time) / (right.m_time - left.m_time);
-				pos = linearInterpolate(left.m_value, right.m_value, u);
+				pos = linearInterpolate(left.m_value, right.m_value, F32(u));
 				break;
 			}
 		}
@@ -255,7 +255,7 @@ void AnimationResource::interpolate(U channelIndex, Second time, Vec3& pos, Quat
 			if(time >= left.m_time && time <= right.m_time)
 			{
 				const Second u = (time - left.m_time) / (right.m_time - left.m_time);
-				rot = left.m_value.slerp(right.m_value, u);
+				rot = left.m_value.slerp(right.m_value, F32(u));
 				break;
 			}
 		}

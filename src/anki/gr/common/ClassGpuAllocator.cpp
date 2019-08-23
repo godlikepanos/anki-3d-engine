@@ -11,7 +11,7 @@ namespace anki
 {
 
 /// Max number of sub allocations (aka slots) per chunk.
-const U MAX_SLOTS_PER_CHUNK = 128;
+const U32 MAX_SLOTS_PER_CHUNK = 128;
 
 class ClassGpuAllocatorChunk : public IntrusiveListEnabled<ClassGpuAllocatorChunk>
 {
@@ -39,7 +39,7 @@ public:
 	PtrSize m_chunkSize = 0;
 
 	/// The max slot size for this class.
-	U32 m_maxSlotSize = 0;
+	PtrSize m_maxSlotSize = 0;
 
 	/// The number of slots for a single chunk.
 	U32 m_slotsPerChunkCount = 0;
@@ -67,11 +67,11 @@ void ClassGpuAllocator::init(GenericMemoryPoolAllocator<U8> alloc, ClassGpuAlloc
 	//
 	// Initialize the classes
 	//
-	U classCount = iface->getClassCount();
+	U32 classCount = iface->getClassCount();
 	ANKI_ASSERT(classCount > 0);
 	m_classes.create(m_alloc, classCount);
 
-	for(U i = 0; i < classCount; ++i)
+	for(U32 i = 0; i < classCount; ++i)
 	{
 		PtrSize slotSize = 0, chunkSize = 0;
 		m_iface->getClassInfo(i, slotSize, chunkSize);
@@ -84,7 +84,7 @@ void ClassGpuAllocator::init(GenericMemoryPoolAllocator<U8> alloc, ClassGpuAlloc
 		Class& c = m_classes[i];
 		c.m_chunkSize = chunkSize;
 		c.m_maxSlotSize = slotSize;
-		c.m_slotsPerChunkCount = chunkSize / slotSize;
+		c.m_slotsPerChunkCount = U32(chunkSize / slotSize);
 	}
 }
 
@@ -151,7 +151,7 @@ Error ClassGpuAllocator::createChunk(Class& cl, Chunk*& chunk)
 {
 	ClassGpuAllocatorMemory* mem = nullptr;
 
-	ANKI_CHECK(m_iface->allocate(&cl - &m_classes[0], mem));
+	ANKI_CHECK(m_iface->allocate(U32(&cl - &m_classes[0]), mem));
 	ANKI_ASSERT(mem);
 
 	chunk = m_alloc.newInstance<Chunk>();
@@ -194,8 +194,8 @@ Error ClassGpuAllocator::allocate(PtrSize size, U alignment, ClassGpuAllocatorHa
 	}
 
 	// Allocate from chunk
-	U bitCount = cl->m_slotsPerChunkCount;
-	for(U i = 0; i < bitCount; ++i)
+	U32 bitCount = cl->m_slotsPerChunkCount;
+	for(U32 i = 0; i < bitCount; ++i)
 	{
 		if(!chunk->m_inUseSlots.get(i))
 		{
@@ -225,7 +225,7 @@ void ClassGpuAllocator::free(ClassGpuAllocatorHandle& handle)
 	Class& cl = *chunk.m_class;
 
 	LockGuard<Mutex> lock(cl.m_mtx);
-	U slotIdx = handle.m_offset / cl.m_maxSlotSize;
+	const U32 slotIdx = U32(handle.m_offset / cl.m_maxSlotSize);
 
 	ANKI_ASSERT(chunk.m_inUseSlots.get(slotIdx));
 	ANKI_ASSERT(chunk.m_inUseSlotCount > 0);

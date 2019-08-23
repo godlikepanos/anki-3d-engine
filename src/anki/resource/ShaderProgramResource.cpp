@@ -16,7 +16,7 @@ Bool ShaderProgramResourceInputVariable::evalPreproc(ConstWeakArray<te_variable>
 	ANKI_ASSERT(vars.getSize() == m_program->getMutators().getSize());
 
 	int err;
-	te_expr* n = te_compile(m_preprocExpr.cstr(), &vars[0], vars.getSize(), &err);
+	te_expr* n = te_compile(m_preprocExpr.cstr(), &vars[0], U32(vars.getSize()), &err);
 
 	if(!n)
 	{
@@ -75,11 +75,11 @@ Bool ShaderProgramResourceInputVariable::acceptAllMutations(
 	static const U MAX_MUTATORS = 64;
 
 	Array<const ShaderProgramResourceMutator*, MAX_MUTATORS> missingMutators;
-	U missingMutatorCount = 0;
+	U32 missingMutatorCount = 0;
 
 	Array<te_variable, MAX_MUTATORS> vars;
 	Array<F64, MAX_MUTATORS> varValues;
-	U varCount = 0;
+	U32 varCount = 0;
 
 	// - Find the mutators that don't appear in "mutations"
 	// - Fill the vars with the known mutators
@@ -210,7 +210,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 	{
 		m_inputVars.create(getAllocator(), pp.getInputs().getSize());
 
-		for(U i = 0; i < m_inputVars.getSize(); ++i)
+		for(U32 i = 0; i < m_inputVars.getSize(); ++i)
 		{
 			Input& out = m_inputVars[i];
 			const ShaderProgramPreprocessorInput& in = pp.getInputs()[i];
@@ -229,7 +229,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// Set some other vars
-	m_descriptorSet = pp.getDescritproSet();
+	m_descriptorSet = U8(pp.getDescritproSet());
 	m_shaderStages = pp.getShaderStages();
 	if(instancedMutatorIdx != MAX_U)
 	{
@@ -319,7 +319,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 	}
 
 	// Get instance count, one mutation has it
-	U instanceCount = 1;
+	U32 instanceCount = 1;
 	if(m_instancingMutator)
 	{
 		for(const ShaderProgramResourceMutation& m : mutations)
@@ -354,8 +354,8 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 			ShaderVariableBlockInfo& blockInfo = variant.m_blockInfos[in.m_idx];
 
 			// std140 rules
-			blockInfo.m_offset = variant.m_uniBlockSize;
-			blockInfo.m_arraySize = (in.m_instanced) ? instanceCount : 1;
+			blockInfo.m_offset = I16(variant.m_uniBlockSize);
+			blockInfo.m_arraySize = (in.m_instanced) ? I16(instanceCount) : 1;
 
 			if(in.m_dataType == ShaderVariableDataType::FLOAT || in.m_dataType == ShaderVariableDataType::INT
 				|| in.m_dataType == ShaderVariableDataType::UINT)
@@ -530,7 +530,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 				binding,
 				in.m_name.cstr(),
 				binding + 1);
-			variant.m_bindings[in.m_idx] = binding;
+			variant.m_bindings[in.m_idx] = I16(binding);
 			++binding;
 		}
 	}
@@ -553,7 +553,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 	}
 
 	// Compute the binding count
-	variant.m_bindingCount = (!variant.m_usesPushConstants) + binding;
+	variant.m_bindingCount = U8((!variant.m_usesPushConstants) + binding);
 
 	// Write the source header
 	StringListAuto shaderHeaderSrc(getTempAllocator());

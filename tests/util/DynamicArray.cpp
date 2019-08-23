@@ -99,7 +99,7 @@ ANKI_TEST(Util, DynamicArray)
 
 	// Fuzzy
 	{
-		srand(time(nullptr));
+		srand(U32(time(nullptr)));
 		HeapAllocator<U8> alloc(allocAligned, nullptr);
 		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
 
@@ -114,11 +114,11 @@ ANKI_TEST(Util, DynamicArray)
 			U32 value = rand();
 			if(grow)
 			{
-				newSize = vec.size() * randRange(1.0, 4.0);
+				newSize = vec.size() * getRandomRange(1, 4);
 			}
 			else
 			{
-				newSize = vec.size() * randRange(0.0, 0.9);
+				newSize = U32(F32(vec.size()) * getRandomRange(0.0, 0.9));
 			}
 
 			vec.resize(newSize, value);
@@ -180,7 +180,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 	{
 		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
 
-		for(U i = 0; i < 10; ++i)
+		for(I32 i = 0; i < 10; ++i)
 		{
 			arr.emplaceBack(i);
 		}
@@ -206,7 +206,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 	// Fuzzy
 	{
-		srand(time(nullptr));
+		srand(U32(time(nullptr)));
 
 		DynamicArrayAuto<DynamicArrayFoo> arr(alloc);
 		std::vector<DynamicArrayFoo> vec;
@@ -214,8 +214,8 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 		const I ITERATIONS = 10000;
 		for(I i = 0; i < ITERATIONS; ++i)
 		{
-			I randNum = rand();
-			I op = rand() % 3;
+			I32 randNum = rand();
+			I32 op = rand() % 3;
 
 			switch(op)
 			{

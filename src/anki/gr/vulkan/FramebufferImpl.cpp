@@ -38,10 +38,10 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	ANKI_ASSERT(init.isValid());
 
 	// Init common
-	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
+	for(U32 i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
 		m_colorAttachmentMask.set(i);
-		m_colorAttCount = i + 1;
+		m_colorAttCount = U8(i + 1);
 	}
 
 	if(init.m_depthStencilAttachment.m_textureView)
@@ -180,7 +180,7 @@ void FramebufferImpl::setupAttachmentDescriptor(
 void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 {
 	// Setup attachments and references
-	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
+	for(U32 i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
 		setupAttachmentDescriptor(
 			init.m_colorAttachments[i], m_attachmentDescriptions[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);

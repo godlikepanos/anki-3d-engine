@@ -55,7 +55,7 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_RESOURCE_LOGE("Too big margin %d", U(margin));
 		return Error::USER_DATA;
 	}
-	m_margin = margin;
+	m_margin = U32(margin);
 
 	//
 	// <subTextures>

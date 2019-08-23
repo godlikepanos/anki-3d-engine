@@ -75,9 +75,9 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 	props->m_maxGravity = inProps.m_particle.m_maxGravity;
 	props->m_maxMass = inProps.m_particle.m_maxMass;
 	props->m_minForce = inProps.m_particle.m_minForceDirection * inProps.m_particle.m_minForceMagnitude;
-	props->m_minLife = inProps.m_particle.m_minLife;
+	props->m_minLife = F32(inProps.m_particle.m_minLife);
 	props->m_maxForce = inProps.m_particle.m_maxForceDirection * inProps.m_particle.m_maxForceMagnitude;
-	props->m_maxLife = inProps.m_particle.m_maxLife;
+	props->m_maxLife = F32(inProps.m_particle.m_maxLife);
 	props->m_minStartingPosition = inProps.m_particle.m_minStartingPosition;
 	props->m_maxStartingPosition = inProps.m_particle.m_maxStartingPosition;
 	props->m_particleCount = inProps.m_maxNumOfParticles;
@@ -113,7 +113,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 	const F32* randFactorsEnd = randFactors + MAX_RAND_FACTORS;
 	for(; randFactors < randFactorsEnd; ++randFactors)
 	{
-		*randFactors = randRange(0.0f, 1.0f);
+		*randFactors = getRandomRange(0.0f, 1.0f);
 	}
 
 	m_randFactorsBuff->unmap();
@@ -131,7 +131,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 		const Vec3 maxForce = inProps.m_particle.m_maxForceDirection * inProps.m_particle.m_maxForceMagnitude;
 		const Vec3& maxGravity = inProps.m_particle.m_maxGravity;
 		const F32 maxMass = inProps.m_particle.m_maxMass;
-		const F32 maxTime = inProps.m_particle.m_maxLife;
+		const F32 maxTime = F32(inProps.m_particle.m_maxLife);
 
 		const Vec3 totalForce = maxGravity * maxMass + maxForce;
 		const Vec3 accelleration = totalForce / maxMass;
@@ -198,14 +198,15 @@ void GpuParticleEmitterNode::simulate(GenericGpuComputeJobQueueElementContext& c
 	unis->m_viewProjMat = ctx.m_viewProjectionMatrix;
 	unis->m_unprojectionParams = ctx.m_projectionMatrix.extractPerspectiveUnprojectionParams();
 	unis->m_randomIndex = rand();
-	unis->m_dt = m_dt;
+	unis->m_dt = F32(m_dt);
 	unis->m_emitterPosition = m_worldPosition;
 	unis->m_emitterRotation = m_worldRotation;
 	unis->m_invViewRotation = Mat3x4(ctx.m_cameraTransform.getRotationPart());
 	cmdb->bindUniformBuffer(1, 4, token.m_buffer, token.m_offset, token.m_range);
 
 	// Dispatch
-	const U workgroupCount = (m_particleCount + COMPUTE_SHADER_WORKGROUP_SIZE_X - 1) / COMPUTE_SHADER_WORKGROUP_SIZE_X;
+	const U32 workgroupCount =
+		(m_particleCount + COMPUTE_SHADER_WORKGROUP_SIZE_X - 1) / COMPUTE_SHADER_WORKGROUP_SIZE_X;
 	cmdb->dispatchCompute(workgroupCount, 1, 1);
 }
 
@@ -217,7 +218,7 @@ void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 	{
 		// Program
 		ShaderProgramPtr prog;
-		m_emitterRsrc->getRenderingInfo(ctx.m_key.m_lod, prog);
+		m_emitterRsrc->getRenderingInfo(ctx.m_key.getLod(), prog);
 		cmdb->bindShaderProgram(prog);
 
 		// Resources

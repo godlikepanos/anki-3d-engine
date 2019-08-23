@@ -179,7 +179,7 @@ public:
 	}
 
 	/// Convenience method to bind the whole texture as color.
-	void bindColorTexture(U32 set, U32 binding, RenderTargetHandle handle, U arrayIdx = 0)
+	void bindColorTexture(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
 	{
 		TexturePtr tex = getTexture(handle);
 		TextureViewInitInfo viewInit(tex); // Use the whole texture
@@ -191,7 +191,7 @@ public:
 
 	/// Convenience method.
 	void bindImage(
-		U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U arrayIdx = 0)
+		U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U32 arrayIdx = 0)
 	{
 		TexturePtr tex;
 		TextureUsageBit usage;

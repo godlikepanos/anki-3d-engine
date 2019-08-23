@@ -97,7 +97,7 @@ public:
 
 	const MeshResource& getMesh(const RenderingKey& key) const
 	{
-		return *m_meshes[key.m_lod];
+		return *m_meshes[key.getLod()];
 	}
 
 	const ModelResource& getModel() const
@@ -139,7 +139,7 @@ private:
 	MaterialResourcePtr m_mtl;
 
 	/// Return the maximum number of LODs
-	U getLodCount() const;
+	U32 getLodCount() const;
 };
 
 /// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.

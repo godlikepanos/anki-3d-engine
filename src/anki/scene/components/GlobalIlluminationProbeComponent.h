@@ -138,7 +138,8 @@ private:
 	{
 		ANKI_ASSERT(userData);
 		GlobalIlluminationProbeComponent& self = *static_cast<GlobalIlluminationProbeComponent*>(userData);
-		ANKI_ASSERT(eyeWorldPosition.xyz() > self.m_aabbMin && eyeWorldPosition.xyz() < self.m_aabbMax);
+		ANKI_ASSERT(fillRenderQueuesOnNextFrame && eyeWorldPosition.xyz() > self.m_aabbMin
+					&& eyeWorldPosition.xyz() < self.m_aabbMax);
 		self.m_markedForRendering = fillRenderQueuesOnNextFrame;
 		self.m_renderPosition = eyeWorldPosition.xyz();
 	}

@@ -72,13 +72,13 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	ANKI_TRACE_SCOPED_EVENT(R_MS);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const U threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
-	const U threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
+	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
+	const U32 threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
 
 	// Get some stuff
-	const PtrSize earlyZCount = ctx.m_renderQueue->m_earlyZRenderables.getSize();
-	const U problemSize = ctx.m_renderQueue->m_renderables.getSize() + earlyZCount;
-	PtrSize start, end;
+	const U32 earlyZCount = U32(ctx.m_renderQueue->m_earlyZRenderables.getSize());
+	const U32 problemSize = U32(ctx.m_renderQueue->m_renderables.getSize() + earlyZCount);
+	U32 start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 	ANKI_ASSERT(end != start);
 
@@ -95,7 +95,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	// First do early Z (if needed)
 	if(earlyZStart < earlyZEnd)
 	{
-		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		for(U32 i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
 			cmdb->setColorChannelWriteMask(i, ColorBit::NONE);
 		}
@@ -113,7 +113,7 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		// Restore state for the color write
 		if(colorStart < colorEnd)
 		{
-			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+			for(U32 i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 			{
 				cmdb->setColorChannelWriteMask(i, ColorBit::ALL);
 			}
@@ -164,7 +164,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		},
 		this,
 		computeNumberOfSecondLevelCommandBuffers(
-			ctx.m_renderQueue->m_earlyZRenderables.getSize() + ctx.m_renderQueue->m_renderables.getSize()));
+			U32(ctx.m_renderQueue->m_earlyZRenderables.getSize() + ctx.m_renderQueue->m_renderables.getSize())));
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{

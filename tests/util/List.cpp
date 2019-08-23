@@ -91,7 +91,7 @@ ANKI_TEST(Util, List)
 
 		for(U i = 0; i < COUNT; i++)
 		{
-			I randVal = rand();
+			I32 randVal = rand();
 			Foo f(randVal);
 
 			a.pushBack(alloc, f);

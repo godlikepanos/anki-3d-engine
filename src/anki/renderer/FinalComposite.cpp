@@ -51,7 +51,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
 	consts.add("LUT_SIZE", U32(LUT_SIZE))
 		.add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()))
-		.add("MOTION_BLUR_SAMPLES", U32(config.getNumber("r.final.motionBlurSamples")));
+		.add("MOTION_BLUR_SAMPLES", config.getNumberU32("r.final.motionBlurSamples"));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);

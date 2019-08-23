@@ -10,15 +10,16 @@
 #include <anki/util/Filesystem.h>
 #include <anki/core/Trace.h>
 
-#if defined(__GNUC__)
+#if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wundef"
+#	pragma GCC diagnostic ignored "-Wconversion"
 #endif
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include <glslang/StandAlone/DirStackFileIncluder.h>
 #include <SPIRV-Cross/spirv_glsl.hpp>
-#if defined(__GNUC__)
+#if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic pop
 #endif
 
@@ -27,7 +28,7 @@ namespace anki
 
 void ShaderCompilerOptions::setFromGrManager(const GrManager& gr)
 {
-#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
+#if ANKI_GR_BACKEND_VULKAN
 	m_outLanguage = ShaderLanguage::SPIRV;
 #else
 	m_outLanguage = ShaderLanguage::GLSL;

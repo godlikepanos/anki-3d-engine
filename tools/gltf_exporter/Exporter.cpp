@@ -68,10 +68,10 @@ void Exporter::getAttributeInfo(const tinygltf::Primitive& primitive,
 	Format& fmt) const
 {
 	const tinygltf::Accessor& accessor = m_model.accessors[primitive.attributes.find(attribName.cstr())->second];
-	count = accessor.count;
+	count = U32(accessor.count);
 	const tinygltf::BufferView& view = m_model.bufferViews[accessor.bufferView];
 	buff = reinterpret_cast<const U8*>(&(m_model.buffers[view.buffer].data[accessor.byteOffset + view.byteOffset]));
-	stride = view.byteStride;
+	stride = U32(view.byteStride);
 	ANKI_ASSERT(stride > 0);
 
 	const Bool normalized = accessor.normalized;
@@ -235,7 +235,7 @@ Error Exporter::exportMesh(const tinygltf::Mesh& mesh)
 		case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
 			for(U i = 0; i < indices.getSize(); ++i)
 			{
-				indices[i] = *reinterpret_cast<const U32*>(buffer.data[i * sizeof(U32)]);
+				indices[i] = U16(*reinterpret_cast<const U32*>(buffer.data[i * sizeof(U32)]));
 			}
 			break;
 		case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT:
@@ -426,10 +426,10 @@ Error Exporter::exportMesh(const tinygltf::Mesh& mesh)
 			w.m_boneIndices[3] = inIdxs[3];
 
 			const F32* inW = reinterpret_cast<const F32*>(&weights[v * weightsStride]);
-			w.m_weights[0] = inW[0] * 0xFF;
-			w.m_weights[1] = inW[1] * 0xFF;
-			w.m_weights[2] = inW[2] * 0xFF;
-			w.m_weights[3] = inW[3] * 0xFF;
+			w.m_weights[0] = U8(inW[0] * 0xFF);
+			w.m_weights[1] = U8(inW[1] * 0xFF);
+			w.m_weights[2] = U8(inW[2] * 0xFF);
+			w.m_weights[3] = U8(inW[3] * 0xFF);
 		}
 	}
 
@@ -562,7 +562,7 @@ Error Exporter::exportMesh(const tinygltf::Mesh& mesh)
 			header.m_flags |= MeshBinaryFile::Flag::CONVEX;
 		}
 		header.m_indexType = IndexType::U16;
-		header.m_totalIndexCount = indices.getSize();
+		header.m_totalIndexCount = U32(indices.getSize());
 		header.m_totalVertexCount = vertCount;
 		header.m_subMeshCount = 1;
 		header.m_aabbMin = aabbMin;
@@ -651,8 +651,8 @@ Error Exporter::exportMesh(const tinygltf::Mesh& mesh)
 			if(uvfmt == Format::R16G16_UNORM)
 			{
 				assert(uv[0] <= 1.0 && uv[0] >= 0.0 && uv[1] <= 1.0 && uv[1] >= 0.0);
-				verts[i].m_uv[0] = uv[0] * 0xFFFF;
-				verts[i].m_uv[1] = uv[1] * 0xFFFF;
+				verts[i].m_uv[0] = U16(uv[0] * 0xFFFF);
+				verts[i].m_uv[1] = U16(uv[1] * 0xFFFF);
 			}
 			else if(uvfmt == Format::R16G16_SFLOAT)
 			{
@@ -704,12 +704,14 @@ Bool Exporter::getMaterialAttrib(const tinygltf::Material& mtl, CString attribNa
 		const tinygltf::Parameter& param = it->second;
 		if(param.has_number_value)
 		{
-			value = Vec4(param.number_value);
+			value = Vec4(F32(param.number_value));
 		}
 		else
 		{
-			value =
-				Vec4(param.ColorFactor()[0], param.ColorFactor()[1], param.ColorFactor()[2], param.ColorFactor()[3]);
+			value = Vec4(F32(param.ColorFactor()[0]),
+				F32(param.ColorFactor()[1]),
+				F32(param.ColorFactor()[2]),
+				F32(param.ColorFactor()[3]));
 		}
 
 		return true;

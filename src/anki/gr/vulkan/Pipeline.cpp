@@ -213,7 +213,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	vertCi.pVertexBindingDescriptions = &m_ci.m_vertBindings[0];
 
 	BitSet<MAX_VERTEX_ATTRIBUTES, U8> bindingSet = {false};
-	for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+	for(U32 i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
 	{
 		if(m_shaderAttributeMask.get(i))
 		{
@@ -221,7 +221,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 			attrib.binding = m_state.m_vertex.m_attributes[i].m_binding;
 			attrib.format = convertFormat(m_state.m_vertex.m_attributes[i].m_format);
 			attrib.location = i;
-			attrib.offset = m_state.m_vertex.m_attributes[i].m_offset;
+			attrib.offset = U32(m_state.m_vertex.m_attributes[i].m_offset);
 
 			if(!bindingSet.get(attrib.binding))
 			{

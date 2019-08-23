@@ -76,18 +76,18 @@ Error Renderer::init(ThreadHive* hive,
 Error Renderer::initInternal(const ConfigSet& config)
 {
 	// Set from the config
-	m_width = config.getNumber("width");
-	m_height = config.getNumber("height");
+	m_width = config.getNumberU32("width");
+	m_height = config.getNumberU32("height");
 	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
 
 	ANKI_ASSERT(m_lodDistances.getSize() == 2);
-	m_lodDistances[0] = config.getNumber("r.lodDistance0");
-	m_lodDistances[1] = config.getNumber("r.lodDistance1");
+	m_lodDistances[0] = config.getNumberF32("r.lodDistance0");
+	m_lodDistances[1] = config.getNumberF32("r.lodDistance1");
 	m_frameCount = 0;
 
-	m_clusterCount[0] = config.getNumber("r.clusterSizeX");
-	m_clusterCount[1] = config.getNumber("r.clusterSizeY");
-	m_clusterCount[2] = config.getNumber("r.clusterSizeZ");
+	m_clusterCount[0] = config.getNumberU32("r.clusterSizeX");
+	m_clusterCount[1] = config.getNumberU32("r.clusterSizeY");
+	m_clusterCount[2] = config.getNumberU32("r.clusterSizeZ");
 	m_clusterCount[3] = m_clusterCount[0] * m_clusterCount[1] * m_clusterCount[2];
 
 	m_clusterBin.init(m_alloc, m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], config);
@@ -201,7 +201,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 		sinit.m_addressing = SamplingAddressing::REPEAT;
 		m_samplers.m_trilinearRepeat = m_gr->newSampler(sinit);
 
-		sinit.m_anisotropyLevel = config.getNumber("r.textureAnisotropy");
+		sinit.m_anisotropyLevel = U8(config.getNumberU32("r.textureAnisotropy"));
 		m_samplers.m_trilinearRepeatAniso = m_gr->newSampler(sinit);
 	}
 
@@ -231,7 +231,7 @@ void Renderer::initJitteredMats()
 
 	for(U i = 0; i < 16; ++i)
 	{
-		Vec2 texSize(1.0f / Vec2(m_width, m_height)); // Texel size
+		Vec2 texSize(1.0f / Vec2(F32(m_width), F32(m_height))); // Texel size
 		texSize *= 2.0f; // Move it to NDC
 
 		Vec2 S = SAMPLE_LOCS_16[i] / 8.0f; // In [-1, 1]
@@ -254,7 +254,7 @@ void Renderer::initJitteredMats()
 
 	for(U i = 0; i < 8; ++i)
 	{
-		Vec2 texSize(1.0f / Vec2(m_width, m_height)); // Texel size
+		Vec2 texSize(1.0f / Vec2(F32(m_width), F32(m_height))); // Texel size
 		texSize *= 2.0f; // Move it to NDC
 
 		Vec2 S = SAMPLE_LOCS_8[i] / 8.0f; // In [-1, 1]
@@ -364,24 +364,6 @@ void Renderer::finalize(const RenderingContext& ctx)
 	}
 }
 
-Vec3 Renderer::unproject(
-	const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4])
-{
-	Mat4 invPm = projectionMat * modelViewMat;
-	invPm.invert();
-
-	// the vec is in NDC space meaning: -1<=vec.x<=1 -1<=vec.y<=1 -1<=vec.z<=1
-	Vec4 vec;
-	vec.x() = (2.0 * (windowCoords.x() - view[0])) / view[2] - 1.0;
-	vec.y() = (2.0 * (windowCoords.y() - view[1])) / view[3] - 1.0;
-	vec.z() = 2.0 * windowCoords.z() - 1.0;
-	vec.w() = 1.0;
-
-	Vec4 out = invPm * vec;
-	out /= out.w();
-	return out.xyz();
-}
-
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
 {
 	ANKI_ASSERT(
@@ -451,11 +433,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 	}
 	CommandBufferPtr cmdb = m_gr->newCommandBuffer(cmdbinit);
 
-	for(U mip = 0; mip < inf.m_mipmapCount; ++mip)
+	for(U32 mip = 0; mip < inf.m_mipmapCount; ++mip)
 	{
-		for(U face = 0; face < faceCount; ++face)
+		for(U32 face = 0; face < faceCount; ++face)
 		{
-			for(U layer = 0; layer < inf.m_layerCount; ++layer)
+			for(U32 layer = 0; layer < inf.m_layerCount; ++layer)
 			{
 				TextureSurfaceInfo surf(mip, 0, face, layer);
 
@@ -561,8 +543,8 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	// Start writing
 	blk->m_unprojectionParams = ctx.m_unprojParams;
 
-	blk->m_rendererSize = Vec2(m_width, m_height);
-	blk->m_time = HighRezTimer::getCurrentTime();
+	blk->m_rendererSize = Vec2(F32(m_width), F32(m_height));
+	blk->m_time = F32(HighRezTimer::getCurrentTime());
 	blk->m_near = ctx.m_renderQueue->m_cameraNear;
 
 	blk->m_clusterCount = UVec4(m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], m_clusterCount[3]);

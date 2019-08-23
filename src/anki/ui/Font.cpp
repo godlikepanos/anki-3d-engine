@@ -44,10 +44,10 @@ Error Font::init(const CString& filename, const std::initializer_list<U32>& font
 	U count = 0;
 	for(U32 height : fontHeights)
 	{
-		cfg.SizePixels = height;
+		cfg.SizePixels = F32(height);
 
 		m_fonts[count].m_imFont =
-			m_imFontAtlas->AddFontFromMemoryTTF(&m_fontData[0], m_fontData.getSize(), height, &cfg);
+			m_imFontAtlas->AddFontFromMemoryTTF(&m_fontData[0], I32(m_fontData.getSize()), F32(height), &cfg);
 		m_fonts[count].m_height = height;
 		++count;
 	}

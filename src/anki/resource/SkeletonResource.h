@@ -42,7 +42,7 @@ public:
 		return m_vertTrf;
 	}
 
-	U getIndex() const
+	U32 getIndex() const
 	{
 		return m_idx;
 	}

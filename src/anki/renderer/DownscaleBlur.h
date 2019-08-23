@@ -32,17 +32,17 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	U getPassWidth(U pass) const
+	U32 getPassWidth(U32 pass) const
 	{
-		return m_rtTex->getWidth() >> min<U32>(pass, m_passCount - 1);
+		return m_rtTex->getWidth() >> min(pass, m_passCount - 1);
 	}
 
-	U getPassHeight(U pass) const
+	U32 getPassHeight(U32 pass) const
 	{
-		return m_rtTex->getHeight() >> min<U32>(pass, m_passCount - 1);
+		return m_rtTex->getHeight() >> min(pass, m_passCount - 1);
 	}
 
-	U getMipmapCount() const
+	U32 getMipmapCount() const
 	{
 		return m_passCount;
 	}
@@ -56,7 +56,7 @@ private:
 	static const Bool m_useCompute = true;
 	Array<U32, 2> m_workgroupSize = {{16, 16}};
 
-	U8 m_passCount = 0; ///< It's also the mip count of the m_rtTex.
+	U32 m_passCount = 0; ///< It's also the mip count of the m_rtTex.
 
 	TexturePtr m_rtTex;
 

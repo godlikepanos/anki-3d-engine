@@ -10,14 +10,14 @@
 #include <anki/util/String.h>
 #include <anki/util/Ptr.h>
 #include <anki/ui/UiImmediateModeBuilder.h>
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
 #endif
 
 namespace anki
 {
 
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 extern android_app* gAndroidApp;
 #endif
 
@@ -47,7 +47,7 @@ public:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	F32 getTimerTick() const
+	Second getTimerTick() const
 	{
 		return m_timerTick;
 	}

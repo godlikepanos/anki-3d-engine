@@ -38,7 +38,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	ANKI_CHECK(m_manager->getResourceManager().loadResource("shaders/Ui.glslp", m_prog));
 	const ShaderProgramResourceVariant* variant;
 
-	for(U i = 0; i < SHADER_COUNT; ++i)
+	for(U32 i = 0; i < SHADER_COUNT; ++i)
 	{
 		ShaderProgramResourceMutationInitList<1> mutators(m_prog);
 		mutators.add("TEXTURE_TYPE", i);
@@ -112,21 +112,21 @@ void Canvas::handleInput()
 	Array<U32, 4> viewport = {{0, 0, m_width, m_height}};
 	Vec2 mousePosf = in.getMousePosition() / 2.0f + 0.5f;
 	mousePosf.y() = 1.0f - mousePosf.y();
-	const UVec2 mousePos(mousePosf.x() * viewport[2], mousePosf.y() * viewport[3]);
+	const UVec2 mousePos(U32(mousePosf.x() * F32(viewport[2])), U32(mousePosf.y() * F32(viewport[3])));
 
-	io.MousePos.x = mousePos.x();
-	io.MousePos.y = mousePos.y();
+	io.MousePos.x = F32(mousePos.x());
+	io.MousePos.y = F32(mousePos.y());
 
 	io.MouseClicked[0] = in.getMouseButton(MouseButton::LEFT) == 1;
 	io.MouseDown[0] = in.getMouseButton(MouseButton::LEFT) > 0;
 
 	if(in.getMouseButton(MouseButton::SCROLL_UP) == 1)
 	{
-		io.MouseWheel = in.getMouseButton(MouseButton::SCROLL_UP);
+		io.MouseWheel = F32(in.getMouseButton(MouseButton::SCROLL_UP));
 	}
 	else if(in.getMouseButton(MouseButton::SCROLL_DOWN) == 1)
 	{
-		io.MouseWheel = -I32(in.getMouseButton(MouseButton::SCROLL_DOWN));
+		io.MouseWheel = -F32(in.getMouseButton(MouseButton::SCROLL_DOWN));
 	}
 
 // Handle keyboard
@@ -171,7 +171,7 @@ void Canvas::beginBuilding()
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.DeltaTime = 1.0f / 60.0f;
-	io.DisplaySize = ImVec2(m_width, m_height);
+	io.DisplaySize = ImVec2(F32(m_width), F32(m_height));
 
 	ImGui::NewFrame();
 	ImGui::PushFont(&m_font->getImFont(m_dfltFontHeight));
@@ -203,8 +203,8 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	// Allocate index and vertex buffers
 	StagingGpuMemoryToken vertsToken, indicesToken;
 	{
-		const U32 verticesSize = drawData.TotalVtxCount * sizeof(ImDrawVert);
-		const U32 indicesSize = drawData.TotalIdxCount * sizeof(ImDrawIdx);
+		const U32 verticesSize = U32(drawData.TotalVtxCount) * sizeof(ImDrawVert);
+		const U32 indicesSize = U32(drawData.TotalIdxCount) * sizeof(ImDrawIdx);
 
 		if(verticesSize == 0 || indicesSize == 0)
 		{
@@ -229,9 +229,9 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 	cmdb->setCullMode(FaceSelectionBit::NONE);
 
-	const U fbWidth = drawData.DisplaySize.x * drawData.FramebufferScale.x;
-	const U fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
-	cmdb->setViewport(0, 0, fbWidth, fbHeight);
+	const F32 fbWidth = drawData.DisplaySize.x * drawData.FramebufferScale.x;
+	const F32 fbHeight = drawData.DisplaySize.y * drawData.FramebufferScale.y;
+	cmdb->setViewport(0, 0, U32(fbWidth), U32(fbHeight));
 
 	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(ImDrawVert));
 	cmdb->setVertexAttribute(0, 0, Format::R32G32_SFLOAT, 0);
@@ -247,12 +247,12 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 	const Vec2 clipScale = drawData.FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
 	// Render
-	U vertOffset = 0;
-	U idxOffset = 0;
-	for(I n = 0; n < drawData.CmdListsCount; n++)
+	U32 vertOffset = 0;
+	U32 idxOffset = 0;
+	for(I32 n = 0; n < drawData.CmdListsCount; n++)
 	{
 		const ImDrawList& cmdList = *drawData.CmdLists[n];
-		for(I i = 0; i < cmdList.CmdBuffer.Size; i++)
+		for(I32 i = 0; i < cmdList.CmdBuffer.Size; i++)
 		{
 			const ImDrawCmd& pcmd = cmdList.CmdBuffer[i];
 			if(pcmd.UserCallback)
@@ -282,8 +282,10 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					}
 
 					// Apply scissor/clipping rectangle
-					cmdb->setScissor(
-						clipRect.x(), clipRect.y(), clipRect.z() - clipRect.x(), clipRect.w() - clipRect.y());
+					cmdb->setScissor(U32(clipRect.x()),
+						U32(clipRect.y()),
+						U32(clipRect.z() - clipRect.x()),
+						U32(clipRect.w() - clipRect.y()));
 
 					if(pcmd.TextureId)
 					{

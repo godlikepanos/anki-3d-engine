@@ -122,8 +122,8 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 	ANKI_GLTF_LOGI("Exporting %s", fname.cstr());
 
 	DynamicArrayAuto<SubMesh> submeshes(m_alloc);
-	U totalVertCount = 0;
-	U totalIndexCount = 0;
+	U32 totalVertCount = 0;
+	U32 totalIndexCount = 0;
 	Vec3 aabbMin(MAX_F32);
 	Vec3 aabbMax(MIN_F32);
 	F32 maxUvDistance = MIN_F32;
@@ -175,7 +175,7 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		aabbMin = aabbMin.min(submesh.m_aabbMin);
 		aabbMax = aabbMax.min(submesh.m_aabbMax);
 
-		const U vertCount = submesh.m_positions.getSize();
+		const U32 vertCount = U32(submesh.m_positions.getSize());
 		if(submesh.m_positions.getSize() == 0)
 		{
 			ANKI_GLTF_LOGE("Zero size of positions");
@@ -258,12 +258,12 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 				}
 
 				ANKI_ASSERT(idx < MAX_U16);
-				submesh.m_indices[i] = idx;
+				submesh.m_indices[i] = U16(idx);
 			}
 
 			submesh.m_firstIdx = totalIndexCount;
-			submesh.m_idxCount = primitive->indices->count;
-			totalIndexCount += primitive->indices->count;
+			submesh.m_idxCount = U32(primitive->indices->count);
+			totalIndexCount += U32(primitive->indices->count);
 		}
 
 		//
@@ -463,7 +463,7 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 		header.m_indexType = IndexType::U16;
 		header.m_totalIndexCount = totalIndexCount;
 		header.m_totalVertexCount = totalVertCount;
-		header.m_subMeshCount = submeshes.getSize();
+		header.m_subMeshCount = U32(submeshes.getSize());
 		header.m_aabbMin = aabbMin;
 		header.m_aabbMax = aabbMax;
 	}
@@ -554,8 +554,8 @@ Error Importer::writeMesh(const cgltf_mesh& mesh)
 			if(uvfmt == Format::R16G16_UNORM)
 			{
 				assert(uv[0] <= 1.0 && uv[0] >= 0.0 && uv[1] <= 1.0 && uv[1] >= 0.0);
-				verts[i].m_uv[0] = uv[0] * 0xFFFF;
-				verts[i].m_uv[1] = uv[1] * 0xFFFF;
+				verts[i].m_uv[0] = U16(uv[0] * 0xFFFF);
+				verts[i].m_uv[1] = U16(uv[1] * 0xFFFF);
 			}
 			else if(uvfmt == Format::R16G16_SFLOAT)
 			{

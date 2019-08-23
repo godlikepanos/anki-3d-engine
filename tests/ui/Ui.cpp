@@ -143,7 +143,7 @@ ANKI_TEST(Ui, Ui)
 			stagingMem->endFrame();
 
 			timer.stop();
-			const F32 TICK = 1.0 / 30.0;
+			const F32 TICK = 1.0f / 30.0f;
 			if(timer.getElapsedTime() < TICK)
 			{
 				HighRezTimer::sleep(TICK - timer.getElapsedTime());

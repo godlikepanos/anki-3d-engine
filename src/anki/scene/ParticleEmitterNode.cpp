@@ -19,18 +19,12 @@
 namespace anki
 {
 
-static F32 getRandom(F32 min, F32 max)
-{
-	F32 factor = randFloat(1.0f);
-	return mix(min, max, factor);
-}
-
 static Vec3 getRandom(const Vec3& min, const Vec3& max)
 {
 	Vec3 out;
-	out.x() = mix(min.x(), max.x(), randFloat(1.0f));
-	out.y() = mix(min.y(), max.y(), randFloat(1.0f));
-	out.z() = mix(min.z(), max.z(), randFloat(1.0f));
+	out.x() = mix(min.x(), max.x(), getRandomRange(0.0f, 1.0f));
+	out.y() = mix(min.y(), max.y(), getRandomRange(0.0f, 1.0f));
+	out.z() = mix(min.z(), max.z(), getRandomRange(0.0f, 1.0f));
 	return out;
 }
 
@@ -74,22 +68,22 @@ public:
 		ANKI_ASSERT(isDead());
 
 		// life
-		m_timeOfDeath = crntTime + getRandom(props.m_particle.m_minLife, props.m_particle.m_maxLife);
+		m_timeOfDeath = crntTime + getRandomRange(props.m_particle.m_minLife, props.m_particle.m_maxLife);
 		m_timeOfBirth = crntTime;
 
 		// Size
-		m_initialSize = getRandom(props.m_particle.m_minInitialSize, props.m_particle.m_maxInitialSize);
-		m_finalSize = getRandom(props.m_particle.m_minFinalSize, props.m_particle.m_maxFinalSize);
+		m_initialSize = getRandomRange(props.m_particle.m_minInitialSize, props.m_particle.m_maxInitialSize);
+		m_finalSize = getRandomRange(props.m_particle.m_minFinalSize, props.m_particle.m_maxFinalSize);
 
 		// Alpha
-		m_initialAlpha = getRandom(props.m_particle.m_minInitialAlpha, props.m_particle.m_maxInitialAlpha);
-		m_finalAlpha = getRandom(props.m_particle.m_minFinalAlpha, props.m_particle.m_maxFinalAlpha);
+		m_initialAlpha = getRandomRange(props.m_particle.m_minInitialAlpha, props.m_particle.m_maxInitialAlpha);
+		m_finalAlpha = getRandomRange(props.m_particle.m_minFinalAlpha, props.m_particle.m_maxFinalAlpha);
 	}
 
 	/// Common sumulation code
 	virtual void simulate(Second prevUpdateTime, Second crntTime)
 	{
-		const F32 lifeFactor = (crntTime - m_timeOfBirth) / (m_timeOfDeath - m_timeOfBirth);
+		const F32 lifeFactor = F32((crntTime - m_timeOfBirth) / (m_timeOfDeath - m_timeOfBirth));
 
 		m_crntSize = mix(m_initialSize, m_finalSize, lifeFactor);
 		m_crntAlpha = mix(m_initialAlpha, m_finalAlpha, lifeFactor);
@@ -122,7 +116,7 @@ public:
 	{
 		ParticleBase::simulate(prevUpdateTime, crntTime);
 
-		Second dt = crntTime - prevUpdateTime;
+		F32 dt = F32(crntTime - prevUpdateTime);
 
 		Vec4 xp = m_crntPosition;
 		Vec4 xc = m_acceleration * (dt * dt) + m_velocity * dt + xp;
@@ -179,7 +173,8 @@ public:
 			// the forceDir depends on the particle emitter rotation
 			forceDir = trf.getRotation().getRotationPart() * forceDir;
 
-			const F32 forceMag = getRandom(props.m_particle.m_minForceMagnitude, props.m_particle.m_maxForceMagnitude);
+			const F32 forceMag =
+				getRandomRange(props.m_particle.m_minForceMagnitude, props.m_particle.m_maxForceMagnitude);
 			m_body->applyForce(forceDir * forceMag, Vec3(0.0f));
 		}
 
@@ -313,7 +308,7 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 
 		// Program
 		ShaderProgramPtr prog;
-		self.m_particleEmitterResource->getRenderingInfo(ctx.m_key.m_lod, prog);
+		self.m_particleEmitterResource->getRenderingInfo(ctx.m_key.getLod(), prog);
 		cmdb->bindShaderProgram(prog);
 
 		// Vertex attribs
@@ -363,7 +358,7 @@ void ParticleEmitterNode::createParticlesPhysicsSimulation(SceneGraph* scene)
 
 	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
-		binit.m_mass = getRandom(m_particle.m_minMass, m_particle.m_maxMass);
+		binit.m_mass = getRandomRange(m_particle.m_minMass, m_particle.m_maxMass);
 
 		PhysParticle* part = getAllocator().newInstance<PhysParticle>(binit, this);
 

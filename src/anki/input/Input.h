@@ -48,12 +48,12 @@ public:
 		return initInternal(nativeWindow);
 	}
 
-	U getKey(KeyCode i) const
+	U32 getKey(KeyCode i) const
 	{
-		return m_keys[static_cast<U>(i)];
+		return m_keys[i];
 	}
 
-	U getMouseButton(MouseButton i) const
+	U32 getMouseButton(MouseButton i) const
 	{
 		return m_mouseBtns[i];
 	}

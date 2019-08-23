@@ -64,7 +64,7 @@ Thread::~Thread()
 	m_impl = nullptr;
 }
 
-void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
+void Thread::start(void* userData, ThreadCallback callback, I32 pinToCore)
 {
 	ANKI_ASSERT(!m_started);
 	ANKI_ASSERT(callback != nullptr);
@@ -115,7 +115,7 @@ Error Thread::join()
 #endif
 
 	// Set return error code
-	Error code = static_cast<Error>(ptrToNumber(out));
+	Error code = Error(I32(ptrToNumber(out)));
 	return code;
 }
 

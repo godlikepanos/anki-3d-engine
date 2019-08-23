@@ -43,32 +43,32 @@ public:
 		return m_texView;
 	}
 
-	U getWidth() const
+	U32 getWidth() const
 	{
 		ANKI_ASSERT(m_size.x());
 		return m_size.x();
 	}
 
-	U getHeight() const
+	U32 getHeight() const
 	{
 		ANKI_ASSERT(m_size.y());
 		return m_size.y();
 	}
 
-	U getDepth() const
+	U32 getDepth() const
 	{
 		ANKI_ASSERT(m_size.z());
 		return m_size.z();
 	}
 
-	U getLayerCount() const
+	U32 getLayerCount() const
 	{
 		ANKI_ASSERT(m_layerCount);
 		return m_layerCount;
 	}
 
 private:
-	static constexpr U MAX_COPIES_BEFORE_FLUSH = 4;
+	static constexpr U32 MAX_COPIES_BEFORE_FLUSH = 4;
 
 	class TexUploadTask;
 	class LoadingContext;

@@ -363,7 +363,7 @@ void LuaBinder::serializeGlobals(lua_State* l, LuaBinderSerializeGlobalsCallback
 				callback.write(&ud->getDataTypeInfo().m_signature, sizeof(ud->getDataTypeInfo().m_signature));
 
 				// Write data
-				U32 size = dumpSize;
+				PtrSize size = dumpSize;
 				callback.write(&size, sizeof(size));
 				callback.write(&buff[0], dumpSize);
 			}
@@ -425,7 +425,7 @@ void LuaBinder::deserializeGlobals(lua_State* l, const void* data, PtrSize dataS
 			ptr += sizeof(sig);
 
 			// Get input data size
-			const U32 dataSize = *reinterpret_cast<const U32*>(ptr);
+			const PtrSize dataSize = *reinterpret_cast<const PtrSize*>(ptr);
 			ptr += sizeof(dataSize);
 
 			// Get the type info

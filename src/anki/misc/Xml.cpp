@@ -237,7 +237,7 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 		++count;
 	} while(el);
 
-	out = count;
+	out = U32(count);
 
 	return Error::NONE;
 }

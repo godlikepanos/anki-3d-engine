@@ -18,11 +18,11 @@ namespace anki
 Error VolumetricFog::init(const ConfigSet& config)
 {
 	// Misc
-	const U fractionXY = config.getNumber("r.volumetricLightingAccumulation.clusterFractionXY");
+	const U32 fractionXY = config.getNumberU32("r.volumetricLightingAccumulation.clusterFractionXY");
 	ANKI_ASSERT(fractionXY >= 1);
-	const U fractionZ = config.getNumber("r.volumetricLightingAccumulation.clusterFractionZ");
+	const U32 fractionZ = config.getNumberU32("r.volumetricLightingAccumulation.clusterFractionZ");
 	ANKI_ASSERT(fractionZ >= 1);
-	m_finalClusterZ = config.getNumber("r.volumetricLightingAccumulation.finalClusterInZ");
+	m_finalClusterZ = config.getNumberU32("r.volumetricLightingAccumulation.finalClusterInZ");
 	ANKI_ASSERT(m_finalClusterZ > 0 && m_finalClusterZ < m_r->getClusterCount()[2]);
 
 	m_volumeSize[0] = m_r->getClusterCount()[0] * fractionXY;

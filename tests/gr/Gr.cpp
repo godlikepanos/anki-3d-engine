@@ -309,7 +309,7 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 	gr = nullptr; \
 	stagingMem = nullptr;
 
-static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
+static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
 	StagingGpuMemoryToken token;
 	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::UNIFORM, token);
@@ -317,7 +317,7 @@ static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 	return ptr;
 }
 
-static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
+static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U32 set, U32 binding)
 {
 	StagingGpuMemoryToken token;
 	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::STORAGE, token);
@@ -469,7 +469,7 @@ ANKI_TEST(Gr, ClearScreen)
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 30.0;
+		const F32 TICK = 1.0f / 30.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -511,7 +511,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 30.0;
+		const F32 TICK = 1.0f / 30.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -580,7 +580,7 @@ ANKI_TEST(Gr, ViewportAndScissor)
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 30.0;
+		const F32 TICK = 1.0f / 30.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -593,7 +593,7 @@ ANKI_TEST(Gr, ViewportAndScissor)
 
 ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 {
-	srand(time(nullptr));
+	srand(U32(time(nullptr)));
 	COMMON_BEGIN()
 
 	ANKI_TEST_LOGI("Expect to see a grey quad appearing in the 4 corners. "
@@ -629,7 +629,8 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 
 		FramebufferInitInfo fbinit;
 		fbinit.m_colorAttachmentCount = 1;
-		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{randFloat(1.0), randFloat(1.0), randFloat(1.0), 1.0}};
+		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {
+			{getRandomRange(0.0f, 1.0f), getRandomRange(0.0f, 1.0f), getRandomRange(0.0f, 1.0f), 1.0}};
 		fbinit.m_colorAttachments[0].m_textureView = view;
 
 		f = gr->newFramebuffer(fbinit);
@@ -640,15 +641,15 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	samplerInit.m_mipmapFilter = SamplingFilter::BASE;
 	SamplerPtr sampler = gr->newSampler(samplerInit);
 
-	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
+	static const Array2d<U32, 4, 4> VIEWPORTS = {{{{0, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
 		{{RT_WIDTH / 2, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
 		{{RT_WIDTH / 2, RT_HEIGHT / 2, RT_WIDTH / 2, RT_HEIGHT / 2}},
 		{{0, RT_HEIGHT / 2, RT_WIDTH / 2, RT_HEIGHT / 2}}}};
 
-	const U ITERATIONS = 400;
-	const U SCISSOR_MARGIN = 2;
-	const U RENDER_AREA_MARGIN = 1;
-	for(U i = 0; i < ITERATIONS; ++i)
+	const U32 ITERATIONS = 400;
+	const U32 SCISSOR_MARGIN = 2;
+	const U32 RENDER_AREA_MARGIN = 1;
+	for(U32 i = 0; i < ITERATIONS; ++i)
 	{
 		HighRezTimer timer;
 		timer.start();
@@ -720,7 +721,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 30.0;
+		const F32 TICK = 1.0f / 30.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -794,7 +795,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 		// Uploaded buffer
 		Vec4* rotMat = SET_UNIFORMS(Vec4*, sizeof(Vec4), cmdb, 0, 1);
-		F32 angle = toRad(360.0f / ITERATION_COUNT * iterations);
+		F32 angle = toRad(360.0f / F32(ITERATION_COUNT) * F32(iterations));
 		(*rotMat)[0] = cos(angle);
 		(*rotMat)[1] = -sin(angle);
 		(*rotMat)[2] = sin(angle);
@@ -808,7 +809,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 30.0;
+		const F32 TICK = 1.0f / 30.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -888,7 +889,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 30.0;
+		const F32 TICK = 1.0f / 30.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -1070,7 +1071,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	cmdb->setTextureSurfaceBarrier(
 		a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(1, 0, 0, 0));
 
-	for(U i = 0; i < 3; ++i)
+	for(U32 i = 0; i < 3; ++i)
 	{
 		cmdb->setTextureSurfaceBarrier(
 			b, TextureUsageBit::GENERATE_MIPMAPS, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(i, 0, 0, 0));
@@ -1119,7 +1120,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 30.0;
+		const F32 TICK = 1.0f / 30.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -1132,7 +1133,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 static void drawOffscreenDrawcalls(GrManager& gr,
 	ShaderProgramPtr prog,
 	CommandBufferPtr cmdb,
-	U viewPortSize,
+	U32 viewPortSize,
 	BufferPtr indexBuff,
 	BufferPtr vertBuff)
 {
@@ -1142,7 +1143,7 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 	Mat4 viewMat(Vec4(0.0, 0.0, 5.0, 1.0), Mat3::getIdentity(), 1.0f);
 	viewMat.invert();
 
-	Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(60.0), toRad(60.0), 0.1f, 100.0f);
+	Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(60.0f), toRad(60.0f), 0.1f, 100.0f);
 
 	Mat4 modelMat(Vec4(-0.5, -0.5, 0.0, 1.0), Mat3(Euler(ang, ang / 2.0f, ang / 3.0f)), 1.0f);
 
@@ -1161,7 +1162,7 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 	cmdb->drawElements(PrimitiveTopology::TRIANGLES, 6 * 2 * 3);
 
 	// 2nd draw
-	modelMat = Mat4(Vec4(0.5, 0.5, 0.0, 1.0), Mat3(Euler(ang * 2.0, ang, ang / 3.0f * 2.0)), 1.0f);
+	modelMat = Mat4(Vec4(0.5, 0.5, 0.0, 1.0), Mat3(Euler(ang * 2.0f, ang, ang / 3.0f * 2.0f)), 1.0f);
 
 	mvp = SET_UNIFORMS(Mat4*, sizeof(*mvp), cmdb, 0, 0);
 	*mvp = projMat * viewMat * modelMat;
@@ -1208,9 +1209,9 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	FramebufferInitInfo fbinit;
 	fbinit.m_colorAttachmentCount = 2;
 	fbinit.m_colorAttachments[0].m_textureView = gr.newTextureView(TextureViewInitInfo(col0));
-	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{0.1, 0.0, 0.0, 0.0}};
+	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{0.1f, 0.0f, 0.0f, 0.0f}};
 	fbinit.m_colorAttachments[1].m_textureView = gr.newTextureView(TextureViewInitInfo(col1));
-	fbinit.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0, 0.1, 0.0, 0.0}};
+	fbinit.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0f, 0.1f, 0.0f, 0.0f}};
 	TextureViewInitInfo viewInit(dp);
 	viewInit.m_depthStencilAspect = DepthStencilAspectBit::DEPTH;
 	fbinit.m_depthStencilAttachment.m_textureView = gr.newTextureView(viewInit);
@@ -1311,7 +1312,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		gr.swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 30.0;
+		const F32 TICK = 1.0f / 30.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -1408,7 +1409,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		// Write image
 		Vec4* col = SET_STORAGE(Vec4*, sizeof(*col), cmdb, 1, 0);
-		*col = Vec4(iterations / F32(ITERATION_COUNT));
+		*col = Vec4(F32(iterations) / F32(ITERATION_COUNT));
 
 		cmdb->setTextureSurfaceBarrier(
 			tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, TextureSurfaceInfo(1, 0, 0, 0));
@@ -1440,7 +1441,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 30.0;
+		const F32 TICK = 1.0f / 30.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -1578,7 +1579,7 @@ ANKI_TEST(Gr, 3DTextures)
 
 		Vec4* uv = SET_UNIFORMS(Vec4*, sizeof(Vec4), cmdb, 0, 0);
 
-		U idx = (F32(ITERATION_COUNT - iterations - 1) / ITERATION_COUNT) * TEX_COORDS_LOD.getSize();
+		U32 idx = U32((F32(ITERATION_COUNT - iterations - 1) / F32(ITERATION_COUNT)) * F32(TEX_COORDS_LOD.getSize()));
 		*uv = TEX_COORDS_LOD[idx];
 
 		cmdb->bindTextureAndSampler(
@@ -1594,7 +1595,7 @@ ANKI_TEST(Gr, 3DTextures)
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0 / 15.0;
+		const F32 TICK = 1.0f / 15.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
@@ -1658,7 +1659,7 @@ ANKI_TEST(Gr, RenderGraph)
 
 	// GI light
 	RenderTargetHandle giGiLightRt = descr.importRenderTarget(dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
-	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, 0));
 
@@ -1672,12 +1673,12 @@ ANKI_TEST(Gr, RenderGraph)
 
 	// GI light mips
 	{
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass =
 				descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI mip%u", faceIdx).toCString());
 
-			for(U mip = 0; mip < GI_MIP_COUNT; ++mip)
+			for(U32 mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
 				TextureSurfaceInfo surf(mip, 0, faceIdx, 0);
 				pass.newDependency({giGiLightRt, TextureUsageBit::GENERATE_MIPMAPS, surf});
@@ -1872,11 +1873,11 @@ void main()
 	BufferPtr uploadBuff = gr->newBuffer(BufferInitInfo(
 		texInit.m_width * texInit.m_height * 3, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::WRITE));
 	U8* data = static_cast<U8*>(uploadBuff->map(0, uploadBuff->getSize(), BufferMapAccessBit::WRITE));
-	for(U i = 0; i < texInit.m_width * texInit.m_height; ++i)
+	for(U32 i = 0; i < texInit.m_width * texInit.m_height; ++i)
 	{
-		data[0] = i;
-		data[1] = i + 1;
-		data[2] = i + 2;
+		data[0] = U8(i);
+		data[1] = U8(i + 1);
+		data[2] = U8(i + 2);
 		data += 3;
 	}
 	uploadBuff->unmap();
@@ -1886,9 +1887,9 @@ void main()
 	data = static_cast<U8*>(uploadBuff2->map(0, uploadBuff2->getSize(), BufferMapAccessBit::WRITE));
 	for(U i = 0; i < (texInit.m_width >> 1) * (texInit.m_height >> 1); ++i)
 	{
-		data[0] = i;
-		data[1] = i + 1;
-		data[2] = i + 2;
+		data[0] = U8(i);
+		data[1] = U8(i + 1);
+		data[2] = U8(i + 2);
 		data += 3;
 	}
 	uploadBuff2->unmap();
@@ -2226,7 +2227,7 @@ void main()
 	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-	for(U i = 0; i < uniformBuffers.getSize(); ++i)
+	for(U32 i = 0; i < uniformBuffers.getSize(); ++i)
 	{
 		cmdb->bindUniformBuffer(0, 0, uniformBuffers[i], 0, MAX_PTR_SIZE, i);
 	}

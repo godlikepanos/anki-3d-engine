@@ -38,7 +38,7 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 {
 	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/TemporalAAResolve.glslp", m_prog));
 
-	for(U i = 0; i < 2; ++i)
+	for(U32 i = 0; i < 2; ++i)
 	{
 		ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
 		consts.add("VARIANCE_CLIPPING_GAMMA", 1.7f)

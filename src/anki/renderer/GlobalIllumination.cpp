@@ -15,7 +15,7 @@ namespace anki
 {
 
 /// Given a cell index compute its world position.
-static Vec3 computeProbeCellPosition(U cellIdx, const GlobalIlluminationProbeQueueElement& probe)
+static Vec3 computeProbeCellPosition(U32 cellIdx, const GlobalIlluminationProbeQueueElement& probe)
 {
 	ANKI_ASSERT(cellIdx < probe.m_totalCellCount);
 
@@ -88,7 +88,7 @@ void GlobalIllumination::setRenderGraphDependencies(
 void GlobalIllumination::bindVolumeTextures(
 	const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, U32 set, U32 binding) const
 {
-	for(U idx = 0; idx < MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES; ++idx)
+	for(U32 idx = 0; idx < MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES; ++idx)
 	{
 		if(idx < ctx.m_renderQueue->m_giProbes.getSize())
 		{
@@ -117,9 +117,9 @@ Error GlobalIllumination::init(const ConfigSet& cfg)
 
 Error GlobalIllumination::initInternal(const ConfigSet& cfg)
 {
-	m_tileSize = cfg.getNumber("r.gi.tileResolution");
-	m_cacheEntries.create(getAllocator(), cfg.getNumber("r.gi.maxCachedProbes"));
-	m_maxVisibleProbes = cfg.getNumber("r.gi.maxVisibleProbes");
+	m_tileSize = cfg.getNumberU32("r.gi.tileResolution");
+	m_cacheEntries.create(getAllocator(), cfg.getNumberU32("r.gi.maxCachedProbes"));
+	m_maxVisibleProbes = cfg.getNumberU32("r.gi.maxVisibleProbes");
 	ANKI_ASSERT(m_maxVisibleProbes <= MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES);
 	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
 
@@ -175,7 +175,7 @@ Error GlobalIllumination::initGBuffer(const ConfigSet& cfg)
 
 Error GlobalIllumination::initShadowMapping(const ConfigSet& cfg)
 {
-	const U resolution = cfg.getNumber("r.gi.shadowMapResolution");
+	const U32 resolution = cfg.getNumberU32("r.gi.shadowMapResolution");
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -264,18 +264,19 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 	}
 
 	// Compute task counts for some of the passes
-	U gbufferTaskCount, smTaskCount;
+	U32 gbufferTaskCount, smTaskCount;
 	{
 		giCtx->m_gbufferDrawcallCount = 0;
 		giCtx->m_smDrawcallCount = 0;
 		for(const RenderQueue* rq : giCtx->m_probeToUpdateThisFrame->m_renderQueues)
 		{
 			ANKI_ASSERT(rq);
-			giCtx->m_gbufferDrawcallCount += rq->m_renderables.getSize();
+			giCtx->m_gbufferDrawcallCount += U32(rq->m_renderables.getSize());
 
 			if(rq->m_directionalLight.hasShadow())
 			{
-				giCtx->m_smDrawcallCount += rq->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize();
+				giCtx->m_smDrawcallCount +=
+					U32(rq->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize());
 			}
 		}
 
@@ -499,7 +500,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 
 			foundProbeToUpdateNextFrame = true;
 
-			const U cellToRender = (cacheEntryDirty) ? 0 : entry.m_renderedCells;
+			const U32 cellToRender = (cacheEntryDirty) ? 0 : entry.m_renderedCells;
 			const Vec3 cellPos = computeProbeCellPosition(cellToRender, probe);
 			probe.m_feedbackCallback(true, probe.m_feedbackCallbackUserData, cellPos.xyz0());
 			continue;
@@ -542,7 +543,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 		}
 
 		// Compute the render position
-		const U cellToRender = entry.m_renderedCells++;
+		const U32 cellToRender = entry.m_renderedCells++;
 		ANKI_ASSERT(cellToRender < probe.m_totalCellCount);
 		unflatten3dArrayIndex(probe.m_cellCounts.z(),
 			probe.m_cellCounts.y(),
@@ -602,19 +603,22 @@ void GlobalIllumination::runGBufferInThread(RenderPassWorkContext& rgraphCtx, In
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
 
-	I start, end;
+	I32 start, end;
+	U32 startu, endu;
 	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex,
 		rgraphCtx.m_secondLevelCommandBufferCount,
 		giCtx.m_gbufferDrawcallCount,
-		start,
-		end);
+		startu,
+		endu);
+	start = I32(startu);
+	end = I32(endu);
 
-	I drawcallCount = 0;
-	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	I32 drawcallCount = 0;
+	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
-		const I faceDrawcallCount = I(probe.m_renderQueues[faceIdx]->m_renderables.getSize());
-		const I localStart = max(I(0), start - drawcallCount);
-		const I localEnd = min(faceDrawcallCount, end - drawcallCount);
+		const I32 faceDrawcallCount = I32(probe.m_renderQueues[faceIdx]->m_renderables.getSize());
+		const I32 localStart = max(I32(0), start - drawcallCount);
+		const I32 localEnd = min(faceDrawcallCount, end - drawcallCount);
 
 		if(localStart < localEnd)
 		{
@@ -638,7 +642,7 @@ void GlobalIllumination::runGBufferInThread(RenderPassWorkContext& rgraphCtx, In
 
 		drawcallCount += faceDrawcallCount;
 	}
-	ANKI_ASSERT(giCtx.m_gbufferDrawcallCount == drawcallCount);
+	ANKI_ASSERT(giCtx.m_gbufferDrawcallCount == U32(drawcallCount));
 
 	// It's secondary, no need to restore the state
 }
@@ -650,18 +654,21 @@ void GlobalIllumination::runShadowmappingInThread(RenderPassWorkContext& rgraphC
 
 	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
 
-	I start, end;
+	I32 start, end;
+	U32 startu, endu;
 	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex,
 		rgraphCtx.m_secondLevelCommandBufferCount,
 		giCtx.m_smDrawcallCount,
-		start,
-		end);
+		startu,
+		endu);
+	start = I32(startu);
+	end = I32(endu);
 
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->setPolygonOffset(1.0f, 1.0f);
 
-	I drawcallCount = 0;
-	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	I32 drawcallCount = 0;
+	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
 		const RenderQueue& faceRenderQueue = *probe.m_renderQueues[faceIdx];
@@ -669,13 +676,13 @@ void GlobalIllumination::runShadowmappingInThread(RenderPassWorkContext& rgraphC
 		ANKI_ASSERT(faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0]);
 		const RenderQueue& cascadeRenderQueue = *faceRenderQueue.m_directionalLight.m_shadowRenderQueues[0];
 
-		const I faceDrawcallCount = I(cascadeRenderQueue.m_renderables.getSize());
-		const I localStart = max(I(0), start - drawcallCount);
-		const I localEnd = min(faceDrawcallCount, end - drawcallCount);
+		const I32 faceDrawcallCount = I32(cascadeRenderQueue.m_renderables.getSize());
+		const I32 localStart = max(I32(0), start - drawcallCount);
+		const I32 localEnd = min(faceDrawcallCount, end - drawcallCount);
 
 		if(localStart < localEnd)
 		{
-			const U rez = m_shadowMapping.m_rtDescr.m_height;
+			const U32 rez = m_shadowMapping.m_rtDescr.m_height;
 			cmdb->setViewport(rez * faceIdx, 0, rez, rez);
 			cmdb->setScissor(rez * faceIdx, 0, rez, rez);
 
@@ -725,12 +732,12 @@ void GlobalIllumination::runLightShading(RenderPassWorkContext& rgraphCtx, Inter
 		}
 	}
 
-	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
 		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
-		const U rez = m_tileSize;
+		const U32 rez = m_tileSize;
 		cmdb->setScissor(rez * faceIdx, 0, rez, rez);
 		cmdb->setViewport(rez * faceIdx, 0, rez, rez);
 
@@ -770,7 +777,7 @@ void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, Interna
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 	rgraphCtx.bindColorTexture(0, 1, giCtx.m_lightShadingRt);
 
-	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
+	for(U32 i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
 	{
 		rgraphCtx.bindColorTexture(0, 2, giCtx.m_gbufferColorRts[i], i);
 	}

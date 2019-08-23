@@ -21,7 +21,7 @@ Error TimestampQueryImpl::init()
 {
 	ANKI_CHECK(getGrManagerImpl().getTimestampQueryFactory().newQuery(m_handle));
 
-	m_timestampPeriod = getGrManagerImpl().getPhysicalDeviceProperties().limits.timestampPeriod;
+	m_timestampPeriod = U64(getGrManagerImpl().getPhysicalDeviceProperties().limits.timestampPeriod);
 
 	return Error::NONE;
 }

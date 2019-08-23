@@ -37,9 +37,9 @@ Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 
 Error LightEvent::update(Second prevUpdateTime, Second crntTime)
 {
-	F32 freq = randRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
+	const F32 freq = getRandomRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
 
-	F32 factor = sin(crntTime * freq * PI) / 2.0 + 0.5;
+	F32 factor = F32(sin(crntTime * freq * PI)) / 2.0f + 0.5f;
 	LightComponent& lightc = m_associatedNodes[0]->getComponent<LightComponent>();
 
 	// Update radius

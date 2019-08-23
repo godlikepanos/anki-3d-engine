@@ -47,8 +47,8 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_cacheDir.create(m_alloc, init.m_cacheDir);
 
 	// Init some constants
-	m_maxTextureSize = init.m_config->getNumber("rsrc.maxTextureSize");
-	m_dumpShaderSource = init.m_config->getNumber("rsrc.dumpShaderSources");
+	m_maxTextureSize = init.m_config->getNumberU32("rsrc.maxTextureSize");
+	m_dumpShaderSource = init.m_config->getBool("rsrc.dumpShaderSources");
 
 	// Init type resource managers
 #define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) TypeResourceManager<rsrc_>::init(m_alloc);
@@ -64,7 +64,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 	m_asyncLoader->init(m_alloc);
 
 	m_transferGpuAlloc = m_alloc.newInstance<TransferGpuAllocator>();
-	ANKI_CHECK(m_transferGpuAlloc->init(init.m_config->getNumber("rsrc.transferScratchMemorySize"), m_gr, m_alloc));
+	ANKI_CHECK(m_transferGpuAlloc->init(init.m_config->getNumberU32("rsrc.transferScratchMemorySize"), m_gr, m_alloc));
 
 	m_shaderCompiler = m_alloc.newInstance<ShaderCompilerCache>(m_alloc, m_cacheDir.toCString());
 

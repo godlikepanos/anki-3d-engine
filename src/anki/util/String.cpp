@@ -32,7 +32,7 @@ Error CString::toNumber(F32& out) const
 {
 	F64 d;
 	ANKI_CHECK(toNumber(d));
-	out = d;
+	out = F32(d);
 	return Error::NONE;
 }
 

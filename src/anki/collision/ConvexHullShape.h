@@ -34,7 +34,7 @@ public:
 	/// owner of the storage.
 	/// @param points The base of the storage buffer. Size should be @a pointCount * sizeof(Vec4)
 	/// @param pointCount The number of points
-	ConvexHullShape(const Vec4* points, U pointCount)
+	ConvexHullShape(const Vec4* points, U32 pointCount)
 		: m_trf(Transform::getIdentity())
 		, m_invTrf(Transform::getIdentity())
 		, m_points(points)

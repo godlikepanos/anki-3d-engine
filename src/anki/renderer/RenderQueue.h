@@ -382,7 +382,7 @@ public:
 		zeroMemory(m_directionalLight);
 	}
 
-	U countAllRenderables() const;
+	PtrSize countAllRenderables() const;
 };
 
 static_assert(std::is_trivially_destructible<RenderQueue>::value == true, "Should be trivially destructible");

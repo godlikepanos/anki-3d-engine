@@ -135,7 +135,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 	{
 		// Don't have enough space. Wait for next frame
 
-		m_frameCount = (m_frameCount + 1) % FRAME_COUNT;
+		m_frameCount = U8((m_frameCount + 1) % FRAME_COUNT);
 		Frame& nextFrame = m_frames[m_frameCount];
 
 		// Wait for all memory to be released
@@ -163,7 +163,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 
 	ANKI_CHECK(frame->m_stackAlloc.allocate(size, handle.m_handle));
 	handle.m_range = size;
-	handle.m_frame = frame - &m_frames[0];
+	handle.m_frame = U8(frame - &m_frames[0]);
 	m_crntFrameAllocatedSize += size;
 	++frame->m_pendingReleases;
 

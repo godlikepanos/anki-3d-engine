@@ -100,19 +100,25 @@ struct DummyType
 /// @endcode
 #define ANKI_ENABLE(...) ANKI_ENABLE_INTERNAL(__LINE__, __VA_ARGS__)
 
-/// Pick a random number from min to max
-extern I32 randRange(I32 min, I32 max);
+/// Get a pseudo random number.
+U64 getRandom();
 
 /// Pick a random number from min to max
-extern U32 randRange(U32 min, U32 max);
+template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
+T getRandomRange(T min, T max)
+{
+	ANKI_ASSERT(min <= max);
+	const F64 r = F64(getRandom()) / F64(MAX_U64);
+	return T(min + r * (max - min));
+}
 
-/// Pick a random number from min to max
-extern F32 randRange(F32 min, F32 max);
-
-/// Pick a random number from min to max
-extern F64 randRange(F64 min, F64 max);
-
-extern F32 randFloat(F32 max);
+template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
+T getRandomRange(T min, T max)
+{
+	ANKI_ASSERT(min <= max);
+	const U64 r = getRandom();
+	return T(r % U64(max - min + 1)) + min;
+}
 
 /// Get min of two values.
 template<typename T>
@@ -146,7 +152,9 @@ inline Bool isPowerOfTwo(Int x)
 template<typename Int, ANKI_ENABLE(std::is_integral<Int>::value)>
 inline Int nextPowerOfTwo(Int x)
 {
-	return pow(2, ceil(log(x) / log(2)));
+	const F64 d = F64(x);
+	const F64 res = pow(2.0, ceil(log(d) / log(2.0)));
+	return Int(res);
 }
 
 /// Get the aligned number rounded up.
@@ -310,12 +318,10 @@ inline void unflatten3dArrayIndex(
 /// Given a threaded problem split it into smaller ones. This function accepts the number of threads and the size of
 /// the threaded problem. Then given a thread index it chooses a range that the thread can operate into. That range is
 /// supposed to be as evenly split as possible across threads.
-template<typename TThreadId, typename TThreadCount, typename TProblemSize, typename TResult>
-inline void splitThreadedProblem(
-	TThreadId threadId, TThreadCount threadCount, TProblemSize problemSize, TResult& start, TResult& end)
+inline void splitThreadedProblem(U32 threadId, U32 threadCount, U32 problemSize, U32& start, U32& end)
 {
 	ANKI_ASSERT(threadCount > 0 && threadId < threadCount);
-	const auto div = problemSize / threadCount;
+	const U32 div = problemSize / threadCount;
 	start = threadId * div;
 	end = (threadId == threadCount - 1) ? problemSize : (threadId + 1u) * div;
 	ANKI_ASSERT(!(threadId == threadCount - 1 && end != problemSize));

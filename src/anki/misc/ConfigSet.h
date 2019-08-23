@@ -40,7 +40,12 @@ public:
 
 	/// @name Find an option and return it's value.
 	/// @{
-	F64 getNumber(const CString& name) const;
+	F64 getNumberF64(const CString& name) const;
+	F32 getNumberF32(const CString& name) const;
+	U32 getNumberU32(const CString& name) const;
+	U16 getNumberU16(const CString& name) const;
+	U8 getNumberU8(const CString& name) const;
+	Bool getBool(const CString& name) const;
 	CString getString(const CString& name) const;
 	/// @}
 
