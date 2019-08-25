@@ -360,20 +360,24 @@ Error Importer::visitNode(
 		return threadErr;
 	}
 
-	Transform localTrf;
 	HashMapAuto<CString, StringAuto> outExtras(m_alloc);
-	Bool dummyNode = false;
 	if(node.light)
 	{
+		ANKI_CHECK(writeLight(node, parentExtras));
+
+		Transform localTrf;
 		ANKI_CHECK(getNodeTransform(node, localTrf));
 		localTrf.setScale(1.0f); // Remove scale
-		ANKI_CHECK(writeLight(node, parentExtras));
+		ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 	}
 	else if(node.camera)
 	{
+		ANKI_CHECK(writeCamera(node, parentExtras));
+
+		Transform localTrf;
 		ANKI_CHECK(getNodeTransform(node, localTrf));
 		localTrf.setScale(1.0f); // Remove scale
-		ANKI_CHECK(writeCamera(node, parentExtras));
+		ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 	}
 	else if(node.mesh)
 	{
@@ -384,8 +388,6 @@ Error Importer::visitNode(
 		HashMapAuto<CString, StringAuto>::Iterator it;
 		if((it = extras.find("particles")) != extras.getEnd())
 		{
-			ANKI_CHECK(getNodeTransform(node, localTrf));
-
 			const StringAuto& fname = *it;
 
 			Bool gpuParticles = false;
@@ -398,11 +400,13 @@ Error Importer::visitNode(
 				(gpuParticles) ? "Gpu" : "",
 				getNodeName(node).cstr(),
 				fname.cstr()));
+
+			Transform localTrf;
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if((it = extras.find("collision")) != extras.getEnd() && *it == "true")
 		{
-			ANKI_CHECK(getNodeTransform(node, localTrf));
-
 			// Write colission mesh
 			{
 				StringAuto fname(m_alloc);
@@ -420,6 +424,10 @@ Error Importer::visitNode(
 				getNodeName(node).cstr(),
 				m_rpath.cstr(),
 				node.mesh->name));
+
+			Transform localTrf;
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if((it = extras.find("reflection_probe")) != extras.getEnd() && *it == "true")
 		{
@@ -432,8 +440,6 @@ Error Importer::visitNode(
 			const Vec3 aabbMin = tsl - half - tsl;
 			const Vec3 aabbMax = tsl + half - tsl;
 
-			localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
-
 			ANKI_CHECK(m_sceneFile.writeText(
 				"\nnode = scene:newReflectionProbeNode(\"%s\", Vec4.new(%f, %f, %f, 0), Vec4.new(%f, %f, %f, 0))\n",
 				getNodeName(node).cstr(),
@@ -443,6 +449,10 @@ Error Importer::visitNode(
 				aabbMax.x(),
 				aabbMax.y(),
 				aabbMax.z()));
+
+			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if((it = extras.find("gi_probe")) != extras.getEnd() && *it == "true")
 		{
@@ -454,8 +464,6 @@ Error Importer::visitNode(
 			const Vec3 half = scale;
 			const Vec3 aabbMin = tsl - half - tsl;
 			const Vec3 aabbMax = tsl + half - tsl;
-
-			localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
 
 			F32 fadeDistance = -1.0f;
 			if((it = extras.find("gi_probe_fade_distance")) != extras.getEnd())
@@ -490,16 +498,13 @@ Error Importer::visitNode(
 			{
 				ANKI_CHECK(m_sceneFile.writeText("comp:setCellSize(%f)\n", cellSize));
 			}
+
+			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if((it = extras.find("decal")) != extras.getEnd() && *it == "true")
 		{
-			Vec3 tsl;
-			Mat3 rot;
-			Vec3 scale;
-			getNodeTransform(node, tsl, rot, scale);
-
-			localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
-
 			StringAuto diffuseAtlas(m_alloc);
 			if((it = extras.find("decal_diffuse_atlas")) != extras.getEnd())
 			{
@@ -553,12 +558,18 @@ Error Importer::visitNode(
 					specularRougnessMetallicSubtexture.cstr(),
 					specularRougnessMetallicFactor));
 			}
+
+			Vec3 tsl;
+			Mat3 rot;
+			Vec3 scale;
+			getNodeTransform(node, tsl, rot, scale);
+			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else
 		{
 			// Model node
-
-			ANKI_CHECK(getNodeTransform(node, localTrf));
 
 			// Async because it's slow
 			struct Ctx
@@ -567,12 +578,17 @@ Error Importer::visitNode(
 				cgltf_mesh* m_mesh;
 				cgltf_material* m_mtl;
 				cgltf_skin* m_skin;
+				Bool m_selfCollision;
 			};
 			Ctx* ctx = m_alloc.newInstance<Ctx>();
 			ctx->m_importer = this;
 			ctx->m_mesh = node.mesh;
 			ctx->m_mtl = node.mesh->primitives[0].material;
 			ctx->m_skin = node.skin;
+
+			HashMapAuto<CString, StringAuto>::Iterator it2;
+			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
+			ctx->m_selfCollision = selfCollision;
 
 			m_hive->submitTask(
 				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
@@ -595,6 +611,11 @@ Error Importer::visitNode(
 						err = self.m_importer->writeSkeleton(*self.m_skin);
 					}
 
+					if(!err && self.m_selfCollision)
+					{
+						err = self.m_importer->writeCollisionMesh(*self.m_mesh);
+					}
+
 					if(err)
 					{
 						self.m_importer->m_errorInThread.store(err._getCode());
@@ -605,27 +626,33 @@ Error Importer::visitNode(
 				ctx);
 
 			ANKI_CHECK(writeModelNode(node, parentExtras));
+
+			Transform localTrf;
+			ANKI_CHECK(getNodeTransform(node, localTrf));
+			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
+
+			if(selfCollision)
+			{
+				ANKI_CHECK(
+					m_sceneFile.writeText("node2 = scene:newStaticCollisionNode(\"%s_cl\", \"%s%s.ankicl\", trf)\n",
+						getNodeName(node).cstr(),
+						m_rpath.cstr(),
+						node.mesh->name));
+			}
 		}
 	}
 	else
 	{
 		ANKI_GLTF_LOGW("Ignoring node %s. Assuming transform node", getNodeName(node).cstr());
 		ANKI_CHECK(getExtras(node.extras, outExtras));
-		ANKI_CHECK(getNodeTransform(node, localTrf));
-		dummyNode = true;
-	}
-
-	// Write transform
-	Transform trf = parentTrf.combineTransformations(localTrf);
-	if(!dummyNode)
-	{
-		ANKI_CHECK(writeTransform(trf));
 	}
 
 	// Visit children
+	Transform nodeTrf;
+	ANKI_CHECK(getNodeTransform(node, nodeTrf));
 	for(cgltf_node* const* c = node.children; c < node.children + node.children_count; ++c)
 	{
-		ANKI_CHECK(visitNode(*(*c), (dummyNode) ? trf : Transform::getIdentity(), outExtras));
+		ANKI_CHECK(visitNode(*(*c), nodeTrf, outExtras));
 	}
 
 	return Error::NONE;
@@ -919,6 +946,26 @@ Error Importer::writeSkeleton(const cgltf_skin& skin)
 	return Error::NONE;
 }
 
+Error Importer::writeCollisionMesh(const cgltf_mesh& mesh)
+{
+	StringAuto fname(m_alloc);
+	fname.sprintf("%s%s.ankicl", m_outDir.cstr(), mesh.name);
+	ANKI_GLTF_LOGI("Importing collision mesh %s", fname.cstr());
+
+	// Write file
+	File file;
+	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
+
+	ANKI_CHECK(file.writeText("%s\n", XML_HEADER));
+
+	ANKI_CHECK(file.writeText("<collisionShape>\n\t<type>staticMesh</type>\n\t<value>"
+							  "%s%s.ankimesh</value>\n</collisionShape>\n",
+		m_rpath.cstr(),
+		mesh.name));
+
+	return Error::NONE;
+}
+
 Error Importer::writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	const cgltf_light& light = *node.light;
@@ -1081,8 +1128,6 @@ Error Importer::writeModelNode(const cgltf_node& node, const HashMapAuto<CString
 
 	ANKI_CHECK(m_sceneFile.writeText(
 		"\nnode = scene:newModelNode(\"%s\", \"%s\")\n", getNodeName(node).cstr(), modelFname.cstr()));
-
-	// TODO: collision mesh
 
 	return Error::NONE;
 }
