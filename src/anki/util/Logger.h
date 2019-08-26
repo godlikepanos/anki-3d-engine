@@ -40,6 +40,7 @@ public:
 	LoggerMessageType m_type;
 	const char* m_msg;
 	const char* m_subsystem;
+	ThreadId m_tid;
 };
 
 /// The message handler callback.
@@ -68,8 +69,13 @@ public:
 	void addFileMessageHandler(File* file);
 
 	/// Send a message
-	void write(
-		const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type, const char* msg);
+	void write(const char* file,
+		int line,
+		const char* func,
+		const char* subsystem,
+		LoggerMessageType type,
+		ThreadId tid,
+		const char* msg);
 
 	/// Send a formated message
 	void writeFormated(const char* file,
@@ -77,6 +83,7 @@ public:
 		const char* func,
 		const char* subsystem,
 		LoggerMessageType type,
+		ThreadId tid,
 		const char* fmt,
 		...);
 
@@ -111,8 +118,13 @@ typedef Singleton<Logger> LoggerSingleton;
 #define ANKI_LOG(subsystem_, t, ...) \
 	do \
 	{ \
-		LoggerSingleton::get().writeFormated( \
-			ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, LoggerMessageType::t, __VA_ARGS__); \
+		LoggerSingleton::get().writeFormated(ANKI_FILE, \
+			__LINE__, \
+			ANKI_FUNC, \
+			subsystem_, \
+			LoggerMessageType::t, \
+			Thread::getCurrentThreadId(), \
+			__VA_ARGS__); \
 	} while(false);
 /// @}
 

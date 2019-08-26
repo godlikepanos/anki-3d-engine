@@ -57,12 +57,17 @@ void Logger::removeMessageHandler(void* data, LoggerMessageHandlerCallback callb
 	}
 }
 
-void Logger::write(
-	const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type, const char* msg)
+void Logger::write(const char* file,
+	int line,
+	const char* func,
+	const char* subsystem,
+	LoggerMessageType type,
+	ThreadId tid,
+	const char* msg)
 {
 	m_mutex.lock();
 
-	LoggerMessageInfo inf = {file, line, func, type, msg, subsystem};
+	LoggerMessageInfo inf = {file, line, func, type, msg, subsystem, tid};
 
 	U count = m_handlersCount;
 	while(count-- != 0)
@@ -78,8 +83,14 @@ void Logger::write(
 	}
 }
 
-void Logger::writeFormated(
-	const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type, const char* fmt, ...)
+void Logger::writeFormated(const char* file,
+	int line,
+	const char* func,
+	const char* subsystem,
+	LoggerMessageType type,
+	ThreadId tid,
+	const char* fmt,
+	...)
 {
 	char buffer[1024 * 10];
 	va_list args;
@@ -93,7 +104,7 @@ void Logger::writeFormated(
 	}
 	else if(len < I(sizeof(buffer)))
 	{
-		write(file, line, func, subsystem, type, buffer);
+		write(file, line, func, subsystem, type, tid, buffer);
 		va_end(args);
 	}
 	else
@@ -107,7 +118,7 @@ void Logger::writeFormated(
 		char* newBuffer = static_cast<char*>(malloc(newSize));
 		len = vsnprintf(newBuffer, newSize, fmt, args);
 
-		write(file, line, func, subsystem, type, newBuffer);
+		write(file, line, func, subsystem, type, tid, newBuffer);
 
 		free(newBuffer);
 		va_end(args);
@@ -148,7 +159,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		ANKI_ASSERT(0);
 	}
 
-	const char* fmt = "%s[%s][%s]%s%s %s (%s:%d %s)%s\n";
+	const char* fmt = "%s[%s][%s][%" PRIx64 "]%s%s %s (%s:%d %s)%s\n";
 	if(!runningFromATerminal())
 	{
 		terminalColor = "";
@@ -161,6 +172,7 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		terminalColorBg,
 		MSG_TEXT[static_cast<U>(info.m_type)],
 		info.m_subsystem ? info.m_subsystem : "N/A ",
+		info.m_tid,
 		endTerminalColor,
 		terminalColor,
 		info.m_msg,
@@ -214,9 +226,10 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 	}
 
 	fprintf(out,
-		"[%s][%s] %s (%s:%d %s)\n",
+		"[%s][%s][%" PRIx64 "] %s (%s:%d %s)\n",
 		MSG_TEXT[static_cast<U>(info.m_type)],
 		info.m_subsystem ? info.m_subsystem : "N/A ",
+		info.m_tid,
 		info.m_msg,
 		info.m_file,
 		info.m_line,

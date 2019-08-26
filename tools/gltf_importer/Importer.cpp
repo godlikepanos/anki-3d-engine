@@ -185,11 +185,12 @@ Error Importer::writeAll()
 	ANKI_CHECK(m_sceneFile.writeText("local scene = getSceneGraph()\nlocal events = getEventManager()\n"));
 
 	// Nodes
-	for(const cgltf_scene* scene = m_gltf->scenes; scene < m_gltf->scenes + m_gltf->scenes_count; ++scene)
+	Error err = Error::NONE;
+	for(const cgltf_scene* scene = m_gltf->scenes; scene < m_gltf->scenes + m_gltf->scenes_count && !err; ++scene)
 	{
-		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count; ++node)
+		for(cgltf_node* const* node = scene->nodes; node < scene->nodes + scene->nodes_count && !err; ++node)
 		{
-			ANKI_CHECK(visitNode(*(*node), Transform::getIdentity(), HashMapAuto<CString, StringAuto>(m_alloc)));
+			err = visitNode(*(*node), Transform::getIdentity(), HashMapAuto<CString, StringAuto>(m_alloc));
 		}
 	}
 
@@ -203,7 +204,7 @@ Error Importer::writeAll()
 		return threadErr;
 	}
 
-	return Error::NONE;
+	return err;
 }
 
 Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out)
@@ -451,7 +452,6 @@ Error Importer::visitNode(
 				aabbMax.z()));
 
 			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
-			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if((it = extras.find("gi_probe")) != extras.getEnd() && *it == "true")
@@ -500,7 +500,6 @@ Error Importer::visitNode(
 			}
 
 			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
-			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if((it = extras.find("decal")) != extras.getEnd() && *it == "true")
@@ -564,7 +563,6 @@ Error Importer::visitNode(
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
 			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
-			ANKI_CHECK(getNodeTransform(node, localTrf));
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else
@@ -649,7 +647,13 @@ Error Importer::visitNode(
 
 	// Visit children
 	Transform nodeTrf;
-	ANKI_CHECK(getNodeTransform(node, nodeTrf));
+	{
+		Vec3 tsl;
+		Mat3 rot;
+		Vec3 scale;
+		getNodeTransform(node, tsl, rot, scale);
+		nodeTrf = Transform(tsl.xyz0(), Mat3x4(rot), scale.x());
+	}
 	for(cgltf_node* const* c = node.children; c < node.children + node.children_count; ++c)
 	{
 		ANKI_CHECK(visitNode(*(*c), nodeTrf, outExtras));
