@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/square_door.ankimesh</mesh>
+			<material>assets/details.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

@@ -95,7 +95,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	// Run renderer
 	RenderingContext ctx(m_frameAlloc);
 	m_runCtx.m_ctx = &ctx;
-	m_runCtx.m_secondaryTaskId.set(0);
+	m_runCtx.m_secondaryTaskId.setNonAtomically(0);
 	ctx.m_renderGraphDescr.setStatisticsEnabled(m_statsEnabled);
 
 	RenderTargetHandle presentRt = ctx.m_renderGraphDescr.importRenderTarget(presentTex, TextureUsageBit::NONE);

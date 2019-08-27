@@ -234,10 +234,11 @@ ANKI_TEST(Resource, AsyncLoader)
 		ANKI_TEST_EXPECT_EQ(counter.load(), 4);
 
 		// Check both
-		counter.set(0);
+		counter.setNonAtomically(0);
 		a.submitNewTask<Task>(0.0f, nullptr, &counter, 0, false, false);
 		a.submitNewTask<Task>(0.0f, nullptr, &counter, -1, true, true);
 		a.submitNewTask<Task>(0.0f, nullptr, &counter, 2, false, false);
+
 		HighRezTimer::sleep(1.0);
 		ANKI_TEST_EXPECT_EQ(counter.load(), 2);
 		a.resume();

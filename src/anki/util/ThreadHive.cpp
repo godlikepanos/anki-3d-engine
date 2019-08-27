@@ -32,7 +32,7 @@ public:
 		, m_hive(hive)
 	{
 		ANKI_ASSERT(hive);
-		m_thread.start(this, threadCallback, (pinToCores) ? I(m_id) : -1);
+		m_thread.start(this, threadCallback, (pinToCores) ? I32(m_id) : -1);
 	}
 
 private:

@@ -75,7 +75,7 @@ inline T* MicroObjectRecycler<T>::findToReuse()
 			}
 		}
 
-		ANKI_ASSERT(out->getRefcount().get() == 0);
+		ANKI_ASSERT(out->getRefcount().getNonAtomically() == 0);
 	}
 
 #if ANKI_EXTRA_CHECKS
@@ -92,7 +92,7 @@ template<typename T>
 inline void MicroObjectRecycler<T>::recycle(T* s)
 {
 	ANKI_ASSERT(s);
-	ANKI_ASSERT(s->getRefcount().get() == 0);
+	ANKI_ASSERT(s->getRefcount().getNonAtomically() == 0);
 
 	LockGuard<Mutex> lock(m_mtx);
 

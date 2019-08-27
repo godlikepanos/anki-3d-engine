@@ -98,7 +98,7 @@ public:
 		PtrSize alignment = alignof(ThreadHiveSemaphore);
 		ThreadHiveSemaphore* sem =
 			reinterpret_cast<ThreadHiveSemaphore*>(m_alloc.allocate(sizeof(ThreadHiveSemaphore), &alignment));
-		sem->m_atomic.set(initialValue);
+		sem->m_atomic.setNonAtomically(initialValue);
 		return sem;
 	}
 

@@ -17,6 +17,7 @@ const F32 ESM_CONSTANT = 40.0;
 #endif
 
 // Fresnel term unreal
+// specular: The specular color aka F0
 Vec3 F_Unreal(Vec3 specular, F32 VoH)
 {
 	return specular + (1.0 - specular) * pow(2.0, (-5.55473 * VoH - 6.98316) * VoH);
@@ -24,6 +25,7 @@ Vec3 F_Unreal(Vec3 specular, F32 VoH)
 
 // Fresnel Schlick: "An Inexpensive BRDF Model for Physically-Based Rendering"
 // It has lower VGRPs than F_Unreal
+// specular: The specular color aka F0
 Vec3 F_Schlick(Vec3 specular, F32 VoH)
 {
 	const F32 a = 1.0 - VoH;

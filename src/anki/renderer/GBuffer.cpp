@@ -57,10 +57,10 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
 		m_fbDescr.m_colorAttachments[i].m_loadOperation = loadop;
-		m_fbDescr.m_colorAttachments[i].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 0.0}};
+		m_fbDescr.m_colorAttachments[i].m_clearValue.m_colorf = {{1.0f, 0.0f, 1.0f, 0.0f}};
 	}
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;
 	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 	m_fbDescr.bake();
 

@@ -128,6 +128,12 @@ public:
 		return !(*this == b);
 	}
 
+	U32 getKey() const
+	{
+		check();
+		return m_elementIdx;
+	}
+
 private:
 	TSparseArrayPtr m_array;
 	Index m_elementIdx;
@@ -342,6 +348,10 @@ public:
 
 	/// Check the validity of the array.
 	void validate() const;
+
+	/// Create a copy of this.
+	template<typename TAlloc>
+	void clone(TAlloc& alloc, SparseArray& b) const;
 
 protected:
 	/// Element metadata.

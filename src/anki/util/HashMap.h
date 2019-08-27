@@ -194,7 +194,7 @@ public:
 		return m_sparseArr.find(hash);
 	}
 
-private:
+protected:
 	SparseArrayType m_sparseArr;
 };
 
@@ -222,10 +222,17 @@ public:
 		*this = std::move(b);
 	}
 
+	/// Copy.
+	HashMapAuto(const HashMapAuto& b)
+		: Base()
+	{
+		copy(b);
+	}
+
 	/// Destructor.
 	~HashMapAuto()
 	{
-		Base::destroy(m_alloc);
+		destroy();
 	}
 
 	/// Move.
@@ -236,11 +243,18 @@ public:
 		return *this;
 	}
 
+	/// Copy.
+	HashMapAuto& operator=(const HashMapAuto& b)
+	{
+		copy(b);
+		return *this;
+	}
+
 	/// Construct an element inside the map.
 	template<typename... TArgs>
 	typename Base::Iterator emplace(const TKey& key, TArgs&&... args)
 	{
-		return Base::emplace(m_alloc, std::forward(args)...);
+		return Base::emplace(m_alloc, key, std::forward<TArgs>(args)...);
 	}
 
 	/// Erase element.
@@ -249,8 +263,21 @@ public:
 		Base::erase(m_alloc, it);
 	}
 
+	/// Clean up the map.
+	void destroy()
+	{
+		Base::destroy(m_alloc);
+	}
+
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
+
+	void copy(const HashMapAuto& b)
+	{
+		destroy();
+		m_alloc = b.m_alloc;
+		b.m_sparseArr.clone(m_alloc, Base::m_sparseArr);
+	}
 };
 /// @}
 

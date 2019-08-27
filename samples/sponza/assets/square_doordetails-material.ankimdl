@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>assets/square_door.ankimesh</mesh>
-			<material>assets/details-material.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

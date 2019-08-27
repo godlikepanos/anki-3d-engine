@@ -408,10 +408,12 @@ def create_dds_images(mips_fnames, tmp_dir, fast, color_format, normal):
 	for fname in mips_fnames:
 		# Unfortunately we need to flip the image. Use convert again
 		in_fname = fname + ".tga"
+		"""
 		flipped_fname = fname + "_flip.tga"
 		args = ["convert", in_fname, "-flip", flipped_fname]
 		subprocess.check_call(args)
 		in_fname = flipped_fname
+		"""
 
 		# Continue
 		out_fname = os.path.join(tmp_dir, os.path.basename(fname) + ".dds")
@@ -604,7 +606,7 @@ def convert(config):
 
 	# Create images
 	for in_file in config.in_files:
-		mips_fnames = create_mipmaps(in_file, config.tmp_dir, width, height, color_format, config.to_linear_rgb, 
+		mips_fnames = create_mipmaps(in_file, config.tmp_dir, width, height, color_format, config.to_linear_rgb,
 				config.mips_count)
 
 		# Create etc images

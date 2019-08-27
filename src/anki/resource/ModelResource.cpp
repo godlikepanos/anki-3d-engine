@@ -31,15 +31,6 @@ static Bool attributeIsRequired(VertexAttributeLocation loc, Pass pass, Bool has
 	}
 }
 
-ModelPatch::ModelPatch(ModelResource* model)
-	: m_model(model)
-{
-}
-
-ModelPatch::~ModelPatch()
-{
-}
-
 void ModelPatch::getRenderingDataSub(
 	const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const
 {
@@ -118,10 +109,14 @@ U32 ModelPatch::getLodCount() const
 	return max<U32>(m_meshCount, getMaterial()->getLodCount());
 }
 
-Error ModelPatch::create(
-	ConstWeakArray<CString> meshFNames, const CString& mtlFName, Bool async, ResourceManager* manager)
+Error ModelPatch::init(ModelResource* model,
+	ConstWeakArray<CString> meshFNames,
+	const CString& mtlFName,
+	Bool async,
+	ResourceManager* manager)
 {
 	ANKI_ASSERT(meshFNames.getSize() > 0);
+	m_model = model;
 
 	// Load material
 	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl, async));
@@ -153,12 +148,6 @@ ModelResource::ModelResource(ResourceManager* manager)
 ModelResource::~ModelResource()
 {
 	auto alloc = getAllocator();
-
-	for(ModelPatch* patch : m_modelPatches)
-	{
-		alloc.deleteInstance(patch);
-	}
-
 	m_modelPatches.destroy(alloc);
 }
 
@@ -236,11 +225,9 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 
 		CString cstr;
 		ANKI_CHECK(materialEl.getText(cstr));
-		ModelPatch* mpatch = alloc.newInstance<ModelPatch>(this);
 
-		ANKI_CHECK(mpatch->create(ConstWeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async, &getManager()));
-
-		m_modelPatches[count++] = mpatch;
+		ANKI_CHECK(m_modelPatches[count].init(
+			this, ConstWeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async, &getManager()));
 
 		// Move to next
 		ANKI_CHECK(modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
@@ -259,11 +246,11 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 	// Calculate compound bounding volume
 	RenderingKey key;
 	key.setLod(0);
-	m_visibilityShape = m_modelPatches[0]->getMesh(key).getBoundingShape();
+	m_visibilityShape = m_modelPatches[0].getMesh(key).getBoundingShape();
 
-	for(auto it = m_modelPatches.begin() + 1; it != m_modelPatches.end(); ++it)
+	for(auto it = m_modelPatches.getBegin() + 1; it != m_modelPatches.getEnd(); ++it)
 	{
-		m_visibilityShape = m_visibilityShape.getCompoundShape((*it)->getMesh(key).getBoundingShape());
+		m_visibilityShape = m_visibilityShape.getCompoundShape((*it).getMesh(key).getBoundingShape());
 	}
 
 	return Error::NONE;

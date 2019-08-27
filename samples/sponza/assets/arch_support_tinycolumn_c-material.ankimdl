@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>assets/arch_support_tiny.ankimesh</mesh>
-			<material>assets/column_c-material.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

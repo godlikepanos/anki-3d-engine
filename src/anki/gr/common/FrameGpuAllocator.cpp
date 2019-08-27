@@ -83,7 +83,7 @@ PtrSize FrameGpuAllocator::getUnallocatedMemorySize() const
 {
 	PtrSize perFrameSize = m_size / MAX_FRAMES_IN_FLIGHT;
 	PtrSize crntFrameStartOffset = perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
-	PtrSize usedSize = m_offset.get() - crntFrameStartOffset + m_lastAllocatedSize.get();
+	PtrSize usedSize = m_offset.getNonAtomically() - crntFrameStartOffset + m_lastAllocatedSize.getNonAtomically();
 
 	PtrSize remaining = (perFrameSize >= usedSize) ? (perFrameSize - usedSize) : 0;
 	return remaining;

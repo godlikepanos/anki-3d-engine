@@ -554,7 +554,7 @@ protected:
 
 	void checkInit() const
 	{
-		ANKI_ASSERT(m_data.getSize() > 1);
+		ANKI_ASSERT(m_data.getSize() > 0);
 	}
 
 	/// Append to this string.

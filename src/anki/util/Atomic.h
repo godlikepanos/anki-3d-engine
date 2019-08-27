@@ -44,13 +44,13 @@ public:
 	}
 
 	/// Set the value without protection.
-	void set(const Value& a)
+	void setNonAtomically(const Value& a)
 	{
 		m_val = a;
 	}
 
 	/// Get the value without protection.
-	const Value& get() const
+	const Value& getNonAtomically() const
 	{
 		return m_val;
 	}

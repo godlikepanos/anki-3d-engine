@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/fabric_b.ankimesh</mesh>
+			<material>assets/fabric_f.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

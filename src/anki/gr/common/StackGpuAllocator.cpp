@@ -105,7 +105,7 @@ Error StackGpuAllocator::allocate(PtrSize size, StackGpuAllocatorHandle& handle)
 					alignRoundUp(m_alignment, newChunk->m_size);
 
 					newChunk->m_next = nullptr;
-					newChunk->m_offset.set(0);
+					newChunk->m_offset.setNonAtomically(0);
 					ANKI_CHECK(m_iface->allocate(newChunk->m_size, newChunk->m_mem));
 
 					m_crntChunk.store(newChunk);
@@ -114,7 +114,7 @@ Error StackGpuAllocator::allocate(PtrSize size, StackGpuAllocatorHandle& handle)
 				{
 					// Need to recycle one
 
-					crntChunk->m_next->m_offset.set(0);
+					crntChunk->m_next->m_offset.setNonAtomically(0);
 
 					m_crntChunk.store(crntChunk->m_next);
 				}
@@ -127,10 +127,10 @@ Error StackGpuAllocator::allocate(PtrSize size, StackGpuAllocatorHandle& handle)
 
 void StackGpuAllocator::reset()
 {
-	m_crntChunk.set(m_chunkListHead);
+	m_crntChunk.setNonAtomically(m_chunkListHead);
 	if(m_chunkListHead)
 	{
-		m_chunkListHead->m_offset.set(0);
+		m_chunkListHead->m_offset.setNonAtomically(0);
 	}
 }
 

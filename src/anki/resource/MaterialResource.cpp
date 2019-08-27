@@ -559,14 +559,14 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		if(m_passMutator)
 		{
 			mutations[count].m_mutator = m_passMutator;
-			mutations[count].m_value = I(key.getPass());
+			mutations[count].m_value = I32(key.getPass());
 			++count;
 		}
 
 		if(m_lodMutator)
 		{
 			mutations[count].m_mutator = m_lodMutator;
-			mutations[count].m_value = I(key.getLod());
+			mutations[count].m_value = I32(key.getLod());
 			++count;
 		}
 

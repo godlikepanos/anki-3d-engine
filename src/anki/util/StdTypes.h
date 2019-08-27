@@ -112,6 +112,29 @@ ANKI_DO_LIMIT(F64, MIN_F64, MAX_F64)
 
 #undef ANKI_DO_LIMIT
 
+/// @name AnKi type literals.
+/// @{
+inline constexpr U8 operator"" _U8(unsigned long long arg) noexcept
+{
+	return static_cast<U8>(arg);
+}
+
+inline constexpr U16 operator"" _U16(unsigned long long arg) noexcept
+{
+	return static_cast<U16>(arg);
+}
+
+inline constexpr U32 operator"" _U32(unsigned long long arg) noexcept
+{
+	return static_cast<U32>(arg);
+}
+
+inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
+{
+	return static_cast<U64>(arg);
+}
+/// @}
+
 /// Representation of error and a wrapper on top of error codes.
 class Error
 {
@@ -261,6 +284,9 @@ static constexpr long double operator""_ns(long double x)
 	using Self = std::remove_reference<_SelfRef>::type;
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wkeyword-macro"
+
 /// Redefine the sizeof because the default returns size_t and that will require casting when used with U32 for example.
 #	define _ANKI_SIZEOF(type) ((anki::U32)(sizeof(type)))
 #	define sizeof(type) _ANKI_SIZEOF(type)
@@ -269,6 +295,8 @@ static constexpr long double operator""_ns(long double x)
 /// example.
 #	define _ANKI_ALIGNOF(type) ((anki::U32)(alignof(type)))
 #	define alignof(type) _ANKI_ALIGNOF(type)
+
+#	pragma GCC diagnostic pop
 #endif
 /// @}
 

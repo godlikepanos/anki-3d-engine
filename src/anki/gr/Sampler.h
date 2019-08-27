@@ -37,7 +37,7 @@ public:
 	{
 		const U8* const first = reinterpret_cast<const U8* const>(&m_minLod);
 		const U8* const last = reinterpret_cast<const U8* const>(&m_addressing) + sizeof(m_addressing);
-		const U size = last - first;
+		const U32 size = U32(last - first);
 		ANKI_ASSERT(size
 					== sizeof(F32) * 2 + sizeof(SamplingFilter) * 2 + sizeof(CompareOperation) + sizeof(I8)
 						   + sizeof(SamplingAddressing));

@@ -32,7 +32,7 @@
 #pragma anki input texture2D diffTex "DIFFUSE_TEX == 1 && PASS == 0"
 #pragma anki input texture2D specTex "SPECULAR_TEX == 1 && PASS == 0"
 #pragma anki input texture2D roughnessTex "ROUGHNESS_TEX == 1 && PASS == 0"
-#pragma anki input texture2D metalTex "METAL_TEX == 1 && PASS == 0"
+#pragma anki input texture2D metallicTex "METAL_TEX == 1 && PASS == 0"
 #pragma anki input texture2D normalTex "NORMAL_TEX == 1 && PASS == 0 && LOD < 2"
 #pragma anki input texture2D heightTex "PARALLAX == 1 && PASS == 0 && LOD == 0"
 #pragma anki input texture2D emissiveTex "EMISSIVE_TEX == 1 && PASS == 0"
@@ -83,11 +83,11 @@ void main()
 #	endif
 
 #	if roughnessTex_DEFINED
-	const F32 roughness = texture(roughnessTex, globalSampler, uv).r;
+	const F32 roughness = texture(roughnessTex, globalSampler, uv).g;
 #	endif
 
-#	if metalTex_DEFINED
-	const F32 metallic = texture(metalTex, globalSampler, uv).r;
+#	if metallicTex_DEFINED
+	const F32 metallic = texture(metallicTex, globalSampler, uv).b;
 #	endif
 
 #	if normalTex_DEFINED

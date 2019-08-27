@@ -228,6 +228,7 @@ set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} SPIRV-Cross)
 
 if(ANKI_BUILD_TOOLS)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} assimp)
+	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} meshoptimizer)
 endif()
 
 if(VULKAN)
@@ -365,7 +366,7 @@ endif()
 if(NOT MSVC)
 	add_definitions("-pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable "
 		"-Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result"
-		"-Wconversion -std=c++14")
+		"-Wconversion -Wno-sign-conversion -std=c++14")
 else()
 	add_definitions("/wd4996 /wd4244 /wd4262 /wd4267")
 endif()

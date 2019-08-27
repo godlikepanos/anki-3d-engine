@@ -3089,8 +3089,20 @@ using HVec2 = TVec<F16, 2>;
 /// 32bit signed integer 2D vector
 using IVec2 = TVec<I32, 2>;
 
+/// 16bit signed integer 2D vector
+using I16Vec2 = TVec<I16, 2>;
+
+/// 8bit signed integer 2D vector
+using I8Vec2 = TVec<I8, 2>;
+
 /// 32bit unsigned integer 2D vector
 using UVec2 = TVec<U32, 2>;
+
+/// 16bit unsigned integer 2D vector
+using U16Vec2 = TVec<U16, 2>;
+
+/// 8bit unsigned integer 2D vector
+using U8Vec2 = TVec<U8, 2>;
 
 /// F32 3D vector
 using Vec3 = TVec<F32, 3>;
@@ -3102,8 +3114,20 @@ using HVec3 = TVec<F16, 3>;
 /// 32bit signed integer 3D vector
 using IVec3 = TVec<I32, 3>;
 
+/// 16bit signed integer 3D vector
+using I16Vec3 = TVec<I16, 3>;
+
+/// 8bit signed integer 3D vector
+using I8Vec3 = TVec<I8, 3>;
+
 /// 32bit unsigned integer 3D vector
 using UVec3 = TVec<U32, 3>;
+
+/// 16bit unsigned integer 3D vector
+using U16Vec3 = TVec<U16, 3>;
+
+/// 8bit unsigned integer 3D vector
+using U8Vec3 = TVec<U8, 3>;
 
 /// F32 4D vector
 using Vec4 = TVec<F32, 4>;
@@ -3115,8 +3139,20 @@ using HVec4 = TVec<F16, 4>;
 /// 32bit signed integer 4D vector
 using IVec4 = TVec<I32, 4>;
 
+/// 16bit signed integer 4D vector
+using I16Vec4 = TVec<I16, 4>;
+
+/// 8bit signed integer 4D vector
+using I8Vec4 = TVec<I8, 4>;
+
 /// 32bit unsigned integer 4D vector
 using UVec4 = TVec<U32, 4>;
+
+/// 16bit unsigned integer 4D vector
+using U16Vec4 = TVec<U16, 4>;
+
+/// 8bit unsigned integer 4D vector
+using U8Vec4 = TVec<U8, 4>;
 /// @}
 
 } // end namespace anki

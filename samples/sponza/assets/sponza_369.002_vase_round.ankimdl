@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/sponza_369.002.ankimesh</mesh>
+			<material>assets/vase_round.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

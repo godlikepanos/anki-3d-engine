@@ -301,7 +301,7 @@ public:
 
 	void reset()
 	{
-		m_visitedMask.set(0);
+		m_visitedMask.setNonAtomically(0);
 	}
 
 private:

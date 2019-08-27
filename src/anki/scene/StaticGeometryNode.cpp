@@ -55,10 +55,10 @@ Error StaticGeometryNode::init(const CString& filename)
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_model));
 
 	U i = 0;
-	for(const ModelPatch* patch : m_model->getModelPatches())
+	for(const ModelPatch& patch : m_model->getModelPatches())
 	{
 		StaticGeometryPatchNode* node;
-		ANKI_CHECK(getSceneGraph().newSceneNode<StaticGeometryPatchNode>(CString(), node, patch));
+		ANKI_CHECK(getSceneGraph().newSceneNode<StaticGeometryPatchNode>(CString(), node, &patch));
 
 		++i;
 	}

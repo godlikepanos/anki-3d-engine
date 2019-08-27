@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>assets/metal_rod.ankimesh</mesh>
-			<material>assets/flagpole-material.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>
