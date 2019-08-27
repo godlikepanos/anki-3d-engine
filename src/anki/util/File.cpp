@@ -428,7 +428,7 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 
 	if(m_type == Type::C)
 	{
-		if(fseek(ANKI_CFILE, offset, (I)origin) != 0)
+		if(fseek(ANKI_CFILE, offset, I32(origin)) != 0)
 		{
 			ANKI_UTIL_LOGE("fseek() failed");
 			err = Error::FUNCTION_FAILED;

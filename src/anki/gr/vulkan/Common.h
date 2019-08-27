@@ -150,7 +150,7 @@ ANKI_USE_RESULT VkBlendOp convertBlendOperation(BlendOperation ak);
 /// Convert color write mask.
 inline ANKI_USE_RESULT VkColorComponentFlags convertColorWriteMask(ColorBit ak)
 {
-	return static_cast<U>(ak);
+	return static_cast<VkColorComponentFlags>(ak);
 }
 
 /// Convert load op.

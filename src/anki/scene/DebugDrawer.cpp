@@ -367,7 +367,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
 	// Setup state
 	ShaderProgramResourceMutationInitList<2> mutators(m_prog);
 	mutators.add("COLOR_TEXTURE", 0);
-	mutators.add("DITHERED_DEPTH_TEST", U(ditherFailedDepth != 0));
+	mutators.add("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("INSTANCE_COUNT", U32(mvps.getSize()));
 	const ShaderProgramResourceVariant* variant;
@@ -442,7 +442,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
 	// Setup state
 	ShaderProgramResourceMutationInitList<2> mutators(m_prog);
 	mutators.add("COLOR_TEXTURE", 1);
-	mutators.add("DITHERED_DEPTH_TEST", U(ditherFailedDepth != 0));
+	mutators.add("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("INSTANCE_COUNT", U32(positions.getSize()));
 	const ShaderProgramResourceVariant* variant;
