@@ -28,7 +28,7 @@ void JitterMoveEvent::setPositionLimits(const Vec4& posMin, const Vec4& posMax)
 {
 	for(U i = 0; i < 3; i++)
 	{
-		m_newPos[i] = randRange(posMin[i], posMax[i]);
+		m_newPos[i] = getRandomRange(posMin[i], posMax[i]);
 	}
 
 	m_newPos[3] = 0.0;
@@ -43,7 +43,7 @@ Error JitterMoveEvent::update(Second prevUpdateTime, Second crntTime)
 
 	Transform trf = move.getLocalTransform();
 
-	F32 factor = sin(getDelta(crntTime) * PI);
+	F32 factor = F32(sin(getDelta(crntTime) * PI));
 
 	trf.getOrigin() = linearInterpolate(m_originalPos, m_newPos, factor);
 

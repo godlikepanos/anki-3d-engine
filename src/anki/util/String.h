@@ -62,7 +62,7 @@ class CString
 public:
 	using Char = char;
 
-	static const PtrSize NPOS = MAX_PTR_SIZE;
+	static constexpr PtrSize NPOS = MAX_PTR_SIZE;
 
 	CString() = default;
 
@@ -96,31 +96,6 @@ public:
 		checkInit();
 		ANKI_ASSERT(pos <= getLength());
 		return m_ptr[pos];
-	}
-
-	/// Get C-string.
-	const Char* cstr() const
-	{
-		checkInit();
-		return m_ptr;
-	}
-
-	const Char* begin() const
-	{
-		checkInit();
-		return &m_ptr[0];
-	}
-
-	const Char* end() const
-	{
-		checkInit();
-		return &m_ptr[getLength()];
-	}
-
-	/// Return true if the string is not initialized.
-	Bool isEmpty() const
-	{
-		return m_ptr == nullptr;
 	}
 
 	Bool operator==(const CString& b) const
@@ -188,11 +163,29 @@ public:
 		}
 	}
 
-	/// Get the underlying C string.
-	const char* get() const
+	/// Get C-string.
+	const Char* cstr() const
 	{
 		checkInit();
 		return m_ptr;
+	}
+
+	const Char* begin() const
+	{
+		checkInit();
+		return &m_ptr[0];
+	}
+
+	const Char* end() const
+	{
+		checkInit();
+		return &m_ptr[getLength()];
+	}
+
+	/// Return true if the string is not initialized.
+	Bool isEmpty() const
+	{
+		return m_ptr == nullptr || getLength() == 0;
 	}
 
 	/// Get the string length.
@@ -238,7 +231,7 @@ public:
 	ANKI_USE_RESULT Error toNumber(Bool& out) const;
 
 	/// Compute the hash.
-	U32 computeHash() const
+	U64 computeHash() const
 	{
 		checkInit();
 		return anki::computeHash(m_ptr, getLength());
@@ -296,27 +289,6 @@ public:
 	{
 	}
 
-	/// Initialize using a const string.
-	void create(Allocator alloc, const CStringType& cstr);
-
-	/// Initialize using a range. Copies the range of [first, last)
-	void create(Allocator alloc, ConstIterator first, ConstIterator last);
-
-	/// Initialize using a character.
-	void create(Allocator alloc, Char c, PtrSize length);
-
-	/// Copy one string to this one.
-	void create(Allocator alloc, const String& b)
-	{
-		create(alloc, b.toCString());
-	}
-
-	/// Destroy the string.
-	void destroy(Allocator alloc)
-	{
-		m_data.destroy(alloc);
-	}
-
 	/// Move one string to this one.
 	String& operator=(String&& b)
 	{
@@ -326,13 +298,6 @@ public:
 
 	/// Move a StringAuto to this one.
 	String& operator=(StringAuto&& b);
-
-	/// Get a C string.
-	const Char* cstr() const
-	{
-		checkInit();
-		return &m_data[0];
-	}
 
 	/// Return char at the specified position.
 	const Char& operator[](U pos) const
@@ -346,30 +311,6 @@ public:
 	{
 		checkInit();
 		return m_data[pos];
-	}
-
-	Iterator begin()
-	{
-		checkInit();
-		return &m_data[0];
-	}
-
-	ConstIterator begin() const
-	{
-		checkInit();
-		return &m_data[0];
-	}
-
-	Iterator end()
-	{
-		checkInit();
-		return &m_data[m_data.getSize() - 1];
-	}
-
-	ConstIterator end() const
-	{
-		checkInit();
-		return &m_data[m_data.getSize() - 1];
 	}
 
 	operator Bool() const
@@ -423,45 +364,61 @@ public:
 		return std::strcmp(&m_data[0], &b.m_data[0]) >= 0;
 	}
 
-	/// Return true if strings are equal
-	Bool operator==(const CStringType& cstr) const
+	/// Get a C string.
+	const Char* cstr() const
 	{
 		checkInit();
-		return std::strcmp(&m_data[0], cstr.get()) == 0;
+		return &m_data[0];
 	}
 
-	/// Return true if strings are not equal
-	Bool operator!=(const CStringType& cstr) const
+	operator CString() const
 	{
-		return !(*this == cstr);
+		return toCString();
 	}
 
-	/// Return true if this is less than cstr.
-	Bool operator<(const CStringType& cstr) const
+	/// Initialize using a const string.
+	void create(Allocator alloc, const CStringType& cstr);
+
+	/// Initialize using a range. Copies the range of [first, last)
+	void create(Allocator alloc, ConstIterator first, ConstIterator last);
+
+	/// Initialize using a character.
+	void create(Allocator alloc, Char c, PtrSize length);
+
+	/// Copy one string to this one.
+	void create(Allocator alloc, const String& b)
 	{
-		checkInit();
-		return std::strcmp(&m_data[0], cstr.get()) < 0;
+		create(alloc, b.toCString());
 	}
 
-	/// Return true if this is less or equal to cstr.
-	Bool operator<=(const CStringType& cstr) const
+	/// Destroy the string.
+	void destroy(Allocator alloc)
 	{
-		checkInit();
-		return std::strcmp(&m_data[0], cstr.get()) <= 0;
+		m_data.destroy(alloc);
 	}
 
-	/// Return true if this is greater than cstr.
-	Bool operator>(const CStringType& cstr) const
-	{
-		checkInit();
-		return std::strcmp(&m_data[0], cstr.get()) > 0;
-	}
-
-	/// Return true if this is greater or equal to cstr.
-	Bool operator>=(const CStringType& cstr) const
+	Iterator begin()
 	{
 		checkInit();
-		return std::strcmp(&m_data[0], cstr.get()) >= 0;
+		return &m_data[0];
+	}
+
+	ConstIterator begin() const
+	{
+		checkInit();
+		return &m_data[0];
+	}
+
+	Iterator end()
+	{
+		checkInit();
+		return &m_data[m_data.getSize() - 1];
+	}
+
+	ConstIterator end() const
+	{
+		checkInit();
+		return &m_data[m_data.getSize() - 1];
 	}
 
 	/// Return the string's length. It doesn't count the terminating character.
@@ -586,7 +543,7 @@ public:
 	}
 
 	/// Compute the hash.
-	U32 computeHash() const
+	U64 computeHash() const
 	{
 		checkInit();
 		return anki::computeHash(&m_data[0], m_data.getSize());
@@ -674,6 +631,25 @@ public:
 		Base::destroy(m_alloc);
 	}
 
+	/// Copy operator.
+	StringAuto& operator=(const StringAuto& b)
+	{
+		destroy();
+		m_alloc = b.m_alloc;
+		if(!b.isEmpty())
+		{
+			create(b.m_data.getBegin(), b.m_data.getEnd());
+		}
+		return *this;
+	}
+
+	/// Move one string to this one.
+	StringAuto& operator=(StringAuto&& b)
+	{
+		move(b);
+		return *this;
+	}
+
 	/// Initialize using a const string.
 	void create(const CStringType& cstr)
 	{
@@ -702,25 +678,6 @@ public:
 	void destroy()
 	{
 		Base::destroy(m_alloc);
-	}
-
-	/// Copy operator.
-	StringAuto& operator=(const StringAuto& b)
-	{
-		destroy();
-		m_alloc = b.m_alloc;
-		if(!b.isEmpty())
-		{
-			create(b.m_data.getBegin(), b.m_data.getEnd());
-		}
-		return *this;
-	}
-
-	/// Move one string to this one.
-	StringAuto& operator=(StringAuto&& b)
-	{
-		move(b);
-		return *this;
 	}
 
 	/// Append another string to this one.
@@ -761,6 +718,40 @@ private:
 		m_alloc = std::move(b.m_alloc);
 	}
 };
+
+#define ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, op) \
+	inline Bool operator op(TypeA a, TypeB b) \
+	{ \
+		return CString(a) op CString(b); \
+	}
+
+#define ANKI_STRING_COMPARE_OPS(TypeA, TypeB) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, ==) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, !=) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, <) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, <=) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, >) \
+	ANKI_STRING_COMPARE_OPERATOR(TypeA, TypeB, >=)
+
+ANKI_STRING_COMPARE_OPS(const char*, CString)
+ANKI_STRING_COMPARE_OPS(const char*, const String&)
+ANKI_STRING_COMPARE_OPS(const char*, const StringAuto&)
+
+ANKI_STRING_COMPARE_OPS(CString, const char*)
+ANKI_STRING_COMPARE_OPS(CString, const String&)
+ANKI_STRING_COMPARE_OPS(CString, const StringAuto&)
+
+ANKI_STRING_COMPARE_OPS(const String&, const char*)
+ANKI_STRING_COMPARE_OPS(const String&, CString)
+ANKI_STRING_COMPARE_OPS(const String&, const StringAuto&)
+
+ANKI_STRING_COMPARE_OPS(const StringAuto&, const char*)
+ANKI_STRING_COMPARE_OPS(const StringAuto&, CString)
+ANKI_STRING_COMPARE_OPS(const StringAuto&, const String&)
+ANKI_STRING_COMPARE_OPS(const StringAuto&, const StringAuto&)
+
+#undef ANKI_STRING_COMPARE_OPERATOR
+#undef ANKI_STRING_COMPARE_OPS
 /// @}
 
 } // end namespace anki

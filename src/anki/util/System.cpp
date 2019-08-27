@@ -10,14 +10,14 @@
 #if ANKI_POSIX
 #	include <unistd.h>
 #	include <signal.h>
-#elif ANKI_OS == ANKI_OS_WINDOWS
+#elif ANKI_OS_WINDOWS
 #	include <windows.h>
 #else
 #	error "Unimplemented"
 #endif
 
 // For print backtrace
-#if ANKI_POSIX && ANKI_OS != ANKI_OS_ANDROID
+#if ANKI_POSIX && !ANKI_OS_ANDROID
 #	include <execinfo.h>
 #	include <cstdlib>
 #endif
@@ -28,8 +28,8 @@ namespace anki
 U32 getCpuCoresCount()
 {
 #if ANKI_POSIX
-	return sysconf(_SC_NPROCESSORS_ONLN);
-#elif ANKI_OS == ANKI_OS_WINDOWS
+	return U32(sysconf(_SC_NPROCESSORS_ONLN));
+#elif ANKI_OS_WINDOWS
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
 	return sysinfo.dwNumberOfProcessors;
@@ -40,19 +40,19 @@ U32 getCpuCoresCount()
 
 void BackTraceWalker::exec()
 {
-#if ANKI_POSIX && ANKI_OS != ANKI_OS_ANDROID
+#if ANKI_POSIX && !ANKI_OS_ANDROID
 	// Get addresses's for all entries on the stack
 	void** array = static_cast<void**>(malloc(m_stackSize * sizeof(void*)));
 	if(array)
 	{
-		size_t size = backtrace(array, m_stackSize);
+		I32 size = backtrace(array, I32(m_stackSize));
 
 		// Get symbols
 		char** strings = backtrace_symbols(array, size);
 
 		if(strings)
 		{
-			for(size_t i = 0; i < size; ++i)
+			for(I32 i = 0; i < size; ++i)
 			{
 				operator()(strings[i]);
 			}

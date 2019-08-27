@@ -25,7 +25,7 @@ Error PipelineLayoutFactory::newPipelineLayout(
 {
 	U64 hash = computeHash(&pushConstantsSize, sizeof(pushConstantsSize));
 	Array<VkDescriptorSetLayout, MAX_DESCRIPTOR_SETS> vkDsetLayouts;
-	U dsetLayoutCount = 0;
+	U32 dsetLayoutCount = 0;
 	for(const DescriptorSetLayout& dl : dsetLayouts)
 	{
 		vkDsetLayouts[dsetLayoutCount++] = dl.getHandle();

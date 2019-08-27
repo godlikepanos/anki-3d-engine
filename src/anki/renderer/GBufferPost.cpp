@@ -34,9 +34,9 @@ Error GBufferPost::initInternal(const ConfigSet& cfg)
 	ANKI_CHECK(getResourceManager().loadResource("shaders/GBufferPost.glslp", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
-	consts.add("CLUSTER_COUNT_X", U32(cfg.getNumber("r.clusterSizeX")));
-	consts.add("CLUSTER_COUNT_Y", U32(cfg.getNumber("r.clusterSizeY")));
-	consts.add("CLUSTER_COUNT_Z", U32(cfg.getNumber("r.clusterSizeZ")));
+	consts.add("CLUSTER_COUNT_X", cfg.getNumberU32("r.clusterSizeX"));
+	consts.add("CLUSTER_COUNT_Y", cfg.getNumberU32("r.clusterSizeY"));
+	consts.add("CLUSTER_COUNT_Z", cfg.getNumberU32("r.clusterSizeZ"));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(consts.get(), variant);

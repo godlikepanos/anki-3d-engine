@@ -7,9 +7,8 @@
 #include <anki/util/Assert.h>
 #include <anki/util/Logger.h>
 #include <windows.h>
-
-// Someone pollutes the global namespace
-#undef ERROR
+#include <Shlobj.h>
+#include <anki/util/CleanupWindows.h>
 
 namespace anki
 {
@@ -28,12 +27,12 @@ Bool fileExists(const CString& filename)
 
 Bool directoryExists(const CString& filename)
 {
-	DWORD dwAttrib = GetFileAttributes(filename.get());
+	DWORD dwAttrib = GetFileAttributes(filename.cstr());
 
 	return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-Error removeDirectory(const CString& dirname)
+Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> alloc)
 {
 	// For some reason dirname should be double null terminated
 	if(dirname.getLength() > MAX_PATH - 2)
@@ -63,37 +62,25 @@ Error removeDirectory(const CString& dirname)
 Error createDirectory(const CString& dir)
 {
 	Error err = Error::NONE;
-	if(CreateDirectory(dir.get(), NULL) == 0)
+	if(CreateDirectory(dir.cstr(), NULL) == 0)
 	{
-		ANKI_UTIL_LOGE("Failed to create directory %s", dir.get());
+		ANKI_UTIL_LOGE("Failed to create directory %s", dir.cstr());
 		err = Error::FUNCTION_FAILED;
 	}
 
 	return err;
 }
 
-Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
+Error getHomeDirectory(StringAuto& out)
 {
-	const char* homed = getenv("HOMEDRIVE");
-	const char* homep = getenv("HOMEPATH");
-
-	if(homed == nullptr || homep == nullptr)
+	char path[MAX_PATH];
+	if(SHGetFolderPath(NULL, CSIDL_PROFILE, nullptr, 0, path) != S_OK)
 	{
-		ANKI_UTIL_LOGE("HOME environment variables not set");
+		ANKI_UTIL_LOGE("SHGetFolderPath() failed");
 		return Error::FUNCTION_FAILED;
 	}
 
-	out.sprintf(alloc, "%s/%s", homed, homep);
-
-	// Convert to Unix path
-	for(char& c : out)
-	{
-		if(c == '\\')
-		{
-			c = '/';
-		}
-	}
-
+	out.create(path);
 	return Error::NONE;
 }
 

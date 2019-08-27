@@ -70,9 +70,9 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 {
 	// Init the shadowmaps and FBs
 	{
-		m_scratch.m_tileCountX = cfg.getNumber("r.shadowMapping.scratchTileCountX");
-		m_scratch.m_tileCountY = cfg.getNumber("r.shadowMapping.scratchTileCountY");
-		m_scratch.m_tileResolution = cfg.getNumber("r.shadowMapping.tileResolution");
+		m_scratch.m_tileCountX = cfg.getNumberU32("r.shadowMapping.scratchTileCountX");
+		m_scratch.m_tileCountY = cfg.getNumberU32("r.shadowMapping.scratchTileCountY");
+		m_scratch.m_tileResolution = cfg.getNumberU32("r.shadowMapping.tileResolution");
 
 		// RT
 		m_scratch.m_rtDescr = m_r->create2DRenderTargetDescription(m_scratch.m_tileResolution * m_scratch.m_tileCountX,
@@ -97,8 +97,8 @@ Error ShadowMapping::initAtlas(const ConfigSet& cfg)
 {
 	// Init RT
 	{
-		m_atlas.m_tileResolution = cfg.getNumber("r.shadowMapping.tileResolution");
-		m_atlas.m_tileCountBothAxis = cfg.getNumber("r.shadowMapping.tileCountPerRowOrColumn");
+		m_atlas.m_tileResolution = cfg.getNumberU32("r.shadowMapping.tileResolution");
+		m_atlas.m_tileCountBothAxis = cfg.getNumberU32("r.shadowMapping.tileCountPerRowOrColumn");
 
 		// RT
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
@@ -140,8 +140,8 @@ Error ShadowMapping::initInternal(const ConfigSet& cfg)
 	ANKI_CHECK(initScratch(cfg));
 	ANKI_CHECK(initAtlas(cfg));
 
-	m_lodDistances[0] = cfg.getNumber("r.shadowMapping.lightLodDistance0");
-	m_lodDistances[1] = cfg.getNumber("r.shadowMapping.lightLodDistance1");
+	m_lodDistances[0] = cfg.getNumberF32("r.shadowMapping.lightLodDistance0");
+	m_lodDistances[1] = cfg.getNumberF32("r.shadowMapping.lightLodDistance1");
 
 	return Error::NONE;
 }
@@ -292,7 +292,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 Mat4 ShadowMapping::createSpotLightTextureMatrix(const Viewport& viewport) const
 {
-	const F32 atlasSize = m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis;
+	const F32 atlasSize = F32(m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis);
 	const Vec2 uv(F32(viewport[0]) / atlasSize, F32(viewport[1]) / atlasSize);
 	ANKI_ASSERT(uv >= Vec2(0.0f) && uv <= Vec2(1.0f));
 
@@ -317,7 +317,7 @@ Mat4 ShadowMapping::createSpotLightTextureMatrix(const Viewport& viewport) const
 		1.0f);
 }
 
-U ShadowMapping::choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurAtlas) const
+U32 ShadowMapping::choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurAtlas) const
 {
 	const F32 distFromTheCamera = (cameraOrigin - light.m_worldPosition.xyz0()).getLength() - light.m_radius;
 	if(distFromTheCamera < m_lodDistances[0])
@@ -333,7 +333,7 @@ U ShadowMapping::choseLod(const Vec4& cameraOrigin, const PointLightQueueElement
 	}
 }
 
-U ShadowMapping::choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurAtlas) const
+U32 ShadowMapping::choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurAtlas) const
 {
 	// Get some data
 	const Vec4 coneOrigin = light.m_worldTransform.getTranslationPart().xyz0();
@@ -346,7 +346,7 @@ U ShadowMapping::choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement&
 	const F32 V1len = V.dot(coneDir);
 	const F32 distFromTheCamera = cos(coneAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(coneAngle);
 
-	U lod;
+	U32 lod;
 	if(distFromTheCamera < m_lodDistances[0])
 	{
 		blurAtlas = true;
@@ -514,9 +514,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Array<U32, MAX_SHADOW_CASCADES> lods;
 		Array<Bool, MAX_SHADOW_CASCADES> blurAtlass;
 
-		U activeCascades = 0;
+		U32 activeCascades = 0;
 
-		for(U cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
+		for(U32 cascade = 0; cascade < light.m_shadowCascadeCount; ++cascade)
 		{
 			ANKI_ASSERT(light.m_shadowRenderQueues[cascade]);
 			if(light.m_shadowRenderQueues[cascade]->m_renderables.getSize() > 0)
@@ -601,12 +601,12 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		Array<Viewport, 6> scratchViewports;
 		Array<TileAllocatorResult, 6> subResults;
 		Array<U32, 6> lods;
-		U numOfFacesThatHaveDrawcalls = 0;
+		U32 numOfFacesThatHaveDrawcalls = 0;
 
 		Bool blurAtlas;
-		const U lod = choseLod(cameraOrigin, *light, blurAtlas);
+		const U32 lod = choseLod(cameraOrigin, *light, blurAtlas);
 
-		for(U face = 0; face < 6; ++face)
+		for(U32 face = 0; face < 6; ++face)
 		{
 			ANKI_ASSERT(light->m_shadowRenderQueues[face]);
 			if(light->m_shadowRenderQueues[face]->m_renderables.getSize())
@@ -618,7 +618,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 					light->m_shadowRenderQueues[face]->m_shadowRenderablesLastUpdateTimestamp;
 
 				drawcallCounts[numOfFacesThatHaveDrawcalls] =
-					light->m_shadowRenderQueues[face]->m_renderables.getSize();
+					U32(light->m_shadowRenderQueues[face]->m_renderables.getSize());
 
 				lods[numOfFacesThatHaveDrawcalls] = lod;
 
@@ -643,7 +643,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			// All good, update the lights
 
 			const F32 atlasResolution = F32(m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis);
-			F32 superTileSize = atlasViewports[0][2]; // Should be the same for all tiles and faces
+			F32 superTileSize = F32(atlasViewports[0][2]); // Should be the same for all tiles and faces
 			superTileSize -= 1.0f; // Remove 2 half texels to avoid bilinear filtering bleeding
 
 			light->m_shadowAtlasTileSize = superTileSize / atlasResolution;
@@ -680,9 +680,9 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				{
 					// Doesn't have renderables, point the face to the empty tile
 					Viewport atlasViewport = emptyTileViewport;
-					ANKI_ASSERT(atlasViewport[2] <= superTileSize && atlasViewport[3] <= superTileSize);
-					atlasViewport[2] = superTileSize;
-					atlasViewport[3] = superTileSize;
+					ANKI_ASSERT(F32(atlasViewport[2]) <= superTileSize && F32(atlasViewport[3]) <= superTileSize);
+					atlasViewport[2] = U32(superTileSize);
+					atlasViewport[3] = U32(superTileSize);
 
 					light->m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + 0.5f) / atlasResolution;
 					light->m_shadowAtlasTileOffsets[face].y() = (F32(atlasViewport[1]) + 0.5f) / atlasResolution;
@@ -706,7 +706,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		TileAllocatorResult subResult;
 		Viewport atlasViewport;
 		Viewport scratchViewport;
-		const U32 localDrawcallCount = light->m_shadowRenderQueue->m_renderables.getSize();
+		const U32 localDrawcallCount = U32(light->m_shadowRenderQueue->m_renderables.getSize());
 
 		Bool blurAtlas;
 		const U32 lod = choseLod(cameraOrigin, *light, blurAtlas);
@@ -753,24 +753,24 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	{
 		DynamicArrayAuto<Scratch::WorkItem> workItems(ctx.m_tempAllocator);
 		Scratch::LightToRenderToScratchInfo* lightToRender = lightsToRender.getBegin();
-		U lightToRenderDrawcallCount = lightToRender->m_drawcallCount;
+		U32 lightToRenderDrawcallCount = lightToRender->m_drawcallCount;
 		const Scratch::LightToRenderToScratchInfo* lightToRenderEnd = lightsToRender.getEnd();
 
-		const U threadCount = computeNumberOfSecondLevelCommandBuffers(drawcallCount);
+		const U32 threadCount = computeNumberOfSecondLevelCommandBuffers(drawcallCount);
 		threadCountForScratchPass = threadCount;
-		for(U taskId = 0; taskId < threadCount; ++taskId)
+		for(U32 taskId = 0; taskId < threadCount; ++taskId)
 		{
-			PtrSize start, end;
+			U32 start, end;
 			splitThreadedProblem(taskId, threadCount, drawcallCount, start, end);
 
 			// While there are drawcalls in this task emit new work items
-			U taskDrawcallCount = end - start;
+			U32 taskDrawcallCount = end - start;
 			ANKI_ASSERT(taskDrawcallCount > 0 && "Because we used computeNumberOfSecondLevelCommandBuffers()");
 
 			while(taskDrawcallCount)
 			{
 				ANKI_ASSERT(lightToRender != lightToRenderEnd);
-				const U workItemDrawcallCount = min(lightToRenderDrawcallCount, taskDrawcallCount);
+				const U32 workItemDrawcallCount = min(lightToRenderDrawcallCount, taskDrawcallCount);
 
 				Scratch::WorkItem workItem;
 				workItem.m_viewport = lightToRender->m_viewport;
@@ -836,13 +836,13 @@ void ShadowMapping::newScratchAndAtlasResloveRenderWorkItems(const Viewport& atl
 		Scratch::LightToRenderToScratchInfo toRender = {
 			scratchVewport, lightRenderQueue, U32(lightRenderQueue->m_renderables.getSize())};
 		scratchWorkItem.emplaceBack(toRender);
-		drawcallCount += lightRenderQueue->m_renderables.getSize();
+		drawcallCount += U32(lightRenderQueue->m_renderables.getSize());
 	}
 
 	// Atlas resolve work item
 	{
-		const F32 scratchAtlasWidth = m_scratch.m_tileCountX * m_scratch.m_tileResolution;
-		const F32 scratchAtlasHeight = m_scratch.m_tileCountY * m_scratch.m_tileResolution;
+		const F32 scratchAtlasWidth = F32(m_scratch.m_tileCountX * m_scratch.m_tileResolution);
+		const F32 scratchAtlasHeight = F32(m_scratch.m_tileCountY * m_scratch.m_tileResolution);
 
 		Atlas::ResolveWorkItem atlasItem;
 		atlasItem.m_uvIn[0] = F32(scratchVewport[0]) / scratchAtlasWidth;

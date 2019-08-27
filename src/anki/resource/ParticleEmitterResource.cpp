@@ -141,11 +141,11 @@ Error ParticleEmitterResource::readVar(
 	return Error::NONE;
 }
 
-void ParticleEmitterResource::getRenderingInfo(U lod, ShaderProgramPtr& prog) const
+void ParticleEmitterResource::getRenderingInfo(U32 lod, ShaderProgramPtr& prog) const
 {
-	lod = min<U>(lod, m_lodCount - 1);
+	lod = min<U32>(lod, m_lodCount - 1);
 
-	RenderingKey key(Pass::FS, lod, 1, false, false);
+	RenderingKey key(Pass::FS, U8(lod), 1, false, false);
 	const MaterialVariant& variant = m_material->getOrCreateVariant(key);
 	prog = variant.getShaderProgram();
 }

@@ -24,11 +24,11 @@ Bloom::~Bloom()
 
 Error Bloom::initExposure(const ConfigSet& config)
 {
-	m_exposure.m_width = m_r->getDownscaleBlur().getPassWidth(MAX_U) * 2;
-	m_exposure.m_height = m_r->getDownscaleBlur().getPassHeight(MAX_U) * 2;
+	m_exposure.m_width = m_r->getDownscaleBlur().getPassWidth(MAX_U32) * 2;
+	m_exposure.m_height = m_r->getDownscaleBlur().getPassHeight(MAX_U32) * 2;
 
-	m_exposure.m_threshold = config.getNumber("r.bloom.threshold");
-	m_exposure.m_scale = config.getNumber("r.bloom.scale");
+	m_exposure.m_threshold = config.getNumberF32("r.bloom.threshold");
+	m_exposure.m_scale = config.getNumberF32("r.bloom.scale");
 
 	// Create RT info
 	m_exposure.m_rtDescr =

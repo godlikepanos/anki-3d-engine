@@ -35,7 +35,9 @@ using WalkDirectoryTreeCallback = Error (*)(const CString& filename, void* userD
 ANKI_USE_RESULT Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback);
 
 /// Equivalent to: rm -rf dir
-ANKI_USE_RESULT Error removeDirectory(const CString& dir);
+/// @param dir The directory to remove.
+/// @param alloc A temp allocator that this function requires.
+ANKI_USE_RESULT Error removeDirectory(const CString& dir, GenericMemoryPoolAllocator<U8> alloc);
 
 /// Equivalent to: mkdir dir
 ANKI_USE_RESULT Error createDirectory(const CString& dir);
@@ -43,7 +45,7 @@ ANKI_USE_RESULT Error createDirectory(const CString& dir);
 /// Get the home directory.
 /// Write the home directory to @a buff. The @a buffSize is the size of the @a buff. If the @buffSize is not enough the
 /// function will throw an exception.
-ANKI_USE_RESULT Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out);
+ANKI_USE_RESULT Error getHomeDirectory(StringAuto& out);
 /// @}
 
 } // end namespace anki

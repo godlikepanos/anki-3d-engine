@@ -182,7 +182,7 @@ public:
 	}
 
 	void bindTextureAndSampler(
-		U binding, U arrayIdx, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
+		U32 binding, U32 arrayIdx, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
 	{
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
 		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
@@ -201,7 +201,7 @@ public:
 		unbindCustomDSet();
 	}
 
-	void bindTexture(U binding, U arrayIdx, const TextureView* texView, VkImageLayout layout)
+	void bindTexture(U32 binding, U32 arrayIdx, const TextureView* texView, VkImageLayout layout)
 	{
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
 		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
@@ -218,7 +218,7 @@ public:
 		unbindCustomDSet();
 	}
 
-	void bindSampler(U binding, U arrayIdx, const Sampler* sampler)
+	void bindSampler(U32 binding, U32 arrayIdx, const Sampler* sampler)
 	{
 		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
@@ -230,7 +230,7 @@ public:
 		unbindCustomDSet();
 	}
 
-	void bindUniformBuffer(U binding, U arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
+	void bindUniformBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
@@ -245,7 +245,7 @@ public:
 		unbindCustomDSet();
 	}
 
-	void bindStorageBuffer(U binding, U arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
+	void bindStorageBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
 		b = {};
@@ -260,7 +260,7 @@ public:
 		unbindCustomDSet();
 	}
 
-	void bindImage(U binding, U arrayIdx, const TextureView* texView)
+	void bindImage(U32 binding, U32 arrayIdx, const TextureView* texView)
 	{
 		ANKI_ASSERT(texView);
 		const TextureViewImpl* impl = static_cast<const TextureViewImpl*>(texView);
@@ -301,8 +301,8 @@ private:
 	/// Only DescriptorSetFactory should call this.
 	/// @param hash If hash is zero then the DS doesn't need rebind.
 	void flush(U64& hash,
-		Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
-		U& dynamicOffsetCount,
+		Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
+		U32& dynamicOffsetCount,
 		DescriptorSet& customDSet);
 
 	void unbindCustomDSet()
@@ -384,8 +384,8 @@ public:
 		DescriptorSetState& state,
 		DescriptorSet& set,
 		Bool& dirty,
-		Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
-		U& dynamicOffsetCount);
+		Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
+		U32& dynamicOffsetCount);
 
 	void endFrame()
 	{

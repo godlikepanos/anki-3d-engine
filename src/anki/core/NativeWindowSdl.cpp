@@ -5,7 +5,7 @@
 
 #include <anki/core/NativeWindowSdl.h>
 #include <anki/util/Logger.h>
-#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
+#if ANKI_GR_BACKEND_VULKAN
 #	include <SDL_vulkan.h>
 #endif
 
@@ -25,7 +25,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		return Error::FUNCTION_FAILED;
 	}
 
-#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
+#if ANKI_GR_BACKEND_VULKAN
 	if(SDL_Vulkan_LoadLibrary(nullptr))
 	{
 		ANKI_CORE_LOGE("SDL_Vulkan_LoadLibrary() failed: %s", SDL_GetError());
@@ -38,7 +38,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	//
 	ANKI_CORE_LOGI("Creating SDL window. SDL version %u.%u", SDL_MAJOR_VERSION, SDL_MINOR_VERSION);
 
-#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_GL
+#if ANKI_GR_BACKEND_GL
 	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0])
 		|| SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.m_rgbaBits[1])
 		|| SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.m_rgbaBits[2])
@@ -56,9 +56,9 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	//
 	U32 flags = 0;
 
-#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_GL
+#if ANKI_GR_BACKEND_GL
 	flags |= SDL_WINDOW_OPENGL;
-#elif ANKI_GR_BACKEND == ANKI_GR_BACKEND_VULKAN
+#elif ANKI_GR_BACKEND_VULKAN
 	flags |= SDL_WINDOW_VULKAN;
 #endif
 

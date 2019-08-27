@@ -108,7 +108,7 @@ ANKI_TEST(Util, StackMemoryPool)
 				for(U i = 0; i < m_allocations.getSize(); ++i)
 				{
 					void* ptr = m_pool->allocate(ALLOC_SIZE, 1);
-					memset(ptr, (taskId << 4) | i, ALLOC_SIZE);
+					memset(ptr, U8((taskId << 4) | i), ALLOC_SIZE);
 					m_allocations[i] = ptr;
 				}
 
@@ -119,7 +119,7 @@ ANKI_TEST(Util, StackMemoryPool)
 		pool.create(allocAligned, nullptr, 100, 1.0, 0, true);
 		Array<AllocateTask, THREAD_COUNT> tasks;
 
-		for(U i = 0; i < THREAD_COUNT; ++i)
+		for(U32 i = 0; i < THREAD_COUNT; ++i)
 		{
 			tasks[i].m_pool = &pool;
 			threadPool.assignNewTask(i, &tasks[i]);
@@ -134,7 +134,7 @@ ANKI_TEST(Util, StackMemoryPool)
 
 			for(U j = 0; j < task.m_allocations.getSize(); ++j)
 			{
-				U8 magic = (i << 4) | j;
+				U8 magic = U8((i << 4) | j);
 				U8* ptr = static_cast<U8*>(task.m_allocations[j]);
 
 				for(U k = 0; k < ALLOC_SIZE; ++k)
@@ -146,7 +146,7 @@ ANKI_TEST(Util, StackMemoryPool)
 
 		// Reset and allocate again
 		pool.reset();
-		for(U i = 0; i < THREAD_COUNT; ++i)
+		for(U32 i = 0; i < THREAD_COUNT; ++i)
 		{
 			threadPool.assignNewTask(i, &tasks[i]);
 		}
@@ -158,7 +158,7 @@ ANKI_TEST(Util, StackMemoryPool)
 
 			for(U j = 0; j < task.m_allocations.getSize(); ++j)
 			{
-				U8 magic = (i << 4) | j;
+				U8 magic = U8((i << 4) | j);
 				U8* ptr = static_cast<U8*>(task.m_allocations[j]);
 
 				for(U k = 0; k < ALLOC_SIZE; ++k)

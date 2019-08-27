@@ -7,13 +7,11 @@
 
 #include <anki/util/StdTypes.h>
 
-#if ANKI_SIMD == ANKI_SIMD_SSE
+#if ANKI_SIMD_SSE
 #	include <smmintrin.h>
-#elif ANKI_SIMD == ANKI_SIMD_NEON
+#elif ANKI_SIMD_NEON
 #	include <arm_neon.h>
-#elif ANKI_SIMD == ANKI_SIMD_NONE
-#	define ANKI_DUMMY_DUMMY_DUMMY 1
-#else
+#elif !ANKI_SIMD_NONE
 #	error "See file"
 #endif
 
@@ -29,7 +27,7 @@ public:
 	static constexpr U ALIGNMENT = alignof(T);
 };
 
-#if ANKI_SIMD == ANKI_SIMD_SSE
+#if ANKI_SIMD_SSE
 // Specialize for F32
 template<>
 class MathSimd<F32, 4>
@@ -38,7 +36,7 @@ public:
 	using Type = __m128;
 	static constexpr U ALIGNMENT = 16;
 };
-#elif ANKI_SIMD == ANKI_SIMD_NEON
+#elif ANKI_SIMD_NEON
 // Specialize for F32
 template<>
 class MathSimd<F32, 4>

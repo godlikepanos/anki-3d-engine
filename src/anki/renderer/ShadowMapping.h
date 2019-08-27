@@ -101,15 +101,15 @@ private:
 	/// @name Misc & common
 	/// @{
 
-	static const U m_lodCount = 3;
-	static const U m_pointLightsMaxLod = 1;
+	static const U32 m_lodCount = 3;
+	static const U32 m_pointLightsMaxLod = 1;
 
 	Array<F32, m_lodCount - 1> m_lodDistances;
 
 	/// Find the lod of the light
-	U choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurAtlas) const;
+	U32 choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurAtlas) const;
 	/// Find the lod of the light
-	U choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurAtlas) const;
+	U32 choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurAtlas) const;
 
 	/// Try to allocate a number of scratch tiles and regular tiles.
 	TileAllocatorResult allocateTilesAndScratchTiles(U64 lightUuid,

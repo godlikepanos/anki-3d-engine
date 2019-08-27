@@ -61,8 +61,8 @@ private:
 
 	U32 translateTileIdx(U32 x, U32 y, U32 lod) const
 	{
-		const U lodWidth = m_tileCountX >> lod;
-		const U idx = y * lodWidth + x + m_lodFirstTileIndex[lod];
+		const U32 lodWidth = m_tileCountX >> lod;
+		const U32 idx = y * lodWidth + x + m_lodFirstTileIndex[lod];
 		ANKI_ASSERT(idx < m_allTiles.getSize());
 		return idx;
 	}
@@ -79,16 +79,19 @@ private:
 	}
 
 	/// Search for a tile recursively.
-	Bool searchTileRecursively(U crntTileIdx,
-		U crntTileLod,
-		U allocationLod,
+	Bool searchTileRecursively(U32 crntTileIdx,
+		U32 crntTileLod,
+		U32 allocationLod,
 		Timestamp crntTimestamp,
-		U& emptyTileIdx,
-		U& toKickTileIdx,
+		U32& emptyTileIdx,
+		U32& toKickTileIdx,
 		Timestamp& tileToKickMinTimestamp) const;
 
-	Bool evaluateCandidate(
-		U tileIdx, Timestamp crntTimestamp, U& emptyTileIdx, U& toKickTileIdx, Timestamp& tileToKickMinTimestamp) const;
+	Bool evaluateCandidate(U32 tileIdx,
+		Timestamp crntTimestamp,
+		U32& emptyTileIdx,
+		U32& toKickTileIdx,
+		Timestamp& tileToKickMinTimestamp) const;
 };
 /// @}
 

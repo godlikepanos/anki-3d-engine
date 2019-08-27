@@ -32,10 +32,10 @@ class TransferGpuAllocatorHandle;
 
 /// @name Constants
 /// @{
-const U MAX_LOD_COUNT = 3;
-const U MAX_INSTANCES = 64;
-const U MAX_SUB_DRAWCALLS = 64; ///< @warning If changed don't forget to change MAX_INSTANCE_GROUPS
-const U MAX_INSTANCE_GROUPS = 7; ///< It's log2(MAX_INSTANCES) + 1
+constexpr U32 MAX_LOD_COUNT = 3;
+constexpr U32 MAX_INSTANCES = 64;
+constexpr U32 MAX_SUB_DRAWCALLS = 64; ///< @warning If changed don't forget to change MAX_INSTANCE_GROUPS
+constexpr U32 MAX_INSTANCE_GROUPS = 7; ///< It's log2(MAX_INSTANCES) + 1
 
 /// Standard attribute locations. Should be the same as in Common.glsl.
 enum class VertexAttributeLocation : U8

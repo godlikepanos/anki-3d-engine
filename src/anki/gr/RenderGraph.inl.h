@@ -210,7 +210,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 	rt.setName(tex->getName());
 
 	RenderTargetHandle out;
-	out.m_idx = m_renderTargets.getSize() - 1;
+	out.m_idx = U32(m_renderTargets.getSize() - 1);
 	return out;
 }
 
@@ -233,7 +233,7 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	rt.setName(initInf.getName());
 
 	RenderTargetHandle out;
-	out.m_idx = m_renderTargets.getSize() - 1;
+	out.m_idx = U32(m_renderTargets.getSize() - 1);
 	return out;
 }
 
@@ -251,7 +251,7 @@ inline RenderPassBufferHandle RenderGraphDescription::importBuffer(BufferPtr buf
 	b.m_importedBuff = buff;
 
 	RenderPassBufferHandle out;
-	out.m_idx = m_buffers.getSize() - 1;
+	out.m_idx = U32(m_buffers.getSize() - 1);
 	return out;
 }
 

@@ -5,8 +5,15 @@
 
 #include "Importer.h"
 
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wconversion"
+#endif
 #define CGLTF_IMPLEMENTATION
 #include <cgltf/cgltf.h>
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
 
 namespace anki
 {
@@ -278,7 +285,7 @@ Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<CString, Strin
 	return Error::NONE;
 }
 
-void Importer::populateNodePtrToIdxInternal(const cgltf_node& node, U& idx)
+void Importer::populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx)
 {
 	m_nodePtrToIdx.emplace(&node, idx++);
 
@@ -290,7 +297,7 @@ void Importer::populateNodePtrToIdxInternal(const cgltf_node& node, U& idx)
 
 void Importer::populateNodePtrToIdx()
 {
-	U idx = 0;
+	U32 idx = 0;
 
 	for(const cgltf_scene* scene = m_gltf->scenes; scene < m_gltf->scenes + m_gltf->scenes_count; ++scene)
 	{

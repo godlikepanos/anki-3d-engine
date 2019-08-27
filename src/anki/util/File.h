@@ -134,7 +134,7 @@ private:
 	/// Open a C file
 	ANKI_USE_RESULT Error openCFile(const CString& filename, FileOpenFlag flags);
 
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 	/// Open an Android file
 	ANKI_USE_RESULT Error openAndroidFile(const CString& filename, FileOpenFlag flags);
 #endif

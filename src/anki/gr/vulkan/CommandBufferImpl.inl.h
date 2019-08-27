@@ -313,22 +313,29 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 	commandCommon();
 
 	// Bind descriptors
-	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
 	{
 		if(m_computeProg->getReflectionInfo().m_descriptorSetMask.get(i))
 		{
 			DescriptorSet dset;
 			Bool dirty;
-			Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsets;
-			U dynamicOffsetCount;
+			Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsetsPtrSize;
+			U32 dynamicOffsetCount;
 			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))
+				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}
 
 			if(dirty)
 			{
+				// Vulkan should have had the dynamic offsets as VkDeviceSize and not U32. Workaround that.
+				Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsets;
+				for(U32 i = 0; i < dynamicOffsetCount; ++i)
+				{
+					dynamicOffsets[i] = U32(dynamicOffsetsPtrSize[i]);
+				}
+
 				VkDescriptorSet dsHandle = dset.getHandle();
 
 				ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
@@ -503,22 +510,29 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Bind dsets
-	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
 	{
 		if(m_graphicsProg->getReflectionInfo().m_descriptorSetMask.get(i))
 		{
 			DescriptorSet dset;
 			Bool dirty;
-			Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsets;
-			U dynamicOffsetCount;
+			Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsetsPtrSize;
+			U32 dynamicOffsetCount;
 			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))
+				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize, dynamicOffsetCount))
 			{
 				ANKI_VK_LOGF("Cannot recover");
 			}
 
 			if(dirty)
 			{
+				// Vulkan should have had the dynamic offsets as VkDeviceSize and not U32. Workaround that.
+				Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsets;
+				for(U32 i = 0; i < dynamicOffsetCount; ++i)
+				{
+					dynamicOffsets[i] = U32(dynamicOffsetsPtrSize[i]);
+				}
+
 				VkDescriptorSet dsHandle = dset.getHandle();
 
 				ANKI_CMD(vkCmdBindDescriptorSets(m_handle,

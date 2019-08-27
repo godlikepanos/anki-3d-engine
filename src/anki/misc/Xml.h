@@ -202,7 +202,7 @@ public:
 			U count = 0;
 			for(F32 v : arr)
 			{
-				out[count++] = v;
+				out[count++] = typename T::Scalar(v);
 			}
 		}
 

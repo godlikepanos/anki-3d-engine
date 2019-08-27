@@ -32,7 +32,7 @@ public:
 		, m_hive(hive)
 	{
 		ANKI_ASSERT(hive);
-		m_thread.start(this, threadCallback, (pinToCores) ? I(m_id) : -1);
+		m_thread.start(this, threadCallback, (pinToCores) ? I32(m_id) : -1);
 	}
 
 private:
@@ -58,7 +58,7 @@ public:
 	ThreadHiveSemaphore* m_signalSemaphore;
 };
 
-ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores)
+ThreadHive::ThreadHive(U32 threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores)
 	: m_slowAlloc(alloc)
 	, m_alloc(alloc.getMemoryPool().getAllocationCallback(),
 		  alloc.getMemoryPool().getAllocationCallbackUserData(),
@@ -66,7 +66,7 @@ ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool
 	, m_threadCount(threadCount)
 {
 	m_threads = reinterpret_cast<Thread*>(m_slowAlloc.allocate(sizeof(Thread) * threadCount));
-	for(U i = 0; i < threadCount; ++i)
+	for(U32 i = 0; i < threadCount; ++i)
 	{
 		::new(&m_threads[i]) Thread(i, this, pinToCores);
 	}
@@ -85,7 +85,7 @@ ThreadHive::~ThreadHive()
 		}
 
 		// Join and destroy
-		U threadCount = m_threadCount;
+		U32 threadCount = m_threadCount;
 		while(threadCount-- != 0)
 		{
 			Error err = m_threads[threadCount].m_thread.join();
@@ -97,7 +97,7 @@ ThreadHive::~ThreadHive()
 	}
 }
 
-void ThreadHive::submitTasks(ThreadHiveTask* tasks, const U taskCount)
+void ThreadHive::submitTasks(ThreadHiveTask* tasks, const U32 taskCount)
 {
 	ANKI_ASSERT(tasks && taskCount > 0);
 
@@ -106,7 +106,7 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, const U taskCount)
 
 	// Initialize tasks
 	Task* prevTask = nullptr;
-	for(U i = 0; i < taskCount; ++i)
+	for(U32 i = 0; i < taskCount; ++i)
 	{
 		const ThreadHiveTask& inTask = tasks[i];
 		Task& outTask = htasks[i];
@@ -151,7 +151,7 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, const U taskCount)
 	m_cvar.notifyAll();
 }
 
-void ThreadHive::threadRun(U threadId)
+void ThreadHive::threadRun(U32 threadId)
 {
 	Task* task = nullptr;
 
@@ -180,7 +180,7 @@ void ThreadHive::threadRun(U threadId)
 	ANKI_HIVE_DEBUG_PRINT("tid: %lu thread quits!\n", threadId);
 }
 
-Bool ThreadHive::waitForWork(U threadId, Task*& task)
+Bool ThreadHive::waitForWork(U32 threadId, Task*& task)
 {
 	LockGuard<Mutex> lock(m_mtx);
 

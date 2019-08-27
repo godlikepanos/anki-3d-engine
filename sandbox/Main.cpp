@@ -45,7 +45,7 @@ Error MyApp::init(int argc, char* argv[])
 	MainRenderer& renderer = getMainRenderer();
 	ResourceManager& resources = getResourceManager();
 
-	renderer.getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0, 0.9, 0.9));
+	renderer.getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f));
 	renderer.getOffscreenRenderer().getVolumetricFog().setParticleDensity(1.0f);
 
 	if(getenv("PROFILE"))
@@ -89,10 +89,10 @@ Error MyApp::init(int argc, char* argv[])
 
 Error MyApp::userMainLoop(Bool& quit)
 {
-	F32 dist = 0.1;
-	F32 ang = toRad(2.5);
-	F32 scale = 0.01;
-	F32 mouseSensivity = 9.0;
+	F32 dist = 0.1f;
+	F32 ang = toRad(2.5f);
+	F32 scale = 0.01f;
+	F32 mouseSensivity = 9.0f;
 	quit = false;
 
 	SceneGraph& scene = getSceneGraph();
@@ -121,7 +121,7 @@ Error MyApp::userMainLoop(Bool& quit)
 	{
 		/*Vec3 origin = mover->getWorldTransform().getOrigin().xyz();
 		printf("%f %f %f\n", origin.x(), origin.y(), origin.z());*/
-		mover->setLocalOrigin(Vec4(81.169312, -2.309618, 17.088392, 0.0));
+		mover->setLocalOrigin(Vec4(81.169312f, -2.309618f, 17.088392f, 0.0f));
 		// mover->setLocalRotation(Mat3x4::getIdentity());
 	}
 

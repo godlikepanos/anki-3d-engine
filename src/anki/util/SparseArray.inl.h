@@ -63,7 +63,7 @@ typename SparseArray<T, TIndex>::Iterator SparseArray<T, TIndex>::emplace(TAlloc
 
 template<typename T, typename TIndex>
 template<typename TAlloc>
-U32 SparseArray<T, TIndex>::insert(TAlloc& alloc, Index idx, Value& val)
+TIndex SparseArray<T, TIndex>::insert(TAlloc& alloc, Index idx, Value& val)
 {
 start:
 	const Index desiredPos = mod(idx);
@@ -138,8 +138,8 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 	// Allocate new storage
 	Value* const oldElements = m_elements;
 	Metadata* const oldMetadata = m_metadata;
-	const U32 oldCapacity = m_capacity;
-	const U32 oldElementCount = m_elementCount;
+	const Index oldCapacity = m_capacity;
+	const Index oldElementCount = m_elementCount;
 	(void)oldElementCount;
 
 	m_capacity *= 2;
@@ -151,7 +151,7 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 
 	// Find from where we start
 	Index startPos = ~Index(0);
-	for(U i = 0; i < oldCapacity; ++i)
+	for(Index i = 0; i < oldCapacity; ++i)
 	{
 		if(oldMetadata[i].m_alive)
 		{
@@ -172,7 +172,7 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 	{
 		if(oldMetadata[pos].m_alive)
 		{
-			U32 c = insert(alloc, oldMetadata[pos].m_idx, oldElements[pos]);
+			Index c = insert(alloc, oldMetadata[pos].m_idx, oldElements[pos]);
 			ANKI_ASSERT(c > 0);
 			m_elementCount += c;
 
@@ -195,7 +195,7 @@ template<typename TAlloc>
 void SparseArray<T, TIndex>::erase(TAlloc& alloc, Iterator it)
 {
 	ANKI_ASSERT(it.m_array == this);
-	ANKI_ASSERT(it.m_elementIdx != MAX_U32);
+	ANKI_ASSERT(it.m_elementIdx != getMaxNumericLimit<Index>());
 	ANKI_ASSERT(it.m_iteratorVer == m_iteratorVer);
 	ANKI_ASSERT(m_elementCount > 0);
 
@@ -261,7 +261,7 @@ void SparseArray<T, TIndex>::validate() const
 
 	// Find from where we start
 	Index startPos = ~Index(0);
-	for(U i = 0; i < m_capacity; ++i)
+	for(Index i = 0; i < m_capacity; ++i)
 	{
 		if(m_metadata[i].m_alive)
 		{
@@ -313,7 +313,7 @@ TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
 {
 	if(ANKI_UNLIKELY(m_elementCount == 0))
 	{
-		return MAX_U32;
+		return getMaxNumericLimit<Index>();
 	}
 
 	const Index desiredPos = mod(idx);
@@ -329,7 +329,7 @@ TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
 		pos = mod(pos + 1);
 	}
 
-	return MAX_U32;
+	return getMaxNumericLimit<Index>();
 }
 
 template<typename T, typename TIndex>

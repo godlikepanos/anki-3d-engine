@@ -45,7 +45,7 @@ void DeveloperConsole::build(CanvasPtr ctx)
 	ImGui::Begin("Console", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoTitleBar);
 
 	ImGui::SetWindowPos(Vec2(0.0f, 0.0f));
-	ImGui::SetWindowSize(Vec2(ctx->getWidth(), ctx->getHeight() * (2.0f / 3.0f)));
+	ImGui::SetWindowSize(Vec2(F32(ctx->getWidth()), F32(ctx->getHeight()) * (2.0f / 3.0f)));
 
 	// Push the items
 	const F32 footerHeightToPreserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();

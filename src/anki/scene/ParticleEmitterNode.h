@@ -46,7 +46,7 @@ private:
 	};
 
 	/// Size of a single vertex.
-	static const U VERTEX_SIZE = 5 * sizeof(F32);
+	static const U32 VERTEX_SIZE = 5 * sizeof(F32);
 
 	ParticleEmitterResourcePtr m_particleEmitterResource;
 	DynamicArray<ParticleBase*> m_particles;

@@ -78,14 +78,14 @@ public:
 class ThreadHive : public NonCopyable
 {
 public:
-	static const U MAX_THREADS = 32;
+	static const U32 MAX_THREADS = 32;
 
 	/// Create the hive.
-	ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores = false);
+	ThreadHive(U32 threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores = false);
 
 	~ThreadHive();
 
-	U getThreadCount() const
+	U32 getThreadCount() const
 	{
 		return m_threadCount;
 	}
@@ -115,7 +115,7 @@ public:
 	}
 
 	/// Submit tasks. The ThreadHiveTaskCallback callbacks can also call this.
-	void submitTasks(ThreadHiveTask* tasks, const U taskCount);
+	void submitTasks(ThreadHiveTask* tasks, const U32 taskCount);
 
 	/// Submit a single task without dependencies. The ThreadHiveTaskCallback callbacks can also call this.
 	void submitTask(ThreadHiveTaskCallback callback, void* arg)
@@ -148,16 +148,16 @@ private:
 	Mutex m_mtx;
 	ConditionVariable m_cvar;
 
-	void threadRun(U threadId);
+	void threadRun(U32 threadId);
 
 	/// Wait for more tasks.
-	Bool waitForWork(U threadId, Task*& task);
+	Bool waitForWork(U32 threadId, Task*& task);
 
 	/// Get new work from the queue.
 	Task* getNewTask();
 
 	/// Complete a task.
-	void completeTask(U taskId);
+	void completeTask(U32 taskId);
 };
 /// @}
 

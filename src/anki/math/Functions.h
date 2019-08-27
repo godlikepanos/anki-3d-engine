@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/util/StdTypes.h>
+#include <anki/util/Functions.h>
 #include <cmath>
 #include <cstdlib>
 
@@ -67,10 +67,16 @@ inline T atan2(const T x, const T y)
 void sinCos(const F32 a, F32& sina, F32& cosa);
 void sinCos(const F64 a, F64& sina, F64& cosa);
 
-template<typename T>
+template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
 inline T sqrt(const T x)
 {
 	return std::sqrt(x);
+}
+
+template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
+inline T sqrt(const T x)
+{
+	return T(std::sqrt(F64(x)));
 }
 
 template<typename T>
@@ -101,12 +107,22 @@ inline T modf(T x, T& intPart)
 
 /// The same as abs/fabs. For ints and floats.
 template<typename T,
-	typename std::enable_if<std::is_floating_point<T>::value
-								|| (std::is_integral<T>::value && std::is_signed<T>::value),
-		int>::type = 0>
+	ANKI_ENABLE(std::is_floating_point<T>::value || (std::is_integral<T>::value && std::is_signed<T>::value))>
 inline T absolute(const T f)
 {
 	return (f < T(0)) ? -f : f;
+}
+
+template<typename T>
+inline T pow(const T x, const T power)
+{
+	return T(std::pow(x, power));
+}
+
+template<typename T>
+inline T log2(const T x)
+{
+	return T(std::log2(x));
 }
 
 template<typename T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
@@ -140,7 +156,7 @@ inline T toDegrees(const T rad)
 template<typename Type>
 inline Type linearInterpolate(const Type& from, const Type& to, F32 u)
 {
-	return from * (1.0f - u) + to * u;
+	return from * Type(1.0f - u) + to * Type(u);
 }
 
 /// Cosine interpolation
@@ -150,8 +166,8 @@ inline Type linearInterpolate(const Type& from, const Type& to, F32 u)
 template<typename Type>
 inline Type cosInterpolate(const Type& from, const Type& to, F32 u)
 {
-	F32 u2 = (1.0f - cos<Type>(u * PI)) / 2.0f;
-	return from * (1.0f - u2) + to * u2;
+	const F32 u2 = (1.0f - cos<Type>(u * PI)) / 2.0f;
+	return from * Type(1.0f - u2) + to * Type(u2);
 }
 
 /// Cubic interpolation
@@ -179,19 +195,28 @@ inline U32 packColorToR10G10B10A2SNorm(F32 r, F32 g, F32 b, F32 a)
 	{
 		struct
 		{
-			I m_x : 10;
-			I m_y : 10;
-			I m_z : 10;
-			I m_w : 2;
+			I32 m_x : 10;
+			I32 m_y : 10;
+			I32 m_z : 10;
+			I32 m_w : 2;
 		} m_unpacked;
 		U32 m_packed;
 	};
 
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 	SignedR10G10B10A10 out;
-	out.m_unpacked.m_x = I(round(r * 511.0f));
-	out.m_unpacked.m_y = I(round(g * 511.0f));
-	out.m_unpacked.m_z = I(round(b * 511.0f));
-	out.m_unpacked.m_w = I(round(a * 1.0f));
+	out.m_unpacked.m_x = I32(round(r * 511.0f));
+	out.m_unpacked.m_y = I32(round(g * 511.0f));
+	out.m_unpacked.m_z = I32(round(b * 511.0f));
+	out.m_unpacked.m_w = I32(round(a * 1.0f));
+
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
 
 	return out.m_packed;
 }

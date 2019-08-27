@@ -95,7 +95,7 @@ public:
 
 	const MeshResource& getMesh(const RenderingKey& key) const
 	{
-		return *m_meshes[key.m_lod];
+		return *m_meshes[key.getLod()];
 	}
 
 	const ModelResource& getModel() const
@@ -134,7 +134,7 @@ private:
 	MaterialResourcePtr m_mtl;
 
 	/// Return the maximum number of LODs
-	U getLodCount() const;
+	U32 getLodCount() const;
 
 	ANKI_USE_RESULT Error init(ModelResource* model,
 		ConstWeakArray<CString> meshFNames,

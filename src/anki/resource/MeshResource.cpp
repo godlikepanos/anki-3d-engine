@@ -110,7 +110,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	m_vertCount = header.m_totalVertexCount;
 	m_vertBufferInfos.create(getAllocator(), header.m_vertexBufferCount);
 
-	PtrSize totalVertexBuffSize = 0;
+	U32 totalVertexBuffSize = 0;
 	for(U i = 0; i < header.m_vertexBufferCount; ++i)
 	{
 		alignRoundUp(VERTEX_BUFFER_ALIGNMENT, totalVertexBuffSize);
@@ -138,7 +138,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		{
 			out.m_fmt = in.m_format;
 			out.m_relativeOffset = in.m_relativeOffset;
-			out.m_buffIdx = in.m_bufferBinding;
+			out.m_buffIdx = U8(in.m_bufferBinding);
 			ANKI_ASSERT(in.m_scale == 1.0f && "Not supported ATM");
 		}
 	}
@@ -209,7 +209,7 @@ Error MeshResource::loadAsync(MeshLoader& loader) const
 
 		// Load to staging
 		PtrSize offset = 0;
-		for(U i = 0; i < m_vertBufferInfos.getSize(); ++i)
+		for(U32 i = 0; i < m_vertBufferInfos.getSize(); ++i)
 		{
 			alignRoundUp(VERTEX_BUFFER_ALIGNMENT, offset);
 			ANKI_CHECK(loader.storeVertexBuffer(i, data + offset, m_vertBufferInfos[i].m_stride * m_vertCount));

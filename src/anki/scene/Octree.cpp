@@ -427,8 +427,8 @@ void Octree::cleanupInternal()
 
 void Octree::debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) const
 {
-	const U32 placeableCount = leaf.m_placeables.getSize();
-	const Vec3 color = (placeableCount > 0) ? heatmap(10.0f / placeableCount) : Vec3(0.25f);
+	const U32 placeableCount = U32(leaf.m_placeables.getSize());
+	const Vec3 color = (placeableCount > 0) ? heatmap(10.0f / F32(placeableCount)) : Vec3(0.25f);
 
 	const Aabb box(leaf.m_aabbMin, leaf.m_aabbMax);
 	drawer.drawCube(box, Vec4(color, 1.0f));
@@ -519,7 +519,7 @@ void Octree::gatherVisibleParallelTask(
 
 	// Move to children leafs
 	Array<ThreadHiveTask, 8> tasks;
-	U taskCount = 0;
+	U32 taskCount = 0;
 	Aabb aabb;
 	for(Leaf* child : leaf->m_children)
 	{

@@ -52,7 +52,7 @@ void PhysicsTrigger::processContacts()
 	}
 
 	// Process contacts
-	for(U i = 0; i < U(m_ghostShape->getOverlappingPairs().size()); ++i)
+	for(U32 i = 0; i < U32(m_ghostShape->getOverlappingPairs().size()); ++i)
 	{
 		btCollisionObject* obj = m_ghostShape->getOverlappingPairs()[i];
 

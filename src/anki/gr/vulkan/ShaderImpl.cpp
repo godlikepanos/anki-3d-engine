@@ -81,14 +81,14 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 	// Set spec info
 	if(specConstIds.m_vec.size())
 	{
-		const U constCount = specConstIds.m_vec.size();
+		const U32 constCount = U32(specConstIds.m_vec.size());
 
 		m_specConstInfo.mapEntryCount = constCount;
 		m_specConstInfo.pMapEntries = getAllocator().newArray<VkSpecializationMapEntry>(constCount);
 		m_specConstInfo.dataSize = constCount * sizeof(I32);
 		m_specConstInfo.pData = getAllocator().newArray<I32>(constCount);
 
-		U count = 0;
+		U32 count = 0;
 		for(const spirv_cross::SpecializationConstant& sconst : specConstIds.m_vec)
 		{
 			// Set the entry
@@ -130,7 +130,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			ANKI_ASSERT(binding < MAX_BINDINGS_PER_DESCRIPTOR_SET);
 
 			const spirv_cross::SPIRType& typeInfo = spvc.get_type(r.type_id);
-			U arraySize = 1;
+			U32 arraySize = 1;
 			if(typeInfo.array.size() != 0)
 			{
 				ANKI_ASSERT(typeInfo.array.size() == 1 && "Only 1D arrays are supported");
@@ -142,8 +142,8 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 			m_activeBindingMask[set].set(set);
 
 			// Check that there are no other descriptors with the same binding
-			U foundIdx = MAX_U;
-			for(U i = 0; i < counts[set]; ++i)
+			U32 foundIdx = MAX_U32;
+			for(U32 i = 0; i < counts[set]; ++i)
 			{
 				if(descriptors[set][i].m_binding == binding)
 				{
@@ -152,14 +152,14 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 				}
 			}
 
-			if(foundIdx == MAX_U)
+			if(foundIdx == MAX_U32)
 			{
 				// New binding, init it
 				DescriptorBinding& descriptor = descriptors[set][counts[set]++];
-				descriptor.m_binding = binding;
+				descriptor.m_binding = U8(binding);
 				descriptor.m_type = type;
 				descriptor.m_stageMask = static_cast<ShaderTypeBit>(1 << m_shaderType);
-				descriptor.m_arraySizeMinusOne = arraySize - 1;
+				descriptor.m_arraySizeMinusOne = U8(arraySize - 1);
 			}
 			else
 			{
@@ -217,7 +217,8 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	// Push consts
 	if(rsrc.push_constant_buffers.size() == 1)
 	{
-		const U32 blockSize = spvc.get_declared_struct_size(spvc.get_type(rsrc.push_constant_buffers[0].base_type_id));
+		const U32 blockSize =
+			U32(spvc.get_declared_struct_size(spvc.get_type(rsrc.push_constant_buffers[0].base_type_id)));
 		ANKI_ASSERT(blockSize > 0);
 		ANKI_ASSERT(blockSize % 16 == 0 && "Should be aligned");
 		ANKI_ASSERT(blockSize <= getGrManagerImpl().getDeviceCapabilities().m_pushConstantsSize);

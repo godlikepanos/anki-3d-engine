@@ -115,7 +115,7 @@ def ret(ret_el):
 	if type_is_bool(type):
 		wglue("lua_pushboolean(l, ret);")
 	elif type_is_number(type):
-		wglue("lua_pushnumber(l, ret);")
+		wglue("lua_pushnumber(l, lua_Number(ret));")
 	elif type == "char" or type == "CString":
 		wglue("lua_pushstring(l, &ret[0]);")
 	elif type == "Error":
@@ -127,7 +127,7 @@ def ret(ret_el):
 		ident(-1)
 		wglue("}")
 		wglue("")
-		wglue("lua_pushnumber(l, ret);")
+		wglue("lua_pushnumber(l, lua_Number(ret));")
 	else:
 		if is_ptr or is_ref:
 		 	wglue("voidp = lua_newuserdata(l, sizeof(LuaUserData));")

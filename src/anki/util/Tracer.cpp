@@ -556,12 +556,12 @@ void Tracer::getSpreadsheetColumnName(U column, Array<char, 3>& arr)
 
 	if(major)
 	{
-		arr[0] = 'A' + (major - 1);
-		arr[1] = 'A' + minor;
+		arr[0] = char('A' + (major - 1));
+		arr[1] = char('A' + minor);
 	}
 	else
 	{
-		arr[0] = 'A' + minor;
+		arr[0] = char('A' + minor);
 		arr[1] = '\0';
 	}
 

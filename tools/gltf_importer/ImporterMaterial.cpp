@@ -7,7 +7,16 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ASSERT(x) ANKI_ASSERT(x)
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wfloat-conversion"
+#	pragma GCC diagnostic ignored "-Wconversion"
+#	pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
 #include <stb/stb_image.h>
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
 
 namespace anki
 {

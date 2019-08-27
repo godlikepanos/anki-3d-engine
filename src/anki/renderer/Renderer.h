@@ -207,7 +207,7 @@ public:
 
 	F32 getAspectRatio() const
 	{
-		return F32(m_width) / m_height;
+		return F32(m_width) / F32(m_height);
 	}
 
 	/// Init the renderer.
@@ -257,17 +257,8 @@ anki_internal:
 		return *m_ui;
 	}
 
-	/// My version of gluUnproject
-	/// @param windowCoords Window screen coords
-	/// @param modelViewMat The modelview matrix
-	/// @param projectionMat The projection matrix
-	/// @param view The view vector
-	/// @return The unprojected coords
-	static Vec3 unproject(
-		const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4]);
-
 	/// Get the LOD given the distance of an object from the camera
-	U calculateLod(F32 distance) const
+	U32 calculateLod(F32 distance) const
 	{
 		ANKI_ASSERT(m_lodDistances.getSize() == 2);
 		if(distance < m_lodDistances[0])

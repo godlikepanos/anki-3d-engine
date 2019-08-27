@@ -257,10 +257,10 @@ void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.getSubresource()));
 
 	const DepthStencilAspectBit aspect = view.getSubresource().m_depthStencilAspect;
-	const U face = view.getSubresource().m_firstFace;
-	const U layer = view.getSubresource().m_firstLayer;
+	const U32 face = view.getSubresource().m_firstFace;
+	const U32 layer = view.getSubresource().m_firstLayer;
 
-	for(U i = 0; i < tex.getMipmapCount() - 1u; ++i)
+	for(U32 i = 0; i < tex.getMipmapCount() - 1u; ++i)
 	{
 		// Transition source
 		if(i > 0)
@@ -304,7 +304,7 @@ void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 
 		ANKI_ASSERT(srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
 
-		U vkLayer = 0;
+		U32 vkLayer = 0;
 		switch(tex.getTextureType())
 		{
 		case TextureType::_2D:
@@ -404,7 +404,7 @@ void CommandBufferImpl::flushBarriers()
 	//
 
 	DynamicArrayAuto<VkImageMemoryBarrier> finalImgBarriers(m_alloc);
-	U finalImgBarrierCount = 0;
+	U32 finalImgBarrierCount = 0;
 	if(m_imgBarrierCount > 0)
 	{
 		DynamicArrayAuto<VkImageMemoryBarrier> squashedBarriers(m_alloc);
@@ -511,8 +511,8 @@ void CommandBufferImpl::flushQueryResets()
 			return a.m_queryIdx < b.m_queryIdx;
 		});
 
-	U firstQuery = m_queryResetAtoms[0].m_queryIdx;
-	U queryCount = 1;
+	U32 firstQuery = m_queryResetAtoms[0].m_queryIdx;
+	U32 queryCount = 1;
 	VkQueryPool pool = m_queryResetAtoms[0].m_pool;
 	for(U i = 1; i < m_queryResetAtomCount; ++i)
 	{
@@ -570,8 +570,8 @@ void CommandBufferImpl::flushWriteQueryResults()
 			return a.m_queryIdx < b.m_queryIdx;
 		});
 
-	U firstQuery = m_writeQueryAtoms[0].m_queryIdx;
-	U queryCount = 1;
+	U32 firstQuery = m_writeQueryAtoms[0].m_queryIdx;
+	U32 queryCount = 1;
 	VkQueryPool pool = m_writeQueryAtoms[0].m_pool;
 	PtrSize offset = m_writeQueryAtoms[0].m_offset;
 	VkBuffer buff = m_writeQueryAtoms[0].m_buffer;
@@ -624,10 +624,10 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 	const TextureVolumeInfo vol(view.getSubresource().m_firstMipmap);
 
 	// Compute the sizes of the mip
-	const U width = tex.getWidth() >> surf.m_level;
-	const U height = tex.getHeight() >> surf.m_level;
+	const U32 width = tex.getWidth() >> surf.m_level;
+	const U32 height = tex.getHeight() >> surf.m_level;
 	ANKI_ASSERT(width && height);
-	const U depth = (is3D) ? (tex.getDepth() >> surf.m_level) : 1u;
+	const U32 depth = (is3D) ? (tex.getDepth() >> surf.m_level) : 1u;
 
 	if(!tex.m_workarounds)
 	{
@@ -711,7 +711,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 			ANKI_CMD(vkCmdCopyBuffer(m_handle,
 						 static_cast<const BufferImpl&>(*buff).getHandle(),
 						 shadowHandle,
-						 regions.getSize(),
+						 U32(regions.getSize()),
 						 &regions[0]),
 				ANY_OTHER_COMMAND);
 		}

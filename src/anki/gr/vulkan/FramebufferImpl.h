@@ -57,7 +57,7 @@ public:
 		stencil = !!(m_aspect & DepthStencilAspectBit::STENCIL);
 	}
 
-	U getColorAttachmentCount() const
+	U32 getColorAttachmentCount() const
 	{
 		return m_colorAttCount;
 	}
@@ -67,7 +67,7 @@ public:
 		return !!m_aspect;
 	}
 
-	U getAttachmentCount() const
+	U32 getAttachmentCount() const
 	{
 		return m_colorAttCount + (hasDepthStencil() ? 1 : 0);
 	}

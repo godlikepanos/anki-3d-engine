@@ -40,7 +40,7 @@ public:
 		SamplerPtr sampler,
 		const RenderableQueueElement* begin,
 		const RenderableQueueElement* end,
-		U minLod = 0);
+		U32 minLod = 0);
 
 private:
 	Renderer* m_r;

@@ -94,7 +94,7 @@ Error INotify::pollEvents(Bool& modified)
 			// Process the new event
 
 			Array<U8, 2_KB> readBuff;
-			int nbytes = read(m_fd, &readBuff[0], sizeof(readBuff));
+			PtrSize nbytes = read(m_fd, &readBuff[0], sizeof(readBuff));
 			if(nbytes > 0)
 			{
 				inotify_event* event = reinterpret_cast<inotify_event*>(&readBuff[0]);

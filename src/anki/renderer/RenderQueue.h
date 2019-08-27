@@ -169,6 +169,16 @@ public:
 	DirectionalLightQueueElement()
 	{
 	}
+
+	ANKI_USE_RESULT Bool isEnabled() const
+	{
+		return m_uuid != 0;
+	}
+
+	ANKI_USE_RESULT Bool hasShadow() const
+	{
+		return isEnabled() && m_shadowCascadeCount > 0;
+	}
 };
 
 static_assert(
@@ -372,7 +382,7 @@ public:
 		zeroMemory(m_directionalLight);
 	}
 
-	U countAllRenderables() const;
+	PtrSize countAllRenderables() const;
 };
 
 static_assert(std::is_trivially_destructible<RenderQueue>::value == true, "Should be trivially destructible");

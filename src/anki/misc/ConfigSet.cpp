@@ -126,12 +126,42 @@ void ConfigSet::set(const CString& name, const CString& value)
 	o->m_strVal.create(m_alloc, value);
 }
 
-F64 ConfigSet::getNumber(const CString& name) const
+F64 ConfigSet::getNumberF64(const CString& name) const
 {
 	const Option* option = tryFind(name);
 	ANKI_ASSERT(option);
 	ANKI_ASSERT(option->m_type == 1);
 	return option->m_fVal;
+}
+
+F32 ConfigSet::getNumberF32(const CString& name) const
+{
+	return F32(getNumberF64(name));
+}
+
+U32 ConfigSet::getNumberU32(const CString& name) const
+{
+	return U32(getNumberF64(name));
+}
+
+U16 ConfigSet::getNumberU16(const CString& name) const
+{
+	return U16(getNumberU32(name));
+}
+
+U8 ConfigSet::getNumberU8(const CString& name) const
+{
+	return U8(getNumberU32(name));
+}
+
+Bool ConfigSet::getBool(const CString& name) const
+{
+	const U32 val = getNumberU32(name);
+	if((val & ~U32(1)) != 0)
+	{
+		ANKI_MISC_LOGW("Expecting 0 or 1 for the config option \"%s\". Will mask out extra bits", name.cstr());
+	}
+	return val & 1;
 }
 
 CString ConfigSet::getString(const CString& name) const

@@ -80,7 +80,7 @@ static void doAllocation(void* arg, U32 threadId, ThreadHive& hive, ThreadHiveSe
 	TestContext* ctx = static_cast<TestContext*>(arg);
 
 	U allocCount = ctx->m_allocCount.fetchAdd(1);
-	PtrSize allocSize = randRange(MIN_ALLOCATION_SIZE, MAX_ALLOCATION_SIZE);
+	PtrSize allocSize = getRandomRange(MIN_ALLOCATION_SIZE, MAX_ALLOCATION_SIZE);
 	ctx->m_allocs[allocCount].m_size = allocSize;
 	ANKI_TEST_EXPECT_NO_ERR(ctx->m_salloc->allocate(allocSize, ctx->m_allocs[allocCount].m_handle));
 }

@@ -55,8 +55,8 @@ public:
 
 	Bool operator()(const RenderableQueueElement& a, const RenderableQueueElement& b)
 	{
-		const U aClass = a.m_distanceFromCamera * m_distGranularity;
-		const U bClass = b.m_distanceFromCamera * m_distGranularity;
+		const U32 aClass = U32(a.m_distanceFromCamera * m_distGranularity);
+		const U32 bClass = U32(b.m_distanceFromCamera * m_distGranularity);
 
 		if(aClass == bClass && a.m_callback == b.m_callback)
 		{
@@ -73,7 +73,7 @@ private:
 };
 
 /// Storage for a single element type.
-template<typename T, U INITIAL_STORAGE_SIZE = 32, U STORAGE_GROW_RATE = 4>
+template<typename T, U32 INITIAL_STORAGE_SIZE = 32, U32 STORAGE_GROW_RATE = 4>
 class TRenderQueueElementStorage
 {
 public:

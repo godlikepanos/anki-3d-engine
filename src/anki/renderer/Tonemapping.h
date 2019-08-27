@@ -37,7 +37,7 @@ anki_internal:
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
-	U8 m_inputTexMip;
+	U32 m_inputTexMip;
 
 	BufferPtr m_luminanceBuff;
 

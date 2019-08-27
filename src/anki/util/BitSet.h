@@ -18,7 +18,7 @@ namespace anki
 /// Easy bit manipulation.
 /// @tparam N The number of bits.
 /// @tparam TChunkType The type of the chunks that the bitset consists. By default it's U8.
-template<U N, typename TChunkType = U8>
+template<U32 N, typename TChunkType = U8>
 class BitSet
 {
 public:
@@ -39,7 +39,7 @@ public:
 	BitSet operator|(const BitSet& b) const
 	{
 		BitSet out;
-		for(U i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < CHUNK_COUNT; ++i)
 		{
 			out.m_chunks[i] = m_chunks[i] | b.m_chunks[i];
 		}
@@ -49,7 +49,7 @@ public:
 	/// Bitwise or between this and @a b sets.
 	BitSet& operator|=(const BitSet& b)
 	{
-		for(U i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < CHUNK_COUNT; ++i)
 		{
 			m_chunks[i] |= b.m_chunks[i];
 		}
@@ -60,7 +60,7 @@ public:
 	BitSet operator&(const BitSet& b) const
 	{
 		BitSet out;
-		for(U i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < CHUNK_COUNT; ++i)
 		{
 			out.m_chunks[i] = m_chunks[i] & b.m_chunks[i];
 		}
@@ -70,7 +70,7 @@ public:
 	/// Bitwise and between this and @a b sets.
 	BitSet& operator&=(const BitSet& b)
 	{
-		for(U i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < CHUNK_COUNT; ++i)
 		{
 			m_chunks[i] &= b.m_chunks[i];
 		}
@@ -91,7 +91,7 @@ public:
 	/// Bitwise xor between this and @a b sets.
 	BitSet& operator^=(const BitSet& b)
 	{
-		for(U i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < CHUNK_COUNT; ++i)
 		{
 			m_chunks[i] ^= b.m_chunks[i];
 		}
@@ -102,9 +102,9 @@ public:
 	BitSet operator~() const
 	{
 		BitSet out;
-		for(U i = 0; i < CHUNK_COUNT; ++i)
+		for(U32 i = 0; i < CHUNK_COUNT; ++i)
 		{
-			out.m_chunks[i] = ~m_chunks[i];
+			out.m_chunks[i] = TChunkType(~m_chunks[i]);
 		}
 		out.zeroUnusedBits();
 		return out;
@@ -113,7 +113,7 @@ public:
 	Bool operator==(const BitSet& b) const
 	{
 		Bool same = m_chunks[0] == b.m_chunks[0];
-		for(U i = 1; i < CHUNK_COUNT; ++i)
+		for(U32 i = 1; i < CHUNK_COUNT; ++i)
 		{
 			same = same && (m_chunks[i] == b.m_chunks[i]);
 		}
@@ -139,10 +139,10 @@ public:
 	template<typename TInt>
 	void set(TInt pos, Bool setBits = true)
 	{
-		U high, low;
-		position(static_cast<U>(pos), high, low);
-		const ChunkType mask = ChunkType(1) << low;
-		m_chunks[high] = (setBits) ? (m_chunks[high] | mask) : (m_chunks[high] & ~mask);
+		U32 high, low;
+		position(U32(pos), high, low);
+		const ChunkType mask = ChunkType(ChunkType(1) << ChunkType(low));
+		m_chunks[high] = (setBits) ? ChunkType(m_chunks[high] | mask) : ChunkType(m_chunks[high] & ~mask);
 	}
 
 	/// Set multiple bits.
@@ -186,9 +186,9 @@ public:
 	template<typename TInt>
 	void flip(TInt pos)
 	{
-		U high, low;
-		position(static_cast<U>(pos), high, low);
-		const ChunkType mask = ChunkType(1) << low;
+		U32 high, low;
+		position(U32(pos), high, low);
+		const ChunkType mask = ChunkType(ChunkType(1) << ChunkType(low));
 		m_chunks[high] ^= mask;
 	}
 
@@ -196,9 +196,9 @@ public:
 	template<typename TInt>
 	Bool get(TInt pos) const
 	{
-		U high, low;
-		position(static_cast<U>(pos), high, low);
-		const ChunkType mask = ChunkType(1) << low;
+		U32 high, low;
+		position(U32(pos), high, low);
+		const ChunkType mask = ChunkType(ChunkType(1) << ChunkType(low));
 		return (m_chunks[high] & mask) != 0;
 	}
 
@@ -210,9 +210,9 @@ public:
 	}
 
 	/// Count bits.
-	U getEnabledBitCount() const
+	U32 getEnabledBitCount() const
 	{
-		U count = 0;
+		U32 count = 0;
 		for(U i = 0; i < CHUNK_COUNT; ++i)
 		{
 			count += __builtin_popcount(m_chunks[i]);
@@ -220,31 +220,31 @@ public:
 		return count;
 	}
 
-	/// Get the most significant bit that is enabled. Or MAX_U if all is zero.
-	U getMostSignificantBit() const
+	/// Get the most significant bit that is enabled. Or MAX_U32 if all is zero.
+	U32 getMostSignificantBit() const
 	{
-		U i = CHUNK_COUNT;
+		U32 i = CHUNK_COUNT;
 		while(i--)
 		{
-			const U64 bits = U64(m_chunks[i]);
+			const U64 bits = m_chunks[i];
 			if(bits != 0)
 			{
-				const U msb = U(__builtin_clzll(bits));
+				const U32 msb = U32(__builtin_clzll(bits));
 				return (63 - msb) + (i * CHUNK_BIT_COUNT);
 			}
 		}
 
-		return MAX_U;
+		return MAX_U32;
 	}
 
 protected:
 	using ChunkType = TChunkType;
 
 	/// Number of bits a chunk holds.
-	static const U CHUNK_BIT_COUNT = sizeof(ChunkType) * 8;
+	static const U32 CHUNK_BIT_COUNT = sizeof(ChunkType) * 8;
 
 	/// Number of chunks.
-	static const U CHUNK_COUNT = (N + (CHUNK_BIT_COUNT - 1)) / CHUNK_BIT_COUNT;
+	static const U32 CHUNK_COUNT = (N + (CHUNK_BIT_COUNT - 1)) / CHUNK_BIT_COUNT;
 
 	ChunkType m_chunks[CHUNK_COUNT];
 
@@ -252,7 +252,7 @@ protected:
 	{
 	}
 
-	static void position(U bit, U& high, U& low)
+	static void position(U32 bit, U32& high, U32& low)
 	{
 		ANKI_ASSERT(bit < N);
 		high = bit / CHUNK_BIT_COUNT;

@@ -109,7 +109,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initDevice(init));
 	vkGetDeviceQueue(m_device, m_queueIdx, 0, &m_queue);
 
-	m_swapchainFactory.init(this, init.m_config->getNumber("window.vsync"));
+	m_swapchainFactory.init(this, init.m_config->getBool("window.vsync"));
 
 	m_crntSwapchain = m_swapchainFactory.newInstance();
 
@@ -215,10 +215,14 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 {
+	// Init VOLK
+	//
+	ANKI_VK_CHECK(volkInitialize());
+
 	// Create the instance
 	//
-	const U32 vulkanMinor = init.m_config->getNumber("gr.vkminor");
-	const U32 vulkanMajor = init.m_config->getNumber("gr.vkmajor");
+	const U8 vulkanMinor = init.m_config->getNumberU8("gr.vkminor");
+	const U8 vulkanMajor = init.m_config->getNumberU8("gr.vkmajor");
 
 	VkApplicationInfo app = {};
 	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -235,7 +239,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	// Layers
 	static Array<const char*, 1> LAYERS = {{"VK_LAYER_KHRONOS_validation"}};
 	Array<const char*, LAYERS.getSize()> layersToEnable; // Keep it alive in the stack
-	if(init.m_config->getNumber("window.debugContext"))
+	if(init.m_config->getBool("window.debugContext"))
 	{
 		uint32_t count;
 		vkEnumerateInstanceLayerProperties(&count, nullptr);
@@ -291,17 +295,17 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 			ANKI_VK_LOGI("\t%s", instExtensionInf[i].extensionName);
 		}
 
-		U instExtensionCount = 0;
+		U32 instExtensionCount = 0;
 
 		for(U i = 0; i < extCount; ++i)
 		{
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 			if(CString(instExtensionInf[i].extensionName) == VK_KHR_XCB_SURFACE_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_XCB_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_XCB_SURFACE_EXTENSION_NAME;
 			}
-#elif ANKI_OS == ANKI_OS_WINDOWS
+#elif ANKI_OS_WINDOWS
 			if(CString(instExtensionInf[i].extensionName) == VK_KHR_WIN32_SURFACE_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_WIN32_SURFACE;
@@ -348,6 +352,10 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 #endif
 
 	ANKI_VK_CHECK(vkCreateInstance(&ci, pallocCbs, &m_instance));
+
+	// Get symbolx
+	//
+	volkLoadInstance(m_instance);
 
 	// Set debug callbacks
 	//
@@ -408,18 +416,18 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 	m_devFeatures.robustBufferAccess =
-		(init.m_config->getNumber("window.debugContext") && m_devFeatures.robustBufferAccess) ? true : false;
+		(init.m_config->getBool("window.debugContext") && m_devFeatures.robustBufferAccess) ? true : false;
 	ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
 
 	// Set limits
 	m_capabilities.m_uniformBufferBindOffsetAlignment =
-		max<U32>(ANKI_SAFE_ALIGNMENT, m_devProps.limits.minUniformBufferOffsetAlignment);
+		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.limits.minUniformBufferOffsetAlignment));
 	m_capabilities.m_uniformBufferMaxRange = m_devProps.limits.maxUniformBufferRange;
 	m_capabilities.m_storageBufferBindOffsetAlignment =
-		max<U32>(ANKI_SAFE_ALIGNMENT, m_devProps.limits.minStorageBufferOffsetAlignment);
+		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.limits.minStorageBufferOffsetAlignment));
 	m_capabilities.m_storageBufferMaxRange = m_devProps.limits.maxStorageBufferRange;
 	m_capabilities.m_textureBufferBindOffsetAlignment =
-		max<U32>(ANKI_SAFE_ALIGNMENT, m_devProps.limits.minTexelBufferOffsetAlignment);
+		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.limits.minTexelBufferOffsetAlignment));
 	m_capabilities.m_textureBufferMaxRange = MAX_U32;
 
 	m_capabilities.m_majorApiVersion = vulkanMajor;
@@ -440,7 +448,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 	uint32_t desiredFamilyIdx = MAX_U32;
 	const VkQueueFlags DESITED_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
-	for(U i = 0; i < count; ++i)
+	for(U32 i = 0; i < count; ++i)
 	{
 		if((queueInfos[i].queueFlags & DESITED_QUEUE_FLAGS) == DESITED_QUEUE_FLAGS)
 		{
@@ -487,7 +495,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	{
 		extensionInfos.create(extCount);
 		extensionsToEnable.create(extCount);
-		U extensionsToEnableCount = 0;
+		U32 extensionsToEnableCount = 0;
 		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, &extensionInfos[0]);
 
 		ANKI_VK_LOGI("Found the following device extensions:");
@@ -509,7 +517,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_MAINTENANCE1_EXTENSION_NAME;
 			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME
-					&& init.m_config->getNumber("window.debugMarkers"))
+					&& init.m_config->getBool("window.debugMarkers"))
 			{
 				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;
@@ -525,7 +533,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME;
 			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_AMD_SHADER_INFO_EXTENSION_NAME
-					&& init.m_config->getNumber("core.displayStats"))
+					&& init.m_config->getBool("core.displayStats"))
 			{
 				m_extensions |= VulkanExtensions::AMD_SHADER_INFO;
 				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_SHADER_INFO_EXTENSION_NAME;
@@ -723,7 +731,7 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	}
 
 	ANKI_ASSERT(imageIdx < MAX_FRAMES_IN_FLIGHT);
-	m_acquiredImageIdx = imageIdx;
+	m_acquiredImageIdx = U8(imageIdx);
 	return m_crntSwapchain->m_textures[imageIdx];
 }
 
@@ -863,7 +871,7 @@ void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectType
 			VkDebugMarkerObjectNameInfoEXT inf = {};
 			inf.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
 			inf.objectType = type;
-			inf.pObjectName = name.get();
+			inf.pObjectName = name.cstr();
 			inf.object = handle;
 
 			m_pfnDebugMarkerSetObjectNameEXT(m_device, &inf);

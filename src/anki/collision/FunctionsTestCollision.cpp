@@ -28,7 +28,7 @@ static Bool testCollisionGjk(const T& a, const Y& b)
 
 Bool testCollision(const Aabb& a, const Aabb& b)
 {
-#if ANKI_SIMD == ANKI_SIMD_SSE
+#if ANKI_SIMD_SSE
 	const __m128 gt0 = _mm_cmpgt_ps(a.getMin().getSimd(), b.getMax().getSimd());
 	const __m128 gt1 = _mm_cmpgt_ps(b.getMin().getSimd(), a.getMax().getSimd());
 
@@ -66,7 +66,7 @@ Bool testCollision(const Aabb& aabb, const Sphere& s)
 	const Vec4& c = s.getCenter();
 
 	// Find the box's closest point to the sphere
-#if ANKI_SIMD == ANKI_SIMD_SSE
+#if ANKI_SIMD_SSE
 	__m128 gt = _mm_cmpgt_ps(c.getSimd(), aabb.getMax().getSimd());
 	__m128 lt = _mm_cmplt_ps(c.getSimd(), aabb.getMin().getSimd());
 

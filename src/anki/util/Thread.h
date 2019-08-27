@@ -44,7 +44,7 @@ public:
 	/// @param userData The user data of the thread callback
 	/// @param callback The thread callback that will be executed
 	/// @param pinToCore Pin the thread to a core.
-	void start(void* userData, ThreadCallback callback, I pinToCore = -1);
+	void start(void* userData, ThreadCallback callback, I32 pinToCore = -1);
 
 	/// Wait for the thread to finish
 	/// @return The error code of the thread's callback

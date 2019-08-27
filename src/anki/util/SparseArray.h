@@ -24,11 +24,14 @@ class SparseArrayIterator
 	template<typename, typename>
 	friend class SparseArray;
 
+private:
+	using Index = typename RemovePointer<TSparseArrayPtr>::Type::Index;
+
 public:
 	/// Default constructor.
 	SparseArrayIterator()
 		: m_array(nullptr)
-		, m_elementIdx(MAX_U32)
+		, m_elementIdx(getMaxNumericLimit<Index>())
 #if ANKI_EXTRA_CHECKS
 		, m_iteratorVer(MAX_U32)
 #endif
@@ -57,7 +60,7 @@ public:
 	}
 
 	SparseArrayIterator(TSparseArrayPtr arr,
-		U32 modIdx
+		Index modIdx
 #if ANKI_EXTRA_CHECKS
 		,
 		U32 ver
@@ -99,14 +102,14 @@ public:
 		return out;
 	}
 
-	SparseArrayIterator operator+(U32 n) const
+	SparseArrayIterator operator+(Index n) const
 	{
 		check();
-		U32 pos = m_array->iterate(m_elementIdx, n);
+		Index pos = m_array->iterate(m_elementIdx, n);
 		return SparseArrayIterator(m_array, pos);
 	}
 
-	SparseArrayIterator& operator+=(U32 n)
+	SparseArrayIterator& operator+=(Index n)
 	{
 		check();
 		m_elementIdx = m_array->iterate(m_elementIdx, n);
@@ -133,7 +136,7 @@ public:
 
 private:
 	TSparseArrayPtr m_array;
-	U32 m_elementIdx;
+	Index m_elementIdx;
 #if ANKI_EXTRA_CHECKS
 	U32 m_iteratorVer; ///< See SparseArray::m_iteratorVer.
 #endif
@@ -141,7 +144,7 @@ private:
 	void check() const
 	{
 		ANKI_ASSERT(m_array);
-		ANKI_ASSERT(m_elementIdx != MAX_U32);
+		ANKI_ASSERT(m_elementIdx != getMaxNumericLimit<Index>());
 		ANKI_ASSERT(m_array->m_metadata[m_elementIdx].m_alive);
 		ANKI_ASSERT(m_array->m_iteratorVer == m_iteratorVer);
 	}
@@ -164,7 +167,7 @@ public:
 	using Index = TIndex;
 
 	// Consts
-	static constexpr U32 INITIAL_STORAGE_SIZE = 64; ///< The initial storage size of the array.
+	static constexpr Index INITIAL_STORAGE_SIZE = 64; ///< The initial storage size of the array.
 	static constexpr U32 LINEAR_PROBING_COUNT = 8; ///< The number of linear probes.
 	static constexpr F32 MAX_LOAD_FACTOR = 0.8f; ///< Load factor.
 
@@ -172,7 +175,7 @@ public:
 	/// @param initialStorageSize The initial size of the array.
 	/// @param probeCount         The number of probe queries. It's the linear probe count the sparse array is using.
 	/// @param maxLoadFactor      If storage is loaded more than maxLoadFactor then increase it.
-	SparseArray(U32 initialStorageSize = INITIAL_STORAGE_SIZE,
+	SparseArray(Index initialStorageSize = INITIAL_STORAGE_SIZE,
 		U32 probeCount = LINEAR_PROBING_COUNT,
 		F32 maxLoadFactor = MAX_LOAD_FACTOR)
 		: m_initialStorageSize(initialStorageSize)
@@ -251,9 +254,9 @@ public:
 	Iterator getEnd()
 	{
 		return Iterator(this,
-			MAX_U32
+			getMaxNumericLimit<Index>()
 #if ANKI_EXTRA_CHECKS
-			,
+				,
 			m_iteratorVer
 #endif
 		);
@@ -263,9 +266,9 @@ public:
 	ConstIterator getEnd() const
 	{
 		return ConstIterator(this,
-			MAX_U32
+			getMaxNumericLimit<Index>()
 #if ANKI_EXTRA_CHECKS
-			,
+				,
 			m_iteratorVer
 #endif
 		);
@@ -366,12 +369,12 @@ protected:
 
 	Value* m_elements = nullptr;
 	Metadata* m_metadata = nullptr;
-	U32 m_elementCount = 0;
-	U32 m_capacity = 0;
+	Index m_elementCount = 0;
+	Index m_capacity = 0;
 
-	U32 m_initialStorageSize = 0;
+	Index m_initialStorageSize = 0;
 	U32 m_probeCount = 0;
-	F32 m_maxLoadFactor = 0.0;
+	F32 m_maxLoadFactor = 0.0f;
 #if ANKI_EXTRA_CHECKS
 	/// Iterators version. Used to check if iterators point to the newest storage. Needs to be changed whenever we need
 	/// to invalidate iterators.
@@ -387,7 +390,7 @@ protected:
 	}
 
 	/// Wrap an index.
-	static Index mod(const Index idx, U32 capacity)
+	static Index mod(const Index idx, Index capacity)
 	{
 		ANKI_ASSERT(capacity > 0);
 		ANKI_ASSERT(isPowerOfTwo(capacity));
@@ -398,13 +401,13 @@ protected:
 	{
 		ANKI_ASSERT(m_elementCount <= m_capacity);
 		ANKI_ASSERT(m_capacity > 0);
-		return F32(m_elementCount) / m_capacity;
+		return F32(m_elementCount) / F32(m_capacity);
 	}
 
 	/// Insert a value. This method will move the val to a new place.
 	/// @return One if the idx was a new element or zero if the idx was there already.
 	template<typename TAlloc>
-	U32 insert(TAlloc& alloc, Index idx, Value& val);
+	Index insert(TAlloc& alloc, Index idx, Value& val);
 
 	/// Grow the storage and re-insert.
 	template<typename TAlloc>
@@ -422,10 +425,10 @@ protected:
 	{
 		if(m_elementCount == 0)
 		{
-			return MAX_U32;
+			return getMaxNumericLimit<Index>();
 		}
 
-		for(U32 i = 0; i < m_capacity; ++i)
+		for(Index i = 0; i < m_capacity; ++i)
 		{
 			if(m_metadata[i].m_alive)
 			{
@@ -434,7 +437,7 @@ protected:
 		}
 
 		ANKI_ASSERT(0);
-		return MAX_U32;
+		return getMaxNumericLimit<Index>();
 	}
 
 	/// Find an element and return its position inside m_elements.
@@ -451,7 +454,7 @@ protected:
 	}
 
 	/// Iterate a number of elements.
-	U32 iterate(U32 pos, U32 n) const
+	Index iterate(Index pos, Index n) const
 	{
 		ANKI_ASSERT(pos < m_capacity);
 		ANKI_ASSERT(n > 0);
@@ -460,10 +463,10 @@ protected:
 		while(n > 0 && ++pos < m_capacity)
 		{
 			ANKI_ASSERT(m_metadata[pos].m_alive == 1 || m_metadata[pos].m_alive == 0);
-			n -= U32(m_metadata[pos].m_alive);
+			n -= Index(m_metadata[pos].m_alive);
 		}
 
-		return (pos >= m_capacity) ? MAX_U32 : pos;
+		return (pos >= m_capacity) ? getMaxNumericLimit<Index>() : pos;
 	}
 
 	template<typename TAlloc, typename... TArgs>

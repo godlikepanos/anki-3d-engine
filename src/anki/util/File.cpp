@@ -13,7 +13,7 @@
 namespace anki
 {
 
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 extern android_app* gAndroidApp;
 
 #	define ANKI_AFILE reinterpret_cast<AAsset*>(m_file)
@@ -69,7 +69,7 @@ Error File::open(const CString& filename, FileOpenFlag flags)
 	{
 		switch(ft)
 		{
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 		case Type::SPECIAL:
 			err = openAndroidFile(filename.get(), flags);
 			break;
@@ -127,7 +127,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 	}
 
 	// Open
-	m_file = fopen(filename.get(), openMode);
+	m_file = fopen(filename.cstr(), openMode);
 	if(m_file == nullptr)
 	{
 		ANKI_UTIL_LOGE("Failed to open file \"%s\", open mode \"%s\"", &filename[0], openMode);
@@ -151,7 +151,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 		}
 		else
 		{
-			m_size = size;
+			m_size = U32(size);
 			rewind(ANKI_CFILE);
 		}
 	}
@@ -159,7 +159,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 	return err;
 }
 
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 {
 	if((flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE)
@@ -200,7 +200,7 @@ void File::close()
 		{
 			fclose(ANKI_CFILE);
 		}
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 		else if(m_type == Type::SPECIAL)
 		{
 			AAsset_close(ANKI_AFILE);
@@ -231,7 +231,7 @@ Error File::flush()
 				err = Error::FUNCTION_FAILED;
 			}
 		}
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 		else if(m_type == Type::SPECIAL)
 		{
 			ANKI_ASSERT(0 && "Cannot have write these file types");
@@ -259,7 +259,7 @@ Error File::read(void* buff, PtrSize size)
 	{
 		readSize = fread(buff, 1, size, ANKI_CFILE);
 	}
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
 		readSize = AAsset_read(ANKI_AFILE, buff, size);
@@ -291,7 +291,7 @@ PtrSize File::getSize() const
 		ANKI_ASSERT(m_size != 0);
 		out = m_size;
 	}
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
 		out = AAsset_getLength(ANKI_AFILE);
@@ -374,7 +374,7 @@ Error File::write(const void* buff, PtrSize size)
 			err = Error::FILE_ACCESS;
 		}
 	}
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
 		ANKI_UTIL_LOGE("Writting to special files is not supported");
@@ -404,7 +404,7 @@ Error File::writeText(CString format, ...)
 	{
 		std::vfprintf(ANKI_CFILE, &format[0], args);
 	}
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
 		ANKI_UTIL_LOGE("Writting to special files is not supported");
@@ -434,7 +434,7 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 			err = Error::FUNCTION_FAILED;
 		}
 	}
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
 		if(AAsset_seek(ANKI_AFILE, offset, origin) == (off_t)-1)
@@ -460,7 +460,7 @@ Error File::identifyFile(const CString& filename,
 {
 	Error err = Error::NONE;
 
-#if ANKI_OS == ANKI_OS_ANDROID
+#if ANKI_OS_ANDROID
 	if(filename[0] == '$')
 	{
 		type = Type::SPECIAL;

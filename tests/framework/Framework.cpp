@@ -23,13 +23,13 @@ void Test::run()
 {
 	std::cout << "========\nRunning " << suite->name << " " << name << "\n========" << std::endl;
 
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 	struct mallinfo a = mallinfo();
 #endif
 
 	callback(*this);
 
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 	struct mallinfo b = mallinfo();
 
 	int diff = b.uordblks - a.uordblks;
@@ -235,8 +235,8 @@ NativeWindow* createWindow(const Config& cfg)
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	NativeWindowInitInfo inf;
-	inf.m_width = cfg.getNumber("width");
-	inf.m_height = cfg.getNumber("height");
+	inf.m_width = cfg.getNumberU32("width");
+	inf.m_height = cfg.getNumberU32("height");
 	inf.m_title = "AnKi unit tests";
 	NativeWindow* win = new NativeWindow();
 

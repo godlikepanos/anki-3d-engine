@@ -88,29 +88,29 @@ public:
 		return m_compression;
 	}
 
-	U getMipLevelsCount() const
+	U32 getMipLevelsCount() const
 	{
 		ANKI_ASSERT(m_mipLevels != 0);
 		return m_mipLevels;
 	}
 
-	U getWidth() const
+	U32 getWidth() const
 	{
 		return m_width;
 	}
 
-	U getHeight() const
+	U32 getHeight() const
 	{
 		return m_height;
 	}
 
-	U getDepth() const
+	U32 getDepth() const
 	{
 		ANKI_ASSERT(m_textureType == TextureType::_3D);
 		return m_depth;
 	}
 
-	U getLayerCount() const
+	U32 getLayerCount() const
 	{
 		ANKI_ASSERT(m_textureType == TextureType::_2D_ARRAY);
 		return m_layerCount;

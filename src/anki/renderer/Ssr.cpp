@@ -50,9 +50,9 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("FB_SIZE", UVec2(width, height));
 	consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
-	consts.add("MAX_STEPS", U32(cfg.getNumber("r.ssr.maxSteps")));
+	consts.add("MAX_STEPS", cfg.getNumberU32("r.ssr.maxSteps"));
 	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
-	consts.add("HISTORY_COLOR_BLEND_FACTOR", F32(cfg.getNumber("r.ssr.historyBlendFactor")));
+	consts.add("HISTORY_COLOR_BLEND_FACTOR", cfg.getNumberF32("r.ssr.historyBlendFactor"));
 
 	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
 	mutators.add("VARIANT", 0);
@@ -120,8 +120,8 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_normalMat = Mat3x4(ctx.m_matrices.m_view.getRotationPart());
 
 	// Dispatch
-	const U sizeX = (m_r->getWidth() / SSR_FRACTION + m_workgroupSize[0] - 1) / m_workgroupSize[0];
-	const U sizeY = (m_r->getHeight() / SSR_FRACTION + m_workgroupSize[1] - 1) / m_workgroupSize[1];
+	const U32 sizeX = (m_r->getWidth() / SSR_FRACTION + m_workgroupSize[0] - 1) / m_workgroupSize[0];
+	const U32 sizeY = (m_r->getHeight() / SSR_FRACTION + m_workgroupSize[1] - 1) / m_workgroupSize[1];
 	cmdb->dispatchCompute(sizeX / 2, sizeY, 1);
 }
 

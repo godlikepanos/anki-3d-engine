@@ -68,7 +68,7 @@ private:
 	ANKI_USE_RESULT Error parseArrayOfNumbers(
 		CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize = nullptr);
 	void populateNodePtrToIdx();
-	void populateNodePtrToIdxInternal(const cgltf_node& node, U& idx);
+	void populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx);
 	StringAuto getNodeName(const cgltf_node& node);
 
 	template<typename T, typename TFunc>

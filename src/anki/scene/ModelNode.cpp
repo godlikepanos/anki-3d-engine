@@ -94,7 +94,7 @@ Error ModelNode::init(const CString& modelFname)
 	ANKI_CHECK(init(model, 0));
 
 	// Create separate nodes for the model patches and make the children
-	for(U i = 1; i < model->getModelPatches().getSize(); ++i)
+	for(U32 i = 1; i < model->getModelPatches().getSize(); ++i)
 	{
 		ModelNode* other;
 		ANKI_CHECK(getSceneGraph().newSceneNode(CString(), other, model, i));
@@ -117,7 +117,7 @@ void ModelNode::onMoveComponentUpdate(const MoveComponent& move)
 void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) const
 {
 	ANKI_ASSERT(userData.getSize() > 0 && userData.getSize() <= MAX_INSTANCES);
-	ANKI_ASSERT(ctx.m_key.m_instanceCount == userData.getSize());
+	ANKI_ASSERT(ctx.m_key.getInstanceCount() == userData.getSize());
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
@@ -146,7 +146,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			moved = moved || (trfs[i] != prevTrfs[i]);
 		}
 
-		ctx.m_key.m_velocity = moved && ctx.m_key.m_pass == Pass::GB;
+		ctx.m_key.setVelocity(moved && ctx.m_key.getPass() == Pass::GB);
 		ModelRenderingInfo modelInf;
 		patch.getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
 
@@ -183,7 +183,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		}
 
 		// Set vertex buffers
-		for(U i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
+		for(U32 i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
 		{
 			const VertexBufferBinding& binding = modelInf.m_vertexBufferBindings[i];
 			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, VertexStepRate::VERTEX);
@@ -195,8 +195,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES,
 			modelInf.m_indicesCountArray[0],
-			userData.getSize(),
-			modelInf.m_indicesOffsetArray[0] / sizeof(U16),
+			U32(userData.getSize()),
+			U32(modelInf.m_indicesOffsetArray[0] / sizeof(U16)),
 			0,
 			0);
 	}
@@ -215,7 +215,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 			// Set non uniform scale. Add a margin to avoid flickering
 			Mat3 nonUniScale = Mat3::getZero();
-			const F32 MARGIN = 1.02;
+			constexpr F32 MARGIN = 1.02f;
 			nonUniScale(0, 0) = scale.x() * MARGIN;
 			nonUniScale(1, 1) = scale.y() * MARGIN;
 			nonUniScale(2, 2) = scale.z() * MARGIN;

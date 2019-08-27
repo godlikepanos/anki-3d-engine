@@ -235,14 +235,14 @@ public:
 		}
 
 		const T halfTheta = acos<T>(cosHalfTheta);
-		const T sinHalfTheta = sqrt<T>(1.0 - cosHalfTheta * cosHalfTheta);
+		const T sinHalfTheta = sqrt<T>(T(1) - cosHalfTheta * cosHalfTheta);
 
 		if(absolute<T>(sinHalfTheta) < 0.001)
 		{
 			return TQuat((q0 + q1) * 0.5);
 		}
 
-		const T ratioA = sin<T>((1.0 - t) * halfTheta) / sinHalfTheta;
+		const T ratioA = sin<T>((T(1) - t) * halfTheta) / sinHalfTheta;
 		const T ratioB = sin<T>(t * halfTheta) / sinHalfTheta;
 		TQuat tmp, tmp1, sum;
 		tmp = q0 * ratioA;

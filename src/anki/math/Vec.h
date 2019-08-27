@@ -24,7 +24,7 @@ public:
 	using Simd = typename MathSimd<T, N>::Type;
 	static constexpr U COMPONENT_COUNT = N;
 	static constexpr Bool IS_INTEGER = std::is_integral<T>::value;
-	static constexpr Bool HAS_VEC4_SIMD = N == 4 && std::is_same<T, F32>::value && ANKI_SIMD == ANKI_SIMD_SSE;
+	static constexpr Bool HAS_VEC4_SIMD = N == 4 && std::is_same<T, F32>::value && ANKI_SIMD_SSE;
 
 	/// @name Constructors
 	/// @{
@@ -55,7 +55,7 @@ public:
 	{
 		for(U i = 0; i < N; i++)
 		{
-			m_arr[i] = b[i];
+			m_arr[i] = T(b[i]);
 		}
 	}
 

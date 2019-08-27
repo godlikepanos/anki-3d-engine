@@ -51,7 +51,7 @@ public:
 		m_mipmapCount = 1;
 		m_firstLayer = surf.m_layer;
 		m_layerCount = 1;
-		m_firstFace = surf.m_face;
+		m_firstFace = U8(surf.m_face);
 		m_faceCount = 1;
 		m_depthStencilAspect = aspect;
 		ANKI_ASSERT(isValid());

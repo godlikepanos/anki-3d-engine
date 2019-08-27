@@ -37,7 +37,7 @@ MaterialRenderComponent::~MaterialRenderComponent()
 	m_vars.destroy(m_node->getAllocator());
 }
 
-void MaterialRenderComponent::allocateAndSetupUniforms(U set,
+void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
 	const RenderQueueDrawContext& ctx,
 	ConstWeakArray<Mat4> transforms,
 	ConstWeakArray<Mat4> prevTransforms,
@@ -149,7 +149,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 				}
 
 				progVariant.writeShaderBlockMemory(
-					progvar, &normMats[0], transforms.getSize(), uniformsBegin, uniformsEnd);
+					progvar, &normMats[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::ROTATION_MATRIX:
@@ -164,7 +164,8 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 					rots[i] = transforms[i].getRotationPart();
 				}
 
-				progVariant.writeShaderBlockMemory(progvar, &rots[0], transforms.getSize(), uniformsBegin, uniformsEnd);
+				progVariant.writeShaderBlockMemory(
+					progvar, &rots[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::CAMERA_ROTATION_MATRIX:
@@ -201,7 +202,8 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 					mvp[i] = ctx.m_viewProjectionMatrix * transforms[i];
 				}
 
-				progVariant.writeShaderBlockMemory(progvar, &mvp[0], transforms.getSize(), uniformsBegin, uniformsEnd);
+				progVariant.writeShaderBlockMemory(
+					progvar, &mvp[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX:
@@ -217,7 +219,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 				}
 
 				progVariant.writeShaderBlockMemory(
-					progvar, &mvp[0], prevTransforms.getSize(), uniformsBegin, uniformsEnd);
+					progvar, &mvp[0], U32(prevTransforms.getSize()), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::MODEL_VIEW_MATRIX:
@@ -232,7 +234,8 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 					mv[i] = ctx.m_viewMatrix * transforms[i];
 				}
 
-				progVariant.writeShaderBlockMemory(progvar, &mv[0], transforms.getSize(), uniformsBegin, uniformsEnd);
+				progVariant.writeShaderBlockMemory(
+					progvar, &mv[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::MODEL_MATRIX:
@@ -240,7 +243,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U set,
 				ANKI_ASSERT(transforms.getSize() > 0);
 
 				progVariant.writeShaderBlockMemory(
-					progvar, &transforms[0], transforms.getSize(), uniformsBegin, uniformsEnd);
+					progvar, &transforms[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::VIEW_PROJECTION_MATRIX:

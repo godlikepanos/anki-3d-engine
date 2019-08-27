@@ -47,7 +47,7 @@ static ANKI_USE_RESULT Error loadUncompressedTga(ResourceFilePtr fs,
 	// swap red with blue
 	for(I i = 0; i < imageSize; i += bytesPerPxl)
 	{
-		U32 temp = data[i];
+		U8 temp = data[i];
 		data[i] = data[i + 2];
 		data[i + 2] = temp;
 	}
@@ -118,8 +118,8 @@ static ANKI_USE_RESULT Error loadCompressedTga(ResourceFilePtr fs,
 		}
 		else
 		{
-			chunkheader -= 127;
-			ANKI_CHECK(fs->read((char*)&colorbuffer[0], bytesPerPxl));
+			chunkheader = U8(chunkheader - 127);
+			ANKI_CHECK(fs->read(&colorbuffer[0], bytesPerPxl));
 
 			for(int counter = 0; counter < chunkheader; counter++)
 			{
@@ -201,7 +201,7 @@ static_assert(sizeof(AnkiTextureHeader) == 128, "Check sizeof AnkiTextureHeader"
 
 /// Get the size in bytes of a single surface
 static PtrSize calcSurfaceSize(
-	const U width, const U height, const ImageLoader::DataCompression comp, const ImageLoader::ColorFormat cf)
+	const U32 width, const U32 height, const ImageLoader::DataCompression comp, const ImageLoader::ColorFormat cf)
 {
 	PtrSize out = 0;
 
@@ -256,14 +256,14 @@ static PtrSize calcVolumeSize(const U width,
 static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header, ImageLoader::DataCompression comp)
 {
 	PtrSize out = 0;
-	U width = header.m_width;
-	U height = header.m_height;
-	U mips = header.m_mipLevels;
+	U32 width = header.m_width;
+	U32 height = header.m_height;
+	U32 mips = header.m_mipLevels;
 	ANKI_ASSERT(mips > 0);
 
 	if(header.m_type != ImageLoader::TextureType::_3D)
 	{
-		U surfCountPerMip = 0;
+		U32 surfCountPerMip = 0;
 
 		switch(header.m_type)
 		{
@@ -409,7 +409,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		return Error::USER_DATA;
 	}
 
-	toLoadMipCount = min<U>(toLoadMipCount, header.m_mipLevels);
+	toLoadMipCount = U8(min<U32>(toLoadMipCount, header.m_mipLevels));
 
 	colorFormat = header.m_colorFormat;
 
@@ -483,17 +483,18 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		surfaces.create(alloc, toLoadMipCount * layerCount * faceCount);
 
 		// Read all surfaces
-		U mipWidth = header.m_width;
-		U mipHeight = header.m_height;
-		U index = 0;
-		for(U mip = 0; mip < header.m_mipLevels; mip++)
+		U32 mipWidth = header.m_width;
+		U32 mipHeight = header.m_height;
+		U32 index = 0;
+		for(U32 mip = 0; mip < header.m_mipLevels; mip++)
 		{
-			for(U l = 0; l < layerCount; l++)
+			for(U32 l = 0; l < layerCount; l++)
 			{
 
-				for(U f = 0; f < faceCount; ++f)
+				for(U32 f = 0; f < faceCount; ++f)
 				{
-					U dataSize = calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat);
+					const U32 dataSize =
+						U32(calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat));
 
 					// Check if this mipmap can be skipped because of size
 					if(maxSize <= maxTextureSize)
@@ -521,12 +522,13 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	{
 		volumes.create(alloc, toLoadMipCount);
 
-		U mipWidth = header.m_width;
-		U mipHeight = header.m_height;
-		U mipDepth = header.m_depthOrLayerCount;
-		for(U mip = 0; mip < header.m_mipLevels; mip++)
+		U32 mipWidth = header.m_width;
+		U32 mipHeight = header.m_height;
+		U32 mipDepth = header.m_depthOrLayerCount;
+		for(U32 mip = 0; mip < header.m_mipLevels; mip++)
 		{
-			U dataSize = calcVolumeSize(mipWidth, mipHeight, mipDepth, preferredCompression, header.m_colorFormat);
+			const U32 dataSize =
+				U32(calcVolumeSize(mipWidth, mipHeight, mipDepth, preferredCompression, header.m_colorFormat));
 
 			// Check if this mipmap can be skipped because of size
 			if(maxSize <= maxTextureSize)
@@ -600,10 +602,8 @@ Error ImageLoader::load(ResourceFilePtr file, const CString& filename, U32 maxTe
 	{
 #if 0
 		compression = ImageLoader::DataCompression::RAW;
-#elif ANKI_GL == ANKI_GL_DESKTOP
-		m_compression = ImageLoader::DataCompression::S3TC;
 #else
-		m_compression = ImageLoader::DataCompression::ETC;
+		m_compression = ImageLoader::DataCompression::S3TC;
 #endif
 
 		ANKI_CHECK(loadAnkiTexture(file,

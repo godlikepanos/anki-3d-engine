@@ -29,7 +29,7 @@ Dbg::~Dbg()
 
 Error Dbg::init(const ConfigSet& initializer)
 {
-	m_enabled = initializer.getNumber("r.dbg.enabled");
+	m_enabled = initializer.getBool("r.dbg.enabled");
 	return Error::NONE;
 }
 
@@ -83,9 +83,9 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	dctx.m_debugDrawFlags = m_debugDrawFlags;
 
 	// Draw renderables
-	const U threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
-	const U threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
-	const U problemSize = ctx.m_renderQueue->m_renderables.getSize();
+	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
+	const U32 threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
+	const U32 problemSize = U32(ctx.m_renderQueue->m_renderables.getSize());
 	U32 start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 
@@ -181,7 +181,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 			self->run(rgraphCtx, *self->m_runCtx.m_ctx);
 		},
 		this,
-		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_renderables.getSize()));
+		computeNumberOfSecondLevelCommandBuffers(U32(ctx.m_renderQueue->m_renderables.getSize())));
 	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, m_r->getGBuffer().getDepthRt());
 
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

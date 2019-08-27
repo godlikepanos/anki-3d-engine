@@ -37,8 +37,8 @@ public:
 	}
 
 private:
-	static constexpr U COMPUTE_SHADER_WORKGROUP_SIZE_X = 64;
-	static constexpr U MAX_RAND_FACTORS = 32;
+	static constexpr U32 COMPUTE_SHADER_WORKGROUP_SIZE_X = 64;
+	static constexpr U32 MAX_RAND_FACTORS = 32;
 
 	class MoveFeedbackComponent;
 
@@ -56,7 +56,7 @@ private:
 	Aabb m_spatialVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	F32 m_maxDistanceAParticleCanGo = -1.0f;
 	U32 m_particleCount = 0;
-	F32 m_dt = 0.0f;
+	Second m_dt = 0.0;
 	Vec3 m_worldPosition = Vec3(0.0f); //< Cache it.
 	Mat3x4 m_worldRotation = Mat3x4::getIdentity();
 

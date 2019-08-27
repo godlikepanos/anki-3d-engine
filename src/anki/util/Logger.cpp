@@ -3,15 +3,19 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/util/Logger.h>
 #include <anki/util/File.h>
+#include <anki/util/Logger.h>
 #include <anki/util/System.h>
-#include <cstring>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
-#if ANKI_OS == ANKI_OS_ANDROID
+#include <cstring>
+#if ANKI_OS_ANDROID
 #	include <android/log.h>
+#endif
+#if ANKI_OS_WINDOWS
+#	include <windows.h>
+#	include <anki/util/CleanupWindows.h>
 #endif
 
 namespace anki
@@ -127,7 +131,7 @@ void Logger::writeFormated(const char* file,
 
 void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 {
-#if ANKI_OS == ANKI_OS_LINUX
+#if ANKI_OS_LINUX
 	FILE* out = nullptr;
 	const char* terminalColor = nullptr;
 	const char* terminalColorBg = nullptr;
@@ -180,7 +184,58 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		info.m_line,
 		info.m_func,
 		endTerminalColor);
-#elif ANKI_OS == ANKI_OS_ANDROID
+#elif ANKI_OS_WINDOWS
+	WORD attribs = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
+	FILE* out = NULL;
+	switch(info.m_type)
+	{
+	case LoggerMessageType::NORMAL:
+		attribs |= FOREGROUND_GREEN;
+		out = stdout;
+		break;
+	case LoggerMessageType::ERROR:
+		attribs |= FOREGROUND_RED;
+		out = stderr;
+		break;
+	case LoggerMessageType::WARNING:
+		attribs |= FOREGROUND_RED;
+		out = stderr;
+		break;
+	case LoggerMessageType::FATAL:
+		attribs |= FOREGROUND_RED | FOREGROUND_INTENSITY;
+		out = stderr;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	if(consoleHandle != nullptr)
+	{
+		CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+		WORD savedAttribs;
+
+		// Save current attributes
+		GetConsoleScreenBufferInfo(consoleHandle, &consoleInfo);
+		savedAttribs = consoleInfo.wAttributes;
+
+		// Apply changes
+		SetConsoleTextAttribute(consoleHandle, attribs);
+
+		// Print
+		fprintf(out,
+			"[%s][%s] %s (%s:%d %s)\n",
+			MSG_TEXT[static_cast<U>(info.m_type)],
+			info.m_subsystem ? info.m_subsystem : "N/A ",
+			info.m_msg,
+			info.m_file,
+			info.m_line,
+			info.m_func);
+
+		// Restore state
+		SetConsoleTextAttribute(consoleHandle, savedAttribs);
+	}
+#elif ANKI_OS_ANDROID
 	U32 andMsgType = ANDROID_LOG_INFO;
 
 	switch(info.m_type)

@@ -40,19 +40,19 @@ F16 F16::toF16(F32 f)
 				m += 0x00002000;
 			}
 
-			out.m_data = s | (m >> 13);
+			out.m_data = U16(s | (m >> 13));
 		}
 	}
 	else if(e == 0xff - (127 - 15))
 	{
 		if(m == 0)
 		{
-			out.m_data = s | 0x7c00;
+			out.m_data = U16(s | 0x7c00);
 		}
 		else
 		{
 			m >>= 13;
-			out.m_data = s | 0x7c00 | m | (m == 0);
+			out.m_data = U16(s | 0x7c00 | m | (m == 0));
 		}
 	}
 	else
@@ -71,11 +71,11 @@ F16 F16::toF16(F32 f)
 		if(e > 30)
 		{
 			ANKI_ASSERT(0 && "Overflow");
-			out.m_data = s | 0x7c00;
+			out.m_data = U16(s | 0x7c00);
 		}
 		else
 		{
-			out.m_data = s | (e << 10) | (m >> 13);
+			out.m_data = U16(s | (e << 10) | (m >> 13));
 		}
 	}
 

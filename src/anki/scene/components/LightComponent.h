@@ -43,7 +43,7 @@ public:
 	void updateWorldTransform(const Transform& trf)
 	{
 		m_trf = trf;
-		m_flags.set(TRF_DIRTY);
+		m_trfDirty = true;
 	}
 
 	const Vec4& getDiffuseColor() const
@@ -59,7 +59,7 @@ public:
 	void setRadius(F32 x)
 	{
 		m_point.m_radius = x;
-		m_flags.set(DIRTY);
+		m_componentDirty = true;
 	}
 
 	F32 getRadius() const
@@ -70,7 +70,7 @@ public:
 	void setDistance(F32 x)
 	{
 		m_spot.m_distance = x;
-		m_flags.set(DIRTY);
+		m_componentDirty = true;
 	}
 
 	F32 getDistance() const
@@ -80,9 +80,9 @@ public:
 
 	void setInnerAngle(F32 ang)
 	{
-		m_spot.m_innerAngleCos = cos(ang / 2.0);
+		m_spot.m_innerAngleCos = cos(ang / 2.0f);
 		m_spot.m_innerAngle = ang;
-		m_flags.set(DIRTY);
+		m_componentDirty = true;
 	}
 
 	F32 getInnerAngleCos() const
@@ -97,9 +97,9 @@ public:
 
 	void setOuterAngle(F32 ang)
 	{
-		m_spot.m_outerAngleCos = cos(ang / 2.0);
+		m_spot.m_outerAngleCos = cos(ang / 2.0f);
 		m_spot.m_outerAngle = ang;
-		m_flags.set(DIRTY);
+		m_componentDirty = true;
 	}
 
 	F32 getOuterAngle() const
@@ -114,12 +114,12 @@ public:
 
 	Bool getShadowEnabled() const
 	{
-		return m_flags.get(SHADOW);
+		return m_shadow;
 	}
 
 	void setShadowEnabled(const Bool x)
 	{
-		m_flags.set(SHADOW, x);
+		m_shadow = x;
 	}
 
 	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
@@ -204,15 +204,11 @@ private:
 		Dir m_dir;
 	};
 
-	enum
-	{
-		SHADOW = 1 << 0,
-		DIRTY = 1 << 1,
-		TRF_DIRTY = 1 << 2
-	};
-
 	LightComponentType m_type;
-	BitMask<U8> m_flags = BitMask<U8>(DIRTY | TRF_DIRTY);
+
+	U8 m_shadow : 1;
+	U8 m_componentDirty : 1;
+	U8 m_trfDirty : 1;
 };
 /// @}
 

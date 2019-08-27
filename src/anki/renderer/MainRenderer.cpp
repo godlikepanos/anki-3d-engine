@@ -43,14 +43,14 @@ Error MainRenderer::init(ThreadHive* hive,
 	ANKI_R_LOGI("Initializing main renderer");
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
-	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0);
+	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0f);
 
 	// Init renderer and manipulate the width/height
-	m_width = config.getNumber("width");
-	m_height = config.getNumber("height");
+	m_width = config.getNumberU32("width");
+	m_height = config.getNumberU32("height");
 	ConfigSet config2 = config;
-	m_renderingQuality = config.getNumber("r.renderingQuality");
-	UVec2 size(m_renderingQuality * F32(m_width), m_renderingQuality * F32(m_height));
+	m_renderingQuality = config.getNumberF32("r.renderingQuality");
+	UVec2 size(U32(m_renderingQuality * F32(m_width)), U32(m_renderingQuality * F32(m_height)));
 
 	config2.set("width", size.x());
 	config2.set("height", size.y());
@@ -167,7 +167,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 		tasks[i].m_callback = [](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
 			MainRenderer& self = *static_cast<MainRenderer*>(userData);
 
-			const U taskId = self.m_runCtx.m_secondaryTaskId.fetchAdd(1);
+			const U32 taskId = self.m_runCtx.m_secondaryTaskId.fetchAdd(1);
 			self.m_rgraph->runSecondLevel(taskId);
 		};
 	}

@@ -21,7 +21,7 @@ public:
 	StringAuto m_rpath{m_alloc};
 	StringAuto m_texrpath{m_alloc};
 
-	F32 m_normalsMergeCosAngle = cos(toRad(30.0));
+	F32 m_normalsMergeCosAngle = cos(toRad(30.0f));
 
 	tinygltf::TinyGLTF m_loader;
 	tinygltf::Model m_model;

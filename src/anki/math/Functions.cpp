@@ -12,7 +12,7 @@ namespace anki
 template<typename Scalar>
 static Scalar polynomialSinQuadrant(const Scalar a)
 {
-	return a * (1.0 + a * a * (-0.16666 + a * a * (0.0083143 - a * a * 0.00018542)));
+	return Scalar(a * (1.0 + a * a * (-0.16666 + a * a * (0.0083143 - a * a * 0.00018542))));
 }
 
 template<typename Scalar>
@@ -29,12 +29,12 @@ static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 		a = -a;
 		negative = true;
 	}
-	const Scalar TWO_OVER_PI = 1.0 / (PI / 2.0);
+	const Scalar TWO_OVER_PI = Scalar(1.0 / (PI / 2.0));
 	Scalar floatA = TWO_OVER_PI * a;
 	I intA = (int)floatA;
 
 	const Scalar RATIONAL_HALF_PI = 201 / 128.0;
-	const Scalar REMAINDER_HALF_PI = 4.8382679e-4;
+	const Scalar REMAINDER_HALF_PI = Scalar(4.8382679e-4);
 
 	floatA = (a - RATIONAL_HALF_PI * intA) - REMAINDER_HALF_PI * intA;
 

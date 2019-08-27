@@ -359,8 +359,8 @@ Error Input::handleEvents()
 		case SDL_MOUSEMOTION:
 			m_mousePosWin.x() = event.button.x;
 			m_mousePosWin.y() = event.button.y;
-			m_mousePosNdc.x() = (F32)event.button.x / m_nativeWindow->getWidth() * 2.0 - 1.0;
-			m_mousePosNdc.y() = -((F32)event.button.y / m_nativeWindow->getHeight() * 2.0 - 1.0);
+			m_mousePosNdc.x() = F32(event.button.x) / F32(m_nativeWindow->getWidth()) * 2.0f - 1.0f;
+			m_mousePosNdc.y() = -(F32(event.button.y) / F32(m_nativeWindow->getHeight()) * 2.0f - 1.0f);
 			break;
 		case SDL_QUIT:
 			addEvent(InputEvent::WINDOW_CLOSED);
@@ -384,8 +384,8 @@ void Input::moveCursor(const Vec2& pos)
 {
 	if(pos != m_mousePosNdc)
 	{
-		const int x = m_nativeWindow->getWidth() * (pos.x() * 0.5f + 0.5f);
-		const int y = m_nativeWindow->getHeight() * (-pos.y() * 0.5f + 0.5f);
+		const I32 x = I32(F32(m_nativeWindow->getWidth()) * (pos.x() * 0.5f + 0.5f));
+		const I32 y = I32(F32(m_nativeWindow->getHeight()) * (-pos.y() * 0.5f + 0.5f));
 
 		SDL_WarpMouseInWindow(m_nativeWindow->getNative().m_window, x, y);
 

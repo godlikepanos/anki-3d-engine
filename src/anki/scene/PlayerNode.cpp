@@ -29,7 +29,7 @@ public:
 
 		PlayerControllerComponent& playerc = node.getComponent<PlayerControllerComponent>();
 		const Input& in = node.getSceneGraph().getInput();
-		const F32 ang = toRad(7.0);
+		const F32 ang = toRad(7.0f);
 
 		F32 y = in.getMousePosition().y();
 		F32 x = in.getMousePosition().x();
@@ -39,10 +39,10 @@ public:
 
 			// Set origin
 			Vec4 origin = playerc.getTransform().getOrigin();
-			origin.y() += 1.9;
+			origin.y() += 1.9f;
 
 			// Set rotation
-			Mat3x4 rot(Euler(ang * y * 11.25, ang * x * -20.0, 0.0));
+			Mat3x4 rot(Euler(ang * y * 11.25f, ang * x * -20.0f, 0.0f));
 
 			rot = move.getLocalRotation().combineTransformations(rot);
 
@@ -82,26 +82,26 @@ public:
 		Vec4 moveVec(0.0);
 		if(in.getKey(KeyCode::W))
 		{
-			moveVec.z() += 1.0;
+			moveVec.z() += 1.0f;
 		}
 
 		if(in.getKey(KeyCode::A))
 		{
-			moveVec.x() -= 1.0;
+			moveVec.x() -= 1.0f;
 		}
 
 		if(in.getKey(KeyCode::S))
 		{
-			moveVec.z() -= 1.0;
+			moveVec.z() -= 1.0f;
 		}
 
 		if(in.getKey(KeyCode::D))
 		{
-			moveVec.x() += 1.0;
+			moveVec.x() += 1.0f;
 		}
 
 		Vec4 dir = -move.getLocalRotation().getZAxis().xyz0();
-		dir.y() = 0.0;
+		dir.y() = 0.0f;
 		dir.normalize();
 
 		playerc.setVelocity(moveVec.z() * speed, moveVec.x() * speed, 0.0, dir);

@@ -8,9 +8,10 @@
 
 static const char* XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
+#if 0
 static aiColor3D srgbToLinear(aiColor3D in)
 {
-	const float p = 1.0 / 2.4;
+	const float p = 1.0f / 2.4f;
 	aiColor3D out;
 	out[0] = pow(in[0], p);
 	out[1] = pow(in[1], p);
@@ -43,6 +44,7 @@ static aiColor3D computeLightColor(aiColor3D in)
 
 	return in;
 }
+#endif
 
 static std::string getMeshName(const aiMesh& mesh)
 {
@@ -145,7 +147,7 @@ static void removeScale(aiMatrix4x4& m)
 
 static float getUniformScale(const aiMatrix4x4& m)
 {
-	const float SCALE_THRESHOLD = 0.01; // 1 cm
+	const float SCALE_THRESHOLD = 0.01f; // 1 cm
 
 	aiVector3D xAxis(m.a1, m.b1, m.c1);
 	aiVector3D yAxis(m.a2, m.b2, m.c2);
@@ -510,7 +512,7 @@ void Exporter::exportLight(const aiLight& light)
 		float inner = light.mAngleInnerCone;
 		if(outer == inner)
 		{
-			inner = outer / 2.0;
+			inner = outer / 2.0f;
 		}
 
 		file << "lcomp:setInnerAngle(" << inner << ")\n"
@@ -537,7 +539,7 @@ void Exporter::exportLight(const aiLight& light)
 	}
 
 	aiMatrix4x4 rot;
-	aiMatrix4x4::RotationX(-3.1415 / 2.0, rot);
+	aiMatrix4x4::RotationX(-3.1415f / 2.0f, rot);
 	writeNodeTransform("node", toAnkiMatrix(node->mTransformation * rot));
 
 	// Extra
@@ -735,7 +737,7 @@ void Exporter::exportCamera(const aiCamera& cam)
 	}
 
 	aiMatrix4x4 rot;
-	aiMatrix4x4::RotationX(-3.1415 / 2.0, rot);
+	aiMatrix4x4::RotationX(-3.1415f / 2.0f, rot);
 	writeNodeTransform("node", toAnkiMatrix(node->mTransformation * rot));
 }
 
@@ -976,7 +978,7 @@ void Exporter::visitNode(const aiNode* ainode)
 
 		// Create new node
 		Node node;
-		node.m_modelIndex = m_models.size() - 1;
+		node.m_modelIndex = uint32_t(m_models.size() - 1);
 		node.m_transform = toAnkiMatrix(ainode->mTransformation);
 		node.m_group = ainode->mGroup.C_Str();
 		node.m_collisionMesh = collisionMesh;

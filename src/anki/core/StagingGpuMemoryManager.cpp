@@ -26,10 +26,10 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 {
 	m_gr = gr;
 
-	m_perFrameBuffers[StagingGpuMemoryType::UNIFORM].m_size = cfg.getNumber("core.uniformPerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::STORAGE].m_size = cfg.getNumber("core.storagePerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getNumber("core.vertexPerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getNumber("core.textureBufferPerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::UNIFORM].m_size = cfg.getNumberU32("core.uniformPerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::STORAGE].m_size = cfg.getNumberU32("core.storagePerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getNumberU32("core.vertexPerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getNumberU32("core.textureBufferPerFrameMemorySize");
 
 	initBuffer(StagingGpuMemoryType::UNIFORM,
 		gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,

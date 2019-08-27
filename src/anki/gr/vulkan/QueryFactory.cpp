@@ -59,7 +59,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 	ANKI_ASSERT(chunk);
 
 	// Allocate from chunk
-	for(U i = 0; i < MAX_SUB_ALLOCATIONS_PER_QUERY_CHUNK; ++i)
+	for(U32 i = 0; i < MAX_SUB_ALLOCATIONS_PER_QUERY_CHUNK; ++i)
 	{
 		if(chunk->m_allocatedMask.get(i) == 0)
 		{

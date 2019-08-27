@@ -173,8 +173,8 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 						ERROR("Vertex has more than 4 bone weights");
 					}
 
-					vert.m_boneIndices[idx] = i;
-					vert.m_weights[idx] = aiWeight.mWeight * 0xFF;
+					vert.m_boneIndices[idx] = uint16_t(i);
+					vert.m_weights[idx] = uint8_t(aiWeight.mWeight * 0xFF);
 				}
 			}
 		}
@@ -361,7 +361,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 				ERROR("Index too big");
 			}
 
-			uint16_t index = index32;
+			uint16_t index = uint16_t(index32);
 			file.write(reinterpret_cast<char*>(&index), sizeof(index));
 		}
 	}
@@ -424,8 +424,8 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 			if(uvfmt == Format::R16G16_UNORM)
 			{
 				assert(uv[0] <= 1.0 && uv[0] >= 0.0 && uv[1] <= 1.0 && uv[1] >= 0.0);
-				verts[i].m_uv[0] = uv[0] * 0xFFFF;
-				verts[i].m_uv[1] = uv[1] * 0xFFFF;
+				verts[i].m_uv[0] = uint16_t(uv[0] * 0xFFFF);
+				verts[i].m_uv[1] = uint16_t(uv[1] * 0xFFFF);
 			}
 			else if(uvfmt == Format::R16G16_SFLOAT)
 			{
