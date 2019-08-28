@@ -24,8 +24,6 @@ class ConfigSet;
 class ResourceFile : public NonCopyable
 {
 public:
-	using SeekOrigin = File::SeekOrigin;
-
 	ResourceFile(GenericMemoryPoolAllocator<U8> alloc)
 		: m_alloc(alloc)
 	{
@@ -50,7 +48,7 @@ public:
 	/// Set the position indicator to a new position
 	/// @param offset Number of bytes to offset from origin
 	/// @param origin Position used as reference for the offset
-	virtual ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin) = 0;
+	virtual ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) = 0;
 
 	/// Get the size of the file.
 	virtual PtrSize getSize() const = 0;

@@ -17,6 +17,7 @@ namespace anki
 /// @{
 
 /// Open mode
+/// @memberof File
 enum class FileOpenFlag : U8
 {
 	NONE = 0,
@@ -29,6 +30,15 @@ enum class FileOpenFlag : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag, inline)
 
+/// Passed to seek function
+/// @memberof File
+enum class FileSeekOrigin
+{
+	BEGINNING = SEEK_SET,
+	CURRENT = SEEK_CUR,
+	END = SEEK_END
+};
+
 /// An abstraction over typical files and files in ziped archives. This class can read from regular C files, zip files
 /// and on Android from the packed asset files.
 /// To identify the file:
@@ -37,14 +47,6 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag, inline)
 class File : public NonCopyable
 {
 public:
-	/// Passed to seek function
-	enum class SeekOrigin
-	{
-		BEGINNING = SEEK_SET,
-		CURRENT = SEEK_CUR,
-		END = SEEK_END
-	};
-
 	/// Default constructor
 	File() = default;
 
@@ -102,7 +104,7 @@ public:
 	/// Set the position indicator to a new position.
 	/// @param offset Number of bytes to offset from origin
 	/// @param origin Position used as reference for the offset
-	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin);
+	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin);
 
 	/// The the size of the file.
 	PtrSize getSize() const;

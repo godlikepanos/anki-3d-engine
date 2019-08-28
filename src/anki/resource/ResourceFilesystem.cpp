@@ -47,7 +47,7 @@ public:
 		return m_file.readF32(f);
 	}
 
-	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin) override
+	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) override
 	{
 		return m_file.seek(offset, origin);
 	}
@@ -162,10 +162,10 @@ public:
 		return Error::NONE;
 	}
 
-	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin) override
+	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) override
 	{
 		// Rewind if needed
-		if(origin == SeekOrigin::BEGINNING)
+		if(origin == FileSeekOrigin::BEGINNING)
 		{
 			if(unzCloseCurrentFile(m_archive) || unzOpenCurrentFile(m_archive))
 			{

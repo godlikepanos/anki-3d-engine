@@ -420,7 +420,7 @@ Error File::writeText(CString format, ...)
 	return err;
 }
 
-Error File::seek(PtrSize offset, SeekOrigin origin)
+Error File::seek(PtrSize offset, FileSeekOrigin origin)
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);

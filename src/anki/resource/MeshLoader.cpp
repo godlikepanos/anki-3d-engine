@@ -237,7 +237,7 @@ Error MeshLoader::storeIndexBuffer(void* ptr, PtrSize size)
 	}
 	else
 	{
-		ANKI_CHECK(m_file->seek(size, ResourceFile::SeekOrigin::CURRENT));
+		ANKI_CHECK(m_file->seek(size, FileSeekOrigin::CURRENT));
 	}
 
 	++m_loadedChunk;
@@ -257,7 +257,7 @@ Error MeshLoader::storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size)
 	}
 	else
 	{
-		ANKI_CHECK(m_file->seek(size, ResourceFile::SeekOrigin::CURRENT));
+		ANKI_CHECK(m_file->seek(size, FileSeekOrigin::CURRENT));
 	}
 
 	++m_loadedChunk;

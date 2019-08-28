@@ -83,25 +83,25 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 
 	switch(loader.getTextureType())
 	{
-	case ImageLoader::TextureType::_2D:
+	case ImageLoaderTextureType::_2D:
 		init.m_type = TextureType::_2D;
 		init.m_depth = 1;
 		faces = 1;
 		init.m_layerCount = 1;
 		break;
-	case ImageLoader::TextureType::CUBE:
+	case ImageLoaderTextureType::CUBE:
 		init.m_type = TextureType::CUBE;
 		init.m_depth = 1;
 		faces = 6;
 		init.m_layerCount = 1;
 		break;
-	case ImageLoader::TextureType::_2D_ARRAY:
+	case ImageLoaderTextureType::_2D_ARRAY:
 		init.m_type = TextureType::_2D_ARRAY;
 		init.m_layerCount = loader.getLayerCount();
 		init.m_depth = 1;
 		faces = 1;
 		break;
-	case ImageLoader::TextureType::_3D:
+	case ImageLoaderTextureType::_3D:
 		init.m_type = TextureType::_3D;
 		init.m_depth = loader.getDepth();
 		init.m_layerCount = 1;
@@ -112,28 +112,28 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// Internal format
-	if(loader.getColorFormat() == ImageLoader::ColorFormat::RGB8)
+	if(loader.getColorFormat() == ImageLoaderColorFormat::RGB8)
 	{
 		switch(loader.getCompression())
 		{
-		case ImageLoader::DataCompression::RAW:
+		case ImageLoaderDataCompression::RAW:
 			init.m_format = Format::R8G8B8_UNORM;
 			break;
-		case ImageLoader::DataCompression::S3TC:
+		case ImageLoaderDataCompression::S3TC:
 			init.m_format = Format::BC1_RGB_UNORM_BLOCK;
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
 	}
-	else if(loader.getColorFormat() == ImageLoader::ColorFormat::RGBA8)
+	else if(loader.getColorFormat() == ImageLoaderColorFormat::RGBA8)
 	{
 		switch(loader.getCompression())
 		{
-		case ImageLoader::DataCompression::RAW:
+		case ImageLoaderDataCompression::RAW:
 			init.m_format = Format::R8G8B8A8_UNORM;
 			break;
-		case ImageLoader::DataCompression::S3TC:
+		case ImageLoaderDataCompression::S3TC:
 			init.m_format = Format::BC3_UNORM_BLOCK;
 			break;
 		default:
@@ -146,7 +146,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// mipmapsCount
-	init.m_mipmapCount = U8(loader.getMipLevelsCount());
+	init.m_mipmapCount = U8(loader.getMipmapCount());
 
 	// Create the texture
 	m_tex = getManager().getGrManager().newTexture(init);
@@ -181,7 +181,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 
 Error TextureResource::load(LoadingContext& ctx)
 {
-	const U32 copyCount = ctx.m_layerCount * ctx.m_faces * ctx.m_loader.getMipLevelsCount();
+	const U32 copyCount = ctx.m_layerCount * ctx.m_faces * ctx.m_loader.getMipmapCount();
 
 	for(U32 b = 0; b < copyCount; b += MAX_COPIES_BEFORE_FLUSH)
 	{
@@ -196,7 +196,7 @@ Error TextureResource::load(LoadingContext& ctx)
 		for(U32 i = begin; i < end; ++i)
 		{
 			U32 mip, layer, face;
-			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipLevelsCount(), i, layer, face, mip);
+			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			if(ctx.m_texType == TextureType::_3D)
 			{
@@ -218,7 +218,7 @@ Error TextureResource::load(LoadingContext& ctx)
 		for(U32 i = begin; i < end; ++i)
 		{
 			U32 mip, layer, face;
-			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipLevelsCount(), i, layer, face, mip);
+			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			PtrSize surfOrVolSize;
 			const void* surfOrVolData;
@@ -273,7 +273,7 @@ Error TextureResource::load(LoadingContext& ctx)
 		for(U32 i = begin; i < end; ++i)
 		{
 			U32 mip, layer, face;
-			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipLevelsCount(), i, layer, face, mip);
+			unflatten3dArrayIndex(ctx.m_layerCount, ctx.m_faces, ctx.m_loader.getMipmapCount(), i, layer, face, mip);
 
 			if(ctx.m_texType == TextureType::_3D)
 			{
