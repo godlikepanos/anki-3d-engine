@@ -96,7 +96,7 @@ Config::Config()
 	newOption("core.storagePerFrameMemorySize", 16_MB);
 	newOption("core.vertexPerFrameMemorySize", 10_MB);
 	newOption("core.textureBufferPerFrameMemorySize", 1_MB);
-	newOption("core.mainThreadCount", max(2u, getCpuCoresCount() / 2u - 1u));
+	newOption("core.mainThreadCount", max(2u, getCpuCoresCount() / 2u));
 	newOption("core.displayStats", false);
 	newOption("core.clearCaches", false);
 }
