@@ -324,7 +324,7 @@ ANKI_TEST(Util, SparseArrayBench)
 	StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), allocStl);
 
 	using AkMap = SparseArray<int, U32>;
-	AkMap akMap(256, log2(256.0f), 0.90f);
+	AkMap akMap(256, U32(log2(256.0f)), 0.90f);
 
 	HighRezTimer timer;
 

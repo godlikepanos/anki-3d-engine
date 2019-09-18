@@ -170,16 +170,26 @@ public:
 		return m_ptr;
 	}
 
-	const Char* begin() const
+	const Char* getBegin() const
 	{
 		checkInit();
 		return &m_ptr[0];
 	}
 
-	const Char* end() const
+	const Char* getEnd() const
 	{
 		checkInit();
 		return &m_ptr[getLength()];
+	}
+
+	const Char* begin() const
+	{
+		return getBegin();
+	}
+
+	const Char* end() const
+	{
+		return getEnd();
 	}
 
 	/// Return true if the string is not initialized.
@@ -282,6 +292,11 @@ public:
 	String(StringAuto&& b)
 	{
 		*this = std::move(b);
+	}
+
+	String(Allocator alloc, CString str)
+	{
+		create(alloc, str);
 	}
 
 	/// Requires manual destruction.
@@ -391,34 +406,82 @@ public:
 		create(alloc, b.toCString());
 	}
 
+	/// Append another string to this one.
+	void append(Allocator alloc, const String& b)
+	{
+		if(!b.isEmpty())
+		{
+			appendInternal(alloc, &b.m_data[0], b.m_data.getSize() - 1);
+		}
+	}
+
+	/// Append a const string to this one.
+	void append(Allocator alloc, const CStringType& cstr)
+	{
+		if(!cstr.isEmpty())
+		{
+			appendInternal(alloc, cstr.cstr(), cstr.getLength());
+		}
+	}
+
+	/// Append using a range. Copies the range of [first, oneAfterLast)
+	void append(Allocator alloc, ConstIterator first, ConstIterator oneAfterLast)
+	{
+		const PtrSize len = oneAfterLast - first;
+		appendInternal(alloc, first, len);
+	}
+
+	/// Create formated string.
+	void sprintf(Allocator alloc, CString fmt, ...);
+
 	/// Destroy the string.
 	void destroy(Allocator alloc)
 	{
 		m_data.destroy(alloc);
 	}
 
-	Iterator begin()
+	Iterator getBegin()
 	{
 		checkInit();
 		return &m_data[0];
+	}
+
+	ConstIterator getBegin() const
+	{
+		checkInit();
+		return &m_data[0];
+	}
+
+	Iterator getEnd()
+	{
+		checkInit();
+		return &m_data[m_data.getSize() - 1];
+	}
+
+	ConstIterator getEnd() const
+	{
+		checkInit();
+		return &m_data[m_data.getSize() - 1];
+	}
+
+	Iterator begin()
+	{
+		return getBegin();
 	}
 
 	ConstIterator begin() const
 	{
-		checkInit();
-		return &m_data[0];
+		return getBegin();
 	}
 
 	Iterator end()
 	{
-		checkInit();
-		return &m_data[m_data.getSize() - 1];
+		return getEnd();
 	}
 
 	ConstIterator end() const
 	{
-		checkInit();
-		return &m_data[m_data.getSize() - 1];
+		return getEnd();
 	}
 
 	/// Return the string's length. It doesn't count the terminating character.
@@ -436,27 +499,6 @@ public:
 		checkInit();
 		return CStringType(&m_data[0]);
 	}
-
-	/// Append another string to this one.
-	void append(Allocator alloc, const String& b)
-	{
-		if(!b.isEmpty())
-		{
-			appendInternal(alloc, &b.m_data[0], b.m_data.getSize());
-		}
-	}
-
-	/// Append a const string to this one.
-	void append(Allocator alloc, const CStringType& cstr)
-	{
-		if(!cstr.isEmpty())
-		{
-			appendInternal(alloc, &cstr[0], cstr.getLength() + 1);
-		}
-	}
-
-	/// Create formated string.
-	void sprintf(Allocator alloc, CString fmt, ...);
 
 	/// Return true if it's empty.
 	Bool isEmpty() const
@@ -549,6 +591,9 @@ public:
 		return anki::computeHash(&m_data[0], m_data.getSize());
 	}
 
+	/// Replace all occurrences of "from" with "to".
+	String& replaceAll(Allocator alloc, CString from, CString to);
+
 protected:
 	DynamicArray<Char> m_data;
 
@@ -558,7 +603,7 @@ protected:
 	}
 
 	/// Append to this string.
-	void appendInternal(Allocator alloc, const Char* str, PtrSize strSize);
+	void appendInternal(Allocator& alloc, const Char* str, PtrSize strLen);
 
 	void move(String& b)
 	{
@@ -573,7 +618,7 @@ inline void String::toString(Allocator alloc, TNumber number)
 	destroy(alloc);
 
 	Array<Char, 512> buff;
-	I ret = std::snprintf(&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
+	const I ret = std::snprintf(&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
 
 	if(ret < 0 || ret > static_cast<I>(buff.getSize()))
 	{
@@ -707,6 +752,13 @@ public:
 	void toString(TNumber number)
 	{
 		Base::toString(m_alloc, number);
+	}
+
+	/// Replace all occurrences of "from" with "to".
+	StringAuto& replaceAll(CString from, CString to)
+	{
+		Base::replaceAll(m_alloc, from, to);
+		return *this;
 	}
 
 private:

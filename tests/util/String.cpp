@@ -207,6 +207,29 @@ ANKI_TEST(Util, String)
 		ANKI_TEST_EXPECT_EQ(f, 123456789.145);
 		a.destroy(alloc);
 	}
+
+	// replaceAll
+	{
+		String a = {alloc, "foo"};
+		a.replaceAll(alloc, "foo", "bar");
+		ANKI_TEST_EXPECT_EQ(a, "bar");
+		a.destroy(alloc);
+
+		a.create(alloc, "lafooha");
+		a.replaceAll(alloc, "foo", "bar");
+		ANKI_TEST_EXPECT_EQ(a, "labarha");
+		a.destroy(alloc);
+
+		a.create(alloc, "jjhfalkakljla");
+		a.replaceAll(alloc, "a", "b");
+		ANKI_TEST_EXPECT_EQ(a, "jjhfblkbkljlb");
+		a.destroy(alloc);
+
+		a.create(alloc, "%foo%ajlkadsf%foo%");
+		a.replaceAll(alloc, "%foo%", "");
+		ANKI_TEST_EXPECT_EQ(a, "ajlkadsf");
+		a.destroy(alloc);
+	}
 }
 
 } // end namespace anki

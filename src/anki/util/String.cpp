@@ -176,10 +176,10 @@ void String::create(Allocator alloc, Char c, PtrSize length)
 	m_data[length] = '\0';
 }
 
-void String::appendInternal(Allocator alloc, const Char* str, PtrSize strSize)
+void String::appendInternal(Allocator& alloc, const Char* str, PtrSize strLen)
 {
 	ANKI_ASSERT(str != nullptr);
-	ANKI_ASSERT(strSize > 1);
+	ANKI_ASSERT(strLen > 0);
 
 	auto size = m_data.getSize();
 
@@ -190,14 +190,16 @@ void String::appendInternal(Allocator alloc, const Char* str, PtrSize strSize)
 	}
 
 	DynamicArray<Char> newData;
-	newData.create(alloc, size + strSize - 1);
+	newData.create(alloc, size + strLen);
 
 	if(!m_data.isEmpty())
 	{
 		std::memcpy(&newData[0], &m_data[0], sizeof(Char) * size);
 	}
 
-	std::memcpy(&newData[size - 1], str, sizeof(Char) * strSize);
+	std::memcpy(&newData[size - 1], str, sizeof(Char) * strLen);
+
+	newData[newData.getSize() - 1] = '\0';
 
 	m_data.destroy(alloc);
 	m_data = std::move(newData);
@@ -233,6 +235,40 @@ void String::sprintf(Allocator alloc, CString fmt, ...)
 		// buffer was enough
 		create(alloc, CString(&buffer[0]));
 	}
+}
+
+String& String::replaceAll(Allocator alloc, CString from, CString to)
+{
+	String tmp = {alloc, toCString()};
+	const PtrSize fromLen = from.getLength();
+	const PtrSize toLen = to.getLength();
+
+	PtrSize pos = NPOS;
+	while((pos = tmp.find(from)) != NPOS)
+	{
+		String tmp2;
+		if(pos > 0)
+		{
+			tmp2.create(alloc, tmp.getBegin(), tmp.getBegin() + pos);
+		}
+
+		if(toLen > 0)
+		{
+			tmp2.append(alloc, to.getBegin(), to.getBegin() + toLen);
+		}
+
+		if(pos + fromLen < tmp.getLength())
+		{
+			tmp2.append(alloc, tmp.getBegin() + pos + fromLen, tmp.getEnd());
+		}
+
+		tmp.destroy(alloc);
+		tmp = std::move(tmp2);
+	}
+
+	destroy(alloc);
+	*this = std::move(tmp);
+	return *this;
 }
 
 } // end namespace anki
