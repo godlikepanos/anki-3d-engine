@@ -128,6 +128,9 @@ private:
 		RenderTargetHandle m_lightShadingRt;
 		RenderPassBufferHandle m_irradianceDiceValuesBuffHandle;
 		RenderTargetHandle m_shadowMapRt;
+
+		U32 m_gbufferRenderableCount = 0;
+		U32 m_shadowRenderableCount = 0;
 	} m_ctx; ///< Runtime context.
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
@@ -143,8 +146,8 @@ private:
 	void prepareProbes(
 		RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate, U32& probeToUpdateCacheEntryIdx);
 
-	void runGBuffer(U32 faceIdx, CommandBufferPtr& cmdb);
-	void runShadowMapping(U32 faceIdx, CommandBufferPtr& cmdb);
+	void runGBuffer(RenderPassWorkContext& rgraphCtx);
+	void runShadowMapping(RenderPassWorkContext& rgraphCtx);
 	void runLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runMipmappingOfLightShading(U32 faceIdx, RenderPassWorkContext& rgraphCtx);
 	void runIrradiance(RenderPassWorkContext& rgraphCtx);
