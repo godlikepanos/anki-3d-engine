@@ -211,7 +211,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z bullet imgui)
+set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z bullet imgui meshoptimizer)
 
 # Bullet config
 option(BUILD_BULLET2_DEMOS OFF)
@@ -228,7 +228,6 @@ set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} SPIRV-Cross)
 
 if(ANKI_BUILD_TOOLS)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} assimp)
-	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} meshoptimizer)
 endif()
 
 if(VULKAN)
