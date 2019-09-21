@@ -8,6 +8,19 @@
 #include <anki/util/Filesystem.h>
 #include <anki/util/Array.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ASSERT(x) ANKI_ASSERT(x)
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wfloat-conversion"
+#	pragma GCC diagnostic ignored "-Wconversion"
+#	pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
+#include <stb/stb_image.h>
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
+
 namespace anki
 {
 
@@ -141,7 +154,14 @@ class ImageLoader::FileInterface
 {
 public:
 	virtual ANKI_USE_RESULT Error read(void* buff, PtrSize size) = 0;
+
 	virtual ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) = 0;
+
+	virtual PtrSize getSize() const
+	{
+		ANKI_ASSERT(!"Not Implemented");
+		return MAX_PTR_SIZE;
+	}
 };
 
 class ImageLoader::RsrcFile : public FileInterface
@@ -173,6 +193,11 @@ public:
 	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin) final
 	{
 		return m_file.seek(offset, origin);
+	}
+
+	PtrSize getSize() const final
+	{
+		return m_file.getSize();
 	}
 };
 
@@ -578,18 +603,62 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file,
 	return Error::NONE;
 }
 
+Error ImageLoader::loadStb(
+	FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc)
+{
+	// Read the file
+	DynamicArrayAuto<U8> fileData = {alloc};
+	const PtrSize fileSize = fs.getSize();
+	fileData.create(fileSize);
+	ANKI_CHECK(fs.read(&fileData[0], fileSize));
+
+	// Use STB to read the image
+	int stbw, stbh, comp;
+	U8* stbdata = reinterpret_cast<U8*>(stbi_load_from_memory(&fileData[0], I32(fileSize), &stbw, &stbh, &comp, 4));
+	if(!stbdata)
+	{
+		ANKI_RESOURCE_LOGE("STB failed to read image");
+		return Error::FUNCTION_FAILED;
+	}
+
+	// Store it
+	width = U32(stbw);
+	height = U32(stbh);
+	data.create(alloc, width * height * 4);
+	memcpy(&data[0], stbdata, data.getSize());
+
+	// Cleanup
+	stbi_image_free(stbdata);
+
+	return Error::NONE;
+}
+
 Error ImageLoader::load(ResourceFilePtr rfile, const CString& filename, U32 maxTextureSize)
 {
 	RsrcFile file;
 	file.m_rfile = rfile;
-	return loadInternal(file, filename, maxTextureSize);
+
+	const Error err = loadInternal(file, filename, maxTextureSize);
+	if(err)
+	{
+		ANKI_RESOURCE_LOGE("Failed to read image: %s", filename.cstr());
+	}
+
+	return err;
 }
 
 Error ImageLoader::load(const CString& filename, U32 maxTextureSize)
 {
 	SystemFile file;
 	ANKI_CHECK(file.m_file.open(filename, FileOpenFlag::READ | FileOpenFlag::BINARY));
-	return loadInternal(file, filename, maxTextureSize);
+
+	const Error err = loadInternal(file, filename, maxTextureSize);
+	if(err)
+	{
+		ANKI_RESOURCE_LOGE("Failed to read image: %s", filename.cstr());
+	}
+
+	return err;
 }
 
 Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U32 maxTextureSize)
@@ -605,7 +674,6 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 	}
 
 	// load from this extension
-	U32 bpp = 0;
 	m_textureType = ImageLoaderTextureType::_2D;
 	m_compression = ImageLoaderDataCompression::RAW;
 
@@ -616,6 +684,7 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 		m_mipCount = 1;
 		m_depth = 1;
 		m_layerCount = 1;
+		U32 bpp = 0;
 		ANKI_CHECK(loadTga(file, m_surfaces[0].m_width, m_surfaces[0].m_height, bpp, m_surfaces[0].m_data, m_alloc));
 
 		m_width = m_surfaces[0].m_width;
@@ -655,6 +724,20 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 			m_mipCount,
 			m_textureType,
 			m_colorFormat));
+	}
+	else if(ext == "png")
+	{
+		m_surfaces.create(m_alloc, 1);
+
+		m_mipCount = 1;
+		m_depth = 1;
+		m_layerCount = 1;
+		m_colorFormat = ImageLoaderColorFormat::RGBA8;
+
+		ANKI_CHECK(loadStb(file, m_surfaces[0].m_width, m_surfaces[0].m_height, m_surfaces[0].m_data, m_alloc));
+
+		m_width = m_surfaces[0].m_width;
+		m_height = m_surfaces[0].m_height;
 	}
 	else
 	{

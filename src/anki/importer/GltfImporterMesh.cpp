@@ -3,7 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "Importer.h"
+#include <anki/importer/GltfImporter.h>
+#include <anki/util/StringList.h>
+#include <anki/collision/Plane.h>
+#include <anki/collision/Functions.h>
+#include <anki/resource/MeshLoader.h>
 #include <meshoptimizer/meshoptimizer.h>
 
 namespace anki
@@ -117,7 +121,7 @@ public:
 	U32 m_firstIdx = MAX_U32;
 	U32 m_idxCount = MAX_U32;
 
-	SubMesh(HeapAllocator<U8>& alloc)
+	SubMesh(GenericMemoryPoolAllocator<U8>& alloc)
 		: m_verts(alloc)
 		, m_indices(alloc)
 	{
@@ -131,7 +135,7 @@ struct WeightVertex
 };
 
 /// Optimize a submesh using meshoptimizer.
-static void optimizeSubmesh(SubMesh& submesh, HeapAllocator<U8> alloc)
+static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> alloc)
 {
 	const PtrSize vertSize = sizeof(submesh.m_verts[0]);
 
@@ -209,7 +213,7 @@ static void optimizeSubmesh(SubMesh& submesh, HeapAllocator<U8> alloc)
 	}
 }
 
-Error Importer::writeMesh(const cgltf_mesh& mesh)
+Error GltfImporter::writeMesh(const cgltf_mesh& mesh)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankimesh", m_outDir.cstr(), mesh.name);

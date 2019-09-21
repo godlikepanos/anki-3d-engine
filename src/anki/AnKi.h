@@ -16,3 +16,4 @@
 #include <anki/Physics.h>
 #include <anki/Gr.h>
 #include <anki/Core.h>
+#include <anki/Importer.h>

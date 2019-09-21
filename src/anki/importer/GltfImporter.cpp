@@ -3,7 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "Importer.h"
+#include <anki/importer/GltfImporter.h>
+#include <anki/util/System.h>
+#include <anki/util/ThreadHive.h>
+#include <anki/util/StringList.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -133,14 +136,15 @@ static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform&
 	return Error::NONE;
 }
 
-const char* Importer::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
+const char* GltfImporter::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
-Importer::Importer()
+GltfImporter::GltfImporter(GenericMemoryPoolAllocator<U8> alloc)
+	: m_alloc(alloc)
 {
 	m_hive = m_alloc.newInstance<ThreadHive>(getCpuCoresCount(), m_alloc, true);
 }
 
-Importer::~Importer()
+GltfImporter::~GltfImporter()
 {
 	if(m_gltf)
 	{
@@ -151,7 +155,7 @@ Importer::~Importer()
 	m_alloc.deleteInstance(m_hive);
 }
 
-Error Importer::init(CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes)
+Error GltfImporter::init(CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes)
 {
 	m_inputFname.create(inputFname);
 	m_outDir.create(outDir);
@@ -177,7 +181,7 @@ Error Importer::init(CString inputFname, CString outDir, CString rpath, CString 
 	return Error::NONE;
 }
 
-Error Importer::writeAll()
+Error GltfImporter::writeAll()
 {
 	populateNodePtrToIdx();
 
@@ -214,7 +218,7 @@ Error Importer::writeAll()
 	return err;
 }
 
-Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out)
+Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out)
 {
 	cgltf_size extrasSize;
 	cgltf_copy_extras_json(m_gltf, &extras, nullptr, &extrasSize);
@@ -285,7 +289,7 @@ Error Importer::getExtras(const cgltf_extras& extras, HashMapAuto<CString, Strin
 	return Error::NONE;
 }
 
-void Importer::populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx)
+void GltfImporter::populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx)
 {
 	m_nodePtrToIdx.emplace(&node, idx++);
 
@@ -295,7 +299,7 @@ void Importer::populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx)
 	}
 }
 
-void Importer::populateNodePtrToIdx()
+void GltfImporter::populateNodePtrToIdx()
 {
 	U32 idx = 0;
 
@@ -308,7 +312,7 @@ void Importer::populateNodePtrToIdx()
 	}
 }
 
-StringAuto Importer::getNodeName(const cgltf_node& node)
+StringAuto GltfImporter::getNodeName(const cgltf_node& node)
 {
 	StringAuto out{m_alloc};
 
@@ -326,7 +330,7 @@ StringAuto Importer::getNodeName(const cgltf_node& node)
 	return out;
 }
 
-Error Importer::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize)
+Error GltfImporter::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize)
 {
 	StringListAuto list(m_alloc);
 	list.splitString(str, ' ');
@@ -357,7 +361,7 @@ Error Importer::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, con
 	return Error::NONE;
 }
 
-Error Importer::visitNode(
+Error GltfImporter::visitNode(
 	const cgltf_node& node, const Transform& parentTrf, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	// Check error from a thread
@@ -579,7 +583,7 @@ Error Importer::visitNode(
 			// Async because it's slow
 			struct Ctx
 			{
-				Importer* m_importer;
+				GltfImporter* m_importer;
 				cgltf_mesh* m_mesh;
 				cgltf_material* m_mtl;
 				cgltf_skin* m_skin;
@@ -669,7 +673,7 @@ Error Importer::visitNode(
 	return Error::NONE;
 }
 
-Error Importer::writeTransform(const Transform& trf)
+Error GltfImporter::writeTransform(const Transform& trf)
 {
 	ANKI_CHECK(m_sceneFile.writeText("trf = Transform.new()\n"));
 	ANKI_CHECK(m_sceneFile.writeText(
@@ -690,7 +694,7 @@ Error Importer::writeTransform(const Transform& trf)
 	return Error::NONE;
 }
 
-Error Importer::writeModel(const cgltf_mesh& mesh, CString skinName)
+Error GltfImporter::writeModel(const cgltf_mesh& mesh, CString skinName)
 {
 	StringAuto modelFname(m_alloc);
 	modelFname.sprintf("%s%s_%s.ankimdl", m_outDir.cstr(), mesh.name, mesh.primitives[0].material->name);
@@ -746,7 +750,7 @@ Error Importer::writeModel(const cgltf_mesh& mesh, CString skinName)
 	return Error::NONE;
 }
 
-Error Importer::writeAnimation(const cgltf_animation& anim)
+Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankianim", m_outDir.cstr(), anim.name);
@@ -896,7 +900,7 @@ Error Importer::writeAnimation(const cgltf_animation& anim)
 	return Error::NONE;
 }
 
-Error Importer::writeSkeleton(const cgltf_skin& skin)
+Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankiskel", m_outDir.cstr(), skin.name);
@@ -957,7 +961,7 @@ Error Importer::writeSkeleton(const cgltf_skin& skin)
 	return Error::NONE;
 }
 
-Error Importer::writeCollisionMesh(const cgltf_mesh& mesh)
+Error GltfImporter::writeCollisionMesh(const cgltf_mesh& mesh)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankicl", m_outDir.cstr(), mesh.name);
@@ -977,7 +981,7 @@ Error Importer::writeCollisionMesh(const cgltf_mesh& mesh)
 	return Error::NONE;
 }
 
-Error Importer::writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
+Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	const cgltf_light& light = *node.light;
 	StringAuto nodeName = getNodeName(node);
@@ -1103,7 +1107,7 @@ Error Importer::writeLight(const cgltf_node& node, const HashMapAuto<CString, St
 	return Error::NONE;
 }
 
-Error Importer::writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
+Error GltfImporter::writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	if(node.camera->type != cgltf_camera_type_perspective)
 	{
@@ -1127,7 +1131,7 @@ Error Importer::writeCamera(const cgltf_node& node, const HashMapAuto<CString, S
 	return Error::NONE;
 }
 
-Error Importer::writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
+Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras)
 {
 	ANKI_GLTF_LOGI("Importing model node %s", getNodeName(node).cstr());
 

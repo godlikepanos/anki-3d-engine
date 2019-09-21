@@ -5,11 +5,17 @@
 
 #pragma once
 
-#include <src/anki/AnKi.h>
+#include <anki/util/String.h>
+#include <anki/util/File.h>
+#include <anki/util/HashMap.h>
+#include <anki/Math.h>
 #include <cgltf/cgltf.h>
 
 namespace anki
 {
+
+/// @addtogroup importer
+/// @{
 
 #define ANKI_GLTF_LOGI(...) ANKI_LOG("GLTF", NORMAL, __VA_ARGS__)
 #define ANKI_GLTF_LOGE(...) ANKI_LOG("GLTF", ERROR, __VA_ARGS__)
@@ -17,12 +23,12 @@ namespace anki
 #define ANKI_GLTF_LOGF(...) ANKI_LOG("GLTF", FATAL, __VA_ARGS__)
 
 /// Import GLTF and spit AnKi scenes.
-class Importer
+class GltfImporter
 {
 public:
-	Importer();
+	GltfImporter(GenericMemoryPoolAllocator<U8> alloc);
 
-	~Importer();
+	~GltfImporter();
 
 	ANKI_USE_RESULT Error init(
 		CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes);
@@ -42,7 +48,7 @@ private:
 	// Data
 	static const char* XML_HEADER;
 
-	HeapAllocator<U8> m_alloc{allocAligned, nullptr};
+	GenericMemoryPoolAllocator<U8> m_alloc;
 
 	StringAuto m_inputFname = {m_alloc};
 	StringAuto m_outDir = {m_alloc};
@@ -96,9 +102,10 @@ private:
 	ANKI_USE_RESULT Error writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
 	ANKI_USE_RESULT Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
 };
+/// @}
 
 template<typename T, typename TFunc>
-void Importer::visitAccessor(const cgltf_accessor& accessor, TFunc func)
+void GltfImporter::visitAccessor(const cgltf_accessor& accessor, TFunc func)
 {
 	const U8* base =
 		static_cast<const U8*>(accessor.buffer_view->buffer->data) + accessor.offset + accessor.buffer_view->offset;

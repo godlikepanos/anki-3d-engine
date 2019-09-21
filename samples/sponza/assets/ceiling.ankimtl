@@ -21,7 +21,7 @@
 		<input shaderInput="diffTex" value="assets/sponza_ceiling_a_diff_tga.ankitex"/>
 		<input shaderInput="specColor" value="0.040000 0.040000 0.040000"/>
 		<input shaderInput="roughnessTex" value="assets/Sponza_Ceiling_roughness_tga.ankitex"/>
-		<input shaderInput="metallic" value="0.000000" />
+		<input shaderInput="metallic" value="0.000000"/>
 		
 		<input shaderInput="emission" value="0.000000 0.000000 0.000000"/>
 		<input shaderInput="subsurface" value="0.000000"/>

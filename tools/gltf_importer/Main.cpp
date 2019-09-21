@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "Importer.h"
+#include <anki/importer/GltfImporter.h>
 
 using namespace anki;
 
@@ -126,7 +126,8 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	Importer importer;
+	HeapAllocator<U8> alloc{allocAligned, nullptr};
+	GltfImporter importer{alloc};
 	if(importer.init(info.m_inputFname.toCString(),
 		   info.m_outDir.toCString(),
 		   info.m_rpath.toCString(),

@@ -20,8 +20,8 @@
 
 		<input shaderInput="diffTex" value="assets/chain_texture_tga.ankitex"/>
 		<input shaderInput="specColor" value="0.040000 0.040000 0.040000"/>
-		<input shaderInput="roughness" value="0.500000" />
-		<input shaderInput="metallic" value="0.000000" />
+		<input shaderInput="roughness" value="0.500000"/>
+		<input shaderInput="metallic" value="0.000000"/>
 		
 		<input shaderInput="emission" value="0.000000 0.000000 0.000000"/>
 		<input shaderInput="subsurface" value="0.000000"/>

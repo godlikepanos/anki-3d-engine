@@ -180,6 +180,9 @@ private:
 		DynamicArray<U8>& data,
 		GenericMemoryPoolAllocator<U8>& alloc);
 
+	static ANKI_USE_RESULT Error loadStb(
+		FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc);
+
 	static ANKI_USE_RESULT Error loadAnkiTexture(FileInterface& file,
 		U32 maxTextureSize,
 		ImageLoaderDataCompression& preferredCompression,

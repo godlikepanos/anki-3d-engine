@@ -156,6 +156,7 @@
 #	define ANKI_HOT __attribute__ ((hot))
 #	define ANKI_UNREACHABLE() __builtin_unreachable()
 #	define ANKI_PREFETCH_MEMORY(addr) __builtin_prefetch(addr)
+#	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx) __attribute__ ((format (printf, fmtArgIdx + 1, firstArgIdx + 1)))
 #else
 #	define ANKI_LIKELY(x) ((x) == 1)
 #	define ANKI_UNLIKELY(x) ((x) == 1)
@@ -168,6 +169,7 @@
 #	define ANKI_HOT
 #	define ANKI_UNREACHABLE() __assume(false)
 #	define ANKI_PREFETCH_MEMORY(addr) (void)(addr)
+#	define ANKI_CHECK_FORMAT(fmtArgIdx, firstArgIdx)
 #endif
 
 // Pack structs

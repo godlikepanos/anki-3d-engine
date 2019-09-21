@@ -21,7 +21,7 @@
 		<input shaderInput="diffTex" value="assets/background.ankitex"/>
 		<input shaderInput="specColor" value="0.040000 0.040000 0.040000"/>
 		<input shaderInput="roughnessTex" value="assets/Background_Roughness.ankitex"/>
-		<input shaderInput="metallic" value="0.000000" />
+		<input shaderInput="metallic" value="0.000000"/>
 		<input shaderInput="normalTex" value="assets/background_ddn.ankitex"/>
 		<input shaderInput="emission" value="0.000000 0.000000 0.000000"/>
 		<input shaderInput="subsurface" value="0.000000"/>
