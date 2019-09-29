@@ -71,7 +71,7 @@ public:
 	static void init(TArgs... args)
 	{
 		ANKI_ASSERT(m_instance == nullptr);
-		m_instance = new Value(args...);
+		m_instance = new Value(std::forward<TArgs>(args)...);
 	}
 
 	/// Get instance
