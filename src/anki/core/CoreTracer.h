@@ -31,8 +31,8 @@ public:
 	void newFrame(U64 frame);
 
 private:
-	class Chunk;
-	class Frame;
+	class ThreadWorkSubItem;
+	class ThreadWorkItem;
 	class PerFrameCounters;
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -41,17 +41,18 @@ private:
 	ConditionVariable m_cvar;
 	Mutex m_mtx;
 
+	DynamicArray<String> m_counterNames;
 	IntrusiveList<PerFrameCounters> m_frameCounters;
 
-	IntrusiveList<Frame> m_frames;
+	IntrusiveList<ThreadWorkItem> m_workItems;
 	File m_traceJsonFile;
 	File m_countersCsvFile;
 	Bool m_quit = false;
 
 	Error threadWorker();
 
-	Error writeEvents(const Frame& frame);
-	Error writeCounters(const Frame& frame);
+	Error writeEvents(const ThreadWorkItem& item);
+	Error writeCounters(const ThreadWorkItem& item);
 };
 /// @}
 

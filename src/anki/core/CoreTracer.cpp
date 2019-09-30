@@ -10,37 +10,37 @@
 namespace anki
 {
 
-class CoreTracer::Chunk : public IntrusiveListEnabled<Chunk>
+class CoreTracer::ThreadWorkSubItem : public IntrusiveListEnabled<ThreadWorkSubItem>
 {
 public:
 	DynamicArrayAuto<Tracer2Event> m_events;
 	DynamicArrayAuto<Tracer2Counter> m_counters;
 	ThreadId m_tid;
 
-	Chunk(GenericMemoryPoolAllocator<U8>& alloc)
+	ThreadWorkSubItem(GenericMemoryPoolAllocator<U8>& alloc)
 		: m_events(alloc)
 		, m_counters(alloc)
 	{
 	}
 };
 
-class CoreTracer::Frame : public IntrusiveListEnabled<Frame>
+class CoreTracer::ThreadWorkItem : public IntrusiveListEnabled<ThreadWorkItem>
 {
 public:
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	IntrusiveList<Chunk> m_chunks;
+	IntrusiveList<ThreadWorkSubItem> m_chunks;
 
-	Frame(GenericMemoryPoolAllocator<U8>& alloc)
+	ThreadWorkItem(GenericMemoryPoolAllocator<U8>& alloc)
 		: m_alloc(alloc)
 	{
 	}
 
-	~Frame()
+	~ThreadWorkItem()
 	{
 		while(!m_chunks.isEmpty())
 		{
-			Chunk* chunk = m_chunks.popFront();
-			m_alloc.deleteInstance(chunk);
+			ThreadWorkSubItem* sitem = m_chunks.popFront();
+			m_alloc.deleteInstance(sitem);
 		}
 	}
 };
@@ -92,21 +92,21 @@ Error CoreTracer::threadWorker()
 
 	while(!err && !quit)
 	{
-		Frame* frame = nullptr;
+		ThreadWorkItem* item = nullptr;
 
 		// Get some work
 		{
 			// Wait for something
 			LockGuard<Mutex> lock(m_mtx);
-			while(m_frames.isEmpty() && !m_quit)
+			while(m_workItems.isEmpty() && !m_quit)
 			{
 				m_cvar.wait(m_mtx);
 			}
 
 			// Get some work
-			if(!m_frames.isEmpty())
+			if(!m_workItems.isEmpty())
 			{
-				frame = m_frames.popBack();
+				item = m_workItems.popBack();
 			}
 			else if(m_quit)
 			{
@@ -114,23 +114,29 @@ Error CoreTracer::threadWorker()
 			}
 		}
 
-		// Do some work
-		if(frame)
+		// Do some work using the frame and delete it
+		if(item)
 		{
-			// Delete frame
-			m_alloc.deleteInstance(frame);
+			err = writeEvents(*item);
+
+			if(!err)
+			{
+				err = writeCounters(*item);
+			}
+
+			m_alloc.deleteInstance(item);
 		}
 	}
 
 	return err;
 }
 
-Error CoreTracer::writeEvents(const Frame& frame)
+Error CoreTracer::writeEvents(const ThreadWorkItem& item)
 {
-	for(const Chunk& chunk : frame.m_chunks)
+	for(const ThreadWorkSubItem& sitem : item.m_chunks)
 	{
 		// Write events
-		for(const Tracer2Event& event : chunk.m_events)
+		for(const Tracer2Event& event : sitem.m_events)
 		{
 			const U64 startMicroSec = U64(event.m_start * 1000000.0);
 			const U64 durMicroSec = U64(event.m_duration * 1000000.0);
@@ -138,25 +144,25 @@ Error CoreTracer::writeEvents(const Frame& frame)
 			ANKI_CHECK(m_traceJsonFile.writeText("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
 												 "\"pid\": 1, \"tid\": %llu, \"ts\": %llu, \"dur\": %llu},\n",
 				event.m_name.cstr(),
-				chunk.m_tid,
+				sitem.m_tid,
 				startMicroSec,
 				durMicroSec));
 		}
 
-		// Write counters
+		// Store counters
 		// TODO
 	}
 
 	return Error::NONE;
 }
 
-Error CoreTracer::writeCounters(const Frame& frame)
+Error CoreTracer::writeCounters(const ThreadWorkItem& item)
 {
 	// Gather everything
 	DynamicArrayAuto<Tracer2Counter> allCounters(m_alloc);
-	for(const Chunk& chunk : frame.m_chunks)
+	for(const ThreadWorkSubItem& sitem : item.m_chunks)
 	{
-		for(const Tracer2Counter& counter : chunk.m_counters)
+		for(const Tracer2Counter& counter : sitem.m_counters)
 		{
 			allCounters.emplaceBack(counter);
 		}
@@ -189,10 +195,45 @@ Error CoreTracer::writeCounters(const Frame& frame)
 	}
 	ANKI_ASSERT(mergedCounters.getSize() > 0);
 
-	// Write values
-	// TODO
+	// Add missing counter names
+	Bool addedCounterName = false;
+	for(U32 i = 0; i < mergedCounters.getSize(); ++i)
+	{
+		const Tracer2Counter& counter = mergedCounters[i];
+
+		Bool found = false;
+		for(const String& name : m_counterNames)
+		{
+			if(name == counter.m_name)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			m_counterNames.emplaceBack(m_alloc, m_alloc, counter.m_name);
+			addedCounterName = true;
+		}
+	}
+
+	if(addedCounterName)
+	{
+		std::sort(m_counterNames.getBegin(), m_counterNames.getEnd());
+	}
+
+	// Store the counters
+	PerFrameCounters* newPerFrame = m_alloc.newInstance<PerFrameCounters>(m_alloc);
+	newPerFrame->m_counters = std::move(mergedCounters);
+	m_frameCounters.pushBack(newPerFrame);
 
 	return Error::NONE;
+}
+
+void CoreTracer::newFrame(U64 frame)
+{
+	// TODO
 }
 
 } // end namespace anki
