@@ -17,7 +17,7 @@ namespace anki
 /// @addtogroup core
 /// @{
 
-/// XXX
+/// A system that sits on top of the tracer and processes the counters and events.
 class CoreTracer
 {
 public:
@@ -25,13 +25,13 @@ public:
 
 	~CoreTracer();
 
+	/// @param directory The directory to store the trace and counters.
 	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, CString directory);
 
 	/// It will flush everything.
 	void newFrame(U64 frame);
 
 private:
-	class ThreadWorkSubItem;
 	class ThreadWorkItem;
 	class PerFrameCounters;
 
@@ -44,7 +44,7 @@ private:
 	DynamicArray<String> m_counterNames;
 	IntrusiveList<PerFrameCounters> m_frameCounters;
 
-	IntrusiveList<ThreadWorkItem> m_workItems;
+	IntrusiveList<ThreadWorkItem> m_workItems; ///< Items for the thread to process.
 	File m_traceJsonFile;
 	File m_countersCsvFile;
 	Bool m_quit = false;
@@ -52,7 +52,8 @@ private:
 	Error threadWorker();
 
 	Error writeEvents(const ThreadWorkItem& item);
-	Error writeCounters(const ThreadWorkItem& item);
+	void gatherCounters(ThreadWorkItem& item);
+	Error writeCountersForReal();
 };
 /// @}
 
