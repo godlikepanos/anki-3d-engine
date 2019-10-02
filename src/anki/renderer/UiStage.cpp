@@ -8,7 +8,7 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/ui/Font.h>
 #include <anki/ui/UiManager.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

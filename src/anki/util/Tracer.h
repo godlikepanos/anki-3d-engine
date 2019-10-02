@@ -5,9 +5,11 @@
 
 #pragma once
 
-#include <anki/util/File.h>
-#include <anki/util/List.h>
-#include <anki/util/ObjectAllocator.h>
+#include <anki/util/Thread.h>
+#include <anki/util/WeakArray.h>
+#include <anki/util/DynamicArray.h>
+#include <anki/util/Singleton.h>
+#include <anki/util/String.h>
 
 namespace anki
 {
@@ -16,86 +18,138 @@ namespace anki
 /// @{
 
 /// @memberof Tracer
-using TracerEventHandle = void*;
+class TracerEventHandle
+{
+	friend class Tracer;
+
+private:
+	Second m_start;
+};
+
+/// @memberof Tracer
+class TracerEvent
+{
+public:
+	CString m_name;
+	Second m_start;
+	Second m_duration;
+
+	TracerEvent()
+	{
+		// No init
+	}
+};
+
+/// @memberof Tracer
+class TracerCounter
+{
+public:
+	CString m_name;
+	U64 m_value;
+
+	TracerCounter()
+	{
+		// No init
+	}
+};
+
+/// Tracer flush callback.
+/// @memberof Tracer
+using TracerFlushCallback = void (*)(
+	void* userData, ThreadId tid, ConstWeakArray<TracerEvent> events, ConstWeakArray<TracerCounter> counters);
 
 /// Tracer.
 class Tracer : public NonCopyable
 {
 public:
-	Tracer()
+	Tracer(GenericMemoryPoolAllocator<U8> alloc)
+		: m_alloc(alloc)
 	{
 	}
 
 	~Tracer();
 
-	void init(GenericMemoryPoolAllocator<U8> alloc)
-	{
-		m_alloc = alloc;
-	}
-
-	Bool isInitialized() const
-	{
-		return !!m_alloc;
-	}
-
 	/// Begin a new event.
+	/// @note It's thread-safe.
 	ANKI_USE_RESULT TracerEventHandle beginEvent();
 
 	/// End the event that got started with beginEvent().
+	/// @note It's thread-safe.
 	void endEvent(const char* eventName, TracerEventHandle event);
 
-	/// Increase a counter.
-	void increaseCounter(const char* counterName, U64 value);
+	/// Increment a counter.
+	/// @note It's thread-safe.
+	void incrementCounter(const char* counterName, U64 value);
 
-	/// Begin a new frame.
-	void newFrame(U64 frame);
+	/// Flush all counters and events and start clean. The callback will be called multiple times.
+	/// @note It's thread-safe.
+	void flush(TracerFlushCallback callback, void* callbackUserData);
 
-	/// Flush all results to a file. Don't call that more than once.
-	ANKI_USE_RESULT Error flush(CString filename);
+	Bool getEnabled() const
+	{
+		return m_enabled;
+	}
+
+	void setEnabled(Bool enabled)
+	{
+		m_enabled = enabled;
+	}
 
 private:
-	static const U32 EVENTS_PER_CHUNK = 256;
-	static const U32 COUNTERS_PER_CHUNK = 512;
-
-	class Event;
-	class EventsChunk;
-	class GatherEvent;
-
-	class Counter;
-	class CountersChunk;
-	class GatherCounter;
+	static constexpr U32 EVENTS_PER_CHUNK = 256;
+	static constexpr U32 COUNTERS_PER_CHUNK = 512;
 
 	class ThreadLocal;
-	class PerFrameCounters;
-	class FlushCtx;
+	class Chunk;
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
-	Second m_startFrameTime = 0.0;
-	U64 m_frame = 0;
-	SpinLock m_frameMtx; ///< Protect m_startFrameTime and m_frame.
-
 	static thread_local ThreadLocal* m_threadLocal;
 	DynamicArray<ThreadLocal*> m_allThreadLocal; ///< The Tracer should know about all the ThreadLocal.
-	Mutex m_threadLocalMtx;
+	Mutex m_allThreadLocalMtx;
+
+	Bool m_enabled = false;
 
 	/// Get the thread local ThreadLocal structure.
+	/// @note Thread-safe.
 	ThreadLocal& getThreadLocal();
 
-	/// Gather all counters from all the threads.
-	void gatherCounters(FlushCtx& ctx);
-
-	/// Gather the events from all the threads.
-	void gatherEvents(FlushCtx& ctx);
-
-	/// Dump the counters to a CSV file
-	Error writeCounterCsv(const FlushCtx& ctx);
-
-	/// Dump the events and the counters to a chrome trace file.
-	Error writeTraceJson(const FlushCtx& ctx);
-
-	static void getSpreadsheetColumnName(U column, Array<char, 3>& arr);
+	/// Get or create a new chunk.
+	Chunk& getOrCreateChunk(ThreadLocal& tlocal);
 };
+
+/// The global tracer.
+using TracerSingleton = SingletonInit<Tracer>;
+
+/// Scoped tracer event.
+class TracerScopedEvent
+{
+public:
+	TracerScopedEvent(const char* name)
+		: m_name(name)
+		, m_tracer(&TracerSingleton::get())
+	{
+		m_handle = m_tracer->beginEvent();
+	}
+
+	~TracerScopedEvent()
+	{
+		m_tracer->endEvent(m_name, m_handle);
+	}
+
+private:
+	const char* m_name;
+	TracerEventHandle m_handle;
+	Tracer* m_tracer;
+};
+
+#if ANKI_ENABLE_TRACE
+#	define ANKI_TRACE_SCOPED_EVENT(name_) TracerScopedEvent _tse##name_(#	name_)
+#	define ANKI_TRACE_INC_COUNTER(name_, val_) TracerSingleton::get().incrementCounter(#	name_, val_)
+#else
+#	define ANKI_TRACE_SCOPED_EVENT(name_) ((void)0)
+#	define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
+#endif
 /// @}
 
 } // end namespace anki

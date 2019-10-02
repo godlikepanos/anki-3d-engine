@@ -6,7 +6,7 @@
 #include <anki/resource/ResourceFilesystem.h>
 #include <anki/util/Filesystem.h>
 #include <anki/misc/ConfigSet.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 #include <contrib/minizip/unzip.h>
 
 namespace anki

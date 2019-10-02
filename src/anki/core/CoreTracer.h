@@ -29,7 +29,7 @@ public:
 	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, CString directory);
 
 	/// It will flush everything.
-	void newFrame(U64 frame);
+	void flushFrame(U64 frame);
 
 private:
 	class ThreadWorkItem;

@@ -5,7 +5,7 @@
 
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RenderQueue.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/collision/Aabb.h>

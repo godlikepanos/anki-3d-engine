@@ -5,7 +5,7 @@
 
 #include <anki/script/LuaBinder.h>
 #include <anki/util/Logger.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

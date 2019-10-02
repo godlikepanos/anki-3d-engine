@@ -52,7 +52,7 @@ Error MyApp::init(int argc, char* argv[])
 	{
 		m_profile = true;
 		setTimerTick(0.0);
-		CoreTracerSingleton::get().m_enabled = true;
+		TracerSingleton::get().setEnabled(true);
 	}
 
 // Input
@@ -165,7 +165,7 @@ Error MyApp::userMainLoop(Bool& quit)
 
 	if(in.getKey(KeyCode::F12) == 1)
 	{
-		CoreTracerSingleton::get().m_enabled = !CoreTracerSingleton::get().m_enabled;
+		TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
 	}
 
 #if !PLAYER

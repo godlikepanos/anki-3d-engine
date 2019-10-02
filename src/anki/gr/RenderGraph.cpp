@@ -9,7 +9,7 @@
 #include <anki/gr/Sampler.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/CommandBuffer.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/File.h>
 #include <anki/util/StringList.h>

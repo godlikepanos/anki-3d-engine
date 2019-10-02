@@ -20,6 +20,7 @@
 #include <anki/gr/vulkan/PipelineCache.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/util/HashMap.h>
+#include <anki/util/File.h>
 
 namespace anki
 {

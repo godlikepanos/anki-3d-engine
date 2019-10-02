@@ -7,7 +7,7 @@
 #include <anki/gr/Fence.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/GrManager.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

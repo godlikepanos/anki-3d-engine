@@ -5,7 +5,7 @@
 
 #include <anki/core/CoreTracer.h>
 #include <anki/util/DynamicArray.h>
-#include <anki/util/Tracer2.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {
@@ -32,8 +32,8 @@ static void getSpreadsheetColumnName(U32 column, Array<char, 3>& arr)
 class CoreTracer::ThreadWorkItem : public IntrusiveListEnabled<ThreadWorkItem>
 {
 public:
-	DynamicArrayAuto<Tracer2Event> m_events;
-	DynamicArrayAuto<Tracer2Counter> m_counters;
+	DynamicArrayAuto<TracerEvent> m_events;
+	DynamicArrayAuto<TracerCounter> m_counters;
 	ThreadId m_tid;
 	U64 m_frame;
 
@@ -47,7 +47,7 @@ public:
 class CoreTracer::PerFrameCounters : public IntrusiveListEnabled<PerFrameCounters>
 {
 public:
-	DynamicArrayAuto<Tracer2Counter> m_counters;
+	DynamicArrayAuto<TracerCounter> m_counters;
 	U64 m_frame;
 
 	PerFrameCounters(GenericMemoryPoolAllocator<U8>& alloc)
@@ -165,7 +165,7 @@ Error CoreTracer::threadWorker()
 Error CoreTracer::writeEvents(const ThreadWorkItem& item)
 {
 	// Write events
-	for(const Tracer2Event& event : item.m_events)
+	for(const TracerEvent& event : item.m_events)
 	{
 		const U64 startMicroSec = U64(event.m_start * 1000000.0);
 		const U64 durMicroSec = U64(event.m_duration * 1000000.0);
@@ -187,12 +187,12 @@ Error CoreTracer::writeEvents(const ThreadWorkItem& item)
 void CoreTracer::gatherCounters(ThreadWorkItem& item)
 {
 	// Sort
-	std::sort(item.m_counters.getBegin(),
-		item.m_counters.getEnd(),
-		[](const Tracer2Counter& a, const Tracer2Counter& b) { return a.m_name < b.m_name; });
+	std::sort(item.m_counters.getBegin(), item.m_counters.getEnd(), [](const TracerCounter& a, const TracerCounter& b) {
+		return a.m_name < b.m_name;
+	});
 
 	// Merge same
-	DynamicArrayAuto<Tracer2Counter> mergedCounters(m_alloc);
+	DynamicArrayAuto<TracerCounter> mergedCounters(m_alloc);
 	for(U32 i = 0; i < item.m_counters.getSize(); ++i)
 	{
 		if(mergedCounters.getBack().m_name != item.m_counters[i].m_name)
@@ -212,7 +212,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 	Bool addedCounterName = false;
 	for(U32 i = 0; i < mergedCounters.getSize(); ++i)
 	{
-		const Tracer2Counter& counter = mergedCounters[i];
+		const TracerCounter& counter = mergedCounters[i];
 
 		Bool found = false;
 		for(const String& name : m_counterNames)
@@ -250,10 +250,10 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 		// Merge counters to existing frame
 		PerFrameCounters& frame = m_frameCounters.getBack();
 		ANKI_ASSERT(frame.m_frame == item.m_frame);
-		for(const Tracer2Counter& newCounter : mergedCounters)
+		for(const TracerCounter& newCounter : mergedCounters)
 		{
 			Bool found = false;
-			for(Tracer2Counter& existingCounter : frame.m_counters)
+			for(TracerCounter& existingCounter : frame.m_counters)
 			{
 				if(newCounter.m_name == existingCounter.m_name)
 				{
@@ -270,7 +270,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 	}
 }
 
-void CoreTracer::newFrame(U64 frame)
+void CoreTracer::flushFrame(U64 frame)
 {
 	struct Ctx
 	{
@@ -282,8 +282,8 @@ void CoreTracer::newFrame(U64 frame)
 	ctx.m_frame = frame;
 	ctx.m_self = this;
 
-	Tracer2Singleton::get().flush(
-		[](void* ud, ThreadId tid, ConstWeakArray<Tracer2Event> events, ConstWeakArray<Tracer2Counter> counters) {
+	TracerSingleton::get().flush(
+		[](void* ud, ThreadId tid, ConstWeakArray<TracerEvent> events, ConstWeakArray<TracerCounter> counters) {
 			Ctx& ctx = *static_cast<Ctx*>(ud);
 			CoreTracer& self = *ctx.m_self;
 
@@ -334,7 +334,7 @@ Error CoreTracer::writeCountersForReal()
 		{
 			// Find value
 			U64 value = 0;
-			for(const Tracer2Counter& counter : frame.m_counters)
+			for(const TracerCounter& counter : frame.m_counters)
 			{
 				if(counter.m_name == m_counterNames[j])
 				{

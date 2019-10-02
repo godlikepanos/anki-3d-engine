@@ -6,7 +6,7 @@
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/gr/GrManager.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

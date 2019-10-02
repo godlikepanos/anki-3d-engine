@@ -10,7 +10,7 @@
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/Octree.h>
 #include <anki/util/Thread.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 #include <anki/renderer/RenderQueue.h>
 
 namespace anki

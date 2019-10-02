@@ -8,7 +8,7 @@
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/util/List.h>
 #include <anki/util/HashMap.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 #include <algorithm>
 
 namespace anki

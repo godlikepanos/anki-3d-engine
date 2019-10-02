@@ -12,8 +12,7 @@
 #include <anki/util/Logger.h>
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
-#include <anki/core/Trace.h>
-#include <anki/core/App.h>
+#include <anki/util/Tracer.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/util/ThreadHive.h>

@@ -22,6 +22,7 @@ extern android_app* gAndroidApp;
 #endif
 
 // Forward
+class CoreTracer;
 class ConfigSet;
 class ThreadHive;
 class NativeWindow;
@@ -166,6 +167,9 @@ private:
 	HeapAllocator<U8> m_heapAlloc;
 
 	// Sybsystems
+#if ANKI_ENABLE_TRACE
+	CoreTracer* m_coreTracer = nullptr;
+#endif
 	NativeWindow* m_window = nullptr;
 	Input* m_input = nullptr;
 	GrManager* m_gr = nullptr;
