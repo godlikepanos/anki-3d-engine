@@ -24,9 +24,9 @@ public:
 class alignas(ANKI_CACHE_LINE_SIZE) Tracer::ThreadLocal
 {
 public:
-	ThreadId m_tid ANKI_DEBUG_CODE(= 0);
+	ThreadId m_tid = 0;
 
-	Chunk* m_currentChunk ANKI_DEBUG_CODE(= nullptr);
+	Chunk* m_currentChunk = nullptr;
 	IntrusiveList<Chunk> m_allChunks;
 	SpinLock m_currentChunkLock;
 };
@@ -35,7 +35,12 @@ thread_local Tracer::ThreadLocal* Tracer::m_threadLocal = nullptr;
 
 Tracer::~Tracer()
 {
-	// TODO
+	LockGuard<Mutex> lock(m_allThreadLocalMtx);
+	for(ThreadLocal* tlocal : m_allThreadLocal)
+	{
+		m_alloc.deleteInstance(tlocal);
+	}
+	m_allThreadLocal.destroy(m_alloc);
 }
 
 Tracer::ThreadLocal& Tracer::getThreadLocal()
@@ -45,7 +50,6 @@ Tracer::ThreadLocal& Tracer::getThreadLocal()
 	{
 		out = m_alloc.newInstance<ThreadLocal>();
 		out->m_tid = Thread::getCurrentThreadId();
-		out->m_currentChunk = nullptr;
 		m_threadLocal = out;
 
 		// Store it
@@ -60,8 +64,8 @@ Tracer::Chunk& Tracer::getOrCreateChunk(ThreadLocal& tlocal)
 {
 	Chunk* out;
 
-	if(tlocal.m_currentChunk && tlocal.m_currentChunk->m_eventCount + 1 < EVENTS_PER_CHUNK
-		&& tlocal.m_currentChunk->m_counterCount + 1 < COUNTERS_PER_CHUNK)
+	if(tlocal.m_currentChunk && tlocal.m_currentChunk->m_eventCount < EVENTS_PER_CHUNK
+		&& tlocal.m_currentChunk->m_counterCount < COUNTERS_PER_CHUNK)
 	{
 		// There is a chunk and it has enough space
 		out = tlocal.m_currentChunk;
@@ -80,7 +84,16 @@ Tracer::Chunk& Tracer::getOrCreateChunk(ThreadLocal& tlocal)
 TracerEventHandle Tracer::beginEvent()
 {
 	TracerEventHandle out;
-	out.m_start = HighRezTimer::getCurrentTime();
+
+	if(m_enabled)
+	{
+		out.m_start = HighRezTimer::getCurrentTime();
+	}
+	else
+	{
+		out.m_start = 0.0;
+	}
+
 	return out;
 }
 
@@ -100,17 +113,40 @@ void Tracer::endEvent(const char* eventName, TracerEventHandle event)
 	LockGuard<SpinLock> lock(tlocal.m_currentChunkLock);
 	Chunk& chunk = getOrCreateChunk(tlocal);
 
-	ANKI_ASSERT(chunk.m_eventCount + 1 < EVENTS_PER_CHUNK);
 	TracerEvent& writeEvent = chunk.m_events[chunk.m_eventCount++];
 	writeEvent.m_name = eventName;
 	writeEvent.m_start = event.m_start;
 	writeEvent.m_duration = timestamp - event.m_start;
 
 	// Write counter as well. In ns
-	ANKI_ASSERT(chunk.m_counterCount + 1 < COUNTERS_PER_CHUNK);
 	TracerCounter& writeCounter = chunk.m_counters[chunk.m_counterCount++];
 	writeCounter.m_name = eventName;
 	writeCounter.m_value = U64(writeEvent.m_duration * 1000000000.0);
+}
+
+void Tracer::addCustomEvent(const char* eventName, Second start, Second duration)
+{
+	ANKI_ASSERT(eventName && start >= 0.0 && duration >= 0.0);
+	if(!m_enabled)
+	{
+		return;
+	}
+
+	ThreadLocal& tlocal = getThreadLocal();
+
+	// Write the event
+	LockGuard<SpinLock> lock(tlocal.m_currentChunkLock);
+	Chunk& chunk = getOrCreateChunk(tlocal);
+
+	TracerEvent& writeEvent = chunk.m_events[chunk.m_eventCount++];
+	writeEvent.m_name = eventName;
+	writeEvent.m_start = start;
+	writeEvent.m_duration = duration;
+
+	// Write counter as well. In ns
+	TracerCounter& writeCounter = chunk.m_counters[chunk.m_counterCount++];
+	writeCounter.m_name = eventName;
+	writeCounter.m_value = U64(duration * 1000000000.0);
 }
 
 void Tracer::incrementCounter(const char* counterName, U64 value)
@@ -125,7 +161,6 @@ void Tracer::incrementCounter(const char* counterName, U64 value)
 	LockGuard<SpinLock> lock(tlocal.m_currentChunkLock);
 	Chunk& chunk = getOrCreateChunk(tlocal);
 
-	ANKI_ASSERT(chunk.m_counterCount + 1 < COUNTERS_PER_CHUNK);
 	TracerCounter& writeTo = chunk.m_counters[chunk.m_counterCount++];
 	writeTo.m_name = counterName;
 	writeTo.m_value = value;

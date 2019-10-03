@@ -13,6 +13,7 @@
 #include <anki/util/BitSet.h>
 #include <anki/util/File.h>
 #include <anki/util/StringList.h>
+#include <anki/util/HighRezTimer.h>
 
 namespace anki
 {
@@ -796,6 +797,7 @@ void RenderGraph::initBatches()
 
 				m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
 				m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2] = query;
+				m_statistics.m_cpuStartTimes[m_statistics.m_nextTimestamp] = HighRezTimer::getCurrentTime();
 			}
 		}
 		else
@@ -1294,10 +1296,12 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 
 		const Second diff = end - start;
 		statistics.m_gpuTime = diff;
+		statistics.m_cpuStartTime = m_statistics.m_cpuStartTimes[oldFrame];
 	}
 	else
 	{
 		statistics.m_gpuTime = -1.0;
+		statistics.m_cpuStartTime = -1.0;
 	}
 }
 

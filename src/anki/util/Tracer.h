@@ -77,6 +77,10 @@ public:
 	/// @note It's thread-safe.
 	void endEvent(const char* eventName, TracerEventHandle event);
 
+	/// Add a custom event.
+	/// @note It's thread-safe.
+	void addCustomEvent(const char* eventName, Second start, Second duration);
+
 	/// Increment a counter.
 	/// @note It's thread-safe.
 	void incrementCounter(const char* counterName, U64 value);
@@ -145,9 +149,12 @@ private:
 
 #if ANKI_ENABLE_TRACE
 #	define ANKI_TRACE_SCOPED_EVENT(name_) TracerScopedEvent _tse##name_(#	name_)
+#	define ANKI_TRACE_CUSTOM_EVENT(name_, start_, duration_) \
+		TracerSingleton::get().addCustomEvent(#name_, start_, duration_)
 #	define ANKI_TRACE_INC_COUNTER(name_, val_) TracerSingleton::get().incrementCounter(#	name_, val_)
 #else
 #	define ANKI_TRACE_SCOPED_EVENT(name_) ((void)0)
+#	define ANKI_TRACE_CUSTOM_EVENT(name_, start_, duration_) ((void)0)
 #	define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
 #endif
 /// @}

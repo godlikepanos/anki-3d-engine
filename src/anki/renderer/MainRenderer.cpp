@@ -187,11 +187,12 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	if(m_statsEnabled)
 	{
 		static_cast<RendererStats&>(m_stats) = m_r->getStats();
-		m_stats.m_renderingCpuTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingGpuTime;
+		m_stats.m_renderingCpuTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingCpuTime;
 
 		RenderGraphStatistics rgraphStats;
 		m_rgraph->getStatistics(rgraphStats);
 		m_stats.m_renderingGpuTime = rgraphStats.m_gpuTime;
+		m_stats.m_renderingGpuSubmitTimestamp = rgraphStats.m_cpuStartTime;
 	}
 
 	return Error::NONE;

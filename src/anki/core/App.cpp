@@ -579,7 +579,11 @@ Error App::mainLoop()
 
 			// Render
 			TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
-			m_renderer->setStatsEnabled(m_displayStats);
+			m_renderer->setStatsEnabled(m_displayStats
+#if ANKI_ENABLE_TRACE
+										|| TracerSingleton::get().getEnabled()
+#endif
+			);
 			ANKI_CHECK(m_renderer->render(rqueue, presentableTex));
 
 			// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
@@ -627,6 +631,15 @@ Error App::mainLoop()
 
 				statsUi.m_drawableCount = rqueue.countAllRenderables();
 			}
+
+#if ANKI_ENABLE_TRACE
+			if(m_renderer->getStats().m_renderingGpuTime >= 0.0)
+			{
+				ANKI_TRACE_CUSTOM_EVENT(GPU_TIME,
+					m_renderer->getStats().m_renderingGpuSubmitTimestamp,
+					m_renderer->getStats().m_renderingGpuTime);
+			}
+#endif
 
 			++m_globalTimestamp;
 		}

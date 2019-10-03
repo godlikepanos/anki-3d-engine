@@ -14,6 +14,7 @@ ANKI_TEST(Util, Tracer)
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	CoreTracer tracer;
 	ANKI_TEST_EXPECT_NO_ERR(tracer.init(alloc, "./"));
+	TracerSingleton::get().setEnabled(true);
 
 	// 1st frame
 	tracer.flushFrame(0);

@@ -27,6 +27,7 @@ class MainRendererStats : public RendererStats
 public:
 	Second m_renderingCpuTime ANKI_DEBUG_CODE(= -1.0);
 	Second m_renderingGpuTime ANKI_DEBUG_CODE(= -1.0);
+	Second m_renderingGpuSubmitTimestamp ANKI_DEBUG_CODE(= -1.0);
 };
 
 /// Main onscreen renderer

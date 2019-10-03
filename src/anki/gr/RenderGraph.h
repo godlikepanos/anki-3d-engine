@@ -524,6 +524,7 @@ class RenderGraphStatistics
 {
 public:
 	Second m_gpuTime; ///< Time spent in the GPU.
+	Second m_cpuStartTime; ///< Time the work was submited from the CPU (almost)
 };
 
 /// Accepts a descriptor of the frame's render passes and sets the dependencies between them.
@@ -621,6 +622,7 @@ private:
 	{
 	public:
 		Array<TimestampQueryPtr, MAX_TIMESTAMPS_BUFFERED * 2> m_timestamps;
+		Array<Second, MAX_TIMESTAMPS_BUFFERED> m_cpuStartTimes;
 		U8 m_nextTimestamp = 0;
 	} m_statistics;
 
