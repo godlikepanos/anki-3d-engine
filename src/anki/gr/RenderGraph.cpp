@@ -797,7 +797,6 @@ void RenderGraph::initBatches()
 
 				m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
 				m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2] = query;
-				m_statistics.m_cpuStartTimes[m_statistics.m_nextTimestamp] = HighRezTimer::getCurrentTime();
 			}
 		}
 		else
@@ -1217,6 +1216,7 @@ void RenderGraph::flush()
 			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(query);
 
 			m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2 + 1] = query;
+			m_statistics.m_cpuStartTimes[m_statistics.m_nextTimestamp] = HighRezTimer::getCurrentTime();
 		}
 
 		// Flush
@@ -1283,7 +1283,7 @@ void RenderGraph::periodicCleanup()
 
 void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 {
-	const U oldFrame = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
+	const U32 oldFrame = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
 
 	if(m_statistics.m_timestamps[oldFrame * 2] && m_statistics.m_timestamps[oldFrame * 2 + 1])
 	{

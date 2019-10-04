@@ -51,7 +51,7 @@ private:
 
 	Error threadWorker();
 
-	Error writeEvents(const ThreadWorkItem& item);
+	Error writeEvents(ThreadWorkItem& item);
 	void gatherCounters(ThreadWorkItem& item);
 	Error writeCountersForReal();
 };

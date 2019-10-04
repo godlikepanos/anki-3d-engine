@@ -1,5 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
+include(ProcessorCount)
+
 PROJECT(anki)
 
 ################################################################################
@@ -135,19 +137,10 @@ endif()
 # Compiler & linker flags                                                      #
 ################################################################################
 
-if(NOT MSVC)
-	if(ARCH_64)
-		add_definitions(-D_POSIX_VER_64)
-	else()
-		add_definitions(-D_POSIX_VER_32)
-	endif()
-endif()
-
 if(MINGW)
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -mconsole ")
 endif()
 
-add_definitions(-DGLEW_NO_GLU)
 add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 add_definitions(-DANKI_BUILD)
 
@@ -196,6 +189,9 @@ if(NOT MSVC)
 
 	# Set the flags to cmake now
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
+else()
+	ProcessorCount(PC)
+	add_definitions("/MP${PC}")
 endif()
 
 # Use gold linker

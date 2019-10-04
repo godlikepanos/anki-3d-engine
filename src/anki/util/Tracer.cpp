@@ -99,13 +99,17 @@ TracerEventHandle Tracer::beginEvent()
 
 void Tracer::endEvent(const char* eventName, TracerEventHandle event)
 {
-	if(!m_enabled)
+	if(!m_enabled || event.m_start == 0.0)
 	{
 		return;
 	}
 
 	// Get the time before the lock and everything
-	const Second timestamp = HighRezTimer::getCurrentTime();
+	const Second duration = HighRezTimer::getCurrentTime() - event.m_start;
+	if(duration == 0.0)
+	{
+		return;
+	}
 
 	ThreadLocal& tlocal = getThreadLocal();
 
@@ -116,7 +120,7 @@ void Tracer::endEvent(const char* eventName, TracerEventHandle event)
 	TracerEvent& writeEvent = chunk.m_events[chunk.m_eventCount++];
 	writeEvent.m_name = eventName;
 	writeEvent.m_start = event.m_start;
-	writeEvent.m_duration = timestamp - event.m_start;
+	writeEvent.m_duration = duration;
 
 	// Write counter as well. In ns
 	TracerCounter& writeCounter = chunk.m_counters[chunk.m_counterCount++];
@@ -127,7 +131,7 @@ void Tracer::endEvent(const char* eventName, TracerEventHandle event)
 void Tracer::addCustomEvent(const char* eventName, Second start, Second duration)
 {
 	ANKI_ASSERT(eventName && start >= 0.0 && duration >= 0.0);
-	if(!m_enabled)
+	if(!m_enabled || duration == 0.0)
 	{
 		return;
 	}

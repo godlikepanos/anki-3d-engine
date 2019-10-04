@@ -6,6 +6,7 @@
 #include <anki/core/CoreTracer.h>
 #include <anki/util/DynamicArray.h>
 #include <anki/util/Tracer.h>
+#include <anki/math/Functions.h>
 #include <ctime>
 
 namespace anki
@@ -116,7 +117,7 @@ Error CoreTracer::init(GenericMemoryPoolAllocator<U8> alloc, CString directory)
 	std::time_t t = std::time(nullptr);
 	std::tm* tm = std::localtime(&t);
 	StringAuto fname(m_alloc);
-	fname.sprintf("%s/%d-%d-%d-%d-%d_",
+	fname.sprintf("%s/%d%02d%02d-%02d%02d_",
 		directory.cstr(),
 		tm->tm_year + 1900,
 		tm->tm_mon + 1,
@@ -178,19 +179,24 @@ Error CoreTracer::threadWorker()
 	return err;
 }
 
-Error CoreTracer::writeEvents(const ThreadWorkItem& item)
+Error CoreTracer::writeEvents(ThreadWorkItem& item)
 {
+	// First sort them to fix overlaping in chrome
+	std::sort(item.m_events.getBegin(), item.m_events.getEnd(), [](const TracerEvent& a, TracerEvent& b) {
+		return (a.m_start != b.m_start) ? a.m_start < b.m_start : a.m_duration > b.m_duration;
+	});
+
 	// Write events
 	for(const TracerEvent& event : item.m_events)
 	{
-		const U64 startMicroSec = U64(event.m_start * 1000000.0);
-		const U64 durMicroSec = U64(event.m_duration * 1000000.0);
+		const I64 startMicroSec = I64(event.m_start * 1000000.0);
+		const I64 durMicroSec = I64(event.m_duration * 1000000.0);
 
 		// Do a hack
 		const ThreadId tid = (event.m_name == "GPU_TIME") ? 1 : item.m_tid;
 
 		ANKI_CHECK(m_traceJsonFile.writeText("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
-											 "\"pid\": 1, \"tid\": %llu, \"ts\": %llu, \"dur\": %llu},\n",
+											 "\"pid\": 1, \"tid\": %llu, \"ts\": %lld, \"dur\": %lld},\n",
 			event.m_name.cstr(),
 			tid,
 			startMicroSec,
