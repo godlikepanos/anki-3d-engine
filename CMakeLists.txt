@@ -192,6 +192,10 @@ if(NOT MSVC)
 else()
 	ProcessorCount(PC)
 	add_definitions("/MP${PC}")
+
+	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+		add_definitions("/Ox")
+	endif()
 endif()
 
 # Use gold linker

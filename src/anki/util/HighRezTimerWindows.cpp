@@ -5,6 +5,7 @@
 
 #include <anki/util/HighRezTimer.h>
 #include <anki/util/Assert.h>
+#include <cstdio>
 #include <Windows.h>
 
 namespace anki
@@ -17,11 +18,18 @@ namespace
 class DummyInitTimer
 {
 public:
-	DWORD m_start;
+	LARGE_INTEGER m_start;
+	LARGE_INTEGER m_ticksPerSec;
 
 	DummyInitTimer()
 	{
-		m_start = GetTickCount();
+		if (!QueryPerformanceFrequency(&m_ticksPerSec))
+		{
+			fprintf(stderr, "QueryPerformanceFrequency() failed\n");
+			abort();
+		}
+
+		QueryPerformanceCounter(&m_start);
 	}
 };
 
@@ -29,22 +37,27 @@ DummyInitTimer init;
 
 } // end namespace anonymous
 
-static U32 getMs()
+static U64 getMs()
 {
-	DWORD now = GetTickCount();
-	return now - init.m_start;
+	LARGE_INTEGER now;
+	QueryPerformanceCounter(&now);
+
+	now.QuadPart -= init.m_start.QuadPart;
+	now.QuadPart *= 1000;
+	now.QuadPart /= init.m_ticksPerSec.QuadPart;
+
+	return now.QuadPart;
 }
 
 void HighRezTimer::sleep(Second sec)
 {
-	U32 ms = static_cast<U32>(sec * 1000.0);
-	Sleep(ms);
+	Sleep(U32(sec * 1000.0));
 }
 
 Second HighRezTimer::getCurrentTime()
 {
 	// Second(ticks) / 1000.0
-	return static_cast<Second>(getMs()) * 0.001;
+	return Second(getMs()) * 0.001;
 }
 
 } // end namespace anki
