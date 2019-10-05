@@ -63,6 +63,7 @@ Prerequisites:
 - Python 3.0 and up
 	- Make sure that the python executable's location is in `PATH` environment variable
 - Microsoft Visual Studio 2017 and up
+	- Make sure that `Windows 10 SDK (xxx) for Desktop C++ [x86 and x64]` component is installed
 
 To build the release version open `PowerShell` and type:
 
@@ -70,7 +71,7 @@ To build the release version open `PowerShell` and type:
 	$mkdir build
 	$cd build
 	$cmake .. -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release
-	$cmake --build .
+	$cmake --build . --config Release
 
 Alternatively, recent Visual Studio versions support building CMake projects from inside the IDE:
 

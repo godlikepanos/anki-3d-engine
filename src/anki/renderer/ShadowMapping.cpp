@@ -6,10 +6,9 @@
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RenderQueue.h>
-#include <anki/core/App.h>
-#include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/ThreadHive.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

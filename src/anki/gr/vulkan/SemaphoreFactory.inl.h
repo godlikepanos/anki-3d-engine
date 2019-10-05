@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/SemaphoreFactory.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

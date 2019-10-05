@@ -12,7 +12,7 @@
 #include <anki/util/Enum.h>
 #include <anki/util/ObjectAllocator.h>
 #include <anki/util/List.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

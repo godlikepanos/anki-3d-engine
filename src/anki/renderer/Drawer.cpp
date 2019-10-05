@@ -8,7 +8,7 @@
 #include <anki/resource/MaterialResource.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 #include <anki/util/Logger.h>
 
 namespace anki

@@ -9,7 +9,7 @@
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/core/Config.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 #include <anki/resource/MeshResource.h>
 #include <shaders/glsl_cpp_common/TraditionalDeferredShading.h>
 

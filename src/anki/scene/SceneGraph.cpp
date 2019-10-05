@@ -9,12 +9,12 @@
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/Octree.h>
 #include <anki/scene/components/FrustumComponent.h>
-#include <anki/core/Trace.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/renderer/MainRenderer.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/ThreadHive.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

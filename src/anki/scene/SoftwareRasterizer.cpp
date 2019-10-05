@@ -6,7 +6,7 @@
 #include <anki/scene/SoftwareRasterizer.h>
 #include <anki/collision/Aabb.h>
 #include <anki/collision/Functions.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

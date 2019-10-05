@@ -9,7 +9,7 @@
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>
 #include <anki/gr/TimestampQuery.h>
 #include <anki/gr/vulkan/TimestampQueryImpl.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

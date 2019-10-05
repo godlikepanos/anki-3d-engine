@@ -162,7 +162,7 @@ Error SampleApp::userMainLoop(Bool& quit)
 
 		if(in.getKey(KeyCode::F12) == 1)
 		{
-			CoreTracerSingleton::get().m_enabled = !CoreTracerSingleton::get().m_enabled;
+			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
 		}
 
 		if(in.getMousePosition() != Vec2(0.0))

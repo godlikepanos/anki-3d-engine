@@ -5,10 +5,10 @@
 
 #include <anki/gr/ShaderCompiler.h>
 #include <anki/gr/GrManager.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 #include <anki/util/StringList.h>
 #include <anki/util/Filesystem.h>
-#include <anki/core/Trace.h>
+#include <anki/util/File.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push

@@ -9,10 +9,11 @@
 #include <anki/gr/Sampler.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/CommandBuffer.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/File.h>
 #include <anki/util/StringList.h>
+#include <anki/util/HighRezTimer.h>
 
 namespace anki
 {
@@ -1215,6 +1216,7 @@ void RenderGraph::flush()
 			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(query);
 
 			m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2 + 1] = query;
+			m_statistics.m_cpuStartTimes[m_statistics.m_nextTimestamp] = HighRezTimer::getCurrentTime();
 		}
 
 		// Flush
@@ -1281,7 +1283,7 @@ void RenderGraph::periodicCleanup()
 
 void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 {
-	const U oldFrame = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
+	const U32 oldFrame = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
 
 	if(m_statistics.m_timestamps[oldFrame * 2] && m_statistics.m_timestamps[oldFrame * 2 + 1])
 	{
@@ -1294,10 +1296,12 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 
 		const Second diff = end - start;
 		statistics.m_gpuTime = diff;
+		statistics.m_cpuStartTime = m_statistics.m_cpuStartTimes[oldFrame];
 	}
 	else
 	{
 		statistics.m_gpuTime = -1.0;
+		statistics.m_cpuStartTime = -1.0;
 	}
 }
 

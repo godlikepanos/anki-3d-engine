@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/core/Common.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/common/FrameGpuAllocator.h>
 

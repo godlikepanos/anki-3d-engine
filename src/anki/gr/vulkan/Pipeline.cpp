@@ -6,7 +6,7 @@
 #include <anki/gr/vulkan/Pipeline.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/common/Misc.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
 
 namespace anki
 {

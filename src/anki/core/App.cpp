@@ -10,7 +10,8 @@
 #include <anki/util/Filesystem.h>
 #include <anki/util/System.h>
 #include <anki/util/ThreadHive.h>
-#include <anki/core/Trace.h>
+#include <anki/util/Tracer.h>
+#include <anki/core/CoreTracer.h>
 #include <anki/core/DeveloperConsole.h>
 #include <anki/core/NativeWindow.h>
 #include <anki/input/Input.h>
@@ -284,17 +285,7 @@ void App::cleanup()
 	m_heapAlloc.deleteInstance(m_window);
 
 #if ANKI_ENABLE_TRACE
-	if(CoreTracerSingleton::get().isInitialized())
-	{
-		StringAuto fname(m_heapAlloc);
-		fname.sprintf("%s/trace", m_settingsDir.cstr());
-		ANKI_CORE_LOGI("Will dump trace files: %s", fname.cstr());
-		if(CoreTracerSingleton::get().flush(fname.toCString()))
-		{
-			ANKI_CORE_LOGE("Ignoring error from the tracer");
-		}
-		CoreTracerSingleton::destroy();
-	}
+	m_heapAlloc.deleteInstance(m_coreTracer);
 #endif
 
 	m_settingsDir.destroy(m_heapAlloc);
@@ -320,11 +311,6 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 	initMemoryCallbacks(allocCb, allocCbUserData);
 	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData);
-
-#if ANKI_ENABLE_TRACE
-	CoreTracerSingleton::get().init(m_heapAlloc);
-	CoreTracerSingleton::get().newFrame(0);
-#endif
 
 	ANKI_CHECK(initDirs(config));
 
@@ -371,6 +357,14 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 #endif
 
 	ANKI_CORE_LOGI("Number of main threads: %u", U(config.getNumberU32("core.mainThreadCount")));
+
+	//
+	// Core tracer
+	//
+#if ANKI_ENABLE_TRACE
+	m_coreTracer = m_heapAlloc.newInstance<CoreTracer>();
+	ANKI_CHECK(m_coreTracer->init(m_heapAlloc, m_settingsDir));
+#endif
 
 	//
 	// Window
@@ -561,85 +555,99 @@ Error App::mainLoop()
 
 	while(!quit)
 	{
+		{
+			ANKI_TRACE_SCOPED_EVENT(FRAME);
+			const Second startTime = HighRezTimer::getCurrentTime();
+
+			prevUpdateTime = crntTime;
+			crntTime = HighRezTimer::getCurrentTime();
+
+			// Update
+			ANKI_CHECK(m_input->handleEvents());
+
+			// User update
+			ANKI_CHECK(userMainLoop(quit));
+
+			ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime));
+
+			RenderQueue rqueue;
+			m_scene->doVisibilityTests(rqueue);
+
+			// Inject stats UI
+			DynamicArrayAuto<UiQueueElement> newUiElementArr(m_heapAlloc);
+			injectUiElements(newUiElementArr, rqueue);
+
+			// Render
+			TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
+			m_renderer->setStatsEnabled(m_displayStats
+#if ANKI_ENABLE_TRACE
+										|| TracerSingleton::get().getEnabled()
+#endif
+			);
+			ANKI_CHECK(m_renderer->render(rqueue, presentableTex));
+
+			// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
+			m_resources->getAsyncLoader().pause();
+
+			m_gr->swapBuffers();
+			m_stagingMem->endFrame();
+
+			// Update the trace info with some async loader stats
+			U64 asyncTaskCount = m_resources->getAsyncLoader().getCompletedTaskCount();
+			ANKI_TRACE_INC_COUNTER(RESOURCE_ASYNC_TASKS, asyncTaskCount - m_resourceCompletedAsyncTaskCount);
+			m_resourceCompletedAsyncTaskCount = asyncTaskCount;
+
+			// Now resume the loader
+			m_resources->getAsyncLoader().resume();
+
+			// Sleep
+			const Second endTime = HighRezTimer::getCurrentTime();
+			const Second frameTime = endTime - startTime;
+			if(frameTime < m_timerTick)
+			{
+				ANKI_TRACE_SCOPED_EVENT(TIMER_TICK_SLEEP);
+				HighRezTimer::sleep(m_timerTick - frameTime);
+			}
+
+			// Stats
+			if(m_displayStats)
+			{
+				StatsUi& statsUi = static_cast<StatsUi&>(*m_statsUi);
+				statsUi.m_frameTime.set(frameTime);
+				statsUi.m_renderTime.set(m_renderer->getStats().m_renderingCpuTime);
+				statsUi.m_lightBinTime.set(m_renderer->getStats().m_lightBinTime);
+				statsUi.m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
+				statsUi.m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
+				statsUi.m_physicsTime.set(m_scene->getStats().m_physicsUpdate);
+				statsUi.m_gpuTime.set(m_renderer->getStats().m_renderingGpuTime);
+				statsUi.m_allocatedCpuMem = m_memStats.m_allocatedMem.load();
+				statsUi.m_allocCount = m_memStats.m_allocCount.load();
+				statsUi.m_freeCount = m_memStats.m_freeCount.load();
+
+				GrManagerStats grStats = m_gr->getStats();
+				statsUi.m_vkCpuMem = grStats.m_cpuMemory;
+				statsUi.m_vkGpuMem = grStats.m_gpuMemory;
+				statsUi.m_vkCmdbCount = grStats.m_commandBufferCount;
+
+				statsUi.m_drawableCount = rqueue.countAllRenderables();
+			}
+
+#if ANKI_ENABLE_TRACE
+			if(m_renderer->getStats().m_renderingGpuTime >= 0.0)
+			{
+				ANKI_TRACE_CUSTOM_EVENT(GPU_TIME,
+					m_renderer->getStats().m_renderingGpuSubmitTimestamp,
+					m_renderer->getStats().m_renderingGpuTime);
+			}
+#endif
+
+			++m_globalTimestamp;
+		}
+
 #if ANKI_ENABLE_TRACE
 		static U64 frame = 1;
-		CoreTracerSingleton::get().newFrame(frame++);
+		m_coreTracer->flushFrame(frame++);
 #endif
-		ANKI_TRACE_START_EVENT(FRAME);
-		const Second startTime = HighRezTimer::getCurrentTime();
-
-		prevUpdateTime = crntTime;
-		crntTime = HighRezTimer::getCurrentTime();
-
-		// Update
-		ANKI_CHECK(m_input->handleEvents());
-
-		// User update
-		ANKI_CHECK(userMainLoop(quit));
-
-		ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime));
-
-		RenderQueue rqueue;
-		m_scene->doVisibilityTests(rqueue);
-
-		// Inject stats UI
-		DynamicArrayAuto<UiQueueElement> newUiElementArr(m_heapAlloc);
-		injectUiElements(newUiElementArr, rqueue);
-
-		// Render
-		TexturePtr presentableTex = m_gr->acquireNextPresentableTexture();
-		m_renderer->setStatsEnabled(m_displayStats);
-		ANKI_CHECK(m_renderer->render(rqueue, presentableTex));
-
-		// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
-		m_resources->getAsyncLoader().pause();
-
-		m_gr->swapBuffers();
-		m_stagingMem->endFrame();
-
-		// Update the trace info with some async loader stats
-		U64 asyncTaskCount = m_resources->getAsyncLoader().getCompletedTaskCount();
-		ANKI_TRACE_INC_COUNTER(RESOURCE_ASYNC_TASKS, asyncTaskCount - m_resourceCompletedAsyncTaskCount);
-		m_resourceCompletedAsyncTaskCount = asyncTaskCount;
-
-		// Now resume the loader
-		m_resources->getAsyncLoader().resume();
-
-		ANKI_TRACE_STOP_EVENT(FRAME);
-
-		// Sleep
-		const Second endTime = HighRezTimer::getCurrentTime();
-		const Second frameTime = endTime - startTime;
-		if(frameTime < m_timerTick)
-		{
-			ANKI_TRACE_SCOPED_EVENT(TIMER_TICK_SLEEP);
-			HighRezTimer::sleep(m_timerTick - frameTime);
-		}
-
-		// Stats
-		if(m_displayStats)
-		{
-			StatsUi& statsUi = static_cast<StatsUi&>(*m_statsUi);
-			statsUi.m_frameTime.set(frameTime);
-			statsUi.m_renderTime.set(m_renderer->getStats().m_renderingCpuTime);
-			statsUi.m_lightBinTime.set(m_renderer->getStats().m_lightBinTime);
-			statsUi.m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
-			statsUi.m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
-			statsUi.m_physicsTime.set(m_scene->getStats().m_physicsUpdate);
-			statsUi.m_gpuTime.set(m_renderer->getStats().m_renderingGpuTime);
-			statsUi.m_allocatedCpuMem = m_memStats.m_allocatedMem.load();
-			statsUi.m_allocCount = m_memStats.m_allocCount.load();
-			statsUi.m_freeCount = m_memStats.m_freeCount.load();
-
-			GrManagerStats grStats = m_gr->getStats();
-			statsUi.m_vkCpuMem = grStats.m_cpuMemory;
-			statsUi.m_vkGpuMem = grStats.m_gpuMemory;
-			statsUi.m_vkCmdbCount = grStats.m_commandBufferCount;
-
-			statsUi.m_drawableCount = rqueue.countAllRenderables();
-		}
-
-		++m_globalTimestamp;
 	}
 
 	return Error::NONE;

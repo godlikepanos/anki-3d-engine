@@ -7,8 +7,8 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/Collision.h>
 #include <anki/util/ThreadHive.h>
+#include <anki/util/Tracer.h>
 #include <anki/core/Config.h>
-#include <anki/core/Trace.h>
 
 namespace anki
 {
