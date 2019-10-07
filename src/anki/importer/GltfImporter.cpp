@@ -122,7 +122,7 @@ static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform&
 	Vec3 scale;
 	getNodeTransform(node, tsl, rot, scale);
 
-	const F32 scaleEpsilon = 0.0001f;
+	const F32 scaleEpsilon = 0.01f;
 	if(absolute(scale[0] - scale[1]) > scaleEpsilon || absolute(scale[0] - scale[2]) > scaleEpsilon)
 	{
 		ANKI_GLTF_LOGE("Expecting uniform scale");
@@ -141,7 +141,6 @@ const char* GltfImporter::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?
 GltfImporter::GltfImporter(GenericMemoryPoolAllocator<U8> alloc)
 	: m_alloc(alloc)
 {
-	m_hive = m_alloc.newInstance<ThreadHive>(getCpuCoresCount(), m_alloc, true);
 }
 
 GltfImporter::~GltfImporter()
@@ -155,7 +154,8 @@ GltfImporter::~GltfImporter()
 	m_alloc.deleteInstance(m_hive);
 }
 
-Error GltfImporter::init(CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes)
+Error GltfImporter::init(
+	CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes, U32 threadCount)
 {
 	m_inputFname.create(inputFname);
 	m_outDir.create(outDir);
@@ -176,6 +176,12 @@ Error GltfImporter::init(CString inputFname, CString outDir, CString rpath, CStr
 	{
 		ANKI_LOGE("Failed to load GLTF data. Code: %d", res);
 		return Error::FUNCTION_FAILED;
+	}
+
+	if(threadCount > 0)
+	{
+		threadCount = min(getCpuCoresCount(), threadCount);
+		m_hive = m_alloc.newInstance<ThreadHive>(threadCount, m_alloc, true);
 	}
 
 	return Error::NONE;
@@ -205,7 +211,10 @@ Error GltfImporter::writeAll()
 		}
 	}
 
-	m_hive->waitAllTasks();
+	if(m_hive)
+	{
+		m_hive->waitAllTasks();
+	}
 
 	// Check error
 	const Error threadErr = m_errorInThread.load();
@@ -599,40 +608,49 @@ Error GltfImporter::visitNode(
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
 			ctx->m_selfCollision = selfCollision;
 
-			m_hive->submitTask(
-				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
-					Ctx& self = *static_cast<Ctx*>(userData);
+			// Thread task
+			auto callback = [](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+				Ctx& self = *static_cast<Ctx*>(userData);
 
-					Error err = self.m_importer->writeMesh(*self.m_mesh);
+				Error err = self.m_importer->writeMesh(*self.m_mesh);
 
-					if(!err)
-					{
-						err = self.m_importer->writeMaterial(*self.m_mtl);
-					}
+				if(!err)
+				{
+					err = self.m_importer->writeMaterial(*self.m_mtl);
+				}
 
-					if(!err)
-					{
-						err = self.m_importer->writeModel(*self.m_mesh, (self.m_skin) ? self.m_skin->name : CString());
-					}
+				if(!err)
+				{
+					err = self.m_importer->writeModel(*self.m_mesh, (self.m_skin) ? self.m_skin->name : CString());
+				}
 
-					if(!err && self.m_skin)
-					{
-						err = self.m_importer->writeSkeleton(*self.m_skin);
-					}
+				if(!err && self.m_skin)
+				{
+					err = self.m_importer->writeSkeleton(*self.m_skin);
+				}
 
-					if(!err && self.m_selfCollision)
-					{
-						err = self.m_importer->writeCollisionMesh(*self.m_mesh);
-					}
+				if(!err && self.m_selfCollision)
+				{
+					err = self.m_importer->writeCollisionMesh(*self.m_mesh);
+				}
 
-					if(err)
-					{
-						self.m_importer->m_errorInThread.store(err._getCode());
-					}
+				if(err)
+				{
+					self.m_importer->m_errorInThread.store(err._getCode());
+					printf("aaaaaaaaaaaaaaa\n");
+				}
 
-					self.m_importer->m_alloc.deleteInstance(&self);
-				},
-				ctx);
+				self.m_importer->m_alloc.deleteInstance(&self);
+			};
+
+			if(m_hive)
+			{
+				m_hive->submitTask(callback, ctx);
+			}
+			else
+			{
+				callback(ctx, 0, *m_hive, nullptr);
+			}
 
 			ANKI_CHECK(writeModelNode(node, parentExtras));
 

@@ -30,8 +30,12 @@ public:
 
 	~GltfImporter();
 
-	ANKI_USE_RESULT Error init(
-		CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes);
+	ANKI_USE_RESULT Error init(CString inputFname,
+		CString outDir,
+		CString rpath,
+		CString texrpath,
+		Bool optimizeMeshes,
+		U32 threadCount = MAX_U32);
 
 	ANKI_USE_RESULT Error writeAll();
 

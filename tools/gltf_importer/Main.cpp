@@ -12,6 +12,7 @@ Options:
 -rpath <string>        : Replace all absolute paths of assets with that path
 -texrpath <string>     : Same as rpath but for textures
 -optimize-meshes <0|1> : Optimize meshes. Default is 1
+-j <thread_count>      : Number of threads. Defaults to system's max
 )";
 
 class CmdLineArgs
@@ -23,6 +24,7 @@ public:
 	StringAuto m_rpath = {m_alloc};
 	StringAuto m_texRpath = {m_alloc};
 	Bool m_optimizeMeshes = true;
+	U32 m_threadCount = MAX_U32;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -98,6 +100,21 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::USER_DATA;
 			}
 		}
+		else if(strcmp(argv[i], "-j") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				U32 count = 0;
+				ANKI_CHECK(CString(argv[i]).toNumber(count));
+				info.m_threadCount = count;
+			}
+			else
+			{
+				return Error::USER_DATA;
+			}
+		}
 		else
 		{
 			return Error::USER_DATA;
@@ -132,7 +149,8 @@ int main(int argc, char** argv)
 		   info.m_outDir.toCString(),
 		   info.m_rpath.toCString(),
 		   info.m_texRpath.toCString(),
-		   info.m_optimizeMeshes))
+		   info.m_optimizeMeshes,
+		   info.m_threadCount))
 	{
 		return 1;
 	}

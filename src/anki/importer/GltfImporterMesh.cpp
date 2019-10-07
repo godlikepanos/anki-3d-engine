@@ -283,7 +283,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh)
 				visitAccessor<Vec3>(
 					*attrib->data, [&](const Vec3& normal) { submesh.m_verts[count++].m_normal = normal; });
 			}
-			else if(attrib->type == cgltf_attribute_type_texcoord)
+			else if(attrib->type == cgltf_attribute_type_texcoord && CString(attrib->name) == "TEXCOORD_0")
 			{
 				U count = 0;
 				ANKI_CHECK(checkAttribute<Vec2>(*attrib));
@@ -380,6 +380,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh)
 				else
 				{
 					ANKI_ASSERT(0);
+					idx = 0;
 				}
 
 				submesh.m_indices[i] = idx;
@@ -448,7 +449,15 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh)
 				Vec3& b = bitangents[i];
 
 				t.normalize();
-				b.normalize();
+
+				if(b.getLengthSquared() < EPSILON)
+				{
+					b = Vec3(0.0f, 1.0f, 0.0f); // Something random
+				}
+				else
+				{
+					b.normalize();
+				}
 
 				const F32 w = ((n.cross(t)).dot(b) < 0.0f) ? 1.0f : -1.0f;
 				submesh.m_verts[i].m_tangent = Vec4(t, w);
