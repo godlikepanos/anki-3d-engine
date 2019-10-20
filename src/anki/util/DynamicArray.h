@@ -305,6 +305,15 @@ public:
 	{
 	}
 
+	/// And resize
+	template<typename TAllocator>
+	DynamicArrayAuto(TAllocator alloc, PtrSize size)
+		: Base()
+		, m_alloc(alloc)
+	{
+		resize(size);
+	}
+
 	/// Move.
 	DynamicArrayAuto(DynamicArrayAuto&& b)
 		: Base()

@@ -91,7 +91,7 @@ private:
 	}
 
 	// Resources
-	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh);
+	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor);
 	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);
 	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh, CString skinName);
 	ANKI_USE_RESULT Error writeAnimation(const cgltf_animation& anim);

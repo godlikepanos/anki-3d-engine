@@ -118,12 +118,6 @@ public:
 		return *this;
 	}
 
-	/// Check if it's initialized.
-	operator Bool() const
-	{
-		return m_pool != nullptr;
-	}
-
 	/// Get the address of a reference
 	pointer address(reference x) const
 	{

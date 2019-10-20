@@ -213,10 +213,61 @@ static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> all
 	}
 }
 
-Error GltfImporter::writeMesh(const cgltf_mesh& mesh)
+/// Decimate a submesh using meshoptimizer.
+static void decimateSubmesh(F32 factor, SubMesh& submesh, GenericMemoryPoolAllocator<U8> alloc)
+{
+	ANKI_ASSERT(factor > 0.0f && factor < 1.0f);
+	const PtrSize targetIndexCount = PtrSize(F32(submesh.m_indices.getSize() / 3) * factor) * 3;
+	if(targetIndexCount == 0)
+	{
+		return;
+	}
+
+	// Decimate
+	DynamicArrayAuto<U32> newIndices(alloc, targetIndexCount);
+	newIndices.resize(meshopt_simplify(&newIndices[0],
+		&submesh.m_indices[0],
+		submesh.m_indices.getSize(),
+		&submesh.m_verts[0].m_position.x(),
+		submesh.m_verts.getSize(),
+		sizeof(TempVertex),
+		targetIndexCount,
+		1e-2f));
+
+	// Re-pack
+	DynamicArrayAuto<U32> reindexedIndices(alloc);
+	DynamicArrayAuto<TempVertex> newVerts(alloc);
+	HashMapAuto<U32, U32> vertexStored(alloc);
+	for(PtrSize idx = 0; idx < newIndices.getSize(); ++idx)
+	{
+		U32 newIdx;
+		auto it = vertexStored.find(newIndices[idx]);
+		if(it == vertexStored.getEnd())
+		{
+			// Store the vertex
+			newVerts.emplaceBack(submesh.m_verts[newIndices[idx]]);
+			newIdx = U32(newVerts.getSize() - 1);
+			vertexStored.emplace(newIndices[idx], newIdx);
+		}
+		else
+		{
+			// Already stored
+			newIdx = *it;
+		}
+
+		// Store the new index
+		reindexedIndices.emplaceBack(newIdx);
+	}
+
+	// Move back
+	submesh.m_indices = std::move(reindexedIndices);
+	submesh.m_verts = std::move(newVerts);
+}
+
+Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor)
 {
 	StringAuto fname(m_alloc);
-	fname.sprintf("%s%s.ankimesh", m_outDir.cstr(), mesh.name);
+	fname.sprintf("%s%s.ankimesh", m_outDir.cstr(), (nameOverride.isEmpty()) ? mesh.name : nameOverride.cstr());
 	ANKI_GLTF_LOGI("Importing mesh%s%s", (m_optimizeMeshes) ? " (will also optimize) " : " ", fname.cstr());
 
 	ListAuto<SubMesh> submeshes(m_alloc);
@@ -468,6 +519,11 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh)
 		if(m_optimizeMeshes)
 		{
 			optimizeSubmesh(submesh, m_alloc);
+		}
+
+		if(decimateFactor < 1.0f)
+		{
+			decimateSubmesh(decimateFactor, submesh, m_alloc);
 		}
 
 		// Finalize

@@ -55,6 +55,16 @@ public:
 	}
 };
 
+template<>
+class DefaultHasher<U32>
+{
+public:
+	U64 operator()(const U32 a) const
+	{
+		return computeHash(&a, sizeof(a));
+	}
+};
+
 /// Hash map template.
 template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>>
 class HashMap

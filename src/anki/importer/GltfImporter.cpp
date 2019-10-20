@@ -612,7 +612,15 @@ Error GltfImporter::visitNode(
 			auto callback = [](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
 				Ctx& self = *static_cast<Ctx*>(userData);
 
-				Error err = self.m_importer->writeMesh(*self.m_mesh);
+				Error err = self.m_importer->writeMesh(*self.m_mesh, CString(), 1.0f);
+
+				// LOD 1
+				if(!err)
+				{
+					StringAuto name(self.m_importer->m_alloc);
+					name.sprintf("%s_lod1", self.m_mesh->name);
+					err = self.m_importer->writeMesh(*self.m_mesh, name, 0.5f);
+				}
 
 				if(!err)
 				{
@@ -637,7 +645,6 @@ Error GltfImporter::visitNode(
 				if(err)
 				{
 					self.m_importer->m_errorInThread.store(err._getCode());
-					printf("aaaaaaaaaaaaaaa\n");
 				}
 
 				self.m_importer->m_alloc.deleteInstance(&self);
@@ -737,10 +744,10 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh, CString skinName)
 
 	ANKI_CHECK(file.writeText("\t\t\t<mesh>%s%s.ankimesh</mesh>\n", m_rpath.cstr(), mesh.name));
 
-	auto lod1 = extras.find("lod1");
-	if(lod1 != extras.getEnd())
 	{
-		ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s</mesh1>\n", m_rpath.cstr(), lod1->cstr()));
+		StringAuto name(m_alloc);
+		name.sprintf("%s_lod1", mesh.name);
+		ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s.ankimesh</mesh1>\n", m_rpath.cstr(), name.cstr()));
 	}
 
 	auto mtlOverride = extras.find("material_override");
