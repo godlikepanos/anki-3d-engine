@@ -619,7 +619,15 @@ Error GltfImporter::visitNode(
 				{
 					StringAuto name(self.m_importer->m_alloc);
 					name.sprintf("%s_lod1", self.m_mesh->name);
-					err = self.m_importer->writeMesh(*self.m_mesh, name, 0.5f);
+					err = self.m_importer->writeMesh(*self.m_mesh, name, 0.66f);
+				}
+
+				// LOD 2
+				if(!err)
+				{
+					StringAuto name(self.m_importer->m_alloc);
+					name.sprintf("%s_lod2", self.m_mesh->name);
+					err = self.m_importer->writeMesh(*self.m_mesh, name, 0.33f);
 				}
 
 				if(!err)
@@ -748,6 +756,12 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh, CString skinName)
 		StringAuto name(m_alloc);
 		name.sprintf("%s_lod1", mesh.name);
 		ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s.ankimesh</mesh1>\n", m_rpath.cstr(), name.cstr()));
+	}
+
+	{
+		StringAuto name(m_alloc);
+		name.sprintf("%s_lod2", mesh.name);
+		ANKI_CHECK(file.writeText("\t\t\t<mesh2>%s%s.ankimesh</mesh2>\n", m_rpath.cstr(), name.cstr()));
 	}
 
 	auto mtlOverride = extras.find("material_override");
@@ -999,7 +1013,7 @@ Error GltfImporter::writeCollisionMesh(const cgltf_mesh& mesh)
 	ANKI_CHECK(file.writeText("%s\n", XML_HEADER));
 
 	ANKI_CHECK(file.writeText("<collisionShape>\n\t<type>staticMesh</type>\n\t<value>"
-							  "%s%s.ankimesh</value>\n</collisionShape>\n",
+							  "%s%s_lod2.ankimesh</value>\n</collisionShape>\n",
 		m_rpath.cstr(),
 		mesh.name));
 

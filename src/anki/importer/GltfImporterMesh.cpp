@@ -224,7 +224,7 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, GenericMemoryPoolAlloc
 	}
 
 	// Decimate
-	DynamicArrayAuto<U32> newIndices(alloc, targetIndexCount);
+	DynamicArrayAuto<U32> newIndices(alloc, submesh.m_indices.getSize());
 	newIndices.resize(meshopt_simplify(&newIndices[0],
 		&submesh.m_indices[0],
 		submesh.m_indices.getSize(),
@@ -521,6 +521,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			optimizeSubmesh(submesh, m_alloc);
 		}
 
+		// Simplify
 		if(decimateFactor < 1.0f)
 		{
 			decimateSubmesh(decimateFactor, submesh, m_alloc);
