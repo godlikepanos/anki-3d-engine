@@ -134,35 +134,36 @@ struct WeightVertex
 	U8Vec4 m_weights{0_U8};
 };
 
+static void reindexSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> alloc)
+{
+	const PtrSize vertSize = sizeof(submesh.m_verts[0]);
+
+	DynamicArrayAuto<U32> remap(alloc);
+	remap.create(submesh.m_verts.getSize(), 0);
+
+	const PtrSize vertCount = meshopt_generateVertexRemap(&remap[0],
+		&submesh.m_indices[0],
+		submesh.m_indices.getSize(),
+		&submesh.m_verts[0],
+		submesh.m_verts.getSize(),
+		vertSize);
+
+	DynamicArrayAuto<U32> newIdxArray(alloc);
+	newIdxArray.create(submesh.m_indices.getSize(), 0);
+	DynamicArrayAuto<TempVertex> newVertArray(alloc);
+	newVertArray.create(vertCount);
+
+	meshopt_remapIndexBuffer(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &remap[0]);
+	meshopt_remapVertexBuffer(&newVertArray[0], &submesh.m_verts[0], submesh.m_verts.getSize(), vertSize, &remap[0]);
+
+	submesh.m_indices = std::move(newIdxArray);
+	submesh.m_verts = std::move(newVertArray);
+}
+
 /// Optimize a submesh using meshoptimizer.
 static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> alloc)
 {
 	const PtrSize vertSize = sizeof(submesh.m_verts[0]);
-
-	// Re-index
-	{
-		DynamicArrayAuto<U32> remap(alloc);
-		remap.create(submesh.m_verts.getSize(), 0);
-
-		const PtrSize vertCount = meshopt_generateVertexRemap(&remap[0],
-			&submesh.m_indices[0],
-			submesh.m_indices.getSize(),
-			&submesh.m_verts[0],
-			submesh.m_verts.getSize(),
-			vertSize);
-
-		DynamicArrayAuto<U32> newIdxArray(alloc);
-		newIdxArray.create(submesh.m_indices.getSize(), 0);
-		DynamicArrayAuto<TempVertex> newVertArray(alloc);
-		newVertArray.create(vertCount);
-
-		meshopt_remapIndexBuffer(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), &remap[0]);
-		meshopt_remapVertexBuffer(
-			&newVertArray[0], &submesh.m_verts[0], submesh.m_verts.getSize(), vertSize, &remap[0]);
-
-		submesh.m_indices = std::move(newIdxArray);
-		submesh.m_verts = std::move(newVertArray);
-	}
 
 	// Vert cache
 	{
@@ -307,7 +308,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			return Error::USER_DATA;
 		}
 
-		const U vertCount = primitive->attributes[0].data->count;
+		U vertCount = primitive->attributes[0].data->count;
 		submesh.m_verts.create(vertCount);
 
 		//
@@ -436,6 +437,15 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 
 				submesh.m_indices[i] = idx;
 			}
+		}
+
+		// Re-index meshes now and
+		// - before the tanget calculation because that will create many unique verts
+		// - after normal fix because that will create verts with same attributes
+		if(m_optimizeMeshes || decimateFactor < 1.0f)
+		{
+			reindexSubmesh(submesh, m_alloc);
+			vertCount = submesh.m_verts.getSize();
 		}
 
 		//
