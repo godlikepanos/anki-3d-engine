@@ -1076,8 +1076,8 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 	{
 		ANKI_CHECK(m_sceneFile.writeText(
 			"lcomp:setDistance(%f)\n", (light.range > 0.0f) ? light.range : computeLightRadius(color)));
-		ANKI_CHECK(m_sceneFile.writeText("lcomp:setOuterAngle(%f)\n", light.spot_outer_cone_angle));
-		ANKI_CHECK(m_sceneFile.writeText("lcomp:setInnerAngle(%f)\n", light.spot_inner_cone_angle));
+		ANKI_CHECK(m_sceneFile.writeText("lcomp:setOuterAngle(%f)\n", light.spot_outer_cone_angle * 2.0f));
+		ANKI_CHECK(m_sceneFile.writeText("lcomp:setInnerAngle(%f)\n", light.spot_inner_cone_angle * 2.0f));
 	}
 
 	auto lensFlaresFname = extras.find("lens_flare");
