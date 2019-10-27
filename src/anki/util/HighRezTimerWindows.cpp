@@ -23,7 +23,7 @@ public:
 
 	DummyInitTimer()
 	{
-		if (!QueryPerformanceFrequency(&m_ticksPerSec))
+		if(!QueryPerformanceFrequency(&m_ticksPerSec))
 		{
 			fprintf(stderr, "QueryPerformanceFrequency() failed\n");
 			abort();
