@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/shader_compiler/Common.h>
 #include <anki/util/StringList.h>
 #include <anki/util/WeakArray.h>
 #include <anki/util/DynamicArray.h>
@@ -65,7 +66,6 @@ class ShaderProgramParserInput
 public:
 	ShaderProgramParserInput(GenericMemoryPoolAllocator<U8> alloc)
 		: m_name(alloc)
-		, m_preproc(alloc)
 	{
 	}
 
@@ -84,18 +84,22 @@ public:
 		return m_instanced;
 	}
 
-	Bool isConstant() const
+	/// @param constantId It's the vulkan spec const index.
+	Bool isConstant(U32* constantId) const
 	{
-		return m_const;
+		if(constantId)
+		{
+			*constantId = m_specConstId;
+		}
+		return m_specConstId != MAX_U32;
 	}
 
 private:
 	StringAuto m_name;
-	StringAuto m_preproc;
-	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 	U32 m_idx = MAX_U32; ///< Index inside an array.
-	Bool m_const = false;
+	U32 m_specConstId = MAX_U32;
 	Bool m_instanced = false;
+	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 };
 
 /// @memberof ShaderProgramParser
@@ -176,7 +180,8 @@ public:
 	ANKI_USE_RESULT Error parse();
 
 	/// Get the source (and a few more things) given a list of mutators.
-	ShaderProgramParserOutput generateSource(ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates) const;
+	ShaderProgramParserOutput generateSource(
+		ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates, ShaderType stage) const;
 
 	ConstWeakArray<ShaderProgramParserMutator> getMutators() const
 	{
@@ -220,7 +225,8 @@ private:
 	Bool m_insideShader = false;
 	U32 m_set = 0;
 	U32 m_instancedMutatorIdx = MAX_U32;
-	Bool m_foundInstancedInput = false; // TODO need that?
+	U32 m_specConstIdx = 0;
+	Bool m_foundAtLeastOneInstancedInput = false;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
