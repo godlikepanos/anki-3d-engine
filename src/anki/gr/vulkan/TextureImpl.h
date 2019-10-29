@@ -8,7 +8,7 @@
 #include <anki/gr/Texture.h>
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
-#include <anki/gr/common/Misc.h>
+#include <anki/gr/utils/Functions.h>
 #include <anki/gr/vulkan/SamplerFactory.h>
 #include <anki/util/HashMap.h>
 

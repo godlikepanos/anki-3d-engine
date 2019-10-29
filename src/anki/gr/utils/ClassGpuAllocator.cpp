@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/common/ClassGpuAllocator.h>
+#include <anki/gr/utils/ClassGpuAllocator.h>
 #include <anki/util/List.h>
 #include <anki/util/BitSet.h>
 

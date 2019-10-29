@@ -7,7 +7,7 @@
 
 #include <anki/gr/Texture.h>
 #include <anki/gr/gl/GlObject.h>
-#include <anki/gr/common/Misc.h>
+#include <anki/gr/utils/Functions.h>
 #include <anki/util/HashMap.h>
 
 namespace anki

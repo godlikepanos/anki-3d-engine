@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/common/ClassGpuAllocator.h>
+#include <anki/gr/utils/ClassGpuAllocator.h>
 #include <anki/gr/vulkan/Common.h>
 
 namespace anki

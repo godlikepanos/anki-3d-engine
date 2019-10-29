@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/resource/Common.h>
-#include <anki/gr/common/StackGpuAllocator.h>
+#include <anki/gr/utils/StackGpuAllocator.h>
 #include <anki/util/List.h>
 
 namespace anki

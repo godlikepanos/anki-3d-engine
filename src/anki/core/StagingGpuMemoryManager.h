@@ -7,7 +7,7 @@
 
 #include <anki/core/Common.h>
 #include <anki/gr/Buffer.h>
-#include <anki/gr/common/FrameGpuAllocator.h>
+#include <anki/gr/utils/FrameGpuAllocator.h>
 
 namespace anki
 {

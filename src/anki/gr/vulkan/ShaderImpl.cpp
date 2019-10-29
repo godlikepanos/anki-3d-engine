@@ -5,7 +5,7 @@
 
 #include <anki/gr/vulkan/ShaderImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
-#include <anki/gr/common/Misc.h>
+#include <anki/gr/utils/Functions.h>
 #include <SPIRV-Cross/spirv_cross.hpp>
 
 #define ANKI_DUMP_SHADERS ANKI_EXTRA_CHECKS

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/common/FrameGpuAllocator.h>
+#include <anki/gr/utils/FrameGpuAllocator.h>
 
 namespace anki
 {

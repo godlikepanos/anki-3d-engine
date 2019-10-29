@@ -202,7 +202,7 @@ ANKI_TEST(Util, SparseArray)
 		const U MAX = 10000;
 		SparseArray<SAFoo, U64> arr;
 		using StlMap =
-			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
+			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
 		StlMap map(10, std::hash<int>(), std::equal_to<int>(), alloc);
 
 		for(U i = 0; i < MAX; ++i)
@@ -320,7 +320,8 @@ ANKI_TEST(Util, SparseArrayBench)
 	HeapAllocator<U8> allocStl(allocAlignedStl, nullptr);
 	HeapAllocator<U8> allocTml(allocAligned, nullptr);
 
-	using StlMap = std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
+	using StlMap =
+		std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
 	StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), allocStl);
 
 	using AkMap = SparseArray<int, U32>;
