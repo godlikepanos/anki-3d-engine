@@ -10,14 +10,14 @@
 #include <anki/util/WeakArray.h>
 #include <anki/util/DynamicArray.h>
 #include <anki/util/BitSet.h>
-#include <anki/gr/Common.h>
+#include <anki/gr/utils/Functions.h>
 
 namespace anki
 {
 
 // Forward
 class ShaderProgramParser;
-class ShaderProgramParserOutput;
+class ShaderProgramVariant;
 
 /// @addtogroup resource
 /// @{
@@ -61,7 +61,7 @@ private:
 class ShaderProgramParserInput
 {
 	friend ShaderProgramParser;
-	friend ShaderProgramParserOutput;
+	friend ShaderProgramVariant;
 
 public:
 	ShaderProgramParserInput(GenericMemoryPoolAllocator<U8> alloc)
@@ -103,27 +103,28 @@ private:
 };
 
 /// @memberof ShaderProgramParser
-class ShaderProgramParserOutput
+class ShaderProgramVariant
 {
 public:
-	ShaderProgramParserOutput(GenericMemoryPoolAllocator<U8> alloc)
-		: m_source(alloc)
+	CString getSource(ShaderType type) const
 	{
+		return m_sources[type];
 	}
 
-	CString getSource() const
+	Bool isInputActive(const ShaderProgramParserInput& in)
 	{
-		return m_source;
-	}
-
-	Bool inputIsActive(const ShaderProgramParserInput& in)
-	{
-		return m_activeInputMask.get(in.m_idx);
+		return m_activeInputVarsMask.get(in.m_idx);
 	}
 
 private:
-	StringAuto m_source;
-	BitSet<128> m_activeInputMask = {false};
+	GenericMemoryPoolAllocator<U8> m_alloc;
+	Array<String, U(ShaderType::COUNT)> m_sources;
+	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
+	DynamicArray<I16> m_bindings;
+	U32 m_uniBlockSize = 0;
+	U8 m_bindingCount = 0;
+	Bool m_usesPushConstants = false;
+	BitSet<128> m_activeInputVarsMask = {false};
 };
 
 /// @memberof ShaderProgramParser
@@ -180,8 +181,7 @@ public:
 	ANKI_USE_RESULT Error parse();
 
 	/// Get the source (and a few more things) given a list of mutators.
-	ShaderProgramParserOutput generateSource(
-		ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates, ShaderType stage) const;
+	ShaderProgramVariant generateSource(ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates) const;
 
 	ConstWeakArray<ShaderProgramParserMutator> getMutators() const
 	{

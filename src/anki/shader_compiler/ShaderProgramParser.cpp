@@ -147,6 +147,8 @@ Error ShaderProgramParser::parsePragmaDescriptorSet(
 		ANKI_PP_ERROR_MALFORMED_MSG("The descriptor set index is too high");
 	}
 
+	m_globalsLines.pushFrontSprintf("#define _ANKI_DSET %u", m_set);
+
 	return Error::NONE;
 }
 
@@ -163,32 +165,32 @@ Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const Strin
 	if(*begin == "vert")
 	{
 		shaderType = ShaderType::VERTEX;
-		m_lines.pushBack("#ifdef _ANKI_VERTEX_SHADER");
+		m_lines.pushBack("#ifdef ANKI_VERTEX_SHADER");
 	}
 	else if(*begin == "tessc")
 	{
 		shaderType = ShaderType::TESSELLATION_CONTROL;
-		m_lines.pushBack("#ifdef _ANKI_TESSELATION_CONTROL_SHADER");
+		m_lines.pushBack("#ifdef ANKI_TESSELATION_CONTROL_SHADER");
 	}
 	else if(*begin == "tesse")
 	{
 		shaderType = ShaderType::TESSELLATION_EVALUATION;
-		m_lines.pushBack("#ifdef _ANKI_TESSELLATION_EVALUATION_SHADER");
+		m_lines.pushBack("#ifdef ANKI_TESSELLATION_EVALUATION_SHADER");
 	}
 	else if(*begin == "geom")
 	{
 		shaderType = ShaderType::GEOMETRY;
-		m_lines.pushBack("#ifdef _ANKI_GEOMETRY_SHADER");
+		m_lines.pushBack("#ifdef ANKI_GEOMETRY_SHADER");
 	}
 	else if(*begin == "frag")
 	{
 		shaderType = ShaderType::FRAGMENT;
-		m_lines.pushBack("#ifdef _ANKI_FRAGMENT_SHADER");
+		m_lines.pushBack("#ifdef ANKI_FRAGMENT_SHADER");
 	}
 	else if(*begin == "comp")
 	{
 		shaderType = ShaderType::COMPUTE;
-		m_lines.pushBack("#ifdef _ANKI_COMPUTE_SHADER");
+		m_lines.pushBack("#ifdef ANKI_COMPUTE_SHADER");
 	}
 	else
 	{
@@ -255,17 +257,17 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 	m_inputs.emplaceBack(m_alloc);
 	Input& input = m_inputs.getBack();
 
-	if(m_insideShader)
-	{
-		ANKI_PP_ERROR_MALFORMED_MSG("Can't have #pragma input inside a pragma start/end");
-	}
-
 	// const
+	Bool isConst;
 	{
 		if(*begin == "const")
 		{
-			input.m_specConstId = m_specConstIdx++;
+			isConst = true;
 			++begin;
+		}
+		else
+		{
+			isConst = false;
 		}
 	}
 
@@ -369,11 +371,12 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 		const char* name = input.m_name.cstr();
 		const char* type = dataTypeStr.cstr();
 
-		m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
+		// Add an tag for later pre-processing (when trying to see if the variable is present)
+		m_lines.pushBackSprintf("//_anki_input_pesent %s", name);
 
 		if(input.m_instanced)
 		{
-			m_uboStructLines.pushBackSprintf("#if _ANKI_%s_ACTIVE", name);
+			m_uboStructLines.pushBackSprintf("#if _ANKI_UNI_%s_ACTIVE", name);
 			m_uboStructLines.pushBack("#if _ANKI_INSTANCE_COUNT > 1");
 			m_uboStructLines.pushBackSprintf("%s _anki_uni_%s[_ANKI_INSTANCE_COUNT];", type, name);
 			m_uboStructLines.pushBack("#else");
@@ -381,22 +384,310 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 			m_uboStructLines.pushBack("#endif");
 			m_uboStructLines.pushBack("#endif");
 
-			m_globalsLines.pushBack("#ifdef _ANKI_VERTEX_SHADER");
+			m_globalsLines.pushBackSprintf("#if _ANKI_UNI_%s_ACTIVE", name);
+			m_globalsLines.pushBack("#ifdef ANKI_VERTEX_SHADER");
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", name);
 			m_globalsLines.pushBack("#if _ANKI_INSTANCE_COUNT > 1");
 			m_globalsLines.pushBackSprintf("%s %s = _anki_unis._anki_uni_%s[gl_InstanceID];", type, name, name);
 			m_globalsLines.pushBack("#else");
 			m_globalsLines.pushBackSprintf("%s %s = _anki_unis._anki_uni_%s;", type, name, name);
 			m_globalsLines.pushBack("#endif");
 			m_globalsLines.pushBack("#endif");
+			m_globalsLines.pushBack("#endif");
 		}
 		else
 		{
-			m_uboStructLines.pushBackSprintf("#if _ANKI_%s_ACTIVE", name);
+			m_uboStructLines.pushBackSprintf("#if _ANKI_UNI_%s_ACTIVE", name);
 			m_uboStructLines.pushBackSprintf("%s _anki_uni_%s;", type, name);
-			m_globalsLines.pushBack("#endif");
+			m_uboStructLines.pushBack("#endif");
 
+			m_globalsLines.pushBackSprintf("#if _ANKI_UNI_%s_ACTIVE", name);
 			m_globalsLines.pushBackSprintf("%s %s = _anki_unis_._anki_uni_%s;", type, name, name);
+			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", name);
+			m_globalsLines.pushBack("#endif");
 		}
+	}
+
+	return Error::NONE;
+}
+
+Error ShaderProgramParser::parsePragmaMutator(
+	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
+{
+	ANKI_ASSERT(begin && end);
+
+	if(begin >= end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	m_mutators.emplaceBack(m_alloc);
+	Mutator& mutator = m_mutators.getBack();
+
+	// Instanced
+	{
+		if(*begin == "instanced")
+		{
+			mutator.m_instanced = true;
+
+			// Check
+			if(m_instancedMutatorIdx != MAX_U32)
+			{
+				ANKI_PP_ERROR_MALFORMED_MSG("Can't have more than one instanced mutators");
+			}
+
+			m_instancedMutatorIdx = U32(m_mutators.getSize() - 1);
+			++begin;
+		}
+		else
+		{
+			mutator.m_instanced = false;
+		}
+	}
+
+	// Name
+	{
+		if(begin >= end)
+		{
+			// Need to have a name
+			ANKI_PP_ERROR_MALFORMED();
+		}
+
+		// Check for duplicate mutators
+		for(U i = 0; i < m_mutators.getSize() - 1; ++i)
+		{
+			if(m_mutators[i].m_name == *begin)
+			{
+				ANKI_PP_ERROR_MALFORMED_MSG("Duplicate mutator");
+			}
+		}
+
+		mutator.m_name.create(begin->toCString());
+		++begin;
+	}
+
+	// Values
+	{
+		// Gather them
+		for(; begin < end; ++begin)
+		{
+			Mutator::ValueType value = 0;
+
+			if(tokenIsComment(begin->toCString()))
+			{
+				break;
+			}
+
+			if(begin->toNumber(value))
+			{
+				ANKI_PP_ERROR_MALFORMED();
+			}
+
+			mutator.m_values.emplaceBack(value);
+		}
+
+		// Check for correct count
+		if(mutator.m_values.getSize() < 2)
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Mutator with less that 2 values doesn't make sense");
+		}
+
+		std::sort(mutator.m_values.getBegin(), mutator.m_values.getEnd());
+
+		// Check for duplicates
+		for(U i = 1; i < mutator.m_values.getSize(); ++i)
+		{
+			if(mutator.m_values[i - 1] == mutator.m_values[i])
+			{
+				ANKI_PP_ERROR_MALFORMED_MSG("Same value appeared more than once");
+			}
+		}
+	}
+
+	// Update some source
+	if(mutator.m_instanced)
+	{
+		m_globalsLines.pushFrontSprintf("#define _ANKI_INSTANCE_COUNT %s", mutator.m_name.cstr());
+	}
+
+	return Error::NONE;
+}
+
+Error ShaderProgramParser::parseInclude(
+	const StringAuto* begin, const StringAuto* end, CString line, CString fname, U32 depth)
+{
+	// Gather the path
+	StringAuto path(m_alloc);
+	for(; begin < end; ++begin)
+	{
+		path.append(*begin);
+	}
+
+	if(path.isEmpty())
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	// Check
+	const char firstChar = path[0];
+	const char lastChar = path[path.getLength() - 1];
+
+	if((firstChar == '\"' && lastChar == '\"') || (firstChar == '<' && lastChar == '>'))
+	{
+		StringAuto fname2(m_alloc);
+		fname2.create(path.begin() + 1, path.begin() + path.getLength() - 1);
+
+		if(parseFile(fname2, depth + 1))
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Error parsing include. See previous errors");
+		}
+	}
+	else
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	return Error::NONE;
+}
+
+Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth)
+{
+	// Tokenize
+	DynamicArrayAuto<StringAuto> tokens(m_alloc);
+	tokenizeLine(line, tokens);
+	ANKI_ASSERT(tokens.getSize() > 0);
+
+	const StringAuto* token = tokens.getBegin();
+	const StringAuto* end = tokens.getEnd();
+
+	// Skip the hash
+	Bool foundAloneHash = false;
+	if(*token == "#")
+	{
+		++token;
+		foundAloneHash = true;
+	}
+
+	if((token < end) && ((foundAloneHash && *token == "include") || *token == "#include"))
+	{
+		// We _must_ have an #include
+		ANKI_CHECK(parseInclude(token + 1, end, line, fname, depth));
+	}
+	else if((token < end) && ((foundAloneHash && *token == "pragma") || *token == "#pragma"))
+	{
+		// We may have a #pragma once or a #pragma anki or something else
+
+		++token;
+
+		if(*token == "once")
+		{
+			// Pragma once
+
+			if(foundPragmaOnce)
+			{
+				ANKI_PP_ERROR_MALFORMED_MSG("Can't have more than one #pragma once per file");
+			}
+
+			if(token + 1 != end)
+			{
+				ANKI_PP_ERROR_MALFORMED();
+			}
+
+			// Add the guard unique for this file
+			foundPragmaOnce = true;
+			const U64 hash = fname.computeHash();
+			m_lines.pushBackSprintf("#ifndef _ANKI_INCL_GUARD_%llu\n"
+									"#define _ANKI_INCL_GUARD_%llu",
+				hash,
+				hash);
+		}
+		else if(*token == "anki")
+		{
+			// Must be a #pragma anki
+
+			++token;
+
+			if(*token == "mutator")
+			{
+				ANKI_CHECK(parsePragmaMutator(token + 1, end, line, fname));
+			}
+			else if(*token == "input")
+			{
+				ANKI_CHECK(parsePragmaInput(token + 1, end, line, fname));
+			}
+			else if(*token == "start")
+			{
+				ANKI_CHECK(parsePragmaStart(token + 1, end, line, fname));
+			}
+			else if(*token == "end")
+			{
+				ANKI_CHECK(parsePragmaEnd(token + 1, end, line, fname));
+			}
+			else if(*token == "descriptor_set")
+			{
+				ANKI_CHECK(parsePragmaDescriptorSet(token + 1, end, line, fname));
+			}
+			else
+			{
+				ANKI_PP_ERROR_MALFORMED();
+			}
+		}
+		else
+		{
+			// Some other pragma
+			ANKI_SHADER_COMPILER_LOGW("Ignoring: %s", line.cstr());
+			m_lines.pushBack(line);
+		}
+	}
+	else
+	{
+		// Ignore
+		m_lines.pushBack(line);
+	}
+
+	return Error::NONE;
+}
+
+Error ShaderProgramParser::parseFile(CString fname, U32 depth)
+{
+	// First check the depth
+	if(depth > MAX_INCLUDE_DEPTH)
+	{
+		ANKI_SHADER_COMPILER_LOGE("The include depth is too high. Probably circular includance");
+	}
+
+	Bool foundPragmaOnce = false;
+
+	// Load file in lines
+	StringAuto txt(m_alloc);
+	ANKI_CHECK(m_fsystem->readAllText(fname, txt));
+
+	StringListAuto lines(m_alloc);
+	lines.splitString(txt.toCString(), '\n');
+	if(lines.getSize() < 1)
+	{
+		ANKI_SHADER_COMPILER_LOGE("Source is empty");
+	}
+
+	// Parse lines
+	for(const String& line : lines)
+	{
+		if(line.find("pragma") != CString::NPOS || line.find("include") != CString::NPOS)
+		{
+			// Possibly a preprocessor directive we care
+			ANKI_CHECK(parseLine(line.toCString(), fname, foundPragmaOnce, depth));
+		}
+		else
+		{
+			// Just append the line
+			m_lines.pushBack(line.toCString());
+		}
+	}
+
+	if(foundPragmaOnce)
+	{
+		// Append the guard
+		m_lines.pushBack("#endif // Include guard");
 	}
 
 	return Error::NONE;
