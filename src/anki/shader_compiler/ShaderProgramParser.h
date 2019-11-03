@@ -22,6 +22,8 @@ class ShaderProgramVariant;
 /// @addtogroup resource
 /// @{
 
+constexpr U32 MAX_SHADER_PROGRAM_INPUT_VARIABLES = 128;
+
 /// @memberof ShaderProgramParser
 class ShaderProgramParserMutator
 {
@@ -85,13 +87,29 @@ public:
 	}
 
 	/// @param constantId It's the vulkan spec const index.
-	Bool isConstant(U32* constantId) const
+	Bool isConstant(U32* constantId = nullptr) const
 	{
 		if(constantId)
 		{
 			*constantId = m_specConstId;
 		}
 		return m_specConstId != MAX_U32;
+	}
+
+	Bool isTexture() const
+	{
+		return m_dataType >= ShaderVariableDataType::TEXTURE_FIRST
+			   && m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
+	}
+
+	Bool isSampler() const
+	{
+		return m_dataType == ShaderVariableDataType::SAMPLER;
+	}
+
+	Bool inUbo() const
+	{
+		return !isConstant() && !isTexture() && !isSampler();
 	}
 
 private:
@@ -105,6 +123,8 @@ private:
 /// @memberof ShaderProgramParser
 class ShaderProgramVariant
 {
+	friend class ShaderProgramParser;
+
 public:
 	CString getSource(ShaderType type) const
 	{
@@ -122,9 +142,8 @@ private:
 	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
 	DynamicArray<I16> m_bindings;
 	U32 m_uniBlockSize = 0;
-	U8 m_bindingCount = 0;
 	Bool m_usesPushConstants = false;
-	BitSet<128> m_activeInputVarsMask = {false};
+	BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES> m_activeInputVarsMask = {false};
 };
 
 /// @memberof ShaderProgramParser
@@ -159,17 +178,14 @@ public:
 class ShaderProgramParser : public NonCopyable
 {
 public:
-	ShaderProgramParser(
-		CString fname, ShaderProgramParserFilesystemInterface* fsystem, GenericMemoryPoolAllocator<U8> alloc)
+	ShaderProgramParser(CString fname,
+		ShaderProgramParserFilesystemInterface* fsystem,
+		GenericMemoryPoolAllocator<U8> alloc,
+		U32 pushConstantsSize)
 		: m_alloc(alloc)
 		, m_fname(alloc, fname)
 		, m_fsystem(fsystem)
-		, m_lines(alloc)
-		, m_globalsLines(alloc)
-		, m_uboStructLines(alloc)
-		, m_finalSource(alloc)
-		, m_mutators(alloc)
-		, m_inputs(alloc)
+		, m_pushConstSize(pushConstantsSize)
 	{
 	}
 
@@ -181,7 +197,8 @@ public:
 	ANKI_USE_RESULT Error parse();
 
 	/// Get the source (and a few more things) given a list of mutators.
-	ShaderProgramVariant generateSource(ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates) const;
+	ANKI_USE_RESULT Error generateSource(
+		ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates, ShaderProgramVariant& variant) const;
 
 	ConstWeakArray<ShaderProgramParserMutator> getMutators() const
 	{
@@ -213,19 +230,22 @@ private:
 	StringAuto m_fname;
 	ShaderProgramParserFilesystemInterface* m_fsystem = nullptr;
 
-	StringListAuto m_lines; ///< The code.
-	StringListAuto m_globalsLines;
-	StringListAuto m_uboStructLines;
-	StringAuto m_finalSource;
+	StringListAuto m_codeLines = {m_alloc}; ///< The code.
+	StringListAuto m_globalsLines = {m_alloc};
+	StringListAuto m_uboStructLines = {m_alloc};
+	StringAuto m_codeSource = {m_alloc};
+	StringAuto m_globalsSource = {m_alloc};
+	StringAuto m_uboSource = {m_alloc};
 
-	DynamicArrayAuto<Mutator> m_mutators;
-	DynamicArrayAuto<Input> m_inputs;
+	DynamicArrayAuto<Mutator> m_mutators = {m_alloc};
+	DynamicArrayAuto<Input> m_inputs = {m_alloc};
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
 	Bool m_insideShader = false;
 	U32 m_set = 0;
 	U32 m_instancedMutatorIdx = MAX_U32;
 	U32 m_specConstIdx = 0;
+	const U32 m_pushConstSize = 0;
 	Bool m_foundAtLeastOneInstancedInput = false;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
@@ -240,7 +260,8 @@ private:
 	ANKI_USE_RESULT Error parsePragmaDescriptorSet(
 		const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 
-	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens);
+	ANKI_USE_RESULT Error findActiveInputVars(CString source, BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES>& active) const;
+	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const;
 
 	static Bool tokenIsComment(CString token)
 	{
