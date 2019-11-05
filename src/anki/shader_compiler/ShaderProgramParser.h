@@ -246,6 +246,9 @@ private:
 	U32 m_instancedMutatorIdx = MAX_U32;
 	U32 m_specConstIdx = 0;
 	const U32 m_pushConstSize = 0;
+	const U32 m_backendMinor = 1; // TODO
+	const U32 m_backendMajor = 1; // TODO
+	const GpuVendor m_gpuVendor = GpuVendor::AMD; // TODO
 	Bool m_foundAtLeastOneInstancedInput = false;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);

@@ -20,6 +20,54 @@ namespace anki
 static const Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
 	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE"}};
 
+static const char* SHADER_HEADER = R"(#version 450 core
+#define ANKI_BACKEND_MINOR %u
+#define ANKI_BACKEND_MAJOR %u
+#define ANKI_VENDOR_%s 1
+
+#define gl_VertexID gl_VertexIndex
+#define gl_InstanceID gl_InstanceIndex
+
+#extension GL_EXT_control_flow_attributes : require
+#define ANKI_UNROLL [[unroll]]
+#define ANKI_LOOP [[dont_unroll]]
+#define ANKI_BRANCH [[branch]]
+#define ANKI_FLATTEN [[flatten]]
+
+#extension GL_KHR_shader_subgroup_vote : require
+#extension GL_KHR_shader_subgroup_ballot : require
+#extension GL_KHR_shader_subgroup_shuffle : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+#extension GL_EXT_samplerless_texture_functions : require
+#extension GL_EXT_shader_image_load_formatted : require
+#extension GL_EXT_nonuniform_qualifier : enable
+
+#define ANKI_MAX_BINDLESS_TEXTURES %u
+#define ANKI_MAX_BINDLESS_IMAGES %u
+
+#define F32 float
+#define Vec2 vec2
+#define Vec3 vec3
+#define Vec4 vec4
+
+#define U32 uint
+#define UVec2 uvec2
+#define UVec3 uvec3
+#define UVec4 uvec4
+
+#define I32 int
+#define IVec2 ivec2
+#define IVec3 ivec3
+#define IVec4 ivec4
+
+#define Mat3 mat3
+#define Mat4 mat4
+#define Mat3x4 mat3x4
+
+#define Bool bool
+)";
+
 static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, ShaderVariableDataType& out)
 {
 	Error err = Error::NONE;
@@ -103,6 +151,69 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 	}
 
 	return err;
+}
+
+static U32 computeSpecConstantIdsRequired(ShaderVariableDataType type)
+{
+	U32 out;
+	if(type >= ShaderVariableDataType::NUMERIC_1_COMPONENT_FIRST
+		&& type <= ShaderVariableDataType::NUMERIC_1_COMPONENT_LAST)
+	{
+		out = 1;
+	}
+	else if(type >= ShaderVariableDataType::NUMERIC_2_COMPONENT_FIRST
+			&& type <= ShaderVariableDataType::NUMERIC_2_COMPONENT_LAST)
+	{
+		out = 2;
+	}
+	else if(type >= ShaderVariableDataType::NUMERIC_3_COMPONENT_FIRST
+			&& type <= ShaderVariableDataType::NUMERIC_3_COMPONENT_LAST)
+	{
+		out = 3;
+	}
+	else if(type >= ShaderVariableDataType::NUMERIC_4_COMPONENT_FIRST
+			&& type <= ShaderVariableDataType::NUMERIC_4_COMPONENT_LAST)
+	{
+		out = 4;
+	}
+	else
+	{
+		out = MAX_U32;
+	}
+
+	return out;
+}
+
+/// 0: is int, 1: is uint, 2: is float
+static U32 shaderVariableScalarType(ShaderVariableDataType type)
+{
+	U32 out;
+	switch(type)
+	{
+	case ShaderVariableDataType::INT:
+	case ShaderVariableDataType::IVEC2:
+	case ShaderVariableDataType::IVEC3:
+	case ShaderVariableDataType::IVEC4:
+		out = 0;
+		break;
+	case ShaderVariableDataType::UINT:
+	case ShaderVariableDataType::UVEC2:
+	case ShaderVariableDataType::UVEC3:
+	case ShaderVariableDataType::UVEC4:
+		out = 1;
+		break;
+	case ShaderVariableDataType::FLOAT:
+	case ShaderVariableDataType::VEC2:
+	case ShaderVariableDataType::VEC3:
+	case ShaderVariableDataType::VEC4:
+		out = 2;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = MAX_U32;
+		break;
+	}
+	return out;
 }
 
 static ANKI_USE_RESULT Error preprocessCommon(CString in, StringAuto& out)
@@ -347,7 +458,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 	const Bool isTexture = input.m_dataType >= ShaderVariableDataType::TEXTURE_FIRST
 						   && input.m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
 
-	if(input.m_specConstId != MAX_U32)
+	if(isConst)
 	{
 		// Const
 
@@ -357,20 +468,58 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 			ANKI_PP_ERROR_MALFORMED();
 		}
 
+		const U32 vecComponents = computeSpecConstantIdsRequired(input.m_dataType);
+		if(vecComponents == MAX_U32)
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Type can't be const");
+		}
+
+		const U32 scalarType = shaderVariableScalarType(input.m_dataType);
+
 		// Add an tag for later pre-processing (when trying to see if the variable is present)
 		m_codeLines.pushBackSprintf("//_anki_input_pesent %s", input.m_name.cstr());
 
 		m_globalsLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", input.m_name.cstr());
 		m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
 
-		// TODO add vector support
+		const Array<CString, 3> typeNames = {{"I32", "I32", "F32"}};
 
-		m_globalsLines.pushBackSprintf("layout(constant_id = %u) const %s %s = %s(0);",
-			input.m_specConstId,
-			dataTypeStr.cstr(),
-			input.m_name.cstr(),
-			dataTypeStr.cstr(),
-			input.m_name.cstr());
+		input.m_specConstId = m_specConstIdx;
+
+		StringAuto inputDeclaration(m_alloc);
+		for(U32 comp = 0; comp < vecComponents; ++comp)
+		{
+			m_globalsLines.pushBackSprintf("layout(constant_id = %u) const %s _anki_const_%s_%u = %s(0);",
+				m_specConstIdx,
+				typeNames[scalarType].cstr(),
+				input.m_name.cstr(),
+				comp,
+				typeNames[scalarType].cstr());
+
+			if(comp == 0)
+			{
+				inputDeclaration.sprintf("const %s = %s(_anki_const_%s_%u",
+					dataTypeStr.cstr(),
+					dataTypeStr.cstr(),
+					input.m_name.cstr(),
+					comp);
+			}
+			else
+			{
+				StringAuto tmp(m_alloc);
+				tmp.sprintf(", _anki_const_%s_%u", input.m_name.cstr(), comp);
+				inputDeclaration.append(tmp);
+			}
+
+			if(comp == vecComponents - 1)
+			{
+				inputDeclaration.append(");");
+			}
+
+			++m_specConstIdx;
+		}
+
+		m_globalsLines.pushBack(inputDeclaration);
 
 		m_globalsLines.pushBack("#else");
 		m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", input.m_name.cstr());
@@ -915,11 +1064,22 @@ Error ShaderProgramParser::generateSource(
 			StringAuto(m_alloc).sprintf("#define %s %d\n", state.m_mutator->m_name.cstr(), state.m_value));
 	}
 
+	// Create the header
+	StringAuto header(m_alloc);
+	header.sprintf(SHADER_HEADER,
+		m_backendMinor,
+		m_backendMinor,
+		GPU_VENDOR_STR[m_gpuVendor].cstr(),
+		MAX_BINDLESS_TEXTURES,
+		MAX_BINDLESS_IMAGES);
+
 	// Find active vars by running the preprocessor
 	StringAuto activeInputs(m_alloc);
 	if(m_inputs.getSize() > 0)
 	{
 		StringAuto src(m_alloc);
+		src.append(header);
+		src.append("#define ANKI_VERTEX_SHADER 1\n"); // Something random to avoid compilation errors
 		src.append(mutatorDefines);
 		src.append(m_globalsSource);
 		ANKI_CHECK(findActiveInputVars(src, variant.m_activeInputVarsMask));
@@ -1071,6 +1231,7 @@ Error ShaderProgramParser::generateSource(
 
 		// Create the final source without the bindings
 		StringAuto finalSource(m_alloc);
+		finalSource.append(header);
 		finalSource.append(mutatorDefines);
 		finalSource.append(StringAuto(m_alloc).sprintf("#define ANKI_%s 1\n", SHADER_STAGE_NAMES[shaderType].cstr()));
 		finalSource.append(activeInputs);
