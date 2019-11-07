@@ -84,6 +84,13 @@ public:
 		ANKI_ASSERT(list);
 	}
 
+	ListIterator& operator=(const ListIterator& b)
+	{
+		m_node = b.m_node;
+		m_list = b.m_list;
+		return *this;
+	}
+
 	TValueReference operator*() const
 	{
 		ANKI_ASSERT(m_node);

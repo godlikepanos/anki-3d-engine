@@ -182,7 +182,8 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 		},
 		this,
 		computeNumberOfSecondLevelCommandBuffers(U32(ctx.m_renderQueue->m_renderables.getSize())));
-	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, m_r->getGBuffer().getDepthRt());
+
+	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt());
 
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	pass.newDependency({m_r->getGBuffer().getDepthRt(),

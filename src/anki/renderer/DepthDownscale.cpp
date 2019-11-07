@@ -65,7 +65,10 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 		m_copyToBuff.m_buffAddr = m_copyToBuff.m_buff->map(0, buffInit.m_size, BufferMapAccessBit::READ);
 
 		// Fill the buffer with 1.0f
-		memorySet(static_cast<F32*>(m_copyToBuff.m_buffAddr), 1.0f, lastMipHeight * lastMipWidth);
+		for(U32 i = 0; i < lastMipHeight * lastMipWidth; ++i)
+		{
+			static_cast<F32*>(m_copyToBuff.m_buffAddr)[i] = 1.0f;
+		}
 	}
 
 	return Error::NONE;

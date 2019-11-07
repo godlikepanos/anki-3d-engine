@@ -146,7 +146,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		},
 		this,
 		0);
-	pass.setFramebufferInfo(m_fbDescr, {{ctx.m_outRenderTarget}}, {});
+	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget}, {});
 
 	pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 

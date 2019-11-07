@@ -156,7 +156,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
-	pass.setFramebufferInfo(m_fbDescr, rts, m_depthRt);
+	pass.setFramebufferInfo(
+		m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], GBUFFER_COLOR_ATTACHMENT_COUNT), m_depthRt);
 	pass.setWork(
 		[](RenderPassWorkContext& rgraphCtx) {
 			GBuffer* self = static_cast<GBuffer*>(rgraphCtx.m_userData);

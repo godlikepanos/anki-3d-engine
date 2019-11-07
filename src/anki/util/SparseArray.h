@@ -75,6 +75,16 @@ public:
 		ANKI_ASSERT(arr);
 	}
 
+	SparseArrayIterator& operator=(const SparseArrayIterator& b)
+	{
+		m_array = b.m_array;
+		m_elementIdx = b.m_elementIdx;
+#if ANKI_EXTRA_CHECKS
+		m_iteratorVer = b.m_iteratorVer;
+#endif
+		return *this;
+	}
+
 	TValueReference operator*() const
 	{
 		check();
@@ -360,11 +370,6 @@ protected:
 	public:
 		Index m_idx;
 		Bool m_alive;
-
-		Metadata() = delete;
-		Metadata(const Metadata&) = delete;
-		Metadata(Metadata&&) = delete;
-		~Metadata() = delete;
 	};
 
 	Value* m_elements = nullptr;

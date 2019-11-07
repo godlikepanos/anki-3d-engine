@@ -36,7 +36,7 @@ static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 	const Scalar RATIONAL_HALF_PI = 201 / 128.0;
 	const Scalar REMAINDER_HALF_PI = Scalar(4.8382679e-4);
 
-	floatA = (a - RATIONAL_HALF_PI * intA) - REMAINDER_HALF_PI * intA;
+	floatA = (a - RATIONAL_HALF_PI * Scalar(intA)) - REMAINDER_HALF_PI * Scalar(intA);
 
 	Scalar floatAMinusHalfPi = (floatA - RATIONAL_HALF_PI) - REMAINDER_HALF_PI;
 

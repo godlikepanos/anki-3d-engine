@@ -269,16 +269,6 @@ struct RemovePointer<T*>
 	typedef T Type;
 };
 
-template<typename T>
-void memorySet(T* dest, T value, PtrSize count)
-{
-	ANKI_ASSERT(dest);
-	while(count--)
-	{
-		dest[count] = value;
-	}
-}
-
 /// Zero memory of an object
 template<typename T>
 void zeroMemory(T& x)

@@ -94,7 +94,7 @@ void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrS
 			// realloc
 
 			out = binder.m_alloc.getMemoryPool().allocate(nsize, 16);
-			std::memcpy(out, ptr, osize);
+			memcpy(out, ptr, osize);
 			binder.m_alloc.getMemoryPool().free(ptr);
 		}
 	}

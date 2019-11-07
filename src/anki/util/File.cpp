@@ -348,7 +348,7 @@ Error File::readF32(F32& out)
 	Error err = readU32(integer);
 	if(!err)
 	{
-		std::memcpy(&out, &integer, sizeof(F32));
+		memcpy(&out, &integer, sizeof(F32));
 	}
 
 	return err;

@@ -154,7 +154,7 @@ void String::create(Allocator alloc, const CStringType& cstr)
 	auto len = cstr.getLength();
 	auto size = len + 1;
 	m_data.create(alloc, size);
-	std::memcpy(&m_data[0], &cstr[0], sizeof(Char) * size);
+	memcpy(&m_data[0], &cstr[0], sizeof(Char) * size);
 }
 
 void String::create(Allocator alloc, ConstIterator first, ConstIterator last)
@@ -163,7 +163,7 @@ void String::create(Allocator alloc, ConstIterator first, ConstIterator last)
 	auto length = last - first;
 	m_data.create(alloc, length + 1);
 
-	std::memcpy(&m_data[0], first, length);
+	memcpy(&m_data[0], first, length);
 	m_data[length] = '\0';
 }
 
@@ -194,10 +194,10 @@ void String::appendInternal(Allocator& alloc, const Char* str, PtrSize strLen)
 
 	if(!m_data.isEmpty())
 	{
-		std::memcpy(&newData[0], &m_data[0], sizeof(Char) * size);
+		memcpy(&newData[0], &m_data[0], sizeof(Char) * size);
 	}
 
-	std::memcpy(&newData[size - 1], str, sizeof(Char) * strLen);
+	memcpy(&newData[size - 1], str, sizeof(Char) * strLen);
 
 	newData[newData.getSize() - 1] = '\0';
 

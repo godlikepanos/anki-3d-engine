@@ -144,7 +144,7 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 				},
 				this,
 				0);
-			pass.setFramebufferInfo(m_fbDescrs[i], {{m_runCtx.m_rt}}, {});
+			pass.setFramebufferInfo(m_fbDescrs[i], {m_runCtx.m_rt}, {});
 
 			if(i > 0)
 			{

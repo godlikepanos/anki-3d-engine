@@ -27,7 +27,7 @@ ANKI_USE_RESULT Error getXmlVal(const XmlElement& el, const CString& tag, Vec3& 
 
 ParticleEmitterProperties& ParticleEmitterProperties::operator=(const ParticleEmitterProperties& b)
 {
-	std::memcpy(this, &b, sizeof(ParticleEmitterProperties));
+	memcpy(this, &b, sizeof(ParticleEmitterProperties));
 	return *this;
 }
 

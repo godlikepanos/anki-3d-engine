@@ -54,12 +54,12 @@ void StringList::join(const CString& separator, StringAuto& out) const
 	for(; it != Base::getEnd(); it++)
 	{
 		const String& from = *it;
-		std::memcpy(to, &from[0], from.getLength() * sizeof(Char));
+		memcpy(to, &from[0], from.getLength() * sizeof(Char));
 		to += from.getLength();
 
 		if(it != Base::end() - 1)
 		{
-			std::memcpy(to, &separator[0], sepLen * sizeof(Char));
+			memcpy(to, &separator[0], sepLen * sizeof(Char));
 			to += sepLen;
 		}
 	}

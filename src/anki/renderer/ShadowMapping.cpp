@@ -292,7 +292,14 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 Mat4 ShadowMapping::createSpotLightTextureMatrix(const Viewport& viewport) const
 {
 	const F32 atlasSize = F32(m_atlas.m_tileResolution * m_atlas.m_tileCountBothAxis);
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wpedantic" // Because GCC and clang throw an incorrect warning
+#endif
 	const Vec2 uv(F32(viewport[0]) / atlasSize, F32(viewport[1]) / atlasSize);
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
 	ANKI_ASSERT(uv >= Vec2(0.0f) && uv <= Vec2(1.0f));
 
 	ANKI_ASSERT(viewport[2] == viewport[3]);

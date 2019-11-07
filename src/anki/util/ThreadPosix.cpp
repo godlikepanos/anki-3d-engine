@@ -48,7 +48,7 @@ Thread::Thread(const char* name)
 	{
 		U len = std::strlen(name);
 		len = std::min<U>(len, sizeof(m_name) - 1);
-		std::memcpy(&m_name[0], &name[0], len);
+		memcpy(&m_name[0], &name[0], len);
 		m_name[len] = '\0';
 	}
 	else

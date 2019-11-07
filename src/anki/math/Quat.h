@@ -165,6 +165,18 @@ public:
 	}
 	/// @}
 
+	/// @name Operators with same type
+	/// @{
+	TQuat& operator=(const TQuat& b)
+	{
+		x() = b.x();
+		y() = b.y();
+		z() = b.z();
+		w() = b.w();
+		return *this;
+	}
+	/// @}
+
 	/// @name Other
 	/// @{
 

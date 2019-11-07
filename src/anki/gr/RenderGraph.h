@@ -15,6 +15,7 @@
 #include <anki/gr/CommandBuffer.h>
 #include <anki/util/HashMap.h>
 #include <anki/util/BitSet.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -403,12 +404,20 @@ class GraphicsRenderPassDescription : public RenderPassDescriptionBase
 
 public:
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
-		const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
+		ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
 		RenderTargetHandle depthStencilRenderTargetHandle,
-		U32 minx,
-		U32 miny,
-		U32 maxx,
-		U32 maxy);
+		U32 minx = 0,
+		U32 miny = 0,
+		U32 maxx = MAX_U32,
+		U32 maxy = MAX_U32);
+
+	void setFramebufferInfo(const FramebufferDescription& fbInfo,
+		std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
+		RenderTargetHandle depthStencilRenderTargetHandle,
+		U32 minx = 0,
+		U32 miny = 0,
+		U32 maxx = MAX_U32,
+		U32 maxy = MAX_U32);
 
 private:
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;

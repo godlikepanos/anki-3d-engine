@@ -1289,6 +1289,7 @@ void RenderGraph::getStatistics(RenderGraphStatistics& statistics) const
 	{
 		Second start, end;
 		TimestampQueryResult res = m_statistics.m_timestamps[oldFrame * 2]->getResult(start);
+		(void)res;
 		ANKI_ASSERT(res == TimestampQueryResult::AVAILABLE);
 
 		res = m_statistics.m_timestamps[oldFrame * 2 + 1]->getResult(end);

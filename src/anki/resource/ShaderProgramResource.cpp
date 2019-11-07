@@ -312,11 +312,7 @@ void ShaderProgramResource::initVariant(ConstWeakArray<ShaderProgramResourceMuta
 {
 	variant.m_activeInputVars.unsetAll();
 	variant.m_blockInfos.create(getAllocator(), m_inputVars.getSize());
-	variant.m_bindings.create(getAllocator(), m_inputVars.getSize());
-	if(m_inputVars.getSize() > 0)
-	{
-		memorySet<I16>(&variant.m_bindings[0], -1, variant.m_bindings.getSize());
-	}
+	variant.m_bindings.create(getAllocator(), m_inputVars.getSize(), -1);
 
 	// Get instance count, one mutation has it
 	U32 instanceCount = 1;

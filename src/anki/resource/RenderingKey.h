@@ -46,6 +46,12 @@ public:
 	{
 	}
 
+	RenderingKey& operator=(const RenderingKey& b)
+	{
+		memcpy(this, &b, sizeof(*this));
+		return *this;
+	}
+
 	Bool operator==(const RenderingKey& b) const
 	{
 		return m_pass == b.m_pass && m_lod == b.m_lod && m_instanceCount == b.m_instanceCount

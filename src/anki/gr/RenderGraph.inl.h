@@ -129,12 +129,35 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 }
 
 inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
-	const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
+	std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
 	RenderTargetHandle depthStencilRenderTargetHandle,
-	U32 minx = 0,
-	U32 miny = 0,
-	U32 maxx = MAX_U32,
-	U32 maxy = MAX_U32)
+	U32 minx,
+	U32 miny,
+	U32 maxx,
+	U32 maxy)
+{
+	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
+	U32 count = 0;
+	for(const RenderTargetHandle& h : colorRenderTargetHandles)
+	{
+		rts[count++] = h;
+	}
+	setFramebufferInfo(fbInfo,
+		ConstWeakArray<RenderTargetHandle>(&rts[0], count),
+		depthStencilRenderTargetHandle,
+		minx,
+		miny,
+		maxx,
+		maxy);
+}
+
+inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
+	ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
+	RenderTargetHandle depthStencilRenderTargetHandle,
+	U32 minx,
+	U32 miny,
+	U32 maxx,
+	U32 maxy)
 {
 #if ANKI_ASSERTS_ENABLED
 	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
@@ -161,7 +184,7 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferD
 #endif
 
 	m_fbDescr = fbInfo;
-	memcpy(&m_rtHandles[0], &colorRenderTargetHandles[0], sizeof(colorRenderTargetHandles));
+	memcpy(m_rtHandles.getBegin(), colorRenderTargetHandles.getBegin(), colorRenderTargetHandles.getSizeInBytes());
 	m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
 	m_fbRenderArea = {{minx, miny, maxx, maxy}};
 }
