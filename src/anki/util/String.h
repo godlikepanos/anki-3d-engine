@@ -688,6 +688,17 @@ public:
 		return *this;
 	}
 
+	/// Copy from string.
+	StringAuto& operator=(const CString& b)
+	{
+		destroy();
+		if(!b.isEmpty())
+		{
+			create(b.getBegin(), b.getEnd());
+		}
+		return *this;
+	}
+
 	/// Move one string to this one.
 	StringAuto& operator=(StringAuto&& b)
 	{

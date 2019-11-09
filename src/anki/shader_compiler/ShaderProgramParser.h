@@ -17,7 +17,7 @@ namespace anki
 
 // Forward
 class ShaderProgramParser;
-class ShaderProgramVariant;
+class ShaderProgramParserVariant;
 
 /// @addtogroup resource
 /// @{
@@ -63,7 +63,7 @@ private:
 class ShaderProgramParserInput
 {
 	friend ShaderProgramParser;
-	friend ShaderProgramVariant;
+	friend ShaderProgramParserVariant;
 
 public:
 	ShaderProgramParserInput(GenericMemoryPoolAllocator<U8> alloc)
@@ -121,11 +121,21 @@ private:
 };
 
 /// @memberof ShaderProgramParser
-class ShaderProgramVariant
+class ShaderProgramParserVariant
 {
 	friend class ShaderProgramParser;
 
 public:
+	~ShaderProgramParserVariant()
+	{
+		for(String& s : m_sources)
+		{
+			s.destroy(m_alloc);
+		}
+		m_blockInfos.destroy(m_alloc);
+		m_bindings.destroy(m_alloc);
+	}
+
 	CString getSource(ShaderType type) const
 	{
 		return m_sources[type];
@@ -181,11 +191,17 @@ public:
 	ShaderProgramParser(CString fname,
 		ShaderProgramParserFilesystemInterface* fsystem,
 		GenericMemoryPoolAllocator<U8> alloc,
-		U32 pushConstantsSize)
+		U32 pushConstantsSize,
+		U32 backendMinor,
+		U32 backendMajor,
+		GpuVendor gpuVendor)
 		: m_alloc(alloc)
 		, m_fname(alloc, fname)
 		, m_fsystem(fsystem)
 		, m_pushConstSize(pushConstantsSize)
+		, m_backendMinor(backendMinor)
+		, m_backendMajor(backendMajor)
+		, m_gpuVendor(gpuVendor)
 	{
 	}
 
@@ -197,8 +213,8 @@ public:
 	ANKI_USE_RESULT Error parse();
 
 	/// Get the source (and a few more things) given a list of mutators.
-	ANKI_USE_RESULT Error generateSource(
-		ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates, ShaderProgramVariant& variant) const;
+	ANKI_USE_RESULT Error generateVariant(
+		ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates, ShaderProgramParserVariant& variant) const;
 
 	ConstWeakArray<ShaderProgramParserMutator> getMutators() const
 	{
@@ -246,9 +262,9 @@ private:
 	U32 m_instancedMutatorIdx = MAX_U32;
 	U32 m_specConstIdx = 0;
 	const U32 m_pushConstSize = 0;
-	const U32 m_backendMinor = 1; // TODO
-	const U32 m_backendMajor = 1; // TODO
-	const GpuVendor m_gpuVendor = GpuVendor::AMD; // TODO
+	const U32 m_backendMinor = 1;
+	const U32 m_backendMajor = 1;
+	const GpuVendor m_gpuVendor = GpuVendor::AMD;
 	Bool m_foundAtLeastOneInstancedInput = false;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);

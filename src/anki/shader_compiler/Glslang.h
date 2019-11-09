@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/shader_compiler/Common.h>
 #include <anki/gr/Enums.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE

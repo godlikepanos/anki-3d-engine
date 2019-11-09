@@ -384,8 +384,14 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
+	if(m_insideShader)
+	{
+		ANKI_PP_ERROR_MALFORMED_MSG("Can't have #pragma input inside shader blocks");
+	}
+
 	m_inputs.emplaceBack(m_alloc);
 	Input& input = m_inputs.getBack();
+	input.m_idx = U32(m_inputs.getSize() - 1);
 
 	// const
 	Bool isConst;
@@ -477,7 +483,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 		const U32 scalarType = shaderVariableScalarType(input.m_dataType);
 
 		// Add an tag for later pre-processing (when trying to see if the variable is present)
-		m_codeLines.pushBackSprintf("//_anki_input_pesent %s", input.m_name.cstr());
+		m_codeLines.pushBackSprintf("#pragma _anki_input_present_%s", input.m_name.cstr());
 
 		m_globalsLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", input.m_name.cstr());
 		m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
@@ -498,8 +504,9 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 
 			if(comp == 0)
 			{
-				inputDeclaration.sprintf("const %s = %s(_anki_const_%s_%u",
+				inputDeclaration.sprintf("const %s %s = %s(_anki_const_%s_%u",
 					dataTypeStr.cstr(),
+					input.m_name.cstr(),
 					dataTypeStr.cstr(),
 					input.m_name.cstr(),
 					comp);
@@ -536,7 +543,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 		}
 
 		// Add an tag for later pre-processing (when trying to see if the variable is present)
-		m_codeLines.pushBackSprintf("//_anki_input_pesent %s", input.m_name.cstr());
+		m_codeLines.pushBackSprintf("#pragma _anki_input_present_%s", input.m_name.cstr());
 
 		m_globalsLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", input.m_name.cstr());
 		m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
@@ -558,7 +565,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 		const char* type = dataTypeStr.cstr();
 
 		// Add an tag for later pre-processing (when trying to see if the variable is present)
-		m_codeLines.pushBackSprintf("//_anki_input_pesent %s", name);
+		m_codeLines.pushBackSprintf("#pragma _anki_input_present_%s", name);
 
 		if(input.m_instanced)
 		{
@@ -574,9 +581,9 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 			m_globalsLines.pushBack("#ifdef ANKI_VERTEX_SHADER");
 			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", name);
 			m_globalsLines.pushBack("#if _ANKI_INSTANCE_COUNT > 1");
-			m_globalsLines.pushBackSprintf("%s %s = _anki_unis._anki_uni_%s[gl_InstanceID];", type, name, name);
+			m_globalsLines.pushBackSprintf("const %s %s = _anki_unis._anki_uni_%s[gl_InstanceID];", type, name, name);
 			m_globalsLines.pushBack("#else");
-			m_globalsLines.pushBackSprintf("%s %s = _anki_unis._anki_uni_%s;", type, name, name);
+			m_globalsLines.pushBackSprintf("const %s %s = _anki_unis._anki_uni_%s;", type, name, name);
 			m_globalsLines.pushBack("#endif");
 			m_globalsLines.pushBack("#endif //ANKI_VERTEX_SHADER");
 			m_globalsLines.pushBack("#else");
@@ -590,7 +597,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 			m_uboStructLines.pushBack("#endif");
 
 			m_globalsLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", name);
-			m_globalsLines.pushBackSprintf("%s %s = _anki_unis_._anki_uni_%s;", type, name, name);
+			m_globalsLines.pushBackSprintf("const %s %s = _anki_unis_._anki_uni_%s;", type, name, name);
 			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", name);
 			m_globalsLines.pushBack("#else");
 			m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", name);
@@ -958,6 +965,7 @@ Error ShaderProgramParser::parse()
 	// Create the globals source code
 	if(m_globalsLines.getSize() > 0)
 	{
+		m_globalsLines.pushBack("\n");
 		m_globalsLines.join("\n", m_globalsSource);
 		m_globalsLines.destroy();
 	}
@@ -965,6 +973,7 @@ Error ShaderProgramParser::parse()
 	// Create the code lines
 	if(m_codeLines.getSize())
 	{
+		m_codeLines.pushBack("\n");
 		m_codeLines.join("\n", m_codeSource);
 		m_codeLines.destroy();
 	}
@@ -982,22 +991,23 @@ Error ShaderProgramParser::findActiveInputVars(CString source, BitSet<MAX_SHADER
 
 	for(const String& line : lines)
 	{
-		if(line.find("//_anki_input_pesent") == String::NPOS)
+		const CString prefix = "#pragma _anki_input_present_";
+		if(line.find(prefix) == String::NPOS)
 		{
 			continue;
 		}
 
-		DynamicArrayAuto<StringAuto> tokens(m_alloc);
-		tokenizeLine(line, tokens);
-		ANKI_ASSERT(tokens.getSize() == 2);
+		ANKI_ASSERT(line.getLength() > prefix.getLength());
+		const CString varName = line.getBegin() + prefix.getLength();
 
 		// Find the input var
 		Bool found = false;
 		for(const Input& in : m_inputs)
 		{
-			if(in.m_name == tokens[1])
+			if(in.m_name == varName)
 			{
 				active.set(in.m_idx);
+				found = true;
 				break;
 			}
 		}
@@ -1008,8 +1018,8 @@ Error ShaderProgramParser::findActiveInputVars(CString source, BitSet<MAX_SHADER
 	return Error::NONE;
 }
 
-Error ShaderProgramParser::generateSource(
-	ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates, ShaderProgramVariant& variant) const
+Error ShaderProgramParser::generateVariant(
+	ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates, ShaderProgramParserVariant& variant) const
 {
 	// Sanity checks
 	ANKI_ASSERT(m_codeSource.getLength() > 0);
@@ -1035,6 +1045,7 @@ Error ShaderProgramParser::generateSource(
 	}
 
 	// Init variant
+	::new(&variant) ShaderProgramParserVariant();
 	variant.m_alloc = m_alloc;
 	variant.m_bindings.create(m_alloc, m_inputs.getSize(), -1);
 	variant.m_blockInfos.create(m_alloc, m_inputs.getSize());
@@ -1068,7 +1079,7 @@ Error ShaderProgramParser::generateSource(
 	StringAuto header(m_alloc);
 	header.sprintf(SHADER_HEADER,
 		m_backendMinor,
-		m_backendMinor,
+		m_backendMajor,
 		GPU_VENDOR_STR[m_gpuVendor].cstr(),
 		MAX_BINDLESS_TEXTURES,
 		MAX_BINDLESS_IMAGES);
@@ -1081,7 +1092,7 @@ Error ShaderProgramParser::generateSource(
 		src.append(header);
 		src.append("#define ANKI_VERTEX_SHADER 1\n"); // Something random to avoid compilation errors
 		src.append(mutatorDefines);
-		src.append(m_globalsSource);
+		src.append(m_codeSource);
 		ANKI_CHECK(findActiveInputVars(src, variant.m_activeInputVarsMask));
 
 		StringListAuto lines(m_alloc);
@@ -1091,6 +1102,7 @@ Error ShaderProgramParser::generateSource(
 			lines.pushBackSprintf("#define _ANKI_ACTIVATE_INPUT_%s %u", in.m_name.cstr(), active);
 		}
 
+		lines.pushBack("\n");
 		lines.join("\n", activeInputs);
 	}
 

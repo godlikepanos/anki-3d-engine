@@ -8,6 +8,22 @@
 namespace anki
 {
 
+class GlslangCtx
+{
+public:
+	GlslangCtx()
+	{
+		glslang::InitializeProcess();
+	}
+
+	~GlslangCtx()
+	{
+		glslang::FinalizeProcess();
+	}
+};
+
+GlslangCtx g_glslangCtx;
+
 static TBuiltInResource setGlslangLimits()
 {
 	TBuiltInResource c = {};
