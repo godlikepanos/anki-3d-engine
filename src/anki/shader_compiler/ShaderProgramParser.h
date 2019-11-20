@@ -19,10 +19,8 @@ namespace anki
 class ShaderProgramParser;
 class ShaderProgramParserVariant;
 
-/// @addtogroup resource
+/// @addtogroup shader_compiler
 /// @{
-
-constexpr U32 MAX_SHADER_PROGRAM_INPUT_VARIABLES = 128;
 
 /// @memberof ShaderProgramParser
 class ShaderProgramParserMutator

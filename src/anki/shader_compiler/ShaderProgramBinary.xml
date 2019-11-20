@@ -1,0 +1,54 @@
+<serializer>
+	<includes>
+		<include file="&lt;anki/src/shader_compiler/Common.h&gt;"/>
+	</includes>
+
+	<classes>
+		<class name="ShaderProgramBinaryInput" comment="Shader program input variable">
+			<members>
+				<member name="m_name" type="char" pointer="true" array_size="m_nameSize" />
+				<member name="m_nameSize" type="U32" comment="It includes the '\0' char" />
+				<member name="m_firstSpecializationConstantIndex" type="U32" comment="It's MAX_U32 if it's not a constant" />
+				<member name="m_instanced" type="Bool" />
+				<member name="m_dataType" type="ShaderVariableDataType" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryMutator" comment="Shader program mutator">
+			<members>
+				<member name="m_name" type="char" pointer="true" array_size="m_nameSize" />
+				<member name="m_values" type="I32" pointer="true" array_size="m_valueCount" />
+				<member name="m_nameSize" type="U32" />
+				<member name="m_valueCount" type="U32" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryVariant">
+			<members>
+				<member name="m_mutatorValues" type="I32" pointer="true" array_size="m_mutatorValueCount" />
+				<member name="m_mutatorValueCount" type="U32" />
+				<member name="m_activeVariables" type="BitSet&lt;MAX_SHADER_PROGRAM_INPUT_VARIABLES, U32&gt;" />
+				<member name="m_codeIndex" type="U32" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryCode">
+			<members>
+				<member name="m_binary" type="U8" pointer="true" array_size="m_binarySize" />
+				<member name="m_binarySize" type="U32" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinary">
+			<members>
+				<member name="m_magic" type="U8" array_size="8" />
+				<member name="m_mutators" type="ShaderProgramBinaryMutator" pointer="true" array_size="m_mutatorCount" />
+				<member name="m_inputVariables" type="ShaderProgramBinaryInput" pointer="true" array_size="m_inputVariableCount" />
+				<member name="m_codeBlocks" type="ShaderProgramBinaryCode" pointer="true" array_size="m_codeBlockCount" />
+				<member name="m_mutatorCount" type="U32" />
+				<member name="m_inputVariableCount" type="U32" />
+				<member name="m_codeBlockCount" type="U32" />
+			</members>
+		</class>
+	</classes>
+</serializer>

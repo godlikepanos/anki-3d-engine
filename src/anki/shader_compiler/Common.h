@@ -7,8 +7,13 @@
 
 #include <anki/util/Logger.h>
 
+namespace anki
+{
+
 /// @addtogroup shader_compiler
 /// @{
+
+constexpr U32 MAX_SHADER_PROGRAM_INPUT_VARIABLES = 128;
 
 #define ANKI_SHADER_COMPILER_LOGI(...) ANKI_LOG(" SHC", NORMAL, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGE(...) ANKI_LOG(" SHC", ERROR, __VA_ARGS__)
@@ -16,3 +21,5 @@
 #define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG(" SHC", FATAL, __VA_ARGS__)
 
 /// @}
+
+} // end namespace anki

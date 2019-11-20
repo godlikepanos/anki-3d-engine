@@ -34,6 +34,12 @@ namespace anki
 #define ANKI_STRINGIZE(a) _ANKI_STRINGIZE(a)
 
 // ANKI_ENABLE_METHOD & ANKI_ENABLE_ARG trickery copied from Tick library
+template<typename T, int N>
+struct DummyType
+{
+};
+
+#if defined(_MSC_VER)
 template<bool B>
 struct RequiresBool
 {
@@ -54,12 +60,6 @@ struct PrivateEnum
 	};
 };
 
-template<typename T, int N>
-struct DummyType
-{
-};
-
-#if defined(_MSC_VER)
 #	define ANKI_REQUIRES_BOOL(line, ...) RequiresUnwrap<decltype(RequiresBool<(__VA_ARGS__)>{}), line>::VALUE
 
 #	define ANKI_ENABLE_INTERNAL(line, ...) \
@@ -223,7 +223,7 @@ inline void alignRoundDown(TAlignment alignment, TValue& value)
 template<typename Type>
 inline Bool isAligned(PtrSize alignment, Type value)
 {
-	return ((PtrSize)value % alignment) == 0;
+	return (PtrSize(value) % alignment) == 0;
 }
 
 template<typename T>

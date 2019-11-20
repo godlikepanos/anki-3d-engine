@@ -4,3 +4,12 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma once
+
+namespace anki
+{
+
+/// @addtogroup shader_compiler
+/// @{
+/// @}
+
+} // end namespace anki

@@ -23,8 +23,11 @@
 namespace anki
 {
 
+/// @addtogroup shader_compiler
+/// @{
 extern TBuiltInResource GLSLANG_LIMITS;
 
 EShLanguage ankiToGlslangShaderType(ShaderType shaderType);
+/// @}
 
 } // end namespace anki
