@@ -8,69 +8,35 @@
 namespace anki
 {
 
-Error BinarySerializer::alignFilePos(U32 alignment)
-{
-	ANKI_ASSERT(alignment <= ANKI_SAFE_ALIGNMENT);
-
-	if(!isAligned(alignment, m_filePos))
-	{
-		alignRoundUp(alignment, m_filePos);
-		ANKI_CHECK(m_file->seek(m_filePos, FileSeekOrigin::BEGINNING));
-	}
-
-	return Error::NONE;
-}
-
-Error BinarySerializer::writeArrayBasicType(const void* arr, PtrSize size, U32 alignment)
-{
-	ANKI_ASSERT(arr && size > 0);
-	check();
-
-	ANKI_CHECK(alignFilePos(alignment));
-
-	ANKI_CHECK(m_file->write(arr, size));
-	m_filePos += size;
-
-	check();
-	return Error::NONE;
-}
-
-Error BinarySerializer::writeDynamicArrayBasicType(const void* arr, PtrSize size, U32 alignment)
+Error BinarySerializer::doDynamicArrayBasicType(const void* arr, PtrSize size, U32 alignment, PtrSize memberOffset)
 {
 	ANKI_ASSERT(arr);
 	check();
 
-	// Write the array at the end of the file
-	void* pointerPos;
 	if(size == 0)
 	{
-		pointerPos = nullptr;
+		ANKI_ASSERT(arr == nullptr);
+		// Do nothing
 	}
 	else
 	{
-		// Move file pos to a new place
-		const PtrSize oldFilePos = m_filePos;
-		m_filePos = m_eofPos;
-		ANKI_CHECK(alignFilePos(alignment));
-		ANKI_CHECK(m_file->seek(m_filePos, FileSeekOrigin::BEGINNING));
-		m_eofPos = m_filePos + size;
+		ANKI_ASSERT(arr);
 
-		// Write data
+		// Move file pos to the end of the file (allocate space)
+		PtrSize arrayFilePos = getAlignedRoundUp(alignment, m_eofPos);
+		m_eofPos = arrayFilePos + size;
+
+		// Store the pointer for later
+		const PtrSize structFilePos = m_structureFilePos.getBack();
+		PointerInfo pinfo;
+		pinfo.m_filePos = structFilePos + memberOffset;
+		pinfo.m_value = arrayFilePos - m_beginOfDataFilePos;
+		m_pointerFilePositions.emplaceBack(m_alloc, pinfo);
+
+		// Write the array
+		ANKI_CHECK(m_file->seek(arrayFilePos, FileSeekOrigin::BEGINNING));
 		ANKI_CHECK(m_file->write(arr, size));
-
-		// Store the pos
-		pointerPos = numberToPtr<void*>(m_filePos);
-
-		// Restore file pos
-		m_filePos = oldFilePos;
-		ANKI_CHECK(m_file->seek(m_filePos, FileSeekOrigin::BEGINNING));
 	}
-
-	// Write the pointer
-	ANKI_CHECK(alignFilePos(alignof(void*)));
-	ANKI_CHECK(m_file->write(&pointerPos, sizeof(pointerPos)));
-	m_filePos += sizeof(pointerPos);
-	ANKI_ASSERT(m_filePos <= m_eofPos);
 
 	check();
 	return Error::NONE;

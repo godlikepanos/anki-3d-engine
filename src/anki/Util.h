@@ -38,6 +38,7 @@
 #include <anki/util/SparseArray.h>
 #include <anki/util/ObjectAllocator.h>
 #include <anki/util/Tracer.h>
+#include <anki/util/Serializer.h>
 
 /// @defgroup util Utilities (like STL)
 

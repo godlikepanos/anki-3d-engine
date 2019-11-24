@@ -20,12 +20,24 @@ public:
 	U8 m_darraySize;
 	U32* m_darray;
 
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& serializer, TClass self)
+	{
+		serializer.doArray("m_array", offsetof(ClassB, m_array), &self.m_array[0], 3);
+		serializer.doValue("m_darraySize", offsetof(ClassB, m_darraySize), self.m_darraySize);
+		serializer.doDynamicArray("m_darray", offsetof(ClassB, m_darray), self.m_darray, self.m_darraySize);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ClassB&>(deserializer, *this);
+	}
+
 	template<typename TSerializer>
 	void serialize(TSerializer& serializer) const
 	{
-		serializer.writeArray(&m_array[0], 3);
-		serializer.writeValue(m_darraySize);
-		serializer.writeDynamicArray(m_darray, m_darraySize);
+		serializeCommon<TSerializer, const ClassB&>(serializer, *this);
 	}
 };
 
@@ -38,13 +50,25 @@ public:
 	U64 m_u64;
 	ClassB* m_darray;
 
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& serializer, TClass self)
+	{
+		serializer.doArray("m_array", offsetof(ClassA, m_array), &self.m_array[0], 2);
+		serializer.doValue("m_u32", offsetof(ClassA, m_u32), self.m_u32);
+		serializer.doValue("m_u64", offsetof(ClassA, m_u64), self.m_u64);
+		serializer.doDynamicArray("m_darray", offsetof(ClassA, m_darray), self.m_darray, self.m_u32);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ClassA&>(deserializer, *this);
+	}
+
 	template<typename TSerializer>
 	void serialize(TSerializer& serializer) const
 	{
-		serializer.writeArray(&m_array[0], 2);
-		serializer.writeValue(m_u32);
-		serializer.writeValue(m_u64);
-		serializer.writeDynamicArray(m_darray, m_u32);
+		serializeCommon<TSerializer, const ClassA&>(serializer, *this);
 	}
 };
 

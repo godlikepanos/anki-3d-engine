@@ -124,24 +124,49 @@ def gen_class(root_el):
             writeln("%s %s; %s" % (member.base_type, member.name, comment))
     ident(-1)
 
-    # Write the serializer code
+    # Write the serialization and deserialization code
     writeln("")
     ident(1)
-    writeln("template<typename TSerializer>")
-    writeln("void serialize(TSerializer& serializer) const")
+    writeln("template<typename TSerializer, typename TClass>")
+    writeln("static void serializeCommon(TSerializer& serializer, TClass self)")
     writeln("{")
     ident(1)
 
     for member in member_arr:
         if member.pointer and str(member.array_size) == 1:
-            writeln("serializer.writePointer(%s);" % member.name)
+            writeln("serializer.doPointer(\"%s\", offsetof(%s, %s), self.%s);" % (member.name, name, member.name,
+                                                                                  member.name))
         elif member.pointer:
-            writeln("serializer.writeDynamicArray(%s, %s);" % (member.name, member.array_size))
+            writeln("serializer.doDynamicArray(\"%s\", offsetof(%s, %s), self.%s, self.%s);" %
+                    (member.name, name, member.name, member.name, member.array_size))
         elif member.array_size > 1:
-            writeln("serializer.writeArray(&%s[0], %d);" % (member.name, member.array_size))
+            writeln("serializer.doArray(\"%s\", offsetof(%s, %s), &self.%s[0], %d);" % (member.name, name, member.name,
+                                                                                        member.name, member.array_size))
         else:
-            writeln("serializer.writeValue(%s);" % member.name)
+            writeln("serializer.doValue(\"%s\", offsetof(%s, %s), self.%s);" % (member.name, name, member.name,
+                                                                                member.name))
 
+    ident(-1)
+    writeln("}")
+    ident(-1)
+
+    # Write the methods
+    writeln("")
+    ident(1)
+    writeln("template<typename TDeserializer>")
+    writeln("void deserialize(TDeserializer& deserializer)")
+    writeln("{")
+    ident(1)
+    writeln("serializeCommon<TDeserializer, %s&>(deserializer, *this);" % name)
+    ident(-1)
+    writeln("}")
+    writeln("")
+
+    writeln("template<typename TSerializer>")
+    writeln("void serialize(TSerializer& serializer) const")
+    writeln("{")
+    ident(1)
+    writeln("serializeCommon<TSerializer, const %s&>(serializer, *this);" % name)
     ident(-1)
     writeln("}")
     ident(-1)
