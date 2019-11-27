@@ -6,28 +6,21 @@
 #pragma once
 
 #include <anki/shader_compiler/Common.h>
+#include <anki/util/String.h>
 #include <anki/gr/Enums.h>
-
-#if ANKI_COMPILER_GCC_COMPATIBLE
-#	pragma GCC diagnostic push
-#	pragma GCC diagnostic ignored "-Wundef"
-#	pragma GCC diagnostic ignored "-Wconversion"
-#endif
-#include <glslang/Public/ShaderLang.h>
-#include <glslang/SPIRV/GlslangToSpv.h>
-#include <glslang/StandAlone/DirStackFileIncluder.h>
-#if ANKI_COMPILER_GCC_COMPATIBLE
-#	pragma GCC diagnostic pop
-#endif
 
 namespace anki
 {
 
 /// @addtogroup shader_compiler
 /// @{
-extern TBuiltInResource GLSLANG_LIMITS;
 
-EShLanguage ankiToGlslangShaderType(ShaderType shaderType);
+/// Run glslang's preprocessor.
+ANKI_USE_RESULT Error preprocessGlsl(CString in, StringAuto& out);
+
+/// Compile glsl to SPIR-V.
+ANKI_USE_RESULT Error compilerGlslToSpirv(
+	CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc, DynamicArrayAuto<U8>& spirv);
 /// @}
 
 } // end namespace anki

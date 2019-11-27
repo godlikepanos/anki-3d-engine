@@ -46,15 +46,15 @@ public:
 		return m_values;
 	}
 
-	Bool isInstanced() const
+	Bool isInstanceCount() const
 	{
-		return m_instanced;
+		return m_instanceCount;
 	}
 
 private:
 	StringAuto m_name;
 	DynamicArrayAuto<I32> m_values;
-	Bool m_instanced = false;
+	Bool m_instanceCount = false;
 };
 
 /// @memberof ShaderProgramParser
@@ -139,9 +139,15 @@ public:
 		return m_sources[type];
 	}
 
-	Bool isInputActive(const ShaderProgramParserInput& in)
+	Bool isInputActive(const ShaderProgramParserInput& in) const
 	{
 		return m_activeInputVarsMask.get(in.m_idx);
+	}
+
+	const ShaderVariableBlockInfo& getBlockInfo(const ShaderProgramParserInput& in) const
+	{
+		ANKI_ASSERT(in.inUbo() && isInputActive(in));
+		return m_blockInfos[in.m_idx];
 	}
 
 private:
@@ -162,14 +168,6 @@ public:
 	ShaderProgramParserMutator::ValueType m_value = MAX_I32;
 };
 
-/// An interface used by the ShaderProgramParser to abstract file loading.
-/// @memberof ShaderProgramParser
-class ShaderProgramParserFilesystemInterface
-{
-public:
-	ANKI_USE_RESULT virtual Error readAllText(CString filename, StringAuto& txt) = 0;
-};
-
 /// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
 /// in the shader programs.
 ///
@@ -187,7 +185,7 @@ class ShaderProgramParser : public NonCopyable
 {
 public:
 	ShaderProgramParser(CString fname,
-		ShaderProgramParserFilesystemInterface* fsystem,
+		ShaderProgramFilesystemInterface* fsystem,
 		GenericMemoryPoolAllocator<U8> alloc,
 		U32 pushConstantsSize,
 		U32 backendMinor,
@@ -242,7 +240,7 @@ private:
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	StringAuto m_fname;
-	ShaderProgramParserFilesystemInterface* m_fsystem = nullptr;
+	ShaderProgramFilesystemInterface* m_fsystem = nullptr;
 
 	StringListAuto m_codeLines = {m_alloc}; ///< The code.
 	StringListAuto m_globalsLines = {m_alloc};

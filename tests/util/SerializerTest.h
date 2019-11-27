@@ -17,8 +17,8 @@ class ClassB
 {
 public:
 	Array<U8, 3> m_array;
-	U8 m_darraySize;
 	U32* m_darray;
+	U8 m_darraySize;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& serializer, TClass self)

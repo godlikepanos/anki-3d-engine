@@ -10,7 +10,7 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
-	class FilesystemInterface : public ShaderProgramParserFilesystemInterface
+	class FilesystemInterface : public ShaderProgramFilesystemInterface
 	{
 	public:
 		U32 count = 0;

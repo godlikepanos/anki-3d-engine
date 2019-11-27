@@ -7,7 +7,9 @@
 
 #pragma once
 
-#include <anki/src/shader_compiler/Common.h>
+#include <anki/shader_compiler/Common.h>
+#include <anki/shader_compiler/ShaderProgramBinaryExtra.h>
+#include <anki/gr/Enums.h>
 
 namespace anki
 {
@@ -22,12 +24,28 @@ public:
 	Bool m_instanced;
 	ShaderVariableDataType m_dataType;
 
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& s, TClass self)
+	{
+		s.doValue("m_nameSize", offsetof(ShaderProgramBinaryInput, m_nameSize), self.m_nameSize);
+		s.doValue("m_firstSpecializationConstantIndex",
+			offsetof(ShaderProgramBinaryInput, m_firstSpecializationConstantIndex),
+			self.m_firstSpecializationConstantIndex);
+		s.doValue("m_instanced", offsetof(ShaderProgramBinaryInput, m_instanced), self.m_instanced);
+		s.doValue("m_dataType", offsetof(ShaderProgramBinaryInput, m_dataType), self.m_dataType);
+		s.doDynamicArray("m_name", offsetof(ShaderProgramBinaryInput, m_name), self.m_name, self.m_nameSize);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ShaderProgramBinaryInput&>(deserializer, *this);
+	}
+
 	template<typename TSerializer>
 	void serialize(TSerializer& serializer) const
 	{
-		serializer.writeDynamicArray(m_name, m_nameSize);
-		serializer.writeValue(m_nameSize) serializer.writeValue(m_firstSpecializationConstantIndex)
-			serializer.writeValue(m_instanced) serializer.writeValue(m_dataType)
+		serializeCommon<TSerializer, const ShaderProgramBinaryInput&>(serializer, *this);
 	}
 };
 
@@ -39,13 +57,28 @@ public:
 	I32* m_values;
 	U32 m_nameSize;
 	U32 m_valueCount;
+	Bool m_instanceCount;
+
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& s, TClass self)
+	{
+		s.doValue("m_nameSize", offsetof(ShaderProgramBinaryMutator, m_nameSize), self.m_nameSize);
+		s.doValue("m_valueCount", offsetof(ShaderProgramBinaryMutator, m_valueCount), self.m_valueCount);
+		s.doValue("m_instanceCount", offsetof(ShaderProgramBinaryMutator, m_instanceCount), self.m_instanceCount);
+		s.doDynamicArray("m_name", offsetof(ShaderProgramBinaryMutator, m_name), self.m_name, self.m_nameSize);
+		s.doDynamicArray("m_values", offsetof(ShaderProgramBinaryMutator, m_values), self.m_values, self.m_valueCount);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ShaderProgramBinaryMutator&>(deserializer, *this);
+	}
 
 	template<typename TSerializer>
 	void serialize(TSerializer& serializer) const
 	{
-		serializer.writeDynamicArray(m_name, m_nameSize);
-		serializer.writeDynamicArray(m_values, m_valueCount);
-		serializer.writeValue(m_nameSize) serializer.writeValue(m_valueCount)
+		serializeCommon<TSerializer, const ShaderProgramBinaryMutator&>(serializer, *this);
 	}
 };
 
@@ -53,17 +86,57 @@ public:
 class ShaderProgramBinaryVariant
 {
 public:
+	Array<U64, MAX_SHADER_PROGRAM_INPUT_VARIABLES / (sizeof(U64) * 8)> m_activeVariables;
 	I32* m_mutatorValues;
+	ShaderVariableBlockInfo* m_blockInfos;
+	I16* m_bindings;
 	U32 m_mutatorValueCount;
-	BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES, U32> m_activeVariables;
-	U32 m_codeIndex;
+	U32 m_inputVariableCount;
+	Array<U32, U32(ShaderType::COUNT)> m_binaryIndices; ///< Index in ShaderProgramBinary::m_codeBlocks.
+	U32 m_blockSize;
+	Bool m_usesPushConstants;
+
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& s, TClass self)
+	{
+		s.doArray("m_activeVariables",
+			offsetof(ShaderProgramBinaryVariant, m_activeVariables),
+			&self.m_activeVariables[0],
+			MAX_SHADER_PROGRAM_INPUT_VARIABLES / (sizeof(U64) * 8));
+		s.doValue(
+			"m_mutatorValueCount", offsetof(ShaderProgramBinaryVariant, m_mutatorValueCount), self.m_mutatorValueCount);
+		s.doValue("m_inputVariableCount",
+			offsetof(ShaderProgramBinaryVariant, m_inputVariableCount),
+			self.m_inputVariableCount);
+		s.doArray("m_binaryIndices",
+			offsetof(ShaderProgramBinaryVariant, m_binaryIndices),
+			&self.m_binaryIndices[0],
+			U32(ShaderType::COUNT));
+		s.doValue("m_blockSize", offsetof(ShaderProgramBinaryVariant, m_blockSize), self.m_blockSize);
+		s.doValue(
+			"m_usesPushConstants", offsetof(ShaderProgramBinaryVariant, m_usesPushConstants), self.m_usesPushConstants);
+		s.doDynamicArray("m_mutatorValues",
+			offsetof(ShaderProgramBinaryVariant, m_mutatorValues),
+			self.m_mutatorValues,
+			self.m_mutatorValueCount);
+		s.doDynamicArray("m_blockInfos",
+			offsetof(ShaderProgramBinaryVariant, m_blockInfos),
+			self.m_blockInfos,
+			self.m_inputVariableCount);
+		s.doDynamicArray(
+			"m_bindings", offsetof(ShaderProgramBinaryVariant, m_bindings), self.m_bindings, self.m_inputVariableCount);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ShaderProgramBinaryVariant&>(deserializer, *this);
+	}
 
 	template<typename TSerializer>
 	void serialize(TSerializer& serializer) const
 	{
-		serializer.writeDynamicArray(m_mutatorValues, m_mutatorValueCount);
-		serializer.writeValue(m_mutatorValueCount) serializer.writeValue(m_activeVariables)
-			serializer.writeValue(m_codeIndex)
+		serializeCommon<TSerializer, const ShaderProgramBinaryVariant&>(serializer, *this);
 	}
 };
 
@@ -72,13 +145,25 @@ class ShaderProgramBinaryCode
 {
 public:
 	U8* m_binary;
-	U32 m_binarySize;
+	PtrSize m_binarySize;
+
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& s, TClass self)
+	{
+		s.doValue("m_binarySize", offsetof(ShaderProgramBinaryCode, m_binarySize), self.m_binarySize);
+		s.doDynamicArray("m_binary", offsetof(ShaderProgramBinaryCode, m_binary), self.m_binary, self.m_binarySize);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ShaderProgramBinaryCode&>(deserializer, *this);
+	}
 
 	template<typename TSerializer>
 	void serialize(TSerializer& serializer) const
 	{
-		serializer.writeDynamicArray(m_binary, m_binarySize);
-		serializer.writeValue(m_binarySize)
+		serializeCommon<TSerializer, const ShaderProgramBinaryCode&>(serializer, *this);
 	}
 };
 
@@ -93,15 +178,39 @@ public:
 	U32 m_mutatorCount;
 	U32 m_inputVariableCount;
 	U32 m_codeBlockCount;
+	U32 m_descriptorSet;
+	ShaderTypeBit m_presentShaderTypes;
+
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& s, TClass self)
+	{
+		s.doArray("m_magic", offsetof(ShaderProgramBinary, m_magic), &self.m_magic[0], 8);
+		s.doValue("m_mutatorCount", offsetof(ShaderProgramBinary, m_mutatorCount), self.m_mutatorCount);
+		s.doValue(
+			"m_inputVariableCount", offsetof(ShaderProgramBinary, m_inputVariableCount), self.m_inputVariableCount);
+		s.doValue("m_codeBlockCount", offsetof(ShaderProgramBinary, m_codeBlockCount), self.m_codeBlockCount);
+		s.doValue("m_descriptorSet", offsetof(ShaderProgramBinary, m_descriptorSet), self.m_descriptorSet);
+		s.doValue(
+			"m_presentShaderTypes", offsetof(ShaderProgramBinary, m_presentShaderTypes), self.m_presentShaderTypes);
+		s.doDynamicArray("m_mutators", offsetof(ShaderProgramBinary, m_mutators), self.m_mutators, self.m_mutatorCount);
+		s.doDynamicArray("m_inputVariables",
+			offsetof(ShaderProgramBinary, m_inputVariables),
+			self.m_inputVariables,
+			self.m_inputVariableCount);
+		s.doDynamicArray(
+			"m_codeBlocks", offsetof(ShaderProgramBinary, m_codeBlocks), self.m_codeBlocks, self.m_codeBlockCount);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ShaderProgramBinary&>(deserializer, *this);
+	}
 
 	template<typename TSerializer>
 	void serialize(TSerializer& serializer) const
 	{
-		serializer.writeArray(m_magic, 8) serializer.writeDynamicArray(m_mutators, m_mutatorCount);
-		serializer.writeDynamicArray(m_inputVariables, m_inputVariableCount);
-		serializer.writeDynamicArray(m_codeBlocks, m_codeBlockCount);
-		serializer.writeValue(m_mutatorCount) serializer.writeValue(m_inputVariableCount)
-			serializer.writeValue(m_codeBlockCount)
+		serializeCommon<TSerializer, const ShaderProgramBinary&>(serializer, *this);
 	}
 };
 

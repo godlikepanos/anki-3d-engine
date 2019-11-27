@@ -4,6 +4,19 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/shader_compiler/Glslang.h>
+#include <anki/util/StringList.h>
+
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wundef"
+#	pragma GCC diagnostic ignored "-Wconversion"
+#endif
+#include <glslang/Public/ShaderLang.h>
+#include <glslang/SPIRV/GlslangToSpv.h>
+#include <glslang/StandAlone/DirStackFileIncluder.h>
+#if ANKI_COMPILER_GCC_COMPATIBLE
+#	pragma GCC diagnostic pop
+#endif
 
 namespace anki
 {
@@ -125,9 +138,9 @@ static TBuiltInResource setGlslangLimits()
 	return c;
 }
 
-TBuiltInResource GLSLANG_LIMITS = setGlslangLimits();
+static TBuiltInResource GLSLANG_LIMITS = setGlslangLimits();
 
-EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
+static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 {
 	EShLanguage gslangShader;
 	switch(shaderType)
@@ -156,6 +169,103 @@ EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 	};
 
 	return gslangShader;
+}
+
+static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
+{
+	StringAuto prettySrc(alloc);
+	StringListAuto lines(alloc);
+
+	static const char* padding = "==============================================================================";
+
+	lines.splitString(source, '\n', true);
+
+	I lineno = 0;
+	for(auto it = lines.getBegin(); it != lines.getEnd(); ++it)
+	{
+		++lineno;
+		StringAuto tmp(alloc);
+
+		if(!it->isEmpty())
+		{
+			tmp.sprintf("%8d: %s\n", lineno, &(*it)[0]);
+		}
+		else
+		{
+			tmp.sprintf("%8d:\n", lineno);
+		}
+
+		prettySrc.append(tmp);
+	}
+
+	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s",
+		padding,
+		&error[0],
+		padding,
+		&prettySrc[0],
+		padding,
+		&error[0]);
+}
+
+Error preprocessGlsl(CString in, StringAuto& out)
+{
+	glslang::TShader shader(EShLangVertex);
+	Array<const char*, 1> csrc = {{&in[0]}};
+	shader.setStrings(&csrc[0], 1);
+
+	DirStackFileIncluder includer;
+	EShMessages messages = EShMsgDefault;
+	std::string glslangOut;
+	if(!shader.preprocess(&GLSLANG_LIMITS, 450, ENoProfile, false, false, messages, &glslangOut, includer))
+	{
+		ANKI_SHADER_COMPILER_LOGE("Preprocessing failed:\n%s", shader.getInfoLog());
+		return Error::USER_DATA;
+	}
+
+	out.append(glslangOut.c_str());
+
+	return Error::NONE;
+}
+
+Error compilerGlslToSpirv(
+	CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc, DynamicArrayAuto<U8>& spirv)
+{
+	const EShLanguage stage = ankiToGlslangShaderType(shaderType);
+	const EShMessages messages = EShMessages(EShMsgSpvRules | EShMsgVulkanRules);
+	const glslang::EShTargetLanguageVersion langVersion = glslang::EShTargetSpv_1_3;
+
+	glslang::TShader shader(stage);
+	Array<const char*, 1> csrc = {{&src[0]}};
+	shader.setStrings(&csrc[0], 1);
+	shader.setEnvTarget(glslang::EShTargetSpv, langVersion);
+	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
+	{
+		logShaderErrorCode(shader.getInfoLog(), src, tmpAlloc);
+		return Error::USER_DATA;
+	}
+
+	// Setup the program
+	glslang::TProgram program;
+	program.addShader(&shader);
+
+	if(!program.link(messages))
+	{
+		ANKI_SHADER_COMPILER_LOGE("glslang failed to link a shader");
+		return Error::USER_DATA;
+	}
+
+	// Gen SPIRV
+	glslang::SpvOptions spvOptions;
+	spvOptions.optimizeSize = true;
+	spvOptions.disableOptimizer = false;
+	std::vector<unsigned int> glslangSpirv;
+	glslang::GlslangToSpv(*program.getIntermediate(stage), glslangSpirv, &spvOptions);
+
+	// Store
+	spirv.resize(glslangSpirv.size() * sizeof(unsigned int));
+	memcpy(&spirv[0], &glslangSpirv[0], spirv.getSizeInBytes());
+
+	return Error::NONE;
 }
 
 } // end namespace anki

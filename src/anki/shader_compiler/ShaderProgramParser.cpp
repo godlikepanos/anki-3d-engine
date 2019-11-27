@@ -216,26 +216,6 @@ static U32 shaderVariableScalarType(ShaderVariableDataType type)
 	return out;
 }
 
-static ANKI_USE_RESULT Error preprocessCommon(CString in, StringAuto& out)
-{
-	glslang::TShader shader(EShLangVertex);
-	Array<const char*, 1> csrc = {{&in[0]}};
-	shader.setStrings(&csrc[0], 1);
-
-	DirStackFileIncluder includer;
-	EShMessages messages = EShMsgDefault;
-	std::string glslangOut;
-	if(!shader.preprocess(&GLSLANG_LIMITS, 450, ENoProfile, false, false, messages, &glslangOut, includer))
-	{
-		ANKI_SHADER_COMPILER_LOGE("Preprocessing failed:\n%s", shader.getInfoLog());
-		return Error::USER_DATA;
-	}
-
-	out.append(glslangOut.c_str());
-
-	return Error::NONE;
-}
-
 void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const
 {
 	ANKI_ASSERT(line.getLength() > 0);
@@ -623,9 +603,9 @@ Error ShaderProgramParser::parsePragmaMutator(
 
 	// Instanced
 	{
-		if(*begin == "instanced")
+		if(*begin == "instanceCount")
 		{
-			mutator.m_instanced = true;
+			mutator.m_instanceCount = true;
 
 			// Check
 			if(m_instancedMutatorIdx != MAX_U32)
@@ -638,7 +618,7 @@ Error ShaderProgramParser::parsePragmaMutator(
 		}
 		else
 		{
-			mutator.m_instanced = false;
+			mutator.m_instanceCount = false;
 		}
 	}
 
@@ -702,7 +682,7 @@ Error ShaderProgramParser::parsePragmaMutator(
 	}
 
 	// Update some source
-	if(mutator.m_instanced)
+	if(mutator.m_instanceCount)
 	{
 		m_globalsLines.pushFrontSprintf("#define _ANKI_INSTANCE_COUNT %s", mutator.m_name.cstr());
 	}
@@ -984,7 +964,7 @@ Error ShaderProgramParser::parse()
 Error ShaderProgramParser::findActiveInputVars(CString source, BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES>& active) const
 {
 	StringAuto preprocessedSrc(m_alloc);
-	ANKI_CHECK(preprocessCommon(source, preprocessedSrc));
+	ANKI_CHECK(preprocessGlsl(source, preprocessedSrc));
 
 	StringListAuto lines(m_alloc);
 	lines.splitString(preprocessedSrc, '\n');

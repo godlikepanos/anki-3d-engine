@@ -13,6 +13,32 @@ namespace anki
 /// @addtogroup util_file
 /// @{
 
+#define _ANKI_SIMPLE_TYPE (std::is_integral<T>::value || std::is_floating_point<T>::value || std::is_enum<T>::value)
+
+/// Serialize functor. Used to add serialization code to classes that you can't add a serialize() method.
+template<typename T>
+class SerializeFunctor
+{
+public:
+	template<typename TSerializer>
+	void operator()(const T& x, TSerializer& serializer)
+	{
+		x.serialize(serializer);
+	}
+};
+
+/// Deserialize functor. Used to add deserialization code to classes that you can't add a serialize() method.
+template<typename T>
+class DeserializeFunctor
+{
+public:
+	template<typename TDeserializer>
+	void operator()(T& x, TDeserializer& deserializer)
+	{
+		x.deserialize(deserializer);
+	}
+};
+
 /// Serializes to binary files.
 class BinarySerializer : public NonCopyable
 {
@@ -39,8 +65,8 @@ public:
 		doArray(varName, memberOffset, &x, 1);
 	}
 
-	/// Write an array of int and float values. Can't call this directly.
-	template<typename T, ANKI_ENABLE(!std::is_integral<T>::value && !std::is_floating_point<T>::value)>
+	/// Write an array of complex values. Can't call this directly.
+	template<typename T, ANKI_ENABLE(!_ANKI_SIMPLE_TYPE)>
 	void doArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
 	{
 		if(!m_err)
@@ -49,8 +75,8 @@ public:
 		}
 	}
 
-	/// Write an array of complex types. Can't call this directly.
-	template<typename T, ANKI_ENABLE(std::is_integral<T>::value || std::is_floating_point<T>::value)>
+	/// Write an array of int or float types. Can't call this directly.
+	template<typename T, ANKI_ENABLE(_ANKI_SIMPLE_TYPE)>
 	void doArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
 	{
 		// Do nothing, it's already copied
@@ -64,7 +90,7 @@ public:
 	}
 
 	/// Write a dynamic array of complex types. Can't call this directly.
-	template<typename T, ANKI_ENABLE(!std::is_integral<T>::value && !std::is_floating_point<T>::value)>
+	template<typename T, ANKI_ENABLE(!_ANKI_SIMPLE_TYPE)>
 	void doDynamicArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
 	{
 		if(!m_err)
@@ -74,7 +100,7 @@ public:
 	}
 
 	/// Write a dynamic array of int and float values. Can't call this directly.
-	template<typename T, ANKI_ENABLE(std::is_integral<T>::value || std::is_floating_point<T>::value)>
+	template<typename T, ANKI_ENABLE(_ANKI_SIMPLE_TYPE)>
 	void doDynamicArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
 	{
 		if(!m_err)
@@ -120,6 +146,7 @@ private:
 	static void checkStruct()
 	{
 		static_assert(std::is_pod<T>::value, "Only PODs are supported in this serializer");
+		static_assert(alignof(T) <= ANKI_SAFE_ALIGNMENT, "Alignments can't exceed ANKI_SAFE_ALIGNMENT");
 	}
 };
 
@@ -134,35 +161,37 @@ public:
 	template<typename T>
 	static ANKI_USE_RESULT Error deserialize(T*& x, GenericMemoryPoolAllocator<U8> allocator, File& file);
 
-	/// Write a single value. Can't call this directly.
+	/// Read a single value. Can't call this directly.
 	template<typename T>
-	void doValue(CString varName, PtrSize memberOffset, const T& x)
+	void doValue(CString varName, PtrSize memberOffset, T& x)
 	{
 		// Do nothing
 	}
 
-	/// Write an array. Can't call this directly.
+	/// Read an array. Can't call this directly.
 	template<typename T>
-	void doArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
+	void doArray(CString varName, PtrSize memberOffset, T* arr, PtrSize size)
 	{
 		// Do nothing
 	}
 
-	/// Write a pointer. Can't call this directly.
+	/// Read a pointer. Can't call this directly.
 	template<typename T>
-	void doPointer(CString varName, PtrSize memberOffset, const T* ptr)
+	void doPointer(CString varName, PtrSize memberOffset, T* ptr)
 	{
 		// Do nothing
 	}
 
-	/// Write a dynamic array of complex types. Can't call this directly.
+	/// Read a dynamic array of complex types. Can't call this directly.
 	template<typename T>
-	void doDynamicArray(CString varName, PtrSize memberOffset, const T* arr, PtrSize size)
+	void doDynamicArray(CString varName, PtrSize memberOffset, T* arr, PtrSize size)
 	{
 		// Do nothing
 	}
 };
 /// @}
+
+#undef _ANKI_SIMPLE_TYPE
 
 } // end namespace anki
 

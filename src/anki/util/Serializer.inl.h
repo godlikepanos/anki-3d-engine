@@ -102,7 +102,7 @@ Error BinarySerializer::doArrayComplexType(const T* arr, PtrSize size)
 		m_structureFilePos.emplaceBack(m_alloc, structFilePos);
 
 		// Serialize the pointers
-		arr[i].serialize(*this);
+		SerializeFunctor<T>()(arr[i], *this);
 		ANKI_CHECK(m_err);
 
 		// Advance file pos
@@ -149,7 +149,7 @@ Error BinarySerializer::doDynamicArrayComplexType(const T* arr, PtrSize size, Pt
 		{
 			m_structureFilePos.emplaceBack(m_alloc, arrayFilePos);
 
-			arr[i].serialize(*this);
+			SerializeFunctor<T>()(arr[i], *this);
 
 			m_structureFilePos.popBack(m_alloc);
 			arrayFilePos += sizeof(T);

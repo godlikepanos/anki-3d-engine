@@ -17,3 +17,4 @@
 #include <anki/Gr.h>
 #include <anki/Core.h>
 #include <anki/Importer.h>
+#include <anki/ShaderCompiler.h>

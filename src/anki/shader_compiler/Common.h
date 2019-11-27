@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/util/Logger.h>
+#include <anki/util/String.h>
 
 namespace anki
 {
@@ -20,6 +21,12 @@ constexpr U32 MAX_SHADER_PROGRAM_INPUT_VARIABLES = 128;
 #define ANKI_SHADER_COMPILER_LOGW(...) ANKI_LOG(" SHC", WARNING, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG(" SHC", FATAL, __VA_ARGS__)
 
+/// An interface used by the ShaderProgramParser and ShaderProgramCompiler to abstract file loading.
+class ShaderProgramFilesystemInterface
+{
+public:
+	virtual ANKI_USE_RESULT Error readAllText(CString filename, StringAuto& txt) = 0;
+};
 /// @}
 
 } // end namespace anki

@@ -5,11 +5,58 @@
 
 #pragma once
 
+#include <anki/shader_compiler/ShaderProgramBinary.h>
+#include <anki/util/String.h>
+#include <anki/gr/Common.h>
+
 namespace anki
 {
 
 /// @addtogroup shader_compiler
 /// @{
+
+/// A wrapper over the POD ShaderProgramBinary class.
+/// @memberof ShaderProgramCompiler
+class ShaderProgramBinaryWrapper : public NonCopyable
+{
+	friend class ShaderProgramCompiler;
+
+public:
+	ShaderProgramBinaryWrapper(GenericMemoryPoolAllocator<U8> alloc)
+		: m_alloc(alloc)
+	{
+	}
+
+	~ShaderProgramBinaryWrapper()
+	{
+		cleanup();
+	}
+
+	ANKI_USE_RESULT Error serializeToFile(CString fname) const;
+
+	ANKI_USE_RESULT Error deserializeFromFile(CString fname);
+
+private:
+	GenericMemoryPoolAllocator<U8> m_alloc;
+	ShaderProgramBinary* m_binary = nullptr;
+	Bool m_singleAllocation = false;
+
+	void cleanup();
+};
+
+/// Takes an AnKi special shader program and spits a binary.
+class ShaderProgramCompiler : public NonCopyable
+{
+public:
+	ANKI_USE_RESULT Error compile(CString fname,
+		ShaderProgramFilesystemInterface* fsystem,
+		GenericMemoryPoolAllocator<U8> tempAllocator,
+		U32 pushConstantsSize,
+		U32 backendMinor,
+		U32 backendMajor,
+		GpuVendor gpuVendor,
+		ShaderProgramBinaryWrapper& binary);
+};
 /// @}
 
 } // end namespace anki

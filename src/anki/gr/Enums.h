@@ -469,6 +469,12 @@ enum class ShaderTypeBit : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit, inline)
 
+inline ShaderTypeBit shaderTypeToBit(ShaderType type)
+{
+	ANKI_ASSERT(type < ShaderType::COUNT);
+	return ShaderTypeBit(1 << U32(type));
+}
+
 enum class ShaderVariableDataType : U8
 {
 	NONE,

@@ -34,6 +34,19 @@ class MemberInfo:
         self.comment = None
         self.pointer = False
 
+    def is_dynamic_array(self, member_arr):
+        if not self.pointer:
+            return False
+
+        for member in member_arr:
+            if member.name == str(member.array_size):
+                return False
+
+        return True
+
+    def is_pointer(self, member_arr):
+        return self.pointer and not self.is_dynamic_array(member_arr)
+
 
 def parse_commandline():
     """ Parse the command line arguments """
@@ -94,9 +107,7 @@ def gen_class(root_el):
 
         member.array_size = member_el.get("array_size")
         if not member.array_size:
-            member.array_size = 1
-        elif str(member.array_size).isdigit():
-            member.array_size = int(member.array_size)
+            member.array_size = "1"
 
         if member_el.get("pointer") and member_el.get("pointer") == "true":
             member.pointer = True
@@ -118,33 +129,35 @@ def gen_class(root_el):
 
         if member.pointer:
             writeln("%s* %s; %s" % (member.base_type, member.name, comment))
-        elif member.array_size > 1:
-            writeln("Array<%s, %d> %s; %s" % (member.base_type, member.array_size, member.name, comment))
+        elif member.array_size != "1":
+            writeln("Array<%s, %s> %s; %s" % (member.base_type, member.array_size, member.name, comment))
         else:
             writeln("%s %s; %s" % (member.base_type, member.name, comment))
     ident(-1)
+
+    # Before serialize make sure the dynamic arrays are last
+    member_arr_copy = member_arr.copy()
+    member_arr.sort(key=lambda x: x.is_dynamic_array(member_arr_copy))
 
     # Write the serialization and deserialization code
     writeln("")
     ident(1)
     writeln("template<typename TSerializer, typename TClass>")
-    writeln("static void serializeCommon(TSerializer& serializer, TClass self)")
+    writeln("static void serializeCommon(TSerializer& s, TClass self)")
     writeln("{")
     ident(1)
 
     for member in member_arr:
-        if member.pointer and str(member.array_size) == 1:
-            writeln("serializer.doPointer(\"%s\", offsetof(%s, %s), self.%s);" % (member.name, name, member.name,
-                                                                                  member.name))
-        elif member.pointer:
-            writeln("serializer.doDynamicArray(\"%s\", offsetof(%s, %s), self.%s, self.%s);" %
-                    (member.name, name, member.name, member.name, member.array_size))
-        elif member.array_size > 1:
-            writeln("serializer.doArray(\"%s\", offsetof(%s, %s), &self.%s[0], %d);" % (member.name, name, member.name,
-                                                                                        member.name, member.array_size))
+        if member.is_pointer(member_arr_copy):
+            writeln("s.doPointer(\"%s\", offsetof(%s, %s), self.%s);" % (member.name, name, member.name, member.name))
+        elif member.is_dynamic_array(member_arr_copy):
+            writeln("s.doDynamicArray(\"%s\", offsetof(%s, %s), self.%s, self.%s);" % (member.name, name, member.name,
+                                                                                       member.name, member.array_size))
+        elif member.array_size != "1":
+            writeln("s.doArray(\"%s\", offsetof(%s, %s), &self.%s[0], %s);" % (member.name, name, member.name,
+                                                                               member.name, member.array_size))
         else:
-            writeln("serializer.doValue(\"%s\", offsetof(%s, %s), self.%s);" % (member.name, name, member.name,
-                                                                                member.name))
+            writeln("s.doValue(\"%s\", offsetof(%s, %s), self.%s);" % (member.name, name, member.name, member.name))
 
     ident(-1)
     writeln("}")
