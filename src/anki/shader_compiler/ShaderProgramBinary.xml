@@ -8,8 +8,7 @@
 	<classes>
 		<class name="ShaderProgramBinaryInput" comment="Shader program input variable">
 			<members>
-				<member name="m_name" type="char" pointer="true" array_size="m_nameSize" />
-				<member name="m_nameSize" type="U32" comment="It includes the '\0' char" />
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
 				<member name="m_firstSpecializationConstantIndex" type="U32" comment="It's MAX_U32 if it's not a constant" />
 				<member name="m_instanced" type="Bool" />
 				<member name="m_dataType" type="ShaderVariableDataType" />
@@ -18,9 +17,8 @@
 
 		<class name="ShaderProgramBinaryMutator" comment="Shader program mutator">
 			<members>
-				<member name="m_name" type="char" pointer="true" array_size="m_nameSize" />
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
 				<member name="m_values" type="I32" pointer="true" array_size="m_valueCount" />
-				<member name="m_nameSize" type="U32" />
 				<member name="m_valueCount" type="U32" />
 				<member name="m_instanceCount" type="Bool" />
 			</members>
@@ -53,9 +51,11 @@
 				<member name="m_mutators" type="ShaderProgramBinaryMutator" pointer="true" array_size="m_mutatorCount" />
 				<member name="m_inputVariables" type="ShaderProgramBinaryInput" pointer="true" array_size="m_inputVariableCount" />
 				<member name="m_codeBlocks" type="ShaderProgramBinaryCode" pointer="true" array_size="m_codeBlockCount" />
+				<member name="m_variants" type="ShaderProgramBinaryVariant" pointer="true" array_size="m_variantCount" />
 				<member name="m_mutatorCount" type="U32" />
 				<member name="m_inputVariableCount" type="U32" />
 				<member name="m_codeBlockCount" type="U32" />
+				<member name="m_variantCount" type="U32" />
 				<member name="m_descriptorSet" type="U32" />
 				<member name="m_presentShaderTypes" type="ShaderTypeBit" />
 			</members>

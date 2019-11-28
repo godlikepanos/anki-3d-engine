@@ -426,12 +426,17 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 		}
 
 		// Check if there are duplicates
-		for(U i = 0; i < m_inputs.getSize() - 1; ++i)
+		for(PtrSize i = 0; i < m_inputs.getSize() - 1; ++i)
 		{
 			if(m_inputs[i].m_name == *begin)
 			{
 				ANKI_PP_ERROR_MALFORMED_MSG("Duplicate input");
 			}
+		}
+
+		if(begin->getLength() > MAX_SHADER_BINARY_NAME_LENGTH)
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Too big name");
 		}
 
 		input.m_name.create(begin->toCString());
@@ -637,6 +642,11 @@ Error ShaderProgramParser::parsePragmaMutator(
 			{
 				ANKI_PP_ERROR_MALFORMED_MSG("Duplicate mutator");
 			}
+		}
+
+		if(begin->getLength() > MAX_SHADER_BINARY_NAME_LENGTH)
+		{
+			ANKI_PP_ERROR_MALFORMED_MSG("Too big name");
 		}
 
 		mutator.m_name.create(begin->toCString());

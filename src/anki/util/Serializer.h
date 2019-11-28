@@ -145,7 +145,7 @@ private:
 	template<typename T>
 	static void checkStruct()
 	{
-		static_assert(std::is_pod<T>::value, "Only PODs are supported in this serializer");
+		static_assert(!std::is_polymorphic<T>::value, "Only PODs are supported in this serializer");
 		static_assert(alignof(T) <= ANKI_SAFE_ALIGNMENT, "Alignments can't exceed ANKI_SAFE_ALIGNMENT");
 	}
 };

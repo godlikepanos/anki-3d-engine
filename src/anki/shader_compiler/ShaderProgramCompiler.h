@@ -49,13 +49,13 @@ class ShaderProgramCompiler : public NonCopyable
 {
 public:
 	ANKI_USE_RESULT Error compile(CString fname,
-		ShaderProgramFilesystemInterface* fsystem,
+		ShaderProgramFilesystemInterface& fsystem,
 		GenericMemoryPoolAllocator<U8> tempAllocator,
 		U32 pushConstantsSize,
 		U32 backendMinor,
 		U32 backendMajor,
 		GpuVendor gpuVendor,
-		ShaderProgramBinaryWrapper& binary);
+		ShaderProgramBinaryWrapper& binary) const;
 };
 /// @}
 

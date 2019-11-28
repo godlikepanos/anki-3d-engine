@@ -150,6 +150,22 @@ public:
 		return m_blockInfos[in.m_idx];
 	}
 
+	U32 getBinding(const ShaderProgramParserInput& in) const
+	{
+		ANKI_ASSERT(in.isSampler() && in.isTexture() && m_bindings[in.m_idx] >= 0);
+		return U32(m_bindings[in.m_idx]);
+	}
+
+	U32 getBlockSize() const
+	{
+		return m_uniBlockSize;
+	}
+
+	Bool usesPushConstants() const
+	{
+		return m_usesPushConstants;
+	}
+
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	Array<String, U(ShaderType::COUNT)> m_sources;

@@ -28,7 +28,7 @@ public:
 	template<typename TSerializer>
 	void operator()(const ShaderVariableBlockInfo& x, TSerializer& serializer)
 	{
-		serializeShaderVariableBlockInfo<TSerializer, ShaderVariableBlockInfo&>(x, serializer);
+		serializeShaderVariableBlockInfo<TSerializer, const ShaderVariableBlockInfo&>(x, serializer);
 	}
 };
 
@@ -40,7 +40,7 @@ public:
 	template<typename TDeserializer>
 	void operator()(ShaderVariableBlockInfo& x, TDeserializer& deserialize)
 	{
-		serializeShaderVariableBlockInfo<TDeserializer, const ShaderVariableBlockInfo&>(x, deserialize);
+		serializeShaderVariableBlockInfo<TDeserializer, ShaderVariableBlockInfo&>(x, deserialize);
 	}
 };
 
