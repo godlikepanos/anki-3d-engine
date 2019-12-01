@@ -706,6 +706,11 @@ public:
 		return *this;
 	}
 
+	GenericMemoryPoolAllocator<Char> getAllocator() const
+	{
+		return m_alloc;
+	}
+
 	/// Initialize using a const string.
 	void create(const CStringType& cstr)
 	{

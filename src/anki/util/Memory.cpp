@@ -147,45 +147,6 @@ Bool BaseMemoryPool::isCreated() const
 	return m_allocCb != nullptr;
 }
 
-void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)
-{
-	void* out = nullptr;
-	switch(m_type)
-	{
-	case Type::HEAP:
-		out = static_cast<HeapMemoryPool*>(this)->allocate(size, alignmentBytes);
-		break;
-	case Type::STACK:
-		out = static_cast<StackMemoryPool*>(this)->allocate(size, alignmentBytes);
-		break;
-	case Type::CHAIN:
-		out = static_cast<ChainMemoryPool*>(this)->allocate(size, alignmentBytes);
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	return out;
-}
-
-void BaseMemoryPool::free(void* ptr)
-{
-	switch(m_type)
-	{
-	case Type::HEAP:
-		static_cast<HeapMemoryPool*>(this)->free(ptr);
-		break;
-	case Type::STACK:
-		static_cast<StackMemoryPool*>(this)->free(ptr);
-		break;
-	case Type::CHAIN:
-		static_cast<ChainMemoryPool*>(this)->free(ptr);
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-}
-
 HeapMemoryPool::HeapMemoryPool()
 	: BaseMemoryPool(Type::HEAP)
 {
@@ -249,6 +210,11 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 void HeapMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(isCreated());
+
+	if(ANKI_UNLIKELY(ptr == nullptr))
+	{
+		return;
+	}
 
 #if ANKI_MEM_SIGNATURES
 	U8* memU8 = static_cast<U8*>(ptr);
@@ -433,6 +399,11 @@ void StackMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(isCreated());
 
+	if(ANKI_UNLIKELY(ptr == nullptr))
+	{
+		return;
+	}
+
 	// ptr shouldn't be null or not aligned. If not aligned it was not
 	// allocated by this class
 	ANKI_ASSERT(ptr != nullptr && isAligned(m_alignmentBytes, ptr));
@@ -592,6 +563,7 @@ void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 void ChainMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(isCreated());
+
 	if(ANKI_UNLIKELY(ptr == nullptr))
 	{
 		return;

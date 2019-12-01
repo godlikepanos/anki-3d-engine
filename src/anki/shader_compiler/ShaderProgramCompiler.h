@@ -19,7 +19,14 @@ namespace anki
 /// @memberof ShaderProgramCompiler
 class ShaderProgramBinaryWrapper : public NonCopyable
 {
-	friend class ShaderProgramCompiler;
+	friend Error compileShaderProgram(CString fname,
+		ShaderProgramFilesystemInterface& fsystem,
+		GenericMemoryPoolAllocator<U8> tempAllocator,
+		U32 pushConstantsSize,
+		U32 backendMinor,
+		U32 backendMajor,
+		GpuVendor gpuVendor,
+		ShaderProgramBinaryWrapper& binary);
 
 public:
 	ShaderProgramBinaryWrapper(GenericMemoryPoolAllocator<U8> alloc)
@@ -45,18 +52,17 @@ private:
 };
 
 /// Takes an AnKi special shader program and spits a binary.
-class ShaderProgramCompiler : public NonCopyable
-{
-public:
-	ANKI_USE_RESULT Error compile(CString fname,
-		ShaderProgramFilesystemInterface& fsystem,
-		GenericMemoryPoolAllocator<U8> tempAllocator,
-		U32 pushConstantsSize,
-		U32 backendMinor,
-		U32 backendMajor,
-		GpuVendor gpuVendor,
-		ShaderProgramBinaryWrapper& binary) const;
-};
+ANKI_USE_RESULT Error compileShaderProgram(CString fname,
+	ShaderProgramFilesystemInterface& fsystem,
+	GenericMemoryPoolAllocator<U8> tempAllocator,
+	U32 pushConstantsSize,
+	U32 backendMinor,
+	U32 backendMajor,
+	GpuVendor gpuVendor,
+	ShaderProgramBinaryWrapper& binary);
+
+/// XXX
+void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable);
 /// @}
 
 } // end namespace anki

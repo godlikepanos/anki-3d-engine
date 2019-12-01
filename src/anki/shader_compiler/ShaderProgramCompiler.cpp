@@ -7,11 +7,12 @@
 #include <anki/shader_compiler/ShaderProgramParser.h>
 #include <anki/shader_compiler/Glslang.h>
 #include <anki/util/Serializer.h>
+#include <SPIRV-Cross/spirv_glsl.hpp>
 
 namespace anki
 {
 
-static const char* SHADER_BINARY_MAGIC = "ANKISHB1";
+static const char* SHADER_BINARY_MAGIC = "ANKISDR1";
 
 Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 {
@@ -22,6 +23,12 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 
 	BinarySerializer serializer;
 	ANKI_CHECK(serializer.serialize(*m_binary, m_alloc, file));
+
+	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], 0) != 0)
+	{
+		ANKI_SHADER_COMPILER_LOGE("Corrupted or wrong version of shader binary: %s", fname.cstr());
+		return Error::USER_DATA;
+	}
 
 	return Error::NONE;
 }
@@ -41,11 +48,73 @@ Error ShaderProgramBinaryWrapper::deserializeFromFile(CString fname)
 	return Error::NONE;
 }
 
-/// XXX
+void ShaderProgramBinaryWrapper::cleanup()
+{
+	if(m_binary == nullptr)
+	{
+		return;
+	}
+
+	if(!m_singleAllocation)
+	{
+		for(PtrSize i = 0; i < m_binary->m_mutatorCount; ++i)
+		{
+			m_alloc.getMemoryPool().free(m_binary->m_mutators[i].m_values);
+		}
+
+		m_alloc.getMemoryPool().free(m_binary->m_inputVariables);
+
+		for(PtrSize i = 0; i < m_binary->m_codeBlockCount; ++i)
+		{
+			m_alloc.getMemoryPool().free(m_binary->m_codeBlocks[i].m_binary);
+		}
+		m_alloc.getMemoryPool().free(m_binary->m_codeBlocks);
+
+		for(PtrSize i = 0; i < m_binary->m_variantCount; ++i)
+		{
+			m_alloc.getMemoryPool().free(m_binary->m_variants[i].m_mutatorValues);
+			m_alloc.getMemoryPool().free(m_binary->m_variants[i].m_blockInfos);
+			m_alloc.getMemoryPool().free(m_binary->m_variants[i].m_bindings);
+		}
+		m_alloc.getMemoryPool().free(m_binary->m_variants);
+	}
+
+	m_alloc.getMemoryPool().free(m_binary);
+}
+
+/// Spin the dials. Used to compute all mutator combinations.
 static Bool spinDials(DynamicArrayAuto<U32> dials, ConstWeakArray<ShaderProgramParserMutator> mutators)
 {
-	// XXX
-	return false;
+	ANKI_ASSERT(dials.getSize() == mutators.getSize() && dials.getSize() > 0);
+	constexpr Bool done = true;
+	constexpr Bool notDone = false;
+
+	U crntDial = dials.getSize() - 1;
+	while(true)
+	{
+		// Turn dial
+		++dials[crntDial];
+
+		if(dials[crntDial] >= mutators[crntDial].getValues().getSize())
+		{
+			if(crntDial == 0)
+			{
+				// Reached the 1st dial, stop spinning
+				return done;
+			}
+			else
+			{
+				dials[crntDial] = 0;
+				--crntDial;
+			}
+		}
+		else
+		{
+			return notDone;
+		}
+	}
+
+	return notDone;
 }
 
 static Error compileVariant(ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates,
@@ -78,7 +147,7 @@ static Error compileVariant(ConstWeakArray<ShaderProgramParserMutatorState> muta
 	// Compile stages
 	for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)
 	{
-		if(!(shaderTypeToBit(shaderType) & parser.getShaderStages()))
+		if(!(shaderTypeToBit(shaderType) & parser.getShaderTypes()))
 		{
 			variant.m_binaryIndices[shaderType] = MAX_U32;
 			continue;
@@ -167,14 +236,14 @@ static Error compileVariant(ConstWeakArray<ShaderProgramParserMutatorState> muta
 	return Error::NONE;
 }
 
-Error ShaderProgramCompiler::compile(CString fname,
+Error compileShaderProgram(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
 	U32 pushConstantsSize,
 	U32 backendMinor,
 	U32 backendMajor,
 	GpuVendor gpuVendor,
-	ShaderProgramBinaryWrapper& binaryW) const
+	ShaderProgramBinaryWrapper& binaryW)
 {
 	// Initialize the binary
 	binaryW.cleanup();
@@ -267,7 +336,7 @@ Error ShaderProgramCompiler::compile(CString fname,
 			ShaderProgramBinaryVariant& variant = *variants.emplaceBack();
 			ANKI_CHECK(
 				compileVariant(states, parser, variant, codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
-		} while(spinDials(dials, parser.getMutators()));
+		} while(!spinDials(dials, parser.getMutators()));
 
 		// Store to binary
 		binary.m_variantCount = U32(variants.getSizeInBytes());
@@ -285,18 +354,82 @@ Error ShaderProgramCompiler::compile(CString fname,
 
 		binary.m_variantCount = 1;
 		binary.m_variants = binaryAllocator.newInstance<ShaderProgramBinaryVariant>();
-		binary.m_variants = {};
 
 		ANKI_CHECK(compileVariant(
 			states, parser, binary.m_variants[0], codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
-		ANKI_ASSERT(codeBlocks.getSize() == 1);
+		ANKI_ASSERT(codeBlocks.getSize() == U32(__builtin_popcount(U32(parser.getShaderTypes()))));
 
 		binary.m_codeBlockCount = 1;
 		PtrSize size, storage;
 		codeBlocks.moveAndReset(binary.m_codeBlocks, size, storage);
 	}
 
+	// Misc
+	binary.m_descriptorSet = parser.getDescritproSet();
+	binary.m_presentShaderTypes = parser.getShaderTypes();
+
 	return Error::NONE;
+}
+
+void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable)
+{
+	GenericMemoryPoolAllocator<U8> alloc = humanReadable.getAllocator();
+	StringListAuto lines(alloc);
+
+	lines.pushBack("MUTATORS\n");
+	if(binary.m_mutatorCount > 0)
+	{
+		for(U i = 0; i < binary.m_mutatorCount; ++i)
+		{
+			lines.pushBackSprintf("\"%s\"", &binary.m_mutators[i].m_name[0]);
+			for(U j = 0; j < binary.m_mutators[i].m_valueCount; ++j)
+			{
+				lines.pushBackSprintf(" %d", binary.m_mutators[i].m_values[j]);
+			}
+			lines.pushBack("\n");
+		}
+	}
+	else
+	{
+		lines.pushBack("N/A\n");
+	}
+
+	lines.pushBack("\nINPUT VARIABLES\n");
+	if(binary.m_inputVariableCount > 0)
+	{
+		for(U i = 0; i < binary.m_inputVariableCount; ++i)
+		{
+			const ShaderProgramBinaryInput& input = binary.m_inputVariables[i];
+			lines.pushBackSprintf("\"%s\" ", &input.m_name[0]);
+			lines.pushBackSprintf("firstSpecializationConstant %" PRIu32 " ", input.m_firstSpecializationConstantIndex);
+			lines.pushBackSprintf("instanced  %" PRIu32 " ", U32(input.m_instanced));
+			lines.pushBackSprintf("dataType %" PRIu8 "\n", U8(input.m_dataType));
+		}
+	}
+	else
+	{
+		lines.pushBack("N/A\n");
+	}
+
+	lines.pushBack("\nBINARIES\n");
+	for(U i = 0; i < binary.m_codeBlockCount; ++i)
+	{
+		spirv_cross::CompilerGLSL::Options options;
+		options.vulkan_semantics = true;
+
+		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(binary.m_codeBlocks[i].m_binary);
+		ANKI_ASSERT((binary.m_codeBlocks[i].m_binarySize % (sizeof(unsigned int))) == 0);
+		std::vector<unsigned int> spv(spvb, spvb + binary.m_codeBlocks[i].m_binarySize / sizeof(unsigned int));
+		spirv_cross::CompilerGLSL compiler(spv);
+		compiler.set_common_options(options);
+
+		std::string glsl = compiler.compile();
+		lines.pushBackSprintf("idx %" PRIuFAST32 ":\n%s\n--------\n", i, glsl.c_str());
+	}
+
+	// TODO variants
+
+	lines.join("", humanReadable);
 }
 
 } // end namespace anki

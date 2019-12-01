@@ -230,7 +230,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 
 	// Set some other vars
 	m_descriptorSet = U8(pp.getDescritproSet());
-	m_shaderStages = pp.getShaderStages();
+	m_shaderStages = pp.getShaderTypes();
 	if(instancedMutatorIdx != MAX_U)
 	{
 		m_instancingMutator = &m_mutators[instancedMutatorIdx];
