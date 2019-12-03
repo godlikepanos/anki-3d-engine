@@ -7,6 +7,7 @@
 
 #include <anki/util/Logger.h>
 #include <anki/util/String.h>
+#include <anki/util/BitSet.h>
 
 namespace anki
 {
@@ -16,6 +17,8 @@ namespace anki
 
 constexpr U32 MAX_SHADER_PROGRAM_INPUT_VARIABLES = 128;
 constexpr U32 MAX_SHADER_BINARY_NAME_LENGTH = 63;
+
+using ActiveProgramInputVariableMask = BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES, U64>;
 
 #define ANKI_SHADER_COMPILER_LOGI(...) ANKI_LOG(" SHC", NORMAL, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGE(...) ANKI_LOG(" SHC", ERROR, __VA_ARGS__)

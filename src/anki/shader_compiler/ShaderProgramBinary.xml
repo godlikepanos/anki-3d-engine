@@ -26,7 +26,7 @@
 
 		<class name="ShaderProgramBinaryVariant">
 			<members>
-				<member name="m_activeVariables" type="U64" array_size="MAX_SHADER_PROGRAM_INPUT_VARIABLES / (sizeof(U64) * 8)" />
+				<member name="m_activeVariables" type="ActiveProgramInputVariableMask" constructor="false" />
 				<member name="m_mutatorValues" type="I32" pointer="true" array_size="m_mutatorValueCount" />
 				<member name="m_blockInfos" type="ShaderVariableBlockInfo" pointer="true" array_size="m_inputVariableCount" />
 				<member name="m_bindings" type="I16" pointer="true" array_size="m_inputVariableCount" />

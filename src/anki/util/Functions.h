@@ -33,6 +33,23 @@ namespace anki
 /// Make a preprocessor token a string.
 #define ANKI_STRINGIZE(a) _ANKI_STRINGIZE(a)
 
+/// Format to print bits
+#define ANKI_PRIb8 "c%c%c%c%c%c%c%c"
+#define ANKI_PRIb16 ANKI_PRIb8 "%c%c%c%c%c%c%c%c"
+#define ANKI_PRIb32 ANKI_PRIb16 "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
+#define ANKI_PRIb64 ANKI_PRIb32 "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
+
+#define _ANKI_FORMAT_HELPER(byte, bit) (U64(byte) & (U64(1) << U64(bit))) ? '1' : '0'
+
+#define ANKI_FORMAT_U8(byte) \
+	_ANKI_FORMAT_HELPER((byte), 7), _ANKI_FORMAT_HELPER((byte), 6), _ANKI_FORMAT_HELPER((byte), 5), \
+		_ANKI_FORMAT_HELPER((byte), 4), _ANKI_FORMAT_HELPER((byte), 3), _ANKI_FORMAT_HELPER((byte), 2), \
+		_ANKI_FORMAT_HELPER((byte), 1), _ANKI_FORMAT_HELPER((byte), 0)
+
+#define ANKI_FORMAT_U16(u16) ANKI_FORMAT_U8(u16 >> 8), ANKI_FORMAT_U8(u16)
+#define ANKI_FORMAT_U32(u32) ANKI_FORMAT_U16(u32 >> 16), ANKI_FORMAT_U16(u32)
+#define ANKI_FORMAT_U64(u64) ANKI_FORMAT_U32(u64 >> 32), ANKI_FORMAT_U32(u64)
+
 // ANKI_ENABLE_METHOD & ANKI_ENABLE_ARG trickery copied from Tick library
 template<typename T, int N>
 struct DummyType

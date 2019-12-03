@@ -83,11 +83,10 @@ void ShaderProgramBinaryWrapper::cleanup()
 }
 
 /// Spin the dials. Used to compute all mutator combinations.
-static Bool spinDials(DynamicArrayAuto<U32> dials, ConstWeakArray<ShaderProgramParserMutator> mutators)
+static Bool spinDials(DynamicArrayAuto<U32>& dials, ConstWeakArray<ShaderProgramParserMutator> mutators)
 {
 	ANKI_ASSERT(dials.getSize() == mutators.getSize() && dials.getSize() > 0);
-	constexpr Bool done = true;
-	constexpr Bool notDone = false;
+	Bool done = true;
 
 	U crntDial = dials.getSize() - 1;
 	while(true)
@@ -100,7 +99,8 @@ static Bool spinDials(DynamicArrayAuto<U32> dials, ConstWeakArray<ShaderProgramP
 			if(crntDial == 0)
 			{
 				// Reached the 1st dial, stop spinning
-				return done;
+				done = true;
+				break;
 			}
 			else
 			{
@@ -110,11 +110,12 @@ static Bool spinDials(DynamicArrayAuto<U32> dials, ConstWeakArray<ShaderProgramP
 		}
 		else
 		{
-			return notDone;
+			done = false;
+			break;
 		}
 	}
 
-	return notDone;
+	return done;
 }
 
 static Error compileVariant(ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates,
@@ -133,15 +134,14 @@ static Error compileVariant(ConstWeakArray<ShaderProgramParserMutatorState> muta
 
 	// Active vars
 	{
-		BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES, U64> active(false);
+		variant.m_activeVariables = ActiveProgramInputVariableMask(false);
 		for(PtrSize i = 0; i < parser.getInputs().getSize(); ++i)
 		{
 			if(parserVariant.isInputActive(parser.getInputs()[i]))
 			{
-				active.set(i, true);
+				variant.m_activeVariables.set(i, true);
 			}
 		}
-		variant.m_activeVariables = active.getData();
 	}
 
 	// Compile stages
@@ -333,13 +333,18 @@ Error compileShaderProgram(CString fname,
 		// - Populate the binary variant
 		do
 		{
+			for(PtrSize i = 0; i < parser.getMutators().getSize(); ++i)
+			{
+				states[i].m_value = parser.getMutators()[i].getValues()[dials[i]];
+			}
+
 			ShaderProgramBinaryVariant& variant = *variants.emplaceBack();
 			ANKI_CHECK(
 				compileVariant(states, parser, variant, codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
 		} while(!spinDials(dials, parser.getMutators()));
 
 		// Store to binary
-		binary.m_variantCount = U32(variants.getSizeInBytes());
+		binary.m_variantCount = U32(variants.getSize());
 		PtrSize size, storage;
 		variants.moveAndReset(binary.m_variants, size, storage);
 
@@ -359,7 +364,7 @@ Error compileShaderProgram(CString fname,
 			states, parser, binary.m_variants[0], codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
 		ANKI_ASSERT(codeBlocks.getSize() == U32(__builtin_popcount(U32(parser.getShaderTypes()))));
 
-		binary.m_codeBlockCount = 1;
+		binary.m_codeBlockCount = U32(codeBlocks.getSize());
 		PtrSize size, storage;
 		codeBlocks.moveAndReset(binary.m_codeBlocks, size, storage);
 	}
@@ -373,15 +378,17 @@ Error compileShaderProgram(CString fname,
 
 void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable)
 {
+#define ANKI_TAB "    "
+
 	GenericMemoryPoolAllocator<U8> alloc = humanReadable.getAllocator();
 	StringListAuto lines(alloc);
 
-	lines.pushBack("MUTATORS\n");
+	lines.pushBack("**MUTATORS**\n");
 	if(binary.m_mutatorCount > 0)
 	{
 		for(U i = 0; i < binary.m_mutatorCount; ++i)
 		{
-			lines.pushBackSprintf("\"%s\"", &binary.m_mutators[i].m_name[0]);
+			lines.pushBackSprintf(ANKI_TAB "\"%s\"", &binary.m_mutators[i].m_name[0]);
 			for(U j = 0; j < binary.m_mutators[i].m_valueCount; ++j)
 			{
 				lines.pushBackSprintf(" %d", binary.m_mutators[i].m_values[j]);
@@ -391,27 +398,31 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 	}
 	else
 	{
-		lines.pushBack("N/A\n");
+		lines.pushBack(ANKI_TAB "N/A\n");
 	}
 
-	lines.pushBack("\nINPUT VARIABLES\n");
+	lines.pushBack("\n**INPUT VARIABLES**\n");
 	if(binary.m_inputVariableCount > 0)
 	{
 		for(U i = 0; i < binary.m_inputVariableCount; ++i)
 		{
 			const ShaderProgramBinaryInput& input = binary.m_inputVariables[i];
-			lines.pushBackSprintf("\"%s\" ", &input.m_name[0]);
-			lines.pushBackSprintf("firstSpecializationConstant %" PRIu32 " ", input.m_firstSpecializationConstantIndex);
-			lines.pushBackSprintf("instanced  %" PRIu32 " ", U32(input.m_instanced));
+			lines.pushBackSprintf(ANKI_TAB "\"%s\" ", &input.m_name[0]);
+			if(input.m_firstSpecializationConstantIndex < MAX_U32)
+			{
+				lines.pushBackSprintf(
+					"firstSpecializationConstant %" PRIu32 " ", input.m_firstSpecializationConstantIndex);
+			}
+			lines.pushBackSprintf("instanced %" PRIu32 " ", U32(input.m_instanced));
 			lines.pushBackSprintf("dataType %" PRIu8 "\n", U8(input.m_dataType));
 		}
 	}
 	else
 	{
-		lines.pushBack("N/A\n");
+		lines.pushBack(ANKI_TAB "N/A\n");
 	}
 
-	lines.pushBack("\nBINARIES\n");
+	lines.pushBack("\n**BINARIES**\n");
 	for(U i = 0; i < binary.m_codeBlockCount; ++i)
 	{
 		spirv_cross::CompilerGLSL::Options options;
@@ -424,12 +435,106 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 		compiler.set_common_options(options);
 
 		std::string glsl = compiler.compile();
-		lines.pushBackSprintf("idx %" PRIuFAST32 ":\n%s\n--------\n", i, glsl.c_str());
+		StringListAuto sourceLines(alloc);
+		sourceLines.splitString(glsl.c_str(), '\n');
+		StringAuto newGlsl(alloc);
+		sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
+
+		lines.pushBackSprintf(ANKI_TAB "%" PRIuFAST32 " \n" ANKI_TAB ANKI_TAB "%s\n", i, newGlsl.cstr());
 	}
 
-	// TODO variants
+	lines.pushBack("\n**SHADER VARIANTS**\n");
+	for(U i = 0; i < binary.m_variantCount; ++i)
+	{
+		const ShaderProgramBinaryVariant& variant = binary.m_variants[i];
+
+		lines.pushBackSprintf(ANKI_TAB "%" PRIuFAST32 "\n", i);
+
+		// Misc
+		ANKI_ASSERT(variant.m_activeVariables.getData().getSize() == 2);
+		lines.pushBackSprintf(ANKI_TAB ANKI_TAB "activeVariables 0b%" ANKI_PRIb64 " 0b%" ANKI_PRIb64 " ",
+			ANKI_FORMAT_U64(variant.m_activeVariables.getData()[1]),
+			ANKI_FORMAT_U64(variant.m_activeVariables.getData()[0]));
+		lines.pushBackSprintf(
+			"blockSize %" PRIu32 " usesPushConstants %" PRIu8 "\n", variant.m_blockSize, variant.m_usesPushConstants);
+
+		// Mutator values
+		lines.pushBack(ANKI_TAB ANKI_TAB "mutatorValues ");
+		if(variant.m_mutatorValueCount > 0)
+		{
+			for(U j = 0; j < variant.m_mutatorValueCount; ++j)
+			{
+				lines.pushBackSprintf(
+					"\"%s\" %" PRId32 " ", &binary.m_mutators[j].m_name[0], variant.m_mutatorValues[j]);
+			}
+		}
+		else
+		{
+			lines.pushBack("N/A");
+		}
+		lines.pushBack("\n");
+
+		// Block infos
+		lines.pushBack(ANKI_TAB ANKI_TAB "blockInfos ");
+		if(variant.m_inputVariableCount > 0)
+		{
+			for(U j = 0; j < variant.m_inputVariableCount; ++j)
+			{
+				const ShaderVariableBlockInfo& inf = variant.m_blockInfos[j];
+				lines.pushBackSprintf("%" PRIi16 "|%" PRIi16 "|%" PRIi16 "|%" PRIi16 " ",
+					inf.m_offset,
+					inf.m_arraySize,
+					inf.m_arrayStride,
+					inf.m_matrixStride);
+			}
+		}
+		else
+		{
+			lines.pushBack("N/A");
+		}
+		lines.pushBack("\n");
+
+		// Bindings
+		lines.pushBack(ANKI_TAB ANKI_TAB "bindings ");
+		if(variant.m_inputVariableCount > 0)
+		{
+			for(U j = 0; j < variant.m_inputVariableCount; ++j)
+			{
+				if(variant.m_bindings[j] < 0)
+				{
+					lines.pushBack("N/A ");
+				}
+				else
+				{
+					lines.pushBackSprintf("%" PRIi16 " ", variant.m_bindings[j]);
+				}
+			}
+		}
+		else
+		{
+			lines.pushBack("N/A");
+		}
+		lines.pushBack("\n");
+
+		// Binary indices
+		lines.pushBack(ANKI_TAB ANKI_TAB "binaries ");
+		for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)
+		{
+			if(variant.m_binaryIndices[shaderType] < MAX_U32)
+			{
+				lines.pushBackSprintf("%" PRIu32 " ", variant.m_binaryIndices[shaderType]);
+			}
+			else
+			{
+				lines.pushBack("N/A ");
+			}
+		}
+		lines.pushBack("\n");
+	}
 
 	lines.join("", humanReadable);
+
+#undef ANKI_TAB
 }
 
 } // end namespace anki

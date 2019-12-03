@@ -262,8 +262,6 @@ Error ShaderProgramParser::parsePragmaDescriptorSet(
 		ANKI_PP_ERROR_MALFORMED_MSG("The descriptor set index is too high");
 	}
 
-	m_globalsLines.pushFrontSprintf("#define _ANKI_DSET %u", m_set);
-
 	return Error::NONE;
 }
 
@@ -489,7 +487,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 
 			if(comp == 0)
 			{
-				inputDeclaration.sprintf("const %s %s = %s(_anki_const_%s_%u",
+				inputDeclaration.sprintf("%s %s = %s(_anki_const_%s_%u",
 					dataTypeStr.cstr(),
 					input.m_name.cstr(),
 					dataTypeStr.cstr(),
@@ -515,7 +513,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 
 		m_globalsLines.pushBack("#else");
 		m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", input.m_name.cstr());
-		m_globalsLines.pushBack("#endf");
+		m_globalsLines.pushBack("#endif");
 	}
 	else if(isSampler || isTexture)
 	{
@@ -540,7 +538,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 
 		m_globalsLines.pushBack("#else");
 		m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", input.m_name.cstr());
-		m_globalsLines.pushBack("#endf");
+		m_globalsLines.pushBack("#endif");
 	}
 	else
 	{
@@ -935,8 +933,9 @@ Error ShaderProgramParser::parse()
 	}
 
 	// Create the UBO source code
-	if(m_uboStructLines.getSize() > 0)
 	{
+		m_uboStructLines.pushFrontSprintf("#define _ANKI_DSET %u", m_set);
+
 		m_uboStructLines.pushFront("struct _AnkiUniforms {");
 		m_uboStructLines.pushBack("};");
 
@@ -1217,6 +1216,8 @@ Error ShaderProgramParser::generateVariant(
 			variant.m_bindings[in.m_idx] = I16(texOrSamplerBinding++);
 		}
 
+		defines.pushBack(" ");
+
 		if(!defines.isEmpty())
 		{
 			defines.join("\n", bindingDefines);
@@ -1238,6 +1239,7 @@ Error ShaderProgramParser::generateVariant(
 		finalSource.append(StringAuto(m_alloc).sprintf("#define ANKI_%s 1\n", SHADER_STAGE_NAMES[shaderType].cstr()));
 		finalSource.append(activeInputs);
 		finalSource.append(pushConstantDefineSrc);
+		finalSource.append(bindingDefines);
 		finalSource.append(m_uboSource);
 		finalSource.append(m_globalsSource);
 		finalSource.append(m_codeSource);

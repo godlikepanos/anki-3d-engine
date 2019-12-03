@@ -84,7 +84,7 @@ public:
 class ShaderProgramBinaryVariant
 {
 public:
-	Array<U64, MAX_SHADER_PROGRAM_INPUT_VARIABLES / (sizeof(U64) * 8)> m_activeVariables;
+	ActiveProgramInputVariableMask m_activeVariables = {false};
 	I32* m_mutatorValues;
 	ShaderVariableBlockInfo* m_blockInfos;
 	I16* m_bindings;
@@ -97,10 +97,7 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray("m_activeVariables",
-			offsetof(ShaderProgramBinaryVariant, m_activeVariables),
-			&self.m_activeVariables[0],
-			MAX_SHADER_PROGRAM_INPUT_VARIABLES / (sizeof(U64) * 8));
+		s.doValue("m_activeVariables", offsetof(ShaderProgramBinaryVariant, m_activeVariables), self.m_activeVariables);
 		s.doValue(
 			"m_mutatorValueCount", offsetof(ShaderProgramBinaryVariant, m_mutatorValueCount), self.m_mutatorValueCount);
 		s.doValue("m_inputVariableCount",

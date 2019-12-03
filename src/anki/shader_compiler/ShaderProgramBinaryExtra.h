@@ -44,4 +44,35 @@ public:
 	}
 };
 
+/// Serialize ActiveProgramInputVariableMask
+template<typename TSerializer, typename T>
+void serializeActiveProgramInputVariableMask(T x, TSerializer& s)
+{
+	s.doArray("bitset", 0, &x.getData()[0], x.getData().getSize());
+}
+
+/// Serialize ActiveProgramInputVariableMask
+template<>
+class SerializeFunctor<ActiveProgramInputVariableMask>
+{
+public:
+	template<typename TSerializer>
+	void operator()(const ActiveProgramInputVariableMask& x, TSerializer& serializer)
+	{
+		serializeActiveProgramInputVariableMask<TSerializer, const ActiveProgramInputVariableMask&>(x, serializer);
+	}
+};
+
+/// Deserialize ActiveProgramInputVariableMask
+template<>
+class DeserializeFunctor<ActiveProgramInputVariableMask>
+{
+public:
+	template<typename TDeserializer>
+	void operator()(ActiveProgramInputVariableMask& x, TDeserializer& deserialize)
+	{
+		serializeShaderVariableBlockInfo<TDeserializer, ActiveProgramInputVariableMask&>(x, deserialize);
+	}
+};
+
 } // end namespace anki

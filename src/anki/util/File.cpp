@@ -471,6 +471,8 @@ PtrSize File::tell()
 	{
 		ANKI_ASSERT(0);
 	}
+
+	return 0;
 }
 
 Error File::identifyFile(const CString& filename,

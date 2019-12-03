@@ -25,7 +25,7 @@ ctx = Context()
 
 
 class MemberInfo:
-    __slots__ = ["name", "base_type", "array_size", "comment", "pointer"]
+    __slots__ = ["name", "base_type", "array_size", "comment", "pointer", "constructor"]
 
     def __init__(self):
         self.name = None
@@ -33,6 +33,7 @@ class MemberInfo:
         self.array_size = 1
         self.comment = None
         self.pointer = False
+        self.constructor = None
 
     def is_dynamic_array(self, member_arr):
         if not self.pointer:
@@ -117,6 +118,9 @@ def gen_class(root_el):
         if member_el.get("comment"):
             member.comment = member_el.get("comment")
 
+        if member_el.get("constructor"):
+            member.constructor = member_el.get("constructor")
+
         member_arr.append(member)
 
     # Write members
@@ -127,12 +131,17 @@ def gen_class(root_el):
         else:
             comment = ""
 
-        if member.pointer:
-            writeln("%s* %s; %s" % (member.base_type, member.name, comment))
-        elif member.array_size != "1":
-            writeln("Array<%s, %s> %s; %s" % (member.base_type, member.array_size, member.name, comment))
+        if member.constructor:
+            constructor = "= {%s}" % member.constructor
         else:
-            writeln("%s %s; %s" % (member.base_type, member.name, comment))
+            constructor = ""
+
+        if member.pointer:
+            writeln("%s* %s%s; %s" % (member.base_type, member.name, constructor, comment))
+        elif member.array_size != "1":
+            writeln("Array<%s, %s> %s%s; %s" % (member.base_type, member.array_size, member.name, constructor, comment))
+        else:
+            writeln("%s %s%s; %s" % (member.base_type, member.name, constructor, comment))
     ident(-1)
 
     # Before serialize make sure the dynamic arrays are last

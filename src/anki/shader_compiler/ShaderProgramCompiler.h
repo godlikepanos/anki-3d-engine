@@ -43,6 +43,12 @@ public:
 
 	ANKI_USE_RESULT Error deserializeFromFile(CString fname);
 
+	const ShaderProgramBinary& getBinary() const
+	{
+		ANKI_ASSERT(m_binary);
+		return *m_binary;
+	}
+
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	ShaderProgramBinary* m_binary = nullptr;

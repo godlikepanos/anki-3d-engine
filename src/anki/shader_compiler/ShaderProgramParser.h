@@ -152,7 +152,7 @@ public:
 
 	U32 getBinding(const ShaderProgramParserInput& in) const
 	{
-		ANKI_ASSERT(in.isSampler() && in.isTexture() && m_bindings[in.m_idx] >= 0);
+		ANKI_ASSERT((in.isSampler() || in.isTexture()) && m_bindings[in.m_idx] >= 0);
 		return U32(m_bindings[in.m_idx]);
 	}
 
