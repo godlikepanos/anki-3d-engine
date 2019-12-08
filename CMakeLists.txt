@@ -363,9 +363,10 @@ endif()
 
 # AnKi compiler flags (Mainly warnings)
 if(NOT MSVC)
-	add_definitions("-pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable "
-		"-Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result"
-		"-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess -std=c++14")
+	add_definitions("-pedantic -Wno-unknown-warning-option -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused "
+		"-Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wno-implicit-fallthrough -Wunused-result "
+		"-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess "
+		"-Wunused-variable -std=c++14")
 else()
 	add_definitions("/wd4996 /wd4244 /wd4262 /wd4267")
 endif()

@@ -389,7 +389,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 	ANKI_ASSERT(drawcallsCount);
 	ANKI_ASSERT(lods);
 
-	TileAllocatorResult res;
+	TileAllocatorResult res = TileAllocatorResult::ALLOCATION_FAILED;
 
 	// Allocate atlas tiles first. They may be cached and that will affect how many scratch tiles we'll need
 	for(U i = 0; i < faceCount; ++i)
