@@ -324,6 +324,15 @@ public:
 		resize(size);
 	}
 
+	/// With default value
+	template<typename TAllocator>
+	DynamicArrayAuto(TAllocator alloc, PtrSize size, const T& v)
+		: Base()
+		, m_alloc(alloc)
+	{
+		create(size, v);
+	}
+
 	/// Move.
 	DynamicArrayAuto(DynamicArrayAuto&& b)
 		: Base()

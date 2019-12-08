@@ -28,8 +28,6 @@ class ShaderProgramParserMutator
 	friend ShaderProgramParser;
 
 public:
-	using ValueType = I32;
-
 	ShaderProgramParserMutator(GenericMemoryPoolAllocator<U8> alloc)
 		: m_name(alloc)
 		, m_values(alloc)
@@ -41,7 +39,7 @@ public:
 		return m_name;
 	}
 
-	ConstWeakArray<I32> getValues() const
+	ConstWeakArray<MutatorValue> getValues() const
 	{
 		return m_values;
 	}
@@ -53,7 +51,7 @@ public:
 
 private:
 	StringAuto m_name;
-	DynamicArrayAuto<I32> m_values;
+	DynamicArrayAuto<MutatorValue> m_values;
 	Bool m_instanceCount = false;
 };
 
@@ -176,14 +174,6 @@ private:
 	BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES> m_activeInputVarsMask = {false};
 };
 
-/// @memberof ShaderProgramParser
-class ShaderProgramParserMutatorState
-{
-public:
-	const ShaderProgramParserMutator* m_mutator = nullptr;
-	ShaderProgramParserMutator::ValueType m_value = MAX_I32;
-};
-
 /// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
 /// in the shader programs.
 ///
@@ -191,12 +181,14 @@ public:
 /// #include {<> | ""}
 /// #pragma once
 /// #pragma anki mutator [instanced] NAME VALUE0 [VALUE1 [VALUE2] ...]
+/// #pragma anki rewrite_mutation NAME_A VALUE0 NAME_B VALUE1 [NAME_C VALUE3...] to
+///                               NAME_A VALUE4 NAME_B VALUE5 [NAME_C VALUE6...]
 /// #pragma anki input [const | instanced] TYPE NAME
 /// #pragma anki start {vert | tessc | tesse | geom | frag | comp}
 /// #pragma anki end
 /// #pragma anki descriptor_set <number>
 ///
-/// Only the "anki input" should be in an ifdef-like guard.
+/// Only the "anki input" should be in an ifdef-like guard. For everything else it's ignored.
 class ShaderProgramParser : public NonCopyable
 {
 public:
@@ -206,27 +198,20 @@ public:
 		U32 pushConstantsSize,
 		U32 backendMinor,
 		U32 backendMajor,
-		GpuVendor gpuVendor)
-		: m_alloc(alloc)
-		, m_fname(alloc, fname)
-		, m_fsystem(fsystem)
-		, m_pushConstSize(pushConstantsSize)
-		, m_backendMinor(backendMinor)
-		, m_backendMajor(backendMajor)
-		, m_gpuVendor(gpuVendor)
-	{
-	}
+		GpuVendor gpuVendor);
 
-	~ShaderProgramParser()
-	{
-	}
+	~ShaderProgramParser();
 
 	/// Parse the file and its includes.
 	ANKI_USE_RESULT Error parse();
 
+	/// Given a mutation convert it to something acceptable. This will reduce the variants.
+	/// @return true if the mutation was rewritten.
+	Bool rewriteMutation(WeakArray<MutatorValue> mutation) const;
+
 	/// Get the source (and a few more things) given a list of mutators.
 	ANKI_USE_RESULT Error generateVariant(
-		ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates, ShaderProgramParserVariant& variant) const;
+		ConstWeakArray<MutatorValue> mutation, ShaderProgramParserVariant& variant) const;
 
 	ConstWeakArray<ShaderProgramParserMutator> getMutators() const
 	{
@@ -251,6 +236,7 @@ public:
 private:
 	using Mutator = ShaderProgramParserMutator;
 	using Input = ShaderProgramParserInput;
+	class MutationRewrite;
 
 	static const U32 MAX_INCLUDE_DEPTH = 8;
 
@@ -267,6 +253,7 @@ private:
 
 	DynamicArrayAuto<Mutator> m_mutators = {m_alloc};
 	DynamicArrayAuto<Input> m_inputs = {m_alloc};
+	DynamicArrayAuto<MutationRewrite> m_mutationRewrites = {m_alloc};
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
 	Bool m_insideShader = false;
@@ -290,6 +277,8 @@ private:
 	ANKI_USE_RESULT Error parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 	ANKI_USE_RESULT Error parsePragmaDescriptorSet(
 		const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	ANKI_USE_RESULT Error parsePragmaRewriteMutation(
+		const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 
 	ANKI_USE_RESULT Error findActiveInputVars(CString source, BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES>& active) const;
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const;
@@ -298,6 +287,8 @@ private:
 	{
 		return token.getLength() >= 2 && token[0] == '/' && (token[1] == '/' || token[1] == '*');
 	}
+
+	static Bool mutatorHasValue(const ShaderProgramParserMutator& mutator, MutatorValue value);
 };
 /// @}
 

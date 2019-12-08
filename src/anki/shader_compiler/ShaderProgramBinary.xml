@@ -18,7 +18,7 @@
 		<class name="ShaderProgramBinaryMutator" comment="Shader program mutator">
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
-				<member name="m_values" type="I32" pointer="true" array_size="m_valueCount" />
+				<member name="m_values" type="MutatorValue" pointer="true" array_size="m_valueCount" />
 				<member name="m_valueCount" type="U32" />
 				<member name="m_instanceCount" type="Bool" />
 			</members>
@@ -27,7 +27,7 @@
 		<class name="ShaderProgramBinaryVariant">
 			<members>
 				<member name="m_activeVariables" type="ActiveProgramInputVariableMask" constructor="false" />
-				<member name="m_mutatorValues" type="I32" pointer="true" array_size="m_mutatorValueCount" />
+				<member name="m_mutatorValues" type="MutatorValue" pointer="true" array_size="m_mutatorValueCount" />
 				<member name="m_blockInfos" type="ShaderVariableBlockInfo" pointer="true" array_size="m_inputVariableCount" />
 				<member name="m_bindings" type="I16" pointer="true" array_size="m_inputVariableCount" />
 				<member name="m_mutatorValueCount" type="U32" />

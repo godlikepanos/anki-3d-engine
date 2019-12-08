@@ -53,7 +53,7 @@ class ShaderProgramBinaryMutator
 {
 public:
 	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name;
-	I32* m_values;
+	MutatorValue* m_values;
 	U32 m_valueCount;
 	Bool m_instanceCount;
 
@@ -85,7 +85,7 @@ class ShaderProgramBinaryVariant
 {
 public:
 	ActiveProgramInputVariableMask m_activeVariables = {false};
-	I32* m_mutatorValues;
+	MutatorValue* m_mutatorValues;
 	ShaderVariableBlockInfo* m_blockInfos;
 	I16* m_bindings;
 	U32 m_mutatorValueCount;

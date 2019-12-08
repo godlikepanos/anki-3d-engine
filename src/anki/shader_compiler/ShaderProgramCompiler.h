@@ -67,7 +67,7 @@ ANKI_USE_RESULT Error compileShaderProgram(CString fname,
 	GpuVendor gpuVendor,
 	ShaderProgramBinaryWrapper& binary);
 
-/// XXX
+/// Create a human readable representation of the shader binary.
 void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable);
 /// @}
 

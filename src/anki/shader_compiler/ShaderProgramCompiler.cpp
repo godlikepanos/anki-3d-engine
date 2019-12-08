@@ -7,6 +7,7 @@
 #include <anki/shader_compiler/ShaderProgramParser.h>
 #include <anki/shader_compiler/Glslang.h>
 #include <anki/util/Serializer.h>
+#include <anki/util/HashMap.h>
 #include <SPIRV-Cross/spirv_glsl.hpp>
 
 namespace anki
@@ -118,7 +119,7 @@ static Bool spinDials(DynamicArrayAuto<U32>& dials, ConstWeakArray<ShaderProgram
 	return done;
 }
 
-static Error compileVariant(ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates,
+static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 	const ShaderProgramParser& parser,
 	ShaderProgramBinaryVariant& variant,
 	DynamicArrayAuto<ShaderProgramBinaryCode>& codeBlocks,
@@ -130,7 +131,7 @@ static Error compileVariant(ConstWeakArray<ShaderProgramParserMutatorState> muta
 
 	// Generate the source and the rest for the variant
 	ShaderProgramParserVariant parserVariant;
-	ANKI_CHECK(parser.generateVariant(mutatorStates, parserVariant));
+	ANKI_CHECK(parser.generateVariant(mutation, parserVariant));
 
 	// Active vars
 	{
@@ -193,7 +194,7 @@ static Error compileVariant(ConstWeakArray<ShaderProgramParserMutatorState> muta
 	variant.m_mutatorValues = binaryAlloc.newArray<I32>(parser.getMutators().getSize());
 	for(PtrSize i = 0; i < parser.getMutators().getSize(); ++i)
 	{
-		variant.m_mutatorValues[i] = mutatorStates[i].m_value;
+		variant.m_mutatorValues[i] = mutation[i];
 	}
 
 	// Input vars
@@ -315,32 +316,88 @@ Error compileShaderProgram(CString fname,
 	if(parser.getMutators().getSize() > 0)
 	{
 		// Initialize
-		DynamicArrayAuto<ShaderProgramParserMutatorState> states(tempAllocator, parser.getMutators().getSize());
-		DynamicArrayAuto<U32> dials(tempAllocator, parser.getMutators().getSize());
-		for(PtrSize i = 0; i < parser.getMutators().getSize(); ++i)
-		{
-			states[i].m_mutator = &parser.getMutators()[i];
-			states[i].m_value = parser.getMutators()[i].getValues()[0];
-
-			dials[i] = 0;
-		}
+		DynamicArrayAuto<MutatorValue> mutation(tempAllocator, parser.getMutators().getSize());
+		DynamicArrayAuto<MutatorValue> mutation2(tempAllocator, parser.getMutators().getSize());
+		DynamicArrayAuto<U32> dials(tempAllocator, parser.getMutators().getSize(), 0);
 		DynamicArrayAuto<ShaderProgramBinaryVariant> variants(binaryAllocator);
 		DynamicArrayAuto<ShaderProgramBinaryCode> codeBlocks(binaryAllocator);
 		DynamicArrayAuto<U64> codeBlockHashes(tempAllocator);
+		HashMapAuto<U64, U> mutationToVariantIdx(tempAllocator);
 
 		// Spin for all possible combinations of mutators and
 		// - Create the spirv
 		// - Populate the binary variant
 		do
 		{
+			// Create the mutation
 			for(PtrSize i = 0; i < parser.getMutators().getSize(); ++i)
 			{
-				states[i].m_value = parser.getMutators()[i].getValues()[dials[i]];
+				mutation[i] = parser.getMutators()[i].getValues()[dials[i]];
+				mutation2[i] = mutation[i];
 			}
+			const Bool rewritten =
+				parser.rewriteMutation(WeakArray<MutatorValue>(mutation.getBegin(), mutation.getSize()));
 
+			// Create the variant
 			ShaderProgramBinaryVariant& variant = *variants.emplaceBack();
-			ANKI_CHECK(
-				compileVariant(states, parser, variant, codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
+			if(!rewritten)
+			{
+				// New and unique variant, add it
+				ANKI_CHECK(compileVariant(
+					mutation, parser, variant, codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
+
+				mutationToVariantIdx.emplace(
+					computeHash(&mutation[0], mutation.getSizeInBytes()), variants.getSize() - 1);
+			}
+			else
+			{
+				// Check if the original variant exists
+				auto it = mutationToVariantIdx.find(computeHash(&mutation[0], mutation.getSizeInBytes()));
+				U originalVariantIdx = (it != mutationToVariantIdx.getEnd()) ? *it : MAX_U;
+
+				if(originalVariantIdx == MAX_U)
+				{
+					// Original variant not found, create it
+
+					ShaderProgramBinaryVariant& other = *variants.emplaceBack();
+					originalVariantIdx = variants.getSize() - 1;
+
+					ANKI_CHECK(compileVariant(
+						mutation, parser, other, codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
+
+					mutationToVariantIdx.emplace(
+						computeHash(&mutation[0], mutation.getSizeInBytes()), originalVariantIdx);
+				}
+
+				// Copy the original variant to the current variant
+				{
+					const ShaderProgramBinaryVariant& other = variants[originalVariantIdx];
+
+					variant = other;
+
+					variant.m_mutatorValues = binaryAllocator.newArray<MutatorValue>(variant.m_mutatorValueCount);
+					memcpy(variant.m_mutatorValues,
+						mutation2.getBegin(),
+						sizeof(variant.m_mutatorValues[0]) * variant.m_mutatorValueCount);
+
+					if(variant.m_inputVariableCount > 0)
+					{
+						variant.m_blockInfos =
+							binaryAllocator.newArray<ShaderVariableBlockInfo>(variant.m_inputVariableCount);
+						memcpy(variant.m_blockInfos,
+							other.m_blockInfos,
+							sizeof(variant.m_blockInfos[0]) * variant.m_inputVariableCount);
+
+						variant.m_bindings = binaryAllocator.newArray<I16>(variant.m_inputVariableCount);
+						memcpy(variant.m_bindings,
+							other.m_bindings,
+							sizeof(variant.m_bindings[0]) * variant.m_inputVariableCount);
+					}
+
+					mutationToVariantIdx.emplace(
+						computeHash(&mutation2[0], mutation2.getSizeInBytes()), &variant - &variants[0]);
+				}
+			}
 		} while(!spinDials(dials, parser.getMutators()));
 
 		// Store to binary
@@ -353,7 +410,7 @@ Error compileShaderProgram(CString fname,
 	}
 	else
 	{
-		DynamicArrayAuto<ShaderProgramParserMutatorState> states(tempAllocator);
+		DynamicArrayAuto<MutatorValue> mutation(tempAllocator);
 		DynamicArrayAuto<ShaderProgramBinaryCode> codeBlocks(binaryAllocator);
 		DynamicArrayAuto<U64> codeBlockHashes(tempAllocator);
 
@@ -361,7 +418,7 @@ Error compileShaderProgram(CString fname,
 		binary.m_variants = binaryAllocator.newInstance<ShaderProgramBinaryVariant>();
 
 		ANKI_CHECK(compileVariant(
-			states, parser, binary.m_variants[0], codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
+			mutation, parser, binary.m_variants[0], codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
 		ANKI_ASSERT(codeBlocks.getSize() == U32(__builtin_popcount(U32(parser.getShaderTypes()))));
 
 		binary.m_codeBlockCount = U32(codeBlocks.getSize());

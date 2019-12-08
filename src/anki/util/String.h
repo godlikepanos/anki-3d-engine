@@ -228,14 +228,14 @@ public:
 	/// Convert to I32.
 	ANKI_USE_RESULT Error toNumber(I32& out) const;
 
-	/// Convert to U8.
-	ANKI_USE_RESULT Error toNumber(U8& out) const;
-
 	/// Convert to U64.
 	ANKI_USE_RESULT Error toNumber(U64& out) const;
 
 	/// Convert to U32.
 	ANKI_USE_RESULT Error toNumber(U32& out) const;
+
+	/// Convert to U8.
+	ANKI_USE_RESULT Error toNumber(U8& out) const;
 
 	/// Convert to Bool.
 	ANKI_USE_RESULT Error toNumber(Bool& out) const;

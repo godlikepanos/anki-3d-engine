@@ -41,7 +41,7 @@ public:
 	}
 
 	template<PtrSize S>
-	explicit WeakArray(Array<T, S>& arr)
+	WeakArray(Array<T, S>& arr)
 		: WeakArray(&arr[0], S)
 	{
 	}

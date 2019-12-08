@@ -23,6 +23,8 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 #pragma anki mutator M0 1 2
 #pragma anki mutator M1 3 4
 
+#pragma anki rewrite_mutation M0 2 M1 4 to M0 1 M1 3
+
 #if M0 == 1
 #pragma anki input Vec3 var0
 #endif
@@ -58,12 +60,17 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 	ANKI_TEST_EXPECT_EQ(parser.getInputs().getSize(), 2);
 
 	// Test a variant
-	Array<ShaderProgramParserMutatorState, 2> arr = {{{&parser.getMutators()[0], 2}, {&parser.getMutators()[1], 4}}};
-	ConstWeakArray<ShaderProgramParserMutatorState> mutatorStates(arr);
+	Array<MutatorValue, 2> mutation = {{2, 4}};
 
 	ShaderProgramParserVariant variant;
-	ANKI_TEST_EXPECT_NO_ERR(parser.generateVariant(mutatorStates, variant));
+	ANKI_TEST_EXPECT_NO_ERR(parser.generateVariant(mutation, variant));
 	ANKI_TEST_EXPECT_EQ(variant.isInputActive(parser.getInputs()[0]), false);
 	ANKI_TEST_EXPECT_EQ(variant.isInputActive(parser.getInputs()[1]), true);
+
+	// Test rewrite
+	ANKI_TEST_EXPECT_EQ(parser.rewriteMutation(mutation), true);
+	ANKI_TEST_EXPECT_EQ(mutation[0], 1);
+	ANKI_TEST_EXPECT_EQ(mutation[1], 3);
+
 	// printf("%s\n", variant.getSource(ShaderType::VERTEX).cstr());
 }

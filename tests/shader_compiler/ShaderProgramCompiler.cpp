@@ -22,6 +22,34 @@ ANKI_TEST(ShaderCompiler, ShaderProgramCompiler)
 #pragma anki mutator BONES 0 1
 #pragma anki mutator VELOCITY 0 1
 
+#pragma anki rewrite_mutation PASS 1 DIFFUSE_TEX 1 to PASS 1 DIFFUSE_TEX 0
+#pragma anki rewrite_mutation PASS 2 DIFFUSE_TEX 1 to PASS 2 DIFFUSE_TEX 0
+#pragma anki rewrite_mutation PASS 3 DIFFUSE_TEX 1 to PASS 2 DIFFUSE_TEX 0
+
+#pragma anki rewrite_mutation PASS 1 SPECULAR_TEX 1 to PASS 1 SPECULAR_TEX 0
+#pragma anki rewrite_mutation PASS 2 SPECULAR_TEX 1 to PASS 2 SPECULAR_TEX 0
+#pragma anki rewrite_mutation PASS 3 SPECULAR_TEX 1 to PASS 2 SPECULAR_TEX 0
+
+#pragma anki rewrite_mutation PASS 1 ROUGHNESS_TEX 1 to PASS 1 ROUGHNESS_TEX 0
+#pragma anki rewrite_mutation PASS 2 ROUGHNESS_TEX 1 to PASS 2 ROUGHNESS_TEX 0
+#pragma anki rewrite_mutation PASS 3 ROUGHNESS_TEX 1 to PASS 2 ROUGHNESS_TEX 0
+
+#pragma anki rewrite_mutation PASS 1 METAL_TEX 1 to PASS 1 METAL_TEX 0
+#pragma anki rewrite_mutation PASS 2 METAL_TEX 1 to PASS 2 METAL_TEX 0
+#pragma anki rewrite_mutation PASS 3 METAL_TEX 1 to PASS 2 METAL_TEX 0
+
+#pragma anki rewrite_mutation PASS 1 NORMAL_TEX 1 to PASS 1 NORMAL_TEX 0
+#pragma anki rewrite_mutation PASS 2 NORMAL_TEX 1 to PASS 2 NORMAL_TEX 0
+#pragma anki rewrite_mutation PASS 3 NORMAL_TEX 1 to PASS 2 NORMAL_TEX 0
+
+#pragma anki rewrite_mutation PASS 1 EMISSIVE_TEX 1 to PASS 1 EMISSIVE_TEX 0
+#pragma anki rewrite_mutation PASS 2 EMISSIVE_TEX 1 to PASS 2 EMISSIVE_TEX 0
+#pragma anki rewrite_mutation PASS 3 EMISSIVE_TEX 1 to PASS 2 EMISSIVE_TEX 0
+
+#pragma anki rewrite_mutation PASS 1 VELOCITY 1 to PASS 1 VELOCITY 0
+#pragma anki rewrite_mutation PASS 2 VELOCITY 1 to PASS 2 VELOCITY 0
+#pragma anki rewrite_mutation PASS 3 VELOCITY 1 to PASS 2 VELOCITY 0
+
 #pragma anki input instanced Mat4 mvp
 #if PASS == 0
 #	pragma anki input instanced Mat3 rotationMat
@@ -122,7 +150,7 @@ void main()
 	ShaderProgramBinaryWrapper binary(alloc);
 	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", fsystem, alloc, 128, 1, 1, GpuVendor::AMD, binary));
 
-	StringAuto dis(alloc);
+	/*StringAuto dis(alloc);
 	disassembleShaderProgramBinary(binary.getBinary(), dis);
-	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
+	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());*/
 }
