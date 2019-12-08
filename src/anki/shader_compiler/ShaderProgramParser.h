@@ -236,7 +236,31 @@ public:
 private:
 	using Mutator = ShaderProgramParserMutator;
 	using Input = ShaderProgramParserInput;
-	class MutationRewrite;
+
+	class MutationRewrite
+	{
+	public:
+		class Record
+		{
+		public:
+			U32 m_mutatorIndex = MAX_U32;
+			MutatorValue m_valueFrom = getMaxNumericLimit<MutatorValue>();
+			MutatorValue m_valueTo = getMaxNumericLimit<MutatorValue>();
+
+			Bool operator!=(const Record& b) const
+			{
+				return !(
+					m_mutatorIndex == b.m_mutatorIndex && m_valueFrom == b.m_valueFrom && m_valueTo == b.m_valueTo);
+			}
+		};
+
+		DynamicArrayAuto<Record> m_records;
+
+		MutationRewrite(GenericMemoryPoolAllocator<U8> alloc)
+			: m_records(alloc)
+		{
+		}
+	};
 
 	static const U32 MAX_INCLUDE_DEPTH = 8;
 
