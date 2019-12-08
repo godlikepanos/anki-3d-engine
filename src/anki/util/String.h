@@ -228,14 +228,14 @@ public:
 	/// Convert to I32.
 	ANKI_USE_RESULT Error toNumber(I32& out) const;
 
-	/// Convert to U8.
-	ANKI_USE_RESULT Error toNumber(U8& out) const;
-
 	/// Convert to U64.
 	ANKI_USE_RESULT Error toNumber(U64& out) const;
 
 	/// Convert to U32.
 	ANKI_USE_RESULT Error toNumber(U32& out) const;
+
+	/// Convert to U8.
+	ANKI_USE_RESULT Error toNumber(U8& out) const;
 
 	/// Convert to Bool.
 	ANKI_USE_RESULT Error toNumber(Bool& out) const;
@@ -688,11 +688,27 @@ public:
 		return *this;
 	}
 
+	/// Copy from string.
+	StringAuto& operator=(const CString& b)
+	{
+		destroy();
+		if(!b.isEmpty())
+		{
+			create(b.getBegin(), b.getEnd());
+		}
+		return *this;
+	}
+
 	/// Move one string to this one.
 	StringAuto& operator=(StringAuto&& b)
 	{
 		move(b);
 		return *this;
+	}
+
+	GenericMemoryPoolAllocator<Char> getAllocator() const
+	{
+		return m_alloc;
 	}
 
 	/// Initialize using a const string.

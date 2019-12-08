@@ -145,7 +145,7 @@ ANKI_TEST(Util, HashMap)
 		using AkMap = HashMap<int, int, Hasher>;
 		AkMap akMap(128, 32, 0.9f);
 		using StlMap =
-			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
+			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<const int, int>>>;
 		StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), alloc);
 
 		std::unordered_map<int, int> tmpMap;

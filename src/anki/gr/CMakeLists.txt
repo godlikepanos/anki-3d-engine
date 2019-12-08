@@ -1,4 +1,4 @@
-file(GLOB SOURCES *.cpp common/*.cpp)
+file(GLOB SOURCES *.cpp utils/*.cpp)
 
 if(GL)
 	set(GR_BACKEND "gl")

@@ -20,6 +20,11 @@
 #include <anki/gr/RenderGraph.h>
 #include <anki/gr/ShaderCompiler.h>
 
+#include <anki/gr/utils/ClassGpuAllocator.h>
+#include <anki/gr/utils/FrameGpuAllocator.h>
+#include <anki/gr/utils/Functions.h>
+#include <anki/gr/utils/StackGpuAllocator.h>
+
 /// @defgroup graphics Graphics API abstraction
 
 /// @defgroup opengl OpenGL backend

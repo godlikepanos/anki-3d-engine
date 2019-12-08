@@ -1,0 +1,64 @@
+<serializer>
+	<includes>
+		<include file="&lt;anki/shader_compiler/Common.h&gt;"/>
+		<include file="&lt;anki/shader_compiler/ShaderProgramBinaryExtra.h&gt;"/>
+		<include file="&lt;anki/gr/Enums.h&gt;"/>
+	</includes>
+
+	<classes>
+		<class name="ShaderProgramBinaryInput" comment="Shader program input variable">
+			<members>
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
+				<member name="m_firstSpecializationConstantIndex" type="U32" comment="It's MAX_U32 if it's not a constant" />
+				<member name="m_instanced" type="Bool" />
+				<member name="m_dataType" type="ShaderVariableDataType" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryMutator" comment="Shader program mutator">
+			<members>
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
+				<member name="m_values" type="MutatorValue" pointer="true" array_size="m_valueCount" />
+				<member name="m_valueCount" type="U32" />
+				<member name="m_instanceCount" type="Bool" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryVariant">
+			<members>
+				<member name="m_activeVariables" type="ActiveProgramInputVariableMask" constructor="false" />
+				<member name="m_mutatorValues" type="MutatorValue" pointer="true" array_size="m_mutatorValueCount" />
+				<member name="m_blockInfos" type="ShaderVariableBlockInfo" pointer="true" array_size="m_inputVariableCount" />
+				<member name="m_bindings" type="I16" pointer="true" array_size="m_inputVariableCount" />
+				<member name="m_mutatorValueCount" type="U32" />
+				<member name="m_inputVariableCount" type="U32" />
+				<member name="m_binaryIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks" />
+				<member name="m_blockSize" type="U32" />
+				<member name="m_usesPushConstants" type="Bool" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryCode">
+			<members>
+				<member name="m_binary" type="U8" pointer="true" array_size="m_binarySize" />
+				<member name="m_binarySize" type="PtrSize" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinary">
+			<members>
+				<member name="m_magic" type="U8" array_size="8" />
+				<member name="m_mutators" type="ShaderProgramBinaryMutator" pointer="true" array_size="m_mutatorCount" />
+				<member name="m_inputVariables" type="ShaderProgramBinaryInput" pointer="true" array_size="m_inputVariableCount" />
+				<member name="m_codeBlocks" type="ShaderProgramBinaryCode" pointer="true" array_size="m_codeBlockCount" />
+				<member name="m_variants" type="ShaderProgramBinaryVariant" pointer="true" array_size="m_variantCount" />
+				<member name="m_mutatorCount" type="U32" />
+				<member name="m_inputVariableCount" type="U32" />
+				<member name="m_codeBlockCount" type="U32" />
+				<member name="m_variantCount" type="U32" />
+				<member name="m_descriptorSet" type="U32" />
+				<member name="m_presentShaderTypes" type="ShaderTypeBit" />
+			</members>
+		</class>
+	</classes>
+</serializer>

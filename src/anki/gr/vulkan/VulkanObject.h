@@ -34,7 +34,7 @@ public:
 	template<> \
 	const GrManagerImpl& VulkanObject<type_, type_##Impl>::getGrManagerImpl() const;
 #define ANKI_INSTANTIATE_GR_OBJECT_DELIMITER()
-#include <anki/gr/common/InstantiationMacros.h>
+#include <anki/gr/utils/InstantiationMacros.h>
 #undef ANKI_INSTANTIATE_GR_OBJECT_DELIMITER
 #undef ANKI_INSTANTIATE_GR_OBJECT
 /// @}

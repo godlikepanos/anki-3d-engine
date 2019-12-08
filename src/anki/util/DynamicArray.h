@@ -222,6 +222,16 @@ public:
 		return &m_data[m_size - 1];
 	}
 
+	/// Remove the last value.
+	template<typename TAllocator>
+	void popBack(TAllocator alloc)
+	{
+		if(m_size > 0)
+		{
+			resizeStorage(alloc, m_size - 1);
+		}
+	}
+
 	/// Emplace a new element at a specific position. @a T needs to be movable and default constructible.
 	/// @param alloc The allocator.
 	/// @param where Points to the position to emplace. Should be less or equal to what getEnd() returns.
@@ -312,6 +322,15 @@ public:
 		, m_alloc(alloc)
 	{
 		resize(size);
+	}
+
+	/// With default value
+	template<typename TAllocator>
+	DynamicArrayAuto(TAllocator alloc, PtrSize size, const T& v)
+		: Base()
+		, m_alloc(alloc)
+	{
+		create(size, v);
 	}
 
 	/// Move.

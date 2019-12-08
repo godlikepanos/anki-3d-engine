@@ -9,7 +9,7 @@
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
-#include <anki/gr/common/Misc.h>
+#include <anki/gr/utils/Functions.h>
 
 namespace anki
 {

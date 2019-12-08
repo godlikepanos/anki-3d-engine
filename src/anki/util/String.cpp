@@ -16,12 +16,13 @@ Error CString::toNumber(F64& out) const
 {
 	checkInit();
 	errno = 0;
-	out = std::strtod(m_ptr, nullptr);
+	char* endPtr;
+	out = std::strtod(m_ptr, &endPtr);
 
-	if(errno)
+	if(errno || endPtr != m_ptr + getLength())
 	{
 		errno = 0;
-		ANKI_UTIL_LOGE("Conversion failed");
+		ANKI_UTIL_LOGE("Conversion failed: %s", m_ptr);
 		return Error::USER_DATA;
 	}
 
@@ -36,6 +37,24 @@ Error CString::toNumber(F32& out) const
 	return Error::NONE;
 }
 
+Error CString::toNumber(I64& out) const
+{
+	checkInit();
+	errno = 0;
+	char* endPtr;
+	static_assert(sizeof(long long) == sizeof(I64), "See file");
+	out = std::strtoll(m_ptr, &endPtr, 10);
+
+	if(errno || endPtr != m_ptr + getLength())
+	{
+		errno = 0;
+		ANKI_UTIL_LOGE("Conversion failed: %s", m_ptr);
+		return Error::USER_DATA;
+	}
+
+	return Error::NONE;
+}
+
 Error CString::toNumber(I8& out) const
 {
 	I64 i64 = 0;
@@ -43,7 +62,7 @@ Error CString::toNumber(I8& out) const
 
 	if(i64 < MIN_I8 || i64 > MAX_I8)
 	{
-		ANKI_UTIL_LOGE("Conversion failed. Our of range");
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
 		return Error::USER_DATA;
 	}
 
@@ -51,38 +70,18 @@ Error CString::toNumber(I8& out) const
 	return Error::NONE;
 }
 
-Error CString::toNumber(I64& out) const
-{
-	checkInit();
-	errno = 0;
-	static_assert(sizeof(long long) == sizeof(I64), "See file");
-	out = std::strtoll(m_ptr, nullptr, 10);
-
-	if(errno)
-	{
-		errno = 0;
-		ANKI_UTIL_LOGE("Conversion failed");
-		return Error::USER_DATA;
-	}
-
-	return Error::NONE;
-}
-
 Error CString::toNumber(I32& out) const
 {
-	checkInit();
-	errno = 0;
-	long long i = std::strtoll(m_ptr, nullptr, 10);
+	I64 i64 = 0;
+	ANKI_CHECK(toNumber(i64));
 
-	if(errno || i < MIN_I32 || i > MAX_I32)
+	if(i64 < MIN_I32 || i64 > MAX_I32)
 	{
-		errno = 0;
-		ANKI_UTIL_LOGE("Conversion failed");
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
 		return Error::USER_DATA;
 	}
 
-	out = I32(i);
-
+	out = I32(i64);
 	return Error::NONE;
 }
 
@@ -90,13 +89,14 @@ Error CString::toNumber(U64& out) const
 {
 	checkInit();
 	errno = 0;
+	char* endPtr;
 	static_assert(sizeof(unsigned long long) == sizeof(U64), "See file");
-	out = std::strtoull(m_ptr, nullptr, 10);
+	out = std::strtoull(m_ptr, &endPtr, 10);
 
-	if(errno)
+	if(errno || endPtr != m_ptr + getLength())
 	{
 		errno = 0;
-		ANKI_UTIL_LOGE("Conversion failed");
+		ANKI_UTIL_LOGE("Conversion failed: %s", m_ptr);
 		return Error::USER_DATA;
 	}
 
@@ -105,33 +105,31 @@ Error CString::toNumber(U64& out) const
 
 Error CString::toNumber(U32& out) const
 {
-	checkInit();
-	errno = 0;
-	unsigned long long i = std::strtoull(m_ptr, nullptr, 10);
+	U64 u64;
+	ANKI_CHECK(toNumber(u64));
 
-	if(errno || i > MAX_U32)
+	if(u64 > MAX_U32)
 	{
-		errno = 0;
-		ANKI_UTIL_LOGE("Conversion failed");
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
 		return Error::USER_DATA;
 	}
 
-	out = U32(i);
+	out = U32(u64);
 	return Error::NONE;
 }
 
 Error CString::toNumber(U8& out) const
 {
-	U64 i64 = 0;
-	ANKI_CHECK(toNumber(i64));
+	U64 u64 = 0;
+	ANKI_CHECK(toNumber(u64));
 
-	if(i64 > MAX_U8)
+	if(u64 > MAX_U8)
 	{
-		ANKI_UTIL_LOGE("Conversion failed. Our of range");
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
 		return Error::USER_DATA;
 	}
 
-	out = U8(i64);
+	out = U8(u64);
 	return Error::NONE;
 }
 

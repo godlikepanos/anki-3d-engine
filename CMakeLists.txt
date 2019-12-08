@@ -180,7 +180,7 @@ if(NOT MSVC)
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 		add_definitions("-O3 -DNDEBUG")
 	elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-		add_definitions("-O3 -g3")
+		add_definitions("-O3 -g3 -fno-omit-frame-pointer")
 	elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 		add_definitions("-O0 -g3")
 	else()
@@ -412,7 +412,8 @@ set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCol
 	ankiimgui)
 
 # Add anki sub libraries
-set(ANKI_SUB_DIRS importer core script renderer scene ui input physics resource misc gr collision math util)
+set(ANKI_SUB_DIRS importer core script renderer scene ui input physics resource misc gr collision math util
+	shader_compiler)
 foreach(TMP ${ANKI_SUB_DIRS})
 	add_subdirectory(src/anki/${TMP})
 endforeach()

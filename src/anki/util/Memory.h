@@ -53,20 +53,6 @@ void* allocAligned(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 class BaseMemoryPool : public NonCopyable
 {
 public:
-	/// Pool type.
-	enum class Type : U8
-	{
-		NONE,
-		HEAP,
-		STACK,
-		CHAIN
-	};
-
-	BaseMemoryPool(Type type)
-		: m_type(type)
-	{
-	}
-
 	virtual ~BaseMemoryPool();
 
 	/// Allocate memory. This operation MAY be thread safe
@@ -110,6 +96,15 @@ public:
 	}
 
 protected:
+	/// Pool type.
+	enum class Type : U8
+	{
+		NONE,
+		HEAP,
+		STACK,
+		CHAIN
+	};
+
 	/// User allocation function.
 	AllocAlignedCallback m_allocCb = nullptr;
 
@@ -119,15 +114,20 @@ protected:
 	/// Allocations count.
 	Atomic<U32> m_allocationsCount = {0};
 
+	BaseMemoryPool(Type type)
+		: m_type(type)
+	{
+	}
+
 	/// Check if already created.
 	Bool isCreated() const;
 
 private:
-	/// Type.
-	Type m_type = Type::NONE;
-
 	/// Refcount.
 	Atomic<U32> m_refcount = {0};
+
+	/// Type.
+	Type m_type = Type::NONE;
 };
 
 /// A dummy interface to match the StackMemoryPool and ChainMemoryPool interfaces in order to be used by the same
@@ -370,6 +370,41 @@ private:
 	/// Destroy a chunk.
 	void destroyChunk(Chunk* ch);
 };
+
+inline void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)
+{
+	void* out = nullptr;
+	switch(m_type)
+	{
+	case Type::HEAP:
+		out = static_cast<HeapMemoryPool*>(this)->allocate(size, alignmentBytes);
+		break;
+	case Type::STACK:
+		out = static_cast<StackMemoryPool*>(this)->allocate(size, alignmentBytes);
+		break;
+	default:
+		ANKI_ASSERT(m_type == Type::CHAIN);
+		out = static_cast<ChainMemoryPool*>(this)->allocate(size, alignmentBytes);
+	}
+
+	return out;
+}
+
+inline void BaseMemoryPool::free(void* ptr)
+{
+	switch(m_type)
+	{
+	case Type::HEAP:
+		static_cast<HeapMemoryPool*>(this)->free(ptr);
+		break;
+	case Type::STACK:
+		static_cast<StackMemoryPool*>(this)->free(ptr);
+		break;
+	default:
+		ANKI_ASSERT(m_type == Type::CHAIN);
+		static_cast<ChainMemoryPool*>(this)->free(ptr);
+	}
+}
 /// @}
 
 } // end namespace anki

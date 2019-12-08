@@ -469,6 +469,12 @@ enum class ShaderTypeBit : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit, inline)
 
+inline ShaderTypeBit shaderTypeToBit(ShaderType type)
+{
+	ANKI_ASSERT(type < ShaderType::COUNT);
+	return ShaderTypeBit(1 << U32(type));
+}
+
 enum class ShaderVariableDataType : U8
 {
 	NONE,
@@ -498,6 +504,15 @@ enum class ShaderVariableDataType : U8
 
 	NUMERICS_FIRST = INT,
 	NUMERICS_LAST = MAT4,
+
+	NUMERIC_1_COMPONENT_FIRST = INT,
+	NUMERIC_1_COMPONENT_LAST = FLOAT,
+	NUMERIC_2_COMPONENT_FIRST = IVEC2,
+	NUMERIC_2_COMPONENT_LAST = VEC2,
+	NUMERIC_3_COMPONENT_FIRST = IVEC3,
+	NUMERIC_3_COMPONENT_LAST = VEC3,
+	NUMERIC_4_COMPONENT_FIRST = IVEC4,
+	NUMERIC_4_COMPONENT_LAST = VEC4,
 
 	MATRIX_FIRST = MAT3,
 	MATRIX_LAST = MAT4,

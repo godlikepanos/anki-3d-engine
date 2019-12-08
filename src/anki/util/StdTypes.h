@@ -73,6 +73,8 @@ constexpr F64 MIN_F64 = -std::numeric_limits<F64>::max();
 using Bool = bool; ///< 1 byte boolean type. The same as C++'s bool.
 static_assert(sizeof(bool) == 1, "Wrong size for bool");
 
+using Bool32 = I32;
+
 using Second = F64; ///< The base time unit is second.
 constexpr Second MAX_SECOND = MAX_F64;
 constexpr Second MIN_SECOND = MIN_F64;

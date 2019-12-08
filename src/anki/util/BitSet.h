@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/util/StdTypes.h>
+#include <anki/util/Array.h>
 #include <initializer_list>
 #include <cstring>
 
@@ -21,6 +21,15 @@ namespace anki
 template<U32 N, typename TChunkType = U8>
 class BitSet
 {
+protected:
+	using ChunkType = TChunkType;
+
+	/// Number of bits a chunk holds.
+	static constexpr U32 CHUNK_BIT_COUNT = sizeof(ChunkType) * 8;
+
+	/// Number of chunks.
+	static constexpr U32 CHUNK_COUNT = (N + (CHUNK_BIT_COUNT - 1)) / CHUNK_BIT_COUNT;
+
 public:
 	/// Constructor. It will set all the bits or unset them.
 	BitSet(Bool set)
@@ -158,7 +167,7 @@ public:
 	/// Set all bits.
 	void setAll()
 	{
-		memset(m_chunks, 0xFF, sizeof(m_chunks));
+		memset(&m_chunks[0], 0xFF, sizeof(m_chunks));
 		zeroUnusedBits();
 	}
 
@@ -179,7 +188,7 @@ public:
 	/// Unset all bits.
 	void unsetAll()
 	{
-		memset(m_chunks, 0, sizeof(m_chunks));
+		memset(&m_chunks[0], 0, sizeof(m_chunks));
 	}
 
 	/// Flip the bits at the given position. It will go from 1 to 0 or from 0 to 1.
@@ -237,16 +246,13 @@ public:
 		return MAX_U32;
 	}
 
+	Array<TChunkType, CHUNK_COUNT> getData() const
+	{
+		return m_chunks;
+	}
+
 protected:
-	using ChunkType = TChunkType;
-
-	/// Number of bits a chunk holds.
-	static const U32 CHUNK_BIT_COUNT = sizeof(ChunkType) * 8;
-
-	/// Number of chunks.
-	static const U32 CHUNK_COUNT = (N + (CHUNK_BIT_COUNT - 1)) / CHUNK_BIT_COUNT;
-
-	ChunkType m_chunks[CHUNK_COUNT];
+	Array<ChunkType, CHUNK_COUNT> m_chunks;
 
 	BitSet()
 	{

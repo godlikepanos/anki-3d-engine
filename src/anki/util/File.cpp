@@ -452,6 +452,29 @@ Error File::seek(PtrSize offset, FileSeekOrigin origin)
 	return err;
 }
 
+PtrSize File::tell()
+{
+	ANKI_ASSERT(m_file);
+	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
+
+	if(m_type == Type::C)
+	{
+		return ftell(ANKI_CFILE);
+	}
+#if ANKI_OS_ANDROID
+	else if(m_type == Type::SPECIAL)
+	{
+		ANKI_ASSERT(0);
+	}
+#endif
+	else
+	{
+		ANKI_ASSERT(0);
+	}
+
+	return 0;
+}
+
 Error File::identifyFile(const CString& filename,
 	char* archiveFilename,
 	PtrSize archiveFilenameLength,

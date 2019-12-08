@@ -106,6 +106,9 @@ public:
 	/// @param origin Position used as reference for the offset
 	ANKI_USE_RESULT Error seek(PtrSize offset, FileSeekOrigin origin);
 
+	/// Return the position indicator inside the file.
+	PtrSize tell();
+
 	/// The the size of the file.
 	PtrSize getSize() const;
 

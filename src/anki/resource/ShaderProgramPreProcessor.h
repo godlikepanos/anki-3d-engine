@@ -148,7 +148,7 @@ public:
 		return m_inputs;
 	}
 
-	ShaderTypeBit getShaderStages() const
+	ShaderTypeBit getShaderTypes() const
 	{
 		return m_shaderTypes;
 	}

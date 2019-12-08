@@ -19,7 +19,7 @@
 #include <anki/gr/gl/ShaderProgramImpl.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/gl/FramebufferImpl.h>
-#include <anki/gr/common/Misc.h>
+#include <anki/gr/utils/Functions.h>
 
 namespace anki
 {

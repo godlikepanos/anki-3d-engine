@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/util/Assert.h>
+#include <anki/util/Thread.h>
 #include <utility>
 
 namespace anki
@@ -99,18 +100,18 @@ typename SingletonInit<T>::Value* SingletonInit<T>::m_instance = nullptr;
 
 /// This template makes a class singleton with thread local instance
 template<typename T>
-class SingletonThreadSafe
+class SingletonThreadLocal
 {
 public:
 	typedef T Value;
 
 	// Non copyable
-	SingletonThreadSafe(const SingletonThreadSafe&) = delete;
-	SingletonThreadSafe& operator=(const SingletonThreadSafe&) = delete;
+	SingletonThreadLocal(const SingletonThreadLocal&) = delete;
+	SingletonThreadLocal& operator=(const SingletonThreadLocal&) = delete;
 
 	// Non constructable
-	SingletonThreadSafe() = delete;
-	~SingletonThreadSafe() = delete;
+	SingletonThreadLocal() = delete;
+	~SingletonThreadLocal() = delete;
 
 	/// Get instance
 	static Value& get()
@@ -132,7 +133,50 @@ private:
 };
 
 template<typename T>
-thread_local typename SingletonThreadSafe<T>::Value* SingletonThreadSafe<T>::m_instance = nullptr;
+thread_local typename SingletonThreadLocal<T>::Value* SingletonThreadLocal<T>::m_instance = nullptr;
+
+/// This template makes a class with a destructor with arguments singleton
+template<typename T>
+class SingletonThreadsafe
+{
+public:
+	typedef T Value;
+
+	// Non copyable
+	SingletonThreadsafe(const SingletonThreadsafe&) = delete;
+	SingletonThreadsafe& operator=(const SingletonThreadsafe&) = delete;
+
+	// Non constructable
+	SingletonThreadsafe() = delete;
+	~SingletonThreadsafe() = delete;
+
+	/// Get instance
+	static Value& get()
+	{
+		LockGuard<Mutex> lock(m_mtx);
+		return *(m_instance ? m_instance : (m_instance = new Value));
+	}
+
+	/// Cleanup
+	static void destroy()
+	{
+		LockGuard<Mutex> lock(m_mtx);
+		if(m_instance)
+		{
+			delete m_instance;
+		}
+	}
+
+private:
+	static Value* m_instance;
+	static Mutex m_mtx;
+};
+
+template<typename T>
+typename SingletonThreadsafe<T>::Value* SingletonThreadsafe<T>::m_instance = nullptr;
+
+template<typename T>
+Mutex SingletonThreadsafe<T>::m_mtx;
 /// @}
 
 } // end namespace anki
