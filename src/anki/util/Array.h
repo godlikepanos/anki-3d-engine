@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include <anki/util/Assert.h>
-#include <anki/util/StdTypes.h>
+#include <anki/util/Functions.h>
 
 namespace anki
 {
@@ -135,21 +134,42 @@ public:
 		return getBack();
 	}
 
+	// Get size
+#define ANKI_ARRAY_SIZE_METHOD(type, condition) \
+	ANKI_ENABLE_METHOD(condition) \
+	static constexpr type getSize() \
+	{ \
+		return type(N); \
+	}
+	ANKI_ARRAY_SIZE_METHOD(U8, N <= MAX_U8)
+	ANKI_ARRAY_SIZE_METHOD(U16, N > MAX_U8 && N <= MAX_U16)
+	ANKI_ARRAY_SIZE_METHOD(U32, N > MAX_U16 && N <= MAX_U32)
+	ANKI_ARRAY_SIZE_METHOD(U64, N > MAX_U32)
+#undef ANKI_ARRAY_SIZE_METHOD
+
 	static constexpr PtrSize getSize()
 	{
 		return N;
 	}
 
 	/// Make it compatible with STL
-	static constexpr PtrSize size()
+	static constexpr size_t size()
 	{
 		return N;
 	}
 
-	static constexpr PtrSize getSizeInBytes()
-	{
-		return N * sizeof(Value);
+	// Get size in bytes
+#define ANKI_ARRAY_SIZE_IN_BYTES_METHOD(type, condition) \
+	ANKI_ENABLE_METHOD(condition) \
+	static constexpr type getSizeInBytes() \
+	{ \
+		return type(N * sizeof(Value)); \
 	}
+	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U8, N * sizeof(Value) <= MAX_U8)
+	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U16, N * sizeof(Value) > MAX_U8 && N * sizeof(Value) <= MAX_U16)
+	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U32, N * sizeof(Value) > MAX_U16 && N * sizeof(Value) <= MAX_U32)
+	ANKI_ARRAY_SIZE_IN_BYTES_METHOD(U64, N * sizeof(Value) > MAX_U32)
+#undef ANKI_ARRAY_SIZE_IN_BYTES_METHOD
 };
 
 /// 2D Array. @code Array2d<X, 10, 2> a; @endcode is equivelent to @code X a[10][2]; @endcode
