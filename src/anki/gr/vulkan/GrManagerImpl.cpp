@@ -305,6 +305,11 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_XCB_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_XCB_SURFACE_EXTENSION_NAME;
 			}
+			else if(CString(instExtensionInf[i].extensionName) == VK_KHR_XLIB_SURFACE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_XLIB_SURFACE;
+				instExtensions[instExtensionCount++] = VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
+			}
 #elif ANKI_OS_WINDOWS
 			if(CString(instExtensionInf[i].extensionName) == VK_KHR_WIN32_SURFACE_EXTENSION_NAME)
 			{

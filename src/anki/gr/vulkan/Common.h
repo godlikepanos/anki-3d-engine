@@ -9,13 +9,20 @@
 
 #if ANKI_OS_LINUX
 #	define VK_USE_PLATFORM_XCB_KHR 1
+#	define VK_USE_PLATFORM_XLIB_KHR 1
 #elif ANKI_OS_WINDOWS
 #	define VK_USE_PLATFORM_WIN32_KHR 1
 #else
 #	error TODO
 #endif
 #include <volk/volk.h>
-#include <anki/util/CleanupWindows.h> // Clean global namespace
+
+// Cleanup global namespace from these dirty libaries
+#if ANKI_OS_LINUX
+#	undef Bool
+#elif ANKI_OS_WINDOWS
+#	include <anki/util/CleanupWindows.h>
+#endif
 
 namespace anki
 {
@@ -39,16 +46,17 @@ enum class VulkanExtensions : U16
 	NONE = 0,
 	KHR_MAINENANCE1 = 1 << 0,
 	KHR_XCB_SURFACE = 1 << 1,
-	KHR_WIN32_SURFACE = 1 << 2,
-	KHR_SWAPCHAIN = 1 << 3,
-	KHR_SURFACE = 1 << 4,
-	EXT_DEBUG_MARKER = 1 << 5,
-	KHR_DEDICATED_ALLOCATION = 1 << 6,
-	EXT_SHADER_SUBGROUP_BALLOT = 1 << 7,
-	EXT_DEBUG_REPORT = 1 << 8,
-	AMD_SHADER_INFO = 1 << 9,
-	AMD_RASTERIZATION_ORDER = 1 << 10,
-	EXT_DESCRIPTOR_INDEXING = 1 << 11,
+	KHR_XLIB_SURFACE = 1 << 2,
+	KHR_WIN32_SURFACE = 1 << 3,
+	KHR_SWAPCHAIN = 1 << 4,
+	KHR_SURFACE = 1 << 5,
+	EXT_DEBUG_MARKER = 1 << 6,
+	KHR_DEDICATED_ALLOCATION = 1 << 7,
+	EXT_SHADER_SUBGROUP_BALLOT = 1 << 8,
+	EXT_DEBUG_REPORT = 1 << 9,
+	AMD_SHADER_INFO = 1 << 10,
+	AMD_RASTERIZATION_ORDER = 1 << 11,
+	EXT_DESCRIPTOR_INDEXING = 1 << 12,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions, inline)
 
