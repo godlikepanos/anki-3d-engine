@@ -84,7 +84,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 	// Get submeshes
 	m_subMeshes.create(getAllocator(), header.m_subMeshCount);
-	for(U i = 0; i < m_subMeshes.getSize(); ++i)
+	for(U32 i = 0; i < m_subMeshes.getSize(); ++i)
 	{
 		m_subMeshes[i].m_firstIndex = loader.getSubMeshes()[i].m_firstIndex;
 		m_subMeshes[i].m_indexCount = loader.getSubMeshes()[i].m_indexCount;
@@ -111,7 +111,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	m_vertBufferInfos.create(getAllocator(), header.m_vertexBufferCount);
 
 	U32 totalVertexBuffSize = 0;
-	for(U i = 0; i < header.m_vertexBufferCount; ++i)
+	for(U32 i = 0; i < header.m_vertexBufferCount; ++i)
 	{
 		alignRoundUp(VERTEX_BUFFER_ALIGNMENT, totalVertexBuffSize);
 

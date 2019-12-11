@@ -72,14 +72,14 @@ const RenderTargetHandle& GlobalIllumination::getVolumeRenderTarget(
 	ANKI_ASSERT(m_giCtx);
 	ANKI_ASSERT(&probe >= &m_giCtx->m_ctx->m_renderQueue->m_giProbes.getFront()
 				&& &probe <= &m_giCtx->m_ctx->m_renderQueue->m_giProbes.getBack());
-	const U idx = &probe - &m_giCtx->m_ctx->m_renderQueue->m_giProbes.getFront();
+	const U32 idx = U32(&probe - &m_giCtx->m_ctx->m_renderQueue->m_giProbes.getFront());
 	return m_giCtx->m_irradianceProbeRts[idx];
 }
 
 void GlobalIllumination::setRenderGraphDependencies(
 	RenderingContext& ctx, RenderPassDescriptionBase& pass, TextureUsageBit usage) const
 {
-	for(U idx = 0; idx < ctx.m_renderQueue->m_giProbes.getSize(); ++idx)
+	for(U32 idx = 0; idx < ctx.m_renderQueue->m_giProbes.getSize(); ++idx)
 	{
 		pass.newDependency({getVolumeRenderTarget(ctx.m_renderQueue->m_giProbes[idx]), usage});
 	}
@@ -230,7 +230,7 @@ Error GlobalIllumination::initIrradiance(const ConfigSet& cfg)
 	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.glslp", m_irradiance.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_irradiance.m_prog);
-	consts.add("WORKGROUP_SIZE", U32(m_tileSize));
+	consts.add("WORKGROUP_SIZE", m_tileSize);
 
 	ShaderProgramResourceMutationInitList<3> mutations(m_irradiance.m_prog);
 	mutations.add("LIGHT_SHADING_TEX", 0);
@@ -271,12 +271,11 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 		for(const RenderQueue* rq : giCtx->m_probeToUpdateThisFrame->m_renderQueues)
 		{
 			ANKI_ASSERT(rq);
-			giCtx->m_gbufferDrawcallCount += U32(rq->m_renderables.getSize());
+			giCtx->m_gbufferDrawcallCount += rq->m_renderables.getSize();
 
 			if(rq->m_directionalLight.hasShadow())
 			{
-				giCtx->m_smDrawcallCount +=
-					U32(rq->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize());
+				giCtx->m_smDrawcallCount += rq->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize();
 			}
 		}
 
@@ -418,12 +417,12 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 
 		pass.newDependency({giCtx->m_lightShadingRt, TextureUsageBit::SAMPLED_COMPUTE});
 
-		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
+		for(U32 i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
 		{
 			pass.newDependency({giCtx->m_gbufferColorRts[i], TextureUsageBit::SAMPLED_COMPUTE});
 		}
 
-		const U probeIdx = giCtx->m_probeToUpdateThisFrame - &giCtx->m_ctx->m_renderQueue->m_giProbes.getFront();
+		const U32 probeIdx = U32(giCtx->m_probeToUpdateThisFrame - &giCtx->m_ctx->m_renderQueue->m_giProbes.getFront());
 		pass.newDependency({giCtx->m_irradianceProbeRts[probeIdx], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	}
 }
@@ -446,7 +445,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 	newListOfProbes.create(ctx.m_tempAllocator, ctx.m_renderQueue->m_giProbes.getSize());
 	DynamicArray<RenderTargetHandle> volumeRts;
 	volumeRts.create(ctx.m_tempAllocator, ctx.m_renderQueue->m_giProbes.getSize());
-	U newListOfProbeCount = 0;
+	U32 newListOfProbeCount = 0;
 	Bool foundProbeToUpdateNextFrame = false;
 	for(U32 probeIdx = 0; probeIdx < ctx.m_renderQueue->m_giProbes.getSize(); ++probeIdx)
 	{
@@ -579,7 +578,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 	if(newListOfProbeCount > 0)
 	{
 		GlobalIlluminationProbeQueueElement* firstProbe;
-		PtrSize probeCount, storage;
+		U32 probeCount, storage;
 		newListOfProbes.moveAndReset(firstProbe, probeCount, storage);
 		ctx.m_renderQueue->m_giProbes = WeakArray<GlobalIlluminationProbeQueueElement>(firstProbe, newListOfProbeCount);
 
@@ -769,7 +768,7 @@ void GlobalIllumination::runIrradiance(RenderPassWorkContext& rgraphCtx, Interna
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	ANKI_ASSERT(giCtx.m_probeToUpdateThisFrame);
 	const GlobalIlluminationProbeQueueElement& probe = *giCtx.m_probeToUpdateThisFrame;
-	const U probeIdx = &probe - &giCtx.m_ctx->m_renderQueue->m_giProbes.getFront();
+	const U32 probeIdx = U32(&probe - &giCtx.m_ctx->m_renderQueue->m_giProbes.getFront());
 
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
 

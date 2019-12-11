@@ -48,7 +48,7 @@ Error OccluderNode::init(const CString& meshFname)
 	MeshLoader loader(&getSceneGraph().getResourceManager());
 	ANKI_CHECK(loader.load(meshFname));
 
-	const U indexCount = loader.getHeader().m_totalIndexCount;
+	const U32 indexCount = loader.getHeader().m_totalIndexCount;
 	m_vertsL.create(getAllocator(), indexCount);
 	m_vertsW.create(getAllocator(), indexCount);
 
@@ -56,7 +56,7 @@ Error OccluderNode::init(const CString& meshFname)
 	DynamicArrayAuto<U32> indices(getAllocator());
 	ANKI_CHECK(loader.storeIndicesAndPosition(indices, positions));
 
-	for(U i = 0; i < indices.getSize(); ++i)
+	for(U32 i = 0; i < indices.getSize(); ++i)
 	{
 		m_vertsL[i] = positions[indices[i]];
 	}
@@ -72,14 +72,14 @@ Error OccluderNode::init(const CString& meshFname)
 void OccluderNode::onMoveComponentUpdate(MoveComponent& movec)
 {
 	const Transform& trf(movec.getWorldTransform());
-	U count = m_vertsL.getSize();
+	U32 count = m_vertsL.getSize();
 	while(count--)
 	{
 
 		m_vertsW[count] = trf.transform(m_vertsL[count]);
 	}
 
-	getComponent<OccluderComponent>().setVertices(&m_vertsW[0], U32(m_vertsW.getSize()), sizeof(m_vertsW[0]));
+	getComponent<OccluderComponent>().setVertices(&m_vertsW[0], m_vertsW.getSize(), sizeof(m_vertsW[0]));
 }
 
 } // end namespace anki

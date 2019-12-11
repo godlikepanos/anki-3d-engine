@@ -24,7 +24,7 @@ void SoftwareRasterizer::prepare(const Mat4& mv, const Mat4& p, U32 width, U32 h
 	ANKI_ASSERT(width > 0 && height > 0);
 	m_width = width;
 	m_height = height;
-	U size = width * height;
+	U32 size = width * height;
 	if(m_zbuffer.getSize() < size)
 	{
 		m_zbuffer.destroy(m_alloc);
@@ -394,7 +394,7 @@ void SoftwareRasterizer::fillDepthBuffer(ConstWeakArray<F32> depthValues)
 {
 	ANKI_ASSERT(m_zbuffer.getSize() == depthValues.getSize());
 
-	U count = depthValues.getSize();
+	U32 count = depthValues.getSize();
 	while(count--)
 	{
 		F32 depth = depthValues[count];

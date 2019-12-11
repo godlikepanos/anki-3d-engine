@@ -153,11 +153,11 @@ ANKI_TEST(Util, HashMap)
 		HighRezTimer timer;
 
 		// Create a huge set
-		const U COUNT = 1024 * 1024 * 10;
+		const U32 COUNT = 1024 * 1024 * 10;
 		DynamicArrayAuto<int> vals(alloc);
 		vals.create(COUNT);
 
-		for(U i = 0; i < COUNT; ++i)
+		for(U32 i = 0; i < COUNT; ++i)
 		{
 			// Put unique keys
 			int v;
@@ -174,7 +174,7 @@ ANKI_TEST(Util, HashMap)
 		{
 			// Put the vals AnKi
 			timer.start();
-			for(U i = 0; i < COUNT; ++i)
+			for(U32 i = 0; i < COUNT; ++i)
 			{
 				akMap.emplace(alloc, vals[i], vals[i]);
 			}
@@ -183,7 +183,7 @@ ANKI_TEST(Util, HashMap)
 
 			// Put the vals STL
 			timer.start();
-			for(U i = 0; i < COUNT; ++i)
+			for(U32 i = 0; i < COUNT; ++i)
 			{
 				stdMap[vals[i]] = vals[i];
 			}
@@ -199,7 +199,7 @@ ANKI_TEST(Util, HashMap)
 
 			// Find values AnKi
 			timer.start();
-			for(U i = 0; i < COUNT; ++i)
+			for(U32 i = 0; i < COUNT; ++i)
 			{
 				auto it = akMap.find(vals[i]);
 				count += *it;
@@ -209,7 +209,7 @@ ANKI_TEST(Util, HashMap)
 
 			// Find values STL
 			timer.start();
-			for(U i = 0; i < COUNT; ++i)
+			for(U32 i = 0; i < COUNT; ++i)
 			{
 				count += stdMap[vals[i]];
 			}
@@ -227,7 +227,7 @@ ANKI_TEST(Util, HashMap)
 
 			// Random delete AnKi
 			Second akTime = 0.0;
-			for(U i = 0; i < vals.getSize(); ++i)
+			for(U32 i = 0; i < vals.getSize(); ++i)
 			{
 				auto it = akMap.find(vals[i]);
 
@@ -239,7 +239,7 @@ ANKI_TEST(Util, HashMap)
 
 			// Random delete STL
 			Second stlTime = 0.0;
-			for(U i = 0; i < vals.getSize(); ++i)
+			for(U32 i = 0; i < vals.getSize(); ++i)
 			{
 				auto it = stdMap.find(vals[i]);
 

@@ -216,7 +216,7 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 	return Error::NONE;
 }
 
-void AnimationResource::interpolate(U channelIndex, Second time, Vec3& pos, Quat& rot, F32& scale) const
+void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Quat& rot, F32& scale) const
 {
 	// Audjust time
 	if(time > m_startTime + m_duration)
@@ -232,7 +232,7 @@ void AnimationResource::interpolate(U channelIndex, Second time, Vec3& pos, Quat
 	// Position
 	if(channel.m_positions.getSize() > 1)
 	{
-		for(U i = 0; i < channel.m_positions.getSize() - 1; ++i)
+		for(U32 i = 0; i < channel.m_positions.getSize() - 1; ++i)
 		{
 			const AnimationKeyframe<Vec3>& left = channel.m_positions[i];
 			const AnimationKeyframe<Vec3>& right = channel.m_positions[i + 1];
@@ -248,7 +248,7 @@ void AnimationResource::interpolate(U channelIndex, Second time, Vec3& pos, Quat
 	// Rotation
 	if(channel.m_rotations.getSize() > 1)
 	{
-		for(U i = 0; i < channel.m_rotations.getSize() - 1; ++i)
+		for(U32 i = 0; i < channel.m_rotations.getSize() - 1; ++i)
 		{
 			const AnimationKeyframe<Quat>& left = channel.m_rotations[i];
 			const AnimationKeyframe<Quat>& right = channel.m_rotations[i + 1];

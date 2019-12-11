@@ -13,7 +13,7 @@ inline void MicroObjectRecycler<T>::destroy()
 {
 	LockGuard<Mutex> lock(m_mtx);
 
-	U count = m_objectCount;
+	U32 count = m_objectCount;
 	while(count--)
 	{
 		T* obj = m_objects[count];
@@ -35,7 +35,7 @@ inline void MicroObjectRecycler<T>::destroy()
 template<typename T>
 inline void MicroObjectRecycler<T>::releaseFences()
 {
-	U count = m_objectCount;
+	U32 count = m_objectCount;
 	while(count--)
 	{
 		T& obj = *m_objects[count];
@@ -56,7 +56,7 @@ inline T* MicroObjectRecycler<T>::findToReuse()
 	{
 		releaseFences();
 
-		U count = m_objectCount;
+		U32 count = m_objectCount;
 		while(count--)
 		{
 			if(!m_objects[count]->getFence())
@@ -64,7 +64,7 @@ inline T* MicroObjectRecycler<T>::findToReuse()
 				out = m_objects[count];
 
 				// Pop it
-				for(U i = count; i < m_objectCount - 1; ++i)
+				for(U32 i = count; i < m_objectCount - 1; ++i)
 				{
 					m_objects[i] = m_objects[i + 1];
 				}
@@ -101,7 +101,7 @@ inline void MicroObjectRecycler<T>::recycle(T* s)
 	if(m_objects.getSize() <= m_objectCount)
 	{
 		// Grow storage
-		m_objects.resize(m_alloc, max<U>(1, m_objects.getSize() * 2));
+		m_objects.resize(m_alloc, max<U32>(1, m_objects.getSize() * 2));
 	}
 
 	m_objects[m_objectCount] = s;

@@ -390,7 +390,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 
 	m_inputs.emplaceBack(m_alloc);
 	Input& input = m_inputs.getBack();
-	input.m_idx = U32(m_inputs.getSize() - 1);
+	input.m_idx = m_inputs.getSize() - 1;
 
 	// const
 	Bool isConst;
@@ -445,7 +445,7 @@ Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const Strin
 		}
 
 		// Check if there are duplicates
-		for(PtrSize i = 0; i < m_inputs.getSize() - 1; ++i)
+		for(U32 i = 0; i < m_inputs.getSize() - 1; ++i)
 		{
 			if(m_inputs[i].m_name == *begin)
 			{
@@ -637,7 +637,7 @@ Error ShaderProgramParser::parsePragmaMutator(
 				ANKI_PP_ERROR_MALFORMED_MSG("Can't have more than one instanced mutators");
 			}
 
-			m_instancedMutatorIdx = U32(m_mutators.getSize() - 1);
+			m_instancedMutatorIdx = m_mutators.getSize() - 1;
 			++begin;
 		}
 		else
@@ -655,7 +655,7 @@ Error ShaderProgramParser::parsePragmaMutator(
 		}
 
 		// Check for duplicate mutators
-		for(U i = 0; i < m_mutators.getSize() - 1; ++i)
+		for(U32 i = 0; i < m_mutators.getSize() - 1; ++i)
 		{
 			if(m_mutators[i].m_name == *begin)
 			{
@@ -701,7 +701,7 @@ Error ShaderProgramParser::parsePragmaMutator(
 		std::sort(mutator.m_values.getBegin(), mutator.m_values.getEnd());
 
 		// Check for duplicates
-		for(U i = 1; i < mutator.m_values.getSize(); ++i)
+		for(U32 i = 1; i < mutator.m_values.getSize(); ++i)
 		{
 			if(mutator.m_values[i - 1] == mutator.m_values[i])
 			{
@@ -768,11 +768,11 @@ Error ShaderProgramParser::parsePragmaRewriteMutation(
 			if(servingFrom)
 			{
 				MutationRewrite::Record& rec = *rewrite.m_records.emplaceBack();
-				for(U i = 0; i < m_mutators.getSize(); ++i)
+				for(U32 i = 0; i < m_mutators.getSize(); ++i)
 				{
 					if(m_mutators[i].getName() == mutatorName)
 					{
-						rec.m_mutatorIndex = U32(i);
+						rec.m_mutatorIndex = i;
 						break;
 					}
 				}
@@ -825,7 +825,7 @@ Error ShaderProgramParser::parsePragmaRewriteMutation(
 		});
 
 	// More cross checking
-	for(U i = 1; i < rewrite.m_records.getSize(); ++i)
+	for(U32 i = 1; i < rewrite.m_records.getSize(); ++i)
 	{
 		if(rewrite.m_records[i - 1].m_mutatorIndex == rewrite.m_records[i].m_mutatorIndex)
 		{
@@ -833,7 +833,7 @@ Error ShaderProgramParser::parsePragmaRewriteMutation(
 		}
 	}
 
-	for(U i = 0; i < m_mutationRewrites.getSize() - 1; ++i)
+	for(U32 i = 0; i < m_mutationRewrites.getSize() - 1; ++i)
 	{
 		const MutationRewrite& other = m_mutationRewrites[i];
 
@@ -843,7 +843,7 @@ Error ShaderProgramParser::parsePragmaRewriteMutation(
 		}
 
 		Bool same = true;
-		for(U j = 0; j < rewrite.m_records.getSize(); ++j)
+		for(U32 j = 0; j < rewrite.m_records.getSize(); ++j)
 		{
 			if(rewrite.m_records[j] != other.m_records[j])
 			{
@@ -1180,7 +1180,7 @@ Error ShaderProgramParser::generateVariant(
 	// Sanity checks
 	ANKI_ASSERT(m_codeSource.getLength() > 0);
 	ANKI_ASSERT(mutation.getSize() == m_mutators.getSize());
-	for(U i = 0; i < mutation.getSize(); ++i)
+	for(U32 i = 0; i < mutation.getSize(); ++i)
 	{
 		ANKI_ASSERT(mutatorHasValue(m_mutators[i], mutation[i]) && "Value not found");
 	}
@@ -1200,7 +1200,7 @@ Error ShaderProgramParser::generateVariant(
 
 	// Create the mutator defines
 	StringAuto mutatorDefines(m_alloc);
-	for(U i = 0; i < mutation.getSize(); ++i)
+	for(U32 i = 0; i < mutation.getSize(); ++i)
 	{
 		mutatorDefines.append(StringAuto(m_alloc).sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]));
 	}
@@ -1396,7 +1396,7 @@ Bool ShaderProgramParser::rewriteMutation(WeakArray<MutatorValue> mutation) cons
 {
 	// Checks
 	ANKI_ASSERT(mutation.getSize() == m_mutators.getSize());
-	for(PtrSize i = 0; i < mutation.getSize(); ++i)
+	for(U32 i = 0; i < mutation.getSize(); ++i)
 	{
 		ANKI_ASSERT(mutatorHasValue(m_mutators[i], mutation[i]));
 	}
@@ -1411,7 +1411,7 @@ Bool ShaderProgramParser::rewriteMutation(WeakArray<MutatorValue> mutation) cons
 	for(const MutationRewrite& rewrite : m_mutationRewrites)
 	{
 		Bool found = true;
-		for(U i = 0; i < rewrite.m_records.getSize(); ++i)
+		for(U32 i = 0; i < rewrite.m_records.getSize(); ++i)
 		{
 			if(rewrite.m_records[i].m_valueFrom != mutation[rewrite.m_records[i].m_mutatorIndex])
 			{
@@ -1423,7 +1423,7 @@ Bool ShaderProgramParser::rewriteMutation(WeakArray<MutatorValue> mutation) cons
 		if(found)
 		{
 			// Rewrite it
-			for(U i = 0; i < rewrite.m_records.getSize(); ++i)
+			for(U32 i = 0; i < rewrite.m_records.getSize(); ++i)
 			{
 				mutation[rewrite.m_records[i].m_mutatorIndex] = rewrite.m_records[i].m_valueTo;
 			}

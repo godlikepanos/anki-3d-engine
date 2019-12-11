@@ -34,9 +34,9 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	// Merge bindings
 	//
 	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> bindings;
-	Array<U, MAX_DESCRIPTOR_SETS> counts = {};
-	U descriptorSetCount = 0;
-	for(U set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
+	Array<U32, MAX_DESCRIPTOR_SETS> counts = {};
+	U32 descriptorSetCount = 0;
+	for(U32 set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
 	{
 		for(ShaderType stype = ShaderType::FIRST; stype < ShaderType::COUNT; ++stype)
 		{
@@ -51,10 +51,10 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 			m_refl.m_activeBindingMask[set] |= simpl.m_activeBindingMask[set];
 
-			for(U i = 0; i < simpl.m_bindings[set].getSize(); ++i)
+			for(U32 i = 0; i < simpl.m_bindings[set].getSize(); ++i)
 			{
 				Bool bindingFound = false;
-				for(U j = 0; j < counts[set]; ++j)
+				for(U32 j = 0; j < counts[set]; ++j)
 				{
 					if(bindings[set][j].m_binding == simpl.m_bindings[set][i].m_binding)
 					{
@@ -97,7 +97,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the descriptor set layouts
 	//
-	for(U set = 0; set < descriptorSetCount; ++set)
+	for(U32 set = 0; set < descriptorSetCount; ++set)
 	{
 		DescriptorSetLayoutInitInfo inf;
 		inf.m_bindings = WeakArray<DescriptorBinding>((counts[set]) ? &bindings[set][0] : nullptr, counts[set]);

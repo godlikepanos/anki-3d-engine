@@ -129,7 +129,7 @@ Error ProbeReflections::initLightShading(const ConfigSet& config)
 			"CubeRefl refl");
 		texinit.m_mipmapCount = U8(m_lightShading.m_mipCount);
 		texinit.m_type = TextureType::CUBE_ARRAY;
-		texinit.m_layerCount = U32(m_cacheEntries.getSize());
+		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 
 		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
@@ -251,7 +251,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx,
 	// - Find the cache entries for each probe
 	DynamicArray<ReflectionProbeQueueElement> newListOfProbes;
 	newListOfProbes.create(ctx.m_tempAllocator, ctx.m_renderQueue->m_reflectionProbes.getSize());
-	U newListOfProbeCount = 0;
+	U32 newListOfProbeCount = 0;
 	Bool foundProbeToUpdateNextFrame = false;
 	for(U32 probeIdx = 0; probeIdx < ctx.m_renderQueue->m_reflectionProbes.getSize(); ++probeIdx)
 	{
@@ -326,7 +326,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx,
 	if(newListOfProbeCount > 0)
 	{
 		ReflectionProbeQueueElement* firstProbe;
-		PtrSize probeCount, storage;
+		U32 probeCount, storage;
 		newListOfProbes.moveAndReset(firstProbe, probeCount, storage);
 		ctx.m_renderQueue->m_reflectionProbes = WeakArray<ReflectionProbeQueueElement>(firstProbe, newListOfProbeCount);
 	}
@@ -556,7 +556,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_gbufferRenderableCount = 0;
 		for(U32 i = 0; i < 6; ++i)
 		{
-			m_ctx.m_gbufferRenderableCount += U32(probeToUpdate->m_renderQueues[i]->m_renderables.getSize());
+			m_ctx.m_gbufferRenderableCount += probeToUpdate->m_renderQueues[i]->m_renderables.getSize();
 		}
 		const U32 taskCount = computeNumberOfSecondLevelCommandBuffers(m_ctx.m_gbufferRenderableCount);
 
@@ -618,8 +618,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		m_ctx.m_shadowRenderableCount = 0;
 		for(U32 i = 0; i < 6; ++i)
 		{
-			m_ctx.m_shadowRenderableCount += U32(
-				probeToUpdate->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize());
+			m_ctx.m_shadowRenderableCount +=
+				probeToUpdate->m_renderQueues[i]->m_directionalLight.m_shadowRenderQueues[0]->m_renderables.getSize();
 		}
 		const U32 taskCount = computeNumberOfSecondLevelCommandBuffers(m_ctx.m_shadowRenderableCount);
 

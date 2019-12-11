@@ -97,7 +97,7 @@ static inline int pwrapWeakArraySceneNodePtrgetSize(lua_State* l)
 	WeakArraySceneNodePtr* self = ud->getData<WeakArraySceneNodePtr>();
 
 	// Call the method
-	PtrSize ret = self->getSize();
+	U32 ret = self->getSize();
 
 	// Push return value
 	lua_pushnumber(l, lua_Number(ret));
@@ -142,7 +142,7 @@ static inline int pwrapWeakArraySceneNodePtrgetAt(lua_State* l)
 	WeakArraySceneNodePtr* self = ud->getData<WeakArraySceneNodePtr>();
 
 	// Pop arguments
-	U arg0;
+	U32 arg0;
 	if(ANKI_UNLIKELY(LuaBinder::checkNumber(l, 2, arg0)))
 	{
 		return -1;

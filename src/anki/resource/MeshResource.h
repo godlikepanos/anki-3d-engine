@@ -41,7 +41,7 @@ public:
 	}
 
 	/// Get submesh info.
-	void getSubMeshInfo(U subMeshId, U32& firstIndex, U32& indexCount, const Obb*& obb) const
+	void getSubMeshInfo(U32 subMeshId, U32& firstIndex, U32& indexCount, const Obb*& obb) const
 	{
 		const SubMesh& sm = m_subMeshes[subMeshId];
 		firstIndex = sm.m_firstIndex;
@@ -51,7 +51,7 @@ public:
 
 	U32 getSubMeshCount() const
 	{
-		return U32(m_subMeshes.getSize());
+		return m_subMeshes.getSize();
 	}
 
 	/// Get all info around vertex indices.
@@ -66,7 +66,7 @@ public:
 	/// Get the number of logical vertex buffers.
 	U32 getVertexBufferCount() const
 	{
-		return U32(m_vertBufferInfos.getSize());
+		return m_vertBufferInfos.getSize();
 	}
 
 	/// Get vertex buffer info.

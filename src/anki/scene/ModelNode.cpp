@@ -136,7 +136,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		trfs[0] = Mat4(movec.getWorldTransform());
 		prevTrfs[0] = Mat4(movec.getPreviousWorldTransform());
 		Bool moved = trfs[0] != prevTrfs[0];
-		for(U i = 1; i < userData.getSize(); ++i)
+		for(U32 i = 1; i < userData.getSize(); ++i)
 		{
 			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
 			const MoveComponent& movec = self2.getComponent<MoveComponent>();
@@ -195,7 +195,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES,
 			modelInf.m_indicesCountArray[0],
-			U32(userData.getSize()),
+			userData.getSize(),
 			U32(modelInf.m_indicesOffsetArray[0] / sizeof(U16)),
 			0,
 			0);
@@ -205,7 +205,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		// Draw the bounding volumes
 
 		Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(userData.getSize());
-		for(U i = 0; i < userData.getSize(); ++i)
+		for(U32 i = 0; i < userData.getSize(); ++i)
 		{
 			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
 

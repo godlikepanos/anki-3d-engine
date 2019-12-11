@@ -236,7 +236,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, S
 		return Error::NONE;
 	}
 
-	DynamicArrayAuto<char> json(m_alloc);
+	DynamicArrayAuto<char, PtrSize> json(m_alloc);
 	json.create(extrasSize + 1);
 	cgltf_result res = cgltf_copy_extras_json(m_gltf, &extras, &json[0], &extrasSize);
 	if(res != cgltf_result_success)
@@ -258,7 +258,7 @@ Error GltfImporter::getExtras(const cgltf_extras& extras, HashMapAuto<CString, S
 	}
 
 	DynamicArrayAuto<jsmntok_t> tokens(m_alloc);
-	tokens.create(tokenCount);
+	tokens.create(U32(tokenCount));
 
 	// Get tokens
 	jsmn_init(&parser);
@@ -344,12 +344,12 @@ Error GltfImporter::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out,
 	StringListAuto list(m_alloc);
 	list.splitString(str, ' ');
 
-	out.create(list.getSize());
+	out.create(U32(list.getSize()));
 
 	Error err = Error::NONE;
 	auto it = list.getBegin();
 	auto end = list.getEnd();
-	U i = 0;
+	U32 i = 0;
 	while(it != end && !err)
 	{
 		err = it->toNumber(out[i++]);
@@ -862,7 +862,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 				return Error::USER_DATA;
 			}
 
-			for(U i = 0; i < keys.getSize(); ++i)
+			for(U32 i = 0; i < keys.getSize(); ++i)
 			{
 				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n",
 					keys[i],
@@ -888,7 +888,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 				return Error::USER_DATA;
 			}
 
-			for(U i = 0; i < keys.getSize(); ++i)
+			for(U32 i = 0; i < keys.getSize(); ++i)
 			{
 				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n",
 					keys[i],
@@ -915,7 +915,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 				return Error::USER_DATA;
 			}
 
-			for(U i = 0; i < keys.getSize(); ++i)
+			for(U32 i = 0; i < keys.getSize(); ++i)
 			{
 				const F32 scaleEpsilon = 0.0001f;
 				if(absolute(scales[i][0] - scales[i][1]) > scaleEpsilon
@@ -960,7 +960,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 
 	ANKI_CHECK(file.writeText("%s\n<skeleton>\n", XML_HEADER));
 
-	for(U i = 0; i < skin.joints_count; ++i)
+	for(U32 i = 0; i < skin.joints_count; ++i)
 	{
 		const cgltf_node& boneNode = *skin.joints[i];
 
@@ -975,7 +975,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 
 		// Bone transform
 		ANKI_CHECK(file.writeText("boneTransform=\""));
-		for(U j = 0; j < 16; j++)
+		for(U32 j = 0; j < 16; j++)
 		{
 			ANKI_CHECK(file.writeText("%f ", boneMats[i][j]));
 		}

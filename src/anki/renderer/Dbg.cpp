@@ -85,11 +85,11 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	// Draw renderables
 	const U32 threadId = rgraphCtx.m_currentSecondLevelCommandBufferIndex;
 	const U32 threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
-	const U32 problemSize = U32(ctx.m_renderQueue->m_renderables.getSize());
+	const U32 problemSize = ctx.m_renderQueue->m_renderables.getSize();
 	U32 start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 
-	for(U i = start; i < end; ++i)
+	for(U32 i = start; i < end; ++i)
 	{
 		const RenderableQueueElement& el = ctx.m_renderQueue->m_renderables[i];
 		Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
@@ -109,7 +109,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	// Draw lights
 	if(threadId == 0)
 	{
-		U count = ctx.m_renderQueue->m_pointLights.getSize();
+		U32 count = ctx.m_renderQueue->m_pointLights.getSize();
 		while(count--)
 		{
 			const PointLightQueueElement& el = ctx.m_renderQueue->m_pointLights[count];
@@ -181,7 +181,7 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 			self->run(rgraphCtx, *self->m_runCtx.m_ctx);
 		},
 		this,
-		computeNumberOfSecondLevelCommandBuffers(U32(ctx.m_renderQueue->m_renderables.getSize())));
+		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_renderables.getSize()));
 
 	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt());
 

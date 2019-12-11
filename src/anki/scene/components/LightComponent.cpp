@@ -85,7 +85,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
 	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= MAX_SHADOW_CASCADES);
 
-	const U32 shadowCascadeCount = U32(cascadeFrustumComponents.getSize());
+	const U32 shadowCascadeCount = cascadeFrustumComponents.getSize();
 
 	el.m_drawCallback = m_drawCallback;
 	el.m_drawCallbackUserData = m_drawCallbackUserData;
@@ -150,7 +150,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 		}
 
 		// Compute the matrices
-		for(U i = 0; i < shadowCascadeCount; ++i)
+		for(U32 i = 0; i < shadowCascadeCount; ++i)
 		{
 			const Sphere& sphere = boundingSpheres[i];
 			const Vec3 sphereCenter = sphere.getCenter().xyz();

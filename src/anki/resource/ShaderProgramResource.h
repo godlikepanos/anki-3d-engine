@@ -374,7 +374,7 @@ private:
 };
 
 /// Smart initializer of multiple ShaderProgramResourceConstantValue.
-template<U count>
+template<U32 count>
 class ShaderProgramResourceConstantValueInitList
 {
 public:
@@ -407,19 +407,19 @@ public:
 		return ConstWeakArray<ShaderProgramResourceConstantValue>(&m_constantValues[0], m_count);
 	}
 
-	ShaderProgramResourceConstantValue& operator[](U idx)
+	ShaderProgramResourceConstantValue& operator[](U32 idx)
 	{
 		return m_constantValues[idx];
 	}
 
 private:
 	ShaderProgramResourcePtr m_ptr;
-	U m_count = 0;
+	U32 m_count = 0;
 	Array<ShaderProgramResourceConstantValue, count> m_constantValues;
 };
 
 /// Smart initializer of multiple ShaderProgramResourceMutation.
-template<U count>
+template<U32 count>
 class ShaderProgramResourceMutationInitList
 {
 public:
@@ -449,14 +449,14 @@ public:
 		return ConstWeakArray<ShaderProgramResourceMutation>(&m_mutations[0], m_count);
 	}
 
-	ShaderProgramResourceMutation& operator[](U idx)
+	ShaderProgramResourceMutation& operator[](U32 idx)
 	{
 		return m_mutations[idx];
 	}
 
 private:
 	ShaderProgramResourcePtr m_ptr;
-	U m_count = 0;
+	U32 m_count = 0;
 	Array<ShaderProgramResourceMutation, count> m_mutations;
 };
 /// @}

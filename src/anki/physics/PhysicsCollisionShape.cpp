@@ -45,7 +45,7 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(
 
 		m_mesh.init();
 
-		for(U i = 0; i < indices.getSize(); i += 3)
+		for(U32 i = 0; i < indices.getSize(); i += 3)
 		{
 			m_mesh->addTriangle(
 				toBt(positions[indices[i]]), toBt(positions[indices[i + 1]]), toBt(positions[indices[i + 2]]));

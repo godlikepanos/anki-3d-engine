@@ -49,7 +49,7 @@ Error XmlElement::getMat3(Mat3& out) const
 
 	if(!err)
 	{
-		for(U i = 0; i < 9 && !err; i++)
+		for(U32 i = 0; i < 9 && !err; i++)
 		{
 			out[i] = arr[i];
 		}
@@ -76,7 +76,7 @@ Error XmlElement::getMat4(Mat4& out) const
 
 	if(!err)
 	{
-		for(U i = 0; i < 16 && !err; i++)
+		for(U32 i = 0; i < 16 && !err; i++)
 		{
 			out[i] = arr[i];
 		}
@@ -103,7 +103,7 @@ Error XmlElement::getVec2(Vec2& out) const
 
 	if(!err)
 	{
-		for(U i = 0; i < 2; i++)
+		for(U32 i = 0; i < 2; i++)
 		{
 			out[i] = arr[i];
 		}
@@ -130,7 +130,7 @@ Error XmlElement::getVec3(Vec3& out) const
 
 	if(!err)
 	{
-		for(U i = 0; i < 3; i++)
+		for(U32 i = 0; i < 3; i++)
 		{
 			out[i] = arr[i];
 		}
@@ -157,7 +157,7 @@ Error XmlElement::getVec4(Vec4& out) const
 
 	if(!err)
 	{
-		for(U i = 0; i < 4; i++)
+		for(U32 i = 0; i < 4; i++)
 		{
 			out[i] = arr[i];
 		}

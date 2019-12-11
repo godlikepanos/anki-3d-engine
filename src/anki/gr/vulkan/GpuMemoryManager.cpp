@@ -198,7 +198,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	m_alloc = alloc;
 
 	m_ifaces.create(alloc, m_memoryProperties.memoryTypeCount);
-	for(U i = 0; i < m_ifaces.getSize(); ++i)
+	for(U32 i = 0; i < m_ifaces.getSize(); ++i)
 	{
 		Interface& iface = m_ifaces[i];
 
@@ -209,12 +209,12 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 
 	// One allocator per type per linear/non-linear resources
 	m_callocs.create(alloc, m_memoryProperties.memoryTypeCount * 2);
-	for(U i = 0; i < m_callocs.getSize(); ++i)
+	for(U32 i = 0; i < m_callocs.getSize(); ++i)
 	{
 		m_callocs[i].init(m_alloc, &m_ifaces[i / 2]);
 
-		const U memTypeIdx = i / 2;
-		const U heapIdx = m_memoryProperties.memoryTypes[memTypeIdx].heapIndex;
+		const U32 memTypeIdx = i / 2;
+		const U32 heapIdx = m_memoryProperties.memoryTypes[memTypeIdx].heapIndex;
 		m_callocs[i].m_isDeviceMemory =
 			!!(m_memoryProperties.memoryHeaps[heapIdx].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
 	}

@@ -187,7 +187,7 @@ void String::appendInternal(Allocator& alloc, const Char* str, PtrSize strLen)
 		size = 1;
 	}
 
-	DynamicArray<Char> newData;
+	DynamicArray<Char, PtrSize> newData;
 	newData.create(alloc, size + strLen);
 
 	if(!m_data.isEmpty())

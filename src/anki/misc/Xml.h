@@ -292,12 +292,12 @@ private:
 		list.splitString(txt, ' ');
 
 		out = DynamicArrayAuto<T>(m_alloc);
-		out.create(list.getSize());
+		out.create(U32(list.getSize()));
 
 		Error err = Error::NONE;
 		auto it = list.getBegin();
 		auto end = list.getEnd();
-		U i = 0;
+		U32 i = 0;
 		while(it != end && !err)
 		{
 			err = it->toNumber(out[i++]);

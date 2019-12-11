@@ -16,7 +16,7 @@ Bool ShaderProgramResourceInputVariable::evalPreproc(ConstWeakArray<te_variable>
 	ANKI_ASSERT(vars.getSize() == m_program->getMutators().getSize());
 
 	int err;
-	te_expr* n = te_compile(m_preprocExpr.cstr(), &vars[0], U32(vars.getSize()), &err);
+	te_expr* n = te_compile(m_preprocExpr.cstr(), &vars[0], vars.getSize(), &err);
 
 	if(!n)
 	{
@@ -41,7 +41,7 @@ Bool ShaderProgramResourceInputVariable::recusiveSpin(U32 crntMissingMutatorIdx,
 {
 	for(ShaderProgramResourceMutatorValue val : missingMutators[crntMissingMutatorIdx]->getValues())
 	{
-		const U valIdx = varIdxOffset + crntMissingMutatorIdx;
+		const U32 valIdx = varIdxOffset + crntMissingMutatorIdx;
 		varValues[valIdx] = val;
 		vars[valIdx] = {missingMutators[crntMissingMutatorIdx]->getName().cstr(), &varValues[valIdx], 0, 0};
 
@@ -181,19 +181,19 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 	m_source.create(getAllocator(), pp.getSource());
 
 	// Create the mutators
-	U instancedMutatorIdx = MAX_U;
+	U32 instancedMutatorIdx = MAX_U32;
 	if(pp.getMutators().getSize())
 	{
 		m_mutators.create(getAllocator(), pp.getMutators().getSize());
 
-		for(U i = 0; i < m_mutators.getSize(); ++i)
+		for(U32 i = 0; i < m_mutators.getSize(); ++i)
 		{
 			Mutator& out = m_mutators[i];
 			const ShaderProgramPreprocessorMutator& in = pp.getMutators()[i];
 
 			out.m_name.create(getAllocator(), in.getName());
 			out.m_values.create(getAllocator(), in.getValues().getSize());
-			for(U j = 0; j < out.m_values.getSize(); ++j)
+			for(U32 j = 0; j < out.m_values.getSize(); ++j)
 			{
 				out.m_values[j] = in.getValues()[j];
 			}
@@ -231,7 +231,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 	// Set some other vars
 	m_descriptorSet = U8(pp.getDescritproSet());
 	m_shaderStages = pp.getShaderTypes();
-	if(instancedMutatorIdx != MAX_U)
+	if(instancedMutatorIdx != MAX_U32)
 	{
 		m_instancingMutator = &m_mutators[instancedMutatorIdx];
 	}

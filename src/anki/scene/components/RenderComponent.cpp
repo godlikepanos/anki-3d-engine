@@ -20,7 +20,7 @@ MaterialRenderComponent::MaterialRenderComponent(SceneNode* node, MaterialResour
 
 	// Create the material variables
 	m_vars.create(m_node->getAllocator(), m_mtl->getVariables().getSize());
-	U count = 0;
+	U32 count = 0;
 	for(const MaterialVariable& mv : m_mtl->getVariables())
 	{
 		m_vars[count++].m_mvar = &mv;
@@ -141,7 +141,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
 				DynamicArrayAuto<Mat3> normMats(m_node->getFrameAllocator());
 				normMats.create(transforms.getSize());
 
-				for(U i = 0; i < transforms.getSize(); i++)
+				for(U32 i = 0; i < transforms.getSize(); i++)
 				{
 					Mat4 mv = ctx.m_viewMatrix * transforms[i];
 					normMats[i] = mv.getRotationPart();
@@ -149,7 +149,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
 				}
 
 				progVariant.writeShaderBlockMemory(
-					progvar, &normMats[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
+					progvar, &normMats[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::ROTATION_MATRIX:
@@ -159,13 +159,12 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
 				DynamicArrayAuto<Mat3> rots(m_node->getFrameAllocator());
 				rots.create(transforms.getSize());
 
-				for(U i = 0; i < transforms.getSize(); i++)
+				for(U32 i = 0; i < transforms.getSize(); i++)
 				{
 					rots[i] = transforms[i].getRotationPart();
 				}
 
-				progVariant.writeShaderBlockMemory(
-					progvar, &rots[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
+				progVariant.writeShaderBlockMemory(progvar, &rots[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::CAMERA_ROTATION_MATRIX:
@@ -197,13 +196,12 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
 				DynamicArrayAuto<Mat4> mvp(m_node->getFrameAllocator());
 				mvp.create(transforms.getSize());
 
-				for(U i = 0; i < transforms.getSize(); i++)
+				for(U32 i = 0; i < transforms.getSize(); i++)
 				{
 					mvp[i] = ctx.m_viewProjectionMatrix * transforms[i];
 				}
 
-				progVariant.writeShaderBlockMemory(
-					progvar, &mvp[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
+				progVariant.writeShaderBlockMemory(progvar, &mvp[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX:
@@ -213,13 +211,13 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
 				DynamicArrayAuto<Mat4> mvp(m_node->getFrameAllocator());
 				mvp.create(prevTransforms.getSize());
 
-				for(U i = 0; i < prevTransforms.getSize(); i++)
+				for(U32 i = 0; i < prevTransforms.getSize(); i++)
 				{
 					mvp[i] = ctx.m_previousViewProjectionMatrix * prevTransforms[i];
 				}
 
 				progVariant.writeShaderBlockMemory(
-					progvar, &mvp[0], U32(prevTransforms.getSize()), uniformsBegin, uniformsEnd);
+					progvar, &mvp[0], prevTransforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::MODEL_VIEW_MATRIX:
@@ -229,13 +227,12 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
 				DynamicArrayAuto<Mat4> mv(m_node->getFrameAllocator());
 				mv.create(transforms.getSize());
 
-				for(U i = 0; i < transforms.getSize(); i++)
+				for(U32 i = 0; i < transforms.getSize(); i++)
 				{
 					mv[i] = ctx.m_viewMatrix * transforms[i];
 				}
 
-				progVariant.writeShaderBlockMemory(
-					progvar, &mv[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
+				progVariant.writeShaderBlockMemory(progvar, &mv[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::MODEL_MATRIX:
@@ -243,7 +240,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
 				ANKI_ASSERT(transforms.getSize() > 0);
 
 				progVariant.writeShaderBlockMemory(
-					progvar, &transforms[0], U32(transforms.getSize()), uniformsBegin, uniformsEnd);
+					progvar, &transforms[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
 			case BuiltinMaterialVariableId::VIEW_PROJECTION_MATRIX:

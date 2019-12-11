@@ -134,7 +134,7 @@ public:
 	template<typename Component>
 	Component* tryGetComponent()
 	{
-		U count = m_components.getSize();
+		U32 count = m_components.getSize();
 		while(count-- != 0)
 		{
 			SceneComponent* comp = m_components[count];
@@ -150,7 +150,7 @@ public:
 	template<typename Component>
 	const Component* tryGetComponent() const
 	{
-		U count = m_components.getSize();
+		U32 count = m_components.getSize();
 		while(count-- != 0)
 		{
 			const SceneComponent* comp = m_components[count];
@@ -182,7 +182,7 @@ public:
 
 	/// Get the nth component.
 	template<typename Component>
-	Component& getComponentAt(U idx)
+	Component& getComponentAt(U32 idx)
 	{
 		ANKI_ASSERT(m_components[idx]->getType() == Component::CLASS_TYPE);
 		return *static_cast<Component*>(m_components[idx]);
@@ -190,13 +190,13 @@ public:
 
 	/// Get the nth component.
 	template<typename Component>
-	const Component& getComponentAt(U idx) const
+	const Component& getComponentAt(U32 idx) const
 	{
 		ANKI_ASSERT(m_components[idx]->getType() == Component::CLASS_TYPE);
 		return *static_cast<const Component*>(m_components[idx]);
 	}
 
-	U getComponentCount() const
+	U32 getComponentCount() const
 	{
 		return m_components.getSize();
 	}

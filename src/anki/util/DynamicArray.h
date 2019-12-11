@@ -12,7 +12,7 @@ namespace anki
 {
 
 // Forward
-template<typename T>
+template<typename T, typename TSize>
 class DynamicArrayAuto;
 
 /// @addtogroup util_containers
@@ -20,7 +20,9 @@ class DynamicArrayAuto;
 
 /// Dynamic array with manual destruction. It doesn't hold the allocator and that makes it compact. At the same time
 /// that requires manual destruction. Used in permanent classes.
-template<typename T>
+/// @tparam T The type this array will hold.
+/// @tparam TSize The type that denotes the maximum number of elements of the array.
+template<typename T, typename TSize = U32>
 class DynamicArray
 {
 public:
@@ -29,6 +31,7 @@ public:
 	using ConstIterator = const Value*;
 	using Reference = Value&;
 	using ConstReference = const Value&;
+	using Size = TSize;
 
 	static constexpr F32 GROW_SCALE = 2.0f;
 	static constexpr F32 SHRINK_SCALE = 2.0f;
@@ -69,18 +72,18 @@ public:
 	}
 
 	/// Move DynamicArrayAuto to this.
-	DynamicArray& operator=(DynamicArrayAuto<T>&& b);
+	DynamicArray& operator=(DynamicArrayAuto<T, TSize>&& b);
 
 	// Non-copyable
 	DynamicArray& operator=(const DynamicArray& b) = delete;
 
-	Reference operator[](const PtrSize n)
+	Reference operator[](const Size n)
 	{
 		ANKI_ASSERT(n < m_size);
 		return m_data[n];
 	}
 
-	ConstReference operator[](const PtrSize n) const
+	ConstReference operator[](const Size n) const
 	{
 		ANKI_ASSERT(n < m_size);
 		return m_data[n];
@@ -158,14 +161,9 @@ public:
 		return m_data[m_size - 1];
 	}
 
-	PtrSize getSize() const
+	Size getSize() const
 	{
 		return m_size;
-	}
-
-	PtrSize getByteSize() const
-	{
-		return m_size * sizeof(Value);
 	}
 
 	Bool isEmpty() const
@@ -180,7 +178,7 @@ public:
 
 	/// Only create the array. Useful if @a T is non-copyable or movable .
 	template<typename TAllocator>
-	void create(TAllocator alloc, PtrSize size)
+	void create(TAllocator alloc, Size size)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0);
 		if(size > 0)
@@ -193,7 +191,7 @@ public:
 
 	/// Only create the array. Useful if @a T is non-copyable or movable .
 	template<typename TAllocator>
-	void create(TAllocator alloc, PtrSize size, const Value& v)
+	void create(TAllocator alloc, Size size, const Value& v)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0);
 		if(size > 0)
@@ -206,11 +204,11 @@ public:
 
 	/// Grow or create the array. @a T needs to be copyable and moveable.
 	template<typename TAllocator>
-	void resize(TAllocator alloc, PtrSize size, const Value& v);
+	void resize(TAllocator alloc, Size size, const Value& v);
 
 	/// Grow or create the array. @a T needs to be copyable, moveable and default constructible.
 	template<typename TAllocator>
-	void resize(TAllocator alloc, PtrSize size);
+	void resize(TAllocator alloc, Size size);
 
 	/// Push back value.
 	template<typename TAllocator, typename... TArgs>
@@ -273,7 +271,7 @@ public:
 
 	/// Move the data from this object. It's like moving (operator or constructor) but instead of moving to another
 	/// object of the same type it moves to 3 values.
-	void moveAndReset(Value*& data, PtrSize& size, PtrSize& storageSize)
+	void moveAndReset(Value*& data, Size& size, Size& storageSize)
 	{
 		data = m_data;
 		size = m_size;
@@ -285,28 +283,29 @@ public:
 
 protected:
 	Value* m_data;
-	PtrSize m_size;
-	PtrSize m_capacity = 0;
+	Size m_size;
+	Size m_capacity = 0;
 
 private:
 	/// Resizes the storage but DOESN'T CONSTRUCT ANY ELEMENTS. It only moves or destroys.
 	template<typename TAllocator>
-	void resizeStorage(TAllocator& alloc, PtrSize newSize);
+	void resizeStorage(TAllocator& alloc, Size newSize);
 };
 
 /// Dynamic array with automatic destruction. It's the same as DynamicArray but it holds the allocator in order to
 /// perform automatic destruction. Use it for temp operations and on transient classes.
-template<typename T>
-class DynamicArrayAuto : public DynamicArray<T>
+template<typename T, typename TSize = U32>
+class DynamicArrayAuto : public DynamicArray<T, TSize>
 {
 public:
-	using Base = DynamicArray<T>;
+	using Base = DynamicArray<T, TSize>;
 	using Base::m_capacity;
 	using Base::m_data;
 	using Base::m_size;
 	using typename Base::Value;
 	using typename Base::Iterator;
 	using typename Base::ConstIterator;
+	using typename Base::Size;
 
 	template<typename TAllocator>
 	DynamicArrayAuto(TAllocator alloc)
@@ -317,7 +316,7 @@ public:
 
 	/// And resize
 	template<typename TAllocator>
-	DynamicArrayAuto(TAllocator alloc, PtrSize size)
+	DynamicArrayAuto(TAllocator alloc, Size size)
 		: Base()
 		, m_alloc(alloc)
 	{
@@ -326,7 +325,7 @@ public:
 
 	/// With default value
 	template<typename TAllocator>
-	DynamicArrayAuto(TAllocator alloc, PtrSize size, const T& v)
+	DynamicArrayAuto(TAllocator alloc, Size size, const T& v)
 		: Base()
 		, m_alloc(alloc)
 	{
@@ -353,7 +352,7 @@ public:
 		if(b.getSize())
 		{
 			create(b.getSize());
-			for(PtrSize i = 0; i < b.getSize(); ++i)
+			for(Size i = 0; i < b.getSize(); ++i)
 			{
 				(*this)[i] = b[i];
 			}
@@ -383,7 +382,7 @@ public:
 		if(b.getSize())
 		{
 			create(b.getSize());
-			for(PtrSize i = 0; i < b.getSize(); ++i)
+			for(Size i = 0; i < b.getSize(); ++i)
 			{
 				(*this)[i] = b[i];
 			}
@@ -392,13 +391,13 @@ public:
 	}
 
 	/// @copydoc DynamicArray::create
-	void create(PtrSize size)
+	void create(Size size)
 	{
 		Base::create(m_alloc, size);
 	}
 
 	/// @copydoc DynamicArray::create
-	void create(PtrSize size, const Value& v)
+	void create(Size size, const Value& v)
 	{
 		Base::create(m_alloc, size, v);
 	}
@@ -410,7 +409,7 @@ public:
 	}
 
 	/// @copydoc DynamicArray::resize
-	void resize(PtrSize size, const Value& v)
+	void resize(Size size, const Value& v)
 	{
 		Base::resize(m_alloc, size, v);
 	}
@@ -430,13 +429,13 @@ public:
 	}
 
 	/// @copydoc DynamicArray::resize
-	void resize(PtrSize size)
+	void resize(Size size)
 	{
 		Base::resize(m_alloc, size);
 	}
 
 	/// @copydoc DynamicArray::moveAndReset
-	void moveAndReset(Value*& data, PtrSize& size, PtrSize& storageSize)
+	void moveAndReset(Value*& data, Size& size, Size& storageSize)
 	{
 		Base::moveAndReset(data, size, storageSize);
 		// Don't touch the m_alloc

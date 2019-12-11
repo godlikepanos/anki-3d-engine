@@ -262,7 +262,7 @@ Error compilerGlslToSpirv(
 	glslang::GlslangToSpv(*program.getIntermediate(stage), glslangSpirv, &spvOptions);
 
 	// Store
-	spirv.resize(glslangSpirv.size() * sizeof(unsigned int));
+	spirv.resize(U32(glslangSpirv.size() * sizeof(unsigned int)));
 	memcpy(&spirv[0], &glslangSpirv[0], spirv.getSizeInBytes());
 
 	return Error::NONE;

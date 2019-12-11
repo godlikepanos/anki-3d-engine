@@ -369,7 +369,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
 	mutators.add("COLOR_TEXTURE", 0);
 	mutators.add("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("INSTANCE_COUNT", U32(mvps.getSize()));
+	consts.add("INSTANCE_COUNT", mvps.getSize());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
 	cmdb->bindShaderProgram(variant->getProgram());
@@ -381,7 +381,7 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
-	cmdb->drawElements(PrimitiveTopology::LINES, indexCount, U32(mvps.getSize()));
+	cmdb->drawElements(PrimitiveTopology::LINES, indexCount, mvps.getSize());
 }
 
 void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
@@ -444,7 +444,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
 	mutators.add("COLOR_TEXTURE", 1);
 	mutators.add("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("INSTANCE_COUNT", U32(positions.getSize()));
+	consts.add("INSTANCE_COUNT", positions.getSize());
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
 	cmdb->bindShaderProgram(variant->getProgram());
@@ -458,7 +458,7 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
 	cmdb->bindSampler(1, 1, sampler);
 	cmdb->bindTexture(1, 2, tex, TextureUsageBit::SAMPLED_FRAGMENT);
 
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, U32(positions.getSize()));
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, positions.getSize());
 }
 
 } // end namespace anki

@@ -655,10 +655,10 @@ Error App::mainLoop()
 
 void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, RenderQueue& rqueue)
 {
-	const U originalCount = rqueue.m_uis.getSize();
+	const U32 originalCount = rqueue.m_uis.getSize();
 	if(m_displayStats || m_consoleEnabled)
 	{
-		const U extraElements = (m_displayStats != 0) + (m_consoleEnabled != 0);
+		const U32 extraElements = (m_displayStats != 0) + (m_consoleEnabled != 0);
 		newUiElementArr.create(originalCount + extraElements);
 
 		if(originalCount > 0)
@@ -669,7 +669,7 @@ void App::injectUiElements(DynamicArrayAuto<UiQueueElement>& newUiElementArr, Re
 		rqueue.m_uis = WeakArray<UiQueueElement>(newUiElementArr);
 	}
 
-	U count = originalCount;
+	U32 count = originalCount;
 	if(m_displayStats)
 	{
 		newUiElementArr[count].m_userData = m_statsUi.get();

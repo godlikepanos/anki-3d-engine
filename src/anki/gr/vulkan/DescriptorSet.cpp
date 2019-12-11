@@ -334,8 +334,8 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 	}
 
 	// Second pass: Populate the VkWriteDescriptorSet with VkDescriptorImageInfo and VkDescriptorBufferInfo
-	U texCounter = 0;
-	U buffCounter = 0;
+	U32 texCounter = 0;
+	U32 buffCounter = 0;
 
 	VkWriteDescriptorSet writeTemplate = {};
 	writeTemplate.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -378,7 +378,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 
 	// Write
 	vkUpdateDescriptorSets(m_layoutEntry->m_factory->m_dev,
-		U32(writeInfos.getSize()),
+		writeInfos.getSize(),
 		(writeInfos.getSize() > 0) ? &writeInfos[0] : nullptr,
 		0,
 		nullptr);
@@ -672,7 +672,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 {
 	// Compute the hash for the layout
 	Array<DescriptorBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> bindings;
-	U32 bindingCount = U32(init.m_bindings.getSize());
+	U32 bindingCount = init.m_bindings.getSize();
 	U64 hash;
 
 	if(init.m_bindings.getSize() > 0)
@@ -848,7 +848,7 @@ Error BindlessDescriptorSet::init(const GrAllocator<U8>& alloc, VkDevice dev)
 		m_freeTexIndices.create(m_alloc, MAX_BINDLESS_TEXTURES);
 		m_freeTexIndexCount = U16(m_freeTexIndices.getSize());
 
-		for(U i = 0; i < m_freeTexIndices.getSize(); ++i)
+		for(U32 i = 0; i < m_freeTexIndices.getSize(); ++i)
 		{
 			m_freeTexIndices[i] = U16(m_freeTexIndices.getSize() - i - 1);
 		}
@@ -856,7 +856,7 @@ Error BindlessDescriptorSet::init(const GrAllocator<U8>& alloc, VkDevice dev)
 		m_freeImgIndices.create(m_alloc, MAX_BINDLESS_IMAGES);
 		m_freeImgIndexCount = U16(m_freeImgIndices.getSize());
 
-		for(U i = 0; i < m_freeImgIndices.getSize(); ++i)
+		for(U32 i = 0; i < m_freeImgIndices.getSize(); ++i)
 		{
 			m_freeImgIndices[i] = U16(m_freeImgIndices.getSize() - i - 1);
 		}
@@ -962,7 +962,7 @@ void BindlessDescriptorSet::unbindCommon(U32 idx, DynamicArray<U16>& freeIndices
 	std::sort(&freeIndices[0], &freeIndices[0] + freeIndexCount, std::greater<U16>());
 
 	// Make sure there are no duplicates
-	for(U i = 1; i < freeIndexCount; ++i)
+	for(U32 i = 1; i < freeIndexCount; ++i)
 	{
 		ANKI_ASSERT(freeIndices[i] != freeIndices[i - 1]);
 	}

@@ -92,7 +92,7 @@ public:
 	}
 
 	/// Get the interpolated data
-	void interpolate(U channelIndex, Second time, Vec3& position, Quat& rotation, F32& scale) const;
+	void interpolate(U32 channelIndex, Second time, Vec3& position, Quat& rotation, F32& scale) const;
 
 private:
 	DynamicArray<AnimationChannel> m_channels;

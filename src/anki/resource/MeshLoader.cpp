@@ -272,14 +272,14 @@ Error MeshLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, Dynami
 
 		// Create staging buff
 		const PtrSize idxBufferSize = getIndexBufferSize();
-		DynamicArrayAuto<U8> staging(m_alloc);
+		DynamicArrayAuto<U8, PtrSize> staging(m_alloc);
 		staging.create(idxBufferSize);
 
 		// Store to staging buff
 		ANKI_CHECK(storeIndexBuffer(&staging[0], staging.getSizeInBytes()));
 
 		// Copy
-		for(U i = 0; i < m_header.m_totalIndexCount; ++i)
+		for(U32 i = 0; i < m_header.m_totalIndexCount; ++i)
 		{
 			if(m_header.m_indexType == IndexType::U32)
 			{
@@ -301,14 +301,14 @@ Error MeshLoader::storeIndicesAndPosition(DynamicArrayAuto<U32>& indices, Dynami
 
 		// Create staging buff
 		const PtrSize vertBuffSize = m_header.m_totalVertexCount * buffInfo.m_vertexStride;
-		DynamicArrayAuto<U8> staging(m_alloc);
+		DynamicArrayAuto<U8, PtrSize> staging(m_alloc);
 		staging.create(vertBuffSize);
 
 		// Store to staging buff
 		ANKI_CHECK(storeVertexBuffer(attrib.m_bufferBinding, &staging[0], staging.getSizeInBytes()));
 
 		// Copy
-		for(U i = 0; i < m_header.m_totalVertexCount; ++i)
+		for(U32 i = 0; i < m_header.m_totalVertexCount; ++i)
 		{
 			Vec3 vert(0.0f);
 			if(attrib.m_format == Format::R32G32B32_SFLOAT)

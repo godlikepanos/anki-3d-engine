@@ -60,7 +60,7 @@ public:
 	{
 		for(U32 i = 0; i < CHUNK_COUNT; ++i)
 		{
-			m_chunks[i] |= b.m_chunks[i];
+			m_chunks[i] = m_chunks[i] | b.m_chunks[i];
 		}
 		return *this;
 	}
@@ -81,7 +81,7 @@ public:
 	{
 		for(U32 i = 0; i < CHUNK_COUNT; ++i)
 		{
-			m_chunks[i] &= b.m_chunks[i];
+			m_chunks[i] = m_chunks[i] & b.m_chunks[i];
 		}
 		return *this;
 	}
@@ -102,7 +102,7 @@ public:
 	{
 		for(U32 i = 0; i < CHUNK_COUNT; ++i)
 		{
-			m_chunks[i] ^= b.m_chunks[i];
+			m_chunks[i] = m_chunks[i] ^ b.m_chunks[i];
 		}
 		return *this;
 	}

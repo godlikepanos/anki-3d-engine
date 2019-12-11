@@ -223,7 +223,7 @@ void PointLightNode::onMoveUpdate(const MoveComponent& move)
 	onMoveUpdateCommon(move);
 
 	// Update the frustums
-	U count = 0;
+	U32 count = 0;
 	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
 		Transform trf = m_shadowData[count].m_localTrf;
 		trf.setOrigin(move.getWorldTransform().getOrigin());
@@ -276,7 +276,7 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 		m_shadowData[5].m_localTrf.setRotation(Mat3x4(rot));
 
 		const Vec4& origin = getComponent<MoveComponent>().getWorldTransform().getOrigin();
-		for(U i = 0; i < 6; i++)
+		for(U32 i = 0; i < 6; i++)
 		{
 			Transform trf = m_shadowData[i].m_localTrf;
 			trf.setOrigin(origin);

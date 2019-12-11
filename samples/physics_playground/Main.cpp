@@ -334,7 +334,7 @@ Error MyApp::userMainLoop(Bool& quit)
 		SceneNode& node = getSceneGraph().findSceneNode("trigger");
 		TriggerComponent& comp = node.getComponent<TriggerComponent>();
 
-		for(U i = 0; i < comp.getContactSceneNodes().getSize(); ++i)
+		for(U32 i = 0; i < comp.getContactSceneNodes().getSize(); ++i)
 		{
 			ANKI_LOGI("Touching %s", comp.getContactSceneNodes()[i]->getName().cstr());
 		}

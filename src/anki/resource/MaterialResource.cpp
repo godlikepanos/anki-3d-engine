@@ -167,7 +167,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 			return Error::USER_DATA;
 		}
 
-		for(U i = 0; i < MAX_INSTANCE_GROUPS; ++i)
+		for(U32 i = 0; i < MAX_INSTANCE_GROUPS; ++i)
 		{
 			if(m_instanceMutator->getValues()[i] != (1 << i))
 			{
@@ -182,13 +182,13 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 	m_passMutator = m_prog->tryFindMutator("PASS");
 	if(m_passMutator)
 	{
-		if(m_passMutator->getValues().getSize() != U(Pass::COUNT))
+		if(m_passMutator->getValues().getSize() != U32(Pass::COUNT))
 		{
 			ANKI_RESOURCE_LOGE("Mutator PASS should have %u values in the program", U(Pass::COUNT));
 			return Error::USER_DATA;
 		}
 
-		for(U i = 0; i < U(Pass::COUNT); ++i)
+		for(U32 i = 0; i < U(Pass::COUNT); ++i)
 		{
 			if(m_passMutator->getValues()[i] != I(i))
 			{
@@ -215,7 +215,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 			return Error::USER_DATA;
 		}
 
-		for(U i = 0; i < m_lodMutator->getValues().getSize(); ++i)
+		for(U32 i = 0; i < m_lodMutator->getValues().getSize(); ++i)
 		{
 			if(m_lodMutator->getValues()[i] != I(i))
 			{
@@ -237,7 +237,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 			return Error::USER_DATA;
 		}
 
-		for(U i = 0; i < m_bonesMutator->getValues().getSize(); ++i)
+		for(U32 i = 0; i < m_bonesMutator->getValues().getSize(); ++i)
 		{
 			if(m_bonesMutator->getValues()[i] != I(i))
 			{
@@ -258,7 +258,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 			return Error::USER_DATA;
 		}
 
-		for(U i = 0; i < m_velocityMutator->getValues().getSize(); ++i)
+		for(U32 i = 0; i < m_velocityMutator->getValues().getSize(); ++i)
 		{
 			if(m_velocityMutator->getValues()[i] != I(i))
 			{
@@ -282,8 +282,8 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 {
 	// Iterate the program's variables and get counts
-	U constInputCount = 0;
-	U nonConstInputCount = 0;
+	U32 constInputCount = 0;
+	U32 nonConstInputCount = 0;
 	for(const ShaderProgramResourceInputVariable& in : m_prog->getInputVariables())
 	{
 		if(!in.acceptAllMutations(m_mutations))
@@ -538,12 +538,13 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 
 	if(variant.m_variant == nullptr)
 	{
-		const U mutatorCount = m_mutations.getSize() + ((m_instanceMutator) ? 1 : 0) + ((m_passMutator) ? 1 : 0)
-							   + ((m_lodMutator) ? 1 : 0) + ((m_bonesMutator) ? 1 : 0) + ((m_velocityMutator) ? 1 : 0);
+		const U32 mutatorCount = m_mutations.getSize() + ((m_instanceMutator) ? 1 : 0) + ((m_passMutator) ? 1 : 0)
+								 + ((m_lodMutator) ? 1 : 0) + ((m_bonesMutator) ? 1 : 0)
+								 + ((m_velocityMutator) ? 1 : 0);
 
 		DynamicArrayAuto<ShaderProgramResourceMutation> mutations(getTempAllocator());
 		mutations.create(mutatorCount);
-		U count = m_mutations.getSize();
+		U32 count = m_mutations.getSize();
 		if(m_mutations.getSize())
 		{
 			memcpy(&mutations[0], &m_mutations[0], m_mutations.getSize() * sizeof(m_mutations[0]));

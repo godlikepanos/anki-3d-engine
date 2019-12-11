@@ -326,8 +326,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		};
 		Array<SpatialTemp, MAX_SUB_DRAWCALLS> sps;
 
-		U spIdx = 0;
-		U count = 0;
+		U32 spIdx = 0;
+		U32 count = 0;
 		Error err = node.iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp) {
 			if(spatialInsideFrustum(testedFrc, sp) && testAgainstRasterizer(sp.getAabb()))
 			{
@@ -464,7 +464,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			{
 				ANKI_ASSERT(lc->getShadowEnabled() == true && "Only with shadow for now");
 
-				U cascadeCount;
+				U32 cascadeCount;
 				if(ANKI_UNLIKELY(!castsShadow))
 				{
 					cascadeCount = 0;
@@ -488,7 +488,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 										 cascadeCount * sizeof(FrustumComponent), alignof(FrustumComponent)))
 								   : nullptr,
 					cascadeCount);
-				for(U i = 0; i < cascadeCount; ++i)
+				for(U32 i = 0; i < cascadeCount; ++i)
 				{
 					::new(&cascadeFrustumComponents[i]) FrustumComponent(&node, FrustumType::ORTHOGRAPHIC);
 				}
@@ -497,7 +497,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 				nextQueues = WeakArray<RenderQueue>(
 					(cascadeCount) ? alloc.newArray<RenderQueue>(cascadeCount) : nullptr, cascadeCount);
-				for(U i = 0; i < cascadeCount; ++i)
+				for(U32 i = 0; i < cascadeCount; ++i)
 				{
 					result.m_directionalLight.m_shadowRenderQueues[i] = &nextQueues[i];
 				}
@@ -508,7 +508,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				result.m_directionalLight.m_uuid = testedNode.getUuid();
 
 				// Manually update the dummy components
-				for(U i = 0; i < cascadeCount; ++i)
+				for(U32 i = 0; i < cascadeCount; ++i)
 				{
 					cascadeFrustumComponents[i].setEnabledVisibilityTests(
 						FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
@@ -633,9 +633,9 @@ void CombineResultsTask::combine()
 	RenderQueue& results = *m_frcCtx->m_renderQueue;
 
 	// Compute the timestamp
-	const U threadCount = m_frcCtx->m_queueViews.getSize();
+	const U32 threadCount = m_frcCtx->m_queueViews.getSize();
 	results.m_shadowRenderablesLastUpdateTimestamp = 0;
-	for(U i = 0; i < threadCount; ++i)
+	for(U32 i = 0; i < threadCount; ++i)
 	{
 		results.m_shadowRenderablesLastUpdateTimestamp =
 			max(results.m_shadowRenderablesLastUpdateTimestamp, m_frcCtx->m_queueViews[i].m_timestamp);
@@ -645,7 +645,7 @@ void CombineResultsTask::combine()
 #define ANKI_VIS_COMBINE(t_, member_) \
 	{ \
 		Array<TRenderQueueElementStorage<t_>, 64> subStorages; \
-		for(U i = 0; i < threadCount; ++i) \
+		for(U32 i = 0; i < threadCount; ++i) \
 		{ \
 			subStorages[i] = m_frcCtx->m_queueViews[i].member_; \
 		} \
@@ -660,7 +660,7 @@ void CombineResultsTask::combine()
 	{ \
 		Array<TRenderQueueElementStorage<t_>, 64> subStorages; \
 		Array<TRenderQueueElementStorage<U32>, 64> ptrSubStorages; \
-		for(U i = 0; i < threadCount; ++i) \
+		for(U32 i = 0; i < threadCount; ++i) \
 		{ \
 			subStorages[i] = m_frcCtx->m_queueViews[i].member_; \
 			ptrSubStorages[i] = m_frcCtx->m_queueViews[i].ptrMember_; \
@@ -685,7 +685,7 @@ void CombineResultsTask::combine()
 	ANKI_VIS_COMBINE(GlobalIlluminationProbeQueueElement, m_giProbes);
 	ANKI_VIS_COMBINE(GenericGpuComputeJobQueueElement, m_genericGpuComputeJobs);
 
-	for(U i = 0; i < threadCount; ++i)
+	for(U32 i = 0; i < threadCount; ++i)
 	{
 		if(m_frcCtx->m_queueViews[i].m_directionalLight.m_uuid != 0)
 		{
@@ -735,9 +735,9 @@ void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
 	WeakArray<T>& combined,
 	WeakArray<T*>* ptrCombined)
 {
-	U totalElCount = subStorages[0].m_elementCount;
-	U biggestSubStorageIdx = 0;
-	for(U i = 1; i < subStorages.getSize(); ++i)
+	U32 totalElCount = subStorages[0].m_elementCount;
+	U32 biggestSubStorageIdx = 0;
+	for(U32 i = 1; i < subStorages.getSize(); ++i)
 	{
 		totalElCount += subStorages[i].m_elementCount;
 
@@ -757,9 +757,9 @@ void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
 	if(ptrSubStorages != nullptr)
 	{
 		ANKI_ASSERT(ptrCombined);
-		U ptrTotalElCount = (*ptrSubStorages)[0].m_elementCount;
+		U32 ptrTotalElCount = (*ptrSubStorages)[0].m_elementCount;
 
-		for(U i = 1; i < ptrSubStorages->getSize(); ++i)
+		for(U32 i = 1; i < ptrSubStorages->getSize(); ++i)
 		{
 			ptrTotalElCount += (*ptrSubStorages)[i].m_elementCount;
 		}
@@ -778,7 +778,7 @@ void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
 		// Can't reuse any of the existing storage, will allocate a brand new one
 
 		it = alloc.newArray<T>(totalElCount);
-		biggestSubStorageIdx = MAX_U;
+		biggestSubStorageIdx = MAX_U32;
 
 		combined = WeakArray<T>(it, totalElCount);
 	}
@@ -791,7 +791,7 @@ void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
 		combined = WeakArray<T>(subStorages[biggestSubStorageIdx].m_elements, totalElCount);
 	}
 
-	for(U i = 0; i < subStorages.getSize(); ++i)
+	for(U32 i = 0; i < subStorages.getSize(); ++i)
 	{
 		if(subStorages[i].m_elementCount == 0)
 		{
@@ -803,7 +803,7 @@ void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
 		{
 			T* base = (i != biggestSubStorageIdx) ? it : subStorages[biggestSubStorageIdx].m_elements;
 
-			for(U x = 0; x < (*ptrSubStorages)[i].m_elementCount; ++x)
+			for(U32 x = 0; x < (*ptrSubStorages)[i].m_elementCount; ++x)
 			{
 				ANKI_ASSERT((*ptrSubStorages)[i].m_elements[x] < subStorages[i].m_elementCount);
 

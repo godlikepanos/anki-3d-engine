@@ -36,7 +36,7 @@ Error VolumetricFog::init(const ConfigSet& config)
 	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]))
 		.add("CLUSTER_COUNT", UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]))
-		.add("FINAL_CLUSTER_Z", U32(m_finalClusterZ))
+		.add("FINAL_CLUSTER_Z", m_finalClusterZ)
 		.add("FRACTION", UVec3(fractionXY, fractionXY, fractionZ))
 		.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
 

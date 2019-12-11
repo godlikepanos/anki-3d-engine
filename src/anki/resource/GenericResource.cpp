@@ -23,7 +23,7 @@ Error GenericResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	PtrSize size = file->getSize();
+	const U32 size = U32(file->getSize());
 	m_data.create(getAllocator(), size);
 	ANKI_CHECK(file->read(&m_data[0], size));
 

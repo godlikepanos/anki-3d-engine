@@ -168,7 +168,7 @@ void ReflectionProbeNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 {
 	Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(userData.getSize());
 	Vec3* const positions = ctx.m_frameAllocator.newArray<Vec3>(userData.getSize());
-	for(U i = 0; i < userData.getSize(); ++i)
+	for(U32 i = 0; i < userData.getSize(); ++i)
 	{
 		const ReflectionProbeNode& self = *static_cast<const ReflectionProbeNode*>(userData[i]);
 		const ReflectionProbeComponent& rComp = self.getComponent<ReflectionProbeComponent>();

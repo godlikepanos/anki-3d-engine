@@ -344,7 +344,7 @@ Error ShaderCompiler::genSpirv(CString src, const ShaderCompilerOptions& options
 	glslang::GlslangToSpv(*program.getIntermediate(stage), glslangSpirv, &spvOptions);
 
 	// Store
-	spirv.resize(glslangSpirv.size() * sizeof(unsigned int));
+	spirv.resize(U32(glslangSpirv.size() * sizeof(unsigned int)));
 	memcpy(&spirv[0], &glslangSpirv[0], spirv.getSizeInBytes());
 
 	return Error::NONE;
@@ -416,7 +416,7 @@ Error ShaderCompiler::compile(CString source,
 		StringAuto out(m_alloc);
 		ANKI_CHECK(preprocessCommon(finalSrc.toCString(), options, out));
 
-		bin.resize(out.getLength() + 1);
+		bin.resize(U32(out.getLength() + 1));
 		memcpy(&bin[0], &out[0], bin.getSizeInBytes());
 #endif
 	}
@@ -518,7 +518,7 @@ Error ShaderCompilerCache::compileInternal(CString source,
 		ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::READ | FileOpenFlag::BINARY));
 
 		PtrSize size = file.getSize();
-		bin.resize(size);
+		bin.resize(U32(size));
 		ANKI_CHECK(file.read(&bin[0], bin.getSize()));
 	}
 	else

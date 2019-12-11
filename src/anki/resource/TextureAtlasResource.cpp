@@ -62,8 +62,8 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 	//
 
 	// Get counts
-	PtrSize namesSize = 0;
-	PtrSize subTexesCount = 0;
+	U32 namesSize = 0;
+	U32 subTexesCount = 0;
 	XmlElement subTexesEl, subTexEl;
 	ANKI_CHECK(rootel.getChildElement("subTextures", subTexesEl));
 	ANKI_CHECK(subTexesEl.getChildElement("subTexture", subTexEl));
@@ -79,7 +79,7 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 			return Error::USER_DATA;
 		}
 
-		namesSize += name.getLength() + 1;
+		namesSize += U32(name.getLength()) + 1;
 		++subTexesCount;
 
 		ANKI_CHECK(subTexEl.getNextSiblingElement("subTexture", subTexEl));

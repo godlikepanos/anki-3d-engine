@@ -19,7 +19,7 @@ Error PipelineCache::init(
 	m_dumpFilename.sprintf(alloc, "%s/vk_pipeline_cache", &cacheDir[0]);
 
 	// Try read the pipeline cache file.
-	DynamicArrayAuto<U8> diskDump(alloc);
+	DynamicArrayAuto<U8, PtrSize> diskDump(alloc);
 	if(fileExists(m_dumpFilename.toCString()))
 	{
 		File file;
@@ -93,7 +93,7 @@ Error PipelineCache::destroyInternal(VkDevice dev, VkPhysicalDevice pdev, GrAllo
 		if(size > 0)
 		{
 			// Read cache
-			DynamicArrayAuto<U8> cacheData(alloc);
+			DynamicArrayAuto<U8, PtrSize> cacheData(alloc);
 			cacheData.create(size);
 			ANKI_VK_CHECK(vkGetPipelineCacheData(dev, m_cacheHandle, &size, &cacheData[0]));
 

@@ -67,11 +67,11 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 		<class name="WeakArraySceneNodePtr">
 			<methods>
 				<method name="getSize">
-					<return>PtrSize</return>
+					<return>U32</return>
 				</method>
 				<method name="getAt">
 					<overrideCall><![CDATA[SceneNode* ret = (*self)[arg0];]]></overrideCall>
-					<args><arg>U</arg></args>
+					<args><arg>U32</arg></args>
 					<return>SceneNode*</return>
 				</method>
 			</methods>

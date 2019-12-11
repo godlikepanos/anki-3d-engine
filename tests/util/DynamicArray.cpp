@@ -110,11 +110,11 @@ ANKI_TEST(Util, DynamicArray)
 		for(U i = 0; i < ITERATIONS; ++i)
 		{
 			const Bool grow = arr.getSize() > 0 && (rand() & 1);
-			PtrSize newSize;
+			U32 newSize;
 			U32 value = rand();
 			if(grow)
 			{
-				newSize = vec.size() * getRandomRange(1, 4);
+				newSize = U32(vec.size()) * getRandomRange(1, 4);
 			}
 			else
 			{
@@ -126,9 +126,9 @@ ANKI_TEST(Util, DynamicArray)
 
 			// Validate
 			ANKI_TEST_EXPECT_EQ(arr.getSize(), vec.size());
-			for(U i = 0; i < arr.getSize(); ++i)
+			for(U32 j = 0; j < arr.getSize(); ++j)
 			{
-				ANKI_TEST_EXPECT_EQ(arr[i].m_x, vec[i].m_x);
+				ANKI_TEST_EXPECT_EQ(arr[j].m_x, vec[j].m_x);
 			}
 
 			arr.validate();
@@ -187,7 +187,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 		arr.emplaceAt(arr.getBegin() + 4, 666);
 
-		for(I i = 0; i < 10 + 1; ++i)
+		for(I32 i = 0; i < 10 + 1; ++i)
 		{
 			if(i < 4)
 			{
@@ -243,7 +243,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 
 		// Check
 		ANKI_TEST_EXPECT_EQ(arr.getSize(), vec.size());
-		for(PtrSize i = 0; i < arr.getSize(); ++i)
+		for(U32 i = 0; i < arr.getSize(); ++i)
 		{
 			ANKI_TEST_EXPECT_EQ(arr[i].m_x, vec[i].m_x);
 		}

@@ -123,7 +123,7 @@ Error ModelPatch::init(ModelResource* model,
 
 	// Load meshes
 	m_meshCount = 0;
-	for(U i = 0; i < meshFNames.getSize(); i++)
+	for(U32 i = 0; i < meshFNames.getSize(); i++)
 	{
 		ANKI_CHECK(manager->loadResource(meshFNames[i], m_meshes[i], async));
 
@@ -172,7 +172,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));
 
 	// Count
-	U count = 0;
+	U32 count = 0;
 	do
 	{
 		++count;
@@ -197,7 +197,7 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(modelPatchEl.getChildElement("material", materialEl));
 
 		Array<CString, 3> meshesFnames;
-		U meshesCount = 1;
+		U32 meshesCount = 1;
 
 		// Get mesh
 		XmlElement meshEl;

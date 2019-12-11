@@ -85,7 +85,7 @@ Error LightShading::initApplyFog(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShadingApplyFog.glslp", m_applyFog.m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_applyFog.m_prog);
-	consts.add("FOG_LAST_CLASTER", U32(m_r->getVolumetricFog().getFinalClusterInZ()));
+	consts.add("FOG_LAST_CLASTER", m_r->getVolumetricFog().getFinalClusterInZ());
 
 	const ShaderProgramResourceVariant* variant;
 	m_applyFog.m_prog->getOrCreateVariant(consts.get(), variant);
@@ -189,7 +189,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.setWork(
 		[](RenderPassWorkContext& rgraphCtx) { static_cast<LightShading*>(rgraphCtx.m_userData)->run(rgraphCtx); },
 		this,
-		computeNumberOfSecondLevelCommandBuffers(U32(ctx.m_renderQueue->m_forwardShadingRenderables.getSize())));
+		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()));
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{m_runCtx.m_rt}}, {m_r->getGBuffer().getDepthRt()});
 
 	// Light shading

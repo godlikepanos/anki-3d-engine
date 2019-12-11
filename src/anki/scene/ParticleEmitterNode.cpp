@@ -356,7 +356,7 @@ void ParticleEmitterNode::createParticlesPhysicsSimulation(SceneGraph* scene)
 
 	m_particles.create(getAllocator(), m_maxNumOfParticles);
 
-	for(U i = 0; i < m_maxNumOfParticles; i++)
+	for(U32 i = 0; i < m_maxNumOfParticles; i++)
 	{
 		binit.m_mass = getRandomRange(m_particle.m_minMass, m_particle.m_maxMass);
 
@@ -370,7 +370,7 @@ void ParticleEmitterNode::createParticlesSimpleSimulation()
 {
 	m_particles.create(getAllocator(), m_maxNumOfParticles);
 
-	for(U i = 0; i < m_maxNumOfParticles; i++)
+	for(U32 i = 0; i < m_maxNumOfParticles; i++)
 	{
 		ParticleSimple* part = getAllocator().newInstance<ParticleSimple>();
 

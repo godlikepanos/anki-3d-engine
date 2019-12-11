@@ -15,7 +15,7 @@ namespace anki
 /// @{
 
 /// Array that doesn't own the memory.
-template<typename T>
+template<typename T, typename TSize = U32>
 class WeakArray
 {
 public:
@@ -24,8 +24,9 @@ public:
 	using ConstIterator = const Value*;
 	using Reference = Value&;
 	using ConstReference = const Value&;
+	using Size = TSize;
 
-	WeakArray(T* mem, PtrSize size)
+	WeakArray(T* mem, Size size)
 		: m_data(mem)
 		, m_size(size)
 	{
@@ -87,13 +88,13 @@ public:
 		return *this;
 	}
 
-	Reference operator[](const PtrSize n)
+	Reference operator[](const Size n)
 	{
 		ANKI_ASSERT(n < m_size);
 		return m_data[n];
 	}
 
-	ConstReference operator[](const PtrSize n) const
+	ConstReference operator[](const Size n) const
 	{
 		ANKI_ASSERT(n < m_size);
 		return m_data[n];
@@ -171,14 +172,9 @@ public:
 		return m_data[m_size - 1];
 	}
 
-	PtrSize getSize() const
+	Size getSize() const
 	{
 		return m_size;
-	}
-
-	PtrSize getByteSize() const
-	{
-		return m_size * sizeof(Value);
 	}
 
 	Bool isEmpty() const
@@ -193,19 +189,20 @@ public:
 
 private:
 	Value* m_data;
-	PtrSize m_size;
+	Size m_size;
 };
 
 /// Array that doesn't own the memory.
-template<typename T>
+template<typename T, typename TSize = U32>
 class ConstWeakArray
 {
 public:
 	using Value = T;
 	using ConstIterator = const Value*;
 	using ConstReference = const Value&;
+	using Size = TSize;
 
-	ConstWeakArray(const T* mem, PtrSize size)
+	ConstWeakArray(const T* mem, Size size)
 		: m_data(mem)
 		, m_size(size)
 	{
@@ -275,7 +272,7 @@ public:
 		return *this;
 	}
 
-	ConstReference operator[](const PtrSize n) const
+	ConstReference operator[](const Size n) const
 	{
 		ANKI_ASSERT(n < m_size);
 		return m_data[n];
@@ -317,14 +314,9 @@ public:
 		return m_data[m_size - 1];
 	}
 
-	PtrSize getSize() const
+	Size getSize() const
 	{
 		return m_size;
-	}
-
-	PtrSize getByteSize() const
-	{
-		return m_size * sizeof(Value);
 	}
 
 	Bool isEmpty() const
@@ -339,7 +331,7 @@ public:
 
 private:
 	const Value* m_data;
-	PtrSize m_size;
+	Size m_size;
 };
 /// @}
 

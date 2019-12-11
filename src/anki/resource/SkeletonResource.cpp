@@ -95,13 +95,13 @@ Error SkeletonResource::load(const ResourceFilename& filename, Bool async)
 
 	// Resolve the parents
 	auto it = boneParents.getBegin();
-	for(U i = 0; i < m_bones.getSize(); ++i)
+	for(U32 i = 0; i < m_bones.getSize(); ++i)
 	{
 		Bone& bone = m_bones[i];
 
 		if(!it->isEmpty())
 		{
-			for(U j = 0; j < m_bones.getSize(); ++j)
+			for(U32 j = 0; j < m_bones.getSize(); ++j)
 			{
 				if(m_bones[j].m_name == *it)
 				{

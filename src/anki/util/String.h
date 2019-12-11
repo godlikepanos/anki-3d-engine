@@ -595,7 +595,7 @@ public:
 	String& replaceAll(Allocator alloc, CString from, CString to);
 
 protected:
-	DynamicArray<Char> m_data;
+	DynamicArray<Char, PtrSize> m_data;
 
 	void checkInit() const
 	{

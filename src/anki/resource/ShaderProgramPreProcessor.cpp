@@ -411,7 +411,7 @@ Error ShaderProgramPreprocessor::parsePragmaMutator(
 				ANKI_PP_ERROR("Can't have more than one instanced mutators");
 			}
 
-			m_instancedMutatorIdx = U32(m_mutators.getSize() - 1);
+			m_instancedMutatorIdx = m_mutators.getSize() - 1;
 			++begin;
 		}
 		else
@@ -429,7 +429,7 @@ Error ShaderProgramPreprocessor::parsePragmaMutator(
 		}
 
 		// Check for duplicate mutators
-		for(U i = 0; i < m_mutators.getSize() - 1; ++i)
+		for(U32 i = 0; i < m_mutators.getSize() - 1; ++i)
 		{
 			if(m_mutators[i].m_name == *begin)
 			{
@@ -471,7 +471,7 @@ Error ShaderProgramPreprocessor::parsePragmaMutator(
 		std::sort(mutator.m_values.getBegin(), mutator.m_values.getEnd());
 
 		// Check for duplicates
-		for(U i = 1; i < mutator.m_values.getSize(); ++i)
+		for(U32 i = 1; i < mutator.m_values.getSize(); ++i)
 		{
 			if(mutator.m_values[i - 1] == mutator.m_values[i])
 			{
@@ -546,7 +546,7 @@ Error ShaderProgramPreprocessor::parsePragmaInput(
 		}
 
 		// Check if there are duplicates
-		for(U i = 0; i < m_inputs.getSize() - 1; ++i)
+		for(U32 i = 0; i < m_inputs.getSize() - 1; ++i)
 		{
 			if(m_inputs[i].m_name == *begin)
 			{

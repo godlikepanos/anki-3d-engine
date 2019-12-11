@@ -408,12 +408,12 @@ void CommandBufferImpl::flushBarriers()
 	if(m_imgBarrierCount > 0)
 	{
 		DynamicArrayAuto<VkImageMemoryBarrier> squashedBarriers(m_alloc);
-		U squashedBarrierCount = 0;
+		U32 squashedBarrierCount = 0;
 
 		squashedBarriers.create(m_imgBarrierCount);
 
 		// Squash the mips by reducing the barriers
-		for(U i = 0; i < m_imgBarrierCount; ++i)
+		for(U32 i = 0; i < m_imgBarrierCount; ++i)
 		{
 			const VkImageMemoryBarrier* prev = (i > 0) ? &m_imgBarriers[i - 1] : nullptr;
 			const VkImageMemoryBarrier& crnt = m_imgBarriers[i];
@@ -443,7 +443,7 @@ void CommandBufferImpl::flushBarriers()
 		// Squash the layers
 		finalImgBarriers.create(squashedBarrierCount);
 
-		for(U i = 0; i < squashedBarrierCount; ++i)
+		for(U32 i = 0; i < squashedBarrierCount; ++i)
 		{
 			const VkImageMemoryBarrier* prev = (i > 0) ? &squashedBarriers[i - 1] : nullptr;
 			const VkImageMemoryBarrier& crnt = squashedBarriers[i];
@@ -514,7 +514,7 @@ void CommandBufferImpl::flushQueryResets()
 	U32 firstQuery = m_queryResetAtoms[0].m_queryIdx;
 	U32 queryCount = 1;
 	VkQueryPool pool = m_queryResetAtoms[0].m_pool;
-	for(U i = 1; i < m_queryResetAtomCount; ++i)
+	for(U32 i = 1; i < m_queryResetAtomCount; ++i)
 	{
 		const QueryResetAtom& crnt = m_queryResetAtoms[i];
 		const QueryResetAtom& prev = m_queryResetAtoms[i - 1];
@@ -575,7 +575,7 @@ void CommandBufferImpl::flushWriteQueryResults()
 	VkQueryPool pool = m_writeQueryAtoms[0].m_pool;
 	PtrSize offset = m_writeQueryAtoms[0].m_offset;
 	VkBuffer buff = m_writeQueryAtoms[0].m_buffer;
-	for(U i = 1; i < m_writeQueryAtoms.getSize(); ++i)
+	for(U32 i = 1; i < m_writeQueryAtoms.getSize(); ++i)
 	{
 		const WriteQueryAtom& crnt = m_writeQueryAtoms[i];
 		const WriteQueryAtom& prev = m_writeQueryAtoms[i - 1];
@@ -671,25 +671,25 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 
 		// Copy to shadow buffer in batches. If the number of pixels is high and we do a single vkCmdCopyBuffer we will
 		// need many regions. That allocation will be huge so do the copies in batches.
-		const U regionCount = width * height * depth;
-		const U REGIONS_PER_CMD_COPY_BUFFER = 32;
-		const U cmdCopyBufferCount = (regionCount + REGIONS_PER_CMD_COPY_BUFFER - 1) / REGIONS_PER_CMD_COPY_BUFFER;
-		for(U cmdCopyBuffer = 0; cmdCopyBuffer < cmdCopyBufferCount; ++cmdCopyBuffer)
+		const U32 regionCount = width * height * depth;
+		const U32 REGIONS_PER_CMD_COPY_BUFFER = 32;
+		const U32 cmdCopyBufferCount = (regionCount + REGIONS_PER_CMD_COPY_BUFFER - 1) / REGIONS_PER_CMD_COPY_BUFFER;
+		for(U32 cmdCopyBuffer = 0; cmdCopyBuffer < cmdCopyBufferCount; ++cmdCopyBuffer)
 		{
-			const U beginRegion = cmdCopyBuffer * REGIONS_PER_CMD_COPY_BUFFER;
-			const U endRegion = min(regionCount, (cmdCopyBuffer + 1) * REGIONS_PER_CMD_COPY_BUFFER);
+			const U32 beginRegion = cmdCopyBuffer * REGIONS_PER_CMD_COPY_BUFFER;
+			const U32 endRegion = min(regionCount, (cmdCopyBuffer + 1) * REGIONS_PER_CMD_COPY_BUFFER);
 			ANKI_ASSERT(beginRegion < regionCount);
 			ANKI_ASSERT(endRegion <= regionCount);
 
-			const U crntRegionCount = endRegion - beginRegion;
+			const U32 crntRegionCount = endRegion - beginRegion;
 			DynamicArrayAuto<VkBufferCopy> regions(m_alloc);
 			regions.create(crntRegionCount);
 
 			// Populate regions
-			U count = 0;
-			for(U regionIdx = beginRegion; regionIdx < endRegion; ++regionIdx)
+			U32 count = 0;
+			for(U32 regionIdx = beginRegion; regionIdx < endRegion; ++regionIdx)
 			{
-				U x, y, d;
+				U32 x, y, d;
 				unflatten3dArrayIndex(width, height, depth, regionIdx, x, y, d);
 
 				VkBufferCopy& c = regions[count++];
@@ -711,7 +711,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 			ANKI_CMD(vkCmdCopyBuffer(m_handle,
 						 static_cast<const BufferImpl&>(*buff).getHandle(),
 						 shadowHandle,
-						 U32(regions.getSize()),
+						 regions.getSize(),
 						 &regions[0]),
 				ANY_OTHER_COMMAND);
 		}

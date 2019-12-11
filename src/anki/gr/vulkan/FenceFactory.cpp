@@ -10,7 +10,7 @@ namespace anki
 
 void FenceFactory::destroy()
 {
-	for(U i = 0; i < m_fenceCount; ++i)
+	for(U32 i = 0; i < m_fenceCount; ++i)
 	{
 		m_alloc.deleteInstance(m_fences[i]);
 	}
@@ -24,7 +24,7 @@ MicroFence* FenceFactory::newFence()
 
 	LockGuard<Mutex> lock(m_mtx);
 
-	U count = m_fenceCount;
+	U32 count = m_fenceCount;
 	while(count--)
 	{
 		VkResult status;
@@ -35,7 +35,7 @@ MicroFence* FenceFactory::newFence()
 			ANKI_VK_CHECKF(vkResetFences(m_dev, 1, &m_fences[count]->getHandle()));
 
 			// Pop it
-			for(U i = count; i < m_fenceCount - 1; ++i)
+			for(U32 i = count; i < m_fenceCount - 1; ++i)
 			{
 				m_fences[i] = m_fences[i + 1];
 			}
@@ -69,7 +69,7 @@ void FenceFactory::deleteFence(MicroFence* fence)
 	if(m_fences.getSize() <= m_fenceCount)
 	{
 		// Grow storage
-		m_fences.resize(m_alloc, max<U>(1, m_fences.getSize() * 2));
+		m_fences.resize(m_alloc, max<U32>(1, m_fences.getSize() * 2));
 	}
 
 	m_fences[m_fenceCount] = fence;

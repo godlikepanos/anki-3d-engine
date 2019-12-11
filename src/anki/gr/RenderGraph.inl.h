@@ -161,7 +161,7 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferD
 {
 #if ANKI_ASSERTS_ENABLED
 	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
-	for(U i = 0; i < colorRenderTargetHandles.getSize(); ++i)
+	for(U32 i = 0; i < colorRenderTargetHandles.getSize(); ++i)
 	{
 		if(i >= fbInfo.m_colorAttachmentCount)
 		{
@@ -233,7 +233,7 @@ inline RenderTargetHandle RenderGraphDescription::importRenderTarget(TexturePtr 
 	rt.setName(tex->getName());
 
 	RenderTargetHandle out;
-	out.m_idx = U32(m_renderTargets.getSize() - 1);
+	out.m_idx = m_renderTargets.getSize() - 1;
 	return out;
 }
 
@@ -256,7 +256,7 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	rt.setName(initInf.getName());
 
 	RenderTargetHandle out;
-	out.m_idx = U32(m_renderTargets.getSize() - 1);
+	out.m_idx = m_renderTargets.getSize() - 1;
 	return out;
 }
 
@@ -274,7 +274,7 @@ inline RenderPassBufferHandle RenderGraphDescription::importBuffer(BufferPtr buf
 	b.m_importedBuff = buff;
 
 	RenderPassBufferHandle out;
-	out.m_idx = U32(m_buffers.getSize() - 1);
+	out.m_idx = m_buffers.getSize() - 1;
 	return out;
 }
 

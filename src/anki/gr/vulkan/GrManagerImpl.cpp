@@ -254,7 +254,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 			U32 layersToEnableCount = 0;
 			for(const char* c : LAYERS)
 			{
-				for(U i = 0; i < count; ++i)
+				for(U32 i = 0; i < count; ++i)
 				{
 					if(CString(c) == layerProps[i].layerName)
 					{
@@ -267,7 +267,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 			if(layersToEnableCount)
 			{
 				ANKI_VK_LOGI("Will enable the following layers:");
-				for(U i = 0; i < layersToEnableCount; ++i)
+				for(U32 i = 0; i < layersToEnableCount; ++i)
 				{
 					ANKI_VK_LOGI("\t%s", layersToEnable[i]);
 				}
@@ -290,14 +290,14 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		vkEnumerateInstanceExtensionProperties(nullptr, &extCount, &instExtensionInf[0]);
 
 		ANKI_VK_LOGI("Found the following instance extensions:");
-		for(U i = 0; i < extCount; ++i)
+		for(U32 i = 0; i < extCount; ++i)
 		{
 			ANKI_VK_LOGI("\t%s", instExtensionInf[i].extensionName);
 		}
 
 		U32 instExtensionCount = 0;
 
-		for(U i = 0; i < extCount; ++i)
+		for(U32 i = 0; i < extCount; ++i)
 		{
 #if ANKI_OS_LINUX
 			if(CString(instExtensionInf[i].extensionName) == VK_KHR_XCB_SURFACE_EXTENSION_NAME)
@@ -334,7 +334,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		if(instExtensionCount)
 		{
 			ANKI_VK_LOGI("Will enable the following instance extensions:");
-			for(U i = 0; i < instExtensionCount; ++i)
+			for(U32 i = 0; i < instExtensionCount; ++i)
 			{
 				ANKI_VK_LOGI("\t%s", instExtensions[i]);
 			}
@@ -504,7 +504,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, &extensionInfos[0]);
 
 		ANKI_VK_LOGI("Found the following device extensions:");
-		for(U i = 0; i < extCount; ++i)
+		for(U32 i = 0; i < extCount; ++i)
 		{
 			ANKI_VK_LOGI("\t%s", extensionInfos[i].extensionName);
 		}
@@ -573,7 +573,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
-		for(U i = 0; i < extensionsToEnableCount; ++i)
+		for(U32 i = 0; i < extensionsToEnableCount; ++i)
 		{
 			ANKI_VK_LOGI("\t%s", extensionsToEnable[i]);
 		}

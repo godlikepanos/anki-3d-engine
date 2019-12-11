@@ -114,7 +114,7 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 
 	if(m_imgBarriers.getSize() <= m_imgBarrierCount)
 	{
-		m_imgBarriers.resize(m_alloc, max<U>(2, m_imgBarrierCount * 2));
+		m_imgBarriers.resize(m_alloc, max<U32>(2, m_imgBarrierCount * 2));
 	}
 
 	m_imgBarriers[m_imgBarrierCount++] = inf;
@@ -230,7 +230,7 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 
 	if(m_buffBarriers.getSize() <= m_buffBarrierCount)
 	{
-		m_buffBarriers.resize(m_alloc, max<U>(2, m_buffBarrierCount * 2));
+		m_buffBarriers.resize(m_alloc, max<U32>(2, m_buffBarrierCount * 2));
 	}
 
 	m_buffBarriers[m_buffBarrierCount++] = b;
@@ -367,7 +367,7 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 
 	if(m_queryResetAtoms.getSize() <= m_queryResetAtomCount)
 	{
-		m_queryResetAtoms.resize(m_alloc, max<U>(2, m_queryResetAtomCount * 2));
+		m_queryResetAtoms.resize(m_alloc, max<U32>(2, m_queryResetAtomCount * 2));
 	}
 
 	QueryResetAtom atom;
@@ -467,7 +467,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 
 	if(m_secondLevelAtoms.getSize() <= m_secondLevelAtomCount)
 	{
-		m_secondLevelAtoms.resize(m_alloc, max<U>(8, m_secondLevelAtomCount * 2));
+		m_secondLevelAtoms.resize(m_alloc, max<U32>(8, m_secondLevelAtomCount * 2));
 	}
 
 	m_secondLevelAtoms[m_secondLevelAtomCount++] = static_cast<const CommandBufferImpl&>(*cmdb).m_handle;

@@ -76,8 +76,8 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 	const U32 threadCount = rgraphCtx.m_secondLevelCommandBufferCount;
 
 	// Get some stuff
-	const U32 earlyZCount = U32(ctx.m_renderQueue->m_earlyZRenderables.getSize());
-	const U32 problemSize = U32(ctx.m_renderQueue->m_renderables.getSize() + earlyZCount);
+	const U32 earlyZCount = ctx.m_renderQueue->m_earlyZRenderables.getSize();
+	const U32 problemSize = ctx.m_renderQueue->m_renderables.getSize() + earlyZCount;
 	U32 start, end;
 	splitThreadedProblem(threadId, threadCount, problemSize, start, end);
 	ANKI_ASSERT(end != start);
@@ -165,7 +165,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 		},
 		this,
 		computeNumberOfSecondLevelCommandBuffers(
-			U32(ctx.m_renderQueue->m_earlyZRenderables.getSize() + ctx.m_renderQueue->m_renderables.getSize())));
+			ctx.m_renderQueue->m_earlyZRenderables.getSize() + ctx.m_renderQueue->m_renderables.getSize()));
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{

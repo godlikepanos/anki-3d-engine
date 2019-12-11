@@ -99,7 +99,7 @@ void DecalNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 {
 	Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(userData.getSize());
 	Vec3* const positions = ctx.m_frameAllocator.newArray<Vec3>(userData.getSize());
-	for(U i = 0; i < userData.getSize(); ++i)
+	for(U32 i = 0; i < userData.getSize(); ++i)
 	{
 		const DecalNode& self = *static_cast<const DecalNode*>(userData[i]);
 		const DecalComponent& decalComp = self.getComponent<DecalComponent>();

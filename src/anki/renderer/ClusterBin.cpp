@@ -90,10 +90,10 @@ public:
 	{
 	}
 
-	WeakArray<U32> getClusterIndices(const U clusterZ)
+	WeakArray<U32> getClusterIndices(const U32 clusterZ)
 	{
 		ANKI_ASSERT(clusterZ < m_clusterCountZ);
-		const U perClusterCount = m_indices.getSize() / m_clusterCountZ;
+		const U32 perClusterCount = m_indices.getSize() / m_clusterCountZ;
 		return WeakArray<U32>(&m_indices[perClusterCount * clusterZ], perClusterCount);
 	}
 };
@@ -259,8 +259,8 @@ void ClusterBin::prepare(BinCtx& ctx)
 void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 {
 	ANKI_ASSERT(tileIdx < m_clusterCounts[0] * m_clusterCounts[1]);
-	const U tileX = tileIdx % m_clusterCounts[0];
-	const U tileY = tileIdx / m_clusterCounts[0];
+	const U32 tileX = tileIdx % m_clusterCounts[0];
+	const U32 tileY = tileIdx / m_clusterCounts[0];
 
 	// Compute the tile's cluster edges in view space
 	WeakArray<Vec4> clusterEdgesVSpace(
@@ -275,7 +275,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2] + 1; ++clusterZ)
 		{
 			const F32 zNear = -computeClusterNear(ctx.m_out->m_shaderMagicValues, clusterZ);
-			const U idx = clusterZ * 4;
+			const U32 idx = clusterZ * 4;
 
 			clusterEdgesVSpace[idx + 0] = unproject(zNear, startNdc, unprojParams).xyz1();
 			clusterEdgesVSpace[idx + 1] = unproject(zNear, startNdc + Vec2(tileSize.x(), 0.0f), unprojParams).xyz1();
@@ -286,9 +286,9 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 	// Transform the tile's cluster edges to world space
 	DynamicArrayAuto<Vec4>& clusterEdgesWSpace = tileCtx.m_clusterEdgesWSpace;
-	for(U clusterZ = 0; clusterZ < m_clusterCounts[2] + 1; ++clusterZ)
+	for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2] + 1; ++clusterZ)
 	{
-		const U idx = clusterZ * 4;
+		const U32 idx = clusterZ * 4;
 		clusterEdgesWSpace[idx + 0] = (ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[idx + 0]).xyz0();
 		clusterEdgesWSpace[idx + 1] = (ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[idx + 1]).xyz0();
 		clusterEdgesWSpace[idx + 2] = (ctx.m_in->m_renderQueue->m_cameraTransform * clusterEdgesVSpace[idx + 2]).xyz0();
@@ -297,8 +297,8 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 	// Compute the tile frustum
 	Array<Plane, 4> frustumPlanes;
-	const U lastQuartet = clusterEdgesWSpace.getSize() - 1 - 4;
-	const U beforeLastQuartet = lastQuartet - 4;
+	const U32 lastQuartet = clusterEdgesWSpace.getSize() - 1 - 4;
+	const U32 beforeLastQuartet = lastQuartet - 4;
 	frustumPlanes[0].setFrom3Points(clusterEdgesWSpace[beforeLastQuartet + 0],
 		clusterEdgesWSpace[beforeLastQuartet + 1],
 		clusterEdgesWSpace[lastQuartet + 0]);
@@ -315,12 +315,12 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	// Compute the cluster AABBs and spheres
 	DynamicArrayAuto<Aabb>& clusterBoxes = tileCtx.m_clusterBoxes;
 	DynamicArrayAuto<Sphere>& clusterSpheres = tileCtx.m_clusterSpheres;
-	for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+	for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 	{
 		// Compute an AABB and a sphere that contains the cluster
 		Vec4 aabbMin(MAX_F32, MAX_F32, MAX_F32, 0.0f);
 		Vec4 aabbMax(MIN_F32, MIN_F32, MIN_F32, 0.0f);
-		for(U i = 0; i < 8; ++i)
+		for(U32 i = 0; i < 8; ++i)
 		{
 			aabbMin = aabbMin.min(clusterEdgesWSpace[clusterZ * 4 + i]);
 			aabbMax = aabbMax.max(clusterEdgesWSpace[clusterZ * 4 + i]);
@@ -360,7 +360,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 				continue;
 			}
 
-			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
 				if(!testCollision(lightSphere, clusterBoxes[clusterZ]))
 				{
@@ -390,7 +390,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 				continue;
 			}
 
-			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
 				if(!testCollision(clusterSpheres[clusterZ],
 					   Cone(slight.m_worldTransform.getTranslationPart().xyz0(),
@@ -420,7 +420,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 				continue;
 			}
 
-			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
 				if(!testCollision(probeBox, clusterBoxes[clusterZ]))
 				{
@@ -446,7 +446,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 				continue;
 			}
 
-			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
 				if(!testCollision(probeBox, clusterBoxes[clusterZ]))
 				{
@@ -473,7 +473,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 				continue;
 			}
 
-			for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+			for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
 				if(!testCollision(decalBox, clusterBoxes[clusterZ]))
 				{
@@ -502,7 +502,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 					continue;
 				}
 
-				for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+				for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 				{
 					if(!testCollision(box, clusterBoxes[clusterZ]))
 					{
@@ -523,7 +523,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 					continue;
 				}
 
-				for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+				for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 				{
 					if(!testCollision(sphere, clusterBoxes[clusterZ]))
 					{
@@ -537,7 +537,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	}
 
 	// Upload the indices for all clusters of the tile
-	for(U clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
+	for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 	{
 		WeakArray<U32> inIndices = tileCtx.getClusterIndices(clusterZ);
 		const ClusterBin::TileCtx::ClusterMetaInfo& inf = tileCtx.m_clusterInfos[clusterZ];
@@ -554,18 +554,18 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 
 		// Write the offsets
 		U32 offset = firstIndex + TYPED_OBJECT_COUNT - 1;
-		for(U i = 1; i < TYPED_OBJECT_COUNT; ++i)
+		for(U32 i = 1; i < TYPED_OBJECT_COUNT; ++i)
 		{
 			offset += inf.m_counts[i - 1] + 1; // Count plus the stop
 			outIndices[i - 1] = offset;
 		}
 
 		// Write indices
-		U outIndicesOffset = TYPED_OBJECT_COUNT - 1;
-		U inIndicesOffset = 0;
-		for(U i = 0; i < TYPED_OBJECT_COUNT; ++i)
+		U32 outIndicesOffset = TYPED_OBJECT_COUNT - 1;
+		U32 inIndicesOffset = 0;
+		for(U32 i = 0; i < TYPED_OBJECT_COUNT; ++i)
 		{
-			for(U c = 0; c < inf.m_counts[i]; ++c)
+			for(U32 c = 0; c < inf.m_counts[i]; ++c)
 			{
 				outIndices[outIndicesOffset++] = inIndices[inIndicesOffset++];
 			}
@@ -577,7 +577,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		ANKI_ASSERT(outIndicesOffset == indexCountPlusOther);
 
 		// Write the cluster
-		const U clusterIndex =
+		const U32 clusterIndex =
 			clusterZ * (m_clusterCounts[0] * m_clusterCounts[1]) + tileY * m_clusterCounts[0] + tileX;
 		ctx.m_clusters[clusterIndex] = firstIndex + TYPED_OBJECT_COUNT - 1; // Points to the first object
 	}
@@ -588,7 +588,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	const RenderQueue& rqueue = *ctx.m_in->m_renderQueue;
 
 	// Write the point lights
-	const U visiblePointLightCount = rqueue.m_pointLights.getSize();
+	const U32 visiblePointLightCount = rqueue.m_pointLights.getSize();
 	if(visiblePointLightCount)
 	{
 		PointLight* data = static_cast<PointLight*>(ctx.m_in->m_stagingMem->allocateFrame(
@@ -596,7 +596,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 
 		WeakArray<PointLight> gpuLights(data, visiblePointLightCount);
 
-		for(U i = 0; i < visiblePointLightCount; ++i)
+		for(U32 i = 0; i < visiblePointLightCount; ++i)
 		{
 			const PointLightQueueElement& in = rqueue.m_pointLights[i];
 			PointLight& out = gpuLights[i];
@@ -627,7 +627,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	}
 
 	// Write the spot lights
-	const U visibleSpotLightCount = rqueue.m_spotLights.getSize();
+	const U32 visibleSpotLightCount = rqueue.m_spotLights.getSize();
 	if(visibleSpotLightCount)
 	{
 		SpotLight* data = static_cast<SpotLight*>(ctx.m_in->m_stagingMem->allocateFrame(
@@ -635,7 +635,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 
 		WeakArray<SpotLight> gpuLights(data, visibleSpotLightCount);
 
-		for(U i = 0; i < visibleSpotLightCount; ++i)
+		for(U32 i = 0; i < visibleSpotLightCount; ++i)
 		{
 			const SpotLightQueueElement& in = rqueue.m_spotLights[i];
 			SpotLight& out = gpuLights[i];
@@ -674,7 +674,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	}
 
 	// Write the decals
-	const U visibleDecalCount = rqueue.m_decals.getSize();
+	const U32 visibleDecalCount = rqueue.m_decals.getSize();
 	if(visibleDecalCount)
 	{
 		Decal* data = static_cast<Decal*>(ctx.m_in->m_stagingMem->allocateFrame(
@@ -684,7 +684,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 		TextureView* diffuseAtlas = nullptr;
 		TextureView* specularRoughnessAtlas = nullptr;
 
-		for(U i = 0; i < visibleDecalCount; ++i)
+		for(U32 i = 0; i < visibleDecalCount; ++i)
 		{
 			const DecalQueueElement& in = rqueue.m_decals[i];
 			Decal& out = gpuDecals[i];
@@ -722,7 +722,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	}
 
 	// Write the probes
-	const U visibleProbeCount = rqueue.m_reflectionProbes.getSize();
+	const U32 visibleProbeCount = rqueue.m_reflectionProbes.getSize();
 	if(visibleProbeCount)
 	{
 		ReflectionProbe* data = static_cast<ReflectionProbe*>(
@@ -732,7 +732,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 
 		WeakArray<ReflectionProbe> gpuProbes(data, visibleProbeCount);
 
-		for(U i = 0; i < visibleProbeCount; ++i)
+		for(U32 i = 0; i < visibleProbeCount; ++i)
 		{
 			const ReflectionProbeQueueElement& in = rqueue.m_reflectionProbes[i];
 			ReflectionProbe& out = gpuProbes[i];
@@ -749,7 +749,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	}
 
 	// Fog volumes
-	const U visibleFogVolumeCount = rqueue.m_fogDensityVolumes.getSize();
+	const U32 visibleFogVolumeCount = rqueue.m_fogDensityVolumes.getSize();
 	if(visibleFogVolumeCount)
 	{
 		FogDensityVolume* data = static_cast<FogDensityVolume*>(
@@ -759,7 +759,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 
 		WeakArray<FogDensityVolume> gpuFogVolumes(data, visibleFogVolumeCount);
 
-		for(U i = 0; i < visibleFogVolumeCount; ++i)
+		for(U32 i = 0; i < visibleFogVolumeCount; ++i)
 		{
 			const FogDensityQueueElement& in = rqueue.m_fogDensityVolumes[i];
 			FogDensityVolume& out = gpuFogVolumes[i];
@@ -785,7 +785,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	}
 
 	// Write the probes
-	const U visibleGiProbeCount = rqueue.m_giProbes.getSize();
+	const U32 visibleGiProbeCount = rqueue.m_giProbes.getSize();
 	if(visibleGiProbeCount)
 	{
 		GlobalIlluminationProbe* data = static_cast<GlobalIlluminationProbe*>(
@@ -795,7 +795,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 
 		WeakArray<GlobalIlluminationProbe> gpuProbes(data, visibleGiProbeCount);
 
-		for(U i = 0; i < visibleGiProbeCount; ++i)
+		for(U32 i = 0; i < visibleGiProbeCount; ++i)
 		{
 			const GlobalIlluminationProbeQueueElement& in = rqueue.m_giProbes[i];
 			GlobalIlluminationProbe& out = gpuProbes[i];

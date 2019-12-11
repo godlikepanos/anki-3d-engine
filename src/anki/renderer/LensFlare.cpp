@@ -89,7 +89,7 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	U32 count = min<U32>(U32(ctx.m_renderQueue->m_lensFlares.getSize()), m_maxFlares);
+	U32 count = min<U32>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	ANKI_ASSERT(count > 0);
 
 	cmdb->bindShaderProgram(m_updateIndirectBuffGrProg);
@@ -99,7 +99,7 @@ void LensFlare::updateIndirectInfo(const RenderingContext& ctx, RenderPassWorkCo
 	*reinterpret_cast<Mat4*>(flarePositions) = ctx.m_matrices.m_viewProjectionJitter;
 	flarePositions += 4;
 
-	for(U i = 0; i < count; ++i)
+	for(U32 i = 0; i < count; ++i)
 	{
 		*flarePositions = Vec4(ctx.m_renderQueue->m_lensFlares[i].m_worldPosition, 1.0f);
 		++flarePositions;
@@ -149,13 +149,13 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		return;
 	}
 
-	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
+	const U32 count = min<U32>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 
 	cmdb->bindShaderProgram(m_realGrProg);
 	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 	cmdb->setDepthWrite(false);
 
-	for(U i = 0; i < count; ++i)
+	for(U32 i = 0; i < count; ++i)
 	{
 		const LensFlareQueueElement& flareEl = ctx.m_renderQueue->m_lensFlares[i];
 
@@ -170,8 +170,8 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 			ANKI_ASSERT(0 && "Check that before");
 		}*/
 
-		U c = 0;
-		U spritesCount = max<U>(1, m_maxSpritesPerFlare);
+		U32 c = 0;
+		U32 spritesCount = max<U32>(1, m_maxSpritesPerFlare);
 
 		// Get uniform memory
 		LensFlareSprite* tmpSprites =

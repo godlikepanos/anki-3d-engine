@@ -136,17 +136,17 @@ struct WeightVertex
 
 static void reindexSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> alloc)
 {
-	const PtrSize vertSize = sizeof(submesh.m_verts[0]);
+	const U32 vertSize = sizeof(submesh.m_verts[0]);
 
 	DynamicArrayAuto<U32> remap(alloc);
 	remap.create(submesh.m_verts.getSize(), 0);
 
-	const PtrSize vertCount = meshopt_generateVertexRemap(&remap[0],
+	const U32 vertCount = U32(meshopt_generateVertexRemap(&remap[0],
 		&submesh.m_indices[0],
 		submesh.m_indices.getSize(),
 		&submesh.m_verts[0],
 		submesh.m_verts.getSize(),
-		vertSize);
+		vertSize));
 
 	DynamicArrayAuto<U32> newIdxArray(alloc);
 	newIdxArray.create(submesh.m_indices.getSize(), 0);
@@ -197,12 +197,12 @@ static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> all
 		DynamicArrayAuto<TempVertex> newVertArray(alloc);
 		newVertArray.create(submesh.m_verts.getSize());
 
-		const PtrSize newVertCount = meshopt_optimizeVertexFetch(&newVertArray[0],
+		const U32 newVertCount = U32(meshopt_optimizeVertexFetch(&newVertArray[0],
 			&submesh.m_indices[0], // Inplace
 			submesh.m_indices.getSize(),
 			&submesh.m_verts[0],
 			submesh.m_verts.getSize(),
-			vertSize);
+			vertSize));
 
 		if(newVertCount != submesh.m_verts.getSize())
 		{
@@ -226,20 +226,20 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, GenericMemoryPoolAlloc
 
 	// Decimate
 	DynamicArrayAuto<U32> newIndices(alloc, submesh.m_indices.getSize());
-	newIndices.resize(meshopt_simplify(&newIndices[0],
+	newIndices.resize(U32(meshopt_simplify(&newIndices[0],
 		&submesh.m_indices[0],
 		submesh.m_indices.getSize(),
 		&submesh.m_verts[0].m_position.x(),
 		submesh.m_verts.getSize(),
 		sizeof(TempVertex),
 		targetIndexCount,
-		1e-2f));
+		1e-2f)));
 
 	// Re-pack
 	DynamicArrayAuto<U32> reindexedIndices(alloc);
 	DynamicArrayAuto<TempVertex> newVerts(alloc);
 	HashMapAuto<U32, U32> vertexStored(alloc);
-	for(PtrSize idx = 0; idx < newIndices.getSize(); ++idx)
+	for(U32 idx = 0; idx < newIndices.getSize(); ++idx)
 	{
 		U32 newIdx;
 		auto it = vertexStored.find(newIndices[idx]);
@@ -247,7 +247,7 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, GenericMemoryPoolAlloc
 		{
 			// Store the vertex
 			newVerts.emplaceBack(submesh.m_verts[newIndices[idx]]);
-			newIdx = U32(newVerts.getSize() - 1);
+			newIdx = newVerts.getSize() - 1;
 			vertexStored.emplace(newIndices[idx], newIdx);
 		}
 		else
@@ -308,7 +308,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			return Error::USER_DATA;
 		}
 
-		U vertCount = primitive->attributes[0].data->count;
+		U32 vertCount = U32(primitive->attributes[0].data->count);
 		submesh.m_verts.create(vertCount);
 
 		//
@@ -320,7 +320,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		{
 			if(attrib->type == cgltf_attribute_type_position)
 			{
-				U count = 0;
+				U32 count = 0;
 				ANKI_CHECK(checkAttribute<Vec3>(*attrib));
 				visitAccessor<Vec3>(*attrib->data, [&](const Vec3& pos) {
 					submesh.m_aabbMin = submesh.m_aabbMin.min(pos);
@@ -330,14 +330,14 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			}
 			else if(attrib->type == cgltf_attribute_type_normal)
 			{
-				U count = 0;
+				U32 count = 0;
 				ANKI_CHECK(checkAttribute<Vec3>(*attrib));
 				visitAccessor<Vec3>(
 					*attrib->data, [&](const Vec3& normal) { submesh.m_verts[count++].m_normal = normal; });
 			}
 			else if(attrib->type == cgltf_attribute_type_texcoord && CString(attrib->name) == "TEXCOORD_0")
 			{
-				U count = 0;
+				U32 count = 0;
 				ANKI_CHECK(checkAttribute<Vec2>(*attrib));
 				visitAccessor<Vec2>(*attrib->data, [&](const Vec2& uv) {
 					maxUvDistance = max(maxUvDistance, max(uv.x(), uv.y()));
@@ -347,7 +347,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			}
 			else if(attrib->type == cgltf_attribute_type_joints)
 			{
-				U count = 0;
+				U32 count = 0;
 				ANKI_CHECK(checkAttribute<U16Vec4>(*attrib));
 				visitAccessor<U16Vec4>(
 					*attrib->data, [&](const U16Vec4& x) { submesh.m_verts[count++].m_boneIds = x; });
@@ -355,7 +355,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			}
 			else if(attrib->type == cgltf_attribute_type_weights)
 			{
-				U count = 0;
+				U32 count = 0;
 				ANKI_CHECK(checkAttribute<Vec4>(*attrib));
 				visitAccessor<Vec4>(
 					*attrib->data, [&](const Vec4& bw) { submesh.m_verts[count++].m_boneWeights = bw; });
@@ -374,12 +374,12 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		//
 		// Fix normals. If normal A and normal B have the same position then try to merge them
 		//
-		for(U v = 0; v < vertCount; ++v)
+		for(U32 v = 0; v < vertCount; ++v)
 		{
 			const Vec3& pos = submesh.m_verts[v].m_position;
 			Vec3& normal = submesh.m_verts[v].m_normal;
 
-			for(U prevV = 0; prevV < v; ++prevV)
+			for(U32 prevV = 0; prevV < v; ++prevV)
 			{
 				const Vec3& otherPos = submesh.m_verts[prevV].m_position;
 
@@ -415,7 +415,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 				ANKI_GLTF_LOGE("Incorect index count: %d", primitive->indices->count);
 				return Error::USER_DATA;
 			}
-			submesh.m_indices.create(primitive->indices->count);
+			submesh.m_indices.create(U32(primitive->indices->count));
 			const U8* base = static_cast<const U8*>(primitive->indices->buffer_view->buffer->data)
 							 + primitive->indices->offset + primitive->indices->buffer_view->offset;
 			for(U32 i = 0; i < primitive->indices->count; ++i)
@@ -455,11 +455,11 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			DynamicArrayAuto<Vec3> bitangents(m_alloc);
 			bitangents.create(vertCount, Vec3(0.0f));
 
-			for(U i = 0; i < submesh.m_indices.getSize(); i += 3)
+			for(U32 i = 0; i < submesh.m_indices.getSize(); i += 3)
 			{
-				const U i0 = submesh.m_indices[i + 0];
-				const U i1 = submesh.m_indices[i + 1];
-				const U i2 = submesh.m_indices[i + 2];
+				const U32 i0 = submesh.m_indices[i + 0];
+				const U32 i1 = submesh.m_indices[i + 1];
+				const U32 i2 = submesh.m_indices[i + 2];
 
 				const Vec3& v0 = submesh.m_verts[i0].m_position;
 				const Vec3& v1 = submesh.m_verts[i1].m_position;
@@ -503,7 +503,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 				bitangents[i2] += b;
 			}
 
-			for(U i = 0; i < vertCount; ++i)
+			for(U32 i = 0; i < vertCount; ++i)
 			{
 				Vec3 t = Vec3(submesh.m_verts[i].m_tangent.xyz());
 				const Vec3& n = submesh.m_verts[i].m_normal;
@@ -547,9 +547,9 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		{
 			// Finalize
 			submesh.m_firstIdx = totalIndexCount;
-			submesh.m_idxCount = U32(submesh.m_indices.getSize());
+			submesh.m_idxCount = submesh.m_indices.getSize();
 			totalIndexCount += submesh.m_idxCount;
-			totalVertexCount += U32(submesh.m_verts.getSize());
+			totalVertexCount += submesh.m_verts.getSize();
 		}
 	}
 
@@ -563,11 +563,11 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 	Bool convex = true;
 	for(const SubMesh& submesh : submeshes)
 	{
-		for(U i = 0; i < submesh.m_indices.getSize(); i += 3)
+		for(U32 i = 0; i < submesh.m_indices.getSize(); i += 3)
 		{
-			const U i0 = submesh.m_indices[i + 0];
-			const U i1 = submesh.m_indices[i + 1];
-			const U i2 = submesh.m_indices[i + 2];
+			const U32 i0 = submesh.m_indices[i + 0];
+			const U32 i1 = submesh.m_indices[i + 1];
+			const U32 i2 = submesh.m_indices[i + 2];
 
 			const Vec3& v0 = submesh.m_verts[i0].m_position;
 			const Vec3& v1 = submesh.m_verts[i1].m_position;
@@ -747,7 +747,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		}
 
 		ANKI_CHECK(file.write(&indices[0], indices.getSizeInBytes()));
-		vertCount += U32(submesh.m_verts.getSize());
+		vertCount += submesh.m_verts.getSize();
 	}
 
 	// Write first vert buffer
@@ -758,7 +758,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		{
 			DynamicArrayAuto<Vec3> positions(m_alloc);
 			positions.create(submesh.m_verts.getSize());
-			for(U v = 0; v < submesh.m_verts.getSize(); ++v)
+			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				positions[v] = submesh.m_verts[v].m_position;
 			}
@@ -769,7 +769,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			DynamicArrayAuto<HVec4> pos16(m_alloc);
 			pos16.create(submesh.m_verts.getSize());
 
-			for(U v = 0; v < submesh.m_verts.getSize(); ++v)
+			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
 				pos16[v] = HVec4(F16(submesh.m_verts[v].m_position.x()),
 					F16(submesh.m_verts[v].m_position.y()),
@@ -798,7 +798,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		DynamicArrayAuto<Vert> verts(m_alloc);
 		verts.create(submesh.m_verts.getSize());
 
-		for(U i = 0; i < verts.getSize(); ++i)
+		for(U32 i = 0; i < verts.getSize(); ++i)
 		{
 			const Vec3& normal = submesh.m_verts[i].m_normal;
 			const Vec4& tangent = submesh.m_verts[i].m_tangent;
@@ -836,11 +836,11 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			DynamicArrayAuto<WeightVertex> verts(m_alloc);
 			verts.create(submesh.m_verts.getSize());
 
-			for(U i = 0; i < verts.getSize(); ++i)
+			for(U32 i = 0; i < verts.getSize(); ++i)
 			{
 				WeightVertex vert;
 
-				for(U c = 0; c < 4; ++c)
+				for(U32 c = 0; c < 4; ++c)
 				{
 					vert.m_boneIndices[c] = submesh.m_verts[i].m_boneIds[c];
 					vert.m_weights[c] = U8(submesh.m_verts[i].m_boneWeights[c] * F32(MAX_U8));

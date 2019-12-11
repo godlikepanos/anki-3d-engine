@@ -8,12 +8,12 @@
 namespace anki
 {
 
-template<typename T>
-DynamicArray<T>& DynamicArray<T>::operator=(DynamicArrayAuto<T>&& b)
+template<typename T, typename TSize>
+DynamicArray<T, TSize>& DynamicArray<T, TSize>::operator=(DynamicArrayAuto<T, TSize>&& b)
 {
 	ANKI_ASSERT(m_data == nullptr && m_size == 0 && "Cannot move before destroying");
 	T* data;
-	PtrSize size, storageSize;
+	Size size, storageSize;
 	b.moveAndReset(data, size, storageSize);
 	m_data = data;
 	m_size = size;
@@ -21,23 +21,22 @@ DynamicArray<T>& DynamicArray<T>::operator=(DynamicArrayAuto<T>&& b)
 	return *this;
 }
 
-template<typename T>
+template<typename T, typename TSize>
 template<typename TAllocator>
-void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
+void DynamicArray<T, TSize>::resizeStorage(TAllocator& alloc, Size newSize)
 {
 	if(newSize > m_capacity)
 	{
 		// Need to grow
 
-		m_capacity =
-			(newSize > PtrSize(F32(m_capacity) * GROW_SCALE)) ? newSize : PtrSize(F32(m_capacity) * GROW_SCALE);
+		m_capacity = (newSize > Size(F32(m_capacity) * GROW_SCALE)) ? newSize : Size(F32(m_capacity) * GROW_SCALE);
 		Value* newStorage =
 			static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
 
 		// Move old elements to the new storage
 		if(m_data)
 		{
-			for(PtrSize i = 0; i < m_size; ++i)
+			for(Size i = 0; i < m_size; ++i)
 			{
 				alloc.construct(&newStorage[i], std::move(m_data[i]));
 				m_data[i].~T();
@@ -62,7 +61,7 @@ void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
 
 		m_size = newSize;
 
-		if(newSize < PtrSize(F32(m_capacity) / SHRINK_SCALE) || newSize == 0)
+		if(newSize < Size(F32(m_capacity) / SHRINK_SCALE) || newSize == 0)
 		{
 			// Need to shrink
 
@@ -72,7 +71,7 @@ void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
 				Value* newStorage =
 					static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
 
-				for(PtrSize i = 0; i < m_size; ++i)
+				for(Size i = 0; i < m_size; ++i)
 				{
 					alloc.construct(&newStorage[i], std::move(m_data[i]));
 					m_data[i].~T();
@@ -90,9 +89,9 @@ void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
 	}
 }
 
-template<typename T>
+template<typename T, typename TSize>
 template<typename TAllocator>
-void DynamicArray<T>::resize(TAllocator alloc, PtrSize newSize, const Value& v)
+void DynamicArray<T, TSize>::resize(TAllocator alloc, Size newSize, const Value& v)
 {
 	const Bool willGrow = newSize > m_size;
 	resizeStorage(alloc, newSize);
@@ -112,9 +111,9 @@ void DynamicArray<T>::resize(TAllocator alloc, PtrSize newSize, const Value& v)
 	ANKI_ASSERT(m_size == newSize);
 }
 
-template<typename T>
+template<typename T, typename TSize>
 template<typename TAllocator>
-void DynamicArray<T>::resize(TAllocator alloc, PtrSize newSize)
+void DynamicArray<T, TSize>::resize(TAllocator alloc, Size newSize)
 {
 	const Bool willGrow = newSize > m_size;
 	resizeStorage(alloc, newSize);
@@ -134,12 +133,13 @@ void DynamicArray<T>::resize(TAllocator alloc, PtrSize newSize)
 	ANKI_ASSERT(m_size == newSize);
 }
 
-template<typename T>
+template<typename T, typename TSize>
 template<typename TAllocator, typename... TArgs>
-typename DynamicArray<T>::Iterator DynamicArray<T>::emplaceAt(TAllocator alloc, ConstIterator where, TArgs&&... args)
+typename DynamicArray<T, TSize>::Iterator DynamicArray<T, TSize>::emplaceAt(
+	TAllocator alloc, ConstIterator where, TArgs&&... args)
 {
 	const Value* wherePtr = where;
-	PtrSize outIdx = MAX_PTR_SIZE;
+	Size outIdx = getMaxNumericLimit<Size>();
 
 	if(wherePtr != nullptr)
 	{
@@ -150,15 +150,15 @@ typename DynamicArray<T>::Iterator DynamicArray<T>::emplaceAt(TAllocator alloc, 
 		ANKI_ASSERT(wherePtr <= m_data + m_size);
 		ANKI_ASSERT(!isEmpty());
 
-		const PtrSize oldSize = m_size;
+		const Size oldSize = m_size;
 
-		const PtrSize whereIdx = wherePtr - m_data; // Get that before grow the storage
+		const Size whereIdx = Size(wherePtr - m_data); // Get that before grow the storage
 		ANKI_ASSERT(whereIdx >= 0u && whereIdx <= oldSize);
 
 		// Resize storage
 		resizeStorage(alloc, oldSize + 1u);
 
-		PtrSize elementsToMoveRight = oldSize - whereIdx;
+		Size elementsToMoveRight = oldSize - whereIdx;
 		if(elementsToMoveRight == 0)
 		{
 			// "where" arg points to the end of the array
@@ -173,7 +173,7 @@ typename DynamicArray<T>::Iterator DynamicArray<T>::emplaceAt(TAllocator alloc, 
 			// Move the elements one place to the right
 			while(elementsToMoveRight--)
 			{
-				const PtrSize idx = whereIdx + elementsToMoveRight;
+				const Size idx = whereIdx + elementsToMoveRight;
 
 				m_data[idx + 1] = std::move(m_data[idx]);
 			}
@@ -196,7 +196,7 @@ typename DynamicArray<T>::Iterator DynamicArray<T>::emplaceAt(TAllocator alloc, 
 	}
 
 	// Construct the new object
-	ANKI_ASSERT(outIdx != MAX_PTR_SIZE);
+	ANKI_ASSERT(outIdx != getMaxNumericLimit<Size>());
 	alloc.construct(&m_data[outIdx], std::forward<TArgs>(args)...);
 
 	// Increase the size because resizeStorage will not

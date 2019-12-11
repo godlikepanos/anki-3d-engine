@@ -220,14 +220,14 @@ Error ImageLoader::loadUncompressedTga(
 	}
 
 	// read the data
-	I bytesPerPxl = (bpp / 8);
-	I imageSize = bytesPerPxl * width * height;
+	U32 bytesPerPxl = (bpp / 8);
+	U32 imageSize = bytesPerPxl * width * height;
 	data.create(alloc, imageSize);
 
 	ANKI_CHECK(fs.read(reinterpret_cast<char*>(&data[0]), imageSize));
 
 	// swap red with blue
-	for(I i = 0; i < imageSize; i += bytesPerPxl)
+	for(U32 i = 0; i < imageSize; i += bytesPerPxl)
 	{
 		U8 temp = data[i];
 		data[i] = data[i + 2];
@@ -253,20 +253,20 @@ Error ImageLoader::loadCompressedTga(
 		return Error::USER_DATA;
 	}
 
-	I bytesPerPxl = (bpp / 8);
-	I imageSize = bytesPerPxl * width * height;
+	U32 bytesPerPxl = (bpp / 8);
+	U32 imageSize = bytesPerPxl * width * height;
 	data.create(alloc, imageSize);
 
-	U pixelcount = height * width;
-	U currentpixel = 0;
-	U currentbyte = 0;
+	U32 pixelcount = height * width;
+	U32 currentpixel = 0;
+	U32 currentbyte = 0;
 	U8 colorbuffer[4];
 
 	do
 	{
 		U8 chunkheader = 0;
 
-		ANKI_CHECK(fs.read((char*)&chunkheader, sizeof(U8)));
+		ANKI_CHECK(fs.read(&chunkheader, sizeof(U8)));
 
 		if(chunkheader < 128)
 		{
@@ -299,7 +299,7 @@ Error ImageLoader::loadCompressedTga(
 			chunkheader = U8(chunkheader - 127);
 			ANKI_CHECK(fs.read(&colorbuffer[0], bytesPerPxl));
 
-			for(int counter = 0; counter < chunkheader; counter++)
+			for(U32 counter = 0; counter < chunkheader; counter++)
 			{
 				data[currentbyte] = colorbuffer[2];
 				data[currentbyte + 1] = colorbuffer[1];
@@ -463,7 +463,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file,
 
 	colorFormat = header.m_colorFormat;
 
-	U faceCount = 1;
+	U32 faceCount = 1;
 	switch(header.m_type)
 	{
 	case ImageLoaderTextureType::_2D:
@@ -609,7 +609,7 @@ Error ImageLoader::loadStb(
 	// Read the file
 	DynamicArrayAuto<U8> fileData = {alloc};
 	const PtrSize fileSize = fs.getSize();
-	fileData.create(fileSize);
+	fileData.create(U32(fileSize));
 	ANKI_CHECK(fs.read(&fileData[0], fileSize));
 
 	// Use STB to read the image

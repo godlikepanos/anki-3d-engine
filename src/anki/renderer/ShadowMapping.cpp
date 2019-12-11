@@ -624,7 +624,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 					light->m_shadowRenderQueues[face]->m_shadowRenderablesLastUpdateTimestamp;
 
 				drawcallCounts[numOfFacesThatHaveDrawcalls] =
-					U32(light->m_shadowRenderQueues[face]->m_renderables.getSize());
+					light->m_shadowRenderQueues[face]->m_renderables.getSize();
 
 				lods[numOfFacesThatHaveDrawcalls] = lod;
 
@@ -712,7 +712,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		TileAllocatorResult subResult;
 		Viewport atlasViewport;
 		Viewport scratchViewport;
-		const U32 localDrawcallCount = U32(light->m_shadowRenderQueue->m_renderables.getSize());
+		const U32 localDrawcallCount = light->m_shadowRenderQueue->m_renderables.getSize();
 
 		Bool blurAtlas;
 		const U32 lod = choseLod(cameraOrigin, *light, blurAtlas);
@@ -808,8 +808,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		// All good, store the work items for the threads to pick up
 		{
 			Scratch::WorkItem* items;
-			PtrSize itemSize;
-			PtrSize itemStorageSize;
+			U32 itemSize;
+			U32 itemStorageSize;
 			workItems.moveAndReset(items, itemSize, itemStorageSize);
 
 			ANKI_ASSERT(items && itemSize && itemStorageSize);
@@ -840,9 +840,9 @@ void ShadowMapping::newScratchAndAtlasResloveRenderWorkItems(const Viewport& atl
 	// Scratch work item
 	{
 		Scratch::LightToRenderToScratchInfo toRender = {
-			scratchVewport, lightRenderQueue, U32(lightRenderQueue->m_renderables.getSize())};
+			scratchVewport, lightRenderQueue, lightRenderQueue->m_renderables.getSize()};
 		scratchWorkItem.emplaceBack(toRender);
-		drawcallCount += U32(lightRenderQueue->m_renderables.getSize());
+		drawcallCount += lightRenderQueue->m_renderables.getSize();
 	}
 
 	// Atlas resolve work item

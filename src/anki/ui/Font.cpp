@@ -33,15 +33,15 @@ Error Font::init(const CString& filename, const std::initializer_list<U32>& font
 	// Load font in memory
 	ResourceFilePtr file;
 	ANKI_CHECK(m_manager->getResourceManager().getFilesystem().openFile(filename, file));
-	m_fontData.create(getAllocator(), file->getSize());
+	m_fontData.create(getAllocator(), U32(file->getSize()));
 	ANKI_CHECK(file->read(&m_fontData[0], file->getSize()));
 
-	m_fonts.create(getAllocator(), fontHeights.size());
+	m_fonts.create(getAllocator(), U32(fontHeights.size()));
 
 	// Bake font
 	ImFontConfig cfg;
 	cfg.FontDataOwnedByAtlas = false;
-	U count = 0;
+	U32 count = 0;
 	for(U32 height : fontHeights)
 	{
 		cfg.SizePixels = F32(height);

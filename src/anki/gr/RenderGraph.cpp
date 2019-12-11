@@ -20,7 +20,7 @@ namespace anki
 
 #define ANKI_DBG_RENDER_GRAPH 0
 
-static inline U getTextureSurfOrVolCount(const TexturePtr& tex)
+static inline U32 getTextureSurfOrVolCount(const TexturePtr& tex)
 {
 	return tex->getMipmapCount() * tex->getLayerCount() * (textureTypeIsCube(tex->getTextureType()) ? 6 : 1);
 }
@@ -280,7 +280,7 @@ void RenderGraph::reset()
 	{
 		if(rt.m_imported)
 		{
-			const U surfOrVolumeCount = getTextureSurfOrVolCount(rt.m_texture);
+			const U32 surfOrVolumeCount = getTextureSurfOrVolCount(rt.m_texture);
 
 			// Create a new hash because our hash map dislikes concurent keys.
 			const U64 uuid = rt.m_texture->getUuid();
@@ -301,7 +301,7 @@ void RenderGraph::reset()
 			}
 
 			// Update the usage
-			for(U surfOrVolIdx = 0; surfOrVolIdx < surfOrVolumeCount; ++surfOrVolIdx)
+			for(U32 surfOrVolIdx = 0; surfOrVolIdx < surfOrVolumeCount; ++surfOrVolIdx)
 			{
 				it->m_surfOrVolLastUsages[surfOrVolIdx] = rt.m_surfOrVolUsages[surfOrVolIdx];
 			}
@@ -607,7 +607,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 
 	// Init the resources
 	ctx->m_rts.create(alloc, descr.m_renderTargets.getSize());
-	for(U rtIdx = 0; rtIdx < ctx->m_rts.getSize(); ++rtIdx)
+	for(U32 rtIdx = 0; rtIdx < ctx->m_rts.getSize(); ++rtIdx)
 	{
 		RT& outRt = ctx->m_rts[rtIdx];
 		const RenderGraphDescription::RT& inRt = descr.m_renderTargets[rtIdx];
@@ -635,7 +635,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 		}
 
 		// Init the usage
-		const U surfOrVolumeCount = getTextureSurfOrVolCount(outRt.m_texture);
+		const U32 surfOrVolumeCount = getTextureSurfOrVolCount(outRt.m_texture);
 		outRt.m_surfOrVolUsages.create(alloc, surfOrVolumeCount, TextureUsageBit::NONE);
 		if(imported && inRt.m_importedAndUndefinedUsage)
 		{
@@ -649,7 +649,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 			ANKI_ASSERT(it != m_importedRenderTargets.getEnd() && "Can't find the imported RT");
 
 			ANKI_ASSERT(it->m_surfOrVolLastUsages.getSize() == surfOrVolumeCount);
-			for(U surfOrVolIdx = 0; surfOrVolIdx < surfOrVolumeCount; ++surfOrVolIdx)
+			for(U32 surfOrVolIdx = 0; surfOrVolIdx < surfOrVolumeCount; ++surfOrVolIdx)
 			{
 				outRt.m_surfOrVolUsages[surfOrVolIdx] = it->m_surfOrVolLastUsages[surfOrVolIdx];
 			}
@@ -657,7 +657,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 		else if(imported)
 		{
 			// Set the usage that was given by the user
-			for(U surfOrVolIdx = 0; surfOrVolIdx < surfOrVolumeCount; ++surfOrVolIdx)
+			for(U32 surfOrVolIdx = 0; surfOrVolIdx < surfOrVolumeCount; ++surfOrVolIdx)
 			{
 				outRt.m_surfOrVolUsages[surfOrVolIdx] = inRt.m_importedLastKnownUsage;
 			}
@@ -669,7 +669,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 
 	// Buffers
 	ctx->m_buffers.create(alloc, descr.m_buffers.getSize());
-	for(U buffIdx = 0; buffIdx < ctx->m_buffers.getSize(); ++buffIdx)
+	for(U32 buffIdx = 0; buffIdx < ctx->m_buffers.getSize(); ++buffIdx)
 	{
 		ctx->m_buffers[buffIdx].m_usage = descr.m_buffers[buffIdx].m_usage;
 		ANKI_ASSERT(descr.m_buffers[buffIdx].m_importedBuff.isCreated());
@@ -684,7 +684,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
 {
 	BakeContext& ctx = *m_ctx;
-	const U32 passCount = U32(descr.m_passes.getSize());
+	const U32 passCount = descr.m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
 
 	ctx.m_passes.create(alloc, passCount);
@@ -698,7 +698,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 
 		// Create consumer info
 		outPass.m_consumedTextures.resize(alloc, inPass.m_rtDeps.getSize());
-		for(U depIdx = 0; depIdx < inPass.m_rtDeps.getSize(); ++depIdx)
+		for(U32 depIdx = 0; depIdx < inPass.m_rtDeps.getSize(); ++depIdx)
 		{
 			const RenderPassDependency& inDep = inPass.m_rtDeps[depIdx];
 			ANKI_ASSERT(inDep.m_isTexture);
@@ -808,7 +808,7 @@ void RenderGraph::initBatches()
 		for(U32 passIdx : m_ctx->m_batches.getBack().m_passIndices)
 		{
 			m_ctx->m_passIsInBatch.set(passIdx);
-			m_ctx->m_passes[passIdx].m_batchIdx = U32(m_ctx->m_batches.getSize() - 1);
+			m_ctx->m_passes[passIdx].m_batchIdx = m_ctx->m_batches.getSize() - 1;
 		}
 	}
 }
@@ -816,10 +816,10 @@ void RenderGraph::initBatches()
 void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
 {
 	BakeContext& ctx = *m_ctx;
-	const U passCount = descr.m_passes.getSize();
+	const U32 passCount = descr.m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
 
-	for(U passIdx = 0; passIdx < passCount; ++passIdx)
+	for(U32 passIdx = 0; passIdx < passCount; ++passIdx)
 	{
 		const RenderPassDescriptionBase& inPass = *descr.m_passes[passIdx];
 		Pass& outPass = ctx.m_passes[passIdx];
@@ -913,7 +913,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 	RT& rt = ctx.m_rts[rtIdx];
 
 	iterateSurfsOrVolumes(
-		rt.m_texture, dep.m_texture.m_subresource, [&](U surfOrVolIdx, const TextureSurfaceInfo& surf) {
+		rt.m_texture, dep.m_texture.m_subresource, [&](U32 surfOrVolIdx, const TextureSurfaceInfo& surf) {
 			TextureUsageBit& crntUsage = rt.m_surfOrVolUsages[surfOrVolIdx];
 			if(crntUsage != depUsage)
 			{
@@ -964,7 +964,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> buffHasBarrierMask = {false};
 
 		// For all passes of that batch
-		for(U passIdx : batch.m_passIndices)
+		for(U32 passIdx : batch.m_passIndices)
 		{
 			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 
@@ -1102,7 +1102,7 @@ void RenderGraph::runSecondLevel(U32 threadIdx)
 
 	for(Pass& p : m_ctx->m_passes)
 	{
-		const U32 size = U32(p.m_secondLevelCmdbs.getSize());
+		const U32 size = p.m_secondLevelCmdbs.getSize();
 		if(threadIdx < size)
 		{
 			ANKI_ASSERT(!p.m_secondLevelCmdbs[threadIdx].isCreated());
@@ -1207,7 +1207,7 @@ void RenderGraph::flush()
 {
 	ANKI_TRACE_SCOPED_EVENT(GR_RENDER_GRAPH_FLUSH);
 
-	for(U i = 0; i < m_ctx->m_graphicsCmdbs.getSize(); ++i)
+	for(U32 i = 0; i < m_ctx->m_graphicsCmdbs.getSize(); ++i)
 	{
 		// Maybe write a timestamp before flush
 		if(ANKI_UNLIKELY(m_ctx->m_gatherStatistics && i == m_ctx->m_graphicsCmdbs.getSize() - 1))
@@ -1230,7 +1230,7 @@ void RenderGraph::getCrntUsage(
 	usage = TextureUsageBit::NONE;
 	const Batch& batch = m_ctx->m_batches[batchIdx];
 
-	for(U passIdx : batch.m_passIndices)
+	for(U32 passIdx : batch.m_passIndices)
 	{
 		for(const Pass::ConsumedTextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
 		{
@@ -1245,7 +1245,7 @@ void RenderGraph::getCrntUsage(
 
 void RenderGraph::periodicCleanup()
 {
-	U rtsCleanedCount = 0;
+	U32 rtsCleanedCount = 0;
 	for(RenderTargetCacheEntry& entry : m_renderTargetCache)
 	{
 		if(entry.m_texturesInUse < entry.m_textures.getSize())
@@ -1262,7 +1262,7 @@ void RenderGraph::periodicCleanup()
 			}
 
 			// Populate the new array
-			for(U i = 0; i < newArray.getSize(); ++i)
+			for(U32 i = 0; i < newArray.getSize(); ++i)
 			{
 				newArray[i] = std::move(entry.m_textures[i]);
 			}

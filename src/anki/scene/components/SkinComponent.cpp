@@ -59,7 +59,7 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 
 		// Iterate the animation channels and interpolate
 		BitSet<128> bonesAnimated(false);
-		for(U i = 0; i < track.m_anim->getChannels().getSize(); ++i)
+		for(U32 i = 0; i < track.m_anim->getChannels().getSize(); ++i)
 		{
 			const AnimationChannel& channel = track.m_anim->getChannels()[i];
 			const Bone* bone = m_skeleton->tryFindBone(channel.m_name.toCString());
