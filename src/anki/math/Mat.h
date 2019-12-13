@@ -1530,6 +1530,11 @@ public:
 	{
 		(*this) = getIdentity();
 	}
+
+	static constexpr U8 getSize()
+	{
+		return U8(I * J);
+	}
 	/// @}
 
 protected:

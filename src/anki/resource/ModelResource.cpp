@@ -8,7 +8,7 @@
 #include <anki/resource/MaterialResource.h>
 #include <anki/resource/MeshResource.h>
 #include <anki/resource/MeshLoader.h>
-#include <anki/misc/Xml.h>
+#include <anki/util/Xml.h>
 #include <anki/util/Logger.h>
 
 namespace anki

@@ -38,7 +38,7 @@ public:
 	void set(const CString& name, F64 value);
 	/// @}
 
-	/// @name Find an option and return it's value.
+	/// @name Find an option and return its value.
 	/// @{
 	F64 getNumberF64(const CString& name) const;
 	F32 getNumberF32(const CString& name) const;
@@ -66,7 +66,7 @@ private:
 		String m_name;
 		String m_strVal;
 		String m_helpMsg;
-		F64 m_fVal = 0.0;
+		F64 m_fVal = 0.0f;
 		U8 m_type = 0; ///< 0: string, 1: float
 
 		Option() = default;

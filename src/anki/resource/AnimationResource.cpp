@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/resource/AnimationResource.h>
-#include <anki/misc/Xml.h>
+#include <anki/util/Xml.h>
 
 namespace anki
 {
@@ -98,7 +98,7 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 
 				// <value>
 				ANKI_CHECK(keyEl.getChildElement("value", el));
-				ANKI_CHECK(el.getVec3(key.m_value));
+				ANKI_CHECK(el.getNumbers(key.m_value));
 
 				// Check ident
 				if(key.m_value == Vec3(0.0))
@@ -137,7 +137,7 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 				// <value>
 				Vec4 tmp2;
 				ANKI_CHECK(keyEl.getChildElement("value", el));
-				ANKI_CHECK(el.getVec4(tmp2));
+				ANKI_CHECK(el.getNumbers(tmp2));
 				key.m_value = Quat(tmp2);
 
 				// Check ident

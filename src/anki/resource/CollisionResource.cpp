@@ -7,7 +7,7 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/MeshLoader.h>
 #include <anki/physics/PhysicsWorld.h>
-#include <anki/misc/Xml.h>
+#include <anki/util/Xml.h>
 
 namespace anki
 {
@@ -39,7 +39,7 @@ Error CollisionResource::load(const ResourceFilename& filename, Bool async)
 	else if(type == "box")
 	{
 		Vec3 extend;
-		ANKI_CHECK(valEl.getVec3(extend));
+		ANKI_CHECK(valEl.getNumbers(extend));
 		m_physicsShape = physics.newInstance<PhysicsBox>(extend);
 	}
 	else if(type == "staticMesh")

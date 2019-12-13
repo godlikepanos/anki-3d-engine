@@ -3035,6 +3035,11 @@ public:
 		ANKI_ASSERT(data);
 		memcpy(this, data, sizeof(*this));
 	}
+
+	static constexpr U8 getSize()
+	{
+		return U8(N);
+	}
 	/// @}
 
 private:

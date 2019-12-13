@@ -7,7 +7,7 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/util/StringList.h>
-#include <anki/misc/Xml.h>
+#include <anki/util/Xml.h>
 #include <cstring>
 
 namespace anki
@@ -22,7 +22,7 @@ static ANKI_USE_RESULT Error getXmlVal(const XmlElement& el, const CString& tag,
 template<>
 ANKI_USE_RESULT Error getXmlVal(const XmlElement& el, const CString& tag, Vec3& out, Bool& found)
 {
-	return el.getAttributeVectorOptional(tag, out, found);
+	return el.getAttributeNumbersOptional(tag, out, found);
 }
 
 ParticleEmitterProperties& ParticleEmitterProperties::operator=(const ParticleEmitterProperties& b)

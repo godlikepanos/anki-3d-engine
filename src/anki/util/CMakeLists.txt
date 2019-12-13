@@ -1,5 +1,5 @@
 set(SOURCES Assert.cpp Functions.cpp File.cpp Filesystem.cpp Memory.cpp System.cpp HighRezTimer.cpp ThreadPool.cpp
-	ThreadHive.cpp Hash.cpp Logger.cpp String.cpp StringList.cpp Tracer.cpp Serializer.cpp)
+	ThreadHive.cpp Hash.cpp Logger.cpp String.cpp StringList.cpp Tracer.cpp Serializer.cpp Xml.cpp)
 
 if(LINUX OR ANDROID OR MACOS)
 	set(SOURCES ${SOURCES} HighRezTimerPosix.cpp FilesystemPosix.cpp ThreadPosix.cpp)

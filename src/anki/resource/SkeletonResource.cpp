@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/resource/SkeletonResource.h>
-#include <anki/misc/Xml.h>
+#include <anki/util/Xml.h>
 #include <anki/util/StringList.h>
 
 namespace anki
@@ -59,12 +59,12 @@ Error SkeletonResource::load(const ResourceFilename& filename, Bool async)
 		// <transform>
 		XmlElement trfEl;
 		ANKI_CHECK(boneEl.getChildElement("transform", trfEl));
-		ANKI_CHECK(trfEl.getMat4(bone.m_transform));
+		ANKI_CHECK(trfEl.getNumbers(bone.m_transform));
 
 		// <boneTransform>
 		XmlElement btrfEl;
 		ANKI_CHECK(boneEl.getChildElement("boneTransform", btrfEl));
-		ANKI_CHECK(btrfEl.getMat4(bone.m_vertTrf));
+		ANKI_CHECK(btrfEl.getNumbers(bone.m_vertTrf));
 
 		// <parent>
 		XmlElement parentEl;

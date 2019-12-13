@@ -39,6 +39,7 @@
 #include <anki/util/ObjectAllocator.h>
 #include <anki/util/Tracer.h>
 #include <anki/util/Serializer.h>
+#include <anki/util/Xml.h>
 
 /// @defgroup util Utilities (like STL)
 

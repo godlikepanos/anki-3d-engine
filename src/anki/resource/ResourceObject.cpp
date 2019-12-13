@@ -5,7 +5,7 @@
 
 #include <anki/resource/ResourceObject.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/misc/Xml.h>
+#include <anki/util/Xml.h>
 
 namespace anki
 {

@@ -5,7 +5,7 @@
 
 #include <anki/resource/MaterialResource.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/misc/Xml.h>
+#include <anki/util/Xml.h>
 
 namespace anki
 {
@@ -342,37 +342,37 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 				ANKI_CHECK(inputEl.getAttributeNumber("value", constVal.m_int));
 				break;
 			case ShaderVariableDataType::IVEC2:
-				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_ivec2));
+				ANKI_CHECK(inputEl.getAttributeNumbers("value", constVal.m_ivec2));
 				break;
 			case ShaderVariableDataType::IVEC3:
-				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_ivec3));
+				ANKI_CHECK(inputEl.getAttributeNumbers("value", constVal.m_ivec3));
 				break;
 			case ShaderVariableDataType::IVEC4:
-				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_ivec4));
+				ANKI_CHECK(inputEl.getAttributeNumbers("value", constVal.m_ivec4));
 				break;
 			case ShaderVariableDataType::UINT:
 				ANKI_CHECK(inputEl.getAttributeNumber("value", constVal.m_uint));
 				break;
 			case ShaderVariableDataType::UVEC2:
-				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_uvec2));
+				ANKI_CHECK(inputEl.getAttributeNumbers("value", constVal.m_uvec2));
 				break;
 			case ShaderVariableDataType::UVEC3:
-				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_uvec3));
+				ANKI_CHECK(inputEl.getAttributeNumbers("value", constVal.m_uvec3));
 				break;
 			case ShaderVariableDataType::UVEC4:
-				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_uvec4));
+				ANKI_CHECK(inputEl.getAttributeNumbers("value", constVal.m_uvec4));
 				break;
 			case ShaderVariableDataType::FLOAT:
 				ANKI_CHECK(inputEl.getAttributeNumber("value", constVal.m_float));
 				break;
 			case ShaderVariableDataType::VEC2:
-				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_vec2));
+				ANKI_CHECK(inputEl.getAttributeNumbers("value", constVal.m_vec2));
 				break;
 			case ShaderVariableDataType::VEC3:
-				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_vec3));
+				ANKI_CHECK(inputEl.getAttributeNumbers("value", constVal.m_vec3));
 				break;
 			case ShaderVariableDataType::VEC4:
-				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_vec4));
+				ANKI_CHECK(inputEl.getAttributeNumbers("value", constVal.m_vec4));
 				break;
 			default:
 				ANKI_ASSERT(0);
@@ -442,43 +442,43 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 					ANKI_CHECK(inputEl.getAttributeNumber("value", mtlVar.m_int));
 					break;
 				case ShaderVariableDataType::IVEC2:
-					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_ivec2));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_ivec2));
 					break;
 				case ShaderVariableDataType::IVEC3:
-					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_ivec3));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_ivec3));
 					break;
 				case ShaderVariableDataType::IVEC4:
-					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_ivec4));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_ivec4));
 					break;
 				case ShaderVariableDataType::UINT:
 					ANKI_CHECK(inputEl.getAttributeNumber("value", mtlVar.m_uint));
 					break;
 				case ShaderVariableDataType::UVEC2:
-					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_uvec2));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_uvec2));
 					break;
 				case ShaderVariableDataType::UVEC3:
-					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_uvec3));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_uvec3));
 					break;
 				case ShaderVariableDataType::UVEC4:
-					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_uvec4));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_uvec4));
 					break;
 				case ShaderVariableDataType::FLOAT:
 					ANKI_CHECK(inputEl.getAttributeNumber("value", mtlVar.m_float));
 					break;
 				case ShaderVariableDataType::VEC2:
-					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_vec2));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_vec2));
 					break;
 				case ShaderVariableDataType::VEC3:
-					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_vec3));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_vec3));
 					break;
 				case ShaderVariableDataType::VEC4:
-					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_vec4));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_vec4));
 					break;
 				case ShaderVariableDataType::MAT3:
-					ANKI_CHECK(inputEl.getAttributeMatrix("value", mtlVar.m_mat3));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_mat3));
 					break;
 				case ShaderVariableDataType::MAT4:
-					ANKI_CHECK(inputEl.getAttributeMatrix("value", mtlVar.m_mat4));
+					ANKI_CHECK(inputEl.getAttributeNumbers("value", mtlVar.m_mat4));
 					break;
 				case ShaderVariableDataType::TEXTURE_2D:
 				case ShaderVariableDataType::TEXTURE_2D_ARRAY:

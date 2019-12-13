@@ -8,7 +8,7 @@
 #include <anki/resource/MeshLoader.h>
 #include <anki/resource/AsyncLoader.h>
 #include <anki/util/Functions.h>
-#include <anki/misc/Xml.h>
+#include <anki/util/Xml.h>
 
 namespace anki
 {
