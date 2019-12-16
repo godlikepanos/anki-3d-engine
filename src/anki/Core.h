@@ -6,6 +6,6 @@
 #pragma once
 
 #include <anki/core/App.h>
-#include <anki/core/Config.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/core/NativeWindow.h>
 #include <anki/core/CoreTracer.h>

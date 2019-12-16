@@ -6,13 +6,18 @@
 #include <anki/renderer/GlobalIllumination.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RenderQueue.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/Tracer.h>
 #include <anki/collision/Aabb.h>
 #include <anki/collision/Functions.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_giTileResolution, 32, 4, 2048)
+ANKI_REGISTER_CONFIG_OPTION(r_giShadowMapResolution, 128, 4, 2048)
+ANKI_REGISTER_CONFIG_OPTION(r_giMaxCachedProbes, 16, 4, 2048)
+ANKI_REGISTER_CONFIG_OPTION(r_giMaxVisibleProbes, 8, 1, 256)
 
 /// Given a cell index compute its world position.
 static Vec3 computeProbeCellPosition(U32 cellIdx, const GlobalIlluminationProbeQueueElement& probe)
@@ -117,9 +122,9 @@ Error GlobalIllumination::init(const ConfigSet& cfg)
 
 Error GlobalIllumination::initInternal(const ConfigSet& cfg)
 {
-	m_tileSize = cfg.getNumberU32("r.gi.tileResolution");
-	m_cacheEntries.create(getAllocator(), cfg.getNumberU32("r.gi.maxCachedProbes"));
-	m_maxVisibleProbes = cfg.getNumberU32("r.gi.maxVisibleProbes");
+	m_tileSize = cfg.getNumberU32("r_giTileResolution");
+	m_cacheEntries.create(getAllocator(), cfg.getNumberU32("r_giMaxCachedProbes"));
+	m_maxVisibleProbes = cfg.getNumberU32("r_giMaxVisibleProbes");
 	ANKI_ASSERT(m_maxVisibleProbes <= MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES);
 	ANKI_ASSERT(m_cacheEntries.getSize() >= m_maxVisibleProbes);
 
@@ -175,7 +180,7 @@ Error GlobalIllumination::initGBuffer(const ConfigSet& cfg)
 
 Error GlobalIllumination::initShadowMapping(const ConfigSet& cfg)
 {
-	const U32 resolution = cfg.getNumberU32("r.gi.shadowMapResolution");
+	const U32 resolution = cfg.getNumberU32("r_giShadowMapResolution");
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -451,7 +456,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 	{
 		if(newListOfProbeCount + 1 >= m_maxVisibleProbes)
 		{
-			ANKI_R_LOGW("Can't have more that %u visible probes. Increase the r.gi.maxVisibleProbes or (somehow) "
+			ANKI_R_LOGW("Can't have more that %u visible probes. Increase the r_giMaxVisibleProbes or (somehow) "
 						"decrease the visible probes",
 				m_maxVisibleProbes);
 			break;
@@ -466,7 +471,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 		{
 			// Failed
 			ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
-						"Increase the r.gi.maxCachedProbes or (somehow) decrease the visible probes");
+						"Increase the r_giMaxCachedProbes or (somehow) decrease the visible probes");
 			continue;
 		}
 

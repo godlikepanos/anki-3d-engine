@@ -12,11 +12,13 @@
 #include <anki/Scene.h>
 #include <anki/util/Logger.h>
 #include <anki/util/Enum.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/collision/ConvexHullShape.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_dbgEnabled, 0, 0, 1)
 
 Dbg::Dbg(Renderer* r)
 	: RendererObject(r)
@@ -29,7 +31,7 @@ Dbg::~Dbg()
 
 Error Dbg::init(const ConfigSet& initializer)
 {
-	m_enabled = initializer.getBool("r.dbg.enabled");
+	m_enabled = initializer.getBool("r_dbgEnabled");
 	return Error::NONE;
 }
 

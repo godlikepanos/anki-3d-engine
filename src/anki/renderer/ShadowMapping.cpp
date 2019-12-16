@@ -6,12 +6,23 @@
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RenderQueue.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/util/Tracer.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingTileResolution, 128, 16, 2048)
+ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingTileCountPerRowOrColumn, 16, 1, 256)
+ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingScratchTileCountX,
+	4 * (MAX_SHADOW_CASCADES + 2),
+	1u,
+	256u,
+	"Number of tiles of the scratch buffer in X")
+ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingScratchTileCountY, 4, 1, 256, "Number of tiles of the scratch buffer in Y")
+ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingLightLodDistance0, 10.0, 1.0, MAX_F64)
+ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingLightLodDistance1, 20.0, 2.0, MAX_F64)
 
 class ShadowMapping::Scratch::WorkItem
 {
@@ -69,9 +80,9 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 {
 	// Init the shadowmaps and FBs
 	{
-		m_scratch.m_tileCountX = cfg.getNumberU32("r.shadowMapping.scratchTileCountX");
-		m_scratch.m_tileCountY = cfg.getNumberU32("r.shadowMapping.scratchTileCountY");
-		m_scratch.m_tileResolution = cfg.getNumberU32("r.shadowMapping.tileResolution");
+		m_scratch.m_tileCountX = cfg.getNumberU32("r_shadowMappingScratchTileCountX");
+		m_scratch.m_tileCountY = cfg.getNumberU32("r_shadowMappingScratchTileCountY");
+		m_scratch.m_tileResolution = cfg.getNumberU32("r_shadowMappingTileResolution");
 
 		// RT
 		m_scratch.m_rtDescr = m_r->create2DRenderTargetDescription(m_scratch.m_tileResolution * m_scratch.m_tileCountX,
@@ -96,8 +107,8 @@ Error ShadowMapping::initAtlas(const ConfigSet& cfg)
 {
 	// Init RT
 	{
-		m_atlas.m_tileResolution = cfg.getNumberU32("r.shadowMapping.tileResolution");
-		m_atlas.m_tileCountBothAxis = cfg.getNumberU32("r.shadowMapping.tileCountPerRowOrColumn");
+		m_atlas.m_tileResolution = cfg.getNumberU32("r_shadowMappingTileResolution");
+		m_atlas.m_tileCountBothAxis = cfg.getNumberU32("r_shadowMappingTileCountPerRowOrColumn");
 
 		// RT
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
@@ -139,8 +150,8 @@ Error ShadowMapping::initInternal(const ConfigSet& cfg)
 	ANKI_CHECK(initScratch(cfg));
 	ANKI_CHECK(initAtlas(cfg));
 
-	m_lodDistances[0] = cfg.getNumberF32("r.shadowMapping.lightLodDistance0");
-	m_lodDistances[1] = cfg.getNumberF32("r.shadowMapping.lightLodDistance1");
+	m_lodDistances[0] = cfg.getNumberF32("r_shadowMappingLightLodDistance0");
+	m_lodDistances[1] = cfg.getNumberF32("r_shadowMappingLightLodDistance1");
 
 	return Error::NONE;
 }
@@ -405,7 +416,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 		if(res == TileAllocatorResult::ALLOCATION_FAILED)
 		{
 			ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. "
-						"Increase the r.shadowMapping.tileCountPerRowOrColumn or decrease the scene's shadow casters");
+						"Increase the r_shadowMappingTileCountPerRowOrColumn or decrease the scene's shadow casters");
 
 			// Invalidate cache entries for what we already allocated
 			for(U j = 0; j < i; ++j)
@@ -446,7 +457,7 @@ TileAllocatorResult ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 		if(res == TileAllocatorResult::ALLOCATION_FAILED)
 		{
 			ANKI_R_LOGW("Don't have enough space in the scratch shadow mapping buffer. "
-						"If you see this message too often increase r.shadowMapping.scratchTileCountX/Y");
+						"If you see this message too often increase r_shadowMappingScratchTileCountX/Y");
 
 			// Invalidate atlas tiles
 			for(U j = 0; j < faceCount; ++j)

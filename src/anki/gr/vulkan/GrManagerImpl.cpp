@@ -10,11 +10,18 @@
 #include <anki/gr/Fence.h>
 #include <anki/gr/vulkan/FenceImpl.h>
 #include <anki/util/Functions.h>
-#include <anki/core/Config.h>
+#include <anki/core/ConfigSet.h>
 #include <glslang/Public/ShaderLang.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(gr_debugContext, 0, 0, 1)
+ANKI_REGISTER_CONFIG_OPTION(gr_vsync, 0, 0, 1)
+ANKI_REGISTER_CONFIG_OPTION(gr_debugMarkers, 0, 0, 1)
+ANKI_REGISTER_CONFIG_OPTION(gr_diskShaderCacheMaxSize, 128_MB, 1_MB, 1_GB)
+ANKI_REGISTER_CONFIG_OPTION(gr_vkminor, 1, 1, 1)
+ANKI_REGISTER_CONFIG_OPTION(gr_vkmajor, 1, 1, 1)
 
 GrManagerImpl::~GrManagerImpl()
 {
@@ -109,7 +116,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initDevice(init));
 	vkGetDeviceQueue(m_device, m_queueIdx, 0, &m_queue);
 
-	m_swapchainFactory.init(this, init.m_config->getBool("window.vsync"));
+	m_swapchainFactory.init(this, init.m_config->getBool("gr_vsync"));
 
 	m_crntSwapchain = m_swapchainFactory.newInstance();
 
@@ -221,8 +228,8 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	// Create the instance
 	//
-	const U8 vulkanMinor = init.m_config->getNumberU8("gr.vkminor");
-	const U8 vulkanMajor = init.m_config->getNumberU8("gr.vkmajor");
+	const U8 vulkanMinor = init.m_config->getNumberU8("gr_vkminor");
+	const U8 vulkanMajor = init.m_config->getNumberU8("gr_vkmajor");
 
 	VkApplicationInfo app = {};
 	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -239,7 +246,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	// Layers
 	static Array<const char*, 1> LAYERS = {{"VK_LAYER_KHRONOS_validation"}};
 	Array<const char*, LAYERS.getSize()> layersToEnable; // Keep it alive in the stack
-	if(init.m_config->getBool("window.debugContext"))
+	if(init.m_config->getBool("gr_debugContext"))
 	{
 		uint32_t count;
 		vkEnumerateInstanceLayerProperties(&count, nullptr);
@@ -421,7 +428,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 	m_devFeatures.robustBufferAccess =
-		(init.m_config->getBool("window.debugContext") && m_devFeatures.robustBufferAccess) ? true : false;
+		(init.m_config->getBool("gr_debugContext") && m_devFeatures.robustBufferAccess) ? true : false;
 	ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
 
 	// Set limits
@@ -522,7 +529,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_MAINTENANCE1_EXTENSION_NAME;
 			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME
-					&& init.m_config->getBool("window.debugMarkers"))
+					&& init.m_config->getBool("gr_debugMarkers"))
 			{
 				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;
@@ -538,7 +545,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME;
 			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_AMD_SHADER_INFO_EXTENSION_NAME
-					&& init.m_config->getBool("core.displayStats"))
+					&& init.m_config->getBool("core_displayStats"))
 			{
 				m_extensions |= VulkanExtensions::AMD_SHADER_INFO;
 				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_SHADER_INFO_EXTENSION_NAME;

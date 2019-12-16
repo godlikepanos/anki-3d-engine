@@ -33,7 +33,7 @@ Error MyApp::init(int argc, char* argv[])
 	}
 
 	// Config
-	Config config;
+	ConfigSet config = DefaultConfigSet::get();
 	ANKI_CHECK(config.loadFromFile(argv[1]));
 	ANKI_CHECK(config.setFromCommandLineArguments(argc, argv));
 	// ANKI_CHECK(config.saveToFile(argv[1]));

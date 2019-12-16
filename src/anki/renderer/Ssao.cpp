@@ -9,7 +9,7 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/util/Functions.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 
 namespace anki
 {

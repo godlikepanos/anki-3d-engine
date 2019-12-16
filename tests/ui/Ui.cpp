@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <tests/framework/Framework.h>
-#include <anki/core/Config.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/Ui.h>
 #include <anki/Input.h>
@@ -54,13 +54,13 @@ public:
 
 ANKI_TEST(Ui, Ui)
 {
-	Config cfg;
+	ConfigSet cfg = DefaultConfigSet::get();
 	initConfig(cfg);
-	cfg.set("window.vsync", 1);
-	cfg.set("window.debugContext", 0);
+	cfg.set("gr_vsync", 1);
+	cfg.set("gr_debugContext", 0);
 	cfg.set("width", 1024);
 	cfg.set("height", 760);
-	cfg.set("rsrc.dataPaths", "engine_data");
+	cfg.set("rsrc_dataPaths", "engine_data");
 
 	NativeWindow* win = createWindow(cfg);
 	Input* in = new Input();

@@ -8,10 +8,14 @@
 #include <anki/renderer/GlobalIllumination.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/resource/TextureResource.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_volumetricLightingAccumulationClusterFractionXY, 4, 1, 16)
+ANKI_REGISTER_CONFIG_OPTION(r_volumetricLightingAccumulationClusterFractionZ, 4, 1, 16)
+ANKI_REGISTER_CONFIG_OPTION(r_volumetricLightingAccumulationFinalClusterInZ, 26, 1, 256)
 
 VolumetricLightingAccumulation::VolumetricLightingAccumulation(Renderer* r)
 	: RendererObject(r)
@@ -25,11 +29,11 @@ VolumetricLightingAccumulation::~VolumetricLightingAccumulation()
 Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 {
 	// Misc
-	const U32 fractionXY = config.getNumberU32("r.volumetricLightingAccumulation.clusterFractionXY");
+	const U32 fractionXY = config.getNumberU32("r_volumetricLightingAccumulationClusterFractionXY");
 	ANKI_ASSERT(fractionXY >= 1);
-	const U32 fractionZ = config.getNumberU32("r.volumetricLightingAccumulation.clusterFractionZ");
+	const U32 fractionZ = config.getNumberU32("r_volumetricLightingAccumulationClusterFractionZ");
 	ANKI_ASSERT(fractionZ >= 1);
-	m_finalClusterZ = config.getNumberU32("r.volumetricLightingAccumulation.finalClusterInZ");
+	m_finalClusterZ = config.getNumberU32("r_volumetricLightingAccumulationFinalClusterInZ");
 	ANKI_ASSERT(m_finalClusterZ > 0 && m_finalClusterZ < m_r->getClusterCount()[2]);
 
 	m_volumeSize[0] = m_r->getClusterCount()[0] * fractionXY;

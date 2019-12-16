@@ -39,7 +39,7 @@ public:
 			U(init.m_config->getNumber("gr.glmajor")),
 			U(init.m_config->getNumber("gr.glminor")));
 
-		if(init.m_config->getNumber("window.debugContext"))
+		if(init.m_config->getNumber("gr_debugContext"))
 		{
 			if(SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG))
 			{

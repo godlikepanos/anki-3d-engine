@@ -413,8 +413,7 @@ set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCol
 	ankiimgui)
 
 # Add anki sub libraries
-set(ANKI_SUB_DIRS importer core script renderer scene ui input physics resource misc gr collision math util
-	shader_compiler)
+set(ANKI_SUB_DIRS importer core script renderer scene ui input physics resource gr collision math util shader_compiler)
 foreach(TMP ${ANKI_SUB_DIRS})
 	add_subdirectory(src/anki/${TMP})
 endforeach()

@@ -7,7 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/LightShading.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 
 namespace anki
 {
@@ -34,9 +34,9 @@ Error GBufferPost::initInternal(const ConfigSet& cfg)
 	ANKI_CHECK(getResourceManager().loadResource("shaders/GBufferPost.glslp", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
-	consts.add("CLUSTER_COUNT_X", cfg.getNumberU32("r.clusterSizeX"));
-	consts.add("CLUSTER_COUNT_Y", cfg.getNumberU32("r.clusterSizeY"));
-	consts.add("CLUSTER_COUNT_Z", cfg.getNumberU32("r.clusterSizeZ"));
+	consts.add("CLUSTER_COUNT_X", cfg.getNumberU32("r_clusterSizeX"));
+	consts.add("CLUSTER_COUNT_Y", cfg.getNumberU32("r_clusterSizeY"));
+	consts.add("CLUSTER_COUNT_Z", cfg.getNumberU32("r_clusterSizeZ"));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(consts.get(), variant);

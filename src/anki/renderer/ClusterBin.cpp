@@ -8,10 +8,12 @@
 #include <anki/Collision.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/util/Tracer.h>
-#include <anki/core/Config.h>
+#include <anki/core/ConfigSet.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_avgObjectsPerCluster, 16, 16, 256)
 
 /// Get a view space point.
 static Vec4 unproject(const F32 zVspace, const Vec2& ndc, const Vec4& unprojParams)
@@ -114,7 +116,7 @@ void ClusterBin::init(
 
 	m_totalClusterCount = clusterCountX * clusterCountY * clusterCountZ;
 
-	m_avgObjectsPerCluster = cfg.getNumberU32("r.avgObjectsPerCluster");
+	m_avgObjectsPerCluster = cfg.getNumberU32("r_avgObjectsPerCluster");
 
 	// The actual indices per cluster are
 	// - the object indices per cluster
@@ -339,7 +341,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	ClusterBin::TileCtx::ClusterMetaInfo& inf = tileCtx.m_clusterInfos[clusterZ]; \
 	if(ANKI_UNLIKELY(U32(inf.m_offset) + 1 >= m_avgObjectsPerCluster)) \
 	{ \
-		ANKI_R_LOGW("Out of cluster indices. Increase r.avgObjectsPerCluster"); \
+		ANKI_R_LOGW("Out of cluster indices. Increase r_avgObjectsPerCluster"); \
 		continue; \
 	} \
 	tileCtx.getClusterIndices(clusterZ)[inf.m_offset++] = i; \

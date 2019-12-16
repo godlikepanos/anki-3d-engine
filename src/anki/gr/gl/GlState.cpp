@@ -8,7 +8,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/util/Logger.h>
 #include <anki/core/Trace.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <algorithm>
 #include <cstring>
 
@@ -83,7 +83,7 @@ __stdcall
 
 void GlState::initMainThread(const ConfigSet& config)
 {
-	m_registerMessages = config.getNumber("window.debugContext");
+	m_registerMessages = config.getNumber("gr_debugContext");
 }
 
 void GlState::initRenderThread()

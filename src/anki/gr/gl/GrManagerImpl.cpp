@@ -42,7 +42,7 @@ Error GrManagerImpl::init(GrManagerInitInfo& init, GrAllocator<U8> alloc)
 	m_alloc = alloc;
 	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 
-	m_debugMarkers = init.m_config->getNumber("window.debugMarkers");
+	m_debugMarkers = init.m_config->getNumber("gr_debugMarkers");
 
 	// Init the backend of the backend
 	ANKI_CHECK(createBackend(init));

@@ -9,7 +9,7 @@
 #include <anki/renderer/LensFlare.h>
 #include <anki/util/Logger.h>
 #include <anki/util/Tracer.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 
 namespace anki
 {

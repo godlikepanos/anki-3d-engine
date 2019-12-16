@@ -221,13 +221,13 @@ extern void deleteTesterSingleton();
 /// Check error code.
 #define ANKI_TEST_EXPECT_ERR(x_, y_) ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
 
-void initConfig(Config& cfg);
+void initConfig(ConfigSet& cfg);
 
-NativeWindow* createWindow(const Config& cfg);
+NativeWindow* createWindow(const ConfigSet& cfg);
 
-GrManager* createGrManager(const Config& cfg, NativeWindow* win);
+GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win);
 
 ResourceManager* createResourceManager(
-	const Config& cfg, GrManager* gr, PhysicsWorld*& physics, ResourceFilesystem*& resourceFs);
+	const ConfigSet& cfg, GrManager* gr, PhysicsWorld*& physics, ResourceFilesystem*& resourceFs);
 
 } // end namespace anki

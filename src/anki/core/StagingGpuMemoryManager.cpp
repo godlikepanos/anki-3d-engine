@@ -4,12 +4,17 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/core/StagingGpuMemoryManager.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/gr/GrManager.h>
 #include <anki/util/Tracer.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(core_uniformPerFrameMemorySize, 16_MB, 1_MB, 1_GB)
+ANKI_REGISTER_CONFIG_OPTION(core_storagePerFrameMemorySize, 16_MB, 1_MB, 1_GB)
+ANKI_REGISTER_CONFIG_OPTION(core_vertexPerFrameMemorySize, 10_MB, 1_MB, 1_GB)
+ANKI_REGISTER_CONFIG_OPTION(core_textureBufferPerFrameMemorySize, 1_MB, 1_MB, 1_GB)
 
 StagingGpuMemoryManager::~StagingGpuMemoryManager()
 {
@@ -26,10 +31,10 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 {
 	m_gr = gr;
 
-	m_perFrameBuffers[StagingGpuMemoryType::UNIFORM].m_size = cfg.getNumberU32("core.uniformPerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::STORAGE].m_size = cfg.getNumberU32("core.storagePerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getNumberU32("core.vertexPerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getNumberU32("core.textureBufferPerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::UNIFORM].m_size = cfg.getNumberU32("core_uniformPerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::STORAGE].m_size = cfg.getNumberU32("core_storagePerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getNumberU32("core_vertexPerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getNumberU32("core_textureBufferPerFrameMemorySize");
 
 	initBuffer(StagingGpuMemoryType::UNIFORM,
 		gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,

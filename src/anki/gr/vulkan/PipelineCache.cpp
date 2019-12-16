@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/PipelineCache.h>
-#include <anki/core/Config.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/Filesystem.h>
 #include <anki/util/File.h>
 
@@ -15,7 +15,7 @@ Error PipelineCache::init(
 	VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, const ConfigSet& cfg, GrAllocator<U8> alloc)
 {
 	ANKI_ASSERT(cacheDir && dev && pdev);
-	m_dumpSize = cfg.getNumberU32("gr.diskShaderCacheMaxSize");
+	m_dumpSize = cfg.getNumberU32("gr_diskShaderCacheMaxSize");
 	m_dumpFilename.sprintf(alloc, "%s/vk_pipeline_cache", &cacheDir[0]);
 
 	// Try read the pipeline cache file.

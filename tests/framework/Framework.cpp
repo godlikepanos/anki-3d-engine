@@ -223,14 +223,14 @@ void deleteTesterSingleton()
 	}
 }
 
-void initConfig(Config& cfg)
+void initConfig(ConfigSet& cfg)
 {
 	cfg.set("width", 1920);
 	cfg.set("height", 1080);
-	cfg.set("rsrc.dataPaths", ".:..");
+	cfg.set("rsrc_dataPaths", ".:..");
 }
 
-NativeWindow* createWindow(const Config& cfg)
+NativeWindow* createWindow(const ConfigSet& cfg)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
@@ -245,7 +245,7 @@ NativeWindow* createWindow(const Config& cfg)
 	return win;
 }
 
-GrManager* createGrManager(const Config& cfg, NativeWindow* win)
+GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win)
 {
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
@@ -259,7 +259,7 @@ GrManager* createGrManager(const Config& cfg, NativeWindow* win)
 }
 
 ResourceManager* createResourceManager(
-	const Config& cfg, GrManager* gr, PhysicsWorld*& physics, ResourceFilesystem*& resourceFs)
+	const ConfigSet& cfg, GrManager* gr, PhysicsWorld*& physics, ResourceFilesystem*& resourceFs)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 

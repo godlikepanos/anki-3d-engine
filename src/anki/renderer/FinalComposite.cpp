@@ -16,10 +16,12 @@
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/UiStage.h>
 #include <anki/util/Logger.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_motionBlurSamples, 32, 1, 2048)
 
 FinalComposite::FinalComposite(Renderer* r)
 	: RendererObject(r)
@@ -51,7 +53,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
 	consts.add("LUT_SIZE", U32(LUT_SIZE))
 		.add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()))
-		.add("MOTION_BLUR_SAMPLES", config.getNumberU32("r.final.motionBlurSamples"));
+		.add("MOTION_BLUR_SAMPLES", config.getNumberU32("r_motionBlurSamples"));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);

@@ -7,12 +7,15 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/Functions.h>
 #include <shaders/glsl_cpp_common/LensFlareSprite.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_lensFlareMaxSpritesPerFlare, 8, 4, 256)
+ANKI_REGISTER_CONFIG_OPTION(r_lensFlareMaxFlares, 16, 8, 256)
 
 LensFlare::~LensFlare()
 {
@@ -41,8 +44,8 @@ Error LensFlare::initInternal(const ConfigSet& config)
 
 Error LensFlare::initSprite(const ConfigSet& config)
 {
-	m_maxSpritesPerFlare = config.getNumberU8("r.lensFlare.maxSpritesPerFlare");
-	m_maxFlares = config.getNumberU8("r.lensFlare.maxFlares");
+	m_maxSpritesPerFlare = config.getNumberU8("r_lensFlareMaxSpritesPerFlare");
+	m_maxFlares = config.getNumberU8("r_lensFlareMaxFlares");
 
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{

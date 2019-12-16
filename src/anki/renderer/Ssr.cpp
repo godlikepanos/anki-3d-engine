@@ -9,11 +9,14 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/RenderQueue.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <shaders/glsl_cpp_common/Ssr.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_ssrMaxSteps, 64, 1, 2048)
+ANKI_REGISTER_CONFIG_OPTION(r_ssrHistoryBlendFactor, 0.3, 0.0, MAX_F64)
 
 Ssr::~Ssr()
 {
@@ -50,9 +53,9 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
 	consts.add("FB_SIZE", UVec2(width, height));
 	consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
-	consts.add("MAX_STEPS", cfg.getNumberU32("r.ssr.maxSteps"));
+	consts.add("MAX_STEPS", cfg.getNumberU32("r_ssrMaxSteps"));
 	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
-	consts.add("HISTORY_COLOR_BLEND_FACTOR", cfg.getNumberF32("r.ssr.historyBlendFactor"));
+	consts.add("HISTORY_COLOR_BLEND_FACTOR", cfg.getNumberF32("r_ssrHistoryBlendFactor"));
 
 	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
 	mutators.add("VARIANT", 0);

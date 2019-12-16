@@ -6,7 +6,7 @@
 #include "tests/framework/Framework.h"
 #include "anki/resource/DummyResource.h"
 #include "anki/resource/ResourceManager.h"
-#include "anki/core/Config.h"
+#include "anki/core/ConfigSet.h"
 
 namespace anki
 {
@@ -14,7 +14,7 @@ namespace anki
 ANKI_TEST(Resource, ResourceManager)
 {
 	// Create
-	Config config;
+	ConfigSet config = DefaultConfigSet::get();
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 

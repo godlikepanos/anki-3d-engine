@@ -6,7 +6,7 @@
 #include <tests/framework/Framework.h>
 #include <anki/Gr.h>
 #include <anki/core/NativeWindow.h>
-#include <anki/core/Config.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/resource/TransferGpuAllocator.h>
@@ -286,14 +286,14 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 
 #define COMMON_BEGIN() \
 	stagingMem = new StagingGpuMemoryManager(); \
-	Config cfg; \
+	ConfigSet cfg = DefaultConfigSet::get(); \
 	cfg.set("width", WIDTH); \
 	cfg.set("height", HEIGHT); \
-	cfg.set("window.debugContext", true); \
-	cfg.set("window.vsync", false); \
+	cfg.set("gr_debugContext", true); \
+	cfg.set("gr_vsync", false); \
 	win = createWindow(cfg); \
 	gr = createGrManager(cfg, win); \
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config())); \
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg)); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
 	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, gr, gr->getAllocator())); \
 	{

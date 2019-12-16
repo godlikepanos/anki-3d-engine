@@ -8,10 +8,13 @@
 #include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Tonemapping.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_bloomThreshold, 2.5, 0.0, 256.0)
+ANKI_REGISTER_CONFIG_OPTION(r_bloomScale, 2.5, 0.0, 256.0)
 
 Bloom::Bloom(Renderer* r)
 	: RendererObject(r)
@@ -27,8 +30,8 @@ Error Bloom::initExposure(const ConfigSet& config)
 	m_exposure.m_width = m_r->getDownscaleBlur().getPassWidth(MAX_U32) * 2;
 	m_exposure.m_height = m_r->getDownscaleBlur().getPassHeight(MAX_U32) * 2;
 
-	m_exposure.m_threshold = config.getNumberF32("r.bloom.threshold");
-	m_exposure.m_scale = config.getNumberF32("r.bloom.scale");
+	m_exposure.m_threshold = config.getNumberF32("r_bloomThreshold");
+	m_exposure.m_scale = config.getNumberF32("r_bloomScale");
 
 	// Create RT info
 	m_exposure.m_rtDescr =

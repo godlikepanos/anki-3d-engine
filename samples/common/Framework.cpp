@@ -19,10 +19,10 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	}
 
 	// Init the super class
-	Config config;
-	config.set("window.fullscreen", true);
-	config.set("rsrc.dataPaths", ".:../..");
-	config.set("window.debugContext", 0);
+	ConfigSet config = DefaultConfigSet::get();
+	config.set("window_fullscreen", true);
+	config.set("rsrc_dataPaths", ".:../..");
+	config.set("gr_debugContext", 0);
 	ANKI_CHECK(config.setFromCommandLineArguments(argc, argv));
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
 

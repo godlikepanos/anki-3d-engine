@@ -15,7 +15,7 @@
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Ssr.h>
 #include <anki/renderer/GlobalIllumination.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 
 namespace anki

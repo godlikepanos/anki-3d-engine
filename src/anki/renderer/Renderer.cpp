@@ -6,7 +6,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/util/Tracer.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/collision/Aabb.h>
 
@@ -35,6 +35,13 @@
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_lodDistance0, 20.0, 1.0, MAX_F64, "Distance that will be used to calculate the LOD 0")
+ANKI_REGISTER_CONFIG_OPTION(r_lodDistance1, 40.0, 2.0, MAX_F64, "Distance that will be used to calculate the LOD 1")
+ANKI_REGISTER_CONFIG_OPTION(r_clusterSizeX, 32, 1, 256)
+ANKI_REGISTER_CONFIG_OPTION(r_clusterSizeY, 26, 1, 256)
+ANKI_REGISTER_CONFIG_OPTION(r_clusterSizeZ, 32, 1, 256)
+ANKI_REGISTER_CONFIG_OPTION(r_textureAnisotropy, 8, 1, 16)
 
 Renderer::Renderer()
 	: m_sceneDrawer(this)
@@ -81,13 +88,13 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
 
 	ANKI_ASSERT(m_lodDistances.getSize() == 2);
-	m_lodDistances[0] = config.getNumberF32("r.lodDistance0");
-	m_lodDistances[1] = config.getNumberF32("r.lodDistance1");
+	m_lodDistances[0] = config.getNumberF32("r_lodDistance0");
+	m_lodDistances[1] = config.getNumberF32("r_lodDistance1");
 	m_frameCount = 0;
 
-	m_clusterCount[0] = config.getNumberU32("r.clusterSizeX");
-	m_clusterCount[1] = config.getNumberU32("r.clusterSizeY");
-	m_clusterCount[2] = config.getNumberU32("r.clusterSizeZ");
+	m_clusterCount[0] = config.getNumberU32("r_clusterSizeX");
+	m_clusterCount[1] = config.getNumberU32("r_clusterSizeY");
+	m_clusterCount[2] = config.getNumberU32("r_clusterSizeZ");
 	m_clusterCount[3] = m_clusterCount[0] * m_clusterCount[1] * m_clusterCount[2];
 
 	m_clusterBin.init(m_alloc, m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], config);
@@ -201,7 +208,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 		sinit.m_addressing = SamplingAddressing::REPEAT;
 		m_samplers.m_trilinearRepeat = m_gr->newSampler(sinit);
 
-		sinit.m_anisotropyLevel = U8(config.getNumberU32("r.textureAnisotropy"));
+		sinit.m_anisotropyLevel = U8(config.getNumberU32("r_textureAnisotropy"));
 		m_samplers.m_trilinearRepeatAniso = m_gr->newSampler(sinit);
 	}
 

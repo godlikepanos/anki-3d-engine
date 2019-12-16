@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/core/App.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/Logger.h>
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
@@ -33,6 +33,13 @@
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(width, 1280, 16, 16 * 1024, "Width")
+ANKI_REGISTER_CONFIG_OPTION(height, 768, 16, 16 * 1024, "Height")
+ANKI_REGISTER_CONFIG_OPTION(core_mainThreadCount, max(2u, getCpuCoresCount() / 2u), 2u, 1024u)
+ANKI_REGISTER_CONFIG_OPTION(core_displayStats, 0, 0, 1)
+ANKI_REGISTER_CONFIG_OPTION(core_clearCaches, 0, 0, 1)
+ANKI_REGISTER_CONFIG_OPTION(window_fullscreen, 0, 0, 1)
 
 #if ANKI_OS_ANDROID
 /// The one and only android hack
@@ -307,7 +314,7 @@ Error App::init(const ConfigSet& config, AllocAlignedCallback allocCb, void* all
 Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	ConfigSet config = config_;
-	m_displayStats = config.getNumberU32("core.displayStats");
+	m_displayStats = config.getNumberU32("core_displayStats");
 
 	initMemoryCallbacks(allocCb, allocCbUserData);
 	m_heapAlloc = HeapAllocator<U8>(m_allocCb, m_allocCbData);
@@ -356,7 +363,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	}
 #endif
 
-	ANKI_CORE_LOGI("Number of main threads: %u", U(config.getNumberU32("core.mainThreadCount")));
+	ANKI_CORE_LOGI("Number of main threads: %u", U(config.getNumberU32("core_mainThreadCount")));
 
 	//
 	// Core tracer
@@ -374,7 +381,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	nwinit.m_height = config.getNumberU32("height");
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = config.getBool("window.fullscreen");
+	nwinit.m_fullscreenDesktopRez = config.getBool("window_fullscreen");
 	m_window = m_heapAlloc.newInstance<NativeWindow>();
 
 	ANKI_CHECK(m_window->init(nwinit, m_heapAlloc));
@@ -388,7 +395,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// ThreadPool
 	//
-	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(config.getNumberU32("core.mainThreadCount"), m_heapAlloc, true);
+	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(config.getNumberU32("core_mainThreadCount"), m_heapAlloc, true);
 
 	//
 	// Graphics API
@@ -508,7 +515,7 @@ Error App::initDirs(const ConfigSet& cfg)
 	m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]);
 
 	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
-	if(cfg.getBool("core.clearCaches") && cacheDirExists)
+	if(cfg.getBool("core_clearCaches") && cacheDirExists)
 	{
 		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", &m_cacheDir[0]);
 		ANKI_CHECK(removeDirectory(m_cacheDir.toCString(), m_heapAlloc));

@@ -5,7 +5,7 @@
 
 #include <anki/resource/ResourceFilesystem.h>
 #include <anki/util/Filesystem.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/Tracer.h>
 #include <contrib/minizip/unzip.h>
 
@@ -208,11 +208,11 @@ ResourceFilesystem::~ResourceFilesystem()
 Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 {
 	StringListAuto paths(m_alloc);
-	paths.splitString(config.getString("rsrc.dataPaths"), ':');
+	paths.splitString(config.getString("rsrc_dataPaths"), ':');
 
 	if(paths.getSize() < 1)
 	{
-		ANKI_RESOURCE_LOGE("Config option \"rsrc.dataPaths\" is empty");
+		ANKI_RESOURCE_LOGE("Config option \"rsrc_dataPaths\" is empty");
 		return Error::USER_DATA;
 	}
 

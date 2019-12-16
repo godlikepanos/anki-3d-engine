@@ -10,7 +10,7 @@
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/VolumetricLightingAccumulation.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 
 namespace anki
 {
@@ -18,11 +18,11 @@ namespace anki
 Error VolumetricFog::init(const ConfigSet& config)
 {
 	// Misc
-	const U32 fractionXY = config.getNumberU32("r.volumetricLightingAccumulation.clusterFractionXY");
+	const U32 fractionXY = config.getNumberU32("r_volumetricLightingAccumulationClusterFractionXY");
 	ANKI_ASSERT(fractionXY >= 1);
-	const U32 fractionZ = config.getNumberU32("r.volumetricLightingAccumulation.clusterFractionZ");
+	const U32 fractionZ = config.getNumberU32("r_volumetricLightingAccumulationClusterFractionZ");
 	ANKI_ASSERT(fractionZ >= 1);
-	m_finalClusterZ = config.getNumberU32("r.volumetricLightingAccumulation.finalClusterInZ");
+	m_finalClusterZ = config.getNumberU32("r_volumetricLightingAccumulationFinalClusterInZ");
 	ANKI_ASSERT(m_finalClusterZ > 0 && m_finalClusterZ < m_r->getClusterCount()[2]);
 
 	m_volumeSize[0] = m_r->getClusterCount()[0] * fractionXY;

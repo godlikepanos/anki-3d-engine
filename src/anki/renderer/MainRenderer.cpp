@@ -13,12 +13,14 @@
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
 #include <anki/util/Tracer.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/util/ThreadHive.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_renderingQuality, 1.0, 0.5, 1.0, "A factor over the requested renderingresolution")
 
 MainRenderer::MainRenderer()
 {
@@ -48,7 +50,7 @@ Error MainRenderer::init(ThreadHive* hive,
 	m_width = config.getNumberU32("width");
 	m_height = config.getNumberU32("height");
 	ConfigSet config2 = config;
-	m_renderingQuality = config.getNumberF32("r.renderingQuality");
+	m_renderingQuality = config.getNumberF32("r_renderingQuality");
 	UVec2 size(U32(m_renderingQuality * F32(m_width)), U32(m_renderingQuality * F32(m_height)));
 
 	config2.set("width", size.x());

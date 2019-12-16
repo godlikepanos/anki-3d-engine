@@ -8,13 +8,18 @@
 #include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/RenderQueue.h>
-#include <anki/core/Config.h>
+#include <anki/core/ConfigSet.h>
 #include <anki/util/Tracer.h>
 #include <anki/resource/MeshResource.h>
 #include <shaders/glsl_cpp_common/TraditionalDeferredShading.h>
 
 namespace anki
 {
+
+ANKI_REGISTER_CONFIG_OPTION(r_probeReflectionResolution, 128, 4, 2048)
+ANKI_REGISTER_CONFIG_OPTION(r_probeReflectionIrradianceResolution, 16, 4, 2048)
+ANKI_REGISTER_CONFIG_OPTION(r_probeRefectionlMaxSimultaneousProbeCount, 32, 4, 256)
+ANKI_REGISTER_CONFIG_OPTION(r_probeReflectionShadowMapResolution, 64, 4, 2048)
 
 ProbeReflections::ProbeReflections(Renderer* r)
 	: RendererObject(r)
@@ -44,7 +49,7 @@ Error ProbeReflections::init(const ConfigSet& config)
 Error ProbeReflections::initInternal(const ConfigSet& config)
 {
 	// Init cache entries
-	m_cacheEntries.create(getAllocator(), config.getNumberU32("r.indirect.maxSimultaneousProbeCount"));
+	m_cacheEntries.create(getAllocator(), config.getNumberU32("r_probeRefectionlMaxSimultaneousProbeCount"));
 
 	ANKI_CHECK(initGBuffer(config));
 	ANKI_CHECK(initLightShading(config));
@@ -68,7 +73,7 @@ Error ProbeReflections::initInternal(const ConfigSet& config)
 
 Error ProbeReflections::initGBuffer(const ConfigSet& config)
 {
-	m_gbuffer.m_tileSize = config.getNumberU32("r.indirect.reflectionResolution");
+	m_gbuffer.m_tileSize = config.getNumberU32("r_probeReflectionResolution");
 
 	// Create RT descriptions
 	{
@@ -115,7 +120,7 @@ Error ProbeReflections::initGBuffer(const ConfigSet& config)
 
 Error ProbeReflections::initLightShading(const ConfigSet& config)
 {
-	m_lightShading.m_tileSize = config.getNumberU32("r.indirect.reflectionResolution");
+	m_lightShading.m_tileSize = config.getNumberU32("r_probeReflectionResolution");
 	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
 
 	// Init cube arr
@@ -143,7 +148,7 @@ Error ProbeReflections::initLightShading(const ConfigSet& config)
 
 Error ProbeReflections::initIrradiance(const ConfigSet& config)
 {
-	m_irradiance.m_workgroupSize = config.getNumberU32("r.indirect.irradianceResolution");
+	m_irradiance.m_workgroupSize = config.getNumberU32("r_probeReflectionIrradianceResolution");
 
 	// Create prog
 	{
@@ -188,7 +193,7 @@ Error ProbeReflections::initIrradianceToRefl(const ConfigSet& cfg)
 
 Error ProbeReflections::initShadowMapping(const ConfigSet& cfg)
 {
-	const U32 resolution = cfg.getNumberU32("r.indirect.shadowMapResolution");
+	const U32 resolution = cfg.getNumberU32("r_probeReflectionShadowMapResolution");
 	ANKI_ASSERT(resolution > 8);
 
 	// RT descr
@@ -264,7 +269,7 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx,
 		{
 			// Failed
 			ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
-						"Increase the r.indirect.maxSimultaneousProbeCount or decrease the scene's probes");
+						"Increase the r_probeRefectionlMaxSimultaneousProbeCount or decrease the scene's probes");
 			continue;
 		}
 
