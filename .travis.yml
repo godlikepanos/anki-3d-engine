@@ -49,6 +49,7 @@ script:
   - which python3
   - which python
   - python --version
+  - ls -l /c
   - $CC --version
   - $CXX --version
   - echo "VULKAN_SDK ENV" $VULKAN_SDK
