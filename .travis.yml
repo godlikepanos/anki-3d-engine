@@ -28,7 +28,6 @@ matrix:
         - unzip VulkanSDKLib.zip -d vulkansdk
         - export VULKAN_SDK=$TRAVIS_BUILD_DIR/vulkansdk
       env:
-        - PATH=/c/Python37:/c/Python37/Scripts:$PATH
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON TOOLS=OFF TESTS=OFF
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF TOOLS=OFF TESTS=OFF
     - os: linux
@@ -47,9 +46,10 @@ matrix:
 script:
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PYTHON3=$(which python); fi
   - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then PYTHON3=$(which python3); fi
+  - which python3
+  - which python
   - $CC --version
   - $CXX --version
-  - $PYTHON3 --version
   - echo "VULKAN_SDK ENV" $VULKAN_SDK
   - mkdir build
   - cd build
