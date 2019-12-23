@@ -48,6 +48,7 @@ script:
   - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then PYTHON3=$(which python3); fi
   - which python3
   - which python
+  - python --version
   - $CC --version
   - $CXX --version
   - echo "VULKAN_SDK ENV" $VULKAN_SDK
