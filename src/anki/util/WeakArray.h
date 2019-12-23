@@ -172,6 +172,14 @@ public:
 		return m_data[m_size - 1];
 	}
 
+	/// Set the array pointer and its size.
+	void setArray(Value* array, Size size)
+	{
+		ANKI_ASSERT((array && size > 0) || (array == nullptr && size == 0));
+		m_data = array;
+		m_size = size;
+	}
+
 	Size getSize() const
 	{
 		return m_size;
@@ -312,6 +320,14 @@ public:
 	{
 		ANKI_ASSERT(!isEmpty());
 		return m_data[m_size - 1];
+	}
+
+	/// Set the array pointer and its size.
+	void setArray(Value* array, Size size)
+	{
+		ANKI_ASSERT(array && size > 0 || array == nullptr && size == 0);
+		m_data = array;
+		m_size = size;
 	}
 
 	Size getSize() const

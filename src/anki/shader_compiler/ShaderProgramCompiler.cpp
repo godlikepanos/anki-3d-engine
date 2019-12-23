@@ -23,7 +23,9 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 	ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
 
 	BinarySerializer serializer;
-	ANKI_CHECK(serializer.serialize(*m_binary, m_alloc, file));
+	StackAllocator<U8> tmpAlloc(
+		m_alloc.getMemoryPool().getAllocationCallback(), m_alloc.getMemoryPool().getAllocationCallbackUserData(), 4_KB);
+	ANKI_CHECK(serializer.serialize(*m_binary, tmpAlloc, file));
 
 	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], 0) != 0)
 	{
@@ -58,29 +60,32 @@ void ShaderProgramBinaryWrapper::cleanup()
 
 	if(!m_singleAllocation)
 	{
-		for(PtrSize i = 0; i < m_binary->m_mutatorCount; ++i)
+		for(ShaderProgramBinaryMutator& mutator : m_binary->m_mutators)
 		{
-			m_alloc.getMemoryPool().free(m_binary->m_mutators[i].m_values);
+			m_alloc.getMemoryPool().free(mutator.m_values.getBegin());
 		}
 
-		m_alloc.getMemoryPool().free(m_binary->m_inputVariables);
+		m_alloc.getMemoryPool().free(m_binary->m_mutators.getBegin());
+		m_alloc.getMemoryPool().free(m_binary->m_inputVariables.getBegin());
 
-		for(PtrSize i = 0; i < m_binary->m_codeBlockCount; ++i)
+		for(ShaderProgramBinaryCode& code : m_binary->m_codeBlocks)
 		{
-			m_alloc.getMemoryPool().free(m_binary->m_codeBlocks[i].m_binary);
+			m_alloc.getMemoryPool().free(code.m_binary.getBegin());
 		}
-		m_alloc.getMemoryPool().free(m_binary->m_codeBlocks);
+		m_alloc.getMemoryPool().free(m_binary->m_codeBlocks.getBegin());
 
-		for(PtrSize i = 0; i < m_binary->m_variantCount; ++i)
+		for(ShaderProgramBinaryVariant& variant : m_binary->m_variants)
 		{
-			m_alloc.getMemoryPool().free(m_binary->m_variants[i].m_mutatorValues);
-			m_alloc.getMemoryPool().free(m_binary->m_variants[i].m_blockInfos);
-			m_alloc.getMemoryPool().free(m_binary->m_variants[i].m_bindings);
+			m_alloc.getMemoryPool().free(variant.m_mutation.getBegin());
+			m_alloc.getMemoryPool().free(variant.m_blockInfos.getBegin());
+			m_alloc.getMemoryPool().free(variant.m_bindings.getBegin());
 		}
-		m_alloc.getMemoryPool().free(m_binary->m_variants);
+		m_alloc.getMemoryPool().free(m_binary->m_variants.getBegin());
 	}
 
 	m_alloc.getMemoryPool().free(m_binary);
+	m_binary = nullptr;
+	m_singleAllocation = false;
 }
 
 /// Spin the dials. Used to compute all mutator combinations.
@@ -180,8 +185,7 @@ static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 			memcpy(code, &spirv[0], spirv.getSizeInBytes());
 
 			ShaderProgramBinaryCode block;
-			block.m_binary = code;
-			block.m_binarySize = spirv.getSizeInBytes();
+			block.m_binary.setArray(code, spirv.getSizeInBytes());
 			codeBlocks.emplaceBack(block);
 
 			codeBlockHashes.emplaceBack(newHash);
@@ -191,10 +195,11 @@ static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 	}
 
 	// Mutator values
-	variant.m_mutatorValues = binaryAlloc.newArray<I32>(parser.getMutators().getSize());
+	variant.m_mutation.setArray(
+		binaryAlloc.newArray<MutatorValue>(parser.getMutators().getSize()), parser.getMutators().getSize());
 	for(U32 i = 0; i < parser.getMutators().getSize(); ++i)
 	{
-		variant.m_mutatorValues[i] = mutation[i];
+		variant.m_mutation[i] = mutation[i];
 	}
 
 	// Input vars
@@ -204,9 +209,12 @@ static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 		defaultInfo.m_arrayStride = -1;
 		defaultInfo.m_matrixStride = -1;
 		defaultInfo.m_offset = -1;
-		variant.m_blockInfos = binaryAlloc.newArray<ShaderVariableBlockInfo>(parser.getInputs().getSize(), defaultInfo);
+		variant.m_blockInfos.setArray(
+			binaryAlloc.newArray<ShaderVariableBlockInfo>(parser.getInputs().getSize(), defaultInfo),
+			parser.getInputs().getSize());
 
-		variant.m_bindings = binaryAlloc.newArray<I16>(parser.getInputs().getSize(), -1);
+		variant.m_bindings.setArray(
+			binaryAlloc.newArray<I16>(parser.getInputs().getSize(), -1), parser.getInputs().getSize());
 
 		for(U32 i = 0; i < parser.getInputs().getSize(); ++i)
 		{
@@ -229,8 +237,6 @@ static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 	}
 
 	// Misc
-	variant.m_mutatorValueCount = parser.getMutators().getSize();
-	variant.m_inputVariableCount = parser.getInputs().getSize();
 	variant.m_blockSize = parserVariant.getBlockSize();
 	variant.m_usesPushConstants = parserVariant.usesPushConstants();
 
@@ -263,10 +269,11 @@ Error compileShaderProgram(CString fname,
 	// Inputs
 	if(parser.getInputs().getSize() > 0)
 	{
-		binary.m_inputVariableCount = parser.getInputs().getSize();
-		binary.m_inputVariables = binaryAllocator.newArray<ShaderProgramBinaryInput>(binary.m_inputVariableCount);
+		binary.m_inputVariables.setArray(
+			binaryAllocator.newArray<ShaderProgramBinaryInput>(parser.getInputs().getSize()),
+			parser.getInputs().getSize());
 
-		for(U32 i = 0; i < binary.m_inputVariableCount; ++i)
+		for(U32 i = 0; i < binary.m_inputVariables.getSize(); ++i)
 		{
 			ShaderProgramBinaryInput& out = binary.m_inputVariables[i];
 			const ShaderProgramParserInput& in = parser.getInputs()[i];
@@ -283,16 +290,17 @@ Error compileShaderProgram(CString fname,
 	}
 	else
 	{
-		ANKI_ASSERT(binary.m_inputVariableCount == 0 && binary.m_inputVariables == nullptr);
+		ANKI_ASSERT(binary.m_inputVariables.getSize() == 0);
 	}
 
 	// Mutators
+	U32 variantCount = 0;
 	if(parser.getMutators().getSize() > 0)
 	{
-		binary.m_mutatorCount = parser.getMutators().getSize();
-		binary.m_mutators = binaryAllocator.newArray<ShaderProgramBinaryMutator>(binary.m_mutatorCount);
+		binary.m_mutators.setArray(binaryAllocator.newArray<ShaderProgramBinaryMutator>(parser.getMutators().getSize()),
+			parser.getMutators().getSize());
 
-		for(U32 i = 0; i < binary.m_mutatorCount; ++i)
+		for(U32 i = 0; i < binary.m_mutators.getSize(); ++i)
 		{
 			ShaderProgramBinaryMutator& out = binary.m_mutators[i];
 			const ShaderProgramParserMutator& in = parser.getMutators()[i];
@@ -300,16 +308,18 @@ Error compileShaderProgram(CString fname,
 			ANKI_ASSERT(in.getName().getLength() < out.m_name.getSize());
 			memcpy(&out.m_name[0], in.getName().cstr(), in.getName().getLength() + 1);
 
-			out.m_valueCount = in.getValues().getSize();
-			out.m_values = binaryAllocator.newArray<I32>(out.m_valueCount);
-			memcpy(out.m_values, &in.getValues()[0], in.getValues().getSizeInBytes());
+			out.m_values.setArray(binaryAllocator.newArray<I32>(in.getValues().getSize()), in.getValues().getSize());
+			memcpy(out.m_values.getBegin(), in.getValues().getBegin(), in.getValues().getSizeInBytes());
 
 			out.m_instanceCount = in.isInstanceCount();
+
+			// Update the count
+			variantCount = (i == 0) ? out.m_values.getSize() : variantCount * out.m_values.getSize();
 		}
 	}
 	else
 	{
-		ANKI_ASSERT(binary.m_mutatorCount == 0 && binary.m_mutators == nullptr);
+		ANKI_ASSERT(binary.m_mutators.getSize() == 0);
 	}
 
 	// Create all variants
@@ -319,10 +329,12 @@ Error compileShaderProgram(CString fname,
 		DynamicArrayAuto<MutatorValue> mutation(tempAllocator, parser.getMutators().getSize());
 		DynamicArrayAuto<MutatorValue> mutation2(tempAllocator, parser.getMutators().getSize());
 		DynamicArrayAuto<U32> dials(tempAllocator, parser.getMutators().getSize(), 0);
-		DynamicArrayAuto<ShaderProgramBinaryVariant> variants(binaryAllocator);
+		DynamicArrayAuto<ShaderProgramBinaryVariant> variants(binaryAllocator, variantCount);
 		DynamicArrayAuto<ShaderProgramBinaryCode> codeBlocks(binaryAllocator);
 		DynamicArrayAuto<U64> codeBlockHashes(tempAllocator);
 		HashMapAuto<U64, U32> mutationToVariantIdx(tempAllocator);
+
+		variantCount = 0;
 
 		// Spin for all possible combinations of mutators and
 		// - Create the spirv
@@ -339,15 +351,14 @@ Error compileShaderProgram(CString fname,
 				parser.rewriteMutation(WeakArray<MutatorValue>(mutation.getBegin(), mutation.getSize()));
 
 			// Create the variant
-			ShaderProgramBinaryVariant& variant = *variants.emplaceBack();
+			ShaderProgramBinaryVariant& variant = variants[variantCount++];
 			if(!rewritten)
 			{
 				// New and unique variant, add it
 				ANKI_CHECK(compileVariant(
 					mutation, parser, variant, codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
 
-				mutationToVariantIdx.emplace(
-					computeHash(&mutation[0], mutation.getSizeInBytes()), variants.getSize() - 1);
+				mutationToVariantIdx.emplace(computeHash(&mutation[0], mutation.getSizeInBytes()), variantCount - 1);
 			}
 			else
 			{
@@ -359,8 +370,8 @@ Error compileShaderProgram(CString fname,
 				{
 					// Original variant not found, create it
 
-					ShaderProgramBinaryVariant& other = *variants.emplaceBack();
-					originalVariantIdx = variants.getSize() - 1;
+					ShaderProgramBinaryVariant& other = variants[variantCount++];
+					originalVariantIdx = variantCount - 1;
 
 					ANKI_CHECK(compileVariant(
 						mutation, parser, other, codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
@@ -371,27 +382,30 @@ Error compileShaderProgram(CString fname,
 
 				// Copy the original variant to the current variant
 				{
+					ANKI_ASSERT(originalVariantIdx < variantCount);
 					const ShaderProgramBinaryVariant& other = variants[originalVariantIdx];
 
 					variant = other;
 
-					variant.m_mutatorValues = binaryAllocator.newArray<MutatorValue>(variant.m_mutatorValueCount);
-					memcpy(variant.m_mutatorValues,
-						mutation2.getBegin(),
-						sizeof(variant.m_mutatorValues[0]) * variant.m_mutatorValueCount);
+					variant.m_mutation.setArray(
+						binaryAllocator.newArray<MutatorValue>(other.m_mutation.getSize()), other.m_mutation.getSize());
+					memcpy(
+						variant.m_mutation.getBegin(), other.m_mutation.getBegin(), other.m_mutation.getSizeInBytes());
 
-					if(variant.m_inputVariableCount > 0)
+					if(other.m_blockInfos.getSize())
 					{
-						variant.m_blockInfos =
-							binaryAllocator.newArray<ShaderVariableBlockInfo>(variant.m_inputVariableCount);
-						memcpy(variant.m_blockInfos,
-							other.m_blockInfos,
-							sizeof(variant.m_blockInfos[0]) * variant.m_inputVariableCount);
+						variant.m_blockInfos.setArray(
+							binaryAllocator.newArray<ShaderVariableBlockInfo>(other.m_blockInfos.getSize()),
+							other.m_blockInfos.getSize());
+						memcpy(variant.m_blockInfos.getBegin(),
+							other.m_blockInfos.getBegin(),
+							other.m_blockInfos.getSizeInBytes());
 
-						variant.m_bindings = binaryAllocator.newArray<I16>(variant.m_inputVariableCount);
-						memcpy(variant.m_bindings,
-							other.m_bindings,
-							sizeof(variant.m_bindings[0]) * variant.m_inputVariableCount);
+						variant.m_bindings.setArray(
+							binaryAllocator.newArray<I16>(other.m_bindings.getSize()), other.m_bindings.getSize());
+						memcpy(variant.m_bindings.getBegin(),
+							other.m_bindings.getBegin(),
+							other.m_bindings.getSizeInBytes());
 					}
 
 					mutationToVariantIdx.emplace(
@@ -400,13 +414,17 @@ Error compileShaderProgram(CString fname,
 			}
 		} while(!spinDials(dials, parser.getMutators()));
 
-		// Store to binary
-		binary.m_variantCount = variants.getSize();
-		U32 size, storage;
-		variants.moveAndReset(binary.m_variants, size, storage);
+		ANKI_ASSERT(variantCount == variants.getSize());
 
-		binary.m_codeBlockCount = codeBlocks.getSize();
-		codeBlocks.moveAndReset(binary.m_codeBlocks, size, storage);
+		// Store to binary
+		U32 size, storage;
+		ShaderProgramBinaryVariant* firstVariant;
+		variants.moveAndReset(firstVariant, size, storage);
+		binary.m_variants.setArray(firstVariant, size);
+
+		ShaderProgramBinaryCode* firstCodeBlock;
+		codeBlocks.moveAndReset(firstCodeBlock, size, storage);
+		binary.m_codeBlocks.setArray(firstCodeBlock, size);
 	}
 	else
 	{
@@ -414,16 +432,16 @@ Error compileShaderProgram(CString fname,
 		DynamicArrayAuto<ShaderProgramBinaryCode> codeBlocks(binaryAllocator);
 		DynamicArrayAuto<U64> codeBlockHashes(tempAllocator);
 
-		binary.m_variantCount = 1;
-		binary.m_variants = binaryAllocator.newInstance<ShaderProgramBinaryVariant>();
+		binary.m_variants.setArray(binaryAllocator.newInstance<ShaderProgramBinaryVariant>(), 1);
 
 		ANKI_CHECK(compileVariant(
 			mutation, parser, binary.m_variants[0], codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
 		ANKI_ASSERT(codeBlocks.getSize() == U32(__builtin_popcount(U32(parser.getShaderTypes()))));
 
-		binary.m_codeBlockCount = codeBlocks.getSize();
+		ShaderProgramBinaryCode* firstCodeBlock;
 		U32 size, storage;
-		codeBlocks.moveAndReset(binary.m_codeBlocks, size, storage);
+		codeBlocks.moveAndReset(firstCodeBlock, size, storage);
+		binary.m_codeBlocks.setArray(firstCodeBlock, size);
 	}
 
 	// Misc
@@ -441,14 +459,14 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 	StringListAuto lines(alloc);
 
 	lines.pushBack("**MUTATORS**\n");
-	if(binary.m_mutatorCount > 0)
+	if(binary.m_mutators.getSize() > 0)
 	{
-		for(U i = 0; i < binary.m_mutatorCount; ++i)
+		for(const ShaderProgramBinaryMutator& mutator : binary.m_mutators)
 		{
-			lines.pushBackSprintf(ANKI_TAB "\"%s\"", &binary.m_mutators[i].m_name[0]);
-			for(U j = 0; j < binary.m_mutators[i].m_valueCount; ++j)
+			lines.pushBackSprintf(ANKI_TAB "\"%s\"", &mutator.m_name[0]);
+			for(MutatorValue value : mutator.m_values)
 			{
-				lines.pushBackSprintf(" %d", binary.m_mutators[i].m_values[j]);
+				lines.pushBackSprintf(" %d", value);
 			}
 			lines.pushBack("\n");
 		}
@@ -459,11 +477,10 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 	}
 
 	lines.pushBack("\n**INPUT VARIABLES**\n");
-	if(binary.m_inputVariableCount > 0)
+	if(binary.m_inputVariables.getSize() > 0)
 	{
-		for(U i = 0; i < binary.m_inputVariableCount; ++i)
+		for(const ShaderProgramBinaryInput& input : binary.m_inputVariables)
 		{
-			const ShaderProgramBinaryInput& input = binary.m_inputVariables[i];
 			lines.pushBackSprintf(ANKI_TAB "\"%s\" ", &input.m_name[0]);
 			if(input.m_firstSpecializationConstantIndex < MAX_U32)
 			{
@@ -480,14 +497,15 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 	}
 
 	lines.pushBack("\n**BINARIES**\n");
-	for(U i = 0; i < binary.m_codeBlockCount; ++i)
+	U32 count = 0;
+	for(const ShaderProgramBinaryCode& code : binary.m_codeBlocks)
 	{
 		spirv_cross::CompilerGLSL::Options options;
 		options.vulkan_semantics = true;
 
-		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(binary.m_codeBlocks[i].m_binary);
-		ANKI_ASSERT((binary.m_codeBlocks[i].m_binarySize % (sizeof(unsigned int))) == 0);
-		std::vector<unsigned int> spv(spvb, spvb + binary.m_codeBlocks[i].m_binarySize / sizeof(unsigned int));
+		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(code.m_binary.getBegin());
+		ANKI_ASSERT((code.m_binary.getSize() % (sizeof(unsigned int))) == 0);
+		std::vector<unsigned int> spv(spvb, spvb + code.m_binary.getSize() / sizeof(unsigned int));
 		spirv_cross::CompilerGLSL compiler(spv);
 		compiler.set_common_options(options);
 
@@ -497,15 +515,14 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 		StringAuto newGlsl(alloc);
 		sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
 
-		lines.pushBackSprintf(ANKI_TAB "%" PRIuFAST32 " \n" ANKI_TAB ANKI_TAB "%s\n", i, newGlsl.cstr());
+		lines.pushBackSprintf(ANKI_TAB "%" PRIuFAST32 " \n" ANKI_TAB ANKI_TAB "%s\n", count++, newGlsl.cstr());
 	}
 
 	lines.pushBack("\n**SHADER VARIANTS**\n");
-	for(U i = 0; i < binary.m_variantCount; ++i)
+	count = 0;
+	for(const ShaderProgramBinaryVariant& variant : binary.m_variants)
 	{
-		const ShaderProgramBinaryVariant& variant = binary.m_variants[i];
-
-		lines.pushBackSprintf(ANKI_TAB "%" PRIuFAST32 "\n", i);
+		lines.pushBackSprintf(ANKI_TAB "%" PRIuFAST32 "\n", count++);
 
 		// Misc
 		ANKI_ASSERT(variant.m_activeVariables.getData().getSize() == 2);
@@ -517,12 +534,11 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 
 		// Mutator values
 		lines.pushBack(ANKI_TAB ANKI_TAB "mutatorValues ");
-		if(variant.m_mutatorValueCount > 0)
+		if(variant.m_mutation.getSize() > 0)
 		{
-			for(U j = 0; j < variant.m_mutatorValueCount; ++j)
+			for(U32 j = 0; j < variant.m_mutation.getSize(); ++j)
 			{
-				lines.pushBackSprintf(
-					"\"%s\" %" PRId32 " ", &binary.m_mutators[j].m_name[0], variant.m_mutatorValues[j]);
+				lines.pushBackSprintf("\"%s\" %" PRId32 " ", &binary.m_mutators[j].m_name[0], variant.m_mutation[j]);
 			}
 		}
 		else
@@ -533,11 +549,10 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 
 		// Block infos
 		lines.pushBack(ANKI_TAB ANKI_TAB "blockInfos ");
-		if(variant.m_inputVariableCount > 0)
+		if(variant.m_blockInfos.getSize() > 0)
 		{
-			for(U j = 0; j < variant.m_inputVariableCount; ++j)
+			for(const ShaderVariableBlockInfo& inf : variant.m_blockInfos)
 			{
-				const ShaderVariableBlockInfo& inf = variant.m_blockInfos[j];
 				lines.pushBackSprintf("%" PRIi16 "|%" PRIi16 "|%" PRIi16 "|%" PRIi16 " ",
 					inf.m_offset,
 					inf.m_arraySize,
@@ -553,17 +568,17 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 
 		// Bindings
 		lines.pushBack(ANKI_TAB ANKI_TAB "bindings ");
-		if(variant.m_inputVariableCount > 0)
+		if(variant.m_bindings.getSize() > 0)
 		{
-			for(U j = 0; j < variant.m_inputVariableCount; ++j)
+			for(I32 binding : variant.m_bindings)
 			{
-				if(variant.m_bindings[j] < 0)
+				if(binding < 0)
 				{
 					lines.pushBack("N/A ");
 				}
 				else
 				{
-					lines.pushBackSprintf("%" PRIi16 " ", variant.m_bindings[j]);
+					lines.pushBackSprintf("%" PRIi32 " ", binding);
 				}
 			}
 		}

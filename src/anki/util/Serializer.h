@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/util/File.h>
+#include <anki/util/WeakArray.h>
 
 #pragma once
 
@@ -36,6 +37,39 @@ public:
 	void operator()(T& x, TDeserializer& deserializer)
 	{
 		x.deserialize(deserializer);
+	}
+};
+
+/// Specialization for WeakArray.
+template<typename T, typename TSize>
+class SerializeFunctor<WeakArray<T, TSize>>
+{
+public:
+	template<typename TSerializer>
+	void operator()(const WeakArray<T, TSize>& x, TSerializer& serializer)
+	{
+		const TSize size = x.getSize();
+		serializer.doDynamicArray("m_array", 0, (x.getSize()) ? &x[0] : nullptr, size);
+		serializer.doValue("m_size", sizeof(void*), size);
+	}
+};
+
+/// Specialization for WeakArray.
+template<typename T, typename TSize>
+class DeserializeFunctor<WeakArray<T, TSize>>
+{
+public:
+	template<typename TDeserializer>
+	void operator()(WeakArray<T, TSize>& x, TDeserializer& deserializer)
+	{
+		TSize size;
+		deserializer.doValue("m_size", sizeof(void*), size);
+		T* arr = nullptr;
+		if(size > 0)
+		{
+			deserializer.doDynamicArray("m_array", 0, arr, size);
+		}
+		x = WeakArray<T, TSize>(arr, size);
 	}
 };
 

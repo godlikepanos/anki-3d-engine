@@ -18,8 +18,7 @@
 		<class name="ShaderProgramBinaryMutator" comment="Shader program mutator">
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
-				<member name="m_values" type="MutatorValue" pointer="true" array_size="m_valueCount" />
-				<member name="m_valueCount" type="U32" />
+				<member name="m_values" type="WeakArray&lt;MutatorValue&gt;" />
 				<member name="m_instanceCount" type="Bool" />
 			</members>
 		</class>
@@ -27,35 +26,28 @@
 		<class name="ShaderProgramBinaryVariant">
 			<members>
 				<member name="m_activeVariables" type="ActiveProgramInputVariableMask" constructor="false" />
-				<member name="m_mutatorValues" type="MutatorValue" pointer="true" array_size="m_mutatorValueCount" />
-				<member name="m_blockInfos" type="ShaderVariableBlockInfo" pointer="true" array_size="m_inputVariableCount" />
-				<member name="m_bindings" type="I16" pointer="true" array_size="m_inputVariableCount" />
-				<member name="m_mutatorValueCount" type="U32" />
-				<member name="m_inputVariableCount" type="U32" />
-				<member name="m_binaryIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks" />
-				<member name="m_blockSize" type="U32" />
+				<member name="m_mutation" type="WeakArray&lt;MutatorValue&gt;" />
 				<member name="m_usesPushConstants" type="Bool" />
+				<member name="m_blockInfos" type="WeakArray&lt;ShaderVariableBlockInfo&gt;" />
+				<member name="m_blockSize" type="U32" />
+				<member name="m_bindings" type="WeakArray&lt;I16&gt;" />
+				<member name="m_binaryIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks" />
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryCode">
 			<members>
-				<member name="m_binary" type="U8" pointer="true" array_size="m_binarySize" />
-				<member name="m_binarySize" type="PtrSize" />
+				<member name="m_binary" type="WeakArray&lt;U8, PtrSize&gt;" />
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinary">
 			<members>
 				<member name="m_magic" type="U8" array_size="8" />
-				<member name="m_mutators" type="ShaderProgramBinaryMutator" pointer="true" array_size="m_mutatorCount" />
-				<member name="m_inputVariables" type="ShaderProgramBinaryInput" pointer="true" array_size="m_inputVariableCount" />
-				<member name="m_codeBlocks" type="ShaderProgramBinaryCode" pointer="true" array_size="m_codeBlockCount" />
-				<member name="m_variants" type="ShaderProgramBinaryVariant" pointer="true" array_size="m_variantCount" />
-				<member name="m_mutatorCount" type="U32" />
-				<member name="m_inputVariableCount" type="U32" />
-				<member name="m_codeBlockCount" type="U32" />
-				<member name="m_variantCount" type="U32" />
+				<member name="m_mutators" type="WeakArray&lt;ShaderProgramBinaryMutator&gt;" />
+				<member name="m_inputVariables" type="WeakArray&lt;ShaderProgramBinaryInput&gt;" />
+				<member name="m_codeBlocks" type="WeakArray&lt;ShaderProgramBinaryCode&gt;" />
+				<member name="m_variants" type="WeakArray&lt;ShaderProgramBinaryVariant&gt;" />
 				<member name="m_descriptorSet" type="U32" />
 				<member name="m_presentShaderTypes" type="ShaderTypeBit" />
 			</members>
