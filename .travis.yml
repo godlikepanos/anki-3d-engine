@@ -28,6 +28,7 @@ matrix:
         - unzip VulkanSDKLib.zip -d vulkansdk
         - export VULKAN_SDK=$TRAVIS_BUILD_DIR/vulkansdk
       env:
+        - PATH=/c/Python37:/c/Python37/Scripts:$PATH
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON TOOLS=OFF TESTS=OFF
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF TOOLS=OFF TESTS=OFF
     - os: linux
