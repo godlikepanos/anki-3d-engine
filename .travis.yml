@@ -23,7 +23,7 @@ matrix:
     - os: windows
       before_install:
         - choco install python3
-        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
         - wget http://anki3d.org/VulkanSDKLib.zip
         - unzip VulkanSDKLib.zip -d vulkansdk
         - export VULKAN_SDK=$TRAVIS_BUILD_DIR/vulkansdk
@@ -48,7 +48,6 @@ script:
   - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then PYTHON3=$(which python3); fi
   - $CC --version
   - $CXX --version
-  - $PYTHON3 --version
   - echo "VULKAN_SDK ENV" $VULKAN_SDK
   - mkdir build
   - cd build
