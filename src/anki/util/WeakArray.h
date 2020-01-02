@@ -226,7 +226,7 @@ public:
 	}
 
 	/// Construct from WeakArray.
-	ConstWeakArray(const WeakArray<T>& arr)
+	ConstWeakArray(const WeakArray<T, TSize>& arr)
 		: ConstWeakArray((arr.getSize()) ? &arr[0] : nullptr, arr.getSize())
 	{
 	}
@@ -267,6 +267,15 @@ public:
 	{
 		m_data = b.m_data;
 		m_size = b.m_size;
+		return *this;
+	}
+
+	/// Copy from a WeakArray.
+	template<typename Y>
+	ConstWeakArray& operator=(const WeakArray<Y, TSize>& b)
+	{
+		m_data = (b.getSize()) ? b.getBegin() : nullptr;
+		m_size = b.getSize();
 		return *this;
 	}
 

@@ -8,42 +8,42 @@
 	<classes>
 		<class name="ShaderProgramBinaryVariable" comment="Storage or uniform variable">
 			<members>
-				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
 				<member name="m_blockInfo" type="ShaderVariableBlockInfo" />
-				<member name="m_type" type="ShaderVariableDataType" />
-				<member name="m_active" type="Bool" />
+				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
+				<member name="m_active" type="Bool" constructor="= true" />
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryBlock" comment="Storage or uniform block">
 			<members>
-				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
 				<member name="m_variables" type="WeakArray&lt;ShaderProgramBinaryVariable&gt;" />
-				<member name="m_binding" type="U32" />
-				<member name="m_set" type="U32" />
+				<member name="m_binding" type="U32" constructor="= MAX_U32" />
+				<member name="m_set" type="U32" constructor="= MAX_U32" />
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryOpaque" comment="Sampler or texture or image">
 			<members>
-				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
-				<member name="m_type" type="ShaderVariableDataType" />
-				<member name="m_binding" type="U32" />
-				<member name="m_set" type="U32" />
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
+				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
+				<member name="m_binding" type="U32" constructor="= MAX_U32" />
+				<member name="m_set" type="U32" constructor="= MAX_U32" />
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryConstant" comment="Specialization constant">
 			<members>
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
-				<member name="m_type" type="ShaderVariableDataType" />
-				<member name="m_constantId" type="U32" />
+				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
+				<member name="m_constantId" type="U32" constructor="= MAX_U32"/>
 			</members>
 		</class>
 
 		<class name="ShaderProgramBinaryMutator" comment="Shader program mutator">
 			<members>
-				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
 				<member name="m_values" type="WeakArray&lt;MutatorValue&gt;" />
 			</members>
 		</class>
@@ -52,26 +52,35 @@
 			<members>
 				<member name="m_uniformBlocks" type="WeakArray&lt;ShaderProgramBinaryBlock&gt;" />
 				<member name="m_storageBlocks" type="WeakArray&lt;ShaderProgramBinaryBlock&gt;" />
-				<member name="m_pushConstantBlock" type="ShaderProgramBinaryBlock" pointer="true" />
+				<member name="m_pushConstantBlock" type="ShaderProgramBinaryBlock" pointer="true" constructor="= nullptr" />
 				<member name="m_opaques" type="WeakArray&lt;ShaderProgramBinaryOpaque&gt;" />
-				<member name="m_mutation" type="WeakArray&lt;MutatorValue&gt;" />
-				<member name="m_binaryIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks" />
+				<member name="m_specializationConstants" type="WeakArray&lt;ShaderProgramBinaryConstant&gt;" />
+				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks" constructor="= {}" />
 			</members>
 		</class>
 
-		<class name="ShaderProgramBinaryCode">
+		<class name="ShaderProgramBinaryCodeBlock" comment="Contains the IR (SPIR-V)">
 			<members>
 				<member name="m_binary" type="WeakArray&lt;U8, PtrSize&gt;" />
 			</members>
 		</class>
 
+		<class name="ShaderProgramBinaryMutation">
+			<members>
+				<member name="m_values" type="WeakArray&lt;MutatorValue&gt;" />
+				<member name="m_variantIndex" type="U32" constructor="= MAX_U32" />
+				<member name="m_hash" type="U64" comment="Mutation hash" constructor="= 0" />
+			</members>
+		</class>
+
 		<class name="ShaderProgramBinary">
 			<members>
-				<member name="m_magic" type="U8" array_size="8" />
+				<member name="m_magic" type="U8" array_size="8" constructor="= {}" />
 				<member name="m_mutators" type="WeakArray&lt;ShaderProgramBinaryMutator&gt;" />
-				<member name="m_codeBlocks" type="WeakArray&lt;ShaderProgramBinaryCode&gt;" />
+				<member name="m_codeBlocks" type="WeakArray&lt;ShaderProgramBinaryCodeBlock&gt;" />
 				<member name="m_variants" type="WeakArray&lt;ShaderProgramBinaryVariant&gt;" />
-				<member name="m_presentShaderTypes" type="ShaderTypeBit" />
+				<member name="m_mutations" type="WeakArray&lt;ShaderProgramBinaryMutation&gt;" />
+				<member name="m_presentShaderTypes" type="ShaderTypeBit" constructor="= ShaderTypeBit::NONE" />
 			</members>
 		</class>
 	</classes>

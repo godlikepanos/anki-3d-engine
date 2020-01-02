@@ -30,7 +30,7 @@ class MemberInfo:
     def __init__(self):
         self.name = None
         self.base_type = None
-        self.array_size = 1
+        self.array_size = "1"
         self.comment = None
         self.pointer = False
         self.constructor = None
@@ -40,10 +40,10 @@ class MemberInfo:
             return False
 
         for member in member_arr:
-            if member.name == str(member.array_size):
-                return False
+            if member.name == self.array_size:
+                return True
 
-        return True
+        return False
 
     def is_pointer(self, member_arr):
         return self.pointer and not self.is_dynamic_array(member_arr)
@@ -132,7 +132,7 @@ def gen_class(root_el):
             comment = ""
 
         if member.constructor:
-            constructor = "= {%s}" % member.constructor
+            constructor = " %s" % member.constructor
         else:
             constructor = ""
 
