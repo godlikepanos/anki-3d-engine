@@ -25,14 +25,6 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 
 #pragma anki rewrite_mutation M0 2 M1 4 to M0 1 M1 3
 
-#if M0 == 1
-#pragma anki input Vec3 var0
-#endif
-
-#if M1 == 4
-#pragma anki input const Vec3 var1
-#endif
-
 #pragma anki start vert
 
 // vert
@@ -56,16 +48,11 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 	ShaderProgramParser parser("filename0", &interface, alloc, 128, 1, 1, GpuVendor::AMD);
 	ANKI_TEST_EXPECT_NO_ERR(parser.parse());
 
-	// Check inputs
-	ANKI_TEST_EXPECT_EQ(parser.getInputs().getSize(), 2);
-
 	// Test a variant
 	Array<MutatorValue, 2> mutation = {{2, 4}};
 
 	ShaderProgramParserVariant variant;
 	ANKI_TEST_EXPECT_NO_ERR(parser.generateVariant(mutation, variant));
-	ANKI_TEST_EXPECT_EQ(variant.isInputActive(parser.getInputs()[0]), false);
-	ANKI_TEST_EXPECT_EQ(variant.isInputActive(parser.getInputs()[1]), true);
 
 	// Test rewrite
 	ANKI_TEST_EXPECT_EQ(parser.rewriteMutation(mutation), true);
