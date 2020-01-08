@@ -27,7 +27,7 @@ layout(set = 1, binding = 0) uniform u_
 #endif
 };
 
-layout(set = 1, binding = 1) uniform u2_
+layout(set = 1, binding = 1) buffer u2_
 {
 	Mat4 u_mvp2[INSTANCE_COUNT];
 #if PASS > 1
@@ -41,6 +41,8 @@ layout(set = 0, binding = 0) uniform texture2D u_tex[3];
 layout(set = 0, binding = 1) uniform sampler u_sampler;
 
 #pragma anki start vert
+ANKI_SPECIALIZATION_CONSTANT_F32(specConst, 1, 0);
+
 out gl_PerVertex
 {
 	Vec4 gl_Position;
@@ -48,7 +50,7 @@ out gl_PerVertex
 
 void main()
 {
-	gl_Position = u_mvp[gl_InstanceID] * u_mvp2[gl_InstanceID] * Vec4(gl_VertexID);
+	gl_Position = u_mvp[gl_InstanceID] * u_mvp2[gl_InstanceID] * Vec4(gl_VertexID) * Vec4(specConst);
 }
 #pragma anki end
 

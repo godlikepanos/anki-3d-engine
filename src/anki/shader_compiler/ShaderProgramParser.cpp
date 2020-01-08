@@ -79,6 +79,8 @@ static const char* SHADER_HEADER = R"(#version 450 core
 	layout(constant_id = id) const I32 ANKI_CONCATENATE(x, _0) = defltVal[0]; \
 	layout(constant_id = id + 1) const I32 ANKI_CONCATENATE(x, _1) = defltVal[1]; \
 	layout(constant_id = id + 2) const I32 ANKI_CONCATENATE(x, _2) = defltVal[2]
+
+#define ANKI_SPECIALIZATION_CONSTANT_F32(x, id, defltVal) layout(constant_id = id) const F32 x = defltVal
 )";
 
 ShaderProgramParser::ShaderProgramParser(CString fname,
