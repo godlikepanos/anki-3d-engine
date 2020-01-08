@@ -65,6 +65,20 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define Mat3x4 mat3x4
 
 #define Bool bool
+
+#define _ANKI_CONCATENATE(a, b) a##b
+#define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
+
+#define ANKI_SPECIALIZATION_CONSTANT_I32(x, id, defltVal) layout(constant_id = id) const I32 x = defltVal
+
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC2(x, id, defltVal) \
+	layout(constant_id = id) const I32 ANKI_CONCATENATE(x, _0) = defltVal[0]; \
+	layout(constant_id = id + 1) const I32 ANKI_CONCATENATE(x, _1) = defltVal[1]
+
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC3(x, id, defltVal) \
+	layout(constant_id = id) const I32 ANKI_CONCATENATE(x, _0) = defltVal[0]; \
+	layout(constant_id = id + 1) const I32 ANKI_CONCATENATE(x, _1) = defltVal[1]; \
+	layout(constant_id = id + 2) const I32 ANKI_CONCATENATE(x, _2) = defltVal[2]
 )";
 
 ShaderProgramParser::ShaderProgramParser(CString fname,

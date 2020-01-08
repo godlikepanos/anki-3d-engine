@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include <anki/util/Assert.h>
-#include <anki/util/StdTypes.h>
+#include <anki/util/Allocator.h>
 
 namespace anki
 {
@@ -266,6 +265,28 @@ public:
 	}
 };
 
+/// UniquePtr alternative deleter.
+template<typename T>
+class AllocatorPtrDeleter
+{
+public:
+	GenericMemoryPoolAllocator<U8> m_allocator;
+
+	AllocatorPtrDeleter()
+	{
+	}
+
+	AllocatorPtrDeleter(GenericMemoryPoolAllocator<U8> alloc)
+		: m_allocator(alloc)
+	{
+	}
+
+	void operator()(T* x)
+	{
+		m_allocator.template deleteInstance<T>(x);
+	}
+};
+
 /// A unique pointer.
 template<typename T, typename TDeleter = DefaultPtrDeleter<T>>
 class UniquePtr : public PtrBase<T>
@@ -279,8 +300,9 @@ public:
 	{
 	}
 
-	explicit UniquePtr(T* ptr)
+	explicit UniquePtr(T* ptr, const Deleter& deleter = Deleter())
 		: Base(ptr)
+		, m_deleter(deleter)
 	{
 	}
 
@@ -311,26 +333,37 @@ public:
 	}
 
 	/// Set a new pointer. Will destroy the previous.
-	void reset(T* ptr)
+	void reset(T* ptr, const Deleter& deleter = Deleter())
 	{
 		destroy();
 		Base::m_ptr = ptr;
+		m_deleter = deleter;
+	}
+
+	/// Move the ownership of the pointer outside the UniquePtr.
+	void moveAndReset(T*& ptr)
+	{
+		ptr = Base::m_ptr;
+		Base::m_ptr = nullptr;
+		m_deleter = Deleter();
 	}
 
 private:
+	Deleter m_deleter;
+
 	void destroy()
 	{
 		if(Base::m_ptr)
 		{
-			TDeleter deleter;
-			deleter(Base::m_ptr);
+			m_deleter(Base::m_ptr);
 			Base::m_ptr = nullptr;
+			m_deleter = Deleter();
 		}
 	}
 
 	void move(UniquePtr& b)
 	{
-		reset(b.m_ptr);
+		reset(b.m_ptr, b.m_deleter);
 		b.m_ptr = nullptr;
 	}
 };

@@ -80,10 +80,11 @@ void ShaderProgramBinaryWrapper::cleanup()
 
 		for(ShaderProgramBinaryVariant& variant : m_binary->m_variants)
 		{
-			m_alloc.getMemoryPool().free(variant.m_uniformBlocks.getBegin());
-			m_alloc.getMemoryPool().free(variant.m_storageBlocks.getBegin());
-			m_alloc.getMemoryPool().free(variant.m_pushConstantBlock);
-			m_alloc.getMemoryPool().free(variant.m_specializationConstants.getBegin());
+			m_alloc.getMemoryPool().free(variant.m_reflection.m_uniformBlocks.getBegin());
+			m_alloc.getMemoryPool().free(variant.m_reflection.m_storageBlocks.getBegin());
+			m_alloc.getMemoryPool().free(variant.m_reflection.m_pushConstantBlock);
+			m_alloc.getMemoryPool().free(variant.m_reflection.m_specializationConstants.getBegin());
+			m_alloc.getMemoryPool().free(variant.m_reflection.m_opaques.getBegin());
 		}
 		m_alloc.getMemoryPool().free(m_binary->m_variants.getBegin());
 	}
@@ -129,12 +130,308 @@ static Bool spinDials(DynamicArrayAuto<U32>& dials, ConstWeakArray<ShaderProgram
 	return done;
 }
 
-static Error performSpirvReflection(ShaderProgramBinaryVariant& variant,
+/// Populates the reflection info.
+class SpirvReflector : public spirv_cross::Compiler
+{
+public:
+	SpirvReflector(const U32* ir, PtrSize wordCount)
+		: spirv_cross::Compiler(ir, wordCount)
+	{
+	}
+
+	ANKI_USE_RESULT static Error performSpirvReflection(ShaderProgramBinaryReflection& refl,
+		Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
+		GenericMemoryPoolAllocator<U8> tmpAlloc,
+		GenericMemoryPoolAllocator<U8> binaryAlloc);
+
+private:
+	ANKI_USE_RESULT Error spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const;
+
+	ANKI_USE_RESULT Error blockReflection(
+		const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<ShaderProgramBinaryBlock>& blocks) const;
+
+	ANKI_USE_RESULT Error opaqueReflection(
+		const spirv_cross::Resource& res, DynamicArrayAuto<ShaderProgramBinaryOpaque>& opaques) const;
+};
+
+Error SpirvReflector::blockReflection(
+	const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<ShaderProgramBinaryBlock>& blocks) const
+{
+	ShaderProgramBinaryBlock newBlock;
+	const spirv_cross::SPIRType type = get_type(res.type_id);
+	const spirv_cross::Bitset decorationMask = get_decoration_bitset(res.id);
+
+	const Bool isPushConstant = get_storage_class(res.id) == spv::StorageClassPushConstant;
+	const Bool isBlock = get_decoration_bitset(type.self).get(spv::DecorationBlock)
+						 || get_decoration_bitset(type.self).get(spv::DecorationBufferBlock);
+
+	const spirv_cross::ID fallbackId =
+		(!isPushConstant && isBlock) ? spirv_cross::ID(res.base_type_id) : spirv_cross::ID(res.id);
+
+	// Name
+	{
+		const std::string name = (!res.name.empty()) ? res.name : get_fallback_name(fallbackId);
+		if(name.length() == 0 || name.length() > MAX_SHADER_BINARY_NAME_LENGTH)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Too big of a name: %s", name.c_str());
+			return Error::USER_DATA;
+		}
+		memcpy(newBlock.m_name.getBegin(), name.c_str(), name.length() + 1);
+	}
+
+	// Set
+	if(!isPushConstant)
+	{
+		newBlock.m_set = get_decoration(res.id, spv::DecorationDescriptorSet);
+		if(newBlock.m_set >= MAX_DESCRIPTOR_SETS)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Too high descriptor set: %u", newBlock.m_set);
+			return Error::USER_DATA;
+		}
+	}
+
+	// Binding
+	if(!isPushConstant)
+	{
+		newBlock.m_binding = get_decoration(res.id, spv::DecorationBinding);
+	}
+
+	// Size
+	newBlock.m_size = U32(get_declared_struct_size(get_type(res.base_type_id)));
+	ANKI_ASSERT(isStorage || newBlock.m_size > 0);
+
+	// Add it
+	Bool found = false;
+	for(const ShaderProgramBinaryBlock& other : blocks)
+	{
+		const Bool bindingSame = other.m_set == newBlock.m_set && other.m_binding == newBlock.m_binding;
+		const Bool nameSame = strcmp(other.m_name.getBegin(), newBlock.m_name.getBegin()) == 0;
+		const Bool sizeSame = other.m_size == newBlock.m_size;
+		const Bool varsSame = other.m_variables.getSize() == newBlock.m_variables.getSize();
+
+		const Bool err0 = bindingSame && (!nameSame || !sizeSame || !varsSame);
+		const Bool err1 = nameSame && (!bindingSame || !sizeSame || !varsSame);
+		if(err0 || err1)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Linking error");
+			return Error::USER_DATA;
+		}
+
+		if(bindingSame)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if(!found)
+	{
+		blocks.emplaceBack(newBlock);
+	}
+
+	return Error::NONE;
+}
+
+Error SpirvReflector::spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const
+{
+	switch(type.basetype)
+	{
+	case spirv_cross::SPIRType::Image:
+	case spirv_cross::SPIRType::SampledImage:
+	{
+		switch(type.image.dim)
+		{
+		case spv::Dim1D:
+			out = (type.image.arrayed) ? ShaderVariableDataType::TEXTURE_1D_ARRAY : ShaderVariableDataType::TEXTURE_1D;
+			break;
+		case spv::Dim2D:
+			out = (type.image.arrayed) ? ShaderVariableDataType::TEXTURE_2D_ARRAY : ShaderVariableDataType::TEXTURE_2D;
+			break;
+		case spv::Dim3D:
+			out = ShaderVariableDataType::TEXTURE_3D;
+			break;
+		case spv::DimCube:
+			out = (type.image.arrayed) ? ShaderVariableDataType::TEXTURE_CUBE_ARRAY
+									   : ShaderVariableDataType::TEXTURE_CUBE;
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+
+		break;
+	}
+	case spirv_cross::SPIRType::Sampler:
+		out = ShaderVariableDataType::SAMPLER;
+		break;
+	default:
+		ANKI_SHADER_COMPILER_LOGE("Can't determine the type");
+		return Error::USER_DATA;
+	}
+
+	return Error::NONE;
+}
+
+Error SpirvReflector::opaqueReflection(
+	const spirv_cross::Resource& res, DynamicArrayAuto<ShaderProgramBinaryOpaque>& opaques) const
+{
+	ShaderProgramBinaryOpaque newOpaque;
+	const spirv_cross::SPIRType type = get_type(res.type_id);
+	const spirv_cross::Bitset decorationMask = get_decoration_bitset(res.id);
+
+	const spirv_cross::ID fallbackId = spirv_cross::ID(res.id);
+
+	// Name
+	const std::string name = (!res.name.empty()) ? res.name : get_fallback_name(fallbackId);
+	if(name.length() == 0 || name.length() > MAX_SHADER_BINARY_NAME_LENGTH)
+	{
+		ANKI_SHADER_COMPILER_LOGE("Too big of a name: %s", name.c_str());
+		return Error::USER_DATA;
+	}
+	memcpy(newOpaque.m_name.getBegin(), name.c_str(), name.length() + 1);
+
+	// Type
+	ANKI_CHECK(spirvTypeToAnki(type, newOpaque.m_type));
+
+	// Set
+	newOpaque.m_set = get_decoration(res.id, spv::DecorationDescriptorSet);
+	if(newOpaque.m_set >= MAX_DESCRIPTOR_SETS)
+	{
+		ANKI_SHADER_COMPILER_LOGE("Too high descriptor set: %u", newOpaque.m_set);
+		return Error::USER_DATA;
+	}
+
+	// Binding
+	newOpaque.m_binding = get_decoration(res.id, spv::DecorationBinding);
+
+	// Size
+	if(type.array.size() == 0)
+	{
+		newOpaque.m_arraySize = 1;
+	}
+	else if(type.array.size() == 1)
+	{
+		newOpaque.m_arraySize = type.array[0];
+	}
+	else
+	{
+		ANKI_SHADER_COMPILER_LOGE("Can't support multi-dimensional arrays: %s", newOpaque.m_name.getBegin());
+		return Error::USER_DATA;
+	}
+
+	// Add it
+	Bool found = false;
+	for(const ShaderProgramBinaryOpaque& other : opaques)
+	{
+		const Bool bindingSame = other.m_set == newOpaque.m_set && other.m_binding == newOpaque.m_binding;
+		const Bool nameSame = strcmp(other.m_name.getBegin(), newOpaque.m_name.getBegin()) == 0;
+		const Bool sizeSame = other.m_arraySize == newOpaque.m_arraySize;
+		const Bool typeSame = other.m_type == newOpaque.m_type;
+
+		const Bool err0 = bindingSame && (!nameSame || !sizeSame || !typeSame);
+		const Bool err1 = nameSame && (!bindingSame || !sizeSame || !typeSame);
+		if(err0 || err1)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Linking error");
+			return Error::USER_DATA;
+		}
+
+		if(bindingSame)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if(!found)
+	{
+		opaques.emplaceBack(newOpaque);
+	}
+
+	return Error::NONE;
+}
+
+Error SpirvReflector::performSpirvReflection(ShaderProgramBinaryReflection& refl,
 	Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
 	GenericMemoryPoolAllocator<U8> tmpAlloc,
 	GenericMemoryPoolAllocator<U8> binaryAlloc)
 {
-	// TODO
+	DynamicArrayAuto<ShaderProgramBinaryBlock> uniformBlocks(binaryAlloc);
+	DynamicArrayAuto<ShaderProgramBinaryBlock> storageBlocks(binaryAlloc);
+	DynamicArrayAuto<ShaderProgramBinaryBlock> pushConstantBlock(binaryAlloc);
+	DynamicArrayAuto<ShaderProgramBinaryOpaque> opaques(binaryAlloc);
+	DynamicArrayAuto<ShaderProgramBinaryConstant> specializationConstants(binaryAlloc);
+
+	// Perform reflection for each stage
+	for(const ShaderType type : EnumIterable<ShaderType>())
+	{
+		if(spirv[type].getSize() == 0)
+		{
+			continue;
+		}
+
+		// Parse SPIR-V
+		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(spirv[type].getBegin());
+		SpirvReflector compiler(spvb, spirv[type].getSizeInBytes() / sizeof(unsigned int));
+
+		// Uniform blocks
+		for(const spirv_cross::Resource& res : compiler.get_shader_resources().uniform_buffers)
+		{
+			ANKI_CHECK(compiler.blockReflection(res, false, uniformBlocks));
+		}
+
+		// Sorage blocks
+		for(const spirv_cross::Resource& res : compiler.get_shader_resources().storage_buffers)
+		{
+			ANKI_CHECK(compiler.blockReflection(res, true, storageBlocks));
+		}
+
+		// Push constants
+		if(compiler.get_shader_resources().push_constant_buffers.size() == 1)
+		{
+			ANKI_CHECK(compiler.blockReflection(
+				compiler.get_shader_resources().push_constant_buffers[0], false, pushConstantBlock));
+		}
+		else if(compiler.get_shader_resources().push_constant_buffers.size() > 1)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Expecting only a single push constants block");
+			return Error::USER_DATA;
+		}
+
+		// Opaque
+		for(const spirv_cross::Resource& res : compiler.get_shader_resources().separate_images)
+		{
+			ANKI_CHECK(compiler.opaqueReflection(res, opaques));
+		}
+		for(const spirv_cross::Resource& res : compiler.get_shader_resources().storage_images)
+		{
+			ANKI_CHECK(compiler.opaqueReflection(res, opaques));
+		}
+		for(const spirv_cross::Resource& res : compiler.get_shader_resources().separate_samplers)
+		{
+			ANKI_CHECK(compiler.opaqueReflection(res, opaques));
+		}
+
+		// TODO
+	}
+
+	ShaderProgramBinaryBlock* firstBlock;
+	U32 size, storage;
+	uniformBlocks.moveAndReset(firstBlock, size, storage);
+	refl.m_uniformBlocks.setArray(firstBlock, size);
+
+	storageBlocks.moveAndReset(firstBlock, size, storage);
+	refl.m_storageBlocks.setArray(firstBlock, size);
+
+	if(pushConstantBlock.getSize() == 1)
+	{
+		pushConstantBlock.moveAndReset(firstBlock, size, storage);
+		refl.m_pushConstantBlock = firstBlock;
+	}
+
+	ShaderProgramBinaryOpaque* firstOpaque;
+	opaques.moveAndReset(firstOpaque, size, storage);
+	refl.m_opaques.setArray(firstOpaque, size);
+
 	return Error::NONE;
 }
 
@@ -200,7 +497,7 @@ static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 	}
 
 	// Do reflection
-	ANKI_CHECK(performSpirvReflection(variant, spirvBinaries, tmpAlloc, binaryAlloc));
+	ANKI_CHECK(SpirvReflector::performSpirvReflection(variant.m_reflection, spirvBinaries, tmpAlloc, binaryAlloc));
 
 	return Error::NONE;
 }
@@ -406,18 +703,18 @@ Error compileShaderProgram(CString fname,
 
 static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListAuto& lines)
 {
-	lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "\"%s\" set %" PRIu32 " binding %" PRIu32 "\n",
+	lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u size %4u\n",
 		block.m_name.getBegin(),
 		block.m_set,
-		block.m_binding);
+		block.m_binding,
+		block.m_size);
 
 	for(const ShaderProgramBinaryVariable& var : block.m_variables)
 	{
-		lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB ANKI_TAB
-			"\"%s\" type %" PRIu32 " active %" PRIu8 " blockInfo %" PRIi16 "|%" PRIi16 "|%" PRIi16 "|%" PRIi16 "\n",
+		lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB ANKI_TAB "\"%s\" type: %u active: %s blockInfo: %d,%d,%d,%d\n",
 			var.m_name.getBegin(),
 			U32(var.m_type),
-			U8(var.m_active),
+			var.m_active ? "true" : "false",
 			var.m_blockInfo.m_offset,
 			var.m_blockInfo.m_arraySize,
 			var.m_blockInfo.m_arrayStride,
@@ -435,10 +732,10 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 	{
 		for(const ShaderProgramBinaryMutator& mutator : binary.m_mutators)
 		{
-			lines.pushBackSprintf(ANKI_TAB "\"%s\"", &mutator.m_name[0]);
-			for(MutatorValue value : mutator.m_values)
+			lines.pushBackSprintf(ANKI_TAB "%-32s ", &mutator.m_name[0]);
+			for(U32 i = 0; i < mutator.m_values.getSize(); ++i)
 			{
-				lines.pushBackSprintf(" %d", value);
+				lines.pushBackSprintf((i < mutator.m_values.getSize() - 1) ? "%d," : "%d", mutator.m_values[i]);
 			}
 			lines.pushBack("\n");
 		}
@@ -477,53 +774,54 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 		lines.pushBackSprintf(ANKI_TAB "#%u\n", count++);
 
 		// Uniform blocks
-		if(variant.m_uniformBlocks.getSize() > 0)
+		if(variant.m_reflection.m_uniformBlocks.getSize() > 0)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Uniform blocks\n");
-			for(const ShaderProgramBinaryBlock& block : variant.m_uniformBlocks)
+			for(const ShaderProgramBinaryBlock& block : variant.m_reflection.m_uniformBlocks)
 			{
 				disassembleBlock(block, lines);
 			}
 		}
 
 		// Storage blocks
-		if(variant.m_storageBlocks.getSize() > 0)
+		if(variant.m_reflection.m_storageBlocks.getSize() > 0)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Storage blocks\n");
-			for(const ShaderProgramBinaryBlock& block : variant.m_storageBlocks)
+			for(const ShaderProgramBinaryBlock& block : variant.m_reflection.m_storageBlocks)
 			{
 				disassembleBlock(block, lines);
 			}
 		}
 
 		// Opaque
-		if(variant.m_opaques.getSize() > 0)
+		if(variant.m_reflection.m_opaques.getSize() > 0)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Opaque\n");
-			for(const ShaderProgramBinaryOpaque& o : variant.m_opaques)
+			for(const ShaderProgramBinaryOpaque& o : variant.m_reflection.m_opaques)
 			{
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "\"%s\" set %u binding %u type %u\n",
+				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u type %4u arraySize %4u\n",
 					o.m_name.getBegin(),
 					o.m_set,
 					o.m_binding,
-					o.m_type);
+					o.m_type,
+					o.m_arraySize);
 			}
 		}
 
 		// Push constants
-		if(variant.m_pushConstantBlock)
+		if(variant.m_reflection.m_pushConstantBlock)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Push constants\n");
-			disassembleBlock(*variant.m_pushConstantBlock, lines);
+			disassembleBlock(*variant.m_reflection.m_pushConstantBlock, lines);
 		}
 
 		// Constants
-		if(variant.m_specializationConstants.getSize() > 0)
+		if(variant.m_reflection.m_specializationConstants.getSize() > 0)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Specialization constants\n");
-			for(const ShaderProgramBinaryConstant& c : variant.m_specializationConstants)
+			for(const ShaderProgramBinaryConstant& c : variant.m_reflection.m_specializationConstants)
 			{
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "\"%s\" type %u id %u\n",
+				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%16s type %4u id %4u\n",
 					c.m_name.getBegin(),
 					U32(c.m_type),
 					c.m_constantId);
@@ -531,16 +829,21 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 		}
 
 		// Binary indices
-		lines.pushBack(ANKI_TAB ANKI_TAB "binaries ");
-		for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)
+		lines.pushBack(ANKI_TAB ANKI_TAB "Binaries ");
+		for(ShaderType shaderType : EnumIterable<ShaderType>())
 		{
 			if(variant.m_codeBlockIndices[shaderType] < MAX_U32)
 			{
-				lines.pushBackSprintf("%u ", variant.m_codeBlockIndices[shaderType]);
+				lines.pushBackSprintf("%u", variant.m_codeBlockIndices[shaderType]);
 			}
 			else
 			{
-				lines.pushBack("N/A ");
+				lines.pushBack("-");
+			}
+
+			if(shaderType != ShaderType::LAST)
+			{
+				lines.pushBack(",");
 			}
 		}
 		lines.pushBack("\n");
@@ -551,13 +854,17 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 	count = 0;
 	for(const ShaderProgramBinaryMutation& mutation : binary.m_mutations)
 	{
-		lines.pushBackSprintf(ANKI_TAB "#%u variantIndex %u values ", count++, mutation.m_variantIndex);
+		lines.pushBackSprintf(ANKI_TAB "#%-4u variantIndex %4u values (", count++, mutation.m_variantIndex);
 		if(mutation.m_values.getSize() > 0)
 		{
-			for(MutatorValue val : mutation.m_values)
+			for(U32 i = 0; i < mutation.m_values.getSize(); ++i)
 			{
-				lines.pushBackSprintf("%d ", I32(val));
+				lines.pushBackSprintf((i < mutation.m_values.getSize() - 1) ? "%s %4d, " : "%s %4d",
+					binary.m_mutators[i].m_name.getBegin(),
+					I32(mutation.m_values[i]));
 			}
+
+			lines.pushBack(")");
 		}
 		else
 		{

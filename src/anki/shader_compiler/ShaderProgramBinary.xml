@@ -21,6 +21,7 @@
 				<member name="m_variables" type="WeakArray&lt;ShaderProgramBinaryVariable&gt;" />
 				<member name="m_binding" type="U32" constructor="= MAX_U32" />
 				<member name="m_set" type="U32" constructor="= MAX_U32" />
+				<member name="m_size" type="U32" constructor="= MAX_U32" />
 			</members>
 		</class>
 
@@ -30,6 +31,7 @@
 				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
 				<member name="m_binding" type="U32" constructor="= MAX_U32" />
 				<member name="m_set" type="U32" constructor="= MAX_U32" />
+				<member name="m_arraySize" type="U32" constructor="= MAX_U32" />
 			</members>
 		</class>
 
@@ -41,21 +43,27 @@
 			</members>
 		</class>
 
-		<class name="ShaderProgramBinaryMutator" comment="Shader program mutator">
-			<members>
-				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
-				<member name="m_values" type="WeakArray&lt;MutatorValue&gt;" />
-			</members>
-		</class>
-
-		<class name="ShaderProgramBinaryVariant">
+		<class name="ShaderProgramBinaryReflection">
 			<members>
 				<member name="m_uniformBlocks" type="WeakArray&lt;ShaderProgramBinaryBlock&gt;" />
 				<member name="m_storageBlocks" type="WeakArray&lt;ShaderProgramBinaryBlock&gt;" />
 				<member name="m_pushConstantBlock" type="ShaderProgramBinaryBlock" pointer="true" constructor="= nullptr" />
 				<member name="m_opaques" type="WeakArray&lt;ShaderProgramBinaryOpaque&gt;" />
 				<member name="m_specializationConstants" type="WeakArray&lt;ShaderProgramBinaryConstant&gt;" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryVariant">
+			<members>
+				<member name="m_reflection" type="ShaderProgramBinaryReflection" />
 				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks" constructor="= {}" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryMutator" comment="Shader program mutator">
+			<members>
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
+				<member name="m_values" type="WeakArray&lt;MutatorValue&gt;" />
 			</members>
 		</class>
 
