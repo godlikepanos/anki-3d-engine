@@ -141,4 +141,28 @@ void writeShaderBlockMemory(ShaderVariableDataType type,
 	}
 }
 
+const CString shaderVariableDataTypeToString(ShaderVariableDataType t)
+{
+#define ANKI_SVDT_MACRO(svdt, akType) \
+	case ShaderVariableDataType::svdt: \
+		return ANKI_STRINGIZE(akType);
+
+#define ANKI_SVDT_MACRO_2(svdt, akType) ANKI_SVDT_MACRO(svdt, akType)
+
+	switch(t)
+	{
+	case ShaderVariableDataType::NONE:
+		return "NONE";
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+	default:
+		ANKI_ASSERT(0);
+	}
+
+#undef ANKI_SVDT_MACRO
+#undef ANKI_SVDT_MACRO_2
+
+	ANKI_ASSERT(0);
+	return "";
+}
+
 } // end namespace anki

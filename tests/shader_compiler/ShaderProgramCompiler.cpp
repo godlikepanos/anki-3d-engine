@@ -19,19 +19,24 @@ ANKI_TEST(ShaderCompiler, ShaderProgramCompiler)
 
 ANKI_SPECIALIZATION_CONSTANT_I32(INSTANCE_COUNT, 0, 1);
 
-layout(set = 1, binding = 0) uniform u_
+struct PerInstance
 {
-	Mat4 u_mvp[INSTANCE_COUNT];
+	Mat4 m_mvp;
 #if PASS > 1
-	Mat3 u_normalMat[INSTANCE_COUNT];
+	Mat3 m_normalMat;
 #endif
 };
 
-layout(set = 1, binding = 1) buffer u2_
+layout(set = 1, binding = 0) uniform perInstance
 {
-	Mat4 u_mvp2[INSTANCE_COUNT];
+	PerInstance u_perInstance[INSTANCE_COUNT];
+};
+
+layout(set = 1, binding = 1) buffer perDrawcall
+{
+	Vec4 u_color;
 #if PASS > 1
-	Mat3 u_normalMat2[INSTANCE_COUNT];
+	Mat3 u_someMat;
 #endif
 };
 
@@ -50,7 +55,7 @@ out gl_PerVertex
 
 void main()
 {
-	gl_Position = u_mvp[gl_InstanceID] * u_mvp2[gl_InstanceID] * Vec4(gl_VertexID) * Vec4(specConst);
+	gl_Position = u_perInstance[gl_InstanceID].m_mvp * Vec4(specConst);
 }
 #pragma anki end
 
@@ -62,7 +67,7 @@ void main()
 #if DIFFUSE_TEX == 1
 	out_color = texture(sampler2D(u_tex[0], u_sampler), Vec2(0));
 #else
-	out_color = Vec4(0);
+	out_color = u_color;
 #endif
 }
 #pragma anki end

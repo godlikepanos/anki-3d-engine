@@ -479,32 +479,14 @@ enum class ShaderVariableDataType : U8
 {
 	NONE,
 
-	INT,
-	UINT,
-	FLOAT,
-	IVEC2,
-	UVEC2,
-	VEC2,
-	IVEC3,
-	UVEC3,
-	VEC3,
-	IVEC4,
-	UVEC4,
-	VEC4,
-	MAT3,
-	MAT4,
+#define ANKI_SVDT_MACRO(x, y) x,
+#define ANKI_SVDT_MACRO_2(x, y) x,
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+#undef ANKI_SVDT_MACRO_2
 
-	TEXTURE_1D,
-	TEXTURE_1D_ARRAY,
-	TEXTURE_2D,
-	TEXTURE_2D_ARRAY,
-	TEXTURE_3D,
-	TEXTURE_CUBE,
-	TEXTURE_CUBE_ARRAY,
+	// Derived
 
-	SAMPLER,
-
-	// Combined
 	NUMERICS_FIRST = INT,
 	NUMERICS_LAST = MAT4,
 
@@ -522,6 +504,9 @@ enum class ShaderVariableDataType : U8
 
 	TEXTURE_FIRST = TEXTURE_1D,
 	TEXTURE_LAST = TEXTURE_CUBE_ARRAY,
+
+	IMAGE_FIRST = IMAGE_1D,
+	IMAGE_LAST = IMAGE_CUBE_ARRAY,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType, inline)
 

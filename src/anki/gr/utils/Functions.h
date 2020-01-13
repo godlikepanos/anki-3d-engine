@@ -38,29 +38,15 @@ inline Bool blendingDisabled(BlendFactor srcFactorRgb,
 template<typename T>
 ShaderVariableDataType getShaderVariableTypeFromTypename();
 
-#define ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(typename_, type_) \
+#define ANKI_SVDT_MACRO(svdt, akType) \
 	template<> \
-	inline ShaderVariableDataType getShaderVariableTypeFromTypename<typename_>() \
+	inline ShaderVariableDataType getShaderVariableTypeFromTypename<akType>() \
 	{ \
-		return ShaderVariableDataType::type_; \
+		return ShaderVariableDataType::svdt; \
 	}
 
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(I32, INT)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(IVec2, IVEC2)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(IVec3, IVEC3)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(IVec4, IVEC4)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(U32, UINT)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(UVec2, UVEC2)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(UVec3, UVEC3)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(UVec4, UVEC4)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(F32, FLOAT)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(Vec2, VEC2)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(Vec3, VEC3)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(Vec4, VEC4)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(Mat3, MAT3)
-ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(Mat4, MAT4)
-
-#undef ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
 
 /// Shader block information.
 class ShaderVariableBlockInfo
@@ -84,5 +70,8 @@ void writeShaderBlockMemory(ShaderVariableDataType type,
 	U32 elementsCount,
 	void* buffBegin,
 	const void* buffEnd);
+
+/// Convert a ShaderVariableDataType to string.
+const CString shaderVariableDataTypeToString(ShaderVariableDataType t);
 
 } // end namespace anki
