@@ -23,7 +23,7 @@ struct PerInstance
 {
 	Mat4 m_mvp;
 #if PASS > 1
-	Mat3 m_normalMat;
+	Mat3 m_normalMat[2];
 #endif
 };
 

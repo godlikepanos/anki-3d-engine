@@ -81,6 +81,21 @@ void ShaderProgramBinaryWrapper::cleanup()
 
 		for(ShaderProgramBinaryVariant& variant : m_binary->m_variants)
 		{
+			for(ShaderProgramBinaryBlock& block : variant.m_reflection.m_uniformBlocks)
+			{
+				m_alloc.getMemoryPool().free(block.m_variables.getBegin());
+			}
+
+			for(ShaderProgramBinaryBlock& block : variant.m_reflection.m_storageBlocks)
+			{
+				m_alloc.getMemoryPool().free(block.m_variables.getBegin());
+			}
+
+			if(variant.m_reflection.m_pushConstantBlock)
+			{
+				m_alloc.getMemoryPool().free(variant.m_reflection.m_pushConstantBlock->m_variables.getBegin());
+			}
+
 			m_alloc.getMemoryPool().free(variant.m_reflection.m_uniformBlocks.getBegin());
 			m_alloc.getMemoryPool().free(variant.m_reflection.m_storageBlocks.getBegin());
 			m_alloc.getMemoryPool().free(variant.m_reflection.m_pushConstantBlock);

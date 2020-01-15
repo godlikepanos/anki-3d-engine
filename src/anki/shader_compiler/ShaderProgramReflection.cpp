@@ -14,8 +14,9 @@ namespace anki
 class SpirvReflector : public spirv_cross::Compiler
 {
 public:
-	SpirvReflector(const U32* ir, PtrSize wordCount)
+	SpirvReflector(const U32* ir, PtrSize wordCount, const GenericMemoryPoolAllocator<U8>& tmpAlloc)
 		: spirv_cross::Compiler(ir, wordCount)
+		, m_tmpAlloc(tmpAlloc)
 	{
 	}
 
@@ -25,6 +26,8 @@ public:
 		GenericMemoryPoolAllocator<U8> binaryAlloc);
 
 private:
+	GenericMemoryPoolAllocator<U8> m_tmpAlloc;
+
 	ANKI_USE_RESULT Error spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const;
 
 	ANKI_USE_RESULT Error blockReflection(
@@ -38,8 +41,9 @@ private:
 	ANKI_USE_RESULT Error blockVariablesReflection(
 		spirv_cross::TypeID resourceId, DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const;
 
-	ANKI_USE_RESULT Error blockVariableReflection(
-		const spirv_cross::SPIRType& type, DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const;
+	ANKI_USE_RESULT Error blockVariableReflection(const spirv_cross::SPIRType& type,
+		CString parentVariable,
+		DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const;
 };
 
 Error SpirvReflector::blockVariablesReflection(
@@ -58,7 +62,7 @@ Error SpirvReflector::blockVariablesReflection(
 			if(type.self == resourceId)
 			{
 				found = true;
-				err = blockVariableReflection(type, vars);
+				err = blockVariableReflection(type, CString(), vars);
 			}
 		}
 	});
@@ -73,8 +77,9 @@ Error SpirvReflector::blockVariablesReflection(
 	return Error::NONE;
 }
 
-Error SpirvReflector::blockVariableReflection(
-	const spirv_cross::SPIRType& type, DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const
+Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
+	CString parentVariable,
+	DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const
 {
 	ANKI_ASSERT(type.basetype == spirv_cross::SPIRType::Struct);
 
@@ -90,7 +95,19 @@ Error SpirvReflector::blockVariableReflection(
 			ANKI_ASSERT(i < meta->members.size());
 			ANKI_ASSERT(!meta->members[i].alias.empty());
 			const std::string& name = meta->members[i].alias;
-			strcpy(var.m_name.getBegin(), name.c_str());
+
+			if(parentVariable.isEmpty())
+			{
+				strncpy(var.m_name.getBegin(), name.c_str(), var.m_name.getSize());
+			}
+			else
+			{
+				StringAuto extendedName(m_tmpAlloc);
+				extendedName.sprintf("%s.%s", parentVariable.cstr(), name.c_str());
+				strncpy(var.m_name.getBegin(), extendedName.cstr(), var.m_name.getSize());
+			}
+
+			var.m_name[var.m_name.getSize() - 1] = '\0';
 		}
 
 		// Offset
@@ -148,8 +165,19 @@ Error SpirvReflector::blockVariableReflection(
 
 		if(memberType.basetype == spirv_cross::SPIRType::Struct)
 		{
-			// ANKI_ASSERT(!"TODO");
-			printf("%s\n", var.m_name.getBegin());
+			if(var.m_blockInfo.m_arraySize == 1)
+			{
+				ANKI_CHECK(blockVariableReflection(memberType, var.m_name.getBegin(), vars));
+			}
+			else
+			{
+				for(U32 i = 0; i < U32(var.m_blockInfo.m_arraySize); ++i)
+				{
+					StringAuto newName(m_tmpAlloc);
+					newName.sprintf("%s[%u]", var.m_name.getBegin(), i);
+					ANKI_CHECK(blockVariableReflection(memberType, newName, vars));
+				}
+			}
 		}
 		else if(memberType.vecsize == 1 && memberType.columns == 1 && isNumeric)
 		{
@@ -200,7 +228,10 @@ Error SpirvReflector::blockVariableReflection(
 		}
 
 		// Store the member
-		vars.emplaceBack(var);
+		if(var.m_type != ShaderVariableDataType::NONE)
+		{
+			vars.emplaceBack(var);
+		}
 	}
 
 	return Error::NONE;
@@ -498,7 +529,7 @@ Error SpirvReflector::performSpirvReflection(ShaderProgramBinaryReflection& refl
 
 		// Parse SPIR-V
 		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(spirv[type].getBegin());
-		SpirvReflector compiler(spvb, spirv[type].getSizeInBytes() / sizeof(unsigned int));
+		SpirvReflector compiler(spvb, spirv[type].getSizeInBytes() / sizeof(unsigned int), tmpAlloc);
 
 		// Uniform blocks
 		for(const spirv_cross::Resource& res : compiler.get_shader_resources().uniform_buffers)
