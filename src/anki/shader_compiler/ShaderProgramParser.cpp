@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/shader_compiler/ShaderProgramParser.h>
-#include <anki/shader_compiler/Glslang.h>
 
 namespace anki
 {
@@ -66,155 +65,32 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define Mat3x4 mat3x4
 
 #define Bool bool
+
+#define _ANKI_CONCATENATE(a, b) a##b
+#define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
+
+#define ANKI_SPECIALIZATION_CONSTANT_I32(x, id, defltVal) layout(constant_id = id) const I32 x = defltVal
+
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC2(x, id, defltVal) \
+	layout(constant_id = id) const I32 ANKI_CONCATENATE(x, _0) = defltVal[0]; \
+	layout(constant_id = id + 1) const I32 ANKI_CONCATENATE(x, _1) = defltVal[1]
+
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC3(x, id, defltVal) \
+	layout(constant_id = id) const I32 ANKI_CONCATENATE(x, _0) = defltVal[0]; \
+	layout(constant_id = id + 1) const I32 ANKI_CONCATENATE(x, _1) = defltVal[1]; \
+	layout(constant_id = id + 2) const I32 ANKI_CONCATENATE(x, _2) = defltVal[2]
+
+#define ANKI_SPECIALIZATION_CONSTANT_F32(x, id, defltVal) layout(constant_id = id) const F32 x = defltVal
+
+#define ANKI_SPECIALIZATION_CONSTANT_VEC2(x, id, defltVal) \
+	layout(constant_id = id) const F32 ANKI_CONCATENATE(x, _0) = defltVal[0]; \
+	layout(constant_id = id + 1) const F32 ANKI_CONCATENATE(x, _1) = defltVal[1]
+
+#define ANKI_SPECIALIZATION_CONSTANT_VEC3(x, id, defltVal) \
+	layout(constant_id = id) const F32 ANKI_CONCATENATE(x, _0) = defltVal[0]; \
+	layout(constant_id = id + 1) const F32 ANKI_CONCATENATE(x, _1) = defltVal[1]; \
+	layout(constant_id = id + 2) const F32 ANKI_CONCATENATE(x, _2) = defltVal[2]
 )";
-
-static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, ShaderVariableDataType& out)
-{
-	Error err = Error::NONE;
-
-	if(str == "I32")
-	{
-		out = ShaderVariableDataType::INT;
-	}
-	else if(str == "IVec2")
-	{
-		out = ShaderVariableDataType::IVEC2;
-	}
-	else if(str == "IVec3")
-	{
-		out = ShaderVariableDataType::IVEC3;
-	}
-	else if(str == "IVec4")
-	{
-		out = ShaderVariableDataType::IVEC4;
-	}
-	else if(str == "U32")
-	{
-		out = ShaderVariableDataType::UINT;
-	}
-	else if(str == "UVec2")
-	{
-		out = ShaderVariableDataType::UVEC2;
-	}
-	else if(str == "UVec3")
-	{
-		out = ShaderVariableDataType::UVEC3;
-	}
-	else if(str == "UVec4")
-	{
-		out = ShaderVariableDataType::UVEC4;
-	}
-	else if(str == "F32")
-	{
-		out = ShaderVariableDataType::FLOAT;
-	}
-	else if(str == "Vec2")
-	{
-		out = ShaderVariableDataType::VEC2;
-	}
-	else if(str == "Vec3")
-	{
-		out = ShaderVariableDataType::VEC3;
-	}
-	else if(str == "Vec4")
-	{
-		out = ShaderVariableDataType::VEC4;
-	}
-	else if(str == "Mat3")
-	{
-		out = ShaderVariableDataType::MAT3;
-	}
-	else if(str == "Mat4")
-	{
-		out = ShaderVariableDataType::MAT4;
-	}
-	else if(str == "texture2D")
-	{
-		out = ShaderVariableDataType::TEXTURE_2D;
-	}
-	else if(str == "texture2DArray")
-	{
-		out = ShaderVariableDataType::TEXTURE_2D_ARRAY;
-	}
-	else if(str == "textureCube")
-	{
-		out = ShaderVariableDataType::TEXTURE_CUBE;
-	}
-	else if(str == "sampler")
-	{
-		out = ShaderVariableDataType::SAMPLER;
-	}
-	else
-	{
-		ANKI_SHADER_COMPILER_LOGE("Incorrect variable type %s", &str[0]);
-		err = Error::USER_DATA;
-	}
-
-	return err;
-}
-
-static U32 computeSpecConstantIdsRequired(ShaderVariableDataType type)
-{
-	U32 out;
-	if(type >= ShaderVariableDataType::NUMERIC_1_COMPONENT_FIRST
-		&& type <= ShaderVariableDataType::NUMERIC_1_COMPONENT_LAST)
-	{
-		out = 1;
-	}
-	else if(type >= ShaderVariableDataType::NUMERIC_2_COMPONENT_FIRST
-			&& type <= ShaderVariableDataType::NUMERIC_2_COMPONENT_LAST)
-	{
-		out = 2;
-	}
-	else if(type >= ShaderVariableDataType::NUMERIC_3_COMPONENT_FIRST
-			&& type <= ShaderVariableDataType::NUMERIC_3_COMPONENT_LAST)
-	{
-		out = 3;
-	}
-	else if(type >= ShaderVariableDataType::NUMERIC_4_COMPONENT_FIRST
-			&& type <= ShaderVariableDataType::NUMERIC_4_COMPONENT_LAST)
-	{
-		out = 4;
-	}
-	else
-	{
-		out = MAX_U32;
-	}
-
-	return out;
-}
-
-/// 0: is int, 1: is uint, 2: is float
-static U32 shaderVariableScalarType(ShaderVariableDataType type)
-{
-	U32 out;
-	switch(type)
-	{
-	case ShaderVariableDataType::INT:
-	case ShaderVariableDataType::IVEC2:
-	case ShaderVariableDataType::IVEC3:
-	case ShaderVariableDataType::IVEC4:
-		out = 0;
-		break;
-	case ShaderVariableDataType::UINT:
-	case ShaderVariableDataType::UVEC2:
-	case ShaderVariableDataType::UVEC3:
-	case ShaderVariableDataType::UVEC4:
-		out = 1;
-		break;
-	case ShaderVariableDataType::FLOAT:
-	case ShaderVariableDataType::VEC2:
-	case ShaderVariableDataType::VEC3:
-	case ShaderVariableDataType::VEC4:
-		out = 2;
-		break;
-	default:
-		ANKI_ASSERT(0);
-		out = MAX_U32;
-		break;
-	}
-	return out;
-}
 
 ShaderProgramParser::ShaderProgramParser(CString fname,
 	ShaderProgramFilesystemInterface* fsystem,
@@ -261,29 +137,6 @@ void ShaderProgramParser::tokenizeLine(CString line, DynamicArrayAuto<StringAuto
 	{
 		tokens.emplaceBack(m_alloc, s);
 	}
-}
-
-Error ShaderProgramParser::parsePragmaDescriptorSet(
-	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
-{
-	ANKI_ASSERT(begin && end);
-
-	if(begin >= end)
-	{
-		ANKI_PP_ERROR_MALFORMED();
-	}
-
-	if(begin->toNumber(m_set))
-	{
-		ANKI_PP_ERROR_MALFORMED();
-	}
-
-	if(m_set >= MAX_DESCRIPTOR_SETS)
-	{
-		ANKI_PP_ERROR_MALFORMED_MSG("The descriptor set index is too high");
-	}
-
-	return Error::NONE;
 }
 
 Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const StringAuto* end, CString line, CString fname)
@@ -374,244 +227,6 @@ Error ShaderProgramParser::parsePragmaEnd(const StringAuto* begin, const StringA
 	return Error::NONE;
 }
 
-Error ShaderProgramParser::parsePragmaInput(const StringAuto* begin, const StringAuto* end, CString line, CString fname)
-{
-	ANKI_ASSERT(begin && end);
-
-	if(begin >= end)
-	{
-		ANKI_PP_ERROR_MALFORMED();
-	}
-
-	if(m_insideShader)
-	{
-		ANKI_PP_ERROR_MALFORMED_MSG("Can't have #pragma input inside shader blocks");
-	}
-
-	m_inputs.emplaceBack(m_alloc);
-	Input& input = m_inputs.getBack();
-	input.m_idx = m_inputs.getSize() - 1;
-
-	// const
-	Bool isConst;
-	{
-		if(*begin == "const")
-		{
-			isConst = true;
-			++begin;
-		}
-		else
-		{
-			isConst = false;
-		}
-	}
-
-	// instanced
-	{
-		if(begin >= end)
-		{
-			ANKI_PP_ERROR_MALFORMED();
-		}
-
-		input.m_instanced = false;
-		if(*begin == "instanced")
-		{
-			input.m_instanced = true;
-			m_foundAtLeastOneInstancedInput = true;
-			++begin;
-		}
-	}
-
-	// type
-	const StringAuto& dataTypeStr = *begin;
-	{
-		if(begin >= end)
-		{
-			ANKI_PP_ERROR_MALFORMED();
-		}
-
-		if(computeShaderVariableDataType(*begin, input.m_dataType))
-		{
-			ANKI_PP_ERROR_MALFORMED();
-		}
-		++begin;
-	}
-
-	// name
-	{
-		if(begin >= end)
-		{
-			ANKI_PP_ERROR_MALFORMED();
-		}
-
-		// Check if there are duplicates
-		for(U32 i = 0; i < m_inputs.getSize() - 1; ++i)
-		{
-			if(m_inputs[i].m_name == *begin)
-			{
-				ANKI_PP_ERROR_MALFORMED_MSG("Duplicate input");
-			}
-		}
-
-		if(begin->getLength() > MAX_SHADER_BINARY_NAME_LENGTH)
-		{
-			ANKI_PP_ERROR_MALFORMED_MSG("Too big name");
-		}
-
-		input.m_name.create(begin->toCString());
-		++begin;
-	}
-
-	// Append to source
-
-	const Bool isSampler = input.m_dataType == ShaderVariableDataType::SAMPLER;
-	const Bool isTexture = input.m_dataType >= ShaderVariableDataType::TEXTURE_FIRST
-						   && input.m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
-
-	if(isConst)
-	{
-		// Const
-
-		if(isSampler || isTexture || input.m_instanced)
-		{
-			// No const samplers or instanced
-			ANKI_PP_ERROR_MALFORMED();
-		}
-
-		const U32 vecComponents = computeSpecConstantIdsRequired(input.m_dataType);
-		if(vecComponents == MAX_U32)
-		{
-			ANKI_PP_ERROR_MALFORMED_MSG("Type can't be const");
-		}
-
-		const U32 scalarType = shaderVariableScalarType(input.m_dataType);
-
-		// Add an tag for later pre-processing (when trying to see if the variable is present)
-		m_codeLines.pushBackSprintf("#pragma _anki_input_present_%s", input.m_name.cstr());
-
-		m_globalsLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", input.m_name.cstr());
-		m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
-
-		const Array<CString, 3> typeNames = {{"I32", "I32", "F32"}};
-
-		input.m_specConstId = m_specConstIdx;
-
-		StringAuto inputDeclaration(m_alloc);
-		for(U32 comp = 0; comp < vecComponents; ++comp)
-		{
-			m_globalsLines.pushBackSprintf("layout(constant_id = %u) const %s _anki_const_%s_%u = %s(0);",
-				m_specConstIdx,
-				typeNames[scalarType].cstr(),
-				input.m_name.cstr(),
-				comp,
-				typeNames[scalarType].cstr());
-
-			if(comp == 0)
-			{
-				inputDeclaration.sprintf("%s %s = %s(_anki_const_%s_%u",
-					dataTypeStr.cstr(),
-					input.m_name.cstr(),
-					dataTypeStr.cstr(),
-					input.m_name.cstr(),
-					comp);
-			}
-			else
-			{
-				StringAuto tmp(m_alloc);
-				tmp.sprintf(", _anki_const_%s_%u", input.m_name.cstr(), comp);
-				inputDeclaration.append(tmp);
-			}
-
-			if(comp == vecComponents - 1)
-			{
-				inputDeclaration.append(");");
-			}
-
-			++m_specConstIdx;
-		}
-
-		m_globalsLines.pushBack(inputDeclaration);
-
-		m_globalsLines.pushBack("#else");
-		m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", input.m_name.cstr());
-		m_globalsLines.pushBack("#endif");
-	}
-	else if(isSampler || isTexture)
-	{
-		// Sampler or texture
-
-		if(input.m_instanced)
-		{
-			// Samplers and textures can't be instanced
-			ANKI_PP_ERROR_MALFORMED();
-		}
-
-		// Add an tag for later pre-processing (when trying to see if the variable is present)
-		m_codeLines.pushBackSprintf("#pragma _anki_input_present_%s", input.m_name.cstr());
-
-		m_globalsLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", input.m_name.cstr());
-		m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", input.m_name.cstr());
-
-		m_globalsLines.pushBackSprintf("layout(set = _ANKI_DSET, binding = _ANKI_%s_BINDING) uniform %s %s;",
-			input.m_name.cstr(),
-			dataTypeStr.cstr(),
-			input.m_name.cstr());
-
-		m_globalsLines.pushBack("#else");
-		m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", input.m_name.cstr());
-		m_globalsLines.pushBack("#endif");
-	}
-	else
-	{
-		// UBO
-
-		const char* name = input.m_name.cstr();
-		const char* type = dataTypeStr.cstr();
-
-		// Add an tag for later pre-processing (when trying to see if the variable is present)
-		m_codeLines.pushBackSprintf("#pragma _anki_input_present_%s", name);
-
-		if(input.m_instanced)
-		{
-			m_uboStructLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", name);
-			m_uboStructLines.pushBack("#if _ANKI_INSTANCE_COUNT > 1");
-			m_uboStructLines.pushBackSprintf("%s _anki_uni_%s[_ANKI_INSTANCE_COUNT];", type, name);
-			m_uboStructLines.pushBack("#else");
-			m_uboStructLines.pushBackSprintf("%s _anki_uni_%s;", type, name);
-			m_uboStructLines.pushBack("#endif");
-			m_uboStructLines.pushBack("#endif");
-
-			m_globalsLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", name);
-			m_globalsLines.pushBack("#ifdef ANKI_VERTEX_SHADER");
-			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", name);
-			m_globalsLines.pushBack("#if _ANKI_INSTANCE_COUNT > 1");
-			m_globalsLines.pushBackSprintf("const %s %s = _anki_unis._anki_uni_%s[gl_InstanceID];", type, name, name);
-			m_globalsLines.pushBack("#else");
-			m_globalsLines.pushBackSprintf("const %s %s = _anki_unis._anki_uni_%s;", type, name, name);
-			m_globalsLines.pushBack("#endif");
-			m_globalsLines.pushBack("#endif //ANKI_VERTEX_SHADER");
-			m_globalsLines.pushBack("#else");
-			m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", name);
-			m_globalsLines.pushBack("#endif");
-		}
-		else
-		{
-			m_uboStructLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", name);
-			m_uboStructLines.pushBackSprintf("%s _anki_uni_%s;", type, name);
-			m_uboStructLines.pushBack("#endif");
-
-			m_globalsLines.pushBackSprintf("#if _ANKI_ACTIVATE_INPUT_%s", name);
-			m_globalsLines.pushBackSprintf("const %s %s = _anki_unis_._anki_uni_%s;", type, name, name);
-			m_globalsLines.pushBackSprintf("#define %s_DEFINED 1", name);
-			m_globalsLines.pushBack("#else");
-			m_globalsLines.pushBackSprintf("#define %s_DEFINED 0", name);
-			m_globalsLines.pushBack("#endif");
-		}
-	}
-
-	return Error::NONE;
-}
-
 Error ShaderProgramParser::parsePragmaMutator(
 	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
 {
@@ -624,27 +239,6 @@ Error ShaderProgramParser::parsePragmaMutator(
 
 	m_mutators.emplaceBack(m_alloc);
 	Mutator& mutator = m_mutators.getBack();
-
-	// Instanced
-	{
-		if(*begin == "instanceCount")
-		{
-			mutator.m_instanceCount = true;
-
-			// Check
-			if(m_instancedMutatorIdx != MAX_U32)
-			{
-				ANKI_PP_ERROR_MALFORMED_MSG("Can't have more than one instanced mutators");
-			}
-
-			m_instancedMutatorIdx = m_mutators.getSize() - 1;
-			++begin;
-		}
-		else
-		{
-			mutator.m_instanceCount = false;
-		}
-	}
 
 	// Name
 	{
@@ -708,12 +302,6 @@ Error ShaderProgramParser::parsePragmaMutator(
 				ANKI_PP_ERROR_MALFORMED_MSG("Same value appeared more than once");
 			}
 		}
-	}
-
-	// Update some source
-	if(mutator.m_instanceCount)
-	{
-		m_globalsLines.pushFrontSprintf("#define _ANKI_INSTANCE_COUNT %s", mutator.m_name.cstr());
 	}
 
 	return Error::NONE;
@@ -959,10 +547,6 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			{
 				ANKI_CHECK(parsePragmaMutator(token + 1, end, line, fname));
 			}
-			else if(*token == "input")
-			{
-				ANKI_CHECK(parsePragmaInput(token + 1, end, line, fname));
-			}
 			else if(*token == "start")
 			{
 				ANKI_CHECK(parsePragmaStart(token + 1, end, line, fname));
@@ -970,10 +554,6 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			else if(*token == "end")
 			{
 				ANKI_CHECK(parsePragmaEnd(token + 1, end, line, fname));
-			}
-			else if(*token == "descriptor_set")
-			{
-				ANKI_CHECK(parsePragmaDescriptorSet(token + 1, end, line, fname));
 			}
 			else if(*token == "rewrite_mutation")
 			{
@@ -1063,23 +643,11 @@ Error ShaderProgramParser::parse()
 
 	// Checks
 	{
-		if(m_foundAtLeastOneInstancedInput != (m_instancedMutatorIdx != MAX_U32))
-		{
-			ANKI_SHADER_COMPILER_LOGE("If there is an instanced mutator there should be at least one instanced input");
-			return Error::USER_DATA;
-		}
-
 		if(!!(m_shaderTypes & ShaderTypeBit::COMPUTE))
 		{
 			if(m_shaderTypes != ShaderTypeBit::COMPUTE)
 			{
 				ANKI_SHADER_COMPILER_LOGE("Can't combine compute shader with other types of shaders");
-				return Error::USER_DATA;
-			}
-
-			if(m_instancedMutatorIdx != MAX_U32)
-			{
-				ANKI_SHADER_COMPILER_LOGE("Can't have instanced mutators in compute programs");
 				return Error::USER_DATA;
 			}
 		}
@@ -1099,76 +667,11 @@ Error ShaderProgramParser::parse()
 		}
 	}
 
-	// Create the UBO source code
-	{
-		m_uboStructLines.pushFrontSprintf("#define _ANKI_DSET %u", m_set);
-
-		m_uboStructLines.pushFront("struct _AnkiUniforms {");
-		m_uboStructLines.pushBack("};");
-
-		m_uboStructLines.pushBack("#if _ANKI_USE_PUSH_CONSTANTS == 1");
-		m_uboStructLines.pushBackSprintf(
-			"layout(push_constant, std140, row_major) uniform _anki_pc {_AnkiUniforms _anki_unis;};");
-		m_uboStructLines.pushBack("#else");
-		m_uboStructLines.pushBack(
-			"layout(set = _ANKI_DSET, binding = 0, row_major) uniform _anki_ubo {_AnkiUniforms _anki_unis;};");
-		m_uboStructLines.pushBack("#endif\n");
-
-		m_uboStructLines.join("\n", m_uboSource);
-		m_uboStructLines.destroy();
-	}
-
-	// Create the globals source code
-	if(m_globalsLines.getSize() > 0)
-	{
-		m_globalsLines.pushBack("\n");
-		m_globalsLines.join("\n", m_globalsSource);
-		m_globalsLines.destroy();
-	}
-
 	// Create the code lines
 	if(m_codeLines.getSize())
 	{
-		m_codeLines.pushBack("\n");
 		m_codeLines.join("\n", m_codeSource);
 		m_codeLines.destroy();
-	}
-
-	return Error::NONE;
-}
-
-Error ShaderProgramParser::findActiveInputVars(CString source, BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES>& active) const
-{
-	StringAuto preprocessedSrc(m_alloc);
-	ANKI_CHECK(preprocessGlsl(source, preprocessedSrc));
-
-	StringListAuto lines(m_alloc);
-	lines.splitString(preprocessedSrc, '\n');
-
-	for(const String& line : lines)
-	{
-		const CString prefix = "#pragma _anki_input_present_";
-		if(line.find(prefix) == String::NPOS)
-		{
-			continue;
-		}
-
-		ANKI_ASSERT(line.getLength() > prefix.getLength());
-		const CString varName = line.getBegin() + prefix.getLength();
-
-		// Find the input var
-		Bool found = false;
-		for(const Input& in : m_inputs)
-		{
-			if(in.m_name == varName)
-			{
-				active.set(in.m_idx);
-				found = true;
-				break;
-			}
-		}
-		(void)found;
-		ANKI_ASSERT(found);
 	}
 
 	return Error::NONE;
@@ -1188,15 +691,6 @@ Error ShaderProgramParser::generateVariant(
 	// Init variant
 	::new(&variant) ShaderProgramParserVariant();
 	variant.m_alloc = m_alloc;
-	variant.m_bindings.create(m_alloc, m_inputs.getSize(), -1);
-	variant.m_blockInfos.create(m_alloc, m_inputs.getSize());
-
-	// Get instance count, one mutation has it
-	U32 instanceCount = 1;
-	if(m_instancedMutatorIdx != MAX_U32)
-	{
-		instanceCount = mutation[m_instancedMutatorIdx];
-	}
 
 	// Create the mutator defines
 	StringAuto mutatorDefines(m_alloc);
@@ -1214,157 +708,6 @@ Error ShaderProgramParser::generateVariant(
 		MAX_BINDLESS_TEXTURES,
 		MAX_BINDLESS_IMAGES);
 
-	// Find active vars by running the preprocessor
-	StringAuto activeInputs(m_alloc);
-	if(m_inputs.getSize() > 0)
-	{
-		StringAuto src(m_alloc);
-		src.append(header);
-		src.append("#define ANKI_VERTEX_SHADER 1\n"); // Something random to avoid compilation errors
-		src.append(mutatorDefines);
-		src.append(m_codeSource);
-		ANKI_CHECK(findActiveInputVars(src, variant.m_activeInputVarsMask));
-
-		StringListAuto lines(m_alloc);
-		for(const Input& in : m_inputs)
-		{
-			const Bool active = variant.m_activeInputVarsMask.get(in.m_idx);
-			lines.pushBackSprintf("#define _ANKI_ACTIVATE_INPUT_%s %u", in.m_name.cstr(), active);
-		}
-
-		lines.pushBack("\n");
-		lines.join("\n", activeInputs);
-	}
-
-	// Initialize the active vars that are inside a UBO
-	for(const Input& in : m_inputs)
-	{
-		if(!variant.m_activeInputVarsMask.get(in.m_idx))
-		{
-			continue;
-		}
-
-		if(!in.inUbo())
-		{
-			continue;
-		}
-
-		ShaderVariableBlockInfo& blockInfo = variant.m_blockInfos[in.m_idx];
-
-		// std140 rules
-		blockInfo.m_offset = I16(variant.m_uniBlockSize);
-		blockInfo.m_arraySize = (in.m_instanced) ? I16(instanceCount) : 1;
-
-		if(in.m_dataType == ShaderVariableDataType::FLOAT || in.m_dataType == ShaderVariableDataType::INT
-			|| in.m_dataType == ShaderVariableDataType::UINT)
-		{
-			blockInfo.m_arrayStride = sizeof(Vec4);
-
-			if(blockInfo.m_arraySize == 1)
-			{
-				// No need to align the in.m_offset
-				variant.m_uniBlockSize += sizeof(F32);
-			}
-			else
-			{
-				alignRoundUp(sizeof(Vec4), blockInfo.m_offset);
-				variant.m_uniBlockSize += sizeof(Vec4) * blockInfo.m_arraySize;
-			}
-		}
-		else if(in.m_dataType == ShaderVariableDataType::VEC2 || in.m_dataType == ShaderVariableDataType::IVEC2
-				|| in.m_dataType == ShaderVariableDataType::UVEC2)
-		{
-			blockInfo.m_arrayStride = sizeof(Vec4);
-
-			if(blockInfo.m_arraySize == 1)
-			{
-				alignRoundUp(sizeof(Vec2), blockInfo.m_offset);
-				variant.m_uniBlockSize = blockInfo.m_offset + sizeof(Vec2);
-			}
-			else
-			{
-				alignRoundUp(sizeof(Vec4), blockInfo.m_offset);
-				variant.m_uniBlockSize = blockInfo.m_offset + sizeof(Vec4) * blockInfo.m_arraySize;
-			}
-		}
-		else if(in.m_dataType == ShaderVariableDataType::VEC3 || in.m_dataType == ShaderVariableDataType::IVEC3
-				|| in.m_dataType == ShaderVariableDataType::UVEC3)
-		{
-			alignRoundUp(sizeof(Vec4), blockInfo.m_offset);
-			blockInfo.m_arrayStride = sizeof(Vec4);
-
-			if(blockInfo.m_arraySize == 1)
-			{
-				variant.m_uniBlockSize = blockInfo.m_offset + sizeof(Vec3);
-			}
-			else
-			{
-				variant.m_uniBlockSize = blockInfo.m_offset + sizeof(Vec4) * blockInfo.m_arraySize;
-			}
-		}
-		else if(in.m_dataType == ShaderVariableDataType::VEC4 || in.m_dataType == ShaderVariableDataType::IVEC4
-				|| in.m_dataType == ShaderVariableDataType::UVEC4)
-		{
-			blockInfo.m_arrayStride = sizeof(Vec4);
-			alignRoundUp(sizeof(Vec4), blockInfo.m_offset);
-			variant.m_uniBlockSize = blockInfo.m_offset + sizeof(Vec4) * blockInfo.m_arraySize;
-		}
-		else if(in.m_dataType == ShaderVariableDataType::MAT3)
-		{
-			alignRoundUp(sizeof(Vec4), blockInfo.m_offset);
-			blockInfo.m_arrayStride = sizeof(Vec4) * 3;
-			variant.m_uniBlockSize = blockInfo.m_offset + sizeof(Vec4) * 3 * blockInfo.m_arraySize;
-			blockInfo.m_matrixStride = sizeof(Vec4);
-		}
-		else if(in.m_dataType == ShaderVariableDataType::MAT4)
-		{
-			alignRoundUp(sizeof(Vec4), blockInfo.m_offset);
-			blockInfo.m_arrayStride = sizeof(Mat4);
-			variant.m_uniBlockSize = blockInfo.m_offset + sizeof(Mat4) * blockInfo.m_arraySize;
-			blockInfo.m_matrixStride = sizeof(Vec4);
-		}
-		else
-		{
-			ANKI_ASSERT(0);
-		}
-	}
-
-	// Find if it's using push constants
-	StringAuto pushConstantDefineSrc(m_alloc);
-	{
-		variant.m_usesPushConstants = variant.m_uniBlockSize <= m_pushConstSize;
-		pushConstantDefineSrc.sprintf("#define _ANKI_USE_PUSH_CONSTANTS %u\n", variant.m_usesPushConstants);
-	}
-
-	// Handle the bindings for the textures and samplers
-	StringAuto bindingDefines(m_alloc);
-	{
-		StringListAuto defines(m_alloc);
-		U32 texOrSamplerBinding = variant.m_usesPushConstants ? 0 : 1;
-		for(const Input& in : m_inputs)
-		{
-			if(!variant.m_activeInputVarsMask.get(in.m_idx))
-			{
-				continue;
-			}
-
-			if(!in.isSampler() && !in.isTexture())
-			{
-				continue;
-			}
-
-			defines.pushBackSprintf("#define _ANKI_%s_BINDING %u", in.m_name.cstr(), texOrSamplerBinding);
-			variant.m_bindings[in.m_idx] = I16(texOrSamplerBinding++);
-		}
-
-		defines.pushBack(" ");
-
-		if(!defines.isEmpty())
-		{
-			defines.join("\n", bindingDefines);
-		}
-	}
-
 	// Generate souce per stage
 	for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)
 	{
@@ -1378,11 +721,6 @@ Error ShaderProgramParser::generateVariant(
 		finalSource.append(header);
 		finalSource.append(mutatorDefines);
 		finalSource.append(StringAuto(m_alloc).sprintf("#define ANKI_%s 1\n", SHADER_STAGE_NAMES[shaderType].cstr()));
-		finalSource.append(activeInputs);
-		finalSource.append(pushConstantDefineSrc);
-		finalSource.append(bindingDefines);
-		finalSource.append(m_uboSource);
-		finalSource.append(m_globalsSource);
 		finalSource.append(m_codeSource);
 
 		// Move the source

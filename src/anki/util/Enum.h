@@ -130,4 +130,59 @@ inline TEnum valueToEnum(typename EnumUnderlyingType<TEnum>::Type v)
 {
 	return static_cast<TEnum>(v);
 }
+
+/// @memberof EnumIterable
+template<typename TEnum>
+class EnumIterableIterator
+{
+public:
+	using Type = typename EnumUnderlyingType<TEnum>::Type;
+
+	EnumIterableIterator(TEnum val)
+		: m_val(static_cast<Type>(val))
+	{
+	}
+
+	TEnum operator*() const
+	{
+		return static_cast<TEnum>(m_val);
+	}
+
+	void operator++()
+	{
+		++m_val;
+	}
+
+	bool operator!=(EnumIterableIterator b) const
+	{
+		return m_val != b.m_val;
+	}
+
+private:
+	Type m_val;
+};
+
+/// Allow an enum to be used in a for range loop.
+/// @code
+/// for(SomeEnum type : EnumIterable<SomeEnum>())
+/// {
+/// 	...
+/// }
+/// @endcode
+template<typename TEnum>
+class EnumIterable
+{
+public:
+	using Iterator = EnumIterableIterator<TEnum>;
+
+	static Iterator begin()
+	{
+		return Iterator(TEnum::FIRST);
+	}
+
+	static Iterator end()
+	{
+		return Iterator(TEnum::COUNT);
+	}
+};
 /// @}

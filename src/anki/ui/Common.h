@@ -10,6 +10,7 @@
 #include <imgui/imgui.h>
 
 #include <anki/util/Allocator.h>
+#include <anki/util/Ptr.h>
 
 namespace anki
 {

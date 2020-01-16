@@ -441,6 +441,12 @@ public:
 		// Don't touch the m_alloc
 	}
 
+	/// Get the allocator.
+	const GenericMemoryPoolAllocator<T>& getAllocator() const
+	{
+		return m_alloc;
+	}
+
 private:
 	GenericMemoryPoolAllocator<T> m_alloc;
 };

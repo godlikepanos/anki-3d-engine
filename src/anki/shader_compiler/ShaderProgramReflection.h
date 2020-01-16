@@ -6,22 +6,22 @@
 #pragma once
 
 #include <anki/shader_compiler/Common.h>
-#include <anki/util/String.h>
 #include <anki/gr/Enums.h>
-#include <anki/gr/utils/Functions.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
 
+// Forward
+class ShaderProgramBinaryReflection;
+
 /// @addtogroup shader_compiler
 /// @{
 
-/// Run glslang's preprocessor.
-ANKI_USE_RESULT Error preprocessGlsl(CString in, StringAuto& out);
-
-/// Compile glsl to SPIR-V.
-ANKI_USE_RESULT Error compilerGlslToSpirv(
-	CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc, DynamicArrayAuto<U8>& spirv);
+ANKI_USE_RESULT Error performSpirvReflection(ShaderProgramBinaryReflection& refl,
+	Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
+	GenericMemoryPoolAllocator<U8> tmpAlloc,
+	GenericMemoryPoolAllocator<U8> binaryAlloc);
 /// @}
 
 } // end namespace anki

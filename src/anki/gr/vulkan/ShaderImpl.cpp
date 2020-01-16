@@ -21,7 +21,7 @@ namespace anki
 class ShaderImpl::SpecConstsVector
 {
 public:
-	std::vector<spirv_cross::SpecializationConstant> m_vec;
+	spirv_cross::SmallVector<spirv_cross::SpecializationConstant> m_vec;
 };
 
 ShaderImpl::~ShaderImpl()
@@ -120,7 +120,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	}};
 	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> descriptors;
 
-	auto func = [&](const std::vector<spirv_cross::Resource>& resources, DescriptorType type) -> void {
+	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, DescriptorType type) -> void {
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;

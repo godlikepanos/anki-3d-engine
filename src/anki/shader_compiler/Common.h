@@ -20,10 +20,8 @@ namespace anki
 #define ANKI_SHADER_COMPILER_LOGW(...) ANKI_LOG("SHCO", WARNING, __VA_ARGS__)
 #define ANKI_SHADER_COMPILER_LOGF(...) ANKI_LOG("SHCO", FATAL, __VA_ARGS__)
 
-constexpr U32 MAX_SHADER_PROGRAM_INPUT_VARIABLES = 128;
 constexpr U32 MAX_SHADER_BINARY_NAME_LENGTH = 63;
 
-using ActiveProgramInputVariableMask = BitSet<MAX_SHADER_PROGRAM_INPUT_VARIABLES, U64>;
 using MutatorValue = I32; ///< The type of the mutator value
 
 /// An interface used by the ShaderProgramParser and ShaderProgramCompiler to abstract file loading.

@@ -9,7 +9,7 @@
 ANKI_TEST(ShaderCompiler, ShaderProgramCompiler)
 {
 	const CString sourceCode = R"(
-#pragma anki mutator instanceCount INSTANCE_COUNT 1 2 4 8 16 32 64
+#pragma anki mutator INSTANCE_COUNT 1 2 4 8 16 32 64
 #pragma anki mutator LOD 0 1 2
 #pragma anki mutator PASS 0 1 2 3
 #pragma anki mutator DIFFUSE_TEX 0 1
@@ -50,59 +50,60 @@ ANKI_TEST(ShaderCompiler, ShaderProgramCompiler)
 #pragma anki rewrite_mutation PASS 2 VELOCITY 1 to PASS 2 VELOCITY 0
 #pragma anki rewrite_mutation PASS 3 VELOCITY 1 to PASS 2 VELOCITY 0
 
-#pragma anki input instanced Mat4 mvp
+layout(set = 0, binding = 0) uniform ankiMaterial
+{
+	Mat4 u_ankiMvp[INSTANCE_COUNT];
+
 #if PASS == 0
-#	pragma anki input instanced Mat3 rotationMat
-#endif
-#if PASS == 0 && PARALLAX == 1
-#	pragma anki input instanced Mat4 modelViewMat
-#endif
-#if PASS == 0 && VELOCITY == 1
-#	pragma anki input instanced Mat4 prevMvp
+	Mat3 u_ankiRotationMat[INSTANCE_COUNT];
 #endif
 
-#if DIFFUSE_TEX == 0 && PASS == 0
-#	pragma anki input const Vec3 diffColor
+#if PASS == 0 && PARALLAX == 1
+	Mat4 u_ankiModelViewMat[INSTANCE_COUNT];
 #endif
-#if SPECULAR_TEX == 0 && PASS == 0
-#	pragma anki input const Vec3 specColor
+
+#if PASS == 0 && VELOCITY == 1
+	Mat4 u_ankiPrevMvp[INSTANCE_COUNT];
 #endif
-#if ROUGHNESS_TEX == 0 && PASS == 0
-#	pragma anki input const F32 roughness
-#endif
-#if METAL_TEX == 0 && PASS == 0
-#	pragma anki input const F32 metallic
-#endif
-#if EMISSIVE_TEX == 0 && PASS == 0
-#	pragma anki input const Vec3 emission
-#endif
-#if PARALLAX == 1 && PASS == 0 && LOD == 0
-#	pragma anki input const F32 heightMapScale
-#endif
+};
+
 #if PASS == 0
-#	pragma anki input const F32 subsurface
+
+#if DIFFUSE_TEX == 0
+ANKI_SPECIALIZATION_CONSTANT_VEC3(diffColor, 0, Vec3(0));
+#else
+layout(set = 0, binding = 1) uniform texture2D diffTex;
 #endif
-#pragma anki input sampler globalSampler
-#if DIFFUSE_TEX == 1 && PASS == 0
-#	pragma anki input texture2D diffTex
+
+#if SPECULAR_TEX == 0
+ANKI_SPECIALIZATION_CONSTANT_VEC3(specColor, 3, Vec3(0));
+#else
+layout(set = 0, binding = 2) uniform texture2D specTex;
 #endif
-#if SPECULAR_TEX == 1 && PASS == 0
-#	pragma anki input texture2D specTex
+
+#if ROUGHNESS_TEX == 0
+ANKI_SPECIALIZATION_CONSTANT_F32(roughness, 6, 0.0);
+#else
+layout(set = 0, binding = 3) uniform texture2D roughnessTex;
 #endif
-#if ROUGHNESS_TEX == 1 && PASS == 0
-#	pragma anki input texture2D roughnessTex
+
+#if METAL_TEX == 0
+ANKI_SPECIALIZATION_CONSTANT_F32(metallic, 7, 0.0);
+#else
+layout(set = 0, binding = 4) uniform texture2D metallicTex;
 #endif
-#if METAL_TEX == 1 && PASS == 0
-#	pragma anki input texture2D metallicTex
+
+#if EMISSIVE_TEX == 0
+ANKI_SPECIALIZATION_CONSTANT_VEC3(emission, 8, Vec3(0.0));
+#else
+layout(set = 0, binding = 5) uniform texture2D emissiveTex;
 #endif
-#if NORMAL_TEX == 1 && PASS == 0 && LOD < 2
-#	pragma anki input texture2D normalTex
+
+#if PARALLAX == 1 && LOD == 0
+ANKI_SPECIALIZATION_CONSTANT_F32(heightMapScale, 11, 0.0);
+layout(set = 0, binding = 6) uniform texture2D heightTex;
 #endif
-#if PARALLAX == 1 && PASS == 0 && LOD == 0
-#	pragma anki input texture2D heightTex
-#endif
-#if EMISSIVE_TEX == 1 && PASS == 0
-#	pragma anki input texture2D emissiveTex
+
 #endif
 
 #pragma anki start vert
@@ -150,7 +151,9 @@ void main()
 	ShaderProgramBinaryWrapper binary(alloc);
 	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", fsystem, alloc, 128, 1, 1, GpuVendor::AMD, binary));
 
-	/*StringAuto dis(alloc);
+#if 0
+	StringAuto dis(alloc);
 	disassembleShaderProgramBinary(binary.getBinary(), dis);
-	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());*/
+	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
+#endif
 }
