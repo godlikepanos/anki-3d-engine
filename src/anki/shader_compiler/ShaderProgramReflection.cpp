@@ -583,8 +583,6 @@ Error SpirvReflector::performSpirvReflection(ShaderProgramBinaryReflection& refl
 
 		// Spec consts
 		ANKI_CHECK(compiler.constsReflection(specializationConstants));
-
-		// TODO
 	}
 
 	ShaderProgramBinaryBlock* firstBlock;
