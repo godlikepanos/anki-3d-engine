@@ -131,7 +131,15 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 					return Error::USER_DATA;
 				}
 
-				var.m_blockInfo.m_arraySize = I16(memberType.array[0]);
+				const Bool specConstantArray = memberType.array_size_literal[0];
+				if(specConstantArray)
+				{
+					var.m_blockInfo.m_arraySize = I16(memberType.array[0]);
+				}
+				else
+				{
+					var.m_blockInfo.m_arraySize = 1;
+				}
 			}
 			else
 			{
@@ -139,7 +147,11 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 			}
 		}
 
-		// TODO stride
+		// Array stride
+		if(has_decoration(type.member_types[i], spv::DecorationArrayStride))
+		{
+			var.m_blockInfo.m_arrayStride = I16(get_decoration(type.member_types[i], spv::DecorationArrayStride));
+		}
 
 		// Type
 		auto func = [&](const Array<ShaderVariableDataType, 3>& arr) {

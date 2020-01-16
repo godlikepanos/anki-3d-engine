@@ -96,7 +96,7 @@ void main()
 	ShaderProgramBinaryWrapper binary(alloc);
 	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", fsystem, alloc, 128, 1, 1, GpuVendor::AMD, binary));
 
-#if 1
+#if 0
 	StringAuto dis(alloc);
 	disassembleShaderProgramBinary(binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());

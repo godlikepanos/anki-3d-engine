@@ -422,8 +422,7 @@ static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListAu
 
 	for(const ShaderProgramBinaryVariable& var : block.m_variables)
 	{
-		lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB ANKI_TAB
-			"%-28s type: %8s active: %4s blockInfo: %d,%d,%d,%d\n",
+		lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB ANKI_TAB "%-28s type %8s active %4s blockInfo %d,%d,%d,%d\n",
 			var.m_name.getBegin(),
 			shaderVariableDataTypeToString(var.m_type).cstr(),
 			var.m_active ? "true" : "false",
@@ -511,7 +510,7 @@ void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAut
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Opaque\n");
 			for(const ShaderProgramBinaryOpaque& o : variant.m_reflection.m_opaques)
 			{
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u type %8s arraySize %4u\n",
+				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u type %12s arraySize %4u\n",
 					o.m_name.getBegin(),
 					o.m_set,
 					o.m_binding,
