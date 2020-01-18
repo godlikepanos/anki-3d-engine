@@ -1051,6 +1051,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 
 	Vec3 color(light.color[0], light.color[1], light.color[2]);
 	color *= light.intensity;
+	color /= 100.0f; // Blender changed something
 	ANKI_CHECK(
 		m_sceneFile.writeText("lcomp:setDiffuseColor(Vec4.new(%f, %f, %f, 1))\n", color.x(), color.y(), color.z()));
 
@@ -1076,8 +1077,29 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 	{
 		ANKI_CHECK(m_sceneFile.writeText(
 			"lcomp:setDistance(%f)\n", (light.range > 0.0f) ? light.range : computeLightRadius(color)));
-		ANKI_CHECK(m_sceneFile.writeText("lcomp:setOuterAngle(%f)\n", light.spot_outer_cone_angle * 2.0f));
-		ANKI_CHECK(m_sceneFile.writeText("lcomp:setInnerAngle(%f)\n", light.spot_inner_cone_angle * 2.0f));
+
+		const F32 outer = light.spot_outer_cone_angle * 2.0f;
+		ANKI_CHECK(m_sceneFile.writeText("lcomp:setOuterAngle(%f)\n", outer));
+
+		auto angStr = extras.find("inner_cone_angle_factor");
+		F32 inner;
+		if(angStr != extras.getEnd())
+		{
+			F32 factor;
+			ANKI_CHECK(angStr->toNumber(factor));
+			inner = light.spot_inner_cone_angle * 2.0f * min(1.0f, factor);
+		}
+		else
+		{
+			inner = light.spot_inner_cone_angle * 2.0f;
+		}
+
+		if(inner >= 0.95f * outer)
+		{
+			inner = 0.75f * outer;
+		}
+
+		ANKI_CHECK(m_sceneFile.writeText("lcomp:setInnerAngle(%f)\n", inner));
 	}
 
 	auto lensFlaresFname = extras.find("lens_flare");
