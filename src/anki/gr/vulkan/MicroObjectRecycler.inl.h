@@ -62,21 +62,14 @@ inline T* MicroObjectRecycler<T>::findToReuse()
 			if(!m_objects[count]->getFence())
 			{
 				out = m_objects[count];
-
-				// Pop it
-				for(U32 i = count; i < m_objectCount - 1; ++i)
-				{
-					m_objects[i] = m_objects[i + 1];
-				}
-
+				m_objects[count] = m_objects[m_objectCount - 1];
 				--m_objectCount;
-
 				break;
 			}
 		}
-
-		ANKI_ASSERT(out->getRefcount().getNonAtomically() == 0);
 	}
+
+	ANKI_ASSERT(out == nullptr || out->getRefcount().getNonAtomically() == 0);
 
 #if ANKI_EXTRA_CHECKS
 	if(out == nullptr)
