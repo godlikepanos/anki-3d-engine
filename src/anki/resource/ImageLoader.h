@@ -49,7 +49,6 @@ class ImageLoaderSurface
 public:
 	U32 m_width;
 	U32 m_height;
-	U32 m_mipLevel;
 	DynamicArray<U8> m_data;
 };
 
@@ -61,7 +60,6 @@ public:
 	U32 m_width;
 	U32 m_height;
 	U32 m_depth;
-	U32 m_mipLevel;
 	DynamicArray<U8> m_data;
 };
 
@@ -148,7 +146,7 @@ private:
 
 	DynamicArray<ImageLoaderVolume> m_volumes;
 
-	U8 m_mipCount = 0;
+	U32 m_mipCount = 0;
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0;
@@ -193,7 +191,7 @@ private:
 		U32& height,
 		U32& depth,
 		U32& layerCount,
-		U8& toLoadMipCount,
+		U32& mipCount,
 		ImageLoaderTextureType& textureType,
 		ImageLoaderColorFormat& colorFormat);
 
