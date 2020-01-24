@@ -13,8 +13,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_avgObjectsPerCluster, 16, 16, 256)
-
 /// Get a view space point.
 static Vec4 unproject(const F32 zVspace, const Vec2& ndc, const Vec4& unprojParams)
 {

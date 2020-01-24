@@ -16,11 +16,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_probeReflectionResolution, 128, 4, 2048)
-ANKI_REGISTER_CONFIG_OPTION(r_probeReflectionIrradianceResolution, 16, 4, 2048)
-ANKI_REGISTER_CONFIG_OPTION(r_probeRefectionlMaxSimultaneousProbeCount, 32, 4, 256)
-ANKI_REGISTER_CONFIG_OPTION(r_probeReflectionShadowMapResolution, 64, 4, 2048)
-
 ProbeReflections::ProbeReflections(Renderer* r)
 	: RendererObject(r)
 	, m_lightShading(r)

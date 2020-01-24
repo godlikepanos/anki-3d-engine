@@ -36,13 +36,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_lodDistance0, 20.0, 1.0, MAX_F64, "Distance that will be used to calculate the LOD 0")
-ANKI_REGISTER_CONFIG_OPTION(r_lodDistance1, 40.0, 2.0, MAX_F64, "Distance that will be used to calculate the LOD 1")
-ANKI_REGISTER_CONFIG_OPTION(r_clusterSizeX, 32, 1, 256)
-ANKI_REGISTER_CONFIG_OPTION(r_clusterSizeY, 26, 1, 256)
-ANKI_REGISTER_CONFIG_OPTION(r_clusterSizeZ, 32, 1, 256)
-ANKI_REGISTER_CONFIG_OPTION(r_textureAnisotropy, 8, 1, 16)
-
 Renderer::Renderer()
 	: m_sceneDrawer(this)
 {

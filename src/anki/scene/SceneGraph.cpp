@@ -19,13 +19,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(
-	scene_earlyZDistance, 10.0, 0.0, MAX_F64, "Objects with distance lower than that will be used in early Z")
-ANKI_REGISTER_CONFIG_OPTION(
-	scene_reflectionProbeEffectiveDistance, 256.0, 1.0, MAX_F64, "How far reflection probes can look")
-ANKI_REGISTER_CONFIG_OPTION(
-	scene_reflectionProbeShadowEffectiveDistance, 32.0, 1.0, MAX_F64, "How far to render shadows for reflection probes")
-
 const U NODE_UPDATE_BATCH = 10;
 
 class SceneGraph::UpdateSceneNodesCtx

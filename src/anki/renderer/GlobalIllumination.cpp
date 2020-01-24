@@ -14,11 +14,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_giTileResolution, 32, 4, 2048)
-ANKI_REGISTER_CONFIG_OPTION(r_giShadowMapResolution, 128, 4, 2048)
-ANKI_REGISTER_CONFIG_OPTION(r_giMaxCachedProbes, 16, 4, 2048)
-ANKI_REGISTER_CONFIG_OPTION(r_giMaxVisibleProbes, 8, 1, 256)
-
 /// Given a cell index compute its world position.
 static Vec3 computeProbeCellPosition(U32 cellIdx, const GlobalIlluminationProbeQueueElement& probe)
 {

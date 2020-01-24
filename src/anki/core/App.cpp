@@ -34,13 +34,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(width, 1280, 16, 16 * 1024, "Width")
-ANKI_REGISTER_CONFIG_OPTION(height, 768, 16, 16 * 1024, "Height")
-ANKI_REGISTER_CONFIG_OPTION(core_mainThreadCount, max(2u, getCpuCoresCount() / 2u), 2u, 1024u)
-ANKI_REGISTER_CONFIG_OPTION(core_displayStats, 0, 0, 1)
-ANKI_REGISTER_CONFIG_OPTION(core_clearCaches, 0, 0, 1)
-ANKI_REGISTER_CONFIG_OPTION(window_fullscreen, 0, 0, 1)
-
 #if ANKI_OS_ANDROID
 /// The one and only android hack
 android_app* gAndroidApp = nullptr;

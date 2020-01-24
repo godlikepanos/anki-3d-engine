@@ -23,12 +23,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(rsrc_maxTextureSize, 1024u * 1024u, 4u, MAX_U32)
-ANKI_REGISTER_CONFIG_OPTION(rsrc_dumpShaderSources, 0, 0, 1)
-ANKI_REGISTER_CONFIG_OPTION(
-	rsrc_dataPaths, ".", "The engine loads assets only in from these paths. Separate them with :")
-ANKI_REGISTER_CONFIG_OPTION(rsrc_transferScratchMemorySize, 256_MB, 1_MB, 4_GB)
-
 ResourceManager::ResourceManager()
 {
 }

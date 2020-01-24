@@ -13,17 +13,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingTileResolution, 128, 16, 2048)
-ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingTileCountPerRowOrColumn, 16, 1, 256)
-ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingScratchTileCountX,
-	4 * (MAX_SHADOW_CASCADES + 2),
-	1u,
-	256u,
-	"Number of tiles of the scratch buffer in X")
-ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingScratchTileCountY, 4, 1, 256, "Number of tiles of the scratch buffer in Y")
-ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingLightLodDistance0, 10.0, 1.0, MAX_F64)
-ANKI_REGISTER_CONFIG_OPTION(r_shadowMappingLightLodDistance1, 20.0, 2.0, MAX_F64)
-
 class ShadowMapping::Scratch::WorkItem
 {
 public:

@@ -13,9 +13,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_bloomThreshold, 2.5, 0.0, 256.0)
-ANKI_REGISTER_CONFIG_OPTION(r_bloomScale, 2.5, 0.0, 256.0)
-
 Bloom::Bloom(Renderer* r)
 	: RendererObject(r)
 {

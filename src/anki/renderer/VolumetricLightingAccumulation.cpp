@@ -13,10 +13,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_volumetricLightingAccumulationClusterFractionXY, 4, 1, 16)
-ANKI_REGISTER_CONFIG_OPTION(r_volumetricLightingAccumulationClusterFractionZ, 4, 1, 16)
-ANKI_REGISTER_CONFIG_OPTION(r_volumetricLightingAccumulationFinalClusterInZ, 26, 1, 256)
-
 VolumetricLightingAccumulation::VolumetricLightingAccumulation(Renderer* r)
 	: RendererObject(r)
 {

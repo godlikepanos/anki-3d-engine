@@ -11,11 +11,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(core_uniformPerFrameMemorySize, 16_MB, 1_MB, 1_GB)
-ANKI_REGISTER_CONFIG_OPTION(core_storagePerFrameMemorySize, 16_MB, 1_MB, 1_GB)
-ANKI_REGISTER_CONFIG_OPTION(core_vertexPerFrameMemorySize, 10_MB, 1_MB, 1_GB)
-ANKI_REGISTER_CONFIG_OPTION(core_textureBufferPerFrameMemorySize, 1_MB, 1_MB, 1_GB)
-
 StagingGpuMemoryManager::~StagingGpuMemoryManager()
 {
 	m_gr->finish();

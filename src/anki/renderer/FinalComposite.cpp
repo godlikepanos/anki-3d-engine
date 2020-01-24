@@ -21,8 +21,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_motionBlurSamples, 32, 1, 2048)
-
 FinalComposite::FinalComposite(Renderer* r)
 	: RendererObject(r)
 {

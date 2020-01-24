@@ -18,8 +18,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_dbgEnabled, 0, 0, 1)
-
 Dbg::Dbg(Renderer* r)
 	: RendererObject(r)
 {

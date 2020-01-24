@@ -15,9 +15,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_ssrMaxSteps, 64, 1, 2048)
-ANKI_REGISTER_CONFIG_OPTION(r_ssrHistoryBlendFactor, 0.3, 0.0, MAX_F64)
-
 Ssr::~Ssr()
 {
 }

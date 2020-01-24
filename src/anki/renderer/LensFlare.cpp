@@ -14,9 +14,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_lensFlareMaxSpritesPerFlare, 8, 4, 256)
-ANKI_REGISTER_CONFIG_OPTION(r_lensFlareMaxFlares, 16, 8, 256)
-
 LensFlare::~LensFlare()
 {
 }

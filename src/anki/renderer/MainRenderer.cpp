@@ -20,8 +20,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(r_renderingQuality, 1.0, 0.5, 1.0, "A factor over the requested renderingresolution")
-
 MainRenderer::MainRenderer()
 {
 }

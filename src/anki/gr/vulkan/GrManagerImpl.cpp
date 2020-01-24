@@ -16,13 +16,6 @@
 namespace anki
 {
 
-ANKI_REGISTER_CONFIG_OPTION(gr_debugContext, 0, 0, 1)
-ANKI_REGISTER_CONFIG_OPTION(gr_vsync, 0, 0, 1)
-ANKI_REGISTER_CONFIG_OPTION(gr_debugMarkers, 0, 0, 1)
-ANKI_REGISTER_CONFIG_OPTION(gr_diskShaderCacheMaxSize, 128_MB, 1_MB, 1_GB)
-ANKI_REGISTER_CONFIG_OPTION(gr_vkminor, 1, 1, 1)
-ANKI_REGISTER_CONFIG_OPTION(gr_vkmajor, 1, 1, 1)
-
 GrManagerImpl::~GrManagerImpl()
 {
 	// FIRST THING: wait for the GPU

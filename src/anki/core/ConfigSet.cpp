@@ -8,6 +8,10 @@
 #include <anki/util/Logger.h>
 #include <anki/util/File.h>
 
+// Used by the config options
+#include <anki/util/System.h>
+#include <anki/renderer/ClusterBin.h>
+
 namespace anki
 {
 
@@ -59,6 +63,14 @@ public:
 ConfigSet::ConfigSet()
 {
 	m_alloc = HeapAllocator<U8>(allocAligned, nullptr);
+
+#define ANKI_CONFIG_OPTION(name, ...) newOption(ANKI_STRINGIZE(name), __VA_ARGS__);
+#include <anki/core/ConfigDefs.h>
+#include <anki/resource/ConfigDefs.h>
+#include <anki/renderer/ConfigDefs.h>
+#include <anki/scene/ConfigDefs.h>
+#include <anki/gr/ConfigDefs.h>
+#undef ANKI_CONFIG_OPTION
 }
 
 ConfigSet::~ConfigSet()
@@ -181,39 +193,35 @@ void ConfigSet::newOptionInternal(CString optionName, U64 value, U64 minValue, U
 
 void ConfigSet::set(CString optionName, CString value)
 {
-	Option* o = tryFind(optionName);
-	ANKI_ASSERT(o);
-	ANKI_ASSERT(o->m_type == Option::STRING);
-	o->m_str.destroy(m_alloc);
-	o->m_str.create(m_alloc, value);
+	Option& o = find(optionName);
+	ANKI_ASSERT(o.m_type == Option::STRING);
+	o.m_str.destroy(m_alloc);
+	o.m_str.create(m_alloc, value);
 }
 
 void ConfigSet::setInternal(CString optionName, F64 value)
 {
-	Option* o = tryFind(optionName);
-	ANKI_ASSERT(o);
-	ANKI_ASSERT(o->m_type == Option::FLOAT);
-	ANKI_ASSERT(value >= o->m_minFloat);
-	ANKI_ASSERT(value <= o->m_maxFloat);
-	o->m_float = value;
+	Option& o = find(optionName);
+	ANKI_ASSERT(o.m_type == Option::FLOAT);
+	ANKI_ASSERT(value >= o.m_minFloat);
+	ANKI_ASSERT(value <= o.m_maxFloat);
+	o.m_float = value;
 }
 
 void ConfigSet::setInternal(CString optionName, U64 value)
 {
-	Option* o = tryFind(optionName);
-	ANKI_ASSERT(o);
-	ANKI_ASSERT(o->m_type == Option::UNSIGNED);
-	ANKI_ASSERT(value >= o->m_minUnsigned);
-	ANKI_ASSERT(value <= o->m_maxUnsigned);
-	o->m_unsigned = value;
+	Option& o = find(optionName);
+	ANKI_ASSERT(o.m_type == Option::UNSIGNED);
+	ANKI_ASSERT(value >= o.m_minUnsigned);
+	ANKI_ASSERT(value <= o.m_maxUnsigned);
+	o.m_unsigned = value;
 }
 
 F64 ConfigSet::getNumberF64(CString optionName) const
 {
-	const Option* option = tryFind(optionName);
-	ANKI_ASSERT(option);
-	ANKI_ASSERT(option->m_type == Option::FLOAT);
-	return option->m_float;
+	const Option& option = find(optionName);
+	ANKI_ASSERT(option.m_type == Option::FLOAT);
+	return option.m_float;
 }
 
 F32 ConfigSet::getNumberF32(CString optionName) const
@@ -223,10 +231,9 @@ F32 ConfigSet::getNumberF32(CString optionName) const
 
 U64 ConfigSet::getNumberU64(CString optionName) const
 {
-	const Option* option = tryFind(optionName);
-	ANKI_ASSERT(option);
-	ANKI_ASSERT(option->m_type == Option::UNSIGNED);
-	return option->m_unsigned;
+	const Option& option = find(optionName);
+	ANKI_ASSERT(option.m_type == Option::UNSIGNED);
+	return option.m_unsigned;
 }
 
 U32 ConfigSet::getNumberU32(CString optionName) const
@@ -271,10 +278,9 @@ Bool ConfigSet::getBool(CString optionName) const
 
 CString ConfigSet::getString(CString optionName) const
 {
-	const Option* o = tryFind(optionName);
-	ANKI_ASSERT(o);
-	ANKI_ASSERT(o->m_type == Option::STRING);
-	return o->m_str.toCString();
+	const Option& o = find(optionName);
+	ANKI_ASSERT(o.m_type == Option::STRING);
+	return o.m_str.toCString();
 }
 
 Error ConfigSet::loadFromFile(CString filename)
