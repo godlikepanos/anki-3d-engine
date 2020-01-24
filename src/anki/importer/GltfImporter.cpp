@@ -1027,7 +1027,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 	ANKI_GLTF_LOGI("Importing light %s", nodeName.cstr());
 
 	HashMapAuto<CString, StringAuto> extras(parentExtras);
-	ANKI_CHECK(getExtras(node.extras, extras));
+	ANKI_CHECK(getExtras(light.extras, extras));
 
 	CString lightTypeStr;
 	switch(light.type)
@@ -1138,7 +1138,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 		}
 	}
 
-	auto lightEventIntensity = extras.find("lens_flare");
+	auto lightEventIntensity = extras.find("light_event_intensity");
 	auto lightEventFrequency = extras.find("light_event_frequency");
 	if(lightEventIntensity != extras.getEnd() || lightEventFrequency != extras.getEnd())
 	{
