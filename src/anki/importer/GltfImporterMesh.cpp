@@ -368,7 +368,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 
 		aabbMin = aabbMin.min(submesh.m_aabbMin);
 		// Bump aabbMax a bit
-		submesh.m_aabbMax += EPSILON + 10.0f;
+		submesh.m_aabbMax += EPSILON * 10.0f;
 		aabbMax = aabbMax.max(submesh.m_aabbMax);
 
 		//

@@ -217,6 +217,12 @@ Error GltfImporter::writeAll()
 	}
 
 	// Check error
+	if(err)
+	{
+		ANKI_GLTF_LOGE("Error happened in main thread");
+		return err;
+	}
+
 	const Error threadErr = m_errorInThread.load();
 	if(threadErr)
 	{
@@ -764,10 +770,12 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh, CString skinName)
 		ANKI_CHECK(file.writeText("\t\t\t<mesh2>%s%s.ankimesh</mesh2>\n", m_rpath.cstr(), name.cstr()));
 	}
 
-	auto mtlOverride = extras.find("material_override");
-	if(mtlOverride != extras.getEnd())
+	HashMapAuto<CString, StringAuto> materialExtras(m_alloc);
+	ANKI_CHECK(getExtras(mesh.primitives[0].material->extras, materialExtras));
+	auto mtlOverride = materialExtras.find("material_override");
+	if(mtlOverride != materialExtras.getEnd())
 	{
-		ANKI_CHECK(file.writeText("\t\t\t<material>%s%s</material>\n", m_rpath.cstr(), mtlOverride->cstr()));
+		ANKI_CHECK(file.writeText("\t\t\t<material>%s</material>\n", mtlOverride->cstr()));
 	}
 	else
 	{
