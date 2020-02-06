@@ -2,9 +2,9 @@ set(SOURCES Assert.cpp Functions.cpp File.cpp Filesystem.cpp Memory.cpp System.c
 	ThreadHive.cpp Hash.cpp Logger.cpp String.cpp StringList.cpp Tracer.cpp Serializer.cpp Xml.cpp)
 
 if(LINUX OR ANDROID OR MACOS)
-	set(SOURCES ${SOURCES} HighRezTimerPosix.cpp FilesystemPosix.cpp ThreadPosix.cpp)
+	set(SOURCES ${SOURCES} HighRezTimerPosix.cpp FilesystemPosix.cpp ThreadPosix.cpp ProcessPosix.cpp)
 else()
-	set(SOURCES ${SOURCES} HighRezTimerWindows.cpp FilesystemWindows.cpp ThreadWindows.cpp)
+	set(SOURCES ${SOURCES} HighRezTimerWindows.cpp FilesystemWindows.cpp ThreadWindows.cpp ProcessWindows.cpp)
 endif()
 
 if(LINUX)

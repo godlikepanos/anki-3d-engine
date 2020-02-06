@@ -489,7 +489,7 @@ public:
 	{
 		auto size = m_data.getSize();
 		auto out = (size != 0) ? (size - 1) : 0;
-		ANKI_ASSERT(std::strlen(&m_data[0]) == out);
+		ANKI_ASSERT(size == 0 || std::strlen(&m_data[0]) == out);
 		return out;
 	}
 

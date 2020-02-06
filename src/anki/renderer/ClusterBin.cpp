@@ -803,7 +803,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			out.m_aabbMin = in.m_aabbMin;
 			out.m_aabbMax = in.m_aabbMax;
 			out.m_textureIndex = U32(&in - &rqueue.m_giProbes.getFront());
-			out.m_halfTexelSizeU = 1.0f / F32(in.m_cellCounts.x() * 6.0f) / 2.0f;
+			out.m_halfTexelSizeU = 1.0f / F32(F32(in.m_cellCounts.x()) * 6.0f) / 2.0f;
 			out.m_fadeDistance = in.m_fadeDistance;
 		}
 	}

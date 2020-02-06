@@ -147,11 +147,6 @@ public:
 	ANKI_ARRAY_SIZE_METHOD(U64, N > MAX_U32)
 #undef ANKI_ARRAY_SIZE_METHOD
 
-	static constexpr PtrSize getSize()
-	{
-		return N;
-	}
-
 	/// Make it compatible with STL
 	static constexpr size_t size()
 	{
