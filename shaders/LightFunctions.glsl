@@ -10,11 +10,63 @@
 #include <shaders/Functions.glsl>
 #include <shaders/Pack.glsl>
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
+#include <shaders/glsl_cpp_common/Evsm.h>
 
-const U32 SHADOW_SAMPLE_COUNT = 16;
-#if !defined(ESM_CONSTANT)
-const F32 ESM_CONSTANT = 40.0;
+// Do some EVSM magic with depth
+Vec2 evsmProcessDepth(F32 depth)
+{
+	depth = 2.0 * depth - 1.0;
+	const F32 pos = exp(EVSM_POSITIVE_CONSTANT * depth);
+	const F32 neg = -exp(EVSM_NEGATIVE_CONSTANT * depth);
+	return Vec2(pos, neg);
+}
+
+F32 linstep(F32 a, F32 b, F32 v)
+{
+	return saturate((v - a) / (b - a));
+}
+
+// Reduces VSM light bleedning
+F32 reduceLightBleeding(F32 pMax, F32 amount)
+{
+	// Remove the [0, amount] tail and linearly rescale (amount, 1].
+	return linstep(amount, 1.0, pMax);
+}
+
+F32 chebyshevUpperBound(Vec2 moments, F32 mean, F32 minVariance, F32 lightBleedingReduction)
+{
+	// Compute variance
+	F32 variance = moments.y - (moments.x * moments.x);
+	variance = max(variance, minVariance);
+
+	// Compute probabilistic upper bound
+	const F32 d = mean - moments.x;
+	F32 pMax = variance / (variance + (d * d));
+
+	pMax = reduceLightBleeding(pMax, lightBleedingReduction);
+
+	// One-tailed Chebyshev
+	return (mean <= moments.x) ? 1.0 : pMax;
+}
+
+// Compute the shadow factor of EVSM given the 2 depths
+F32 evsmComputeShadowFactor(F32 occluderDepth, Vec4 shadowMapMoments)
+{
+	const Vec2 evsmOccluderDepths = evsmProcessDepth(occluderDepth);
+	const Vec2 depthScale =
+		EVSM_BIAS * 0.01 * Vec2(EVSM_POSITIVE_CONSTANT, EVSM_NEGATIVE_CONSTANT) * evsmOccluderDepths;
+	const Vec2 minVariance = depthScale * depthScale;
+
+#if !ANKI_EVSM4
+	return chebyshevUpperBound(shadowMapMoments.xy, evsmOccluderDepths.x, minVariance.x, EVSM_LIGHT_BLEEDING_REDUCTION);
+#else
+	const F32 pos =
+		chebyshevUpperBound(shadowMapMoments.xy, evsmOccluderDepths.x, minVariance.x, EVSM_LIGHT_BLEEDING_REDUCTION);
+	const F32 neg =
+		chebyshevUpperBound(shadowMapMoments.zw, evsmOccluderDepths.y, minVariance.y, EVSM_LIGHT_BLEEDING_REDUCTION);
+	return min(pos, neg);
 #endif
+}
 
 // Fresnel term unreal
 // specular: The specular color aka F0
@@ -116,14 +168,9 @@ F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotM
 	const Vec4 texCoords4 = light.m_texProjectionMat * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-	const F32 near = LIGHT_FRUSTUM_NEAR_PLANE;
-	const F32 far = light.m_radius;
+	const Vec4 shadowMoments = textureLod(spotMap, spotMapSampler, texCoords3.xy, 0.0);
 
-	const F32 linearDepth = linearizeDepth(texCoords3.z, near, far);
-
-	const F32 shadowFactor = textureLod(spotMap, spotMapSampler, texCoords3.xy, 0.0).r;
-
-	return saturate(exp(ESM_CONSTANT * (shadowFactor - linearDepth)));
+	return evsmComputeShadowFactor(texCoords3.z, shadowMoments);
 }
 
 // Compute the shadow factor of point (omni) lights.
@@ -133,31 +180,40 @@ F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D s
 	const Vec3 dirabs = abs(dir);
 	const F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z));
 
+	// 1) Project the dist to light's proj mat
+	//
 	const F32 near = LIGHT_FRUSTUM_NEAR_PLANE;
 	const F32 far = light.m_radius;
+	const F32 g = near - far;
 
-	const F32 linearDepth = (dist - near) / (far - near);
+	const F32 zVSpace = -dist;
+	const F32 w = -zVSpace;
+	F32 z = (far * zVSpace + far * near) / g;
+	z /= w;
 
-	// Read tex
-	F32 shadowFactor;
-	{
-		// Convert cube coords
-		U32 faceIdxu;
-		Vec2 uv = convertCubeUvsu(dir, faceIdxu);
+	// 2) Read shadow tex
+	//
 
-		// Get the atlas offset
-		Vec2 atlasOffset;
-		atlasOffset.x = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][(faceIdxu & 1u) << 1u];
-		atlasOffset.y = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][((faceIdxu & 1u) << 1u) + 1u];
+	// Convert cube coords
+	U32 faceIdxu;
+	Vec2 uv = convertCubeUvsu(dir, faceIdxu);
 
-		// Compute UV
-		uv = fma(uv, Vec2(light.m_shadowAtlasTileScale), atlasOffset);
+	// Get the atlas offset
+	Vec2 atlasOffset;
+	atlasOffset.x = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][(faceIdxu & 1u) << 1u];
+	atlasOffset.y = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][((faceIdxu & 1u) << 1u) + 1u];
 
-		// Sample
-		shadowFactor = textureLod(shadowMap, shadowMapSampler, uv, 0.0).r;
-	}
+	// Compute UV
+	uv = fma(uv, Vec2(light.m_shadowAtlasTileScale), atlasOffset);
 
-	return saturate(exp(ESM_CONSTANT * (shadowFactor - linearDepth)));
+	// Sample
+	const Vec4 shadowMoments = textureLod(shadowMap, shadowMapSampler, uv, 0.0);
+
+	// 3) Compare
+	//
+	const F32 shadowFactor = evsmComputeShadowFactor(z, shadowMoments);
+
+	return shadowFactor;
 }
 
 // Compute the shadow factor of a directional light
@@ -188,12 +244,9 @@ F32 computeShadowFactorDirLight(
 	const Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-	const F32 cascadeLinearDepth = texCoords3.z;
+	const Vec4 shadowMoments = textureLod(shadowMap, shadowMapSampler, texCoords3.xy, 0.0);
 
-	F32 shadowFactor = textureLod(shadowMap, shadowMapSampler, texCoords3.xy, 0.0).r;
-	shadowFactor = saturate(exp(ESM_CONSTANT * 3.0 * (shadowFactor - cascadeLinearDepth)));
-
-	return shadowFactor;
+	return evsmComputeShadowFactor(texCoords3.z, shadowMoments);
 }
 
 // Compute the shadow factor of a directional light

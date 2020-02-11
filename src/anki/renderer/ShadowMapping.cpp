@@ -36,10 +36,7 @@ class ShadowMapping::Atlas::ResolveWorkItem
 public:
 	Vec4 m_uvIn; ///< UV + size that point to the scratch buffer.
 	Array<U32, 4> m_viewportOut; ///< Viewport in the atlas RT.
-	F32 m_cameraNear;
-	F32 m_cameraFar;
 	Bool m_blur;
-	Bool m_perspectiveProjection;
 };
 
 ShadowMapping::~ShadowMapping()
@@ -164,29 +161,19 @@ void ShadowMapping::runAtlas(RenderPassWorkContext& rgraphCtx)
 
 		struct Uniforms
 		{
+			UVec4 m_viewport;
 			Vec2 m_uvScale;
 			Vec2 m_uvTranslation;
-			F32 m_near;
-			F32 m_far;
-			U32 m_renderingTechnique;
-			U32 m_padding;
-			UVec4 m_viewport;
+			U32 m_blur;
+			U32 m_padding0;
+			U32 m_padding1;
+			U32 m_padding2;
 		} unis;
 		unis.m_uvScale = workItem.m_uvIn.zw();
 		unis.m_uvTranslation = workItem.m_uvIn.xy();
-		unis.m_near = workItem.m_cameraNear;
-		unis.m_far = workItem.m_cameraFar;
 		unis.m_viewport = UVec4(
 			workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
-
-		if(workItem.m_perspectiveProjection)
-		{
-			unis.m_renderingTechnique = (workItem.m_blur) ? 0 : 1;
-		}
-		else
-		{
-			unis.m_renderingTechnique = (workItem.m_blur) ? 2 : 3;
-		}
+		unis.m_blur = workItem.m_blur;
 
 		cmdb->setPushConstants(&unis, sizeof(unis));
 
@@ -571,7 +558,6 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 					newScratchAndAtlasResloveRenderWorkItems(atlasViewports[activeCascades],
 						scratchViewports[activeCascades],
 						blurAtlass[activeCascades],
-						false,
 						light.m_shadowRenderQueues[cascade],
 						lightsToRender,
 						atlasWorkItems,
@@ -673,7 +659,6 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 						newScratchAndAtlasResloveRenderWorkItems(atlasViewport,
 							scratchViewport,
 							blurAtlas,
-							true,
 							light->m_shadowRenderQueues[face],
 							lightsToRender,
 							atlasWorkItems,
@@ -740,7 +725,6 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 				newScratchAndAtlasResloveRenderWorkItems(atlasViewport,
 					scratchViewport,
 					blurAtlas,
-					true,
 					light->m_shadowRenderQueue,
 					lightsToRender,
 					atlasWorkItems,
@@ -831,7 +815,6 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 void ShadowMapping::newScratchAndAtlasResloveRenderWorkItems(const Viewport& atlasViewport,
 	const Viewport& scratchVewport,
 	Bool blurAtlas,
-	Bool perspectiveProjection,
 	RenderQueue* lightRenderQueue,
 	DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
 	DynamicArrayAuto<Atlas::ResolveWorkItem>& atlasResolveWorkItem,
@@ -857,12 +840,7 @@ void ShadowMapping::newScratchAndAtlasResloveRenderWorkItems(const Viewport& atl
 		atlasItem.m_uvIn[3] = F32(scratchVewport[3]) / scratchAtlasHeight;
 
 		atlasItem.m_viewportOut = atlasViewport;
-
-		atlasItem.m_cameraFar = lightRenderQueue->m_cameraFar;
-		atlasItem.m_cameraNear = lightRenderQueue->m_cameraNear;
-
 		atlasItem.m_blur = blurAtlas;
-		atlasItem.m_perspectiveProjection = perspectiveProjection;
 
 		atlasResolveWorkItem.emplaceBack(atlasItem);
 	}

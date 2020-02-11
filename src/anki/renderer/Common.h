@@ -8,6 +8,7 @@
 #include <anki/Gr.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/util/Ptr.h>
+#include <shaders/glsl_cpp_common/Evsm.h>
 
 namespace anki
 {
@@ -108,7 +109,11 @@ constexpr Format FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::R16G16B
 constexpr Format DBG_COLOR_ATTACHMENT_PIXEL_FORMAT = Format::R8G8B8A8_UNORM;
 
 constexpr Format SHADOW_DEPTH_PIXEL_FORMAT = Format::D32_SFLOAT;
-constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R16_UNORM;
+#if ANKI_EVSM4
+constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32B32A32_SFLOAT;
+#else
+constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32_SFLOAT;
+#endif
 
 /// A convenience function to find empty cache entries. Used for various probes.
 template<typename THashMap, typename TCacheEntryArray, typename TAlloc>

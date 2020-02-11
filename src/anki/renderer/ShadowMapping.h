@@ -126,7 +126,6 @@ private:
 	void newScratchAndAtlasResloveRenderWorkItems(const Viewport& atlasViewport,
 		const Viewport& scratchVewport,
 		Bool blurAtlas,
-		Bool perspectiveProjection,
 		RenderQueue* lightRenderQueue,
 		DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
 		DynamicArrayAuto<Atlas::ResolveWorkItem>& atlasResolveWorkItem,
