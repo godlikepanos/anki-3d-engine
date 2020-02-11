@@ -10,7 +10,7 @@
 namespace anki
 {
 
-thread_local std::mt19937 g_randromGenerator(U64(HighRezTimer::getCurrentTime() * 1000000.0));
+thread_local std::mt19937_64 g_randromGenerator(U64(HighRezTimer::getCurrentTime() * 1000000.0));
 
 U64 getRandom()
 {
