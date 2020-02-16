@@ -107,10 +107,8 @@ F32 V_Schlick(F32 roughness, F32 NoV, F32 NoL)
 
 Vec3 envBRDF(Vec3 specular, F32 roughness, texture2D integrationLut, sampler integrationLutSampler, F32 NoV)
 {
-	const F32 a = roughness * roughness;
-	const F32 a2 = a * a;
-	const Vec2 envBRDF = textureLod(integrationLut, integrationLutSampler, Vec2(a2, NoV), 0.0).xy;
-	return specular * envBRDF.x + /*min(1.0, 50.0 * specular.g) */ envBRDF.y;
+	const Vec2 envBRDF = textureLod(integrationLut, integrationLutSampler, Vec2(roughness, NoV), 0.0).xy;
+	return specular * envBRDF.x + min(1.0, 50.0 * specular.g) * envBRDF.y;
 }
 
 Vec3 diffuseLambert(Vec3 diffuse)

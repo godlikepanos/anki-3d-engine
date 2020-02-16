@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
 # All rights reserved.
@@ -13,11 +13,26 @@ import struct
 import copy
 import tempfile
 import shutil
+from PIL import Image
+from ctypes import Structure, sizeof, c_int, c_char, c_byte, c_uint
+from io import BytesIO
 
 
-#
-# Config
-#
+class CStruct(Structure):
+    """ C structure """
+
+    def to_bytearray(self):
+        s = BytesIO()
+        s.write(self)
+        s.seek(0)
+        return s.read()
+
+    def from_bytearray(self, bin):
+        s = BytesIO(bin)
+        s.seek(0)
+        s.readinto(self)
+
+
 class Config:
     in_files = []
     out_file = ""
@@ -95,48 +110,33 @@ DDSCAPS2_CUBEMAP_NEGATIVEZ = 0x00008000
 DDSCAPS2_VOLUME = 0x00200000
 
 
-class DdsHeader:
+class DdsHeader(CStruct):
     """ The header of a dds file """
 
-    _fields = [
-        ('dwMagic', '4s'),
-        ('dwSize', 'I'),
-        ('dwFlags', 'I'),
-        ('dwHeight', 'I'),
-        ('dwWidth', 'I'),
-        ('dwPitchOrLinearSize', 'I'),
-        ('dwDepth', 'I'),
-        ('dwMipMapCount', 'I'),
-        ('dwReserved1', '44s'),
+    _fields_ = (
+        ('dwMagic', c_char * 4),
+        ('dwSize', c_int),
+        ('dwFlags', c_int),
+        ('dwHeight', c_int),
+        ('dwWidth', c_int),
+        ('dwPitchOrLinearSize', c_int),
+        ('dwDepth', c_int),
+        ('dwMipMapCount', c_int),
+        ('dwReserved1', c_char * 44),
 
         # Pixel format
-        ('dwSize', 'I'),
-        ('dwFlags', 'I'),
-        ('dwFourCC', '4s'),
-        ('dwRGBBitCount', 'I'),
-        ('dwRBitMask', 'I'),
-        ('dwGBitMask', 'I'),
-        ('dwBBitMask', 'I'),
-        ('dwRGBAlphaBitMask', 'I'),
-        ('dwCaps1', 'I'),
-        ('dwCaps2', 'I'),
-        ('dwCapsReserved', '8s'),
-        ('dwReserved2', 'I')
-    ]
-
-    def __init__(self, buff):
-        buff_format = self.get_format()
-        items = struct.unpack(buff_format, buff)
-        for field, value in map(None, self._fields, items):
-            setattr(self, field[0], value)
-
-    @classmethod
-    def get_format(cls):
-        return '<' + ''.join([f[1] for f in cls._fields])
-
-    @classmethod
-    def get_size(cls):
-        return struct.calcsize(cls.get_format())
+        ('dwSize', c_int),
+        ('dwFlags', c_int),
+        ('dwFourCC', c_char * 4),
+        ('dwRGBBitCount', c_int),
+        ('dwRBitMask', c_int),
+        ('dwGBitMask', c_int),
+        ('dwBBitMask', c_int),
+        ('dwRGBAlphaBitMask', c_int),
+        ('dwCaps1', c_int),
+        ('dwCaps2', c_int),
+        ('dwCapsReserved', c_char * 8),
+        ('dwReserved2', c_int))
 
 
 #
@@ -236,7 +236,7 @@ def parse_commandline():
         choices=["default", "linear", "nearest"],
         help="texture filtering. Can be: default, linear, nearest")
 
-    parser.add_argument("--mips-count", type=int, default=0xFFFF, help="Max number of mipmaps")
+    parser.add_argument("--mip-count", type=int, default=0xFFFF, help="Max number of mipmaps")
 
     args = parser.parse_args()
 
@@ -260,7 +260,7 @@ def parse_commandline():
     else:
         assert 0, "See file"
 
-    if args.mips_count <= 0:
+    if args.mip_count <= 0:
         parser.error("Wrong number of mipmaps")
 
     config = Config()
@@ -274,7 +274,7 @@ def parse_commandline():
     config.store_uncompressed = args.store_uncompressed
     config.to_linear_rgb = args.to_linear_rgb
     config.filter = filter
-    config.mips_count = args.mips_count
+    config.mip_count = args.mip_count
 
     if args.store_etc:
         config.compressed_formats = config.compressed_formats | DC_ETC2
@@ -288,40 +288,19 @@ def parse_commandline():
 def identify_image(in_file):
     """ Return the size of the input image and the internal format """
 
-    color_format = CF_NONE
+    img = Image.open(in_file)
 
-    proc = subprocess.Popen(["identify", "-verbose", in_file], stdout=subprocess.PIPE)
-
-    stdout_str = proc.stdout.read()
-
-    # Make sure the colorspace is what we want
-    """reg = re.search(r"Colorspace: (.*)", stdout_str)
-    if not reg or (reg.group(1) != "RGB" and reg.group(1) != "sRGB"):
-        raise Exception("Something is wrong with the colorspace")"""
-
-    # Get the size of the iamge
-    reg = re.search(r"Geometry: ([0-9]*)x([0-9]*)\+", stdout_str)
-
-    if not reg:
-        raise Exception("Cannot extract size")
-
-    # Identify the color space
-    """if not re.search(r"red: 8-bit", stdout_str) or not re.search(r"green: 8-bit", stdout_str) or not re.search(
-            r"blue: 8-bit", stdout_str):
-        raise Exception("Incorrect channel depths")"""
-
-    if re.search(r"alpha: 8-bit", stdout_str):
-        color_format = CF_RGBA8
-        color_format_str = "RGBA"
-    else:
+    if img.mode == "RGB":
         color_format = CF_RGB8
-        color_format_str = "RGB"
+    elif img.mode == "RGBA":
+        color_format = CF_RGBA8
+    else:
+        raise Exception("Wrong format %s" % img.mode)
 
     # print some stuff and return
-    printi("width: %s, height: %s color format: %s" % \
-      (reg.group(1), reg.group(2), color_format_str))
+    printi("width: %s, height: %s color format: %s" % (img.width, img.height, img.mode))
 
-    return (color_format, int(reg.group(1)), int(reg.group(2)))
+    return (color_format, img.width, img.height)
 
 
 def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, to_linear_rgb, max_mip_count):
@@ -354,8 +333,8 @@ def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, to_linear_rg
             args.append("RGB")
 
         # Add this because it will automatically convert gray-like images to grayscale TGAs
-        args.append("-type")
-        args.append("TrueColor")
+        #args.append("-type")
+        #args.append("TrueColor")
 
         # resize
         args.append("-resize")
@@ -455,60 +434,34 @@ def write_raw(tex_file, fname, width, height, color_format):
 
     printi("  Appending %s" % fname)
 
-    # Read and check the header
-    uncompressed_tga_header = struct.pack("BBBBBBBBBBBB", 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    img = Image.open(fname)
+    if img.size[0] != width or img.size[1] != height:
+        raise Exception("Expecting different image size")
 
-    in_file = open(fname, "rb")
-    tga_header = in_file.read(12)
+    if (img.mode == "RGB" and color_format != CF_RGB8) or (img.mode == "RGBA" and color_format != CF_RGBA8):
+        raise Exception("Expecting different image format")
 
-    if len(tga_header) != 12:
-        raise Exception("Failed reading TGA header")
-
-    if uncompressed_tga_header != tga_header:
-        raise Exception("Incorrect TGA header")
-
-    # Read the size and bpp
-    header6_buff = in_file.read(6)
-
-    if len(header6_buff) != 6:
-        raise Exception("Failed reading TGA header #2")
-
-    header6 = struct.unpack("BBBBBB", header6_buff)
-
-    img_width = header6[1] * 256 + header6[0]
-    img_height = header6[3] * 256 + header6[2]
-    img_bpp = header6[4]
-
-    if (color_format != CF_RGB8 or img_bpp != 24) and (color_format != CF_RGBA8 or img_bpp != 32):
-        raise Exception("Unexpected bpp")
-
-    if img_width != width or img_height != height:
-        raise Exception("Unexpected width or height")
-
-    # Read the data
-    data_size = width * height
     if color_format == CF_RGB8:
-        data_size *= 3
+        img = img.convert("RGB")
     else:
-        data_size *= 4
+        img = img.convert("RGBA")
 
-    data = bytearray(in_file.read(data_size))
+    data = bytearray()
 
-    if len(data) != data_size:
-        raise Exception("Failed to read all data")
+    for h in range(0, int(height)):
+        for w in range(0, int(width)):
+            if color_format == CF_RGBA8:
+                r, g, b, a = img.getpixel((w, h))
+                data.append(r)
+                data.append(g)
+                data.append(b)
+                data.append(a)
+            else:
+                r, g, b = img.getpixel((w, h))
+                data.append(r)
+                data.append(g)
+                data.append(b)
 
-    tmp = in_file.read(128)
-    if len(tmp) != 0:
-        printw("  File shouldn't contain more data")
-
-    # Swap colors
-    bpp = img_bpp / 8
-    for i in xrange(0, data_size, bpp):
-        temp = data[i]
-        data[i] = data[i + 2]
-        data[i + 2] = temp
-
-    # Write data to tex_file
     tex_file.write(data)
 
 
@@ -519,20 +472,21 @@ def write_s3tc(out_file, fname, width, height, color_format):
     printi("  Appending %s" % fname)
     in_file = open(fname, "rb")
 
-    header = in_file.read(DdsHeader.get_size())
+    header_bin = in_file.read(sizeof(DdsHeader()))
 
-    if len(header) != DdsHeader.get_size():
+    if len(header_bin) != sizeof(DdsHeader()):
         raise Exception("Failed to read DDS header")
 
-    dds_header = DdsHeader(header)
+    dds_header = DdsHeader()
+    dds_header.from_bytearray(header_bin)
 
     if dds_header.dwWidth != width or dds_header.dwHeight != height:
         raise Exception("Incorrect width")
 
-    if color_format == CF_RGB8 and dds_header.dwFourCC != "DXT1":
+    if color_format == CF_RGB8 and dds_header.dwFourCC != b"DXT1":
         raise Exception("Incorrect format. Expecting DXT1")
 
-    if color_format == CF_RGBA8 and dds_header.dwFourCC != "DXT5":
+    if color_format == CF_RGBA8 and dds_header.dwFourCC != b"DXT5":
         raise Exception("Incorrect format. Expecting DXT5")
 
     # Read and write the data
@@ -543,7 +497,7 @@ def write_s3tc(out_file, fname, width, height, color_format):
 
     data_size = (width / 4) * (height / 4) * block_size
 
-    data = in_file.read(data_size)
+    data = in_file.read(int(data_size))
 
     if len(data) != data_size:
         raise Exception("Failed to read DDS data")
@@ -618,7 +572,7 @@ def convert(config):
     # Create images
     for in_file in config.in_files:
         mips_fnames = create_mipmaps(in_file, config.tmp_dir, width, height, color_format, config.to_linear_rgb,
-                                     config.mips_count)
+                                     config.mip_count)
 
         # Create etc images
         if config.compressed_formats & DC_ETC2:
@@ -652,8 +606,10 @@ def convert(config):
     if header_padding_size != 88:
         raise Exception("Check the header")
 
+    padding = bytearray()
     for i in range(0, header_padding_size):
-        tex_file.write('\0')
+        padding.append(0)
+    tex_file.write(padding)
 
     # For each compression
     for compression in range(0, 3):
@@ -671,7 +627,7 @@ def convert(config):
 
                 # Write RAW
                 if compression == 0 and config.store_uncompressed:
-                    write_raw(tex_file, in_base_fname + ".tga", tmp_width, tmp_height, color_format)
+                    write_raw(tex_file, in_base_fname + ".png", tmp_width, tmp_height, color_format)
                 # Write S3TC
                 elif compression == 1 and (config.compressed_formats & DC_S3TC):
                     write_s3tc(tex_file, in_base_fname + ".dds", tmp_width, tmp_height, color_format)
@@ -710,8 +666,8 @@ def main():
     try:
         convert(config)
     finally:
-        #shutil.rmtree(config.tmp_dir)
-        i = 0
+        shutil.rmtree(config.tmp_dir)
+        #i = 0
 
     # Done
     printi("Done!")
