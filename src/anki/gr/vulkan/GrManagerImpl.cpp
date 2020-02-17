@@ -626,6 +626,21 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 {
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
+
+	// Print some info
+	ANKI_VK_LOGI("Vulkan memory info:");
+	for(U32 i = 0; i < m_memoryProperties.memoryHeapCount; ++i)
+	{
+		ANKI_VK_LOGI("\tHeap %u size %zu", i, m_memoryProperties.memoryHeaps[i].size);
+	}
+	for(U32 i = 0; i < m_memoryProperties.memoryTypeCount; ++i)
+	{
+		ANKI_VK_LOGI("\tMem type %u points to heap %u, flags %" ANKI_PRIb32,
+			i,
+			m_memoryProperties.memoryTypes[i].heapIndex,
+			ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
+	}
+
 	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator());
 
 	return Error::NONE;
