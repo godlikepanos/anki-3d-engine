@@ -262,11 +262,31 @@ U32 GpuMemoryManager::findMemoryType(
 	{
 		if(resourceMemTypeBits & (1u << i))
 		{
-			VkMemoryPropertyFlags flags = m_memoryProperties.memoryTypes[i].propertyFlags;
+			const VkMemoryPropertyFlags flags = m_memoryProperties.memoryTypes[i].propertyFlags;
 
 			if((flags & preferFlags) == preferFlags && (flags & avoidFlags) == 0)
 			{
-				prefered = i;
+				// It's the candidate we want
+
+				if(prefered == MAX_U32)
+				{
+					prefered = i;
+				}
+				else
+				{
+					// On some Intel drivers there are identical memory types pointing to different heaps. Chose the
+					// biggest heap
+
+					const PtrSize crntHeapSize =
+						m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[i].heapIndex].size;
+					const PtrSize prevHeapSize =
+						m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[prefered].heapIndex].size;
+
+					if(crntHeapSize > prevHeapSize)
+					{
+						prefered = i;
+					}
+				}
 			}
 		}
 	}
