@@ -6,6 +6,8 @@
 ANKI_CONFIG_OPTION(gr_debugContext, 0, 0, 1)
 ANKI_CONFIG_OPTION(gr_vsync, 0, 0, 1)
 ANKI_CONFIG_OPTION(gr_debugMarkers, 0, 0, 1)
+ANKI_CONFIG_OPTION(gr_maxBindlessTextures, 256, 8, 1024)
+ANKI_CONFIG_OPTION(gr_maxBindlessImages, 32, 8, 1024)
 
 // Vulkan
 ANKI_CONFIG_OPTION(gr_diskShaderCacheMaxSize, 128_MB, 1_MB, 1_GB)

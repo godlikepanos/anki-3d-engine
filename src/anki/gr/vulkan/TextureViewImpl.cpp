@@ -63,11 +63,11 @@ U32 TextureViewImpl::getOrCreateBindlessIndex(VkImageLayout layout, DescriptorTy
 
 		if(resourceType == DescriptorType::TEXTURE)
 		{
-			outIdx = getGrManagerImpl().getBindlessDescriptorSet().bindTexture(m_handle, layout);
+			outIdx = getGrManagerImpl().getDescriptorSetFactory().bindBindlessTexture(m_handle, layout);
 		}
 		else
 		{
-			outIdx = getGrManagerImpl().getBindlessDescriptorSet().bindImage(m_handle);
+			outIdx = getGrManagerImpl().getDescriptorSetFactory().bindBindlessImage(m_handle);
 		}
 
 		m_microImageView->m_bindlessIndices[arrayIdx] = outIdx;

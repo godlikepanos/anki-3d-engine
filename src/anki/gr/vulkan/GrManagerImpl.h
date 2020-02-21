@@ -222,16 +222,6 @@ public:
 
 	void printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash = 0) const;
 
-	const BindlessDescriptorSet& getBindlessDescriptorSet() const
-	{
-		return m_bindlessDset;
-	}
-
-	BindlessDescriptorSet& getBindlessDescriptorSet()
-	{
-		return m_bindlessDset;
-	}
-
 private:
 	U64 m_frame = 0;
 
@@ -312,8 +302,6 @@ private:
 	QueryFactory m_timestampQueryFactory;
 
 	PipelineCache m_pplineCache;
-
-	BindlessDescriptorSet m_bindlessDset;
 
 	Bool m_r8g8b8ImagesSupported = false;
 	Bool m_s8ImagesSupported = false;

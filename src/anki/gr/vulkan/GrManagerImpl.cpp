@@ -48,8 +48,6 @@ GrManagerImpl::~GrManagerImpl()
 	m_pplineLayoutFactory.destroy();
 	m_descrFactory.destroy();
 
-	m_bindlessDset.destroy();
-
 	m_pplineCache.destroy(m_device, m_physicalDevice, getAllocator());
 
 	m_fences.destroy();
@@ -204,11 +202,10 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	m_descrFactory.init(getAllocator(), m_device);
+	m_bindlessLimits.m_bindlessTextureCount = init.m_config->getNumberU32("gr_maxBindlessTextures");
+	m_bindlessLimits.m_bindlessImageCount = init.m_config->getNumberU32("gr_maxBindlessImages");
+	ANKI_CHECK(m_descrFactory.init(getAllocator(), m_device, m_bindlessLimits));
 	m_pplineLayoutFactory.init(getAllocator(), m_device);
-
-	// Bindless descriptors
-	ANKI_CHECK(m_bindlessDset.init(m_alloc, m_device));
 
 	return Error::NONE;
 }
@@ -568,7 +565,43 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		}
 		else
 		{
-			ANKI_CHECK(BindlessDescriptorSet::initDeviceFeatures(m_physicalDevice, m_descriptorIndexingFeatures));
+			// Enable the bindless features required
+
+			m_descriptorIndexingFeatures = {};
+			m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+
+			VkPhysicalDeviceFeatures2 features = {};
+			features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+			features.pNext = &m_descriptorIndexingFeatures;
+
+			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+			if(!m_descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing
+				|| !m_descriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing)
+			{
+				ANKI_VK_LOGE("Non uniform indexing is not supported by the device");
+				return Error::FUNCTION_FAILED;
+			}
+
+			if(!m_descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind
+				|| !m_descriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind)
+			{
+				ANKI_VK_LOGE("Update descriptors after bind is not supported by the device");
+				return Error::FUNCTION_FAILED;
+			}
+
+			if(!m_descriptorIndexingFeatures.descriptorBindingUpdateUnusedWhilePending)
+			{
+				ANKI_VK_LOGE("Update descriptors while cmd buffer is pending is not supported by the device");
+				return Error::FUNCTION_FAILED;
+			}
+
+			if(!m_descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount)
+			{
+				ANKI_VK_LOGE("Variable descriptor count for bindless is not supported");
+				return Error::FUNCTION_FAILED;
+			}
+
 			ci.pNext = &m_descriptorIndexingFeatures;
 		}
 

@@ -98,7 +98,8 @@ ShaderProgramParser::ShaderProgramParser(CString fname,
 	U32 pushConstantsSize,
 	U32 backendMinor,
 	U32 backendMajor,
-	GpuVendor gpuVendor)
+	GpuVendor gpuVendor,
+	const BindlessLimits& bindlessLimits)
 	: m_alloc(alloc)
 	, m_fname(alloc, fname)
 	, m_fsystem(fsystem)
@@ -106,6 +107,7 @@ ShaderProgramParser::ShaderProgramParser(CString fname,
 	, m_backendMinor(backendMinor)
 	, m_backendMajor(backendMajor)
 	, m_gpuVendor(gpuVendor)
+	, m_bindlessLimits(bindlessLimits)
 {
 }
 
@@ -705,8 +707,8 @@ Error ShaderProgramParser::generateVariant(
 		m_backendMinor,
 		m_backendMajor,
 		GPU_VENDOR_STR[m_gpuVendor].cstr(),
-		MAX_BINDLESS_TEXTURES,
-		MAX_BINDLESS_IMAGES);
+		m_bindlessLimits.m_bindlessTextureCount,
+		m_bindlessLimits.m_bindlessImageCount);
 
 	// Generate souce per stage
 	for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)

@@ -41,8 +41,6 @@ const U32 MAX_VERTEX_ATTRIBUTES = 8;
 const U32 MAX_COLOR_ATTACHMENTS = 4;
 const U32 MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
 const U32 MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
-const U32 MAX_BINDLESS_TEXTURES = 256;
-const U32 MAX_BINDLESS_IMAGES = 32;
 
 const U32 MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 
@@ -128,6 +126,14 @@ public:
 
 	/// API version.
 	U8 m_majorApiVersion = 0;
+};
+
+/// Bindless related info.
+class BindlessLimits
+{
+public:
+	U32 m_bindlessTextureCount = 0;
+	U32 m_bindlessImageCount = 0;
 };
 
 /// The type of the allocator for heap allocations
@@ -292,19 +298,6 @@ public:
 		ANKI_ASSERT(_m_padding[0] == 0);
 		return anki::computeHash(this, sizeof(*this));
 	}
-};
-
-enum class DescriptorType : U8
-{
-	COMBINED_TEXTURE_SAMPLER,
-	TEXTURE,
-	SAMPLER,
-	UNIFORM_BUFFER,
-	STORAGE_BUFFER,
-	IMAGE,
-	TEXTURE_BUFFER,
-
-	COUNT
 };
 
 /// The base of all init infos for GR.

@@ -41,6 +41,19 @@ class GrManagerImpl;
 #define ANKI_VK_SELF(class_) class_& self = *static_cast<class_*>(this)
 #define ANKI_VK_SELF_CONST(class_) const class_& self = *static_cast<const class_*>(this)
 
+enum class DescriptorType : U8
+{
+	COMBINED_TEXTURE_SAMPLER,
+	TEXTURE,
+	SAMPLER,
+	UNIFORM_BUFFER,
+	STORAGE_BUFFER,
+	IMAGE,
+	TEXTURE_BUFFER,
+
+	COUNT
+};
+
 enum class VulkanExtensions : U16
 {
 	NONE = 0,

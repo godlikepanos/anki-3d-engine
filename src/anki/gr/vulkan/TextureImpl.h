@@ -47,7 +47,13 @@ public:
 	/// Because for example a single surface view of a cube texture will be a 2D view.
 	TextureType m_derivedTextureType = TextureType::COUNT;
 
-	MicroImageView() = default;
+	MicroImageView()
+	{
+		for(U32 idx : m_bindlessIndices)
+		{
+			ANKI_ASSERT(idx == MAX_U32 && "Forgot to unbind the bindless");
+		}
+	}
 
 	MicroImageView(const MicroImageView& b)
 	{

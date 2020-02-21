@@ -31,6 +31,7 @@ public:
 	ShaderLanguage m_outLanguage;
 	ShaderType m_shaderType;
 	GpuDeviceCapabilities m_gpuCapabilities;
+	BindlessLimits m_bindlessLimits;
 
 	ShaderCompilerOptions()
 	{

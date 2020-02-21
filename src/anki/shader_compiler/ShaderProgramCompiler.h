@@ -26,6 +26,7 @@ class ShaderProgramBinaryWrapper : public NonCopyable
 		U32 backendMinor,
 		U32 backendMajor,
 		GpuVendor gpuVendor,
+		const BindlessLimits& bindlessLimits,
 		ShaderProgramBinaryWrapper& binary);
 
 public:
@@ -65,6 +66,7 @@ ANKI_USE_RESULT Error compileShaderProgram(CString fname,
 	U32 backendMinor,
 	U32 backendMajor,
 	GpuVendor gpuVendor,
+	const BindlessLimits& bindlessLimits,
 	ShaderProgramBinaryWrapper& binary);
 
 /// Create a human readable representation of the shader binary.

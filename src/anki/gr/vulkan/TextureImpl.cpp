@@ -29,6 +29,24 @@ TextureImpl::~TextureImpl()
 		{
 			vkDestroyImageView(getDevice(), it.m_handle, nullptr);
 		}
+
+		if(it.m_bindlessIndices[0] != MAX_U32)
+		{
+			getGrManagerImpl().getDescriptorSetFactory().unbindBindlessTexture(it.m_bindlessIndices[0]);
+			it.m_bindlessIndices[0] = MAX_U32;
+		}
+
+		if(it.m_bindlessIndices[1] != MAX_U32)
+		{
+			getGrManagerImpl().getDescriptorSetFactory().unbindBindlessTexture(it.m_bindlessIndices[1]);
+			it.m_bindlessIndices[1] = MAX_U32;
+		}
+
+		if(it.m_bindlessIndices[2] != MAX_U32)
+		{
+			getGrManagerImpl().getDescriptorSetFactory().unbindBindlessImage(it.m_bindlessIndices[2]);
+			it.m_bindlessIndices[2] = MAX_U32;
+		}
 	}
 
 	m_viewsMap.destroy(getAllocator());

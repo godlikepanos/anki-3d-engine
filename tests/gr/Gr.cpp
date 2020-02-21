@@ -2286,8 +2286,7 @@ ANKI_TEST(Gr, Bindless)
 	static const char* PROG_SRC = R"(
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) uniform utexture2D u_bindlessTextures[ANKI_MAX_BINDLESS_TEXTURES];
-layout(set = 0, binding = 1) uniform readonly uimage2D u_bindlessImages[ANKI_MAX_BINDLESS_IMAGES];
+ANKI_BINDLESS_SET(0)
 
 layout(set = 1, binding = 0) writeonly buffer ss_
 {

@@ -94,7 +94,8 @@ public:
 		U32 pushConstantsSize,
 		U32 backendMinor,
 		U32 backendMajor,
-		GpuVendor gpuVendor);
+		GpuVendor gpuVendor,
+		const BindlessLimits& bindlessLimits);
 
 	~ShaderProgramParser();
 
@@ -165,6 +166,8 @@ private:
 	const U32 m_backendMinor = 1;
 	const U32 m_backendMajor = 1;
 	const GpuVendor m_gpuVendor = GpuVendor::AMD;
+
+	BindlessLimits m_bindlessLimits;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);

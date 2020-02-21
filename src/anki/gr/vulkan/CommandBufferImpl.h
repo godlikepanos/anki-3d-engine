@@ -265,7 +265,7 @@ public:
 	void bindAllBindlessInternal(U32 set)
 	{
 		commandCommon();
-		m_dsetState[set].bindCustumDescriptorSet(getGrManagerImpl().getBindlessDescriptorSet().getDescriptorSet());
+		m_dsetState[set].bindBindlessDescriptorSet();
 	}
 
 	U32 bindBindlessTextureInternal(TextureViewPtr tex, TextureUsageBit usage)

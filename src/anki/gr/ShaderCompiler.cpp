@@ -34,6 +34,7 @@ void ShaderCompilerOptions::setFromGrManager(const GrManager& gr)
 	m_outLanguage = ShaderLanguage::GLSL;
 #endif
 	m_gpuCapabilities = gr.getDeviceCapabilities();
+	m_bindlessLimits = gr.getBindlessLimits();
 }
 
 static const Array<const char*, U(ShaderType::COUNT)> SHADER_NAME = {
@@ -70,6 +71,9 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #
 #	define ANKI_MAX_BINDLESS_TEXTURES %u
 #	define ANKI_MAX_BINDLESS_IMAGES %u
+#	define ANKI_BINDLESS_SET(set_) \
+		layout(set = set_, binding = 0) uniform utexture2D u_bindlessTextures[ANKI_MAX_BINDLESS_TEXTURES]; \
+		layout(set = set_, binding = 1) uniform readonly uimage2D u_bindlessImages[ANKI_MAX_BINDLESS_IMAGES];
 #endif
 
 #define F32 float
@@ -238,8 +242,8 @@ static void preappendAnkiSpecific(CString source, const ShaderCompilerOptions& o
 		options.m_gpuCapabilities.m_majorApiVersion,
 		&GPU_VENDOR_STR[options.m_gpuCapabilities.m_gpuVendor][0],
 		SHADER_NAME[options.m_shaderType],
-		MAX_BINDLESS_TEXTURES,
-		MAX_BINDLESS_IMAGES,
+		options.m_bindlessLimits.m_bindlessTextureCount,
+		options.m_bindlessLimits.m_bindlessImageCount,
 		&source[0]);
 }
 

@@ -220,6 +220,7 @@ Error compileShaderProgram(CString fname,
 	U32 backendMinor,
 	U32 backendMajor,
 	GpuVendor gpuVendor,
+	const BindlessLimits& bindlessLimits,
 	ShaderProgramBinaryWrapper& binaryW)
 {
 	// Initialize the binary
@@ -233,7 +234,7 @@ Error compileShaderProgram(CString fname,
 
 	// Parse source
 	ShaderProgramParser parser(
-		fname, &fsystem, tempAllocator, pushConstantsSize, backendMinor, backendMajor, gpuVendor);
+		fname, &fsystem, tempAllocator, pushConstantsSize, backendMinor, backendMajor, gpuVendor, bindlessLimits);
 	ANKI_CHECK(parser.parse());
 
 	// Mutators

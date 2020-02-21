@@ -56,6 +56,11 @@ public:
 		return m_capabilities;
 	}
 
+	const BindlessLimits& getBindlessLimits() const
+	{
+		return m_bindlessLimits;
+	}
+
 	/// Get next presentable image. The returned Texture is valid until the following swapBuffers. After that it might
 	/// dissapear even if you hold the reference.
 	TexturePtr acquireNextPresentableTexture();
@@ -109,6 +114,7 @@ protected:
 	String m_cacheDir;
 	Atomic<U64> m_uuidIndex = {1};
 	GpuDeviceCapabilities m_capabilities;
+	BindlessLimits m_bindlessLimits;
 
 	GrManager();
 

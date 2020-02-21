@@ -31,8 +31,7 @@ public:
 	U8 m_binding = MAX_U8;
 	U8 m_arraySizeMinusOne = 0;
 };
-
-static_assert(sizeof(DescriptorBinding) == 4, "See file");
+static_assert(sizeof(DescriptorBinding) == 4, "Should be packed because it will be hashed");
 
 class DescriptorSetLayoutInitInfo
 {
@@ -198,7 +197,7 @@ public:
 		b.m_texAndSampler.m_layout = layout;
 
 		m_dirtyBindings.set(binding);
-		unbindCustomDSet();
+		unbindBindlessDSet();
 	}
 
 	void bindTexture(U32 binding, U32 arrayIdx, const TextureView* texView, VkImageLayout layout)
@@ -215,7 +214,7 @@ public:
 		b.m_tex.m_layout = layout;
 
 		m_dirtyBindings.set(binding);
-		unbindCustomDSet();
+		unbindBindlessDSet();
 	}
 
 	void bindSampler(U32 binding, U32 arrayIdx, const Sampler* sampler)
@@ -227,7 +226,7 @@ public:
 		b.m_sampler.m_samplerHandle = static_cast<const SamplerImpl*>(sampler)->m_sampler->getHandle();
 
 		m_dirtyBindings.set(binding);
-		unbindCustomDSet();
+		unbindBindlessDSet();
 	}
 
 	void bindUniformBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
@@ -242,7 +241,7 @@ public:
 		b.m_buff.m_range = range;
 
 		m_dirtyBindings.set(binding);
-		unbindCustomDSet();
+		unbindBindlessDSet();
 	}
 
 	void bindStorageBuffer(U32 binding, U32 arrayIdx, const Buffer* buff, PtrSize offset, PtrSize range)
@@ -257,7 +256,7 @@ public:
 		b.m_buff.m_range = range;
 
 		m_dirtyBindings.set(binding);
-		unbindCustomDSet();
+		unbindBindlessDSet();
 	}
 
 	void bindImage(U32 binding, U32 arrayIdx, const TextureView* texView)
@@ -274,14 +273,14 @@ public:
 		b.m_image.m_imgViewHandle = impl->getHandle();
 
 		m_dirtyBindings.set(binding);
-		unbindCustomDSet();
+		unbindBindlessDSet();
 	}
 
-	void bindCustumDescriptorSet(const DescriptorSet& dset)
+	/// Forget all the rest of the bindings and bind the whole bindless descriptor set.
+	void bindBindlessDescriptorSet()
 	{
-		ANKI_ASSERT(dset.m_handle);
-		m_customDSet = dset;
-		m_customDSetDirty = true;
+		m_bindlessDSetBound = true;
+		m_bindlessDSetDirty = true;
 	}
 
 private:
@@ -289,25 +288,25 @@ private:
 	DescriptorSetLayout m_layout;
 
 	Array<AnyBindingExtended, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindings;
-	DescriptorSet m_customDSet;
 
 	U64 m_lastHash = 0;
 
 	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_dirtyBindings = {true};
 	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U32> m_bindingSet = {false};
 	Bool m_layoutDirty = true;
-	Bool m_customDSetDirty = true;
+	Bool m_bindlessDSetDirty = true;
+	Bool m_bindlessDSetBound = false;
 
 	/// Only DescriptorSetFactory should call this.
 	/// @param hash If hash is zero then the DS doesn't need rebind.
 	void flush(U64& hash,
 		Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
 		U32& dynamicOffsetCount,
-		DescriptorSet& customDSet);
+		Bool& bindlessDSet);
 
-	void unbindCustomDSet()
+	void unbindBindlessDSet()
 	{
-		m_customDSet = {};
+		m_bindlessDSetBound = false;
 	}
 
 	AnyBinding& getBindingToPopulate(U32 bindingIdx, U32 arrayIdx)
@@ -371,14 +370,14 @@ public:
 	DescriptorSetFactory() = default;
 	~DescriptorSetFactory();
 
-	void init(const GrAllocator<U8>& alloc, VkDevice dev);
+	ANKI_USE_RESULT Error init(const GrAllocator<U8>& alloc, VkDevice dev, const BindlessLimits& bindlessLimits);
 
 	void destroy();
 
 	/// @note It's thread-safe.
 	ANKI_USE_RESULT Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
-	/// @note Obviously not thread-safe.
+	/// @note It's thread-safe.
 	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid,
 		StackAllocator<U8>& tmpAlloc,
 		DescriptorSetState& state,
@@ -392,70 +391,32 @@ public:
 		++m_frameCount;
 	}
 
+	/// Bind a sampled image.
+	/// @note It's thread-safe.
+	U32 bindBindlessTexture(const VkImageView view, const VkImageLayout layout);
+
+	/// Bind a storage image.
+	/// @note It's thread-safe.
+	U32 bindBindlessImage(const VkImageView view);
+
+	/// @note It's thread-safe.
+	void unbindBindlessTexture(U32 idx);
+
+	/// @note It's thread-safe.
+	void unbindBindlessImage(U32 idx);
+
 private:
+	class BindlessDescriptorSet;
+
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	U64 m_frameCount = 0;
 
 	DynamicArray<DSLayoutCacheEntry*> m_caches;
 	SpinLock m_cachesMtx; ///< Not a mutex because after a while there will be no reason to lock
-};
 
-/// Wraps a global descriptor set that is used to store bindless textures.
-class BindlessDescriptorSet
-{
-public:
-	~BindlessDescriptorSet();
-
-	Error init(const GrAllocator<U8>& alloc, VkDevice dev);
-
-	void destroy();
-
-	static Error initDeviceFeatures(VkPhysicalDevice pdev, VkPhysicalDeviceDescriptorIndexingFeaturesEXT& features);
-
-	/// Bind a sampled image.
-	/// @note It's thread-safe.
-	U32 bindTexture(const VkImageView view, const VkImageLayout layout);
-
-	/// Bind a storage image.
-	/// @note It's thread-safe.
-	U32 bindImage(const VkImageView view);
-
-	/// @note It's thread-safe.
-	void unbindTexture(U32 idx)
-	{
-		unbindCommon(idx, m_freeTexIndices, m_freeTexIndexCount);
-	}
-
-	/// @note It's thread-safe.
-	void unbindImage(U32 idx)
-	{
-		unbindCommon(idx, m_freeImgIndices, m_freeImgIndexCount);
-	}
-
-	DescriptorSet getDescriptorSet() const
-	{
-		ANKI_ASSERT(m_dset);
-		DescriptorSet out;
-		out.m_handle = m_dset;
-		return out;
-	}
-
-private:
-	GrAllocator<U8> m_alloc;
-	VkDevice m_dev = VK_NULL_HANDLE;
-	VkDescriptorSetLayout m_layout = VK_NULL_HANDLE;
-	VkDescriptorPool m_pool = VK_NULL_HANDLE;
-	VkDescriptorSet m_dset = VK_NULL_HANDLE;
-	Mutex m_mtx;
-
-	DynamicArray<U16> m_freeTexIndices;
-	DynamicArray<U16> m_freeImgIndices;
-
-	U16 m_freeTexIndexCount ANKI_DEBUG_CODE(= MAX_U16);
-	U16 m_freeImgIndexCount ANKI_DEBUG_CODE(= MAX_U16);
-
-	void unbindCommon(U32 idx, DynamicArray<U16>& freeIndices, U16& freeIndexCount);
+	BindlessDescriptorSet* m_bindless = nullptr;
+	BindlessLimits m_bindlessLimits;
 };
 /// @}
 
