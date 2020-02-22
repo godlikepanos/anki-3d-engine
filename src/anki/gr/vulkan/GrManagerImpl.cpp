@@ -596,12 +596,6 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				return Error::FUNCTION_FAILED;
 			}
 
-			if(!m_descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount)
-			{
-				ANKI_VK_LOGE("Variable descriptor count for bindless is not supported");
-				return Error::FUNCTION_FAILED;
-			}
-
 			ci.pNext = &m_descriptorIndexingFeatures;
 		}
 
