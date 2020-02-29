@@ -6,28 +6,23 @@
 #include <anki/util/Filesystem.h>
 #include <anki/util/Assert.h>
 #include <anki/util/Logger.h>
-#include <windows.h>
-#include <Shlobj.h>
-#include <anki/util/CleanupWindows.h>
+#include <anki/util/Win32Minimal.h>
 
 namespace anki
 {
 
-#if !defined(MAX_PATH)
-static const U MAX_PATH = 1024 * 4;
-#endif
 static const U MAX_PATH_LEN = MAX_PATH - 1;
 
 Bool fileExists(const CString& filename)
 {
-	DWORD dwAttrib = GetFileAttributes(&filename[0]);
+	DWORD dwAttrib = GetFileAttributesA(&filename[0]);
 
 	return dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
 Bool directoryExists(const CString& filename)
 {
-	DWORD dwAttrib = GetFileAttributes(filename.cstr());
+	DWORD dwAttrib = GetFileAttributesA(filename.cstr());
 
 	return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
@@ -62,7 +57,7 @@ Error removeDirectory(const CString& dirname, GenericMemoryPoolAllocator<U8> all
 Error createDirectory(const CString& dir)
 {
 	Error err = Error::NONE;
-	if(CreateDirectory(dir.cstr(), NULL) == 0)
+	if(CreateDirectoryA(dir.cstr(), NULL) == 0)
 	{
 		ANKI_UTIL_LOGE("Failed to create directory %s", dir.cstr());
 		err = Error::FUNCTION_FAILED;
@@ -74,7 +69,7 @@ Error createDirectory(const CString& dir)
 Error getHomeDirectory(StringAuto& out)
 {
 	char path[MAX_PATH];
-	if(SHGetFolderPath(NULL, CSIDL_PROFILE, nullptr, 0, path) != S_OK)
+	if(SHGetFolderPathA(NULL, CSIDL_PROFILE, nullptr, 0, path) != S_OK)
 	{
 		ANKI_UTIL_LOGE("SHGetFolderPath() failed");
 		return Error::FUNCTION_FAILED;
@@ -110,9 +105,9 @@ static Error walkDirectoryTreeInternal(
 
 	// Find files
 	HANDLE handle = INVALID_HANDLE_VALUE;
-	WIN32_FIND_DATA find;
+	WIN32_FIND_DATAA find;
 
-	handle = FindFirstFile(&dir2[0], &find);
+	handle = FindFirstFileA(&dir2[0], &find);
 	if(handle == INVALID_HANDLE_VALUE)
 	{
 		ANKI_UTIL_LOGE("FindFirstFile() failed");
@@ -159,7 +154,7 @@ static Error walkDirectoryTreeInternal(
 
 			dir2[oldLen] = '\0';
 		}
-	} while(FindNextFile(handle, &find) != 0);
+	} while(FindNextFileA(handle, &find) != 0);
 
 	if(GetLastError() != ERROR_NO_MORE_FILES)
 	{

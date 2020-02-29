@@ -150,8 +150,9 @@ void main()
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	ShaderProgramBinaryWrapper binary(alloc);
 	BindlessLimits bindlessLimits;
+	GpuDeviceCapabilities gpuCapabilities;
 	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, alloc, 128, 1, 1, GpuVendor::AMD, bindlessLimits, binary));
+		compileShaderProgram("test.glslp", fsystem, alloc, gpuCapabilities, bindlessLimits, binary));
 
 #if 0
 	StringAuto dis(alloc);

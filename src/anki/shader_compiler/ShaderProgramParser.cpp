@@ -95,18 +95,12 @@ static const char* SHADER_HEADER = R"(#version 450 core
 ShaderProgramParser::ShaderProgramParser(CString fname,
 	ShaderProgramFilesystemInterface* fsystem,
 	GenericMemoryPoolAllocator<U8> alloc,
-	U32 pushConstantsSize,
-	U32 backendMinor,
-	U32 backendMajor,
-	GpuVendor gpuVendor,
+	const GpuDeviceCapabilities& gpuCapabilities,
 	const BindlessLimits& bindlessLimits)
 	: m_alloc(alloc)
 	, m_fname(alloc, fname)
 	, m_fsystem(fsystem)
-	, m_pushConstSize(pushConstantsSize)
-	, m_backendMinor(backendMinor)
-	, m_backendMajor(backendMajor)
-	, m_gpuVendor(gpuVendor)
+	, m_gpuCapabilities(gpuCapabilities)
 	, m_bindlessLimits(bindlessLimits)
 {
 }
@@ -704,9 +698,9 @@ Error ShaderProgramParser::generateVariant(
 	// Create the header
 	StringAuto header(m_alloc);
 	header.sprintf(SHADER_HEADER,
-		m_backendMinor,
-		m_backendMajor,
-		GPU_VENDOR_STR[m_gpuVendor].cstr(),
+		m_gpuCapabilities.m_minorApiVersion,
+		m_gpuCapabilities.m_majorApiVersion,
+		GPU_VENDOR_STR[m_gpuCapabilities.m_gpuVendor].cstr(),
 		m_bindlessLimits.m_bindlessTextureCount,
 		m_bindlessLimits.m_bindlessImageCount);
 

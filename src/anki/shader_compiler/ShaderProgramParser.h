@@ -91,10 +91,7 @@ public:
 	ShaderProgramParser(CString fname,
 		ShaderProgramFilesystemInterface* fsystem,
 		GenericMemoryPoolAllocator<U8> alloc,
-		U32 pushConstantsSize,
-		U32 backendMinor,
-		U32 backendMajor,
-		GpuVendor gpuVendor,
+		const GpuDeviceCapabilities& gpuCapabilities,
 		const BindlessLimits& bindlessLimits);
 
 	~ShaderProgramParser();
@@ -162,11 +159,7 @@ private:
 
 	ShaderTypeBit m_shaderTypes = ShaderTypeBit::NONE;
 	Bool m_insideShader = false;
-	const U32 m_pushConstSize = 0;
-	const U32 m_backendMinor = 1;
-	const U32 m_backendMajor = 1;
-	const GpuVendor m_gpuVendor = GpuVendor::AMD;
-
+	GpuDeviceCapabilities m_gpuCapabilities;
 	BindlessLimits m_bindlessLimits;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);

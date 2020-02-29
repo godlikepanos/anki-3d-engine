@@ -11,7 +11,7 @@
 #	include <unistd.h>
 #	include <signal.h>
 #elif ANKI_OS_WINDOWS
-#	include <windows.h>
+#	include <anki/util/Win32Minimal.h>
 #else
 #	error "Unimplemented"
 #endif

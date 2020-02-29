@@ -14,8 +14,7 @@
 #	include <android/log.h>
 #endif
 #if ANKI_OS_WINDOWS
-#	include <windows.h>
-#	include <anki/util/CleanupWindows.h>
+#	include <anki/util/Win32Minimal.h>
 #endif
 
 namespace anki

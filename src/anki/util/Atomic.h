@@ -38,19 +38,19 @@ public:
 	{
 	}
 
-	Atomic(const Value& a)
+	Atomic(Value a)
 		: m_val(a)
 	{
 	}
 
 	/// Set the value without protection.
-	void setNonAtomically(const Value& a)
+	void setNonAtomically(Value a)
 	{
 		m_val = a;
 	}
 
 	/// Get the value without protection.
-	const Value& getNonAtomically() const
+	Value getNonAtomically() const
 	{
 		return m_val;
 	}
@@ -62,35 +62,35 @@ public:
 	}
 
 	/// Store
-	void store(const Value& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	void store(Value a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 		m_att.store(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Fetch and add.
 	template<typename Y>
-	Value fetchAdd(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value fetchAdd(Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 		return m_att.fetch_add(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Fetch and subtract.
 	template<typename Y>
-	Value fetchSub(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value fetchSub(Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 		return m_att.fetch_sub(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Fetch and do bitwise or.
 	template<typename Y>
-	Value fetchOr(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value fetchOr(Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 		return m_att.fetch_or(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Fetch and do bitwise and.
 	template<typename Y>
-	Value fetchAnd(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value fetchAnd(Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 		return m_att.fetch_and(a, static_cast<std::memory_order>(memOrd));
 	}
@@ -104,20 +104,25 @@ public:
 	/// 	return false;
 	/// }
 	/// @endcode
-	Bool compareExchange(Value& expected, const Value& desired, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Bool compareExchange(Value& expected,
+		Value desired,
+		AtomicMemoryOrder successMemOrd = MEMORY_ORDER,
+		AtomicMemoryOrder failMemOrd = MEMORY_ORDER)
 	{
-		return m_att.compare_exchange_weak(
-			expected, desired, static_cast<std::memory_order>(memOrd), static_cast<std::memory_order>(memOrd));
+		return m_att.compare_exchange_weak(expected,
+			desired,
+			static_cast<std::memory_order>(successMemOrd),
+			static_cast<std::memory_order>(failMemOrd));
 	}
 
 	/// Set @a a to the atomic and return the previous value.
-	Value exchange(const Value& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Value exchange(Value a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 		return m_att.exchange(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Store the minimum using compare-and-swap.
-	void min(const Value& a)
+	void min(Value a)
 	{
 		Value prev = load();
 		while(a < prev && !compareExchange(prev, a))
@@ -126,7 +131,7 @@ public:
 	}
 
 	/// Store the maximum using compare-and-swap.
-	void max(const Value& a)
+	void max(Value a)
 	{
 		Value prev = load();
 		while(a > prev && !compareExchange(prev, a))

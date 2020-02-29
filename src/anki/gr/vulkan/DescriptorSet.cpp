@@ -352,7 +352,7 @@ public:
 	VkDescriptorPoolCreateInfo m_poolCreateInf = {};
 
 	DynamicArray<DSThreadAllocator*> m_threadAllocs;
-	SpinLock m_threadAllocsMtx;
+	RWMutex m_threadAllocsMtx;
 
 	DSLayoutCacheEntry(DescriptorSetFactory* factory)
 		: m_factory(factory)
@@ -740,8 +740,6 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 {
 	alloc = nullptr;
 
-	LockGuard<SpinLock> lock(m_threadAllocsMtx);
-
 	class Comp
 	{
 	public:
@@ -757,16 +755,17 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 	};
 
 	// Find using binary search
-	auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
-
-	if(it != m_threadAllocs.getEnd())
 	{
-		ANKI_ASSERT((*it)->m_tid == tid);
-		alloc = *it;
+		RLockGuard<RWMutex> lock(m_threadAllocsMtx);
+		auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
+		alloc = (it != m_threadAllocs.getEnd()) ? *it : nullptr;
 	}
-	else
+
+	if(alloc == nullptr)
 	{
 		// Need to create one
+
+		WLockGuard<RWMutex> lock(m_threadAllocsMtx);
 
 		alloc = m_factory->m_alloc.newInstance<DSThreadAllocator>(this, tid);
 		ANKI_CHECK(alloc->init());

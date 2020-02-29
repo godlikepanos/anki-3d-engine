@@ -8,7 +8,7 @@
 #include <anki/Math.h>
 #include <anki/util/Singleton.h>
 #include <anki/util/Array.h>
-#include <anki/util/StdTypes.h>
+#include <anki/util/String.h>
 #include <anki/input/KeyCode.h>
 
 namespace anki

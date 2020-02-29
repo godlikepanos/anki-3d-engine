@@ -216,10 +216,7 @@ static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 Error compileShaderProgram(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
-	U32 pushConstantsSize,
-	U32 backendMinor,
-	U32 backendMajor,
-	GpuVendor gpuVendor,
+	const GpuDeviceCapabilities& gpuCapabilities,
 	const BindlessLimits& bindlessLimits,
 	ShaderProgramBinaryWrapper& binaryW)
 {
@@ -233,8 +230,7 @@ Error compileShaderProgram(CString fname,
 	memcpy(&binary.m_magic[0], SHADER_BINARY_MAGIC, 8);
 
 	// Parse source
-	ShaderProgramParser parser(
-		fname, &fsystem, tempAllocator, pushConstantsSize, backendMinor, backendMajor, gpuVendor, bindlessLimits);
+	ShaderProgramParser parser(fname, &fsystem, tempAllocator, gpuCapabilities, bindlessLimits);
 	ANKI_CHECK(parser.parse());
 
 	// Mutators

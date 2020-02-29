@@ -5,8 +5,8 @@
 
 #include <anki/util/HighRezTimer.h>
 #include <anki/util/Assert.h>
+#include <anki/util/Win32Minimal.h>
 #include <cstdio>
-#include <Windows.h>
 
 namespace anki
 {

@@ -9,13 +9,10 @@
 #include <anki/core/NativeWindowSdl.h>
 #include <SDL_syswm.h>
 #include <SDL_vulkan.h>
-#if ANKI_OS_LINUX
-#	include <X11/Xlib-xcb.h>
-#elif ANKI_OS_WINDOWS
-#	include <Winuser.h>
-#	include <anki/util/CleanupWindows.h>
-#else
-#	error Not supported
+
+// Because some idiot includes Windows.h
+#if defined(ERROR)
+#	undef ERROR
 #endif
 
 namespace anki

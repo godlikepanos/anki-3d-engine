@@ -22,10 +22,7 @@ class ShaderProgramBinaryWrapper : public NonCopyable
 	friend Error compileShaderProgram(CString fname,
 		ShaderProgramFilesystemInterface& fsystem,
 		GenericMemoryPoolAllocator<U8> tempAllocator,
-		U32 pushConstantsSize,
-		U32 backendMinor,
-		U32 backendMajor,
-		GpuVendor gpuVendor,
+		const GpuDeviceCapabilities& gpuCapabilities,
 		const BindlessLimits& bindlessLimits,
 		ShaderProgramBinaryWrapper& binary);
 
@@ -62,10 +59,7 @@ private:
 ANKI_USE_RESULT Error compileShaderProgram(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
-	U32 pushConstantsSize,
-	U32 backendMinor,
-	U32 backendMajor,
-	GpuVendor gpuVendor,
+	const GpuDeviceCapabilities& gpuCapabilities,
 	const BindlessLimits& bindlessLimits,
 	ShaderProgramBinaryWrapper& binary);
 

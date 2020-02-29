@@ -18,6 +18,10 @@
 #		undef far
 #	endif
 
+#	ifdef FAR
+#		undef FAR
+#	endif
+
 #	ifdef ERROR
 #		undef ERROR
 #	endif

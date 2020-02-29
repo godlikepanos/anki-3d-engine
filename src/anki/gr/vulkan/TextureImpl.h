@@ -52,6 +52,7 @@ public:
 		for(U32 idx : m_bindlessIndices)
 		{
 			ANKI_ASSERT(idx == MAX_U32 && "Forgot to unbind the bindless");
+			(void)idx;
 		}
 	}
 

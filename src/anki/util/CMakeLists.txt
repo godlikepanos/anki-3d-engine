@@ -4,7 +4,7 @@ set(SOURCES Assert.cpp Functions.cpp File.cpp Filesystem.cpp Memory.cpp System.c
 if(LINUX OR ANDROID OR MACOS)
 	set(SOURCES ${SOURCES} HighRezTimerPosix.cpp FilesystemPosix.cpp ThreadPosix.cpp ProcessPosix.cpp)
 else()
-	set(SOURCES ${SOURCES} HighRezTimerWindows.cpp FilesystemWindows.cpp ThreadWindows.cpp ProcessWindows.cpp)
+	set(SOURCES ${SOURCES} HighRezTimerWindows.cpp FilesystemWindows.cpp ThreadWindows.cpp ProcessWindows.cpp Win32Minimal.cpp)
 endif()
 
 if(LINUX)
