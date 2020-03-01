@@ -57,13 +57,12 @@ public:
 		return LuaBinder::evalString(m_lua.getLuaState(), str);
 	}
 
-anki_internal:
-	LuaBinder& getLuaBinder()
+	ANKI_INTERNAL LuaBinder& getLuaBinder()
 	{
 		return m_lua;
 	}
 
-	ScriptAllocator getAllocator() const
+	ANKI_INTERNAL ScriptAllocator getAllocator() const
 	{
 		return m_alloc;
 	}

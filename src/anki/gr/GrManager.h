@@ -88,23 +88,22 @@ public:
 
 	GrManagerStats getStats() const;
 
-anki_internal:
-	GrAllocator<U8>& getAllocator()
+	ANKI_INTERNAL GrAllocator<U8>& getAllocator()
 	{
 		return m_alloc;
 	}
 
-	GrAllocator<U8> getAllocator() const
+	ANKI_INTERNAL GrAllocator<U8> getAllocator() const
 	{
 		return m_alloc;
 	}
 
-	CString getCacheDirectory() const
+	ANKI_INTERNAL CString getCacheDirectory() const
 	{
 		return m_cacheDir.toCString();
 	}
 
-	U64 getNewUuid()
+	ANKI_INTERNAL U64 getNewUuid()
 	{
 		return m_uuidIndex.fetchAdd(1);
 	}

@@ -16,7 +16,7 @@ namespace anki
 /// Tonemapping.
 class Tonemapping : public RendererObject
 {
-anki_internal:
+public:
 	Tonemapping(Renderer* r)
 		: RendererObject(r)
 	{

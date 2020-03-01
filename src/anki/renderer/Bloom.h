@@ -18,7 +18,7 @@ namespace anki
 /// Bloom passes.
 class Bloom : public RendererObject
 {
-anki_internal:
+public:
 	Bloom(Renderer* r);
 
 	~Bloom();

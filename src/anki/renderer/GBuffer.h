@@ -17,7 +17,7 @@ namespace anki
 /// G buffer stage. It populates the G buffer
 class GBuffer : public RendererObject
 {
-anki_internal:
+public:
 	GBuffer(Renderer* r)
 		: RendererObject(r)
 	{

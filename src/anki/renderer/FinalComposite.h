@@ -18,12 +18,6 @@ namespace anki
 class FinalComposite : public RendererObject
 {
 public:
-	/// Load the color grading texture.
-	Error loadColorGradingTexture(CString filename);
-
-anki_internal:
-	static const Format RT_PIXEL_FORMAT = Format::R8G8B8_UNORM;
-
 	FinalComposite(Renderer* r);
 	~FinalComposite();
 
@@ -31,6 +25,9 @@ anki_internal:
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
+
+	/// Load the color grading texture.
+	Error loadColorGradingTexture(CString filename);
 
 private:
 	static const U LUT_SIZE = 16;

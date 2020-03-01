@@ -235,7 +235,6 @@ public:
 		return m_stats;
 	}
 
-anki_internal:
 	U64 getFrameCount() const
 	{
 		return m_frameCount;

@@ -20,6 +20,20 @@ namespace anki
 class Dbg : public RendererObject
 {
 public:
+	Dbg(Renderer* r);
+
+	~Dbg();
+
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
+
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_rt;
+	}
+
 	Bool getEnabled() const
 	{
 		return m_enabled;
@@ -58,21 +72,6 @@ public:
 	void switchDitheredDepthTestEnabled()
 	{
 		m_debugDrawFlags.flip(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON);
-	}
-
-anki_internal:
-	Dbg(Renderer* r);
-
-	~Dbg();
-
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-
-	/// Populate the rendergraph.
-	void populateRenderGraph(RenderingContext& ctx);
-
-	RenderTargetHandle getRt() const
-	{
-		return m_runCtx.m_rt;
 	}
 
 private:

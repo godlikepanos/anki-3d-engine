@@ -17,6 +17,17 @@ namespace anki
 class VolumetricFog : public RendererObject
 {
 public:
+	VolumetricFog(Renderer* r)
+		: RendererObject(r)
+	{
+	}
+
+	~VolumetricFog()
+	{
+	}
+
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+
 	void setFogParticleColor(const Vec3& col)
 	{
 		m_fogDiffuseColor = col;
@@ -36,18 +47,6 @@ public:
 	{
 		return m_fogDensity;
 	}
-
-anki_internal:
-	VolumetricFog(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~VolumetricFog()
-	{
-	}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);

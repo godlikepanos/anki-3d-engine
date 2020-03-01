@@ -16,7 +16,7 @@ namespace anki
 /// Applies SSAO and decals to the GBuffer. It's a seperate pass because it requres the depth buffer.
 class GBufferPost : public RendererObject
 {
-anki_internal:
+public:
 	GBufferPost(Renderer* r)
 		: RendererObject(r)
 	{

@@ -226,10 +226,6 @@ endif()
 
 set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} SPIRV-Cross)
 
-if(ANKI_BUILD_TOOLS)
-	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} assimp)
-endif()
-
 if(VULKAN)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} volk)
 endif()
@@ -413,13 +409,11 @@ set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCol
 	ankiimgui)
 
 # Add anki sub libraries
-set(ANKI_SUB_DIRS importer core script renderer scene ui input physics resource gr collision math util shader_compiler)
-foreach(TMP ${ANKI_SUB_DIRS})
-	add_subdirectory(src/anki/${TMP})
-endforeach()
+add_subdirectory(src/anki)
 
 separate_arguments(AK_SOURCES)
 add_library(anki ${AK_SOURCES})
+target_compile_definitions(anki PRIVATE -DANKI_SOURCE_FILE)
 target_link_libraries(anki ${THIRD_PARTY_LIBS})
 
 ################################################################################

@@ -127,92 +127,93 @@ public:
 	template<typename T>
 	ANKI_USE_RESULT Error loadResource(const CString& filename, ResourcePtr<T>& out, Bool async = true);
 
-anki_internal:
-	U32 getMaxTextureSize() const
+	// Internals:
+
+	ANKI_INTERNAL U32 getMaxTextureSize() const
 	{
 		return m_maxTextureSize;
 	}
 
-	Bool getDumpShaderSource() const
+	ANKI_INTERNAL Bool getDumpShaderSource() const
 	{
 		return m_dumpShaderSource;
 	}
 
-	ResourceAllocator<U8>& getAllocator()
+	ANKI_INTERNAL ResourceAllocator<U8>& getAllocator()
 	{
 		return m_alloc;
 	}
 
-	TempResourceAllocator<U8>& getTempAllocator()
+	ANKI_INTERNAL TempResourceAllocator<U8>& getTempAllocator()
 	{
 		return m_tmpAlloc;
 	}
 
-	GrManager& getGrManager()
+	ANKI_INTERNAL GrManager& getGrManager()
 	{
 		ANKI_ASSERT(m_gr);
 		return *m_gr;
 	}
 
-	TransferGpuAllocator& getTransferGpuAllocator()
+	ANKI_INTERNAL TransferGpuAllocator& getTransferGpuAllocator()
 	{
 		return *m_transferGpuAlloc;
 	}
 
-	PhysicsWorld& getPhysicsWorld()
+	ANKI_INTERNAL PhysicsWorld& getPhysicsWorld()
 	{
 		ANKI_ASSERT(m_physics);
 		return *m_physics;
 	}
 
-	ResourceFilesystem& getFilesystem()
+	ANKI_INTERNAL ResourceFilesystem& getFilesystem()
 	{
 		ANKI_ASSERT(m_fs);
 		return *m_fs;
 	}
 
-	const String& getCacheDirectory() const
+	ANKI_INTERNAL const String& getCacheDirectory() const
 	{
 		return m_cacheDir;
 	}
 
 	template<typename T>
-	T* findLoadedResource(const CString& filename)
+	ANKI_INTERNAL T* findLoadedResource(const CString& filename)
 	{
 		return TypeResourceManager<T>::findLoadedResource(filename);
 	}
 
 	template<typename T>
-	void registerResource(T* ptr)
+	ANKI_INTERNAL void registerResource(T* ptr)
 	{
 		TypeResourceManager<T>::registerResource(ptr);
 	}
 
 	template<typename T>
-	void unregisterResource(T* ptr)
+	ANKI_INTERNAL void unregisterResource(T* ptr)
 	{
 		TypeResourceManager<T>::unregisterResource(ptr);
 	}
 
-	AsyncLoader& getAsyncLoader()
+	ANKI_INTERNAL AsyncLoader& getAsyncLoader()
 	{
 		return *m_asyncLoader;
 	}
 
-	const ShaderCompilerCache& getShaderCompiler() const
+	ANKI_INTERNAL const ShaderCompilerCache& getShaderCompiler() const
 	{
 		ANKI_ASSERT(m_shaderCompiler);
 		return *m_shaderCompiler;
 	}
 
 	/// Get the number of times loadResource() was called.
-	U64 getLoadingRequestCount() const
+	ANKI_INTERNAL U64 getLoadingRequestCount() const
 	{
 		return m_loadRequestCount;
 	}
 
 	/// Get the total number of completed async tasks.
-	U64 getAsyncTaskCompletedCount() const;
+	ANKI_INTERNAL U64 getAsyncTaskCompletedCount() const;
 
 private:
 	GrManager* m_gr = nullptr;
@@ -232,5 +233,3 @@ private:
 /// @}
 
 } // end namespace anki
-
-#include <anki/resource/ResourceManager.inl.h>

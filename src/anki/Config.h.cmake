@@ -196,9 +196,10 @@
 #define ANKI_FILE __FILE__
 #define ANKI_FUNC __func__
 
-#ifdef ANKI_BUILD
-#	define anki_internal public
+// A macro used to mark some functions or variables as AnKi internal.
+#ifdef ANKI_SOURCE_FILE
+#	define ANKI_INTERNAL
 #else
-#	define anki_internal protected
+#	define ANKI_INTERNAL [[deprecated("This is an AnKi internal interface. Don't use it")]]
 #endif
 /// @}

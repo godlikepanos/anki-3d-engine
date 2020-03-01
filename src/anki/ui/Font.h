@@ -30,14 +30,13 @@ public:
 	/// Initialize the font.
 	ANKI_USE_RESULT Error init(const CString& filename, const std::initializer_list<U32>& fontHeights);
 
-anki_internal:
 	/// Get font image atlas.
-	const TextureViewPtr& getTextureView() const
+	ANKI_INTERNAL const TextureViewPtr& getTextureView() const
 	{
 		return m_texView;
 	}
 
-	const ImFont& getImFont(U32 fontHeight) const
+	ANKI_INTERNAL const ImFont& getImFont(U32 fontHeight) const
 	{
 		for(const FontEntry& f : m_fonts)
 		{
@@ -51,12 +50,12 @@ anki_internal:
 		return *m_fonts[0].m_imFont;
 	}
 
-	const ImFont& getFirstImFont() const
+	ANKI_INTERNAL const ImFont& getFirstImFont() const
 	{
 		return *m_fonts[0].m_imFont;
 	}
 
-	ImFontAtlas* getImFontAtlas()
+	ANKI_INTERNAL ImFontAtlas* getImFontAtlas()
 	{
 		return m_imFontAtlas.get();
 	}

@@ -80,28 +80,27 @@ public:
 		rayCast(arr);
 	}
 
-anki_internal:
-	btDynamicsWorld* getBtWorld()
+	ANKI_INTERNAL btDynamicsWorld* getBtWorld()
 	{
 		return m_world.get();
 	}
 
-	const btDynamicsWorld* getBtWorld() const
+	ANKI_INTERNAL const btDynamicsWorld* getBtWorld() const
 	{
 		return m_world.get();
 	}
 
-	F32 getCollisionMargin() const
+	ANKI_INTERNAL F32 getCollisionMargin() const
 	{
 		return 0.04f;
 	}
 
-	ANKI_USE_RESULT LockGuard<Mutex> lockBtWorld() const
+	ANKI_INTERNAL ANKI_USE_RESULT LockGuard<Mutex> lockBtWorld() const
 	{
 		return LockGuard<Mutex>(m_btWorldMtx);
 	}
 
-	void destroyObject(PhysicsObject* obj);
+	ANKI_INTERNAL void destroyObject(PhysicsObject* obj);
 
 private:
 	class MyOverlapFilterCallback;

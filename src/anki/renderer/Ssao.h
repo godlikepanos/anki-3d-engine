@@ -18,7 +18,7 @@ namespace anki
 /// Screen space ambient occlusion pass
 class Ssao : public RendererObject
 {
-anki_internal:
+public:
 	static const Format RT_PIXEL_FORMAT = Format::R8_UNORM;
 
 	Ssao(Renderer* r)

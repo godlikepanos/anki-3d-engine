@@ -18,7 +18,7 @@ namespace anki
 /// Downscales the depth buffer a few times.
 class DepthDownscale : public RendererObject
 {
-anki_internal:
+public:
 	DepthDownscale(Renderer* r)
 		: RendererObject(r)
 	{

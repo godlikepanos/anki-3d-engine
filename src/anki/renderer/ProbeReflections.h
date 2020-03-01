@@ -22,7 +22,7 @@ class ProbeReflections : public RendererObject
 {
 	friend class IrTask;
 
-anki_internal:
+public:
 	ProbeReflections(Renderer* r);
 
 	~ProbeReflections();

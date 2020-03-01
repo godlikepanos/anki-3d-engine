@@ -21,13 +21,12 @@ class PhysicsCollisionShape : public PhysicsObject
 public:
 	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::COLLISION_SHAPE;
 
-anki_internal:
-	const btCollisionShape* getBtShape(Bool forDynamicBodies = false) const
+	ANKI_INTERNAL const btCollisionShape* getBtShape(Bool forDynamicBodies = false) const
 	{
 		return getBtShapeInternal(forDynamicBodies);
 	}
 
-	btCollisionShape* getBtShape(Bool forDynamicBodies = false)
+	ANKI_INTERNAL btCollisionShape* getBtShape(Bool forDynamicBodies = false)
 	{
 		return const_cast<btCollisionShape*>(getBtShapeInternal(forDynamicBodies));
 	}

@@ -16,7 +16,7 @@ namespace anki
 /// Forward rendering stage. The objects that blend must be handled differently
 class ForwardShading : public RendererObject
 {
-anki_internal:
+public:
 	ForwardShading(Renderer* r)
 		: RendererObject(r)
 	{

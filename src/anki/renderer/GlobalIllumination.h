@@ -21,7 +21,7 @@ namespace anki
 /// It builds a volume clipmap with ambient GI information.
 class GlobalIllumination : public RendererObject
 {
-anki_internal:
+public:
 	GlobalIllumination(Renderer* r)
 		: RendererObject(r)
 		, m_lightShading(r)

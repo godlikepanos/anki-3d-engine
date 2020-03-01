@@ -17,7 +17,7 @@ namespace anki
 /// more. It can access the previous frame's depth buffer.
 class GenericCompute : public RendererObject
 {
-anki_internal:
+public:
 	GenericCompute(Renderer* r)
 		: RendererObject(r)
 	{

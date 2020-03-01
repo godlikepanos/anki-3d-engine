@@ -16,7 +16,7 @@ namespace anki
 /// Downsample the IS and blur it at the same time.
 class DownscaleBlur : public RendererObject
 {
-anki_internal:
+public:
 	DownscaleBlur(Renderer* r)
 		: RendererObject(r)
 	{

@@ -16,7 +16,7 @@ namespace anki
 /// Volumetric lighting. It accumulates lighting in a volume texture.
 class VolumetricLightingAccumulation : public RendererObject
 {
-anki_internal:
+public:
 	VolumetricLightingAccumulation(Renderer* r);
 	~VolumetricLightingAccumulation();
 

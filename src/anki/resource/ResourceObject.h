@@ -54,31 +54,32 @@ public:
 		return m_fname.toCString();
 	}
 
-anki_internal:
-	void setFilename(const CString& fname)
+	// Internals:
+
+	ANKI_INTERNAL void setFilename(const CString& fname)
 	{
 		ANKI_ASSERT(m_fname.isEmpty());
 		m_fname.create(getAllocator(), fname);
 	}
 
-	void setUuid(U64 uuid)
+	ANKI_INTERNAL void setUuid(U64 uuid)
 	{
 		ANKI_ASSERT(uuid > 0);
 		m_uuid = uuid;
 	}
 
 	/// To check if 2 resource pointers are actually the same.
-	U64 getUuid() const
+	ANKI_INTERNAL U64 getUuid() const
 	{
 		ANKI_ASSERT(m_uuid > 0);
 		return m_uuid;
 	}
 
-	ANKI_USE_RESULT Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
+	ANKI_INTERNAL ANKI_USE_RESULT Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
-	ANKI_USE_RESULT Error openFileReadAllText(const ResourceFilename& filename, StringAuto& file);
+	ANKI_INTERNAL ANKI_USE_RESULT Error openFileReadAllText(const ResourceFilename& filename, StringAuto& file);
 
-	ANKI_USE_RESULT Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
+	ANKI_INTERNAL ANKI_USE_RESULT Error openFileParseXml(const ResourceFilename& filename, XmlDocument& xml);
 
 private:
 	ResourceManager* m_manager;

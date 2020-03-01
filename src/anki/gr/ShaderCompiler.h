@@ -66,8 +66,7 @@ public:
 	ANKI_USE_RESULT Error preprocess(
 		CString source, const ShaderCompilerOptions& options, const StringList& defines, StringAuto& out) const;
 
-anki_internal:
-	static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc);
+	ANKI_INTERNAL static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc);
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;

@@ -89,13 +89,12 @@ public:
 		m_body->setAngularFactor(toBt(factor));
 	}
 
-anki_internal:
-	const btRigidBody* getBtBody() const
+	ANKI_INTERNAL const btRigidBody* getBtBody() const
 	{
 		return m_body.get();
 	}
 
-	btRigidBody* getBtBody()
+	ANKI_INTERNAL btRigidBody* getBtBody()
 	{
 		return m_body.get();
 	}

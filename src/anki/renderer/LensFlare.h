@@ -18,7 +18,7 @@ namespace anki
 /// Lens flare rendering pass. Part of forward shading.
 class LensFlare : public RendererObject
 {
-anki_internal:
+public:
 	LensFlare(Renderer* r)
 		: RendererObject(r)
 	{

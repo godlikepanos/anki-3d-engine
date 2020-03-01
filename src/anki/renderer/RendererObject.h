@@ -26,7 +26,7 @@ class ConfigSet;
 /// Renderer object.
 class RendererObject
 {
-anki_internal:
+public:
 	RendererObject(Renderer* r)
 		: m_r(r)
 	{

@@ -16,7 +16,7 @@ namespace anki
 /// Screen space reflections.
 class Ssr : public RendererObject
 {
-anki_internal:
+public:
 	Ssr(Renderer* r)
 		: RendererObject(r)
 	{

@@ -17,7 +17,7 @@ namespace anki
 /// Ui pass.
 class UiStage : public RendererObject
 {
-anki_internal:
+public:
 	UiStage(Renderer* r);
 	~UiStage();
 

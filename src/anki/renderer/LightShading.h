@@ -18,7 +18,7 @@ namespace anki
 /// Clustered deferred light pass.
 class LightShading : public RendererObject
 {
-anki_internal:
+public:
 	LightShading(Renderer* r);
 
 	~LightShading();

@@ -19,7 +19,7 @@ namespace anki
 /// Shadowmapping pass
 class ShadowMapping : public RendererObject
 {
-anki_internal:
+public:
 	ShadowMapping(Renderer* r)
 		: RendererObject(r)
 	{
