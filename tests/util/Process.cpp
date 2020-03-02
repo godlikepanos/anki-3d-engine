@@ -19,12 +19,12 @@ ANKI_TEST(Util, Process)
 		HighRezTimer::sleep(1.0);
 
 		HeapAllocator<U8> alloc(allocAligned, nullptr);
-		StringAuto stdout(alloc);
-		ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdout));
-		ANKI_TEST_LOGI(stdout.cstr());
+		StringAuto stdOut(alloc);
+		ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
+		ANKI_TEST_LOGI(stdOut.cstr());
 	}
 
-	// Stderr and stdout
+	// Stderr and stdOut
 	if(1)
 	{
 		File file;
@@ -54,11 +54,11 @@ done
 			}
 
 			HeapAllocator<U8> alloc(allocAligned, nullptr);
-			StringAuto stdout(alloc);
-			ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdout));
-			if(stdout.getLength())
+			StringAuto stdOut(alloc);
+			ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
+			if(stdOut.getLength())
 			{
-				ANKI_TEST_LOGI(stdout.cstr());
+				ANKI_TEST_LOGI(stdOut.cstr());
 			}
 
 			StringAuto stderrStr(alloc);
