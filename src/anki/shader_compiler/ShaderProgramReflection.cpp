@@ -36,7 +36,8 @@ private:
 	ANKI_USE_RESULT Error opaqueReflection(
 		const spirv_cross::Resource& res, DynamicArrayAuto<ShaderProgramBinaryOpaque>& opaques) const;
 
-	ANKI_USE_RESULT Error constsReflection(DynamicArrayAuto<ShaderProgramBinaryConstant>& consts) const;
+	ANKI_USE_RESULT Error constsReflection(
+		DynamicArrayAuto<ShaderProgramBinaryConstant>& consts, ShaderType stage) const;
 
 	ANKI_USE_RESULT Error blockVariablesReflection(
 		spirv_cross::TypeID resourceId, DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const;
@@ -454,7 +455,7 @@ Error SpirvReflector::opaqueReflection(
 	return Error::NONE;
 }
 
-Error SpirvReflector::constsReflection(DynamicArrayAuto<ShaderProgramBinaryConstant>& consts) const
+Error SpirvReflector::constsReflection(DynamicArrayAuto<ShaderProgramBinaryConstant>& consts, ShaderType stage) const
 {
 	spirv_cross::SmallVector<spirv_cross::SpecializationConstant> specConsts = get_specialization_constants();
 	for(const spirv_cross::SpecializationConstant& c : specConsts)
@@ -488,9 +489,9 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<ShaderProgramBinaryConst
 			return Error::USER_DATA;
 		}
 
-		// Add it
-		Bool found = false;
-		for(const ShaderProgramBinaryConstant& other : consts)
+		// Search for it
+		ShaderProgramBinaryConstant* foundConst = nullptr;
+		for(ShaderProgramBinaryConstant& other : consts)
 		{
 			const Bool nameSame = strcmp(other.m_name.getBegin(), newConst.m_name.getBegin()) == 0;
 			const Bool typeSame = other.m_type == newConst.m_type;
@@ -506,14 +507,20 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<ShaderProgramBinaryConst
 
 			if(idSame)
 			{
-				found = true;
+				foundConst = &other;
 				break;
 			}
 		}
 
-		if(!found)
+		// Add it or update it
+		if(foundConst == nullptr)
 		{
 			consts.emplaceBack(newConst);
+		}
+		else
+		{
+			ANKI_ASSERT(foundConst->m_shaderStages != ShaderTypeBit::NONE);
+			foundConst->m_shaderStages |= shaderTypeToBit(stage);
 		}
 	}
 
@@ -582,7 +589,7 @@ Error SpirvReflector::performSpirvReflection(ShaderProgramBinaryReflection& refl
 		}
 
 		// Spec consts
-		ANKI_CHECK(compiler.constsReflection(specializationConstants));
+		ANKI_CHECK(compiler.constsReflection(specializationConstants, type));
 	}
 
 	ShaderProgramBinaryBlock* firstBlock;

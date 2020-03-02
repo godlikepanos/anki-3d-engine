@@ -222,7 +222,7 @@ Error ShaderProgramPreprocessor::parseFile(CString fname, U32 depth)
 	ResourceFilePtr file;
 	ANKI_CHECK(m_fsystem->openFile(fname, file));
 	StringAuto txt(m_alloc);
-	ANKI_CHECK(file->readAllText(m_alloc, txt));
+	ANKI_CHECK(file->readAllText(txt));
 
 	StringListAuto lines(m_alloc);
 	lines.splitString(txt.toCString(), '\n');

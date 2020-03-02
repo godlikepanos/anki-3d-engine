@@ -29,10 +29,10 @@ public:
 		return m_file.read(buff, size);
 	}
 
-	ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out) override
+	ANKI_USE_RESULT Error readAllText(StringAuto& out) override
 	{
 		ANKI_TRACE_SCOPED_EVENT(RSRC_FILE_READ);
-		return m_file.readAllText(alloc, out);
+		return m_file.readAllText(out);
 	}
 
 	ANKI_USE_RESULT Error readU32(U32& u) override
@@ -141,10 +141,10 @@ public:
 		return Error::NONE;
 	}
 
-	ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out) override
+	ANKI_USE_RESULT Error readAllText(StringAuto& out) override
 	{
 		ANKI_ASSERT(m_size);
-		out.create(alloc, '?', m_size);
+		out.create('?', m_size);
 		return read(&out[0], m_size);
 	}
 

@@ -37,7 +37,7 @@ public:
 	virtual ANKI_USE_RESULT Error read(void* buff, PtrSize size) = 0;
 
 	/// Read all the contents of a text file. If the file is not rewined it will probably fail
-	virtual ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out) = 0;
+	virtual ANKI_USE_RESULT Error readAllText(StringAuto& out) = 0;
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's
 	virtual ANKI_USE_RESULT Error readU32(U32& u) = 0;
@@ -86,6 +86,20 @@ public:
 
 	/// Search the path list to find the file. Then open the file for reading. It's thread-safe.
 	ANKI_USE_RESULT Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
+
+	/// Iterate all the filenames from all paths provided.
+	template<typename TFunc>
+	ANKI_USE_RESULT Error iterateAllFilenames(TFunc func) const
+	{
+		for(const Path& path : m_paths)
+		{
+			for(const String& fname : path.m_files)
+			{
+				ANKI_CHECK(func(fname.toCString()));
+			}
+		}
+		return Error::NONE;
+	}
 
 #if !ANKI_TESTS
 private:

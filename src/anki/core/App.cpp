@@ -26,6 +26,7 @@
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/ui/UiManager.h>
 #include <anki/ui/Canvas.h>
+#include <anki/shader_compiler/ShaderProgramCompiler.h>
 
 #if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
@@ -294,11 +295,11 @@ void App::cleanup()
 
 Error App::init(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
-	Error err = initInternal(config, allocCb, allocCbUserData);
+	const Error err = initInternal(config, allocCb, allocCbUserData);
 	if(err)
 	{
+		ANKI_CORE_LOGE("App initialization failed. Shutting down");
 		cleanup();
-		ANKI_CORE_LOGE("App initialization failed");
 	}
 
 	return err;
@@ -435,6 +436,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_resources = m_heapAlloc.newInstance<ResourceManager>();
 
 	ANKI_CHECK(m_resources->init(rinit));
+	ANKI_CHECK(compileAllShaders());
 
 	//
 	// UI
@@ -704,6 +706,53 @@ void App::initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserDat
 		m_allocCb = allocCb;
 		m_allocCbData = allocCbUserData;
 	}
+}
+
+Error App::compileAllShaders()
+{
+	ANKI_CORE_LOGI("Compiling shaders");
+
+	ANKI_CHECK(m_resourceFs->iterateAllFilenames([&](CString fname) -> Error {
+		// Check file extension
+		StringAuto extension(m_heapAlloc);
+		getFilepathExtension(fname, extension);
+		if(extension.getLength() == 0 || extension != "ankiprog")
+		{
+			return Error::NONE;
+		}
+
+		// TODO check if it's in the cache
+
+		// Load interface
+		class Interface : public ShaderProgramFilesystemInterface
+		{
+		public:
+			ResourceFilesystem* m_fsystem = nullptr;
+
+			Error readAllText(CString filename, StringAuto& txt) final
+			{
+				ResourceFilePtr file;
+				ANKI_CHECK(m_fsystem->openFile(filename, file));
+				ANKI_CHECK(file->readAllText(txt));
+				return Error::NONE;
+			}
+		} iface;
+		iface.m_fsystem = m_resourceFs;
+
+		// Compile
+		ShaderProgramBinaryWrapper binary(m_heapAlloc);
+		ANKI_CHECK(compileShaderProgram(
+			fname, iface, m_heapAlloc, m_gr->getDeviceCapabilities(), m_gr->getBindlessLimits(), binary));
+
+		// Save the binary to the cache
+		StringAuto storeFname(m_heapAlloc);
+		storeFname.sprintf("%s/%s.ankiprogbin", m_cacheDir.cstr(), fname.cstr());
+		ANKI_CHECK(binary.serializeToFile(storeFname));
+
+		return Error::NONE;
+	}));
+
+	return Error::NONE;
 }
 
 } // end namespace anki

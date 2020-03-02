@@ -123,6 +123,7 @@ public:
 	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name;
 	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 	U32 m_constantId = MAX_U32;
+	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -133,6 +134,7 @@ public:
 			MAX_SHADER_BINARY_NAME_LENGTH + 1);
 		s.doValue("m_type", offsetof(ShaderProgramBinaryConstant, m_type), self.m_type);
 		s.doValue("m_constantId", offsetof(ShaderProgramBinaryConstant, m_constantId), self.m_constantId);
+		s.doValue("m_shaderStages", offsetof(ShaderProgramBinaryConstant, m_shaderStages), self.m_shaderStages);
 	}
 
 	template<typename TDeserializer>

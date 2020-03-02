@@ -216,6 +216,8 @@ private:
 
 	/// Inject a new UI element in the render queue for displaying various stuff.
 	void injectUiElements(DynamicArrayAuto<UiQueueElement>& elements, RenderQueue& rqueue);
+
+	ANKI_USE_RESULT Error compileAllShaders();
 };
 
 } // end namespace anki

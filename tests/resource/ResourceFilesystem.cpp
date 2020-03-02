@@ -21,7 +21,7 @@ ANKI_TEST(Resource, ResourceFilesystem)
 		ResourceFilePtr file;
 		ANKI_TEST_EXPECT_NO_ERR(fs.openFile("subdir0/hello.txt", file));
 		StringAuto txt(alloc);
-		ANKI_TEST_EXPECT_NO_ERR(file->readAllText(alloc, txt));
+		ANKI_TEST_EXPECT_NO_ERR(file->readAllText(txt));
 		ANKI_TEST_EXPECT_EQ(txt, "hello\n");
 	}
 
@@ -30,7 +30,7 @@ ANKI_TEST(Resource, ResourceFilesystem)
 		ResourceFilePtr file;
 		ANKI_TEST_EXPECT_NO_ERR(fs.openFile("subdir0/hello.txt", file));
 		StringAuto txt(alloc);
-		ANKI_TEST_EXPECT_NO_ERR(file->readAllText(alloc, txt));
+		ANKI_TEST_EXPECT_NO_ERR(file->readAllText(txt));
 		ANKI_TEST_EXPECT_EQ(txt, "hell\n");
 	}
 }

@@ -44,7 +44,7 @@ Error ResourceObject::openFileReadAllText(const CString& filename, StringAuto& t
 
 	// Read string
 	text = StringAuto(getTempAllocator());
-	ANKI_CHECK(file->readAllText(getTempAllocator(), text));
+	ANKI_CHECK(file->readAllText(text));
 
 	return Error::NONE;
 }

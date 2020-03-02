@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-/// @file 
+/// @file
 /// This file is mainly used to test that Windows.h works with our own minimal version of it.
 
 #include "Win32Minimal.h"

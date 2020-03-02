@@ -19,7 +19,9 @@ Error ScriptResource::load(const ResourceFilename& filename, Bool async)
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(file->readAllText(getAllocator(), m_source));
+	StringAuto src(getAllocator());
+	ANKI_CHECK(file->readAllText(src));
+	m_source.create(getAllocator(), src);
 
 	return Error::NONE;
 }
