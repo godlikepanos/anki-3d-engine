@@ -64,7 +64,7 @@ ANKI_USE_RESULT Error compileShaderProgram(CString fname,
 	ShaderProgramBinaryWrapper& binary);
 
 /// Create a human readable representation of the shader binary.
-void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable);
+void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable);
 /// @}
 
 } // end namespace anki

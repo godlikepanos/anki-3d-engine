@@ -20,6 +20,7 @@ Bool fileExists(const CString& filename);
 void getFilepathExtension(const CString& filename, StringAuto& out);
 
 /// Get path filename.
+/// On path/to/file.ext return file.ext
 void getFilepathFilename(const CString& filename, StringAuto& out);
 
 /// Return true if directory exists?
@@ -46,6 +47,10 @@ ANKI_USE_RESULT Error createDirectory(const CString& dir);
 /// Write the home directory to @a buff. The @a buffSize is the size of the @a buff. If the @buffSize is not enough the
 /// function will throw an exception.
 ANKI_USE_RESULT Error getHomeDirectory(StringAuto& out);
+
+/// Get the time the file was last modified.
+ANKI_USE_RESULT Error getFileModificationTime(
+	CString filename, U32& year, U32& month, U32& day, U32& hour, U32& min, U32& second);
 /// @}
 
 } // end namespace anki

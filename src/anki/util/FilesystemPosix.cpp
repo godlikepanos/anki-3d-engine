@@ -18,6 +18,7 @@
 #include <cerrno>
 #include <ftw.h> // For walkDirectoryTree
 #include <cstdlib>
+#include <time.h>
 
 #ifndef USE_FDS
 #	define USE_FDS 15
@@ -205,6 +206,25 @@ Error getHomeDirectory(StringAuto& out)
 	}
 
 	out.create(home);
+	return Error::NONE;
+}
+
+Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day, U32& hour, U32& min, U32& second)
+{
+	struct stat buff;
+	if(lstat(filename.cstr(), &buff))
+	{
+		ANKI_UTIL_LOGE("stat() failed");
+		return Error::NONE;
+	}
+
+	const struct tm& t = *localtime(&buff.st_mtim.tv_sec);
+	year = 1900 + t.tm_year;
+	month = t.tm_mon + 1;
+	day = t.tm_mday;
+	hour = t.tm_hour;
+	second = t.tm_sec;
+
 	return Error::NONE;
 }
 

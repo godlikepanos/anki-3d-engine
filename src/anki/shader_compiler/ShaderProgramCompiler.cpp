@@ -430,7 +430,7 @@ static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListAu
 	}
 }
 
-void disassembleShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable)
+void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable)
 {
 	GenericMemoryPoolAllocator<U8> alloc = humanReadable.getAllocator();
 	StringListAuto lines(alloc);

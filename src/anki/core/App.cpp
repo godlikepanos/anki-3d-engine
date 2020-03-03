@@ -745,8 +745,10 @@ Error App::compileAllShaders()
 			fname, iface, m_heapAlloc, m_gr->getDeviceCapabilities(), m_gr->getBindlessLimits(), binary));
 
 		// Save the binary to the cache
+		StringAuto baseFname(m_heapAlloc);
+		getFilepathFilename(fname, baseFname);
 		StringAuto storeFname(m_heapAlloc);
-		storeFname.sprintf("%s/%s.ankiprogbin", m_cacheDir.cstr(), fname.cstr());
+		storeFname.sprintf("%s/%sbin", m_cacheDir.cstr(), baseFname.cstr());
 		ANKI_CHECK(binary.serializeToFile(storeFname));
 
 		return Error::NONE;

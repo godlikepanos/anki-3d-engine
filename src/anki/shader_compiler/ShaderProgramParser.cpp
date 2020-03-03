@@ -173,7 +173,7 @@ Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const Strin
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	m_codeLines.pushBackSprintf("#ifdef ANKI_%s", SHADER_STAGE_NAMES[shaderType].cstr());
+	m_codeLines.pushBackSprintf("#ifdef ANKI_%s_SHADER", SHADER_STAGE_NAMES[shaderType].cstr());
 
 	++begin;
 	if(begin != end)
@@ -508,7 +508,6 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 	else if((token < end) && ((foundAloneHash && *token == "pragma") || *token == "#pragma"))
 	{
 		// We may have a #pragma once or a #pragma anki or something else
-
 		++token;
 
 		if(*token == "once")
@@ -618,12 +617,6 @@ Error ShaderProgramParser::parseFile(CString fname, U32 depth)
 		m_codeLines.pushBack("#endif // Include guard");
 	}
 
-	if(m_insideShader)
-	{
-		ANKI_SHADER_COMPILER_LOGE("Forgot a \"pragma anki end\"");
-		return Error::USER_DATA;
-	}
-
 	return Error::NONE;
 }
 
@@ -660,6 +653,12 @@ Error ShaderProgramParser::parse()
 				ANKI_SHADER_COMPILER_LOGE("Missing fragment shader");
 				return Error::USER_DATA;
 			}
+		}
+
+		if(m_insideShader)
+		{
+			ANKI_SHADER_COMPILER_LOGE("Forgot a \"pragma anki end\"");
+			return Error::USER_DATA;
 		}
 	}
 
@@ -716,7 +715,8 @@ Error ShaderProgramParser::generateVariant(
 		StringAuto finalSource(m_alloc);
 		finalSource.append(header);
 		finalSource.append(mutatorDefines);
-		finalSource.append(StringAuto(m_alloc).sprintf("#define ANKI_%s 1\n", SHADER_STAGE_NAMES[shaderType].cstr()));
+		finalSource.append(
+			StringAuto(m_alloc).sprintf("#define ANKI_%s_SHADER 1\n", SHADER_STAGE_NAMES[shaderType].cstr()));
 		finalSource.append(m_codeSource);
 
 		// Move the source

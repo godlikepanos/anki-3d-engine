@@ -156,7 +156,7 @@ void main()
 
 #if 0
 	StringAuto dis(alloc);
-	disassembleShaderProgramBinary(binary.getBinary(), dis);
+	dumpShaderProgramBinary(binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
 #endif
 }
