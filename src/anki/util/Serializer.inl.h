@@ -56,14 +56,16 @@ Error BinarySerializer::serializeInternal(const T& x, GenericMemoryPoolAllocator
 		return m_err;
 	}
 
-	// Write all pointers
+	// Write all pointers. Do that now and not while writing the actual shader in order to avoid the file seeks
 	DynamicArrayAuto<PtrSize> pointerFilePositions(m_alloc);
 	for(const PointerInfo& pointer : m_pointerFilePositions)
 	{
 		ANKI_CHECK(m_file->seek(pointer.m_filePos, FileSeekOrigin::BEGINNING));
 		ANKI_CHECK(m_file->write(&pointer.m_value, sizeof(pointer.m_value)));
 
-		pointerFilePositions.emplaceBack(pointer.m_filePos - m_beginOfDataFilePos);
+		const PtrSize offsetAfterHeader = pointer.m_filePos - m_beginOfDataFilePos;
+		ANKI_ASSERT(offsetAfterHeader + sizeof(void*) <= m_eofPos - m_beginOfDataFilePos);
+		pointerFilePositions.emplaceBack(offsetAfterHeader);
 	}
 
 	// Write the pointer offsets
@@ -89,14 +91,14 @@ Error BinarySerializer::serializeInternal(const T& x, GenericMemoryPoolAllocator
 }
 
 template<typename T>
-Error BinarySerializer::doArrayComplexType(const T* arr, PtrSize size)
+Error BinarySerializer::doArrayComplexType(const T* arr, PtrSize size, PtrSize memberOffset)
 {
 	ANKI_ASSERT(arr && size > 0);
 	check();
 	checkStruct<T>();
 
 	// Serialize pointers
-	PtrSize structFilePos = m_structureFilePos.getBack();
+	PtrSize structFilePos = m_structureFilePos.getBack() + memberOffset;
 	for(PtrSize i = 0; i < size; ++i)
 	{
 		m_structureFilePos.emplaceBack(m_alloc, structFilePos);

@@ -105,7 +105,7 @@ public:
 	{
 		if(!m_err)
 		{
-			m_err = doArrayComplexType(arr, size);
+			m_err = doArrayComplexType(arr, size, memberOffset);
 		}
 	}
 
@@ -147,8 +147,8 @@ private:
 	class PointerInfo
 	{
 	public:
-		PtrSize m_filePos;
-		PtrSize m_value;
+		PtrSize m_filePos; ///< Pointer location inside the file.
+		PtrSize m_value; ///< Where it points to. It's an offset after the header.
 	};
 
 	File* m_file = nullptr;
@@ -160,7 +160,7 @@ private:
 	Error m_err = Error::NONE;
 
 	template<typename T>
-	ANKI_USE_RESULT Error doArrayComplexType(const T* arr, PtrSize size);
+	ANKI_USE_RESULT Error doArrayComplexType(const T* arr, PtrSize size, PtrSize memberOffset);
 
 	template<typename T>
 	ANKI_USE_RESULT Error doDynamicArrayComplexType(const T* arr, PtrSize size, PtrSize memberOffset);
