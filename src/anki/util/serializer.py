@@ -163,8 +163,8 @@ def gen_class(root_el):
             writeln("s.doDynamicArray(\"%s\", offsetof(%s, %s), self.%s, self.%s);" % (member.name, name, member.name,
                                                                                        member.name, member.array_size))
         elif member.array_size != "1":
-            writeln("s.doArray(\"%s\", offsetof(%s, %s), &self.%s[0], %s);" % (member.name, name, member.name,
-                                                                               member.name, member.array_size))
+            writeln("s.doArray(\"%s\", offsetof(%s, %s), &self.%s[0], self.%s.getSize());" %
+                    (member.name, name, member.name, member.name, member.name))
         else:
             writeln("s.doValue(\"%s\", offsetof(%s, %s), self.%s);" % (member.name, name, member.name, member.name))
 

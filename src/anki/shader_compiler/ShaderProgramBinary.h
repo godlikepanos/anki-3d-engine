@@ -26,10 +26,7 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray("m_name",
-			offsetof(ShaderProgramBinaryVariable, m_name),
-			&self.m_name[0],
-			MAX_SHADER_BINARY_NAME_LENGTH + 1);
+		s.doArray("m_name", offsetof(ShaderProgramBinaryVariable, m_name), &self.m_name[0], self.m_name.getSize());
 		s.doValue("m_blockInfo", offsetof(ShaderProgramBinaryVariable, m_blockInfo), self.m_blockInfo);
 		s.doValue("m_type", offsetof(ShaderProgramBinaryVariable, m_type), self.m_type);
 		s.doValue("m_active", offsetof(ShaderProgramBinaryVariable, m_active), self.m_active);
@@ -61,8 +58,7 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray(
-			"m_name", offsetof(ShaderProgramBinaryBlock, m_name), &self.m_name[0], MAX_SHADER_BINARY_NAME_LENGTH + 1);
+		s.doArray("m_name", offsetof(ShaderProgramBinaryBlock, m_name), &self.m_name[0], self.m_name.getSize());
 		s.doValue("m_variables", offsetof(ShaderProgramBinaryBlock, m_variables), self.m_variables);
 		s.doValue("m_binding", offsetof(ShaderProgramBinaryBlock, m_binding), self.m_binding);
 		s.doValue("m_set", offsetof(ShaderProgramBinaryBlock, m_set), self.m_set);
@@ -95,8 +91,7 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray(
-			"m_name", offsetof(ShaderProgramBinaryOpaque, m_name), &self.m_name[0], MAX_SHADER_BINARY_NAME_LENGTH + 1);
+		s.doArray("m_name", offsetof(ShaderProgramBinaryOpaque, m_name), &self.m_name[0], self.m_name.getSize());
 		s.doValue("m_type", offsetof(ShaderProgramBinaryOpaque, m_type), self.m_type);
 		s.doValue("m_binding", offsetof(ShaderProgramBinaryOpaque, m_binding), self.m_binding);
 		s.doValue("m_set", offsetof(ShaderProgramBinaryOpaque, m_set), self.m_set);
@@ -128,10 +123,7 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray("m_name",
-			offsetof(ShaderProgramBinaryConstant, m_name),
-			&self.m_name[0],
-			MAX_SHADER_BINARY_NAME_LENGTH + 1);
+		s.doArray("m_name", offsetof(ShaderProgramBinaryConstant, m_name), &self.m_name[0], self.m_name.getSize());
 		s.doValue("m_type", offsetof(ShaderProgramBinaryConstant, m_type), self.m_type);
 		s.doValue("m_constantId", offsetof(ShaderProgramBinaryConstant, m_constantId), self.m_constantId);
 		s.doValue("m_shaderStages", offsetof(ShaderProgramBinaryConstant, m_shaderStages), self.m_shaderStages);
@@ -201,7 +193,7 @@ public:
 		s.doArray("m_codeBlockIndices",
 			offsetof(ShaderProgramBinaryVariant, m_codeBlockIndices),
 			&self.m_codeBlockIndices[0],
-			U32(ShaderType::COUNT));
+			self.m_codeBlockIndices.getSize());
 	}
 
 	template<typename TDeserializer>
@@ -227,8 +219,7 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray(
-			"m_name", offsetof(ShaderProgramBinaryMutator, m_name), &self.m_name[0], MAX_SHADER_BINARY_NAME_LENGTH + 1);
+		s.doArray("m_name", offsetof(ShaderProgramBinaryMutator, m_name), &self.m_name[0], self.m_name.getSize());
 		s.doValue("m_values", offsetof(ShaderProgramBinaryMutator, m_values), self.m_values);
 	}
 
@@ -313,7 +304,7 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray("m_magic", offsetof(ShaderProgramBinary, m_magic), &self.m_magic[0], 8);
+		s.doArray("m_magic", offsetof(ShaderProgramBinary, m_magic), &self.m_magic[0], self.m_magic.getSize());
 		s.doValue("m_mutators", offsetof(ShaderProgramBinary, m_mutators), self.m_mutators);
 		s.doValue("m_codeBlocks", offsetof(ShaderProgramBinary, m_codeBlocks), self.m_codeBlocks);
 		s.doValue("m_variants", offsetof(ShaderProgramBinary, m_variants), self.m_variants);
