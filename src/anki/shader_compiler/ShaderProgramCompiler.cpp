@@ -401,6 +401,11 @@ Error compileShaderProgram(CString fname,
 		binary.m_mutations[0].m_variantIndex = 0;
 	}
 
+	// Sort the mutations
+	std::sort(binary.m_mutations.getBegin(),
+		binary.m_mutations.getEnd(),
+		[](const ShaderProgramBinaryMutation& a, const ShaderProgramBinaryMutation& b) { return a.m_hash < b.m_hash; });
+
 	// Misc
 	binary.m_presentShaderTypes = parser.getShaderTypes();
 

@@ -88,7 +88,7 @@
 				<member name="m_mutators" type="WeakArray&lt;ShaderProgramBinaryMutator&gt;" />
 				<member name="m_codeBlocks" type="WeakArray&lt;ShaderProgramBinaryCodeBlock&gt;" />
 				<member name="m_variants" type="WeakArray&lt;ShaderProgramBinaryVariant&gt;" />
-				<member name="m_mutations" type="WeakArray&lt;ShaderProgramBinaryMutation&gt;" />
+				<member name="m_mutations" type="WeakArray&lt;ShaderProgramBinaryMutation&gt;" comment="I'ts sorted using the mutation's hash" />
 				<member name="m_presentShaderTypes" type="ShaderTypeBit" constructor="= ShaderTypeBit::NONE" />
 			</members>
 		</class>

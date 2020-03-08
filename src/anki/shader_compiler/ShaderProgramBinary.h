@@ -298,7 +298,7 @@ public:
 	WeakArray<ShaderProgramBinaryMutator> m_mutators;
 	WeakArray<ShaderProgramBinaryCodeBlock> m_codeBlocks;
 	WeakArray<ShaderProgramBinaryVariant> m_variants;
-	WeakArray<ShaderProgramBinaryMutation> m_mutations;
+	WeakArray<ShaderProgramBinaryMutation> m_mutations; ///< I'ts sorted using the mutation's hash.
 	ShaderTypeBit m_presentShaderTypes = ShaderTypeBit::NONE;
 
 	template<typename TSerializer, typename TClass>
