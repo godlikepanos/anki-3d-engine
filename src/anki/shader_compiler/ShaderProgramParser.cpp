@@ -69,34 +69,34 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define _ANKI_CONCATENATE(a, b) a##b
 #define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 
-#define ANKI_SPECIALIZATION_CONSTANT_X(type, x, id, defltVal) layout(constant_id = id) const type x = defltVal;
+#define ANKI_SPECIALIZATION_CONSTANT_X(type, x, id, defltVal) layout(constant_id = id) const type x = defltVal
 
 #define ANKI_SPECIALIZATION_CONSTANT_X2(type, componentType, x, id, defltVal) \
 	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_2_, x) = defltVal[0]; \
 	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_2_, x) = defltVal[1]; \
-	const type x = type( \
+	type x = type( \
 		ANKI_CONCATENATE(_anki_const_0_2_, x), \
-		ANKI_CONCATENATE(_anki_const_1_2_, x));
+		ANKI_CONCATENATE(_anki_const_1_2_, x))
 
 #define ANKI_SPECIALIZATION_CONSTANT_X3(type, componentType, x, id, defltVal) \
 	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_3_, x) = defltVal[0]; \
 	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_3_, x) = defltVal[1]; \
 	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_3_, x) = defltVal[2]; \
-	const type x = type( \
+	type x = type( \
 		ANKI_CONCATENATE(_anki_const_0_3_, x), \
 		ANKI_CONCATENATE(_anki_const_1_3_, x), \
-		ANKI_CONCATENATE(_anki_const_2_3_, x));
+		ANKI_CONCATENATE(_anki_const_2_3_, x))
 
 #define ANKI_SPECIALIZATION_CONSTANT_X4(type, componentType, x, id, defltVal) \
 	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_4_, x) = defltVal[0]; \
 	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_4_, x) = defltVal[1]; \
 	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_4_, x) = defltVal[2]; \
 	layout(constant_id = id + 3) const componentType ANKI_CONCATENATE(_anki_const_3_4_, x) = defltVal[3]; \
-	const type x = type( \
+	type x = type( \
 		ANKI_CONCATENATE(_anki_const_0_4_, x), \
 		ANKI_CONCATENATE(_anki_const_1_4_, x), \
 		ANKI_CONCATENATE(_anki_const_2_4_, x)); \
-		ANKI_CONCATENATE(_anki_const_3_4_, x));
+		ANKI_CONCATENATE(_anki_const_3_4_, x))
 
 #define ANKI_SPECIALIZATION_CONSTANT_I32(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X(I32, x, id, defltVal)
 #define ANKI_SPECIALIZATION_CONSTANT_IVEC2(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X2(IVec2, I32, x, id, defltVal)

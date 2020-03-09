@@ -154,7 +154,7 @@ void main()
 	ANKI_TEST_EXPECT_NO_ERR(
 		compileShaderProgram("test.glslp", fsystem, alloc, gpuCapabilities, bindlessLimits, binary));
 
-#if 0
+#if 1
 	StringAuto dis(alloc);
 	dumpShaderProgramBinary(binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
