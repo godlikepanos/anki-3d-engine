@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/shader_compiler/ShaderProgramReflection.h>
-#include <anki/shader_compiler/ShaderProgramBinary.h>
+#include <anki/gr/utils/Functions.h>
 #include <SPIRV-Cross/spirv_glsl.hpp>
 
 namespace anki
@@ -16,39 +16,92 @@ class SpirvReflector : public spirv_cross::Compiler
 public:
 	SpirvReflector(const U32* ir, PtrSize wordCount, const GenericMemoryPoolAllocator<U8>& tmpAlloc)
 		: spirv_cross::Compiler(ir, wordCount)
-		, m_tmpAlloc(tmpAlloc)
+		, m_alloc(tmpAlloc)
 	{
 	}
 
-	ANKI_USE_RESULT static Error performSpirvReflection(ShaderProgramBinaryReflection& refl,
+	ANKI_USE_RESULT static Error performSpirvReflection(
 		Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
 		GenericMemoryPoolAllocator<U8> tmpAlloc,
-		GenericMemoryPoolAllocator<U8> binaryAlloc);
+		ShaderReflectionVisitorInterface& interface);
 
 private:
-	GenericMemoryPoolAllocator<U8> m_tmpAlloc;
+	class Var
+	{
+	public:
+		StringAuto m_name;
+		ShaderVariableBlockInfo m_blockInfo;
+		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+
+		Var(const GenericMemoryPoolAllocator<U8>& alloc)
+			: m_name(alloc)
+		{
+		}
+	};
+
+	class Block
+	{
+	public:
+		StringAuto m_name;
+		DynamicArrayAuto<Var> m_vars;
+		U32 m_binding = MAX_U32;
+		U32 m_set = MAX_U32;
+		U32 m_size = MAX_U32;
+
+		Block(const GenericMemoryPoolAllocator<U8>& alloc)
+			: m_name(alloc)
+			, m_vars(alloc)
+		{
+		}
+	};
+
+	class Opaque
+	{
+	public:
+		StringAuto m_name;
+		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+		U32 m_binding = MAX_U32;
+		U32 m_set = MAX_U32;
+		U32 m_arraySize = MAX_U32;
+
+		Opaque(const GenericMemoryPoolAllocator<U8>& alloc)
+			: m_name(alloc)
+		{
+		}
+	};
+
+	class Const
+	{
+	public:
+		StringAuto m_name;
+		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
+		U32 m_constantId = MAX_U32;
+		ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
+
+		Const(const GenericMemoryPoolAllocator<U8>& alloc)
+			: m_name(alloc)
+		{
+		}
+	};
+
+	GenericMemoryPoolAllocator<U8> m_alloc;
 
 	ANKI_USE_RESULT Error spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const;
 
 	ANKI_USE_RESULT Error blockReflection(
-		const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<ShaderProgramBinaryBlock>& blocks) const;
+		const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<Block>& blocks) const;
 
-	ANKI_USE_RESULT Error opaqueReflection(
-		const spirv_cross::Resource& res, DynamicArrayAuto<ShaderProgramBinaryOpaque>& opaques) const;
+	ANKI_USE_RESULT Error opaqueReflection(const spirv_cross::Resource& res, DynamicArrayAuto<Opaque>& opaques) const;
 
-	ANKI_USE_RESULT Error constsReflection(
-		DynamicArrayAuto<ShaderProgramBinaryConstant>& consts, ShaderType stage) const;
+	ANKI_USE_RESULT Error constsReflection(DynamicArrayAuto<Const>& consts, ShaderType stage) const;
 
-	ANKI_USE_RESULT Error blockVariablesReflection(
-		spirv_cross::TypeID resourceId, DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const;
+	ANKI_USE_RESULT Error blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const;
 
-	ANKI_USE_RESULT Error blockVariableReflection(const spirv_cross::SPIRType& type,
-		CString parentVariable,
-		DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const;
+	ANKI_USE_RESULT Error blockVariableReflection(
+		const spirv_cross::SPIRType& type, CString parentVariable, DynamicArrayAuto<Var>& vars) const;
 };
 
-Error SpirvReflector::blockVariablesReflection(
-	spirv_cross::TypeID resourceId, DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const
+Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const
 {
 	Bool found = false;
 	Error err = Error::NONE;
@@ -78,15 +131,14 @@ Error SpirvReflector::blockVariablesReflection(
 	return Error::NONE;
 }
 
-Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
-	CString parentVariable,
-	DynamicArrayAuto<ShaderProgramBinaryVariable>& vars) const
+Error SpirvReflector::blockVariableReflection(
+	const spirv_cross::SPIRType& type, CString parentVariable, DynamicArrayAuto<Var>& vars) const
 {
 	ANKI_ASSERT(type.basetype == spirv_cross::SPIRType::Struct);
 
 	for(U32 i = 0; i < type.member_types.size(); ++i)
 	{
-		ShaderProgramBinaryVariable var;
+		Var var(m_alloc);
 		const spirv_cross::SPIRType& memberType = get<spirv_cross::SPIRType>(type.member_types[i]);
 
 		// Name
@@ -99,16 +151,12 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 
 			if(parentVariable.isEmpty())
 			{
-				strncpy(var.m_name.getBegin(), name.c_str(), var.m_name.getSize());
+				var.m_name.create(name.c_str());
 			}
 			else
 			{
-				StringAuto extendedName(m_tmpAlloc);
-				extendedName.sprintf("%s.%s", parentVariable.cstr(), name.c_str());
-				strncpy(var.m_name.getBegin(), extendedName.cstr(), var.m_name.getSize());
+				var.m_name.sprintf("%s.%s", parentVariable.cstr(), name.c_str());
 			}
-
-			var.m_name[var.m_name.getSize() - 1] = '\0';
 		}
 
 		// Offset
@@ -180,13 +228,13 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 		{
 			if(var.m_blockInfo.m_arraySize == 1)
 			{
-				ANKI_CHECK(blockVariableReflection(memberType, var.m_name.getBegin(), vars));
+				ANKI_CHECK(blockVariableReflection(memberType, var.m_name, vars));
 			}
 			else
 			{
 				for(U32 i = 0; i < U32(var.m_blockInfo.m_arraySize); ++i)
 				{
-					StringAuto newName(m_tmpAlloc);
+					StringAuto newName(m_alloc);
 					newName.sprintf("%s[%u]", var.m_name.getBegin(), i);
 					ANKI_CHECK(blockVariableReflection(memberType, newName, vars));
 				}
@@ -236,14 +284,14 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 		}
 		else
 		{
-			ANKI_SHADER_COMPILER_LOGE("Unhandled base type for member: %s", var.m_name.getBegin());
+			ANKI_SHADER_COMPILER_LOGE("Unhandled base type for member: %s", var.m_name.cstr());
 			return Error::FUNCTION_FAILED;
 		}
 
 		// Store the member
 		if(var.m_type != ShaderVariableDataType::NONE)
 		{
-			vars.emplaceBack(var);
+			vars.emplaceBack(std::move(var));
 		}
 	}
 
@@ -251,9 +299,9 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 }
 
 Error SpirvReflector::blockReflection(
-	const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<ShaderProgramBinaryBlock>& blocks) const
+	const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<Block>& blocks) const
 {
-	ShaderProgramBinaryBlock newBlock;
+	Block newBlock(m_alloc);
 	const spirv_cross::SPIRType type = get_type(res.type_id);
 	const spirv_cross::Bitset decorationMask = get_decoration_bitset(res.id);
 
@@ -267,12 +315,12 @@ Error SpirvReflector::blockReflection(
 	// Name
 	{
 		const std::string name = (!res.name.empty()) ? res.name : get_fallback_name(fallbackId);
-		if(name.length() == 0 || name.length() > MAX_SHADER_BINARY_NAME_LENGTH)
+		if(name.length() == 0)
 		{
-			ANKI_SHADER_COMPILER_LOGE("Wrong name length: %s", name.length() ? name.c_str() : " ");
+			ANKI_SHADER_COMPILER_LOGE("Can't accept zero name length");
 			return Error::USER_DATA;
 		}
-		memcpy(newBlock.m_name.getBegin(), name.c_str(), name.length() + 1);
+		newBlock.m_name.create(name.c_str());
 	}
 
 	// Set
@@ -297,16 +345,15 @@ Error SpirvReflector::blockReflection(
 	ANKI_ASSERT(isStorage || newBlock.m_size > 0);
 
 	// Add it
-	Bool found = false;
-	for(const ShaderProgramBinaryBlock& other : blocks)
+	const Block* otherFound = nullptr;
+	for(const Block& other : blocks)
 	{
 		const Bool bindingSame = other.m_set == newBlock.m_set && other.m_binding == newBlock.m_binding;
 		const Bool nameSame = strcmp(other.m_name.getBegin(), newBlock.m_name.getBegin()) == 0;
 		const Bool sizeSame = other.m_size == newBlock.m_size;
-		const Bool varsSame = other.m_variables.getSize() == newBlock.m_variables.getSize();
 
-		const Bool err0 = bindingSame && (!nameSame || !sizeSame || !varsSame);
-		const Bool err1 = nameSame && (!bindingSame || !sizeSame || !varsSame);
+		const Bool err0 = bindingSame && (!nameSame || !sizeSame);
+		const Bool err1 = nameSame && (!bindingSame || !sizeSame);
 		if(err0 || err1)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Linking error");
@@ -315,24 +362,27 @@ Error SpirvReflector::blockReflection(
 
 		if(bindingSame)
 		{
-			found = true;
+			otherFound = &other;
 			break;
 		}
 	}
 
-	if(!found)
+	if(!otherFound)
 	{
 		// Get the variables
-		DynamicArrayAuto<ShaderProgramBinaryVariable> vars(blocks.getAllocator());
-		ANKI_CHECK(blockVariablesReflection(res.base_type_id, vars));
-		ShaderProgramBinaryVariable* firstVar;
-		U32 size, storage;
-		vars.moveAndReset(firstVar, size, storage);
-		newBlock.m_variables.setArray(firstVar, size);
+		ANKI_CHECK(blockVariablesReflection(res.base_type_id, newBlock.m_vars));
 
 		// Store the block
-		blocks.emplaceBack(newBlock);
+		blocks.emplaceBack(std::move(newBlock));
 	}
+#if ANKI_ASSERTS_ENABLED
+	else
+	{
+		DynamicArrayAuto<Var> vars(m_alloc);
+		ANKI_CHECK(blockVariablesReflection(res.base_type_id, vars));
+		ANKI_ASSERT(vars.getSize() == otherFound->m_vars.getSize() && "Expecting same vars");
+	}
+#endif
 
 	return Error::NONE;
 }
@@ -376,10 +426,9 @@ Error SpirvReflector::spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderV
 	return Error::NONE;
 }
 
-Error SpirvReflector::opaqueReflection(
-	const spirv_cross::Resource& res, DynamicArrayAuto<ShaderProgramBinaryOpaque>& opaques) const
+Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, DynamicArrayAuto<Opaque>& opaques) const
 {
-	ShaderProgramBinaryOpaque newOpaque;
+	Opaque newOpaque(m_alloc);
 	const spirv_cross::SPIRType type = get_type(res.type_id);
 	const spirv_cross::Bitset decorationMask = get_decoration_bitset(res.id);
 
@@ -387,12 +436,12 @@ Error SpirvReflector::opaqueReflection(
 
 	// Name
 	const std::string name = (!res.name.empty()) ? res.name : get_fallback_name(fallbackId);
-	if(name.length() == 0 || name.length() > MAX_SHADER_BINARY_NAME_LENGTH)
+	if(name.length() == 0)
 	{
-		ANKI_SHADER_COMPILER_LOGE("Wrong name length: %s", name.length() ? name.c_str() : " ");
+		ANKI_SHADER_COMPILER_LOGE("Can't accept zero length name");
 		return Error::USER_DATA;
 	}
-	memcpy(newOpaque.m_name.getBegin(), name.c_str(), name.length() + 1);
+	newOpaque.m_name.create(name.c_str());
 
 	// Type
 	ANKI_CHECK(spirvTypeToAnki(type, newOpaque.m_type));
@@ -419,16 +468,16 @@ Error SpirvReflector::opaqueReflection(
 	}
 	else
 	{
-		ANKI_SHADER_COMPILER_LOGE("Can't support multi-dimensional arrays: %s", newOpaque.m_name.getBegin());
+		ANKI_SHADER_COMPILER_LOGE("Can't support multi-dimensional arrays: %s", newOpaque.m_name.cstr());
 		return Error::USER_DATA;
 	}
 
 	// Add it
 	Bool found = false;
-	for(const ShaderProgramBinaryOpaque& other : opaques)
+	for(const Opaque& other : opaques)
 	{
 		const Bool bindingSame = other.m_set == newOpaque.m_set && other.m_binding == newOpaque.m_binding;
-		const Bool nameSame = strcmp(other.m_name.getBegin(), newOpaque.m_name.getBegin()) == 0;
+		const Bool nameSame = other.m_name == newOpaque.m_name;
 		const Bool sizeSame = other.m_arraySize == newOpaque.m_arraySize;
 		const Bool typeSame = other.m_type == newOpaque.m_type;
 
@@ -449,29 +498,29 @@ Error SpirvReflector::opaqueReflection(
 
 	if(!found)
 	{
-		opaques.emplaceBack(newOpaque);
+		opaques.emplaceBack(std::move(newOpaque));
 	}
 
 	return Error::NONE;
 }
 
-Error SpirvReflector::constsReflection(DynamicArrayAuto<ShaderProgramBinaryConstant>& consts, ShaderType stage) const
+Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts, ShaderType stage) const
 {
 	spirv_cross::SmallVector<spirv_cross::SpecializationConstant> specConsts = get_specialization_constants();
 	for(const spirv_cross::SpecializationConstant& c : specConsts)
 	{
-		ShaderProgramBinaryConstant newConst;
+		Const newConst(m_alloc);
 
 		const spirv_cross::SPIRConstant cc = get<spirv_cross::SPIRConstant>(c.id);
 		const spirv_cross::SPIRType type = get<spirv_cross::SPIRType>(cc.constant_type);
 
 		const std::string name = get_name(c.id);
-		if(name.length() == 0 || name.length() > MAX_SHADER_BINARY_NAME_LENGTH)
+		if(name.length() == 0)
 		{
-			ANKI_SHADER_COMPILER_LOGE("Wrong name length: %s", name.length() ? name.c_str() : " ");
+			ANKI_SHADER_COMPILER_LOGE("Can't accept zero legth name");
 			return Error::USER_DATA;
 		}
-		memcpy(newConst.m_name.getBegin(), name.c_str(), name.length() + 1);
+		newConst.m_name.create(name.c_str());
 
 		newConst.m_constantId = c.constant_id;
 
@@ -490,10 +539,10 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<ShaderProgramBinaryConst
 		}
 
 		// Search for it
-		ShaderProgramBinaryConstant* foundConst = nullptr;
-		for(ShaderProgramBinaryConstant& other : consts)
+		Const* foundConst = nullptr;
+		for(Const& other : consts)
 		{
-			const Bool nameSame = strcmp(other.m_name.getBegin(), newConst.m_name.getBegin()) == 0;
+			const Bool nameSame = other.m_name == newConst.m_name;
 			const Bool typeSame = other.m_type == newConst.m_type;
 			const Bool idSame = other.m_constantId == newConst.m_constantId;
 
@@ -515,7 +564,7 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<ShaderProgramBinaryConst
 		// Add it or update it
 		if(foundConst == nullptr)
 		{
-			consts.emplaceBack(newConst);
+			consts.emplaceBack(std::move(newConst));
 		}
 		else
 		{
@@ -527,16 +576,15 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<ShaderProgramBinaryConst
 	return Error::NONE;
 }
 
-Error SpirvReflector::performSpirvReflection(ShaderProgramBinaryReflection& refl,
-	Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
+Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
 	GenericMemoryPoolAllocator<U8> tmpAlloc,
-	GenericMemoryPoolAllocator<U8> binaryAlloc)
+	ShaderReflectionVisitorInterface& interface)
 {
-	DynamicArrayAuto<ShaderProgramBinaryBlock> uniformBlocks(binaryAlloc);
-	DynamicArrayAuto<ShaderProgramBinaryBlock> storageBlocks(binaryAlloc);
-	DynamicArrayAuto<ShaderProgramBinaryBlock> pushConstantBlock(binaryAlloc);
-	DynamicArrayAuto<ShaderProgramBinaryOpaque> opaques(binaryAlloc);
-	DynamicArrayAuto<ShaderProgramBinaryConstant> specializationConstants(binaryAlloc);
+	DynamicArrayAuto<Block> uniformBlocks(tmpAlloc);
+	DynamicArrayAuto<Block> storageBlocks(tmpAlloc);
+	DynamicArrayAuto<Block> pushConstantBlock(tmpAlloc);
+	DynamicArrayAuto<Opaque> opaques(tmpAlloc);
+	DynamicArrayAuto<Const> specializationConstants(tmpAlloc);
 
 	// Perform reflection for each stage
 	for(const ShaderType type : EnumIterable<ShaderType>())
@@ -592,37 +640,62 @@ Error SpirvReflector::performSpirvReflection(ShaderProgramBinaryReflection& refl
 		ANKI_CHECK(compiler.constsReflection(specializationConstants, type));
 	}
 
-	ShaderProgramBinaryBlock* firstBlock;
-	U32 size, storage;
-	uniformBlocks.moveAndReset(firstBlock, size, storage);
-	refl.m_uniformBlocks.setArray(firstBlock, size);
+	// Inform through the interface
+	interface.setUniformBlockCount(uniformBlocks.getSize());
+	for(const Block& block : uniformBlocks)
+	{
+		interface.visitUniformBlock(block.m_name, block.m_set, block.m_binding, block.m_size);
 
-	storageBlocks.moveAndReset(firstBlock, size, storage);
-	refl.m_storageBlocks.setArray(firstBlock, size);
+		interface.setUniformBlockVariableCount(block.m_vars.getSize());
+		for(const Var& var : block.m_vars)
+		{
+			interface.visitUniformVariable(var.m_name, var.m_type, var.m_blockInfo);
+		}
+	}
+
+	interface.setStorageBlockCount(storageBlocks.getSize());
+	for(const Block& block : storageBlocks)
+	{
+		interface.visitStorageBlock(block.m_name, block.m_set, block.m_binding, block.m_size);
+
+		interface.setStorageBlockVariableCount(block.m_vars.getSize());
+		for(const Var& var : block.m_vars)
+		{
+			interface.visitStorageVariable(var.m_name, var.m_type, var.m_blockInfo);
+		}
+	}
 
 	if(pushConstantBlock.getSize() == 1)
 	{
-		pushConstantBlock.moveAndReset(firstBlock, size, storage);
-		refl.m_pushConstantBlock = firstBlock;
+		interface.visitPushConstantsBlock(
+			pushConstantBlock[0].m_name, pushConstantBlock[0].m_size, pushConstantBlock[0].m_vars.getSize());
+
+		for(const Var& var : pushConstantBlock[0].m_vars)
+		{
+			interface.visitPushConstant(var.m_name, var.m_type, var.m_blockInfo);
+		}
 	}
 
-	ShaderProgramBinaryOpaque* firstOpaque;
-	opaques.moveAndReset(firstOpaque, size, storage);
-	refl.m_opaques.setArray(firstOpaque, size);
+	interface.setOpaqueCount(opaques.getSize());
+	for(const Opaque& o : opaques)
+	{
+		interface.visitOpaque(o.m_name, o.m_type, o.m_set, o.m_binding, o.m_arraySize);
+	}
 
-	ShaderProgramBinaryConstant* firstConst;
-	specializationConstants.moveAndReset(firstConst, size, storage);
-	refl.m_specializationConstants.setArray(firstConst, size);
+	interface.setConstantCount(specializationConstants.getSize());
+	for(const Const& c : specializationConstants)
+	{
+		interface.visitConstant(c.m_name, c.m_type, c.m_constantId, c.m_shaderStages);
+	}
 
 	return Error::NONE;
 }
 
-Error performSpirvReflection(ShaderProgramBinaryReflection& refl,
-	Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
+Error performSpirvReflection(Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
 	GenericMemoryPoolAllocator<U8> tmpAlloc,
-	GenericMemoryPoolAllocator<U8> binaryAlloc)
+	ShaderReflectionVisitorInterface& interface)
 {
-	return SpirvReflector::performSpirvReflection(refl, spirv, tmpAlloc, binaryAlloc);
+	return SpirvReflector::performSpirvReflection(spirv, tmpAlloc, interface);
 }
 
 } // end namespace anki

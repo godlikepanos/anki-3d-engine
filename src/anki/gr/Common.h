@@ -80,6 +80,21 @@ ANKI_GR_CLASS(RenderGraph)
 	template<typename, typename> \
 	friend class GenericPoolAllocator;
 
+/// Shader block information.
+class ShaderVariableBlockInfo
+{
+public:
+	I16 m_offset = -1; ///< Offset inside the block
+
+	I16 m_arraySize = -1; ///< Number of elements.
+
+	/// Stride between the each array element if the variable is array.
+	I16 m_arrayStride = -1;
+
+	/// Identifying the stride between columns of a column-major matrix or rows of a row-major matrix.
+	I16 m_matrixStride = -1;
+};
+
 /// Knowing the vendor allows some optimizations
 enum class GpuVendor : U8
 {

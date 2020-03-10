@@ -6,6 +6,79 @@
 #include <tests/framework/Framework.h>
 #include <anki/shader_compiler/ShaderProgramCompiler.h>
 
+ANKI_TEST(ShaderCompiler, ShaderProgramCompilerSimple)
+{
+	const CString sourceCode = R"(
+#pragma anki mutator INSTANCE_COUNT 1 2 4 8 16 32 64
+
+struct Instanced
+{
+	Mat4 m_ankiMvp;
+	Mat3 m_ankiRotationMat;
+	Mat4 m_ankiModelViewMat;
+	Mat4 m_ankiPrevMvp;
+};
+
+layout(set = 0, binding = 0) uniform ankiMaterial
+{
+	Instanced u_instanced[INSTANCE_COUNT];
+};
+
+#pragma anki start vert
+out gl_PerVertex
+{
+	Vec4 gl_Position;
+};
+
+void main()
+{
+	gl_Position = u_instanced[gl_InstanceID].m_ankiMvp * Vec4(gl_VertexID);
+}
+#pragma anki end
+
+#pragma anki start frag
+layout(location = 0) out Vec3 out_color;
+
+void main()
+{
+	out_color = Vec3(0.0) + u_color.xyz;
+}
+#pragma anki end
+	)";
+
+	// Write the file
+	{
+		File file;
+		ANKI_TEST_EXPECT_NO_ERR(file.open("test.glslp", FileOpenFlag::WRITE));
+		ANKI_TEST_EXPECT_NO_ERR(file.writeText(sourceCode));
+	}
+
+	class Fsystem : public ShaderProgramFilesystemInterface
+	{
+	public:
+		Error readAllText(CString filename, StringAuto& txt) final
+		{
+			File file;
+			ANKI_CHECK(file.open(filename, FileOpenFlag::READ));
+			ANKI_CHECK(file.readAllText(txt));
+			return Error::NONE;
+		}
+	} fsystem;
+
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	ShaderProgramBinaryWrapper binary(alloc);
+	BindlessLimits bindlessLimits;
+	GpuDeviceCapabilities gpuCapabilities;
+	ANKI_TEST_EXPECT_NO_ERR(
+		compileShaderProgram("test.glslp", fsystem, alloc, gpuCapabilities, bindlessLimits, binary));
+
+#if 0
+	StringAuto dis(alloc);
+	dumpShaderProgramBinary(binary.getBinary(), dis);
+	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
+#endif
+}
+
 ANKI_TEST(ShaderCompiler, ShaderProgramCompiler)
 {
 	const CString sourceCode = R"(

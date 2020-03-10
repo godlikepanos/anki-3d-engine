@@ -233,7 +233,7 @@ Error compileShaderProgram(CString fname,
 	ShaderProgramParser parser(fname, &fsystem, tempAllocator, gpuCapabilities, bindlessLimits);
 	ANKI_CHECK(parser.parse());
 
-	// Mutators
+	// Get mutators
 	U32 mutationCount = 0;
 	if(parser.getMutators().getSize() > 0)
 	{
