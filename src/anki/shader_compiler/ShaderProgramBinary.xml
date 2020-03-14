@@ -15,8 +15,25 @@
 
 		<class name="ShaderProgramBinaryVariableInstance" comment="Storage or uniform variable per variant">
 			<members>
-				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinary::m_variables" />
+				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinaryBlock::m_variables" />
 				<member name="m_blockInfo" type="ShaderVariableBlockInfo" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryBlock" comment="Storage or uniform block">
+			<members>
+				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
+				<member name="m_variables" type="WeakArray&lt;ShaderProgramBinaryVariable&gt;" />
+				<member name="m_binding" type="U32" constructor="= MAX_U32" />
+				<member name="m_set" type="U32" constructor="= MAX_U32" />
+			</members>
+		</class>
+
+		<class name="ShaderProgramBinaryBlockInstance" comment="Storage or uniform block per variant">
+			<members>
+				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinary::m_uniformBlocks or m_storageBlocks" />
+				<member name="m_variables" type="WeakArray&lt;ShaderProgramBinaryVariableInstance&gt;" />
+				<member name="m_size" type="U32" constructor="= MAX_U32" />
 			</members>
 		</class>
 
@@ -33,23 +50,6 @@
 			<members>
 				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinary::m_opaques" />
 				<member name="m_arraySize" type="U32" constructor="= MAX_U32" />
-			</members>
-		</class>
-
-		<class name="ShaderProgramBinaryBlock" comment="Storage or uniform block">
-			<members>
-				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" constructor="= {}" />
-				<member name="m_variables" type="WeakArray&lt;ShaderProgramBinaryVariable&gt;" />
-				<member name="m_binding" type="U32" constructor="= MAX_U32" />
-				<member name="m_set" type="U32" constructor="= MAX_U32" />
-				<member name="m_size" type="U32" constructor="= MAX_U32" />
-			</members>
-		</class>
-
-		<class name="ShaderProgramBinaryBlockInstance" comment="Storage or uniform block per variant">
-			<members>
-				<member name="m_index" type="U32" constructor="= MAX_U32" comment="Points to ShaderProgramBinary::m_uniformBlocks or m_storageBlocks" />
-				<member name="m_size" type="U32" constructor="= MAX_U32" />
 			</members>
 		</class>
 
@@ -70,7 +70,7 @@
 
 		<class name="ShaderProgramBinaryVariant">
 			<members>
-				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks" constructor="= {}" />
+				<member name="m_codeBlockIndices" type="U32" array_size="U32(ShaderType::COUNT)" comment="Index in ShaderProgramBinary::m_codeBlocks. MAX_U32 means no shader" constructor="= {}" />
 				<member name="m_uniformBlocks" type="WeakArray&lt;ShaderProgramBinaryBlockInstance&gt;" />
 				<member name="m_storageBlocks" type="WeakArray&lt;ShaderProgramBinaryBlockInstance&gt;" />
 				<member name="m_pushConstantBlock" type="ShaderProgramBinaryBlockInstance" pointer="true" constructor="= nullptr" />

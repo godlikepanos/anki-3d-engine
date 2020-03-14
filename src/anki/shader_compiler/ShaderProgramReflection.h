@@ -20,36 +20,31 @@ namespace anki
 class ShaderReflectionVisitorInterface
 {
 public:
-	virtual void setUniformBlockCount(U32 count) = 0;
+	virtual ANKI_USE_RESULT Error setCounts(
+		U32 uniformBlockCount, U32 storageBlockCount, U32 opaqueCount, Bool pushConstantBlock, U32 constsCount) = 0;
 
-	virtual void visitUniformBlock(CString name, U32 set, U32 binding, U32 size) = 0;
+	virtual ANKI_USE_RESULT Error visitUniformBlock(
+		U32 idx, CString name, U32 set, U32 binding, U32 size, U32 varCount) = 0;
 
-	virtual void setUniformBlockVariableCount(U32 count) = 0;
+	virtual ANKI_USE_RESULT Error visitUniformVariable(
+		U32 blockIdx, U32 idx, CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
 
-	virtual void visitUniformVariable(
-		CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
+	virtual ANKI_USE_RESULT Error visitStorageBlock(
+		U32 idx, CString name, U32 set, U32 binding, U32 size, U32 varCount) = 0;
 
-	virtual void setStorageBlockCount(U32 count) = 0;
+	virtual ANKI_USE_RESULT Error visitStorageVariable(
+		U32 blockIdx, U32 idx, CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
 
-	virtual void visitStorageBlock(CString name, U32 set, U32 binding, U32 size) = 0;
+	virtual ANKI_USE_RESULT Error visitPushConstantsBlock(CString name, U32 size, U32 varCount) = 0;
 
-	virtual void setStorageBlockVariableCount(U32 count) = 0;
+	virtual ANKI_USE_RESULT Error visitPushConstant(
+		U32 idx, CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
 
-	virtual void visitStorageVariable(
-		CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
+	virtual ANKI_USE_RESULT Error visitOpaque(
+		U32 idx, CString name, ShaderVariableDataType type, U32 set, U32 binding, U32 arraySize) = 0;
 
-	virtual void visitPushConstantsBlock(CString name, U32 size, U32 varCount) = 0;
-
-	virtual void visitPushConstant(
-		CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
-
-	virtual void setOpaqueCount(U32 count) = 0;
-
-	virtual void visitOpaque(CString name, ShaderVariableDataType type, U32 set, U32 binding, U32 arraySize) = 0;
-
-	virtual void setConstantCount(U32 count) = 0;
-
-	virtual void visitConstant(CString name, ShaderVariableDataType type, U32 constantId, ShaderTypeBit stages) = 0;
+	virtual ANKI_USE_RESULT Error visitConstant(
+		U32 idx, CString name, ShaderVariableDataType type, U32 constantId, ShaderTypeBit stages) = 0;
 };
 
 /// Does reflection using SPIR-V.

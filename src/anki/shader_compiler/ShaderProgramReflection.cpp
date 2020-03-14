@@ -641,51 +641,60 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8, PtrSize>, 
 	}
 
 	// Inform through the interface
-	interface.setUniformBlockCount(uniformBlocks.getSize());
-	for(const Block& block : uniformBlocks)
-	{
-		interface.visitUniformBlock(block.m_name, block.m_set, block.m_binding, block.m_size);
+	ANKI_CHECK(interface.setCounts(uniformBlocks.getSize(),
+		storageBlocks.getSize(),
+		opaques.getSize(),
+		pushConstantBlock.getSize() == 1,
+		specializationConstants.getSize()));
 
-		interface.setUniformBlockVariableCount(block.m_vars.getSize());
-		for(const Var& var : block.m_vars)
+	for(U32 i = 0; i < uniformBlocks.getSize(); ++i)
+	{
+		const Block& block = uniformBlocks[i];
+		ANKI_CHECK(interface.visitUniformBlock(
+			i, block.m_name, block.m_set, block.m_binding, block.m_size, block.m_vars.getSize()));
+
+		for(U32 j = 0; j < block.m_vars.getSize(); ++j)
 		{
-			interface.visitUniformVariable(var.m_name, var.m_type, var.m_blockInfo);
+			const Var& var = block.m_vars[j];
+			ANKI_CHECK(interface.visitUniformVariable(i, j, var.m_name, var.m_type, var.m_blockInfo));
 		}
 	}
 
-	interface.setStorageBlockCount(storageBlocks.getSize());
-	for(const Block& block : storageBlocks)
+	for(U32 i = 0; i < storageBlocks.getSize(); ++i)
 	{
-		interface.visitStorageBlock(block.m_name, block.m_set, block.m_binding, block.m_size);
+		const Block& block = storageBlocks[i];
+		ANKI_CHECK(interface.visitStorageBlock(
+			i, block.m_name, block.m_set, block.m_binding, block.m_size, block.m_vars.getSize()));
 
-		interface.setStorageBlockVariableCount(block.m_vars.getSize());
-		for(const Var& var : block.m_vars)
+		for(U32 j = 0; j < block.m_vars.getSize(); ++j)
 		{
-			interface.visitStorageVariable(var.m_name, var.m_type, var.m_blockInfo);
+			const Var& var = block.m_vars[j];
+			ANKI_CHECK(interface.visitStorageVariable(i, j, var.m_name, var.m_type, var.m_blockInfo));
 		}
 	}
 
 	if(pushConstantBlock.getSize() == 1)
 	{
-		interface.visitPushConstantsBlock(
-			pushConstantBlock[0].m_name, pushConstantBlock[0].m_size, pushConstantBlock[0].m_vars.getSize());
+		ANKI_CHECK(interface.visitPushConstantsBlock(
+			pushConstantBlock[0].m_name, pushConstantBlock[0].m_size, pushConstantBlock[0].m_vars.getSize()));
 
-		for(const Var& var : pushConstantBlock[0].m_vars)
+		for(U32 j = 0; j < pushConstantBlock[0].m_vars.getSize(); ++j)
 		{
-			interface.visitPushConstant(var.m_name, var.m_type, var.m_blockInfo);
+			const Var& var = pushConstantBlock[0].m_vars[j];
+			ANKI_CHECK(interface.visitPushConstant(j, var.m_name, var.m_type, var.m_blockInfo));
 		}
 	}
 
-	interface.setOpaqueCount(opaques.getSize());
-	for(const Opaque& o : opaques)
+	for(U32 i = 0; i < opaques.getSize(); ++i)
 	{
-		interface.visitOpaque(o.m_name, o.m_type, o.m_set, o.m_binding, o.m_arraySize);
+		const Opaque& o = opaques[i];
+		ANKI_CHECK(interface.visitOpaque(i, o.m_name, o.m_type, o.m_set, o.m_binding, o.m_arraySize));
 	}
 
-	interface.setConstantCount(specializationConstants.getSize());
-	for(const Const& c : specializationConstants)
+	for(U32 i = 0; i < specializationConstants.getSize(); ++i)
 	{
-		interface.visitConstant(c.m_name, c.m_type, c.m_constantId, c.m_shaderStages);
+		const Const& c = specializationConstants[i];
+		ANKI_CHECK(interface.visitConstant(i, c.m_name, c.m_type, c.m_constantId, c.m_shaderStages));
 	}
 
 	return Error::NONE;
