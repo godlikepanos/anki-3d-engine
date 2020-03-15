@@ -21,7 +21,8 @@ struct Instanced
 
 layout(set = 0, binding = 0) uniform ankiMaterial
 {
-	Instanced u_instanced[INSTANCE_COUNT];
+	Instanced u_ankiInstanced[INSTANCE_COUNT];
+	Vec4 u_color;
 };
 
 #pragma anki start vert
@@ -32,7 +33,7 @@ out gl_PerVertex
 
 void main()
 {
-	gl_Position = u_instanced[gl_InstanceID].m_ankiMvp * Vec4(gl_VertexID);
+	gl_Position = u_ankiInstanced[gl_InstanceID].m_ankiMvp * Vec4(gl_VertexID);
 }
 #pragma anki end
 
@@ -72,7 +73,7 @@ void main()
 	ANKI_TEST_EXPECT_NO_ERR(
 		compileShaderProgram("test.glslp", fsystem, alloc, gpuCapabilities, bindlessLimits, binary));
 
-#if 0
+#if 1
 	StringAuto dis(alloc);
 	dumpShaderProgramBinary(binary.getBinary(), dis);
 	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());

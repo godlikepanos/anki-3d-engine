@@ -243,7 +243,7 @@ public:
 	/// [blockType][blockIdx]
 	Array<DynamicArrayAuto<ShaderProgramBinaryBlock>, 3> m_blocks = {{m_alloc, m_alloc, m_alloc}};
 
-	/// [blockType][blockIdx]
+	/// [blockType][blockIdx][varIdx]
 	Array<DynamicArrayAuto<DynamicArrayAuto<ShaderProgramBinaryVariable>>, 3> m_vars = {
 		{{m_alloc}, {m_alloc}, {m_alloc}}};
 
@@ -461,6 +461,10 @@ public:
 			block.m_set = set;
 			block.m_binding = binding;
 			blockIdx = m_blocks[blockType].getSize() - 1;
+
+			// Create some storage for vars as well
+			m_vars[blockType].emplaceBack(m_alloc);
+			ANKI_ASSERT(m_vars[blockType].getSize() == m_blocks[blockType].getSize());
 		}
 
 		// Init the instance
@@ -582,7 +586,67 @@ static Error doReflection(
 		}
 	}
 
-	// TODO
+	if(refl.m_blocks[0].getSize())
+	{
+		ShaderProgramBinaryBlock* blocks;
+		U32 size, storageSize;
+		refl.m_blocks[0].moveAndReset(blocks, size, storageSize);
+		binary.m_uniformBlocks.setArray(blocks, size);
+
+		for(U32 i = 0; i < size; ++i)
+		{
+			ShaderProgramBinaryVariable* vars;
+			U32 varSize, varStorageSize;
+			refl.m_vars[0][i].moveAndReset(vars, varSize, varStorageSize);
+			binary.m_uniformBlocks[i].m_variables.setArray(vars, varSize);
+		}
+	}
+
+	if(refl.m_blocks[1].getSize())
+	{
+		ShaderProgramBinaryBlock* blocks;
+		U32 size, storageSize;
+		refl.m_blocks[1].moveAndReset(blocks, size, storageSize);
+		binary.m_storageBlocks.setArray(blocks, size);
+
+		for(U32 i = 0; i < size; ++i)
+		{
+			ShaderProgramBinaryVariable* vars;
+			U32 varSize, varStorageSize;
+			refl.m_vars[1][i].moveAndReset(vars, varSize, varStorageSize);
+			binary.m_storageBlocks[i].m_variables.setArray(vars, varSize);
+		}
+	}
+
+	if(refl.m_blocks[2].getSize())
+	{
+		ShaderProgramBinaryBlock* blocks;
+		U32 size, storageSize;
+		refl.m_blocks[2].moveAndReset(blocks, size, storageSize);
+		ANKI_ASSERT(size == 1);
+		binary.m_pushConstantBlock = blocks;
+
+		ShaderProgramBinaryVariable* vars;
+		U32 varSize, varStorageSize;
+		refl.m_vars[2][0].moveAndReset(vars, varSize, varStorageSize);
+		binary.m_pushConstantBlock->m_variables.setArray(vars, varSize);
+	}
+
+	if(refl.m_opaque.getSize())
+	{
+		ShaderProgramBinaryOpaque* opaques;
+		U32 size, storageSize;
+		refl.m_opaque.moveAndReset(opaques, size, storageSize);
+		binary.m_opaques.setArray(opaques, size);
+	}
+
+	if(refl.m_consts.getSize())
+	{
+		ShaderProgramBinaryConstant* consts;
+		U32 size, storageSize;
+		refl.m_consts.moveAndReset(consts, size, storageSize);
+		binary.m_constants.setArray(consts, size);
+	}
 
 	return Error::NONE;
 }
@@ -783,30 +847,35 @@ Error compileShaderProgram(CString fname,
 	// Misc
 	binary.m_presentShaderTypes = parser.getShaderTypes();
 
+	// Reflection
+	ANKI_CHECK(doReflection(binary, tempAllocator, binaryAllocator));
+
 	return Error::NONE;
 }
 
 #define ANKI_TAB "    "
 
-#if 0
-static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListAuto& lines)
+static void disassembleBlock(
+	const ShaderProgramBinaryBlockInstance& instance, const ShaderProgramBinaryBlock& block, StringListAuto& lines)
 {
 	lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u size %4u\n",
 		block.m_name.getBegin(),
 		block.m_set,
 		block.m_binding,
-		block.m_size);
+		instance.m_size);
 
-	for(const ShaderProgramBinaryVariable& var : block.m_variables)
+	for(U32 i = 0; i < instance.m_variables.getSize(); ++i)
 	{
-		lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB ANKI_TAB "%-28s type %8s active %4s blockInfo %d,%d,%d,%d\n",
+		const ShaderProgramBinaryVariableInstance& varInstance = instance.m_variables[i];
+		const ShaderProgramBinaryVariable& var = block.m_variables[varInstance.m_index];
+
+		lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB ANKI_TAB "%-48s type %8s blockInfo %d,%d,%d,%d\n",
 			var.m_name.getBegin(),
 			shaderVariableDataTypeToString(var.m_type).cstr(),
-			var.m_active ? "true" : "false",
-			var.m_blockInfo.m_offset,
-			var.m_blockInfo.m_arraySize,
-			var.m_blockInfo.m_arrayStride,
-			var.m_blockInfo.m_matrixStride);
+			varInstance.m_blockInfo.m_offset,
+			varInstance.m_blockInfo.m_arraySize,
+			varInstance.m_blockInfo.m_arrayStride,
+			varInstance.m_blockInfo.m_matrixStride);
 	}
 }
 
@@ -862,53 +931,55 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 		lines.pushBackSprintf(ANKI_TAB "#%u\n", count++);
 
 		// Uniform blocks
-		if(variant.m_reflection.m_uniformBlocks.getSize() > 0)
+		if(variant.m_uniformBlocks.getSize() > 0)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Uniform blocks\n");
-			for(const ShaderProgramBinaryBlock& block : variant.m_reflection.m_uniformBlocks)
+			for(const ShaderProgramBinaryBlockInstance& instance : variant.m_uniformBlocks)
 			{
-				disassembleBlock(block, lines);
+				disassembleBlock(instance, binary.m_uniformBlocks[instance.m_index], lines);
 			}
 		}
 
 		// Storage blocks
-		if(variant.m_reflection.m_storageBlocks.getSize() > 0)
+		if(variant.m_storageBlocks.getSize() > 0)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Storage blocks\n");
-			for(const ShaderProgramBinaryBlock& block : variant.m_reflection.m_storageBlocks)
+			for(const ShaderProgramBinaryBlockInstance& instance : variant.m_storageBlocks)
 			{
-				disassembleBlock(block, lines);
+				disassembleBlock(instance, binary.m_storageBlocks[instance.m_index], lines);
 			}
 		}
 
 		// Opaque
-		if(variant.m_reflection.m_opaques.getSize() > 0)
+		if(variant.m_opaques.getSize() > 0)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Opaque\n");
-			for(const ShaderProgramBinaryOpaque& o : variant.m_reflection.m_opaques)
+			for(const ShaderProgramBinaryOpaqueInstance& instance : variant.m_opaques)
 			{
+				const ShaderProgramBinaryOpaque& o = binary.m_opaques[instance.m_index];
 				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u type %12s arraySize %4u\n",
 					o.m_name.getBegin(),
 					o.m_set,
 					o.m_binding,
 					shaderVariableDataTypeToString(o.m_type).cstr(),
-					o.m_arraySize);
+					instance.m_arraySize);
 			}
 		}
 
 		// Push constants
-		if(variant.m_reflection.m_pushConstantBlock)
+		if(variant.m_pushConstantBlock)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Push constants\n");
-			disassembleBlock(*variant.m_reflection.m_pushConstantBlock, lines);
+			disassembleBlock(*variant.m_pushConstantBlock, *binary.m_pushConstantBlock, lines);
 		}
 
 		// Constants
-		if(variant.m_reflection.m_specializationConstants.getSize() > 0)
+		if(variant.m_constants.getSize() > 0)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Specialization constants\n");
-			for(const ShaderProgramBinaryConstant& c : variant.m_reflection.m_specializationConstants)
+			for(const ShaderProgramBinaryConstantInstance& instance : variant.m_constants)
 			{
+				const ShaderProgramBinaryConstant& c = binary.m_constants[instance.m_index];
 				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s type %8s id %4u\n",
 					c.m_name.getBegin(),
 					shaderVariableDataTypeToString(c.m_type).cstr(),
@@ -964,7 +1035,6 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 
 	lines.join("", humanReadable);
 }
-#endif
 
 #undef ANKI_TAB
 
