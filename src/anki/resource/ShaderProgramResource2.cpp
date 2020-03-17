@@ -53,7 +53,173 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 		}
 	}
 
-	// TODO create the inputs
+	// Create the inputs
+	for(const ShaderProgramBinaryBlock& block : binary.m_uniformBlocks)
+	{
+		if(block.m_name.getBegin() != CString("b_ankiMaterial"))
+		{
+			continue;
+		}
+
+		for(const ShaderProgramBinaryVariable& var : block.m_variables)
+		{
+			Bool instanced;
+			U32 idx;
+			CString name;
+			ANKI_CHECK(parseVariable(var.m_name.getBegin(), instanced, idx, name));
+
+			if(idx > 0)
+			{
+				continue;
+			}
+
+			ShaderProgramResourceInputVariable2& in = *m_inputVars.emplaceBack(getAllocator());
+			in.m_name.create(getAllocator(), name);
+			in.m_index = m_inputVars.getSize() - 1;
+			in.m_constant = false;
+			in.m_dataType = var.m_type;
+			in.m_instanced = instanced;
+		}
+	}
+
+	for(const ShaderProgramBinaryConstant& c : binary.m_constants)
+	{
+		U32 componentIdx;
+		U32 componentCount;
+		CString name;
+		ANKI_CHECK(parseConst(c.m_name.getBegin(), componentIdx, componentCount, name));
+
+		if(componentIdx > 0)
+		{
+			continue;
+		}
+
+		ShaderProgramResourceInputVariable2& in = *m_inputVars.emplaceBack(getAllocator());
+		in.m_name.create(getAllocator(), name);
+		in.m_index = m_inputVars.getSize() - 1;
+		in.m_constant = true;
+
+		if(componentCount == 1)
+		{
+			in.m_dataType = c.m_type;
+		}
+		else if(componentCount == 2)
+		{
+			if(c.m_type == ShaderVariableDataType::INT)
+			{
+				in.m_dataType = ShaderVariableDataType::IVEC2;
+			}
+			else
+			{
+				ANKI_ASSERT(c.m_type == ShaderVariableDataType::FLOAT);
+				in.m_dataType = ShaderVariableDataType::VEC2;
+			}
+		}
+		else if(componentCount == 3)
+		{
+			if(c.m_type == ShaderVariableDataType::INT)
+			{
+				in.m_dataType = ShaderVariableDataType::IVEC3;
+			}
+			else
+			{
+				ANKI_ASSERT(c.m_type == ShaderVariableDataType::FLOAT);
+				in.m_dataType = ShaderVariableDataType::VEC3;
+			}
+		}
+		else if(componentCount == 4)
+		{
+			if(c.m_type == ShaderVariableDataType::INT)
+			{
+				in.m_dataType = ShaderVariableDataType::IVEC4;
+			}
+			else
+			{
+				ANKI_ASSERT(c.m_type == ShaderVariableDataType::FLOAT);
+				in.m_dataType = ShaderVariableDataType::VEC4;
+			}
+		}
+		else
+		{
+			ANKI_ASSERT(0);
+		}
+	}
+
+	return Error::NONE;
+}
+
+Error ShaderProgramResource2::parseVariable(CString fullVarName, Bool& instanced, U32& idx, CString& name)
+{
+	if(fullVarName.find("u_ankiPerDraw") == CString::NPOS)
+	{
+		instanced = false;
+	}
+	else if(fullVarName.find("u_ankiPerInstance") == CString::NPOS)
+	{
+		instanced = true;
+	}
+	else
+	{
+		ANKI_RESOURCE_LOGE("Wrong variable name: %s", fullVarName.cstr());
+		return Error::USER_DATA;
+	}
+
+	if(instanced)
+	{
+		const PtrSize leftBracket = fullVarName.find("[");
+		const PtrSize rightBracket = fullVarName.find("]");
+
+		if(leftBracket == CString::NPOS || rightBracket == CString::NPOS || rightBracket <= leftBracket)
+		{
+			ANKI_RESOURCE_LOGE("Wrong variable name: %s", fullVarName.cstr());
+			return Error::USER_DATA;
+		}
+
+		Array<char, 8> idxStr;
+		ANKI_ASSERT(rightBracket - leftBracket < idxStr.getSize() - 1);
+		for(PtrSize i = leftBracket; i <= rightBracket; ++i)
+		{
+			idxStr[i - leftBracket] = fullVarName[i];
+		}
+		idxStr[rightBracket - leftBracket + 1] = '\0';
+
+		ANKI_CHECK(CString(idxStr.getBegin()).toNumber(idx));
+	}
+
+	const PtrSize dot = fullVarName.find(".");
+	if(dot == CString::NPOS)
+	{
+		ANKI_RESOURCE_LOGE("Wrong variable name: %s", fullVarName.cstr());
+		return Error::USER_DATA;
+	}
+
+	name = fullVarName.getBegin() + dot;
+
+	return Error::NONE;
+}
+
+Error ShaderProgramResource2::parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name)
+{
+	const CString prefixName = "_anki_const_";
+	const PtrSize prefix = constName.find(prefixName);
+	if(prefix != 0)
+	{
+		// Simple name
+		componentIdx = 0;
+		componentCount = 1;
+		name = constName;
+		return Error::NONE;
+	}
+
+	Array<char, 2> number;
+	number[0] = constName[prefixName.getLength() + 1];
+	number[1] = '\0';
+	ANKI_CHECK(CString(number.getBegin()).toNumber(componentIdx));
+
+	number[0] = constName[prefixName.getLength() + 3];
+	ANKI_CHECK(CString(number.getBegin()).toNumber(componentCount));
+
+	name = constName.getBegin() + prefixName.getLength() + 4;
 
 	return Error::NONE;
 }

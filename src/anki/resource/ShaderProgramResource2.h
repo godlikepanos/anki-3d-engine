@@ -37,9 +37,10 @@ class ShaderProgramResourceInputVariable2
 {
 public:
 	String m_name;
-	Bool m_constant = false;
-	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 	U32 m_index = MAX_U32;
+	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
+	Bool m_constant = false;
+	Bool m_instanced = false;
 
 	Bool isTexture() const
 	{
@@ -160,6 +161,10 @@ private:
 	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
 
 	void initVariant(const ShaderProgramResourceVariantInitInfo2& info, ShaderProgramResourceVariant2& variant) const;
+
+	static ANKI_USE_RESULT Error parseVariable(CString fullVarName, Bool& instanced, U32& idx, CString& name);
+
+	static ANKI_USE_RESULT Error parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name);
 };
 
 /// The value of a constant.

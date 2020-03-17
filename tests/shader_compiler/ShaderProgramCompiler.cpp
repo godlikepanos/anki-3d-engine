@@ -21,7 +21,7 @@ struct Instanced
 
 layout(set = 0, binding = 0) uniform ankiMaterial
 {
-	Instanced u_ankiInstanced[INSTANCE_COUNT];
+	Instanced u_ankiPerInstance[INSTANCE_COUNT];
 	Vec4 u_color;
 };
 
@@ -33,7 +33,7 @@ out gl_PerVertex
 
 void main()
 {
-	gl_Position = u_ankiInstanced[gl_InstanceID].m_ankiMvp * Vec4(gl_VertexID);
+	gl_Position = u_ankiPerInstance[gl_InstanceID].m_ankiMvp * Vec4(gl_VertexID);
 }
 #pragma anki end
 
