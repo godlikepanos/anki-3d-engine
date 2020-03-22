@@ -20,8 +20,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT static Error performSpirvReflection(
-		Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
+	ANKI_USE_RESULT static Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
 		GenericMemoryPoolAllocator<U8> tmpAlloc,
 		ShaderReflectionVisitorInterface& interface);
 
@@ -98,7 +97,7 @@ private:
 	ANKI_USE_RESULT Error blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const;
 
 	ANKI_USE_RESULT Error blockVariableReflection(
-		const spirv_cross::SPIRType& type, CString parentVariable, DynamicArrayAuto<Var>& vars) const;
+		const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset, DynamicArrayAuto<Var>& vars) const;
 };
 
 Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const
@@ -116,7 +115,7 @@ Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, D
 			if(type.self == resourceId)
 			{
 				found = true;
-				err = blockVariableReflection(type, CString(), vars);
+				err = blockVariableReflection(type, CString(), 0, vars);
 			}
 		}
 	});
@@ -132,7 +131,7 @@ Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, D
 }
 
 Error SpirvReflector::blockVariableReflection(
-	const spirv_cross::SPIRType& type, CString parentVariable, DynamicArrayAuto<Var>& vars) const
+	const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset, DynamicArrayAuto<Var>& vars) const
 {
 	ANKI_ASSERT(type.basetype == spirv_cross::SPIRType::Struct);
 
@@ -167,7 +166,7 @@ Error SpirvReflector::blockVariableReflection(
 			ANKI_ASSERT(i < memb.size());
 			const spirv_cross::Meta::Decoration& dec = memb[i];
 			ANKI_ASSERT(dec.decoration_flags.get(spv::DecorationOffset));
-			var.m_blockInfo.m_offset = I16(dec.offset);
+			var.m_blockInfo.m_offset = I16(dec.offset + baseOffset);
 		}
 
 		// Array size
@@ -228,7 +227,7 @@ Error SpirvReflector::blockVariableReflection(
 		{
 			if(var.m_blockInfo.m_arraySize == 1)
 			{
-				ANKI_CHECK(blockVariableReflection(memberType, var.m_name, vars));
+				ANKI_CHECK(blockVariableReflection(memberType, var.m_name, var.m_blockInfo.m_offset, vars));
 			}
 			else
 			{
@@ -236,7 +235,8 @@ Error SpirvReflector::blockVariableReflection(
 				{
 					StringAuto newName(m_alloc);
 					newName.sprintf("%s[%u]", var.m_name.getBegin(), i);
-					ANKI_CHECK(blockVariableReflection(memberType, newName, vars));
+					ANKI_CHECK(blockVariableReflection(
+						memberType, newName, var.m_blockInfo.m_offset + var.m_blockInfo.m_arrayStride * i, vars));
 				}
 			}
 		}
@@ -288,7 +288,7 @@ Error SpirvReflector::blockVariableReflection(
 			return Error::FUNCTION_FAILED;
 		}
 
-		// Store the member
+		// Store the member if it's no struct
 		if(var.m_type != ShaderVariableDataType::NONE)
 		{
 			vars.emplaceBack(std::move(var));
@@ -576,7 +576,7 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts, ShaderTy
 	return Error::NONE;
 }
 
-Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
+Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
 	GenericMemoryPoolAllocator<U8> tmpAlloc,
 	ShaderReflectionVisitorInterface& interface)
 {
@@ -700,7 +700,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8, PtrSize>, 
 	return Error::NONE;
 }
 
-Error performSpirvReflection(Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
+Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
 	GenericMemoryPoolAllocator<U8> tmpAlloc,
 	ShaderReflectionVisitorInterface& interface)
 {

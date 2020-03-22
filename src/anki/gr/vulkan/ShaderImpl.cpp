@@ -97,10 +97,22 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 			entry.offset = count * sizeof(I32);
 			entry.size = sizeof(I32);
 
+			// Find the value
+			const ShaderSpecializationConstValue* val = nullptr;
+			for(const ShaderSpecializationConstValue& v : inf.m_constValues)
+			{
+				if(v.m_constantId == entry.constantID)
+				{
+					val = &v;
+					break;
+				}
+			}
+			ANKI_ASSERT(val && "Contant ID wasn't found in the init info");
+
 			// Copy the data
 			U8* data = static_cast<U8*>(const_cast<void*>(m_specConstInfo.pData));
 			data += entry.offset;
-			*reinterpret_cast<I32*>(data) = inf.m_constValues[sconst.constant_id].m_int;
+			*reinterpret_cast<I32*>(data) = val->m_int;
 
 			++count;
 		}

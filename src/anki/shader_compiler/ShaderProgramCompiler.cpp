@@ -182,7 +182,7 @@ static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 	ANKI_CHECK(parser.generateVariant(mutation, parserVariant));
 
 	// Compile stages
-	Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirvBinaries;
+	Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirvBinaries;
 	for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)
 	{
 		if(!(shaderTypeToBit(shaderType) & parser.getShaderTypes()))
@@ -217,7 +217,7 @@ static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 			memcpy(code, &spirv[0], spirv.getSizeInBytes());
 
 			ShaderProgramBinaryCodeBlock block;
-			block.m_binary.setArray(code, spirv.getSizeInBytes());
+			block.m_binary.setArray(code, U32(spirv.getSizeInBytes()));
 			codeBlocks.emplaceBack(block);
 
 			codeBlockHashes.emplaceBack(newHash);
@@ -532,7 +532,7 @@ static Error doReflection(
 
 	for(ShaderProgramBinaryVariant& variant : binary.m_variants)
 	{
-		Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirvs;
+		Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirvs;
 		for(ShaderType stage : EnumIterable<ShaderType>())
 		{
 			if(variant.m_codeBlockIndices[stage] != MAX_U32)

@@ -246,7 +246,8 @@ public:
 class ShaderProgramBinaryVariant
 {
 public:
-	Array<U32, U32(ShaderType::COUNT)> m_codeBlockIndices = {}; ///< Index in ShaderProgramBinary::m_codeBlocks.
+	Array<U32, U32(ShaderType::COUNT)> m_codeBlockIndices =
+		{}; ///< Index in ShaderProgramBinary::m_codeBlocks. MAX_U32 means no shader.
 	WeakArray<ShaderProgramBinaryBlockInstance> m_uniformBlocks;
 	WeakArray<ShaderProgramBinaryBlockInstance> m_storageBlocks;
 	ShaderProgramBinaryBlockInstance* m_pushConstantBlock = nullptr;
@@ -312,7 +313,7 @@ public:
 class ShaderProgramBinaryCodeBlock
 {
 public:
-	WeakArray<U8, PtrSize> m_binary;
+	WeakArray<U8> m_binary;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)

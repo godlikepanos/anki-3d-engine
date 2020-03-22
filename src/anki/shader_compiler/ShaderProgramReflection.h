@@ -48,7 +48,7 @@ public:
 };
 
 /// Does reflection using SPIR-V.
-ANKI_USE_RESULT Error performSpirvReflection(Array<ConstWeakArray<U8, PtrSize>, U32(ShaderType::COUNT)> spirv,
+ANKI_USE_RESULT Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
 	GenericMemoryPoolAllocator<U8> tmpAlloc,
 	ShaderReflectionVisitorInterface& interface);
 /// @}

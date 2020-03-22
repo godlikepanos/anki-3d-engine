@@ -88,7 +88,7 @@
 
 		<class name="ShaderProgramBinaryCodeBlock" comment="Contains the IR (SPIR-V)">
 			<members>
-				<member name="m_binary" type="WeakArray&lt;U8, PtrSize&gt;" />
+				<member name="m_binary" type="WeakArray&lt;U8&gt;" />
 			</members>
 		</class>
 

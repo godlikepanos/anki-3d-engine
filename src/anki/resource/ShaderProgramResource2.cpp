@@ -6,7 +6,9 @@
 #include <anki/resource/ShaderProgramResource2.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/gr/ShaderProgram.h>
+#include <anki/gr/GrManager.h>
 #include <anki/util/Filesystem.h>
+#include <anki/util/Functions.h>
 
 namespace anki
 {
@@ -54,21 +56,79 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 	}
 
 	// Create the inputs
-	for(const ShaderProgramBinaryBlock& block : binary.m_uniformBlocks)
 	{
-		if(block.m_name.getBegin() != CString("b_ankiMaterial"))
+		U32 descriptorSet = MAX_U32;
+		U32 maxDescriptorSet = 0;
+		for(const ShaderProgramBinaryBlock& block : binary.m_uniformBlocks)
 		{
-			continue;
+			maxDescriptorSet = max(maxDescriptorSet, block.m_set);
+
+			if(block.m_name.getBegin() != CString("b_ankiMaterial"))
+			{
+				continue;
+			}
+
+			m_materialUboIdx = U8(&block - &binary.m_uniformBlocks[0]);
+			descriptorSet = block.m_set;
+
+			for(const ShaderProgramBinaryVariable& var : block.m_variables)
+			{
+				Bool instanced;
+				U32 idx;
+				CString name;
+				ANKI_CHECK(parseVariable(var.m_name.getBegin(), instanced, idx, name));
+
+				if(idx > 0)
+				{
+					continue;
+				}
+
+				ShaderProgramResourceInputVariable2& in = *m_inputVars.emplaceBack(getAllocator());
+				in.m_name.create(getAllocator(), name);
+				in.m_index = m_inputVars.getSize() - 1;
+				in.m_constant = false;
+				in.m_dataType = var.m_type;
+				in.m_instanced = instanced;
+			}
 		}
 
-		for(const ShaderProgramBinaryVariable& var : block.m_variables)
+		// Continue with the opaque if it's a material shader program
+		if(descriptorSet != MAX_U32)
 		{
-			Bool instanced;
-			U32 idx;
-			CString name;
-			ANKI_CHECK(parseVariable(var.m_name.getBegin(), instanced, idx, name));
+			for(const ShaderProgramBinaryOpaque& o : binary.m_opaques)
+			{
+				maxDescriptorSet = max(maxDescriptorSet, o.m_set);
 
-			if(idx > 0)
+				if(o.m_set != descriptorSet)
+				{
+					continue;
+				}
+
+				ShaderProgramResourceInputVariable2& in = *m_inputVars.emplaceBack(getAllocator());
+				in.m_name.create(getAllocator(), o.m_name.getBegin());
+				in.m_index = m_inputVars.getSize() - 1;
+				in.m_constant = false;
+				in.m_dataType = o.m_type;
+				in.m_instanced = false;
+			}
+		}
+
+		if(descriptorSet != MAX_U32 && descriptorSet != maxDescriptorSet)
+		{
+			ANKI_RESOURCE_LOGE("All bindings of a material shader should be in the highest descriptor set");
+			return Error::USER_DATA;
+		}
+
+		m_descriptorSet = U8(descriptorSet);
+
+		for(const ShaderProgramBinaryConstant& c : binary.m_constants)
+		{
+			U32 componentIdx;
+			U32 componentCount;
+			CString name;
+			ANKI_CHECK(parseConst(c.m_name.getBegin(), componentIdx, componentCount, name));
+
+			if(componentIdx > 0)
 			{
 				continue;
 			}
@@ -76,74 +136,56 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 			ShaderProgramResourceInputVariable2& in = *m_inputVars.emplaceBack(getAllocator());
 			in.m_name.create(getAllocator(), name);
 			in.m_index = m_inputVars.getSize() - 1;
-			in.m_constant = false;
-			in.m_dataType = var.m_type;
-			in.m_instanced = instanced;
-		}
-	}
+			in.m_constant = true;
 
-	for(const ShaderProgramBinaryConstant& c : binary.m_constants)
-	{
-		U32 componentIdx;
-		U32 componentCount;
-		CString name;
-		ANKI_CHECK(parseConst(c.m_name.getBegin(), componentIdx, componentCount, name));
-
-		if(componentIdx > 0)
-		{
-			continue;
-		}
-
-		ShaderProgramResourceInputVariable2& in = *m_inputVars.emplaceBack(getAllocator());
-		in.m_name.create(getAllocator(), name);
-		in.m_index = m_inputVars.getSize() - 1;
-		in.m_constant = true;
-
-		if(componentCount == 1)
-		{
-			in.m_dataType = c.m_type;
-		}
-		else if(componentCount == 2)
-		{
-			if(c.m_type == ShaderVariableDataType::INT)
+			if(componentCount == 1)
 			{
-				in.m_dataType = ShaderVariableDataType::IVEC2;
+				in.m_dataType = c.m_type;
+			}
+			else if(componentCount == 2)
+			{
+				if(c.m_type == ShaderVariableDataType::INT)
+				{
+					in.m_dataType = ShaderVariableDataType::IVEC2;
+				}
+				else
+				{
+					ANKI_ASSERT(c.m_type == ShaderVariableDataType::FLOAT);
+					in.m_dataType = ShaderVariableDataType::VEC2;
+				}
+			}
+			else if(componentCount == 3)
+			{
+				if(c.m_type == ShaderVariableDataType::INT)
+				{
+					in.m_dataType = ShaderVariableDataType::IVEC3;
+				}
+				else
+				{
+					ANKI_ASSERT(c.m_type == ShaderVariableDataType::FLOAT);
+					in.m_dataType = ShaderVariableDataType::VEC3;
+				}
+			}
+			else if(componentCount == 4)
+			{
+				if(c.m_type == ShaderVariableDataType::INT)
+				{
+					in.m_dataType = ShaderVariableDataType::IVEC4;
+				}
+				else
+				{
+					ANKI_ASSERT(c.m_type == ShaderVariableDataType::FLOAT);
+					in.m_dataType = ShaderVariableDataType::VEC4;
+				}
 			}
 			else
 			{
-				ANKI_ASSERT(c.m_type == ShaderVariableDataType::FLOAT);
-				in.m_dataType = ShaderVariableDataType::VEC2;
+				ANKI_ASSERT(0);
 			}
 		}
-		else if(componentCount == 3)
-		{
-			if(c.m_type == ShaderVariableDataType::INT)
-			{
-				in.m_dataType = ShaderVariableDataType::IVEC3;
-			}
-			else
-			{
-				ANKI_ASSERT(c.m_type == ShaderVariableDataType::FLOAT);
-				in.m_dataType = ShaderVariableDataType::VEC3;
-			}
-		}
-		else if(componentCount == 4)
-		{
-			if(c.m_type == ShaderVariableDataType::INT)
-			{
-				in.m_dataType = ShaderVariableDataType::IVEC4;
-			}
-			else
-			{
-				ANKI_ASSERT(c.m_type == ShaderVariableDataType::FLOAT);
-				in.m_dataType = ShaderVariableDataType::VEC4;
-			}
-		}
-		else
-		{
-			ANKI_ASSERT(0);
-		}
-	}
+	} // End creating the inputs
+
+	m_shaderStages = binary.m_presentShaderTypes;
 
 	return Error::NONE;
 }
@@ -294,14 +336,130 @@ void ShaderProgramResource2::initVariant(
 		ANKI_ASSERT(binary.m_variants.getSize() == 1);
 		binaryVariant = &binary.m_variants[0];
 	}
-
 	ANKI_ASSERT(binaryVariant);
 
-	// XXX
-	for(const Input& in : m_inputVars)
+	// Init the uniform vars
+	if(m_materialUboIdx != MAX_U8)
 	{
-		(void)in;
+		variant.m_blockInfos.create(getAllocator(), m_inputVars.getSize());
+
+		for(const ShaderProgramBinaryVariableInstance& instance :
+			binaryVariant->m_uniformBlocks[m_materialUboIdx].m_variables)
+		{
+			ANKI_ASSERT(instance.m_index == m_materialUboIdx);
+			const U32 inputIdx = m_binaryMapping.m_uniformVars[instance.m_index].m_inputVarIdx;
+			const U32 arrayIdx = m_binaryMapping.m_uniformVars[instance.m_index].m_arrayIdx;
+			ShaderVariableBlockInfo& blockInfo = variant.m_blockInfos[inputIdx];
+
+			if(arrayIdx == 0)
+			{
+				blockInfo = instance.m_blockInfo;
+			}
+			else if(arrayIdx == 1)
+			{
+				ANKI_ASSERT(blockInfo.m_offset >= 0);
+				blockInfo.m_arraySize = max(blockInfo.m_arraySize, I16(arrayIdx + 1));
+				ANKI_ASSERT(instance.m_blockInfo.m_offset > blockInfo.m_offset);
+				blockInfo.m_arrayStride = instance.m_blockInfo.m_offset - blockInfo.m_offset;
+			}
+			else
+			{
+				ANKI_ASSERT(blockInfo.m_offset >= 0);
+				blockInfo.m_arraySize = max(blockInfo.m_arraySize, I16(arrayIdx + 1));
+			}
+
+			variant.m_activeInputVars.set(inputIdx);
+		}
 	}
+
+	// Init the opaques
+	variant.m_opaqueBindings.create(getAllocator(), m_inputVars.getSize(), -1);
+	for(const ShaderProgramBinaryOpaqueInstance& instance : binaryVariant->m_opaques)
+	{
+		const U32 opaqueIdx = instance.m_index;
+		const ShaderProgramBinaryOpaque& opaque = binary.m_opaques[opaqueIdx];
+		if(opaque.m_set != m_descriptorSet)
+		{
+			continue;
+		}
+
+		const U32 inputIdx = m_binaryMapping.m_opaques[opaqueIdx];
+		const Input& in = m_inputVars[inputIdx];
+		ANKI_ASSERT(in.isSampler() || in.isTexture());
+
+		variant.m_opaqueBindings[inputIdx] = I16(opaque.m_binding);
+		variant.m_activeInputVars.set(inputIdx);
+	}
+
+	// Set the constannt values
+	Array2d<ShaderSpecializationConstValue, U(ShaderType::COUNT), 64> constValues;
+	Array<U32, U(ShaderType::COUNT)> constValueCounts;
+	for(ShaderType shaderType : EnumIterable<ShaderType>())
+	{
+		if(!(shaderTypeToBit(shaderType) & m_shaderStages))
+		{
+			continue;
+		}
+
+		for(const ShaderProgramBinaryConstantInstance& instance : binaryVariant->m_constants)
+		{
+			const ShaderProgramBinaryConstant& c = binary.m_constants[instance.m_index];
+			if(!(c.m_shaderStages & shaderTypeToBit(shaderType)))
+			{
+				continue;
+			}
+
+			const U32 inputIdx = m_binaryMapping.m_constants[instance.m_index].m_inputVarIdx;
+			const U32 component = m_binaryMapping.m_constants[instance.m_index].m_component;
+
+			// Get value
+			const ShaderProgramResourceConstantValue2* value = nullptr;
+			for(U32 i = 0; i < info.m_constantValueCount; ++i)
+			{
+				if(info.m_constantValues[i].m_inputVariableIndex == inputIdx)
+				{
+					value = &info.m_constantValues[i];
+					break;
+				}
+			}
+			ANKI_ASSERT(value && "Forgot to set the value of a constant");
+
+			U32& count = constValueCounts[shaderType];
+			constValues[shaderType][count].m_constantId = c.m_constantId;
+			constValues[shaderType][count].m_dataType = c.m_type;
+			constValues[shaderType][count].m_int = value->m_ivec4[component];
+			++count;
+		}
+	}
+
+	// Create the program name
+	StringAuto progName(getTempAllocator());
+	getFilepathFilename(getFilename(), progName);
+	char* cprogName = const_cast<char*>(progName.cstr());
+	if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
+	{
+		cprogName[MAX_GR_OBJECT_NAME_LENGTH] = '\0';
+	}
+
+	// Time to init the shaders
+	ShaderProgramInitInfo progInf(cprogName);
+	for(ShaderType shaderType : EnumIterable<ShaderType>())
+	{
+		if(!(shaderTypeToBit(shaderType) & m_shaderStages))
+		{
+			continue;
+		}
+
+		ShaderInitInfo inf(cprogName);
+		inf.m_shaderType = shaderType;
+		inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
+		inf.m_constValues.setArray(&constValues[shaderType][0], constValueCounts[shaderType]);
+
+		progInf.m_shaders[shaderType] = getManager().getGrManager().newShader(inf);
+	}
+
+	// Create the program
+	variant.m_prog = getManager().getGrManager().newShaderProgram(progInf);
 }
 
 } // end namespace anki

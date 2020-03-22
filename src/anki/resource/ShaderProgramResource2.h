@@ -74,16 +74,36 @@ public:
 		return m_prog;
 	}
 
-	/// Return true of the the variable is active.
+	/// Return true if the the variable is active in this variant.
 	Bool variableActive(const ShaderProgramResourceInputVariable2& var) const
 	{
 		return m_activeInputVars.get(var.m_index);
+	}
+
+	U32 getBinding(const ShaderProgramResourceInputVariable2& var) const
+	{
+		ANKI_ASSERT(m_opaqueBindings[var.m_index] >= 0);
+		return U32(m_opaqueBindings[var.m_index]);
+	}
+
+	U32 getUniformBlockSize() const
+	{
+		return m_uniBlockSize;
+	}
+
+	Bool usePushConstants() const
+	{
+		return m_usesPushConstants;
 	}
 
 private:
 	ShaderProgramPtr m_prog;
 
 	BitSet<128, U64> m_activeInputVars = {false};
+	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
+	DynamicArray<I16> m_opaqueBindings;
+	U32 m_uniBlockSize = 0;
+	Bool m_usesPushConstants = false;
 };
 
 /// Shader program resource. It loads special AnKi programs.
@@ -155,8 +175,33 @@ private:
 	DynamicArray<Input> m_inputVars;
 	DynamicArray<Mutator> m_mutators;
 
+	class UniformVarInfo
+	{
+	public:
+		U32 m_arrayIdx = 0;
+		U32 m_inputVarIdx = 0;
+	};
+
+	class ConstInfo
+	{
+	public:
+		U32 m_component = 0;
+		U32 m_inputVarIdx = 0;
+	};
+
+	class
+	{
+	public:
+		DynamicArray<UniformVarInfo> m_uniformVars;
+		DynamicArray<ConstInfo> m_constants;
+		DynamicArray<U32> m_opaques;
+	} m_binaryMapping;
+
 	mutable HashMap<U64, ShaderProgramResourceVariant2*> m_variants;
 	mutable RWMutex m_mtx;
+
+	U8 m_descriptorSet = MAX_U8;
+	U8 m_materialUboIdx = MAX_U8; ///< Index into the program binary.
 
 	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
 

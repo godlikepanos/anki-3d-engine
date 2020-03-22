@@ -9,7 +9,12 @@
 ANKI_TEST(ShaderCompiler, ShaderProgramCompilerSimple)
 {
 	const CString sourceCode = R"(
-#pragma anki mutator INSTANCE_COUNT 1 2 4 8 16 32 64
+#pragma anki mutator INSTANCE_COUNT 1 2 4
+
+struct Foo
+{
+	Mat4 m_mat;
+};
 
 struct Instanced
 {
@@ -17,10 +22,12 @@ struct Instanced
 	Mat3 m_ankiRotationMat;
 	Mat4 m_ankiModelViewMat;
 	Mat4 m_ankiPrevMvp;
+	Foo m_foo[2];
 };
 
 layout(set = 0, binding = 0) uniform ankiMaterial
 {
+	Vec4 u_whatever;
 	Instanced u_ankiPerInstance[INSTANCE_COUNT];
 	Vec4 u_color;
 };
