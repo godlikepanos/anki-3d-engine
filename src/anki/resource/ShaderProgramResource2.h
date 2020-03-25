@@ -33,30 +33,12 @@ public:
 };
 
 /// Shader program resource variant.
-class ShaderProgramResourceInputVariable2
+class ShaderProgramResourceConstant2
 {
 public:
 	String m_name;
-	U32 m_index = MAX_U32;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
-	Bool m_constant = false;
-	Bool m_instanced = false;
-
-	Bool isTexture() const
-	{
-		return m_dataType >= ShaderVariableDataType::TEXTURE_FIRST
-			   && m_dataType <= ShaderVariableDataType::TEXTURE_LAST;
-	}
-
-	Bool isSampler() const
-	{
-		return m_dataType == ShaderVariableDataType::SAMPLER;
-	}
-
-	Bool inBlock() const
-	{
-		return !m_constant && !isTexture() && !isSampler();
-	}
+	U32 m_index;
 };
 
 /// Shader program resource variant.
@@ -75,35 +57,14 @@ public:
 	}
 
 	/// Return true if the the variable is active in this variant.
-	Bool variableActive(const ShaderProgramResourceInputVariable2& var) const
+	Bool isConstantActive(const ShaderProgramResourceConstant2& var) const
 	{
-		return m_activeInputVars.get(var.m_index);
-	}
-
-	U32 getBinding(const ShaderProgramResourceInputVariable2& var) const
-	{
-		ANKI_ASSERT(m_opaqueBindings[var.m_index] >= 0);
-		return U32(m_opaqueBindings[var.m_index]);
-	}
-
-	U32 getUniformBlockSize() const
-	{
-		return m_uniBlockSize;
-	}
-
-	Bool usePushConstants() const
-	{
-		return m_usesPushConstants;
+		return m_activeConsts.get(var.m_index);
 	}
 
 private:
 	ShaderProgramPtr m_prog;
-
-	BitSet<128, U64> m_activeInputVars = {false};
-	DynamicArray<ShaderVariableBlockInfo> m_blockInfos;
-	DynamicArray<I16> m_opaqueBindings;
-	U32 m_uniBlockSize = 0;
-	Bool m_usesPushConstants = false;
+	BitSet<128, U64> m_activeConsts = {false};
 };
 
 /// Shader program resource. It loads special AnKi programs.
@@ -117,16 +78,16 @@ public:
 	/// Load the resource.
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
-	/// Get the array of input variables.
-	const DynamicArray<ShaderProgramResourceInputVariable2>& getInputVariables() const
+	/// Get the array of constants.
+	const DynamicArray<ShaderProgramResourceConstant2>& getConstants() const
 	{
-		return m_inputVars;
+		return m_consts;
 	}
 
-	/// Try to find an input variable.
-	const ShaderProgramResourceInputVariable2* tryFindInputVariable(CString name) const
+	/// Try to find a constant.
+	const ShaderProgramResourceConstant2* tryFindConstant(CString name) const
 	{
-		for(const ShaderProgramResourceInputVariable2& m : m_inputVars)
+		for(const ShaderProgramResourceConstant2& m : m_consts)
 		{
 			if(m.m_name == name)
 			{
@@ -155,10 +116,9 @@ public:
 		return nullptr;
 	}
 
-	/// Has tessellation shaders.
-	Bool hasTessellation() const
+	ShaderTypeBit getStages() const
 	{
-		return !!(m_shaderStages & ShaderTypeBit::TESSELLATION_EVALUATION);
+		return m_shaderStages;
 	}
 
 	/// Get or create a graphics shader program variant.
@@ -168,46 +128,28 @@ public:
 
 private:
 	using Mutator = ShaderProgramResourceMutator2;
-	using Input = ShaderProgramResourceInputVariable2;
+	using Const = ShaderProgramResourceConstant2;
 
 	ShaderProgramBinaryWrapper m_binary;
 
-	DynamicArray<Input> m_inputVars;
+	DynamicArray<Const> m_consts;
 	DynamicArray<Mutator> m_mutators;
 
-	class UniformVarInfo
-	{
-	public:
-		U32 m_arrayIdx = 0;
-		U32 m_inputVarIdx = 0;
-	};
-
-	class ConstInfo
+	class ConstMapping
 	{
 	public:
 		U32 m_component = 0;
-		U32 m_inputVarIdx = 0;
+		U32 m_constsIdx = 0; ///< Index in m_consts
 	};
 
-	class
-	{
-	public:
-		DynamicArray<UniformVarInfo> m_uniformVars;
-		DynamicArray<ConstInfo> m_constants;
-		DynamicArray<U32> m_opaques;
-	} m_binaryMapping;
+	DynamicArray<ConstMapping> m_constBinaryMapping;
 
 	mutable HashMap<U64, ShaderProgramResourceVariant2*> m_variants;
 	mutable RWMutex m_mtx;
 
-	U8 m_descriptorSet = MAX_U8;
-	U8 m_materialUboIdx = MAX_U8; ///< Index into the program binary.
-
 	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
 
 	void initVariant(const ShaderProgramResourceVariantInitInfo2& info, ShaderProgramResourceVariant2& variant) const;
-
-	static ANKI_USE_RESULT Error parseVariable(CString fullVarName, Bool& instanced, U32& idx, CString& name);
 
 	static ANKI_USE_RESULT Error parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name);
 };
@@ -229,8 +171,8 @@ public:
 		Vec4 m_vec4;
 	};
 
-	U32 m_inputVariableIndex;
-	U8 _m_padding[sizeof(Vec4) - sizeof(m_inputVariableIndex)];
+	U32 m_constantIndex;
+	U8 _m_padding[sizeof(Vec4) - sizeof(m_constantIndex)];
 
 	ShaderProgramResourceConstantValue2()
 	{
@@ -257,11 +199,10 @@ public:
 	template<typename T>
 	ShaderProgramResourceVariantInitInfo2& addConstant(CString name, const T& value)
 	{
-		const ShaderProgramResourceInputVariable2* in = m_ptr->tryFindInputVariable(name);
+		const ShaderProgramResourceConstant2* in = m_ptr->tryFindConstant(name);
 		ANKI_ASSERT(in);
-		ANKI_ASSERT(in->m_constant);
 		ANKI_ASSERT(in->m_dataType == getShaderVariableTypeFromTypename<T>());
-		m_constantValues[m_constantValueCount].m_inputVariableIndex = U32(in - m_ptr->getInputVariables().getBegin());
+		m_constantValues[m_constantValueCount].m_constantIndex = U32(in - m_ptr->getConstants().getBegin());
 		memcpy(&m_constantValues[m_constantValueCount].m_int, &value, sizeof(T));
 		++m_constantValueCount;
 		return *this;
