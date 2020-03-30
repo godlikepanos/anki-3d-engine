@@ -30,6 +30,18 @@ class ShaderProgramResourceMutator2 : public NonCopyable
 public:
 	CString m_name;
 	ConstWeakArray<MutatorValue> m_values;
+
+	Bool valueExists(MutatorValue v) const
+	{
+		for(MutatorValue x : m_values)
+		{
+			if(v == x)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 };
 
 /// Shader program resource variant.
@@ -62,8 +74,15 @@ public:
 		return m_activeConsts.get(var.m_index);
 	}
 
+	const ShaderProgramBinaryVariant& getBinaryVariant() const
+	{
+		ANKI_ASSERT(m_binaryVariant);
+		return *m_binaryVariant;
+	}
+
 private:
 	ShaderProgramPtr m_prog;
+	const ShaderProgramBinaryVariant* m_binaryVariant = nullptr;
 	BitSet<128, U64> m_activeConsts = {false};
 };
 
@@ -119,6 +138,11 @@ public:
 	ShaderTypeBit getStages() const
 	{
 		return m_shaderStages;
+	}
+
+	const ShaderProgramBinary& getBinary() const
+	{
+		return m_binary.getBinary();
 	}
 
 	/// Get or create a graphics shader program variant.

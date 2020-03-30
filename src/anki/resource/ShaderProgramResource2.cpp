@@ -239,6 +239,7 @@ void ShaderProgramResource2::initVariant(
 		binaryVariant = &binary.m_variants[0];
 	}
 	ANKI_ASSERT(binaryVariant);
+	variant.m_binaryVariant = binaryVariant;
 
 	// Set the constannt values
 	Array2d<ShaderSpecializationConstValue, U(ShaderType::COUNT), 64> constValues;

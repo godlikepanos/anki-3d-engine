@@ -9,9 +9,13 @@
 #include <anki/resource/RenderingKey.h>
 #include <anki/resource/ShaderProgramResource2.h>
 #include <anki/Math.h>
+#include <anki/util/Enum.h>
 
 namespace anki
 {
+
+// Forward
+class XmlElement;
 
 /// @addtogroup resource
 /// @{
@@ -31,15 +35,42 @@ enum class BuiltinMaterialVariableId2 : U8
 	CAMERA_POSITION,
 	PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX,
 	GLOBAL_SAMPLER,
-	COUNT
+
+	COUNT,
+	FIRST = 0,
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMaterialVariableId2, inline)
 
 /// Holds the shader variables. It's a container for shader program variables that share the same name.
 class MaterialVariable2 : public NonCopyable
 {
 	friend class MaterialVariant2;
+	friend class MaterialResource2;
 
 public:
+	MaterialVariable2();
+
+	MaterialVariable2(MaterialVariable2&& b)
+	{
+		*this = std::move(b);
+	}
+
+	~MaterialVariable2();
+
+	MaterialVariable2& operator=(MaterialVariable2&& b)
+	{
+		m_name = std::move(b.m_name);
+		m_index = b.m_index;
+		m_indexInBinary = b.m_indexInBinary;
+		m_constant = b.m_constant;
+		m_instanced = b.m_instanced;
+		m_dataType = b.m_dataType;
+		m_builtin = b.m_builtin;
+		m_mat4 = b.m_mat4;
+		m_tex = std::move(b.m_tex);
+		return *this;
+	}
+
 	/// Get the builtin info.
 	BuiltinMaterialVariableId2 getBuiltin() const
 	{
@@ -70,14 +101,40 @@ public:
 		return !m_constant && !isTexture() && !isSampler();
 	}
 
+	Bool isConstant() const
+	{
+		return m_constant;
+	}
+
+	Bool isInstanced() const
+	{
+		return m_instanced;
+	}
+
+	Bool isBuildin() const
+	{
+		return m_builtin != BuiltinMaterialVariableId2::NONE;
+	}
+
+	ShaderVariableDataType getDataType() const
+	{
+		ANKI_ASSERT(m_dataType != ShaderVariableDataType::NONE);
+		return m_dataType;
+	}
+
 protected:
+	static constexpr F32 NO_VALUE = 1234.5678f;
+
 	String m_name;
 	U32 m_index = MAX_U32;
+	U32 m_indexInBinary = MAX_U32;
 	Bool m_constant = false;
 	Bool m_instanced = false;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 	BuiltinMaterialVariableId2 m_builtin = BuiltinMaterialVariableId2::NONE;
 
+	/// Values for non-builtins
+	/// @{
 	union
 	{
 		I32 m_int;
@@ -97,6 +154,12 @@ protected:
 	};
 
 	TextureResourcePtr m_tex;
+	/// @}
+
+	Bool valueSetByMaterial() const
+	{
+		return m_tex.isCreated() || m_mat4(3, 3) != NO_VALUE;
+	}
 };
 
 // Specialize the MaterialVariable::getValue
@@ -137,6 +200,8 @@ inline const TextureResourcePtr& MaterialVariable2::getValue() const
 /// Material variant.
 class MaterialVariant2 : public NonCopyable
 {
+	friend class MaterialResource2;
+
 public:
 	/// Return true of the the variable is active.
 	Bool isVariableActive(const MaterialVariable2& var) const
@@ -189,7 +254,7 @@ private:
 ///		</mutators>]
 ///
 ///		[<inputs>
-///			<input shaderInput="name to shaderProg input" value="values"/> (1)
+///			<input shaderVar="name to shaderProg var" value="values"/> (1)
 ///		</inputs>]
 /// </material>
 /// @endcode
@@ -226,10 +291,8 @@ public:
 
 	Bool isInstanced() const
 	{
-		return m_instanced;
+		return m_instancingMutator != nullptr;
 	}
-
-	const MaterialVariant2& getOrCreateVariant(const RenderingKey& key) const;
 
 	ConstWeakArray<MaterialVariable2> getVariables() const
 	{
@@ -241,20 +304,50 @@ public:
 		return m_descriptorSetIdx;
 	}
 
+	const MaterialVariant2& getOrCreateVariant(const RenderingKey& key) const;
+
 private:
+	class SubMutation
+	{
+	public:
+		const ShaderProgramResourceMutator2* m_mutator;
+		MutatorValue m_value;
+	};
+
 	ShaderProgramResource2Ptr m_prog;
+
+	const ShaderProgramResourceMutator2* m_instancingMutator = nullptr;
+	const ShaderProgramResourceMutator2* m_passMutator = nullptr;
+	const ShaderProgramResourceMutator2* m_lodMutator = nullptr;
+	const ShaderProgramResourceMutator2* m_bonesMutator = nullptr;
+	const ShaderProgramResourceMutator2* m_velocityMutator = nullptr;
 
 	Bool m_shadow = true;
 	Bool m_forwardShading = false;
-	Bool m_instanced = false;
 	U8 m_lodCount = 1;
-	U8 m_descriptorSetIdx = 0; ///< Cache the value from the m_prog;
+	U8 m_descriptorSetIdx = 0; ///< The material set.
+	U32 m_uboIdx = MAX_U32; ///< The b_ankiMaterial UBO inside the binary.
 
 	/// Matrix of variants.
 	mutable Array5d<MaterialVariant2, U(Pass::COUNT), MAX_LOD_COUNT, MAX_INSTANCE_GROUPS, 2, 2> m_variantMatrix;
 	mutable RWMutex m_variantMatrixMtx;
 
 	DynamicArray<MaterialVariable2> m_vars;
+
+	DynamicArray<SubMutation> m_nonBuiltinsMutation;
+
+	ANKI_USE_RESULT Error createVars();
+
+	static ANKI_USE_RESULT Error parseVariable(CString fullVarName, Bool& instanced, U32& idx, CString& name);
+
+	/// Parse whatever is inside the <inputs> tag.
+	ANKI_USE_RESULT Error parseInputs(XmlElement inputsEl, Bool async);
+
+	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl);
+
+	static U32 getInstanceGroupIdx(U32 instanceCount);
+
+	void initVariant(const ShaderProgramResourceVariant2& progVariant, MaterialVariant2& variant) const;
 };
 /// @}
 
