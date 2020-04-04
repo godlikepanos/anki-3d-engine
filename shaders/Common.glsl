@@ -41,7 +41,7 @@ const U32 MAX_U32 = 0xFFFFFFFFu;
 
 const F32 PI = 3.14159265358979323846;
 const U32 UBO_MAX_SIZE = 16384u;
-#define MAX_SHARED_MEMORY (32u * 1024u)
+const U32 MAX_SHARED_MEMORY = 32u * 1024u;
 
 // Macros
 #define UV_TO_NDC(x_) ((x_)*2.0 - 1.0)

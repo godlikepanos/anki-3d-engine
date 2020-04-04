@@ -57,6 +57,8 @@ class ShaderInitInfo : public GrBaseInitInfo
 public:
 	ShaderType m_shaderType = ShaderType::COUNT;
 	ConstWeakArray<U8> m_binary = {};
+
+	/// @note It's OK to have entries in that array with consts that do not appear in the shader.
 	ConstWeakArray<ShaderSpecializationConstValue> m_constValues;
 
 	ShaderInitInfo()

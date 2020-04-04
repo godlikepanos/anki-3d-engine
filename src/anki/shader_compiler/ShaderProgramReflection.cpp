@@ -75,7 +75,6 @@ private:
 		StringAuto m_name;
 		ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 		U32 m_constantId = MAX_U32;
-		ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
 
 		Const(const GenericMemoryPoolAllocator<U8>& alloc)
 			: m_name(alloc)
@@ -306,15 +305,10 @@ Error SpirvReflector::blockReflection(
 	const spirv_cross::Bitset decorationMask = get_decoration_bitset(res.id);
 
 	const Bool isPushConstant = get_storage_class(res.id) == spv::StorageClassPushConstant;
-	const Bool isBlock = get_decoration_bitset(type.self).get(spv::DecorationBlock)
-						 || get_decoration_bitset(type.self).get(spv::DecorationBufferBlock);
-
-	const spirv_cross::ID fallbackId =
-		(!isPushConstant && isBlock) ? spirv_cross::ID(res.base_type_id) : spirv_cross::ID(res.id);
 
 	// Name
 	{
-		const std::string name = (!res.name.empty()) ? res.name : get_fallback_name(fallbackId);
+		const std::string name = (!res.name.empty()) ? res.name : to_name(res.base_type_id);
 		if(name.length() == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Can't accept zero name length");
@@ -566,11 +560,6 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts, ShaderTy
 		{
 			consts.emplaceBack(std::move(newConst));
 		}
-		else
-		{
-			ANKI_ASSERT(foundConst->m_shaderStages != ShaderTypeBit::NONE);
-			foundConst->m_shaderStages |= shaderTypeToBit(stage);
-		}
 	}
 
 	return Error::NONE;
@@ -694,7 +683,7 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 	for(U32 i = 0; i < specializationConstants.getSize(); ++i)
 	{
 		const Const& c = specializationConstants[i];
-		ANKI_CHECK(interface.visitConstant(i, c.m_name, c.m_type, c.m_constantId, c.m_shaderStages));
+		ANKI_CHECK(interface.visitConstant(i, c.m_name, c.m_type, c.m_constantId));
 	}
 
 	return Error::NONE;

@@ -684,6 +684,8 @@ Error ShaderProgramParser::parse()
 	{
 		m_codeLines.join("\n", m_codeSource);
 		m_codeLines.destroy();
+
+		m_codeSourceHash = computeHash(m_codeSource.getBegin(), m_codeSource.getLength());
 	}
 
 	return Error::NONE;

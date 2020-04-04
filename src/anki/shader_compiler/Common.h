@@ -30,6 +30,13 @@ class ShaderProgramFilesystemInterface
 public:
 	virtual ANKI_USE_RESULT Error readAllText(CString filename, StringAuto& txt) = 0;
 };
+
+/// This controls if the compilation will continue after the parsing stage.
+class ShaderProgramPostParseInterface
+{
+public:
+	virtual Bool skipCompilation(U64 programHash) = 0;
+};
 /// @}
 
 } // end namespace anki

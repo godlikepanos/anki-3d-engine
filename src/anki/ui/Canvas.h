@@ -7,7 +7,7 @@
 
 #include <anki/ui/UiObject.h>
 #include <anki/gr/CommandBuffer.h>
-#include <anki/resource/ShaderProgramResource.h>
+#include <anki/resource/ShaderProgramResource2.h>
 
 namespace anki
 {
@@ -81,7 +81,7 @@ private:
 		SHADER_COUNT
 	};
 
-	ShaderProgramResourcePtr m_prog;
+	ShaderProgramResource2Ptr m_prog;
 	Array<ShaderProgramPtr, SHADER_COUNT> m_grProgs;
 	SamplerPtr m_sampler;
 

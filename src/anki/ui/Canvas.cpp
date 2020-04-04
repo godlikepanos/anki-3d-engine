@@ -9,6 +9,8 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/input/Input.h>
+#include <anki/gr/Sampler.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {
@@ -35,14 +37,14 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 	resize(width, height);
 
 	// Create program
-	ANKI_CHECK(m_manager->getResourceManager().loadResource("shaders/Ui.glslp", m_prog));
-	const ShaderProgramResourceVariant* variant;
+	ANKI_CHECK(m_manager->getResourceManager().loadResource("shaders/Ui.ankiprog", m_prog));
 
 	for(U32 i = 0; i < SHADER_COUNT; ++i)
 	{
-		ShaderProgramResourceMutationInitList<1> mutators(m_prog);
-		mutators.add("TEXTURE_TYPE", i);
-		m_prog->getOrCreateVariant(mutators.get(), variant);
+		const ShaderProgramResourceVariant2* variant;
+		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+		variantInitInfo.addMutation("TEXTURE_TYPE", i);
+		m_prog->getOrCreateVariant(variantInitInfo, variant);
 		m_grProgs[i] = variant->getProgram();
 	}
 

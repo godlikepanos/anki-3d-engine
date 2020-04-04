@@ -21,6 +21,7 @@ class ShaderProgramBinaryWrapper : public NonCopyable
 {
 	friend Error compileShaderProgram(CString fname,
 		ShaderProgramFilesystemInterface& fsystem,
+		ShaderProgramPostParseInterface* postParseCallback,
 		GenericMemoryPoolAllocator<U8> tempAllocator,
 		const GpuDeviceCapabilities& gpuCapabilities,
 		const BindlessLimits& bindlessLimits,
@@ -58,6 +59,7 @@ private:
 /// Takes an AnKi special shader program and spits a binary.
 ANKI_USE_RESULT Error compileShaderProgram(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
+	ShaderProgramPostParseInterface* postParseCallback,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
 	const GpuDeviceCapabilities& gpuCapabilities,
 	const BindlessLimits& bindlessLimits,

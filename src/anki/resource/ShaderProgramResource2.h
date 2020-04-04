@@ -8,6 +8,7 @@
 #include <anki/resource/ResourceObject.h>
 #include <anki/shader_compiler/ShaderProgramCompiler.h>
 #include <anki/gr/utils/Functions.h>
+#include <anki/gr/ShaderProgram.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/String.h>
 #include <anki/util/HashMap.h>
@@ -50,7 +51,7 @@ class ShaderProgramResourceConstant2
 public:
 	String m_name;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
-	U32 m_index;
+	U32 m_index = MAX_U32;
 };
 
 /// Shader program resource variant.
@@ -98,7 +99,7 @@ public:
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get the array of constants.
-	const DynamicArray<ShaderProgramResourceConstant2>& getConstants() const
+	ConstWeakArray<ShaderProgramResourceConstant2> getConstants() const
 	{
 		return m_consts;
 	}
@@ -117,7 +118,7 @@ public:
 	}
 
 	/// Get the array of mutators.
-	const DynamicArray<ShaderProgramResourceMutator2>& getMutators() const
+	ConstWeakArray<ShaderProgramResourceMutator2> getMutators() const
 	{
 		return m_mutators;
 	}

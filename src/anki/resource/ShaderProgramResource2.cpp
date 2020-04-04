@@ -30,7 +30,20 @@ ShaderProgramResource2::ShaderProgramResource2(ResourceManager* manager)
 ShaderProgramResource2::~ShaderProgramResource2()
 {
 	m_mutators.destroy(getAllocator());
+
+	for(ShaderProgramResourceConstant2& c : m_consts)
+	{
+		c.m_name.destroy(getAllocator());
+	}
 	m_consts.destroy(getAllocator());
+	m_constBinaryMapping.destroy(getAllocator());
+
+	for(auto it : m_variants)
+	{
+		ShaderProgramResourceVariant2* variant = &(*it);
+		getAllocator().deleteInstance(variant);
+	}
+	m_variants.destroy(getAllocator());
 }
 
 Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
@@ -39,7 +52,7 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 	StringAuto baseFilename(getTempAllocator());
 	getFilepathFilename(filename, baseFilename);
 	StringAuto binaryFilename(getTempAllocator());
-	binaryFilename.sprintf("%s/%s.bin", getManager().getCacheDirectory().cstr(), binaryFilename.cstr());
+	binaryFilename.sprintf("%s/%sbin", getManager().getCacheDirectory().cstr(), baseFilename.cstr());
 	ANKI_CHECK(m_binary.deserializeFromFile(binaryFilename));
 	const ShaderProgramBinary& binary = m_binary.getBinary();
 
@@ -242,44 +255,30 @@ void ShaderProgramResource2::initVariant(
 	variant.m_binaryVariant = binaryVariant;
 
 	// Set the constannt values
-	Array2d<ShaderSpecializationConstValue, U(ShaderType::COUNT), 64> constValues;
-	Array<U32, U(ShaderType::COUNT)> constValueCounts;
-	for(ShaderType shaderType : EnumIterable<ShaderType>())
+	Array<ShaderSpecializationConstValue, 64> constValues;
+	U32 constValueCount = 0;
+	for(const ShaderProgramBinaryConstantInstance& instance : binaryVariant->m_constants)
 	{
-		if(!(shaderTypeToBit(shaderType) & m_shaderStages))
+		const ShaderProgramBinaryConstant& c = binary.m_constants[instance.m_index];
+		const U32 inputIdx = m_constBinaryMapping[instance.m_index].m_constsIdx;
+		const U32 component = m_constBinaryMapping[instance.m_index].m_component;
+
+		// Get value
+		const ShaderProgramResourceConstantValue2* value = nullptr;
+		for(U32 i = 0; i < info.m_constantValueCount; ++i)
 		{
-			continue;
-		}
-
-		for(const ShaderProgramBinaryConstantInstance& instance : binaryVariant->m_constants)
-		{
-			const ShaderProgramBinaryConstant& c = binary.m_constants[instance.m_index];
-			if(!(c.m_shaderStages & shaderTypeToBit(shaderType)))
+			if(info.m_constantValues[i].m_constantIndex == inputIdx)
 			{
-				continue;
+				value = &info.m_constantValues[i];
+				break;
 			}
-
-			const U32 inputIdx = m_constBinaryMapping[instance.m_index].m_constsIdx;
-			const U32 component = m_constBinaryMapping[instance.m_index].m_component;
-
-			// Get value
-			const ShaderProgramResourceConstantValue2* value = nullptr;
-			for(U32 i = 0; i < info.m_constantValueCount; ++i)
-			{
-				if(info.m_constantValues[i].m_constantIndex == inputIdx)
-				{
-					value = &info.m_constantValues[i];
-					break;
-				}
-			}
-			ANKI_ASSERT(value && "Forgot to set the value of a constant");
-
-			U32& count = constValueCounts[shaderType];
-			constValues[shaderType][count].m_constantId = c.m_constantId;
-			constValues[shaderType][count].m_dataType = c.m_type;
-			constValues[shaderType][count].m_int = value->m_ivec4[component];
-			++count;
 		}
+		ANKI_ASSERT(value && "Forgot to set the value of a constant");
+
+		constValues[constValueCount].m_constantId = c.m_constantId;
+		constValues[constValueCount].m_dataType = c.m_type;
+		constValues[constValueCount].m_int = value->m_ivec4[component];
+		++constValueCount;
 	}
 
 	// Create the program name
@@ -303,7 +302,7 @@ void ShaderProgramResource2::initVariant(
 		ShaderInitInfo inf(cprogName);
 		inf.m_shaderType = shaderType;
 		inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
-		inf.m_constValues.setArray(&constValues[shaderType][0], constValueCounts[shaderType]);
+		inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
 
 		progInf.m_shaders[shaderType] = getManager().getGrManager().newShader(inf);
 	}

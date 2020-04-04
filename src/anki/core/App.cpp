@@ -711,20 +711,34 @@ void App::initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserDat
 Error App::compileAllShaders()
 {
 	ANKI_CORE_LOGI("Compiling shaders");
+	U32 shadersCompileCount = 0;
 
 	ANKI_CHECK(m_resourceFs->iterateAllFilenames([&](CString fname) -> Error {
 		// Check file extension
 		StringAuto extension(m_heapAlloc);
 		getFilepathExtension(fname, extension);
-		if(extension.getLength() == 0 || extension != "ankiprog")
+		if(extension.getLength() != 8 || extension != "ankiprog")
 		{
 			return Error::NONE;
 		}
 
-		// TODO check if it's in the cache
+		// Get some filenames
+		StringAuto baseFname(m_heapAlloc);
+		getFilepathFilename(fname, baseFname);
+		StringAuto metaFname(m_heapAlloc);
+		metaFname.sprintf("%s/%smeta", m_cacheDir.cstr(), baseFname.cstr());
+
+		// Get the hash from the meta file
+		U64 metafileHash = 0;
+		if(fileExists(metaFname))
+		{
+			File metaFile;
+			ANKI_CHECK(metaFile.open(metaFname, FileOpenFlag::READ | FileOpenFlag::BINARY));
+			ANKI_CHECK(metaFile.read(&metafileHash, sizeof(metafileHash)));
+		}
 
 		// Load interface
-		class Interface : public ShaderProgramFilesystemInterface
+		class FSystem : public ShaderProgramFilesystemInterface
 		{
 		public:
 			ResourceFilesystem* m_fsystem = nullptr;
@@ -736,24 +750,56 @@ Error App::compileAllShaders()
 				ANKI_CHECK(file->readAllText(txt));
 				return Error::NONE;
 			}
-		} iface;
-		iface.m_fsystem = m_resourceFs;
+		} fsystem;
+		fsystem.m_fsystem = m_resourceFs;
+
+		class Skip : public ShaderProgramPostParseInterface
+		{
+		public:
+			U64 m_metafileHash;
+			U64 m_newHash;
+
+			Bool skipCompilation(U64 hash)
+			{
+				ANKI_ASSERT(hash != 0);
+				m_newHash = hash;
+				return hash == m_metafileHash;
+			};
+		} skip;
+		skip.m_metafileHash = metafileHash;
+		skip.m_newHash = 0;
 
 		// Compile
 		ShaderProgramBinaryWrapper binary(m_heapAlloc);
 		ANKI_CHECK(compileShaderProgram(
-			fname, iface, m_heapAlloc, m_gr->getDeviceCapabilities(), m_gr->getBindlessLimits(), binary));
+			fname, fsystem, &skip, m_heapAlloc, m_gr->getDeviceCapabilities(), m_gr->getBindlessLimits(), binary));
+
+		const Bool cachedBinIsUpToDate = metafileHash == skip.m_newHash;
+		if(!cachedBinIsUpToDate)
+		{
+			++shadersCompileCount;
+		}
+
+		// Update the meta file
+		if(!cachedBinIsUpToDate)
+		{
+			File metaFile;
+			ANKI_CHECK(metaFile.open(metaFname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
+			ANKI_CHECK(metaFile.write(&skip.m_newHash, sizeof(skip.m_newHash)));
+		}
 
 		// Save the binary to the cache
-		StringAuto baseFname(m_heapAlloc);
-		getFilepathFilename(fname, baseFname);
-		StringAuto storeFname(m_heapAlloc);
-		storeFname.sprintf("%s/%sbin", m_cacheDir.cstr(), baseFname.cstr());
-		ANKI_CHECK(binary.serializeToFile(storeFname));
+		if(!cachedBinIsUpToDate)
+		{
+			StringAuto storeFname(m_heapAlloc);
+			storeFname.sprintf("%s/%sbin", m_cacheDir.cstr(), baseFname.cstr());
+			ANKI_CHECK(binary.serializeToFile(storeFname));
+		}
 
 		return Error::NONE;
 	}));
 
+	ANKI_CORE_LOGI("Compiled %u programs", shadersCompileCount);
 	return Error::NONE;
 }
 

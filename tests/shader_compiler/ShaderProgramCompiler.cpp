@@ -25,7 +25,7 @@ struct Instanced
 	Foo m_foo[2];
 };
 
-layout(set = 0, binding = 0) uniform ankiMaterial
+layout(push_constant) uniform ankiMaterial
 {
 	Vec4 u_whatever;
 	Instanced u_ankiPerInstance[INSTANCE_COUNT];
@@ -78,7 +78,7 @@ void main()
 	BindlessLimits bindlessLimits;
 	GpuDeviceCapabilities gpuCapabilities;
 	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, alloc, gpuCapabilities, bindlessLimits, binary));
+		compileShaderProgram("test.glslp", fsystem, nullptr, alloc, gpuCapabilities, bindlessLimits, binary));
 
 #if 1
 	StringAuto dis(alloc);
@@ -233,7 +233,7 @@ void main()
 	BindlessLimits bindlessLimits;
 	GpuDeviceCapabilities gpuCapabilities;
 	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, alloc, gpuCapabilities, bindlessLimits, binary));
+		compileShaderProgram("test.glslp", fsystem, nullptr, alloc, gpuCapabilities, bindlessLimits, binary));
 
 #if 1
 	StringAuto dis(alloc);

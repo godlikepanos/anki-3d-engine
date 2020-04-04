@@ -58,7 +58,6 @@
 				<member name="m_name" type="char" array_size="MAX_SHADER_BINARY_NAME_LENGTH + 1" />
 				<member name="m_type" type="ShaderVariableDataType" constructor="= ShaderVariableDataType::NONE" />
 				<member name="m_constantId" type="U32" constructor="= MAX_U32"/>
-				<member name="m_shaderStages" type="ShaderTypeBit" constructor="= ShaderTypeBit::NONE"/>
 			</members>
 		</class>
 

@@ -43,8 +43,7 @@ public:
 	virtual ANKI_USE_RESULT Error visitOpaque(
 		U32 idx, CString name, ShaderVariableDataType type, U32 set, U32 binding, U32 arraySize) = 0;
 
-	virtual ANKI_USE_RESULT Error visitConstant(
-		U32 idx, CString name, ShaderVariableDataType type, U32 constantId, ShaderTypeBit stages) = 0;
+	virtual ANKI_USE_RESULT Error visitConstant(U32 idx, CString name, ShaderVariableDataType type, U32 constantId) = 0;
 };
 
 /// Does reflection using SPIR-V.

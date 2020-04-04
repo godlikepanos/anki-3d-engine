@@ -353,15 +353,14 @@ public:
 		}
 
 		// Create the instance
-		ShaderProgramBinaryOpaqueInstance& instance = *m_opaqueInstances.emplaceBack();
+		ShaderProgramBinaryOpaqueInstance& instance = m_opaqueInstances[instanceIdx];
 		instance.m_index = opaqueIdx;
 		instance.m_arraySize = arraySize;
 
 		return Error::NONE;
 	}
 
-	Error visitConstant(
-		U32 instanceIdx, CString name, ShaderVariableDataType type, U32 constantId, ShaderTypeBit stages) final
+	Error visitConstant(U32 instanceIdx, CString name, ShaderVariableDataType type, U32 constantId) final
 	{
 		// Find const
 		U32 constIdx = MAX_U32;
@@ -369,8 +368,7 @@ public:
 		{
 			if(name == m_consts[i].m_name.getBegin())
 			{
-				if(type != m_consts[i].m_type || constantId != m_consts[i].m_constantId
-					|| m_consts[i].m_shaderStages != stages)
+				if(type != m_consts[i].m_type || constantId != m_consts[i].m_constantId)
 				{
 					ANKI_SHADER_COMPILER_LOGE(
 						"The type, constantId and stages can't difer between shader variants for const: %s",
@@ -390,13 +388,12 @@ public:
 			ANKI_CHECK(setName(name, c.m_name));
 			c.m_type = type;
 			c.m_constantId = constantId;
-			c.m_shaderStages = stages;
 
 			constIdx = m_consts.getSize() - 1;
 		}
 
 		// Create the instance
-		ShaderProgramBinaryConstantInstance& instance = *m_constInstances.emplaceBack();
+		ShaderProgramBinaryConstantInstance& instance = m_constInstances[instanceIdx];
 		instance.m_index = constIdx;
 
 		return Error::NONE;
@@ -653,6 +650,7 @@ static Error doReflection(
 
 Error compileShaderProgram(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
+	ShaderProgramPostParseInterface* postParseCallback,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
 	const GpuDeviceCapabilities& gpuCapabilities,
 	const BindlessLimits& bindlessLimits,
@@ -670,6 +668,11 @@ Error compileShaderProgram(CString fname,
 	// Parse source
 	ShaderProgramParser parser(fname, &fsystem, tempAllocator, gpuCapabilities, bindlessLimits);
 	ANKI_CHECK(parser.parse());
+
+	if(postParseCallback && postParseCallback->skipCompilation(parser.getHash()))
+	{
+		return Error::NONE;
+	}
 
 	// Get mutators
 	U32 mutationCount = 0;

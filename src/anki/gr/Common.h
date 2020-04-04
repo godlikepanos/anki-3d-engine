@@ -109,6 +109,7 @@ enum class GpuVendor : U8
 extern Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR;
 
 /// Device capabilities.
+ANKI_BEGIN_PACKED_STRUCT
 class GpuDeviceCapabilities
 {
 public:
@@ -142,6 +143,9 @@ public:
 	/// API version.
 	U8 m_majorApiVersion = 0;
 };
+ANKI_END_PACKED_STRUCT
+static_assert(
+	sizeof(GpuDeviceCapabilities) == sizeof(PtrSize) * 4 + sizeof(U32) * 3 + sizeof(U8) * 3, "Should be packed");
 
 /// Bindless related info.
 class BindlessLimits
