@@ -89,7 +89,7 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResourcePtr m_prog;
+		ShaderProgramResource2Ptr m_prog;
 		ShaderProgramPtr m_grProg;
 	} m_irradianceToRefl; ///< Apply irradiance back to the reflection.
 

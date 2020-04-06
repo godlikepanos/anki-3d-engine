@@ -176,11 +176,12 @@ Error ProbeReflections::initIrradiance(const ConfigSet& config)
 Error ProbeReflections::initIrradianceToRefl(const ConfigSet& cfg)
 {
 	// Create program
-	ANKI_CHECK(
-		m_r->getResourceManager().loadResource("shaders/ApplyIrradianceToReflection.glslp", m_irradianceToRefl.m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource(
+		"shaders/ApplyIrradianceToReflection.ankiprog", m_irradianceToRefl.m_prog));
 
-	const ShaderProgramResourceVariant* variant;
-	m_irradianceToRefl.m_prog->getOrCreateVariant(variant);
+	const ShaderProgramResourceVariant2* variant;
+	m_irradianceToRefl.m_prog->getOrCreateVariant(
+		ShaderProgramResourceVariantInitInfo2(m_irradianceToRefl.m_prog), variant);
 	m_irradianceToRefl.m_grProg = variant->getProgram();
 
 	return Error::NONE;

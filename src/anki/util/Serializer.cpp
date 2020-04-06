@@ -10,7 +10,6 @@ namespace anki
 
 Error BinarySerializer::doDynamicArrayBasicType(const void* arr, PtrSize size, U32 alignment, PtrSize memberOffset)
 {
-	ANKI_ASSERT(arr);
 	check();
 
 	if(size == 0)
