@@ -81,10 +81,19 @@ public:
 		return *m_binaryVariant;
 	}
 
+	const Array<U32, 3>& getWorkgroupSizes() const
+	{
+		ANKI_ASSERT(m_workgroupSizes[0] != MAX_U32);
+		ANKI_ASSERT(m_workgroupSizes[1] != MAX_U32);
+		ANKI_ASSERT(m_workgroupSizes[2] != MAX_U32);
+		return m_workgroupSizes;
+	}
+
 private:
 	ShaderProgramPtr m_prog;
 	const ShaderProgramBinaryVariant* m_binaryVariant = nullptr;
 	BitSet<128, U64> m_activeConsts = {false};
+	Array<U32, 3> m_workgroupSizes;
 };
 
 /// Shader program resource. It loads special AnKi programs.

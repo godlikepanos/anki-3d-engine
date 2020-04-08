@@ -281,6 +281,48 @@ void ShaderProgramResource2::initVariant(
 		++constValueCount;
 	}
 
+	// Get the workgroup sizes
+	if(!!(m_shaderStages & ShaderTypeBit::COMPUTE))
+	{
+		for(U32 i = 0; i < 3; ++i)
+		{
+			if(binaryVariant->m_workgroupSizes[i] != MAX_U32)
+			{
+				// Size didn't come from specialization const
+				variant.m_workgroupSizes[i] = binaryVariant->m_workgroupSizes[i];
+			}
+			else
+			{
+				// Size is specialization const
+
+				ANKI_ASSERT(binaryVariant->m_workgroupSizesConstants[i] != MAX_U32);
+
+				const U32 binaryConstIdx = binaryVariant->m_workgroupSizesConstants[i];
+				const U32 constIdx = m_constBinaryMapping[binaryConstIdx].m_constsIdx;
+				const U32 component = m_constBinaryMapping[binaryConstIdx].m_component;
+				const Const& c = m_consts[constIdx];
+				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::INT || c.m_dataType == ShaderVariableDataType::IVEC2
+							|| c.m_dataType == ShaderVariableDataType::IVEC3
+							|| c.m_dataType == ShaderVariableDataType::IVEC4);
+
+				// Find the value
+				for(U32 i = 0; i < info.m_constantValueCount; ++i)
+				{
+					if(info.m_constantValues[i].m_constantIndex == constIdx)
+					{
+						const I32 value = info.m_constantValues[i].m_ivec4[component];
+						ANKI_ASSERT(value > 0);
+
+						variant.m_workgroupSizes[i] = U32(value);
+						break;
+					}
+				}
+			}
+
+			ANKI_ASSERT(variant.m_workgroupSizes[i] != MAX_U32);
+		}
+	}
+
 	// Create the program name
 	StringAuto progName(getTempAllocator());
 	getFilepathFilename(getFilename(), progName);

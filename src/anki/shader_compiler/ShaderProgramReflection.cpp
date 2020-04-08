@@ -97,6 +97,8 @@ private:
 
 	ANKI_USE_RESULT Error blockVariableReflection(
 		const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset, DynamicArrayAuto<Var>& vars) const;
+
+	ANKI_USE_RESULT Error workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& specConstMask);
 };
 
 Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const
@@ -565,6 +567,55 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts, ShaderTy
 	return Error::NONE;
 }
 
+Error SpirvReflector::workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& specConstMask)
+{
+	sizex = sizey = sizez = specConstMask = 0;
+
+	auto entries = get_entry_points_and_stages();
+	for(const auto& e : entries)
+	{
+		if(e.execution_model == spv::ExecutionModelGLCompute)
+		{
+			const auto& spvEntry = get_entry_point(e.name, e.execution_model);
+
+			spirv_cross::SpecializationConstant specx, specy, specz;
+			get_work_group_size_specialization_constants(specx, specy, specz);
+
+			if(specx.id != spirv_cross::ID(0))
+			{
+				specConstMask |= 1;
+				sizex = specx.constant_id;
+			}
+			else
+			{
+				sizex = spvEntry.workgroup_size.x;
+			}
+
+			if(specy.id != spirv_cross::ID(0))
+			{
+				specConstMask |= 2;
+				sizey = specy.constant_id;
+			}
+			else
+			{
+				sizey = spvEntry.workgroup_size.y;
+			}
+
+			if(specz.id != spirv_cross::ID(0))
+			{
+				specConstMask |= 4;
+				sizez = specz.constant_id;
+			}
+			else
+			{
+				sizez = spvEntry.workgroup_size.z;
+			}
+		}
+	}
+
+	return Error::NONE;
+}
+
 Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
 	GenericMemoryPoolAllocator<U8> tmpAlloc,
 	ShaderReflectionVisitorInterface& interface)
@@ -574,6 +625,8 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 	DynamicArrayAuto<Block> pushConstantBlock(tmpAlloc);
 	DynamicArrayAuto<Opaque> opaques(tmpAlloc);
 	DynamicArrayAuto<Const> specializationConstants(tmpAlloc);
+	Array<U32, 3> workgroupSizes = {};
+	U32 workgroupSizeSpecConstMask = 0;
 
 	// Perform reflection for each stage
 	for(const ShaderType type : EnumIterable<ShaderType>())
@@ -627,6 +680,12 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 
 		// Spec consts
 		ANKI_CHECK(compiler.constsReflection(specializationConstants, type));
+
+		if(type == ShaderType::COMPUTE)
+		{
+			ANKI_CHECK(compiler.workgroupSizes(
+				workgroupSizes[0], workgroupSizes[1], workgroupSizes[2], workgroupSizeSpecConstMask));
+		}
 	}
 
 	// Inform through the interface
@@ -684,6 +743,12 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 	{
 		const Const& c = specializationConstants[i];
 		ANKI_CHECK(interface.visitConstant(i, c.m_name, c.m_type, c.m_constantId));
+	}
+
+	if(spirv[ShaderType::COMPUTE].getSize())
+	{
+		ANKI_CHECK(interface.setWorkgroupSizes(
+			workgroupSizes[0], workgroupSizes[1], workgroupSizes[2], workgroupSizeSpecConstMask));
 	}
 
 	return Error::NONE;

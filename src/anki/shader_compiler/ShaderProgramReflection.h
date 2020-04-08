@@ -20,6 +20,8 @@ namespace anki
 class ShaderReflectionVisitorInterface
 {
 public:
+	virtual ANKI_USE_RESULT Error setWorkgroupSizes(U32 x, U32 y, U32 z, U32 specConstMask) = 0;
+
 	virtual ANKI_USE_RESULT Error setCounts(
 		U32 uniformBlockCount, U32 storageBlockCount, U32 opaqueCount, Bool pushConstantBlock, U32 constsCount) = 0;
 

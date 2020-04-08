@@ -75,6 +75,8 @@
 				<member name="m_pushConstantBlock" type="ShaderProgramBinaryBlockInstance" pointer="true" constructor="= nullptr" />
 				<member name="m_opaques" type="WeakArray&lt;ShaderProgramBinaryOpaqueInstance&gt;" />
 				<member name="m_constants" type="WeakArray&lt;ShaderProgramBinaryConstantInstance&gt;" />
+				<member name="m_workgroupSizes" type="U32" array_size="3" constructor="= {{MAX_U32, MAX_U32, MAX_U32}}" />
+				<member name="m_workgroupSizesConstants" type="U32" array_size="3" constructor="= {{MAX_U32, MAX_U32, MAX_U32}}" comment="Indices to ShaderProgramBinary::m_constants" />
 			</members>
 		</class>
 

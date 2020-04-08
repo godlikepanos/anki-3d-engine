@@ -231,7 +231,6 @@ static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
 	return Error::NONE;
 }
 
-/// Will be called once per instance.
 class Refl final : public ShaderReflectionVisitorInterface
 {
 public:
@@ -259,11 +258,50 @@ public:
 
 	DynamicArrayAuto<ShaderProgramBinaryOpaqueInstance> m_opaqueInstances = {m_alloc};
 	DynamicArrayAuto<ShaderProgramBinaryConstantInstance> m_constInstances = {m_alloc};
+
+	Array<U32, 3> m_workgroupSizes = {{MAX_U32, MAX_U32, MAX_U32}};
+	Array<U32, 3> m_workgroupSizesConstants = {{MAX_U32, MAX_U32, MAX_U32}};
 	/// @}
 
 	Refl(const GenericMemoryPoolAllocator<U8>& alloc)
 		: m_alloc(alloc)
 	{
+	}
+
+	Error setWorkgroupSizes(U32 x, U32 y, U32 z, U32 specConstMask) final
+	{
+		m_workgroupSizesConstants = {{MAX_U32, MAX_U32, MAX_U32}};
+		m_workgroupSizes = {{MAX_U32, MAX_U32, MAX_U32}};
+		const Array<U32, 3> input = {{x, y, z}};
+
+		for(U32 i = 0; i < 3; ++i)
+		{
+			if(specConstMask & (1 << i))
+			{
+				for(const ShaderProgramBinaryConstantInstance& c : m_constInstances)
+				{
+					if(m_consts[c.m_index].m_constantId == input[i])
+					{
+						m_workgroupSizesConstants[i] = c.m_index;
+						break;
+					}
+				}
+
+				if(m_workgroupSizesConstants[i] == MAX_U32)
+				{
+					ANKI_SHADER_COMPILER_LOGE("Reflection identified workgroup size dimension %u as spec constant but "
+											  "not such spec constant was found",
+						i);
+					return Error::USER_DATA;
+				}
+			}
+			else
+			{
+				m_workgroupSizes[i] = x;
+			}
+		}
+
+		return Error::NONE;
 	}
 
 	Error setCounts(
@@ -581,6 +619,9 @@ static Error doReflection(
 			refl.m_constInstances.moveAndReset(instances, size, storageSize);
 			variant.m_constants.setArray(instances, size);
 		}
+
+		variant.m_workgroupSizes = refl.m_workgroupSizes;
+		variant.m_workgroupSizesConstants = refl.m_workgroupSizesConstants;
 	}
 
 	if(refl.m_blocks[0].getSize())

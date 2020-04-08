@@ -251,6 +251,9 @@ public:
 	ShaderProgramBinaryBlockInstance* m_pushConstantBlock = nullptr;
 	WeakArray<ShaderProgramBinaryOpaqueInstance> m_opaques;
 	WeakArray<ShaderProgramBinaryConstantInstance> m_constants;
+	Array<U32, 3> m_workgroupSizes = {{MAX_U32, MAX_U32, MAX_U32}};
+	Array<U32, 3> m_workgroupSizesConstants = {
+		{MAX_U32, MAX_U32, MAX_U32}}; ///< Indices to ShaderProgramBinary::m_constants.
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -265,6 +268,14 @@ public:
 			"m_pushConstantBlock", offsetof(ShaderProgramBinaryVariant, m_pushConstantBlock), self.m_pushConstantBlock);
 		s.doValue("m_opaques", offsetof(ShaderProgramBinaryVariant, m_opaques), self.m_opaques);
 		s.doValue("m_constants", offsetof(ShaderProgramBinaryVariant, m_constants), self.m_constants);
+		s.doArray("m_workgroupSizes",
+			offsetof(ShaderProgramBinaryVariant, m_workgroupSizes),
+			&self.m_workgroupSizes[0],
+			self.m_workgroupSizes.getSize());
+		s.doArray("m_workgroupSizesConstants",
+			offsetof(ShaderProgramBinaryVariant, m_workgroupSizesConstants),
+			&self.m_workgroupSizesConstants[0],
+			self.m_workgroupSizesConstants.getSize());
 	}
 
 	template<typename TDeserializer>
