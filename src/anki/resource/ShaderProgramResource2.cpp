@@ -169,11 +169,11 @@ Error ShaderProgramResource2::parseConst(CString constName, U32& componentIdx, U
 	}
 
 	Array<char, 2> number;
-	number[0] = constName[prefixName.getLength() + 1];
+	number[0] = constName[prefixName.getLength()];
 	number[1] = '\0';
 	ANKI_CHECK(CString(number.getBegin()).toNumber(componentIdx));
 
-	number[0] = constName[prefixName.getLength() + 3];
+	number[0] = constName[prefixName.getLength() + 2];
 	ANKI_CHECK(CString(number.getBegin()).toNumber(componentCount));
 
 	name = constName.getBegin() + prefixName.getLength() + 4;

@@ -297,7 +297,7 @@ public:
 			}
 			else
 			{
-				m_workgroupSizes[i] = x;
+				m_workgroupSizes[i] = input[i];
 			}
 		}
 
@@ -1071,7 +1071,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 		}
 		else
 		{
-			lines.pushBack("N/A");
+			lines.pushBack("N/A)");
 		}
 
 		lines.pushBack("\n");

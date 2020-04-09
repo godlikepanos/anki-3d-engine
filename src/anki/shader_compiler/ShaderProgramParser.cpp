@@ -76,8 +76,8 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_SPECIALIZATION_CONSTANT_X2(type, componentType, n, id, defltVal) \
 	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = defltVal[0]; \
 	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_2_, n) = defltVal[1]; \
-	const componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_2_, n); \
-	const componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_2_, n); \
+	const componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_2_, n) + componentType(0); \
+	const componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_2_, n) + componentType(0); \
 	const type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y)); \
 	const UVec2 ANKI_CONCATENATE(n, _CONST_ID) = UVec2(id, id + 1)
 
@@ -85,9 +85,9 @@ static const char* SHADER_HEADER = R"(#version 450 core
 	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = defltVal[0]; \
 	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = defltVal[1]; \
 	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = defltVal[2]; \
-	const componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_3_, n); \
-	const componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_3_, n); \
-	const componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_3_, n); \
+	const componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_3_, n) + componentType(0); \
+	const componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_3_, n) + componentType(0); \
+	const componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_3_, n) + componentType(0); \
 	const type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y), ANKI_CONCATENATE(n, _Z)); \
 	const UVec3 ANKI_CONCATENATE(n, _CONST_ID) = UVec3(id, id + 1, id + 2)
 
@@ -96,10 +96,10 @@ static const char* SHADER_HEADER = R"(#version 450 core
 	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_4_, n) = defltVal[1]; \
 	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_4_, n) = defltVal[2]; \
 	layout(constant_id = id + 3) const componentType ANKI_CONCATENATE(_anki_const_3_4_, n) = defltVal[3]; \
-	const componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_4_, n); \
-	const componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_4_, n); \
-	const componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_4_, n); \
-	const componentType ANKI_CONCATENATE(n, _W) = ANKI_CONCATENATE(_anki_const_3_4_, n); \
+	const componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_4_, n) + componentType(0); \
+	const componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_4_, n) + componentType(0); \
+	const componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_4_, n) + componentType(0); \
+	const componentType ANKI_CONCATENATE(n, _W) = ANKI_CONCATENATE(_anki_const_3_4_, n) + componentType(0); \
 	const type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y), ANKI_CONCATENATE(n, _Z), \
 		ANKI_CONCATENATE(n, _W)); \
 	const UVec4 ANKI_CONCATENATE(n, _CONST_ID) = UVec4(id, id + 1, id + 2, id + 3)

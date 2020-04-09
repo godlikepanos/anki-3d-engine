@@ -50,7 +50,7 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResourcePtr m_prog;
+		ShaderProgramResource2Ptr m_prog;
 		ShaderProgramPtr m_grProg;
 
 		F32 m_threshold = 10.0; ///< How bright it is
