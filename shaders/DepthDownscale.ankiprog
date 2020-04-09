@@ -4,15 +4,14 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki mutator SAMPLE_RESOLVE_TYPE 0 1 2 // 0: average, 1: min, 2: max
+#define AVG 0
+#define MIN 1
+#define MAX 2
 
 #pragma anki start comp
 #include <shaders/Common.glsl>
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
-
-#define AVG 0
-#define MIN 1
-#define MAX 2
 
 layout(push_constant, std430) uniform pc_
 {
