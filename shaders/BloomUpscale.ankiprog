@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki input const UVec2 INPUT_TEX_SIZE
-#pragma anki input const UVec2 WORKGROUP_SIZE
-#pragma anki input const UVec2 FB_SIZE
+ANKI_SPECIALIZATION_CONSTANT_IVEC2(FB_SIZE, 0, IVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_IVEC2(INPUT_TEX_SIZE, 2, IVec2(1));
+const UVec2 WORKGROUP_SIZE = UVec2(16u, 16u);
 
 #pragma anki start comp
 #include <shaders/Common.glsl>

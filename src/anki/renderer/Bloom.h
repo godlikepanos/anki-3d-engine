@@ -43,9 +43,9 @@ public:
 	}
 
 private:
-	static const Format RT_PIXEL_FORMAT = Format::A2B10G10R10_UNORM_PACK32;
+	static constexpr Format RT_PIXEL_FORMAT = Format::A2B10G10R10_UNORM_PACK32;
 
-	Array<U32, 2> m_workgroupSize = {{16, 16}};
+	const Array<U32, 3> m_workgroupSize = {{16, 16, 1}};
 
 	class
 	{
@@ -65,7 +65,7 @@ private:
 	{
 	public:
 		TextureResourcePtr m_lensDirtTex;
-		ShaderProgramResourcePtr m_prog;
+		ShaderProgramResource2Ptr m_prog;
 		ShaderProgramPtr m_grProg;
 
 		U32 m_width = 0;

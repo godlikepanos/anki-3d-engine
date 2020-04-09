@@ -62,16 +62,18 @@ Error Bloom::initUpscale(const ConfigSet& config)
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/BloomUpscale.glslp", m_upscale.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/BloomUpscale.ankiprog", m_upscale.m_prog));
 
-	ShaderProgramResourceConstantValueInitList<3> consts(m_upscale.m_prog);
-	consts.add("FB_SIZE", UVec2(m_upscale.m_width, m_upscale.m_height))
-		.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]))
-		.add("INPUT_TEX_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));
+	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_upscale.m_prog);
+	variantInitInfo.addConstant("FB_SIZE", IVec2(m_upscale.m_width, m_upscale.m_height));
+	variantInitInfo.addConstant("INPUT_TEX_SIZE", IVec2(m_exposure.m_width, m_exposure.m_height));
 
-	const ShaderProgramResourceVariant* variant;
-	m_upscale.m_prog->getOrCreateVariant(consts.get(), variant);
+	const ShaderProgramResourceVariant2* variant;
+	m_upscale.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_upscale.m_grProg = variant->getProgram();
+	ANKI_ASSERT(variant->getWorkgroupSizes()[0] == m_workgroupSize[0]
+				&& variant->getWorkgroupSizes()[1] == m_workgroupSize[1]
+				&& variant->getWorkgroupSizes()[2] == m_workgroupSize[2]);
 
 	// Textures
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/LensDirt.ankitex", m_upscale.m_lensDirtTex));
