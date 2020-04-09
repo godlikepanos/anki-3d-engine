@@ -301,6 +301,7 @@ void ShaderProgramResource2::initVariant(
 				const U32 constIdx = m_constBinaryMapping[binaryConstIdx].m_constsIdx;
 				const U32 component = m_constBinaryMapping[binaryConstIdx].m_component;
 				const Const& c = m_consts[constIdx];
+				(void)c;
 				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::INT || c.m_dataType == ShaderVariableDataType::IVEC2
 							|| c.m_dataType == ShaderVariableDataType::IVEC3
 							|| c.m_dataType == ShaderVariableDataType::IVEC4);

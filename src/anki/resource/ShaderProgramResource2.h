@@ -83,9 +83,9 @@ public:
 
 	const Array<U32, 3>& getWorkgroupSizes() const
 	{
-		ANKI_ASSERT(m_workgroupSizes[0] != MAX_U32);
-		ANKI_ASSERT(m_workgroupSizes[1] != MAX_U32);
-		ANKI_ASSERT(m_workgroupSizes[2] != MAX_U32);
+		ANKI_ASSERT(m_workgroupSizes[0] != MAX_U32 && m_workgroupSizes[0] != 0);
+		ANKI_ASSERT(m_workgroupSizes[1] != MAX_U32 && m_workgroupSizes[1] != 0);
+		ANKI_ASSERT(m_workgroupSizes[2] != MAX_U32 && m_workgroupSizes[2] != 0);
 		return m_workgroupSizes;
 	}
 
@@ -94,6 +94,71 @@ private:
 	const ShaderProgramBinaryVariant* m_binaryVariant = nullptr;
 	BitSet<128, U64> m_activeConsts = {false};
 	Array<U32, 3> m_workgroupSizes;
+};
+
+/// The value of a constant.
+class ShaderProgramResourceConstantValue2
+{
+public:
+	union
+	{
+		I32 m_int;
+		IVec2 m_ivec2;
+		IVec3 m_ivec3;
+		IVec4 m_ivec4;
+
+		F32 m_float;
+		Vec2 m_vec2;
+		Vec3 m_vec3;
+		Vec4 m_vec4;
+	};
+
+	U32 m_constantIndex;
+	U8 _m_padding[sizeof(Vec4) - sizeof(m_constantIndex)];
+
+	ShaderProgramResourceConstantValue2()
+	{
+		zeroMemory(*this);
+	}
+};
+static_assert(sizeof(ShaderProgramResourceConstantValue2) == sizeof(Vec4) * 2, "Need it to be packed");
+
+/// Smart initializer of multiple ShaderProgramResourceConstantValue.
+class ShaderProgramResourceVariantInitInfo2
+{
+	friend class ShaderProgramResource2;
+
+public:
+	ShaderProgramResourceVariantInitInfo2()
+	{
+	}
+
+	ShaderProgramResourceVariantInitInfo2(const ShaderProgramResource2Ptr& ptr)
+		: m_ptr(ptr)
+	{
+	}
+
+	~ShaderProgramResourceVariantInitInfo2()
+	{
+	}
+
+	template<typename T>
+	ShaderProgramResourceVariantInitInfo2& addConstant(CString name, const T& value);
+
+	ShaderProgramResourceVariantInitInfo2& addMutation(CString name, MutatorValue t);
+
+private:
+	static constexpr U32 MAX_CONSTANTS = 32;
+	static constexpr U32 MAX_MUTATORS = 32;
+
+	ShaderProgramResource2Ptr m_ptr;
+
+	U32 m_constantValueCount = 0;
+	Array<ShaderProgramResourceConstantValue2, MAX_CONSTANTS> m_constantValues;
+
+	U32 m_mutationCount = 0;
+	Array<MutatorValue, MAX_MUTATORS> m_mutation; ///< The order of storing the values is important. It will be hashed.
+	BitSet<MAX_MUTATORS> m_setMutators = {false};
 };
 
 /// Shader program resource. It loads special AnKi programs.
@@ -160,6 +225,12 @@ public:
 	void getOrCreateVariant(
 		const ShaderProgramResourceVariantInitInfo2& info, const ShaderProgramResourceVariant2*& variant) const;
 
+	/// @copydoc getOrCreateVariant
+	void getOrCreateVariant(const ShaderProgramResourceVariant2*& variant) const
+	{
+		getOrCreateVariant(ShaderProgramResourceVariantInitInfo2(), variant);
+	}
+
 private:
 	using Mutator = ShaderProgramResourceMutator2;
 	using Const = ShaderProgramResourceConstant2;
@@ -188,84 +259,30 @@ private:
 	static ANKI_USE_RESULT Error parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name);
 };
 
-/// The value of a constant.
-class ShaderProgramResourceConstantValue2
+template<typename T>
+inline ShaderProgramResourceVariantInitInfo2& ShaderProgramResourceVariantInitInfo2::addConstant(
+	CString name, const T& value)
 {
-public:
-	union
-	{
-		I32 m_int;
-		IVec2 m_ivec2;
-		IVec3 m_ivec3;
-		IVec4 m_ivec4;
+	const ShaderProgramResourceConstant2* in = m_ptr->tryFindConstant(name);
+	ANKI_ASSERT(in);
+	ANKI_ASSERT(in->m_dataType == getShaderVariableTypeFromTypename<T>());
+	m_constantValues[m_constantValueCount].m_constantIndex = U32(in - m_ptr->getConstants().getBegin());
+	memcpy(&m_constantValues[m_constantValueCount].m_int, &value, sizeof(T));
+	++m_constantValueCount;
+	return *this;
+}
 
-		F32 m_float;
-		Vec2 m_vec2;
-		Vec3 m_vec3;
-		Vec4 m_vec4;
-	};
-
-	U32 m_constantIndex;
-	U8 _m_padding[sizeof(Vec4) - sizeof(m_constantIndex)];
-
-	ShaderProgramResourceConstantValue2()
-	{
-		zeroMemory(*this);
-	}
-};
-static_assert(sizeof(ShaderProgramResourceConstantValue2) == sizeof(Vec4) * 2, "Need it to be packed");
-
-/// Smart initializer of multiple ShaderProgramResourceConstantValue.
-class ShaderProgramResourceVariantInitInfo2
+inline ShaderProgramResourceVariantInitInfo2& ShaderProgramResourceVariantInitInfo2::addMutation(
+	CString name, MutatorValue t)
 {
-	friend class ShaderProgramResource2;
-
-public:
-	ShaderProgramResourceVariantInitInfo2(const ShaderProgramResource2Ptr& ptr)
-		: m_ptr(ptr)
-	{
-	}
-
-	~ShaderProgramResourceVariantInitInfo2()
-	{
-	}
-
-	template<typename T>
-	ShaderProgramResourceVariantInitInfo2& addConstant(CString name, const T& value)
-	{
-		const ShaderProgramResourceConstant2* in = m_ptr->tryFindConstant(name);
-		ANKI_ASSERT(in);
-		ANKI_ASSERT(in->m_dataType == getShaderVariableTypeFromTypename<T>());
-		m_constantValues[m_constantValueCount].m_constantIndex = U32(in - m_ptr->getConstants().getBegin());
-		memcpy(&m_constantValues[m_constantValueCount].m_int, &value, sizeof(T));
-		++m_constantValueCount;
-		return *this;
-	}
-
-	ShaderProgramResourceVariantInitInfo2& addMutation(CString name, MutatorValue t)
-	{
-		const ShaderProgramResourceMutator2* m = m_ptr->tryFindMutator(name);
-		const PtrSize idx = m - m_ptr->getMutators().getBegin();
-		ANKI_ASSERT(m);
-		m_mutation[idx] = t;
-		m_setMutators.set(idx);
-		++m_mutationCount;
-		return *this;
-	}
-
-private:
-	static constexpr U32 MAX_CONSTANTS = 32;
-	static constexpr U32 MAX_MUTATORS = 32;
-
-	ShaderProgramResource2Ptr m_ptr;
-
-	U32 m_constantValueCount = 0;
-	Array<ShaderProgramResourceConstantValue2, MAX_CONSTANTS> m_constantValues;
-
-	U32 m_mutationCount = 0;
-	Array<MutatorValue, MAX_MUTATORS> m_mutation; ///< The order of storing the values is important. It will be hashed.
-	BitSet<MAX_MUTATORS> m_setMutators = {false};
-};
+	const ShaderProgramResourceMutator2* m = m_ptr->tryFindMutator(name);
+	const PtrSize idx = m - m_ptr->getMutators().getBegin();
+	ANKI_ASSERT(m);
+	m_mutation[idx] = t;
+	m_setMutators.set(idx);
+	++m_mutationCount;
+	return *this;
+}
 /// @}
 
 } // end namespace anki

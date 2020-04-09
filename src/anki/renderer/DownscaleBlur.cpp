@@ -61,19 +61,18 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	}
 
 	// Shader programs
-	const ShaderProgramResourceVariant* variant = nullptr;
+	const ShaderProgramResourceVariant2* variant = nullptr;
 	if(m_useCompute)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/DownscaleBlurCompute.glslp", m_prog));
-
-		ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-		consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
-
-		m_prog->getOrCreateVariant(consts.get(), variant);
+		ANKI_CHECK(getResourceManager().loadResource("shaders/DownscaleBlurCompute.ankiprog", m_prog));
+		m_prog->getOrCreateVariant(variant);
+		m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
+		m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
+		ANKI_ASSERT(variant->getWorkgroupSizes()[2] == 1);
 	}
 	else
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/DownscaleBlur.glslp", m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("shaders/DownscaleBlur.ankiprog", m_prog));
 		m_prog->getOrCreateVariant(variant);
 	}
 	m_grProg = variant->getProgram();

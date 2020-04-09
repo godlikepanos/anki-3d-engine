@@ -54,7 +54,7 @@ public:
 
 private:
 	static const Bool m_useCompute = true;
-	Array<U32, 2> m_workgroupSize = {{16, 16}};
+	Array<U32, 2> m_workgroupSize = {{0, 0}};
 
 	U32 m_passCount = 0; ///< It's also the mip count of the m_rtTex.
 
@@ -62,7 +62,7 @@ private:
 
 	DynamicArray<FramebufferDescription> m_fbDescrs;
 
-	ShaderProgramResourcePtr m_prog;
+	ShaderProgramResource2Ptr m_prog;
 	ShaderProgramPtr m_grProg;
 
 	class
