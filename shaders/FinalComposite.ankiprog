@@ -7,9 +7,9 @@
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1
 
-#pragma anki input const U32 LUT_SIZE
-#pragma anki input const UVec2 FB_SIZE
-#pragma anki input const U32 MOTION_BLUR_SAMPLES
+ANKI_SPECIALIZATION_CONSTANT_I32(LUT_SIZE, 0, 1);
+ANKI_SPECIALIZATION_CONSTANT_IVEC2(FB_SIZE, 1, IVec2(1, 1));
+ANKI_SPECIALIZATION_CONSTANT_I32(MOTION_BLUR_SAMPLES, 3, 1);
 
 #pragma anki start vert
 #include <shaders/QuadVert.glsl>
@@ -89,7 +89,7 @@ void main()
 	out_color = colorGrading(out_color);
 
 #if BLUE_NOISE
-	const Vec3 bnUvw = Vec3(FB_SIZE / Vec2(64.0) * uv, u_blueNoiseLayerPad3.x);
+	const Vec3 bnUvw = Vec3(Vec2(FB_SIZE) / Vec2(64.0) * uv, u_blueNoiseLayerPad3.x);
 	Vec3 blueNoise = textureLod(u_blueNoise, u_trilinearRepeatSampler, bnUvw, 0.0).rgb;
 	blueNoise = blueNoise * 2.0 - 1.0;
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));

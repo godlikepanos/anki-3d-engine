@@ -710,6 +710,7 @@ void App::initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserDat
 
 Error App::compileAllShaders()
 {
+	ANKI_TRACE_SCOPED_EVENT(COMPILE_SHADERS);
 	ANKI_CORE_LOGI("Compiling shaders");
 	U32 shadersCompileCount = 0;
 

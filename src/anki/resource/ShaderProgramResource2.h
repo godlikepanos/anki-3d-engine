@@ -153,10 +153,9 @@ private:
 
 	ShaderProgramResource2Ptr m_ptr;
 
-	U32 m_constantValueCount = 0;
 	Array<ShaderProgramResourceConstantValue2, MAX_CONSTANTS> m_constantValues;
+	BitSet<MAX_CONSTANTS> m_setConstants = {false};
 
-	U32 m_mutationCount = 0;
 	Array<MutatorValue, MAX_MUTATORS> m_mutation; ///< The order of storing the values is important. It will be hashed.
 	BitSet<MAX_MUTATORS> m_setMutators = {false};
 };
@@ -266,9 +265,10 @@ inline ShaderProgramResourceVariantInitInfo2& ShaderProgramResourceVariantInitIn
 	const ShaderProgramResourceConstant2* in = m_ptr->tryFindConstant(name);
 	ANKI_ASSERT(in);
 	ANKI_ASSERT(in->m_dataType == getShaderVariableTypeFromTypename<T>());
-	m_constantValues[m_constantValueCount].m_constantIndex = U32(in - m_ptr->getConstants().getBegin());
-	memcpy(&m_constantValues[m_constantValueCount].m_int, &value, sizeof(T));
-	++m_constantValueCount;
+	const U32 constIdx = U32(in - m_ptr->getConstants().getBegin());
+	m_constantValues[constIdx].m_constantIndex = constIdx;
+	memcpy(&m_constantValues[constIdx].m_int, &value, sizeof(T));
+	m_setConstants.set(constIdx);
 	return *this;
 }
 
@@ -276,11 +276,10 @@ inline ShaderProgramResourceVariantInitInfo2& ShaderProgramResourceVariantInitIn
 	CString name, MutatorValue t)
 {
 	const ShaderProgramResourceMutator2* m = m_ptr->tryFindMutator(name);
-	const PtrSize idx = m - m_ptr->getMutators().getBegin();
 	ANKI_ASSERT(m);
-	m_mutation[idx] = t;
-	m_setMutators.set(idx);
-	++m_mutationCount;
+	const PtrSize mutatorIdx = m - m_ptr->getMutators().getBegin();
+	m_mutation[mutatorIdx] = t;
+	m_setMutators.set(mutatorIdx);
 	return *this;
 }
 /// @}

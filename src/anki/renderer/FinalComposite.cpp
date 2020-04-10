@@ -43,22 +43,23 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("shaders/FinalComposite.glslp", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/FinalComposite.ankiprog", m_prog));
 
-	ShaderProgramResourceMutationInitList<3> mutations(m_prog);
-	mutations.add("BLUE_NOISE", 1).add("BLOOM_ENABLED", 1).add("DBG_ENABLED", 0);
+	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	variantInitInfo.addMutation("BLUE_NOISE", 1);
+	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
+	variantInitInfo.addMutation("DBG_ENABLED", 0);
+	variantInitInfo.addConstant("LUT_SIZE", I32(LUT_SIZE));
+	variantInitInfo.addConstant("LUT_SIZE", I32(LUT_SIZE));
+	variantInitInfo.addConstant("FB_SIZE", IVec2(m_r->getWidth(), m_r->getHeight()));
+	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", I32(config.getNumberU32("r_motionBlurSamples")));
 
-	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
-	consts.add("LUT_SIZE", U32(LUT_SIZE))
-		.add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()))
-		.add("MOTION_BLUR_SAMPLES", config.getNumberU32("r_motionBlurSamples"));
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
+	const ShaderProgramResourceVariant2* variant;
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProgs[0] = variant->getProgram();
 
-	mutations[2].m_value = 1;
-	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
+	variantInitInfo.addMutation("DBG_ENABLED", 1);
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProgs[1] = variant->getProgram();
 
 	return Error::NONE;

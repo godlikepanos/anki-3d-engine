@@ -186,18 +186,19 @@ void ShaderProgramResource2::getOrCreateVariant(
 {
 	// Sanity checks
 	ANKI_ASSERT(info.m_setMutators.getEnabledBitCount() == m_mutators.getSize());
+	ANKI_ASSERT(info.m_setConstants.getEnabledBitCount() == m_consts.getSize());
 
 	// Compute variant hash
 	U64 hash = 0;
-	if(info.m_mutationCount)
+	if(m_mutators.getSize())
 	{
-		hash = computeHash(info.m_mutation.getBegin(), info.m_mutationCount * sizeof(info.m_mutation[0]));
+		hash = computeHash(info.m_mutation.getBegin(), m_mutators.getSize() * sizeof(info.m_mutation[0]));
 	}
 
-	if(info.m_constantValueCount)
+	if(m_consts.getSize())
 	{
-		hash = appendHash(
-			info.m_constantValues.getBegin(), info.m_constantValueCount * sizeof(info.m_constantValues[0]), hash);
+		hash =
+			appendHash(info.m_constantValues.getBegin(), m_consts.getSize() * sizeof(info.m_constantValues[0]), hash);
 	}
 
 	// Check if the variant is in the cache
@@ -233,7 +234,7 @@ void ShaderProgramResource2::initVariant(
 	if(m_mutators.getSize())
 	{
 		// Create the mutation hash
-		const U64 hash = computeHash(info.m_mutation.getBegin(), info.m_mutationCount * sizeof(info.m_mutation[0]));
+		const U64 hash = computeHash(info.m_mutation.getBegin(), m_mutators.getSize() * sizeof(info.m_mutation[0]));
 
 		// Search for the mutation in the binary
 		// TODO optimize the search
@@ -265,7 +266,7 @@ void ShaderProgramResource2::initVariant(
 
 		// Get value
 		const ShaderProgramResourceConstantValue2* value = nullptr;
-		for(U32 i = 0; i < info.m_constantValueCount; ++i)
+		for(U32 i = 0; i < m_consts.getSize(); ++i)
 		{
 			if(info.m_constantValues[i].m_constantIndex == inputIdx)
 			{
@@ -307,7 +308,7 @@ void ShaderProgramResource2::initVariant(
 							|| c.m_dataType == ShaderVariableDataType::IVEC4);
 
 				// Find the value
-				for(U32 i = 0; i < info.m_constantValueCount; ++i)
+				for(U32 i = 0; i < m_consts.getSize(); ++i)
 				{
 					if(info.m_constantValues[i].m_constantIndex == constIdx)
 					{

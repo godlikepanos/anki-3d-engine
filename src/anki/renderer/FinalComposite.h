@@ -34,7 +34,7 @@ private:
 
 	FramebufferDescription m_fbDescr;
 
-	ShaderProgramResourcePtr m_prog;
+	ShaderProgramResource2Ptr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs; ///< One with Dbg and one without
 
 	TextureResourcePtr m_lut; ///< Color grading lookup texture.
