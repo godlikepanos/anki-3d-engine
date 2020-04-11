@@ -23,6 +23,7 @@ public:
 	{
 		F32 m_float;
 		I32 m_int;
+		U32 m_uint;
 	};
 
 	U32 m_constantId = MAX_U32;
@@ -43,6 +44,12 @@ public:
 	explicit ShaderSpecializationConstValue(I32 i)
 		: m_int(i)
 		, m_dataType(ShaderVariableDataType::INT)
+	{
+	}
+
+	explicit ShaderSpecializationConstValue(U32 i)
+		: m_int(i)
+		, m_dataType(ShaderVariableDataType::UINT)
 	{
 	}
 

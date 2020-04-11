@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_IVEC2(FB_SIZE, 0, IVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
 const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
 
 #pragma anki start comp

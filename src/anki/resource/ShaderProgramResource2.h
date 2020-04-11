@@ -102,6 +102,11 @@ class ShaderProgramResourceConstantValue2
 public:
 	union
 	{
+		U32 m_uint;
+		UVec2 m_uvec2;
+		UVec3 m_uvec3;
+		UVec4 m_uvec4;
+
 		I32 m_int;
 		IVec2 m_ivec2;
 		IVec3 m_ivec3;

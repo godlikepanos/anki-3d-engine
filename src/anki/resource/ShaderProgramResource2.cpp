@@ -110,7 +110,11 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 		}
 		else if(componentCount == 2)
 		{
-			if(c.m_type == ShaderVariableDataType::INT)
+			if(c.m_type == ShaderVariableDataType::UINT)
+			{
+				in.m_dataType = ShaderVariableDataType::UVEC2;
+			}
+			else if(c.m_type == ShaderVariableDataType::INT)
 			{
 				in.m_dataType = ShaderVariableDataType::IVEC2;
 			}
@@ -122,7 +126,11 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 		}
 		else if(componentCount == 3)
 		{
-			if(c.m_type == ShaderVariableDataType::INT)
+			if(c.m_type == ShaderVariableDataType::UINT)
+			{
+				in.m_dataType = ShaderVariableDataType::UVEC3;
+			}
+			else if(c.m_type == ShaderVariableDataType::INT)
 			{
 				in.m_dataType = ShaderVariableDataType::IVEC3;
 			}
@@ -134,7 +142,11 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 		}
 		else if(componentCount == 4)
 		{
-			if(c.m_type == ShaderVariableDataType::INT)
+			if(c.m_type == ShaderVariableDataType::UINT)
+			{
+				in.m_dataType = ShaderVariableDataType::UVEC4;
+			}
+			else if(c.m_type == ShaderVariableDataType::INT)
 			{
 				in.m_dataType = ShaderVariableDataType::IVEC4;
 			}
@@ -303,9 +315,9 @@ void ShaderProgramResource2::initVariant(
 				const U32 component = m_constBinaryMapping[binaryConstIdx].m_component;
 				const Const& c = m_consts[constIdx];
 				(void)c;
-				ANKI_ASSERT(c.m_dataType == ShaderVariableDataType::INT || c.m_dataType == ShaderVariableDataType::IVEC2
-							|| c.m_dataType == ShaderVariableDataType::IVEC3
-							|| c.m_dataType == ShaderVariableDataType::IVEC4);
+				ANKI_ASSERT(
+					c.m_dataType == ShaderVariableDataType::UINT || c.m_dataType == ShaderVariableDataType::UVEC2
+					|| c.m_dataType == ShaderVariableDataType::UVEC3 || c.m_dataType == ShaderVariableDataType::UVEC4);
 
 				// Find the value
 				for(U32 i = 0; i < m_consts.getSize(); ++i)

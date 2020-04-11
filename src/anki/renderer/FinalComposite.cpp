@@ -49,10 +49,10 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	variantInitInfo.addMutation("BLUE_NOISE", 1);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addMutation("DBG_ENABLED", 0);
-	variantInitInfo.addConstant("LUT_SIZE", I32(LUT_SIZE));
-	variantInitInfo.addConstant("LUT_SIZE", I32(LUT_SIZE));
-	variantInitInfo.addConstant("FB_SIZE", IVec2(m_r->getWidth(), m_r->getHeight()));
-	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", I32(config.getNumberU32("r_motionBlurSamples")));
+	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
+	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
+	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", config.getNumberU32("r_motionBlurSamples"));
 
 	const ShaderProgramResourceVariant2* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);

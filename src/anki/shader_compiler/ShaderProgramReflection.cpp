@@ -523,6 +523,8 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts, ShaderTy
 		switch(type.basetype)
 		{
 		case spirv_cross::SPIRType::UInt:
+			newConst.m_type = ShaderVariableDataType::UINT;
+			break;
 		case spirv_cross::SPIRType::Int:
 			newConst.m_type = ShaderVariableDataType::INT;
 			break;

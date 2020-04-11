@@ -39,7 +39,7 @@ Error Bloom::initExposure(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("shaders/Bloom.ankiprog", m_exposure.m_prog));
 
 	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_exposure.m_prog);
-	variantInitInfo.addConstant("FB_SIZE", IVec2(m_exposure.m_width, m_exposure.m_height));
+	variantInitInfo.addConstant("FB_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));
 
 	const ShaderProgramResourceVariant2* variant;
 	m_exposure.m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -65,8 +65,8 @@ Error Bloom::initUpscale(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("shaders/BloomUpscale.ankiprog", m_upscale.m_prog));
 
 	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_upscale.m_prog);
-	variantInitInfo.addConstant("FB_SIZE", IVec2(m_upscale.m_width, m_upscale.m_height));
-	variantInitInfo.addConstant("INPUT_TEX_SIZE", IVec2(m_exposure.m_width, m_exposure.m_height));
+	variantInitInfo.addConstant("FB_SIZE", UVec2(m_upscale.m_width, m_upscale.m_height));
+	variantInitInfo.addConstant("INPUT_TEX_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));
 
 	const ShaderProgramResourceVariant2* variant;
 	m_upscale.m_prog->getOrCreateVariant(variantInitInfo, variant);
