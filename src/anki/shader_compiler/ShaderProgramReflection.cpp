@@ -477,15 +477,14 @@ Error SpirvReflector::opaqueReflection(const spirv_cross::Resource& res, Dynamic
 		const Bool sizeSame = other.m_arraySize == newOpaque.m_arraySize;
 		const Bool typeSame = other.m_type == newOpaque.m_type;
 
-		const Bool err0 = bindingSame && (!nameSame || !sizeSame || !typeSame);
-		const Bool err1 = nameSame && (!bindingSame || !sizeSame || !typeSame);
-		if(err0 || err1)
+		const Bool err = nameSame && (!bindingSame || !sizeSame || !typeSame);
+		if(err)
 		{
 			ANKI_SHADER_COMPILER_LOGE("Linking error");
 			return Error::USER_DATA;
 		}
 
-		if(bindingSame)
+		if(nameSame)
 		{
 			found = true;
 			break;

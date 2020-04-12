@@ -80,7 +80,7 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResourcePtr m_prog;
+		ShaderProgramResource2Ptr m_prog;
 		ShaderProgramPtr m_grProg;
 		BufferPtr m_diceValuesBuff;
 		U32 m_workgroupSize = 16;

@@ -32,6 +32,10 @@ layout(push_constant) uniform ankiMaterial
 	Vec4 u_color;
 };
 
+layout(set = 0, binding = 1) uniform texture2D u_tex2d;
+layout(set = 0, binding = 1) uniform texture3D u_tex3d;
+layout(set = 0, binding = 2) uniform sampler u_sampler;
+
 #pragma anki start vert
 out gl_PerVertex
 {
@@ -49,7 +53,17 @@ layout(location = 0) out Vec3 out_color;
 
 void main()
 {
-	out_color = Vec3(0.0) + u_color.xyz;
+	out_color = Vec3(0);
+
+	if(INSTANCE_COUNT == 1)
+		out_color += textureLod(sampler2D(u_tex2d, u_sampler), Vec2(0), 0.0).rgb;
+	else if(INSTANCE_COUNT == 2)
+		out_color += textureLod(sampler3D(u_tex3d, u_sampler), Vec3(0), 0.0).rgb;
+	else
+		out_color += textureLod(sampler2D(u_tex2d, u_sampler), Vec2(0), 0.0).rgb
+			+ textureLod(sampler3D(u_tex3d, u_sampler), Vec3(0), 0.0).rgb;
+
+	out_color += u_color.xyz;
 }
 #pragma anki end
 	)";
