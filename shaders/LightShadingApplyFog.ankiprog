@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki input const U32 FOG_LAST_CLASTER
+ANKI_SPECIALIZATION_CONSTANT_U32(FOG_LAST_CLASTER, 0, 1u);
 
 #pragma anki start vert
 #include <shaders/QuadVert.glsl>

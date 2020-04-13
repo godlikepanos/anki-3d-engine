@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki input const U32 CLUSTER_COUNT_X
-#pragma anki input const U32 CLUSTER_COUNT_Y
-#pragma anki input const U32 CLUSTER_COUNT_Z
-#pragma anki input const U32 CLUSTER_COUNT
-#pragma anki input const U32 IR_MIPMAP_COUNT
+ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_X, 0, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_Y, 1, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_Z, 2, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT, 3, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(IR_MIPMAP_COUNT, 4, 1u);
 
 #pragma anki start vert
 #include <shaders/Common.glsl>
