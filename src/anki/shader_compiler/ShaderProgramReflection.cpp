@@ -180,10 +180,11 @@ Error SpirvReflector::blockVariableReflection(
 					return Error::USER_DATA;
 				}
 
-				const Bool specConstantArray = memberType.array_size_literal[0];
-				if(specConstantArray)
+				const Bool notSpecConstantArraySize = memberType.array_size_literal[0];
+				if(notSpecConstantArraySize)
 				{
-					var.m_blockInfo.m_arraySize = I16(memberType.array[0]);
+					// Have a min to acount for unsized arrays of SSBOs
+					var.m_blockInfo.m_arraySize = max<I16>(I16(memberType.array[0]), 1);
 				}
 				else
 				{

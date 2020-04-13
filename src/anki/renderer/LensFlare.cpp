@@ -53,12 +53,9 @@ Error LensFlare::initSprite(const ConfigSet& config)
 	m_maxSprites = U16(m_maxSpritesPerFlare * m_maxFlares);
 
 	// Load prog
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LensFlareSprite.glslp", m_realProg));
-
-	ShaderProgramResourceConstantValueInitList<1> consts(m_realProg);
-	consts.add("MAX_SPRITES", U32(m_maxSprites));
-	const ShaderProgramResourceVariant* variant;
-	m_realProg->getOrCreateVariant(consts.get(), variant);
+	ANKI_CHECK(getResourceManager().loadResource("shaders/LensFlareSprite.ankiprog", m_realProg));
+	const ShaderProgramResourceVariant2* variant;
+	m_realProg->getOrCreateVariant(variant);
 	m_realGrProg = variant->getProgram();
 
 	return Error::NONE;
@@ -74,13 +71,12 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 		"LensFlares"));
 
 	ANKI_CHECK(
-		getResourceManager().loadResource("shaders/LensFlareUpdateIndirectInfo.glslp", m_updateIndirectBuffProg));
+		getResourceManager().loadResource("shaders/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
 
-	ShaderProgramResourceConstantValueInitList<1> consts(m_updateIndirectBuffProg);
-	consts.add("IN_DEPTH_MAP_SIZE", Vec2(F32(m_r->getWidth() / 2 / 2), F32(m_r->getHeight() / 2 / 2)));
-
-	const ShaderProgramResourceVariant* variant;
-	m_updateIndirectBuffProg->getOrCreateVariant(consts.get(), variant);
+	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_updateIndirectBuffProg);
+	variantInitInfo.addConstant("IN_DEPTH_MAP_SIZE", UVec2(m_r->getWidth() / 2 / 2, m_r->getHeight() / 2 / 2));
+	const ShaderProgramResourceVariant2* variant;
+	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();
 
 	return Error::NONE;
@@ -175,7 +171,7 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 
 		// Get uniform memory
 		LensFlareSprite* tmpSprites =
-			allocateAndBindUniforms<LensFlareSprite*>(spritesCount * sizeof(LensFlareSprite), cmdb, 0, 0);
+			allocateAndBindStorage<LensFlareSprite*>(spritesCount * sizeof(LensFlareSprite), cmdb, 0, 0);
 		WeakArray<LensFlareSprite> sprites(tmpSprites, spritesCount);
 
 		// misc

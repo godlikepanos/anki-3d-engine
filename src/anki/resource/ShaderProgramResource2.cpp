@@ -219,17 +219,27 @@ void ShaderProgramResource2::getOrCreateVariant(
 
 		auto it = m_variants.find(hash);
 		variant = (it != m_variants.getEnd()) ? *it : nullptr;
+
+		if(variant != nullptr)
+		{
+			// Done
+			return;
+		}
 	}
 
+	// Create the variant
+	WLockGuard<RWMutex> lock(m_mtx);
+
+	// Check again
+	auto it = m_variants.find(hash);
+	variant = (it != m_variants.getEnd()) ? *it : nullptr;
 	if(variant != nullptr)
 	{
 		// Done
 		return;
 	}
 
-	// Create the variant
-	WLockGuard<RWMutex> lock(m_mtx);
-
+	// Create
 	ShaderProgramResourceVariant2* v = getAllocator().newInstance<ShaderProgramResourceVariant2>();
 	initVariant(info, *v);
 	m_variants.emplace(getAllocator(), hash, v);

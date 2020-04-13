@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki input const Vec2 IN_DEPTH_MAP_SIZE
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_DEPTH_MAP_SIZE, 0, UVec2(1.0));
 
 #pragma anki start comp
 #include <shaders/Common.glsl>
@@ -54,7 +54,7 @@ void main()
 	// Compute the UVs to sample the depth map
 	// Belongs to [-WORKGROUP_SIZE, WORKGROUP_SIZE]
 	const Vec2 displacement = Vec2(gl_LocalInvocationID.xy) - Vec2(WORKGROUP_SIZE / 2u);
-	const Vec2 TEXEL_SIZE = 1.0 / IN_DEPTH_MAP_SIZE;
+	const Vec2 TEXEL_SIZE = 1.0 / Vec2(IN_DEPTH_MAP_SIZE);
 	const Vec2 uv = NDC_TO_UV(posNdc.xy) + displacement * TEXEL_SIZE;
 
 	// Sample and store depth

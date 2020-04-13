@@ -3,16 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki input const U32 MAX_SPRITES
-
 #pragma anki start vert
 #include <shaders/Common.glsl>
 #include <shaders/glsl_cpp_common/LensFlareSprite.h>
 
 // The block contains data for all flares
-layout(std140, set = 0, binding = 0) uniform _blk
+layout(std140, set = 0, binding = 0) readonly buffer ssbo00
 {
-	LensFlareSprite u_sprites[MAX_SPRITES];
+	LensFlareSprite u_sprites[];
 };
 
 layout(location = 0) out Vec3 out_uv;

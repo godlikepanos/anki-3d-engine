@@ -36,6 +36,11 @@ layout(set = 0, binding = 1) uniform texture2D u_tex2d;
 layout(set = 0, binding = 1) uniform texture3D u_tex3d;
 layout(set = 0, binding = 2) uniform sampler u_sampler;
 
+layout(set = 0, binding = 3) buffer ssbo
+{
+	Foo u_mats[];
+};
+
 #pragma anki start vert
 out gl_PerVertex
 {
@@ -44,7 +49,7 @@ out gl_PerVertex
 
 void main()
 {
-	gl_Position = u_ankiPerInstance[gl_InstanceID].m_ankiMvp * Vec4(gl_VertexID);
+	gl_Position = u_ankiPerInstance[gl_InstanceID].m_ankiMvp * u_mats[gl_InstanceID].m_mat * Vec4(gl_VertexID);
 }
 #pragma anki end
 

@@ -652,6 +652,12 @@ const MaterialVariant2& MaterialResource2::getOrCreateVariant(const RenderingKey
 	// Not initialized, init it
 	WLockGuard<RWMutex> lock(m_variantMatrixMtx);
 
+	// Check again
+	if(variant.m_prog.isCreated())
+	{
+		return variant;
+	}
+
 	ShaderProgramResourceVariantInitInfo2 initInfo(m_prog);
 
 	for(const SubMutation& m : m_nonBuiltinsMutation)

@@ -767,16 +767,24 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 
 		WLockGuard<RWMutex> lock(m_threadAllocsMtx);
 
-		alloc = m_factory->m_alloc.newInstance<DSThreadAllocator>(this, tid);
-		ANKI_CHECK(alloc->init());
+		// Search again
+		auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
+		alloc = (it != m_threadAllocs.getEnd()) ? *it : nullptr;
 
-		m_threadAllocs.resize(m_factory->m_alloc, m_threadAllocs.getSize() + 1);
-		m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
+		// Create
+		if(alloc == nullptr)
+		{
+			alloc = m_factory->m_alloc.newInstance<DSThreadAllocator>(this, tid);
+			ANKI_CHECK(alloc->init());
 
-		// Sort for fast find
-		std::sort(m_threadAllocs.getBegin(),
-			m_threadAllocs.getEnd(),
-			[](const DSThreadAllocator* a, const DSThreadAllocator* b) { return a->m_tid < b->m_tid; });
+			m_threadAllocs.resize(m_factory->m_alloc, m_threadAllocs.getSize() + 1);
+			m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
+
+			// Sort for fast find
+			std::sort(m_threadAllocs.getBegin(),
+				m_threadAllocs.getEnd(),
+				[](const DSThreadAllocator* a, const DSThreadAllocator* b) { return a->m_tid < b->m_tid; });
+		}
 	}
 
 	ANKI_ASSERT(alloc);
