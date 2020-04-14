@@ -81,7 +81,7 @@ private:
 	UniquePtr<Renderer> m_r;
 	Bool m_rDrawToDefaultFb = false;
 
-	ShaderProgramResourcePtr m_blitProg;
+	ShaderProgramResource2Ptr m_blitProg;
 	ShaderProgramPtr m_blitGrProg;
 
 	U32 m_width = 0; ///< Default FB size.

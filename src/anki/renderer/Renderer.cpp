@@ -120,7 +120,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
 		1024, BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::NONE, "Dummy"));
 
-	ANKI_CHECK(m_resources->loadResource("shaders/ClearTextureCompute.glslp", m_clearTexComputeProg));
+	ANKI_CHECK(m_resources->loadResource("shaders/ClearTextureCompute.ankiprog", m_clearTexComputeProg));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_genericCompute.reset(m_alloc.newInstance<GenericCompute>(this));
@@ -497,11 +497,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				else
 				{
 					// Compute
-					ShaderProgramResourceMutationInitList<1> mutators(m_clearTexComputeProg);
-					mutators.add("IS_2D", U32((inf.m_type != TextureType::_3D) ? 1 : 0));
+					ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_clearTexComputeProg);
+					variantInitInfo.addMutation("IS_2D", I32((inf.m_type != TextureType::_3D) ? 1 : 0));
 
-					const ShaderProgramResourceVariant* variant;
-					m_clearTexComputeProg->getOrCreateVariant(mutators.get(), variant);
+					const ShaderProgramResourceVariant2* variant;
+					m_clearTexComputeProg->getOrCreateVariant(variantInitInfo, variant);
 
 					cmdb->bindShaderProgram(variant->getProgram());
 

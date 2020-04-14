@@ -764,6 +764,7 @@ Error App::compileAllShaders()
 			{
 				ANKI_ASSERT(hash != 0);
 				m_newHash = hash;
+				// TODO Need to consider getDeviceCapabilities and getBindlessLimits
 				return hash == m_metafileHash;
 			};
 		} skip;

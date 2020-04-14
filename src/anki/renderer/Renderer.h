@@ -421,7 +421,7 @@ private:
 
 	RendererPrecreatedSamplers m_samplers;
 
-	ShaderProgramResourcePtr m_clearTexComputeProg;
+	ShaderProgramResource2Ptr m_clearTexComputeProg;
 
 	RendererStats m_stats;
 	Bool m_statsEnabled = false;
