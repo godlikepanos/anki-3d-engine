@@ -56,7 +56,7 @@ private:
 		U32 m_tileResolution = 0; ///< Tile resolution.
 		U32 m_tileCountBothAxis = 0;
 
-		ShaderProgramResourcePtr m_resolveProg;
+		ShaderProgramResource2Ptr m_resolveProg;
 		ShaderProgramPtr m_resolveGrProg;
 
 		WeakArray<ResolveWorkItem> m_resolveWorkItems;

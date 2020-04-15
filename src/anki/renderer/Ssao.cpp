@@ -56,30 +56,34 @@ Error Ssao::initBlur(const ConfigSet& config)
 	// shader
 	if(m_blurUseCompute)
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlurCompute.glslp", m_blur.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlurCompute.ankiprog", m_blur.m_prog));
 
-		ShaderProgramResourceMutationInitList<3> mutators(m_blur.m_prog);
-		mutators.add("ORIENTATION", 2).add("KERNEL_SIZE", 3).add("COLOR_COMPONENTS", 1);
-		ShaderProgramResourceConstantValueInitList<2> consts(m_blur.m_prog);
-		consts.add("TEXTURE_SIZE", UVec2(m_width, m_height))
-			.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
+		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_blur.m_prog);
+		variantInitInfo.addMutation("ORIENTATION", 2);
+		variantInitInfo.addMutation("KERNEL_SIZE", 3);
+		variantInitInfo.addMutation("COLOR_COMPONENTS", 1);
+		variantInitInfo.addConstant("TEXTURE_SIZE", UVec2(m_width, m_height));
 
-		const ShaderProgramResourceVariant* variant;
-		m_blur.m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+		const ShaderProgramResourceVariant2* variant;
+		m_blur.m_prog->getOrCreateVariant(variantInitInfo, variant);
+
+		m_blur.m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
+		m_blur.m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 
 		m_blur.m_grProg = variant->getProgram();
 	}
 	else
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlur.glslp", m_blur.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlur.ankiprog", m_blur.m_prog));
 
-		ShaderProgramResourceMutationInitList<3> mutators(m_blur.m_prog);
-		mutators.add("ORIENTATION", 2).add("KERNEL_SIZE", 3).add("COLOR_COMPONENTS", 1);
-		ShaderProgramResourceConstantValueInitList<1> consts(m_blur.m_prog);
-		consts.add("TEXTURE_SIZE", UVec2(m_width, m_height));
+		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_blur.m_prog);
+		variantInitInfo.addMutation("ORIENTATION", 2);
+		variantInitInfo.addMutation("KERNEL_SIZE", 3);
+		variantInitInfo.addMutation("COLOR_COMPONENTS", 1);
+		variantInitInfo.addConstant("TEXTURE_SIZE", UVec2(m_width, m_height));
 
-		const ShaderProgramResourceVariant* variant;
-		m_blur.m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+		const ShaderProgramResourceVariant2* variant;
+		m_blur.m_prog->getOrCreateVariant(variantInitInfo, variant);
 
 		m_blur.m_grProg = variant->getProgram();
 	}
@@ -179,7 +183,7 @@ void Ssao::runBlur(RenderPassWorkContext& rgraphCtx)
 	if(m_blurUseCompute)
 	{
 		rgraphCtx.bindImage(0, 2, m_runCtx.m_rts[1], TextureSubresourceInfo());
-		dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_width, m_height);
+		dispatchPPCompute(cmdb, m_blur.m_workgroupSize[0], m_blur.m_workgroupSize[1], m_width, m_height);
 	}
 	else
 	{

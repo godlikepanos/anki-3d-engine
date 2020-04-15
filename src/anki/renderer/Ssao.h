@@ -57,8 +57,9 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResourcePtr m_prog;
+		ShaderProgramResource2Ptr m_prog;
 		ShaderProgramPtr m_grProg;
+		Array<U32, 2> m_workgroupSize = {};
 	} m_blur; ///< Box blur.
 
 	class

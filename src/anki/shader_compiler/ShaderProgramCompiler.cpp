@@ -689,7 +689,7 @@ static Error doReflection(
 	return Error::NONE;
 }
 
-Error compileShaderProgram(CString fname,
+Error compileShaderProgramInternal(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
 	ShaderProgramPostParseInterface* postParseCallback,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
@@ -895,6 +895,24 @@ Error compileShaderProgram(CString fname,
 	ANKI_CHECK(doReflection(binary, tempAllocator, binaryAllocator));
 
 	return Error::NONE;
+}
+
+Error compileShaderProgram(CString fname,
+	ShaderProgramFilesystemInterface& fsystem,
+	ShaderProgramPostParseInterface* postParseCallback,
+	GenericMemoryPoolAllocator<U8> tempAllocator,
+	const GpuDeviceCapabilities& gpuCapabilities,
+	const BindlessLimits& bindlessLimits,
+	ShaderProgramBinaryWrapper& binaryW)
+{
+	const Error err = compileShaderProgramInternal(
+		fname, fsystem, postParseCallback, tempAllocator, gpuCapabilities, bindlessLimits, binaryW);
+	if(err)
+	{
+		ANKI_SHADER_COMPILER_LOGE("Failed to compile: %s", fname.cstr());
+	}
+
+	return err;
 }
 
 #define ANKI_TAB "    "

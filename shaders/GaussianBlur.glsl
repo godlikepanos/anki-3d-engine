@@ -3,23 +3,29 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// Defines it needs:
-// WORKGROUP_SIZE (only for compute)
-
 #pragma once
 
 #pragma anki mutator ORIENTATION 0 1 2 // 0: VERTICAL, 1: HORIZONTAL, 2: BOX
-#pragma anki mutator KERNEL_SIZE 3 5 7 9 11 13 15
+#pragma anki mutator KERNEL_SIZE 3 5 7 9 11
 #pragma anki mutator COLOR_COMPONENTS 4 3 1
 
-#pragma anki input const UVec2 TEXTURE_SIZE
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0, UVec2(1));
 
 #include <shaders/GaussianBlurCommon.glsl>
 
 #if defined(ANKI_COMPUTE_SHADER)
+const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
 #	define USE_COMPUTE 1
 #else
 #	define USE_COMPUTE 0
+#endif
+
+#if ORIENTATION == 0
+#	define VERTICAL 1
+#elif ORIENTATION == 1
+#	define HORIZONTAL 1
+#else
+#	define BOX 1
 #endif
 
 // Determine color type

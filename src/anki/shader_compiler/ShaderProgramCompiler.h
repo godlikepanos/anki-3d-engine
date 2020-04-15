@@ -19,7 +19,7 @@ namespace anki
 /// @memberof ShaderProgramCompiler
 class ShaderProgramBinaryWrapper : public NonCopyable
 {
-	friend Error compileShaderProgram(CString fname,
+	friend Error compileShaderProgramInternal(CString fname,
 		ShaderProgramFilesystemInterface& fsystem,
 		ShaderProgramPostParseInterface* postParseCallback,
 		GenericMemoryPoolAllocator<U8> tempAllocator,

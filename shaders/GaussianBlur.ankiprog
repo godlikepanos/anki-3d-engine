@@ -7,14 +7,6 @@
 #include <shaders/QuadVert.glsl>
 #pragma anki end
 
-#pragma anki frag
-#if ORIENTATION == 0
-#	define VERTICAL 1
-#elif ORIENTATION == 1
-#	define HORIZONTAL 1
-#else
-#	define BOX 1
-#endif
-
+#pragma anki start frag
 #include <shaders/GaussianBlur.glsl>
 #pragma anki end

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki input const UVec2 INPUT_TEXTURE_SIZE
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEXTURE_SIZE, 0, UVec2(1));
 
 #pragma anki start comp
 #include <shaders/GaussianBlurCommon.glsl>
