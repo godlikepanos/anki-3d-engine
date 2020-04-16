@@ -11,11 +11,10 @@
 
 #pragma anki mutator VARIANT 0 1
 
-#pragma anki input const UVec2 FB_SIZE
-#pragma anki input const UVec2 WORKGROUP_SIZE
-#pragma anki input const U32 MAX_STEPS
-#pragma anki input const U32 LIGHT_BUFFER_MIP_COUNT
-#pragma anki input const F32 HISTORY_COLOR_BLEND_FACTOR
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_U32(MAX_STEPS, 2, 1);
+ANKI_SPECIALIZATION_CONSTANT_U32(LIGHT_BUFFER_MIP_COUNT, 3, 1);
+ANKI_SPECIALIZATION_CONSTANT_F32(HISTORY_COLOR_BLEND_FACTOR, 4, 0.5);
 
 #pragma anki start comp
 #include <shaders/Functions.glsl>
@@ -23,6 +22,7 @@
 #include <shaders/glsl_cpp_common/Ssr.h>
 #include <shaders/Tonemapping.glsl>
 
+const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_trilinearClampSampler;
