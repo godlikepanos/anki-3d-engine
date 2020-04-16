@@ -49,7 +49,7 @@ public:
 	void drawLights(TraditionalDeferredLightShadingDrawInfo& info);
 
 private:
-	ShaderProgramResourcePtr m_lightProg;
+	ShaderProgramResource2Ptr m_lightProg;
 	Array<ShaderProgramPtr, 2> m_plightGrProg;
 	Array<ShaderProgramPtr, 2> m_slightGrProg;
 	Array<ShaderProgramPtr, 2> m_dirLightGrProg;
