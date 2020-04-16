@@ -26,26 +26,26 @@ Error Ssao::initMain(const ConfigSet& config)
 	// Shader
 	if(m_useCompute)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/SsaoCompute.glslp", m_main.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("shaders/SsaoCompute.ankiprog", m_main.m_prog));
 	}
 	else
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/Ssao.glslp", m_main.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("shaders/Ssao.ankiprog", m_main.m_prog));
 	}
 
-	ShaderProgramResourceMutationInitList<2> mutators(m_main.m_prog);
-	mutators.add("USE_NORMAL", (m_useNormal) ? 1u : 0u).add("SOFT_BLUR", (m_useSoftBlur) ? 1u : 0u);
-
-	ShaderProgramResourceConstantValueInitList<7> consts(m_main.m_prog);
-	consts.add("NOISE_MAP_SIZE", U32(m_main.m_noiseTex->getWidth()))
-		.add("FB_SIZE", UVec2(m_width, m_height))
-		.add("RADIUS", 2.5f)
-		.add("BIAS", 0.0f)
-		.add("STRENGTH", 2.5f)
-		.add("SAMPLE_COUNT", 8u)
-		.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
-	const ShaderProgramResourceVariant* variant;
-	m_main.m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_main.m_prog);
+	variantInitInfo.addMutation("USE_NORMAL", (m_useNormal) ? 1u : 0u);
+	variantInitInfo.addMutation("SOFT_BLUR", (m_useSoftBlur) ? 1u : 0u);
+	variantInitInfo.addConstant("NOISE_MAP_SIZE", U32(m_main.m_noiseTex->getWidth()));
+	variantInitInfo.addConstant("FB_SIZE", UVec2(m_width, m_height));
+	variantInitInfo.addConstant("RADIUS", 2.5f);
+	variantInitInfo.addConstant("BIAS", 0.0f);
+	variantInitInfo.addConstant("STRENGTH", 2.5f);
+	variantInitInfo.addConstant("SAMPLE_COUNT", 8u);
+	const ShaderProgramResourceVariant2* variant;
+	m_main.m_prog->getOrCreateVariant(variantInitInfo, variant);
+	m_main.m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
+	m_main.m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 	m_main.m_grProg = variant->getProgram();
 
 	return Error::NONE;
@@ -159,10 +159,7 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	if(m_useCompute)
 	{
 		rgraphCtx.bindImage(0, 5, m_runCtx.m_rts[0], TextureSubresourceInfo());
-
-		const U32 sizeX = (m_width + m_workgroupSize[0] - 1) / m_workgroupSize[0];
-		const U32 sizeY = (m_height + m_workgroupSize[1] - 1) / m_workgroupSize[1];
-		cmdb->dispatchCompute(sizeX, sizeY, 1);
+		dispatchPPCompute(cmdb, m_main.m_workgroupSize[0], m_main.m_workgroupSize[1], m_width, m_height);
 	}
 	else
 	{
