@@ -8,16 +8,16 @@
 #pragma anki mutator TONEMAP_FIX 0 1
 #pragma anki mutator YCBCR 0 1
 
-#pragma anki input const F32 VARIANCE_CLIPPING_GAMMA
-#pragma anki input const F32 BLEND_FACTOR
-#pragma anki input const UVec2 FB_SIZE
-#pragma anki input const UVec2 WORKGROUP_SIZE
+ANKI_SPECIALIZATION_CONSTANT_F32(VARIANCE_CLIPPING_GAMMA, 0, 1.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(BLEND_FACTOR, 1, 0.5);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 2, UVec2(1));
 
 #pragma anki start comp
 #include <shaders/Functions.glsl>
 #include <shaders/Pack.glsl>
 #include <shaders/Tonemapping.glsl>
 
+const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;

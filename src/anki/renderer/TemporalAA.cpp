@@ -36,22 +36,25 @@ Error TemporalAA::init(const ConfigSet& config)
 
 Error TemporalAA::initInternal(const ConfigSet& config)
 {
-	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/TemporalAAResolve.glslp", m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/TemporalAAResolve.ankiprog", m_prog));
 
 	for(U32 i = 0; i < 2; ++i)
 	{
-		ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
-		consts.add("VARIANCE_CLIPPING_GAMMA", 1.7f)
-			.add("BLEND_FACTOR", 1.0f / 16.0f)
-			.add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()))
-			.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
+		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+		variantInitInfo.addConstant("VARIANCE_CLIPPING_GAMMA", 1.7f);
+		variantInitInfo.addConstant("BLEND_FACTOR", 1.0f / 16.0f);
+		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+		variantInitInfo.addMutation("SHARPEN", i + 1);
+		variantInitInfo.addMutation("VARIANCE_CLIPPING", 1);
+		variantInitInfo.addMutation("TONEMAP_FIX", 1);
+		variantInitInfo.addMutation("YCBCR", 0);
 
-		ShaderProgramResourceMutationInitList<4> mutations(m_prog);
-		mutations.add("SHARPEN", i + 1).add("VARIANCE_CLIPPING", 1).add("TONEMAP_FIX", 1).add("YCBCR", 0);
-
-		const ShaderProgramResourceVariant* variant;
-		m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
+		const ShaderProgramResourceVariant2* variant;
+		m_prog->getOrCreateVariant(variantInitInfo, variant);
 		m_grProgs[i] = variant->getProgram();
+
+		m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
+		m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 	}
 
 	for(U i = 0; i < 2; ++i)
