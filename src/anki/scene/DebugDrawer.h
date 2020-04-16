@@ -86,7 +86,7 @@ public:
 	}
 
 private:
-	ShaderProgramResourcePtr m_prog;
+	ShaderProgramResource2Ptr m_prog;
 
 	RenderQueueDrawContext* m_ctx = nullptr;
 
@@ -188,7 +188,7 @@ public:
 	}
 
 private:
-	ShaderProgramResourcePtr m_prog;
+	ShaderProgramResource2Ptr m_prog;
 };
 /// @}
 
