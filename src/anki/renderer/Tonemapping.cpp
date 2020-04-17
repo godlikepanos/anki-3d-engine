@@ -12,7 +12,6 @@ namespace anki
 
 Error Tonemapping::init(const ConfigSet& cfg)
 {
-	ANKI_R_LOGI("Initializing tonemapping");
 	Error err = initInternal(cfg);
 	if(err)
 	{
@@ -25,17 +24,18 @@ Error Tonemapping::init(const ConfigSet& cfg)
 Error Tonemapping::initInternal(const ConfigSet& initializer)
 {
 	m_inputTexMip = m_r->getDownscaleBlur().getMipmapCount() - 2;
+	const U32 width = m_r->getDownscaleBlur().getPassWidth(m_inputTexMip);
+	const U32 height = m_r->getDownscaleBlur().getPassHeight(m_inputTexMip);
+	ANKI_R_LOGI("Initializing tonemapping (input %ux%u)", width, height);
 
 	// Create program
-	ANKI_CHECK(getResourceManager().loadResource("shaders/TonemappingAverageLuminance.glslp", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/TonemappingAverageLuminance.ankiprog", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("INPUT_TEX_SIZE",
-		UVec2(
-			m_r->getDownscaleBlur().getPassWidth(m_inputTexMip), m_r->getDownscaleBlur().getPassHeight(m_inputTexMip)));
+	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	variantInitInfo.addConstant("INPUT_TEX_SIZE", UVec2(width, height));
 
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(consts.get(), variant);
+	const ShaderProgramResourceVariant2* variant;
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
 	// Create buffer

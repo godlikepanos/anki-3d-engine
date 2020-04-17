@@ -35,7 +35,7 @@ public:
 	}
 
 private:
-	ShaderProgramResourcePtr m_prog;
+	ShaderProgramResource2Ptr m_prog;
 	ShaderProgramPtr m_grProg;
 	U32 m_inputTexMip;
 
