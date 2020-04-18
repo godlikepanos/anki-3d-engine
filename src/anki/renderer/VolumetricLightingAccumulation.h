@@ -37,7 +37,7 @@ public:
 	}
 
 private:
-	ShaderProgramResourcePtr m_prog;
+	ShaderProgramResource2Ptr m_prog;
 	ShaderProgramPtr m_grProg;
 
 	Array<TexturePtr, 2> m_rtTextures;
@@ -45,7 +45,7 @@ private:
 
 	U32 m_finalClusterZ = 0;
 
-	Array<U32, 3> m_workgroupSize = {{8, 8, 8}};
+	Array<U32, 3> m_workgroupSize = {};
 	Array<U32, 3> m_volumeSize;
 
 	class

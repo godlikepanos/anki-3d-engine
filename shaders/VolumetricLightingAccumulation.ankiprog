@@ -7,17 +7,17 @@
 
 #pragma anki mutator ENABLE_SHADOWS 0 1
 
-#pragma anki input const UVec3 VOLUME_SIZE
-#pragma anki input const UVec3 CLUSTER_COUNT
-#pragma anki input const U32 FINAL_CLUSTER_Z
-#pragma anki input const UVec3 FRACTION
-#pragma anki input const UVec3 WORKGROUP_SIZE
-#pragma anki input const UVec3 NOISE_TEX_SIZE
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(VOLUME_SIZE, 0, UVec3(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(CLUSTER_COUNT, 3, UVec3(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(FRACTION, 6, UVec3(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(NOISE_TEX_SIZE, 9, UVec3(1));
+ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_CLUSTER_Z, 12, 1);
 
 #pragma anki start comp
 
 const F32 PHASE_FUNCTION_ANISOTROPY = 0.3;
 
+const UVec3 WORKGROUP_SIZE = UVec3(8, 8, 8);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyRepeatSampler;

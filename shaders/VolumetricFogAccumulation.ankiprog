@@ -3,17 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki input const UVec2 WORKGROUP_SIZE
-#pragma anki input const UVec3 VOLUME_SIZE
-#pragma anki input const UVec3 CLUSTER_COUNT
-#pragma anki input const UVec3 FRACTION
-#pragma anki input const U32 FINAL_CLUSTER_Z
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(VOLUME_SIZE, 0, UVec3(1));
+ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_CLUSTER_Z, 9, 1);
 
 #pragma anki start comp
 
 #include <shaders/glsl_cpp_common/ClusteredShading.h>
 #include <shaders/Common.glsl>
 
+const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;

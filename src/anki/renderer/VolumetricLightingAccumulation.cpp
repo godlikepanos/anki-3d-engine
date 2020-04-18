@@ -43,22 +43,22 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/blue_noise_rgb8_16x16x16_3d.ankitex", m_noiseTex));
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricLightingAccumulation.glslp", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricLightingAccumulation.ankiprog", m_prog));
 
-	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
-	mutators.add("ENABLE_SHADOWS", 1);
+	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);
+	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
+	variantInitInfo.addConstant(
+		"CLUSTER_COUNT", UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]));
+	variantInitInfo.addConstant("FINAL_CLUSTER_Z", U32(m_finalClusterZ));
+	variantInitInfo.addConstant("FRACTION", UVec3(fractionXY, fractionXY, fractionZ));
+	variantInitInfo.addConstant(
+		"NOISE_TEX_SIZE", UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
 
-	ShaderProgramResourceConstantValueInitList<6> consts(m_prog);
-	consts.add("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]))
-		.add("CLUSTER_COUNT", UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]))
-		.add("FINAL_CLUSTER_Z", U32(m_finalClusterZ))
-		.add("FRACTION", UVec3(fractionXY, fractionXY, fractionZ))
-		.add("WORKGROUP_SIZE", UVec3(m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2]))
-		.add("NOISE_TEX_SIZE", UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	const ShaderProgramResourceVariant2* variant;
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
+	m_workgroupSize = variant->getWorkgroupSizes();
 
 	// Create RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_volumeSize[0],
