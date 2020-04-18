@@ -50,12 +50,11 @@ GpuParticleEmitterNode::~GpuParticleEmitterNode()
 Error GpuParticleEmitterNode::init(const CString& filename)
 {
 	// Create program
-	ANKI_CHECK(getResourceManager().loadResource("shaders/GpuParticlesSimulation.glslp", m_prog));
-	const ShaderProgramResourceVariant* variant;
-	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("WORKGROUP_SIZE_X", U32(COMPUTE_SHADER_WORKGROUP_SIZE_X));
-	m_prog->getOrCreateVariant(consts.get(), variant);
+	ANKI_CHECK(getResourceManager().loadResource("shaders/GpuParticlesSimulation.ankiprog", m_prog));
+	const ShaderProgramResourceVariant2* variant;
+	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();
+	m_workgroupSizeX = variant->getWorkgroupSizes()[0];
 
 	// Load particle props
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_emitterRsrc));
@@ -205,8 +204,7 @@ void GpuParticleEmitterNode::simulate(GenericGpuComputeJobQueueElementContext& c
 	cmdb->bindUniformBuffer(1, 4, token.m_buffer, token.m_offset, token.m_range);
 
 	// Dispatch
-	const U32 workgroupCount =
-		(m_particleCount + COMPUTE_SHADER_WORKGROUP_SIZE_X - 1) / COMPUTE_SHADER_WORKGROUP_SIZE_X;
+	const U32 workgroupCount = (m_particleCount + m_workgroupSizeX - 1) / m_workgroupSizeX;
 	cmdb->dispatchCompute(workgroupCount, 1, 1);
 }
 
