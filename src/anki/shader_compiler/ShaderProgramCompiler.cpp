@@ -9,7 +9,6 @@
 #include <anki/shader_compiler/ShaderProgramReflection.h>
 #include <anki/util/Serializer.h>
 #include <anki/util/HashMap.h>
-#include <SPIRV-Cross/spirv_glsl.hpp>
 
 namespace anki
 {
@@ -167,68 +166,146 @@ static Bool spinDials(DynamicArrayAuto<U32>& dials, ConstWeakArray<ShaderProgram
 	return done;
 }
 
-static Error compileVariant(ConstWeakArray<MutatorValue> mutation,
+static Error compileSpirv(ConstWeakArray<MutatorValue> mutation,
 	const ShaderProgramParser& parser,
-	ShaderProgramBinaryVariant& variant,
-	DynamicArrayAuto<ShaderProgramBinaryCodeBlock>& codeBlocks,
-	DynamicArrayAuto<U64>& codeBlockHashes,
 	GenericMemoryPoolAllocator<U8>& tmpAlloc,
-	GenericMemoryPoolAllocator<U8>& binaryAlloc)
+	Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)>& spirv)
 {
-	variant = {};
-
 	// Generate the source and the rest for the variant
 	ShaderProgramParserVariant parserVariant;
 	ANKI_CHECK(parser.generateVariant(mutation, parserVariant));
 
 	// Compile stages
-	Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirvBinaries;
-	for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)
+	for(ShaderType shaderType : EnumIterable<ShaderType>())
 	{
 		if(!(shaderTypeToBit(shaderType) & parser.getShaderTypes()))
 		{
-			variant.m_codeBlockIndices[shaderType] = MAX_U32;
 			continue;
 		}
 
 		// Compile
-		DynamicArrayAuto<U8> spirv(tmpAlloc);
-		ANKI_CHECK(compilerGlslToSpirv(parserVariant.getSource(shaderType), shaderType, tmpAlloc, spirv));
-		ANKI_ASSERT(spirv.getSize() > 0);
-
-		// Check if the spirv is already generated
-		const U64 newHash = computeHash(&spirv[0], spirv.getSize());
-		Bool found = false;
-		for(U32 i = 0; i < codeBlockHashes.getSize(); ++i)
-		{
-			if(codeBlockHashes[i] == newHash)
-			{
-				// Found it
-				variant.m_codeBlockIndices[shaderType] = i;
-				found = true;
-				break;
-			}
-		}
-
-		// Create it if not found
-		if(!found)
-		{
-			U8* code = binaryAlloc.allocate(spirv.getSizeInBytes());
-			memcpy(code, &spirv[0], spirv.getSizeInBytes());
-
-			ShaderProgramBinaryCodeBlock block;
-			block.m_binary.setArray(code, U32(spirv.getSizeInBytes()));
-			codeBlocks.emplaceBack(block);
-
-			codeBlockHashes.emplaceBack(newHash);
-
-			variant.m_codeBlockIndices[shaderType] = codeBlocks.getSize() - 1;
-		}
-
-		spirvBinaries[shaderType] = codeBlocks[variant.m_codeBlockIndices[shaderType]].m_binary;
+		ANKI_CHECK(compilerGlslToSpirv(parserVariant.getSource(shaderType), shaderType, tmpAlloc, spirv[shaderType]));
+		ANKI_ASSERT(spirv[shaderType].getSize() > 0);
 	}
 
 	return Error::NONE;
+}
+
+static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation,
+	const ShaderProgramParser& parser,
+	ShaderProgramBinaryVariant& variant,
+	DynamicArrayAuto<ShaderProgramBinaryCodeBlock>& codeBlocks,
+	DynamicArrayAuto<U64>& codeBlockHashes,
+	GenericMemoryPoolAllocator<U8>& tmpAlloc,
+	GenericMemoryPoolAllocator<U8>& binaryAlloc,
+	ShaderProgramAsyncTaskInterface& taskManager,
+	Mutex& mtx,
+	Atomic<I32>& error)
+{
+	variant = {};
+
+	class Ctx
+	{
+	public:
+		GenericMemoryPoolAllocator<U8> m_tmpAlloc;
+		GenericMemoryPoolAllocator<U8> m_binaryAlloc;
+		DynamicArrayAuto<MutatorValue> m_mutation{m_tmpAlloc};
+		const ShaderProgramParser* m_parser;
+		ShaderProgramBinaryVariant* m_variant;
+		DynamicArrayAuto<ShaderProgramBinaryCodeBlock>* m_codeBlocks;
+		DynamicArrayAuto<U64>* m_codeBlockHashes;
+		Mutex* m_mtx;
+		Atomic<I32>* m_err;
+
+		Ctx(GenericMemoryPoolAllocator<U8> tmpAlloc)
+			: m_tmpAlloc(tmpAlloc)
+		{
+		}
+	};
+
+	Ctx* ctx = tmpAlloc.newInstance<Ctx>(tmpAlloc);
+	ctx->m_binaryAlloc = binaryAlloc;
+	ctx->m_mutation.create(mutation.getSize());
+	memcpy(ctx->m_mutation.getBegin(), mutation.getBegin(), mutation.getSizeInBytes());
+	ctx->m_parser = &parser;
+	ctx->m_variant = &variant;
+	ctx->m_codeBlocks = &codeBlocks;
+	ctx->m_codeBlockHashes = &codeBlockHashes;
+	ctx->m_mtx = &mtx;
+	ctx->m_err = &error;
+
+	auto callback = [](void* userData) {
+		Ctx& ctx = *static_cast<Ctx*>(userData);
+		GenericMemoryPoolAllocator<U8>& tmpAlloc = ctx.m_tmpAlloc;
+
+		if(ctx.m_err->load() != 0)
+		{
+			// Cleanup and return
+			tmpAlloc.deleteInstance(&ctx);
+			return;
+		}
+
+		// All good, compile the variant
+		Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)> spirvs = {
+			{{tmpAlloc}, {tmpAlloc}, {tmpAlloc}, {tmpAlloc}, {tmpAlloc}, {tmpAlloc}}};
+		const Error err = compileSpirv(ctx.m_mutation, *ctx.m_parser, tmpAlloc, spirvs);
+
+		if(!err)
+		{
+			// No error, check if the spirvs are common with some other variant and store it
+
+			LockGuard<Mutex> lock(*ctx.m_mtx);
+
+			for(ShaderType shaderType : EnumIterable<ShaderType>())
+			{
+				DynamicArrayAuto<U8>& spirv = spirvs[shaderType];
+
+				if(spirv.isEmpty())
+				{
+					ctx.m_variant->m_codeBlockIndices[shaderType] = MAX_U32;
+					continue;
+				}
+
+				// Check if the spirv is already generated
+				const U64 newHash = computeHash(&spirv[0], spirv.getSize());
+				Bool found = false;
+				for(U32 i = 0; i < ctx.m_codeBlockHashes->getSize(); ++i)
+				{
+					if((*ctx.m_codeBlockHashes)[i] == newHash)
+					{
+						// Found it
+						ctx.m_variant->m_codeBlockIndices[shaderType] = i;
+						found = true;
+						break;
+					}
+				}
+
+				// Create it if not found
+				if(!found)
+				{
+					U8* code = ctx.m_binaryAlloc.allocate(spirv.getSizeInBytes());
+					memcpy(code, &spirv[0], spirv.getSizeInBytes());
+
+					ShaderProgramBinaryCodeBlock block;
+					block.m_binary.setArray(code, U32(spirv.getSizeInBytes()));
+
+					ctx.m_codeBlocks->emplaceBack(block);
+					ctx.m_codeBlockHashes->emplaceBack(newHash);
+
+					ctx.m_variant->m_codeBlockIndices[shaderType] = ctx.m_codeBlocks->getSize() - 1;
+				}
+			}
+		}
+		else
+		{
+			ctx.m_err->store(err._getCode());
+		}
+
+		// Cleanup
+		tmpAlloc.deleteInstance(&ctx);
+	};
+
+	taskManager.enqueueTask(callback, ctx);
 }
 
 class Refl final : public ShaderReflectionVisitorInterface
@@ -692,6 +769,7 @@ static Error doReflection(
 Error compileShaderProgramInternal(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
 	ShaderProgramPostParseInterface* postParseCallback,
+	ShaderProgramAsyncTaskInterface* taskManager_,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
 	const GpuDeviceCapabilities& gpuCapabilities,
 	const BindlessLimits& bindlessLimits,
@@ -743,6 +821,24 @@ Error compileShaderProgramInternal(CString fname,
 	}
 
 	// Create all variants
+	Mutex mtx;
+	Atomic<I32> errorAtomic(0);
+	class SyncronousShaderProgramAsyncTaskInterface : public ShaderProgramAsyncTaskInterface
+	{
+	public:
+		void enqueueTask(void (*callback)(void* userData), void* userData) final
+		{
+			callback(userData);
+		}
+
+		Error joinTasks() final
+		{
+			// Nothing
+			return Error::NONE;
+		}
+	} syncTaskManager;
+	ShaderProgramAsyncTaskInterface& taskManager = (taskManager_) ? *taskManager_ : syncTaskManager;
+
 	if(parser.getMutators().getSize() > 0)
 	{
 		// Initialize
@@ -754,6 +850,10 @@ Error compileShaderProgramInternal(CString fname,
 		DynamicArrayAuto<ShaderProgramBinaryMutation> mutations(binaryAllocator, mutationCount);
 		DynamicArrayAuto<U64> codeBlockHashes(tempAllocator);
 		HashMapAuto<U64, U32> mutationHashToIdx(tempAllocator);
+
+		// Grow the storage of the variants array. Can't have it resize, threads will work on stale data
+		variants.resizeStorage(mutationCount);
+		const ShaderProgramBinaryVariant* baseVariant = nullptr;
 
 		mutationCount = 0;
 
@@ -788,14 +888,18 @@ Error compileShaderProgramInternal(CString fname,
 				// New and unique mutation and thus variant, add it
 
 				ShaderProgramBinaryVariant& variant = *variants.emplaceBack();
+				baseVariant = (baseVariant == nullptr) ? variants.getBegin() : baseVariant;
 
-				ANKI_CHECK(compileVariant(originalMutationValues,
+				compileVariantAsync(originalMutationValues,
 					parser,
 					variant,
 					codeBlocks,
 					codeBlockHashes,
 					tempAllocator,
-					binaryAllocator));
+					binaryAllocator,
+					taskManager,
+					mtx,
+					errorAtomic);
 
 				mutation.m_variantIndex = variants.getSize() - 1;
 
@@ -815,14 +919,18 @@ Error compileShaderProgramInternal(CString fname,
 					// Rewrite variant not found, create it
 
 					variant = variants.emplaceBack();
+					baseVariant = (baseVariant == nullptr) ? variants.getBegin() : baseVariant;
 
-					ANKI_CHECK(compileVariant(rewrittenMutationValues,
+					compileVariantAsync(originalMutationValues,
 						parser,
 						*variant,
 						codeBlocks,
 						codeBlockHashes,
 						tempAllocator,
-						binaryAllocator));
+						binaryAllocator,
+						taskManager,
+						mtx,
+						errorAtomic);
 
 					ShaderProgramBinaryMutation& otherMutation = mutations[mutationCount++];
 					otherMutation.m_values.setArray(
@@ -846,6 +954,11 @@ Error compileShaderProgramInternal(CString fname,
 		} while(!spinDials(dials, parser.getMutators()));
 
 		ANKI_ASSERT(mutationCount == mutations.getSize());
+		ANKI_ASSERT(baseVariant == variants.getBegin() && "Can't have the variants array grow");
+
+		// Done, wait the threads
+		ANKI_CHECK(taskManager.joinTasks());
+		ANKI_CHECK(Error(errorAtomic.getNonAtomically()));
 
 		// Store temp containers to binary
 		U32 size, storage;
@@ -869,8 +982,20 @@ Error compileShaderProgramInternal(CString fname,
 
 		binary.m_variants.setArray(binaryAllocator.newInstance<ShaderProgramBinaryVariant>(), 1);
 
-		ANKI_CHECK(compileVariant(
-			mutation, parser, binary.m_variants[0], codeBlocks, codeBlockHashes, tempAllocator, binaryAllocator));
+		compileVariantAsync(mutation,
+			parser,
+			binary.m_variants[0],
+			codeBlocks,
+			codeBlockHashes,
+			tempAllocator,
+			binaryAllocator,
+			taskManager,
+			mtx,
+			errorAtomic);
+
+		ANKI_CHECK(taskManager.joinTasks());
+		ANKI_CHECK(Error(errorAtomic.getNonAtomically()));
+
 		ANKI_ASSERT(codeBlocks.getSize() == U32(__builtin_popcount(U32(parser.getShaderTypes()))));
 
 		ShaderProgramBinaryCodeBlock* firstCodeBlock;
@@ -900,13 +1025,14 @@ Error compileShaderProgramInternal(CString fname,
 Error compileShaderProgram(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
 	ShaderProgramPostParseInterface* postParseCallback,
+	ShaderProgramAsyncTaskInterface* taskManager,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
 	const GpuDeviceCapabilities& gpuCapabilities,
 	const BindlessLimits& bindlessLimits,
 	ShaderProgramBinaryWrapper& binaryW)
 {
 	const Error err = compileShaderProgramInternal(
-		fname, fsystem, postParseCallback, tempAllocator, gpuCapabilities, bindlessLimits, binaryW);
+		fname, fsystem, postParseCallback, taskManager, tempAllocator, gpuCapabilities, bindlessLimits, binaryW);
 	if(err)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Failed to compile: %s", fname.cstr());
@@ -914,190 +1040,5 @@ Error compileShaderProgram(CString fname,
 
 	return err;
 }
-
-#define ANKI_TAB "    "
-
-static void disassembleBlock(
-	const ShaderProgramBinaryBlockInstance& instance, const ShaderProgramBinaryBlock& block, StringListAuto& lines)
-{
-	lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u size %4u\n",
-		block.m_name.getBegin(),
-		block.m_set,
-		block.m_binding,
-		instance.m_size);
-
-	for(U32 i = 0; i < instance.m_variables.getSize(); ++i)
-	{
-		const ShaderProgramBinaryVariableInstance& varInstance = instance.m_variables[i];
-		const ShaderProgramBinaryVariable& var = block.m_variables[varInstance.m_index];
-
-		lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB ANKI_TAB "%-48s type %8s blockInfo %d,%d,%d,%d\n",
-			var.m_name.getBegin(),
-			shaderVariableDataTypeToString(var.m_type).cstr(),
-			varInstance.m_blockInfo.m_offset,
-			varInstance.m_blockInfo.m_arraySize,
-			varInstance.m_blockInfo.m_arrayStride,
-			varInstance.m_blockInfo.m_matrixStride);
-	}
-}
-
-void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable)
-{
-	GenericMemoryPoolAllocator<U8> alloc = humanReadable.getAllocator();
-	StringListAuto lines(alloc);
-
-	lines.pushBack("**MUTATORS**\n");
-	if(binary.m_mutators.getSize() > 0)
-	{
-		for(const ShaderProgramBinaryMutator& mutator : binary.m_mutators)
-		{
-			lines.pushBackSprintf(ANKI_TAB "%-32s ", &mutator.m_name[0]);
-			for(U32 i = 0; i < mutator.m_values.getSize(); ++i)
-			{
-				lines.pushBackSprintf((i < mutator.m_values.getSize() - 1) ? "%d," : "%d", mutator.m_values[i]);
-			}
-			lines.pushBack("\n");
-		}
-	}
-	else
-	{
-		lines.pushBack(ANKI_TAB "N/A\n");
-	}
-
-	lines.pushBack("\n**BINARIES**\n");
-	U32 count = 0;
-	for(const ShaderProgramBinaryCodeBlock& code : binary.m_codeBlocks)
-	{
-		spirv_cross::CompilerGLSL::Options options;
-		options.vulkan_semantics = true;
-
-		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(code.m_binary.getBegin());
-		ANKI_ASSERT((code.m_binary.getSize() % (sizeof(unsigned int))) == 0);
-		std::vector<unsigned int> spv(spvb, spvb + code.m_binary.getSize() / sizeof(unsigned int));
-		spirv_cross::CompilerGLSL compiler(spv);
-		compiler.set_common_options(options);
-
-		std::string glsl = compiler.compile();
-		StringListAuto sourceLines(alloc);
-		sourceLines.splitString(glsl.c_str(), '\n');
-		StringAuto newGlsl(alloc);
-		sourceLines.join("\n" ANKI_TAB ANKI_TAB, newGlsl);
-
-		lines.pushBackSprintf(ANKI_TAB "#%u \n" ANKI_TAB ANKI_TAB "%s\n", count++, newGlsl.cstr());
-	}
-
-	lines.pushBack("\n**SHADER VARIANTS**\n");
-	count = 0;
-	for(const ShaderProgramBinaryVariant& variant : binary.m_variants)
-	{
-		lines.pushBackSprintf(ANKI_TAB "#%u\n", count++);
-
-		// Uniform blocks
-		if(variant.m_uniformBlocks.getSize() > 0)
-		{
-			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Uniform blocks\n");
-			for(const ShaderProgramBinaryBlockInstance& instance : variant.m_uniformBlocks)
-			{
-				disassembleBlock(instance, binary.m_uniformBlocks[instance.m_index], lines);
-			}
-		}
-
-		// Storage blocks
-		if(variant.m_storageBlocks.getSize() > 0)
-		{
-			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Storage blocks\n");
-			for(const ShaderProgramBinaryBlockInstance& instance : variant.m_storageBlocks)
-			{
-				disassembleBlock(instance, binary.m_storageBlocks[instance.m_index], lines);
-			}
-		}
-
-		// Opaque
-		if(variant.m_opaques.getSize() > 0)
-		{
-			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Opaque\n");
-			for(const ShaderProgramBinaryOpaqueInstance& instance : variant.m_opaques)
-			{
-				const ShaderProgramBinaryOpaque& o = binary.m_opaques[instance.m_index];
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u type %12s arraySize %4u\n",
-					o.m_name.getBegin(),
-					o.m_set,
-					o.m_binding,
-					shaderVariableDataTypeToString(o.m_type).cstr(),
-					instance.m_arraySize);
-			}
-		}
-
-		// Push constants
-		if(variant.m_pushConstantBlock)
-		{
-			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Push constants\n");
-			disassembleBlock(*variant.m_pushConstantBlock, *binary.m_pushConstantBlock, lines);
-		}
-
-		// Constants
-		if(variant.m_constants.getSize() > 0)
-		{
-			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Specialization constants\n");
-			for(const ShaderProgramBinaryConstantInstance& instance : variant.m_constants)
-			{
-				const ShaderProgramBinaryConstant& c = binary.m_constants[instance.m_index];
-				lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s type %8s id %4u\n",
-					c.m_name.getBegin(),
-					shaderVariableDataTypeToString(c.m_type).cstr(),
-					c.m_constantId);
-			}
-		}
-
-		// Binary indices
-		lines.pushBack(ANKI_TAB ANKI_TAB "Binaries ");
-		for(ShaderType shaderType : EnumIterable<ShaderType>())
-		{
-			if(variant.m_codeBlockIndices[shaderType] < MAX_U32)
-			{
-				lines.pushBackSprintf("%u", variant.m_codeBlockIndices[shaderType]);
-			}
-			else
-			{
-				lines.pushBack("-");
-			}
-
-			if(shaderType != ShaderType::LAST)
-			{
-				lines.pushBack(",");
-			}
-		}
-		lines.pushBack("\n");
-	}
-
-	// Mutations
-	lines.pushBack("\n**MUTATIONS**\n");
-	count = 0;
-	for(const ShaderProgramBinaryMutation& mutation : binary.m_mutations)
-	{
-		lines.pushBackSprintf(ANKI_TAB "#%-4u variantIndex %4u values (", count++, mutation.m_variantIndex);
-		if(mutation.m_values.getSize() > 0)
-		{
-			for(U32 i = 0; i < mutation.m_values.getSize(); ++i)
-			{
-				lines.pushBackSprintf((i < mutation.m_values.getSize() - 1) ? "%s %4d, " : "%s %4d",
-					binary.m_mutators[i].m_name.getBegin(),
-					I32(mutation.m_values[i]));
-			}
-
-			lines.pushBack(")");
-		}
-		else
-		{
-			lines.pushBack("N/A)");
-		}
-
-		lines.pushBack("\n");
-	}
-
-	lines.join("", humanReadable);
-}
-
-#undef ANKI_TAB
 
 } // end namespace anki

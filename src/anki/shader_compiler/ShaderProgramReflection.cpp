@@ -353,7 +353,7 @@ Error SpirvReflector::blockReflection(
 		const Bool err1 = nameSame && (!bindingSame || !sizeSame);
 		if(err0 || err1)
 		{
-			ANKI_SHADER_COMPILER_LOGE("Linking error");
+			ANKI_SHADER_COMPILER_LOGE("Linking error. Blocks %s and %s", other.m_name.cstr(), newBlock.m_name.cstr());
 			return Error::USER_DATA;
 		}
 

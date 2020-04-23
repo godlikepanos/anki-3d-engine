@@ -714,6 +714,12 @@ Error App::compileAllShaders()
 	ANKI_CORE_LOGI("Compiling shaders");
 	U32 shadersCompileCount = 0;
 
+	// Compute hash for both
+	const GpuDeviceCapabilities caps = m_gr->getDeviceCapabilities();
+	const BindlessLimits limits = m_gr->getBindlessLimits();
+	U64 gpuHash = computeHash(&caps, sizeof(caps));
+	gpuHash = appendHash(&limits, sizeof(limits), gpuHash);
+
 	ANKI_CHECK(m_resourceFs->iterateAllFilenames([&](CString fname) -> Error {
 		// Check file extension
 		StringAuto extension(m_heapAlloc);
@@ -722,6 +728,8 @@ Error App::compileAllShaders()
 		{
 			return Error::NONE;
 		}
+
+		ANKI_CORE_LOGI("\t%s", fname.cstr());
 
 		// Get some filenames
 		StringAuto baseFname(m_heapAlloc);
@@ -754,32 +762,80 @@ Error App::compileAllShaders()
 		} fsystem;
 		fsystem.m_fsystem = m_resourceFs;
 
+		// Skip interface
 		class Skip : public ShaderProgramPostParseInterface
 		{
 		public:
 			U64 m_metafileHash;
 			U64 m_newHash;
+			U64 m_gpuHash;
 
 			Bool skipCompilation(U64 hash)
 			{
 				ANKI_ASSERT(hash != 0);
-				m_newHash = hash;
-				// TODO Need to consider getDeviceCapabilities and getBindlessLimits
+				const Array<U64, 2> hashes = {{hash, m_gpuHash}};
+				const U64 finalHash = computeHash(hashes.getBegin(), hashes.getSizeInBytes());
+
+				m_newHash = finalHash;
 				return hash == m_metafileHash;
 			};
 		} skip;
 		skip.m_metafileHash = metafileHash;
 		skip.m_newHash = 0;
+		skip.m_gpuHash = gpuHash;
+
+		// Threading interface
+		class TaskManager : public ShaderProgramAsyncTaskInterface
+		{
+		public:
+			ThreadHive* m_hive = nullptr;
+			HeapAllocator<U8> m_alloc;
+
+			void enqueueTask(void (*callback)(void* userData), void* userData)
+			{
+				struct Ctx
+				{
+					void (*m_callback)(void* userData);
+					void* m_userData;
+					HeapAllocator<U8> m_alloc;
+				};
+				Ctx* ctx = m_alloc.newInstance<Ctx>();
+				ctx->m_callback = callback;
+				ctx->m_userData = userData;
+				ctx->m_alloc = m_alloc;
+
+				m_hive->submitTask(
+					[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+						Ctx* ctx = static_cast<Ctx*>(userData);
+						ctx->m_callback(ctx->m_userData);
+						auto alloc = ctx->m_alloc;
+						alloc.deleteInstance(ctx);
+					},
+					ctx);
+			}
+
+			Error joinTasks()
+			{
+				m_hive->waitAllTasks();
+				return Error::NONE;
+			}
+		} taskManager;
+		taskManager.m_hive = m_threadHive;
+		taskManager.m_alloc = m_heapAlloc;
 
 		// Compile
 		ShaderProgramBinaryWrapper binary(m_heapAlloc);
-		ANKI_CHECK(compileShaderProgram(
-			fname, fsystem, &skip, m_heapAlloc, m_gr->getDeviceCapabilities(), m_gr->getBindlessLimits(), binary));
+		ANKI_CHECK(compileShaderProgram(fname, fsystem, &skip, &taskManager, m_heapAlloc, caps, limits, binary));
 
 		const Bool cachedBinIsUpToDate = metafileHash == skip.m_newHash;
 		if(!cachedBinIsUpToDate)
 		{
 			++shadersCompileCount;
+			ANKI_CORE_LOGI("\t\tCompiled");
+		}
+		else
+		{
+			ANKI_CORE_LOGI("\t\tSkipped");
 		}
 
 		// Update the meta file

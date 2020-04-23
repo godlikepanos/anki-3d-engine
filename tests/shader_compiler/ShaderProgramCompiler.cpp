@@ -5,6 +5,7 @@
 
 #include <tests/framework/Framework.h>
 #include <anki/shader_compiler/ShaderProgramCompiler.h>
+#include <anki/util/ThreadHive.h>
 
 ANKI_TEST(ShaderCompiler, ShaderProgramCompilerSimple)
 {
@@ -93,11 +94,53 @@ void main()
 	} fsystem;
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
+
+	const U32 threadCount = 8;
+	ThreadHive hive(threadCount, alloc);
+
+	class TaskManager : public ShaderProgramAsyncTaskInterface
+	{
+	public:
+		ThreadHive* m_hive = nullptr;
+		HeapAllocator<U8> m_alloc;
+
+		void enqueueTask(void (*callback)(void* userData), void* userData)
+		{
+			struct Ctx
+			{
+				void (*m_callback)(void* userData);
+				void* m_userData;
+				HeapAllocator<U8> m_alloc;
+			};
+			Ctx* ctx = m_alloc.newInstance<Ctx>();
+			ctx->m_callback = callback;
+			ctx->m_userData = userData;
+			ctx->m_alloc = m_alloc;
+
+			m_hive->submitTask(
+				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+					Ctx* ctx = static_cast<Ctx*>(userData);
+					ctx->m_callback(ctx->m_userData);
+					auto alloc = ctx->m_alloc;
+					alloc.deleteInstance(ctx);
+				},
+				ctx);
+		}
+
+		Error joinTasks()
+		{
+			m_hive->waitAllTasks();
+			return Error::NONE;
+		}
+	} taskManager;
+	taskManager.m_hive = &hive;
+	taskManager.m_alloc = alloc;
+
 	ShaderProgramBinaryWrapper binary(alloc);
 	BindlessLimits bindlessLimits;
 	GpuDeviceCapabilities gpuCapabilities;
-	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, nullptr, alloc, gpuCapabilities, bindlessLimits, binary));
+	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram(
+		"test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities, bindlessLimits, binary));
 
 #if 1
 	StringAuto dis(alloc);
@@ -248,11 +291,53 @@ void main()
 	} fsystem;
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
+
+	const U32 threadCount = 24;
+	ThreadHive hive(threadCount, alloc);
+
+	class TaskManager : public ShaderProgramAsyncTaskInterface
+	{
+	public:
+		ThreadHive* m_hive = nullptr;
+		HeapAllocator<U8> m_alloc;
+
+		void enqueueTask(void (*callback)(void* userData), void* userData)
+		{
+			struct Ctx
+			{
+				void (*m_callback)(void* userData);
+				void* m_userData;
+				HeapAllocator<U8> m_alloc;
+			};
+			Ctx* ctx = m_alloc.newInstance<Ctx>();
+			ctx->m_callback = callback;
+			ctx->m_userData = userData;
+			ctx->m_alloc = m_alloc;
+
+			m_hive->submitTask(
+				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+					Ctx* ctx = static_cast<Ctx*>(userData);
+					ctx->m_callback(ctx->m_userData);
+					auto alloc = ctx->m_alloc;
+					alloc.deleteInstance(ctx);
+				},
+				ctx);
+		}
+
+		Error joinTasks()
+		{
+			m_hive->waitAllTasks();
+			return Error::NONE;
+		}
+	} taskManager;
+	taskManager.m_hive = &hive;
+	taskManager.m_alloc = alloc;
+
 	ShaderProgramBinaryWrapper binary(alloc);
 	BindlessLimits bindlessLimits;
 	GpuDeviceCapabilities gpuCapabilities;
-	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, nullptr, alloc, gpuCapabilities, bindlessLimits, binary));
+	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram(
+		"test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities, bindlessLimits, binary));
 
 #if 1
 	StringAuto dis(alloc);

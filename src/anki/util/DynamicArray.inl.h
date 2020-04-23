@@ -23,7 +23,7 @@ DynamicArray<T, TSize>& DynamicArray<T, TSize>::operator=(DynamicArrayAuto<T, TS
 
 template<typename T, typename TSize>
 template<typename TAllocator>
-void DynamicArray<T, TSize>::resizeStorage(TAllocator& alloc, Size newSize)
+void DynamicArray<T, TSize>::resizeStorage(TAllocator alloc, Size newSize)
 {
 	if(newSize > m_capacity)
 	{

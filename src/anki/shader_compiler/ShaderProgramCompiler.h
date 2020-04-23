@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/shader_compiler/ShaderProgramBinary.h>
+#include <anki/shader_compiler/ShaderProgramDump.h>
 #include <anki/util/String.h>
 #include <anki/gr/Common.h>
 
@@ -22,6 +22,7 @@ class ShaderProgramBinaryWrapper : public NonCopyable
 	friend Error compileShaderProgramInternal(CString fname,
 		ShaderProgramFilesystemInterface& fsystem,
 		ShaderProgramPostParseInterface* postParseCallback,
+		ShaderProgramAsyncTaskInterface* taskManager,
 		GenericMemoryPoolAllocator<U8> tempAllocator,
 		const GpuDeviceCapabilities& gpuCapabilities,
 		const BindlessLimits& bindlessLimits,
@@ -60,13 +61,11 @@ private:
 ANKI_USE_RESULT Error compileShaderProgram(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
 	ShaderProgramPostParseInterface* postParseCallback,
+	ShaderProgramAsyncTaskInterface* taskManager,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
 	const GpuDeviceCapabilities& gpuCapabilities,
 	const BindlessLimits& bindlessLimits,
 	ShaderProgramBinaryWrapper& binary);
-
-/// Create a human readable representation of the shader binary.
-void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable);
 /// @}
 
 } // end namespace anki
