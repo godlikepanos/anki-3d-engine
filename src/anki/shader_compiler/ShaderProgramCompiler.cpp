@@ -14,6 +14,7 @@ namespace anki
 {
 
 static const char* SHADER_BINARY_MAGIC = "ANKISDR1";
+const U32 SHADER_BINARY_VERSION = 1;
 
 Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 {
@@ -23,8 +24,8 @@ Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 	ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
 
 	BinarySerializer serializer;
-	StackAllocator<U8> tmpAlloc(
-		m_alloc.getMemoryPool().getAllocationCallback(), m_alloc.getMemoryPool().getAllocationCallbackUserData(), 4_KB);
+	HeapAllocator<U8> tmpAlloc(
+		m_alloc.getMemoryPool().getAllocationCallback(), m_alloc.getMemoryPool().getAllocationCallbackUserData());
 	ANKI_CHECK(serializer.serialize(*m_binary, tmpAlloc, file));
 
 	return Error::NONE;

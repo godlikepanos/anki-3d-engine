@@ -25,15 +25,16 @@ enum class BuiltinMaterialVariableId2 : U8
 {
 	NONE = 0,
 	MODEL_VIEW_PROJECTION_MATRIX,
-	MODEL_VIEW_MATRIX,
+	PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX,
 	MODEL_MATRIX,
-	VIEW_PROJECTION_MATRIX,
 	VIEW_MATRIX,
+	PROJECTION_MATRIX,
+	MODEL_VIEW_MATRIX,
+	VIEW_PROJECTION_MATRIX,
 	NORMAL_MATRIX,
 	ROTATION_MATRIX,
 	CAMERA_ROTATION_MATRIX,
 	CAMERA_POSITION,
-	PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX,
 	GLOBAL_SAMPLER,
 
 	COUNT,
@@ -62,6 +63,7 @@ public:
 		m_name = std::move(b.m_name);
 		m_index = b.m_index;
 		m_indexInBinary = b.m_indexInBinary;
+		m_indexInBinary2ndElement = b.m_indexInBinary2ndElement;
 		m_constant = b.m_constant;
 		m_instanced = b.m_instanced;
 		m_dataType = b.m_dataType;
@@ -128,6 +130,7 @@ protected:
 	String m_name;
 	U32 m_index = MAX_U32;
 	U32 m_indexInBinary = MAX_U32;
+	U32 m_indexInBinary2ndElement = MAX_U32;
 	Bool m_constant = false;
 	Bool m_instanced = false;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
@@ -249,9 +252,9 @@ private:
 ///		[forwardShading="0 | 1"]
 ///		<shaderProgram="path"/>
 ///
-///		[<mutators>
+///		[<mutation>
 ///			<mutator name="str" value="value"/>
-///		</mutators>]
+///		</mutation>]
 ///
 ///		[<inputs>
 ///			<input shaderVar="name to shaderProg var" value="values"/> (1)
@@ -347,7 +350,31 @@ private:
 
 	static U32 getInstanceGroupIdx(U32 instanceCount);
 
-	void initVariant(const ShaderProgramResourceVariant2& progVariant, MaterialVariant2& variant) const;
+	void initVariant(
+		const ShaderProgramResourceVariant2& progVariant, MaterialVariant2& variant, U32 instanceCount) const;
+
+	const MaterialVariable2* tryFindVariableInternal(CString name) const
+	{
+		for(const MaterialVariable2& v : m_vars)
+		{
+			if(v.m_name == name)
+			{
+				return &v;
+			}
+		}
+
+		return nullptr;
+	}
+
+	const MaterialVariable2* tryFindVariable(CString name) const
+	{
+		return tryFindVariableInternal(name);
+	}
+
+	MaterialVariable2* tryFindVariable(CString name)
+	{
+		return const_cast<MaterialVariable2*>(tryFindVariableInternal(name));
+	}
 };
 /// @}
 

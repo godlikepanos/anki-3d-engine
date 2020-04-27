@@ -11,6 +11,7 @@
 #include <anki/resource/ScriptResource.h>
 #include <anki/resource/MeshResource.h>
 #include <anki/resource/MaterialResource.h>
+#include <anki/resource/MaterialResource2.h>
 #include <anki/resource/TextureAtlasResource.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/GenericResource.h>

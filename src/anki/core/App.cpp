@@ -719,6 +719,7 @@ Error App::compileAllShaders()
 	const BindlessLimits limits = m_gr->getBindlessLimits();
 	U64 gpuHash = computeHash(&caps, sizeof(caps));
 	gpuHash = appendHash(&limits, sizeof(limits), gpuHash);
+	gpuHash = appendHash(&SHADER_BINARY_VERSION, sizeof(SHADER_BINARY_VERSION), gpuHash);
 
 	ANKI_CHECK(m_resourceFs->iterateAllFilenames([&](CString fname) -> Error {
 		// Check file extension
@@ -777,7 +778,7 @@ Error App::compileAllShaders()
 				const U64 finalHash = computeHash(hashes.getBegin(), hashes.getSizeInBytes());
 
 				m_newHash = finalHash;
-				return hash == m_metafileHash;
+				return finalHash == m_metafileHash;
 			};
 		} skip;
 		skip.m_metafileHash = metafileHash;

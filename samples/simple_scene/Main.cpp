@@ -16,6 +16,7 @@ public:
 		ScriptResourcePtr script;
 		ANKI_CHECK(getResourceManager().loadResource("assets/scene.lua", script));
 		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
+
 		return Error::NONE;
 	}
 };

@@ -22,16 +22,60 @@ public:
 static const Array<BuiltinVarInfo, U(BuiltinMaterialVariableId2::COUNT)> BUILTIN_INFOS = {
 	{{"NONE", ShaderVariableDataType::NONE, false},
 		{"m_ankiMvp", ShaderVariableDataType::MAT4, true},
-		{"m_ankiViewMatrix", ShaderVariableDataType::MAT4, true},
+		{"m_ankiPreviousMvp", ShaderVariableDataType::MAT4, true},
 		{"m_ankiModelMatrix", ShaderVariableDataType::MAT4, true},
-		{"m_ankiProjectionMatrix", ShaderVariableDataType::MAT4, false},
 		{"m_ankiViewMatrix", ShaderVariableDataType::MAT4, false},
+		{"m_ankiProjectionMatrix", ShaderVariableDataType::MAT4, false},
+		{"m_ankiModelViewMatrix", ShaderVariableDataType::MAT4, true},
+		{"m_ankiViewProjectionMatrix", ShaderVariableDataType::MAT4, false},
 		{"m_ankiNormalMatrix", ShaderVariableDataType::MAT3, true},
 		{"m_ankiRotationMatrix", ShaderVariableDataType::MAT3, true},
 		{"m_ankiCameraRotationMatrix", ShaderVariableDataType::MAT3, false},
 		{"m_ankiCameraPosition", ShaderVariableDataType::VEC3, false},
-		{"m_ankiPreviousMvp", ShaderVariableDataType::MAT4, true},
-		{"m_ankiGlobalSampler", ShaderVariableDataType::SAMPLER, false}}};
+		{"u_ankiGlobalSampler", ShaderVariableDataType::SAMPLER, false}}};
+
+static ANKI_USE_RESULT Error checkBuiltin(
+	CString name, ShaderVariableDataType dataType, Bool instanced, BuiltinMaterialVariableId2& outId)
+{
+	outId = BuiltinMaterialVariableId2::NONE;
+
+	for(BuiltinMaterialVariableId2 id : EnumIterable<BuiltinMaterialVariableId2>())
+	{
+		if(id == BuiltinMaterialVariableId2::NONE)
+		{
+			continue;
+		}
+
+		if(BUILTIN_INFOS[id].m_name == name)
+		{
+			outId = id;
+
+			if(BUILTIN_INFOS[id].m_type != dataType)
+			{
+				ANKI_RESOURCE_LOGE("Incorect type for builtin: %s", name.cstr());
+				return Error::USER_DATA;
+			}
+
+			if(BUILTIN_INFOS[id].m_instanced != instanced)
+			{
+				ANKI_RESOURCE_LOGE("Variable %s be instanced: %s",
+					(BUILTIN_INFOS[id].m_instanced) ? "should" : "shouldn't",
+					name.cstr());
+				return Error::USER_DATA;
+			}
+
+			break;
+		}
+	}
+
+	if(outId == BuiltinMaterialVariableId2::NONE && (name.find("m_anki") == 0 || name.find("u_anki") == 0))
+	{
+		ANKI_RESOURCE_LOGE("Unknown builtin var: %s", name.cstr());
+		return Error::USER_DATA;
+	}
+
+	return Error::NONE;
+}
 
 MaterialVariable2::MaterialVariable2()
 {
@@ -50,7 +94,32 @@ MaterialResource2::MaterialResource2(ResourceManager* manager)
 
 MaterialResource2::~MaterialResource2()
 {
-	// TODO
+	for(Pass p : EnumIterable<Pass>())
+	{
+		for(U32 l = 0; l < MAX_LOD_COUNT; ++l)
+		{
+			for(U32 inst = 0; inst < MAX_INSTANCE_GROUPS; ++inst)
+			{
+				for(U32 skinned = 0; skinned <= 1; ++skinned)
+				{
+					for(U32 vel = 0; vel <= 1; ++vel)
+					{
+						MaterialVariant2& variant = m_variantMatrix[p][l][inst][skinned][vel];
+						variant.m_blockInfos.destroy(getAllocator());
+						variant.m_opaqueBindings.destroy(getAllocator());
+					}
+				}
+			}
+		}
+	}
+
+	for(MaterialVariable2& var : m_vars)
+	{
+		var.m_name.destroy(getAllocator());
+	}
+	m_vars.destroy(getAllocator());
+
+	m_nonBuiltinsMutation.destroy(getAllocator());
 }
 
 Error MaterialResource2::load(const ResourceFilename& filename, Bool async)
@@ -80,9 +149,9 @@ Error MaterialResource2::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(rootEl.getAttributeNumberOptional("forwardShading", m_forwardShading, present));
 	m_forwardShading = m_forwardShading != 0;
 
-	// <mutators>
+	// <mutation>
 	XmlElement mutatorsEl;
-	ANKI_CHECK(rootEl.getChildElementOptional("mutators", mutatorsEl));
+	ANKI_CHECK(rootEl.getChildElementOptional("mutation", mutatorsEl));
 	if(mutatorsEl)
 	{
 		ANKI_CHECK(parseMutators(mutatorsEl));
@@ -93,16 +162,6 @@ Error MaterialResource2::load(const ResourceFilename& filename, Bool async)
 	if(el)
 	{
 		ANKI_CHECK(parseInputs(el, async));
-	}
-
-	// Check that all non-builtin vars have a value
-	for(const MaterialVariable2& var : m_vars)
-	{
-		if(!var.isBuildin() && !var.valueSetByMaterial())
-		{
-			ANKI_RESOURCE_LOGE("Missing value for variable %s", var.m_name.cstr());
-			return Error::USER_DATA;
-		}
 	}
 
 	return Error::NONE;
@@ -296,11 +355,13 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 
 Error MaterialResource2::parseVariable(CString fullVarName, Bool& instanced, U32& idx, CString& name)
 {
-	if(fullVarName.find("u_ankiPerDraw") == CString::NPOS)
+	idx = 0;
+
+	if(fullVarName.find("u_ankiPerDraw") != CString::NPOS)
 	{
 		instanced = false;
 	}
-	else if(fullVarName.find("u_ankiPerInstance") == CString::NPOS)
+	else if(fullVarName.find("u_ankiPerInstance") != CString::NPOS)
 	{
 		instanced = true;
 	}
@@ -310,26 +371,42 @@ Error MaterialResource2::parseVariable(CString fullVarName, Bool& instanced, U32
 		return Error::USER_DATA;
 	}
 
+	const PtrSize leftBracket = fullVarName.find("[");
+	const PtrSize rightBracket = fullVarName.find("]");
+
 	if(instanced)
 	{
-		const PtrSize leftBracket = fullVarName.find("[");
-		const PtrSize rightBracket = fullVarName.find("]");
-
-		if(leftBracket == CString::NPOS || rightBracket == CString::NPOS || rightBracket <= leftBracket)
+		const Bool correct =
+			(leftBracket == CString::NPOS && rightBracket == CString::NPOS)
+			|| (leftBracket != CString::NPOS && rightBracket != CString::NPOS && rightBracket > leftBracket);
+		if(!correct)
 		{
 			ANKI_RESOURCE_LOGE("Wrong variable name: %s", fullVarName.cstr());
 			return Error::USER_DATA;
 		}
 
-		Array<char, 8> idxStr;
-		ANKI_ASSERT(rightBracket - leftBracket < idxStr.getSize() - 1);
-		for(PtrSize i = leftBracket; i <= rightBracket; ++i)
+		if(leftBracket != CString::NPOS)
 		{
-			idxStr[i - leftBracket] = fullVarName[i];
-		}
-		idxStr[rightBracket - leftBracket + 1] = '\0';
+			Array<char, 8> idxStr = {};
+			for(PtrSize i = leftBracket + 1; i < rightBracket; ++i)
+			{
+				idxStr[i - (leftBracket + 1)] = fullVarName[i];
+			}
 
-		ANKI_CHECK(CString(idxStr.getBegin()).toNumber(idx));
+			ANKI_CHECK(CString(idxStr.getBegin()).toNumber(idx));
+		}
+		else
+		{
+			idx = 0;
+		}
+	}
+	else
+	{
+		if(leftBracket != CString::NPOS || rightBracket != CString::NPOS)
+		{
+			ANKI_RESOURCE_LOGE("Can't support non instanced array variables: %s", fullVarName.cstr());
+			return Error::USER_DATA;
+		}
 	}
 
 	const PtrSize dot = fullVarName.find(".");
@@ -339,7 +416,7 @@ Error MaterialResource2::parseVariable(CString fullVarName, Bool& instanced, U32
 		return Error::USER_DATA;
 	}
 
-	name = fullVarName.getBegin() + dot;
+	name = fullVarName.getBegin() + dot + 1;
 
 	return Error::NONE;
 }
@@ -369,10 +446,34 @@ Error MaterialResource2::createVars()
 			U32 idx;
 			CString name;
 			ANKI_CHECK(parseVariable(var.m_name.getBegin(), instanced, idx, name));
+			ANKI_ASSERT(name.getLength() > 0 && (instanced || idx == 0));
 
 			if(idx > 0)
 			{
+				if(idx > MAX_INSTANCES)
+				{
+					ANKI_RESOURCE_LOGE("Array variable exceeds the instance count: %s", var.m_name.getBegin());
+					return Error::USER_DATA;
+				}
+
+				if(idx == 1)
+				{
+					// Find the idx==0
+					MaterialVariable2* other = tryFindVariable(name);
+					ANKI_ASSERT(other);
+					ANKI_ASSERT(other->m_indexInBinary2ndElement == MAX_U32);
+					other->m_indexInBinary2ndElement = U32(&var - block.m_variables.getBegin());
+				}
+
+				// Skip var
 				continue;
+			}
+
+			const MaterialVariable2* other = tryFindVariable(name);
+			if(other)
+			{
+				ANKI_RESOURCE_LOGE("Variable found twice: %s", name.cstr());
+				return Error::USER_DATA;
 			}
 
 			MaterialVariable2& in = *m_vars.emplaceBack(getAllocator());
@@ -384,34 +485,7 @@ Error MaterialResource2::createVars()
 			in.m_dataType = var.m_type;
 
 			// Check if it's builtin
-			for(BuiltinMaterialVariableId2 id : EnumIterable<BuiltinMaterialVariableId2>())
-			{
-				if(id == BuiltinMaterialVariableId2::NONE)
-				{
-					continue;
-				}
-
-				if(BUILTIN_INFOS[id].m_name == name)
-				{
-					in.m_builtin = id;
-
-					if(BUILTIN_INFOS[id].m_type != in.m_dataType)
-					{
-						ANKI_RESOURCE_LOGE("Incorect type for builtin: %s", name.cstr());
-						return Error::USER_DATA;
-					}
-
-					if(BUILTIN_INFOS[id].m_instanced == instanced)
-					{
-						ANKI_RESOURCE_LOGE("Variable %s be instanced: %s",
-							(BUILTIN_INFOS[id].m_instanced) ? "should" : "shouldn't",
-							name.cstr());
-						return Error::USER_DATA;
-					}
-
-					break;
-				}
-			}
+			ANKI_CHECK(checkBuiltin(name, in.m_dataType, instanced, in.m_builtin));
 		}
 	}
 
@@ -438,6 +512,9 @@ Error MaterialResource2::createVars()
 		in.m_constant = false;
 		in.m_instanced = false;
 		in.m_dataType = o.m_type;
+
+		// Check if it's builtin
+		ANKI_CHECK(checkBuiltin(in.m_name, in.m_dataType, false, in.m_builtin));
 	}
 
 	if(descriptorSet != maxDescriptorSet)
@@ -474,15 +551,7 @@ Error MaterialResource2::parseInputs(XmlElement inputsEl, Bool async)
 		ANKI_CHECK(inputEl.getAttributeText("shaderVar", varName));
 
 		// Try find var
-		MaterialVariable2* foundVar = nullptr;
-		for(MaterialVariable2& v : m_vars)
-		{
-			if(v.m_name == varName)
-			{
-				foundVar = &v;
-				break;
-			}
-		}
+		MaterialVariable2* foundVar = tryFindVariable(varName);
 
 		if(foundVar == nullptr)
 		{
@@ -490,11 +559,14 @@ Error MaterialResource2::parseInputs(XmlElement inputsEl, Bool async)
 			return Error::USER_DATA;
 		}
 
-		if(foundVar->m_builtin == BuiltinMaterialVariableId2::NONE)
+		if(foundVar->m_builtin != BuiltinMaterialVariableId2::NONE)
 		{
 			ANKI_RESOURCE_LOGE("Shouldn't list builtin vars: %s", varName.cstr());
 			return Error::USER_DATA;
 		}
+
+		// A value will be set
+		foundVar->m_mat4(3, 3) = 0.0f;
 
 		// Process var
 		if(foundVar->isConstant())
@@ -697,6 +769,11 @@ const MaterialVariant2& MaterialResource2::getOrCreateVariant(const RenderingKey
 			continue;
 		}
 
+		if(!var.valueSetByMaterial())
+		{
+			continue;
+		}
+
 		switch(var.m_dataType)
 		{
 		case ShaderVariableDataType::INT:
@@ -732,12 +809,13 @@ const MaterialVariant2& MaterialResource2::getOrCreateVariant(const RenderingKey
 	m_prog->getOrCreateVariant(initInfo, progVariant);
 
 	// Init the variant
-	initVariant(*progVariant, variant);
+	initVariant(*progVariant, variant, key.getInstanceCount());
 
 	return variant;
 }
 
-void MaterialResource2::initVariant(const ShaderProgramResourceVariant2& progVariant, MaterialVariant2& variant) const
+void MaterialResource2::initVariant(
+	const ShaderProgramResourceVariant2& progVariant, MaterialVariant2& variant, U32 instanceCount) const
 {
 	// Find the block instance
 	const ShaderProgramBinary& binary = m_prog->getBinary();
@@ -763,6 +841,7 @@ void MaterialResource2::initVariant(const ShaderProgramResourceVariant2& progVar
 	variant.m_blockInfos.create(getAllocator(), m_vars.getSize());
 	variant.m_opaqueBindings.create(getAllocator(), m_vars.getSize(), -1);
 	variant.m_uniBlockSize = binaryBlockInstance->m_size;
+	ANKI_ASSERT(variant.m_uniBlockSize > 0);
 
 	// Initialize the block infos, active vars and bindings
 	for(const MaterialVariable2& var : m_vars)
@@ -774,6 +853,7 @@ void MaterialResource2::initVariant(const ShaderProgramResourceVariant2& progVar
 				if(c.m_name == var.m_name)
 				{
 					variant.m_activeVars.set(var.m_index, progVariant.isConstantActive(c));
+					break;
 				}
 			}
 		}
@@ -785,7 +865,24 @@ void MaterialResource2::initVariant(const ShaderProgramResourceVariant2& progVar
 				{
 					variant.m_activeVars.set(var.m_index, true);
 					variant.m_blockInfos[var.m_index] = instance.m_blockInfo;
-					break;
+
+					if(var.m_instanced)
+					{
+						variant.m_blockInfos[var.m_index].m_arraySize = I16(instanceCount);
+					}
+					else
+					{
+						break;
+					}
+				}
+				else if(instance.m_index == var.m_indexInBinary2ndElement)
+				{
+					// Then we need to update the stride
+					ANKI_ASSERT(variant.m_blockInfos[var.m_index].m_offset >= 0);
+
+					const I16 stride = I16(instance.m_blockInfo.m_offset - variant.m_blockInfos[var.m_index].m_offset);
+					ANKI_ASSERT(stride >= 4);
+					variant.m_blockInfos[var.m_index].m_arrayStride = stride;
 				}
 			}
 		}
@@ -803,6 +900,33 @@ void MaterialResource2::initVariant(const ShaderProgramResourceVariant2& progVar
 			}
 		}
 	}
+
+	// No make sure that the vars that are active
+	for(const MaterialVariable2& var : m_vars)
+	{
+		if(var.m_builtin == BuiltinMaterialVariableId2::NONE && variant.m_activeVars.get(var.m_index)
+			&& !var.valueSetByMaterial())
+		{
+			ANKI_RESOURCE_LOGF("An active variable doesn't have its value set by the material: %s", var.m_name.cstr());
+		}
+
+		ANKI_ASSERT(!(var.m_instanced && var.m_indexInBinary2ndElement == MAX_U32));
+	}
+
+// Debug print
+#if 0
+	printf("binary variant idx %u\n", U32(&binaryVariant - binary.m_variants.getBegin()));
+	for(const MaterialVariable2& var : m_vars)
+	{
+
+		printf("Var %s %s\n", var.m_name.cstr(), variant.m_activeVars.get(var.m_index) ? "active" : "inactive");
+		if(var.inBlock() && variant.m_activeVars.get(var.m_index))
+		{
+			const ShaderVariableBlockInfo& inf = variant.m_blockInfos[var.m_index];
+			printf("\tblockInfo %d,%d,%d,%d\n", inf.m_offset, inf.m_arraySize, inf.m_arrayStride, inf.m_matrixStride);
+		}
+	}
+#endif
 }
 
 U32 MaterialResource2::getInstanceGroupIdx(U32 instanceCount)

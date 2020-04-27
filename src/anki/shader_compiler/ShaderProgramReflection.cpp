@@ -171,6 +171,7 @@ Error SpirvReflector::blockVariableReflection(
 		}
 
 		// Array size
+		Bool isArray = false;
 		{
 			if(!memberType.array.empty())
 			{
@@ -185,10 +186,12 @@ Error SpirvReflector::blockVariableReflection(
 				{
 					// Have a min to acount for unsized arrays of SSBOs
 					var.m_blockInfo.m_arraySize = max<I16>(I16(memberType.array[0]), 1);
+					isArray = true;
 				}
 				else
 				{
 					var.m_blockInfo.m_arraySize = 1;
+					isArray = true;
 				}
 			}
 			else
@@ -227,7 +230,7 @@ Error SpirvReflector::blockVariableReflection(
 
 		if(memberType.basetype == spirv_cross::SPIRType::Struct)
 		{
-			if(var.m_blockInfo.m_arraySize == 1)
+			if(var.m_blockInfo.m_arraySize == 1 && !isArray)
 			{
 				ANKI_CHECK(blockVariableReflection(memberType, var.m_name, var.m_blockInfo.m_offset, vars));
 			}

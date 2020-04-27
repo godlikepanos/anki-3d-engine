@@ -16,6 +16,8 @@
 #pragma anki mutator PARALLAX 0 1
 #pragma anki mutator EMISSIVE_TEX 0 1
 
+#pragma anki rewrite_mutation ANKI_PASS 1 to ANKI_PASS 0
+
 #pragma anki rewrite_mutation ANKI_PASS 1 DIFFUSE_TEX 1 to ANKI_PASS 1 DIFFUSE_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 2 DIFFUSE_TEX 1 to ANKI_PASS 2 DIFFUSE_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 DIFFUSE_TEX 1 to ANKI_PASS 2 DIFFUSE_TEX 0
@@ -96,7 +98,7 @@ struct PerDraw
 	Vec3 m_emission;
 #	endif
 #	if REALLY_USING_PARALLAX
-	F32 m_heightMapScale;
+	F32 m_heightmapScale;
 #	endif
 #	if ANKI_PASS == PASS_GB
 	F32 m_subsurface;
@@ -340,7 +342,7 @@ void main()
 #if ANKI_PASS == PASS_GB
 #	if REALLY_USING_PARALLAX
 	const Vec2 uv =
-		computeTextureCoordParallax(u_heightTex, u_ankiGlobalSampler, in_uv, u_ankiPerDraw.m_heightMapScale);
+		computeTextureCoordParallax(u_heightTex, u_ankiGlobalSampler, in_uv, u_ankiPerDraw.m_heightmapScale);
 #	else
 	const Vec2 uv = in_uv;
 #	endif

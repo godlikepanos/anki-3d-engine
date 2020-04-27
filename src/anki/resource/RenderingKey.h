@@ -18,7 +18,9 @@ enum class Pass : U8
 	FS, ///< Forward shading.
 	SM, ///< Shadow mapping.
 	EZ, ///< Early Z.
-	COUNT
+
+	COUNT,
+	FIRST = 0
 };
 
 /// A key that consistst of the rendering pass and the level of detail

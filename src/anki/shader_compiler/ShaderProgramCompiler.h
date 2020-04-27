@@ -15,6 +15,8 @@ namespace anki
 /// @addtogroup shader_compiler
 /// @{
 
+extern const U32 SHADER_BINARY_VERSION;
+
 /// A wrapper over the POD ShaderProgramBinary class.
 /// @memberof ShaderProgramCompiler
 class ShaderProgramBinaryWrapper : public NonCopyable

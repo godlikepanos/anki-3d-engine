@@ -11,6 +11,7 @@
 #include <anki/gr/ShaderCompiler.h>
 
 #include <anki/resource/MaterialResource.h>
+#include <anki/resource/MaterialResource2.h>
 #include <anki/resource/MeshResource.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ScriptResource.h>
