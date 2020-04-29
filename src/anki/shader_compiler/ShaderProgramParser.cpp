@@ -586,6 +586,9 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			{
 				ANKI_PP_ERROR_MALFORMED();
 			}
+
+			// Add the line as a comment because of hashing of the source
+			m_codeLines.pushBackSprintf("//%s", line.cstr());
 		}
 		else
 		{

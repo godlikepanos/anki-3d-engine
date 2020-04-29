@@ -274,19 +274,38 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 	}
 
 	m_builtinMutators[BuiltinMutatorId2::PASS] = m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS]);
+	if(m_builtinMutators[BuiltinMutatorId2::PASS] && m_forwardShading)
+	{
+		ANKI_RESOURCE_LOGE(
+			"Mutator is not required for forward shading: %s", BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS].cstr());
+		return Error::USER_DATA;
+	}
+	else if(!m_builtinMutators[BuiltinMutatorId2::PASS] && !m_forwardShading)
+	{
+		ANKI_RESOURCE_LOGE(
+			"Mutator is required for opaque shading: %s", BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS].cstr());
+		return Error::USER_DATA;
+	}
+
 	if(m_builtinMutators[BuiltinMutatorId2::PASS])
 	{
-		if(m_builtinMutators[BuiltinMutatorId2::PASS]->m_values.getSize() != U32(Pass::COUNT))
+		if(m_builtinMutators[BuiltinMutatorId2::PASS]->m_values.getSize() != U32(Pass::COUNT) - 1)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have %u values in the program",
 				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS].cstr(),
-				U32(Pass::COUNT));
+				U32(Pass::COUNT) - 1);
 			return Error::USER_DATA;
 		}
 
-		for(U32 i = 0; i < U(Pass::COUNT); ++i)
+		U32 count = 0;
+		for(Pass p : EnumIterable<Pass>())
 		{
-			if(m_builtinMutators[BuiltinMutatorId2::PASS]->m_values[i] != I(i))
+			if(p == Pass::FS)
+			{
+				continue;
+			}
+
+			if(m_builtinMutators[BuiltinMutatorId2::PASS]->m_values[count++] != I(p))
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
 					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS].cstr());

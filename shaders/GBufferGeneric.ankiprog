@@ -6,7 +6,7 @@
 #pragma anki mutator ANKI_INSTANCE_COUNT 1 2 4 8 16 32 64
 #pragma anki mutator ANKI_LOD 0 1 2
 #pragma anki mutator ANKI_VELOCITY 0 1
-#pragma anki mutator ANKI_PASS 0 1 2 3
+#pragma anki mutator ANKI_PASS 0 2 3
 #pragma anki mutator ANKI_BONES 0 1
 #pragma anki mutator DIFFUSE_TEX 0 1
 #pragma anki mutator SPECULAR_TEX 0 1
@@ -16,33 +16,24 @@
 #pragma anki mutator PARALLAX 0 1
 #pragma anki mutator EMISSIVE_TEX 0 1
 
-#pragma anki rewrite_mutation ANKI_PASS 1 to ANKI_PASS 0
-
-#pragma anki rewrite_mutation ANKI_PASS 1 DIFFUSE_TEX 1 to ANKI_PASS 1 DIFFUSE_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 2 DIFFUSE_TEX 1 to ANKI_PASS 2 DIFFUSE_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 DIFFUSE_TEX 1 to ANKI_PASS 2 DIFFUSE_TEX 0
 
-#pragma anki rewrite_mutation ANKI_PASS 1 SPECULAR_TEX 1 to ANKI_PASS 1 SPECULAR_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 2 SPECULAR_TEX 1 to ANKI_PASS 2 SPECULAR_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 SPECULAR_TEX 1 to ANKI_PASS 2 SPECULAR_TEX 0
 
-#pragma anki rewrite_mutation ANKI_PASS 1 NORMAL_TEX 1 to ANKI_PASS 1 NORMAL_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 2 NORMAL_TEX 1 to ANKI_PASS 2 NORMAL_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 NORMAL_TEX 1 to ANKI_PASS 2 NORMAL_TEX 0
 
-#pragma anki rewrite_mutation ANKI_PASS 1 ROUGHNESS_TEX 1 to ANKI_PASS 1 ROUGHNESS_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 2 ROUGHNESS_TEX 1 to ANKI_PASS 2 ROUGHNESS_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 ROUGHNESS_TEX 1 to ANKI_PASS 2 ROUGHNESS_TEX 0
 
-#pragma anki rewrite_mutation ANKI_PASS 1 METAL_TEX 1 to ANKI_PASS 1 METAL_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 2 METAL_TEX 1 to ANKI_PASS 2 METAL_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 METAL_TEX 1 to ANKI_PASS 2 METAL_TEX 0
 
-#pragma anki rewrite_mutation ANKI_PASS 1 EMISSIVE_TEX 1 to ANKI_PASS 1 EMISSIVE_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 2 EMISSIVE_TEX 1 to ANKI_PASS 2 EMISSIVE_TEX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 EMISSIVE_TEX 1 to ANKI_PASS 2 EMISSIVE_TEX 0
 
-#pragma anki rewrite_mutation ANKI_PASS 1 PARALLAX 1 to ANKI_PASS 1 PARALLAX 0
 #pragma anki rewrite_mutation ANKI_PASS 2 PARALLAX 1 to ANKI_PASS 2 PARALLAX 0
 #pragma anki rewrite_mutation ANKI_PASS 3 PARALLAX 1 to ANKI_PASS 2 PARALLAX 0
 
