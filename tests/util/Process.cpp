@@ -21,7 +21,7 @@ ANKI_TEST(Util, Process)
 		HeapAllocator<U8> alloc(allocAligned, nullptr);
 		StringAuto stdOut(alloc);
 		ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
-		ANKI_TEST_LOGI(stdOut.cstr());
+		ANKI_TEST_LOGI("%s", stdOut.cstr());
 	}
 
 	// Stderr and stdOut
@@ -58,14 +58,14 @@ done
 			ANKI_TEST_EXPECT_NO_ERR(proc.readFromStdout(stdOut));
 			if(stdOut.getLength())
 			{
-				ANKI_TEST_LOGI(stdOut.cstr());
+				ANKI_TEST_LOGI("%s", stdOut.cstr());
 			}
 
 			StringAuto stderrStr(alloc);
 			ANKI_TEST_EXPECT_NO_ERR(proc.readFromStderr(stderrStr));
 			if(stderrStr.getLength())
 			{
-				ANKI_TEST_LOGI(stderrStr.cstr());
+				ANKI_TEST_LOGI("%s", stderrStr.cstr());
 			}
 		}
 

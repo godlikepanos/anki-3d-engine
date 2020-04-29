@@ -184,7 +184,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 	{
 		if(m_passMutator->getValues().getSize() != U32(Pass::COUNT))
 		{
-			ANKI_RESOURCE_LOGE("Mutator PASS should have %u values in the program", U(Pass::COUNT));
+			ANKI_RESOURCE_LOGE("Mutator PASS should have %u values in the program", U32(Pass::COUNT));
 			return Error::USER_DATA;
 		}
 
@@ -211,7 +211,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 	{
 		if(m_lodMutator->getValues().getSize() > MAX_LOD_COUNT)
 		{
-			ANKI_RESOURCE_LOGE("Mutator LOD should have at least %u values in the program", U(MAX_LOD_COUNT));
+			ANKI_RESOURCE_LOGE("Mutator LOD should have at least %u values in the program", U32(MAX_LOD_COUNT));
 			return Error::USER_DATA;
 		}
 
@@ -324,7 +324,7 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 
 		if(!foundVar->acceptAllMutations(m_mutations))
 		{
-			ANKI_RESOURCE_LOGE("Variable \"%s\" is not needed by the material's mutations");
+			ANKI_RESOURCE_LOGE("Variable \"%s\" is not needed by the material's mutations", varName.cstr());
 			return Error::USER_DATA;
 		}
 

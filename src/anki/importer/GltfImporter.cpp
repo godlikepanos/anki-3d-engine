@@ -345,7 +345,7 @@ StringAuto GltfImporter::getNodeName(const cgltf_node& node)
 	return out;
 }
 
-Error GltfImporter::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize)
+Error GltfImporter::parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out, const U32* expectedArraySize)
 {
 	StringListAuto list(m_alloc);
 	list.splitString(str, ' ');
@@ -1126,7 +1126,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 		if(lsSpriteSize != extras.getEnd())
 		{
 			DynamicArrayAuto<F64> numbers(m_alloc);
-			const U count = 2;
+			const U32 count = 2;
 			ANKI_CHECK(parseArrayOfNumbers(lsSpriteSize->toCString(), numbers, &count));
 
 			ANKI_CHECK(m_sceneFile.writeText("lfcomp:setFirstFlareSize(Vec2.new(%f, %f))\n", numbers[0], numbers[1]));
@@ -1135,7 +1135,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 		if(lsColor != extras.getEnd())
 		{
 			DynamicArrayAuto<F64> numbers(m_alloc);
-			const U count = 4;
+			const U32 count = 4;
 			ANKI_CHECK(parseArrayOfNumbers(lsColor->toCString(), numbers, &count));
 
 			ANKI_CHECK(m_sceneFile.writeText("lfcomp:setColorMultiplier(Vec4.new(%f, %f, %f, %f))\n",
@@ -1155,7 +1155,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 		if(lightEventIntensity != extras.getEnd())
 		{
 			DynamicArrayAuto<F64> numbers(m_alloc);
-			const U count = 4;
+			const U32 count = 4;
 			ANKI_CHECK(parseArrayOfNumbers(lightEventIntensity->toCString(), numbers, &count));
 			ANKI_CHECK(m_sceneFile.writeText("event:setIntensityMultiplier(Vec4.new(%f, %f, %f, %f))\n",
 				numbers[0],
@@ -1167,7 +1167,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 		if(lightEventFrequency != extras.getEnd())
 		{
 			DynamicArrayAuto<F64> numbers(m_alloc);
-			const U count = 2;
+			const U32 count = 2;
 			ANKI_CHECK(parseArrayOfNumbers(lightEventFrequency->toCString(), numbers, &count));
 			ANKI_CHECK(m_sceneFile.writeText("event:setFrequency(%f, %f)\n", numbers[0], numbers[1]));
 		}

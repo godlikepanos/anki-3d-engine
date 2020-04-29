@@ -76,7 +76,7 @@ private:
 	// Misc
 	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
 	ANKI_USE_RESULT Error parseArrayOfNumbers(
-		CString str, DynamicArrayAuto<F64>& out, const U* expectedArraySize = nullptr);
+		CString str, DynamicArrayAuto<F64>& out, const U32* expectedArraySize = nullptr);
 	void populateNodePtrToIdx();
 	void populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx);
 	StringAuto getNodeName(const cgltf_node& node);

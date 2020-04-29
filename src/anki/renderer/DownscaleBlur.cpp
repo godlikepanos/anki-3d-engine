@@ -29,7 +29,7 @@ Error DownscaleBlur::init(const ConfigSet& cfg)
 Error DownscaleBlur::initInternal(const ConfigSet&)
 {
 	m_passCount = computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), DOWNSCALE_BLUR_DOWN_TO) - 1;
-	ANKI_R_LOGI("Initializing dowscale blur (passCount: %u)", U(m_passCount));
+	ANKI_R_LOGI("Initializing dowscale blur (passCount: %u)", m_passCount);
 
 	// Create the miped texture
 	TextureInitInfo texinit = m_r->create2DRenderTargetDescription(

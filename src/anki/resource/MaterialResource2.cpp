@@ -11,6 +11,9 @@
 namespace anki
 {
 
+static const Array<CString, U32(BuiltinMutatorId2::COUNT)> BUILTIN_MUTATOR_NAMES = {
+	{"NONE", "ANKI_INSTANCE_COUNT", "ANKI_PASS", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY"}};
+
 class BuiltinVarInfo
 {
 public:
@@ -195,10 +198,23 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 			return Error::USER_DATA;
 		}
 
-		if(mutatorName == "ANKI_INSTANCE_COUNT" || mutatorName == "ANKI_PASS" || mutatorName == "ANKI_LOD"
-			|| mutatorName == "ANKI_BONES" || mutatorName == "ANKI_VELOCITY")
+		for(BuiltinMutatorId2 id : EnumIterable<BuiltinMutatorId2>())
 		{
-			ANKI_RESOURCE_LOGE("Cannot list builtin mutator \"%s\"", &mutatorName[0]);
+			if(id == BuiltinMutatorId2::NONE)
+			{
+				continue;
+			}
+
+			if(mutatorName = BUILTIN_MUTATOR_NAMES[id])
+			{
+				ANKI_RESOURCE_LOGE("Cannot list builtin mutator: %s", mutatorName.cstr());
+				return Error::USER_DATA;
+			}
+		}
+
+		if(mutatorName.find("ANKI_") == 0)
+		{
+			ANKI_RESOURCE_LOGE("Mutators can't start with ANKI_: %s", mutatorName.cstr());
 			return Error::USER_DATA;
 		}
 
@@ -232,20 +248,24 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 	//
 	U builtinMutatorCount = 0;
 
-	m_instancingMutator = m_prog->tryFindMutator("ANKI_INSTANCE_COUNT");
-	if(m_instancingMutator)
+	m_builtinMutators[BuiltinMutatorId2::INSTANCE_COUNT] =
+		m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::INSTANCE_COUNT]);
+	if(m_builtinMutators[BuiltinMutatorId2::INSTANCE_COUNT])
 	{
-		if(m_instancingMutator->m_values.getSize() != MAX_INSTANCE_GROUPS)
+		if(m_builtinMutators[BuiltinMutatorId2::INSTANCE_COUNT]->m_values.getSize() != MAX_INSTANCE_GROUPS)
 		{
-			ANKI_RESOURCE_LOGE("Mutator ANKI_INSTANCE_COUNT should have %u values in the program", MAX_INSTANCE_GROUPS);
+			ANKI_RESOURCE_LOGE("Mutator %s should have %u values in the program",
+				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::INSTANCE_COUNT].cstr(),
+				MAX_INSTANCE_GROUPS);
 			return Error::USER_DATA;
 		}
 
 		for(U32 i = 0; i < MAX_INSTANCE_GROUPS; ++i)
 		{
-			if(m_instancingMutator->m_values[i] != (1 << i))
+			if(m_builtinMutators[BuiltinMutatorId2::INSTANCE_COUNT]->m_values[i] != (1 << i))
 			{
-				ANKI_RESOURCE_LOGE("Values of the ANKI_INSTANCE_COUNT mutator in the program are not the expected");
+				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
+					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::INSTANCE_COUNT].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -253,20 +273,23 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 		++builtinMutatorCount;
 	}
 
-	m_passMutator = m_prog->tryFindMutator("ANKI_PASS");
-	if(m_passMutator)
+	m_builtinMutators[BuiltinMutatorId2::PASS] = m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS]);
+	if(m_builtinMutators[BuiltinMutatorId2::PASS])
 	{
-		if(m_passMutator->m_values.getSize() != U32(Pass::COUNT))
+		if(m_builtinMutators[BuiltinMutatorId2::PASS]->m_values.getSize() != U32(Pass::COUNT))
 		{
-			ANKI_RESOURCE_LOGE("Mutator ANKI_PASS should have %u values in the program", U(Pass::COUNT));
+			ANKI_RESOURCE_LOGE("Mutator %s should have %u values in the program",
+				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS].cstr(),
+				U32(Pass::COUNT));
 			return Error::USER_DATA;
 		}
 
 		for(U32 i = 0; i < U(Pass::COUNT); ++i)
 		{
-			if(m_passMutator->m_values[i] != I(i))
+			if(m_builtinMutators[BuiltinMutatorId2::PASS]->m_values[i] != I(i))
 			{
-				ANKI_RESOURCE_LOGE("Values of the ANKI_PASS mutator in the program are not the expected");
+				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
+					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -274,48 +297,54 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 		++builtinMutatorCount;
 	}
 
-	if(!m_forwardShading && !m_passMutator)
+	if(!m_forwardShading && !m_builtinMutators[BuiltinMutatorId2::PASS])
 	{
-		ANKI_RESOURCE_LOGE("ANKI_PASS mutator is required");
+		ANKI_RESOURCE_LOGE("%s mutator is required", BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS].cstr());
 		return Error::USER_DATA;
 	}
 
-	m_lodMutator = m_prog->tryFindMutator("ANKI_LOD");
-	if(m_lodMutator)
+	m_builtinMutators[BuiltinMutatorId2::LOD] = m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::LOD]);
+	if(m_builtinMutators[BuiltinMutatorId2::LOD])
 	{
-		if(m_lodMutator->m_values.getSize() > MAX_LOD_COUNT)
+		if(m_builtinMutators[BuiltinMutatorId2::LOD]->m_values.getSize() > MAX_LOD_COUNT)
 		{
-			ANKI_RESOURCE_LOGE("Mutator ANKI_LOD should have at least %u values in the program", U(MAX_LOD_COUNT));
+			ANKI_RESOURCE_LOGE("Mutator %s should have at least %u values in the program",
+				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::LOD].cstr(),
+				U32(MAX_LOD_COUNT));
 			return Error::USER_DATA;
 		}
 
-		for(U32 i = 0; i < m_lodMutator->m_values.getSize(); ++i)
+		for(U32 i = 0; i < m_builtinMutators[BuiltinMutatorId2::LOD]->m_values.getSize(); ++i)
 		{
-			if(m_lodMutator->m_values[i] != I(i))
+			if(m_builtinMutators[BuiltinMutatorId2::LOD]->m_values[i] != I(i))
 			{
-				ANKI_RESOURCE_LOGE("Values of the ANKI_LOD mutator in the program are not the expected");
+				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
+					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::LOD].cstr());
 				return Error::USER_DATA;
 			}
 		}
 
-		m_lodCount = U8(m_lodMutator->m_values.getSize());
+		m_lodCount = U8(m_builtinMutators[BuiltinMutatorId2::LOD]->m_values.getSize());
 		++builtinMutatorCount;
 	}
 
-	m_bonesMutator = m_prog->tryFindMutator("ANKI_BONES");
-	if(m_bonesMutator)
+	m_builtinMutators[BuiltinMutatorId2::BONES] =
+		m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::BONES]);
+	if(m_builtinMutators[BuiltinMutatorId2::BONES])
 	{
-		if(m_bonesMutator->m_values.getSize() != 2)
+		if(m_builtinMutators[BuiltinMutatorId2::BONES]->m_values.getSize() != 2)
 		{
-			ANKI_RESOURCE_LOGE("Mutator ANKI_BONES should have 2 values in the program");
+			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program",
+				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::BONES].cstr());
 			return Error::USER_DATA;
 		}
 
-		for(U32 i = 0; i < m_bonesMutator->m_values.getSize(); ++i)
+		for(U32 i = 0; i < m_builtinMutators[BuiltinMutatorId2::BONES]->m_values.getSize(); ++i)
 		{
-			if(m_bonesMutator->m_values[i] != I(i))
+			if(m_builtinMutators[BuiltinMutatorId2::BONES]->m_values[i] != I(i))
 			{
-				ANKI_RESOURCE_LOGE("Values of the BONES mutator in the program are not the expected");
+				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
+					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::BONES].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -323,20 +352,23 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 		++builtinMutatorCount;
 	}
 
-	m_velocityMutator = m_prog->tryFindMutator("ANKI_VELOCITY");
-	if(m_velocityMutator)
+	m_builtinMutators[BuiltinMutatorId2::VELOCITY] =
+		m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::VELOCITY]);
+	if(m_builtinMutators[BuiltinMutatorId2::VELOCITY])
 	{
-		if(m_velocityMutator->m_values.getSize() != 2)
+		if(m_builtinMutators[BuiltinMutatorId2::VELOCITY]->m_values.getSize() != 2)
 		{
-			ANKI_RESOURCE_LOGE("Mutator ANKI_VELOCITY should have 2 values in the program");
+			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program",
+				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::VELOCITY].cstr());
 			return Error::USER_DATA;
 		}
 
-		for(U32 i = 0; i < m_velocityMutator->m_values.getSize(); ++i)
+		for(U32 i = 0; i < m_builtinMutators[BuiltinMutatorId2::VELOCITY]->m_values.getSize(); ++i)
 		{
-			if(m_velocityMutator->m_values[i] != I(i))
+			if(m_builtinMutators[BuiltinMutatorId2::VELOCITY]->m_values[i] != I(i))
 			{
-				ANKI_RESOURCE_LOGE("Values of the ANKI_VELOCITY mutator in the program are not the expected");
+				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
+					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::VELOCITY].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -704,8 +736,8 @@ const MaterialVariant2& MaterialResource2::getOrCreateVariant(const RenderingKey
 		ANKI_ASSERT(key.getInstanceCount() == 1);
 	}
 
-	ANKI_ASSERT(!key.isSkinned() || m_bonesMutator);
-	ANKI_ASSERT(!key.hasVelocity() || m_velocityMutator);
+	ANKI_ASSERT(!key.isSkinned() || m_builtinMutators[BuiltinMutatorId2::BONES]);
+	ANKI_ASSERT(!key.hasVelocity() || m_builtinMutators[BuiltinMutatorId2::VELOCITY]);
 
 	key.setInstanceCount(1 << getInstanceGroupIdx(key.getInstanceCount()));
 
@@ -737,29 +769,29 @@ const MaterialVariant2& MaterialResource2::getOrCreateVariant(const RenderingKey
 		initInfo.addMutation(m.m_mutator->m_name, m.m_value);
 	}
 
-	if(m_instancingMutator)
+	if(m_builtinMutators[BuiltinMutatorId2::INSTANCE_COUNT])
 	{
-		initInfo.addMutation(m_instancingMutator->m_name, key.getInstanceCount());
+		initInfo.addMutation(m_builtinMutators[BuiltinMutatorId2::INSTANCE_COUNT]->m_name, key.getInstanceCount());
 	}
 
-	if(m_passMutator)
+	if(m_builtinMutators[BuiltinMutatorId2::PASS])
 	{
-		initInfo.addMutation(m_passMutator->m_name, MutatorValue(key.getPass()));
+		initInfo.addMutation(m_builtinMutators[BuiltinMutatorId2::PASS]->m_name, MutatorValue(key.getPass()));
 	}
 
-	if(m_lodMutator)
+	if(m_builtinMutators[BuiltinMutatorId2::LOD])
 	{
-		initInfo.addMutation(m_lodMutator->m_name, MutatorValue(key.getLod()));
+		initInfo.addMutation(m_builtinMutators[BuiltinMutatorId2::LOD]->m_name, MutatorValue(key.getLod()));
 	}
 
-	if(m_bonesMutator)
+	if(m_builtinMutators[BuiltinMutatorId2::BONES])
 	{
-		initInfo.addMutation(m_bonesMutator->m_name, key.isSkinned() != 0);
+		initInfo.addMutation(m_builtinMutators[BuiltinMutatorId2::BONES]->m_name, key.isSkinned() != 0);
 	}
 
-	if(m_velocityMutator)
+	if(m_builtinMutators[BuiltinMutatorId2::VELOCITY])
 	{
-		initInfo.addMutation(m_velocityMutator->m_name, key.hasVelocity() != 0);
+		initInfo.addMutation(m_builtinMutators[BuiltinMutatorId2::VELOCITY]->m_name, key.hasVelocity() != 0);
 	}
 
 	for(const MaterialVariable2& var : m_vars)

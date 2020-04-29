@@ -20,7 +20,7 @@ class XmlElement;
 /// @addtogroup resource
 /// @{
 
-/// The ID of a buildin material variable
+/// The ID of a buildin material variable.
 enum class BuiltinMaterialVariableId2 : U8
 {
 	NONE = 0,
@@ -41,6 +41,21 @@ enum class BuiltinMaterialVariableId2 : U8
 	FIRST = 0,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMaterialVariableId2, inline)
+
+/// The ID of builtin mutators.
+enum class BuiltinMutatorId2 : U8
+{
+	NONE = 0,
+	INSTANCE_COUNT,
+	PASS,
+	LOD,
+	BONES,
+	VELOCITY,
+
+	COUNT,
+	FIRST = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMutatorId2, inline)
 
 /// Holds the shader variables. It's a container for shader program variables that share the same name.
 class MaterialVariable2 : public NonCopyable
@@ -294,7 +309,7 @@ public:
 
 	Bool isInstanced() const
 	{
-		return m_instancingMutator != nullptr;
+		return m_builtinMutators[BuiltinMutatorId2::INSTANCE_COUNT] != nullptr;
 	}
 
 	ConstWeakArray<MaterialVariable2> getVariables() const
@@ -319,11 +334,7 @@ private:
 
 	ShaderProgramResource2Ptr m_prog;
 
-	const ShaderProgramResourceMutator2* m_instancingMutator = nullptr;
-	const ShaderProgramResourceMutator2* m_passMutator = nullptr;
-	const ShaderProgramResourceMutator2* m_lodMutator = nullptr;
-	const ShaderProgramResourceMutator2* m_bonesMutator = nullptr;
-	const ShaderProgramResourceMutator2* m_velocityMutator = nullptr;
+	Array<const ShaderProgramResourceMutator2*, U32(BuiltinMutatorId2::COUNT)> m_builtinMutators = {};
 
 	Bool m_shadow = true;
 	Bool m_forwardShading = false;

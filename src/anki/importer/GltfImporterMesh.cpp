@@ -412,7 +412,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			ANKI_ASSERT(primitive->indices);
 			if(primitive->indices->count == 0 || (primitive->indices->count % 3) != 0)
 			{
-				ANKI_GLTF_LOGE("Incorect index count: %d", primitive->indices->count);
+				ANKI_GLTF_LOGE("Incorect index count: %lu", primitive->indices->count);
 				return Error::USER_DATA;
 			}
 			submesh.m_indices.create(U32(primitive->indices->count));

@@ -102,7 +102,7 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocat
 	m_gr = gr;
 
 	m_maxAllocSize = getAlignedRoundUp(CHUNK_INITIAL_SIZE * FRAME_COUNT, maxSize);
-	ANKI_RESOURCE_LOGI("Will use %uMB of memory for transfer scratch", m_maxAllocSize / 1024 / 1024);
+	ANKI_RESOURCE_LOGI("Will use %luMB of memory for transfer scratch", m_maxAllocSize / 1024 / 1024);
 
 	m_interface.reset(m_alloc.newInstance<Interface>());
 	m_interface->m_gr = gr;

@@ -121,7 +121,7 @@ Error LuaBinder::evalString(lua_State* state, const CString& str)
 	int e = luaL_dostring(state, &str[0]);
 	if(e)
 	{
-		ANKI_SCRIPT_LOGE("%s (line:%d)", lua_tostring(state, -1));
+		ANKI_SCRIPT_LOGE("%s", lua_tostring(state, -1));
 		lua_pop(state, 1);
 		err = Error::USER_DATA;
 	}

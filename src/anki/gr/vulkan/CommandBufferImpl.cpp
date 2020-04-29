@@ -234,14 +234,14 @@ void CommandBufferImpl::endRecording()
 	{
 		if(m_commandCount > COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS * 4)
 		{
-			ANKI_VK_LOGW("Command buffer has too many commands: %u", U(m_commandCount));
+			ANKI_VK_LOGW("Command buffer has too many commands: %u", m_commandCount);
 		}
 	}
 	else
 	{
 		if(m_commandCount <= COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS / 4)
 		{
-			ANKI_VK_LOGW("Command buffer has too few commands: %u", U(m_commandCount));
+			ANKI_VK_LOGW("Command buffer has too few commands: %u", m_commandCount);
 		}
 	}
 #endif

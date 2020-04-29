@@ -216,8 +216,7 @@ ANKI_TEST(Util, HashMap)
 			timer.stop();
 			Second stlTime = timer.getElapsedTime();
 
-			ANKI_TEST_LOGI(
-				"Find bench: STL %f AnKi %f | %f%% (%lld)", stlTime, akTime, stlTime / akTime * 100.0, count);
+			ANKI_TEST_LOGI("Find bench: STL %f AnKi %f | %f%% (%ld)", stlTime, akTime, stlTime / akTime * 100.0, count);
 		}
 
 		// Delete

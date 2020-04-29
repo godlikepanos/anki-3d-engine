@@ -187,7 +187,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	ANKI_VK_LOGI("Initializing memory manager");
 	for(const ClassInf& c : CLASSES)
 	{
-		ANKI_VK_LOGI("\tGPU mem class. Chunk size: %u, slotSize: %u, allocsPerChunk %u",
+		ANKI_VK_LOGI("\tGPU mem class. Chunk size: %lu, slotSize: %lu, allocsPerChunk %lu",
 			c.m_chunkSize,
 			c.m_slotSize,
 			c.m_chunkSize / c.m_slotSize);

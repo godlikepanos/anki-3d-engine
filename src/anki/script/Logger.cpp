@@ -33,7 +33,7 @@ static inline int pwraplogi(lua_State* l)
 	}
 
 	// Call the function
-	ANKI_SCRIPT_LOGI(arg0);
+	ANKI_SCRIPT_LOGI("%s", arg0);
 
 	return 0;
 }
@@ -74,7 +74,7 @@ static inline int pwraploge(lua_State* l)
 	}
 
 	// Call the function
-	ANKI_SCRIPT_LOGE(arg0);
+	ANKI_SCRIPT_LOGE("%s", arg0);
 
 	return 0;
 }
@@ -115,7 +115,7 @@ static inline int pwraplogw(lua_State* l)
 	}
 
 	// Call the function
-	ANKI_SCRIPT_LOGW(arg0);
+	ANKI_SCRIPT_LOGW("%s", arg0);
 
 	return 0;
 }

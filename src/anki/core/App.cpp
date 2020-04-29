@@ -357,7 +357,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	}
 #endif
 
-	ANKI_CORE_LOGI("Number of main threads: %u", U(config.getNumberU32("core_mainThreadCount")));
+	ANKI_CORE_LOGI("Number of main threads: %u", config.getNumberU32("core_mainThreadCount"));
 
 	//
 	// Core tracer
