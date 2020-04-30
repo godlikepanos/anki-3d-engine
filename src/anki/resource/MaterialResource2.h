@@ -319,7 +319,13 @@ public:
 
 	U32 getDescriptorSetIndex() const
 	{
+		ANKI_ASSERT(m_descriptorSetIdx != MAX_U8);
 		return m_descriptorSetIdx;
+	}
+
+	U32 getBoneTransformsBinding() const
+	{
+		return m_boneTrfsBinding;
 	}
 
 	const MaterialVariant2& getOrCreateVariant(const RenderingKey& key) const;
@@ -339,8 +345,9 @@ private:
 	Bool m_shadow = true;
 	Bool m_forwardShading = false;
 	U8 m_lodCount = 1;
-	U8 m_descriptorSetIdx = 0; ///< The material set.
+	U8 m_descriptorSetIdx = MAX_U8; ///< The material set.
 	U32 m_uboIdx = MAX_U32; ///< The b_ankiMaterial UBO inside the binary.
+	U32 m_boneTrfsBinding = MAX_U32;
 
 	/// Matrix of variants.
 	mutable Array5d<MaterialVariant2, U(Pass::COUNT), MAX_LOD_COUNT, MAX_INSTANCE_GROUPS, 2, 2> m_variantMatrix;

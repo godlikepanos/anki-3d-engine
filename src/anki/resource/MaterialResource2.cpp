@@ -369,6 +369,30 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 		}
 
 		++builtinMutatorCount;
+
+		// Find the binding of the transforms
+		const ShaderProgramBinary& binary = m_prog->getBinary();
+		for(const ShaderProgramBinaryBlock& block : binary.m_storageBlocks)
+		{
+			if(block.m_name.getBegin() == CString("u_ankiBoneTransforms"))
+			{
+				if(block.m_set != m_descriptorSetIdx)
+				{
+					ANKI_RESOURCE_LOGE("The set of u_ankiBoneTransforms should be %u", m_descriptorSetIdx);
+					return Error::USER_DATA;
+				}
+
+				m_boneTrfsBinding = block.m_binding;
+				break;
+			}
+		}
+
+		if(m_boneTrfsBinding == MAX_U32)
+		{
+			ANKI_RESOURCE_LOGE("The program is using the %s mutator but u_ankiBoneTransforms was not found",
+				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::BONES].cstr());
+			return Error::NONE;
+		}
 	}
 
 	m_builtinMutators[BuiltinMutatorId2::VELOCITY] =

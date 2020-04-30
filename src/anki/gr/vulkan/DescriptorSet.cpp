@@ -955,9 +955,9 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 
 	if(init.m_bindings.getSize() > 0)
 	{
-		memcpy(&bindings[0], &init.m_bindings[0], init.m_bindings.getSizeInBytes());
-		std::sort(&bindings[0],
-			&bindings[0] + bindingCount,
+		memcpy(bindings.getBegin(), init.m_bindings.getBegin(), init.m_bindings.getSizeInBytes());
+		std::sort(bindings.getBegin(),
+			bindings.getBegin() + bindingCount,
 			[](const DescriptorBinding& a, const DescriptorBinding& b) { return a.m_binding < b.m_binding; });
 
 		hash = computeHash(&bindings[0], init.m_bindings.getSizeInBytes());
@@ -1018,7 +1018,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 		if(cache == nullptr)
 		{
 			cache = m_alloc.newInstance<DSLayoutCacheEntry>(this);
-			ANKI_CHECK(cache->init(&bindings[0], bindingCount, hash));
+			ANKI_CHECK(cache->init(bindings.getBegin(), bindingCount, hash));
 
 			m_caches.resize(m_alloc, m_caches.getSize() + 1);
 			m_caches[m_caches.getSize() - 1] = cache;
