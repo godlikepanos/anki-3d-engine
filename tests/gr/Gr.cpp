@@ -2270,6 +2270,10 @@ ANKI_TEST(Gr, Bindless)
 	// Create texture B
 	TexturePtr texB = gr->newTexture(texInit);
 
+	// Create texture C
+	texInit.m_format = Format::R32G32B32A32_SFLOAT;
+	TexturePtr texC = gr->newTexture(texInit);
+
 	// Create sampler
 	SamplerInitInfo samplerInit;
 	SamplerPtr sampler = gr->newSampler(samplerInit);
@@ -2277,6 +2281,7 @@ ANKI_TEST(Gr, Bindless)
 	// Create views
 	TextureViewPtr viewA = gr->newTextureView(TextureViewInitInfo(texA, TextureSurfaceInfo()));
 	TextureViewPtr viewB = gr->newTextureView(TextureViewInitInfo(texB, TextureSurfaceInfo()));
+	TextureViewPtr viewC = gr->newTextureView(TextureViewInitInfo(texC, TextureSurfaceInfo()));
 
 	// Create result buffer
 	BufferPtr resBuff =
@@ -2303,9 +2308,10 @@ layout(push_constant) uniform pc_
 void main()
 {
 	uvec4 val0 = imageLoad(u_bindlessImages[u_texIndices[0]], ivec2(0));
-	uvec4 val1 = texelFetch(usampler2D(u_bindlessTextures[u_texIndices[1]], u_sampler), ivec2(0), 0);
+	uvec4 val1 = texelFetch(usampler2D(u_bindlessTexturesU2d[u_texIndices[1]], u_sampler), ivec2(0), 0);
+	vec4 val2 = texelFetch(sampler2D(u_bindlessTextures2d[u_texIndices[2]], u_sampler), ivec2(0), 0);
 
-	u_result = val0 + val1;
+	u_result = val0 + val1 + uvec4(val2);
 })";
 
 	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
@@ -2322,17 +2328,23 @@ void main()
 		texA, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureSurfaceInfo());
 	cmdb->setTextureSurfaceBarrier(
 		texB, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureSurfaceInfo());
+	cmdb->setTextureSurfaceBarrier(
+		texC, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureSurfaceInfo());
 
-	TransferGpuAllocatorHandle handle0, handle1;
+	TransferGpuAllocatorHandle handle0, handle1, handle2;
 	const UVec4 mip0 = UVec4(1, 2, 3, 4);
 	UPLOAD_TEX_SURFACE(cmdb, texA, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0), handle0);
 	const UVec4 mip1 = UVec4(10, 20, 30, 40);
 	UPLOAD_TEX_SURFACE(cmdb, texB, TextureSurfaceInfo(0, 0, 0, 0), &mip1[0], sizeof(mip1), handle1);
+	const Vec4 mip2 = Vec4(2.2f, 3.3f, 4.4f, 5.5f);
+	UPLOAD_TEX_SURFACE(cmdb, texC, TextureSurfaceInfo(0, 0, 0, 0), &mip2[0], sizeof(mip2), handle2);
 
 	cmdb->setTextureSurfaceBarrier(
 		texA, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::IMAGE_COMPUTE_READ, TextureSurfaceInfo());
 	cmdb->setTextureSurfaceBarrier(
 		texB, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_COMPUTE, TextureSurfaceInfo());
+	cmdb->setTextureSurfaceBarrier(
+		texC, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_COMPUTE, TextureSurfaceInfo());
 
 	cmdb->bindStorageBuffer(1, 0, resBuff, 0, MAX_PTR_SIZE);
 	cmdb->bindSampler(1, 1, sampler);
@@ -2340,7 +2352,8 @@ void main()
 
 	const U32 idx0 = cmdb->bindBindlessImage(viewA);
 	const U32 idx1 = cmdb->bindBindlessTexture(viewB, TextureUsageBit::SAMPLED_COMPUTE);
-	UVec4 pc(idx0, idx1, 0, 0);
+	const U32 idx2 = cmdb->bindBindlessTexture(viewC, TextureUsageBit::SAMPLED_COMPUTE);
+	UVec4 pc(idx0, idx1, idx2, 0);
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
 	cmdb->bindAllBindless(0);
@@ -2352,15 +2365,16 @@ void main()
 	cmdb->flush(&fence);
 	transfAlloc->release(handle0, fence);
 	transfAlloc->release(handle1, fence);
+	transfAlloc->release(handle2, fence);
 	gr->finish();
 
 	// Check result
 	UVec4* res = static_cast<UVec4*>(resBuff->map(0, sizeof(UVec4), BufferMapAccessBit::READ));
 
-	ANKI_TEST_EXPECT_EQ(res->x(), 11);
-	ANKI_TEST_EXPECT_EQ(res->y(), 22);
-	ANKI_TEST_EXPECT_EQ(res->z(), 33);
-	ANKI_TEST_EXPECT_EQ(res->w(), 44);
+	ANKI_TEST_EXPECT_EQ(res->x(), 13);
+	ANKI_TEST_EXPECT_EQ(res->y(), 25);
+	ANKI_TEST_EXPECT_EQ(res->z(), 37);
+	ANKI_TEST_EXPECT_EQ(res->w(), 49);
 
 	resBuff->unmap();
 

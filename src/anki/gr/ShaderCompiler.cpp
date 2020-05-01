@@ -72,7 +72,8 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #	define ANKI_MAX_BINDLESS_TEXTURES %u
 #	define ANKI_MAX_BINDLESS_IMAGES %u
 #	define ANKI_BINDLESS_SET(set_) \
-		layout(set = set_, binding = 0) uniform utexture2D u_bindlessTextures[ANKI_MAX_BINDLESS_TEXTURES]; \
+		layout(set = set_, binding = 0) uniform utexture2D u_bindlessTexturesU2d[ANKI_MAX_BINDLESS_TEXTURES]; \
+		layout(set = set_, binding = 0) uniform texture2D u_bindlessTextures2d[ANKI_MAX_BINDLESS_TEXTURES]; \
 		layout(set = set_, binding = 1) uniform readonly uimage2D u_bindlessImages[ANKI_MAX_BINDLESS_IMAGES];
 #endif
 

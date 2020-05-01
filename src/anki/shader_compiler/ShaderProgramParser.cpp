@@ -45,6 +45,14 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_MAX_BINDLESS_TEXTURES %u
 #define ANKI_MAX_BINDLESS_IMAGES %u
 
+#define ANKI_BINDLESS_SET(set_) \
+	layout(set = set_, binding = 0) uniform utexture2D u_bindlessTextures2dU32[ANKI_MAX_BINDLESS_TEXTURES]; \
+	layout(set = set_, binding = 0) uniform itexture2D u_bindlessTextures2dI32[ANKI_MAX_BINDLESS_TEXTURES]; \
+	layout(set = set_, binding = 0) uniform texture2D u_bindlessTextures2dF32[ANKI_MAX_BINDLESS_TEXTURES]; \
+	layout(set = set_, binding = 1) uniform readonly uimage2D u_bindlessImages2dU32[ANKI_MAX_BINDLESS_IMAGES]; \
+	layout(set = set_, binding = 1) uniform readonly iimage2D u_bindlessImages2dI32[ANKI_MAX_BINDLESS_IMAGES]; \
+	layout(set = set_, binding = 1) uniform readonly image2D u_bindlessImages2dF32[ANKI_MAX_BINDLESS_IMAGES];
+
 #define F32 float
 #define Vec2 vec2
 #define Vec3 vec3
@@ -119,6 +127,8 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id, defltVal) _ANKI_SCONST_X3(Vec3, F32, n, id, defltVal,)
 #define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id, defltVal) _ANKI_SCONST_X4(Vec4, F32, n, id, defltVal,)
 )";
+
+static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));
 
 ShaderProgramParser::ShaderProgramParser(CString fname,
 	ShaderProgramFilesystemInterface* fsystem,
@@ -699,7 +709,7 @@ Error ShaderProgramParser::parse()
 		m_codeLines.join("\n", m_codeSource);
 		m_codeLines.destroy();
 
-		m_codeSourceHash = computeHash(m_codeSource.getBegin(), m_codeSource.getLength());
+		m_codeSourceHash = appendHash(m_codeSource.getBegin(), m_codeSource.getLength(), SHADER_HEADER_HASH);
 	}
 
 	return Error::NONE;
