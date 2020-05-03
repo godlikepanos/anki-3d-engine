@@ -160,7 +160,7 @@ Error SampleApp::userMainLoop(Bool& quit)
 			mover->rotateLocalZ(-ROTATE_ANGLE);
 		}
 
-		if(in.getKey(KeyCode::F12) == 1)
+		if(in.getKey(KeyCode::F12) == 1 && ANKI_ENABLE_TRACE)
 		{
 			TracerSingleton::get().setEnabled(!TracerSingleton::get().getEnabled());
 		}

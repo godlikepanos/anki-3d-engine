@@ -205,7 +205,7 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 				continue;
 			}
 
-			if(mutatorName = BUILTIN_MUTATOR_NAMES[id])
+			if(mutatorName == BUILTIN_MUTATOR_NAMES[id])
 			{
 				ANKI_RESOURCE_LOGE("Cannot list builtin mutator: %s", mutatorName.cstr());
 				return Error::USER_DATA;
@@ -374,7 +374,7 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 		const ShaderProgramBinary& binary = m_prog->getBinary();
 		for(const ShaderProgramBinaryBlock& block : binary.m_storageBlocks)
 		{
-			if(block.m_name.getBegin() == CString("u_ankiBoneTransforms"))
+			if(block.m_name.getBegin() == CString("b_ankiBoneTransforms"))
 			{
 				if(block.m_set != m_descriptorSetIdx)
 				{
@@ -389,7 +389,7 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 
 		if(m_boneTrfsBinding == MAX_U32)
 		{
-			ANKI_RESOURCE_LOGE("The program is using the %s mutator but u_ankiBoneTransforms was not found",
+			ANKI_RESOURCE_LOGE("The program is using the %s mutator but b_ankiBoneTransforms was not found",
 				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::BONES].cstr());
 			return Error::NONE;
 		}
@@ -514,6 +514,7 @@ Error MaterialResource2::createVars()
 
 		descriptorSet = block.m_set;
 		m_uboIdx = U32(&block - binary.m_uniformBlocks.getBegin());
+		m_uboBinding = block.m_binding;
 
 		for(const ShaderProgramBinaryVariable& var : block.m_variables)
 		{

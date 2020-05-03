@@ -7,7 +7,7 @@
 
 #include <anki/scene/Common.h>
 #include <anki/scene/components/SceneComponent.h>
-#include <anki/resource/MaterialResource.h>
+#include <anki/resource/MaterialResource2.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/renderer/RenderQueue.h>
 
@@ -89,13 +89,13 @@ public:
 		return m_mvar->getValue<T>();
 	}
 
-	const MaterialVariable& getMaterialVariable() const
+	const MaterialVariable2& getMaterialVariable() const
 	{
 		return *m_mvar;
 	}
 
 private:
-	const MaterialVariable* m_mvar = nullptr;
+	const MaterialVariable2* m_mvar = nullptr;
 };
 
 /// Material render component interface.
@@ -104,7 +104,7 @@ class MaterialRenderComponent : public RenderComponent
 public:
 	using Variables = DynamicArray<MaterialRenderComponentVariable>;
 
-	MaterialRenderComponent(SceneNode* node, MaterialResourcePtr mtl);
+	MaterialRenderComponent(SceneNode* node, MaterialResource2Ptr mtl);
 
 	~MaterialRenderComponent();
 
@@ -129,7 +129,7 @@ public:
 	}
 
 	/// Access the material
-	const MaterialResource& getMaterial() const
+	const MaterialResource2& getMaterial() const
 	{
 		ANKI_ASSERT(m_mtl);
 		return *m_mtl;
@@ -168,7 +168,7 @@ public:
 private:
 	SceneNode* m_node;
 	Variables m_vars;
-	MaterialResourcePtr m_mtl;
+	MaterialResource2Ptr m_mtl;
 };
 /// @}
 

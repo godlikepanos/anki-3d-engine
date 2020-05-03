@@ -8,6 +8,7 @@
 #include <anki/resource/ResourceObject.h>
 #include <anki/resource/RenderingKey.h>
 #include <anki/resource/ShaderProgramResource2.h>
+#include <anki/resource/TextureResource.h>
 #include <anki/Math.h>
 #include <anki/util/Enum.h>
 
@@ -245,9 +246,20 @@ public:
 
 	const ShaderVariableBlockInfo& getBlockInfo(const MaterialVariable2& var) const
 	{
+		ANKI_ASSERT(isVariableActive(var));
 		ANKI_ASSERT(var.inBlock());
 		ANKI_ASSERT(m_blockInfos[var.m_index].m_offset >= 0);
 		return m_blockInfos[var.m_index];
+	}
+
+	template<typename T>
+	void writeShaderBlockMemory(
+		const MaterialVariable2& var, const T* elements, U32 elementsCount, void* buffBegin, const void* buffEnd) const
+	{
+		ANKI_ASSERT(isVariableActive(var));
+		ANKI_ASSERT(getShaderVariableTypeFromTypename<T>() == var.getDataType());
+		const ShaderVariableBlockInfo& blockInfo = getBlockInfo(var);
+		anki::writeShaderBlockMemory(var.getDataType(), blockInfo, elements, elementsCount, buffBegin, buffEnd);
 	}
 
 private:
@@ -328,6 +340,12 @@ public:
 		return m_boneTrfsBinding;
 	}
 
+	U32 getUniformsBinding() const
+	{
+		ANKI_ASSERT(m_uboBinding != MAX_U32);
+		return m_uboBinding;
+	}
+
 	const MaterialVariant2& getOrCreateVariant(const RenderingKey& key) const;
 
 private:
@@ -347,6 +365,7 @@ private:
 	U8 m_lodCount = 1;
 	U8 m_descriptorSetIdx = MAX_U8; ///< The material set.
 	U32 m_uboIdx = MAX_U32; ///< The b_ankiMaterial UBO inside the binary.
+	U32 m_uboBinding = MAX_U32;
 	U32 m_boneTrfsBinding = MAX_U32;
 
 	/// Matrix of variants.

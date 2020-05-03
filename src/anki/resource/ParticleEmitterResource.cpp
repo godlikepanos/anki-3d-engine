@@ -146,7 +146,7 @@ void ParticleEmitterResource::getRenderingInfo(U32 lod, ShaderProgramPtr& prog) 
 	lod = min<U32>(lod, m_lodCount - 1);
 
 	RenderingKey key(Pass::FS, U8(lod), 1, false, false);
-	const MaterialVariant& variant = m_material->getOrCreateVariant(key);
+	const MaterialVariant2& variant = m_material->getOrCreateVariant(key);
 	prog = variant.getShaderProgram();
 }
 
