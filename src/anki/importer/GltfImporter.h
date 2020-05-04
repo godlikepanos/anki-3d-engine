@@ -35,6 +35,8 @@ public:
 		CString rpath,
 		CString texrpath,
 		Bool optimizeMeshes,
+		F32 lodFactor,
+		U32 lodCount,
 		U32 threadCount = MAX_U32);
 
 	ANKI_USE_RESULT Error writeAll();
@@ -71,6 +73,8 @@ private:
 
 	HashMapAuto<const void*, U32, PtrHasher> m_nodePtrToIdx{m_alloc}; ///< Need an index for the unnamed nodes.
 
+	F32 m_lodFactor = 1.0f;
+	U32 m_lodCount = 1;
 	Bool m_optimizeMeshes = false;
 
 	// Misc

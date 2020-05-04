@@ -59,7 +59,7 @@ static ANKI_USE_RESULT Error checkBuiltin(
 				return Error::USER_DATA;
 			}
 
-			if(BUILTIN_INFOS[id].m_instanced != instanced)
+			if(instanced && !BUILTIN_INFOS[id].m_instanced)
 			{
 				ANKI_RESOURCE_LOGE("Variable %s be instanced: %s",
 					(BUILTIN_INFOS[id].m_instanced) ? "should" : "shouldn't",

@@ -154,8 +154,14 @@ GltfImporter::~GltfImporter()
 	m_alloc.deleteInstance(m_hive);
 }
 
-Error GltfImporter::init(
-	CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes, U32 threadCount)
+Error GltfImporter::init(CString inputFname,
+	CString outDir,
+	CString rpath,
+	CString texrpath,
+	Bool optimizeMeshes,
+	F32 lodFactor,
+	U32 lodCount,
+	U32 threadCount)
 {
 	m_inputFname.create(inputFname);
 	m_outDir.create(outDir);
@@ -163,18 +169,34 @@ Error GltfImporter::init(
 	m_texrpath.create(texrpath);
 	m_optimizeMeshes = optimizeMeshes;
 
+	m_lodCount = clamp(lodCount, 1u, 3u);
+	m_lodFactor = clamp(lodFactor, 0.0f, 1.0f);
+	if(m_lodFactor * F32(m_lodCount - 1) > 0.7f)
+	{
+		ANKI_GLTF_LOGE("LOD factor is too high %f", m_lodFactor);
+		return Error::USER_DATA;
+	}
+
+	if(m_lodFactor < EPSILON || lodCount == 1)
+	{
+		m_lodCount = 1;
+		m_lodFactor = 0.0f;
+	}
+
+	ANKI_GLTF_LOGI("Having %u LODs with LOD factor %f", m_lodCount, m_lodFactor);
+
 	cgltf_options options = {};
 	cgltf_result res = cgltf_parse_file(&options, inputFname.cstr(), &m_gltf);
 	if(res != cgltf_result_success)
 	{
-		ANKI_LOGE("Failed to open the GLTF file. Code: %d", res);
+		ANKI_GLTF_LOGE("Failed to open the GLTF file. Code: %d", res);
 		return Error::FUNCTION_FAILED;
 	}
 
 	res = cgltf_load_buffers(&options, m_gltf, inputFname.cstr());
 	if(res != cgltf_result_success)
 	{
-		ANKI_LOGE("Failed to load GLTF data. Code: %d", res);
+		ANKI_GLTF_LOGE("Failed to load GLTF data. Code: %d", res);
 		return Error::FUNCTION_FAILED;
 	}
 
@@ -603,12 +625,16 @@ Error GltfImporter::visitNode(
 				cgltf_material* m_mtl;
 				cgltf_skin* m_skin;
 				Bool m_selfCollision;
+				U32 m_lodCount;
+				F32 m_lodFactor;
 			};
 			Ctx* ctx = m_alloc.newInstance<Ctx>();
 			ctx->m_importer = this;
 			ctx->m_mesh = node.mesh;
 			ctx->m_mtl = node.mesh->primitives[0].material;
 			ctx->m_skin = node.skin;
+			ctx->m_lodCount = m_lodCount;
+			ctx->m_lodFactor = m_lodFactor;
 
 			HashMapAuto<CString, StringAuto>::Iterator it2;
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
@@ -618,22 +644,23 @@ Error GltfImporter::visitNode(
 			auto callback = [](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
 				Ctx& self = *static_cast<Ctx*>(userData);
 
+				// LOD 0
 				Error err = self.m_importer->writeMesh(*self.m_mesh, CString(), 1.0f);
 
 				// LOD 1
-				if(!err)
+				if(!err && self.m_lodCount > 1)
 				{
 					StringAuto name(self.m_importer->m_alloc);
 					name.sprintf("%s_lod1", self.m_mesh->name);
-					err = self.m_importer->writeMesh(*self.m_mesh, name, 0.66f);
+					err = self.m_importer->writeMesh(*self.m_mesh, name, 1.0f - self.m_lodFactor);
 				}
 
 				// LOD 2
-				if(!err)
+				if(!err && self.m_lodCount > 2)
 				{
 					StringAuto name(self.m_importer->m_alloc);
 					name.sprintf("%s_lod2", self.m_mesh->name);
-					err = self.m_importer->writeMesh(*self.m_mesh, name, 0.33f);
+					err = self.m_importer->writeMesh(*self.m_mesh, name, 1.0f - self.m_lodFactor * 2.0f);
 				}
 
 				if(!err)
@@ -758,12 +785,14 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh, CString skinName)
 
 	ANKI_CHECK(file.writeText("\t\t\t<mesh>%s%s.ankimesh</mesh>\n", m_rpath.cstr(), mesh.name));
 
+	if(m_lodCount > 1)
 	{
 		StringAuto name(m_alloc);
 		name.sprintf("%s_lod1", mesh.name);
 		ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s.ankimesh</mesh1>\n", m_rpath.cstr(), name.cstr()));
 	}
 
+	if(m_lodCount > 2)
 	{
 		StringAuto name(m_alloc);
 		name.sprintf("%s_lod2", mesh.name);

@@ -12,7 +12,7 @@ struct PerDraw
 	F32 m_fogDistanceOfMaxThikness;
 };
 
-layout(set = 1, binding = 0) uniform b_ankiMaterial
+layout(set = 1, binding = 0, row_major) uniform b_ankiMaterial
 {
 	PerDraw u_ankiPerDraw;
 };

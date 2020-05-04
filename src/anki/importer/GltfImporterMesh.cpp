@@ -269,7 +269,10 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankimesh", m_outDir.cstr(), (nameOverride.isEmpty()) ? mesh.name : nameOverride.cstr());
-	ANKI_GLTF_LOGI("Importing mesh%s%s", (m_optimizeMeshes) ? " (will also optimize) " : " ", fname.cstr());
+	ANKI_GLTF_LOGI("Importing mesh (%s, decimate factor %f): %s",
+		(m_optimizeMeshes) ? "optimze" : "WON'T optimize",
+		decimateFactor,
+		fname.cstr());
 
 	ListAuto<SubMesh> submeshes(m_alloc);
 	U32 totalIndexCount = 0;
@@ -509,7 +512,14 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 				const Vec3& n = submesh.m_verts[i].m_normal;
 				Vec3& b = bitangents[i];
 
-				t.normalize();
+				if(t.getLengthSquared() < EPSILON)
+				{
+					t = Vec3(1.0f, 0.0f, 0.0f); // Something random
+				}
+				else
+				{
+					t.normalize();
+				}
 
 				if(b.getLengthSquared() < EPSILON)
 				{
