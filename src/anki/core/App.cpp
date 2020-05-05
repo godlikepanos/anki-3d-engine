@@ -711,7 +711,7 @@ void App::initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserDat
 Error App::compileAllShaders()
 {
 	ANKI_TRACE_SCOPED_EVENT(COMPILE_SHADERS);
-	ANKI_CORE_LOGI("Compiling shaders");
+	ANKI_CORE_LOGI("Compiling shader programs");
 	U32 shadersCompileCount = 0;
 
 	// Compute hash for both
@@ -729,8 +729,6 @@ Error App::compileAllShaders()
 		{
 			return Error::NONE;
 		}
-
-		ANKI_CORE_LOGI("\t%s", fname.cstr());
 
 		// Get some filenames
 		StringAuto baseFname(m_heapAlloc);
@@ -770,6 +768,7 @@ Error App::compileAllShaders()
 			U64 m_metafileHash;
 			U64 m_newHash;
 			U64 m_gpuHash;
+			CString m_fname;
 
 			Bool skipCompilation(U64 hash)
 			{
@@ -778,12 +777,20 @@ Error App::compileAllShaders()
 				const U64 finalHash = computeHash(hashes.getBegin(), hashes.getSizeInBytes());
 
 				m_newHash = finalHash;
-				return finalHash == m_metafileHash;
+				const Bool skip = finalHash == m_metafileHash;
+
+				if(!skip)
+				{
+					ANKI_CORE_LOGI("\t%s", m_fname.cstr());
+				}
+
+				return skip;
 			};
 		} skip;
 		skip.m_metafileHash = metafileHash;
 		skip.m_newHash = 0;
 		skip.m_gpuHash = gpuHash;
+		skip.m_fname = fname;
 
 		// Threading interface
 		class TaskManager : public ShaderProgramAsyncTaskInterface
@@ -832,11 +839,6 @@ Error App::compileAllShaders()
 		if(!cachedBinIsUpToDate)
 		{
 			++shadersCompileCount;
-			ANKI_CORE_LOGI("\t\tCompiled");
-		}
-		else
-		{
-			ANKI_CORE_LOGI("\t\tSkipped");
 		}
 
 		// Update the meta file
@@ -858,7 +860,7 @@ Error App::compileAllShaders()
 		return Error::NONE;
 	}));
 
-	ANKI_CORE_LOGI("Compiled %u programs", shadersCompileCount);
+	ANKI_CORE_LOGI("Compiled %u shader programs", shadersCompileCount);
 	return Error::NONE;
 }
 
