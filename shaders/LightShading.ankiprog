@@ -248,15 +248,16 @@ void main()
 			F32 totalBlendWeight = EPSILON;
 			diffIndirect = Vec3(0.0);
 
-			UVec4 execMask = UVec4(0u);
-			ANKI_LOOP while((execMask & gl_SubgroupEqMask) == UVec4(0u))
+			Bool laneActive = true;
+			ANKI_LOOP while(laneActive)
 			{
 				U32 uniformIdxOffset = subgroupBroadcastFirst(idxOffset); // Should be uniform
-				const UVec4 laneMask = subgroupBallot(uniformIdxOffset == idxOffset);
-				execMask |= laneMask;
+				const Bool laneMatch = uniformIdxOffset == idxOffset;
 
-				if(uniformIdxOffset == idxOffset)
+				if(laneMatch)
 				{
+					laneActive = false;
+
 					// Loop probes
 					ANKI_LOOP while((idx = u_lightIndices[uniformIdxOffset++]) != MAX_U32)
 					{
