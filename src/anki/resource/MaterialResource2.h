@@ -384,6 +384,7 @@ private:
 	ANKI_USE_RESULT Error parseInputs(XmlElement inputsEl, Bool async);
 
 	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl);
+	ANKI_USE_RESULT Error findBuiltinMutators();
 
 	static U32 getInstanceGroupIdx(U32 instanceCount);
 

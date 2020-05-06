@@ -3,13 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator ANKI_PASS 0 2 3
+#pragma anki mutator ANKI_VELOCITY 0 1
+
 #include <shaders/glsl_cpp_common/GpuParticles.h>
 
 struct PerDraw
 {
 	Mat4 m_ankiMvp;
-	Vec3 m_minusCameraZ;
-	U32 m_particleCount;
 	Vec3 m_diffColor;
 	F32 m_roughness;
 	Vec3 m_specColor;
@@ -18,14 +19,19 @@ struct PerDraw
 	Vec3 m_finalEmission;
 };
 
-layout(set = 1, binding = 0, std140, row_major) uniform b_ankiMaterial
+layout(set = 0, binding = 0, std140, row_major) uniform b_ankiMaterial
 {
 	PerDraw u_ankiPerDraw;
 };
 
-layout(set = 0, binding = 0) buffer ssbo_
+layout(set = 0, binding = 1) buffer b_particles
 {
 	GpuParticle u_particles[];
+};
+
+layout(set = 0, binding = 2) uniform b_extra
+{
+	Vec3 u_minusCameraZ;
 };
 
 #pragma anki start vert
@@ -70,7 +76,7 @@ void main()
 {
 	GbufferInfo g;
 	g.m_diffuse = u_ankiPerDraw.m_diffColor;
-	g.m_normal = u_ankiPerDraw.m_minusCameraZ;
+	g.m_normal = u_minusCameraZ;
 	g.m_specular = u_ankiPerDraw.m_specColor;
 	g.m_roughness = u_ankiPerDraw.m_roughness;
 	g.m_subsurface = 0.0;

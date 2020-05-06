@@ -172,8 +172,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		// Uniforms
 		static_cast<const MaterialRenderComponent&>(getComponent<RenderComponent>())
-			.allocateAndSetupUniforms(patch.getMaterial()->getDescriptorSetIndex(),
-				ctx,
+			.allocateAndSetupUniforms(ctx,
 				ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
 				ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),
 				*ctx.m_stagingGpuAllocator);

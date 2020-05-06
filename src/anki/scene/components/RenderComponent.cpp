@@ -37,8 +37,7 @@ MaterialRenderComponent::~MaterialRenderComponent()
 	m_vars.destroy(m_node->getAllocator());
 }
 
-void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
-	const RenderQueueDrawContext& ctx,
+void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawContext& ctx,
 	ConstWeakArray<Mat4> transforms,
 	ConstWeakArray<Mat4> prevTransforms,
 	StagingGpuMemoryManager& alloc) const
@@ -47,6 +46,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(U32 set,
 	ANKI_ASSERT(prevTransforms.getSize() == transforms.getSize());
 
 	const MaterialVariant2& variant = m_mtl->getOrCreateVariant(ctx.m_key);
+	const U32 set = m_mtl->getDescriptorSetIndex();
 
 	// Allocate uniform memory
 	StagingGpuMemoryToken token;

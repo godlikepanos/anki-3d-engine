@@ -216,23 +216,24 @@ void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 	{
 		// Program
 		ShaderProgramPtr prog;
-		m_emitterRsrc->getRenderingInfo(ctx.m_key.getLod(), prog);
+		m_emitterRsrc->getRenderingInfo(ctx.m_key, prog);
 		cmdb->bindShaderProgram(prog);
 
 		// Resources
-		cmdb->bindStorageBuffer(0, 0, m_particlesBuff, 0, MAX_PTR_SIZE);
+		static const Mat4 identity = Mat4::getIdentity();
+		static_cast<const MaterialRenderComponent&>(getComponent<RenderComponent>())
+			.allocateAndSetupUniforms(ctx,
+				ConstWeakArray<Mat4>(&identity, 1),
+				ConstWeakArray<Mat4>(&identity, 1),
+				*ctx.m_stagingGpuAllocator);
 
-		struct PC
-		{
-			Mat4 m_mvp;
-			Vec3 m_minusCameraZ;
-			U32 m_particleCount;
-		} pc;
+		cmdb->bindStorageBuffer(0, 1, m_particlesBuff, 0, MAX_PTR_SIZE);
 
-		pc.m_mvp = ctx.m_viewProjectionMatrix;
-		pc.m_minusCameraZ = ctx.m_cameraTransform.getColumn(2).xyz();
-		pc.m_particleCount = m_particleCount;
-		cmdb->setPushConstants(&pc, sizeof(pc));
+		StagingGpuMemoryToken token;
+		Vec4* extraUniforms = static_cast<Vec4*>(
+			ctx.m_stagingGpuAllocator->allocateFrame(sizeof(Vec4), StagingGpuMemoryType::UNIFORM, token));
+		*extraUniforms = ctx.m_cameraTransform.getColumn(2);
+		cmdb->bindUniformBuffer(0, 2, token.m_buffer, token.m_offset, token.m_range);
 
 		// Draw
 		cmdb->setLineWidth(8.0f);

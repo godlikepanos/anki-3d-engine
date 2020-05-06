@@ -37,7 +37,8 @@ public:
 		Bool optimizeMeshes,
 		F32 lodFactor,
 		U32 lodCount,
-		U32 threadCount = MAX_U32);
+		F32 lightIntensityScale,
+		U32 threadCount);
 
 	ANKI_USE_RESULT Error writeAll();
 
@@ -75,6 +76,7 @@ private:
 
 	F32 m_lodFactor = 1.0f;
 	U32 m_lodCount = 1;
+	F32 m_lightIntensityScale = 1.0f;
 	Bool m_optimizeMeshes = false;
 
 	// Misc
@@ -100,7 +102,7 @@ private:
 	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh, CString skinName);
 	ANKI_USE_RESULT Error writeAnimation(const cgltf_animation& anim);
 	ANKI_USE_RESULT Error writeSkeleton(const cgltf_skin& skin);
-	ANKI_USE_RESULT Error writeCollisionMesh(const cgltf_mesh& mesh);
+	ANKI_USE_RESULT Error writeCollisionMesh(const cgltf_mesh& mesh, U32 maxLod);
 
 	// Scene
 	ANKI_USE_RESULT Error writeTransform(const Transform& trf);

@@ -308,7 +308,7 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 
 		// Program
 		ShaderProgramPtr prog;
-		self.m_particleEmitterResource->getRenderingInfo(ctx.m_key.getLod(), prog);
+		self.m_particleEmitterResource->getRenderingInfo(ctx.m_key, prog);
 		cmdb->bindShaderProgram(prog);
 
 		// Vertex attribs
@@ -322,11 +322,7 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 		// Uniforms
 		Array<Mat4, 1> trf = {{Mat4::getIdentity()}};
 		static_cast<const MaterialRenderComponent&>(self.getComponent<RenderComponent>())
-			.allocateAndSetupUniforms(self.m_particleEmitterResource->getMaterial()->getDescriptorSetIndex(),
-				ctx,
-				trf,
-				trf,
-				*ctx.m_stagingGpuAllocator);
+			.allocateAndSetupUniforms(ctx, trf, trf, *ctx.m_stagingGpuAllocator);
 
 		// Draw
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, self.m_aliveParticlesCount, 0, 0);

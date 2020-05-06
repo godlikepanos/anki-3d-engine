@@ -161,6 +161,7 @@ Error GltfImporter::init(CString inputFname,
 	Bool optimizeMeshes,
 	F32 lodFactor,
 	U32 lodCount,
+	F32 lightIntensityScale,
 	U32 threadCount)
 {
 	m_inputFname.create(inputFname);
@@ -168,6 +169,8 @@ Error GltfImporter::init(CString inputFname,
 	m_rpath.create(rpath);
 	m_texrpath.create(texrpath);
 	m_optimizeMeshes = optimizeMeshes;
+
+	m_lightIntensityScale = clamp(lightIntensityScale, 0.1f, 1.0f);
 
 	m_lodCount = clamp(lodCount, 1u, 3u);
 	m_lodFactor = clamp(lodFactor, 0.0f, 1.0f);
@@ -646,6 +649,7 @@ Error GltfImporter::visitNode(
 
 				// LOD 0
 				Error err = self.m_importer->writeMesh(*self.m_mesh, CString(), 1.0f);
+				U32 maxLod = 0;
 
 				// LOD 1
 				if(!err && self.m_lodCount > 1)
@@ -653,6 +657,7 @@ Error GltfImporter::visitNode(
 					StringAuto name(self.m_importer->m_alloc);
 					name.sprintf("%s_lod1", self.m_mesh->name);
 					err = self.m_importer->writeMesh(*self.m_mesh, name, 1.0f - self.m_lodFactor);
+					maxLod = 1;
 				}
 
 				// LOD 2
@@ -661,6 +666,7 @@ Error GltfImporter::visitNode(
 					StringAuto name(self.m_importer->m_alloc);
 					name.sprintf("%s_lod2", self.m_mesh->name);
 					err = self.m_importer->writeMesh(*self.m_mesh, name, 1.0f - self.m_lodFactor * 2.0f);
+					maxLod = 2;
 				}
 
 				if(!err)
@@ -680,7 +686,7 @@ Error GltfImporter::visitNode(
 
 				if(!err && self.m_selfCollision)
 				{
-					err = self.m_importer->writeCollisionMesh(*self.m_mesh);
+					err = self.m_importer->writeCollisionMesh(*self.m_mesh, maxLod);
 				}
 
 				if(err)
@@ -1037,7 +1043,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 	return Error::NONE;
 }
 
-Error GltfImporter::writeCollisionMesh(const cgltf_mesh& mesh)
+Error GltfImporter::writeCollisionMesh(const cgltf_mesh& mesh, U32 maxLod)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankicl", m_outDir.cstr(), mesh.name);
@@ -1049,10 +1055,21 @@ Error GltfImporter::writeCollisionMesh(const cgltf_mesh& mesh)
 
 	ANKI_CHECK(file.writeText("%s\n", XML_HEADER));
 
-	ANKI_CHECK(file.writeText("<collisionShape>\n\t<type>staticMesh</type>\n\t<value>"
-							  "%s%s_lod2.ankimesh</value>\n</collisionShape>\n",
-		m_rpath.cstr(),
-		mesh.name));
+	if(maxLod == 0)
+	{
+		ANKI_CHECK(file.writeText("<collisionShape>\n\t<type>staticMesh</type>\n\t<value>"
+								  "%s%s.ankimesh</value>\n</collisionShape>\n",
+			m_rpath.cstr(),
+			mesh.name));
+	}
+	else
+	{
+		ANKI_CHECK(file.writeText("<collisionShape>\n\t<type>staticMesh</type>\n\t<value>"
+								  "%s%s_lod%u.ankimesh</value>\n</collisionShape>\n",
+			m_rpath.cstr(),
+			mesh.name,
+			maxLod));
+	}
 
 	return Error::NONE;
 }
@@ -1088,7 +1105,7 @@ Error GltfImporter::writeLight(const cgltf_node& node, const HashMapAuto<CString
 
 	Vec3 color(light.color[0], light.color[1], light.color[2]);
 	color *= light.intensity;
-	color /= 100.0f; // Blender changed something
+	color *= m_lightIntensityScale;
 	ANKI_CHECK(
 		m_sceneFile.writeText("lcomp:setDiffuseColor(Vec4.new(%f, %f, %f, 1))\n", color.x(), color.y(), color.z()));
 

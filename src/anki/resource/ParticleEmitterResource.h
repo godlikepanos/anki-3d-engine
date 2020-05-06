@@ -111,7 +111,7 @@ public:
 	}
 
 	/// Get program for rendering.
-	void getRenderingInfo(U32 lod, ShaderProgramPtr& prog) const;
+	void getRenderingInfo(const RenderingKey& key, ShaderProgramPtr& prog) const;
 
 	/// Load it
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);

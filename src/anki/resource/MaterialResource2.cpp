@@ -160,6 +160,9 @@ Error MaterialResource2::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(parseMutators(mutatorsEl));
 	}
 
+	// The rest of the mutators
+	ANKI_CHECK(findBuiltinMutators());
+
 	// <inputs>
 	ANKI_CHECK(rootEl.getChildElementOptional("inputs", el));
 	if(el)
@@ -243,9 +246,12 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 
 	ANKI_ASSERT(mutatorCount == m_nonBuiltinsMutation.getSize());
 
-	//
-	// Find the builtin mutators
-	//
+	return Error::NONE;
+}
+
+Error MaterialResource2::findBuiltinMutators()
+{
+	// INSTANCE_COUNT
 	U builtinMutatorCount = 0;
 
 	m_builtinMutators[BuiltinMutatorId2::INSTANCE_COUNT] =
@@ -273,6 +279,7 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 		++builtinMutatorCount;
 	}
 
+	// PASS
 	m_builtinMutators[BuiltinMutatorId2::PASS] = m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::PASS]);
 	if(m_builtinMutators[BuiltinMutatorId2::PASS] && m_forwardShading)
 	{
@@ -322,6 +329,7 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 		return Error::USER_DATA;
 	}
 
+	// LOD
 	m_builtinMutators[BuiltinMutatorId2::LOD] = m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::LOD]);
 	if(m_builtinMutators[BuiltinMutatorId2::LOD])
 	{
@@ -347,6 +355,7 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 		++builtinMutatorCount;
 	}
 
+	// BONES
 	m_builtinMutators[BuiltinMutatorId2::BONES] =
 		m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::BONES]);
 	if(m_builtinMutators[BuiltinMutatorId2::BONES])
@@ -395,6 +404,7 @@ Error MaterialResource2::parseMutators(XmlElement mutatorsEl)
 		}
 	}
 
+	// VELOCITY
 	m_builtinMutators[BuiltinMutatorId2::VELOCITY] =
 		m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId2::VELOCITY]);
 	if(m_builtinMutators[BuiltinMutatorId2::VELOCITY])

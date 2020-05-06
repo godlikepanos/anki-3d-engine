@@ -282,6 +282,7 @@ inline ShaderProgramResourceVariantInitInfo2& ShaderProgramResourceVariantInitIn
 {
 	const ShaderProgramResourceMutator2* m = m_ptr->tryFindMutator(name);
 	ANKI_ASSERT(m);
+	ANKI_ASSERT(m->valueExists(t));
 	const PtrSize mutatorIdx = m - m_ptr->getMutators().getBegin();
 	m_mutation[mutatorIdx] = t;
 	m_setMutators.set(mutatorIdx);

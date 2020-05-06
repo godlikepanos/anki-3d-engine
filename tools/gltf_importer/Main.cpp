@@ -29,6 +29,7 @@ public:
 	U32 m_threadCount = MAX_U32;
 	U32 m_lodCount = 1;
 	F32 m_lodFactor = 0.25f;
+	F32 m_lightIntensityScale = 1.0f;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -145,6 +146,19 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::USER_DATA;
 			}
 		}
+		else if(strcmp(argv[i], "-light-scale") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				ANKI_CHECK(CString(argv[i]).toNumber(info.m_lightIntensityScale));
+			}
+			else
+			{
+				return Error::USER_DATA;
+			}
+		}
 		else
 		{
 			return Error::USER_DATA;
@@ -182,6 +196,7 @@ int main(int argc, char** argv)
 		   info.m_optimizeMeshes,
 		   info.m_lodFactor,
 		   info.m_lodCount,
+		   info.m_lightIntensityScale,
 		   info.m_threadCount))
 	{
 		return 1;

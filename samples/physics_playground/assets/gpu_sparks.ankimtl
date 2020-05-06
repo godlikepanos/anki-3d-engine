@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<material shaderProgram="shaders/GpuParticles.glslp" shadow="0">
+<material shaderProgram="shaders/GBufferGpuParticles.ankiprog" shadow="0">
 	<inputs>
-		<input shaderInput="diffColor" value="1.0 0.1 0.1"/>
-		<input shaderInput="specColor" value="0.04 0.04 0.04"/>
-		<input shaderInput="roughness" value="9.0"/>
-		<input shaderInput="metallic" value="0.0"/>
-		<input shaderInput="initialEmission" value="1024 1024 1024"/>
-		<input shaderInput="finalEmission" value="10 10 10"/>
+		<input shaderVar="m_diffColor" value="1.0 0.1 0.1"/>
+		<input shaderVar="m_specColor" value="0.04 0.04 0.04"/>
+		<input shaderVar="m_roughness" value="9.0"/>
+		<input shaderVar="m_metallic" value="0.0"/>
+		<input shaderVar="m_initialEmission" value="1024 1024 1024"/>
+		<input shaderVar="m_finalEmission" value="10 10 10"/>
 	</inputs>
 </material>
 
