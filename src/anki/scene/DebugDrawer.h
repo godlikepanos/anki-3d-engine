@@ -9,8 +9,8 @@
 #include <anki/Math.h>
 #include <anki/Gr.h>
 #include <anki/physics/PhysicsDrawer.h>
+#include <anki/resource/ShaderProgramResource2.h>
 #include <anki/util/Array.h>
-#include <anki/resource/ShaderProgramResource.h>
 
 namespace anki
 {

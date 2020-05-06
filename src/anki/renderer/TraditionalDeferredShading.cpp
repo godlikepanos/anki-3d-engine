@@ -6,7 +6,6 @@
 #include <anki/renderer/TraditionalDeferredShading.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/resource/ShaderProgramResource.h>
 #include <anki/resource/MeshResource.h>
 #include <shaders/glsl_cpp_common/TraditionalDeferredShading.h>
 

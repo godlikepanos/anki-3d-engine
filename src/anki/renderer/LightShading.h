@@ -7,7 +7,6 @@
 
 #include <anki/renderer/RendererObject.h>
 #include <anki/resource/TextureResource.h>
-#include <anki/resource/ShaderProgramResource.h>
 
 namespace anki
 {
