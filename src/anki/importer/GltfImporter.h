@@ -38,7 +38,8 @@ public:
 		F32 lodFactor,
 		U32 lodCount,
 		F32 lightIntensityScale,
-		U32 threadCount);
+		U32 threadCount,
+		CString comment);
 
 	ANKI_USE_RESULT Error writeAll();
 
@@ -78,6 +79,7 @@ private:
 	U32 m_lodCount = 1;
 	F32 m_lightIntensityScale = 1.0f;
 	Bool m_optimizeMeshes = false;
+	StringAuto m_comment{m_alloc};
 
 	// Misc
 	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);

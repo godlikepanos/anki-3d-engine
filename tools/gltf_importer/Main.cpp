@@ -187,7 +187,18 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	HeapAllocator<U8> alloc{allocAligned, nullptr};
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	StringAuto comment(alloc);
+	for(I32 i = 0; i < argc; ++i)
+	{
+		if(i != 0)
+		{
+			comment.append(" ");
+		}
+
+		comment.append(argv[i]);
+	}
+
 	GltfImporter importer{alloc};
 	if(importer.init(info.m_inputFname.toCString(),
 		   info.m_outDir.toCString(),
@@ -197,7 +208,8 @@ int main(int argc, char** argv)
 		   info.m_lodFactor,
 		   info.m_lodCount,
 		   info.m_lightIntensityScale,
-		   info.m_threadCount))
+		   info.m_threadCount,
+		   comment))
 	{
 		return 1;
 	}
