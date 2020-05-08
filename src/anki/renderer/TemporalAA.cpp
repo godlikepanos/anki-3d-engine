@@ -40,7 +40,7 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 
 	for(U32 i = 0; i < 2; ++i)
 	{
-		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addConstant("VARIANCE_CLIPPING_GAMMA", 1.7f);
 		variantInitInfo.addConstant("BLEND_FACTOR", 1.0f / 16.0f);
 		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
@@ -49,7 +49,7 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 		variantInitInfo.addMutation("TONEMAP_FIX", 1);
 		variantInitInfo.addMutation("YCBCR", 0);
 
-		const ShaderProgramResourceVariant2* variant;
+		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
 		m_grProgs[i] = variant->getProgram();
 

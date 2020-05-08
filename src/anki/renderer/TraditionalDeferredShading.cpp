@@ -29,11 +29,11 @@ Error TraditionalDeferredLightShading::init()
 
 		for(U32 specular = 0; specular <= 1; ++specular)
 		{
-			ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_lightProg);
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightProg);
 			variantInitInfo.addMutation("LIGHT_TYPE", 0);
 			variantInitInfo.addMutation("SPECULAR", specular);
 
-			const ShaderProgramResourceVariant2* variant;
+			const ShaderProgramResourceVariant* variant;
 			m_lightProg->getOrCreateVariant(variantInitInfo, variant);
 			m_plightGrProg[specular] = variant->getProgram();
 

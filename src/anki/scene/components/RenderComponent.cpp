@@ -12,7 +12,7 @@
 namespace anki
 {
 
-MaterialRenderComponent::MaterialRenderComponent(SceneNode* node, MaterialResource2Ptr mtl)
+MaterialRenderComponent::MaterialRenderComponent(SceneNode* node, MaterialResourcePtr mtl)
 	: m_node(node)
 	, m_mtl(mtl)
 {
@@ -21,7 +21,7 @@ MaterialRenderComponent::MaterialRenderComponent(SceneNode* node, MaterialResour
 	// Create the material variables
 	m_vars.create(m_node->getAllocator(), m_mtl->getVariables().getSize());
 	U32 count = 0;
-	for(const MaterialVariable2& mv : m_mtl->getVariables())
+	for(const MaterialVariable& mv : m_mtl->getVariables())
 	{
 		m_vars[count++].m_mvar = &mv;
 	}
@@ -45,7 +45,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCES);
 	ANKI_ASSERT(prevTransforms.getSize() == transforms.getSize());
 
-	const MaterialVariant2& variant = m_mtl->getOrCreateVariant(ctx.m_key);
+	const MaterialVariant& variant = m_mtl->getOrCreateVariant(ctx.m_key);
 	const U32 set = m_mtl->getDescriptorSetIndex();
 
 	// Allocate uniform memory
@@ -60,7 +60,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 	for(auto it = m_vars.getBegin(); it != m_vars.getEnd(); ++it)
 	{
 		const MaterialRenderComponentVariable& var = *it;
-		const MaterialVariable2& mvar = var.getMaterialVariable();
+		const MaterialVariable& mvar = var.getMaterialVariable();
 
 		if(!variant.isVariableActive(mvar))
 		{
@@ -85,13 +85,13 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 		{
 			switch(mvar.getBuiltin())
 			{
-			case BuiltinMaterialVariableId2::NONE:
+			case BuiltinMaterialVariableId::NONE:
 			{
 				const Vec3 val = mvar.getValue<Vec3>();
 				variant.writeShaderBlockMemory(mvar, &val, 1, uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::CAMERA_POSITION:
+			case BuiltinMaterialVariableId::CAMERA_POSITION:
 			{
 				const Vec3 val = ctx.m_cameraTransform.getTranslationPart().xyz();
 				variant.writeShaderBlockMemory(mvar, &val, 1, uniformsBegin, uniformsEnd);
@@ -113,13 +113,13 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 		{
 			switch(mvar.getBuiltin())
 			{
-			case BuiltinMaterialVariableId2::NONE:
+			case BuiltinMaterialVariableId::NONE:
 			{
 				const Mat3 val = mvar.getValue<Mat3>();
 				variant.writeShaderBlockMemory(mvar, &val, 1, uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::NORMAL_MATRIX:
+			case BuiltinMaterialVariableId::NORMAL_MATRIX:
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
@@ -134,7 +134,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 				variant.writeShaderBlockMemory(mvar, &normMats[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::ROTATION_MATRIX:
+			case BuiltinMaterialVariableId::ROTATION_MATRIX:
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
@@ -147,7 +147,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 				variant.writeShaderBlockMemory(mvar, &rots[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::CAMERA_ROTATION_MATRIX:
+			case BuiltinMaterialVariableId::CAMERA_ROTATION_MATRIX:
 			{
 				const Mat3 rot = ctx.m_cameraTransform.getRotationPart();
 				variant.writeShaderBlockMemory(mvar, &rot, 1, uniformsBegin, uniformsEnd);
@@ -163,13 +163,13 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 		{
 			switch(mvar.getBuiltin())
 			{
-			case BuiltinMaterialVariableId2::NONE:
+			case BuiltinMaterialVariableId::NONE:
 			{
 				const Mat4 val = mvar.getValue<Mat4>();
 				variant.writeShaderBlockMemory(mvar, &val, 1, uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::MODEL_VIEW_PROJECTION_MATRIX:
+			case BuiltinMaterialVariableId::MODEL_VIEW_PROJECTION_MATRIX:
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
@@ -182,7 +182,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 				variant.writeShaderBlockMemory(mvar, &mvp[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX:
+			case BuiltinMaterialVariableId::PREVIOUS_MODEL_VIEW_PROJECTION_MATRIX:
 			{
 				ANKI_ASSERT(prevTransforms.getSize() > 0);
 
@@ -195,7 +195,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 				variant.writeShaderBlockMemory(mvar, &mvp[0], prevTransforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::MODEL_VIEW_MATRIX:
+			case BuiltinMaterialVariableId::MODEL_VIEW_MATRIX:
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
@@ -208,20 +208,20 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 				variant.writeShaderBlockMemory(mvar, &mv[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::MODEL_MATRIX:
+			case BuiltinMaterialVariableId::MODEL_MATRIX:
 			{
 				ANKI_ASSERT(transforms.getSize() > 0);
 
 				variant.writeShaderBlockMemory(mvar, &transforms[0], transforms.getSize(), uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::VIEW_PROJECTION_MATRIX:
+			case BuiltinMaterialVariableId::VIEW_PROJECTION_MATRIX:
 			{
 				ANKI_ASSERT(transforms.getSize() == 0 && "Cannot have transform");
 				variant.writeShaderBlockMemory(mvar, &ctx.m_viewProjectionMatrix, 1, uniformsBegin, uniformsEnd);
 				break;
 			}
-			case BuiltinMaterialVariableId2::VIEW_MATRIX:
+			case BuiltinMaterialVariableId::VIEW_MATRIX:
 			{
 				variant.writeShaderBlockMemory(mvar, &ctx.m_viewMatrix, 1, uniformsBegin, uniformsEnd);
 				break;
@@ -247,7 +247,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 		{
 			switch(mvar.getBuiltin())
 			{
-			case BuiltinMaterialVariableId2::GLOBAL_SAMPLER:
+			case BuiltinMaterialVariableId::GLOBAL_SAMPLER:
 				ctx.m_commandBuffer->bindSampler(set, variant.getOpaqueBinding(mvar), ctx.m_sampler);
 				break;
 			default:

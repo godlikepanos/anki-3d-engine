@@ -10,7 +10,7 @@
 #include <anki/collision/Obb.h>
 #include <anki/resource/RenderingKey.h>
 #include <anki/resource/MeshResource.h>
-#include <anki/resource/MaterialResource2.h>
+#include <anki/resource/MaterialResource.h>
 #include <anki/resource/SkeletonResource.h>
 #include <anki/resource/AnimationResource.h>
 
@@ -88,7 +88,7 @@ class ModelPatch
 	friend class ModelResource;
 
 public:
-	const MaterialResource2Ptr& getMaterial() const
+	const MaterialResourcePtr& getMaterial() const
 	{
 		return m_mtl;
 	}
@@ -131,7 +131,7 @@ private:
 
 	Array<MeshResourcePtr, MAX_LOD_COUNT> m_meshes; ///< One for each LOD
 	U8 m_meshCount = 0;
-	MaterialResource2Ptr m_mtl;
+	MaterialResourcePtr m_mtl;
 
 	/// Return the maximum number of LODs
 	U32 getLodCount() const;

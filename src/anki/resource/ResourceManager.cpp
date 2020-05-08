@@ -9,7 +9,7 @@
 #include <anki/util/Logger.h>
 #include <anki/core/ConfigSet.h>
 
-#include <anki/resource/MaterialResource2.h>
+#include <anki/resource/MaterialResource.h>
 #include <anki/resource/MeshResource.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ScriptResource.h>
@@ -18,7 +18,7 @@
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/GenericResource.h>
 #include <anki/resource/TextureAtlasResource.h>
-#include <anki/resource/ShaderProgramResource2.h>
+#include <anki/resource/ShaderProgramResource.h>
 #include <anki/resource/CollisionResource.h>
 
 namespace anki

@@ -149,14 +149,14 @@ Error ProbeReflections::initIrradiance(const ConfigSet& config)
 	{
 		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
 
-		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_irradiance.m_prog);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 
 		variantInitInfo.addMutation("WORKGROUP_SIZE_XY", U32(m_irradiance.m_workgroupSize));
 		variantInitInfo.addMutation("LIGHT_SHADING_TEX", 1);
 		variantInitInfo.addMutation("STORE_LOCATION", 1);
 		variantInitInfo.addMutation("SECOND_BOUNCE", 0);
 
-		const ShaderProgramResourceVariant2* variant;
+		const ShaderProgramResourceVariant* variant;
 		m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);
 		m_irradiance.m_grProg = variant->getProgram();
 	}
@@ -178,9 +178,9 @@ Error ProbeReflections::initIrradianceToRefl(const ConfigSet& cfg)
 	ANKI_CHECK(m_r->getResourceManager().loadResource(
 		"shaders/ApplyIrradianceToReflection.ankiprog", m_irradianceToRefl.m_prog));
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_irradianceToRefl.m_prog->getOrCreateVariant(
-		ShaderProgramResourceVariantInitInfo2(m_irradianceToRefl.m_prog), variant);
+		ShaderProgramResourceVariantInitInfo(m_irradianceToRefl.m_prog), variant);
 	m_irradianceToRefl.m_grProg = variant->getProgram();
 
 	return Error::NONE;

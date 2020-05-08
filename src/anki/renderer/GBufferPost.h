@@ -30,7 +30,7 @@ public:
 	void populateRenderGraph(RenderingContext& ctx);
 
 private:
-	ShaderProgramResource2Ptr m_prog;
+	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
 	FramebufferDescription m_fbDescr;

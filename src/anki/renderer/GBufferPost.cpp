@@ -33,11 +33,11 @@ Error GBufferPost::initInternal(const ConfigSet& cfg)
 	// Load shaders
 	ANKI_CHECK(getResourceManager().loadResource("shaders/GBufferPost.ankiprog", m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("CLUSTER_COUNT_X", cfg.getNumberU32("r_clusterSizeX"));
 	variantInitInfo.addConstant("CLUSTER_COUNT_Y", cfg.getNumberU32("r_clusterSizeY"));
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 

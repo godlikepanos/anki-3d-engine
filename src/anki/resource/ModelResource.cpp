@@ -46,7 +46,7 @@ void ModelPatch::getRenderingDataSub(
 		mtlKey.setLod(min(key.getLod(), m_mtl->getLodCount() - 1));
 		mtlKey.setSkinned(hasSkin);
 
-		const MaterialVariant2& variant = m_mtl->getOrCreateVariant(mtlKey);
+		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey);
 
 		inf.m_program = variant.getShaderProgram();
 

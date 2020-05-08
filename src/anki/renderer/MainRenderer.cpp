@@ -63,7 +63,7 @@ Error MainRenderer::init(ThreadHive* hive,
 	if(!m_rDrawToDefaultFb)
 	{
 		ANKI_CHECK(resources->loadResource("shaders/Blit.ankiprog", m_blitProg));
-		const ShaderProgramResourceVariant2* variant;
+		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(variant);
 		m_blitGrProg = variant->getProgram();
 

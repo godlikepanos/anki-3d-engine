@@ -33,7 +33,7 @@ Error Ssao::initMain(const ConfigSet& config)
 		ANKI_CHECK(getResourceManager().loadResource("shaders/Ssao.ankiprog", m_main.m_prog));
 	}
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_main.m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_main.m_prog);
 	variantInitInfo.addMutation("USE_NORMAL", (m_useNormal) ? 1u : 0u);
 	variantInitInfo.addMutation("SOFT_BLUR", (m_useSoftBlur) ? 1u : 0u);
 	variantInitInfo.addConstant("NOISE_MAP_SIZE", U32(m_main.m_noiseTex->getWidth()));
@@ -42,7 +42,7 @@ Error Ssao::initMain(const ConfigSet& config)
 	variantInitInfo.addConstant("BIAS", 0.0f);
 	variantInitInfo.addConstant("STRENGTH", 2.5f);
 	variantInitInfo.addConstant("SAMPLE_COUNT", 8u);
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_main.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_main.m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
 	m_main.m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
@@ -58,13 +58,13 @@ Error Ssao::initBlur(const ConfigSet& config)
 	{
 		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlurCompute.ankiprog", m_blur.m_prog));
 
-		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_blur.m_prog);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_blur.m_prog);
 		variantInitInfo.addMutation("ORIENTATION", 2);
 		variantInitInfo.addMutation("KERNEL_SIZE", 3);
 		variantInitInfo.addMutation("COLOR_COMPONENTS", 1);
 		variantInitInfo.addConstant("TEXTURE_SIZE", UVec2(m_width, m_height));
 
-		const ShaderProgramResourceVariant2* variant;
+		const ShaderProgramResourceVariant* variant;
 		m_blur.m_prog->getOrCreateVariant(variantInitInfo, variant);
 
 		m_blur.m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
@@ -76,13 +76,13 @@ Error Ssao::initBlur(const ConfigSet& config)
 	{
 		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlur.ankiprog", m_blur.m_prog));
 
-		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_blur.m_prog);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_blur.m_prog);
 		variantInitInfo.addMutation("ORIENTATION", 2);
 		variantInitInfo.addMutation("KERNEL_SIZE", 3);
 		variantInitInfo.addMutation("COLOR_COMPONENTS", 1);
 		variantInitInfo.addConstant("TEXTURE_SIZE", UVec2(m_width, m_height));
 
-		const ShaderProgramResourceVariant2* variant;
+		const ShaderProgramResourceVariant* variant;
 		m_blur.m_prog->getOrCreateVariant(variantInitInfo, variant);
 
 		m_blur.m_grProg = variant->getProgram();

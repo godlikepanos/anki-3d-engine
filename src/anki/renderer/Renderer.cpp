@@ -497,10 +497,10 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				else
 				{
 					// Compute
-					ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_clearTexComputeProg);
+					ShaderProgramResourceVariantInitInfo variantInitInfo(m_clearTexComputeProg);
 					variantInitInfo.addMutation("IS_2D", I32((inf.m_type != TextureType::_3D) ? 1 : 0));
 
-					const ShaderProgramResourceVariant2* variant;
+					const ShaderProgramResourceVariant* variant;
 					m_clearTexComputeProg->getOrCreateVariant(variantInitInfo, variant);
 
 					cmdb->bindShaderProgram(variant->getProgram());

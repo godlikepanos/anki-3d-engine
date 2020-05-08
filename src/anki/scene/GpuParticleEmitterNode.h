@@ -41,7 +41,7 @@ private:
 
 	class MoveFeedbackComponent;
 
-	ShaderProgramResource2Ptr m_prog;
+	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	U32 m_workgroupSizeX = 0;
 

@@ -33,7 +33,7 @@ public:
 private:
 	Array<TexturePtr, 2> m_rtTextures;
 
-	ShaderProgramResource2Ptr m_prog;
+	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProgs;
 
 	Array<U32, 2> m_workgroupSize = {};

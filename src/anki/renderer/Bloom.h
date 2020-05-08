@@ -50,7 +50,7 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResource2Ptr m_prog;
+		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 
 		F32 m_threshold = 10.0; ///< How bright it is
@@ -65,7 +65,7 @@ private:
 	{
 	public:
 		TextureResourcePtr m_lensDirtTex;
-		ShaderProgramResource2Ptr m_prog;
+		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 
 		U32 m_width = 0;

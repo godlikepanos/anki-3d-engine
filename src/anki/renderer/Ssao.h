@@ -48,7 +48,7 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResource2Ptr m_prog;
+		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 		TextureResourcePtr m_noiseTex;
 		Array<U32, 2> m_workgroupSize = {};
@@ -57,7 +57,7 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResource2Ptr m_prog;
+		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 		Array<U32, 2> m_workgroupSize = {};
 	} m_blur; ///< Box blur.

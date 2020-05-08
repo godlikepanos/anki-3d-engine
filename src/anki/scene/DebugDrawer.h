@@ -9,7 +9,7 @@
 #include <anki/Math.h>
 #include <anki/Gr.h>
 #include <anki/physics/PhysicsDrawer.h>
-#include <anki/resource/ShaderProgramResource2.h>
+#include <anki/resource/ShaderProgramResource.h>
 #include <anki/util/Array.h>
 
 namespace anki
@@ -86,7 +86,7 @@ public:
 	}
 
 private:
-	ShaderProgramResource2Ptr m_prog;
+	ShaderProgramResourcePtr m_prog;
 
 	RenderQueueDrawContext* m_ctx = nullptr;
 
@@ -188,7 +188,7 @@ public:
 	}
 
 private:
-	ShaderProgramResource2Ptr m_prog;
+	ShaderProgramResourcePtr m_prog;
 };
 /// @}
 

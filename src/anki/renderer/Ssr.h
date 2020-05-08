@@ -35,7 +35,7 @@ public:
 	}
 
 private:
-	ShaderProgramResource2Ptr m_prog;
+	ShaderProgramResourcePtr m_prog;
 	Array<ShaderProgramPtr, 2> m_grProg;
 
 	TexturePtr m_rt;

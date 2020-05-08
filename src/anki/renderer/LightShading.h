@@ -39,14 +39,14 @@ private:
 		FramebufferDescription m_fbDescr;
 
 		// Light shaders
-		ShaderProgramResource2Ptr m_prog;
+		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 	} m_lightShading;
 
 	class
 	{
 	public:
-		ShaderProgramResource2Ptr m_prog;
+		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 	} m_applyFog;
 

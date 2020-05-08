@@ -41,11 +41,11 @@ public:
 private:
 	// Occlusion test
 	BufferPtr m_indirectBuff;
-	ShaderProgramResource2Ptr m_updateIndirectBuffProg;
+	ShaderProgramResourcePtr m_updateIndirectBuffProg;
 	ShaderProgramPtr m_updateIndirectBuffGrProg;
 
 	// Sprite billboards
-	ShaderProgramResource2Ptr m_realProg;
+	ShaderProgramResourcePtr m_realProg;
 	ShaderProgramPtr m_realGrProg;
 	U8 m_maxSpritesPerFlare;
 	U8 m_maxFlares;

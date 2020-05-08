@@ -41,8 +41,8 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 
 	for(U32 i = 0; i < SHADER_COUNT; ++i)
 	{
-		const ShaderProgramResourceVariant2* variant;
-		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+		const ShaderProgramResourceVariant* variant;
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("TEXTURE_TYPE", i);
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
 		m_grProgs[i] = variant->getProgram();

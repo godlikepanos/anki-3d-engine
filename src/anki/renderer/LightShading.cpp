@@ -53,14 +53,14 @@ Error LightShading::initLightShading(const ConfigSet& config)
 	// Load shaders and programs
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShading.ankiprog", m_lightShading.m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_lightShading.m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
 	variantInitInfo.addConstant("CLUSTER_COUNT_X", U32(m_r->getClusterCount()[0]));
 	variantInitInfo.addConstant("CLUSTER_COUNT_Y", U32(m_r->getClusterCount()[1]));
 	variantInitInfo.addConstant("CLUSTER_COUNT_Z", U32(m_r->getClusterCount()[2]));
 	variantInitInfo.addConstant("CLUSTER_COUNT", U32(m_r->getClusterCount()[3]));
 	variantInitInfo.addConstant("IR_MIPMAP_COUNT", U32(m_r->getProbeReflections().getReflectionTextureMipmapCount()));
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_lightShading.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_lightShading.m_grProg = variant->getProgram();
 
@@ -84,10 +84,10 @@ Error LightShading::initApplyFog(const ConfigSet& config)
 	// Load shaders and programs
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShadingApplyFog.ankiprog", m_applyFog.m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_applyFog.m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
 	variantInitInfo.addConstant("FOG_LAST_CLASTER", m_r->getVolumetricFog().getFinalClusterInZ());
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_applyFog.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_applyFog.m_grProg = variant->getProgram();
 

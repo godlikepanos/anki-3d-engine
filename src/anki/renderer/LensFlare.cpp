@@ -54,7 +54,7 @@ Error LensFlare::initSprite(const ConfigSet& config)
 
 	// Load prog
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LensFlareSprite.ankiprog", m_realProg));
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_realProg->getOrCreateVariant(variant);
 	m_realGrProg = variant->getProgram();
 
@@ -73,9 +73,9 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 	ANKI_CHECK(
 		getResourceManager().loadResource("shaders/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_updateIndirectBuffProg);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
 	variantInitInfo.addConstant("IN_DEPTH_MAP_SIZE", UVec2(m_r->getWidth() / 2 / 2, m_r->getHeight() / 2 / 2));
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_updateIndirectBuffProg->getOrCreateVariant(variantInitInfo, variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();
 

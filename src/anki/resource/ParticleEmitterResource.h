@@ -7,7 +7,7 @@
 
 #include <anki/resource/ResourceObject.h>
 #include <anki/resource/RenderingKey.h>
-#include <anki/resource/MaterialResource2.h>
+#include <anki/resource/MaterialResource.h>
 #include <anki/Math.h>
 #include <anki/Gr.h>
 
@@ -105,7 +105,7 @@ public:
 		return *this;
 	}
 
-	const MaterialResource2Ptr& getMaterial() const
+	const MaterialResourcePtr& getMaterial() const
 	{
 		return m_material;
 	}
@@ -117,7 +117,7 @@ public:
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 private:
-	MaterialResource2Ptr m_material;
+	MaterialResourcePtr m_material;
 	U8 m_lodCount = 1; ///< Cache the value from the material
 
 	void loadInternal(const XmlElement& el);

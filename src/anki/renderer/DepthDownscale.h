@@ -58,7 +58,7 @@ private:
 
 	TexturePtr m_hizTex;
 	Bool m_hizTexImportedOnce = false;
-	ShaderProgramResource2Ptr m_prog;
+	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	U32 m_mipCount = 0;
 

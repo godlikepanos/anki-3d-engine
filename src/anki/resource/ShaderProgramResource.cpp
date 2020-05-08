@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/resource/ShaderProgramResource2.h>
+#include <anki/resource/ShaderProgramResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/gr/ShaderProgram.h>
 #include <anki/gr/GrManager.h>
@@ -13,25 +13,25 @@
 namespace anki
 {
 
-ShaderProgramResourceVariant2::ShaderProgramResourceVariant2()
+ShaderProgramResourceVariant::ShaderProgramResourceVariant()
 {
 }
 
-ShaderProgramResourceVariant2::~ShaderProgramResourceVariant2()
+ShaderProgramResourceVariant::~ShaderProgramResourceVariant()
 {
 }
 
-ShaderProgramResource2::ShaderProgramResource2(ResourceManager* manager)
+ShaderProgramResource::ShaderProgramResource(ResourceManager* manager)
 	: ResourceObject(manager)
 	, m_binary(getAllocator())
 {
 }
 
-ShaderProgramResource2::~ShaderProgramResource2()
+ShaderProgramResource::~ShaderProgramResource()
 {
 	m_mutators.destroy(getAllocator());
 
-	for(ShaderProgramResourceConstant2& c : m_consts)
+	for(ShaderProgramResourceConstant& c : m_consts)
 	{
 		c.m_name.destroy(getAllocator());
 	}
@@ -40,13 +40,13 @@ ShaderProgramResource2::~ShaderProgramResource2()
 
 	for(auto it : m_variants)
 	{
-		ShaderProgramResourceVariant2* variant = &(*it);
+		ShaderProgramResourceVariant* variant = &(*it);
 		getAllocator().deleteInstance(variant);
 	}
 	m_variants.destroy(getAllocator());
 }
 
-Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
+Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 {
 	// Load the binary from the cache. It should have been compiled there
 	StringAuto baseFilename(getTempAllocator());
@@ -82,7 +82,7 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 		mapping.m_component = componentIdx;
 		if(componentIdx > 0)
 		{
-			const ShaderProgramResourceConstant2* other = tryFindConstant(name);
+			const ShaderProgramResourceConstant* other = tryFindConstant(name);
 			ANKI_ASSERT(other);
 			mapping.m_constsIdx = U32(other - m_consts.getBegin());
 		}
@@ -100,7 +100,7 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 		}
 
 		// Create new one
-		ShaderProgramResourceConstant2& in = *m_consts.emplaceBack(getAllocator());
+		ShaderProgramResourceConstant& in = *m_consts.emplaceBack(getAllocator());
 		in.m_name.create(getAllocator(), name);
 		in.m_index = m_consts.getSize() - 1;
 
@@ -167,7 +167,7 @@ Error ShaderProgramResource2::load(const ResourceFilename& filename, Bool async)
 	return Error::NONE;
 }
 
-Error ShaderProgramResource2::parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name)
+Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name)
 {
 	const CString prefixName = "_anki_const_";
 	const PtrSize prefix = constName.find(prefixName);
@@ -193,8 +193,8 @@ Error ShaderProgramResource2::parseConst(CString constName, U32& componentIdx, U
 	return Error::NONE;
 }
 
-void ShaderProgramResource2::getOrCreateVariant(
-	const ShaderProgramResourceVariantInitInfo2& info, const ShaderProgramResourceVariant2*& variant) const
+void ShaderProgramResource::getOrCreateVariant(
+	const ShaderProgramResourceVariantInitInfo& info, const ShaderProgramResourceVariant*& variant) const
 {
 	// Sanity checks
 	ANKI_ASSERT(info.m_setMutators.getEnabledBitCount() == m_mutators.getSize());
@@ -240,14 +240,14 @@ void ShaderProgramResource2::getOrCreateVariant(
 	}
 
 	// Create
-	ShaderProgramResourceVariant2* v = getAllocator().newInstance<ShaderProgramResourceVariant2>();
+	ShaderProgramResourceVariant* v = getAllocator().newInstance<ShaderProgramResourceVariant>();
 	initVariant(info, *v);
 	m_variants.emplace(getAllocator(), hash, v);
 	variant = v;
 }
 
-void ShaderProgramResource2::initVariant(
-	const ShaderProgramResourceVariantInitInfo2& info, ShaderProgramResourceVariant2& variant) const
+void ShaderProgramResource::initVariant(
+	const ShaderProgramResourceVariantInitInfo& info, ShaderProgramResourceVariant& variant) const
 {
 	const ShaderProgramBinary& binary = m_binary.getBinary();
 
@@ -287,7 +287,7 @@ void ShaderProgramResource2::initVariant(
 		const U32 component = m_constBinaryMapping[instance.m_index].m_component;
 
 		// Get value
-		const ShaderProgramResourceConstantValue2* value = nullptr;
+		const ShaderProgramResourceConstantValue* value = nullptr;
 		for(U32 i = 0; i < m_consts.getSize(); ++i)
 		{
 			if(info.m_constantValues[i].m_constantIndex == inputIdx)

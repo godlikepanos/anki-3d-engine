@@ -45,7 +45,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	// Progs
 	ANKI_CHECK(getResourceManager().loadResource("shaders/FinalComposite.ankiprog", m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("BLUE_NOISE", 1);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
 	variantInitInfo.addMutation("DBG_ENABLED", 0);
@@ -54,7 +54,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
 	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", config.getNumberU32("r_motionBlurSamples"));
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProgs[0] = variant->getProgram();
 

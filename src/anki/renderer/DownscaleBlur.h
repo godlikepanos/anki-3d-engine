@@ -62,7 +62,7 @@ private:
 
 	DynamicArray<FramebufferDescription> m_fbDescrs;
 
-	ShaderProgramResource2Ptr m_prog;
+	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
 	class

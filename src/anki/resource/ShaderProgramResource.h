@@ -19,14 +19,14 @@ namespace anki
 {
 
 // Forward
-class ShaderProgramResourceVariantInitInfo2;
+class ShaderProgramResourceVariantInitInfo;
 
 /// @addtogroup resource
 /// @{
 
 /// The means to mutate a shader program.
-/// @memberof ShaderProgramResource2
-class ShaderProgramResourceMutator2 : public NonCopyable
+/// @memberof ShaderProgramResource
+class ShaderProgramResourceMutator : public NonCopyable
 {
 public:
 	CString m_name;
@@ -46,7 +46,7 @@ public:
 };
 
 /// Shader program resource variant.
-class ShaderProgramResourceConstant2
+class ShaderProgramResourceConstant
 {
 public:
 	String m_name;
@@ -55,14 +55,14 @@ public:
 };
 
 /// Shader program resource variant.
-class ShaderProgramResourceVariant2
+class ShaderProgramResourceVariant
 {
-	friend class ShaderProgramResource2;
+	friend class ShaderProgramResource;
 
 public:
-	ShaderProgramResourceVariant2();
+	ShaderProgramResourceVariant();
 
-	~ShaderProgramResourceVariant2();
+	~ShaderProgramResourceVariant();
 
 	const ShaderProgramPtr& getProgram() const
 	{
@@ -70,7 +70,7 @@ public:
 	}
 
 	/// Return true if the the variable is active in this variant.
-	Bool isConstantActive(const ShaderProgramResourceConstant2& var) const
+	Bool isConstantActive(const ShaderProgramResourceConstant& var) const
 	{
 		return m_activeConsts.get(var.m_index);
 	}
@@ -97,7 +97,7 @@ private:
 };
 
 /// The value of a constant.
-class ShaderProgramResourceConstantValue2
+class ShaderProgramResourceConstantValue
 {
 public:
 	union
@@ -121,44 +121,44 @@ public:
 	U32 m_constantIndex;
 	U8 _m_padding[sizeof(Vec4) - sizeof(m_constantIndex)];
 
-	ShaderProgramResourceConstantValue2()
+	ShaderProgramResourceConstantValue()
 	{
 		zeroMemory(*this);
 	}
 };
-static_assert(sizeof(ShaderProgramResourceConstantValue2) == sizeof(Vec4) * 2, "Need it to be packed");
+static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "Need it to be packed");
 
 /// Smart initializer of multiple ShaderProgramResourceConstantValue.
-class ShaderProgramResourceVariantInitInfo2
+class ShaderProgramResourceVariantInitInfo
 {
-	friend class ShaderProgramResource2;
+	friend class ShaderProgramResource;
 
 public:
-	ShaderProgramResourceVariantInitInfo2()
+	ShaderProgramResourceVariantInitInfo()
 	{
 	}
 
-	ShaderProgramResourceVariantInitInfo2(const ShaderProgramResource2Ptr& ptr)
+	ShaderProgramResourceVariantInitInfo(const ShaderProgramResourcePtr& ptr)
 		: m_ptr(ptr)
 	{
 	}
 
-	~ShaderProgramResourceVariantInitInfo2()
+	~ShaderProgramResourceVariantInitInfo()
 	{
 	}
 
 	template<typename T>
-	ShaderProgramResourceVariantInitInfo2& addConstant(CString name, const T& value);
+	ShaderProgramResourceVariantInitInfo& addConstant(CString name, const T& value);
 
-	ShaderProgramResourceVariantInitInfo2& addMutation(CString name, MutatorValue t);
+	ShaderProgramResourceVariantInitInfo& addMutation(CString name, MutatorValue t);
 
 private:
 	static constexpr U32 MAX_CONSTANTS = 32;
 	static constexpr U32 MAX_MUTATORS = 32;
 
-	ShaderProgramResource2Ptr m_ptr;
+	ShaderProgramResourcePtr m_ptr;
 
-	Array<ShaderProgramResourceConstantValue2, MAX_CONSTANTS> m_constantValues;
+	Array<ShaderProgramResourceConstantValue, MAX_CONSTANTS> m_constantValues;
 	BitSet<MAX_CONSTANTS> m_setConstants = {false};
 
 	Array<MutatorValue, MAX_MUTATORS> m_mutation; ///< The order of storing the values is important. It will be hashed.
@@ -166,26 +166,26 @@ private:
 };
 
 /// Shader program resource. It loads special AnKi programs.
-class ShaderProgramResource2 : public ResourceObject
+class ShaderProgramResource : public ResourceObject
 {
 public:
-	ShaderProgramResource2(ResourceManager* manager);
+	ShaderProgramResource(ResourceManager* manager);
 
-	~ShaderProgramResource2();
+	~ShaderProgramResource();
 
 	/// Load the resource.
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get the array of constants.
-	ConstWeakArray<ShaderProgramResourceConstant2> getConstants() const
+	ConstWeakArray<ShaderProgramResourceConstant> getConstants() const
 	{
 		return m_consts;
 	}
 
 	/// Try to find a constant.
-	const ShaderProgramResourceConstant2* tryFindConstant(CString name) const
+	const ShaderProgramResourceConstant* tryFindConstant(CString name) const
 	{
-		for(const ShaderProgramResourceConstant2& m : m_consts)
+		for(const ShaderProgramResourceConstant& m : m_consts)
 		{
 			if(m.m_name == name)
 			{
@@ -196,15 +196,15 @@ public:
 	}
 
 	/// Get the array of mutators.
-	ConstWeakArray<ShaderProgramResourceMutator2> getMutators() const
+	ConstWeakArray<ShaderProgramResourceMutator> getMutators() const
 	{
 		return m_mutators;
 	}
 
 	/// Try to find a mutator.
-	const ShaderProgramResourceMutator2* tryFindMutator(CString name) const
+	const ShaderProgramResourceMutator* tryFindMutator(CString name) const
 	{
-		for(const ShaderProgramResourceMutator2& m : m_mutators)
+		for(const ShaderProgramResourceMutator& m : m_mutators)
 		{
 			if(m.m_name == name)
 			{
@@ -227,17 +227,17 @@ public:
 	/// Get or create a graphics shader program variant.
 	/// @note It's thread-safe.
 	void getOrCreateVariant(
-		const ShaderProgramResourceVariantInitInfo2& info, const ShaderProgramResourceVariant2*& variant) const;
+		const ShaderProgramResourceVariantInitInfo& info, const ShaderProgramResourceVariant*& variant) const;
 
 	/// @copydoc getOrCreateVariant
-	void getOrCreateVariant(const ShaderProgramResourceVariant2*& variant) const
+	void getOrCreateVariant(const ShaderProgramResourceVariant*& variant) const
 	{
-		getOrCreateVariant(ShaderProgramResourceVariantInitInfo2(), variant);
+		getOrCreateVariant(ShaderProgramResourceVariantInitInfo(), variant);
 	}
 
 private:
-	using Mutator = ShaderProgramResourceMutator2;
-	using Const = ShaderProgramResourceConstant2;
+	using Mutator = ShaderProgramResourceMutator;
+	using Const = ShaderProgramResourceConstant;
 
 	ShaderProgramBinaryWrapper m_binary;
 
@@ -253,21 +253,21 @@ private:
 
 	DynamicArray<ConstMapping> m_constBinaryMapping;
 
-	mutable HashMap<U64, ShaderProgramResourceVariant2*> m_variants;
+	mutable HashMap<U64, ShaderProgramResourceVariant*> m_variants;
 	mutable RWMutex m_mtx;
 
 	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
 
-	void initVariant(const ShaderProgramResourceVariantInitInfo2& info, ShaderProgramResourceVariant2& variant) const;
+	void initVariant(const ShaderProgramResourceVariantInitInfo& info, ShaderProgramResourceVariant& variant) const;
 
 	static ANKI_USE_RESULT Error parseConst(CString constName, U32& componentIdx, U32& componentCount, CString& name);
 };
 
 template<typename T>
-inline ShaderProgramResourceVariantInitInfo2& ShaderProgramResourceVariantInitInfo2::addConstant(
+inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInfo::addConstant(
 	CString name, const T& value)
 {
-	const ShaderProgramResourceConstant2* in = m_ptr->tryFindConstant(name);
+	const ShaderProgramResourceConstant* in = m_ptr->tryFindConstant(name);
 	ANKI_ASSERT(in);
 	ANKI_ASSERT(in->m_dataType == getShaderVariableTypeFromTypename<T>());
 	const U32 constIdx = U32(in - m_ptr->getConstants().getBegin());
@@ -277,10 +277,10 @@ inline ShaderProgramResourceVariantInitInfo2& ShaderProgramResourceVariantInitIn
 	return *this;
 }
 
-inline ShaderProgramResourceVariantInitInfo2& ShaderProgramResourceVariantInitInfo2::addMutation(
+inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInfo::addMutation(
 	CString name, MutatorValue t)
 {
-	const ShaderProgramResourceMutator2* m = m_ptr->tryFindMutator(name);
+	const ShaderProgramResourceMutator* m = m_ptr->tryFindMutator(name);
 	ANKI_ASSERT(m);
 	ANKI_ASSERT(m->valueExists(t));
 	const PtrSize mutatorIdx = m - m_ptr->getMutators().getBegin();

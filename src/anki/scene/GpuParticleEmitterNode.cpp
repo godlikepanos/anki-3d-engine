@@ -51,7 +51,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 {
 	// Create program
 	ANKI_CHECK(getResourceManager().loadResource("shaders/GpuParticlesSimulation.ankiprog", m_prog));
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();
 	m_workgroupSizeX = variant->getWorkgroupSizes()[0];

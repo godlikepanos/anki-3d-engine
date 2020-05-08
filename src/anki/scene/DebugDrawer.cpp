@@ -39,12 +39,12 @@ void DebugDrawer::flush()
 
 	// Bind program
 	{
-		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 		variantInitInfo.addMutation("COLOR_TEXTURE", 0);
 		variantInitInfo.addMutation(
 			"DITHERED_DEPTH_TEST", m_ctx->m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON));
 		variantInitInfo.addConstant("INSTANCE_COUNT", 1u);
-		const ShaderProgramResourceVariant2* variant;
+		const ShaderProgramResourceVariant* variant;
 		m_prog->getOrCreateVariant(variantInitInfo, variant);
 		cmdb->bindShaderProgram(variant->getProgram());
 	}
@@ -364,11 +364,11 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
 	*pcolor = color;
 
 	// Setup state
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("COLOR_TEXTURE", 0);
 	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
 	variantInitInfo.addConstant("INSTANCE_COUNT", mvps.getSize());
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 
@@ -438,11 +438,11 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
 	*pcolor = color;
 
 	// Setup state
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("COLOR_TEXTURE", 1);
 	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
 	variantInitInfo.addConstant("INSTANCE_COUNT", positions.getSize());
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 

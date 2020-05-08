@@ -47,14 +47,14 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource("shaders/Ssr.ankiprog", m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("FB_SIZE", UVec2(width, height));
 	variantInitInfo.addConstant("MAX_STEPS", cfg.getNumberU32("r_ssrMaxSteps"));
 	variantInitInfo.addConstant("LIGHT_BUFFER_MIP_COUNT", m_r->getDownscaleBlur().getMipmapCount());
 	variantInitInfo.addConstant("HISTORY_COLOR_BLEND_FACTOR", cfg.getNumberF32("r_ssrHistoryBlendFactor"));
 	variantInitInfo.addMutation("VARIANT", 0);
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg[0] = variant->getProgram();
 	m_workgroupSize[0] = variant->getWorkgroupSizes()[0];

@@ -43,10 +43,10 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	// Progs
 	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.ankiprog", m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("SAMPLE_RESOLVE_TYPE", 2);
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 

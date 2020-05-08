@@ -33,11 +33,11 @@ Error VolumetricFog::init(const ConfigSet& config)
 	// Shaders
 	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricFogAccumulation.ankiprog", m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
 	variantInitInfo.addConstant("FINAL_CLUSTER_Z", m_finalClusterZ);
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 	m_workgroupSize[0] = variant->getWorkgroupSizes()[0];

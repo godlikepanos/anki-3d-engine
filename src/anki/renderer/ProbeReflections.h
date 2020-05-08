@@ -80,7 +80,7 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResource2Ptr m_prog;
+		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 		BufferPtr m_diceValuesBuff;
 		U32 m_workgroupSize = 16;
@@ -89,7 +89,7 @@ private:
 	class
 	{
 	public:
-		ShaderProgramResource2Ptr m_prog;
+		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 	} m_irradianceToRefl; ///< Apply irradiance back to the reflection.
 

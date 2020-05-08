@@ -45,7 +45,7 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	// Shaders
 	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricLightingAccumulation.ankiprog", m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);
 	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
 	variantInitInfo.addConstant(
@@ -55,7 +55,7 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	variantInitInfo.addConstant(
 		"NOISE_TEX_SIZE", UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 	m_workgroupSize = variant->getWorkgroupSizes();

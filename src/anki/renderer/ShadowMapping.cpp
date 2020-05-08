@@ -118,12 +118,12 @@ Error ShadowMapping::initAtlas(const ConfigSet& cfg)
 		ANKI_CHECK(getResourceManager().loadResource(
 			"shaders/ExponentialShadowmappingResolve.ankiprog", m_atlas.m_resolveProg));
 
-		ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_atlas.m_resolveProg);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_atlas.m_resolveProg);
 		variantInitInfo.addConstant("INPUT_TEXTURE_SIZE",
 			UVec2(m_scratch.m_tileCountX * m_scratch.m_tileResolution,
 				m_scratch.m_tileCountY * m_scratch.m_tileResolution));
 
-		const ShaderProgramResourceVariant2* variant;
+		const ShaderProgramResourceVariant* variant;
 		m_atlas.m_resolveProg->getOrCreateVariant(variantInitInfo, variant);
 		m_atlas.m_resolveGrProg = variant->getProgram();
 	}

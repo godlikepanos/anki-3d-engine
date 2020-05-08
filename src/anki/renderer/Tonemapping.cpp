@@ -31,10 +31,10 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	// Create program
 	ANKI_CHECK(getResourceManager().loadResource("shaders/TonemappingAverageLuminance.ankiprog", m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("INPUT_TEX_SIZE", UVec2(width, height));
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 

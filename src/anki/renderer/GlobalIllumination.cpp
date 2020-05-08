@@ -229,13 +229,13 @@ Error GlobalIllumination::initIrradiance(const ConfigSet& cfg)
 {
 	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
 
-	ShaderProgramResourceVariantInitInfo2 variantInitInfo(m_irradiance.m_prog);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 	variantInitInfo.addMutation("WORKGROUP_SIZE_XY", m_tileSize);
 	variantInitInfo.addMutation("LIGHT_SHADING_TEX", 0);
 	variantInitInfo.addMutation("STORE_LOCATION", 0);
 	variantInitInfo.addMutation("SECOND_BOUNCE", 1);
 
-	const ShaderProgramResourceVariant2* variant;
+	const ShaderProgramResourceVariant* variant;
 	m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_irradiance.m_grProg = variant->getProgram();
 

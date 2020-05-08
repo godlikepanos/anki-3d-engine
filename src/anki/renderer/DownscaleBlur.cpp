@@ -61,7 +61,7 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	}
 
 	// Shader programs
-	const ShaderProgramResourceVariant2* variant = nullptr;
+	const ShaderProgramResourceVariant* variant = nullptr;
 	if(m_useCompute)
 	{
 		ANKI_CHECK(getResourceManager().loadResource("shaders/DownscaleBlurCompute.ankiprog", m_prog));
