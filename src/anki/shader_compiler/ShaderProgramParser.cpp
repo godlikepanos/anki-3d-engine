@@ -715,6 +715,17 @@ Error ShaderProgramParser::parse()
 	return Error::NONE;
 }
 
+void ShaderProgramParser::generateAnkiShaderHeader(
+	const GpuDeviceCapabilities& caps, const BindlessLimits& limits, StringAuto& header)
+{
+	header.sprintf(SHADER_HEADER,
+		caps.m_minorApiVersion,
+		caps.m_majorApiVersion,
+		GPU_VENDOR_STR[caps.m_gpuVendor].cstr(),
+		limits.m_bindlessTextureCount,
+		limits.m_bindlessImageCount);
+}
+
 Error ShaderProgramParser::generateVariant(
 	ConstWeakArray<MutatorValue> mutation, ShaderProgramParserVariant& variant) const
 {
@@ -739,12 +750,7 @@ Error ShaderProgramParser::generateVariant(
 
 	// Create the header
 	StringAuto header(m_alloc);
-	header.sprintf(SHADER_HEADER,
-		m_gpuCapabilities.m_minorApiVersion,
-		m_gpuCapabilities.m_majorApiVersion,
-		GPU_VENDOR_STR[m_gpuCapabilities.m_gpuVendor].cstr(),
-		m_bindlessLimits.m_bindlessTextureCount,
-		m_bindlessLimits.m_bindlessImageCount);
+	generateAnkiShaderHeader(m_gpuCapabilities, m_bindlessLimits, header);
 
 	// Generate souce per stage
 	for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)

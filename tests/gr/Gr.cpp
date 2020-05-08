@@ -10,6 +10,8 @@
 #include <anki/util/HighRezTimer.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/resource/TransferGpuAllocator.h>
+#include <anki/shader_compiler/Glslang.h>
+#include <anki/shader_compiler/ShaderProgramParser.h>
 #include <ctime>
 
 namespace anki
@@ -354,16 +356,13 @@ static ShaderPtr createShader(
 	CString src, ShaderType type, GrManager& gr, ConstWeakArray<ShaderSpecializationConstValue> specVals = {})
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	ShaderCompiler comp(alloc);
+	StringAuto header(alloc);
+	ShaderProgramParser::generateAnkiShaderHeader(gr.getDeviceCapabilities(), gr.getBindlessLimits(), header);
+	header.append(src);
+	DynamicArrayAuto<U8> spirv(alloc);
+	ANKI_TEST_EXPECT_NO_ERR(compilerGlslToSpirv(header, type, alloc, spirv));
 
-	ShaderCompilerOptions options;
-	options.setFromGrManager(gr);
-	options.m_shaderType = type;
-
-	DynamicArrayAuto<U8> bin(alloc);
-	ANKI_TEST_EXPECT_NO_ERR(comp.compile(src, options, bin));
-
-	ShaderInitInfo initInf(type, WeakArray<U8>(&bin[0], bin.getSize()));
+	ShaderInitInfo initInf(type, spirv);
 	initInf.m_constValues = specVals;
 
 	return gr.newShader(initInf);

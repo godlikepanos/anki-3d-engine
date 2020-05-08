@@ -62,7 +62,8 @@ Vec3 raymarch(Vec3 r, Vec3 n, Vec3 viewPos, Vec2 uv, F32 depth)
 
 	// Compute an end point p1. This point is supposed to fall in front of the near plane. Add a small padding to near
 	// to avoid having p1 touching the near plane.
-	const Vec3 p1 = p0 + r * (-p0.z - (u_near + 0.1));
+	const F32 p0DistFromNear = -p0.z - (u_near + 0.1); // aka testPlane(near, p0)
+	const Vec3 p1 = p0 + r * p0DistFromNear; // Whatever the direction of r, p1 won't touch the near plane
 
 	// Start point
 	const Vec3 start = Vec3(uv, depth);

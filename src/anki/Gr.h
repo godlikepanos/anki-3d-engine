@@ -18,7 +18,6 @@
 #include <anki/gr/Fence.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/RenderGraph.h>
-#include <anki/gr/ShaderCompiler.h>
 
 #include <anki/gr/utils/ClassGpuAllocator.h>
 #include <anki/gr/utils/FrameGpuAllocator.h>

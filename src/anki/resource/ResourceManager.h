@@ -200,12 +200,6 @@ public:
 		return *m_asyncLoader;
 	}
 
-	ANKI_INTERNAL const ShaderCompilerCache& getShaderCompiler() const
-	{
-		ANKI_ASSERT(m_shaderCompiler);
-		return *m_shaderCompiler;
-	}
-
 	/// Get the number of times loadResource() was called.
 	ANKI_INTERNAL U64 getLoadingRequestCount() const
 	{
@@ -227,7 +221,6 @@ private:
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;
-	ShaderCompilerCache* m_shaderCompiler = nullptr;
 	Bool m_dumpShaderSource = false;
 };
 /// @}
