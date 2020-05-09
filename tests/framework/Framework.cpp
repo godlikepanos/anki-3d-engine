@@ -208,19 +208,16 @@ int Tester::listTests()
 	return 0;
 }
 
-static Tester* testerInstance = nullptr;
+static Tester* g_testerInstance = nullptr;
 
 Tester& getTesterSingleton()
 {
-	return *(testerInstance ? testerInstance : (testerInstance = new Tester));
+	return *(g_testerInstance ? g_testerInstance : (g_testerInstance = new Tester));
 }
 
 void deleteTesterSingleton()
 {
-	if(testerInstance != nullptr)
-	{
-		delete testerInstance;
-	}
+	delete g_testerInstance;
 }
 
 void initConfig(ConfigSet& cfg)
