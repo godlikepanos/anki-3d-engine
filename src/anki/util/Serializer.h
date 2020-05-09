@@ -120,7 +120,7 @@ public:
 	template<typename T>
 	void doPointer(CString varName, PtrSize memberOffset, const T* ptr)
 	{
-		doDynamicArray(varName, memberOffset, ptr, 1);
+		doDynamicArray(varName, memberOffset, ptr, (ptr) ? 1 : 0);
 	}
 
 	/// Write a dynamic array of complex types. Can't call this directly.

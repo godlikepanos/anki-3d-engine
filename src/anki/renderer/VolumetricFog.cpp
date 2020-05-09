@@ -31,18 +31,17 @@ Error VolumetricFog::init(const ConfigSet& config)
 	ANKI_R_LOGI("Initializing volumetric fog. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricFogAccumulation.glslp", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricFogAccumulation.ankiprog", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
-	consts.add("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]))
-		.add("CLUSTER_COUNT", UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]))
-		.add("FINAL_CLUSTER_Z", m_finalClusterZ)
-		.add("FRACTION", UVec3(fractionXY, fractionXY, fractionZ))
-		.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
+	variantInitInfo.addConstant("FINAL_CLUSTER_Z", m_finalClusterZ);
 
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(consts.get(), variant);
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
+	m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
+	m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 
 	// RT descr
 	m_rtDescr =

@@ -85,8 +85,8 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 
 		m_specConstInfo.mapEntryCount = constCount;
 		m_specConstInfo.pMapEntries = getAllocator().newArray<VkSpecializationMapEntry>(constCount);
-		m_specConstInfo.dataSize = constCount * sizeof(I32);
-		m_specConstInfo.pData = getAllocator().newArray<I32>(constCount);
+		m_specConstInfo.dataSize = constCount * sizeof(U32);
+		m_specConstInfo.pData = getAllocator().newArray<U32>(constCount);
 
 		U32 count = 0;
 		for(const spirv_cross::SpecializationConstant& sconst : specConstIds.m_vec)
@@ -94,13 +94,25 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 			// Set the entry
 			VkSpecializationMapEntry& entry = const_cast<VkSpecializationMapEntry&>(m_specConstInfo.pMapEntries[count]);
 			entry.constantID = sconst.constant_id;
-			entry.offset = count * sizeof(I32);
-			entry.size = sizeof(I32);
+			entry.offset = count * sizeof(U32);
+			entry.size = sizeof(U32);
+
+			// Find the value
+			const ShaderSpecializationConstValue* val = nullptr;
+			for(const ShaderSpecializationConstValue& v : inf.m_constValues)
+			{
+				if(v.m_constantId == entry.constantID)
+				{
+					val = &v;
+					break;
+				}
+			}
+			ANKI_ASSERT(val && "Contant ID wasn't found in the init info");
 
 			// Copy the data
 			U8* data = static_cast<U8*>(const_cast<void*>(m_specConstInfo.pData));
 			data += entry.offset;
-			*reinterpret_cast<I32*>(data) = inf.m_constValues[sconst.constant_id].m_int;
+			*reinterpret_cast<U32*>(data) = val->m_uint;
 
 			++count;
 		}

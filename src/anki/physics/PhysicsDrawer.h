@@ -55,7 +55,7 @@ private:
 
 		void reportErrorWarning(const char* warningString) override
 		{
-			ANKI_PHYS_LOGW(warningString);
+			ANKI_PHYS_LOGW("%s", warningString);
 		}
 
 		void draw3dText(const btVector3& location, const char* textString) override

@@ -48,21 +48,6 @@ ShaderVariableDataType getShaderVariableTypeFromTypename();
 #include <anki/gr/ShaderVariableDataTypeDefs.h>
 #undef ANKI_SVDT_MACRO
 
-/// Shader block information.
-class ShaderVariableBlockInfo
-{
-public:
-	I16 m_offset = -1; ///< Offset inside the block
-
-	I16 m_arraySize = -1; ///< Number of elements.
-
-	/// Stride between the each array element if the variable is array.
-	I16 m_arrayStride = -1;
-
-	/// Identifying the stride between columns of a column-major matrix or rows of a row-major matrix.
-	I16 m_matrixStride = -1;
-};
-
 /// Populate the memory of a variable that is inside a shader block.
 void writeShaderBlockMemory(ShaderVariableDataType type,
 	const ShaderVariableBlockInfo& varBlkInfo,

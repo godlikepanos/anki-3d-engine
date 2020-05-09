@@ -5,6 +5,149 @@
 
 #include <tests/framework/Framework.h>
 #include <anki/shader_compiler/ShaderProgramCompiler.h>
+#include <anki/util/ThreadHive.h>
+
+ANKI_TEST(ShaderCompiler, ShaderProgramCompilerSimple)
+{
+	const CString sourceCode = R"(
+#pragma anki mutator INSTANCE_COUNT 1 2 4
+
+struct Foo
+{
+	Mat4 m_mat;
+};
+
+struct Instanced
+{
+	Mat4 m_ankiMvp;
+	Mat3 m_ankiRotationMat;
+	Mat4 m_ankiModelViewMat;
+	Mat4 m_ankiPrevMvp;
+	Foo m_foo[2];
+};
+
+layout(push_constant) uniform ankiMaterial
+{
+	Vec4 u_whatever;
+	Instanced u_ankiPerInstance[INSTANCE_COUNT];
+	Vec4 u_color;
+};
+
+layout(set = 0, binding = 1) uniform texture2D u_tex2d;
+layout(set = 0, binding = 1) uniform texture3D u_tex3d;
+layout(set = 0, binding = 2) uniform sampler u_sampler;
+
+layout(set = 0, binding = 3) buffer ssbo
+{
+	Foo u_mats[];
+};
+
+#pragma anki start vert
+out gl_PerVertex
+{
+	Vec4 gl_Position;
+};
+
+void main()
+{
+	gl_Position = u_ankiPerInstance[gl_InstanceID].m_ankiMvp * u_mats[gl_InstanceID].m_mat * Vec4(gl_VertexID);
+}
+#pragma anki end
+
+#pragma anki start frag
+layout(location = 0) out Vec3 out_color;
+
+void main()
+{
+	out_color = Vec3(0);
+
+	if(INSTANCE_COUNT == 1)
+		out_color += textureLod(sampler2D(u_tex2d, u_sampler), Vec2(0), 0.0).rgb;
+	else if(INSTANCE_COUNT == 2)
+		out_color += textureLod(sampler3D(u_tex3d, u_sampler), Vec3(0), 0.0).rgb;
+	else
+		out_color += textureLod(sampler2D(u_tex2d, u_sampler), Vec2(0), 0.0).rgb
+			+ textureLod(sampler3D(u_tex3d, u_sampler), Vec3(0), 0.0).rgb;
+
+	out_color += u_color.xyz;
+}
+#pragma anki end
+	)";
+
+	// Write the file
+	{
+		File file;
+		ANKI_TEST_EXPECT_NO_ERR(file.open("test.glslp", FileOpenFlag::WRITE));
+		ANKI_TEST_EXPECT_NO_ERR(file.writeText(sourceCode));
+	}
+
+	class Fsystem : public ShaderProgramFilesystemInterface
+	{
+	public:
+		Error readAllText(CString filename, StringAuto& txt) final
+		{
+			File file;
+			ANKI_CHECK(file.open(filename, FileOpenFlag::READ));
+			ANKI_CHECK(file.readAllText(txt));
+			return Error::NONE;
+		}
+	} fsystem;
+
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+
+	const U32 threadCount = 8;
+	ThreadHive hive(threadCount, alloc);
+
+	class TaskManager : public ShaderProgramAsyncTaskInterface
+	{
+	public:
+		ThreadHive* m_hive = nullptr;
+		HeapAllocator<U8> m_alloc;
+
+		void enqueueTask(void (*callback)(void* userData), void* userData)
+		{
+			struct Ctx
+			{
+				void (*m_callback)(void* userData);
+				void* m_userData;
+				HeapAllocator<U8> m_alloc;
+			};
+			Ctx* ctx = m_alloc.newInstance<Ctx>();
+			ctx->m_callback = callback;
+			ctx->m_userData = userData;
+			ctx->m_alloc = m_alloc;
+
+			m_hive->submitTask(
+				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+					Ctx* ctx = static_cast<Ctx*>(userData);
+					ctx->m_callback(ctx->m_userData);
+					auto alloc = ctx->m_alloc;
+					alloc.deleteInstance(ctx);
+				},
+				ctx);
+		}
+
+		Error joinTasks()
+		{
+			m_hive->waitAllTasks();
+			return Error::NONE;
+		}
+	} taskManager;
+	taskManager.m_hive = &hive;
+	taskManager.m_alloc = alloc;
+
+	ShaderProgramBinaryWrapper binary(alloc);
+	BindlessLimits bindlessLimits;
+	GpuDeviceCapabilities gpuCapabilities;
+	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram(
+		"test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities, bindlessLimits, binary));
+
+#if 1
+	StringAuto dis(alloc);
+	dumpShaderProgramBinary(binary.getBinary(), dis);
+	ANKI_LOGI("Binary disassembly:\n%s\n", dis.cstr());
+#endif
+}
 
 ANKI_TEST(ShaderCompiler, ShaderProgramCompiler)
 {
@@ -148,11 +291,53 @@ void main()
 	} fsystem;
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
+
+	const U32 threadCount = 24;
+	ThreadHive hive(threadCount, alloc);
+
+	class TaskManager : public ShaderProgramAsyncTaskInterface
+	{
+	public:
+		ThreadHive* m_hive = nullptr;
+		HeapAllocator<U8> m_alloc;
+
+		void enqueueTask(void (*callback)(void* userData), void* userData)
+		{
+			struct Ctx
+			{
+				void (*m_callback)(void* userData);
+				void* m_userData;
+				HeapAllocator<U8> m_alloc;
+			};
+			Ctx* ctx = m_alloc.newInstance<Ctx>();
+			ctx->m_callback = callback;
+			ctx->m_userData = userData;
+			ctx->m_alloc = m_alloc;
+
+			m_hive->submitTask(
+				[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+					Ctx* ctx = static_cast<Ctx*>(userData);
+					ctx->m_callback(ctx->m_userData);
+					auto alloc = ctx->m_alloc;
+					alloc.deleteInstance(ctx);
+				},
+				ctx);
+		}
+
+		Error joinTasks()
+		{
+			m_hive->waitAllTasks();
+			return Error::NONE;
+		}
+	} taskManager;
+	taskManager.m_hive = &hive;
+	taskManager.m_alloc = alloc;
+
 	ShaderProgramBinaryWrapper binary(alloc);
 	BindlessLimits bindlessLimits;
 	GpuDeviceCapabilities gpuCapabilities;
-	ANKI_TEST_EXPECT_NO_ERR(
-		compileShaderProgram("test.glslp", fsystem, alloc, gpuCapabilities, bindlessLimits, binary));
+	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram(
+		"test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities, bindlessLimits, binary));
 
 #if 1
 	StringAuto dis(alloc);

@@ -117,6 +117,16 @@ public:
 		return m_shaderTypes;
 	}
 
+	U64 getHash() const
+	{
+		ANKI_ASSERT(m_codeSourceHash != 0);
+		return m_codeSourceHash;
+	}
+
+	/// Generates the common header that will be used by all AnKi shaders.
+	static void generateAnkiShaderHeader(
+		const GpuDeviceCapabilities& caps, const BindlessLimits& limits, StringAuto& header);
+
 private:
 	using Mutator = ShaderProgramParserMutator;
 
@@ -153,6 +163,7 @@ private:
 
 	StringListAuto m_codeLines = {m_alloc}; ///< The code.
 	StringAuto m_codeSource = {m_alloc};
+	U64 m_codeSourceHash = 0;
 
 	DynamicArrayAuto<Mutator> m_mutators = {m_alloc};
 	DynamicArrayAuto<MutationRewrite> m_mutationRewrites = {m_alloc};

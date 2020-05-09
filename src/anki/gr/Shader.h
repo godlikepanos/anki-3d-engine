@@ -23,8 +23,10 @@ public:
 	{
 		F32 m_float;
 		I32 m_int;
+		U32 m_uint;
 	};
 
+	U32 m_constantId = MAX_U32;
 	ShaderVariableDataType m_dataType;
 
 	ShaderSpecializationConstValue()
@@ -45,6 +47,12 @@ public:
 	{
 	}
 
+	explicit ShaderSpecializationConstValue(U32 i)
+		: m_int(i)
+		, m_dataType(ShaderVariableDataType::UINT)
+	{
+	}
+
 	ShaderSpecializationConstValue(const ShaderSpecializationConstValue&) = default;
 
 	ShaderSpecializationConstValue& operator=(const ShaderSpecializationConstValue&) = default;
@@ -56,6 +64,8 @@ class ShaderInitInfo : public GrBaseInitInfo
 public:
 	ShaderType m_shaderType = ShaderType::COUNT;
 	ConstWeakArray<U8> m_binary = {};
+
+	/// @note It's OK to have entries in that array with consts that do not appear in the shader.
 	ConstWeakArray<ShaderSpecializationConstValue> m_constValues;
 
 	ShaderInitInfo()

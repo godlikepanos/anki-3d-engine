@@ -767,16 +767,24 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 
 		WLockGuard<RWMutex> lock(m_threadAllocsMtx);
 
-		alloc = m_factory->m_alloc.newInstance<DSThreadAllocator>(this, tid);
-		ANKI_CHECK(alloc->init());
+		// Search again
+		auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
+		alloc = (it != m_threadAllocs.getEnd()) ? *it : nullptr;
 
-		m_threadAllocs.resize(m_factory->m_alloc, m_threadAllocs.getSize() + 1);
-		m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
+		// Create
+		if(alloc == nullptr)
+		{
+			alloc = m_factory->m_alloc.newInstance<DSThreadAllocator>(this, tid);
+			ANKI_CHECK(alloc->init());
 
-		// Sort for fast find
-		std::sort(m_threadAllocs.getBegin(),
-			m_threadAllocs.getEnd(),
-			[](const DSThreadAllocator* a, const DSThreadAllocator* b) { return a->m_tid < b->m_tid; });
+			m_threadAllocs.resize(m_factory->m_alloc, m_threadAllocs.getSize() + 1);
+			m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
+
+			// Sort for fast find
+			std::sort(m_threadAllocs.getBegin(),
+				m_threadAllocs.getEnd(),
+				[](const DSThreadAllocator* a, const DSThreadAllocator* b) { return a->m_tid < b->m_tid; });
+		}
 	}
 
 	ANKI_ASSERT(alloc);
@@ -947,9 +955,9 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 
 	if(init.m_bindings.getSize() > 0)
 	{
-		memcpy(&bindings[0], &init.m_bindings[0], init.m_bindings.getSizeInBytes());
-		std::sort(&bindings[0],
-			&bindings[0] + bindingCount,
+		memcpy(bindings.getBegin(), init.m_bindings.getBegin(), init.m_bindings.getSizeInBytes());
+		std::sort(bindings.getBegin(),
+			bindings.getBegin() + bindingCount,
 			[](const DescriptorBinding& a, const DescriptorBinding& b) { return a.m_binding < b.m_binding; });
 
 		hash = computeHash(&bindings[0], init.m_bindings.getSizeInBytes());
@@ -1010,7 +1018,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 		if(cache == nullptr)
 		{
 			cache = m_alloc.newInstance<DSLayoutCacheEntry>(this);
-			ANKI_CHECK(cache->init(&bindings[0], bindingCount, hash));
+			ANKI_CHECK(cache->init(bindings.getBegin(), bindingCount, hash));
 
 			m_caches.resize(m_alloc, m_caches.getSize() + 1);
 			m_caches[m_caches.getSize() - 1] = cache;

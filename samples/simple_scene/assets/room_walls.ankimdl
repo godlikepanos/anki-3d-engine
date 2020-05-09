@@ -2,6 +2,8 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/room.ankimesh</mesh>
+			<mesh1>assets/room_lod1.ankimesh</mesh1>
+			<mesh2>assets/room_lod2.ankimesh</mesh2>
 			<material>assets/walls.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

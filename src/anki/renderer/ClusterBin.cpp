@@ -712,7 +712,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			out.m_texProjectionMat = in.m_textureMatrix;
 		}
 
-		ANKI_ASSERT(diffuseAtlas && specularRoughnessAtlas);
+		ANKI_ASSERT(diffuseAtlas || specularRoughnessAtlas);
 		ctx.m_out->m_diffDecalTexView.reset(diffuseAtlas);
 		ctx.m_out->m_specularRoughnessDecalTexView.reset(specularRoughnessAtlas);
 	}

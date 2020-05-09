@@ -79,7 +79,7 @@ public:
 	PtrSize m_indexBufferOffset;
 	IndexType m_indexType;
 
-	U8 m_bindingCount;
+	U32 m_boneTransformsBinding;
 };
 
 /// Model patch interface class. Its very important class and it binds the material with the mesh
@@ -88,7 +88,7 @@ class ModelPatch
 	friend class ModelResource;
 
 public:
-	MaterialResourcePtr getMaterial() const
+	const MaterialResourcePtr& getMaterial() const
 	{
 		return m_mtl;
 	}

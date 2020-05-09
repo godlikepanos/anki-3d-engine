@@ -159,7 +159,12 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 				skinc.getBoneTransforms().getSize() * sizeof(Mat4), StagingGpuMemoryType::STORAGE, token);
 			memcpy(trfs, &skinc.getBoneTransforms()[0], skinc.getBoneTransforms().getSize() * sizeof(Mat4));
 
-			cmdb->bindStorageBuffer(0, modelInf.m_bindingCount, token.m_buffer, token.m_offset, token.m_range);
+			ANKI_ASSERT(modelInf.m_boneTransformsBinding < MAX_U32);
+			cmdb->bindStorageBuffer(patch.getMaterial()->getDescriptorSetIndex(),
+				modelInf.m_boneTransformsBinding,
+				token.m_buffer,
+				token.m_offset,
+				token.m_range);
 		}
 
 		// Program
@@ -167,8 +172,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		// Uniforms
 		static_cast<const MaterialRenderComponent&>(getComponent<RenderComponent>())
-			.allocateAndSetupUniforms(patch.getMaterial()->getDescriptorSetIndex(),
-				ctx,
+			.allocateAndSetupUniforms(ctx,
 				ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
 				ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),
 				*ctx.m_stagingGpuAllocator);

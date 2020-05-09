@@ -5,7 +5,6 @@
 
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/resource/MaterialResource.h>
 #include <anki/resource/MeshResource.h>
 #include <anki/resource/MeshLoader.h>
 #include <anki/util/Xml.h>
@@ -51,7 +50,7 @@ void ModelPatch::getRenderingDataSub(
 
 		inf.m_program = variant.getShaderProgram();
 
-		inf.m_bindingCount = U8(variant.getBindingCount());
+		inf.m_boneTransformsBinding = m_mtl->getBoneTransformsBinding();
 	}
 
 	// Vertex attributes & bindings

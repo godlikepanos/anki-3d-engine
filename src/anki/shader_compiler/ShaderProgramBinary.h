@@ -19,17 +19,13 @@ class ShaderProgramBinaryVariable
 {
 public:
 	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name = {};
-	ShaderVariableBlockInfo m_blockInfo;
 	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
-	Bool m_active = true;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
 		s.doArray("m_name", offsetof(ShaderProgramBinaryVariable, m_name), &self.m_name[0], self.m_name.getSize());
-		s.doValue("m_blockInfo", offsetof(ShaderProgramBinaryVariable, m_blockInfo), self.m_blockInfo);
 		s.doValue("m_type", offsetof(ShaderProgramBinaryVariable, m_type), self.m_type);
-		s.doValue("m_active", offsetof(ShaderProgramBinaryVariable, m_active), self.m_active);
 	}
 
 	template<typename TDeserializer>
@@ -45,6 +41,33 @@ public:
 	}
 };
 
+/// Storage or uniform variable per variant.
+class ShaderProgramBinaryVariableInstance
+{
+public:
+	U32 m_index = MAX_U32; ///< Points to ShaderProgramBinaryBlock::m_variables.
+	ShaderVariableBlockInfo m_blockInfo;
+
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& s, TClass self)
+	{
+		s.doValue("m_index", offsetof(ShaderProgramBinaryVariableInstance, m_index), self.m_index);
+		s.doValue("m_blockInfo", offsetof(ShaderProgramBinaryVariableInstance, m_blockInfo), self.m_blockInfo);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ShaderProgramBinaryVariableInstance&>(deserializer, *this);
+	}
+
+	template<typename TSerializer>
+	void serialize(TSerializer& serializer) const
+	{
+		serializeCommon<TSerializer, const ShaderProgramBinaryVariableInstance&>(serializer, *this);
+	}
+};
+
 /// Storage or uniform block.
 class ShaderProgramBinaryBlock
 {
@@ -53,7 +76,6 @@ public:
 	WeakArray<ShaderProgramBinaryVariable> m_variables;
 	U32 m_binding = MAX_U32;
 	U32 m_set = MAX_U32;
-	U32 m_size = MAX_U32;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -62,7 +84,6 @@ public:
 		s.doValue("m_variables", offsetof(ShaderProgramBinaryBlock, m_variables), self.m_variables);
 		s.doValue("m_binding", offsetof(ShaderProgramBinaryBlock, m_binding), self.m_binding);
 		s.doValue("m_set", offsetof(ShaderProgramBinaryBlock, m_set), self.m_set);
-		s.doValue("m_size", offsetof(ShaderProgramBinaryBlock, m_size), self.m_size);
 	}
 
 	template<typename TDeserializer>
@@ -78,6 +99,35 @@ public:
 	}
 };
 
+/// Storage or uniform block per variant.
+class ShaderProgramBinaryBlockInstance
+{
+public:
+	U32 m_index = MAX_U32; ///< Points to ShaderProgramBinary::m_uniformBlocks or m_storageBlocks.
+	WeakArray<ShaderProgramBinaryVariableInstance> m_variables;
+	U32 m_size = MAX_U32;
+
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& s, TClass self)
+	{
+		s.doValue("m_index", offsetof(ShaderProgramBinaryBlockInstance, m_index), self.m_index);
+		s.doValue("m_variables", offsetof(ShaderProgramBinaryBlockInstance, m_variables), self.m_variables);
+		s.doValue("m_size", offsetof(ShaderProgramBinaryBlockInstance, m_size), self.m_size);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ShaderProgramBinaryBlockInstance&>(deserializer, *this);
+	}
+
+	template<typename TSerializer>
+	void serialize(TSerializer& serializer) const
+	{
+		serializeCommon<TSerializer, const ShaderProgramBinaryBlockInstance&>(serializer, *this);
+	}
+};
+
 /// Sampler or texture or image.
 class ShaderProgramBinaryOpaque
 {
@@ -86,7 +136,6 @@ public:
 	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 	U32 m_binding = MAX_U32;
 	U32 m_set = MAX_U32;
-	U32 m_arraySize = MAX_U32;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -95,7 +144,6 @@ public:
 		s.doValue("m_type", offsetof(ShaderProgramBinaryOpaque, m_type), self.m_type);
 		s.doValue("m_binding", offsetof(ShaderProgramBinaryOpaque, m_binding), self.m_binding);
 		s.doValue("m_set", offsetof(ShaderProgramBinaryOpaque, m_set), self.m_set);
-		s.doValue("m_arraySize", offsetof(ShaderProgramBinaryOpaque, m_arraySize), self.m_arraySize);
 	}
 
 	template<typename TDeserializer>
@@ -111,6 +159,33 @@ public:
 	}
 };
 
+/// Sampler or texture or image per variant.
+class ShaderProgramBinaryOpaqueInstance
+{
+public:
+	U32 m_index = MAX_U32; ///< Points to ShaderProgramBinary::m_opaques.
+	U32 m_arraySize = MAX_U32;
+
+	template<typename TSerializer, typename TClass>
+	static void serializeCommon(TSerializer& s, TClass self)
+	{
+		s.doValue("m_index", offsetof(ShaderProgramBinaryOpaqueInstance, m_index), self.m_index);
+		s.doValue("m_arraySize", offsetof(ShaderProgramBinaryOpaqueInstance, m_arraySize), self.m_arraySize);
+	}
+
+	template<typename TDeserializer>
+	void deserialize(TDeserializer& deserializer)
+	{
+		serializeCommon<TDeserializer, ShaderProgramBinaryOpaqueInstance&>(deserializer, *this);
+	}
+
+	template<typename TSerializer>
+	void serialize(TSerializer& serializer) const
+	{
+		serializeCommon<TSerializer, const ShaderProgramBinaryOpaqueInstance&>(serializer, *this);
+	}
+};
+
 /// Specialization constant.
 class ShaderProgramBinaryConstant
 {
@@ -118,7 +193,6 @@ public:
 	Array<char, MAX_SHADER_BINARY_NAME_LENGTH + 1> m_name;
 	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 	U32 m_constantId = MAX_U32;
-	ShaderTypeBit m_shaderStages = ShaderTypeBit::NONE;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -126,7 +200,6 @@ public:
 		s.doArray("m_name", offsetof(ShaderProgramBinaryConstant, m_name), &self.m_name[0], self.m_name.getSize());
 		s.doValue("m_type", offsetof(ShaderProgramBinaryConstant, m_type), self.m_type);
 		s.doValue("m_constantId", offsetof(ShaderProgramBinaryConstant, m_constantId), self.m_constantId);
-		s.doValue("m_shaderStages", offsetof(ShaderProgramBinaryConstant, m_shaderStages), self.m_shaderStages);
 	}
 
 	template<typename TDeserializer>
@@ -142,40 +215,28 @@ public:
 	}
 };
 
-/// ShaderProgramBinaryReflection class.
-class ShaderProgramBinaryReflection
+/// Specialization constant per variant.
+class ShaderProgramBinaryConstantInstance
 {
 public:
-	WeakArray<ShaderProgramBinaryBlock> m_uniformBlocks;
-	WeakArray<ShaderProgramBinaryBlock> m_storageBlocks;
-	ShaderProgramBinaryBlock* m_pushConstantBlock = nullptr;
-	WeakArray<ShaderProgramBinaryOpaque> m_opaques;
-	WeakArray<ShaderProgramBinaryConstant> m_specializationConstants;
+	U32 m_index = MAX_U32; ///< Points to ShaderProgramBinary::m_constants.
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doValue("m_uniformBlocks", offsetof(ShaderProgramBinaryReflection, m_uniformBlocks), self.m_uniformBlocks);
-		s.doValue("m_storageBlocks", offsetof(ShaderProgramBinaryReflection, m_storageBlocks), self.m_storageBlocks);
-		s.doPointer("m_pushConstantBlock",
-			offsetof(ShaderProgramBinaryReflection, m_pushConstantBlock),
-			self.m_pushConstantBlock);
-		s.doValue("m_opaques", offsetof(ShaderProgramBinaryReflection, m_opaques), self.m_opaques);
-		s.doValue("m_specializationConstants",
-			offsetof(ShaderProgramBinaryReflection, m_specializationConstants),
-			self.m_specializationConstants);
+		s.doValue("m_index", offsetof(ShaderProgramBinaryConstantInstance, m_index), self.m_index);
 	}
 
 	template<typename TDeserializer>
 	void deserialize(TDeserializer& deserializer)
 	{
-		serializeCommon<TDeserializer, ShaderProgramBinaryReflection&>(deserializer, *this);
+		serializeCommon<TDeserializer, ShaderProgramBinaryConstantInstance&>(deserializer, *this);
 	}
 
 	template<typename TSerializer>
 	void serialize(TSerializer& serializer) const
 	{
-		serializeCommon<TSerializer, const ShaderProgramBinaryReflection&>(serializer, *this);
+		serializeCommon<TSerializer, const ShaderProgramBinaryConstantInstance&>(serializer, *this);
 	}
 };
 
@@ -183,17 +244,38 @@ public:
 class ShaderProgramBinaryVariant
 {
 public:
-	ShaderProgramBinaryReflection m_reflection;
-	Array<U32, U32(ShaderType::COUNT)> m_codeBlockIndices = {}; ///< Index in ShaderProgramBinary::m_codeBlocks.
+	Array<U32, U32(ShaderType::COUNT)> m_codeBlockIndices =
+		{}; ///< Index in ShaderProgramBinary::m_codeBlocks. MAX_U32 means no shader.
+	WeakArray<ShaderProgramBinaryBlockInstance> m_uniformBlocks;
+	WeakArray<ShaderProgramBinaryBlockInstance> m_storageBlocks;
+	ShaderProgramBinaryBlockInstance* m_pushConstantBlock = nullptr;
+	WeakArray<ShaderProgramBinaryOpaqueInstance> m_opaques;
+	WeakArray<ShaderProgramBinaryConstantInstance> m_constants;
+	Array<U32, 3> m_workgroupSizes = {{MAX_U32, MAX_U32, MAX_U32}};
+	Array<U32, 3> m_workgroupSizesConstants = {
+		{MAX_U32, MAX_U32, MAX_U32}}; ///< Indices to ShaderProgramBinary::m_constants.
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doValue("m_reflection", offsetof(ShaderProgramBinaryVariant, m_reflection), self.m_reflection);
 		s.doArray("m_codeBlockIndices",
 			offsetof(ShaderProgramBinaryVariant, m_codeBlockIndices),
 			&self.m_codeBlockIndices[0],
 			self.m_codeBlockIndices.getSize());
+		s.doValue("m_uniformBlocks", offsetof(ShaderProgramBinaryVariant, m_uniformBlocks), self.m_uniformBlocks);
+		s.doValue("m_storageBlocks", offsetof(ShaderProgramBinaryVariant, m_storageBlocks), self.m_storageBlocks);
+		s.doPointer(
+			"m_pushConstantBlock", offsetof(ShaderProgramBinaryVariant, m_pushConstantBlock), self.m_pushConstantBlock);
+		s.doValue("m_opaques", offsetof(ShaderProgramBinaryVariant, m_opaques), self.m_opaques);
+		s.doValue("m_constants", offsetof(ShaderProgramBinaryVariant, m_constants), self.m_constants);
+		s.doArray("m_workgroupSizes",
+			offsetof(ShaderProgramBinaryVariant, m_workgroupSizes),
+			&self.m_workgroupSizes[0],
+			self.m_workgroupSizes.getSize());
+		s.doArray("m_workgroupSizesConstants",
+			offsetof(ShaderProgramBinaryVariant, m_workgroupSizesConstants),
+			&self.m_workgroupSizesConstants[0],
+			self.m_workgroupSizesConstants.getSize());
 	}
 
 	template<typename TDeserializer>
@@ -240,7 +322,7 @@ public:
 class ShaderProgramBinaryCodeBlock
 {
 public:
-	WeakArray<U8, PtrSize> m_binary;
+	WeakArray<U8> m_binary;
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -298,7 +380,12 @@ public:
 	WeakArray<ShaderProgramBinaryMutator> m_mutators;
 	WeakArray<ShaderProgramBinaryCodeBlock> m_codeBlocks;
 	WeakArray<ShaderProgramBinaryVariant> m_variants;
-	WeakArray<ShaderProgramBinaryMutation> m_mutations; ///< I'ts sorted using the mutation's hash.
+	WeakArray<ShaderProgramBinaryMutation> m_mutations; ///< It's sorted using the mutation's hash.
+	WeakArray<ShaderProgramBinaryBlock> m_uniformBlocks;
+	WeakArray<ShaderProgramBinaryBlock> m_storageBlocks;
+	ShaderProgramBinaryBlock* m_pushConstantBlock = nullptr;
+	WeakArray<ShaderProgramBinaryOpaque> m_opaques;
+	WeakArray<ShaderProgramBinaryConstant> m_constants;
 	ShaderTypeBit m_presentShaderTypes = ShaderTypeBit::NONE;
 
 	template<typename TSerializer, typename TClass>
@@ -309,6 +396,12 @@ public:
 		s.doValue("m_codeBlocks", offsetof(ShaderProgramBinary, m_codeBlocks), self.m_codeBlocks);
 		s.doValue("m_variants", offsetof(ShaderProgramBinary, m_variants), self.m_variants);
 		s.doValue("m_mutations", offsetof(ShaderProgramBinary, m_mutations), self.m_mutations);
+		s.doValue("m_uniformBlocks", offsetof(ShaderProgramBinary, m_uniformBlocks), self.m_uniformBlocks);
+		s.doValue("m_storageBlocks", offsetof(ShaderProgramBinary, m_storageBlocks), self.m_storageBlocks);
+		s.doPointer(
+			"m_pushConstantBlock", offsetof(ShaderProgramBinary, m_pushConstantBlock), self.m_pushConstantBlock);
+		s.doValue("m_opaques", offsetof(ShaderProgramBinary, m_opaques), self.m_opaques);
+		s.doValue("m_constants", offsetof(ShaderProgramBinary, m_constants), self.m_constants);
 		s.doValue(
 			"m_presentShaderTypes", offsetof(ShaderProgramBinary, m_presentShaderTypes), self.m_presentShaderTypes);
 	}

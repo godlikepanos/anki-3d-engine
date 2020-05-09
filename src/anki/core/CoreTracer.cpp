@@ -109,6 +109,9 @@ CoreTracer::~CoreTracer()
 Error CoreTracer::init(GenericMemoryPoolAllocator<U8> alloc, CString directory)
 {
 	TracerSingleton::init(alloc);
+	const Bool enableTracer = getenv("ANKI_CORE_TRACER_ENABLED") && getenv("ANKI_CORE_TRACER_ENABLED")[0] == '1';
+	TracerSingleton::get().setEnabled(enableTracer);
+	ANKI_CORE_LOGI("Tracing is %s from the beginning", (enableTracer) ? "enabled" : "disabled");
 
 	m_alloc = alloc;
 	m_thread.start(this,

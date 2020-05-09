@@ -80,6 +80,21 @@ ANKI_GR_CLASS(RenderGraph)
 	template<typename, typename> \
 	friend class GenericPoolAllocator;
 
+/// Shader block information.
+class ShaderVariableBlockInfo
+{
+public:
+	I16 m_offset = -1; ///< Offset inside the block
+
+	I16 m_arraySize = -1; ///< Number of elements.
+
+	/// Stride between the each array element if the variable is array.
+	I16 m_arrayStride = -1;
+
+	/// Identifying the stride between columns of a column-major matrix or rows of a row-major matrix.
+	I16 m_matrixStride = -1;
+};
+
 /// Knowing the vendor allows some optimizations
 enum class GpuVendor : U8
 {
@@ -94,6 +109,7 @@ enum class GpuVendor : U8
 extern Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR;
 
 /// Device capabilities.
+ANKI_BEGIN_PACKED_STRUCT
 class GpuDeviceCapabilities
 {
 public:
@@ -127,6 +143,9 @@ public:
 	/// API version.
 	U8 m_majorApiVersion = 0;
 };
+ANKI_END_PACKED_STRUCT
+static_assert(
+	sizeof(GpuDeviceCapabilities) == sizeof(PtrSize) * 4 + sizeof(U32) * 3 + sizeof(U8) * 3, "Should be packed");
 
 /// Bindless related info.
 class BindlessLimits

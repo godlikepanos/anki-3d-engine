@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/shader_compiler/ShaderProgramBinary.h>
+#include <anki/shader_compiler/ShaderProgramDump.h>
 #include <anki/util/String.h>
 #include <anki/gr/Common.h>
 
@@ -15,12 +15,16 @@ namespace anki
 /// @addtogroup shader_compiler
 /// @{
 
+extern const U32 SHADER_BINARY_VERSION;
+
 /// A wrapper over the POD ShaderProgramBinary class.
 /// @memberof ShaderProgramCompiler
 class ShaderProgramBinaryWrapper : public NonCopyable
 {
-	friend Error compileShaderProgram(CString fname,
+	friend Error compileShaderProgramInternal(CString fname,
 		ShaderProgramFilesystemInterface& fsystem,
+		ShaderProgramPostParseInterface* postParseCallback,
+		ShaderProgramAsyncTaskInterface* taskManager,
 		GenericMemoryPoolAllocator<U8> tempAllocator,
 		const GpuDeviceCapabilities& gpuCapabilities,
 		const BindlessLimits& bindlessLimits,
@@ -58,13 +62,12 @@ private:
 /// Takes an AnKi special shader program and spits a binary.
 ANKI_USE_RESULT Error compileShaderProgram(CString fname,
 	ShaderProgramFilesystemInterface& fsystem,
+	ShaderProgramPostParseInterface* postParseCallback,
+	ShaderProgramAsyncTaskInterface* taskManager,
 	GenericMemoryPoolAllocator<U8> tempAllocator,
 	const GpuDeviceCapabilities& gpuCapabilities,
 	const BindlessLimits& bindlessLimits,
 	ShaderProgramBinaryWrapper& binary);
-
-/// Create a human readable representation of the shader binary.
-void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable);
 /// @}
 
 } // end namespace anki

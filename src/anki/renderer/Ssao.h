@@ -44,7 +44,6 @@ private:
 	static const Bool m_useSoftBlur = true;
 	static const Bool m_blurUseCompute = true;
 	U32 m_width, m_height;
-	Array<U32, 2> m_workgroupSize = {{16, 16}};
 
 	class
 	{
@@ -52,6 +51,7 @@ private:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 		TextureResourcePtr m_noiseTex;
+		Array<U32, 2> m_workgroupSize = {};
 	} m_main; ///< Main noisy pass.
 
 	class
@@ -59,6 +59,7 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
+		Array<U32, 2> m_workgroupSize = {};
 	} m_blur; ///< Box blur.
 
 	class

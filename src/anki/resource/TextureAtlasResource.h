@@ -52,17 +52,17 @@ public:
 		return m_tex->getGrTextureView();
 	}
 
-	U getWidth() const
+	U32 getWidth() const
 	{
 		return m_size[0];
 	}
 
-	U getHeight() const
+	U32 getHeight() const
 	{
 		return m_size[1];
 	}
 
-	U getSubTextureMargin() const
+	U32 getSubTextureMargin() const
 	{
 		return m_margin;
 	}

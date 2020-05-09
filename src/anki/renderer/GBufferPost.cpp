@@ -18,7 +18,7 @@ GBufferPost::~GBufferPost()
 
 Error GBufferPost::init(const ConfigSet& cfg)
 {
-	Error err = initInternal(cfg);
+	const Error err = initInternal(cfg);
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize GBufferPost pass");
@@ -31,15 +31,14 @@ Error GBufferPost::initInternal(const ConfigSet& cfg)
 	ANKI_R_LOGI("Initializing GBufferPost pass");
 
 	// Load shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/GBufferPost.glslp", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/GBufferPost.ankiprog", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
-	consts.add("CLUSTER_COUNT_X", cfg.getNumberU32("r_clusterSizeX"));
-	consts.add("CLUSTER_COUNT_Y", cfg.getNumberU32("r_clusterSizeY"));
-	consts.add("CLUSTER_COUNT_Z", cfg.getNumberU32("r_clusterSizeZ"));
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.addConstant("CLUSTER_COUNT_X", cfg.getNumberU32("r_clusterSizeX"));
+	variantInitInfo.addConstant("CLUSTER_COUNT_Y", cfg.getNumberU32("r_clusterSizeY"));
 
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(consts.get(), variant);
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
 	// Create FB descr

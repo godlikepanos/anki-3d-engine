@@ -45,24 +45,23 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	m_rt = m_r->createAndClearRenderTarget(texinit);
 
 	// Create shader
-	ANKI_CHECK(getResourceManager().loadResource("shaders/Ssr.glslp", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/Ssr.ankiprog", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
-	consts.add("FB_SIZE", UVec2(width, height));
-	consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
-	consts.add("MAX_STEPS", cfg.getNumberU32("r_ssrMaxSteps"));
-	consts.add("LIGHT_BUFFER_MIP_COUNT", U32(m_r->getDownscaleBlur().getMipmapCount()));
-	consts.add("HISTORY_COLOR_BLEND_FACTOR", cfg.getNumberF32("r_ssrHistoryBlendFactor"));
-
-	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
-	mutators.add("VARIANT", 0);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.addConstant("FB_SIZE", UVec2(width, height));
+	variantInitInfo.addConstant("MAX_STEPS", cfg.getNumberU32("r_ssrMaxSteps"));
+	variantInitInfo.addConstant("LIGHT_BUFFER_MIP_COUNT", m_r->getDownscaleBlur().getMipmapCount());
+	variantInitInfo.addConstant("HISTORY_COLOR_BLEND_FACTOR", cfg.getNumberF32("r_ssrHistoryBlendFactor"));
+	variantInitInfo.addMutation("VARIANT", 0);
 
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg[0] = variant->getProgram();
+	m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
+	m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
 
-	mutators[0].m_value = 1;
-	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	variantInitInfo.addMutation("VARIANT", 1);
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg[1] = variant->getProgram();
 
 	return Error::NONE;
@@ -120,9 +119,8 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_normalMat = Mat3x4(ctx.m_matrices.m_view.getRotationPart());
 
 	// Dispatch
-	const U32 sizeX = (m_r->getWidth() / SSR_FRACTION + m_workgroupSize[0] - 1) / m_workgroupSize[0];
-	const U32 sizeY = (m_r->getHeight() / SSR_FRACTION + m_workgroupSize[1] - 1) / m_workgroupSize[1];
-	cmdb->dispatchCompute(sizeX / 2, sizeY, 1);
+	dispatchPPCompute(
+		cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth() / SSR_FRACTION, m_r->getHeight() / SSR_FRACTION);
 }
 
 } // end namespace anki

@@ -6,7 +6,6 @@
 #include <anki/renderer/TraditionalDeferredShading.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/resource/ShaderProgramResource.h>
 #include <anki/resource/MeshResource.h>
 #include <shaders/glsl_cpp_common/TraditionalDeferredShading.h>
 
@@ -26,24 +25,24 @@ Error TraditionalDeferredLightShading::init()
 {
 	// Init progs
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/TraditionalDeferredShading.glslp", m_lightProg));
+		ANKI_CHECK(getResourceManager().loadResource("shaders/TraditionalDeferredShading.ankiprog", m_lightProg));
 
 		for(U32 specular = 0; specular <= 1; ++specular)
 		{
-			ShaderProgramResourceMutationInitList<2> mutators(m_lightProg);
-			mutators.add("LIGHT_TYPE", 0);
-			mutators.add("SPECULAR", specular);
+			ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightProg);
+			variantInitInfo.addMutation("LIGHT_TYPE", 0);
+			variantInitInfo.addMutation("SPECULAR", specular);
 
 			const ShaderProgramResourceVariant* variant;
-			m_lightProg->getOrCreateVariant(mutators.get(), variant);
+			m_lightProg->getOrCreateVariant(variantInitInfo, variant);
 			m_plightGrProg[specular] = variant->getProgram();
 
-			mutators[0].m_value = 1;
-			m_lightProg->getOrCreateVariant(mutators.get(), variant);
+			variantInitInfo.addMutation("LIGHT_TYPE", 1);
+			m_lightProg->getOrCreateVariant(variantInitInfo, variant);
 			m_slightGrProg[specular] = variant->getProgram();
 
-			mutators[0].m_value = 2;
-			m_lightProg->getOrCreateVariant(mutators.get(), variant);
+			variantInitInfo.addMutation("LIGHT_TYPE", 2);
+			m_lightProg->getOrCreateVariant(variantInitInfo, variant);
 			m_dirLightGrProg[specular] = variant->getProgram();
 		}
 	}

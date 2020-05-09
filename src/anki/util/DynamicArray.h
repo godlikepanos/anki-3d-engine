@@ -281,15 +281,14 @@ public:
 		m_capacity = 0;
 	}
 
+	/// Resizes the storage but DOESN'T CONSTRUCT ANY ELEMENTS. It only moves or destroys.
+	template<typename TAllocator>
+	void resizeStorage(TAllocator alloc, Size newSize);
+
 protected:
 	Value* m_data;
 	Size m_size;
 	Size m_capacity = 0;
-
-private:
-	/// Resizes the storage but DOESN'T CONSTRUCT ANY ELEMENTS. It only moves or destroys.
-	template<typename TAllocator>
-	void resizeStorage(TAllocator& alloc, Size newSize);
 };
 
 /// Dynamic array with automatic destruction. It's the same as DynamicArray but it holds the allocator in order to
@@ -439,6 +438,12 @@ public:
 	{
 		Base::moveAndReset(data, size, storageSize);
 		// Don't touch the m_alloc
+	}
+
+	/// @copydoc DynamicArray::resizeStorage
+	void resizeStorage(Size newSize)
+	{
+		Base::resizeStorage(m_alloc, newSize);
 	}
 
 	/// Get the allocator.

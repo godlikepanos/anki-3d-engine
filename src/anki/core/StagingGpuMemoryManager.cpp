@@ -70,7 +70,7 @@ void* StagingGpuMemoryManager::allocateFrame(PtrSize size, StagingGpuMemoryType 
 	Error err = buff.m_alloc.allocate(size, token.m_offset);
 	if(err)
 	{
-		ANKI_CORE_LOGF("Out of staging GPU memory. Usage: %u", usage);
+		ANKI_CORE_LOGF("Out of staging GPU memory. Usage: %u", U32(usage));
 	}
 
 	token.m_buffer = buff.m_buff;

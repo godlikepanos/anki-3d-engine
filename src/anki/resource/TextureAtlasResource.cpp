@@ -52,7 +52,7 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_CHECK(el.getNumber(margin));
 	if(margin >= I(m_tex->getWidth()) || margin >= I(m_tex->getHeight()) || margin < 0)
 	{
-		ANKI_RESOURCE_LOGE("Too big margin %d", U(margin));
+		ANKI_RESOURCE_LOGE("Too big margin %d", I32(margin));
 		return Error::USER_DATA;
 	}
 	m_margin = U32(margin);

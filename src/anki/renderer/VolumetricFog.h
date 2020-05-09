@@ -75,7 +75,7 @@ private:
 
 	U32 m_finalClusterZ = 0;
 
-	Array<U32, 2> m_workgroupSize = {{8, 8}};
+	Array<U32, 2> m_workgroupSize = {};
 	Array<U32, 3> m_volumeSize;
 
 	Vec3 m_fogDiffuseColor = Vec3(1.0f);

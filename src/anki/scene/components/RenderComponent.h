@@ -159,8 +159,7 @@ public:
 		return err;
 	}
 
-	void allocateAndSetupUniforms(U32 set,
-		const RenderQueueDrawContext& ctx,
+	void allocateAndSetupUniforms(const RenderQueueDrawContext& ctx,
 		ConstWeakArray<Mat4> transforms,
 		ConstWeakArray<Mat4> prevTransforms,
 		StagingGpuMemoryManager& alloc) const;

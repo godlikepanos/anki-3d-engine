@@ -13,6 +13,8 @@ Options:
 -texrpath <string>     : Same as rpath but for textures
 -optimize-meshes <0|1> : Optimize meshes. Default is 1
 -j <thread_count>      : Number of threads. Defaults to system's max
+-lod-count <1|2|3>     : The number of geometry LODs to generate. Default: 1
+-lod-factor            : The decimate factor for each LOD. Default 0.25
 )";
 
 class CmdLineArgs
@@ -25,6 +27,9 @@ public:
 	StringAuto m_texRpath = {m_alloc};
 	Bool m_optimizeMeshes = true;
 	U32 m_threadCount = MAX_U32;
+	U32 m_lodCount = 1;
+	F32 m_lodFactor = 0.25f;
+	F32 m_lightIntensityScale = 1.0f;
 };
 
 static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
@@ -115,6 +120,45 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 				return Error::USER_DATA;
 			}
 		}
+		else if(strcmp(argv[i], "-lod-count") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				ANKI_CHECK(CString(argv[i]).toNumber(info.m_lodCount));
+			}
+			else
+			{
+				return Error::USER_DATA;
+			}
+		}
+		else if(strcmp(argv[i], "-lod-factor") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				ANKI_CHECK(CString(argv[i]).toNumber(info.m_lodFactor));
+			}
+			else
+			{
+				return Error::USER_DATA;
+			}
+		}
+		else if(strcmp(argv[i], "-light-scale") == 0)
+		{
+			++i;
+
+			if(i < argc)
+			{
+				ANKI_CHECK(CString(argv[i]).toNumber(info.m_lightIntensityScale));
+			}
+			else
+			{
+				return Error::USER_DATA;
+			}
+		}
 		else
 		{
 			return Error::USER_DATA;
@@ -143,14 +187,29 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	HeapAllocator<U8> alloc{allocAligned, nullptr};
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	StringAuto comment(alloc);
+	for(I32 i = 0; i < argc; ++i)
+	{
+		if(i != 0)
+		{
+			comment.append(" ");
+		}
+
+		comment.append(argv[i]);
+	}
+
 	GltfImporter importer{alloc};
 	if(importer.init(info.m_inputFname.toCString(),
 		   info.m_outDir.toCString(),
 		   info.m_rpath.toCString(),
 		   info.m_texRpath.toCString(),
 		   info.m_optimizeMeshes,
-		   info.m_threadCount))
+		   info.m_lodFactor,
+		   info.m_lodCount,
+		   info.m_lightIntensityScale,
+		   info.m_threadCount,
+		   comment))
 	{
 		return 1;
 	}

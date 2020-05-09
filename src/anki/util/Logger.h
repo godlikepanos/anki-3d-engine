@@ -78,6 +78,7 @@ public:
 		const char* msg);
 
 	/// Send a formated message
+	ANKI_CHECK_FORMAT(7, 8)
 	void writeFormated(const char* file,
 		int line,
 		const char* func,

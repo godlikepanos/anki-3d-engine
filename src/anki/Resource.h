@@ -18,7 +18,6 @@
 #include <anki/resource/DummyResource.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ShaderProgramResource.h>
-#include <anki/resource/ShaderProgramResource2.h>
 #include <anki/resource/CollisionResource.h>
 
 #include <anki/resource/MeshLoader.h>

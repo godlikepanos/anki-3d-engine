@@ -45,6 +45,14 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_MAX_BINDLESS_TEXTURES %u
 #define ANKI_MAX_BINDLESS_IMAGES %u
 
+#define ANKI_BINDLESS_SET(set_) \
+	layout(set = set_, binding = 0) uniform utexture2D u_bindlessTextures2dU32[ANKI_MAX_BINDLESS_TEXTURES]; \
+	layout(set = set_, binding = 0) uniform itexture2D u_bindlessTextures2dI32[ANKI_MAX_BINDLESS_TEXTURES]; \
+	layout(set = set_, binding = 0) uniform texture2D u_bindlessTextures2dF32[ANKI_MAX_BINDLESS_TEXTURES]; \
+	layout(set = set_, binding = 1) uniform readonly uimage2D u_bindlessImages2dU32[ANKI_MAX_BINDLESS_IMAGES]; \
+	layout(set = set_, binding = 1) uniform readonly iimage2D u_bindlessImages2dI32[ANKI_MAX_BINDLESS_IMAGES]; \
+	layout(set = set_, binding = 1) uniform readonly image2D u_bindlessImages2dF32[ANKI_MAX_BINDLESS_IMAGES];
+
 #define F32 float
 #define Vec2 vec2
 #define Vec3 vec3
@@ -69,45 +77,58 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define _ANKI_CONCATENATE(a, b) a##b
 #define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 
-#define ANKI_SPECIALIZATION_CONSTANT_X(type, x, id, defltVal) layout(constant_id = id) const type x = defltVal
+#define _ANKI_SCONST_X(type, n, id, defltVal) \
+	layout(constant_id = id) const type n = defltVal; \
+	const U32 ANKI_CONCATENATE(n, _CONST_ID) = id
 
-#define ANKI_SPECIALIZATION_CONSTANT_X2(type, componentType, x, id, defltVal) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_2_, x) = defltVal[0]; \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_2_, x) = defltVal[1]; \
-	type x = type( \
-		ANKI_CONCATENATE(_anki_const_0_2_, x), \
-		ANKI_CONCATENATE(_anki_const_1_2_, x))
+#define _ANKI_SCONST_X2(type, componentType, n, id, defltVal, constWorkaround) \
+	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = defltVal[0]; \
+	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_2_, n) = defltVal[1]; \
+	constWorkaround componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_2_, n) + componentType(0); \
+	constWorkaround componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_2_, n) + componentType(0); \
+	constWorkaround type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y)); \
+	const UVec2 ANKI_CONCATENATE(n, _CONST_ID) = UVec2(id, id + 1)
 
-#define ANKI_SPECIALIZATION_CONSTANT_X3(type, componentType, x, id, defltVal) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_3_, x) = defltVal[0]; \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_3_, x) = defltVal[1]; \
-	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_3_, x) = defltVal[2]; \
-	type x = type( \
-		ANKI_CONCATENATE(_anki_const_0_3_, x), \
-		ANKI_CONCATENATE(_anki_const_1_3_, x), \
-		ANKI_CONCATENATE(_anki_const_2_3_, x))
+#define _ANKI_SCONST_X3(type, componentType, n, id, defltVal, constWorkaround) \
+	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = defltVal[0]; \
+	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = defltVal[1]; \
+	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = defltVal[2]; \
+	constWorkaround componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_3_, n) + componentType(0); \
+	constWorkaround componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_3_, n) + componentType(0); \
+	constWorkaround componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_3_, n) + componentType(0); \
+	constWorkaround type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y), ANKI_CONCATENATE(n, _Z)); \
+	const UVec3 ANKI_CONCATENATE(n, _CONST_ID) = UVec3(id, id + 1, id + 2)
 
-#define ANKI_SPECIALIZATION_CONSTANT_X4(type, componentType, x, id, defltVal) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_4_, x) = defltVal[0]; \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_4_, x) = defltVal[1]; \
-	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_4_, x) = defltVal[2]; \
-	layout(constant_id = id + 3) const componentType ANKI_CONCATENATE(_anki_const_3_4_, x) = defltVal[3]; \
-	type x = type( \
-		ANKI_CONCATENATE(_anki_const_0_4_, x), \
-		ANKI_CONCATENATE(_anki_const_1_4_, x), \
-		ANKI_CONCATENATE(_anki_const_2_4_, x)); \
-		ANKI_CONCATENATE(_anki_const_3_4_, x))
+#define _ANKI_SCONST_X4(type, componentType, n, id, defltVal, constWorkaround) \
+	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = defltVal[0]; \
+	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_4_, n) = defltVal[1]; \
+	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_4_, n) = defltVal[2]; \
+	layout(constant_id = id + 3) const componentType ANKI_CONCATENATE(_anki_const_3_4_, n) = defltVal[3]; \
+	constWorkaround componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_4_, n) + componentType(0); \
+	constWorkaround componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_4_, n) + componentType(0); \
+	constWorkaround componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_4_, n) + componentType(0); \
+	constWorkaround componentType ANKI_CONCATENATE(n, _W) = ANKI_CONCATENATE(_anki_const_3_4_, n) + componentType(0); \
+	constWorkaround type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y), ANKI_CONCATENATE(n, _Z), \
+		ANKI_CONCATENATE(n, _W)); \
+	const UVec4 ANKI_CONCATENATE(n, _CONST_ID) = UVec4(id, id + 1, id + 2, id + 3)
 
-#define ANKI_SPECIALIZATION_CONSTANT_I32(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X(I32, x, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC2(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X2(IVec2, I32, x, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC3(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X3(IVec3, I32, x, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC4(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X4(IVec4, I32, x, id, defltVal)
+#define ANKI_SPECIALIZATION_CONSTANT_I32(n, id, defltVal) _ANKI_SCONST_X(I32, n, id, defltVal)
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC2(n, id, defltVal) _ANKI_SCONST_X2(IVec2, I32, n, id, defltVal, const)
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC3(n, id, defltVal) _ANKI_SCONST_X3(IVec3, I32, n, id, defltVal, const)
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC4(n, id, defltVal) _ANKI_SCONST_X4(IVec4, I32, n, id, defltVal, const)
 
-#define ANKI_SPECIALIZATION_CONSTANT_F32(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X(F32, x, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC2(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X2(Vec2, F32, x, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC3(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X3(Vec3, F32, x, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC4(x, id, defltVal) ANKI_SPECIALIZATION_CONSTANT_X4(Vec4, F32, x, id, defltVal)
+#define ANKI_SPECIALIZATION_CONSTANT_U32(n, id, defltVal) _ANKI_SCONST_X(U32, n, id, defltVal)
+#define ANKI_SPECIALIZATION_CONSTANT_UVEC2(n, id, defltVal) _ANKI_SCONST_X2(UVec2, U32, n, id, defltVal, const)
+#define ANKI_SPECIALIZATION_CONSTANT_UVEC3(n, id, defltVal) _ANKI_SCONST_X3(UVec3, U32, n, id, defltVal, const)
+#define ANKI_SPECIALIZATION_CONSTANT_UVEC4(n, id, defltVal) _ANKI_SCONST_X4(UVec4, U32, n, id, defltVal, const)
+
+#define ANKI_SPECIALIZATION_CONSTANT_F32(n, id, defltVal) _ANKI_SCONST_X(F32, n, id, defltVal)
+#define ANKI_SPECIALIZATION_CONSTANT_VEC2(n, id, defltVal) _ANKI_SCONST_X2(Vec2, F32, n, id, defltVal,)
+#define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id, defltVal) _ANKI_SCONST_X3(Vec3, F32, n, id, defltVal,)
+#define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id, defltVal) _ANKI_SCONST_X4(Vec4, F32, n, id, defltVal,)
 )";
+
+static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));
 
 ShaderProgramParser::ShaderProgramParser(CString fname,
 	ShaderProgramFilesystemInterface* fsystem,
@@ -575,6 +596,9 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			{
 				ANKI_PP_ERROR_MALFORMED();
 			}
+
+			// Add the line as a comment because of hashing of the source
+			m_codeLines.pushBackSprintf("//%s", line.cstr());
 		}
 		else
 		{
@@ -684,9 +708,22 @@ Error ShaderProgramParser::parse()
 	{
 		m_codeLines.join("\n", m_codeSource);
 		m_codeLines.destroy();
+
+		m_codeSourceHash = appendHash(m_codeSource.getBegin(), m_codeSource.getLength(), SHADER_HEADER_HASH);
 	}
 
 	return Error::NONE;
+}
+
+void ShaderProgramParser::generateAnkiShaderHeader(
+	const GpuDeviceCapabilities& caps, const BindlessLimits& limits, StringAuto& header)
+{
+	header.sprintf(SHADER_HEADER,
+		caps.m_minorApiVersion,
+		caps.m_majorApiVersion,
+		GPU_VENDOR_STR[caps.m_gpuVendor].cstr(),
+		limits.m_bindlessTextureCount,
+		limits.m_bindlessImageCount);
 }
 
 Error ShaderProgramParser::generateVariant(
@@ -713,12 +750,7 @@ Error ShaderProgramParser::generateVariant(
 
 	// Create the header
 	StringAuto header(m_alloc);
-	header.sprintf(SHADER_HEADER,
-		m_gpuCapabilities.m_minorApiVersion,
-		m_gpuCapabilities.m_majorApiVersion,
-		GPU_VENDOR_STR[m_gpuCapabilities.m_gpuVendor].cstr(),
-		m_bindlessLimits.m_bindlessTextureCount,
-		m_bindlessLimits.m_bindlessImageCount);
+	generateAnkiShaderHeader(m_gpuCapabilities, m_bindlessLimits, header);
 
 	// Generate souce per stage
 	for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)

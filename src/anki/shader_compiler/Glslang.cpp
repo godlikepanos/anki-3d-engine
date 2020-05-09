@@ -5,6 +5,7 @@
 
 #include <anki/shader_compiler/Glslang.h>
 #include <anki/util/StringList.h>
+#include <anki/util/File.h>
 
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic push
@@ -264,6 +265,23 @@ Error compilerGlslToSpirv(
 	// Store
 	spirv.resize(U32(glslangSpirv.size() * sizeof(unsigned int)));
 	memcpy(&spirv[0], &glslangSpirv[0], spirv.getSizeInBytes());
+
+#if 0
+	// Dump it
+	{
+		static U32 count = 0;
+		if(count == 0)
+		{
+			ANKI_SHADER_COMPILER_LOGW("SPIR-V dumping is enabled");
+		}
+
+		File file;
+		StringAuto fname(tmpAlloc);
+		fname.sprintf("/tmp/%u.spv", count++);
+		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
+		ANKI_CHECK(file.write(spirv.getBegin(), spirv.getSizeInBytes()));
+	}
+#endif
 
 	return Error::NONE;
 }

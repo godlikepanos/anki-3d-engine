@@ -334,7 +334,7 @@ public:
 	/// Set the array pointer and its size.
 	void setArray(Value* array, Size size)
 	{
-		ANKI_ASSERT(array && size > 0 || array == nullptr && size == 0);
+		ANKI_ASSERT((array && size > 0) || (array == nullptr && size == 0));
 		m_data = array;
 		m_size = size;
 	}

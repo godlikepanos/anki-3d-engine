@@ -3,16 +3,21 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// Defines it needs:
-// HORIZONTAL | VERTICAL | BOX
-// COLOR_COMPONENTS
-// WORKGROUP_SIZE (only for compute)
-// TEXTURE_SIZE
-// SAMPLE_COUNT (must be odd number)
+#pragma anki mutator ORIENTATION 0 1 2 // 0: VERTICAL, 1: HORIZONTAL, 2: BOX
+#pragma anki mutator SAMPLE_COUNT 3 5 7 9 11 13 15
+#pragma anki mutator COLOR_COMPONENTS 4 3 1
 
-#pragma once
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0, UVec2(1));
 
 #include <shaders/Common.glsl>
+
+#if ORIENTATION == 0
+#	define VERTICAL 1
+#elif ORIENTATION == 1
+#	define HORIZONTAL 1
+#else
+#	define BOX 1
+#endif
 
 #if SAMPLE_COUNT < 3
 #	error See file
@@ -20,6 +25,7 @@
 
 #if defined(ANKI_COMPUTE_SHADER)
 #	define USE_COMPUTE 1
+const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
 #else
 #	define USE_COMPUTE 0
 #endif

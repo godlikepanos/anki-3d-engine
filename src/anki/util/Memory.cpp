@@ -154,7 +154,7 @@ HeapMemoryPool::HeapMemoryPool()
 
 HeapMemoryPool::~HeapMemoryPool()
 {
-	U count = m_allocationsCount.load();
+	const U32 count = m_allocationsCount.load();
 	if(count != 0)
 	{
 		ANKI_UTIL_LOGW("Memory pool destroyed before all memory being released "

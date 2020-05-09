@@ -237,7 +237,7 @@ void ResourceFilesystem::addCachePath(const CString& path)
 
 Error ResourceFilesystem::addNewPath(const CString& path)
 {
-	U fileCount = 0;
+	U32 fileCount = 0;
 	static const CString extension(".ankizip");
 
 	auto pos = path.find(extension);
@@ -300,7 +300,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		struct UserData
 		{
 			ResourceFilesystem* m_sys;
-			U* m_fileCount;
+			U32* m_fileCount;
 		} ud{this, &fileCount};
 
 		ANKI_CHECK(walkDirectoryTree(path, &ud, [](const CString& fname, void* ud, Bool isDir) -> Error {
@@ -313,7 +313,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 			ResourceFilesystem* self = udd->m_sys;
 
 			Path& p = self->m_paths.getFront();
-			p.m_files.pushBackSprintf(self->m_alloc, "%s", &fname[0]);
+			p.m_files.pushBackSprintf(self->m_alloc, "%s", fname.cstr());
 
 			++(*udd->m_fileCount);
 			return Error::NONE;

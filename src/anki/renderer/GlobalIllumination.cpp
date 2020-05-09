@@ -227,18 +227,16 @@ Error GlobalIllumination::initLightShading(const ConfigSet& cfg)
 
 Error GlobalIllumination::initIrradiance(const ConfigSet& cfg)
 {
-	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.glslp", m_irradiance.m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
 
-	ShaderProgramResourceConstantValueInitList<1> consts(m_irradiance.m_prog);
-	consts.add("WORKGROUP_SIZE", m_tileSize);
-
-	ShaderProgramResourceMutationInitList<3> mutations(m_irradiance.m_prog);
-	mutations.add("LIGHT_SHADING_TEX", 0);
-	mutations.add("STORE_LOCATION", 0);
-	mutations.add("SECOND_BOUNCE", 1);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
+	variantInitInfo.addMutation("WORKGROUP_SIZE_XY", m_tileSize);
+	variantInitInfo.addMutation("LIGHT_SHADING_TEX", 0);
+	variantInitInfo.addMutation("STORE_LOCATION", 0);
+	variantInitInfo.addMutation("SECOND_BOUNCE", 1);
 
 	const ShaderProgramResourceVariant* variant;
-	m_irradiance.m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
+	m_irradiance.m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_irradiance.m_grProg = variant->getProgram();
 
 	return Error::NONE;

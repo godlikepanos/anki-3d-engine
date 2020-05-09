@@ -18,7 +18,7 @@ Error DebugDrawer::init(ResourceManager* rsrcManager)
 	ANKI_ASSERT(rsrcManager);
 
 	// Create the prog and shaders
-	ANKI_CHECK(rsrcManager->loadResource("shaders/SceneDebug.glslp", m_prog));
+	ANKI_CHECK(rsrcManager->loadResource("shaders/SceneDebug.ankiprog", m_prog));
 
 	return Error::NONE;
 }
@@ -39,14 +39,13 @@ void DebugDrawer::flush()
 
 	// Bind program
 	{
-		ShaderProgramResourceMutationInitList<2> mutators(m_prog);
-		mutators.add("COLOR_TEXTURE", 0);
-		mutators.add(
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+		variantInitInfo.addMutation("COLOR_TEXTURE", 0);
+		variantInitInfo.addMutation(
 			"DITHERED_DEPTH_TEST", m_ctx->m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON));
-		ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-		consts.add("INSTANCE_COUNT", 1u);
+		variantInitInfo.addConstant("INSTANCE_COUNT", 1u);
 		const ShaderProgramResourceVariant* variant;
-		m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+		m_prog->getOrCreateVariant(variantInitInfo, variant);
 		cmdb->bindShaderProgram(variant->getProgram());
 	}
 
@@ -295,7 +294,7 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator,
 
 Error DebugDrawer2::init(ResourceManager* rsrcManager)
 {
-	return rsrcManager->loadResource("shaders/SceneDebug.glslp", m_prog);
+	return rsrcManager->loadResource("shaders/SceneDebug.ankiprog", m_prog);
 }
 
 void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
@@ -365,13 +364,12 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
 	*pcolor = color;
 
 	// Setup state
-	ShaderProgramResourceMutationInitList<2> mutators(m_prog);
-	mutators.add("COLOR_TEXTURE", 0);
-	mutators.add("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
-	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("INSTANCE_COUNT", mvps.getSize());
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.addMutation("COLOR_TEXTURE", 0);
+	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
+	variantInitInfo.addConstant("INSTANCE_COUNT", mvps.getSize());
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 
 	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
@@ -440,13 +438,12 @@ void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
 	*pcolor = color;
 
 	// Setup state
-	ShaderProgramResourceMutationInitList<2> mutators(m_prog);
-	mutators.add("COLOR_TEXTURE", 1);
-	mutators.add("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
-	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-	consts.add("INSTANCE_COUNT", positions.getSize());
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.addMutation("COLOR_TEXTURE", 1);
+	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
+	variantInitInfo.addConstant("INSTANCE_COUNT", positions.getSize());
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	cmdb->bindShaderProgram(variant->getProgram());
 
 	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);

@@ -132,8 +132,9 @@ Error MeshLoader::checkFormat(VertexAttributeLocation type, ConstWeakArray<Forma
 
 	if(!found)
 	{
-		ANKI_RESOURCE_LOGE(
-			"Vertex attribute %u has unsupported format %u", U(type), U(m_header.m_vertexAttributes[type].m_format));
+		ANKI_RESOURCE_LOGE("Vertex attribute %u has unsupported format %u",
+			U32(type),
+			U32(m_header.m_vertexAttributes[type].m_format));
 		return Error::USER_DATA;
 	}
 
@@ -146,7 +147,7 @@ Error MeshLoader::checkFormat(VertexAttributeLocation type, ConstWeakArray<Forma
 	// Scale should be 1.0 for now
 	if(attrib.m_scale != 1.0f)
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u should have 1.0 scale", U(type));
+		ANKI_RESOURCE_LOGE("Vertex attribute %u should have 1.0 scale", U32(type));
 		return Error::USER_DATA;
 	}
 

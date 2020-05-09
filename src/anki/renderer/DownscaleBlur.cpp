@@ -29,7 +29,7 @@ Error DownscaleBlur::init(const ConfigSet& cfg)
 Error DownscaleBlur::initInternal(const ConfigSet&)
 {
 	m_passCount = computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), DOWNSCALE_BLUR_DOWN_TO) - 1;
-	ANKI_R_LOGI("Initializing dowscale blur (passCount: %u)", U(m_passCount));
+	ANKI_R_LOGI("Initializing dowscale blur (passCount: %u)", m_passCount);
 
 	// Create the miped texture
 	TextureInitInfo texinit = m_r->create2DRenderTargetDescription(
@@ -64,16 +64,15 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	const ShaderProgramResourceVariant* variant = nullptr;
 	if(m_useCompute)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/DownscaleBlurCompute.glslp", m_prog));
-
-		ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
-		consts.add("WORKGROUP_SIZE", UVec2(m_workgroupSize[0], m_workgroupSize[1]));
-
-		m_prog->getOrCreateVariant(consts.get(), variant);
+		ANKI_CHECK(getResourceManager().loadResource("shaders/DownscaleBlurCompute.ankiprog", m_prog));
+		m_prog->getOrCreateVariant(variant);
+		m_workgroupSize[0] = variant->getWorkgroupSizes()[0];
+		m_workgroupSize[1] = variant->getWorkgroupSizes()[1];
+		ANKI_ASSERT(variant->getWorkgroupSizes()[2] == 1);
 	}
 	else
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/DownscaleBlur.glslp", m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("shaders/DownscaleBlur.ankiprog", m_prog));
 		m_prog->getOrCreateVariant(variant);
 	}
 	m_grProg = variant->getProgram();

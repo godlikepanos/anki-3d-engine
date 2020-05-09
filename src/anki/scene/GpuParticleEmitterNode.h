@@ -37,13 +37,13 @@ public:
 	}
 
 private:
-	static constexpr U32 COMPUTE_SHADER_WORKGROUP_SIZE_X = 64;
 	static constexpr U32 MAX_RAND_FACTORS = 32;
 
 	class MoveFeedbackComponent;
 
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
+	U32 m_workgroupSizeX = 0;
 
 	ParticleEmitterResourcePtr m_emitterRsrc;
 

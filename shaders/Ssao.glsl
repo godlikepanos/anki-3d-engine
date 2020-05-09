@@ -8,13 +8,12 @@
 #pragma anki mutator USE_NORMAL 0 1
 #pragma anki mutator SOFT_BLUR 0 1
 
-#pragma anki input const U32 NOISE_MAP_SIZE
-#pragma anki input const UVec2 FB_SIZE
-#pragma anki input const F32 RADIUS
-#pragma anki input const F32 BIAS
-#pragma anki input const F32 STRENGTH
-#pragma anki input const U32 SAMPLE_COUNT
-#pragma anki input const UVec2 WORKGROUP_SIZE
+ANKI_SPECIALIZATION_CONSTANT_U32(NOISE_MAP_SIZE, 0, 1);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 1, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_F32(RADIUS, 3, 0.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(BIAS, 4, 0.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(STRENGTH, 5, 0.0);
+ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 6, 1);
 
 #pragma once
 
@@ -28,6 +27,7 @@
 #	define USE_COMPUTE 0
 #else
 #	define USE_COMPUTE 1
+const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
 #endif
 
 // Do a compute soft blur

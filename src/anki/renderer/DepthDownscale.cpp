@@ -41,13 +41,13 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	m_hizTex = m_r->createAndClearRenderTarget(texInit);
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.glslp", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.ankiprog", m_prog));
 
-	ShaderProgramResourceMutationInitList<1> mutations(m_prog);
-	mutations.add("SAMPLE_RESOLVE_TYPE", 2);
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.addMutation("SAMPLE_RESOLVE_TYPE", 2);
 
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutations.get(), variant);
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
 	// Copy to buffer

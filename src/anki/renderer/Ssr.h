@@ -40,7 +40,7 @@ private:
 
 	TexturePtr m_rt;
 
-	Array<U8, 2> m_workgroupSize = {{16, 16}};
+	Array<U32, 2> m_workgroupSize = {};
 
 	class
 	{
