@@ -1000,15 +1000,17 @@ void MaterialResource::initVariant(
 
 // Debug print
 #if 0
-	printf("binary variant idx %u\n", U32(&binaryVariant - binary.m_variants.getBegin()));
+	ANKI_RESOURCE_LOGI("binary variant idx %u\n", U32(&binaryVariant - binary.m_variants.getBegin()));
 	for(const MaterialVariable& var : m_vars)
 	{
 
-		printf("Var %s %s\n", var.m_name.cstr(), variant.m_activeVars.get(var.m_index) ? "active" : "inactive");
+		ANKI_RESOURCE_LOGI(
+			"Var %s %s\n", var.m_name.cstr(), variant.m_activeVars.get(var.m_index) ? "active" : "inactive");
 		if(var.inBlock() && variant.m_activeVars.get(var.m_index))
 		{
 			const ShaderVariableBlockInfo& inf = variant.m_blockInfos[var.m_index];
-			printf("\tblockInfo %d,%d,%d,%d\n", inf.m_offset, inf.m_arraySize, inf.m_arrayStride, inf.m_matrixStride);
+			ANKI_RESOURCE_LOGI(
+				"\tblockInfo %d,%d,%d,%d\n", inf.m_offset, inf.m_arraySize, inf.m_arrayStride, inf.m_matrixStride);
 		}
 	}
 #endif

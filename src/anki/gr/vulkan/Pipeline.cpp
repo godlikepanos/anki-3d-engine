@@ -109,7 +109,7 @@ Bool PipelineStateTracker::updateHashes()
 	}
 
 	// Color
-	if(!!m_shaderColorAttachmentWritemask)
+	if(!!m_fbColorAttachmentMask)
 	{
 		ANKI_ASSERT(m_fbColorAttachmentMask == m_shaderColorAttachmentWritemask
 					&& "Shader and fb should have same attachment mask");
@@ -121,11 +121,11 @@ Bool PipelineStateTracker::updateHashes()
 			stateDirty = true;
 		}
 
-		if(!!(m_dirty.m_colAttachments & m_shaderColorAttachmentWritemask))
+		if(!!(m_dirty.m_colAttachments & m_fbColorAttachmentMask))
 		{
 			for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
 			{
-				if(m_shaderColorAttachmentWritemask.get(i) && m_dirty.m_colAttachments.get(i))
+				if(m_fbColorAttachmentMask.get(i) && m_dirty.m_colAttachments.get(i))
 				{
 					m_dirty.m_colAttachments.unset(i);
 					m_hashes.m_colAttachments[i] =
