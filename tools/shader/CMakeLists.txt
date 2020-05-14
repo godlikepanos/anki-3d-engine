@@ -1,7 +1,9 @@
 include_directories("../../src")
 
-file(GLOB_RECURSE SOURCES *.cpp)
-
-add_executable(shader_dump ${SOURCES})
+add_executable(shader_dump ShaderProgramBinaryDumpMain.cpp)
 target_link_libraries(shader_dump anki)
 installExecutable(shader_dump)
+
+add_executable(shader_compiler ShaderProgramCompilerMain.cpp)
+target_link_libraries(shader_compiler anki)
+installExecutable(shader_compiler)
