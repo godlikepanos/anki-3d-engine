@@ -268,12 +268,18 @@ inline ShaderProgramResourceVariantInitInfo& ShaderProgramResourceVariantInitInf
 	CString name, const T& value)
 {
 	const ShaderProgramResourceConstant* in = m_ptr->tryFindConstant(name);
-	ANKI_ASSERT(in);
-	ANKI_ASSERT(in->m_dataType == getShaderVariableTypeFromTypename<T>());
-	const U32 constIdx = U32(in - m_ptr->getConstants().getBegin());
-	m_constantValues[constIdx].m_constantIndex = constIdx;
-	memcpy(&m_constantValues[constIdx].m_int, &value, sizeof(T));
-	m_setConstants.set(constIdx);
+	if(in != nullptr)
+	{
+		ANKI_ASSERT(in->m_dataType == getShaderVariableTypeFromTypename<T>());
+		const U32 constIdx = U32(in - m_ptr->getConstants().getBegin());
+		m_constantValues[constIdx].m_constantIndex = constIdx;
+		memcpy(&m_constantValues[constIdx].m_int, &value, sizeof(T));
+		m_setConstants.set(constIdx);
+	}
+	else
+	{
+		ANKI_RESOURCE_LOGW("Constant not found: %s", name.cstr());
+	}
 	return *this;
 }
 

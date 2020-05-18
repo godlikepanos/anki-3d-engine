@@ -1405,6 +1405,8 @@ StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 Error RenderGraph::dumpDependencyDotFile(
 	const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const
 {
+	ANKI_GR_LOGW("Running with debug code");
+
 	static const Array<const char*, 5> COLORS = {{"red", "green", "blue", "magenta", "cyan"}};
 	auto alloc = ctx.m_alloc;
 	StringListAuto slist(alloc);
@@ -1412,7 +1414,7 @@ Error RenderGraph::dumpDependencyDotFile(
 	slist.pushBackSprintf("digraph {\n");
 	slist.pushBackSprintf("\t//splines = ortho;\nconcentrate = true;\n");
 
-	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
+	for(U32 batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
 	{
 		// Set same rank
 		slist.pushBackSprintf("\t{rank=\"same\";");
@@ -1459,14 +1461,14 @@ Error RenderGraph::dumpDependencyDotFile(
 	// slist.pushBackSprintf("subgraph cluster_1 {\n");
 	StringAuto prevBubble(ctx.m_alloc);
 	prevBubble.create("START");
-	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
+	for(U32 batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
 	{
 		const Batch& batch = ctx.m_batches[batchIdx];
 
 		StringAuto batchName(ctx.m_alloc);
 		batchName.sprintf("batch%u", batchIdx);
 
-		for(U barrierIdx = 0; barrierIdx < batch.m_barriersBefore.getSize(); ++barrierIdx)
+		for(U32 barrierIdx = 0; barrierIdx < batch.m_barriersBefore.getSize(); ++barrierIdx)
 		{
 			const Barrier& barrier = batch.m_barriersBefore[barrierIdx];
 			StringAuto barrierName(ctx.m_alloc);
@@ -1503,7 +1505,7 @@ Error RenderGraph::dumpDependencyDotFile(
 			prevBubble = barrierName;
 		}
 
-		for(U passIdx : batch.m_passIndices)
+		for(U32 passIdx : batch.m_passIndices)
 		{
 			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 			StringAuto passName(alloc);

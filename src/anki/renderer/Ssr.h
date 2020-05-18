@@ -41,6 +41,7 @@ private:
 	TexturePtr m_rt;
 
 	Array<U32, 2> m_workgroupSize = {};
+	U32 m_maxSteps = 32;
 
 	class
 	{

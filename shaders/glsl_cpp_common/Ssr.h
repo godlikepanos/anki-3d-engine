@@ -12,7 +12,12 @@ ANKI_BEGIN_NAMESPACE
 // Screen space reflections uniforms
 struct SsrUniforms
 {
-	Vec4 m_nearPad3;
+	UVec2 m_depthBufferSize;
+	UVec2 m_framebufferSize;
+	U32 m_frameCount;
+	U32 m_depthMipCount;
+	U32 m_maxSteps;
+	U32 m_lightBufferMipCount;
 	Mat4 m_prevViewProjMatMulInvViewProjMat;
 	Mat4 m_projMat;
 	Mat4 m_invProjMat;
