@@ -14,5 +14,6 @@
 !*.anki*
 !*.blend
 !*.lua
+!*.png
 !CMakeLists.txt
 build*/*

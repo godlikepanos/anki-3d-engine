@@ -60,7 +60,7 @@ static void taskToWait(void* arg, U32 threadId, ThreadHive& hive, ThreadHiveSema
 
 ANKI_TEST(Util, ThreadHive)
 {
-	const U32 threadCount = 4;
+	const U32 threadCount = 32;
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	ThreadHive hive(threadCount, alloc);
 

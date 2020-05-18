@@ -178,6 +178,11 @@ public:
 	{
 		return m_rfile->seek(offset, origin);
 	}
+
+	PtrSize getSize() const final
+	{
+		return m_rfile->getSize();
+	}
 };
 
 class ImageLoader::SystemFile : public FileInterface

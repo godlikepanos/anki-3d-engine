@@ -36,6 +36,8 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	ANKI_R_LOGI("Initializing SSR pass (%ux%u)", width, height);
 	m_maxSteps = cfg.getNumberU32("r_ssrMaxSteps");
 
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseRgb816x16.png", m_noiseTex));
+
 	// Create RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(width,
 		height,
@@ -94,23 +96,10 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_grProg[m_r->getFrameCount() & 1u]);
 
-	// Bind all
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
-
-	rgraphCtx.bindColorTexture(0, 2, m_r->getGBuffer().getColorRt(1));
-	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
-
-	TextureSubresourceInfo hizSubresource;
-	hizSubresource.m_mipmapCount = m_r->getDepthDownscale().getMipmapCount();
-	rgraphCtx.bindTexture(0, 4, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
-
-	rgraphCtx.bindColorTexture(0, 5, m_r->getDownscaleBlur().getRt());
-
-	rgraphCtx.bindImage(0, 6, m_runCtx.m_rt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
 
 	// Bind uniforms
-	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 7);
+	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 1);
 	unis->m_depthBufferSize = UVec2(m_r->getWidth(), m_r->getHeight()) >> 2u;
 	unis->m_framebufferSize = UVec2(m_r->getWidth(), m_r->getHeight());
 	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
@@ -122,6 +111,21 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
 	unis->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
 	unis->m_normalMat = Mat3x4(ctx.m_matrices.m_view.getRotationPart());
+
+	// Bind all
+	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
+
+	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(1));
+	rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
+
+	TextureSubresourceInfo hizSubresource;
+	hizSubresource.m_mipmapCount = m_r->getDepthDownscale().getMipmapCount();
+	rgraphCtx.bindTexture(0, 5, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
+
+	rgraphCtx.bindColorTexture(0, 6, m_r->getDownscaleBlur().getRt());
+
+	cmdb->bindSampler(0, 7, m_r->getSamplers().m_trilinearRepeat);
+	cmdb->bindTexture(0, 8, m_noiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_ALL);
 
 	// Dispatch
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth() / 2, m_r->getHeight());

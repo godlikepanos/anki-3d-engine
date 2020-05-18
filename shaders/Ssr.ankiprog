@@ -21,19 +21,22 @@
 const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) uniform sampler u_trilinearClampSampler;
-layout(set = 0, binding = 1) uniform sampler u_nearestNearestClampSampler;
-layout(set = 0, binding = 2) uniform texture2D u_gbufferRt1;
-layout(set = 0, binding = 3) uniform texture2D u_gbufferRt2;
-layout(set = 0, binding = 4) uniform texture2D u_depthRt;
-layout(set = 0, binding = 5) uniform texture2D u_lightBufferRt;
+layout(set = 0, binding = 0, rgba16f) uniform image2D out_img;
 
-layout(set = 0, binding = 6, rgba16f) uniform image2D out_img;
-
-layout(set = 0, binding = 7, row_major) uniform u_
+layout(set = 0, binding = 1, row_major) uniform u_
 {
 	SsrUniforms u_unis;
 };
+
+layout(set = 0, binding = 2) uniform sampler u_trilinearClampSampler;
+layout(set = 0, binding = 3) uniform texture2D u_gbufferRt1;
+layout(set = 0, binding = 4) uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 5) uniform texture2D u_depthRt;
+layout(set = 0, binding = 6) uniform texture2D u_lightBufferRt;
+
+layout(set = 0, binding = 7) uniform sampler u_trilinearRepeatSampler;
+layout(set = 0, binding = 8) uniform texture2D u_noiseTex;
+const Vec2 NOISE_TEX_SIZE = Vec2(16.0);
 
 void main()
 {
@@ -71,25 +74,29 @@ void main()
 	const Vec3 reflVec = reflect(viewDir, viewNormal);
 
 	// Rand idx
-	U32 randIdx = (fixedInvocationId.x & 1) * 2 + (fixedInvocationId.y & 1);
-	randIdx = (randIdx + u_unis.m_frameCount & 3) & 3;
+	const Vec2 noiseUv = Vec2(u_unis.m_framebufferSize) / NOISE_TEX_SIZE * uv;
+	const Vec2 noiseShift = 1.0 / NOISE_TEX_SIZE * (u_unis.m_frameCount % 4u);
+	const F32 noise = textureLod(u_noiseTex, u_trilinearRepeatSampler, noiseUv + noiseShift, 0.0).r;
 
 	// Do the heavy work
 	Vec3 hitPoint;
 	F32 hitAttenuation;
 	const U32 lod = 1;
+	const U32 step = 16u;
+	const F32 stepf = step;
+	const F32 minStepf = 4.0;
 	raymarchGroundTruth(viewPos,
 		reflVec,
 		uv,
 		depth,
 		u_unis.m_projMat,
-		randIdx,
 		u_unis.m_maxSteps,
 		u_depthRt,
-		u_nearestNearestClampSampler,
+		u_trilinearClampSampler,
 		F32(lod),
 		u_unis.m_depthBufferSize >> lod,
-		16u,
+		step,
+		U32((stepf - minStepf) * noise + minStepf),
 		hitPoint,
 		hitAttenuation);
 
