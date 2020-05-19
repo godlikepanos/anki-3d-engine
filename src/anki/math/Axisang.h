@@ -183,6 +183,15 @@ public:
 	}
 	/// @}
 
+	/// @name Other
+	/// @{
+	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
+	void toString(StringAuto& str) const
+	{
+		str.sprintf("%f %f %f | %f", m_axis.x(), m_axis.y(), m_axis.z(), m_ang);
+	}
+	/// @}
+
 private:
 	/// @name Data
 	/// @{

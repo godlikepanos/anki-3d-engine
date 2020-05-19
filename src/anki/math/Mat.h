@@ -1535,6 +1535,31 @@ public:
 	{
 		return U8(I * J);
 	}
+
+	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
+	void toString(StringAuto& str) const
+	{
+		for(U j = 0; j < J; ++j)
+		{
+			for(U i = 0; i < I; ++i)
+			{
+				CString fmt;
+				if(i == I - 1 && j == J - 1)
+				{
+					fmt = "%f";
+				}
+				else if(i == I - 1)
+				{
+					fmt = "%f\n";
+				}
+				else
+				{
+					fmt = "%f ";
+				}
+				str.append(StringAuto(str.getAllocator()).sprintf(fmt, m_arr2[j][i]));
+			}
+		}
+	}
 	/// @}
 
 protected:

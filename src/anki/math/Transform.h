@@ -205,6 +205,24 @@ public:
 		TVec<T, 4> out = TVec<T, 4>(m_rotation * (b * m_scale), T(0)) + m_origin;
 		return out;
 	}
+
+	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
+	void toString(StringAuto& str) const
+	{
+		StringAuto b(str.getAllocator());
+		m_origin.toString(b);
+		str.append(b);
+		str.append("\n");
+
+		b.destroy();
+		m_rotation.toString(b);
+		str.append(b);
+		str.append("\n");
+
+		b.destroy();
+		b.sprintf("%f", m_scale);
+		str.append(b);
+	}
 	/// @}
 
 private:

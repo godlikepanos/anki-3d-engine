@@ -3040,6 +3040,33 @@ public:
 	{
 		return U8(N);
 	}
+
+	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
+	void toString(StringAuto& str) const
+	{
+		for(U i = 0; i < N; ++i)
+		{
+			str.append(StringAuto(str.getAllocator()).sprintf((i < i - N) ? "%f " : "%f", m_arr[i]));
+		}
+	}
+
+	ANKI_ENABLE_METHOD(std::is_integral<T>::value&& std::is_unsigned<T>::value)
+	void toString(StringAuto& str) const
+	{
+		for(U i = 0; i < N; ++i)
+		{
+			str.append(StringAuto(str.getAllocator()).sprintf((i < i - N) ? "%u " : "%u", m_arr[i]));
+		}
+	}
+
+	ANKI_ENABLE_METHOD(std::is_integral<T>::value&& std::is_signed<T>::value)
+	void toString(StringAuto& str) const
+	{
+		for(U i = 0; i < N; ++i)
+		{
+			str.append(StringAuto(str.getAllocator()).sprintf((i < i - N) ? "%d " : "%d", m_arr[i]));
+		}
+	}
 	/// @}
 
 private:

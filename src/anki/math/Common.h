@@ -8,3 +8,4 @@
 #include <anki/math/Simd.h>
 #include <anki/util/Array.h>
 #include <anki/util/Assert.h>
+#include <anki/util/String.h>
