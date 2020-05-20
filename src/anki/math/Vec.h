@@ -3050,7 +3050,8 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_METHOD(std::is_integral<T>::value&& std::is_unsigned<T>::value)
+	static constexpr Bool CLANG_WORKAROUND = std::is_integral<T>::value && std::is_unsigned<T>::value;
+	ANKI_ENABLE_METHOD(CLANG_WORKAROUND)
 	void toString(StringAuto& str) const
 	{
 		for(U i = 0; i < N; ++i)
@@ -3059,7 +3060,8 @@ public:
 		}
 	}
 
-	ANKI_ENABLE_METHOD(std::is_integral<T>::value&& std::is_signed<T>::value)
+	static constexpr Bool CLANG_WORKAROUND2 = std::is_integral<T>::value && std::is_signed<T>::value;
+	ANKI_ENABLE_METHOD(CLANG_WORKAROUND2)
 	void toString(StringAuto& str) const
 	{
 		for(U i = 0; i < N; ++i)
