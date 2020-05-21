@@ -346,7 +346,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 		__DATE__,
 		ANKI_REVISION);
 
-	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
+	m_timerTick = 1.0 / F32(config.getNumberU32("core_targetFps")); // in sec. 1.0 / period
 
 // Check SIMD support
 #if ANKI_SIMD_SSE && ANKI_COMPILER_GCC_COMPATIBLE
