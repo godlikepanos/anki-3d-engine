@@ -1,0 +1,51 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// if VARIANT==0 then the checkerboard pattern is (render on 'v'):
+// -----
+// |v| |
+// | |v|
+// -----
+
+#pragma anki mutator VARIANT 0 1
+
+#pragma anki start comp
+#include <shaders/SsRaymarching.glsl>
+#include <shaders/Functions.glsl>
+#include <shaders/glsl_cpp_common/Ssgi.h>
+
+const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba16f) uniform image2D out_img;
+
+layout(set = 0, binding = 1, row_major) uniform u_
+{
+	SsgiUniforms u_unis;
+};
+
+void main()
+{
+	// Compute a global invocation ID that takes the checkerboard pattern into account
+	IVec2 fixedInvocationId = IVec2(gl_GlobalInvocationID.xy);
+	fixedInvocationId.x *= 2;
+#if VARIANT == 0
+	fixedInvocationId.x += ((fixedInvocationId.y + 1) & 1);
+#else
+	fixedInvocationId.x += ((fixedInvocationId.y + 0) & 1);
+#endif
+
+	if(fixedInvocationId.x >= I32(u_unis.m_framebufferSize.x) || fixedInvocationId.y >= I32(u_unis.m_framebufferSize.y))
+	{
+		// Skip threads outside the writable image
+		return;
+	}
+
+	const Vec2 uv = (Vec2(fixedInvocationId.xy) + 0.5) / Vec2(u_unis.m_framebufferSize);
+
+	imageStore(out_img, fixedInvocationId, Vec4(uv, 1, 0));
+}
+
+#pragma anki end

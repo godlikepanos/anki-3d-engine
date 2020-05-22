@@ -38,6 +38,7 @@ class DepthDownscale;
 class TemporalAA;
 class UiStage;
 class Ssr;
+class Ssgi;
 class VolumetricLightingAccumulation;
 class GlobalIllumination;
 class GenericCompute;

@@ -17,7 +17,9 @@ ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationClusterFractionZ, 4, 1, 16)
 ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationFinalClusterInZ, 26, 1, 256)
 
 ANKI_CONFIG_OPTION(r_ssrMaxSteps, 64, 1, 2048)
-ANKI_CONFIG_OPTION(r_ssrHistoryBlendFactor, 0.3, 0.0, MAX_F64)
+
+ANKI_CONFIG_OPTION(r_ssgiMaxSteps, 32, 1, 2048)
+ANKI_CONFIG_OPTION(r_ssgiDepthLod, 2, 0, 1000)
 
 ANKI_CONFIG_OPTION(r_shadowMappingTileResolution, 128, 16, 2048)
 ANKI_CONFIG_OPTION(r_shadowMappingTileCountPerRowOrColumn, 16, 1, 256)

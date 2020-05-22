@@ -195,6 +195,11 @@ public:
 		return *m_ssr;
 	}
 
+	Ssgi& getSsgi()
+	{
+		return *m_ssgi;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;
@@ -377,6 +382,7 @@ private:
 	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage
 	UniquePtr<GBufferPost> m_gbufferPost;
 	UniquePtr<Ssr> m_ssr;
+	UniquePtr<Ssgi> m_ssgi;
 	UniquePtr<LightShading> m_lightShading; ///< Illumination rendering stage
 	UniquePtr<DepthDownscale> m_depth;
 	UniquePtr<ForwardShading> m_forwardShading; ///< Forward shading.
