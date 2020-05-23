@@ -20,6 +20,7 @@ public:
 	Ssr(Renderer* r)
 		: RendererObject(r)
 	{
+		registerDebugRenderTarget("SSR");
 	}
 
 	~Ssr();
@@ -54,6 +55,12 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
 	void run(RenderPassWorkContext& rgraphCtx);
+
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
+	{
+		ANKI_ASSERT(rtName == "SSR");
+		handle = m_runCtx.m_rt;
+	}
 };
 /// @}
 

@@ -23,7 +23,7 @@ static MainRenderer* getMainRenderer(lua_State* l)
 }
 
 LuaUserDataTypeInfo luaUserDataTypeInfoDbg = {
-	-2784798555522127122, "Dbg", LuaUserData::computeSizeForGarbageCollected<Dbg>(), nullptr, nullptr};
+	6963341295180544814, "Dbg", LuaUserData::computeSizeForGarbageCollected<Dbg>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Dbg>()
@@ -134,8 +134,11 @@ static inline void wrapDbg(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {
-	919289102518575326, "MainRenderer", LuaUserData::computeSizeForGarbageCollected<MainRenderer>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-2700850970637484325,
+	"MainRenderer",
+	LuaUserData::computeSizeForGarbageCollected<MainRenderer>(),
+	nullptr,
+	nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MainRenderer>()
@@ -170,7 +173,7 @@ static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 	F32 ret = self->getAspectRatio();
 
 	// Push return value
-	lua_pushnumber(l, ret);
+	lua_pushnumber(l, lua_Number(ret));
 
 	return 1;
 }
@@ -188,11 +191,61 @@ static int wrapMainRenderergetAspectRatio(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method MainRenderer::setCurrentDebugRenderTarget.
+static inline int pwrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
+{
+	LuaUserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	if(ANKI_UNLIKELY(LuaBinder::checkArgsCount(l, 2)))
+	{
+		return -1;
+	}
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, luaUserDataTypeInfoMainRenderer, ud))
+	{
+		return -1;
+	}
+
+	MainRenderer* self = ud->getData<MainRenderer>();
+
+	// Pop arguments
+	const char* arg0;
+	if(ANKI_UNLIKELY(LuaBinder::checkString(l, 2, arg0)))
+	{
+		return -1;
+	}
+
+	// Call the method
+	self->getOffscreenRenderer().setCurrentDebugRenderTarget(arg0);
+
+	return 0;
+}
+
+/// Wrap method MainRenderer::setCurrentDebugRenderTarget.
+static int wrapMainRenderersetCurrentDebugRenderTarget(lua_State* l)
+{
+	int res = pwrapMainRenderersetCurrentDebugRenderTarget(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Wrap class MainRenderer.
 static inline void wrapMainRenderer(lua_State* l)
 {
 	LuaBinder::createClass(l, &luaUserDataTypeInfoMainRenderer);
 	LuaBinder::pushLuaCFuncMethod(l, "getAspectRatio", wrapMainRenderergetAspectRatio);
+	LuaBinder::pushLuaCFuncMethod(l, "setCurrentDebugRenderTarget", wrapMainRenderersetCurrentDebugRenderTarget);
 	lua_settop(l, 0);
 }
 

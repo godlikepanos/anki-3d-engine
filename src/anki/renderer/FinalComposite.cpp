@@ -48,19 +48,22 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("BLUE_NOISE", 1);
 	variantInitInfo.addMutation("BLOOM_ENABLED", 1);
-	variantInitInfo.addMutation("DBG_ENABLED", 0);
 	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
 	variantInitInfo.addConstant("LUT_SIZE", U32(LUT_SIZE));
 	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
 	variantInitInfo.addConstant("MOTION_BLUR_SAMPLES", config.getNumberU32("r_motionBlurSamples"));
 
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProgs[0] = variant->getProgram();
-
-	variantInitInfo.addMutation("DBG_ENABLED", 1);
-	m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_grProgs[1] = variant->getProgram();
+	for(U32 dbg = 0; dbg < 2; ++dbg)
+	{
+		for(U32 dbgRt = 0; dbgRt < 2; ++dbgRt)
+		{
+			const ShaderProgramResourceVariant* variant;
+			variantInitInfo.addMutation("DBG_ENABLED", dbg);
+			variantInitInfo.addMutation("DBG_RENDER_TARGET_ENABLED", dbgRt);
+			m_prog->getOrCreateVariant(variantInitInfo, variant);
+			m_grProgs[dbg][dbgRt] = variant->getProgram();
+		}
+	}
 
 	return Error::NONE;
 }
@@ -91,8 +94,11 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const Bool dbgEnabled = m_r->getDbg().getEnabled();
+	RenderTargetHandle dbgRt;
+	Bool dbgRtValid;
+	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid);
 
-	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
+	cmdb->bindShaderProgram(m_grProgs[dbgEnabled][dbgRtValid]);
 
 	// Bind stuff
 	rgraphCtx.bindUniformBuffer(0, 0, m_r->getTonemapping().getAverageLuminanceBuffer());
@@ -112,6 +118,11 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	if(dbgEnabled)
 	{
 		rgraphCtx.bindColorTexture(0, 10, m_r->getDbg().getRt());
+	}
+
+	if(dbgRtValid)
+	{
+		rgraphCtx.bindColorTexture(0, 11, dbgRt);
 	}
 
 	struct PushConsts
@@ -161,6 +172,14 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newDependency({m_r->getGBuffer().getColorRt(3), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+
+	RenderTargetHandle dbgRt;
+	Bool dbgRtValid;
+	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid);
+	if(dbgRtValid)
+	{
+		pass.newDependency({dbgRt, TextureUsageBit::SAMPLED_FRAGMENT});
+	}
 }
 
 } // end namespace anki

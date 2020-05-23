@@ -38,6 +38,11 @@ public:
 
 	HeapAllocator<U8> getAllocator() const;
 
+	virtual void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const
+	{
+		ANKI_ASSERT(!"Object doesn't support that");
+	}
+
 protected:
 	Renderer* m_r; ///< Know your father
 
@@ -112,6 +117,8 @@ protected:
 		bindStorage(cmdb, set, binding, token);
 		return ptr;
 	}
+
+	void registerDebugRenderTarget(CString rtName);
 };
 /// @}
 

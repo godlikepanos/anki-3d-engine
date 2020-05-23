@@ -364,6 +364,19 @@ public:
 		return *m_threadHive;
 	}
 
+	/// @name Debug render targets
+	/// @{
+
+	/// Register a debug render target.
+	void registerDebugRenderTarget(RendererObject* obj, CString rtName);
+
+	/// Set the render target you want to show.
+	void setCurrentDebugRenderTarget(CString rtName);
+
+	// Need to call it after the handle is set by the RenderGraph.
+	void getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid);
+	/// @}
+
 private:
 	ResourceManager* m_resources = nullptr;
 	ThreadHive* m_threadHive = nullptr;
@@ -431,6 +444,15 @@ private:
 
 	RendererStats m_stats;
 	Bool m_statsEnabled = false;
+
+	class DebugRtInfo
+	{
+	public:
+		RendererObject* m_obj;
+		String m_rtName;
+	};
+	DynamicArray<DebugRtInfo> m_debugRts;
+	String m_currentDebugRtName;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

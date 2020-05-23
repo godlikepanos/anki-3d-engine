@@ -22,6 +22,7 @@ public:
 	Ssgi(Renderer* r)
 		: RendererObject(r)
 	{
+		registerDebugRenderTarget("SSGI");
 	}
 
 	~Ssgi();
@@ -34,6 +35,12 @@ public:
 	RenderTargetHandle getRt() const
 	{
 		return m_runCtx.m_rt;
+	}
+
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
+	{
+		ANKI_ASSERT(rtName == "SSGI");
+		handle = m_runCtx.m_rt;
 	}
 
 private:

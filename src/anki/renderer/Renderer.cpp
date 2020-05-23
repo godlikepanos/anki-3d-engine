@@ -44,6 +44,12 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
+	for(DebugRtInfo& info : m_debugRts)
+	{
+		info.m_rtName.destroy(getAllocator());
+	}
+	m_debugRts.destroy(getAllocator());
+	m_currentDebugRtName.destroy(getAllocator());
 }
 
 Error Renderer::init(ThreadHive* hive,
@@ -596,6 +602,55 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	else
 	{
 		blk->m_dirLight.m_active = 0;
+	}
+}
+
+void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
+{
+#if ANKI_ASSERTS_ENABLED
+	for(const DebugRtInfo& inf : m_debugRts)
+	{
+		ANKI_ASSERT(inf.m_rtName != rtName && "Choose different name");
+	}
+#endif
+
+	ANKI_ASSERT(obj);
+	DebugRtInfo inf;
+	inf.m_obj = obj;
+	inf.m_rtName.create(getAllocator(), rtName);
+
+	m_debugRts.emplaceBack(getAllocator(), std::move(inf));
+}
+
+void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid)
+{
+	if(ANKI_LIKELY(m_currentDebugRtName.isEmpty()))
+	{
+		handleValid = false;
+		return;
+	}
+
+	RendererObject* obj = nullptr;
+	for(const DebugRtInfo& inf : m_debugRts)
+	{
+		if(inf.m_rtName == m_currentDebugRtName)
+		{
+			obj = inf.m_obj;
+		}
+	}
+	ANKI_ASSERT(obj);
+
+	obj->getDebugRenderTarget(m_currentDebugRtName, handle);
+	handleValid = true;
+}
+
+void Renderer::setCurrentDebugRenderTarget(CString rtName)
+{
+	m_currentDebugRtName.destroy(getAllocator());
+
+	if(!rtName.isEmpty() && rtName.getLength() > 0)
+	{
+		m_currentDebugRtName.create(getAllocator(), rtName);
 	}
 }
 
