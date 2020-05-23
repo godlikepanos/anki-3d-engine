@@ -132,14 +132,14 @@ private:
 
 /// A dummy interface to match the StackMemoryPool and ChainMemoryPool interfaces in order to be used by the same
 /// allocator template.
-class HeapMemoryPool : public BaseMemoryPool
+class HeapMemoryPool final : public BaseMemoryPool
 {
 public:
 	/// Default constructor.
 	HeapMemoryPool();
 
 	/// Destroy
-	~HeapMemoryPool() final;
+	~HeapMemoryPool();
 
 	/// The real constructor.
 	/// @param allocCb The allocation function callback
@@ -163,7 +163,7 @@ private:
 
 /// Thread safe memory pool. It's a preallocated memory pool that is used for memory allocations on top of that
 /// preallocated memory. It is mainly used by fast stack allocators
-class StackMemoryPool : public BaseMemoryPool
+class StackMemoryPool final : public BaseMemoryPool
 {
 public:
 	/// The type of the pool's snapshot
@@ -173,7 +173,7 @@ public:
 	StackMemoryPool();
 
 	/// Destroy
-	~StackMemoryPool() final;
+	~StackMemoryPool();
 
 	/// Create with parameters
 	/// @param allocCb The allocation function callback
@@ -269,14 +269,14 @@ private:
 };
 
 /// Chain memory pool. Almost similar to StackMemoryPool but more flexible and at the same time a bit slower.
-class ChainMemoryPool : public BaseMemoryPool
+class ChainMemoryPool final : public BaseMemoryPool
 {
 public:
 	/// Default constructor
 	ChainMemoryPool();
 
 	/// Destroy
-	~ChainMemoryPool() final;
+	~ChainMemoryPool();
 
 	/// Creates the pool.
 	/// @param allocCb The allocation function callback.

@@ -21,7 +21,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 
 	if(SDL_Init(INIT_SUBSYSTEMS) != 0)
 	{
-		ANKI_CORE_LOGE("SDL_Init() failed");
+		ANKI_CORE_LOGE("SDL_Init() failed: %s", SDL_GetError());
 		return Error::FUNCTION_FAILED;
 	}
 
