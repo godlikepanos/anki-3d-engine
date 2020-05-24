@@ -97,6 +97,11 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_depthBufferSize = UVec2(m_r->getWidth(), m_r->getHeight()) >> (m_main.m_depthLod + 1);
 	unis->m_framebufferSize = UVec2(m_r->getWidth(), m_r->getHeight());
 	unis->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
+	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
+	unis->m_prevViewProjMatMulInvViewProjMat =
+		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
+	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
+	unis->m_maxSteps = m_main.m_maxSteps;
 
 	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
 
@@ -107,9 +112,6 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindTexture(0, 4, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
 
 	rgraphCtx.bindColorTexture(0, 5, m_r->getDownscaleBlur().getRt());
-
-	cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearRepeat);
-	cmdb->bindTexture(0, 7, m_main.m_noiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_ALL);
 
 	// Dispatch
 	dispatchPPCompute(cmdb, 16, 16, m_r->getWidth() / 2, m_r->getHeight());

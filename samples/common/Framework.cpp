@@ -61,6 +61,26 @@ Error SampleApp::userMainLoop(Bool& quit)
 		setDisplayDeveloperConsole(!getDisplayDeveloperConsole());
 	}
 
+	static Bool pressed = false;
+	Bool somethingPressed = false;
+	if(in.getKey(KeyCode::U) == 1)
+	{
+		pressed = !pressed;
+		somethingPressed = true;
+	}
+
+	if(somethingPressed)
+	{
+		if(pressed)
+		{
+			renderer.setCurrentDebugRenderTarget("SSGI");
+		}
+		else
+		{
+			renderer.setCurrentDebugRenderTarget("");
+		}
+	}
+
 	if(!getDisplayDeveloperConsole())
 	{
 		in.hideCursor(true);

@@ -14,7 +14,12 @@ struct SsgiUniforms
 {
 	UVec2 m_depthBufferSize;
 	UVec2 m_framebufferSize;
+	UVec2 m_padding0;
+	U32 m_frameCount;
+	U32 m_maxSteps;
 	Mat4 m_invProjMat;
+	Mat4 m_projMat;
+	Mat4 m_prevViewProjMatMulInvViewProjMat;
 };
 
 ANKI_END_NAMESPACE
