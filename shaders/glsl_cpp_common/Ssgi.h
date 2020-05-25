@@ -20,6 +20,11 @@ struct SsgiUniforms
 	Mat4 m_invProjMat;
 	Mat4 m_projMat;
 	Mat4 m_prevViewProjMatMulInvViewProjMat;
+#ifdef __cplusplus
+	Mat3x4 m_normalMat;
+#else
+	Mat3 m_normalMat;
+#endif
 };
 
 ANKI_END_NAMESPACE

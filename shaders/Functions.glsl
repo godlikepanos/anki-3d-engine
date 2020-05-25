@@ -531,7 +531,7 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 #else
 	// http://jcgt.org/published/0006/01/01/
 	const Vec3 z = zAxis;
-	const F32 sign = (z.z >= 0) ? 1.0 : -1.0;
+	const F32 sign = (z.z >= 0.0) ? 1.0 : -1.0;
 	const F32 a = -1.0 / (sign + z.z);
 	const F32 b = z.x * z.y * a;
 

@@ -100,6 +100,7 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
 	unis->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
+	unis->m_normalMat = Mat3x4(ctx.m_matrices.m_view.getRotationPart());
 	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
 	unis->m_maxSteps = m_main.m_maxSteps;
 

@@ -54,6 +54,7 @@ void main()
 
 	// Get normal
 	const Vec3 worldNormal = readNormalFromGBuffer(u_gbufferRt2, u_trilinearClampSampler, uv);
+	const Vec3 viewNormal = u_unis.m_normalMat * worldNormal;
 
 	// Get depth
 	const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, uv, 0.0).r;
@@ -62,10 +63,10 @@ void main()
 	const Vec4 viewPos4 = u_unis.m_invProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
 	const Vec3 viewPos = viewPos4.xyz / viewPos4.w;
 
-	// Get a random point inside the hemisphere
+	// Get a random point inside the hemisphere. Use hemisphereSampleCos to avoid perpendicular vecs to viewNormal
 	const UVec2 random = rand3DPCG16(UVec3(fixedInvocationId, u_unis.m_frameCount)).xy;
 	const Vec2 randomCircle = hammersleyRandom16(0, 0xFFFFu, random);
-	const Vec3 randomHemisphere = rotationFromDirection(worldNormal) * hemisphereSampleUniform(randomCircle);
+	const Vec3 randomHemisphere = rotationFromDirection(viewNormal) * hemisphereSampleCos(randomCircle);
 
 	// Trace
 	Vec3 hitPoint;
@@ -109,7 +110,7 @@ void main()
 		outColor = Vec4(0.0, 0.0, 0.0, 1.0);
 	}
 
-	const F32 NoL = dot(randomHemisphere, worldNormal);
+	const F32 NoL = saturate(dot(randomHemisphere, worldNormal));
 	outColor.xyz *= NoL;
 
 	imageStore(out_img, fixedInvocationId, outColor);
