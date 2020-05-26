@@ -110,7 +110,7 @@ void main()
 		outColor = Vec4(0.0, 0.0, 0.0, 1.0);
 	}
 
-	const F32 NoL = saturate(dot(randomHemisphere, worldNormal));
+	const F32 NoL = max(0.0, dot(randomHemisphere, viewNormal));
 	outColor.xyz *= NoL;
 
 	imageStore(out_img, fixedInvocationId, outColor);
