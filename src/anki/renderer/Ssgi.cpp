@@ -70,7 +70,15 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 
 	// Create RTs
-	m_runCtx.m_rt = rgraph.importRenderTarget(m_main.m_rt, TextureUsageBit::SAMPLED_FRAGMENT);
+	if(ANKI_LIKELY(m_main.m_rtImportedOnce))
+	{
+		m_runCtx.m_rt = rgraph.importRenderTarget(m_main.m_rt);
+	}
+	else
+	{
+		m_runCtx.m_rt = rgraph.importRenderTarget(m_main.m_rt, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_main.m_rtImportedOnce = true;
+	}
 
 	// Create pass
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSGI");
@@ -82,6 +90,10 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 	TextureSubresourceInfo hizSubresource;
 	hizSubresource.m_firstMipmap = m_main.m_depthLod;
 	rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, hizSubresource});
+
+	rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
+
+	rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
 void Ssgi::run(RenderPassWorkContext& rgraphCtx)
