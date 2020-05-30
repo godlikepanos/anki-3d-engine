@@ -190,8 +190,8 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 	dir = normalize(dir);
 
 	// Compute step
-	U32 stepSkip = bigStep;
-	U32 step = randInitialStep;
+	I32 stepSkip = I32(bigStep);
+	I32 step = I32(randInitialStep);
 
 	// Iterate
 	Vec3 origin;
@@ -213,23 +213,24 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 		}
 		else if(stepSkip > 1)
 		{
-			step -= bigStep - 1u;
-			stepSkip = 1u;
+			step = max(1, step - stepSkip + 1);
+			stepSkip = stepSkip / 2;
 		}
 		else
 		{
 			// Found it
+
+			// Compute attenuation
+			const F32 blackMargin = 0.05 / 4.0;
+			const F32 whiteMargin = 0.1 / 2.0;
+			const Vec2 marginAttenuation2d = smoothstep(blackMargin, whiteMargin, origin.xy)
+											* (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
+			const F32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
+			attenuation = marginAttenuation * cameraContribution;
+
+			// ...and hit point
+			hitPoint = origin;
 			break;
 		}
 	}
-
-	// Write the values
-	const F32 blackMargin = 0.05 / 4.0;
-	const F32 whiteMargin = 0.1 / 2.0;
-	const Vec2 marginAttenuation2d = smoothstep(blackMargin, whiteMargin, origin.xy)
-									 * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
-	const F32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
-	attenuation = marginAttenuation * cameraContribution;
-
-	hitPoint = origin;
 }
