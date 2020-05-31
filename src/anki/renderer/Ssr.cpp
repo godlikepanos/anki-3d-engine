@@ -35,6 +35,7 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	const U32 height = m_r->getHeight();
 	ANKI_R_LOGI("Initializing SSR pass (%ux%u)", width, height);
 	m_maxSteps = cfg.getNumberU32("r_ssrMaxSteps");
+	m_depthLod = cfg.getNumberU32("r_ssrDepthLod");
 
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseRgb816x16.png", m_noiseTex));
 
@@ -84,7 +85,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 
 	TextureSubresourceInfo hizSubresource;
-	hizSubresource.m_mipmapCount = m_r->getDepthDownscale().getMipmapCount();
+	hizSubresource.m_firstMipmap = m_depthLod;
 	rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, hizSubresource});
 
 	rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
@@ -100,7 +101,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 
 	// Bind uniforms
 	SsrUniforms* unis = allocateAndBindUniforms<SsrUniforms*>(sizeof(SsrUniforms), cmdb, 0, 1);
-	unis->m_depthBufferSize = UVec2(m_r->getWidth(), m_r->getHeight()) >> 2u;
+	unis->m_depthBufferSize = UVec2(m_r->getWidth(), m_r->getHeight()) >> (m_depthLod + 1);
 	unis->m_framebufferSize = UVec2(m_r->getWidth(), m_r->getHeight());
 	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
 	unis->m_depthMipCount = m_r->getDepthDownscale().getMipmapCount();
@@ -119,7 +120,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
 
 	TextureSubresourceInfo hizSubresource;
-	hizSubresource.m_mipmapCount = m_r->getDepthDownscale().getMipmapCount();
+	hizSubresource.m_firstMipmap = m_depthLod;
 	rgraphCtx.bindTexture(0, 5, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
 
 	rgraphCtx.bindColorTexture(0, 6, m_r->getDownscaleBlur().getRt());

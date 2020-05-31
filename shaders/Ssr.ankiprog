@@ -81,7 +81,7 @@ void main()
 	// Do the heavy work
 	Vec3 hitPoint;
 	F32 hitAttenuation;
-	const U32 lod = 1;
+	const U32 lod = 0;
 	const U32 step = 16u;
 	const F32 stepf = step;
 	const F32 minStepf = 4.0;
@@ -94,7 +94,7 @@ void main()
 		u_depthRt,
 		u_trilinearClampSampler,
 		F32(lod),
-		u_unis.m_depthBufferSize >> lod,
+		u_unis.m_depthBufferSize,
 		step,
 		U32((stepf - minStepf) * noise + minStepf),
 		hitPoint,

@@ -44,6 +44,7 @@ private:
 
 	Array<U32, 2> m_workgroupSize = {};
 	U32 m_maxSteps = 32;
+	U32 m_depthLod = 0;
 
 	class
 	{
