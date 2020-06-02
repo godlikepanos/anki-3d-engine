@@ -52,6 +52,7 @@ private:
 		TexturePtr m_rt;
 		TextureResourcePtr m_noiseTex;
 		U32 m_maxSteps = 32;
+		U32 m_firstStepPixels = 16;
 		U32 m_depthLod = 0;
 		Bool m_rtImportedOnce = false;
 	} m_main;

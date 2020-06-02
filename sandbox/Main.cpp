@@ -216,6 +216,28 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 #endif
 
+	{
+		static Bool pressed = false;
+		Bool somethingPressed = false;
+		if(in.getKey(KeyCode::U) == 1)
+		{
+			pressed = !pressed;
+			somethingPressed = true;
+		}
+
+		if(somethingPressed)
+		{
+			if(pressed)
+			{
+				renderer.getOffscreenRenderer().setCurrentDebugRenderTarget("SSGI");
+			}
+			else
+			{
+				renderer.getOffscreenRenderer().setCurrentDebugRenderTarget("");
+			}
+		}
+	}
+
 	if(in.getEvent(InputEvent::WINDOW_CLOSED))
 	{
 		quit = true;

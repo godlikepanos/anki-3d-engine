@@ -18,6 +18,8 @@ struct SsrUniforms
 	U32 m_depthMipCount;
 	U32 m_maxSteps;
 	U32 m_lightBufferMipCount;
+	UVec3 m_padding0;
+	U32 m_firstStepPixels;
 	Mat4 m_prevViewProjMatMulInvViewProjMat;
 	Mat4 m_projMat;
 	Mat4 m_invProjMat;

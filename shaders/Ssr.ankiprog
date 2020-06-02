@@ -41,21 +41,22 @@ const Vec2 NOISE_TEX_SIZE = Vec2(16.0);
 void main()
 {
 	// Compute a global invocation ID that takes the checkerboard pattern into account
-	IVec2 fixedInvocationId = IVec2(gl_GlobalInvocationID.xy);
-	fixedInvocationId.x *= 2;
+	IVec2 fixedGlobalInvocationId = IVec2(gl_GlobalInvocationID.xy);
+	fixedGlobalInvocationId.x *= 2;
 #if VARIANT == 0
-	fixedInvocationId.x += ((fixedInvocationId.y + 1) & 1);
+	fixedGlobalInvocationId.x += ((fixedGlobalInvocationId.y + 1) & 1);
 #else
-	fixedInvocationId.x += ((fixedInvocationId.y + 0) & 1);
+	fixedGlobalInvocationId.x += ((fixedGlobalInvocationId.y + 0) & 1);
 #endif
 
-	if(fixedInvocationId.x >= I32(u_unis.m_framebufferSize.x) || fixedInvocationId.y >= I32(u_unis.m_framebufferSize.y))
+	if(fixedGlobalInvocationId.x >= I32(u_unis.m_framebufferSize.x)
+		|| fixedGlobalInvocationId.y >= I32(u_unis.m_framebufferSize.y))
 	{
 		// Skip threads outside the writable image
 		return;
 	}
 
-	const Vec2 uv = (Vec2(fixedInvocationId.xy) + 0.5) / Vec2(u_unis.m_framebufferSize);
+	const Vec2 uv = (Vec2(fixedGlobalInvocationId.xy) + 0.5) / Vec2(u_unis.m_framebufferSize);
 
 	// Read part of the G-buffer
 	const F32 roughness = readRoughnessFromGBuffer(u_gbufferRt1, u_trilinearClampSampler, uv);
@@ -82,9 +83,9 @@ void main()
 	Vec3 hitPoint;
 	F32 hitAttenuation;
 	const U32 lod = 0;
-	const U32 step = 16u;
+	const U32 step = u_unis.m_firstStepPixels;
 	const F32 stepf = step;
-	const F32 minStepf = 4.0;
+	const F32 minStepf = stepf / 4.0;
 	raymarchGroundTruth(viewPos,
 		reflVec,
 		uv,
@@ -100,12 +101,39 @@ void main()
 		hitPoint,
 		hitAttenuation);
 
+#if 0
+	// Reject backfacing
+	ANKI_BRANCH if(hitAttenuation > 0.0)
+	{
+		const Vec3 hitNormal =
+			u_unis.m_normalMat * readNormalFromGBuffer(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy);
+		F32 backFaceAttenuation;
+		rejectBackFaces(reflVec, hitNormal, backFaceAttenuation);
+
+		hitAttenuation *= backFaceAttenuation;
+	}
+
+	// Reject far from hit point
+	ANKI_BRANCH if(hitAttenuation > 0.0)
+	{
+		const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, hitPoint.xy, 0.0).r;
+		Vec4 viewPos4 = u_unis.m_invProjMat * Vec4(UV_TO_NDC(hitPoint.xy), depth, 1.0);
+		const F32 actualZ = viewPos4.z / viewPos4.w;
+
+		viewPos4 = u_unis.m_invProjMat * Vec4(UV_TO_NDC(hitPoint.xy), hitPoint.z, 1.0);
+		const F32 hitZ = viewPos4.z / viewPos4.w;
+
+		const F32 rejectionMeters = 1.0;
+		const F32 diff = abs(actualZ - hitZ);
+		const F32 distAttenuation = (diff < rejectionMeters) ? 1.0 : 0.0;
+		hitAttenuation *= distAttenuation;
+	}
+#endif
+
 	// Read the reflection
 	Vec4 outColor;
 	ANKI_BRANCH if(hitAttenuation > 0.0)
 	{
-		// Read the refl
-
 		// Reproject the UV because you are reading the previous frame
 		const Vec4 v4 = u_unis.m_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(hitPoint.xy), hitPoint.z, 1.0);
 		hitPoint.xy = NDC_TO_UV(v4.xy / v4.w);
@@ -125,6 +153,6 @@ void main()
 	}
 
 	// Store
-	imageStore(out_img, fixedInvocationId, outColor);
+	imageStore(out_img, fixedGlobalInvocationId, outColor);
 }
 #pragma anki end

@@ -178,7 +178,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 	const Vec3 start = Vec3(uv, depthRef);
 
 	// Project end point
-	const Vec3 p1 = rayOrigin + rayDir * 10.0;
+	const Vec3 p1 = rayOrigin + rayDir * 0.1;
 	const Vec4 end4 = projMat * Vec4(p1, 1.0);
 	Vec3 end = end4.xyz / end4.w;
 	end.xy = NDC_TO_UV(end.xy);
@@ -224,7 +224,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 			const F32 blackMargin = 0.05 / 4.0;
 			const F32 whiteMargin = 0.1 / 2.0;
 			const Vec2 marginAttenuation2d = smoothstep(blackMargin, whiteMargin, origin.xy)
-											* (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
+											 * (1.0 - smoothstep(1.0 - whiteMargin, 1.0 - blackMargin, origin.xy));
 			const F32 marginAttenuation = marginAttenuation2d.x * marginAttenuation2d.y;
 			attenuation = marginAttenuation * cameraContribution;
 
@@ -233,4 +233,9 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 			break;
 		}
 	}
+}
+
+void rejectBackFaces(Vec3 reflection, Vec3 normalAtHitPoint, out F32 attenuation)
+{
+	attenuation = smoothstep(-0.17, 0.0, dot(normalAtHitPoint, -reflection));
 }

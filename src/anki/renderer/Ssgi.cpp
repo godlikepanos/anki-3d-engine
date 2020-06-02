@@ -35,6 +35,7 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 	ANKI_R_LOGI("Initializing SSGI pass (%ux%u)", width, height);
 	m_main.m_maxSteps = cfg.getNumberU32("r_ssgiMaxSteps");
 	m_main.m_depthLod = min(cfg.getNumberU32("r_ssgiDepthLod"), m_r->getDepthDownscale().getMipmapCount() - 1);
+	m_main.m_firstStepPixels = 32;
 
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseRgb816x16.png", m_main.m_noiseTex));
 
@@ -115,6 +116,7 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_normalMat = Mat3x4(ctx.m_matrices.m_view.getRotationPart());
 	unis->m_frameCount = m_r->getFrameCount() & MAX_U32;
 	unis->m_maxSteps = m_main.m_maxSteps;
+	unis->m_firstStepPixels = m_main.m_firstStepPixels;
 
 	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
 

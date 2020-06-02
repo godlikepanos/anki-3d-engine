@@ -36,6 +36,7 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	ANKI_R_LOGI("Initializing SSR pass (%ux%u)", width, height);
 	m_maxSteps = cfg.getNumberU32("r_ssrMaxSteps");
 	m_depthLod = cfg.getNumberU32("r_ssrDepthLod");
+	m_firstStepPixels = 32;
 
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseRgb816x16.png", m_noiseTex));
 
@@ -107,6 +108,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	unis->m_depthMipCount = m_r->getDepthDownscale().getMipmapCount();
 	unis->m_maxSteps = m_maxSteps;
 	unis->m_lightBufferMipCount = m_r->getDownscaleBlur().getMipmapCount();
+	unis->m_firstStepPixels = m_firstStepPixels;
 	unis->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
