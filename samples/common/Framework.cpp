@@ -73,7 +73,7 @@ Error SampleApp::userMainLoop(Bool& quit)
 	{
 		if(pressed)
 		{
-			renderer.setCurrentDebugRenderTarget("SSR");
+			renderer.setCurrentDebugRenderTarget("SSGI");
 		}
 		else
 		{

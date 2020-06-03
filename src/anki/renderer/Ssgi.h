@@ -34,13 +34,13 @@ public:
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_rt;
+		return m_runCtx.m_rts[m_main.m_writeRtIdx];
 	}
 
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
 	{
 		ANKI_ASSERT(rtName == "SSGI");
-		handle = m_runCtx.m_rt;
+		handle = m_runCtx.m_rts[m_main.m_writeRtIdx];
 	}
 
 private:
@@ -49,23 +49,19 @@ private:
 	public:
 		ShaderProgramResourcePtr m_prog;
 		Array<ShaderProgramPtr, 2> m_grProg;
-		TexturePtr m_rt;
+		Array<TexturePtr, 2> m_rts;
 		TextureResourcePtr m_noiseTex;
 		U32 m_maxSteps = 32;
 		U32 m_firstStepPixels = 16;
 		U32 m_depthLod = 0;
 		Bool m_rtImportedOnce = false;
+		U8 m_writeRtIdx = 1;
 	} m_main;
 
 	class
 	{
 	public:
-	} m_denoise;
-
-	class
-	{
-	public:
-		RenderTargetHandle m_rt;
+		Array<RenderTargetHandle, 2> m_rts;
 		RenderingContext* m_ctx ANKI_DEBUG_CODE(= nullptr);
 	} m_runCtx;
 

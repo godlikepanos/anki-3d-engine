@@ -43,10 +43,11 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(width,
 		height,
 		Format::R16G16B16A16_SFLOAT,
-		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::SAMPLED_ALL,
 		"SSGI");
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-	m_main.m_rt = m_r->createAndClearRenderTarget(texinit);
+	m_main.m_rts[0] = m_r->createAndClearRenderTarget(texinit);
+	m_main.m_rts[1] = m_r->createAndClearRenderTarget(texinit);
 
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource("shaders/Ssgi.ankiprog", m_main.m_prog));
@@ -69,15 +70,18 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_ctx = &ctx;
+	m_main.m_writeRtIdx = (m_main.m_writeRtIdx + 1) % 2;
 
 	// Create RTs
 	if(ANKI_LIKELY(m_main.m_rtImportedOnce))
 	{
-		m_runCtx.m_rt = rgraph.importRenderTarget(m_main.m_rt);
+		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_main.m_rts[0]);
+		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_main.m_rts[1]);
 	}
 	else
 	{
-		m_runCtx.m_rt = rgraph.importRenderTarget(m_main.m_rt, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_main.m_rts[0], TextureUsageBit::SAMPLED_FRAGMENT);
+		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_main.m_rts[1], TextureUsageBit::SAMPLED_FRAGMENT);
 		m_main.m_rtImportedOnce = true;
 	}
 
@@ -86,7 +90,8 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 	rpass.setWork(
 		[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->run(rgraphCtx); }, this, 0);
 
-	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE});
+	rpass.newDependency({m_runCtx.m_rts[m_main.m_writeRtIdx], TextureUsageBit::IMAGE_COMPUTE_WRITE});
+	rpass.newDependency({m_runCtx.m_rts[!m_main.m_writeRtIdx], TextureUsageBit::SAMPLED_COMPUTE});
 
 	TextureSubresourceInfo hizSubresource;
 	hizSubresource.m_firstMipmap = m_main.m_depthLod;
@@ -103,7 +108,7 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_main.m_grProg[m_r->getFrameCount() & 1u]);
 
-	rgraphCtx.bindImage(0, 0, m_runCtx.m_rt, TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 0, m_runCtx.m_rts[m_main.m_writeRtIdx], TextureSubresourceInfo());
 
 	// Bind uniforms
 	SsgiUniforms* unis = allocateAndBindUniforms<SsgiUniforms*>(sizeof(SsgiUniforms), cmdb, 0, 1);
@@ -127,6 +132,7 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindTexture(0, 4, m_r->getDepthDownscale().getHiZRt(), hizSubresource);
 
 	rgraphCtx.bindColorTexture(0, 5, m_r->getDownscaleBlur().getRt());
+	rgraphCtx.bindColorTexture(0, 6, m_runCtx.m_rts[!m_main.m_writeRtIdx]);
 
 	// Dispatch
 	dispatchPPCompute(cmdb, 16, 16, m_r->getWidth() / 2, m_r->getHeight());

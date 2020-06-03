@@ -10,6 +10,7 @@
 // -----
 
 #pragma anki mutator VARIANT 0 1
+#define EXTRA_REJECTION 0
 
 #pragma anki start comp
 #include <shaders/Functions.glsl>
@@ -101,7 +102,7 @@ void main()
 		hitPoint,
 		hitAttenuation);
 
-#if 0
+#if EXTRA_REJECTION
 	// Reject backfacing
 	ANKI_BRANCH if(hitAttenuation > 0.0)
 	{
