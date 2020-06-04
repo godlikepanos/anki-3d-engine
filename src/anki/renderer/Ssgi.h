@@ -61,6 +61,13 @@ private:
 	class
 	{
 	public:
+		ShaderProgramResourcePtr m_prog;
+		Array<ShaderProgramPtr, 2> m_grProg;
+	} m_denoise;
+
+	class
+	{
+	public:
 		Array<RenderTargetHandle, 2> m_rts;
 		RenderingContext* m_ctx ANKI_DEBUG_CODE(= nullptr);
 	} m_runCtx;
@@ -68,6 +75,8 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
 	void run(RenderPassWorkContext& rgraphCtx);
+	void runVBlur(RenderPassWorkContext& rgraphCtx);
+	void runHBlur(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

@@ -49,19 +49,40 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 	m_main.m_rts[0] = m_r->createAndClearRenderTarget(texinit);
 	m_main.m_rts[1] = m_r->createAndClearRenderTarget(texinit);
 
-	// Create shader
-	ANKI_CHECK(getResourceManager().loadResource("shaders/Ssgi.ankiprog", m_main.m_prog));
+	// Create main shaders
+	{
+		ANKI_CHECK(getResourceManager().loadResource("shaders/Ssgi.ankiprog", m_main.m_prog));
 
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_main.m_prog);
-	variantInitInfo.addMutation("VARIANT", 0);
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_main.m_prog);
+		variantInitInfo.addMutation("VARIANT", 0);
 
-	const ShaderProgramResourceVariant* variant;
-	m_main.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_main.m_grProg[0] = variant->getProgram();
+		const ShaderProgramResourceVariant* variant;
+		m_main.m_prog->getOrCreateVariant(variantInitInfo, variant);
+		m_main.m_grProg[0] = variant->getProgram();
 
-	variantInitInfo.addMutation("VARIANT", 1);
-	m_main.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_main.m_grProg[1] = variant->getProgram();
+		variantInitInfo.addMutation("VARIANT", 1);
+		m_main.m_prog->getOrCreateVariant(variantInitInfo, variant);
+		m_main.m_grProg[1] = variant->getProgram();
+	}
+
+	// Init denoise
+	{
+		ANKI_CHECK(getResourceManager().loadResource("shaders/DepthAwareBlurCompute.ankiprog", m_denoise.m_prog));
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoise.m_prog);
+		const ShaderProgramResourceVariant* variant;
+
+		variantInitInfo.addConstant("TEXTURE_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+
+		variantInitInfo.addMutation("SAMPLE_COUNT", 15);
+		variantInitInfo.addMutation("COLOR_COMPONENTS", 4);
+		variantInitInfo.addMutation("ORIENTATION", 0);
+		m_denoise.m_prog->getOrCreateVariant(variantInitInfo, variant);
+		m_denoise.m_grProg[0] = variant->getProgram();
+
+		variantInitInfo.addMutation("ORIENTATION", 1);
+		m_denoise.m_prog->getOrCreateVariant(variantInitInfo, variant);
+		m_denoise.m_grProg[1] = variant->getProgram();
+	}
 
 	return Error::NONE;
 }
@@ -72,34 +93,65 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_ctx = &ctx;
 	m_main.m_writeRtIdx = (m_main.m_writeRtIdx + 1) % 2;
 
-	// Create RTs
-	if(ANKI_LIKELY(m_main.m_rtImportedOnce))
+	// Main pass
 	{
-		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_main.m_rts[0]);
-		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_main.m_rts[1]);
+		// Create RTs
+		if(ANKI_LIKELY(m_main.m_rtImportedOnce))
+		{
+			m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_main.m_rts[0]);
+			m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_main.m_rts[1]);
+		}
+		else
+		{
+			m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_main.m_rts[0], TextureUsageBit::SAMPLED_FRAGMENT);
+			m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_main.m_rts[1], TextureUsageBit::SAMPLED_FRAGMENT);
+			m_main.m_rtImportedOnce = true;
+		}
+
+		// Create pass
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSGI");
+		rpass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->run(rgraphCtx); },
+			this,
+			0);
+
+		rpass.newDependency({m_runCtx.m_rts[m_main.m_writeRtIdx], TextureUsageBit::IMAGE_COMPUTE_WRITE});
+		rpass.newDependency({m_runCtx.m_rts[!m_main.m_writeRtIdx], TextureUsageBit::SAMPLED_COMPUTE});
+
+		TextureSubresourceInfo hizSubresource;
+		hizSubresource.m_firstMipmap = m_main.m_depthLod;
+		rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, hizSubresource});
+		rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	}
-	else
+
+	// Blur vertical
 	{
-		m_runCtx.m_rts[0] = rgraph.importRenderTarget(m_main.m_rts[0], TextureUsageBit::SAMPLED_FRAGMENT);
-		m_runCtx.m_rts[1] = rgraph.importRenderTarget(m_main.m_rts[1], TextureUsageBit::SAMPLED_FRAGMENT);
-		m_main.m_rtImportedOnce = true;
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSGIBlurV");
+
+		rpass.newDependency({m_runCtx.m_rts[m_main.m_writeRtIdx], TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_runCtx.m_rts[!m_main.m_writeRtIdx], TextureUsageBit::IMAGE_COMPUTE_WRITE});
+		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
+
+		rpass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->runVBlur(rgraphCtx); },
+			this,
+			0);
 	}
 
-	// Create pass
-	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSGI");
-	rpass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->run(rgraphCtx); }, this, 0);
+	// Blur horizontal
+	{
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSGIBlurH");
 
-	rpass.newDependency({m_runCtx.m_rts[m_main.m_writeRtIdx], TextureUsageBit::IMAGE_COMPUTE_WRITE});
-	rpass.newDependency({m_runCtx.m_rts[!m_main.m_writeRtIdx], TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_runCtx.m_rts[!m_main.m_writeRtIdx], TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_runCtx.m_rts[m_main.m_writeRtIdx], TextureUsageBit::IMAGE_COMPUTE_WRITE});
+		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
-	TextureSubresourceInfo hizSubresource;
-	hizSubresource.m_firstMipmap = m_main.m_depthLod;
-	rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, hizSubresource});
-
-	rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
-
-	rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->runHBlur(rgraphCtx); },
+			this,
+			0);
+	}
 }
 
 void Ssgi::run(RenderPassWorkContext& rgraphCtx)
@@ -136,6 +188,34 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 
 	// Dispatch
 	dispatchPPCompute(cmdb, 16, 16, m_r->getWidth() / 2, m_r->getHeight());
+}
+
+void Ssgi::runVBlur(RenderPassWorkContext& rgraphCtx)
+{
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	cmdb->bindShaderProgram(m_denoise.m_grProg[0]);
+
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_rts[m_main.m_writeRtIdx]);
+	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+
+	rgraphCtx.bindImage(0, 3, m_runCtx.m_rts[!m_main.m_writeRtIdx], TextureSubresourceInfo());
+
+	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth(), m_r->getHeight());
+}
+
+void Ssgi::runHBlur(RenderPassWorkContext& rgraphCtx)
+{
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	cmdb->bindShaderProgram(m_denoise.m_grProg[1]);
+
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_rts[!m_main.m_writeRtIdx]);
+	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+
+	rgraphCtx.bindImage(0, 3, m_runCtx.m_rts[m_main.m_writeRtIdx], TextureSubresourceInfo());
+
+	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth(), m_r->getHeight());
 }
 
 } // end namespace anki
