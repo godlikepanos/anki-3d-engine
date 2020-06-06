@@ -126,6 +126,7 @@ void main()
 		// Modulate
 		const F32 NoL = max(0.0, dot(randomHemisphere, newViewNormal));
 		outColor.xyz *= NoL;
+		outColor.xyz *= PI / 2.0;
 	}
 	else
 	{
@@ -136,7 +137,7 @@ void main()
 	const Vec4 v4 = u_unis.m_prevViewProjMatMulInvViewProjMat * Vec4(ndc, depth, 1.0);
 	const Vec2 historyUv = NDC_TO_UV(v4.xy / v4.w);
 	const Vec4 history = textureLod(u_historyTex, u_trilinearClampSampler, historyUv, 0.0);
-	outColor = mix(history, outColor, 0.25);
+	outColor = mix(history, outColor, 0.15);
 
 	// Store
 	imageStore(out_img, fixedGlobalInvocationId, outColor);
