@@ -31,7 +31,7 @@ shared Vec4 s_depths[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
 F32 computeDepthWeights(F32 refDepth, F32 depth)
 {
 	const F32 diff = abs(refDepth - depth);
-	const F32 weight = 1.0 - pow(diff, 0.5);
+	const F32 weight = sqrt(1.0 / (EPSILON + diff));
 	return weight;
 }
 

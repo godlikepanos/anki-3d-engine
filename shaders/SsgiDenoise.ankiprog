@@ -28,7 +28,7 @@ layout(set = 0, binding = 3) writeonly uniform image2D u_outImg;
 F32 computeDepthWeight(F32 refDepth, F32 depth)
 {
 	const F32 diff = abs(refDepth - depth);
-	const F32 weight = 1.0 - pow(diff, 0.5);
+	const F32 weight = sqrt(1.0 / (EPSILON + diff));
 	return weight;
 }
 
