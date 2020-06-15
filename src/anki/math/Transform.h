@@ -151,10 +151,9 @@ public:
 		(*this) = getIdentity();
 	}
 
-	static const TTransform& getIdentity()
+	static TTransform getIdentity()
 	{
-		static const TTransform ident(TVec<T, 4>(0.0), TMat<T, 3, 4>::getIdentity(), 1.0);
-		return ident;
+		return TTransform(TVec<T, 4>(0.0), TMat<T, 3, 4>::getIdentity(), 1.0);
 	}
 
 	/// @copybrief combineTTransformations
