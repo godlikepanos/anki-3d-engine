@@ -81,9 +81,9 @@ void main()
 #endif
 
 	Vec2 inUvOffset = Vec2(0.0);
-	inUvOffset.X_OR_Y = 1.5 * IN_TEXEL_SIZE.X_OR_Y;
+	inUvOffset.X_OR_Y = 1.0 * IN_TEXEL_SIZE.X_OR_Y;
 	Vec2 depthUvOffset = Vec2(0.0);
-	depthUvOffset.X_OR_Y = 1.5 * DEPTH_TEXEL_SIZE.X_OR_Y;
+	depthUvOffset.X_OR_Y = 2.0 * DEPTH_TEXEL_SIZE.X_OR_Y;
 
 	ANKI_UNROLL for(U32 i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
 	{
@@ -91,7 +91,7 @@ void main()
 		sampleTex(inUv - inUvOffset, depthUv - depthUvOffset, refDepth, color, weight);
 
 		inUvOffset.X_OR_Y += IN_TEXEL_SIZE.X_OR_Y;
-		depthUvOffset.X_OR_Y += DEPTH_TEXEL_SIZE.X_OR_Y;
+		depthUvOffset.X_OR_Y += 2.0 * DEPTH_TEXEL_SIZE.X_OR_Y;
 	}
 
 	color /= weight;

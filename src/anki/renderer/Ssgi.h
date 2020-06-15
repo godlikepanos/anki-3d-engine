@@ -34,13 +34,13 @@ public:
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_rts[m_main.m_writeRtIdx];
+		return m_runCtx.m_finalRt;
 	}
 
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
 	{
 		ANKI_ASSERT(rtName == "SSGI");
-		handle = m_runCtx.m_rts[m_main.m_writeRtIdx];
+		handle = m_runCtx.m_finalRt;
 	}
 
 private:
@@ -48,28 +48,36 @@ private:
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
-		Array<ShaderProgramPtr, 2> m_grProg;
-		Array<TexturePtr, 2> m_rts;
+		Array<ShaderProgramPtr, 4> m_grProg;
+		RenderTargetDescription m_rtDescr;
 		TextureResourcePtr m_noiseTex;
 		U32 m_maxSteps = 32;
 		U32 m_firstStepPixels = 16;
 		U32 m_depthLod = 0;
-		Bool m_rtImportedOnce = false;
-		U8 m_writeRtIdx = 1;
 	} m_main;
 
 	class
 	{
 	public:
 		ShaderProgramResourcePtr m_prog;
-		Array<ShaderProgramPtr, 2> m_grProg;
+		Array2d<ShaderProgramPtr, 2, 4> m_grProg;
 	} m_denoise;
 
 	class
 	{
 	public:
-		Array<RenderTargetHandle, 2> m_rts;
-		RenderingContext* m_ctx ANKI_DEBUG_CODE(= nullptr);
+		TexturePtr m_rt;
+		ShaderProgramResourcePtr m_prog;
+		Array<ShaderProgramPtr, 4> m_grProg;
+		Bool m_rtImportedOnce = false;
+	} m_recontruction;
+
+	class
+	{
+	public:
+		Array<RenderTargetHandle, 2> m_intermediateRts;
+		RenderTargetHandle m_finalRt;
+		RenderingContext* m_ctx = nullptr;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
@@ -77,6 +85,7 @@ private:
 	void run(RenderPassWorkContext& rgraphCtx);
 	void runVBlur(RenderPassWorkContext& rgraphCtx);
 	void runHBlur(RenderPassWorkContext& rgraphCtx);
+	void runRecontruct(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// if VARIANT==0 then the checkerboard pattern is (render on 'v'):
+// The VARIANT points to the fragment in the quad that will be processed:
 // -----
-// |v| |
-// | |v|
+// |3|2|
+// |0|1|
 // -----
 
-#pragma anki mutator VARIANT 0 1
+#pragma anki mutator VARIANT 0 1 2 3
 
 #pragma anki start comp
 #include <shaders/SsRaymarching.glsl>
@@ -37,16 +37,20 @@ layout(set = 0, binding = 6) uniform texture2D u_historyTex;
 void main()
 {
 	// Compute a global invocation ID that takes the checkerboard pattern into account
-	IVec2 fixedGlobalInvocationId = IVec2(gl_GlobalInvocationID.xy);
-	fixedGlobalInvocationId.x *= 2;
+	UVec2 fixedGlobalInvocationId = IVec2(gl_GlobalInvocationID.xy);
+	fixedGlobalInvocationId *= 2;
 #if VARIANT == 0
-	fixedGlobalInvocationId.x += ((fixedGlobalInvocationId.y + 1) & 1);
+	// Nothing
+#elif VARIANT == 1
+	fixedGlobalInvocationId.x += 1;
+#elif VARIANT == 2
+	fixedGlobalInvocationId += 1;
 #else
-	fixedGlobalInvocationId.x += ((fixedGlobalInvocationId.y + 0) & 1);
+	fixedGlobalInvocationId.y += 1;
 #endif
 
-	if(fixedGlobalInvocationId.x >= I32(u_unis.m_framebufferSize.x)
-		|| fixedGlobalInvocationId.y >= I32(u_unis.m_framebufferSize.y))
+	if(fixedGlobalInvocationId.x >= u_unis.m_framebufferSize.x
+		|| fixedGlobalInvocationId.y >= u_unis.m_framebufferSize.y)
 	{
 		// Skip threads outside the writable image
 		return;
@@ -67,7 +71,7 @@ void main()
 	const Vec3 viewPos = viewPos4.xyz / viewPos4.w;
 
 	// Get a random point inside the hemisphere. Use hemisphereSampleCos to avoid perpendicular vecs to viewNormal
-	const UVec2 random = rand3DPCG16(UVec3(fixedGlobalInvocationId, u_unis.m_frameCount)).xy;
+	const UVec2 random = rand3DPCG16(UVec3(gl_GlobalInvocationID.xy, u_unis.m_frameCount)).xy;
 	const Vec2 randomCircle = hammersleyRandom16(0, 0xFFFFu, random);
 	const Vec3 randomHemisphere = rotationFromDirection(viewNormal) * hemisphereSampleCos(randomCircle);
 
@@ -104,7 +108,7 @@ void main()
 	}
 
 	// Read the light buffer
-	Vec4 outColor;
+	Vec3 outColor;
 	ANKI_BRANCH if(hitAttenuation > 0.0)
 	{
 		// Reproject the UV because you are reading the previous frame
@@ -112,10 +116,9 @@ void main()
 		hitPoint.xy = NDC_TO_UV(v4.xy / v4.w);
 
 		// Read the light buffer
-		outColor.rgb = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, 100.0).rgb;
-		outColor.rgb = clamp(outColor.rgb, 0.0, FLT_MAX); // Fix the value just in case
-		outColor.rgb *= hitAttenuation;
-		outColor.a = 1.0 - hitAttenuation;
+		outColor = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, 100.0).rgb;
+		outColor = clamp(outColor, 0.0, FLT_MAX); // Fix the value just in case
+		outColor *= hitAttenuation;
 
 		// Compute a new normal based on the new hit point
 		const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, hitPoint.xy, 0.0).r;
@@ -125,31 +128,22 @@ void main()
 
 		// Modulate
 		const F32 NoL = max(0.0, dot(randomHemisphere, newViewNormal));
-		outColor.xyz *= NoL;
-		outColor.xyz *= PI / 2.0;
+		outColor *= NoL;
+		outColor *= PI;
 	}
 	else
 	{
-		outColor = Vec4(0.0, 0.0, 0.0, 1.0);
+		outColor = Vec3(0.0, 0.0, 0.0);
 	}
 
 	// Blend with history
 	const Vec4 v4 = u_unis.m_prevViewProjMatMulInvViewProjMat * Vec4(ndc, depth, 1.0);
 	const Vec2 historyUv = NDC_TO_UV(v4.xy / v4.w);
-	const Vec4 history = textureLod(u_historyTex, u_trilinearClampSampler, historyUv, 0.0);
+	const Vec3 history = textureLod(u_historyTex, u_trilinearClampSampler, historyUv, 0.0).rgb;
 	outColor = mix(history, outColor, 0.15);
 
 	// Store
-	imageStore(out_img, fixedGlobalInvocationId, outColor);
-
-	IVec2 adjacentGlobalInvocationId = IVec2(gl_GlobalInvocationID.xy);
-	adjacentGlobalInvocationId.x *= 2;
-#if VARIANT == 0
-	adjacentGlobalInvocationId.x += ((adjacentGlobalInvocationId.y + 0) & 1);
-#else
-	adjacentGlobalInvocationId.x += ((adjacentGlobalInvocationId.y + 1) & 1);
-#endif
-	imageStore(out_img, adjacentGlobalInvocationId, outColor * 1.0);
+	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 1.0));
 }
 
 #pragma anki end
