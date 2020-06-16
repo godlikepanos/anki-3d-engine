@@ -268,7 +268,7 @@ void Ssgi::runRecontruct(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindImage(0, 3, m_runCtx.m_finalRt, TextureSubresourceInfo());
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth(), m_r->getHeight());
+	dispatchPPCompute(cmdb, 16, 16, m_r->getWidth(), m_r->getHeight());
 }
 
 } // end namespace anki

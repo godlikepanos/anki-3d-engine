@@ -281,8 +281,9 @@ void main()
 			diffIndirect /= totalBlendWeight;
 		}
 
-		const Vec4 ssgi = textureLod(u_ssgiRt, u_trilinearClampSampler, in_uv, 0.0);
-		out_color += (ssgi.rgb + diffIndirect) * gbuffer.m_diffuse;
+		const Vec3 ssgi = textureLod(u_ssgiRt, u_trilinearClampSampler, in_uv, 0.0).rgb;
+		diffIndirect += ssgi;
+		out_color += diffIndirect * gbuffer.m_diffuse;
 	}
 }
 #pragma anki end

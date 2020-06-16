@@ -17,7 +17,7 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
 
 #include <shaders/Common.glsl>
 
-const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
+const UVec2 WORKGROUP_SIZE = UVec2(16u, 16u);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
