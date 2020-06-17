@@ -147,8 +147,10 @@ void main()
 	outColor = mix(history, outColor, 0.15);
 
 	// Remove fireflies
+#if 0
 	const Vec3 avgColor = subgroupAdd(outColor) / F32(gl_SubgroupSize);
 	outColor = min(outColor, avgColor);
+#endif
 
 	// Store
 	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 1.0));
