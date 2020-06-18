@@ -218,7 +218,9 @@ F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D s
 F32 computeShadowFactorDirLight(
 	DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap, sampler shadowMapSampler)
 {
-#if defined(ANKI_VENDOR_NVIDIA)
+#define ANKI_FAST_CASCADES_WORKAROUND 1 // Doesn't make sense but it's super fast
+
+#if ANKI_FAST_CASCADES_WORKAROUND
 	// Assumes MAX_SHADOW_CASCADES is 4
 	Mat4 lightProjectionMat;
 	switch(cascadeIdx)

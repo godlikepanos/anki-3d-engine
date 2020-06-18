@@ -384,7 +384,7 @@ public:
 		{
 			m_arr1[n] = b.m_arr1[n];
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	/// Copy.
@@ -394,7 +394,7 @@ public:
 		{
 			m_simd[i] = b.m_simd[i];
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_METHOD(!HAS_SIMD)
@@ -426,7 +426,7 @@ public:
 		{
 			m_arr1[n] += b.m_arr1[n];
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_METHOD(HAS_SIMD)
@@ -436,7 +436,7 @@ public:
 		{
 			m_simd[i] = _mm_add_ps(m_simd[i], b.m_simd[i]);
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_METHOD(!HAS_SIMD)
@@ -468,7 +468,7 @@ public:
 		{
 			m_arr1[n] -= b.m_arr1[n];
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_METHOD(HAS_SIMD)
@@ -478,7 +478,7 @@ public:
 		{
 			m_simd[i] = _mm_sub_ps(m_simd[i], b.m_simd[i]);
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	ANKI_ENABLE_METHOD(J == I && !HAS_MAT4_SIMD)
@@ -528,7 +528,7 @@ public:
 	TMat& operator*=(const TMat& b)
 	{
 		(*this) = (*this) * b;
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	Bool operator==(const TMat& b) const
@@ -574,7 +574,7 @@ public:
 		{
 			m_arr1[i] += f;
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	TMat operator-(const T f) const
@@ -593,7 +593,7 @@ public:
 		{
 			m_arr1[i] -= f;
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	TMat operator*(const T f) const
@@ -612,7 +612,7 @@ public:
 		{
 			m_arr1[i] *= f;
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 
 	TMat operator/(const T f) const
@@ -633,7 +633,7 @@ public:
 		{
 			m_arr1[i] /= f;
 		}
-		return static_cast<TMat&>(*this);
+		return *this;
 	}
 	/// @}
 
@@ -1494,10 +1494,9 @@ public:
 		return ((*this) * (1.0 - t)) + (b * t);
 	}
 
-	static const TMat& getZero()
+	static TMat getZero()
 	{
-		static const TMat zero(0.0);
-		return zero;
+		return TMat(0.0);
 	}
 
 	void setZero()
@@ -1506,24 +1505,21 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(I == 3 && J == 3)
-	static const TMat& getIdentity()
+	static TMat getIdentity()
 	{
-		static const TMat ident(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-		return ident;
+		return TMat(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 	}
 
 	ANKI_ENABLE_METHOD(I == 4 && J == 4)
-	static const TMat& getIdentity()
+	static TMat getIdentity()
 	{
-		static const TMat ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-		return ident;
+		return TMat(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 	}
 
 	ANKI_ENABLE_METHOD(I == 4 && J == 3)
-	static const TMat& getIdentity()
+	static TMat getIdentity()
 	{
-		static const TMat ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-		return ident;
+		return TMat(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	}
 
 	void setIdentity()

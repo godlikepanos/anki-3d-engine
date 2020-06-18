@@ -13,10 +13,11 @@ namespace anki
 TextureView* TextureView::newInstance(GrManager* manager, const TextureViewInitInfo& init)
 {
 	TextureViewImpl* impl = manager->getAllocator().newInstance<TextureViewImpl>(manager, init.getName());
-	Error err = impl->init(init);
+	const Error err = impl->init(init);
 	if(err)
 	{
 		manager->getAllocator().deleteInstance(impl);
+		impl = nullptr;
 	}
 	return impl;
 }

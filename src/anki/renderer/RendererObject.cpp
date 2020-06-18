@@ -77,4 +77,9 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 	return secondLevelCmdbCount;
 }
 
+void RendererObject::registerDebugRenderTarget(CString rtName)
+{
+	m_r->registerDebugRenderTarget(this, rtName);
+}
+
 } // end namespace anki

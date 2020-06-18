@@ -195,6 +195,11 @@ public:
 		return *m_ssr;
 	}
 
+	Ssgi& getSsgi()
+	{
+		return *m_ssgi;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;
@@ -359,6 +364,25 @@ public:
 		return *m_threadHive;
 	}
 
+	/// @name Debug render targets
+	/// @{
+
+	/// Register a debug render target.
+	void registerDebugRenderTarget(RendererObject* obj, CString rtName);
+
+	/// Set the render target you want to show.
+	void setCurrentDebugRenderTarget(CString rtName);
+
+	/// Get the render target currently showing.
+	CString getCurrentDebugRenderTarget() const
+	{
+		return m_currentDebugRtName;
+	}
+
+	// Need to call it after the handle is set by the RenderGraph.
+	void getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid);
+	/// @}
+
 private:
 	ResourceManager* m_resources = nullptr;
 	ThreadHive* m_threadHive = nullptr;
@@ -377,6 +401,7 @@ private:
 	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage
 	UniquePtr<GBufferPost> m_gbufferPost;
 	UniquePtr<Ssr> m_ssr;
+	UniquePtr<Ssgi> m_ssgi;
 	UniquePtr<LightShading> m_lightShading; ///< Illumination rendering stage
 	UniquePtr<DepthDownscale> m_depth;
 	UniquePtr<ForwardShading> m_forwardShading; ///< Forward shading.
@@ -425,6 +450,15 @@ private:
 
 	RendererStats m_stats;
 	Bool m_statsEnabled = false;
+
+	class DebugRtInfo
+	{
+	public:
+		RendererObject* m_obj;
+		String m_rtName;
+	};
+	DynamicArray<DebugRtInfo> m_debugRts;
+	String m_currentDebugRtName;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

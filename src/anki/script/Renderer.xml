@@ -11,7 +11,7 @@
 #include <anki/Renderer.h>
 
 namespace anki {
-	
+
 static MainRenderer* getMainRenderer(lua_State* l)
 {
 	LuaBinder* binder = nullptr;
@@ -20,7 +20,7 @@ static MainRenderer* getMainRenderer(lua_State* l)
 	MainRenderer* r = binder->getOtherSystems().m_renderer;
 	ANKI_ASSERT(r);
 	return r;
-}	
+}
 ]]></head>
 
 	<classes>
@@ -40,6 +40,12 @@ static MainRenderer* getMainRenderer(lua_State* l)
 			<methods>
 				<method name="getAspectRatio">
 					<return>F32</return>
+				</method>
+				<method name="setCurrentDebugRenderTarget">
+					<overrideCall>self->getOffscreenRenderer().setCurrentDebugRenderTarget(arg0);</overrideCall>
+					<args>
+						<arg>CString</arg>
+					</args>
 				</method>
 			</methods>
 		</class>

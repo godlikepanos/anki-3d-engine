@@ -114,7 +114,7 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 	if(in.getKey(KeyCode::_2))
 	{
-		mover = &scene.findSceneNode("Spot_004").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("Cylinder.049").getComponent<MoveComponent>();
 	}
 
 	if(in.getKey(KeyCode::L) == 1)
@@ -215,6 +215,28 @@ Error MyApp::userMainLoop(Bool& quit)
 		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
 	}
 #endif
+
+	{
+		static Bool pressed = false;
+		Bool somethingPressed = false;
+		if(in.getKey(KeyCode::U) == 1)
+		{
+			pressed = !pressed;
+			somethingPressed = true;
+		}
+
+		if(somethingPressed)
+		{
+			if(pressed)
+			{
+				renderer.getOffscreenRenderer().setCurrentDebugRenderTarget("SSGI");
+			}
+			else
+			{
+				renderer.getOffscreenRenderer().setCurrentDebugRenderTarget("");
+			}
+		}
+	}
 
 	if(in.getEvent(InputEvent::WINDOW_CLOSED))
 	{

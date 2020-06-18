@@ -61,6 +61,16 @@ Error SampleApp::userMainLoop(Bool& quit)
 		setDisplayDeveloperConsole(!getDisplayDeveloperConsole());
 	}
 
+	if(in.getKey(KeyCode::U) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSGI") ? "" : "SSGI");
+	}
+
+	if(in.getKey(KeyCode::I) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSR") ? "" : "SSR");
+	}
+
 	if(!getDisplayDeveloperConsole())
 	{
 		in.hideCursor(true);

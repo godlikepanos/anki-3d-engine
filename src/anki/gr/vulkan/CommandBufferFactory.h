@@ -175,7 +175,7 @@ private:
 	uint32_t m_queueFamily;
 
 	DynamicArray<CommandBufferThreadAllocator*> m_threadAllocs;
-	SpinLock m_threadAllocMtx;
+	RWMutex m_threadAllocMtx;
 
 	Atomic<U32> m_createdCmdBufferCount = {0};
 };

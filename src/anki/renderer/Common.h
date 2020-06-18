@@ -20,6 +20,7 @@ namespace anki
 
 // Forward
 class Renderer;
+class RendererObject;
 class GBuffer;
 class GBufferPost;
 class ShadowMapping;
@@ -38,6 +39,7 @@ class DepthDownscale;
 class TemporalAA;
 class UiStage;
 class Ssr;
+class Ssgi;
 class VolumetricLightingAccumulation;
 class GlobalIllumination;
 class GenericCompute;

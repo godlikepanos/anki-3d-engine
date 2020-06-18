@@ -20,6 +20,7 @@ public:
 	Ssr(Renderer* r)
 		: RendererObject(r)
 	{
+		registerDebugRenderTarget("SSR");
 	}
 
 	~Ssr();
@@ -43,6 +44,8 @@ private:
 
 	Array<U32, 2> m_workgroupSize = {};
 	U32 m_maxSteps = 32;
+	U32 m_depthLod = 0;
+	U32 m_firstStepPixels = 16;
 
 	class
 	{
@@ -54,6 +57,12 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
 	void run(RenderPassWorkContext& rgraphCtx);
+
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
+	{
+		ANKI_ASSERT(rtName == "SSR");
+		handle = m_runCtx.m_rt;
+	}
 };
 /// @}
 

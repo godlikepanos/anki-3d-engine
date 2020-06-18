@@ -2942,7 +2942,7 @@ public:
 	ANKI_ENABLE_METHOD(HAS_VEC4_SIMD)
 	TVec abs() const
 	{
-		static const __m128 signMask = _mm_set1_ps(-0.0f);
+		const __m128 signMask = _mm_set1_ps(-0.0f);
 		return TVec(_mm_andnot_ps(signMask, m_simd));
 	}
 

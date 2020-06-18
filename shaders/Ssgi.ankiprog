@@ -1,0 +1,159 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// The VARIANT points to the fragment in the quad that will be processed:
+// -----
+// |3|2|
+// |0|1|
+// -----
+
+#pragma anki mutator VARIANT 0 1 2 3
+
+#pragma anki start comp
+#include <shaders/SsRaymarching.glsl>
+#include <shaders/Functions.glsl>
+#include <shaders/Pack.glsl>
+#include <shaders/ImportanceSampling.glsl>
+#include <shaders/glsl_cpp_common/Ssgi.h>
+
+const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba16f) uniform image2D out_img;
+
+layout(set = 0, binding = 1, row_major, std140) uniform u_
+{
+	SsgiUniforms u_unis;
+};
+
+layout(set = 0, binding = 2) uniform sampler u_trilinearClampSampler;
+layout(set = 0, binding = 3) uniform texture2D u_gbufferRt2;
+layout(set = 0, binding = 4) uniform texture2D u_depthRt;
+layout(set = 0, binding = 5) uniform texture2D u_lightBufferRt;
+layout(set = 0, binding = 6) uniform texture2D u_historyTex;
+
+void main()
+{
+	// Compute a global invocation ID that takes the checkerboard pattern into account
+	UVec2 fixedGlobalInvocationId = IVec2(gl_GlobalInvocationID.xy);
+	fixedGlobalInvocationId *= 2;
+#if VARIANT == 0
+	// Nothing
+#elif VARIANT == 1
+	fixedGlobalInvocationId.x += 1;
+#elif VARIANT == 2
+	fixedGlobalInvocationId += 1;
+#else
+	fixedGlobalInvocationId.y += 1;
+#endif
+
+	if(fixedGlobalInvocationId.x >= u_unis.m_framebufferSize.x
+		|| fixedGlobalInvocationId.y >= u_unis.m_framebufferSize.y)
+	{
+		// Skip threads outside the writable image
+		return;
+	}
+
+	const Vec2 uv = (Vec2(fixedGlobalInvocationId.xy) + 0.5) / Vec2(u_unis.m_framebufferSize);
+	const Vec2 ndc = UV_TO_NDC(uv);
+
+	// Get normal
+	const Vec3 worldNormal = readNormalFromGBuffer(u_gbufferRt2, u_trilinearClampSampler, uv);
+	const Vec3 viewNormal = u_unis.m_normalMat * worldNormal;
+
+	// Get depth
+	const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, uv, 0.0).r;
+
+	// Compute view pos
+	const Vec4 viewPos4 = u_unis.m_invProjMat * Vec4(ndc, depth, 1.0);
+	const Vec3 viewPos = viewPos4.xyz / viewPos4.w;
+
+	// Get a random point inside the hemisphere. Use hemisphereSampleCos to avoid perpendicular vecs to viewNormal
+	const UVec2 random = rand3DPCG16(UVec3(gl_GlobalInvocationID.xy, u_unis.m_frameCount)).xy;
+	const Vec2 randomCircle = hammersleyRandom16(0, 0xFFFFu, random);
+	const Vec3 randomHemisphere = rotationFromDirection(viewNormal) * hemisphereSampleCos(randomCircle);
+
+	// Trace
+	Vec3 hitPoint;
+	F32 hitAttenuation;
+	const U32 lod = 0;
+	const F32 minStepf = 4.0;
+	const F32 noise = F32(random.x) * (1.0 / 65536.0);
+	raymarchGroundTruth(viewPos,
+		randomHemisphere,
+		uv,
+		depth,
+		u_unis.m_projMat,
+		u_unis.m_maxSteps,
+		u_depthRt,
+		u_trilinearClampSampler,
+		F32(lod),
+		u_unis.m_depthBufferSize,
+		u_unis.m_firstStepPixels,
+		U32(mix(minStepf, F32(u_unis.m_firstStepPixels), noise)),
+		hitPoint,
+		hitAttenuation);
+
+	// Reject backfacing
+	ANKI_BRANCH if(hitAttenuation > 0.0)
+	{
+		const Vec3 hitNormal =
+			u_unis.m_normalMat * readNormalFromGBuffer(u_gbufferRt2, u_trilinearClampSampler, hitPoint.xy);
+		F32 backFaceAttenuation;
+		rejectBackFaces(randomHemisphere, hitNormal, backFaceAttenuation);
+
+		hitAttenuation *= backFaceAttenuation;
+	}
+
+	// Read the light buffer
+	Vec3 outColor;
+	ANKI_BRANCH if(hitAttenuation > 0.0)
+	{
+		// Reproject the UV because you are reading the previous frame
+		const Vec4 v4 = u_unis.m_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(hitPoint.xy), hitPoint.z, 1.0);
+		hitPoint.xy = NDC_TO_UV(v4.xy / v4.w);
+
+		// Read the light buffer
+		outColor = textureLod(u_lightBufferRt, u_trilinearClampSampler, hitPoint.xy, 100.0).rgb;
+		outColor = clamp(outColor, 0.0, FLT_MAX); // Fix the value just in case
+		outColor *= hitAttenuation;
+
+#if 0
+		// Compute a new normal based on the new hit point
+		const F32 depth = textureLod(u_depthRt, u_trilinearClampSampler, hitPoint.xy, 0.0).r;
+		const Vec4 viewPos4 = u_unis.m_invProjMat * Vec4(UV_TO_NDC(hitPoint.xy), depth, 1.0);
+		const Vec3 hitViewPos = viewPos4.xyz / viewPos4.w;
+		const Vec3 newViewNormal = normalize(hitViewPos - viewPos);
+#else
+		const Vec3 newViewNormal = viewNormal;
+#endif
+
+		// Modulate
+		const F32 NoL = max(0.0, dot(randomHemisphere, newViewNormal));
+		outColor *= NoL;
+		outColor *= 2.0 * PI;
+	}
+	else
+	{
+		outColor = Vec3(0.0, 0.0, 0.0);
+	}
+
+	// Blend with history
+	const Vec4 v4 = u_unis.m_prevViewProjMatMulInvViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec2 historyUv = NDC_TO_UV(v4.xy / v4.w);
+	const Vec3 history = textureLod(u_historyTex, u_trilinearClampSampler, historyUv, 0.0).rgb;
+	outColor = mix(history, outColor, 0.15);
+
+	// Remove fireflies
+#if 0
+	const Vec3 avgColor = subgroupAdd(outColor) / F32(gl_SubgroupSize);
+	outColor = min(outColor, avgColor);
+#endif
+
+	// Store
+	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 1.0));
+}
+
+#pragma anki end

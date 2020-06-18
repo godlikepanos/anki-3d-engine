@@ -15,7 +15,7 @@
 #	pragma GCC diagnostic ignored "-Wall"
 #	pragma GCC diagnostic ignored "-Wconversion"
 #	pragma GCC diagnostic ignored "-Wfloat-conversion"
-#	if ANKI_COMPILER_GCC && __GNUC__ >= 9
+#	if(ANKI_COMPILER_GCC && __GNUC__ >= 9) || (ANKI_COMPILER_CLANG && __clang_major__ >= 10)
 #		pragma GCC diagnostic ignored "-Wdeprecated-copy"
 #	endif
 #endif

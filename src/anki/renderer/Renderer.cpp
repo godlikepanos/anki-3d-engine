@@ -28,6 +28,7 @@
 #include <anki/renderer/TemporalAA.h>
 #include <anki/renderer/UiStage.h>
 #include <anki/renderer/Ssr.h>
+#include <anki/renderer/Ssgi.h>
 #include <anki/renderer/VolumetricLightingAccumulation.h>
 #include <anki/renderer/GlobalIllumination.h>
 #include <anki/renderer/GenericCompute.h>
@@ -43,6 +44,12 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
+	for(DebugRtInfo& info : m_debugRts)
+	{
+		info.m_rtName.destroy(getAllocator());
+	}
+	m_debugRts.destroy(getAllocator());
+	m_currentDebugRtName.destroy(getAllocator());
 }
 
 Error Renderer::init(ThreadHive* hive,
@@ -167,6 +174,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_ssr.reset(m_alloc.newInstance<Ssr>(this));
 	ANKI_CHECK(m_ssr->init(config));
+
+	m_ssgi.reset(m_alloc.newInstance<Ssgi>(this));
+	ANKI_CHECK(m_ssgi->init(config));
 
 	m_tonemapping.reset(getAllocator().newInstance<Tonemapping>(this));
 	ANKI_CHECK(m_tonemapping->init(config));
@@ -313,6 +323,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_ssao->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);
 	m_ssr->populateRenderGraph(ctx);
+	m_ssgi->populateRenderGraph(ctx);
 	m_lightShading->populateRenderGraph(ctx);
 	m_temporalAA->populateRenderGraph(ctx);
 	m_downscale->populateRenderGraph(ctx);
@@ -591,6 +602,55 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	else
 	{
 		blk->m_dirLight.m_active = 0;
+	}
+}
+
+void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
+{
+#if ANKI_ASSERTS_ENABLED
+	for(const DebugRtInfo& inf : m_debugRts)
+	{
+		ANKI_ASSERT(inf.m_rtName != rtName && "Choose different name");
+	}
+#endif
+
+	ANKI_ASSERT(obj);
+	DebugRtInfo inf;
+	inf.m_obj = obj;
+	inf.m_rtName.create(getAllocator(), rtName);
+
+	m_debugRts.emplaceBack(getAllocator(), std::move(inf));
+}
+
+void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid)
+{
+	if(ANKI_LIKELY(m_currentDebugRtName.isEmpty()))
+	{
+		handleValid = false;
+		return;
+	}
+
+	RendererObject* obj = nullptr;
+	for(const DebugRtInfo& inf : m_debugRts)
+	{
+		if(inf.m_rtName == m_currentDebugRtName)
+		{
+			obj = inf.m_obj;
+		}
+	}
+	ANKI_ASSERT(obj);
+
+	obj->getDebugRenderTarget(m_currentDebugRtName, handle);
+	handleValid = true;
+}
+
+void Renderer::setCurrentDebugRenderTarget(CString rtName)
+{
+	m_currentDebugRtName.destroy(getAllocator());
+
+	if(!rtName.isEmpty() && rtName.getLength() > 0)
+	{
+		m_currentDebugRtName.create(getAllocator(), rtName);
 	}
 }
 

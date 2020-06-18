@@ -21,6 +21,7 @@
 #include <anki/renderer/TemporalAA.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/Ssr.h>
+#include <anki/renderer/Ssgi.h>
 #include <anki/renderer/ProbeReflections.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Ssao.h>

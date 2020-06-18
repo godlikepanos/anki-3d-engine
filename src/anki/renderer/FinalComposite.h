@@ -35,7 +35,7 @@ private:
 	FramebufferDescription m_fbDescr;
 
 	ShaderProgramResourcePtr m_prog;
-	Array<ShaderProgramPtr, 2> m_grProgs; ///< One with Dbg and one without
+	Array2d<ShaderProgramPtr, 2, 2> m_grProgs; ///< [Debug on or off][Dbg render target on or off]
 
 	TextureResourcePtr m_lut; ///< Color grading lookup texture.
 	TextureResourcePtr m_blueNoise;

@@ -517,3 +517,27 @@ Bool aabbsOverlap(const Vec3 aMin, const Vec3 aMax, const Vec3 bMin, const Vec3 
 			return; \
 		} \
 	}
+
+// Create a matrix from some direction.
+Mat3 rotationFromDirection(Vec3 zAxis)
+{
+#if 0
+	const Vec3 z = zAxis;
+	const Bool alignsWithXBasis = abs(z.x - 1.0) <= EPSILON; // aka z == Vec3(1.0, 0.0, 0.0)
+	Vec3 x = (alignsWithXBasis) ? Vec3(0.0, 0.0, 1.0) : Vec3(1.0, 0.0, 0.0);
+	const Vec3 y = normalize(cross(x, z));
+	x = normalize(cross(z, y));
+	return Mat3(x, y, z);
+#else
+	// http://jcgt.org/published/0006/01/01/
+	const Vec3 z = zAxis;
+	const F32 sign = (z.z >= 0.0) ? 1.0 : -1.0;
+	const F32 a = -1.0 / (sign + z.z);
+	const F32 b = z.x * z.y * a;
+
+	const Vec3 x = Vec3(1.0 + sign * a * pow(z.x, 2.0), sign * b, -sign * z.x);
+	const Vec3 y = Vec3(b, sign + a * pow(z.y, 2.0), -z.y);
+
+	return Mat3(x, y, z);
+#endif
+}
