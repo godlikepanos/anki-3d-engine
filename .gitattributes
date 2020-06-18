@@ -1,0 +1,14 @@
+*.cpp text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.glsl text eol=lf
+*.lua text eol=lf
+*.py text eol=lf
+*.cmake text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.ankiprog text eol=lf
+*.ankimtl text eol=lf
+*.ankimdl text eol=lf
+*.ankipart text eol=lf
