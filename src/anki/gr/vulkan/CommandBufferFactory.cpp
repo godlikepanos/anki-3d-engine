@@ -254,8 +254,6 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 
 	// Get the thread allocator
 	{
-		LockGuard<SpinLock> lock(m_threadAllocMtx);
-
 		class Comp
 		{
 		public:
@@ -271,32 +269,41 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 		};
 
 		// Find using binary search
-		auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
-
-		if(it != m_threadAllocs.getEnd())
 		{
-			ANKI_ASSERT((*it)->m_tid == tid);
-			alloc = *it;
+			RLockGuard<RWMutex> lock(m_threadAllocMtx);
+			auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
+			alloc = (it != m_threadAllocs.getEnd()) ? (*it) : nullptr;
 		}
-		else
+
+		if(ANKI_UNLIKELY(alloc == nullptr))
 		{
-			alloc = m_alloc.newInstance<CommandBufferThreadAllocator>(this, tid);
+			WLockGuard<RWMutex> lock(m_threadAllocMtx);
 
-			m_threadAllocs.resize(m_alloc, m_threadAllocs.getSize() + 1);
-			m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
+			// Check again
+			auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
+			alloc = (it != m_threadAllocs.getEnd()) ? (*it) : nullptr;
 
-			// Sort for fast find
-			std::sort(m_threadAllocs.getBegin(),
-				m_threadAllocs.getEnd(),
-				[](const CommandBufferThreadAllocator* a, const CommandBufferThreadAllocator* b) {
-					return a->m_tid < b->m_tid;
-				});
+			if(alloc == nullptr)
+			{
+				alloc = m_alloc.newInstance<CommandBufferThreadAllocator>(this, tid);
 
-			ANKI_CHECK(alloc->init());
+				m_threadAllocs.resize(m_alloc, m_threadAllocs.getSize() + 1);
+				m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
+
+				// Sort for fast find
+				std::sort(m_threadAllocs.getBegin(),
+					m_threadAllocs.getEnd(),
+					[](const CommandBufferThreadAllocator* a, const CommandBufferThreadAllocator* b) {
+						return a->m_tid < b->m_tid;
+					});
+
+				ANKI_CHECK(alloc->init());
+			}
 		}
 	}
 
 	ANKI_ASSERT(alloc);
+	ANKI_ASSERT(alloc->m_tid == tid);
 	Bool createdNew;
 	ANKI_CHECK(alloc->newCommandBuffer(cmdbFlags, ptr, createdNew));
 	if(createdNew)

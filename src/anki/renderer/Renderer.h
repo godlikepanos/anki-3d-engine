@@ -373,6 +373,12 @@ public:
 	/// Set the render target you want to show.
 	void setCurrentDebugRenderTarget(CString rtName);
 
+	/// Get the render target currently showing.
+	CString getCurrentDebugRenderTarget() const
+	{
+		return m_currentDebugRtName;
+	}
+
 	// Need to call it after the handle is set by the RenderGraph.
 	void getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid);
 	/// @}

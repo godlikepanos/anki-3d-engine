@@ -886,7 +886,8 @@ void RenderGraph::iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubr
 	{
 		for(U32 layer = subresource.m_firstLayer; layer < subresource.m_firstLayer + subresource.m_layerCount; ++layer)
 		{
-			for(U32 face = subresource.m_firstFace; face < subresource.m_firstFace + subresource.m_faceCount; ++face)
+			for(U32 face = subresource.m_firstFace; face < U32(subresource.m_firstFace + subresource.m_faceCount);
+				++face)
 			{
 				// Compute surf or vol idx
 				const U32 faceCount = textureTypeIsCube(tex->getTextureType()) ? 6 : 1;

@@ -14,10 +14,11 @@ namespace anki
 ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgramInitInfo& init)
 {
 	ShaderProgramImpl* impl = manager->getAllocator().newInstance<ShaderProgramImpl>(manager, init.getName());
-	Error err = impl->init(init);
+	const Error err = impl->init(init);
 	if(err)
 	{
 		manager->getAllocator().deleteInstance(impl);
+		impl = nullptr;
 	}
 	return impl;
 }

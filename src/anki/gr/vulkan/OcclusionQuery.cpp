@@ -17,6 +17,7 @@ OcclusionQuery* OcclusionQuery::newInstance(GrManager* manager)
 	if(err)
 	{
 		manager->getAllocator().deleteInstance(impl);
+		impl = nullptr;
 	}
 	return impl;
 }

@@ -61,24 +61,14 @@ Error SampleApp::userMainLoop(Bool& quit)
 		setDisplayDeveloperConsole(!getDisplayDeveloperConsole());
 	}
 
-	static Bool pressed = false;
-	Bool somethingPressed = false;
 	if(in.getKey(KeyCode::U) == 1)
 	{
-		pressed = !pressed;
-		somethingPressed = true;
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSGI") ? "" : "SSGI");
 	}
 
-	if(somethingPressed)
+	if(in.getKey(KeyCode::I) == 1)
 	{
-		if(pressed)
-		{
-			renderer.setCurrentDebugRenderTarget("SSGI");
-		}
-		else
-		{
-			renderer.setCurrentDebugRenderTarget("");
-		}
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSR") ? "" : "SSR");
 	}
 
 	if(!getDisplayDeveloperConsole())

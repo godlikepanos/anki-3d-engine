@@ -788,6 +788,7 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 	}
 
 	ANKI_ASSERT(alloc);
+	ANKI_ASSERT(alloc->m_tid == tid);
 	return Error::NONE;
 }
 
