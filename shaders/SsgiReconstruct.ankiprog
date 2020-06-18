@@ -71,7 +71,7 @@ void reconstructAll(Vec4 depthRefs, Vec3 masterColor)
 	const U32 slaveDrefIdx[3] = U32[](3, 2, 0);
 #else
 	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2) + IVec2(0, 1);
-	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(0, -1), IVec2(-1, 1), IVec2(0, 1));
+	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(0, -1), IVec2(1, -1), IVec2(1, 0));
 	const U32 masterDrefIdx = 0;
 	const U32 slaveDrefIdx[3] = U32[](3, 2, 1);
 #endif
