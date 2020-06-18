@@ -88,6 +88,7 @@ Error MicroSwapchain::initInternal()
 
 	// Chose present mode
 	VkPresentModeKHR presentMode = VK_PRESENT_MODE_MAX_ENUM_KHR;
+	VkPresentModeKHR presentModeSecondChoice = VK_PRESENT_MODE_MAX_ENUM_KHR;
 	{
 		uint32_t presentModeCount;
 		vkGetPhysicalDeviceSurfacePresentModesKHR(
@@ -99,25 +100,34 @@ Error MicroSwapchain::initInternal()
 
 		if(m_factory->m_vsync)
 		{
-			presentMode = VK_PRESENT_MODE_FIFO_KHR;
+			for(U i = 0; i < presentModeCount; ++i)
+			{
+				if(presentModes[i] == VK_PRESENT_MODE_FIFO_RELAXED_KHR)
+				{
+					presentMode = presentModes[i];
+				}
+				else if(presentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
+				{
+					presentModeSecondChoice = presentModes[i];
+				}
+			}
 		}
 		else
 		{
 			for(U i = 0; i < presentModeCount; ++i)
 			{
-				if(presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+				if(presentModes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
 				{
-					presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-					break;
+					presentMode = presentModes[i];
 				}
-				else if(presentModes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
+				else if(presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
 				{
-					presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-					break;
+					presentModeSecondChoice = presentModes[i];
 				}
 			}
 		}
 
+		presentMode = (presentMode != VK_PRESENT_MODE_MAX_ENUM_KHR) ? presentMode : presentModeSecondChoice;
 		if(presentMode == VK_PRESENT_MODE_MAX_ENUM_KHR)
 		{
 			ANKI_VK_LOGE("Couldn't find a present mode");
