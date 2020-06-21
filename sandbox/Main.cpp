@@ -216,26 +216,22 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 #endif
 
+	if(in.getKey(KeyCode::U) == 1)
 	{
-		static Bool pressed = false;
-		Bool somethingPressed = false;
-		if(in.getKey(KeyCode::U) == 1)
-		{
-			pressed = !pressed;
-			somethingPressed = true;
-		}
+		renderer.getOffscreenRenderer().setCurrentDebugRenderTarget(
+			(renderer.getOffscreenRenderer().getCurrentDebugRenderTarget() == "SSGI") ? "" : "SSGI");
+	}
 
-		if(somethingPressed)
-		{
-			if(pressed)
-			{
-				renderer.getOffscreenRenderer().setCurrentDebugRenderTarget("SSGI");
-			}
-			else
-			{
-				renderer.getOffscreenRenderer().setCurrentDebugRenderTarget("");
-			}
-		}
+	if(in.getKey(KeyCode::I) == 1)
+	{
+		renderer.getOffscreenRenderer().setCurrentDebugRenderTarget(
+			(renderer.getOffscreenRenderer().getCurrentDebugRenderTarget() == "SSR") ? "" : "SSR");
+	}
+
+	if(in.getKey(KeyCode::O) == 1)
+	{
+		renderer.getOffscreenRenderer().setCurrentDebugRenderTarget(
+			(renderer.getOffscreenRenderer().getCurrentDebugRenderTarget() == "SM_resolve") ? "" : "SM_resolve");
 	}
 
 	if(in.getEvent(InputEvent::WINDOW_CLOSED))

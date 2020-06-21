@@ -43,6 +43,7 @@ class Ssgi;
 class VolumetricLightingAccumulation;
 class GlobalIllumination;
 class GenericCompute;
+class ShadowmapsResolve;
 
 class RenderingContext;
 class DebugDrawer;

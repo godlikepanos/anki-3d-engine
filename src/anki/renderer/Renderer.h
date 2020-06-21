@@ -190,6 +190,11 @@ public:
 		return *m_uiStage;
 	}
 
+	ShadowmapsResolve& getShadowmapsResolve()
+	{
+		return *m_smResolve;
+	}
+
 	Ssr& getSsr()
 	{
 		return *m_ssr;
@@ -416,6 +421,7 @@ private:
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
 	UniquePtr<UiStage> m_uiStage;
 	UniquePtr<GenericCompute> m_genericCompute;
+	UniquePtr<ShadowmapsResolve> m_smResolve;
 	/// @}
 
 	Array<U32, 4> m_clusterCount;

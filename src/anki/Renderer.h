@@ -25,6 +25,7 @@
 #include <anki/renderer/ProbeReflections.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Ssao.h>
+#include <anki/renderer/Ssgi.h>
 #include <anki/renderer/Drawer.h>
 #include <anki/renderer/UiStage.h>
 #include <anki/renderer/Tonemapping.h>
@@ -33,5 +34,6 @@
 #include <anki/renderer/VolumetricLightingAccumulation.h>
 #include <anki/renderer/GlobalIllumination.h>
 #include <anki/renderer/GenericCompute.h>
+#include <anki/renderer/ShadowmapsResolve.h>
 
 /// @defgroup renderer Renderering system

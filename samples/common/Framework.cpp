@@ -71,6 +71,12 @@ Error SampleApp::userMainLoop(Bool& quit)
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSR") ? "" : "SSR");
 	}
 
+	if(in.getKey(KeyCode::O) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget(
+			(renderer.getCurrentDebugRenderTarget() == "SM_resolve") ? "" : "SM_resolve");
+	}
+
 	if(!getDisplayDeveloperConsole())
 	{
 		in.hideCursor(true);
