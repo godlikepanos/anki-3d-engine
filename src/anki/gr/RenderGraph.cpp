@@ -793,6 +793,7 @@ void RenderGraph::initBatches()
 			{
 				setTimestamp = false;
 				TimestampQueryPtr query = getManager().newTimestampQuery();
+				cmdb->resetTimestampQuery(query);
 				cmdb->writeTimestamp(query);
 
 				m_statistics.m_nextTimestamp = (m_statistics.m_nextTimestamp + 1) % MAX_TIMESTAMPS_BUFFERED;
@@ -1214,6 +1215,7 @@ void RenderGraph::flush()
 		if(ANKI_UNLIKELY(m_ctx->m_gatherStatistics && i == m_ctx->m_graphicsCmdbs.getSize() - 1))
 		{
 			TimestampQueryPtr query = getManager().newTimestampQuery();
+			m_ctx->m_graphicsCmdbs[i]->resetTimestampQuery(query);
 			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(query);
 
 			m_statistics.m_timestamps[m_statistics.m_nextTimestamp * 2 + 1] = query;

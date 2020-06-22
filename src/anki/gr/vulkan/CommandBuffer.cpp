@@ -377,6 +377,12 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 	self.pushSecondLevelCommandBuffer(cmdb);
 }
 
+void CommandBuffer::resetTimestampQuery(TimestampQueryPtr query)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.resetTimestampQueryInternal(query);
+}
+
 void CommandBuffer::writeTimestamp(TimestampQueryPtr query)
 {
 	ANKI_VK_SELF(CommandBufferImpl);

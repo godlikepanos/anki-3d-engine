@@ -416,6 +416,9 @@ public:
 	/// End query.
 	void endOcclusionQuery(OcclusionQueryPtr query);
 
+	/// Reset timestamp query before writeTimestamp.
+	void resetTimestampQuery(TimestampQueryPtr query);
+
 	/// Write a timestamp.
 	void writeTimestamp(TimestampQueryPtr query);
 

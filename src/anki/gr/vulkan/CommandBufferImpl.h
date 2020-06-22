@@ -37,7 +37,7 @@ class CommandBufferInitInfo;
 enum class CommandBufferCommandType : U8
 {
 	SET_BARRIER,
-	RESET_OCCLUSION_QUERY,
+	RESET_QUERY,
 	WRITE_QUERY_RESULT,
 	PUSH_SECOND_LEVEL,
 	ANY_OTHER_COMMAND
@@ -312,6 +312,8 @@ public:
 
 	void endOcclusionQuery(OcclusionQueryPtr query);
 
+	void resetTimestampQueryInternal(TimestampQueryPtr& query);
+
 	void writeTimestampInternal(TimestampQueryPtr& query);
 
 	void generateMipmaps2d(TextureViewPtr texView);
@@ -450,7 +452,6 @@ private:
 	};
 
 	DynamicArray<QueryResetAtom> m_queryResetAtoms;
-	U16 m_queryResetAtomCount = 0;
 	/// @}
 
 	/// @name write_query_result_batch
