@@ -159,7 +159,7 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferD
 	U32 maxx,
 	U32 maxy)
 {
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
 	for(U32 i = 0; i < colorRenderTargetHandles.getSize(); ++i)
 	{

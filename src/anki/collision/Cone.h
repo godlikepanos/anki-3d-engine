@@ -107,25 +107,25 @@ public:
 
 private:
 	Vec4 m_origin
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= Vec4(MAX_F32)
 #endif
 		;
 
 	Vec4 m_dir
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= Vec4(MAX_F32)
 #endif
 		;
 
 	F32 m_length
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= -1.0f
 #endif
 		;
 
 	F32 m_angle
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= -1.0f
 #endif
 		;

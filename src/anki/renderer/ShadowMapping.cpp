@@ -479,7 +479,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			m_r->getGlobalTimestamp(), 1, MAX_U64, 0, 1, m_pointLightsMaxLod, emptyTileViewport);
 
 		(void)res;
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		static Bool firstRun = true;
 		if(firstRun)
 		{

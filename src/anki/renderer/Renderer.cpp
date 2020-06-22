@@ -612,7 +612,7 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 
 void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 {
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 	for(const DebugRtInfo& inf : m_debugRts)
 	{
 		ANKI_ASSERT(inf.m_rtName != rtName && "Choose different name");
