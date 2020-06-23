@@ -65,6 +65,17 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	if(init.m_fullscreenDesktopRez)
 	{
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+
+		// Alter the window size
+		SDL_DisplayMode mode;
+		if(SDL_GetDesktopDisplayMode(0, &mode))
+		{
+			ANKI_CORE_LOGE("SDL_GetDesktopDisplayMode() failed: %s", SDL_GetError());
+			return Error::FUNCTION_FAILED;
+		}
+
+		init.m_width = mode.w;
+		init.m_height = mode.h;
 	}
 
 	m_impl->m_window = SDL_CreateWindow(

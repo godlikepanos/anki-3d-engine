@@ -206,15 +206,12 @@ GrAllocator<U8> MicroSwapchain::getAllocator() const
 
 MicroSwapchainPtr SwapchainFactory::newInstance()
 {
-	MicroSwapchain* out = m_recycler.findToReuse();
-
-	if(out == nullptr)
-	{
-		// Create a new one
-		out = m_gr->getAllocator().newInstance<MicroSwapchain>(this);
-	}
-
-	return MicroSwapchainPtr(out);
+	// Delete stale swapchains (they are stale because they are probably out of data) and always create a new one
+	m_recycler.trimCache();
+	MicroSwapchain* dummy = m_recycler.findToReuse(); // This is useless but call it to avoid assertions
+	ANKI_ASSERT(dummy == nullptr);
+	(void)dummy;
+	return MicroSwapchainPtr(m_gr->getAllocator().newInstance<MicroSwapchain>(this));
 }
 
 void SwapchainFactory::init(GrManagerImpl* manager, Bool vsync)

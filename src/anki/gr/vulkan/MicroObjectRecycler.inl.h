@@ -13,10 +13,9 @@ inline void MicroObjectRecycler<T>::destroy()
 {
 	LockGuard<Mutex> lock(m_mtx);
 
-	U32 count = m_objectCount;
-	while(count--)
+	for(U32 i = 0; i < m_objects.getSize(); ++i)
 	{
-		T* obj = m_objects[count];
+		T* obj = m_objects[i];
 		ANKI_ASSERT(obj);
 		ANKI_ASSERT(!obj->getFence() || obj->getFence()->done());
 
@@ -27,7 +26,6 @@ inline void MicroObjectRecycler<T>::destroy()
 #endif
 	}
 
-	m_objectCount = 0;
 	m_objects.destroy(m_alloc);
 	ANKI_ASSERT(m_createdAndNotRecycled == 0 && "Destroying the recycler while objects have not recycled yet");
 }
@@ -35,10 +33,9 @@ inline void MicroObjectRecycler<T>::destroy()
 template<typename T>
 inline void MicroObjectRecycler<T>::releaseFences()
 {
-	U32 count = m_objectCount;
-	while(count--)
+	for(U32 i = 0; i < m_objects.getSize(); ++i)
 	{
-		T& obj = *m_objects[count];
+		T& obj = *m_objects[i];
 		if(obj.getFence() && obj.getFence()->done())
 		{
 			obj.getFence().reset(nullptr);
@@ -52,18 +49,17 @@ inline T* MicroObjectRecycler<T>::findToReuse()
 	T* out = nullptr;
 	LockGuard<Mutex> lock(m_mtx);
 
-	if(m_objectCount > 0)
+	if(m_objects.getSize() > 0)
 	{
 		releaseFences();
 
-		U32 count = m_objectCount;
-		while(count--)
+		for(U32 i = 0; i < m_objects.getSize(); ++i)
 		{
-			if(!m_objects[count]->getFence())
+			if(!m_objects[i]->getFence())
 			{
-				out = m_objects[count];
-				m_objects[count] = m_objects[m_objectCount - 1];
-				--m_objectCount;
+				out = m_objects[i];
+				m_objects[i] = m_objects[m_objects.getSize() - 1];
+				m_objects.popBack(m_alloc);
 				break;
 			}
 		}
@@ -91,14 +87,41 @@ inline void MicroObjectRecycler<T>::recycle(T* s)
 
 	releaseFences();
 
-	if(m_objects.getSize() <= m_objectCount)
+	m_objects.emplaceBack(m_alloc, s);
+}
+
+template<typename T>
+inline void MicroObjectRecycler<T>::trimCache()
+{
+	LockGuard<Mutex> lock(m_mtx);
+
+	releaseFences();
+
+	DynamicArray<T*> newObjects;
+
+	for(U32 i = 0; i < m_objects.getSize(); ++i)
 	{
-		// Grow storage
-		m_objects.resize(m_alloc, max<U32>(1, m_objects.getSize() * 2));
+		T* obj = m_objects[i];
+		ANKI_ASSERT(obj);
+		ANKI_ASSERT(obj->getRefcount().getNonAtomically() == 0);
+
+		if(obj->getFence())
+		{
+			// Can't delete it
+			newObjects.emplaceBack(m_alloc, obj);
+		}
+		else
+		{
+			auto alloc = obj->getAllocator();
+			alloc.deleteInstance(obj);
+		}
 	}
 
-	m_objects[m_objectCount] = s;
-	++m_objectCount;
+	if(newObjects.getSize() > 0)
+	{
+		m_objects.destroy(m_alloc);
+		m_objects = std::move(newObjects);
+	}
 }
 
 } // end namespace anki

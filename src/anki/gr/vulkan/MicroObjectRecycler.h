@@ -47,10 +47,12 @@ public:
 	/// Release an object back to the recycler. It's thread-safe.
 	void recycle(T* s);
 
+	/// Destroy those objects that their fence is done. It's thread-safe.
+	void trimCache();
+
 private:
 	GrAllocator<U8> m_alloc;
 	DynamicArray<T*> m_objects;
-	U32 m_objectCount = 0;
 	Mutex m_mtx;
 #if ANKI_EXTRA_CHECKS
 	U32 m_createdAndNotRecycled = 0;
