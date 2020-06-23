@@ -9,19 +9,23 @@ using namespace anki;
 
 Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
-	if(!directoryExists("assets"))
+	HeapAllocator<U32> alloc(allocAligned, nullptr);
+	StringAuto mainDataPath(alloc, ANKI_SOURCE_DIRECTORY);
+	StringAuto assetsDataPath(alloc);
+	assetsDataPath.sprintf("%s/samples/%s", ANKI_SOURCE_DIRECTORY, sampleName.cstr());
+
+	if(!directoryExists(assetsDataPath))
 	{
-		ANKI_LOGE("Cannot find directory \"assets\". YOU ARE RUNNING THE SAMPLE FROM THE WRONG DIRECTORY. "
-				  "To run %s you have to navigate to the /path/to/anki/samples/%s and then execute it",
-			argv[0],
-			&sampleName[0]);
+		ANKI_LOGE("Cannot find directory \"%s\". Have you moved the clone of the repository?", assetsDataPath.cstr());
 		return Error::USER_DATA;
 	}
+
+	printf("%s\n", StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()).cstr());
 
 	// Init the super class
 	ConfigSet config = DefaultConfigSet::get();
 	config.set("window_fullscreen", true);
-	config.set("rsrc_dataPaths", ".:../..");
+	config.set("rsrc_dataPaths", StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
 	config.set("gr_debugContext", 0);
 	ANKI_CHECK(config.setFromCommandLineArguments(argc, argv));
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));

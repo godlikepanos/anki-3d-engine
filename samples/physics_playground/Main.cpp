@@ -348,7 +348,7 @@ int main(int argc, char* argv[])
 	Error err = Error::NONE;
 
 	MyApp* app = new MyApp;
-	err = app->init(argc, argv, argv[0]);
+	err = app->init(argc, argv, "physics_playground");
 	if(!err)
 	{
 		err = app->mainLoop();

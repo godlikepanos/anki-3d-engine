@@ -22,6 +22,7 @@
 #define ANKI_OPTIMIZE ${ANKI_OPTIMIZE}
 #define ANKI_TESTS ${ANKI_TESTS}
 #define ANKI_ENABLE_TRACE ${_ANKI_ENABLE_TRACE}
+#define ANKI_SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 
 // Compiler
 #if defined(__clang__)

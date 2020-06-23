@@ -7,8 +7,8 @@ AnKi 3D engine is a Linux and Windows opensource game engine that runs on Vulkan
 1 License
 =========
 
-AnKi's license is BSD. This practically means that you can use the source or parts of the source on proprietary and non
-proprietary products as long as you follow the conditions of the license.
+AnKi's license is `BSD`. This practically means that you can use the source or parts of the source on proprietary and
+non proprietary products as long as you follow the conditions of the license.
 
 See `LICENSE` file for more info.
 
@@ -84,11 +84,17 @@ Alternatively, recent Visual Studio versions support building CMake projects fro
 3 Next steps
 ============
 
-Try to build with `samples` enabled (search for the `ANKI_BUILD_SAMPLES=ON` option in your CMake GUI) and try running
-the sponza executable. Then you will be able to see sponza running in AnKi. All samples must run from within their
+This code repository contains **3 sample projects** that are built by default (`ANKI_BUILD_SAMPLES` CMake option):
+
+- `sponza`: The Crytek's Sponza scene
+- `simple_scene`: A simple scene
+- `physics_playground`: A scene with programmer's art and some physics interactions
+
+You can try running them and interacting with them. To run sponza, for example, execute the binary from any working
 directory.
 
-	$cd path/to/anki/samples/sponza
+On Linux:
+
 	$./path/to/build/bin/sponza
 
-More samples will follow.
+On Windows just find the `sponza.exe` and execute it.
