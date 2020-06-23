@@ -106,13 +106,13 @@ public:
 
 private:
 	Vec4 m_min
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= Vec4(MAX_F32)
 #endif
 		;
 
 	Vec4 m_max
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= Vec4(MIN_F32)
 #endif
 		;

@@ -110,19 +110,19 @@ public:
 
 private:
 	Vec4 m_center
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= Vec4(MAX_F32)
 #endif
 		;
 
 	Vec4 m_extend /// With identity rotation this points to max (front, right, top in our case)
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= Vec4(MAX_F32)
 #endif
 		;
 
 	Mat3x4 m_rotation
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= Mat3x4(MAX_F32)
 #endif
 		;

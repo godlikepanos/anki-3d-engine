@@ -52,6 +52,7 @@ layout(set = 0, binding = 16) uniform texture2D u_msDepthRt;
 layout(set = 0, binding = 17) uniform texture2D u_ssrRt;
 layout(set = 0, binding = 18) uniform texture2D u_ssaoRt;
 layout(set = 0, binding = 19) uniform texture2D u_ssgiRt;
+layout(set = 0, binding = 20) uniform texture2D u_resolvedSm;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;
@@ -69,12 +70,12 @@ layout(location = 0) out Vec3 out_color;
 
 void main()
 {
-	F32 depth = textureLod(u_msDepthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
-	Vec2 ndc = UV_TO_NDC(in_uv);
+	const F32 depth = textureLod(u_msDepthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
+	const Vec2 ndc = UV_TO_NDC(in_uv);
 
 	// Get world position
-	Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
-	Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get first light index
 	U32 idxOffset;
@@ -93,6 +94,10 @@ void main()
 	readGBuffer(u_msRt0, u_msRt1, u_msRt2, u_nearestAnyClampSampler, in_uv, 0.0, gbuffer);
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
 
+	// SM
+	Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);
+	U32 resolvedSmIdx = 0;
+
 	// SSAO
 	const F32 ssao = textureLod(u_ssaoRt, u_trilinearClampSampler, in_uv, 0.0).r;
 	gbuffer.m_diffuse *= ssao;
@@ -107,12 +112,8 @@ void main()
 		F32 shadowFactor;
 		if(u_dirLight.m_cascadeCount > 0)
 		{
-			const F32 linearDepth = linearizeDepth(depth, u_near, u_far);
-			const F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
-			const U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
-
-			shadowFactor =
-				computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex, u_trilinearClampSampler);
+			shadowFactor = resolvedSm[0];
+			++resolvedSmIdx;
 		}
 		else
 		{
@@ -139,7 +140,7 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			const F32 shadow = computeShadowFactorPointLight(light, frag2Light, u_shadowTex, u_trilinearClampSampler);
+			const F32 shadow = resolvedSm[resolvedSmIdx++];
 			lambert *= shadow;
 		}
 
@@ -158,7 +159,7 @@ void main()
 		const F32 shadowmapLayerIdx = light.m_shadowmapId;
 		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
 		{
-			const F32 shadow = computeShadowFactorSpotLight(light, worldPos, u_shadowTex, u_trilinearClampSampler);
+			const F32 shadow = resolvedSm[resolvedSmIdx++];
 			lambert *= shadow;
 		}
 

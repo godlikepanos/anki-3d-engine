@@ -108,7 +108,7 @@ public:
 		ANKI_ASSERT(size > 0 && alignment > 0);
 		PtrSize align = alignment;
 		void* out = m_alloc.allocate(size, &align);
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		memset(out, 0, size);
 #endif
 		return out;

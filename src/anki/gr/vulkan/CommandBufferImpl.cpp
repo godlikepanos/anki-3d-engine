@@ -256,11 +256,19 @@ void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 	ANKI_ASSERT(tex.getTextureType() != TextureType::_3D && "Not for 3D");
 	ANKI_ASSERT(tex.isSubresourceGoodForMipmapGeneration(view.getSubresource()));
 
+	const U32 blitCount = tex.getMipmapCount() - 1u;
+	if(blitCount == 0)
+	{
+		// Nothing to be done, flush the previous commands though because you may batch (and sort) things you shouldn't
+		flushBatches(CommandBufferCommandType::ANY_OTHER_COMMAND);
+		return;
+	}
+
 	const DepthStencilAspectBit aspect = view.getSubresource().m_depthStencilAspect;
 	const U32 face = view.getSubresource().m_firstFace;
 	const U32 layer = view.getSubresource().m_firstLayer;
 
-	for(U32 i = 0; i < tex.getMipmapCount() - 1u; ++i)
+	for(U32 i = 0; i < blitCount; ++i)
 	{
 		// Transition source
 		if(i > 0)
@@ -494,13 +502,13 @@ void CommandBufferImpl::flushBarriers()
 
 void CommandBufferImpl::flushQueryResets()
 {
-	if(m_queryResetAtomCount == 0)
+	if(m_queryResetAtoms.getSize() == 0)
 	{
 		return;
 	}
 
-	std::sort(&m_queryResetAtoms[0],
-		&m_queryResetAtoms[0] + m_queryResetAtomCount,
+	std::sort(m_queryResetAtoms.getBegin(),
+		m_queryResetAtoms.getEnd(),
 		[](const QueryResetAtom& a, const QueryResetAtom& b) -> Bool {
 			if(a.m_pool != b.m_pool)
 			{
@@ -514,7 +522,7 @@ void CommandBufferImpl::flushQueryResets()
 	U32 firstQuery = m_queryResetAtoms[0].m_queryIdx;
 	U32 queryCount = 1;
 	VkQueryPool pool = m_queryResetAtoms[0].m_pool;
-	for(U32 i = 1; i < m_queryResetAtomCount; ++i)
+	for(U32 i = 1; i < m_queryResetAtoms.getSize(); ++i)
 	{
 		const QueryResetAtom& crnt = m_queryResetAtoms[i];
 		const QueryResetAtom& prev = m_queryResetAtoms[i - 1];
@@ -538,7 +546,7 @@ void CommandBufferImpl::flushQueryResets()
 
 	vkCmdResetQueryPool(m_handle, pool, firstQuery, queryCount);
 
-	m_queryResetAtomCount = 0;
+	m_queryResetAtoms.destroy(m_alloc);
 }
 
 void CommandBufferImpl::flushWriteQueryResults()

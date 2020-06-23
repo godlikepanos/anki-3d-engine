@@ -101,11 +101,12 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 			m_recontruction.m_grProg[i] = variant->getProgram();
 		}
 
-		const TextureInitInfo initInfo = m_r->create2DRenderTargetInitInfo(width,
+		TextureInitInfo initInfo = m_r->create2DRenderTargetInitInfo(width,
 			height,
 			Format::B10G11R11_UFLOAT_PACK32,
 			TextureUsageBit::SAMPLED_ALL | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"SSGI");
+		initInfo.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		m_recontruction.m_rt = m_r->createAndClearRenderTarget(initInfo);
 	}
 
@@ -183,6 +184,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newDependency({m_runCtx.m_intermediateRts[WRITE], TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_runCtx.m_finalRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
+		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
 		rpass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {

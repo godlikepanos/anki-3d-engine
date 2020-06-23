@@ -363,18 +363,12 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 	ANKI_ASSERT(handle);
 
 #if ANKI_BATCH_COMMANDS
-	flushBatches(CommandBufferCommandType::RESET_OCCLUSION_QUERY);
-
-	if(m_queryResetAtoms.getSize() <= m_queryResetAtomCount)
-	{
-		m_queryResetAtoms.resize(m_alloc, max<U32>(2, m_queryResetAtomCount * 2));
-	}
+	flushBatches(CommandBufferCommandType::RESET_QUERY);
 
 	QueryResetAtom atom;
 	atom.m_pool = handle;
 	atom.m_queryIdx = idx;
-
-	m_queryResetAtoms[m_queryResetAtomCount++] = atom;
+	m_queryResetAtoms.emplaceBack(m_alloc, atom);
 #else
 	ANKI_CMD(vkCmdResetQueryPool(m_handle, handle, idx, 1), ANY_OTHER_COMMAND);
 #endif
@@ -404,6 +398,28 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 	ANKI_ASSERT(handle);
 
 	ANKI_CMD(vkCmdEndQuery(m_handle, handle, idx), ANY_OTHER_COMMAND);
+
+	m_microCmdb->pushObjectRef(query);
+}
+
+inline void CommandBufferImpl::resetTimestampQueryInternal(TimestampQueryPtr& query)
+{
+	commandCommon();
+
+	const VkQueryPool handle = static_cast<const TimestampQueryImpl&>(*query).m_handle.getQueryPool();
+	const U32 idx = static_cast<const TimestampQueryImpl&>(*query).m_handle.getQueryIndex();
+	ANKI_ASSERT(handle);
+
+#if ANKI_BATCH_COMMANDS
+	flushBatches(CommandBufferCommandType::RESET_QUERY);
+
+	QueryResetAtom atom;
+	atom.m_pool = handle;
+	atom.m_queryIdx = idx;
+	m_queryResetAtoms.emplaceBack(m_alloc, atom);
+#else
+	ANKI_CMD(vkCmdResetQueryPool(m_handle, handle, idx, 1), ANY_OTHER_COMMAND);
+#endif
 
 	m_microCmdb->pushObjectRef(query);
 }
@@ -589,7 +605,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Some checks
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 	if(m_state.getPrimitiveTopology() == PrimitiveTopology::LINES
 		|| m_state.getPrimitiveTopology() == PrimitiveTopology::LINE_STRIP)
 	{
@@ -631,7 +647,7 @@ inline void CommandBufferImpl::flushBatches(CommandBufferCommandType type)
 		case CommandBufferCommandType::SET_BARRIER:
 			flushBarriers();
 			break;
-		case CommandBufferCommandType::RESET_OCCLUSION_QUERY:
+		case CommandBufferCommandType::RESET_QUERY:
 			flushQueryResets();
 			break;
 		case CommandBufferCommandType::WRITE_QUERY_RESULT:
@@ -815,7 +831,7 @@ inline void CommandBufferImpl::setLineWidth(F32 width)
 	commandCommon();
 	vkCmdSetLineWidth(m_handle, width);
 
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 	m_lineWidthSet = true;
 #endif
 }

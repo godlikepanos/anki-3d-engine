@@ -16,6 +16,7 @@
 #include <anki/renderer/Ssr.h>
 #include <anki/renderer/Ssgi.h>
 #include <anki/renderer/GlobalIllumination.h>
+#include <anki/renderer/ShadowmapsResolve.h>
 #include <anki/core/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 
@@ -137,6 +138,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindColorTexture(0, 17, m_r->getSsr().getRt());
 		rgraphCtx.bindColorTexture(0, 18, m_r->getSsao().getRt());
 		rgraphCtx.bindColorTexture(0, 19, m_r->getSsgi().getRt());
+		rgraphCtx.bindColorTexture(0, 20, m_r->getShadowmapsResolve().getRt());
 
 		// Draw
 		drawQuad(cmdb);
@@ -206,6 +208,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getSsgi().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency({m_r->getShadowmapsResolve().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	// Refl & indirect
 	pass.newDependency({m_r->getSsr().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});

@@ -375,7 +375,7 @@ Error SpirvReflector::blockReflection(
 		// Store the block
 		blocks.emplaceBack(std::move(newBlock));
 	}
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 	else
 	{
 		DynamicArrayAuto<Var> vars(m_alloc);

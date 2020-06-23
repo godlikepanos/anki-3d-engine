@@ -91,13 +91,13 @@ public:
 
 private:
 	Vec4 m_normal
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= Vec4(MAX_F32)
 #endif
 		;
 
 	F32 m_offset
-#if ANKI_ASSERTS_ENABLED
+#if ANKI_ENABLE_ASSERTS
 		= MAX_F32
 #endif
 		;

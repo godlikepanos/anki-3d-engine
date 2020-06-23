@@ -54,3 +54,5 @@ ANKI_CONFIG_OPTION(r_avgObjectsPerCluster, 16, 16, 256)
 
 ANKI_CONFIG_OPTION(r_bloomThreshold, 2.5, 0.0, 256.0)
 ANKI_CONFIG_OPTION(r_bloomScale, 2.5, 0.0, 256.0)
+
+ANKI_CONFIG_OPTION(r_smResolveFactor, 0.5, 0.25, 1.0)

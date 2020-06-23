@@ -496,8 +496,7 @@ public:
 	/// Return the CString.
 	CStringType toCString() const
 	{
-		checkInit();
-		return CStringType(&m_data[0]);
+		return (!isEmpty()) ? CStringType(&m_data[0]) : CStringType();
 	}
 
 	/// Return true if it's empty.
