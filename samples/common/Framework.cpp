@@ -20,8 +20,6 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 		return Error::USER_DATA;
 	}
 
-	printf("%s\n", StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()).cstr());
-
 	// Init the super class
 	ConfigSet config = DefaultConfigSet::get();
 	config.set("window_fullscreen", true);

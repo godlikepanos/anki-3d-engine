@@ -210,6 +210,31 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 	StringListAuto paths(m_alloc);
 	paths.splitString(config.getString("rsrc_dataPaths"), ':');
 
+	// Workaround the fact that : is used in drives in Windows
+#if ANKI_OS_WINDOWS
+	StringListAuto paths2(m_alloc);
+	StringListAuto::Iterator it = paths.getBegin();
+	while(it != paths.getEnd())
+	{
+		const String& s = *it;
+		StringListAuto::Iterator it2 = it + 1;
+		if(s.getLength() == 1 && (s[0] >= 'a' && s[0] <= 'z') || (s[0] >= 'A' && s[0] <= 'Z') && it2 != paths.getEnd())
+		{
+			paths2.pushBackSprintf("%s:%s", s.cstr(), it2->cstr());
+			++it;
+		}
+		else
+		{
+			paths2.pushBack(s);
+		}
+
+		++it;
+	}
+
+	paths.destroy();
+	paths = std::move(paths2);
+#endif
+
 	if(paths.getSize() < 1)
 	{
 		ANKI_RESOURCE_LOGE("Config option \"rsrc_dataPaths\" is empty");
