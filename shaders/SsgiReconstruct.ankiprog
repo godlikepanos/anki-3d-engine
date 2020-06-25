@@ -93,11 +93,20 @@ void reconstructAll(Vec4 depthRefs, Vec3 masterColor)
 void main()
 {
 	const UVec2 IN_TEXTURE_SIZE = FB_SIZE / 2;
+
+	// Initialize the storage for all threads, including helpers. The check should be a constexpr
+	if((WORKGROUP_SIZE.x % IN_TEXTURE_SIZE.x) != 0 || (WORKGROUP_SIZE.y % IN_TEXTURE_SIZE.y) != 0)
+	{
+		s_colors[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec3(0.0);
+		s_depths[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec4(1000.0); // High value so it has low weight
+
+		memoryBarrierShared();
+		barrier();
+	}
+
 	ANKI_BRANCH if(gl_GlobalInvocationID.x >= IN_TEXTURE_SIZE.x || gl_GlobalInvocationID.y >= IN_TEXTURE_SIZE.y)
 	{
 		// Out of bounds
-		s_colors[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec3(0.0);
-		s_depths[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec4(1000.0); // High value so it has low weight
 		return;
 	}
 
