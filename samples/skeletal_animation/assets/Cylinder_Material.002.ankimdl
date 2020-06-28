@@ -1,0 +1,9 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/Cylinder.ankimesh</mesh>
+			<material>assets/Material.002.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+	<skeleton>assets/Armature.001.ankiskel</skeleton>
+</model>

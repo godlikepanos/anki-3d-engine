@@ -31,7 +31,7 @@ SkinComponent::~SkinComponent()
 	m_boneTrfs.destroy(m_node->getAllocator());
 }
 
-void SkinComponent::playAnimation(U track, AnimationResourcePtr anim, Second startTime, Bool repeat)
+void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, Second startTime, Bool repeat)
 {
 	m_tracks[track].m_anim = anim;
 	m_tracks[track].m_time = startTime;

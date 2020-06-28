@@ -1005,6 +1005,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
 
 	ANKI_CHECK(file.writeText("%s\n<skeleton>\n", XML_HEADER));
+	ANKI_CHECK(file.writeText("\t<bones>\n", XML_HEADER));
 
 	for(U32 i = 0; i < skin.joints_count; ++i)
 	{
@@ -1013,8 +1014,8 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 		StringAuto parent(m_alloc);
 
 		// Name & parent
-		ANKI_CHECK(file.writeText("\t<bone name=\"%s\" ", getNodeName(boneNode).cstr()));
-		if(boneNode.parent)
+		ANKI_CHECK(file.writeText("\t\t<bone name=\"%s\" ", getNodeName(boneNode).cstr()));
+		if(boneNode.parent && getNodeName(*boneNode.parent) != skin.name)
 		{
 			ANKI_CHECK(file.writeText("parent=\"%s\" ", getNodeName(*boneNode.parent).cstr()));
 		}
@@ -1031,7 +1032,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 		Transform trf;
 		ANKI_CHECK(getNodeTransform(boneNode, trf));
 		Mat4 mat{trf};
-		ANKI_CHECK(file.writeText("tansform=\""));
+		ANKI_CHECK(file.writeText("transform=\""));
 		for(U j = 0; j < 16; j++)
 		{
 			ANKI_CHECK(file.writeText("%f ", mat[j]));
@@ -1041,6 +1042,7 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 		ANKI_CHECK(file.writeText("/>\n"));
 	}
 
+	ANKI_CHECK(file.writeText("\t</bones>\n"));
 	ANKI_CHECK(file.writeText("</skeleton>\n"));
 
 	return Error::NONE;

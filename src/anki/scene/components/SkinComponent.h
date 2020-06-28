@@ -20,8 +20,8 @@ namespace anki
 class SkinComponent : public SceneComponent
 {
 public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::SKIN;
-	static const U MAX_ANIMATION_TRACKS = 2;
+	static constexpr SceneComponentType CLASS_TYPE = SceneComponentType::SKIN;
+	static constexpr U32 MAX_ANIMATION_TRACKS = 2;
 
 	SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton);
 
@@ -29,7 +29,7 @@ public:
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
-	void playAnimation(U track, AnimationResourcePtr anim, Second startTime, Bool repeat);
+	void playAnimation(U32 track, AnimationResourcePtr anim, Second startTime, Bool repeat);
 
 	const DynamicArray<Mat4>& getBoneTransforms() const
 	{

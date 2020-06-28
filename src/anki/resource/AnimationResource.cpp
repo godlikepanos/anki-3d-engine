@@ -27,7 +27,6 @@ AnimationResource::~AnimationResource()
 Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlElement el;
-	Second ftmp;
 
 	m_startTime = MAX_SECOND;
 	Second maxTime = MIN_SECOND;
@@ -66,9 +65,8 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 		AnimationChannel& ch = m_channels[channelCount];
 
 		// <name>
-		ANKI_CHECK(chEl.getChildElement("name", el));
 		CString strtmp;
-		ANKI_CHECK(el.getText(strtmp));
+		ANKI_CHECK(chEl.getAttributeText("name", strtmp));
 		ch.m_name.create(getAllocator(), strtmp);
 
 		XmlElement keysEl, keyEl;
@@ -89,16 +87,13 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 			{
 				AnimationKeyframe<Vec3>& key = ch.m_positions[count++];
 
-				// <time>
-				ANKI_CHECK(keyEl.getChildElement("time", el));
-				ANKI_CHECK(el.getNumber(ftmp));
-				key.m_time = ftmp;
-				m_startTime = std::min(m_startTime, key.m_time);
-				maxTime = std::max(maxTime, key.m_time);
+				// time
+				ANKI_CHECK(keyEl.getAttributeNumber("time", key.m_time));
+				m_startTime = min(m_startTime, key.m_time);
+				maxTime = max(maxTime, key.m_time);
 
-				// <value>
-				ANKI_CHECK(keyEl.getChildElement("value", el));
-				ANKI_CHECK(el.getNumbers(key.m_value));
+				// value
+				ANKI_CHECK(keyEl.getNumbers(key.m_value));
 
 				// Check ident
 				if(key.m_value == Vec3(0.0))
@@ -127,18 +122,13 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 			{
 				AnimationKeyframe<Quat>& key = ch.m_rotations[count++];
 
-				// <time>
-				ANKI_CHECK(keyEl.getChildElement("time", el));
-				ANKI_CHECK(el.getNumber(ftmp));
-				key.m_time = ftmp;
-				m_startTime = std::min(m_startTime, key.m_time);
-				maxTime = std::max(maxTime, key.m_time);
+				// time
+				ANKI_CHECK(keyEl.getAttributeNumber("time", key.m_time));
+				m_startTime = min(m_startTime, key.m_time);
+				maxTime = max(maxTime, key.m_time);
 
-				// <value>
-				Vec4 tmp2;
-				ANKI_CHECK(keyEl.getChildElement("value", el));
-				ANKI_CHECK(el.getNumbers(tmp2));
-				key.m_value = Quat(tmp2);
+				// value
+				ANKI_CHECK(keyEl.getNumbers(key.m_value));
 
 				// Check ident
 				if(key.m_value == Quat::getIdentity())
@@ -167,20 +157,17 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 			{
 				AnimationKeyframe<F32>& key = ch.m_scales[count++];
 
-				// <time>
-				ANKI_CHECK(keyEl.getChildElement("time", el));
-				ANKI_CHECK(el.getNumber(ftmp));
-				key.m_time = ftmp;
+				// time
+				ANKI_CHECK(keyEl.getAttributeNumber("time", key.m_time));
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
-				// <value>
+				// value
 				ANKI_CHECK(keyEl.getChildElement("value", el));
-				ANKI_CHECK(el.getNumber(ftmp));
-				key.m_value = F32(ftmp);
+				ANKI_CHECK(keyEl.getNumber(key.m_value));
 
 				// Check ident
-				if(isZero(key.m_value - 1.0))
+				if(isZero(key.m_value - 1.0f))
 				{
 					++identScaleCount;
 				}

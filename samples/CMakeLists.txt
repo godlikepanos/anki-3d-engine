@@ -1,3 +1,4 @@
 add_subdirectory(simple_scene)
 add_subdirectory(sponza)
 add_subdirectory(physics_playground)
+add_subdirectory(skeletal_animation)
