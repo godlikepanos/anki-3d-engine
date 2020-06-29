@@ -835,6 +835,64 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh, CString skinName)
 	return Error::NONE;
 }
 
+template<typename T>
+class GltfAnimKey
+{
+public:
+	Second m_time;
+	T m_value;
+};
+
+class GltfAnimChannel
+{
+public:
+	StringAuto m_name;
+	DynamicArrayAuto<GltfAnimKey<Vec3>> m_positions;
+	DynamicArrayAuto<GltfAnimKey<Quat>> m_rotations;
+	DynamicArrayAuto<GltfAnimKey<F32>> m_scales;
+
+	GltfAnimChannel(GenericMemoryPoolAllocator<U8> alloc)
+		: m_name(alloc)
+		, m_positions(alloc)
+		, m_rotations(alloc)
+		, m_scales(alloc)
+	{
+	}
+};
+
+/// Optimize out same animation keys.
+template<typename T>
+static void optimizeChannel(DynamicArrayAuto<GltfAnimKey<T>>& arr)
+{
+	if(arr.getSize() < 3)
+	{
+		return;
+	}
+
+	DynamicArrayAuto<GltfAnimKey<T>> newArr(arr.getAllocator());
+	newArr.emplaceBack(arr.getFront());
+	for(U32 i = 1; i < arr.getSize() - 1; ++i)
+	{
+		const GltfAnimKey<T>& left = arr[i - 1];
+		const GltfAnimKey<T>& middle = arr[i];
+		const GltfAnimKey<T>& right = arr[i + 1];
+
+		if(left.m_value == middle.m_value && middle.m_value == right.m_value)
+		{
+			// Skip it
+		}
+		else
+		{
+			newArr.emplaceBack(middle);
+		}
+	}
+	newArr.emplaceBack(arr.getBack());
+	ANKI_ASSERT(newArr.getSize() <= arr.getSize());
+
+	arr.destroy();
+	arr = std::move(newArr);
+}
+
 Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 {
 	StringAuto fname(m_alloc);
@@ -843,11 +901,11 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 
 	// Gather the channels
 	HashMapAuto<CString, Array<const cgltf_animation_channel*, 3>> channelMap(m_alloc);
-
+	U32 channelCount = 0;
 	for(U i = 0; i < anim.channels_count; ++i)
 	{
 		const cgltf_animation_channel& channel = anim.channels[i];
-		StringAuto channelName = getNodeName(*channel.target_node);
+		const StringAuto channelName = getNodeName(*channel.target_node);
 
 		U idx;
 		switch(channel.target_path)
@@ -875,26 +933,22 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			Array<const cgltf_animation_channel*, 3> arr = {};
 			arr[idx] = &channel;
 			channelMap.emplace(channelName.toCString(), arr);
+			++channelCount;
 		}
 	}
 
-	// Write file
-	File file;
-	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
-
-	ANKI_CHECK(file.writeText("%s\n<animation>\n", XML_HEADER));
-	ANKI_CHECK(file.writeText("\t<channels>\n"));
-
+	// Gather the keys
+	DynamicArrayAuto<GltfAnimChannel> tempChannels(m_alloc, channelCount, m_alloc);
+	channelCount = 0;
 	for(auto it = channelMap.getBegin(); it != channelMap.getEnd(); ++it)
 	{
 		Array<const cgltf_animation_channel*, 3> arr = *it;
-		const cgltf_animation_channel& channel = (arr[0]) ? *arr[0] : ((arr[1]) ? *arr[1] : *arr[2]);
-		StringAuto channelName = getNodeName(*channel.target_node);
+		const cgltf_animation_channel& anyChannel = (arr[0]) ? *arr[0] : ((arr[1]) ? *arr[1] : *arr[2]);
+		const StringAuto channelName = getNodeName(*anyChannel.target_node);
 
-		ANKI_CHECK(file.writeText("\t\t<channel name=\"%s\">\n", channelName.cstr()));
+		tempChannels[channelCount].m_name = channelName;
 
 		// Positions
-		ANKI_CHECK(file.writeText("\t\t\t<positionKeys>\n"));
 		if(arr[0])
 		{
 			const cgltf_animation_channel& channel = *arr[0];
@@ -910,17 +964,15 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 
 			for(U32 i = 0; i < keys.getSize(); ++i)
 			{
-				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n",
-					keys[i],
-					positions[i].x(),
-					positions[i].y(),
-					positions[i].z()));
+				GltfAnimKey<Vec3> key;
+				key.m_time = keys[i];
+				key.m_value = Vec3(positions[i].x(), positions[i].y(), positions[i].z());
+
+				tempChannels[channelCount].m_positions.emplaceBack(key);
 			}
 		}
-		ANKI_CHECK(file.writeText("\t\t\t</positionKeys>\n"));
 
 		// Rotations
-		ANKI_CHECK(file.writeText("\t\t\t<rotationKeys>\n"));
 		if(arr[1])
 		{
 			const cgltf_animation_channel& channel = *arr[1];
@@ -936,18 +988,15 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 
 			for(U32 i = 0; i < keys.getSize(); ++i)
 			{
-				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n",
-					keys[i],
-					rotations[i].x(),
-					rotations[i].y(),
-					rotations[i].z(),
-					rotations[i].w()));
+				GltfAnimKey<Quat> key;
+				key.m_time = keys[i];
+				key.m_value = Quat(rotations[i].x(), rotations[i].y(), rotations[i].z(), rotations[i].w());
+
+				tempChannels[channelCount].m_rotations.emplaceBack(key);
 			}
 		}
-		ANKI_CHECK(file.writeText("\t\t\t</rotationKeys>\n"));
 
 		// Scales
-		ANKI_CHECK(file.writeText("\t\t\t<scaleKeys>\n"));
 		if(arr[2])
 		{
 			const cgltf_animation_channel& channel = *arr[2];
@@ -971,7 +1020,79 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 					return Error::USER_DATA;
 				}
 
-				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f</key>\n", keys[i], scales[i].x()));
+				GltfAnimKey<F32> key;
+				key.m_time = keys[i];
+				key.m_value = scales[i][0];
+
+				if(absolute(key.m_value - 1.0f) <= scaleEpsilon)
+				{
+					key.m_value = 1.0f;
+				}
+
+				tempChannels[channelCount].m_scales.emplaceBack(key);
+			}
+		}
+
+		++channelCount;
+	}
+
+	// Optimize animation
+	for(GltfAnimChannel& channel : tempChannels)
+	{
+		optimizeChannel(channel.m_positions);
+		optimizeChannel(channel.m_rotations);
+		optimizeChannel(channel.m_scales);
+	}
+
+	// Write file
+	File file;
+	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
+
+	ANKI_CHECK(file.writeText("%s\n<animation>\n", XML_HEADER));
+	ANKI_CHECK(file.writeText("\t<channels>\n"));
+
+	for(const GltfAnimChannel& channel : tempChannels)
+	{
+		ANKI_CHECK(file.writeText("\t\t<channel name=\"%s\">\n", channel.m_name.cstr()));
+
+		// Positions
+		ANKI_CHECK(file.writeText("\t\t\t<positionKeys>\n"));
+		if(channel.m_positions.getSize())
+		{
+			for(const GltfAnimKey<Vec3>& key : channel.m_positions)
+			{
+				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n",
+					key.m_time,
+					key.m_value.x(),
+					key.m_value.y(),
+					key.m_value.z()));
+			}
+		}
+		ANKI_CHECK(file.writeText("\t\t\t</positionKeys>\n"));
+
+		// Rotations
+		ANKI_CHECK(file.writeText("\t\t\t<rotationKeys>\n"));
+		if(channel.m_rotations.getSize())
+		{
+			for(const GltfAnimKey<Quat>& key : channel.m_rotations)
+			{
+				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n",
+					key.m_time,
+					key.m_value.x(),
+					key.m_value.y(),
+					key.m_value.z(),
+					key.m_value.w()));
+			}
+		}
+		ANKI_CHECK(file.writeText("\t\t\t</rotationKeys>\n"));
+
+		// Scales
+		ANKI_CHECK(file.writeText("\t\t\t<scaleKeys>\n"));
+		if(channel.m_scales.getSize())
+		{
+			for(const GltfAnimKey<F32>& key : channel.m_scales)
+			{
+				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f</key>\n", key.m_time, key.m_value));
 			}
 		}
 		ANKI_CHECK(file.writeText("\t\t\t</scaleKeys>\n"));

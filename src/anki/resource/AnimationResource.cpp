@@ -231,6 +231,10 @@ void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Qu
 			}
 		}
 	}
+	else
+	{
+		pos = Vec3(0.0f);
+	}
 
 	// Rotation
 	if(channel.m_rotations.getSize() > 1)
@@ -246,6 +250,30 @@ void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Qu
 				break;
 			}
 		}
+	}
+	else
+	{
+		rot = Quat::getIdentity();
+	}
+
+	// Scale
+	if(channel.m_scales.getSize() > 1)
+	{
+		for(U32 i = 0; i < channel.m_scales.getSize() - 1; ++i)
+		{
+			const AnimationKeyframe<F32>& left = channel.m_scales[i];
+			const AnimationKeyframe<F32>& right = channel.m_scales[i + 1];
+			if(time >= left.m_time && time <= right.m_time)
+			{
+				const Second u = (time - left.m_time) / (right.m_time - left.m_time);
+				scale = linearInterpolate(left.m_value, right.m_value, F32(u));
+				break;
+			}
+		}
+	}
+	else
+	{
+		scale = 1.0f;
 	}
 }
 
