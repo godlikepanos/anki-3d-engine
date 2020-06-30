@@ -146,28 +146,16 @@ Vec4 g_tangent = in_tangent;
 #if ANKI_BONES
 void skinning()
 {
-	Vec3 position = Vec3(0.0);
-	Vec3 normal = Vec3(0.0);
-	Vec3 tangent = Vec3(0.0);
-	for(U32 i = 0; i < 4; ++i)
+	Mat4 skinMat = u_ankiBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
+	ANKI_UNROLL for(U32 i = 1; i < 4; ++i)
 	{
-		const U32 boneIdx = in_boneIndices[i];
-		if(boneIdx < 0xFFFF)
-		{
-			const F32 boneWeight = in_boneWeights[i];
-
-			position += (u_ankiBoneTransforms[boneIdx] * Vec4(g_position * boneWeight, 1.0)).xyz;
-#	if ANKI_PASS == PASS_GB
-			normal += (u_ankiBoneTransforms[boneIdx] * Vec4(g_normal * boneWeight, 0.0)).xyz;
-			tangent += (u_ankiBoneTransforms[boneIdx] * Vec4(g_tangent.xyz * boneWeight, 0.0)).xyz;
-#	endif
-		}
+		skinMat += u_ankiBoneTransforms[in_boneIndices[i]] * in_boneWeights[i];
 	}
 
-	g_position = position;
+	g_position = (skinMat * Vec4(g_position, 1.0)).xyz;
 #	if ANKI_PASS == PASS_GB
-	g_tangent.xyz = tangent;
-	g_normal = normal;
+	g_tangent.xyz = (skinMat * Vec4(g_tangent.xyz, 0.0)).xyz;
+	g_normal = (skinMat * Vec4(g_normal, 0.0)).xyz;
 #	endif
 }
 #endif

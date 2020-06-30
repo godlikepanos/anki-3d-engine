@@ -77,7 +77,7 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 
 			// Store
 			bonesAnimated.set(bone->getIndex());
-			m_boneTrfs[bone->getIndex()] = Mat4(position.xyz1(), Mat3(rotation), 1.0f) * bone->getVertexTransform();
+			m_boneTrfs[bone->getIndex()] = Mat4(position.xyz1(), Mat3(rotation), scale) * bone->getVertexTransform();
 		}
 
 		// Walk the bone hierarchy to add additional transforms
@@ -89,7 +89,7 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 
 void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated)
 {
-	Mat4 myTrf = parentTrf * bone.getTransform();
+	const Mat4 myTrf = parentTrf * bone.getTransform();
 
 	if(bonesAnimated.get(bone.getIndex()))
 	{

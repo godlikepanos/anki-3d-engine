@@ -1143,9 +1143,11 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 
 		// Bone transform
 		ANKI_CHECK(file.writeText("boneTransform=\""));
+		Mat4 btrf(&boneMats[i][0]);
+		btrf.transpose();
 		for(U32 j = 0; j < 16; j++)
 		{
-			ANKI_CHECK(file.writeText("%f ", boneMats[i][j]));
+			ANKI_CHECK(file.writeText("%f ", btrf[j]));
 		}
 		ANKI_CHECK(file.writeText("\" "));
 
