@@ -2,13 +2,13 @@
 local scene = getSceneGraph()
 local events = getEventManager()
 
-node = scene:newModelNode("Cylinder", "assets/Cylinder_Material.002.ankimdl")
+node = scene:newModelNode("droid.001", "assets/Mesh_Robot.001.ankimdl")
 trf = Transform.new()
 trf:setOrigin(Vec4.new(0.000000, 0.000000, 0.000000, 0))
 rot = Mat3x4.new()
-rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000)
+rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000)
 trf:setRotation(rot)
-trf:setScale(1.000000)
+trf:setScale(0.017834)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
 
 node = scene:newModelNode("room", "assets/room_room.ankimdl")

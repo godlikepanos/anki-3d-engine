@@ -1,0 +1,9 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/Mesh.ankimesh</mesh>
+			<material>assets/Robot.001.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+	<skeleton>assets/Armature.002.ankiskel</skeleton>
+</model>

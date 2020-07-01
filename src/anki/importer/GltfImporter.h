@@ -98,6 +98,13 @@ private:
 		visitAccessor<T>(accessor, [&](const T& val) { out.emplaceBack(val); });
 	}
 
+	StringAuto fixFilename(CString in) const
+	{
+		StringAuto out(m_alloc, in);
+		out.replaceAll("|", "_");
+		return out;
+	}
+
 	// Resources
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor);
 	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);

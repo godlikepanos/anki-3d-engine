@@ -205,6 +205,15 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 
 void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Quat& rot, F32& scale) const
 {
+	pos = Vec3(0.0f);
+	rot = Quat::getIdentity();
+	scale = 1.0f;
+
+	if(ANKI_UNLIKELY(time < m_startTime))
+	{
+		return;
+	}
+
 	// Audjust time
 	if(time > m_startTime + m_duration)
 	{
@@ -231,10 +240,6 @@ void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Qu
 			}
 		}
 	}
-	else
-	{
-		pos = Vec3(0.0f);
-	}
 
 	// Rotation
 	if(channel.m_rotations.getSize() > 1)
@@ -251,10 +256,6 @@ void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Qu
 			}
 		}
 	}
-	else
-	{
-		rot = Quat::getIdentity();
-	}
 
 	// Scale
 	if(channel.m_scales.getSize() > 1)
@@ -270,10 +271,6 @@ void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Qu
 				break;
 			}
 		}
-	}
-	else
-	{
-		scale = 1.0f;
 	}
 }
 

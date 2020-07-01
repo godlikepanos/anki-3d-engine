@@ -897,6 +897,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankianim", m_outDir.cstr(), anim.name);
+	fname = fixFilename(fname);
 	ANKI_GLTF_LOGI("Importing animation %s", fname.cstr());
 
 	// Gather the channels
