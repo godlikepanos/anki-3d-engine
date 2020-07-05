@@ -107,7 +107,7 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 		}
 
 		// <rotationKeys>
-		ANKI_CHECK(chEl.getChildElement("rotationKeys", keysEl));
+		ANKI_CHECK(chEl.getChildElementOptional("rotationKeys", keysEl));
 		if(keysEl)
 		{
 			ANKI_CHECK(keysEl.getChildElement("key", keyEl));

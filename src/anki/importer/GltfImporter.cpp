@@ -1057,9 +1057,9 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 		ANKI_CHECK(file.writeText("\t\t<channel name=\"%s\">\n", channel.m_name.cstr()));
 
 		// Positions
-		ANKI_CHECK(file.writeText("\t\t\t<positionKeys>\n"));
 		if(channel.m_positions.getSize())
 		{
+			ANKI_CHECK(file.writeText("\t\t\t<positionKeys>\n"));
 			for(const GltfAnimKey<Vec3>& key : channel.m_positions)
 			{
 				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f</key>\n",
@@ -1068,13 +1068,13 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 					key.m_value.y(),
 					key.m_value.z()));
 			}
+			ANKI_CHECK(file.writeText("\t\t\t</positionKeys>\n"));
 		}
-		ANKI_CHECK(file.writeText("\t\t\t</positionKeys>\n"));
 
 		// Rotations
-		ANKI_CHECK(file.writeText("\t\t\t<rotationKeys>\n"));
 		if(channel.m_rotations.getSize())
 		{
+			ANKI_CHECK(file.writeText("\t\t\t<rotationKeys>\n"));
 			for(const GltfAnimKey<Quat>& key : channel.m_rotations)
 			{
 				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f %f %f %f</key>\n",
@@ -1084,19 +1084,19 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 					key.m_value.z(),
 					key.m_value.w()));
 			}
+			ANKI_CHECK(file.writeText("\t\t\t</rotationKeys>\n"));
 		}
-		ANKI_CHECK(file.writeText("\t\t\t</rotationKeys>\n"));
 
 		// Scales
-		ANKI_CHECK(file.writeText("\t\t\t<scaleKeys>\n"));
 		if(channel.m_scales.getSize())
 		{
+			ANKI_CHECK(file.writeText("\t\t\t<scaleKeys>\n"));
 			for(const GltfAnimKey<F32>& key : channel.m_scales)
 			{
 				ANKI_CHECK(file.writeText("\t\t\t\t<key time=\"%f\">%f</key>\n", key.m_time, key.m_value));
 			}
+			ANKI_CHECK(file.writeText("\t\t\t</scaleKeys>\n"));
 		}
-		ANKI_CHECK(file.writeText("\t\t\t</scaleKeys>\n"));
 
 		ANKI_CHECK(file.writeText("\t\t</channel>\n"));
 	}
