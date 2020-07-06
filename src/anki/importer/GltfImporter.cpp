@@ -861,8 +861,9 @@ public:
 };
 
 /// Optimize out same animation keys.
-template<typename T>
-static void optimizeChannel(DynamicArrayAuto<GltfAnimKey<T>>& arr)
+template<typename T, typename TZeroFunc, typename TLerpFunc>
+static void optimizeChannel(
+	DynamicArrayAuto<GltfAnimKey<T>>& arr, const T& identity, TZeroFunc isZeroFunc, TLerpFunc lerpFunc)
 {
 	if(arr.getSize() < 3)
 	{
@@ -883,11 +884,28 @@ static void optimizeChannel(DynamicArrayAuto<GltfAnimKey<T>>& arr)
 		}
 		else
 		{
-			newArr.emplaceBack(middle);
+			const F32 factor = F32((middle.m_time - left.m_time) / (right.m_time - left.m_time));
+			ANKI_ASSERT(factor > 0.0f && factor < 1.0f);
+			const T lerpRez = lerpFunc(left.m_value, right.m_value, factor);
+			if(isZeroFunc(middle.m_value - lerpRez))
+			{
+				// It's redundant, skip it
+			}
+			else
+			{
+				newArr.emplaceBack(middle);
+			}
 		}
 	}
 	newArr.emplaceBack(arr.getBack());
 	ANKI_ASSERT(newArr.getSize() <= arr.getSize());
+
+	// Check if identity
+	if(newArr.getSize() == 2 && isZeroFunc(newArr[0].m_value - newArr[1].m_value)
+		&& isZeroFunc(newArr[0].m_value - identity))
+	{
+		newArr.destroy();
+	}
 
 	arr.destroy();
 	arr = std::move(newArr);
@@ -1038,11 +1056,21 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	}
 
 	// Optimize animation
+	constexpr F32 KILL_EPSILON = 0.001f; // 1 millimiter
 	for(GltfAnimChannel& channel : tempChannels)
 	{
-		optimizeChannel(channel.m_positions);
-		optimizeChannel(channel.m_rotations);
-		optimizeChannel(channel.m_scales);
+		optimizeChannel(channel.m_positions,
+			Vec3(0.0f),
+			[](const Vec3& a) -> Bool { return a.abs() < KILL_EPSILON; },
+			[](const Vec3& a, const Vec3& b, F32 u) -> Vec3 { return linearInterpolate(a, b, u); });
+		optimizeChannel(channel.m_rotations,
+			Quat::getIdentity(),
+			[](const Quat& a) -> Bool { return a.abs() < Quat(EPSILON * 20.0f); },
+			[](const Quat& a, const Quat& b, F32 u) -> Quat { return a.slerp(b, u); });
+		optimizeChannel(channel.m_scales,
+			1.0f,
+			[](const F32& a) -> Bool { return absolute(a) < KILL_EPSILON; },
+			[](const F32& a, const F32& b, F32 u) -> F32 { return linearInterpolate(a, b, u); });
 	}
 
 	// Write file

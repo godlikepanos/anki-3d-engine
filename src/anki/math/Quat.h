@@ -72,7 +72,7 @@ public:
 	{
 	}
 
-	explicit TQuat(const TVec<T, 4>& v)
+	TQuat(const Base& v)
 		: Base(v.x(), v.y(), v.z(), v.w())
 	{
 	}
