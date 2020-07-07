@@ -36,6 +36,11 @@ public:
 		return m_boneTrfs;
 	}
 
+	const SkeletonResourcePtr& getSkeleronResource() const
+	{
+		return m_skeleton;
+	}
+
 private:
 	class Track
 	{

@@ -382,6 +382,50 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps,
 	cmdb->drawElements(PrimitiveTopology::LINES, indexCount, mvps.getSize());
 }
 
+void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps,
+	const Vec4& color,
+	F32 lineSize,
+	Bool ditherFailedDepth,
+	ConstWeakArray<Vec3> lines,
+	StagingGpuMemoryManager& stagingGpuAllocator,
+	CommandBufferPtr& cmdb) const
+{
+	ANKI_ASSERT(mvps.getSize() > 0);
+	ANKI_ASSERT(lines.getSize() > 0 && (lines.getSize() % 2) == 0);
+
+	// Verts
+	StagingGpuMemoryToken vertsToken;
+	Vec3* verts = static_cast<Vec3*>(
+		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * lines.getSize(), StagingGpuMemoryType::VERTEX, vertsToken));
+	memcpy(verts, lines.getBegin(), lines.getSizeInBytes());
+
+	// Set the uniforms
+	StagingGpuMemoryToken unisToken;
+	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(
+		sizeof(Mat4) * mvps.getSize() + sizeof(Vec4), StagingGpuMemoryType::UNIFORM, unisToken));
+
+	memcpy(pmvps, &mvps[0], mvps.getSizeInBytes());
+	Vec4* pcolor = reinterpret_cast<Vec4*>(pmvps + mvps.getSize());
+	*pcolor = color;
+
+	// Setup state
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
+	variantInitInfo.addMutation("COLOR_TEXTURE", 0);
+	variantInitInfo.addMutation("DITHERED_DEPTH_TEST", U32(ditherFailedDepth != 0));
+	variantInitInfo.addConstant("INSTANCE_COUNT", mvps.getSize());
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(variantInitInfo, variant);
+	cmdb->bindShaderProgram(variant->getProgram());
+
+	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(Vec3));
+
+	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
+
+	cmdb->setLineWidth(lineSize);
+	cmdb->drawArrays(PrimitiveTopology::LINES, lines.getSize(), mvps.getSize());
+}
+
 void DebugDrawer2::drawBillboardTextures(const Mat4& projMat,
 	const Mat4& viewMat,
 	ConstWeakArray<Vec3> positions,

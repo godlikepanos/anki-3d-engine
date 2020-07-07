@@ -102,6 +102,7 @@ private:
 	{
 		StringAuto out(m_alloc, in);
 		out.replaceAll("|", "_");
+		out.replaceAll(" ", "_");
 		return out;
 	}
 

@@ -247,6 +247,40 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		ctx.m_frameAllocator.deleteArray(mvps, userData.getSize());
 
+		// Bones
+		if(m_model->getSkeleton())
+		{
+			const SkinComponent& skinc = getComponentAt<SkinComponent>(0);
+			SkeletonResourcePtr skeleton = skinc.getSkeleronResource();
+			const U32 boneCount = skinc.getBoneTransforms().getSize();
+
+			Vec3* lines = ctx.m_frameAllocator.newArray<Vec3>(boneCount * 2);
+			for(U32 i = 0; i < boneCount; ++i)
+			{
+				const Bone& bone = skeleton->getBones()[i];
+				ANKI_ASSERT(bone.getIndex() == i);
+				const Vec4 point(0.0f, 0.0f, 0.0f, 1.0f);
+				const Bone* parent = bone.getParent();
+				Mat4 m = (parent)
+							 ? skinc.getBoneTransforms()[parent->getIndex()] * parent->getVertexTransform().getInverse()
+							 : Mat4::getIdentity();
+				lines[i * 2] = (m * point).xyz();
+				m = skinc.getBoneTransforms()[i] * bone.getVertexTransform().getInverse();
+				lines[i * 2 + 1] = (m * point).xyz();
+			}
+
+			const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(getComponent<MoveComponent>().getWorldTransform());
+			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1),
+				Vec4(1, 1, 1, 1),
+				10.0f,
+				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+				ConstWeakArray<Vec3>(lines, boneCount * 2),
+				*ctx.m_stagingGpuAllocator,
+				cmdb);
+
+			ctx.m_frameAllocator.deleteArray(lines, boneCount * 2);
+		}
+
 		// Restore state
 		if(!enableDepthTest)
 		{

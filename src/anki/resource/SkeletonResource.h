@@ -52,6 +52,11 @@ public:
 		return ConstWeakArray<Bone*>((m_childrenCount) ? &m_children[0] : nullptr, m_childrenCount);
 	}
 
+	const Bone* getParent() const
+	{
+		return m_parent;
+	}
+
 private:
 	String m_name; ///< The name of the bone
 

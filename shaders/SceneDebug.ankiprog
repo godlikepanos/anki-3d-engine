@@ -8,6 +8,12 @@
 
 ANKI_SPECIALIZATION_CONSTANT_U32(INSTANCE_COUNT, 0, 1);
 
+layout(set = 1, binding = 0, row_major) uniform u0_
+{
+	Mat4 u_mvp[INSTANCE_COUNT];
+	Vec4 u_color;
+};
+
 #pragma anki start vert
 #include <shaders/Common.glsl>
 
@@ -16,12 +22,6 @@ layout(location = 0) in Vec3 in_position;
 layout(location = 1) in Vec2 in_uv;
 layout(location = 0) out Vec2 out_uv;
 #endif
-
-layout(set = 1, binding = 0, row_major) uniform u0_
-{
-	Mat4 u_mvp[INSTANCE_COUNT];
-	Vec4 u_color;
-};
 
 out gl_PerVertex
 {
@@ -45,12 +45,6 @@ layout(location = 0) in Vec2 in_uv;
 layout(set = 1, binding = 1) uniform sampler u_trilinearRepeatSampler;
 layout(set = 1, binding = 2) uniform texture2D u_tex;
 #endif
-
-layout(set = 1, binding = 0, row_major) uniform u0_
-{
-	Mat4 u_mvp[INSTANCE_COUNT];
-	Vec4 u_color;
-};
 
 // NOTE: Don't eliminate the binding because it confuses the descriptor set creation
 #if DITHERED_DEPTH_TEST == 1

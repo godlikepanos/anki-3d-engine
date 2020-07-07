@@ -19,7 +19,7 @@ public:
 		ANKI_CHECK(getResourceManager().loadResource("assets/scene.lua", script));
 		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
-		ANKI_CHECK(getResourceManager().loadResource("assets/Armature.002_Take 001_BaseLayer.ankianim", m_anim));
+		ANKI_CHECK(getResourceManager().loadResource("assets/Armature.002_Take_001_BaseLayer.ankianim", m_anim));
 		getSceneGraph().findSceneNode("droid.001").getComponent<SkinComponent>().playAnimation(0, m_anim, 0.0, true);
 
 		getMainRenderer().getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f));
