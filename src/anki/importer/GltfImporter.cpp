@@ -1061,16 +1061,16 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 	{
 		optimizeChannel(channel.m_positions,
 			Vec3(0.0f),
-			[](const Vec3& a) -> Bool { return a.abs() < KILL_EPSILON; },
-			[](const Vec3& a, const Vec3& b, F32 u) -> Vec3 { return linearInterpolate(a, b, u); });
+			[&](const Vec3& a) -> Bool { return a.abs() < KILL_EPSILON; },
+			[&](const Vec3& a, const Vec3& b, F32 u) -> Vec3 { return linearInterpolate(a, b, u); });
 		optimizeChannel(channel.m_rotations,
 			Quat::getIdentity(),
-			[](const Quat& a) -> Bool { return a.abs() < Quat(EPSILON * 20.0f); },
-			[](const Quat& a, const Quat& b, F32 u) -> Quat { return a.slerp(b, u); });
+			[&](const Quat& a) -> Bool { return a.abs() < Quat(EPSILON * 20.0f); },
+			[&](const Quat& a, const Quat& b, F32 u) -> Quat { return a.slerp(b, u); });
 		optimizeChannel(channel.m_scales,
 			1.0f,
-			[](const F32& a) -> Bool { return absolute(a) < KILL_EPSILON; },
-			[](const F32& a, const F32& b, F32 u) -> F32 { return linearInterpolate(a, b, u); });
+			[&](const F32& a) -> Bool { return absolute(a) < KILL_EPSILON; },
+			[&](const F32& a, const F32& b, F32 u) -> F32 { return linearInterpolate(a, b, u); });
 	}
 
 	// Write file
