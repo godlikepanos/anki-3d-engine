@@ -45,6 +45,9 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 	updated = false;
 	const Second timeDiff = crntTime - prevTime;
 
+	Vec4 minExtend(MAX_F32, MAX_F32, MAX_F32, 0.0f);
+	Vec4 maxExtend(MIN_F32, MIN_F32, MIN_F32, 0.0f);
+
 	for(Track& track : m_tracks)
 	{
 		if(!track.m_anim.isCreated())
@@ -81,13 +84,21 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 		}
 
 		// Walk the bone hierarchy to add additional transforms
-		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated);
+		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated, minExtend, maxExtend);
+	}
+
+	if(updated)
+	{
+		const Vec4 E{EPSILON, EPSILON, EPSILON, 0.0f};
+		m_boneBoundingVolume.setMin(minExtend - E);
+		m_boneBoundingVolume.setMax(maxExtend + E);
 	}
 
 	return Error::NONE;
 }
 
-void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated)
+void SkinComponent::visitBones(
+	const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend)
 {
 	Mat4 outMat;
 
@@ -102,9 +113,14 @@ void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const Bi
 
 	m_boneTrfs[bone.getIndex()] = outMat * bone.getVertexTransform();
 
+	// Update volume
+	const Vec4 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	minExtend = minExtend.min(bonePos.xyz0());
+	maxExtend = maxExtend.max(bonePos.xyz0());
+
 	for(const Bone* child : bone.getChildren())
 	{
-		visitBones(*child, outMat, bonesAnimated);
+		visitBones(*child, outMat, bonesAnimated, minExtend, maxExtend);
 	}
 }
 
