@@ -254,7 +254,9 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			SkeletonResourcePtr skeleton = skinc.getSkeleronResource();
 			const U32 boneCount = skinc.getBoneTransforms().getSize();
 
-			Vec3* lines = ctx.m_frameAllocator.newArray<Vec3>(boneCount * 2);
+			DynamicArrayAuto<Vec3> lines(ctx.m_frameAllocator);
+			lines.resizeStorage(boneCount * 2);
+			DynamicArrayAuto<Vec3> chidlessLines(ctx.m_frameAllocator);
 			for(U32 i = 0; i < boneCount; ++i)
 			{
 				const Bone& bone = skeleton->getBones()[i];
@@ -264,21 +266,40 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 				Mat4 m = (parent)
 							 ? skinc.getBoneTransforms()[parent->getIndex()] * parent->getVertexTransform().getInverse()
 							 : Mat4::getIdentity();
-				lines[i * 2] = (m * point).xyz();
+				const Vec3 a = (m * point).xyz();
+
 				m = skinc.getBoneTransforms()[i] * bone.getVertexTransform().getInverse();
-				lines[i * 2 + 1] = (m * point).xyz();
+				const Vec3 b = (m * point).xyz();
+
+				lines.emplaceBack(a);
+				lines.emplaceBack(b);
+
+				if(bone.getChildren().getSize() == 0)
+				{
+					// If there are not children try to draw something for that bone as well
+					chidlessLines.emplaceBack(b);
+					const F32 len = (b - a).getLength();
+					const Vec3 c = b + (b - a).getNormalized() * len;
+					chidlessLines.emplaceBack(c);
+				}
 			}
 
 			const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(getComponent<MoveComponent>().getWorldTransform());
 			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1),
-				Vec4(1, 1, 1, 1),
-				10.0f,
+				Vec4(1.0f),
+				20.0f,
 				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-				ConstWeakArray<Vec3>(lines, boneCount * 2),
+				lines,
 				*ctx.m_stagingGpuAllocator,
 				cmdb);
 
-			ctx.m_frameAllocator.deleteArray(lines, boneCount * 2);
+			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1),
+				Vec4(0.7f, 0.7f, 0.7f, 1.0f),
+				5.0f,
+				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+				chidlessLines,
+				*ctx.m_stagingGpuAllocator,
+				cmdb);
 		}
 
 		// Restore state

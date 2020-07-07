@@ -39,6 +39,7 @@ void main()
 
 #pragma anki start frag
 #include <shaders/Common.glsl>
+#include <shaders/ImportanceSampling.glsl>
 
 #if COLOR_TEXTURE == 1
 layout(location = 0) in Vec2 in_uv;
@@ -58,11 +59,13 @@ void main()
 {
 	// Check if we should skip the frag
 #if DITHERED_DEPTH_TEST == 1
+	const UVec2 random = rand3DPCG16(UVec3(UVec2(gl_FragCoord.xy), 1)).xy;
+	const Vec2 noise = Vec2(random) / 65536.0;
+	const F32 factor = noise.x * noise.y;
 	const Vec2 uv = gl_FragCoord.xy / Vec2(textureSize(u_depthRt, 0));
 	const F32 depthRef = textureLod(u_depthRt, u_nearestAnyClampSampler, uv, 0.0).r;
 	const Bool depthTestFailed = gl_FragCoord.z >= depthRef;
-	const IVec2 fragCoordi = IVec2(gl_FragCoord.xy);
-	if(depthTestFailed && ((fragCoordi.x + fragCoordi.y) % 8) != 0)
+	if(depthTestFailed && factor < 0.5)
 	{
 		discard;
 	}
