@@ -2,7 +2,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/room.003.ankimesh</mesh>
-			<material>assets/room_blue.ankimtl</material>
+			<material>assets/room.blue.ankimtl</material>
 		</modelPatch>
 	</modelPatches>
 </model>
