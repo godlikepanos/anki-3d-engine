@@ -42,7 +42,9 @@ public:
 		{
 			AnimationPlayInfo animInfo;
 			animInfo.m_startTime = 0.5;
-			animInfo.m_repeatTimes = 2.0;
+			animInfo.m_repeatTimes = 3.0;
+			animInfo.m_blendInTime = 0.5;
+			animInfo.m_blendOutTime = 0.35;
 			getSceneGraph()
 				.findSceneNode("droid.001")
 				.getComponent<SkinComponent>()

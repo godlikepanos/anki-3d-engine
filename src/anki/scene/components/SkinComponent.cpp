@@ -20,22 +20,38 @@ SkinComponent::SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton)
 	ANKI_ASSERT(node);
 
 	m_boneTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize());
-	for(Mat4& trf : m_boneTrfs)
+	m_animationTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize());
+
+	for(U32 i = 0; i < m_boneTrfs.getSize(); ++i)
 	{
-		trf.setIdentity();
+		m_boneTrfs[i].setIdentity();
+		m_animationTrfs[i] = {Vec3(0.0f), Quat::getIdentity(), 1.0f};
 	}
 }
 
 SkinComponent::~SkinComponent()
 {
 	m_boneTrfs.destroy(m_node->getAllocator());
+	m_animationTrfs.destroy(m_node->getAllocator());
 }
 
 void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)
 {
+	const Second animDuration = anim->getDuration();
+
 	m_tracks[track].m_anim = anim;
 	m_tracks[track].m_absoluteStartTime = m_absoluteTime + info.m_startTime;
 	m_tracks[track].m_relativeTimePassed = 0.0;
+	if(info.m_repeatTimes > 0.0)
+	{
+		m_tracks[track].m_blendInTime = min(animDuration * info.m_repeatTimes, info.m_blendInTime);
+		m_tracks[track].m_blendOutTime = min(animDuration * info.m_repeatTimes, info.m_blendOutTime);
+	}
+	else
+	{
+		m_tracks[track].m_blendInTime = info.m_blendInTime;
+		m_tracks[track].m_blendOutTime = 0.0; // Irrelevant
+	}
 	m_tracks[track].m_repeatTimes = info.m_repeatTimes;
 }
 
@@ -64,9 +80,10 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 			continue;
 		}
 
-		const Second animationDuration = track.m_anim->getDuration();
+		const Second clipDuration = track.m_anim->getDuration();
+		const Second animationDuration = track.m_repeatTimes * clipDuration;
 
-		if(track.m_repeatTimes > 0.0 && track.m_relativeTimePassed > track.m_repeatTimes * animationDuration)
+		if(track.m_repeatTimes > 0.0 && track.m_relativeTimePassed > animationDuration)
 		{
 			// Animation finished
 			continue;
@@ -87,6 +104,7 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 				ANKI_SCENE_LOGW("Animation is referencing unknown bone \"%s\"", &channel.m_name[0]);
 				continue;
 			}
+			const U32 boneIdx = bone->getIndex();
 
 			// Interpolate
 			Vec3 position;
@@ -94,9 +112,44 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 			F32 scale;
 			track.m_anim->interpolate(i, animTime, position, rotation, scale);
 
+			// Blend with previous track
+			if(bonesAnimated.get(boneIdx) && (track.m_blendInTime > 0.0 || track.m_blendOutTime > 0.0))
+			{
+				F32 blendInFactor;
+				if(track.m_blendInTime > 0.0)
+				{
+					blendInFactor = min(1.0f, F32(animTime / track.m_blendInTime));
+				}
+				else
+				{
+					blendInFactor = 1.0f;
+				}
+
+				F32 blendOutFactor;
+				if(track.m_blendOutTime > 0.0)
+				{
+					blendOutFactor = min(1.0f, F32((animationDuration - animTime) / track.m_blendOutTime));
+				}
+				else
+				{
+					blendOutFactor = 1.0f;
+				}
+
+				const F32 factor = blendInFactor * blendOutFactor;
+
+				if(factor < 1.0f)
+				{
+					const Trf& prevTrf = m_animationTrfs[boneIdx];
+
+					position = linearInterpolate(prevTrf.m_translation, position, factor);
+					rotation = prevTrf.m_rotation.slerp(rotation, factor);
+					scale = linearInterpolate(prevTrf.m_scale, scale, factor);
+				}
+			}
+
 			// Store
-			bonesAnimated.set(bone->getIndex());
-			m_boneTrfs[bone->getIndex()] = Mat4(position.xyz1(), Mat3(rotation), scale);
+			bonesAnimated.set(boneIdx);
+			m_animationTrfs[boneIdx] = {position, rotation, scale};
 		}
 	}
 
@@ -125,7 +178,8 @@ void SkinComponent::visitBones(
 
 	if(bonesAnimated.get(bone.getIndex()))
 	{
-		outMat = parentTrf * m_boneTrfs[bone.getIndex()];
+		const Trf& t = m_animationTrfs[bone.getIndex()];
+		outMat = parentTrf * Mat4(t.m_translation.xyz1(), Mat3(t.m_rotation), t.m_scale);
 	}
 	else
 	{

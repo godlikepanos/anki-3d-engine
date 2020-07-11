@@ -26,6 +26,12 @@ public:
 
 	/// Negative means infinite.
 	F32 m_repeatTimes = 1.0f;
+
+	/// The time from when the animation starts until it fully replaces the animations of previous tracks.
+	Second m_blendInTime = 0.0f;
+
+	/// The time from when the animation ends until it until it has zero influence to the animations of previous tracks.
+	Second m_blendOutTime = 0.0f;
 };
 
 /// Skin component.
@@ -65,12 +71,23 @@ private:
 		AnimationResourcePtr m_anim;
 		Second m_absoluteStartTime = 0.0;
 		Second m_relativeTimePassed = 0.0;
+		Second m_blendInTime = 0.0;
+		Second m_blendOutTime = 0.0f;
 		F32 m_repeatTimes = 1.0f;
+	};
+
+	class Trf
+	{
+	public:
+		Vec3 m_translation;
+		Quat m_rotation;
+		F32 m_scale;
 	};
 
 	SceneNode* m_node;
 	SkeletonResourcePtr m_skeleton;
 	DynamicArray<Mat4> m_boneTrfs;
+	DynamicArray<Trf> m_animationTrfs;
 	Aabb m_boneBoundingVolume{Vec3(-1.0f), Vec3(1.0f)};
 	Array<Track, MAX_ANIMATION_TRACKS> m_tracks;
 	Second m_absoluteTime = 0.0;
