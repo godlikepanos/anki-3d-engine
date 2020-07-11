@@ -11,20 +11,45 @@ using namespace anki;
 class MyApp : public SampleApp
 {
 public:
-	AnimationResourcePtr m_anim;
+	AnimationResourcePtr m_floatAnim;
+	AnimationResourcePtr m_waveAnim;
 
-	Error sampleExtraInit()
+	Error sampleExtraInit() override
 	{
 		ScriptResourcePtr script;
 		ANKI_CHECK(getResourceManager().loadResource("assets/scene.lua", script));
 		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
-		ANKI_CHECK(getResourceManager().loadResource("assets/Armature.002_Take_001_BaseLayer.ankianim", m_anim));
-		getSceneGraph().findSceneNode("droid.001").getComponent<SkinComponent>().playAnimation(0, m_anim, 0.0, true);
+		ANKI_CHECK(getResourceManager().loadResource("assets/float.001.ankianim", m_floatAnim));
+		ANKI_CHECK(getResourceManager().loadResource("assets/wave.001.ankianim", m_waveAnim));
+
+		AnimationPlayInfo animInfo;
+		animInfo.m_startTime = 2.0;
+		animInfo.m_repeatTimes = -1.0;
+		getSceneGraph()
+			.findSceneNode("droid.001")
+			.getComponent<SkinComponent>()
+			.playAnimation(0, m_floatAnim, animInfo);
 
 		getMainRenderer().getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f));
 		getMainRenderer().getOffscreenRenderer().getVolumetricFog().setParticleDensity(2.0f);
 		return Error::NONE;
+	}
+
+	Error userMainLoop(Bool& quit) override
+	{
+		if(getInput().getKey(KeyCode::H) == 1)
+		{
+			AnimationPlayInfo animInfo;
+			animInfo.m_startTime = 0.5;
+			animInfo.m_repeatTimes = 2.0;
+			getSceneGraph()
+				.findSceneNode("droid.001")
+				.getComponent<SkinComponent>()
+				.playAnimation(1, m_waveAnim, animInfo);
+		}
+
+		return SampleApp::userMainLoop(quit);
 	}
 };
 

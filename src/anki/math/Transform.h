@@ -34,9 +34,18 @@ public:
 
 	explicit TTransform(const TMat<T, 4, 4>& m4)
 	{
-		m_rotation = TMat<T, 3, 4>(m4.getRotationPart());
+		const TVec<T, 3> s0 = m4.getColumn(0).xyz();
+		const TVec<T, 3> s1 = m4.getColumn(1).xyz();
+		const TVec<T, 3> s2 = m4.getColumn(2).xyz();
+
+		const TVec<T, 3> scales{s0.getLength(), s1.getLength(), s2.getLength()};
+		const T E = T(0.001);
+		ANKI_ASSERT(
+			isZero(scales.x() - scales.y(), E) && isZero(scales.y() - scales.z(), E) && "Expecting uniform scale");
+
+		m_rotation.setColumns(s0 / scales.x(), s1 / scales.y(), s2 / scales.z(), TVec<T, 3>{0.0});
 		m_origin = m4.getTranslationPart().xyz0();
-		m_scale = 1.0;
+		m_scale = scales.x();
 		checkW();
 	}
 
