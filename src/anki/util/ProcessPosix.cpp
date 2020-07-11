@@ -148,6 +148,7 @@ Error Process::kill(ProcessKillSignal k)
 		break;
 	default:
 		ANKI_ASSERT(0);
+		sig = 0;
 	};
 
 	const pid_t p = ::kill(m_pid, sig);

@@ -940,6 +940,7 @@ Error GltfImporter::writeAnimation(const cgltf_animation& anim)
 			break;
 		default:
 			ANKI_ASSERT(0);
+			idx = 0;
 		}
 
 		auto it = channelMap.find(channelName.toCString());

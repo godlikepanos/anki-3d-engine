@@ -46,10 +46,10 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 	updated = false;
 	const Second dt = crntTime - prevTime;
 
-	Vec4 minExtend{MAX_F32, MAX_F32, MAX_F32, 0.0f};
-	Vec4 maxExtend{MIN_F32, MIN_F32, MIN_F32, 0.0f};
+	Vec4 minExtend(MAX_F32, MAX_F32, MAX_F32, 0.0f);
+	Vec4 maxExtend(MIN_F32, MIN_F32, MIN_F32, 0.0f);
 
-	BitSet<128> bonesAnimated{false};
+	BitSet<128> bonesAnimated(false);
 
 	for(Track& track : m_tracks)
 	{
@@ -108,7 +108,7 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 		// Walk the bone hierarchy to add additional transforms
 		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated, minExtend, maxExtend);
 
-		const Vec4 E{EPSILON, EPSILON, EPSILON, 0.0f};
+		const Vec4 E(EPSILON, EPSILON, EPSILON, 0.0f);
 		m_boneBoundingVolume.setMin(minExtend - E);
 		m_boneBoundingVolume.setMax(maxExtend + E);
 	}
@@ -135,7 +135,7 @@ void SkinComponent::visitBones(
 	m_boneTrfs[bone.getIndex()] = outMat * bone.getVertexTransform();
 
 	// Update volume
-	const Vec4 bonePos = outMat * Vec4{0.0f, 0.0f, 0.0f, 1.0f};
+	const Vec4 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	minExtend = minExtend.min(bonePos.xyz0());
 	maxExtend = maxExtend.max(bonePos.xyz0());
 
