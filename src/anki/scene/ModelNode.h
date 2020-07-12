@@ -40,16 +40,18 @@ public:
 
 private:
 	class MoveFeedbackComponent;
+	class SkinFeedbackComponent;
 
 	ModelResourcePtr m_model; ///< The resource
 
-	Obb m_obb;
+	Obb m_obbLocal;
+	Obb m_obbWorld;
 	U64 m_mergeKey = 0;
 	U32 m_modelPatchIdx = 0;
 
 	DebugDrawer2 m_dbgDrawer;
 
-	void onMoveComponentUpdate(const MoveComponent& move);
+	void updateSpatialComponent(const MoveComponent& move);
 
 	void draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) const;
 };

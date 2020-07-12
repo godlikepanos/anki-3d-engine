@@ -27,7 +27,6 @@ AnimationResource::~AnimationResource()
 Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlElement el;
-	Second ftmp;
 
 	m_startTime = MAX_SECOND;
 	Second maxTime = MIN_SECOND;
@@ -66,9 +65,8 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 		AnimationChannel& ch = m_channels[channelCount];
 
 		// <name>
-		ANKI_CHECK(chEl.getChildElement("name", el));
 		CString strtmp;
-		ANKI_CHECK(el.getText(strtmp));
+		ANKI_CHECK(chEl.getAttributeText("name", strtmp));
 		ch.m_name.create(getAllocator(), strtmp);
 
 		XmlElement keysEl, keyEl;
@@ -89,16 +87,13 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 			{
 				AnimationKeyframe<Vec3>& key = ch.m_positions[count++];
 
-				// <time>
-				ANKI_CHECK(keyEl.getChildElement("time", el));
-				ANKI_CHECK(el.getNumber(ftmp));
-				key.m_time = ftmp;
-				m_startTime = std::min(m_startTime, key.m_time);
-				maxTime = std::max(maxTime, key.m_time);
+				// time
+				ANKI_CHECK(keyEl.getAttributeNumber("time", key.m_time));
+				m_startTime = min(m_startTime, key.m_time);
+				maxTime = max(maxTime, key.m_time);
 
-				// <value>
-				ANKI_CHECK(keyEl.getChildElement("value", el));
-				ANKI_CHECK(el.getNumbers(key.m_value));
+				// value
+				ANKI_CHECK(keyEl.getNumbers(key.m_value));
 
 				// Check ident
 				if(key.m_value == Vec3(0.0))
@@ -112,7 +107,7 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 		}
 
 		// <rotationKeys>
-		ANKI_CHECK(chEl.getChildElement("rotationKeys", keysEl));
+		ANKI_CHECK(chEl.getChildElementOptional("rotationKeys", keysEl));
 		if(keysEl)
 		{
 			ANKI_CHECK(keysEl.getChildElement("key", keyEl));
@@ -127,18 +122,13 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 			{
 				AnimationKeyframe<Quat>& key = ch.m_rotations[count++];
 
-				// <time>
-				ANKI_CHECK(keyEl.getChildElement("time", el));
-				ANKI_CHECK(el.getNumber(ftmp));
-				key.m_time = ftmp;
-				m_startTime = std::min(m_startTime, key.m_time);
-				maxTime = std::max(maxTime, key.m_time);
+				// time
+				ANKI_CHECK(keyEl.getAttributeNumber("time", key.m_time));
+				m_startTime = min(m_startTime, key.m_time);
+				maxTime = max(maxTime, key.m_time);
 
-				// <value>
-				Vec4 tmp2;
-				ANKI_CHECK(keyEl.getChildElement("value", el));
-				ANKI_CHECK(el.getNumbers(tmp2));
-				key.m_value = Quat(tmp2);
+				// value
+				ANKI_CHECK(keyEl.getNumbers(key.m_value));
 
 				// Check ident
 				if(key.m_value == Quat::getIdentity())
@@ -167,20 +157,17 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 			{
 				AnimationKeyframe<F32>& key = ch.m_scales[count++];
 
-				// <time>
-				ANKI_CHECK(keyEl.getChildElement("time", el));
-				ANKI_CHECK(el.getNumber(ftmp));
-				key.m_time = ftmp;
+				// time
+				ANKI_CHECK(keyEl.getAttributeNumber("time", key.m_time));
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
-				// <value>
+				// value
 				ANKI_CHECK(keyEl.getChildElement("value", el));
-				ANKI_CHECK(el.getNumber(ftmp));
-				key.m_value = F32(ftmp);
+				ANKI_CHECK(keyEl.getNumber(key.m_value));
 
 				// Check ident
-				if(isZero(key.m_value - 1.0))
+				if(isZero(key.m_value - 1.0f))
 				{
 					++identScaleCount;
 				}
@@ -218,6 +205,15 @@ Error AnimationResource::load(const ResourceFilename& filename, Bool async)
 
 void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Quat& rot, F32& scale) const
 {
+	pos = Vec3(0.0f);
+	rot = Quat::getIdentity();
+	scale = 1.0f;
+
+	if(ANKI_UNLIKELY(time < m_startTime))
+	{
+		return;
+	}
+
 	// Audjust time
 	if(time > m_startTime + m_duration)
 	{
@@ -256,6 +252,22 @@ void AnimationResource::interpolate(U32 channelIndex, Second time, Vec3& pos, Qu
 			{
 				const Second u = (time - left.m_time) / (right.m_time - left.m_time);
 				rot = left.m_value.slerp(right.m_value, F32(u));
+				break;
+			}
+		}
+	}
+
+	// Scale
+	if(channel.m_scales.getSize() > 1)
+	{
+		for(U32 i = 0; i < channel.m_scales.getSize() - 1; ++i)
+		{
+			const AnimationKeyframe<F32>& left = channel.m_scales[i];
+			const AnimationKeyframe<F32>& right = channel.m_scales[i + 1];
+			if(time >= left.m_time && time <= right.m_time)
+			{
+				const Second u = (time - left.m_time) / (right.m_time - left.m_time);
+				scale = linearInterpolate(left.m_value, right.m_value, F32(u));
 				break;
 			}
 		}

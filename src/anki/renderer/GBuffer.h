@@ -21,6 +21,8 @@ public:
 	GBuffer(Renderer* r)
 		: RendererObject(r)
 	{
+		registerDebugRenderTarget("GBuffer_normals");
+		registerDebugRenderTarget("GBuffer_albedo");
 	}
 
 	~GBuffer();
@@ -38,6 +40,22 @@ public:
 	RenderTargetHandle getDepthRt() const
 	{
 		return m_depthRt;
+	}
+
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
+	{
+		if(rtName == "GBuffer_albedo")
+		{
+			handle = m_colorRts[0];
+		}
+		else if(rtName == "GBuffer_normals")
+		{
+			handle = m_colorRts[2];
+		}
+		else
+		{
+			ANKI_ASSERT(!"See file");
+		}
 	}
 
 private:

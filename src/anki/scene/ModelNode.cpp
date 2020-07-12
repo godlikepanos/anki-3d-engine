@@ -31,10 +31,40 @@ public:
 		updated = false;
 
 		const MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == node.getGlobalTimestamp())
+		const SkinComponent* skin = node.tryGetComponent<SkinComponent>();
+		if(move.getTimestamp() == node.getGlobalTimestamp()
+			|| (skin && skin->getTimestamp() == node.getGlobalTimestamp()))
 		{
 			ModelNode& mnode = static_cast<ModelNode&>(node);
-			mnode.onMoveComponentUpdate(move);
+			mnode.updateSpatialComponent(move);
+		}
+
+		return Error::NONE;
+	}
+};
+
+/// Feedback component.
+class ModelNode::SkinFeedbackComponent : public SceneComponent
+{
+public:
+	SkinFeedbackComponent()
+		: SceneComponent(SceneComponentType::NONE)
+	{
+	}
+
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	{
+		updated = false;
+
+		const SkinComponent& skin = node.getComponent<SkinComponent>();
+		if(skin.getTimestamp() == node.getGlobalTimestamp())
+		{
+			ModelNode& mnode = static_cast<ModelNode&>(node);
+
+			const Aabb& box = skin.getBoneBoundingVolume();
+			mnode.m_obbLocal.setCenter((box.getMin() + box.getMax()) / 2.0f);
+			mnode.m_obbLocal.setExtend(box.getMax() - mnode.m_obbLocal.getCenter());
+			mnode.m_obbLocal.setRotation(Mat3x4::getIdentity());
 		}
 
 		return Error::NONE;
@@ -68,10 +98,11 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 	if(m_model->getSkeleton().isCreated())
 	{
 		newComponent<SkinComponent>(this, m_model->getSkeleton());
+		newComponent<SkinFeedbackComponent>();
 	}
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
-	newComponent<SpatialComponent>(this, &m_obb);
+	newComponent<SpatialComponent>(this, &m_obbWorld);
 	MaterialRenderComponent* rcomp =
 		newComponent<MaterialRenderComponent>(this, m_model->getModelPatches()[m_modelPatchIdx].getMaterial());
 	rcomp->setup(
@@ -81,6 +112,8 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 		},
 		this,
 		m_mergeKey);
+
+	m_obbLocal = m_model->getModelPatches()[m_modelPatchIdx].getBoundingShape();
 
 	return Error::NONE;
 }
@@ -105,9 +138,9 @@ Error ModelNode::init(const CString& modelFname)
 	return Error::NONE;
 }
 
-void ModelNode::onMoveComponentUpdate(const MoveComponent& move)
+void ModelNode::updateSpatialComponent(const MoveComponent& move)
 {
-	m_obb = m_model->getModelPatches()[m_modelPatchIdx].getBoundingShape().getTransformed(move.getWorldTransform());
+	m_obbWorld = m_obbLocal.getTransformed(move.getWorldTransform());
 
 	SpatialComponent& sp = getComponent<SpatialComponent>();
 	sp.markForUpdate();
@@ -213,9 +246,9 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		{
 			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
 
-			const Mat3 rot = self2.m_obb.getRotation().getRotationPart();
-			const Vec4 tsl = self2.m_obb.getCenter().xyz1();
-			const Vec3 scale = self2.m_obb.getExtend().xyz();
+			const Mat3 rot = self2.m_obbWorld.getRotation().getRotationPart();
+			const Vec4 tsl = self2.m_obbWorld.getCenter().xyz1();
+			const Vec3 scale = self2.m_obbWorld.getExtend().xyz();
 
 			// Set non uniform scale. Add a margin to avoid flickering
 			Mat3 nonUniScale = Mat3::getZero();
@@ -239,13 +272,68 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()),
 			Vec4(1.0f, 0.0f, 1.0f, 1.0f),
-			1.0f,
+			2.0f,
 			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
 			2.0f,
 			*ctx.m_stagingGpuAllocator,
 			cmdb);
 
 		ctx.m_frameAllocator.deleteArray(mvps, userData.getSize());
+
+		// Bones
+		if(m_model->getSkeleton())
+		{
+			const SkinComponent& skinc = getComponentAt<SkinComponent>(0);
+			SkeletonResourcePtr skeleton = skinc.getSkeleronResource();
+			const U32 boneCount = skinc.getBoneTransforms().getSize();
+
+			DynamicArrayAuto<Vec3> lines(ctx.m_frameAllocator);
+			lines.resizeStorage(boneCount * 2);
+			DynamicArrayAuto<Vec3> chidlessLines(ctx.m_frameAllocator);
+			for(U32 i = 0; i < boneCount; ++i)
+			{
+				const Bone& bone = skeleton->getBones()[i];
+				ANKI_ASSERT(bone.getIndex() == i);
+				const Vec4 point(0.0f, 0.0f, 0.0f, 1.0f);
+				const Bone* parent = bone.getParent();
+				Mat4 m = (parent)
+							 ? skinc.getBoneTransforms()[parent->getIndex()] * parent->getVertexTransform().getInverse()
+							 : Mat4::getIdentity();
+				const Vec3 a = (m * point).xyz();
+
+				m = skinc.getBoneTransforms()[i] * bone.getVertexTransform().getInverse();
+				const Vec3 b = (m * point).xyz();
+
+				lines.emplaceBack(a);
+				lines.emplaceBack(b);
+
+				if(bone.getChildren().getSize() == 0)
+				{
+					// If there are not children try to draw something for that bone as well
+					chidlessLines.emplaceBack(b);
+					const F32 len = (b - a).getLength();
+					const Vec3 c = b + (b - a).getNormalized() * len;
+					chidlessLines.emplaceBack(c);
+				}
+			}
+
+			const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(getComponent<MoveComponent>().getWorldTransform());
+			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1),
+				Vec4(1.0f),
+				20.0f,
+				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+				lines,
+				*ctx.m_stagingGpuAllocator,
+				cmdb);
+
+			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1),
+				Vec4(0.7f, 0.7f, 0.7f, 1.0f),
+				5.0f,
+				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+				chidlessLines,
+				*ctx.m_stagingGpuAllocator,
+				cmdb);
+		}
 
 		// Restore state
 		if(!enableDepthTest)

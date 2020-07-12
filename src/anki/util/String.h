@@ -701,6 +701,7 @@ public:
 	/// Move one string to this one.
 	StringAuto& operator=(StringAuto&& b)
 	{
+		destroy();
 		move(b);
 		return *this;
 	}

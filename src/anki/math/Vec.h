@@ -2752,6 +2752,36 @@ public:
 		(*this) ^= TVec(f);
 		return *this;
 	}
+
+	Bool operator==(const T f) const
+	{
+		return *this == TVec(f);
+	}
+
+	Bool operator!=(const T f) const
+	{
+		return *this != TVec(f);
+	}
+
+	Bool operator<(const T f) const
+	{
+		return *this < TVec(f);
+	}
+
+	Bool operator<=(const T f) const
+	{
+		return *this <= TVec(f);
+	}
+
+	Bool operator>(const T f) const
+	{
+		return *this > TVec(f);
+	}
+
+	Bool operator>=(const T f) const
+	{
+		return *this >= TVec(f);
+	}
 	/// @}
 
 	/// @name Operators with other

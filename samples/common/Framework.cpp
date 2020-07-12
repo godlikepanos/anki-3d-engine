@@ -79,6 +79,12 @@ Error SampleApp::userMainLoop(Bool& quit)
 			(renderer.getCurrentDebugRenderTarget() == "SM_resolve") ? "" : "SM_resolve");
 	}
 
+	if(in.getKey(KeyCode::P) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget(
+			(renderer.getCurrentDebugRenderTarget() == "GBuffer_normals") ? "" : "GBuffer_normals");
+	}
+
 	if(!getDisplayDeveloperConsole())
 	{
 		in.hideCursor(true);

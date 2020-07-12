@@ -153,6 +153,27 @@ public:
 			ConstWeakArray<Mat4>(&mvp, 1), color, lineSize, ditherFailedDepth, cubeSideSize, stagingGpuAllocator, cmdb);
 	}
 
+	void drawLines(ConstWeakArray<Mat4> mvps,
+		const Vec4& color,
+		F32 lineSize,
+		Bool ditherFailedDepth,
+		ConstWeakArray<Vec3> lines,
+		StagingGpuMemoryManager& stagingGpuAllocator,
+		CommandBufferPtr& cmdb) const;
+
+	void drawLine(const Mat4& mvp,
+		const Vec4& color,
+		F32 lineSize,
+		Bool ditherFailedDepth,
+		const Vec3& a,
+		const Vec3& b,
+		StagingGpuMemoryManager& stagingGpuAllocator,
+		CommandBufferPtr& cmdb) const
+	{
+		Array<Vec3, 2> points = {{a, b}};
+		drawLines(ConstWeakArray<Mat4>(&mvp, 1), color, lineSize, ditherFailedDepth, points, stagingGpuAllocator, cmdb);
+	}
+
 	void drawBillboardTextures(const Mat4& projMat,
 		const Mat4& viewMat,
 		ConstWeakArray<Vec3> positions,

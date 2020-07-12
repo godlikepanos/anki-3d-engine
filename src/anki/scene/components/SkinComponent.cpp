@@ -20,22 +20,39 @@ SkinComponent::SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton)
 	ANKI_ASSERT(node);
 
 	m_boneTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize());
-	for(Mat4& trf : m_boneTrfs)
+	m_animationTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize());
+
+	for(U32 i = 0; i < m_boneTrfs.getSize(); ++i)
 	{
-		trf.setIdentity();
+		m_boneTrfs[i].setIdentity();
+		m_animationTrfs[i] = {Vec3(0.0f), Quat::getIdentity(), 1.0f};
 	}
 }
 
 SkinComponent::~SkinComponent()
 {
 	m_boneTrfs.destroy(m_node->getAllocator());
+	m_animationTrfs.destroy(m_node->getAllocator());
 }
 
-void SkinComponent::playAnimation(U track, AnimationResourcePtr anim, Second startTime, Bool repeat)
+void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)
 {
+	const Second animDuration = anim->getDuration();
+
 	m_tracks[track].m_anim = anim;
-	m_tracks[track].m_time = startTime;
-	m_tracks[track].m_repeat = repeat;
+	m_tracks[track].m_absoluteStartTime = m_absoluteTime + info.m_startTime;
+	m_tracks[track].m_relativeTimePassed = 0.0;
+	if(info.m_repeatTimes > 0.0)
+	{
+		m_tracks[track].m_blendInTime = min(animDuration * info.m_repeatTimes, info.m_blendInTime);
+		m_tracks[track].m_blendOutTime = min(animDuration * info.m_repeatTimes, info.m_blendOutTime);
+	}
+	else
+	{
+		m_tracks[track].m_blendInTime = info.m_blendInTime;
+		m_tracks[track].m_blendOutTime = 0.0; // Irrelevant
+	}
+	m_tracks[track].m_repeatTimes = info.m_repeatTimes;
 }
 
 Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
@@ -43,7 +60,12 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 	ANKI_ASSERT(&node == m_node);
 
 	updated = false;
-	const Second timeDiff = crntTime - prevTime;
+	const Second dt = crntTime - prevTime;
+
+	Vec4 minExtend(MAX_F32, MAX_F32, MAX_F32, 0.0f);
+	Vec4 maxExtend(MIN_F32, MIN_F32, MIN_F32, 0.0f);
+
+	BitSet<128> bonesAnimated(false);
 
 	for(Track& track : m_tracks)
 	{
@@ -52,13 +74,27 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 			continue;
 		}
 
+		if(track.m_absoluteStartTime > m_absoluteTime)
+		{
+			// Hasn't started yet
+			continue;
+		}
+
+		const Second clipDuration = track.m_anim->getDuration();
+		const Second animationDuration = track.m_repeatTimes * clipDuration;
+
+		if(track.m_repeatTimes > 0.0 && track.m_relativeTimePassed > animationDuration)
+		{
+			// Animation finished
+			continue;
+		}
+
 		updated = true;
 
-		const Second animTime = track.m_time;
-		track.m_time += timeDiff;
+		const Second animTime = track.m_relativeTimePassed;
+		track.m_relativeTimePassed += dt;
 
 		// Iterate the animation channels and interpolate
-		BitSet<128> bonesAnimated(false);
 		for(U32 i = 0; i < track.m_anim->getChannels().getSize(); ++i)
 		{
 			const AnimationChannel& channel = track.m_anim->getChannels()[i];
@@ -68,6 +104,7 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 				ANKI_SCENE_LOGW("Animation is referencing unknown bone \"%s\"", &channel.m_name[0]);
 				continue;
 			}
+			const U32 boneIdx = bone->getIndex();
 
 			// Interpolate
 			Vec3 position;
@@ -75,34 +112,90 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 			F32 scale;
 			track.m_anim->interpolate(i, animTime, position, rotation, scale);
 
-			// Store
-			bonesAnimated.set(bone->getIndex());
-			m_boneTrfs[bone->getIndex()] = Mat4(position.xyz1(), Mat3(rotation), 1.0f) * bone->getVertexTransform();
-		}
+			// Blend with previous track
+			if(bonesAnimated.get(boneIdx) && (track.m_blendInTime > 0.0 || track.m_blendOutTime > 0.0))
+			{
+				F32 blendInFactor;
+				if(track.m_blendInTime > 0.0)
+				{
+					blendInFactor = min(1.0f, F32(animTime / track.m_blendInTime));
+				}
+				else
+				{
+					blendInFactor = 1.0f;
+				}
 
-		// Walk the bone hierarchy to add additional transforms
-		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated);
+				F32 blendOutFactor;
+				if(track.m_blendOutTime > 0.0)
+				{
+					blendOutFactor = min(1.0f, F32((animationDuration - animTime) / track.m_blendOutTime));
+				}
+				else
+				{
+					blendOutFactor = 1.0f;
+				}
+
+				const F32 factor = blendInFactor * blendOutFactor;
+
+				if(factor < 1.0f)
+				{
+					const Trf& prevTrf = m_animationTrfs[boneIdx];
+
+					position = linearInterpolate(prevTrf.m_translation, position, factor);
+					rotation = prevTrf.m_rotation.slerp(rotation, factor);
+					scale = linearInterpolate(prevTrf.m_scale, scale, factor);
+				}
+			}
+
+			// Store
+			bonesAnimated.set(boneIdx);
+			m_animationTrfs[boneIdx] = {position, rotation, scale};
+		}
 	}
+
+	// Always update the 1st time
+	updated = updated || (m_absoluteTime == 0.0);
+
+	if(updated)
+	{
+		// Walk the bone hierarchy to add additional transforms
+		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated, minExtend, maxExtend);
+
+		const Vec4 E(EPSILON, EPSILON, EPSILON, 0.0f);
+		m_boneBoundingVolume.setMin(minExtend - E);
+		m_boneBoundingVolume.setMax(maxExtend + E);
+	}
+
+	m_absoluteTime += dt;
 
 	return Error::NONE;
 }
 
-void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated)
+void SkinComponent::visitBones(
+	const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend)
 {
-	Mat4 myTrf = parentTrf * bone.getTransform();
+	Mat4 outMat;
 
 	if(bonesAnimated.get(bone.getIndex()))
 	{
-		m_boneTrfs[bone.getIndex()] = myTrf * m_boneTrfs[bone.getIndex()];
+		const Trf& t = m_animationTrfs[bone.getIndex()];
+		outMat = parentTrf * Mat4(t.m_translation.xyz1(), Mat3(t.m_rotation), t.m_scale);
 	}
 	else
 	{
-		m_boneTrfs[bone.getIndex()] = myTrf * bone.getVertexTransform();
+		outMat = parentTrf * bone.getTransform();
 	}
+
+	m_boneTrfs[bone.getIndex()] = outMat * bone.getVertexTransform();
+
+	// Update volume
+	const Vec4 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	minExtend = minExtend.min(bonePos.xyz0());
+	maxExtend = maxExtend.max(bonePos.xyz0());
 
 	for(const Bone* child : bone.getChildren())
 	{
-		visitBones(*child, myTrf, bonesAnimated);
+		visitBones(*child, outMat, bonesAnimated, minExtend, maxExtend);
 	}
 }
 

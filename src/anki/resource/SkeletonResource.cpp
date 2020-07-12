@@ -49,31 +49,24 @@ Error SkeletonResource::load(const ResourceFilename& filename, Bool async)
 		Bone& bone = m_bones[boneCount];
 		bone.m_idx = boneCount;
 
-		// <name>
-		XmlElement nameEl;
-		ANKI_CHECK(boneEl.getChildElement("name", nameEl));
-		CString tmp;
-		ANKI_CHECK(nameEl.getText(tmp));
-		bone.m_name.create(getAllocator(), tmp);
+		// name
+		CString name;
+		ANKI_CHECK(boneEl.getAttributeText("name", name));
+		bone.m_name.create(getAllocator(), name);
 
-		// <transform>
-		XmlElement trfEl;
-		ANKI_CHECK(boneEl.getChildElement("transform", trfEl));
-		ANKI_CHECK(trfEl.getNumbers(bone.m_transform));
+		// transform
+		ANKI_CHECK(boneEl.getAttributeNumbers("transform", bone.m_transform));
 
-		// <boneTransform>
-		XmlElement btrfEl;
-		ANKI_CHECK(boneEl.getChildElement("boneTransform", btrfEl));
-		ANKI_CHECK(btrfEl.getNumbers(bone.m_vertTrf));
+		// boneTransform
+		ANKI_CHECK(boneEl.getAttributeNumbers("boneTransform", bone.m_vertTrf));
 
-		// <parent>
-		XmlElement parentEl;
-		ANKI_CHECK(boneEl.getChildElementOptional("parent", parentEl));
-		if(parentEl)
+		// parent
+		CString parent;
+		Bool hasParent;
+		ANKI_CHECK(boneEl.getAttributeTextOptional("parent", parent, hasParent));
+		if(hasParent)
 		{
-			CString parentName;
-			ANKI_CHECK(parentEl.getText(parentName));
-			boneParents.pushBack(parentName);
+			boneParents.pushBack(parent);
 		}
 		else
 		{
@@ -99,7 +92,7 @@ Error SkeletonResource::load(const ResourceFilename& filename, Bool async)
 	{
 		Bone& bone = m_bones[i];
 
-		if(!it->isEmpty())
+		if(it->getLength() > 0)
 		{
 			for(U32 j = 0; j < m_bones.getSize(); ++j)
 			{
