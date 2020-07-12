@@ -57,7 +57,7 @@ Error MicroSwapchain::initInternal()
 	}
 
 	// Get the surface format
-	VkFormat surfaceFormat = VK_FORMAT_END_RANGE;
+	VkFormat surfaceFormat = VK_FORMAT_UNDEFINED;
 	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
 	{
 		uint32_t formatCount;

@@ -793,8 +793,7 @@ inline void CommandBufferImpl::copyBufferToBuffer(
 
 inline Bool CommandBufferImpl::flipViewport() const
 {
-	return static_cast<const FramebufferImpl&>(*m_activeFb).hasPresentableTexture()
-		   && !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
+	return static_cast<const FramebufferImpl&>(*m_activeFb).hasPresentableTexture();
 }
 
 inline void CommandBufferImpl::setPushConstants(const void* data, U32 dataSize)

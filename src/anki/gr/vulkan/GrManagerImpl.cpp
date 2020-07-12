@@ -513,26 +513,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::KHR_SWAPCHAIN;
 				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 			}
-			else if(CString(&extensionInfos[extCount].extensionName[0]) == VK_KHR_MAINTENANCE1_EXTENSION_NAME)
-			{
-				m_extensions |= VulkanExtensions::KHR_MAINENANCE1;
-				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_MAINTENANCE1_EXTENSION_NAME;
-			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME
 					&& init.m_config->getBool("gr_debugMarkers"))
 			{
 				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;
-			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME)
-			{
-				m_extensions |= VulkanExtensions::KHR_DEDICATED_ALLOCATION;
-				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME;
-			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME)
-			{
-				m_extensions |= VulkanExtensions::EXT_SHADER_SUBGROUP_BALLOT;
-				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME;
 			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_AMD_SHADER_INFO_EXTENSION_NAME
 					&& init.m_config->getBool("core_displayStats"))
@@ -545,28 +530,10 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::AMD_RASTERIZATION_ORDER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME;
 			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)
-			{
-				m_extensions |= VulkanExtensions::EXT_DESCRIPTOR_INDEXING;
-				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME;
-			}
 		}
 
-		// Check required extensions.
-		if(!(m_extensions & VulkanExtensions::KHR_MAINENANCE1))
+		// Enable the bindless features required
 		{
-			ANKI_VK_LOGE("%s is required", VK_KHR_MAINTENANCE1_EXTENSION_NAME);
-			return Error::FUNCTION_FAILED;
-		}
-		if(!(m_extensions & VulkanExtensions::EXT_DESCRIPTOR_INDEXING))
-		{
-			ANKI_VK_LOGE("%s is required", VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-			return Error::FUNCTION_FAILED;
-		}
-		else
-		{
-			// Enable the bindless features required
-
 			m_descriptorIndexingFeatures = {};
 			m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 

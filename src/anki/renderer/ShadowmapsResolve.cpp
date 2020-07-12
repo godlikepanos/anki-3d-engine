@@ -64,6 +64,7 @@ void ShadowmapsResolve::populateRenderGraph(RenderingContext& ctx)
 
 	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
+	rpass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
 void ShadowmapsResolve::run(RenderPassWorkContext& rgraphCtx)

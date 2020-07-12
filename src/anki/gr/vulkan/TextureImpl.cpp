@@ -219,8 +219,6 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 Error TextureImpl::initImage(const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
-	Bool useDedicatedMemory = !!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
-							  && !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_DEDICATED_ALLOCATION);
 
 	// Check if format is supported
 	Bool supported;
@@ -314,14 +312,6 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	ci.pQueueFamilyIndices = &queueIdx;
 	ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-	VkDedicatedAllocationImageCreateInfoNV dedicatedMemCi = {};
-	if(useDedicatedMemory)
-	{
-		dedicatedMemCi.sType = VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_IMAGE_CREATE_INFO_NV;
-		dedicatedMemCi.dedicatedAllocation = true;
-		ci.pNext = &dedicatedMemCi;
-	}
-
 	ANKI_VK_CHECK(vkCreateImage(getDevice(), &ci, nullptr, &m_imageHandle));
 	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, m_imageHandle);
 #if 0
@@ -332,26 +322,40 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 
 	// Allocate memory
 	//
-	VkMemoryRequirements req = {};
-	vkGetImageMemoryRequirements(getDevice(), m_imageHandle, &req);
+	VkMemoryDedicatedRequirementsKHR dedicatedRequirements = {};
+	dedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS_KHR;
 
-	U32 memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-		req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	VkMemoryRequirements2 requirements = {};
+	requirements.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+	requirements.pNext = &dedicatedRequirements;
+
+	VkImageMemoryRequirementsInfo2 imageRequirementsInfo = {};
+	imageRequirementsInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
+	imageRequirementsInfo.image = m_imageHandle;
+
+	vkGetImageMemoryRequirements2(getDevice(), &imageRequirementsInfo, &requirements);
+
+	U32 memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(requirements.memoryRequirements.memoryTypeBits,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
 	if(memIdx == MAX_U32)
 	{
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-			req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+			requirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 	}
 
 	ANKI_ASSERT(memIdx != MAX_U32);
 
-	if(!useDedicatedMemory)
+	if(!dedicatedRequirements.prefersDedicatedAllocation)
 	{
 		// Allocate
-		getGrManagerImpl().getGpuMemoryManager().allocateMemory(
-			memIdx, req.size, U32(req.alignment), false, m_memHandle);
+		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx,
+			requirements.memoryRequirements.size,
+			U32(requirements.memoryRequirements.alignment),
+			false,
+			m_memHandle);
 
 		// Bind mem to image
 		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
@@ -359,17 +363,17 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	}
 	else
 	{
-		VkDedicatedAllocationMemoryAllocateInfoNV dedicatedInfo = {};
-		dedicatedInfo.sType = VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_MEMORY_ALLOCATE_INFO_NV;
+		VkMemoryDedicatedAllocateInfoKHR dedicatedInfo = {};
+		dedicatedInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR;
 		dedicatedInfo.image = m_imageHandle;
 
-		VkMemoryAllocateInfo memAllocCi = {};
-		memAllocCi.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memAllocCi.pNext = &dedicatedInfo;
-		memAllocCi.allocationSize = req.size;
-		memAllocCi.memoryTypeIndex = memIdx;
+		VkMemoryAllocateInfo memoryAllocateInfo = {};
+		memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		memoryAllocateInfo.pNext = &dedicatedInfo;
+		memoryAllocateInfo.allocationSize = requirements.memoryRequirements.size;
+		memoryAllocateInfo.memoryTypeIndex = memIdx;
 
-		ANKI_VK_CHECK(vkAllocateMemory(getDevice(), &memAllocCi, nullptr, &m_dedicatedMem));
+		ANKI_VK_CHECK(vkAllocateMemory(getDevice(), &memoryAllocateInfo, nullptr, &m_dedicatedMem));
 		getGrManagerImpl().trySetVulkanHandleName(
 			init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, ptrToNumber(m_dedicatedMem));
 
