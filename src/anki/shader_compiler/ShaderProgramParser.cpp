@@ -42,6 +42,9 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #extension GL_EXT_shader_image_load_formatted : require
 #extension GL_EXT_nonuniform_qualifier : enable
 
+#extension GL_EXT_buffer_reference : enable
+#extension GL_ARB_gpu_shader_int64 : enable
+
 #define ANKI_MAX_BINDLESS_TEXTURES %u
 #define ANKI_MAX_BINDLESS_IMAGES %u
 
@@ -73,6 +76,8 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define Mat3x4 mat3x4
 
 #define Bool bool
+
+#define U64 uint64_t
 
 #define _ANKI_CONCATENATE(a, b) a##b
 #define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
@@ -126,6 +131,12 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_SPECIALIZATION_CONSTANT_VEC2(n, id, defltVal) _ANKI_SCONST_X2(Vec2, F32, n, id, defltVal,)
 #define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id, defltVal) _ANKI_SCONST_X3(Vec3, F32, n, id, defltVal,)
 #define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id, defltVal) _ANKI_SCONST_X4(Vec4, F32, n, id, defltVal,)
+
+#define ANKI_REF(type) \
+	layout(buffer_reference, std430) buffer type##Ref \
+	{ \
+		type m_value; \
+	}
 )";
 
 static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));

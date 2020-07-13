@@ -2380,4 +2380,83 @@ void main()
 	COMMON_END()
 }
 
+ANKI_TEST(Gr, BufferAddress)
+{
+	COMMON_BEGIN()
+
+	// Create program
+	static const char* PROG_SRC = R"(
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+ANKI_REF(Vec4);
+
+layout(push_constant) uniform u_
+{
+	U64 u_bufferAddress;
+	U64 u_padding0;
+};
+
+layout(set = 0, binding = 0) writeonly buffer ss_
+{
+	Vec4 u_result;
+};
+
+void main()
+{
+	u_result = Vec4Ref(u_bufferAddress).m_value + Vec4Ref(u_bufferAddress + 16u).m_value;
+})";
+
+	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
+	ShaderProgramInitInfo sprogInit;
+	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
+	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
+
+	// Create buffers
+	BufferInitInfo info;
+	info.m_size = sizeof(Vec4) * 2;
+	info.m_usage = BufferUsageBit::ALL_COMPUTE;
+	info.m_access = BufferMapAccessBit::WRITE;
+	info.m_exposeGpuAddress = true;
+	BufferPtr ptrBuff = gr->newBuffer(info);
+
+	Vec4* mapped = static_cast<Vec4*>(ptrBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+	const Vec4 VEC(123.456f, -1.1f, 100.0f, -666.0f);
+	*mapped = VEC;
+	++mapped;
+	*mapped = VEC * 10.0f;
+	ptrBuff->unmap();
+
+	BufferPtr resBuff =
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4), BufferUsageBit::ALL_COMPUTE, BufferMapAccessBit::READ));
+
+	// Run
+	CommandBufferInitInfo cinit;
+	cinit.m_flags = CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+
+	cmdb->bindShaderProgram(prog);
+
+	struct Address
+	{
+		PtrSize m_address;
+		PtrSize m_padding;
+	} address;
+	address.m_address = ptrBuff->getGpuAddress();
+	cmdb->setPushConstants(&address, sizeof(address));
+
+	cmdb->bindStorageBuffer(0, 0, resBuff, 0, MAX_PTR_SIZE);
+
+	cmdb->dispatchCompute(1, 1, 1);
+
+	cmdb->flush();
+	gr->finish();
+
+	// Check
+	mapped = static_cast<Vec4*>(resBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::READ));
+	ANKI_TEST_EXPECT_EQ(*mapped, VEC + VEC * 10.0f);
+	resBuff->unmap();
+
+	COMMON_END();
+}
+
 } // end namespace anki

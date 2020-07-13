@@ -20,6 +20,7 @@ public:
 	PtrSize m_size = 0;
 	BufferUsageBit m_usage = BufferUsageBit::NONE;
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
+	Bool m_exposeGpuAddress = false; ///< Expose the buffer's GPU address.
 
 	BufferInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
@@ -77,10 +78,18 @@ public:
 	/// Unmap the buffer.
 	void unmap();
 
+	/// Get the GPU adress of the buffer.
+	U64 getGpuAddress() const
+	{
+		ANKI_ASSERT(m_gpuAddress);
+		return m_gpuAddress;
+	}
+
 protected:
 	PtrSize m_size = 0;
 	BufferUsageBit m_usage = BufferUsageBit::NONE;
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
+	U64 m_gpuAddress = 0;
 
 	/// Construct.
 	Buffer(GrManager* manager, CString name)

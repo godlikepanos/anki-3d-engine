@@ -32,6 +32,7 @@ private:
 	ClassGpuAllocatorHandle m_classHandle;
 	U8 m_memTypeIdx = MAX_U8;
 	Bool m_linear = false;
+	Bool m_exposesBufferGpuAddress = false;
 };
 
 /// Dynamic GPU memory allocator for all types.
@@ -47,7 +48,12 @@ public:
 	void destroy();
 
 	/// Allocate memory.
-	void allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, Bool linearResource, GpuMemoryHandle& handle);
+	void allocateMemory(U32 memTypeIdx,
+		PtrSize size,
+		U32 alignment,
+		Bool linearResource,
+		Bool exposesBufferGpuAddress,
+		GpuMemoryHandle& handle);
 
 	/// Free memory.
 	void freeMemory(GpuMemoryHandle& handle);
@@ -68,8 +74,8 @@ private:
 	class ClassAllocator;
 
 	GrAllocator<U8> m_alloc;
-	DynamicArray<Interface> m_ifaces;
-	DynamicArray<ClassAllocator> m_callocs;
+	DynamicArray<Array<Interface, 2>> m_ifaces;
+	DynamicArray<Array<ClassAllocator, 3>> m_callocs;
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 };
 /// @}

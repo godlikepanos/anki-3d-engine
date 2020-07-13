@@ -43,9 +43,13 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	ci.size = size;
 	ci.usage = convertBufferUsageBit(usage);
+	if(inf.m_exposeGpuAddress)
+	{
+		ci.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	}
 	ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	ci.queueFamilyIndexCount = 1;
-	U32 queueIdx = getGrManagerImpl().getGraphicsQueueFamily();
+	const U32 queueIdx = getGrManagerImpl().getGraphicsQueueFamily();
 	ci.pQueueFamilyIndices = &queueIdx;
 	ANKI_VK_CHECK(vkCreateBuffer(getDevice(), &ci, nullptr, &m_handle));
 	getGrManagerImpl().trySetVulkanHandleName(inf.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT, m_handle);
@@ -144,12 +148,28 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
 	// Allocate
-	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, U32(req.alignment), true, m_memHandle);
+	getGrManagerImpl().getGpuMemoryManager().allocateMemory(
+		memIdx, req.size, U32(req.alignment), true, inf.m_exposeGpuAddress, m_memHandle);
 
 	// Bind mem to buffer
 	{
 		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
 		ANKI_VK_CHECK(vkBindBufferMemory(getDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
+	}
+
+	// Get GPU buffer address
+	if(inf.m_exposeGpuAddress)
+	{
+		VkBufferDeviceAddressInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+		info.buffer = m_handle;
+		m_gpuAddress = vkGetBufferDeviceAddress(getDevice(), &info);
+
+		if(m_gpuAddress == 0)
+		{
+			ANKI_VK_LOGE("vkGetBufferDeviceAddress() failed");
+			return Error::FUNCTION_FAILED;
+		}
 	}
 
 	m_access = access;

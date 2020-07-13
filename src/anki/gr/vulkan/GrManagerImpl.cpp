@@ -535,7 +535,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		// Enable the bindless features required
 		{
 			m_descriptorIndexingFeatures = {};
-			m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+			m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
 
 			VkPhysicalDeviceFeatures2 features = {};
 			features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -564,6 +564,27 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			}
 
 			ci.pNext = &m_descriptorIndexingFeatures;
+		}
+
+		// Enable the buffer address features required
+		{
+			m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+
+			VkPhysicalDeviceFeatures2 features = {};
+			features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+			features.pNext = &m_bufferDeviceAddressFeatures;
+			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+			if(!m_bufferDeviceAddressFeatures.bufferDeviceAddress)
+			{
+				ANKI_VK_LOGE("Buffer device address is required and not supported");
+				return Error::FUNCTION_FAILED;
+			}
+
+			m_bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = false;
+			m_bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = false;
+
+			m_descriptorIndexingFeatures.pNext = &m_bufferDeviceAddressFeatures;
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");

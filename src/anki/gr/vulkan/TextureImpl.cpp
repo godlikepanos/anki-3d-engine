@@ -355,6 +355,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 			requirements.memoryRequirements.size,
 			U32(requirements.memoryRequirements.alignment),
 			false,
+			false,
 			m_memHandle);
 
 		// Bind mem to image

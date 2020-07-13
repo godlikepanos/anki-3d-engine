@@ -18,7 +18,7 @@ public:
 	PtrSize m_chunkSize;
 };
 
-static const Array<ClassInf, CLASS_COUNT> CLASSES = {{{256_B, 16_KB},
+static const Array<ClassInf, CLASS_COUNT> CLASSES{{{256_B, 16_KB},
 	{4_KB, 256_KB},
 	{128_KB, 8_MB},
 	{1_MB, 64_MB},
@@ -46,6 +46,7 @@ public:
 	Mutex m_mtx;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	U8 m_memTypeIdx = MAX_U8;
+	Bool m_exposesBufferGpuAddress = false;
 
 	Error allocate(U32 classIdx, ClassGpuAllocatorMemory*& cmem) override
 	{
@@ -68,6 +69,15 @@ public:
 			ci.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			ci.allocationSize = CLASSES[classIdx].m_chunkSize;
 			ci.memoryTypeIndex = m_memTypeIdx;
+
+			VkMemoryAllocateFlagsInfo flags = {};
+			flags.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+			flags.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+			if(m_exposesBufferGpuAddress)
+			{
+				ci.pNext = &flags;
+			}
+
 			ANKI_VK_CHECKF(vkAllocateMemory(m_dev, &ci, nullptr, &mem->m_handle));
 
 			mem->m_classIdx = U8(classIdx);
@@ -134,7 +144,7 @@ public:
 		}
 	}
 
-	// Mapp memory
+	// Map memory
 	void* mapMemory(ClassGpuAllocatorMemory* cmem)
 	{
 		ANKI_ASSERT(cmem);
@@ -169,9 +179,12 @@ GpuMemoryManager::~GpuMemoryManager()
 
 void GpuMemoryManager::destroy()
 {
-	for(Interface& iface : m_ifaces)
+	for(U32 i = 0; i < m_ifaces.getSize(); ++i)
 	{
-		iface.collectGarbage();
+		for(U32 j = 0; j < 2; j++)
+		{
+			m_ifaces[i][j].collectGarbage();
+		}
 	}
 
 	m_ifaces.destroy(m_alloc);
@@ -198,46 +211,88 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	m_alloc = alloc;
 
 	m_ifaces.create(alloc, m_memoryProperties.memoryTypeCount);
-	for(U32 i = 0; i < m_ifaces.getSize(); ++i)
+	for(U32 memTypeIdx = 0; memTypeIdx < m_ifaces.getSize(); ++memTypeIdx)
 	{
-		Interface& iface = m_ifaces[i];
-
-		iface.m_alloc = alloc;
-		iface.m_dev = dev;
-		iface.m_memTypeIdx = U8(i);
+		for(U32 type = 0; type < 2; ++type)
+		{
+			m_ifaces[memTypeIdx][type].m_alloc = alloc;
+			m_ifaces[memTypeIdx][type].m_dev = dev;
+			m_ifaces[memTypeIdx][type].m_memTypeIdx = U8(memTypeIdx);
+			m_ifaces[memTypeIdx][type].m_exposesBufferGpuAddress = (type == 1);
+		}
 	}
 
 	// One allocator per type per linear/non-linear resources
-	m_callocs.create(alloc, m_memoryProperties.memoryTypeCount * 2);
-	for(U32 i = 0; i < m_callocs.getSize(); ++i)
+	m_callocs.create(alloc, m_memoryProperties.memoryTypeCount);
+	for(U32 memTypeIdx = 0; memTypeIdx < m_callocs.getSize(); ++memTypeIdx)
 	{
-		m_callocs[i].init(m_alloc, &m_ifaces[i / 2]);
+		for(U32 type = 0; type < 3; ++type)
+		{
+			const Bool exposesBufferGpuAddress = (type == 2);
+			ANKI_ASSERT(
+				m_ifaces[memTypeIdx][exposesBufferGpuAddress].m_exposesBufferGpuAddress == exposesBufferGpuAddress);
+			m_callocs[memTypeIdx][type].init(m_alloc, &m_ifaces[memTypeIdx][exposesBufferGpuAddress]);
 
-		const U32 memTypeIdx = i / 2;
-		const U32 heapIdx = m_memoryProperties.memoryTypes[memTypeIdx].heapIndex;
-		m_callocs[i].m_isDeviceMemory =
-			!!(m_memoryProperties.memoryHeaps[heapIdx].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+			const U32 heapIdx = m_memoryProperties.memoryTypes[memTypeIdx].heapIndex;
+			m_callocs[memTypeIdx][type].m_isDeviceMemory =
+				!!(m_memoryProperties.memoryHeaps[heapIdx].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT);
+		}
 	}
 }
 
-void GpuMemoryManager::allocateMemory(
-	U32 memTypeIdx, PtrSize size, U32 alignment, Bool linearResource, GpuMemoryHandle& handle)
+void GpuMemoryManager::allocateMemory(U32 memTypeIdx,
+	PtrSize size,
+	U32 alignment,
+	Bool linearResource,
+	Bool exposesBufferGpuAddress,
+	GpuMemoryHandle& handle)
 {
-	ClassGpuAllocator& calloc = m_callocs[memTypeIdx * 2 + ((linearResource) ? 0 : 1)];
-	Error err = calloc.allocate(size, alignment, handle.m_classHandle);
+	U32 type;
+	if(!linearResource)
+	{
+		type = 0;
+	}
+	else if(!exposesBufferGpuAddress)
+	{
+		type = 1;
+	}
+	else
+	{
+		ANKI_ASSERT(linearResource);
+		type = 2;
+	}
+
+	ClassGpuAllocator& calloc = m_callocs[memTypeIdx][type];
+	const Error err = calloc.allocate(size, alignment, handle.m_classHandle);
 	(void)err;
 
 	handle.m_memory = static_cast<Memory*>(handle.m_classHandle.m_memory)->m_handle;
 	handle.m_offset = handle.m_classHandle.m_offset;
 	handle.m_linear = linearResource;
 	handle.m_memTypeIdx = U8(memTypeIdx);
+	handle.m_exposesBufferGpuAddress = exposesBufferGpuAddress;
 }
 
 void GpuMemoryManager::freeMemory(GpuMemoryHandle& handle)
 {
 	ANKI_ASSERT(handle);
 
-	ClassGpuAllocator& calloc = m_callocs[handle.m_memTypeIdx * 2 + ((handle.m_linear) ? 0 : 1)];
+	U32 type;
+	if(handle.m_exposesBufferGpuAddress)
+	{
+		type = 2;
+	}
+	else if(handle.m_linear)
+	{
+		type = 1;
+	}
+	else
+	{
+		ANKI_ASSERT(!handle.m_exposesBufferGpuAddress);
+		type = 0;
+	}
+
+	ClassGpuAllocator& calloc = m_callocs[handle.m_memTypeIdx][type];
 	calloc.free(handle.m_classHandle);
 
 	handle = {};
@@ -247,7 +302,7 @@ void* GpuMemoryManager::getMappedAddress(GpuMemoryHandle& handle)
 {
 	ANKI_ASSERT(handle);
 
-	Interface& iface = m_ifaces[handle.m_memTypeIdx];
+	Interface& iface = m_ifaces[handle.m_memTypeIdx][handle.m_exposesBufferGpuAddress];
 	U8* out = static_cast<U8*>(iface.mapMemory(handle.m_classHandle.m_memory));
 	return static_cast<void*>(out + handle.m_offset);
 }
@@ -299,15 +354,18 @@ void GpuMemoryManager::getAllocatedMemory(PtrSize& gpuMemory, PtrSize& cpuMemory
 	gpuMemory = 0;
 	cpuMemory = 0;
 
-	for(const ClassAllocator& alloc : m_callocs)
+	for(U32 memTypeIdx = 0; memTypeIdx < m_callocs.getSize(); ++memTypeIdx)
 	{
-		if(alloc.m_isDeviceMemory)
+		for(U32 type = 0; type < 3; ++type)
 		{
-			gpuMemory += alloc.getAllocatedMemory();
-		}
-		else
-		{
-			cpuMemory += alloc.getAllocatedMemory();
+			if(m_callocs[memTypeIdx][type].m_isDeviceMemory)
+			{
+				gpuMemory += m_callocs[memTypeIdx][type].getAllocatedMemory();
+			}
+			else
+			{
+				cpuMemory += m_callocs[memTypeIdx][type].getAllocatedMemory();
+			}
 		}
 	}
 }
