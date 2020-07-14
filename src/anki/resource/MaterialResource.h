@@ -340,6 +340,11 @@ public:
 		return m_boneTrfsBinding;
 	}
 
+	U32 getPrevFrameBoneTransformsBinding() const
+	{
+		return m_prevFrameBoneTrfsBinding;
+	}
+
 	U32 getUniformsBinding() const
 	{
 		ANKI_ASSERT(m_uboBinding != MAX_U32);
@@ -367,6 +372,7 @@ private:
 	U32 m_uboIdx = MAX_U32; ///< The b_ankiMaterial UBO inside the binary.
 	U32 m_uboBinding = MAX_U32;
 	U32 m_boneTrfsBinding = MAX_U32;
+	U32 m_prevFrameBoneTrfsBinding = MAX_U32;
 
 	/// Matrix of variants.
 	mutable Array5d<MaterialVariant, U(Pass::COUNT), MAX_LOD_COUNT, MAX_INSTANCE_GROUPS, 2, 2> m_variantMatrix;

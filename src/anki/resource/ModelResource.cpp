@@ -51,6 +51,7 @@ void ModelPatch::getRenderingDataSub(
 		inf.m_program = variant.getShaderProgram();
 
 		inf.m_boneTransformsBinding = m_mtl->getBoneTransformsBinding();
+		inf.m_prevFrameBoneTransformsBinding = m_mtl->getPrevFrameBoneTransformsBinding();
 	}
 
 	// Vertex attributes & bindings

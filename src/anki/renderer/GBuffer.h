@@ -23,6 +23,7 @@ public:
 	{
 		registerDebugRenderTarget("GBuffer_normals");
 		registerDebugRenderTarget("GBuffer_albedo");
+		registerDebugRenderTarget("GBuffer_velocity");
 	}
 
 	~GBuffer();
@@ -51,6 +52,10 @@ public:
 		else if(rtName == "GBuffer_normals")
 		{
 			handle = m_colorRts[2];
+		}
+		else if(rtName == "GBuffer_velocity")
+		{
+			handle = m_colorRts[3];
 		}
 		else
 		{

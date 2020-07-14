@@ -63,6 +63,12 @@ Error SampleApp::userMainLoop(Bool& quit)
 		setDisplayDeveloperConsole(!getDisplayDeveloperConsole());
 	}
 
+	if(in.getKey(KeyCode::Y) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget(
+			(renderer.getCurrentDebugRenderTarget() == "GBuffer_velocity") ? "" : "GBuffer_velocity");
+	}
+
 	if(in.getKey(KeyCode::U) == 1)
 	{
 		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSGI") ? "" : "SSGI");

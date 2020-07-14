@@ -386,18 +386,28 @@ Error MaterialResource::findBuiltinMutators()
 			{
 				if(block.m_set != m_descriptorSetIdx)
 				{
-					ANKI_RESOURCE_LOGE("The set of u_ankiBoneTransforms should be %u", m_descriptorSetIdx);
+					ANKI_RESOURCE_LOGE("The set of b_ankiBoneTransforms should be %u", m_descriptorSetIdx);
 					return Error::USER_DATA;
 				}
 
 				m_boneTrfsBinding = block.m_binding;
-				break;
+			}
+			else if(block.m_name.getBegin() == CString("b_ankiPrevFrameBoneTransforms"))
+			{
+				if(block.m_set != m_descriptorSetIdx)
+				{
+					ANKI_RESOURCE_LOGE("The set of b_ankiPrevFrameBoneTransforms should be %u", m_descriptorSetIdx);
+					return Error::USER_DATA;
+				}
+
+				m_prevFrameBoneTrfsBinding = block.m_binding;
 			}
 		}
 
-		if(m_boneTrfsBinding == MAX_U32)
+		if(m_boneTrfsBinding == MAX_U32 || m_prevFrameBoneTrfsBinding == MAX_U32)
 		{
-			ANKI_RESOURCE_LOGE("The program is using the %s mutator but b_ankiBoneTransforms was not found",
+			ANKI_RESOURCE_LOGE("The program is using the %s mutator but b_ankiBoneTransforms or "
+							   "b_ankiPrevFrameBoneTransforms was not found",
 				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::BONES].cstr());
 			return Error::NONE;
 		}

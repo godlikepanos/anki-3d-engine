@@ -42,6 +42,26 @@ public:
 		return m_runCtx.m_upscaleRt;
 	}
 
+	F32 getThreshold() const
+	{
+		return m_exposure.m_threshold;
+	}
+
+	void setThreshold(F32 t)
+	{
+		m_exposure.m_threshold = t;
+	}
+
+	F32 getScale() const
+	{
+		return m_exposure.m_scale;
+	}
+
+	void setScale(F32 t)
+	{
+		m_exposure.m_scale = t;
+	}
+
 private:
 	static constexpr Format RT_PIXEL_FORMAT = Format::A2B10G10R10_UNORM_PACK32;
 
@@ -53,8 +73,8 @@ private:
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
 
-		F32 m_threshold = 10.0; ///< How bright it is
-		F32 m_scale = 1.0;
+		F32 m_threshold = 10.0f; ///< How bright it is
+		F32 m_scale = 1.0f;
 		U32 m_width = 0;
 		U32 m_height = 0;
 

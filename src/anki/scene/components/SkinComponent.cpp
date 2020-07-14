@@ -19,19 +19,16 @@ SkinComponent::SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton)
 {
 	ANKI_ASSERT(node);
 
-	m_boneTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize());
-	m_animationTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize());
-
-	for(U32 i = 0; i < m_boneTrfs.getSize(); ++i)
-	{
-		m_boneTrfs[i].setIdentity();
-		m_animationTrfs[i] = {Vec3(0.0f), Quat::getIdentity(), 1.0f};
-	}
+	m_boneTrfs[0].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
+	m_boneTrfs[1].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
+	m_animationTrfs.create(
+		m_node->getAllocator(), m_skeleton->getBones().getSize(), {Vec3(0.0f), Quat::getIdentity(), 1.0f});
 }
 
 SkinComponent::~SkinComponent()
 {
-	m_boneTrfs.destroy(m_node->getAllocator());
+	m_boneTrfs[0].destroy(m_node->getAllocator());
+	m_boneTrfs[1].destroy(m_node->getAllocator());
 	m_animationTrfs.destroy(m_node->getAllocator());
 }
 
@@ -158,12 +155,19 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 
 	if(updated)
 	{
+		m_prevBoneTrfs = m_crntBoneTrfs;
+		m_crntBoneTrfs = m_crntBoneTrfs ^ 1;
+
 		// Walk the bone hierarchy to add additional transforms
 		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated, minExtend, maxExtend);
 
 		const Vec4 E(EPSILON, EPSILON, EPSILON, 0.0f);
 		m_boneBoundingVolume.setMin(minExtend - E);
 		m_boneBoundingVolume.setMax(maxExtend + E);
+	}
+	else
+	{
+		m_prevBoneTrfs = m_crntBoneTrfs;
 	}
 
 	m_absoluteTime += dt;
@@ -186,7 +190,7 @@ void SkinComponent::visitBones(
 		outMat = parentTrf * bone.getTransform();
 	}
 
-	m_boneTrfs[bone.getIndex()] = outMat * bone.getVertexTransform();
+	m_boneTrfs[m_crntBoneTrfs][bone.getIndex()] = outMat * bone.getVertexTransform();
 
 	// Update volume
 	const Vec4 bonePos = outMat * Vec4(0.0f, 0.0f, 0.0f, 1.0f);

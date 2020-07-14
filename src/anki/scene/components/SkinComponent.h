@@ -9,6 +9,7 @@
 #include <anki/resource/Forward.h>
 #include <anki/collision/Aabb.h>
 #include <anki/util/Forward.h>
+#include <anki/util/WeakArray.h>
 #include <anki/Math.h>
 
 namespace anki
@@ -49,9 +50,14 @@ public:
 
 	void playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info);
 
-	const DynamicArray<Mat4>& getBoneTransforms() const
+	ConstWeakArray<Mat4> getBoneTransforms() const
 	{
-		return m_boneTrfs;
+		return m_boneTrfs[m_crntBoneTrfs];
+	}
+
+	ConstWeakArray<Mat4> getPreviousFrameBoneTransforms() const
+	{
+		return m_boneTrfs[m_prevBoneTrfs];
 	}
 
 	const SkeletonResourcePtr& getSkeleronResource() const
@@ -86,11 +92,13 @@ private:
 
 	SceneNode* m_node;
 	SkeletonResourcePtr m_skeleton;
-	DynamicArray<Mat4> m_boneTrfs;
+	Array<DynamicArray<Mat4>, 2> m_boneTrfs;
 	DynamicArray<Trf> m_animationTrfs;
 	Aabb m_boneBoundingVolume{Vec3(-1.0f), Vec3(1.0f)};
 	Array<Track, MAX_ANIMATION_TRACKS> m_tracks;
 	Second m_absoluteTime = 0.0;
+	U8 m_crntBoneTrfs = 0;
+	U8 m_prevBoneTrfs = 1;
 
 	void visitBones(const Bone& bone,
 		const Mat4& parentTrf,

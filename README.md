@@ -89,6 +89,7 @@ This code repository contains **3 sample projects** that are built by default (`
 - `sponza`: The Crytek's Sponza scene
 - `simple_scene`: A simple scene
 - `physics_playground`: A scene with programmer's art and some physics interactions
+- `skeletal_animation`: A simple scene with an animated skin
 
 You can try running them and interacting with them. To run sponza, for example, execute the binary from any working
 directory.

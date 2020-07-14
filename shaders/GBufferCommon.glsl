@@ -47,7 +47,7 @@ layout(location = 5) out Vec3 out_eyeTangentSpace;
 layout(location = 6) out Vec3 out_normalTangentSpace;
 #		endif
 
-#		if ANKI_VELOCITY
+#		if ANKI_VELOCITY || ANKI_BONES
 layout(location = 7) out Vec2 out_velocity;
 #		endif
 #	endif // ANKI_PASS == PASS_GB
@@ -68,7 +68,7 @@ layout(location = 5) in Vec3 in_eyeTangentSpace;
 layout(location = 6) in Vec3 in_normalTangentSpace;
 #	endif
 
-#	if ANKI_VELOCITY
+#	if ANKI_VELOCITY || ANKI_BONES
 layout(location = 7) in Vec2 in_velocity;
 #	endif
 #endif

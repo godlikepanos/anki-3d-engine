@@ -187,10 +187,15 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		if(m_model->getSkeleton())
 		{
 			const SkinComponent& skinc = getComponentAt<SkinComponent>(0);
-			StagingGpuMemoryToken token;
+			const U32 boneCount = skinc.getBoneTransforms().getSize();
+			StagingGpuMemoryToken token, tokenPrev;
 			void* trfs = ctx.m_stagingGpuAllocator->allocateFrame(
-				skinc.getBoneTransforms().getSize() * sizeof(Mat4), StagingGpuMemoryType::STORAGE, token);
-			memcpy(trfs, &skinc.getBoneTransforms()[0], skinc.getBoneTransforms().getSize() * sizeof(Mat4));
+				boneCount * sizeof(Mat4), StagingGpuMemoryType::STORAGE, token);
+			memcpy(trfs, &skinc.getBoneTransforms()[0], boneCount * sizeof(Mat4));
+
+			trfs = ctx.m_stagingGpuAllocator->allocateFrame(
+				boneCount * sizeof(Mat4), StagingGpuMemoryType::STORAGE, tokenPrev);
+			memcpy(trfs, &skinc.getPreviousFrameBoneTransforms()[0], boneCount * sizeof(Mat4));
 
 			ANKI_ASSERT(modelInf.m_boneTransformsBinding < MAX_U32);
 			cmdb->bindStorageBuffer(patch.getMaterial()->getDescriptorSetIndex(),
@@ -198,6 +203,13 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 				token.m_buffer,
 				token.m_offset,
 				token.m_range);
+
+			ANKI_ASSERT(modelInf.m_prevFrameBoneTransformsBinding < MAX_U32);
+			cmdb->bindStorageBuffer(patch.getMaterial()->getDescriptorSetIndex(),
+				modelInf.m_prevFrameBoneTransformsBinding,
+				tokenPrev.m_buffer,
+				tokenPrev.m_offset,
+				tokenPrev.m_range);
 		}
 
 		// Program

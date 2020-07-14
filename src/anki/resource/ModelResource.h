@@ -80,6 +80,7 @@ public:
 	IndexType m_indexType;
 
 	U32 m_boneTransformsBinding;
+	U32 m_prevFrameBoneTransformsBinding;
 };
 
 /// Model patch interface class. Its very important class and it binds the material with the mesh
