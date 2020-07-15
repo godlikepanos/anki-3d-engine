@@ -171,6 +171,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency({m_runCtx.m_intermediateRts[READ], TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_runCtx.m_intermediateRts[WRITE], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 
 		rpass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->runHBlur(rgraphCtx); },
@@ -185,6 +186,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency({m_runCtx.m_intermediateRts[WRITE], TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_runCtx.m_finalRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
 		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 
 		rpass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
@@ -239,8 +241,12 @@ void Ssgi::runVBlur(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_intermediateRts[WRITE]);
 	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
 
-	rgraphCtx.bindImage(0, 3, m_runCtx.m_intermediateRts[READ], TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 4, m_runCtx.m_intermediateRts[READ], TextureSubresourceInfo());
+
+	const Mat4 mat = m_runCtx.m_ctx->m_matrices.m_viewProjectionJitter.getInverse();
+	cmdb->setPushConstants(&mat, sizeof(mat));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth() / 2, m_r->getHeight() / 2);
 }
@@ -253,8 +259,12 @@ void Ssgi::runHBlur(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_intermediateRts[READ]);
 	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
 
-	rgraphCtx.bindImage(0, 3, m_runCtx.m_intermediateRts[WRITE], TextureSubresourceInfo());
+	rgraphCtx.bindImage(0, 4, m_runCtx.m_intermediateRts[WRITE], TextureSubresourceInfo());
+
+	const Mat4 mat = m_runCtx.m_ctx->m_matrices.m_viewProjectionJitter.getInverse();
+	cmdb->setPushConstants(&mat, sizeof(mat));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth() / 2, m_r->getHeight() / 2);
 }

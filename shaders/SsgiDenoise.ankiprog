@@ -11,7 +11,8 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_TEXTURE_SIZE, 0, UVec2(1));
 
 #pragma anki start comp
 
-#include <shaders/Common.glsl>
+#include <shaders/BilateralFilter.glsl>
+#include <shaders/Pack.glsl>
 
 #if SAMPLE_COUNT < 3
 #	error See file
@@ -23,13 +24,19 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_inTex;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
-layout(set = 0, binding = 3) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
+layout(set = 0, binding = 4) writeonly uniform image2D u_outImg;
 
-F32 computeDepthWeight(F32 refDepth, F32 depth)
+layout(std140, push_constant, row_major) uniform b_pc
 {
-	const F32 diff = abs(refDepth - depth);
-	const F32 weight = sqrt(1.0 / (EPSILON + diff));
-	return weight;
+	Mat4 u_invViewProjMat;
+};
+
+Vec3 unproject(Vec2 ndc, F32 depth)
+{
+	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+	return worldPos;
 }
 
 F32 readDepth(Vec2 uv)
@@ -37,10 +44,28 @@ F32 readDepth(Vec2 uv)
 	return textureLod(u_depthTex, u_linearAnyClampSampler, uv, 0.0).r;
 }
 
-void sampleTex(Vec2 inUv, Vec2 depthUv, F32 refDepth, inout Vec3 col, inout F32 weight)
+Vec3 readNormal(Vec2 uv)
 {
-	const Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, inUv, 0.0).rgb;
-	const F32 w = computeDepthWeight(refDepth, readDepth(depthUv));
+	return readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
+}
+
+void sampleTex(Vec2 colorUv, Vec2 fullUv, BilateralSample ref, inout Vec3 col, inout F32 weight)
+{
+	const Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, colorUv, 0.0).rgb;
+
+	BilateralSample crnt;
+	crnt.m_depth = readDepth(fullUv);
+	crnt.m_position = unproject(UV_TO_NDC(fullUv), crnt.m_depth);
+	crnt.m_normal = readNormal(fullUv);
+
+	BilateralConfig config;
+	const Vec3 weights = normalize(Vec3(0.0, 1.0, 1.0));
+	config.m_depthWeight = weights.x;
+	config.m_normalWeight = weights.y;
+	config.m_planeWeight = weights.z;
+	config.m_roughnessWeight = 0.0;
+
+	const F32 w = calculateBilateralWeight(crnt, ref, config);
 	col += color * w;
 	weight += w;
 }
@@ -71,8 +96,12 @@ void main()
 
 	// Reference
 	Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, inUv, 0.0).rgb;
-	const F32 refDepth = readDepth(depthUv);
 	F32 weight = 1.0;
+
+	BilateralSample ref;
+	ref.m_depth = readDepth(depthUv);
+	ref.m_position = unproject(UV_TO_NDC(depthUv), ref.m_depth);
+	ref.m_normal = readNormal(depthUv);
 
 #if ORIENTATION == 1
 #	define X_OR_Y x
@@ -87,8 +116,8 @@ void main()
 
 	ANKI_UNROLL for(U32 i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
 	{
-		sampleTex(inUv + inUvOffset, depthUv + depthUvOffset, refDepth, color, weight);
-		sampleTex(inUv - inUvOffset, depthUv - depthUvOffset, refDepth, color, weight);
+		sampleTex(inUv + inUvOffset, depthUv + depthUvOffset, ref, color, weight);
+		sampleTex(inUv - inUvOffset, depthUv - depthUvOffset, ref, color, weight);
 
 		inUvOffset.X_OR_Y += IN_TEXEL_SIZE.X_OR_Y;
 		depthUvOffset.X_OR_Y += 2.0 * DEPTH_TEXEL_SIZE.X_OR_Y;
