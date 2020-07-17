@@ -14,6 +14,7 @@ namespace anki
 /// @{
 
 /// Buffer init info.
+/// @memberof Buffer
 class BufferInitInfo : public GrBaseInitInfo
 {
 public:

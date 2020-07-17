@@ -246,10 +246,11 @@ private:
 	VkQueue m_queue = VK_NULL_HANDLE;
 	Mutex m_globalMtx;
 
-	VkPhysicalDeviceProperties m_devProps = {};
-	VkPhysicalDeviceFeatures m_devFeatures = {};
-	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures = {};
-	VkPhysicalDeviceBufferDeviceAddressFeatures m_bufferDeviceAddressFeatures = {};
+	VkPhysicalDeviceProperties m_devProps{};
+	VkPhysicalDeviceFeatures m_devFeatures{};
+	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures{};
+	VkPhysicalDeviceBufferDeviceAddressFeatures m_bufferDeviceAddressFeatures{};
+	VkPhysicalDeviceRayTracingFeaturesKHR m_rtFeatures{};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
 	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;

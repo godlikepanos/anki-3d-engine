@@ -15,6 +15,7 @@
 #else
 #	error TODO
 #endif
+#define VK_ENABLE_BETA_EXTENSIONS
 #include <volk/volk.h>
 
 // Cleanup global namespace from these dirty libaries
@@ -66,6 +67,7 @@ enum class VulkanExtensions : U16
 	EXT_DEBUG_REPORT = 1 << 9,
 	AMD_SHADER_INFO = 1 << 10,
 	AMD_RASTERIZATION_ORDER = 1 << 11,
+	KHR_RAY_TRACING = 1 << 12
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions, inline)
 
@@ -275,6 +277,25 @@ ANKI_USE_RESULT inline VkRasterizationOrderAMD convertRasterizationOrder(Rasteri
 	default:
 		ANKI_ASSERT(0);
 		out = VK_RASTERIZATION_ORDER_STRICT_AMD;
+	}
+
+	return out;
+}
+
+ANKI_USE_RESULT inline VkAccelerationStructureTypeKHR convertAccelerationStructureType(AccelerationStructureType ak)
+{
+	VkAccelerationStructureTypeKHR out;
+	switch(ak)
+	{
+	case AccelerationStructureType::BOTTOM_LEVEL:
+		out = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		break;
+	case AccelerationStructureType::TOP_LEVEL:
+		out = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 	}
 
 	return out;

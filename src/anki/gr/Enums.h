@@ -652,6 +652,14 @@ enum class RasterizationOrder : U8
 	RELAXED,
 	COUNT
 };
+
+/// Acceleration structure type.
+enum class AccelerationStructureType : U8
+{
+	TOP_LEVEL,
+	BOTTOM_LEVEL,
+	COUNT
+};
 /// @}
 
 } // end namespace anki

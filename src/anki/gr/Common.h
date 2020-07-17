@@ -27,6 +27,7 @@ class BufferInitInfo;
 class ShaderInitInfo;
 class ShaderProgramInitInfo;
 class CommandBufferInitInfo;
+class AccelerationStructureInitInfo;
 
 /// @addtogroup graphics
 /// @{
@@ -70,6 +71,7 @@ ANKI_GR_CLASS(TimestampQuery)
 ANKI_GR_CLASS(ShaderProgram)
 ANKI_GR_CLASS(Fence)
 ANKI_GR_CLASS(RenderGraph)
+ANKI_GR_CLASS(AccelerationStructure)
 
 #undef ANKI_GR_CLASS
 

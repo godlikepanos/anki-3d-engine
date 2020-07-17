@@ -530,6 +530,12 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::AMD_RASTERIZATION_ORDER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME;
 			}
+			else if(CString(extensionInfos[extCount].extensionName) == VK_KHR_RAY_TRACING_EXTENSION_NAME
+					&& init.m_config->getBool("gr_rayTracing"))
+			{
+				m_extensions |= VulkanExtensions::KHR_RAY_TRACING;
+				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_RAY_TRACING_EXTENSION_NAME;
+			}
 		}
 
 		// Enable the bindless features required
@@ -585,6 +591,31 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			m_bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = false;
 
 			m_descriptorIndexingFeatures.pNext = &m_bufferDeviceAddressFeatures;
+		}
+
+		// Set RT features
+		if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
+		{
+			m_rtFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
+
+			VkPhysicalDeviceFeatures2 features = {};
+			features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+			features.pNext = &m_rtFeatures;
+			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+			if(!m_rtFeatures.rayTracing || m_rtFeatures.rayQuery)
+			{
+				ANKI_VK_LOGE("Ray tracing and ray query are both required");
+				return Error::FUNCTION_FAILED;
+			}
+
+			// Only enable what's necessary
+			m_rtFeatures = {};
+			m_rtFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
+			m_rtFeatures.rayTracing = true;
+			m_rtFeatures.rayQuery = true;
+
+			m_bufferDeviceAddressFeatures.pNext = &m_rtFeatures;
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");

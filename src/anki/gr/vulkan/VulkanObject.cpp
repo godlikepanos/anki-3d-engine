@@ -17,6 +17,7 @@
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>
 #include <anki/gr/vulkan/TimestampQueryImpl.h>
 #include <anki/gr/vulkan/FenceImpl.h>
+#include <anki/gr/vulkan/AccelerationStructureImpl.h>
 
 namespace anki
 {

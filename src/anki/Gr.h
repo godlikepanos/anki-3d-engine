@@ -16,6 +16,7 @@
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/TimestampQuery.h>
 #include <anki/gr/Fence.h>
+#include <anki/gr/AccelerationStructure.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/RenderGraph.h>
 

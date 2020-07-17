@@ -17,6 +17,7 @@
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/TimestampQuery.h>
 #include <anki/gr/RenderGraph.h>
+#include <anki/gr/AccelerationStructure.h>
 
 namespace anki
 {
@@ -149,6 +150,11 @@ TimestampQueryPtr GrManager::newTimestampQuery()
 RenderGraphPtr GrManager::newRenderGraph()
 {
 	return RenderGraphPtr(RenderGraph::newInstance(this));
+}
+
+AccelerationStructurePtr GrManager::newAccelerationStructure(const AccelerationStructureInitInfo& init)
+{
+	return AccelerationStructurePtr(AccelerationStructure::newInstance(this, init));
 }
 
 } // end namespace anki
