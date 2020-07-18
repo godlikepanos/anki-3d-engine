@@ -11,7 +11,15 @@ namespace anki
 
 AccelerationStructureImpl::~AccelerationStructureImpl()
 {
-	ANKI_ASSERT(!"TODO");
+	if(m_handle)
+	{
+		vkDestroyAccelerationStructureKHR(getDevice(), m_handle, nullptr);
+	}
+
+	if(m_memHandle)
+	{
+		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
+	}
 }
 
 Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
@@ -56,7 +64,44 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 	// Allocate memory
 	{
-		// TODO
+		// Get mem requirements
+		VkAccelerationStructureMemoryRequirementsInfoKHR reqIn{};
+		reqIn.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_KHR;
+		reqIn.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_KHR;
+		reqIn.buildType = VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR;
+		reqIn.accelerationStructure = m_handle;
+
+		VkMemoryRequirements2 req{};
+		req.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+
+		vkGetAccelerationStructureMemoryRequirementsKHR(getDevice(), &reqIn, &req);
+
+		// Find mem IDX
+		U32 memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryRequirements.memoryTypeBits,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+		// Fallback
+		if(memIdx == MAX_U32)
+		{
+			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
+				req.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+		}
+
+		ANKI_ASSERT(memIdx != MAX_U32);
+
+		// Allocate
+		// TODO is it linear or no-linear?
+		getGrManagerImpl().getGpuMemoryManager().allocateMemory(
+			memIdx, req.memoryRequirements.size, U32(req.memoryRequirements.alignment), true, false, m_memHandle);
+
+		// Bind memory
+		VkBindAccelerationStructureMemoryInfoKHR bindInfo{};
+		bindInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_KHR;
+		bindInfo.accelerationStructure = m_handle;
+		bindInfo.memory = m_memHandle.m_memory;
+		bindInfo.memoryOffset = m_memHandle.m_offset;
+		ANKI_VK_CHECK(vkBindAccelerationStructureMemoryKHR(getDevice(), 1, &bindInfo));
 	}
 
 	return Error::NONE;

@@ -42,8 +42,28 @@ public:
 
 	Bool isValid() const
 	{
-		ANKI_ASSERT(!"TODO");
-		return false;
+		if(m_type == AccelerationStructureType::COUNT)
+		{
+			return false;
+		}
+
+		if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
+		{
+			if(m_bottomLevel.m_indexType == IndexType::COUNT || m_bottomLevel.m_positionsFormat == Format::NONE
+				|| m_bottomLevel.m_indexCount == 0 || m_bottomLevel.m_vertexCount == 0)
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if(m_topLevel.m_bottomLevelCount == 0)
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 };
 

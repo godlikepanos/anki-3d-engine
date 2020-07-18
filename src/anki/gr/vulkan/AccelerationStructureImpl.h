@@ -29,8 +29,15 @@ public:
 
 	ANKI_USE_RESULT Error init(const AccelerationStructureInitInfo& inf);
 
+	VkAccelerationStructureKHR getHandle() const
+	{
+		ANKI_ASSERT(m_handle);
+		return m_handle;
+	}
+
 private:
 	VkAccelerationStructureKHR m_handle = VK_NULL_HANDLE;
+	GpuMemoryHandle m_memHandle;
 };
 /// @}
 
