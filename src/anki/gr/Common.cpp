@@ -228,4 +228,15 @@ PtrSize computeVolumeSize(U width, U height, U depth, Format fmt)
 	}
 }
 
+PtrSize getFormatBytes(Format fmt)
+{
+	ANKI_ASSERT(fmt != Format::NONE);
+	U texelComponents;
+	U texelBytes;
+	U blockSize;
+	U blockBytes;
+	getFormatInfo(fmt, texelComponents, texelBytes, blockSize, blockBytes);
+	return texelBytes;
+}
+
 } // end namespace anki

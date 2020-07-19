@@ -27,6 +27,18 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	ANKI_ASSERT(inf.isValid());
 	m_type = inf.m_type;
 
+	if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
+	{
+		m_bottomLevelInfo.m_indexType = inf.m_bottomLevel.m_indexType;
+		m_bottomLevelInfo.m_positionsFormat = inf.m_bottomLevel.m_positionsFormat;
+		m_bottomLevelInfo.m_indexCount = inf.m_bottomLevel.m_indexCount;
+		m_bottomLevelInfo.m_vertexCount = inf.m_bottomLevel.m_vertexCount;
+	}
+	else
+	{
+		m_topLevelInfo.m_bottomLevelCount = inf.m_topLevel.m_bottomLevelCount;
+	}
+
 	// Create the handle
 	{
 		VkAccelerationStructureCreateGeometryTypeInfoKHR geom{};

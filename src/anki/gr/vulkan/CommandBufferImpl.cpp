@@ -9,6 +9,7 @@
 
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/vulkan/FramebufferImpl.h>
+#include <anki/gr/vulkan/AccelerationStructureImpl.h>
 
 #include <algorithm>
 
@@ -810,6 +811,28 @@ void CommandBufferImpl::rebindDynamicState()
 		ANKI_CMD(vkCmdSetStencilReference(m_handle, VK_STENCIL_FACE_BACK_BIT, m_stencilReferenceMasks[1]),
 			ANY_OTHER_COMMAND);
 	}
+}
+
+void CommandBufferImpl::buildBottomLevelAccelerationStructureInternal(AccelerationStructurePtr& as,
+	BufferPtr& positions,
+	PtrSize positionsOffset,
+	PtrSize positionsStride,
+	BufferPtr& indices,
+	PtrSize indicesOffset)
+{
+	// Get objects
+	AccelerationStructureImpl& asImpl = static_cast<AccelerationStructureImpl&>(*as);
+	const BufferImpl& positionsImpl = static_cast<const BufferImpl&>(*positions);
+	const BufferImpl& indicesImpl = static_cast<const BufferImpl&>(*indices);
+
+	// Do checks
+#if ANKI_ENABLE_ASSERTS
+	{
+		const ASBottomLevelInfo& bottomInfo = asImpl.getBottomLevelInfo();
+	}
+#endif
+
+	ANKI_ASSERT(!"TODO");
 }
 
 } // end namespace anki

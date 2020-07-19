@@ -325,6 +325,18 @@ void CommandBuffer::copyBufferToBuffer(
 	self.copyBufferToBuffer(src, srcOffset, dst, dstOffset, range);
 }
 
+void CommandBuffer::buildBottomLevelAccelerationStructure(AccelerationStructurePtr as,
+	BufferPtr positions,
+	PtrSize positionsOffset,
+	PtrSize positionsStride,
+	BufferPtr indices,
+	PtrSize indicesOffset)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.buildBottomLevelAccelerationStructureInternal(
+		as, positions, positionsOffset, positionsStride, indices, indicesOffset);
+}
+
 void CommandBuffer::setTextureBarrier(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource)
 {

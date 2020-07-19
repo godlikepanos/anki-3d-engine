@@ -372,6 +372,13 @@ public:
 
 	void copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range);
 
+	void buildBottomLevelAccelerationStructureInternal(AccelerationStructurePtr& as,
+		BufferPtr& positions,
+		PtrSize positionsOffset,
+		PtrSize positionsStride,
+		BufferPtr& indices,
+		PtrSize indicesOffset);
+
 	void setPushConstants(const void* data, U32 dataSize);
 
 	void setRasterizationOrder(RasterizationOrder order);

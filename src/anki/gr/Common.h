@@ -403,6 +403,9 @@ PtrSize computeSurfaceSize(U width, U height, Format fmt);
 
 /// Compute the size in bytes of the texture volume.
 PtrSize computeVolumeSize(U width, U height, U depth, Format fmt);
+
+/// Get the size of a single component of that format.
+PtrSize getFormatBytes(Format fmt);
 /// @}
 
 } // end namespace anki
