@@ -15,23 +15,6 @@ namespace anki
 /// @addtogroup vulkan
 /// @{
 
-/// @memberof AccelerationStructureImpl
-class ASBottomLevelInfo
-{
-public:
-	IndexType m_indexType = IndexType::COUNT;
-	Format m_positionsFormat = Format::NONE;
-	U32 m_indexCount = 0;
-	U32 m_vertexCount = 0;
-};
-
-/// @memberof AccelerationStructureImpl
-class ASTopLevelInfo
-{
-public:
-	U32 m_bottomLevelCount = 0;
-};
-
 /// AccelerationStructure implementation.
 class AccelerationStructureImpl final : public AccelerationStructure,
 										public VulkanObject<AccelerationStructure, AccelerationStructureImpl>
@@ -52,27 +35,49 @@ public:
 		return m_handle;
 	}
 
-	const ASBottomLevelInfo& getBottomLevelInfo() const
+	U32 getBuildScratchBufferSize() const
 	{
-		ANKI_ASSERT(m_type == AccelerationStructureType::BOTTOM_LEVEL);
-		return m_bottomLevelInfo;
+		ANKI_ASSERT(m_scratchBufferSize > 0);
+		return m_scratchBufferSize;
 	}
 
-	const ASTopLevelInfo& getTopLevelInfo() const
+	void generateBuildInfo(U64 scratchBufferAddress,
+		VkAccelerationStructureBuildGeometryInfoKHR& info,
+		VkAccelerationStructureBuildOffsetInfoKHR& offsetInfo) const
 	{
-		ANKI_ASSERT(m_type == AccelerationStructureType::TOP_LEVEL);
-		return m_topLevelInfo;
+		info = m_buildInfo;
+		info.scratchData.deviceAddress = scratchBufferAddress;
+		offsetInfo = m_offsetInfo;
 	}
 
 private:
+	class ASBottomLevelInfo : public BottomLevelAccelerationStructureInitInfo
+	{
+	public:
+		U64 m_gpuAddress = 0;
+	};
+
+	class ASTopLevelInfo
+	{
+	public:
+		DynamicArray<AccelerationStructureInstance> m_instances;
+		BufferPtr m_instancesBuff;
+	};
+
 	VkAccelerationStructureKHR m_handle = VK_NULL_HANDLE;
 	GpuMemoryHandle m_memHandle;
 
-	union
-	{
-		ASBottomLevelInfo m_bottomLevelInfo;
-		ASTopLevelInfo m_topLevelInfo;
-	};
+	ASBottomLevelInfo m_bottomLevelInfo;
+	ASTopLevelInfo m_topLevelInfo;
+
+	U32 m_scratchBufferSize = 0;
+
+	VkAccelerationStructureBuildGeometryInfoKHR m_buildInfo{};
+	VkAccelerationStructureGeometryKHR m_geometry{};
+	VkAccelerationStructureGeometryKHR* m_geometryPtr = &m_geometry;
+	VkAccelerationStructureBuildOffsetInfoKHR m_offsetInfo{};
+
+	void initBuildInfo();
 };
 /// @}
 

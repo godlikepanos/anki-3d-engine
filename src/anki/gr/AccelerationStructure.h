@@ -5,7 +5,9 @@
 
 #pragma once
 
-#include <anki/gr/GrObject.h>
+#include <anki/gr/Buffer.h>
+#include <anki/Math.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -13,27 +15,75 @@ namespace anki
 /// @addtogroup graphics
 /// @{
 
+/// @memberof AccelerationStructureInitInfo
+class BottomLevelAccelerationStructureInitInfo
+{
+public:
+	BufferPtr m_indexBuffer;
+	PtrSize m_indexBufferOffset = 0;
+	U32 m_indexCount = 0;
+	IndexType m_indexType = IndexType::COUNT;
+
+	BufferPtr m_positionBuffer;
+	PtrSize m_positionBufferOffset = 0;
+	U32 m_positionStride = 0;
+	Format m_positionsFormat = Format::NONE;
+	U32 m_positionCount = 0;
+
+	Bool isValid() const
+	{
+		if(m_indexBuffer.get() == nullptr || m_indexCount == 0 || m_indexType == IndexType::COUNT
+			|| m_positionBuffer.get() == nullptr || m_positionStride == 0 || m_positionsFormat == Format::NONE
+			|| m_positionCount == 0)
+		{
+			return false;
+		}
+
+		const PtrSize posRange = m_positionBufferOffset + m_positionStride * m_positionCount;
+		if(m_positionStride < getFormatBytes(m_positionsFormat)
+			|| (m_positionStride % getFormatBytes(m_positionsFormat)) != 0 || posRange > m_positionBuffer->getSize())
+		{
+			return false;
+		}
+
+		const PtrSize idxStride = (m_indexType == IndexType::U16) ? 2 : 4;
+		if(m_indexBufferOffset + idxStride * m_indexCount > m_indexBuffer->getSize())
+		{
+			return false;
+		}
+
+		return true;
+	}
+};
+
+/// @memberof AccelerationStructureInitInfo
+class AccelerationStructureInstance
+{
+public:
+	AccelerationStructurePtr m_bottomLevel;
+	Mat3x4 m_transform = Mat3x4::getIdentity();
+};
+
+/// @memberof AccelerationStructureInitInfo
+class TopLevelAccelerationStructureInitInfo
+{
+public:
+	ConstWeakArray<AccelerationStructureInstance> m_instances;
+
+	Bool isValid() const
+	{
+		return m_instances.getSize() > 0;
+	}
+};
+
 /// Acceleration struture init info.
 /// @memberof AccelerationStructure
 class AccelerationStructureInitInfo : public GrBaseInitInfo
 {
 public:
 	AccelerationStructureType m_type = AccelerationStructureType::COUNT;
-
-	class
-	{
-	public:
-		IndexType m_indexType = IndexType::COUNT;
-		Format m_positionsFormat = Format::NONE;
-		U32 m_indexCount = 0;
-		U32 m_vertexCount = 0;
-	} m_bottomLevel;
-
-	class
-	{
-	public:
-		U32 m_bottomLevelCount = 0;
-	} m_topLevel;
+	BottomLevelAccelerationStructureInitInfo m_bottomLevel;
+	TopLevelAccelerationStructureInitInfo m_topLevel;
 
 	AccelerationStructureInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
@@ -47,23 +97,7 @@ public:
 			return false;
 		}
 
-		if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
-		{
-			if(m_bottomLevel.m_indexType == IndexType::COUNT || m_bottomLevel.m_positionsFormat == Format::NONE
-				|| m_bottomLevel.m_indexCount == 0 || m_bottomLevel.m_vertexCount == 0)
-			{
-				return false;
-			}
-		}
-		else
-		{
-			if(m_topLevel.m_bottomLevelCount == 0)
-			{
-				return false;
-			}
-		}
-
-		return true;
+		return (m_type == AccelerationStructureType::BOTTOM_LEVEL) ? m_bottomLevel.isValid() : m_topLevel.isValid();
 	}
 };
 
@@ -74,6 +108,12 @@ class AccelerationStructure : public GrObject
 
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::ACCELERATION_STRUCTURE;
+
+	AccelerationStructureType getType() const
+	{
+		ANKI_ASSERT(m_type != AccelerationStructureType::COUNT);
+		return m_type;
+	}
 
 protected:
 	AccelerationStructureType m_type = AccelerationStructureType::COUNT;

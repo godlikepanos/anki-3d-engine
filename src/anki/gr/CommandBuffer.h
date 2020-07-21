@@ -386,19 +386,8 @@ public:
 	/// @param range Size to copy.
 	void copyBufferToBuffer(BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset, PtrSize range);
 
-	/// Build the bottom level acceleration structure.
-	/// @param[in,out] as The AS to build.
-	/// @param[in] positions The position buffer.
-	/// @param positionsOffset Offset to the positions buffer.
-	/// @param positionsStride Stride of the positions.
-	/// @param[in] indices The indices buffer.
-	/// @param indicesOffset The offset of the 1st index.
-	void buildBottomLevelAccelerationStructure(AccelerationStructurePtr as,
-		BufferPtr positions,
-		PtrSize positionsOffset,
-		PtrSize positionsStride,
-		BufferPtr indices,
-		PtrSize indicesOffset);
+	/// Build the acceleration structure.
+	void buildAccelerationStructure(AccelerationStructurePtr as);
 	/// @}
 
 	/// @name Sync

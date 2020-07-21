@@ -813,26 +813,30 @@ void CommandBufferImpl::rebindDynamicState()
 	}
 }
 
-void CommandBufferImpl::buildBottomLevelAccelerationStructureInternal(AccelerationStructurePtr& as,
-	BufferPtr& positions,
-	PtrSize positionsOffset,
-	PtrSize positionsStride,
-	BufferPtr& indices,
-	PtrSize indicesOffset)
+void CommandBufferImpl::buildAccelerationStructureInternal(AccelerationStructurePtr& as)
 {
 	// Get objects
-	AccelerationStructureImpl& asImpl = static_cast<AccelerationStructureImpl&>(*as);
-	const BufferImpl& positionsImpl = static_cast<const BufferImpl&>(*positions);
-	const BufferImpl& indicesImpl = static_cast<const BufferImpl&>(*indices);
+	const AccelerationStructureImpl& asImpl = static_cast<AccelerationStructureImpl&>(*as);
 
-	// Do checks
-#if ANKI_ENABLE_ASSERTS
-	{
-		const ASBottomLevelInfo& bottomInfo = asImpl.getBottomLevelInfo();
-	}
-#endif
+	// Create the scrach buffer
+	BufferInitInfo bufferInit;
+	bufferInit.m_exposeGpuAddress = true;
+	bufferInit.m_usage = BufferImpl::ACCELERATION_STRUCTURE_BUILD_SCRATCH_USAGE;
+	bufferInit.m_size = asImpl.getBuildScratchBufferSize();
+	BufferPtr scratchBuff = getManager().newBuffer(bufferInit);
 
-	ANKI_ASSERT(!"TODO");
+	// Create the build info
+	VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
+	VkAccelerationStructureBuildOffsetInfoKHR offsetInfo;
+	asImpl.generateBuildInfo(scratchBuff->getGpuAddress(), buildInfo, offsetInfo);
+
+	// Do the command
+	VkAccelerationStructureBuildOffsetInfoKHR* offsetInfoPtr = &offsetInfo;
+	ANKI_CMD(vkCmdBuildAccelerationStructureKHR(m_handle, 1, &buildInfo, &offsetInfoPtr), ANY_OTHER_COMMAND);
+
+	// Push refs
+	m_microCmdb->pushObjectRef(as);
+	m_microCmdb->pushObjectRef(scratchBuff);
 }
 
 } // end namespace anki

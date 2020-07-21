@@ -6,6 +6,7 @@
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
+#include <anki/gr/AccelerationStructure.h>
 
 namespace anki
 {
@@ -325,16 +326,10 @@ void CommandBuffer::copyBufferToBuffer(
 	self.copyBufferToBuffer(src, srcOffset, dst, dstOffset, range);
 }
 
-void CommandBuffer::buildBottomLevelAccelerationStructure(AccelerationStructurePtr as,
-	BufferPtr positions,
-	PtrSize positionsOffset,
-	PtrSize positionsStride,
-	BufferPtr indices,
-	PtrSize indicesOffset)
+void CommandBuffer::buildAccelerationStructure(AccelerationStructurePtr as)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.buildBottomLevelAccelerationStructureInternal(
-		as, positions, positionsOffset, positionsStride, indices, indicesOffset);
+	self.buildAccelerationStructureInternal(as);
 }
 
 void CommandBuffer::setTextureBarrier(

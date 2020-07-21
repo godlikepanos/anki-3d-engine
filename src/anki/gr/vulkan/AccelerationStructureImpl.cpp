@@ -29,14 +29,15 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 	if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
 	{
-		m_bottomLevelInfo.m_indexType = inf.m_bottomLevel.m_indexType;
-		m_bottomLevelInfo.m_positionsFormat = inf.m_bottomLevel.m_positionsFormat;
-		m_bottomLevelInfo.m_indexCount = inf.m_bottomLevel.m_indexCount;
-		m_bottomLevelInfo.m_vertexCount = inf.m_bottomLevel.m_vertexCount;
+		static_cast<BottomLevelAccelerationStructureInitInfo&>(m_bottomLevelInfo) = inf.m_bottomLevel;
 	}
 	else
 	{
-		m_topLevelInfo.m_bottomLevelCount = inf.m_topLevel.m_bottomLevelCount;
+		m_topLevelInfo.m_instances.create(getAllocator(), inf.m_topLevel.m_instances.getSize());
+		for(U32 i = 0; i < inf.m_topLevel.m_instances.getSize(); ++i)
+		{
+			m_topLevelInfo.m_instances[i] = inf.m_topLevel.m_instances[i];
+		}
 	}
 
 	// Create the handle
@@ -48,18 +49,18 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
 		{
 			geom.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-			geom.indexType = convertIndexType(inf.m_bottomLevel.m_indexType);
-			geom.vertexFormat = convertFormat(inf.m_bottomLevel.m_positionsFormat);
-			geom.maxPrimitiveCount = inf.m_bottomLevel.m_indexCount / 3;
-			geom.maxVertexCount = inf.m_bottomLevel.m_vertexCount;
-			geom.allowsTransforms = false;
+			geom.indexType = convertIndexType(m_bottomLevelInfo.m_indexType);
+			geom.vertexFormat = convertFormat(m_bottomLevelInfo.m_positionsFormat);
+			geom.maxPrimitiveCount = m_bottomLevelInfo.m_indexCount / 3;
+			geom.maxVertexCount = m_bottomLevelInfo.m_positionCount;
 		}
 		else
 		{
 			geom.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
-			geom.maxPrimitiveCount = inf.m_topLevel.m_bottomLevelCount;
-			geom.allowsTransforms = true;
+			geom.maxPrimitiveCount = m_topLevelInfo.m_instances.getSize();
 		}
+
+		geom.allowsTransforms = false; // Only for triangle types and at the moment not used
 
 		VkAccelerationStructureCreateInfoKHR ci{};
 		ci.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
@@ -116,7 +117,114 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		ANKI_VK_CHECK(vkBindAccelerationStructureMemoryKHR(getDevice(), 1, &bindInfo));
 	}
 
+	// Get scratch buffer size
+	{
+		VkMemoryRequirements2 req{};
+		req.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+
+		VkAccelerationStructureMemoryRequirementsInfoKHR inf{};
+		inf.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_KHR;
+		inf.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_KHR;
+		inf.buildType = VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR;
+		inf.accelerationStructure = m_handle;
+		vkGetAccelerationStructureMemoryRequirementsKHR(getDevice(), &inf, &req);
+
+		m_scratchBufferSize = U32(req.memoryRequirements.size);
+	}
+
+	// Get GPU address
+	if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
+	{
+		VkAccelerationStructureDeviceAddressInfoKHR inf{};
+		inf.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+		inf.accelerationStructure = m_handle;
+
+		m_bottomLevelInfo.m_gpuAddress = vkGetAccelerationStructureDeviceAddressKHR(getDevice(), &inf);
+		ANKI_ASSERT(m_bottomLevelInfo.m_gpuAddress);
+	}
+
 	return Error::NONE;
+}
+
+void AccelerationStructureImpl::initBuildInfo()
+{
+	if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
+	{
+		m_geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+		m_geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+		m_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR; // TODO
+
+		VkAccelerationStructureGeometryTrianglesDataKHR& triangles = m_geometry.geometry.triangles;
+		triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+		triangles.vertexFormat = convertFormat(m_bottomLevelInfo.m_positionsFormat);
+		triangles.vertexData.deviceAddress =
+			m_bottomLevelInfo.m_positionBuffer->getGpuAddress() + m_bottomLevelInfo.m_positionBufferOffset;
+		triangles.vertexStride = m_bottomLevelInfo.m_positionStride;
+		triangles.indexType = convertIndexType(m_bottomLevelInfo.m_indexType);
+		triangles.indexData.deviceAddress =
+			m_bottomLevelInfo.m_indexBuffer->getGpuAddress() + m_bottomLevelInfo.m_indexBufferOffset;
+	}
+	else
+	{
+		const U32 instanceCount = m_topLevelInfo.m_instances.getSize();
+
+		// Create the instances buffer
+		{
+			BufferInitInfo buffInit("RT_instances");
+			buffInit.m_size = sizeof(VkAccelerationStructureInstanceKHR) * instanceCount;
+			buffInit.m_usage = BufferImpl::ACCELERATION_STRUCTURE_BUILD_SCRATCH_USAGE;
+			buffInit.m_exposeGpuAddress = true;
+			buffInit.m_access = BufferMapAccessBit::WRITE;
+			m_topLevelInfo.m_instancesBuff = getManager().newBuffer(buffInit);
+		}
+
+		// Populate the instances buffer
+		{
+			VkAccelerationStructureInstanceKHR* instances = static_cast<VkAccelerationStructureInstanceKHR*>(
+				m_topLevelInfo.m_instancesBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+			for(U32 i = 0; i < instanceCount; ++i)
+			{
+				VkAccelerationStructureInstanceKHR& outInst = instances[i];
+				const AccelerationStructureInstance& inInst = m_topLevelInfo.m_instances[i];
+				static_assert(sizeof(outInst.transform) == sizeof(inInst.m_transform), "See file");
+				memcpy(&outInst.transform.matrix[0][0], &inInst.m_transform, sizeof(inInst.m_transform));
+				outInst.instanceCustomIndex = i;
+				outInst.mask = 0xFF;
+				outInst.instanceShaderBindingTableRecordOffset = 0;
+				outInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR;
+				outInst.accelerationStructureReference =
+					static_cast<const AccelerationStructureImpl&>(*inInst.m_bottomLevel).m_bottomLevelInfo.m_gpuAddress;
+				ANKI_ASSERT(outInst.accelerationStructureReference != 0);
+			}
+
+			m_topLevelInfo.m_instancesBuff->unmap();
+		}
+
+		// TODO geometry
+	}
+
+	m_buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+	m_buildInfo.type = convertAccelerationStructureType(m_type);
+	m_buildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	m_buildInfo.update = false;
+	m_buildInfo.dstAccelerationStructure = m_handle;
+	m_buildInfo.geometryArrayOfPointers = false;
+	m_buildInfo.geometryCount = 1;
+	m_buildInfo.ppGeometries = &m_geometryPtr;
+	m_buildInfo.scratchData.deviceAddress = MAX_U64;
+
+	// Ofset info
+	m_offsetInfo.firstVertex = 0;
+	if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
+	{
+		m_offsetInfo.primitiveCount = m_bottomLevelInfo.m_indexCount / 3;
+	}
+	else
+	{
+		m_offsetInfo.primitiveCount = m_topLevelInfo.m_instances.getSize();
+	}
+	m_offsetInfo.primitiveOffset = 0;
+	m_offsetInfo.transformOffset = 0;
 }
 
 } // end namespace anki
