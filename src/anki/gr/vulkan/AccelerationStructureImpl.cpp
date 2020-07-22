@@ -200,7 +200,10 @@ void AccelerationStructureImpl::initBuildInfo()
 			m_topLevelInfo.m_instancesBuff->unmap();
 		}
 
-		// TODO geometry
+		VkAccelerationStructureGeometryInstancesDataKHR& inst = m_geometry.geometry.instances;
+		inst.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+		inst.arrayOfPointers = false;
+		inst.data.deviceAddress = m_topLevelInfo.m_instancesBuff->getGpuAddress();
 	}
 
 	m_buildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;

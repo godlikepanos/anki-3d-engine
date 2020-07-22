@@ -660,6 +660,15 @@ enum class AccelerationStructureType : U8
 	BOTTOM_LEVEL,
 	COUNT
 };
+
+enum class AccelerationStructureUsageBit : U8
+{
+	NONE = 0,
+	BUILD = 1 << 0,
+	COMPUTE_READ = 1 << 1,
+	RAY_GEN_READ = 1 << 2
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit, inline)
 /// @}
 
 } // end namespace anki
