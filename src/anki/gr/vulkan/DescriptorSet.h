@@ -10,6 +10,7 @@
 #include <anki/gr/vulkan/TextureImpl.h>
 #include <anki/gr/vulkan/TextureViewImpl.h>
 #include <anki/gr/vulkan/SamplerImpl.h>
+#include <anki/gr/vulkan/AccelerationStructureImpl.h>
 #include <anki/util/WeakArray.h>
 #include <anki/util/BitSet.h>
 
@@ -106,6 +107,12 @@ public:
 	VkImageView m_imgViewHandle;
 };
 
+class AsBinding
+{
+public:
+	VkAccelerationStructureKHR m_accelerationStructureHandle;
+};
+
 class AnyBinding
 {
 public:
@@ -118,6 +125,7 @@ public:
 		SamplerBinding m_sampler;
 		BufferBinding m_buff;
 		ImageBinding m_image;
+		AsBinding m_accelerationStructure;
 	};
 
 	DescriptorType m_type;
@@ -271,6 +279,19 @@ public:
 		ANKI_ASSERT(impl->getHash());
 		b.m_uuids[0] = b.m_uuids[1] = impl->getHash();
 		b.m_image.m_imgViewHandle = impl->getHandle();
+
+		m_dirtyBindings.set(binding);
+		unbindBindlessDSet();
+	}
+
+	void bindAccelerationStructure(U32 binding, U32 arrayIdx, const AccelerationStructure* as)
+	{
+		AnyBinding& b = getBindingToPopulate(binding, arrayIdx);
+		b = {};
+		b.m_type = DescriptorType::ACCELERATION_STRUCTURE;
+		b.m_uuids[0] = b.m_uuids[1] = as->getUuid();
+		b.m_accelerationStructure.m_accelerationStructureHandle =
+			static_cast<const AccelerationStructureImpl*>(as)->getHandle();
 
 		m_dirtyBindings.set(binding);
 		unbindBindlessDSet();

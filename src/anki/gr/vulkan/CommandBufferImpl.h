@@ -262,6 +262,13 @@ public:
 		m_microCmdb->pushObjectRef(img);
 	}
 
+	void bindAccelerationStructureInternal(U32 set, U32 binding, AccelerationStructurePtr& as, U32 arrayIdx)
+	{
+		commandCommon();
+		m_dsetState[set].bindAccelerationStructure(binding, arrayIdx, as.get());
+		m_microCmdb->pushObjectRef(as);
+	}
+
 	void bindAllBindlessInternal(U32 set)
 	{
 		commandCommon();

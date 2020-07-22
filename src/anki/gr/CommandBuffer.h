@@ -286,6 +286,13 @@ public:
 	void bindTextureBuffer(
 		U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx = 0);
 
+	/// Bind an acceleration structure.
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param[in,out] as The AS to bind.
+	/// @param arrayIdx The array index if the binding is an array.
+	void bindAccelerationStructure(U32 set, U32 binding, AccelerationStructurePtr as, U32 arrayIdx = 0);
+
 	/// Bind the bindless descriptor set into a slot.
 	void bindAllBindless(U32 set);
 

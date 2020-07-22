@@ -189,6 +189,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	func(rsrc.separate_samplers, DescriptorType::SAMPLER);
 	func(rsrc.storage_buffers, DescriptorType::STORAGE_BUFFER);
 	func(rsrc.storage_images, DescriptorType::IMAGE);
+	func(rsrc.acceleration_structures, DescriptorType::ACCELERATION_STRUCTURE);
 
 	for(U32 set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
 	{

@@ -51,6 +51,7 @@ enum class DescriptorType : U8
 	STORAGE_BUFFER,
 	IMAGE,
 	TEXTURE_BUFFER,
+	ACCELERATION_STRUCTURE,
 
 	COUNT
 };
@@ -235,6 +236,9 @@ ANKI_USE_RESULT inline VkDescriptorType convertDescriptorType(DescriptorType ak)
 		break;
 	case DescriptorType::IMAGE:
 		out = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		break;
+	case DescriptorType::ACCELERATION_STRUCTURE:
+		out = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 		break;
 	default:
 		out = VK_DESCRIPTOR_TYPE_MAX_ENUM;

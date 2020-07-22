@@ -815,6 +815,8 @@ void CommandBufferImpl::rebindDynamicState()
 
 void CommandBufferImpl::buildAccelerationStructureInternal(AccelerationStructurePtr& as)
 {
+	commandCommon();
+
 	// Get objects
 	const AccelerationStructureImpl& asImpl = static_cast<AccelerationStructureImpl&>(*as);
 

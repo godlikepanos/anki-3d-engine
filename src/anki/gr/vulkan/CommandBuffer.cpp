@@ -200,6 +200,12 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img, U32 arra
 	self.bindImageInternal(set, binding, img, arrayIdx);
 }
 
+void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, AccelerationStructurePtr as, U32 arrayIdx)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.bindAccelerationStructureInternal(set, binding, as, arrayIdx);
+}
+
 void CommandBuffer::bindTextureBuffer(
 	U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
 {

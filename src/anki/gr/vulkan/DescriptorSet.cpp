@@ -531,6 +531,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 	DynamicArrayAuto<VkWriteDescriptorSet> writeInfos(tmpAlloc);
 	DynamicArrayAuto<VkDescriptorImageInfo> texInfos(tmpAlloc);
 	DynamicArrayAuto<VkDescriptorBufferInfo> buffInfos(tmpAlloc);
+	DynamicArrayAuto<VkWriteDescriptorSetAccelerationStructureKHR> asInfos(tmpAlloc);
 
 	// First pass: Populate the VkDescriptorImageInfo and VkDescriptorBufferInfo
 	for(U bindingIdx = m_layoutEntry->m_minBinding; bindingIdx <= m_layoutEntry->m_maxBinding; ++bindingIdx)
@@ -586,6 +587,15 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 					info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 					break;
 				}
+				case DescriptorType::ACCELERATION_STRUCTURE:
+				{
+					VkWriteDescriptorSetAccelerationStructureKHR& info = *asInfos.emplaceBack();
+					info.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+					info.pNext = nullptr;
+					info.accelerationStructureCount = 1;
+					info.pAccelerationStructures = &b.m_accelerationStructure.m_accelerationStructureHandle;
+					break;
+				}
 				default:
 					ANKI_ASSERT(0);
 				}
@@ -596,8 +606,9 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 	// Second pass: Populate the VkWriteDescriptorSet with VkDescriptorImageInfo and VkDescriptorBufferInfo
 	U32 texCounter = 0;
 	U32 buffCounter = 0;
+	U32 asCounter = 0;
 
-	VkWriteDescriptorSet writeTemplate = {};
+	VkWriteDescriptorSet writeTemplate{};
 	writeTemplate.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	writeTemplate.pNext = nullptr;
 	writeTemplate.dstSet = set.m_handle;
@@ -628,6 +639,9 @@ void DSThreadAllocator::writeSet(const Array<AnyBindingExtended, MAX_BINDINGS_PE
 				case DescriptorType::UNIFORM_BUFFER:
 				case DescriptorType::STORAGE_BUFFER:
 					writeInfo.pBufferInfo = &buffInfos[buffCounter++];
+					break;
+				case DescriptorType::ACCELERATION_STRUCTURE:
+					writeInfo.pNext = &asInfos[asCounter++];
 					break;
 				default:
 					ANKI_ASSERT(0);
@@ -877,6 +891,10 @@ void DescriptorSetState::flush(U64& hash,
 						break;
 					case DescriptorType::IMAGE:
 						ANKI_ASSERT(anyBinding.m_type == DescriptorType::IMAGE && "Have bound the wrong type");
+						break;
+					case DescriptorType::ACCELERATION_STRUCTURE:
+						ANKI_ASSERT(
+							anyBinding.m_type == DescriptorType::ACCELERATION_STRUCTURE && "Have bound the wrong type");
 						break;
 					default:
 						ANKI_ASSERT(0);
