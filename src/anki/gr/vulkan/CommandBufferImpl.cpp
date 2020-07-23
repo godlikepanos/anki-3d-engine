@@ -30,6 +30,7 @@ CommandBufferImpl::~CommandBufferImpl()
 
 	m_imgBarriers.destroy(m_alloc);
 	m_buffBarriers.destroy(m_alloc);
+	m_memBarriers.destroy(m_alloc);
 	m_queryResetAtoms.destroy(m_alloc);
 	m_writeQueryAtoms.destroy(m_alloc);
 	m_secondLevelAtoms.destroy(m_alloc);
@@ -486,8 +487,8 @@ void CommandBufferImpl::flushBarriers()
 		m_srcStageMask,
 		m_dstStageMask,
 		0,
-		0,
-		nullptr,
+		m_memBarrierCount,
+		(m_memBarrierCount) ? &m_memBarriers[0] : nullptr,
 		m_buffBarrierCount,
 		(m_buffBarrierCount) ? &m_buffBarriers[0] : nullptr,
 		finalImgBarrierCount,
@@ -497,6 +498,7 @@ void CommandBufferImpl::flushBarriers()
 
 	m_imgBarrierCount = 0;
 	m_buffBarrierCount = 0;
+	m_memBarrierCount = 0;
 	m_srcStageMask = 0;
 	m_dstStageMask = 0;
 }

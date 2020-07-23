@@ -353,7 +353,10 @@ public:
 		PtrSize size,
 		VkBuffer buff);
 
-	void setBufferBarrier(BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size);
+	void setBufferBarrier(BufferPtr& buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size);
+
+	void setAccelerationStructureBarrierInternal(
+		AccelerationStructurePtr& as, AccelerationStructureUsageBit prevUsage, AccelerationStructureUsageBit nextUsage);
 
 	void fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value);
 
@@ -445,8 +448,10 @@ private:
 	/// @{
 	DynamicArray<VkImageMemoryBarrier> m_imgBarriers;
 	DynamicArray<VkBufferMemoryBarrier> m_buffBarriers;
+	DynamicArray<VkMemoryBarrier> m_memBarriers;
 	U16 m_imgBarrierCount = 0;
 	U16 m_buffBarrierCount = 0;
+	U16 m_memBarrierCount = 0;
 	VkPipelineStageFlags m_srcStageMask = 0;
 	VkPipelineStageFlags m_dstStageMask = 0;
 	/// @}

@@ -366,6 +366,13 @@ void CommandBuffer::setBufferBarrier(
 	self.setBufferBarrier(buff, before, after, offset, size);
 }
 
+void CommandBuffer::setAccelerationStructureBarrier(
+	AccelerationStructurePtr as, AccelerationStructureUsageBit prevUsage, AccelerationStructureUsageBit nextUsage)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.setAccelerationStructureBarrierInternal(as, prevUsage, nextUsage);
+}
+
 void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)
 {
 	ANKI_VK_SELF(CommandBufferImpl);

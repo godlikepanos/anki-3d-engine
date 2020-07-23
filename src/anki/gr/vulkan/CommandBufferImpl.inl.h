@@ -244,7 +244,7 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 }
 
 inline void CommandBufferImpl::setBufferBarrier(
-	BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
+	BufferPtr& buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
 {
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 
@@ -257,6 +257,39 @@ inline void CommandBufferImpl::setBufferBarrier(
 	setBufferBarrier(srcStage, srcAccess, dstStage, dstAccess, offset, size, impl.getHandle());
 
 	m_microCmdb->pushObjectRef(buff);
+}
+
+inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(
+	AccelerationStructurePtr& as, AccelerationStructureUsageBit prevUsage, AccelerationStructureUsageBit nextUsage)
+{
+	commandCommon();
+
+	VkPipelineStageFlags srcStage;
+	VkAccessFlags srcAccess;
+	VkPipelineStageFlags dstStage;
+	VkAccessFlags dstAccess;
+	AccelerationStructureImpl::computeBarrierInfo(prevUsage, nextUsage, srcStage, srcAccess, dstStage, dstAccess);
+
+#if ANKI_BATCH_COMMANDS
+	flushBatches(CommandBufferCommandType::SET_BARRIER);
+
+	VkMemoryBarrier memBarrier{};
+	memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+	memBarrier.srcAccessMask = srcAccess;
+	memBarrier.dstAccessMask = dstAccess;
+
+	if(m_memBarriers.getSize() <= m_memBarrierCount)
+	{
+		m_memBarriers.resize(m_alloc, max<U32>(2, m_memBarrierCount * 2));
+	}
+
+	m_memBarriers[m_memBarrierCount++] = memBarrier;
+
+	m_srcStageMask |= srcStage;
+	m_dstStageMask |= dstStage;
+#else
+	ANKI_ASSERT(!"TODO");
+#endif
 }
 
 inline void CommandBufferImpl::drawArrays(

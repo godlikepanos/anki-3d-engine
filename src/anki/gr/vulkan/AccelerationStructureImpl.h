@@ -50,6 +50,13 @@ public:
 		offsetInfo = m_offsetInfo;
 	}
 
+	static void computeBarrierInfo(AccelerationStructureUsageBit before,
+		AccelerationStructureUsageBit after,
+		VkPipelineStageFlags& srcStages,
+		VkAccessFlags& srcAccesses,
+		VkPipelineStageFlags& dstStages,
+		VkAccessFlags& dstAccesses);
+
 private:
 	class ASBottomLevelInfo : public BottomLevelAccelerationStructureInitInfo
 	{

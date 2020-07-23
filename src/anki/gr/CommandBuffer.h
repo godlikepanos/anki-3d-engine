@@ -412,6 +412,9 @@ public:
 
 	void setBufferBarrier(
 		BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage, PtrSize offset, PtrSize size);
+
+	void setAccelerationStructureBarrier(
+		AccelerationStructurePtr as, AccelerationStructureUsageBit prevUsage, AccelerationStructureUsageBit nextUsage);
 	/// @}
 
 	/// @name Other

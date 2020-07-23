@@ -188,7 +188,7 @@ void AccelerationStructureImpl::initBuildInfo()
 				const AccelerationStructureInstance& inInst = m_topLevelInfo.m_instances[i];
 				static_assert(sizeof(outInst.transform) == sizeof(inInst.m_transform), "See file");
 				memcpy(&outInst.transform.matrix[0][0], &inInst.m_transform, sizeof(inInst.m_transform));
-				outInst.instanceCustomIndex = i;
+				outInst.instanceCustomIndex = i & 0xFFFFFF;
 				outInst.mask = 0xFF;
 				outInst.instanceShaderBindingTableRecordOffset = 0;
 				outInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR;
@@ -228,6 +228,52 @@ void AccelerationStructureImpl::initBuildInfo()
 	}
 	m_offsetInfo.primitiveOffset = 0;
 	m_offsetInfo.transformOffset = 0;
+}
+
+void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit before,
+	AccelerationStructureUsageBit after,
+	VkPipelineStageFlags& srcStages,
+	VkAccessFlags& srcAccesses,
+	VkPipelineStageFlags& dstStages,
+	VkAccessFlags& dstAccesses)
+{
+	// Before
+	srcStages = 0;
+	dstStages = 0;
+
+	if(before == AccelerationStructureUsageBit::NONE)
+	{
+		srcStages |= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		srcAccesses |= 0;
+	}
+
+	if(!!(before & AccelerationStructureUsageBit::BUILD))
+	{
+		srcStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+		srcAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+	}
+
+	// After
+	dstStages = 0;
+	dstAccesses = 0;
+
+	if(!!(after & AccelerationStructureUsageBit::COMPUTE_READ))
+	{
+		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+	}
+
+	if(!!(after & AccelerationStructureUsageBit::RAY_GEN_READ))
+	{
+		dstStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+	}
+
+	if(after == AccelerationStructureUsageBit::BUILD)
+	{
+		dstStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+	}
 }
 
 } // end namespace anki
