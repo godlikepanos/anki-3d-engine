@@ -2459,4 +2459,154 @@ void main()
 	COMMON_END();
 }
 
+ANKI_TEST(Gr, AccelerationStructure)
+{
+	COMMON_BEGIN();
+
+	if(!gr->getDeviceCapabilities().m_rayTracingEnabled)
+	{
+		ANKI_TEST_LOGW("Skipping test since the GPU doesn't support ray tracing");
+	}
+
+	// Index buffer
+	BufferPtr idxBuffer;
+	{
+		Array<U16, 3> indices{0, 1, 2};
+		BufferInitInfo init;
+		init.m_access = BufferMapAccessBit::WRITE;
+		init.m_exposeGpuAddress = true;
+		init.m_size = sizeof(indices);
+		idxBuffer = gr->newBuffer(init);
+
+		void* addr = idxBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE);
+		memcpy(addr, &indices[0], sizeof(indices));
+		idxBuffer->unmap();
+	}
+
+	// Position buffer (add some padding to complicate things a bit)
+	BufferPtr vertBuffer;
+	{
+		Array<Vec4, 3> verts{{{-1.0f, -1.0f, 0.0f, 100.0f}, {1.0f, 1.0f, 0.0f, 100.0f}, {0.0f, 1.0f, 0.0f, 100.0f}}};
+
+		BufferInitInfo init;
+		init.m_access = BufferMapAccessBit::WRITE;
+		init.m_exposeGpuAddress = true;
+		init.m_size = sizeof(verts);
+		vertBuffer = gr->newBuffer(init);
+
+		void* addr = vertBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE);
+		memcpy(addr, &verts[0], sizeof(verts));
+		vertBuffer->unmap();
+	}
+
+	// BLAS
+	AccelerationStructurePtr blas;
+	{
+		AccelerationStructureInitInfo init;
+		init.m_type = AccelerationStructureType::BOTTOM_LEVEL;
+		init.m_bottomLevel.m_indexBuffer = idxBuffer;
+		init.m_bottomLevel.m_indexCount = 3;
+		init.m_bottomLevel.m_indexType = IndexType::U16;
+		init.m_bottomLevel.m_positionBuffer = vertBuffer;
+		init.m_bottomLevel.m_positionCount = 3;
+		init.m_bottomLevel.m_positionsFormat = Format::R32G32B32_SFLOAT;
+		init.m_bottomLevel.m_positionStride = 4 * 4;
+
+		blas = gr->newAccelerationStructure(init);
+	}
+
+	// TLAS
+	AccelerationStructurePtr tlas;
+	{
+		AccelerationStructureInitInfo init;
+		init.m_type = AccelerationStructureType::TOP_LEVEL;
+		Array<AccelerationStructureInstance, 1> instances{{{blas, Mat3x4::getIdentity()}}};
+		init.m_topLevel.m_instances = instances;
+
+		tlas = gr->newAccelerationStructure(init);
+	}
+
+	// Program
+	ShaderProgramPtr prog;
+	{
+		CString src = R"(
+#extension GL_EXT_ray_query : enable
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(push_constant, std140, row_major) uniform b_pc
+{
+	Mat4 u_vp;
+	Vec3 u_cameraPos;
+	F32 u_padding0;
+};
+
+layout(set = 0, binding = 0) uniform accelerationStructureEXT u_tlas;
+
+layout(set = 0, binding = 1, rgba8) writeonly uniform image2D u_outImg;
+
+void main()
+{
+	// Unproject
+	const Vec4 p4 = inverse(u_vp) * Vec4(Vec2(gl_GlobalInvocationID.xy), 0.0, 1.0);
+	const Vec4 p3 = p4.xyz / p4.w;
+
+	const Vec3 rayDir = p3 - u_cameraPos;
+	const Vec3 rayOrigin = u_cameraPos;
+
+	rayQueryEXT rayQuery;
+	rayQueryInitializeEXT(rayQuery, u_tlas, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT, 0xFFu, rayOrigin,
+		0.01, raydir, 1000.0);
+
+	rayQueryProceedEXT(rayQuery);
+
+	Vec3 outColor;
+	U32 committedStatus = rayQueryGetIntersectionTypeEXT(rayQuery);
+	if(committedStatus == gl_RayQueryCommittedIntersectionTriangleEXT)
+	{
+		outColor = Vec3(rayQueryGetIntersectionBarycentricsEXT(rayQuery, true), 0.0);
+	}
+	else
+	{
+		outColor = Vec3(0.0);
+	}
+
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
+}
+		)";
+
+		ShaderPtr shader = createShader(src, ShaderType::COMPUTE, *gr);
+		ShaderProgramInitInfo sprogInit;
+		sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
+		prog = gr->newShaderProgram(sprogInit);
+	}
+
+	// Out buffer
+	constexpr U32 DIMENSION_SIZE = 1024;
+	BufferPtr outBuff;
+	{
+		BufferInitInfo init;
+		init.m_access = BufferMapAccessBit::READ;
+		init.m_usage = BufferUsageBit::STORAGE_ALL;
+		init.m_exposeGpuAddress = false;
+		init.m_size = DIMENSION_SIZE * DIMENSION_SIZE * sizeof(U8) * 3;
+		outBuff = gr->newBuffer(init);
+	}
+
+	// Do the work
+	{
+		CommandBufferInitInfo cinit;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+
+		cmdb->setAccelerationStructureBarrier(
+			blas, AccelerationStructureUsageBit::NONE, AccelerationStructureUsageBit::BUILD);
+		cmdb->buildAccelerationStructure(blas);
+		cmdb->setAccelerationStructureBarrier(
+			blas, AccelerationStructureUsageBit::BUILD, AccelerationStructureUsageBit::ATTACH);
+	}
+
+	COMMON_END();
+}
+
 } // end namespace anki

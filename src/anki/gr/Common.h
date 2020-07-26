@@ -144,10 +144,13 @@ public:
 
 	/// API version.
 	U8 m_majorApiVersion = 0;
+
+	/// RT.
+	Bool m_rayTracingEnabled = false;
 };
 ANKI_END_PACKED_STRUCT
-static_assert(
-	sizeof(GpuDeviceCapabilities) == sizeof(PtrSize) * 4 + sizeof(U32) * 3 + sizeof(U8) * 3, "Should be packed");
+static_assert(sizeof(GpuDeviceCapabilities) == sizeof(PtrSize) * 4 + sizeof(U32) * 3 + sizeof(U8) * 3 + sizeof(Bool),
+	"Should be packed");
 
 /// Bindless related info.
 class BindlessLimits

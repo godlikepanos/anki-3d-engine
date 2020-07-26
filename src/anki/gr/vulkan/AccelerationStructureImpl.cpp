@@ -257,6 +257,12 @@ void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit
 	dstStages = 0;
 	dstAccesses = 0;
 
+	if(!!(after & AccelerationStructureUsageBit::ATTACH))
+	{
+		dstStages |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+	}
+
 	if(!!(after & AccelerationStructureUsageBit::COMPUTE_READ))
 	{
 		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;

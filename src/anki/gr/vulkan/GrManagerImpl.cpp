@@ -535,6 +535,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			{
 				m_extensions |= VulkanExtensions::KHR_RAY_TRACING;
 				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_RAY_TRACING_EXTENSION_NAME;
+				m_capabilities.m_rayTracingEnabled = true;
 			}
 		}
 

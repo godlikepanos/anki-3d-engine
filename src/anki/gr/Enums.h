@@ -665,8 +665,9 @@ enum class AccelerationStructureUsageBit : U8
 {
 	NONE = 0,
 	BUILD = 1 << 0,
-	COMPUTE_READ = 1 << 1,
-	RAY_GEN_READ = 1 << 2
+	ATTACH = 1 << 1, ///< Attached to a TLAS. Only for BLAS.
+	COMPUTE_READ = 1 << 2,
+	RAY_GEN_READ = 1 << 3
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit, inline)
 /// @}
