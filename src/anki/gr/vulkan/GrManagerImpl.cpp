@@ -577,7 +577,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		{
 			m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
 
-			VkPhysicalDeviceFeatures2 features = {};
+			VkPhysicalDeviceFeatures2 features{};
 			features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 			features.pNext = &m_bufferDeviceAddressFeatures;
 			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
@@ -588,7 +588,9 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				return Error::FUNCTION_FAILED;
 			}
 
-			m_bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = false;
+			m_bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay =
+				m_bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay
+				&& init.m_config->getBool("gr_debugMarkers");
 			m_bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = false;
 
 			m_descriptorIndexingFeatures.pNext = &m_bufferDeviceAddressFeatures;

@@ -39,11 +39,13 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
+layout(location = 0) out Vec2 out_uv;
+
 void main()
 {
 	const vec2 POSITIONS[4] = vec2[](vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0, 1.0));
-
 	gl_Position = vec4(POSITIONS[gl_VertexID % 4], 0.0, 1.0);
+	out_uv = gl_Position.xy / 2.0 + 0.5;
 })";
 
 static const char* VERT_UBO_SRC = R"(
@@ -293,6 +295,8 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 	cfg.set("height", HEIGHT); \
 	cfg.set("gr_debugContext", true); \
 	cfg.set("gr_vsync", false); \
+	cfg.set("gr_rayTracing", true); \
+	cfg.set("gr_debugMarkers", true); \
 	win = createWindow(cfg); \
 	gr = createGrManager(cfg, win); \
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg)); \
@@ -2459,21 +2463,24 @@ void main()
 	COMMON_END();
 }
 
-ANKI_TEST(Gr, AccelerationStructure)
+ANKI_TEST(Gr, RayQueries)
 {
 	COMMON_BEGIN();
 
-	if(!gr->getDeviceCapabilities().m_rayTracingEnabled)
+	const Bool useRayTracing = gr->getDeviceCapabilities().m_rayTracingEnabled;
+	if(!useRayTracing)
 	{
-		ANKI_TEST_LOGW("Skipping test since the GPU doesn't support ray tracing");
+		ANKI_TEST_LOGW("Test will run without using ray tracing");
 	}
 
 	// Index buffer
 	BufferPtr idxBuffer;
+	if(useRayTracing)
 	{
 		Array<U16, 3> indices{0, 1, 2};
 		BufferInitInfo init;
 		init.m_access = BufferMapAccessBit::WRITE;
+		init.m_usage = BufferUsageBit::INDEX;
 		init.m_exposeGpuAddress = true;
 		init.m_size = sizeof(indices);
 		idxBuffer = gr->newBuffer(init);
@@ -2485,11 +2492,13 @@ ANKI_TEST(Gr, AccelerationStructure)
 
 	// Position buffer (add some padding to complicate things a bit)
 	BufferPtr vertBuffer;
+	if(useRayTracing)
 	{
-		Array<Vec4, 3> verts{{{-1.0f, -1.0f, 0.0f, 100.0f}, {1.0f, 1.0f, 0.0f, 100.0f}, {0.0f, 1.0f, 0.0f, 100.0f}}};
+		Array<Vec4, 3> verts{{{-1.0f, 0.0f, 0.0f, 100.0f}, {1.0f, 0.0f, 0.0f, 100.0f}, {0.0f, 2.0f, 0.0f, 100.0f}}};
 
 		BufferInitInfo init;
 		init.m_access = BufferMapAccessBit::WRITE;
+		init.m_usage = BufferUsageBit::VERTEX;
 		init.m_exposeGpuAddress = true;
 		init.m_size = sizeof(verts);
 		vertBuffer = gr->newBuffer(init);
@@ -2501,6 +2510,7 @@ ANKI_TEST(Gr, AccelerationStructure)
 
 	// BLAS
 	AccelerationStructurePtr blas;
+	if(useRayTracing)
 	{
 		AccelerationStructureInitInfo init;
 		init.m_type = AccelerationStructureType::BOTTOM_LEVEL;
@@ -2517,6 +2527,7 @@ ANKI_TEST(Gr, AccelerationStructure)
 
 	// TLAS
 	AccelerationStructurePtr tlas;
+	if(useRayTracing)
 	{
 		AccelerationStructureInitInfo init;
 		init.m_type = AccelerationStructureType::TOP_LEVEL;
@@ -2530,9 +2541,10 @@ ANKI_TEST(Gr, AccelerationStructure)
 	ShaderProgramPtr prog;
 	{
 		CString src = R"(
-#extension GL_EXT_ray_query : enable
 
-layout(local_size_x = 8, local_size_y = 8) in;
+#if USE_RAY_TRACING
+#extension GL_EXT_ray_query : enable
+#endif
 
 layout(push_constant, std140, row_major) uniform b_pc
 {
@@ -2541,59 +2553,112 @@ layout(push_constant, std140, row_major) uniform b_pc
 	F32 u_padding0;
 };
 
+#if USE_RAY_TRACING
 layout(set = 0, binding = 0) uniform accelerationStructureEXT u_tlas;
+#endif
 
-layout(set = 0, binding = 1, rgba8) writeonly uniform image2D u_outImg;
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_color;
+
+Bool rayTriangleIntersect(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, out F32 t, out F32 u, out F32 v)
+{
+	const Vec3 v0v1 = v1 - v0;
+	const Vec3 v0v2 = v2 - v0;
+	const Vec3 pvec = cross(dir, v0v2);
+	const F32 det = dot(v0v1, pvec);
+
+	if(det < 0.00001)
+	{
+		return false;
+	}
+
+	const F32 invDet = 1.0 / det;
+
+	const Vec3 tvec = orig - v0;
+	u = dot(tvec, pvec) * invDet;
+	if(u < 0.0 || u > 1.0)
+	{
+		return false;
+	}
+
+	const Vec3 qvec = cross(tvec, v0v1);
+	v = dot(dir, qvec) * invDet;
+	if(v < 0.0 || u + v > 1.0)
+	{
+		return false;
+	}
+
+	t = dot(v0v2, qvec) * invDet;
+	return true;
+}
 
 void main()
 {
 	// Unproject
-	const Vec4 p4 = inverse(u_vp) * Vec4(Vec2(gl_GlobalInvocationID.xy), 0.0, 1.0);
-	const Vec4 p3 = p4.xyz / p4.w;
+	const Vec2 ndc = in_uv * 2.0 - 1.0;
+	const Vec4 p4 = inverse(u_vp) * Vec4(ndc, 1.0, 1.0);
+	const Vec3 p3 = p4.xyz / p4.w;
 
-	const Vec3 rayDir = p3 - u_cameraPos;
+	const Vec3 rayDir = normalize(p3 - u_cameraPos);
 	const Vec3 rayOrigin = u_cameraPos;
 
+#if USE_RAY_TRACING
 	rayQueryEXT rayQuery;
 	rayQueryInitializeEXT(rayQuery, u_tlas, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT, 0xFFu, rayOrigin,
 		0.01, raydir, 1000.0);
 
 	rayQueryProceedEXT(rayQuery);
 
-	Vec3 outColor;
-	U32 committedStatus = rayQueryGetIntersectionTypeEXT(rayQuery);
+	Bool hit;
+	F32 u;
+	F32 v;
+	const U32 committedStatus = rayQueryGetIntersectionTypeEXT(rayQuery);
 	if(committedStatus == gl_RayQueryCommittedIntersectionTriangleEXT)
 	{
-		outColor = Vec3(rayQueryGetIntersectionBarycentricsEXT(rayQuery, true), 0.0);
+		const Vec2 bary = rayQueryGetIntersectionBarycentricsEXT(rayQuery, true);
+		u = bary.x;
+		v = bary.y;
+		hit = true;
 	}
 	else
 	{
-		outColor = Vec3(0.0);
+		hit = false;
 	}
+#else
+	// Manual trace
+	Vec3 arr[3] = Vec3[](Vec3(-1.0f, 0.0f, 0.0f), Vec3(1.0f, 0.0f, 0.0f), Vec3(0.0f, 2.0f, 0.0f));
+	F32 t;
+	F32 u;
+	F32 v;
+	const Bool hit = rayTriangleIntersect(rayOrigin, rayDir, arr[0], arr[1], arr[2], t, u, v);
+#endif
 
-	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
+	if(hit)
+	{
+		out_color = Vec3(u, v, 1.0 - (u + v));
+	}
+	else
+	{
+		out_color = Vec3(0.5);
+	}
 }
 		)";
 
-		ShaderPtr shader = createShader(src, ShaderType::COMPUTE, *gr);
-		ShaderProgramInitInfo sprogInit;
-		sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
-		prog = gr->newShaderProgram(sprogInit);
+		StringAuto fragSrc(HeapAllocator<U8>{allocAligned, nullptr});
+		if(useRayTracing)
+		{
+			fragSrc.append("#define USE_RAY_TRACING 1\n");
+		}
+		else
+		{
+			fragSrc.append("#define USE_RAY_TRACING 0\n");
+		}
+		fragSrc.append(src);
+		prog = createProgram(VERT_QUAD_STRIP_SRC, fragSrc, *gr);
 	}
 
-	// Out buffer
-	constexpr U32 DIMENSION_SIZE = 1024;
-	BufferPtr outBuff;
-	{
-		BufferInitInfo init;
-		init.m_access = BufferMapAccessBit::READ;
-		init.m_usage = BufferUsageBit::STORAGE_ALL;
-		init.m_exposeGpuAddress = false;
-		init.m_size = DIMENSION_SIZE * DIMENSION_SIZE * sizeof(U8) * 3;
-		outBuff = gr->newBuffer(init);
-	}
-
-	// Do the work
+	// Build AS
+	if(useRayTracing)
 	{
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
@@ -2604,6 +2669,73 @@ void main()
 		cmdb->buildAccelerationStructure(blas);
 		cmdb->setAccelerationStructureBarrier(
 			blas, AccelerationStructureUsageBit::BUILD, AccelerationStructureUsageBit::ATTACH);
+
+		cmdb->setAccelerationStructureBarrier(
+			tlas, AccelerationStructureUsageBit::NONE, AccelerationStructureUsageBit::BUILD);
+		cmdb->buildAccelerationStructure(blas);
+		cmdb->setAccelerationStructureBarrier(
+			blas, AccelerationStructureUsageBit::BUILD, AccelerationStructureUsageBit::FRAGMENT_READ);
+
+		cmdb->flush();
+	}
+
+	// Draw
+	constexpr U32 ITERATIONS = 300;
+	for(U i = 0; i < ITERATIONS; ++i)
+	{
+		HighRezTimer timer;
+		timer.start();
+
+		const Vec4 cameraPos{0.0f, 0.0f, 3.0f, 0.0f};
+		const Mat4 viewMat = Mat4{Transform{cameraPos, Mat3x4::getIdentity(), 1.0f}}.getInverse();
+		const Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(90.0f), toRad(90.0f), 0.01f, 1000.0f);
+
+		CommandBufferInitInfo cinit;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+
+		cmdb->bindShaderProgram(prog);
+		struct PC
+		{
+			Mat4 m_vp;
+			Vec4 m_cameraPos;
+		} pc;
+		pc.m_vp = projMat * viewMat;
+		pc.m_cameraPos = cameraPos;
+		cmdb->setPushConstants(&pc, sizeof(pc));
+
+		if(useRayTracing)
+		{
+			cmdb->bindAccelerationStructure(0, 0, tlas);
+		}
+
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*gr, presentTex);
+
+		cmdb->setTextureBarrier(
+			presentTex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSubresourceInfo{});
+
+		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4);
+		cmdb->endRenderPass();
+
+		cmdb->setTextureBarrier(presentTex,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureUsageBit::PRESENT,
+			TextureSubresourceInfo{});
+
+		cmdb->flush();
+
+		gr->swapBuffers();
+
+		timer.stop();
+		const F32 TICK = 1.0f / 30.0f;
+		if(timer.getElapsedTime() < TICK)
+		{
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
+		}
 	}
 
 	COMMON_END();

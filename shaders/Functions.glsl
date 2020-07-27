@@ -541,3 +541,36 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 	return Mat3(x, y, z);
 #endif
 }
+
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
+Bool rayTriangleIntersect(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, out F32 t, out F32 u, out F32 v)
+{
+	const Vec3 v0v1 = v1 - v0;
+	const Vec3 v0v2 = v2 - v0;
+	const Vec3 pvec = cross(dir, v0v2);
+	const F32 det = dot(v0v1, pvec);
+
+	if(det < EPSILON)
+	{
+		return false;
+	}
+
+	const F32 invDet = 1.0 / det;
+
+	const Vec3 tvec = orig - v0;
+	u = dot(tvec, pvec) * invDet;
+	if(u < 0.0 || u > 1.0)
+	{
+		return false;
+	}
+
+	const Vec3 qvec = cross(tvec, v0v1);
+	v = dot(dir, qvec) * invDet;
+	if(v < 0.0 || u + v > 1.0)
+	{
+		return false;
+	}
+
+	t = dot(v0v2, qvec) * invDet;
+	return true;
+}
