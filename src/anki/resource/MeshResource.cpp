@@ -102,7 +102,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	const PtrSize indexBuffSize = m_indexCount * ((m_indexType == IndexType::U32) ? 4 : 2);
 
 	m_indexBuff = getManager().getGrManager().newBuffer(BufferInitInfo(indexBuffSize,
-		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
+		BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION,
 		BufferMapAccessBit::NONE,
 		"MeshIdx"));
 
@@ -122,7 +122,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	}
 
 	m_vertBuff = getManager().getGrManager().newBuffer(BufferInitInfo(totalVertexBuffSize,
-		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
+		BufferUsageBit::VERTEX | BufferUsageBit::TRANSFER_DESTINATION,
 		BufferMapAccessBit::NONE,
 		"MeshVert"));
 
@@ -156,8 +156,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	cmdb->fillBuffer(m_vertBuff, 0, MAX_PTR_SIZE, 0);
 	cmdb->fillBuffer(m_indexBuff, 0, MAX_PTR_SIZE, 0);
 
-	cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::FILL, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
-	cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::FILL, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
 
 	cmdb->flush();
 
@@ -185,10 +185,8 @@ Error MeshResource::loadAsync(MeshLoader& loader) const
 	CommandBufferPtr cmdb = gr.newCommandBuffer(cmdbinit);
 
 	// Set barriers
-	cmdb->setBufferBarrier(
-		m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
-	cmdb->setBufferBarrier(
-		m_indexBuff, BufferUsageBit::INDEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::TRANSFER_DESTINATION, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::INDEX, BufferUsageBit::TRANSFER_DESTINATION, 0, MAX_PTR_SIZE);
 
 	// Write index buffer
 	{
@@ -224,10 +222,8 @@ Error MeshResource::loadAsync(MeshLoader& loader) const
 	}
 
 	// Set barriers
-	cmdb->setBufferBarrier(
-		m_vertBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
-	cmdb->setBufferBarrier(
-		m_indexBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
 
 	// Finalize
 	FencePtr fence;

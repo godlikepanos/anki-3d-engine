@@ -676,7 +676,7 @@ void CommandBufferImpl::copyBufferToTextureViewInternal(
 		const PtrSize shadowSize = (is3D) ? computeVolumeSize(width, height, depth, Format::R8G8B8A8_UNORM)
 										  : computeSurfaceSize(width, height, Format::R8G8B8A8_UNORM);
 		BufferPtr shadow = getManager().newBuffer(
-			BufferInitInfo(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE, "Workaround"));
+			BufferInitInfo(shadowSize, BufferUsageBit::ALL_TRANSFER, BufferMapAccessBit::NONE, "Workaround"));
 		const VkBuffer shadowHandle = static_cast<const BufferImpl&>(*shadow).getHandle();
 		m_microCmdb->pushObjectRef(shadow);
 

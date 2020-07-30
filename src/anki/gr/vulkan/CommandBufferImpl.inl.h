@@ -314,7 +314,7 @@ inline void CommandBufferImpl::drawArraysIndirect(
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT_GRAPHICS));
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT_DRAW));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(DrawArraysIndirectInfo) * drawCount) <= impl.getSize());
 
@@ -328,7 +328,7 @@ inline void CommandBufferImpl::drawElementsIndirect(
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT_ALL));
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT_DRAW));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(DrawElementsIndirectInfo) * drawCount) <= impl.getSize());
 
@@ -706,7 +706,7 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::FILL));
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::TRANSFER_DESTINATION));
 
 	ANKI_ASSERT(offset < impl.getSize());
 	ANKI_ASSERT((offset % 4) == 0 && "Should be multiple of 4");
@@ -728,7 +728,7 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 	ANKI_ASSERT(!insideRenderPass());
 
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
-	ANKI_ASSERT(impl.usageValid(BufferUsageBit::QUERY_RESULT));
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::TRANSFER_DESTINATION));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(U32)) <= impl.getSize());
 
@@ -806,6 +806,11 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 inline void CommandBufferImpl::copyBufferToBuffer(
 	BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range)
 {
+	ANKI_ASSERT(static_cast<const BufferImpl&>(*src).usageValid(BufferUsageBit::TRANSFER_SOURCE));
+	ANKI_ASSERT(static_cast<const BufferImpl&>(*dst).usageValid(BufferUsageBit::TRANSFER_DESTINATION));
+	ANKI_ASSERT(srcOffset + range <= src->getSize());
+	ANKI_ASSERT(dstOffset + range <= dst->getSize());
+
 	commandCommon();
 
 	VkBufferCopy region = {};

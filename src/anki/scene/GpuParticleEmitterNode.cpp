@@ -87,7 +87,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 
 	// Create the particle buffer
 	buffInit.m_access = BufferMapAccessBit::WRITE;
-	buffInit.m_usage = BufferUsageBit::STORAGE_ALL;
+	buffInit.m_usage = BufferUsageBit::ALL_STORAGE;
 	buffInit.m_size = sizeof(GpuParticle) * inProps.m_maxNumOfParticles;
 	m_particlesBuff = getSceneGraph().getGrManager().newBuffer(buffInit);
 

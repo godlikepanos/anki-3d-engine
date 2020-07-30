@@ -34,13 +34,13 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 	initBuffer(StagingGpuMemoryType::UNIFORM,
 		gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,
 		gr->getDeviceCapabilities().m_uniformBufferMaxRange,
-		BufferUsageBit::UNIFORM_ALL,
+		BufferUsageBit::ALL_UNIFORM,
 		*gr);
 
 	initBuffer(StagingGpuMemoryType::STORAGE,
 		gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
 		gr->getDeviceCapabilities().m_storageBufferMaxRange,
-		BufferUsageBit::STORAGE_ALL,
+		BufferUsageBit::ALL_STORAGE,
 		*gr);
 
 	initBuffer(StagingGpuMemoryType::VERTEX, 16, MAX_U32, BufferUsageBit::VERTEX | BufferUsageBit::INDEX, *gr);
@@ -48,7 +48,7 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 	initBuffer(StagingGpuMemoryType::TEXTURE,
 		gr->getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
 		gr->getDeviceCapabilities().m_textureBufferMaxRange,
-		BufferUsageBit::TEXTURE_ALL,
+		BufferUsageBit::ALL_TEXTURE,
 		*gr);
 
 	return Error::NONE;

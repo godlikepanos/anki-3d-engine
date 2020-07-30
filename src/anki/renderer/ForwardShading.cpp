@@ -82,7 +82,7 @@ void ForwardShading::setDependencies(const RenderingContext& ctx, GraphicsRender
 
 	if(ctx.m_renderQueue->m_lensFlares.getSize())
 	{
-		pass.newDependency({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::INDIRECT_GRAPHICS});
+		pass.newDependency({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::INDIRECT_DRAW});
 	}
 }
 

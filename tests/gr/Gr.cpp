@@ -738,10 +738,10 @@ ANKI_TEST(Gr, Buffer)
 {
 	COMMON_BEGIN()
 
-	BufferPtr a = gr->newBuffer(BufferInitInfo(512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE));
+	BufferPtr a = gr->newBuffer(BufferInitInfo(512, BufferUsageBit::ALL_UNIFORM, BufferMapAccessBit::NONE));
 
 	BufferPtr b = gr->newBuffer(
-		BufferInitInfo(64, BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::WRITE | BufferMapAccessBit::READ));
+		BufferInitInfo(64, BufferUsageBit::ALL_STORAGE, BufferMapAccessBit::WRITE | BufferMapAccessBit::READ));
 
 	void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -764,7 +764,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 	// A non-uploaded buffer
 	BufferPtr b =
-		gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::WRITE));
+		gr->newBuffer(BufferInitInfo(sizeof(Vec4) * 3, BufferUsageBit::ALL_UNIFORM, BufferMapAccessBit::WRITE));
 
 	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -1874,7 +1874,7 @@ void main()
 
 	// Create the buffer to copy to the texture
 	BufferPtr uploadBuff = gr->newBuffer(BufferInitInfo(
-		texInit.m_width * texInit.m_height * 3, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::WRITE));
+		texInit.m_width * texInit.m_height * 3, BufferUsageBit::ALL_TRANSFER, BufferMapAccessBit::WRITE));
 	U8* data = static_cast<U8*>(uploadBuff->map(0, uploadBuff->getSize(), BufferMapAccessBit::WRITE));
 	for(U32 i = 0; i < texInit.m_width * texInit.m_height; ++i)
 	{
@@ -1886,7 +1886,7 @@ void main()
 	uploadBuff->unmap();
 
 	BufferPtr uploadBuff2 = gr->newBuffer(BufferInitInfo(
-		(texInit.m_width >> 1) * (texInit.m_height >> 1) * 3, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::WRITE));
+		(texInit.m_width >> 1) * (texInit.m_height >> 1) * 3, BufferUsageBit::ALL_TRANSFER, BufferMapAccessBit::WRITE));
 	data = static_cast<U8*>(uploadBuff2->map(0, uploadBuff2->getSize(), BufferMapAccessBit::WRITE));
 	for(U i = 0; i < (texInit.m_width >> 1) * (texInit.m_height >> 1); ++i)
 	{
@@ -2132,8 +2132,8 @@ void main()
 	ShaderProgramPtr prog = createProgram(VERT_SRC, FRAG_SRC, *gr);
 
 	// Create the result buffer
-	BufferPtr resultBuff = gr->newBuffer(
-		BufferInitInfo(sizeof(UVec4), BufferUsageBit::STORAGE_ALL | BufferUsageBit::FILL, BufferMapAccessBit::READ));
+	BufferPtr resultBuff = gr->newBuffer(BufferInitInfo(
+		sizeof(UVec4), BufferUsageBit::ALL_STORAGE | BufferUsageBit::TRANSFER_DESTINATION, BufferMapAccessBit::READ));
 
 	// Draw
 	CommandBufferInitInfo cinit;
@@ -2141,8 +2141,11 @@ void main()
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 	cmdb->fillBuffer(resultBuff, 0, resultBuff->getSize(), 0);
-	cmdb->setBufferBarrier(
-		resultBuff, BufferUsageBit::FILL, BufferUsageBit::STORAGE_FRAGMENT_WRITE, 0, resultBuff->getSize());
+	cmdb->setBufferBarrier(resultBuff,
+		BufferUsageBit::TRANSFER_DESTINATION,
+		BufferUsageBit::STORAGE_FRAGMENT_WRITE,
+		0,
+		resultBuff->getSize());
 
 	cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 	cmdb->bindShaderProgram(prog);

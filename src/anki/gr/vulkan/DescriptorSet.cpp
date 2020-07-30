@@ -872,7 +872,7 @@ void DescriptorSetState::flush(U64& hash,
 						break;
 					case DescriptorType::TEXTURE:
 						ANKI_ASSERT(anyBinding.m_type == DescriptorType::TEXTURE && "Have bound the wrong type");
-						toHash[toHashCount] = U64(anyBinding.m_tex.m_layout);
+						toHash[toHashCount++] = U64(anyBinding.m_tex.m_layout);
 						break;
 					case DescriptorType::SAMPLER:
 						ANKI_ASSERT(anyBinding.m_type == DescriptorType::SAMPLER && "Have bound the wrong type");

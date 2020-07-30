@@ -261,12 +261,12 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 {
 	VkBufferUsageFlags out = 0;
 
-	if(!!(usageMask & BufferUsageBit::UNIFORM_ALL))
+	if(!!(usageMask & BufferUsageBit::ALL_UNIFORM))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::STORAGE_ALL))
+	if(!!(usageMask & BufferUsageBit::ALL_STORAGE))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	}
@@ -281,25 +281,34 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::INDIRECT_ALL))
+	if(!!(usageMask & BufferUsageBit::ALL_INDIRECT))
 	{
 		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 	}
 
-	if(!!(usageMask
-		   & (BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL | BufferUsageBit::QUERY_RESULT)))
+	if(!!(usageMask & BufferUsageBit::TRANSFER_DESTINATION))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)))
+	if(!!(usageMask & BufferUsageBit::TRANSFER_SOURCE))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::TEXTURE_ALL))
+	if(!!(usageMask & BufferUsageBit::ALL_TEXTURE) && !(usageMask & BufferUsageBit::ALL_WRITE))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+	}
+
+	if(!!(usageMask & BufferUsageBit::ALL_TEXTURE) && !(usageMask & BufferUsageBit::ALL_READ))
+	{
+		out |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
+	}
+
+	if(!!(usageMask & (BufferUsageBit::ALL_RAY_TRACING & ~BufferUsageBit::INDIRECT_TRACE_RAYS)))
+	{
+		out |= VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR;
 	}
 
 	ANKI_ASSERT(out);

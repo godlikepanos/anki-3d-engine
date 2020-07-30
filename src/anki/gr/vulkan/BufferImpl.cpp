@@ -65,7 +65,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 		VkMemoryPropertyFlags preferDeviceLocal;
 		VkMemoryPropertyFlags avoidDeviceLocal;
-		if((usage & (~BufferUsageBit::TRANSFER_ALL)) != BufferUsageBit::NONE)
+		if((usage & (~BufferUsageBit::ALL_TRANSFER)) != BufferUsageBit::NONE)
 		{
 			// Will be used for something other than transfer, try to put it in the device
 			preferDeviceLocal = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -208,57 +208,43 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 {
 	VkPipelineStageFlags stageMask = 0;
 
-	if(!!(usage & (BufferUsageBit::UNIFORM_VERTEX | BufferUsageBit::STORAGE_VERTEX_READ_WRITE)))
-	{
-		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
-	}
-
-	if(!!(usage
-		   & (BufferUsageBit::UNIFORM_TESSELLATION_EVALUATION
-				 | BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_READ_WRITE)))
-	{
-		stageMask |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
-	}
-
-	if(!!(usage
-		   & (BufferUsageBit::UNIFORM_TESSELLATION_CONTROL | BufferUsageBit::STORAGE_TESSELLATION_CONTROL_READ_WRITE)))
-	{
-		stageMask |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
-	}
-
-	if(!!(usage & (BufferUsageBit::UNIFORM_GEOMETRY | BufferUsageBit::STORAGE_GEOMETRY_READ_WRITE)))
-	{
-		stageMask |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
-	}
-
-	if(!!(usage & (BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::STORAGE_FRAGMENT_READ_WRITE)))
-	{
-		stageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-
-	if(!!(usage & (BufferUsageBit::UNIFORM_COMPUTE | BufferUsageBit::STORAGE_COMPUTE_READ_WRITE)))
-	{
-		stageMask |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-	}
-
-	if(!!(usage & (BufferUsageBit::INDEX | BufferUsageBit::VERTEX)))
-	{
-		stageMask |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
-					 | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
-					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
-	}
-
-	if(!!(usage & BufferUsageBit::INDIRECT_ALL))
+	if(!!(usage & BufferUsageBit::ALL_INDIRECT))
 	{
 		stageMask |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::TRANSFER_ALL)))
+	if(!!(usage & (BufferUsageBit::INDEX | BufferUsageBit::VERTEX)))
 	{
-		stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		stageMask |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::QUERY_RESULT)))
+	if(!!(usage & BufferUsageBit::ALL_GEOMETRY))
+	{
+		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
+					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+	}
+
+	if(!!(usage & BufferUsageBit::ALL_FRAGMENT))
+	{
+		stageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+
+	if(!!(usage & (BufferUsageBit::ALL_COMPUTE & ~BufferUsageBit::INDIRECT_COMPUTE)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+	}
+
+	if(!!(usage & BufferUsageBit::ACCELERATION_STRUCTURE_BUILD))
+	{
+		stageMask |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+	}
+
+	if(!!(usage & (BufferUsageBit::ALL_TRACE_RAYS & ~BufferUsageBit::INDIRECT_TRACE_RAYS)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+	}
+
+	if(!!(usage & BufferUsageBit::ALL_TRANSFER))
 	{
 		stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
@@ -276,17 +262,19 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 {
 	VkAccessFlags mask = 0;
 
-	const BufferUsageBit SHADER_READ =
-		BufferUsageBit::STORAGE_VERTEX_READ | BufferUsageBit::STORAGE_TESSELLATION_CONTROL_READ
-		| BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_READ | BufferUsageBit::STORAGE_GEOMETRY_READ
-		| BufferUsageBit::STORAGE_FRAGMENT_READ | BufferUsageBit::STORAGE_COMPUTE_READ;
+	constexpr BufferUsageBit SHADER_READ =
+		BufferUsageBit::STORAGE_GEOMETRY_READ | BufferUsageBit::STORAGE_FRAGMENT_READ
+		| BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_TRACE_RAYS_READ
+		| BufferUsageBit::TEXTURE_GEOMETRY_READ | BufferUsageBit::TEXTURE_FRAGMENT_READ
+		| BufferUsageBit::TEXTURE_COMPUTE_READ | BufferUsageBit::TEXTURE_TRACE_RAYS_READ;
 
-	const BufferUsageBit SHADER_WRITE =
-		BufferUsageBit::STORAGE_VERTEX_WRITE | BufferUsageBit::STORAGE_TESSELLATION_CONTROL_WRITE
-		| BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_WRITE | BufferUsageBit::STORAGE_GEOMETRY_WRITE
-		| BufferUsageBit::STORAGE_FRAGMENT_WRITE | BufferUsageBit::STORAGE_COMPUTE_WRITE;
+	constexpr BufferUsageBit SHADER_WRITE =
+		BufferUsageBit::STORAGE_GEOMETRY_WRITE | BufferUsageBit::STORAGE_FRAGMENT_WRITE
+		| BufferUsageBit::STORAGE_COMPUTE_WRITE | BufferUsageBit::STORAGE_TRACE_RAYS_WRITE
+		| BufferUsageBit::TEXTURE_GEOMETRY_WRITE | BufferUsageBit::TEXTURE_FRAGMENT_WRITE
+		| BufferUsageBit::TEXTURE_COMPUTE_WRITE | BufferUsageBit::TEXTURE_TRACE_RAYS_WRITE;
 
-	if(!!(usage & BufferUsageBit::UNIFORM_ALL))
+	if(!!(usage & BufferUsageBit::ALL_UNIFORM))
 	{
 		mask |= VK_ACCESS_UNIFORM_READ_BIT;
 	}
@@ -311,24 +299,24 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 		mask |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::INDIRECT_ALL))
+	if(!!(usage & BufferUsageBit::ALL_INDIRECT))
 	{
 		mask |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::FILL | BufferUsageBit::BUFFER_UPLOAD_DESTINATION)))
+	if(!!(usage & BufferUsageBit::TRANSFER_DESTINATION))
 	{
 		mask |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)))
+	if(!!(usage & BufferUsageBit::TRANSFER_SOURCE))
 	{
 		mask |= VK_ACCESS_TRANSFER_READ_BIT;
 	}
 
-	if(!!(usage & BufferUsageBit::QUERY_RESULT))
+	if(!!(usage & BufferUsageBit::ACCELERATION_STRUCTURE_BUILD))
 	{
-		mask |= VK_ACCESS_TRANSFER_WRITE_BIT;
+		mask |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
 	return mask;

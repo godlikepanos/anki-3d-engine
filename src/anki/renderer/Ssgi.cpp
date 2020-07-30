@@ -156,6 +156,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newDependency({m_runCtx.m_intermediateRts[WRITE], TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_runCtx.m_intermediateRts[READ], TextureUsageBit::IMAGE_COMPUTE_WRITE});
+		rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
 		rpass.setWork(
@@ -170,8 +171,8 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.newDependency({m_runCtx.m_intermediateRts[READ], TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_runCtx.m_intermediateRts[WRITE], TextureUsageBit::IMAGE_COMPUTE_WRITE});
-		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE});
 
 		rpass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->runHBlur(rgraphCtx); },

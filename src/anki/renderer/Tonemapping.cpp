@@ -40,7 +40,7 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 
 	// Create buffer
 	m_luminanceBuff = getGrManager().newBuffer(BufferInitInfo(sizeof(Vec4),
-		BufferUsageBit::STORAGE_ALL | BufferUsageBit::UNIFORM_ALL | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
+		BufferUsageBit::ALL_STORAGE | BufferUsageBit::ALL_UNIFORM | BufferUsageBit::TRANSFER_DESTINATION,
 		BufferMapAccessBit::NONE,
 		"AvgLum"));
 
@@ -67,8 +67,8 @@ void Tonemapping::importRenderTargets(RenderingContext& ctx)
 {
 	// Computation of the AVG luminance will run first in the frame and it will use the m_luminanceBuff as storage
 	// read/write. To skip the barrier import it as read/write as well.
-	m_runCtx.m_buffHandle =
-		ctx.m_renderGraphDescr.importBuffer(m_luminanceBuff, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE);
+	m_runCtx.m_buffHandle = ctx.m_renderGraphDescr.importBuffer(
+		m_luminanceBuff, BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_COMPUTE_WRITE);
 }
 
 void Tonemapping::populateRenderGraph(RenderingContext& ctx)
@@ -86,7 +86,8 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 		this,
 		0);
 
-	pass.newDependency({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
+	pass.newDependency(
+		{m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_COMPUTE_WRITE});
 
 	TextureSubresourceInfo inputTexSubresource;
 	inputTexSubresource.m_firstMipmap = m_inputTexMip;

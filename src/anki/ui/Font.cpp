@@ -73,7 +73,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	// Create and populate the buffer
 	PtrSize buffSize = width * height * 4;
 	BufferPtr buff = m_manager->getGrManager().newBuffer(
-		BufferInitInfo(buffSize, BufferUsageBit::BUFFER_UPLOAD_SOURCE, BufferMapAccessBit::WRITE, "UI"));
+		BufferInitInfo(buffSize, BufferUsageBit::TRANSFER_SOURCE, BufferMapAccessBit::WRITE, "UI"));
 	void* mapped = buff->map(0, buffSize, BufferMapAccessBit::WRITE);
 	memcpy(mapped, data, buffSize);
 	buff->unmap();

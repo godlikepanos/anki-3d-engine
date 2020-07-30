@@ -126,7 +126,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	}
 
 	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
-		1024, BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::NONE, "Dummy"));
+		1024, BufferUsageBit::ALL_UNIFORM | BufferUsageBit::ALL_STORAGE, BufferMapAccessBit::NONE, "Dummy"));
 
 	ANKI_CHECK(m_resources->loadResource("shaders/ClearTextureCompute.ankiprog", m_clearTexComputeProg));
 

@@ -164,7 +164,7 @@ Error ProbeReflections::initIrradiance(const ConfigSet& config)
 	// Create buff
 	{
 		BufferInitInfo init;
-		init.m_usage = BufferUsageBit::STORAGE_ALL;
+		init.m_usage = BufferUsageBit::ALL_STORAGE;
 		init.m_size = 6 * sizeof(Vec4);
 		m_irradiance.m_diceValuesBuff = getGrManager().newBuffer(init);
 	}

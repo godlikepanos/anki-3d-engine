@@ -35,7 +35,7 @@ public:
 		TransferGpuAllocator::Memory* mm = m_alloc.newInstance<TransferGpuAllocator::Memory>();
 
 		mm->m_buffer = m_gr->newBuffer(
-			BufferInitInfo(size, BufferUsageBit::BUFFER_UPLOAD_SOURCE, BufferMapAccessBit::WRITE, "Transfer"));
+			BufferInitInfo(size, BufferUsageBit::TRANSFER_SOURCE, BufferMapAccessBit::WRITE, "Transfer"));
 		mm->m_mappedMemory = mm->m_buffer->map(0, size, BufferMapAccessBit::WRITE);
 
 		mem = mm;

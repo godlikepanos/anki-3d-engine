@@ -66,7 +66,7 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 	GrManager& gr = getGrManager();
 
 	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawArraysIndirectInfo),
-		BufferUsageBit::INDIRECT_GRAPHICS | BufferUsageBit::STORAGE_COMPUTE_WRITE,
+		BufferUsageBit::INDIRECT_DRAW | BufferUsageBit::STORAGE_COMPUTE_WRITE,
 		BufferMapAccessBit::NONE,
 		"LensFlares"));
 
