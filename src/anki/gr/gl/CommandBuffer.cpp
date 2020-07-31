@@ -51,8 +51,8 @@ void CommandBuffer::flush(FencePtr* fence)
 	}
 }
 
-void CommandBuffer::bindVertexBuffer(
-	U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
+void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride,
+									 VertexStepRate stepRate)
 {
 	class Cmd final : public GlCommand
 	{
@@ -240,7 +240,7 @@ void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 		Error operator()(GlState& state)
 		{
 			if(state.m_scissor[0] != m_value[0] || state.m_scissor[1] != m_value[1] || state.m_scissor[2] != m_value[2]
-				|| state.m_scissor[3] != m_value[3])
+			   || state.m_scissor[3] != m_value[3])
 			{
 				state.m_scissor = m_value;
 				glScissor(m_value[0], m_value[1], m_value[2], m_value[3]);
@@ -351,10 +351,8 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 	}
 }
 
-void CommandBuffer::setStencilOperations(FaceSelectionBit face,
-	StencilOperation stencilFail,
-	StencilOperation stencilPassDepthFail,
-	StencilOperation stencilPassDepthPass)
+void CommandBuffer::setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
+										 StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
 {
 	class Cmd final : public GlCommand
 	{
@@ -382,10 +380,9 @@ void CommandBuffer::setStencilOperations(FaceSelectionBit face,
 	ANKI_GL_SELF(CommandBufferImpl);
 	if(self.m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass))
 	{
-		self.pushBackNewCommand<Cmd>(convertFaceMode(face),
-			convertStencilOperation(stencilFail),
-			convertStencilOperation(stencilPassDepthFail),
-			convertStencilOperation(stencilPassDepthPass));
+		self.pushBackNewCommand<Cmd>(convertFaceMode(face), convertStencilOperation(stencilFail),
+									 convertStencilOperation(stencilPassDepthFail),
+									 convertStencilOperation(stencilPassDepthPass));
 	}
 }
 
@@ -544,8 +541,8 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 	}
 }
 
-void CommandBuffer::setBlendFactors(
-	U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
+void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA,
+									BlendFactor dstA)
 {
 	class Cmd final : public GlCommand
 	{
@@ -575,11 +572,8 @@ void CommandBuffer::setBlendFactors(
 	ANKI_GL_SELF(CommandBufferImpl);
 	if(self.m_state.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA))
 	{
-		self.pushBackNewCommand<Cmd>(attachment,
-			convertBlendFactor(srcRgb),
-			convertBlendFactor(dstRgb),
-			convertBlendFactor(srcA),
-			convertBlendFactor(dstA));
+		self.pushBackNewCommand<Cmd>(attachment, convertBlendFactor(srcRgb), convertBlendFactor(dstRgb),
+									 convertBlendFactor(srcA), convertBlendFactor(dstA));
 	}
 }
 
@@ -613,8 +607,8 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	}
 }
 
-void CommandBuffer::bindTextureAndSampler(
-	U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage)
+void CommandBuffer::bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler,
+										  TextureUsageBit usage)
 {
 	class Cmd final : public GlCommand
 	{
@@ -739,13 +733,8 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TextureViewPtr img)
 		{
 			const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*m_img);
 
-			glBindImageTexture(m_unit,
-				view.m_view.m_glName,
-				0,
-				GL_TRUE,
-				0,
-				GL_READ_WRITE,
-				static_cast<const TextureImpl&>(*view.m_tex).m_internalFormat);
+			glBindImageTexture(m_unit, view.m_view.m_glName, 0, GL_TRUE, 0, GL_READ_WRITE,
+							   static_cast<const TextureImpl&>(*view.m_tex).m_internalFormat);
 			return Error::NONE;
 		}
 	};
@@ -844,12 +833,9 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 }
 
 void CommandBuffer::beginRenderPass(FramebufferPtr fb,
-	const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
-	TextureUsageBit depthStencilAttachmentUsage,
-	U32 minx,
-	U32 miny,
-	U32 width,
-	U32 height)
+									const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+									TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width,
+									U32 height)
 {
 	class BindFramebufferCommand final : public GlCommand
 	{
@@ -865,8 +851,8 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb,
 
 		Error operator()(GlState& state)
 		{
-			static_cast<const FramebufferImpl&>(*m_fb).bind(
-				state, m_renderArea[0], m_renderArea[1], m_renderArea[2], m_renderArea[3]);
+			static_cast<const FramebufferImpl&>(*m_fb).bind(state, m_renderArea[0], m_renderArea[1], m_renderArea[2],
+															m_renderArea[3]);
 			return Error::NONE;
 		}
 	};
@@ -903,8 +889,8 @@ void CommandBuffer::endRenderPass()
 	self.m_state.endRenderPass();
 }
 
-void CommandBuffer::drawElements(
-	PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+void CommandBuffer::drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex,
+								 U32 baseVertex, U32 baseInstance)
 {
 	class Cmd final : public GlCommand
 	{
@@ -922,13 +908,9 @@ void CommandBuffer::drawElements(
 
 		Error operator()(GlState&)
 		{
-			glDrawElementsInstancedBaseVertexBaseInstance(m_topology,
-				m_info.m_count,
-				m_indexType,
-				numberToPtr<void*>(m_info.m_firstIndex),
-				m_info.m_instanceCount,
-				m_info.m_baseVertex,
-				m_info.m_baseInstance);
+			glDrawElementsInstancedBaseVertexBaseInstance(
+				m_topology, m_info.m_count, m_indexType, numberToPtr<void*>(m_info.m_firstIndex),
+				m_info.m_instanceCount, m_info.m_baseVertex, m_info.m_baseInstance);
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
@@ -974,8 +956,8 @@ void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instan
 
 		Error operator()(GlState& state)
 		{
-			glDrawArraysInstancedBaseInstance(
-				m_topology, m_info.m_first, m_info.m_count, m_info.m_instanceCount, m_info.m_baseInstance);
+			glDrawArraysInstancedBaseInstance(m_topology, m_info.m_first, m_info.m_count, m_info.m_instanceCount,
+											  m_info.m_baseInstance);
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
@@ -992,8 +974,8 @@ void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instan
 	self.pushBackNewCommand<DrawArraysCommand>(convertPrimitiveTopology(topology), info);
 }
 
-void CommandBuffer::drawElementsIndirect(
-	PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
+void CommandBuffer::drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
+										 BufferPtr indirectBuff)
 {
 	class DrawElementsIndirectCommand final : public GlCommand
 	{
@@ -1023,8 +1005,8 @@ void CommandBuffer::drawElementsIndirect(
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
 
-			glMultiDrawElementsIndirect(
-				m_topology, m_indexType, numberToPtr<void*>(m_offset), m_drawCount, sizeof(DrawElementsIndirectInfo));
+			glMultiDrawElementsIndirect(m_topology, m_indexType, numberToPtr<void*>(m_offset), m_drawCount,
+										sizeof(DrawElementsIndirectInfo));
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 			return Error::NONE;
@@ -1039,8 +1021,8 @@ void CommandBuffer::drawElementsIndirect(
 		convertPrimitiveTopology(topology), self.m_state.m_idx.m_indexType, drawCount, offset, indirectBuff);
 }
 
-void CommandBuffer::drawArraysIndirect(
-	PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
+void CommandBuffer::drawArraysIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
+									   BufferPtr indirectBuff)
 {
 	class DrawArraysIndirectCommand final : public GlCommand
 	{
@@ -1068,8 +1050,8 @@ void CommandBuffer::drawArraysIndirect(
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
 
-			glMultiDrawArraysIndirect(
-				m_topology, numberToPtr<void*>(m_offset), m_drawCount, sizeof(DrawArraysIndirectInfo));
+			glMultiDrawArraysIndirect(m_topology, numberToPtr<void*>(m_offset), m_drawCount,
+									  sizeof(DrawArraysIndirectInfo));
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 			return Error::NONE;
@@ -1079,8 +1061,8 @@ void CommandBuffer::drawArraysIndirect(
 	ANKI_GL_SELF(CommandBufferImpl);
 	self.m_state.checkNonIndexedDrawcall();
 	self.flushDrawcall(*this);
-	self.pushBackNewCommand<DrawArraysIndirectCommand>(
-		convertPrimitiveTopology(topology), drawCount, offset, indirectBuff);
+	self.pushBackNewCommand<DrawArraysIndirectCommand>(convertPrimitiveTopology(topology), drawCount, offset,
+													   indirectBuff);
 }
 
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
@@ -1183,8 +1165,8 @@ void CommandBuffer::copyBufferToTextureView(BufferPtr buff, PtrSize offset, PtrS
 			const TextureViewImpl& viewImpl = static_cast<TextureViewImpl&>(*m_texView);
 			const TextureImpl& texImpl = static_cast<TextureImpl&>(*viewImpl.m_tex);
 
-			texImpl.copyFromBuffer(
-				viewImpl.getSubresource(), static_cast<const BufferImpl&>(*m_buff).getGlName(), m_offset, m_range);
+			texImpl.copyFromBuffer(viewImpl.getSubresource(), static_cast<const BufferImpl&>(*m_buff).getGlName(),
+								   m_offset, m_range);
 			return Error::NONE;
 		}
 	};
@@ -1198,8 +1180,8 @@ void CommandBuffer::copyBufferToTextureView(BufferPtr buff, PtrSize offset, PtrS
 	self.pushBackNewCommand<TexSurfUploadCommand>(buff, offset, range, texView);
 }
 
-void CommandBuffer::copyBufferToBuffer(
-	BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset, PtrSize range)
+void CommandBuffer::copyBufferToBuffer(BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset,
+									   PtrSize range)
 {
 	class Cmd final : public GlCommand
 	{
@@ -1221,8 +1203,8 @@ void CommandBuffer::copyBufferToBuffer(
 
 		Error operator()(GlState& state)
 		{
-			static_cast<BufferImpl&>(*m_dst).write(
-				static_cast<const BufferImpl&>(*m_src).getGlName(), m_srcOffset, m_dstOffset, m_range);
+			static_cast<BufferImpl&>(*m_dst).write(static_cast<const BufferImpl&>(*m_src).getGlName(), m_srcOffset,
+												   m_dstOffset, m_range);
 			return Error::NONE;
 		}
 	};
@@ -1303,8 +1285,8 @@ void CommandBuffer::blitTextureViews(TextureViewPtr srcView, TextureViewPtr dest
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::setBufferBarrier(
-	BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage, PtrSize offset, PtrSize size)
+void CommandBuffer::setBufferBarrier(BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage, PtrSize offset,
+									 PtrSize size)
 {
 	class SetBufferMemBarrierCommand final : public GlCommand
 	{
@@ -1352,7 +1334,7 @@ void CommandBuffer::setBufferBarrier(
 	}
 
 	if(!!(all
-		   & (BufferUsageBit::FILL | BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::BUFFER_UPLOAD_DESTINATION)))
+		  & (BufferUsageBit::FILL | BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::BUFFER_UPLOAD_DESTINATION)))
 	{
 		d |= GL_BUFFER_UPDATE_BARRIER_BIT;
 	}
@@ -1367,22 +1349,22 @@ void CommandBuffer::setBufferBarrier(
 	self.pushBackNewCommand<SetBufferMemBarrierCommand>(d);
 }
 
-void CommandBuffer::setTextureSurfaceBarrier(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
+void CommandBuffer::setTextureSurfaceBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+											 const TextureSurfaceInfo& surf)
 {
 	TextureSubresourceInfo subresource;
 	setTextureBarrier(tex, prevUsage, nextUsage, subresource);
 }
 
-void CommandBuffer::setTextureVolumeBarrier(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
+void CommandBuffer::setTextureVolumeBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+											const TextureVolumeInfo& vol)
 {
 	TextureSubresourceInfo subresource;
 	setTextureBarrier(tex, prevUsage, nextUsage, subresource);
 }
 
-void CommandBuffer::setTextureBarrier(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource)
+void CommandBuffer::setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+									  const TextureSubresourceInfo& subresource)
 {
 	class Cmd final : public GlCommand
 	{
@@ -1524,9 +1506,8 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 			ANKI_ASSERT(m_offset + 4 <= buff.getSize());
 
 			glBindBuffer(GL_QUERY_BUFFER, buff.getGlName());
-			glGetQueryObjectuiv(static_cast<const OcclusionQueryImpl&>(*m_query).getGlName(),
-				GL_QUERY_RESULT,
-				numberToPtr<GLuint*>(m_offset));
+			glGetQueryObjectuiv(static_cast<const OcclusionQueryImpl&>(*m_query).getGlName(), GL_QUERY_RESULT,
+								numberToPtr<GLuint*>(m_offset));
 			glBindBuffer(GL_QUERY_BUFFER, 0);
 
 			return Error::NONE;

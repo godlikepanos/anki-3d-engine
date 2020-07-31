@@ -101,10 +101,9 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 	const PtrSize indexBuffSize = m_indexCount * ((m_indexType == IndexType::U32) ? 4 : 2);
 
-	m_indexBuff = getManager().getGrManager().newBuffer(BufferInitInfo(indexBuffSize,
-		BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION,
-		BufferMapAccessBit::NONE,
-		"MeshIdx"));
+	m_indexBuff = getManager().getGrManager().newBuffer(
+		BufferInitInfo(indexBuffSize, BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION,
+					   BufferMapAccessBit::NONE, "MeshIdx"));
 
 	// Vertex stuff
 	m_vertCount = header.m_totalVertexCount;
@@ -121,10 +120,9 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		totalVertexBuffSize += m_vertCount * m_vertBufferInfos[i].m_stride;
 	}
 
-	m_vertBuff = getManager().getGrManager().newBuffer(BufferInitInfo(totalVertexBuffSize,
-		BufferUsageBit::VERTEX | BufferUsageBit::TRANSFER_DESTINATION,
-		BufferMapAccessBit::NONE,
-		"MeshVert"));
+	m_vertBuff = getManager().getGrManager().newBuffer(
+		BufferInitInfo(totalVertexBuffSize, BufferUsageBit::VERTEX | BufferUsageBit::TRANSFER_DESTINATION,
+					   BufferMapAccessBit::NONE, "MeshVert"));
 
 	m_texChannelCount = !!header.m_vertexAttributes[VertexAttributeLocation::UV2].m_format ? 2 : 1;
 

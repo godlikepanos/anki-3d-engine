@@ -79,8 +79,8 @@ Error getHomeDirectory(StringAuto& out)
 	return Error::NONE;
 }
 
-static Error walkDirectoryTreeInternal(
-	const CString& dir, void* userData, WalkDirectoryTreeCallback callback, U baseDirLen)
+static Error walkDirectoryTreeInternal(const CString& dir, void* userData, WalkDirectoryTreeCallback callback,
+									   U baseDirLen)
 {
 	// Append something to the path
 	if(dir.getLength() > MAX_PATH_LEN - 2)

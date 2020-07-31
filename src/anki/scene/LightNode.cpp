@@ -166,15 +166,10 @@ void LightNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		Vec3 color = lcomp.getDiffuseColor().xyz();
 		color /= max(max(color.x(), color.y()), color.z());
 
-		self.m_dbgDrawer.drawBillboardTexture(ctx.m_projectionMatrix,
-			ctx.m_viewMatrix,
-			lcomp.getTransform().getOrigin().xyz(),
-			color.xyz1(),
+		self.m_dbgDrawer.drawBillboardTexture(
+			ctx.m_projectionMatrix, ctx.m_viewMatrix, lcomp.getTransform().getOrigin().xyz(), color.xyz1(),
 			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-			self.m_dbgTex->getGrTextureView(),
-			ctx.m_sampler,
-			Vec2(0.75f),
-			*ctx.m_stagingGpuAllocator,
+			self.m_dbgTex->getGrTextureView(), ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator,
 			ctx.m_commandBuffer);
 
 		// Restore state

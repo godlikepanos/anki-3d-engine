@@ -188,8 +188,8 @@ public:
 		m_layout = layout;
 	}
 
-	void bindTextureAndSampler(
-		U32 binding, U32 arrayIdx, const TextureView* texView, const Sampler* sampler, VkImageLayout layout)
+	void bindTextureAndSampler(U32 binding, U32 arrayIdx, const TextureView* texView, const Sampler* sampler,
+							   VkImageLayout layout)
 	{
 		const TextureViewImpl& viewImpl = static_cast<const TextureViewImpl&>(*texView);
 		ANKI_ASSERT(viewImpl.getTextureImpl().isSubresourceGoodForSampling(viewImpl.getSubresource()));
@@ -320,10 +320,8 @@ private:
 
 	/// Only DescriptorSetFactory should call this.
 	/// @param hash If hash is zero then the DS doesn't need rebind.
-	void flush(U64& hash,
-		Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
-		U32& dynamicOffsetCount,
-		Bool& bindlessDSet);
+	void flush(U64& hash, Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets, U32& dynamicOffsetCount,
+			   Bool& bindlessDSet);
 
 	void unbindBindlessDSet()
 	{
@@ -399,13 +397,10 @@ public:
 	ANKI_USE_RESULT Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
 	/// @note It's thread-safe.
-	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid,
-		StackAllocator<U8>& tmpAlloc,
-		DescriptorSetState& state,
-		DescriptorSet& set,
-		Bool& dirty,
-		Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
-		U32& dynamicOffsetCount);
+	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid, StackAllocator<U8>& tmpAlloc, DescriptorSetState& state,
+										   DescriptorSet& set, Bool& dirty,
+										   Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET>& dynamicOffsets,
+										   U32& dynamicOffsetCount);
 
 	void endFrame()
 	{

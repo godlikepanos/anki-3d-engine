@@ -31,7 +31,7 @@ public:
 
 StartTime startTime;
 
-} // end namespace anonymous
+} // namespace
 
 static U64 getNs()
 {

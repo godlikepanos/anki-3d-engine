@@ -199,13 +199,8 @@ static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolA
 		prettySrc.append(tmp);
 	}
 
-	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s",
-		padding,
-		&error[0],
-		padding,
-		&prettySrc[0],
-		padding,
-		&error[0]);
+	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s", padding, &error[0], padding,
+							  &prettySrc[0], padding, &error[0]);
 }
 
 Error preprocessGlsl(CString in, StringAuto& out)
@@ -228,8 +223,8 @@ Error preprocessGlsl(CString in, StringAuto& out)
 	return Error::NONE;
 }
 
-Error compilerGlslToSpirv(
-	CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc, DynamicArrayAuto<U8>& spirv)
+Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc,
+						  DynamicArrayAuto<U8>& spirv)
 {
 	const EShLanguage stage = ankiToGlslangShaderType(shaderType);
 	const EShMessages messages = EShMessages(EShMsgSpvRules | EShMsgVulkanRules);

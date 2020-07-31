@@ -233,15 +233,15 @@ void main()
 
 		const U32 crntProbeIdx = u_lightIndices[idxOffset];
 		if(subgroupAllEqual(crntProbeIdx)
-			&& subgroupAll(crntProbeIdx != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
+		   && subgroupAll(crntProbeIdx != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
 		{
 			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
 
 			GlobalIlluminationProbe probe = u_giProbes[subgroupBroadcastFirst(crntProbeIdx)]; // It should be uniform
 
 			// Sample
-			diffIndirect = sampleGlobalIllumination(
-				worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures, u_trilinearClampSampler);
+			diffIndirect = sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures,
+													u_trilinearClampSampler);
 		}
 		else
 		{
@@ -271,8 +271,8 @@ void main()
 						totalBlendWeight += blendWeight;
 
 						// Sample
-						const Vec3 c = sampleGlobalIllumination(
-							worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures, u_trilinearClampSampler);
+						const Vec3 c = sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe,
+																u_globalIlluminationTextures, u_trilinearClampSampler);
 						diffIndirect += c * blendWeight;
 					}
 				}

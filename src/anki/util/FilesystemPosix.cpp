@@ -69,8 +69,8 @@ public:
 
 static thread_local WalkDirectoryTreeCallbackContext g_walkDirectoryTreeContext;
 
-static int walkDirectoryTreeCallback(
-	const char* filepath, const struct stat* info, const int typeflag, struct FTW* pathinfo)
+static int walkDirectoryTreeCallback(const char* filepath, const struct stat* info, const int typeflag,
+									 struct FTW* pathinfo)
 {
 	Bool isDir;
 	Bool ignored = true;

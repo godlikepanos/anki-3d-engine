@@ -197,24 +197,14 @@ void ReflectionProbeNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 	}
 
 	const ReflectionProbeNode& self = *static_cast<const ReflectionProbeNode*>(userData[0]);
-	self.m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()),
-		Vec4(0.0f, 0.0f, 1.0f, 1.0f),
-		1.0f,
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-		2.0f,
-		*ctx.m_stagingGpuAllocator,
-		ctx.m_commandBuffer);
+	self.m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()), Vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f,
+							   ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f,
+							   *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
-	self.m_dbgDrawer.drawBillboardTextures(ctx.m_projectionMatrix,
-		ctx.m_viewMatrix,
-		ConstWeakArray<Vec3>(positions, userData.getSize()),
-		Vec4(1.0f),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-		self.m_dbgTex->getGrTextureView(),
-		ctx.m_sampler,
-		Vec2(0.75f),
-		*ctx.m_stagingGpuAllocator,
-		ctx.m_commandBuffer);
+	self.m_dbgDrawer.drawBillboardTextures(
+		ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(positions, userData.getSize()), Vec4(1.0f),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), self.m_dbgTex->getGrTextureView(),
+		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
 
 	ctx.m_frameAllocator.deleteArray(positions, userData.getSize());
 	ctx.m_frameAllocator.deleteArray(mvps, userData.getSize());

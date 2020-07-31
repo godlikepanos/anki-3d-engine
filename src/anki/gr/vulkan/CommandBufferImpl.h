@@ -101,9 +101,9 @@ public:
 	void bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
 	{
 		commandCommon();
-		ANKI_CMD(vkCmdBindIndexBuffer(
-					 m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset, convertIndexType(type)),
-			ANY_OTHER_COMMAND);
+		ANKI_CMD(vkCmdBindIndexBuffer(m_handle, static_cast<const BufferImpl&>(*buff).getHandle(), offset,
+									  convertIndexType(type)),
+				 ANY_OTHER_COMMAND);
 		m_microCmdb->pushObjectRef(buff);
 	}
 
@@ -163,10 +163,8 @@ public:
 		m_state.setPolygonOffset(factor, units);
 	}
 
-	void setStencilOperations(FaceSelectionBit face,
-		StencilOperation stencilFail,
-		StencilOperation stencilPassDepthFail,
-		StencilOperation stencilPassDepthPass)
+	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
+							  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
 	{
 		commandCommon();
 		m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
@@ -220,8 +218,8 @@ public:
 		m_state.setBlendOperation(attachment, funcRgb, funcA);
 	}
 
-	void bindTextureAndSamplerInternal(
-		U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler, TextureUsageBit usage, U32 arrayIdx)
+	void bindTextureAndSamplerInternal(U32 set, U32 binding, TextureViewPtr& texView, SamplerPtr sampler,
+									   TextureUsageBit usage, U32 arrayIdx)
 	{
 		commandCommon();
 		const TextureViewImpl& view = static_cast<const TextureViewImpl&>(*texView);
@@ -292,20 +290,15 @@ public:
 		return idx;
 	}
 
-	void beginRenderPass(FramebufferPtr fb,
-		const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
-		TextureUsageBit depthStencilAttachmentUsage,
-		U32 minx,
-		U32 miny,
-		U32 width,
-		U32 height);
+	void beginRenderPass(FramebufferPtr fb, const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+						 TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height);
 
 	void endRenderPass();
 
 	void drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance);
 
-	void drawElements(
-		PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance);
+	void drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex,
+					  U32 baseInstance);
 
 	void drawArraysIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr& buff);
 
@@ -331,32 +324,25 @@ public:
 
 	void endRecording();
 
-	void setTextureBarrier(TexturePtr tex,
-		TextureUsageBit prevUsage,
-		TextureUsageBit nextUsage,
-		const TextureSubresourceInfo& subresource);
+	void setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+						   const TextureSubresourceInfo& subresource);
 
-	void setTextureSurfaceBarrier(
-		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf);
+	void setTextureSurfaceBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+								  const TextureSurfaceInfo& surf);
 
-	void setTextureVolumeBarrier(
-		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol);
+	void setTextureVolumeBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+								 const TextureVolumeInfo& vol);
 
-	void setTextureBarrierRange(
-		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range);
+	void setTextureBarrierRange(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+								const VkImageSubresourceRange& range);
 
-	void setBufferBarrier(VkPipelineStageFlags srcStage,
-		VkAccessFlags srcAccess,
-		VkPipelineStageFlags dstStage,
-		VkAccessFlags dstAccess,
-		PtrSize offset,
-		PtrSize size,
-		VkBuffer buff);
+	void setBufferBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkPipelineStageFlags dstStage,
+						  VkAccessFlags dstAccess, PtrSize offset, PtrSize size, VkBuffer buff);
 
 	void setBufferBarrier(BufferPtr& buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size);
 
-	void setAccelerationStructureBarrierInternal(
-		AccelerationStructurePtr& as, AccelerationStructureUsageBit prevUsage, AccelerationStructureUsageBit nextUsage);
+	void setAccelerationStructureBarrierInternal(AccelerationStructurePtr& as, AccelerationStructureUsageBit prevUsage,
+												 AccelerationStructureUsageBit nextUsage);
 
 	void fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value);
 
@@ -516,14 +502,9 @@ private:
 
 	void flushWriteQueryResults();
 
-	void setImageBarrier(VkPipelineStageFlags srcStage,
-		VkAccessFlags srcAccess,
-		VkImageLayout prevLayout,
-		VkPipelineStageFlags dstStage,
-		VkAccessFlags dstAccess,
-		VkImageLayout newLayout,
-		VkImage img,
-		const VkImageSubresourceRange& range);
+	void setImageBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess, VkImageLayout prevLayout,
+						 VkPipelineStageFlags dstStage, VkAccessFlags dstAccess, VkImageLayout newLayout, VkImage img,
+						 const VkImageSubresourceRange& range);
 
 	void beginRecording();
 

@@ -201,14 +201,14 @@ Error TextureResource::load(LoadingContext& ctx)
 			if(ctx.m_texType == TextureType::_3D)
 			{
 				TextureVolumeInfo vol(mip);
-				cmdb->setTextureVolumeBarrier(
-					ctx.m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, vol);
+				cmdb->setTextureVolumeBarrier(ctx.m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+											  vol);
 			}
 			else
 			{
 				TextureSurfaceInfo surf(mip, 0, face, layer);
-				cmdb->setTextureSurfaceBarrier(
-					ctx.m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
+				cmdb->setTextureSurfaceBarrier(ctx.m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+											   surf);
 			}
 		}
 
@@ -230,10 +230,8 @@ Error TextureResource::load(LoadingContext& ctx)
 				surfOrVolSize = vol.m_data.getSize();
 				surfOrVolData = &vol.m_data[0];
 
-				allocationSize = computeVolumeSize(ctx.m_tex->getWidth() >> mip,
-					ctx.m_tex->getHeight() >> mip,
-					ctx.m_tex->getDepth() >> mip,
-					ctx.m_tex->getFormat());
+				allocationSize = computeVolumeSize(ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip,
+												   ctx.m_tex->getDepth() >> mip, ctx.m_tex->getFormat());
 			}
 			else
 			{
@@ -241,8 +239,8 @@ Error TextureResource::load(LoadingContext& ctx)
 				surfOrVolSize = surf.m_data.getSize();
 				surfOrVolData = &surf.m_data[0];
 
-				allocationSize = computeSurfaceSize(
-					ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip, ctx.m_tex->getFormat());
+				allocationSize = computeSurfaceSize(ctx.m_tex->getWidth() >> mip, ctx.m_tex->getHeight() >> mip,
+													ctx.m_tex->getFormat());
 			}
 
 			ANKI_ASSERT(allocationSize >= surfOrVolSize);
@@ -278,18 +276,16 @@ Error TextureResource::load(LoadingContext& ctx)
 			if(ctx.m_texType == TextureType::_3D)
 			{
 				TextureVolumeInfo vol(mip);
-				cmdb->setTextureVolumeBarrier(ctx.m_tex,
-					TextureUsageBit::TRANSFER_DESTINATION,
-					TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
-					vol);
+				cmdb->setTextureVolumeBarrier(
+					ctx.m_tex, TextureUsageBit::TRANSFER_DESTINATION,
+					TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION, vol);
 			}
 			else
 			{
 				TextureSurfaceInfo surf(mip, 0, face, layer);
-				cmdb->setTextureSurfaceBarrier(ctx.m_tex,
-					TextureUsageBit::TRANSFER_DESTINATION,
-					TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
-					surf);
+				cmdb->setTextureSurfaceBarrier(
+					ctx.m_tex, TextureUsageBit::TRANSFER_DESTINATION,
+					TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION, surf);
 			}
 		}
 

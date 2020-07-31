@@ -165,9 +165,8 @@ public:
 	/// @param[out] el The queue element to fill out.
 	/// @param[out] cascadeFrustumComponents Fill those frustums as well. The size of this array is the count of the
 	///             cascades.
-	void setupDirectionalLightQueueElement(const FrustumComponent& frustumComp,
-		DirectionalLightQueueElement& el,
-		WeakArray<FrustumComponent> cascadeFrustumComponents) const;
+	void setupDirectionalLightQueueElement(const FrustumComponent& frustumComp, DirectionalLightQueueElement& el,
+										   WeakArray<FrustumComponent> cascadeFrustumComponents) const;
 
 private:
 	U64 m_uuid;

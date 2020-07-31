@@ -22,8 +22,8 @@ static MainRenderer* getMainRenderer(lua_State* l)
 	return r;
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoDbg = {
-	6963341295180544814, "Dbg", LuaUserData::computeSizeForGarbageCollected<Dbg>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoDbg = {6963341295180544814, "Dbg",
+											  LuaUserData::computeSizeForGarbageCollected<Dbg>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Dbg>()
@@ -134,11 +134,9 @@ static inline void wrapDbg(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-2700850970637484325,
-	"MainRenderer",
-	LuaUserData::computeSizeForGarbageCollected<MainRenderer>(),
-	nullptr,
-	nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMainRenderer = {-2700850970637484325, "MainRenderer",
+													   LuaUserData::computeSizeForGarbageCollected<MainRenderer>(),
+													   nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<MainRenderer>()

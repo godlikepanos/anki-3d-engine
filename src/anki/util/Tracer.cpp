@@ -65,7 +65,7 @@ Tracer::Chunk& Tracer::getOrCreateChunk(ThreadLocal& tlocal)
 	Chunk* out;
 
 	if(tlocal.m_currentChunk && tlocal.m_currentChunk->m_eventCount < EVENTS_PER_CHUNK
-		&& tlocal.m_currentChunk->m_counterCount < COUNTERS_PER_CHUNK)
+	   && tlocal.m_currentChunk->m_counterCount < COUNTERS_PER_CHUNK)
 	{
 		// There is a chunk and it has enough space
 		out = tlocal.m_currentChunk;
@@ -183,10 +183,8 @@ void Tracer::flush(TracerFlushCallback callback, void* callbackUserData)
 		{
 			Chunk* chunk = tlocal->m_allChunks.popFront();
 
-			callback(callbackUserData,
-				tlocal->m_tid,
-				WeakArray<TracerEvent>(&chunk->m_events[0], chunk->m_eventCount),
-				WeakArray<TracerCounter>(&chunk->m_counters[0], chunk->m_counterCount));
+			callback(callbackUserData, tlocal->m_tid, WeakArray<TracerEvent>(&chunk->m_events[0], chunk->m_eventCount),
+					 WeakArray<TracerCounter>(&chunk->m_counters[0], chunk->m_counterCount));
 
 			m_alloc.deleteInstance(chunk);
 		}

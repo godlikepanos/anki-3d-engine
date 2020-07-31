@@ -41,11 +41,9 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseRgb816x16.png", m_noiseTex));
 
 	// Create RTs
-	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(width,
-		height,
-		Format::R16G16B16A16_SFLOAT,
-		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-		"SSR");
+	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
+		width, height, Format::R16G16B16A16_SFLOAT,
+		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT, "SSR");
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	m_rt = m_r->createAndClearRenderTarget(texinit);
 
@@ -78,8 +76,8 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 
 	// Create pass
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSR");
-	rpass.setWork(
-		[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssr*>(rgraphCtx.m_userData)->run(rgraphCtx); }, this, 0);
+	rpass.setWork([](RenderPassWorkContext& rgraphCtx) { static_cast<Ssr*>(rgraphCtx.m_userData)->run(rgraphCtx); },
+				  this, 0);
 
 	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE});
 	rpass.newDependency({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_COMPUTE});

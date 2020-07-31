@@ -94,8 +94,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("Bloom Main");
 		rpass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) { static_cast<Bloom*>(rgraphCtx.m_userData)->runExposure(rgraphCtx); },
-			this,
-			0);
+			this, 0);
 
 		TextureSubresourceInfo inputTexSubresource;
 		inputTexSubresource.m_firstMipmap = m_r->getDownscaleBlur().getMipmapCount() - 1;
@@ -114,8 +113,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 			[](RenderPassWorkContext& rgraphCtx) {
 				static_cast<Bloom*>(rgraphCtx.m_userData)->runUpscaleAndSslf(rgraphCtx);
 			},
-			this,
-			0);
+			this, 0);
 
 		rpass.newDependency({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_runCtx.m_upscaleRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});

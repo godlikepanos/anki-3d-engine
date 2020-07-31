@@ -17,8 +17,8 @@ namespace anki
 using GjkSupportCallback = Vec4 (*)(const void* shape, const Vec4& dir);
 
 /// Return true if the two convex shapes intersect.
-Bool gjkIntersection(
-	const void* shape0, GjkSupportCallback shape0Callback, const void* shape1, GjkSupportCallback shape1Callback);
+Bool gjkIntersection(const void* shape0, GjkSupportCallback shape0Callback, const void* shape1,
+					 GjkSupportCallback shape1Callback);
 /// @}
 
 } // end namespace anki

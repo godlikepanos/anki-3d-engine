@@ -109,10 +109,9 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	if(frc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::OCCLUDERS) && frc.hasCoverageBuffer())
 	{
 		// Gather triangles task
-		ThreadHiveTask fillDepthTask = ANKI_THREAD_HIVE_TASK({ self->fill(); },
-			alloc.newInstance<FillRasterizerWithCoverageTask>(frcCtx),
-			nullptr,
-			hive.newSemaphore(1));
+		ThreadHiveTask fillDepthTask =
+			ANKI_THREAD_HIVE_TASK({ self->fill(); }, alloc.newInstance<FillRasterizerWithCoverageTask>(frcCtx), nullptr,
+								  hive.newSemaphore(1));
 
 		hive.submitTasks(&fillDepthTask, 1);
 
@@ -126,10 +125,9 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, RenderQueue& 
 	}
 
 	// Gather visibles from the octree. No need to signal anything because it will spawn new tasks
-	ThreadHiveTask gatherTask = ANKI_THREAD_HIVE_TASK({ self->gather(hive); },
-		alloc.newInstance<GatherVisiblesFromOctreeTask>(frcCtx),
-		prepareRasterizerSem,
-		nullptr);
+	ThreadHiveTask gatherTask =
+		ANKI_THREAD_HIVE_TASK({ self->gather(hive); }, alloc.newInstance<GatherVisiblesFromOctreeTask>(frcCtx),
+							  prepareRasterizerSem, nullptr);
 	hive.submitTasks(&gatherTask, 1);
 
 	// Combind results task
@@ -168,7 +166,8 @@ void GatherVisiblesFromOctreeTask::gather(ThreadHive& hive)
 	U32 testIdx = m_frcCtx->m_visCtx->m_testsCount.fetchAdd(1);
 
 	// Walk the tree
-	m_frcCtx->m_visCtx->m_scene->getOctree().walkTree(testIdx,
+	m_frcCtx->m_visCtx->m_scene->getOctree().walkTree(
+		testIdx,
 		[&](const Aabb& box) {
 			Bool visible = m_frcCtx->m_frc->insideFrustum(box);
 			if(visible && m_frcCtx->m_r)
@@ -385,7 +384,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 										   : max(0.0f, testPlane(nearPlane, sps[0].m_sp->getAabb()));
 
 			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
-				&& !(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
+			   && !(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
 			{
 				RenderableQueueElement* el2 = result.m_earlyZRenderables.newElement(alloc);
 				*el2 = *el;
@@ -415,8 +414,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				lc->setupPointLightQueueElement(*el);
 
 				if(castsShadow
-					&& testedFrc.visibilityTestsEnabled(
-						   FrustumComponentVisibilityTestFlag::POINT_LIGHT_SHADOWS_ENABLED))
+				   && testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::POINT_LIGHT_SHADOWS_ENABLED))
 				{
 					RenderQueue* a = alloc.newArray<RenderQueue>(6);
 					nextQueues = WeakArray<RenderQueue>(a, 6);
@@ -444,7 +442,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				lc->setupSpotLightQueueElement(*el);
 
 				if(castsShadow
-					&& testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::SPOT_LIGHT_SHADOWS_ENABLED))
+				   && testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::SPOT_LIGHT_SHADOWS_ENABLED))
 				{
 					RenderQueue* a = alloc.newInstance<RenderQueue>();
 					nextQueues = WeakArray<RenderQueue>(a, 1);
@@ -484,8 +482,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 				// Create some dummy frustum components and initialize them
 				WeakArray<FrustumComponent> cascadeFrustumComponents(
-					(cascadeCount) ? reinterpret_cast<FrustumComponent*>(alloc.allocate(
-										 cascadeCount * sizeof(FrustumComponent), alignof(FrustumComponent)))
+					(cascadeCount) ? reinterpret_cast<FrustumComponent*>(
+						alloc.allocate(cascadeCount * sizeof(FrustumComponent), alignof(FrustumComponent)))
 								   : nullptr,
 					cascadeCount);
 				for(U32 i = 0; i < cascadeCount; ++i)
@@ -649,11 +647,8 @@ void CombineResultsTask::combine()
 		{ \
 			subStorages[i] = m_frcCtx->m_queueViews[i].member_; \
 		} \
-		combineQueueElements<t_>(alloc, \
-			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], threadCount), \
-			nullptr, \
-			results.member_, \
-			nullptr); \
+		combineQueueElements<t_>(alloc, WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], threadCount), \
+								 nullptr, results.member_, nullptr); \
 	}
 
 #define ANKI_VIS_COMBINE_AND_PTR(t_, member_, ptrMember_) \
@@ -666,11 +661,8 @@ void CombineResultsTask::combine()
 			ptrSubStorages[i] = m_frcCtx->m_queueViews[i].ptrMember_; \
 		} \
 		WeakArray<TRenderQueueElementStorage<U32>> arr(&ptrSubStorages[0], threadCount); \
-		combineQueueElements<t_>(alloc, \
-			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], threadCount), \
-			&arr, \
-			results.member_, \
-			&results.ptrMember_); \
+		combineQueueElements<t_>(alloc, WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], threadCount), &arr, \
+								 results.member_, &results.ptrMember_); \
 	}
 
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_renderables);
@@ -711,13 +703,11 @@ void CombineResultsTask::combine()
 	// Sort some of the arrays
 	std::sort(results.m_renderables.getBegin(), results.m_renderables.getEnd(), MaterialDistanceSortFunctor(20.0f));
 
-	std::sort(results.m_earlyZRenderables.getBegin(),
-		results.m_earlyZRenderables.getEnd(),
-		DistanceSortFunctor<RenderableQueueElement>());
+	std::sort(results.m_earlyZRenderables.getBegin(), results.m_earlyZRenderables.getEnd(),
+			  DistanceSortFunctor<RenderableQueueElement>());
 
-	std::sort(results.m_forwardShadingRenderables.getBegin(),
-		results.m_forwardShadingRenderables.getEnd(),
-		RevDistanceSortFunctor<RenderableQueueElement>());
+	std::sort(results.m_forwardShadingRenderables.getBegin(), results.m_forwardShadingRenderables.getEnd(),
+			  RevDistanceSortFunctor<RenderableQueueElement>());
 
 	std::sort(results.m_giProbes.getBegin(), results.m_giProbes.getEnd());
 
@@ -730,10 +720,9 @@ void CombineResultsTask::combine()
 
 template<typename T>
 void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
-	WeakArray<TRenderQueueElementStorage<T>> subStorages,
-	WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorages,
-	WeakArray<T>& combined,
-	WeakArray<T*>* ptrCombined)
+											  WeakArray<TRenderQueueElementStorage<T>> subStorages,
+											  WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorages,
+											  WeakArray<T>& combined, WeakArray<T*>* ptrCombined)
 {
 	U32 totalElCount = subStorages[0].m_elementCount;
 	U32 biggestSubStorageIdx = 0;

@@ -44,8 +44,8 @@ Error MicroSwapchain::initInternal()
 	VkSurfaceCapabilitiesKHR surfaceProperties;
 	U32 surfaceWidth = 0, surfaceHeight = 0;
 	{
-		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-			m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(), &surfaceProperties));
+		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_factory->m_gr->getPhysicalDevice(),
+																m_factory->m_gr->getSurface(), &surfaceProperties));
 
 		if(surfaceProperties.currentExtent.width == MAX_U32 || surfaceProperties.currentExtent.height == MAX_U32)
 		{
@@ -61,13 +61,13 @@ Error MicroSwapchain::initInternal()
 	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
 	{
 		uint32_t formatCount;
-		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(
-			m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(), &formatCount, nullptr));
+		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
+														   m_factory->m_gr->getSurface(), &formatCount, nullptr));
 
 		DynamicArrayAuto<VkSurfaceFormatKHR> formats(getAllocator());
 		formats.create(formatCount);
-		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(
-			m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
+		ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_factory->m_gr->getPhysicalDevice(),
+														   m_factory->m_gr->getSurface(), &formatCount, &formats[0]));
 
 		while(formatCount--)
 		{
@@ -91,12 +91,12 @@ Error MicroSwapchain::initInternal()
 	VkPresentModeKHR presentModeSecondChoice = VK_PRESENT_MODE_MAX_ENUM_KHR;
 	{
 		uint32_t presentModeCount;
-		vkGetPhysicalDeviceSurfacePresentModesKHR(
-			m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(), &presentModeCount, nullptr);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(),
+												  &presentModeCount, nullptr);
 		presentModeCount = min(presentModeCount, 4u);
 		Array<VkPresentModeKHR, 4> presentModes;
-		vkGetPhysicalDeviceSurfacePresentModesKHR(
-			m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(), &presentModeCount, &presentModes[0]);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(m_factory->m_gr->getPhysicalDevice(), m_factory->m_gr->getSurface(),
+												  &presentModeCount, &presentModes[0]);
 
 		if(m_factory->m_vsync)
 		{
@@ -169,12 +169,8 @@ Error MicroSwapchain::initInternal()
 			return Error::FUNCTION_FAILED;
 		}
 
-		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u",
-			count,
-			presentMode,
-			surfaceWidth,
-			surfaceHeight,
-			U32(m_factory->m_vsync));
+		ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u, size: %ux%u, vsync: %u", count,
+					 presentMode, surfaceWidth, surfaceHeight, U32(m_factory->m_vsync));
 
 		Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
 		ANKI_VK_CHECK(vkGetSwapchainImagesKHR(dev, m_swapchain, &count, &images[0]));

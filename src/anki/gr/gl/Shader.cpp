@@ -20,10 +20,9 @@ Shader* Shader::newInstance(GrManager* manager, const ShaderInitInfo& init)
 		StringAuto m_source;
 		DynamicArrayAuto<ShaderSpecializationConstValue> m_constValues;
 
-		ShaderCreateCommand(Shader* shader,
-			ConstWeakArray<U8> bin,
-			ConstWeakArray<ShaderSpecializationConstValue> constValues,
-			const CommandBufferAllocator<U8>& alloc)
+		ShaderCreateCommand(Shader* shader, ConstWeakArray<U8> bin,
+							ConstWeakArray<ShaderSpecializationConstValue> constValues,
+							const CommandBufferAllocator<U8>& alloc)
 			: m_shader(shader)
 			, m_source(alloc)
 			, m_constValues(alloc)

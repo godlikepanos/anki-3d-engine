@@ -243,7 +243,7 @@ public:
 	void setPolygonOffset(F32 factor, F32 units)
 	{
 		if(m_state.m_rasterizer.m_depthBiasConstantFactor != factor
-			|| m_state.m_rasterizer.m_depthBiasSlopeFactor != units)
+		   || m_state.m_rasterizer.m_depthBiasSlopeFactor != units)
 		{
 			m_state.m_rasterizer.m_depthBiasConstantFactor = factor;
 			m_state.m_rasterizer.m_depthBiasSlopeFactor = units;
@@ -260,15 +260,13 @@ public:
 		}
 	}
 
-	void setStencilOperations(FaceSelectionBit face,
-		StencilOperation stencilFail,
-		StencilOperation stencilPassDepthFail,
-		StencilOperation stencilPassDepthPass)
+	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
+							  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
 	{
 		if(!!(face & FaceSelectionBit::FRONT)
-			&& (m_state.m_stencil.m_face[0].m_stencilFailOperation != stencilFail
-				   || m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation != stencilPassDepthFail
-				   || m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation != stencilPassDepthPass))
+		   && (m_state.m_stencil.m_face[0].m_stencilFailOperation != stencilFail
+			   || m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation != stencilPassDepthFail
+			   || m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation != stencilPassDepthPass))
 		{
 			m_state.m_stencil.m_face[0].m_stencilFailOperation = stencilFail;
 			m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation = stencilPassDepthFail;
@@ -277,9 +275,9 @@ public:
 		}
 
 		if(!!(face & FaceSelectionBit::BACK)
-			&& (m_state.m_stencil.m_face[1].m_stencilFailOperation != stencilFail
-				   || m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation != stencilPassDepthFail
-				   || m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation != stencilPassDepthPass))
+		   && (m_state.m_stencil.m_face[1].m_stencilFailOperation != stencilFail
+			   || m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation != stencilPassDepthFail
+			   || m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation != stencilPassDepthPass))
 		{
 			m_state.m_stencil.m_face[1].m_stencilFailOperation = stencilFail;
 			m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation = stencilPassDepthFail;
@@ -343,7 +341,7 @@ public:
 	{
 		PPColorAttachmentStateInfo& c = m_state.m_color.m_attachments[attachment];
 		if(c.m_srcBlendFactorRgb != srcRgb || c.m_dstBlendFactorRgb != dstRgb || c.m_srcBlendFactorA != srcA
-			|| c.m_dstBlendFactorA != dstA)
+		   || c.m_dstBlendFactorA != dstA)
 		{
 			c.m_srcBlendFactorRgb = srcRgb;
 			c.m_dstBlendFactorRgb = dstRgb;

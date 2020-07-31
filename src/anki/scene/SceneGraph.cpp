@@ -53,14 +53,9 @@ SceneGraph::~SceneGraph()
 	}
 }
 
-Error SceneGraph::init(AllocAlignedCallback allocCb,
-	void* allocCbData,
-	ThreadHive* threadHive,
-	ResourceManager* resources,
-	Input* input,
-	ScriptManager* scriptManager,
-	const Timestamp* globalTimestamp,
-	const ConfigSet& config)
+Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
+					   ResourceManager* resources, Input* input, ScriptManager* scriptManager,
+					   const Timestamp* globalTimestamp, const ConfigSet& config)
 {
 	m_globalTimestamp = globalTimestamp;
 	m_threadHive = threadHive;
@@ -86,8 +81,8 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
-	m_defaultMainCam->getComponent<FrustumComponent>().setPerspective(
-		0.1f, 1000.0f, toRad(60.0f), (1080.0f / 1920.0f) * toRad(60.0f));
+	m_defaultMainCam->getComponent<FrustumComponent>().setPerspective(0.1f, 1000.0f, toRad(60.0f),
+																	  (1080.0f / 1920.0f) * toRad(60.0f));
 	m_mainCam = m_defaultMainCam;
 
 	// Create a special node for debugging the physics world
@@ -231,9 +226,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 						ANKI_SCENE_LOGF("Will not recover");
 					}
 				},
-				&updateCtx,
-				nullptr,
-				nullptr);
+				&updateCtx, nullptr, nullptr);
 		}
 
 		m_threadHive->submitTasks(&tasks[0], m_threadHive->getThreadCount());

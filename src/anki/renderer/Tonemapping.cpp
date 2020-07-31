@@ -39,10 +39,9 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	m_grProg = variant->getProgram();
 
 	// Create buffer
-	m_luminanceBuff = getGrManager().newBuffer(BufferInitInfo(sizeof(Vec4),
-		BufferUsageBit::ALL_STORAGE | BufferUsageBit::ALL_UNIFORM | BufferUsageBit::TRANSFER_DESTINATION,
-		BufferMapAccessBit::NONE,
-		"AvgLum"));
+	m_luminanceBuff = getGrManager().newBuffer(BufferInitInfo(
+		sizeof(Vec4), BufferUsageBit::ALL_STORAGE | BufferUsageBit::ALL_UNIFORM | BufferUsageBit::TRANSFER_DESTINATION,
+		BufferMapAccessBit::NONE, "AvgLum"));
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
@@ -83,8 +82,7 @@ void Tonemapping::populateRenderGraph(RenderingContext& ctx)
 			Tonemapping* const self = static_cast<Tonemapping*>(rgraphCtx.m_userData);
 			self->run(rgraphCtx);
 		},
-		this,
-		0);
+		this, 0);
 
 	pass.newDependency(
 		{m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::STORAGE_COMPUTE_WRITE});

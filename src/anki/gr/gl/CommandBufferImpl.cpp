@@ -25,8 +25,8 @@ void CommandBufferImpl::init(const CommandBufferInitInfo& init)
 {
 	auto& pool = getManager().getAllocator().getMemoryPool();
 
-	m_alloc = CommandBufferAllocator<GlCommand*>(
-		pool.getAllocationCallback(), pool.getAllocationCallbackUserData(), init.m_hints.m_chunkSize, 1.0, 0, false);
+	m_alloc = CommandBufferAllocator<GlCommand*>(pool.getAllocationCallback(), pool.getAllocationCallbackUserData(),
+												 init.m_hints.m_chunkSize, 1.0, 0, false);
 
 	m_flags = init.m_flags;
 
@@ -216,10 +216,8 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 	{
 		if(m_state.m_glStencilFuncSeparateDirty[i])
 		{
-			pushBackNewCommand<StencilCmd>(GL_FRONT + i,
-				convertCompareOperation(m_state.m_stencilCompare[i]),
-				m_state.m_stencilRef[i],
-				m_state.m_stencilCompareMask[i]);
+			pushBackNewCommand<StencilCmd>(GL_FRONT + i, convertCompareOperation(m_state.m_stencilCompare[i]),
+										   m_state.m_stencilRef[i], m_state.m_stencilCompareMask[i]);
 
 			m_state.m_glStencilFuncSeparateDirty[i] = false;
 		}

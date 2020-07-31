@@ -34,8 +34,8 @@ Error GBuffer::init(const ConfigSet& initializer)
 Error GBuffer::initInternal(const ConfigSet& initializer)
 {
 	// RT descrs
-	m_depthRtDescr = m_r->create2DRenderTargetDescription(
-		m_r->getWidth(), m_r->getHeight(), GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT, "GBuffer depth");
+	m_depthRtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(), m_r->getHeight(),
+														  GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT, "GBuffer depth");
 	m_depthRtDescr.bake();
 
 	static const Array<const char*, GBUFFER_COLOR_ATTACHMENT_COUNT> rtNames = {
@@ -101,14 +101,11 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		}
 
 		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
-		m_r->getSceneDrawer().drawRange(Pass::EZ,
-			ctx.m_matrices.m_view,
-			ctx.m_matrices.m_viewProjectionJitter,
-			ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection,
-			cmdb,
-			m_r->getSamplers().m_trilinearRepeatAniso,
-			ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
-			ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd);
+		m_r->getSceneDrawer().drawRange(Pass::EZ, ctx.m_matrices.m_view, ctx.m_matrices.m_viewProjectionJitter,
+										ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection, cmdb,
+										m_r->getSamplers().m_trilinearRepeatAniso,
+										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
+										ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd);
 
 		// Restore state for the color write
 		if(colorStart < colorEnd)
@@ -126,14 +123,11 @@ void GBuffer::runInThread(const RenderingContext& ctx, RenderPassWorkContext& rg
 		cmdb->setDepthCompareOperation(CompareOperation::LESS_EQUAL);
 
 		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
-		m_r->getSceneDrawer().drawRange(Pass::GB,
-			ctx.m_matrices.m_view,
-			ctx.m_matrices.m_viewProjectionJitter,
-			ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection,
-			cmdb,
-			m_r->getSamplers().m_trilinearRepeatAniso,
-			ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
-			ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);
+		m_r->getSceneDrawer().drawRange(Pass::GB, ctx.m_matrices.m_view, ctx.m_matrices.m_viewProjectionJitter,
+										ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection, cmdb,
+										m_r->getSamplers().m_trilinearRepeatAniso,
+										ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
+										ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);
 	}
 }
 
@@ -156,16 +150,16 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
-	pass.setFramebufferInfo(
-		m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], GBUFFER_COLOR_ATTACHMENT_COUNT), m_depthRt);
+	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], GBUFFER_COLOR_ATTACHMENT_COUNT),
+							m_depthRt);
 	pass.setWork(
 		[](RenderPassWorkContext& rgraphCtx) {
 			GBuffer* self = static_cast<GBuffer*>(rgraphCtx.m_userData);
 			self->runInThread(*self->m_ctx, rgraphCtx);
 		},
 		this,
-		computeNumberOfSecondLevelCommandBuffers(
-			ctx.m_renderQueue->m_earlyZRenderables.getSize() + ctx.m_renderQueue->m_renderables.getSize()));
+		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
+												 + ctx.m_renderQueue->m_renderables.getSize()));
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{

@@ -10,8 +10,8 @@ namespace anki
 
 template<PtrSize T_OBJECT_SIZE, U32 T_OBJECT_ALIGNMENT, U32 T_OBJECTS_PER_CHUNK, typename TIndexType>
 template<typename T, typename TAlloc, typename... TArgs>
-T* ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TIndexType>::newInstance(
-	TAlloc& alloc, TArgs&&... args)
+T* ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TIndexType>::newInstance(TAlloc& alloc,
+																									TArgs&&... args)
 {
 	static_assert(alignof(T) <= OBJECT_ALIGNMENT, "Wrong object alignment");
 	static_assert(sizeof(T) <= OBJECT_SIZE, "Wrong object size");
@@ -73,8 +73,8 @@ T* ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TInde
 
 template<PtrSize T_OBJECT_SIZE, U32 T_OBJECT_ALIGNMENT, U32 T_OBJECTS_PER_CHUNK, typename TIndexType>
 template<typename T, typename TAlloc>
-void ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TIndexType>::deleteInstance(
-	TAlloc& alloc, T* obj)
+void ObjectAllocator<T_OBJECT_SIZE, T_OBJECT_ALIGNMENT, T_OBJECTS_PER_CHUNK, TIndexType>::deleteInstance(TAlloc& alloc,
+																										 T* obj)
 {
 	static_assert(alignof(T) <= OBJECT_ALIGNMENT, "Wrong object alignment");
 	static_assert(sizeof(T) <= OBJECT_SIZE, "Wrong object size");

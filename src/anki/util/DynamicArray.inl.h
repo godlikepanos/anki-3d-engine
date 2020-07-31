@@ -135,8 +135,8 @@ void DynamicArray<T, TSize>::resize(TAllocator alloc, Size newSize)
 
 template<typename T, typename TSize>
 template<typename TAllocator, typename... TArgs>
-typename DynamicArray<T, TSize>::Iterator DynamicArray<T, TSize>::emplaceAt(
-	TAllocator alloc, ConstIterator where, TArgs&&... args)
+typename DynamicArray<T, TSize>::Iterator DynamicArray<T, TSize>::emplaceAt(TAllocator alloc, ConstIterator where,
+																			TArgs&&... args)
 {
 	const Value* wherePtr = where;
 	Size outIdx = getMaxNumericLimit<Size>();

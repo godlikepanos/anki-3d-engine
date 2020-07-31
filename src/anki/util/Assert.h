@@ -18,7 +18,7 @@ namespace anki
 
 void akassert(const char* exprTxt, const char* file, int line, const char* func);
 
-} // end namespace
+} // namespace anki
 
 #	define ANKI_ASSERT(x) \
 		do \

@@ -131,8 +131,8 @@ class PhysicsTriangleSoup final : public PhysicsCollisionShape
 private:
 	ClassWrapper<btTriangleMesh> m_mesh;
 
-	PhysicsTriangleSoup(
-		PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices, Bool convex = false);
+	PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices,
+						Bool convex = false);
 
 	~PhysicsTriangleSoup();
 };

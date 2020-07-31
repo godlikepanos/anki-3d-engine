@@ -40,11 +40,11 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 
 #if ANKI_GR_BACKEND_GL
 	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0])
-		|| SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.m_rgbaBits[1])
-		|| SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.m_rgbaBits[2])
-		|| SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, init.m_rgbaBits[3])
-		|| SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, init.m_depthBits)
-		|| SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, init.m_doubleBuffer))
+	   || SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.m_rgbaBits[1])
+	   || SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.m_rgbaBits[2])
+	   || SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, init.m_rgbaBits[3])
+	   || SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, init.m_depthBits)
+	   || SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, init.m_doubleBuffer))
 	{
 		ANKI_CORE_LOGE("SDL_GL_SetAttribute() failed");
 		return Error::FUNCTION_FAILED;
@@ -78,8 +78,8 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		init.m_height = mode.h;
 	}
 
-	m_impl->m_window = SDL_CreateWindow(
-		&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, init.m_width, init.m_height, flags);
+	m_impl->m_window = SDL_CreateWindow(&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+										init.m_width, init.m_height, flags);
 
 	if(m_impl->m_window == nullptr)
 	{

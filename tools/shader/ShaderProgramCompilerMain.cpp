@@ -173,14 +173,8 @@ static Error work(const CmdLineArgs& info)
 
 	// Compile
 	ShaderProgramBinaryWrapper binary(alloc);
-	ANKI_CHECK(compileShaderProgram(info.m_inputFname,
-		fsystem,
-		nullptr,
-		(info.m_threadCount) ? &taskManager : nullptr,
-		alloc,
-		caps,
-		limits,
-		binary));
+	ANKI_CHECK(compileShaderProgram(info.m_inputFname, fsystem, nullptr, (info.m_threadCount) ? &taskManager : nullptr,
+									alloc, caps, limits, binary));
 
 	// Store the binary
 	ANKI_CHECK(binary.serializeToFile(info.m_outFname));

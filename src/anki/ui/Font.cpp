@@ -104,8 +104,8 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 
 		cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
 		cmdb->copyBufferToTextureView(buff, 0, buffSize, tmpView);
-		cmdb->setTextureSurfaceBarrier(
-			m_tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS, surf);
+		cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS,
+									   surf);
 	}
 
 	// Gen mips

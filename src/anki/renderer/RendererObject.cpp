@@ -36,8 +36,8 @@ void* RendererObject::allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryT
 	return m_r->getStagingGpuMemoryManager().allocateFrame(size, usage, token);
 }
 
-void RendererObject::bindUniforms(
-	CommandBufferPtr& cmdb, U32 set, U32 binding, const StagingGpuMemoryToken& token) const
+void RendererObject::bindUniforms(CommandBufferPtr& cmdb, U32 set, U32 binding,
+								  const StagingGpuMemoryToken& token) const
 {
 	if(token && !token.isUnused())
 	{

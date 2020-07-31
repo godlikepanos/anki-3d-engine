@@ -151,8 +151,7 @@ Error MyApp::sampleExtraInit()
 		{
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
-				StringAuto(getAllocator()).sprintf("monkey_chain%u", i).toCString(),
-				monkey,
+				StringAuto(getAllocator()).sprintf("monkey_chain%u", i).toCString(), monkey,
 				"assets/Suzannedynamic-material.ankimdl"));
 
 			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
@@ -241,8 +240,7 @@ Error MyApp::userMainLoop(Bool& quit)
 
 		ModelNode* monkey;
 		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
-			StringAuto(getAllocator()).sprintf("monkey%u", instance++).toCString(),
-			monkey,
+			StringAuto(getAllocator()).sprintf("monkey%u", instance++).toCString(), monkey,
 			"assets/Suzannedynamic-material.ankimdl"));
 		// monkey->getComponent<MoveComponent>().setLocalTransform(camTrf);
 
@@ -290,8 +288,7 @@ Error MyApp::userMainLoop(Bool& quit)
 			static U id = 0;
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
-				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(),
-				monkey,
+				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(), monkey,
 				"assets/Suzannedynamic-material.ankimdl"));
 			monkey->getComponent<MoveComponent>().setLocalTransform(trf);
 
@@ -301,8 +298,7 @@ Error MyApp::userMainLoop(Bool& quit)
 			// Create some particles
 			ParticleEmitterNode* particles;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
-				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("parts%u", id++).toCString(),
-				particles,
+				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("parts%u", id++).toCString(), particles,
 				"assets/smoke.ankipart"));
 			particles->getComponent<MoveComponent>().setLocalTransform(trf);
 			createDestructionEvent(particles);

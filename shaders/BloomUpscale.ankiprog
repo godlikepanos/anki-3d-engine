@@ -27,16 +27,14 @@ const F32 CHROMATIC_DISTORTION = 3.0;
 #define ENABLE_HALO 1
 const F32 HALO_OPACITY = 0.5;
 
-Vec3 textureDistorted(texture2D tex,
-	sampler sampl,
-	Vec2 uv,
-	Vec2 direction, // direction of DISTORTION
-	Vec3 DISTORTION) // per-channel DISTORTION factor
+Vec3 textureDistorted(texture2D tex, sampler sampl, Vec2 uv,
+					  Vec2 direction, // direction of DISTORTION
+					  Vec3 DISTORTION) // per-channel DISTORTION factor
 {
 #if ENABLE_CHROMATIC_DISTORTION
 	return Vec3(textureLod(tex, sampl, uv + direction * DISTORTION.r, 0.0).r,
-		textureLod(tex, sampl, uv + direction * DISTORTION.g, 0.0).g,
-		textureLod(tex, sampl, uv + direction * DISTORTION.b, 0.0).b);
+				textureLod(tex, sampl, uv + direction * DISTORTION.g, 0.0).g,
+				textureLod(tex, sampl, uv + direction * DISTORTION.b, 0.0).b);
 #else
 	return textureLod(tex, uv, 0.0).rgb;
 #endif

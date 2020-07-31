@@ -89,8 +89,8 @@ public:
 			moveCount = 0;
 	}
 };
-}
-}
+} // namespace
+} // namespace anki
 
 ANKI_TEST(Util, SparseArray)
 {
@@ -407,10 +407,8 @@ ANKI_TEST(Util, SparseArrayBench)
 	// Mem usage
 	const I64 stlMemUsage = stlMaxAllocSize + sizeof(stdMap);
 	const I64 akMemUsage = akMaxAllocSize + sizeof(akMap);
-	ANKI_TEST_LOGI("Max mem usage: STL %li AnKi %li | %f%% (At any given time what was the max mem usage)",
-		stlMemUsage,
-		akMemUsage,
-		F64(stlMemUsage) / F32(akMemUsage) * 100.0f);
+	ANKI_TEST_LOGI("Max mem usage: STL %li AnKi %li | %f%% (At any given time what was the max mem usage)", stlMemUsage,
+				   akMemUsage, F64(stlMemUsage) / F32(akMemUsage) * 100.0f);
 
 	// Deletes
 	{

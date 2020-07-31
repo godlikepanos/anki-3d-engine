@@ -200,16 +200,9 @@ int main(int argc, char** argv)
 	}
 
 	GltfImporter importer{alloc};
-	if(importer.init(info.m_inputFname.toCString(),
-		   info.m_outDir.toCString(),
-		   info.m_rpath.toCString(),
-		   info.m_texRpath.toCString(),
-		   info.m_optimizeMeshes,
-		   info.m_lodFactor,
-		   info.m_lodCount,
-		   info.m_lightIntensityScale,
-		   info.m_threadCount,
-		   comment))
+	if(importer.init(info.m_inputFname.toCString(), info.m_outDir.toCString(), info.m_rpath.toCString(),
+					 info.m_texRpath.toCString(), info.m_optimizeMeshes, info.m_lodFactor, info.m_lodCount,
+					 info.m_lightIntensityScale, info.m_threadCount, comment))
 	{
 		return 1;
 	}

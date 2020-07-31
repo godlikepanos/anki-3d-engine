@@ -320,28 +320,23 @@ private:
 	ANKI_USE_RESULT Error initMemory(const ConfigSet& cfg);
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
-	static void* allocateCallback(
-		void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
+	static void* allocateCallback(void* userData, size_t size, size_t alignment,
+								  VkSystemAllocationScope allocationScope);
 
-	static void* reallocateCallback(
-		void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
+	static void* reallocateCallback(void* userData, void* original, size_t size, size_t alignment,
+									VkSystemAllocationScope allocationScope);
 
 	static void freeCallback(void* userData, void* ptr);
 #endif
 
 	void resetFrame(PerFrame& frame);
 
-	static VkBool32 debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
-		VkDebugReportObjectTypeEXT objectType,
-		uint64_t object,
-		size_t location,
-		int32_t messageCode,
-		const char* pLayerPrefix,
-		const char* pMessage,
-		void* pUserData);
+	static VkBool32 debugReportCallbackEXT(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
+										   uint64_t object, size_t location, int32_t messageCode,
+										   const char* pLayerPrefix, const char* pMessage, void* pUserData);
 
-	ANKI_USE_RESULT Error printPipelineShaderInfoInternal(
-		VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const;
+	ANKI_USE_RESULT Error printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages,
+														  U64 hash) const;
 };
 /// @}
 

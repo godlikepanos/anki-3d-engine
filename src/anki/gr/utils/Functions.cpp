@@ -9,11 +9,8 @@ namespace anki
 {
 
 template<typename T>
-static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& varBlkInfo,
-	const void* elements,
-	U32 elementsCount,
-	void* buffBegin,
-	const void* buffEnd)
+static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& varBlkInfo, const void* elements,
+											   U32 elementsCount, void* buffBegin, const void* buffEnd)
 {
 	// Check args
 	ANKI_ASSERT(elements != nullptr);
@@ -36,11 +33,8 @@ static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& va
 }
 
 template<typename T>
-static void writeShaderBlockMemorySimple(const ShaderVariableBlockInfo& varBlkInfo,
-	const void* elements,
-	U32 elementsCount,
-	void* buffBegin,
-	const void* buffEnd)
+static void writeShaderBlockMemorySimple(const ShaderVariableBlockInfo& varBlkInfo, const void* elements,
+										 U32 elementsCount, void* buffBegin, const void* buffEnd)
 {
 	writeShaderBlockMemorySanityChecks<T>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 
@@ -58,11 +52,8 @@ static void writeShaderBlockMemorySimple(const ShaderVariableBlockInfo& varBlkIn
 }
 
 template<typename T, typename Vec>
-static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkInfo,
-	const void* elements,
-	U32 elementsCount,
-	void* buffBegin,
-	const void* buffEnd)
+static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkInfo, const void* elements,
+										 U32 elementsCount, void* buffBegin, const void* buffEnd)
 {
 	writeShaderBlockMemorySanityChecks<T>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 	ANKI_ASSERT(varBlkInfo.m_matrixStride > 0);
@@ -85,12 +76,8 @@ static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkIn
 	}
 }
 
-void writeShaderBlockMemory(ShaderVariableDataType type,
-	const ShaderVariableBlockInfo& varBlkInfo,
-	const void* elements,
-	U32 elementsCount,
-	void* buffBegin,
-	const void* buffEnd)
+void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlockInfo& varBlkInfo,
+							const void* elements, U32 elementsCount, void* buffBegin, const void* buffEnd)
 {
 	switch(type)
 	{

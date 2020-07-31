@@ -150,7 +150,7 @@ public:
 };
 ANKI_END_PACKED_STRUCT
 static_assert(sizeof(GpuDeviceCapabilities) == sizeof(PtrSize) * 4 + sizeof(U32) * 3 + sizeof(U8) * 3 + sizeof(Bool),
-	"Should be packed");
+			  "Should be packed");
 
 /// Bindless related info.
 class BindlessLimits

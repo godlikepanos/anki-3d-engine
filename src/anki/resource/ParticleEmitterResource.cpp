@@ -89,8 +89,8 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async
 }
 
 template<typename T>
-Error ParticleEmitterResource::readVar(
-	const XmlElement& rootEl, CString varName, T& minVal, T& maxVal, const T* defaultVal)
+Error ParticleEmitterResource::readVar(const XmlElement& rootEl, CString varName, T& minVal, T& maxVal,
+									   const T* defaultVal)
 {
 	XmlElement el;
 

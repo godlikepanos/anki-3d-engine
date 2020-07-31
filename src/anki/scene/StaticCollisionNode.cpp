@@ -39,4 +39,4 @@ Error StaticCollisionNode::init(const CString& resourceFname, const Transform& t
 	return Error::NONE;
 }
 
-} // end namespace
+} // namespace anki

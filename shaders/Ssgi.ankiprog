@@ -50,7 +50,7 @@ void main()
 #endif
 
 	if(fixedGlobalInvocationId.x >= u_unis.m_framebufferSize.x
-		|| fixedGlobalInvocationId.y >= u_unis.m_framebufferSize.y)
+	   || fixedGlobalInvocationId.y >= u_unis.m_framebufferSize.y)
 	{
 		// Skip threads outside the writable image
 		return;
@@ -81,20 +81,9 @@ void main()
 	const U32 lod = 0;
 	const F32 minStepf = 4.0;
 	const F32 noise = F32(random.x) * (1.0 / 65536.0);
-	raymarchGroundTruth(viewPos,
-		randomHemisphere,
-		uv,
-		depth,
-		u_unis.m_projMat,
-		u_unis.m_maxSteps,
-		u_depthRt,
-		u_trilinearClampSampler,
-		F32(lod),
-		u_unis.m_depthBufferSize,
-		u_unis.m_firstStepPixels,
-		U32(mix(minStepf, F32(u_unis.m_firstStepPixels), noise)),
-		hitPoint,
-		hitAttenuation);
+	raymarchGroundTruth(viewPos, randomHemisphere, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,
+						u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize, u_unis.m_firstStepPixels,
+						U32(mix(minStepf, F32(u_unis.m_firstStepPixels), noise)), hitPoint, hitAttenuation);
 
 	// Reject backfacing
 	ANKI_BRANCH if(hitAttenuation > 0.0)

@@ -52,11 +52,10 @@ typename SparseArray<T, TIndex>::Iterator SparseArray<T, TIndex>::emplace(TAlloc
 {
 	emplaceInternal(alloc, idx, std::forward<TArgs>(args)...);
 
-	return Iterator(this,
-		findInternal(idx)
+	return Iterator(this, findInternal(idx)
 #if ANKI_EXTRA_CHECKS
-			,
-		m_iteratorVer
+							  ,
+					m_iteratorVer
 #endif
 	);
 }

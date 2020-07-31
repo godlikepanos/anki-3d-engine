@@ -27,12 +27,9 @@ public:
 
 	~UiManager();
 
-	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCallback,
-		void* allocCallbackUserData,
-		ResourceManager* resources,
-		GrManager* gr,
-		StagingGpuMemoryManager* gpuMem,
-		Input* input);
+	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCallback, void* allocCallbackUserData,
+							   ResourceManager* resources, GrManager* gr, StagingGpuMemoryManager* gpuMem,
+							   Input* input);
 
 	UiAllocator getAllocator() const
 	{

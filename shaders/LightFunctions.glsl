@@ -215,8 +215,8 @@ F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D s
 }
 
 // Compute the shadow factor of a directional light
-F32 computeShadowFactorDirLight(
-	DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap, sampler shadowMapSampler)
+F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
+								sampler shadowMapSampler)
 {
 #define ANKI_FAST_CASCADES_WORKAROUND 1 // Doesn't make sense but it's super fast
 
@@ -250,8 +250,8 @@ F32 computeShadowFactorDirLight(
 }
 
 // Compute the shadow factor of a directional light
-F32 computeShadowFactorDirLight(
-	Mat4 lightProjectionMat, Vec3 worldPos, texture2D shadowMap, samplerShadow shadowMapSampler)
+F32 computeShadowFactorDirLight(Mat4 lightProjectionMat, Vec3 worldPos, texture2D shadowMap,
+								samplerShadow shadowMapSampler)
 {
 	const Vec4 texCoords4 = lightProjectionMat * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
@@ -298,10 +298,9 @@ F32 computeAttenuationFactor(F32 squareRadiusOverOne, Vec3 frag2Light)
 
 // Given the probe properties trace a ray inside the probe and find the cube tex coordinates to sample
 Vec3 intersectProbe(Vec3 fragPos, // Ray origin
-	Vec3 rayDir, // Ray direction
-	Vec3 probeAabbMin,
-	Vec3 probeAabbMax,
-	Vec3 probeOrigin // Cubemap origin
+					Vec3 rayDir, // Ray direction
+					Vec3 probeAabbMin, Vec3 probeAabbMax,
+					Vec3 probeOrigin // Cubemap origin
 )
 {
 	// Compute the intersection point
@@ -315,9 +314,7 @@ Vec3 intersectProbe(Vec3 fragPos, // Ray origin
 // Compute a weight (factor) of fragPos against some probe's bounds. The weight will be zero when fragPos is close to
 // AABB bounds and 1.0 at fadeDistance and less.
 F32 computeProbeBlendWeight(Vec3 fragPos, // Doesn't need to be inside the AABB
-	Vec3 probeAabbMin,
-	Vec3 probeAabbMax,
-	F32 fadeDistance)
+							Vec3 probeAabbMin, Vec3 probeAabbMax, F32 fadeDistance)
 {
 	// Compute the min distance of fragPos from the edges of the AABB
 	const Vec3 distFromMin = fragPos - probeAabbMin;
@@ -347,11 +344,8 @@ Vec3 sampleAmbientDice(Vec3 posx, Vec3 negx, Vec3 posy, Vec3 negy, Vec3 posz, Ve
 }
 
 // Sample the irradiance term from the clipmap
-Vec3 sampleGlobalIllumination(const Vec3 worldPos,
-	const Vec3 normal,
-	const GlobalIlluminationProbe probe,
-	texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES],
-	sampler linearAnyClampSampler)
+Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
+							  texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES], sampler linearAnyClampSampler)
 {
 	// Find the UVW
 	Vec3 uvw = (worldPos - probe.m_aabbMin) / (probe.m_aabbMax - probe.m_aabbMin);
@@ -375,13 +369,8 @@ Vec3 sampleGlobalIllumination(const Vec3 worldPos,
 	}
 
 	// Sample the irradiance
-	const Vec3 irradiance = sampleAmbientDice(irradiancePerDir[0],
-		irradiancePerDir[1],
-		irradiancePerDir[2],
-		irradiancePerDir[3],
-		irradiancePerDir[4],
-		irradiancePerDir[5],
-		normal);
+	const Vec3 irradiance = sampleAmbientDice(irradiancePerDir[0], irradiancePerDir[1], irradiancePerDir[2],
+											  irradiancePerDir[3], irradiancePerDir[4], irradiancePerDir[5], normal);
 
 	return irradiance;
 }

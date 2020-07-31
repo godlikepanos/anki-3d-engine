@@ -54,14 +54,11 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		bindStorage(cmdb, 0, 8, rsrc.m_indicesToken);
 
 		// Start drawing
-		m_r->getSceneDrawer().drawRange(Pass::FS,
-			ctx.m_matrices.m_view,
-			ctx.m_matrices.m_viewProjectionJitter,
-			ctx.m_prevMatrices.m_viewProjectionJitter,
-			cmdb,
-			m_r->getSamplers().m_trilinearRepeatAniso,
-			ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
-			ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);
+		m_r->getSceneDrawer().drawRange(Pass::FS, ctx.m_matrices.m_view, ctx.m_matrices.m_viewProjectionJitter,
+										ctx.m_prevMatrices.m_viewProjectionJitter, cmdb,
+										m_r->getSamplers().m_trilinearRepeatAniso,
+										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
+										ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);
 
 		// Restore state
 		cmdb->setDepthWrite(true);

@@ -83,8 +83,8 @@ struct PrivateEnum
 		typename PrivateEnum<line>::Type ANKI_CONCATENATE( \
 			privateEnum, line) = PrivateEnum<line>::Type::NA, \
 						 bool ANKI_CONCATENATE(privateBool, line) = true, \
-						 typename = typename std::enable_if_t<( \
-							 ANKI_CONCATENATE(privateBool, line) && ANKI_REQUIRES_BOOL(line, __VA_ARGS__))>
+						 typename = typename std::enable_if_t<(ANKI_CONCATENATE(privateBool, line) \
+															   && ANKI_REQUIRES_BOOL(line, __VA_ARGS__))>
 #else
 
 #	define ANKI_ENABLE_INTERNAL(line, ...) \
@@ -313,8 +313,8 @@ constexpr Bool isPacked()
 /// Imagine an array [sizeA][sizeB][sizeC] and a flat index in that array. Then this function will compute the unflatten
 /// indices.
 template<typename T, typename TI, typename TOut>
-inline void unflatten3dArrayIndex(
-	const T sizeA, const T sizeB, const T sizeC, const TI flatIdx, TOut& a, TOut& b, TOut& c)
+inline void unflatten3dArrayIndex(const T sizeA, const T sizeB, const T sizeC, const TI flatIdx, TOut& a, TOut& b,
+								  TOut& c)
 {
 	ANKI_ASSERT(flatIdx < (sizeA * sizeB * sizeC));
 	a = (flatIdx / (sizeB * sizeC)) % sizeA;

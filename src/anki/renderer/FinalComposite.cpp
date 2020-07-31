@@ -156,8 +156,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 			FinalComposite* self = static_cast<FinalComposite*>(rgraphCtx.m_userData);
 			self->run(*self->m_runCtx.m_ctx, rgraphCtx);
 		},
-		this,
-		0);
+		this, 0);
 	pass.setFramebufferInfo(m_fbDescr, {ctx.m_outRenderTarget}, {});
 
 	pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

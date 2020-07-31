@@ -48,4 +48,4 @@ void glConditionalCheckError(const char* file, int line, const char* func)
 	ANKI_GL_LOGF("GL error: %s (%s:%d %s)", errStr, file, line, func);
 }
 
-} // end namespace
+} // namespace anki

@@ -141,14 +141,8 @@ Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F3
 }
 
 // Write the data to FAIs
-void writeRts(Vec3 diffColor,
-	Vec3 normal,
-	Vec3 specularColor,
-	F32 roughness,
-	F32 subsurface,
-	Vec3 emission,
-	F32 metallic,
-	Vec2 velocity)
+void writeRts(Vec3 diffColor, Vec3 normal, Vec3 specularColor, F32 roughness, F32 subsurface, Vec3 emission,
+			  F32 metallic, Vec2 velocity)
 {
 	GbufferInfo g;
 	g.m_diffuse = diffColor;

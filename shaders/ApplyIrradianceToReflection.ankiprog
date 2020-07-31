@@ -39,13 +39,9 @@ void main()
 	readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, sampleUv, 0.0, gbuffer);
 
 	// Sample
-	const Vec3 irradiance = sampleAmbientDice(u_irradianceDice[0u].xyz,
-		u_irradianceDice[1u].xyz,
-		u_irradianceDice[2u].xyz,
-		u_irradianceDice[3u].xyz,
-		u_irradianceDice[4u].xyz,
-		u_irradianceDice[5u].xyz,
-		gbuffer.m_normal);
+	const Vec3 irradiance = sampleAmbientDice(u_irradianceDice[0u].xyz, u_irradianceDice[1u].xyz,
+											  u_irradianceDice[2u].xyz, u_irradianceDice[3u].xyz,
+											  u_irradianceDice[4u].xyz, u_irradianceDice[5u].xyz, gbuffer.m_normal);
 
 	// Compute the indirect term
 	const Vec3 indirect = gbuffer.m_diffuse * irradiance;

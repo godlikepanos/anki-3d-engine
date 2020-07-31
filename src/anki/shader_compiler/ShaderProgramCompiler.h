@@ -21,14 +21,12 @@ extern const U32 SHADER_BINARY_VERSION;
 /// @memberof ShaderProgramCompiler
 class ShaderProgramBinaryWrapper : public NonCopyable
 {
-	friend Error compileShaderProgramInternal(CString fname,
-		ShaderProgramFilesystemInterface& fsystem,
-		ShaderProgramPostParseInterface* postParseCallback,
-		ShaderProgramAsyncTaskInterface* taskManager,
-		GenericMemoryPoolAllocator<U8> tempAllocator,
-		const GpuDeviceCapabilities& gpuCapabilities,
-		const BindlessLimits& bindlessLimits,
-		ShaderProgramBinaryWrapper& binary);
+	friend Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterface& fsystem,
+											  ShaderProgramPostParseInterface* postParseCallback,
+											  ShaderProgramAsyncTaskInterface* taskManager,
+											  GenericMemoryPoolAllocator<U8> tempAllocator,
+											  const GpuDeviceCapabilities& gpuCapabilities,
+											  const BindlessLimits& bindlessLimits, ShaderProgramBinaryWrapper& binary);
 
 public:
 	ShaderProgramBinaryWrapper(GenericMemoryPoolAllocator<U8> alloc)
@@ -60,14 +58,12 @@ private:
 };
 
 /// Takes an AnKi special shader program and spits a binary.
-ANKI_USE_RESULT Error compileShaderProgram(CString fname,
-	ShaderProgramFilesystemInterface& fsystem,
-	ShaderProgramPostParseInterface* postParseCallback,
-	ShaderProgramAsyncTaskInterface* taskManager,
-	GenericMemoryPoolAllocator<U8> tempAllocator,
-	const GpuDeviceCapabilities& gpuCapabilities,
-	const BindlessLimits& bindlessLimits,
-	ShaderProgramBinaryWrapper& binary);
+ANKI_USE_RESULT Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,
+										   ShaderProgramPostParseInterface* postParseCallback,
+										   ShaderProgramAsyncTaskInterface* taskManager,
+										   GenericMemoryPoolAllocator<U8> tempAllocator,
+										   const GpuDeviceCapabilities& gpuCapabilities,
+										   const BindlessLimits& bindlessLimits, ShaderProgramBinaryWrapper& binary);
 /// @}
 
 } // end namespace anki

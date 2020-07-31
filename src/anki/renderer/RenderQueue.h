@@ -68,8 +68,8 @@ public:
 	}
 };
 
-static_assert(
-	std::is_trivially_destructible<RenderableQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<RenderableQueueElement>::value == true,
+			  "Should be trivially destructible");
 
 /// Context that contains variables for the GenericGpuComputeJobQueueElement.
 class GenericGpuComputeJobQueueElementContext final : public RenderingMatrices
@@ -80,8 +80,8 @@ public:
 };
 
 /// Callback for GenericGpuComputeJobQueueElement.
-using GenericGpuComputeJobQueueElementCallback = void (*)(
-	GenericGpuComputeJobQueueElementContext& ctx, const void* userData);
+using GenericGpuComputeJobQueueElementCallback = void (*)(GenericGpuComputeJobQueueElementContext& ctx,
+														  const void* userData);
 
 /// It has enough info to execute generic compute on the GPU.
 class GenericGpuComputeJobQueueElement final
@@ -96,7 +96,7 @@ public:
 };
 
 static_assert(std::is_trivially_destructible<GenericGpuComputeJobQueueElement>::value == true,
-	"Should be trivially destructible");
+			  "Should be trivially destructible");
 
 /// Point light render queue element.
 class PointLightQueueElement final
@@ -123,8 +123,8 @@ public:
 	}
 };
 
-static_assert(
-	std::is_trivially_destructible<PointLightQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<PointLightQueueElement>::value == true,
+			  "Should be trivially destructible");
 
 /// Spot light render queue element.
 class SpotLightQueueElement final
@@ -181,8 +181,8 @@ public:
 	}
 };
 
-static_assert(
-	std::is_trivially_destructible<DirectionalLightQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<DirectionalLightQueueElement>::value == true,
+			  "Should be trivially destructible");
 
 /// Normally the visibility tests don't perform tests on the reflection probes because probes dont change that often.
 /// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
@@ -209,12 +209,12 @@ public:
 	}
 };
 
-static_assert(
-	std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true,
+			  "Should be trivially destructible");
 
 /// See ReflectionProbeQueueElementFeedbackCallback for its purpose.
-using GlobalIlluminationProbeQueueElementFeedbackCallback = void (*)(
-	Bool fillRenderQueuesOnNextFrame, void* userData, const Vec4& eyeWorldPosition);
+using GlobalIlluminationProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData,
+																	 const Vec4& eyeWorldPosition);
 
 // Probe for global illumination.
 class GlobalIlluminationProbeQueueElement final
@@ -251,7 +251,7 @@ public:
 };
 
 static_assert(std::is_trivially_destructible<GlobalIlluminationProbeQueueElement>::value == true,
-	"Should be trivially destructible");
+			  "Should be trivially destructible");
 
 /// Lens flare render queue element.
 class LensFlareQueueElement final
@@ -339,8 +339,8 @@ public:
 	}
 };
 
-static_assert(
-	std::is_trivially_destructible<FogDensityQueueElement>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<FogDensityQueueElement>::value == true,
+			  "Should be trivially destructible");
 
 /// A callback to fill a coverage buffer.
 using FillCoverageBufferCallback = void (*)(void* userData, F32* depthValues, U32 width, U32 height);

@@ -217,8 +217,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 					Ssao* const self = static_cast<Ssao*>(rgraphCtx.m_userData);
 					self->runMain(*self->m_runCtx.m_ctx, rgraphCtx);
 				},
-				this,
-				0);
+				this, 0);
 		}
 		else
 		{
@@ -240,8 +239,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 					Ssao* const self = static_cast<Ssao*>(rgraphCtx.m_userData);
 					self->runMain(*self->m_runCtx.m_ctx, rgraphCtx);
 				},
-				this,
-				0);
+				this, 0);
 		}
 	}
 
@@ -256,8 +254,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 					Ssao* const self = static_cast<Ssao*>(rgraphCtx.m_userData);
 					self->runBlur(rgraphCtx);
 				},
-				this,
-				0);
+				this, 0);
 
 			pass.newDependency({m_runCtx.m_rts[1], TextureUsageBit::IMAGE_COMPUTE_WRITE});
 			pass.newDependency({m_runCtx.m_rts[0], TextureUsageBit::SAMPLED_COMPUTE});
@@ -271,8 +268,7 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 					Ssao* const self = static_cast<Ssao*>(rgraphCtx.m_userData);
 					self->runBlur(rgraphCtx);
 				},
-				this,
-				0);
+				this, 0);
 			pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[1]}}, {});
 
 			pass.newDependency({m_runCtx.m_rts[1], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});

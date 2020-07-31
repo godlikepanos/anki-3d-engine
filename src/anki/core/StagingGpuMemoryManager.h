@@ -95,8 +95,8 @@ private:
 	GrManager* m_gr = nullptr;
 	Array<PerFrameBuffer, U(StagingGpuMemoryType::COUNT)> m_perFrameBuffers;
 
-	void initBuffer(
-		StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize, BufferUsageBit usage, GrManager& gr);
+	void initBuffer(StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize, BufferUsageBit usage,
+					GrManager& gr);
 };
 /// @}
 

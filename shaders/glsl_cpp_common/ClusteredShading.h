@@ -169,8 +169,8 @@ ANKI_SHADER_FUNC_INLINE U32 computeClusterK(ClustererMagicValues magic, Vec3 wor
 }
 
 // Compute cluster index
-ANKI_SHADER_FUNC_INLINE U32 computeClusterIndex(
-	ClustererMagicValues magic, Vec2 uv, Vec3 worldPos, U32 clusterCountX, U32 clusterCountY)
+ANKI_SHADER_FUNC_INLINE U32 computeClusterIndex(ClustererMagicValues magic, Vec2 uv, Vec3 worldPos, U32 clusterCountX,
+												U32 clusterCountY)
 {
 	const UVec2 xy = UVec2(uv * Vec2(F32(clusterCountX), F32(clusterCountY)));
 	const U32 k = computeClusterK(magic, worldPos);
@@ -190,8 +190,8 @@ ANKI_SHADER_FUNC_INLINE F32 computeClusterNear(ClustererMagicValues magic, U32 k
 }
 
 // Compute the UV coordinates of a volume texture that encloses the clusterer
-ANKI_SHADER_FUNC_INLINE Vec3 computeClustererVolumeTextureUvs(
-	ClustererMagicValues magic, Vec2 uv, Vec3 worldPos, U32 clusterCountZ)
+ANKI_SHADER_FUNC_INLINE Vec3 computeClustererVolumeTextureUvs(ClustererMagicValues magic, Vec2 uv, Vec3 worldPos,
+															  U32 clusterCountZ)
 {
 	const F32 k = computeClusterKf(magic, worldPos);
 	return Vec3(uv, k / F32(clusterCountZ));

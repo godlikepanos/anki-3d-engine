@@ -29,15 +29,9 @@ MainRenderer::~MainRenderer()
 	ANKI_R_LOGI("Destroying main renderer");
 }
 
-Error MainRenderer::init(ThreadHive* hive,
-	ResourceManager* resources,
-	GrManager* gr,
-	StagingGpuMemoryManager* stagingMem,
-	UiManager* ui,
-	AllocAlignedCallback allocCb,
-	void* allocCbUserData,
-	const ConfigSet& config,
-	Timestamp* globTimestamp)
+Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gr,
+						 StagingGpuMemoryManager* stagingMem, UiManager* ui, AllocAlignedCallback allocCb,
+						 void* allocCbUserData, const ConfigSet& config, Timestamp* globTimestamp)
 {
 	ANKI_R_LOGI("Initializing main renderer");
 
@@ -135,8 +129,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 				MainRenderer* const self = static_cast<MainRenderer*>(rgraphCtx.m_userData);
 				self->runBlit(rgraphCtx);
 			},
-			this,
-			0);
+			this, 0);
 
 		pass.newDependency({presentRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newDependency({ctx.m_outRenderTarget, TextureUsageBit::SAMPLED_FRAGMENT});
@@ -150,8 +143,7 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 			[](RenderPassWorkContext& rgraphCtx) {
 				// Do nothing. This pass is dummy
 			},
-			nullptr,
-			0);
+			nullptr, 0);
 		pass.newDependency({presentRt, TextureUsageBit::PRESENT});
 	}
 

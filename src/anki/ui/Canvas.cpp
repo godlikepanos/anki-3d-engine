@@ -57,8 +57,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight, U32 width, U32 height)
 
 	// Allocator
 	m_stackAlloc = StackAllocator<U8>(getAllocator().getMemoryPool().getAllocationCallback(),
-		getAllocator().getMemoryPool().getAllocationCallbackUserData(),
-		512_B);
+									  getAllocator().getMemoryPool().getAllocationCallbackUserData(), 512_B);
 
 	// Create the context
 	setImAllocator();
@@ -284,10 +283,8 @@ void Canvas::appendToCommandBufferInternal(CommandBufferPtr& cmdb)
 					}
 
 					// Apply scissor/clipping rectangle
-					cmdb->setScissor(U32(clipRect.x()),
-						U32(clipRect.y()),
-						U32(clipRect.z() - clipRect.x()),
-						U32(clipRect.w() - clipRect.y()));
+					cmdb->setScissor(U32(clipRect.x()), U32(clipRect.y()), U32(clipRect.z() - clipRect.x()),
+									 U32(clipRect.w() - clipRect.y()));
 
 					if(pcmd.TextureId)
 					{

@@ -105,15 +105,15 @@ Error SkeletonResource::load(const ResourceFilename& filename, Bool async)
 
 			if(bone.m_parent == nullptr)
 			{
-				ANKI_RESOURCE_LOGE(
-					"Bone \"%s\" is referencing an unknown parent \"%s\"", &bone.m_name[0], &it->toCString()[0]);
+				ANKI_RESOURCE_LOGE("Bone \"%s\" is referencing an unknown parent \"%s\"", &bone.m_name[0],
+								   &it->toCString()[0]);
 				return Error::USER_DATA;
 			}
 
 			if(bone.m_parent->m_childrenCount >= MAX_CHILDREN_PER_BONE)
 			{
-				ANKI_RESOURCE_LOGE(
-					"Bone \"%s\" cannot have more that %u children", &bone.m_parent->m_name[0], MAX_CHILDREN_PER_BONE);
+				ANKI_RESOURCE_LOGE("Bone \"%s\" cannot have more that %u children", &bone.m_parent->m_name[0],
+								   MAX_CHILDREN_PER_BONE);
 				return Error::USER_DATA;
 			}
 

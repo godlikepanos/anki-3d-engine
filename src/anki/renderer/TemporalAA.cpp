@@ -59,9 +59,8 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 
 	for(U i = 0; i < 2; ++i)
 	{
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
-			m_r->getHeight(),
-			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
+			m_r->getWidth(), m_r->getHeight(), LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			"TemporalAA");
 
@@ -112,13 +111,11 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 			TemporalAA* const self = static_cast<TemporalAA*>(rgraphCtx.m_userData);
 			self->run(*self->m_runCtx.m_ctx, rgraphCtx);
 		},
-		this,
-		0);
+		this, 0);
 
 	pass.newDependency({m_runCtx.m_renderRt, TextureUsageBit::IMAGE_COMPUTE_WRITE});
-	pass.newDependency({m_r->getGBuffer().getDepthRt(),
-		TextureUsageBit::SAMPLED_COMPUTE,
-		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
+	pass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE,
+						TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newDependency({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newDependency({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newDependency({m_r->getGBuffer().getColorRt(3), TextureUsageBit::SAMPLED_COMPUTE});

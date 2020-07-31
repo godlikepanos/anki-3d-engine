@@ -88,9 +88,8 @@ public:
 
 	/// Default constructor.
 	/// @copy doc SparseArray::SparseArray
-	HashMap(U32 initialStorageSize = INITIAL_STORAGE_SIZE,
-		U32 probeCount = LINEAR_PROBING_COUNT,
-		F32 maxLoadFactor = MAX_LOAD_FACTOR)
+	HashMap(U32 initialStorageSize = INITIAL_STORAGE_SIZE, U32 probeCount = LINEAR_PROBING_COUNT,
+			F32 maxLoadFactor = MAX_LOAD_FACTOR)
 		: m_sparseArr(initialStorageSize, probeCount, maxLoadFactor)
 	{
 	}
@@ -217,10 +216,8 @@ public:
 
 	/// Default constructor.
 	/// @copy doc SparseArray::SparseArray
-	HashMapAuto(const GenericMemoryPoolAllocator<U8>& alloc,
-		U32 initialStorageSize = Base::INITIAL_STORAGE_SIZE,
-		U32 probeCount = Base::LINEAR_PROBING_COUNT,
-		F32 maxLoadFactor = Base::MAX_LOAD_FACTOR)
+	HashMapAuto(const GenericMemoryPoolAllocator<U8>& alloc, U32 initialStorageSize = Base::INITIAL_STORAGE_SIZE,
+				U32 probeCount = Base::LINEAR_PROBING_COUNT, F32 maxLoadFactor = Base::MAX_LOAD_FACTOR)
 		: Base(initialStorageSize, probeCount, maxLoadFactor)
 		, m_alloc(alloc)
 	{

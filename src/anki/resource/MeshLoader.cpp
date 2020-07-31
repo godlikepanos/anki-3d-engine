@@ -132,9 +132,8 @@ Error MeshLoader::checkFormat(VertexAttributeLocation type, ConstWeakArray<Forma
 
 	if(!found)
 	{
-		ANKI_RESOURCE_LOGE("Vertex attribute %u has unsupported format %u",
-			U32(type),
-			U32(m_header.m_vertexAttributes[type].m_format));
+		ANKI_RESOURCE_LOGE("Vertex attribute %u has unsupported format %u", U32(type),
+						   U32(m_header.m_vertexAttributes[type].m_format));
 		return Error::USER_DATA;
 	}
 
@@ -173,14 +172,14 @@ Error MeshLoader::checkHeader() const
 	}
 
 	// Attributes
-	ANKI_CHECK(checkFormat(
-		VertexAttributeLocation::POSITION, Array<Format, 2>{{Format::R16G16B16A16_SFLOAT, Format::R32G32B32_SFLOAT}}));
+	ANKI_CHECK(checkFormat(VertexAttributeLocation::POSITION,
+						   Array<Format, 2>{{Format::R16G16B16A16_SFLOAT, Format::R32G32B32_SFLOAT}}));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::NORMAL, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::TANGENT, Array<Format, 1>{{Format::A2B10G10R10_SNORM_PACK32}}));
 	ANKI_CHECK(
 		checkFormat(VertexAttributeLocation::UV, Array<Format, 2>{{Format::R16G16_UNORM, Format::R16G16_SFLOAT}}));
-	ANKI_CHECK(checkFormat(
-		VertexAttributeLocation::BONE_INDICES, Array<Format, 2>{{Format::NONE, Format::R16G16B16A16_UINT}}));
+	ANKI_CHECK(checkFormat(VertexAttributeLocation::BONE_INDICES,
+						   Array<Format, 2>{{Format::NONE, Format::R16G16B16A16_UINT}}));
 	ANKI_CHECK(
 		checkFormat(VertexAttributeLocation::BONE_WEIGHTS, Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}));
 

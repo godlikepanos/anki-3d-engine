@@ -31,9 +31,8 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	ANKI_R_LOGI("Initializing HiZ. Mip count %u, last mip size %ux%u", m_mipCount, lastMipWidth, lastMipHeight);
 
 	// Create RT descr
-	TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(width,
-		height,
-		Format::R32_SFLOAT,
+	TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(
+		width, height, Format::R32_SFLOAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 		"HiZ");
 	texInit.m_mipmapCount = U8(m_mipCount);
@@ -119,9 +118,8 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 
 		if(i == 0)
 		{
-			pass.newDependency({m_r->getGBuffer().getDepthRt(),
-				TextureUsageBit::SAMPLED_COMPUTE,
-				TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
+			pass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE,
+								TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 		}
 		else
 		{
@@ -187,8 +185,8 @@ void DepthDownscale::run(RenderPassWorkContext& rgraphCtx)
 	// Bind input texure
 	if(level == 0)
 	{
-		rgraphCtx.bindTexture(
-			0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	}
 	else
 	{

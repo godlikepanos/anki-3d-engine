@@ -23,34 +23,29 @@ struct GlDbg
 };
 
 static const GlDbg gldbgsource[] = {{GL_DEBUG_SOURCE_API, "GL_DEBUG_SOURCE_API"},
-	{GL_DEBUG_SOURCE_WINDOW_SYSTEM, "GL_DEBUG_SOURCE_WINDOW_SYSTEM"},
-	{GL_DEBUG_SOURCE_SHADER_COMPILER, "GL_DEBUG_SOURCE_SHADER_COMPILER"},
-	{GL_DEBUG_SOURCE_THIRD_PARTY, "GL_DEBUG_SOURCE_THIRD_PARTY"},
-	{GL_DEBUG_SOURCE_APPLICATION, "GL_DEBUG_SOURCE_APPLICATION"},
-	{GL_DEBUG_SOURCE_OTHER, "GL_DEBUG_SOURCE_OTHER"}};
+									{GL_DEBUG_SOURCE_WINDOW_SYSTEM, "GL_DEBUG_SOURCE_WINDOW_SYSTEM"},
+									{GL_DEBUG_SOURCE_SHADER_COMPILER, "GL_DEBUG_SOURCE_SHADER_COMPILER"},
+									{GL_DEBUG_SOURCE_THIRD_PARTY, "GL_DEBUG_SOURCE_THIRD_PARTY"},
+									{GL_DEBUG_SOURCE_APPLICATION, "GL_DEBUG_SOURCE_APPLICATION"},
+									{GL_DEBUG_SOURCE_OTHER, "GL_DEBUG_SOURCE_OTHER"}};
 
 static const GlDbg gldbgtype[] = {{GL_DEBUG_TYPE_ERROR, "GL_DEBUG_TYPE_ERROR"},
-	{GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR"},
-	{GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR"},
-	{GL_DEBUG_TYPE_PORTABILITY, "GL_DEBUG_TYPE_PORTABILITY"},
-	{GL_DEBUG_TYPE_PERFORMANCE, "GL_DEBUG_TYPE_PERFORMANCE"},
-	{GL_DEBUG_TYPE_OTHER, "GL_DEBUG_TYPE_OTHER"}};
+								  {GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR"},
+								  {GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR"},
+								  {GL_DEBUG_TYPE_PORTABILITY, "GL_DEBUG_TYPE_PORTABILITY"},
+								  {GL_DEBUG_TYPE_PERFORMANCE, "GL_DEBUG_TYPE_PERFORMANCE"},
+								  {GL_DEBUG_TYPE_OTHER, "GL_DEBUG_TYPE_OTHER"}};
 
 static const GlDbg gldbgseverity[] = {{GL_DEBUG_SEVERITY_LOW, "GL_DEBUG_SEVERITY_LOW"},
-	{GL_DEBUG_SEVERITY_MEDIUM, "GL_DEBUG_SEVERITY_MEDIUM"},
-	{GL_DEBUG_SEVERITY_HIGH, "GL_DEBUG_SEVERITY_HIGH"}};
+									  {GL_DEBUG_SEVERITY_MEDIUM, "GL_DEBUG_SEVERITY_MEDIUM"},
+									  {GL_DEBUG_SEVERITY_HIGH, "GL_DEBUG_SEVERITY_HIGH"}};
 
 #	if ANKI_OS == ANKI_OS_WINDOWS && ANKI_COMPILER != ANKI_COMPILER_MSVC
 __stdcall
 #	endif
 	void
-	oglMessagesCallback(GLenum source,
-		GLenum type,
-		GLuint id,
-		GLenum severity,
-		GLsizei length,
-		const char* message,
-		const GLvoid* userParam)
+	oglMessagesCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message,
+						const GLvoid* userParam)
 {
 	using namespace anki;
 
@@ -128,8 +123,8 @@ void GlState::initRenderThread()
 			{
 				for(U sv = 0; sv < sizeof(gldbgseverity) / sizeof(GlDbg); sv++)
 				{
-					glDebugMessageControl(
-						gldbgsource[s].token, gldbgtype[t].token, gldbgseverity[sv].token, 0, nullptr, GL_TRUE);
+					glDebugMessageControl(gldbgsource[s].token, gldbgtype[t].token, gldbgseverity[sv].token, 0, nullptr,
+										  GL_TRUE);
 				}
 			}
 		}

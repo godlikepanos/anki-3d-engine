@@ -44,11 +44,8 @@ private:
 			m_drawer->drawLines(&lines[0], 2, Vec4(toAnki(color), 1.0f));
 		}
 
-		void drawContactPoint(const btVector3& PointOnB,
-			const btVector3& normalOnB,
-			btScalar distance,
-			int lifeTime,
-			const btVector3& color) override
+		void drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime,
+							  const btVector3& color) override
 		{
 			// TODO
 		}

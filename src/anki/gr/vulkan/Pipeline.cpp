@@ -66,9 +66,9 @@ Bool PipelineStateTracker::updateHashes()
 				{
 					m_hashes.m_vertexAttribs[i] =
 						computeHash(&m_state.m_vertex.m_attributes[i], sizeof(m_state.m_vertex.m_attributes[i]));
-					m_hashes.m_vertexAttribs[i] = appendHash(&m_state.m_vertex.m_bindings[i],
-						sizeof(m_state.m_vertex.m_bindings[i]),
-						m_hashes.m_vertexAttribs[i]);
+					m_hashes.m_vertexAttribs[i] =
+						appendHash(&m_state.m_vertex.m_bindings[i], sizeof(m_state.m_vertex.m_bindings[i]),
+								   m_hashes.m_vertexAttribs[i]);
 
 					stateDirty = true;
 				}
@@ -307,14 +307,15 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 
 		if(m_fbStencil)
 		{
-			dsCi.stencilTestEnable = !stencilTestDisabled(m_state.m_stencil.m_face[0].m_stencilFailOperation,
-										 m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation,
-										 m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation,
-										 m_state.m_stencil.m_face[0].m_compareFunction)
-									 || !stencilTestDisabled(m_state.m_stencil.m_face[1].m_stencilFailOperation,
-											m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation,
-											m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation,
-											m_state.m_stencil.m_face[1].m_compareFunction);
+			dsCi.stencilTestEnable =
+				!stencilTestDisabled(m_state.m_stencil.m_face[0].m_stencilFailOperation,
+									 m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation,
+									 m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation,
+									 m_state.m_stencil.m_face[0].m_compareFunction)
+				|| !stencilTestDisabled(m_state.m_stencil.m_face[1].m_stencilFailOperation,
+										m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation,
+										m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation,
+										m_state.m_stencil.m_face[1].m_compareFunction);
 
 			dsCi.front.failOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilFailOperation);
 			dsCi.front.passOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation);
@@ -344,12 +345,8 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 			VkPipelineColorBlendAttachmentState& out = m_ci.m_colAttachments[i];
 			const PPColorAttachmentStateInfo& in = m_state.m_color.m_attachments[i];
 
-			out.blendEnable = !blendingDisabled(in.m_srcBlendFactorRgb,
-				in.m_dstBlendFactorRgb,
-				in.m_srcBlendFactorA,
-				in.m_dstBlendFactorA,
-				in.m_blendFunctionRgb,
-				in.m_blendFunctionA);
+			out.blendEnable = !blendingDisabled(in.m_srcBlendFactorRgb, in.m_dstBlendFactorRgb, in.m_srcBlendFactorA,
+												in.m_dstBlendFactorA, in.m_blendFunctionRgb, in.m_blendFunctionA);
 			out.srcColorBlendFactor = convertBlendFactor(in.m_srcBlendFactorRgb);
 			out.dstColorBlendFactor = convertBlendFactor(in.m_dstBlendFactorRgb);
 			out.srcAlphaBlendFactor = convertBlendFactor(in.m_srcBlendFactorA);
@@ -369,14 +366,10 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	dynCi.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 
 	// Almost all state is dynamic. Depth bias is static
-	static const Array<VkDynamicState, 8> DYN = {{VK_DYNAMIC_STATE_VIEWPORT,
-		VK_DYNAMIC_STATE_SCISSOR,
-		VK_DYNAMIC_STATE_BLEND_CONSTANTS,
-		VK_DYNAMIC_STATE_DEPTH_BOUNDS,
-		VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,
-		VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
-		VK_DYNAMIC_STATE_STENCIL_REFERENCE,
-		VK_DYNAMIC_STATE_LINE_WIDTH}};
+	static const Array<VkDynamicState, 8> DYN = {
+		{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+		 VK_DYNAMIC_STATE_DEPTH_BOUNDS, VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK, VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
+		 VK_DYNAMIC_STATE_STENCIL_REFERENCE, VK_DYNAMIC_STATE_LINE_WIDTH}};
 
 	dynCi.dynamicStateCount = DYN.getSize();
 	dynCi.pDynamicStates = &DYN[0];
@@ -459,8 +452,8 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline,
 
 		// Print shader info
 		const ShaderProgramImpl& shaderImpl = static_cast<const ShaderProgramImpl&>(*state.m_state.m_prog);
-		shaderImpl.getGrManagerImpl().printPipelineShaderInfo(
-			pp.m_handle, shaderImpl.getName(), shaderImpl.getStages(), hash);
+		shaderImpl.getGrManagerImpl().printPipelineShaderInfo(pp.m_handle, shaderImpl.getName(), shaderImpl.getStages(),
+															  hash);
 	}
 }
 

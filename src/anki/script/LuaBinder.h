@@ -244,8 +244,8 @@ public:
 	/// Get some user data from the stack.
 	/// The function uses the type signature to validate the type and not the
 	/// typeName. That is supposed to be faster.
-	static ANKI_USE_RESULT Error checkUserData(
-		lua_State* l, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo, LuaUserData*& out);
+	static ANKI_USE_RESULT Error checkUserData(lua_State* l, I32 stackIdx, const LuaUserDataTypeInfo& typeInfo,
+											   LuaUserData*& out);
 
 	/// Allocate memory.
 	static void* luaAlloc(lua_State* l, size_t size, U32 alignment);

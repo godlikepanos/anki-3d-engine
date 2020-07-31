@@ -163,11 +163,10 @@ const ShaderProgramImplReflection& ShaderProgramImpl::getReflection()
 		}
 
 		// Sort the uniforms
-		std::sort(m_refl.m_uniforms.getBegin(),
-			m_refl.m_uniforms.getEnd(),
-			[](const ShaderProgramImplReflection::Uniform& a, const ShaderProgramImplReflection::Uniform& b) {
-				return a.m_location < b.m_location;
-			});
+		std::sort(m_refl.m_uniforms.getBegin(), m_refl.m_uniforms.getEnd(),
+				  [](const ShaderProgramImplReflection::Uniform& a, const ShaderProgramImplReflection::Uniform& b) {
+					  return a.m_location < b.m_location;
+				  });
 
 		// Now calculate the offset inside the push constant buffer
 		m_refl.m_uniformDataSize = 0;

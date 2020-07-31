@@ -38,8 +38,8 @@ PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBod
 	addToWorld();
 }
 
-PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(
-	PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB, const Vec3& relPosB)
+PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA,
+												 PhysicsBodyPtr bodyB, const Vec3& relPosB)
 	: PhysicsJoint(world, JointType::P2P)
 {
 	ANKI_ASSERT(bodyA != bodyB);

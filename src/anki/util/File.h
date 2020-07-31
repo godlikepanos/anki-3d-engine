@@ -130,11 +130,8 @@ private:
 	static FileOpenFlag getMachineEndianness();
 
 	/// Get the type of the file
-	ANKI_USE_RESULT Error identifyFile(const CString& filename,
-		char* archiveFilename,
-		PtrSize archiveFilenameSize,
-		CString& filenameInArchive,
-		Type& type);
+	ANKI_USE_RESULT Error identifyFile(const CString& filename, char* archiveFilename, PtrSize archiveFilenameSize,
+									   CString& filenameInArchive, Type& type);
 
 	/// Open a C file
 	ANKI_USE_RESULT Error openCFile(const CString& filename, FileOpenFlag flags);

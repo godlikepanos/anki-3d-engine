@@ -38,12 +38,8 @@ Error ShaderImpl::init(CString source, ConstWeakArray<ShaderSpecializationConstV
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated());
 
-	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER,
-		GL_TESS_CONTROL_SHADER,
-		GL_TESS_EVALUATION_SHADER,
-		GL_GEOMETRY_SHADER,
-		GL_FRAGMENT_SHADER,
-		GL_COMPUTE_SHADER}};
+	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER,
+											 GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER}};
 
 	m_glType = gltype[U(m_shaderType)];
 

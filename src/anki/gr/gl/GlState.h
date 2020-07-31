@@ -44,9 +44,9 @@ public:
 	/// @name FB
 	/// @{
 	Array2d<Bool, MAX_COLOR_ATTACHMENTS, 4> m_colorWriteMasks = {{{{true, true, true, true}},
-		{{true, true, true, true}},
-		{{true, true, true, true}},
-		{{true, true, true, true}}}};
+																  {{true, true, true, true}},
+																  {{true, true, true, true}},
+																  {{true, true, true, true}}}};
 
 	Bool m_depthWriteMask = true;
 

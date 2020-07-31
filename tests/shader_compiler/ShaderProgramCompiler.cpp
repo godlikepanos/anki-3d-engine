@@ -139,8 +139,8 @@ void main()
 	ShaderProgramBinaryWrapper binary(alloc);
 	BindlessLimits bindlessLimits;
 	GpuDeviceCapabilities gpuCapabilities;
-	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram(
-		"test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities, bindlessLimits, binary));
+	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities,
+												 bindlessLimits, binary));
 
 #if 1
 	StringAuto dis(alloc);
@@ -336,8 +336,8 @@ void main()
 	ShaderProgramBinaryWrapper binary(alloc);
 	BindlessLimits bindlessLimits;
 	GpuDeviceCapabilities gpuCapabilities;
-	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram(
-		"test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities, bindlessLimits, binary));
+	ANKI_TEST_EXPECT_NO_ERR(compileShaderProgram("test.glslp", fsystem, nullptr, &taskManager, alloc, gpuCapabilities,
+												 bindlessLimits, binary));
 
 #if 1
 	StringAuto dis(alloc);

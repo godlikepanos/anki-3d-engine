@@ -35,9 +35,8 @@ public:
 	{
 		m_window = init.m_window->getNative().m_window;
 
-		ANKI_GL_LOGI("Creating GL %u.%u context...",
-			U(init.m_config->getNumber("gr.glmajor")),
-			U(init.m_config->getNumber("gr.glminor")));
+		ANKI_GL_LOGI("Creating GL %u.%u context...", U(init.m_config->getNumber("gr.glmajor")),
+					 U(init.m_config->getNumber("gr.glminor")));
 
 		if(init.m_config->getNumber("gr_debugContext"))
 		{
@@ -49,8 +48,8 @@ public:
 		}
 
 		if(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, init.m_config->getNumber("gr.glmajor"))
-			|| SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, init.m_config->getNumber("gr.glminor"))
-			|| SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
+		   || SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, init.m_config->getNumber("gr.glminor"))
+		   || SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
 		{
 			ANKI_GL_LOGE("SDL_GL_SetAttribute() failed");
 			return Error::FUNCTION_FAILED;

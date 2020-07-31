@@ -137,17 +137,12 @@ public:
 
 	void getBufferState(RenderPassBufferHandle handle, BufferPtr& buff) const;
 
-	void getRenderTargetState(RenderTargetHandle handle,
-		const TextureSubresourceInfo& subresource,
-		TexturePtr& tex,
-		TextureUsageBit& usage) const;
+	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, TexturePtr& tex,
+							  TextureUsageBit& usage) const;
 
 	/// Convenience method.
-	void bindTextureAndSampler(U32 set,
-		U32 binding,
-		RenderTargetHandle handle,
-		const TextureSubresourceInfo& subresource,
-		const SamplerPtr& sampler)
+	void bindTextureAndSampler(U32 set, U32 binding, RenderTargetHandle handle,
+							   const TextureSubresourceInfo& subresource, const SamplerPtr& sampler)
 	{
 		TexturePtr tex;
 		TextureUsageBit usage;
@@ -191,8 +186,8 @@ public:
 	}
 
 	/// Convenience method.
-	void bindImage(
-		U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource, U32 arrayIdx = 0)
+	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, const TextureSubresourceInfo& subresource,
+				   U32 arrayIdx = 0)
 	{
 		TexturePtr tex;
 		TextureUsageBit usage;
@@ -245,8 +240,8 @@ public:
 	}
 
 	/// Dependency to the whole texture.
-	RenderPassDependency(
-		RenderTargetHandle handle, TextureUsageBit usage, DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage,
+						 DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
 		: m_texture({handle, usage, TextureSubresourceInfo()})
 		, m_isTexture(true)
 	{
@@ -404,20 +399,14 @@ class GraphicsRenderPassDescription : public RenderPassDescriptionBase
 
 public:
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
-		ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-		RenderTargetHandle depthStencilRenderTargetHandle,
-		U32 minx = 0,
-		U32 miny = 0,
-		U32 maxx = MAX_U32,
-		U32 maxy = MAX_U32);
+							ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
+							RenderTargetHandle depthStencilRenderTargetHandle, U32 minx = 0, U32 miny = 0,
+							U32 maxx = MAX_U32, U32 maxy = MAX_U32);
 
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
-		std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-		RenderTargetHandle depthStencilRenderTargetHandle,
-		U32 minx = 0,
-		U32 miny = 0,
-		U32 maxx = MAX_U32,
-		U32 maxy = MAX_U32);
+							std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
+							RenderTargetHandle depthStencilRenderTargetHandle, U32 minx = 0, U32 miny = 0,
+							U32 maxx = MAX_U32, U32 maxy = MAX_U32);
 
 private:
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;
@@ -648,10 +637,8 @@ private:
 	void setBatchBarriers(const RenderGraphDescription& descr);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
-	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr,
-		const RenderTargetHandle* rtHandles,
-		CString name,
-		Bool& drawsToPresentableTex);
+	FramebufferPtr getOrCreateFramebuffer(const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles,
+										  CString name, Bool& drawsToPresentableTex);
 
 	/// Every N number of frames clean unused cached items.
 	void periodicCleanup();
@@ -667,15 +654,13 @@ private:
 	template<typename TFunc>
 	static void iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubresourceInfo& subresource, TFunc func);
 
-	void getCrntUsage(RenderTargetHandle handle,
-		U32 batchIdx,
-		const TextureSubresourceInfo& subresource,
-		TextureUsageBit& usage) const;
+	void getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource,
+					  TextureUsageBit& usage) const;
 
 	/// @name Dump the dependency graph into a file.
 	/// @{
-	ANKI_USE_RESULT Error dumpDependencyDotFile(
-		const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const;
+	ANKI_USE_RESULT Error dumpDependencyDotFile(const RenderGraphDescription& descr, const BakeContext& ctx,
+												CString path) const;
 	static StringAuto textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage);
 	static StringAuto bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage);
 	/// @}

@@ -159,10 +159,8 @@ public:
 		return err;
 	}
 
-	void allocateAndSetupUniforms(const RenderQueueDrawContext& ctx,
-		ConstWeakArray<Mat4> transforms,
-		ConstWeakArray<Mat4> prevTransforms,
-		StagingGpuMemoryManager& alloc) const;
+	void allocateAndSetupUniforms(const RenderQueueDrawContext& ctx, ConstWeakArray<Mat4> transforms,
+								  ConstWeakArray<Mat4> prevTransforms, StagingGpuMemoryManager& alloc) const;
 
 private:
 	SceneNode* m_node;

@@ -222,10 +222,8 @@ void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 		// Resources
 		static const Mat4 identity = Mat4::getIdentity();
 		static_cast<const MaterialRenderComponent&>(getComponent<RenderComponent>())
-			.allocateAndSetupUniforms(ctx,
-				ConstWeakArray<Mat4>(&identity, 1),
-				ConstWeakArray<Mat4>(&identity, 1),
-				*ctx.m_stagingGpuAllocator);
+			.allocateAndSetupUniforms(ctx, ConstWeakArray<Mat4>(&identity, 1), ConstWeakArray<Mat4>(&identity, 1),
+									  *ctx.m_stagingGpuAllocator);
 
 		cmdb->bindStorageBuffer(0, 1, m_particlesBuff, 0, MAX_PTR_SIZE);
 

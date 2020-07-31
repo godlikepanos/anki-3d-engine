@@ -221,14 +221,9 @@ public:
 	}
 
 	/// Init the renderer.
-	ANKI_USE_RESULT Error init(ThreadHive* hive,
-		ResourceManager* resources,
-		GrManager* gr,
-		StagingGpuMemoryManager* stagingMem,
-		UiManager* ui,
-		HeapAllocator<U8> alloc,
-		const ConfigSet& config,
-		Timestamp* globTimestamp);
+	ANKI_USE_RESULT Error init(ThreadHive* hive, ResourceManager* resources, GrManager* gr,
+							   StagingGpuMemoryManager* stagingMem, UiManager* ui, HeapAllocator<U8> alloc,
+							   const ConfigSet& config, Timestamp* globTimestamp);
 
 	/// This function does all the rendering stages and produces a final result.
 	ANKI_USE_RESULT Error populateRenderGraph(RenderingContext& ctx);
@@ -285,15 +280,15 @@ public:
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
-	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(
-		U32 w, U32 h, Format format, TextureUsageBit usage, CString name = {});
+	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage,
+																 CString name = {});
 
 	/// Create the init info for a 2D texture that will be used as a render target.
-	ANKI_USE_RESULT RenderTargetDescription create2DRenderTargetDescription(
-		U32 w, U32 h, Format format, CString name = {});
+	ANKI_USE_RESULT RenderTargetDescription create2DRenderTargetDescription(U32 w, U32 h, Format format,
+																			CString name = {});
 
-	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(
-		const TextureInitInfo& inf, const ClearValue& clearVal = ClearValue());
+	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf,
+														  const ClearValue& clearVal = ClearValue());
 
 	GrManager& getGrManager()
 	{

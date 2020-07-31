@@ -147,13 +147,9 @@ void TileAllocator::updateSuperTiles(const Tile& updateFrom)
 	}
 }
 
-Bool TileAllocator::searchTileRecursively(U32 crntTileIdx,
-	U32 crntTileLod,
-	U32 allocationLod,
-	Timestamp crntTimestamp,
-	U32& emptyTileIdx,
-	U32& toKickTileIdx,
-	Timestamp& tileToKickMinTimestamp) const
+Bool TileAllocator::searchTileRecursively(U32 crntTileIdx, U32 crntTileLod, U32 allocationLod, Timestamp crntTimestamp,
+										  U32& emptyTileIdx, U32& toKickTileIdx,
+										  Timestamp& tileToKickMinTimestamp) const
 {
 	const Tile& tile = m_allTiles[crntTileIdx];
 
@@ -177,13 +173,8 @@ Bool TileAllocator::searchTileRecursively(U32 crntTileIdx,
 
 		for(const U32 idx : tile.m_subTiles)
 		{
-			const Bool done = searchTileRecursively(idx,
-				crntTileLod >> 1,
-				allocationLod,
-				crntTimestamp,
-				emptyTileIdx,
-				toKickTileIdx,
-				tileToKickMinTimestamp);
+			const Bool done = searchTileRecursively(idx, crntTileLod >> 1, allocationLod, crntTimestamp, emptyTileIdx,
+													toKickTileIdx, tileToKickMinTimestamp);
 
 			if(done)
 			{
@@ -195,11 +186,8 @@ Bool TileAllocator::searchTileRecursively(U32 crntTileIdx,
 	return false;
 }
 
-Bool TileAllocator::evaluateCandidate(U32 tileIdx,
-	Timestamp crntTimestamp,
-	U32& emptyTileIdx,
-	U32& toKickTileIdx,
-	Timestamp& tileToKickMinTimestamp) const
+Bool TileAllocator::evaluateCandidate(U32 tileIdx, Timestamp crntTimestamp, U32& emptyTileIdx, U32& toKickTileIdx,
+									  Timestamp& tileToKickMinTimestamp) const
 {
 	const Tile& tile = m_allTiles[tileIdx];
 
@@ -230,13 +218,8 @@ Bool TileAllocator::evaluateCandidate(U32 tileIdx,
 	return false;
 }
 
-TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
-	Timestamp lightTimestamp,
-	U64 lightUuid,
-	U32 lightFace,
-	U32 drawcallCount,
-	U32 lod,
-	Array<U32, 4>& tileViewport)
+TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp, Timestamp lightTimestamp, U64 lightUuid,
+											U32 lightFace, U32 drawcallCount, U32 lod, Array<U32, 4>& tileViewport)
 {
 	// Preconditions
 	ANKI_ASSERT(crntTimestamp > 0);
@@ -314,8 +297,8 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 
 		for(U32 tileIdx = m_lodFirstTileIndex[maxLod]; tileIdx <= m_lodFirstTileIndex[maxLod + 1]; ++tileIdx)
 		{
-			const Bool done = searchTileRecursively(
-				tileIdx, maxLod, lod, crntTimestamp, emptyTileIdx, toKickTileIdx, tileToKickMinTimestamp);
+			const Bool done = searchTileRecursively(tileIdx, maxLod, lod, crntTimestamp, emptyTileIdx, toKickTileIdx,
+													tileToKickMinTimestamp);
 
 			if(done)
 			{
@@ -359,10 +342,8 @@ TileAllocatorResult TileAllocator::allocate(Timestamp crntTimestamp,
 	}
 
 	// Return
-	tileViewport = {allocatedTile.m_viewport[0],
-		allocatedTile.m_viewport[1],
-		allocatedTile.m_viewport[2],
-		allocatedTile.m_viewport[3]};
+	tileViewport = {allocatedTile.m_viewport[0], allocatedTile.m_viewport[1], allocatedTile.m_viewport[2],
+					allocatedTile.m_viewport[3]};
 
 	return TileAllocatorResult::ALLOCATION_SUCCEEDED;
 }

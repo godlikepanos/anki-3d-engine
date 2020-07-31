@@ -60,12 +60,9 @@ public:
 		return m_actualSize;
 	}
 
-	void computeBarrierInfo(BufferUsageBit before,
-		BufferUsageBit after,
-		VkPipelineStageFlags& srcStages,
-		VkAccessFlags& srcAccesses,
-		VkPipelineStageFlags& dstStages,
-		VkAccessFlags& dstAccesses) const;
+	void computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages,
+							VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
+							VkAccessFlags& dstAccesses) const;
 
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;

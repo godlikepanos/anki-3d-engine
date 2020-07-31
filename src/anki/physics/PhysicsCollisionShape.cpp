@@ -35,8 +35,8 @@ PhysicsBox::~PhysicsBox()
 	m_box.destroy();
 }
 
-PhysicsTriangleSoup::PhysicsTriangleSoup(
-	PhysicsWorld* world, ConstWeakArray<Vec3> positions, ConstWeakArray<U32> indices, Bool convex)
+PhysicsTriangleSoup::PhysicsTriangleSoup(PhysicsWorld* world, ConstWeakArray<Vec3> positions,
+										 ConstWeakArray<U32> indices, Bool convex)
 	: PhysicsCollisionShape(world, ShapeType::TRI_MESH)
 {
 	if(!convex)
@@ -47,8 +47,8 @@ PhysicsTriangleSoup::PhysicsTriangleSoup(
 
 		for(U32 i = 0; i < indices.getSize(); i += 3)
 		{
-			m_mesh->addTriangle(
-				toBt(positions[indices[i]]), toBt(positions[indices[i + 1]]), toBt(positions[indices[i + 2]]));
+			m_mesh->addTriangle(toBt(positions[indices[i]]), toBt(positions[indices[i + 1]]),
+								toBt(positions[indices[i + 2]]));
 		}
 
 		// Create the dynamic shape

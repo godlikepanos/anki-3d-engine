@@ -51,7 +51,7 @@ void main()
 #endif
 
 	if(fixedGlobalInvocationId.x >= I32(u_unis.m_framebufferSize.x)
-		|| fixedGlobalInvocationId.y >= I32(u_unis.m_framebufferSize.y))
+	   || fixedGlobalInvocationId.y >= I32(u_unis.m_framebufferSize.y))
 	{
 		// Skip threads outside the writable image
 		return;
@@ -87,20 +87,9 @@ void main()
 	const U32 step = u_unis.m_firstStepPixels;
 	const F32 stepf = step;
 	const F32 minStepf = stepf / 4.0;
-	raymarchGroundTruth(viewPos,
-		reflVec,
-		uv,
-		depth,
-		u_unis.m_projMat,
-		u_unis.m_maxSteps,
-		u_depthRt,
-		u_trilinearClampSampler,
-		F32(lod),
-		u_unis.m_depthBufferSize,
-		step,
-		U32((stepf - minStepf) * noise + minStepf),
-		hitPoint,
-		hitAttenuation);
+	raymarchGroundTruth(viewPos, reflVec, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,
+						u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize, step,
+						U32((stepf - minStepf) * noise + minStepf), hitPoint, hitAttenuation);
 
 #if EXTRA_REJECTION
 	// Reject backfacing

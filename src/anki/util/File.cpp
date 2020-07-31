@@ -49,8 +49,8 @@ Error File::open(const CString& filename, FileOpenFlag flags)
 
 	// Only these flags are accepted
 	ANKI_ASSERT((flags
-					& (FileOpenFlag::READ | FileOpenFlag::WRITE | FileOpenFlag::APPEND | FileOpenFlag::BINARY
-						  | FileOpenFlag::ENDIAN_LITTLE | FileOpenFlag::ENDIAN_BIG))
+				 & (FileOpenFlag::READ | FileOpenFlag::WRITE | FileOpenFlag::APPEND | FileOpenFlag::BINARY
+					| FileOpenFlag::ENDIAN_LITTLE | FileOpenFlag::ENDIAN_BIG))
 				!= FileOpenFlag::NONE);
 
 	// Cannot be both
@@ -475,11 +475,8 @@ PtrSize File::tell()
 	return 0;
 }
 
-Error File::identifyFile(const CString& filename,
-	char* archiveFilename,
-	PtrSize archiveFilenameLength,
-	CString& filenameInArchive,
-	Type& type)
+Error File::identifyFile(const CString& filename, char* archiveFilename, PtrSize archiveFilenameLength,
+						 CString& filenameInArchive, Type& type)
 {
 	Error err = Error::NONE;
 

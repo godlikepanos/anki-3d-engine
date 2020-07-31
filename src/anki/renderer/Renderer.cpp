@@ -53,14 +53,8 @@ Renderer::~Renderer()
 	m_currentDebugRtName.destroy(getAllocator());
 }
 
-Error Renderer::init(ThreadHive* hive,
-	ResourceManager* resources,
-	GrManager* gl,
-	StagingGpuMemoryManager* stagingMem,
-	UiManager* ui,
-	HeapAllocator<U8> alloc,
-	const ConfigSet& config,
-	Timestamp* globTimestamp)
+Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl, StagingGpuMemoryManager* stagingMem,
+					 UiManager* ui, HeapAllocator<U8> alloc, const ConfigSet& config, Timestamp* globTimestamp)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_INIT);
 
@@ -226,22 +220,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 void Renderer::initJitteredMats()
 {
-	static const Array<Vec2, 16> SAMPLE_LOCS_16 = {{Vec2(-8.0, 0.0),
-		Vec2(-6.0, -4.0),
-		Vec2(-3.0, -2.0),
-		Vec2(-2.0, -6.0),
-		Vec2(1.0, -1.0),
-		Vec2(2.0, -5.0),
-		Vec2(6.0, -7.0),
-		Vec2(5.0, -3.0),
-		Vec2(4.0, 1.0),
-		Vec2(7.0, 4.0),
-		Vec2(3.0, 5.0),
-		Vec2(0.0, 7.0),
-		Vec2(-1.0, 3.0),
-		Vec2(-4.0, 6.0),
-		Vec2(-7.0, 8.0),
-		Vec2(-5.0, 2.0)}};
+	static const Array<Vec2, 16> SAMPLE_LOCS_16 = {
+		{Vec2(-8.0, 0.0), Vec2(-6.0, -4.0), Vec2(-3.0, -2.0), Vec2(-2.0, -6.0), Vec2(1.0, -1.0), Vec2(2.0, -5.0),
+		 Vec2(6.0, -7.0), Vec2(5.0, -3.0), Vec2(4.0, 1.0), Vec2(7.0, 4.0), Vec2(3.0, 5.0), Vec2(0.0, 7.0),
+		 Vec2(-1.0, 3.0), Vec2(-4.0, 6.0), Vec2(-7.0, 8.0), Vec2(-5.0, 2.0)}};
 
 	for(U i = 0; i < 16; ++i)
 	{
@@ -257,14 +239,8 @@ void Renderer::initJitteredMats()
 		m_jitteredMats16x[i].setTranslationPart(Vec4(subSample, 0.0, 1.0));
 	}
 
-	static const Array<Vec2, 8> SAMPLE_LOCS_8 = {{Vec2(-7.0, 1.0),
-		Vec2(-5.0, -5.0),
-		Vec2(-1.0, -3.0),
-		Vec2(3.0, -7.0),
-		Vec2(5.0, -1.0),
-		Vec2(7.0, 7.0),
-		Vec2(1.0, 3.0),
-		Vec2(-3.0, 5.0)}};
+	static const Array<Vec2, 8> SAMPLE_LOCS_8 = {{Vec2(-7.0, 1.0), Vec2(-5.0, -5.0), Vec2(-1.0, -3.0), Vec2(3.0, -7.0),
+												  Vec2(5.0, -1.0), Vec2(7.0, 7.0), Vec2(1.0, 3.0), Vec2(-3.0, 5.0)}};
 
 	for(U i = 0; i < 8; ++i)
 	{
@@ -298,7 +274,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
-		|| m_prevAsyncTasksCompleted != m_resources->getAsyncTaskCompletedCount())
+	   || m_prevAsyncTasksCompleted != m_resources->getAsyncTaskCompletedCount())
 	{
 		m_prevLoadRequestCount = m_resources->getLoadingRequestCount();
 		m_prevAsyncTasksCompleted = m_resources->getAsyncTaskCompletedCount();
@@ -375,15 +351,15 @@ void Renderer::finalize(const RenderingContext& ctx)
 		U32 width;
 		U32 height;
 		m_depth->getClientDepthMapInfo(depthValues, width, height);
-		ctx.m_renderQueue->m_fillCoverageBufferCallback(
-			ctx.m_renderQueue->m_fillCoverageBufferCallbackUserData, depthValues, width, height);
+		ctx.m_renderQueue->m_fillCoverageBufferCallback(ctx.m_renderQueue->m_fillCoverageBufferCallbackUserData,
+														depthValues, width, height);
 	}
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage, CString name)
 {
-	ANKI_ASSERT(
-		!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE) || !!(usage & TextureUsageBit::IMAGE_COMPUTE_WRITE));
+	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE)
+				|| !!(usage & TextureUsageBit::IMAGE_COMPUTE_WRITE));
 	TextureInitInfo init(name);
 
 	init.m_width = w;
@@ -498,16 +474,16 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					}
 					FramebufferPtr fb = m_gr->newFramebuffer(fbInit);
 
-					cmdb->setTextureSurfaceBarrier(
-						tex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
+					cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE,
+												   TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
 
 					cmdb->beginRenderPass(fb, colUsage, dsUsage);
 					cmdb->endRenderPass();
 
 					if(!!inf.m_initialUsage)
 					{
-						cmdb->setTextureSurfaceBarrier(
-							tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, inf.m_initialUsage, surf);
+						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+													   inf.m_initialUsage, surf);
 					}
 				}
 				else
@@ -526,8 +502,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 					TextureViewPtr view = getGrManager().newTextureView(TextureViewInitInfo(tex, surf));
 					cmdb->bindImage(0, 0, view);
 
-					cmdb->setTextureSurfaceBarrier(
-						tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, surf);
+					cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE,
+												   surf);
 
 					UVec3 wgSize;
 					wgSize.x() = (8 - 1 + (tex->getWidth() >> mip)) / 8;
@@ -538,8 +514,8 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 
 					if(!!inf.m_initialUsage)
 					{
-						cmdb->setTextureSurfaceBarrier(
-							tex, TextureUsageBit::IMAGE_COMPUTE_WRITE, inf.m_initialUsage, surf);
+						cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::IMAGE_COMPUTE_WRITE, inf.m_initialUsage,
+													   surf);
 					}
 				}
 			}

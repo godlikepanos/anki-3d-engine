@@ -68,15 +68,9 @@ void main()
 
 	if(MOTION_BLUR_SAMPLES > 0u)
 	{
-		out_color = motionBlur(u_velocityRt,
-			u_nearestAnyClampSampler,
-			u_lightShadingRt,
-			u_linearAnyClampSampler,
-			u_depthRt,
-			u_nearestAnyClampSampler,
-			uv,
-			u_prevViewProjMatMulInvViewProjMat,
-			MOTION_BLUR_SAMPLES);
+		out_color =
+			motionBlur(u_velocityRt, u_nearestAnyClampSampler, u_lightShadingRt, u_linearAnyClampSampler, u_depthRt,
+					   u_nearestAnyClampSampler, uv, u_prevViewProjMatMulInvViewProjMat, MOTION_BLUR_SAMPLES);
 	}
 	else
 	{

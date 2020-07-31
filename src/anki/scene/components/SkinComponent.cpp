@@ -21,8 +21,8 @@ SkinComponent::SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton)
 
 	m_boneTrfs[0].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
 	m_boneTrfs[1].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
-	m_animationTrfs.create(
-		m_node->getAllocator(), m_skeleton->getBones().getSize(), {Vec3(0.0f), Quat::getIdentity(), 1.0f});
+	m_animationTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize(),
+						   {Vec3(0.0f), Quat::getIdentity(), 1.0f});
 }
 
 SkinComponent::~SkinComponent()
@@ -175,8 +175,8 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 	return Error::NONE;
 }
 
-void SkinComponent::visitBones(
-	const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated, Vec4& minExtend, Vec4& maxExtend)
+void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated,
+							   Vec4& minExtend, Vec4& maxExtend)
 {
 	Mat4 outMat;
 

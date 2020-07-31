@@ -137,8 +137,8 @@ ANKI_TEST(Util, DynamicArray)
 		arr = DynamicArrayAuto<DynamicArrayFoo>(alloc);
 		vec = std::vector<DynamicArrayFoo>();
 		ANKI_TEST_EXPECT_GT(destructorCount, 0);
-		ANKI_TEST_EXPECT_EQ(
-			constructor0Count + constructor1Count + constructor2Count + constructor3Count, destructorCount);
+		ANKI_TEST_EXPECT_EQ(constructor0Count + constructor1Count + constructor2Count + constructor3Count,
+							destructorCount);
 	}
 }
 
@@ -251,7 +251,7 @@ ANKI_TEST(Util, DynamicArrayEmplaceAt)
 		arr.destroy();
 		vec.resize(0);
 
-		ANKI_TEST_EXPECT_EQ(
-			constructor0Count + constructor1Count + constructor2Count + constructor3Count, destructorCount);
+		ANKI_TEST_EXPECT_EQ(constructor0Count + constructor1Count + constructor2Count + constructor3Count,
+							destructorCount);
 	}
 }

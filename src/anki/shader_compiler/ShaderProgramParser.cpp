@@ -141,11 +141,10 @@ static const char* SHADER_HEADER = R"(#version 450 core
 
 static const U64 SHADER_HEADER_HASH = computeHash(SHADER_HEADER, sizeof(SHADER_HEADER));
 
-ShaderProgramParser::ShaderProgramParser(CString fname,
-	ShaderProgramFilesystemInterface* fsystem,
-	GenericMemoryPoolAllocator<U8> alloc,
-	const GpuDeviceCapabilities& gpuCapabilities,
-	const BindlessLimits& bindlessLimits)
+ShaderProgramParser::ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem,
+										 GenericMemoryPoolAllocator<U8> alloc,
+										 const GpuDeviceCapabilities& gpuCapabilities,
+										 const BindlessLimits& bindlessLimits)
 	: m_alloc(alloc)
 	, m_fname(alloc, fname)
 	, m_fsystem(fsystem)
@@ -272,8 +271,8 @@ Error ShaderProgramParser::parsePragmaEnd(const StringAuto* begin, const StringA
 	return Error::NONE;
 }
 
-Error ShaderProgramParser::parsePragmaMutator(
-	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
+Error ShaderProgramParser::parsePragmaMutator(const StringAuto* begin, const StringAuto* end, CString line,
+											  CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -352,8 +351,8 @@ Error ShaderProgramParser::parsePragmaMutator(
 	return Error::NONE;
 }
 
-Error ShaderProgramParser::parsePragmaRewriteMutation(
-	const StringAuto* begin, const StringAuto* end, CString line, CString fname)
+Error ShaderProgramParser::parsePragmaRewriteMutation(const StringAuto* begin, const StringAuto* end, CString line,
+													  CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -451,11 +450,10 @@ Error ShaderProgramParser::parsePragmaRewriteMutation(
 	} while(begin < end && !tokenIsComment(*begin));
 
 	// Sort for some later cross checking
-	std::sort(rewrite.m_records.getBegin(),
-		rewrite.m_records.getEnd(),
-		[](const MutationRewrite::Record& a, const MutationRewrite::Record& b) {
-			return a.m_mutatorIndex < b.m_mutatorIndex;
-		});
+	std::sort(rewrite.m_records.getBegin(), rewrite.m_records.getEnd(),
+			  [](const MutationRewrite::Record& a, const MutationRewrite::Record& b) {
+				  return a.m_mutatorIndex < b.m_mutatorIndex;
+			  });
 
 	// More cross checking
 	for(U32 i = 1; i < rewrite.m_records.getSize(); ++i)
@@ -494,8 +492,8 @@ Error ShaderProgramParser::parsePragmaRewriteMutation(
 	return Error::NONE;
 }
 
-Error ShaderProgramParser::parseInclude(
-	const StringAuto* begin, const StringAuto* end, CString line, CString fname, U32 depth)
+Error ShaderProgramParser::parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname,
+										U32 depth)
 {
 	// Gather the path
 	StringAuto path(m_alloc);
@@ -578,8 +576,7 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			const U64 hash = fname.computeHash();
 			m_codeLines.pushBackSprintf("#ifndef _ANKI_INCL_GUARD_%llu\n"
 										"#define _ANKI_INCL_GUARD_%llu",
-				hash,
-				hash);
+										hash, hash);
 		}
 		else if(*token == "anki")
 		{
@@ -726,19 +723,15 @@ Error ShaderProgramParser::parse()
 	return Error::NONE;
 }
 
-void ShaderProgramParser::generateAnkiShaderHeader(
-	const GpuDeviceCapabilities& caps, const BindlessLimits& limits, StringAuto& header)
+void ShaderProgramParser::generateAnkiShaderHeader(const GpuDeviceCapabilities& caps, const BindlessLimits& limits,
+												   StringAuto& header)
 {
-	header.sprintf(SHADER_HEADER,
-		caps.m_minorApiVersion,
-		caps.m_majorApiVersion,
-		GPU_VENDOR_STR[caps.m_gpuVendor].cstr(),
-		limits.m_bindlessTextureCount,
-		limits.m_bindlessImageCount);
+	header.sprintf(SHADER_HEADER, caps.m_minorApiVersion, caps.m_majorApiVersion,
+				   GPU_VENDOR_STR[caps.m_gpuVendor].cstr(), limits.m_bindlessTextureCount, limits.m_bindlessImageCount);
 }
 
-Error ShaderProgramParser::generateVariant(
-	ConstWeakArray<MutatorValue> mutation, ShaderProgramParserVariant& variant) const
+Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
+										   ShaderProgramParserVariant& variant) const
 {
 	// Sanity checks
 	ANKI_ASSERT(m_codeSource.getLength() > 0);

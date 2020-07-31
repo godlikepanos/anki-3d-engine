@@ -86,14 +86,10 @@ inline void CommandBufferImpl::setStencilReference(FaceSelectionBit face, U32 re
 	}
 }
 
-inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
-	VkAccessFlags srcAccess,
-	VkImageLayout prevLayout,
-	VkPipelineStageFlags dstStage,
-	VkAccessFlags dstAccess,
-	VkImageLayout newLayout,
-	VkImage img,
-	const VkImageSubresourceRange& range)
+inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess,
+											   VkImageLayout prevLayout, VkPipelineStageFlags dstStage,
+											   VkAccessFlags dstAccess, VkImageLayout newLayout, VkImage img,
+											   const VkImageSubresourceRange& range)
 {
 	ANKI_ASSERT(img);
 	commandCommon();
@@ -127,8 +123,8 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 #endif
 }
 
-inline void CommandBufferImpl::setTextureBarrierRange(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range)
+inline void CommandBufferImpl::setTextureBarrierRange(TexturePtr tex, TextureUsageBit prevUsage,
+													  TextureUsageBit nextUsage, const VkImageSubresourceRange& range)
 {
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	ANKI_ASSERT(impl.usageValid(prevUsage));
@@ -149,8 +145,8 @@ inline void CommandBufferImpl::setTextureBarrierRange(
 	m_microCmdb->pushObjectRef(tex);
 }
 
-inline void CommandBufferImpl::setTextureBarrier(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource_)
+inline void CommandBufferImpl::setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+												 const TextureSubresourceInfo& subresource_)
 {
 	TextureSubresourceInfo subresource = subresource_;
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
@@ -172,8 +168,8 @@ inline void CommandBufferImpl::setTextureBarrier(
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
-inline void CommandBufferImpl::setTextureSurfaceBarrier(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
+inline void CommandBufferImpl::setTextureSurfaceBarrier(TexturePtr tex, TextureUsageBit prevUsage,
+														TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {
 	if(ANKI_UNLIKELY(surf.m_level > 0 && nextUsage == TextureUsageBit::GENERATE_MIPMAPS))
 	{
@@ -188,8 +184,8 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
-inline void CommandBufferImpl::setTextureVolumeBarrier(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
+inline void CommandBufferImpl::setTextureVolumeBarrier(TexturePtr tex, TextureUsageBit prevUsage,
+													   TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
 {
 	if(vol.m_level > 0)
 	{
@@ -204,13 +200,9 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
-inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
-	VkAccessFlags srcAccess,
-	VkPipelineStageFlags dstStage,
-	VkAccessFlags dstAccess,
-	PtrSize offset,
-	PtrSize size,
-	VkBuffer buff)
+inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess,
+												VkPipelineStageFlags dstStage, VkAccessFlags dstAccess, PtrSize offset,
+												PtrSize size, VkBuffer buff)
 {
 	ANKI_ASSERT(buff);
 	commandCommon();
@@ -243,8 +235,8 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 #endif
 }
 
-inline void CommandBufferImpl::setBufferBarrier(
-	BufferPtr& buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
+inline void CommandBufferImpl::setBufferBarrier(BufferPtr& buff, BufferUsageBit before, BufferUsageBit after,
+												PtrSize offset, PtrSize size)
 {
 	const BufferImpl& impl = static_cast<const BufferImpl&>(*buff);
 
@@ -259,8 +251,9 @@ inline void CommandBufferImpl::setBufferBarrier(
 	m_microCmdb->pushObjectRef(buff);
 }
 
-inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(
-	AccelerationStructurePtr& as, AccelerationStructureUsageBit prevUsage, AccelerationStructureUsageBit nextUsage)
+inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(AccelerationStructurePtr& as,
+																	   AccelerationStructureUsageBit prevUsage,
+																	   AccelerationStructureUsageBit nextUsage)
 {
 	commandCommon();
 
@@ -292,24 +285,24 @@ inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(
 #endif
 }
 
-inline void CommandBufferImpl::drawArrays(
-	PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+inline void CommandBufferImpl::drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first,
+										  U32 baseInstance)
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	ANKI_CMD(vkCmdDraw(m_handle, count, instanceCount, first, baseInstance), ANY_OTHER_COMMAND);
 }
 
-inline void CommandBufferImpl::drawElements(
-	PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+inline void CommandBufferImpl::drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex,
+											U32 baseVertex, U32 baseInstance)
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	ANKI_CMD(vkCmdDrawIndexed(m_handle, count, instanceCount, firstIndex, baseVertex, baseInstance), ANY_OTHER_COMMAND);
 }
 
-inline void CommandBufferImpl::drawArraysIndirect(
-	PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr& buff)
+inline void CommandBufferImpl::drawArraysIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
+												  BufferPtr& buff)
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
@@ -319,11 +312,11 @@ inline void CommandBufferImpl::drawArraysIndirect(
 	ANKI_ASSERT((offset + sizeof(DrawArraysIndirectInfo) * drawCount) <= impl.getSize());
 
 	ANKI_CMD(vkCmdDrawIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawArraysIndirectInfo)),
-		ANY_OTHER_COMMAND);
+			 ANY_OTHER_COMMAND);
 }
 
-inline void CommandBufferImpl::drawElementsIndirect(
-	PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr& buff)
+inline void CommandBufferImpl::drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset,
+													BufferPtr& buff)
 {
 	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
@@ -333,7 +326,7 @@ inline void CommandBufferImpl::drawElementsIndirect(
 	ANKI_ASSERT((offset + sizeof(DrawElementsIndirectInfo) * drawCount) <= impl.getSize());
 
 	ANKI_CMD(vkCmdDrawIndexedIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawElementsIndirectInfo)),
-		ANY_OTHER_COMMAND);
+			 ANY_OTHER_COMMAND);
 }
 
 inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
@@ -371,15 +364,10 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 
 				VkDescriptorSet dsHandle = dset.getHandle();
 
-				ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
-							 VK_PIPELINE_BIND_POINT_COMPUTE,
-							 m_computeProg->getPipelineLayout().getHandle(),
-							 i,
-							 1,
-							 &dsHandle,
-							 dynamicOffsetCount,
-							 &dynamicOffsets[0]),
-					ANY_OTHER_COMMAND);
+				ANKI_CMD(vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_COMPUTE,
+												 m_computeProg->getPipelineLayout().getHandle(), i, 1, &dsHandle,
+												 dynamicOffsetCount, &dynamicOffsets[0]),
+						 ANY_OTHER_COMMAND);
 			}
 		}
 	}
@@ -483,9 +471,9 @@ inline void CommandBufferImpl::clearTextureView(TextureViewPtr texView, const Cl
 	if(!view.getSubresource().m_depthStencilAspect)
 	{
 		VkImageSubresourceRange vkRange = view.getVkImageSubresourceRange();
-		ANKI_CMD(vkCmdClearColorImage(
-					 m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &vkRange),
-			ANY_OTHER_COMMAND);
+		ANKI_CMD(vkCmdClearColorImage(m_handle, tex.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1,
+									  &vkRange),
+				 ANY_OTHER_COMMAND);
 	}
 	else
 	{
@@ -521,8 +509,8 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 
 	m_secondLevelAtoms[m_secondLevelAtomCount++] = static_cast<const CommandBufferImpl&>(*cmdb).m_handle;
 #else
-	ANKI_CMD(
-		vkCmdExecuteCommands(m_handle, 1, &static_cast<const CommandBufferImpl&>(*cmdb).m_handle), ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdExecuteCommands(m_handle, 1, &static_cast<const CommandBufferImpl&>(*cmdb).m_handle),
+			 ANY_OTHER_COMMAND);
 #endif
 
 	++m_rpCommandCount;
@@ -584,15 +572,10 @@ inline void CommandBufferImpl::drawcallCommon()
 
 				VkDescriptorSet dsHandle = dset.getHandle();
 
-				ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
-							 VK_PIPELINE_BIND_POINT_GRAPHICS,
-							 m_graphicsProg->getPipelineLayout().getHandle(),
-							 i,
-							 1,
-							 &dsHandle,
-							 dynamicOffsetCount,
-							 &dynamicOffsets[0]),
-					ANY_OTHER_COMMAND);
+				ANKI_CMD(vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS,
+												 m_graphicsProg->getPipelineLayout().getHandle(), i, 1, &dsHandle,
+												 dynamicOffsetCount, &dynamicOffsets[0]),
+						 ANY_OTHER_COMMAND);
 			}
 		}
 	}
@@ -640,7 +623,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	// Some checks
 #if ANKI_ENABLE_ASSERTS
 	if(m_state.getPrimitiveTopology() == PrimitiveTopology::LINES
-		|| m_state.getPrimitiveTopology() == PrimitiveTopology::LINE_STRIP)
+	   || m_state.getPrimitiveTopology() == PrimitiveTopology::LINE_STRIP)
 	{
 		ANKI_ASSERT(m_lineWidthSet == true);
 	}
@@ -721,8 +704,8 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 	m_microCmdb->pushObjectRef(buff);
 }
 
-inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
-	OcclusionQueryPtr query, PtrSize offset, BufferPtr buff)
+inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset,
+																 BufferPtr buff)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
@@ -745,15 +728,9 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 
 	m_writeQueryAtoms.emplaceBack(m_alloc, atom);
 #else
-	ANKI_CMD(vkCmdCopyQueryPoolResults(m_handle,
-				 q.m_handle.m_pool,
-				 q.m_handle.m_queryIndex,
-				 1,
-				 impl.getHandle(),
-				 offset,
-				 sizeof(U32),
-				 VK_QUERY_RESULT_PARTIAL_BIT),
-		ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdCopyQueryPoolResults(m_handle, q.m_handle.m_pool, q.m_handle.m_queryIndex, 1, impl.getHandle(),
+									   offset, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT),
+			 ANY_OTHER_COMMAND);
 #endif
 
 	m_microCmdb->pushObjectRef(query);
@@ -779,7 +756,7 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 
 		// Bind the pipeline now
 		ANKI_CMD(vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_COMPUTE, impl.getComputePipelineHandle()),
-			ANY_OTHER_COMMAND);
+				 ANY_OTHER_COMMAND);
 	}
 
 	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
@@ -803,8 +780,8 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 #endif
 }
 
-inline void CommandBufferImpl::copyBufferToBuffer(
-	BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range)
+inline void CommandBufferImpl::copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset,
+												  PtrSize range)
 {
 	ANKI_ASSERT(static_cast<const BufferImpl&>(*src).usageValid(BufferUsageBit::TRANSFER_SOURCE));
 	ANKI_ASSERT(static_cast<const BufferImpl&>(*dst).usageValid(BufferUsageBit::TRANSFER_DESTINATION));
@@ -818,12 +795,9 @@ inline void CommandBufferImpl::copyBufferToBuffer(
 	region.dstOffset = dstOffset;
 	region.size = range;
 
-	ANKI_CMD(vkCmdCopyBuffer(m_handle,
-				 static_cast<const BufferImpl&>(*src).getHandle(),
-				 static_cast<const BufferImpl&>(*dst).getHandle(),
-				 1,
-				 &region),
-		ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdCopyBuffer(m_handle, static_cast<const BufferImpl&>(*src).getHandle(),
+							 static_cast<const BufferImpl&>(*dst).getHandle(), 1, &region),
+			 ANY_OTHER_COMMAND);
 
 	m_microCmdb->pushObjectRef(src);
 	m_microCmdb->pushObjectRef(dst);

@@ -40,10 +40,8 @@ public:
 	{
 	}
 
-	TextureViewInitInfo(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE,
-		CString name = {})
+	TextureViewInitInfo(TexturePtr tex, const TextureSurfaceInfo& surf,
+						DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_texture(tex)
 	{

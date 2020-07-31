@@ -25,13 +25,8 @@ ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgra
 		ShaderPtr m_frag;
 		ShaderPtr m_comp;
 
-		CreateCommand(ShaderProgram* prog,
-			ShaderPtr vert,
-			ShaderPtr tessc,
-			ShaderPtr tesse,
-			ShaderPtr geom,
-			ShaderPtr frag,
-			ShaderPtr comp)
+		CreateCommand(ShaderProgram* prog, ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom,
+					  ShaderPtr frag, ShaderPtr comp)
 			: m_prog(prog)
 			, m_vert(vert)
 			, m_tessc(tessc)
@@ -61,13 +56,10 @@ ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgra
 	impl->getRefcount().fetchAdd(1); // Hold a reference in case the command finishes and deletes quickly
 
 	CommandBufferPtr cmdb = manager->newCommandBuffer(CommandBufferInitInfo());
-	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CreateCommand>(impl,
-		init.m_shaders[ShaderType::VERTEX],
-		init.m_shaders[ShaderType::TESSELLATION_CONTROL],
-		init.m_shaders[ShaderType::TESSELLATION_EVALUATION],
-		init.m_shaders[ShaderType::GEOMETRY],
-		init.m_shaders[ShaderType::FRAGMENT],
-		init.m_shaders[ShaderType::COMPUTE]);
+	static_cast<CommandBufferImpl&>(*cmdb).pushBackNewCommand<CreateCommand>(
+		impl, init.m_shaders[ShaderType::VERTEX], init.m_shaders[ShaderType::TESSELLATION_CONTROL],
+		init.m_shaders[ShaderType::TESSELLATION_EVALUATION], init.m_shaders[ShaderType::GEOMETRY],
+		init.m_shaders[ShaderType::FRAGMENT], init.m_shaders[ShaderType::COMPUTE]);
 	static_cast<CommandBufferImpl&>(*cmdb).flush();
 
 	return impl;

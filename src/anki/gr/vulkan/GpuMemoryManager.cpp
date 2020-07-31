@@ -19,15 +19,16 @@ public:
 };
 
 static const Array<ClassInf, CLASS_COUNT> CLASSES{{{256_B, 16_KB},
-	{4_KB, 256_KB},
-	{128_KB, 8_MB},
-	{1_MB, 64_MB},
-	{16_MB, 128_MB},
-	{64_MB, 256_MB},
-	{128_MB, 256_MB}}};
+												   {4_KB, 256_KB},
+												   {128_KB, 8_MB},
+												   {1_MB, 64_MB},
+												   {16_MB, 128_MB},
+												   {64_MB, 256_MB},
+												   {128_MB, 256_MB}}};
 
-class GpuMemoryManager::Memory final : public ClassGpuAllocatorMemory,
-									   public IntrusiveListEnabled<GpuMemoryManager::Memory>
+class GpuMemoryManager::Memory final :
+	public ClassGpuAllocatorMemory,
+	public IntrusiveListEnabled<GpuMemoryManager::Memory>
 {
 public:
 	VkDeviceMemory m_handle = VK_NULL_HANDLE;
@@ -200,10 +201,8 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	ANKI_VK_LOGI("Initializing memory manager");
 	for(const ClassInf& c : CLASSES)
 	{
-		ANKI_VK_LOGI("\tGPU mem class. Chunk size: %lu, slotSize: %lu, allocsPerChunk %lu",
-			c.m_chunkSize,
-			c.m_slotSize,
-			c.m_chunkSize / c.m_slotSize);
+		ANKI_VK_LOGI("\tGPU mem class. Chunk size: %lu, slotSize: %lu, allocsPerChunk %lu", c.m_chunkSize, c.m_slotSize,
+					 c.m_chunkSize / c.m_slotSize);
 	}
 
 	vkGetPhysicalDeviceMemoryProperties(pdev, &m_memoryProperties);
@@ -229,8 +228,8 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 		for(U32 type = 0; type < 3; ++type)
 		{
 			const Bool exposesBufferGpuAddress = (type == 2);
-			ANKI_ASSERT(
-				m_ifaces[memTypeIdx][exposesBufferGpuAddress].m_exposesBufferGpuAddress == exposesBufferGpuAddress);
+			ANKI_ASSERT(m_ifaces[memTypeIdx][exposesBufferGpuAddress].m_exposesBufferGpuAddress
+						== exposesBufferGpuAddress);
 			m_callocs[memTypeIdx][type].init(m_alloc, &m_ifaces[memTypeIdx][exposesBufferGpuAddress]);
 
 			const U32 heapIdx = m_memoryProperties.memoryTypes[memTypeIdx].heapIndex;
@@ -240,12 +239,8 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	}
 }
 
-void GpuMemoryManager::allocateMemory(U32 memTypeIdx,
-	PtrSize size,
-	U32 alignment,
-	Bool linearResource,
-	Bool exposesBufferGpuAddress,
-	GpuMemoryHandle& handle)
+void GpuMemoryManager::allocateMemory(U32 memTypeIdx, PtrSize size, U32 alignment, Bool linearResource,
+									  Bool exposesBufferGpuAddress, GpuMemoryHandle& handle)
 {
 	U32 type;
 	if(!linearResource)
@@ -307,8 +302,8 @@ void* GpuMemoryManager::getMappedAddress(GpuMemoryHandle& handle)
 	return static_cast<void*>(out + handle.m_offset);
 }
 
-U32 GpuMemoryManager::findMemoryType(
-	U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const
+U32 GpuMemoryManager::findMemoryType(U32 resourceMemTypeBits, VkMemoryPropertyFlags preferFlags,
+									 VkMemoryPropertyFlags avoidFlags) const
 {
 	U32 prefered = MAX_U32;
 

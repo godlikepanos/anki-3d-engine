@@ -255,8 +255,8 @@ GrManager* createGrManager(const ConfigSet& cfg, NativeWindow* win)
 	return gr;
 }
 
-ResourceManager* createResourceManager(
-	const ConfigSet& cfg, GrManager* gr, PhysicsWorld*& physics, ResourceFilesystem*& resourceFs)
+ResourceManager* createResourceManager(const ConfigSet& cfg, GrManager* gr, PhysicsWorld*& physics,
+									   ResourceFilesystem*& resourceFs)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 

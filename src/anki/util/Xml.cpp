@@ -147,8 +147,8 @@ Error XmlDocument::parse(CString xmlText, GenericMemoryPoolAllocator<U8> alloc)
 
 	if(m_doc.Parse(&xmlText[0]))
 	{
-		ANKI_UTIL_LOGE(
-			"Cannot parse file. Reason: %s", ((m_doc.GetErrorStr1() == nullptr) ? "unknown" : m_doc.GetErrorStr1()));
+		ANKI_UTIL_LOGE("Cannot parse file. Reason: %s",
+					   ((m_doc.GetErrorStr1() == nullptr) ? "unknown" : m_doc.GetErrorStr1()));
 
 		return Error::USER_DATA;
 	}

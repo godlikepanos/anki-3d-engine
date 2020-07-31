@@ -40,8 +40,8 @@ public:
 
 	~ShaderProgramImpl();
 
-	ANKI_USE_RESULT Error initGraphics(
-		ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom, ShaderPtr frag);
+	ANKI_USE_RESULT Error initGraphics(ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom,
+									   ShaderPtr frag);
 	ANKI_USE_RESULT Error initCompute(ShaderPtr comp);
 
 	// Do that only when is needed to avoid serializing the thread the driver is using for compilation.

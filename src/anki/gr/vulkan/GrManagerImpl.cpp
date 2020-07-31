@@ -133,13 +133,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	// Set m_r8g8b8ImagesSupported
 	{
 		VkImageFormatProperties props = {};
-		VkResult res = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice,
-			VK_FORMAT_R8G8B8_UNORM,
-			VK_IMAGE_TYPE_2D,
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-			0,
-			&props);
+		VkResult res = vkGetPhysicalDeviceImageFormatProperties(
+			m_physicalDevice, VK_FORMAT_R8G8B8_UNORM, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, &props);
 
 		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 		{
@@ -157,13 +153,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	// Set m_s8ImagesSupported
 	{
 		VkImageFormatProperties props = {};
-		VkResult res = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice,
-			VK_FORMAT_S8_UINT,
-			VK_IMAGE_TYPE_2D,
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			0,
-			&props);
+		VkResult res = vkGetPhysicalDeviceImageFormatProperties(
+			m_physicalDevice, VK_FORMAT_S8_UINT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0, &props);
 
 		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 		{
@@ -181,13 +173,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	// Set m_d24S8ImagesSupported
 	{
 		VkImageFormatProperties props = {};
-		VkResult res = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice,
-			VK_FORMAT_D24_UNORM_S8_UINT,
-			VK_IMAGE_TYPE_2D,
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			0,
-			&props);
+		VkResult res = vkGetPhysicalDeviceImageFormatProperties(
+			m_physicalDevice, VK_FORMAT_D24_UNORM_S8_UINT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0, &props);
 
 		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 		{
@@ -413,8 +401,8 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::UNKNOWN;
 	}
-	ANKI_VK_LOGI(
-		"GPU is %s. Vendor identified as %s", m_devProps.deviceName, &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
+	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s", m_devProps.deviceName,
+				 &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 	m_devFeatures.robustBufferAccess =
@@ -551,14 +539,14 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
 			if(!m_descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing
-				|| !m_descriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing)
+			   || !m_descriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing)
 			{
 				ANKI_VK_LOGE("Non uniform indexing is not supported by the device");
 				return Error::FUNCTION_FAILED;
 			}
 
 			if(!m_descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind
-				|| !m_descriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind)
+			   || !m_descriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind)
 			{
 				ANKI_VK_LOGE("Update descriptors after bind is not supported by the device");
 				return Error::FUNCTION_FAILED;
@@ -684,10 +672,9 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 	}
 	for(U32 i = 0; i < m_memoryProperties.memoryTypeCount; ++i)
 	{
-		ANKI_VK_LOGI("\tMem type %u points to heap %u, flags %" ANKI_PRIb32,
-			i,
-			m_memoryProperties.memoryTypes[i].heapIndex,
-			ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
+		ANKI_VK_LOGI("\tMem type %u points to heap %u, flags %" ANKI_PRIb32, i,
+					 m_memoryProperties.memoryTypes[i].heapIndex,
+					 ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
 	}
 
 	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator());
@@ -696,8 +683,8 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 }
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
-void* GrManagerImpl::allocateCallback(
-	void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
+void* GrManagerImpl::allocateCallback(void* userData, size_t size, size_t alignment,
+									  VkSystemAllocationScope allocationScope)
 {
 	if(ANKI_UNLIKELY(size == 0))
 	{
@@ -720,8 +707,8 @@ void* GrManagerImpl::allocateCallback(
 	return static_cast<AllocHeader*>(header);
 }
 
-void* GrManagerImpl::reallocateCallback(
-	void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
+void* GrManagerImpl::reallocateCallback(void* userData, void* original, size_t size, size_t alignment,
+										VkSystemAllocationScope allocationScope)
 {
 	if(original && size == 0)
 	{
@@ -773,12 +760,8 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 	// Get new image
 	uint32_t imageIdx;
 
-	VkResult res = vkAcquireNextImageKHR(m_device,
-		m_crntSwapchain->m_swapchain,
-		UINT64_MAX,
-		frame.m_acquireSemaphore->getHandle(),
-		fence->getHandle(),
-		&imageIdx);
+	VkResult res = vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX,
+										 frame.m_acquireSemaphore->getHandle(), fence->getHandle(), &imageIdx);
 
 	if(res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -787,12 +770,8 @@ TexturePtr GrManagerImpl::acquireNextPresentableTexture()
 		m_crntSwapchain = m_swapchainFactory.newInstance();
 
 		// Can't fail a second time
-		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device,
-			m_crntSwapchain->m_swapchain,
-			UINT64_MAX,
-			frame.m_acquireSemaphore->getHandle(),
-			fence->getHandle(),
-			&imageIdx));
+		ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device, m_crntSwapchain->m_swapchain, UINT64_MAX,
+											 frame.m_acquireSemaphore->getHandle(), fence->getHandle(), &imageIdx));
 	}
 	else
 	{
@@ -975,14 +954,9 @@ StringAuto GrManagerImpl::tryGetVulkanHandleName(U64 handle) const
 	return out;
 }
 
-VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
-	VkDebugReportObjectTypeEXT objectType,
-	uint64_t object,
-	size_t location,
-	int32_t messageCode,
-	const char* pLayerPrefix,
-	const char* pMessage,
-	void* pUserData)
+VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType,
+											   uint64_t object, size_t location, int32_t messageCode,
+											   const char* pLayerPrefix, const char* pMessage, void* pUserData)
 {
 	// Get the object name
 	GrManagerImpl* self = static_cast<GrManagerImpl*>(pUserData);
@@ -1013,8 +987,8 @@ void GrManagerImpl::printPipelineShaderInfo(VkPipeline ppline, CString name, Sha
 	}
 }
 
-Error GrManagerImpl::printPipelineShaderInfoInternal(
-	VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const
+Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString name, ShaderTypeBit stages,
+													 U64 hash) const
 {
 	if(m_pfnGetShaderInfoAMD)
 	{
@@ -1052,18 +1026,15 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(
 			}
 
 			size_t size = sizeof(stats);
-			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(
-				m_device, ppline, convertShaderTypeBit(stage), VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats));
+			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(m_device, ppline, convertShaderTypeBit(stage),
+												VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats));
 
 			str.append(StringAuto(getAllocator())
-						   .sprintf("Stage %u: VGRPS %02u, SGRPS %02u ",
-							   U32(type),
-							   stats.resourceUsage.numUsedVgprs,
-							   stats.resourceUsage.numUsedSgprs));
+						   .sprintf("Stage %u: VGRPS %02u, SGRPS %02u ", U32(type), stats.resourceUsage.numUsedVgprs,
+									stats.resourceUsage.numUsedSgprs));
 
 			ANKI_CHECK(m_shaderStatsFile.writeText((type != ShaderType::LAST) ? "%u,%u," : "%u,%u\n",
-				stats.resourceUsage.numUsedVgprs,
-				stats.resourceUsage.numUsedSgprs));
+												   stats.resourceUsage.numUsedVgprs, stats.resourceUsage.numUsedSgprs));
 		}
 
 		ANKI_VK_LOGI("Pipeline \"%s\" (0x%016" PRIx64 ") stats: %s", name.cstr(), hash, str.cstr());

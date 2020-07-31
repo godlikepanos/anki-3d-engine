@@ -89,4 +89,4 @@ private:
 };
 /// @}
 
-} // end namespace
+} // namespace anki

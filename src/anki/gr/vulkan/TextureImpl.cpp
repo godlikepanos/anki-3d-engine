@@ -141,8 +141,8 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 		range.layerCount = m_layerCount;
 		range.levelCount = m_mipCount;
 
-		static_cast<CommandBufferImpl&>(*cmdb).setTextureBarrierRange(
-			TexturePtr(this), TextureUsageBit::NONE, init.m_initialUsage, range);
+		static_cast<CommandBufferImpl&>(*cmdb).setTextureBarrierRange(TexturePtr(this), TextureUsageBit::NONE,
+																	  init.m_initialUsage, range);
 
 		static_cast<CommandBufferImpl&>(*cmdb).endRecording();
 		getGrManagerImpl().flushCommandBuffer(cmdb, nullptr);
@@ -197,13 +197,9 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 {
 	VkImageFormatProperties props = {};
 
-	VkResult res = vkGetPhysicalDeviceImageFormatProperties(getGrManagerImpl().getPhysicalDevice(),
-		m_vkFormat,
-		convertTextureType(init.m_type),
-		VK_IMAGE_TILING_OPTIMAL,
-		convertTextureUsage(init.m_usage, init.m_format),
-		calcCreateFlags(init),
-		&props);
+	VkResult res = vkGetPhysicalDeviceImageFormatProperties(
+		getGrManagerImpl().getPhysicalDevice(), m_vkFormat, convertTextureType(init.m_type), VK_IMAGE_TILING_OPTIMAL,
+		convertTextureUsage(init.m_usage, init.m_format), calcCreateFlags(init), &props);
 
 	if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 	{
@@ -237,8 +233,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		}
 		else if(init.m_format == Format::S8_UINT)
 		{
-			ANKI_ASSERT(
-				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ALL)) && "Can't do that ATM");
+			ANKI_ASSERT(!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ALL))
+						&& "Can't do that ATM");
 			init.m_format = Format::D24_UNORM_S8_UINT;
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
@@ -246,8 +242,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		}
 		else if(init.m_format == Format::D24_UNORM_S8_UINT)
 		{
-			ANKI_ASSERT(
-				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ALL)) && "Can't do that ATM");
+			ANKI_ASSERT(!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ALL))
+						&& "Can't do that ATM");
 			init.m_format = Format::D32_SFLOAT_S8_UINT;
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
@@ -336,14 +332,14 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	vkGetImageMemoryRequirements2(getDevice(), &imageRequirementsInfo, &requirements);
 
 	U32 memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(requirements.memoryRequirements.memoryTypeBits,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+																		 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+																		 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
 	if(memIdx == MAX_U32)
 	{
-		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-			requirements.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(requirements.memoryRequirements.memoryTypeBits,
+																		 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 	}
 
 	ANKI_ASSERT(memIdx != MAX_U32);
@@ -351,12 +347,9 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	if(!dedicatedRequirements.prefersDedicatedAllocation)
 	{
 		// Allocate
-		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx,
-			requirements.memoryRequirements.size,
-			U32(requirements.memoryRequirements.alignment),
-			false,
-			false,
-			m_memHandle);
+		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, requirements.memoryRequirements.size,
+																U32(requirements.memoryRequirements.alignment), false,
+																false, m_memHandle);
 
 		// Bind mem to image
 		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
@@ -375,8 +368,8 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		memoryAllocateInfo.memoryTypeIndex = memIdx;
 
 		ANKI_VK_CHECK(vkAllocateMemory(getDevice(), &memoryAllocateInfo, nullptr, &m_dedicatedMem));
-		getGrManagerImpl().trySetVulkanHandleName(
-			init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT, ptrToNumber(m_dedicatedMem));
+		getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT,
+												  ptrToNumber(m_dedicatedMem));
 
 		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);
 		ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_dedicatedMem, 0));
@@ -385,13 +378,9 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	return Error::NONE;
 }
 
-void TextureImpl::computeBarrierInfo(TextureUsageBit before,
-	TextureUsageBit after,
-	U level,
-	VkPipelineStageFlags& srcStages,
-	VkAccessFlags& srcAccesses,
-	VkPipelineStageFlags& dstStages,
-	VkAccessFlags& dstAccesses) const
+void TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U level,
+									 VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
+									 VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const
 {
 	ANKI_ASSERT(level < m_mipCount);
 	ANKI_ASSERT(usageValid(before) && usageValid(after));
@@ -713,8 +702,8 @@ const MicroImageView& TextureImpl::getOrCreateView(const TextureSubresourceInfo&
 		ANKI_ASSERT(viewTexType != TextureType::COUNT);
 
 		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &handle));
-		getGrManagerImpl().trySetVulkanHandleName(
-			getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT, ptrToNumber(handle));
+		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+												  ptrToNumber(handle));
 
 		it = m_viewsMap.emplace(getAllocator(), subresource);
 		it->m_handle = handle;

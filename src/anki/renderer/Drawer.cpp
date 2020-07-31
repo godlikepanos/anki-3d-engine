@@ -38,15 +38,9 @@ RenderableDrawer::~RenderableDrawer()
 {
 }
 
-void RenderableDrawer::drawRange(Pass pass,
-	const Mat4& viewMat,
-	const Mat4& viewProjMat,
-	const Mat4& prevViewProjMat,
-	CommandBufferPtr cmdb,
-	SamplerPtr sampler,
-	const RenderableQueueElement* begin,
-	const RenderableQueueElement* end,
-	U32 minLod)
+void RenderableDrawer::drawRange(Pass pass, const Mat4& viewMat, const Mat4& viewProjMat, const Mat4& prevViewProjMat,
+								 CommandBufferPtr cmdb, SamplerPtr sampler, const RenderableQueueElement* begin,
+								 const RenderableQueueElement* end, U32 minLod)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -107,7 +101,7 @@ void RenderableDrawer::drawSingle(DrawContext& ctx)
 	const Bool shouldFlush =
 		ctx.m_cachedRenderElementCount > 0
 		&& (!canMergeRenderableQueueElements(ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount - 1], rqel)
-			   || ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount - 1] != lod);
+			|| ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount - 1] != lod);
 
 	if(shouldFlush)
 	{

@@ -14,15 +14,9 @@
 #endif
 
 // Perform motion blur.
-Vec3 motionBlur(texture2D velocityTex,
-	sampler velocityTexSampler,
-	texture2D toBlurTex,
-	sampler toBlurTexSampler,
-	texture2D depthTex,
-	sampler depthTexSampler,
-	Vec2 nowUv,
-	Mat4 prevViewProjMatMulInvViewProjMat,
-	U32 maxSamples)
+Vec3 motionBlur(texture2D velocityTex, sampler velocityTexSampler, texture2D toBlurTex, sampler toBlurTexSampler,
+				texture2D depthTex, sampler depthTexSampler, Vec2 nowUv, Mat4 prevViewProjMatMulInvViewProjMat,
+				U32 maxSamples)
 {
 	// Compute previous UV
 	Vec2 velocity = textureLod(velocityTex, velocityTexSampler, nowUv, 0.0).rg;

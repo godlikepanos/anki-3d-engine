@@ -141,7 +141,7 @@ public:
 	Bool setScissor(GLsizei minx, GLsizei miny, GLsizei width, GLsizei height)
 	{
 		if(!m_scissorSet
-			|| (m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != width || m_scissor[3] != height))
+		   || (m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != width || m_scissor[3] != height))
 		{
 			m_scissor = {{minx, miny, width, height}};
 			m_scissorSet = true;
@@ -198,11 +198,11 @@ public:
 
 	Bool maybeEnableStencilTest()
 	{
-		Bool enable = !stencilTestDisabled(
-			m_stencilFail[0], m_stencilPassDepthFail[0], m_stencilPassDepthPass[0], m_stencilCompare[0]);
+		Bool enable = !stencilTestDisabled(m_stencilFail[0], m_stencilPassDepthFail[0], m_stencilPassDepthPass[0],
+										   m_stencilCompare[0]);
 		enable = enable
-				 || !stencilTestDisabled(
-						m_stencilFail[1], m_stencilPassDepthFail[1], m_stencilPassDepthPass[1], m_stencilCompare[1]);
+				 || !stencilTestDisabled(m_stencilFail[1], m_stencilPassDepthFail[1], m_stencilPassDepthPass[1],
+										 m_stencilCompare[1]);
 
 		if(enable != m_stencilTestEnabled)
 		{
@@ -216,15 +216,13 @@ public:
 	Array<StencilOperation, 2> m_stencilPassDepthFail = {{StencilOperation::COUNT, StencilOperation::COUNT}};
 	Array<StencilOperation, 2> m_stencilPassDepthPass = {{StencilOperation::COUNT, StencilOperation::COUNT}};
 
-	Bool setStencilOperations(FaceSelectionBit face,
-		StencilOperation stencilFail,
-		StencilOperation stencilPassDepthFail,
-		StencilOperation stencilPassDepthPass)
+	Bool setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
+							  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
 	{
 		Bool changed = false;
 		if(!!(face & FaceSelectionBit::FRONT)
-			&& (m_stencilFail[0] != stencilFail || m_stencilPassDepthFail[0] != stencilPassDepthFail
-				   || m_stencilPassDepthPass[0] != stencilPassDepthPass))
+		   && (m_stencilFail[0] != stencilFail || m_stencilPassDepthFail[0] != stencilPassDepthFail
+			   || m_stencilPassDepthPass[0] != stencilPassDepthPass))
 		{
 			m_stencilFail[0] = stencilFail;
 			m_stencilPassDepthFail[0] = stencilPassDepthFail;
@@ -233,8 +231,8 @@ public:
 		}
 
 		if(!!(face & FaceSelectionBit::BACK)
-			&& (m_stencilFail[1] != stencilFail || m_stencilPassDepthFail[1] != stencilPassDepthFail
-				   || m_stencilPassDepthPass[1] != stencilPassDepthPass))
+		   && (m_stencilFail[1] != stencilFail || m_stencilPassDepthFail[1] != stencilPassDepthFail
+			   || m_stencilPassDepthPass[1] != stencilPassDepthPass))
 		{
 			m_stencilFail[1] = stencilFail;
 			m_stencilPassDepthFail[1] = stencilPassDepthFail;
@@ -398,12 +396,8 @@ public:
 	Bool maybeEnableBlend(U attidx)
 	{
 		ColorAttachment& att = m_colorAtt[attidx];
-		Bool wantBlend = !blendingDisabled(att.m_blendSrcFactorRgb,
-			att.m_blendDstFactorRgb,
-			att.m_blendSrcFactorA,
-			att.m_blendDstFactorA,
-			att.m_blendOpRgb,
-			att.m_blendOpA);
+		Bool wantBlend = !blendingDisabled(att.m_blendSrcFactorRgb, att.m_blendDstFactorRgb, att.m_blendSrcFactorA,
+										   att.m_blendDstFactorA, att.m_blendOpRgb, att.m_blendOpA);
 
 		if(wantBlend != att.m_enableBlend)
 		{
@@ -417,7 +411,7 @@ public:
 	{
 		auto& att = m_colorAtt[attachment];
 		if(att.m_blendSrcFactorRgb != srcRgb || att.m_blendDstFactorRgb != dstRgb || att.m_blendSrcFactorA != srcA
-			|| att.m_blendDstFactorA != dstA)
+		   || att.m_blendDstFactorA != dstA)
 		{
 			att.m_blendSrcFactorRgb = srcRgb;
 			att.m_blendDstFactorRgb = dstRgb;

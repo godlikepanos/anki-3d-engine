@@ -253,8 +253,8 @@ public:
 	}
 
 	template<typename T>
-	void writeShaderBlockMemory(
-		const MaterialVariable& var, const T* elements, U32 elementsCount, void* buffBegin, const void* buffEnd) const
+	void writeShaderBlockMemory(const MaterialVariable& var, const T* elements, U32 elementsCount, void* buffBegin,
+								const void* buffEnd) const
 	{
 		ANKI_ASSERT(isVariableActive(var));
 		ANKI_ASSERT(getShaderVariableTypeFromTypename<T>() == var.getDataType());
@@ -394,8 +394,8 @@ private:
 
 	static U32 getInstanceGroupIdx(U32 instanceCount);
 
-	void initVariant(
-		const ShaderProgramResourceVariant& progVariant, MaterialVariant& variant, U32 instanceCount) const;
+	void initVariant(const ShaderProgramResourceVariant& progVariant, MaterialVariant& variant,
+					 U32 instanceCount) const;
 
 	const MaterialVariable* tryFindVariableInternal(CString name) const
 	{

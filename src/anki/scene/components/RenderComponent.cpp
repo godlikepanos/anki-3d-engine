@@ -38,9 +38,9 @@ MaterialRenderComponent::~MaterialRenderComponent()
 }
 
 void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawContext& ctx,
-	ConstWeakArray<Mat4> transforms,
-	ConstWeakArray<Mat4> prevTransforms,
-	StagingGpuMemoryManager& alloc) const
+													   ConstWeakArray<Mat4> transforms,
+													   ConstWeakArray<Mat4> prevTransforms,
+													   StagingGpuMemoryManager& alloc) const
 {
 	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCES);
 	ANKI_ASSERT(prevTransforms.getSize() == transforms.getSize());
@@ -53,8 +53,8 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 	void* const uniformsBegin =
 		alloc.allocateFrame(variant.getUniformBlockSize(), StagingGpuMemoryType::UNIFORM, token);
 	const void* const uniformsEnd = static_cast<U8*>(uniformsBegin) + variant.getUniformBlockSize();
-	ctx.m_commandBuffer->bindUniformBuffer(
-		set, m_mtl->getUniformsBinding(), token.m_buffer, token.m_offset, token.m_range);
+	ctx.m_commandBuffer->bindUniformBuffer(set, m_mtl->getUniformsBinding(), token.m_buffer, token.m_offset,
+										   token.m_range);
 
 	// Iterate variables
 	for(auto it = m_vars.getBegin(); it != m_vars.getEnd(); ++it)
@@ -237,10 +237,9 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 		case ShaderVariableDataType::TEXTURE_3D:
 		case ShaderVariableDataType::TEXTURE_CUBE:
 		{
-			ctx.m_commandBuffer->bindTexture(set,
-				variant.getOpaqueBinding(mvar),
-				mvar.getValue<TextureResourcePtr>()->getGrTextureView(),
-				TextureUsageBit::SAMPLED_FRAGMENT);
+			ctx.m_commandBuffer->bindTexture(set, variant.getOpaqueBinding(mvar),
+											 mvar.getValue<TextureResourcePtr>()->getGrTextureView(),
+											 TextureUsageBit::SAMPLED_FRAGMENT);
 			break;
 		}
 		case ShaderVariableDataType::SAMPLER:

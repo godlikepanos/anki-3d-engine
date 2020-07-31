@@ -122,13 +122,12 @@ ANKI_TEST(Util, WalkDir)
 
 	// Test error
 	U32 count = 0;
-	ANKI_TEST_EXPECT_ERR(walkDirectoryTree("./data///dir////",
-							 &count,
-							 [](const CString& fname, void* pCount, Bool isDir) -> Error {
-								 ++(*static_cast<U32*>(pCount));
-								 return Error::FUNCTION_FAILED;
-							 }),
-		Error::FUNCTION_FAILED);
+	ANKI_TEST_EXPECT_ERR(walkDirectoryTree("./data///dir////", &count,
+										   [](const CString& fname, void* pCount, Bool isDir) -> Error {
+											   ++(*static_cast<U32*>(pCount));
+											   return Error::FUNCTION_FAILED;
+										   }),
+						 Error::FUNCTION_FAILED);
 
 	ANKI_TEST_EXPECT_EQ(count, 1);
 }

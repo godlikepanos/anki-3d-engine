@@ -38,8 +38,8 @@ Error Dbg::lazyInit()
 	ANKI_ASSERT(!m_initialized);
 
 	// RT descr
-	m_rtDescr = m_r->create2DRenderTargetDescription(
-		m_r->getWidth(), m_r->getHeight(), DBG_COLOR_ATTACHMENT_PIXEL_FORMAT, "Dbg");
+	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(), m_r->getHeight(),
+													 DBG_COLOR_ATTACHMENT_PIXEL_FORMAT, "Dbg");
 	m_rtDescr.bake();
 
 	// Create FB descr
@@ -181,14 +181,13 @@ void Dbg::populateRenderGraph(RenderingContext& ctx)
 			Dbg* self = static_cast<Dbg*>(rgraphCtx.m_userData);
 			self->run(rgraphCtx, *self->m_runCtx.m_ctx);
 		},
-		this,
-		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_renderables.getSize()));
+		this, computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_renderables.getSize()));
 
 	pass.setFramebufferInfo(m_fbDescr, {m_runCtx.m_rt}, m_r->getGBuffer().getDepthRt());
 
 	pass.newDependency({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	pass.newDependency({m_r->getGBuffer().getDepthRt(),
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ});
+						TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ});
 }
 
 } // end namespace anki

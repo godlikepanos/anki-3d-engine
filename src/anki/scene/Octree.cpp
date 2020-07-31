@@ -226,8 +226,8 @@ void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf
 
 				// Compute AABB
 				Vec3 childAabbMin, childAabbMax;
-				computeChildAabb(
-					crntBit, parent->m_aabbMin, parent->m_aabbMax, center, child->m_aabbMin, child->m_aabbMax);
+				computeChildAabb(crntBit, parent->m_aabbMin, parent->m_aabbMax, center, child->m_aabbMin,
+								 child->m_aabbMax);
 
 				parent->m_children[i] = child;
 			}
@@ -238,12 +238,8 @@ void Octree::placeRecursive(const Aabb& volume, OctreePlaceable* placeable, Leaf
 	}
 }
 
-void Octree::computeChildAabb(LeafMask child,
-	const Vec3& parentAabbMin,
-	const Vec3& parentAabbMax,
-	const Vec3& parentAabbCenter,
-	Vec3& childAabbMin,
-	Vec3& childAabbMax)
+void Octree::computeChildAabb(LeafMask child, const Vec3& parentAabbMin, const Vec3& parentAabbMax,
+							  const Vec3& parentAabbCenter, Vec3& childAabbMin, Vec3& childAabbMax)
 {
 	ANKI_ASSERT(__builtin_popcount(U32(child)) == 1);
 
@@ -332,12 +328,9 @@ void Octree::removeInternal(OctreePlaceable& placeable)
 	}
 }
 
-void Octree::gatherVisibleRecursive(const Plane frustumPlanes[6],
-	U32 testId,
-	OctreeNodeVisibilityTestCallback testCallback,
-	void* testCallbackUserData,
-	Leaf* leaf,
-	DynamicArrayAuto<void*>& out)
+void Octree::gatherVisibleRecursive(const Plane frustumPlanes[6], U32 testId,
+									OctreeNodeVisibilityTestCallback testCallback, void* testCallbackUserData,
+									Leaf* leaf, DynamicArrayAuto<void*>& out)
 {
 	ANKI_ASSERT(leaf);
 
@@ -443,14 +436,10 @@ void Octree::debugDrawRecursive(const Leaf& leaf, OctreeDebugDrawer& drawer) con
 	}
 }
 
-void Octree::gatherVisibleParallel(const Plane frustumPlanes[6],
-	U32 testId,
-	OctreeNodeVisibilityTestCallback testCallback,
-	void* testCallbackUserData,
-	DynamicArrayAuto<void*>* out,
-	ThreadHive& hive,
-	ThreadHiveSemaphore* waitSemaphore,
-	ThreadHiveSemaphore*& signalSemaphore)
+void Octree::gatherVisibleParallel(const Plane frustumPlanes[6], U32 testId,
+								   OctreeNodeVisibilityTestCallback testCallback, void* testCallbackUserData,
+								   DynamicArrayAuto<void*>* out, ThreadHive& hive, ThreadHiveSemaphore* waitSemaphore,
+								   ThreadHiveSemaphore*& signalSemaphore)
 {
 	ANKI_ASSERT(out && frustumPlanes);
 
@@ -490,8 +479,8 @@ void Octree::gatherVisibleTaskCallback(void* ud, U32 threadId, ThreadHive& hive,
 	taskCtx->m_ctx->m_octree->gatherVisibleParallelTask(threadId, hive, sem, *taskCtx);
 }
 
-void Octree::gatherVisibleParallelTask(
-	U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem, GatherParallelTaskCtx& taskCtx)
+void Octree::gatherVisibleParallelTask(U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem,
+									   GatherParallelTaskCtx& taskCtx)
 {
 	ANKI_ASSERT(taskCtx.m_ctx && taskCtx.m_leaf);
 	GatherParallelCtx& ctx = *taskCtx.m_ctx;

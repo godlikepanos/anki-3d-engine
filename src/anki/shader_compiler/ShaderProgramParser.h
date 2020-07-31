@@ -88,11 +88,8 @@ private:
 class ShaderProgramParser : public NonCopyable
 {
 public:
-	ShaderProgramParser(CString fname,
-		ShaderProgramFilesystemInterface* fsystem,
-		GenericMemoryPoolAllocator<U8> alloc,
-		const GpuDeviceCapabilities& gpuCapabilities,
-		const BindlessLimits& bindlessLimits);
+	ShaderProgramParser(CString fname, ShaderProgramFilesystemInterface* fsystem, GenericMemoryPoolAllocator<U8> alloc,
+						const GpuDeviceCapabilities& gpuCapabilities, const BindlessLimits& bindlessLimits);
 
 	~ShaderProgramParser();
 
@@ -104,8 +101,8 @@ public:
 	Bool rewriteMutation(WeakArray<MutatorValue> mutation) const;
 
 	/// Get the source (and a few more things) given a list of mutators.
-	ANKI_USE_RESULT Error generateVariant(
-		ConstWeakArray<MutatorValue> mutation, ShaderProgramParserVariant& variant) const;
+	ANKI_USE_RESULT Error generateVariant(ConstWeakArray<MutatorValue> mutation,
+										  ShaderProgramParserVariant& variant) const;
 
 	ConstWeakArray<ShaderProgramParserMutator> getMutators() const
 	{
@@ -124,8 +121,8 @@ public:
 	}
 
 	/// Generates the common header that will be used by all AnKi shaders.
-	static void generateAnkiShaderHeader(
-		const GpuDeviceCapabilities& caps, const BindlessLimits& limits, StringAuto& header);
+	static void generateAnkiShaderHeader(const GpuDeviceCapabilities& caps, const BindlessLimits& limits,
+										 StringAuto& header);
 
 private:
 	using Mutator = ShaderProgramParserMutator;
@@ -142,8 +139,8 @@ private:
 
 			Bool operator!=(const Record& b) const
 			{
-				return !(
-					m_mutatorIndex == b.m_mutatorIndex && m_valueFrom == b.m_valueFrom && m_valueTo == b.m_valueTo);
+				return !(m_mutatorIndex == b.m_mutatorIndex && m_valueFrom == b.m_valueFrom
+						 && m_valueTo == b.m_valueTo);
 			}
 		};
 
@@ -175,14 +172,14 @@ private:
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
-	ANKI_USE_RESULT Error parseInclude(
-		const StringAuto* begin, const StringAuto* end, CString line, CString fname, U32 depth);
-	ANKI_USE_RESULT Error parsePragmaMutator(
-		const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	ANKI_USE_RESULT Error parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname,
+									   U32 depth);
+	ANKI_USE_RESULT Error parsePragmaMutator(const StringAuto* begin, const StringAuto* end, CString line,
+											 CString fname);
 	ANKI_USE_RESULT Error parsePragmaStart(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 	ANKI_USE_RESULT Error parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
-	ANKI_USE_RESULT Error parsePragmaRewriteMutation(
-		const StringAuto* begin, const StringAuto* end, CString line, CString fname);
+	ANKI_USE_RESULT Error parsePragmaRewriteMutation(const StringAuto* begin, const StringAuto* end, CString line,
+													 CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const;
 

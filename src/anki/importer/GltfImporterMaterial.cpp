@@ -45,8 +45,8 @@ static CString getTextureUri(const cgltf_texture_view& view)
 }
 
 /// Read the texture and find out if
-static Error identifyMetallicRoughnessTexture(
-	CString fname, F32& constantMetalines, F32& constantRoughness, GenericMemoryPoolAllocator<U8>& alloc)
+static Error identifyMetallicRoughnessTexture(CString fname, F32& constantMetalines, F32& constantRoughness,
+											  GenericMemoryPoolAllocator<U8>& alloc)
 {
 	ImageLoader iloader(alloc);
 	ANKI_CHECK(iloader.load(fname));
@@ -114,17 +114,16 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 		StringAuto uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.pbr_metallic_roughness.base_color_texture).cstr());
 
-		xml.replaceAll(
-			"%diff%", StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_diffTex\" value=\"%s\"/>", uri.cstr()));
+		xml.replaceAll("%diff%",
+					   StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_diffTex\" value=\"%s\"/>", uri.cstr()));
 		xml.replaceAll("%diffTexMutator%", "1");
 	}
 	else
 	{
 		const F32* diffCol = &mtl.pbr_metallic_roughness.base_color_factor[0];
 
-		xml.replaceAll("%diff%",
-			StringAuto{m_alloc}.sprintf(
-				"<input shaderVar=\"m_diffColor\" value=\"%f %f %f\"/>", diffCol[0], diffCol[1], diffCol[2]));
+		xml.replaceAll("%diff%", StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_diffColor\" value=\"%f %f %f\"/>",
+															 diffCol[0], diffCol[1], diffCol[2]));
 
 		xml.replaceAll("%diffTexMutator%", "0");
 	}
@@ -155,9 +154,8 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 			specular = Vec3(0.04f);
 		}
 
-		xml.replaceAll("%spec%",
-			StringAuto{m_alloc}.sprintf(
-				"<input shaderVar=\"m_specColor\" value=\"%f %f %f\"/>", specular.x(), specular.y(), specular.z()));
+		xml.replaceAll("%spec%", StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_specColor\" value=\"%f %f %f\"/>",
+															 specular.x(), specular.y(), specular.z()));
 
 		xml.replaceAll("%specTexMutator%", "0");
 	}
@@ -175,11 +173,11 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 	if(mtl.pbr_metallic_roughness.metallic_roughness_texture.texture && constantRoughness < 0.0f)
 	{
 		StringAuto uri(m_alloc);
-		uri.sprintf(
-			"%s%s", m_texrpath.cstr(), getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
+		uri.sprintf("%s%s", m_texrpath.cstr(),
+					getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
 
 		xml.replaceAll("%roughness%",
-			StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_roughnessTex\" value=\"%s\"/>", uri.cstr()));
+					   StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_roughnessTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%roughnessTexMutator%", "1");
 	}
@@ -189,8 +187,8 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 								  ? constantRoughness * mtl.pbr_metallic_roughness.roughness_factor
 								  : mtl.pbr_metallic_roughness.roughness_factor;
 
-		xml.replaceAll(
-			"%roughness%", StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_roughness\" value=\"%f\"/>", roughness));
+		xml.replaceAll("%roughness%",
+					   StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_roughness\" value=\"%f\"/>", roughness));
 
 		xml.replaceAll("%roughnessTexMutator%", "0");
 	}
@@ -199,11 +197,11 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 	if(mtl.pbr_metallic_roughness.metallic_roughness_texture.texture && constantMetaliness < 0.0f)
 	{
 		StringAuto uri(m_alloc);
-		uri.sprintf(
-			"%s%s", m_texrpath.cstr(), getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
+		uri.sprintf("%s%s", m_texrpath.cstr(),
+					getTextureUri(mtl.pbr_metallic_roughness.metallic_roughness_texture).cstr());
 
-		xml.replaceAll(
-			"%metallic%", StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_metallicTex\" value=\"%s\"/>", uri.cstr()));
+		xml.replaceAll("%metallic%",
+					   StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_metallicTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%metalTexMutator%", "1");
 	}
@@ -213,8 +211,8 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 								  ? constantMetaliness * mtl.pbr_metallic_roughness.metallic_factor
 								  : mtl.pbr_metallic_roughness.metallic_factor;
 
-		xml.replaceAll(
-			"%metallic%", StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_metallic\" value=\"%f\"/>", metalines));
+		xml.replaceAll("%metallic%",
+					   StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_metallic\" value=\"%f\"/>", metalines));
 
 		xml.replaceAll("%metalTexMutator%", "0");
 	}
@@ -225,8 +223,8 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 		StringAuto uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.normal_texture).cstr());
 
-		xml.replaceAll(
-			"%normal%", StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_normalTex\" value=\"%s\"/>", uri.cstr()));
+		xml.replaceAll("%normal%",
+					   StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_normalTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%normalTexMutator%", "1");
 	}
@@ -242,8 +240,8 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 		StringAuto uri(m_alloc);
 		uri.sprintf("%s%s", m_texrpath.cstr(), getTextureUri(mtl.emissive_texture).cstr());
 
-		xml.replaceAll(
-			"%emission%", StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_emissiveTex\" value=\"%s\"/>", uri.cstr()));
+		xml.replaceAll("%emission%",
+					   StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_emissiveTex\" value=\"%s\"/>", uri.cstr()));
 
 		xml.replaceAll("%emissiveTexMutator%", "1");
 	}
@@ -251,11 +249,8 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 	{
 		const F32* emissionCol = &mtl.emissive_factor[0];
 
-		xml.replaceAll("%emission%",
-			StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_emission\" value=\"%f %f %f\"/>",
-				emissionCol[0],
-				emissionCol[1],
-				emissionCol[2]));
+		xml.replaceAll("%emission%", StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_emission\" value=\"%f %f %f\"/>",
+																 emissionCol[0], emissionCol[1], emissionCol[2]));
 
 		xml.replaceAll("%emissiveTexMutator%", "0");
 	}
@@ -274,7 +269,7 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 		}
 
 		xml.replaceAll("%subsurface%",
-			StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_subsurface\" value=\"%f\"/>", subsurface));
+					   StringAuto{m_alloc}.sprintf("<input shaderVar=\"m_subsurface\" value=\"%f\"/>", subsurface));
 	}
 
 	// Height texture
@@ -285,9 +280,9 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 		uri.sprintf("%s%s", m_texrpath.cstr(), it->cstr());
 
 		xml.replaceAll("%height%",
-			StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_heightTex\" value=\"%s\" \"/>\n"
-										"\t\t<input shaderVar=\"m_heightmapScale\" value=\"0.05\"/>",
-				uri.cstr()));
+					   StringAuto{m_alloc}.sprintf("<input shaderVar=\"u_heightTex\" value=\"%s\" \"/>\n"
+												   "\t\t<input shaderVar=\"m_heightmapScale\" value=\"0.05\"/>",
+												   uri.cstr()));
 
 		xml.replaceAll("%parallaxMutator%", "1");
 	}

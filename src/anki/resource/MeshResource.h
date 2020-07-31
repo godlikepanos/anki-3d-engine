@@ -78,8 +78,8 @@ public:
 	}
 
 	/// Get attribute info. You need to check if the attribute is preset first (isVertexAttributePresent)
-	void getVertexAttributeInfo(
-		const VertexAttributeLocation attrib, U32& bufferIdx, Format& format, PtrSize& relativeOffset) const
+	void getVertexAttributeInfo(const VertexAttributeLocation attrib, U32& bufferIdx, Format& format,
+								PtrSize& relativeOffset) const
 	{
 		ANKI_ASSERT(!!m_attribs[attrib].m_fmt);
 		bufferIdx = m_attribs[attrib].m_buffIdx;

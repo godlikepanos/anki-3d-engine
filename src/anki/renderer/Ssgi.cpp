@@ -101,11 +101,9 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 			m_recontruction.m_grProg[i] = variant->getProgram();
 		}
 
-		TextureInitInfo initInfo = m_r->create2DRenderTargetInitInfo(width,
-			height,
-			Format::B10G11R11_UFLOAT_PACK32,
-			TextureUsageBit::SAMPLED_ALL | TextureUsageBit::IMAGE_COMPUTE_WRITE,
-			"SSGI");
+		TextureInitInfo initInfo = m_r->create2DRenderTargetInitInfo(
+			width, height, Format::B10G11R11_UFLOAT_PACK32,
+			TextureUsageBit::SAMPLED_ALL | TextureUsageBit::IMAGE_COMPUTE_WRITE, "SSGI");
 		initInfo.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		m_recontruction.m_rt = m_r->createAndClearRenderTarget(initInfo);
 	}
@@ -136,8 +134,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 		// Create pass
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("SSGI");
 		rpass.setWork(
-			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->run(rgraphCtx); },
-			this,
+			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->run(rgraphCtx); }, this,
 			0);
 
 		rpass.newDependency({m_runCtx.m_intermediateRts[WRITE], TextureUsageBit::IMAGE_COMPUTE_WRITE});
@@ -161,8 +158,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->runVBlur(rgraphCtx); },
-			this,
-			0);
+			this, 0);
 	}
 
 	// Blur horizontal
@@ -176,8 +172,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 
 		rpass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) { static_cast<Ssgi*>(rgraphCtx.m_userData)->runHBlur(rgraphCtx); },
-			this,
-			0);
+			this, 0);
 	}
 
 	// Reconstruction
@@ -193,8 +188,7 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 			[](RenderPassWorkContext& rgraphCtx) {
 				static_cast<Ssgi*>(rgraphCtx.m_userData)->runRecontruct(rgraphCtx);
 			},
-			this,
-			0);
+			this, 0);
 	}
 }
 

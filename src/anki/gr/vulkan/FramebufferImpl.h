@@ -41,8 +41,8 @@ public:
 	}
 
 	/// Use it for binding. It's thread-safe
-	VkRenderPass getRenderPassHandle(
-		const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts, VkImageLayout dsLayout);
+	VkRenderPass getRenderPassHandle(const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts,
+									 VkImageLayout dsLayout);
 
 	VkFramebuffer getFramebufferHandle() const
 	{
@@ -130,8 +130,8 @@ private:
 	ANKI_USE_RESULT Error initFbs(const FramebufferInitInfo& init);
 	void initRpassCreateInfo(const FramebufferInitInfo& init);
 	void initClearValues(const FramebufferInitInfo& init);
-	void setupAttachmentDescriptor(
-		const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc, VkImageLayout layout) const;
+	void setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc,
+								   VkImageLayout layout) const;
 };
 /// @}
 

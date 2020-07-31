@@ -24,21 +24,21 @@ public:
 
 static const Array<BuiltinVarInfo, U(BuiltinMaterialVariableId::COUNT)> BUILTIN_INFOS = {
 	{{"NONE", ShaderVariableDataType::NONE, false},
-		{"m_ankiMvp", ShaderVariableDataType::MAT4, true},
-		{"m_ankiPreviousMvp", ShaderVariableDataType::MAT4, true},
-		{"m_ankiModelMatrix", ShaderVariableDataType::MAT4, true},
-		{"m_ankiViewMatrix", ShaderVariableDataType::MAT4, false},
-		{"m_ankiProjectionMatrix", ShaderVariableDataType::MAT4, false},
-		{"m_ankiModelViewMatrix", ShaderVariableDataType::MAT4, true},
-		{"m_ankiViewProjectionMatrix", ShaderVariableDataType::MAT4, false},
-		{"m_ankiNormalMatrix", ShaderVariableDataType::MAT3, true},
-		{"m_ankiRotationMatrix", ShaderVariableDataType::MAT3, true},
-		{"m_ankiCameraRotationMatrix", ShaderVariableDataType::MAT3, false},
-		{"m_ankiCameraPosition", ShaderVariableDataType::VEC3, false},
-		{"u_ankiGlobalSampler", ShaderVariableDataType::SAMPLER, false}}};
+	 {"m_ankiMvp", ShaderVariableDataType::MAT4, true},
+	 {"m_ankiPreviousMvp", ShaderVariableDataType::MAT4, true},
+	 {"m_ankiModelMatrix", ShaderVariableDataType::MAT4, true},
+	 {"m_ankiViewMatrix", ShaderVariableDataType::MAT4, false},
+	 {"m_ankiProjectionMatrix", ShaderVariableDataType::MAT4, false},
+	 {"m_ankiModelViewMatrix", ShaderVariableDataType::MAT4, true},
+	 {"m_ankiViewProjectionMatrix", ShaderVariableDataType::MAT4, false},
+	 {"m_ankiNormalMatrix", ShaderVariableDataType::MAT3, true},
+	 {"m_ankiRotationMatrix", ShaderVariableDataType::MAT3, true},
+	 {"m_ankiCameraRotationMatrix", ShaderVariableDataType::MAT3, false},
+	 {"m_ankiCameraPosition", ShaderVariableDataType::VEC3, false},
+	 {"u_ankiGlobalSampler", ShaderVariableDataType::SAMPLER, false}}};
 
-static ANKI_USE_RESULT Error checkBuiltin(
-	CString name, ShaderVariableDataType dataType, Bool instanced, BuiltinMaterialVariableId& outId)
+static ANKI_USE_RESULT Error checkBuiltin(CString name, ShaderVariableDataType dataType, Bool instanced,
+										  BuiltinMaterialVariableId& outId)
 {
 	outId = BuiltinMaterialVariableId::NONE;
 
@@ -62,8 +62,7 @@ static ANKI_USE_RESULT Error checkBuiltin(
 			if(instanced && !BUILTIN_INFOS[id].m_instanced)
 			{
 				ANKI_RESOURCE_LOGE("Variable %s be instanced: %s",
-					(BUILTIN_INFOS[id].m_instanced) ? "should" : "shouldn't",
-					name.cstr());
+								   (BUILTIN_INFOS[id].m_instanced) ? "should" : "shouldn't", name.cstr());
 				return Error::USER_DATA;
 			}
 
@@ -261,8 +260,7 @@ Error MaterialResource::findBuiltinMutators()
 		if(m_builtinMutators[BuiltinMutatorId::INSTANCE_COUNT]->m_values.getSize() != MAX_INSTANCE_GROUPS)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have %u values in the program",
-				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCE_COUNT].cstr(),
-				MAX_INSTANCE_GROUPS);
+							   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCE_COUNT].cstr(), MAX_INSTANCE_GROUPS);
 			return Error::USER_DATA;
 		}
 
@@ -271,7 +269,7 @@ Error MaterialResource::findBuiltinMutators()
 			if(m_builtinMutators[BuiltinMutatorId::INSTANCE_COUNT]->m_values[i] != (1 << i))
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
-					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCE_COUNT].cstr());
+								   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCE_COUNT].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -283,14 +281,14 @@ Error MaterialResource::findBuiltinMutators()
 	m_builtinMutators[BuiltinMutatorId::PASS] = m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::PASS]);
 	if(m_builtinMutators[BuiltinMutatorId::PASS] && m_forwardShading)
 	{
-		ANKI_RESOURCE_LOGE(
-			"Mutator is not required for forward shading: %s", BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::PASS].cstr());
+		ANKI_RESOURCE_LOGE("Mutator is not required for forward shading: %s",
+						   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::PASS].cstr());
 		return Error::USER_DATA;
 	}
 	else if(!m_builtinMutators[BuiltinMutatorId::PASS] && !m_forwardShading)
 	{
-		ANKI_RESOURCE_LOGE(
-			"Mutator is required for opaque shading: %s", BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::PASS].cstr());
+		ANKI_RESOURCE_LOGE("Mutator is required for opaque shading: %s",
+						   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::PASS].cstr());
 		return Error::USER_DATA;
 	}
 
@@ -299,8 +297,7 @@ Error MaterialResource::findBuiltinMutators()
 		if(m_builtinMutators[BuiltinMutatorId::PASS]->m_values.getSize() != U32(Pass::COUNT) - 1)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have %u values in the program",
-				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::PASS].cstr(),
-				U32(Pass::COUNT) - 1);
+							   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::PASS].cstr(), U32(Pass::COUNT) - 1);
 			return Error::USER_DATA;
 		}
 
@@ -315,7 +312,7 @@ Error MaterialResource::findBuiltinMutators()
 			if(m_builtinMutators[BuiltinMutatorId::PASS]->m_values[count++] != I(p))
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
-					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::PASS].cstr());
+								   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::PASS].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -336,8 +333,7 @@ Error MaterialResource::findBuiltinMutators()
 		if(m_builtinMutators[BuiltinMutatorId::LOD]->m_values.getSize() > MAX_LOD_COUNT)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have at least %u values in the program",
-				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::LOD].cstr(),
-				U32(MAX_LOD_COUNT));
+							   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::LOD].cstr(), U32(MAX_LOD_COUNT));
 			return Error::USER_DATA;
 		}
 
@@ -346,7 +342,7 @@ Error MaterialResource::findBuiltinMutators()
 			if(m_builtinMutators[BuiltinMutatorId::LOD]->m_values[i] != I(i))
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
-					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::LOD].cstr());
+								   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::LOD].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -362,7 +358,7 @@ Error MaterialResource::findBuiltinMutators()
 		if(m_builtinMutators[BuiltinMutatorId::BONES]->m_values.getSize() != 2)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program",
-				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::BONES].cstr());
+							   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::BONES].cstr());
 			return Error::USER_DATA;
 		}
 
@@ -371,7 +367,7 @@ Error MaterialResource::findBuiltinMutators()
 			if(m_builtinMutators[BuiltinMutatorId::BONES]->m_values[i] != I(i))
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
-					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::BONES].cstr());
+								   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::BONES].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -408,7 +404,7 @@ Error MaterialResource::findBuiltinMutators()
 		{
 			ANKI_RESOURCE_LOGE("The program is using the %s mutator but b_ankiBoneTransforms or "
 							   "b_ankiPrevFrameBoneTransforms was not found",
-				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::BONES].cstr());
+							   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::BONES].cstr());
 			return Error::NONE;
 		}
 	}
@@ -421,7 +417,7 @@ Error MaterialResource::findBuiltinMutators()
 		if(m_builtinMutators[BuiltinMutatorId::VELOCITY]->m_values.getSize() != 2)
 		{
 			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program",
-				BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::VELOCITY].cstr());
+							   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::VELOCITY].cstr());
 			return Error::USER_DATA;
 		}
 
@@ -430,7 +426,7 @@ Error MaterialResource::findBuiltinMutators()
 			if(m_builtinMutators[BuiltinMutatorId::VELOCITY]->m_values[i] != I(i))
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
-					BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::VELOCITY].cstr());
+								   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::VELOCITY].cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -909,8 +905,8 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	return variant;
 }
 
-void MaterialResource::initVariant(
-	const ShaderProgramResourceVariant& progVariant, MaterialVariant& variant, U32 instanceCount) const
+void MaterialResource::initVariant(const ShaderProgramResourceVariant& progVariant, MaterialVariant& variant,
+								   U32 instanceCount) const
 {
 	// Find the block instance
 	const ShaderProgramBinary& binary = m_prog->getBinary();
@@ -927,8 +923,8 @@ void MaterialResource::initVariant(
 
 	if(binaryBlockInstance == nullptr)
 	{
-		ANKI_RESOURCE_LOGF(
-			"The uniform block doesn't appear to be active for variant. Material: %s", getFilename().cstr());
+		ANKI_RESOURCE_LOGF("The uniform block doesn't appear to be active for variant. Material: %s",
+						   getFilename().cstr());
 	}
 
 	// Some init
@@ -1000,7 +996,7 @@ void MaterialResource::initVariant(
 	for(const MaterialVariable& var : m_vars)
 	{
 		if(var.m_builtin == BuiltinMaterialVariableId::NONE && variant.m_activeVars.get(var.m_index)
-			&& !var.valueSetByMaterial())
+		   && !var.valueSetByMaterial())
 		{
 			ANKI_RESOURCE_LOGF("An active variable doesn't have its value set by the material: %s", var.m_name.cstr());
 		}

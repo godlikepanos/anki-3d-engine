@@ -147,13 +147,9 @@ public:
 	}
 
 	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
-	void computeBarrierInfo(TextureUsageBit before,
-		TextureUsageBit after,
-		U level,
-		VkPipelineStageFlags& srcStages,
-		VkAccessFlags& srcAccesses,
-		VkPipelineStageFlags& dstStages,
-		VkAccessFlags& dstAccesses) const;
+	void computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U level, VkPipelineStageFlags& srcStages,
+							VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
+							VkAccessFlags& dstAccesses) const;
 
 	/// Predict the image layout.
 	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
@@ -171,8 +167,8 @@ public:
 		range.layerCount = in.m_layerCount * in.m_faceCount;
 	}
 
-	void computeVkImageViewCreateInfo(
-		const TextureSubresourceInfo& subresource, VkImageViewCreateInfo& viewCi, TextureType& newTextureType) const
+	void computeVkImageViewCreateInfo(const TextureSubresourceInfo& subresource, VkImageViewCreateInfo& viewCi,
+									  TextureType& newTextureType) const
 	{
 		ANKI_ASSERT(isSubresourceValid(subresource));
 
@@ -206,8 +202,8 @@ private:
 	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
 
 	template<typename TextureInfo>
-	void updateUsageState(
-		const TextureInfo& surfOrVol, TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
+	void updateUsageState(const TextureInfo& surfOrVol, TextureUsageBit usage, StackAllocator<U8>& alloc,
+						  TextureUsageState& state) const;
 
 	void updateUsageState(TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
 

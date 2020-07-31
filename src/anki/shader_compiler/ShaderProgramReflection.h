@@ -22,36 +22,36 @@ class ShaderReflectionVisitorInterface
 public:
 	virtual ANKI_USE_RESULT Error setWorkgroupSizes(U32 x, U32 y, U32 z, U32 specConstMask) = 0;
 
-	virtual ANKI_USE_RESULT Error setCounts(
-		U32 uniformBlockCount, U32 storageBlockCount, U32 opaqueCount, Bool pushConstantBlock, U32 constsCount) = 0;
+	virtual ANKI_USE_RESULT Error setCounts(U32 uniformBlockCount, U32 storageBlockCount, U32 opaqueCount,
+											Bool pushConstantBlock, U32 constsCount) = 0;
 
-	virtual ANKI_USE_RESULT Error visitUniformBlock(
-		U32 idx, CString name, U32 set, U32 binding, U32 size, U32 varCount) = 0;
+	virtual ANKI_USE_RESULT Error visitUniformBlock(U32 idx, CString name, U32 set, U32 binding, U32 size,
+													U32 varCount) = 0;
 
-	virtual ANKI_USE_RESULT Error visitUniformVariable(
-		U32 blockIdx, U32 idx, CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
+	virtual ANKI_USE_RESULT Error visitUniformVariable(U32 blockIdx, U32 idx, CString name, ShaderVariableDataType type,
+													   const ShaderVariableBlockInfo& blockInfo) = 0;
 
-	virtual ANKI_USE_RESULT Error visitStorageBlock(
-		U32 idx, CString name, U32 set, U32 binding, U32 size, U32 varCount) = 0;
+	virtual ANKI_USE_RESULT Error visitStorageBlock(U32 idx, CString name, U32 set, U32 binding, U32 size,
+													U32 varCount) = 0;
 
-	virtual ANKI_USE_RESULT Error visitStorageVariable(
-		U32 blockIdx, U32 idx, CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
+	virtual ANKI_USE_RESULT Error visitStorageVariable(U32 blockIdx, U32 idx, CString name, ShaderVariableDataType type,
+													   const ShaderVariableBlockInfo& blockInfo) = 0;
 
 	virtual ANKI_USE_RESULT Error visitPushConstantsBlock(CString name, U32 size, U32 varCount) = 0;
 
-	virtual ANKI_USE_RESULT Error visitPushConstant(
-		U32 idx, CString name, ShaderVariableDataType type, const ShaderVariableBlockInfo& blockInfo) = 0;
+	virtual ANKI_USE_RESULT Error visitPushConstant(U32 idx, CString name, ShaderVariableDataType type,
+													const ShaderVariableBlockInfo& blockInfo) = 0;
 
-	virtual ANKI_USE_RESULT Error visitOpaque(
-		U32 idx, CString name, ShaderVariableDataType type, U32 set, U32 binding, U32 arraySize) = 0;
+	virtual ANKI_USE_RESULT Error visitOpaque(U32 idx, CString name, ShaderVariableDataType type, U32 set, U32 binding,
+											  U32 arraySize) = 0;
 
 	virtual ANKI_USE_RESULT Error visitConstant(U32 idx, CString name, ShaderVariableDataType type, U32 constantId) = 0;
 };
 
 /// Does reflection using SPIR-V.
 ANKI_USE_RESULT Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
-	GenericMemoryPoolAllocator<U8> tmpAlloc,
-	ShaderReflectionVisitorInterface& interface);
+											 GenericMemoryPoolAllocator<U8> tmpAlloc,
+											 ShaderReflectionVisitorInterface& interface);
 /// @}
 
 } // end namespace anki

@@ -50,8 +50,8 @@ constexpr inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 		a = a operator_ b; \
 		return a; \
 	} \
-	qualifier_ EnumUnderlyingType<enum_>::Type& operator assignOperator_( \
-		EnumUnderlyingType<enum_>::Type& a, const enum_ b) \
+	qualifier_ EnumUnderlyingType<enum_>::Type& operator assignOperator_(EnumUnderlyingType<enum_>::Type& a, \
+																		 const enum_ b) \
 	{ \
 		using Int = EnumUnderlyingType<enum_>::Type; \
 		a = static_cast<Int>(a operator_ static_cast<Int>(b)); \

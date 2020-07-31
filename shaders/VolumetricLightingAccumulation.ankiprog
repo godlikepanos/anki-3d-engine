@@ -179,8 +179,8 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 			GlobalIlluminationProbe probe = u_giProbes[u_lightIndices[idxOffset]];
 
 			// Sample
-			diffIndirect = sampleGlobalIllumination(
-				worldPos, viewDir, probe, u_globalIlluminationTextures, u_linearAnyClampSampler);
+			diffIndirect = sampleGlobalIllumination(worldPos, viewDir, probe, u_globalIlluminationTextures,
+													u_linearAnyClampSampler);
 		}
 		else
 		{
@@ -200,8 +200,8 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 				totalBlendWeight += blendWeight;
 
 				// Sample
-				const Vec3 c = sampleGlobalIllumination(
-					worldPos, viewDir, probe, u_globalIlluminationTextures, u_linearAnyClampSampler);
+				const Vec3 c = sampleGlobalIllumination(worldPos, viewDir, probe, u_globalIlluminationTextures,
+														u_linearAnyClampSampler);
 				diffIndirect += c * blendWeight;
 			}
 
@@ -226,8 +226,8 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 			F32 factor;
 			ANKI_BRANCH if(vol.m_isBox == 1u)
 			{
-				factor = computeProbeBlendWeight(
-					worldPos, vol.m_aabbMinOrSphereCenter, vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
+				factor = computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter,
+												 vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
 			}
 			else
 			{

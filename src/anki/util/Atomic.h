@@ -104,15 +104,11 @@ public:
 	/// 	return false;
 	/// }
 	/// @endcode
-	Bool compareExchange(Value& expected,
-		Value desired,
-		AtomicMemoryOrder successMemOrd = MEMORY_ORDER,
-		AtomicMemoryOrder failMemOrd = MEMORY_ORDER)
+	Bool compareExchange(Value& expected, Value desired, AtomicMemoryOrder successMemOrd = MEMORY_ORDER,
+						 AtomicMemoryOrder failMemOrd = MEMORY_ORDER)
 	{
-		return m_att.compare_exchange_weak(expected,
-			desired,
-			static_cast<std::memory_order>(successMemOrd),
-			static_cast<std::memory_order>(failMemOrd));
+		return m_att.compare_exchange_weak(expected, desired, static_cast<std::memory_order>(successMemOrd),
+										   static_cast<std::memory_order>(failMemOrd));
 	}
 
 	/// Set @a a to the atomic and return the previous value.

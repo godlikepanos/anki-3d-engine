@@ -60,8 +60,8 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 		if(m_type == LightComponentType::SPOT)
 		{
 			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-			Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(
-				m_spot.m_outerAngle, m_spot.m_outerAngle, LIGHT_FRUSTUM_NEAR_PLANE, m_spot.m_distance);
+			Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle,
+																   LIGHT_FRUSTUM_NEAR_PLANE, m_spot.m_distance);
 			m_spot.m_textureMat = biasMat4 * proj * Mat4(m_trf.getInverse());
 		}
 	}
@@ -79,8 +79,8 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 }
 
 void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& frustumComp,
-	DirectionalLightQueueElement& el,
-	WeakArray<FrustumComponent> cascadeFrustumComponents) const
+													   DirectionalLightQueueElement& el,
+													   WeakArray<FrustumComponent> cascadeFrustumComponents) const
 {
 	ANKI_ASSERT(m_type == LightComponentType::DIRECTIONAL);
 	ANKI_ASSERT(cascadeFrustumComponents.getSize() <= MAX_SHADOW_CASCADES);
@@ -205,8 +205,8 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 			}
 
 			// Light matrix
-			static const Mat4 biasMat4(
-				0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+			static const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+									   0.0f, 0.0f, 1.0f);
 			el.m_textureMatrices[i] = biasMat4 * cascadeProjMat * cascadeViewMat;
 
 			// Fill the frustum with the fixed projection parameters from the fixed projection matrix

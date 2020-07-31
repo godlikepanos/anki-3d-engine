@@ -59,14 +59,9 @@ public:
 
 	~SceneGraph();
 
-	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb,
-		void* allocCbData,
-		ThreadHive* threadHive,
-		ResourceManager* resources,
-		Input* input,
-		ScriptManager* scriptManager,
-		const Timestamp* globalTimestamp,
-		const ConfigSet& config);
+	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHive* threadHive,
+							   ResourceManager* resources, Input* input, ScriptManager* scriptManager,
+							   const Timestamp* globalTimestamp, const ConfigSet& config);
 
 	Timestamp getGlobalTimestamp() const
 	{

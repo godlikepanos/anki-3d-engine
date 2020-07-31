@@ -30,16 +30,8 @@ public:
 
 	~GltfImporter();
 
-	ANKI_USE_RESULT Error init(CString inputFname,
-		CString outDir,
-		CString rpath,
-		CString texrpath,
-		Bool optimizeMeshes,
-		F32 lodFactor,
-		U32 lodCount,
-		F32 lightIntensityScale,
-		U32 threadCount,
-		CString comment);
+	ANKI_USE_RESULT Error init(CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes,
+							   F32 lodFactor, U32 lodCount, F32 lightIntensityScale, U32 threadCount, CString comment);
 
 	ANKI_USE_RESULT Error writeAll();
 
@@ -83,8 +75,8 @@ private:
 
 	// Misc
 	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
-	ANKI_USE_RESULT Error parseArrayOfNumbers(
-		CString str, DynamicArrayAuto<F64>& out, const U32* expectedArraySize = nullptr);
+	ANKI_USE_RESULT Error parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out,
+											  const U32* expectedArraySize = nullptr);
 	void populateNodePtrToIdx();
 	void populateNodePtrToIdxInternal(const cgltf_node& node, U32& idx);
 	StringAuto getNodeName(const cgltf_node& node);
@@ -116,8 +108,8 @@ private:
 
 	// Scene
 	ANKI_USE_RESULT Error writeTransform(const Transform& trf);
-	ANKI_USE_RESULT Error visitNode(
-		const cgltf_node& node, const Transform& parentTrf, const HashMapAuto<CString, StringAuto>& parentExtras);
+	ANKI_USE_RESULT Error visitNode(const cgltf_node& node, const Transform& parentTrf,
+									const HashMapAuto<CString, StringAuto>& parentExtras);
 	ANKI_USE_RESULT Error writeLight(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
 	ANKI_USE_RESULT Error writeCamera(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);
 	ANKI_USE_RESULT Error writeModelNode(const cgltf_node& node, const HashMapAuto<CString, StringAuto>& parentExtras);

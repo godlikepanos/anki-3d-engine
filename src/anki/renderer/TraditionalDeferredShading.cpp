@@ -54,8 +54,8 @@ Error TraditionalDeferredLightShading::init()
 	return Error::NONE;
 }
 
-void TraditionalDeferredLightShading::bindVertexIndexBuffers(
-	MeshResourcePtr& mesh, CommandBufferPtr& cmdb, U32& indexCount)
+void TraditionalDeferredLightShading::bindVertexIndexBuffers(MeshResourcePtr& mesh, CommandBufferPtr& cmdb,
+															 U32& indexCount)
 {
 	// Attrib
 	U32 bufferBinding;
@@ -166,8 +166,8 @@ void TraditionalDeferredLightShading::drawLights(TraditionalDeferredLightShading
 	{
 		// Compute the model matrix
 		//
-		Mat4 modelM(
-			splightEl.m_worldTransform.getTranslationPart().xyz1(), splightEl.m_worldTransform.getRotationPart(), 1.0f);
+		Mat4 modelM(splightEl.m_worldTransform.getTranslationPart().xyz1(),
+					splightEl.m_worldTransform.getRotationPart(), 1.0f);
 
 		// Calc the scale of the cone
 		Mat4 scaleM(Mat4::getIdentity());

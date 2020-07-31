@@ -72,10 +72,9 @@ Error ProbeReflections::initGBuffer(const ConfigSet& config)
 
 	// Create RT descriptions
 	{
-		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(m_gbuffer.m_tileSize * 6,
-			m_gbuffer.m_tileSize,
-			GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
-			"CubeRefl GBuffer");
+		RenderTargetDescription texinit =
+			m_r->create2DRenderTargetDescription(m_gbuffer.m_tileSize * 6, m_gbuffer.m_tileSize,
+												 GBUFFER_COLOR_ATTACHMENT_PIXEL_FORMATS[0], "CubeRefl GBuffer");
 
 		// Create color RT descriptions
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
@@ -120,9 +119,8 @@ Error ProbeReflections::initLightShading(const ConfigSet& config)
 
 	// Init cube arr
 	{
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_lightShading.m_tileSize,
-			m_lightShading.m_tileSize,
-			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
+			m_lightShading.m_tileSize, m_lightShading.m_tileSize, LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
 				| TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 				| TextureUsageBit::GENERATE_MIPMAPS,
@@ -175,12 +173,12 @@ Error ProbeReflections::initIrradiance(const ConfigSet& config)
 Error ProbeReflections::initIrradianceToRefl(const ConfigSet& cfg)
 {
 	// Create program
-	ANKI_CHECK(m_r->getResourceManager().loadResource(
-		"shaders/ApplyIrradianceToReflection.ankiprog", m_irradianceToRefl.m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/ApplyIrradianceToReflection.ankiprog",
+													  m_irradianceToRefl.m_prog));
 
 	const ShaderProgramResourceVariant* variant;
-	m_irradianceToRefl.m_prog->getOrCreateVariant(
-		ShaderProgramResourceVariantInitInfo(m_irradianceToRefl.m_prog), variant);
+	m_irradianceToRefl.m_prog->getOrCreateVariant(ShaderProgramResourceVariantInitInfo(m_irradianceToRefl.m_prog),
+												  variant);
 	m_irradianceToRefl.m_grProg = variant->getProgram();
 
 	return Error::NONE;
@@ -233,9 +231,8 @@ void ProbeReflections::initCacheEntry(U32 cacheEntryIdx)
 	}
 }
 
-void ProbeReflections::prepareProbes(RenderingContext& ctx,
-	ReflectionProbeQueueElement*& probeToUpdateThisFrame,
-	U32& probeToUpdateThisFrameCacheEntryIdx)
+void ProbeReflections::prepareProbes(RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdateThisFrame,
+									 U32& probeToUpdateThisFrameCacheEntryIdx)
 {
 	probeToUpdateThisFrame = nullptr;
 	probeToUpdateThisFrameCacheEntryIdx = MAX_U32;
@@ -258,8 +255,8 @@ void ProbeReflections::prepareProbes(RenderingContext& ctx,
 		ReflectionProbeQueueElement& probe = ctx.m_renderQueue->m_reflectionProbes[probeIdx];
 
 		// Find cache entry
-		const U32 cacheEntryIdx = findBestCacheEntry(
-			probe.m_uuid, m_r->getGlobalTimestamp(), m_cacheEntries, m_probeUuidToCacheEntryIdx, getAllocator());
+		const U32 cacheEntryIdx = findBestCacheEntry(probe.m_uuid, m_r->getGlobalTimestamp(), m_cacheEntries,
+													 m_probeUuidToCacheEntryIdx, getAllocator());
 		if(ANKI_UNLIKELY(cacheEntryIdx == MAX_U32))
 		{
 			// Failed
@@ -346,11 +343,8 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 
 	I32 start, end;
 	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex,
-		rgraphCtx.m_secondLevelCommandBufferCount,
-		m_ctx.m_gbufferRenderableCount,
-		startu,
-		endu);
+	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount,
+						 m_ctx.m_gbufferRenderableCount, startu, endu);
 	start = I32(startu);
 	end = I32(endu);
 
@@ -369,15 +363,11 @@ void ProbeReflections::runGBuffer(RenderPassWorkContext& rgraphCtx)
 
 			const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
-			m_r->getSceneDrawer().drawRange(Pass::GB,
-				rqueue.m_viewMatrix,
-				rqueue.m_viewProjectionMatrix,
-				Mat4::getIdentity(), // Don't care about prev mats
-				cmdb,
-				m_r->getSamplers().m_trilinearRepeat,
-				rqueue.m_renderables.getBegin() + localStart,
-				rqueue.m_renderables.getBegin() + localEnd,
-				MAX_LOD_COUNT - 1);
+			m_r->getSceneDrawer().drawRange(Pass::GB, rqueue.m_viewMatrix, rqueue.m_viewProjectionMatrix,
+											Mat4::getIdentity(), // Don't care about prev mats
+											cmdb, m_r->getSamplers().m_trilinearRepeat,
+											rqueue.m_renderables.getBegin() + localStart,
+											rqueue.m_renderables.getBegin() + localEnd, MAX_LOD_COUNT - 1);
 		}
 	}
 
@@ -473,8 +463,8 @@ void ProbeReflections::runIrradiance(RenderPassWorkContext& rgraphCtx)
 	subresource.m_firstLayer = cacheEntryIdx;
 	rgraphCtx.bindTexture(0, 1, m_ctx.m_lightShadingRt, subresource);
 
-	allocateAndBindStorage<void*>(
-		sizeof(Vec4) * 6 * m_irradiance.m_workgroupSize * m_irradiance.m_workgroupSize, cmdb, 0, 3);
+	allocateAndBindStorage<void*>(sizeof(Vec4) * 6 * m_irradiance.m_workgroupSize * m_irradiance.m_workgroupSize, cmdb,
+								  0, 3);
 
 	cmdb->bindStorageBuffer(0, 4, m_irradiance.m_diceValuesBuff, 0, m_irradiance.m_diceValuesBuff->getSize());
 
@@ -567,8 +557,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			[](RenderPassWorkContext& rgraphCtx) {
 				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runGBuffer(rgraphCtx);
 			},
-			this,
-			taskCount);
+			this, taskCount);
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
@@ -581,7 +570,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Shadow pass. Optional
 	if(probeToUpdate->m_renderQueues[0]->m_directionalLight.m_uuid
-		&& probeToUpdate->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0)
+	   && probeToUpdate->m_renderQueues[0]->m_directionalLight.m_shadowCascadeCount > 0)
 	{
 		// Update light matrices
 		for(U i = 0; i < 6; ++i)
@@ -593,22 +582,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			const F32 yScale = 1.0f;
 			const F32 xOffset = F32(i) * (1.0f / 6.0f);
 			const F32 yOffset = 0.0f;
-			const Mat4 atlasMtx(xScale,
-				0.0f,
-				0.0f,
-				xOffset,
-				0.0f,
-				yScale,
-				0.0f,
-				yOffset,
-				0.0f,
-				0.0f,
-				1.0f,
-				0.0f,
-				0.0f,
-				0.0f,
-				0.0f,
-				1.0f);
+			const Mat4 atlasMtx(xScale, 0.0f, 0.0f, xOffset, 0.0f, yScale, 0.0f, yOffset, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+								0.0f, 0.0f, 1.0f);
 
 			Mat4& lightMat = probeToUpdate->m_renderQueues[i]->m_directionalLight.m_textureMatrices[0];
 			lightMat = atlasMtx * lightMat;
@@ -633,8 +608,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			[](RenderPassWorkContext& rgraphCtx) {
 				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runShadowMapping(rgraphCtx);
 			},
-			this,
-			taskCount);
+			this, taskCount);
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
 		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
@@ -646,29 +620,22 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Light shading passes
 	{
-		Array<RenderPassWorkCallback, 6> callbacks = {{runLightShadingCallback<0>,
-			runLightShadingCallback<1>,
-			runLightShadingCallback<2>,
-			runLightShadingCallback<3>,
-			runLightShadingCallback<4>,
-			runLightShadingCallback<5>}};
+		Array<RenderPassWorkCallback, 6> callbacks = {{runLightShadingCallback<0>, runLightShadingCallback<1>,
+													   runLightShadingCallback<2>, runLightShadingCallback<3>,
+													   runLightShadingCallback<4>, runLightShadingCallback<5>}};
 
 		// RT
 		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
 		// Passes
-		static const Array<CString, 6> passNames = {{"CubeRefl LightShad #0",
-			"CubeRefl LightShad #1",
-			"CubeRefl LightShad #2",
-			"CubeRefl LightShad #3",
-			"CubeRefl LightShad #4",
-			"CubeRefl LightShad #5"}};
+		static const Array<CString, 6> passNames = {{"CubeRefl LightShad #0", "CubeRefl LightShad #1",
+													 "CubeRefl LightShad #2", "CubeRefl LightShad #3",
+													 "CubeRefl LightShad #4", "CubeRefl LightShad #5"}};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 			pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
-				{{m_ctx.m_lightShadingRt}},
-				{});
+									{{m_ctx.m_lightShadingRt}}, {});
 			pass.setWork(callbacks[faceIdx], this, 0);
 
 			TextureSubresourceInfo subresource(TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
@@ -678,9 +645,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			{
 				pass.newDependency({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
 			}
-			pass.newDependency({m_ctx.m_gbufferDepthRt,
-				TextureUsageBit::SAMPLED_FRAGMENT,
-				TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
+			pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::SAMPLED_FRAGMENT,
+								TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 
 			if(m_ctx.m_shadowMapRt.isValid())
 			{
@@ -700,8 +666,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			[](RenderPassWorkContext& rgraphCtx) {
 				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runIrradiance(rgraphCtx);
 			},
-			this,
-			0);
+			this, 0);
 
 		// Read a cube but only one layer and level
 		TextureSubresourceInfo readSubresource;
@@ -720,8 +685,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			[](RenderPassWorkContext& rgraphCtx) {
 				static_cast<ProbeReflections*>(rgraphCtx.m_userData)->runIrradianceToRefl(rgraphCtx);
 			},
-			this,
-			0);
+			this, 0);
 
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT - 1; ++i)
 		{
@@ -738,19 +702,13 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Mipmapping "passes"
 	{
-		static const Array<RenderPassWorkCallback, 6> callbacks = {{runMipmappingOfLightShadingCallback<0>,
-			runMipmappingOfLightShadingCallback<1>,
-			runMipmappingOfLightShadingCallback<2>,
-			runMipmappingOfLightShadingCallback<3>,
-			runMipmappingOfLightShadingCallback<4>,
-			runMipmappingOfLightShadingCallback<5>}};
+		static const Array<RenderPassWorkCallback, 6> callbacks = {
+			{runMipmappingOfLightShadingCallback<0>, runMipmappingOfLightShadingCallback<1>,
+			 runMipmappingOfLightShadingCallback<2>, runMipmappingOfLightShadingCallback<3>,
+			 runMipmappingOfLightShadingCallback<4>, runMipmappingOfLightShadingCallback<5>}};
 
-		static const Array<CString, 6> passNames = {{"CubeRefl Mip #0",
-			"CubeRefl Mip #1",
-			"CubeRefl Mip #2",
-			"CubeRefl Mip #3",
-			"CubeRefl Mip #4",
-			"CubeRefl Mip #5"}};
+		static const Array<CString, 6> passNames = {{"CubeRefl Mip #0", "CubeRefl Mip #1", "CubeRefl Mip #2",
+													 "CubeRefl Mip #3", "CubeRefl Mip #4", "CubeRefl Mip #5"}};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
@@ -771,11 +729,8 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 
 	I32 start, end;
 	U32 startu, endu;
-	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex,
-		rgraphCtx.m_secondLevelCommandBufferCount,
-		m_ctx.m_shadowRenderableCount,
-		startu,
-		endu);
+	splitThreadedProblem(rgraphCtx.m_currentSecondLevelCommandBufferIndex, rgraphCtx.m_secondLevelCommandBufferCount,
+						 m_ctx.m_shadowRenderableCount, startu, endu);
 	start = I32(startu);
 	end = I32(endu);
 
@@ -803,15 +758,12 @@ void ProbeReflections::runShadowMapping(RenderPassWorkContext& rgraphCtx)
 			cmdb->setScissor(rez * faceIdx, 0, rez, rez);
 
 			ANKI_ASSERT(localStart >= 0 && localEnd <= faceDrawcallCount);
-			m_r->getSceneDrawer().drawRange(Pass::SM,
-				cascadeRenderQueue.m_viewMatrix,
-				cascadeRenderQueue.m_viewProjectionMatrix,
-				Mat4::getIdentity(), // Don't care about prev matrices here
-				cmdb,
-				m_r->getSamplers().m_trilinearRepeatAniso,
-				cascadeRenderQueue.m_renderables.getBegin() + localStart,
-				cascadeRenderQueue.m_renderables.getBegin() + localEnd,
-				MAX_LOD_COUNT - 1);
+			m_r->getSceneDrawer().drawRange(Pass::SM, cascadeRenderQueue.m_viewMatrix,
+											cascadeRenderQueue.m_viewProjectionMatrix,
+											Mat4::getIdentity(), // Don't care about prev matrices here
+											cmdb, m_r->getSamplers().m_trilinearRepeatAniso,
+											cascadeRenderQueue.m_renderables.getBegin() + localStart,
+											cascadeRenderQueue.m_renderables.getBegin() + localEnd, MAX_LOD_COUNT - 1);
 		}
 	}
 }

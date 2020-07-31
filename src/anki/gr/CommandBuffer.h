@@ -136,8 +136,8 @@ public:
 	/// @{
 
 	/// Bind vertex buffer.
-	void bindVertexBuffer(
-		U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate = VertexStepRate::VERTEX);
+	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride,
+						  VertexStepRate stepRate = VertexStepRate::VERTEX);
 
 	/// Setup a vertex attribute.
 	void setVertexAttribute(U32 location, U32 buffBinding, Format fmt, PtrSize relativeOffset);
@@ -165,10 +165,8 @@ public:
 	void setPolygonOffset(F32 factor, F32 units);
 
 	/// Set stencil operations. To disable stencil test put StencilOperation::KEEP to all operations.
-	void setStencilOperations(FaceSelectionBit face,
-		StencilOperation stencilFail,
-		StencilOperation stencilPassDepthFail,
-		StencilOperation stencilPassDepthPass);
+	void setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
+							  StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass);
 
 	/// Set stencil compare operation.
 	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp);
@@ -229,8 +227,8 @@ public:
 	/// @param sampler The sampler to override the default sampler of the tex.
 	/// @param usage The state the tex is in.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindTextureAndSampler(
-		U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage, U32 arrayIdx = 0);
+	void bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage,
+							   U32 arrayIdx = 0);
 
 	/// Bind sampler.
 	/// @param set The set to bind to.
@@ -283,8 +281,8 @@ public:
 	///              of the buffer.
 	/// @param fmt The format of the buffer.
 	/// @param arrayIdx The array index if the binding is an array.
-	void bindTextureBuffer(
-		U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx = 0);
+	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt,
+						   U32 arrayIdx = 0);
 
 	/// Bind an acceleration structure.
 	/// @param set The set to bind to.
@@ -316,13 +314,9 @@ public:
 	/// Begin renderpass.
 	/// The minx, miny, width, height control the area that the load and store operations will happen. If the scissor is
 	/// bigger than the render area the results are undefined.
-	void beginRenderPass(FramebufferPtr fb,
-		const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
-		TextureUsageBit depthStencilAttachmentUsage,
-		U32 minx = 0,
-		U32 miny = 0,
-		U32 width = MAX_U32,
-		U32 height = MAX_U32);
+	void beginRenderPass(FramebufferPtr fb, const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+						 TextureUsageBit depthStencilAttachmentUsage, U32 minx = 0, U32 miny = 0, U32 width = MAX_U32,
+						 U32 height = MAX_U32);
 
 	/// End renderpass.
 	void endRenderPass();
@@ -330,12 +324,8 @@ public:
 
 	/// @name Jobs
 	/// @{
-	void drawElements(PrimitiveTopology topology,
-		U32 count,
-		U32 instanceCount = 1,
-		U32 firstIndex = 0,
-		U32 baseVertex = 0,
-		U32 baseInstance = 0);
+	void drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount = 1, U32 firstIndex = 0,
+					  U32 baseVertex = 0, U32 baseInstance = 0);
 
 	void drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
 
@@ -399,22 +389,20 @@ public:
 
 	/// @name Sync
 	/// @{
-	void setTextureBarrier(TexturePtr tex,
-		TextureUsageBit prevUsage,
-		TextureUsageBit nextUsage,
-		const TextureSubresourceInfo& subresource);
+	void setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+						   const TextureSubresourceInfo& subresource);
 
-	void setTextureSurfaceBarrier(
-		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf);
+	void setTextureSurfaceBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+								  const TextureSurfaceInfo& surf);
 
-	void setTextureVolumeBarrier(
-		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol);
+	void setTextureVolumeBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+								 const TextureVolumeInfo& vol);
 
-	void setBufferBarrier(
-		BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage, PtrSize offset, PtrSize size);
+	void setBufferBarrier(BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage, PtrSize offset,
+						  PtrSize size);
 
-	void setAccelerationStructureBarrier(
-		AccelerationStructurePtr as, AccelerationStructureUsageBit prevUsage, AccelerationStructureUsageBit nextUsage);
+	void setAccelerationStructureBarrier(AccelerationStructurePtr as, AccelerationStructureUsageBit prevUsage,
+										 AccelerationStructureUsageBit nextUsage);
 	/// @}
 
 	/// @name Other

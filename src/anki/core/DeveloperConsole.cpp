@@ -49,10 +49,8 @@ void DeveloperConsole::build(CanvasPtr ctx)
 
 	// Push the items
 	const F32 footerHeightToPreserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
-	ImGui::BeginChild("ScrollingRegion",
-		Vec2(0, -footerHeightToPreserve),
-		false,
-		ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
+	ImGui::BeginChild("ScrollingRegion", Vec2(0, -footerHeightToPreserve), false,
+					  ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1 InputText
 
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, Vec2(4.0f, 1.0f)); // Tighten spacing
 
@@ -75,13 +73,9 @@ void DeveloperConsole::build(CanvasPtr ctx)
 		}
 
 		static const Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {{"I", "E", "W", "F"}};
-		ImGui::TextWrapped("[%s][%s] %s (%s:%d %s)",
-			MSG_TEXT[static_cast<U>(item.m_type)],
-			(item.m_subsystem) ? item.m_subsystem : "N/A ",
-			item.m_msg.cstr(),
-			item.m_file,
-			item.m_line,
-			item.m_func);
+		ImGui::TextWrapped("[%s][%s] %s (%s:%d %s)", MSG_TEXT[static_cast<U>(item.m_type)],
+						   (item.m_subsystem) ? item.m_subsystem : "N/A ", item.m_msg.cstr(), item.m_file, item.m_line,
+						   item.m_func);
 
 		ImGui::PopStyleColor();
 	}
@@ -100,8 +94,8 @@ void DeveloperConsole::build(CanvasPtr ctx)
 	// Commands
 	ImGui::Separator();
 	ImGui::PushItemWidth(-1.0f); // Use the whole size
-	if(ImGui::InputText(
-		   "", &m_inputText[0], m_inputText.getSizeInBytes(), ImGuiInputTextFlags_EnterReturnsTrue, nullptr, nullptr))
+	if(ImGui::InputText("", &m_inputText[0], m_inputText.getSizeInBytes(), ImGuiInputTextFlags_EnterReturnsTrue,
+						nullptr, nullptr))
 	{
 		const Error err = m_scriptEnv.evalString(&m_inputText[0]);
 		if(!err)

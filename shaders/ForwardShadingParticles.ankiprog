@@ -61,8 +61,8 @@ layout(location = 2) in Vec3 in_worldPos;
 void main()
 {
 #if ANIMATED_TEXTURE == 1
-	Vec4 texCol = readAnimatedTextureRgba(
-		u_diffuseMapArr, u_ankiGlobalSampler, u_ankiPerDraw.m_animationPeriod, in_uv, anki_u_time);
+	Vec4 texCol = readAnimatedTextureRgba(u_diffuseMapArr, u_ankiGlobalSampler, u_ankiPerDraw.m_animationPeriod, in_uv,
+										  anki_u_time);
 #else
 	Vec4 texCol = texture(u_diffuseMap, u_ankiGlobalSampler, in_uv);
 #endif

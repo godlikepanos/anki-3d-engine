@@ -62,8 +62,8 @@ public:
 	}
 
 	/// Revive the particle
-	virtual void revive(
-		const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime, Second crntTime)
+	virtual void revive(const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime,
+						Second crntTime)
 	{
 		ANKI_ASSERT(isDead());
 
@@ -97,8 +97,8 @@ public:
 	Vec4 m_velocity = Vec4(0.0);
 	Vec4 m_acceleration = Vec4(0.0);
 
-	void revive(
-		const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime, Second crntTime) override
+	void revive(const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime,
+				Second crntTime) override
 	{
 		ParticleBase::revive(props, trf, prevUpdateTime, crntTime);
 		m_velocity = Vec4(0.0);
@@ -149,8 +149,8 @@ public:
 		m_body->activate(false);
 	}
 
-	void revive(
-		const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime, Second crntTime) override
+	void revive(const ParticleEmitterProperties& props, const Transform& trf, Second prevUpdateTime,
+				Second crntTime) override
 	{
 		ParticleBase::revive(props, trf, prevUpdateTime, crntTime);
 
@@ -302,8 +302,8 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 	{
 		// Load verts
 		StagingGpuMemoryToken token;
-		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(
-			self.m_aliveParticlesCount * VERTEX_SIZE, StagingGpuMemoryType::VERTEX, token);
+		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(self.m_aliveParticlesCount * VERTEX_SIZE,
+																	StagingGpuMemoryType::VERTEX, token);
 		memcpy(gpuStorage, self.m_verts, self.m_aliveParticlesCount * VERTEX_SIZE);
 
 		// Program

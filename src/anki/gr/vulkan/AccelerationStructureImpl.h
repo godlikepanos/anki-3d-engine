@@ -16,8 +16,9 @@ namespace anki
 /// @{
 
 /// AccelerationStructure implementation.
-class AccelerationStructureImpl final : public AccelerationStructure,
-										public VulkanObject<AccelerationStructure, AccelerationStructureImpl>
+class AccelerationStructureImpl final :
+	public AccelerationStructure,
+	public VulkanObject<AccelerationStructure, AccelerationStructureImpl>
 {
 public:
 	AccelerationStructureImpl(GrManager* manager, CString name)
@@ -41,21 +42,17 @@ public:
 		return m_scratchBufferSize;
 	}
 
-	void generateBuildInfo(U64 scratchBufferAddress,
-		VkAccelerationStructureBuildGeometryInfoKHR& info,
-		VkAccelerationStructureBuildOffsetInfoKHR& offsetInfo) const
+	void generateBuildInfo(U64 scratchBufferAddress, VkAccelerationStructureBuildGeometryInfoKHR& info,
+						   VkAccelerationStructureBuildOffsetInfoKHR& offsetInfo) const
 	{
 		info = m_buildInfo;
 		info.scratchData.deviceAddress = scratchBufferAddress;
 		offsetInfo = m_offsetInfo;
 	}
 
-	static void computeBarrierInfo(AccelerationStructureUsageBit before,
-		AccelerationStructureUsageBit after,
-		VkPipelineStageFlags& srcStages,
-		VkAccessFlags& srcAccesses,
-		VkPipelineStageFlags& dstStages,
-		VkAccessFlags& dstAccesses);
+	static void computeBarrierInfo(AccelerationStructureUsageBit before, AccelerationStructureUsageBit after,
+								   VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
+								   VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses);
 
 private:
 	class ASBottomLevelInfo : public BottomLevelAccelerationStructureInitInfo

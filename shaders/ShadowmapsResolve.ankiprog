@@ -85,9 +85,8 @@ void main()
 	}
 
 	// Store
-	imageStore(out_img,
-		IVec2(gl_GlobalInvocationID.xy),
-		Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
+	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy),
+			   Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
 }
 
 #pragma anki end

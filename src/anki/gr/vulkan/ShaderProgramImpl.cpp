@@ -111,10 +111,10 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Create the ppline layout
 	//
-	WeakArray<DescriptorSetLayout> dsetLayouts(
-		(descriptorSetCount) ? &m_descriptorSetLayouts[0] : nullptr, descriptorSetCount);
-	ANKI_CHECK(getGrManagerImpl().getPipelineLayoutFactory().newPipelineLayout(
-		dsetLayouts, m_refl.m_pushConstantsSize, m_pplineLayout));
+	WeakArray<DescriptorSetLayout> dsetLayouts((descriptorSetCount) ? &m_descriptorSetLayouts[0] : nullptr,
+											   descriptorSetCount);
+	ANKI_CHECK(getGrManagerImpl().getPipelineLayoutFactory().newPipelineLayout(dsetLayouts, m_refl.m_pushConstantsSize,
+																			   m_pplineLayout));
 
 	// Get some masks
 	//
@@ -160,8 +160,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	if(graphicsProg)
 	{
 		m_pplineFactory = getAllocator().newInstance<PipelineFactory>();
-		m_pplineFactory->init(
-			getGrManagerImpl().getAllocator(), getGrManagerImpl().getDevice(), getGrManagerImpl().getPipelineCache());
+		m_pplineFactory->init(getGrManagerImpl().getAllocator(), getGrManagerImpl().getDevice(),
+							  getGrManagerImpl().getPipelineCache());
 	}
 
 	// Create the pipeline if compute
@@ -180,8 +180,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.stage.module = shaderImpl.m_handle;
 		ci.stage.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 
-		ANKI_VK_CHECK(vkCreateComputePipelines(
-			getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_computePpline));
+		ANKI_VK_CHECK(vkCreateComputePipelines(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
+											   &m_computePpline));
 		getGrManagerImpl().printPipelineShaderInfo(m_computePpline, getName(), ShaderTypeBit::COMPUTE);
 	}
 

@@ -72,7 +72,7 @@ Vec4 textureCatmullRom4Samples(texture2D tex, sampler sampl, Vec2 uv, Vec2 texSi
 	const Vec2 sum1 = (2.0 * f - 2.5) * f - 0.5;
 	Vec4 w = Vec4(f * sum0 + 1.0, f * sum1);
 	const Vec4 pos = Vec4((((-2.0 * f + 3.0) * f + 0.5) * f - 1.5) * f / (w.xy * texSize) + uv,
-		(((-2.0 * f + 5.0) * f - 2.5) * f - 0.5) / (sum1 * texSize) + uv);
+						  (((-2.0 * f + 5.0) * f - 2.5) * f - 0.5) / (sum1 * texSize) + uv);
 	w.xz *= halff.x * halff.y > 0.0 ? 1.0 : -1.0;
 
 	return (texture(tex, sampl, pos.xy) * w.x + texture(tex, sampl, pos.zy) * w.z) * w.y
@@ -85,13 +85,8 @@ F32 rand(Vec2 n)
 	return 0.5 + 0.5 * fract(sin(dot(n, Vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-Vec4 nearestDepthUpscale(Vec2 uv,
-	texture2D depthFull,
-	texture2D depthHalf,
-	texture2D colorTex,
-	sampler linearAnyClampSampler,
-	Vec2 linearDepthCf,
-	F32 depthThreshold)
+Vec4 nearestDepthUpscale(Vec2 uv, texture2D depthFull, texture2D depthHalf, texture2D colorTex,
+						 sampler linearAnyClampSampler, Vec2 linearDepthCf, F32 depthThreshold)
 {
 	F32 fullDepth = textureLod(depthFull, linearAnyClampSampler, uv, 0.0).r; // Sampler not important.
 	fullDepth = linearizeDepthOptimal(fullDepth, linearDepthCf.x, linearDepthCf.y);
@@ -148,17 +143,9 @@ F32 _calcDepthWeight(texture2D depthLow, sampler nearestAnyClamp, Vec2 uv, F32 r
 	return 1.0 / (EPSILON + abs(ref - linearD));
 }
 
-Vec4 _sampleAndWeight(texture2D depthLow,
-	texture2D colorLow,
-	sampler linearAnyClamp,
-	sampler nearestAnyClamp,
-	const Vec2 lowInvSize,
-	Vec2 uv,
-	const Vec2 offset,
-	const F32 ref,
-	const F32 weight,
-	const Vec2 linearDepthCf,
-	inout F32 normalize)
+Vec4 _sampleAndWeight(texture2D depthLow, texture2D colorLow, sampler linearAnyClamp, sampler nearestAnyClamp,
+					  const Vec2 lowInvSize, Vec2 uv, const Vec2 offset, const F32 ref, const F32 weight,
+					  const Vec2 linearDepthCf, inout F32 normalize)
 {
 	uv += offset * lowInvSize;
 	const F32 dw = _calcDepthWeight(depthLow, nearestAnyClamp, uv, ref, linearDepthCf);
@@ -167,119 +154,32 @@ Vec4 _sampleAndWeight(texture2D depthLow,
 	return v * dw * weight;
 }
 
-Vec4 bilateralUpsample(texture2D depthHigh,
-	texture2D depthLow,
-	texture2D colorLow,
-	sampler linearAnyClamp,
-	sampler nearestAnyClamp,
-	const Vec2 lowInvSize,
-	const Vec2 uv,
-	const Vec2 linearDepthCf)
+Vec4 bilateralUpsample(texture2D depthHigh, texture2D depthLow, texture2D colorLow, sampler linearAnyClamp,
+					   sampler nearestAnyClamp, const Vec2 lowInvSize, const Vec2 uv, const Vec2 linearDepthCf)
 {
 	const Vec3 WEIGHTS = Vec3(0.25, 0.125, 0.0625);
 	const F32 depthRef =
 		linearizeDepthOptimal(textureLod(depthHigh, nearestAnyClamp, uv, 0.0).r, linearDepthCf.x, linearDepthCf.y);
 	F32 normalize = 0.0;
 
-	Vec4 sum = _sampleAndWeight(depthLow,
-		colorLow,
-		linearAnyClamp,
-		nearestAnyClamp,
-		lowInvSize,
-		uv,
-		Vec2(0.0, 0.0),
-		depthRef,
-		WEIGHTS.x,
-		linearDepthCf,
-		normalize);
-	sum += _sampleAndWeight(depthLow,
-		colorLow,
-		linearAnyClamp,
-		nearestAnyClamp,
-		lowInvSize,
-		uv,
-		Vec2(-1.0, 0.0),
-		depthRef,
-		WEIGHTS.y,
-		linearDepthCf,
-		normalize);
-	sum += _sampleAndWeight(depthLow,
-		colorLow,
-		linearAnyClamp,
-		nearestAnyClamp,
-		lowInvSize,
-		uv,
-		Vec2(0.0, -1.0),
-		depthRef,
-		WEIGHTS.y,
-		linearDepthCf,
-		normalize);
-	sum += _sampleAndWeight(depthLow,
-		colorLow,
-		linearAnyClamp,
-		nearestAnyClamp,
-		lowInvSize,
-		uv,
-		Vec2(1.0, 0.0),
-		depthRef,
-		WEIGHTS.y,
-		linearDepthCf,
-		normalize);
-	sum += _sampleAndWeight(depthLow,
-		colorLow,
-		linearAnyClamp,
-		nearestAnyClamp,
-		lowInvSize,
-		uv,
-		Vec2(0.0, 1.0),
-		depthRef,
-		WEIGHTS.y,
-		linearDepthCf,
-		normalize);
-	sum += _sampleAndWeight(depthLow,
-		colorLow,
-		linearAnyClamp,
-		nearestAnyClamp,
-		lowInvSize,
-		uv,
-		Vec2(1.0, 1.0),
-		depthRef,
-		WEIGHTS.z,
-		linearDepthCf,
-		normalize);
-	sum += _sampleAndWeight(depthLow,
-		colorLow,
-		linearAnyClamp,
-		nearestAnyClamp,
-		lowInvSize,
-		uv,
-		Vec2(1.0, -1.0),
-		depthRef,
-		WEIGHTS.z,
-		linearDepthCf,
-		normalize);
-	sum += _sampleAndWeight(depthLow,
-		colorLow,
-		linearAnyClamp,
-		nearestAnyClamp,
-		lowInvSize,
-		uv,
-		Vec2(-1.0, 1.0),
-		depthRef,
-		WEIGHTS.z,
-		linearDepthCf,
-		normalize);
-	sum += _sampleAndWeight(depthLow,
-		colorLow,
-		linearAnyClamp,
-		nearestAnyClamp,
-		lowInvSize,
-		uv,
-		Vec2(-1.0, -1.0),
-		depthRef,
-		WEIGHTS.z,
-		linearDepthCf,
-		normalize);
+	Vec4 sum = _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, 0.0),
+								depthRef, WEIGHTS.x, linearDepthCf, normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, 0.0),
+							depthRef, WEIGHTS.y, linearDepthCf, normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, -1.0),
+							depthRef, WEIGHTS.y, linearDepthCf, normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, 0.0),
+							depthRef, WEIGHTS.y, linearDepthCf, normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(0.0, 1.0),
+							depthRef, WEIGHTS.y, linearDepthCf, normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, 1.0),
+							depthRef, WEIGHTS.z, linearDepthCf, normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(1.0, -1.0),
+							depthRef, WEIGHTS.z, linearDepthCf, normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, 1.0),
+							depthRef, WEIGHTS.z, linearDepthCf, normalize);
+	sum += _sampleAndWeight(depthLow, colorLow, linearAnyClamp, nearestAnyClamp, lowInvSize, uv, Vec2(-1.0, -1.0),
+							depthRef, WEIGHTS.z, linearDepthCf, normalize);
 
 	return sum / normalize;
 }

@@ -143,8 +143,8 @@ private:
 	/// Lazily init the cache entry
 	void initCacheEntry(U32 cacheEntryIdx);
 
-	void prepareProbes(
-		RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate, U32& probeToUpdateCacheEntryIdx);
+	void prepareProbes(RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate,
+					   U32& probeToUpdateCacheEntryIdx);
 
 	void runGBuffer(RenderPassWorkContext& rgraphCtx);
 	void runShadowMapping(RenderPassWorkContext& rgraphCtx);

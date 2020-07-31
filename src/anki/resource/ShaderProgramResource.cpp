@@ -193,8 +193,8 @@ Error ShaderProgramResource::parseConst(CString constName, U32& componentIdx, U3
 	return Error::NONE;
 }
 
-void ShaderProgramResource::getOrCreateVariant(
-	const ShaderProgramResourceVariantInitInfo& info, const ShaderProgramResourceVariant*& variant) const
+void ShaderProgramResource::getOrCreateVariant(const ShaderProgramResourceVariantInitInfo& info,
+											   const ShaderProgramResourceVariant*& variant) const
 {
 	// Sanity checks
 	ANKI_ASSERT(info.m_setMutators.getEnabledBitCount() == m_mutators.getSize());
@@ -246,8 +246,8 @@ void ShaderProgramResource::getOrCreateVariant(
 	variant = v;
 }
 
-void ShaderProgramResource::initVariant(
-	const ShaderProgramResourceVariantInitInfo& info, ShaderProgramResourceVariant& variant) const
+void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitInfo& info,
+										ShaderProgramResourceVariant& variant) const
 {
 	const ShaderProgramBinary& binary = m_binary.getBinary();
 

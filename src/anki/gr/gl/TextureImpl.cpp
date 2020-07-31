@@ -94,8 +94,8 @@ TextureImpl::~TextureImpl()
 		CommandBufferPtr commands;
 
 		commands = manager.newCommandBuffer(CommandBufferInitInfo());
-		static_cast<CommandBufferImpl&>(*commands).pushBackNewCommand<DeleteTextureCommand>(
-			m_glName, m_viewsMap, getAllocator());
+		static_cast<CommandBufferImpl&>(*commands).pushBackNewCommand<DeleteTextureCommand>(m_glName, m_viewsMap,
+																							getAllocator());
 		static_cast<CommandBufferImpl&>(*commands).flush();
 	}
 	else
@@ -209,8 +209,8 @@ void TextureImpl::init(const TextureInitInfo& init)
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::copyFromBuffer(
-	const TextureSubresourceInfo& subresource, GLuint pbo, PtrSize offset, PtrSize dataSize) const
+void TextureImpl::copyFromBuffer(const TextureSubresourceInfo& subresource, GLuint pbo, PtrSize offset,
+								 PtrSize dataSize) const
 {
 	ANKI_ASSERT(isSubresourceGoodForCopyFromBuffer(subresource));
 	ANKI_ASSERT(dataSize > 0);
@@ -243,13 +243,13 @@ void TextureImpl::copyFromBuffer(
 		const U surfIdx = computeSurfaceIdx(TextureSurfaceInfo(mipmap, 0, subresource.m_firstFace, 0));
 		if(!m_compressed)
 		{
-			glTexSubImage2D(
-				GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_glFormat, m_glType, ptrOffset);
+			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_glFormat, m_glType,
+							ptrOffset);
 		}
 		else
 		{
-			glCompressedTexSubImage2D(
-				GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_glFormat, dataSize, ptrOffset);
+			glCompressedTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_glFormat,
+									  dataSize, ptrOffset);
 		}
 		break;
 	}
@@ -341,8 +341,8 @@ void TextureImpl::clear(const TextureSubresourceInfo& subresource, const ClearVa
 				const U width = m_width >> mip;
 				const U height = m_height >> mip;
 
-				glClearTexSubImage(
-					m_glName, mip, 0, 0, surfaceIdx, width, height, 1, format, GL_FLOAT, &clearValue.m_colorf[0]);
+				glClearTexSubImage(m_glName, mip, 0, 0, surfaceIdx, width, height, 1, format, GL_FLOAT,
+								   &clearValue.m_colorf[0]);
 			}
 		}
 	}
@@ -405,24 +405,17 @@ MicroTextureView TextureImpl::getOrCreateView(const TextureSubresourceInfo& subr
 
 		const U firstSurf = computeSurfaceIdx(
 			TextureSurfaceInfo(subresource.m_firstMipmap, 0, subresource.m_firstFace, subresource.m_firstLayer));
-		const U lastSurf = computeSurfaceIdx(TextureSurfaceInfo(subresource.m_firstMipmap,
-			0,
-			subresource.m_firstFace + subresource.m_faceCount - 1,
-			subresource.m_firstLayer + subresource.m_layerCount - 1));
+		const U lastSurf = computeSurfaceIdx(
+			TextureSurfaceInfo(subresource.m_firstMipmap, 0, subresource.m_firstFace + subresource.m_faceCount - 1,
+							   subresource.m_firstLayer + subresource.m_layerCount - 1));
 		ANKI_ASSERT(firstSurf <= lastSurf);
 
 		MicroTextureView view;
 		view.m_aspect = subresource.m_depthStencilAspect;
 
 		glGenTextures(1, &view.m_glName);
-		glTextureView(view.m_glName,
-			glTarget,
-			m_glName,
-			m_internalFormat,
-			subresource.m_firstMipmap,
-			subresource.m_mipmapCount,
-			firstSurf,
-			lastSurf - firstSurf + 1);
+		glTextureView(view.m_glName, glTarget, m_glName, m_internalFormat, subresource.m_firstMipmap,
+					  subresource.m_mipmapCount, firstSurf, lastSurf - firstSurf + 1);
 
 		m_viewsMap.emplace(getAllocator(), subresource, view);
 

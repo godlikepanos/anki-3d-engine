@@ -30,8 +30,8 @@ static Bool attributeIsRequired(VertexAttributeLocation loc, Pass pass, Bool has
 	}
 }
 
-void ModelPatch::getRenderingDataSub(
-	const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const
+void ModelPatch::getRenderingDataSub(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray,
+									 ModelRenderingInfo& inf) const
 {
 	const Bool hasSkin = m_model->getSkeleton().isCreated();
 
@@ -109,11 +109,8 @@ U32 ModelPatch::getLodCount() const
 	return max<U32>(m_meshCount, getMaterial()->getLodCount());
 }
 
-Error ModelPatch::init(ModelResource* model,
-	ConstWeakArray<CString> meshFNames,
-	const CString& mtlFName,
-	Bool async,
-	ResourceManager* manager)
+Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames, const CString& mtlFName, Bool async,
+					   ResourceManager* manager)
 {
 	ANKI_ASSERT(meshFNames.getSize() > 0);
 	m_model = model;
@@ -226,8 +223,8 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		CString cstr;
 		ANKI_CHECK(materialEl.getText(cstr));
 
-		ANKI_CHECK(m_modelPatches[count].init(
-			this, ConstWeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async, &getManager()));
+		ANKI_CHECK(m_modelPatches[count].init(this, ConstWeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async,
+											  &getManager()));
 
 		// Move to next
 		ANKI_CHECK(modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));

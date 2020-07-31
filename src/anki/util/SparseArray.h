@@ -59,13 +59,12 @@ public:
 	{
 	}
 
-	SparseArrayIterator(TSparseArrayPtr arr,
-		Index modIdx
+	SparseArrayIterator(TSparseArrayPtr arr, Index modIdx
 #if ANKI_EXTRA_CHECKS
-		,
-		U32 ver
+						,
+						U32 ver
 #endif
-		)
+						)
 		: m_array(arr)
 		, m_elementIdx(modIdx)
 #if ANKI_EXTRA_CHECKS
@@ -185,9 +184,8 @@ public:
 	/// @param initialStorageSize The initial size of the array.
 	/// @param probeCount         The number of probe queries. It's the linear probe count the sparse array is using.
 	/// @param maxLoadFactor      If storage is loaded more than maxLoadFactor then increase it.
-	SparseArray(Index initialStorageSize = INITIAL_STORAGE_SIZE,
-		U32 probeCount = LINEAR_PROBING_COUNT,
-		F32 maxLoadFactor = MAX_LOAD_FACTOR)
+	SparseArray(Index initialStorageSize = INITIAL_STORAGE_SIZE, U32 probeCount = LINEAR_PROBING_COUNT,
+				F32 maxLoadFactor = MAX_LOAD_FACTOR)
 		: m_initialStorageSize(initialStorageSize)
 		, m_probeCount(probeCount)
 		, m_maxLoadFactor(maxLoadFactor)
@@ -239,11 +237,10 @@ public:
 	/// Get begin.
 	Iterator getBegin()
 	{
-		return Iterator(this,
-			findFirstAlive()
+		return Iterator(this, findFirstAlive()
 #if ANKI_EXTRA_CHECKS
-				,
-			m_iteratorVer
+								  ,
+						m_iteratorVer
 #endif
 		);
 	}
@@ -251,11 +248,10 @@ public:
 	/// Get begin.
 	ConstIterator getBegin() const
 	{
-		return ConstIterator(this,
-			findFirstAlive()
+		return ConstIterator(this, findFirstAlive()
 #if ANKI_EXTRA_CHECKS
-				,
-			m_iteratorVer
+									   ,
+							 m_iteratorVer
 #endif
 		);
 	}
@@ -263,11 +259,10 @@ public:
 	/// Get end.
 	Iterator getEnd()
 	{
-		return Iterator(this,
-			getMaxNumericLimit<Index>()
+		return Iterator(this, getMaxNumericLimit<Index>()
 #if ANKI_EXTRA_CHECKS
-				,
-			m_iteratorVer
+								  ,
+						m_iteratorVer
 #endif
 		);
 	}
@@ -275,11 +270,10 @@ public:
 	/// Get end.
 	ConstIterator getEnd() const
 	{
-		return ConstIterator(this,
-			getMaxNumericLimit<Index>()
+		return ConstIterator(this, getMaxNumericLimit<Index>()
 #if ANKI_EXTRA_CHECKS
-				,
-			m_iteratorVer
+									   ,
+							 m_iteratorVer
 #endif
 		);
 	}
@@ -331,11 +325,10 @@ public:
 	/// Get an iterator.
 	Iterator find(Index idx)
 	{
-		return Iterator(this,
-			findInternal(idx)
+		return Iterator(this, findInternal(idx)
 #if ANKI_EXTRA_CHECKS
-				,
-			m_iteratorVer
+								  ,
+						m_iteratorVer
 #endif
 		);
 	}
@@ -343,11 +336,10 @@ public:
 	/// Get an iterator.
 	ConstIterator find(Index idx) const
 	{
-		return ConstIterator(this,
-			findInternal(idx)
+		return ConstIterator(this, findInternal(idx)
 #if ANKI_EXTRA_CHECKS
-				,
-			m_iteratorVer
+									   ,
+							 m_iteratorVer
 #endif
 		);
 	}

@@ -258,24 +258,18 @@ public:
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
 	{
-		s.doArray("m_codeBlockIndices",
-			offsetof(ShaderProgramBinaryVariant, m_codeBlockIndices),
-			&self.m_codeBlockIndices[0],
-			self.m_codeBlockIndices.getSize());
+		s.doArray("m_codeBlockIndices", offsetof(ShaderProgramBinaryVariant, m_codeBlockIndices),
+				  &self.m_codeBlockIndices[0], self.m_codeBlockIndices.getSize());
 		s.doValue("m_uniformBlocks", offsetof(ShaderProgramBinaryVariant, m_uniformBlocks), self.m_uniformBlocks);
 		s.doValue("m_storageBlocks", offsetof(ShaderProgramBinaryVariant, m_storageBlocks), self.m_storageBlocks);
-		s.doPointer(
-			"m_pushConstantBlock", offsetof(ShaderProgramBinaryVariant, m_pushConstantBlock), self.m_pushConstantBlock);
+		s.doPointer("m_pushConstantBlock", offsetof(ShaderProgramBinaryVariant, m_pushConstantBlock),
+					self.m_pushConstantBlock);
 		s.doValue("m_opaques", offsetof(ShaderProgramBinaryVariant, m_opaques), self.m_opaques);
 		s.doValue("m_constants", offsetof(ShaderProgramBinaryVariant, m_constants), self.m_constants);
-		s.doArray("m_workgroupSizes",
-			offsetof(ShaderProgramBinaryVariant, m_workgroupSizes),
-			&self.m_workgroupSizes[0],
-			self.m_workgroupSizes.getSize());
-		s.doArray("m_workgroupSizesConstants",
-			offsetof(ShaderProgramBinaryVariant, m_workgroupSizesConstants),
-			&self.m_workgroupSizesConstants[0],
-			self.m_workgroupSizesConstants.getSize());
+		s.doArray("m_workgroupSizes", offsetof(ShaderProgramBinaryVariant, m_workgroupSizes), &self.m_workgroupSizes[0],
+				  self.m_workgroupSizes.getSize());
+		s.doArray("m_workgroupSizesConstants", offsetof(ShaderProgramBinaryVariant, m_workgroupSizesConstants),
+				  &self.m_workgroupSizesConstants[0], self.m_workgroupSizesConstants.getSize());
 	}
 
 	template<typename TDeserializer>
@@ -398,12 +392,12 @@ public:
 		s.doValue("m_mutations", offsetof(ShaderProgramBinary, m_mutations), self.m_mutations);
 		s.doValue("m_uniformBlocks", offsetof(ShaderProgramBinary, m_uniformBlocks), self.m_uniformBlocks);
 		s.doValue("m_storageBlocks", offsetof(ShaderProgramBinary, m_storageBlocks), self.m_storageBlocks);
-		s.doPointer(
-			"m_pushConstantBlock", offsetof(ShaderProgramBinary, m_pushConstantBlock), self.m_pushConstantBlock);
+		s.doPointer("m_pushConstantBlock", offsetof(ShaderProgramBinary, m_pushConstantBlock),
+					self.m_pushConstantBlock);
 		s.doValue("m_opaques", offsetof(ShaderProgramBinary, m_opaques), self.m_opaques);
 		s.doValue("m_constants", offsetof(ShaderProgramBinary, m_constants), self.m_constants);
-		s.doValue(
-			"m_presentShaderTypes", offsetof(ShaderProgramBinary, m_presentShaderTypes), self.m_presentShaderTypes);
+		s.doValue("m_presentShaderTypes", offsetof(ShaderProgramBinary, m_presentShaderTypes),
+				  self.m_presentShaderTypes);
 	}
 
 	template<typename TDeserializer>

@@ -41,8 +41,8 @@ private:
 
 /// The callback that defines a ThreadHibe task.
 /// @memberof ThreadHive
-using ThreadHiveTaskCallback = void (*)(
-	void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore);
+using ThreadHiveTaskCallback = void (*)(void* userData, U32 threadId, ThreadHive& hive,
+										ThreadHiveSemaphore* signalSemaphore);
 
 /// Task for the ThreadHive. @memberof ThreadHive
 class ThreadHiveTask

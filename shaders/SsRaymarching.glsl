@@ -57,19 +57,13 @@ void stepToNextCell(Vec3 rayOrigin, Vec3 rayDir, U32 mipLevel, UVec2 hizSize, ou
 
 // Note: All calculations in view space
 void raymarch(Vec3 rayOrigin, // Ray origin in view space
-	Vec3 rayDir, // Ray dir in view space
-	F32 tmin, // Shoot rays from
-	Vec2 uv, // UV the ray starts
-	F32 depthRef, // Depth the ray starts
-	Mat4 projMat, // Projection matrix
-	U32 randFrom0To3,
-	U32 maxIterations,
-	texture2D hizTex,
-	sampler hizSampler,
-	U32 hizMipCount,
-	UVec2 hizMip0Size,
-	out Vec3 hitPoint,
-	out F32 attenuation)
+			  Vec3 rayDir, // Ray dir in view space
+			  F32 tmin, // Shoot rays from
+			  Vec2 uv, // UV the ray starts
+			  F32 depthRef, // Depth the ray starts
+			  Mat4 projMat, // Projection matrix
+			  U32 randFrom0To3, U32 maxIterations, texture2D hizTex, sampler hizSampler, U32 hizMipCount,
+			  UVec2 hizMip0Size, out Vec3 hitPoint, out F32 attenuation)
 {
 	attenuation = 0.0;
 
@@ -149,19 +143,12 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 
 // Note: All calculations in view space
 void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
-	Vec3 rayDir, // Ray dir in view space
-	Vec2 uv, // UV the ray starts
-	F32 depthRef, // Depth the ray starts
-	Mat4 projMat, // Projection matrix
-	U32 maxIterations,
-	texture2D depthTex,
-	sampler depthSampler,
-	F32 depthLod,
-	UVec2 depthTexSize,
-	U32 bigStep,
-	U32 randInitialStep,
-	out Vec3 hitPoint,
-	out F32 attenuation)
+						 Vec3 rayDir, // Ray dir in view space
+						 Vec2 uv, // UV the ray starts
+						 F32 depthRef, // Depth the ray starts
+						 Mat4 projMat, // Projection matrix
+						 U32 maxIterations, texture2D depthTex, sampler depthSampler, F32 depthLod, UVec2 depthTexSize,
+						 U32 bigStep, U32 randInitialStep, out Vec3 hitPoint, out F32 attenuation)
 {
 	attenuation = 0.0;
 

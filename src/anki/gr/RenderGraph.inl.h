@@ -13,8 +13,9 @@ inline void RenderPassWorkContext::getBufferState(RenderPassBufferHandle handle,
 	buff = m_rgraph->getBuffer(handle);
 }
 
-inline void RenderPassWorkContext::getRenderTargetState(
-	RenderTargetHandle handle, const TextureSubresourceInfo& subresource, TexturePtr& tex, TextureUsageBit& usage) const
+inline void RenderPassWorkContext::getRenderTargetState(RenderTargetHandle handle,
+														const TextureSubresourceInfo& subresource, TexturePtr& tex,
+														TextureUsageBit& usage) const
 {
 	m_rgraph->getCrntUsage(handle, m_batchIdx, subresource, usage);
 	tex = m_rgraph->getTexture(handle);
@@ -128,13 +129,9 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 	}
 }
 
-inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
-	std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
-	RenderTargetHandle depthStencilRenderTargetHandle,
-	U32 minx,
-	U32 miny,
-	U32 maxx,
-	U32 maxy)
+inline void GraphicsRenderPassDescription::setFramebufferInfo(
+	const FramebufferDescription& fbInfo, std::initializer_list<RenderTargetHandle> colorRenderTargetHandles,
+	RenderTargetHandle depthStencilRenderTargetHandle, U32 minx, U32 miny, U32 maxx, U32 maxy)
 {
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
 	U32 count = 0;
@@ -142,22 +139,13 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferD
 	{
 		rts[count++] = h;
 	}
-	setFramebufferInfo(fbInfo,
-		ConstWeakArray<RenderTargetHandle>(&rts[0], count),
-		depthStencilRenderTargetHandle,
-		minx,
-		miny,
-		maxx,
-		maxy);
+	setFramebufferInfo(fbInfo, ConstWeakArray<RenderTargetHandle>(&rts[0], count), depthStencilRenderTargetHandle, minx,
+					   miny, maxx, maxy);
 }
 
-inline void GraphicsRenderPassDescription::setFramebufferInfo(const FramebufferDescription& fbInfo,
-	ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
-	RenderTargetHandle depthStencilRenderTargetHandle,
-	U32 minx,
-	U32 miny,
-	U32 maxx,
-	U32 maxy)
+inline void GraphicsRenderPassDescription::setFramebufferInfo(
+	const FramebufferDescription& fbInfo, ConstWeakArray<RenderTargetHandle> colorRenderTargetHandles,
+	RenderTargetHandle depthStencilRenderTargetHandle, U32 minx, U32 miny, U32 maxx, U32 maxy)
 {
 #if ANKI_ENABLE_ASSERTS
 	ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");

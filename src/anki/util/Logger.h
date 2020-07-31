@@ -69,24 +69,13 @@ public:
 	void addFileMessageHandler(File* file);
 
 	/// Send a message
-	void write(const char* file,
-		int line,
-		const char* func,
-		const char* subsystem,
-		LoggerMessageType type,
-		ThreadId tid,
-		const char* msg);
+	void write(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
+			   ThreadId tid, const char* msg);
 
 	/// Send a formated message
 	ANKI_CHECK_FORMAT(7, 8)
-	void writeFormated(const char* file,
-		int line,
-		const char* func,
-		const char* subsystem,
-		LoggerMessageType type,
-		ThreadId tid,
-		const char* fmt,
-		...);
+	void writeFormated(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
+					   ThreadId tid, const char* fmt, ...);
 
 private:
 	class Handler
@@ -119,13 +108,8 @@ typedef Singleton<Logger> LoggerSingleton;
 #define ANKI_LOG(subsystem_, t, ...) \
 	do \
 	{ \
-		LoggerSingleton::get().writeFormated(ANKI_FILE, \
-			__LINE__, \
-			ANKI_FUNC, \
-			subsystem_, \
-			LoggerMessageType::t, \
-			Thread::getCurrentThreadId(), \
-			__VA_ARGS__); \
+		LoggerSingleton::get().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, subsystem_, LoggerMessageType::t, \
+											 Thread::getCurrentThreadId(), __VA_ARGS__); \
 	} while(false);
 /// @}
 

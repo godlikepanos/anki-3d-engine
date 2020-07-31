@@ -114,19 +114,15 @@ Error CoreTracer::init(GenericMemoryPoolAllocator<U8> alloc, CString directory)
 	ANKI_CORE_LOGI("Tracing is %s from the beginning", (enableTracer) ? "enabled" : "disabled");
 
 	m_alloc = alloc;
-	m_thread.start(this,
-		[](ThreadCallbackInfo& info) -> Error { return static_cast<CoreTracer*>(info.m_userData)->threadWorker(); });
+	m_thread.start(this, [](ThreadCallbackInfo& info) -> Error {
+		return static_cast<CoreTracer*>(info.m_userData)->threadWorker();
+	});
 
 	std::time_t t = std::time(nullptr);
 	std::tm* tm = std::localtime(&t);
 	StringAuto fname(m_alloc);
-	fname.sprintf("%s/%d%02d%02d-%02d%02d_",
-		directory.cstr(),
-		tm->tm_year + 1900,
-		tm->tm_mon + 1,
-		tm->tm_mday,
-		tm->tm_hour,
-		tm->tm_min);
+	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+				  tm->tm_hour, tm->tm_min);
 
 	ANKI_CHECK(m_traceJsonFile.open(StringAuto(alloc).sprintf("%strace.json", fname.cstr()), FileOpenFlag::WRITE));
 	ANKI_CHECK(m_traceJsonFile.writeText("[\n"));
@@ -200,10 +196,7 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 
 		ANKI_CHECK(m_traceJsonFile.writeText("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
 											 "\"pid\": 1, \"tid\": %llu, \"ts\": %lld, \"dur\": %lld},\n",
-			event.m_name.cstr(),
-			tid,
-			startMicroSec,
-			durMicroSec));
+											 event.m_name.cstr(), tid, startMicroSec, durMicroSec));
 	}
 
 	// Store counters
@@ -215,9 +208,8 @@ Error CoreTracer::writeEvents(ThreadWorkItem& item)
 void CoreTracer::gatherCounters(ThreadWorkItem& item)
 {
 	// Sort
-	std::sort(item.m_counters.getBegin(), item.m_counters.getEnd(), [](const TracerCounter& a, const TracerCounter& b) {
-		return a.m_name < b.m_name;
-	});
+	std::sort(item.m_counters.getBegin(), item.m_counters.getEnd(),
+			  [](const TracerCounter& a, const TracerCounter& b) { return a.m_name < b.m_name; });
 
 	// Merge same
 	DynamicArrayAuto<TracerCounter> mergedCounters(m_alloc);
@@ -387,8 +379,8 @@ Error CoreTracer::writeCountersForReal()
 		{
 			Array<char, 3> columnName;
 			getSpreadsheetColumnName(i + 1, columnName);
-			ANKI_CHECK(m_countersCsvFile.writeText(
-				",=%s(%s2:%s%u)", func, &columnName[0], &columnName[0], m_frameCounters.getSize() + 1));
+			ANKI_CHECK(m_countersCsvFile.writeText(",=%s(%s2:%s%u)", func, &columnName[0], &columnName[0],
+												   m_frameCounters.getSize() + 1));
 		}
 
 		ANKI_CHECK(m_countersCsvFile.writeText("\n"));

@@ -339,12 +339,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 				   "compiler %s, "
 				   "build date %s, "
 				   "commit %s)",
-		ANKI_VERSION_MAJOR,
-		ANKI_VERSION_MINOR,
-		buildType,
-		ANKI_COMPILER_STR,
-		__DATE__,
-		ANKI_REVISION);
+				   ANKI_VERSION_MAJOR, ANKI_VERSION_MINOR, buildType, ANKI_COMPILER_STR, __DATE__, ANKI_REVISION);
 
 	m_timerTick = 1.0 / F32(config.getNumberU32("core_targetFps")); // in sec. 1.0 / period
 
@@ -455,8 +450,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
 
-	ANKI_CHECK(m_renderer->init(
-		m_threadHive, m_resources, m_gr, m_stagingMem, m_ui, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
+	ANKI_CHECK(m_renderer->init(m_threadHive, m_resources, m_gr, m_stagingMem, m_ui, m_allocCb, m_allocCbData, config,
+								&m_globalTimestamp));
 
 	//
 	// Script
@@ -469,8 +464,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
-	ANKI_CHECK(m_scene->init(
-		m_allocCb, m_allocCbData, m_threadHive, m_resources, m_input, m_script, &m_globalTimestamp, config));
+	ANKI_CHECK(m_scene->init(m_allocCb, m_allocCbData, m_threadHive, m_resources, m_input, m_script, &m_globalTimestamp,
+							 config));
 
 	// Inform the script engine about some subsystems
 	m_script->setRenderer(m_renderer);
@@ -637,9 +632,8 @@ Error App::mainLoop()
 #if ANKI_ENABLE_TRACE
 			if(m_renderer->getStats().m_renderingGpuTime >= 0.0)
 			{
-				ANKI_TRACE_CUSTOM_EVENT(GPU_TIME,
-					m_renderer->getStats().m_renderingGpuSubmitTimestamp,
-					m_renderer->getStats().m_renderingGpuTime);
+				ANKI_TRACE_CUSTOM_EVENT(GPU_TIME, m_renderer->getStats().m_renderingGpuSubmitTimestamp,
+										m_renderer->getStats().m_renderingGpuTime);
 			}
 #endif
 

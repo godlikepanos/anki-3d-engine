@@ -144,17 +144,13 @@ void main()
 		gbufferUv.x *= 1.0 / 6.0;
 		gbufferUv.x += (1.0 / 6.0) * F32(f);
 		GbufferInfo gbuffer;
-		readGBuffer(
-			u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0, gbuffer);
+		readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0,
+					gbuffer);
 
 		// Sample irradiance
-		Vec3 firstBounceIrradiance = sampleAmbientDice(s_diceIrradiance[0],
-			s_diceIrradiance[1],
-			s_diceIrradiance[2],
-			s_diceIrradiance[3],
-			s_diceIrradiance[4],
-			s_diceIrradiance[5],
-			gbuffer.m_normal);
+		Vec3 firstBounceIrradiance =
+			sampleAmbientDice(s_diceIrradiance[0], s_diceIrradiance[1], s_diceIrradiance[2], s_diceIrradiance[3],
+							  s_diceIrradiance[4], s_diceIrradiance[5], gbuffer.m_normal);
 		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance;
 
 		// Compute 2nd bounce

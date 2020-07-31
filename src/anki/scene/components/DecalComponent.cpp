@@ -53,12 +53,9 @@ void DecalComponent::updateInternal()
 
 	Mat4 viewMat = worldTransform.getInverse();
 
-	Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(m_sizes.x() / 2.0f,
-		-m_sizes.x() / 2.0f,
-		m_sizes.y() / 2.0f,
-		-m_sizes.y() / 2.0f,
-		LIGHT_FRUSTUM_NEAR_PLANE,
-		m_sizes.z());
+	Mat4 projMat =
+		Mat4::calculateOrthographicProjectionMatrix(m_sizes.x() / 2.0f, -m_sizes.x() / 2.0f, m_sizes.y() / 2.0f,
+													-m_sizes.y() / 2.0f, LIGHT_FRUSTUM_NEAR_PLANE, m_sizes.z());
 
 	static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 

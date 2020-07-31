@@ -64,12 +64,9 @@ typedef struct _CONSOLE_SCREEN_BUFFER_INFO CONSOLE_SCREEN_BUFFER_INFO, *PCONSOLE
 typedef struct _SYSTEM_INFO SYSTEM_INFO, *LPSYSTEM_INFO;
 
 // Thread & locks
-ANKI_WINBASEAPI HANDLE ANKI_WINAPI CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes,
-	SIZE_T dwStackSize,
-	LPTHREAD_START_ROUTINE lpStartAddress,
-	LPVOID lpParameter,
-	DWORD dwCreationFlags,
-	LPDWORD lpThreadId);
+ANKI_WINBASEAPI HANDLE ANKI_WINAPI CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
+												LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
+												DWORD dwCreationFlags, LPDWORD lpThreadId);
 ANKI_WINBASEAPI DWORD_PTR ANKI_WINAPI SetThreadAffinityMask(HANDLE hThread, DWORD_PTR dwThreadAffinityMask);
 ANKI_WINBASEAPI DWORD ANKI_WINAPI WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
 ANKI_WINBASEAPI BOOL ANKI_WINAPI CloseHandle(HANDLE hObject);
@@ -90,8 +87,8 @@ ANKI_WINBASEAPI BOOLEAN ANKI_WINAPI TryAcquireSRWLockExclusive(PSRWLOCK SRWLock)
 ANKI_WINBASEAPI BOOLEAN ANKI_WINAPI TryAcquireSRWLockShared(PSRWLOCK SRWLock);
 
 ANKI_WINBASEAPI VOID ANKI_WINAPI InitializeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
-ANKI_WINBASEAPI BOOL ANKI_WINAPI SleepConditionVariableCS(
-	PCONDITION_VARIABLE ConditionVariable, PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds);
+ANKI_WINBASEAPI BOOL ANKI_WINAPI SleepConditionVariableCS(PCONDITION_VARIABLE ConditionVariable,
+														  PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds);
 ANKI_WINBASEAPI VOID ANKI_WINAPI WakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
 ANKI_WINBASEAPI VOID ANKI_WINAPI WakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
 
@@ -110,8 +107,8 @@ ANKI_WINBASEAPI BOOL ANKI_WINAPI QueryPerformanceFrequency(LARGE_INTEGER* lpFreq
 ANKI_WINBASEAPI BOOL ANKI_WINAPI QueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount);
 ANKI_WINBASEAPI VOID ANKI_WINAPI Sleep(DWORD dwMilliseconds);
 ANKI_WINBASEAPI HANDLE ANKI_WINAPI GetStdHandle(DWORD nStdHandle);
-ANKI_WINBASEAPI BOOL ANKI_WINAPI GetConsoleScreenBufferInfo(
-	HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
+ANKI_WINBASEAPI BOOL ANKI_WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput,
+															PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
 ANKI_WINBASEAPI BOOL ANKI_WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes);
 ANKI_WINBASEAPI VOID ANKI_WINAPI GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 
@@ -359,12 +356,11 @@ inline void InitializeConditionVariable(PCONDITION_VARIABLE ConditionVariable)
 	::InitializeConditionVariable(reinterpret_cast<::PCONDITION_VARIABLE>(ConditionVariable));
 }
 
-inline BOOL SleepConditionVariableCS(
-	PCONDITION_VARIABLE ConditionVariable, PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds)
+inline BOOL SleepConditionVariableCS(PCONDITION_VARIABLE ConditionVariable, PCRITICAL_SECTION CriticalSection,
+									 DWORD dwMilliseconds)
 {
 	return ::SleepConditionVariableCS(reinterpret_cast<::PCONDITION_VARIABLE>(ConditionVariable),
-		reinterpret_cast<::PCRITICAL_SECTION>(CriticalSection),
-		dwMilliseconds);
+									  reinterpret_cast<::PCRITICAL_SECTION>(CriticalSection), dwMilliseconds);
 }
 
 inline void WakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable)
@@ -426,8 +422,8 @@ inline BOOL QueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount)
 
 inline BOOL GetConsoleScreenBufferInfo(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo)
 {
-	return ::GetConsoleScreenBufferInfo(
-		hConsoleOutput, reinterpret_cast<::PCONSOLE_SCREEN_BUFFER_INFO>(lpConsoleScreenBufferInfo));
+	return ::GetConsoleScreenBufferInfo(hConsoleOutput,
+										reinterpret_cast<::PCONSOLE_SCREEN_BUFFER_INFO>(lpConsoleScreenBufferInfo));
 }
 
 inline VOID GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)

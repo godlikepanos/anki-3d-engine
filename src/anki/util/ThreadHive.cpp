@@ -60,9 +60,8 @@ public:
 
 ThreadHive::ThreadHive(U32 threadCount, GenericMemoryPoolAllocator<U8> alloc, Bool pinToCores)
 	: m_slowAlloc(alloc)
-	, m_alloc(alloc.getMemoryPool().getAllocationCallback(),
-		  alloc.getMemoryPool().getAllocationCallbackUserData(),
-		  1024 * 4)
+	, m_alloc(alloc.getMemoryPool().getAllocationCallback(), alloc.getMemoryPool().getAllocationCallbackUserData(),
+			  1024 * 4)
 	, m_threadCount(threadCount)
 {
 	m_threads = reinterpret_cast<Thread*>(m_slowAlloc.allocate(sizeof(Thread) * threadCount));
@@ -159,8 +158,8 @@ void ThreadHive::threadRun(U32 threadId)
 	{
 		// Run the task
 		ANKI_ASSERT(task && task->m_cb);
-		ANKI_HIVE_DEBUG_PRINT(
-			"tid: %lu will exec %p (udata: %p)\n", threadId, static_cast<void*>(task), static_cast<void*>(task->m_arg));
+		ANKI_HIVE_DEBUG_PRINT("tid: %lu will exec %p (udata: %p)\n", threadId, static_cast<void*>(task),
+							  static_cast<void*>(task->m_arg));
 		task->m_cb(task->m_arg, threadId, *this, task->m_signalSemaphore);
 
 #if ANKI_EXTRA_CHECKS

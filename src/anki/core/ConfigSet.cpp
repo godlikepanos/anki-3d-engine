@@ -320,21 +320,19 @@ Error ConfigSet::loadFromFile(CString filename)
 		{
 			if(option.m_type == Option::FLOAT)
 			{
-				ANKI_CORE_LOGW(
-					"Missing option for \"%s\". Will use the default value: %f", &option.m_name[0], option.m_float);
+				ANKI_CORE_LOGW("Missing option for \"%s\". Will use the default value: %f", &option.m_name[0],
+							   option.m_float);
 			}
 			else if(option.m_type == Option::UNSIGNED)
 			{
-				ANKI_CORE_LOGW("Missing option for \"%s\". Will use the default value: %" PRIu64,
-					&option.m_name[0],
-					option.m_unsigned);
+				ANKI_CORE_LOGW("Missing option for \"%s\". Will use the default value: %" PRIu64, &option.m_name[0],
+							   option.m_unsigned);
 			}
 			else
 			{
 				ANKI_ASSERT(option.m_type == Option::STRING);
-				ANKI_CORE_LOGW("Missing option for \"%s\". Will use the default value: %s",
-					option.m_name.cstr(),
-					option.m_str.cstr());
+				ANKI_CORE_LOGW("Missing option for \"%s\". Will use the default value: %s", option.m_name.cstr(),
+							   option.m_str.cstr());
 			}
 		}
 	}
@@ -364,14 +362,14 @@ Error ConfigSet::saveToFile(CString filename) const
 		}
 		else if(option.m_type == Option::UNSIGNED)
 		{
-			ANKI_CHECK(file.writeText(
-				"\t<%s>%" PRIu64 "</%s>\n", option.m_name.cstr(), option.m_unsigned, option.m_name.cstr()));
+			ANKI_CHECK(file.writeText("\t<%s>%" PRIu64 "</%s>\n", option.m_name.cstr(), option.m_unsigned,
+									  option.m_name.cstr()));
 		}
 		else
 		{
 			ANKI_ASSERT(option.m_type == Option::STRING);
-			ANKI_CHECK(file.writeText(
-				"\t<%s><![CDATA[%s]]></%s>\n", option.m_name.cstr(), option.m_str.cstr(), option.m_name.cstr()));
+			ANKI_CHECK(file.writeText("\t<%s><![CDATA[%s]]></%s>\n", option.m_name.cstr(), option.m_str.cstr(),
+									  option.m_name.cstr()));
 		}
 	}
 

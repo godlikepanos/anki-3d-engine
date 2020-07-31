@@ -86,8 +86,8 @@ void CommandBufferThreadAllocator::destroy()
 	ANKI_ASSERT(m_createdCmdbs.load() == 0 && "Someone still holds references to command buffers");
 }
 
-Error CommandBufferThreadAllocator::newCommandBuffer(
-	CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& outPtr, Bool& createdNew)
+Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags, MicroCommandBufferPtr& outPtr,
+													 Bool& createdNew)
 {
 	cmdbFlags = cmdbFlags & (CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH);
 	createdNew = false;
@@ -181,10 +181,9 @@ Error CommandBufferThreadAllocator::newCommandBuffer(
 		m_createdCmdbs.fetchAdd(1);
 #endif
 
-		newCmdb->m_fastAlloc = StackAllocator<U8>(m_factory->m_alloc.getMemoryPool().getAllocationCallback(),
-			m_factory->m_alloc.getMemoryPool().getAllocationCallbackUserData(),
-			256_KB,
-			2.0f);
+		newCmdb->m_fastAlloc =
+			StackAllocator<U8>(m_factory->m_alloc.getMemoryPool().getAllocationCallback(),
+							   m_factory->m_alloc.getMemoryPool().getAllocationCallbackUserData(), 256_KB, 2.0f);
 
 		newCmdb->m_handle = cmdb;
 		newCmdb->m_flags = cmdbFlags;
@@ -291,11 +290,10 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 				m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
 
 				// Sort for fast find
-				std::sort(m_threadAllocs.getBegin(),
-					m_threadAllocs.getEnd(),
-					[](const CommandBufferThreadAllocator* a, const CommandBufferThreadAllocator* b) {
-						return a->m_tid < b->m_tid;
-					});
+				std::sort(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(),
+						  [](const CommandBufferThreadAllocator* a, const CommandBufferThreadAllocator* b) {
+							  return a->m_tid < b->m_tid;
+						  });
 
 				ANKI_CHECK(alloc->init());
 			}

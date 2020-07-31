@@ -44,8 +44,8 @@ public:
 static_assert(sizeof(AnkiTextureHeader) == 128, "Check sizeof AnkiTextureHeader");
 
 /// Get the size in bytes of a single surface
-static PtrSize calcSurfaceSize(
-	const U32 width, const U32 height, const ImageLoaderDataCompression comp, const ImageLoaderColorFormat cf)
+static PtrSize calcSurfaceSize(const U32 width, const U32 height, const ImageLoaderDataCompression comp,
+							   const ImageLoaderColorFormat cf)
 {
 	PtrSize out = 0;
 
@@ -72,11 +72,8 @@ static PtrSize calcSurfaceSize(
 }
 
 /// Get the size in bytes of a single volume
-static PtrSize calcVolumeSize(const U width,
-	const U height,
-	const U depth,
-	const ImageLoaderDataCompression comp,
-	const ImageLoaderColorFormat cf)
+static PtrSize calcVolumeSize(const U width, const U height, const U depth, const ImageLoaderDataCompression comp,
+							  const ImageLoaderColorFormat cf)
 {
 	PtrSize out = 0;
 
@@ -206,8 +203,8 @@ public:
 	}
 };
 
-Error ImageLoader::loadUncompressedTga(
-	FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc)
+Error ImageLoader::loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data,
+									   GenericMemoryPoolAllocator<U8>& alloc)
 {
 	Array<U8, 6> header6;
 
@@ -242,8 +239,8 @@ Error ImageLoader::loadUncompressedTga(
 	return Error::NONE;
 }
 
-Error ImageLoader::loadCompressedTga(
-	FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc)
+Error ImageLoader::loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data,
+									 GenericMemoryPoolAllocator<U8>& alloc)
 {
 	Array<U8, 6> header6;
 	ANKI_CHECK(fs.read(reinterpret_cast<char*>(&header6[0]), sizeof(header6)));
@@ -331,8 +328,8 @@ Error ImageLoader::loadCompressedTga(
 	return Error::NONE;
 }
 
-Error ImageLoader::loadTga(
-	FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc)
+Error ImageLoader::loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data,
+						   GenericMemoryPoolAllocator<U8>& alloc)
 {
 	char myTgaHeader[12];
 
@@ -361,19 +358,12 @@ Error ImageLoader::loadTga(
 	return Error::NONE;
 }
 
-Error ImageLoader::loadAnkiTexture(FileInterface& file,
-	U32 maxTextureSize,
-	ImageLoaderDataCompression& preferredCompression,
-	DynamicArray<ImageLoaderSurface>& surfaces,
-	DynamicArray<ImageLoaderVolume>& volumes,
-	GenericMemoryPoolAllocator<U8>& alloc,
-	U32& width,
-	U32& height,
-	U32& depth,
-	U32& layerCount,
-	U32& mipCount,
-	ImageLoaderTextureType& textureType,
-	ImageLoaderColorFormat& colorFormat)
+Error ImageLoader::loadAnkiTexture(FileInterface& file, U32 maxTextureSize,
+								   ImageLoaderDataCompression& preferredCompression,
+								   DynamicArray<ImageLoaderSurface>& surfaces, DynamicArray<ImageLoaderVolume>& volumes,
+								   GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height, U32& depth,
+								   U32& layerCount, U32& mipCount, ImageLoaderTextureType& textureType,
+								   ImageLoaderColorFormat& colorFormat)
 {
 	//
 	// Read and check the header
@@ -388,7 +378,7 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file,
 	}
 
 	if(header.m_width == 0 || !isPowerOfTwo(header.m_width) || header.m_width > 4096 || header.m_height == 0
-		|| !isPowerOfTwo(header.m_height) || header.m_height > 4096)
+	   || !isPowerOfTwo(header.m_height) || header.m_height > 4096)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect width/height value");
 		return Error::USER_DATA;
@@ -579,8 +569,8 @@ Error ImageLoader::loadAnkiTexture(FileInterface& file,
 	return Error::NONE;
 }
 
-Error ImageLoader::loadStb(
-	FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc)
+Error ImageLoader::loadStb(FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data,
+						   GenericMemoryPoolAllocator<U8>& alloc)
 {
 	// Read the file
 	DynamicArrayAuto<U8> fileData = {alloc};
@@ -687,19 +677,8 @@ Error ImageLoader::loadInternal(FileInterface& file, const CString& filename, U3
 		m_compression = ImageLoaderDataCompression::S3TC;
 #endif
 
-		ANKI_CHECK(loadAnkiTexture(file,
-			maxTextureSize,
-			m_compression,
-			m_surfaces,
-			m_volumes,
-			m_alloc,
-			m_width,
-			m_height,
-			m_depth,
-			m_layerCount,
-			m_mipCount,
-			m_textureType,
-			m_colorFormat));
+		ANKI_CHECK(loadAnkiTexture(file, maxTextureSize, m_compression, m_surfaces, m_volumes, m_alloc, m_width,
+								   m_height, m_depth, m_layerCount, m_mipCount, m_textureType, m_colorFormat));
 	}
 	else if(ext == "png")
 	{

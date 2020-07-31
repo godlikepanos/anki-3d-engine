@@ -47,8 +47,8 @@ public:
 	/// @param executable The executable to start.
 	/// @param arguments The command line arguments.
 	/// @param environment The environment variables.
-	ANKI_USE_RESULT Error start(
-		CString executable, ConstWeakArray<CString> arguments, ConstWeakArray<CString> environment);
+	ANKI_USE_RESULT Error start(CString executable, ConstWeakArray<CString> arguments,
+								ConstWeakArray<CString> environment);
 
 	/// Wait for the process to finish.
 	/// @param timeout The time to wait. If 0.0 wait forever.

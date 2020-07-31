@@ -56,8 +56,8 @@ public:
 		const FramebufferImpl& fb = static_cast<FramebufferImpl&>(*gr.m_fakeDefaultFb);
 		const U width = gr.m_fakeFbTex->getWidth();
 		const U height = gr.m_fakeFbTex->getHeight();
-		glBlitNamedFramebuffer(
-			fb.getGlName(), 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		glBlitNamedFramebuffer(fb.getGlName(), 0, 0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT,
+							   GL_NEAREST);
 
 		// Swap buffers
 		m_renderingThread->swapBuffersInternal();
@@ -186,8 +186,8 @@ void RenderingThread::prepare()
 	glGetError();
 
 	ANKI_GL_LOGI("OpenGL async thread started: OpenGL version \"%s\", GLSL version \"%s\"",
-		reinterpret_cast<const char*>(glGetString(GL_VERSION)),
-		reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+				 reinterpret_cast<const char*>(glGetString(GL_VERSION)),
+				 reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
 	// Get thread id
 	m_serverThreadId = Thread::getCurrentThreadId();

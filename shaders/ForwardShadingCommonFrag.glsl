@@ -43,8 +43,8 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	Vec3 outColor = Vec3(0.0);
 
 	// Find the cluster and then the light counts
-	const U32 clusterIdx = computeClusterIndex(
-		u_clustererMagic, gl_FragCoord.xy / RENDERER_SIZE, worldPos, u_clusterCountX, u_clusterCountY);
+	const U32 clusterIdx = computeClusterIndex(u_clustererMagic, gl_FragCoord.xy / RENDERER_SIZE, worldPos,
+											   u_clusterCountX, u_clusterCountY);
 
 	U32 idxOffset = u_clusters[clusterIdx];
 

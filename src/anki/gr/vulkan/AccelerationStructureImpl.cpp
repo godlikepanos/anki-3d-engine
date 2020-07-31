@@ -71,8 +71,8 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		ci.pGeometryInfos = &geom;
 
 		ANKI_VK_CHECK(vkCreateAccelerationStructureKHR(getDevice(), &ci, nullptr, &m_handle));
-		getGrManagerImpl().trySetVulkanHandleName(
-			inf.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR_EXT, m_handle);
+		getGrManagerImpl().trySetVulkanHandleName(inf.getName(),
+												  VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR_EXT, m_handle);
 	}
 
 	// Allocate memory
@@ -91,14 +91,14 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 		// Find mem IDX
 		U32 memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryRequirements.memoryTypeBits,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+																			 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+																			 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		// Fallback
 		if(memIdx == MAX_U32)
 		{
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-				req.memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryRequirements.memoryTypeBits,
+																			 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 		}
 
 		ANKI_ASSERT(memIdx != MAX_U32);
@@ -231,11 +231,9 @@ void AccelerationStructureImpl::initBuildInfo()
 }
 
 void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit before,
-	AccelerationStructureUsageBit after,
-	VkPipelineStageFlags& srcStages,
-	VkAccessFlags& srcAccesses,
-	VkPipelineStageFlags& dstStages,
-	VkAccessFlags& dstAccesses)
+												   AccelerationStructureUsageBit after, VkPipelineStageFlags& srcStages,
+												   VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
+												   VkAccessFlags& dstAccesses)
 {
 	// Before
 	srcStages = 0;

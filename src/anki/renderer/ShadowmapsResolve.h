@@ -60,4 +60,4 @@ public:
 };
 /// @}
 
-} // end namespace
+} // namespace anki

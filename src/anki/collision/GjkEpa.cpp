@@ -210,8 +210,8 @@ static Bool update(GjkContext& ctx, const GjkSupport& a)
 	return true;
 }
 
-Bool gjkIntersection(
-	const void* shape0, GjkSupportCallback shape0Callback, const void* shape1, GjkSupportCallback shape1Callback)
+Bool gjkIntersection(const void* shape0, GjkSupportCallback shape0Callback, const void* shape1,
+					 GjkSupportCallback shape1Callback)
 {
 	ANKI_ASSERT(shape0 && shape0Callback && shape1 && shape1Callback);
 

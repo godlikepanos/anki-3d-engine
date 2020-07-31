@@ -11,21 +11,15 @@
 namespace anki
 {
 
-inline Bool stencilTestDisabled(StencilOperation stencilFail,
-	StencilOperation stencilPassDepthFail,
-	StencilOperation stencilPassDepthPass,
-	CompareOperation compare)
+inline Bool stencilTestDisabled(StencilOperation stencilFail, StencilOperation stencilPassDepthFail,
+								StencilOperation stencilPassDepthPass, CompareOperation compare)
 {
 	return stencilFail == StencilOperation::KEEP && stencilPassDepthFail == StencilOperation::KEEP
 		   && stencilPassDepthPass == StencilOperation::KEEP && compare == CompareOperation::ALWAYS;
 }
 
-inline Bool blendingDisabled(BlendFactor srcFactorRgb,
-	BlendFactor dstFactorRgb,
-	BlendFactor srcFactorA,
-	BlendFactor dstFactorA,
-	BlendOperation opRgb,
-	BlendOperation opA)
+inline Bool blendingDisabled(BlendFactor srcFactorRgb, BlendFactor dstFactorRgb, BlendFactor srcFactorA,
+							 BlendFactor dstFactorA, BlendOperation opRgb, BlendOperation opA)
 {
 	Bool dontWantBlend = srcFactorRgb == BlendFactor::ONE && dstFactorRgb == BlendFactor::ZERO
 						 && srcFactorA == BlendFactor::ONE && dstFactorA == BlendFactor::ZERO
@@ -49,12 +43,8 @@ ShaderVariableDataType getShaderVariableTypeFromTypename();
 #undef ANKI_SVDT_MACRO
 
 /// Populate the memory of a variable that is inside a shader block.
-void writeShaderBlockMemory(ShaderVariableDataType type,
-	const ShaderVariableBlockInfo& varBlkInfo,
-	const void* elements,
-	U32 elementsCount,
-	void* buffBegin,
-	const void* buffEnd);
+void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlockInfo& varBlkInfo,
+							const void* elements, U32 elementsCount, void* buffBegin, const void* buffEnd);
 
 /// Convert a ShaderVariableDataType to string.
 const CString shaderVariableDataTypeToString(ShaderVariableDataType t);

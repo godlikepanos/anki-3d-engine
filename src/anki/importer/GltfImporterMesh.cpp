@@ -141,12 +141,8 @@ static void reindexSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> allo
 	DynamicArrayAuto<U32> remap(alloc);
 	remap.create(submesh.m_verts.getSize(), 0);
 
-	const U32 vertCount = U32(meshopt_generateVertexRemap(&remap[0],
-		&submesh.m_indices[0],
-		submesh.m_indices.getSize(),
-		&submesh.m_verts[0],
-		submesh.m_verts.getSize(),
-		vertSize));
+	const U32 vertCount = U32(meshopt_generateVertexRemap(&remap[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
+														  &submesh.m_verts[0], submesh.m_verts.getSize(), vertSize));
 
 	DynamicArrayAuto<U32> newIdxArray(alloc);
 	newIdxArray.create(submesh.m_indices.getSize(), 0);
@@ -170,8 +166,8 @@ static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> all
 		DynamicArrayAuto<U32> newIdxArray(alloc);
 		newIdxArray.create(submesh.m_indices.getSize(), 0);
 
-		meshopt_optimizeVertexCache(
-			&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(), submesh.m_verts.getSize());
+		meshopt_optimizeVertexCache(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
+									submesh.m_verts.getSize());
 
 		submesh.m_indices = std::move(newIdxArray);
 	}
@@ -181,13 +177,8 @@ static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> all
 		DynamicArrayAuto<U32> newIdxArray(alloc);
 		newIdxArray.create(submesh.m_indices.getSize(), 0);
 
-		meshopt_optimizeOverdraw(&newIdxArray[0],
-			&submesh.m_indices[0],
-			submesh.m_indices.getSize(),
-			&submesh.m_verts[0].m_position.x(),
-			submesh.m_verts.getSize(),
-			vertSize,
-			1.05f);
+		meshopt_optimizeOverdraw(&newIdxArray[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
+								 &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(), vertSize, 1.05f);
 
 		submesh.m_indices = std::move(newIdxArray);
 	}
@@ -198,11 +189,9 @@ static void optimizeSubmesh(SubMesh& submesh, GenericMemoryPoolAllocator<U8> all
 		newVertArray.create(submesh.m_verts.getSize());
 
 		const U32 newVertCount = U32(meshopt_optimizeVertexFetch(&newVertArray[0],
-			&submesh.m_indices[0], // Inplace
-			submesh.m_indices.getSize(),
-			&submesh.m_verts[0],
-			submesh.m_verts.getSize(),
-			vertSize));
+																 &submesh.m_indices[0], // Inplace
+																 submesh.m_indices.getSize(), &submesh.m_verts[0],
+																 submesh.m_verts.getSize(), vertSize));
 
 		if(newVertCount != submesh.m_verts.getSize())
 		{
@@ -226,14 +215,9 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, GenericMemoryPoolAlloc
 
 	// Decimate
 	DynamicArrayAuto<U32> newIndices(alloc, submesh.m_indices.getSize());
-	newIndices.resize(U32(meshopt_simplify(&newIndices[0],
-		&submesh.m_indices[0],
-		submesh.m_indices.getSize(),
-		&submesh.m_verts[0].m_position.x(),
-		submesh.m_verts.getSize(),
-		sizeof(TempVertex),
-		targetIndexCount,
-		1e-2f)));
+	newIndices.resize(U32(meshopt_simplify(&newIndices[0], &submesh.m_indices[0], submesh.m_indices.getSize(),
+										   &submesh.m_verts[0].m_position.x(), submesh.m_verts.getSize(),
+										   sizeof(TempVertex), targetIndexCount, 1e-2f)));
 
 	// Re-pack
 	DynamicArrayAuto<U32> reindexedIndices(alloc);
@@ -269,10 +253,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankimesh", m_outDir.cstr(), (nameOverride.isEmpty()) ? mesh.name : nameOverride.cstr());
-	ANKI_GLTF_LOGI("Importing mesh (%s, decimate factor %f): %s",
-		(m_optimizeMeshes) ? "optimze" : "WON'T optimize",
-		decimateFactor,
-		fname.cstr());
+	ANKI_GLTF_LOGI("Importing mesh (%s, decimate factor %f): %s", (m_optimizeMeshes) ? "optimze" : "WON'T optimize",
+				   decimateFactor, fname.cstr());
 
 	ListAuto<SubMesh> submeshes(m_alloc);
 	U32 totalIndexCount = 0;
@@ -298,8 +280,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		U minVertCount = MAX_U;
 		U maxVertCount = MIN_U;
 		for(const cgltf_attribute* attrib = primitive->attributes;
-			attrib < primitive->attributes + primitive->attributes_count;
-			++attrib)
+			attrib < primitive->attributes + primitive->attributes_count; ++attrib)
 		{
 			minVertCount = min(minVertCount, U(attrib->data->count));
 			maxVertCount = max(maxVertCount, U(attrib->data->count));
@@ -318,8 +299,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		// Gather positions + normals + UVs
 		//
 		for(const cgltf_attribute* attrib = primitive->attributes;
-			attrib < primitive->attributes + primitive->attributes_count;
-			++attrib)
+			attrib < primitive->attributes + primitive->attributes_count; ++attrib)
 		{
 			if(attrib->type == cgltf_attribute_type_position)
 			{
@@ -335,8 +315,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			{
 				U32 count = 0;
 				ANKI_CHECK(checkAttribute<Vec3>(*attrib));
-				visitAccessor<Vec3>(
-					*attrib->data, [&](const Vec3& normal) { submesh.m_verts[count++].m_normal = normal; });
+				visitAccessor<Vec3>(*attrib->data,
+									[&](const Vec3& normal) { submesh.m_verts[count++].m_normal = normal; });
 			}
 			else if(attrib->type == cgltf_attribute_type_texcoord && CString(attrib->name) == "TEXCOORD_0")
 			{
@@ -352,16 +332,16 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 			{
 				U32 count = 0;
 				ANKI_CHECK(checkAttribute<U16Vec4>(*attrib));
-				visitAccessor<U16Vec4>(
-					*attrib->data, [&](const U16Vec4& x) { submesh.m_verts[count++].m_boneIds = x; });
+				visitAccessor<U16Vec4>(*attrib->data,
+									   [&](const U16Vec4& x) { submesh.m_verts[count++].m_boneIds = x; });
 				hasBoneWeights = true;
 			}
 			else if(attrib->type == cgltf_attribute_type_weights)
 			{
 				U32 count = 0;
 				ANKI_CHECK(checkAttribute<Vec4>(*attrib));
-				visitAccessor<Vec4>(
-					*attrib->data, [&](const Vec4& bw) { submesh.m_verts[count++].m_boneWeights = bw; });
+				visitAccessor<Vec4>(*attrib->data,
+									[&](const Vec4& bw) { submesh.m_verts[count++].m_boneWeights = bw; });
 			}
 			else
 			{
@@ -781,10 +761,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 
 			for(U32 v = 0; v < submesh.m_verts.getSize(); ++v)
 			{
-				pos16[v] = HVec4(F16(submesh.m_verts[v].m_position.x()),
-					F16(submesh.m_verts[v].m_position.y()),
-					F16(submesh.m_verts[v].m_position.z()),
-					F16(0.0f));
+				pos16[v] = HVec4(F16(submesh.m_verts[v].m_position.x()), F16(submesh.m_verts[v].m_position.y()),
+								 F16(submesh.m_verts[v].m_position.z()), F16(0.0f));
 			}
 
 			ANKI_CHECK(file.write(&pos16[0], pos16.getSizeInBytes()));

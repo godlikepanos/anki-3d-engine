@@ -54,8 +54,8 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	// Create a renderpass.
 	initRpassCreateInfo(init);
 	ANKI_VK_CHECK(vkCreateRenderPass(getDevice(), &m_rpassCi, nullptr, &m_compatibleRpass));
-	getGrManagerImpl().trySetVulkanHandleName(
-		init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT, m_compatibleRpass);
+	getGrManagerImpl().trySetVulkanHandleName(init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT,
+											  m_compatibleRpass);
 
 	// Create the FB
 	ANKI_CHECK(initFbs(init));
@@ -84,7 +84,7 @@ void FramebufferImpl::initClearValues(const FramebufferInitInfo& init)
 	if(hasDepthStencil())
 	{
 		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR
-			|| init.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR)
+		   || init.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR)
 		{
 			m_clearVals[m_colorAttCount].depthStencil.depth =
 				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth;
@@ -163,8 +163,8 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 	return Error::NONE;
 }
 
-void FramebufferImpl::setupAttachmentDescriptor(
-	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc, VkImageLayout layout) const
+void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc,
+												VkImageLayout layout) const
 {
 	desc = {};
 	desc.format = convertFormat(static_cast<const TextureViewImpl&>(*att.m_textureView).getTextureImpl().getFormat());
@@ -182,8 +182,8 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 	// Setup attachments and references
 	for(U32 i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
-		setupAttachmentDescriptor(
-			init.m_colorAttachments[i], m_attachmentDescriptions[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		setupAttachmentDescriptor(init.m_colorAttachments[i], m_attachmentDescriptions[i],
+								  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 		m_references[i].attachment = i;
 		m_references[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -191,9 +191,8 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 
 	if(hasDepthStencil())
 	{
-		setupAttachmentDescriptor(init.m_depthStencilAttachment,
-			m_attachmentDescriptions[init.m_colorAttachmentCount],
-			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		setupAttachmentDescriptor(init.m_depthStencilAttachment, m_attachmentDescriptions[init.m_colorAttachmentCount],
+								  VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
 		VkAttachmentReference& dsReference = m_references[init.m_colorAttachmentCount];
 		dsReference.attachment = init.m_colorAttachmentCount;
@@ -215,8 +214,8 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 	m_rpassCi.pSubpasses = &m_subpassDescr;
 }
 
-VkRenderPass FramebufferImpl::getRenderPassHandle(
-	const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts, VkImageLayout dsLayout)
+VkRenderPass FramebufferImpl::getRenderPassHandle(const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts,
+												  VkImageLayout dsLayout)
 {
 	VkRenderPass out = {};
 

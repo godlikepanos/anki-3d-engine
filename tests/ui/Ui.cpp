@@ -123,19 +123,15 @@ ANKI_TEST(Ui, Ui)
 			cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 			CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
-			cmdb->setTextureBarrier(presentTex,
-				TextureUsageBit::NONE,
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureSubresourceInfo());
+			cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+									TextureSubresourceInfo());
 
 			cmdb->beginRenderPass(fb, {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}}, {});
 			canvas->appendToCommandBuffer(cmdb);
 			cmdb->endRenderPass();
 
-			cmdb->setTextureBarrier(presentTex,
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureUsageBit::PRESENT,
-				TextureSubresourceInfo());
+			cmdb->setTextureBarrier(presentTex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::PRESENT,
+									TextureSubresourceInfo());
 
 			cmdb->flush();
 

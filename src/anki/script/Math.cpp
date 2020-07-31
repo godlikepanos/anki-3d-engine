@@ -3616,8 +3616,8 @@ static inline void wrapVec4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {
-	6306819796139686981, "Mat3", LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
+LuaUserDataTypeInfo luaUserDataTypeInfoMat3 = {6306819796139686981, "Mat3",
+											   LuaUserData::computeSizeForGarbageCollected<Mat3>(), nullptr, nullptr};
 
 template<>
 const LuaUserDataTypeInfo& LuaUserData::getDataTypeInfoFor<Mat3>()

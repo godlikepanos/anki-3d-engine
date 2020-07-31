@@ -38,14 +38,14 @@ ShaderImpl::~ShaderImpl()
 
 	if(m_specConstInfo.pMapEntries)
 	{
-		getAllocator().deleteArray(
-			const_cast<VkSpecializationMapEntry*>(m_specConstInfo.pMapEntries), m_specConstInfo.mapEntryCount);
+		getAllocator().deleteArray(const_cast<VkSpecializationMapEntry*>(m_specConstInfo.pMapEntries),
+								   m_specConstInfo.mapEntryCount);
 	}
 
 	if(m_specConstInfo.pData)
 	{
-		getAllocator().deleteArray(
-			static_cast<I32*>(const_cast<void*>(m_specConstInfo.pData)), m_specConstInfo.dataSize / sizeof(I32));
+		getAllocator().deleteArray(static_cast<I32*>(const_cast<void*>(m_specConstInfo.pData)),
+								   m_specConstInfo.dataSize / sizeof(I32));
 	}
 }
 
@@ -66,11 +66,8 @@ Error ShaderImpl::init(const ShaderInitInfo& inf)
 	}
 #endif
 
-	VkShaderModuleCreateInfo ci = {VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-		nullptr,
-		0,
-		inf.m_binary.getSize(),
-		reinterpret_cast<const uint32_t*>(&inf.m_binary[0])};
+	VkShaderModuleCreateInfo ci = {VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, inf.m_binary.getSize(),
+								   reinterpret_cast<const uint32_t*>(&inf.m_binary[0])};
 
 	ANKI_VK_CHECK(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
 

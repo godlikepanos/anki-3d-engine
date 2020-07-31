@@ -81,8 +81,8 @@ Error SampleApp::userMainLoop(Bool& quit)
 
 	if(in.getKey(KeyCode::O) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget(
-			(renderer.getCurrentDebugRenderTarget() == "SM_resolve") ? "" : "SM_resolve");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SM_resolve") ? ""
+																									  : "SM_resolve");
 	}
 
 	if(in.getKey(KeyCode::P) == 1)

@@ -38,8 +38,8 @@ void CommandBuffer::flush(FencePtr* fence)
 	}
 }
 
-void CommandBuffer::bindVertexBuffer(
-	U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
+void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride,
+									 VertexStepRate stepRate)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.bindVertexBuffer(binding, buff, offset, stride, stepRate);
@@ -93,10 +93,8 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 	self.setPolygonOffset(factor, units);
 }
 
-void CommandBuffer::setStencilOperations(FaceSelectionBit face,
-	StencilOperation stencilFail,
-	StencilOperation stencilPassDepthFail,
-	StencilOperation stencilPassDepthPass)
+void CommandBuffer::setStencilOperations(FaceSelectionBit face, StencilOperation stencilFail,
+										 StencilOperation stencilPassDepthFail, StencilOperation stencilPassDepthPass)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
@@ -150,8 +148,8 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 	self.setColorChannelWriteMask(attachment, mask);
 }
 
-void CommandBuffer::setBlendFactors(
-	U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
+void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA,
+									BlendFactor dstA)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
@@ -163,8 +161,8 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 	self.setBlendOperation(attachment, funcRgb, funcA);
 }
 
-void CommandBuffer::bindTextureAndSampler(
-	U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler, TextureUsageBit usage, U32 arrayIdx)
+void CommandBuffer::bindTextureAndSampler(U32 set, U32 binding, TextureViewPtr texView, SamplerPtr sampler,
+										  TextureUsageBit usage, U32 arrayIdx)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.bindTextureAndSamplerInternal(set, binding, texView, sampler, usage, arrayIdx);
@@ -206,8 +204,8 @@ void CommandBuffer::bindAccelerationStructure(U32 set, U32 binding, Acceleration
 	self.bindAccelerationStructureInternal(set, binding, as, arrayIdx);
 }
 
-void CommandBuffer::bindTextureBuffer(
-	U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt, U32 arrayIdx)
+void CommandBuffer::bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, Format fmt,
+									  U32 arrayIdx)
 {
 	ANKI_ASSERT(!"TODO");
 }
@@ -237,12 +235,9 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 }
 
 void CommandBuffer::beginRenderPass(FramebufferPtr fb,
-	const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
-	TextureUsageBit depthStencilAttachmentUsage,
-	U32 minx,
-	U32 miny,
-	U32 width,
-	U32 height)
+									const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
+									TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width,
+									U32 height)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.beginRenderPass(fb, colorAttachmentUsages, depthStencilAttachmentUsage, minx, miny, width, height);
@@ -254,8 +249,8 @@ void CommandBuffer::endRenderPass()
 	self.endRenderPass();
 }
 
-void CommandBuffer::drawElements(
-	PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+void CommandBuffer::drawElements(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex,
+								 U32 baseVertex, U32 baseInstance)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.drawElements(topology, count, instanceCount, firstIndex, baseVertex, baseInstance);
@@ -325,8 +320,8 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 	self.writeOcclusionQueryResultToBuffer(query, offset, buff);
 }
 
-void CommandBuffer::copyBufferToBuffer(
-	BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset, PtrSize range)
+void CommandBuffer::copyBufferToBuffer(BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset,
+									   PtrSize range)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.copyBufferToBuffer(src, srcOffset, dst, dstOffset, range);
@@ -338,36 +333,37 @@ void CommandBuffer::buildAccelerationStructure(AccelerationStructurePtr as)
 	self.buildAccelerationStructureInternal(as);
 }
 
-void CommandBuffer::setTextureBarrier(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSubresourceInfo& subresource)
+void CommandBuffer::setTextureBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+									  const TextureSubresourceInfo& subresource)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setTextureBarrier(tex, prevUsage, nextUsage, subresource);
 }
 
-void CommandBuffer::setTextureSurfaceBarrier(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
+void CommandBuffer::setTextureSurfaceBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+											 const TextureSurfaceInfo& surf)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setTextureSurfaceBarrier(tex, prevUsage, nextUsage, surf);
 }
 
-void CommandBuffer::setTextureVolumeBarrier(
-	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
+void CommandBuffer::setTextureVolumeBarrier(TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage,
+											const TextureVolumeInfo& vol)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setTextureVolumeBarrier(tex, prevUsage, nextUsage, vol);
 }
 
-void CommandBuffer::setBufferBarrier(
-	BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
+void CommandBuffer::setBufferBarrier(BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset,
+									 PtrSize size)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setBufferBarrier(buff, before, after, offset, size);
 }
 
-void CommandBuffer::setAccelerationStructureBarrier(
-	AccelerationStructurePtr as, AccelerationStructureUsageBit prevUsage, AccelerationStructureUsageBit nextUsage)
+void CommandBuffer::setAccelerationStructureBarrier(AccelerationStructurePtr as,
+													AccelerationStructureUsageBit prevUsage,
+													AccelerationStructureUsageBit nextUsage)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setAccelerationStructureBarrierInternal(as, prevUsage, nextUsage);

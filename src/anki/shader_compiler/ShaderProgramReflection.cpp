@@ -21,8 +21,8 @@ public:
 	}
 
 	ANKI_USE_RESULT static Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
-		GenericMemoryPoolAllocator<U8> tmpAlloc,
-		ShaderReflectionVisitorInterface& interface);
+														GenericMemoryPoolAllocator<U8> tmpAlloc,
+														ShaderReflectionVisitorInterface& interface);
 
 private:
 	class Var
@@ -86,8 +86,8 @@ private:
 
 	ANKI_USE_RESULT Error spirvTypeToAnki(const spirv_cross::SPIRType& type, ShaderVariableDataType& out) const;
 
-	ANKI_USE_RESULT Error blockReflection(
-		const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<Block>& blocks) const;
+	ANKI_USE_RESULT Error blockReflection(const spirv_cross::Resource& res, Bool isStorage,
+										  DynamicArrayAuto<Block>& blocks) const;
 
 	ANKI_USE_RESULT Error opaqueReflection(const spirv_cross::Resource& res, DynamicArrayAuto<Opaque>& opaques) const;
 
@@ -95,8 +95,8 @@ private:
 
 	ANKI_USE_RESULT Error blockVariablesReflection(spirv_cross::TypeID resourceId, DynamicArrayAuto<Var>& vars) const;
 
-	ANKI_USE_RESULT Error blockVariableReflection(
-		const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset, DynamicArrayAuto<Var>& vars) const;
+	ANKI_USE_RESULT Error blockVariableReflection(const spirv_cross::SPIRType& type, CString parentVariable,
+												  U32 baseOffset, DynamicArrayAuto<Var>& vars) const;
 
 	ANKI_USE_RESULT Error workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& specConstMask);
 };
@@ -131,8 +131,8 @@ Error SpirvReflector::blockVariablesReflection(spirv_cross::TypeID resourceId, D
 	return Error::NONE;
 }
 
-Error SpirvReflector::blockVariableReflection(
-	const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset, DynamicArrayAuto<Var>& vars) const
+Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type, CString parentVariable, U32 baseOffset,
+											  DynamicArrayAuto<Var>& vars) const
 {
 	ANKI_ASSERT(type.basetype == spirv_cross::SPIRType::Struct);
 
@@ -303,8 +303,8 @@ Error SpirvReflector::blockVariableReflection(
 	return Error::NONE;
 }
 
-Error SpirvReflector::blockReflection(
-	const spirv_cross::Resource& res, Bool isStorage, DynamicArrayAuto<Block>& blocks) const
+Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, Bool isStorage,
+									  DynamicArrayAuto<Block>& blocks) const
 {
 	Block newBlock(m_alloc);
 	const spirv_cross::SPIRType type = get_type(res.type_id);
@@ -622,8 +622,8 @@ Error SpirvReflector::workgroupSizes(U32& sizex, U32& sizey, U32& sizez, U32& sp
 }
 
 Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
-	GenericMemoryPoolAllocator<U8> tmpAlloc,
-	ShaderReflectionVisitorInterface& interface)
+											 GenericMemoryPoolAllocator<U8> tmpAlloc,
+											 ShaderReflectionVisitorInterface& interface)
 {
 	DynamicArrayAuto<Block> uniformBlocks(tmpAlloc);
 	DynamicArrayAuto<Block> storageBlocks(tmpAlloc);
@@ -660,8 +660,8 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 		// Push constants
 		if(compiler.get_shader_resources().push_constant_buffers.size() == 1)
 		{
-			ANKI_CHECK(compiler.blockReflection(
-				compiler.get_shader_resources().push_constant_buffers[0], false, pushConstantBlock));
+			ANKI_CHECK(compiler.blockReflection(compiler.get_shader_resources().push_constant_buffers[0], false,
+												pushConstantBlock));
 		}
 		else if(compiler.get_shader_resources().push_constant_buffers.size() > 1)
 		{
@@ -688,23 +688,20 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 
 		if(type == ShaderType::COMPUTE)
 		{
-			ANKI_CHECK(compiler.workgroupSizes(
-				workgroupSizes[0], workgroupSizes[1], workgroupSizes[2], workgroupSizeSpecConstMask));
+			ANKI_CHECK(compiler.workgroupSizes(workgroupSizes[0], workgroupSizes[1], workgroupSizes[2],
+											   workgroupSizeSpecConstMask));
 		}
 	}
 
 	// Inform through the interface
-	ANKI_CHECK(interface.setCounts(uniformBlocks.getSize(),
-		storageBlocks.getSize(),
-		opaques.getSize(),
-		pushConstantBlock.getSize() == 1,
-		specializationConstants.getSize()));
+	ANKI_CHECK(interface.setCounts(uniformBlocks.getSize(), storageBlocks.getSize(), opaques.getSize(),
+								   pushConstantBlock.getSize() == 1, specializationConstants.getSize()));
 
 	for(U32 i = 0; i < uniformBlocks.getSize(); ++i)
 	{
 		const Block& block = uniformBlocks[i];
-		ANKI_CHECK(interface.visitUniformBlock(
-			i, block.m_name, block.m_set, block.m_binding, block.m_size, block.m_vars.getSize()));
+		ANKI_CHECK(interface.visitUniformBlock(i, block.m_name, block.m_set, block.m_binding, block.m_size,
+											   block.m_vars.getSize()));
 
 		for(U32 j = 0; j < block.m_vars.getSize(); ++j)
 		{
@@ -716,8 +713,8 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 	for(U32 i = 0; i < storageBlocks.getSize(); ++i)
 	{
 		const Block& block = storageBlocks[i];
-		ANKI_CHECK(interface.visitStorageBlock(
-			i, block.m_name, block.m_set, block.m_binding, block.m_size, block.m_vars.getSize()));
+		ANKI_CHECK(interface.visitStorageBlock(i, block.m_name, block.m_set, block.m_binding, block.m_size,
+											   block.m_vars.getSize()));
 
 		for(U32 j = 0; j < block.m_vars.getSize(); ++j)
 		{
@@ -728,8 +725,8 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 
 	if(pushConstantBlock.getSize() == 1)
 	{
-		ANKI_CHECK(interface.visitPushConstantsBlock(
-			pushConstantBlock[0].m_name, pushConstantBlock[0].m_size, pushConstantBlock[0].m_vars.getSize()));
+		ANKI_CHECK(interface.visitPushConstantsBlock(pushConstantBlock[0].m_name, pushConstantBlock[0].m_size,
+													 pushConstantBlock[0].m_vars.getSize()));
 
 		for(U32 j = 0; j < pushConstantBlock[0].m_vars.getSize(); ++j)
 		{
@@ -752,16 +749,15 @@ Error SpirvReflector::performSpirvReflection(Array<ConstWeakArray<U8>, U32(Shade
 
 	if(spirv[ShaderType::COMPUTE].getSize())
 	{
-		ANKI_CHECK(interface.setWorkgroupSizes(
-			workgroupSizes[0], workgroupSizes[1], workgroupSizes[2], workgroupSizeSpecConstMask));
+		ANKI_CHECK(interface.setWorkgroupSizes(workgroupSizes[0], workgroupSizes[1], workgroupSizes[2],
+											   workgroupSizeSpecConstMask));
 	}
 
 	return Error::NONE;
 }
 
 Error performSpirvReflection(Array<ConstWeakArray<U8>, U32(ShaderType::COUNT)> spirv,
-	GenericMemoryPoolAllocator<U8> tmpAlloc,
-	ShaderReflectionVisitorInterface& interface)
+							 GenericMemoryPoolAllocator<U8> tmpAlloc, ShaderReflectionVisitorInterface& interface)
 {
 	return SpirvReflector::performSpirvReflection(spirv, tmpAlloc, interface);
 }

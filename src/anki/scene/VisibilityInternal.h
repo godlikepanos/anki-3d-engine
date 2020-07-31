@@ -178,8 +178,8 @@ public:
 
 	void fill();
 };
-static_assert(
-	std::is_trivially_destructible<FillRasterizerWithCoverageTask>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<FillRasterizerWithCoverageTask>::value == true,
+			  "Should be trivially destructible");
 
 /// ThreadHive task to get visible nodes from the octree.
 class GatherVisiblesFromOctreeTask
@@ -202,8 +202,8 @@ private:
 	/// Submit tasks to test the m_spatials.
 	void flush(ThreadHive& hive);
 };
-static_assert(
-	std::is_trivially_destructible<GatherVisiblesFromOctreeTask>::value == true, "Should be trivially destructible");
+static_assert(std::is_trivially_destructible<GatherVisiblesFromOctreeTask>::value == true,
+			  "Should be trivially destructible");
 
 /// ThreadHive task that does the actual visibility tests.
 class VisibilityTestTask
@@ -247,10 +247,9 @@ public:
 private:
 	template<typename T>
 	static void combineQueueElements(SceneFrameAllocator<U8>& alloc,
-		WeakArray<TRenderQueueElementStorage<T>> subStorages,
-		WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorage,
-		WeakArray<T>& combined,
-		WeakArray<T*>* ptrCombined);
+									 WeakArray<TRenderQueueElementStorage<T>> subStorages,
+									 WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorage, WeakArray<T>& combined,
+									 WeakArray<T*>* ptrCombined);
 };
 static_assert(std::is_trivially_destructible<CombineResultsTask>::value == true, "Should be trivially destructible");
 /// @}

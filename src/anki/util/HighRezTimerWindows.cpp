@@ -35,7 +35,7 @@ public:
 
 DummyInitTimer init;
 
-} // end namespace anonymous
+} // namespace
 
 static U64 getMs()
 {

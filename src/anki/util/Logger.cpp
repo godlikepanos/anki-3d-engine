@@ -60,13 +60,8 @@ void Logger::removeMessageHandler(void* data, LoggerMessageHandlerCallback callb
 	}
 }
 
-void Logger::write(const char* file,
-	int line,
-	const char* func,
-	const char* subsystem,
-	LoggerMessageType type,
-	ThreadId tid,
-	const char* msg)
+void Logger::write(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
+				   ThreadId tid, const char* msg)
 {
 	m_mutex.lock();
 
@@ -86,14 +81,8 @@ void Logger::write(const char* file,
 	}
 }
 
-void Logger::writeFormated(const char* file,
-	int line,
-	const char* func,
-	const char* subsystem,
-	LoggerMessageType type,
-	ThreadId tid,
-	const char* fmt,
-	...)
+void Logger::writeFormated(const char* file, int line, const char* func, const char* subsystem, LoggerMessageType type,
+						   ThreadId tid, const char* fmt, ...)
 {
 	char buffer[1024 * 10];
 	va_list args;
@@ -170,19 +159,9 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		endTerminalColor = "";
 	}
 
-	fprintf(out,
-		fmt,
-		terminalColorBg,
-		MSG_TEXT[static_cast<U>(info.m_type)],
-		info.m_subsystem ? info.m_subsystem : "N/A ",
-		info.m_tid,
-		endTerminalColor,
-		terminalColor,
-		info.m_msg,
-		info.m_file,
-		info.m_line,
-		info.m_func,
-		endTerminalColor);
+	fprintf(out, fmt, terminalColorBg, MSG_TEXT[static_cast<U>(info.m_type)],
+			info.m_subsystem ? info.m_subsystem : "N/A ", info.m_tid, endTerminalColor, terminalColor, info.m_msg,
+			info.m_file, info.m_line, info.m_func, endTerminalColor);
 #elif ANKI_OS_WINDOWS
 	WORD attribs = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
 	FILE* out = NULL;
@@ -222,14 +201,8 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		SetConsoleTextAttribute(consoleHandle, attribs);
 
 		// Print
-		fprintf(out,
-			"[%s][%s] %s (%s:%d %s)\n",
-			MSG_TEXT[static_cast<U>(info.m_type)],
-			info.m_subsystem ? info.m_subsystem : "N/A ",
-			info.m_msg,
-			info.m_file,
-			info.m_line,
-			info.m_func);
+		fprintf(out, "[%s][%s] %s (%s:%d %s)\n", MSG_TEXT[static_cast<U>(info.m_type)],
+				info.m_subsystem ? info.m_subsystem : "N/A ", info.m_msg, info.m_file, info.m_line, info.m_func);
 
 		// Restore state
 		SetConsoleTextAttribute(consoleHandle, savedAttribs);
@@ -279,15 +252,9 @@ void Logger::defaultSystemMessageHandler(void*, const LoggerMessageInfo& info)
 		ANKI_ASSERT(0);
 	}
 
-	fprintf(out,
-		"[%s][%s][%" PRIx64 "] %s (%s:%d %s)\n",
-		MSG_TEXT[static_cast<U>(info.m_type)],
-		info.m_subsystem ? info.m_subsystem : "N/A ",
-		info.m_tid,
-		info.m_msg,
-		info.m_file,
-		info.m_line,
-		info.m_func);
+	fprintf(out, "[%s][%s][%" PRIx64 "] %s (%s:%d %s)\n", MSG_TEXT[static_cast<U>(info.m_type)],
+			info.m_subsystem ? info.m_subsystem : "N/A ", info.m_tid, info.m_msg, info.m_file, info.m_line,
+			info.m_func);
 
 	fflush(out);
 #endif
@@ -297,12 +264,8 @@ void Logger::fileMessageHandler(void* pfile, const LoggerMessageInfo& info)
 {
 	File* file = reinterpret_cast<File*>(pfile);
 
-	Error err = file->writeText("[%s] %s (%s:%d %s)\n",
-		MSG_TEXT[static_cast<U>(info.m_type)],
-		info.m_msg,
-		info.m_file,
-		info.m_line,
-		info.m_func);
+	Error err = file->writeText("[%s] %s (%s:%d %s)\n", MSG_TEXT[static_cast<U>(info.m_type)], info.m_msg, info.m_file,
+								info.m_line, info.m_func);
 
 	if(!err)
 	{

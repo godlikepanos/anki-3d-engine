@@ -66,24 +66,16 @@ public:
 	/// @param testCallbackUserData Parameter to the testCallback. Can be nullptr.
 	/// @param out The output of the tests.
 	/// @note It's thread-safe against other gatherVisible calls.
-	void gatherVisible(const Plane frustumPlanes[6],
-		U32 testId,
-		OctreeNodeVisibilityTestCallback testCallback,
-		void* testCallbackUserData,
-		DynamicArrayAuto<void*>& out)
+	void gatherVisible(const Plane frustumPlanes[6], U32 testId, OctreeNodeVisibilityTestCallback testCallback,
+					   void* testCallbackUserData, DynamicArrayAuto<void*>& out)
 	{
 		gatherVisibleRecursive(frustumPlanes, testId, testCallback, testCallbackUserData, m_rootLeaf, out);
 	}
 
 	/// Similar to gatherVisible but it spawns ThreadHive tasks.
-	void gatherVisibleParallel(const Plane frustumPlanes[6],
-		U32 testId,
-		OctreeNodeVisibilityTestCallback testCallback,
-		void* testCallbackUserData,
-		DynamicArrayAuto<void*>* out,
-		ThreadHive& hive,
-		ThreadHiveSemaphore* waitSemaphore,
-		ThreadHiveSemaphore*& signalSemaphore);
+	void gatherVisibleParallel(const Plane frustumPlanes[6], U32 testId, OctreeNodeVisibilityTestCallback testCallback,
+							   void* testCallbackUserData, DynamicArrayAuto<void*>* out, ThreadHive& hive,
+							   ThreadHiveSemaphore* waitSemaphore, ThreadHiveSemaphore*& signalSemaphore);
 
 	/// Walk the tree.
 	/// @tparam TTestAabbFunc The lambda that will test an Aabb. Signature of lambda: Bool(*)(const Aabb& leafBox)
@@ -255,28 +247,21 @@ private:
 
 	static Bool volumeTotallyInsideLeaf(const Aabb& volume, const Leaf& leaf);
 
-	static void computeChildAabb(LeafMask child,
-		const Vec3& parentAabbMin,
-		const Vec3& parentAabbMax,
-		const Vec3& parentAabbCenter,
-		Vec3& childAabbMin,
-		Vec3& childAabbMax);
+	static void computeChildAabb(LeafMask child, const Vec3& parentAabbMin, const Vec3& parentAabbMax,
+								 const Vec3& parentAabbCenter, Vec3& childAabbMin, Vec3& childAabbMax);
 
 	/// Remove a placeable from the tree.
 	void removeInternal(OctreePlaceable& placeable);
 
-	static void gatherVisibleRecursive(const Plane frustumPlanes[6],
-		U32 testId,
-		OctreeNodeVisibilityTestCallback testCallback,
-		void* testCallbackUserData,
-		Leaf* leaf,
-		DynamicArrayAuto<void*>& out);
+	static void gatherVisibleRecursive(const Plane frustumPlanes[6], U32 testId,
+									   OctreeNodeVisibilityTestCallback testCallback, void* testCallbackUserData,
+									   Leaf* leaf, DynamicArrayAuto<void*>& out);
 
 	/// ThreadHive callback.
 	static void gatherVisibleTaskCallback(void* ud, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem);
 
-	void gatherVisibleParallelTask(
-		U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem, GatherParallelTaskCtx& taskCtx);
+	void gatherVisibleParallelTask(U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* sem,
+								   GatherParallelTaskCtx& taskCtx);
 
 	/// Remove a leaf.
 	void cleanupRecursive(Leaf* leaf, Bool& canDeleteLeafUponReturn);

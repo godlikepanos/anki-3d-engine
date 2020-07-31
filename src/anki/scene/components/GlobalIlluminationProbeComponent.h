@@ -133,8 +133,8 @@ private:
 	Bool m_markedForRendering = false;
 	Bool m_dirty = true;
 
-	static void giProbeQueueElementFeedbackCallback(
-		Bool fillRenderQueuesOnNextFrame, void* userData, const Vec4& eyeWorldPosition)
+	static void giProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData,
+													const Vec4& eyeWorldPosition)
 	{
 		ANKI_ASSERT(userData);
 		GlobalIlluminationProbeComponent& self = *static_cast<GlobalIlluminationProbeComponent*>(userData);

@@ -33,15 +33,15 @@ public:
 	Bool isValid() const
 	{
 		if(m_indexBuffer.get() == nullptr || m_indexCount == 0 || m_indexType == IndexType::COUNT
-			|| m_positionBuffer.get() == nullptr || m_positionStride == 0 || m_positionsFormat == Format::NONE
-			|| m_positionCount == 0)
+		   || m_positionBuffer.get() == nullptr || m_positionStride == 0 || m_positionsFormat == Format::NONE
+		   || m_positionCount == 0)
 		{
 			return false;
 		}
 
 		const PtrSize posRange = m_positionBufferOffset + m_positionStride * m_positionCount;
 		if(m_positionStride < getFormatBytes(m_positionsFormat)
-			|| (m_positionStride % getFormatBytes(m_positionsFormat)) != 0 || posRange > m_positionBuffer->getSize())
+		   || (m_positionStride % getFormatBytes(m_positionsFormat)) != 0 || posRange > m_positionBuffer->getSize())
 		{
 			return false;
 		}
@@ -131,8 +131,8 @@ protected:
 
 private:
 	/// Allocate and initialize new instance.
-	static ANKI_USE_RESULT AccelerationStructure* newInstance(
-		GrManager* manager, const AccelerationStructureInitInfo& init);
+	static ANKI_USE_RESULT AccelerationStructure* newInstance(GrManager* manager,
+															  const AccelerationStructureInitInfo& init);
 };
 /// @}
 

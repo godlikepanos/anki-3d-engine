@@ -94,8 +94,8 @@ class PhysicsPoint2PointJoint : public PhysicsJoint
 private:
 	PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos);
 
-	PhysicsPoint2PointJoint(
-		PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB, const Vec3& relPosB);
+	PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, PhysicsBodyPtr bodyB,
+							const Vec3& relPosB);
 
 	~PhysicsPoint2PointJoint();
 };
@@ -108,13 +108,8 @@ class PhysicsHingeJoint : public PhysicsJoint
 private:
 	PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos, const Vec3& axis);
 
-	PhysicsHingeJoint(PhysicsWorld* world,
-		PhysicsBodyPtr bodyA,
-		const Vec3& relPosA,
-		const Vec3& axisA,
-		PhysicsBodyPtr bodyB,
-		const Vec3& relPosB,
-		const Vec3& axisB);
+	PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA, const Vec3& axisA,
+					  PhysicsBodyPtr bodyB, const Vec3& relPosB, const Vec3& axisB);
 
 	~PhysicsHingeJoint();
 };

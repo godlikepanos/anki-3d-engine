@@ -51,11 +51,11 @@ Bool FrustumComponent::updateInternal()
 
 		if(m_frustumType == FrustumType::PERSPECTIVE)
 		{
-			m_projMat = Mat4::calculatePerspectiveProjectionMatrix(
-				m_perspective.m_fovX, m_perspective.m_fovY, m_perspective.m_near, m_perspective.m_far);
+			m_projMat = Mat4::calculatePerspectiveProjectionMatrix(m_perspective.m_fovX, m_perspective.m_fovY,
+																   m_perspective.m_near, m_perspective.m_far);
 
-			computeEdgesOfFrustum(
-				m_perspective.m_far, m_perspective.m_fovY, m_perspective.m_fovY, &m_perspective.m_edgesL[0]);
+			computeEdgesOfFrustum(m_perspective.m_far, m_perspective.m_fovY, m_perspective.m_fovY,
+								  &m_perspective.m_edgesL[0]);
 
 			// Planes
 			F32 c, s; // cos & sine
@@ -79,14 +79,12 @@ Bool FrustumComponent::updateInternal()
 		}
 		else
 		{
-			m_projMat = Mat4::calculateOrthographicProjectionMatrix(
-				m_ortho.m_right, m_ortho.m_left, m_ortho.m_top, m_ortho.m_bottom, m_ortho.m_near, m_ortho.m_far);
+			m_projMat = Mat4::calculateOrthographicProjectionMatrix(m_ortho.m_right, m_ortho.m_left, m_ortho.m_top,
+																	m_ortho.m_bottom, m_ortho.m_near, m_ortho.m_far);
 
 			// OBB
-			const Vec4 c((m_ortho.m_right + m_ortho.m_left) * 0.5f,
-				(m_ortho.m_top + m_ortho.m_bottom) * 0.5f,
-				-(m_ortho.m_far + m_ortho.m_near) * 0.5f,
-				0.0f);
+			const Vec4 c((m_ortho.m_right + m_ortho.m_left) * 0.5f, (m_ortho.m_top + m_ortho.m_bottom) * 0.5f,
+						 -(m_ortho.m_far + m_ortho.m_near) * 0.5f, 0.0f);
 			const Vec4 e = Vec4(m_ortho.m_right, m_ortho.m_top, -m_ortho.m_far, 0.0f) - c;
 
 			m_ortho.m_obbL = Obb(c, Mat3x4::getIdentity(), e);
@@ -159,10 +157,10 @@ void FrustumComponent::setEnabledVisibilityTests(FrustumComponentVisibilityTestF
 
 #if ANKI_ENABLE_ASSERTS
 	if(!!(m_flags & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-		|| !!(m_flags & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+	   || !!(m_flags & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
 	{
 		if((m_flags & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-			== (m_flags & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+		   == (m_flags & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
 		{
 			ANKI_ASSERT(0 && "Cannot have them both");
 		}

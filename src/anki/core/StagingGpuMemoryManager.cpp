@@ -31,31 +31,22 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getNumberU32("core_vertexPerFrameMemorySize");
 	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getNumberU32("core_textureBufferPerFrameMemorySize");
 
-	initBuffer(StagingGpuMemoryType::UNIFORM,
-		gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,
-		gr->getDeviceCapabilities().m_uniformBufferMaxRange,
-		BufferUsageBit::ALL_UNIFORM,
-		*gr);
+	initBuffer(StagingGpuMemoryType::UNIFORM, gr->getDeviceCapabilities().m_uniformBufferBindOffsetAlignment,
+			   gr->getDeviceCapabilities().m_uniformBufferMaxRange, BufferUsageBit::ALL_UNIFORM, *gr);
 
-	initBuffer(StagingGpuMemoryType::STORAGE,
-		gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
-		gr->getDeviceCapabilities().m_storageBufferMaxRange,
-		BufferUsageBit::ALL_STORAGE,
-		*gr);
+	initBuffer(StagingGpuMemoryType::STORAGE, gr->getDeviceCapabilities().m_storageBufferBindOffsetAlignment,
+			   gr->getDeviceCapabilities().m_storageBufferMaxRange, BufferUsageBit::ALL_STORAGE, *gr);
 
 	initBuffer(StagingGpuMemoryType::VERTEX, 16, MAX_U32, BufferUsageBit::VERTEX | BufferUsageBit::INDEX, *gr);
 
-	initBuffer(StagingGpuMemoryType::TEXTURE,
-		gr->getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
-		gr->getDeviceCapabilities().m_textureBufferMaxRange,
-		BufferUsageBit::ALL_TEXTURE,
-		*gr);
+	initBuffer(StagingGpuMemoryType::TEXTURE, gr->getDeviceCapabilities().m_textureBufferBindOffsetAlignment,
+			   gr->getDeviceCapabilities().m_textureBufferMaxRange, BufferUsageBit::ALL_TEXTURE, *gr);
 
 	return Error::NONE;
 }
 
-void StagingGpuMemoryManager::initBuffer(
-	StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize, BufferUsageBit usage, GrManager& gr)
+void StagingGpuMemoryManager::initBuffer(StagingGpuMemoryType type, U32 alignment, PtrSize maxAllocSize,
+										 BufferUsageBit usage, GrManager& gr)
 {
 	auto& perframe = m_perFrameBuffers[type];
 

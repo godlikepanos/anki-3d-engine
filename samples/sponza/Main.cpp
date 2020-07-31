@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 	{
 		ANKI_LOGE("Error reported. To run %s you have to navigate to the /path/to/anki/samples/sponza. "
 				  "And then execute it",
-			argv[0]);
+				  argv[0]);
 	}
 	else
 	{

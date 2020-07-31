@@ -66,9 +66,8 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 	GrManager& gr = getGrManager();
 
 	m_indirectBuff = gr.newBuffer(BufferInitInfo(m_maxFlares * sizeof(DrawArraysIndirectInfo),
-		BufferUsageBit::INDIRECT_DRAW | BufferUsageBit::STORAGE_COMPUTE_WRITE,
-		BufferMapAccessBit::NONE,
-		"LensFlares"));
+												 BufferUsageBit::INDIRECT_DRAW | BufferUsageBit::STORAGE_COMPUTE_WRITE,
+												 BufferMapAccessBit::NONE, "LensFlares"));
 
 	ANKI_CHECK(
 		getResourceManager().loadResource("shaders/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
@@ -130,8 +129,7 @@ void LensFlare::populateRenderGraph(RenderingContext& ctx)
 				LensFlare* const self = static_cast<LensFlare*>(rgraphCtx.m_userData);
 				self->updateIndirectInfo(*self->m_runCtx.m_ctx, rgraphCtx);
 			},
-			this,
-			0);
+			this, 0);
 
 		rpass.newDependency({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
 		rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, HIZ_QUARTER_DEPTH});
@@ -188,11 +186,11 @@ void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmd
 		// Render
 		ANKI_ASSERT(flareEl.m_textureView);
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearRepeat);
-		cmdb->bindTexture(
-			0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)), TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 2, TextureViewPtr(const_cast<TextureView*>(flareEl.m_textureView)),
+						  TextureUsageBit::SAMPLED_FRAGMENT);
 
-		cmdb->drawArraysIndirect(
-			PrimitiveTopology::TRIANGLE_STRIP, 1, i * sizeof(DrawArraysIndirectInfo), m_indirectBuff);
+		cmdb->drawArraysIndirect(PrimitiveTopology::TRIANGLE_STRIP, 1, i * sizeof(DrawArraysIndirectInfo),
+								 m_indirectBuff);
 	}
 
 	// Restore state

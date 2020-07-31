@@ -133,8 +133,8 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(0));
 		rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(1));
 		rgraphCtx.bindColorTexture(0, 15, m_r->getGBuffer().getColorRt(2));
-		rgraphCtx.bindTexture(
-			0, 16, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindTexture(0, 16, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 		rgraphCtx.bindColorTexture(0, 17, m_r->getSsr().getRt());
 		rgraphCtx.bindColorTexture(0, 18, m_r->getSsao().getRt());
 		rgraphCtx.bindColorTexture(0, 19, m_r->getSsgi().getRt());
@@ -153,8 +153,8 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 		cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 
-		rgraphCtx.bindTexture(
-			0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+		rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 		rgraphCtx.bindColorTexture(0, 3, m_r->getVolumetricFog().getRt());
 
 		struct PushConsts
@@ -193,8 +193,7 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 
 	pass.setWork(
 		[](RenderPassWorkContext& rgraphCtx) { static_cast<LightShading*>(rgraphCtx.m_userData)->run(rgraphCtx); },
-		this,
-		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()));
+		this, computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()));
 	pass.setFramebufferInfo(m_lightShading.m_fbDescr, {{m_runCtx.m_rt}}, {m_r->getGBuffer().getDepthRt()});
 
 	// Light shading
@@ -203,8 +202,8 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getGBuffer().getDepthRt(),
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-		TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
+						TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
+						TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getSsgi().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});

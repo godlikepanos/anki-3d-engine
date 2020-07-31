@@ -103,8 +103,8 @@ ClusterBin::~ClusterBin()
 	m_clusterEdges.destroy(m_alloc);
 }
 
-void ClusterBin::init(
-	HeapAllocator<U8> alloc, U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ, const ConfigSet& cfg)
+void ClusterBin::init(HeapAllocator<U8> alloc, U32 clusterCountX, U32 clusterCountY, U32 clusterCountZ,
+					  const ConfigSet& cfg)
 {
 	m_alloc = alloc;
 
@@ -169,9 +169,7 @@ void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 			ANKI_TRACE_SCOPED_EVENT(R_WRITE_LIGHT_BUFFERS);
 			self->m_bin->writeTypedObjectsToGpuBuffers(*self);
 		},
-		&ctx,
-		nullptr,
-		nullptr);
+		&ctx, nullptr, nullptr);
 
 	// Create tasks for binning
 	tasks[1] = ANKI_THREAD_HIVE_TASK(
@@ -195,9 +193,7 @@ void ClusterBin::bin(ClusterBinIn& in, ClusterBinOut& out)
 				ctx.m_bin->binTile(tileIdx, ctx, tileCtx);
 			}
 		},
-		&ctx,
-		nullptr,
-		nullptr);
+		&ctx, nullptr, nullptr);
 
 	for(U threadIdx = 1; threadIdx < in.m_threadHive->getThreadCount(); ++threadIdx)
 	{
@@ -263,8 +259,8 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	const U32 tileY = tileIdx / m_clusterCounts[0];
 
 	// Compute the tile's cluster edges in view space
-	WeakArray<Vec4> clusterEdgesVSpace(
-		&m_clusterEdges[tileIdx * (m_clusterCounts[2] + 1) * 4], (m_clusterCounts[2] + 1) * 4);
+	WeakArray<Vec4> clusterEdgesVSpace(&m_clusterEdges[tileIdx * (m_clusterCounts[2] + 1) * 4],
+									   (m_clusterCounts[2] + 1) * 4);
 	if(ctx.m_clusterEdgesDirty)
 	{
 		const Vec2 tileSize = 2.0f / Vec2(F32(m_clusterCounts[0]), F32(m_clusterCounts[1]));
@@ -300,17 +296,13 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 	const U32 lastQuartet = clusterEdgesWSpace.getSize() - 1 - 4;
 	const U32 beforeLastQuartet = lastQuartet - 4;
 	frustumPlanes[0].setFrom3Points(clusterEdgesWSpace[beforeLastQuartet + 0],
-		clusterEdgesWSpace[beforeLastQuartet + 1],
-		clusterEdgesWSpace[lastQuartet + 0]);
+									clusterEdgesWSpace[beforeLastQuartet + 1], clusterEdgesWSpace[lastQuartet + 0]);
 	frustumPlanes[1].setFrom3Points(clusterEdgesWSpace[beforeLastQuartet + 1],
-		clusterEdgesWSpace[beforeLastQuartet + 2],
-		clusterEdgesWSpace[lastQuartet + 2]);
+									clusterEdgesWSpace[beforeLastQuartet + 2], clusterEdgesWSpace[lastQuartet + 2]);
 	frustumPlanes[2].setFrom3Points(clusterEdgesWSpace[beforeLastQuartet + 2],
-		clusterEdgesWSpace[beforeLastQuartet + 3],
-		clusterEdgesWSpace[lastQuartet + 2]);
+									clusterEdgesWSpace[beforeLastQuartet + 3], clusterEdgesWSpace[lastQuartet + 2]);
 	frustumPlanes[3].setFrom3Points(clusterEdgesWSpace[beforeLastQuartet + 3],
-		clusterEdgesWSpace[beforeLastQuartet + 0],
-		clusterEdgesWSpace[lastQuartet + 0]);
+									clusterEdgesWSpace[beforeLastQuartet + 0], clusterEdgesWSpace[lastQuartet + 0]);
 
 	// Compute the cluster AABBs and spheres
 	DynamicArrayAuto<Aabb>& clusterBoxes = tileCtx.m_clusterBoxes;
@@ -393,10 +385,8 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 			for(U32 clusterZ = 0; clusterZ < m_clusterCounts[2]; ++clusterZ)
 			{
 				if(!testCollision(clusterSpheres[clusterZ],
-					   Cone(slight.m_worldTransform.getTranslationPart().xyz0(),
-						   -slight.m_worldTransform.getZAxis(),
-						   slight.m_distance,
-						   slight.m_outerAngle)))
+								  Cone(slight.m_worldTransform.getTranslationPart().xyz0(),
+									   -slight.m_worldTransform.getZAxis(), slight.m_distance, slight.m_outerAngle)))
 				{
 					continue;
 				}
@@ -613,9 +603,8 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			{
 				out.m_shadowAtlasTileScale = in.m_shadowAtlasTileSize;
 				ANKI_ASSERT(sizeof(out.m_shadowAtlasTileOffsets) == sizeof(in.m_shadowAtlasTileOffsets));
-				memcpy(&out.m_shadowAtlasTileOffsets[0],
-					&in.m_shadowAtlasTileOffsets[0],
-					sizeof(in.m_shadowAtlasTileOffsets));
+				memcpy(&out.m_shadowAtlasTileOffsets[0], &in.m_shadowAtlasTileOffsets[0],
+					   sizeof(in.m_shadowAtlasTileOffsets));
 			}
 
 			out.m_radius = in.m_radius;
@@ -690,7 +679,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			Decal& out = gpuDecals[i];
 
 			if((diffuseAtlas != nullptr && diffuseAtlas != in.m_diffuseAtlas)
-				|| (specularRoughnessAtlas != nullptr && specularRoughnessAtlas != in.m_specularRoughnessAtlas))
+			   || (specularRoughnessAtlas != nullptr && specularRoughnessAtlas != in.m_specularRoughnessAtlas))
 			{
 				ANKI_R_LOGF("All decals should have the same tex atlas");
 			}
@@ -727,8 +716,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	{
 		ReflectionProbe* data = static_cast<ReflectionProbe*>(
 			ctx.m_in->m_stagingMem->allocateFrame(sizeof(ReflectionProbe) * visibleProbeCount,
-				StagingGpuMemoryType::UNIFORM,
-				ctx.m_out->m_reflectionProbesToken));
+												  StagingGpuMemoryType::UNIFORM, ctx.m_out->m_reflectionProbesToken));
 
 		WeakArray<ReflectionProbe> gpuProbes(data, visibleProbeCount);
 
@@ -754,8 +742,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	{
 		FogDensityVolume* data = static_cast<FogDensityVolume*>(
 			ctx.m_in->m_stagingMem->allocateFrame(sizeof(FogDensityVolume) * visibleFogVolumeCount,
-				StagingGpuMemoryType::UNIFORM,
-				ctx.m_out->m_fogDensityVolumesToken));
+												  StagingGpuMemoryType::UNIFORM, ctx.m_out->m_fogDensityVolumesToken));
 
 		WeakArray<FogDensityVolume> gpuFogVolumes(data, visibleFogVolumeCount);
 
@@ -788,10 +775,9 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 	const U32 visibleGiProbeCount = rqueue.m_giProbes.getSize();
 	if(visibleGiProbeCount)
 	{
-		GlobalIlluminationProbe* data = static_cast<GlobalIlluminationProbe*>(
-			ctx.m_in->m_stagingMem->allocateFrame(sizeof(GlobalIlluminationProbe) * visibleGiProbeCount,
-				StagingGpuMemoryType::UNIFORM,
-				ctx.m_out->m_globalIlluminationProbesToken));
+		GlobalIlluminationProbe* data = static_cast<GlobalIlluminationProbe*>(ctx.m_in->m_stagingMem->allocateFrame(
+			sizeof(GlobalIlluminationProbe) * visibleGiProbeCount, StagingGpuMemoryType::UNIFORM,
+			ctx.m_out->m_globalIlluminationProbesToken));
 
 		WeakArray<GlobalIlluminationProbe> gpuProbes(data, visibleGiProbeCount);
 

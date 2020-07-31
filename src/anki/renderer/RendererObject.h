@@ -62,21 +62,16 @@ protected:
 	}
 
 	/// Dispatch a compute job equivelent to drawQuad
-	static void dispatchPPCompute(
-		CommandBufferPtr& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 outImageWidth, U32 outImageHeight)
+	static void dispatchPPCompute(CommandBufferPtr& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 outImageWidth,
+								  U32 outImageHeight)
 	{
 		const U32 sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
 		const U32 sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;
 		cmdb->dispatchCompute(sizeX, sizeY, 1);
 	}
 
-	static void dispatchPPCompute(CommandBufferPtr& cmdb,
-		U32 workgroupSizeX,
-		U32 workgroupSizeY,
-		U32 workgroupSizeZ,
-		U32 outImageWidth,
-		U32 outImageHeight,
-		U32 outImageDepth)
+	static void dispatchPPCompute(CommandBufferPtr& cmdb, U32 workgroupSizeX, U32 workgroupSizeY, U32 workgroupSizeZ,
+								  U32 outImageWidth, U32 outImageHeight, U32 outImageDepth)
 	{
 		const U32 sizeX = (outImageWidth + workgroupSizeX - 1) / workgroupSizeX;
 		const U32 sizeY = (outImageHeight + workgroupSizeY - 1) / workgroupSizeY;

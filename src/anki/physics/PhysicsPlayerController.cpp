@@ -29,9 +29,8 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 		auto lock = getWorld().lockBtWorld();
 		btDynamicsWorld* btworld = getWorld().getBtWorld();
 
-		btworld->addCollisionObject(m_ghostObject.get(),
-			btBroadphaseProxy::CharacterFilter,
-			btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+		btworld->addCollisionObject(m_ghostObject.get(), btBroadphaseProxy::CharacterFilter,
+									btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
 		btworld->addAction(m_controller.get());
 	}
 

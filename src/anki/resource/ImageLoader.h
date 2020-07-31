@@ -157,43 +157,23 @@ private:
 
 	void destroy();
 
-	static ANKI_USE_RESULT Error loadUncompressedTga(FileInterface& fs,
-		U32& width,
-		U32& height,
-		U32& bpp,
-		DynamicArray<U8>& data,
-		GenericMemoryPoolAllocator<U8>& alloc);
+	static ANKI_USE_RESULT Error loadUncompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
+													 DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadCompressedTga(FileInterface& fs,
-		U32& width,
-		U32& height,
-		U32& bpp,
-		DynamicArray<U8>& data,
-		GenericMemoryPoolAllocator<U8>& alloc);
+	static ANKI_USE_RESULT Error loadCompressedTga(FileInterface& fs, U32& width, U32& height, U32& bpp,
+												   DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadTga(FileInterface& fs,
-		U32& width,
-		U32& height,
-		U32& bpp,
-		DynamicArray<U8>& data,
-		GenericMemoryPoolAllocator<U8>& alloc);
+	static ANKI_USE_RESULT Error loadTga(FileInterface& fs, U32& width, U32& height, U32& bpp, DynamicArray<U8>& data,
+										 GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadStb(
-		FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data, GenericMemoryPoolAllocator<U8>& alloc);
+	static ANKI_USE_RESULT Error loadStb(FileInterface& fs, U32& width, U32& height, DynamicArray<U8>& data,
+										 GenericMemoryPoolAllocator<U8>& alloc);
 
-	static ANKI_USE_RESULT Error loadAnkiTexture(FileInterface& file,
-		U32 maxTextureSize,
-		ImageLoaderDataCompression& preferredCompression,
-		DynamicArray<ImageLoaderSurface>& surfaces,
-		DynamicArray<ImageLoaderVolume>& volumes,
-		GenericMemoryPoolAllocator<U8>& alloc,
-		U32& width,
-		U32& height,
-		U32& depth,
-		U32& layerCount,
-		U32& mipCount,
-		ImageLoaderTextureType& textureType,
-		ImageLoaderColorFormat& colorFormat);
+	static ANKI_USE_RESULT Error
+	loadAnkiTexture(FileInterface& file, U32 maxTextureSize, ImageLoaderDataCompression& preferredCompression,
+					DynamicArray<ImageLoaderSurface>& surfaces, DynamicArray<ImageLoaderVolume>& volumes,
+					GenericMemoryPoolAllocator<U8>& alloc, U32& width, U32& height, U32& depth, U32& layerCount,
+					U32& mipCount, ImageLoaderTextureType& textureType, ImageLoaderColorFormat& colorFormat);
 
 	ANKI_USE_RESULT Error loadInternal(FileInterface& file, const CString& filename, U32 maxTextureSize);
 };

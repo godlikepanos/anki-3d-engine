@@ -38,15 +38,9 @@ public:
 
 	~MainRenderer();
 
-	ANKI_USE_RESULT Error init(ThreadHive* hive,
-		ResourceManager* resources,
-		GrManager* gl,
-		StagingGpuMemoryManager* stagingMem,
-		UiManager* ui,
-		AllocAlignedCallback allocCb,
-		void* allocCbUserData,
-		const ConfigSet& config,
-		Timestamp* globTimestamp);
+	ANKI_USE_RESULT Error init(ThreadHive* hive, ResourceManager* resources, GrManager* gl,
+							   StagingGpuMemoryManager* stagingMem, UiManager* ui, AllocAlignedCallback allocCb,
+							   void* allocCbUserData, const ConfigSet& config, Timestamp* globTimestamp);
 
 	ANKI_USE_RESULT Error render(RenderQueue& rqueue, TexturePtr presentTex);
 

@@ -137,11 +137,8 @@ private:
 	/// Return the maximum number of LODs
 	U32 getLodCount() const;
 
-	ANKI_USE_RESULT Error init(ModelResource* model,
-		ConstWeakArray<CString> meshFNames,
-		const CString& mtlFName,
-		Bool async,
-		ResourceManager* resources);
+	ANKI_USE_RESULT Error init(ModelResource* model, ConstWeakArray<CString> meshFNames, const CString& mtlFName,
+							   Bool async, ResourceManager* resources);
 };
 
 /// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.

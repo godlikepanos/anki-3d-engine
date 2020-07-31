@@ -378,8 +378,9 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, 
 	return tex;
 }
 
-FramebufferPtr RenderGraph::getOrCreateFramebuffer(
-	const FramebufferDescription& fbDescr, const RenderTargetHandle* rtHandles, CString name, Bool& drawsToPresentable)
+FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription& fbDescr,
+												   const RenderTargetHandle* rtHandles, CString name,
+												   Bool& drawsToPresentable)
 {
 	ANKI_ASSERT(rtHandles);
 	U64 hash = fbDescr.m_hash;
@@ -428,8 +429,8 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 			outAtt.m_storeOperation = inAtt.m_storeOperation;
 
 			// Create texture view
-			TextureViewInitInfo viewInit(
-				m_ctx->m_rts[rtHandles[i].m_idx].m_texture, TextureSubresourceInfo(inAtt.m_surface), "RenderGraph");
+			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[i].m_idx].m_texture,
+										 TextureSubresourceInfo(inAtt.m_surface), "RenderGraph");
 			TextureViewPtr view = getManager().newTextureView(viewInit);
 
 			outAtt.m_textureView = view;
@@ -448,8 +449,7 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 
 			// Create texture view
 			TextureViewInitInfo viewInit(m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture,
-				TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect),
-				"RenderGraph");
+										 TextureSubresourceInfo(inAtt.m_surface, inAtt.m_aspect), "RenderGraph");
 			TextureViewPtr view = getManager().newTextureView(viewInit);
 
 			outAtt.m_textureView = view;
@@ -718,8 +718,8 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 			if(graphicsPass.hasFramebuffer())
 			{
 				Bool drawsToPresentable;
-				outPass.fb() = getOrCreateFramebuffer(
-					graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0], inPass.m_name.cstr(), drawsToPresentable);
+				outPass.fb() = getOrCreateFramebuffer(graphicsPass.m_fbDescr, &graphicsPass.m_rtHandles[0],
+													  inPass.m_name.cstr(), drawsToPresentable);
 
 				outPass.m_fbRenderArea = graphicsPass.m_fbRenderArea;
 				outPass.m_drawsToPresentable = drawsToPresentable;
@@ -837,10 +837,8 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackA
 				TextureUsageBit usage;
 				for(U i = 0; i < graphicsPass.m_fbDescr.m_colorAttachmentCount; ++i)
 				{
-					getCrntUsage(graphicsPass.m_rtHandles[i],
-						outPass.m_batchIdx,
-						TextureSubresourceInfo(graphicsPass.m_fbDescr.m_colorAttachments[i].m_surface),
-						usage);
+					getCrntUsage(graphicsPass.m_rtHandles[i], outPass.m_batchIdx,
+								 TextureSubresourceInfo(graphicsPass.m_fbDescr.m_colorAttachments[i].m_surface), usage);
 
 					outPass.m_colorUsages[i] = usage;
 				}
@@ -849,10 +847,10 @@ void RenderGraph::initGraphicsPasses(const RenderGraphDescription& descr, StackA
 				{
 					TextureSubresourceInfo subresource =
 						TextureSubresourceInfo(graphicsPass.m_fbDescr.m_depthStencilAttachment.m_surface,
-							graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect);
+											   graphicsPass.m_fbDescr.m_depthStencilAttachment.m_aspect);
 
-					getCrntUsage(
-						graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS], outPass.m_batchIdx, subresource, usage);
+					getCrntUsage(graphicsPass.m_rtHandles[MAX_COLOR_ATTACHMENTS], outPass.m_batchIdx, subresource,
+								 usage);
 
 					outPass.m_dsUsage = usage;
 				}
@@ -1019,36 +1017,35 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 
 #if ANKI_DBG_RENDER_GRAPH
 		// Sort the barriers to ease the dumped graph
-		std::sort(batch.m_barriersBefore.getBegin(),
-			batch.m_barriersBefore.getEnd(),
-			[&](const Barrier& a, const Barrier& b) {
-				const U aidx = (a.m_isTexture) ? a.m_texture.m_idx : a.m_buffer.m_idx;
-				const U bidx = (b.m_isTexture) ? b.m_texture.m_idx : b.m_buffer.m_idx;
+		std::sort(batch.m_barriersBefore.getBegin(), batch.m_barriersBefore.getEnd(),
+				  [&](const Barrier& a, const Barrier& b) {
+					  const U aidx = (a.m_isTexture) ? a.m_texture.m_idx : a.m_buffer.m_idx;
+					  const U bidx = (b.m_isTexture) ? b.m_texture.m_idx : b.m_buffer.m_idx;
 
-				if(aidx == bidx && a.m_isTexture && b.m_isTexture)
-				{
-					if(a.m_texture.m_surface.m_level != b.m_texture.m_surface.m_level)
-					{
-						return a.m_texture.m_surface.m_level < b.m_texture.m_surface.m_level;
-					}
-					else if(a.m_texture.m_surface.m_face != b.m_texture.m_surface.m_face)
-					{
-						return a.m_texture.m_surface.m_face < b.m_texture.m_surface.m_face;
-					}
-					else if(a.m_texture.m_surface.m_layer != b.m_texture.m_surface.m_layer)
-					{
-						return a.m_texture.m_surface.m_layer < b.m_texture.m_surface.m_layer;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else
-				{
-					return aidx < bidx;
-				}
-			});
+					  if(aidx == bidx && a.m_isTexture && b.m_isTexture)
+					  {
+						  if(a.m_texture.m_surface.m_level != b.m_texture.m_surface.m_level)
+						  {
+							  return a.m_texture.m_surface.m_level < b.m_texture.m_surface.m_level;
+						  }
+						  else if(a.m_texture.m_surface.m_face != b.m_texture.m_surface.m_face)
+						  {
+							  return a.m_texture.m_surface.m_face < b.m_texture.m_surface.m_face;
+						  }
+						  else if(a.m_texture.m_surface.m_layer != b.m_texture.m_surface.m_layer)
+						  {
+							  return a.m_texture.m_surface.m_layer < b.m_texture.m_surface.m_layer;
+						  }
+						  else
+						  {
+							  return false;
+						  }
+					  }
+					  else
+					  {
+						  return aidx < bidx;
+					  }
+				  });
 #endif
 	} // For all batches
 }
@@ -1149,17 +1146,13 @@ void RenderGraph::run() const
 			if(barrier.m_isTexture)
 			{
 				cmdb->setTextureSurfaceBarrier(m_ctx->m_rts[barrier.m_texture.m_idx].m_texture,
-					barrier.m_texture.m_usageBefore,
-					barrier.m_texture.m_usageAfter,
-					barrier.m_texture.m_surface);
+											   barrier.m_texture.m_usageBefore, barrier.m_texture.m_usageAfter,
+											   barrier.m_texture.m_surface);
 			}
 			else
 			{
 				cmdb->setBufferBarrier(m_ctx->m_buffers[barrier.m_buffer.m_idx].m_buffer,
-					barrier.m_buffer.m_usageBefore,
-					barrier.m_buffer.m_usageAfter,
-					0,
-					MAX_PTR_SIZE);
+									   barrier.m_buffer.m_usageBefore, barrier.m_buffer.m_usageAfter, 0, MAX_PTR_SIZE);
 			}
 		}
 
@@ -1170,13 +1163,8 @@ void RenderGraph::run() const
 
 			if(pass.fb().isCreated())
 			{
-				cmdb->beginRenderPass(pass.fb(),
-					pass.m_colorUsages,
-					pass.m_dsUsage,
-					pass.m_fbRenderArea[0],
-					pass.m_fbRenderArea[1],
-					pass.m_fbRenderArea[2],
-					pass.m_fbRenderArea[3]);
+				cmdb->beginRenderPass(pass.fb(), pass.m_colorUsages, pass.m_dsUsage, pass.m_fbRenderArea[0],
+									  pass.m_fbRenderArea[1], pass.m_fbRenderArea[2], pass.m_fbRenderArea[3]);
 			}
 
 			const U size = pass.m_secondLevelCmdbs.getSize();
@@ -1227,8 +1215,8 @@ void RenderGraph::flush()
 	}
 }
 
-void RenderGraph::getCrntUsage(
-	RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource, TextureUsageBit& usage) const
+void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const TextureSubresourceInfo& subresource,
+							   TextureUsageBit& usage) const
 {
 	usage = TextureUsageBit::NONE;
 	const Batch& batch = m_ctx->m_batches[batchIdx];
@@ -1400,8 +1388,8 @@ StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 	return str;
 }
 
-Error RenderGraph::dumpDependencyDotFile(
-	const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const
+Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, const BakeContext& ctx,
+										 CString path) const
 {
 	ANKI_GR_LOGW("Running with debug code");
 
@@ -1427,9 +1415,8 @@ Error RenderGraph::dumpDependencyDotFile(
 		{
 			CString passName = descr.m_passes[passIdx]->m_name.toCString();
 
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=%s,shape=box];\n",
-				passName.cstr(),
-				COLORS[batchIdx % COLORS.getSize()],
+			slist.pushBackSprintf(
+				"\t\"%s\"[color=%s,style=%s,shape=box];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()],
 				(descr.m_passes[passIdx]->m_type == RenderPassDescriptionBase::Type::GRAPHICS) ? "bold" : "dashed");
 
 			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
@@ -1474,30 +1461,26 @@ Error RenderGraph::dumpDependencyDotFile(
 			if(barrier.m_isTexture)
 			{
 				barrierLabel.sprintf("<b>%s</b> (mip,dp,f,l)=(%u,%u,%u,%u)<br/>%s <b>to</b> %s",
-					&descr.m_renderTargets[barrier.m_texture.m_idx].m_name[0],
-					barrier.m_texture.m_surface.m_level,
-					barrier.m_texture.m_surface.m_depth,
-					barrier.m_texture.m_surface.m_face,
-					barrier.m_texture.m_surface.m_layer,
-					textureUsageToStr(alloc, barrier.m_texture.m_usageBefore).cstr(),
-					textureUsageToStr(alloc, barrier.m_texture.m_usageAfter).cstr());
+									 &descr.m_renderTargets[barrier.m_texture.m_idx].m_name[0],
+									 barrier.m_texture.m_surface.m_level, barrier.m_texture.m_surface.m_depth,
+									 barrier.m_texture.m_surface.m_face, barrier.m_texture.m_surface.m_layer,
+									 textureUsageToStr(alloc, barrier.m_texture.m_usageBefore).cstr(),
+									 textureUsageToStr(alloc, barrier.m_texture.m_usageAfter).cstr());
 
 				barrierName.sprintf("%s barrier%u", batchName.cstr(), barrierIdx);
 			}
 			else
 			{
 				barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s",
-					&descr.m_buffers[barrier.m_buffer.m_idx].m_name[0],
-					bufferUsageToStr(alloc, barrier.m_buffer.m_usageBefore).cstr(),
-					bufferUsageToStr(alloc, barrier.m_buffer.m_usageAfter).cstr());
+									 &descr.m_buffers[barrier.m_buffer.m_idx].m_name[0],
+									 bufferUsageToStr(alloc, barrier.m_buffer.m_usageBefore).cstr(),
+									 bufferUsageToStr(alloc, barrier.m_buffer.m_usageAfter).cstr());
 
 				barrierName.sprintf("%s barrier%u", batchName.cstr(), barrierIdx);
 			}
 
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n",
-				barrierName.cstr(),
-				COLORS[batchIdx % COLORS.getSize()],
-				barrierLabel.cstr());
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
+								  COLORS[batchIdx % COLORS.getSize()], barrierLabel.cstr());
 			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), barrierName.cstr());
 
 			prevBubble = barrierName;
@@ -1508,8 +1491,8 @@ Error RenderGraph::dumpDependencyDotFile(
 			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 			StringAuto passName(alloc);
 			passName.sprintf("%s pass", pass.m_name.cstr());
-			slist.pushBackSprintf(
-				"\t\"%s\"[color=%s,style=bold];\n", passName.cstr(), COLORS[batchIdx % COLORS.getSize()]);
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold];\n", passName.cstr(),
+								  COLORS[batchIdx % COLORS.getSize()]);
 			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), passName.cstr());
 
 			prevBubble = passName;

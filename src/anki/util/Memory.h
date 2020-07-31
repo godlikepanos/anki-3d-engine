@@ -184,13 +184,9 @@ public:
 	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is not in the top of the stack. Set that to
 	///        true to suppress such errors
 	/// @param alignmentBytes The maximum supported alignment for returned memory
-	void create(AllocAlignedCallback allocCb,
-		void* allocCbUserData,
-		PtrSize initialChunkSize,
-		F32 nextChunkScale = 2.0,
-		PtrSize nextChunkBias = 0,
-		Bool ignoreDeallocationErrors = true,
-		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
+	void create(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F32 nextChunkScale = 2.0,
+				PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true,
+				PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Allocate aligned memory. The operation is thread safe
 	/// @param size The size to allocate
@@ -285,12 +281,8 @@ public:
 	/// @param nextChunkScale Value that controls the next chunk.
 	/// @param nextChunkBias Value that controls the next chunk.
 	/// @param alignmentBytes The maximum supported alignment for returned memory.
-	void create(AllocAlignedCallback allocCb,
-		void* allocCbUserData,
-		PtrSize initialChunkSize,
-		F32 nextChunkScale = 2.0,
-		PtrSize nextChunkBias = 0,
-		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
+	void create(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F32 nextChunkScale = 2.0,
+				PtrSize nextChunkBias = 0, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Allocate memory. This operation is thread safe
 	/// @param size The size to allocate

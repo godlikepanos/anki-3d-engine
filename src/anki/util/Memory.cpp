@@ -159,7 +159,7 @@ HeapMemoryPool::~HeapMemoryPool()
 	{
 		ANKI_UTIL_LOGW("Memory pool destroyed before all memory being released "
 					   "(%u deallocations missed)",
-			count);
+					   count);
 	}
 }
 
@@ -261,13 +261,9 @@ StackMemoryPool::~StackMemoryPool()
 	}
 }
 
-void StackMemoryPool::create(AllocAlignedCallback allocCb,
-	void* allocCbUserData,
-	PtrSize initialChunkSize,
-	F32 nextChunkScale,
-	PtrSize nextChunkBias,
-	Bool ignoreDeallocationErrors,
-	PtrSize alignmentBytes)
+void StackMemoryPool::create(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
+							 F32 nextChunkScale, PtrSize nextChunkBias, Bool ignoreDeallocationErrors,
+							 PtrSize alignmentBytes)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(allocCb);
@@ -485,12 +481,8 @@ ChainMemoryPool::~ChainMemoryPool()
 	}
 }
 
-void ChainMemoryPool::create(AllocAlignedCallback allocCb,
-	void* allocCbUserData,
-	PtrSize initialChunkSize,
-	F32 nextChunkScale,
-	PtrSize nextChunkBias,
-	PtrSize alignmentBytes)
+void ChainMemoryPool::create(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
+							 F32 nextChunkScale, PtrSize nextChunkBias, PtrSize alignmentBytes)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(initialChunkSize > 0);

@@ -35,10 +35,8 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	m_volumeSize[0] = m_r->getClusterCount()[0] * fractionXY;
 	m_volumeSize[1] = m_r->getClusterCount()[1] * fractionXY;
 	m_volumeSize[2] = (m_finalClusterZ + 1) * fractionZ;
-	ANKI_R_LOGI("Initializing volumetric lighting accumulation. Size %ux%ux%u",
-		m_volumeSize[0],
-		m_volumeSize[1],
-		m_volumeSize[2]);
+	ANKI_R_LOGI("Initializing volumetric lighting accumulation. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1],
+				m_volumeSize[2]);
 
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/blue_noise_rgb8_16x16x16_3d.ankitex", m_noiseTex));
 
@@ -48,12 +46,12 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);
 	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
-	variantInitInfo.addConstant(
-		"CLUSTER_COUNT", UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]));
+	variantInitInfo.addConstant("CLUSTER_COUNT",
+								UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]));
 	variantInitInfo.addConstant("FINAL_CLUSTER_Z", U32(m_finalClusterZ));
 	variantInitInfo.addConstant("FRACTION", UVec3(fractionXY, fractionXY, fractionZ));
-	variantInitInfo.addConstant(
-		"NOISE_TEX_SIZE", UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
+	variantInitInfo.addConstant("NOISE_TEX_SIZE",
+								UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -61,12 +59,11 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	m_workgroupSize = variant->getWorkgroupSizes();
 
 	// Create RTs
-	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_volumeSize[0],
-		m_volumeSize[1],
-		Format::R16G16B16A16_SFLOAT,
-		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::SAMPLED_COMPUTE,
-		"VolLight");
+	TextureInitInfo texinit =
+		m_r->create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::R16G16B16A16_SFLOAT,
+										  TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
+											  | TextureUsageBit::SAMPLED_COMPUTE,
+										  "VolLight");
 	texinit.m_depth = m_volumeSize[2];
 	texinit.m_type = TextureType::_3D;
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
@@ -140,13 +137,8 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->setPushConstants(&regs, sizeof(regs));
 
-	dispatchPPCompute(cmdb,
-		m_workgroupSize[0],
-		m_workgroupSize[1],
-		m_workgroupSize[2],
-		m_volumeSize[0],
-		m_volumeSize[1],
-		m_volumeSize[2]);
+	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0],
+					  m_volumeSize[1], m_volumeSize[2]);
 }
 
 } // end namespace anki

@@ -92,8 +92,8 @@ public:
 	/// @param out The value of the attribute.
 	/// @param attribPresent True if the attribute exists. If it doesn't the @a out is undefined.
 	template<typename T>
-	ANKI_USE_RESULT Error getAttributeNumbersOptional(
-		CString name, DynamicArrayAuto<T>& out, Bool& attribPresent) const;
+	ANKI_USE_RESULT Error getAttributeNumbersOptional(CString name, DynamicArrayAuto<T>& out,
+													  Bool& attribPresent) const;
 
 	/// Get the attribute's value as a series of numbers.
 	/// @tparam TArray A type that should have operator[] and getSize() methods implemented.

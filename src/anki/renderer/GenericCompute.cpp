@@ -31,8 +31,7 @@ void GenericCompute::populateRenderGraph(RenderingContext& ctx)
 			GenericCompute* const self = static_cast<GenericCompute*>(rgraphCtx.m_userData);
 			self->run(rgraphCtx);
 		},
-		this,
-		0);
+		this, 0);
 
 	pass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }

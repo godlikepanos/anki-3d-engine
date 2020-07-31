@@ -22,8 +22,8 @@ class PipelineCache
 public:
 	VkPipelineCache m_cacheHandle = VK_NULL_HANDLE;
 
-	ANKI_USE_RESULT Error init(
-		VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, const ConfigSet& cfg, GrAllocator<U8> alloc);
+	ANKI_USE_RESULT Error init(VkDevice dev, VkPhysicalDevice pdev, CString cacheDir, const ConfigSet& cfg,
+							   GrAllocator<U8> alloc);
 
 	void destroy(VkDevice dev, VkPhysicalDevice pdev, GrAllocator<U8> alloc);
 

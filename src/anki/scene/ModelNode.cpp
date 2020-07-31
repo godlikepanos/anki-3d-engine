@@ -33,7 +33,7 @@ public:
 		const MoveComponent& move = node.getComponent<MoveComponent>();
 		const SkinComponent* skin = node.tryGetComponent<SkinComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp()
-			|| (skin && skin->getTimestamp() == node.getGlobalTimestamp()))
+		   || (skin && skin->getTimestamp() == node.getGlobalTimestamp()))
 		{
 			ModelNode& mnode = static_cast<ModelNode&>(node);
 			mnode.updateSpatialComponent(move);
@@ -110,8 +110,7 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 			const ModelNode& self = *static_cast<const ModelNode*>(userData[0]);
 			self.draw(ctx, userData);
 		},
-		this,
-		m_mergeKey);
+		this, m_mergeKey);
 
 	m_obbLocal = m_model->getModelPatches()[m_modelPatchIdx].getBoundingShape();
 
@@ -189,27 +188,22 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			const SkinComponent& skinc = getComponentAt<SkinComponent>(0);
 			const U32 boneCount = skinc.getBoneTransforms().getSize();
 			StagingGpuMemoryToken token, tokenPrev;
-			void* trfs = ctx.m_stagingGpuAllocator->allocateFrame(
-				boneCount * sizeof(Mat4), StagingGpuMemoryType::STORAGE, token);
+			void* trfs = ctx.m_stagingGpuAllocator->allocateFrame(boneCount * sizeof(Mat4),
+																  StagingGpuMemoryType::STORAGE, token);
 			memcpy(trfs, &skinc.getBoneTransforms()[0], boneCount * sizeof(Mat4));
 
-			trfs = ctx.m_stagingGpuAllocator->allocateFrame(
-				boneCount * sizeof(Mat4), StagingGpuMemoryType::STORAGE, tokenPrev);
+			trfs = ctx.m_stagingGpuAllocator->allocateFrame(boneCount * sizeof(Mat4), StagingGpuMemoryType::STORAGE,
+															tokenPrev);
 			memcpy(trfs, &skinc.getPreviousFrameBoneTransforms()[0], boneCount * sizeof(Mat4));
 
 			ANKI_ASSERT(modelInf.m_boneTransformsBinding < MAX_U32);
-			cmdb->bindStorageBuffer(patch.getMaterial()->getDescriptorSetIndex(),
-				modelInf.m_boneTransformsBinding,
-				token.m_buffer,
-				token.m_offset,
-				token.m_range);
+			cmdb->bindStorageBuffer(patch.getMaterial()->getDescriptorSetIndex(), modelInf.m_boneTransformsBinding,
+									token.m_buffer, token.m_offset, token.m_range);
 
 			ANKI_ASSERT(modelInf.m_prevFrameBoneTransformsBinding < MAX_U32);
 			cmdb->bindStorageBuffer(patch.getMaterial()->getDescriptorSetIndex(),
-				modelInf.m_prevFrameBoneTransformsBinding,
-				tokenPrev.m_buffer,
-				tokenPrev.m_offset,
-				tokenPrev.m_range);
+									modelInf.m_prevFrameBoneTransformsBinding, tokenPrev.m_buffer, tokenPrev.m_offset,
+									tokenPrev.m_range);
 		}
 
 		// Program
@@ -217,18 +211,17 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		// Uniforms
 		static_cast<const MaterialRenderComponent&>(getComponent<RenderComponent>())
-			.allocateAndSetupUniforms(ctx,
-				ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
-				ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),
-				*ctx.m_stagingGpuAllocator);
+			.allocateAndSetupUniforms(ctx, ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
+									  ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),
+									  *ctx.m_stagingGpuAllocator);
 
 		// Set attributes
 		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 		{
 			const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
 			ANKI_ASSERT(attrib.m_format != Format::NONE);
-			cmdb->setVertexAttribute(
-				U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+			cmdb->setVertexAttribute(U32(attrib.m_location), attrib.m_bufferBinding, attrib.m_format,
+									 attrib.m_relativeOffset);
 		}
 
 		// Set vertex buffers
@@ -242,12 +235,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		cmdb->bindIndexBuffer(modelInf.m_indexBuffer, 0, IndexType::U16);
 
 		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES,
-			modelInf.m_indicesCountArray[0],
-			userData.getSize(),
-			U32(modelInf.m_indicesOffsetArray[0] / sizeof(U16)),
-			0,
-			0);
+		cmdb->drawElements(PrimitiveTopology::TRIANGLES, modelInf.m_indicesCountArray[0], userData.getSize(),
+						   U32(modelInf.m_indicesOffsetArray[0] / sizeof(U16)), 0, 0);
 	}
 	else
 	{
@@ -282,13 +271,9 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 		}
 
-		m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()),
-			Vec4(1.0f, 0.0f, 1.0f, 1.0f),
-			2.0f,
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-			2.0f,
-			*ctx.m_stagingGpuAllocator,
-			cmdb);
+		m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
+							  ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f,
+							  *ctx.m_stagingGpuAllocator, cmdb);
 
 		ctx.m_frameAllocator.deleteArray(mvps, userData.getSize());
 
@@ -330,21 +315,13 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			}
 
 			const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(getComponent<MoveComponent>().getWorldTransform());
-			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1),
-				Vec4(1.0f),
-				20.0f,
-				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-				lines,
-				*ctx.m_stagingGpuAllocator,
-				cmdb);
+			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f), 20.0f,
+								  ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), lines,
+								  *ctx.m_stagingGpuAllocator, cmdb);
 
-			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1),
-				Vec4(0.7f, 0.7f, 0.7f, 1.0f),
-				5.0f,
-				ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-				chidlessLines,
-				*ctx.m_stagingGpuAllocator,
-				cmdb);
+			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.7f, 0.7f, 0.7f, 1.0f), 5.0f,
+								  ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
+								  chidlessLines, *ctx.m_stagingGpuAllocator, cmdb);
 		}
 
 		// Restore state

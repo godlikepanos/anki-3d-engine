@@ -79,15 +79,16 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		}
 
 		// Device & host & coherent but not cached
-		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
+		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
+			req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | preferDeviceLocal,
 			VK_MEMORY_PROPERTY_HOST_CACHED_BIT | avoidDeviceLocal);
 
 		// Fallback: host & coherent and not cached
 		if(memIdx == MAX_U32)
 		{
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
+				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				VK_MEMORY_PROPERTY_HOST_CACHED_BIT | avoidDeviceLocal);
 		}
 
@@ -95,8 +96,8 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		if(memIdx == MAX_U32)
 		{
 			ANKI_VK_LOGW("Using a fallback mode for write-only buffer");
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
+			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
+																			 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
 	else if((access & BufferMapAccessBit::READ) != BufferMapAccessBit::NONE)
@@ -105,9 +106,10 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 
 		// Cached & coherent
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT
-				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			0);
+																		 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+																			 | VK_MEMORY_PROPERTY_HOST_CACHED_BIT
+																			 | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+																		 0);
 
 		// Fallback: Just cached
 		if(memIdx == MAX_U32)
@@ -120,8 +122,8 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		if(memIdx == MAX_U32)
 		{
 			ANKI_VK_LOGW("Using a fallback mode for read/write buffer");
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
+			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
+																			 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
 	else
@@ -137,8 +139,8 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 		// Fallback: Device with anything else
 		if(memIdx == MAX_U32)
 		{
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-				req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
+			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
+																			 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 		}
 	}
 
@@ -148,8 +150,8 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
 	// Allocate
-	getGrManagerImpl().getGpuMemoryManager().allocateMemory(
-		memIdx, req.size, U32(req.alignment), true, inf.m_exposeGpuAddress, m_memHandle);
+	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, U32(req.alignment), true,
+															inf.m_exposeGpuAddress, m_memHandle);
 
 	// Bind mem to buffer
 	{
@@ -322,12 +324,9 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 	return mask;
 }
 
-void BufferImpl::computeBarrierInfo(BufferUsageBit before,
-	BufferUsageBit after,
-	VkPipelineStageFlags& srcStages,
-	VkAccessFlags& srcAccesses,
-	VkPipelineStageFlags& dstStages,
-	VkAccessFlags& dstAccesses) const
+void BufferImpl::computeBarrierInfo(BufferUsageBit before, BufferUsageBit after, VkPipelineStageFlags& srcStages,
+									VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
+									VkAccessFlags& dstAccesses) const
 {
 	ANKI_ASSERT(usageValid(before) && usageValid(after));
 	ANKI_ASSERT(!!after);
