@@ -8,7 +8,12 @@
 namespace anki
 {
 
-inline void RenderPassWorkContext::getBufferState(RenderPassBufferHandle handle, BufferPtr& buff) const
+inline void RenderPassWorkContext::bindAccelerationStructure(U32 set, U32 binding, AccelerationStructureHandle handle)
+{
+	m_commandBuffer->bindAccelerationStructure(set, binding, m_rgraph->getAs(handle));
+}
+
+inline void RenderPassWorkContext::getBufferState(BufferHandle handle, BufferPtr& buff) const
 {
 	buff = m_rgraph->getBuffer(handle);
 }
@@ -28,7 +33,7 @@ inline TexturePtr RenderPassWorkContext::getTexture(RenderTargetHandle handle) c
 
 inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep) const
 {
-	ANKI_ASSERT(dep.m_isTexture);
+	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::TEXTURE);
 
 	TextureSubresourceInfo& subresource = dep.m_texture.m_subresource;
 	const Bool wholeTexture = subresource.m_mipmapCount == MAX_U32;
@@ -57,9 +62,9 @@ inline void RenderPassDescriptionBase::fixSubresource(RenderPassDependency& dep)
 inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& dep)
 {
 	// Validate dep
-	if(dep.m_isTexture)
+	if(dep.m_type == RenderPassDependency::Type::TEXTURE)
 	{
-		TextureUsageBit usage = dep.m_texture.m_usage;
+		const TextureUsageBit usage = dep.m_texture.m_usage;
 		(void)usage;
 		if(m_type == Type::GRAPHICS)
 		{
@@ -72,9 +77,9 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 
 		ANKI_ASSERT(!!(usage & TextureUsageBit::ALL_READ) || !!(usage & TextureUsageBit::ALL_WRITE));
 	}
-	else
+	else if(dep.m_type == RenderPassDependency::Type::BUFFER)
 	{
-		BufferUsageBit usage = dep.m_buffer.m_usage;
+		const BufferUsageBit usage = dep.m_buffer.m_usage;
 		(void)usage;
 		if(m_type == Type::GRAPHICS)
 		{
@@ -87,18 +92,29 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 
 		ANKI_ASSERT(!!(usage & BufferUsageBit::ALL_READ) || !!(usage & BufferUsageBit::ALL_WRITE));
 	}
+	else
+	{
+		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::ACCELERATION_STRUCTURE);
+		if(m_type == Type::GRAPHICS)
+		{
+			ANKI_ASSERT(!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_GRAPHICS));
+		}
+		else
+		{
+			constexpr AccelerationStructureUsageBit usage = ~AccelerationStructureUsageBit::ALL_GRAPHICS;
+			ANKI_ASSERT(!(dep.m_as.m_usage & usage));
+		}
+	}
 }
 
 inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency& dep)
 {
 	validateDep(dep);
 
-	DynamicArray<RenderPassDependency>& deps = (dep.m_isTexture) ? m_rtDeps : m_buffDeps;
-	deps.emplaceBack(m_alloc, dep);
-
-	if(dep.m_isTexture)
+	if(dep.m_type == RenderPassDependency::Type::TEXTURE)
 	{
-		fixSubresource(deps.getBack());
+		m_rtDeps.emplaceBack(m_alloc, dep);
+		fixSubresource(m_rtDeps.getBack());
 
 		if(!!(dep.m_texture.m_usage & TextureUsageBit::ALL_READ))
 		{
@@ -113,8 +129,10 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 		// Try to derive the usage by that dep
 		m_descr->m_renderTargets[dep.m_texture.m_handle.m_idx].m_usageDerivedByDeps |= dep.m_texture.m_usage;
 	}
-	else
+	else if(dep.m_type == RenderPassDependency::Type::BUFFER)
 	{
+		m_buffDeps.emplaceBack(m_alloc, dep);
+
 		if(!!(dep.m_buffer.m_usage & BufferUsageBit::ALL_READ))
 		{
 			m_readBuffMask.set(dep.m_buffer.m_handle.m_idx);
@@ -124,8 +142,21 @@ inline void RenderPassDescriptionBase::newDependency(const RenderPassDependency&
 		{
 			m_writeBuffMask.set(dep.m_buffer.m_handle.m_idx);
 		}
+	}
+	else
+	{
+		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::ACCELERATION_STRUCTURE);
+		m_asDeps.emplaceBack(m_alloc, dep);
 
-		m_hasBufferDeps = true;
+		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_READ))
+		{
+			m_readAsMask.set(dep.m_as.m_handle.m_idx);
+		}
+
+		if(!!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_WRITE))
+		{
+			m_writeAsMask.set(dep.m_as.m_handle.m_idx);
+		}
 	}
 }
 
@@ -186,6 +217,7 @@ inline RenderGraphDescription::~RenderGraphDescription()
 	m_passes.destroy(m_alloc);
 	m_renderTargets.destroy(m_alloc);
 	m_buffers.destroy(m_alloc);
+	m_as.destroy(m_alloc);
 }
 
 inline GraphicsRenderPassDescription& RenderGraphDescription::newGraphicsRenderPass(CString name)
@@ -248,7 +280,7 @@ inline RenderTargetHandle RenderGraphDescription::newRenderTarget(const RenderTa
 	return out;
 }
 
-inline RenderPassBufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferUsageBit usage)
+inline BufferHandle RenderGraphDescription::importBuffer(BufferPtr buff, BufferUsageBit usage)
 {
 	for(const Buffer& bb : m_buffers)
 	{
@@ -261,9 +293,28 @@ inline RenderPassBufferHandle RenderGraphDescription::importBuffer(BufferPtr buf
 	b.m_usage = usage;
 	b.m_importedBuff = buff;
 
-	RenderPassBufferHandle out;
+	BufferHandle out;
 	out.m_idx = m_buffers.getSize() - 1;
 	return out;
+}
+
+inline AccelerationStructureHandle
+RenderGraphDescription::importAccelerationStructure(AccelerationStructurePtr as, AccelerationStructureUsageBit usage)
+{
+	for(const AS& a : m_as)
+	{
+		(void)a;
+		ANKI_ASSERT(a.m_importedAs != as && "Already imported");
+	}
+
+	AS& a = *m_as.emplaceBack(m_alloc);
+	a.setName(as->getName());
+	a.m_importedAs = as;
+	a.m_usage = usage;
+
+	AccelerationStructureHandle handle;
+	handle.m_idx = m_as.getSize() - 1;
+	return handle;
 }
 
 } // end namespace anki

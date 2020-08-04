@@ -43,42 +43,59 @@ public:
 	BufferPtr m_buffer; ///< Hold a reference.
 };
 
-/// Pipeline barrier of texture or buffer.
-class RenderGraph::Barrier
+class RenderGraph::AS
 {
 public:
-	struct TextureInfo
-	{
-		U32 m_idx;
-		TextureUsageBit m_usageBefore;
-		TextureUsageBit m_usageAfter;
-		TextureSurfaceInfo m_surface;
-	};
+	AccelerationStructureUsageBit m_usage;
+	AccelerationStructurePtr m_as; ///< Hold a reference.
+};
 
-	struct BufferInfo
-	{
-		U32 m_idx;
-		BufferUsageBit m_usageBefore;
-		BufferUsageBit m_usageAfter;
-	};
+/// Pipeline barrier.
+class RenderGraph::TextureBarrier
+{
+public:
+	U32 m_idx;
+	TextureUsageBit m_usageBefore;
+	TextureUsageBit m_usageAfter;
+	TextureSurfaceInfo m_surface;
 
-	union
-	{
-		TextureInfo m_texture;
-		BufferInfo m_buffer;
-	};
-
-	Bool m_isTexture;
-
-	Barrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceInfo& surf)
-		: m_texture({rtIdx, usageBefore, usageAfter, surf})
-		, m_isTexture(true)
+	TextureBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceInfo& surf)
+		: m_idx(rtIdx)
+		, m_usageBefore(usageBefore)
+		, m_usageAfter(usageAfter)
+		, m_surface(surf)
 	{
 	}
+};
 
-	Barrier(U32 buffIdx, BufferUsageBit usageBefore, BufferUsageBit usageAfter)
-		: m_buffer({buffIdx, usageBefore, usageAfter})
-		, m_isTexture(false)
+/// Pipeline barrier.
+class RenderGraph::BufferBarrier
+{
+public:
+	U32 m_idx;
+	BufferUsageBit m_usageBefore;
+	BufferUsageBit m_usageAfter;
+
+	BufferBarrier(U32 buffIdx, BufferUsageBit usageBefore, BufferUsageBit usageAfter)
+		: m_idx(buffIdx)
+		, m_usageBefore(usageBefore)
+		, m_usageAfter(usageAfter)
+	{
+	}
+};
+
+/// Pipeline barrier.
+class RenderGraph::ASBarrier
+{
+public:
+	U32 m_idx;
+	AccelerationStructureUsageBit m_usageBefore;
+	AccelerationStructureUsageBit m_usageAfter;
+
+	ASBarrier(U32 asIdx, AccelerationStructureUsageBit usageBefore, AccelerationStructureUsageBit usageAfter)
+		: m_idx(asIdx)
+		, m_usageBefore(usageBefore)
+		, m_usageAfter(usageAfter)
 	{
 	}
 };
@@ -88,19 +105,9 @@ class RenderGraph::Pass
 {
 public:
 	// WARNING!!!!!: Whatever you put here needs manual destruction in RenderGraph::reset()
-
-	/// WARNING: Should be the same as RenderPassDependency::TextureInfo
-	class ConsumedTextureInfo
-	{
-	public:
-		RenderTargetHandle m_handle;
-		TextureUsageBit m_usage;
-		TextureSubresourceInfo m_subresource;
-	};
-
 	DynamicArray<U32> m_dependsOn;
 
-	DynamicArray<ConsumedTextureInfo> m_consumedTextures;
+	DynamicArray<RenderPassDependency::TextureInfo> m_consumedTextures;
 
 	RenderPassWorkCallback m_callback;
 	void* m_userData;
@@ -132,7 +139,9 @@ class RenderGraph::Batch
 {
 public:
 	DynamicArray<U32> m_passIndices;
-	DynamicArray<Barrier> m_barriersBefore;
+	DynamicArray<TextureBarrier> m_textureBarriersBefore;
+	DynamicArray<BufferBarrier> m_bufferBarriersBefore;
+	DynamicArray<ASBarrier> m_asBarriersBefore;
 	CommandBuffer* m_cmdb; ///< Someone else holds the ref already so have a ptr here.
 };
 
@@ -142,10 +151,11 @@ class RenderGraph::BakeContext
 public:
 	StackAllocator<U8> m_alloc;
 	DynamicArray<Pass> m_passes;
-	BitSet<MAX_RENDER_GRAPH_PASSES, U64> m_passIsInBatch = {false};
+	BitSet<MAX_RENDER_GRAPH_PASSES, U64> m_passIsInBatch{false};
 	DynamicArray<Batch> m_batches;
 	DynamicArray<RT> m_rts;
 	DynamicArray<Buffer> m_buffers;
+	DynamicArray<AS> m_as;
 
 	DynamicArray<CommandBufferPtr> m_graphicsCmdbs;
 
@@ -315,6 +325,11 @@ void RenderGraph::reset()
 		buff.m_buffer.reset(nullptr);
 	}
 
+	for(AS& as : m_ctx->m_as)
+	{
+		as.m_as.reset(nullptr);
+	}
+
 	for(auto& it : m_renderTargetCache)
 	{
 		it.m_texturesInUse = 0;
@@ -464,8 +479,6 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(const FramebufferDescription&
 
 		// Create
 		fb = getManager().newFramebuffer(fbInit);
-
-		// TODO: Check why the hell it compiles if you remove the parameter "hash"
 		m_fbCache.emplace(getAllocator(), hash, fb);
 	}
 
@@ -490,11 +503,11 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 	// Render targets
 	{
 		// Compute the 3 types of dependencies
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aReadBWrite = a.m_readRtMask & b.m_writeRtMask;
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBRead = a.m_writeRtMask & b.m_readRtMask;
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBWrite = a.m_writeRtMask & b.m_writeRtMask;
+		const BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aReadBWrite = a.m_readRtMask & b.m_writeRtMask;
+		const BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBRead = a.m_writeRtMask & b.m_readRtMask;
+		const BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> aWriteBWrite = a.m_writeRtMask & b.m_writeRtMask;
 
-		BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+		const BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
 		if(fullDep.getAny())
 		{
@@ -530,13 +543,13 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 	}
 
 	// Buffers
-	if(a.m_hasBufferDeps)
+	if(a.m_readBuffMask || a.m_writeBuffMask)
 	{
-		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aReadBWrite = a.m_readBuffMask & b.m_writeBuffMask;
-		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBRead = a.m_writeBuffMask & b.m_readBuffMask;
-		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBWrite = a.m_writeBuffMask & b.m_writeBuffMask;
+		const BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aReadBWrite = a.m_readBuffMask & b.m_writeBuffMask;
+		const BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBRead = a.m_writeBuffMask & b.m_readBuffMask;
+		const BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> aWriteBWrite = a.m_writeBuffMask & b.m_writeBuffMask;
 
-		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+		const BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
 
 		if(fullDep.getAny())
 		{
@@ -563,6 +576,43 @@ Bool RenderGraph::passADependsOnB(const RenderPassDescriptionBase& a, const Rend
 					}
 
 					// TODO: Take into account the ranges
+					return true;
+				}
+			}
+		}
+	}
+
+	// AS
+	if(a.m_readAsMask || a.m_writeAsMask)
+	{
+		const BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> aReadBWrite = a.m_readAsMask & b.m_writeAsMask;
+		const BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> aWriteBRead = a.m_writeAsMask & b.m_readAsMask;
+		const BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> aWriteBWrite = a.m_writeAsMask & b.m_writeAsMask;
+
+		const BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+
+		if(fullDep)
+		{
+			for(const RenderPassDependency& aDep : a.m_asDeps)
+			{
+				if(!fullDep.get(aDep.m_as.m_handle.m_idx))
+				{
+					continue;
+				}
+
+				for(const RenderPassDependency& bDep : b.m_asDeps)
+				{
+					if(aDep.m_as.m_handle != bDep.m_as.m_handle)
+					{
+						continue;
+					}
+
+					if(!((aDep.m_as.m_usage | bDep.m_as.m_usage) & AccelerationStructureUsageBit::ALL_WRITE))
+					{
+						// Don't care about read to read deps
+						continue;
+					}
+
 					return true;
 				}
 			}
@@ -676,6 +726,15 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 		ctx->m_buffers[buffIdx].m_buffer = descr.m_buffers[buffIdx].m_importedBuff;
 	}
 
+	// AS
+	ctx->m_as.create(alloc, descr.m_as.getSize());
+	for(U32 i = 0; i < descr.m_as.getSize(); ++i)
+	{
+		ctx->m_as[i].m_usage = descr.m_as[i].m_usage;
+		ctx->m_as[i].m_as = descr.m_as[i].m_importedAs;
+		ANKI_ASSERT(ctx->m_as[i].m_as.isCreated());
+	}
+
 	ctx->m_gatherStatistics = descr.m_gatherStatistics;
 
 	return ctx;
@@ -701,9 +760,9 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		for(U32 depIdx = 0; depIdx < inPass.m_rtDeps.getSize(); ++depIdx)
 		{
 			const RenderPassDependency& inDep = inPass.m_rtDeps[depIdx];
-			ANKI_ASSERT(inDep.m_isTexture);
+			ANKI_ASSERT(inDep.m_type == RenderPassDependency::Type::TEXTURE);
 
-			Pass::ConsumedTextureInfo& inf = outPass.m_consumedTextures[depIdx];
+			RenderPassDependency::TextureInfo& inf = outPass.m_consumedTextures[depIdx];
 
 			ANKI_ASSERT(sizeof(inf) == sizeof(inDep.m_texture));
 			memcpy(&inf, &inDep.m_texture, sizeof(inf));
@@ -904,7 +963,7 @@ void RenderGraph::iterateSurfsOrVolumes(const TexturePtr& tex, const TextureSubr
 
 void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& dep)
 {
-	ANKI_ASSERT(dep.m_isTexture);
+	ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::TEXTURE);
 
 	BakeContext& ctx = *m_ctx;
 	const U32 batchIdx = U32(&batch - &ctx.m_batches[0]);
@@ -925,11 +984,11 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 					crntUsage |= depUsage;
 
 					Bool found = false;
-					for(Barrier& b : batch.m_barriersBefore)
+					for(TextureBarrier& b : batch.m_textureBarriersBefore)
 					{
-						if(b.m_isTexture && b.m_texture.m_idx == rtIdx && b.m_texture.m_surface == surf)
+						if(b.m_idx == rtIdx && b.m_surface == surf)
 						{
-							b.m_texture.m_usageAfter |= depUsage;
+							b.m_usageAfter |= depUsage;
 							found = true;
 							break;
 						}
@@ -942,7 +1001,7 @@ void RenderGraph::setTextureBarrier(Batch& batch, const RenderPassDependency& de
 				{
 					// Create a new barrier for this surface
 
-					batch.m_barriersBefore.emplaceBack(ctx.m_alloc, rtIdx, crntUsage, depUsage, surf);
+					batch.m_textureBarriersBefore.emplaceBack(ctx.m_alloc, rtIdx, crntUsage, depUsage, surf);
 
 					crntUsage = depUsage;
 					rt.m_lastBatchThatTransitionedIt[surfOrVolIdx] = U16(batchIdx);
@@ -961,80 +1020,127 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 	// For all batches
 	for(Batch& batch : ctx.m_batches)
 	{
-		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> buffHasBarrierMask = {false};
+		BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> buffHasBarrierMask(false);
+		BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> asHasBarrierMask(false);
 
 		// For all passes of that batch
 		for(U32 passIdx : batch.m_passIndices)
 		{
 			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 
-			// For all deps
+			// Do textures
 			for(const RenderPassDependency& dep : pass.m_rtDeps)
 			{
 				setTextureBarrier(batch, dep);
 			}
 
+			// Do buffers
 			for(const RenderPassDependency& dep : pass.m_buffDeps)
 			{
 				const U32 buffIdx = dep.m_buffer.m_handle.m_idx;
 				const BufferUsageBit depUsage = dep.m_buffer.m_usage;
+				BufferUsageBit& crntUsage = ctx.m_buffers[buffIdx].m_usage;
 
-				if(depUsage != ctx.m_buffers[buffIdx].m_usage)
+				if(depUsage == crntUsage)
 				{
-					const Bool buffHasBarrier = buffHasBarrierMask.get(buffIdx);
+					continue;
+				}
 
-					if(!buffHasBarrier)
+				const Bool buffHasBarrier = buffHasBarrierMask.get(buffIdx);
+
+				if(!buffHasBarrier)
+				{
+					// Buff hasn't had a barrier in this batch, add a new barrier
+
+					batch.m_bufferBarriersBefore.emplaceBack(alloc, buffIdx, crntUsage, depUsage);
+
+					crntUsage = depUsage;
+					buffHasBarrierMask.set(buffIdx);
+				}
+				else
+				{
+					// Buff already in a barrier, merge the 2 barriers
+
+					BufferBarrier* barrierToMergeTo = nullptr;
+					for(BufferBarrier& b : batch.m_bufferBarriersBefore)
 					{
-						// Buff hasn't had a barrier in this batch, add a new barrier
-
-						batch.m_barriersBefore.emplaceBack(alloc, buffIdx, ctx.m_buffers[buffIdx].m_usage, depUsage);
-
-						ctx.m_buffers[buffIdx].m_usage = depUsage;
-						buffHasBarrierMask.set(buffIdx);
-					}
-					else
-					{
-						// Buff already in a barrier, merge the 2 barriers
-
-						Barrier* barrierToMergeTo = nullptr;
-						for(Barrier& b : batch.m_barriersBefore)
+						if(b.m_idx == buffIdx)
 						{
-							if(!b.m_isTexture && b.m_buffer.m_idx == buffIdx)
-							{
-								barrierToMergeTo = &b;
-								break;
-							}
+							barrierToMergeTo = &b;
+							break;
 						}
-
-						ANKI_ASSERT(barrierToMergeTo);
-						ANKI_ASSERT(!!barrierToMergeTo->m_buffer.m_usageAfter);
-						barrierToMergeTo->m_buffer.m_usageAfter |= depUsage;
-						ctx.m_buffers[buffIdx].m_usage = barrierToMergeTo->m_buffer.m_usageAfter;
 					}
+
+					ANKI_ASSERT(barrierToMergeTo);
+					ANKI_ASSERT(!!barrierToMergeTo->m_usageAfter);
+					barrierToMergeTo->m_usageAfter |= depUsage;
+					crntUsage = barrierToMergeTo->m_usageAfter;
+				}
+			}
+
+			// Do AS
+			for(const RenderPassDependency& dep : pass.m_asDeps)
+			{
+				const U32 asIdx = dep.m_as.m_handle.m_idx;
+				const AccelerationStructureUsageBit depUsage = dep.m_as.m_usage;
+				AccelerationStructureUsageBit& crntUsage = ctx.m_as[asIdx].m_usage;
+
+				if(depUsage == crntUsage)
+				{
+					continue;
+				}
+
+				const Bool asHasBarrierInThisBatch = asHasBarrierMask.get(asIdx);
+				if(!asHasBarrierInThisBatch)
+				{
+					// AS doesn't have a barrier in this batch, create a new one
+
+					batch.m_asBarriersBefore.emplaceBack(alloc, asIdx, crntUsage, depUsage);
+					crntUsage = depUsage;
+					asHasBarrierMask.set(asIdx);
+				}
+				else
+				{
+					// AS already has a barrier, merge the 2 barriers
+
+					ASBarrier* barrierToMergeTo = nullptr;
+					for(ASBarrier& other : batch.m_asBarriersBefore)
+					{
+						if(other.m_idx == asIdx)
+						{
+							barrierToMergeTo = &other;
+							break;
+						}
+					}
+
+					ANKI_ASSERT(barrierToMergeTo);
+					ANKI_ASSERT(!!barrierToMergeTo->m_usageAfter);
+					barrierToMergeTo->m_usageAfter |= depUsage;
+					crntUsage = barrierToMergeTo->m_usageAfter;
 				}
 			}
 		} // For all passes
 
 #if ANKI_DBG_RENDER_GRAPH
 		// Sort the barriers to ease the dumped graph
-		std::sort(batch.m_barriersBefore.getBegin(), batch.m_barriersBefore.getEnd(),
-				  [&](const Barrier& a, const Barrier& b) {
-					  const U aidx = (a.m_isTexture) ? a.m_texture.m_idx : a.m_buffer.m_idx;
-					  const U bidx = (b.m_isTexture) ? b.m_texture.m_idx : b.m_buffer.m_idx;
+		std::sort(batch.m_textureBarriersBefore.getBegin(), batch.m_textureBarriersBefore.getEnd(),
+				  [&](const TextureBarrier& a, const TextureBarrier& b) {
+					  const U aidx = a.m_idx;
+					  const U bidx = b.m_idx;
 
-					  if(aidx == bidx && a.m_isTexture && b.m_isTexture)
+					  if(aidx == bidx)
 					  {
-						  if(a.m_texture.m_surface.m_level != b.m_texture.m_surface.m_level)
+						  if(a.m_surface.m_level != b.m_surface.m_level)
 						  {
-							  return a.m_texture.m_surface.m_level < b.m_texture.m_surface.m_level;
+							  return a.m_surface.m_level < b.m_surface.m_level;
 						  }
-						  else if(a.m_texture.m_surface.m_face != b.m_texture.m_surface.m_face)
+						  else if(a.m_surface.m_face != b.m_surface.m_face)
 						  {
-							  return a.m_texture.m_surface.m_face < b.m_texture.m_surface.m_face;
+							  return a.m_surface.m_face < b.m_surface.m_face;
 						  }
-						  else if(a.m_texture.m_surface.m_layer != b.m_texture.m_surface.m_layer)
+						  else if(a.m_surface.m_layer != b.m_surface.m_layer)
 						  {
-							  return a.m_texture.m_surface.m_layer < b.m_texture.m_surface.m_layer;
+							  return a.m_surface.m_layer < b.m_surface.m_layer;
 						  }
 						  else
 						  {
@@ -1046,6 +1152,12 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr)
 						  return aidx < bidx;
 					  }
 				  });
+
+		std::sort(batch.m_bufferBarriersBefore.getBegin(), batch.m_bufferBarriersBefore.getEnd(),
+				  [&](const BufferBarrier& a, const BufferBarrier& b) { return a.m_idx < b.m_idx; });
+
+		std::sort(batch.m_asBarriersBefore.getBegin(), batch.m_asBarriersBefore.getEnd(),
+				  [&](const ASBarrier& a, const ASBarrier& b) { return a.m_idx < b.m_idx; });
 #endif
 	} // For all batches
 }
@@ -1084,10 +1196,16 @@ TexturePtr RenderGraph::getTexture(RenderTargetHandle handle) const
 	return m_ctx->m_rts[handle.m_idx].m_texture;
 }
 
-BufferPtr RenderGraph::getBuffer(RenderPassBufferHandle handle) const
+BufferPtr RenderGraph::getBuffer(BufferHandle handle) const
 {
 	ANKI_ASSERT(m_ctx->m_buffers[handle.m_idx].m_buffer.isCreated());
 	return m_ctx->m_buffers[handle.m_idx].m_buffer;
+}
+
+AccelerationStructurePtr RenderGraph::getAs(AccelerationStructureHandle handle) const
+{
+	ANKI_ASSERT(m_ctx->m_as[handle.m_idx].m_as.isCreated());
+	return m_ctx->m_as[handle.m_idx].m_as;
 }
 
 void RenderGraph::runSecondLevel(U32 threadIdx)
@@ -1141,19 +1259,20 @@ void RenderGraph::run() const
 		CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 		// Set the barriers
-		for(const Barrier& barrier : batch.m_barriersBefore)
+		for(const TextureBarrier& barrier : batch.m_textureBarriersBefore)
 		{
-			if(barrier.m_isTexture)
-			{
-				cmdb->setTextureSurfaceBarrier(m_ctx->m_rts[barrier.m_texture.m_idx].m_texture,
-											   barrier.m_texture.m_usageBefore, barrier.m_texture.m_usageAfter,
-											   barrier.m_texture.m_surface);
-			}
-			else
-			{
-				cmdb->setBufferBarrier(m_ctx->m_buffers[barrier.m_buffer.m_idx].m_buffer,
-									   barrier.m_buffer.m_usageBefore, barrier.m_buffer.m_usageAfter, 0, MAX_PTR_SIZE);
-			}
+			cmdb->setTextureSurfaceBarrier(m_ctx->m_rts[barrier.m_idx].m_texture, barrier.m_usageBefore,
+										   barrier.m_usageAfter, barrier.m_surface);
+		}
+		for(const BufferBarrier& barrier : batch.m_bufferBarriersBefore)
+		{
+			cmdb->setBufferBarrier(m_ctx->m_buffers[barrier.m_idx].m_buffer, barrier.m_usageBefore,
+								   barrier.m_usageAfter, 0, MAX_PTR_SIZE);
+		}
+		for(const ASBarrier& barrier : batch.m_asBarriersBefore)
+		{
+			cmdb->setAccelerationStructureBarrier(m_ctx->m_as[barrier.m_idx].m_as, barrier.m_usageBefore,
+												  barrier.m_usageAfter);
 		}
 
 		// Call the passes
@@ -1223,7 +1342,7 @@ void RenderGraph::getCrntUsage(RenderTargetHandle handle, U32 batchIdx, const Te
 
 	for(U32 passIdx : batch.m_passIndices)
 	{
-		for(const Pass::ConsumedTextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
+		for(const RenderPassDependency::TextureInfo& consumer : m_ctx->m_passes[passIdx].m_consumedTextures)
 		{
 			if(consumer.m_handle == handle && overlappingTextureSubresource(subresource, consumer.m_subresource))
 			{
@@ -1388,6 +1507,31 @@ StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 	return str;
 }
 
+StringAuto RenderGraph::asUsageToStr(StackAllocator<U8>& alloc, AccelerationStructureUsageBit usage)
+{
+	StringListAuto slist(alloc);
+
+#	define ANKI_AS_USAGE(u) \
+		if(!!(usage & AccelerationStructureUsageBit::u)) \
+		{ \
+			slist.pushBackSprintf("%s", #u); \
+		}
+
+	ANKI_AS_USAGE(BUILD);
+	ANKI_AS_USAGE(ATTACH);
+	ANKI_AS_USAGE(GEOMETRY_READ);
+	ANKI_AS_USAGE(FRAGMENT_READ);
+	ANKI_AS_USAGE(COMPUTE_READ);
+	ANKI_AS_USAGE(RAY_GEN_READ);
+
+#	undef ANKI_AS_USAGE
+
+	ANKI_ASSERT(!slist.isEmpty());
+	StringAuto str(alloc);
+	slist.join(" | ", str);
+	return str;
+}
+
 Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, const BakeContext& ctx,
 										 CString path) const
 {
@@ -1453,31 +1597,57 @@ Error RenderGraph::dumpDependencyDotFile(const RenderGraphDescription& descr, co
 		StringAuto batchName(ctx.m_alloc);
 		batchName.sprintf("batch%u", batchIdx);
 
-		for(U32 barrierIdx = 0; barrierIdx < batch.m_barriersBefore.getSize(); ++barrierIdx)
+		for(U32 barrierIdx = 0; barrierIdx < batch.m_textureBarriersBefore.getSize(); ++barrierIdx)
 		{
-			const Barrier& barrier = batch.m_barriersBefore[barrierIdx];
-			StringAuto barrierName(ctx.m_alloc);
+			const TextureBarrier& barrier = batch.m_textureBarriersBefore[barrierIdx];
+
 			StringAuto barrierLabel(ctx.m_alloc);
-			if(barrier.m_isTexture)
-			{
-				barrierLabel.sprintf("<b>%s</b> (mip,dp,f,l)=(%u,%u,%u,%u)<br/>%s <b>to</b> %s",
-									 &descr.m_renderTargets[barrier.m_texture.m_idx].m_name[0],
-									 barrier.m_texture.m_surface.m_level, barrier.m_texture.m_surface.m_depth,
-									 barrier.m_texture.m_surface.m_face, barrier.m_texture.m_surface.m_layer,
-									 textureUsageToStr(alloc, barrier.m_texture.m_usageBefore).cstr(),
-									 textureUsageToStr(alloc, barrier.m_texture.m_usageAfter).cstr());
+			barrierLabel.sprintf("<b>%s</b> (mip,dp,f,l)=(%u,%u,%u,%u)<br/>%s <b>to</b> %s",
+								 &descr.m_renderTargets[barrier.m_idx].m_name[0], barrier.m_surface.m_level,
+								 barrier.m_surface.m_depth, barrier.m_surface.m_face, barrier.m_surface.m_layer,
+								 textureUsageToStr(alloc, barrier.m_usageBefore).cstr(),
+								 textureUsageToStr(alloc, barrier.m_usageAfter).cstr());
 
-				barrierName.sprintf("%s barrier%u", batchName.cstr(), barrierIdx);
-			}
-			else
-			{
-				barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s",
-									 &descr.m_buffers[barrier.m_buffer.m_idx].m_name[0],
-									 bufferUsageToStr(alloc, barrier.m_buffer.m_usageBefore).cstr(),
-									 bufferUsageToStr(alloc, barrier.m_buffer.m_usageAfter).cstr());
+			StringAuto barrierName(ctx.m_alloc);
+			barrierName.sprintf("%s tex barrier%u", batchName.cstr(), barrierIdx);
 
-				barrierName.sprintf("%s barrier%u", batchName.cstr(), barrierIdx);
-			}
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
+								  COLORS[batchIdx % COLORS.getSize()], barrierLabel.cstr());
+			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), barrierName.cstr());
+
+			prevBubble = barrierName;
+		}
+
+		for(U32 barrierIdx = 0; barrierIdx < batch.m_bufferBarriersBefore.getSize(); ++barrierIdx)
+		{
+			const BufferBarrier& barrier = batch.m_bufferBarriersBefore[barrierIdx];
+
+			StringAuto barrierLabel(ctx.m_alloc);
+			barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s", &descr.m_buffers[barrier.m_idx].m_name[0],
+								 bufferUsageToStr(alloc, barrier.m_usageBefore).cstr(),
+								 bufferUsageToStr(alloc, barrier.m_usageAfter).cstr());
+
+			StringAuto barrierName(ctx.m_alloc);
+			barrierName.sprintf("%s buff barrier%u", batchName.cstr(), barrierIdx);
+
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
+								  COLORS[batchIdx % COLORS.getSize()], barrierLabel.cstr());
+			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), barrierName.cstr());
+
+			prevBubble = barrierName;
+		}
+
+		for(U32 barrierIdx = 0; barrierIdx < batch.m_asBarriersBefore.getSize(); ++barrierIdx)
+		{
+			const ASBarrier& barrier = batch.m_asBarriersBefore[barrierIdx];
+
+			StringAuto barrierLabel(ctx.m_alloc);
+			barrierLabel.sprintf("<b>%s</b><br/>%s <b>to</b> %s", descr.m_as[barrier.m_idx].m_name.getBegin(),
+								 asUsageToStr(alloc, barrier.m_usageBefore).cstr(),
+								 asUsageToStr(alloc, barrier.m_usageAfter).cstr());
+
+			StringAuto barrierName(ctx.m_alloc);
+			barrierName.sprintf("%s AS barrier%u", batchName.cstr(), barrierIdx);
 
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box,label=< %s >];\n", barrierName.cstr(),
 								  COLORS[batchIdx % COLORS.getSize()], barrierLabel.cstr());

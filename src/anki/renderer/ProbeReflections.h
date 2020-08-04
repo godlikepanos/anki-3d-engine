@@ -126,7 +126,7 @@ private:
 		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
 		RenderTargetHandle m_gbufferDepthRt;
 		RenderTargetHandle m_lightShadingRt;
-		RenderPassBufferHandle m_irradianceDiceValuesBuffHandle;
+		BufferHandle m_irradianceDiceValuesBuffHandle;
 		RenderTargetHandle m_shadowMapRt;
 
 		U32 m_gbufferRenderableCount = 0;

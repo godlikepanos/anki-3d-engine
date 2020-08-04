@@ -33,7 +33,7 @@ public:
 	void populateRenderGraph(RenderingContext& ctx);
 
 	/// Get it to set a dependency.
-	RenderPassBufferHandle getIndirectDrawBuffer() const
+	BufferHandle getIndirectDrawBuffer() const
 	{
 		return m_runCtx.m_indirectBuffHandle;
 	}
@@ -55,7 +55,7 @@ private:
 	{
 	public:
 		RenderingContext* m_ctx = nullptr;
-		RenderPassBufferHandle m_indirectBuffHandle;
+		BufferHandle m_indirectBuffHandle;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initSprite(const ConfigSet& config);

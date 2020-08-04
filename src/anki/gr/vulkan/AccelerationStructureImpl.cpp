@@ -261,9 +261,10 @@ void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit
 		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::VERTEX_READ))
+	if(!!(after & AccelerationStructureUsageBit::GEOMETRY_READ))
 	{
-		dstStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+		dstStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
+					 | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
 	}
 

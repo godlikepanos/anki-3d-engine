@@ -29,7 +29,7 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	RenderPassBufferHandle getAverageLuminanceBuffer() const
+	BufferHandle getAverageLuminanceBuffer() const
 	{
 		return m_runCtx.m_buffHandle;
 	}
@@ -44,7 +44,7 @@ private:
 	class
 	{
 	public:
-		RenderPassBufferHandle m_buffHandle;
+		BufferHandle m_buffHandle;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);

@@ -13,6 +13,7 @@
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/TimestampQuery.h>
 #include <anki/gr/CommandBuffer.h>
+#include <anki/gr/AccelerationStructure.h>
 #include <anki/util/HashMap.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/WeakArray.h>
@@ -29,13 +30,15 @@ class RenderGraphDescription;
 
 /// @name RenderGraph constants
 /// @{
-static constexpr U MAX_RENDER_GRAPH_PASSES = 128;
-static constexpr U MAX_RENDER_GRAPH_RENDER_TARGETS = 64; ///< Max imported or not render targets in RenderGraph.
-static constexpr U MAX_RENDER_GRAPH_BUFFERS = 64;
+constexpr U32 MAX_RENDER_GRAPH_PASSES = 128;
+constexpr U32 MAX_RENDER_GRAPH_RENDER_TARGETS = 64; ///< Max imported or not render targets in RenderGraph.
+constexpr U32 MAX_RENDER_GRAPH_BUFFERS = 64;
+constexpr U32 MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES = 32;
 /// @}
 
 /// Render target handle used in the RenderGraph.
-class RenderTargetHandle
+/// @memberof RenderGraphDescription
+class RenderGraphGrObjectHandle
 {
 	friend class RenderPassDependency;
 	friend class RenderGraphDescription;
@@ -43,12 +46,12 @@ class RenderTargetHandle
 	friend class RenderPassDescriptionBase;
 
 public:
-	Bool operator==(const RenderTargetHandle& b) const
+	Bool operator==(const RenderGraphGrObjectHandle& b) const
 	{
 		return m_idx == b.m_idx;
 	}
 
-	Bool operator!=(const RenderTargetHandle& b) const
+	Bool operator!=(const RenderGraphGrObjectHandle& b) const
 	{
 		return m_idx != b.m_idx;
 	}
@@ -60,44 +63,28 @@ public:
 
 private:
 	U32 m_idx = MAX_U32;
-
-	Bool valid() const
-	{
-		return m_idx != MAX_U32;
-	}
 };
 
-/// Buffer handle used in the RenderGraph.
-class RenderPassBufferHandle
+/// Render target (TexturePtr) handle.
+/// @memberof RenderGraphDescription
+class RenderTargetHandle : public RenderGraphGrObjectHandle
 {
-	friend class RenderPassDependency;
-	friend class RenderGraphDescription;
-	friend class RenderGraph;
-	friend class RenderPassDescriptionBase;
+};
 
-public:
-	operator BufferPtr() const;
+/// BufferPtr handle.
+/// @memberof RenderGraphDescription
+class BufferHandle : public RenderGraphGrObjectHandle
+{
+};
 
-	Bool operator==(const RenderPassBufferHandle& b) const
-	{
-		return m_idx == b.m_idx;
-	}
-
-	Bool operator!=(const RenderPassBufferHandle& b) const
-	{
-		return m_idx != b.m_idx;
-	}
-
-private:
-	U32 m_idx = MAX_U32;
-
-	Bool valid() const
-	{
-		return m_idx != MAX_U32;
-	}
+/// AccelerationStructurePtr handle.
+/// @memberof RenderGraphDescription
+class AccelerationStructureHandle : public RenderGraphGrObjectHandle
+{
 };
 
 /// Describes the render target.
+/// @memberof RenderGraphDescription
 class RenderTargetDescription : public TextureInitInfo
 {
 	friend class RenderGraphDescription;
@@ -125,6 +112,7 @@ private:
 };
 
 /// The only parameter of RenderPassWorkCallback.
+/// @memberof RenderGraph
 class RenderPassWorkContext
 {
 	friend class RenderGraph;
@@ -135,7 +123,7 @@ public:
 	U32 m_currentSecondLevelCommandBufferIndex ANKI_DEBUG_CODE(= 0);
 	U32 m_secondLevelCommandBufferCount ANKI_DEBUG_CODE(= 0);
 
-	void getBufferState(RenderPassBufferHandle handle, BufferPtr& buff) const;
+	void getBufferState(BufferHandle handle, BufferPtr& buff) const;
 
 	void getRenderTargetState(RenderTargetHandle handle, const TextureSubresourceInfo& subresource, TexturePtr& tex,
 							  TextureUsageBit& usage) const;
@@ -198,7 +186,7 @@ public:
 	}
 
 	/// Convenience method.
-	void bindStorageBuffer(U32 set, U32 binding, RenderPassBufferHandle handle)
+	void bindStorageBuffer(U32 set, U32 binding, BufferHandle handle)
 	{
 		BufferPtr buff;
 		getBufferState(handle, buff);
@@ -206,12 +194,15 @@ public:
 	}
 
 	/// Convenience method.
-	void bindUniformBuffer(U32 set, U32 binding, RenderPassBufferHandle handle)
+	void bindUniformBuffer(U32 set, U32 binding, BufferHandle handle)
 	{
 		BufferPtr buff;
 		getBufferState(handle, buff);
 		m_commandBuffer->bindUniformBuffer(set, binding, buff, 0, MAX_PTR_SIZE);
 	}
+
+	/// Convenience method.
+	void bindAccelerationStructure(U32 set, U32 binding, AccelerationStructureHandle handle);
 
 private:
 	const RenderGraph* m_rgraph ANKI_DEBUG_CODE(= nullptr);
@@ -222,9 +213,11 @@ private:
 };
 
 /// Work callback for a RenderGraph pass.
+/// @memberof RenderGraphDescription
 using RenderPassWorkCallback = void (*)(RenderPassWorkContext& ctx);
 
 /// RenderGraph pass dependency.
+/// @memberof RenderGraphDescription
 class RenderPassDependency
 {
 	friend class RenderGraph;
@@ -234,27 +227,34 @@ public:
 	/// Dependency to a texture subresource.
 	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSubresourceInfo& subresource)
 		: m_texture({handle, usage, subresource})
-		, m_isTexture(true)
+		, m_type(Type::TEXTURE)
 	{
-		ANKI_ASSERT(handle.valid());
+		ANKI_ASSERT(handle.isValid());
 	}
 
 	/// Dependency to the whole texture.
 	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage,
 						 DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE)
 		: m_texture({handle, usage, TextureSubresourceInfo()})
-		, m_isTexture(true)
+		, m_type(Type::TEXTURE)
 	{
-		ANKI_ASSERT(handle.valid());
+		ANKI_ASSERT(handle.isValid());
 		m_texture.m_subresource.m_mipmapCount = MAX_U32; // Mark it as "whole texture"
 		m_texture.m_subresource.m_depthStencilAspect = aspect;
 	}
 
-	RenderPassDependency(RenderPassBufferHandle handle, BufferUsageBit usage)
+	RenderPassDependency(BufferHandle handle, BufferUsageBit usage)
 		: m_buffer({handle, usage})
-		, m_isTexture(false)
+		, m_type(Type::BUFFER)
 	{
-		ANKI_ASSERT(handle.valid());
+		ANKI_ASSERT(handle.isValid());
+	}
+
+	RenderPassDependency(AccelerationStructureHandle handle, AccelerationStructureUsageBit usage)
+		: m_as({handle, usage})
+		, m_type(Type::ACCELERATION_STRUCTURE)
+	{
+		ANKI_ASSERT(handle.isValid());
 	}
 
 private:
@@ -266,22 +266,39 @@ private:
 		TextureSubresourceInfo m_subresource;
 	};
 
-	struct BufferInfo
+	class BufferInfo
 	{
-		RenderPassBufferHandle m_handle;
+	public:
+		BufferHandle m_handle;
 		BufferUsageBit m_usage;
+	};
+
+	class ASInfo
+	{
+	public:
+		AccelerationStructureHandle m_handle;
+		AccelerationStructureUsageBit m_usage;
 	};
 
 	union
 	{
 		TextureInfo m_texture;
 		BufferInfo m_buffer;
+		ASInfo m_as;
 	};
 
-	Bool m_isTexture;
+	enum class Type : U8
+	{
+		BUFFER,
+		TEXTURE,
+		ACCELERATION_STRUCTURE
+	};
+
+	Type m_type;
 };
 
 /// The base of compute/transfer and graphics renderpasses for RenderGraph.
+/// @memberof RenderGraphDescription
 class RenderPassDescriptionBase
 {
 	friend class RenderGraph;
@@ -293,6 +310,7 @@ public:
 		m_name.destroy(m_alloc); // To avoid the assertion
 		m_rtDeps.destroy(m_alloc);
 		m_buffDeps.destroy(m_alloc);
+		m_asDeps.destroy(m_alloc);
 	}
 
 	void setWork(RenderPassWorkCallback callback, void* userData, U32 secondLeveCmdbCount)
@@ -325,12 +343,14 @@ protected:
 
 	DynamicArray<RenderPassDependency> m_rtDeps;
 	DynamicArray<RenderPassDependency> m_buffDeps;
+	DynamicArray<RenderPassDependency> m_asDeps;
 
-	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_readRtMask = {false};
-	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_writeRtMask = {false};
-	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_readBuffMask = {false};
-	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_writeBuffMask = {false};
-	Bool m_hasBufferDeps = false; ///< Opt.
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_readRtMask{false};
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS, U64> m_writeRtMask{false};
+	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_readBuffMask{false};
+	BitSet<MAX_RENDER_GRAPH_BUFFERS, U64> m_writeBuffMask{false};
+	BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> m_readAsMask{false};
+	BitSet<MAX_RENDER_GRAPH_ACCELERATION_STRUCTURES, U32> m_writeAsMask{false};
 
 	String m_name;
 
@@ -367,6 +387,7 @@ public:
 };
 
 /// Describes a framebuffer.
+/// @memberof RenderGraphDescription
 class FramebufferDescription
 {
 	friend class GraphicsRenderPassDescription;
@@ -390,6 +411,7 @@ private:
 };
 
 /// A graphics render pass for RenderGraph.
+/// @memberof RenderGraphDescription
 class GraphicsRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
@@ -426,6 +448,7 @@ private:
 };
 
 /// A compute render pass for RenderGraph.
+/// @memberof RenderGraphDescription
 class ComputeRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
@@ -440,6 +463,7 @@ private:
 };
 
 /// Builds the description of the frame's render passes and their interactions.
+/// @memberof RenderGraph
 class RenderGraphDescription
 {
 	friend class RenderGraph;
@@ -470,7 +494,11 @@ public:
 	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf);
 
 	/// Import a buffer.
-	RenderPassBufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage);
+	BufferHandle importBuffer(BufferPtr buff, BufferUsageBit usage);
+
+	/// Import an AS.
+	AccelerationStructureHandle importAccelerationStructure(AccelerationStructurePtr as,
+															AccelerationStructureUsageBit usage);
 
 	/// Gather statistics.
 	void setStatisticsEnabled(Bool gather)
@@ -510,14 +538,23 @@ private:
 		BufferPtr m_importedBuff;
 	};
 
+	class AS : public Resource
+	{
+	public:
+		AccelerationStructurePtr m_importedAs;
+		AccelerationStructureUsageBit m_usage;
+	};
+
 	StackAllocator<U8> m_alloc;
 	DynamicArray<RenderPassDescriptionBase*> m_passes;
 	DynamicArray<RT> m_renderTargets;
 	DynamicArray<Buffer> m_buffers;
+	DynamicArray<AS> m_as;
 	Bool m_gatherStatistics = false;
 };
 
 /// Statistics.
+/// @memberof RenderGraph
 class RenderGraphStatistics
 {
 public:
@@ -591,7 +628,10 @@ private:
 	class Batch;
 	class RT;
 	class Buffer;
-	class Barrier;
+	class AS;
+	class TextureBarrier;
+	class BufferBarrier;
+	class ASBarrier;
 
 	/// Render targets of the same type+size+format.
 	class RenderTargetCacheEntry
@@ -663,10 +703,12 @@ private:
 												CString path) const;
 	static StringAuto textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage);
 	static StringAuto bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage);
+	static StringAuto asUsageToStr(StackAllocator<U8>& alloc, AccelerationStructureUsageBit usage);
 	/// @}
 
 	TexturePtr getTexture(RenderTargetHandle handle) const;
-	BufferPtr getBuffer(RenderPassBufferHandle handle) const;
+	BufferPtr getBuffer(BufferHandle handle) const;
+	AccelerationStructurePtr getAs(AccelerationStructureHandle handle) const;
 };
 /// @}
 
