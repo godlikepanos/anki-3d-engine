@@ -167,7 +167,7 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-	pass.newDependency({m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+	pass.newDependency({m_depthRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
 }
 
 } // end namespace anki

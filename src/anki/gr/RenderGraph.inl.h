@@ -101,8 +101,7 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 		}
 		else
 		{
-			constexpr AccelerationStructureUsageBit usage = ~AccelerationStructureUsageBit::ALL_GRAPHICS;
-			ANKI_ASSERT(!(dep.m_as.m_usage & usage));
+			ANKI_ASSERT(!(dep.m_as.m_usage & ~AccelerationStructureUsageBit::ALL_GRAPHICS));
 		}
 	}
 }

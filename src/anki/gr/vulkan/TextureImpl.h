@@ -147,7 +147,7 @@ public:
 	}
 
 	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
-	void computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U level, VkPipelineStageFlags& srcStages,
+	void computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U32 level, VkPipelineStageFlags& srcStages,
 							VkAccessFlags& srcAccesses, VkPipelineStageFlags& dstStages,
 							VkAccessFlags& dstAccesses) const;
 
@@ -184,7 +184,7 @@ public:
 
 private:
 	mutable HashMap<TextureSubresourceInfo, MicroImageView> m_viewsMap;
-	mutable Mutex m_viewsMapMtx;
+	mutable RWMutex m_viewsMapMtx;
 
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
 
@@ -211,6 +211,9 @@ private:
 	TextureType computeNewTexTypeOfSubresource(const TextureSubresourceInfo& subresource) const;
 
 	ANKI_USE_RESULT Error initInternal(VkImage externalImage, const TextureInitInfo& init);
+
+	void computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages,
+							VkAccessFlags& accesses) const;
 };
 /// @}
 

@@ -121,8 +121,8 @@ Error ProbeReflections::initLightShading(const ConfigSet& config)
 	{
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
 			m_lightShading.m_tileSize, m_lightShading.m_tileSize, LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE
-				| TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_READ
+				| TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT
 				| TextureUsageBit::GENERATE_MIPMAPS,
 			"CubeRefl refl");
 		texinit.m_mipmapCount = U8(m_lightShading.m_mipCount);
@@ -565,7 +565,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		}
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-		pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+		pass.newDependency({m_ctx.m_gbufferDepthRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
 	}
 
 	// Shadow pass. Optional
@@ -611,7 +611,7 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			this, taskCount);
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+		pass.newDependency({m_ctx.m_shadowMapRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
 	}
 	else
 	{
@@ -695,7 +695,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 		TextureSubresourceInfo subresource;
 		subresource.m_faceCount = 6;
 		subresource.m_firstLayer = probeToUpdateCacheEntryIdx;
-		pass.newDependency({m_ctx.m_lightShadingRt, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE, subresource});
+		pass.newDependency({m_ctx.m_lightShadingRt,
+							TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE, subresource});
 
 		pass.newDependency({m_ctx.m_irradianceDiceValuesBuffHandle, BufferUsageBit::STORAGE_COMPUTE_READ});
 	}

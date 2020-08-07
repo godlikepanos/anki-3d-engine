@@ -43,7 +43,8 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	// Create RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
 		width, height, Format::R16G16B16A16_SFLOAT,
-		TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT, "SSR");
+		TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		"SSR");
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	m_rt = m_r->createAndClearRenderTarget(texinit);
 
@@ -79,7 +80,7 @@ void Ssr::populateRenderGraph(RenderingContext& ctx)
 	rpass.setWork([](RenderPassWorkContext& rgraphCtx) { static_cast<Ssr*>(rgraphCtx.m_userData)->run(rgraphCtx); },
 				  this, 0);
 
-	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_READ_WRITE});
+	rpass.newDependency({m_runCtx.m_rt, TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE});
 	rpass.newDependency({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_COMPUTE});
 	rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 
@@ -126,7 +127,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 6, m_r->getDownscaleBlur().getRt());
 
 	cmdb->bindSampler(0, 7, m_r->getSamplers().m_trilinearRepeat);
-	cmdb->bindTexture(0, 8, m_noiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_ALL);
+	cmdb->bindTexture(0, 8, m_noiseTex->getGrTextureView(), TextureUsageBit::ALL_SAMPLED);
 
 	// Dispatch
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth() / 2, m_r->getHeight());

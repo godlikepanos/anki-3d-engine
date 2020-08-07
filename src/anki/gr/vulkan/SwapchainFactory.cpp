@@ -181,8 +181,8 @@ Error MicroSwapchain::initInternal()
 			init.m_height = surfaceHeight;
 			init.m_format = Format::B8G8R8A8_UNORM;
 			ANKI_ASSERT(surfaceFormat == VK_FORMAT_B8G8R8A8_UNORM);
-			init.m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
-						   | TextureUsageBit::PRESENT;
+			init.m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
+						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::PRESENT;
 			init.m_type = TextureType::_2D;
 
 			TextureImpl* tex =

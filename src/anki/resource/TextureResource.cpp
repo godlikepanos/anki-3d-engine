@@ -68,8 +68,8 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 	ImageLoader& loader = ctx->m_loader;
 
 	TextureInitInfo init("RsrcTex");
-	init.m_usage = TextureUsageBit::SAMPLED_ALL | TextureUsageBit::TRANSFER_DESTINATION;
-	init.m_initialUsage = TextureUsageBit::SAMPLED_ALL;
+	init.m_usage = TextureUsageBit::ALL_SAMPLED | TextureUsageBit::TRANSFER_DESTINATION;
+	init.m_initialUsage = TextureUsageBit::ALL_SAMPLED;
 	U32 faces = 0;
 
 	ResourceFilePtr file;
@@ -276,16 +276,16 @@ Error TextureResource::load(LoadingContext& ctx)
 			if(ctx.m_texType == TextureType::_3D)
 			{
 				TextureVolumeInfo vol(mip);
-				cmdb->setTextureVolumeBarrier(
-					ctx.m_tex, TextureUsageBit::TRANSFER_DESTINATION,
-					TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION, vol);
+				cmdb->setTextureVolumeBarrier(ctx.m_tex, TextureUsageBit::TRANSFER_DESTINATION,
+											  TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_GEOMETRY,
+											  vol);
 			}
 			else
 			{
 				TextureSurfaceInfo surf(mip, 0, face, layer);
-				cmdb->setTextureSurfaceBarrier(
-					ctx.m_tex, TextureUsageBit::TRANSFER_DESTINATION,
-					TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION, surf);
+				cmdb->setTextureSurfaceBarrier(ctx.m_tex, TextureUsageBit::TRANSFER_DESTINATION,
+											   TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_GEOMETRY,
+											   surf);
 			}
 		}
 

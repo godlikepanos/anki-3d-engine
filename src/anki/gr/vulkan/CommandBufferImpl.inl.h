@@ -129,6 +129,9 @@ inline void CommandBufferImpl::setTextureBarrierRange(TexturePtr tex, TextureUsa
 	const TextureImpl& impl = static_cast<const TextureImpl&>(*tex);
 	ANKI_ASSERT(impl.usageValid(prevUsage));
 	ANKI_ASSERT(impl.usageValid(nextUsage));
+	ANKI_ASSERT(((nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::GENERATE_MIPMAPS
+				 || (nextUsage & TextureUsageBit::GENERATE_MIPMAPS) == TextureUsageBit::NONE)
+				&& "GENERATE_MIPMAPS should be alone");
 
 	VkPipelineStageFlags srcStage;
 	VkAccessFlags srcAccess;

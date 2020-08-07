@@ -374,17 +374,17 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 {
 	VkImageUsageFlags out = 0;
 
-	if(!!(ak & TextureUsageBit::SAMPLED_ALL))
+	if(!!(ak & TextureUsageBit::ALL_SAMPLED))
 	{
 		out |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::IMAGE_ALL))
+	if(!!(ak & TextureUsageBit::ALL_IMAGE))
 	{
 		out |= VK_IMAGE_USAGE_STORAGE_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
+	if(!!(ak & (TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE)))
 	{
 		if(formatIsDepthStencil(format))
 		{
@@ -396,19 +396,14 @@ VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, const Format for
 		}
 	}
 
-	if(!!(ak & TextureUsageBit::GENERATE_MIPMAPS))
-	{
-		out |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-	}
-
 	if(!!(ak & TextureUsageBit::TRANSFER_DESTINATION))
 	{
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::CLEAR))
+	if(!!(ak & TextureUsageBit::GENERATE_MIPMAPS))
 	{
-		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 	}
 
 	ANKI_ASSERT(out);

@@ -161,7 +161,7 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 		flags |= VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;
 	}
 
-	if(!!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
+	if(!!(init.m_usage & TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT))
 	{
 		if(formatIsDepthStencil(init.m_format))
 		{
@@ -173,7 +173,7 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 		}
 	}
 
-	if(!!(init.m_usage & TextureUsageBit::SAMPLED_ALL))
+	if(!!(init.m_usage & TextureUsageBit::ALL_SAMPLED))
 	{
 		flags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
 	}
@@ -223,7 +223,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		// Try to find a fallback
 		if(init.m_format >= Format::R8G8B8_UNORM && init.m_format <= Format::R8G8B8_SRGB)
 		{
-			ANKI_ASSERT(!(init.m_usage & TextureUsageBit::IMAGE_ALL) && "Can't do that ATM");
+			ANKI_ASSERT(!(init.m_usage & TextureUsageBit::ALL_IMAGE) && "Can't do that ATM");
 			const U idx = U(init.m_format) - U(Format::R8G8B8_UNORM);
 			init.m_format = Format(U(Format::R8G8B8A8_UNORM) + idx);
 			ANKI_ASSERT(init.m_format >= Format::R8G8B8A8_UNORM && init.m_format <= Format::R8G8B8A8_SRGB);
@@ -233,7 +233,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		}
 		else if(init.m_format == Format::S8_UINT)
 		{
-			ANKI_ASSERT(!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ALL))
+			ANKI_ASSERT(!(init.m_usage & (TextureUsageBit::ALL_IMAGE | TextureUsageBit::ALL_TRANSFER))
 						&& "Can't do that ATM");
 			init.m_format = Format::D24_UNORM_S8_UINT;
 			m_format = init.m_format;
@@ -242,7 +242,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		}
 		else if(init.m_format == Format::D24_UNORM_S8_UINT)
 		{
-			ANKI_ASSERT(!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ALL))
+			ANKI_ASSERT(!(init.m_usage & (TextureUsageBit::ALL_IMAGE | TextureUsageBit::ALL_TRANSFER))
 						&& "Can't do that ATM");
 			init.m_format = Format::D32_SFLOAT_S8_UINT;
 			m_format = init.m_format;
@@ -378,226 +378,128 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	return Error::NONE;
 }
 
-void TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U level,
+void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages,
+									 VkAccessFlags& accesses) const
+{
+	ANKI_ASSERT(level < m_mipCount);
+	ANKI_ASSERT(usageValid(usage));
+	stages = 0;
+	accesses = 0;
+	const Bool depthStencil = !!m_aspect;
+
+	if(!!(usage & (TextureUsageBit::SAMPLED_GEOMETRY | TextureUsageBit::IMAGE_GEOMETRY_READ)))
+	{
+		stages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
+				  | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+		accesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::IMAGE_GEOMETRY_WRITE))
+	{
+		stages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
+				  | VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
+	}
+
+	if(!!(usage & (TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::IMAGE_FRAGMENT_READ)))
+	{
+		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		accesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::IMAGE_FRAGMENT_WRITE))
+	{
+		stages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
+	}
+
+	if(!!(usage & (TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_READ)))
+	{
+		stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		accesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::IMAGE_COMPUTE_WRITE))
+	{
+		stages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
+	{
+		if(depthStencil)
+		{
+			stages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			accesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+		}
+		else
+		{
+			stages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			accesses |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		}
+	}
+
+	if(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
+	{
+		if(depthStencil)
+		{
+			stages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			accesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		}
+		else
+		{
+			stages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			accesses |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		}
+	}
+
+	if(!!(usage & TextureUsageBit::GENERATE_MIPMAPS))
+	{
+		stages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		if(src)
+		{
+			const Bool lastLevel = level == m_mipCount - 1;
+			if(lastLevel)
+			{
+				accesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+			}
+			else
+			{
+				accesses |= VK_ACCESS_TRANSFER_READ_BIT;
+			}
+		}
+		else
+		{
+			ANKI_ASSERT(level == 0
+						&& "The upper layers should not allow others levels to transition to gen mips state. This "
+						   "happens elsewhere");
+			accesses |= VK_ACCESS_TRANSFER_READ_BIT;
+		}
+	}
+
+	if(!!(usage & TextureUsageBit::TRANSFER_DESTINATION))
+	{
+		stages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		accesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::PRESENT))
+	{
+		stages |= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		accesses |= VK_ACCESS_MEMORY_READ_BIT;
+	}
+}
+
+void TextureImpl::computeBarrierInfo(TextureUsageBit before, TextureUsageBit after, U32 level,
 									 VkPipelineStageFlags& srcStages, VkAccessFlags& srcAccesses,
 									 VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses) const
 {
-	ANKI_ASSERT(level < m_mipCount);
-	ANKI_ASSERT(usageValid(before) && usageValid(after));
-	srcStages = 0;
-	srcAccesses = 0;
-	dstStages = 0;
-	dstAccesses = 0;
-	const Bool lastLevel = level == m_mipCount - 1u;
-	const Bool depthStencil = !!m_aspect;
-
-	//
-	// Before
-	//
-	if(!!(before & TextureUsageBit::SAMPLED_VERTEX))
-	{
-		srcStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(before & TextureUsageBit::SAMPLED_TESSELLATION_CONTROL))
-	{
-		srcStages |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(before & TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION))
-	{
-		srcStages |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(before & TextureUsageBit::SAMPLED_GEOMETRY))
-	{
-		srcStages |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(before & TextureUsageBit::SAMPLED_FRAGMENT))
-	{
-		srcStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(before & TextureUsageBit::SAMPLED_COMPUTE) || !!(before & TextureUsageBit::IMAGE_COMPUTE_READ))
-	{
-		srcStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(before & TextureUsageBit::IMAGE_COMPUTE_WRITE))
-	{
-		srcStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		srcAccesses |= VK_ACCESS_SHADER_WRITE_BIT;
-	}
-
-	if(!!(before & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
-	{
-		if(depthStencil)
-		{
-			srcStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			srcAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-		}
-		else
-		{
-			srcStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; // See Table 4 in the spec
-			srcAccesses |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-		}
-	}
-
-	if(!!(before & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
-	{
-		if(depthStencil)
-		{
-			srcStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			srcAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		}
-		else
-		{
-			srcStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			srcAccesses |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		}
-	}
-
-	if(!!(before & TextureUsageBit::GENERATE_MIPMAPS))
-	{
-		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-		if(!lastLevel)
-		{
-			srcAccesses |= VK_ACCESS_TRANSFER_READ_BIT;
-		}
-		else
-		{
-			srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
-		}
-	}
-
-	if(!!(before & TextureUsageBit::TRANSFER_DESTINATION))
-	{
-		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
-		srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
-	}
-
-	if(!!(before & TextureUsageBit::CLEAR))
-	{
-		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
-		srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
-	}
+	computeBarrierInfo(before, true, level, srcStages, srcAccesses);
+	computeBarrierInfo(after, false, level, dstStages, dstAccesses);
 
 	if(srcStages == 0)
 	{
 		srcStages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-	}
-
-	//
-	// After
-	//
-	if(!!(after & TextureUsageBit::SAMPLED_VERTEX))
-	{
-		dstStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(after & TextureUsageBit::SAMPLED_TESSELLATION_CONTROL))
-	{
-		dstStages |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(after & TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION))
-	{
-		dstStages |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(after & TextureUsageBit::SAMPLED_GEOMETRY))
-	{
-		dstStages |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(after & TextureUsageBit::SAMPLED_FRAGMENT))
-	{
-		dstStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(after & TextureUsageBit::SAMPLED_COMPUTE) || !!(after & TextureUsageBit::IMAGE_COMPUTE_READ))
-	{
-		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
-	}
-
-	if(!!(after & TextureUsageBit::IMAGE_COMPUTE_WRITE))
-	{
-		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		dstAccesses |= VK_ACCESS_SHADER_WRITE_BIT;
-	}
-
-	if(!!(after & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
-	{
-		if(depthStencil)
-		{
-			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			dstAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-		}
-		else
-		{
-			dstStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dstAccesses |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-		}
-	}
-
-	if(!!(after & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
-	{
-		if(depthStencil)
-		{
-			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			dstAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		}
-		else
-		{
-			dstStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dstAccesses |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		}
-	}
-
-	if(!!(after & TextureUsageBit::GENERATE_MIPMAPS))
-	{
-		dstStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
-
-		if(level == 0)
-		{
-			dstAccesses |= VK_ACCESS_TRANSFER_READ_BIT;
-		}
-		else
-		{
-			ANKI_ASSERT(0 && "This will happen in generateMipmaps");
-		}
-	}
-
-	if(!!(after & TextureUsageBit::TRANSFER_DESTINATION))
-	{
-		dstStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
-		dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
-	}
-
-	if(!!(after & TextureUsageBit::CLEAR))
-	{
-		dstStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
-		dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
-	}
-
-	if(!!(after & TextureUsageBit::PRESENT))
-	{
-		dstStages |= VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		dstAccesses |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
 	ANKI_ASSERT(dstStages);
@@ -616,17 +518,17 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
-	else if(!(usage & ~TextureUsageBit::SAMPLED_ALL))
+	else if(!(usage & ~TextureUsageBit::ALL_SAMPLED))
 	{
 		// Only sampling
 		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
-	else if(!(usage & ~TextureUsageBit::IMAGE_COMPUTE_READ_WRITE))
+	else if(!(usage & ~TextureUsageBit::ALL_IMAGE))
 	{
 		// Only image load/store
 		out = VK_IMAGE_LAYOUT_GENERAL;
 	}
-	else if(!(usage & ~TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
+	else if(!(usage & ~TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT))
 	{
 		// Only FB access
 		if(depthStencil)
@@ -638,16 +540,10 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 			out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
 	}
-	else if(depthStencil && !(usage & ~(TextureUsageBit::SAMPLED_ALL | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
+	else if(depthStencil && !(usage & ~(TextureUsageBit::ALL_SAMPLED | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
 	{
 		// FB read & shader read
 		out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-	}
-	else if(depthStencil
-			&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)))
-	{
-		// Wild guess: One aspect is shader read and the other is read write
-		out = VK_IMAGE_LAYOUT_GENERAL;
 	}
 	else if(usage == TextureUsageBit::GENERATE_MIPMAPS)
 	{
@@ -660,10 +556,6 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 			out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		}
 	}
-	else if(usage == TextureUsageBit::CLEAR)
-	{
-		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	}
 	else if(!depthStencil && usage == TextureUsageBit::TRANSFER_DESTINATION)
 	{
 		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -672,11 +564,6 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	}
-	else
-	{
-		// Can't set it to something, chose general
-		out = VK_IMAGE_LAYOUT_GENERAL;
-	}
 
 	ANKI_ASSERT(out != VK_IMAGE_LAYOUT_MAX_ENUM);
 	return out;
@@ -684,38 +571,48 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 
 const MicroImageView& TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresource) const
 {
-	LockGuard<Mutex> lock(m_viewsMapMtx);
-	auto it = m_viewsMap.find(subresource);
+	{
+		RLockGuard<RWMutex> lock(m_viewsMapMtx);
+		auto it = m_viewsMap.find(subresource);
+		if(it != m_viewsMap.getEnd())
+		{
+			return *it;
+		}
+	}
 
+	// Not found need to create it
+
+	WLockGuard<RWMutex> lock(m_viewsMapMtx);
+
+	// Search again
+	auto it = m_viewsMap.find(subresource);
 	if(it != m_viewsMap.getEnd())
 	{
-		// Found, do nothing
+		return *it;
 	}
-	else
-	{
-		VkImageView handle = VK_NULL_HANDLE;
-		TextureType viewTexType = TextureType::COUNT;
 
-		// Compute the VkImageViewCreateInfo
-		VkImageViewCreateInfo viewCi;
-		computeVkImageViewCreateInfo(subresource, viewCi, viewTexType);
-		ANKI_ASSERT(viewTexType != TextureType::COUNT);
+	// Not found in the 2nd search, create it
 
-		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &handle));
-		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
-												  ptrToNumber(handle));
+	VkImageView handle = VK_NULL_HANDLE;
+	TextureType viewTexType = TextureType::COUNT;
 
-		it = m_viewsMap.emplace(getAllocator(), subresource);
-		it->m_handle = handle;
-		it->m_derivedTextureType = viewTexType;
+	// Compute the VkImageViewCreateInfo
+	VkImageViewCreateInfo viewCi;
+	computeVkImageViewCreateInfo(subresource, viewCi, viewTexType);
+	ANKI_ASSERT(viewTexType != TextureType::COUNT);
+
+	ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &handle));
+	getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+											  ptrToNumber(handle));
+
+	it = m_viewsMap.emplace(getAllocator(), subresource);
+	it->m_handle = handle;
+	it->m_derivedTextureType = viewTexType;
 
 #if 0
-		printf("Creating image view %p. Texture %p %s\n",
-			static_cast<void*>(handle),
-			static_cast<void*>(m_imageHandle),
-			getName() ? getName().cstr() : "Unnamed");
+	printf("Creating image view %p. Texture %p %s\n", static_cast<void*>(handle), static_cast<void*>(m_imageHandle),
+		   getName() ? getName().cstr() : "Unnamed");
 #endif
-	}
 
 	ANKI_ASSERT(&(*m_viewsMap.find(subresource)) == &(*it));
 	return *it;

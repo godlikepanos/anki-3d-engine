@@ -241,7 +241,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 				this, threadCountForScratchPass);
 
 			TextureSubresourceInfo subresource = TextureSubresourceInfo(DepthStencilAspectBit::DEPTH);
-			pass.newDependency({m_scratch.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+			pass.newDependency({m_scratch.m_rt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
 		}
 
 		// Atlas pass

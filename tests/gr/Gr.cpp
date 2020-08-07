@@ -611,7 +611,7 @@ ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 	TextureInitInfo init;
 	init.m_depth = 1;
 	init.m_format = COL_FORMAT;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
 	init.m_height = RT_HEIGHT;
 	init.m_width = RT_WIDTH;
 	init.m_mipmapCount = 1;
@@ -1131,7 +1131,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 	TextureInitInfo init;
 	init.m_format = COL_FORMAT;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT;
 	init.m_height = TEX_SIZE;
 	init.m_width = TEX_SIZE;
 	init.m_type = TextureType::_2D;
@@ -1193,11 +1193,11 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 									   TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->setTextureSurfaceBarrier(col1, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 									   TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::NONE, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT,
 									   TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->beginRenderPass(
 			fb, {{TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}},
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
+			TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT);
 
 		if(!useSecondLevel)
 		{
@@ -1223,7 +1223,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 									   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->setTextureSurfaceBarrier(col1, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 									   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		cmdb->setTextureSurfaceBarrier(dp, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT,
 									   TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
 
 		// Draw quad
@@ -1284,7 +1284,8 @@ ANKI_TEST(Gr, ImageLoadStore)
 	TextureInitInfo init;
 	init.m_width = init.m_height = 4;
 	init.m_mipmapCount = 2;
-	init.m_usage = TextureUsageBit::CLEAR | TextureUsageBit::SAMPLED_ALL | TextureUsageBit::IMAGE_COMPUTE_WRITE;
+	init.m_usage =
+		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_COMPUTE_WRITE;
 	init.m_type = TextureType::_2D;
 	init.m_format = Format::R8G8B8A8_UNORM;
 
@@ -1308,23 +1309,25 @@ ANKI_TEST(Gr, ImageLoadStore)
 	CommandBufferInitInfo cmdbinit;
 	CommandBufferPtr cmdb = gr->newCommandBuffer(cmdbinit);
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::CLEAR, TextureSurfaceInfo(0, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+								   TextureSurfaceInfo(0, 0, 0, 0));
 
 	ClearValue clear;
 	clear.m_colorf = {{0.0, 1.0, 0.0, 1.0}};
 	TextureViewInitInfo viewInit2(tex, TextureSurfaceInfo(0, 0, 0, 0));
 	cmdb->clearTextureView(gr->newTextureView(viewInit2), clear);
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::CLEAR, TextureUsageBit::SAMPLED_FRAGMENT,
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT,
 								   TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::CLEAR, TextureSurfaceInfo(1, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION,
+								   TextureSurfaceInfo(1, 0, 0, 0));
 
 	clear.m_colorf = {{0.0, 0.0, 1.0, 1.0}};
 	TextureViewInitInfo viewInit3(tex, TextureSurfaceInfo(1, 0, 0, 0));
 	cmdb->clearTextureView(gr->newTextureView(viewInit3), clear);
 
-	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::CLEAR, TextureUsageBit::IMAGE_COMPUTE_WRITE,
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::IMAGE_COMPUTE_WRITE,
 								   TextureSurfaceInfo(1, 0, 0, 0));
 
 	cmdb->flush();
@@ -1531,7 +1534,7 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle smScratchRt = descr.newRenderTarget(newRTDescr("SM scratch"));
 	{
 		GraphicsRenderPassDescription& pass = descr.newGraphicsRenderPass("SM");
-		pass.newDependency({smScratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+		pass.newDependency({smScratchRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT});
 	}
 
 	// SM to exponential SM
@@ -1757,7 +1760,7 @@ void main()
 	texInit.m_width = texInit.m_height = 8;
 	texInit.m_format = Format::R8G8B8_UINT;
 	texInit.m_type = TextureType::_2D;
-	texInit.m_usage = TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_ALL;
+	texInit.m_usage = TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::ALL_SAMPLED;
 	texInit.m_mipmapCount = 2;
 	TexturePtr tex = gr->newTexture(texInit);
 	TextureViewPtr texView = gr->newTextureView(TextureViewInitInfo(tex));
@@ -2148,7 +2151,7 @@ ANKI_TEST(Gr, Bindless)
 	texInit.m_width = 1;
 	texInit.m_height = 1;
 	texInit.m_format = Format::R32G32B32A32_UINT;
-	texInit.m_usage = TextureUsageBit::ALL_COMPUTE | TextureUsageBit::TRANSFER_ALL;
+	texInit.m_usage = TextureUsageBit::ALL_COMPUTE | TextureUsageBit::ALL_TRANSFER;
 	texInit.m_mipmapCount = 1;
 
 	TexturePtr texA = gr->newTexture(texInit);

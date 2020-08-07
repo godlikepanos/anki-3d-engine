@@ -92,7 +92,7 @@ void GlobalIllumination::bindVolumeTextures(const RenderingContext& ctx, RenderP
 		else
 		{
 			rgraphCtx.m_commandBuffer->bindTexture(set, binding, m_r->getDummyTextureView3d(),
-												   TextureUsageBit::SAMPLED_ALL, idx);
+												   TextureUsageBit::ALL_SAMPLED, idx);
 		}
 	}
 }
@@ -301,7 +301,7 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 		}
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-		pass.newDependency({giCtx->m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+		pass.newDependency({giCtx->m_gbufferDepthRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
 	}
 
 	// Shadow pass. Optional
@@ -341,7 +341,7 @@ void GlobalIllumination::populateRenderGraph(RenderingContext& rctx)
 			giCtx, smTaskCount);
 
 		TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-		pass.newDependency({giCtx->m_shadowsRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, subresource});
+		pass.newDependency({giCtx->m_shadowsRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
 	}
 	else
 	{
@@ -509,7 +509,7 @@ void GlobalIllumination::prepareProbes(InternalContext& giCtx)
 			texInit.m_width = probe.m_cellCounts.x() * 6;
 			texInit.m_height = probe.m_cellCounts.y();
 			texInit.m_depth = probe.m_cellCounts.z();
-			texInit.m_usage = TextureUsageBit::ALL_COMPUTE | TextureUsageBit::SAMPLED_ALL;
+			texInit.m_usage = TextureUsageBit::ALL_COMPUTE | TextureUsageBit::ALL_SAMPLED;
 			texInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 
 			entry.m_volumeTex = m_r->createAndClearRenderTarget(texInit);

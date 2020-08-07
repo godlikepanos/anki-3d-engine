@@ -103,7 +103,7 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 
 		TextureInitInfo initInfo = m_r->create2DRenderTargetInitInfo(
 			width, height, Format::B10G11R11_UFLOAT_PACK32,
-			TextureUsageBit::SAMPLED_ALL | TextureUsageBit::IMAGE_COMPUTE_WRITE, "SSGI");
+			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_COMPUTE_WRITE, "SSGI");
 		initInfo.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		m_recontruction.m_rt = m_r->createAndClearRenderTarget(initInfo);
 	}

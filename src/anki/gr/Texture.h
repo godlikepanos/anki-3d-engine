@@ -32,7 +32,7 @@ public:
 
 	U8 m_samples = 1;
 
-	U8 _m_padding[3] = {0, 0, 0};
+	U8 _m_padding[1] = {0};
 
 	TextureInitInfo() = default;
 

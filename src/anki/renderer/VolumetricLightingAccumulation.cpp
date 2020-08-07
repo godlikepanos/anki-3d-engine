@@ -61,8 +61,8 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	// Create RTs
 	TextureInitInfo texinit =
 		m_r->create2DRenderTargetInitInfo(m_volumeSize[0], m_volumeSize[1], Format::R16G16B16A16_SFLOAT,
-										  TextureUsageBit::IMAGE_COMPUTE_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT
-											  | TextureUsageBit::SAMPLED_COMPUTE,
+										  TextureUsageBit::IMAGE_COMPUTE_READ | TextureUsageBit::IMAGE_COMPUTE_WRITE
+											  | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE,
 										  "VolLight");
 	texinit.m_depth = m_volumeSize[2];
 	texinit.m_type = TextureType::_3D;
