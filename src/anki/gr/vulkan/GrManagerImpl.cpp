@@ -561,7 +561,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			ci.pNext = &m_descriptorIndexingFeatures;
 		}
 
-		// Enable the buffer address features required
+		// Enable the buffer address only with ray tracing ATM
+		if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
 		{
 			m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
 
