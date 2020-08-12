@@ -65,9 +65,12 @@ struct DirectionalLight
 	U32 m_cascadeCount; // If it's zero then it doesn't case shadow
 	Vec3 m_dir;
 	U32 m_active;
+	Vec2 m_padding;
+	F32 m_effectiveShadowDistance;
+	F32 m_shadowCascadesDistancePower;
 	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES];
 };
-const U32 SIZEOF_DIR_LIGHT = 2 * SIZEOF_VEC4 + MAX_SHADOW_CASCADES * SIZEOF_MAT4;
+const U32 SIZEOF_DIR_LIGHT = 3 * SIZEOF_VEC4 + MAX_SHADOW_CASCADES * SIZEOF_MAT4;
 ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == SIZEOF_DIR_LIGHT)
 
 // Representation of a reflection probe
@@ -195,6 +198,24 @@ ANKI_SHADER_FUNC_INLINE Vec3 computeClustererVolumeTextureUvs(ClustererMagicValu
 {
 	const F32 k = computeClusterKf(magic, worldPos);
 	return Vec3(uv, k / F32(clusterCountZ));
+}
+
+// Compute the far plane of a shadow cascade. "p" is the power that defines the distance curve.
+// "effectiveShadowDistance" is the far plane of the last cascade.
+ANKI_SHADER_FUNC_INLINE F32 computeShadowCascadeDistance(U32 cascadeIdx, F32 p, F32 effectiveShadowDistance,
+														 U32 shadowCascadeCount)
+{
+	return pow((F32(cascadeIdx) + 1.0f) / F32(shadowCascadeCount), p) * effectiveShadowDistance;
+}
+
+// The reverse of computeShadowCascadeDistance().
+ANKI_SHADER_FUNC_INLINE U32 computeShadowCascadeIndex(F32 distance, F32 p, F32 effectiveShadowDistance,
+													  U32 shadowCascadeCount)
+{
+	const F32 shadowCascadeCountf = F32(shadowCascadeCount);
+	F32 idx = pow(distance / effectiveShadowDistance, 1.0f / p) * shadowCascadeCountf;
+	idx = min(idx, shadowCascadeCountf - 1.0f);
+	return U32(idx);
 }
 
 ANKI_END_NAMESPACE

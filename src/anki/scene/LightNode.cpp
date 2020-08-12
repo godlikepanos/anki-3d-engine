@@ -97,7 +97,7 @@ void LightNode::frameUpdateCommon()
 	const LightComponent& lc = getComponent<LightComponent>();
 	const Bool castsShadow = lc.getShadowEnabled();
 
-	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
+	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
 		if(castsShadow)
 		{
 			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
@@ -136,7 +136,7 @@ Error LightNode::loadLensFlare(const CString& filename)
 
 	LensFlareComponent* flareComp = newComponent<LensFlareComponent>(this);
 
-	Error err = flareComp->init(filename);
+	const Error err = flareComp->init(filename);
 	if(err)
 	{
 		ANKI_ASSERT(!"TODO: Remove component");

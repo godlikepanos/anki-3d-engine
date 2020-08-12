@@ -253,6 +253,16 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 						<arg>F32</arg>
 					</args>
 				</method>
+				<method name="setShadowCascadesDistancePower">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setEffectiveShadowDistance">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
 			</methods>
 		</class>
 

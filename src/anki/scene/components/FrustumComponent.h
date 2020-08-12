@@ -11,6 +11,7 @@
 #include <anki/collision/Obb.h>
 #include <anki/collision/ConvexHullShape.h>
 #include <anki/collision/Plane.h>
+#include <shaders/glsl_cpp_common/ClusteredShading.h>
 
 namespace anki
 {
@@ -238,17 +239,37 @@ public:
 		}
 	}
 
+	/// Set how far to render shadows for this frustum or set to negative if you want to use the m_frustun's far.
+	void setEffectiveShadowDistance(F32 distance)
+	{
+		m_effectiveShadowDistance = distance;
+	}
+
 	/// How far to render shadows for this frustum.
 	F32 getEffectiveShadowDistance() const
 	{
-		ANKI_ASSERT(m_frustumType != FrustumType::COUNT);
-		return (m_effectiveShadowDist < 0.0f) ? m_perspective.m_far : m_effectiveShadowDist;
+		const F32 distance = (m_effectiveShadowDistance <= 0.0f) ? m_common.m_far : m_effectiveShadowDistance;
+		ANKI_ASSERT(distance > m_common.m_near && distance <= m_common.m_far);
+		return distance;
 	}
 
-	/// Set how far to render shadows for this frustum or set to negative if you want to use the m_frustun's far.
-	void setEffectiveShadowDistance(F32 dist)
+	/// See computeShadowCascadeDistance()
+	void setShadowCascadesDistancePower(F32 power)
 	{
-		m_effectiveShadowDist = dist;
+		ANKI_ASSERT(power >= 1.0f);
+		m_shadowCascadesDistancePower = power;
+	}
+
+	/// See computeShadowCascadeDistance()
+	F32 getShadowCascadesDistancePower() const
+	{
+		return m_shadowCascadesDistancePower;
+	}
+
+	F32 computeShadowCascadeDistance(U32 cascadeIdx) const
+	{
+		return anki::computeShadowCascadeDistance(cascadeIdx, m_shadowCascadesDistancePower,
+												  getEffectiveShadowDistance(), getCascadeCount());
 	}
 
 	const ConvexHullShape& getPerspectiveBoundingShape() const
@@ -263,7 +284,7 @@ public:
 		return m_ortho.m_obbW;
 	}
 
-	const Array<Plane, U(FrustumPlaneType::COUNT)>& getViewPlanes() const
+	const Array<Plane, U32(FrustumPlaneType::COUNT)>& getViewPlanes() const
 	{
 		return m_viewPlanesW;
 	}
@@ -309,8 +330,8 @@ private:
 	};
 
 	// View planes
-	Array<Plane, U(FrustumPlaneType::COUNT)> m_viewPlanesL;
-	Array<Plane, U(FrustumPlaneType::COUNT)> m_viewPlanesW;
+	Array<Plane, U32(FrustumPlaneType::COUNT)> m_viewPlanesL;
+	Array<Plane, U32(FrustumPlaneType::COUNT)> m_viewPlanesW;
 
 	Transform m_trf = Transform::getIdentity();
 	Mat4 m_projMat = Mat4::getIdentity(); ///< Projection matrix
@@ -319,7 +340,10 @@ private:
 	Mat4 m_prevViewProjMat = Mat4::getIdentity();
 
 	/// How far to render shadows for this frustum. If negative it's the m_frustum's far.
-	F32 m_effectiveShadowDist = -1.0f;
+	F32 m_effectiveShadowDistance = -1.0f;
+
+	/// Defines the the rate of the cascade distances
+	F32 m_shadowCascadesDistancePower = 1.0f;
 
 	class
 	{
@@ -334,6 +358,13 @@ private:
 	Bool m_trfMarkedForUpdate = true;
 
 	Bool updateInternal();
+
+	U32 getCascadeCount() const
+	{
+		return !!(m_flags & FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES)
+				   ? MAX_SHADOW_CASCADES
+				   : 1;
+	}
 };
 /// @}
 

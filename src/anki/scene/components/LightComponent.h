@@ -175,13 +175,15 @@ private:
 	RenderQueueDrawCallback m_drawCallback = nullptr;
 	const void* m_drawCallbackUserData = nullptr;
 
-	struct Point
+	class Point
 	{
+	public:
 		F32 m_radius;
 	};
 
-	struct Spot
+	class Spot
 	{
+	public:
 		Mat4 m_textureMat;
 		F32 m_distance;
 		F32 m_innerAngleCos;
@@ -190,8 +192,9 @@ private:
 		F32 m_innerAngle;
 	};
 
-	struct Dir
+	class Dir
 	{
+	public:
 		Vec3 m_sceneMin;
 		Vec3 m_sceneMax;
 	};

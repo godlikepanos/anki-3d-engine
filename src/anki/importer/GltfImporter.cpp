@@ -1352,6 +1352,8 @@ Error GltfImporter::writeCamera(const cgltf_node& node, const HashMapAuto<CStrin
 
 	ANKI_CHECK(m_sceneFile.writeText("frustumc:setPerspective(%f, %f, getMainRenderer():getAspectRatio() * %f, %f)\n",
 									 cam.znear, cam.zfar, cam.yfov, cam.yfov));
+	ANKI_CHECK(m_sceneFile.writeText("frustumc:setShadowCascadesDistancePower(1.5)\n"));
+	ANKI_CHECK(m_sceneFile.writeText("frustumc:setEffectiveShadowDistance(%f)\n", min(cam.zfar, 100.0f)));
 
 	return Error::NONE;
 }

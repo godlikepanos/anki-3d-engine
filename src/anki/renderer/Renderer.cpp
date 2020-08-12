@@ -574,6 +574,8 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 		out.m_cascadeCount = in.m_shadowCascadeCount;
 		out.m_dir = in.m_direction;
 		out.m_active = 1;
+		out.m_effectiveShadowDistance = in.m_effectiveShadowDistance;
+		out.m_shadowCascadesDistancePower = in.m_shadowCascadesDistancePower;
 
 		for(U cascade = 0; cascade < in.m_shadowCascadeCount; ++cascade)
 		{

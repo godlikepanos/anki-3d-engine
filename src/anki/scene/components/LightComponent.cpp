@@ -92,28 +92,27 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 	el.m_uuid = m_uuid;
 	el.m_diffuseColor = m_diffColor.xyz();
 	el.m_direction = -m_trf.getRotation().getZAxis().xyz();
+	el.m_effectiveShadowDistance = frustumComp.getEffectiveShadowDistance();
+	el.m_shadowCascadesDistancePower = frustumComp.getShadowCascadesDistancePower();
 	el.m_shadowCascadeCount = U8(shadowCascadeCount);
 
-	// Compute the texture matrices
 	if(shadowCascadeCount == 0)
 	{
 		return;
 	}
 
+	// Compute the texture matrices
 	const Mat4 lightTrf(m_trf);
 	if(frustumComp.getFrustumType() == FrustumType::PERSPECTIVE)
 	{
 		// Get some stuff
 		const F32 fovX = frustumComp.getFovX();
 		const F32 fovY = frustumComp.getFovY();
-		const F32 far = frustumComp.getEffectiveShadowDistance();
 
 		// Compute a sphere per cascade
 		Array<Sphere, MAX_SHADOW_CASCADES> boundingSpheres;
-		for(U i = 0; i < shadowCascadeCount; ++i)
+		for(U32 i = 0; i < shadowCascadeCount; ++i)
 		{
-			const F32 cascadeFarNearDist = far / F32(shadowCascadeCount);
-
 			// Compute the center of the sphere
 			//           ^ z
 			//           |
@@ -130,8 +129,9 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 			// --------------------------> x
 			//           |
 			// The square distance of A-C is equal to B-C. Solve the equation to find the z.
-			const F32 f = F32(i + 1) * cascadeFarNearDist; // Cascade far
-			const F32 n = max(frustumComp.getNear(), F32(i) * cascadeFarNearDist); // Cascade near
+			const F32 f = frustumComp.computeShadowCascadeDistance(i); // Cascade far
+			const F32 n =
+				(i == 0) ? frustumComp.getNear() : frustumComp.computeShadowCascadeDistance(i - 1); // Cascade near
 			const F32 a = f * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 b = n * tan(fovY / 2.0f) * fovX / fovY;
 			const F32 z = (b * b + n * n - a * a - f * f) / (2.0f * (f - n));

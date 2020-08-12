@@ -94,7 +94,7 @@ F32 phaseFunction(Vec3 viewDir, Vec3 lightDir, F32 g)
 	return saturate(a * b);
 }
 
-Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
+Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 negativeZViewSpace)
 {
 	Vec3 color = Vec3(0.0);
 	const Vec3 viewDir = normalize(u_cameraPos - worldPos);
@@ -108,10 +108,12 @@ Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 linearDepth)
 		F32 factor = phaseFunction(viewDir, u_dirLight.m_dir, PHASE_FUNCTION_ANISOTROPY);
 
 #if ENABLE_SHADOWS
-		if(u_dirLight.m_cascadeCount > 0u)
+		if(u_dirLight.m_cascadeCount > 0u && negativeZViewSpace < u_dirLight.m_effectiveShadowDistance)
 		{
-			const F32 cascadeCountf = F32(u_dirLight.m_cascadeCount);
-			const U32 cascadeIdx = min(U32(linearDepth * cascadeCountf), u_dirLight.m_cascadeCount - 1u);
+			const U32 cascadeIdx =
+				computeShadowCascadeIndex(negativeZViewSpace, u_dirLight.m_shadowCascadesDistancePower,
+										  u_dirLight.m_effectiveShadowDistance, u_dirLight.m_cascadeCount);
+
 			factor *=
 				computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex, u_linearAnyClampSampler);
 		}
@@ -261,8 +263,7 @@ void main()
 	const Vec3 worldPos = worldPosInsideClusterAndZViewSpace(readRand(), negativeZViewSpace);
 
 	// Get lighting
-	const F32 linearDepth = negativeZViewSpace / (u_far - u_near);
-	Vec4 lightAndFog = accumulateLightsAndFog(clusterIdx, worldPos, linearDepth);
+	Vec4 lightAndFog = accumulateLightsAndFog(clusterIdx, worldPos, negativeZViewSpace);
 
 	// Read the prev result
 	{

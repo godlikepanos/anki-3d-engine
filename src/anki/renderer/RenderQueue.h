@@ -164,6 +164,8 @@ public:
 	U64 m_uuid; ///< Zero means that there is no dir light
 	Vec3 m_diffuseColor;
 	Vec3 m_direction;
+	F32 m_effectiveShadowDistance;
+	F32 m_shadowCascadesDistancePower;
 	U8 m_shadowCascadeCount; ///< Zero means that it doesn't case any shadows
 
 	DirectionalLightQueueElement()
