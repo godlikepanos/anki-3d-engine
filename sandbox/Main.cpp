@@ -89,7 +89,6 @@ Error MyApp::init(int argc, char* argv[])
 
 Error MyApp::userMainLoop(Bool& quit)
 {
-	F32 dist = 0.1f;
 	F32 ang = toRad(2.5f);
 	F32 scale = 0.01f;
 	F32 mouseSensivity = 9.0f;
@@ -169,6 +168,18 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 
 #if !PLAYER
+	static F32 dist = 0.1f;
+	if(in.getMouseButton(MouseButton::SCROLL_UP) == 1)
+	{
+		dist += 0.1f;
+		dist = min(dist, 10.0f);
+	}
+	if(in.getMouseButton(MouseButton::SCROLL_DOWN) == 1)
+	{
+		dist -= 0.1f;
+		dist = max(dist, 0.1f);
+	}
+
 	if(in.getKey(KeyCode::UP))
 		mover->rotateLocalX(ang);
 	if(in.getKey(KeyCode::DOWN))

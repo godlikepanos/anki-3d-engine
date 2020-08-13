@@ -43,7 +43,6 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 
 Error SampleApp::userMainLoop(Bool& quit)
 {
-	const F32 MOVE_DISTANCE = 0.1f;
 	const F32 ROTATE_ANGLE = toRad(2.5f);
 	const F32 MOUSE_SENSITIVITY = 9.0f;
 	quit = false;
@@ -150,34 +149,47 @@ Error SampleApp::userMainLoop(Bool& quit)
 			mover->rotateLocalY(-ROTATE_ANGLE);
 		}
 
+		static F32 moveDistance = 0.1f;
+		if(in.getMouseButton(MouseButton::SCROLL_UP) == 1)
+		{
+			moveDistance += 0.1f;
+			moveDistance = min(moveDistance, 10.0f);
+		}
+
+		if(in.getMouseButton(MouseButton::SCROLL_DOWN) == 1)
+		{
+			moveDistance -= 0.1f;
+			moveDistance = max(moveDistance, 0.1f);
+		}
+
 		if(in.getKey(KeyCode::A))
 		{
-			mover->moveLocalX(-MOVE_DISTANCE);
+			mover->moveLocalX(-moveDistance);
 		}
 
 		if(in.getKey(KeyCode::D))
 		{
-			mover->moveLocalX(MOVE_DISTANCE);
+			mover->moveLocalX(moveDistance);
 		}
 
 		if(in.getKey(KeyCode::C))
 		{
-			mover->moveLocalY(-MOVE_DISTANCE);
+			mover->moveLocalY(-moveDistance);
 		}
 
 		if(in.getKey(KeyCode::SPACE))
 		{
-			mover->moveLocalY(MOVE_DISTANCE);
+			mover->moveLocalY(moveDistance);
 		}
 
 		if(in.getKey(KeyCode::W))
 		{
-			mover->moveLocalZ(-MOVE_DISTANCE);
+			mover->moveLocalZ(-moveDistance);
 		}
 
 		if(in.getKey(KeyCode::S))
 		{
-			mover->moveLocalZ(MOVE_DISTANCE);
+			mover->moveLocalZ(moveDistance);
 		}
 
 		if(in.getKey(KeyCode::Q))
