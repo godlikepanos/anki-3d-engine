@@ -73,6 +73,12 @@ void main()
 	const F32 depth = textureLod(u_msDepthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
 	const Vec2 ndc = UV_TO_NDC(in_uv);
 
+	if(depth == 1.0)
+	{
+		out_color = Vec3(0.0);
+		return;
+	}
+
 	// Get world position
 	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;

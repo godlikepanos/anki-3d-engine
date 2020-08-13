@@ -45,17 +45,21 @@ void main()
 	if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
 	{
 		const Vec4 viewPos4 = u_invProjMat * Vec4(ndc, depth, 1.0);
-		const F32 zViewSpace = viewPos4.z / viewPos4.w;
+		const F32 positiveZViewSpace = -(viewPos4.z / viewPos4.w);
 
 		F32 shadowFactor;
-		if(-zViewSpace < u_dirLight.m_effectiveShadowDistance)
+		if(positiveZViewSpace < u_dirLight.m_effectiveShadowDistance)
 		{
 			const U32 cascadeIdx =
-				computeShadowCascadeIndex(-zViewSpace, u_dirLight.m_shadowCascadesDistancePower,
+				computeShadowCascadeIndex(positiveZViewSpace, u_dirLight.m_shadowCascadesDistancePower,
 										  u_dirLight.m_effectiveShadowDistance, u_dirLight.m_cascadeCount);
 
 			shadowFactor =
 				computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex, u_linearAnyClampSampler);
+
+			F32 distanceFadeFactor = saturate(positiveZViewSpace / u_dirLight.m_effectiveShadowDistance);
+			distanceFadeFactor = pow(distanceFadeFactor, 8.0);
+			shadowFactor += distanceFadeFactor;
 		}
 		else
 		{
