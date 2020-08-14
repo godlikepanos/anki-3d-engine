@@ -27,6 +27,8 @@ BufferImpl::~BufferImpl()
 Error BufferImpl::init(const BufferInitInfo& inf)
 {
 	ANKI_ASSERT(!isCreated());
+	const Bool exposeGpuAddress = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_RAY_TRACING)
+								  && !!(inf.m_usage & ~BufferUsageBit::ALL_TRANSFER);
 
 	PtrSize size = inf.m_size;
 	BufferMapAccessBit access = inf.m_access;
@@ -43,7 +45,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	ci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	ci.size = size;
 	ci.usage = convertBufferUsageBit(usage);
-	if(inf.m_exposeGpuAddress)
+	if(exposeGpuAddress)
 	{
 		ci.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 	}
@@ -150,8 +152,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
 	// Allocate
-	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, U32(req.alignment), true,
-															inf.m_exposeGpuAddress, m_memHandle);
+	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, U32(req.alignment), true, m_memHandle);
 
 	// Bind mem to buffer
 	{
@@ -160,7 +161,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 	}
 
 	// Get GPU buffer address
-	if(inf.m_exposeGpuAddress)
+	if(exposeGpuAddress)
 	{
 		VkBufferDeviceAddressInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;

@@ -789,7 +789,6 @@ void CommandBufferImpl::buildAccelerationStructureInternal(AccelerationStructure
 
 	// Create the scrach buffer
 	BufferInitInfo bufferInit;
-	bufferInit.m_exposeGpuAddress = true;
 	bufferInit.m_usage = BufferImpl::ACCELERATION_STRUCTURE_BUILD_SCRATCH_USAGE;
 	bufferInit.m_size = asImpl.getBuildScratchBufferSize();
 	BufferPtr scratchBuff = getManager().newBuffer(bufferInit);

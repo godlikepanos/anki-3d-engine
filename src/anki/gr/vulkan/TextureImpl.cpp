@@ -349,7 +349,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		// Allocate
 		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, requirements.memoryRequirements.size,
 																U32(requirements.memoryRequirements.alignment), false,
-																false, m_memHandle);
+																m_memHandle);
 
 		// Bind mem to image
 		ANKI_TRACE_SCOPED_EVENT(VK_BIND_OBJECT);

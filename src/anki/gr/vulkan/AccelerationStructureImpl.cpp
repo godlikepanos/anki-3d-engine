@@ -106,7 +106,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		// Allocate
 		// TODO is it linear or no-linear?
 		getGrManagerImpl().getGpuMemoryManager().allocateMemory(
-			memIdx, req.memoryRequirements.size, U32(req.memoryRequirements.alignment), true, false, m_memHandle);
+			memIdx, req.memoryRequirements.size, U32(req.memoryRequirements.alignment), true, m_memHandle);
 
 		// Bind memory
 		VkBindAccelerationStructureMemoryInfoKHR bindInfo{};
@@ -173,7 +173,6 @@ void AccelerationStructureImpl::initBuildInfo()
 			BufferInitInfo buffInit("RT_instances");
 			buffInit.m_size = sizeof(VkAccelerationStructureInstanceKHR) * instanceCount;
 			buffInit.m_usage = BufferImpl::ACCELERATION_STRUCTURE_BUILD_SCRATCH_USAGE;
-			buffInit.m_exposeGpuAddress = true;
 			buffInit.m_access = BufferMapAccessBit::WRITE;
 			m_topLevelInfo.m_instancesBuff = getManager().newBuffer(buffInit);
 		}

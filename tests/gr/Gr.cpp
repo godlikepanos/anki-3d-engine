@@ -2306,7 +2306,6 @@ void main()
 	info.m_size = sizeof(Vec4) * 2;
 	info.m_usage = BufferUsageBit::ALL_COMPUTE;
 	info.m_access = BufferMapAccessBit::WRITE;
-	info.m_exposeGpuAddress = true;
 	BufferPtr ptrBuff = gr->newBuffer(info);
 
 	Vec4* mapped = static_cast<Vec4*>(ptrBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
@@ -2367,7 +2366,6 @@ ANKI_TEST(Gr, RayQueries)
 		BufferInitInfo init;
 		init.m_access = BufferMapAccessBit::WRITE;
 		init.m_usage = BufferUsageBit::INDEX;
-		init.m_exposeGpuAddress = true;
 		init.m_size = sizeof(indices);
 		idxBuffer = gr->newBuffer(init);
 
@@ -2385,7 +2383,6 @@ ANKI_TEST(Gr, RayQueries)
 		BufferInitInfo init;
 		init.m_access = BufferMapAccessBit::WRITE;
 		init.m_usage = BufferUsageBit::VERTEX;
-		init.m_exposeGpuAddress = true;
 		init.m_size = sizeof(verts);
 		vertBuffer = gr->newBuffer(init);
 

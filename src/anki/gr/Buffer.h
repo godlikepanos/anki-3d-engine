@@ -21,7 +21,6 @@ public:
 	PtrSize m_size = 0;
 	BufferUsageBit m_usage = BufferUsageBit::NONE;
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
-	Bool m_exposeGpuAddress = false; ///< Expose the buffer's GPU address.
 
 	BufferInitInfo(CString name = {})
 		: GrBaseInitInfo(name)

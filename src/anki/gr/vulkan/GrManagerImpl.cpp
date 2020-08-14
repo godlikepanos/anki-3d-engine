@@ -678,7 +678,8 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 					 ANKI_FORMAT_U32(m_memoryProperties.memoryTypes[i].propertyFlags));
 	}
 
-	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator());
+	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator(),
+						 !!(m_extensions & VulkanExtensions::KHR_RAY_TRACING));
 
 	return Error::NONE;
 }
