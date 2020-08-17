@@ -89,10 +89,10 @@ public:
 	}
 
 private:
-	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders;
+	Array<ShaderPtr, U32(ShaderType::COUNT)> m_shaders;
 	ShaderTypeBit m_stages = ShaderTypeBit::NONE;
 
-	Array<VkPipelineShaderStageCreateInfo, U(ShaderType::COUNT) - 1> m_shaderCreateInfos;
+	Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::FRAGMENT - ShaderType::VERTEX) + 1> m_shaderCreateInfos;
 	U32 m_shaderCreateInfoCount = 0;
 
 	PipelineLayout m_pplineLayout = {};

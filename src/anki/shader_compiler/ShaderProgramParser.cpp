@@ -17,9 +17,10 @@ namespace anki
 	return Error::USER_DATA
 
 static const Array<CString, U32(ShaderType::COUNT)> SHADER_STAGE_NAMES = {
-	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE"}};
+	{"VERTEX", "TESSELLATION_CONTROL", "TESSELLATION_EVALUATION", "GEOMETRY", "FRAGMENT", "COMPUTE", "RAY_GEN",
+	 "ANY_HIT", "CLOSEST_HIT", "MISS", "INTERSECTION", "CALLABLE"}};
 
-static const char* SHADER_HEADER = R"(#version 450 core
+static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_BACKEND_MINOR %u
 #define ANKI_BACKEND_MAJOR %u
 #define ANKI_VENDOR_%s 1
@@ -44,6 +45,9 @@ static const char* SHADER_HEADER = R"(#version 450 core
 
 #extension GL_EXT_buffer_reference : enable
 #extension GL_ARB_gpu_shader_int64 : enable
+
+#extension GL_EXT_nonuniform_qualifier : enable
+#extension GL_EXT_scalar_block_layout : enable
 
 #define ANKI_MAX_BINDLESS_TEXTURES %u
 #define ANKI_MAX_BINDLESS_IMAGES %u
@@ -215,6 +219,30 @@ Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const Strin
 	else if(*begin == "comp")
 	{
 		shaderType = ShaderType::COMPUTE;
+	}
+	else if(*begin == "rgen")
+	{
+		shaderType = ShaderType::RAY_GEN;
+	}
+	else if(*begin == "ahit")
+	{
+		shaderType = ShaderType::ANY_HIT;
+	}
+	else if(*begin == "chit")
+	{
+		shaderType = ShaderType::CLOSEST_HIT;
+	}
+	else if(*begin == "miss")
+	{
+		shaderType = ShaderType::MISS;
+	}
+	else if(*begin == "int")
+	{
+		shaderType = ShaderType::INTERSECTION;
+	}
+	else if(*begin == "call")
+	{
+		shaderType = ShaderType::CALLABLE;
 	}
 	else
 	{
@@ -757,9 +785,9 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 	generateAnkiShaderHeader(m_gpuCapabilities, m_bindlessLimits, header);
 
 	// Generate souce per stage
-	for(ShaderType shaderType = ShaderType::FIRST; shaderType < ShaderType::COUNT; ++shaderType)
+	for(ShaderType shaderType : EnumIterable<ShaderType>())
 	{
-		if(!((1u << ShaderTypeBit(shaderType)) & m_shaderTypes))
+		if(!(ShaderTypeBit(1u << shaderType) & m_shaderTypes))
 		{
 			continue;
 		}

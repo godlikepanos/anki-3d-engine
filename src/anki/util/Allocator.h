@@ -82,7 +82,7 @@ public:
 
 	/// Constuctor that creates a pool
 	template<typename... TArgs>
-	explicit GenericPoolAllocator(AllocAlignedCallback allocCb, void* allocCbUserData, TArgs&&... args)
+	GenericPoolAllocator(AllocAlignedCallback allocCb, void* allocCbUserData, TArgs&&... args)
 	{
 		m_pool = static_cast<TPool*>(allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
 		if(ANKI_UNLIKELY(!m_pool))

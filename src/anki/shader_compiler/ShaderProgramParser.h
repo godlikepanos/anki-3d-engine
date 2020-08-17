@@ -69,7 +69,7 @@ public:
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	Array<String, U(ShaderType::COUNT)> m_sources;
+	Array<String, U32(ShaderType::COUNT)> m_sources;
 };
 
 /// This is a special preprocessor that run before the usual preprocessor. Its purpose is to add some meta information
@@ -81,7 +81,7 @@ private:
 /// #pragma anki mutator NAME VALUE0 [VALUE1 [VALUE2] ...]
 /// #pragma anki rewrite_mutation NAME_A VALUE0 NAME_B VALUE1 [NAME_C VALUE3...] to
 ///                               NAME_A VALUE4 NAME_B VALUE5 [NAME_C VALUE6...]
-/// #pragma anki start {vert | tessc | tesse | geom | frag | comp}
+/// #pragma anki start {vert | tessc | tesse | geom | frag | comp | rgen | ahit | chit | miss | int | call}
 /// #pragma anki end
 ///
 /// Only the "anki input" should be in an ifdef-like guard. For everything else it's ignored.

@@ -18,7 +18,7 @@ namespace anki
 class ShaderProgramInitInfo : public GrBaseInitInfo
 {
 public:
-	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders = {};
+	Array<ShaderPtr, U32(ShaderType::COUNT)> m_shaders = {};
 
 	ShaderProgramInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
@@ -40,23 +40,15 @@ public:
 
 	Bool isValid() const
 	{
-		I32 invalid = 0;
-
-		if(m_shaders[ShaderType::COMPUTE])
+		ShaderTypeBit mask = ShaderTypeBit::NONE;
+		for(ShaderType i : EnumIterable<ShaderType>())
 		{
-			invalid |= m_shaders[ShaderType::VERTEX] || m_shaders[ShaderType::TESSELLATION_CONTROL]
-					   || m_shaders[ShaderType::TESSELLATION_EVALUATION] || m_shaders[ShaderType::GEOMETRY]
-					   || m_shaders[ShaderType::FRAGMENT];
-		}
-		else
-		{
-			invalid |= !m_shaders[ShaderType::VERTEX] || !m_shaders[ShaderType::FRAGMENT];
+			mask |= (m_shaders[i]) ? shaderTypeToBit(i) : ShaderTypeBit::NONE;
 		}
 
-		for(ShaderType type = ShaderType::FIRST; type < ShaderType::COUNT; ++type)
-		{
-			invalid |= m_shaders[type] && m_shaders[type]->getShaderType() != type;
-		}
+		U32 invalid = 0;
+		invalid |= !!(mask & ShaderTypeBit::ALL_GRAPHICS) && !!(mask & ~ShaderTypeBit::ALL_GRAPHICS);
+		invalid |= !!(mask & ShaderTypeBit::COMPUTE) && !!(mask & ~ShaderTypeBit::COMPUTE);
 
 		return invalid == 0;
 	}

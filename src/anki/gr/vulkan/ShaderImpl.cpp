@@ -124,9 +124,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
 	spirv_cross::ShaderResources rsrcActive = spvc.get_shader_resources(spvc.get_active_interface_variables());
 
-	Array<U32, MAX_DESCRIPTOR_SETS> counts = {{
-		0,
-	}};
+	Array<U32, MAX_DESCRIPTOR_SETS> counts = {};
 	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> descriptors;
 
 	auto func = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& resources, DescriptorType type) -> void {

@@ -45,7 +45,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 				continue;
 			}
 
-			m_stages |= static_cast<ShaderTypeBit>(1 << stype);
+			m_stages |= ShaderTypeBit(1 << stype);
 
 			const ShaderImpl& simpl = *static_cast<const ShaderImpl*>(m_shaders[stype].get());
 
@@ -118,7 +118,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 
 	// Get some masks
 	//
-	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::VERTEX);
+	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::ALL_GRAPHICS);
 	if(graphicsProg)
 	{
 		m_refl.m_attributeMask = static_cast<const ShaderImpl*>(m_shaders[ShaderType::VERTEX].get())->m_attributeMask;

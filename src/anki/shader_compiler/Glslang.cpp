@@ -164,6 +164,24 @@ static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 	case ShaderType::COMPUTE:
 		gslangShader = EShLangCompute;
 		break;
+	case ShaderType::RAY_GEN:
+		gslangShader = EShLangRayGen;
+		break;
+	case ShaderType::ANY_HIT:
+		gslangShader = EShLangAnyHit;
+		break;
+	case ShaderType::CLOSEST_HIT:
+		gslangShader = EShLangClosestHit;
+		break;
+	case ShaderType::MISS:
+		gslangShader = EShLangMiss;
+		break;
+	case ShaderType::INTERSECTION:
+		gslangShader = EShLangIntersect;
+		break;
+	case ShaderType::CALLABLE:
+		gslangShader = EShLangCallable;
+		break;
 	default:
 		ANKI_ASSERT(0);
 		gslangShader = EShLangCount;

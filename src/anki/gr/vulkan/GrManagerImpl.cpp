@@ -982,8 +982,7 @@ VkBool32 GrManagerImpl::debugReportCallbackEXT(VkDebugReportFlagsEXT flags, VkDe
 
 void GrManagerImpl::printPipelineShaderInfo(VkPipeline ppline, CString name, ShaderTypeBit stages, U64 hash) const
 {
-	Error err = printPipelineShaderInfoInternal(ppline, name, stages, hash);
-	if(err)
+	if(printPipelineShaderInfoInternal(ppline, name, stages, hash))
 	{
 		ANKI_VK_LOGE("Ignoring previous errors");
 	}

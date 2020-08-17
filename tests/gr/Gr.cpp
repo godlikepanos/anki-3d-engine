@@ -2622,4 +2622,39 @@ void main()
 	COMMON_END();
 }
 
+ANKI_TEST(Gr, RayGen)
+{
+	COMMON_BEGIN();
+
+	HeapAllocator<U8> alloc = {allocAligned, nullptr};
+
+	const CString commonSrc = R"(
+layout(set = 0, binding = 0, std430) readonly buffer b_s00
+{
+	U32 u_indices[];
+};
+
+layout(set = 0, binding = 1, scalar) readonly buffer b_s01
+{
+	Vec3 u_vertPositions[];
+};
+)";
+
+	// Ahit & chit shaders
+	{
+		const CString src = R"(
+void main()
+{
+
+}
+)";
+
+		StringAuto fullSrc = {alloc};
+		fullSrc.sprintf("%s\n%s", commonSrc.cstr(), src.cstr());
+		ANKI_TEST_EXPECT_NO_ERR(createShader(fullSrc, ShaderType::ANY_HIT, *gr));
+	}
+
+	COMMON_END();
+}
+
 } // end namespace anki

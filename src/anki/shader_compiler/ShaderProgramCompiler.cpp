@@ -205,7 +205,7 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 	public:
 		GenericMemoryPoolAllocator<U8> m_tmpAlloc;
 		GenericMemoryPoolAllocator<U8> m_binaryAlloc;
-		DynamicArrayAuto<MutatorValue> m_mutation{m_tmpAlloc};
+		DynamicArrayAuto<MutatorValue> m_mutation = {m_tmpAlloc};
 		const ShaderProgramParser* m_parser;
 		ShaderProgramBinaryVariant* m_variant;
 		DynamicArrayAuto<ShaderProgramBinaryCodeBlock>* m_codeBlocks;
@@ -242,8 +242,18 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 		}
 
 		// All good, compile the variant
-		Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)> spirvs = {
-			{{tmpAlloc}, {tmpAlloc}, {tmpAlloc}, {tmpAlloc}, {tmpAlloc}, {tmpAlloc}}};
+		Array<DynamicArrayAuto<U8>, U32(ShaderType::COUNT)> spirvs = {{{tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc},
+																	   {tmpAlloc}}};
 		const Error err = compileSpirv(ctx.m_mutation, *ctx.m_parser, tmpAlloc, spirvs);
 
 		if(!err)

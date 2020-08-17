@@ -24,15 +24,16 @@ class DSLayoutCacheEntry;
 /// @addtogroup vulkan
 /// @{
 
-class alignas(4) DescriptorBinding
+class alignas(8) DescriptorBinding
 {
 public:
-	DescriptorType m_type = DescriptorType::COUNT;
 	ShaderTypeBit m_stageMask = ShaderTypeBit::NONE;
+	DescriptorType m_type = DescriptorType::COUNT;
 	U8 m_binding = MAX_U8;
 	U8 m_arraySizeMinusOne = 0;
+	Array<U8, 3> m_padding = {};
 };
-static_assert(sizeof(DescriptorBinding) == 4, "Should be packed because it will be hashed");
+static_assert(sizeof(DescriptorBinding) == 8, "Should be packed because it will be hashed");
 
 class DescriptorSetLayoutInitInfo
 {
