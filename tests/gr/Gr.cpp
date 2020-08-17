@@ -2640,7 +2640,8 @@ layout(set = 0, binding = 1, scalar) readonly buffer b_s01
 };
 )";
 
-	// Ahit & chit shaders
+	// Ahit
+	ShaderPtr ahitShader;
 	{
 		const CString src = R"(
 void main()
@@ -2651,7 +2652,7 @@ void main()
 
 		StringAuto fullSrc = {alloc};
 		fullSrc.sprintf("%s\n%s", commonSrc.cstr(), src.cstr());
-		ANKI_TEST_EXPECT_NO_ERR(createShader(fullSrc, ShaderType::ANY_HIT, *gr));
+		ahitShader = createShader(fullSrc, ShaderType::ANY_HIT, *gr);
 	}
 
 	COMMON_END();
