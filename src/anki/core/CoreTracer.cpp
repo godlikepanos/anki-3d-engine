@@ -223,7 +223,7 @@ void CoreTracer::gatherCounters(ThreadWorkItem& item)
 		else
 		{
 			// Merge
-			mergedCounters.getBack().m_value += item.m_counters[i].m_name;
+			mergedCounters.getBack().m_value += item.m_counters[i].m_value;
 		}
 	}
 	ANKI_ASSERT(mergedCounters.getSize() > 0 && mergedCounters.getSize() <= item.m_counters.getSize());

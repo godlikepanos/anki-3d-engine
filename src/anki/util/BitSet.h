@@ -139,7 +139,7 @@ public:
 		return !getAny();
 	}
 
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return getAny();
 	}

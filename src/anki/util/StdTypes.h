@@ -199,7 +199,7 @@ public:
 	}
 
 	/// Check if it is an error.
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return ANKI_UNLIKELY(m_code != NONE);
 	}

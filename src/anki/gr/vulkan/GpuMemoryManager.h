@@ -23,7 +23,7 @@ public:
 	VkDeviceMemory m_memory = VK_NULL_HANDLE;
 	PtrSize m_offset = MAX_PTR_SIZE;
 
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return m_memory != VK_NULL_HANDLE && m_offset < MAX_PTR_SIZE && m_memTypeIdx < MAX_U8;
 	}

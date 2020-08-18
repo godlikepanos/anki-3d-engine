@@ -85,7 +85,7 @@ public:
 	}
 
 	/// Return true if the string is initialized.
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return !isEmpty();
 	}
@@ -328,7 +328,7 @@ public:
 		return m_data[pos];
 	}
 
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return !isEmpty();
 	}

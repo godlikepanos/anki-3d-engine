@@ -41,7 +41,7 @@ public:
 
 	~StagingGpuMemoryToken() = default;
 
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return m_range != 0;
 	}

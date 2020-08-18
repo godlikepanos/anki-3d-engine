@@ -50,7 +50,7 @@ public:
 	StackGpuAllocatorMemory* m_memory = nullptr;
 	PtrSize m_offset = 0;
 
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return m_memory != nullptr;
 	}

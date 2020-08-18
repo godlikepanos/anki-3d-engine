@@ -53,7 +53,7 @@ public:
 	ClassGpuAllocatorMemory* m_memory = nullptr;
 	PtrSize m_offset = 0; ///< Relative offset inside m_memory
 
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return m_memory != nullptr;
 	}

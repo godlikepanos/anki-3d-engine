@@ -36,7 +36,7 @@ public:
 	}
 
 	/// If element has something return true
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return m_el != nullptr;
 	}

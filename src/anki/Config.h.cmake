@@ -146,8 +146,8 @@
 
 // Some compiler attributes
 #if ANKI_COMPILER_GCC_COMPATIBLE
-#	define ANKI_LIKELY(x) __builtin_expect((x), 1)
-#	define ANKI_UNLIKELY(x) __builtin_expect((x), 0)
+#	define ANKI_LIKELY(x) __builtin_expect(!!(x), 1)
+#	define ANKI_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #	define ANKI_RESTRICT __restrict
 #	define ANKI_USE_RESULT __attribute__((warn_unused_result))
 #	define ANKI_FORCE_INLINE __attribute__((always_inline))

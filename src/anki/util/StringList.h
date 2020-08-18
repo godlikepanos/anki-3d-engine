@@ -33,7 +33,7 @@ public:
 	// Use the base constructors
 	using Base::Base;
 
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return !Base::isEmpty();
 	}

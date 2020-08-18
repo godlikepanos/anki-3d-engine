@@ -39,7 +39,7 @@ public:
 		return m_queryIndex;
 	}
 
-	operator Bool() const
+	explicit operator Bool() const
 	{
 		return m_pool != VK_NULL_HANDLE;
 	}

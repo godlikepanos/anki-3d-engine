@@ -138,7 +138,7 @@ def ret(ret_el):
         ident(-1)
         wglue("}")
         wglue("")
-        wglue("lua_pushnumber(l, lua_Number(ret));")
+        wglue("lua_pushnumber(l, lua_Number(!!ret));")
     else:
         if is_ptr or is_ref:
             wglue("voidp = lua_newuserdata(l, sizeof(LuaUserData));")

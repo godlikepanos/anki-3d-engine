@@ -311,7 +311,7 @@ public:
 
 	Bool hasTessellation() const
 	{
-		return m_prog;
+		return !!(m_prog->getStages() & (ShaderTypeBit::TESSELLATION_CONTROL | ShaderTypeBit::TESSELLATION_EVALUATION));
 	}
 
 	Bool isForwardShading() const

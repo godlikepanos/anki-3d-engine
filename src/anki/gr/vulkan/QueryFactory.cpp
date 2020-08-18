@@ -73,7 +73,7 @@ Error QueryFactory::newQuery(MicroQuery& handle)
 		}
 	}
 
-	ANKI_ASSERT(handle == true);
+	ANKI_ASSERT(!!handle);
 	return Error::NONE;
 }
 
