@@ -2348,7 +2348,7 @@ void main()
 	COMMON_END();
 }
 
-ANKI_TEST(Gr, RayQueries)
+ANKI_TEST(Gr, RayQuery)
 {
 	COMMON_BEGIN();
 
@@ -2488,14 +2488,14 @@ void main()
 #if USE_RAY_TRACING
 	rayQueryEXT rayQuery;
 	rayQueryInitializeEXT(rayQuery, u_tlas, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT, 0xFFu, rayOrigin,
-		0.01, raydir, 1000.0);
+		0.01, rayDir, 1000.0);
 
 	rayQueryProceedEXT(rayQuery);
 
 	Bool hit;
 	F32 u;
 	F32 v;
-	const U32 committedStatus = rayQueryGetIntersectionTypeEXT(rayQuery);
+	const U32 committedStatus = rayQueryGetIntersectionTypeEXT(rayQuery, true);
 	if(committedStatus == gl_RayQueryCommittedIntersectionTriangleEXT)
 	{
 		const Vec2 bary = rayQueryGetIntersectionBarycentricsEXT(rayQuery, true);
@@ -2626,9 +2626,18 @@ ANKI_TEST(Gr, RayGen)
 {
 	COMMON_BEGIN();
 
-	HeapAllocator<U8> alloc = {allocAligned, nullptr};
+	while(true)
+	{
+		const Bool useRayTracing = gr->getDeviceCapabilities().m_rayTracingEnabled;
+		if(!useRayTracing)
+		{
+			ANKI_TEST_LOGW("Ray tracing not supported");
+			break;
+		}
 
-	const CString commonSrc = R"(
+		HeapAllocator<U8> alloc = {allocAligned, nullptr};
+
+		const CString commonSrc = R"(
 layout(set = 0, binding = 0, std430) readonly buffer b_s00
 {
 	U32 u_indices[];
@@ -2640,21 +2649,23 @@ layout(set = 0, binding = 1, scalar) readonly buffer b_s01
 };
 )";
 
-	// Ahit
-	ShaderPtr ahitShader;
-	{
-		const CString src = R"(
+		// Ahit
+		ShaderPtr ahitShader;
+		{
+			const CString src = R"(
 void main()
 {
 
 }
 )";
 
-		StringAuto fullSrc = {alloc};
-		fullSrc.sprintf("%s\n%s", commonSrc.cstr(), src.cstr());
-		ahitShader = createShader(fullSrc, ShaderType::ANY_HIT, *gr);
-	}
+			StringAuto fullSrc = {alloc};
+			fullSrc.sprintf("%s\n%s", commonSrc.cstr(), src.cstr());
+			ahitShader = createShader(fullSrc, ShaderType::ANY_HIT, *gr);
+		}
 
+		break;
+	}
 	COMMON_END();
 }
 

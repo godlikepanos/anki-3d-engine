@@ -595,7 +595,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			features.pNext = &m_rtFeatures;
 			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
-			if(!m_rtFeatures.rayTracing || m_rtFeatures.rayQuery)
+			if(!m_rtFeatures.rayTracing || !m_rtFeatures.rayQuery)
 			{
 				ANKI_VK_LOGE("Ray tracing and ray query are both required");
 				return Error::FUNCTION_FAILED;
