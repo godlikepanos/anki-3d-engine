@@ -40,8 +40,13 @@ public:
 		}
 
 		const PtrSize posRange = m_positionBufferOffset + m_positionStride * m_positionCount;
-		if(m_positionStride < getFormatBytes(m_positionsFormat)
-		   || (m_positionStride % getFormatBytes(m_positionsFormat)) != 0 || posRange > m_positionBuffer->getSize())
+		const PtrSize formatSize = getFormatBytes(m_positionsFormat);
+		if(m_positionStride < formatSize)
+		{
+			return false;
+		}
+
+		if(posRange > m_positionBuffer->getSize())
 		{
 			return false;
 		}

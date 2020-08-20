@@ -42,7 +42,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 	// Create the handle
 	{
-		VkAccelerationStructureCreateGeometryTypeInfoKHR geom{};
+		VkAccelerationStructureCreateGeometryTypeInfoKHR geom = {};
 		geom.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_GEOMETRY_TYPE_INFO_KHR;
 		geom.maxPrimitiveCount = 1;
 
@@ -62,7 +62,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 		geom.allowsTransforms = false; // Only for triangle types and at the moment not used
 
-		VkAccelerationStructureCreateInfoKHR ci{};
+		VkAccelerationStructureCreateInfoKHR ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
 
 		ci.type = convertAccelerationStructureType(m_type);
@@ -78,13 +78,13 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	// Allocate memory
 	{
 		// Get mem requirements
-		VkAccelerationStructureMemoryRequirementsInfoKHR reqIn{};
+		VkAccelerationStructureMemoryRequirementsInfoKHR reqIn = {};
 		reqIn.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_KHR;
 		reqIn.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_KHR;
 		reqIn.buildType = VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR;
 		reqIn.accelerationStructure = m_handle;
 
-		VkMemoryRequirements2 req{};
+		VkMemoryRequirements2 req = {};
 		req.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
 		vkGetAccelerationStructureMemoryRequirementsKHR(getDevice(), &reqIn, &req);
@@ -109,7 +109,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 			memIdx, req.memoryRequirements.size, U32(req.memoryRequirements.alignment), true, m_memHandle);
 
 		// Bind memory
-		VkBindAccelerationStructureMemoryInfoKHR bindInfo{};
+		VkBindAccelerationStructureMemoryInfoKHR bindInfo = {};
 		bindInfo.sType = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_KHR;
 		bindInfo.accelerationStructure = m_handle;
 		bindInfo.memory = m_memHandle.m_memory;
@@ -119,10 +119,10 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 
 	// Get scratch buffer size
 	{
-		VkMemoryRequirements2 req{};
+		VkMemoryRequirements2 req = {};
 		req.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
-		VkAccelerationStructureMemoryRequirementsInfoKHR inf{};
+		VkAccelerationStructureMemoryRequirementsInfoKHR inf = {};
 		inf.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_KHR;
 		inf.type = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_KHR;
 		inf.buildType = VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR;
@@ -135,7 +135,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 	// Get GPU address
 	if(m_type == AccelerationStructureType::BOTTOM_LEVEL)
 	{
-		VkAccelerationStructureDeviceAddressInfoKHR inf{};
+		VkAccelerationStructureDeviceAddressInfoKHR inf = {};
 		inf.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 		inf.accelerationStructure = m_handle;
 
