@@ -311,6 +311,11 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR;
 	}
 
+	if(!!(usageMask & InternalBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH))
+	{
+		out |= VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR;
+	}
+
 	ANKI_ASSERT(out);
 
 	return out;

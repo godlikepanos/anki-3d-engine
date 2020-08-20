@@ -19,8 +19,6 @@ namespace anki
 class BufferImpl final : public Buffer, public VulkanObject<Buffer, BufferImpl>
 {
 public:
-	static constexpr BufferUsageBit ACCELERATION_STRUCTURE_BUILD_SCRATCH_USAGE = BufferUsageBit(1ull << 63ull);
-
 	BufferImpl(GrManager* manager, CString name)
 		: Buffer(manager, name)
 	{

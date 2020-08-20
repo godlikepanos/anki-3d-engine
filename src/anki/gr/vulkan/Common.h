@@ -79,6 +79,13 @@ const F32 DESCRIPTOR_POOL_SIZE_SCALE = 2.0;
 const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descriptors to buffer.
 /// @}
 
+/// Some internal buffer usage flags.
+class InternalBufferUsageBit
+{
+public:
+	static constexpr BufferUsageBit ACCELERATION_STRUCTURE_BUILD_SCRATCH = BufferUsageBit(1ull << 63ull);
+};
+
 /// Check if a vulkan function failed. It will abort on failure.
 #define ANKI_VK_CHECKF(x) \
 	do \
