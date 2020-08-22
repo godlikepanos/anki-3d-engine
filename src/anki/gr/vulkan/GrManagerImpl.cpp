@@ -525,6 +525,16 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_RAY_TRACING_EXTENSION_NAME;
 				m_capabilities.m_rayTracingEnabled = true;
 			}
+			else if(CString(extensionInfos[extCount].extensionName) == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME
+					&& init.m_config->getBool("gr_rayTracing"))
+			{
+				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME;
+			}
+			else if(CString(extensionInfos[extCount].extensionName) == VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME
+					&& init.m_config->getBool("gr_rayTracing"))
+			{
+				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME;
+			}
 		}
 
 		// Enable the bindless features required

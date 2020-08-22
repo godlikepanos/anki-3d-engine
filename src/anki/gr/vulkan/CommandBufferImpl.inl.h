@@ -269,7 +269,7 @@ inline void CommandBufferImpl::setAccelerationStructureBarrierInternal(Accelerat
 #if ANKI_BATCH_COMMANDS
 	flushBatches(CommandBufferCommandType::SET_BARRIER);
 
-	VkMemoryBarrier memBarrier{};
+	VkMemoryBarrier memBarrier = {};
 	memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 	memBarrier.srcAccessMask = srcAccess;
 	memBarrier.dstAccessMask = dstAccess;

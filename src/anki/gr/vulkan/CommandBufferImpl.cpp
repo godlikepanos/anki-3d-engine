@@ -346,7 +346,7 @@ void CommandBufferImpl::generateMipmaps2d(TextureViewPtr texView)
 
 void CommandBufferImpl::flushBarriers()
 {
-	if(m_imgBarrierCount == 0 && m_buffBarrierCount == 0)
+	if(m_imgBarrierCount == 0 && m_buffBarrierCount == 0 && m_memBarrierCount == 0)
 	{
 		return;
 	}

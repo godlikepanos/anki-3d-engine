@@ -20,6 +20,8 @@ AccelerationStructureImpl::~AccelerationStructureImpl()
 	{
 		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
 	}
+
+	m_topLevelInfo.m_instances.destroy(getAllocator());
 }
 
 Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
@@ -201,6 +203,10 @@ void AccelerationStructureImpl::initBuildInfo()
 			m_topLevelInfo.m_instancesBuff->unmap();
 		}
 
+		m_geometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+		m_geometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+		m_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR; // TODO
+
 		VkAccelerationStructureGeometryInstancesDataKHR& inst = m_geometry.geometry.instances;
 		inst.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
 		inst.arrayOfPointers = false;
@@ -238,7 +244,7 @@ void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit
 {
 	// Before
 	srcStages = 0;
-	dstStages = 0;
+	srcAccesses = 0;
 
 	if(before == AccelerationStructureUsageBit::NONE)
 	{

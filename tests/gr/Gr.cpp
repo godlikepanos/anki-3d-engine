@@ -302,9 +302,11 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg)); \
 	TransferGpuAllocator* transfAlloc = new TransferGpuAllocator(); \
 	ANKI_TEST_EXPECT_NO_ERR(transfAlloc->init(128_MB, gr, gr->getAllocator())); \
+	while(true) \
 	{
 
 #define COMMON_END() \
+	break; \
 	} \
 	gr->finish(); \
 	delete transfAlloc; \
@@ -2362,7 +2364,7 @@ ANKI_TEST(Gr, RayQuery)
 	BufferPtr idxBuffer;
 	if(useRayTracing)
 	{
-		Array<U16, 3> indices{0, 1, 2};
+		Array<U16, 3> indices = {0, 1, 2};
 		BufferInitInfo init;
 		init.m_access = BufferMapAccessBit::WRITE;
 		init.m_usage = BufferUsageBit::INDEX;
@@ -2378,7 +2380,7 @@ ANKI_TEST(Gr, RayQuery)
 	BufferPtr vertBuffer;
 	if(useRayTracing)
 	{
-		Array<Vec4, 3> verts{{{-1.0f, 0.0f, 0.0f, 100.0f}, {1.0f, 0.0f, 0.0f, 100.0f}, {0.0f, 2.0f, 0.0f, 100.0f}}};
+		Array<Vec4, 3> verts = {{{-1.0f, 0.0f, 0.0f, 100.0f}, {1.0f, 0.0f, 0.0f, 100.0f}, {0.0f, 2.0f, 0.0f, 100.0f}}};
 
 		BufferInitInfo init;
 		init.m_access = BufferMapAccessBit::WRITE;
@@ -2414,7 +2416,7 @@ ANKI_TEST(Gr, RayQuery)
 	{
 		AccelerationStructureInitInfo init;
 		init.m_type = AccelerationStructureType::TOP_LEVEL;
-		Array<AccelerationStructureInstance, 1> instances{{{blas, Mat3x4::getIdentity()}}};
+		Array<AccelerationStructureInstance, 1> instances = {{{blas, Mat3x4::getIdentity()}}};
 		init.m_topLevel.m_instances = instances;
 
 		tlas = gr->newAccelerationStructure(init);
@@ -2486,15 +2488,16 @@ void main()
 	const Vec3 rayOrigin = u_cameraPos;
 
 #if USE_RAY_TRACING
+	Bool hit = false;
+	F32 u = 0.0;
+	F32 v = 0.0;
+
 	rayQueryEXT rayQuery;
 	rayQueryInitializeEXT(rayQuery, u_tlas, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT, 0xFFu, rayOrigin,
 		0.01, rayDir, 1000.0);
 
 	rayQueryProceedEXT(rayQuery);
 
-	Bool hit;
-	F32 u;
-	F32 v;
 	const U32 committedStatus = rayQueryGetIntersectionTypeEXT(rayQuery, true);
 	if(committedStatus == gl_RayQueryCommittedIntersectionTriangleEXT)
 	{
@@ -2502,10 +2505,6 @@ void main()
 		u = bary.x;
 		v = bary.y;
 		hit = true;
-	}
-	else
-	{
-		hit = false;
 	}
 #else
 	// Manual trace
@@ -2522,7 +2521,7 @@ void main()
 	}
 	else
 	{
-		out_color = Vec3(0.5);
+		out_color = Vec3(mix(0.5, 0.2, in_uv.x));
 	}
 }
 		)";
@@ -2555,21 +2554,21 @@ void main()
 
 		cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::NONE,
 											  AccelerationStructureUsageBit::BUILD);
-		cmdb->buildAccelerationStructure(blas);
-		cmdb->setAccelerationStructureBarrier(blas, AccelerationStructureUsageBit::BUILD,
+		cmdb->buildAccelerationStructure(tlas);
+		cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::BUILD,
 											  AccelerationStructureUsageBit::FRAGMENT_READ);
 
 		cmdb->flush();
 	}
 
 	// Draw
-	constexpr U32 ITERATIONS = 300;
+	constexpr U32 ITERATIONS = 200;
 	for(U i = 0; i < ITERATIONS; ++i)
 	{
 		HighRezTimer timer;
 		timer.start();
 
-		const Vec4 cameraPos{0.0f, 0.0f, 3.0f, 0.0f};
+		const Vec4 cameraPos = {0.0f, 0.0f, 3.0f, 0.0f};
 		const Mat4 viewMat = Mat4{Transform{cameraPos, Mat3x4::getIdentity(), 1.0f}}.getInverse();
 		const Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(90.0f), toRad(90.0f), 0.01f, 1000.0f);
 

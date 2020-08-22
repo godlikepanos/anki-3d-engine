@@ -76,10 +76,10 @@ private:
 
 	U32 m_scratchBufferSize = 0;
 
-	VkAccelerationStructureBuildGeometryInfoKHR m_buildInfo{};
-	VkAccelerationStructureGeometryKHR m_geometry{};
+	VkAccelerationStructureBuildGeometryInfoKHR m_buildInfo = {};
+	VkAccelerationStructureGeometryKHR m_geometry = {};
 	VkAccelerationStructureGeometryKHR* m_geometryPtr = &m_geometry;
-	VkAccelerationStructureBuildOffsetInfoKHR m_offsetInfo{};
+	VkAccelerationStructureBuildOffsetInfoKHR m_offsetInfo = {};
 
 	void initBuildInfo();
 };
