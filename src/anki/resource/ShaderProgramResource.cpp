@@ -369,8 +369,21 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 		inf.m_shaderType = shaderType;
 		inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
 		inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
+		ShaderPtr shader = getManager().getGrManager().newShader(inf);
 
-		progInf.m_shaders[shaderType] = getManager().getGrManager().newShader(inf);
+		const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
+		if(!!(shaderBit & ShaderTypeBit::ALL_GRAPHICS))
+		{
+			progInf.m_graphicsShaders[shaderType] = shader;
+		}
+		else if(shaderType == ShaderType::COMPUTE)
+		{
+			progInf.m_computeShader = shader;
+		}
+		else
+		{
+			ANKI_ASSERT(!"TODO");
+		}
 	}
 
 	// Create the program

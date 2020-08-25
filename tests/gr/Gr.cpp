@@ -378,7 +378,10 @@ static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManage
 {
 	ShaderPtr vert = createShader(vertSrc, ShaderType::VERTEX, gr);
 	ShaderPtr frag = createShader(fragSrc, ShaderType::FRAGMENT, gr);
-	return gr.newShaderProgram(ShaderProgramInitInfo(vert, frag));
+	ShaderProgramInitInfo inf;
+	inf.m_graphicsShaders[ShaderType::VERTEX];
+	inf.m_graphicsShaders[ShaderType::FRAGMENT];
+	return gr.newShaderProgram(inf);
 }
 
 static FramebufferPtr createColorFb(GrManager& gr, TexturePtr tex)
@@ -1304,7 +1307,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 	// Create shader & compute prog
 	ShaderPtr shader = createShader(COMP_WRITE_IMAGE_SRC, ShaderType::COMPUTE, *gr);
 	ShaderProgramInitInfo sprogInit;
-	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
+	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr compProg = gr->newShaderProgram(sprogInit);
 
 	// Write texture data
@@ -1755,7 +1758,9 @@ void main()
 })";
 
 	ShaderPtr comp = createShader(COMP_SRC, ShaderType::COMPUTE, *gr);
-	ShaderProgramPtr prog = gr->newShaderProgram(ShaderProgramInitInfo(comp));
+	ShaderProgramInitInfo sinf;
+	sinf.m_computeShader = comp;
+	ShaderProgramPtr prog = gr->newShaderProgram(sinf);
 
 	// Create the texture
 	TextureInitInfo texInit;
@@ -1904,7 +1909,10 @@ void main()
 	ShaderPtr frag = createShader(FRAG_SRC, ShaderType::FRAGMENT, *gr,
 								  Array<ShaderSpecializationConstValue, 2>{{ShaderSpecializationConstValue(-2147483647),
 																			ShaderSpecializationConstValue(-1.0f)}});
-	ShaderProgramPtr prog = gr->newShaderProgram(ShaderProgramInitInfo(vert, frag));
+	ShaderProgramInitInfo sinf;
+	sinf.m_graphicsShaders[ShaderType::VERTEX] = vert;
+	sinf.m_graphicsShaders[ShaderType::FRAGMENT] = frag;
+	ShaderProgramPtr prog = gr->newShaderProgram(sinf);
 
 	// Create the result buffer
 	BufferPtr resultBuff =
@@ -2110,7 +2118,7 @@ void main()
 
 	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
 	ShaderProgramInitInfo sprogInit;
-	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
+	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
 
 	// Run
@@ -2207,7 +2215,7 @@ void main()
 
 	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
 	ShaderProgramInitInfo sprogInit;
-	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
+	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
 
 	// Run
@@ -2300,7 +2308,7 @@ void main()
 
 	ShaderPtr shader = createShader(PROG_SRC, ShaderType::COMPUTE, *gr);
 	ShaderProgramInitInfo sprogInit;
-	sprogInit.m_shaders[ShaderType::COMPUTE] = shader;
+	sprogInit.m_computeShader = shader;
 	ShaderProgramPtr prog = gr->newShaderProgram(sprogInit);
 
 	// Create buffers

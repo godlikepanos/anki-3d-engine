@@ -762,7 +762,7 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 				 ANY_OTHER_COMMAND);
 	}
 
-	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
 	{
 		if(impl.getReflectionInfo().m_descriptorSetMask.get(i))
 		{

@@ -14,43 +14,132 @@ namespace anki
 /// @addtogroup graphics
 /// @{
 
+/// @memberof RayTracingShaders
+class RayTracingHitGroup
+{
+public:
+	ShaderPtr m_closestHitShader;
+	ShaderPtr m_anyHitShader;
+};
+
+/// @memberof ShaderProgramInitInfo
+class RayTracingShaders
+{
+public:
+	ShaderPtr m_rayGenShader;
+	ShaderPtr m_missShader;
+	WeakArray<RayTracingHitGroup> m_hitGroups;
+};
+
 /// ShaderProgram init info.
 class ShaderProgramInitInfo : public GrBaseInitInfo
 {
 public:
-	Array<ShaderPtr, U32(ShaderType::COUNT)> m_shaders = {};
+	/// Option 1
+	Array<ShaderPtr, U32(ShaderType::LAST_GRAPHICS + 1)> m_graphicsShaders;
+
+	/// Option 2
+	ShaderPtr m_computeShader;
+
+	/// Option 3
+	RayTracingShaders m_rayTracingShaders;
 
 	ShaderProgramInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
 	{
 	}
 
-	ShaderProgramInitInfo(const ShaderPtr& compute, CString name = {})
-		: GrBaseInitInfo(name)
-	{
-		m_shaders[compute->getShaderType()] = compute;
-	}
-
-	ShaderProgramInitInfo(const ShaderPtr& vert, const ShaderPtr& frag, CString name = {})
-		: GrBaseInitInfo(name)
-	{
-		m_shaders[vert->getShaderType()] = vert;
-		m_shaders[frag->getShaderType()] = frag;
-	}
-
 	Bool isValid() const
 	{
-		ShaderTypeBit mask = ShaderTypeBit::NONE;
-		for(ShaderType i : EnumIterable<ShaderType>())
+		ShaderTypeBit graphicsMask = ShaderTypeBit::NONE;
+		for(ShaderType i = ShaderType::FIRST_GRAPHICS; i <= ShaderType::LAST_GRAPHICS; ++i)
 		{
-			mask |= (m_shaders[i]) ? shaderTypeToBit(i) : ShaderTypeBit::NONE;
+			if(m_graphicsShaders[i])
+			{
+				if(m_graphicsShaders[i]->getShaderType() != i)
+				{
+					return false;
+				}
+				graphicsMask |= ShaderTypeBit(1 << i);
+			}
 		}
 
-		U32 invalid = 0;
-		invalid |= !!(mask & ShaderTypeBit::ALL_GRAPHICS) && !!(mask & ~ShaderTypeBit::ALL_GRAPHICS);
-		invalid |= !!(mask & ShaderTypeBit::COMPUTE) && !!(mask & ~ShaderTypeBit::COMPUTE);
+		if(!!graphicsMask
+		   && (graphicsMask & (ShaderTypeBit::VERTEX | ShaderTypeBit::FRAGMENT))
+				  != (ShaderTypeBit::VERTEX | ShaderTypeBit::FRAGMENT))
+		{
+			return false;
+		}
 
-		return invalid == 0;
+		Bool compute = false;
+		if(m_computeShader)
+		{
+			if(m_computeShader->getShaderType() != ShaderType::COMPUTE)
+			{
+				return false;
+			}
+			compute = true;
+		}
+
+		if(compute && !!graphicsMask)
+		{
+			return false;
+		}
+
+		ShaderTypeBit rtMask = ShaderTypeBit::NONE;
+		if(m_rayTracingShaders.m_rayGenShader)
+		{
+			if(m_rayTracingShaders.m_rayGenShader->getShaderType() != ShaderType::RAY_GEN)
+			{
+				return false;
+			}
+			rtMask |= ShaderTypeBit::RAY_GEN;
+		}
+
+		if(m_rayTracingShaders.m_missShader)
+		{
+			if(m_rayTracingShaders.m_missShader->getShaderType() != ShaderType::MISS)
+			{
+				return false;
+			}
+			rtMask |= ShaderTypeBit::MISS;
+		}
+
+		for(const RayTracingHitGroup& group : m_rayTracingShaders.m_hitGroups)
+		{
+			ShaderTypeBit localRtMask = ShaderTypeBit::NONE;
+			if(group.m_anyHitShader)
+			{
+				if(group.m_anyHitShader->getShaderType() != ShaderType::ANY_HIT)
+				{
+					return false;
+				}
+				localRtMask |= ShaderTypeBit::ANY_HIT;
+			}
+
+			if(group.m_closestHitShader)
+			{
+				if(group.m_closestHitShader->getShaderType() != ShaderType::CLOSEST_HIT)
+				{
+					return false;
+				}
+				localRtMask |= ShaderTypeBit::CLOSEST_HIT;
+			}
+
+			if(!localRtMask)
+			{
+				return false;
+			}
+
+			rtMask |= localRtMask;
+		}
+
+		if(!!rtMask && (!!graphicsMask || compute))
+		{
+			return false;
+		}
+
+		return true;
 	}
 };
 

@@ -43,14 +43,14 @@ public:
 
 	Bool isGraphics() const
 	{
-		return m_pplineFactory != nullptr;
+		return !!(m_stages & ShaderTypeBit::ALL_GRAPHICS);
 	}
 
 	const VkPipelineShaderStageCreateInfo* getShaderCreateInfos(U32& count) const
 	{
 		ANKI_ASSERT(isGraphics());
-		count = m_shaderCreateInfoCount;
-		return &m_shaderCreateInfos[0];
+		count = m_graphics.m_shaderCreateInfoCount;
+		return &m_graphics.m_shaderCreateInfos[0];
 	}
 
 	const PipelineLayout& getPipelineLayout() const
@@ -58,7 +58,7 @@ public:
 		return m_pplineLayout;
 	}
 
-	const DescriptorSetLayout& getDescriptorSetLayout(U set) const
+	const DescriptorSetLayout& getDescriptorSetLayout(U32 set) const
 	{
 		ANKI_ASSERT(m_descriptorSetLayouts[set].isCreated());
 		return m_descriptorSetLayouts[set];
@@ -72,14 +72,14 @@ public:
 	/// Only for graphics programs.
 	PipelineFactory& getPipelineFactory()
 	{
-		ANKI_ASSERT(m_pplineFactory);
-		return *m_pplineFactory;
+		ANKI_ASSERT(m_graphics.m_pplineFactory);
+		return *m_graphics.m_pplineFactory;
 	}
 
 	VkPipeline getComputePipelineHandle() const
 	{
-		ANKI_ASSERT(m_computePpline);
-		return m_computePpline;
+		ANKI_ASSERT(m_compute.m_ppline);
+		return m_compute.m_ppline;
 	}
 
 	ShaderTypeBit getStages() const
@@ -89,20 +89,33 @@ public:
 	}
 
 private:
-	Array<ShaderPtr, U32(ShaderType::COUNT)> m_shaders;
+	DynamicArray<ShaderPtr> m_shaders;
 	ShaderTypeBit m_stages = ShaderTypeBit::NONE;
-
-	Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::FRAGMENT - ShaderType::VERTEX) + 1> m_shaderCreateInfos;
-	U32 m_shaderCreateInfoCount = 0;
 
 	PipelineLayout m_pplineLayout = {};
 	Array<DescriptorSetLayout, MAX_DESCRIPTOR_SETS> m_descriptorSetLayouts;
 
 	ShaderProgramReflectionInfo m_refl;
 
-	PipelineFactory* m_pplineFactory = nullptr; ///< Only for graphics programs.
+	class
+	{
+	public:
+		Array<VkPipelineShaderStageCreateInfo, U32(ShaderType::FRAGMENT - ShaderType::VERTEX) + 1> m_shaderCreateInfos;
+		U32 m_shaderCreateInfoCount = 0;
+		PipelineFactory* m_pplineFactory = nullptr;
+	} m_graphics;
 
-	VkPipeline m_computePpline = VK_NULL_HANDLE;
+	class
+	{
+	public:
+		VkPipeline m_ppline = VK_NULL_HANDLE;
+	} m_compute;
+
+	class
+	{
+	public:
+		VkPipeline m_rtPpline = VK_NULL_HANDLE;
+	} m_rt;
 };
 /// @}
 

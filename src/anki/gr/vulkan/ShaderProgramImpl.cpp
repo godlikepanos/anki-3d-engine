@@ -14,22 +14,64 @@ namespace anki
 
 ShaderProgramImpl::~ShaderProgramImpl()
 {
-	if(m_pplineFactory)
+	if(m_graphics.m_pplineFactory)
 	{
-		m_pplineFactory->destroy();
-		getAllocator().deleteInstance(m_pplineFactory);
+		m_graphics.m_pplineFactory->destroy();
+		getAllocator().deleteInstance(m_graphics.m_pplineFactory);
 	}
 
-	if(m_computePpline)
+	if(m_compute.m_ppline)
 	{
-		vkDestroyPipeline(getDevice(), m_computePpline, nullptr);
+		vkDestroyPipeline(getDevice(), m_compute.m_ppline, nullptr);
 	}
+
+	m_shaders.destroy(getAllocator());
 }
 
 Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 {
 	ANKI_ASSERT(inf.isValid());
-	m_shaders = inf.m_shaders;
+
+	// Create the shader references
+	//
+	if(inf.m_computeShader)
+	{
+		m_shaders.emplaceBack(getAllocator(), inf.m_computeShader);
+	}
+	else if(inf.m_graphicsShaders[ShaderType::VERTEX])
+	{
+		for(const ShaderPtr& s : inf.m_graphicsShaders)
+		{
+			if(s)
+			{
+				m_shaders.emplaceBack(getAllocator(), s);
+			}
+		}
+	}
+	else
+	{
+		// Ray tracing
+
+		m_shaders.resizeStorage(getAllocator(), 2 + inf.m_rayTracingShaders.m_hitGroups.getSize());
+
+		m_shaders.emplaceBack(getAllocator(), inf.m_rayTracingShaders.m_rayGenShader);
+		m_shaders.emplaceBack(getAllocator(), inf.m_rayTracingShaders.m_missShader);
+
+		for(const RayTracingHitGroup& group : inf.m_rayTracingShaders.m_hitGroups)
+		{
+			if(group.m_anyHitShader)
+			{
+				m_shaders.emplaceBack(getAllocator(), group.m_anyHitShader);
+			}
+
+			if(group.m_closestHitShader)
+			{
+				m_shaders.emplaceBack(getAllocator(), group.m_closestHitShader);
+			}
+		}
+	}
+
+	ANKI_ASSERT(m_shaders.getSize() > 0);
 
 	// Merge bindings
 	//
@@ -38,16 +80,11 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	U32 descriptorSetCount = 0;
 	for(U32 set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
 	{
-		for(ShaderType stype = ShaderType::FIRST; stype < ShaderType::COUNT; ++stype)
+		for(ShaderPtr& shader : m_shaders)
 		{
-			if(!m_shaders[stype].isCreated())
-			{
-				continue;
-			}
+			m_stages |= ShaderTypeBit(1 << shader->getShaderType());
 
-			m_stages |= ShaderTypeBit(1 << stype);
-
-			const ShaderImpl& simpl = *static_cast<const ShaderImpl*>(m_shaders[stype].get());
+			const ShaderImpl& simpl = static_cast<const ShaderImpl&>(*shader);
 
 			m_refl.m_activeBindingMask[set] |= simpl.m_activeBindingMask[set];
 
@@ -121,12 +158,14 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	const Bool graphicsProg = !!(m_stages & ShaderTypeBit::ALL_GRAPHICS);
 	if(graphicsProg)
 	{
-		m_refl.m_attributeMask = static_cast<const ShaderImpl*>(m_shaders[ShaderType::VERTEX].get())->m_attributeMask;
-		m_refl.m_colorAttachmentWritemask =
-			static_cast<const ShaderImpl*>(m_shaders[ShaderType::FRAGMENT].get())->m_colorAttachmentWritemask;
+		m_refl.m_attributeMask =
+			static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::VERTEX]).m_attributeMask;
 
-		const U attachmentCount = m_refl.m_colorAttachmentWritemask.getEnabledBitCount();
-		for(U i = 0; i < attachmentCount; ++i)
+		m_refl.m_colorAttachmentWritemask =
+			static_cast<const ShaderImpl&>(*inf.m_graphicsShaders[ShaderType::FRAGMENT]).m_colorAttachmentWritemask;
+
+		const U32 attachmentCount = m_refl.m_colorAttachmentWritemask.getEnabledBitCount();
+		for(U32 i = 0; i < attachmentCount; ++i)
 		{
 			ANKI_ASSERT(m_refl.m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
 		}
@@ -136,19 +175,14 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	if(graphicsProg)
 	{
-		for(ShaderType stype = ShaderType::VERTEX; stype <= ShaderType::FRAGMENT; ++stype)
+		for(const ShaderPtr& shader : m_shaders)
 		{
-			if(!m_shaders[stype].isCreated())
-			{
-				continue;
-			}
+			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*shader);
 
-			const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[stype]);
-
-			VkPipelineShaderStageCreateInfo& inf = m_shaderCreateInfos[m_shaderCreateInfoCount++];
+			VkPipelineShaderStageCreateInfo& inf = m_graphics.m_shaderCreateInfos[m_graphics.m_shaderCreateInfoCount++];
 			inf = {};
 			inf.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			inf.stage = convertShaderTypeBit(static_cast<ShaderTypeBit>(1 << stype));
+			inf.stage = convertShaderTypeBit(ShaderTypeBit(1 << shader->getShaderType()));
 			inf.pName = "main";
 			inf.module = shaderImpl.m_handle;
 			inf.pSpecializationInfo = shaderImpl.getSpecConstInfo();
@@ -159,16 +193,16 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	//
 	if(graphicsProg)
 	{
-		m_pplineFactory = getAllocator().newInstance<PipelineFactory>();
-		m_pplineFactory->init(getGrManagerImpl().getAllocator(), getGrManagerImpl().getDevice(),
-							  getGrManagerImpl().getPipelineCache());
+		m_graphics.m_pplineFactory = getAllocator().newInstance<PipelineFactory>();
+		m_graphics.m_pplineFactory->init(getGrManagerImpl().getAllocator(), getGrManagerImpl().getDevice(),
+										 getGrManagerImpl().getPipelineCache());
 	}
 
 	// Create the pipeline if compute
 	//
-	if(!graphicsProg)
+	if(!!(m_stages & ShaderTypeBit::COMPUTE))
 	{
-		const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[ShaderType::COMPUTE]);
+		const ShaderImpl& shaderImpl = static_cast<const ShaderImpl&>(*m_shaders[0]);
 
 		VkComputePipelineCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
@@ -181,8 +215,75 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.stage.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 
 		ANKI_VK_CHECK(vkCreateComputePipelines(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
-											   &m_computePpline));
-		getGrManagerImpl().printPipelineShaderInfo(m_computePpline, getName(), ShaderTypeBit::COMPUTE);
+											   &m_compute.m_ppline));
+		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName(), ShaderTypeBit::COMPUTE);
+	}
+
+	// Create the RT pipeline
+	//
+	if(!!(m_stages & ShaderTypeBit::ALL_RAY_TRACING))
+	{
+		// Create shaders
+		DynamicArrayAuto<VkPipelineShaderStageCreateInfo> stages(getAllocator(), m_shaders.getSize());
+		for(U32 i = 0; i < stages.getSize(); ++i)
+		{
+			const ShaderImpl& impl = static_cast<const ShaderImpl&>(*m_shaders[i]);
+
+			VkPipelineShaderStageCreateInfo& stage = stages[i];
+			stage = {};
+			stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			stage.stage = convertShaderTypeBit(ShaderTypeBit(1 << impl.getShaderType()));
+			stage.pName = "main";
+			stage.module = impl.m_handle;
+			stage.pSpecializationInfo = impl.getSpecConstInfo();
+		}
+
+		// Create groups
+		VkRayTracingShaderGroupCreateInfoKHR defaultGroup = {};
+		defaultGroup.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+		defaultGroup.generalShader = VK_SHADER_UNUSED_KHR;
+		defaultGroup.closestHitShader = VK_SHADER_UNUSED_KHR;
+		defaultGroup.anyHitShader = VK_SHADER_UNUSED_KHR;
+		defaultGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
+
+		DynamicArrayAuto<VkRayTracingShaderGroupCreateInfoKHR> groups(
+			getAllocator(), 2 + inf.m_rayTracingShaders.m_hitGroups.getSize(), defaultGroup);
+
+		// 1st group is the ray gen
+		groups[0].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+		groups[0].generalShader = 0;
+
+		// 2nd group is the miss
+		groups[1].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+		groups[1].generalShader = 1;
+
+		// The rest of the groups are hit
+		for(U32 i = 0; i < inf.m_rayTracingShaders.m_hitGroups.getSize(); ++i)
+		{
+			groups[i + 2].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+			if(inf.m_rayTracingShaders.m_hitGroups[i].m_anyHitShader)
+			{
+				groups[i + 2].anyHitShader = i + 2;
+			}
+			else
+			{
+				ANKI_ASSERT(inf.m_rayTracingShaders.m_hitGroups[i].m_closestHitShader);
+				groups[i + 2].closestHitShader = i + 2;
+			}
+		}
+
+		VkRayTracingPipelineCreateInfoKHR ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+		ci.stageCount = stages.getSize();
+		ci.pStages = &stages[0];
+		ci.groupCount = groups.getSize();
+		ci.pGroups = &groups[0];
+		ci.maxRecursionDepth = 1;
+		ci.libraries.sType = VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR;
+		ci.layout = m_pplineLayout.getHandle();
+
+		ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci,
+													 nullptr, &m_rt.m_rtPpline));
 	}
 
 	return Error::NONE;
