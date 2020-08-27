@@ -52,10 +52,15 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		// Ray tracing
 
-		m_shaders.resizeStorage(getAllocator(), 2 + inf.m_rayTracingShaders.m_hitGroups.getSize());
+		m_shaders.resizeStorage(getAllocator(), 1 + inf.m_rayTracingShaders.m_missShaders.getSize()
+													+ inf.m_rayTracingShaders.m_hitGroups.getSize());
 
 		m_shaders.emplaceBack(getAllocator(), inf.m_rayTracingShaders.m_rayGenShader);
-		m_shaders.emplaceBack(getAllocator(), inf.m_rayTracingShaders.m_missShader);
+
+		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_missShaders)
+		{
+			m_shaders.emplaceBack(getAllocator(), s);
+		}
 
 		for(const RayTracingHitGroup& group : inf.m_rayTracingShaders.m_hitGroups)
 		{
@@ -214,6 +219,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.stage.module = shaderImpl.m_handle;
 		ci.stage.pSpecializationInfo = shaderImpl.getSpecConstInfo();
 
+		ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
 		ANKI_VK_CHECK(vkCreateComputePipelines(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr,
 											   &m_compute.m_ppline));
 		getGrManagerImpl().printPipelineShaderInfo(m_compute.m_ppline, getName(), ShaderTypeBit::COMPUTE);
@@ -247,30 +253,45 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		defaultGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 
 		DynamicArrayAuto<VkRayTracingShaderGroupCreateInfoKHR> groups(
-			getAllocator(), 2 + inf.m_rayTracingShaders.m_hitGroups.getSize(), defaultGroup);
+			getAllocator(),
+			1 + inf.m_rayTracingShaders.m_missShaders.getSize() + inf.m_rayTracingShaders.m_hitGroups.getSize(),
+			defaultGroup);
 
 		// 1st group is the ray gen
 		groups[0].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
 		groups[0].generalShader = 0;
 
-		// 2nd group is the miss
-		groups[1].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-		groups[1].generalShader = 1;
+		// Miss
+		U32 groupCount = 1;
+		U32 shaderCount = 1;
+		for(U32 i = 0; i < inf.m_rayTracingShaders.m_missShaders.getSize(); ++i)
+		{
+			groups[groupCount].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+			groups[groupCount].generalShader = shaderCount;
+			++groupCount;
+			++shaderCount;
+		}
 
 		// The rest of the groups are hit
 		for(U32 i = 0; i < inf.m_rayTracingShaders.m_hitGroups.getSize(); ++i)
 		{
-			groups[i + 2].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
+			groups[groupCount].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
 			if(inf.m_rayTracingShaders.m_hitGroups[i].m_anyHitShader)
 			{
-				groups[i + 2].anyHitShader = i + 2;
+				groups[groupCount].anyHitShader = shaderCount;
+				++shaderCount;
 			}
-			else
+
+			if(inf.m_rayTracingShaders.m_hitGroups[i].m_closestHitShader)
 			{
 				ANKI_ASSERT(inf.m_rayTracingShaders.m_hitGroups[i].m_closestHitShader);
-				groups[i + 2].closestHitShader = i + 2;
+				groups[groupCount].closestHitShader = shaderCount;
+				++shaderCount;
 			}
 		}
+
+		ANKI_ASSERT(groupCount == groups.getSize());
+		ANKI_ASSERT(shaderCount == m_shaders.getSize());
 
 		VkRayTracingPipelineCreateInfoKHR ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
@@ -282,11 +303,21 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.libraries.sType = VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR;
 		ci.layout = m_pplineLayout.getHandle();
 
-		ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci,
-													 nullptr, &m_rt.m_rtPpline));
+		{
+			ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
+			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci,
+														 nullptr, &m_rt.m_rtPpline));
+		}
+
+		createStb();
 	}
 
 	return Error::NONE;
+}
+
+void ShaderProgramImpl::createStb()
+{
+	// TODO
 }
 
 } // end namespace anki

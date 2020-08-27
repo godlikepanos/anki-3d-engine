@@ -57,6 +57,11 @@ public:
 		return m_devProps;
 	}
 
+	const VkPhysicalDeviceRayTracingPropertiesKHR& getPhysicalDeviceRayTracingProperties() const
+	{
+		return m_rtProps;
+	}
+
 	TexturePtr acquireNextPresentableTexture();
 
 	void endFrame();
@@ -246,11 +251,12 @@ private:
 	VkQueue m_queue = VK_NULL_HANDLE;
 	Mutex m_globalMtx;
 
-	VkPhysicalDeviceProperties m_devProps{};
-	VkPhysicalDeviceFeatures m_devFeatures{};
-	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures{};
-	VkPhysicalDeviceBufferDeviceAddressFeatures m_bufferDeviceAddressFeatures{};
-	VkPhysicalDeviceRayTracingFeaturesKHR m_rtFeatures{};
+	VkPhysicalDeviceProperties m_devProps = {};
+	VkPhysicalDeviceRayTracingPropertiesKHR m_rtProps = {};
+	VkPhysicalDeviceFeatures m_devFeatures = {};
+	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures = {};
+	VkPhysicalDeviceBufferDeviceAddressFeatures m_bufferDeviceAddressFeatures = {};
+	VkPhysicalDeviceRayTracingFeaturesKHR m_rtFeatures = {};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
 	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;

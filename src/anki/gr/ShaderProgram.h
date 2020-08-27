@@ -27,7 +27,7 @@ class RayTracingShaders
 {
 public:
 	ShaderPtr m_rayGenShader;
-	ShaderPtr m_missShader;
+	WeakArray<ShaderPtr> m_missShaders;
 	WeakArray<RayTracingHitGroup> m_hitGroups;
 };
 
@@ -96,9 +96,9 @@ public:
 			rtMask |= ShaderTypeBit::RAY_GEN;
 		}
 
-		if(m_rayTracingShaders.m_missShader)
+		for(const ShaderPtr& s : m_rayTracingShaders.m_missShaders)
 		{
-			if(m_rayTracingShaders.m_missShader->getShaderType() != ShaderType::MISS)
+			if(s->getShaderType() != ShaderType::MISS)
 			{
 				return false;
 			}

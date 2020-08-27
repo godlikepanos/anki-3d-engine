@@ -380,7 +380,13 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	count = 1;
 	ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &m_physicalDevice));
 
-	vkGetPhysicalDeviceProperties(m_physicalDevice, &m_devProps);
+	m_rtProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_KHR;
+	VkPhysicalDeviceProperties2 props = {};
+	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	props.pNext = &m_rtProps;
+
+	vkGetPhysicalDeviceProperties2(m_physicalDevice, &props);
+	m_devProps = props.properties;
 
 	// Find vendor
 	switch(m_devProps.vendorID)
