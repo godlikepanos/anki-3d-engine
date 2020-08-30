@@ -116,9 +116,8 @@ private:
 	public:
 		VkPipeline m_rtPpline = VK_NULL_HANDLE;
 		BufferPtr m_stb;
+		DynamicArray<U8> m_allHandles;
 	} m_rt;
-
-	void createStb();
 };
 /// @}
 
