@@ -612,7 +612,7 @@ enum class BufferUsageBit : U64
 	TRANSFER_SOURCE = 1ull << 25ull,
 	TRANSFER_DESTINATION = 1ull << 26ull,
 
-	ACCELERATION_STRUCTURE_BUILD = 1ull << 27ull,
+	ACCELERATION_STRUCTURE_BUILD = 1ull << 27ull, ///< Will be used as a position or index buffer in a BLAS build.
 
 	// Derived
 	ALL_UNIFORM = UNIFORM_GEOMETRY | UNIFORM_FRAGMENT | UNIFORM_COMPUTE | UNIFORM_TRACE_RAYS,

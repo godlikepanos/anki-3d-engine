@@ -429,6 +429,9 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	m_capabilities.m_majorApiVersion = vulkanMajor;
 	m_capabilities.m_minorApiVersion = vulkanMinor;
 
+	m_capabilities.m_shaderGroupHandleSize = m_rtProps.shaderGroupHandleSize;
+	m_capabilities.m_stbRecordSize = m_rtProps.shaderGroupBaseAlignment;
+
 	return Error::NONE;
 }
 

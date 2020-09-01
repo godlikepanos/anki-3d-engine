@@ -38,17 +38,15 @@ class AccelerationStructureInitInfo;
 #define ANKI_GR_LOGF(...) ANKI_LOG("GR  ", FATAL, __VA_ARGS__)
 
 // Some constants
-const U32 MAX_VERTEX_ATTRIBUTES = 8;
-const U32 MAX_COLOR_ATTACHMENTS = 4;
-const U32 MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
-const U32 MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
-
-const U32 MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
-
-const U32 MAX_GR_OBJECT_NAME_LENGTH = 31;
+constexpr U32 MAX_VERTEX_ATTRIBUTES = 8;
+constexpr U32 MAX_COLOR_ATTACHMENTS = 4;
+constexpr U32 MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
+constexpr U32 MAX_BINDINGS_PER_DESCRIPTOR_SET = 32;
+constexpr U32 MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
+constexpr U32 MAX_GR_OBJECT_NAME_LENGTH = 31;
 
 /// The number of commands in a command buffer that make it a small batch command buffer.
-const U32 COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
+constexpr U32 COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
 
 /// Smart pointer for resources.
 template<typename T>
@@ -136,6 +134,12 @@ public:
 	/// Max push constant size.
 	PtrSize m_pushConstantsSize = 128;
 
+	/// The size and alignment of an STB record.
+	U32 m_stbRecordSize = 0;
+
+	/// The size of a shader group handle that will be placed inside an STB record.
+	U32 m_shaderGroupHandleSize = 0;
+
 	/// GPU vendor.
 	GpuVendor m_gpuVendor = GpuVendor::UNKNOWN;
 
@@ -149,7 +153,7 @@ public:
 	Bool m_rayTracingEnabled = false;
 };
 ANKI_END_PACKED_STRUCT
-static_assert(sizeof(GpuDeviceCapabilities) == sizeof(PtrSize) * 4 + sizeof(U32) * 3 + sizeof(U8) * 3 + sizeof(Bool),
+static_assert(sizeof(GpuDeviceCapabilities) == sizeof(PtrSize) * 4 + sizeof(U32) * 5 + sizeof(U8) * 3 + sizeof(Bool),
 			  "Should be packed");
 
 /// Bindless related info.
