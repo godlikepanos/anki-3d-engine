@@ -25,6 +25,11 @@ ShaderProgramImpl::~ShaderProgramImpl()
 		vkDestroyPipeline(getDevice(), m_compute.m_ppline, nullptr);
 	}
 
+	if(m_rt.m_ppline)
+	{
+		vkDestroyPipeline(getDevice(), m_rt.m_ppline, nullptr);
+	}
+
 	m_shaders.destroy(getAllocator());
 	m_rt.m_allHandles.destroy(getAllocator());
 }
@@ -62,6 +67,8 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		{
 			m_shaders.emplaceBack(getAllocator(), s);
 		}
+
+		m_rt.m_missShaderCount = inf.m_rayTracingShaders.m_missShaders.getSize();
 
 		for(const RayTracingHitGroup& group : inf.m_rayTracingShaders.m_hitGroups)
 		{
@@ -315,14 +322,14 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		{
 			ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
 			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci,
-														 nullptr, &m_rt.m_rtPpline));
+														 nullptr, &m_rt.m_ppline));
 		}
 
 		// Get RT handles
 		const U32 handleArraySize =
 			getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupHandleSize * groupCount;
 		m_rt.m_allHandles.create(getAllocator(), handleArraySize, 0);
-		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getDevice(), m_rt.m_rtPpline, 0, groupCount, handleArraySize,
+		ANKI_VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(getDevice(), m_rt.m_ppline, 0, groupCount, handleArraySize,
 														   &m_rt.m_allHandles[0]));
 	}
 

@@ -82,10 +82,28 @@ public:
 		return m_compute.m_ppline;
 	}
 
+	VkPipeline getRayTracingPipelineHandle() const
+	{
+		ANKI_ASSERT(m_rt.m_ppline);
+		return m_rt.m_ppline;
+	}
+
 	ShaderTypeBit getStages() const
 	{
 		ANKI_ASSERT(!!m_stages);
 		return m_stages;
+	}
+
+	U32 getMissShaderCount() const
+	{
+		ANKI_ASSERT(m_rt.m_missShaderCount > 0);
+		return m_rt.m_missShaderCount;
+	}
+
+	ConstWeakArray<U8> getShaderGroupHandles() const
+	{
+		ANKI_ASSERT(m_rt.m_allHandles.getSize() > 0);
+		return m_rt.m_allHandles;
 	}
 
 private:
@@ -114,9 +132,9 @@ private:
 	class
 	{
 	public:
-		VkPipeline m_rtPpline = VK_NULL_HANDLE;
-		BufferPtr m_stb;
+		VkPipeline m_ppline = VK_NULL_HANDLE;
 		DynamicArray<U8> m_allHandles;
+		U32 m_missShaderCount = 0;
 	} m_rt;
 };
 /// @}

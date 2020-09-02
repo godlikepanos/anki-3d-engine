@@ -134,10 +134,10 @@ public:
 	/// Max push constant size.
 	PtrSize m_pushConstantsSize = 128;
 
-	/// The size and alignment of an STB record.
-	U32 m_stbRecordSize = 0;
+	/// The size and alignment of an SBT record.
+	U32 m_sbtRecordSize = 0;
 
-	/// The size of a shader group handle that will be placed inside an STB record.
+	/// The size of a shader group handle that will be placed inside an SBT record.
 	U32 m_shaderGroupHandleSize = 0;
 
 	/// GPU vendor.

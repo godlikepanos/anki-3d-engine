@@ -151,6 +151,10 @@ class ShaderProgram : public GrObject
 public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER_PROGRAM;
 
+	/// Get the shader group handles that will be used in the SBTs. The size of each handle is
+	/// GpuDeviceCapabilities::m_shaderGroupHandleSize.
+	ConstWeakArray<U8> getShaderGroupHandles() const;
+
 protected:
 	/// Construct.
 	ShaderProgram(GrManager* manager, CString name)

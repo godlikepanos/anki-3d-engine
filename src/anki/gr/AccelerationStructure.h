@@ -67,7 +67,7 @@ class AccelerationStructureInstance
 public:
 	AccelerationStructurePtr m_bottomLevel;
 	Mat3x4 m_transform = Mat3x4::getIdentity();
-	U32 m_stbRecordIndex = 0; ///< Points to the STB record.
+	U32 m_sbtRecordIndex = 0; ///< Points to the SBT record.
 };
 
 /// @memberof AccelerationStructureInitInfo

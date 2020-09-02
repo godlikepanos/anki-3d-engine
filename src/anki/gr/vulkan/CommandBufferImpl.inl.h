@@ -378,6 +378,83 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 	ANKI_CMD(vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ), ANY_OTHER_COMMAND);
 }
 
+inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset,
+												 U32 hitGroupSbtRecordCount, U32 width, U32 height, U32 depth)
+{
+	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
+	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
+	ANKI_ASSERT(m_rtProg);
+	const ShaderProgramImpl& sprog = static_cast<const ShaderProgramImpl&>(*m_rtProg);
+	ANKI_ASSERT(sprog.getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize
+				&& "Forgot to set pushConstants");
+
+	const U32 sbtRecordCount = 1 + sprog.getMissShaderCount() + hitGroupSbtRecordCount;
+	const U32 shaderGroupBaseAlignment =
+		getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupBaseAlignment;
+	const PtrSize sbtBufferSize = sbtRecordCount * shaderGroupBaseAlignment;
+	ANKI_ASSERT(sbtBufferSize + sbtBufferOffset <= sbtBuffer->getSize());
+	ANKI_ASSERT(isAligned(shaderGroupBaseAlignment, sbtBufferOffset));
+
+	commandCommon();
+
+	// Bind descriptors
+	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	{
+		if(sprog.getReflectionInfo().m_descriptorSetMask.get(i))
+		{
+			DescriptorSet dset;
+			Bool dirty;
+			Array<PtrSize, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsetsPtrSize;
+			U32 dynamicOffsetCount;
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
+				   m_tid, m_alloc, m_dsetState[i], dset, dirty, dynamicOffsetsPtrSize, dynamicOffsetCount))
+			{
+				ANKI_VK_LOGF("Cannot recover");
+			}
+
+			if(dirty)
+			{
+				// Vulkan should have had the dynamic offsets as VkDeviceSize and not U32. Workaround that.
+				Array<U32, MAX_BINDINGS_PER_DESCRIPTOR_SET> dynamicOffsets;
+				for(U32 i = 0; i < dynamicOffsetCount; ++i)
+				{
+					dynamicOffsets[i] = U32(dynamicOffsetsPtrSize[i]);
+				}
+
+				VkDescriptorSet dsHandle = dset.getHandle();
+
+				ANKI_CMD(vkCmdBindDescriptorSets(m_handle, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+												 sprog.getPipelineLayout().getHandle(), i, 1, &dsHandle,
+												 dynamicOffsetCount, &dynamicOffsets[0]),
+						 ANY_OTHER_COMMAND);
+			}
+		}
+	}
+
+	Array<VkStridedBufferRegionKHR, 3> regions;
+
+	// Rgen
+	regions[0].buffer = static_cast<const BufferImpl&>(*sbtBuffer).getHandle();
+	regions[0].offset = sbtBufferOffset;
+	regions[0].stride = shaderGroupBaseAlignment;
+	regions[0].size = shaderGroupBaseAlignment;
+
+	// Miss
+	regions[1].buffer = regions[0].buffer;
+	regions[1].offset = regions[0].offset + regions[0].size;
+	regions[1].stride = shaderGroupBaseAlignment;
+	regions[1].size = shaderGroupBaseAlignment * sprog.getMissShaderCount();
+
+	// Hit
+	regions[2].buffer = regions[1].buffer;
+	regions[2].offset = regions[1].offset + regions[1].size;
+	regions[2].stride = shaderGroupBaseAlignment;
+	regions[2].size = shaderGroupBaseAlignment * hitGroupSbtRecordCount;
+
+	ANKI_CMD(vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], nullptr, width, height, depth),
+			 ANY_OTHER_COMMAND);
+}
+
 inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
@@ -750,16 +827,30 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 	{
 		m_graphicsProg = &impl;
 		m_computeProg = nullptr; // Unbind the compute prog. Doesn't work like vulkan
+		m_rtProg = nullptr; // See above
 		m_state.bindShaderProgram(prog);
 	}
-	else
+	else if(!!(impl.getStages() & ShaderTypeBit::COMPUTE))
 	{
 		m_computeProg = &impl;
 		m_graphicsProg = nullptr; // See comment in the if()
+		m_rtProg = nullptr; // See above
 
 		// Bind the pipeline now
 		ANKI_CMD(vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_COMPUTE, impl.getComputePipelineHandle()),
 				 ANY_OTHER_COMMAND);
+	}
+	else
+	{
+		ANKI_ASSERT(!!(impl.getStages() & ShaderTypeBit::ALL_RAY_TRACING));
+		m_computeProg = nullptr;
+		m_graphicsProg = nullptr;
+		m_rtProg = &impl;
+
+		// Bind now
+		ANKI_CMD(
+			vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, impl.getRayTracingPipelineHandle()),
+			ANY_OTHER_COMMAND);
 	}
 
 	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)

@@ -23,4 +23,9 @@ ShaderProgram* ShaderProgram::newInstance(GrManager* manager, const ShaderProgra
 	return impl;
 }
 
+ConstWeakArray<U8> ShaderProgram::getShaderGroupHandles() const
+{
+	return static_cast<const ShaderProgramImpl&>(*this).getShaderGroupHandles();
+}
+
 } // end namespace anki

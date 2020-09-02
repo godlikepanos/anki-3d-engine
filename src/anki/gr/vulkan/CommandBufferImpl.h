@@ -306,6 +306,9 @@ public:
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
+	void traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 hitGroupSbtRecordCount, U32 width,
+						   U32 height, U32 depth);
+
 	void resetOcclusionQuery(OcclusionQueryPtr query);
 
 	void beginOcclusionQuery(OcclusionQueryPtr query);
@@ -406,6 +409,8 @@ private:
 	Array<DescriptorSetState, MAX_DESCRIPTOR_SETS> m_dsetState;
 
 	ShaderProgramImpl* m_computeProg ANKI_DEBUG_CODE(= nullptr);
+
+	ShaderProgramImpl* m_rtProg ANKI_DEBUG_CODE(= nullptr);
 
 	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 

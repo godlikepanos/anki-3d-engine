@@ -335,6 +335,16 @@ public:
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
+	/// Trace rays.
+	/// @param[in] sbtBuffer The SBT buffer.
+	/// @param sbtBufferOffset Offset inside the sbtBuffer where SBT records start.
+	/// @param hitGroupSbtRecordCount The number of SBT records that contain hit groups.
+	/// @param width Width.
+	/// @param height Height.
+	/// @param depth Depth.
+	void traceRays(BufferPtr sbtBuffer, PtrSize sbtBufferOffset, U32 hitGroupSbtRecordCount, U32 width, U32 height,
+				   U32 depth);
+
 	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
 	/// TextureUsageBit::GENERATE_MIPMAPS before calling this method.
 	/// @param texView The texture view to generate mips. It should point to a subresource that contains the whole

@@ -190,10 +190,10 @@ void AccelerationStructureImpl::initBuildInfo()
 				VkAccelerationStructureInstanceKHR& outInst = instances[i];
 				const AccelerationStructureInstance& inInst = m_topLevelInfo.m_instances[i];
 				static_assert(sizeof(outInst.transform) == sizeof(inInst.m_transform), "See file");
-				memcpy(&outInst.transform.matrix[0][0], &inInst.m_transform, sizeof(inInst.m_transform));
+				memcpy(&outInst.transform, &inInst.m_transform, sizeof(inInst.m_transform));
 				outInst.instanceCustomIndex = i & 0xFFFFFF;
 				outInst.mask = 0xFF;
-				outInst.instanceShaderBindingTableRecordOffset = inInst.m_stbRecordIndex & 0xFFFFFF;
+				outInst.instanceShaderBindingTableRecordOffset = inInst.m_sbtRecordIndex & 0xFFFFFF;
 				outInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR;
 				outInst.accelerationStructureReference =
 					static_cast<const AccelerationStructureImpl&>(*inInst.m_bottomLevel).m_bottomLevelInfo.m_gpuAddress;
