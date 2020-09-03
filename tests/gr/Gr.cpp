@@ -2629,50 +2629,101 @@ void main()
 	COMMON_END();
 }
 
+static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& indexBuffer, BufferPtr& vertBuffer)
+{
+	BufferInitInfo inf;
+	inf.m_access = BufferMapAccessBit::WRITE;
+	inf.m_usage = BufferUsageBit::INDEX | BufferUsageBit::STORAGE_TRACE_RAYS_READ;
+	inf.m_size = sizeof(Vec3) * 8;
+	vertBuffer = gr.newBuffer(inf);
+	WeakArray<Vec3> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::WRITE);
+
+	//   7----6
+	//  /|   /|
+	// 3-|--2 |
+	// | |  | |
+	// | 4 -|-5
+	// |/   |/
+	// 0----1
+	positions[0] = Vec3(min.x(), min.y(), max.z());
+	positions[1] = Vec3(max.x(), min.y(), max.z());
+	positions[2] = Vec3(max.x(), max.y(), max.z());
+	positions[3] = Vec3(min.x(), max.y(), max.z());
+	positions[4] = Vec3(min.x(), min.y(), min.z());
+	positions[5] = Vec3(max.x(), min.y(), min.z());
+	positions[6] = Vec3(max.x(), max.y(), min.z());
+	positions[7] = Vec3(min.x(), max.y(), min.z());
+
+	vertBuffer->unmap();
+
+	inf.m_size = sizeof(U16) * 36;
+	indexBuffer = gr.newBuffer(inf);
+	WeakArray<U16> indices = indexBuffer->map<U16>(0, 36, BufferMapAccessBit::WRITE);
+	U32 t = 0;
+
+	// Top
+	indices[t++] = 3;
+	indices[t++] = 2;
+	indices[t++] = 7;
+	indices[t++] = 2;
+	indices[t++] = 6;
+	indices[t++] = 7;
+
+	// Bottom
+	indices[t++] = 1;
+	indices[t++] = 0;
+	indices[t++] = 4;
+	indices[t++] = 1;
+	indices[t++] = 4;
+	indices[t++] = 5;
+
+	// Back
+	indices[t++] = 4;
+	indices[t++] = 7;
+	indices[t++] = 6;
+	indices[t++] = 5;
+	indices[t++] = 4;
+	indices[t++] = 6;
+
+	// Front
+	indices[t++] = 0;
+	indices[t++] = 1;
+	indices[t++] = 3;
+	indices[t++] = 3;
+	indices[t++] = 1;
+	indices[t++] = 2;
+
+	// Left
+	indices[t++] = 0;
+	indices[t++] = 3;
+	indices[t++] = 4;
+	indices[t++] = 3;
+	indices[t++] = 7;
+	indices[t++] = 4;
+
+	// Right
+	indices[t++] = 1;
+	indices[t++] = 5;
+	indices[t++] = 2;
+	indices[t++] = 2;
+	indices[t++] = 5;
+	indices[t++] = 6;
+
+	indexBuffer->unmap();
+}
+
 ANKI_TEST(Gr, RayGen)
 {
 	COMMON_BEGIN();
 
-	while(true)
+	const Bool useRayTracing = gr->getDeviceCapabilities().m_rayTracingEnabled;
+	if(!useRayTracing)
 	{
-		const Bool useRayTracing = gr->getDeviceCapabilities().m_rayTracingEnabled;
-		if(!useRayTracing)
-		{
-			ANKI_TEST_LOGW("Ray tracing not supported");
-			break;
-		}
-
-		HeapAllocator<U8> alloc = {allocAligned, nullptr};
-
-		const CString commonSrc = R"(
-layout(set = 0, binding = 0, std430) readonly buffer b_s00
-{
-	U32 u_indices[];
-};
-
-layout(set = 0, binding = 1, scalar) readonly buffer b_s01
-{
-	Vec3 u_vertPositions[];
-};
-)";
-
-		// Ahit
-		ShaderPtr ahitShader;
-		{
-			const CString src = R"(
-void main()
-{
-
-}
-)";
-
-			StringAuto fullSrc = {alloc};
-			fullSrc.sprintf("%s\n%s", commonSrc.cstr(), src.cstr());
-			ahitShader = createShader(fullSrc, ShaderType::ANY_HIT, *gr);
-		}
-
-		break;
+		ANKI_TEST_LOGW("Ray tracing not supported");
 	}
+
+	HeapAllocator<U8> alloc = {allocAligned, nullptr};
+
 	COMMON_END();
 }
 

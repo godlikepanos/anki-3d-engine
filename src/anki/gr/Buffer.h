@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/GrObject.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
@@ -74,6 +75,17 @@ public:
 	/// @param range The range to map or MAX_PTR_SIZE to map until the end.
 	/// @param access The access to the buffer.
 	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
+
+	/// Convenience map method.
+	/// @param offset The starting offset.
+	/// @param elementCount The number of T element sto map.
+	/// @param access The access to the buffer.
+	/// @return The array that was mapped.
+	template<typename T>
+	WeakArray<T> map(PtrSize offset, U32 elementCount, BufferMapAccessBit access)
+	{
+		return WeakArray<T>(static_cast<T*>(map(offset, sizeof(T) * elementCount, access)), elementCount);
+	}
 
 	/// Unmap the buffer.
 	void unmap();
