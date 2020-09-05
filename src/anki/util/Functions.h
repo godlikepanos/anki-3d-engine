@@ -151,11 +151,34 @@ inline T max(T a, T b)
 	return (a > b) ? a : b;
 }
 
+/// Returns 1 or -1 based on the sign
+template <typename T>
+inline T sign(T v) 
+{
+	return v > 0 ? 1 : -1;
+}
+
 template<typename T>
 inline T clamp(T v, T minv, T maxv)
 {
 	ANKI_ASSERT(minv < maxv);
 	return min<T>(max<T>(minv, v), maxv);
+}
+
+/// When a value goes out of bounds it cycles rom the other side
+template <typename T>
+inline T wrap(T value, T min, T max) 
+{
+	ANKI_ASSERT(min < max);
+	return (value < min) ? (max - (min - value)) : ((value > max) ? (min + (value - max)) : value);
+}
+
+/// Same as smoothstep in glsl
+template <typename T>
+inline T smoothstep(T edge0, T edge1, T value) 
+{
+	value = clamp((value - edge0) / (edge1 - edge0), (T)0, (T)1);
+	return value * value * (3 - 2 * value);
 }
 
 /// Check if a number is a power of 2

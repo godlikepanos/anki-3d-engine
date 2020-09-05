@@ -41,10 +41,10 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	return Error::NONE;
 }
 
-Error SampleApp::userMainLoop(Bool& quit)
+Error SampleApp::userMainLoop(Bool& quit, F64 elapsedTime)
 {
 	const F32 ROTATE_ANGLE = toRad(2.5f);
-	const F32 MOUSE_SENSITIVITY = 9.0f;
+	const F32 MOUSE_SENSITIVITY = 6.0f;
 	quit = false;
 
 	SceneGraph& scene = getSceneGraph();
@@ -209,11 +209,17 @@ Error SampleApp::userMainLoop(Bool& quit)
 
 		if(in.getMousePosition() != Vec2(0.0))
 		{
-			F32 angY =
-				-ROTATE_ANGLE * in.getMousePosition().x() * MOUSE_SENSITIVITY * getMainRenderer().getAspectRatio();
+			static Vec2 sEulerYawPitch = Vec2(0.0f);
+			static Vec2 sDeadArea = Vec2(0.0f, 0.25f); // Define smooth transition area
 
-			mover->rotateLocalY(angY);
-			mover->rotateLocalX(ROTATE_ANGLE * in.getMousePosition().y() * MOUSE_SENSITIVITY);
+			Vec2 velocity = in.getMousePosition();
+			Vec2 velSign = Vec2(sign(velocity.x()), sign(velocity.y()));
+			velocity = velocity.abs();
+			velocity = Vec2(smoothstep(sDeadArea.x(), sDeadArea.y(), velocity.x()),
+							smoothstep(sDeadArea.x(), sDeadArea.y(), velocity.y())) * velSign;
+			sEulerYawPitch += velocity * Vec2(360.0f, 90.0f) * elapsedTime * MOUSE_SENSITIVITY;
+			sEulerYawPitch.y() = clamp(sEulerYawPitch.y(), -90.0f, 90.0f); // Avoid cycle in Y axis
+			mover->SetPitchYawRoll(toRad(sEulerYawPitch.y()), toRad(sEulerYawPitch.x()), 0.0f);
 		}
 	}
 	else

@@ -146,12 +146,20 @@ public:
 		ANKI_ASSERT(point.w() == 0.0f);
 		const Vec4 j = Vec4(0.0f, 1.0f, 0.0f, 0.0f);
 		const Vec4 vdir = (point - m_ltrf.getOrigin()).getNormalized();
-		const Vec4 vup = j - vdir * j.dot(vdir);
+		const Vec4 vup = (j - vdir * j.dot(vdir)).getNormalized();
 		const Vec4 vside = vdir.cross(vup);
 
 		Mat3x4& rot = m_ltrf.getRotation();
 		rot.setColumns(vside.xyz(), vup.xyz(), (-vdir).xyz());
 		markForUpdate();
+	}
+
+	void SetPitchYawRoll(F32 radPitch, F32 radYaw, F32 radRoll) 
+	{
+		Vec4 forward = Vec4(	cos(radYaw) * cos(radPitch),
+								sin(radPitch),
+								sin(radYaw) * cos(radPitch), 0.0f).getNormalized();
+		lookAtPoint(m_ltrf.getOrigin() + forward);
 	}
 	/// @}
 

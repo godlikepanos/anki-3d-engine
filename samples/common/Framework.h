@@ -11,7 +11,7 @@ class SampleApp : public anki::App
 {
 public:
 	anki::Error init(int argc, char** argv, anki::CString sampleName);
-	anki::Error userMainLoop(anki::Bool& quit) override;
+	anki::Error userMainLoop(anki::Bool& quit, anki::F64 elapsedTime) override;
 
 	virtual anki::Error sampleExtraInit() = 0;
 };

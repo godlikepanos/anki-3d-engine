@@ -38,7 +38,7 @@ public:
 		return Error::NONE;
 	}
 
-	Error userMainLoop(Bool& quit) override
+	Error userMainLoop(Bool& quit, F64 elapsedTime) override
 	{
 		if(getInput().getKey(KeyCode::H) == 1)
 		{
@@ -53,7 +53,7 @@ public:
 				.playAnimation(1, m_waveAnim, animInfo);
 		}
 
-		return SampleApp::userMainLoop(quit);
+		return SampleApp::userMainLoop(quit, elapsedTime);
 	}
 };
 
