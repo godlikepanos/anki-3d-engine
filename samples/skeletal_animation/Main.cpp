@@ -38,7 +38,7 @@ public:
 		return Error::NONE;
 	}
 
-	Error userMainLoop(Bool& quit, F64 elapsedTime) override
+	Error userMainLoop(Bool& quit, Second elapsedTime) override
 	{
 		if(getInput().getKey(KeyCode::H) == 1)
 		{

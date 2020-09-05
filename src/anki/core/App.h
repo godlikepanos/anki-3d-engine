@@ -97,7 +97,7 @@ public:
 	ANKI_USE_RESULT Error mainLoop();
 
 	/// The user code to run along with the other main loop code.
-	virtual ANKI_USE_RESULT Error userMainLoop(Bool& quit, F64 elapsedTime)
+	virtual ANKI_USE_RESULT Error userMainLoop(Bool& quit, Second elapsedTime)
 	{
 		// Do nothing
 		return Error::NONE;

@@ -149,6 +149,29 @@ inline T toDegrees(const T rad)
 	return rad * (T(180) / PI);
 }
 
+/// Returns 1 or -1 based on the sign
+template <typename T>
+inline T sign(T v) 
+{
+	return v > 0 ? 1 : -1;
+}
+
+/// When a value goes out of bounds it cycles rom the other side
+template <typename T>
+inline T wrap(T value, T min, T max) 
+{
+	ANKI_ASSERT(min < max);
+	return (value < min) ? (max - (min - value)) : ((value > max) ? (min + (value - max)) : value);
+}
+
+/// Same as smoothstep in glsl
+template <typename T>
+inline T smoothstep(T edge0, T edge1, T value) 
+{
+	value = clamp((value - edge0) / (edge1 - edge0), T(0), T(1));
+	return value * value * (3 - 2 * value);
+}
+
 /// Linear interpolation between values
 /// @param[in] from Starting value
 /// @param[in] to Ending value

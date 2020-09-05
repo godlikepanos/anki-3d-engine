@@ -102,7 +102,7 @@ class MyApp : public SampleApp
 {
 public:
 	Error sampleExtraInit() override;
-	Error userMainLoop(Bool& quit, F64 elapsedTime) override;
+	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 };
 
 Error MyApp::sampleExtraInit()
@@ -193,7 +193,7 @@ Error MyApp::sampleExtraInit()
 	return Error::NONE;
 }
 
-Error MyApp::userMainLoop(Bool& quit, F64 elapsedTime)
+Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 {
 	// ANKI_CHECK(SampleApp::userMainLoop(quit));
 
