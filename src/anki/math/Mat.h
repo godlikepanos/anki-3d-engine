@@ -1007,11 +1007,11 @@ public:
 	{
 		TMat& m = *this;
 		// Not normalized axis
-		ANKI_ASSERT(isZero<T>(1.0 - axisang.getAxis().getLength()));
+		ANKI_ASSERT(isZero<T>(T(1) - axisang.getAxis().getLength()));
 
 		T c, s;
 		sinCos(axisang.getAngle(), s, c);
-		T t = 1.0 - c;
+		T t = T(1) - c;
 
 		const TVec<T, 3>& axis = axisang.getAxis();
 		m(0, 0) = c + axis.x() * axis.x() * t;
@@ -1473,7 +1473,7 @@ public:
 	ANKI_ENABLE_METHOD(I == 4 && J == 4)
 	TMat getInverseTransformation() const
 	{
-		TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
+		const TMat<T, 3, 3> invertedRot = getRotationPart().getTransposed();
 		TVec<T, 3> invertedTsl = getTranslationPart().xyz();
 		invertedTsl = -(invertedRot * invertedTsl);
 		return TMat(invertedTsl.xyz0(), invertedRot);
@@ -1487,6 +1487,30 @@ public:
 		return TVec<T, 3>(m(0, 0) * v.x() + m(0, 1) * v.y() + m(0, 2) * v.z() + m(0, 3),
 						  m(1, 0) * v.x() + m(1, 1) * v.y() + m(1, 2) * v.z() + m(1, 3),
 						  m(2, 0) * v.x() + m(2, 1) * v.y() + m(2, 2) * v.z() + m(2, 3));
+	}
+
+	/// Create a new transform matrix position at eye and looking at refPoint.
+	template<U VEC_DIMS, ANKI_ENABLE(J == 3 && I == 4 && VEC_DIMS >= 3)>
+	static TMat lookAt(const TVec<T, VEC_DIMS>& eye, const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
+	{
+		const TVec<T, 3> vdir = (refPoint.xyz() - eye.xyz()).getNormalized();
+		const TVec<T, 3> vup = (up.xyz() - vdir * up.xyz().dot(vdir)).getNormalized();
+		const TVec<T, 3> vside = vdir.cross(vup);
+		TMat out;
+		out.setColumns(vside, vup, -vdir, eye.xyz());
+		return out;
+	}
+
+	/// Create a new transform matrix position at eye and looking at refPoint.
+	template<U VEC_DIMS, ANKI_ENABLE(J == 4 && I == 4 && VEC_DIMS >= 3)>
+	static TMat lookAt(const TVec<T, VEC_DIMS>& eye, const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
+	{
+		const TVec<T, 4> vdir = (refPoint.xyz0() - eye.xyz0()).getNormalized();
+		const TVec<T, 4> vup = (up.xyz0() - vdir * up.xyz0().dot(vdir)).getNormalized();
+		const TVec<T, 4> vside = vdir.cross(vup);
+		TMat out;
+		out.setColumns(vside, vup, -vdir, eye.xyz1());
+		return out;
 	}
 
 	TMat lerp(const TMat& b, T t) const

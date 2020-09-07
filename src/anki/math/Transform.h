@@ -215,8 +215,18 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value)
-	void toString(StringAuto& str) const
+	template<U VEC_DIMS>
+	TTransform& lookAt(const TVec<T, VEC_DIMS>& refPoint, const TVec<T, VEC_DIMS>& up)
+	{
+		const TVec<T, 4> j = up.xyz0();
+		const TVec<T, 4> vdir = (refPoint.xyz0() - m_origin).getNormalized();
+		const TVec<T, 4> vup = (j - vdir * j.dot(vdir)).getNormalized();
+		const TVec<T, 4> vside = vdir.cross(vup);
+		m_rotation.setColumns(vside.xyz(), vup.xyz(), (-vdir).xyz());
+		return *this;
+	}
+
+	ANKI_ENABLE_METHOD(std::is_floating_point<T>::value) void toString(StringAuto& str) const
 	{
 		StringAuto b(str.getAllocator());
 		m_origin.toString(b);

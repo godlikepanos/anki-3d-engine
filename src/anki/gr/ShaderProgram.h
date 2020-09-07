@@ -139,6 +139,11 @@ public:
 			return false;
 		}
 
+		if(!graphicsMask && !compute && !rtMask)
+		{
+			return false;
+		}
+
 		return true;
 	}
 };
