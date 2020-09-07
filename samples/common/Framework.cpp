@@ -41,10 +41,10 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	return Error::NONE;
 }
 
-Error SampleApp::userMainLoop(Bool& quit)
+Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 {
 	const F32 ROTATE_ANGLE = toRad(2.5f);
-	const F32 MOUSE_SENSITIVITY = 9.0f;
+	const F32 MOUSE_SENSITIVITY = 5.0f;
 	quit = false;
 
 	SceneGraph& scene = getSceneGraph();
@@ -209,11 +209,13 @@ Error SampleApp::userMainLoop(Bool& quit)
 
 		if(in.getMousePosition() != Vec2(0.0))
 		{
-			F32 angY =
-				-ROTATE_ANGLE * in.getMousePosition().x() * MOUSE_SENSITIVITY * getMainRenderer().getAspectRatio();
-
-			mover->rotateLocalY(angY);
-			mover->rotateLocalX(ROTATE_ANGLE * in.getMousePosition().y() * MOUSE_SENSITIVITY);
+			Vec2 velocity = in.getMousePosition();
+			Euler angles(mover->getLocalRotation().getRotationPart());
+			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z() = 0.0f;
+			mover->setLocalRotation(Mat3x4(angles));
 		}
 	}
 	else

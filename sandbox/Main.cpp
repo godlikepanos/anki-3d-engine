@@ -19,7 +19,7 @@ public:
 	Bool m_profile = false;
 
 	Error init(int argc, char* argv[]);
-	Error userMainLoop(Bool& quit) override;
+	Error userMainLoop(Bool& quit, Second elapsedTime) override;
 };
 
 MyApp* app = nullptr;
@@ -87,7 +87,7 @@ Error MyApp::init(int argc, char* argv[])
 	return Error::NONE;
 }
 
-Error MyApp::userMainLoop(Bool& quit)
+Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 {
 	F32 ang = toRad(2.5f);
 	F32 scale = 0.01f;

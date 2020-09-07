@@ -149,6 +149,21 @@ inline T toDegrees(const T rad)
 	return rad * (T(180) / PI);
 }
 
+/// Returns 1 or -1 based on the sign
+template <typename T>
+inline T sign(T v) 
+{
+	return v > 0 ? 1 : -1;
+}
+
+/// Same as smoothstep in glsl
+template <typename T>
+inline T smoothstep(T edge0, T edge1, T value) 
+{
+	value = clamp((value - edge0) / (edge1 - edge0), T(0), T(1));
+	return value * value * (3 - 2 * value);
+}
+
 /// Linear interpolation between values
 /// @param[in] from Starting value
 /// @param[in] to Ending value

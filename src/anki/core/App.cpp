@@ -563,7 +563,7 @@ Error App::mainLoop()
 			ANKI_CHECK(m_input->handleEvents());
 
 			// User update
-			ANKI_CHECK(userMainLoop(quit));
+			ANKI_CHECK(userMainLoop(quit, crntTime - prevUpdateTime));
 
 			ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime));
 
