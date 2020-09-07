@@ -13,7 +13,8 @@ namespace anki
 /// @addtogroup math
 /// @{
 
-/// Euler angles. Used for rotations. It cannot describe a rotation accurately though
+/// Euler angles. Used for rotations. It cannot describe a rotation accurately though.
+/// The 'x' denotes a rotation around x axis, 'y' around y axis and 'z' around z axis.
 template<typename T>
 class TEuler
 {
@@ -41,58 +42,51 @@ public:
 	explicit TEuler(const TQuat<T>& q)
 	{
 		const T test = q.x() * q.y() + q.z() * q.w();
-		if(test > 0.499)
+		if(test > T(0.499))
 		{
-			y() = 2.0 * atan2<T>(q.x(), q.w());
-			z() = PI / 2.0;
-			x() = 0.0;
-			return;
+			y() = T(2) * atan2<T>(q.x(), q.w());
+			z() = PI / T(2);
+			x() = T(0);
 		}
-		if(test < -0.499)
+		else if(test < T(-0.499))
 		{
-			y() = -2.0 * atan2<T>(q.x(), q.w());
-			z() = -PI / 2.0;
-			x() = 0.0;
-			return;
+			y() = -T(2) * atan2<T>(q.x(), q.w());
+			z() = -PI / T(2);
+			x() = T(0);
 		}
-
-		T sqx = q.x() * q.x();
-		T sqy = q.y() * q.y();
-		T sqz = q.z() * q.z();
-		y() = atan2<T>(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(), 1.0 - 2.0 * sqy - 2.0 * sqz);
-		z() = asin<T>(2.0 * test);
-		x() = atan2<T>(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(), 1.0 - 2.0 * sqx - 2.0 * sqz);
+		else
+		{
+			const T sqx = q.x() * q.x();
+			const T sqy = q.y() * q.y();
+			const T sqz = q.z() * q.z();
+			y() = atan2<T>(T(2) * q.y() * q.w() - T(2) * q.x() * q.z(), T(1) - T(2) * sqy - T(2) * sqz);
+			z() = asin<T>(T(2) * test);
+			x() = atan2<T>(T(2) * q.x() * q.w() - T(2) * q.y() * q.z(), T(1) - T(2) * sqx - T(2) * sqz);
+		}
 	}
 
 	explicit TEuler(const TMat<T, 3, 3>& m3)
 	{
-		T cx, sx;
-		T cy, sy;
-		T cz, sz;
-
-		sy = m3(0, 2);
-		cy = sqrt<T>(1.0 - sy * sy);
-		// normal case
-		if(!isZero<T>(cy))
+		if(m3(1, 0) > T(0.998))
 		{
-			T factor = 1.0 / cy;
-			sx = -m3(1, 2) * factor;
-			cx = m3(2, 2) * factor;
-			sz = -m3(0, 1) * factor;
-			cz = m3(0, 0) * factor;
+			// Singularity at north pole
+			y() = atan2(m3(0, 2), m3(2, 2));
+			z() = PI / T(2);
+			x() = T(0);
 		}
-		// x and z axes aligned
+		else if(m3(1, 0) < T(-0.998))
+		{
+			// Singularity at south pole
+			y() = atan2(m3(0, 2), m3(2, 2));
+			z() = -PI / T(2);
+			x() = T(0);
+		}
 		else
 		{
-			sz = 0.0;
-			cz = 1.0;
-			sx = m3(2, 1);
-			cx = m3(1, 1);
+			y() = atan2(-m3(2, 0), m3(0, 0));
+			z() = asin(m3(1, 0));
+			x() = atan2(-m3(1, 2), m3(1, 1));
 		}
-
-		z() = atan2<T>(sz, cz);
-		y() = atan2<T>(sy, cy);
-		x() = atan2<T>(sx, cx);
 	}
 	/// @}
 

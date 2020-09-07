@@ -12,6 +12,7 @@
 #include <anki/resource/TransferGpuAllocator.h>
 #include <anki/shader_compiler/Glslang.h>
 #include <anki/shader_compiler/ShaderProgramParser.h>
+#include <anki/collision/Aabb.h>
 #include <ctime>
 
 namespace anki
@@ -379,8 +380,8 @@ static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManage
 	ShaderPtr vert = createShader(vertSrc, ShaderType::VERTEX, gr);
 	ShaderPtr frag = createShader(fragSrc, ShaderType::FRAGMENT, gr);
 	ShaderProgramInitInfo inf;
-	inf.m_graphicsShaders[ShaderType::VERTEX];
-	inf.m_graphicsShaders[ShaderType::FRAGMENT];
+	inf.m_graphicsShaders[ShaderType::VERTEX] = vert;
+	inf.m_graphicsShaders[ShaderType::FRAGMENT] = frag;
 	return gr.newShaderProgram(inf);
 }
 
@@ -2633,18 +2634,18 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 {
 	BufferInitInfo inf;
 	inf.m_access = BufferMapAccessBit::WRITE;
-	inf.m_usage = BufferUsageBit::INDEX | BufferUsageBit::STORAGE_TRACE_RAYS_READ;
+	inf.m_usage = BufferUsageBit::INDEX | BufferUsageBit::VERTEX | BufferUsageBit::STORAGE_TRACE_RAYS_READ;
 	inf.m_size = sizeof(Vec3) * 8;
 	vertBuffer = gr.newBuffer(inf);
 	WeakArray<Vec3> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::WRITE);
 
-	//   7----6
-	//  /|   /|
-	// 3-|--2 |
-	// | |  | |
-	// | 4 -|-5
-	// |/   |/
-	// 0----1
+	//   7------6
+	//  /|     /|
+	// 3------2 |
+	// | |    | |
+	// | 4 ---|-5
+	// |/     |/
+	// 0------1
 	positions[0] = Vec3(min.x(), min.y(), max.z());
 	positions[1] = Vec3(max.x(), min.y(), max.z());
 	positions[2] = Vec3(max.x(), max.y(), max.z());
@@ -2709,6 +2710,7 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 	indices[t++] = 5;
 	indices[t++] = 6;
 
+	ANKI_ASSERT(t == indices.getSize());
 	indexBuffer->unmap();
 }
 
@@ -2716,13 +2718,131 @@ ANKI_TEST(Gr, RayGen)
 {
 	COMMON_BEGIN();
 
-	const Bool useRayTracing = gr->getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool useRayTracing = false; // gr->getDeviceCapabilities().m_rayTracingEnabled;
 	if(!useRayTracing)
 	{
 		ANKI_TEST_LOGW("Ray tracing not supported");
 	}
 
 	HeapAllocator<U8> alloc = {allocAligned, nullptr};
+
+	// Create the raster programs
+	ShaderProgramPtr rasterProg;
+	if(!useRayTracing)
+	{
+		const CString vertSrc = R"(
+layout(push_constant, row_major) uniform b_pc
+{
+	Mat4 u_mvp;
+	Vec4 u_color;
+};
+
+layout(location = 0) in Vec3 in_pos;
+layout(location = 0) out Vec4 out_color;
+
+void main()
+{
+	gl_Position = u_mvp * Vec4(in_pos, 1.0);
+	out_color = u_color;
+}
+)";
+
+		const CString fragSrc = R"(
+layout(location = 0) in Vec4 in_color;
+layout(location = 0) out Vec4 out_color;
+
+void main()
+{
+	out_color = in_color;
+}
+)";
+
+		rasterProg = createProgram(vertSrc, fragSrc, *gr);
+	}
+
+	// Create geometry
+	BufferPtr smallBoxVertBuffer, smallBoxIndexBuffer;
+	BufferPtr bigBoxVertBuffer, bigBoxIndexBuffer;
+	const Aabb smallBox(Vec3(130.0f, 0.0f, 65.0f), Vec3(295.0f, 160.0f, 230.0f));
+	const Aabb bigBox(Vec3(265.0f, 0.0f, 295.0f), Vec3(430.0f, 330.0f, 460.0f));
+	{
+		createCubeBuffers(*gr, -(smallBox.getMax().xyz() - smallBox.getMin().xyz()) / 2.0f,
+						  (smallBox.getMax().xyz() - smallBox.getMin().xyz()) / 2.0f, smallBoxIndexBuffer,
+						  smallBoxVertBuffer);
+
+		createCubeBuffers(*gr, -(bigBox.getMax().xyz() - bigBox.getMin().xyz()) / 2.0f,
+						  (bigBox.getMax().xyz() - bigBox.getMin().xyz()) / 2.0f, bigBoxIndexBuffer, bigBoxVertBuffer);
+	}
+
+	// Draw
+	constexpr U32 ITERATIONS = 200;
+	for(U i = 0; i < ITERATIONS; ++i)
+	{
+		HighRezTimer timer;
+		timer.start();
+
+		const Mat4 viewMat =
+			Mat4::lookAt(Vec3(278.0f, 278.0f, -800.0f), Vec3(278.0f, 278.0f, 0.0f), Vec3(0.0f, 1.0f, 0.0f))
+				.getInverse();
+		const Mat4 projMat =
+			Mat4::calculatePerspectiveProjectionMatrix(toRad(40.0f) * WIDTH / HEIGHT, toRad(40.0f), 0.01f, 2000.0f);
+
+		CommandBufferInitInfo cinit;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+
+		cmdb->bindShaderProgram(rasterProg);
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+		FramebufferPtr fb = createColorFb(*gr, presentTex);
+
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+								TextureSubresourceInfo{});
+
+		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
+
+		struct PC
+		{
+			Mat4 m_mvp;
+			Vec4 m_color;
+		} pc;
+
+		pc.m_mvp = projMat * viewMat
+				   * Mat4(Vec4((smallBox.getMin() + smallBox.getMax()).xyz() / 2.0f, 1.0f),
+						  Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f))));
+		pc.m_color = Vec4(0.75f);
+		cmdb->setPushConstants(&pc, sizeof(pc));
+
+		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+		cmdb->bindVertexBuffer(0, smallBoxVertBuffer, 0, sizeof(Vec3));
+		cmdb->bindIndexBuffer(smallBoxIndexBuffer, 0, IndexType::U16);
+
+		cmdb->drawElements(PrimitiveTopology::TRIANGLE_STRIP, 36);
+
+		cmdb->bindVertexBuffer(0, bigBoxVertBuffer, 0, sizeof(Vec3));
+		pc.m_mvp = projMat * viewMat
+				   * Mat4(Vec4((bigBox.getMin() + bigBox.getMax()).xyz() / 2.0f, 1.0f),
+						  Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f))));
+		cmdb->setPushConstants(&pc, sizeof(pc));
+		cmdb->drawElements(PrimitiveTopology::TRIANGLE_STRIP, 36);
+
+		cmdb->endRenderPass();
+
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::PRESENT,
+								TextureSubresourceInfo{});
+
+		cmdb->flush();
+
+		gr->swapBuffers();
+
+		timer.stop();
+		const F32 TICK = 1.0f / 30.0f;
+		if(timer.getElapsedTime() < TICK)
+		{
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
+		}
+	}
 
 	COMMON_END();
 }

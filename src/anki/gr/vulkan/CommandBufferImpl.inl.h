@@ -392,6 +392,7 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	const U32 shaderGroupBaseAlignment =
 		getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupBaseAlignment;
 	const PtrSize sbtBufferSize = sbtRecordCount * shaderGroupBaseAlignment;
+	(void)sbtBufferSize;
 	ANKI_ASSERT(sbtBufferSize + sbtBufferOffset <= sbtBuffer->getSize());
 	ANKI_ASSERT(isAligned(shaderGroupBaseAlignment, sbtBufferOffset));
 
