@@ -12,3 +12,6 @@
 *.ankimtl text eol=lf
 *.ankimdl text eol=lf
 *.ankipart text eol=lf
+*.ankiskel text eol=lf
+*.ankiankim text eol=lf
+*.ankicl text eol=lf

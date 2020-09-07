@@ -10,7 +10,7 @@ AnKi 3D engine is a Linux and Windows opensource game engine that runs on Vulkan
 AnKi's license is `BSD`. This practically means that you can use the source or parts of the source on proprietary and
 non proprietary products as long as you follow the conditions of the license.
 
-See `LICENSE` file for more info.
+See the [LICENSE](LICENSE) file for more info.
 
 2 Building AnKi
 ===============
@@ -80,11 +80,10 @@ Alternatively, recent Visual Studio versions support building CMake projects fro
 - Visual Studio will automatically understand that AnKi is a CMake project and it will populate the CMake cache
 - Press "build all"
 
-
 3 Next steps
 ============
 
-This code repository contains **3 sample projects** that are built by default (`ANKI_BUILD_SAMPLES` CMake option):
+This code repository contains **4 sample projects** that are built by default (`ANKI_BUILD_SAMPLES` CMake option):
 
 - `sponza`: The Crytek's Sponza scene
 - `simple_scene`: A simple scene
@@ -99,3 +98,9 @@ On Linux:
 	$./path/to/build/bin/sponza
 
 On Windows just find the `sponza.exe` and execute it.
+
+4 Contributing
+==============
+
+There are no special rules if you want to contribute. Just create a PR. Read the code [style guide](docs/code_style.md)
+before that though.
