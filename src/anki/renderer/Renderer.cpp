@@ -239,8 +239,8 @@ void Renderer::initJitteredMats()
 		m_jitteredMats16x[i].setTranslationPart(Vec4(subSample, 0.0, 1.0));
 	}
 
-	static const Array<Vec2, 8> SAMPLE_LOCS_8 = {{Vec2(-7.0, 1.0), Vec2(-5.0, -5.0), Vec2(-1.0, -3.0), Vec2(3.0, -7.0),
-												  Vec2(5.0, -1.0), Vec2(7.0, 7.0), Vec2(1.0, 3.0), Vec2(-3.0, 5.0)}};
+	static const Array<Vec2, 8> SAMPLE_LOCS_8 = {Vec2(-7.0, 1.0), Vec2(-5.0, -5.0), Vec2(-1.0, -3.0), Vec2(3.0, -7.0),
+												 Vec2(5.0, -1.0), Vec2(7.0, 7.0),   Vec2(1.0, 3.0),   Vec2(-3.0, 5.0)};
 
 	for(U i = 0; i < 8; ++i)
 	{

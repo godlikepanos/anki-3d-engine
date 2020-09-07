@@ -20,7 +20,7 @@
 namespace anki
 {
 
-static const Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {{"I", "E", "W", "F"}};
+static const Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {"I", "E", "W", "F"};
 
 Logger::Logger()
 {

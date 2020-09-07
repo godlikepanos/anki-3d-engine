@@ -18,7 +18,7 @@ StagingGpuMemoryManager::~StagingGpuMemoryManager()
 	for(auto& it : m_perFrameBuffers)
 	{
 		it.m_buff->unmap();
-		it.m_buff = {};
+		it.m_buff.reset(nullptr);
 	}
 }
 
@@ -74,7 +74,7 @@ void* StagingGpuMemoryManager::allocateFrame(PtrSize size, StagingGpuMemoryType 
 void* StagingGpuMemoryManager::tryAllocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
 {
 	PerFrameBuffer& buff = m_perFrameBuffers[usage];
-	Error err = buff.m_alloc.allocate(size, token.m_offset);
+	const Error err = buff.m_alloc.allocate(size, token.m_offset);
 	if(!err)
 	{
 		token.m_buffer = buff.m_buff;

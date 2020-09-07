@@ -251,7 +251,7 @@ public:
 	ShaderProgramBinaryBlockInstance* m_pushConstantBlock = nullptr;
 	WeakArray<ShaderProgramBinaryOpaqueInstance> m_opaques;
 	WeakArray<ShaderProgramBinaryConstantInstance> m_constants;
-	Array<U32, 3> m_workgroupSizes = {{MAX_U32, MAX_U32, MAX_U32}};
+	Array<U32, 3> m_workgroupSizes = {MAX_U32, MAX_U32, MAX_U32};
 	Array<U32, 3> m_workgroupSizesConstants = {
 		{MAX_U32, MAX_U32, MAX_U32}}; ///< Indices to ShaderProgramBinary::m_constants.
 

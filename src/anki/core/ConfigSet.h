@@ -110,7 +110,6 @@ private:
 	void setInternal(CString option, F64 value);
 	void setInternal(CString option, U64 value);
 
-
 	void newOptionInternal(CString optionName, U64 value, U64 minValue, U64 maxValue, CString helpMsg);
 	void newOptionInternal(CString optionName, F64 value, F64 minValue, F64 maxValue, CString helpMsg);
 };

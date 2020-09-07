@@ -107,7 +107,7 @@ void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_mip = 0;
 
-	static const Array<CString, 5> passNames = {{"HiZ #0", "HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4"}};
+	static const Array<CString, 5> passNames = {"HiZ #0", "HiZ #1", "HiZ #2", "HiZ #3", "HiZ #4"};
 
 	// Every pass can do MIPS_WRITTEN_PER_PASS mips
 	for(U32 i = 0; i < m_mipCount; i += MIPS_WRITTEN_PER_PASS)

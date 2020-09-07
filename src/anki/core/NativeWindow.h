@@ -23,7 +23,7 @@ class NativeWindowInitInfo
 public:
 	U32 m_width = 640;
 	U32 m_height = 768;
-	Array<U32, 4> m_rgbaBits = {{8, 8, 8, 0}};
+	Array<U32, 4> m_rgbaBits = {8, 8, 8, 0};
 	U32 m_depthBits = 0;
 	U32 m_stencilBits = 0;
 	U32 m_samplesCount = 0;

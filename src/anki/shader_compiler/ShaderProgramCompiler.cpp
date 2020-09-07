@@ -342,8 +342,8 @@ public:
 	DynamicArrayAuto<ShaderProgramBinaryOpaqueInstance> m_opaqueInstances = {m_alloc};
 	DynamicArrayAuto<ShaderProgramBinaryConstantInstance> m_constInstances = {m_alloc};
 
-	Array<U32, 3> m_workgroupSizes = {{MAX_U32, MAX_U32, MAX_U32}};
-	Array<U32, 3> m_workgroupSizesConstants = {{MAX_U32, MAX_U32, MAX_U32}};
+	Array<U32, 3> m_workgroupSizes = {MAX_U32, MAX_U32, MAX_U32};
+	Array<U32, 3> m_workgroupSizesConstants = {MAX_U32, MAX_U32, MAX_U32};
 	/// @}
 
 	Refl(const GenericMemoryPoolAllocator<U8>& alloc)
@@ -353,9 +353,9 @@ public:
 
 	Error setWorkgroupSizes(U32 x, U32 y, U32 z, U32 specConstMask) final
 	{
-		m_workgroupSizesConstants = {{MAX_U32, MAX_U32, MAX_U32}};
-		m_workgroupSizes = {{MAX_U32, MAX_U32, MAX_U32}};
-		const Array<U32, 3> input = {{x, y, z}};
+		m_workgroupSizesConstants = {MAX_U32, MAX_U32, MAX_U32};
+		m_workgroupSizes = {MAX_U32, MAX_U32, MAX_U32};
+		const Array<U32, 3> input = {x, y, z};
 
 		for(U32 i = 0; i < 3; ++i)
 		{

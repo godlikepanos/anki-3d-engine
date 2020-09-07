@@ -620,17 +620,17 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 
 	// Light shading passes
 	{
-		Array<RenderPassWorkCallback, 6> callbacks = {{runLightShadingCallback<0>, runLightShadingCallback<1>,
-													   runLightShadingCallback<2>, runLightShadingCallback<3>,
-													   runLightShadingCallback<4>, runLightShadingCallback<5>}};
+		Array<RenderPassWorkCallback, 6> callbacks = {runLightShadingCallback<0>, runLightShadingCallback<1>,
+													  runLightShadingCallback<2>, runLightShadingCallback<3>,
+													  runLightShadingCallback<4>, runLightShadingCallback<5>};
 
 		// RT
 		m_ctx.m_lightShadingRt = rgraph.importRenderTarget(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
 		// Passes
-		static const Array<CString, 6> passNames = {{"CubeRefl LightShad #0", "CubeRefl LightShad #1",
-													 "CubeRefl LightShad #2", "CubeRefl LightShad #3",
-													 "CubeRefl LightShad #4", "CubeRefl LightShad #5"}};
+		static const Array<CString, 6> passNames = {"CubeRefl LightShad #0", "CubeRefl LightShad #1",
+													"CubeRefl LightShad #2", "CubeRefl LightShad #3",
+													"CubeRefl LightShad #4", "CubeRefl LightShad #5"};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
@@ -708,8 +708,8 @@ void ProbeReflections::populateRenderGraph(RenderingContext& rctx)
 			 runMipmappingOfLightShadingCallback<2>, runMipmappingOfLightShadingCallback<3>,
 			 runMipmappingOfLightShadingCallback<4>, runMipmappingOfLightShadingCallback<5>}};
 
-		static const Array<CString, 6> passNames = {{"CubeRefl Mip #0", "CubeRefl Mip #1", "CubeRefl Mip #2",
-													 "CubeRefl Mip #3", "CubeRefl Mip #4", "CubeRefl Mip #5"}};
+		static const Array<CString, 6> passNames = {"CubeRefl Mip #0", "CubeRefl Mip #1", "CubeRefl Mip #2",
+													"CubeRefl Mip #3", "CubeRefl Mip #4", "CubeRefl Mip #5"};
 		for(U32 faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);

@@ -92,8 +92,8 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	m_runCtx.m_crntPassIdx = 0;
 
 	// Create passes
-	static const Array<CString, 8> passNames = {{"DownBlur #0", "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
-												 "Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"}};
+	static const Array<CString, 8> passNames = {"DownBlur #0",  "Down/Blur #1", "Down/Blur #2", "Down/Blur #3",
+												"Down/Blur #4", "Down/Blur #5", "Down/Blur #6", "Down/Blur #7"};
 	if(m_useCompute)
 	{
 		for(U32 i = 0; i < m_passCount; ++i)

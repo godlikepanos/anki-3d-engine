@@ -151,13 +151,6 @@ inline T max(T a, T b)
 	return (a > b) ? a : b;
 }
 
-template<typename T>
-inline T clamp(T v, T minv, T maxv)
-{
-	ANKI_ASSERT(minv < maxv);
-	return min<T>(max<T>(minv, v), maxv);
-}
-
 /// Check if a number is a power of 2
 template<typename Int, ANKI_ENABLE(std::is_integral<Int>::value)>
 inline Bool isPowerOfTwo(Int x)

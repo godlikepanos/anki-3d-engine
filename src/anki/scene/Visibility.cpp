@@ -551,7 +551,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 			else
 			{
-				el->m_renderQueues = {{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
+				el->m_renderQueues = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 			}
 		}
 
@@ -586,7 +586,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 			else
 			{
-				el->m_renderQueues = {{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
+				el->m_renderQueues = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 			}
 		}
 

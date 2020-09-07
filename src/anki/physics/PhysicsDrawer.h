@@ -40,7 +40,7 @@ private:
 
 		void drawLine(const btVector3& from, const btVector3& to, const btVector3& color) override
 		{
-			Array<Vec3, 2> lines = {{toAnki(from), toAnki(to)}};
+			Array<Vec3, 2> lines = {toAnki(from), toAnki(to)};
 			m_drawer->drawLines(&lines[0], 2, Vec4(toAnki(color), 1.0f));
 		}
 

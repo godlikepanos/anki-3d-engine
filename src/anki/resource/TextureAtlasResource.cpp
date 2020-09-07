@@ -106,7 +106,7 @@ Error TextureAtlasResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(subTexEl.getChildElement("uv", el));
 		Vec4 uv;
 		ANKI_CHECK(el.getNumbers(uv));
-		m_subTexes[subTexesCount].m_uv = {{uv[0], uv[1], uv[2], uv[3]}};
+		m_subTexes[subTexesCount].m_uv = {uv[0], uv[1], uv[2], uv[3]};
 
 		names += name.getLength() + 1;
 		++subTexesCount;

@@ -224,7 +224,7 @@ static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolA
 Error preprocessGlsl(CString in, StringAuto& out)
 {
 	glslang::TShader shader(EShLangVertex);
-	Array<const char*, 1> csrc = {{&in[0]}};
+	Array<const char*, 1> csrc = {&in[0]};
 	shader.setStrings(&csrc[0], 1);
 
 	DirStackFileIncluder includer;
@@ -249,7 +249,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	const glslang::EShTargetLanguageVersion langVersion = glslang::EShTargetSpv_1_3;
 
 	glslang::TShader shader(stage);
-	Array<const char*, 1> csrc = {{&src[0]}};
+	Array<const char*, 1> csrc = {&src[0]};
 	shader.setStrings(&csrc[0], 1);
 	shader.setEnvTarget(glslang::EShTargetSpv, langVersion);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))

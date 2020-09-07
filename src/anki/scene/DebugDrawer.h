@@ -148,7 +148,7 @@ public:
 	void drawLine(const Mat4& mvp, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, const Vec3& a,
 				  const Vec3& b, StagingGpuMemoryManager& stagingGpuAllocator, CommandBufferPtr& cmdb) const
 	{
-		Array<Vec3, 2> points = {{a, b}};
+		Array<Vec3, 2> points = {a, b};
 		drawLines(ConstWeakArray<Mat4>(&mvp, 1), color, lineSize, ditherFailedDepth, points, stagingGpuAllocator, cmdb);
 	}
 

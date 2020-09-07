@@ -75,8 +75,8 @@ private:
 	int m_pid = -1;
 	int m_exitCode = DEFAULT_EXIT_CODE;
 	ProcessStatus m_status = ProcessStatus::NOT_RUNNING;
-	Array<int, 2> m_stdoutPipe = {{-1, -1}};
-	Array<int, 2> m_stderrPipe = {{-1, -1}};
+	Array<int, 2> m_stdoutPipe = {-1, -1};
+	Array<int, 2> m_stderrPipe = {-1, -1};
 
 	void destroyPipes();
 

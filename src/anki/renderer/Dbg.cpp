@@ -93,7 +93,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	for(U32 i = start; i < end; ++i)
 	{
 		const RenderableQueueElement& el = ctx.m_renderQueue->m_renderables[i];
-		Array<void*, 1> a = {{const_cast<void*>(el.m_userData)}};
+		Array<void*, 1> a = {const_cast<void*>(el.m_userData)};
 		el.m_callback(dctx, a);
 	}
 
@@ -102,7 +102,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		for(const GlobalIlluminationProbeQueueElement& el : ctx.m_renderQueue->m_giProbes)
 		{
-			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
 			el.m_debugDrawCallback(dctx, a);
 		}
 	}
@@ -114,13 +114,13 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		while(count--)
 		{
 			const PointLightQueueElement& el = ctx.m_renderQueue->m_pointLights[count];
-			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
 			el.m_debugDrawCallback(dctx, a);
 		}
 
 		for(const SpotLightQueueElement& el : ctx.m_renderQueue->m_spotLights)
 		{
-			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
 			el.m_debugDrawCallback(dctx, a);
 		}
 	}
@@ -130,7 +130,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		for(const DecalQueueElement& el : ctx.m_renderQueue->m_decals)
 		{
-			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
 			el.m_debugDrawCallback(dctx, a);
 		}
 	}
@@ -140,7 +140,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		for(const ReflectionProbeQueueElement& el : ctx.m_renderQueue->m_reflectionProbes)
 		{
-			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
 			el.m_debugDrawCallback(dctx, a);
 		}
 	}
@@ -150,7 +150,7 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 	{
 		for(const GlobalIlluminationProbeQueueElement& el : ctx.m_renderQueue->m_giProbes)
 		{
-			Array<void*, 1> a = {{const_cast<void*>(el.m_debugDrawCallbackUserData)}};
+			Array<void*, 1> a = {const_cast<void*>(el.m_debugDrawCallbackUserData)};
 			el.m_debugDrawCallback(dctx, a);
 		}
 	}

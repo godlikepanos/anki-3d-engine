@@ -208,7 +208,7 @@ void DebugDrawer::drawCube(F32 size)
 	const Vec3 maxPos = Vec3(0.5f * size);
 	const Vec3 minPos = Vec3(-0.5f * size);
 
-	Array<Vec3, 8> points = {{
+	Array<Vec3, 8> points = {
 		Vec3(maxPos.x(), maxPos.y(), maxPos.z()), // right top front
 		Vec3(minPos.x(), maxPos.y(), maxPos.z()), // left top front
 		Vec3(minPos.x(), minPos.y(), maxPos.z()), // left bottom front
@@ -217,9 +217,9 @@ void DebugDrawer::drawCube(F32 size)
 		Vec3(minPos.x(), maxPos.y(), minPos.z()), // left top back
 		Vec3(minPos.x(), minPos.y(), minPos.z()), // left bottom back
 		Vec3(maxPos.x(), minPos.y(), minPos.z()) // right bottom back
-	}};
+	};
 
-	static const Array<U32, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
+	static const Array<U32, 24> indeces = {0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7};
 
 	setTopology(PrimitiveTopology::LINES);
 	for(U32 id : indeces)

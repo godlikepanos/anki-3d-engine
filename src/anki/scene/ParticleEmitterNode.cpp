@@ -320,7 +320,7 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 		cmdb->bindVertexBuffer(0, token.m_buffer, token.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);
 
 		// Uniforms
-		Array<Mat4, 1> trf = {{Mat4::getIdentity()}};
+		Array<Mat4, 1> trf = {Mat4::getIdentity()};
 		static_cast<const MaterialRenderComponent&>(self.getComponent<RenderComponent>())
 			.allocateAndSetupUniforms(ctx, trf, trf, *ctx.m_stagingGpuAllocator);
 

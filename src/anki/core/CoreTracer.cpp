@@ -371,7 +371,7 @@ Error CoreTracer::writeCountersForReal()
 	}
 
 	// Write some statistics
-	Array<const char*, 2> funcs = {{"SUM", "AVERAGE"}};
+	Array<const char*, 2> funcs = {"SUM", "AVERAGE"};
 	for(const char* func : funcs)
 	{
 		ANKI_CHECK(m_countersCsvFile.writeText(func));

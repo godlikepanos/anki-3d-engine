@@ -222,7 +222,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	ci.pApplicationInfo = &app;
 
 	// Layers
-	static Array<const char*, 1> LAYERS = {{"VK_LAYER_KHRONOS_validation"}};
+	static Array<const char*, 1> LAYERS = {"VK_LAYER_KHRONOS_validation"};
 	Array<const char*, LAYERS.getSize()> layersToEnable; // Keep it alive in the stack
 	if(init.m_config->getBool("gr_debugContext"))
 	{

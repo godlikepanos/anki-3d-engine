@@ -767,7 +767,7 @@ Error App::compileAllShaders()
 			Bool skipCompilation(U64 hash)
 			{
 				ANKI_ASSERT(hash != 0);
-				const Array<U64, 2> hashes = {{hash, m_gpuHash}};
+				const Array<U64, 2> hashes = {hash, m_gpuHash};
 				const U64 finalHash = computeHash(hashes.getBegin(), hashes.getSizeInBytes());
 
 				m_newHash = finalHash;

@@ -110,7 +110,7 @@ void Canvas::handleInput()
 	ImGuiIO& io = ImGui::GetIO();
 
 	// Handle mouse
-	Array<U32, 4> viewport = {{0, 0, m_width, m_height}};
+	Array<U32, 4> viewport = {0, 0, m_width, m_height};
 	Vec2 mousePosf = in.getMousePosition() / 2.0f + 0.5f;
 	mousePosf.y() = 1.0f - mousePosf.y();
 	const UVec2 mousePos(U32(mousePosf.x() * F32(viewport[2])), U32(mousePosf.y() * F32(viewport[3])));

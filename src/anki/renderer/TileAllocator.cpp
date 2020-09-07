@@ -16,7 +16,7 @@ public:
 	U64 m_lightUuid = 0;
 	U32 m_lightDrawcallCount = 0;
 	Array<U32, 4> m_viewport = {};
-	Array<U32, 4> m_subTiles = {{MAX_U32, MAX_U32, MAX_U32, MAX_U32}};
+	Array<U32, 4> m_subTiles = {MAX_U32, MAX_U32, MAX_U32, MAX_U32};
 	U32 m_superTile = MAX_U32;
 	U8 m_lightLod = 0;
 	U8 m_lightFace = 0;

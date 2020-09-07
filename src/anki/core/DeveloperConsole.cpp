@@ -72,7 +72,7 @@ void DeveloperConsole::build(CanvasPtr ctx)
 			ANKI_ASSERT(0);
 		}
 
-		static const Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {{"I", "E", "W", "F"}};
+		static const Array<const char*, static_cast<U>(LoggerMessageType::COUNT)> MSG_TEXT = {"I", "E", "W", "F"};
 		ImGui::TextWrapped("[%s][%s] %s (%s:%d %s)", MSG_TEXT[static_cast<U>(item.m_type)],
 						   (item.m_subsystem) ? item.m_subsystem : "N/A ", item.m_msg.cstr(), item.m_file, item.m_line,
 						   item.m_func);

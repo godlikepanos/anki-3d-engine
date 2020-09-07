@@ -204,7 +204,7 @@ inline void GraphicsRenderPassDescription::setFramebufferInfo(
 	m_fbDescr = fbInfo;
 	memcpy(m_rtHandles.getBegin(), colorRenderTargetHandles.getBegin(), colorRenderTargetHandles.getSizeInBytes());
 	m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
-	m_fbRenderArea = {{minx, miny, maxx, maxy}};
+	m_fbRenderArea = {minx, miny, maxx, maxy};
 }
 
 inline RenderGraphDescription::~RenderGraphDescription()

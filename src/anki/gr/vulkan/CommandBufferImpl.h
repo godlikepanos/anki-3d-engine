@@ -396,8 +396,8 @@ private:
 #endif
 
 	FramebufferPtr m_activeFb;
-	Array<U32, 4> m_renderArea = {{0, 0, MAX_U32, MAX_U32}};
-	Array<U32, 2> m_fbSize = {{0, 0}};
+	Array<U32, 4> m_renderArea = {0, 0, MAX_U32, MAX_U32};
+	Array<U32, 2> m_fbSize = {0, 0};
 	U32 m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
 	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
@@ -418,15 +418,15 @@ private:
 
 	/// @name state_opts
 	/// @{
-	Array<U32, 4> m_viewport = {{0, 0, 0, 0}};
-	Array<U32, 4> m_scissor = {{0, 0, MAX_U32, MAX_U32}};
+	Array<U32, 4> m_viewport = {0, 0, 0, 0};
+	Array<U32, 4> m_scissor = {0, 0, MAX_U32, MAX_U32};
 	Bool m_viewportDirty = true;
 	VkViewport m_lastViewport = {};
 	Bool m_scissorDirty = true;
 	VkRect2D m_lastScissor = {{-1, -1}, {MAX_U32, MAX_U32}};
-	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.
-	Array<U32, 2> m_stencilWriteMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
-	Array<U32, 2> m_stencilReferenceMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
+	Array<U32, 2> m_stencilCompareMasks = {0x5A5A5A5A, 0x5A5A5A5A}; ///< Use a stupid number to initialize.
+	Array<U32, 2> m_stencilWriteMasks = {0x5A5A5A5A, 0x5A5A5A5A};
+	Array<U32, 2> m_stencilReferenceMasks = {0x5A5A5A5A, 0x5A5A5A5A};
 #if ANKI_ENABLE_ASSERTS
 	Bool m_lineWidthSet = false;
 #endif

@@ -8,7 +8,7 @@
 namespace anki
 {
 
-Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR = {{"UNKNOWN", "ARM", "NVIDIA", "AMD", "INTEL"}};
+Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR = {"UNKNOWN", "ARM", "NVIDIA", "AMD", "INTEL"};
 
 static void getFormatInfo(Format fmt, U& texelComponents, U& texelBytes, U& blockSize, U& blockBytes)
 {

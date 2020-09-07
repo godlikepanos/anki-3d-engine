@@ -31,7 +31,7 @@ Error TextureViewImpl::init(const TextureViewInitInfo& inf)
 	m_texType = m_microImageView->m_derivedTextureType;
 
 	// Create the hash
-	Array<U64, 2> toHash = {{tex.getUuid(), ptrToNumber(m_handle)}};
+	Array<U64, 2> toHash = {tex.getUuid(), ptrToNumber(m_handle)};
 	m_hash = computeHash(&toHash[0], sizeof(toHash));
 
 	return Error::NONE;
