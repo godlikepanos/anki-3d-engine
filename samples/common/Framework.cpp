@@ -209,13 +209,13 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		if(in.getMousePosition() != Vec2(0.0))
 		{
-			static Vec2 sEulerYawPitch = Vec2(0.0f);
-			static Vec2 sDeadArea = Vec2(0.0f, 0.01f); // Define smooth transition area (TODO: Read this from config)
-
 			Vec2 velocity = in.getMousePosition();
-			sEulerYawPitch += velocity * Vec2(360.0f) * elapsedTime * MOUSE_SENSITIVITY;
-			sEulerYawPitch.y() = clamp(sEulerYawPitch.y(), -90.0f, 90.0f); // Avoid cycle in Y axis
-			mover->setPitchYawRoll(toRad(sEulerYawPitch.y()), toRad(sEulerYawPitch.x()), 0.0f);
+			Euler angles(mover->getLocalRotation().getRotationPart());
+			angles.x() += velocity.y() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
+			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
+			angles.z() = 0.0f;
+			mover->setLocalRotation(Mat3x4(angles));
 		}
 	}
 	else

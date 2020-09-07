@@ -156,14 +156,6 @@ inline T sign(T v)
 	return v > 0 ? 1 : -1;
 }
 
-/// When a value goes out of bounds it cycles rom the other side
-template <typename T>
-inline T wrap(T value, T min, T max) 
-{
-	ANKI_ASSERT(min < max);
-	return (value < min) ? (max - (min - value)) : ((value > max) ? (min + (value - max)) : value);
-}
-
 /// Same as smoothstep in glsl
 template <typename T>
 inline T smoothstep(T edge0, T edge1, T value) 

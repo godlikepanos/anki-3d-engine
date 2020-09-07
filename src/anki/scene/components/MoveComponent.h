@@ -156,9 +156,7 @@ public:
 
 	void setPitchYawRoll(F32 radPitch, F32 radYaw, F32 radRoll) 
 	{
-		const Vec4 forward = Vec4(	cos(radYaw) * cos(radPitch),
-								sin(radPitch),
-								sin(radYaw) * cos(radPitch), 0.0f).getNormalized();
+		const Vec4 forward = Vec4(	cos(radYaw) * cos(radPitch), sin(radPitch),	sin(radYaw) * cos(radPitch), 0.0f).getNormalized();
 		lookAtPoint(m_ltrf.getOrigin() + forward);
 	}
 	/// @}
