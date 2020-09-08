@@ -16,7 +16,7 @@ namespace anki
 /// @{
 
 /// Graphics object type.
-enum GrObjectType : U8
+enum class GrObjectType : U8
 {
 	BUFFER,
 	COMMAND_BUFFER,

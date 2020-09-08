@@ -526,8 +526,9 @@ private:
 		TextureInitInfo m_initInfo;
 		U64 m_hash = 0;
 		TexturePtr m_importedTex;
-		TextureUsageBit m_importedLastKnownUsage;
-		TextureUsageBit m_usageDerivedByDeps; ///< Derived by the deps of this RT and will be used to set its usage.
+		TextureUsageBit m_importedLastKnownUsage = TextureUsageBit::NONE;
+		/// Derived by the deps of this RT and will be used to set its usage.
+		TextureUsageBit m_usageDerivedByDeps = TextureUsageBit::NONE;
 		Bool m_importedAndUndefinedUsage = false;
 	};
 

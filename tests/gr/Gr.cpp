@@ -2630,7 +2630,8 @@ void main()
 	COMMON_END();
 }
 
-static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& indexBuffer, BufferPtr& vertBuffer)
+static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& indexBuffer, BufferPtr& vertBuffer,
+							  Bool turnInsideOut = false)
 {
 	BufferInitInfo inf;
 	inf.m_access = BufferMapAccessBit::WRITE;
@@ -2678,22 +2679,6 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 	indices[t++] = 4;
 	indices[t++] = 5;
 
-	// Back
-	indices[t++] = 4;
-	indices[t++] = 7;
-	indices[t++] = 6;
-	indices[t++] = 5;
-	indices[t++] = 4;
-	indices[t++] = 6;
-
-	// Front
-	indices[t++] = 0;
-	indices[t++] = 1;
-	indices[t++] = 3;
-	indices[t++] = 3;
-	indices[t++] = 1;
-	indices[t++] = 2;
-
 	// Left
 	indices[t++] = 0;
 	indices[t++] = 3;
@@ -2710,7 +2695,32 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 	indices[t++] = 5;
 	indices[t++] = 6;
 
+	// Back
+	indices[t++] = 4;
+	indices[t++] = 7;
+	indices[t++] = 6;
+	indices[t++] = 5;
+	indices[t++] = 4;
+	indices[t++] = 6;
+
+	// Front
+	indices[t++] = 0;
+	indices[t++] = 1;
+	indices[t++] = 3;
+	indices[t++] = 3;
+	indices[t++] = 1;
+	indices[t++] = 2;
+
 	ANKI_ASSERT(t == indices.getSize());
+
+	if(turnInsideOut)
+	{
+		for(U32 i = 0; i < t; i += 3)
+		{
+			std::swap(indices[i + 1], indices[i + 2]);
+		}
+	}
+
 	indexBuffer->unmap();
 }
 
@@ -2763,8 +2773,10 @@ void main()
 	// Create geometry
 	BufferPtr smallBoxVertBuffer, smallBoxIndexBuffer;
 	BufferPtr bigBoxVertBuffer, bigBoxIndexBuffer;
+	BufferPtr roomVertBuffer, roomIndexBuffer;
 	const Aabb smallBox(Vec3(130.0f, 0.0f, 65.0f), Vec3(295.0f, 160.0f, 230.0f));
 	const Aabb bigBox(Vec3(265.0f, 0.0f, 295.0f), Vec3(430.0f, 330.0f, 460.0f));
+	const Aabb roomBox(Vec3(0.0f), Vec3(555.0f));
 	{
 		createCubeBuffers(*gr, -(smallBox.getMax().xyz() - smallBox.getMin().xyz()) / 2.0f,
 						  (smallBox.getMax().xyz() - smallBox.getMin().xyz()) / 2.0f, smallBoxIndexBuffer,
@@ -2772,6 +2784,10 @@ void main()
 
 		createCubeBuffers(*gr, -(bigBox.getMax().xyz() - bigBox.getMin().xyz()) / 2.0f,
 						  (bigBox.getMax().xyz() - bigBox.getMin().xyz()) / 2.0f, bigBoxIndexBuffer, bigBoxVertBuffer);
+
+		createCubeBuffers(*gr, -(roomBox.getMax().xyz() - roomBox.getMin().xyz()) / 2.0f,
+						  (roomBox.getMax().xyz() - roomBox.getMin().xyz()) / 2.0f, roomIndexBuffer, roomVertBuffer,
+						  true);
 	}
 
 	// Draw
@@ -2802,35 +2818,46 @@ void main()
 
 		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
 
+		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
+
 		struct PC
 		{
 			Mat4 m_mvp;
 			Vec4 m_color;
 		} pc;
 
+		// Room
+		pc.m_mvp = projMat * viewMat
+				   * Mat4(Vec4((roomBox.getMin() + roomBox.getMax()).xyz() / 2.0f, 1.0f), Mat3::getIdentity());
+		pc.m_color = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		cmdb->setPushConstants(&pc, sizeof(pc));
+		cmdb->bindVertexBuffer(0, roomVertBuffer, 0, sizeof(Vec3));
+		cmdb->bindIndexBuffer(roomIndexBuffer, 0, IndexType::U16);
+		cmdb->drawElements(PrimitiveTopology::TRIANGLES, 36);
+
+		// Small box
 		pc.m_mvp = projMat * viewMat
 				   * Mat4(Vec4((smallBox.getMin() + smallBox.getMax()).xyz() / 2.0f, 1.0f),
 						  Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f))));
 		pc.m_color = Vec4(0.75f);
 		cmdb->setPushConstants(&pc, sizeof(pc));
-
-		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
 		cmdb->bindVertexBuffer(0, smallBoxVertBuffer, 0, sizeof(Vec3));
 		cmdb->bindIndexBuffer(smallBoxIndexBuffer, 0, IndexType::U16);
+		cmdb->drawElements(PrimitiveTopology::TRIANGLES, 36);
 
-		cmdb->drawElements(PrimitiveTopology::TRIANGLE_STRIP, 36);
-
-		cmdb->bindVertexBuffer(0, bigBoxVertBuffer, 0, sizeof(Vec3));
+		// Big box
 		pc.m_mvp = projMat * viewMat
 				   * Mat4(Vec4((bigBox.getMin() + bigBox.getMax()).xyz() / 2.0f, 1.0f),
 						  Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f))));
 		cmdb->setPushConstants(&pc, sizeof(pc));
-		cmdb->drawElements(PrimitiveTopology::TRIANGLE_STRIP, 36);
+		cmdb->bindVertexBuffer(0, bigBoxVertBuffer, 0, sizeof(Vec3));
+		cmdb->bindIndexBuffer(bigBoxIndexBuffer, 0, IndexType::U16);
+		cmdb->drawElements(PrimitiveTopology::TRIANGLES, 36);
 
 		cmdb->endRenderPass();
 
 		cmdb->setTextureBarrier(presentTex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::PRESENT,
-								TextureSubresourceInfo{});
+								TextureSubresourceInfo());
 
 		cmdb->flush();
 

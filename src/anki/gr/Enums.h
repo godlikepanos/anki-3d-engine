@@ -14,7 +14,7 @@ namespace anki
 
 /// @addtogroup graphics
 /// @{
-enum ColorBit : U8
+enum class ColorBit : U8
 {
 	NONE = 0,
 	RED = 1 << 0,
@@ -25,7 +25,7 @@ enum ColorBit : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ColorBit, inline)
 
-enum PrimitiveTopology : U8
+enum class PrimitiveTopology : U8
 {
 	POINTS,
 	LINES,

@@ -49,22 +49,22 @@ VkPrimitiveTopology convertTopology(PrimitiveTopology ak)
 	VkPrimitiveTopology out = VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
 	switch(ak)
 	{
-	case POINTS:
+	case PrimitiveTopology::POINTS:
 		out = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		break;
-	case LINES:
+	case PrimitiveTopology::LINES:
 		out = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		break;
-	case LINE_STRIP:
+	case PrimitiveTopology::LINE_STRIP:
 		out = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 		break;
-	case TRIANGLES:
+	case PrimitiveTopology::TRIANGLES:
 		out = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		break;
-	case TRIANGLE_STRIP:
+	case PrimitiveTopology::TRIANGLE_STRIP:
 		out = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 		break;
-	case PATCHES:
+	case PrimitiveTopology::PATCHES:
 		out = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 		break;
 	default:
