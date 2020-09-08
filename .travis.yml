@@ -34,7 +34,7 @@ matrix:
       dist: xenial
       compiler: gcc
       env:
-        - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON TOOLS=ON TESTS=ON
+        - GENERATOR="Unix Makefiles" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON TOOLS=ON TESTS=ON CC=gcc-6 CXX=g++-6
         - GENERATOR="Unix Makefiles" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF TOOLS=ON TESTS=ON
     - os: linux
       dist: xenial
