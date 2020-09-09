@@ -33,7 +33,7 @@ void main()
 #if COLOR_TEXTURE == 1
 	out_uv = in_uv;
 #endif
-	gl_Position = u_mvp[gl_InstanceID] * Vec4(in_position, 1.0);
+	gl_Position = u_mvp[gl_InstanceIndex] * Vec4(in_position, 1.0);
 }
 #pragma anki end
 

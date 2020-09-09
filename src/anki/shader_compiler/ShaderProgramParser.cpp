@@ -26,7 +26,6 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_VENDOR_%s 1
 
 #define gl_VertexID gl_VertexIndex
-#define gl_InstanceID gl_InstanceIndex
 
 #extension GL_EXT_control_flow_attributes : require
 #define ANKI_UNROLL [[unroll]]
@@ -51,6 +50,10 @@ static const char* SHADER_HEADER = R"(#version 460 core
 
 #define ANKI_MAX_BINDLESS_TEXTURES %u
 #define ANKI_MAX_BINDLESS_IMAGES %u
+
+#if %u
+#	extension GL_EXT_ray_tracing : enable
+#endif
 
 #define ANKI_BINDLESS_SET(set_) \
 	layout(set = set_, binding = 0) uniform utexture2D u_bindlessTextures2dU32[ANKI_MAX_BINDLESS_TEXTURES]; \
@@ -755,7 +758,8 @@ void ShaderProgramParser::generateAnkiShaderHeader(const GpuDeviceCapabilities& 
 												   StringAuto& header)
 {
 	header.sprintf(SHADER_HEADER, caps.m_minorApiVersion, caps.m_majorApiVersion,
-				   GPU_VENDOR_STR[caps.m_gpuVendor].cstr(), limits.m_bindlessTextureCount, limits.m_bindlessImageCount);
+				   GPU_VENDOR_STR[caps.m_gpuVendor].cstr(), limits.m_bindlessTextureCount, limits.m_bindlessImageCount,
+				   U(caps.m_rayTracingEnabled));
 }
 
 Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,

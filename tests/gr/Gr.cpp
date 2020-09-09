@@ -2728,13 +2728,13 @@ ANKI_TEST(Gr, RayGen)
 {
 	COMMON_BEGIN();
 
-	const Bool useRayTracing = false; // gr->getDeviceCapabilities().m_rayTracingEnabled;
+	const Bool useRayTracing = gr->getDeviceCapabilities().m_rayTracingEnabled;
 	if(!useRayTracing)
 	{
 		ANKI_TEST_LOGW("Ray tracing not supported");
 	}
 
-	HeapAllocator<U8> alloc = {allocAligned, nullptr};
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	// Create the raster programs
 	ShaderProgramPtr rasterProg;
@@ -2770,6 +2770,115 @@ void main()
 		rasterProg = createProgram(vertSrc, fragSrc, *gr);
 	}
 
+	ShaderProgramPtr rtProg;
+	if(useRayTracing)
+	{
+		const CString commonSrc = R"(
+struct PayLoad
+{
+	Vec3 m_color;
+};
+
+struct Material
+{
+	Vec3 m_diffuseColor;
+};
+
+struct Mesh
+{
+	U64 m_indexBufferPtr;
+	U64 m_positionBufferPtr;
+};
+
+struct Model
+{
+	Material m_mtl;
+	Mesh m_mesh;
+};
+
+layout(set = 0, binding = 0, scalar) buffer u_00
+{
+	Model m_models[];
+};
+)";
+
+		const CString chit0Src = R"(
+layout(location = 0) rayPayloadInEXT PayLoad payLoad;
+
+void main()
+{
+	payLoad.m_color = m_models[gl_InstanceID].m_mtl.m_diffuseColor;
+}
+)";
+
+		const CString chit1Src = R"(
+layout(location = 0) rayPayloadInEXT PayLoad payLoad;
+
+void main()
+{
+	Vec3 col;
+	switch(gl_PrimitiveID)
+	{
+	case 0:
+		col = Vec3(1.0, 0.0, 0.0);
+		break;
+	case 1:
+		col = Vec3(0.0, 1.0, 0.0);
+		break;
+	case 2:
+		col = Vec3(0.0, 0.0, 1.0);
+		break;
+	default:
+		col = Vec3(1.0, 0.0, 1.0);
+	}
+
+	payLoad.m_color = col;
+}
+)";
+
+		const CString missSrc = R"(
+layout(location = 0) rayPayloadInEXT PayLoad payLoad;
+
+void main()
+{
+	payLoad.m_color = Vec3(0.0);
+}
+)";
+
+		const CString rayGenSrc = R"(
+layout(set = 0, binding = 1) uniform accelerationStructureEXT u_tlas;
+layout(set = 0, binding = 2, rgba8) uniform image2D u_outImg;
+
+void main()
+{
+	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
+}
+		)";
+
+		ShaderPtr chit0Shader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), chit0Src.cstr()),
+											 ShaderType::CLOSEST_HIT, *gr);
+		ShaderPtr chit1Shader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), chit1Src.cstr()),
+											 ShaderType::CLOSEST_HIT, *gr);
+		ShaderPtr missShader =
+			createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::MISS, *gr);
+
+		ShaderPtr rayGenShader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()),
+											  ShaderType::RAY_GEN, *gr);
+
+		Array<RayTracingHitGroup, 2> hitGroups;
+		hitGroups[0].m_closestHitShader = chit0Shader;
+		hitGroups[1].m_closestHitShader = chit1Shader;
+
+		Array<ShaderPtr, 1> missShaders = {missShader};
+
+		ShaderProgramInitInfo inf;
+		inf.m_rayTracingShaders.m_hitGroups = hitGroups;
+		inf.m_rayTracingShaders.m_rayGenShader = rayGenShader;
+		inf.m_rayTracingShaders.m_missShaders = missShaders;
+
+		rtProg = gr->newShaderProgram(inf);
+	}
+
 	// Create geometry
 	BufferPtr smallBoxVertBuffer, smallBoxIndexBuffer;
 	BufferPtr bigBoxVertBuffer, bigBoxIndexBuffer;
@@ -2791,6 +2900,7 @@ void main()
 	}
 
 	// Draw
+#if 0
 	constexpr U32 ITERATIONS = 200;
 	for(U i = 0; i < ITERATIONS; ++i)
 	{
@@ -2870,6 +2980,7 @@ void main()
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
 		}
 	}
+#endif
 
 	COMMON_END();
 }

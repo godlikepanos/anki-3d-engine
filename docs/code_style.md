@@ -61,6 +61,12 @@ All **function and method names** should form a sentence with at least one verb.
 - All member variables have the `m_` prefix.
 - All global variables have the `g_` prefix.
 
+**Variables that act as a measure for quantity** should have the `count` suffix. Not `num` or `numberOf` or similar.
+
+	int appleCount = ...; // YES
+	int appleNum = ...;   // NO
+	int numApples = ...;  // NO
+
 C++ rules
 =========
 

@@ -134,7 +134,7 @@ layout(set = 0, binding = 10, row_major, std140) readonly buffer b_ankiPrevFrame
 #if ANKI_INSTANCE_COUNT == 1
 #	define INSTANCE_ID 0
 #else
-#	define INSTANCE_ID gl_InstanceID
+#	define INSTANCE_ID gl_InstanceIndex
 #endif
 
 #pragma anki start vert

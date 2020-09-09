@@ -50,7 +50,7 @@ out gl_PerVertex
 
 void main()
 {
-	gl_Position = u_ankiPerInstance[gl_InstanceID].m_ankiMvp * u_mats[gl_InstanceID].m_mat * Vec4(gl_VertexID);
+	gl_Position = u_ankiPerInstance[gl_InstanceIndex].m_ankiMvp * u_mats[gl_InstanceIndex].m_mat * Vec4(gl_VertexID);
 }
 #pragma anki end
 

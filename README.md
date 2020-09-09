@@ -76,7 +76,7 @@ To build the release version open `PowerShell` and type:
 Alternatively, recent Visual Studio versions support building CMake projects from inside the IDE:
 
 - Open Visual Studio
-- Choose the "open folder" option and navigate to AnKi's checkout
+- Choose the "open a local folder" option and open AnKi's root directory (where this README.md is located)
 - Visual Studio will automatically understand that AnKi is a CMake project and it will populate the CMake cache
 - Press "build all"
 
@@ -97,7 +97,8 @@ On Linux:
 
 	$./path/to/build/bin/sponza
 
-On Windows just find the `sponza.exe` and execute it.
+On Windows just find the `sponza.exe` and execute it. It's preferable to run the samples from a terminal because that
+prints some information, including possible errors.
 
 4 Contributing
 ==============
