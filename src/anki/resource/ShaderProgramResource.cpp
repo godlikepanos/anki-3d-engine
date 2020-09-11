@@ -360,7 +360,7 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 	ShaderProgramInitInfo progInf(cprogName);
 	for(ShaderType shaderType : EnumIterable<ShaderType>())
 	{
-		if(!(shaderTypeToBit(shaderType) & m_shaderStages))
+		if(!(ShaderTypeBit(1 << shaderType) & m_shaderStages))
 		{
 			continue;
 		}

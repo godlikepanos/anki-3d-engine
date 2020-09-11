@@ -165,7 +165,7 @@ void ShaderImpl::doReflection(ConstWeakArray<U8> spirv, SpecConstsVector& specCo
 				DescriptorBinding& descriptor = descriptors[set][counts[set]++];
 				descriptor.m_binding = U8(binding);
 				descriptor.m_type = type;
-				descriptor.m_stageMask = static_cast<ShaderTypeBit>(1 << m_shaderType);
+				descriptor.m_stageMask = ShaderTypeBit(1 << m_shaderType);
 				descriptor.m_arraySizeMinusOne = U8(arraySize - 1);
 			}
 			else

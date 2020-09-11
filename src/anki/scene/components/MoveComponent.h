@@ -30,7 +30,7 @@ enum class MoveComponentFlag : U8
 	/// If dirty then is marked for update
 	MARKED_FOR_UPDATE = 1 << 3,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MoveComponentFlag, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MoveComponentFlag)
 
 /// Interface for movable scene nodes
 class MoveComponent : public SceneComponent

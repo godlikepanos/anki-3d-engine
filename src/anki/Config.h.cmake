@@ -186,6 +186,7 @@
 #if ANKI_COMPILER_MSVC
 #	include <intrin.h>
 #	define __builtin_popcount __popcnt
+#	define __builtin_popcountl __popcnt64
 #	define __builtin_clzll(x) ((int)__lzcnt64(x))
 #endif
 

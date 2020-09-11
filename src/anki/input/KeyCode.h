@@ -266,7 +266,7 @@ enum class KeyCode
 	COUNT,
 	FIRST = 0,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(KeyCode, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(KeyCode)
 
 enum class MouseButton
 {
@@ -278,6 +278,6 @@ enum class MouseButton
 
 	COUNT
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MouseButton, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MouseButton)
 
 } // end namespace anki

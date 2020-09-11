@@ -102,7 +102,7 @@ enum class CommandBufferFlag : U8
 	/// Will contain compute work.
 	COMPUTE_WORK = 1 << 6,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag)
 
 /// Command buffer init info.
 class CommandBufferInitInfo : public GrBaseInitInfo

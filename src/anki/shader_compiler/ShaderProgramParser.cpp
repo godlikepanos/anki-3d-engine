@@ -262,7 +262,7 @@ Error ShaderProgramParser::parsePragmaStart(const StringAuto* begin, const Strin
 	}
 
 	// Set the mask
-	ShaderTypeBit mask = ShaderTypeBit(1 << U(shaderType));
+	const ShaderTypeBit mask = ShaderTypeBit(1 << shaderType);
 	if(!!(mask & m_shaderTypes))
 	{
 		ANKI_PP_ERROR_MALFORMED_MSG("Can't have #pragma start <shader> appearing more than once");

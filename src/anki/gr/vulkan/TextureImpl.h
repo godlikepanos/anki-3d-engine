@@ -28,7 +28,7 @@ enum class TextureImplWorkaround : U8
 	S8_TO_D24S8 = 1 << 1,
 	D24S8_TO_D32S8 = 1 << 2,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround)
 
 /// A Vulkan image view with some extra data.
 class MicroImageView

@@ -457,7 +457,7 @@ private:
 		NONE = 0,
 		ALL = PROG | IA | RASTER | STENCIL | DEPTH | COLOR
 	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DirtyBit, friend)
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(DirtyBit)
 
 	class DirtyBits
 	{

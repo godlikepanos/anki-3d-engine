@@ -1046,7 +1046,7 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 			}
 
 			size_t size = sizeof(stats);
-			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(m_device, ppline, convertShaderTypeBit(stage),
+			ANKI_VK_CHECK(m_pfnGetShaderInfoAMD(m_device, ppline, VkShaderStageFlagBits(convertShaderTypeBit(stage)),
 												VK_SHADER_INFO_TYPE_STATISTICS_AMD, &size, &stats));
 
 			str.append(StringAuto(getAllocator())

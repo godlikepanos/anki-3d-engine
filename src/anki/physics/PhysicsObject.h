@@ -29,7 +29,7 @@ enum class PhysicsObjectType : U8
 	FIRST_FILTERED = BODY,
 	LAST_FILTERED = TRIGGER,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType)
 
 /// Base of all physics objects.
 class PhysicsObject : public IntrusiveListEnabled<PhysicsObject>

@@ -178,7 +178,7 @@ static Error compileSpirv(ConstWeakArray<MutatorValue> mutation, const ShaderPro
 	// Compile stages
 	for(ShaderType shaderType : EnumIterable<ShaderType>())
 	{
-		if(!(shaderTypeToBit(shaderType) & parser.getShaderTypes()))
+		if(!(ShaderTypeBit(1 << shaderType) & parser.getShaderTypes()))
 		{
 			continue;
 		}

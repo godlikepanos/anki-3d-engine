@@ -41,7 +41,7 @@ enum class BuiltinMaterialVariableId : U8
 	COUNT,
 	FIRST = 0,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMaterialVariableId, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMaterialVariableId)
 
 /// The ID of builtin mutators.
 enum class BuiltinMutatorId : U8
@@ -56,7 +56,7 @@ enum class BuiltinMutatorId : U8
 	COUNT,
 	FIRST = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMutatorId, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BuiltinMutatorId)
 
 /// Holds the shader variables. It's a container for shader program variables that share the same name.
 class MaterialVariable : public NonCopyable

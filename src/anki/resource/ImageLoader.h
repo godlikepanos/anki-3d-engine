@@ -40,7 +40,7 @@ enum class ImageLoaderDataCompression : U32
 	S3TC = 1 << 1,
 	ETC = 1 << 2
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageLoaderDataCompression, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ImageLoaderDataCompression)
 
 /// An image surface
 /// @memberof ImageLoader

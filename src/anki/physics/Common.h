@@ -89,7 +89,7 @@ enum class PhysicsMaterialBit : U64
 
 	ALL = MAX_U64
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit)
 
 ANKI_USE_RESULT inline Vec3 toAnki(const btVector3& v)
 {

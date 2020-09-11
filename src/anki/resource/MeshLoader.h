@@ -31,7 +31,7 @@ public:
 
 		ALL = QUAD | CONVEX,
 	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(Flag)
 
 	struct VertexBuffer
 	{

@@ -28,7 +28,7 @@ enum class FileOpenFlag : U8
 	ENDIAN_LITTLE = 1 << 5, ///< The default
 	ENDIAN_BIG = 1 << 6
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag)
 
 /// Passed to seek function
 /// @memberof File

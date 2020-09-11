@@ -188,7 +188,7 @@ private:
 		FRONT = PX_PY_PZ | PX_NY_PZ | NX_PY_PZ | NX_NY_PZ,
 		BACK = PX_PY_NZ | PX_NY_NZ | NX_PY_NZ | NX_NY_NZ,
 	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(LeafMask, friend)
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(LeafMask)
 
 	SceneAllocator<U8> m_alloc;
 	U32 m_maxDepth = 0;

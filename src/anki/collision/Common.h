@@ -28,7 +28,7 @@ enum class FrustumPlaneType : U8
 	COUNT,
 	FIRST = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumPlaneType, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumPlaneType)
 
 /// Collision shape type.
 enum class CollisionShapeType : U8
@@ -45,7 +45,7 @@ enum class CollisionShapeType : U8
 	COUNT,
 	FIRST = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CollisionShapeType, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CollisionShapeType)
 
 /// Frustum type
 enum class FrustumType : U8
@@ -56,7 +56,7 @@ enum class FrustumType : U8
 	COUNT,
 	FIRST = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumType, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumType)
 /// @}
 
 } // end namespace anki

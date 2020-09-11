@@ -52,7 +52,7 @@ enum class VertexAttributeLocation : U8
 	COUNT,
 	FIRST = POSITION,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeLocation, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeLocation)
 /// @}
 
 /// Deleter for ResourcePtr.

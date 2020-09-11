@@ -18,7 +18,7 @@ class ConfigSet;
 /// @addtogroup core
 /// @{
 
-enum class StagingGpuMemoryType
+enum class StagingGpuMemoryType : U8
 {
 	UNIFORM,
 	STORAGE,
@@ -26,7 +26,7 @@ enum class StagingGpuMemoryType
 	TEXTURE,
 	COUNT
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(StagingGpuMemoryType, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(StagingGpuMemoryType)
 
 /// Token that gets returned when requesting for memory to write to a resource.
 class StagingGpuMemoryToken

@@ -23,7 +23,7 @@ enum class ColorBit : U8
 	ALPHA = 1 << 3,
 	ALL = RED | GREEN | BLUE | ALPHA
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ColorBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ColorBit)
 
 enum class PrimitiveTopology : U8
 {
@@ -50,7 +50,7 @@ enum class FaceSelectionBit : U8
 	BACK = 1 << 1,
 	FRONT_AND_BACK = FRONT | BACK
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FaceSelectionBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FaceSelectionBit)
 
 enum class CompareOperation : U8
 {
@@ -128,7 +128,7 @@ enum class DepthStencilAspectBit : U8
 	STENCIL = 1 << 1,
 	DEPTH_STENCIL = DEPTH | STENCIL
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DepthStencilAspectBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DepthStencilAspectBit)
 
 /// Pixel or vertex format.
 /// WARNING: Keep it the same as vulkan (one conversion less).
@@ -328,7 +328,7 @@ enum class Format : U32
 	PVRTC2_2BPP_SRGB_BLOCK_IMG = 1000054006,
 	PVRTC2_4BPP_SRGB_BLOCK_IMG = 1000054007,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Format)
 
 inline Bool formatIsDepthStencil(const Format fmt)
 {
@@ -422,7 +422,7 @@ enum class TextureUsageBit : U32
 	ALL_WRITE = IMAGE_GEOMETRY_WRITE | IMAGE_FRAGMENT_WRITE | IMAGE_COMPUTE_WRITE | IMAGE_RAY_GEN_WRITE
 				| FRAMEBUFFER_ATTACHMENT_WRITE | TRANSFER_DESTINATION | GENERATE_MIPMAPS
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit)
 
 enum class SamplingFilter : U8
 {
@@ -443,7 +443,7 @@ enum class SamplingAddressing : U8
 	LAST = COUNT - 1,
 };
 
-enum class ShaderType : U8
+enum class ShaderType : U16
 {
 	VERTEX,
 	TESSELLATION_CONTROL,
@@ -466,7 +466,7 @@ enum class ShaderType : U8
 	FIRST_RAY_TRACING = RAY_GEN,
 	LAST_RAY_TRACING = CALLABLE,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType)
 
 enum class ShaderTypeBit : U16
 {
@@ -488,13 +488,7 @@ enum class ShaderTypeBit : U16
 	ALL_RAY_TRACING = RAY_GEN | ANY_HIT | CLOSEST_HIT | MISS | INTERSECTION | CALLABLE,
 	ALL = ALL_GRAPHICS | COMPUTE | ALL_RAY_TRACING,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit, inline)
-
-inline ShaderTypeBit shaderTypeToBit(ShaderType type)
-{
-	ANKI_ASSERT(type < ShaderType::COUNT);
-	return ShaderTypeBit(1 << U32(type));
-}
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit)
 
 enum class ShaderVariableDataType : U8
 {
@@ -529,7 +523,7 @@ enum class ShaderVariableDataType : U8
 	IMAGE_FIRST = IMAGE_1D,
 	IMAGE_LAST = IMAGE_CUBE_ARRAY,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType)
 
 /// Occlusion query result bit.
 enum class OcclusionQueryResultBit : U8
@@ -538,7 +532,7 @@ enum class OcclusionQueryResultBit : U8
 	VISIBLE = 1 << 1,
 	NOT_VISIBLE = 1 << 2
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OcclusionQueryResultBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OcclusionQueryResultBit)
 
 /// Occlusion query result.
 enum class OcclusionQueryResult : U8
@@ -643,7 +637,7 @@ enum class BufferUsageBit : U64
 				| TEXTURE_GEOMETRY_WRITE | TEXTURE_FRAGMENT_WRITE | TEXTURE_COMPUTE_WRITE | TEXTURE_TRACE_RAYS_WRITE
 				| TRANSFER_DESTINATION,
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
 
 /// Buffer access when mapped.
 enum class BufferMapAccessBit : U8
@@ -652,7 +646,7 @@ enum class BufferMapAccessBit : U8
 	READ = 1 << 0,
 	WRITE = 1 << 1
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit)
 
 /// Index buffer's index type.
 enum class IndexType : U8
@@ -693,7 +687,7 @@ enum class AccelerationStructureUsageBit : U8
 	ALL_READ = ATTACH | GEOMETRY_READ | FRAGMENT_READ | COMPUTE_READ | RAY_GEN_READ,
 	ALL_WRITE = BUILD
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(AccelerationStructureUsageBit)
 /// @}
 
 } // end namespace anki

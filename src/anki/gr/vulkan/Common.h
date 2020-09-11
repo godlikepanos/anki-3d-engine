@@ -70,7 +70,7 @@ enum class VulkanExtensions : U16
 	AMD_RASTERIZATION_ORDER = 1 << 11,
 	KHR_RAY_TRACING = 1 << 12
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions)
 
 /// @name Constants
 /// @{
@@ -197,11 +197,7 @@ ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(const TextureUsageBit ak, 
 
 ANKI_USE_RESULT VkStencilOp convertStencilOp(StencilOperation ak);
 
-ANKI_USE_RESULT inline VkShaderStageFlagBits convertShaderTypeBit(ShaderTypeBit bit)
-{
-	ANKI_ASSERT(bit != ShaderTypeBit::NONE);
-	return static_cast<VkShaderStageFlagBits>(bit);
-}
+ANKI_USE_RESULT VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit);
 
 ANKI_USE_RESULT inline VkVertexInputRate convertVertexStepRate(VertexStepRate ak)
 {

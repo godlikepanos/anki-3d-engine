@@ -205,7 +205,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			VkPipelineShaderStageCreateInfo& inf = m_graphics.m_shaderCreateInfos[m_graphics.m_shaderCreateInfoCount++];
 			inf = {};
 			inf.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			inf.stage = convertShaderTypeBit(ShaderTypeBit(1 << shader->getShaderType()));
+			inf.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << shader->getShaderType())));
 			inf.pName = "main";
 			inf.module = shaderImpl.m_handle;
 			inf.pSpecializationInfo = shaderImpl.getSpecConstInfo();
@@ -256,7 +256,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 			VkPipelineShaderStageCreateInfo& stage = stages[i];
 			stage = {};
 			stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			stage.stage = convertShaderTypeBit(ShaderTypeBit(1 << impl.getShaderType()));
+			stage.stage = VkShaderStageFlagBits(convertShaderTypeBit(ShaderTypeBit(1 << impl.getShaderType())));
 			stage.pName = "main";
 			stage.module = impl.m_handle;
 			stage.pSpecializationInfo = impl.getSpecConstInfo();
@@ -270,21 +270,20 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		defaultGroup.anyHitShader = VK_SHADER_UNUSED_KHR;
 		defaultGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 
-		DynamicArrayAuto<VkRayTracingShaderGroupCreateInfoKHR> groups(
-			getAllocator(),
-			1 + inf.m_rayTracingShaders.m_missShaders.getSize() + inf.m_rayTracingShaders.m_hitGroups.getSize(),
-			defaultGroup);
+		U32 groupCount =
+			1 + inf.m_rayTracingShaders.m_missShaders.getSize() + inf.m_rayTracingShaders.m_hitGroups.getSize();
+		DynamicArrayAuto<VkRayTracingShaderGroupCreateInfoKHR> groups(getAllocator(), groupCount, defaultGroup);
 
 		// 1st group is the ray gen
 		groups[0].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
 		groups[0].generalShader = 0;
 
 		// Miss
-		U32 groupCount = 1;
+		groupCount = 1;
 		for(U32 i = 0; i < inf.m_rayTracingShaders.m_missShaders.getSize(); ++i)
 		{
 			groups[groupCount].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-			groups[groupCount].generalShader = 0;
+			groups[groupCount].generalShader = groupCount;
 			++groupCount;
 		}
 

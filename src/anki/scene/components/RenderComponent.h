@@ -24,7 +24,7 @@ enum class RenderComponentFlag : U8
 	FORWARD_SHADING = 1 << 1,
 	SORT_LAST = 1 << 2, ///< Push it last when sorting the visibles.
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderComponentFlag, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderComponentFlag)
 
 /// Render component interface. Implemented by renderable scene nodes
 class RenderComponent : public SceneComponent

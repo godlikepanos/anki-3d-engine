@@ -452,6 +452,76 @@ VkStencilOp convertStencilOp(StencilOperation ak)
 	return out;
 }
 
+VkShaderStageFlags convertShaderTypeBit(ShaderTypeBit bit)
+{
+	ANKI_ASSERT(bit != ShaderTypeBit::NONE);
+
+	VkShaderStageFlags out = 0;
+	if(!!(bit & ShaderTypeBit::VERTEX))
+	{
+		out |= VK_SHADER_STAGE_VERTEX_BIT;
+	}
+
+	if(!!(bit & ShaderTypeBit::TESSELLATION_CONTROL))
+	{
+		out |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+	}
+
+	if(!!(bit & ShaderTypeBit::TESSELLATION_EVALUATION))
+	{
+		out |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+	}
+
+	if(!!(bit & ShaderTypeBit::GEOMETRY))
+	{
+		out |= VK_SHADER_STAGE_GEOMETRY_BIT;
+	}
+
+	if(!!(bit & ShaderTypeBit::FRAGMENT))
+	{
+		out |= VK_SHADER_STAGE_FRAGMENT_BIT;
+	}
+
+	if(!!(bit & ShaderTypeBit::COMPUTE))
+	{
+		out |= VK_SHADER_STAGE_COMPUTE_BIT;
+	}
+
+	if(!!(bit & ShaderTypeBit::RAY_GEN))
+	{
+		out |= VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+	}
+
+	if(!!(bit & ShaderTypeBit::ANY_HIT))
+	{
+		out |= VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
+	}
+
+	if(!!(bit & ShaderTypeBit::CLOSEST_HIT))
+	{
+		out |= VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+	}
+
+	if(!!(bit & ShaderTypeBit::MISS))
+	{
+		out |= VK_SHADER_STAGE_MISS_BIT_KHR;
+	}
+
+	if(!!(bit & ShaderTypeBit::INTERSECTION))
+	{
+		out |= VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
+	}
+
+	if(!!(bit & ShaderTypeBit::CALLABLE))
+	{
+		out |= VK_SHADER_STAGE_CALLABLE_BIT_KHR;
+	}
+
+	ANKI_ASSERT(out != 0);
+	ANKI_ASSERT(__builtin_popcount(U32(bit)) == __builtin_popcount(out));
+	return out;
+}
+
 const char* vkResultToString(VkResult res)
 {
 	const char* out;

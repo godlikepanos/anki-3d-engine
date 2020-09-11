@@ -50,7 +50,7 @@ enum class FrustumComponentVisibilityTestFlag : U16
 	ALL_SHADOWS_ENABLED =
 		POINT_LIGHT_SHADOWS_ENABLED | SPOT_LIGHT_SHADOWS_ENABLED | DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag)
 
 /// Frustum component. Useful for nodes that take part in visibility tests like cameras and lights.
 class FrustumComponent : public SceneComponent

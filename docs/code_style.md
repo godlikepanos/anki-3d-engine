@@ -73,7 +73,7 @@ C++ rules
 **Always use strongly typed enums**. If you need to relax the rules use the `ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS` macro.
 
 	enum class MyEnum : uint {...};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MyEnum, inline);
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MyEnum);
 
 **Never use `typedef`** to define types. Use `using` instead.
 

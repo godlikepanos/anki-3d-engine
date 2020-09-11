@@ -5,138 +5,141 @@
 
 #pragma once
 
-#include <anki/Config.h>
+#include <anki/util/Assert.h>
+
+namespace anki
+{
 
 /// @privatesection
 /// @{
 
-// Re-implement std::underlying_type to avoid including the whole typetraits header
-template<typename TEnum>
-struct EnumUnderlyingType
+/// This is a template where the Type will be I64 if the T is any unsigned integer and U64 otherwise
+template<typename T, bool = std::is_unsigned<T>::value>
+class EnumSafeIntegerType
 {
-	using Type = __underlying_type(TEnum);
+public:
+	using Type = I64;
 };
 
-/// Convert an enum to it's integer type.
-template<typename TEnum>
-constexpr inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
+template<typename T>
+class EnumSafeIntegerType<T, true>
 {
-	return static_cast<typename EnumUnderlyingType<TEnum>::Type>(e);
-}
+public:
+	using Type = U64;
+};
 
-#define _ANKI_ENUM_OPERATOR(enum_, qualifier_, operator_, assignOperator_) \
-	constexpr qualifier_ enum_ operator operator_(const enum_ a, const enum_ b) \
+/// This macro will do an operation between 2 values. It will be used in constexpr functions. There is also an assertion
+/// which makes sure that the result will fit in an enum. Despite the fact that the assertion contains non-constexpr
+/// elements it will work on constexpr expressions. The compiler will compile-time ignore the non-constexpr part if the
+/// assert if the assertion expression is true.
+#define _ANKI_ENUM_OPERATION_BODY(enumType, regularOperator, a, b) \
+	using EnumInt = std::underlying_type<enumType>::type; \
+	using SafeInt = EnumSafeIntegerType<EnumInt>::Type; \
+	const SafeInt c = SafeInt(a) regularOperator SafeInt(b); \
+	ANKI_ASSERT(c <= SafeInt(std::numeric_limits<EnumInt>::max())); \
+	return enumType(c)
+
+#define _ANKI_ENUM_OPERATOR(enumType, qualifier, regularOperator, assignmentOperator) \
+	constexpr qualifier enumType operator regularOperator(const enumType a, const enumType b) \
 	{ \
-		using Int = EnumUnderlyingType<enum_>::Type; \
-		return static_cast<enum_>(static_cast<Int>(a) operator_ static_cast<Int>(b)); \
+		_ANKI_ENUM_OPERATION_BODY(enumType, regularOperator, a, b); \
 	} \
-	constexpr qualifier_ enum_ operator operator_(const enum_ a, const EnumUnderlyingType<enum_>::Type b) \
+	constexpr qualifier enumType operator regularOperator(const enumType a, \
+														  const std::underlying_type<enumType>::type b) \
 	{ \
-		using Int = EnumUnderlyingType<enum_>::Type; \
-		return static_cast<enum_>(static_cast<Int>(a) operator_ b); \
+		_ANKI_ENUM_OPERATION_BODY(enumType, regularOperator, a, b); \
 	} \
-	constexpr qualifier_ enum_ operator operator_(const EnumUnderlyingType<enum_>::Type a, const enum_ b) \
+	constexpr qualifier enumType operator regularOperator(const std::underlying_type<enumType>::type a, \
+														  const enumType b) \
 	{ \
-		using Int = EnumUnderlyingType<enum_>::Type; \
-		return static_cast<enum_>(a operator_ static_cast<Int>(b)); \
+		_ANKI_ENUM_OPERATION_BODY(enumType, regularOperator, a, b); \
 	} \
-	qualifier_ enum_& operator assignOperator_(enum_& a, const enum_ b) \
+	qualifier enumType& operator assignmentOperator(enumType& a, const enumType b) \
 	{ \
-		a = a operator_ b; \
+		a = a regularOperator b; \
 		return a; \
 	} \
-	qualifier_ enum_& operator assignOperator_(enum_& a, const EnumUnderlyingType<enum_>::Type b) \
+	qualifier enumType& operator assignmentOperator(enumType& a, const std::underlying_type<enumType>::type b) \
 	{ \
-		a = a operator_ b; \
+		a = a regularOperator b; \
 		return a; \
 	} \
-	qualifier_ EnumUnderlyingType<enum_>::Type& operator assignOperator_(EnumUnderlyingType<enum_>::Type& a, \
-																		 const enum_ b) \
+	qualifier std::underlying_type<enumType>::type& operator assignmentOperator( \
+		std::underlying_type<enumType>::type& a, const enumType b) \
 	{ \
-		using Int = EnumUnderlyingType<enum_>::Type; \
-		a = static_cast<Int>(a operator_ static_cast<Int>(b)); \
+		using EnumInt = std::underlying_type<enumType>::type; \
+		a = EnumInt(a regularOperator b); \
 		return a; \
 	}
 
-#define _ANKI_ENUM_UNARAY_OPERATOR(enum_, qualifier_, operator_) \
-	constexpr qualifier_ enum_ operator operator_(const enum_ a) \
+#define _ANKI_ENUM_UNARAY_OPERATOR(enumType, qualifier, regularOperator) \
+	constexpr qualifier enumType operator regularOperator(const enumType a) \
 	{ \
-		using Int = EnumUnderlyingType<enum_>::Type; \
-		return static_cast<enum_>(operator_ static_cast<Int>(a)); \
+		using EnumInt = std::underlying_type<enumType>::type; \
+		return enumType(regularOperator EnumInt(a)); \
 	}
 
-#define _ANKI_ENUM_INCREMENT_DECREMENT(enum_, qualifier_) \
-	qualifier_ enum_& operator++(enum_& a) \
+#define _ANKI_ENUM_INCREMENT_DECREMENT(enumType, qualifier) \
+	qualifier enumType& operator++(enumType& a) \
 	{ \
-		using Int = EnumUnderlyingType<enum_>::Type; \
-		a = static_cast<enum_>(static_cast<Int>(a) + 1); \
+		a = a + 1; \
 		return a; \
 	} \
-	qualifier_ enum_& operator--(enum_& a) \
+	qualifier enumType& operator--(enumType& a) \
 	{ \
-		using Int = EnumUnderlyingType<enum_>::Type; \
-		a = static_cast<enum_>(static_cast<Int>(a) - 1); \
+		a = a - 1; \
 		return a; \
 	} \
-	qualifier_ enum_ operator++(enum_& a, int) \
+	qualifier enumType operator++(enumType& a, int) \
 	{ \
-		enum_ old = a; \
+		const enumType old = a; \
 		++a; \
 		return old; \
 	} \
-	qualifier_ enum_ operator--(enum_& a, int) \
+	qualifier enumType operator--(enumType& a, int) \
 	{ \
-		enum_ old = a; \
+		const enumType old = a; \
 		--a; \
 		return old; \
 	}
 
-#define _ANKI_ENUM_NEGATIVE_OPERATOR(enum_, qualifier_) \
-	qualifier_ Bool operator!(const enum_& a) \
+#define _ANKI_ENUM_NEGATIVE_OPERATOR(enumType, qualifier) \
+	qualifier Bool operator!(const enumType a) \
 	{ \
-		using Int = EnumUnderlyingType<enum_>::Type; \
-		return static_cast<Int>(a) == 0; \
-	} \
+		using EnumInt = std::underlying_type<enumType>::type; \
+		return EnumInt(a) == 0; \
+	}
+
+#define _ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enumType, qualifier) \
+	_ANKI_ENUM_OPERATOR(enumType, qualifier, |, |=) \
+	_ANKI_ENUM_OPERATOR(enumType, qualifier, &, &=) \
+	_ANKI_ENUM_OPERATOR(enumType, qualifier, ^, ^=) \
+	_ANKI_ENUM_OPERATOR(enumType, qualifier, +, +=) \
+	_ANKI_ENUM_OPERATOR(enumType, qualifier, -, -=) \
+	_ANKI_ENUM_OPERATOR(enumType, qualifier, *, *=) \
+	_ANKI_ENUM_OPERATOR(enumType, qualifier, /, /=) \
+	_ANKI_ENUM_OPERATOR(enumType, qualifier, <<, <<=) \
+	_ANKI_ENUM_OPERATOR(enumType, qualifier, >>, >>=) \
+	_ANKI_ENUM_UNARAY_OPERATOR(enumType, qualifier, ~) \
+	_ANKI_ENUM_INCREMENT_DECREMENT(enumType, qualifier) \
+	_ANKI_ENUM_NEGATIVE_OPERATOR(enumType, qualifier)
 /// @}
 
 /// @addtogroup util_other
 /// @{
 
 /// Implement all those functions that will make a stronly typed enum behave like the old type of enums.
-#define ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enum_, qualifier_) \
-	_ANKI_ENUM_OPERATOR(enum_, qualifier_, |, |=) \
-	_ANKI_ENUM_OPERATOR(enum_, qualifier_, &, &=) \
-	_ANKI_ENUM_OPERATOR(enum_, qualifier_, ^, ^=) \
-	_ANKI_ENUM_OPERATOR(enum_, qualifier_, +, +=) \
-	_ANKI_ENUM_OPERATOR(enum_, qualifier_, -, -=) \
-	_ANKI_ENUM_OPERATOR(enum_, qualifier_, *, *=) \
-	_ANKI_ENUM_OPERATOR(enum_, qualifier_, /, /=) \
-	_ANKI_ENUM_OPERATOR(enum_, qualifier_, <<, <<=) \
-	_ANKI_ENUM_OPERATOR(enum_, qualifier_, >>, >>=) \
-	_ANKI_ENUM_UNARAY_OPERATOR(enum_, qualifier_, ~) \
-	_ANKI_ENUM_INCREMENT_DECREMENT(enum_, qualifier_) \
-	_ANKI_ENUM_NEGATIVE_OPERATOR(enum_, qualifier_)
+#define ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enumType) _ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enumType, inline)
 
-/// Convert enum to the underlying type.
-template<typename TEnum>
-inline typename EnumUnderlyingType<TEnum>::Type enumToValue(TEnum e)
-{
-	return static_cast<typename EnumUnderlyingType<TEnum>::Type>(e);
-}
-
-/// Convert enum to the underlying type.
-template<typename TEnum>
-inline TEnum valueToEnum(typename EnumUnderlyingType<TEnum>::Type v)
-{
-	return static_cast<TEnum>(v);
-}
+/// Same as ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS but for enums that are defined in a class.
+#define ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS_FRIEND(enumType) _ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enumType, friend)
 
 /// @memberof EnumIterable
 template<typename TEnum>
 class EnumIterableIterator
 {
 public:
-	using Type = typename EnumUnderlyingType<TEnum>::Type;
+	using Type = typename std::underlying_type<TEnum>::type;
 
 	EnumIterableIterator(TEnum val)
 		: m_val(static_cast<Type>(val))
@@ -186,3 +189,5 @@ public:
 	}
 };
 /// @}
+
+} // end namespace anki
