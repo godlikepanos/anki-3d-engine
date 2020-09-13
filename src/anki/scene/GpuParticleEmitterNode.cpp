@@ -61,7 +61,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 
 	// Create a UBO with the props
 	BufferInitInfo buffInit;
-	buffInit.m_access = BufferMapAccessBit::WRITE;
+	buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
 	buffInit.m_usage = BufferUsageBit::UNIFORM_COMPUTE;
 	buffInit.m_size = sizeof(GpuParticleEmitterProperties);
 	m_propsBuff = getSceneGraph().getGrManager().newBuffer(buffInit);
@@ -86,7 +86,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 	m_particleCount = inProps.m_maxNumOfParticles;
 
 	// Create the particle buffer
-	buffInit.m_access = BufferMapAccessBit::WRITE;
+	buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
 	buffInit.m_usage = BufferUsageBit::ALL_STORAGE;
 	buffInit.m_size = sizeof(GpuParticle) * inProps.m_maxNumOfParticles;
 	m_particlesBuff = getSceneGraph().getGrManager().newBuffer(buffInit);
@@ -200,7 +200,7 @@ void GpuParticleEmitterNode::simulate(GenericGpuComputeJobQueueElementContext& c
 	unis->m_dt = F32(m_dt);
 	unis->m_emitterPosition = m_worldPosition;
 	unis->m_emitterRotation = m_worldRotation;
-	unis->m_invViewRotation = Mat3x4(ctx.m_cameraTransform.getRotationPart());
+	unis->m_invViewRotation = Mat3x4(Vec3(0.0f), ctx.m_cameraTransform.getRotationPart());
 	cmdb->bindUniformBuffer(1, 4, token.m_buffer, token.m_offset, token.m_range);
 
 	// Dispatch

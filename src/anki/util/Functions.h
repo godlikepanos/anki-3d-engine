@@ -139,28 +139,28 @@ T getRandomRange(T min, T max)
 
 /// Get min of two values.
 template<typename T>
-inline T min(T a, T b)
+inline constexpr T min(T a, T b)
 {
 	return (a < b) ? a : b;
 }
 
 /// Get max of two values.
 template<typename T>
-inline T max(T a, T b)
+inline constexpr T max(T a, T b)
 {
 	return (a > b) ? a : b;
 }
 
 /// Check if a number is a power of 2
 template<typename Int, ANKI_ENABLE(std::is_integral<Int>::value)>
-inline Bool isPowerOfTwo(Int x)
+inline constexpr Bool isPowerOfTwo(Int x)
 {
 	return !(x == 0) && !(x & (x - 1));
 }
 
 /// Get the next power of two number. For example if x is 130 this will return 256.
 template<typename Int, ANKI_ENABLE(std::is_integral<Int>::value)>
-inline Int nextPowerOfTwo(Int x)
+inline constexpr Int nextPowerOfTwo(Int x)
 {
 	const F64 d = F64(x);
 	const F64 res = pow(2.0, ceil(log(d) / log(2.0)));
@@ -171,7 +171,7 @@ inline Int nextPowerOfTwo(Int x)
 /// @param alignment The bytes of alignment
 /// @param value The value to align
 template<typename TInt, ANKI_ENABLE(std::is_integral<TInt>::value)>
-inline TInt getAlignedRoundUp(PtrSize alignment, TInt value)
+inline constexpr TInt getAlignedRoundUp(PtrSize alignment, TInt value)
 {
 	ANKI_ASSERT(alignment > 0);
 	PtrSize v = PtrSize(value);
@@ -183,7 +183,7 @@ inline TInt getAlignedRoundUp(PtrSize alignment, TInt value)
 /// @param alignment The bytes of alignment
 /// @param value The value to align
 template<typename TFloat, ANKI_ENABLE(std::is_floating_point<TFloat>::value)>
-inline TFloat getAlignedRoundUp(TFloat alignment, TFloat value)
+inline constexpr TFloat getAlignedRoundUp(TFloat alignment, TFloat value)
 {
 	ANKI_ASSERT(alignment > TFloat(0.0));
 	return ceil(value / alignment) * alignment;
@@ -202,7 +202,7 @@ inline void alignRoundUp(TAlignment alignment, TValue& value)
 /// @param alignment The bytes of alignment
 /// @param value The value to align
 template<typename TInt, ANKI_ENABLE(std::is_integral<TInt>::value)>
-inline TInt getAlignedRoundDown(PtrSize alignment, TInt value)
+inline constexpr TInt getAlignedRoundDown(PtrSize alignment, TInt value)
 {
 	ANKI_ASSERT(alignment > 0);
 	PtrSize v = PtrSize(value);
@@ -214,7 +214,7 @@ inline TInt getAlignedRoundDown(PtrSize alignment, TInt value)
 /// @param alignment The bytes of alignment
 /// @param value The value to align
 template<typename TFloat, ANKI_ENABLE(std::is_floating_point<TFloat>::value)>
-inline TFloat getAlignedRoundDown(TFloat alignment, TFloat value)
+inline constexpr TFloat getAlignedRoundDown(TFloat alignment, TFloat value)
 {
 	ANKI_ASSERT(alignment > TFloat(0.0));
 	return floor(value / alignment) * alignment;
@@ -231,7 +231,7 @@ inline void alignRoundDown(TAlignment alignment, TValue& value)
 
 /// Check if a number is aligned
 template<typename Type>
-inline Bool isAligned(PtrSize alignment, Type value)
+inline constexpr Bool isAligned(PtrSize alignment, Type value)
 {
 	return (PtrSize(value) % alignment) == 0;
 }
@@ -239,7 +239,7 @@ inline Bool isAligned(PtrSize alignment, Type value)
 template<typename T>
 inline void swapValues(T& a, T& b)
 {
-	T tmp = b;
+	const T tmp = b;
 	b = a;
 	a = tmp;
 }
@@ -248,14 +248,14 @@ inline void swapValues(T& a, T& b)
 template<typename TPtr>
 inline PtrSize ptrToNumber(TPtr ptr)
 {
-	uintptr_t i = reinterpret_cast<uintptr_t>(ptr);
-	PtrSize size = i;
+	const uintptr_t i = reinterpret_cast<uintptr_t>(ptr);
+	const PtrSize size = i;
 	return size;
 }
 
 /// Convert a number to a pointer.
 template<typename TPtr>
-inline TPtr numberToPtr(PtrSize num)
+inline constexpr TPtr numberToPtr(PtrSize num)
 {
 	uintptr_t i = static_cast<uintptr_t>(num);
 	TPtr ptr = reinterpret_cast<TPtr>(i);

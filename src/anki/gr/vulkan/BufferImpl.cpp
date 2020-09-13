@@ -31,7 +31,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 								  && !!(inf.m_usage & ~BufferUsageBit::ALL_TRANSFER);
 
 	PtrSize size = inf.m_size;
-	BufferMapAccessBit access = inf.m_access;
+	BufferMapAccessBit access = inf.m_mapAccess;
 	BufferUsageBit usage = inf.m_usage;
 
 	ANKI_ASSERT(size > 0);

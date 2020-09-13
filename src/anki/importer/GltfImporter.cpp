@@ -130,7 +130,7 @@ static ANKI_USE_RESULT Error getNodeTransform(const cgltf_node& node, Transform&
 	}
 
 	trf.setOrigin(tsl.xyz0());
-	trf.setRotation(Mat3x4(rot));
+	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	trf.setScale(scale[0]);
 
 	return Error::NONE;
@@ -487,7 +487,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				getNodeName(node).cstr(), aabbMin.x(), aabbMin.y(), aabbMin.z(), aabbMax.x(), aabbMax.y(),
 				aabbMax.z()));
 
-			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
+			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if((it = extras.find("gi_probe")) != extras.getEnd() && *it == "true")
@@ -531,7 +531,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				ANKI_CHECK(m_sceneFile.writeText("comp:setCellSize(%f)\n", cellSize));
 			}
 
-			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
+			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if((it = extras.find("decal")) != extras.getEnd() && *it == "true")
@@ -591,7 +591,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			Mat3 rot;
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
-			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(rot), 1.0f);
+			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else
@@ -711,7 +711,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		Mat3 rot;
 		Vec3 scale;
 		getNodeTransform(node, tsl, rot, scale);
-		nodeTrf = Transform(tsl.xyz0(), Mat3x4(rot), scale.x());
+		nodeTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), scale.x());
 	}
 	for(cgltf_node* const* c = node.children; c < node.children + node.children_count; ++c)
 	{

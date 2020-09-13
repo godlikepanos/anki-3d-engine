@@ -108,49 +108,49 @@ inline T modf(T x, T& intPart)
 /// The same as abs/fabs. For ints and floats.
 template<typename T,
 		 ANKI_ENABLE(std::is_floating_point<T>::value || (std::is_integral<T>::value && std::is_signed<T>::value))>
-inline T absolute(const T f)
+inline constexpr T absolute(const T f)
 {
 	return (f < T(0)) ? -f : f;
 }
 
 template<typename T>
-inline T pow(const T x, const T power)
+inline constexpr T pow(const T x, const T power)
 {
 	return T(std::pow(x, power));
 }
 
 template<typename T>
-inline T log2(const T x)
+inline constexpr T log2(const T x)
 {
 	return T(std::log2(x));
 }
 
 template<typename T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
-inline Bool isZero(const T f, const T e = EPSILON)
+inline constexpr Bool isZero(const T f, const T e = EPSILON)
 {
 	return absolute<T>(f) < e;
 }
 
 template<typename T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-inline Bool isZero(const T f)
+inline constexpr Bool isZero(const T f)
 {
 	return f == 0;
 }
 
 template<typename T>
-inline T toRad(const T degrees)
+inline constexpr T toRad(const T degrees)
 {
 	return degrees * (PI / T(180));
 }
 
 template<typename T>
-inline T toDegrees(const T rad)
+inline constexpr T toDegrees(const T rad)
 {
 	return rad * (T(180) / PI);
 }
 
 template<typename T>
-inline T clamp(T v, T minv, T maxv)
+inline constexpr T clamp(T v, T minv, T maxv)
 {
 	ANKI_ASSERT(minv < maxv);
 	return min<T>(max<T>(minv, v), maxv);
@@ -158,14 +158,14 @@ inline T clamp(T v, T minv, T maxv)
 
 /// Returns 1 or -1 based on the sign
 template<typename T>
-inline T sign(T v)
+inline constexpr T sign(T v)
 {
 	return (v > T(0)) ? T(1) : T(-1);
 }
 
 /// Same as smoothstep in glsl
 template<typename T>
-inline T smoothstep(T edge0, T edge1, T value)
+inline constexpr T smoothstep(T edge0, T edge1, T value)
 {
 	value = clamp((value - edge0) / (edge1 - edge0), T(0), T(1));
 	return value * value * (T(3) - T(2) * value);
@@ -175,21 +175,21 @@ inline T smoothstep(T edge0, T edge1, T value)
 /// @param[in] from Starting value
 /// @param[in] to Ending value
 /// @param[in] u The percentage from the from "from" value. Values from [0.0, 1.0]
-template<typename Type>
-inline Type linearInterpolate(const Type& from, const Type& to, F32 u)
+template<typename T>
+inline constexpr T linearInterpolate(const T& from, const T& to, F32 u)
 {
-	return from * Type(1.0f - u) + to * Type(u);
+	return from * T(1.0f - u) + to * T(u);
 }
 
 /// Cosine interpolation
 /// @param[in] from Starting value
 /// @param[in] to Ending value
 /// @param[in] u The percentage from the from "from" value. Values from [0.0, 1.0]
-template<typename Type>
-inline Type cosInterpolate(const Type& from, const Type& to, F32 u)
+template<typename T>
+inline T cosInterpolate(const T& from, const T& to, F32 u)
 {
-	const F32 u2 = (1.0f - cos<Type>(u * PI)) / 2.0f;
-	return from * Type(1.0f - u2) + to * Type(u2);
+	const F32 u2 = (1.0f - cos<F32>(u * PI)) / 2.0f;
+	return from * T(1.0f - u2) + to * T(u2);
 }
 
 /// Cubic interpolation
@@ -198,14 +198,14 @@ inline Type cosInterpolate(const Type& from, const Type& to, F32 u)
 /// @param[in] c Point c
 /// @param[in] d Point d
 /// @param[in] u The percentage from the from b point to d point. Value from [0.0, 1.0]
-template<typename Type>
-inline Type cubicInterpolate(const Type& a, const Type& b, const Type& c, const Type& d, F32 u)
+template<typename T>
+inline constexpr T cubicInterpolate(const T& a, const T& b, const T& c, const T& d, F32 u)
 {
-	F32 u2 = u * u;
-	Type a0 = d - c - a + b;
-	Type a1 = a - b - a0;
-	Type a2 = c - a;
-	Type a3 = b;
+	const F32 u2 = u * u;
+	const T a0 = d - c - a + b;
+	const T a1 = a - b - a0;
+	const T a2 = c - a;
+	const T a3 = b;
 
 	return (a0 * u * u2 + a1 * u2 + a2 * u + a3);
 }

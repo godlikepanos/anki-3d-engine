@@ -21,18 +21,18 @@ class BufferInitInfo : public GrBaseInitInfo
 public:
 	PtrSize m_size = 0;
 	BufferUsageBit m_usage = BufferUsageBit::NONE;
-	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
+	BufferMapAccessBit m_mapAccess = BufferMapAccessBit::NONE;
 
 	BufferInitInfo(CString name = {})
 		: GrBaseInitInfo(name)
 	{
 	}
 
-	BufferInitInfo(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access, CString name = {})
+	BufferInitInfo(PtrSize size, BufferUsageBit usage, BufferMapAccessBit mapAccess, CString name = {})
 		: GrBaseInitInfo(name)
 		, m_size(size)
 		, m_usage(usage)
-		, m_access(access)
+		, m_mapAccess(mapAccess)
 	{
 	}
 
@@ -82,9 +82,9 @@ public:
 	/// @param access The access to the buffer.
 	/// @return The array that was mapped.
 	template<typename T>
-	WeakArray<T> map(PtrSize offset, U32 elementCount, BufferMapAccessBit access)
+	WeakArray<T, PtrSize> map(PtrSize offset, PtrSize elementCount, BufferMapAccessBit access)
 	{
-		return WeakArray<T>(static_cast<T*>(map(offset, sizeof(T) * elementCount, access)), elementCount);
+		return WeakArray<T, PtrSize>(static_cast<T*>(map(offset, sizeof(T) * elementCount, access)), elementCount);
 	}
 
 	/// Unmap the buffer.

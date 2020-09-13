@@ -455,7 +455,7 @@ void ClusterBin::binTile(U32 tileIdx, BinCtx& ctx, TileCtx& tileCtx)
 		{
 			const DecalQueueElement& decal = ctx.m_in->m_renderQueue->m_decals[i];
 			decalBox.setCenter(decal.m_obbCenter.xyz0());
-			decalBox.setRotation(Mat3x4(decal.m_obbRotation));
+			decalBox.setRotation(Mat3x4(Vec3(0.0f), decal.m_obbRotation));
 			decalBox.setExtend(decal.m_obbExtend.xyz0());
 
 			if(!insideClusterFrustum(frustumPlanes, decalBox))

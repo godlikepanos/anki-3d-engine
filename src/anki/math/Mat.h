@@ -145,77 +145,18 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(J == 4 && I == 4)
-	explicit TMat(const TMat<T, 3, 3>& m3)
-	{
-		auto& m = *this;
-		m(0, 0) = m3(0, 0);
-		m(0, 1) = m3(0, 1);
-		m(0, 2) = m3(0, 2);
-		m(0, 3) = 0.0;
-		m(1, 0) = m3(1, 0);
-		m(1, 1) = m3(1, 1);
-		m(1, 2) = m3(1, 2);
-		m(1, 3) = 0.0;
-		m(2, 0) = m3(2, 0);
-		m(2, 1) = m3(2, 1);
-		m(2, 2) = m3(2, 2);
-		m(2, 3) = 0.0;
-		m(3, 0) = 0.0;
-		m(3, 1) = 0.0;
-		m(3, 2) = 0.0;
-		m(3, 3) = 1.0;
-	}
-
-	ANKI_ENABLE_METHOD(J == 4 && I == 4)
-	explicit TMat(const TVec<T, 4>& v)
-	{
-		auto& m = *this;
-		m(0, 0) = 1.0;
-		m(0, 1) = 0.0;
-		m(0, 2) = 0.0;
-		m(0, 3) = v.x();
-		m(1, 0) = 0.0;
-		m(1, 1) = 1.0;
-		m(1, 2) = 0.0;
-		m(1, 3) = v.y();
-		m(2, 0) = 0.0;
-		m(2, 1) = 0.0;
-		m(2, 2) = 1.0;
-		m(2, 3) = v.z();
-		m(3, 0) = 0.0;
-		m(3, 1) = 0.0;
-		m(3, 2) = 0.0;
-		m(3, 3) = v.w();
-	}
-
-	ANKI_ENABLE_METHOD(J == 4 && I == 4)
-	explicit TMat(const TVec<T, 3>& v)
-		: TMat(v.xyz1())
-	{
-	}
-
-	ANKI_ENABLE_METHOD(J == 4 && I == 4)
-	TMat(const TVec<T, 4>& transl, const TMat<T, 3, 3>& rot)
-	{
-		setRotationPart(rot);
-		setTranslationPart(transl);
-		auto& m = *this;
-		m(3, 0) = m(3, 1) = m(3, 2) = T(0);
-	}
-
-	ANKI_ENABLE_METHOD(J == 4 && I == 4)
-	TMat(const TVec<T, 4>& transl, const TMat<T, 3, 3>& rot, const T scale)
+	TMat(const TVec<T, 4>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
 	{
 		if(isZero<T>(scale - T(1)))
 		{
-			setRotationPart(rot);
+			setRotationPart(rotation);
 		}
 		else
 		{
-			setRotationPart(rot * scale);
+			setRotationPart(rotation * scale);
 		}
 
-		setTranslationPart(transl);
+		setTranslationPart(translation);
 
 		auto& m = *this;
 		m(3, 0) = m(3, 1) = m(3, 2) = T(0);
@@ -223,7 +164,7 @@ public:
 
 	ANKI_ENABLE_METHOD(J == 4 && I == 4)
 	explicit TMat(const TTransform<T>& t)
-		: TMat<T, 4, 4>(t.getOrigin().xyz1(), t.getRotation().getRotationPart(), t.getScale())
+		: TMat(t.getOrigin().xyz1(), t.getRotation().getRotationPart(), t.getScale())
 	{
 	}
 
@@ -248,24 +189,6 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TMat<T, 3, 3>& m3)
-	{
-		auto& m = *this;
-		m(0, 0) = m3(0, 0);
-		m(0, 1) = m3(0, 1);
-		m(0, 2) = m3(0, 2);
-		m(0, 3) = 0.0;
-		m(1, 0) = m3(1, 0);
-		m(1, 1) = m3(1, 1);
-		m(1, 2) = m3(1, 2);
-		m(1, 3) = 0.0;
-		m(2, 0) = m3(2, 0);
-		m(2, 1) = m3(2, 1);
-		m(2, 2) = m3(2, 2);
-		m(2, 3) = 0.0;
-	}
-
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TMat<T, 4, 4>& m4)
 	{
 		auto& m = *this;
@@ -284,70 +207,42 @@ public:
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TVec<T, 3>& v)
+	explicit TMat(const TVec<T, 3>& translation, const TMat<T, 3, 3>& rotation, const T scale = T(1))
 	{
-		auto& m = *this;
-		m(0, 0) = 1.0;
-		m(0, 1) = 0.0;
-		m(0, 2) = 0.0;
-		m(0, 3) = v.x();
-		m(1, 0) = 0.0;
-		m(1, 1) = 1.0;
-		m(1, 2) = 0.0;
-		m(1, 3) = v.y();
-		m(2, 0) = 0.0;
-		m(2, 1) = 0.0;
-		m(2, 2) = 1.0;
-		m(2, 3) = v.z();
-	}
-
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TQuat<T>& q)
-	{
-		setRotationPart(TMat<T, 3, 3>(q));
-		setTranslationPart(TVec<T, 3>(0.0));
-	}
-
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TEuler<T>& b)
-	{
-		setRotationPart(TMat<T, 3, 3>(b));
-		setTranslationPart(TVec<T, 3>(0.0));
-	}
-
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	explicit TMat(const TAxisang<T>& b)
-	{
-		setRotationPart(TAxisang<T>(b));
-		setTranslationPart(TVec<T, 3>(0.0));
-	}
-
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	TMat(const TVec<T, 3>& transl, const TMat<T, 3, 3>& rot)
-	{
-		setRotationPart(rot);
-		setTranslationPart(transl);
-	}
-
-	ANKI_ENABLE_METHOD(J == 3 && I == 4)
-	TMat(const TVec<T, 3>& transl, const TMat<T, 3, 3>& rot, const T scale)
-	{
-		if(isZero<T>(scale - 1.0))
+		if(isZero<T>(scale - T(1)))
 		{
-			setRotationPart(rot);
+			setRotationPart(rotation);
 		}
 		else
 		{
-			setRotationPart(rot * scale);
+			setRotationPart(rotation * scale);
 		}
 
-		setTranslationPart(transl);
+		setTranslationPart(translation);
+	}
+
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	explicit TMat(const TVec<T, 3>& translation, const TQuat<T>& q, const T scale = T(1))
+		: TMat(translation, TMat<T, 3, 3>(q), scale)
+	{
+	}
+
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	explicit TMat(const TVec<T, 3>& translation, const TEuler<T>& b, const T scale = T(1))
+		: TMat(translation, TMat<T, 3, 3>(b), scale)
+	{
+	}
+
+	ANKI_ENABLE_METHOD(J == 3 && I == 4)
+	explicit TMat(const TVec<T, 3>& translation, const TAxisang<T>& b, const T scale = T(1))
+		: TMat(translation, TMat<T, 3, 3>(b), scale)
+	{
 	}
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TTransform<T>& t)
+		: TMat(t.getOrigin().xyz(), t.getRotation(), t.getScale())
 	{
-		(*this) = TMat(t.getOrigin(), t.getRotation(), t.getScale());
 	}
 	/// @}
 

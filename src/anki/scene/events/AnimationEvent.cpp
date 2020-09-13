@@ -37,7 +37,7 @@ Error AnimationEvent::update(Second prevUpdateTime, Second crntTime)
 
 	Transform trf;
 	trf.setOrigin(pos.xyz0());
-	trf.setRotation(Mat3x4(rot));
+	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	trf.setScale(scale);
 
 	MoveComponent& move = m_associatedNodes[0]->getComponent<MoveComponent>();

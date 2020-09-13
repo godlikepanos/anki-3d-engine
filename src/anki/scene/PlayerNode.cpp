@@ -42,7 +42,7 @@ public:
 			origin.y() += 1.9f;
 
 			// Set rotation
-			Mat3x4 rot(Euler(ang * y * 11.25f, ang * x * -20.0f, 0.0f));
+			Mat3x4 rot(Vec3(0.0f), Euler(ang * y * 11.25f, ang * x * -20.0f, 0.0f));
 
 			rot = move.getLocalRotation().combineTransformations(rot);
 

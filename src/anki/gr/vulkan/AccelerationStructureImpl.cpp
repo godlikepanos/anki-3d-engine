@@ -177,7 +177,7 @@ void AccelerationStructureImpl::initBuildInfo()
 			BufferInitInfo buffInit("RT_instances");
 			buffInit.m_size = sizeof(VkAccelerationStructureInstanceKHR) * instanceCount;
 			buffInit.m_usage = InternalBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH;
-			buffInit.m_access = BufferMapAccessBit::WRITE;
+			buffInit.m_mapAccess = BufferMapAccessBit::WRITE;
 			m_topLevelInfo.m_instancesBuff = getManager().newBuffer(buffInit);
 		}
 

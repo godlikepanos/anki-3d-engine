@@ -112,7 +112,7 @@ void Ssr::run(RenderPassWorkContext& rgraphCtx)
 		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 	unis->m_projMat = ctx.m_matrices.m_projectionJitter;
 	unis->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
-	unis->m_normalMat = Mat3x4(ctx.m_matrices.m_view.getRotationPart());
+	unis->m_normalMat = Mat3x4(Vec3(0.0f), ctx.m_matrices.m_view.getRotationPart());
 
 	// Bind all
 	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);

@@ -70,17 +70,17 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 	Mat3 rot;
 
 	rot = Mat3(Euler(0.0f, -PI / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
-	m_cubeSides[0].m_localTrf.setRotation(Mat3x4(rot));
+	m_cubeSides[0].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(0.0f, PI / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
-	m_cubeSides[1].m_localTrf.setRotation(Mat3x4(rot));
+	m_cubeSides[1].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(PI / 2.0f, 0.0f, 0.0f));
-	m_cubeSides[2].m_localTrf.setRotation(Mat3x4(rot));
+	m_cubeSides[2].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(-PI / 2.0f, 0.0f, 0.0f));
-	m_cubeSides[3].m_localTrf.setRotation(Mat3x4(rot));
+	m_cubeSides[3].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(0.0f, PI, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
-	m_cubeSides[4].m_localTrf.setRotation(Mat3x4(rot));
+	m_cubeSides[4].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(0.0f, 0.0f, PI));
-	m_cubeSides[5].m_localTrf.setRotation(Mat3x4(rot));
+	m_cubeSides[5].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
 
 	for(U i = 0; i < 6; ++i)
 	{

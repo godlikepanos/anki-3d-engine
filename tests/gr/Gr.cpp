@@ -2316,7 +2316,7 @@ void main()
 	BufferInitInfo info;
 	info.m_size = sizeof(Vec4) * 2;
 	info.m_usage = BufferUsageBit::ALL_COMPUTE;
-	info.m_access = BufferMapAccessBit::WRITE;
+	info.m_mapAccess = BufferMapAccessBit::WRITE;
 	BufferPtr ptrBuff = gr->newBuffer(info);
 
 	Vec4* mapped = static_cast<Vec4*>(ptrBuff->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
@@ -2375,7 +2375,7 @@ ANKI_TEST(Gr, RayQuery)
 	{
 		Array<U16, 3> indices = {0, 1, 2};
 		BufferInitInfo init;
-		init.m_access = BufferMapAccessBit::WRITE;
+		init.m_mapAccess = BufferMapAccessBit::WRITE;
 		init.m_usage = BufferUsageBit::INDEX;
 		init.m_size = sizeof(indices);
 		idxBuffer = gr->newBuffer(init);
@@ -2392,7 +2392,7 @@ ANKI_TEST(Gr, RayQuery)
 		Array<Vec4, 3> verts = {{{-1.0f, 0.0f, 0.0f, 100.0f}, {1.0f, 0.0f, 0.0f, 100.0f}, {0.0f, 2.0f, 0.0f, 100.0f}}};
 
 		BufferInitInfo init;
-		init.m_access = BufferMapAccessBit::WRITE;
+		init.m_mapAccess = BufferMapAccessBit::WRITE;
 		init.m_usage = BufferUsageBit::VERTEX;
 		init.m_size = sizeof(verts);
 		vertBuffer = gr->newBuffer(init);
@@ -2634,11 +2634,11 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 							  Bool turnInsideOut = false)
 {
 	BufferInitInfo inf;
-	inf.m_access = BufferMapAccessBit::WRITE;
+	inf.m_mapAccess = BufferMapAccessBit::WRITE;
 	inf.m_usage = BufferUsageBit::INDEX | BufferUsageBit::VERTEX | BufferUsageBit::STORAGE_TRACE_RAYS_READ;
 	inf.m_size = sizeof(Vec3) * 8;
 	vertBuffer = gr.newBuffer(inf);
-	WeakArray<Vec3> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::WRITE);
+	WeakArray<Vec3, PtrSize> positions = vertBuffer->map<Vec3>(0, 8, BufferMapAccessBit::WRITE);
 
 	//   7------6
 	//  /|     /|
@@ -2660,7 +2660,7 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 
 	inf.m_size = sizeof(U16) * 36;
 	indexBuffer = gr.newBuffer(inf);
-	WeakArray<U16> indices = indexBuffer->map<U16>(0, 36, BufferMapAccessBit::WRITE);
+	WeakArray<U16, PtrSize> indices = indexBuffer->map<U16>(0, 36, BufferMapAccessBit::WRITE);
 	U32 t = 0;
 
 	// Top
@@ -2899,8 +2899,63 @@ void main()
 						  true);
 	}
 
+	// Create AS
+	AccelerationStructurePtr tlas;
+	if(useRayTracing)
+	{
+		// Small box
+		AccelerationStructureInitInfo inf;
+		inf.m_type = AccelerationStructureType::BOTTOM_LEVEL;
+		inf.m_bottomLevel.m_indexBuffer = smallBoxIndexBuffer;
+		inf.m_bottomLevel.m_indexType = IndexType::U16;
+		inf.m_bottomLevel.m_indexCount = 36;
+		inf.m_bottomLevel.m_positionBuffer = smallBoxVertBuffer;
+		inf.m_bottomLevel.m_positionCount = 8;
+		inf.m_bottomLevel.m_positionsFormat = Format::R32G32B32_SFLOAT;
+		inf.m_bottomLevel.m_positionStride = sizeof(Vec3);
+
+		AccelerationStructurePtr smallBlas = gr->newAccelerationStructure(inf);
+
+		// TLAS
+		Array<AccelerationStructureInstance, 1> instances;
+		instances[0].m_bottomLevel = smallBlas;
+		instances[0].m_transform = Mat3x4(Vec3((smallBox.getMin() + smallBox.getMax()).xyz() / 2.0f),
+										  Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f))));
+		instances[0].m_sbtRecordIndex = 0;
+
+		inf.m_type = AccelerationStructureType::TOP_LEVEL;
+		inf.m_topLevel.m_instances = instances;
+
+		tlas = gr->newAccelerationStructure(inf);
+	}
+
+	// Create the SBT
+	BufferPtr sbt;
+	if(useRayTracing)
+	{
+		BufferInitInfo inf;
+		inf.m_mapAccess = BufferMapAccessBit::WRITE;
+		inf.m_usage = BufferUsageBit::SBT;
+		inf.m_size = gr->getDeviceCapabilities().m_sbtRecordSize * 4;
+
+		sbt = gr->newBuffer(inf);
+		WeakArray<U8, PtrSize> mapped = sbt->map<U8>(0, inf.m_size, BufferMapAccessBit::WRITE);
+		memset(&mapped[0], 0, inf.m_size);
+
+		ConstWeakArray<U8> handles = rtProg->getShaderGroupHandles();
+		ANKI_TEST_EXPECT_EQ(handles.getSize(), gr->getDeviceCapabilities().m_shaderGroupHandleSize * 4);
+
+		for(U32 handle = 0; handle < 4; ++handle)
+		{
+			memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * handle],
+				   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * handle],
+				   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+		}
+
+		sbt->unmap();
+	}
+
 	// Draw
-#if 0
 	constexpr U32 ITERATIONS = 200;
 	for(U i = 0; i < ITERATIONS; ++i)
 	{
@@ -2917,6 +2972,7 @@ void main()
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
+#if 0
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 
 		cmdb->bindShaderProgram(rasterProg);
@@ -2968,6 +3024,7 @@ void main()
 
 		cmdb->setTextureBarrier(presentTex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::PRESENT,
 								TextureSubresourceInfo());
+#endif
 
 		cmdb->flush();
 
@@ -2980,7 +3037,6 @@ void main()
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
 		}
 	}
-#endif
 
 	COMMON_END();
 }

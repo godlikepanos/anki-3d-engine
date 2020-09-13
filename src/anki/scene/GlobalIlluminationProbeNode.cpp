@@ -97,17 +97,17 @@ Error GlobalIlluminationProbeNode::init()
 
 	Mat3 rot;
 	rot = Mat3(Euler(0.0f, -PI / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
-	m_cubeFaceTransforms[0].setRotation(Mat3x4(rot));
+	m_cubeFaceTransforms[0].setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(0.0f, PI / 2.0f, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
-	m_cubeFaceTransforms[1].setRotation(Mat3x4(rot));
+	m_cubeFaceTransforms[1].setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(PI / 2.0f, 0.0f, 0.0f));
-	m_cubeFaceTransforms[2].setRotation(Mat3x4(rot));
+	m_cubeFaceTransforms[2].setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(-PI / 2.0f, 0.0f, 0.0f));
-	m_cubeFaceTransforms[3].setRotation(Mat3x4(rot));
+	m_cubeFaceTransforms[3].setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(0.0f, PI, 0.0f)) * Mat3(Euler(0.0f, 0.0f, PI));
-	m_cubeFaceTransforms[4].setRotation(Mat3x4(rot));
+	m_cubeFaceTransforms[4].setRotation(Mat3x4(Vec3(0.0f), rot));
 	rot = Mat3(Euler(0.0f, 0.0f, PI));
-	m_cubeFaceTransforms[5].setRotation(Mat3x4(rot));
+	m_cubeFaceTransforms[5].setRotation(Mat3x4(Vec3(0.0f), rot));
 
 	for(U i = 0; i < 6; ++i)
 	{

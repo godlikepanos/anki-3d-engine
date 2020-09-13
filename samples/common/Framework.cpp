@@ -215,7 +215,7 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			angles.x() = clamp(angles.x(), toRad(-90.0f), toRad(90.0f)); // Avoid cycle in Y axis
 			angles.y() += -velocity.x() * toRad(360.0f) * F32(elapsedTime) * MOUSE_SENSITIVITY;
 			angles.z() = 0.0f;
-			mover->setLocalRotation(Mat3x4(angles));
+			mover->setLocalRotation(Mat3x4(Vec3(0.0f), angles));
 		}
 	}
 	else
