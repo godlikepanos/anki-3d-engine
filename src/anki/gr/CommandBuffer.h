@@ -336,6 +336,26 @@ public:
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
 	/// Trace rays.
+	///
+	/// The 1st thing in the sbtBuffer is the ray gen shader group handle:
+	/// @code RG = RG_offset @endcode
+	/// The RG_offset is equal to the stbBufferOffset.
+	///
+	/// Then the sbtBuffer contains the miss shader group handles and their data. The indexing is as follows:
+	/// @code M = M_offset + M_stride * R_miss @endcode
+	/// The M_offset is equal to stbBufferOffset + GpuDeviceCapabilities::m_sbtRecordSize.
+	/// The M_stride is equal to GpuDeviceCapabilities::m_sbtRecordSize.
+	/// The R_miss is defined in the traceRayEXT and it's the "ray type".
+	///
+	/// After the miss shaders the sbtBuffer has the hit group shader group handles and their data. The indexing is:
+	/// @code HG = HG_offset + (HG_stride * (R_offset + R_stride * G_id + I_offset)) @endcode
+	/// The HG_offset is equal to sbtBufferOffset + GpuDeviceCapabilities::m_sbtRecordSize * (missShaderCount + 1).
+	/// The HG_stride is equal GpuDeviceCapabilities::m_sbtRecordSize.
+	/// The R_offset and R_stride are provided in traceRayEXT. The R_offset is the "ray type" and R_stride the number of
+	/// ray types.
+	/// The G_id is always 0 ATM.
+	/// The I_offset is the AccelerationStructureInstance::m_sbtRecordIndex.
+	///
 	/// @param[in] sbtBuffer The SBT buffer.
 	/// @param sbtBufferOffset Offset inside the sbtBuffer where SBT records start.
 	/// @param hitGroupSbtRecordCount The number of SBT records that contain hit groups.

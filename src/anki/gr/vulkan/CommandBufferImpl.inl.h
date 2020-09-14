@@ -432,7 +432,7 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 		}
 	}
 
-	Array<VkStridedBufferRegionKHR, 3> regions;
+	Array<VkStridedBufferRegionKHR, 4> regions;
 
 	// Rgen
 	regions[0].buffer = static_cast<const BufferImpl&>(*sbtBuffer).getHandle();
@@ -452,7 +452,10 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	regions[2].stride = shaderGroupBaseAlignment;
 	regions[2].size = shaderGroupBaseAlignment * hitGroupSbtRecordCount;
 
-	ANKI_CMD(vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], nullptr, width, height, depth),
+	// Callable, nothing for now
+	regions[3] = VkStridedBufferRegionKHR();
+
+	ANKI_CMD(vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth),
 			 ANY_OTHER_COMMAND);
 }
 

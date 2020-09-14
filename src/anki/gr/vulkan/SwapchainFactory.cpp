@@ -145,7 +145,7 @@ Error MicroSwapchain::initInternal()
 		ci.imageColorSpace = colorspace;
 		ci.imageExtent = surfaceProperties.currentExtent;
 		ci.imageArrayLayers = 1;
-		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
 		ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		ci.queueFamilyIndexCount = 1;
 		U32 idx = m_factory->m_gr->getGraphicsQueueIndex();
@@ -181,7 +181,8 @@ Error MicroSwapchain::initInternal()
 			init.m_height = surfaceHeight;
 			init.m_format = Format::B8G8R8A8_UNORM;
 			ANKI_ASSERT(surfaceFormat == VK_FORMAT_B8G8R8A8_UNORM);
-			init.m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
+			init.m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
+						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
 						   | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::PRESENT;
 			init.m_type = TextureType::_2D;
 

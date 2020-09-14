@@ -2851,7 +2851,7 @@ layout(set = 0, binding = 2, rgba8) uniform image2D u_outImg;
 
 void main()
 {
-	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
+	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(0.1));
 }
 		)";
 
@@ -2900,7 +2900,7 @@ void main()
 	}
 
 	// Create AS
-	AccelerationStructurePtr tlas;
+	AccelerationStructurePtr smallBlas, tlas;
 	if(useRayTracing)
 	{
 		// Small box
@@ -2914,7 +2914,7 @@ void main()
 		inf.m_bottomLevel.m_positionsFormat = Format::R32G32B32_SFLOAT;
 		inf.m_bottomLevel.m_positionStride = sizeof(Vec3);
 
-		AccelerationStructurePtr smallBlas = gr->newAccelerationStructure(inf);
+		smallBlas = gr->newAccelerationStructure(inf);
 
 		// TLAS
 		Array<AccelerationStructureInstance, 1> instances;
@@ -2955,6 +2955,43 @@ void main()
 		sbt->unmap();
 	}
 
+	// Create model info
+	BufferPtr modelBuffer;
+	if(useRayTracing)
+	{
+		struct Material
+		{
+			Vec3 m_diffuseColor;
+		};
+
+		struct Mesh
+		{
+			U64 m_indexBufferPtr;
+			U64 m_positionBufferPtr;
+		};
+
+		struct Model
+		{
+			Material m_mtl;
+			Mesh m_mesh;
+		};
+
+		const U32 modelCount = 1;
+
+		BufferInitInfo inf;
+		inf.m_mapAccess = BufferMapAccessBit::WRITE;
+		inf.m_usage = BufferUsageBit::ALL_STORAGE;
+		inf.m_size = sizeof(Model) * modelCount;
+
+		modelBuffer = gr->newBuffer(inf);
+		WeakArray<Model, PtrSize> models = modelBuffer->map<Model>(0, modelCount, BufferMapAccessBit::WRITE);
+		memset(&models[0], 0, inf.m_size);
+
+		models[0].m_mtl.m_diffuseColor = Vec3(0.75f);
+
+		modelBuffer->unmap();
+	}
+
 	// Draw
 	constexpr U32 ITERATIONS = 200;
 	for(U i = 0; i < ITERATIONS; ++i)
@@ -2971,6 +3008,46 @@ void main()
 		CommandBufferInitInfo cinit;
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
+
+		if(i == 0)
+		{
+			cmdb->setAccelerationStructureBarrier(smallBlas, AccelerationStructureUsageBit::NONE,
+												  AccelerationStructureUsageBit::BUILD);
+			cmdb->buildAccelerationStructure(smallBlas);
+			cmdb->setAccelerationStructureBarrier(smallBlas, AccelerationStructureUsageBit::BUILD,
+												  AccelerationStructureUsageBit::ATTACH);
+
+			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::NONE,
+												  AccelerationStructureUsageBit::BUILD);
+			cmdb->buildAccelerationStructure(tlas);
+			cmdb->setAccelerationStructureBarrier(smallBlas, AccelerationStructureUsageBit::BUILD,
+												  AccelerationStructureUsageBit::TRACE_RAYS_READ);
+		}
+
+		TexturePtr presentTex = gr->acquireNextPresentableTexture();
+
+		TextureViewPtr presentView;
+		{
+
+			TextureViewInitInfo inf;
+			inf.m_texture = presentTex;
+
+			presentView = gr->newTextureView(inf);
+		}
+
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE,
+								TextureSubresourceInfo());
+
+		cmdb->bindStorageBuffer(0, 0, modelBuffer, 0, MAX_PTR_SIZE);
+		cmdb->bindAccelerationStructure(0, 1, tlas);
+		cmdb->bindImage(0, 2, presentView);
+
+		cmdb->bindShaderProgram(rtProg);
+
+		cmdb->traceRays(sbt, 0, 1, WIDTH, HEIGHT, 1);
+
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE, TextureUsageBit::PRESENT,
+								TextureSubresourceInfo());
 
 #if 0
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);

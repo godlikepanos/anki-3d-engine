@@ -283,7 +283,7 @@ void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit
 		srcAccesses |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(before & AccelerationStructureUsageBit::RAY_GEN_READ))
+	if(!!(before & AccelerationStructureUsageBit::TRACE_RAYS_READ))
 	{
 		srcStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		srcAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
@@ -324,7 +324,7 @@ void AccelerationStructureImpl::computeBarrierInfo(AccelerationStructureUsageBit
 		dstAccesses |= VK_ACCESS_MEMORY_READ_BIT;
 	}
 
-	if(!!(after & AccelerationStructureUsageBit::RAY_GEN_READ))
+	if(!!(after & AccelerationStructureUsageBit::TRACE_RAYS_READ))
 	{
 		dstStages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 		dstAccesses |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;

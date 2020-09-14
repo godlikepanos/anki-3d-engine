@@ -425,6 +425,18 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level,
 		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
+	if(!!(usage & (TextureUsageBit::SAMPLED_TRACE_RAYS | TextureUsageBit::IMAGE_TRACE_RAYS_READ)))
+	{
+		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+		accesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(usage & TextureUsageBit::IMAGE_TRACE_RAYS_WRITE))
+	{
+		stages |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+		accesses |= VK_ACCESS_SHADER_WRITE_BIT;
+	}
+
 	if(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
 	{
 		if(depthStencil)
