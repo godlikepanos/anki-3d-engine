@@ -257,6 +257,14 @@ public:
 	{
 		commandCommon();
 		m_dsetState[set].bindImage(binding, arrayIdx, img.get());
+
+		const Bool isPresentable =
+			!!(static_cast<const TextureViewImpl&>(*img).getTextureImpl().getTextureUsage() & TextureUsageBit::PRESENT);
+		if(isPresentable)
+		{
+			m_renderedToDefaultFb = true;
+		}
+
 		m_microCmdb->pushObjectRef(img);
 	}
 
@@ -402,14 +410,12 @@ private:
 	Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> m_colorAttachmentUsages = {};
 	TextureUsageBit m_depthStencilAttachmentUsage = TextureUsageBit::NONE;
 
-	ShaderProgramImpl* m_graphicsProg ANKI_DEBUG_CODE(= nullptr); ///< Last bound graphics program
-
 	PipelineStateTracker m_state;
 
 	Array<DescriptorSetState, MAX_DESCRIPTOR_SETS> m_dsetState;
 
+	ShaderProgramImpl* m_graphicsProg ANKI_DEBUG_CODE(= nullptr); ///< Last bound graphics program
 	ShaderProgramImpl* m_computeProg ANKI_DEBUG_CODE(= nullptr);
-
 	ShaderProgramImpl* m_rtProg ANKI_DEBUG_CODE(= nullptr);
 
 	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
@@ -551,6 +557,25 @@ private:
 		out.offset.y = (flipvp) ? (fbHeight - (miny + height)) : miny;
 
 		return out;
+	}
+
+	const ShaderProgramImpl& getBoundProgram()
+	{
+		if(m_graphicsProg)
+		{
+			ANKI_ASSERT(m_computeProg == nullptr && m_rtProg == nullptr);
+			return *m_graphicsProg;
+		}
+		else if(m_computeProg)
+		{
+			ANKI_ASSERT(m_graphicsProg == nullptr && m_rtProg == nullptr);
+			return *m_computeProg;
+		}
+		else
+		{
+			ANKI_ASSERT(m_graphicsProg == nullptr && m_computeProg == nullptr && m_rtProg != nullptr);
+			return *m_rtProg;
+		}
 	}
 };
 /// @}

@@ -605,6 +605,7 @@ inline void CommandBufferImpl::drawcallCommon()
 {
 	// Preconditions
 	commandCommon();
+	ANKI_ASSERT(m_graphicsProg);
 	ANKI_ASSERT(insideRenderPass() || secondLevel());
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM || m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
 	ANKI_ASSERT(m_graphicsProg->getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize
@@ -620,7 +621,6 @@ inline void CommandBufferImpl::drawcallCommon()
 	++m_rpCommandCount;
 
 	// Get or create ppline
-	ANKI_ASSERT(m_graphicsProg);
 	Pipeline ppline;
 	Bool stateDirty;
 	m_graphicsProg->getPipelineFactory().newPipeline(m_state, ppline, stateDirty);
@@ -909,16 +909,14 @@ inline Bool CommandBufferImpl::flipViewport() const
 inline void CommandBufferImpl::setPushConstants(const void* data, U32 dataSize)
 {
 	ANKI_ASSERT(data && dataSize && dataSize % 16 == 0);
-	const ShaderProgramImpl* prog = (m_graphicsProg) ? m_graphicsProg : m_computeProg;
-	ANKI_ASSERT(prog && "Need have bound the ShaderProgram first");
-	ANKI_ASSERT(prog->getReflectionInfo().m_pushConstantsSize == dataSize
+	const ShaderProgramImpl& prog = getBoundProgram();
+	ANKI_ASSERT(prog.getReflectionInfo().m_pushConstantsSize == dataSize
 				&& "The bound program should have push constants equal to the \"dataSize\" parameter");
 
 	commandCommon();
 
-	ANKI_CMD(
-		vkCmdPushConstants(m_handle, prog->getPipelineLayout().getHandle(), VK_SHADER_STAGE_ALL, 0, dataSize, data),
-		ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdPushConstants(m_handle, prog.getPipelineLayout().getHandle(), VK_SHADER_STAGE_ALL, 0, dataSize, data),
+			 ANY_OTHER_COMMAND);
 
 #if ANKI_EXTRA_CHECKS
 	m_setPushConstantsSize = dataSize;

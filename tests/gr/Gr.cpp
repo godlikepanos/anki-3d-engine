@@ -2695,14 +2695,6 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 	indices[t++] = 5;
 	indices[t++] = 6;
 
-	// Back
-	indices[t++] = 4;
-	indices[t++] = 7;
-	indices[t++] = 6;
-	indices[t++] = 5;
-	indices[t++] = 4;
-	indices[t++] = 6;
-
 	// Front
 	indices[t++] = 0;
 	indices[t++] = 1;
@@ -2710,6 +2702,14 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 	indices[t++] = 3;
 	indices[t++] = 1;
 	indices[t++] = 2;
+
+	// Back
+	indices[t++] = 4;
+	indices[t++] = 7;
+	indices[t++] = 6;
+	indices[t++] = 5;
+	indices[t++] = 4;
+	indices[t++] = 6;
 
 	ANKI_ASSERT(t == indices.getSize());
 
@@ -2800,48 +2800,50 @@ layout(set = 0, binding = 0, scalar) buffer u_00
 {
 	Model m_models[];
 };
+
+#define PAYLOAD_LOCATION 0
 )";
 
 		const CString chit0Src = R"(
-layout(location = 0) rayPayloadInEXT PayLoad payLoad;
+layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 
 void main()
 {
-	payLoad.m_color = m_models[gl_InstanceID].m_mtl.m_diffuseColor;
+	s_payLoad.m_color = m_models[gl_InstanceID].m_mtl.m_diffuseColor;
 }
 )";
 
 		const CString chit1Src = R"(
-layout(location = 0) rayPayloadInEXT PayLoad payLoad;
+layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 
 void main()
 {
 	Vec3 col;
-	switch(gl_PrimitiveID)
+	U32 quad = gl_PrimitiveID / 2;
+
+	if(quad == 2)
 	{
-	case 0:
-		col = Vec3(1.0, 0.0, 0.0);
-		break;
-	case 1:
-		col = Vec3(0.0, 1.0, 0.0);
-		break;
-	case 2:
-		col = Vec3(0.0, 0.0, 1.0);
-		break;
-	default:
-		col = Vec3(1.0, 0.0, 1.0);
+		col = Vec3(0.65, 0.05, 0.05);
+	}
+	else if(quad == 3)
+	{
+		col = Vec3(0.12, 0.45, 0.15);
+	}
+	else
+	{
+		col = Vec3(0.73f);
 	}
 
-	payLoad.m_color = col;
+	s_payLoad.m_color = col;
 }
 )";
 
 		const CString missSrc = R"(
-layout(location = 0) rayPayloadInEXT PayLoad payLoad;
+layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 
 void main()
 {
-	payLoad.m_color = Vec3(0.0);
+	s_payLoad.m_color = Vec3(0.5);
 }
 )";
 
@@ -2849,9 +2851,36 @@ void main()
 layout(set = 0, binding = 1) uniform accelerationStructureEXT u_tlas;
 layout(set = 0, binding = 2, rgba8) uniform image2D u_outImg;
 
+layout(push_constant) uniform u_pc
+{
+	Mat4 u_vp;
+	Vec3 u_cameraPos;
+	F32 u_padding0;
+};
+
+layout(location = PAYLOAD_LOCATION) rayPayloadEXT PayLoad s_payLoad;
+
 void main()
 {
-	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(0.1));
+	Vec2 uv = (Vec2(gl_LaunchIDEXT.xy) + 0.5) / Vec2(gl_LaunchSizeEXT.xy);
+	uv.y = 1.0 - uv.y;
+	const Vec2 ndc = uv * 2.0 - 1.0;
+	const Vec4 p4 = inverse(u_vp) * Vec4(ndc, 1.0, 1.0);
+	const Vec3 p3 = p4.xyz / p4.w;
+
+	const Vec3 rayDir = normalize(p3 - u_cameraPos);
+	const Vec3 rayOrigin = u_cameraPos;
+
+	const U32 cullMask = 0xFF;
+	const U32 sbtRecordOffset = 0;
+	const U32 sbtRecordStride = 0;
+	const U32 missIndex = 0;
+	const F32 tMin = 0.01;
+	const F32 tMax = 10000.0;
+	traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin, tMin,
+				rayDir, tMax, PAYLOAD_LOCATION);
+
+	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(s_payLoad.m_color, 0.0));
 }
 		)";
 
@@ -2900,7 +2929,7 @@ void main()
 	}
 
 	// Create AS
-	AccelerationStructurePtr smallBlas, tlas;
+	AccelerationStructurePtr smallBlas, tlas, bigBlas, roomBlas;
 	if(useRayTracing)
 	{
 		// Small box
@@ -2916,12 +2945,33 @@ void main()
 
 		smallBlas = gr->newAccelerationStructure(inf);
 
+		// Big box
+		inf.m_bottomLevel.m_indexBuffer = bigBoxIndexBuffer;
+		inf.m_bottomLevel.m_positionBuffer = bigBoxVertBuffer;
+		bigBlas = gr->newAccelerationStructure(inf);
+
+		// Room
+		inf.m_bottomLevel.m_indexBuffer = roomIndexBuffer;
+		inf.m_bottomLevel.m_positionBuffer = roomVertBuffer;
+		inf.m_bottomLevel.m_indexCount = 30;
+		roomBlas = gr->newAccelerationStructure(inf);
+
 		// TLAS
-		Array<AccelerationStructureInstance, 1> instances;
+		Array<AccelerationStructureInstance, 3> instances;
 		instances[0].m_bottomLevel = smallBlas;
 		instances[0].m_transform = Mat3x4(Vec3((smallBox.getMin() + smallBox.getMax()).xyz() / 2.0f),
 										  Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f))));
 		instances[0].m_sbtRecordIndex = 0;
+
+		instances[1].m_bottomLevel = bigBlas;
+		instances[1].m_transform = Mat3x4(Vec3((bigBox.getMin() + bigBox.getMax()).xyz() / 2.0f),
+										  Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f))));
+		instances[1].m_sbtRecordIndex = 0;
+
+		instances[2].m_bottomLevel = roomBlas;
+		instances[2].m_transform =
+			Mat3x4(Vec3((roomBox.getMin() + roomBox.getMax()).xyz() / 2.0f), Mat3::getIdentity());
+		instances[2].m_sbtRecordIndex = 1;
 
 		inf.m_type = AccelerationStructureType::TOP_LEVEL;
 		inf.m_topLevel.m_instances = instances;
@@ -2933,19 +2983,21 @@ void main()
 	BufferPtr sbt;
 	if(useRayTracing)
 	{
+		const U32 handleCount = 4;
+
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
 		inf.m_usage = BufferUsageBit::SBT;
-		inf.m_size = gr->getDeviceCapabilities().m_sbtRecordSize * 4;
+		inf.m_size = gr->getDeviceCapabilities().m_sbtRecordSize * handleCount;
 
 		sbt = gr->newBuffer(inf);
 		WeakArray<U8, PtrSize> mapped = sbt->map<U8>(0, inf.m_size, BufferMapAccessBit::WRITE);
 		memset(&mapped[0], 0, inf.m_size);
 
 		ConstWeakArray<U8> handles = rtProg->getShaderGroupHandles();
-		ANKI_TEST_EXPECT_EQ(handles.getSize(), gr->getDeviceCapabilities().m_shaderGroupHandleSize * 4);
+		ANKI_TEST_EXPECT_EQ(handles.getSize(), gr->getDeviceCapabilities().m_shaderGroupHandleSize * handleCount);
 
-		for(U32 handle = 0; handle < 4; ++handle)
+		for(U32 handle = 0; handle < handleCount; ++handle)
 		{
 			memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * handle],
 				   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * handle],
@@ -2976,7 +3028,7 @@ void main()
 			Mesh m_mesh;
 		};
 
-		const U32 modelCount = 1;
+		const U32 modelCount = 2;
 
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
@@ -2988,6 +3040,7 @@ void main()
 		memset(&models[0], 0, inf.m_size);
 
 		models[0].m_mtl.m_diffuseColor = Vec3(0.75f);
+		models[1].m_mtl.m_diffuseColor = Vec3(1.0f);
 
 		modelBuffer->unmap();
 	}
@@ -3013,8 +3066,18 @@ void main()
 		{
 			cmdb->setAccelerationStructureBarrier(smallBlas, AccelerationStructureUsageBit::NONE,
 												  AccelerationStructureUsageBit::BUILD);
+			cmdb->setAccelerationStructureBarrier(bigBlas, AccelerationStructureUsageBit::NONE,
+												  AccelerationStructureUsageBit::BUILD);
+			cmdb->setAccelerationStructureBarrier(roomBlas, AccelerationStructureUsageBit::NONE,
+												  AccelerationStructureUsageBit::BUILD);
 			cmdb->buildAccelerationStructure(smallBlas);
+			cmdb->buildAccelerationStructure(bigBlas);
+			cmdb->buildAccelerationStructure(roomBlas);
 			cmdb->setAccelerationStructureBarrier(smallBlas, AccelerationStructureUsageBit::BUILD,
+												  AccelerationStructureUsageBit::ATTACH);
+			cmdb->setAccelerationStructureBarrier(bigBlas, AccelerationStructureUsageBit::BUILD,
+												  AccelerationStructureUsageBit::ATTACH);
+			cmdb->setAccelerationStructureBarrier(roomBlas, AccelerationStructureUsageBit::BUILD,
 												  AccelerationStructureUsageBit::ATTACH);
 
 			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::NONE,
@@ -3043,6 +3106,17 @@ void main()
 		cmdb->bindImage(0, 2, presentView);
 
 		cmdb->bindShaderProgram(rtProg);
+
+		class PC
+		{
+		public:
+			Mat4 m_vp;
+			Vec4 m_cameraPos;
+		} pc;
+		pc.m_vp = projMat * viewMat;
+		pc.m_cameraPos = Vec4(278.0f, 278.0f, -800.0f, 0.0f);
+
+		cmdb->setPushConstants(&pc, sizeof(pc));
 
 		cmdb->traceRays(sbt, 0, 1, WIDTH, HEIGHT, 1);
 
