@@ -2912,9 +2912,12 @@ void main()
 	BufferPtr smallBoxVertBuffer, smallBoxIndexBuffer;
 	BufferPtr bigBoxVertBuffer, bigBoxIndexBuffer;
 	BufferPtr roomVertBuffer, roomIndexBuffer;
+	BufferPtr lightVertBuffer, lightIndexBuffer;
 	const Aabb smallBox(Vec3(130.0f, 0.0f, 65.0f), Vec3(295.0f, 160.0f, 230.0f));
 	const Aabb bigBox(Vec3(265.0f, 0.0f, 295.0f), Vec3(430.0f, 330.0f, 460.0f));
 	const Aabb roomBox(Vec3(0.0f), Vec3(555.0f));
+	const Aabb lightBox(Vec3(213.0f + 1.0f, 554.0f, 227.0f + 1.0f),
+						Vec3(343.0f - 1.0f, 554.0f + 0.001f, 332.0f - 1.0f));
 	{
 		createCubeBuffers(*gr, -(smallBox.getMax().xyz() - smallBox.getMin().xyz()) / 2.0f,
 						  (smallBox.getMax().xyz() - smallBox.getMin().xyz()) / 2.0f, smallBoxIndexBuffer,
@@ -2926,10 +2929,14 @@ void main()
 		createCubeBuffers(*gr, -(roomBox.getMax().xyz() - roomBox.getMin().xyz()) / 2.0f,
 						  (roomBox.getMax().xyz() - roomBox.getMin().xyz()) / 2.0f, roomIndexBuffer, roomVertBuffer,
 						  true);
+
+		createCubeBuffers(*gr, -(lightBox.getMax().xyz() - lightBox.getMin().xyz()) / 2.0f,
+						  (lightBox.getMax().xyz() - lightBox.getMin().xyz()) / 2.0f, lightIndexBuffer,
+						  lightVertBuffer);
 	}
 
 	// Create AS
-	AccelerationStructurePtr smallBlas, tlas, bigBlas, roomBlas;
+	AccelerationStructurePtr smallBlas, tlas, bigBlas, roomBlas, lightBlas;
 	if(useRayTracing)
 	{
 		// Small box
@@ -2956,8 +2963,14 @@ void main()
 		inf.m_bottomLevel.m_indexCount = 30;
 		roomBlas = gr->newAccelerationStructure(inf);
 
+		// Light
+		inf.m_bottomLevel.m_indexBuffer = lightIndexBuffer;
+		inf.m_bottomLevel.m_positionBuffer = lightVertBuffer;
+		inf.m_bottomLevel.m_indexCount = 36;
+		lightBlas = gr->newAccelerationStructure(inf);
+
 		// TLAS
-		Array<AccelerationStructureInstance, 3> instances;
+		Array<AccelerationStructureInstance, 4> instances;
 		instances[0].m_bottomLevel = smallBlas;
 		instances[0].m_transform = Mat3x4(Vec3((smallBox.getMin() + smallBox.getMax()).xyz() / 2.0f),
 										  Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f))));
@@ -2968,10 +2981,15 @@ void main()
 										  Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f))));
 		instances[1].m_sbtRecordIndex = 0;
 
-		instances[2].m_bottomLevel = roomBlas;
+		instances[2].m_bottomLevel = lightBlas;
 		instances[2].m_transform =
+			Mat3x4(Vec3((lightBox.getMin() + lightBox.getMax()).xyz() / 2.0f), Mat3::getIdentity());
+		instances[2].m_sbtRecordIndex = 0;
+
+		instances[3].m_bottomLevel = roomBlas;
+		instances[3].m_transform =
 			Mat3x4(Vec3((roomBox.getMin() + roomBox.getMax()).xyz() / 2.0f), Mat3::getIdentity());
-		instances[2].m_sbtRecordIndex = 1;
+		instances[3].m_sbtRecordIndex = 1;
 
 		inf.m_type = AccelerationStructureType::TOP_LEVEL;
 		inf.m_topLevel.m_instances = instances;
@@ -3028,7 +3046,7 @@ void main()
 			Mesh m_mesh;
 		};
 
-		const U32 modelCount = 2;
+		const U32 modelCount = 4;
 
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
@@ -3040,7 +3058,8 @@ void main()
 		memset(&models[0], 0, inf.m_size);
 
 		models[0].m_mtl.m_diffuseColor = Vec3(0.75f);
-		models[1].m_mtl.m_diffuseColor = Vec3(1.0f);
+		models[1].m_mtl.m_diffuseColor = Vec3(0.75f);
+		models[2].m_mtl.m_diffuseColor = Vec3(1.0f);
 
 		modelBuffer->unmap();
 	}
@@ -3070,14 +3089,19 @@ void main()
 												  AccelerationStructureUsageBit::BUILD);
 			cmdb->setAccelerationStructureBarrier(roomBlas, AccelerationStructureUsageBit::NONE,
 												  AccelerationStructureUsageBit::BUILD);
+			cmdb->setAccelerationStructureBarrier(lightBlas, AccelerationStructureUsageBit::NONE,
+												  AccelerationStructureUsageBit::BUILD);
 			cmdb->buildAccelerationStructure(smallBlas);
 			cmdb->buildAccelerationStructure(bigBlas);
 			cmdb->buildAccelerationStructure(roomBlas);
+			cmdb->buildAccelerationStructure(lightBlas);
 			cmdb->setAccelerationStructureBarrier(smallBlas, AccelerationStructureUsageBit::BUILD,
 												  AccelerationStructureUsageBit::ATTACH);
 			cmdb->setAccelerationStructureBarrier(bigBlas, AccelerationStructureUsageBit::BUILD,
 												  AccelerationStructureUsageBit::ATTACH);
 			cmdb->setAccelerationStructureBarrier(roomBlas, AccelerationStructureUsageBit::BUILD,
+												  AccelerationStructureUsageBit::ATTACH);
+			cmdb->setAccelerationStructureBarrier(lightBlas, AccelerationStructureUsageBit::BUILD,
 												  AccelerationStructureUsageBit::ATTACH);
 
 			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::NONE,
