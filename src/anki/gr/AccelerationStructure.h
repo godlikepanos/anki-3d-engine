@@ -68,6 +68,7 @@ public:
 	AccelerationStructurePtr m_bottomLevel;
 	Mat3x4 m_transform = Mat3x4::getIdentity();
 	U32 m_sbtRecordIndex = 0; ///< Points to the SBT record.
+	U8 m_mask = 0xFF; ///< A mask that this instance belongs to. Will be tested against what's in traceRayEXT().
 };
 
 /// @memberof AccelerationStructureInitInfo

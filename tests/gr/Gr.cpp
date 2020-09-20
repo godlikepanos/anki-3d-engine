@@ -2771,12 +2771,25 @@ void main()
 	}
 
 	ShaderProgramPtr rtProg;
+	constexpr U32 rayGenGroupIdx = 0;
+	constexpr U32 missGroupIdx = 1;
+	constexpr U32 shadowMissGroupIdx = 2;
+	constexpr U32 colorChitGroupIdx = 3;
+	constexpr U32 primitiveChitGroupIdx = 4;
+	constexpr U32 shadowAhitGroupIdx = 5;
+	constexpr U32 hitgroupCount = 6;
 	if(useRayTracing)
 	{
 		const CString commonSrc = R"(
 struct PayLoad
 {
 	Vec3 m_color;
+	F32 m_hitT;
+};
+
+struct ShadowPayLoad
+{
+	Bool m_hit;
 };
 
 struct Material
@@ -2796,12 +2809,25 @@ struct Model
 	Mesh m_mesh;
 };
 
-layout(set = 0, binding = 0, scalar) buffer u_00
+struct Light
 {
-	Model m_models[];
+	Vec3 m_min;
+	Vec3 m_max;
+	Vec3 m_intensity;
+};
+
+layout(set = 0, binding = 0, scalar) buffer b_00
+{
+	Model u_models[];
+};
+
+layout(set = 0, binding = 1, scalar) buffer b_01
+{
+	Light u_lights[];
 };
 
 #define PAYLOAD_LOCATION 0
+#define SHADOW_PAYLOAD_LOCATION 1
 )";
 
 		const CString chit0Src = R"(
@@ -2809,7 +2835,8 @@ layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 
 void main()
 {
-	s_payLoad.m_color = m_models[gl_InstanceID].m_mtl.m_diffuseColor;
+	s_payLoad.m_color = u_models[gl_InstanceID].m_mtl.m_diffuseColor;
+	s_payLoad.m_hitT = gl_HitTEXT;
 }
 )";
 
@@ -2835,6 +2862,7 @@ void main()
 	}
 
 	s_payLoad.m_color = col;
+	s_payLoad.m_hitT = gl_HitTEXT;
 }
 )";
 
@@ -2844,21 +2872,63 @@ layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 void main()
 {
 	s_payLoad.m_color = Vec3(0.5);
+	s_payLoad.m_hitT = -1.0;
+}
+)";
+
+		const CString shadowAhitSrc = R"(
+layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadInEXT ShadowPayLoad s_payLoad;
+
+void main()
+{
+	s_payLoad.m_hit = true;
+	terminateRayEXT();
+}
+)";
+
+		const CString shadowMissSrc = R"(
+layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadInEXT ShadowPayLoad s_payLoad;
+
+void main()
+{
+	s_payLoad.m_hit = false;
 }
 )";
 
 		const CString rayGenSrc = R"(
-layout(set = 0, binding = 1) uniform accelerationStructureEXT u_tlas;
-layout(set = 0, binding = 2, rgba8) uniform image2D u_outImg;
+layout(set = 1, binding = 0) uniform accelerationStructureEXT u_tlas;
+layout(set = 1, binding = 1, rgba8) uniform image2D u_outImg;
 
 layout(push_constant) uniform u_pc
 {
 	Mat4 u_vp;
 	Vec3 u_cameraPos;
-	F32 u_padding0;
+	U32 u_lightCount;
 };
 
 layout(location = PAYLOAD_LOCATION) rayPayloadEXT PayLoad s_payLoad;
+layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadEXT ShadowPayLoad s_shadowPayLoad;
+
+UVec3 rand3DPCG16(UVec3 v)
+{
+	v = v * 1664525u + 1013904223u;
+
+	v.x += v.y * v.z;
+	v.y += v.z * v.x;
+	v.z += v.x * v.y;
+	v.x += v.y * v.z;
+	v.y += v.z * v.x;
+	v.z += v.x * v.y;
+
+	return v >> 16u;
+}
+
+Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
+{
+	const F32 e1 = fract(F32(sampleIdx) / sampleCount + F32(random.x) * (1.0 / 65536.0));
+	const F32 e2 = F32((bitfieldReverse(sampleIdx) >> 16) ^ random.y) * (1.0 / 65536.0);
+	return Vec2(e1, e2);
+}
 
 void main()
 {
@@ -2868,19 +2938,55 @@ void main()
 	const Vec4 p4 = inverse(u_vp) * Vec4(ndc, 1.0, 1.0);
 	const Vec3 p3 = p4.xyz / p4.w;
 
-	const Vec3 rayDir = normalize(p3 - u_cameraPos);
-	const Vec3 rayOrigin = u_cameraPos;
+	const UVec2 random = rand3DPCG16(UVec3(gl_LaunchSizeEXT.xy, 0)).xy;
+	const Vec2 randomCircle = hammersleyRandom16(0, 0xFFFFu, random);
 
-	const U32 cullMask = 0xFF;
-	const U32 sbtRecordOffset = 0;
-	const U32 sbtRecordStride = 0;
-	const U32 missIndex = 0;
-	const F32 tMin = 0.01;
-	const F32 tMax = 10000.0;
-	traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin, tMin,
-				rayDir, tMax, PAYLOAD_LOCATION);
+	Vec3 outColor = Vec3(0.0);
 
-	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(s_payLoad.m_color, 0.0));
+	// Primary ray
+	{
+		const Vec3 rayOrigin = u_cameraPos;
+		const Vec3 rayDir = normalize(p3 - u_cameraPos);
+		const U32 cullMask = 0xFF;
+		const U32 sbtRecordOffset = 0;
+		const U32 sbtRecordStride = 0;
+		const U32 missIndex = 0;
+		const F32 tMin = 0.01;
+		const F32 tMax = 10000.0;
+		traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin,
+					tMin, rayDir, tMax, PAYLOAD_LOCATION);
+	}
+
+	if(s_payLoad.m_hitT > 0.0)
+	{
+		const Vec3 rayOrigin = u_cameraPos + normalize(p3 - u_cameraPos) * s_payLoad.m_hitT;
+		const Vec3 diffuseColor = s_payLoad.m_color;
+
+		for(U32 i = 0; i < u_lightCount; ++i)
+		{
+			s_shadowPayLoad.m_hit = false;
+			const Light light = u_lights[i];
+			const Vec3 randomPointInLight = mix(light.m_min, light.m_max, randomCircle.xyx);
+
+			const Vec3 rayDir = normalize(randomPointInLight - rayOrigin);
+			const U32 cullMask = 0x1;
+			const U32 sbtRecordOffset = 1;
+			const U32 sbtRecordStride = 0;
+			const U32 missIndex = 1;
+			const F32 tMin = 0.01;
+			const F32 tMax = length(randomPointInLight - rayOrigin);
+			traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin,
+						tMin, rayDir, tMax, SHADOW_PAYLOAD_LOCATION);
+
+			outColor += (s_shadowPayLoad.m_hit) ? diffuseColor * light.m_intensity : Vec3(0.0);
+		}
+	}
+	else
+	{
+		outColor = s_payLoad.m_color;
+	}
+
+	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(outColor, 0.0));
 }
 		)";
 
@@ -2888,17 +2994,24 @@ void main()
 											 ShaderType::CLOSEST_HIT, *gr);
 		ShaderPtr chit1Shader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), chit1Src.cstr()),
 											 ShaderType::CLOSEST_HIT, *gr);
+
+		ShaderPtr shadowAhitShader = createShader(
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::ANY_HIT, *gr);
 		ShaderPtr missShader =
 			createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::MISS, *gr);
+
+		ShaderPtr shadowMissShader = createShader(
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowMissSrc.cstr()), ShaderType::MISS, *gr);
 
 		ShaderPtr rayGenShader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()),
 											  ShaderType::RAY_GEN, *gr);
 
-		Array<RayTracingHitGroup, 2> hitGroups;
+		Array<RayTracingHitGroup, 3> hitGroups;
 		hitGroups[0].m_closestHitShader = chit0Shader;
 		hitGroups[1].m_closestHitShader = chit1Shader;
+		hitGroups[2].m_anyHitShader = shadowAhitShader;
 
-		Array<ShaderPtr, 1> missShaders = {missShader};
+		Array<ShaderPtr, 2> missShaders = {missShader, shadowMissShader};
 
 		ShaderProgramInitInfo inf;
 		inf.m_rayTracingShaders.m_hitGroups = hitGroups;
@@ -2979,17 +3092,17 @@ void main()
 		instances[1].m_bottomLevel = bigBlas;
 		instances[1].m_transform = Mat3x4(Vec3((bigBox.getMin() + bigBox.getMax()).xyz() / 2.0f),
 										  Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f))));
-		instances[1].m_sbtRecordIndex = 0;
+		instances[1].m_sbtRecordIndex = 1;
 
 		instances[2].m_bottomLevel = lightBlas;
 		instances[2].m_transform =
 			Mat3x4(Vec3((lightBox.getMin() + lightBox.getMax()).xyz() / 2.0f), Mat3::getIdentity());
-		instances[2].m_sbtRecordIndex = 0;
+		instances[2].m_sbtRecordIndex = 2;
 
 		instances[3].m_bottomLevel = roomBlas;
 		instances[3].m_transform =
 			Mat3x4(Vec3((roomBox.getMin() + roomBox.getMax()).xyz() / 2.0f), Mat3::getIdentity());
-		instances[3].m_sbtRecordIndex = 1;
+		instances[3].m_sbtRecordIndex = 3;
 
 		inf.m_type = AccelerationStructureType::TOP_LEVEL;
 		inf.m_topLevel.m_instances = instances;
@@ -3001,26 +3114,65 @@ void main()
 	BufferPtr sbt;
 	if(useRayTracing)
 	{
-		const U32 handleCount = 4;
+		const U32 recordCount = 1 + 2 + 4 * 2;
 
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
 		inf.m_usage = BufferUsageBit::SBT;
-		inf.m_size = gr->getDeviceCapabilities().m_sbtRecordSize * handleCount;
+		inf.m_size = gr->getDeviceCapabilities().m_sbtRecordSize * recordCount;
 
 		sbt = gr->newBuffer(inf);
 		WeakArray<U8, PtrSize> mapped = sbt->map<U8>(0, inf.m_size, BufferMapAccessBit::WRITE);
 		memset(&mapped[0], 0, inf.m_size);
 
 		ConstWeakArray<U8> handles = rtProg->getShaderGroupHandles();
-		ANKI_TEST_EXPECT_EQ(handles.getSize(), gr->getDeviceCapabilities().m_shaderGroupHandleSize * handleCount);
+		ANKI_TEST_EXPECT_EQ(handles.getSize(), gr->getDeviceCapabilities().m_shaderGroupHandleSize * hitgroupCount);
 
-		for(U32 handle = 0; handle < handleCount; ++handle)
-		{
-			memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * handle],
-				   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * handle],
-				   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
-		}
+		// Ray gen
+		U32 record = 0;
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * rayGenGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+
+		// 2xMiss
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * missGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowMissGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+
+		// Small box
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * colorChitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+
+		// Big box
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * colorChitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+
+		// Light
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * colorChitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+
+		// Room
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * primitiveChitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		sbt->unmap();
 	}
@@ -3062,6 +3214,34 @@ void main()
 		models[2].m_mtl.m_diffuseColor = Vec3(1.0f);
 
 		modelBuffer->unmap();
+	}
+
+	// Create lights
+	BufferPtr lightBuffer;
+	constexpr U32 lightCount = 1;
+	if(useRayTracing)
+	{
+		class Light
+		{
+		public:
+			Vec3 m_min;
+			Vec3 m_max;
+			Vec3 m_intensity;
+		};
+
+		BufferInitInfo inf;
+		inf.m_mapAccess = BufferMapAccessBit::WRITE;
+		inf.m_usage = BufferUsageBit::ALL_STORAGE;
+		inf.m_size = sizeof(Light) * lightCount;
+
+		lightBuffer = gr->newBuffer(inf);
+		WeakArray<Light, PtrSize> lights = lightBuffer->map<Light>(0, lightCount, BufferMapAccessBit::WRITE);
+
+		lights[0].m_min = lightBox.getMin().xyz();
+		lights[0].m_max = lightBox.getMax().xyz();
+		lights[0].m_intensity = Vec3(1.0f);
+
+		lightBuffer->unmap();
 	}
 
 	// Draw
@@ -3126,8 +3306,9 @@ void main()
 								TextureSubresourceInfo());
 
 		cmdb->bindStorageBuffer(0, 0, modelBuffer, 0, MAX_PTR_SIZE);
-		cmdb->bindAccelerationStructure(0, 1, tlas);
-		cmdb->bindImage(0, 2, presentView);
+		cmdb->bindStorageBuffer(0, 1, lightBuffer, 0, MAX_PTR_SIZE);
+		cmdb->bindAccelerationStructure(1, 0, tlas);
+		cmdb->bindImage(1, 1, presentView);
 
 		cmdb->bindShaderProgram(rtProg);
 
@@ -3135,10 +3316,12 @@ void main()
 		{
 		public:
 			Mat4 m_vp;
-			Vec4 m_cameraPos;
+			Vec3 m_cameraPos;
+			U32 m_lightCount;
 		} pc;
 		pc.m_vp = projMat * viewMat;
-		pc.m_cameraPos = Vec4(278.0f, 278.0f, -800.0f, 0.0f);
+		pc.m_cameraPos = Vec3(278.0f, 278.0f, -800.0f);
+		pc.m_lightCount = 1;
 
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
