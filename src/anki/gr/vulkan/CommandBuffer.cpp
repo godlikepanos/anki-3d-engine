@@ -280,11 +280,11 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 	self.dispatchCompute(groupCountX, groupCountY, groupCountZ);
 }
 
-void CommandBuffer::traceRays(BufferPtr sbtBuffer, PtrSize sbtBufferOffset, U32 hitGroupSbtRecordCount, U32 width,
-							  U32 height, U32 depth)
+void CommandBuffer::traceRays(BufferPtr sbtBuffer, PtrSize sbtBufferOffset, U32 hitGroupSbtRecordCount,
+							  U32 rayTypeCount, U32 width, U32 height, U32 depth)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
-	self.traceRaysInternal(sbtBuffer, sbtBufferOffset, hitGroupSbtRecordCount, width, height, depth);
+	self.traceRaysInternal(sbtBuffer, sbtBufferOffset, hitGroupSbtRecordCount, rayTypeCount, width, height, depth);
 }
 
 void CommandBuffer::generateMipmaps2d(TextureViewPtr texView)

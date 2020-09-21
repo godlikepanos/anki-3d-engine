@@ -379,7 +379,8 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 }
 
 inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset,
-												 U32 hitGroupSbtRecordCount, U32 width, U32 height, U32 depth)
+												 U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
+												 U32 depth)
 {
 	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
 	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
@@ -388,7 +389,9 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	ANKI_ASSERT(sprog.getReflectionInfo().m_pushConstantsSize == m_setPushConstantsSize
 				&& "Forgot to set pushConstants");
 
-	const U32 sbtRecordCount = 1 + sprog.getMissShaderCount() + hitGroupSbtRecordCount;
+	ANKI_ASSERT(rayTypeCount == sprog.getMissShaderCount() && "All the miss shaders should be in use");
+	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
+	const U32 sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
 	const U32 shaderGroupBaseAlignment =
 		getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupBaseAlignment;
 	const PtrSize sbtBufferSize = sbtRecordCount * shaderGroupBaseAlignment;
@@ -449,7 +452,7 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	// Hit
 	regions[2].buffer = regions[1].buffer;
 	regions[2].offset = regions[1].offset + regions[1].size;
-	regions[2].stride = shaderGroupBaseAlignment;
+	regions[2].stride = shaderGroupBaseAlignment * rayTypeCount;
 	regions[2].size = shaderGroupBaseAlignment * hitGroupSbtRecordCount;
 
 	// Callable, nothing for now

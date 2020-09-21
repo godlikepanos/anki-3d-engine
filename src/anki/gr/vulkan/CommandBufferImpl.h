@@ -314,8 +314,8 @@ public:
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
-	void traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 hitGroupSbtRecordCount, U32 width,
-						   U32 height, U32 depth);
+	void traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
+						   U32 width, U32 height, U32 depth);
 
 	void resetOcclusionQuery(OcclusionQueryPtr query);
 

@@ -2789,7 +2789,7 @@ struct PayLoad
 
 struct ShadowPayLoad
 {
-	Bool m_hit;
+	F32 m_shadow;
 };
 
 struct Material
@@ -2812,8 +2812,11 @@ struct Model
 struct Light
 {
 	Vec3 m_min;
+	F32 m_padding0;
 	Vec3 m_max;
+	F32 m_padding1;
 	Vec3 m_intensity;
+	F32 m_padding2;
 };
 
 layout(set = 0, binding = 0, scalar) buffer b_00
@@ -2821,7 +2824,7 @@ layout(set = 0, binding = 0, scalar) buffer b_00
 	Model u_models[];
 };
 
-layout(set = 0, binding = 1, scalar) buffer b_01
+layout(set = 0, binding = 1) buffer b_01
 {
 	Light u_lights[];
 };
@@ -2881,8 +2884,14 @@ layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadInEXT ShadowPayLoad s_payLo
 
 void main()
 {
-	s_payLoad.m_hit = true;
-	terminateRayEXT();
+	s_payLoad.m_shadow += 0.25;
+	//terminateRayEXT();
+}
+)";
+
+		const CString shadowChitSrc = R"(
+void main()
+{
 }
 )";
 
@@ -2891,7 +2900,7 @@ layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadInEXT ShadowPayLoad s_payLo
 
 void main()
 {
-	s_payLoad.m_hit = false;
+	s_payLoad.m_shadow = 1.0;
 }
 )";
 
@@ -2899,11 +2908,18 @@ void main()
 layout(set = 1, binding = 0) uniform accelerationStructureEXT u_tlas;
 layout(set = 1, binding = 1, rgba8) uniform image2D u_outImg;
 
-layout(push_constant) uniform u_pc
+struct PC
 {
-	Mat4 u_vp;
-	Vec3 u_cameraPos;
-	U32 u_lightCount;
+	Mat4 m_vp;
+	Vec3 m_cameraPos;
+	U32 m_lightCount;
+	UVec3 m_padding0;
+	U32 m_frame;
+};
+
+layout(push_constant, scalar) uniform u_pc
+{
+	PC u_regs;
 };
 
 layout(location = PAYLOAD_LOCATION) rayPayloadEXT PayLoad s_payLoad;
@@ -2935,50 +2951,51 @@ void main()
 	Vec2 uv = (Vec2(gl_LaunchIDEXT.xy) + 0.5) / Vec2(gl_LaunchSizeEXT.xy);
 	uv.y = 1.0 - uv.y;
 	const Vec2 ndc = uv * 2.0 - 1.0;
-	const Vec4 p4 = inverse(u_vp) * Vec4(ndc, 1.0, 1.0);
+	const Vec4 p4 = inverse(u_regs.m_vp) * Vec4(ndc, 1.0, 1.0);
 	const Vec3 p3 = p4.xyz / p4.w;
 
-	const UVec2 random = rand3DPCG16(UVec3(gl_LaunchSizeEXT.xy, 0)).xy;
+	const UVec2 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_regs.m_frame)).xy;
 	const Vec2 randomCircle = hammersleyRandom16(0, 0xFFFFu, random);
 
 	Vec3 outColor = Vec3(0.0);
 
 	// Primary ray
 	{
-		const Vec3 rayOrigin = u_cameraPos;
-		const Vec3 rayDir = normalize(p3 - u_cameraPos);
+		const Vec3 rayOrigin = u_regs.m_cameraPos;
+		const Vec3 rayDir = normalize(p3 - u_regs.m_cameraPos);
 		const U32 cullMask = 0xFF;
 		const U32 sbtRecordOffset = 0;
 		const U32 sbtRecordStride = 0;
 		const U32 missIndex = 0;
 		const F32 tMin = 0.01;
 		const F32 tMax = 10000.0;
-		traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin,
-					tMin, rayDir, tMax, PAYLOAD_LOCATION);
+		traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex,
+					rayOrigin, tMin, rayDir, tMax, PAYLOAD_LOCATION);
 	}
 
 	if(s_payLoad.m_hitT > 0.0)
 	{
-		const Vec3 rayOrigin = u_cameraPos + normalize(p3 - u_cameraPos) * s_payLoad.m_hitT;
+		const Vec3 rayOrigin = u_regs.m_cameraPos + normalize(p3 - u_regs.m_cameraPos) * s_payLoad.m_hitT;
 		const Vec3 diffuseColor = s_payLoad.m_color;
 
-		for(U32 i = 0; i < u_lightCount; ++i)
+		for(U32 i = 0; i < u_regs.m_lightCount; ++i)
 		{
-			s_shadowPayLoad.m_hit = false;
+			s_shadowPayLoad.m_shadow = 0.0;
 			const Light light = u_lights[i];
 			const Vec3 randomPointInLight = mix(light.m_min, light.m_max, randomCircle.xyx);
 
 			const Vec3 rayDir = normalize(randomPointInLight - rayOrigin);
-			const U32 cullMask = 0x1;
+			const U32 cullMask = 0x2;
 			const U32 sbtRecordOffset = 1;
 			const U32 sbtRecordStride = 0;
 			const U32 missIndex = 1;
-			const F32 tMin = 0.01;
+			const F32 tMin = 0.1;
 			const F32 tMax = length(randomPointInLight - rayOrigin);
-			traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin,
+			const U32 flags = gl_RayFlagsOpaqueEXT;
+			traceRayEXT(u_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin,
 						tMin, rayDir, tMax, SHADOW_PAYLOAD_LOCATION);
 
-			outColor += (s_shadowPayLoad.m_hit) ? diffuseColor * light.m_intensity : Vec3(0.0);
+			outColor += diffuseColor * light.m_intensity * clamp(s_shadowPayLoad.m_shadow, 0.0, 1);
 		}
 	}
 	else
@@ -2997,6 +3014,8 @@ void main()
 
 		ShaderPtr shadowAhitShader = createShader(
 			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::ANY_HIT, *gr);
+		ShaderPtr shadowChitShader = createShader(
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowChitSrc.cstr()), ShaderType::CLOSEST_HIT, *gr);
 		ShaderPtr missShader =
 			createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), missSrc.cstr()), ShaderType::MISS, *gr);
 
@@ -3009,6 +3028,7 @@ void main()
 		Array<RayTracingHitGroup, 3> hitGroups;
 		hitGroups[0].m_closestHitShader = chit0Shader;
 		hitGroups[1].m_closestHitShader = chit1Shader;
+		hitGroups[2].m_closestHitShader = shadowChitShader;
 		hitGroups[2].m_anyHitShader = shadowAhitShader;
 
 		Array<ShaderPtr, 2> missShaders = {missShader, shadowMissShader};
@@ -3050,6 +3070,9 @@ void main()
 
 	// Create AS
 	AccelerationStructurePtr smallBlas, tlas, bigBlas, roomBlas, lightBlas;
+	constexpr U32 modelCount = 4;
+	constexpr U8 opaqueMask = 0b10;
+	constexpr U8 lightMask = 0b01;
 	if(useRayTracing)
 	{
 		// Small box
@@ -3088,21 +3111,25 @@ void main()
 		instances[0].m_transform = Mat3x4(Vec3((smallBox.getMin() + smallBox.getMax()).xyz() / 2.0f),
 										  Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f))));
 		instances[0].m_sbtRecordIndex = 0;
+		instances[0].m_mask = opaqueMask;
 
 		instances[1].m_bottomLevel = bigBlas;
 		instances[1].m_transform = Mat3x4(Vec3((bigBox.getMin() + bigBox.getMax()).xyz() / 2.0f),
 										  Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f))));
 		instances[1].m_sbtRecordIndex = 1;
+		instances[1].m_mask = opaqueMask;
 
 		instances[2].m_bottomLevel = lightBlas;
 		instances[2].m_transform =
 			Mat3x4(Vec3((lightBox.getMin() + lightBox.getMax()).xyz() / 2.0f), Mat3::getIdentity());
 		instances[2].m_sbtRecordIndex = 2;
+		instances[2].m_mask = lightMask;
 
 		instances[3].m_bottomLevel = roomBlas;
 		instances[3].m_transform =
 			Mat3x4(Vec3((roomBox.getMin() + roomBox.getMax()).xyz() / 2.0f), Mat3::getIdentity());
 		instances[3].m_sbtRecordIndex = 3;
+		instances[3].m_mask = opaqueMask;
 
 		inf.m_type = AccelerationStructureType::TOP_LEVEL;
 		inf.m_topLevel.m_instances = instances;
@@ -3114,7 +3141,7 @@ void main()
 	BufferPtr sbt;
 	if(useRayTracing)
 	{
-		const U32 recordCount = 1 + 2 + 4 * 2;
+		const U32 recordCount = 1 + 2 + modelCount * 2;
 
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
@@ -3198,8 +3225,6 @@ void main()
 			Mesh m_mesh;
 		};
 
-		const U32 modelCount = 4;
-
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
 		inf.m_usage = BufferUsageBit::ALL_STORAGE;
@@ -3225,8 +3250,11 @@ void main()
 		{
 		public:
 			Vec3 m_min;
+			F32 m_padding0;
 			Vec3 m_max;
+			F32 m_padding1;
 			Vec3 m_intensity;
+			F32 m_padding2;
 		};
 
 		BufferInitInfo inf;
@@ -3312,84 +3340,33 @@ void main()
 
 		cmdb->bindShaderProgram(rtProg);
 
-		class PC
+		struct PC
 		{
-		public:
 			Mat4 m_vp;
 			Vec3 m_cameraPos;
 			U32 m_lightCount;
+			UVec3 m_padding0;
+			U32 m_frame;
 		} pc;
 		pc.m_vp = projMat * viewMat;
 		pc.m_cameraPos = Vec3(278.0f, 278.0f, -800.0f);
-		pc.m_lightCount = 1;
+		pc.m_lightCount = lightCount;
+		static U32 frame = 0;
+		pc.m_frame = frame++;
 
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
-		cmdb->traceRays(sbt, 0, 1, WIDTH, HEIGHT, 1);
+		cmdb->traceRays(sbt, 0, modelCount * 2, 2, WIDTH, HEIGHT, 1);
 
 		cmdb->setTextureBarrier(presentTex, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE, TextureUsageBit::PRESENT,
 								TextureSubresourceInfo());
-
-#if 0
-		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-
-		cmdb->bindShaderProgram(rasterProg);
-		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-		FramebufferPtr fb = createColorFb(*gr, presentTex);
-
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-								TextureSubresourceInfo{});
-
-		cmdb->beginRenderPass(fb, {TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE}, {});
-
-		cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
-
-		struct PC
-		{
-			Mat4 m_mvp;
-			Vec4 m_color;
-		} pc;
-
-		// Room
-		pc.m_mvp = projMat * viewMat
-				   * Mat4(Vec4((roomBox.getMin() + roomBox.getMax()).xyz() / 2.0f, 1.0f), Mat3::getIdentity());
-		pc.m_color = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		cmdb->setPushConstants(&pc, sizeof(pc));
-		cmdb->bindVertexBuffer(0, roomVertBuffer, 0, sizeof(Vec3));
-		cmdb->bindIndexBuffer(roomIndexBuffer, 0, IndexType::U16);
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, 36);
-
-		// Small box
-		pc.m_mvp = projMat * viewMat
-				   * Mat4(Vec4((smallBox.getMin() + smallBox.getMax()).xyz() / 2.0f, 1.0f),
-						  Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f))));
-		pc.m_color = Vec4(0.75f);
-		cmdb->setPushConstants(&pc, sizeof(pc));
-		cmdb->bindVertexBuffer(0, smallBoxVertBuffer, 0, sizeof(Vec3));
-		cmdb->bindIndexBuffer(smallBoxIndexBuffer, 0, IndexType::U16);
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, 36);
-
-		// Big box
-		pc.m_mvp = projMat * viewMat
-				   * Mat4(Vec4((bigBox.getMin() + bigBox.getMax()).xyz() / 2.0f, 1.0f),
-						  Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f))));
-		cmdb->setPushConstants(&pc, sizeof(pc));
-		cmdb->bindVertexBuffer(0, bigBoxVertBuffer, 0, sizeof(Vec3));
-		cmdb->bindIndexBuffer(bigBoxIndexBuffer, 0, IndexType::U16);
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, 36);
-
-		cmdb->endRenderPass();
-
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::PRESENT,
-								TextureSubresourceInfo());
-#endif
 
 		cmdb->flush();
 
 		gr->swapBuffers();
 
 		timer.stop();
-		const F32 TICK = 1.0f / 30.0f;
+		const F32 TICK = 1.0f / 60.0f;
 		if(timer.getElapsedTime() < TICK)
 		{
 			HighRezTimer::sleep(TICK - timer.getElapsedTime());
