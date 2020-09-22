@@ -44,6 +44,7 @@ static const char* SHADER_HEADER = R"(#version 460 core
 
 #extension GL_EXT_buffer_reference : enable
 #extension GL_ARB_gpu_shader_int64 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_int8 : enable
 
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable
@@ -85,6 +86,7 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define Bool bool
 
 #define U64 uint64_t
+#define U8 uint8_t
 
 #define _ANKI_CONCATENATE(a, b) a##b
 #define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
@@ -144,6 +146,8 @@ static const char* SHADER_HEADER = R"(#version 460 core
 	{ \
 		type m_value; \
 	}
+
+#define ANKI_PADDING(bytes) U8 _padding_ ## __LINE__[bytes]
 
 layout(std140, row_major) uniform;
 layout(std140, row_major) buffer;

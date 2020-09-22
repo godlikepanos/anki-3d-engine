@@ -2207,9 +2207,9 @@ layout(push_constant) uniform pc_
 
 void main()
 {
-	uvec4 val0 = imageLoad(u_bindlessImages[u_texIndices[0]], ivec2(0));
-	uvec4 val1 = texelFetch(usampler2D(u_bindlessTexturesU2d[u_texIndices[1]], u_sampler), ivec2(0), 0);
-	vec4 val2 = texelFetch(sampler2D(u_bindlessTextures2d[u_texIndices[2]], u_sampler), ivec2(0), 0);
+	uvec4 val0 = imageLoad(u_bindlessImages2dU32[u_texIndices[0]], ivec2(0));
+	uvec4 val1 = texelFetch(usampler2D(u_bindlessTextures2dU32[u_texIndices[1]], u_sampler), ivec2(0), 0);
+	vec4 val2 = texelFetch(sampler2D(u_bindlessTextures2dF32[u_texIndices[2]], u_sampler), ivec2(0), 0);
 
 	u_result = val0 + val1 + uvec4(val2);
 })";
@@ -2732,44 +2732,16 @@ ANKI_TEST(Gr, RayGen)
 	if(!useRayTracing)
 	{
 		ANKI_TEST_LOGW("Ray tracing not supported");
+		break;
 	}
+
+#define MAGIC_MACRO(x) x
+#include "RtTypes.h"
+#undef MAGIC_MACRO
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
-	// Create the raster programs
-	ShaderProgramPtr rasterProg;
-	if(!useRayTracing)
-	{
-		const CString vertSrc = R"(
-layout(push_constant, row_major) uniform b_pc
-{
-	Mat4 u_mvp;
-	Vec4 u_color;
-};
-
-layout(location = 0) in Vec3 in_pos;
-layout(location = 0) out Vec4 out_color;
-
-void main()
-{
-	gl_Position = u_mvp * Vec4(in_pos, 1.0);
-	out_color = u_color;
-}
-)";
-
-		const CString fragSrc = R"(
-layout(location = 0) in Vec4 in_color;
-layout(location = 0) out Vec4 out_color;
-
-void main()
-{
-	out_color = in_color;
-}
-)";
-
-		rasterProg = createProgram(vertSrc, fragSrc, *gr);
-	}
-
+	// Create the ppline
 	ShaderProgramPtr rtProg;
 	constexpr U32 rayGenGroupIdx = 0;
 	constexpr U32 missGroupIdx = 1;
@@ -2778,9 +2750,10 @@ void main()
 	constexpr U32 primitiveChitGroupIdx = 4;
 	constexpr U32 shadowAhitGroupIdx = 5;
 	constexpr U32 hitgroupCount = 6;
-	if(useRayTracing)
 	{
-		const CString commonSrc = R"(
+		const CString commonSrcPart = R"(
+%s
+
 struct PayLoad
 {
 	Vec3 m_color;
@@ -2792,41 +2765,14 @@ struct ShadowPayLoad
 	F32 m_shadow;
 };
 
-struct Material
-{
-	Vec3 m_diffuseColor;
-};
-
-struct Mesh
-{
-	U64 m_indexBufferPtr;
-	U64 m_positionBufferPtr;
-};
-
-struct Model
-{
-	Material m_mtl;
-	Mesh m_mesh;
-};
-
-struct Light
-{
-	Vec3 m_min;
-	F32 m_padding0;
-	Vec3 m_max;
-	F32 m_padding1;
-	Vec3 m_intensity;
-	F32 m_padding2;
-};
-
 layout(set = 0, binding = 0, scalar) buffer b_00
 {
 	Model u_models[];
 };
 
-layout(set = 0, binding = 1) buffer b_01
+layout(set = 0, binding = 1, scalar) buffer b_01
 {
-	Light u_lights[];
+	layout(align = 16) Light u_lights[];
 };
 
 #define PAYLOAD_LOCATION 0
@@ -2842,6 +2788,15 @@ void main()
 	s_payLoad.m_hitT = gl_HitTEXT;
 }
 )";
+
+#define MAGIC_MACRO ANKI_STRINGIZE
+		const CString rtTypesStr =
+#include "RtTypes.h"
+			;
+#undef MAGIC_MACRO
+
+		StringAuto commonSrc(alloc);
+		commonSrc.sprintf(commonSrcPart, rtTypesStr.cstr());
 
 		const CString chit1Src = R"(
 layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
@@ -3073,7 +3028,6 @@ void main()
 	constexpr U32 modelCount = 4;
 	constexpr U8 opaqueMask = 0b10;
 	constexpr U8 lightMask = 0b01;
-	if(useRayTracing)
 	{
 		// Small box
 		AccelerationStructureInitInfo inf;
@@ -3139,7 +3093,6 @@ void main()
 
 	// Create the SBT
 	BufferPtr sbt;
-	if(useRayTracing)
 	{
 		const U32 recordCount = 1 + 2 + modelCount * 2;
 
@@ -3206,25 +3159,7 @@ void main()
 
 	// Create model info
 	BufferPtr modelBuffer;
-	if(useRayTracing)
 	{
-		struct Material
-		{
-			Vec3 m_diffuseColor;
-		};
-
-		struct Mesh
-		{
-			U64 m_indexBufferPtr;
-			U64 m_positionBufferPtr;
-		};
-
-		struct Model
-		{
-			Material m_mtl;
-			Mesh m_mesh;
-		};
-
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
 		inf.m_usage = BufferUsageBit::ALL_STORAGE;
@@ -3244,19 +3179,7 @@ void main()
 	// Create lights
 	BufferPtr lightBuffer;
 	constexpr U32 lightCount = 1;
-	if(useRayTracing)
 	{
-		class Light
-		{
-		public:
-			Vec3 m_min;
-			F32 m_padding0;
-			Vec3 m_max;
-			F32 m_padding1;
-			Vec3 m_intensity;
-			F32 m_padding2;
-		};
-
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
 		inf.m_usage = BufferUsageBit::ALL_STORAGE;
@@ -3340,14 +3263,7 @@ void main()
 
 		cmdb->bindShaderProgram(rtProg);
 
-		struct PC
-		{
-			Mat4 m_vp;
-			Vec3 m_cameraPos;
-			U32 m_lightCount;
-			UVec3 m_padding0;
-			U32 m_frame;
-		} pc;
+		PushConstants pc;
 		pc.m_vp = projMat * viewMat;
 		pc.m_cameraPos = Vec3(278.0f, 278.0f, -800.0f);
 		pc.m_lightCount = lightCount;

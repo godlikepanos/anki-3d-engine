@@ -254,9 +254,8 @@ private:
 	VkPhysicalDeviceProperties m_devProps = {};
 	VkPhysicalDeviceRayTracingPropertiesKHR m_rtProps = {};
 	VkPhysicalDeviceFeatures m_devFeatures = {};
-	VkPhysicalDeviceDescriptorIndexingFeatures m_descriptorIndexingFeatures = {};
-	VkPhysicalDeviceBufferDeviceAddressFeatures m_bufferDeviceAddressFeatures = {};
 	VkPhysicalDeviceRayTracingFeaturesKHR m_rtFeatures = {};
+	VkPhysicalDeviceVulkan12Features m_12Features = {};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
 	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;

@@ -546,62 +546,65 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			}
 		}
 
-		// Enable the bindless features required
+		// Enable a few 1.2 features
 		{
-			m_descriptorIndexingFeatures = {};
-			m_descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+			m_12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
 
 			VkPhysicalDeviceFeatures2 features = {};
 			features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-			features.pNext = &m_descriptorIndexingFeatures;
+			features.pNext = &m_12Features;
 
 			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
-			if(!m_descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing
-			   || !m_descriptorIndexingFeatures.shaderStorageImageArrayNonUniformIndexing)
+			// Descriptor indexing
+			if(!m_12Features.shaderSampledImageArrayNonUniformIndexing
+			   || !m_12Features.shaderStorageImageArrayNonUniformIndexing)
 			{
 				ANKI_VK_LOGE("Non uniform indexing is not supported by the device");
 				return Error::FUNCTION_FAILED;
 			}
 
-			if(!m_descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind
-			   || !m_descriptorIndexingFeatures.descriptorBindingStorageImageUpdateAfterBind)
+			if(!m_12Features.descriptorBindingSampledImageUpdateAfterBind
+			   || !m_12Features.descriptorBindingStorageImageUpdateAfterBind)
 			{
 				ANKI_VK_LOGE("Update descriptors after bind is not supported by the device");
 				return Error::FUNCTION_FAILED;
 			}
 
-			if(!m_descriptorIndexingFeatures.descriptorBindingUpdateUnusedWhilePending)
+			if(!m_12Features.descriptorBindingUpdateUnusedWhilePending)
 			{
 				ANKI_VK_LOGE("Update descriptors while cmd buffer is pending is not supported by the device");
 				return Error::FUNCTION_FAILED;
 			}
 
-			ci.pNext = &m_descriptorIndexingFeatures;
-		}
-
-		// Enable the buffer address only with ray tracing ATM
-		if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
-		{
-			m_bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
-
-			VkPhysicalDeviceFeatures2 features{};
-			features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-			features.pNext = &m_bufferDeviceAddressFeatures;
-			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
-
-			if(!m_bufferDeviceAddressFeatures.bufferDeviceAddress)
+			// Buffer address
+			if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
 			{
-				ANKI_VK_LOGE("Buffer device address is required and not supported");
+				if(!m_12Features.bufferDeviceAddress)
+				{
+					ANKI_VK_LOGE("Buffer device address is not supported by the device");
+					return Error::FUNCTION_FAILED;
+				}
+
+				m_12Features.bufferDeviceAddressCaptureReplay =
+					m_12Features.bufferDeviceAddressCaptureReplay && init.m_config->getBool("gr_debugMarkers");
+				m_12Features.bufferDeviceAddressMultiDevice = false;
+			}
+			else
+			{
+				m_12Features.bufferDeviceAddress = false;
+				m_12Features.bufferDeviceAddressCaptureReplay = false;
+				m_12Features.bufferDeviceAddressMultiDevice = false;
+			}
+
+			// Scalar block layout
+			if(!m_12Features.scalarBlockLayout)
+			{
+				ANKI_VK_LOGE("Scalar block layout is not supported by the device");
 				return Error::FUNCTION_FAILED;
 			}
 
-			m_bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay =
-				m_bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay
-				&& init.m_config->getBool("gr_debugMarkers");
-			m_bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = false;
-
-			m_descriptorIndexingFeatures.pNext = &m_bufferDeviceAddressFeatures;
+			ci.pNext = &m_12Features;
 		}
 
 		// Set RT features
@@ -626,7 +629,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			m_rtFeatures.rayTracing = true;
 			m_rtFeatures.rayQuery = true;
 
-			m_bufferDeviceAddressFeatures.pNext = &m_rtFeatures;
+			m_12Features.pNext = &m_rtFeatures;
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
