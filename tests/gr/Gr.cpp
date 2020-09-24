@@ -2754,6 +2754,8 @@ ANKI_TEST(Gr, RayGen)
 		const CString commonSrcPart = R"(
 %s
 
+const F32 PI = 3.14159265358979323846;
+
 struct PayLoad
 {
 	Vec3 m_emissiveColor;
@@ -2779,6 +2781,61 @@ layout(set = 0, binding = 1, scalar) buffer b_01
 
 #define PAYLOAD_LOCATION 0
 #define SHADOW_PAYLOAD_LOCATION 1
+
+UVec3 rand3DPCG16(UVec3 v)
+{
+	v = v * 1664525u + 1013904223u;
+
+	v.x += v.y * v.z;
+	v.y += v.z * v.x;
+	v.z += v.x * v.y;
+	v.x += v.y * v.z;
+	v.y += v.z * v.x;
+	v.z += v.x * v.y;
+
+	return v >> 16u;
+}
+
+Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
+{
+	const F32 e1 = fract(F32(sampleIdx) / sampleCount + F32(random.x) * (1.0 / 65536.0));
+	const F32 e2 = F32((bitfieldReverse(sampleIdx) >> 16) ^ random.y) * (1.0 / 65536.0);
+	return Vec2(e1, e2);
+}
+
+Vec3 hemisphereSampleUniform(Vec2 uv)
+{
+	const F32 phi = uv.y * 2.0 * PI;
+	const F32 cosTheta = 1.0 - uv.x;
+	const F32 sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+	return Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+}
+
+Mat3 rotationFromDirection(Vec3 zAxis)
+{
+	Vec3 z = zAxis;
+	F32 sign = (z.z >= 0.0) ? 1.0 : -1.0;
+	F32 a = -1.0 / (sign + z.z);
+	F32 b = z.x * z.y * a;
+
+	Vec3 x = Vec3(1.0 + sign * a * pow(z.x, 2.0), sign * b, -sign * z.x);
+	Vec3 y = Vec3(b, sign + a * pow(z.y, 2.0), -z.y);
+
+	return Mat3(x, y, z);
+}
+
+void scatterLambertian(Vec3 normal, Vec2 uniformRandom01, out Vec3 scatterDir, out F32 pdf)
+{
+	scatterDir = normalize(rotationFromDirection(normal) * hemisphereSampleUniform(uniformRandom01));
+	pdf = dot(normal, scatterDir) / PI;
+}
+
+F32 scatteringPdfLambertian(Vec3 normal, Vec3 scatteredDir)
+{
+	F32 cosine = dot(normal, scatteredDir);
+	return max(cosine / PI, 0.0);
+}
+
 )";
 
 		const CString chit0Src = R"(
@@ -2918,27 +2975,6 @@ layout(push_constant, scalar) uniform u_pc
 
 layout(location = PAYLOAD_LOCATION) rayPayloadEXT PayLoad s_payLoad;
 layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadEXT ShadowPayLoad s_shadowPayLoad;
-
-UVec3 rand3DPCG16(UVec3 v)
-{
-	v = v * 1664525u + 1013904223u;
-
-	v.x += v.y * v.z;
-	v.y += v.z * v.x;
-	v.z += v.x * v.y;
-	v.x += v.y * v.z;
-	v.y += v.z * v.x;
-	v.z += v.x * v.y;
-
-	return v >> 16u;
-}
-
-Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
-{
-	const F32 e1 = fract(F32(sampleIdx) / sampleCount + F32(random.x) * (1.0 / 65536.0));
-	const F32 e2 = F32((bitfieldReverse(sampleIdx) >> 16) ^ random.y) * (1.0 / 65536.0);
-	return Vec2(e1, e2);
-}
 
 void main()
 {

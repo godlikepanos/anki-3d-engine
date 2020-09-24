@@ -314,7 +314,7 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.pStages = &stages[0];
 		ci.groupCount = groups.getSize();
 		ci.pGroups = &groups[0];
-		ci.maxRecursionDepth = 1;
+		ci.maxRecursionDepth = inf.m_rayTracingShaders.m_maxRecursionDepth;
 		ci.libraries.sType = VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR;
 		ci.layout = m_pplineLayout.getHandle();
 
