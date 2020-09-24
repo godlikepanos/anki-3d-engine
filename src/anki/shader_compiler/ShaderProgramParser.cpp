@@ -43,8 +43,16 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #extension GL_EXT_nonuniform_qualifier : enable
 
 #extension GL_EXT_buffer_reference : enable
-#extension GL_ARB_gpu_shader_int64 : enable
+#extension GL_EXT_buffer_reference2 : enable
+
+#extension GL_EXT_shader_explicit_arithmetic_types : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int8 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_int16 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_int32 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_float16 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_float32 : enable
+#extension GL_EXT_shader_explicit_arithmetic_types_float64 : enable
 
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable
@@ -65,31 +73,109 @@ static const char* SHADER_HEADER = R"(#version 460 core
 	layout(set = set_, binding = 1) uniform readonly image2D u_bindlessImages2dF32[ANKI_MAX_BINDLESS_IMAGES];
 
 #define F32 float
+#define _ANKI_SIZEOF_float 4
 #define Vec2 vec2
+#define _ANKI_SIZEOF_vec2 8
 #define Vec3 vec3
+#define _ANKI_SIZEOF_vec3 12
 #define Vec4 vec4
+#define _ANKI_SIZEOF_vec4 16
+
+#define F16 float16_t
+#define _ANKI_SIZEOF_float16_t 2
+#define HVec2 f16vec2
+#define _ANKI_SIZEOF_f16vec2 4
+#define HVec3 f16vec3
+#define _ANKI_SIZEOF_f16vec3 6
+#define HVec4 f16vec4
+#define _ANKI_SIZEOF_f16vec4 8
+
+#define U8 uint8_t
+#define _ANKI_SIZEOF_uint8_t 1
+#define U8Vec2 u8vec2
+#define _ANKI_SIZEOF_u8vec2 2
+#define U8Vec3 u8vec3
+#define _ANKI_SIZEOF_u8vec3 3
+#define U8Vec4 u8vec4
+#define _ANKI_SIZEOF_u8vec4 4
+
+#define I8 int8_t
+#define _ANKI_SIZEOF_int8_t 1
+#define I8Vec2 i8vec2
+#define _ANKI_SIZEOF_i8vec2 2
+#define I8Vec3 i8vec3
+#define _ANKI_SIZEOF_i8vec3 3
+#define I8Vec4 i8vec4
+#define _ANKI_SIZEOF_i8vec4 4
+
+#define U16 uint16_t
+#define _ANKI_SIZEOF_uint16_t 2
+#define U16Vec2 u16vec2
+#define _ANKI_SIZEOF_u16vec2 4
+#define U16Vec3 u16vec3
+#define _ANKI_SIZEOF_u16vec3 6
+#define U16Vec4 u16vec4
+#define _ANKI_SIZEOF_u16vec4 8
+
+#define I16 int16_t
+#define _ANKI_SIZEOF_int16_t 2
+#define I16Vec2 i16vec2
+#define _ANKI_SIZEOF_i16vec2 4
+#define I16Vec3 i16vec3
+#define _ANKI_SIZEOF_i16vec3 6
+#define i16Vec4 i16vec4
+#define _ANKI_SIZEOF_i16vec4 8
 
 #define U32 uint
+#define _ANKI_SIZEOF_uint 4
 #define UVec2 uvec2
+#define _ANKI_SIZEOF_uvec2 8
 #define UVec3 uvec3
+#define _ANKI_SIZEOF_uvec3 12
 #define UVec4 uvec4
+#define _ANKI_SIZEOF_uvec4 16
 
 #define I32 int
+#define _ANKI_SIZEOF_int 4
 #define IVec2 ivec2
+#define _ANKI_SIZEOF_ivec2 8
 #define IVec3 ivec3
+#define _ANKI_SIZEOF_ivec3 12
 #define IVec4 ivec4
+#define _ANKI_SIZEOF_ivec4 16
+
+#define U64 uint64_t
+#define _ANKI_SIZEOF_uint64_t 8
+#define U64Vec2 u64vec2
+#define _ANKI_SIZEOF_u64vec2 16
+#define U64Vec3 u64vec3
+#define _ANKI_SIZEOF_u64vec3 24
+#define U64Vec4 u64vec4
+#define _ANKI_SIZEOF_u64vec4 32
+
+#define I64 int64_t
+#define _ANKI_SIZEOF_int64_t 8
+#define I64Vec2 i64vec2
+#define _ANKI_SIZEOF_i64vec2 16
+#define I64Vec3 i64vec3
+#define _ANKI_SIZEOF_i64vec3 24
+#define I64Vec4 i64vec4
+#define _ANKI_SIZEOF_i64vec4 32
 
 #define Mat3 mat3
+
 #define Mat4 mat4
+#define _ANKI_SIZEOF_mat4 64
+
 #define Mat3x4 mat3x4
+#define _ANKI_SIZEOF_mat3x4 48
 
 #define Bool bool
 
-#define U64 uint64_t
-#define U8 uint8_t
-
 #define _ANKI_CONCATENATE(a, b) a##b
 #define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
+
+#define ANKI_SIZEOF(basicType) _ANKI_CONCATENATE(_ANKI_SIZEOF_, basicType)
 
 #define _ANKI_SCONST_X(type, n, id, defltVal) \
 	layout(constant_id = id) const type n = defltVal; \
@@ -141,8 +227,8 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id, defltVal) _ANKI_SCONST_X3(Vec3, F32, n, id, defltVal,)
 #define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id, defltVal) _ANKI_SCONST_X4(Vec4, F32, n, id, defltVal,)
 
-#define ANKI_REF(type) \
-	layout(buffer_reference, std430) buffer type##Ref \
+#define ANKI_REF(type, alignment) \
+	layout(buffer_reference, scalar, buffer_reference_align = (alignment)) buffer type##Ref \
 	{ \
 		type m_value; \
 	}

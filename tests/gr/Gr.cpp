@@ -2756,8 +2756,10 @@ ANKI_TEST(Gr, RayGen)
 
 struct PayLoad
 {
-	Vec3 m_color;
+	Vec3 m_emissiveColor;
 	F32 m_hitT;
+	Vec3 m_diffuseColor;
+	Vec3 m_normal;
 };
 
 struct ShadowPayLoad
@@ -2772,7 +2774,7 @@ layout(set = 0, binding = 0, scalar) buffer b_00
 
 layout(set = 0, binding = 1, scalar) buffer b_01
 {
-	layout(align = 16) Light u_lights[];
+	Light u_lights[];
 };
 
 #define PAYLOAD_LOCATION 0
@@ -2782,9 +2784,27 @@ layout(set = 0, binding = 1, scalar) buffer b_01
 		const CString chit0Src = R"(
 layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 
+hitAttributeEXT vec2 g_attribs;
+
+ANKI_REF(U16Vec3, ANKI_SIZEOF(U16));
+ANKI_REF(Vec3, ANKI_SIZEOF(F32));
+
 void main()
 {
-	s_payLoad.m_color = u_models[gl_InstanceID].m_mtl.m_diffuseColor;
+	const Model model = u_models[nonuniformEXT(gl_InstanceID)];
+
+	const U32 offset = gl_PrimitiveID * 6;
+	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(model.m_mesh.m_indexBufferPtr + offset)).m_value;
+
+	const Vec3 pos0 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[0] * ANKI_SIZEOF(Vec3))).m_value;
+	const Vec3 pos1 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[1] * ANKI_SIZEOF(Vec3))).m_value;
+	const Vec3 pos2 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[2] * ANKI_SIZEOF(Vec3))).m_value;
+
+	const Vec3 normal = normalize(cross(pos1 - pos0, pos2 - pos0));
+
+	s_payLoad.m_diffuseColor = model.m_mtl.m_diffuseColor;
+	s_payLoad.m_emissiveColor = model.m_mtl.m_emissiveColor;
+	s_payLoad.m_normal = normal;
 	s_payLoad.m_hitT = gl_HitTEXT;
 }
 )";
@@ -2800,6 +2820,9 @@ void main()
 
 		const CString chit1Src = R"(
 layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
+
+ANKI_REF(U16Vec3, ANKI_SIZEOF(U16));
+ANKI_REF(Vec3, ANKI_SIZEOF(F32));
 
 void main()
 {
@@ -2819,7 +2842,20 @@ void main()
 		col = Vec3(0.73f);
 	}
 
-	s_payLoad.m_color = col;
+	const Model model = u_models[nonuniformEXT(gl_InstanceID)];
+
+	const U32 offset = gl_PrimitiveID * 6;
+	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(model.m_mesh.m_indexBufferPtr + offset)).m_value;
+
+	const Vec3 pos0 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[0] * ANKI_SIZEOF(Vec3))).m_value;
+	const Vec3 pos1 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[1] * ANKI_SIZEOF(Vec3))).m_value;
+	const Vec3 pos2 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[2] * ANKI_SIZEOF(Vec3))).m_value;
+
+	const Vec3 normal = normalize(cross(pos1 - pos0, pos2 - pos0));
+
+	s_payLoad.m_diffuseColor = col;
+	s_payLoad.m_emissiveColor = Vec3(0.0);
+	s_payLoad.m_normal = normal;
 	s_payLoad.m_hitT = gl_HitTEXT;
 }
 )";
@@ -2829,7 +2865,10 @@ layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 
 void main()
 {
-	s_payLoad.m_color = Vec3(0.5);
+	s_payLoad.m_diffuseColor = Vec3(0.5);
+	s_payLoad.m_emissiveColor =
+		mix(Vec3(0.3, 0.5, 0.3), Vec3(0.1, 0.6, 0.1), F32(gl_LaunchIDEXT.y) / F32(gl_LaunchSizeEXT.y));
+	s_payLoad.m_normal = Vec3(1.0, 0.0, 1.0);
 	s_payLoad.m_hitT = -1.0;
 }
 )";
@@ -2928,10 +2967,11 @@ void main()
 					rayOrigin, tMin, rayDir, tMax, PAYLOAD_LOCATION);
 	}
 
+	const Vec3 diffuseColor = Vec3(s_payLoad.m_diffuseColor);
+	const Vec3 normal = s_payLoad.m_normal;
 	if(s_payLoad.m_hitT > 0.0)
 	{
 		const Vec3 rayOrigin = u_regs.m_cameraPos + normalize(p3 - u_regs.m_cameraPos) * s_payLoad.m_hitT;
-		const Vec3 diffuseColor = s_payLoad.m_color;
 
 		for(U32 i = 0; i < u_regs.m_lightCount; ++i)
 		{
@@ -2950,12 +2990,13 @@ void main()
 			traceRayEXT(u_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin,
 						tMin, rayDir, tMax, SHADOW_PAYLOAD_LOCATION);
 
-			outColor += diffuseColor * light.m_intensity * clamp(s_shadowPayLoad.m_shadow, 0.0, 1);
+			F32 shadow = clamp(s_shadowPayLoad.m_shadow, 0.0, 1.0);
+			outColor += normal * light.m_intensity * shadow;
 		}
 	}
 	else
 	{
-		outColor = s_payLoad.m_color;
+		outColor = diffuseColor;
 	}
 
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(outColor, 0.0));
@@ -3170,8 +3211,20 @@ void main()
 		memset(&models[0], 0, inf.m_size);
 
 		models[0].m_mtl.m_diffuseColor = Vec3(0.75f);
+		models[0].m_mesh.m_positionBufferPtr = smallBoxVertBuffer->getGpuAddress();
+		models[0].m_mesh.m_indexBufferPtr = smallBoxIndexBuffer->getGpuAddress();
+
 		models[1].m_mtl.m_diffuseColor = Vec3(0.75f);
+		models[1].m_mesh.m_positionBufferPtr = bigBoxVertBuffer->getGpuAddress();
+		models[1].m_mesh.m_indexBufferPtr = bigBoxIndexBuffer->getGpuAddress();
+
 		models[2].m_mtl.m_diffuseColor = Vec3(1.0f);
+		models[2].m_mesh.m_positionBufferPtr = lightVertBuffer->getGpuAddress();
+		models[2].m_mesh.m_indexBufferPtr = lightIndexBuffer->getGpuAddress();
+
+		models[3].m_mtl.m_diffuseColor = Vec3(1.0f);
+		models[3].m_mesh.m_positionBufferPtr = roomVertBuffer->getGpuAddress();
+		models[3].m_mesh.m_indexBufferPtr = roomIndexBuffer->getGpuAddress();
 
 		modelBuffer->unmap();
 	}
