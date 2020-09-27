@@ -2746,10 +2746,11 @@ ANKI_TEST(Gr, RayGen)
 	constexpr U32 rayGenGroupIdx = 0;
 	constexpr U32 missGroupIdx = 1;
 	constexpr U32 shadowMissGroupIdx = 2;
-	constexpr U32 colorChitGroupIdx = 3;
-	constexpr U32 primitiveChitGroupIdx = 4;
-	constexpr U32 shadowAhitGroupIdx = 5;
-	constexpr U32 hitgroupCount = 6;
+	constexpr U32 lambertianChitGroupIdx = 3;
+	constexpr U32 lambertianRoomChitGroupIdx = 4;
+	constexpr U32 emissiveChitGroupIdx = 5;
+	constexpr U32 shadowAhitGroupIdx = 6;
+	constexpr U32 hitgroupCount = 7;
 	{
 		const CString commonSrcPart = R"(
 %s
@@ -2758,10 +2759,10 @@ const F32 PI = 3.14159265358979323846;
 
 struct PayLoad
 {
-	Vec3 m_emissiveColor;
+	Vec3 m_total;
+	Vec3 m_weight;
+	Vec3 m_scatteredDir;
 	F32 m_hitT;
-	Vec3 m_diffuseColor;
-	Vec3 m_normal;
 };
 
 struct ShadowPayLoad
@@ -2779,8 +2780,29 @@ layout(set = 0, binding = 1, scalar) buffer b_01
 	Light u_lights[];
 };
 
+layout(push_constant, scalar) uniform b_pc
+{
+	PushConstants u_regs;
+};
+
 #define PAYLOAD_LOCATION 0
 #define SHADOW_PAYLOAD_LOCATION 1
+
+ANKI_REF(U16Vec3, ANKI_SIZEOF(U16));
+ANKI_REF(Vec3, ANKI_SIZEOF(F32));
+
+Vec3 computePrimitiveNormal(Mesh mesh, U32 primitiveId)
+{
+	const U32 offset = primitiveId * 6;
+	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(mesh.m_indexBufferPtr + offset)).m_value;
+
+	const Vec3 pos0 = Vec3Ref(nonuniformEXT(mesh.m_positionBufferPtr + indices[0] * ANKI_SIZEOF(Vec3))).m_value;
+	const Vec3 pos1 = Vec3Ref(nonuniformEXT(mesh.m_positionBufferPtr + indices[1] * ANKI_SIZEOF(Vec3))).m_value;
+	const Vec3 pos2 = Vec3Ref(nonuniformEXT(mesh.m_positionBufferPtr + indices[2] * ANKI_SIZEOF(Vec3))).m_value;
+
+	const Vec3 normal = normalize(cross(pos1 - pos0, pos2 - pos0));
+	return normal;
+}
 
 UVec3 rand3DPCG16(UVec3 v)
 {
@@ -2824,9 +2846,16 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 	return Mat3(x, y, z);
 }
 
-void scatterLambertian(Vec3 normal, Vec2 uniformRandom01, out Vec3 scatterDir, out F32 pdf)
+Vec3 randomDirectionInHemisphere(Vec3 normal)
 {
-	scatterDir = normalize(rotationFromDirection(normal) * hemisphereSampleUniform(uniformRandom01));
+	const UVec2 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_regs.m_frame)).xy;
+	const Vec2 uniformRandom = hammersleyRandom16(0, 0xFFFFu, random);
+	return normalize(rotationFromDirection(normal) * hemisphereSampleUniform(uniformRandom));
+}
+
+void scatterLambertian(Vec3 normal, out Vec3 scatterDir, out F32 pdf)
+{
+	scatterDir = randomDirectionInHemisphere(normal);
 	pdf = dot(normal, scatterDir) / PI;
 }
 
@@ -2838,34 +2867,6 @@ F32 scatteringPdfLambertian(Vec3 normal, Vec3 scatteredDir)
 
 )";
 
-		const CString chit0Src = R"(
-layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
-
-hitAttributeEXT vec2 g_attribs;
-
-ANKI_REF(U16Vec3, ANKI_SIZEOF(U16));
-ANKI_REF(Vec3, ANKI_SIZEOF(F32));
-
-void main()
-{
-	const Model model = u_models[nonuniformEXT(gl_InstanceID)];
-
-	const U32 offset = gl_PrimitiveID * 6;
-	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(model.m_mesh.m_indexBufferPtr + offset)).m_value;
-
-	const Vec3 pos0 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[0] * ANKI_SIZEOF(Vec3))).m_value;
-	const Vec3 pos1 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[1] * ANKI_SIZEOF(Vec3))).m_value;
-	const Vec3 pos2 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[2] * ANKI_SIZEOF(Vec3))).m_value;
-
-	const Vec3 normal = normalize(cross(pos1 - pos0, pos2 - pos0));
-
-	s_payLoad.m_diffuseColor = model.m_mtl.m_diffuseColor;
-	s_payLoad.m_emissiveColor = model.m_mtl.m_emissiveColor;
-	s_payLoad.m_normal = normal;
-	s_payLoad.m_hitT = gl_HitTEXT;
-}
-)";
-
 #define MAGIC_MACRO ANKI_STRINGIZE
 		const CString rtTypesStr =
 #include "RtTypes.h"
@@ -2875,11 +2876,32 @@ void main()
 		StringAuto commonSrc(alloc);
 		commonSrc.sprintf(commonSrcPart, rtTypesStr.cstr());
 
-		const CString chit1Src = R"(
+		const CString lambertianSrc = R"(
 layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 
-ANKI_REF(U16Vec3, ANKI_SIZEOF(U16));
-ANKI_REF(Vec3, ANKI_SIZEOF(F32));
+hitAttributeEXT vec2 g_attribs;
+
+void main()
+{
+	const Model model = u_models[nonuniformEXT(gl_InstanceID)];
+
+	const Vec3 normal = computePrimitiveNormal(model.m_mesh, gl_PrimitiveID);
+
+	Vec3 scatteredDir;
+	F32 pdf;
+	scatterLambertian(normal, scatteredDir, pdf);
+
+	const F32 scatteringPdf = scatteringPdfLambertian(normal, scatteredDir);
+
+	s_payLoad.m_total += model.m_mtl.m_emissiveColor * s_payLoad.m_weight;
+	s_payLoad.m_weight *= model.m_mtl.m_diffuseColor * scatteringPdf / pdf;
+	s_payLoad.m_scatteredDir = scatteredDir;
+	s_payLoad.m_hitT = gl_HitTEXT;
+}
+)";
+
+		const CString lambertianRoomSrc = R"(
+layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 
 void main()
 {
@@ -2901,31 +2923,45 @@ void main()
 
 	const Model model = u_models[nonuniformEXT(gl_InstanceID)];
 
-	const U32 offset = gl_PrimitiveID * 6;
-	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(model.m_mesh.m_indexBufferPtr + offset)).m_value;
+	const Vec3 normal = computePrimitiveNormal(model.m_mesh, gl_PrimitiveID);
 
-	const Vec3 pos0 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[0] * ANKI_SIZEOF(Vec3))).m_value;
-	const Vec3 pos1 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[1] * ANKI_SIZEOF(Vec3))).m_value;
-	const Vec3 pos2 = Vec3Ref(nonuniformEXT(model.m_mesh.m_positionBufferPtr + indices[2] * ANKI_SIZEOF(Vec3))).m_value;
+	Vec3 scatteredDir;
+	F32 pdf;
+	scatterLambertian(normal, scatteredDir, pdf);
 
-	const Vec3 normal = normalize(cross(pos1 - pos0, pos2 - pos0));
+	const F32 scatteringPdf = scatteringPdfLambertian(normal, scatteredDir);
 
-	s_payLoad.m_diffuseColor = col;
-	s_payLoad.m_emissiveColor = Vec3(0.0);
-	s_payLoad.m_normal = normal;
+	// Color = diff * scatteringPdf / pdf * trace(depth - 1)
+	s_payLoad.m_total += model.m_mtl.m_emissiveColor * s_payLoad.m_weight;
+	s_payLoad.m_weight *= col * scatteringPdf / pdf;
+	s_payLoad.m_scatteredDir = scatteredDir;
 	s_payLoad.m_hitT = gl_HitTEXT;
 }
 )";
+
+		const CString emissiveSrc = R"(
+layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
+
+void main()
+{
+	const Model model = u_models[nonuniformEXT(gl_InstanceID)];
+
+	s_payLoad.m_total += model.m_mtl.m_emissiveColor * s_payLoad.m_weight;
+	s_payLoad.m_weight = Vec3(0.0);
+	s_payLoad.m_scatteredDir = Vec3(1.0, 0.0, 0.0);
+	s_payLoad.m_hitT = -1.0;
+})";
 
 		const CString missSrc = R"(
 layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
 
 void main()
 {
-	s_payLoad.m_diffuseColor = Vec3(0.5);
-	s_payLoad.m_emissiveColor =
-		mix(Vec3(0.3, 0.5, 0.3), Vec3(0.1, 0.6, 0.1), F32(gl_LaunchIDEXT.y) / F32(gl_LaunchSizeEXT.y));
-	s_payLoad.m_normal = Vec3(1.0, 0.0, 1.0);
+	//s_payLoad.m_color =
+		//mix(Vec3(0.3, 0.5, 0.3), Vec3(0.1, 0.6, 0.1), F32(gl_LaunchIDEXT.y) / F32(gl_LaunchSizeEXT.y));
+		//Vec3(0.0);
+	s_payLoad.m_weight = Vec3(0.0);
+	s_payLoad.m_scatteredDir = Vec3(1.0, 0.0, 0.0);
 	s_payLoad.m_hitT = -1.0;
 }
 )";
@@ -2959,20 +2995,6 @@ void main()
 layout(set = 1, binding = 0) uniform accelerationStructureEXT u_tlas;
 layout(set = 1, binding = 1, rgba8) uniform image2D u_outImg;
 
-struct PC
-{
-	Mat4 m_vp;
-	Vec3 m_cameraPos;
-	U32 m_lightCount;
-	UVec3 m_padding0;
-	U32 m_frame;
-};
-
-layout(push_constant, scalar) uniform u_pc
-{
-	PC u_regs;
-};
-
 layout(location = PAYLOAD_LOCATION) rayPayloadEXT PayLoad s_payLoad;
 layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadEXT ShadowPayLoad s_shadowPayLoad;
 
@@ -2989,20 +3011,43 @@ void main()
 
 	Vec3 outColor = Vec3(0.0);
 
-	// Primary ray
+	const U32 sampleCount = 16;
+	const U32 maxRecursionDepth = 3;
+	for(U32 s = 0; s < sampleCount; ++s)
 	{
-		const Vec3 rayOrigin = u_regs.m_cameraPos;
-		const Vec3 rayDir = normalize(p3 - u_regs.m_cameraPos);
-		const U32 cullMask = 0xFF;
-		const U32 sbtRecordOffset = 0;
-		const U32 sbtRecordStride = 0;
-		const U32 missIndex = 0;
-		const F32 tMin = 0.01;
-		const F32 tMax = 10000.0;
-		traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex,
-					rayOrigin, tMin, rayDir, tMax, PAYLOAD_LOCATION);
+		Vec3 rayOrigin = u_regs.m_cameraPos;
+		Vec3 rayDir = normalize(p3 - u_regs.m_cameraPos);
+		s_payLoad.m_total = Vec3(0.0);
+		s_payLoad.m_weight = Vec3(1.0);
+
+		for(U32 depth = 0; depth < maxRecursionDepth; ++depth)
+		{
+			const U32 cullMask = 0xFF;
+			const U32 sbtRecordOffset = 0;
+			const U32 sbtRecordStride = 0;
+			const U32 missIndex = 0;
+			const F32 tMin = 0.1;
+			const F32 tMax = 10000.0;
+			traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex,
+						rayOrigin, tMin, rayDir, tMax, PAYLOAD_LOCATION);
+
+			if(s_payLoad.m_hitT > 0.0)
+			{
+				rayOrigin = rayOrigin + rayDir * s_payLoad.m_hitT;
+				rayDir = s_payLoad.m_scatteredDir;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		outColor += s_payLoad.m_total + s_payLoad.m_weight;
 	}
 
+	outColor /= F32(sampleCount);
+
+#if 0
 	const Vec3 diffuseColor = Vec3(s_payLoad.m_diffuseColor);
 	const Vec3 normal = s_payLoad.m_normal;
 	if(s_payLoad.m_hitT > 0.0)
@@ -3034,15 +3079,19 @@ void main()
 	{
 		outColor = diffuseColor;
 	}
+#endif
 
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(outColor, 0.0));
 }
 		)";
 
-		ShaderPtr chit0Shader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), chit0Src.cstr()),
-											 ShaderType::CLOSEST_HIT, *gr);
-		ShaderPtr chit1Shader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), chit1Src.cstr()),
-											 ShaderType::CLOSEST_HIT, *gr);
+		ShaderPtr lambertianShader = createShader(
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()), ShaderType::CLOSEST_HIT, *gr);
+		ShaderPtr lambertianRoomShader =
+			createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianRoomSrc.cstr()),
+						 ShaderType::CLOSEST_HIT, *gr);
+		ShaderPtr emissiveShader = createShader(
+			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), emissiveSrc.cstr()), ShaderType::CLOSEST_HIT, *gr);
 
 		ShaderPtr shadowAhitShader = createShader(
 			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), shadowAhitSrc.cstr()), ShaderType::ANY_HIT, *gr);
@@ -3057,11 +3106,12 @@ void main()
 		ShaderPtr rayGenShader = createShader(StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), rayGenSrc.cstr()),
 											  ShaderType::RAY_GEN, *gr);
 
-		Array<RayTracingHitGroup, 3> hitGroups;
-		hitGroups[0].m_closestHitShader = chit0Shader;
-		hitGroups[1].m_closestHitShader = chit1Shader;
-		hitGroups[2].m_closestHitShader = shadowChitShader;
-		hitGroups[2].m_anyHitShader = shadowAhitShader;
+		Array<RayTracingHitGroup, 4> hitGroups;
+		hitGroups[0].m_closestHitShader = lambertianShader;
+		hitGroups[1].m_closestHitShader = lambertianRoomShader;
+		hitGroups[2].m_closestHitShader = emissiveShader;
+		hitGroups[3].m_closestHitShader = shadowChitShader;
+		hitGroups[3].m_anyHitShader = shadowAhitShader;
 
 		Array<ShaderPtr, 2> missShaders = {missShader, shadowMissShader};
 
@@ -3201,7 +3251,7 @@ void main()
 
 		// Small box
 		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * colorChitGroupIdx],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianChitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
@@ -3209,7 +3259,7 @@ void main()
 
 		// Big box
 		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * colorChitGroupIdx],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianChitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
@@ -3217,7 +3267,7 @@ void main()
 
 		// Light
 		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * colorChitGroupIdx],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * emissiveChitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
@@ -3225,7 +3275,7 @@ void main()
 
 		// Room
 		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * primitiveChitGroupIdx],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianRoomChitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
@@ -3255,6 +3305,7 @@ void main()
 		models[1].m_mesh.m_indexBufferPtr = bigBoxIndexBuffer->getGpuAddress();
 
 		models[2].m_mtl.m_diffuseColor = Vec3(1.0f);
+		models[2].m_mtl.m_emissiveColor = Vec3(15.0f);
 		models[2].m_mesh.m_positionBufferPtr = lightVertBuffer->getGpuAddress();
 		models[2].m_mesh.m_indexBufferPtr = lightIndexBuffer->getGpuAddress();
 
@@ -3285,7 +3336,7 @@ void main()
 	}
 
 	// Draw
-	constexpr U32 ITERATIONS = 200;
+	constexpr U32 ITERATIONS = 400;
 	for(U i = 0; i < ITERATIONS; ++i)
 	{
 		HighRezTimer timer;
