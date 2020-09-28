@@ -12,6 +12,8 @@ MAGIC_MACRO(
 	struct Model {
 		Material m_mtl;
 		Mesh m_mesh;
+		Mat3x4Scalar m_worldTransform;
+		Mat3 m_worldRotation;
 	};
 
 	struct Light {

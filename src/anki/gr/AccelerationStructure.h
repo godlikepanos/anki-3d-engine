@@ -39,7 +39,7 @@ public:
 			return false;
 		}
 
-		const PtrSize posRange = m_positionBufferOffset + m_positionStride * m_positionCount;
+		const PtrSize posRange = m_positionBufferOffset + PtrSize(m_positionStride) * m_positionCount;
 		const PtrSize formatSize = getFormatBytes(m_positionsFormat);
 		if(m_positionStride < formatSize)
 		{

@@ -367,7 +367,7 @@ public:
 		if(name && name.getLength())
 		{
 			ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
-			memcpy(&m_name[0], &name[0], name.getLength() + 1);
+			memcpy(&m_name[0], &name[0], PtrSize(name.getLength()) + 1);
 		}
 	}
 

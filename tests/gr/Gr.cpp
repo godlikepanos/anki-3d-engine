@@ -1777,7 +1777,7 @@ void main()
 	SamplerPtr sampler = gr->newSampler(samplerInit);
 
 	// Create the buffer to copy to the texture
-	BufferPtr uploadBuff = gr->newBuffer(BufferInitInfo(texInit.m_width * texInit.m_height * 3,
+	BufferPtr uploadBuff = gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width) * texInit.m_height * 3,
 														BufferUsageBit::ALL_TRANSFER, BufferMapAccessBit::WRITE));
 	U8* data = static_cast<U8*>(uploadBuff->map(0, uploadBuff->getSize(), BufferMapAccessBit::WRITE));
 	for(U32 i = 0; i < texInit.m_width * texInit.m_height; ++i)
@@ -1789,7 +1789,7 @@ void main()
 	}
 	uploadBuff->unmap();
 
-	BufferPtr uploadBuff2 = gr->newBuffer(BufferInitInfo((texInit.m_width >> 1) * (texInit.m_height >> 1) * 3,
+	BufferPtr uploadBuff2 = gr->newBuffer(BufferInitInfo(PtrSize(texInit.m_width >> 1) * (texInit.m_height >> 1) * 3,
 														 BufferUsageBit::ALL_TRANSFER, BufferMapAccessBit::WRITE));
 	data = static_cast<U8*>(uploadBuff2->map(0, uploadBuff2->getSize(), BufferMapAccessBit::WRITE));
 	for(U i = 0; i < (texInit.m_width >> 1) * (texInit.m_height >> 1); ++i)
@@ -2724,6 +2724,17 @@ static void createCubeBuffers(GrManager& gr, Vec3 min, Vec3 max, BufferPtr& inde
 	indexBuffer->unmap();
 }
 
+enum class GeomWhat
+{
+	SMALL_BOX,
+	BIG_BOX,
+	ROOM,
+	LIGHT,
+	COUNT,
+	FIRST = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GeomWhat)
+
 ANKI_TEST(Gr, RayGen)
 {
 	COMMON_BEGIN();
@@ -2735,11 +2746,178 @@ ANKI_TEST(Gr, RayGen)
 		break;
 	}
 
+	using Mat3x4Scalar = Array2d<F32, 3, 4>;
 #define MAGIC_MACRO(x) x
 #include "RtTypes.h"
 #undef MAGIC_MACRO
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
+
+	// Create the offscreen RTs
+	Array<TexturePtr, 2> offscreenRts;
+	{
+		TextureInitInfo inf("T_offscreen#1");
+		inf.m_width = WIDTH;
+		inf.m_height = HEIGHT;
+		inf.m_format = Format::R8G8B8A8_UNORM;
+		inf.m_usage = TextureUsageBit::IMAGE_TRACE_RAYS_READ | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
+					  | TextureUsageBit::IMAGE_COMPUTE_READ;
+		inf.m_initialUsage = TextureUsageBit::IMAGE_COMPUTE_READ;
+
+		offscreenRts[0] = gr->newTexture(inf);
+
+		inf.setName("T_offscreen#2");
+		offscreenRts[1] = gr->newTexture(inf);
+	}
+
+	// Copy to present program
+	ShaderProgramPtr copyToPresentProg;
+	{
+		const CString src = R"(
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform readonly image2D u_inImg;
+layout(set = 0, binding = 1) uniform writeonly image2D u_outImg;
+
+void main()
+{
+	const UVec2 size = UVec2(imageSize(u_inImg));
+	if(gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y)
+	{
+		return;
+	}
+
+	const Vec4 col = imageLoad(u_inImg, IVec2(gl_GlobalInvocationID.xy));
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), col);
+})";
+
+		ShaderPtr shader = createShader(src, ShaderType::COMPUTE, *gr);
+		ShaderProgramInitInfo sprogInit;
+		sprogInit.m_computeShader = shader;
+		copyToPresentProg = gr->newShaderProgram(sprogInit);
+	}
+
+	// Create the gometries
+	struct Geom
+	{
+		BufferPtr m_vertexBuffer;
+		BufferPtr m_indexBuffer;
+		Aabb m_aabb;
+		Mat3x4 m_worldTransform;
+		Mat3 m_worldRotation;
+		Bool m_insideOut = false;
+		U8 m_asMask = 0b10;
+		AccelerationStructurePtr m_blas;
+		U32 m_indexCount = 36;
+		Vec3 m_diffuseColor = Vec3(0.0f);
+		Vec3 m_emissiveColor = Vec3(0.0f);
+	};
+
+	Array<Geom, U(GeomWhat::COUNT)> geometries;
+	geometries[GeomWhat::SMALL_BOX].m_aabb = Aabb(Vec3(130.0f, 0.0f, 65.0f), Vec3(295.0f, 160.0f, 230.0f));
+	geometries[GeomWhat::SMALL_BOX].m_worldRotation = Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f)));
+	geometries[GeomWhat::SMALL_BOX].m_worldTransform = Mat3x4(
+		Vec3((geometries[GeomWhat::SMALL_BOX].m_aabb.getMin() + geometries[GeomWhat::SMALL_BOX].m_aabb.getMax()).xyz()
+			 / 2.0f),
+		geometries[GeomWhat::SMALL_BOX].m_worldRotation);
+	geometries[GeomWhat::SMALL_BOX].m_diffuseColor = Vec3(0.75f);
+
+	geometries[GeomWhat::BIG_BOX].m_aabb = Aabb(Vec3(265.0f, 0.0f, 295.0f), Vec3(430.0f, 330.0f, 460.0f));
+	geometries[GeomWhat::BIG_BOX].m_worldRotation = Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f)));
+	geometries[GeomWhat::BIG_BOX].m_worldTransform = Mat3x4(
+		Vec3((geometries[GeomWhat::BIG_BOX].m_aabb.getMin() + geometries[GeomWhat::BIG_BOX].m_aabb.getMax()).xyz()
+			 / 2.0f),
+		geometries[GeomWhat::BIG_BOX].m_worldRotation);
+	geometries[GeomWhat::BIG_BOX].m_diffuseColor = Vec3(0.75f);
+
+	geometries[GeomWhat::ROOM].m_aabb = Aabb(Vec3(0.0f), Vec3(555.0f));
+	geometries[GeomWhat::ROOM].m_worldRotation = Mat3::getIdentity();
+	geometries[GeomWhat::ROOM].m_worldTransform = Mat3x4(
+		Vec3((geometries[GeomWhat::ROOM].m_aabb.getMin() + geometries[GeomWhat::ROOM].m_aabb.getMax()).xyz() / 2.0f),
+		geometries[GeomWhat::ROOM].m_worldRotation);
+	geometries[GeomWhat::ROOM].m_insideOut = true;
+	geometries[GeomWhat::ROOM].m_indexCount = 30;
+
+	geometries[GeomWhat::LIGHT].m_aabb =
+		Aabb(Vec3(213.0f + 1.0f, 554.0f, 227.0f + 1.0f), Vec3(343.0f - 1.0f, 554.0f + 0.001f, 332.0f - 1.0f));
+	geometries[GeomWhat::LIGHT].m_worldRotation = Mat3::getIdentity();
+	geometries[GeomWhat::LIGHT].m_worldTransform = Mat3x4(
+		Vec3((geometries[GeomWhat::LIGHT].m_aabb.getMin() + geometries[GeomWhat::LIGHT].m_aabb.getMax()).xyz() / 2.0f),
+		geometries[GeomWhat::LIGHT].m_worldRotation);
+	geometries[GeomWhat::LIGHT].m_asMask = 0b01;
+	geometries[GeomWhat::LIGHT].m_emissiveColor = Vec3(15.0f);
+
+	// Create Buffers
+	for(Geom& g : geometries)
+	{
+		createCubeBuffers(*gr, -(g.m_aabb.getMax().xyz() - g.m_aabb.getMin().xyz()) / 2.0f,
+						  (g.m_aabb.getMax().xyz() - g.m_aabb.getMin().xyz()) / 2.0f, g.m_indexBuffer, g.m_vertexBuffer,
+						  g.m_insideOut);
+	}
+
+	// Create AS
+	AccelerationStructurePtr tlas;
+	{
+		for(Geom& g : geometries)
+		{
+			AccelerationStructureInitInfo inf;
+			inf.m_type = AccelerationStructureType::BOTTOM_LEVEL;
+			inf.m_bottomLevel.m_indexBuffer = g.m_indexBuffer;
+			inf.m_bottomLevel.m_indexType = IndexType::U16;
+			inf.m_bottomLevel.m_indexCount = g.m_indexCount;
+			inf.m_bottomLevel.m_positionBuffer = g.m_vertexBuffer;
+			inf.m_bottomLevel.m_positionCount = 8;
+			inf.m_bottomLevel.m_positionsFormat = Format::R32G32B32_SFLOAT;
+			inf.m_bottomLevel.m_positionStride = sizeof(Vec3);
+
+			g.m_blas = gr->newAccelerationStructure(inf);
+		}
+
+		// TLAS
+		Array<AccelerationStructureInstance, U32(GeomWhat::COUNT)> instances;
+		U32 count = 0;
+		for(Geom& g : geometries)
+		{
+			instances[count].m_bottomLevel = g.m_blas;
+			instances[count].m_transform = g.m_worldTransform;
+			instances[count].m_sbtRecordIndex = count;
+			instances[count].m_mask = g.m_asMask;
+
+			++count;
+		}
+
+		AccelerationStructureInitInfo inf;
+		inf.m_type = AccelerationStructureType::TOP_LEVEL;
+		inf.m_topLevel.m_instances = instances;
+
+		tlas = gr->newAccelerationStructure(inf);
+	}
+
+	// Create model info
+	BufferPtr modelBuffer;
+	{
+		BufferInitInfo inf;
+		inf.m_mapAccess = BufferMapAccessBit::WRITE;
+		inf.m_usage = BufferUsageBit::ALL_STORAGE;
+		inf.m_size = sizeof(Model) * U32(GeomWhat::COUNT);
+
+		modelBuffer = gr->newBuffer(inf);
+		WeakArray<Model, PtrSize> models = modelBuffer->map<Model>(0, U32(GeomWhat::COUNT), BufferMapAccessBit::WRITE);
+		memset(&models[0], 0, inf.m_size);
+
+		for(GeomWhat i : EnumIterable<GeomWhat>())
+		{
+			const Geom& g = geometries[i];
+			models[U32(i)].m_mtl.m_diffuseColor = g.m_diffuseColor;
+			models[U32(i)].m_mtl.m_emissiveColor = g.m_emissiveColor;
+			models[U32(i)].m_mesh.m_indexBufferPtr = g.m_indexBuffer->getGpuAddress();
+			models[U32(i)].m_mesh.m_positionBufferPtr = g.m_vertexBuffer->getGpuAddress();
+			memcpy(&models[U32(i)].m_worldTransform, &g.m_worldTransform, sizeof(Mat3x4));
+			models[U32(i)].m_worldRotation = g.m_worldRotation;
+		}
+
+		modelBuffer->unmap();
+	}
 
 	// Create the ppline
 	ShaderProgramPtr rtProg;
@@ -2753,6 +2931,8 @@ ANKI_TEST(Gr, RayGen)
 	constexpr U32 hitgroupCount = 7;
 	{
 		const CString commonSrcPart = R"(
+#define Mat3x4Scalar Mat3x4
+
 %s
 
 const F32 PI = 3.14159265358979323846;
@@ -2791,8 +2971,9 @@ layout(push_constant, scalar) uniform b_pc
 ANKI_REF(U16Vec3, ANKI_SIZEOF(U16));
 ANKI_REF(Vec3, ANKI_SIZEOF(F32));
 
-Vec3 computePrimitiveNormal(Mesh mesh, U32 primitiveId)
+Vec3 computePrimitiveNormal(Model model, U32 primitiveId)
 {
+	const Mesh mesh = model.m_mesh;
 	const U32 offset = primitiveId * 6;
 	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(mesh.m_indexBufferPtr + offset)).m_value;
 
@@ -2801,7 +2982,7 @@ Vec3 computePrimitiveNormal(Mesh mesh, U32 primitiveId)
 	const Vec3 pos2 = Vec3Ref(nonuniformEXT(mesh.m_positionBufferPtr + indices[2] * ANKI_SIZEOF(Vec3))).m_value;
 
 	const Vec3 normal = normalize(cross(pos1 - pos0, pos2 - pos0));
-	return normal;
+	return model.m_worldRotation * normal;
 }
 
 UVec3 rand3DPCG16(UVec3 v)
@@ -2863,9 +3044,7 @@ F32 scatteringPdfLambertian(Vec3 normal, Vec3 scatteredDir)
 {
 	F32 cosine = dot(normal, scatteredDir);
 	return max(cosine / PI, 0.0);
-}
-
-)";
+})";
 
 #define MAGIC_MACRO ANKI_STRINGIZE
 		const CString rtTypesStr =
@@ -2885,7 +3064,7 @@ void main()
 {
 	const Model model = u_models[nonuniformEXT(gl_InstanceID)];
 
-	const Vec3 normal = computePrimitiveNormal(model.m_mesh, gl_PrimitiveID);
+	const Vec3 normal = computePrimitiveNormal(model, gl_PrimitiveID);
 
 	Vec3 scatteredDir;
 	F32 pdf;
@@ -2897,8 +3076,7 @@ void main()
 	s_payLoad.m_weight *= model.m_mtl.m_diffuseColor * scatteringPdf / pdf;
 	s_payLoad.m_scatteredDir = scatteredDir;
 	s_payLoad.m_hitT = gl_HitTEXT;
-}
-)";
+})";
 
 		const CString lambertianRoomSrc = R"(
 layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
@@ -2923,7 +3101,7 @@ void main()
 
 	const Model model = u_models[nonuniformEXT(gl_InstanceID)];
 
-	const Vec3 normal = computePrimitiveNormal(model.m_mesh, gl_PrimitiveID);
+	const Vec3 normal = computePrimitiveNormal(model, gl_PrimitiveID);
 
 	Vec3 scatteredDir;
 	F32 pdf;
@@ -2936,8 +3114,7 @@ void main()
 	s_payLoad.m_weight *= col * scatteringPdf / pdf;
 	s_payLoad.m_scatteredDir = scatteredDir;
 	s_payLoad.m_hitT = gl_HitTEXT;
-}
-)";
+})";
 
 		const CString emissiveSrc = R"(
 layout(location = PAYLOAD_LOCATION) rayPayloadInEXT PayLoad s_payLoad;
@@ -2963,8 +3140,7 @@ void main()
 	s_payLoad.m_weight = Vec3(0.0);
 	s_payLoad.m_scatteredDir = Vec3(1.0, 0.0, 0.0);
 	s_payLoad.m_hitT = -1.0;
-}
-)";
+})";
 
 		const CString shadowAhitSrc = R"(
 layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadInEXT ShadowPayLoad s_payLoad;
@@ -2973,14 +3149,12 @@ void main()
 {
 	s_payLoad.m_shadow += 0.25;
 	//terminateRayEXT();
-}
-)";
+})";
 
 		const CString shadowChitSrc = R"(
 void main()
 {
-}
-)";
+})";
 
 		const CString shadowMissSrc = R"(
 layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadInEXT ShadowPayLoad s_payLoad;
@@ -2988,12 +3162,12 @@ layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadInEXT ShadowPayLoad s_payLo
 void main()
 {
 	s_payLoad.m_shadow = 1.0;
-}
-)";
+})";
 
 		const CString rayGenSrc = R"(
 layout(set = 1, binding = 0) uniform accelerationStructureEXT u_tlas;
-layout(set = 1, binding = 1, rgba8) uniform image2D u_outImg;
+layout(set = 1, binding = 1, rgba8) uniform readonly image2D u_inImg;
+layout(set = 1, binding = 2, rgba8) uniform writeonly image2D u_outImg;
 
 layout(location = PAYLOAD_LOCATION) rayPayloadEXT PayLoad s_payLoad;
 layout(location = SHADOW_PAYLOAD_LOCATION) rayPayloadEXT ShadowPayLoad s_shadowPayLoad;
@@ -3011,8 +3185,8 @@ void main()
 
 	Vec3 outColor = Vec3(0.0);
 
-	const U32 sampleCount = 16;
-	const U32 maxRecursionDepth = 3;
+	const U32 sampleCount = 8;
+	const U32 maxRecursionDepth = 2;
 	for(U32 s = 0; s < sampleCount; ++s)
 	{
 		Vec3 rayOrigin = u_regs.m_cameraPos;
@@ -3043,6 +3217,7 @@ void main()
 		}
 
 		outColor += s_payLoad.m_total + s_payLoad.m_weight;
+		//outColor += s_payLoad.m_scatteredDir * 0.5 + 0.5;
 	}
 
 	outColor /= F32(sampleCount);
@@ -3081,9 +3256,10 @@ void main()
 	}
 #endif
 
+	const Vec3 history = imageLoad(u_inImg, IVec2(gl_LaunchIDEXT.xy)).rgb;
+	outColor = mix(outColor, history, (u_regs.m_frame != 0) ?  0.99 : 0.0);
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(outColor, 0.0));
-}
-		)";
+})";
 
 		ShaderPtr lambertianShader = createShader(
 			StringAuto(alloc).sprintf("%s\n%s", commonSrc.cstr(), lambertianSrc.cstr()), ShaderType::CLOSEST_HIT, *gr);
@@ -3123,105 +3299,10 @@ void main()
 		rtProg = gr->newShaderProgram(inf);
 	}
 
-	// Create geometry
-	BufferPtr smallBoxVertBuffer, smallBoxIndexBuffer;
-	BufferPtr bigBoxVertBuffer, bigBoxIndexBuffer;
-	BufferPtr roomVertBuffer, roomIndexBuffer;
-	BufferPtr lightVertBuffer, lightIndexBuffer;
-	const Aabb smallBox(Vec3(130.0f, 0.0f, 65.0f), Vec3(295.0f, 160.0f, 230.0f));
-	const Aabb bigBox(Vec3(265.0f, 0.0f, 295.0f), Vec3(430.0f, 330.0f, 460.0f));
-	const Aabb roomBox(Vec3(0.0f), Vec3(555.0f));
-	const Aabb lightBox(Vec3(213.0f + 1.0f, 554.0f, 227.0f + 1.0f),
-						Vec3(343.0f - 1.0f, 554.0f + 0.001f, 332.0f - 1.0f));
-	{
-		createCubeBuffers(*gr, -(smallBox.getMax().xyz() - smallBox.getMin().xyz()) / 2.0f,
-						  (smallBox.getMax().xyz() - smallBox.getMin().xyz()) / 2.0f, smallBoxIndexBuffer,
-						  smallBoxVertBuffer);
-
-		createCubeBuffers(*gr, -(bigBox.getMax().xyz() - bigBox.getMin().xyz()) / 2.0f,
-						  (bigBox.getMax().xyz() - bigBox.getMin().xyz()) / 2.0f, bigBoxIndexBuffer, bigBoxVertBuffer);
-
-		createCubeBuffers(*gr, -(roomBox.getMax().xyz() - roomBox.getMin().xyz()) / 2.0f,
-						  (roomBox.getMax().xyz() - roomBox.getMin().xyz()) / 2.0f, roomIndexBuffer, roomVertBuffer,
-						  true);
-
-		createCubeBuffers(*gr, -(lightBox.getMax().xyz() - lightBox.getMin().xyz()) / 2.0f,
-						  (lightBox.getMax().xyz() - lightBox.getMin().xyz()) / 2.0f, lightIndexBuffer,
-						  lightVertBuffer);
-	}
-
-	// Create AS
-	AccelerationStructurePtr smallBlas, tlas, bigBlas, roomBlas, lightBlas;
-	constexpr U32 modelCount = 4;
-	constexpr U8 opaqueMask = 0b10;
-	constexpr U8 lightMask = 0b01;
-	{
-		// Small box
-		AccelerationStructureInitInfo inf;
-		inf.m_type = AccelerationStructureType::BOTTOM_LEVEL;
-		inf.m_bottomLevel.m_indexBuffer = smallBoxIndexBuffer;
-		inf.m_bottomLevel.m_indexType = IndexType::U16;
-		inf.m_bottomLevel.m_indexCount = 36;
-		inf.m_bottomLevel.m_positionBuffer = smallBoxVertBuffer;
-		inf.m_bottomLevel.m_positionCount = 8;
-		inf.m_bottomLevel.m_positionsFormat = Format::R32G32B32_SFLOAT;
-		inf.m_bottomLevel.m_positionStride = sizeof(Vec3);
-
-		smallBlas = gr->newAccelerationStructure(inf);
-
-		// Big box
-		inf.m_bottomLevel.m_indexBuffer = bigBoxIndexBuffer;
-		inf.m_bottomLevel.m_positionBuffer = bigBoxVertBuffer;
-		bigBlas = gr->newAccelerationStructure(inf);
-
-		// Room
-		inf.m_bottomLevel.m_indexBuffer = roomIndexBuffer;
-		inf.m_bottomLevel.m_positionBuffer = roomVertBuffer;
-		inf.m_bottomLevel.m_indexCount = 30;
-		roomBlas = gr->newAccelerationStructure(inf);
-
-		// Light
-		inf.m_bottomLevel.m_indexBuffer = lightIndexBuffer;
-		inf.m_bottomLevel.m_positionBuffer = lightVertBuffer;
-		inf.m_bottomLevel.m_indexCount = 36;
-		lightBlas = gr->newAccelerationStructure(inf);
-
-		// TLAS
-		Array<AccelerationStructureInstance, 4> instances;
-		instances[0].m_bottomLevel = smallBlas;
-		instances[0].m_transform = Mat3x4(Vec3((smallBox.getMin() + smallBox.getMax()).xyz() / 2.0f),
-										  Mat3(Axisang(toRad(-18.0f), Vec3(0.0f, 1.0f, 0.0f))));
-		instances[0].m_sbtRecordIndex = 0;
-		instances[0].m_mask = opaqueMask;
-
-		instances[1].m_bottomLevel = bigBlas;
-		instances[1].m_transform = Mat3x4(Vec3((bigBox.getMin() + bigBox.getMax()).xyz() / 2.0f),
-										  Mat3(Axisang(toRad(15.0f), Vec3(0.0f, 1.0f, 0.0f))));
-		instances[1].m_sbtRecordIndex = 1;
-		instances[1].m_mask = opaqueMask;
-
-		instances[2].m_bottomLevel = lightBlas;
-		instances[2].m_transform =
-			Mat3x4(Vec3((lightBox.getMin() + lightBox.getMax()).xyz() / 2.0f), Mat3::getIdentity());
-		instances[2].m_sbtRecordIndex = 2;
-		instances[2].m_mask = lightMask;
-
-		instances[3].m_bottomLevel = roomBlas;
-		instances[3].m_transform =
-			Mat3x4(Vec3((roomBox.getMin() + roomBox.getMax()).xyz() / 2.0f), Mat3::getIdentity());
-		instances[3].m_sbtRecordIndex = 3;
-		instances[3].m_mask = opaqueMask;
-
-		inf.m_type = AccelerationStructureType::TOP_LEVEL;
-		inf.m_topLevel.m_instances = instances;
-
-		tlas = gr->newAccelerationStructure(inf);
-	}
-
 	// Create the SBT
 	BufferPtr sbt;
 	{
-		const U32 recordCount = 1 + 2 + modelCount * 2;
+		const U32 recordCount = 1 + 2 + U32(GeomWhat::COUNT) * 2;
 
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
@@ -3265,14 +3346,6 @@ void main()
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
-		// Light
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * emissiveChitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
-			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
-			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
-
 		// Room
 		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianRoomChitGroupIdx],
@@ -3281,39 +3354,15 @@ void main()
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
+		// Light
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * emissiveChitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
+			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
+
 		sbt->unmap();
-	}
-
-	// Create model info
-	BufferPtr modelBuffer;
-	{
-		BufferInitInfo inf;
-		inf.m_mapAccess = BufferMapAccessBit::WRITE;
-		inf.m_usage = BufferUsageBit::ALL_STORAGE;
-		inf.m_size = sizeof(Model) * modelCount;
-
-		modelBuffer = gr->newBuffer(inf);
-		WeakArray<Model, PtrSize> models = modelBuffer->map<Model>(0, modelCount, BufferMapAccessBit::WRITE);
-		memset(&models[0], 0, inf.m_size);
-
-		models[0].m_mtl.m_diffuseColor = Vec3(0.75f);
-		models[0].m_mesh.m_positionBufferPtr = smallBoxVertBuffer->getGpuAddress();
-		models[0].m_mesh.m_indexBufferPtr = smallBoxIndexBuffer->getGpuAddress();
-
-		models[1].m_mtl.m_diffuseColor = Vec3(0.75f);
-		models[1].m_mesh.m_positionBufferPtr = bigBoxVertBuffer->getGpuAddress();
-		models[1].m_mesh.m_indexBufferPtr = bigBoxIndexBuffer->getGpuAddress();
-
-		models[2].m_mtl.m_diffuseColor = Vec3(1.0f);
-		models[2].m_mtl.m_emissiveColor = Vec3(15.0f);
-		models[2].m_mesh.m_positionBufferPtr = lightVertBuffer->getGpuAddress();
-		models[2].m_mesh.m_indexBufferPtr = lightIndexBuffer->getGpuAddress();
-
-		models[3].m_mtl.m_diffuseColor = Vec3(1.0f);
-		models[3].m_mesh.m_positionBufferPtr = roomVertBuffer->getGpuAddress();
-		models[3].m_mesh.m_indexBufferPtr = roomIndexBuffer->getGpuAddress();
-
-		modelBuffer->unmap();
 	}
 
 	// Create lights
@@ -3328,16 +3377,16 @@ void main()
 		lightBuffer = gr->newBuffer(inf);
 		WeakArray<Light, PtrSize> lights = lightBuffer->map<Light>(0, lightCount, BufferMapAccessBit::WRITE);
 
-		lights[0].m_min = lightBox.getMin().xyz();
-		lights[0].m_max = lightBox.getMax().xyz();
+		lights[0].m_min = geometries[GeomWhat::LIGHT].m_aabb.getMin().xyz();
+		lights[0].m_max = geometries[GeomWhat::LIGHT].m_aabb.getMax().xyz();
 		lights[0].m_intensity = Vec3(1.0f);
 
 		lightBuffer->unmap();
 	}
 
 	// Draw
-	constexpr U32 ITERATIONS = 400;
-	for(U i = 0; i < ITERATIONS; ++i)
+	constexpr U32 ITERATIONS = 100 * 8;
+	for(U32 i = 0; i < ITERATIONS; ++i)
 	{
 		HighRezTimer timer;
 		timer.start();
@@ -3349,57 +3398,66 @@ void main()
 			Mat4::calculatePerspectiveProjectionMatrix(toRad(40.0f) * WIDTH / HEIGHT, toRad(40.0f), 0.01f, 2000.0f);
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+		cinit.m_flags =
+			CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newCommandBuffer(cinit);
 
 		if(i == 0)
 		{
-			cmdb->setAccelerationStructureBarrier(smallBlas, AccelerationStructureUsageBit::NONE,
-												  AccelerationStructureUsageBit::BUILD);
-			cmdb->setAccelerationStructureBarrier(bigBlas, AccelerationStructureUsageBit::NONE,
-												  AccelerationStructureUsageBit::BUILD);
-			cmdb->setAccelerationStructureBarrier(roomBlas, AccelerationStructureUsageBit::NONE,
-												  AccelerationStructureUsageBit::BUILD);
-			cmdb->setAccelerationStructureBarrier(lightBlas, AccelerationStructureUsageBit::NONE,
-												  AccelerationStructureUsageBit::BUILD);
-			cmdb->buildAccelerationStructure(smallBlas);
-			cmdb->buildAccelerationStructure(bigBlas);
-			cmdb->buildAccelerationStructure(roomBlas);
-			cmdb->buildAccelerationStructure(lightBlas);
-			cmdb->setAccelerationStructureBarrier(smallBlas, AccelerationStructureUsageBit::BUILD,
-												  AccelerationStructureUsageBit::ATTACH);
-			cmdb->setAccelerationStructureBarrier(bigBlas, AccelerationStructureUsageBit::BUILD,
-												  AccelerationStructureUsageBit::ATTACH);
-			cmdb->setAccelerationStructureBarrier(roomBlas, AccelerationStructureUsageBit::BUILD,
-												  AccelerationStructureUsageBit::ATTACH);
-			cmdb->setAccelerationStructureBarrier(lightBlas, AccelerationStructureUsageBit::BUILD,
-												  AccelerationStructureUsageBit::ATTACH);
+			for(const Geom& g : geometries)
+			{
+				cmdb->setAccelerationStructureBarrier(g.m_blas, AccelerationStructureUsageBit::NONE,
+													  AccelerationStructureUsageBit::BUILD);
+			}
+
+			for(const Geom& g : geometries)
+			{
+				cmdb->buildAccelerationStructure(g.m_blas);
+			}
+
+			for(const Geom& g : geometries)
+			{
+				cmdb->setAccelerationStructureBarrier(g.m_blas, AccelerationStructureUsageBit::BUILD,
+													  AccelerationStructureUsageBit::ATTACH);
+			}
 
 			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::NONE,
 												  AccelerationStructureUsageBit::BUILD);
 			cmdb->buildAccelerationStructure(tlas);
-			cmdb->setAccelerationStructureBarrier(smallBlas, AccelerationStructureUsageBit::BUILD,
+			cmdb->setAccelerationStructureBarrier(tlas, AccelerationStructureUsageBit::BUILD,
 												  AccelerationStructureUsageBit::TRACE_RAYS_READ);
 		}
 
 		TexturePtr presentTex = gr->acquireNextPresentableTexture();
-
 		TextureViewPtr presentView;
 		{
 
 			TextureViewInitInfo inf;
 			inf.m_texture = presentTex;
-
 			presentView = gr->newTextureView(inf);
 		}
 
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE,
+		TextureViewPtr offscreenView, offscreenHistoryView;
+		{
+
+			TextureViewInitInfo inf;
+			inf.m_texture = offscreenRts[i & 1];
+			offscreenView = gr->newTextureView(inf);
+
+			inf.m_texture = offscreenRts[(i + 1) & 1];
+			offscreenHistoryView = gr->newTextureView(inf);
+		}
+
+		cmdb->setTextureBarrier(offscreenRts[i & 1], TextureUsageBit::NONE, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE,
 								TextureSubresourceInfo());
+		cmdb->setTextureBarrier(offscreenRts[(i + 1) & 1], TextureUsageBit::IMAGE_COMPUTE_READ,
+								TextureUsageBit::IMAGE_TRACE_RAYS_READ, TextureSubresourceInfo());
 
 		cmdb->bindStorageBuffer(0, 0, modelBuffer, 0, MAX_PTR_SIZE);
 		cmdb->bindStorageBuffer(0, 1, lightBuffer, 0, MAX_PTR_SIZE);
 		cmdb->bindAccelerationStructure(1, 0, tlas);
-		cmdb->bindImage(1, 1, presentView);
+		cmdb->bindImage(1, 1, offscreenHistoryView);
+		cmdb->bindImage(1, 2, offscreenView);
 
 		cmdb->bindShaderProgram(rtProg);
 
@@ -3407,14 +3465,27 @@ void main()
 		pc.m_vp = projMat * viewMat;
 		pc.m_cameraPos = Vec3(278.0f, 278.0f, -800.0f);
 		pc.m_lightCount = lightCount;
-		static U32 frame = 0;
-		pc.m_frame = frame++;
+		pc.m_frame = i;
 
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
-		cmdb->traceRays(sbt, 0, modelCount * 2, 2, WIDTH, HEIGHT, 1);
+		cmdb->traceRays(sbt, 0, U32(GeomWhat::COUNT) * 2, 2, WIDTH, HEIGHT, 1);
 
-		cmdb->setTextureBarrier(presentTex, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE, TextureUsageBit::PRESENT,
+		// Copy to present
+		cmdb->setTextureBarrier(offscreenRts[i & 1], TextureUsageBit::IMAGE_TRACE_RAYS_WRITE,
+								TextureUsageBit::IMAGE_COMPUTE_READ, TextureSubresourceInfo());
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE,
+								TextureSubresourceInfo());
+
+		cmdb->bindImage(0, 0, offscreenView);
+		cmdb->bindImage(0, 1, presentView);
+
+		cmdb->bindShaderProgram(copyToPresentProg);
+		const U32 sizeX = (WIDTH + 8 - 1) / 8;
+		const U32 sizeY = (HEIGHT + 8 - 1) / 8;
+		cmdb->dispatchCompute(sizeX, sizeY, 1);
+
+		cmdb->setTextureBarrier(presentTex, TextureUsageBit::IMAGE_COMPUTE_WRITE, TextureUsageBit::PRESENT,
 								TextureSubresourceInfo());
 
 		cmdb->flush();

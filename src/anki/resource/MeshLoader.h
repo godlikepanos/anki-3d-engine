@@ -135,7 +135,7 @@ private:
 
 	PtrSize getIndexBufferSize() const
 	{
-		return m_header.m_totalIndexCount * ((m_header.m_indexType == IndexType::U16) ? 2 : 4);
+		return PtrSize(m_header.m_totalIndexCount) * ((m_header.m_indexType == IndexType::U16) ? 2 : 4);
 	}
 
 	ANKI_USE_RESULT Error checkHeader() const;

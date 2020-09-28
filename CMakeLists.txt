@@ -190,7 +190,7 @@ if(NOT MSVC)
 	# Set the flags to cmake now
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 else()
-	ProcessorCount(PC)
+	#ProcessorCount(PC)
 	#add_definitions("/MP${PC}")
 
 	if(${CMAKE_BUILD_TYPE} STREQUAL "Release" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
@@ -364,7 +364,7 @@ if(NOT MSVC)
 		"-Wconversion -Wno-sign-conversion -Wno-keyword-macro -Wno-string-conversion -Wno-class-memaccess "
 		"-Wunused-variable -std=c++14")
 else()
-	add_definitions("/wd4996 /wd4244 /wd4262 /wd4267")
+	add_definitions("/wd4996 /wd4244 /wd4262 /wd4267 /wd26495 /wd26439")
 endif()
 
 # Set platform specific
