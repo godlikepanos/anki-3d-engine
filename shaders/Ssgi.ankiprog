@@ -72,7 +72,8 @@ void main()
 
 	// Get a random point inside the hemisphere. Use hemisphereSampleCos to avoid perpendicular vecs to viewNormal
 	const UVec2 random = rand3DPCG16(UVec3(gl_GlobalInvocationID.xy, u_unis.m_frameCount)).xy;
-	const Vec2 randomCircle = hammersleyRandom16(0, 0xFFFFu, random);
+	Vec2 randomCircle = hammersleyRandom16(0, 0xFFFFu, random);
+	randomCircle.x *= 0.85; // Reduce the cone angle a bit to avoid self-collisions
 	const Vec3 randomHemisphere = rotationFromDirection(viewNormal) * hemisphereSampleCos(randomCircle);
 
 	// Trace

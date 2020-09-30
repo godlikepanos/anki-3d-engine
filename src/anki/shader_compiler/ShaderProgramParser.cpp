@@ -813,7 +813,7 @@ Error ShaderProgramParser::parse()
 				return Error::USER_DATA;
 			}
 		}
-		else
+		else if(!!(m_shaderTypes & ShaderTypeBit::ALL_GRAPHICS))
 		{
 			if(!(m_shaderTypes & ShaderTypeBit::VERTEX))
 			{

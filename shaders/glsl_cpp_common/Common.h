@@ -29,6 +29,8 @@ inline F32 dot(const T& a, const T& b)
 }
 ANKI_END_NAMESPACE
 
+#	define ANKI_SIZEOF(x) sizeof(x)
+
 //
 // Macros & functions GLSL
 //
@@ -50,14 +52,3 @@ ANKI_END_NAMESPACE
 
 #	define ANKI_SHADER_STATIC_ASSERT(cond_)
 #endif
-
-//
-// Consts
-//
-ANKI_BEGIN_NAMESPACE
-
-const U32 SIZEOF_VEC2 = 2u * 4u;
-const U32 SIZEOF_VEC4 = 4u * 4u;
-const U32 SIZEOF_MAT4 = 4u * SIZEOF_VEC4;
-
-ANKI_END_NAMESPACE

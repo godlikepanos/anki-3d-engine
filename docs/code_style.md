@@ -61,6 +61,15 @@ All **function and method names** should form a sentence with at least one verb.
 - All member variables have the `m_` prefix.
 - All global variables have the `g_` prefix.
 
+In GLSL there are more exceptions:
+
+- All uniforms (buffers, textures, images, push constants) and storage buffers have the `u_` prefix.
+- All input globals the `in_` prefix.
+- All output globals the `out_` prefix.
+- All shared storage the `s_` prefix.
+- All blocks (storage or uniform) block names the  `b_` prefix.
+- All payloads the `p_` prefix.
+
 **Variables that act as a measure for quantity** should have the `count` suffix. Not `num` or `numberOf` or similar.
 
 	int appleCount = ...; // YES

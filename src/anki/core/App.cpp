@@ -724,6 +724,11 @@ Error App::compileAllShaders()
 			return Error::NONE;
 		}
 
+		if(fname.find("/Rt") != CString::NPOS && !m_gr->getDeviceCapabilities().m_rayTracingEnabled)
+		{
+			return Error::NONE;
+		}
+
 		// Get some filenames
 		StringAuto baseFname(m_heapAlloc);
 		getFilepathFilename(fname, baseFname);

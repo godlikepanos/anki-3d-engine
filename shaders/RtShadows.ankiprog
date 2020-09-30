@@ -1,0 +1,28 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator DIFFUSE_TEXTURE 0 1
+
+#include <shaders/Common.glsl>
+#include <shaders/glsl_cpp_common/Model.h>
+
+struct Payload
+{
+	F32 m_shadowFactor;
+};
+
+layout(location = 0) rayPayloadInEXT Payload p_payload;
+
+#pragma anki start ahit
+
+#if defined(DIFFUSE_TEXTURE)
+layout(set = 0, binding = 0) uniform texture2D u_diffTex;
+layout(set = 0, binding = 1) uniform sampler u_ankiGlobalSampler;
+#endif
+
+void main()
+{
+}
+#pragma anki end

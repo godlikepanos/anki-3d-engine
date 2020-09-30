@@ -37,7 +37,7 @@ struct PointLight
 	F32 m_radius; // Radius
 	Vec4 m_shadowAtlasTileOffsets[3u]; // It's a Vec4 because of the std140 limitations
 };
-const U32 SIZEOF_POINT_LIGHT = 6 * SIZEOF_VEC4;
+const U32 SIZEOF_POINT_LIGHT = 6 * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == SIZEOF_POINT_LIGHT)
 
 // Spot light
@@ -55,7 +55,7 @@ struct SpotLight
 	F32 m_padding1;
 	Mat4 m_texProjectionMat;
 };
-const U32 SIZEOF_SPOT_LIGHT = 4 * SIZEOF_VEC4 + SIZEOF_MAT4;
+const U32 SIZEOF_SPOT_LIGHT = 4 * ANKI_SIZEOF(Vec4) + ANKI_SIZEOF(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == SIZEOF_SPOT_LIGHT)
 
 // Directional light (sun)
@@ -70,7 +70,7 @@ struct DirectionalLight
 	F32 m_shadowCascadesDistancePower;
 	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES];
 };
-const U32 SIZEOF_DIR_LIGHT = 3 * SIZEOF_VEC4 + MAX_SHADOW_CASCADES * SIZEOF_MAT4;
+const U32 SIZEOF_DIR_LIGHT = 3 * ANKI_SIZEOF(Vec4) + MAX_SHADOW_CASCADES * ANKI_SIZEOF(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == SIZEOF_DIR_LIGHT)
 
 // Representation of a reflection probe
@@ -83,7 +83,7 @@ struct ReflectionProbe
 	Vec3 m_aabbMax;
 	F32 m_padding1;
 };
-const U32 SIZEOF_REFLECTION_PROBE = 3 * SIZEOF_VEC4;
+const U32 SIZEOF_REFLECTION_PROBE = 3 * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == SIZEOF_REFLECTION_PROBE)
 
 // Decal
@@ -94,7 +94,7 @@ struct Decal
 	Mat4 m_texProjectionMat;
 	Vec4 m_blendFactors;
 };
-const U32 SIZEOF_DECAL = 3 * SIZEOF_VEC4 + SIZEOF_MAT4;
+const U32 SIZEOF_DECAL = 3 * ANKI_SIZEOF(Vec4) + ANKI_SIZEOF(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Decal) == SIZEOF_DECAL)
 
 // Fog density volume
@@ -105,7 +105,7 @@ struct FogDensityVolume
 	Vec3 m_aabbMaxOrSphereRadiusSquared;
 	F32 m_density;
 };
-const U32 SIZEOF_FOG_DENSITY_VOLUME = 2u * SIZEOF_VEC4;
+const U32 SIZEOF_FOG_DENSITY_VOLUME = 2u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == SIZEOF_FOG_DENSITY_VOLUME)
 
 // Global illumination probe
@@ -123,7 +123,7 @@ struct GlobalIlluminationProbe
 	F32 m_padding1;
 	F32 m_padding2;
 };
-const U32 SIZEOF_GLOBAL_ILLUMINATION_PROBE = 3u * SIZEOF_VEC4;
+const U32 SIZEOF_GLOBAL_ILLUMINATION_PROBE = 3u * ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == SIZEOF_GLOBAL_ILLUMINATION_PROBE)
 
 // Common uniforms for light shading passes
@@ -157,7 +157,7 @@ struct LightingUniforms
 
 	DirectionalLight m_dirLight;
 };
-const U32 SIZEOF_LIGHTING_UNIFORMS = 9u * SIZEOF_VEC4 + 8u * SIZEOF_MAT4 + SIZEOF_DIR_LIGHT;
+const U32 SIZEOF_LIGHTING_UNIFORMS = 9u * ANKI_SIZEOF(Vec4) + 8u * ANKI_SIZEOF(Mat4) + SIZEOF_DIR_LIGHT;
 ANKI_SHADER_STATIC_ASSERT(sizeof(LightingUniforms) == SIZEOF_LIGHTING_UNIFORMS)
 
 ANKI_SHADER_FUNC_INLINE F32 computeClusterKf(ClustererMagicValues magic, Vec3 worldPos)
