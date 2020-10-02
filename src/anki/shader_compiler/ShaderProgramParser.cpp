@@ -24,6 +24,7 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_BACKEND_MINOR %u
 #define ANKI_BACKEND_MAJOR %u
 #define ANKI_VENDOR_%s 1
+#define ANKI_%s_SHADER 1
 
 #define gl_VertexID gl_VertexIndex
 
@@ -60,7 +61,7 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_MAX_BINDLESS_TEXTURES %u
 #define ANKI_MAX_BINDLESS_IMAGES %u
 
-#if %u
+#if %u || defined(ANKI_RAY_GEN_SHADER) || defined(ANKI_ANY_HIT_SHADER) || defined(ANKI_CLOSEST_HIT_SHADER) || defined(ANKI_MISS_SHADER) || defined(ANKI_INTERSECTION_SHADER) || defined(ANKI_CALLABLE_SHADER)
 #	extension GL_EXT_ray_tracing : enable
 #endif
 
@@ -70,7 +71,7 @@ static const char* SHADER_HEADER = R"(#version 460 core
 	layout(set = set_, binding = 0) uniform texture2D u_bindlessTextures2dF32[ANKI_MAX_BINDLESS_TEXTURES]; \
 	layout(set = set_, binding = 1) uniform readonly uimage2D u_bindlessImages2dU32[ANKI_MAX_BINDLESS_IMAGES]; \
 	layout(set = set_, binding = 1) uniform readonly iimage2D u_bindlessImages2dI32[ANKI_MAX_BINDLESS_IMAGES]; \
-	layout(set = set_, binding = 1) uniform readonly image2D u_bindlessImages2dF32[ANKI_MAX_BINDLESS_IMAGES];
+	layout(set = set_, binding = 1) uniform readonly image2D u_bindlessImages2dF32[ANKI_MAX_BINDLESS_IMAGES]
 
 #define F32 float
 #define _ANKI_SIZEOF_float 4
@@ -847,12 +848,12 @@ Error ShaderProgramParser::parse()
 	return Error::NONE;
 }
 
-void ShaderProgramParser::generateAnkiShaderHeader(const GpuDeviceCapabilities& caps, const BindlessLimits& limits,
-												   StringAuto& header)
+void ShaderProgramParser::generateAnkiShaderHeader(ShaderType shaderType, const GpuDeviceCapabilities& caps,
+												   const BindlessLimits& limits, StringAuto& header)
 {
 	header.sprintf(SHADER_HEADER, caps.m_minorApiVersion, caps.m_majorApiVersion,
-				   GPU_VENDOR_STR[caps.m_gpuVendor].cstr(), limits.m_bindlessTextureCount, limits.m_bindlessImageCount,
-				   U(caps.m_rayTracingEnabled));
+				   GPU_VENDOR_STR[caps.m_gpuVendor].cstr(), SHADER_STAGE_NAMES[shaderType].cstr(),
+				   limits.m_bindlessTextureCount, limits.m_bindlessImageCount, U(caps.m_rayTracingEnabled));
 }
 
 Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation,
@@ -877,10 +878,6 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 		mutatorDefines.append(StringAuto(m_alloc).sprintf("#define %s %d\n", m_mutators[i].m_name.cstr(), mutation[i]));
 	}
 
-	// Create the header
-	StringAuto header(m_alloc);
-	generateAnkiShaderHeader(m_gpuCapabilities, m_bindlessLimits, header);
-
 	// Generate souce per stage
 	for(ShaderType shaderType : EnumIterable<ShaderType>())
 	{
@@ -889,12 +886,14 @@ Error ShaderProgramParser::generateVariant(ConstWeakArray<MutatorValue> mutation
 			continue;
 		}
 
+		// Create the header
+		StringAuto header(m_alloc);
+		generateAnkiShaderHeader(shaderType, m_gpuCapabilities, m_bindlessLimits, header);
+
 		// Create the final source without the bindings
 		StringAuto finalSource(m_alloc);
 		finalSource.append(header);
 		finalSource.append(mutatorDefines);
-		finalSource.append(
-			StringAuto(m_alloc).sprintf("#define ANKI_%s_SHADER 1\n", SHADER_STAGE_NAMES[shaderType].cstr()));
 		finalSource.append(m_codeSource);
 
 		// Move the source

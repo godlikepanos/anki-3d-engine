@@ -37,19 +37,19 @@ public:
 
 	explicit ShaderSpecializationConstValue(F32 f)
 		: m_float(f)
-		, m_dataType(ShaderVariableDataType::FLOAT)
+		, m_dataType(ShaderVariableDataType::F32)
 	{
 	}
 
 	explicit ShaderSpecializationConstValue(I32 i)
 		: m_int(i)
-		, m_dataType(ShaderVariableDataType::INT)
+		, m_dataType(ShaderVariableDataType::I32)
 	{
 	}
 
 	explicit ShaderSpecializationConstValue(U32 i)
 		: m_int(i)
-		, m_dataType(ShaderVariableDataType::UINT)
+		, m_dataType(ShaderVariableDataType::U32)
 	{
 	}
 

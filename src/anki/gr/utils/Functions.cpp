@@ -76,53 +76,64 @@ static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkIn
 	}
 }
 
+// This is some trickery to select calling between writeShaderBlockMemoryMatrix and writeShaderBlockMemorySimple
+namespace
+{
+
+template<typename T>
+class IsShaderVarDataTypeAMatrix
+{
+public:
+	static constexpr Bool VALUE = false;
+};
+
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+	template<> \
+	class IsShaderVarDataTypeAMatrix<type> \
+	{ \
+	public: \
+		static constexpr Bool VALUE = rowCount * columnCount > 4; \
+	};
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+
+template<typename T, Bool isMatrix = IsShaderVarDataTypeAMatrix<T>::VALUE>
+class WriteShaderBlockMemory
+{
+public:
+	void operator()(const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount, void* buffBegin,
+					const void* buffEnd)
+	{
+		using RowVec = typename T::RowVec;
+		writeShaderBlockMemoryMatrix<T, RowVec>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+	}
+};
+
+template<typename T>
+class WriteShaderBlockMemory<T, false>
+{
+public:
+	void operator()(const ShaderVariableBlockInfo& varBlkInfo, const void* elements, U32 elementsCount, void* buffBegin,
+					const void* buffEnd)
+	{
+		writeShaderBlockMemorySimple<T>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+	}
+};
+
+} // namespace
+
 void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlockInfo& varBlkInfo,
 							const void* elements, U32 elementsCount, void* buffBegin, const void* buffEnd)
 {
 	switch(type)
 	{
-	case ShaderVariableDataType::INT:
-		writeShaderBlockMemorySimple<I32>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+	case ShaderVariableDataType::capital: \
+		WriteShaderBlockMemory<type>()(varBlkInfo, elements, elementsCount, buffBegin, buffEnd); \
 		break;
-	case ShaderVariableDataType::UINT:
-		writeShaderBlockMemorySimple<U32>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::FLOAT:
-		writeShaderBlockMemorySimple<F32>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::IVEC2:
-		writeShaderBlockMemorySimple<IVec2>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::UVEC2:
-		writeShaderBlockMemorySimple<UVec2>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::VEC2:
-		writeShaderBlockMemorySimple<Vec2>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::IVEC3:
-		writeShaderBlockMemorySimple<IVec3>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::UVEC3:
-		writeShaderBlockMemorySimple<UVec3>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::VEC3:
-		writeShaderBlockMemorySimple<Vec3>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::IVEC4:
-		writeShaderBlockMemorySimple<IVec4>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::UVEC4:
-		writeShaderBlockMemorySimple<UVec4>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::VEC4:
-		writeShaderBlockMemorySimple<Vec4>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::MAT3:
-		writeShaderBlockMemoryMatrix<Mat3, Vec3>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
-	case ShaderVariableDataType::MAT4:
-		writeShaderBlockMemoryMatrix<Mat4, Vec4>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
-		break;
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+
 	default:
 		ANKI_ASSERT(0);
 	}
@@ -130,23 +141,22 @@ void writeShaderBlockMemory(ShaderVariableDataType type, const ShaderVariableBlo
 
 const CString shaderVariableDataTypeToString(ShaderVariableDataType t)
 {
-#define ANKI_SVDT_MACRO(svdt, akType) \
-	case ShaderVariableDataType::svdt: \
-		return ANKI_STRINGIZE(akType);
-
-#define ANKI_SVDT_MACRO_2(svdt, akType) ANKI_SVDT_MACRO(svdt, akType)
-
 	switch(t)
 	{
 	case ShaderVariableDataType::NONE:
 		return "NONE";
+
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+	case ShaderVariableDataType::capital: \
+		return ANKI_STRINGIZE(type);
+#define ANKI_SVDT_MACRO_OPAQUE(capital, type) ANKI_SVDT_MACRO(capital, type, 0, 0, 0)
 #include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+#undef ANKI_SVDT_MACRO_OPAQUE
+
 	default:
 		ANKI_ASSERT(0);
 	}
-
-#undef ANKI_SVDT_MACRO
-#undef ANKI_SVDT_MACRO_2
 
 	ANKI_ASSERT(0);
 	return "";

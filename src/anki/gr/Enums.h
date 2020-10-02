@@ -494,19 +494,19 @@ enum class ShaderVariableDataType : U8
 {
 	NONE,
 
-#define ANKI_SVDT_MACRO(x, y) x,
-#define ANKI_SVDT_MACRO_2(x, y) x,
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) capital,
+#define ANKI_SVDT_MACRO_OPAQUE(capital, type) capital,
 #include <anki/gr/ShaderVariableDataTypeDefs.h>
 #undef ANKI_SVDT_MACRO
-#undef ANKI_SVDT_MACRO_2
+#undef ANKI_SVDT_MACRO_OPAQUE
 
 	// Derived
 
-	NUMERICS_FIRST = INT,
+	NUMERICS_FIRST = I32,
 	NUMERICS_LAST = MAT4,
 
-	NUMERIC_1_COMPONENT_FIRST = INT,
-	NUMERIC_1_COMPONENT_LAST = FLOAT,
+	NUMERIC_1_COMPONENT_FIRST = I32,
+	NUMERIC_1_COMPONENT_LAST = F32,
 	NUMERIC_2_COMPONENT_FIRST = IVEC2,
 	NUMERIC_2_COMPONENT_LAST = VEC2,
 	NUMERIC_3_COMPONENT_FIRST = IVEC3,

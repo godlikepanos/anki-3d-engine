@@ -79,10 +79,52 @@ static ANKI_USE_RESULT Error checkBuiltin(CString name, ShaderVariableDataType d
 	return Error::NONE;
 }
 
+// This is some trickery to select calling between XmlElement::getAttributeNumber and XmlElement::getAttributeNumbers
+namespace
+{
+
+template<typename T>
+class IsShaderVarDataTypeAnArray
+{
+public:
+	static constexpr Bool VALUE = false;
+};
+
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+	template<> \
+	class IsShaderVarDataTypeAnArray<type> \
+	{ \
+	public: \
+		static constexpr Bool VALUE = rowCount * columnCount > 1; \
+	};
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+
+template<typename T, Bool isArray = IsShaderVarDataTypeAnArray<T>::VALUE>
+class GetAttribute
+{
+public:
+	Error operator()(const XmlElement& el, T& out)
+	{
+		return el.getAttributeNumbers("value", out);
+	}
+};
+
+template<typename T>
+class GetAttribute<T, false>
+{
+public:
+	Error operator()(const XmlElement& el, T& out)
+	{
+		return el.getAttributeNumber("value", out);
+	}
+};
+
+} // namespace
+
 MaterialVariable::MaterialVariable()
 {
-	m_mat4 = Mat4::getZero();
-	m_mat4(3, 3) = NO_VALUE; // Add a random value
+	m_Mat4 = Mat4::getZero();
 }
 
 MaterialVariable::~MaterialVariable()
@@ -657,7 +699,7 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 		}
 
 		// A value will be set
-		foundVar->m_mat4(3, 3) = 0.0f;
+		foundVar->m_numericValueIsSet = true;
 
 		// Process var
 		if(foundVar->isConstant())
@@ -666,42 +708,13 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 
 			switch(foundVar->getDataType())
 			{
-			case ShaderVariableDataType::INT:
-				ANKI_CHECK(inputEl.getAttributeNumber("value", foundVar->m_int));
-				break;
-			case ShaderVariableDataType::IVEC2:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_ivec2));
-				break;
-			case ShaderVariableDataType::IVEC3:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_ivec3));
-				break;
-			case ShaderVariableDataType::IVEC4:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_ivec4));
-				break;
-			case ShaderVariableDataType::UINT:
-				ANKI_CHECK(inputEl.getAttributeNumber("value", foundVar->m_uint));
-				break;
-			case ShaderVariableDataType::UVEC2:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_uvec2));
-				break;
-			case ShaderVariableDataType::UVEC3:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_uvec3));
-				break;
-			case ShaderVariableDataType::UVEC4:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_uvec4));
-				break;
-			case ShaderVariableDataType::FLOAT:
-				ANKI_CHECK(inputEl.getAttributeNumber("value", foundVar->m_float));
-				break;
-			case ShaderVariableDataType::VEC2:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_vec2));
-				break;
-			case ShaderVariableDataType::VEC3:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_vec3));
-				break;
-			case ShaderVariableDataType::VEC4:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_vec4));
-				break;
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+	case ShaderVariableDataType::capital: \
+		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
+		break;
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+
 			default:
 				ANKI_ASSERT(0);
 				break;
@@ -719,48 +732,13 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 
 			switch(foundVar->getDataType())
 			{
-			case ShaderVariableDataType::INT:
-				ANKI_CHECK(inputEl.getAttributeNumber("value", foundVar->m_int));
-				break;
-			case ShaderVariableDataType::IVEC2:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_ivec2));
-				break;
-			case ShaderVariableDataType::IVEC3:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_ivec3));
-				break;
-			case ShaderVariableDataType::IVEC4:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_ivec4));
-				break;
-			case ShaderVariableDataType::UINT:
-				ANKI_CHECK(inputEl.getAttributeNumber("value", foundVar->m_uint));
-				break;
-			case ShaderVariableDataType::UVEC2:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_uvec2));
-				break;
-			case ShaderVariableDataType::UVEC3:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_uvec3));
-				break;
-			case ShaderVariableDataType::UVEC4:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_uvec4));
-				break;
-			case ShaderVariableDataType::FLOAT:
-				ANKI_CHECK(inputEl.getAttributeNumber("value", foundVar->m_float));
-				break;
-			case ShaderVariableDataType::VEC2:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_vec2));
-				break;
-			case ShaderVariableDataType::VEC3:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_vec3));
-				break;
-			case ShaderVariableDataType::VEC4:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_vec4));
-				break;
-			case ShaderVariableDataType::MAT3:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_mat3));
-				break;
-			case ShaderVariableDataType::MAT4:
-				ANKI_CHECK(inputEl.getAttributeNumbers("value", foundVar->m_mat4));
-				break;
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+	case ShaderVariableDataType::capital: \
+		ANKI_CHECK(GetAttribute<type>()(inputEl, foundVar->ANKI_CONCATENATE(m_, type))); \
+		break;
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+
 			case ShaderVariableDataType::TEXTURE_2D:
 			case ShaderVariableDataType::TEXTURE_2D_ARRAY:
 			case ShaderVariableDataType::TEXTURE_3D:
@@ -867,30 +845,13 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 
 		switch(var.m_dataType)
 		{
-		case ShaderVariableDataType::INT:
-			initInfo.addConstant(var.getName(), var.getValue<I32>());
-			break;
-		case ShaderVariableDataType::IVEC2:
-			initInfo.addConstant(var.getName(), var.getValue<IVec2>());
-			break;
-		case ShaderVariableDataType::IVEC3:
-			initInfo.addConstant(var.getName(), var.getValue<IVec3>());
-			break;
-		case ShaderVariableDataType::IVEC4:
-			initInfo.addConstant(var.getName(), var.getValue<IVec4>());
-			break;
-		case ShaderVariableDataType::FLOAT:
-			initInfo.addConstant(var.getName(), var.getValue<F32>());
-			break;
-		case ShaderVariableDataType::VEC2:
-			initInfo.addConstant(var.getName(), var.getValue<Vec2>());
-			break;
-		case ShaderVariableDataType::VEC3:
-			initInfo.addConstant(var.getName(), var.getValue<Vec3>());
-			break;
-		case ShaderVariableDataType::VEC4:
-			initInfo.addConstant(var.getName(), var.getValue<Vec4>());
-			break;
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+	case ShaderVariableDataType::capital: \
+		initInfo.addConstant(var.getName(), var.getValue<type>()); \
+		break;
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+
 		default:
 			ANKI_ASSERT(0);
 		}

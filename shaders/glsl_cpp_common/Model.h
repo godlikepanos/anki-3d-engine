@@ -15,8 +15,10 @@ struct Vertex
 {
 	U32 m_normal; // Packed in R10G10B10A2SNorm
 	U32 m_tangent; // Packed in R10G10B10A2SNorm
-	F16 m_uvs[UV_CHANNEL_COUNT];
+	HVec2 m_uvs[UV_CHANNEL_COUNT];
 };
+
+const U32 SIZEOF_VERTEX = 4 * 4;
 
 struct Mesh
 {

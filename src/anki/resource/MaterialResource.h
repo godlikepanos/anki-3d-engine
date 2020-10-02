@@ -82,9 +82,10 @@ public:
 		m_indexInBinary2ndElement = b.m_indexInBinary2ndElement;
 		m_constant = b.m_constant;
 		m_instanced = b.m_instanced;
+		m_numericValueIsSet = b.m_numericValueIsSet;
 		m_dataType = b.m_dataType;
 		m_builtin = b.m_builtin;
-		m_mat4 = b.m_mat4;
+		m_Mat4 = b.m_Mat4;
 		m_tex = std::move(b.m_tex);
 		return *this;
 	}
@@ -141,14 +142,13 @@ public:
 	}
 
 protected:
-	static constexpr F32 NO_VALUE = 1234.5678f;
-
 	String m_name;
 	U32 m_index = MAX_U32;
 	U32 m_indexInBinary = MAX_U32;
 	U32 m_indexInBinary2ndElement = MAX_U32;
 	Bool m_constant = false;
 	Bool m_instanced = false;
+	Bool m_numericValueIsSet = false; ///< The unamed union bellow is set
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 	BuiltinMaterialVariableId m_builtin = BuiltinMaterialVariableId::NONE;
 
@@ -156,20 +156,9 @@ protected:
 	/// @{
 	union
 	{
-		I32 m_int;
-		IVec2 m_ivec2;
-		IVec3 m_ivec3;
-		IVec4 m_ivec4;
-		U32 m_uint;
-		UVec2 m_uvec2;
-		UVec3 m_uvec3;
-		UVec4 m_uvec4;
-		F32 m_float;
-		Vec2 m_vec2;
-		Vec3 m_vec3;
-		Vec4 m_vec4;
-		Mat3 m_mat3;
-		Mat4 m_mat4;
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) type ANKI_CONCATENATE(m_, type);
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
 	};
 
 	TextureResourcePtr m_tex;
@@ -177,7 +166,7 @@ protected:
 
 	Bool valueSetByMaterial() const
 	{
-		return m_tex.isCreated() || m_mat4(3, 3) != NO_VALUE;
+		return m_tex.isCreated() || m_numericValueIsSet;
 	}
 };
 
@@ -191,20 +180,12 @@ protected:
 		return var_; \
 	}
 
-ANKI_SPECIALIZE_GET_VALUE(I32, m_int, INT)
-ANKI_SPECIALIZE_GET_VALUE(IVec2, m_ivec2, IVEC2)
-ANKI_SPECIALIZE_GET_VALUE(IVec3, m_ivec3, IVEC3)
-ANKI_SPECIALIZE_GET_VALUE(IVec4, m_ivec4, IVEC4)
-ANKI_SPECIALIZE_GET_VALUE(U32, m_uint, UINT)
-ANKI_SPECIALIZE_GET_VALUE(UVec2, m_uvec2, UVEC2)
-ANKI_SPECIALIZE_GET_VALUE(UVec3, m_uvec3, UVEC3)
-ANKI_SPECIALIZE_GET_VALUE(UVec4, m_uvec4, UVEC4)
-ANKI_SPECIALIZE_GET_VALUE(F32, m_float, FLOAT)
-ANKI_SPECIALIZE_GET_VALUE(Vec2, m_vec2, VEC2)
-ANKI_SPECIALIZE_GET_VALUE(Vec3, m_vec3, VEC3)
-ANKI_SPECIALIZE_GET_VALUE(Vec4, m_vec4, VEC4)
-ANKI_SPECIALIZE_GET_VALUE(Mat3, m_mat3, MAT3)
-ANKI_SPECIALIZE_GET_VALUE(Mat4, m_mat4, MAT4)
+#define ANKI_SVDT_MACRO(capital, type, baseType, rowCount, columnCount) \
+	ANKI_SPECIALIZE_GET_VALUE(type, ANKI_CONCATENATE(m_, type), capital)
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+
+#undef ANKI_SPECIALIZE_GET_VALUE
 
 template<>
 inline const TextureResourcePtr& MaterialVariable::getValue() const
@@ -213,8 +194,6 @@ inline const TextureResourcePtr& MaterialVariable::getValue() const
 	ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);
 	return m_tex;
 }
-
-#undef ANKI_SPECIALIZE_GET_VALUE
 
 /// Material variant.
 class MaterialVariant : public NonCopyable

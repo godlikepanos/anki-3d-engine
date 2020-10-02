@@ -69,7 +69,7 @@ void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawCont
 
 		switch(mvar.getDataType())
 		{
-		case ShaderVariableDataType::FLOAT:
+		case ShaderVariableDataType::F32:
 		{
 			const F32 val = mvar.getValue<F32>();
 			variant.writeShaderBlockMemory(mvar, &val, 1, uniformsBegin, uniformsEnd);

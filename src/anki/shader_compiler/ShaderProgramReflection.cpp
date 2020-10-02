@@ -10,6 +10,28 @@
 namespace anki
 {
 
+static ShaderVariableDataType spirvcrossBaseTypeToAnki(spirv_cross::SPIRType::BaseType cross)
+{
+	ShaderVariableDataType out = ShaderVariableDataType::NONE;
+
+	switch(cross)
+	{
+	case spirv_cross::SPIRType::Int:
+		out = ShaderVariableDataType::I32;
+		break;
+	case spirv_cross::SPIRType::UInt:
+		out = ShaderVariableDataType::U32;
+		break;
+	case spirv_cross::SPIRType::Float:
+		out = ShaderVariableDataType::F32;
+		break;
+	default:
+		break;
+	}
+
+	return out;
+}
+
 /// Populates the reflection info.
 class SpirvReflector : public spirv_cross::Compiler
 {
@@ -206,27 +228,8 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 			var.m_blockInfo.m_arrayStride = I16(get_decoration(type.member_types[i], spv::DecorationArrayStride));
 		}
 
-		// Type
-		auto func = [&](const Array<ShaderVariableDataType, 3>& arr) {
-			switch(memberType.basetype)
-			{
-			case spirv_cross::SPIRType::UInt:
-				var.m_type = arr[0];
-				break;
-			case spirv_cross::SPIRType::Int:
-				var.m_type = arr[1];
-				break;
-			case spirv_cross::SPIRType::Float:
-				var.m_type = arr[2];
-				break;
-			default:
-				ANKI_ASSERT(0);
-			}
-		};
-
-		const Bool isNumeric = memberType.basetype == spirv_cross::SPIRType::UInt
-							   || memberType.basetype == spirv_cross::SPIRType::Int
-							   || memberType.basetype == spirv_cross::SPIRType::Float;
+		const ShaderVariableDataType baseType = spirvcrossBaseTypeToAnki(memberType.basetype);
+		const Bool isNumeric = baseType != ShaderVariableDataType::NONE;
 
 		if(memberType.basetype == spirv_cross::SPIRType::Struct)
 		{
@@ -245,47 +248,32 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 				}
 			}
 		}
-		else if(memberType.vecsize == 1 && memberType.columns == 1 && isNumeric)
+		else if(isNumeric)
 		{
-			static const Array<ShaderVariableDataType, 3> arr = {
-				{ShaderVariableDataType::UINT, ShaderVariableDataType::INT, ShaderVariableDataType::FLOAT}};
-			func(arr);
-		}
-		else if(memberType.vecsize == 2 && memberType.columns == 1 && isNumeric)
-		{
-			static const Array<ShaderVariableDataType, 3> arr = {
-				{ShaderVariableDataType::UVEC2, ShaderVariableDataType::IVEC2, ShaderVariableDataType::VEC2}};
-			func(arr);
-		}
-		else if(memberType.vecsize == 3 && memberType.columns == 1 && isNumeric)
-		{
-			static const Array<ShaderVariableDataType, 3> arr = {
-				{ShaderVariableDataType::UVEC3, ShaderVariableDataType::IVEC3, ShaderVariableDataType::VEC3}};
-			func(arr);
-		}
-		else if(memberType.vecsize == 4 && memberType.columns == 1 && isNumeric)
-		{
-			static const Array<ShaderVariableDataType, 3> arr = {
-				{ShaderVariableDataType::UVEC4, ShaderVariableDataType::IVEC4, ShaderVariableDataType::VEC4}};
-			func(arr);
-		}
-		else if(memberType.vecsize == 3 && memberType.columns == 3
-				&& memberType.basetype == spirv_cross::SPIRType::Float)
-		{
-			var.m_type = ShaderVariableDataType::MAT3;
-			var.m_blockInfo.m_matrixStride = 16;
-		}
-		else if(memberType.vecsize == 4 && memberType.columns == 3
-				&& memberType.basetype == spirv_cross::SPIRType::Float)
-		{
-			var.m_type = ShaderVariableDataType::MAT3X4;
-			var.m_blockInfo.m_matrixStride = 16;
-		}
-		else if(memberType.vecsize == 4 && memberType.columns == 4
-				&& memberType.basetype == spirv_cross::SPIRType::Float)
-		{
-			var.m_type = ShaderVariableDataType::MAT4;
-			var.m_blockInfo.m_matrixStride = 16;
+			const Bool isMatrix = memberType.columns > 1;
+
+			if(0)
+			{
+			}
+#define ANKI_SVDT_MACRO(capital, type, baseType_, rowCount, columnCount) \
+	else if(ShaderVariableDataType::baseType_ == baseType && isMatrix && memberType.vecsize == columnCount \
+			&& memberType.columns == rowCount) \
+	{ \
+		var.m_type = ShaderVariableDataType::capital; \
+		var.m_blockInfo.m_matrixStride = 16; \
+	} \
+	else if(ShaderVariableDataType::baseType_ == baseType && !isMatrix && memberType.vecsize == rowCount) \
+	{ \
+		var.m_type = ShaderVariableDataType::capital; \
+	}
+#include <anki/gr/ShaderVariableDataTypeDefs.h>
+#undef ANKI_SVDT_MACRO
+
+			if(var.m_type == ShaderVariableDataType::NONE)
+			{
+				ANKI_SHADER_COMPILER_LOGE("Unhandled numeric member: %s", var.m_name.cstr());
+				return Error::FUNCTION_FAILED;
+			}
 		}
 		else
 		{
@@ -301,7 +289,7 @@ Error SpirvReflector::blockVariableReflection(const spirv_cross::SPIRType& type,
 	}
 
 	return Error::NONE;
-}
+} // namespace anki
 
 Error SpirvReflector::blockReflection(const spirv_cross::Resource& res, Bool isStorage,
 									  DynamicArrayAuto<Block>& blocks) const
@@ -526,13 +514,13 @@ Error SpirvReflector::constsReflection(DynamicArrayAuto<Const>& consts, ShaderTy
 		switch(type.basetype)
 		{
 		case spirv_cross::SPIRType::UInt:
-			newConst.m_type = ShaderVariableDataType::UINT;
+			newConst.m_type = ShaderVariableDataType::U32;
 			break;
 		case spirv_cross::SPIRType::Int:
-			newConst.m_type = ShaderVariableDataType::INT;
+			newConst.m_type = ShaderVariableDataType::I32;
 			break;
 		case spirv_cross::SPIRType::Float:
-			newConst.m_type = ShaderVariableDataType::FLOAT;
+			newConst.m_type = ShaderVariableDataType::F32;
 			break;
 		default:
 			ANKI_SHADER_COMPILER_LOGE("Can't determine the type of the spec constant: %s", name.c_str());

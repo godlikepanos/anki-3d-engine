@@ -121,8 +121,8 @@ public:
 	}
 
 	/// Generates the common header that will be used by all AnKi shaders.
-	static void generateAnkiShaderHeader(const GpuDeviceCapabilities& caps, const BindlessLimits& limits,
-										 StringAuto& header);
+	static void generateAnkiShaderHeader(ShaderType shaderType, const GpuDeviceCapabilities& caps,
+										 const BindlessLimits& limits, StringAuto& header);
 
 private:
 	using Mutator = ShaderProgramParserMutator;
