@@ -17,6 +17,9 @@
 namespace anki
 {
 
+// Forward
+class F16;
+
 /// @addtogroup util_private
 /// @{
 
@@ -213,29 +216,38 @@ public:
 		return (out == nullptr) ? NPOS : PtrSize(out - m_ptr);
 	}
 
-	/// Convert to F64.
-	ANKI_USE_RESULT Error toNumber(F64& out) const;
+	/// Convert to F16.
+	ANKI_USE_RESULT Error toNumber(F16& out) const;
 
 	/// Convert to F32.
 	ANKI_USE_RESULT Error toNumber(F32& out) const;
 
+	/// Convert to F64.
+	ANKI_USE_RESULT Error toNumber(F64& out) const;
+
 	/// Convert to I8.
 	ANKI_USE_RESULT Error toNumber(I8& out) const;
 
-	/// Convert to I64.
-	ANKI_USE_RESULT Error toNumber(I64& out) const;
+	/// Convert to U8.
+	ANKI_USE_RESULT Error toNumber(U8& out) const;
+
+	/// Convert to I16.
+	ANKI_USE_RESULT Error toNumber(I16& out) const;
+
+	/// Convert to U16.
+	ANKI_USE_RESULT Error toNumber(U16& out) const;
 
 	/// Convert to I32.
 	ANKI_USE_RESULT Error toNumber(I32& out) const;
 
-	/// Convert to U64.
-	ANKI_USE_RESULT Error toNumber(U64& out) const;
-
 	/// Convert to U32.
 	ANKI_USE_RESULT Error toNumber(U32& out) const;
 
-	/// Convert to U8.
-	ANKI_USE_RESULT Error toNumber(U8& out) const;
+	/// Convert to I64.
+	ANKI_USE_RESULT Error toNumber(I64& out) const;
+
+	/// Convert to U64.
+	ANKI_USE_RESULT Error toNumber(U64& out) const;
 
 	/// Convert to Bool.
 	ANKI_USE_RESULT Error toNumber(Bool& out) const;
@@ -529,8 +541,8 @@ public:
 	template<typename TNumber>
 	void toString(Allocator alloc, TNumber number);
 
-	/// Convert to F64.
-	ANKI_USE_RESULT Error toNumber(F64& out) const
+	/// Convert to F16.
+	ANKI_USE_RESULT Error toNumber(F16& out) const
 	{
 		return toCString().toNumber(out);
 	}
@@ -541,14 +553,8 @@ public:
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to I64.
-	ANKI_USE_RESULT Error toNumber(I64& out) const
-	{
-		return toCString().toNumber(out);
-	}
-
-	/// Convert to I32.
-	ANKI_USE_RESULT Error toNumber(I32& out) const
+	/// Convert to F64.
+	ANKI_USE_RESULT Error toNumber(F64& out) const
 	{
 		return toCString().toNumber(out);
 	}
@@ -559,8 +565,26 @@ public:
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to U64.
-	ANKI_USE_RESULT Error toNumber(U64& out) const
+	/// Convert to U8.
+	ANKI_USE_RESULT Error toNumber(U8& out) const
+	{
+		return toCString().toNumber(out);
+	}
+
+	/// Convert to I16.
+	ANKI_USE_RESULT Error toNumber(I16& out) const
+	{
+		return toCString().toNumber(out);
+	}
+
+	/// Convert to U16.
+	ANKI_USE_RESULT Error toNumber(U16& out) const
+	{
+		return toCString().toNumber(out);
+	}
+
+	/// Convert to I32.
+	ANKI_USE_RESULT Error toNumber(I32& out) const
 	{
 		return toCString().toNumber(out);
 	}
@@ -571,8 +595,14 @@ public:
 		return toCString().toNumber(out);
 	}
 
-	/// Convert to U8.
-	ANKI_USE_RESULT Error toNumber(U8& out) const
+	/// Convert to I64.
+	ANKI_USE_RESULT Error toNumber(I64& out) const
+	{
+		return toCString().toNumber(out);
+	}
+
+	/// Convert to U64.
+	ANKI_USE_RESULT Error toNumber(U64& out) const
 	{
 		return toCString().toNumber(out);
 	}

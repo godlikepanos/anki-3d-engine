@@ -11,7 +11,6 @@
 #include <anki/math/Euler.h>
 #include <anki/math/Axisang.h>
 #include <anki/math/Transform.h>
-#include <anki/math/F16.h>
 
 #include <anki/math/Functions.h>
 

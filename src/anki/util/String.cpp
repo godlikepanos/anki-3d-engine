@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/util/String.h>
+#include <anki/util/F16.h>
 #include <cmath> // For HUGE_VAL
 #include <climits> // For LLONG_MAX
 #include <cstdarg> // For var args
@@ -34,6 +35,14 @@ Error CString::toNumber(F32& out) const
 	F64 d;
 	ANKI_CHECK(toNumber(d));
 	out = F32(d);
+	return Error::NONE;
+}
+
+Error CString::toNumber(F16& out) const
+{
+	F64 d;
+	ANKI_CHECK(toNumber(d));
+	out = F16(d);
 	return Error::NONE;
 }
 
@@ -130,6 +139,36 @@ Error CString::toNumber(U8& out) const
 	}
 
 	out = U8(u64);
+	return Error::NONE;
+}
+
+Error CString::toNumber(I16& out) const
+{
+	I64 i64 = 0;
+	ANKI_CHECK(toNumber(i64));
+
+	if(i64 < MIN_I16 || i64 > MAX_I16)
+	{
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
+		return Error::USER_DATA;
+	}
+
+	out = I16(i64);
+	return Error::NONE;
+}
+
+Error CString::toNumber(U16& out) const
+{
+	U64 u64;
+	ANKI_CHECK(toNumber(u64));
+
+	if(u64 > MAX_U16)
+	{
+		ANKI_UTIL_LOGE("Conversion failed. Our of range: %s", m_ptr);
+		return Error::USER_DATA;
+	}
+
+	out = U16(u64);
 	return Error::NONE;
 }
 

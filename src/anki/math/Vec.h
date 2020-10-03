@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/math/Common.h>
+#include <anki/util/F16.h>
 
 namespace anki
 {

@@ -13,7 +13,7 @@
 namespace anki
 {
 
-static const char* SHADER_BINARY_MAGIC = "ANKISDR1";
+static const char* SHADER_BINARY_MAGIC = "ANKISDR2";
 const U32 SHADER_BINARY_VERSION = 1;
 
 Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
@@ -43,9 +43,10 @@ Error ShaderProgramBinaryWrapper::deserializeFromFile(CString fname)
 
 	m_singleAllocation = true;
 
-	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], 0) != 0)
+	if(memcmp(SHADER_BINARY_MAGIC, &m_binary->m_magic[0], strlen(SHADER_BINARY_MAGIC)) != 0)
 	{
-		ANKI_SHADER_COMPILER_LOGE("Corrupted or wrong version of shader binary: %s", fname.cstr());
+		ANKI_SHADER_COMPILER_LOGE("Corrupted or wrong version of shader binary: %s. Clean the shader cache",
+								  fname.cstr());
 		return Error::USER_DATA;
 	}
 

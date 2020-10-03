@@ -40,6 +40,7 @@
 #include <anki/util/Tracer.h>
 #include <anki/util/Serializer.h>
 #include <anki/util/Xml.h>
+#include <anki/util/F16.h>
 
 /// @defgroup util Utilities (like STL)
 
