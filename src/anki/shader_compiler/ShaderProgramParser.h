@@ -83,6 +83,8 @@ private:
 ///                               NAME_A VALUE4 NAME_B VALUE5 [NAME_C VALUE6...]
 /// #pragma anki start {vert | tessc | tesse | geom | frag | comp | rgen | ahit | chit | miss | int | call}
 /// #pragma anki end
+/// #pragma anki library "name"
+/// #pragma anki sub_library "name"
 ///
 /// Only the "anki input" should be in an ifdef-like guard. For everything else it's ignored.
 class ShaderProgramParser : public NonCopyable
@@ -118,6 +120,16 @@ public:
 	{
 		ANKI_ASSERT(m_codeSourceHash != 0);
 		return m_codeSourceHash;
+	}
+
+	CString getLibraryName() const
+	{
+		return m_libName;
+	}
+
+	CString getSubLibraryName() const
+	{
+		return m_sublibName;
 	}
 
 	/// Generates the common header that will be used by all AnKi shaders.
@@ -170,6 +182,9 @@ private:
 	GpuDeviceCapabilities m_gpuCapabilities;
 	BindlessLimits m_bindlessLimits;
 
+	StringAuto m_libName = {m_alloc};
+	StringAuto m_sublibName = {m_alloc};
+
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
 	ANKI_USE_RESULT Error parseInclude(const StringAuto* begin, const StringAuto* end, CString line, CString fname,
@@ -180,6 +195,10 @@ private:
 	ANKI_USE_RESULT Error parsePragmaEnd(const StringAuto* begin, const StringAuto* end, CString line, CString fname);
 	ANKI_USE_RESULT Error parsePragmaRewriteMutation(const StringAuto* begin, const StringAuto* end, CString line,
 													 CString fname);
+	ANKI_USE_RESULT Error parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
+												 CString fname);
+	ANKI_USE_RESULT Error parsePragmaSubLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
+													CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const;
 

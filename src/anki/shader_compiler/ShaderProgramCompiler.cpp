@@ -13,7 +13,7 @@
 namespace anki
 {
 
-static const char* SHADER_BINARY_MAGIC = "ANKISDR2";
+static const char* SHADER_BINARY_MAGIC = "ANKISDR3";
 const U32 SHADER_BINARY_VERSION = 1;
 
 Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
@@ -981,6 +981,29 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	std::sort(
 		binary.m_mutations.getBegin(), binary.m_mutations.getEnd(),
 		[](const ShaderProgramBinaryMutation& a, const ShaderProgramBinaryMutation& b) { return a.m_hash < b.m_hash; });
+
+	// Lib name
+	if(parser.getLibraryName().getLength() > 0)
+	{
+		if(parser.getLibraryName().getLength() >= sizeof(binary.m_libraryName))
+		{
+			ANKI_SHADER_COMPILER_LOGE("Library name too long: %s", parser.getLibraryName().cstr());
+			return Error::USER_DATA;
+		}
+
+		memcpy(&binary.m_libraryName[0], &parser.getLibraryName()[0], parser.getLibraryName().getLength());
+	}
+
+	if(parser.getSubLibraryName().getLength() > 0)
+	{
+		if(parser.getSubLibraryName().getLength() >= sizeof(binary.m_subLibraryName))
+		{
+			ANKI_SHADER_COMPILER_LOGE("Sub library name too long: %s", parser.getSubLibraryName().cstr());
+			return Error::USER_DATA;
+		}
+
+		memcpy(&binary.m_subLibraryName[0], &parser.getSubLibraryName()[0], parser.getSubLibraryName().getLength());
+	}
 
 	// Misc
 	binary.m_presentShaderTypes = parser.getShaderTypes();

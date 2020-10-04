@@ -3,6 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki library RtShadows
+#pragma anki sub_library Main
+
 #pragma anki mutator ALPHA_TEXTURE 0 1
 
 #include <shaders/Common.glsl>
@@ -13,7 +16,7 @@ struct Payload
 	F32 m_shadowFactor;
 };
 
-#if defined(ALPHA_TEXTURE)
+#if ALPHA_TEXTURE == 1
 layout(set = 0, binding = 0, scalar) buffer b_ankiModelInstances
 {
 	ModelInstance u_ankiModelInstances[];
@@ -36,7 +39,7 @@ ANKI_REF(Vertex, 4);
 
 void main()
 {
-#if defined(ALPHA_TEXTURE)
+#if ALPHA_TEXTURE == 1
 	const Mesh mesh = u_ankiModelInstances[nonuniformEXT(gl_InstanceID)].m_mesh;
 
 	const U32 offset = gl_PrimitiveID * ANKI_SIZEOF(U16Vec3);

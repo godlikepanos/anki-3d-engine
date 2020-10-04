@@ -36,6 +36,19 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 	GenericMemoryPoolAllocator<U8> alloc = humanReadable.getAllocator();
 	StringListAuto lines(alloc);
 
+	if(binary.m_libraryName[0])
+	{
+		lines.pushBack("**LIBRARY**\n");
+		lines.pushBackSprintf(ANKI_TAB "%s\n", &binary.m_libraryName[0]);
+
+		if(binary.m_subLibraryName[0])
+		{
+			lines.pushBackSprintf(ANKI_TAB "%s (sublibrary)\n", &binary.m_subLibraryName[0]);
+		}
+
+		lines.pushBack("\n");
+	}
+
 	lines.pushBack("**MUTATORS**\n");
 	if(binary.m_mutators.getSize() > 0)
 	{
@@ -60,6 +73,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 	{
 		spirv_cross::CompilerGLSL::Options options;
 		options.vulkan_semantics = true;
+		options.version = 460;
 
 		const unsigned int* spvb = reinterpret_cast<const unsigned int*>(code.m_binary.getBegin());
 		ANKI_ASSERT((code.m_binary.getSize() % (sizeof(unsigned int))) == 0);

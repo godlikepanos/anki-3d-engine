@@ -204,8 +204,7 @@ public:
 	/// Get the string length.
 	U32 getLength() const
 	{
-		checkInit();
-		return U32(std::strlen(m_ptr));
+		return (m_ptr == nullptr) ? 0 : U32(std::strlen(m_ptr));
 	}
 
 	PtrSize find(const CString& cstr, PtrSize position = 0) const
@@ -497,12 +496,9 @@ public:
 	}
 
 	/// Return the string's length. It doesn't count the terminating character.
-	PtrSize getLength() const
+	U32 getLength() const
 	{
-		auto size = m_data.getSize();
-		auto out = (size != 0) ? (size - 1) : 0;
-		ANKI_ASSERT(size == 0 || std::strlen(&m_data[0]) == out);
-		return out;
+		return (m_data.getSize() == 0) ? 0 : U32(std::strlen(&m_data[0]));
 	}
 
 	/// Return the CString.

@@ -252,8 +252,8 @@ public:
 	WeakArray<ShaderProgramBinaryOpaqueInstance> m_opaques;
 	WeakArray<ShaderProgramBinaryConstantInstance> m_constants;
 	Array<U32, 3> m_workgroupSizes = {MAX_U32, MAX_U32, MAX_U32};
-	Array<U32, 3> m_workgroupSizesConstants = {
-		{MAX_U32, MAX_U32, MAX_U32}}; ///< Indices to ShaderProgramBinary::m_constants.
+	Array<U32, 3> m_workgroupSizesConstants = {MAX_U32, MAX_U32,
+											   MAX_U32}; ///< Indices to ShaderProgramBinary::m_constants.
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -381,6 +381,8 @@ public:
 	WeakArray<ShaderProgramBinaryOpaque> m_opaques;
 	WeakArray<ShaderProgramBinaryConstant> m_constants;
 	ShaderTypeBit m_presentShaderTypes = ShaderTypeBit::NONE;
+	Array<char, 64> m_libraryName = {}; ///< The name of the shader library. Mainly for RT shaders.
+	Array<char, 64> m_subLibraryName = {}; ///< The name of the sub shader library. Mainly the ray type.
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -398,6 +400,10 @@ public:
 		s.doValue("m_constants", offsetof(ShaderProgramBinary, m_constants), self.m_constants);
 		s.doValue("m_presentShaderTypes", offsetof(ShaderProgramBinary, m_presentShaderTypes),
 				  self.m_presentShaderTypes);
+		s.doArray("m_libraryName", offsetof(ShaderProgramBinary, m_libraryName), &self.m_libraryName[0],
+				  self.m_libraryName.getSize());
+		s.doArray("m_subLibraryName", offsetof(ShaderProgramBinary, m_subLibraryName), &self.m_subLibraryName[0],
+				  self.m_subLibraryName.getSize());
 	}
 
 	template<typename TDeserializer>

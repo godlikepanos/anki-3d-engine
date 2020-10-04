@@ -476,6 +476,46 @@ Error ShaderProgramParser::parsePragmaMutator(const StringAuto* begin, const Str
 	return Error::NONE;
 }
 
+Error ShaderProgramParser::parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
+												  CString fname)
+{
+	ANKI_ASSERT(begin && end);
+
+	if(begin >= end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	if(m_libName.getLength() > 0)
+	{
+		ANKI_PP_ERROR_MALFORMED_MSG("Library name already set");
+	}
+
+	m_libName = *begin;
+
+	return Error::NONE;
+}
+
+Error ShaderProgramParser::parsePragmaSubLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
+													 CString fname)
+{
+	ANKI_ASSERT(begin && end);
+
+	if(begin >= end)
+	{
+		ANKI_PP_ERROR_MALFORMED();
+	}
+
+	if(m_sublibName.getLength() > 0)
+	{
+		ANKI_PP_ERROR_MALFORMED_MSG("Sub library name already set");
+	}
+
+	m_sublibName = *begin;
+
+	return Error::NONE;
+}
+
 Error ShaderProgramParser::parsePragmaRewriteMutation(const StringAuto* begin, const StringAuto* end, CString line,
 													  CString fname)
 {
@@ -725,6 +765,14 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			{
 				ANKI_CHECK(parsePragmaRewriteMutation(token + 1, end, line, fname));
 			}
+			else if(*token == "library")
+			{
+				ANKI_CHECK(parsePragmaLibraryName(token + 1, end, line, fname));
+			}
+			else if(*token == "sub_library")
+			{
+				ANKI_CHECK(parsePragmaSubLibraryName(token + 1, end, line, fname));
+			}
 			else
 			{
 				ANKI_PP_ERROR_MALFORMED();
@@ -841,8 +889,24 @@ Error ShaderProgramParser::parse()
 	{
 		m_codeLines.join("\n", m_codeSource);
 		m_codeLines.destroy();
+	}
 
-		m_codeSourceHash = appendHash(m_codeSource.getBegin(), m_codeSource.getLength(), SHADER_HEADER_HASH);
+	// Create the hash
+	{
+		if(m_codeLines.getSize())
+		{
+			m_codeSourceHash = appendHash(m_codeSource.getBegin(), m_codeSource.getLength(), SHADER_HEADER_HASH);
+		}
+
+		if(m_libName.getLength() > 0)
+		{
+			m_codeSourceHash = appendHash(m_libName.getBegin(), m_libName.getLength(), m_codeSourceHash);
+		}
+
+		if(m_sublibName.getLength() > 0)
+		{
+			m_codeSourceHash = appendHash(m_sublibName.getBegin(), m_sublibName.getLength(), m_codeSourceHash);
+		}
 	}
 
 	return Error::NONE;

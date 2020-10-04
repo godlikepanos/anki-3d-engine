@@ -16,11 +16,32 @@ static ShaderVariableDataType spirvcrossBaseTypeToAnki(spirv_cross::SPIRType::Ba
 
 	switch(cross)
 	{
+	case spirv_cross::SPIRType::SByte:
+		out = ShaderVariableDataType::I8;
+		break;
+	case spirv_cross::SPIRType::UByte:
+		out = ShaderVariableDataType::U8;
+		break;
+	case spirv_cross::SPIRType::Short:
+		out = ShaderVariableDataType::I16;
+		break;
+	case spirv_cross::SPIRType::UShort:
+		out = ShaderVariableDataType::U16;
+		break;
 	case spirv_cross::SPIRType::Int:
 		out = ShaderVariableDataType::I32;
 		break;
 	case spirv_cross::SPIRType::UInt:
 		out = ShaderVariableDataType::U32;
+		break;
+	case spirv_cross::SPIRType::Int64:
+		out = ShaderVariableDataType::I64;
+		break;
+	case spirv_cross::SPIRType::UInt64:
+		out = ShaderVariableDataType::U64;
+		break;
+	case spirv_cross::SPIRType::Half:
+		out = ShaderVariableDataType::F16;
 		break;
 	case spirv_cross::SPIRType::Float:
 		out = ShaderVariableDataType::F32;
