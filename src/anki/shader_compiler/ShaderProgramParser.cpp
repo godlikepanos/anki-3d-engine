@@ -893,7 +893,7 @@ Error ShaderProgramParser::parse()
 
 	// Create the hash
 	{
-		if(m_codeLines.getSize())
+		if(m_codeSource.getLength())
 		{
 			m_codeSourceHash = appendHash(m_codeSource.getBegin(), m_codeSource.getLength(), SHADER_HEADER_HASH);
 		}

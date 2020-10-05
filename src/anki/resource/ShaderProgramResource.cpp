@@ -164,6 +164,22 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 
 	m_shaderStages = binary.m_presentShaderTypes;
 
+	// Do some RT checks
+	if(!!(m_shaderStages & ShaderTypeBit::ALL_RAY_TRACING))
+	{
+		if((m_shaderStages & ~(ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)) != ShaderTypeBit::NONE)
+		{
+			ANKI_RESOURCE_LOGE("Any and closest hit shaders shouldn't coexist with other stages");
+			return Error::USER_DATA;
+		}
+
+		if((m_shaderStages & ~(ShaderTypeBit::MISS | ShaderTypeBit::RAY_GEN)) != ShaderTypeBit::NONE)
+		{
+			ANKI_RESOURCE_LOGE("Miss and ray gen shaders shouldn't coexist with other stages");
+			return Error::USER_DATA;
+		}
+	}
+
 	return Error::NONE;
 }
 
@@ -277,7 +293,7 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 	ANKI_ASSERT(binaryVariant);
 	variant.m_binaryVariant = binaryVariant;
 
-	// Set the constannt values
+	// Set the constant values
 	Array<ShaderSpecializationConstValue, 64> constValues;
 	U32 constValueCount = 0;
 	for(const ShaderProgramBinaryConstantInstance& instance : binaryVariant->m_constants)
@@ -357,37 +373,56 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 	}
 
 	// Time to init the shaders
-	ShaderProgramInitInfo progInf(cprogName);
-	for(ShaderType shaderType : EnumIterable<ShaderType>())
+	if(!!(m_shaderStages & (ShaderTypeBit::ALL_GRAPHICS | ShaderTypeBit::COMPUTE)))
 	{
-		if(!(ShaderTypeBit(1 << shaderType) & m_shaderStages))
+		ShaderProgramInitInfo progInf(cprogName);
+		for(ShaderType shaderType : EnumIterable<ShaderType>())
 		{
-			continue;
+			if(!(ShaderTypeBit(1 << shaderType) & m_shaderStages))
+			{
+				continue;
+			}
+
+			ShaderInitInfo inf(cprogName);
+			inf.m_shaderType = shaderType;
+			inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
+			inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
+			ShaderPtr shader = getManager().getGrManager().newShader(inf);
+
+			const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
+			if(!!(shaderBit & ShaderTypeBit::ALL_GRAPHICS))
+			{
+				progInf.m_graphicsShaders[shaderType] = shader;
+			}
+			else if(shaderType == ShaderType::COMPUTE)
+			{
+				progInf.m_computeShader = shader;
+			}
+			else
+			{
+				ANKI_ASSERT(0);
+			}
 		}
 
-		ShaderInitInfo inf(cprogName);
-		inf.m_shaderType = shaderType;
-		inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
-		inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
-		ShaderPtr shader = getManager().getGrManager().newShader(inf);
+		// Create the program
+		variant.m_prog = getManager().getGrManager().newShaderProgram(progInf);
+	}
+	else
+	{
+		for(ShaderType shaderType : EnumIterable<ShaderType>())
+		{
+			if(!(ShaderTypeBit(1 << shaderType) & m_shaderStages))
+			{
+				continue;
+			}
 
-		const ShaderTypeBit shaderBit = ShaderTypeBit(1 << shaderType);
-		if(!!(shaderBit & ShaderTypeBit::ALL_GRAPHICS))
-		{
-			progInf.m_graphicsShaders[shaderType] = shader;
-		}
-		else if(shaderType == ShaderType::COMPUTE)
-		{
-			progInf.m_computeShader = shader;
-		}
-		else
-		{
-			ANKI_ASSERT(!"TODO");
+			ShaderInitInfo inf(cprogName);
+			inf.m_shaderType = shaderType;
+			inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
+			inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
+			ShaderPtr shader = getManager().getGrManager().newShader(inf);
 		}
 	}
-
-	// Create the program
-	variant.m_prog = getManager().getGrManager().newShaderProgram(progInf);
 }
 
 } // end namespace anki

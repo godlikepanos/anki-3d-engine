@@ -26,7 +26,6 @@
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/ui/UiManager.h>
 #include <anki/ui/Canvas.h>
-#include <anki/shader_compiler/ShaderProgramCompiler.h>
 
 #if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
@@ -431,7 +430,6 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_resources = m_heapAlloc.newInstance<ResourceManager>();
 
 	ANKI_CHECK(m_resources->init(rinit));
-	ANKI_CHECK(compileAllShaders());
 
 	//
 	// UI
@@ -700,167 +698,6 @@ void App::initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserDat
 		m_allocCb = allocCb;
 		m_allocCbData = allocCbUserData;
 	}
-}
-
-Error App::compileAllShaders()
-{
-	ANKI_TRACE_SCOPED_EVENT(COMPILE_SHADERS);
-	ANKI_CORE_LOGI("Compiling shader programs");
-	U32 shadersCompileCount = 0;
-
-	// Compute hash for both
-	const GpuDeviceCapabilities caps = m_gr->getDeviceCapabilities();
-	const BindlessLimits limits = m_gr->getBindlessLimits();
-	U64 gpuHash = computeHash(&caps, sizeof(caps));
-	gpuHash = appendHash(&limits, sizeof(limits), gpuHash);
-	gpuHash = appendHash(&SHADER_BINARY_VERSION, sizeof(SHADER_BINARY_VERSION), gpuHash);
-
-	ANKI_CHECK(m_resourceFs->iterateAllFilenames([&](CString fname) -> Error {
-		// Check file extension
-		StringAuto extension(m_heapAlloc);
-		getFilepathExtension(fname, extension);
-		if(extension.getLength() != 8 || extension != "ankiprog")
-		{
-			return Error::NONE;
-		}
-
-		if(fname.find("/Rt") != CString::NPOS && !m_gr->getDeviceCapabilities().m_rayTracingEnabled)
-		{
-			return Error::NONE;
-		}
-
-		// Get some filenames
-		StringAuto baseFname(m_heapAlloc);
-		getFilepathFilename(fname, baseFname);
-		StringAuto metaFname(m_heapAlloc);
-		metaFname.sprintf("%s/%smeta", m_cacheDir.cstr(), baseFname.cstr());
-
-		// Get the hash from the meta file
-		U64 metafileHash = 0;
-		if(fileExists(metaFname))
-		{
-			File metaFile;
-			ANKI_CHECK(metaFile.open(metaFname, FileOpenFlag::READ | FileOpenFlag::BINARY));
-			ANKI_CHECK(metaFile.read(&metafileHash, sizeof(metafileHash)));
-		}
-
-		// Load interface
-		class FSystem : public ShaderProgramFilesystemInterface
-		{
-		public:
-			ResourceFilesystem* m_fsystem = nullptr;
-
-			Error readAllText(CString filename, StringAuto& txt) final
-			{
-				ResourceFilePtr file;
-				ANKI_CHECK(m_fsystem->openFile(filename, file));
-				ANKI_CHECK(file->readAllText(txt));
-				return Error::NONE;
-			}
-		} fsystem;
-		fsystem.m_fsystem = m_resourceFs;
-
-		// Skip interface
-		class Skip : public ShaderProgramPostParseInterface
-		{
-		public:
-			U64 m_metafileHash;
-			U64 m_newHash;
-			U64 m_gpuHash;
-			CString m_fname;
-
-			Bool skipCompilation(U64 hash)
-			{
-				ANKI_ASSERT(hash != 0);
-				const Array<U64, 2> hashes = {hash, m_gpuHash};
-				const U64 finalHash = computeHash(hashes.getBegin(), hashes.getSizeInBytes());
-
-				m_newHash = finalHash;
-				const Bool skip = finalHash == m_metafileHash;
-
-				if(!skip)
-				{
-					ANKI_CORE_LOGI("\t%s", m_fname.cstr());
-				}
-
-				return skip;
-			};
-		} skip;
-		skip.m_metafileHash = metafileHash;
-		skip.m_newHash = 0;
-		skip.m_gpuHash = gpuHash;
-		skip.m_fname = fname;
-
-		// Threading interface
-		class TaskManager : public ShaderProgramAsyncTaskInterface
-		{
-		public:
-			ThreadHive* m_hive = nullptr;
-			HeapAllocator<U8> m_alloc;
-
-			void enqueueTask(void (*callback)(void* userData), void* userData)
-			{
-				struct Ctx
-				{
-					void (*m_callback)(void* userData);
-					void* m_userData;
-					HeapAllocator<U8> m_alloc;
-				};
-				Ctx* ctx = m_alloc.newInstance<Ctx>();
-				ctx->m_callback = callback;
-				ctx->m_userData = userData;
-				ctx->m_alloc = m_alloc;
-
-				m_hive->submitTask(
-					[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
-						Ctx* ctx = static_cast<Ctx*>(userData);
-						ctx->m_callback(ctx->m_userData);
-						auto alloc = ctx->m_alloc;
-						alloc.deleteInstance(ctx);
-					},
-					ctx);
-			}
-
-			Error joinTasks()
-			{
-				m_hive->waitAllTasks();
-				return Error::NONE;
-			}
-		} taskManager;
-		taskManager.m_hive = m_threadHive;
-		taskManager.m_alloc = m_heapAlloc;
-
-		// Compile
-		ShaderProgramBinaryWrapper binary(m_heapAlloc);
-		ANKI_CHECK(compileShaderProgram(fname, fsystem, &skip, &taskManager, m_heapAlloc, caps, limits, binary));
-
-		const Bool cachedBinIsUpToDate = metafileHash == skip.m_newHash;
-		if(!cachedBinIsUpToDate)
-		{
-			++shadersCompileCount;
-		}
-
-		// Update the meta file
-		if(!cachedBinIsUpToDate)
-		{
-			File metaFile;
-			ANKI_CHECK(metaFile.open(metaFname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
-			ANKI_CHECK(metaFile.write(&skip.m_newHash, sizeof(skip.m_newHash)));
-		}
-
-		// Save the binary to the cache
-		if(!cachedBinIsUpToDate)
-		{
-			StringAuto storeFname(m_heapAlloc);
-			storeFname.sprintf("%s/%sbin", m_cacheDir.cstr(), baseFname.cstr());
-			ANKI_CHECK(binary.serializeToFile(storeFname));
-		}
-
-		return Error::NONE;
-	}));
-
-	ANKI_CORE_LOGI("Compiled %u shader programs", shadersCompileCount);
-	return Error::NONE;
 }
 
 } // end namespace anki

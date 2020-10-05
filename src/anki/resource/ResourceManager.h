@@ -21,6 +21,7 @@ class ResourceManager;
 class AsyncLoader;
 class ResourceManagerModel;
 class ShaderCompilerCache;
+class ShaderProgramResourceSystem;
 
 /// @addtogroup resource
 /// @{
@@ -218,6 +219,7 @@ private:
 	String m_cacheDir;
 	U32 m_maxTextureSize;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
+	ShaderProgramResourceSystem* m_shaderProgramSystem = nullptr;
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
 	TransferGpuAllocator* m_transferGpuAlloc = nullptr;

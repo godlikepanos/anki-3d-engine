@@ -5,6 +5,7 @@
 
 #include <anki/util/Assert.h>
 #include <anki/util/System.h>
+#include <anki/util/Functions.h>
 #include <cstdlib>
 #include <cstdio>
 #if ANKI_OS_ANDROID
@@ -49,7 +50,7 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 	printf("Backtrace:\n");
 	bw.exec();
 
-	abort();
+	ANKI_DEBUG_BREAK();
 }
 
 #endif

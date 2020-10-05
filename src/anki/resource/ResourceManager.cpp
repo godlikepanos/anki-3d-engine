@@ -5,6 +5,7 @@
 
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/AsyncLoader.h>
+#include <anki/resource/ShaderProgramResourceSystem.h>
 #include <anki/resource/AnimationResource.h>
 #include <anki/util/Logger.h>
 #include <anki/core/ConfigSet.h>
@@ -32,6 +33,7 @@ ResourceManager::~ResourceManager()
 {
 	m_cacheDir.destroy(m_alloc);
 	m_alloc.deleteInstance(m_asyncLoader);
+	m_alloc.deleteInstance(m_shaderProgramSystem);
 	m_alloc.deleteInstance(m_transferGpuAlloc);
 }
 
@@ -63,6 +65,10 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 
 	m_transferGpuAlloc = m_alloc.newInstance<TransferGpuAllocator>();
 	ANKI_CHECK(m_transferGpuAlloc->init(init.m_config->getNumberU32("rsrc_transferScratchMemorySize"), m_gr, m_alloc));
+
+	// Init the programs
+	m_shaderProgramSystem = m_alloc.newInstance<ShaderProgramResourceSystem>(m_cacheDir, m_gr, m_fs, m_alloc);
+	ANKI_CHECK(m_shaderProgramSystem->init());
 
 	return Error::NONE;
 }

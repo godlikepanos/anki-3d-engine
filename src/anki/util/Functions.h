@@ -117,6 +117,13 @@ struct PrivateEnum
 /// @endcode
 #define ANKI_ENABLE(...) ANKI_ENABLE_INTERNAL(__LINE__, __VA_ARGS__)
 
+/// OS specific debug breakpoint
+#if ANKI_OS_WINDOWS
+#	define ANKI_DEBUG_BREAK() __debugbreak()
+#else
+#	define ANKI_DEBUG_BREAK() abort()
+#endif
+
 /// Get a pseudo random number.
 U64 getRandom();
 
