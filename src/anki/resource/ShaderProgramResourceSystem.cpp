@@ -42,6 +42,7 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 
 		if(fname.find("/Rt") != CString::NPOS && !gr.getDeviceCapabilities().m_rayTracingEnabled)
 		{
+			// Skip RT programs
 			return Error::NONE;
 		}
 
@@ -177,6 +178,251 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 	}));
 
 	ANKI_RESOURCE_LOGI("Compiled %u shader programs", shadersCompileCount);
+	return Error::NONE;
+}
+
+Error ShaderProgramResourceSystem::createRtPrograms(CString cacheDir, GrManager& gr, ResourceFilesystem& fs,
+													GenericMemoryPoolAllocator<U8>& alloc)
+{
+	ANKI_TRACE_SCOPED_EVENT(COMPILE_SHADERS);
+	ANKI_RESOURCE_LOGI("Creating ray tracing programs");
+
+	// Gather the RT program fnames
+	StringListAuto rtPrograms(alloc);
+	ANKI_CHECK(fs.iterateAllFilenames([&](CString fname) -> Error {
+		// Check file extension
+		StringAuto extension(alloc);
+		getFilepathExtension(fname, extension);
+		if(extension.getLength() != 8 || extension != "ankiprog")
+		{
+			return Error::NONE;
+		}
+
+		if(fname.find("/Rt") == CString::NPOS)
+		{
+			// Skip non-RT programs
+			return Error::NONE;
+		}
+
+		rtPrograms.pushBack(fname);
+
+		return Error::NONE;
+	}));
+
+	// Group things together
+	class Shader
+	{
+	public:
+		ShaderPtr m_shader;
+		U64 m_hash = 0;
+	};
+
+	class HitGroup
+	{
+	public:
+		U32 m_chit = MAX_U32;
+		U32 m_ahit = MAX_U32;
+		U64 m_mutationHash = 0;
+	};
+
+	class RayType
+	{
+	public:
+		RayType(GenericMemoryPoolAllocator<U8> alloc)
+			: m_name(alloc)
+			, m_hitGroups(alloc)
+		{
+		}
+
+		U32 m_miss = MAX_U32;
+		StringAuto m_name;
+		DynamicArrayAuto<HitGroup> m_hitGroups;
+	};
+
+	class Lib
+	{
+	public:
+		Lib(GenericMemoryPoolAllocator<U8> alloc)
+			: m_alloc(alloc)
+		{
+		}
+
+		GenericMemoryPoolAllocator<U8> m_alloc;
+		StringAuto m_name{m_alloc};
+		ShaderPtr m_rayGenShader;
+		DynamicArrayAuto<Shader> m_shaders{m_alloc};
+		DynamicArrayAuto<RayType> m_rayTypes{m_alloc};
+	};
+
+	DynamicArrayAuto<Lib> libs(alloc);
+
+	for(const String& filename : rtPrograms)
+	{
+		// Get the binary
+		StringAuto baseFilename(alloc);
+		getFilepathFilename(filename, baseFilename);
+		StringAuto binaryFilename(alloc);
+		binaryFilename.sprintf("%s/%sbin", cacheDir.cstr(), baseFilename.cstr());
+		ShaderProgramBinaryWrapper binaryw(alloc);
+		ANKI_CHECK(binaryw.deserializeFromFile(binaryFilename));
+		const ShaderProgramBinary& binary = binaryw.getBinary();
+
+		// Checks
+		if(binary.m_libraryName[0] == '\0')
+		{
+			ANKI_RESOURCE_LOGE("Library is missing from program: %s", filename.cstr());
+			return Error::USER_DATA;
+		}
+
+		CString subLibrary;
+		if(binary.m_subLibraryName[0] != '\0')
+		{
+			subLibrary = &binary.m_subLibraryName[0];
+		}
+
+		// Create the program name
+		StringAuto progName(alloc);
+		getFilepathFilename(filename, progName);
+		char* cprogName = const_cast<char*>(progName.cstr());
+		if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
+		{
+			cprogName[MAX_GR_OBJECT_NAME_LENGTH] = '\0';
+		}
+
+		// Find or create the lib
+		Lib* lib = nullptr;
+		{
+			for(Lib& l : libs)
+			{
+				if(l.m_name == CString(&binary.m_libraryName[0]))
+				{
+					lib = &l;
+					break;
+				}
+			}
+
+			if(lib == nullptr)
+			{
+				libs.emplaceBack(alloc);
+				lib = &libs.getBack();
+				lib->m_name.create(CString(&binary.m_libraryName[0]));
+			}
+		}
+
+		// Ray gen
+		if(!!(binary.m_presentShaderTypes & ShaderTypeBit::RAY_GEN))
+		{
+			if(lib->m_rayGenShader.get())
+			{
+				ANKI_RESOURCE_LOGE("The library already has a ray gen shader: %s", filename.cstr());
+				return Error::USER_DATA;
+			}
+
+			if(!!(binary.m_presentShaderTypes & ~ShaderTypeBit::RAY_GEN))
+			{
+				ANKI_RESOURCE_LOGE("Ray gen can't co-exist with other types: %s", filename.cstr());
+				return Error::USER_DATA;
+			}
+
+			if(binary.m_constants.getSize() || binary.m_mutators.getSize())
+			{
+				ANKI_RESOURCE_LOGE("Ray gen can't have spec constants or mutators ATM: %s", filename.cstr());
+				return Error::USER_DATA;
+			}
+
+			ShaderInitInfo inf(cprogName);
+			inf.m_shaderType = ShaderType::RAY_GEN;
+			inf.m_binary = binary.m_codeBlocks[0].m_binary;
+			lib->m_rayGenShader = gr.newShader(inf);
+		}
+
+		// Miss shaders
+		if(!!(binary.m_presentShaderTypes & ShaderTypeBit::MISS))
+		{
+			if(!!(binary.m_presentShaderTypes & ~ShaderTypeBit::MISS))
+			{
+				ANKI_RESOURCE_LOGE("Miss shaders can't co-exist with other types: %s", filename.cstr());
+				return Error::USER_DATA;
+			}
+
+			if(binary.m_constants.getSize() || binary.m_mutators.getSize())
+			{
+				ANKI_RESOURCE_LOGE("Miss can't have spec constants or mutators ATM: %s", filename.cstr());
+				return Error::USER_DATA;
+			}
+
+			if(subLibrary.getLength() == 0)
+			{
+				ANKI_RESOURCE_LOGE("Miss shader should have set the sub-library to be used as ray type: %s",
+								   filename.cstr());
+				return Error::USER_DATA;
+			}
+
+			RayType* rayType = nullptr;
+			for(RayType& rt : lib->m_rayTypes)
+			{
+				if(rt.m_name == subLibrary)
+				{
+					rayType = &rt;
+					break;
+				}
+			}
+
+			if(rayType == nullptr)
+			{
+				lib->m_rayTypes.emplaceBack(alloc);
+				rayType = &lib->m_rayTypes.getBack();
+				rayType->m_name.create(subLibrary);
+			}
+
+			if(rayType->m_miss != MAX_U32)
+			{
+				ANKI_RESOURCE_LOGE(
+					"There is another miss program with the same library and sub-library names with this: %s",
+					filename.cstr());
+				return Error::USER_DATA;
+			}
+
+			Shader* shader = nullptr;
+			for(Shader& s : lib->m_shaders)
+			{
+				if(s.m_hash == binary.m_codeBlocks[0].m_hash)
+				{
+					shader = &s;
+					break;
+				}
+			}
+
+			if(shader == nullptr)
+			{
+				shader = lib->m_shaders.emplaceBack();
+
+				ShaderInitInfo inf(cprogName);
+				inf.m_shaderType = ShaderType::MISS;
+				inf.m_binary = binary.m_codeBlocks[0].m_binary;
+				shader->m_shader = gr.newShader(inf);
+				shader->m_hash = binary.m_codeBlocks[0].m_hash;
+			}
+
+			rayType->m_miss = U32(shader - &lib->m_shaders[0]);
+		}
+
+		// Hit shaders
+		if(!!(binary.m_presentShaderTypes & (ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)))
+		{
+			if(!!(binary.m_presentShaderTypes & ~(ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)))
+			{
+				ANKI_RESOURCE_LOGE("Hit shaders can't co-exist with other types: %s", filename.cstr());
+				return Error::USER_DATA;
+			}
+
+			// Iterate all mutations
+			for(U32 m = 0; m < binary.m_mutations.getSize(); ++m)
+			{
+			}
+		}
+	}
+
 	return Error::NONE;
 }
 

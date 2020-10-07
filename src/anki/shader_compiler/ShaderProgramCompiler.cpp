@@ -295,6 +295,7 @@ static void compileVariantAsync(ConstWeakArray<MutatorValue> mutation, const Sha
 
 					ShaderProgramBinaryCodeBlock block;
 					block.m_binary.setArray(code, U32(spirv.getSizeInBytes()));
+					block.m_hash = newHash;
 
 					ctx.m_codeBlocks->emplaceBack(block);
 					ctx.m_codeBlockHashes->emplaceBack(newHash);

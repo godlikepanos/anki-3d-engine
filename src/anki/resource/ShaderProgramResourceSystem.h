@@ -6,12 +6,36 @@
 #pragma once
 
 #include <anki/resource/Common.h>
+#include <anki/gr/ShaderProgram.h>
+#include <anki/util/HashMap.h>
+#include <anki/shader_compiler/ShaderProgramBinary.h>
 
 namespace anki
 {
 
 /// @addtogroup resource
 /// @{
+
+/// XXX
+class ShaderProgramRaytracingLibrary
+{
+public:
+	String m_libraryName;
+	DynamicArray<String> m_rayTypes;
+	ShaderProgramPtr m_program;
+
+	static U64 generateHitGroupHash(CString resourceFilename, ConstWeakArray<MutatorValue> mutation);
+
+	U32 getHitGroupIndex(U64 groupHash) const
+	{
+		auto it = m_groupHashToGroupIndex.find(groupHash);
+		ANKI_ASSERT(it != m_groupHashToGroupIndex.getEnd());
+		return *it;
+	}
+
+private:
+	HashMap<U64, U32> m_groupHashToGroupIndex;
+};
 
 /// A system that does some work with shader programs.
 class ShaderProgramResourceSystem
@@ -45,6 +69,9 @@ private:
 	/// Iterate all programs in the filesystem and compile them to AnKi's binary format.
 	static Error compileAllShaders(CString cacheDir, GrManager& gr, ResourceFilesystem& fs,
 								   GenericMemoryPoolAllocator<U8>& alloc);
+
+	static Error createRtPrograms(CString cacheDir, GrManager& gr, ResourceFilesystem& fs,
+								  GenericMemoryPoolAllocator<U8>& alloc);
 };
 /// @}
 
