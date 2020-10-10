@@ -13,8 +13,8 @@
 namespace anki
 {
 
-static const char* SHADER_BINARY_MAGIC = "ANKISDR3";
-const U32 SHADER_BINARY_VERSION = 1;
+static const char* SHADER_BINARY_MAGIC = "ANKISDR4"; ///< @warning If changed change SHADER_BINARY_VERSION
+const U32 SHADER_BINARY_VERSION = 4;
 
 Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 {
@@ -995,16 +995,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 		memcpy(&binary.m_libraryName[0], &parser.getLibraryName()[0], parser.getLibraryName().getLength());
 	}
 
-	if(parser.getSubLibraryName().getLength() > 0)
-	{
-		if(parser.getSubLibraryName().getLength() >= sizeof(binary.m_subLibraryName))
-		{
-			ANKI_SHADER_COMPILER_LOGE("Sub library name too long: %s", parser.getSubLibraryName().cstr());
-			return Error::USER_DATA;
-		}
-
-		memcpy(&binary.m_subLibraryName[0], &parser.getSubLibraryName()[0], parser.getSubLibraryName().getLength());
-	}
+	binary.m_rayType = parser.getRayType();
 
 	// Misc
 	binary.m_presentShaderTypes = parser.getShaderTypes();

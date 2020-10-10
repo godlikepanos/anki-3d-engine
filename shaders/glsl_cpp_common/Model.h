@@ -9,7 +9,8 @@
 
 ANKI_BEGIN_NAMESPACE
 
-const U32 UV_CHANNEL_COUNT = 2;
+const U32 UV_CHANNEL_0 = 0;
+const U32 UV_CHANNEL_COUNT = 1;
 
 struct Vertex
 {
@@ -18,7 +19,7 @@ struct Vertex
 	HVec2 m_uvs[UV_CHANNEL_COUNT];
 };
 
-const U32 SIZEOF_VERTEX = 4 * 4;
+const U32 SIZEOF_VERTEX = 4 * 3;
 
 struct Mesh
 {
@@ -29,16 +30,25 @@ struct Mesh
 	U32 m_vertexCount;
 };
 
+const U32 TEXTURE_CHANNEL_DIFFUSE = 0;
+const U32 TEXTURE_CHANNEL_NORMAL = 1;
+const U32 TEXTURE_CHANNEL_ROUGHNESS_METALNESS = 2;
+const U32 TEXTURE_CHANNEL_EMISSION = 3;
+const U32 TEXTURE_CHANNEL_HEIGHT = 4;
+const U32 TEXTURE_CHANNEL_AUX_0 = 5;
+const U32 TEXTURE_CHANNEL_AUX_1 = 6;
+const U32 TEXTURE_CHANNEL_AUX_2 = 7;
+
 const U32 TEXTURE_CHANNEL_COUNT = 8;
 
 struct Material
 {
-	U32 m_textureIds[TEXTURE_CHANNEL_COUNT];
+	U16 m_textureIds[TEXTURE_CHANNEL_COUNT];
 	Vec3 m_diffuseColor;
 	Vec3 m_specularColor;
 	Vec3 m_emissiveColor;
-	F32 m_roughness;
-	F32 m_metallines;
+	F16 m_roughness;
+	F16 m_metalness;
 };
 
 struct ModelInstance

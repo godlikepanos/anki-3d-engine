@@ -384,7 +384,7 @@ public:
 	WeakArray<ShaderProgramBinaryConstant> m_constants;
 	ShaderTypeBit m_presentShaderTypes = ShaderTypeBit::NONE;
 	Array<char, 64> m_libraryName = {}; ///< The name of the shader library. Mainly for RT shaders.
-	Array<char, 64> m_subLibraryName = {}; ///< The name of the sub shader library. Mainly the ray type.
+	U32 m_rayType = MAX_U32; ///< An arbitary number indicating the type of the ray.
 
 	template<typename TSerializer, typename TClass>
 	static void serializeCommon(TSerializer& s, TClass self)
@@ -404,8 +404,7 @@ public:
 				  self.m_presentShaderTypes);
 		s.doArray("m_libraryName", offsetof(ShaderProgramBinary, m_libraryName), &self.m_libraryName[0],
 				  self.m_libraryName.getSize());
-		s.doArray("m_subLibraryName", offsetof(ShaderProgramBinary, m_subLibraryName), &self.m_subLibraryName[0],
-				  self.m_subLibraryName.getSize());
+		s.doValue("m_rayType", offsetof(ShaderProgramBinary, m_rayType), self.m_rayType);
 	}
 
 	template<typename TDeserializer>

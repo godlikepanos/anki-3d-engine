@@ -84,7 +84,7 @@ private:
 /// #pragma anki start {vert | tessc | tesse | geom | frag | comp | rgen | ahit | chit | miss | int | call}
 /// #pragma anki end
 /// #pragma anki library "name"
-/// #pragma anki sub_library "name"
+/// #pragma anki ray_type NUMBER
 ///
 /// Only the "anki input" should be in an ifdef-like guard. For everything else it's ignored.
 class ShaderProgramParser : public NonCopyable
@@ -127,9 +127,9 @@ public:
 		return m_libName;
 	}
 
-	CString getSubLibraryName() const
+	U32 getRayType() const
 	{
-		return m_sublibName;
+		return m_rayType;
 	}
 
 	/// Generates the common header that will be used by all AnKi shaders.
@@ -183,7 +183,7 @@ private:
 	BindlessLimits m_bindlessLimits;
 
 	StringAuto m_libName = {m_alloc};
-	StringAuto m_sublibName = {m_alloc};
+	U32 m_rayType = MAX_U32;
 
 	ANKI_USE_RESULT Error parseFile(CString fname, U32 depth);
 	ANKI_USE_RESULT Error parseLine(CString line, CString fname, Bool& foundPragmaOnce, U32 depth);
@@ -197,8 +197,8 @@ private:
 													 CString fname);
 	ANKI_USE_RESULT Error parsePragmaLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
 												 CString fname);
-	ANKI_USE_RESULT Error parsePragmaSubLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
-													CString fname);
+	ANKI_USE_RESULT Error parsePragmaRayType(const StringAuto* begin, const StringAuto* end, CString line,
+											 CString fname);
 
 	void tokenizeLine(CString line, DynamicArrayAuto<StringAuto>& tokens) const;
 

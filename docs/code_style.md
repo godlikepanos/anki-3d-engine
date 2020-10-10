@@ -68,7 +68,6 @@ In GLSL there are more exceptions:
 - All output globals the `out_` prefix.
 - All shared storage the `s_` prefix.
 - All blocks (storage or uniform) block names the  `b_` prefix.
-- All payloads the `p_` prefix.
 
 **Variables that act as a measure for quantity** should have the `count` suffix. Not `num` or `numberOf` or similar.
 

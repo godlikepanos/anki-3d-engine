@@ -39,14 +39,13 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 	if(binary.m_libraryName[0])
 	{
 		lines.pushBack("**LIBRARY**\n");
-		lines.pushBackSprintf(ANKI_TAB "%s\n", &binary.m_libraryName[0]);
+		lines.pushBackSprintf(ANKI_TAB "%s\n\n", &binary.m_libraryName[0]);
+	}
 
-		if(binary.m_subLibraryName[0])
-		{
-			lines.pushBackSprintf(ANKI_TAB "%s (sublibrary)\n", &binary.m_subLibraryName[0]);
-		}
-
-		lines.pushBack("\n");
+	if(binary.m_rayType != MAX_U32)
+	{
+		lines.pushBack("**RAY TYPE**\n");
+		lines.pushBackSprintf(ANKI_TAB "%u\n\n", binary.m_rayType);
 	}
 
 	lines.pushBack("**MUTATORS**\n");

@@ -116,7 +116,7 @@
 				<member name="m_constants" type="WeakArray&lt;ShaderProgramBinaryConstant&gt;" />
 				<member name="m_presentShaderTypes" type="ShaderTypeBit" constructor="= ShaderTypeBit::NONE" />
 				<member name="m_libraryName" type="char" array_size="64" constructor="= {}" comment="The name of the shader library. Mainly for RT shaders" />
-				<member name="m_subLibraryName" type="char" array_size="64" constructor="= {}" comment="The name of the sub shader library. Mainly the ray type" />
+				<member name="m_rayType" type="U32" constructor="= MAX_U32" comment="An arbitary number indicating the type of the ray" />
 			</members>
 		</class>
 	</classes>

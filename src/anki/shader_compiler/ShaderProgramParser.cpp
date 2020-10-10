@@ -496,8 +496,8 @@ Error ShaderProgramParser::parsePragmaLibraryName(const StringAuto* begin, const
 	return Error::NONE;
 }
 
-Error ShaderProgramParser::parsePragmaSubLibraryName(const StringAuto* begin, const StringAuto* end, CString line,
-													 CString fname)
+Error ShaderProgramParser::parsePragmaRayType(const StringAuto* begin, const StringAuto* end, CString line,
+											  CString fname)
 {
 	ANKI_ASSERT(begin && end);
 
@@ -506,12 +506,17 @@ Error ShaderProgramParser::parsePragmaSubLibraryName(const StringAuto* begin, co
 		ANKI_PP_ERROR_MALFORMED();
 	}
 
-	if(m_sublibName.getLength() > 0)
+	if(m_rayType != MAX_U32)
 	{
-		ANKI_PP_ERROR_MALFORMED_MSG("Sub library name already set");
+		ANKI_PP_ERROR_MALFORMED_MSG("Ray type already set");
 	}
 
-	m_sublibName = *begin;
+	ANKI_CHECK(begin->toNumber(m_rayType));
+
+	if(m_rayType > 128)
+	{
+		ANKI_PP_ERROR_MALFORMED_MSG("Ray type has a very large value");
+	}
 
 	return Error::NONE;
 }
@@ -769,9 +774,9 @@ Error ShaderProgramParser::parseLine(CString line, CString fname, Bool& foundPra
 			{
 				ANKI_CHECK(parsePragmaLibraryName(token + 1, end, line, fname));
 			}
-			else if(*token == "sub_library")
+			else if(*token == "ray_type")
 			{
-				ANKI_CHECK(parsePragmaSubLibraryName(token + 1, end, line, fname));
+				ANKI_CHECK(parsePragmaRayType(token + 1, end, line, fname));
 			}
 			else
 			{
@@ -903,10 +908,7 @@ Error ShaderProgramParser::parse()
 			m_codeSourceHash = appendHash(m_libName.getBegin(), m_libName.getLength(), m_codeSourceHash);
 		}
 
-		if(m_sublibName.getLength() > 0)
-		{
-			m_codeSourceHash = appendHash(m_sublibName.getBegin(), m_sublibName.getLength(), m_codeSourceHash);
-		}
+		m_codeSourceHash = appendHash(&m_rayType, sizeof(m_rayType), m_codeSourceHash);
 	}
 
 	return Error::NONE;
