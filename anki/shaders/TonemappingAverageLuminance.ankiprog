@@ -1,0 +1,100 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEX_SIZE, 0, UVec2(1));
+
+#pragma anki start comp
+#define LOG_AVG 0
+
+#include <anki/shaders/Common.glsl>
+#include <anki/shaders/Tonemapping.glsl>
+
+const UVec2 WORKGROUP_SIZE = UVec2(32u, 32u);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+// Align the tex size to workgroup size
+const UVec2 ALIGNED_INPUT_TEX_SIZE = WORKGROUP_SIZE * ((INPUT_TEX_SIZE + WORKGROUP_SIZE - 1u) / WORKGROUP_SIZE);
+const UVec2 PIXELS_PER_TILE = ALIGNED_INPUT_TEX_SIZE / WORKGROUP_SIZE;
+
+layout(set = 0, binding = 0) uniform texture2D u_tex;
+
+#define TONEMAPPING_RESOURCE_AS_BUFFER 1
+#define TONEMAPPING_SET 0
+#define TONEMAPPING_BINDING 1
+#include <anki/shaders/TonemappingResources.glsl>
+
+shared F32 s_avgLum[WORKGROUP_SIZE.x * WORKGROUP_SIZE.y];
+
+void main()
+{
+	// Gather the log-average luminance of a tile. It will miss some pixels but not too many
+	const U32 yStart = gl_LocalInvocationID.y * PIXELS_PER_TILE.y;
+	const U32 xStart = gl_LocalInvocationID.x * PIXELS_PER_TILE.x;
+
+	F32 avgLum = 0.0;
+	ANKI_UNROLL for(U32 y = 0; y < PIXELS_PER_TILE.y; ++y)
+	{
+		ANKI_UNROLL for(U32 x = 0; x < PIXELS_PER_TILE.x; ++x)
+		{
+			const UVec2 uv = UVec2(xStart, yStart) + UVec2(x, y);
+			if(uv.x >= INPUT_TEX_SIZE.x || uv.y >= INPUT_TEX_SIZE.y)
+			{
+				continue;
+			}
+
+			const Vec3 color = texelFetch(u_tex, IVec2(uv), 0).rgb;
+			const F32 lum = computeLuminance(color);
+#if LOG_AVG
+			avgLum += log(max(EPSILON, lum));
+#else
+			avgLum += lum;
+#endif
+		}
+	}
+
+	s_avgLum[gl_LocalInvocationIndex] = avgLum;
+
+	memoryBarrierShared();
+	barrier();
+
+	// Gather the results into one
+	ANKI_LOOP for(U32 s = (WORKGROUP_SIZE.x * WORKGROUP_SIZE.y) / 2u; s > 0u; s >>= 1u)
+	{
+		if(gl_LocalInvocationIndex < s)
+		{
+			s_avgLum[gl_LocalInvocationIndex] += s_avgLum[gl_LocalInvocationIndex + s];
+		}
+
+		memoryBarrierShared();
+		barrier();
+	}
+
+	// Write the result
+	ANKI_BRANCH if(gl_LocalInvocationIndex == 0u)
+	{
+#if LOG_AVG
+		const F32 crntLum = exp(s_avgLum[0] * (1.0 / F32(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y)));
+#else
+		const F32 crntLum = s_avgLum[0] * (1.0 / F32(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y));
+#endif
+
+#if 1
+		const F32 prevLum = u_averageLuminance;
+
+		// Lerp between previous and new L value
+		const F32 INTERPOLATION_FACTOR = 0.05;
+		F32 finalAvgLum = mix(prevLum, crntLum, INTERPOLATION_FACTOR);
+#else
+		F32 finalAvgLum = crntLum;
+#endif
+
+		// This is a workaround because sometimes the avg lum becomes nan
+		finalAvgLum = clamp(finalAvgLum, EPSILON, FLT_MAX);
+
+		u_averageLuminance = finalAvgLum;
+		u_exposureThreshold0 = computeExposure(u_averageLuminance, 0.0);
+	}
+}
+#pragma anki end

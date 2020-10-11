@@ -1,0 +1,105 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator SAMPLE_RESOLVE_TYPE 0 1 2 // 0: average, 1: min, 2: max
+#define AVG 0
+#define MIN 1
+#define MAX 2
+
+#pragma anki start comp
+#include <anki/shaders/Common.glsl>
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(push_constant, std430) uniform pc_
+{
+	UVec2 u_level0WriteImgSize;
+	UVec2 u_level1WriteImgSize;
+	U32 u_copyToClientLevel;
+	U32 u_writeLevel1;
+	U32 u_padding0;
+	U32 u_padding1;
+};
+
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_readTex;
+layout(set = 0, binding = 2) writeonly uniform image2D u_level0WriteImg;
+layout(set = 0, binding = 3) writeonly uniform image2D u_level1WriteImg;
+
+layout(std430, set = 0, binding = 4) writeonly buffer s1_
+{
+	F32 u_clientBuf[];
+};
+
+shared F32 s_depths[gl_WorkGroupSize.y][gl_WorkGroupSize.x];
+
+// Resolve depths into one value
+F32 resolveDepths(Vec4 depths)
+{
+#if SAMPLE_RESOLVE_TYPE == MIN
+	Vec2 mind2 = min(depths.xy, depths.zw);
+	const F32 depth = min(mind2.x, mind2.y);
+#elif SAMPLE_RESOLVE_TYPE == MAX
+	Vec2 max2 = max(depths.xy, depths.zw);
+	const F32 depth = max(max2.x, max2.y);
+#elif SAMPLE_RESOLVE_TYPE == AVG
+	const F32 depth = dot(depths, Vec4(1.0 / 4.0));
+#else
+#	error See file
+#endif
+
+	return depth;
+}
+
+void main()
+{
+	// Read depth
+	const Vec2 readUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(u_level0WriteImgSize);
+	Vec4 depths = textureGather(sampler2D(u_readTex, u_nearestAnyClampSampler), readUv, 0);
+
+	// Resolve & store the 1st level
+	F32 depth = resolveDepths(depths);
+	s_depths[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = depth;
+
+	if(all(lessThan(gl_GlobalInvocationID.xy, u_level0WriteImgSize)))
+	{
+		imageStore(u_level0WriteImg, IVec2(gl_GlobalInvocationID.xy), Vec4(depth));
+
+		if(u_copyToClientLevel == 0u)
+		{
+			const U32 idx = gl_GlobalInvocationID.y * u_level0WriteImgSize.x + gl_GlobalInvocationID.x;
+			u_clientBuf[idx] = depth;
+		}
+	}
+
+	// Sync
+	memoryBarrierShared();
+	barrier();
+
+	// Resolve 2nd level
+	if(u_writeLevel1 == 1u && all(equal(gl_LocalInvocationID.xy & UVec2(1u), UVec2(0u))))
+	{
+		depths.x = depth;
+		depths.y = s_depths[gl_LocalInvocationID.y + 0u][gl_LocalInvocationID.x + 1u];
+		depths.z = s_depths[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 1u];
+		depths.w = s_depths[gl_LocalInvocationID.y + 1u][gl_LocalInvocationID.x + 0u];
+
+		depth = resolveDepths(depths);
+
+		const UVec2 writeUv = gl_GlobalInvocationID.xy >> 1u;
+		if(all(lessThan(writeUv, u_level1WriteImgSize)))
+		{
+			imageStore(u_level1WriteImg, IVec2(writeUv), Vec4(depth));
+
+			if(u_copyToClientLevel == 1u)
+			{
+				const U32 idx = writeUv.y * u_level1WriteImgSize.x + writeUv.x;
+				u_clientBuf[idx] = depth;
+			}
+		}
+	}
+}
+
+#pragma anki end

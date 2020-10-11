@@ -1,0 +1,297 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// This shader accumulates the lighting for every cluster fraction
+
+#pragma anki mutator ENABLE_SHADOWS 0 1
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(VOLUME_SIZE, 0, UVec3(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(CLUSTER_COUNT, 3, UVec3(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(FRACTION, 6, UVec3(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(NOISE_TEX_SIZE, 9, UVec3(1));
+ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_CLUSTER_Z, 12, 1);
+
+#pragma anki start comp
+
+const F32 PHASE_FUNCTION_ANISOTROPY = 0.3;
+
+const UVec3 WORKGROUP_SIZE = UVec3(8, 8, 8);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = WORKGROUP_SIZE.z) in;
+
+layout(set = 0, binding = 0) uniform sampler u_linearAnyRepeatSampler;
+layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
+
+layout(set = 0, binding = 2) writeonly uniform image3D u_volume;
+layout(set = 0, binding = 3) uniform texture3D u_noiseTex;
+layout(set = 0, binding = 4) uniform texture3D u_prevVolume;
+
+layout(push_constant, std430) uniform pc_
+{
+	Vec3 u_padding;
+	F32 u_noiseOffset;
+};
+
+#define LIGHT_SET 0
+#define LIGHT_COMMON_UNIS_BINDING 5
+#define LIGHT_LIGHTS_BINDING 6
+#define LIGHT_GLOBAL_ILLUMINATION_BINDING 9
+#define LIGHT_FOG_DENSITY_VOLUMES_BINDING 11
+#define LIGHT_CLUSTERS_BINDING 12
+#include <anki/shaders/ClusteredShadingCommon.glsl>
+
+Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
+
+Vec3 readRand()
+{
+	Vec3 uv = (g_globalInvocationID + 0.5) / Vec3(NOISE_TEX_SIZE);
+	uv.z += u_noiseOffset;
+	return textureLod(u_noiseTex, u_linearAnyRepeatSampler, uv, 0.0).rgb;
+}
+
+Vec3 worldPosInsideClusterAndZViewSpace(Vec3 relativePos, out F32 negativeZViewSpace)
+{
+	// Compute the cluster Z as float
+	const F32 clusterKNear = g_globalInvocationID.z * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
+	const F32 clusterKFar = (g_globalInvocationID.z + 1.0) * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
+	const F32 clusterK = mix(clusterKNear, clusterKFar, relativePos.z);
+
+	// Get a Z value
+	negativeZViewSpace = computeClusterNearf(u_clustererMagic, clusterK);
+	const F32 zVSpace = -negativeZViewSpace;
+
+	// Get a XY value
+	const Vec2 uvMin = g_globalInvocationID.xy / Vec2(VOLUME_SIZE.xy);
+	const Vec2 uvMax = uvMin + 1.0 / Vec2(VOLUME_SIZE.xy);
+	const Vec2 uv = mix(uvMin, uvMax, relativePos.xy);
+	const Vec2 ndc = UV_TO_NDC(uv);
+	const Vec2 xyZVspace = ndc * u_unprojectionParams.xy * zVSpace;
+
+	// Get the pos
+	const Vec4 worldPos4 = u_invViewMat * Vec4(xyZVspace, zVSpace, 1.0);
+	const Vec3 worldPos = worldPos4.xyz;
+
+	return worldPos;
+}
+
+Vec3 worldPosInsideCluster(Vec3 relativePos)
+{
+	F32 unused;
+	return worldPosInsideClusterAndZViewSpace(relativePos, unused);
+}
+
+// https://developer.nvidia.com/gpugems/GPUGems2/gpugems2_chapter16.html
+F32 phaseFunction(Vec3 viewDir, Vec3 lightDir, F32 g)
+{
+	const F32 g2 = g * g;
+	const F32 cosTheta = max(0.0, dot(viewDir, lightDir));
+	const F32 cosTheta2 = cosTheta * cosTheta;
+
+	const F32 a = (3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2));
+	const F32 b = (1.0 + cosTheta2) / pow(1.0 + g2 - 2.0 * g * cosTheta, 3.0 / 2.0);
+
+	return saturate(a * b);
+}
+
+Vec4 accumulateLightsAndFog(U32 clusterIdx, Vec3 worldPos, F32 negativeZViewSpace)
+{
+	Vec3 color = Vec3(0.0);
+	const Vec3 viewDir = normalize(u_cameraPos - worldPos);
+
+	// Get ID offset
+	U32 idxOffset = u_clusters[clusterIdx];
+
+	// Dir light
+	if(u_dirLight.m_active != 0u)
+	{
+		F32 factor = phaseFunction(viewDir, u_dirLight.m_dir, PHASE_FUNCTION_ANISOTROPY);
+
+#if ENABLE_SHADOWS
+		if(u_dirLight.m_cascadeCount > 0u && negativeZViewSpace < u_dirLight.m_effectiveShadowDistance)
+		{
+			const U32 cascadeIdx =
+				computeShadowCascadeIndex(negativeZViewSpace, u_dirLight.m_shadowCascadesDistancePower,
+										  u_dirLight.m_effectiveShadowDistance, u_dirLight.m_cascadeCount);
+
+			factor *=
+				computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex, u_linearAnyClampSampler);
+		}
+#endif
+
+		color += u_dirLight.m_diffuseColor * factor;
+	}
+
+	// Point lights
+	U32 idx;
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		const PointLight light = u_pointLights[idx];
+
+		const Vec3 frag2Light = light.m_position - worldPos;
+		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+
+		factor *= phaseFunction(viewDir, normalize(worldPos - light.m_position), PHASE_FUNCTION_ANISOTROPY);
+
+#if ENABLE_SHADOWS
+		if(light.m_shadowAtlasTileScale >= 0.0)
+		{
+			factor *= computeShadowFactorPointLight(light, frag2Light, u_shadowTex, u_linearAnyClampSampler);
+		}
+#endif
+
+		color += light.m_diffuseColor * factor;
+	}
+
+	// Spot lights
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		const SpotLight light = u_spotLights[idx];
+
+		const Vec3 frag2Light = light.m_position - worldPos;
+		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
+
+		const Vec3 l = normalize(frag2Light);
+
+		factor *= computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
+
+		factor *= phaseFunction(viewDir, light.m_dir, PHASE_FUNCTION_ANISOTROPY);
+
+#if ENABLE_SHADOWS
+		const F32 shadowmapLayerIdx = light.m_shadowmapId;
+		if(shadowmapLayerIdx >= 0.0)
+		{
+			factor *= computeShadowFactorSpotLight(light, worldPos, u_shadowTex, u_linearAnyClampSampler);
+		}
+#endif
+
+		color += light.m_diffuseColor * factor;
+	}
+
+	// Indirect diffuse GI
+	{
+		idxOffset = u_clusters[clusterIdx];
+		idxOffset = u_lightIndices[idxOffset - 3u];
+		Vec3 diffIndirect;
+
+		if(subgroupAll(u_lightIndices[idxOffset] != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
+		{
+			// Only one probe, do a fast path without blend weight
+
+			GlobalIlluminationProbe probe = u_giProbes[u_lightIndices[idxOffset]];
+
+			// Sample
+			diffIndirect = sampleGlobalIllumination(worldPos, viewDir, probe, u_globalIlluminationTextures,
+													u_linearAnyClampSampler);
+		}
+		else
+		{
+			// Zero or more than one probes, do a slow path that blends them together
+
+			F32 totalBlendWeight = EPSILON;
+			diffIndirect = Vec3(0.0);
+
+			// Loop probes
+			ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+			{
+				GlobalIlluminationProbe probe = u_giProbes[idx];
+
+				// Compute blend weight
+				const F32 blendWeight =
+					computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
+				totalBlendWeight += blendWeight;
+
+				// Sample
+				const Vec3 c = sampleGlobalIllumination(worldPos, viewDir, probe, u_globalIlluminationTextures,
+														u_linearAnyClampSampler);
+				diffIndirect += c * blendWeight;
+			}
+
+			// Normalize
+			diffIndirect /= totalBlendWeight;
+		}
+
+		diffIndirect *= PI; // Irradiance is pre-divided with PI so fix it
+
+		color += diffIndirect;
+	}
+
+	// Fog density
+	F32 fogDensity = 0.0;
+	{
+		idxOffset = u_clusters[clusterIdx];
+		idxOffset = u_lightIndices[idxOffset - 1u];
+		ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+		{
+			const FogDensityVolume vol = u_fogDensityVolumes[idx];
+
+			F32 factor;
+			ANKI_BRANCH if(vol.m_isBox == 1u)
+			{
+				factor = computeProbeBlendWeight(worldPos, vol.m_aabbMinOrSphereCenter,
+												 vol.m_aabbMaxOrSphereRadiusSquared, 0.2);
+			}
+			else
+			{
+				const Vec3 diff = worldPos - vol.m_aabbMinOrSphereCenter;
+				F32 distSq = dot(diff, diff) / vol.m_aabbMaxOrSphereRadiusSquared.x;
+				distSq = min(1.0, distSq);
+				factor = 1.0 - distSq;
+			}
+
+			fogDensity += vol.m_density * factor;
+		}
+	}
+
+	return Vec4(color, fogDensity);
+}
+
+void main()
+{
+	if(any(greaterThanEqual(gl_GlobalInvocationID.xyz, VOLUME_SIZE)))
+	{
+		return;
+	}
+
+	// Find the cluster
+	const UVec3 clusterXYZ = gl_GlobalInvocationID / FRACTION;
+	const U32 clusterIdx =
+		clusterXYZ.z * (CLUSTER_COUNT.x * CLUSTER_COUNT.y) + clusterXYZ.y * CLUSTER_COUNT.x + clusterXYZ.x;
+
+	// Find a random pos inside the cluster
+	F32 negativeZViewSpace;
+	const Vec3 worldPos = worldPosInsideClusterAndZViewSpace(readRand(), negativeZViewSpace);
+
+	// Get lighting
+	Vec4 lightAndFog = accumulateLightsAndFog(clusterIdx, worldPos, negativeZViewSpace);
+
+	// Read the prev result
+	{
+		// Better get a new world pos in the center of the cluster. Using worldPos creates noisy results
+		const Vec3 midWPos = worldPosInsideCluster(Vec3(0.5));
+
+		// Compute UV
+		const Vec4 prevClipPos4 = u_prevViewProjMat * Vec4(midWPos, 1.0);
+		const Vec2 prevUv = NDC_TO_UV(prevClipPos4.xy / prevClipPos4.w);
+
+		// Compute new Z tex coord
+		F32 k = computeClusterKf(u_prevClustererMagic, midWPos);
+		k /= F32(FINAL_CLUSTER_Z + 1u);
+
+		// Read prev
+		const Vec3 uvw = Vec3(prevUv, k);
+		const Vec3 ndc = UV_TO_NDC(uvw);
+		if(all(lessThan(abs(ndc), Vec3(1.0))))
+		{
+			const Vec4 prev = textureLod(u_prevVolume, u_linearAnyClampSampler, uvw, 0.0);
+
+			// Modulate
+			lightAndFog = mix(prev, lightAndFog, 1.0 / 16.0);
+		}
+	}
+
+	// Write result
+	imageStore(u_volume, IVec3(gl_GlobalInvocationID), lightAndFog);
+}
+
+#pragma anki end

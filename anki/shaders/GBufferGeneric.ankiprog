@@ -1,0 +1,402 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator ANKI_INSTANCE_COUNT 1 2 4 8 16 32 64
+#pragma anki mutator ANKI_LOD 0 1 2
+#pragma anki mutator ANKI_VELOCITY 0 1
+#pragma anki mutator ANKI_PASS 0 2 3
+#pragma anki mutator ANKI_BONES 0 1
+#pragma anki mutator DIFFUSE_TEX 0 1
+#pragma anki mutator SPECULAR_TEX 0 1
+#pragma anki mutator ROUGHNESS_TEX 0 1
+#pragma anki mutator METAL_TEX 0 1
+#pragma anki mutator NORMAL_TEX 0 1
+#pragma anki mutator PARALLAX 0 1
+#pragma anki mutator EMISSIVE_TEX 0 1
+
+#pragma anki rewrite_mutation ANKI_PASS 2 DIFFUSE_TEX 1 to ANKI_PASS 2 DIFFUSE_TEX 0
+#pragma anki rewrite_mutation ANKI_PASS 3 DIFFUSE_TEX 1 to ANKI_PASS 3 DIFFUSE_TEX 0
+
+#pragma anki rewrite_mutation ANKI_PASS 2 SPECULAR_TEX 1 to ANKI_PASS 2 SPECULAR_TEX 0
+#pragma anki rewrite_mutation ANKI_PASS 3 SPECULAR_TEX 1 to ANKI_PASS 3 SPECULAR_TEX 0
+
+#pragma anki rewrite_mutation ANKI_PASS 2 NORMAL_TEX 1 to ANKI_PASS 2 NORMAL_TEX 0
+#pragma anki rewrite_mutation ANKI_PASS 3 NORMAL_TEX 1 to ANKI_PASS 3 NORMAL_TEX 0
+
+#pragma anki rewrite_mutation ANKI_PASS 2 ROUGHNESS_TEX 1 to ANKI_PASS 2 ROUGHNESS_TEX 0
+#pragma anki rewrite_mutation ANKI_PASS 3 ROUGHNESS_TEX 1 to ANKI_PASS 3 ROUGHNESS_TEX 0
+
+#pragma anki rewrite_mutation ANKI_PASS 2 METAL_TEX 1 to ANKI_PASS 2 METAL_TEX 0
+#pragma anki rewrite_mutation ANKI_PASS 3 METAL_TEX 1 to ANKI_PASS 3 METAL_TEX 0
+
+#pragma anki rewrite_mutation ANKI_PASS 2 EMISSIVE_TEX 1 to ANKI_PASS 2 EMISSIVE_TEX 0
+#pragma anki rewrite_mutation ANKI_PASS 3 EMISSIVE_TEX 1 to ANKI_PASS 3 EMISSIVE_TEX 0
+
+#pragma anki rewrite_mutation ANKI_PASS 2 PARALLAX 1 to ANKI_PASS 2 PARALLAX 0
+#pragma anki rewrite_mutation ANKI_PASS 3 PARALLAX 1 to ANKI_PASS 3 PARALLAX 0
+
+#define REALLY_USING_PARALLAX (PARALLAX == 1 && ANKI_PASS == 0 && ANKI_LOD == 0)
+
+#include <anki/shaders/GBufferCommon.glsl>
+
+layout(set = 0, binding = 1) uniform sampler u_ankiGlobalSampler;
+#if DIFFUSE_TEX == 1 && ANKI_PASS == PASS_GB
+layout(set = 0, binding = 2) uniform texture2D u_diffTex;
+#	define USING_DIFF_TEX 1
+#endif
+#if SPECULAR_TEX == 1 && ANKI_PASS == PASS_GB
+layout(set = 0, binding = 3) uniform texture2D u_specTex;
+#	define USING_SPECULAR_TEX 1
+#endif
+#if ROUGHNESS_TEX == 1 && ANKI_PASS == PASS_GB
+layout(set = 0, binding = 4) uniform texture2D u_roughnessTex;
+#	define USING_ROUGHNESS_TEX 1
+#endif
+#if NORMAL_TEX == 1 && ANKI_PASS == PASS_GB && ANKI_LOD < 2
+layout(set = 0, binding = 5) uniform texture2D u_normalTex;
+#	define USING_NORMAL_TEX 1
+#endif
+#if METAL_TEX == 1 && ANKI_PASS == PASS_GB
+layout(set = 0, binding = 6) uniform texture2D u_metallicTex;
+#	define USING_METALLIC_TEX 1
+#endif
+#if REALLY_USING_PARALLAX
+layout(set = 0, binding = 7) uniform texture2D u_heightTex;
+#endif
+#if EMISSIVE_TEX == 1 && ANKI_PASS == PASS_GB
+layout(set = 0, binding = 8) uniform texture2D u_emissiveTex;
+#	define USING_EMISSIVE_TEX 1
+#endif
+
+#if ANKI_PASS == PASS_GB
+struct PerDraw
+{
+#	if !defined(USING_DIFF_TEX)
+	Vec3 m_diffColor;
+#	endif
+#	if !defined(USING_ROUGHNESS_TEX)
+	F32 m_roughness;
+#	endif
+#	if !defined(USING_SPECULAR_TEX)
+	Vec3 m_specColor;
+#	endif
+#	if !defined(USING_METALLIC_TEX)
+	F32 m_metallic;
+#	endif
+#	if !defined(USING_EMISSIVE_TEX)
+	Vec3 m_emission;
+#	endif
+#	if REALLY_USING_PARALLAX
+	F32 m_heightmapScale;
+#	endif
+#	if ANKI_PASS == PASS_GB
+	F32 m_subsurface;
+#	endif
+};
+#endif
+
+struct PerInstance
+{
+	Mat4 m_ankiMvp;
+#if ANKI_PASS == PASS_GB
+	Mat3 m_ankiRotationMatrix;
+#endif
+#if REALLY_USING_PARALLAX
+	Mat4 m_ankiModelViewMatrix;
+#endif
+#if ANKI_PASS == PASS_GB && ANKI_VELOCITY == 1
+	Mat4 m_ankiPreviousMvp;
+#endif
+};
+
+layout(set = 0, binding = 0, row_major, std140) uniform b_ankiMaterial
+{
+#if ANKI_PASS == PASS_GB
+	PerDraw u_ankiPerDraw;
+#endif
+	PerInstance u_ankiPerInstance[ANKI_INSTANCE_COUNT];
+};
+
+#if ANKI_BONES
+layout(set = 0, binding = 9, row_major, std140) readonly buffer b_ankiBoneTransforms
+{
+	Mat4 u_ankiBoneTransforms[];
+};
+
+layout(set = 0, binding = 10, row_major, std140) readonly buffer b_ankiPrevFrameBoneTransforms
+{
+	Mat4 u_ankiPrevFrameBoneTransforms[];
+};
+#endif
+
+#if ANKI_INSTANCE_COUNT == 1
+#	define INSTANCE_ID 0
+#else
+#	define INSTANCE_ID gl_InstanceIndex
+#endif
+
+#pragma anki start vert
+
+// Globals (always in local space)
+Vec3 g_position = in_position;
+#if ANKI_PASS == PASS_GB
+Vec3 g_prevPosition = in_position;
+Vec2 g_uv = in_uv;
+Vec3 g_normal = in_normal;
+Vec4 g_tangent = in_tangent;
+#endif
+
+// Perform skinning
+#if ANKI_BONES
+void skinning()
+{
+	Mat4 skinMat = u_ankiBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
+	Mat4 prevSkinMat = u_ankiPrevFrameBoneTransforms[in_boneIndices[0]] * in_boneWeights[0];
+	ANKI_UNROLL for(U32 i = 1; i < 4; ++i)
+	{
+		skinMat += u_ankiBoneTransforms[in_boneIndices[i]] * in_boneWeights[i];
+		prevSkinMat += u_ankiPrevFrameBoneTransforms[in_boneIndices[i]] * in_boneWeights[i];
+	}
+
+#	if ANKI_PASS == PASS_GB
+	g_prevPosition = (prevSkinMat * Vec4(g_position, 1.0)).xyz;
+	g_tangent.xyz = (skinMat * Vec4(g_tangent.xyz, 0.0)).xyz;
+	g_normal = (skinMat * Vec4(g_normal, 0.0)).xyz;
+#	endif
+	g_position = (skinMat * Vec4(g_position, 1.0)).xyz;
+}
+#endif
+
+// Common store function
+#if ANKI_PASS == PASS_GB
+void positionUvNormalTangent()
+{
+	gl_Position = u_ankiPerInstance[INSTANCE_ID].m_ankiMvp * Vec4(g_position, 1.0);
+	out_normal = u_ankiPerInstance[INSTANCE_ID].m_ankiRotationMatrix * g_normal.xyz;
+	out_tangent = u_ankiPerInstance[INSTANCE_ID].m_ankiRotationMatrix * g_tangent.xyz;
+	out_bitangent = cross(out_normal, out_tangent) * g_tangent.w;
+	out_uv = g_uv;
+}
+#endif
+
+// Store stuff for parallax mapping
+#if REALLY_USING_PARALLAX
+void parallax()
+{
+	const Mat4 modelViewMat = u_ankiPerInstance[INSTANCE_ID].m_ankiModelViewMatrix;
+	const Vec3 n = in_normal;
+	const Vec3 t = in_tangent.xyz;
+	const Vec3 b = cross(n, t) * in_tangent.w;
+
+	const Mat3 normalMat = Mat3(modelViewMat);
+	const Mat3 invTbn = transpose(normalMat * Mat3(t, b, n));
+
+	const Vec3 viewPos = (modelViewMat * Vec4(g_position, 1.0)).xyz;
+	out_distFromTheCamera = viewPos.z;
+
+	out_eyeTangentSpace = invTbn * viewPos;
+	out_normalTangentSpace = invTbn * n;
+}
+#endif
+
+#if(ANKI_VELOCITY || ANKI_BONES) && ANKI_PASS == PASS_GB
+void velocity()
+{
+#	if ANKI_BONES
+	const Vec3 prevLocalPos = g_prevPosition;
+#	else
+	const Vec3 prevLocalPos = g_position;
+#	endif
+
+#	if ANKI_VELOCITY
+	const Mat4 mvp = u_ankiPerInstance[INSTANCE_ID].m_ankiPreviousMvp;
+#	else
+	const Mat4 mvp = u_ankiPerInstance[INSTANCE_ID].m_ankiMvp;
+#	endif
+
+	const Vec4 v4 = mvp * Vec4(prevLocalPos, 1.0);
+
+	const Vec2 prevNdc = v4.xy / v4.w;
+
+	const Vec2 crntNdc = gl_Position.xy / gl_Position.w;
+
+	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
+	out_velocity = (prevNdc - crntNdc) * 0.5;
+}
+#endif
+
+void main()
+{
+#if ANKI_BONES
+	skinning();
+#endif
+
+#if ANKI_PASS == PASS_GB
+	positionUvNormalTangent();
+
+#	if REALLY_USING_PARALLAX
+	parallax();
+#	endif
+
+#	if ANKI_VELOCITY || ANKI_BONES
+	velocity();
+#	endif
+#else
+	gl_Position = u_ankiPerInstance[INSTANCE_ID].m_ankiMvp * Vec4(g_position, 1.0);
+#endif
+}
+#pragma anki end
+
+#pragma anki start frag
+
+#if REALLY_USING_PARALLAX
+Vec2 computeTextureCoordParallax(texture2D heightMap, sampler sampl, Vec2 uv, F32 heightMapScale)
+{
+	const U32 MAX_SAMPLES = 25;
+	const U32 MIN_SAMPLES = 1;
+	const F32 MAX_EFFECTIVE_DISTANCE = 32.0;
+
+	// Get that because we are sampling inside a loop
+	const Vec2 dPdx = dFdx(uv);
+	const Vec2 dPdy = dFdy(uv);
+
+	const Vec3 eyeTangentSpace = in_eyeTangentSpace;
+	const Vec3 normTangentSpace = in_normalTangentSpace;
+
+	F32 parallaxLimit = -length(eyeTangentSpace.xy) / eyeTangentSpace.z;
+	parallaxLimit *= heightMapScale;
+
+	const Vec2 offsetDir = normalize(eyeTangentSpace.xy);
+	const Vec2 maxOffset = offsetDir * parallaxLimit;
+
+	const Vec3 E = normalize(eyeTangentSpace);
+
+	const F32 factor0 = -dot(E, normTangentSpace);
+	const F32 factor1 = in_distFromTheCamera / -MAX_EFFECTIVE_DISTANCE;
+	const F32 factor = saturate((1.0 - factor0) * (1.0 - factor1));
+	const F32 sampleCountf = mix(F32(MIN_SAMPLES), F32(MAX_SAMPLES), factor);
+
+	const F32 stepSize = 1.0 / sampleCountf;
+
+	F32 crntRayHeight = 1.0;
+	Vec2 crntOffset = Vec2(0.0);
+	Vec2 lastOffset = Vec2(0.0);
+
+	F32 lastSampledHeight = 1.0;
+	F32 crntSampledHeight = 1.0;
+
+	U32 crntSample = 0;
+
+	const U32 sampleCount = U32(sampleCountf);
+	ANKI_LOOP while(crntSample < sampleCount)
+	{
+		crntSampledHeight = textureGrad(heightMap, sampl, uv + crntOffset, dPdx, dPdy).r;
+
+		if(crntSampledHeight > crntRayHeight)
+		{
+			const F32 delta1 = crntSampledHeight - crntRayHeight;
+			const F32 delta2 = (crntRayHeight + stepSize) - lastSampledHeight;
+			const F32 ratio = delta1 / (delta1 + delta2);
+
+			crntOffset = mix(crntOffset, lastOffset, ratio);
+
+			crntSample = sampleCount + 1;
+		}
+		else
+		{
+			crntSample++;
+
+			crntRayHeight -= stepSize;
+
+			lastOffset = crntOffset;
+			crntOffset += stepSize * maxOffset;
+
+			lastSampledHeight = crntSampledHeight;
+		}
+	}
+
+	return uv + crntOffset;
+}
+#endif
+
+// Do normal mapping
+#if ANKI_PASS == PASS_GB
+Vec3 readNormalFromTexture(texture2D map, sampler sampl, highp Vec2 texCoords)
+{
+	// First read the texture
+	const Vec3 nAtTangentspace = normalize((texture(map, sampl, texCoords).rgb - 0.5) * 2.0);
+
+	const Vec3 n = normalize(in_normal);
+	const Vec3 t = normalize(in_tangent);
+	const Vec3 b = normalize(in_bitangent);
+
+	const Mat3 tbnMat = Mat3(t, b, n);
+
+	return tbnMat * nAtTangentspace;
+}
+#endif
+
+void main()
+{
+#if ANKI_PASS == PASS_GB
+#	if REALLY_USING_PARALLAX
+	const Vec2 uv =
+		computeTextureCoordParallax(u_heightTex, u_ankiGlobalSampler, in_uv, u_ankiPerDraw.m_heightmapScale);
+#	else
+	const Vec2 uv = in_uv;
+#	endif
+
+#	if defined(USING_DIFF_TEX)
+	const Vec3 diffColor = texture(u_diffTex, u_ankiGlobalSampler, uv).rgb;
+#	else
+	const Vec3 diffColor = u_ankiPerDraw.m_diffColor;
+#	endif
+
+#	if defined(USING_SPECULAR_TEX)
+	const Vec3 specColor = texture(u_specTex, u_ankiGlobalSampler, uv).rgb;
+#	else
+	const Vec3 specColor = u_ankiPerDraw.m_specColor;
+#	endif
+
+#	if defined(USING_ROUGHNESS_TEX)
+	const F32 roughness = texture(u_roughnessTex, u_ankiGlobalSampler, uv).g;
+#	else
+	const F32 roughness = u_ankiPerDraw.m_roughness;
+#	endif
+
+#	if defined(USING_METALLIC_TEX)
+	const F32 metallic = texture(u_metallicTex, u_ankiGlobalSampler, uv).b;
+#	else
+	const F32 metallic = u_ankiPerDraw.m_metallic;
+#	endif
+
+#	if defined(USING_NORMAL_TEX)
+	const Vec3 normal = readNormalFromTexture(u_normalTex, u_ankiGlobalSampler, uv);
+#	else
+	const Vec3 normal = normalize(in_normal);
+#	endif
+
+#	if defined(USING_EMISSIVE_TEX)
+	const Vec3 emission = texture(u_emissiveTex, u_ankiGlobalSampler, uv).rgb;
+#	else
+	const Vec3 emission = u_ankiPerDraw.m_emission;
+#	endif
+
+#	if ANKI_VELOCITY || ANKI_BONES
+	const Vec2 velocity = in_velocity;
+#	else
+	const Vec2 velocity = Vec2(-1.0);
+#	endif
+
+	writeGBuffer(diffColor, normal, specColor, roughness, u_ankiPerDraw.m_subsurface, emission, metallic, velocity);
+#elif ANKI_PASS == PASS_EZ
+	out_gbuffer0 = Vec4(0.0);
+	out_gbuffer1 = Vec4(0.0);
+	out_gbuffer2 = Vec4(0.0);
+	out_gbuffer3 = Vec2(0.0);
+#endif
+}
+
+#pragma anki end

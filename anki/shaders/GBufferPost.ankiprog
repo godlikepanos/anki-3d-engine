@@ -1,0 +1,125 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_X, 0, 1);
+ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_Y, 1, 1);
+
+#pragma anki start vert
+#include <anki/shaders/Common.glsl>
+
+layout(location = 0) out Vec2 out_uv;
+layout(location = 1) out Vec2 out_clusterIJ;
+
+out gl_PerVertex
+{
+	Vec4 gl_Position;
+};
+
+void main()
+{
+	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
+	const Vec2 pos = out_uv * 2.0 - 1.0;
+	gl_Position = Vec4(pos, 0.0, 1.0);
+
+	out_clusterIJ = Vec2(CLUSTER_COUNT_X, CLUSTER_COUNT_Y) * out_uv;
+}
+#pragma anki end
+
+#pragma anki start frag
+#include <anki/shaders/Pack.glsl>
+#include <anki/shaders/Functions.glsl>
+
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_msDepthRt;
+
+layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
+#define LIGHT_SET 0
+#define LIGHT_COMMON_UNIS_BINDING 3
+#define LIGHT_DECALS_BINDING 4
+#define LIGHT_CLUSTERS_BINDING 7
+#include <anki/shaders/ClusteredShadingCommon.glsl>
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 1) in Vec2 in_clusterIJ;
+
+layout(location = 0) out Vec4 out_color0;
+layout(location = 1) out Vec4 out_color1;
+
+void main()
+{
+	// This code blends the diffuse and the specular+rougness of the decals with GBuffer render targets.
+	// Normaly the blending is being done ('D' is the decal diffuse and 'f' is decal blend factor):
+	// d=gbuffer.diff
+	// 1st decal: d'=d*(1-f)+D*f
+	// 2nd decal: d''=d'*(1-f')+D'*f' <=> d''=d*(1-f)*(1-f')+D*f*(1-f')+D'*f'
+	// By looking at the trend we will have to multiply the gbuffer.diff with: (1-f)*(1-f') ... (1-f'''')
+
+	Vec4 outDiffuse = Vec4(0.0, 0.0, 0.0, 1.0);
+	Vec4 outSpecular = Vec4(0.0, 0.0, 0.0, 1.0);
+
+	// Get worldPos
+	const F32 depth = textureLod(u_msDepthRt, u_nearestAnyClampSampler, in_uv, 0.0).r;
+	const Vec2 ndc = UV_TO_NDC(in_uv);
+	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	// Get first decal index
+	U32 idxOffset;
+	{
+		const U32 k = computeClusterK(u_clustererMagic, worldPos);
+		const U32 clusterIdx =
+			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
+
+		idxOffset = u_clusters[clusterIdx];
+		idxOffset = u_lightIndices[idxOffset - 2u]; // Use the offset metadata
+	}
+
+	// Process decals
+	U32 idx = u_lightIndices[idxOffset];
+	if(idx == MAX_U32)
+	{
+		discard;
+	}
+
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		const Decal decal = u_decals[idx];
+
+		// Project pos to decal space
+		const Vec4 texCoords4 = decal.m_texProjectionMat * Vec4(worldPos, 1.0);
+		if(texCoords4.w <= 0.7)
+		{
+			// Behind the decal, skip
+			continue;
+		}
+
+		Vec2 texCoords2 = texCoords4.xy / texCoords4.w;
+
+		// Clamp the tex coords. Expect a border in the texture atlas
+		texCoords2 = saturate(texCoords2);
+
+		// Read diffuse
+		const Vec2 diffUv = mad(texCoords2, decal.m_diffUv.zw, decal.m_diffUv.xy);
+		const Vec4 decalDiff = texture(u_diffDecalTex, u_trilinearRepeatSampler, diffUv);
+
+		// Read roughness
+		const Vec2 specUv = mad(texCoords2, decal.m_normRoughnessUv.zw, decal.m_normRoughnessUv.xy);
+		const Vec3 spec = texture(u_specularRoughnessDecalTex, u_trilinearRepeatSampler, specUv).rgb;
+
+		// Update diffuse
+		F32 f = decalDiff.a * decal.m_blendFactors[0];
+		outDiffuse.rgb = outDiffuse.rgb * (1.0 - f) + decalDiff.rgb * f;
+		outDiffuse.a *= (1.0 - f);
+
+		// Update specular
+		f = decalDiff.a * decal.m_blendFactors[1];
+		outSpecular.rgb = outSpecular.rgb * (1.0 - f) + spec.rgb * f;
+		outSpecular.a *= (1.0 - f);
+	}
+
+	out_color0 = outDiffuse;
+	out_color1 = outSpecular;
+}
+#pragma anki end

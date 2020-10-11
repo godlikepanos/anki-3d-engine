@@ -1,0 +1,153 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator SHARPEN 0 1 2 // 0: disabled, 1: vertical, 2: horizontal
+#pragma anki mutator VARIANCE_CLIPPING 0 1
+#pragma anki mutator TONEMAP_FIX 0 1
+#pragma anki mutator YCBCR 0 1
+
+ANKI_SPECIALIZATION_CONSTANT_F32(VARIANCE_CLIPPING_GAMMA, 0, 1.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(BLEND_FACTOR, 1, 0.5);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 2, UVec2(1));
+
+#pragma anki start comp
+#include <anki/shaders/Functions.glsl>
+#include <anki/shaders/Pack.glsl>
+#include <anki/shaders/Tonemapping.glsl>
+
+const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_depthRt;
+layout(set = 0, binding = 2) uniform texture2D u_inputRt;
+layout(set = 0, binding = 3) uniform texture2D u_historyRt;
+layout(set = 0, binding = 4) uniform texture2D u_velocityRt;
+layout(set = 0, binding = 5) writeonly uniform image2D out_img;
+
+#if TONEMAP_FIX
+#	define TONEMAPPING_SET 0
+#	define TONEMAPPING_BINDING 6
+#	include <anki/shaders/TonemappingResources.glsl>
+#endif
+
+layout(push_constant, std140, row_major) uniform pc_
+{
+	Mat4 u_prevViewProjMatMulInvViewProjMat;
+};
+
+#if YCBCR
+#	define sample(s, uv) rgbToYCbCr(textureLod(s, u_linearAnyClampSampler, uv, 0.0).rgb)
+#	define sampleOffset(s, uv, x, y) \
+		rgbToYCbCr(textureLodOffset(sampler2D(s, u_linearAnyClampSampler), uv, 0.0, IVec2(x, y)).rgb)
+#else
+#	define sample(s, uv) textureLod(s, u_linearAnyClampSampler, uv, 0.0).rgb
+#	define sampleOffset(s, uv, x, y) textureLodOffset(sampler2D(s, u_linearAnyClampSampler), uv, 0.0, IVec2(x, y)).rgb
+#endif
+
+#define VELOCITY 0
+
+Vec3 sharpen(Vec2 uv)
+{
+	const Vec3 center = sample(u_inputRt, uv);
+#if SHARPEN == 1
+	Vec3 near = sampleOffset(u_inputRt, uv, 1, 0) + sampleOffset(u_inputRt, uv, -1, 0);
+#else
+	Vec3 near = sampleOffset(u_inputRt, uv, 0, 1) + sampleOffset(u_inputRt, uv, 0, -1);
+#endif
+	near *= 0.5;
+	const F32 sharpness = 1.0;
+	return center + max(Vec3(0.0), center - near) * sharpness;
+}
+
+void main()
+{
+	if((FB_SIZE.x % WORKGROUP_SIZE.x) != 0u || (FB_SIZE.y % WORKGROUP_SIZE.y) != 0u) // This check is free
+	{
+		if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
+		{
+			return;
+		}
+	}
+
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
+
+	// Get prev uv coords
+	Vec2 oldUv;
+#if VELOCITY
+	const Vec2 velocity = textureLod(u_velocityRt, u_linearAnyClampSampler, uv, 0.0).rg;
+	if(velocity.x != -1.0)
+	{
+		oldUv = uv + velocity;
+	}
+	else
+#endif
+	{
+		const Vec4 v4 = u_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
+		oldUv = NDC_TO_UV(v4.xy / v4.w);
+	}
+
+	// Read textures
+	Vec3 historyCol = sample(u_historyRt, oldUv);
+#if SHARPEN > 0
+	const Vec3 crntCol = sharpen(uv);
+#else
+	const Vec3 crntCol = sample(u_inputRt, uv);
+#endif
+
+	// Remove ghosting by clamping the history color to neighbour's AABB
+	const Vec3 near0 = sampleOffset(u_inputRt, uv, 1, 0);
+	const Vec3 near1 = sampleOffset(u_inputRt, uv, 0, 1);
+	const Vec3 near2 = sampleOffset(u_inputRt, uv, -1, 0);
+	const Vec3 near3 = sampleOffset(u_inputRt, uv, 0, -1);
+
+#if VARIANCE_CLIPPING
+	const Vec3 m1 = crntCol + near0 + near1 + near2 + near3;
+	const Vec3 m2 = crntCol * crntCol + near0 * near0 + near1 * near1 + near2 * near2 + near3 * near3;
+
+	const Vec3 mu = m1 / 5.0;
+	const Vec3 sigma = sqrt(m2 / 5.0 - mu * mu);
+
+	const Vec3 boxMin = mu - VARIANCE_CLIPPING_GAMMA * sigma;
+	const Vec3 boxMax = mu + VARIANCE_CLIPPING_GAMMA * sigma;
+#else
+	const Vec3 boxMin = min(crntCol, min(near0, min(near1, min(near2, near3))));
+	const Vec3 boxMax = max(crntCol, max(near0, max(near1, max(near2, near3))));
+#endif
+
+	historyCol = clamp(historyCol, boxMin, boxMax);
+
+	// Remove jitter (T. Lottes)
+#if YCBCR
+	const F32 lum0 = crntCol.r;
+	const F32 lum1 = historyCol.r;
+	const F32 maxLum = boxMax.r;
+#elif TONEMAP_FIX
+	const F32 lum0 = computeLuminance(tonemap(crntCol, u_exposureThreshold0));
+	const F32 lum1 = computeLuminance(tonemap(historyCol, u_exposureThreshold0));
+	// F32 maxLum = computeLuminance(tonemap(boxMax, u_exposureThreshold0));
+	const F32 maxLum = 1.0;
+#else
+	const F32 lum0 = computeLuminance(crntCol);
+	const F32 lum1 = computeLuminance(historyCol);
+	const F32 maxLum = computeLuminance(boxMax);
+#endif
+
+	F32 diff = abs(lum0 - lum1) / max(lum0, max(lum1, maxLum + EPSILON));
+	diff = 1.0 - diff;
+	diff = diff * diff;
+	const F32 feedback = mix(0.0, BLEND_FACTOR, diff);
+
+	// Write result
+#if YCBCR
+	const Vec3 outColor = yCbCrToRgb(mix(historyCol, crntCol, feedback));
+#else
+	const Vec3 outColor = mix(historyCol, crntCol, feedback);
+#endif
+	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
+}
+
+#pragma anki end

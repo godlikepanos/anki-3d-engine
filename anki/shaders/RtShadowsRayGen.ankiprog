@@ -1,0 +1,18 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki library RtShadows
+#pragma anki ray_type 0
+
+#pragma anki start rgen
+
+layout(location = 0) rayPayloadEXT F32 g_payload;
+
+void main()
+{
+	g_payload = 0.0;
+	// TODO
+}
+#pragma anki end

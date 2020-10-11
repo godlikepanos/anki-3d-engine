@@ -1,0 +1,81 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator COLOR_TEXTURE 0 1
+#pragma anki mutator DITHERED_DEPTH_TEST 0 1
+
+ANKI_SPECIALIZATION_CONSTANT_U32(INSTANCE_COUNT, 0, 1);
+
+layout(set = 1, binding = 0, row_major) uniform u0_
+{
+	Mat4 u_mvp[INSTANCE_COUNT];
+	Vec4 u_color;
+};
+
+#pragma anki start vert
+#include <anki/shaders/Common.glsl>
+
+layout(location = 0) in Vec3 in_position;
+#if COLOR_TEXTURE == 1
+layout(location = 1) in Vec2 in_uv;
+layout(location = 0) out Vec2 out_uv;
+#endif
+
+out gl_PerVertex
+{
+	Vec4 gl_Position;
+};
+
+void main()
+{
+#if COLOR_TEXTURE == 1
+	out_uv = in_uv;
+#endif
+	gl_Position = u_mvp[gl_InstanceIndex] * Vec4(in_position, 1.0);
+}
+#pragma anki end
+
+#pragma anki start frag
+#include <anki/shaders/Common.glsl>
+#include <anki/shaders/ImportanceSampling.glsl>
+
+#if COLOR_TEXTURE == 1
+layout(location = 0) in Vec2 in_uv;
+layout(set = 1, binding = 1) uniform sampler u_trilinearRepeatSampler;
+layout(set = 1, binding = 2) uniform texture2D u_tex;
+#endif
+
+// NOTE: Don't eliminate the binding because it confuses the descriptor set creation
+#if DITHERED_DEPTH_TEST == 1
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_depthRt;
+#endif
+
+layout(location = 0) out Vec4 out_color;
+
+void main()
+{
+	// Check if we should skip the frag
+#if DITHERED_DEPTH_TEST == 1
+	const UVec2 random = rand3DPCG16(UVec3(UVec2(gl_FragCoord.xy), 1)).xy;
+	const Vec2 noise = Vec2(random) / 65536.0;
+	const F32 factor = noise.x * noise.y;
+	const Vec2 uv = gl_FragCoord.xy / Vec2(textureSize(u_depthRt, 0));
+	const F32 depthRef = textureLod(u_depthRt, u_nearestAnyClampSampler, uv, 0.0).r;
+	const Bool depthTestFailed = gl_FragCoord.z >= depthRef;
+	if(depthTestFailed && factor < 0.5)
+	{
+		discard;
+	}
+#endif
+
+	// Write the color
+#if COLOR_TEXTURE == 1
+	out_color = texture(u_tex, u_trilinearRepeatSampler, in_uv) * u_color;
+#else
+	out_color = u_color;
+#endif
+}
+#pragma anki end

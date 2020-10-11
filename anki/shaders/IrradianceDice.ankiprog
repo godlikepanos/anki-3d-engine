@@ -1,0 +1,218 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Compute the irradiance given a light shading result. The irradiance will be stored in an ambient dice.
+
+#pragma anki mutator WORKGROUP_SIZE_XY 8 16 32
+#pragma anki mutator LIGHT_SHADING_TEX 0 1 // 0: texture2D, 1: textureCubeArray
+#pragma anki mutator STORE_LOCATION 0 1 // 0: in a 3D texture, 1: In an SSBO
+#pragma anki mutator SECOND_BOUNCE 0 1
+
+#pragma anki start comp
+
+#include <anki/shaders/Functions.glsl>
+#include <anki/shaders/Pack.glsl>
+#include <anki/shaders/LightFunctions.glsl>
+
+#define DEBUG_MODE 0 // 0: disable, 1: different color per dice face, 2: different color per cell
+
+const U32 WORKGROUP_SIZE = WORKGROUP_SIZE_XY * WORKGROUP_SIZE_XY;
+
+layout(local_size_x = WORKGROUP_SIZE_XY, local_size_y = WORKGROUP_SIZE_XY, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+#if LIGHT_SHADING_TEX == 0
+layout(set = 0, binding = 1) uniform texture2D u_lightShadingTex2d;
+#else
+layout(set = 0, binding = 1) uniform textureCube u_lightShadingTexCube;
+#endif
+
+#if SECOND_BOUNCE == 1
+layout(set = 0, binding = 2) uniform texture2D u_gbufferTex[3u];
+#endif
+
+// This is a temporary buffer used instead of shared memory because we can't fit it into shared memory
+layout(set = 0, binding = 3, std430) buffer ssbo_
+{
+	Vec4 u_integrationResults[6u * WORKGROUP_SIZE];
+};
+
+#if STORE_LOCATION == 0
+layout(set = 0, binding = 4) uniform writeonly image3D u_irradianceVolume;
+
+layout(push_constant, std430) uniform pc_
+{
+	IVec3 u_volumeTexel;
+	I32 u_nextTexelOffsetInU;
+};
+#else
+layout(set = 0, binding = 4, std430) writeonly buffer ssbo1_
+{
+	Vec4 u_irradianceDisceResults[6u];
+};
+#endif
+
+shared Vec3 s_diceIrradiance[6u];
+
+Vec3 sampleLightShadingTexture(const U32 face)
+{
+#if LIGHT_SHADING_TEX == 0
+	const Vec2 INPUT_TEXTURES_SIZE = Vec2(WORKGROUP_SIZE_XY * 6u, WORKGROUP_SIZE_XY);
+	const Vec2 uv =
+		(Vec2(gl_LocalInvocationID.x + WORKGROUP_SIZE_XY * face, gl_LocalInvocationID.y) + 0.5) / INPUT_TEXTURES_SIZE;
+
+	return textureLod(u_lightShadingTex2d, u_nearestAnyClampSampler, uv, 0.0).rgb;
+#else
+	const Vec2 uv = (Vec2(gl_LocalInvocationID.x, gl_LocalInvocationID.y) + 0.5) / F32(WORKGROUP_SIZE_XY);
+	const Vec2 ndc = UV_TO_NDC(uv);
+	const Vec3 cubeUvw = getCubemapDirection(ndc, face);
+
+	return textureLod(u_lightShadingTexCube, u_nearestAnyClampSampler, cubeUvw, 0.0).rgb;
+#endif
+}
+
+void main()
+{
+	const F32 WORKGROUP_SIZE_XY_F = F32(WORKGROUP_SIZE_XY);
+
+	// Compute the NDC used in cubeCoordSolidAngle
+	const Vec2 faceUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / WORKGROUP_SIZE_XY_F;
+	const Vec2 ndc = UV_TO_NDC(faceUv);
+
+	// Initialize
+	ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+	{
+		// Get the direction of the dice face
+		const Vec3 diceDir = getCubemapDirection(Vec2(0.0), f);
+
+		const Vec3 r = getCubemapDirection(ndc, f);
+
+		// Compute integral part
+		const F32 lambert = max(0.0, dot(r, diceDir));
+		const Vec3 lightShading = sampleLightShadingTexture(f);
+		const Vec3 irradiance = lightShading * lambert * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_XY_F);
+
+		// Store
+		u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationID.y * WORKGROUP_SIZE_XY + gl_LocalInvocationID.x] =
+			irradiance.xyzx;
+	}
+
+	memoryBarrierBuffer();
+	barrier();
+
+	// Reduce using prefix sum
+	ANKI_LOOP for(U32 s = WORKGROUP_SIZE / 2u; s > 0u; s >>= 1u)
+	{
+		if(gl_LocalInvocationIndex < s)
+		{
+			ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+			{
+				u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationIndex] +=
+					u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationIndex + s];
+			}
+		}
+
+		memoryBarrierBuffer();
+		barrier();
+	}
+
+	if(gl_LocalInvocationIndex < 6u)
+	{
+		s_diceIrradiance[gl_LocalInvocationIndex] =
+			u_integrationResults[gl_LocalInvocationIndex * WORKGROUP_SIZE + 0u].xyz;
+	}
+
+	memoryBarrierShared();
+	barrier();
+
+#if SECOND_BOUNCE == 1
+	// Initialize again for the 2nd bounce
+	ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+	{
+		// Get the direction of the dice face
+		const Vec3 diceDir = getCubemapDirection(Vec2(0.0), f);
+
+		const Vec3 r = getCubemapDirection(ndc, f);
+
+		// Compute integral part
+		const F32 lambert = max(0.0, dot(r, diceDir));
+
+		// Read the gbuffer
+		Vec2 gbufferUv = (Vec2(gl_LocalInvocationID.xy) + 0.5) / WORKGROUP_SIZE_XY_F;
+		gbufferUv.x *= 1.0 / 6.0;
+		gbufferUv.x += (1.0 / 6.0) * F32(f);
+		GbufferInfo gbuffer;
+		readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, gbufferUv, 0.0,
+					gbuffer);
+
+		// Sample irradiance
+		Vec3 firstBounceIrradiance =
+			sampleAmbientDice(s_diceIrradiance[0], s_diceIrradiance[1], s_diceIrradiance[2], s_diceIrradiance[3],
+							  s_diceIrradiance[4], s_diceIrradiance[5], gbuffer.m_normal);
+		firstBounceIrradiance = gbuffer.m_diffuse * firstBounceIrradiance;
+
+		// Compute 2nd bounce
+		const Vec3 lightShading = sampleLightShadingTexture(f);
+		const Vec3 irradiance =
+			(firstBounceIrradiance + lightShading * lambert) * cubeCoordSolidAngle(ndc, WORKGROUP_SIZE_XY_F);
+
+		// Store
+		u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationID.y * WORKGROUP_SIZE_XY + gl_LocalInvocationID.x] =
+			irradiance.xyzx;
+	}
+
+	memoryBarrierBuffer();
+	barrier();
+
+	// Reduce using prefix sum again
+	ANKI_LOOP for(U32 s = WORKGROUP_SIZE / 2u; s > 0u; s >>= 1u)
+	{
+		if(gl_LocalInvocationIndex < s)
+		{
+			ANKI_UNROLL for(U32 f = 0u; f < 6u; ++f)
+			{
+				u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationIndex] +=
+					u_integrationResults[f * WORKGROUP_SIZE + gl_LocalInvocationIndex + s];
+			}
+		}
+
+		memoryBarrierBuffer();
+		barrier();
+	}
+#endif
+
+	// Store the results
+	if(gl_LocalInvocationIndex < 6u)
+	{
+		const U32 f = gl_LocalInvocationIndex;
+
+#if DEBUG_MODE == 0
+#	if SECOND_BOUNCE == 1
+		Vec3 irradiance = u_integrationResults[f * WORKGROUP_SIZE + 0u].xyz;
+#	else
+		Vec3 irradiance = s_diceIrradiance[f];
+#	endif
+		const Vec3 toStoreValue = irradiance;
+#elif DEBUG_MODE == 1
+		const Vec3 toStoreValue = colorPerCubeFace(f);
+#else
+		const UVec3 volumeSize = UVec3(imageSize(u_irradianceVolume));
+		const UVec3 subvolumeSize = UVec3(volumeSize.x / 6u, volumeSize.y, volumeSize.z);
+		const U32 cellIdx =
+			u_volumeTexel.z * subvolumeSize.x * subvolumeSize.y + u_volumeTexel.y * subvolumeSize.x + u_volumeTexel.x;
+		const F32 headmapFactor = F32(cellIdx) / F32(subvolumeSize.x * subvolumeSize.y * subvolumeSize.z);
+		const Vec3 toStoreValue = heatmap(headmapFactor);
+#endif
+
+#if STORE_LOCATION == 0
+		const IVec3 storeUvw = IVec3(u_volumeTexel.x + I32(f) * u_nextTexelOffsetInU, u_volumeTexel.y, u_volumeTexel.z);
+		imageStore(u_irradianceVolume, storeUvw, Vec4(toStoreValue, 0.0));
+#else
+		u_irradianceDisceResults[f] = toStoreValue.xyzx;
+#endif
+	}
+}
+
+#pragma anki end

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<material shaderProgram="shaders/GBufferGpuParticles.ankiprog" shadow="0">
+<material shaderProgram="anki/shaders/GBufferGpuParticles.ankiprog" shadow="0">
 	<inputs>
 		<input shaderVar="m_diffColor" value="1.0 0.1 0.1"/>
 		<input shaderVar="m_specColor" value="0.04 0.04 0.04"/>

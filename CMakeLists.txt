@@ -328,10 +328,10 @@ else()
 	set(ANKI_TESTS 0)
 endif()
 
-configure_file("src/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
+configure_file("anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
 
 # Include & lib directories
-include_directories("src"
+include_directories(
 	"thirdparty/tinyxml2/include"
 	"thirdparty/lua"
 	"thirdparty/imgui"
@@ -409,7 +409,7 @@ set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCol
 	ankiimgui)
 
 # Add anki sub libraries
-add_subdirectory(src/anki)
+add_subdirectory(anki)
 
 separate_arguments(AK_SOURCES)
 add_library(anki ${AK_SOURCES})

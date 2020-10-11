@@ -1,0 +1,131 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// The VARIANT points to the master fragment in the quad:
+// -----
+// |3|2|
+// |0|1|
+// -----
+
+#pragma anki mutator VARIANT 0 1 2 3
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
+
+#pragma anki start comp
+
+#include <anki/shaders/Common.glsl>
+
+const UVec2 WORKGROUP_SIZE = UVec2(16u, 16u);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_inTex;
+layout(set = 0, binding = 2) uniform texture2D u_depthTex;
+layout(set = 0, binding = 3) writeonly uniform image2D u_outImg;
+
+shared Vec3 s_colors[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
+shared Vec4 s_depths[WORKGROUP_SIZE.y][WORKGROUP_SIZE.x];
+
+F32 computeDepthWeights(F32 refDepth, F32 depth)
+{
+	const F32 diff = abs(refDepth - depth);
+	const F32 weight = sqrt(1.0 / (EPSILON + diff));
+	return weight;
+}
+
+void reconstruct(IVec2 storeCoord, F32 depthRef, Vec4 colorAndDepth0, Vec4 colorAndDepth1)
+{
+	F32 weight = computeDepthWeights(depthRef, colorAndDepth0.w);
+	Vec3 col = colorAndDepth0.rgb * weight;
+	F32 weightSum = weight;
+
+	weight = computeDepthWeights(depthRef, colorAndDepth1.w);
+	col += colorAndDepth1.rgb * weight;
+	weightSum += weight;
+
+	col /= weightSum;
+
+	imageStore(u_outImg, storeCoord, Vec4(col, 0.0));
+}
+
+void reconstructAll(Vec4 depthRefs, Vec3 masterColor)
+{
+	const IVec2 localInvocationId = IVec2(gl_LocalInvocationID.xy);
+
+#if VARIANT == 0
+	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2);
+	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(1, 0), IVec2(1, 1), IVec2(0, 1));
+	const U32 masterDrefIdx = 3;
+	const U32 slaveDrefIdx[3] = U32[](2, 1, 0);
+#elif VARIANT == 1
+	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2) + IVec2(1, 0);
+	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(-1, 0), IVec2(0, 1), IVec2(-1, 1));
+	const U32 masterDrefIdx = 2;
+	const U32 slaveDrefIdx[3] = U32[](3, 1, 0);
+#elif VARIANT == 2
+	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2) + IVec2(1, 1);
+	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(-1, -1), IVec2(0, -1), IVec2(-1, 0));
+	const U32 masterDrefIdx = 1;
+	const U32 slaveDrefIdx[3] = U32[](3, 2, 0);
+#else
+	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2) + IVec2(0, 1);
+	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(0, -1), IVec2(1, -1), IVec2(1, 0));
+	const U32 masterDrefIdx = 0;
+	const U32 slaveDrefIdx[3] = U32[](3, 2, 1);
+#endif
+
+	const Vec4 masterColorAndDepth = Vec4(masterColor, depthRefs[masterDrefIdx]);
+	imageStore(u_outImg, masterStoreCoord, Vec4(masterColor, 0.0));
+
+	ANKI_UNROLL for(U32 i = 0; i < 3; ++i)
+	{
+		const IVec2 sharedCoord =
+			clamp(localInvocationId + slaveRelativeCoords[i], IVec2(0), IVec2(WORKGROUP_SIZE) - 1);
+		const Vec3 masterColor2 = s_colors[sharedCoord.y][sharedCoord.x];
+		const F32 masterDepth2 = s_depths[sharedCoord.y][sharedCoord.x][masterDrefIdx];
+		const IVec2 storeCoord = masterStoreCoord + slaveRelativeCoords[i];
+		reconstruct(storeCoord, depthRefs[slaveDrefIdx[i]], masterColorAndDepth, Vec4(masterColor2, masterDepth2));
+	}
+}
+
+void main()
+{
+	const UVec2 IN_TEXTURE_SIZE = FB_SIZE / 2;
+
+	// Initialize the storage for all threads, including helpers. The check should be a constexpr
+	if((WORKGROUP_SIZE.x % IN_TEXTURE_SIZE.x) != 0 || (WORKGROUP_SIZE.y % IN_TEXTURE_SIZE.y) != 0)
+	{
+		s_colors[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec3(0.0);
+		s_depths[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec4(1000.0); // High value so it has low weight
+
+		memoryBarrierShared();
+		barrier();
+	}
+
+	ANKI_BRANCH if(gl_GlobalInvocationID.x >= IN_TEXTURE_SIZE.x || gl_GlobalInvocationID.y >= IN_TEXTURE_SIZE.y)
+	{
+		// Out of bounds
+		return;
+	}
+
+	const Vec2 inTexelSize = 1.0 / Vec2(IN_TEXTURE_SIZE);
+	const Vec2 fbTexelSize = 1.0 / Vec2(FB_SIZE);
+
+	const Vec2 inUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(IN_TEXTURE_SIZE);
+	const Vec2 fbUv = (Vec2(gl_GlobalInvocationID.xy) * 2.0 + 1.0) / Vec2(FB_SIZE);
+
+	const Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, inUv, 0.0).rgb;
+	const Vec4 depthRefs = textureGather(sampler2D(u_depthTex, u_linearAnyClampSampler), fbUv, 0);
+
+	s_colors[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = color;
+	s_depths[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = depthRefs;
+
+	memoryBarrierShared();
+	barrier();
+
+	reconstructAll(depthRefs, color);
+}
+
+#pragma anki end

@@ -1,0 +1,61 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start comp
+#include <anki/shaders/Pack.glsl>
+#include <anki/shaders/LightFunctions.glsl>
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 6) in;
+
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_gbufferTex[3u];
+
+layout(set = 0, binding = 2) buffer readonly ssbo_
+{
+	Vec4 u_irradianceDice[6u];
+};
+
+layout(set = 0, binding = 3, r11f_g11f_b10f) uniform imageCube u_cubeTex;
+
+void main()
+{
+	const Vec2 cubeSize = Vec2(imageSize(u_cubeTex));
+	if(gl_GlobalInvocationID.x >= cubeSize.x || gl_GlobalInvocationID.y >= cubeSize.y)
+	{
+		return;
+	}
+
+	const U32 faceIdx = gl_LocalInvocationID.z;
+
+	// Compute the UVs to read the gbuffer from
+	Vec2 sampleUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(cubeSize);
+	sampleUv.x *= (1.0 / 6.0);
+	sampleUv.x += (1.0 / 6.0) * F32(faceIdx);
+
+	// Read the gbuffer
+	GbufferInfo gbuffer;
+	readGBuffer(u_gbufferTex[0u], u_gbufferTex[1u], u_gbufferTex[2u], u_nearestAnyClampSampler, sampleUv, 0.0, gbuffer);
+
+	// Sample
+	const Vec3 irradiance = sampleAmbientDice(u_irradianceDice[0u].xyz, u_irradianceDice[1u].xyz,
+											  u_irradianceDice[2u].xyz, u_irradianceDice[3u].xyz,
+											  u_irradianceDice[4u].xyz, u_irradianceDice[5u].xyz, gbuffer.m_normal);
+
+	// Compute the indirect term
+	const Vec3 indirect = gbuffer.m_diffuse * irradiance;
+
+	// Read the prev color and apply indirect
+	const IVec3 coords = IVec3(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y, faceIdx);
+	const Vec3 prevColor = imageLoad(u_cubeTex, coords).xyz;
+	const Vec3 prevColorWithIndirectDiffuse = prevColor + gbuffer.m_diffuse * indirect;
+
+	// Barrier just in case
+	memoryBarrierImage();
+	barrier();
+
+	// Write it back
+	imageStore(u_cubeTex, coords, Vec4(prevColorWithIndirectDiffuse, 0.0));
+}
+#pragma anki end

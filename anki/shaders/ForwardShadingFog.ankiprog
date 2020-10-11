@@ -1,0 +1,42 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+struct PerDraw
+{
+	Mat4 m_ankiMvp;
+	Mat4 m_ankiModelViewMatrix;
+	Vec3 m_fogColor;
+	F32 m_fogAlphaScale;
+	F32 m_fogDistanceOfMaxThikness;
+};
+
+layout(set = 1, binding = 0, row_major) uniform b_ankiMaterial
+{
+	PerDraw u_ankiPerDraw;
+};
+
+#pragma anki start vert
+#include <anki/shaders/ForwardShadingCommonVert.glsl>
+
+layout(location = 0) out F32 out_zVSpace;
+
+void main()
+{
+	gl_Position = u_ankiPerDraw.m_ankiMvp * Vec4(in_position, 1.0);
+	out_zVSpace = (u_ankiPerDraw.m_ankiModelViewMatrix * Vec4(in_position, 1.0)).z;
+}
+
+#pragma anki end
+
+#pragma anki start frag
+#include <anki/shaders/ForwardShadingCommonFrag.glsl>
+
+layout(location = 0) in F32 in_zVSpace;
+
+void main()
+{
+	fog(u_ankiPerDraw.m_fogColor, u_ankiPerDraw.m_fogAlphaScale, u_ankiPerDraw.m_fogDistanceOfMaxThikness, in_zVSpace);
+}
+#pragma anki end

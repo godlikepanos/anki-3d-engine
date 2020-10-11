@@ -1,0 +1,23 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start vert
+#include <anki/shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <anki/shaders/Common.glsl>
+
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_tex;
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_col;
+
+void main()
+{
+	out_col = textureLod(u_tex, u_linearAnyClampSampler, in_uv, 0.0).rgb;
+}
+#pragma anki end

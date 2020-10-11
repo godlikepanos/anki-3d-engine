@@ -1,0 +1,78 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator ANIMATED_TEXTURE 0 1
+#pragma anki mutator LIGHT 0 1
+
+struct PerDraw
+{
+	Mat4 m_ankiMvp;
+	Mat3 m_ankiCameraRotationMatrix;
+#if ANIMATED_TEXTURE == 1
+	F32 m_animationPeriod;
+#endif
+	Vec4 m_colorScale;
+	Vec4 m_colorBias;
+};
+
+layout(set = 1, binding = 0, row_major) uniform b_ankiMaterial
+{
+	PerDraw u_ankiPerDraw;
+};
+
+layout(set = 1, binding = 1) uniform sampler u_ankiGlobalSampler;
+#if ANIMATED_TEXTURE == 0
+layout(set = 1, binding = 2) uniform texture2D u_diffuseMap;
+#endif
+#if ANIMATED_TEXTURE == 1
+layout(set = 1, binding = 2) uniform texture2DArray u_diffuseMapArr;
+#endif
+
+#pragma anki start vert
+#include <anki/shaders/ForwardShadingCommonVert.glsl>
+
+layout(location = SCALE_LOCATION) in F32 in_scale;
+layout(location = ALPHA_LOCATION) in F32 in_alpha;
+
+layout(location = 0) flat out F32 out_alpha;
+layout(location = 1) out Vec2 out_uv;
+layout(location = 2) out Vec3 out_worldPos;
+
+void main()
+{
+	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1);
+
+	out_worldPos = u_ankiPerDraw.m_ankiCameraRotationMatrix * Vec3((out_uv - 0.5) * in_scale, 0.0) + in_position;
+	gl_Position = u_ankiPerDraw.m_ankiMvp * Vec4(out_worldPos, 1.0);
+
+	out_alpha = in_alpha;
+}
+#pragma anki end
+
+#pragma anki start frag
+#include <anki/shaders/ForwardShadingCommonFrag.glsl>
+
+layout(location = 0) flat in F32 in_alpha;
+layout(location = 1) in Vec2 in_uv;
+layout(location = 2) in Vec3 in_worldPos;
+
+void main()
+{
+#if ANIMATED_TEXTURE == 1
+	Vec4 texCol = readAnimatedTextureRgba(u_diffuseMapArr, u_ankiGlobalSampler, u_ankiPerDraw.m_animationPeriod, in_uv,
+										  anki_u_time);
+#else
+	Vec4 texCol = texture(u_diffuseMap, u_ankiGlobalSampler, in_uv);
+#endif
+
+#if LIGHT
+	texCol.rgb = computeLightColorLow(texCol.rgb, in_worldPos);
+#endif
+
+	Vec4 colScale = u_ankiPerDraw.m_colorScale;
+	colScale.a *= in_alpha;
+	particleAlpha(texCol, colScale, u_ankiPerDraw.m_colorBias);
+}
+#pragma anki end

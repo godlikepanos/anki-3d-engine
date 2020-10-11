@@ -1,0 +1,78 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_DEPTH_MAP_SIZE, 0, UVec2(1.0));
+
+#pragma anki start comp
+#include <anki/shaders/Common.glsl>
+
+const U32 WORKGROUP_SIZE = 8;
+layout(local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE, local_size_z = 1) in;
+
+struct DrawArraysIndirectInfo
+{
+	U32 count;
+	U32 instanceCount;
+	U32 first;
+	U32 baseInstance;
+};
+
+layout(set = 0, binding = 0, std430, row_major) readonly buffer ss0_
+{
+	Mat4 u_mvp;
+	Vec4 u_flarePositions[];
+};
+
+layout(set = 0, binding = 1, std430) writeonly buffer ss1_
+{
+	DrawArraysIndirectInfo u_indirectInfo[];
+};
+
+layout(set = 0, binding = 2) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 3) uniform texture2D u_depthMap;
+
+shared U32 s_maxDepth;
+
+void main()
+{
+	// Init the s_maxDepth
+	if(gl_LocalInvocationIndex == 0)
+	{
+		s_maxDepth = 0;
+	}
+	memoryBarrierShared();
+	barrier();
+
+	// Project the flare
+	const U32 flareIdx = gl_WorkGroupID.x;
+	const Vec4 posClip = u_mvp * u_flarePositions[flareIdx];
+	const Vec3 posNdc = posClip.xyz / posClip.w;
+	const F32 depth = posNdc.z;
+
+	// Compute the UVs to sample the depth map
+	// Belongs to [-WORKGROUP_SIZE, WORKGROUP_SIZE]
+	const Vec2 displacement = Vec2(gl_LocalInvocationID.xy) - Vec2(WORKGROUP_SIZE / 2u);
+	const Vec2 TEXEL_SIZE = 1.0 / Vec2(IN_DEPTH_MAP_SIZE);
+	const Vec2 uv = NDC_TO_UV(posNdc.xy) + displacement * TEXEL_SIZE;
+
+	// Sample and store depth
+	const F32 refDepth = textureLod(u_depthMap, u_nearestAnyClampSampler, uv, 0.0).r;
+	atomicMax(s_maxDepth, U32(refDepth * F32(MAX_U32)));
+
+	// Sync
+	memoryBarrierShared();
+	barrier();
+
+	if(gl_LocalInvocationIndex == 0)
+	{
+		const F32 refDepth2 = F32(s_maxDepth) / F32(MAX_U32);
+		u_indirectInfo[flareIdx].count = (depth > refDepth2) ? 0u : 4u;
+
+		u_indirectInfo[flareIdx].instanceCount = 1u;
+		u_indirectInfo[flareIdx].first = 0u;
+		u_indirectInfo[flareIdx].baseInstance = 0u;
+	}
+}
+#pragma anki end

@@ -1,0 +1,132 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator VARIANT 0 1 2 3
+#pragma anki mutator ORIENTATION 0 1 // 0: VERTICAL, 1: HORIZONTAL
+#pragma anki mutator SAMPLE_COUNT 3 5 7 9 11 13 15
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_TEXTURE_SIZE, 0, UVec2(1));
+
+#pragma anki start comp
+
+#include <anki/shaders/BilateralFilter.glsl>
+#include <anki/shaders/Pack.glsl>
+
+#if SAMPLE_COUNT < 3
+#	error See file
+#endif
+
+const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_inTex;
+layout(set = 0, binding = 2) uniform texture2D u_depthTex;
+layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
+layout(set = 0, binding = 4) writeonly uniform image2D u_outImg;
+
+layout(std140, push_constant, row_major) uniform b_pc
+{
+	Mat4 u_invViewProjMat;
+};
+
+Vec3 unproject(Vec2 ndc, F32 depth)
+{
+	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+	return worldPos;
+}
+
+F32 readDepth(Vec2 uv)
+{
+	return textureLod(u_depthTex, u_linearAnyClampSampler, uv, 0.0).r;
+}
+
+Vec3 readNormal(Vec2 uv)
+{
+	return readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
+}
+
+void sampleTex(Vec2 colorUv, Vec2 fullUv, BilateralSample ref, inout Vec3 col, inout F32 weight)
+{
+	const Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, colorUv, 0.0).rgb;
+
+	BilateralSample crnt;
+	crnt.m_depth = readDepth(fullUv);
+	crnt.m_position = unproject(UV_TO_NDC(fullUv), crnt.m_depth);
+	crnt.m_normal = readNormal(fullUv);
+
+	BilateralConfig config;
+	const Vec3 weights = normalize(Vec3(0.0, 1.0, 1.0));
+	config.m_depthWeight = weights.x;
+	config.m_normalWeight = weights.y;
+	config.m_planeWeight = weights.z;
+	config.m_roughnessWeight = 0.0;
+
+	const F32 w = calculateBilateralWeight(crnt, ref, config);
+	col += color * w;
+	weight += w;
+}
+
+void main()
+{
+	// Set UVs
+	ANKI_BRANCH if(gl_GlobalInvocationID.x >= IN_TEXTURE_SIZE.x || gl_GlobalInvocationID.y >= IN_TEXTURE_SIZE.y)
+	{
+		// Out of bounds
+		return;
+	}
+
+	const Vec2 inUv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(IN_TEXTURE_SIZE);
+#if VARIANT == 0
+	const UVec2 depthReadOffset = UVec2(0, 0);
+#elif VARIANT == 1
+	const UVec2 depthReadOffset = UVec2(1, 0);
+#elif VARIANT == 2
+	const UVec2 depthReadOffset = UVec2(1, 1);
+#else
+	const UVec2 depthReadOffset = UVec2(1, 0);
+#endif
+	const Vec2 depthUv = (Vec2(gl_GlobalInvocationID.xy * 2 + depthReadOffset) + 0.5) / Vec2(IN_TEXTURE_SIZE * 2);
+
+	const Vec2 IN_TEXEL_SIZE = 1.0 / Vec2(IN_TEXTURE_SIZE);
+	const Vec2 DEPTH_TEXEL_SIZE = 1.0 / Vec2(IN_TEXTURE_SIZE * 2);
+
+	// Reference
+	Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, inUv, 0.0).rgb;
+	F32 weight = 1.0;
+
+	BilateralSample ref;
+	ref.m_depth = readDepth(depthUv);
+	ref.m_position = unproject(UV_TO_NDC(depthUv), ref.m_depth);
+	ref.m_normal = readNormal(depthUv);
+
+#if ORIENTATION == 1
+#	define X_OR_Y x
+#else
+#	define X_OR_Y y
+#endif
+
+	Vec2 inUvOffset = Vec2(0.0);
+	inUvOffset.X_OR_Y = 1.0 * IN_TEXEL_SIZE.X_OR_Y;
+	Vec2 depthUvOffset = Vec2(0.0);
+	depthUvOffset.X_OR_Y = 2.0 * DEPTH_TEXEL_SIZE.X_OR_Y;
+
+	ANKI_UNROLL for(U32 i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
+	{
+		sampleTex(inUv + inUvOffset, depthUv + depthUvOffset, ref, color, weight);
+		sampleTex(inUv - inUvOffset, depthUv - depthUvOffset, ref, color, weight);
+
+		inUvOffset.X_OR_Y += IN_TEXEL_SIZE.X_OR_Y;
+		depthUvOffset.X_OR_Y += 2.0 * DEPTH_TEXEL_SIZE.X_OR_Y;
+	}
+
+	color /= weight;
+
+	// Write value
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(color, 0.0));
+}
+
+#pragma anki end

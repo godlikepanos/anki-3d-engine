@@ -1,0 +1,107 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start comp
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_X, 2, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_Y, 3, 1u);
+
+#define LIGHT_SET 0
+#define LIGHT_COMMON_UNIS_BINDING 3
+#define LIGHT_LIGHTS_BINDING 4
+#define LIGHT_CLUSTERS_BINDING 7
+#include <anki/shaders/ClusteredShadingCommon.glsl>
+
+const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba8) uniform image2D out_img;
+layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 2) uniform texture2D u_depthRt;
+
+void main()
+{
+	SKIP_OUT_OF_BOUNDS_INVOCATIONS();
+
+	// World position
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const Vec2 ndc = UV_TO_NDC(uv);
+	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
+	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	// Cluster
+	const U32 clusterIdx = computeClusterIndex(u_clustererMagic, uv, worldPos, CLUSTER_COUNT_X, CLUSTER_COUNT_Y);
+	U32 idxOffset = u_clusters[clusterIdx];
+
+	U32 shadowCasterCountPerFragment = 0;
+	const U32 maxShadowCastersPerFragment = 4;
+	F32 shadowFactors[maxShadowCastersPerFragment] = F32[](0.0, 0.0, 0.0, 0.0);
+
+	// Dir light
+	if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
+	{
+		const Vec4 viewPos4 = u_invProjMat * Vec4(ndc, depth, 1.0);
+		const F32 positiveZViewSpace = -(viewPos4.z / viewPos4.w);
+
+		F32 shadowFactor;
+		if(positiveZViewSpace < u_dirLight.m_effectiveShadowDistance)
+		{
+			const U32 cascadeIdx =
+				computeShadowCascadeIndex(positiveZViewSpace, u_dirLight.m_shadowCascadesDistancePower,
+										  u_dirLight.m_effectiveShadowDistance, u_dirLight.m_cascadeCount);
+
+			shadowFactor =
+				computeShadowFactorDirLight(u_dirLight, cascadeIdx, worldPos, u_shadowTex, u_linearAnyClampSampler);
+
+			F32 distanceFadeFactor = saturate(positiveZViewSpace / u_dirLight.m_effectiveShadowDistance);
+			distanceFadeFactor = pow(distanceFadeFactor, 8.0);
+			shadowFactor += distanceFadeFactor;
+		}
+		else
+		{
+			shadowFactor = 1.0;
+		}
+
+		shadowFactors[0] = shadowFactor;
+		++shadowCasterCountPerFragment;
+	}
+
+	// Point lights
+	U32 idx;
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		PointLight light = u_pointLights[idx];
+
+		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
+		{
+			const Vec3 frag2Light = light.m_position - worldPos;
+
+			const F32 shadowFactor =
+				computeShadowFactorPointLight(light, frag2Light, u_shadowTex, u_linearAnyClampSampler);
+			shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment++)] = shadowFactor;
+		}
+	}
+
+	// Spot lights
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		SpotLight light = u_spotLights[idx];
+
+		ANKI_BRANCH if(light.m_shadowmapId >= 0.0)
+		{
+			const F32 shadowFactor =
+				computeShadowFactorSpotLight(light, worldPos, u_shadowTex, u_linearAnyClampSampler);
+			shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment++)] = shadowFactor;
+		}
+	}
+
+	// Store
+	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy),
+			   Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
+}
+
+#pragma anki end

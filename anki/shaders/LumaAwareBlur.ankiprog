@@ -1,0 +1,81 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator HORIZONTAL 0 1
+#pragma anki mutator KERNEL_SIZE 3 5 7 9 11 13 15
+#pragma anki mutator COLOR_COMPONENTS 4 3 1
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0, UVec2(1));
+
+#pragma anki start vert
+#include <anki/shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <anki/shaders/GaussianBlurCommon.glsl>
+#include <anki/shaders/Tonemapping.glsl>
+
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_tex;
+
+layout(location = 0) in Vec2 in_uv;
+
+// Determine color type
+#if COLOR_COMPONENTS == 4
+#	define COL_TYPE Vec4
+#	define TEX_FETCH rgba
+#elif COLOR_COMPONENTS == 3
+#	define COL_TYPE Vec3
+#	define TEX_FETCH rgb
+#elif COLOR_COMPONENTS == 1
+#	define COL_TYPE F32
+#	define TEX_FETCH r
+#else
+#	error See file
+#endif
+
+F32 computeLumaWeight(F32 refLuma, COL_TYPE col)
+{
+	const F32 l = computeLuminance(Vec3(col));
+	const F32 diff = abs(refLuma - l);
+	const F32 weight = 1.0 / (EPSILON + diff);
+	return weight;
+}
+
+// Output
+layout(location = 0) out COL_TYPE out_color;
+
+void main()
+{
+#if HORIZONTAL
+	const Vec2 TEXEL_SIZE = Vec2(1.0 / F32(TEXTURE_SIZE.x), 0.0);
+#else
+	const Vec2 TEXEL_SIZE = Vec2(0.0, 1.0 / F32(TEXTURE_SIZE.y));
+#endif
+
+	COL_TYPE col = textureLod(u_tex, u_linearAnyClampSampler, in_uv, 0.0).TEX_FETCH;
+	out_color = col;
+	const F32 refLuma = computeLuminance(Vec3(col));
+	F32 weight = 1.0;
+	Vec2 texCoordOffset = 1.5 * TEXEL_SIZE;
+
+	for(U32 i = 0u; i < KERNEL_SIZE; ++i)
+	{
+		COL_TYPE col = textureLod(u_tex, u_linearAnyClampSampler, in_uv + texCoordOffset, 0.0).TEX_FETCH;
+		F32 w = computeLumaWeight(refLuma, col);
+		out_color += col * w;
+		weight += w;
+
+		col = textureLod(u_tex, u_linearAnyClampSampler, in_uv - texCoordOffset, 0.0).TEX_FETCH;
+		w = computeLumaWeight(refLuma, col);
+		out_color += col * w;
+		weight += w;
+
+		texCoordOffset += 2.0 * TEXEL_SIZE;
+	}
+
+	out_color = out_color / weight;
+}
+#pragma anki end

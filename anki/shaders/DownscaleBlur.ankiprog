@@ -1,0 +1,12 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki start vert
+#include <anki/shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <anki/shaders/DownscaleBlur.glsl>
+#pragma anki end

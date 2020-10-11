@@ -1,0 +1,108 @@
+// Copyright (C) 2009-2020, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator BLUE_NOISE 0 1
+#pragma anki mutator BLOOM_ENABLED 0 1
+#pragma anki mutator DBG_ENABLED 0 1
+#pragma anki mutator DBG_RENDER_TARGET_ENABLED 0 1
+
+ANKI_SPECIALIZATION_CONSTANT_U32(LUT_SIZE, 0, 1);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 1, UVec2(1, 1));
+ANKI_SPECIALIZATION_CONSTANT_U32(MOTION_BLUR_SAMPLES, 3, 1);
+
+#pragma anki start vert
+#include <anki/shaders/QuadVert.glsl>
+#pragma anki end
+
+#pragma anki start frag
+#include <anki/shaders/Common.glsl>
+#include <anki/shaders/Tonemapping.glsl>
+#include <anki/shaders/Functions.glsl>
+#include <anki/shaders/MotionBlur.glsl>
+
+#define TONEMAPPING_BINDING 0
+#define TONEMAPPING_SET 0
+#include <anki/shaders/TonemappingResources.glsl>
+
+layout(set = 0, binding = 1) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 2) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 3) uniform sampler u_trilinearRepeatSampler;
+
+layout(set = 0, binding = 4) uniform texture2D u_lightShadingRt;
+layout(set = 0, binding = 5) uniform texture2D u_ppsBloomLfRt;
+layout(set = 0, binding = 6) uniform texture3D u_lut;
+layout(set = 0, binding = 7) uniform texture2DArray u_blueNoise;
+layout(set = 0, binding = 8) uniform texture2D u_velocityRt;
+layout(set = 0, binding = 9) uniform texture2D u_depthRt;
+#if DBG_ENABLED
+layout(set = 0, binding = 10) uniform texture2D u_dbgOutlineRt;
+#endif
+#if DBG_RENDER_TARGET_ENABLED
+layout(set = 0, binding = 11) uniform texture2D u_dbgRt;
+#endif
+
+layout(push_constant, row_major, std430) uniform pc_
+{
+	Vec4 u_blueNoiseLayerPad3;
+	Mat4 u_prevViewProjMatMulInvViewProjMat;
+};
+
+layout(location = 0) in Vec2 in_uv;
+layout(location = 0) out Vec3 out_color;
+
+Vec3 colorGrading(Vec3 color)
+{
+	const Vec3 LUT_SCALE = Vec3((F32(LUT_SIZE) - 1.0) / F32(LUT_SIZE));
+	const Vec3 LUT_OFFSET = Vec3(1.0 / (2.0 * F32(LUT_SIZE)));
+
+	color = min(color, Vec3(1.0));
+	const Vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
+	return textureLod(u_lut, u_trilinearRepeatSampler, lutCoords, 0.0).rgb;
+}
+
+void main()
+{
+	const Vec2 uv = in_uv.xy;
+
+	if(MOTION_BLUR_SAMPLES > 0u)
+	{
+		out_color =
+			motionBlur(u_velocityRt, u_nearestAnyClampSampler, u_lightShadingRt, u_linearAnyClampSampler, u_depthRt,
+					   u_nearestAnyClampSampler, uv, u_prevViewProjMatMulInvViewProjMat, MOTION_BLUR_SAMPLES);
+	}
+	else
+	{
+		out_color = textureLod(u_lightShadingRt, u_linearAnyClampSampler, uv, 0.0).rgb;
+	}
+
+	out_color = tonemap(out_color, u_exposureThreshold0);
+
+#if BLOOM_ENABLED
+	const Vec3 bloom = textureLod(u_ppsBloomLfRt, u_linearAnyClampSampler, uv, 0.0).rgb;
+	out_color += bloom;
+#endif
+
+	out_color = colorGrading(out_color);
+
+#if BLUE_NOISE
+	const Vec3 bnUvw = Vec3(Vec2(FB_SIZE) / Vec2(64.0) * uv, u_blueNoiseLayerPad3.x);
+	Vec3 blueNoise = textureLod(u_blueNoise, u_trilinearRepeatSampler, bnUvw, 0.0).rgb;
+	blueNoise = blueNoise * 2.0 - 1.0;
+	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
+
+	out_color += blueNoise / 255.0;
+#endif
+
+#if DBG_RENDER_TARGET_ENABLED
+	out_color = textureLod(u_dbgRt, u_linearAnyClampSampler, uv, 0.0).rgb;
+#endif
+
+#if DBG_ENABLED
+	const Vec4 dbg = textureLod(u_dbgOutlineRt, u_linearAnyClampSampler, uv, 0.0);
+	out_color = mix(out_color, dbg.rgb, dbg.a);
+#endif
+}
+
+#pragma anki end
