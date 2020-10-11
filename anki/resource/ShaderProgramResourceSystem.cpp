@@ -223,6 +223,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, Gr
 															DynamicArray<ShaderProgramRaytracingLibrary>& outLibs)
 {
 	ANKI_RESOURCE_LOGI("Creating ray tracing programs");
+	U32 rtProgramCount = 0;
 
 	// Gather the RT program fnames
 	StringListAuto rtPrograms(alloc);
@@ -552,84 +553,87 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, Gr
 	}
 
 	// Create the libraries
-	if(libs.getSize() == 0)
+	if(libs.getSize() != 0)
 	{
-		return Error::NONE;
-	}
+		outLibs.resize(alloc, libs.getSize());
 
-	outLibs.resize(alloc, libs.getSize());
-
-	for(U32 libIdx = 0; libIdx < libs.getSize(); ++libIdx)
-	{
-		ShaderProgramRaytracingLibrary& outLib = outLibs[libIdx];
-		Lib& inLib = libs[libIdx];
-
-		if(inLib.m_presentStages
-		   != (ShaderTypeBit::RAY_GEN | ShaderTypeBit::MISS | ShaderTypeBit::CLOSEST_HIT | ShaderTypeBit::ANY_HIT))
+		for(U32 libIdx = 0; libIdx < libs.getSize(); ++libIdx)
 		{
-			ANKI_RESOURCE_LOGE("The libray is missing shader shader types: %s", inLib.m_name.cstr());
-			return Error::USER_DATA;
-		}
+			ShaderProgramRaytracingLibrary& outLib = outLibs[libIdx];
+			Lib& inLib = libs[libIdx];
 
-		// Sort because the expectation is that the miss shaders are organized based on ray type
-		std::sort(inLib.m_rayTypes.getBegin(), inLib.m_rayTypes.getEnd(),
-				  [](const RayType& a, const RayType& b) { return a.m_typeIndex < b.m_typeIndex; });
-
-		outLib.m_libraryName.create(alloc, inLib.m_name);
-		outLib.m_rayTypeCount = inLib.m_rayTypes.getSize();
-
-		DynamicArrayAuto<RayTracingHitGroup> initInfoHitGroups(alloc);
-		DynamicArrayAuto<ShaderPtr> missShaders(alloc);
-
-		for(U32 rayTypeIdx = 0; rayTypeIdx < inLib.m_rayTypes.getSize(); ++rayTypeIdx)
-		{
-			const RayType& inRayType = inLib.m_rayTypes[rayTypeIdx];
-
-			if(inRayType.m_typeIndex != rayTypeIdx)
+			if(inLib.m_presentStages
+			   != (ShaderTypeBit::RAY_GEN | ShaderTypeBit::MISS | ShaderTypeBit::CLOSEST_HIT | ShaderTypeBit::ANY_HIT))
 			{
-				ANKI_RESOURCE_LOGE("Ray types are not contiguous for library: %s", inLib.m_name.cstr());
+				ANKI_RESOURCE_LOGE("The libray is missing shader shader types: %s", inLib.m_name.cstr());
 				return Error::USER_DATA;
 			}
 
-			// Add the hitgroups to the init info
-			for(U32 hitGroupIdx = 0; hitGroupIdx < inRayType.m_hitGroups.getSize(); ++hitGroupIdx)
+			// Sort because the expectation is that the miss shaders are organized based on ray type
+			std::sort(inLib.m_rayTypes.getBegin(), inLib.m_rayTypes.getEnd(),
+					  [](const RayType& a, const RayType& b) { return a.m_typeIndex < b.m_typeIndex; });
+
+			outLib.m_libraryName.create(alloc, inLib.m_name);
+			outLib.m_rayTypeCount = inLib.m_rayTypes.getSize();
+
+			DynamicArrayAuto<RayTracingHitGroup> initInfoHitGroups(alloc);
+			DynamicArrayAuto<ShaderPtr> missShaders(alloc);
+
+			for(U32 rayTypeIdx = 0; rayTypeIdx < inLib.m_rayTypes.getSize(); ++rayTypeIdx)
 			{
-				const HitGroup& inHitGroup = inRayType.m_hitGroups[hitGroupIdx];
+				const RayType& inRayType = inLib.m_rayTypes[rayTypeIdx];
 
-				outLib.m_groupHashToGroupIndex.emplace(alloc, inHitGroup.m_hitGroupHash, initInfoHitGroups.getSize());
-
-				RayTracingHitGroup* infoHitGroup = initInfoHitGroups.emplaceBack();
-				if(inHitGroup.m_ahit != MAX_U32)
+				if(inRayType.m_typeIndex != rayTypeIdx)
 				{
-					infoHitGroup->m_anyHitShader = inLib.m_shaders[inHitGroup.m_ahit].m_shader;
+					ANKI_RESOURCE_LOGE("Ray types are not contiguous for library: %s", inLib.m_name.cstr());
+					return Error::USER_DATA;
 				}
 
-				if(inHitGroup.m_chit != MAX_U32)
+				// Add the hitgroups to the init info
+				for(U32 hitGroupIdx = 0; hitGroupIdx < inRayType.m_hitGroups.getSize(); ++hitGroupIdx)
 				{
-					infoHitGroup->m_closestHitShader = inLib.m_shaders[inHitGroup.m_chit].m_shader;
+					const HitGroup& inHitGroup = inRayType.m_hitGroups[hitGroupIdx];
+
+					outLib.m_groupHashToGroupIndex.emplace(alloc, inHitGroup.m_hitGroupHash,
+														   initInfoHitGroups.getSize());
+
+					RayTracingHitGroup* infoHitGroup = initInfoHitGroups.emplaceBack();
+					if(inHitGroup.m_ahit != MAX_U32)
+					{
+						infoHitGroup->m_anyHitShader = inLib.m_shaders[inHitGroup.m_ahit].m_shader;
+					}
+
+					if(inHitGroup.m_chit != MAX_U32)
+					{
+						infoHitGroup->m_closestHitShader = inLib.m_shaders[inHitGroup.m_chit].m_shader;
+					}
 				}
+
+				// Add the miss shader
+				ANKI_ASSERT(inRayType.m_miss != MAX_U32);
+				missShaders.emplaceBack(inLib.m_shaders[inRayType.m_miss].m_shader);
 			}
 
-			// Add the miss shader
-			ANKI_ASSERT(inRayType.m_miss != MAX_U32);
-			missShaders.emplaceBack(inLib.m_shaders[inRayType.m_miss].m_shader);
-		}
+			// Program name
+			StringAuto progName(alloc, inLib.m_name);
+			char* cprogName = const_cast<char*>(progName.cstr());
+			if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
+			{
+				cprogName[MAX_GR_OBJECT_NAME_LENGTH] = '\0';
+			}
 
-		// Program name
-		StringAuto progName(alloc, inLib.m_name);
-		char* cprogName = const_cast<char*>(progName.cstr());
-		if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
-		{
-			cprogName[MAX_GR_OBJECT_NAME_LENGTH] = '\0';
-		}
+			// Create the program
+			ShaderProgramInitInfo inf(cprogName);
+			inf.m_rayTracingShaders.m_rayGenShader = inLib.m_rayGenShader;
+			inf.m_rayTracingShaders.m_missShaders = missShaders;
+			inf.m_rayTracingShaders.m_hitGroups = initInfoHitGroups;
+			outLib.m_program = gr.newShaderProgram(inf);
 
-		// Create the program
-		ShaderProgramInitInfo inf(cprogName);
-		inf.m_rayTracingShaders.m_rayGenShader = inLib.m_rayGenShader;
-		inf.m_rayTracingShaders.m_missShaders = missShaders;
-		inf.m_rayTracingShaders.m_hitGroups = initInfoHitGroups;
-		outLib.m_program = gr.newShaderProgram(inf);
+			++rtProgramCount;
+		}
 	}
+
+	ANKI_RESOURCE_LOGI("Created %u ray tracing programs", rtProgramCount);
 
 	return Error::NONE;
 }

@@ -9,12 +9,12 @@
 #pragma anki mutator ALPHA_TEXTURE 0 1
 
 #include <anki/shaders/Common.glsl>
-#include <anki/shaders/include/Model.h>
+#include <anki/shaders/include/GpuModel.h>
 
 #if ALPHA_TEXTURE == 1
-layout(set = 0, binding = 0, scalar) buffer b_ankiModelInstances
+layout(set = 0, binding = 0, scalar) buffer b_ankiModels
 {
-	ModelInstance u_ankiModelInstances[];
+	GpuModel u_ankiModels[];
 };
 
 layout(set = 0, binding = 1) uniform sampler u_ankiGlobalSampler;
@@ -29,20 +29,20 @@ layout(location = 0) rayPayloadInEXT F32 g_payload;
 hitAttributeEXT vec2 g_attribs;
 
 ANKI_REF(U16Vec3, 2);
-ANKI_REF(Vertex, 4);
+ANKI_REF(GpuVertex, 4);
 
 void main()
 {
 #if ALPHA_TEXTURE == 1
-	const ModelInstance model = u_ankiModelInstances[nonuniformEXT(gl_InstanceID)];
-	const Mesh mesh = model.m_mesh;
+	const GpuModel model = u_ankiModels[nonuniformEXT(gl_InstanceID)];
+	const GpuMesh mesh = model.m_mesh;
 
 	const U32 offset = gl_PrimitiveID * ANKI_SIZEOF(U16Vec3);
 	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(mesh.m_indexBufferPtr + offset)).m_value;
 
-	const Vertex vert0 = VertexRef(mesh.m_vertexBufferPtr + indices[0] * SIZEOF_VERTEX).m_value;
-	const Vertex vert1 = VertexRef(mesh.m_vertexBufferPtr + indices[1] * SIZEOF_VERTEX).m_value;
-	const Vertex vert2 = VertexRef(mesh.m_vertexBufferPtr + indices[2] * SIZEOF_VERTEX).m_value;
+	const GpuVertex vert0 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[0] * SIZEOF_GPU_VERTEX).m_value;
+	const GpuVertex vert1 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[1] * SIZEOF_GPU_VERTEX).m_value;
+	const GpuVertex vert2 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[2] * SIZEOF_GPU_VERTEX).m_value;
 
 	const Vec3 barycentrics = Vec3(1.0f - g_attribs.x - g_attribs.y, g_attribs.x, g_attribs.y);
 
