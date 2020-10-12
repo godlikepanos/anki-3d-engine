@@ -19,7 +19,7 @@ struct GpuVertex
 	HVec2 m_uvs[UV_CHANNEL_COUNT];
 };
 
-const U32 SIZEOF_GPU_VERTEX = 4 * 3;
+const U32 _ANKI_SIZEOF_GpuVertex = 4 * 3;
 
 struct GpuMesh
 {

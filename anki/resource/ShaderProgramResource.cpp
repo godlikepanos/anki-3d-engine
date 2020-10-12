@@ -363,18 +363,18 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 		}
 	}
 
-	// Create the program name
-	StringAuto progName(getTempAllocator());
-	getFilepathFilename(getFilename(), progName);
-	char* cprogName = const_cast<char*>(progName.cstr());
-	if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
-	{
-		cprogName[MAX_GR_OBJECT_NAME_LENGTH] = '\0';
-	}
-
 	// Time to init the shaders
 	if(!!(m_shaderStages & (ShaderTypeBit::ALL_GRAPHICS | ShaderTypeBit::COMPUTE)))
 	{
+		// Create the program name
+		StringAuto progName(getTempAllocator());
+		getFilepathFilename(getFilename(), progName);
+		char* cprogName = const_cast<char*>(progName.cstr());
+		if(progName.getLength() > MAX_GR_OBJECT_NAME_LENGTH)
+		{
+			cprogName[MAX_GR_OBJECT_NAME_LENGTH] = '\0';
+		}
+
 		ShaderProgramInitInfo progInf(cprogName);
 		for(ShaderType shaderType : EnumIterable<ShaderType>())
 		{
@@ -409,19 +409,8 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 	}
 	else
 	{
-		for(ShaderType shaderType : EnumIterable<ShaderType>())
-		{
-			if(!(ShaderTypeBit(1 << shaderType) & m_shaderStages))
-			{
-				continue;
-			}
-
-			ShaderInitInfo inf(cprogName);
-			inf.m_shaderType = shaderType;
-			inf.m_binary = binary.m_codeBlocks[binaryVariant->m_codeBlockIndices[shaderType]].m_binary;
-			inf.m_constValues.setArray((constValueCount) ? constValues.getBegin() : nullptr, constValueCount);
-			ShaderPtr shader = getManager().getGrManager().newShader(inf);
-		}
+		ANKI_ASSERT(!!(m_shaderStages & ShaderTypeBit::ALL_RAY_TRACING));
+		ANKI_ASSERT(!"TODO");
 	}
 }
 

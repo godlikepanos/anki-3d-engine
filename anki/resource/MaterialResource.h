@@ -11,6 +11,7 @@
 #include <anki/resource/TextureResource.h>
 #include <anki/Math.h>
 #include <anki/util/Enum.h>
+#include <anki/shaders/include/GpuModel.h>
 
 namespace anki
 {
@@ -20,6 +21,18 @@ class XmlElement;
 
 /// @addtogroup resource
 /// @{
+
+enum class RayTracingMaterialType : U8
+{
+	SHADOWS,
+	GI,
+	REFLECTIONS,
+	PATH_TRACING,
+
+	COUNT,
+	FIRST = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RayTracingMaterialType)
 
 /// The ID of a buildin material variable.
 enum class BuiltinMaterialVariableId : U8
@@ -249,15 +262,40 @@ private:
 	U32 m_uniBlockSize = 0;
 };
 
+/// Ray tracing material variant.
+class RayTracingMaterialVariant
+{
+	friend class MaterialResource;
+	template<typename, PtrSize>
+	friend class Array;
+
+public:
+	RayTracingMaterialVariant(const RayTracingMaterialVariant&) = delete;
+	RayTracingMaterialVariant& operator=(const RayTracingMaterialVariant&) = delete;
+
+	ConstWeakArray<U8> getHitShaderGroupHandle() const
+	{
+		return m_shaderGroupHandle;
+	}
+
+	const GpuMaterial& getGpuMaterialDescriptor() const
+	{
+		return m_gpuMaterialDescr;
+	}
+
+private:
+	DynamicArray<U8> m_shaderGroupHandle;
+	GpuMaterial m_gpuMaterialDescr;
+
+	RayTracingMaterialVariant() = default;
+	~RayTracingMaterialVariant() = default;
+};
+
 /// Material resource.
 ///
 /// Material XML file format:
 /// @code
-/// <material
-///		[shadow="0 | 1"]
-///		[forwardShading="0 | 1"]
-///		<shaderProgram="path"/>
-///
+/// <material [shadow="0 | 1"] [forwardShading="0 | 1"] shaderProgram="path">
 ///		[<mutation>
 ///			<mutator name="str" value="value"/>
 ///		</mutation>]
@@ -266,7 +304,18 @@ private:
 ///			<input shaderVar="name to shaderProg var" value="values"/> (1)
 ///		</inputs>]
 /// </material>
+///
+/// [<rtMaterial shaderProgram="path" type="shadows|gi|reflections|pathTracing">
+///		[<mutation>
+///			<mutator name="str" value="value"/>
+///		</mutation>]
+///
+/// 	[<inputs>
+/// 		<input name="name" value="" />
+/// 	</inputs>]
+/// </rtMaterial>]
 /// @endcode
+///
 /// (1): Only for non-builtins.
 class MaterialResource : public ResourceObject
 {
@@ -360,6 +409,8 @@ private:
 	DynamicArray<MaterialVariable> m_vars;
 
 	DynamicArray<SubMutation> m_nonBuiltinsMutation;
+
+	Array<RayTracingMaterialVariant, U(RayTracingMaterialType::COUNT)> m_rtVariantMatrix;
 
 	ANKI_USE_RESULT Error createVars();
 

@@ -64,6 +64,7 @@ public:
 
 	~ShaderProgramResourceVariant();
 
+	/// @note On ray tracing program resources it points to the actual ray tracing program that contains everything.
 	const ShaderProgramPtr& getProgram() const
 	{
 		return m_prog;
@@ -89,11 +90,19 @@ public:
 		return m_workgroupSizes;
 	}
 
+	/// Only for hit ray tracing programs.
+	ConstWeakArray<U8> getHitShaderGroupHandle() const
+	{
+		ANKI_ASSERT(m_hitShaderGroupHandle.getSize() > 0);
+		return m_hitShaderGroupHandle;
+	}
+
 private:
 	ShaderProgramPtr m_prog;
 	const ShaderProgramBinaryVariant* m_binaryVariant = nullptr;
 	BitSet<128, U64> m_activeConsts = {false};
 	Array<U32, 3> m_workgroupSizes;
+	DynamicArray<U8> m_hitShaderGroupHandle; ///< Hit shaders group handle.
 };
 
 /// The value of a constant.

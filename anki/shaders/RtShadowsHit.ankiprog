@@ -40,9 +40,9 @@ void main()
 	const U32 offset = gl_PrimitiveID * ANKI_SIZEOF(U16Vec3);
 	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(mesh.m_indexBufferPtr + offset)).m_value;
 
-	const GpuVertex vert0 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[0] * SIZEOF_GPU_VERTEX).m_value;
-	const GpuVertex vert1 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[1] * SIZEOF_GPU_VERTEX).m_value;
-	const GpuVertex vert2 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[2] * SIZEOF_GPU_VERTEX).m_value;
+	const GpuVertex vert0 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[0] * ANKI_SIZEOF(GpuVertex)).m_value;
+	const GpuVertex vert1 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[1] * ANKI_SIZEOF(GpuVertex)).m_value;
+	const GpuVertex vert2 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[2] * ANKI_SIZEOF(GpuVertex)).m_value;
 
 	const Vec3 barycentrics = Vec3(1.0f - g_attribs.x - g_attribs.y, g_attribs.x, g_attribs.y);
 
