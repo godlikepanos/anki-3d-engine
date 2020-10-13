@@ -460,6 +460,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, Gr
 			}
 
 			// Iterate all mutations
+			// TODO What if there are no mutation?
 			for(U32 m = 0; m < binary.m_mutations.getSize(); ++m)
 			{
 				const ShaderProgramBinaryMutation& mutation = binary.m_mutations[m];
@@ -467,7 +468,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, Gr
 
 				// Generate the hash
 				const U64 hitGroupHash =
-					ShaderProgramRaytracingLibrary::generateHitGroupHash(filename, mutation.m_values);
+					ShaderProgramRaytracingLibrary::generateHitGroupHash(filename, mutation.m_hash);
 
 				HitGroup hitGroup;
 				hitGroup.m_hitGroupHash = hitGroupHash;
@@ -595,7 +596,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, Gr
 					const HitGroup& inHitGroup = inRayType.m_hitGroups[hitGroupIdx];
 
 					outLib.m_groupHashToGroupIndex.emplace(alloc, inHitGroup.m_hitGroupHash,
-														   initInfoHitGroups.getSize());
+														   initInfoHitGroups.getSize() + outLib.m_rayTypeCount + 1);
 
 					RayTracingHitGroup* infoHitGroup = initInfoHitGroups.emplaceBack();
 					if(inHitGroup.m_ahit != MAX_U32)

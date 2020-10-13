@@ -93,8 +93,8 @@ public:
 	/// Only for hit ray tracing programs.
 	ConstWeakArray<U8> getHitShaderGroupHandle() const
 	{
-		ANKI_ASSERT(m_hitShaderGroupHandle.getSize() > 0);
-		return m_hitShaderGroupHandle;
+		ANKI_ASSERT(m_hitShaderGroupHandleSize > 0);
+		return ConstWeakArray<U8>(&m_hitShaderGroupHandle[0], m_hitShaderGroupHandleSize);
 	}
 
 private:
@@ -102,7 +102,8 @@ private:
 	const ShaderProgramBinaryVariant* m_binaryVariant = nullptr;
 	BitSet<128, U64> m_activeConsts = {false};
 	Array<U32, 3> m_workgroupSizes;
-	DynamicArray<U8> m_hitShaderGroupHandle; ///< Hit shaders group handle.
+	Array<U8, 32> m_hitShaderGroupHandle = {}; ///< Cache the handle here.
+	U8 m_hitShaderGroupHandleSize = 0;
 };
 
 /// The value of a constant.

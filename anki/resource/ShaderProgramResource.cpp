@@ -5,6 +5,7 @@
 
 #include <anki/resource/ShaderProgramResource.h>
 #include <anki/resource/ResourceManager.h>
+#include <anki/resource/ShaderProgramResourceSystem.h>
 #include <anki/gr/ShaderProgram.h>
 #include <anki/gr/GrManager.h>
 #include <anki/util/Filesystem.h>
@@ -269,16 +270,17 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 
 	// Get the binary program variant
 	const ShaderProgramBinaryVariant* binaryVariant = nullptr;
+	U64 mutationHash = 0;
 	if(m_mutators.getSize())
 	{
 		// Create the mutation hash
-		const U64 hash = computeHash(info.m_mutation.getBegin(), m_mutators.getSize() * sizeof(info.m_mutation[0]));
+		mutationHash = computeHash(info.m_mutation.getBegin(), m_mutators.getSize() * sizeof(info.m_mutation[0]));
 
 		// Search for the mutation in the binary
 		// TODO optimize the search
 		for(const ShaderProgramBinaryMutation& mutation : binary.m_mutations)
 		{
-			if(mutation.m_hash == hash)
+			if(mutation.m_hash == mutationHash)
 			{
 				binaryVariant = &binary.m_variants[mutation.m_variantIndex];
 				break;
@@ -410,7 +412,45 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 	else
 	{
 		ANKI_ASSERT(!!(m_shaderStages & ShaderTypeBit::ALL_RAY_TRACING));
-		ANKI_ASSERT(!"TODO");
+
+		// Find the library
+		CString libName = &binary.m_libraryName[0];
+		ANKI_ASSERT(libName.getLength() > 0);
+
+		const ShaderProgramResourceSystem& progSystem = getManager().getShaderProgramResourceSystem();
+		const ShaderProgramRaytracingLibrary* foundLib = nullptr;
+		for(const ShaderProgramRaytracingLibrary& lib : progSystem.getRayTracingLibraries())
+		{
+			if(lib.getLibraryName() == libName)
+			{
+				foundLib = &lib;
+				break;
+			}
+		}
+		ANKI_ASSERT(foundLib);
+
+		variant.m_prog = foundLib->getShaderProgram();
+
+		// Set the group handle
+		const U32 groupHandleSize = getManager().getGrManager().getDeviceCapabilities().m_shaderGroupHandleSize;
+		variant.m_hitShaderGroupHandleSize = U8(groupHandleSize);
+
+		ANKI_ASSERT(sizeof(variant.m_hitShaderGroupHandle) >= groupHandleSize);
+		WeakArray<U8> handle(&variant.m_hitShaderGroupHandle[0], groupHandleSize);
+		if(m_shaderStages == ShaderTypeBit::RAY_GEN)
+		{
+			foundLib->getRayGenShaderGroupHandle(handle);
+		}
+		else if(m_shaderStages == ShaderTypeBit::MISS)
+		{
+			const U32 rayType = binary.m_rayType;
+			foundLib->getMissShaderGroupHandle(rayType, handle);
+		}
+		else
+		{
+			ANKI_ASSERT(!!(m_shaderStages & (ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)));
+			foundLib->getHitShaderGroupHandle(getFilename(), mutationHash, handle);
+		}
 	}
 }
 

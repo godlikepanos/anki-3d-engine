@@ -39,10 +39,9 @@ public:
 	}
 
 	/// Given the filename of a program (that contains hit shaders) and a specific mutation get the group handle.
-	void getHitShaderGroupHandle(CString resourceFilename, ConstWeakArray<MutatorValue> mutation,
-								 WeakArray<U8>& handle) const
+	void getHitShaderGroupHandle(CString resourceFilename, U64 mutationHash, WeakArray<U8>& handle) const
 	{
-		const U32 hitGroupIndex = getHitGroupIndex(generateHitGroupHash(resourceFilename, mutation));
+		const U32 hitGroupIndex = getHitGroupIndex(generateHitGroupHash(resourceFilename, mutationHash));
 		getShaderGroupHandle(hitGroupIndex, handle);
 	}
 
@@ -52,6 +51,11 @@ public:
 		getShaderGroupHandle(rayType + 1, handle);
 	}
 
+	void getRayGenShaderGroupHandle(WeakArray<U8>& handle) const
+	{
+		getShaderGroupHandle(0, handle);
+	}
+
 private:
 	String m_libraryName;
 	U32 m_rayTypeCount = MAX_U32;
@@ -59,11 +63,10 @@ private:
 	HashMap<U64, U32> m_groupHashToGroupIndex;
 
 	/// Given the filename of a program (that contains hit shaders) and a specific mutation get a hash back.
-	static U64 generateHitGroupHash(CString resourceFilename, ConstWeakArray<MutatorValue> mutation)
+	static U64 generateHitGroupHash(CString resourceFilename, U64 mutationHash)
 	{
 		ANKI_ASSERT(resourceFilename.getLength() > 0);
-		U64 hash = computeHash(resourceFilename.cstr(), resourceFilename.getLength());
-		hash = appendHash(mutation.getBegin(), mutation.getSizeInBytes(), hash);
+		const U64 hash = appendHash(resourceFilename.cstr(), resourceFilename.getLength(), mutationHash);
 		return hash;
 	}
 

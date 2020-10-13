@@ -210,6 +210,12 @@ public:
 	/// Get the total number of completed async tasks.
 	ANKI_INTERNAL U64 getAsyncTaskCompletedCount() const;
 
+	/// Return the container of program libraries.
+	const ShaderProgramResourceSystem& getShaderProgramResourceSystem() const
+	{
+		return *m_shaderProgramSystem;
+	}
+
 private:
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
