@@ -459,11 +459,23 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, Gr
 				return Error::USER_DATA;
 			}
 
-			// Iterate all mutations
-			// TODO What if there are no mutation?
-			for(U32 m = 0; m < binary.m_mutations.getSize(); ++m)
+			// Before you iterate the mutations do some work if there are none
+			ConstWeakArray<ShaderProgramBinaryMutation> mutations;
+			ShaderProgramBinaryMutation dummyMutation;
+			if(binary.m_mutations.getSize())
 			{
-				const ShaderProgramBinaryMutation& mutation = binary.m_mutations[m];
+				mutations = binary.m_mutations;
+			}
+			else
+			{
+				dummyMutation.m_hash = 0;
+				dummyMutation.m_variantIndex = 0;
+				mutations = ConstWeakArray<ShaderProgramBinaryMutation>(&dummyMutation, 1);
+			}
+
+			// Iterate all mutations
+			for(const ShaderProgramBinaryMutation& mutation : mutations)
+			{
 				const ShaderProgramBinaryVariant& variant = binary.m_variants[mutation.m_variantIndex];
 
 				// Generate the hash
