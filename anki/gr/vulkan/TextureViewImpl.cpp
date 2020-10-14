@@ -45,10 +45,14 @@ U32 TextureViewImpl::getOrCreateBindlessIndex(VkImageLayout layout, DescriptorTy
 	{
 		ANKI_ASSERT(layout == VK_IMAGE_LAYOUT_GENERAL);
 	}
+	else
+	{
+		ANKI_ASSERT(layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
 
 	ANKI_ASSERT(m_microImageView);
 
-	const U arrayIdx = (resourceType == DescriptorType::IMAGE) ? 2 : ((layout == VK_IMAGE_LAYOUT_GENERAL) ? 1 : 0);
+	const U32 arrayIdx = (resourceType == DescriptorType::IMAGE) ? 1 : 0;
 
 	LockGuard<SpinLock> lock(m_microImageView->m_lock);
 

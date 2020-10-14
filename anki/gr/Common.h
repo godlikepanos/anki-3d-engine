@@ -50,12 +50,14 @@ constexpr U32 COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
 
 /// Smart pointer for resources.
 template<typename T>
-using GrObjectPtr = IntrusivePtr<T, DefaultPtrDeleter<T>>;
+using GrObjectPtrT = IntrusivePtr<T, DefaultPtrDeleter<GrObject>>;
+
+using GrObjectPtr = GrObjectPtrT<GrObject>;
 
 #define ANKI_GR_CLASS(x_) \
 	class x_##Impl; \
 	class x_; \
-	using x_##Ptr = GrObjectPtr<x_>;
+	using x_##Ptr = GrObjectPtrT<x_>;
 
 ANKI_GR_CLASS(Buffer)
 ANKI_GR_CLASS(Texture)

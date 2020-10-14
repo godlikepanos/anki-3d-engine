@@ -89,6 +89,14 @@ public:
 		return m_subresource;
 	}
 
+	/// Returns an index to be used for bindless access. Only for sampling.
+	/// @note It's thread-safe
+	U32 getOrCreateBindlessTextureIndex();
+
+	/// Returns an index to be used for bindless access. For image read/write.
+	/// @note It's thread-safe
+	U32 getOrCreateBindlessImageIndex();
+
 protected:
 	TextureType m_texType = TextureType::COUNT;
 	TextureSubresourceInfo m_subresource;

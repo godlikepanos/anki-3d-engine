@@ -294,17 +294,6 @@ public:
 	/// Bind the bindless descriptor set into a slot.
 	void bindAllBindless(U32 set);
 
-	/// Bind a texture as bindless. It's very lightweight and doesn't translate to a GPU operation.
-	/// @param tex The texture view to bind.
-	/// @param usage The state the tex is in.
-	/// @return The index to use to access the texture.
-	U32 bindBindlessTexture(TextureViewPtr tex, TextureUsageBit usage);
-
-	/// Bind an image as bindless. It's very lightweight and doesn't translate to a GPU operation.
-	/// @param img The image to bind.
-	/// @return The index to use to access the image.
-	U32 bindBindlessImage(TextureViewPtr img);
-
 	/// Set push constants.
 	void setPushConstants(const void* data, U32 dataSize);
 
@@ -458,6 +447,9 @@ public:
 	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 
 	Bool isEmpty() const;
+
+	/// The command buffer will co-own a pointer. Useful to track the lifetime of bindless resources.
+	void addReference(GrObjectPtr ptr);
 	/// @}
 
 protected:

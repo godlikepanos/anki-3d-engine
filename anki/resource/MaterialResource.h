@@ -311,7 +311,7 @@ private:
 ///		</mutation>]
 ///
 /// 	[<inputs>
-/// 		<input name="name" value="" />
+/// 		<input name="name" value="value" />
 /// 	</inputs>]
 /// </rtMaterial>]
 /// @endcode

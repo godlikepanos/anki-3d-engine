@@ -216,18 +216,6 @@ void CommandBuffer::bindAllBindless(U32 set)
 	self.bindAllBindlessInternal(set);
 }
 
-U32 CommandBuffer::bindBindlessTexture(TextureViewPtr tex, TextureUsageBit usage)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	return self.bindBindlessTextureInternal(tex, usage);
-}
-
-U32 CommandBuffer::bindBindlessImage(TextureViewPtr img)
-{
-	ANKI_VK_SELF(CommandBufferImpl);
-	return self.bindBindlessImageInternal(img);
-}
-
 void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
@@ -434,6 +422,12 @@ void CommandBuffer::setLineWidth(F32 width)
 {
 	ANKI_VK_SELF(CommandBufferImpl);
 	self.setLineWidth(width);
+}
+
+void CommandBuffer::addReference(GrObjectPtr ptr)
+{
+	ANKI_VK_SELF(CommandBufferImpl);
+	self.addReference(ptr);
 }
 
 } // end namespace anki

@@ -281,23 +281,6 @@ public:
 		m_dsetState[set].bindBindlessDescriptorSet();
 	}
 
-	U32 bindBindlessTextureInternal(TextureViewPtr tex, TextureUsageBit usage)
-	{
-		TextureViewImpl& view = static_cast<TextureViewImpl&>(*tex);
-		const VkImageLayout layout = view.getTextureImpl().computeLayout(usage, 0);
-		const U32 idx = view.getOrCreateBindlessIndex(layout, DescriptorType::TEXTURE);
-		m_microCmdb->pushObjectRef(tex);
-		return idx;
-	}
-
-	U32 bindBindlessImageInternal(TextureViewPtr img)
-	{
-		TextureViewImpl& view = static_cast<TextureViewImpl&>(*img);
-		const U32 idx = view.getOrCreateBindlessIndex(VK_IMAGE_LAYOUT_GENERAL, DescriptorType::IMAGE);
-		m_microCmdb->pushObjectRef(img);
-		return idx;
-	}
-
 	void beginRenderPass(FramebufferPtr fb, const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorAttachmentUsages,
 						 TextureUsageBit depthStencilAttachmentUsage, U32 minx, U32 miny, U32 width, U32 height);
 
@@ -386,6 +369,11 @@ public:
 	void setRasterizationOrder(RasterizationOrder order);
 
 	void setLineWidth(F32 width);
+
+	void addReference(GrObjectPtr& ptr)
+	{
+		m_microCmdb->pushObjectRef(ptr);
+	}
 
 private:
 	StackAllocator<U8> m_alloc;

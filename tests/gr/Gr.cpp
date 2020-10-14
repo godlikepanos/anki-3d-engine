@@ -2162,7 +2162,7 @@ ANKI_TEST(Gr, Bindless)
 	texInit.m_width = 1;
 	texInit.m_height = 1;
 	texInit.m_format = Format::R32G32B32A32_UINT;
-	texInit.m_usage = TextureUsageBit::ALL_COMPUTE | TextureUsageBit::ALL_TRANSFER;
+	texInit.m_usage = TextureUsageBit::ALL_IMAGE | TextureUsageBit::ALL_TRANSFER | TextureUsageBit::ALL_SAMPLED;
 	texInit.m_mipmapCount = 1;
 
 	TexturePtr texA = gr->newTexture(texInit);
@@ -2191,7 +2191,7 @@ ANKI_TEST(Gr, Bindless)
 	static const char* PROG_SRC = R"(
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-ANKI_BINDLESS_SET(0)
+ANKI_BINDLESS_SET(0);
 
 layout(set = 1, binding = 0) writeonly buffer ss_
 {
@@ -2250,9 +2250,12 @@ void main()
 	cmdb->bindSampler(1, 1, sampler);
 	cmdb->bindShaderProgram(prog);
 
-	const U32 idx0 = cmdb->bindBindlessImage(viewA);
-	const U32 idx1 = cmdb->bindBindlessTexture(viewB, TextureUsageBit::SAMPLED_COMPUTE);
-	const U32 idx2 = cmdb->bindBindlessTexture(viewC, TextureUsageBit::SAMPLED_COMPUTE);
+	cmdb->addReference(viewA);
+	cmdb->addReference(viewB);
+	cmdb->addReference(viewC);
+	const U32 idx0 = viewA->getOrCreateBindlessImageIndex();
+	const U32 idx1 = viewB->getOrCreateBindlessTextureIndex();
+	const U32 idx2 = viewC->getOrCreateBindlessTextureIndex();
 	UVec4 pc(idx0, idx1, idx2, 0);
 	cmdb->setPushConstants(&pc, sizeof(pc));
 

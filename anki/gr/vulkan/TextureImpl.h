@@ -36,10 +36,9 @@ class MicroImageView
 public:
 	VkImageView m_handle = {};
 
-	/// Index 0: Sampled image with SHADER_READ_ONLY layout
-	/// Index 1: Sampled image with GENERAL layout
-	/// Index 2: Storage image with ofcource GENERAL layout.
-	mutable Array<U32, 3> m_bindlessIndices = {MAX_U32, MAX_U32, MAX_U32};
+	/// Index 0: Sampled image with SHADER_READ_ONLY layout.
+	/// Index 1: Storage image with ofcource GENERAL layout.
+	mutable Array<U32, 2> m_bindlessIndices = {MAX_U32, MAX_U32};
 
 	/// Protect the m_bindlessIndices.
 	mutable SpinLock m_lock;
