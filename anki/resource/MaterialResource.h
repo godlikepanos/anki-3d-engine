@@ -284,7 +284,7 @@ public:
 	}
 
 private:
-	DynamicArray<U8> m_shaderGroupHandle;
+	ConstWeakArray<U8> m_shaderGroupHandle;
 	GpuMaterial m_gpuMaterialDescr;
 
 	RayTracingMaterialVariant() = default;
@@ -410,7 +410,13 @@ private:
 
 	DynamicArray<SubMutation> m_nonBuiltinsMutation;
 
-	Array<RayTracingMaterialVariant, U(RayTracingMaterialType::COUNT)> m_rtVariantMatrix;
+	class Rt
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		RayTracingMaterialVariant m_variant;
+	};
+	Array<Rt, U(RayTracingMaterialType::COUNT)> m_rt;
 
 	ANKI_USE_RESULT Error createVars();
 
@@ -449,6 +455,8 @@ private:
 	{
 		return const_cast<MaterialVariable*>(tryFindVariableInternal(name));
 	}
+
+	Error parseRtMaterial(XmlElement rootEl);
 };
 /// @}
 

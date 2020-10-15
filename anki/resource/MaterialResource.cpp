@@ -991,4 +991,109 @@ U32 MaterialResource::getInstanceGroupIdx(U32 instanceCount)
 	return U32(std::log2(F32(instanceCount)));
 }
 
+Error MaterialResource::parseRtMaterial(XmlElement rootEl)
+{
+	XmlElement rtMaterialEl;
+	ANKI_CHECK(rootEl.getChildElementOptional("rtMaterial", rtMaterialEl));
+	if(!rtMaterialEl)
+	{
+		return Error::NONE;
+	}
+
+	// type
+	CString typeStr;
+	ANKI_CHECK(rtMaterialEl.getAttributeText("type", typeStr));
+	RayTracingMaterialType type = RayTracingMaterialType::COUNT;
+	if(typeStr == "SHADOWS")
+	{
+		type = RayTracingMaterialType::SHADOWS;
+	}
+	else if(typeStr == "GI")
+	{
+		type = RayTracingMaterialType::GI;
+	}
+	else if(typeStr == "REFLECTIONS")
+	{
+		type = RayTracingMaterialType::REFLECTIONS;
+	}
+	else if(typeStr == "PATH_TRACING")
+	{
+		type = RayTracingMaterialType::PATH_TRACING;
+	}
+	else
+	{
+		ANKI_RESOURCE_LOGE("Uknown ray tracing type: %s", typeStr.cstr());
+		return Error::USER_DATA;
+	}
+
+	// shaderProgram
+	CString fname;
+	ANKI_CHECK(rtMaterialEl.getAttributeText("shaderProgram", fname));
+	ANKI_CHECK(getManager().loadResource(fname, m_rt[type].m_prog, false));
+
+	// mutation
+	XmlElement mutationEl;
+	ANKI_CHECK(rtMaterialEl.getChildElementOptional("mutation", mutationEl));
+	DynamicArrayAuto<SubMutation> mutatorValues(getTempAllocator());
+	if(mutationEl)
+	{
+		XmlElement mutatorEl;
+		ANKI_CHECK(mutationEl.getChildElement("mutator", mutatorEl));
+		U32 mutatorCount = 0;
+		ANKI_CHECK(mutatorEl.getSiblingElementsCount(mutatorCount));
+		++mutatorCount;
+
+		mutatorValues.resize(mutatorCount);
+
+		mutatorCount = 0;
+		do
+		{
+			// name
+			CString mutatorName;
+			ANKI_CHECK(mutatorEl.getAttributeText("name", mutatorName));
+			if(mutatorName.isEmpty())
+			{
+				ANKI_RESOURCE_LOGE("Mutator name is empty");
+				return Error::USER_DATA;
+			}
+
+			// value
+			MutatorValue mutatorValue;
+			ANKI_CHECK(mutatorEl.getAttributeNumber("value", mutatorValue));
+
+			// Check
+			const ShaderProgramResourceMutator* mutatorPtr = m_rt[type].m_prog->tryFindMutator(mutatorName);
+			if(mutatorPtr == nullptr)
+			{
+				ANKI_RESOURCE_LOGE("Mutator not found: %s", mutatorName.cstr());
+				return Error::USER_DATA;
+			}
+
+			if(mutatorPtr->valueExists(mutatorValue))
+			{
+				ANKI_RESOURCE_LOGE("Mutator value doesn't exist: %s", mutatorName.cstr());
+				return Error::USER_DATA;
+			}
+
+			// All good
+			mutatorValues[mutatorCount].m_mutator = mutatorPtr;
+			mutatorValues[mutatorCount].m_value = mutatorValue;
+
+			// Advance
+			++mutatorCount;
+			ANKI_CHECK(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
+		} while(mutatorEl);
+
+		ANKI_ASSERT(mutatorCount == mutatorValues.getSize());
+	}
+
+	if(mutatorValues.getSize() != m_rt[type].m_prog->getMutators().getSize())
+	{
+		ANKI_RESOURCE_LOGE("Forgot to set all mutators on some RT mutation");
+		return Error::USER_DATA;
+	}
+
+	return Error::NONE;
+}
+
 } // end namespace anki
