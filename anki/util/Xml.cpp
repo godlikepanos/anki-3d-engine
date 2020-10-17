@@ -156,18 +156,23 @@ Error XmlDocument::parse(CString xmlText, GenericMemoryPoolAllocator<U8> alloc)
 	return Error::NONE;
 }
 
+ANKI_USE_RESULT Error XmlDocument::getChildElementOptional(CString name, XmlElement& out) const
+{
+	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_alloc);
+	return Error::NONE;
+}
+
 ANKI_USE_RESULT Error XmlDocument::getChildElement(CString name, XmlElement& out) const
 {
-	Error err = Error::NONE;
-	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_alloc);
+	ANKI_CHECK(getChildElementOptional(name, out));
 
 	if(!out)
 	{
 		ANKI_UTIL_LOGE("Cannot find tag \"%s\"", &name[0]);
-		err = Error::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return err;
+	return Error::NONE;
 }
 
 } // end namespace anki

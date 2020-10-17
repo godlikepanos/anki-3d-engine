@@ -122,6 +122,38 @@ public:
 
 } // namespace
 
+class GpuMaterialTexture
+{
+public:
+	const char* m_name;
+	U32 m_textureSlot;
+};
+
+static const Array<GpuMaterialTexture, TEXTURE_CHANNEL_COUNT> GPU_MATERIAL_TEXTURES = {
+	{{"TEXTURE_CHANNEL_DIFFUSE", TEXTURE_CHANNEL_DIFFUSE},
+	 {"TEXTURE_CHANNEL_NORMAL", TEXTURE_CHANNEL_NORMAL},
+	 {"TEXTURE_CHANNEL_ROUGHNESS_METALNESS", TEXTURE_CHANNEL_ROUGHNESS_METALNESS},
+	 {"TEXTURE_CHANNEL_EMISSION", TEXTURE_CHANNEL_EMISSION},
+	 {"TEXTURE_CHANNEL_HEIGHT", TEXTURE_CHANNEL_HEIGHT},
+	 {"TEXTURE_CHANNEL_AUX_0", TEXTURE_CHANNEL_AUX_0},
+	 {"TEXTURE_CHANNEL_AUX_1", TEXTURE_CHANNEL_AUX_1},
+	 {"TEXTURE_CHANNEL_AUX_2", TEXTURE_CHANNEL_AUX_2}}};
+
+class GpuMaterialFloats
+{
+public:
+	const char* m_name;
+	U32 m_offsetof;
+	U32 m_floatCount;
+};
+
+static const Array<GpuMaterialFloats, 5> GPU_MATERIAL_FLOATS = {
+	{{"diffuseColor", offsetof(GpuMaterial, m_diffuseColor), 3},
+	 {"specularColor", offsetof(GpuMaterial, m_specularColor), 3},
+	 {"emissiveColor", offsetof(GpuMaterial, m_emissiveColor), 3},
+	 {"roughness", offsetof(GpuMaterial, m_roughness), 1},
+	 {"metalness", offsetof(GpuMaterial, m_metalness), 1}}};
+
 MaterialVariable::MaterialVariable()
 {
 	m_Mat4 = Mat4::getZero();
@@ -209,6 +241,14 @@ Error MaterialResource::load(const ResourceFilename& filename, Bool async)
 	if(el)
 	{
 		ANKI_CHECK(parseInputs(el, async));
+	}
+
+	// <rtMaterial>
+	XmlElement rtMaterialEl;
+	ANKI_CHECK(doc.getChildElementOptional("rtMaterial", rtMaterialEl));
+	if(rtMaterialEl && getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled)
+	{
+		ANKI_CHECK(parseRtMaterial(rtMaterialEl));
 	}
 
 	return Error::NONE;
@@ -991,15 +1031,8 @@ U32 MaterialResource::getInstanceGroupIdx(U32 instanceCount)
 	return U32(std::log2(F32(instanceCount)));
 }
 
-Error MaterialResource::parseRtMaterial(XmlElement rootEl)
+Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 {
-	XmlElement rtMaterialEl;
-	ANKI_CHECK(rootEl.getChildElementOptional("rtMaterial", rtMaterialEl));
-	if(!rtMaterialEl)
-	{
-		return Error::NONE;
-	}
-
 	// type
 	CString typeStr;
 	ANKI_CHECK(rtMaterialEl.getAttributeText("type", typeStr));
@@ -1069,7 +1102,7 @@ Error MaterialResource::parseRtMaterial(XmlElement rootEl)
 				return Error::USER_DATA;
 			}
 
-			if(mutatorPtr->valueExists(mutatorValue))
+			if(!mutatorPtr->valueExists(mutatorValue))
 			{
 				ANKI_RESOURCE_LOGE("Mutator value doesn't exist: %s", mutatorName.cstr());
 				return Error::USER_DATA;
@@ -1092,6 +1125,99 @@ Error MaterialResource::parseRtMaterial(XmlElement rootEl)
 		ANKI_RESOURCE_LOGE("Forgot to set all mutators on some RT mutation");
 		return Error::USER_DATA;
 	}
+
+	// input
+	RayTracingMaterialVariant& variant = m_rt[type].m_variant;
+	GpuMaterial& gpuMaterial = variant.m_gpuMaterialDescr;
+	XmlElement inputsEl;
+	ANKI_CHECK(rtMaterialEl.getChildElementOptional("inputs", inputsEl));
+	if(inputsEl)
+	{
+		XmlElement inputEl;
+		ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
+
+		do
+		{
+			// name
+			CString inputName;
+			ANKI_CHECK(inputEl.getAttributeText("name", inputName));
+
+			// Check if texture
+			Bool found = false;
+			for(U32 i = 0; i < GPU_MATERIAL_TEXTURES.getSize(); ++i)
+			{
+				if(GPU_MATERIAL_TEXTURES[i].m_name == inputName)
+				{
+					// Found, load the texture
+
+					CString fname;
+					ANKI_CHECK(inputEl.getAttributeText("value", fname));
+
+					const U32 textureIdx = GPU_MATERIAL_TEXTURES[i].m_textureSlot;
+					ANKI_CHECK(getManager().loadResource(fname, variant.m_textureResources[textureIdx], false));
+
+					variant.m_textureViews[textureIdx] = variant.m_textureResources[textureIdx]->getGrTextureView();
+
+					gpuMaterial.m_bindlessTextureIndices[textureIdx] =
+						U16(variant.m_textureViews[textureIdx]->getOrCreateBindlessTextureIndex());
+
+					found = true;
+					break;
+				}
+			}
+
+			// Check floats
+			if(!found)
+			{
+				for(U32 i = 0; i < GPU_MATERIAL_FLOATS.getSize(); ++i)
+				{
+					if(GPU_MATERIAL_FLOATS[i].m_name == inputName)
+					{
+						// Found it, set the value
+
+						if(GPU_MATERIAL_FLOATS[i].m_floatCount == 3)
+						{
+							Vec3 val;
+							ANKI_CHECK(inputEl.getAttributeNumbers("value", val));
+							memcpy(reinterpret_cast<U8*>(&gpuMaterial) + GPU_MATERIAL_FLOATS[i].m_offsetof, &val,
+								   sizeof(val));
+						}
+						else
+						{
+							ANKI_ASSERT(GPU_MATERIAL_FLOATS[i].m_floatCount == 1);
+							F32 val;
+							ANKI_CHECK(inputEl.getAttributeNumber("value", val));
+							memcpy(reinterpret_cast<U8*>(&gpuMaterial) + GPU_MATERIAL_FLOATS[i].m_offsetof, &val,
+								   sizeof(val));
+						}
+
+						found = true;
+						break;
+					}
+				}
+			}
+
+			if(!found)
+			{
+				ANKI_RESOURCE_LOGE("Input name is incorrect: %s", inputName.cstr());
+				return Error::USER_DATA;
+			}
+
+			// Advance
+			ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
+		} while(inputEl);
+	}
+
+	// Finally get the shader group handle
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_rt[type].m_prog);
+	for(const SubMutation& subMutation : mutatorValues)
+	{
+		variantInitInfo.addMutation(subMutation.m_mutator->m_name, subMutation.m_value);
+	}
+
+	const ShaderProgramResourceVariant* progVariant;
+	m_rt[type].m_prog->getOrCreateVariant(variantInitInfo, progVariant);
+	variant.m_shaderGroupHandle = progVariant->getHitShaderGroupHandle();
 
 	return Error::NONE;
 }

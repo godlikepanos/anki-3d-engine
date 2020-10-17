@@ -19,7 +19,9 @@
 #	define ANKI_SHADER_IN(type_) const type_&
 #	define ANKI_SHADER_OUT(type_) type_&
 
-#	define ANKI_SHADER_STATIC_ASSERT(cond_) static_assert(cond_, "See file");
+#	define ANKI_SHADER_STATIC_ASSERT(cond_) static_assert(cond_, "See file")
+
+#	define ANKI_SIZEOF(x) sizeof(x)
 
 ANKI_BEGIN_NAMESPACE
 template<typename T>

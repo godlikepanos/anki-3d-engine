@@ -205,6 +205,8 @@ public:
 
 	ANKI_USE_RESULT Error getChildElement(CString name, XmlElement& out) const;
 
+	ANKI_USE_RESULT Error getChildElementOptional(CString name, XmlElement& out) const;
+
 private:
 	tinyxml2::XMLDocument m_doc;
 	GenericMemoryPoolAllocator<U8> m_alloc;

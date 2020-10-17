@@ -20,6 +20,8 @@ struct GpuVertex
 };
 
 const U32 _ANKI_SIZEOF_GpuVertex = 4 * 3;
+const U32 _ANKI_ALIGNOF_GpuVertex = 4;
+ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_GpuVertex == sizeof(GpuVertex));
 
 struct GpuMesh
 {
@@ -43,7 +45,7 @@ const U32 TEXTURE_CHANNEL_COUNT = 8;
 
 struct GpuMaterial
 {
-	U16 m_textureIds[TEXTURE_CHANNEL_COUNT];
+	U16 m_bindlessTextureIndices[TEXTURE_CHANNEL_COUNT];
 	Vec3 m_diffuseColor;
 	Vec3 m_specularColor;
 	Vec3 m_emissiveColor;

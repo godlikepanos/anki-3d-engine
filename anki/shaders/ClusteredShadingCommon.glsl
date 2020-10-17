@@ -46,12 +46,12 @@ layout(set = LIGHT_SET, binding = LIGHT_COMMON_UNIS_BINDING, std140, row_major) 
 #if defined(LIGHT_LIGHTS_BINDING)
 layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING, std140) uniform u1_
 {
-	PointLight u_pointLights[UBO_MAX_SIZE / SIZEOF_POINT_LIGHT];
+	PointLight u_pointLights[UBO_MAX_SIZE / ANKI_SIZEOF(PointLight)];
 };
 
 layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 1, std140, row_major) uniform u2_
 {
-	SpotLight u_spotLights[UBO_MAX_SIZE / SIZEOF_SPOT_LIGHT];
+	SpotLight u_spotLights[UBO_MAX_SIZE / ANKI_SIZEOF(SpotLight)];
 };
 
 layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 2) uniform highp texture2D u_shadowTex;
@@ -63,7 +63,7 @@ layout(set = LIGHT_SET, binding = LIGHT_LIGHTS_BINDING + 2) uniform highp textur
 #if defined(LIGHT_INDIRECT_SPECULAR_BINDING)
 layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING) uniform u3_
 {
-	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / SIZEOF_REFLECTION_PROBE];
+	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / ANKI_SIZEOF(ReflectionProbe)];
 };
 
 layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 1) uniform textureCubeArray u_reflectionsTex;
@@ -76,7 +76,7 @@ layout(set = LIGHT_SET, binding = LIGHT_INDIRECT_SPECULAR_BINDING + 2) uniform t
 #if defined(LIGHT_DECALS_BINDING)
 layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_DECALS_BINDING) uniform u4_
 {
-	Decal u_decals[UBO_MAX_SIZE / SIZEOF_DECAL];
+	Decal u_decals[UBO_MAX_SIZE / ANKI_SIZEOF(Decal)];
 };
 
 layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 1) uniform texture2D u_diffDecalTex;
@@ -89,7 +89,7 @@ layout(set = LIGHT_SET, binding = LIGHT_DECALS_BINDING + 2) uniform texture2D u_
 #if defined(LIGHT_FOG_DENSITY_VOLUMES_BINDING)
 layout(std140, row_major, set = LIGHT_SET, binding = LIGHT_FOG_DENSITY_VOLUMES_BINDING) uniform u5_
 {
-	FogDensityVolume u_fogDensityVolumes[UBO_MAX_SIZE / SIZEOF_FOG_DENSITY_VOLUME];
+	FogDensityVolume u_fogDensityVolumes[UBO_MAX_SIZE / ANKI_SIZEOF(FogDensityVolume)];
 };
 #endif
 

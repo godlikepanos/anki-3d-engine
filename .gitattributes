@@ -8,6 +8,7 @@
 *.cmake text eol=lf
 *.txt text eol=lf
 *.md text eol=lf
+*.sh text eol=lf
 *.ankiprog text eol=lf
 *.ankimtl text eol=lf
 *.ankimdl text eol=lf

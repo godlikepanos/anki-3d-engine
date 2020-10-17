@@ -168,15 +168,11 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 	// Do some RT checks
 	if(!!(m_shaderStages & ShaderTypeBit::ALL_RAY_TRACING))
 	{
-		if((m_shaderStages & ~(ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)) != ShaderTypeBit::NONE)
+		if(m_shaderStages != (ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)
+		   && m_shaderStages != ShaderTypeBit::MISS && m_shaderStages != ShaderTypeBit::RAY_GEN)
 		{
-			ANKI_RESOURCE_LOGE("Any and closest hit shaders shouldn't coexist with other stages");
-			return Error::USER_DATA;
-		}
-
-		if((m_shaderStages & ~(ShaderTypeBit::MISS | ShaderTypeBit::RAY_GEN)) != ShaderTypeBit::NONE)
-		{
-			ANKI_RESOURCE_LOGE("Miss and ray gen shaders shouldn't coexist with other stages");
+			ANKI_RESOURCE_LOGE("Any and closest hit shaders shouldn't coexist with other stages. Miss can't coexist "
+							   "with other stages. Raygen can't coexist with other stages as well");
 			return Error::USER_DATA;
 		}
 	}

@@ -49,7 +49,7 @@ void main()
 	const Vec2 uv = vert0.m_uvs[UV_CHANNEL_0] * barycentrics.x + vert1.m_uvs[UV_CHANNEL_0] * barycentrics.y
 					+ vert2.m_uvs[UV_CHANNEL_0] * barycentrics.z;
 
-	const U32 texIdx = model.m_material.m_textureIds[TEXTURE_CHANNEL_DIFFUSE];
+	const U32 texIdx = model.m_material.m_bindlessTextureIndices[TEXTURE_CHANNEL_DIFFUSE];
 	const F32 alpha = textureLod(u_bindlessTextures2dF32[nonuniformEXT(texIdx)], u_ankiGlobalSampler, uv, 3).a;
 
 	g_payload += alpha;
