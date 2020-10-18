@@ -8,7 +8,8 @@ ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_CLUSTER_Z, 9, 1);
 
 #pragma anki start comp
 
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingTypes.h>
+#include <anki/shaders/include/ClusteredShadingFunctions.h>
 #include <anki/shaders/Common.glsl>
 
 const UVec2 WORKGROUP_SIZE = UVec2(8, 8);

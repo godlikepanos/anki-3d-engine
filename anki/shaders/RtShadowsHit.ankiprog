@@ -9,7 +9,7 @@
 #pragma anki mutator ALPHA_TEXTURE 0 1
 
 #include <anki/shaders/Common.glsl>
-#include <anki/shaders/include/GpuModel.h>
+#include <anki/shaders/include/ModelTypes.h>
 
 #if ALPHA_TEXTURE == 1
 layout(set = 0, binding = 0, scalar) buffer b_ankiModels
@@ -29,7 +29,7 @@ layout(location = 0) rayPayloadInEXT F32 g_payload;
 hitAttributeEXT vec2 g_attribs;
 
 ANKI_REF(U16Vec3, 2);
-ANKI_REF(GpuVertex, 4);
+ANKI_REF(MainVertex, ANKI_ALIGNOF(MainVertex));
 
 void main()
 {
@@ -40,9 +40,9 @@ void main()
 	const U32 offset = gl_PrimitiveID * ANKI_SIZEOF(U16Vec3);
 	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(mesh.m_indexBufferPtr + offset)).m_value;
 
-	const GpuVertex vert0 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[0] * ANKI_SIZEOF(GpuVertex)).m_value;
-	const GpuVertex vert1 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[1] * ANKI_SIZEOF(GpuVertex)).m_value;
-	const GpuVertex vert2 = GpuVertexRef(mesh.m_vertexBufferPtr + indices[2] * ANKI_SIZEOF(GpuVertex)).m_value;
+	const MainVertex vert0 = MainVertexRef(mesh.m_mainVertexBufferPtr + indices[0] * ANKI_SIZEOF(MainVertex)).m_value;
+	const MainVertex vert1 = MainVertexRef(mesh.m_mainVertexBufferPtr + indices[1] * ANKI_SIZEOF(MainVertex)).m_value;
+	const MainVertex vert2 = MainVertexRef(mesh.m_mainVertexBufferPtr + indices[2] * ANKI_SIZEOF(MainVertex)).m_value;
 
 	const Vec3 barycentrics = Vec3(1.0f - g_attribs.x - g_attribs.y, g_attribs.x, g_attribs.y);
 

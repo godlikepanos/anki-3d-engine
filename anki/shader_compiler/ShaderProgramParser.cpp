@@ -176,7 +176,8 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define _ANKI_CONCATENATE(a, b) a##b
 #define ANKI_CONCATENATE(a, b) _ANKI_CONCATENATE(a, b)
 
-#define ANKI_SIZEOF(basicType) _ANKI_CONCATENATE(_ANKI_SIZEOF_, basicType)
+#define ANKI_SIZEOF(type) _ANKI_CONCATENATE(_ANKI_SIZEOF_, type)
+#define ANKI_ALIGNOF(type) _ANKI_CONCATENATE(_ANKI_ALIGNOF_, type)
 
 #define _ANKI_SCONST_X(type, n, id, defltVal) \
 	layout(constant_id = id) const type n = defltVal; \

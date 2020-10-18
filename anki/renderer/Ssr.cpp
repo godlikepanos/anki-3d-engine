@@ -10,7 +10,7 @@
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/core/ConfigSet.h>
-#include <anki/shaders/include/Ssr.h>
+#include <anki/shaders/include/SsrTypes.h>
 
 namespace anki
 {

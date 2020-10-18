@@ -9,7 +9,8 @@
 
 #include <anki/shaders/Functions.glsl>
 #include <anki/shaders/Pack.glsl>
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingTypes.h>
+#include <anki/shaders/include/ClusteredShadingFunctions.h>
 #include <anki/shaders/include/Evsm.h>
 
 // Do some EVSM magic with depth

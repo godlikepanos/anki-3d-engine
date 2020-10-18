@@ -8,7 +8,7 @@
 #include <anki/renderer/Common.h>
 #include <anki/resource/RenderingKey.h>
 #include <anki/ui/Canvas.h>
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingTypes.h>
 
 namespace anki
 {

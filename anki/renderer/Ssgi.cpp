@@ -9,7 +9,7 @@
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/core/ConfigSet.h>
-#include <anki/shaders/include/Ssgi.h>
+#include <anki/shaders/include/SsgiTypes.h>
 
 namespace anki
 {

@@ -6,7 +6,7 @@
 #pragma anki mutator ANKI_PASS 0 2 3
 #pragma anki mutator ANKI_VELOCITY 0 1
 
-#include <anki/shaders/include/GpuParticles.h>
+#include <anki/shaders/include/ParticleTypes.h>
 
 struct PerDraw
 {

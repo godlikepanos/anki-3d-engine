@@ -11,7 +11,7 @@
 #include <anki/resource/TextureResource.h>
 #include <anki/Math.h>
 #include <anki/util/Enum.h>
-#include <anki/shaders/include/GpuModel.h>
+#include <anki/shaders/include/ModelTypes.h>
 
 namespace anki
 {

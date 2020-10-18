@@ -7,7 +7,7 @@
 
 #pragma anki start comp
 
-#include <anki/shaders/include/GpuParticles.h>
+#include <anki/shaders/include/ParticleTypes.h>
 #include <anki/shaders/Common.glsl>
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;

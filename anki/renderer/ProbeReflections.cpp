@@ -11,7 +11,7 @@
 #include <anki/core/ConfigSet.h>
 #include <anki/util/Tracer.h>
 #include <anki/resource/MeshResource.h>
-#include <anki/shaders/include/TraditionalDeferredShading.h>
+#include <anki/shaders/include/TraditionalDeferredShadingTypes.h>
 
 namespace anki
 {

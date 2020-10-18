@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/renderer/Common.h>
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingFunctions.h>
 
 namespace anki
 {

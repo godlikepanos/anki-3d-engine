@@ -15,7 +15,7 @@
 #pragma anki start comp
 #include <anki/shaders/Functions.glsl>
 #include <anki/shaders/Pack.glsl>
-#include <anki/shaders/include/Ssr.h>
+#include <anki/shaders/include/SsrTypes.h>
 #include <anki/shaders/Tonemapping.glsl>
 #include <anki/shaders/SsRaymarching.glsl>
 

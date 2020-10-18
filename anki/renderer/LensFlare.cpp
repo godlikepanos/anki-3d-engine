@@ -9,7 +9,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/core/ConfigSet.h>
 #include <anki/util/Functions.h>
-#include <anki/shaders/include/LensFlareSprite.h>
+#include <anki/shaders/include/LensFlareTypes.h>
 
 namespace anki
 {

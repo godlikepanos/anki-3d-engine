@@ -9,7 +9,7 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Octree.h>
 #include <anki/Collision.h>
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingTypes.h>
 
 namespace anki
 {

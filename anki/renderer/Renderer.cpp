@@ -33,7 +33,7 @@
 #include <anki/renderer/GlobalIllumination.h>
 #include <anki/renderer/GenericCompute.h>
 #include <anki/renderer/ShadowmapsResolve.h>
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingTypes.h>
 
 namespace anki
 {

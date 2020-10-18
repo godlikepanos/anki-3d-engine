@@ -11,7 +11,7 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/renderer/LightShading.h>
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingTypes.h>
 
 namespace anki
 {

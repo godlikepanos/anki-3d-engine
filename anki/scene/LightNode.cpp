@@ -10,7 +10,7 @@
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingTypes.h>
 
 namespace anki
 {

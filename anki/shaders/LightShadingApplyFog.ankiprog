@@ -11,7 +11,8 @@ ANKI_SPECIALIZATION_CONSTANT_U32(FOG_LAST_CLASTER, 0, 1u);
 
 #pragma anki start frag
 
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingTypes.h>
+#include <anki/shaders/include/ClusteredShadingFunctions.h>
 #include <anki/shaders/Common.glsl>
 
 layout(location = 0) in Vec2 in_uv;

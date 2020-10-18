@@ -11,7 +11,7 @@
 #include <anki/collision/Obb.h>
 #include <anki/collision/ConvexHullShape.h>
 #include <anki/collision/Plane.h>
-#include <anki/shaders/include/ClusteredShading.h>
+#include <anki/shaders/include/ClusteredShadingFunctions.h>
 
 namespace anki
 {

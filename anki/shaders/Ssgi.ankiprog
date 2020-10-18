@@ -16,7 +16,7 @@
 #include <anki/shaders/Functions.glsl>
 #include <anki/shaders/Pack.glsl>
 #include <anki/shaders/ImportanceSampling.glsl>
-#include <anki/shaders/include/Ssgi.h>
+#include <anki/shaders/include/SsgiTypes.h>
 
 const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;

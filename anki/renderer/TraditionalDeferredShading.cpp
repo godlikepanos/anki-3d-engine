@@ -7,7 +7,7 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/MeshResource.h>
-#include <anki/shaders/include/TraditionalDeferredShading.h>
+#include <anki/shaders/include/TraditionalDeferredShadingTypes.h>
 
 namespace anki
 {

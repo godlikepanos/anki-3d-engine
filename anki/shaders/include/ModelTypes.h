@@ -12,22 +12,36 @@ ANKI_BEGIN_NAMESPACE
 const U32 UV_CHANNEL_0 = 0;
 const U32 UV_CHANNEL_COUNT = 1;
 
-struct GpuVertex
+/// The main vertex that contains normals, tangents and UVs
+struct MainVertex
 {
-	U32 m_normal; // Packed in R10G10B10A2SNorm
-	U32 m_tangent; // Packed in R10G10B10A2SNorm
+	U32 m_normal; ///< Packed in a custom R11G11B10_SNorm
+	U32 m_tangent; ///< Packed in a custom R10G10B11A1_SNorm format
 	HVec2 m_uvs[UV_CHANNEL_COUNT];
 };
 
-const U32 _ANKI_SIZEOF_GpuVertex = 4 * 3;
-const U32 _ANKI_ALIGNOF_GpuVertex = 4;
-ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_GpuVertex == sizeof(GpuVertex));
+const U32 _ANKI_SIZEOF_MainVertex = 4 * 3;
+const U32 _ANKI_ALIGNOF_MainVertex = 4;
+ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_MainVertex == sizeof(MainVertex));
 
+/// The vertex that contains the bone influences.
+struct BoneInfoVertex
+{
+	F32 m_boneIndices[4];
+	U8 m_boneWeights[4];
+};
+
+const U32 _ANKI_SIZEOF_BoneInfoVertex = 5 * 4;
+const U32 _ANKI_ALIGNOF_BoneInfoVertex = 4;
+ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_BoneInfoVertex == sizeof(BoneInfoVertex));
+
+/// A structure that contains all the info of a geometry.
 struct GpuMesh
 {
-	U64 m_indexBufferPtr; // Points to a buffer of U16
-	U64 m_positionBufferPtr; // Points to a buffer of Vec3
-	U64 m_vertexBufferPtr; // Points to a buffer of Vertex
+	U64 m_indexBufferPtr; ///< Points to a buffer of U16 indices.
+	U64 m_positionBufferPtr; ///< Points to a buffer of Vec3 positions.
+	U64 m_mainVertexBufferPtr; ///< Points to a buffer of MainVertex.
+	U64 m_boneInfoVertexBufferPtr; ///< Points to a buffer of BoneInfoVertex.
 	U32 m_indexCount;
 	U32 m_vertexCount;
 };

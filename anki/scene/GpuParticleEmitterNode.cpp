@@ -10,7 +10,7 @@
 #include <anki/scene/components/GenericGpuComputeJobComponent.h>
 #include <anki/scene/components/RenderComponent.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/shaders/include/GpuParticles.h>
+#include <anki/shaders/include/ParticleTypes.h>
 
 namespace anki
 {
