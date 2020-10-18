@@ -31,8 +31,6 @@ inline F32 dot(const T& a, const T& b)
 }
 ANKI_END_NAMESPACE
 
-#	define ANKI_SIZEOF(x) sizeof(x)
-
 //
 // Macros & functions GLSL
 //
