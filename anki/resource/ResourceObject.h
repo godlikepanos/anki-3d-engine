@@ -68,7 +68,7 @@ public:
 		m_uuid = uuid;
 	}
 
-	/// To check if 2 resource pointers are actually the same.
+	/// To check if 2 resource pointers are actually the same resource.
 	ANKI_INTERNAL U64 getUuid() const
 	{
 		ANKI_ASSERT(m_uuid > 0);

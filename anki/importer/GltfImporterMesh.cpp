@@ -249,6 +249,19 @@ static void decimateSubmesh(F32 factor, SubMesh& submesh, GenericMemoryPoolAlloc
 	submesh.m_verts = std::move(newVerts);
 }
 
+U32 GltfImporter::getMeshTotalVertexCount(const cgltf_mesh& mesh)
+{
+	U32 totalVertexCount = 0;
+
+	for(const cgltf_primitive* primitive = mesh.primitives; primitive < mesh.primitives + mesh.primitives_count;
+		++primitive)
+	{
+		totalVertexCount += U32(primitive->attributes[0].data->count);
+	}
+
+	return totalVertexCount;
+}
+
 Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor)
 {
 	StringAuto fname(m_alloc);
@@ -694,6 +707,7 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		header.m_indexType = IndexType::U16;
 		header.m_totalIndexCount = totalIndexCount;
 		header.m_totalVertexCount = totalVertexCount;
+		ANKI_ASSERT(header.m_totalVertexCount == getMeshTotalVertexCount(mesh));
 		header.m_subMeshCount = U32(submeshes.getSize());
 		header.m_aabbMin = aabbMin;
 		header.m_aabbMax = aabbMax;

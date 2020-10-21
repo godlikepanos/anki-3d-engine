@@ -606,16 +606,12 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				cgltf_material* m_mtl;
 				cgltf_skin* m_skin;
 				Bool m_selfCollision;
-				U32 m_lodCount;
-				F32 m_lodFactor;
 			};
 			Ctx* ctx = m_alloc.newInstance<Ctx>();
 			ctx->m_importer = this;
 			ctx->m_mesh = node.mesh;
 			ctx->m_mtl = node.mesh->primitives[0].material;
 			ctx->m_skin = node.skin;
-			ctx->m_lodCount = m_lodCount;
-			ctx->m_lodFactor = m_lodFactor;
 
 			HashMapAuto<CString, StringAuto>::Iterator it2;
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
@@ -626,24 +622,24 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				Ctx& self = *static_cast<Ctx*>(userData);
 
 				// LOD 0
-				Error err = self.m_importer->writeMesh(*self.m_mesh, CString(), 1.0f);
+				Error err = self.m_importer->writeMesh(*self.m_mesh, CString(), self.m_importer->computeLodFactor(0));
 				U32 maxLod = 0;
 
 				// LOD 1
-				if(!err && self.m_lodCount > 1)
+				if(!err && self.m_importer->m_lodCount > 1 && !self.m_importer->skipMeshLod(*self.m_mesh, 1))
 				{
 					StringAuto name(self.m_importer->m_alloc);
 					name.sprintf("%s_lod1", self.m_mesh->name);
-					err = self.m_importer->writeMesh(*self.m_mesh, name, 1.0f - self.m_lodFactor);
+					err = self.m_importer->writeMesh(*self.m_mesh, name, self.m_importer->computeLodFactor(1));
 					maxLod = 1;
 				}
 
 				// LOD 2
-				if(!err && self.m_lodCount > 2)
+				if(!err && self.m_importer->m_lodCount > 2 && !self.m_importer->skipMeshLod(*self.m_mesh, 2))
 				{
 					StringAuto name(self.m_importer->m_alloc);
 					name.sprintf("%s_lod2", self.m_mesh->name);
-					err = self.m_importer->writeMesh(*self.m_mesh, name, 1.0f - self.m_lodFactor * 2.0f);
+					err = self.m_importer->writeMesh(*self.m_mesh, name, self.m_importer->computeLodFactor(2));
 					maxLod = 2;
 				}
 
@@ -767,14 +763,14 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh, CString skinName)
 
 	ANKI_CHECK(file.writeText("\t\t\t<mesh>%s%s.ankimesh</mesh>\n", m_rpath.cstr(), mesh.name));
 
-	if(m_lodCount > 1)
+	if(m_lodCount > 1 && !skipMeshLod(mesh, 1))
 	{
 		StringAuto name(m_alloc);
 		name.sprintf("%s_lod1", mesh.name);
 		ANKI_CHECK(file.writeText("\t\t\t<mesh1>%s%s.ankimesh</mesh1>\n", m_rpath.cstr(), name.cstr()));
 	}
 
-	if(m_lodCount > 2)
+	if(m_lodCount > 2 && !skipMeshLod(mesh, 2))
 	{
 		StringAuto name(m_alloc);
 		name.sprintf("%s_lod2", mesh.name);

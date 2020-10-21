@@ -55,6 +55,18 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 			geom.vertexFormat = convertFormat(m_bottomLevelInfo.m_positionsFormat);
 			geom.maxPrimitiveCount = m_bottomLevelInfo.m_indexCount / 3;
 			geom.maxVertexCount = m_bottomLevelInfo.m_positionCount;
+
+			VkFormatProperties2 formatProperties = {};
+			formatProperties.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
+			vkGetPhysicalDeviceFormatProperties2(getGrManagerImpl().getPhysicalDevice(), geom.vertexFormat,
+												 &formatProperties);
+
+			if(!(formatProperties.formatProperties.bufferFeatures
+				 & VK_FORMAT_FEATURE_ACCELERATION_STRUCTURE_VERTEX_BUFFER_BIT_KHR))
+			{
+				ANKI_VK_LOGE("The positions format cannot be used in acceleration structures");
+				return Error::USER_DATA;
+			}
 		}
 		else
 		{

@@ -73,6 +73,9 @@ private:
 	Bool m_optimizeMeshes = false;
 	StringAuto m_comment{m_alloc};
 
+	/// Don't generate LODs for meshes with less vertices than this number.
+	U32 m_skipLodVertexCountThreshold = 256;
+
 	// Misc
 	ANKI_USE_RESULT Error getExtras(const cgltf_extras& extras, HashMapAuto<CString, StringAuto>& out);
 	ANKI_USE_RESULT Error parseArrayOfNumbers(CString str, DynamicArrayAuto<F64>& out,
@@ -97,6 +100,19 @@ private:
 		out.replaceAll(" ", "_");
 		return out;
 	}
+
+	F32 computeLodFactor(U32 lod) const
+	{
+		ANKI_ASSERT(lod < m_lodCount);
+		return 1.0f - m_lodFactor * F32(lod);
+	}
+
+	Bool skipMeshLod(const cgltf_mesh& mesh, U32 lod) const
+	{
+		return U32(computeLodFactor(lod) * F32(getMeshTotalVertexCount(mesh))) < m_skipLodVertexCountThreshold;
+	}
+
+	static U32 getMeshTotalVertexCount(const cgltf_mesh& mesh);
 
 	// Resources
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor);

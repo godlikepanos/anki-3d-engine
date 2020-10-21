@@ -66,6 +66,12 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	LoadContext* ctx;
 	LoadContext localCtx(this, getTempAllocator());
 
+	const Bool rayTracingEnabled = getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled;
+	if(rayTracingEnabled)
+	{
+		async = false; // TODO Find a better way
+	}
+
 	if(async)
 	{
 		task = getManager().getAsyncLoader().newTask<LoadTask>(this);
@@ -99,11 +105,15 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	ANKI_ASSERT((m_indexCount % 3) == 0 && "Expecting triangles");
 	m_indexType = header.m_indexType;
 
-	const PtrSize indexBuffSize = m_indexCount * ((m_indexType == IndexType::U32) ? 4 : 2);
+	const PtrSize indexBuffSize = PtrSize(m_indexCount) * ((m_indexType == IndexType::U32) ? 4 : 2);
 
+	BufferUsageBit indexBufferUsage = BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION;
+	if(rayTracingEnabled)
+	{
+		indexBufferUsage |= BufferUsageBit::ACCELERATION_STRUCTURE_BUILD;
+	}
 	m_indexBuff = getManager().getGrManager().newBuffer(
-		BufferInitInfo(indexBuffSize, BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION,
-					   BufferMapAccessBit::NONE, "MeshIdx"));
+		BufferInitInfo(indexBuffSize, indexBufferUsage, BufferMapAccessBit::NONE, "MeshIdx"));
 
 	// Vertex stuff
 	m_vertCount = header.m_totalVertexCount;
@@ -120,9 +130,13 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		totalVertexBuffSize += m_vertCount * m_vertBufferInfos[i].m_stride;
 	}
 
+	BufferUsageBit vertexBufferUsage = BufferUsageBit::VERTEX | BufferUsageBit::TRANSFER_DESTINATION;
+	if(rayTracingEnabled)
+	{
+		vertexBufferUsage |= BufferUsageBit::ACCELERATION_STRUCTURE_BUILD;
+	}
 	m_vertBuff = getManager().getGrManager().newBuffer(
-		BufferInitInfo(totalVertexBuffSize, BufferUsageBit::VERTEX | BufferUsageBit::TRANSFER_DESTINATION,
-					   BufferMapAccessBit::NONE, "MeshVert"));
+		BufferInitInfo(totalVertexBuffSize, vertexBufferUsage, BufferMapAccessBit::NONE, "MeshVert"));
 
 	m_texChannelCount = !!header.m_vertexAttributes[VertexAttributeLocation::UV2].m_format ? 2 : 1;
 
@@ -147,17 +161,52 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	m_obb = Obb(obbCenter.xyz0(), Mat3x4::getIdentity(), obbExtend.xyz0());
 
 	// Clear the buffers
-	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
+	if(!async)
+	{
+		CommandBufferInitInfo cmdbinit;
+		cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
+		CommandBufferPtr cmdb = getManager().getGrManager().newCommandBuffer(cmdbinit);
 
-	cmdb->fillBuffer(m_vertBuff, 0, MAX_PTR_SIZE, 0);
-	cmdb->fillBuffer(m_indexBuff, 0, MAX_PTR_SIZE, 0);
+		cmdb->fillBuffer(m_vertBuff, 0, MAX_PTR_SIZE, 0);
+		cmdb->fillBuffer(m_indexBuff, 0, MAX_PTR_SIZE, 0);
 
-	cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
-	cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+		cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::VERTEX, 0,
+							   MAX_PTR_SIZE);
+		cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::INDEX, 0,
+							   MAX_PTR_SIZE);
 
-	cmdb->flush();
+		cmdb->flush();
+	}
+
+	// Create the BLAS
+	if(rayTracingEnabled)
+	{
+		AccelerationStructureInitInfo inf("Mesh BLAS");
+		inf.m_type = AccelerationStructureType::BOTTOM_LEVEL;
+
+		inf.m_bottomLevel.m_indexBuffer = m_indexBuff;
+		inf.m_bottomLevel.m_indexBufferOffset = 0;
+		inf.m_bottomLevel.m_indexCount = m_indexCount;
+		inf.m_bottomLevel.m_indexType = m_indexType;
+
+		U32 bufferIdx;
+		Format format;
+		PtrSize relativeOffset;
+		getVertexAttributeInfo(VertexAttributeLocation::POSITION, bufferIdx, format, relativeOffset);
+
+		BufferPtr posBuffer;
+		PtrSize offset;
+		PtrSize stride;
+		getVertexBufferInfo(bufferIdx, posBuffer, offset, stride);
+
+		inf.m_bottomLevel.m_positionBuffer = posBuffer;
+		inf.m_bottomLevel.m_positionBufferOffset = offset;
+		inf.m_bottomLevel.m_positionStride = U32(stride);
+		inf.m_bottomLevel.m_positionsFormat = format;
+		inf.m_bottomLevel.m_positionCount = m_vertCount;
+
+		m_blas = getManager().getGrManager().newAccelerationStructure(inf);
+	}
 
 	// Submit the loading task
 	if(async)
@@ -208,9 +257,10 @@ Error MeshResource::loadAsync(MeshLoader& loader) const
 		for(U32 i = 0; i < m_vertBufferInfos.getSize(); ++i)
 		{
 			alignRoundUp(VERTEX_BUFFER_ALIGNMENT, offset);
-			ANKI_CHECK(loader.storeVertexBuffer(i, data + offset, m_vertBufferInfos[i].m_stride * m_vertCount));
+			ANKI_CHECK(
+				loader.storeVertexBuffer(i, data + offset, PtrSize(m_vertBufferInfos[i].m_stride) * m_vertCount));
 
-			offset += m_vertBufferInfos[i].m_stride * m_vertCount;
+			offset += PtrSize(m_vertBufferInfos[i].m_stride) * m_vertCount;
 		}
 
 		ANKI_ASSERT(offset == m_vertBuff->getSize());
@@ -219,9 +269,29 @@ Error MeshResource::loadAsync(MeshLoader& loader) const
 		cmdb->copyBufferToBuffer(handles[0].getBuffer(), handles[0].getOffset(), m_vertBuff, 0, handles[0].getRange());
 	}
 
-	// Set barriers
-	cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
-	cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+	// Build the BLAS
+	if(gr.getDeviceCapabilities().m_rayTracingEnabled)
+	{
+		cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::TRANSFER_DESTINATION,
+							   BufferUsageBit::ACCELERATION_STRUCTURE_BUILD | BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
+		cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::TRANSFER_DESTINATION,
+							   BufferUsageBit::ACCELERATION_STRUCTURE_BUILD | BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+
+		cmdb->setAccelerationStructureBarrier(m_blas, AccelerationStructureUsageBit::NONE,
+											  AccelerationStructureUsageBit::BUILD);
+
+		cmdb->buildAccelerationStructure(m_blas);
+
+		cmdb->setAccelerationStructureBarrier(m_blas, AccelerationStructureUsageBit::BUILD,
+											  AccelerationStructureUsageBit::ALL_READ);
+	}
+	else
+	{
+		cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::VERTEX, 0,
+							   MAX_PTR_SIZE);
+		cmdb->setBufferBarrier(m_indexBuff, BufferUsageBit::TRANSFER_DESTINATION, BufferUsageBit::INDEX, 0,
+							   MAX_PTR_SIZE);
+	}
 
 	// Finalize
 	FencePtr fence;

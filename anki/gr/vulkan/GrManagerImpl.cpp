@@ -410,11 +410,6 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s", m_devProps.deviceName,
 				 &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
 
-	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
-	m_devFeatures.robustBufferAccess =
-		(init.m_config->getBool("gr_debugContext") && m_devFeatures.robustBufferAccess) ? true : false;
-	ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
-
 	// Set limits
 	m_capabilities.m_uniformBufferBindOffsetAlignment =
 		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.limits.minUniformBufferOffsetAlignment));
@@ -482,7 +477,6 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	ci.queueCreateInfoCount = 1;
 	ci.pQueueCreateInfos = &q;
-	ci.pEnabledFeatures = &m_devFeatures;
 
 	// Extensions
 	U32 extCount = 0;
@@ -546,92 +540,6 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			}
 		}
 
-		// Enable a few 1.2 features
-		{
-			m_12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-
-			VkPhysicalDeviceFeatures2 features = {};
-			features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-			features.pNext = &m_12Features;
-
-			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
-
-			// Descriptor indexing
-			if(!m_12Features.shaderSampledImageArrayNonUniformIndexing
-			   || !m_12Features.shaderStorageImageArrayNonUniformIndexing)
-			{
-				ANKI_VK_LOGE("Non uniform indexing is not supported by the device");
-				return Error::FUNCTION_FAILED;
-			}
-
-			if(!m_12Features.descriptorBindingSampledImageUpdateAfterBind
-			   || !m_12Features.descriptorBindingStorageImageUpdateAfterBind)
-			{
-				ANKI_VK_LOGE("Update descriptors after bind is not supported by the device");
-				return Error::FUNCTION_FAILED;
-			}
-
-			if(!m_12Features.descriptorBindingUpdateUnusedWhilePending)
-			{
-				ANKI_VK_LOGE("Update descriptors while cmd buffer is pending is not supported by the device");
-				return Error::FUNCTION_FAILED;
-			}
-
-			// Buffer address
-			if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
-			{
-				if(!m_12Features.bufferDeviceAddress)
-				{
-					ANKI_VK_LOGE("Buffer device address is not supported by the device");
-					return Error::FUNCTION_FAILED;
-				}
-
-				m_12Features.bufferDeviceAddressCaptureReplay =
-					m_12Features.bufferDeviceAddressCaptureReplay && init.m_config->getBool("gr_debugMarkers");
-				m_12Features.bufferDeviceAddressMultiDevice = false;
-			}
-			else
-			{
-				m_12Features.bufferDeviceAddress = false;
-				m_12Features.bufferDeviceAddressCaptureReplay = false;
-				m_12Features.bufferDeviceAddressMultiDevice = false;
-			}
-
-			// Scalar block layout
-			if(!m_12Features.scalarBlockLayout)
-			{
-				ANKI_VK_LOGE("Scalar block layout is not supported by the device");
-				return Error::FUNCTION_FAILED;
-			}
-
-			ci.pNext = &m_12Features;
-		}
-
-		// Set RT features
-		if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
-		{
-			m_rtFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
-
-			VkPhysicalDeviceFeatures2 features = {};
-			features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-			features.pNext = &m_rtFeatures;
-			vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
-
-			if(!m_rtFeatures.rayTracing || !m_rtFeatures.rayQuery)
-			{
-				ANKI_VK_LOGE("Ray tracing and ray query are both required");
-				return Error::FUNCTION_FAILED;
-			}
-
-			// Only enable what's necessary
-			m_rtFeatures = {};
-			m_rtFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
-			m_rtFeatures.rayTracing = true;
-			m_rtFeatures.rayQuery = true;
-
-			m_12Features.pNext = &m_rtFeatures;
-		}
-
 		ANKI_VK_LOGI("Will enable the following device extensions:");
 		for(U32 i = 0; i < extensionsToEnableCount; ++i)
 		{
@@ -640,6 +548,107 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 		ci.enabledExtensionCount = extensionsToEnableCount;
 		ci.ppEnabledExtensionNames = &extensionsToEnable[0];
+	}
+
+	// Enable/disable generic features
+	{
+		VkPhysicalDeviceFeatures2 devFeatures = {};
+		devFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &devFeatures);
+		m_devFeatures = devFeatures.features;
+		m_devFeatures.robustBufferAccess =
+			(init.m_config->getBool("gr_debugContext") && m_devFeatures.robustBufferAccess) ? true : false;
+		ANKI_VK_LOGI("Robust buffer access is %s", (m_devFeatures.robustBufferAccess) ? "enabled" : "disabled");
+
+		ci.pEnabledFeatures = &m_devFeatures;
+	}
+
+	// Enable a few 1.2 features
+	{
+		m_12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+
+		VkPhysicalDeviceFeatures2 features = {};
+		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features.pNext = &m_12Features;
+
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+		// Descriptor indexing
+		if(!m_12Features.shaderSampledImageArrayNonUniformIndexing
+		   || !m_12Features.shaderStorageImageArrayNonUniformIndexing)
+		{
+			ANKI_VK_LOGE("Non uniform indexing is not supported by the device");
+			return Error::FUNCTION_FAILED;
+		}
+
+		if(!m_12Features.descriptorBindingSampledImageUpdateAfterBind
+		   || !m_12Features.descriptorBindingStorageImageUpdateAfterBind)
+		{
+			ANKI_VK_LOGE("Update descriptors after bind is not supported by the device");
+			return Error::FUNCTION_FAILED;
+		}
+
+		if(!m_12Features.descriptorBindingUpdateUnusedWhilePending)
+		{
+			ANKI_VK_LOGE("Update descriptors while cmd buffer is pending is not supported by the device");
+			return Error::FUNCTION_FAILED;
+		}
+
+		// Buffer address
+		if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
+		{
+			if(!m_12Features.bufferDeviceAddress)
+			{
+				ANKI_VK_LOGE("Buffer device address is not supported by the device");
+				return Error::FUNCTION_FAILED;
+			}
+
+			m_12Features.bufferDeviceAddressCaptureReplay =
+				m_12Features.bufferDeviceAddressCaptureReplay && init.m_config->getBool("gr_debugMarkers");
+			m_12Features.bufferDeviceAddressMultiDevice = false;
+		}
+		else
+		{
+			m_12Features.bufferDeviceAddress = false;
+			m_12Features.bufferDeviceAddressCaptureReplay = false;
+			m_12Features.bufferDeviceAddressMultiDevice = false;
+		}
+
+		// Scalar block layout
+		if(!m_12Features.scalarBlockLayout)
+		{
+			ANKI_VK_LOGE("Scalar block layout is not supported by the device");
+			return Error::FUNCTION_FAILED;
+		}
+
+		m_12Features.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_12Features;
+	}
+
+	// Set RT features
+	if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
+	{
+		m_rtFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
+
+		VkPhysicalDeviceFeatures2 features = {};
+		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features.pNext = &m_rtFeatures;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+		if(!m_rtFeatures.rayTracing || !m_rtFeatures.rayQuery)
+		{
+			ANKI_VK_LOGE("Ray tracing and ray query are both required");
+			return Error::FUNCTION_FAILED;
+		}
+
+		// Only enable what's necessary
+		m_rtFeatures = {};
+		m_rtFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
+		m_rtFeatures.rayTracing = true;
+		m_rtFeatures.rayQuery = true;
+
+		m_rtFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_rtFeatures;
 	}
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));

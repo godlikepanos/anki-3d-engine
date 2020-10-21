@@ -44,6 +44,8 @@ struct GpuMesh
 	U64 m_boneInfoVertexBufferPtr; ///< Points to a buffer of BoneInfoVertex.
 	U32 m_indexCount;
 	U32 m_vertexCount;
+	Vec3 m_aabbMin;
+	Vec3 m_aabbMax;
 };
 
 const U32 TEXTURE_CHANNEL_DIFFUSE = 0;

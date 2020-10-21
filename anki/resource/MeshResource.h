@@ -105,7 +105,13 @@ public:
 		return isVertexAttributePresent(VertexAttributeLocation::BONE_WEIGHTS);
 	}
 
-protected:
+	AccelerationStructurePtr getBottomLevelAccelerationStructure() const
+	{
+		ANKI_ASSERT(m_blas.isCreated());
+		return m_blas;
+	}
+
+private:
 	class LoadTask;
 	class LoadContext;
 
@@ -148,6 +154,8 @@ protected:
 
 	// Other
 	Obb m_obb;
+
+	AccelerationStructurePtr m_blas;
 
 	ANKI_USE_RESULT Error loadAsync(MeshLoader& loader) const;
 };

@@ -15,7 +15,7 @@ GrObject::GrObject(GrManager* manager, GrObjectType type, CString name)
 	, m_refcount(0)
 	, m_type(type)
 {
-	if(!name || name.getLength() == 0)
+	if(name.getLength() == 0)
 	{
 		name = "N/A";
 	}
