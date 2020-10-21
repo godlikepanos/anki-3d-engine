@@ -46,6 +46,7 @@ public:
 MeshResource::MeshResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
+	memset(&m_meshGpuDescriptor, 0, sizeof(m_meshGpuDescriptor));
 }
 
 MeshResource::~MeshResource()
@@ -194,18 +195,49 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		PtrSize relativeOffset;
 		getVertexAttributeInfo(VertexAttributeLocation::POSITION, bufferIdx, format, relativeOffset);
 
-		BufferPtr posBuffer;
+		BufferPtr buffer;
 		PtrSize offset;
 		PtrSize stride;
-		getVertexBufferInfo(bufferIdx, posBuffer, offset, stride);
+		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
 
-		inf.m_bottomLevel.m_positionBuffer = posBuffer;
+		inf.m_bottomLevel.m_positionBuffer = buffer;
 		inf.m_bottomLevel.m_positionBufferOffset = offset;
 		inf.m_bottomLevel.m_positionStride = U32(stride);
 		inf.m_bottomLevel.m_positionsFormat = format;
 		inf.m_bottomLevel.m_positionCount = m_vertCount;
 
 		m_blas = getManager().getGrManager().newAccelerationStructure(inf);
+	}
+
+	// Fill the GPU descriptor
+	if(rayTracingEnabled)
+	{
+		U32 bufferIdx;
+		Format format;
+		PtrSize relativeOffset;
+		getVertexAttributeInfo(VertexAttributeLocation::POSITION, bufferIdx, format, relativeOffset);
+		BufferPtr buffer;
+		PtrSize offset;
+		PtrSize stride;
+		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
+		m_meshGpuDescriptor.m_indexBufferPtr = m_indexBuff->getGpuAddress();
+		m_meshGpuDescriptor.m_positionBufferPtr = buffer->getGpuAddress();
+
+		getVertexAttributeInfo(VertexAttributeLocation::NORMAL, bufferIdx, format, relativeOffset);
+		getVertexBufferInfo(bufferIdx, buffer, offset, stride);
+		m_meshGpuDescriptor.m_mainVertexBufferPtr = buffer->getGpuAddress();
+
+		if(hasBoneWeights())
+		{
+			getVertexAttributeInfo(VertexAttributeLocation::BONE_WEIGHTS, bufferIdx, format, relativeOffset);
+			getVertexBufferInfo(bufferIdx, buffer, offset, stride);
+			m_meshGpuDescriptor.m_boneInfoVertexBufferPtr = buffer->getGpuAddress();
+		}
+
+		m_meshGpuDescriptor.m_indexCount = m_indexCount;
+		m_meshGpuDescriptor.m_vertexCount = m_vertCount;
+		m_meshGpuDescriptor.m_aabbMin = header.m_aabbMin;
+		m_meshGpuDescriptor.m_aabbMax = header.m_aabbMax;
 	}
 
 	// Submit the loading task

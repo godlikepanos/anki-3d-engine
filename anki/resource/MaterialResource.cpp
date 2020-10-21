@@ -148,11 +148,11 @@ public:
 };
 
 static const Array<GpuMaterialFloats, 5> GPU_MATERIAL_FLOATS = {
-	{{"diffuseColor", offsetof(GpuMaterial, m_diffuseColor), 3},
-	 {"specularColor", offsetof(GpuMaterial, m_specularColor), 3},
-	 {"emissiveColor", offsetof(GpuMaterial, m_emissiveColor), 3},
-	 {"roughness", offsetof(GpuMaterial, m_roughness), 1},
-	 {"metalness", offsetof(GpuMaterial, m_metalness), 1}}};
+	{{"diffuseColor", offsetof(MaterialGpuDescriptor, m_diffuseColor), 3},
+	 {"specularColor", offsetof(MaterialGpuDescriptor, m_specularColor), 3},
+	 {"emissiveColor", offsetof(MaterialGpuDescriptor, m_emissiveColor), 3},
+	 {"roughness", offsetof(MaterialGpuDescriptor, m_roughness), 1},
+	 {"metalness", offsetof(MaterialGpuDescriptor, m_metalness), 1}}};
 
 MaterialVariable::MaterialVariable()
 {
@@ -1128,7 +1128,7 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 
 	// input
 	RayTracingMaterialVariant& variant = m_rt[type].m_variant;
-	GpuMaterial& gpuMaterial = variant.m_gpuMaterialDescr;
+	MaterialGpuDescriptor& gpuMaterial = variant.m_materialGpuDescriptor;
 	XmlElement inputsEl;
 	ANKI_CHECK(rtMaterialEl.getChildElementOptional("inputs", inputsEl));
 	if(inputsEl)

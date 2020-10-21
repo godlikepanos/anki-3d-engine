@@ -481,6 +481,10 @@ public:
 	Semaphore& operator=(const Semaphore&) = delete;
 
 	/// Same as sem_wait().
+	/// @code
+	/// if(value == 0) wait();
+	/// --value;
+	/// @endcode
 	void wait()
 	{
 #if ANKI_POSIX
@@ -491,6 +495,10 @@ public:
 	}
 
 	/// Same as sem_post().
+	/// @code
+	/// ++value;
+	/// wakeupWaiters();
+	/// @endcode
 	void post()
 	{
 #if ANKI_POSIX

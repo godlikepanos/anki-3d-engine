@@ -9,6 +9,7 @@
 #include <anki/Math.h>
 #include <anki/Gr.h>
 #include <anki/collision/Obb.h>
+#include <anki/shaders/include/ModelTypes.h>
 
 namespace anki
 {
@@ -111,6 +112,11 @@ public:
 		return m_blas;
 	}
 
+	const MeshGpuDescriptor& getMeshGpuDescriptor() const
+	{
+		return m_meshGpuDescriptor;
+	}
+
 private:
 	class LoadTask;
 	class LoadContext;
@@ -155,7 +161,9 @@ private:
 	// Other
 	Obb m_obb;
 
+	// RT
 	AccelerationStructurePtr m_blas;
+	MeshGpuDescriptor m_meshGpuDescriptor;
 
 	ANKI_USE_RESULT Error loadAsync(MeshLoader& loader) const;
 };

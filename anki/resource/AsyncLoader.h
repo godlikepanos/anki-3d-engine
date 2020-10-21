@@ -66,7 +66,7 @@ public:
 		submitTask(newTask<TTask>(std::forward<TArgs>(args)...));
 	}
 
-	/// Pause the loader. This method will block the main thread for the current async task to finish. The rest of the
+	/// Pause the loader. This method will block the caller for the current async task to finish. The rest of the
 	/// tasks in the queue will not be executed until resume is called.
 	void pause();
 

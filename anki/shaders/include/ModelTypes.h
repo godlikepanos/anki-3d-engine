@@ -36,7 +36,7 @@ const U32 _ANKI_ALIGNOF_BoneInfoVertex = 4;
 ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_BoneInfoVertex == sizeof(BoneInfoVertex));
 
 /// A structure that contains all the info of a geometry.
-struct GpuMesh
+struct MeshGpuDescriptor
 {
 	U64 m_indexBufferPtr; ///< Points to a buffer of U16 indices.
 	U64 m_positionBufferPtr; ///< Points to a buffer of Vec3 positions.
@@ -59,7 +59,7 @@ const U32 TEXTURE_CHANNEL_AUX_2 = 7;
 
 const U32 TEXTURE_CHANNEL_COUNT = 8;
 
-struct GpuMaterial
+struct MaterialGpuDescriptor
 {
 	U16 m_bindlessTextureIndices[TEXTURE_CHANNEL_COUNT];
 	Vec3 m_diffuseColor;
@@ -69,10 +69,10 @@ struct GpuMaterial
 	F32 m_metalness;
 };
 
-struct GpuModel
+struct ModelGpuDescriptor
 {
-	GpuMesh m_mesh;
-	GpuMaterial m_material;
+	MeshGpuDescriptor m_mesh;
+	MaterialGpuDescriptor m_material;
 #if defined(__cplusplus)
 	F32 m_worldTransform[12];
 #else

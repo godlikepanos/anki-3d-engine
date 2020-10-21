@@ -14,10 +14,10 @@
 #if ALPHA_TEXTURE == 1
 layout(set = 0, binding = 0, scalar) buffer b_ankiModels
 {
-	GpuModel u_ankiModels[];
+	ModelGpuDescriptor u_modelDescriptors[];
 };
 
-layout(set = 0, binding = 1) uniform sampler u_ankiGlobalSampler;
+layout(set = 0, binding = 1) uniform sampler u_sampler;
 
 ANKI_BINDLESS_SET(1);
 #endif
@@ -34,8 +34,8 @@ ANKI_REF(MainVertex, ANKI_ALIGNOF(MainVertex));
 void main()
 {
 #if ALPHA_TEXTURE == 1
-	const GpuModel model = u_ankiModels[nonuniformEXT(gl_InstanceID)];
-	const GpuMesh mesh = model.m_mesh;
+	const ModelGpuDescriptor model = u_modelDescriptors[nonuniformEXT(gl_InstanceID)];
+	const MeshGpuDescriptor mesh = model.m_mesh;
 
 	const U32 offset = gl_PrimitiveID * ANKI_SIZEOF(U16Vec3);
 	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(mesh.m_indexBufferPtr + offset)).m_value;
@@ -50,7 +50,7 @@ void main()
 					+ vert2.m_uvs[UV_CHANNEL_0] * barycentrics.z;
 
 	const U32 texIdx = model.m_material.m_bindlessTextureIndices[TEXTURE_CHANNEL_DIFFUSE];
-	const F32 alpha = textureLod(u_bindlessTextures2dF32[nonuniformEXT(texIdx)], u_ankiGlobalSampler, uv, 3).a;
+	const F32 alpha = textureLod(u_bindlessTextures2dF32[nonuniformEXT(texIdx)], u_sampler, uv, 3).a;
 
 	g_payload += alpha;
 

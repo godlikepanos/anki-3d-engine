@@ -278,9 +278,9 @@ public:
 		return m_shaderGroupHandle;
 	}
 
-	const GpuMaterial& getGpuMaterialDescriptor() const
+	const MaterialGpuDescriptor& getMaterialGpuDescriptor() const
 	{
-		return m_gpuMaterialDescr;
+		return m_materialGpuDescriptor;
 	}
 
 	const Array<TextureViewPtr, TEXTURE_CHANNEL_COUNT>& getTextureViews() const
@@ -290,13 +290,13 @@ public:
 
 private:
 	ConstWeakArray<U8> m_shaderGroupHandle;
-	GpuMaterial m_gpuMaterialDescr;
+	MaterialGpuDescriptor m_materialGpuDescriptor;
 	Array<TextureResourcePtr, TEXTURE_CHANNEL_COUNT> m_textureResources; ///< Keep the resources alive.
 	Array<TextureViewPtr, TEXTURE_CHANNEL_COUNT> m_textureViews; ///< Cache the GPU objects.
 
 	RayTracingMaterialVariant()
 	{
-		memset(&m_gpuMaterialDescr, 0, sizeof(m_gpuMaterialDescr));
+		memset(&m_materialGpuDescriptor, 0, sizeof(m_materialGpuDescriptor));
 	}
 
 	~RayTracingMaterialVariant() = default;
