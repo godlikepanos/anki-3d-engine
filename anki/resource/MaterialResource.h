@@ -22,18 +22,6 @@ class XmlElement;
 /// @addtogroup resource
 /// @{
 
-enum class RayTracingMaterialType : U8
-{
-	SHADOWS,
-	GI,
-	REFLECTIONS,
-	PATH_TRACING,
-
-	COUNT,
-	FIRST = 0
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RayTracingMaterialType)
-
 /// The ID of a buildin material variable.
 enum class BuiltinMaterialVariableId : U8
 {
@@ -283,9 +271,10 @@ public:
 		return m_materialGpuDescriptor;
 	}
 
-	const Array<TextureViewPtr, TEXTURE_CHANNEL_COUNT>& getTextureViews() const
+	/// Get the texture views that are referenced by what getMaterialGpuDescriptor() returned. Used for life tracking.
+	const ConstWeakArray<TextureViewPtr> getTextureViews() const
 	{
-		return m_textureViews;
+		return ConstWeakArray<TextureViewPtr>((m_textureViewCount) ? &m_textureViews[0] : nullptr, m_textureViewCount);
 	}
 
 private:
@@ -293,6 +282,7 @@ private:
 	MaterialGpuDescriptor m_materialGpuDescriptor;
 	Array<TextureResourcePtr, TEXTURE_CHANNEL_COUNT> m_textureResources; ///< Keep the resources alive.
 	Array<TextureViewPtr, TEXTURE_CHANNEL_COUNT> m_textureViews; ///< Cache the GPU objects.
+	U8 m_textureViewCount = 0;
 
 	RayTracingMaterialVariant()
 	{
@@ -391,6 +381,18 @@ public:
 	}
 
 	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
+
+	const RayTracingMaterialVariant& getRayTracingVariant(U32 lod, RayTracingMaterialType type) const
+	{
+		(void)lod; // Not supported for now
+		ANKI_ASSERT(m_rt[type].m_prog.isCreated());
+		return m_rt[type].m_variant;
+	}
+
+	Bool getRayTracingTypeSupported(RayTracingMaterialType type) const
+	{
+		return m_rt[type].m_prog.isCreated();
+	}
 
 private:
 	class SubMutation

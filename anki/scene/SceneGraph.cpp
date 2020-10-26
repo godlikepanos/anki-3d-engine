@@ -89,6 +89,8 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	PhysicsDebugNode* pnode;
 	ANKI_CHECK(newSceneNode<PhysicsDebugNode>("_physicsDebugNode", pnode));
 
+	m_enableRtShadows = config.getBool("scene_rayTracedShadows") && m_gr->getDeviceCapabilities().m_rayTracingEnabled;
+
 	return Error::NONE;
 }
 

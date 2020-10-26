@@ -126,24 +126,4 @@ constexpr Bool isPacked<RenderingKey>()
 	return sizeof(RenderingKey) == 5;
 }
 
-/// The hash function
-class RenderingKeyHasher
-{
-public:
-	U64 operator()(const RenderingKey& key) const
-	{
-		return computeHash(&key, sizeof(key));
-	}
-};
-
-/// The collision evaluation function
-class RenderingKeyEqual
-{
-public:
-	Bool operator()(const RenderingKey& a, const RenderingKey& b) const
-	{
-		return a == b;
-	}
-};
-
 } // end namespace anki

@@ -134,10 +134,8 @@ public:
 	template<typename Component>
 	Component* tryGetComponent()
 	{
-		U32 count = m_components.getSize();
-		while(count-- != 0)
+		for(SceneComponent* comp : m_components)
 		{
-			SceneComponent* comp = m_components[count];
 			if(comp->getType() == Component::CLASS_TYPE)
 			{
 				return static_cast<Component*>(comp);
@@ -150,10 +148,8 @@ public:
 	template<typename Component>
 	const Component* tryGetComponent() const
 	{
-		U32 count = m_components.getSize();
-		while(count-- != 0)
+		for(const SceneComponent* comp : m_components)
 		{
-			const SceneComponent* comp = m_components[count];
 			if(comp->getType() == Component::CLASS_TYPE)
 			{
 				return static_cast<const Component*>(comp);

@@ -180,7 +180,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		ctx.m_key.setVelocity(moved && ctx.m_key.getPass() == Pass::GB);
 		ModelRenderingInfo modelInf;
-		patch.getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
+		patch.getRenderingInfo(ctx.m_key, WeakArray<U8>(), modelInf);
 
 		// Bones storage
 		if(m_model->getSkeleton())

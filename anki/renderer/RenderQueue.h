@@ -9,6 +9,7 @@
 #include <anki/resource/RenderingKey.h>
 #include <anki/ui/Canvas.h>
 #include <anki/shaders/include/ClusteredShadingTypes.h>
+#include <anki/shaders/include/ModelTypes.h>
 
 namespace anki
 {
@@ -347,6 +348,21 @@ static_assert(std::is_trivially_destructible<FogDensityQueueElement>::value == t
 /// A callback to fill a coverage buffer.
 using FillCoverageBufferCallback = void (*)(void* userData, F32* depthValues, U32 width, U32 height);
 
+/// Ray tracing queue element.
+class RayTracingInstanceQueueElement final
+{
+public:
+	ModelGpuDescriptor m_modelDescriptor;
+	Array<ConstWeakArray<U8>, U(RayTracingMaterialType::COUNT)> m_shaderGroupHandles;
+
+	/// This points to the GR objects that are m_modelDescriptor is referencing. Use this to add a refcount to avoid
+	/// accidential deletions.
+	WeakArray<GrObject*> m_grObjects;
+};
+
+static_assert(std::is_trivially_destructible<RayTracingInstanceQueueElement>::value == true,
+			  "Should be trivially destructible");
+
 /// The render queue. This is what the renderer is fed to render.
 class RenderQueue : public RenderingMatrices
 {
@@ -366,6 +382,7 @@ public:
 	WeakArray<FogDensityQueueElement> m_fogDensityVolumes;
 	WeakArray<UiQueueElement> m_uis;
 	WeakArray<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
+	WeakArray<RayTracingInstanceQueueElement> m_rayTracingInstances;
 
 	/// Applies only if the RenderQueue holds shadow casters. It's the max timesamp of all shadow casters
 	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;

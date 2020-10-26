@@ -7,6 +7,7 @@
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
+#include <anki/scene/SceneGraph.h>
 
 namespace anki
 {
@@ -78,7 +79,7 @@ Error CameraNode::init(FrustumType frustumType)
 
 	// Frustum component
 	FrustumComponent* frc = newComponent<FrustumComponent>(this, frustumType);
-	frc->setEnabledVisibilityTests(
+	const FrustumComponentVisibilityTestFlag visibilityFlags =
 		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES | FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
@@ -86,7 +87,15 @@ Error CameraNode::init(FrustumType frustumType)
 		| FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES | FrustumComponentVisibilityTestFlag::EARLY_Z
 		| FrustumComponentVisibilityTestFlag::ALL_SHADOWS_ENABLED
-		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS);
+		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS;
+	frc->setEnabledVisibilityTests(visibilityFlags);
+
+	// One more component for RT
+	if(getSceneGraph().getRayTracedShadowsEnabled())
+	{
+		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>(this, FrustumType::ORTHOGRAPHIC);
+		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RAY_TRACING_SHADOWS);
+	}
 
 	// Feedback component #2
 	newComponent<FrustumFeedbackComponent>();
@@ -117,8 +126,11 @@ void CameraNode::onFrustumComponentUpdate(FrustumComponent& fr)
 void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 {
 	// Frustum
-	FrustumComponent& fr = getComponent<FrustumComponent>();
-	fr.setTransform(move.getWorldTransform());
+	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fc) {
+		fc.setTransform(move.getWorldTransform());
+		return Error::NONE;
+	});
+	(void)err;
 
 	// Spatial
 	SpatialComponent& sp = getComponent<SpatialComponent>();

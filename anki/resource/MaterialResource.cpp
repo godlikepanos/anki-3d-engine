@@ -1156,11 +1156,13 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 					const U32 textureIdx = GPU_MATERIAL_TEXTURES[i].m_textureSlot;
 					ANKI_CHECK(getManager().loadResource(fname, variant.m_textureResources[textureIdx], false));
 
-					variant.m_textureViews[textureIdx] = variant.m_textureResources[textureIdx]->getGrTextureView();
+					variant.m_textureViews[variant.m_textureViewCount] =
+						variant.m_textureResources[textureIdx]->getGrTextureView();
 
 					gpuMaterial.m_bindlessTextureIndices[textureIdx] =
-						U16(variant.m_textureViews[textureIdx]->getOrCreateBindlessTextureIndex());
+						U16(variant.m_textureViews[variant.m_textureViewCount]->getOrCreateBindlessTextureIndex());
 
+					++variant.m_textureViewCount;
 					found = true;
 					break;
 				}

@@ -223,6 +223,11 @@ public:
 		return *m_octree;
 	}
 
+	Bool getRayTracedShadowsEnabled() const
+	{
+		return m_enableRtShadows;
+	}
+
 private:
 	class UpdateSceneNodesCtx;
 
@@ -261,6 +266,8 @@ private:
 
 	SceneGraphLimits m_limits;
 	SceneGraphStats m_stats;
+
+	Bool m_enableRtShadows = false;
 
 	/// Put a node in the appropriate containers
 	ANKI_USE_RESULT Error registerNode(SceneNode* node);

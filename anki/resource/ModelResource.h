@@ -17,9 +17,6 @@
 namespace anki
 {
 
-// Forward
-class PhysicsCollisionShape;
-
 /// @addtogroup resource
 /// @{
 
@@ -83,6 +80,19 @@ public:
 	U32 m_prevFrameBoneTransformsBinding;
 };
 
+/// Part of the information required to create a TLAS and a SBT.
+class ModelRayTracingInfo
+{
+public:
+	ModelGpuDescriptor m_descriptor;
+	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
+	ConstWeakArray<U8> m_shaderGroupHandle;
+
+	/// Get some pointers that the m_descriptor is pointing to. Use these pointers for life tracking.
+	Array<GrObjectPtr, TEXTURE_CHANNEL_COUNT + 2> m_grObjectReferences;
+	U32 m_grObjectReferenceCount;
+};
+
 /// Model patch interface class. Its very important class and it binds the material with the mesh
 class ModelPatch
 {
@@ -125,7 +135,11 @@ public:
 
 	/// Get information for multiDraw rendering. Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts.
-	void getRenderingDataSub(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const;
+	void getRenderingInfo(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const;
+
+	/// Get the ray tracing info.
+	/// @return Return's false if the @a type is not supported.
+	Bool getRayTracingInfo(U32 lod, RayTracingMaterialType type, ModelRayTracingInfo& info) const;
 
 private:
 	ModelResource* m_model ANKI_DEBUG_CODE(= nullptr);

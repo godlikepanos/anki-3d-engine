@@ -53,6 +53,18 @@ enum class VertexAttributeLocation : U8
 	FIRST = POSITION,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeLocation)
+
+enum class RayTracingMaterialType : U8
+{
+	SHADOWS,
+	GI,
+	REFLECTIONS,
+	PATH_TRACING,
+
+	COUNT,
+	FIRST = 0
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RayTracingMaterialType)
 /// @}
 
 /// Deleter for ResourcePtr.

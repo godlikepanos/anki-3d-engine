@@ -30,8 +30,8 @@ static Bool attributeIsRequired(VertexAttributeLocation loc, Pass pass, Bool has
 	}
 }
 
-void ModelPatch::getRenderingDataSub(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray,
-									 ModelRenderingInfo& inf) const
+void ModelPatch::getRenderingInfo(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray,
+								  ModelRenderingInfo& inf) const
 {
 	const Bool hasSkin = m_model->getSkeleton().isCreated();
 
@@ -102,6 +102,36 @@ void ModelPatch::getRenderingDataSub(const RenderingKey& key, WeakArray<U8> subM
 	inf.m_drawcallCount = 1;
 	inf.m_indicesOffsetArray[0] = 0;
 	inf.m_indicesCountArray[0] = indexCount;
+}
+
+Bool ModelPatch::getRayTracingInfo(U32 lod, RayTracingMaterialType type, ModelRayTracingInfo& info) const
+{
+	const Bool supported = m_mtl->getRayTracingTypeSupported(type);
+	if(!supported)
+	{
+		return false;
+	}
+
+	info.m_grObjectReferenceCount = 0;
+	memset(&info.m_descriptor, 0, sizeof(info.m_descriptor));
+
+	// Mesh
+	const MeshResourcePtr& mesh = m_meshes[min(U32(m_meshCount - 1), lod)];
+	info.m_bottomLevelAccelerationStructure = mesh->getBottomLevelAccelerationStructure();
+	info.m_descriptor.m_mesh = mesh->getMeshGpuDescriptor();
+	info.m_grObjectReferences[info.m_grObjectReferenceCount++] = mesh->getIndexBuffer();
+	info.m_grObjectReferences[info.m_grObjectReferenceCount++] = mesh->getVertexBuffer();
+
+	// Material
+	const RayTracingMaterialVariant& materialVariant = m_mtl->getRayTracingVariant(lod, type);
+	info.m_descriptor.m_material = materialVariant.getMaterialGpuDescriptor();
+	info.m_shaderGroupHandle = materialVariant.getHitShaderGroupHandle();
+	for(U32 i = 0; i < materialVariant.getTextureViews().getSize(); ++i)
+	{
+		info.m_grObjectReferences[info.m_grObjectReferenceCount++] = materialVariant.getTextureViews()[i];
+	}
+
+	return true;
 }
 
 U32 ModelPatch::getLodCount() const

@@ -117,6 +117,18 @@ public:
 		return m_meshGpuDescriptor;
 	}
 
+	/// Get the buffer that contains all the indices of all submesses.
+	BufferPtr getIndexBuffer() const
+	{
+		return m_indexBuff;
+	}
+
+	/// Get the buffer that contains all the vertices of all submesses.
+	BufferPtr getVertexBuffer() const
+	{
+		return m_vertBuff;
+	}
+
 private:
 	class LoadTask;
 	class LoadContext;
@@ -124,8 +136,9 @@ private:
 	static constexpr U VERTEX_BUFFER_ALIGNMENT = 64;
 
 	/// Sub-mesh data
-	struct SubMesh
+	class SubMesh
 	{
+	public:
 		U32 m_firstIndex;
 		U32 m_indexCount;
 		Obb m_obb;
@@ -140,15 +153,17 @@ private:
 	// Vertex stuff
 	U32 m_vertCount = 0;
 
-	struct VertBuffInfo
+	class VertBuffInfo
 	{
+	public:
 		U32 m_offset; ///< Offset from the base of m_vertBuff.
 		U32 m_stride;
 	};
 	DynamicArray<VertBuffInfo> m_vertBufferInfos;
 
-	struct AttribInfo
+	class AttribInfo
 	{
+	public:
 		Format m_fmt = Format::NONE;
 		U32 m_relativeOffset = 0;
 		U8 m_buffIdx = 0;
