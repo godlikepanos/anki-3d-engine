@@ -28,7 +28,7 @@ public:
 		animInfo.m_repeatTimes = -1.0;
 		getSceneGraph()
 			.findSceneNode("droid.001")
-			.getComponent<SkinComponent>()
+			.getFirstComponentOfType<SkinComponent>()
 			.playAnimation(0, m_floatAnim, animInfo);
 
 		getMainRenderer().getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f));
@@ -49,7 +49,7 @@ public:
 			animInfo.m_blendOutTime = 0.35;
 			getSceneGraph()
 				.findSceneNode("droid.001")
-				.getComponent<SkinComponent>()
+				.getFirstComponentOfType<SkinComponent>()
 				.playAnimation(1, m_waveAnim, animInfo);
 		}
 

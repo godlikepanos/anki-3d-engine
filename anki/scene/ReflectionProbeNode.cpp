@@ -33,7 +33,7 @@ public:
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Move updated
@@ -133,7 +133,7 @@ void ReflectionProbeNode::onMoveUpdate(MoveComponent& move)
 	(void)err;
 
 	// Update the spatial comp
-	SpatialComponent& sp = getComponent<SpatialComponent>();
+	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
 	sp.markForUpdate();
 	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 	const Vec3 aabbMinWSpace = m_aabbMinLSpace + move.getWorldTransform().getOrigin().xyz();
@@ -142,7 +142,7 @@ void ReflectionProbeNode::onMoveUpdate(MoveComponent& move)
 	m_spatialAabb.setMax(aabbMaxWSpace);
 
 	// Update the refl comp
-	ReflectionProbeComponent& reflc = getComponent<ReflectionProbeComponent>();
+	ReflectionProbeComponent& reflc = getFirstComponentOfType<ReflectionProbeComponent>();
 	reflc.setPosition(move.getWorldTransform().getOrigin());
 	reflc.setBoundingBox(aabbMinWSpace.xyz0(), aabbMaxWSpace.xyz0());
 }
@@ -150,7 +150,7 @@ void ReflectionProbeNode::onMoveUpdate(MoveComponent& move)
 Error ReflectionProbeNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	// Check the reflection probe component and if it's marked for rendering enable the frustum components
-	const ReflectionProbeComponent& reflc = getComponent<ReflectionProbeComponent>();
+	const ReflectionProbeComponent& reflc = getFirstComponentOfType<ReflectionProbeComponent>();
 
 	const FrustumComponentVisibilityTestFlag testFlags =
 		reflc.getMarkedForRendering() ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
@@ -171,7 +171,7 @@ void ReflectionProbeNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 	for(U32 i = 0; i < userData.getSize(); ++i)
 	{
 		const ReflectionProbeNode& self = *static_cast<const ReflectionProbeNode*>(userData[i]);
-		const ReflectionProbeComponent& rComp = self.getComponent<ReflectionProbeComponent>();
+		const ReflectionProbeComponent& rComp = self.getFirstComponentOfType<ReflectionProbeComponent>();
 
 		const Vec3 tsl = (rComp.getBoundingBoxMin().xyz() + rComp.getBoundingBoxMax().xyz()) / 2.0f;
 		const Vec3 scale = (tsl - rComp.getBoundingBoxMin().xyz());

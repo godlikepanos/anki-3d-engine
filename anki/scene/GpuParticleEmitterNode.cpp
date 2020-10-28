@@ -27,7 +27,7 @@ public:
 	{
 		updated = false;
 
-		const MoveComponent& move = node.getComponent<MoveComponent>();
+		const MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			GpuParticleEmitterNode& mnode = static_cast<GpuParticleEmitterNode&>(node);
@@ -168,7 +168,7 @@ void GpuParticleEmitterNode::onMoveComponentUpdate(const MoveComponent& movec)
 	// Update the AABB
 	m_spatialVolume.setMin((pos - m_maxDistanceAParticleCanGo).xyz());
 	m_spatialVolume.setMax((pos + m_maxDistanceAParticleCanGo).xyz());
-	SpatialComponent& spatialc = getComponent<SpatialComponent>();
+	SpatialComponent& spatialc = getFirstComponentOfType<SpatialComponent>();
 	spatialc.markForUpdate();
 	spatialc.setSpatialOrigin(pos);
 
@@ -221,7 +221,7 @@ void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 
 		// Resources
 		static const Mat4 identity = Mat4::getIdentity();
-		static_cast<const MaterialRenderComponent&>(getComponent<RenderComponent>())
+		static_cast<const MaterialRenderComponent&>(getFirstComponentOfType<RenderComponent>())
 			.allocateAndSetupUniforms(ctx, ConstWeakArray<Mat4>(&identity, 1), ConstWeakArray<Mat4>(&identity, 1),
 									  *ctx.m_stagingGpuAllocator);
 

@@ -16,7 +16,7 @@ namespace anki
 /// @{
 
 // The type of the components
-enum class SceneComponentType : U16
+enum class SceneComponentType : U8
 {
 	NONE,
 	FRUSTUM,

@@ -311,28 +311,28 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					</args>
 				</method>
 				<method name="setMarkedForDeletion"></method>
-				<method name="tryGetComponent&lt;MoveComponent&gt;" alias="getMoveComponent">
+				<method name="tryGetFirstComponentOfType&lt;MoveComponent&gt;" alias="getMoveComponent">
 					<return>MoveComponent*</return>
 				</method>
-				<method name="tryGetComponent&lt;LightComponent&gt;" alias="getLightComponent">
+				<method name="tryGetFirstComponentOfType&lt;LightComponent&gt;" alias="getLightComponent">
 					<return>LightComponent*</return>
 				</method>
-				<method name="tryGetComponent&lt;LensFlareComponent&gt;" alias="getLensFlareComponent">
+				<method name="tryGetFirstComponentOfType&lt;LensFlareComponent&gt;" alias="getLensFlareComponent">
 					<return>LensFlareComponent*</return>
 				</method>
-				<method name="tryGetComponent&lt;DecalComponent&gt;" alias="getDecalComponent">
+				<method name="tryGetFirstComponentOfType&lt;DecalComponent&gt;" alias="getDecalComponent">
 					<return>DecalComponent*</return>
 				</method>
-				<method name="tryGetComponent&lt;TriggerComponent&gt;" alias="getTriggerComponent">
+				<method name="tryGetFirstComponentOfType&lt;TriggerComponent&gt;" alias="getTriggerComponent">
 					<return>TriggerComponent*</return>
 				</method>
-				<method name="tryGetComponent&lt;FogDensityComponent&gt;" alias="getFogDensityComponent">
+				<method name="tryGetFirstComponentOfType&lt;FogDensityComponent&gt;" alias="getFogDensityComponent">
 					<return>FogDensityComponent*</return>
 				</method>
-				<method name="tryGetComponent&lt;FrustumComponent&gt;" alias="getFrustumComponent">
+				<method name="tryGetFirstComponentOfType&lt;FrustumComponent&gt;" alias="getFrustumComponent">
 					<return>FrustumComponent*</return>
 				</method>
-				<method name="tryGetComponent&lt;GlobalIlluminationProbeComponent&gt;" alias="getGlobalIlluminationProbeComponent">
+				<method name="tryGetFirstComponentOfType&lt;GlobalIlluminationProbeComponent&gt;" alias="getGlobalIlluminationProbeComponent">
 					<return>GlobalIlluminationProbeComponent*</return>
 				</method>
 			</methods>

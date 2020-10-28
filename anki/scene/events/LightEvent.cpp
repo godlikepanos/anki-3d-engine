@@ -15,7 +15,7 @@ Error LightEvent::init(Second startTime, Second duration, SceneNode* light)
 	Event::init(startTime, duration);
 	m_associatedNodes.emplaceBack(getAllocator(), light);
 
-	LightComponent& lightc = light->getComponent<LightComponent>();
+	LightComponent& lightc = light->getFirstComponentOfType<LightComponent>();
 
 	switch(lightc.getLightComponentType())
 	{
@@ -40,7 +40,7 @@ Error LightEvent::update(Second prevUpdateTime, Second crntTime)
 	const F32 freq = getRandomRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
 
 	F32 factor = F32(sin(crntTime * freq * PI)) / 2.0f + 0.5f;
-	LightComponent& lightc = m_associatedNodes[0]->getComponent<LightComponent>();
+	LightComponent& lightc = m_associatedNodes[0]->getFirstComponentOfType<LightComponent>();
 
 	// Update radius
 	if(m_radiusMultiplier != 0.0)
@@ -64,7 +64,7 @@ Error LightEvent::update(Second prevUpdateTime, Second crntTime)
 	{
 		Vec4 outCol = m_originalDiffColor + factor * m_intensityMultiplier;
 
-		LensFlareComponent* lfc = m_associatedNodes[0]->tryGetComponent<LensFlareComponent>();
+		LensFlareComponent* lfc = m_associatedNodes[0]->tryGetFirstComponentOfType<LensFlareComponent>();
 
 		if(lfc && lfc->getColorMultiplier().xyz() == lightc.getDiffuseColor().xyz())
 		{

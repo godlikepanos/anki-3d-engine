@@ -30,8 +30,8 @@ public:
 	{
 		updated = false;
 
-		const MoveComponent& move = node.getComponent<MoveComponent>();
-		const SkinComponent* skin = node.tryGetComponent<SkinComponent>();
+		const MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
+		const SkinComponent* skin = node.tryGetFirstComponentOfType<SkinComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp()
 		   || (skin && skin->getTimestamp() == node.getGlobalTimestamp()))
 		{
@@ -56,7 +56,7 @@ public:
 	{
 		updated = false;
 
-		const SkinComponent& skin = node.getComponent<SkinComponent>();
+		const SkinComponent& skin = node.getFirstComponentOfType<SkinComponent>();
 		if(skin.getTimestamp() == node.getGlobalTimestamp())
 		{
 			ModelNode& mnode = static_cast<ModelNode&>(node);
@@ -141,7 +141,7 @@ void ModelNode::updateSpatialComponent(const MoveComponent& move)
 {
 	m_obbWorld = m_obbLocal.getTransformed(move.getWorldTransform());
 
-	SpatialComponent& sp = getComponent<SpatialComponent>();
+	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
 	sp.markForUpdate();
 	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 }
@@ -164,14 +164,14 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		// Transforms
 		Array<Mat4, MAX_INSTANCES> trfs;
 		Array<Mat4, MAX_INSTANCES> prevTrfs;
-		const MoveComponent& movec = getComponent<MoveComponent>();
+		const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
 		trfs[0] = Mat4(movec.getWorldTransform());
 		prevTrfs[0] = Mat4(movec.getPreviousWorldTransform());
 		Bool moved = trfs[0] != prevTrfs[0];
 		for(U32 i = 1; i < userData.getSize(); ++i)
 		{
 			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
-			const MoveComponent& movec = self2.getComponent<MoveComponent>();
+			const MoveComponent& movec = self2.getFirstComponentOfType<MoveComponent>();
 			trfs[i] = Mat4(movec.getWorldTransform());
 			prevTrfs[i] = Mat4(movec.getPreviousWorldTransform());
 
@@ -210,7 +210,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		cmdb->bindShaderProgram(modelInf.m_program);
 
 		// Uniforms
-		static_cast<const MaterialRenderComponent&>(getComponent<RenderComponent>())
+		static_cast<const MaterialRenderComponent&>(getFirstComponentOfType<RenderComponent>())
 			.allocateAndSetupUniforms(ctx, ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
 									  ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),
 									  *ctx.m_stagingGpuAllocator);
@@ -314,7 +314,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 				}
 			}
 
-			const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(getComponent<MoveComponent>().getWorldTransform());
+			const Mat4 mvp =
+				ctx.m_viewProjectionMatrix * Mat4(getFirstComponentOfType<MoveComponent>().getWorldTransform());
 			m_dbgDrawer.drawLines(ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f), 20.0f,
 								  ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), lines,
 								  *ctx.m_stagingGpuAllocator, cmdb);

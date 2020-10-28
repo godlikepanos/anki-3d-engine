@@ -27,11 +27,11 @@ public:
 	{
 		updated = false;
 
-		BodyComponent& bodyc = node.getComponent<BodyComponent>();
+		BodyComponent& bodyc = node.getFirstComponentOfType<BodyComponent>();
 
 		if(bodyc.getTimestamp() == node.getGlobalTimestamp())
 		{
-			MoveComponent& move = node.getComponent<MoveComponent>();
+			MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 			move.setLocalTransform(bodyc.getTransform());
 		}
 

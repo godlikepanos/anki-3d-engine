@@ -40,7 +40,7 @@ Error AnimationEvent::update(Second prevUpdateTime, Second crntTime)
 	trf.setRotation(Mat3x4(Vec3(0.0f), rot));
 	trf.setScale(scale);
 
-	MoveComponent& move = m_associatedNodes[0]->getComponent<MoveComponent>();
+	MoveComponent& move = m_associatedNodes[0]->getFirstComponentOfType<MoveComponent>();
 	move.setLocalTransform(trf);
 
 	return Error::NONE;

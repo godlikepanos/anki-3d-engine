@@ -212,7 +212,7 @@ public:
 	{
 		updated = false; // Don't care about updates for this component
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			static_cast<ParticleEmitterNode&>(node).onMoveComponentUpdate(move);
@@ -321,7 +321,7 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 
 		// Uniforms
 		Array<Mat4, 1> trf = {Mat4::getIdentity()};
-		static_cast<const MaterialRenderComponent&>(self.getComponent<RenderComponent>())
+		static_cast<const MaterialRenderComponent&>(self.getFirstComponentOfType<RenderComponent>())
 			.allocateAndSetupUniforms(ctx, trf, trf, *ctx.m_stagingGpuAllocator);
 
 		// Draw
@@ -337,7 +337,7 @@ void ParticleEmitterNode::onMoveComponentUpdate(MoveComponent& move)
 {
 	m_identityRotation = move.getWorldTransform().getRotation() == Mat3x4::getIdentity();
 
-	SpatialComponent& sp = getComponent<SpatialComponent>();
+	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
 	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 	sp.markForUpdate();
 }
@@ -449,14 +449,14 @@ Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 		m_verts = nullptr;
 	}
 
-	getComponent<SpatialComponent>().markForUpdate();
+	getFirstComponentOfType<SpatialComponent>().markForUpdate();
 
 	//
 	// Emit new particles
 	//
 	if(m_timeLeftForNextEmission <= 0.0)
 	{
-		MoveComponent& move = getComponent<MoveComponent>();
+		MoveComponent& move = getFirstComponentOfType<MoveComponent>();
 
 		U particlesCount = 0; // How many particles I am allowed to emmit
 		for(ParticleBase* pp : m_particles)

@@ -32,7 +32,7 @@ public:
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Move updated
@@ -57,7 +57,7 @@ public:
 	{
 		updated = false;
 
-		GlobalIlluminationProbeComponent& probec = node.getComponent<GlobalIlluminationProbeComponent>();
+		GlobalIlluminationProbeComponent& probec = node.getFirstComponentOfType<GlobalIlluminationProbeComponent>();
 		if(probec.getTimestamp() == node.getGlobalTimestamp() || probec.getMarkedForRendering())
 		{
 			// Move updated
@@ -139,13 +139,13 @@ void GlobalIlluminationProbeNode::onMoveUpdate(MoveComponent& move)
 	const Vec4 displacement = move.getWorldTransform().getOrigin() - m_previousPosition;
 	m_previousPosition = move.getWorldTransform().getOrigin();
 
-	GlobalIlluminationProbeComponent& gic = getComponent<GlobalIlluminationProbeComponent>();
+	GlobalIlluminationProbeComponent& gic = getFirstComponentOfType<GlobalIlluminationProbeComponent>();
 	gic.setBoundingBox(gic.getAlignedBoundingBoxMin() + displacement, gic.getAlignedBoundingBoxMax() + displacement);
 }
 
 void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 {
-	GlobalIlluminationProbeComponent& gic = getComponent<GlobalIlluminationProbeComponent>();
+	GlobalIlluminationProbeComponent& gic = getFirstComponentOfType<GlobalIlluminationProbeComponent>();
 
 	// Update the frustum component if the shape needs rendering
 	if(gic.getMarkedForRendering())
@@ -181,7 +181,7 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 	{
 		// Update only when the shape was actually update
 
-		SpatialComponent& sp = getComponent<SpatialComponent>();
+		SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
 		sp.markForUpdate();
 		sp.setSpatialOrigin((m_spatialAabb.getMax() + m_spatialAabb.getMin()) / 2.0f);
 		m_spatialAabb.setMin(gic.getAlignedBoundingBoxMin());
@@ -192,7 +192,7 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 Error GlobalIlluminationProbeNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	// Check the reflection probe component and if it's marked for rendering enable the frustum components
-	const GlobalIlluminationProbeComponent& gic = getComponent<GlobalIlluminationProbeComponent>();
+	const GlobalIlluminationProbeComponent& gic = getFirstComponentOfType<GlobalIlluminationProbeComponent>();
 
 	const FrustumComponentVisibilityTestFlag testFlags =
 		gic.getMarkedForRendering() ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
@@ -213,7 +213,8 @@ void GlobalIlluminationProbeNode::debugDrawCallback(RenderQueueDrawContext& ctx,
 	for(U32 i = 0; i < userData.getSize(); ++i)
 	{
 		const GlobalIlluminationProbeNode& self = *static_cast<const GlobalIlluminationProbeNode*>(userData[i]);
-		const GlobalIlluminationProbeComponent& giComp = self.getComponent<GlobalIlluminationProbeComponent>();
+		const GlobalIlluminationProbeComponent& giComp =
+			self.getFirstComponentOfType<GlobalIlluminationProbeComponent>();
 
 		const Vec3 tsl = (giComp.getAlignedBoundingBoxMin().xyz() + giComp.getAlignedBoundingBoxMax().xyz()) / 2.0f;
 		const Vec3 scale = (tsl - giComp.getAlignedBoundingBoxMin().xyz());

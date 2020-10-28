@@ -76,9 +76,9 @@ Error MyApp::init(int argc, char* argv[])
 
 	PlayerNode* pnode;
 	ANKI_CHECK(scene.newSceneNode<PlayerNode>(
-		"player", pnode, cam.getComponent<MoveComponent>().getLocalOrigin() - Vec4(0.0, 1.0, 0.0, 0.0)));
+		"player", pnode, cam.getFirstComponentOfType<MoveComponent>().getLocalOrigin() - Vec4(0.0, 1.0, 0.0, 0.0)));
 
-	cam.getComponent<MoveComponent>().setLocalTransform(
+	cam.getFirstComponentOfType<MoveComponent>().setLocalTransform(
 		Transform(Vec4(0.0, 0.0, 0.0, 0.0), Mat3x4::getIdentity(), 1.0));
 
 	pnode->addChild(&cam);
@@ -105,15 +105,15 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 
 	// move the camera
-	static MoveComponent* mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
+	static MoveComponent* mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
 
 	if(in.getKey(KeyCode::_1))
 	{
-		mover = scene.getActiveCameraNode().tryGetComponent<MoveComponent>();
+		mover = scene.getActiveCameraNode().tryGetFirstComponentOfType<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_2))
 	{
-		mover = &scene.findSceneNode("Cylinder.049").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("Cylinder.049").getFirstComponentOfType<MoveComponent>();
 	}
 
 	if(in.getKey(KeyCode::L) == 1)

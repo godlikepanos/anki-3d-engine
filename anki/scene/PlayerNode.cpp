@@ -27,7 +27,7 @@ public:
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = node.getComponent<PlayerControllerComponent>();
+		PlayerControllerComponent& playerc = node.getFirstComponentOfType<PlayerControllerComponent>();
 		const Input& in = node.getSceneGraph().getInput();
 		const F32 ang = toRad(7.0f);
 
@@ -35,7 +35,7 @@ public:
 		F32 x = in.getMousePosition().x();
 		if(playerc.getTimestamp() == node.getGlobalTimestamp() || y != 0.0 || x != 0.0)
 		{
-			MoveComponent& move = node.getComponent<MoveComponent>();
+			MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 
 			// Set origin
 			Vec4 origin = playerc.getTransform().getOrigin();
@@ -73,8 +73,8 @@ public:
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = node.getComponent<PlayerControllerComponent>();
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		PlayerControllerComponent& playerc = node.getFirstComponentOfType<PlayerControllerComponent>();
+		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		const Input& in = node.getSceneGraph().getInput();
 
 		const F32 speed = 0.5;

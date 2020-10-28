@@ -96,11 +96,11 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 		in.lockCursor(true);
 
 		// move the camera
-		static MoveComponent* mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
+		static MoveComponent* mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
 
 		if(in.getKey(KeyCode::_1) == 1)
 		{
-			mover = &scene.getActiveCameraNode().getComponent<MoveComponent>();
+			mover = &scene.getActiveCameraNode().getFirstComponentOfType<MoveComponent>();
 		}
 
 		if(in.getKey(KeyCode::F1) == 1)

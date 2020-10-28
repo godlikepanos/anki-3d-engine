@@ -52,7 +52,7 @@ public:
 	{
 		updated = false;
 
-		LightComponent& light = node.getComponent<LightComponent>();
+		LightComponent& light = node.getFirstComponentOfType<LightComponent>();
 		if(light.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Shape updated
@@ -94,7 +94,7 @@ Error LightNode::initCommon(LightComponentType lightType)
 void LightNode::frameUpdateCommon()
 {
 	// Update frustum comps shadow info
-	const LightComponent& lc = getComponent<LightComponent>();
+	const LightComponent& lc = getFirstComponentOfType<LightComponent>();
 	const Bool castsShadow = lc.getShadowEnabled();
 
 	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
@@ -115,24 +115,24 @@ void LightNode::frameUpdateCommon()
 void LightNode::onMoveUpdateCommon(const MoveComponent& move)
 {
 	// Update the spatial
-	SpatialComponent& sp = getComponent<SpatialComponent>();
+	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
 	sp.markForUpdate();
 	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 
 	// Update the lens flare
-	LensFlareComponent* lf = tryGetComponent<LensFlareComponent>();
+	LensFlareComponent* lf = tryGetFirstComponentOfType<LensFlareComponent>();
 	if(lf)
 	{
 		lf->setWorldPosition(move.getWorldTransform().getOrigin());
 	}
 
 	// Update light component
-	getComponent<LightComponent>().updateWorldTransform(move.getWorldTransform());
+	getFirstComponentOfType<LightComponent>().updateWorldTransform(move.getWorldTransform());
 }
 
 Error LightNode::loadLensFlare(const CString& filename)
 {
-	ANKI_ASSERT(tryGetComponent<LensFlareComponent>() == nullptr);
+	ANKI_ASSERT(tryGetFirstComponentOfType<LensFlareComponent>() == nullptr);
 
 	LensFlareComponent* flareComp = newComponent<LensFlareComponent>(this);
 
@@ -151,7 +151,7 @@ void LightNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 	for(const void* plight : userData)
 	{
 		const LightNode& self = *static_cast<const LightNode*>(plight);
-		const LightComponent& lcomp = self.getComponent<LightComponent>();
+		const LightComponent& lcomp = self.getFirstComponentOfType<LightComponent>();
 
 		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
 		if(enableDepthTest)
@@ -247,7 +247,7 @@ void PointLightNode::onShapeUpdate(LightComponent& light)
 
 Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
-	if(getComponent<LightComponent>().getShadowEnabled() && m_shadowData.isEmpty())
+	if(getFirstComponentOfType<LightComponent>().getShadowEnabled() && m_shadowData.isEmpty())
 	{
 		m_shadowData.create(getAllocator(), 6);
 
@@ -270,7 +270,7 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 		rot = Mat3(Euler(0.0, 0.0, PI));
 		m_shadowData[5].m_localTrf.setRotation(Mat3x4(Vec3(0.0f), rot));
 
-		const Vec4& origin = getComponent<MoveComponent>().getWorldTransform().getOrigin();
+		const Vec4& origin = getFirstComponentOfType<MoveComponent>().getWorldTransform().getOrigin();
 		for(U32 i = 0; i < 6; i++)
 		{
 			Transform trf = m_shadowData[i].m_localTrf;
@@ -335,11 +335,11 @@ void SpotLightNode::onMoveUpdate(const MoveComponent& move)
 void SpotLightNode::onShapeUpdate(LightComponent& light)
 {
 	// Update the frustum first
-	FrustumComponent& frc = getComponent<FrustumComponent>();
+	FrustumComponent& frc = getFirstComponentOfType<FrustumComponent>();
 	frc.setPerspective(LIGHT_FRUSTUM_NEAR_PLANE, light.getDistance(), light.getOuterAngle(), light.getOuterAngle());
 
 	// Mark the spatial for update
-	SpatialComponent& sp = getComponent<SpatialComponent>();
+	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
 	sp.markForUpdate();
 }
 
@@ -363,10 +363,10 @@ public:
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Move updated
-			LightComponent& lightc = node.getComponent<LightComponent>();
+			LightComponent& lightc = node.getFirstComponentOfType<LightComponent>();
 			lightc.updateWorldTransform(move.getWorldTransform());
 
-			SpatialComponent& spatialc = node.getComponent<SpatialComponent>();
+			SpatialComponent& spatialc = node.getFirstComponentOfType<SpatialComponent>();
 			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin());
 			spatialc.markForUpdate();
 		}

@@ -38,7 +38,7 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 
 		if(parent)
 		{
-			const MoveComponent* parentMove = parent->tryGetComponent<MoveComponent>();
+			const MoveComponent* parentMove = parent->tryGetFirstComponentOfType<MoveComponent>();
 
 			if(parentMove == nullptr)
 			{

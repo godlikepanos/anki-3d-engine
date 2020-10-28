@@ -23,7 +23,7 @@ public:
 	{
 		updated = false;
 
-		const MoveComponent& movec = node.getComponent<MoveComponent>();
+		const MoveComponent& movec = node.getFirstComponentOfType<MoveComponent>();
 		if(movec.getTimestamp() == node.getGlobalTimestamp())
 		{
 			static_cast<FogDensityNode&>(node).moveUpdated(movec);
@@ -50,11 +50,11 @@ FogDensityNode::~FogDensityNode()
 void FogDensityNode::moveUpdated(const MoveComponent& movec)
 {
 	// Update the fog component
-	FogDensityComponent& fogc = getComponent<FogDensityComponent>();
+	FogDensityComponent& fogc = getFirstComponentOfType<FogDensityComponent>();
 	fogc.updatePosition(movec.getWorldTransform().getOrigin());
 
 	// Update the spatial component
-	SpatialComponent& spatialc = getComponent<SpatialComponent>();
+	SpatialComponent& spatialc = getFirstComponentOfType<SpatialComponent>();
 
 	Vec4 min, max;
 	if(fogc.isAabb())

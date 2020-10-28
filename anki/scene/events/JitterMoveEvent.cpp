@@ -17,7 +17,7 @@ Error JitterMoveEvent::init(Second startTime, Second duration, SceneNode* node)
 	Event::init(startTime, duration);
 	m_associatedNodes.emplaceBack(getAllocator(), node);
 
-	const MoveComponent& move = node->getComponent<MoveComponent>();
+	const MoveComponent& move = node->getFirstComponentOfType<MoveComponent>();
 
 	m_originalPos = move.getLocalTransform().getOrigin();
 
@@ -39,7 +39,7 @@ Error JitterMoveEvent::update(Second prevUpdateTime, Second crntTime)
 {
 	SceneNode* node = m_associatedNodes[0];
 
-	MoveComponent& move = node->getComponent<MoveComponent>();
+	MoveComponent& move = node->getFirstComponentOfType<MoveComponent>();
 
 	Transform trf = move.getLocalTransform();
 

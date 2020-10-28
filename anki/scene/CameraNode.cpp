@@ -25,7 +25,7 @@ public:
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			CameraNode& cam = static_cast<CameraNode&>(node);
@@ -49,7 +49,7 @@ public:
 	{
 		updated = false;
 
-		FrustumComponent& fr = node.getComponent<FrustumComponent>();
+		FrustumComponent& fr = node.getFirstComponentOfType<FrustumComponent>();
 		if(fr.getTimestamp() == node.getGlobalTimestamp())
 		{
 			CameraNode& cam = static_cast<CameraNode&>(node);
@@ -71,6 +71,8 @@ CameraNode::~CameraNode()
 
 Error CameraNode::init(FrustumType frustumType)
 {
+	constexpr F32 defaultFar = 500.0f;
+
 	// Move component
 	newComponent<MoveComponent>();
 
@@ -89,12 +91,22 @@ Error CameraNode::init(FrustumType frustumType)
 		| FrustumComponentVisibilityTestFlag::ALL_SHADOWS_ENABLED
 		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS;
 	frc->setEnabledVisibilityTests(visibilityFlags);
+	if(frustumType == FrustumType::PERSPECTIVE)
+	{
+		frc->setPerspective(0.1f, defaultFar, toRad(45.0f), toRad(45.0f));
+	}
+	else
+	{
+		frc->setOrthographic(0.1f, defaultFar, 5.0f, -5.0f, 5.0f, -5.0f);
+	}
 
-	// One more component for RT
+	// Extended frustum for RT
 	if(getSceneGraph().getRayTracedShadowsEnabled())
 	{
 		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>(this, FrustumType::ORTHOGRAPHIC);
 		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RAY_TRACING_SHADOWS);
+
+		rtFrustumComponent->setOrthographic(0.1f, defaultFar * 2.0f, defaultFar, -defaultFar, defaultFar, -defaultFar);
 	}
 
 	// Feedback component #2
@@ -119,21 +131,40 @@ Error CameraNode::init(FrustumType frustumType)
 void CameraNode::onFrustumComponentUpdate(FrustumComponent& fr)
 {
 	// Spatial
-	SpatialComponent& sp = getComponent<SpatialComponent>();
+	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
 	sp.markForUpdate();
 }
 
 void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 {
+	const Transform& worldTransform = move.getWorldTransform();
+
 	// Frustum
+	U count = 0;
 	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fc) {
-		fc.setTransform(move.getWorldTransform());
+		if(count == 0)
+		{
+			fc.setTransform(worldTransform);
+		}
+		else
+		{
+			// Extended RT frustum, re-align it so the frustum is positioned at the center of the camera eye
+			ANKI_ASSERT(fc.getFrustumType() == FrustumType::ORTHOGRAPHIC);
+			const F32 far = fc.getFar();
+			Transform extendedFrustumTransform = Transform::getIdentity();
+			Vec3 newOrigin = worldTransform.getOrigin().xyz();
+			newOrigin.z() += far / 2.0f;
+			extendedFrustumTransform.setOrigin(newOrigin.xyz0());
+		}
+
+		++count;
 		return Error::NONE;
 	});
 	(void)err;
+	ANKI_ASSERT(count == 2);
 
 	// Spatial
-	SpatialComponent& sp = getComponent<SpatialComponent>();
+	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
 	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 	sp.markForUpdate();
 }

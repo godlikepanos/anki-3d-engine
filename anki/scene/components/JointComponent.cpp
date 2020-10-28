@@ -58,7 +58,7 @@ Vec3 JointComponent::computeLocalPivotFromFactors(const PhysicsBodyPtr& body, co
 template<typename TJoint, typename... TArgs>
 void JointComponent::newJoint(const Vec3& relPosFactor, F32 breakingImpulse, TArgs&&... args)
 {
-	BodyComponent* bodyc = m_node->tryGetComponent<BodyComponent>();
+	BodyComponent* bodyc = m_node->tryGetFirstComponentOfType<BodyComponent>();
 
 	if(bodyc)
 	{
@@ -85,11 +85,11 @@ void JointComponent::newPoint2PointJoint(const Vec3& relPosFactor, F32 breakingI
 
 void JointComponent::newPoint2PointJoint2(const Vec3& relPosFactorA, const Vec3& relPosFactorB, F32 breakingImpulse)
 {
-	BodyComponent* bodycA = m_node->tryGetComponent<BodyComponent>();
+	BodyComponent* bodycA = m_node->tryGetFirstComponentOfType<BodyComponent>();
 	BodyComponent* bodycB = nullptr;
 	if(m_node->getParent())
 	{
-		bodycB = m_node->getParent()->tryGetComponent<BodyComponent>();
+		bodycB = m_node->getParent()->tryGetFirstComponentOfType<BodyComponent>();
 	}
 
 	if(bodycA && bodycB)

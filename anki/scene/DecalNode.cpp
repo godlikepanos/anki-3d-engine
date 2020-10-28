@@ -25,7 +25,7 @@ public:
 	{
 		updated = false;
 
-		MoveComponent& movec = node.getComponent<MoveComponent>();
+		MoveComponent& movec = node.getFirstComponentOfType<MoveComponent>();
 
 		if(movec.getTimestamp() == node.getGlobalTimestamp())
 		{
@@ -49,7 +49,7 @@ public:
 	{
 		updated = false;
 
-		DecalComponent& decalc = node.getComponent<DecalComponent>();
+		DecalComponent& decalc = node.getFirstComponentOfType<DecalComponent>();
 
 		if(decalc.getTimestamp() == node.getGlobalTimestamp())
 		{
@@ -81,17 +81,17 @@ Error DecalNode::init()
 
 void DecalNode::onMove(MoveComponent& movec)
 {
-	SpatialComponent& sc = getComponent<SpatialComponent>();
+	SpatialComponent& sc = getFirstComponentOfType<SpatialComponent>();
 	sc.setSpatialOrigin(movec.getWorldTransform().getOrigin());
 	sc.markForUpdate();
 
-	DecalComponent& decalc = getComponent<DecalComponent>();
+	DecalComponent& decalc = getFirstComponentOfType<DecalComponent>();
 	decalc.updateTransform(movec.getWorldTransform());
 }
 
 void DecalNode::onDecalUpdated()
 {
-	SpatialComponent& sc = getComponent<SpatialComponent>();
+	SpatialComponent& sc = getFirstComponentOfType<SpatialComponent>();
 	sc.markForUpdate();
 }
 
@@ -102,7 +102,7 @@ void DecalNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 	for(U32 i = 0; i < userData.getSize(); ++i)
 	{
 		const DecalNode& self = *static_cast<const DecalNode*>(userData[i]);
-		const DecalComponent& decalComp = self.getComponent<DecalComponent>();
+		const DecalComponent& decalComp = self.getFirstComponentOfType<DecalComponent>();
 
 		const Mat3 rot = decalComp.getBoundingVolume().getRotation().getRotationPart();
 		const Vec4 tsl = decalComp.getBoundingVolume().getCenter().xyz1();

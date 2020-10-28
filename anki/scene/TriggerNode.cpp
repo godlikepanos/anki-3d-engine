@@ -26,7 +26,7 @@ public:
 	{
 		updated = false;
 
-		const MoveComponent& move = node.getComponent<MoveComponent>();
+		const MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			static_cast<TriggerNode&>(node).m_trigger->setTransform(move.getWorldTransform());

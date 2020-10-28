@@ -25,7 +25,7 @@ public:
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			OccluderNode& mnode = static_cast<OccluderNode&>(node);
@@ -79,7 +79,7 @@ void OccluderNode::onMoveComponentUpdate(MoveComponent& movec)
 		m_vertsW[count] = trf.transform(m_vertsL[count]);
 	}
 
-	getComponent<OccluderComponent>().setVertices(&m_vertsW[0], m_vertsW.getSize(), sizeof(m_vertsW[0]));
+	getFirstComponentOfType<OccluderComponent>().setVertices(&m_vertsW[0], m_vertsW.getSize(), sizeof(m_vertsW[0]));
 }
 
 } // end namespace anki

@@ -96,34 +96,70 @@ public:
 		return Error::NONE;
 	}
 
-	/// Iterate all components
-	template<typename Func>
-	ANKI_USE_RESULT Error iterateComponents(Func func) const
+	/// Iterate all components.
+	template<typename TFunct>
+	ANKI_USE_RESULT Error iterateComponents(TFunct func) const
 	{
 		Error err = Error::NONE;
 		auto it = m_components.getBegin();
 		auto end = m_components.getEnd();
 		for(; !err && it != end; ++it)
 		{
-			err = func(*(*it));
+			const SceneComponent* c = *it;
+			err = func(*c);
+		}
+
+		return err;
+	}
+
+	/// Iterate all components.
+	template<typename TFunct>
+	ANKI_USE_RESULT Error iterateComponents(TFunct func)
+	{
+		Error err = Error::NONE;
+		auto it = m_components.getBegin();
+		auto end = m_components.getEnd();
+		for(; !err && it != end; ++it)
+		{
+			SceneComponent* c = *it;
+			err = func(*c);
 		}
 
 		return err;
 	}
 
 	/// Iterate all components of a specific type
-	template<typename Component, typename Func>
-	ANKI_USE_RESULT Error iterateComponentsOfType(Func func) const
+	template<typename TComponent, typename TFunct>
+	ANKI_USE_RESULT Error iterateComponentsOfType(TFunct func) const
 	{
 		Error err = Error::NONE;
 		auto it = m_components.getBegin();
 		auto end = m_components.getEnd();
 		for(; !err && it != end; ++it)
 		{
-			auto* comp = *it;
-			if(comp->getType() == Component::CLASS_TYPE)
+			if(it->m_type == TComponent::CLASS_TYPE)
 			{
-				err = func(*static_cast<Component*>(comp));
+				const SceneComponent* comp = *it;
+				err = func(static_cast<const TComponent&>(*comp));
+			}
+		}
+
+		return err;
+	}
+
+	/// Iterate all components of a specific type
+	template<typename TComponent, typename TFunct>
+	ANKI_USE_RESULT Error iterateComponentsOfType(TFunct func)
+	{
+		Error err = Error::NONE;
+		auto it = m_components.getBegin();
+		auto end = m_components.getEnd();
+		for(; !err && it != end; ++it)
+		{
+			if(it->m_type == TComponent::CLASS_TYPE)
+			{
+				SceneComponent* comp = *it;
+				err = func(static_cast<TComponent&>(*comp));
 			}
 		}
 
@@ -131,65 +167,85 @@ public:
 	}
 
 	/// Try geting a pointer to the first component of the requested type
-	template<typename Component>
-	Component* tryGetComponent()
+	template<typename TComponent>
+	const TComponent* tryGetFirstComponentOfType() const
 	{
-		for(SceneComponent* comp : m_components)
+		for(const ComponentsArrayElement& el : m_components)
 		{
-			if(comp->getType() == Component::CLASS_TYPE)
+			if(el.m_type == TComponent::CLASS_TYPE)
 			{
-				return static_cast<Component*>(comp);
+				const SceneComponent* comp = el;
+				return static_cast<const TComponent*>(comp);
 			}
 		}
 		return nullptr;
 	}
 
 	/// Try geting a pointer to the first component of the requested type
-	template<typename Component>
-	const Component* tryGetComponent() const
+	template<typename TComponent>
+	TComponent* tryGetFirstComponentOfType()
 	{
-		for(const SceneComponent* comp : m_components)
+		const TComponent* c = static_cast<const SceneNode*>(this)->tryGetFirstComponentOfType<TComponent>();
+		return const_cast<TComponent*>(c);
+	}
+
+	/// Get a pointer to the first component of the requested type
+	template<typename TComponent>
+	const TComponent& getFirstComponentOfType() const
+	{
+		const TComponent* out = tryGetFirstComponentOfType<TComponent>();
+		ANKI_ASSERT(out != nullptr);
+		return *out;
+	}
+
+	/// Get a pointer to the first component of the requested type
+	template<typename TComponent>
+	TComponent& getFirstComponentOfType()
+	{
+		const TComponent& c = static_cast<const SceneNode*>(this)->getFirstComponentOfType<TComponent>();
+		return const_cast<TComponent&>(c);
+	}
+
+	/// Try geting a pointer to the nth component of the requested type.
+	template<typename TComponent>
+	const TComponent* tryGetNthComponentOfType(U32 nth) const
+	{
+		I32 inth = I32(nth);
+		for(const ComponentsArrayElement& el : m_components)
 		{
-			if(comp->getType() == Component::CLASS_TYPE)
+			if(el.m_type == TComponent::CLASS_TYPE && inth-- == 0)
 			{
-				return static_cast<const Component*>(comp);
+				const SceneComponent* comp = el;
+				return static_cast<const TComponent*>(comp);
 			}
 		}
 		return nullptr;
 	}
 
-	/// Get a pointer to the first component of the requested type
-	template<typename Component>
-	Component& getComponent()
+	/// Try geting a pointer to the nth component of the requested type.
+	template<typename TComponent>
+	TComponent* tryGetNthComponentOfType(U32 nth)
 	{
-		Component* out = tryGetComponent<Component>();
-		ANKI_ASSERT(out != nullptr);
-		return *out;
-	}
-
-	/// Get a pointer to the first component of the requested type
-	template<typename Component>
-	const Component& getComponent() const
-	{
-		const Component* out = tryGetComponent<Component>();
-		ANKI_ASSERT(out != nullptr);
-		return *out;
+		const TComponent* c = static_cast<const SceneNode*>(this)->tryGetNthComponentOfType<TComponent>(nth);
+		return const_cast<TComponent*>(c);
 	}
 
 	/// Get the nth component.
-	template<typename Component>
-	Component& getComponentAt(U32 idx)
+	template<typename TComponent>
+	TComponent& getComponentAt(U32 idx)
 	{
-		ANKI_ASSERT(m_components[idx]->getType() == Component::CLASS_TYPE);
-		return *static_cast<Component*>(m_components[idx]);
+		ANKI_ASSERT(m_components[idx].m_type == TComponent::CLASS_TYPE);
+		SceneComponent* c = m_components[idx];
+		return *static_cast<TComponent*>(c);
 	}
 
 	/// Get the nth component.
-	template<typename Component>
-	const Component& getComponentAt(U32 idx) const
+	template<typename TComponent>
+	const TComponent& getComponentAt(U32 idx) const
 	{
-		ANKI_ASSERT(m_components[idx]->getType() == Component::CLASS_TYPE);
-		return *static_cast<const Component*>(m_components[idx]);
+		ANKI_ASSERT(m_components[idx].m_type == TComponent::CLASS_TYPE);
+		const SceneComponent* c = m_components[idx];
+		return *static_cast<const TComponent*>(c);
 	}
 
 	U32 getComponentCount() const
@@ -210,11 +266,63 @@ protected:
 	ResourceManager& getResourceManager();
 
 private:
+	/// This class packs a pointer to a SceneComponent and its type at the same 64bit value. Used to avoid cache misses
+	/// when iterating the m_components.
+	class ComponentsArrayElement
+	{
+	public:
+		SceneComponentType m_type : 8;
+		PtrSize m_ptr : 56;
+
+		ComponentsArrayElement(SceneComponent* comp)
+			: m_type(comp->getType())
+			, m_ptr(ptrToNumber(comp))
+		{
+			ANKI_ASSERT((ptrToNumber(comp) & (PtrSize(0xFF) << PtrSize(56))) == 0);
+		}
+
+		ComponentsArrayElement(const ComponentsArrayElement& b)
+			: m_type(b.m_type)
+			, m_ptr(b.m_ptr)
+		{
+		}
+
+		ComponentsArrayElement& operator=(const ComponentsArrayElement& b)
+		{
+			m_type = b.m_type;
+			m_ptr = b.m_ptr;
+			return *this;
+		}
+
+		operator SceneComponent*()
+		{
+			return numberToPtr<SceneComponent*>(m_ptr);
+		}
+
+		operator const SceneComponent*() const
+		{
+			return numberToPtr<const SceneComponent*>(m_ptr);
+		}
+
+		const SceneComponent* operator->() const
+		{
+			return numberToPtr<const SceneComponent*>(m_ptr);
+		}
+
+		SceneComponent* operator->()
+		{
+			return numberToPtr<SceneComponent*>(m_ptr);
+		}
+	};
+
+	static_assert(sizeof(SceneComponentType) == 1, "Wrong size");
+	static_assert(sizeof(ComponentsArrayElement) == sizeof(void*), "Wrong size");
+
 	SceneGraph* m_scene = nullptr;
 	U64 m_uuid;
-	String m_name; ///< A unique name
+	String m_name; ///< A unique name.
 
-	DynamicArray<SceneComponent*> m_components;
+	DynamicArray<ComponentsArrayElement> m_components;
 
 	Timestamp m_maxComponentTimestamp = 0;
 

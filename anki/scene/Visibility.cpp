@@ -283,32 +283,33 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		Bool wantNode = false;
 
 		const RenderComponent* rc = nullptr;
-		wantNode |= wantsRenderComponents && (rc = node.tryGetComponent<RenderComponent>());
+		wantNode |= wantsRenderComponents && (rc = node.tryGetFirstComponentOfType<RenderComponent>());
 
-		wantNode |= wantsShadowCasters && (rc = node.tryGetComponent<RenderComponent>())
+		wantNode |= wantsShadowCasters && (rc = node.tryGetFirstComponentOfType<RenderComponent>())
 					&& !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
 
 		const LightComponent* lc = nullptr;
-		wantNode |= wantsLightComponents && (lc = node.tryGetComponent<LightComponent>());
+		wantNode |= wantsLightComponents && (lc = node.tryGetFirstComponentOfType<LightComponent>());
 
 		const LensFlareComponent* lfc = nullptr;
-		wantNode |= wantsFlareComponents && (lfc = node.tryGetComponent<LensFlareComponent>());
+		wantNode |= wantsFlareComponents && (lfc = node.tryGetFirstComponentOfType<LensFlareComponent>());
 
 		const ReflectionProbeComponent* reflc = nullptr;
-		wantNode |= wantsReflectionProbes && (reflc = node.tryGetComponent<ReflectionProbeComponent>());
+		wantNode |= wantsReflectionProbes && (reflc = node.tryGetFirstComponentOfType<ReflectionProbeComponent>());
 
 		DecalComponent* decalc = nullptr;
-		wantNode |= wantsDecals && (decalc = node.tryGetComponent<DecalComponent>());
+		wantNode |= wantsDecals && (decalc = node.tryGetFirstComponentOfType<DecalComponent>());
 
 		const FogDensityComponent* fogc = nullptr;
-		wantNode |= wantsFogDensityComponents && (fogc = node.tryGetComponent<FogDensityComponent>());
+		wantNode |= wantsFogDensityComponents && (fogc = node.tryGetFirstComponentOfType<FogDensityComponent>());
 
 		GlobalIlluminationProbeComponent* giprobec = nullptr;
-		wantNode |= wantsGiProbeCoponents && (giprobec = node.tryGetComponent<GlobalIlluminationProbeComponent>());
+		wantNode |=
+			wantsGiProbeCoponents && (giprobec = node.tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>());
 
 		GenericGpuComputeJobComponent* computec = nullptr;
-		wantNode |=
-			wantsGenericComputeJobCoponents && (computec = node.tryGetComponent<GenericGpuComputeJobComponent>());
+		wantNode |= wantsGenericComputeJobCoponents
+					&& (computec = node.tryGetFirstComponentOfType<GenericGpuComputeJobComponent>());
 
 		if(ANKI_UNLIKELY(!wantNode))
 		{
@@ -822,7 +823,7 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;
 	ctx.m_earlyZDist = scene.getLimits().m_earlyZDistance;
-	ctx.submitNewWork(fsn.getComponent<FrustumComponent>(), rqueue, hive);
+	ctx.submitNewWork(fsn.getFirstComponentOfType<FrustumComponent>(), rqueue, hive);
 
 	hive.waitAllTasks();
 	ctx.m_testedFrcs.destroy(scene.getFrameAllocator());
