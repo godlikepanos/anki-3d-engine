@@ -55,7 +55,7 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 	F32 effectiveDistance = aabbMaxLSpace.x() - aabbMinLSpace.x();
 	effectiveDistance = max(effectiveDistance, aabbMaxLSpace.y() - aabbMinLSpace.y());
 	effectiveDistance = max(effectiveDistance, aabbMaxLSpace.z() - aabbMinLSpace.z());
-	effectiveDistance = max(effectiveDistance, getSceneGraph().getLimits().m_reflectionProbeEffectiveDistance);
+	effectiveDistance = max(effectiveDistance, getSceneGraph().getConfig().m_reflectionProbeEffectiveDistance);
 
 	// Move component first
 	newComponent<MoveComponent>();
@@ -91,7 +91,7 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 		frc->setPerspective(zNear, effectiveDistance, ang, ang);
 		frc->setTransform(m_cubeSides[i].m_localTrf);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
-		frc->setEffectiveShadowDistance(getSceneGraph().getLimits().m_reflectionProbeShadowEffectiveDistance);
+		frc->setEffectiveShadowDistance(getSceneGraph().getConfig().m_reflectionProbeShadowEffectiveDistance);
 	}
 
 	// Spatial component

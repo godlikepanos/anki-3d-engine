@@ -119,7 +119,7 @@ Error GlobalIlluminationProbeNode::init()
 		frc->setPerspective(zNear, tempEffectiveDistance, ang, ang);
 		frc->setTransform(m_cubeFaceTransforms[i]);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
-		frc->setEffectiveShadowDistance(getSceneGraph().getLimits().m_reflectionProbeShadowEffectiveDistance);
+		frc->setEffectiveShadowDistance(getSceneGraph().getConfig().m_reflectionProbeShadowEffectiveDistance);
 	}
 
 	// Spatial component
@@ -156,7 +156,7 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 			max(effectiveDistance, gic.getAlignedBoundingBoxMax().y() - gic.getAlignedBoundingBoxMin().y());
 		effectiveDistance =
 			max(effectiveDistance, gic.getAlignedBoundingBoxMax().z() - gic.getAlignedBoundingBoxMin().z());
-		effectiveDistance = max(effectiveDistance, getSceneGraph().getLimits().m_reflectionProbeEffectiveDistance);
+		effectiveDistance = max(effectiveDistance, getSceneGraph().getConfig().m_reflectionProbeEffectiveDistance);
 
 		// Update frustum components
 		U count = 0;

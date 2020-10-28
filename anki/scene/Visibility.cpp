@@ -822,7 +822,7 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;
-	ctx.m_earlyZDist = scene.getLimits().m_earlyZDistance;
+	ctx.m_earlyZDist = scene.getConfig().m_earlyZDistance;
 	ctx.submitNewWork(fsn.getFirstComponentOfType<FrustumComponent>(), rqueue, hive);
 
 	hive.waitAllTasks();

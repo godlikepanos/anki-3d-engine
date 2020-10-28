@@ -71,8 +71,6 @@ CameraNode::~CameraNode()
 
 Error CameraNode::init(FrustumType frustumType)
 {
-	constexpr F32 defaultFar = 500.0f;
-
 	// Move component
 	newComponent<MoveComponent>();
 
@@ -91,22 +89,16 @@ Error CameraNode::init(FrustumType frustumType)
 		| FrustumComponentVisibilityTestFlag::ALL_SHADOWS_ENABLED
 		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS;
 	frc->setEnabledVisibilityTests(visibilityFlags);
-	if(frustumType == FrustumType::PERSPECTIVE)
-	{
-		frc->setPerspective(0.1f, defaultFar, toRad(45.0f), toRad(45.0f));
-	}
-	else
-	{
-		frc->setOrthographic(0.1f, defaultFar, 5.0f, -5.0f, 5.0f, -5.0f);
-	}
 
 	// Extended frustum for RT
-	if(getSceneGraph().getRayTracedShadowsEnabled())
+	if(getSceneGraph().getConfig().m_rayTracedShadows)
 	{
 		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>(this, FrustumType::ORTHOGRAPHIC);
 		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RAY_TRACING_SHADOWS);
 
-		rtFrustumComponent->setOrthographic(0.1f, defaultFar * 2.0f, defaultFar, -defaultFar, defaultFar, -defaultFar);
+		const F32 dist = getSceneGraph().getConfig().m_rayTracingExtendedFrustumDistance;
+
+		rtFrustumComponent->setOrthographic(0.1f, dist * 2.0f, dist, -dist, dist, -dist);
 	}
 
 	// Feedback component #2

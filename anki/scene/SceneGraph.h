@@ -40,12 +40,14 @@ public:
 };
 
 /// SceneGraph limits.
-class SceneGraphLimits
+class SceneGraphConfig
 {
 public:
 	F32 m_earlyZDistance = -1.0f; ///< Objects with distance lower than that will be used in early Z.
 	F32 m_reflectionProbeEffectiveDistance = -1.0f; ///< How far reflection probes can look.
 	F32 m_reflectionProbeShadowEffectiveDistance = -1.0f; ///< How far to render shadows for reflection probes.
+	Bool m_rayTracedShadows = false;
+	F32 m_rayTracingExtendedFrustumDistance = 100.0f; ///< The frustum distance from the eye to every direction.
 };
 
 /// The scene graph that  all the scene entities
@@ -165,9 +167,9 @@ public:
 		return m_stats;
 	}
 
-	const SceneGraphLimits& getLimits() const
+	const SceneGraphConfig& getConfig() const
 	{
-		return m_limits;
+		return m_config;
 	}
 
 	const Vec3& getSceneMin() const
@@ -223,11 +225,6 @@ public:
 		return *m_octree;
 	}
 
-	Bool getRayTracedShadowsEnabled() const
-	{
-		return m_enableRtShadows;
-	}
-
 private:
 	class UpdateSceneNodesCtx;
 
@@ -264,10 +261,8 @@ private:
 
 	Atomic<U64> m_nodesUuid = {1};
 
-	SceneGraphLimits m_limits;
+	SceneGraphConfig m_config;
 	SceneGraphStats m_stats;
-
-	Bool m_enableRtShadows = false;
 
 	/// Put a node in the appropriate containers
 	ANKI_USE_RESULT Error registerNode(SceneNode* node);

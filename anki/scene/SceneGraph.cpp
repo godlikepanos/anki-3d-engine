@@ -68,16 +68,19 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	m_alloc = SceneAllocator<U8>(allocCb, allocCbData);
 	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
 
-	// Limits
-	m_limits.m_earlyZDistance = config.getNumberF32("scene_earlyZDistance");
-	m_limits.m_reflectionProbeEffectiveDistance = config.getNumberF32("scene_reflectionProbeEffectiveDistance");
-	m_limits.m_reflectionProbeShadowEffectiveDistance =
+	// Limits & stuff
+	m_config.m_earlyZDistance = config.getNumberF32("scene_earlyZDistance");
+	m_config.m_reflectionProbeEffectiveDistance = config.getNumberF32("scene_reflectionProbeEffectiveDistance");
+	m_config.m_reflectionProbeShadowEffectiveDistance =
 		config.getNumberF32("scene_reflectionProbeShadowEffectiveDistance");
+	m_config.m_rayTracedShadows =
+		config.getBool("scene_rayTracedShadows") && m_gr->getDeviceCapabilities().m_rayTracingEnabled;
+	m_config.m_rayTracingExtendedFrustumDistance = config.getNumberF32("scene_rayTracingExtendedFrustumDistance");
 
 	ANKI_CHECK(m_events.init(this));
 
 	m_octree = m_alloc.newInstance<Octree>(m_alloc);
-	m_octree->init(m_sceneMin, m_sceneMax, 5); // TODO
+	m_octree->init(m_sceneMin, m_sceneMax, config.getNumberU32("scene_octreeMaxDepth"));
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCameraNode>("mainCamera", m_defaultMainCam));
@@ -88,8 +91,6 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	// Create a special node for debugging the physics world
 	PhysicsDebugNode* pnode;
 	ANKI_CHECK(newSceneNode<PhysicsDebugNode>("_physicsDebugNode", pnode));
-
-	m_enableRtShadows = config.getBool("scene_rayTracedShadows") && m_gr->getDeviceCapabilities().m_rayTracingEnabled;
 
 	return Error::NONE;
 }
