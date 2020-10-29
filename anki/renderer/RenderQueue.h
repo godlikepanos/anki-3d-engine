@@ -384,6 +384,10 @@ public:
 	WeakArray<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
 	WeakArray<RayTracingInstanceQueueElement> m_rayTracingInstances;
 
+	/// Contains the ray tracing elements. The rest of the members are unused. It's separate to avoid multithreading
+	/// bugs.
+	RenderQueue* m_rayTracingQueue = nullptr;
+
 	/// Applies only if the RenderQueue holds shadow casters. It's the max timesamp of all shadow casters
 	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;
 

@@ -51,7 +51,9 @@ enum class FrustumComponentVisibilityTestFlag : U32
 		  | RAY_TRACING_REFLECTIONS | RAY_TRACING_PATH_TRACING,
 
 	ALL_SHADOWS_ENABLED =
-		POINT_LIGHT_SHADOWS_ENABLED | SPOT_LIGHT_SHADOWS_ENABLED | DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES
+		POINT_LIGHT_SHADOWS_ENABLED | SPOT_LIGHT_SHADOWS_ENABLED | DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES,
+
+	ALL_RAY_TRACING = RAY_TRACING_SHADOWS | RAY_TRACING_GI | RAY_TRACING_REFLECTIONS | RAY_TRACING_PATH_TRACING
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag)
 
@@ -209,14 +211,9 @@ public:
 
 	void setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits);
 
-	Bool visibilityTestsEnabled(FrustumComponentVisibilityTestFlag bits) const
+	FrustumComponentVisibilityTestFlag getEnabledVisibilityTests() const
 	{
-		return !!(m_flags & bits);
-	}
-
-	Bool anyVisibilityTestEnabled() const
-	{
-		return !!(m_flags & FrustumComponentVisibilityTestFlag::ALL);
+		return m_flags;
 	}
 
 	/// The type is FillCoverageBufferCallback.

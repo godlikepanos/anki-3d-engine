@@ -137,7 +137,7 @@ public:
 		auto end = m_components.getEnd();
 		for(; !err && it != end; ++it)
 		{
-			if(it->m_type == TComponent::CLASS_TYPE)
+			if(it->getComponentType() == TComponent::CLASS_TYPE)
 			{
 				const SceneComponent* comp = *it;
 				err = func(static_cast<const TComponent&>(*comp));
@@ -156,7 +156,7 @@ public:
 		auto end = m_components.getEnd();
 		for(; !err && it != end; ++it)
 		{
-			if(it->m_type == TComponent::CLASS_TYPE)
+			if(it->getComponentType() == TComponent::CLASS_TYPE)
 			{
 				SceneComponent* comp = *it;
 				err = func(static_cast<TComponent&>(*comp));
@@ -172,7 +172,7 @@ public:
 	{
 		for(const ComponentsArrayElement& el : m_components)
 		{
-			if(el.m_type == TComponent::CLASS_TYPE)
+			if(el.getComponentType() == TComponent::CLASS_TYPE)
 			{
 				const SceneComponent* comp = el;
 				return static_cast<const TComponent*>(comp);
@@ -213,7 +213,7 @@ public:
 		I32 inth = I32(nth);
 		for(const ComponentsArrayElement& el : m_components)
 		{
-			if(el.m_type == TComponent::CLASS_TYPE && inth-- == 0)
+			if(el.getComponentType() == TComponent::CLASS_TYPE && inth-- == 0)
 			{
 				const SceneComponent* comp = el;
 				return static_cast<const TComponent*>(comp);
@@ -234,7 +234,7 @@ public:
 	template<typename TComponent>
 	TComponent& getComponentAt(U32 idx)
 	{
-		ANKI_ASSERT(m_components[idx].m_type == TComponent::CLASS_TYPE);
+		ANKI_ASSERT(m_components[idx].getComponentType() == TComponent::CLASS_TYPE);
 		SceneComponent* c = m_components[idx];
 		return *static_cast<TComponent*>(c);
 	}
@@ -243,7 +243,7 @@ public:
 	template<typename TComponent>
 	const TComponent& getComponentAt(U32 idx) const
 	{
-		ANKI_ASSERT(m_components[idx].m_type == TComponent::CLASS_TYPE);
+		ANKI_ASSERT(m_components[idx].getComponentType() == TComponent::CLASS_TYPE);
 		const SceneComponent* c = m_components[idx];
 		return *static_cast<const TComponent*>(c);
 	}
@@ -271,47 +271,60 @@ private:
 	class ComponentsArrayElement
 	{
 	public:
-		SceneComponentType m_type : 8;
-		PtrSize m_ptr : 56;
+		PtrSize m_combo; ///< Encodes the SceneComponentType in the high 8bits and the SceneComponent* to the remaining.
 
 		ComponentsArrayElement(SceneComponent* comp)
-			: m_type(comp->getType())
-			, m_ptr(ptrToNumber(comp))
 		{
-			ANKI_ASSERT((ptrToNumber(comp) & (PtrSize(0xFF) << PtrSize(56))) == 0);
+			set(comp);
 		}
 
 		ComponentsArrayElement(const ComponentsArrayElement& b)
-			: m_type(b.m_type)
-			, m_ptr(b.m_ptr)
+			: m_combo(b.m_combo)
 		{
 		}
 
 		ComponentsArrayElement& operator=(const ComponentsArrayElement& b)
 		{
-			m_type = b.m_type;
-			m_ptr = b.m_ptr;
+			m_combo = b.m_combo;
 			return *this;
 		}
 
 		operator SceneComponent*()
 		{
-			return numberToPtr<SceneComponent*>(m_ptr);
+			return getPtr();
 		}
 
 		operator const SceneComponent*() const
 		{
-			return numberToPtr<const SceneComponent*>(m_ptr);
+			return getPtr();
 		}
 
 		const SceneComponent* operator->() const
 		{
-			return numberToPtr<const SceneComponent*>(m_ptr);
+			return getPtr();
 		}
 
 		SceneComponent* operator->()
 		{
-			return numberToPtr<SceneComponent*>(m_ptr);
+			return getPtr();
+		}
+
+		SceneComponentType getComponentType() const
+		{
+			return SceneComponentType(m_combo & 0xFF);
+		}
+
+	private:
+		void set(SceneComponent* comp)
+		{
+			m_combo = ptrToNumber(comp) << 8;
+			m_combo |= PtrSize(comp->getType());
+			ANKI_ASSERT(getPtr() == comp);
+		}
+
+		SceneComponent* getPtr() const
+		{
+			return numberToPtr<SceneComponent*>(m_combo >> 8);
 		}
 	};
 
