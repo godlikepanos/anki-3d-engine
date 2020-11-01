@@ -12,56 +12,27 @@
 namespace anki
 {
 
-MaterialRenderComponent::MaterialRenderComponent(SceneNode* node, MaterialResourcePtr mtl)
-	: m_node(node)
-	, m_mtl(mtl)
-{
-	ANKI_ASSERT(node);
-
-	// Create the material variables
-	m_vars.create(m_node->getAllocator(), m_mtl->getVariables().getSize());
-	U32 count = 0;
-	for(const MaterialVariable& mv : m_mtl->getVariables())
-	{
-		m_vars[count++].m_mvar = &mv;
-	}
-
-	RenderComponentFlag flags =
-		(mtl->isForwardShading()) ? RenderComponentFlag::FORWARD_SHADING : RenderComponentFlag::NONE;
-	flags |= (mtl->castsShadow()) ? RenderComponentFlag::CASTS_SHADOW : RenderComponentFlag::NONE;
-	setFlags(flags);
-}
-
-MaterialRenderComponent::~MaterialRenderComponent()
-{
-	m_vars.destroy(m_node->getAllocator());
-}
-
-void MaterialRenderComponent::allocateAndSetupUniforms(const RenderQueueDrawContext& ctx,
-													   ConstWeakArray<Mat4> transforms,
-													   ConstWeakArray<Mat4> prevTransforms,
-													   StagingGpuMemoryManager& alloc) const
+void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
+											   ConstWeakArray<Mat4> transforms, ConstWeakArray<Mat4> prevTransforms,
+											   StagingGpuMemoryManager& alloc)
 {
 	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCES);
 	ANKI_ASSERT(prevTransforms.getSize() == transforms.getSize());
 
-	const MaterialVariant& variant = m_mtl->getOrCreateVariant(ctx.m_key);
-	const U32 set = m_mtl->getDescriptorSetIndex();
+	const MaterialVariant& variant = mtl->getOrCreateVariant(ctx.m_key);
+	const U32 set = mtl->getDescriptorSetIndex();
 
 	// Allocate uniform memory
 	StagingGpuMemoryToken token;
 	void* const uniformsBegin =
 		alloc.allocateFrame(variant.getUniformBlockSize(), StagingGpuMemoryType::UNIFORM, token);
 	const void* const uniformsEnd = static_cast<U8*>(uniformsBegin) + variant.getUniformBlockSize();
-	ctx.m_commandBuffer->bindUniformBuffer(set, m_mtl->getUniformsBinding(), token.m_buffer, token.m_offset,
+	ctx.m_commandBuffer->bindUniformBuffer(set, mtl->getUniformsBinding(), token.m_buffer, token.m_offset,
 										   token.m_range);
 
 	// Iterate variables
-	for(auto it = m_vars.getBegin(); it != m_vars.getEnd(); ++it)
+	for(const MaterialVariable& mvar : mtl->getVariables())
 	{
-		const MaterialRenderComponentVariable& var = *it;
-		const MaterialVariable& mvar = var.getMaterialVariable();
-
 		if(!variant.isVariableActive(mvar))
 		{
 			continue;

@@ -141,6 +141,11 @@ public:
 	/// @return Return's false if the @a type is not supported.
 	Bool getRayTracingInfo(U32 lod, RayTracingMaterialType type, ModelRayTracingInfo& info) const;
 
+	Bool getRayTracingTypeSupported(RayTracingMaterialType type) const
+	{
+		return m_mtl->getRayTracingTypeSupported(type);
+	}
+
 private:
 	ModelResource* m_model ANKI_DEBUG_CODE(= nullptr);
 

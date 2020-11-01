@@ -148,8 +148,8 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 			static_cast<const GpuParticleEmitterNode*>(userData)->simulate(ctx);
 		},
 		this);
-	MaterialRenderComponent* rcomp = newComponent<MaterialRenderComponent>(this, m_emitterRsrc->getMaterial());
-	rcomp->setup(
+	RenderComponent* rcomp = newComponent<RenderComponent>();
+	rcomp->setupRaster(
 		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
 			ANKI_ASSERT(userData.getSize() == 1);
 			static_cast<const GpuParticleEmitterNode*>(userData[0])->draw(ctx);
@@ -157,6 +157,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 		this,
 		0 // No merging
 	);
+	rcomp->setFlagsFromMaterial(m_emitterRsrc->getMaterial());
 
 	return Error::NONE;
 }
@@ -221,9 +222,9 @@ void GpuParticleEmitterNode::draw(RenderQueueDrawContext& ctx) const
 
 		// Resources
 		static const Mat4 identity = Mat4::getIdentity();
-		static_cast<const MaterialRenderComponent&>(getFirstComponentOfType<RenderComponent>())
-			.allocateAndSetupUniforms(ctx, ConstWeakArray<Mat4>(&identity, 1), ConstWeakArray<Mat4>(&identity, 1),
-									  *ctx.m_stagingGpuAllocator);
+
+		RenderComponent::allocateAndSetupUniforms(m_emitterRsrc->getMaterial(), ctx, ConstWeakArray<Mat4>(&identity, 1),
+												  ConstWeakArray<Mat4>(&identity, 1), *ctx.m_stagingGpuAllocator);
 
 		cmdb->bindStorageBuffer(0, 1, m_particlesBuff, 0, MAX_PTR_SIZE);
 

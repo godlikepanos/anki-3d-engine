@@ -237,32 +237,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	Timestamp& timestamp = m_frcCtx->m_queueViews[taskId].m_timestamp;
 	timestamp = testedNode.getComponentMaxTimestamp();
 
-	const Bool wantsRenderComponents =
-		!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS);
-
-	const Bool wantsLightComponents = !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS);
-
-	const Bool wantsFlareComponents =
-		!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS);
-
-	const Bool wantsShadowCasters = !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
-
-	const Bool wantsReflectionProbes =
-		!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::REFLECTION_PROBES);
-
-	const Bool wantsDecals = !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::DECALS);
-
-	const Bool wantsFogDensityComponents =
-		!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS);
-
-	const Bool wantsGiProbeCoponents =
-		!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES);
-
 	const Bool wantsEarlyZ = !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::EARLY_Z)
 							 && m_frcCtx->m_visCtx->m_earlyZDist > 0.0f;
-
-	const Bool wantsGenericComputeJobCoponents =
-		!!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS);
 
 	// Iterate
 	RenderQueueView& result = m_frcCtx->m_queueViews[taskId];
@@ -282,32 +258,39 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		Bool wantNode = false;
 
 		const RenderComponent* rc = nullptr;
-		wantNode |= wantsRenderComponents && (rc = node.tryGetFirstComponentOfType<RenderComponent>());
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+					&& (rc = node.tryGetFirstComponentOfType<RenderComponent>());
 
-		wantNode |= wantsShadowCasters && (rc = node.tryGetFirstComponentOfType<RenderComponent>())
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS)
+					&& (rc = node.tryGetFirstComponentOfType<RenderComponent>())
 					&& !!(rc->getFlags() & RenderComponentFlag::CASTS_SHADOW);
 
 		const LightComponent* lc = nullptr;
-		wantNode |= wantsLightComponents && (lc = node.tryGetFirstComponentOfType<LightComponent>());
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS)
+					&& (lc = node.tryGetFirstComponentOfType<LightComponent>());
 
 		const LensFlareComponent* lfc = nullptr;
-		wantNode |= wantsFlareComponents && (lfc = node.tryGetFirstComponentOfType<LensFlareComponent>());
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS)
+					&& (lfc = node.tryGetFirstComponentOfType<LensFlareComponent>());
 
 		const ReflectionProbeComponent* reflc = nullptr;
-		wantNode |= wantsReflectionProbes && (reflc = node.tryGetFirstComponentOfType<ReflectionProbeComponent>());
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::REFLECTION_PROBES)
+					&& (reflc = node.tryGetFirstComponentOfType<ReflectionProbeComponent>());
 
 		DecalComponent* decalc = nullptr;
-		wantNode |= wantsDecals && (decalc = node.tryGetFirstComponentOfType<DecalComponent>());
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::DECALS)
+					&& (decalc = node.tryGetFirstComponentOfType<DecalComponent>());
 
 		const FogDensityComponent* fogc = nullptr;
-		wantNode |= wantsFogDensityComponents && (fogc = node.tryGetFirstComponentOfType<FogDensityComponent>());
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::FOG_DENSITY_COMPONENTS)
+					&& (fogc = node.tryGetFirstComponentOfType<FogDensityComponent>());
 
 		GlobalIlluminationProbeComponent* giprobec = nullptr;
-		wantNode |=
-			wantsGiProbeCoponents && (giprobec = node.tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>());
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GLOBAL_ILLUMINATION_PROBES)
+					&& (giprobec = node.tryGetFirstComponentOfType<GlobalIlluminationProbeComponent>());
 
 		GenericGpuComputeJobComponent* computec = nullptr;
-		wantNode |= wantsGenericComputeJobCoponents
+		wantNode |= !!(enabledVisibilityTests & FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS)
 					&& (computec = node.tryGetFirstComponentOfType<GenericGpuComputeJobComponent>());
 
 		if(ANKI_UNLIKELY(!wantNode))

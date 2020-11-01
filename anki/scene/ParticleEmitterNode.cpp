@@ -253,9 +253,9 @@ Error ParticleEmitterNode::init(const CString& filename)
 	newComponent<SpatialComponent>(this, &m_obb);
 
 	// Render component
-	MaterialRenderComponent* rcomp =
-		newComponent<MaterialRenderComponent>(this, m_particleEmitterResource->getMaterial());
-	rcomp->setup(drawCallback, this, 0); // No merging
+	RenderComponent* rcomp = newComponent<RenderComponent>();
+	rcomp->setupRaster(drawCallback, this, 0); // No merging
+	rcomp->setFlagsFromMaterial(m_particleEmitterResource->getMaterial());
 
 	// Other
 	m_obb.setCenter(Vec4(0.0));
@@ -321,8 +321,8 @@ void ParticleEmitterNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 
 		// Uniforms
 		Array<Mat4, 1> trf = {Mat4::getIdentity()};
-		static_cast<const MaterialRenderComponent&>(self.getFirstComponentOfType<RenderComponent>())
-			.allocateAndSetupUniforms(ctx, trf, trf, *ctx.m_stagingGpuAllocator);
+		RenderComponent::allocateAndSetupUniforms(self.m_particleEmitterResource->getMaterial(), ctx, trf, trf,
+												  *ctx.m_stagingGpuAllocator);
 
 		// Draw
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, self.m_aliveParticlesCount, 0, 0);

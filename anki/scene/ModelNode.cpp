@@ -103,14 +103,14 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
 	newComponent<SpatialComponent>(this, &m_obbWorld);
-	MaterialRenderComponent* rcomp =
-		newComponent<MaterialRenderComponent>(this, m_model->getModelPatches()[m_modelPatchIdx].getMaterial());
-	rcomp->setup(
+	RenderComponent* rcomp = newComponent<RenderComponent>();
+	rcomp->setupRaster(
 		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
 			const ModelNode& self = *static_cast<const ModelNode*>(userData[0]);
 			self.draw(ctx, userData);
 		},
 		this, m_mergeKey);
+	rcomp->setFlagsFromMaterial(m_model->getModelPatches()[m_modelPatchIdx].getMaterial());
 
 	m_obbLocal = m_model->getModelPatches()[m_modelPatchIdx].getBoundingShape();
 
@@ -210,10 +210,10 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		cmdb->bindShaderProgram(modelInf.m_program);
 
 		// Uniforms
-		static_cast<const MaterialRenderComponent&>(getFirstComponentOfType<RenderComponent>())
-			.allocateAndSetupUniforms(ctx, ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
-									  ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),
-									  *ctx.m_stagingGpuAllocator);
+		RenderComponent::allocateAndSetupUniforms(m_model->getModelPatches()[m_modelPatchIdx].getMaterial(), ctx,
+												  ConstWeakArray<Mat4>(&trfs[0], userData.getSize()),
+												  ConstWeakArray<Mat4>(&prevTrfs[0], userData.getSize()),
+												  *ctx.m_stagingGpuAllocator);
 
 		// Set attributes
 		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
