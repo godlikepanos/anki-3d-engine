@@ -103,7 +103,7 @@ private:
 	static void fileMessageHandler(void* file, const LoggerMessageInfo& info);
 };
 
-typedef Singleton<Logger> LoggerSingleton;
+using LoggerSingleton = Singleton<Logger>;
 
 #define ANKI_LOG(subsystem_, t, ...) \
 	do \

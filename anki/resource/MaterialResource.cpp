@@ -166,6 +166,7 @@ MaterialVariable::~MaterialVariable()
 MaterialResource::MaterialResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
+	memset(&m_materialGpuDescriptor, 0, sizeof(m_materialGpuDescriptor));
 }
 
 MaterialResource::~MaterialResource()
@@ -1033,102 +1034,128 @@ U32 MaterialResource::getInstanceGroupIdx(U32 instanceCount)
 
 Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 {
-	// type
-	CString typeStr;
-	ANKI_CHECK(rtMaterialEl.getAttributeText("type", typeStr));
-	RayTracingMaterialType type = RayTracingMaterialType::COUNT;
-	if(typeStr == "SHADOWS")
+	// rayType
+	XmlElement rayTypeEl;
+	ANKI_CHECK(rtMaterialEl.getChildElement("rayType", rayTypeEl));
+	do
 	{
-		type = RayTracingMaterialType::SHADOWS;
-	}
-	else if(typeStr == "GI")
-	{
-		type = RayTracingMaterialType::GI;
-	}
-	else if(typeStr == "REFLECTIONS")
-	{
-		type = RayTracingMaterialType::REFLECTIONS;
-	}
-	else if(typeStr == "PATH_TRACING")
-	{
-		type = RayTracingMaterialType::PATH_TRACING;
-	}
-	else
-	{
-		ANKI_RESOURCE_LOGE("Uknown ray tracing type: %s", typeStr.cstr());
-		return Error::USER_DATA;
-	}
-
-	// shaderProgram
-	CString fname;
-	ANKI_CHECK(rtMaterialEl.getAttributeText("shaderProgram", fname));
-	ANKI_CHECK(getManager().loadResource(fname, m_rt[type].m_prog, false));
-
-	// mutation
-	XmlElement mutationEl;
-	ANKI_CHECK(rtMaterialEl.getChildElementOptional("mutation", mutationEl));
-	DynamicArrayAuto<SubMutation> mutatorValues(getTempAllocator());
-	if(mutationEl)
-	{
-		XmlElement mutatorEl;
-		ANKI_CHECK(mutationEl.getChildElement("mutator", mutatorEl));
-		U32 mutatorCount = 0;
-		ANKI_CHECK(mutatorEl.getSiblingElementsCount(mutatorCount));
-		++mutatorCount;
-
-		mutatorValues.resize(mutatorCount);
-
-		mutatorCount = 0;
-		do
+		// type
+		CString typeStr;
+		ANKI_CHECK(rayTypeEl.getAttributeText("type", typeStr));
+		RayType type = RayType::COUNT;
+		if(typeStr == "shadows")
 		{
-			// name
-			CString mutatorName;
-			ANKI_CHECK(mutatorEl.getAttributeText("name", mutatorName));
-			if(mutatorName.isEmpty())
-			{
-				ANKI_RESOURCE_LOGE("Mutator name is empty");
-				return Error::USER_DATA;
-			}
+			type = RayType::SHADOWS;
+		}
+		else if(typeStr == "gi")
+		{
+			type = RayType::GI;
+		}
+		else if(typeStr == "reflections")
+		{
+			type = RayType::REFLECTIONS;
+		}
+		else if(typeStr == "pathTracing")
+		{
+			type = RayType::PATH_TRACING;
+		}
+		else
+		{
+			ANKI_RESOURCE_LOGE("Uknown ray tracing type: %s", typeStr.cstr());
+			return Error::USER_DATA;
+		}
 
-			// value
-			MutatorValue mutatorValue;
-			ANKI_CHECK(mutatorEl.getAttributeNumber("value", mutatorValue));
+		if(m_rtPrograms[type].isCreated())
+		{
+			ANKI_RESOURCE_LOGE("Ray tracing type already set: %s", typeStr.cstr());
+			return Error::USER_DATA;
+		}
 
-			// Check
-			const ShaderProgramResourceMutator* mutatorPtr = m_rt[type].m_prog->tryFindMutator(mutatorName);
-			if(mutatorPtr == nullptr)
-			{
-				ANKI_RESOURCE_LOGE("Mutator not found: %s", mutatorName.cstr());
-				return Error::USER_DATA;
-			}
+		m_rayTypes |= RayTypeBit(1 << type);
 
-			if(!mutatorPtr->valueExists(mutatorValue))
-			{
-				ANKI_RESOURCE_LOGE("Mutator value doesn't exist: %s", mutatorName.cstr());
-				return Error::USER_DATA;
-			}
+		// shaderProgram
+		CString fname;
+		ANKI_CHECK(rayTypeEl.getAttributeText("shaderProgram", fname));
+		ANKI_CHECK(getManager().loadResource(fname, m_rtPrograms[type], false));
 
-			// All good
-			mutatorValues[mutatorCount].m_mutator = mutatorPtr;
-			mutatorValues[mutatorCount].m_value = mutatorValue;
-
-			// Advance
+		// mutation
+		XmlElement mutationEl;
+		ANKI_CHECK(rayTypeEl.getChildElementOptional("mutation", mutationEl));
+		DynamicArrayAuto<SubMutation> mutatorValues(getTempAllocator());
+		if(mutationEl)
+		{
+			XmlElement mutatorEl;
+			ANKI_CHECK(mutationEl.getChildElement("mutator", mutatorEl));
+			U32 mutatorCount = 0;
+			ANKI_CHECK(mutatorEl.getSiblingElementsCount(mutatorCount));
 			++mutatorCount;
-			ANKI_CHECK(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
-		} while(mutatorEl);
 
-		ANKI_ASSERT(mutatorCount == mutatorValues.getSize());
-	}
+			mutatorValues.resize(mutatorCount);
 
-	if(mutatorValues.getSize() != m_rt[type].m_prog->getMutators().getSize())
-	{
-		ANKI_RESOURCE_LOGE("Forgot to set all mutators on some RT mutation");
-		return Error::USER_DATA;
-	}
+			mutatorCount = 0;
+			do
+			{
+				// name
+				CString mutatorName;
+				ANKI_CHECK(mutatorEl.getAttributeText("name", mutatorName));
+				if(mutatorName.isEmpty())
+				{
+					ANKI_RESOURCE_LOGE("Mutator name is empty");
+					return Error::USER_DATA;
+				}
+
+				// value
+				MutatorValue mutatorValue;
+				ANKI_CHECK(mutatorEl.getAttributeNumber("value", mutatorValue));
+
+				// Check
+				const ShaderProgramResourceMutator* mutatorPtr = m_rtPrograms[type]->tryFindMutator(mutatorName);
+				if(mutatorPtr == nullptr)
+				{
+					ANKI_RESOURCE_LOGE("Mutator not found: %s", mutatorName.cstr());
+					return Error::USER_DATA;
+				}
+
+				if(!mutatorPtr->valueExists(mutatorValue))
+				{
+					ANKI_RESOURCE_LOGE("Mutator value doesn't exist: %s", mutatorName.cstr());
+					return Error::USER_DATA;
+				}
+
+				// All good
+				mutatorValues[mutatorCount].m_mutator = mutatorPtr;
+				mutatorValues[mutatorCount].m_value = mutatorValue;
+
+				// Advance
+				++mutatorCount;
+				ANKI_CHECK(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
+			} while(mutatorEl);
+
+			ANKI_ASSERT(mutatorCount == mutatorValues.getSize());
+		}
+
+		if(mutatorValues.getSize() != m_rtPrograms[type]->getMutators().getSize())
+		{
+			ANKI_RESOURCE_LOGE("Forgot to set all mutators on some RT mutation");
+			return Error::USER_DATA;
+		}
+
+		// Get the shader group handle
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rtPrograms[type]);
+		for(const SubMutation& subMutation : mutatorValues)
+		{
+			variantInitInfo.addMutation(subMutation.m_mutator->m_name, subMutation.m_value);
+		}
+
+		const ShaderProgramResourceVariant* progVariant;
+		m_rtPrograms[type]->getOrCreateVariant(variantInitInfo, progVariant);
+		m_rtShaderGroupHandles[type] = progVariant->getHitShaderGroupHandle();
+
+		// Advance
+		ANKI_CHECK(rayTypeEl.getNextSiblingElement("rayType", rayTypeEl));
+	} while(rayTypeEl);
 
 	// input
-	RayTracingMaterialVariant& variant = m_rt[type].m_variant;
-	MaterialGpuDescriptor& gpuMaterial = variant.m_materialGpuDescriptor;
 	XmlElement inputsEl;
 	ANKI_CHECK(rtMaterialEl.getChildElementOptional("inputs", inputsEl));
 	if(inputsEl)
@@ -1154,15 +1181,14 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 					ANKI_CHECK(inputEl.getAttributeText("value", fname));
 
 					const U32 textureIdx = GPU_MATERIAL_TEXTURES[i].m_textureSlot;
-					ANKI_CHECK(getManager().loadResource(fname, variant.m_textureResources[textureIdx], false));
+					ANKI_CHECK(getManager().loadResource(fname, m_textureResources[textureIdx], false));
 
-					variant.m_textureViews[variant.m_textureViewCount] =
-						variant.m_textureResources[textureIdx]->getGrTextureView();
+					m_textureViews[m_textureViewCount] = m_textureResources[textureIdx]->getGrTextureView();
 
-					gpuMaterial.m_bindlessTextureIndices[textureIdx] =
-						U16(variant.m_textureViews[variant.m_textureViewCount]->getOrCreateBindlessTextureIndex());
+					m_materialGpuDescriptor.m_bindlessTextureIndices[textureIdx] =
+						U16(m_textureViews[m_textureViewCount]->getOrCreateBindlessTextureIndex());
 
-					++variant.m_textureViewCount;
+					++m_textureViewCount;
 					found = true;
 					break;
 				}
@@ -1181,16 +1207,16 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 						{
 							Vec3 val;
 							ANKI_CHECK(inputEl.getAttributeNumbers("value", val));
-							memcpy(reinterpret_cast<U8*>(&gpuMaterial) + GPU_MATERIAL_FLOATS[i].m_offsetof, &val,
-								   sizeof(val));
+							memcpy(reinterpret_cast<U8*>(&m_materialGpuDescriptor) + GPU_MATERIAL_FLOATS[i].m_offsetof,
+								   &val, sizeof(val));
 						}
 						else
 						{
 							ANKI_ASSERT(GPU_MATERIAL_FLOATS[i].m_floatCount == 1);
 							F32 val;
 							ANKI_CHECK(inputEl.getAttributeNumber("value", val));
-							memcpy(reinterpret_cast<U8*>(&gpuMaterial) + GPU_MATERIAL_FLOATS[i].m_offsetof, &val,
-								   sizeof(val));
+							memcpy(reinterpret_cast<U8*>(&m_materialGpuDescriptor) + GPU_MATERIAL_FLOATS[i].m_offsetof,
+								   &val, sizeof(val));
 						}
 
 						found = true;
@@ -1209,17 +1235,6 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 			ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
 		} while(inputEl);
 	}
-
-	// Finally get the shader group handle
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_rt[type].m_prog);
-	for(const SubMutation& subMutation : mutatorValues)
-	{
-		variantInitInfo.addMutation(subMutation.m_mutator->m_name, subMutation.m_value);
-	}
-
-	const ShaderProgramResourceVariant* progVariant;
-	m_rt[type].m_prog->getOrCreateVariant(variantInitInfo, progVariant);
-	variant.m_shaderGroupHandle = progVariant->getHitShaderGroupHandle();
 
 	return Error::NONE;
 }

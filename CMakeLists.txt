@@ -74,7 +74,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(ANKI_EXTRA_CHECKS "Debugging checks (assertions)" OFF)
 option(ANKI_LTO "LTO compilation" OFF)
 
-option(ANKI_BUILD_TOOLS "Build tools" OFF)
+option(ANKI_BUILD_TOOLS "Build tools" ON)
 option(ANKI_BUILD_TESTS "Build unit tests" OFF)
 option(ANKI_BUILD_SANDBOX "Build sandbox application" ON)
 option(ANKI_BUILD_BENCH "Build benchmark application" OFF)

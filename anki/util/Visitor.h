@@ -87,7 +87,7 @@ struct GetTypeUsingId
 	template<typename TFirst, typename... Types_>
 	struct Helper<0, TFirst, Types_...>
 	{
-		typedef TFirst DataType;
+		using DataType = TFirst;
 	};
 
 	template<I id>

@@ -352,12 +352,14 @@ using FillCoverageBufferCallback = void (*)(void* userData, F32* depthValues, U3
 class RayTracingInstanceQueueElement final
 {
 public:
+	AccelerationStructure* m_bottomLevelAccelerationStructure;
 	ModelGpuDescriptor m_modelDescriptor;
-	Array<ConstWeakArray<U8>, U(RayTracingMaterialType::COUNT)> m_shaderGroupHandles;
+	Array<const U8*, U(RayType::COUNT)> m_shaderGroupHandles;
 
 	/// This points to the GR objects that are m_modelDescriptor is referencing. Use this to add a refcount to avoid
 	/// accidential deletions.
-	WeakArray<GrObject*> m_grObjects;
+	Array<GrObject*, 8> m_grObjects;
+	U32 m_grObjectCount;
 };
 
 static_assert(std::is_trivially_destructible<RayTracingInstanceQueueElement>::value == true,

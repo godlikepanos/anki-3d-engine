@@ -17,10 +17,10 @@ struct MainVertex
 {
 	U32 m_normal; ///< Packed in a custom R11G11B10_SNorm
 	U32 m_tangent; ///< Packed in a custom R10G10B11A1_SNorm format
-	HVec2 m_uvs[UV_CHANNEL_COUNT];
+	Vec2 m_uvs[UV_CHANNEL_COUNT];
 };
 
-const U32 _ANKI_SIZEOF_MainVertex = 4 * 3;
+const U32 _ANKI_SIZEOF_MainVertex = 4 * 4;
 const U32 _ANKI_ALIGNOF_MainVertex = 4;
 ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_MainVertex == sizeof(MainVertex));
 
@@ -48,6 +48,10 @@ struct MeshGpuDescriptor
 	Vec3 m_aabbMax;
 };
 
+const U32 _ANKI_SIZEOF_MeshGpuDescriptor = 4 * ANKI_SIZEOF(U64) + 8 * ANKI_SIZEOF(F32);
+const U32 _ANKI_ALIGNOF_MeshGpuDescriptor = 8;
+ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_MeshGpuDescriptor == sizeof(MeshGpuDescriptor));
+
 const U32 TEXTURE_CHANNEL_DIFFUSE = 0;
 const U32 TEXTURE_CHANNEL_NORMAL = 1;
 const U32 TEXTURE_CHANNEL_ROUGHNESS_METALNESS = 2;
@@ -68,6 +72,11 @@ struct MaterialGpuDescriptor
 	F32 m_roughness;
 	F32 m_metalness;
 };
+
+const U32 _ANKI_SIZEOF_MaterialGpuDescriptor =
+	TEXTURE_CHANNEL_COUNT * ANKI_SIZEOF(U16) + 3 * ANKI_SIZEOF(Vec3) + 2 * ANKI_SIZEOF(F32);
+const U32 _ANKI_ALIGNOF_MaterialGpuDescriptor = 4;
+ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_MaterialGpuDescriptor == sizeof(MaterialGpuDescriptor));
 
 struct ModelGpuDescriptor
 {

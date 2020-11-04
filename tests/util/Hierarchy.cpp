@@ -30,8 +30,7 @@ struct Deleter
 struct Foo2: public Object<Foo2, Allocator<Foo2>,
 	Deleter<Foo2, Allocator<Foo2>>>
 {
-	typedef Object<Foo2, Allocator<Foo2>,
-		Deleter<Foo2, Allocator<Foo2>>> Base;
+	using Base = Object<Foo2, Allocator<Foo2>, Deleter<Foo2, Allocator<Foo2>>>;
 
 	int x = 666;
 	static int constructorCallCount;

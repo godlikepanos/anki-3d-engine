@@ -54,7 +54,7 @@ enum class VertexAttributeLocation : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttributeLocation)
 
-enum class RayTracingMaterialType : U8
+enum class RayType : U8
 {
 	SHADOWS,
 	GI,
@@ -64,7 +64,17 @@ enum class RayTracingMaterialType : U8
 	COUNT,
 	FIRST = 0
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RayTracingMaterialType)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RayType)
+
+enum class RayTypeBit : U8
+{
+	NONE,
+	SHADOWS = 1 << 0,
+	GI = 1 << 1,
+	REFLECTIONS = 1 << 2,
+	PATH_TRACING = 1 << 3
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RayTypeBit)
 /// @}
 
 /// Deleter for ResourcePtr.

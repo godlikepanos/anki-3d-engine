@@ -149,7 +149,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 		},
 		this);
 	RenderComponent* rcomp = newComponent<RenderComponent>();
-	rcomp->setupRaster(
+	rcomp->initRaster(
 		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
 			ANKI_ASSERT(userData.getSize() == 1);
 			static_cast<const GpuParticleEmitterNode*>(userData[0])->draw(ctx);

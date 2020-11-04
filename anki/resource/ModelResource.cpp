@@ -104,13 +104,9 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, WeakArray<U8> subMesh
 	inf.m_indicesCountArray[0] = indexCount;
 }
 
-Bool ModelPatch::getRayTracingInfo(U32 lod, RayTracingMaterialType type, ModelRayTracingInfo& info) const
+void ModelPatch::getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const
 {
-	const Bool supported = m_mtl->getRayTracingTypeSupported(type);
-	if(!supported)
-	{
-		return false;
-	}
+	ANKI_ASSERT(m_mtl->getSupportedRayTracingTypes() != RayTypeBit::NONE);
 
 	info.m_grObjectReferenceCount = 0;
 	memset(&info.m_descriptor, 0, sizeof(info.m_descriptor));
@@ -123,15 +119,20 @@ Bool ModelPatch::getRayTracingInfo(U32 lod, RayTracingMaterialType type, ModelRa
 	info.m_grObjectReferences[info.m_grObjectReferenceCount++] = mesh->getVertexBuffer();
 
 	// Material
-	const RayTracingMaterialVariant& materialVariant = m_mtl->getRayTracingVariant(lod, type);
-	info.m_descriptor.m_material = materialVariant.getMaterialGpuDescriptor();
-	info.m_shaderGroupHandle = materialVariant.getHitShaderGroupHandle();
-	for(U32 i = 0; i < materialVariant.getTextureViews().getSize(); ++i)
+	info.m_descriptor.m_material = m_mtl->getMaterialGpuDescriptor();
+	for(RayType rayType : EnumIterable<RayType>())
 	{
-		info.m_grObjectReferences[info.m_grObjectReferenceCount++] = materialVariant.getTextureViews()[i];
+		if(!!(m_mtl->getSupportedRayTracingTypes() & RayTypeBit(1 << rayType)))
+		{
+			info.m_shaderGroupHandles[rayType] = m_mtl->getShaderGroupHandle(rayType);
+		}
 	}
 
-	return true;
+	ConstWeakArray<TextureViewPtr> textureViews = m_mtl->getAllTextureViews();
+	for(U32 i = 0; i < textureViews.getSize(); ++i)
+	{
+		info.m_grObjectReferences[info.m_grObjectReferenceCount++] = textureViews[i];
+	}
 }
 
 U32 ModelPatch::getLodCount() const

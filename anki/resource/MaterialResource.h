@@ -250,48 +250,6 @@ private:
 	U32 m_uniBlockSize = 0;
 };
 
-/// Ray tracing material variant.
-class RayTracingMaterialVariant
-{
-	friend class MaterialResource;
-	template<typename, PtrSize>
-	friend class Array;
-
-public:
-	RayTracingMaterialVariant(const RayTracingMaterialVariant&) = delete;
-	RayTracingMaterialVariant& operator=(const RayTracingMaterialVariant&) = delete;
-
-	ConstWeakArray<U8> getHitShaderGroupHandle() const
-	{
-		return m_shaderGroupHandle;
-	}
-
-	const MaterialGpuDescriptor& getMaterialGpuDescriptor() const
-	{
-		return m_materialGpuDescriptor;
-	}
-
-	/// Get the texture views that are referenced by what getMaterialGpuDescriptor() returned. Used for life tracking.
-	const ConstWeakArray<TextureViewPtr> getTextureViews() const
-	{
-		return ConstWeakArray<TextureViewPtr>((m_textureViewCount) ? &m_textureViews[0] : nullptr, m_textureViewCount);
-	}
-
-private:
-	ConstWeakArray<U8> m_shaderGroupHandle;
-	MaterialGpuDescriptor m_materialGpuDescriptor;
-	Array<TextureResourcePtr, TEXTURE_CHANNEL_COUNT> m_textureResources; ///< Keep the resources alive.
-	Array<TextureViewPtr, TEXTURE_CHANNEL_COUNT> m_textureViews; ///< Cache the GPU objects.
-	U8 m_textureViewCount = 0;
-
-	RayTracingMaterialVariant()
-	{
-		memset(&m_materialGpuDescriptor, 0, sizeof(m_materialGpuDescriptor));
-	}
-
-	~RayTracingMaterialVariant() = default;
-};
-
 /// Material resource.
 ///
 /// Material XML file format:
@@ -306,10 +264,12 @@ private:
 ///		</inputs>]
 /// </material>
 ///
-/// [<rtMaterial shaderProgram="path" type="shadows|gi|reflections|pathTracing">
-///		[<mutation>
-///			<mutator name="str" value="value"/>
-///		</mutation>]
+/// [<rtMaterial>
+///		<rayType shaderProgram="path" type="shadows|gi|reflections|pathTracing">
+///			[<mutation>
+///				<mutator name="str" value="value"/>
+///			</mutation>]
+///		</rayType>
 ///
 /// 	[<inputs>
 /// 		<input name="name" value="value" />
@@ -382,16 +342,28 @@ public:
 
 	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
-	const RayTracingMaterialVariant& getRayTracingVariant(U32 lod, RayTracingMaterialType type) const
+	ConstWeakArray<U8> getShaderGroupHandle(RayType type) const
 	{
-		(void)lod; // Not supported for now
-		ANKI_ASSERT(m_rt[type].m_prog.isCreated());
-		return m_rt[type].m_variant;
+		ANKI_ASSERT(!!(m_rayTypes & RayTypeBit(1 << type)));
+		ANKI_ASSERT(m_rtShaderGroupHandles[type].getSize());
+		return m_rtShaderGroupHandles[type];
 	}
 
-	Bool getRayTracingTypeSupported(RayTracingMaterialType type) const
+	RayTypeBit getSupportedRayTracingTypes() const
 	{
-		return m_rt[type].m_prog.isCreated();
+		return m_rayTypes;
+	}
+
+	const MaterialGpuDescriptor& getMaterialGpuDescriptor() const
+	{
+		return m_materialGpuDescriptor;
+	}
+
+	/// Get all texture views that the MaterialGpuDescriptor returned by getMaterialGpuDescriptor(), references. Used
+	/// for lifetime management.
+	ConstWeakArray<TextureViewPtr> getAllTextureViews() const
+	{
+		return ConstWeakArray<TextureViewPtr>((m_textureViewCount) ? &m_textureViews[0] : nullptr, m_textureViewCount);
 	}
 
 private:
@@ -423,13 +395,16 @@ private:
 
 	DynamicArray<SubMutation> m_nonBuiltinsMutation;
 
-	class Rt
-	{
-	public:
-		ShaderProgramResourcePtr m_prog;
-		RayTracingMaterialVariant m_variant;
-	};
-	Array<Rt, U(RayTracingMaterialType::COUNT)> m_rt;
+	Array<ShaderProgramResourcePtr, U(RayType::COUNT)> m_rtPrograms;
+	Array<ConstWeakArray<U8>, U(RayType::COUNT)> m_rtShaderGroupHandles;
+
+	MaterialGpuDescriptor m_materialGpuDescriptor;
+
+	Array<TextureResourcePtr, TEXTURE_CHANNEL_COUNT> m_textureResources; ///< Keep the resources alive.
+	Array<TextureViewPtr, TEXTURE_CHANNEL_COUNT> m_textureViews; ///< Cache the GPU objects.
+	U8 m_textureViewCount = 0;
+
+	RayTypeBit m_rayTypes = RayTypeBit::NONE;
 
 	ANKI_USE_RESULT Error createVars();
 

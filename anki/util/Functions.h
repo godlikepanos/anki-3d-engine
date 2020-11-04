@@ -283,7 +283,7 @@ struct RemovePointer;
 template<typename T>
 struct RemovePointer<T*>
 {
-	typedef T Type;
+	using Type = T;
 };
 
 /// Zero memory of an object

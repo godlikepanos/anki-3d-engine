@@ -104,13 +104,18 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 	newComponent<MoveFeedbackComponent>();
 	newComponent<SpatialComponent>(this, &m_obbWorld);
 	RenderComponent* rcomp = newComponent<RenderComponent>();
-	rcomp->setupRaster(
+	rcomp->initRaster(
 		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
 			const ModelNode& self = *static_cast<const ModelNode*>(userData[0]);
 			self.draw(ctx, userData);
 		},
 		this, m_mergeKey);
 	rcomp->setFlagsFromMaterial(m_model->getModelPatches()[m_modelPatchIdx].getMaterial());
+
+	if(m_model->getModelPatches()[m_modelPatchIdx].getSupportedRayTracingTypes() != RayTypeBit::NONE)
+	{
+		rcomp->initRayTracing(setupRayTracingInstanceQueueElement, this);
+	}
 
 	m_obbLocal = m_model->getModelPatches()[m_modelPatchIdx].getBoundingShape();
 
@@ -330,6 +335,48 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		{
 			cmdb->setDepthCompareOperation(CompareOperation::LESS);
 		}
+	}
+}
+
+void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, const void* userData, RayTracingInstanceQueueElement& el)
+{
+	const ModelNode& self = *static_cast<const ModelNode*>(userData);
+	const ModelPatch& patch = self.m_model->getModelPatches()[self.m_modelPatchIdx];
+
+	ModelRayTracingInfo info;
+	patch.getRayTracingInfo(lod, info);
+
+	memset(&el, 0, sizeof(el));
+
+	// AS
+	el.m_bottomLevelAccelerationStructure = info.m_bottomLevelAccelerationStructure.get();
+	info.m_bottomLevelAccelerationStructure->getRefcount().fetchAdd(1);
+
+	// Set the descriptor
+	el.m_modelDescriptor = info.m_descriptor;
+	const MoveComponent& movec = self.getFirstComponentOfType<MoveComponent>();
+	const Mat3x4 worldTrf(movec.getWorldTransform());
+	memcpy(&el.m_modelDescriptor.m_worldTransform, &worldTrf, sizeof(worldTrf));
+	el.m_modelDescriptor.m_worldRotation = movec.getWorldTransform().getRotation().getRotationPart();
+
+	// Handles
+	for(RayType type : EnumIterable<RayType>())
+	{
+		if(!(patch.getMaterial()->getSupportedRayTracingTypes() & RayTypeBit(1 << type)))
+		{
+			continue;
+		}
+
+		el.m_shaderGroupHandles[type] = &info.m_shaderGroupHandles[type][0];
+	}
+
+	// References
+	ANKI_ASSERT(info.m_grObjectReferenceCount <= el.m_grObjects.getSize());
+	el.m_grObjectCount = info.m_grObjectReferenceCount;
+	for(U32 i = 0; i < info.m_grObjectReferenceCount; ++i)
+	{
+		el.m_grObjects[i] = info.m_grObjectReferences[i].get();
+		el.m_grObjects[i]->getRefcount().fetchAdd(1);
 	}
 }
 

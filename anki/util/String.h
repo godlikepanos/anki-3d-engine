@@ -619,6 +619,18 @@ public:
 	/// Replace all occurrences of "from" with "to".
 	String& replaceAll(Allocator alloc, CString from, CString to);
 
+	/// @brief  Execute a functor for all characters of the string.
+	template<typename TFunc>
+	void transform(TFunc func)
+	{
+		U i = 0;
+		while(i < m_data.getSize() && m_data[i] != '\0')
+		{
+			func(m_data[i]);
+			++i;
+		}
+	}
+
 protected:
 	DynamicArray<Char, PtrSize> m_data;
 

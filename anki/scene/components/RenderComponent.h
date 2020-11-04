@@ -26,6 +26,9 @@ enum class RenderComponentFlag : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RenderComponentFlag)
 
+using FillRayTracingInstanceQueueElementCallback = void (*)(U32 lod, const void* userData,
+															RayTracingInstanceQueueElement& el);
+
 /// Render component interface. Implemented by renderable scene nodes
 class RenderComponent : public SceneComponent
 {
@@ -55,7 +58,7 @@ public:
 		setFlags(flags);
 	}
 
-	void setupRaster(RenderQueueDrawCallback callback, const void* userData, U64 mergeKey)
+	void initRaster(RenderQueueDrawCallback callback, const void* userData, U64 mergeKey)
 	{
 		ANKI_ASSERT(callback != nullptr);
 		ANKI_ASSERT(userData != nullptr);
@@ -63,6 +66,12 @@ public:
 		m_callback = callback;
 		m_userData = userData;
 		m_mergeKey = mergeKey;
+	}
+
+	void initRayTracing(FillRayTracingInstanceQueueElementCallback callback, const void* userData)
+	{
+		m_rtCallback = callback;
+		m_rtCallbackUserData = userData;
 	}
 
 	void setupRenderableQueueElement(RenderableQueueElement& el) const
@@ -75,15 +84,23 @@ public:
 		el.m_mergeKey = m_mergeKey;
 	}
 
+	void setupRayTracingInstanceQueueElement(U32 lod, RayTracingInstanceQueueElement& el) const
+	{
+		ANKI_ASSERT(m_rtCallback);
+		m_rtCallback(lod, m_rtCallbackUserData, el);
+	}
+
 	/// Helper function.
 	static void allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
 										 ConstWeakArray<Mat4> transforms, ConstWeakArray<Mat4> prevTransforms,
 										 StagingGpuMemoryManager& alloc);
 
 private:
-	RenderQueueDrawCallback m_callback ANKI_DEBUG_CODE(= nullptr);
-	const void* m_userData ANKI_DEBUG_CODE(= nullptr);
-	U64 m_mergeKey ANKI_DEBUG_CODE(= MAX_U64);
+	RenderQueueDrawCallback m_callback = nullptr;
+	const void* m_userData = nullptr;
+	U64 m_mergeKey = MAX_U64;
+	FillRayTracingInstanceQueueElementCallback m_rtCallback = nullptr;
+	const void* m_rtCallbackUserData = nullptr;
 	RenderComponentFlag m_flags = RenderComponentFlag::NONE;
 };
 /// @}

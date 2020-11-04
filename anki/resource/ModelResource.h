@@ -86,7 +86,7 @@ class ModelRayTracingInfo
 public:
 	ModelGpuDescriptor m_descriptor;
 	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
-	ConstWeakArray<U8> m_shaderGroupHandle;
+	Array<ConstWeakArray<U8>, U(RayType::COUNT)> m_shaderGroupHandles;
 
 	/// Get some pointers that the m_descriptor is pointing to. Use these pointers for life tracking.
 	Array<GrObjectPtr, TEXTURE_CHANNEL_COUNT + 2> m_grObjectReferences;
@@ -138,12 +138,11 @@ public:
 	void getRenderingInfo(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const;
 
 	/// Get the ray tracing info.
-	/// @return Return's false if the @a type is not supported.
-	Bool getRayTracingInfo(U32 lod, RayTracingMaterialType type, ModelRayTracingInfo& info) const;
+	void getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const;
 
-	Bool getRayTracingTypeSupported(RayTracingMaterialType type) const
+	RayTypeBit getSupportedRayTracingTypes() const
 	{
-		return m_mtl->getRayTracingTypeSupported(type);
+		return m_mtl->getSupportedRayTracingTypes();
 	}
 
 private:

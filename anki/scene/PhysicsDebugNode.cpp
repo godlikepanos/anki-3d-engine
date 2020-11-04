@@ -27,9 +27,9 @@ public:
 	{
 		ANKI_ASSERT(node);
 		setFlags(RenderComponentFlag::NONE);
-		setupRaster([](RenderQueueDrawContext& ctx,
-					   ConstWeakArray<void*> userData) { static_cast<MyRenderComponent*>(userData[0])->draw(ctx); },
-					this, 0);
+		initRaster([](RenderQueueDrawContext& ctx,
+					  ConstWeakArray<void*> userData) { static_cast<MyRenderComponent*>(userData[0])->draw(ctx); },
+				   this, 0);
 	}
 
 	ANKI_USE_RESULT Error init()

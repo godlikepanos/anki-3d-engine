@@ -241,7 +241,7 @@ public:
 
 	ANKI_ENABLE_METHOD(J == 3 && I == 4)
 	explicit TMat(const TTransform<T>& t)
-		: TMat(t.getOrigin().xyz(), t.getRotation(), t.getScale())
+		: TMat(t.getOrigin().xyz(), t.getRotation().getRotationPart(), t.getScale())
 	{
 	}
 	/// @}

@@ -54,6 +54,8 @@ private:
 	void updateSpatialComponent(const MoveComponent& move);
 
 	void draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) const;
+
+	static void setupRayTracingInstanceQueueElement(U32 lod, const void* userData, RayTracingInstanceQueueElement& el);
 };
 /// @}
 

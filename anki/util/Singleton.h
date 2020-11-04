@@ -20,7 +20,7 @@ template<typename T>
 class Singleton
 {
 public:
-	typedef T Value;
+	using Value = T;
 
 	// Non copyable
 	Singleton(const Singleton&) = delete;
@@ -57,7 +57,7 @@ template<typename T>
 class SingletonInit
 {
 public:
-	typedef T Value;
+	using Value = T;
 
 	// Non copyable
 	SingletonInit(const SingletonInit&) = delete;
@@ -103,7 +103,7 @@ template<typename T>
 class SingletonThreadLocal
 {
 public:
-	typedef T Value;
+	using Value = T;
 
 	// Non copyable
 	SingletonThreadLocal(const SingletonThreadLocal&) = delete;
@@ -140,7 +140,7 @@ template<typename T>
 class SingletonThreadsafe
 {
 public:
-	typedef T Value;
+	using Value = T;
 
 	// Non copyable
 	SingletonThreadsafe(const SingletonThreadsafe&) = delete;

@@ -1,2 +1,3 @@
 file(GLOB SOURCES *.cpp)
-addAnkiSourceFiles(${SOURCES})
+file(GLOB HEADERS *.h)
+addAnkiSourceFiles(${SOURCES} ${HEADERS})

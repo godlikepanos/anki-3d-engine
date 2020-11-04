@@ -254,7 +254,7 @@ Error ParticleEmitterNode::init(const CString& filename)
 
 	// Render component
 	RenderComponent* rcomp = newComponent<RenderComponent>();
-	rcomp->setupRaster(drawCallback, this, 0); // No merging
+	rcomp->initRaster(drawCallback, this, 0); // No merging
 	rcomp->setFlagsFromMaterial(m_particleEmitterResource->getMaterial());
 
 	// Other
