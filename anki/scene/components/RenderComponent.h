@@ -90,6 +90,11 @@ public:
 		m_rtCallback(lod, m_rtCallbackUserData, el);
 	}
 
+	Bool getSupportsRayTracing() const
+	{
+		return m_rtCallback != nullptr;
+	}
+
 	/// Helper function.
 	static void allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
 										 ConstWeakArray<Mat4> transforms, ConstWeakArray<Mat4> prevTransforms,

@@ -13,6 +13,7 @@
 #include <anki/util/HashMap.h>
 #include <anki/core/App.h>
 #include <anki/scene/events/EventManager.h>
+#include <anki/resource/Common.h>
 
 namespace anki
 {
@@ -48,6 +49,7 @@ public:
 	F32 m_reflectionProbeShadowEffectiveDistance = -1.0f; ///< How far to render shadows for reflection probes.
 	Bool m_rayTracedShadows = false;
 	F32 m_rayTracingExtendedFrustumDistance = 100.0f; ///< The frustum distance from the eye to every direction.
+	Array<F32, MAX_LOD_COUNT> m_maxLodDistances = {};
 };
 
 /// The scene graph that  all the scene entities

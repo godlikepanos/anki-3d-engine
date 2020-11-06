@@ -12,12 +12,12 @@
 #include <anki/shaders/include/ModelTypes.h>
 
 #if ALPHA_TEXTURE == 1
-layout(set = 0, binding = 0, scalar) buffer b_ankiModels
+layout(shaderRecordEXT, scalar) buffer b_model
 {
-	ModelGpuDescriptor u_modelDescriptors[];
+	ModelGpuDescriptor u_modelDescriptor;
 };
 
-layout(set = 0, binding = 1) uniform sampler u_sampler;
+layout(set = 0, binding = 0) uniform sampler u_sampler;
 
 ANKI_BINDLESS_SET(1);
 #endif
@@ -34,7 +34,7 @@ ANKI_REF(MainVertex, ANKI_ALIGNOF(MainVertex));
 void main()
 {
 #if ALPHA_TEXTURE == 1
-	const ModelGpuDescriptor model = u_modelDescriptors[nonuniformEXT(gl_InstanceID)];
+	const ModelGpuDescriptor model = u_modelDescriptor;
 	const MeshGpuDescriptor mesh = model.m_mesh;
 
 	const U32 offset = gl_PrimitiveID * ANKI_SIZEOF(U16Vec3);

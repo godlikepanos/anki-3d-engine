@@ -12,6 +12,7 @@
 #include <anki/collision/ConvexHullShape.h>
 #include <anki/collision/Plane.h>
 #include <anki/shaders/include/ClusteredShadingFunctions.h>
+#include <anki/resource/Common.h>
 
 namespace anki
 {
@@ -289,6 +290,19 @@ public:
 		return m_viewPlanesW;
 	}
 
+	/// Set the lod distance. It doesn't interact with the far plane.
+	void setLodDistance(U32 lod, F32 maxDistance)
+	{
+		ANKI_ASSERT(maxDistance > 0.0f);
+		m_maxLodDistances[lod] = maxDistance;
+	}
+
+	/// See setLodDistance.
+	F32 getLodDistance(U32 lod) const
+	{
+		return m_maxLodDistances[lod];
+	}
+
 private:
 	class Common
 	{
@@ -344,6 +358,8 @@ private:
 
 	/// Defines the the rate of the cascade distances
 	F32 m_shadowCascadesDistancePower = 1.0f;
+
+	Array<F32, MAX_LOD_COUNT> m_maxLodDistances = {};
 
 	class
 	{

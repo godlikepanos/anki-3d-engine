@@ -117,6 +117,7 @@ public:
 	TRenderQueueElementStorage<FogDensityQueueElement> m_fogDensityVolumes;
 	TRenderQueueElementStorage<GlobalIlluminationProbeQueueElement> m_giProbes;
 	TRenderQueueElementStorage<GenericGpuComputeJobQueueElement> m_genericGpuComputeJobs;
+	TRenderQueueElementStorage<RayTracingInstanceQueueElement> m_rayTracingInstances;
 
 	Timestamp m_timestamp = 0;
 
@@ -140,7 +141,8 @@ public:
 	List<const FrustumComponent*> m_testedFrcs;
 	Mutex m_mtx;
 
-	void submitNewWork(const FrustumComponent& frc, RenderQueue& result, ThreadHive& hive);
+	void submitNewWork(const FrustumComponent& frc, const FrustumComponent* primaryFrustum, RenderQueue& result,
+					   ThreadHive& hive);
 };
 
 /// A context for a specific test of a frustum component.
@@ -150,6 +152,9 @@ class FrustumVisibilityContext
 public:
 	VisibilityContext* m_visCtx = nullptr;
 	const FrustumComponent* m_frc = nullptr;
+
+	/// If this is !=nullptr then m_frc is an extended frustum and m_primaryFrustum is the main frustum.
+	const FrustumComponent* m_primaryFrustum = nullptr;
 
 	// S/W rasterizer members
 	SoftwareRasterizer* m_r = nullptr;

@@ -89,6 +89,9 @@ Error CameraNode::init(FrustumType frustumType)
 		| FrustumComponentVisibilityTestFlag::ALL_SHADOWS_ENABLED
 		| FrustumComponentVisibilityTestFlag::GENERIC_COMPUTE_JOB_COMPONENTS;
 	frc->setEnabledVisibilityTests(visibilityFlags);
+	frc->setLodDistance(0, getSceneGraph().getConfig().m_maxLodDistances[0]);
+	frc->setLodDistance(1, getSceneGraph().getConfig().m_maxLodDistances[1]);
+	frc->setLodDistance(2, getSceneGraph().getConfig().m_maxLodDistances[2]);
 
 	// Extended frustum for RT
 	if(getSceneGraph().getConfig().m_rayTracedShadows)
@@ -99,6 +102,9 @@ Error CameraNode::init(FrustumType frustumType)
 		const F32 dist = getSceneGraph().getConfig().m_rayTracingExtendedFrustumDistance;
 
 		rtFrustumComponent->setOrthographic(0.1f, dist * 2.0f, dist, -dist, dist, -dist);
+		rtFrustumComponent->setLodDistance(0, getSceneGraph().getConfig().m_maxLodDistances[0]);
+		rtFrustumComponent->setLodDistance(1, getSceneGraph().getConfig().m_maxLodDistances[1]);
+		rtFrustumComponent->setLodDistance(2, getSceneGraph().getConfig().m_maxLodDistances[2]);
 	}
 
 	// Feedback component #2

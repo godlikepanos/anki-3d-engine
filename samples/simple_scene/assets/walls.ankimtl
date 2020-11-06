@@ -24,3 +24,11 @@
 		
 	</inputs>
 </material>
+
+<rtMaterial>
+	<rayType type="shadows" shaderProgram="anki/shaders/RtShadowsHit.ankiprog">
+		<mutation>
+			<mutator name="ALPHA_TEXTURE" value="0"/>
+		</mutation>
+	</rayType>
+</rtMaterial>
