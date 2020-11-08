@@ -43,7 +43,6 @@ public:
 	}
 
 public:
-	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	RenderTargetDescription m_rtDescr;
 
@@ -57,6 +56,8 @@ public:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
 	void run(RenderPassWorkContext& rgraphCtx);
+
+	void buildSbtAndTlas(BufferPtr& sbtBuffer, PtrSize& sbtOffset, AccelerationStructurePtr& tlas);
 };
 /// @}
 

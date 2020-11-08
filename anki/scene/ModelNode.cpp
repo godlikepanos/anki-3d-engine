@@ -350,7 +350,6 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, const void* userDat
 
 	// AS
 	el.m_bottomLevelAccelerationStructure = info.m_bottomLevelAccelerationStructure.get();
-	info.m_bottomLevelAccelerationStructure->getRefcount().fetchAdd(1);
 
 	// Set the descriptor
 	el.m_modelDescriptor = info.m_descriptor;
@@ -376,7 +375,6 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, const void* userDat
 	for(U32 i = 0; i < info.m_grObjectReferenceCount; ++i)
 	{
 		el.m_grObjects[i] = info.m_grObjectReferences[i].get();
-		el.m_grObjects[i]->getRefcount().fetchAdd(1);
 	}
 }
 
