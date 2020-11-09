@@ -6,6 +6,7 @@
 #include <anki/renderer/RtShadows.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Renderer.h>
+#include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/resource/ShaderProgramResourceSystem.h>
 
@@ -53,10 +54,71 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 
 void RtShadows::populateRenderGraph(RenderingContext& ctx)
 {
-	// TODO
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	m_runCtx.m_ctx = &ctx;
+	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+
+	buildSbtAndTlas();
+
+	m_runCtx.m_tlasHandle = rgraph.importAccelerationStructure(m_runCtx.m_tlas, AccelerationStructureUsageBit::NONE);
+
+	// Build TLAS
+	{
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadowsBuildTlas");
+		rpass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) {
+				static_cast<RtShadows*>(rgraphCtx.m_userData)->runBuildAs(rgraphCtx);
+			},
+			this, 0);
+
+		rpass.newDependency(RenderPassDependency(m_runCtx.m_tlasHandle, AccelerationStructureUsageBit::BUILD));
+	}
+
+	// RT
+	{
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows");
+		rpass.setWork(
+			[](RenderPassWorkContext& rgraphCtx) { static_cast<RtShadows*>(rgraphCtx.m_userData)->run(rgraphCtx); },
+			this, 0);
+
+		rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE));
+		rpass.newDependency(
+			RenderPassDependency(m_runCtx.m_tlasHandle, AccelerationStructureUsageBit::TRACE_RAYS_READ));
+		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
+	}
 }
 
-void RtShadows::buildSbtAndTlas(BufferPtr& sbtBuffer, PtrSize& sbtOffset, AccelerationStructurePtr& tlas)
+void RtShadows::runBuildAs(RenderPassWorkContext& rgraphCtx)
+{
+	rgraphCtx.m_commandBuffer->buildAccelerationStructure(m_runCtx.m_tlas);
+}
+
+void RtShadows::run(RenderPassWorkContext& rgraphCtx)
+{
+	const RenderingContext& ctx = *m_runCtx.m_ctx;
+	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
+	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
+
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
+	rgraphCtx.bindImage(0, 1, m_runCtx.m_rt, TextureSubresourceInfo());
+	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
+	rgraphCtx.bindTexture(0, 3, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindAccelerationStructure(0, 4, m_runCtx.m_tlasHandle);
+
+	bindUniforms(cmdb, 0, 4, ctx.m_lightShadingUniformsToken);
+
+	bindUniforms(cmdb, 0, 5, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 6, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(0, 7, m_r->getShadowMapping().getShadowmapRt());
+
+	bindStorage(cmdb, 0, 8, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 9, rsrc.m_indicesToken);
+
+	cmdb->traceRays(m_runCtx.m_sbtBuffer, m_runCtx.m_sbtOffset, m_runCtx.m_hitGroupCount, 1, m_r->getWidth() / 2,
+					m_r->getHeight() / 2, 1);
+}
+
+void RtShadows::buildSbtAndTlas()
 {
 	// Get some things
 	RenderingContext& ctx = *m_runCtx.m_ctx;
@@ -72,13 +134,15 @@ void RtShadows::buildSbtAndTlas(BufferPtr& sbtBuffer, PtrSize& sbtOffset, Accele
 
 	const U32 extraSbtRecords = 1 + 1; // Raygen + miss
 
+	m_runCtx.m_hitGroupCount = instanceCount;
+
 	// Allocate SBT
 	StagingGpuMemoryToken token;
 	U8* sbt = allocateStorage<U8*>(sbtRecordSize * (instanceCount + extraSbtRecords), token);
 	const U8* sbtStart = sbt;
 	(void)sbtStart;
-	sbtBuffer = token.m_buffer;
-	sbtOffset = token.m_offset;
+	m_runCtx.m_sbtBuffer = token.m_buffer;
+	m_runCtx.m_sbtOffset = token.m_offset;
 
 	// Set the miss and ray gen handles
 	memcpy(sbt, &m_grProg->getShaderGroupHandles()[0], shaderHandleSize);
@@ -117,7 +181,7 @@ void RtShadows::buildSbtAndTlas(BufferPtr& sbtBuffer, PtrSize& sbtOffset, Accele
 	AccelerationStructureInitInfo initInf("RtShadows");
 	initInf.m_type = AccelerationStructureType::TOP_LEVEL;
 	initInf.m_topLevel.m_instances = instances;
-	tlas = getGrManager().newAccelerationStructure(initInf);
+	m_runCtx.m_tlas = getGrManager().newAccelerationStructure(initInf);
 }
 
 } // end namespace anki

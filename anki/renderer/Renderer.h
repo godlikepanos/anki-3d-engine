@@ -195,6 +195,11 @@ public:
 		return *m_smResolve;
 	}
 
+	RtShadows& getRtShadows()
+	{
+		return *m_rtShadows;
+	}
+
 	Ssr& getSsr()
 	{
 		return *m_ssr;
@@ -417,6 +422,7 @@ private:
 	UniquePtr<UiStage> m_uiStage;
 	UniquePtr<GenericCompute> m_genericCompute;
 	UniquePtr<ShadowmapsResolve> m_smResolve;
+	UniquePtr<RtShadows> m_rtShadows;
 	/// @}
 
 	Array<U32, 4> m_clusterCount;

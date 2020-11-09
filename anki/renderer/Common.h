@@ -44,6 +44,7 @@ class VolumetricLightingAccumulation;
 class GlobalIllumination;
 class GenericCompute;
 class ShadowmapsResolve;
+class RtShadows;
 
 class RenderingContext;
 class DebugDrawer;

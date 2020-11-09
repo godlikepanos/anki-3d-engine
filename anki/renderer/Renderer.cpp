@@ -33,6 +33,7 @@
 #include <anki/renderer/GlobalIllumination.h>
 #include <anki/renderer/GenericCompute.h>
 #include <anki/renderer/ShadowmapsResolve.h>
+#include <anki/renderer/RtShadows.h>
 #include <anki/shaders/include/ClusteredShadingTypes.h>
 
 namespace anki
@@ -193,6 +194,12 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_smResolve.reset(m_alloc.newInstance<ShadowmapsResolve>(this));
 	ANKI_CHECK(m_smResolve->init(config));
+
+	if(getGrManager().getDeviceCapabilities().m_rayTracingEnabled && config.getBool("scene_rayTracedShadows"))
+	{
+		m_rtShadows.reset(m_alloc.newInstance<RtShadows>(this));
+		ANKI_CHECK(m_rtShadows->init(config));
+	}
 
 	// Init samplers
 	{

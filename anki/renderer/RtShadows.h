@@ -50,14 +50,21 @@ public:
 	{
 	public:
 		RenderTargetHandle m_rt;
+		AccelerationStructureHandle m_tlasHandle;
 		RenderingContext* m_ctx = nullptr;
+
+		BufferPtr m_sbtBuffer;
+		PtrSize m_sbtOffset;
+		AccelerationStructurePtr m_tlas;
+		U32 m_hitGroupCount = 0;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
+	void runBuildAs(RenderPassWorkContext& rgraphCtx);
 	void run(RenderPassWorkContext& rgraphCtx);
 
-	void buildSbtAndTlas(BufferPtr& sbtBuffer, PtrSize& sbtOffset, AccelerationStructurePtr& tlas);
+	void buildSbtAndTlas();
 };
 /// @}
 
