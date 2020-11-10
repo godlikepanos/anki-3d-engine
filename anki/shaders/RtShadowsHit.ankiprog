@@ -38,7 +38,7 @@ void main()
 	const MeshGpuDescriptor mesh = model.m_mesh;
 
 	const U32 offset = gl_PrimitiveID * ANKI_SIZEOF(U16Vec3);
-	const U16Vec3 indices = U16Vec3Ref(nonuniformEXT(mesh.m_indexBufferPtr + offset)).m_value;
+	const U16Vec3 indices = U16Vec3Ref(mesh.m_indexBufferPtr + offset).m_value;
 
 	const MainVertex vert0 = MainVertexRef(mesh.m_mainVertexBufferPtr + indices[0] * ANKI_SIZEOF(MainVertex)).m_value;
 	const MainVertex vert1 = MainVertexRef(mesh.m_mainVertexBufferPtr + indices[1] * ANKI_SIZEOF(MainVertex)).m_value;

@@ -56,7 +56,6 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 {
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_ctx = &ctx;
-	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
 	buildSbtAndTlas();
 
@@ -75,7 +74,10 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// RT
+	if(0) // TODO
 	{
+		m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+
 		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows");
 		rpass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) { static_cast<RtShadows*>(rgraphCtx.m_userData)->run(rgraphCtx); },
@@ -147,10 +149,10 @@ void RtShadows::buildSbtAndTlas()
 	// Set the miss and ray gen handles
 	memcpy(sbt, &m_grProg->getShaderGroupHandles()[0], shaderHandleSize);
 	sbt += sbtRecordSize;
-	memcpy(sbt + sbtRecordSize, &m_grProg->getShaderGroupHandles()[sbtRecordSize], shaderHandleSize);
+	memcpy(sbt + sbtRecordSize, &m_grProg->getShaderGroupHandles()[shaderHandleSize], shaderHandleSize);
 	sbt += sbtRecordSize;
 
-	// Create the instances
+	// Create the instances. Allocate but not construct to save some CPU time
 	void* instancesMem = ctx.m_tempAllocator.getMemoryPool().allocate(
 		sizeof(AccelerationStructureInstance) * instanceCount, alignof(AccelerationStructureInstance));
 	WeakArray<AccelerationStructureInstance> instances(static_cast<AccelerationStructureInstance*>(instancesMem),
@@ -164,7 +166,8 @@ void RtShadows::buildSbtAndTlas()
 
 		// Init instance
 		AccelerationStructureInstance& out = instances[instanceIdx];
-		out.m_bottomLevel = AccelerationStructurePtr(element.m_bottomLevelAccelerationStructure);
+		::new(&out) AccelerationStructureInstance();
+		out.m_bottomLevel.reset(element.m_bottomLevelAccelerationStructure);
 		memcpy(&out.m_transform, &element.m_modelDescriptor.m_worldTransform[0], sizeof(out.m_transform));
 		out.m_sbtRecordIndex = instanceIdx + extraSbtRecords; // Add the raygen and miss
 		out.m_mask = 0xFF;
@@ -182,6 +185,12 @@ void RtShadows::buildSbtAndTlas()
 	initInf.m_type = AccelerationStructureType::TOP_LEVEL;
 	initInf.m_topLevel.m_instances = instances;
 	m_runCtx.m_tlas = getGrManager().newAccelerationStructure(initInf);
+
+	// Need a cleanup
+	for(U32 instanceIdx = 0; instanceIdx < instanceCount; ++instanceIdx)
+	{
+		instances[instanceIdx].m_bottomLevel.reset(nullptr);
+	}
 }
 
 } // end namespace anki

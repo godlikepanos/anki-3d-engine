@@ -307,6 +307,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depth->populateRenderGraph(ctx);
 	m_smResolve->populateRenderGraph(ctx);
+	if(m_rtShadows)
+	{
+		m_rtShadows->populateRenderGraph(ctx);
+	}
 	m_volFog->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);
 	m_lensFlare->populateRenderGraph(ctx);

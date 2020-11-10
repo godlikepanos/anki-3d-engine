@@ -20,25 +20,22 @@ layout(set = 0, binding = 4) uniform accelerationStructureEXT u_tlas;
 #define LIGHT_CLUSTERS_BINDING 9
 #include <anki/shaders/ClusteredShadingCommon.glsl>
 
-layout(push_constant) uniform b_pc
-{
-	Vec2 u_framebufferSize;
-	UVec2 u_clusterCounts;
-};
+ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
 layout(location = 0) rayPayloadEXT F32 g_payload;
 
 void main()
 {
 	// World position
-	const Vec2 uv = (Vec2(gl_LaunchIDEXT.xy) + 0.5) / u_framebufferSize;
+	const Vec2 uv = (Vec2(gl_LaunchIDEXT.xy) + 0.5) / Vec2(gl_LaunchSizeEXT.xy);
 	const Vec2 ndc = UV_TO_NDC(uv);
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
 	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Cluster
-	const U32 clusterIdx = computeClusterIndex(u_clustererMagic, uv, worldPos, u_clusterCounts.x, u_clusterCounts.y);
+	const U32 clusterIdx = computeClusterIndex(u_clustererMagic, uv, worldPos, u_lightingUniforms.m_clusterCount.x,
+											   u_lightingUniforms.m_clusterCount.y);
 	U32 idxOffset = u_clusters[clusterIdx];
 
 	U32 shadowCasterCountPerFragment = 0;

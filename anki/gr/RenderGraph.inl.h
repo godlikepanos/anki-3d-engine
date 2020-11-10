@@ -97,11 +97,11 @@ inline void RenderPassDescriptionBase::validateDep(const RenderPassDependency& d
 		ANKI_ASSERT(dep.m_type == RenderPassDependency::Type::ACCELERATION_STRUCTURE);
 		if(m_type == Type::GRAPHICS)
 		{
-			ANKI_ASSERT(!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(dep.m_as.m_usage & ~AccelerationStructureUsageBit::ALL_GRAPHICS));
 		}
 		else
 		{
-			ANKI_ASSERT(!(dep.m_as.m_usage & ~AccelerationStructureUsageBit::ALL_GRAPHICS));
+			ANKI_ASSERT(!(dep.m_as.m_usage & AccelerationStructureUsageBit::ALL_GRAPHICS));
 		}
 	}
 }
