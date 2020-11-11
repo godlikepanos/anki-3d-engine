@@ -2,6 +2,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/fabric_b.ankimesh</mesh>
+			<mesh1>assets/fabric_b_lod1.ankimesh</mesh1>
 			<material>assets/fabric_f.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

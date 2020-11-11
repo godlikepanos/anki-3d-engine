@@ -12,7 +12,7 @@
 	</mutation>
 
 	<inputs>
-
+		
 
 		<input shaderVar="u_diffTex" value="assets/sponza_fabric_green_diff.ankitex"/>
 		<input shaderVar="m_specColor" value="0.040000 0.040000 0.040000"/>
@@ -21,6 +21,14 @@
 		<input shaderVar="u_normalTex" value="assets/Sponza_Curtain_Red_normal.ankitex"/>
 		<input shaderVar="m_emission" value="0.000000 0.000000 0.000000"/>
 		<input shaderVar="m_subsurface" value="0.100000"/>
-
+		
 	</inputs>
 </material>
+
+<rtMaterial>
+	<rayType type="shadows" shaderProgram="anki/shaders/RtShadowsHit.ankiprog">
+		<mutation>
+			<mutator name="ALPHA_TEXTURE" value="0"/>
+		</mutation>
+	</rayType>
+</rtMaterial>

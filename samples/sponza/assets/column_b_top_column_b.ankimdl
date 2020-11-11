@@ -2,6 +2,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/column_b_top.ankimesh</mesh>
+			<mesh1>assets/column_b_top_lod1.ankimesh</mesh1>
 			<material>assets/column_b.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

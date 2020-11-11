@@ -2,6 +2,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/sponza_36.ankimesh</mesh>
+			<mesh1>assets/sponza_36_lod1.ankimesh</mesh1>
 			<material>assets/bricks.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

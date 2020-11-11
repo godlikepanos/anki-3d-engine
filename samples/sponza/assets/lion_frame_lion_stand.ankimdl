@@ -2,6 +2,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/lion_frame.ankimesh</mesh>
+			<mesh1>assets/lion_frame_lod1.ankimesh</mesh1>
 			<material>assets/lion_stand.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

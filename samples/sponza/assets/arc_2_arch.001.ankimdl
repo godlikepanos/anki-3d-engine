@@ -2,6 +2,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/arc_2.ankimesh</mesh>
+			<mesh1>assets/arc_2_lod1.ankimesh</mesh1>
 			<material>assets/arch.001.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

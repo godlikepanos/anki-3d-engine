@@ -14,13 +14,14 @@ Options:
 -optimize-meshes <0|1> : Optimize meshes. Default is 1
 -j <thread_count>      : Number of threads. Defaults to system's max
 -lod-count <1|2|3>     : The number of geometry LODs to generate. Default: 1
--lod-factor            : The decimate factor for each LOD. Default 0.25
+-lod-factor <float>    : The decimate factor for each LOD. Default 0.25
+-light-scale <float>   : Multiply the light intensity with this number. Default 1.0
 )";
 
 class CmdLineArgs
 {
 public:
-	HeapAllocator<U8> m_alloc{allocAligned, nullptr};
+	HeapAllocator<U8> m_alloc = {allocAligned, nullptr};
 	StringAuto m_inputFname = {m_alloc};
 	StringAuto m_outDir = {m_alloc};
 	StringAuto m_rpath = {m_alloc};
@@ -180,8 +181,8 @@ static Error parseCommandLineArgs(int argc, char** argv, CmdLineArgs& info)
 
 int main(int argc, char** argv)
 {
-	CmdLineArgs info;
-	if(parseCommandLineArgs(argc, argv, info))
+	CmdLineArgs cmdArgs;
+	if(parseCommandLineArgs(argc, argv, cmdArgs))
 	{
 		ANKI_GLTF_LOGE(USAGE, argv[0]);
 		return 1;
@@ -199,10 +200,20 @@ int main(int argc, char** argv)
 		comment.append(argv[i]);
 	}
 
-	GltfImporter importer{alloc};
-	if(importer.init(info.m_inputFname.toCString(), info.m_outDir.toCString(), info.m_rpath.toCString(),
-					 info.m_texRpath.toCString(), info.m_optimizeMeshes, info.m_lodFactor, info.m_lodCount,
-					 info.m_lightIntensityScale, info.m_threadCount, comment))
+	GltfImporterInitInfo initInfo;
+	initInfo.m_inputFilename = cmdArgs.m_inputFname;
+	initInfo.m_outDirectory = cmdArgs.m_outDir;
+	initInfo.m_rpath = cmdArgs.m_rpath;
+	initInfo.m_texrpath = cmdArgs.m_texRpath;
+	initInfo.m_optimizeMeshes = cmdArgs.m_optimizeMeshes;
+	initInfo.m_lodFactor = cmdArgs.m_lodFactor;
+	initInfo.m_lodCount = cmdArgs.m_lodCount;
+	initInfo.m_lightIntensityScale = cmdArgs.m_lightIntensityScale;
+	initInfo.m_threadCount = cmdArgs.m_threadCount;
+	initInfo.m_comment = comment;
+
+	GltfImporter importer(alloc);
+	if(importer.init(initInfo))
 	{
 		return 1;
 	}

@@ -2,6 +2,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/hanging_vase.ankimesh</mesh>
+			<mesh1>assets/hanging_vase_lod1.ankimesh</mesh1>
 			<material>assets/vase_hanging.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

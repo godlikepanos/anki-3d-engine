@@ -707,7 +707,6 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		header.m_indexType = IndexType::U16;
 		header.m_totalIndexCount = totalIndexCount;
 		header.m_totalVertexCount = totalVertexCount;
-		ANKI_ASSERT(header.m_totalVertexCount == getMeshTotalVertexCount(mesh));
 		header.m_subMeshCount = U32(submeshes.getSize());
 		header.m_aabbMin = aabbMin;
 		header.m_aabbMax = aabbMax;

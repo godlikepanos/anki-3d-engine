@@ -22,6 +22,21 @@ namespace anki
 #define ANKI_GLTF_LOGW(...) ANKI_LOG("GLTF", WARNING, __VA_ARGS__)
 #define ANKI_GLTF_LOGF(...) ANKI_LOG("GLTF", FATAL, __VA_ARGS__)
 
+class GltfImporterInitInfo
+{
+public:
+	CString m_inputFilename;
+	CString m_outDirectory;
+	CString m_rpath;
+	CString m_texrpath;
+	Bool m_optimizeMeshes = true;
+	F32 m_lodFactor = 1.0f;
+	U32 m_lodCount = 1;
+	F32 m_lightIntensityScale = 1.0f;
+	U32 m_threadCount = MAX_U32;
+	CString m_comment;
+};
+
 /// Import GLTF and spit AnKi scenes.
 class GltfImporter
 {
@@ -30,8 +45,7 @@ public:
 
 	~GltfImporter();
 
-	ANKI_USE_RESULT Error init(CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes,
-							   F32 lodFactor, U32 lodCount, F32 lightIntensityScale, U32 threadCount, CString comment);
+	ANKI_USE_RESULT Error init(const GltfImporterInitInfo& initInfo);
 
 	ANKI_USE_RESULT Error writeAll();
 

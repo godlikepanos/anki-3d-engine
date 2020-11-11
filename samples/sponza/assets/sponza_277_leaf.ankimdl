@@ -2,6 +2,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/sponza_277.ankimesh</mesh>
+			<mesh1>assets/sponza_277_lod1.ankimesh</mesh1>
 			<material>assets/leaf.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

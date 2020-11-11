@@ -2,6 +2,7 @@
 	<modelPatches>
 		<modelPatch>
 			<mesh>assets/ceiling.ankimesh</mesh>
+			<mesh1>assets/ceiling_lod1.ankimesh</mesh1>
 			<material>assets/ceiling.ankimtl</material>
 		</modelPatch>
 	</modelPatches>

@@ -154,27 +154,26 @@ GltfImporter::~GltfImporter()
 	m_alloc.deleteInstance(m_hive);
 }
 
-Error GltfImporter::init(CString inputFname, CString outDir, CString rpath, CString texrpath, Bool optimizeMeshes,
-						 F32 lodFactor, U32 lodCount, F32 lightIntensityScale, U32 threadCount, CString comment)
+Error GltfImporter::init(const GltfImporterInitInfo& initInfo)
 {
-	m_inputFname.create(inputFname);
-	m_outDir.create(outDir);
-	m_rpath.create(rpath);
-	m_texrpath.create(texrpath);
-	m_optimizeMeshes = optimizeMeshes;
-	m_comment.create(comment);
+	m_inputFname.create(initInfo.m_inputFilename);
+	m_outDir.create(initInfo.m_outDirectory);
+	m_rpath.create(initInfo.m_rpath);
+	m_texrpath.create(initInfo.m_texrpath);
+	m_optimizeMeshes = initInfo.m_optimizeMeshes;
+	m_comment.create(initInfo.m_comment);
 
-	m_lightIntensityScale = clamp(lightIntensityScale, 0.1f, 1.0f);
+	m_lightIntensityScale = max(initInfo.m_lightIntensityScale, EPSILON);
 
-	m_lodCount = clamp(lodCount, 1u, 3u);
-	m_lodFactor = clamp(lodFactor, 0.0f, 1.0f);
+	m_lodCount = clamp(initInfo.m_lodCount, 1u, 3u);
+	m_lodFactor = clamp(initInfo.m_lodFactor, 0.0f, 1.0f);
 	if(m_lodFactor * F32(m_lodCount - 1) > 0.7f)
 	{
 		ANKI_GLTF_LOGE("LOD factor is too high %f", m_lodFactor);
 		return Error::USER_DATA;
 	}
 
-	if(m_lodFactor < EPSILON || lodCount == 1)
+	if(m_lodFactor < EPSILON || m_lodCount == 1)
 	{
 		m_lodCount = 1;
 		m_lodFactor = 0.0f;
@@ -183,23 +182,23 @@ Error GltfImporter::init(CString inputFname, CString outDir, CString rpath, CStr
 	ANKI_GLTF_LOGI("Having %u LODs with LOD factor %f", m_lodCount, m_lodFactor);
 
 	cgltf_options options = {};
-	cgltf_result res = cgltf_parse_file(&options, inputFname.cstr(), &m_gltf);
+	cgltf_result res = cgltf_parse_file(&options, m_inputFname.cstr(), &m_gltf);
 	if(res != cgltf_result_success)
 	{
 		ANKI_GLTF_LOGE("Failed to open the GLTF file. Code: %d", res);
 		return Error::FUNCTION_FAILED;
 	}
 
-	res = cgltf_load_buffers(&options, m_gltf, inputFname.cstr());
+	res = cgltf_load_buffers(&options, m_gltf, m_inputFname.cstr());
 	if(res != cgltf_result_success)
 	{
 		ANKI_GLTF_LOGE("Failed to load GLTF data. Code: %d", res);
 		return Error::FUNCTION_FAILED;
 	}
 
-	if(threadCount > 0)
+	if(initInfo.m_threadCount > 0)
 	{
-		threadCount = min(getCpuCoresCount(), threadCount);
+		const U32 threadCount = min(getCpuCoresCount(), initInfo.m_threadCount);
 		m_hive = m_alloc.newInstance<ThreadHive>(threadCount, m_alloc, true);
 	}
 
