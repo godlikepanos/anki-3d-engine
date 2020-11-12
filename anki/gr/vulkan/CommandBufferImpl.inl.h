@@ -341,6 +341,8 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 
 	commandCommon();
 
+	getGrManagerImpl().beginMarker(m_handle, m_computeProg->getName());
+
 	// Bind descriptors
 	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
 	{
@@ -376,6 +378,8 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 	}
 
 	ANKI_CMD(vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ), ANY_OTHER_COMMAND);
+
+	getGrManagerImpl().endMarker(m_handle);
 }
 
 inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset,
@@ -400,6 +404,8 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	ANKI_ASSERT(isAligned(shaderGroupBaseAlignment, sbtBufferOffset));
 
 	commandCommon();
+
+	getGrManagerImpl().beginMarker(m_handle, m_rtProg->getName());
 
 	// Bind descriptors
 	for(U32 i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
@@ -460,6 +466,8 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 
 	ANKI_CMD(vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth),
 			 ANY_OTHER_COMMAND);
+
+	getGrManagerImpl().endMarker(m_handle);
 }
 
 inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
