@@ -74,7 +74,6 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// RT
-	if(0) // TODO
 	{
 		m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
 
@@ -101,20 +100,24 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 
+	cmdb->bindShaderProgram(m_grProg);
+
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
 	rgraphCtx.bindImage(0, 1, m_runCtx.m_rt, TextureSubresourceInfo());
 	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindTexture(0, 3, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	rgraphCtx.bindAccelerationStructure(0, 4, m_runCtx.m_tlasHandle);
 
-	bindUniforms(cmdb, 0, 4, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 5, ctx.m_lightShadingUniformsToken);
 
-	bindUniforms(cmdb, 0, 5, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 6, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTexture(0, 7, m_r->getShadowMapping().getShadowmapRt());
+	bindUniforms(cmdb, 0, 6, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 7, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(0, 8, m_r->getShadowMapping().getShadowmapRt());
 
-	bindStorage(cmdb, 0, 8, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 9, rsrc.m_indicesToken);
+	bindStorage(cmdb, 0, 9, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 10, rsrc.m_indicesToken);
+
+	cmdb->bindAllBindless(1);
 
 	cmdb->traceRays(m_runCtx.m_sbtBuffer, m_runCtx.m_sbtOffset, m_runCtx.m_hitGroupCount, 1, m_r->getWidth() / 2,
 					m_r->getHeight() / 2, 1);
