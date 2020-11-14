@@ -343,17 +343,18 @@ public:
 	/// The R_offset and R_stride are provided in traceRayEXT. The R_offset is the "ray type" and R_stride the number of
 	/// ray types.
 	/// The G_id is always 0 ATM.
-	/// The I_offset is the AccelerationStructureInstance::m_sbtRecordIndex.
+	/// The I_offset is the AccelerationStructureInstance::m_hitgroupSbtRecordIndex.
 	///
 	/// @param[in] sbtBuffer The SBT buffer.
 	/// @param sbtBufferOffset Offset inside the sbtBuffer where SBT records start.
 	/// @param hitGroupSbtRecordCount The number of SBT records that contain hit groups.
+	/// @param sbtRecordSize The size of an SBT record
 	/// @param rayTypecount The number of ray types hosted in the pipeline. See above on how it's been used.
 	/// @param width Width.
 	/// @param height Height.
 	/// @param depth Depth.
-	void traceRays(BufferPtr sbtBuffer, PtrSize sbtBufferOffset, U32 hitGroupSbtRecordCount, U32 rayTypeCount,
-				   U32 width, U32 height, U32 depth);
+	void traceRays(BufferPtr sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize, U32 hitGroupSbtRecordCount,
+				   U32 rayTypeCount, U32 width, U32 height, U32 depth);
 
 	/// Generate mipmaps for non-3D textures. You have to transition all the mip levels of this face and layer to
 	/// TextureUsageBit::GENERATE_MIPMAPS before calling this method.

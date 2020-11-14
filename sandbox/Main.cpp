@@ -26,17 +26,15 @@ MyApp* app = nullptr;
 
 Error MyApp::init(int argc, char* argv[])
 {
-	if(argc < 3)
+	if(argc < 2)
 	{
-		ANKI_LOGE("usage: %s /path/to/config.xml relative/path/to/scene.lua", argv[0]);
+		ANKI_LOGE("usage: %s relative/path/to/scene.lua [anki config options]", argv[0]);
 		return Error::USER_DATA;
 	}
 
 	// Config
 	ConfigSet config = DefaultConfigSet::get();
-	ANKI_CHECK(config.loadFromFile(argv[1]));
-	ANKI_CHECK(config.setFromCommandLineArguments(argc, argv));
-	// ANKI_CHECK(config.saveToFile(argv[1]));
+	ANKI_CHECK(config.setFromCommandLineArguments(argc - 2, argv + 2));
 
 	// Init super class
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
@@ -64,7 +62,7 @@ Error MyApp::init(int argc, char* argv[])
 
 	// Load scene
 	ScriptResourcePtr script;
-	ANKI_CHECK(resources.loadResource(argv[2], script));
+	ANKI_CHECK(resources.loadResource(argv[1], script));
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
 	// ANKI_CHECK(renderer.getOffscreenRenderer().getFinalComposite().loadColorGradingTexture(

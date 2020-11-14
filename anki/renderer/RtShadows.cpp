@@ -49,6 +49,9 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 													 "RtShadows");
 	m_rtDescr.bake();
 
+	// Misc
+	m_sbtRecordSize = getAlignedRoundUp(getGrManager().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
+
 	return Error::NONE;
 }
 
@@ -119,8 +122,8 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindAllBindless(1);
 
-	cmdb->traceRays(m_runCtx.m_sbtBuffer, m_runCtx.m_sbtOffset, m_runCtx.m_hitGroupCount, 1, m_r->getWidth() / 2,
-					m_r->getHeight() / 2, 1);
+	cmdb->traceRays(m_runCtx.m_sbtBuffer, m_runCtx.m_sbtOffset, m_sbtRecordSize, m_runCtx.m_hitGroupCount, 1,
+					m_r->getWidth() / 2, m_r->getHeight() / 2, 1);
 }
 
 void RtShadows::buildSbtAndTlas()
@@ -134,7 +137,6 @@ void RtShadows::buildSbtAndTlas()
 	const U32 instanceCount = instanceElements.getSize();
 	ANKI_ASSERT(instanceCount > 0);
 
-	const U32 sbtRecordSize = getGrManager().getDeviceCapabilities().m_sbtRecordSize;
 	const U32 shaderHandleSize = getGrManager().getDeviceCapabilities().m_shaderGroupHandleSize;
 
 	const U32 extraSbtRecords = 1 + 1; // Raygen + miss
@@ -143,7 +145,7 @@ void RtShadows::buildSbtAndTlas()
 
 	// Allocate SBT
 	StagingGpuMemoryToken token;
-	U8* sbt = allocateStorage<U8*>(sbtRecordSize * (instanceCount + extraSbtRecords), token);
+	U8* sbt = allocateStorage<U8*>(m_sbtRecordSize * (instanceCount + extraSbtRecords), token);
 	const U8* sbtStart = sbt;
 	(void)sbtStart;
 	m_runCtx.m_sbtBuffer = token.m_buffer;
@@ -151,9 +153,9 @@ void RtShadows::buildSbtAndTlas()
 
 	// Set the miss and ray gen handles
 	memcpy(sbt, &m_grProg->getShaderGroupHandles()[0], shaderHandleSize);
-	sbt += sbtRecordSize;
-	memcpy(sbt + sbtRecordSize, &m_grProg->getShaderGroupHandles()[shaderHandleSize], shaderHandleSize);
-	sbt += sbtRecordSize;
+	sbt += m_sbtRecordSize;
+	memcpy(sbt, &m_grProg->getShaderGroupHandles()[shaderHandleSize], shaderHandleSize);
+	sbt += m_sbtRecordSize;
 
 	// Create the instances. Allocate but not construct to save some CPU time
 	void* instancesMem = ctx.m_tempAllocator.getMemoryPool().allocate(
@@ -162,7 +164,7 @@ void RtShadows::buildSbtAndTlas()
 													   instanceCount);
 
 	// Init SBT and instances
-	ANKI_ASSERT(sbtRecordSize >= shaderHandleSize + sizeof(ModelGpuDescriptor));
+	ANKI_ASSERT(m_sbtRecordSize >= shaderHandleSize + sizeof(ModelGpuDescriptor));
 	for(U32 instanceIdx = 0; instanceIdx < instanceCount; ++instanceIdx)
 	{
 		const RayTracingInstanceQueueElement& element = instanceElements[instanceIdx];
@@ -172,16 +174,16 @@ void RtShadows::buildSbtAndTlas()
 		::new(&out) AccelerationStructureInstance();
 		out.m_bottomLevel.reset(element.m_bottomLevelAccelerationStructure);
 		memcpy(&out.m_transform, &element.m_modelDescriptor.m_worldTransform[0], sizeof(out.m_transform));
-		out.m_sbtRecordIndex = instanceIdx + extraSbtRecords; // Add the raygen and miss
+		out.m_hitgroupSbtRecordIndex = instanceIdx;
 		out.m_mask = 0xFF;
 
 		// Init SBT record
 		memcpy(sbt, element.m_shaderGroupHandles[RayType::SHADOWS], shaderHandleSize);
 		memcpy(sbt + shaderHandleSize, &element.m_modelDescriptor, sizeof(element.m_modelDescriptor));
-		sbt += sbtRecordSize;
+		sbt += m_sbtRecordSize;
 	}
 
-	ANKI_ASSERT(sbtStart + sbtRecordSize * (instanceCount + extraSbtRecords) == sbt);
+	ANKI_ASSERT(sbtStart + m_sbtRecordSize * (instanceCount + extraSbtRecords) == sbt);
 
 	// Create the TLAS
 	AccelerationStructureInitInfo initInf("RtShadows");

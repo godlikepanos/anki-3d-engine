@@ -25,7 +25,7 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	config.set("window_fullscreen", true);
 	config.set("rsrc_dataPaths", StringAuto(alloc).sprintf("%s:%s", mainDataPath.cstr(), assetsDataPath.cstr()));
 	config.set("gr_debugContext", 0);
-	ANKI_CHECK(config.setFromCommandLineArguments(argc, argv));
+	ANKI_CHECK(config.setFromCommandLineArguments(argc - 1, argv + 1));
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
 	// Input

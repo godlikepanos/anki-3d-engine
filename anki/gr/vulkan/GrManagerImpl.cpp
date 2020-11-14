@@ -425,13 +425,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	m_capabilities.m_minorApiVersion = vulkanMinor;
 
 	m_capabilities.m_shaderGroupHandleSize = m_rtProps.shaderGroupHandleSize;
-	m_capabilities.m_sbtRecordSize = getAlignedRoundUp(m_rtProps.shaderGroupBaseAlignment, 256);
-
-	if(m_capabilities.m_sbtRecordSize > m_rtProps.maxShaderGroupStride)
-	{
-		ANKI_VK_LOGE("The SBT record size can't go up to %u. Need to refactor", m_capabilities.m_sbtRecordSize);
-		return Error::FUNCTION_FAILED;
-	}
+	m_capabilities.m_sbtRecordAlignment = m_rtProps.shaderGroupBaseAlignment;
 
 	return Error::NONE;
 }

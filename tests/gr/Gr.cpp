@@ -2883,7 +2883,7 @@ void main()
 		{
 			instances[count].m_bottomLevel = g.m_blas;
 			instances[count].m_transform = g.m_worldTransform;
-			instances[count].m_sbtRecordIndex = count;
+			instances[count].m_hitgroupSbtRecordIndex = count;
 			instances[count].m_mask = g.m_asMask;
 
 			++count;
@@ -3306,11 +3306,12 @@ void main()
 	BufferPtr sbt;
 	{
 		const U32 recordCount = 1 + 2 + U32(GeomWhat::COUNT) * 2;
+		const U32 sbtRecordSize = gr->getDeviceCapabilities().m_sbtRecordAlignment;
 
 		BufferInitInfo inf;
 		inf.m_mapAccess = BufferMapAccessBit::WRITE;
 		inf.m_usage = BufferUsageBit::SBT;
-		inf.m_size = gr->getDeviceCapabilities().m_sbtRecordSize * recordCount;
+		inf.m_size = sbtRecordSize * recordCount;
 
 		sbt = gr->newBuffer(inf);
 		WeakArray<U8, PtrSize> mapped = sbt->map<U8>(0, inf.m_size, BufferMapAccessBit::WRITE);
@@ -3321,47 +3322,47 @@ void main()
 
 		// Ray gen
 		U32 record = 0;
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * rayGenGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// 2xMiss
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * missGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowMissGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// Small box
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianChitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// Big box
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianChitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// Room
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * lambertianRoomChitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
 		// Light
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * emissiveChitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
-		memcpy(&mapped[gr->getDeviceCapabilities().m_sbtRecordSize * record++],
+		memcpy(&mapped[sbtRecordSize * record++],
 			   &handles[gr->getDeviceCapabilities().m_shaderGroupHandleSize * shadowAhitGroupIdx],
 			   gr->getDeviceCapabilities().m_shaderGroupHandleSize);
 
@@ -3472,7 +3473,8 @@ void main()
 
 		cmdb->setPushConstants(&pc, sizeof(pc));
 
-		cmdb->traceRays(sbt, 0, U32(GeomWhat::COUNT) * 2, 2, WIDTH, HEIGHT, 1);
+		const U32 sbtRecordSize = gr->getDeviceCapabilities().m_sbtRecordAlignment;
+		cmdb->traceRays(sbt, 0, sbtRecordSize, U32(GeomWhat::COUNT) * 2, 2, WIDTH, HEIGHT, 1);
 
 		// Copy to present
 		cmdb->setTextureBarrier(offscreenRts[i & 1], TextureUsageBit::IMAGE_TRACE_RAYS_WRITE,

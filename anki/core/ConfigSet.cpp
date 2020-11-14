@@ -383,45 +383,39 @@ Error ConfigSet::setFromCommandLineArguments(U32 cmdLineArgsCount, char* cmdLine
 	{
 		const char* arg = cmdLineArgs[i];
 		ANKI_ASSERT(arg);
-		if(CString(arg) == "-cfg")
+
+		Option* option = tryFind(arg);
+		if(option == nullptr)
 		{
-			if(i + 2 >= cmdLineArgsCount)
-			{
-				ANKI_CORE_LOGE("Wrong number of arguments after -cfg");
-				return Error::USER_DATA;
-			}
+			ANKI_CORE_LOGW("Can't recognize command line argument: %s", arg);
+			continue;
+		}
 
-			// Get the option
-			++i;
-			arg = cmdLineArgs[i];
-			ANKI_ASSERT(arg);
-			Option* option = tryFind(arg);
-			if(option == nullptr)
-			{
-				ANKI_CORE_LOGE("Option name following -cfg not found: %s", arg);
-				return Error::USER_DATA;
-			}
+		// Set the value
+		++i;
+		if(i >= cmdLineArgsCount)
+		{
+			ANKI_CORE_LOGE("Expecting a command line argument after %s", arg);
+			return Error::USER_DATA;
+		}
 
-			// Set the value
-			++i;
-			arg = cmdLineArgs[i];
-			ANKI_ASSERT(arg);
-			if(option->m_type == Option::STRING)
-			{
-				option->m_str.destroy(m_alloc);
-				option->m_str.create(m_alloc, arg);
-			}
-			else if(option->m_type == Option::FLOAT)
-			{
-				CString val(arg);
-				ANKI_CHECK(val.toNumber(option->m_float));
-			}
-			else
-			{
-				ANKI_ASSERT(option->m_type == Option::UNSIGNED);
-				CString val(arg);
-				ANKI_CHECK(val.toNumber(option->m_unsigned));
-			}
+		arg = cmdLineArgs[i];
+		ANKI_ASSERT(arg);
+		if(option->m_type == Option::STRING)
+		{
+			option->m_str.destroy(m_alloc);
+			option->m_str.create(m_alloc, arg);
+		}
+		else if(option->m_type == Option::FLOAT)
+		{
+			CString val(arg);
+			ANKI_CHECK(val.toNumber(option->m_float));
+		}
+		else
+		{
+			ANKI_ASSERT(option->m_type == Option::UNSIGNED);
+			CString val(arg);
+			ANKI_CHECK(val.toNumber(option->m_unsigned));
 		}
 	}
 

@@ -205,7 +205,7 @@ void AccelerationStructureImpl::initBuildInfo()
 				memcpy(&outInst.transform, &inInst.m_transform, sizeof(inInst.m_transform));
 				outInst.instanceCustomIndex = i & 0xFFFFFF;
 				outInst.mask = inInst.m_mask;
-				outInst.instanceShaderBindingTableRecordOffset = inInst.m_sbtRecordIndex & 0xFFFFFF;
+				outInst.instanceShaderBindingTableRecordOffset = inInst.m_hitgroupSbtRecordIndex & 0xFFFFFF;
 				outInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR;
 				outInst.accelerationStructureReference =
 					static_cast<const AccelerationStructureImpl&>(*inInst.m_bottomLevel).m_bottomLevelInfo.m_gpuAddress;

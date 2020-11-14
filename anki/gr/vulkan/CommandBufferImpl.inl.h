@@ -382,7 +382,7 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 	getGrManagerImpl().endMarker(m_handle);
 }
 
-inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset,
+inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize,
 												 U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
 												 U32 depth)
 {
@@ -396,12 +396,10 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	ANKI_ASSERT(rayTypeCount == sprog.getMissShaderCount() && "All the miss shaders should be in use");
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
 	const U32 sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
-	const U32 shaderGroupBaseAlignment =
-		getGrManagerImpl().getPhysicalDeviceRayTracingProperties().shaderGroupBaseAlignment;
-	const PtrSize sbtBufferSize = sbtRecordCount * shaderGroupBaseAlignment;
+	const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
 	(void)sbtBufferSize;
 	ANKI_ASSERT(sbtBufferSize + sbtBufferOffset <= sbtBuffer->getSize());
-	ANKI_ASSERT(isAligned(shaderGroupBaseAlignment, sbtBufferOffset));
+	ANKI_ASSERT(isAligned(sbtRecordSize, sbtBufferOffset));
 
 	commandCommon();
 
@@ -446,20 +444,20 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	// Rgen
 	regions[0].buffer = static_cast<const BufferImpl&>(*sbtBuffer).getHandle();
 	regions[0].offset = sbtBufferOffset;
-	regions[0].stride = shaderGroupBaseAlignment;
-	regions[0].size = shaderGroupBaseAlignment;
+	regions[0].stride = sbtRecordSize;
+	regions[0].size = sbtRecordSize;
 
 	// Miss
 	regions[1].buffer = regions[0].buffer;
 	regions[1].offset = regions[0].offset + regions[0].size;
-	regions[1].stride = shaderGroupBaseAlignment;
-	regions[1].size = shaderGroupBaseAlignment * sprog.getMissShaderCount();
+	regions[1].stride = sbtRecordSize;
+	regions[1].size = sbtRecordSize * rayTypeCount;
 
 	// Hit
 	regions[2].buffer = regions[1].buffer;
 	regions[2].offset = regions[1].offset + regions[1].size;
-	regions[2].stride = shaderGroupBaseAlignment * rayTypeCount;
-	regions[2].size = shaderGroupBaseAlignment * hitGroupSbtRecordCount;
+	regions[2].stride = sbtRecordSize * rayTypeCount;
+	regions[2].size = sbtRecordSize * hitGroupSbtRecordCount;
 
 	// Callable, nothing for now
 	regions[3] = VkStridedBufferRegionKHR();

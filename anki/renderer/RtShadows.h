@@ -59,6 +59,8 @@ public:
 		U32 m_hitGroupCount = 0;
 	} m_runCtx;
 
+	U32 m_sbtRecordSize = 256;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
 	void runBuildAs(RenderPassWorkContext& rgraphCtx);
