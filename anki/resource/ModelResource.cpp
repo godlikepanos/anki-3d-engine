@@ -124,7 +124,11 @@ void ModelPatch::getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const
 	{
 		if(!!(m_mtl->getSupportedRayTracingTypes() & RayTypeBit(1 << rayType)))
 		{
-			info.m_shaderGroupHandles[rayType] = m_mtl->getShaderGroupHandle(rayType);
+			info.m_shaderGroupHandleIndices[rayType] = m_mtl->getShaderGroupHandleIndex(rayType);
+		}
+		else
+		{
+			info.m_shaderGroupHandleIndices[rayType] = MAX_U32;
 		}
 	}
 

@@ -342,11 +342,11 @@ public:
 
 	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
-	ConstWeakArray<U8> getShaderGroupHandle(RayType type) const
+	U32 getShaderGroupHandleIndex(RayType type) const
 	{
 		ANKI_ASSERT(!!(m_rayTypes & RayTypeBit(1 << type)));
-		ANKI_ASSERT(m_rtShaderGroupHandles[type].getSize());
-		return m_rtShaderGroupHandles[type];
+		ANKI_ASSERT(m_rtShaderGroupHandleIndices[type] < MAX_U32);
+		return m_rtShaderGroupHandleIndices[type];
 	}
 
 	RayTypeBit getSupportedRayTracingTypes() const
@@ -396,7 +396,7 @@ private:
 	DynamicArray<SubMutation> m_nonBuiltinsMutation;
 
 	Array<ShaderProgramResourcePtr, U(RayType::COUNT)> m_rtPrograms;
-	Array<ConstWeakArray<U8>, U(RayType::COUNT)> m_rtShaderGroupHandles;
+	Array<U32, U(RayType::COUNT)> m_rtShaderGroupHandleIndices = {};
 
 	MaterialGpuDescriptor m_materialGpuDescriptor;
 

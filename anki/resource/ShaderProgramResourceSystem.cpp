@@ -15,17 +15,6 @@
 namespace anki
 {
 
-void ShaderProgramRaytracingLibrary::getShaderGroupHandle(U32 groupIndex, WeakArray<U8>& handle) const
-{
-	const U32 shaderGroupHandleSize = m_program->getManager().getDeviceCapabilities().m_shaderGroupHandleSize;
-	ANKI_ASSERT(handle.getSizeInBytes() == shaderGroupHandleSize);
-
-	const U32 begin = shaderGroupHandleSize * groupIndex;
-	ConstWeakArray<U8> handles = m_program->getShaderGroupHandles();
-	ANKI_ASSERT(begin + shaderGroupHandleSize <= handles.getSizeInBytes());
-	memcpy(&handle[0], &handles[begin], shaderGroupHandleSize);
-}
-
 ShaderProgramResourceSystem::~ShaderProgramResourceSystem()
 {
 	m_cacheDir.destroy(m_alloc);

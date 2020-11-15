@@ -152,9 +152,10 @@ void RtShadows::buildSbtAndTlas()
 	m_runCtx.m_sbtOffset = token.m_offset;
 
 	// Set the miss and ray gen handles
-	memcpy(sbt, &m_grProg->getShaderGroupHandles()[0], shaderHandleSize);
+	ConstWeakArray<U8> shaderGroupHandles = m_grProg->getShaderGroupHandles();
+	memcpy(sbt, &shaderGroupHandles[0], shaderHandleSize);
 	sbt += m_sbtRecordSize;
-	memcpy(sbt, &m_grProg->getShaderGroupHandles()[shaderHandleSize], shaderHandleSize);
+	memcpy(sbt, &shaderGroupHandles[shaderHandleSize], shaderHandleSize);
 	sbt += m_sbtRecordSize;
 
 	// Create the instances. Allocate but not construct to save some CPU time
@@ -178,7 +179,8 @@ void RtShadows::buildSbtAndTlas()
 		out.m_mask = 0xFF;
 
 		// Init SBT record
-		memcpy(sbt, element.m_shaderGroupHandles[RayType::SHADOWS], shaderHandleSize);
+		memcpy(sbt, &shaderGroupHandles[element.m_shaderGroupHandleIndices[RayType::SHADOWS] * shaderHandleSize],
+			   shaderHandleSize);
 		memcpy(sbt + shaderHandleSize, &element.m_modelDescriptor, sizeof(element.m_modelDescriptor));
 		sbt += m_sbtRecordSize;
 	}

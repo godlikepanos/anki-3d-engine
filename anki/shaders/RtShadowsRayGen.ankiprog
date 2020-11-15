@@ -45,10 +45,10 @@ void main()
 	// Dir light
 	if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
 	{
-		g_payload = 0.0;
+		g_payload = 1.0;
 
 		const Vec3 rayOrigin = worldPos;
-		const Vec3 rayDir = u_dirLight.m_dir;
+		const Vec3 rayDir = -u_dirLight.m_dir;
 		const U32 cullMask = 0xFF;
 		const U32 sbtRecordOffset = 0;
 		const U32 sbtRecordStride = 0;

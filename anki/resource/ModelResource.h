@@ -86,7 +86,7 @@ class ModelRayTracingInfo
 public:
 	ModelGpuDescriptor m_descriptor;
 	AccelerationStructurePtr m_bottomLevelAccelerationStructure;
-	Array<ConstWeakArray<U8>, U(RayType::COUNT)> m_shaderGroupHandles;
+	Array<U32, U(RayType::COUNT)> m_shaderGroupHandleIndices;
 
 	/// Get some pointers that the m_descriptor is pointing to. Use these pointers for life tracking.
 	Array<GrObjectPtr, TEXTURE_CHANNEL_COUNT + 2> m_grObjectReferences;

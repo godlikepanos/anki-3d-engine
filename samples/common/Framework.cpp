@@ -90,6 +90,12 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 			(renderer.getCurrentDebugRenderTarget() == "GBuffer_normals") ? "" : "GBuffer_normals");
 	}
 
+	if(in.getKey(KeyCode::H) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? ""
+																									 : "RtShadows");
+	}
+
 	if(!getDisplayDeveloperConsole())
 	{
 		in.hideCursor(true);

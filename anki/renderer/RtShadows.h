@@ -22,7 +22,7 @@ public:
 	RtShadows(Renderer* r)
 		: RendererObject(r)
 	{
-		registerDebugRenderTarget("SM_rt");
+		registerDebugRenderTarget("RtShadows");
 	}
 
 	~RtShadows();
@@ -33,7 +33,7 @@ public:
 
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
 	{
-		ANKI_ASSERT(rtName == "SM_rt");
+		ANKI_ASSERT(rtName == "RtShadows");
 		handle = m_runCtx.m_rt;
 	}
 

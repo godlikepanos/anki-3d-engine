@@ -361,12 +361,14 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, const void* userDat
 	// Handles
 	for(RayType type : EnumIterable<RayType>())
 	{
-		if(!(patch.getMaterial()->getSupportedRayTracingTypes() & RayTypeBit(1 << type)))
+		if(!!(patch.getMaterial()->getSupportedRayTracingTypes() & RayTypeBit(1 << type)))
 		{
-			continue;
+			el.m_shaderGroupHandleIndices[type] = info.m_shaderGroupHandleIndices[type];
 		}
-
-		el.m_shaderGroupHandles[type] = &info.m_shaderGroupHandles[type][0];
+		else
+		{
+			el.m_shaderGroupHandleIndices[type] = MAX_U32;
+		}
 	}
 
 	// References

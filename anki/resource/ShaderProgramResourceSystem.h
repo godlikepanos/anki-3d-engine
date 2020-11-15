@@ -38,22 +38,21 @@ public:
 		return m_program;
 	}
 
-	/// Given the filename of a program (that contains hit shaders) and a specific mutation get the group handle.
-	void getHitShaderGroupHandle(CString resourceFilename, U64 mutationHash, WeakArray<U8>& handle) const
+	/// Given the filename of a program (that contains hit shaders) and a specific mutation get the shader handle index.
+	U32 getHitShaderGroupHandleIndex(CString resourceFilename, U64 mutationHash) const
 	{
-		const U32 hitGroupIndex = getHitGroupIndex(generateHitGroupHash(resourceFilename, mutationHash));
-		getShaderGroupHandle(hitGroupIndex, handle);
+		return getHitGroupIndex(generateHitGroupHash(resourceFilename, mutationHash));
 	}
 
-	void getMissShaderGroupHandle(U32 rayType, WeakArray<U8>& handle) const
+	U32 getMissShaderGroupHandleIndex(U32 rayType) const
 	{
 		ANKI_ASSERT(rayType < getRayTypeCount());
-		getShaderGroupHandle(rayType + 1, handle);
+		return rayType + 1;
 	}
 
-	void getRayGenShaderGroupHandle(WeakArray<U8>& handle) const
+	constexpr static U32 getRayGenShaderGroupHandleIndex()
 	{
-		getShaderGroupHandle(0, handle);
+		return 0;
 	}
 
 private:

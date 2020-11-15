@@ -399,7 +399,7 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 	const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
 	(void)sbtBufferSize;
 	ANKI_ASSERT(sbtBufferSize + sbtBufferOffset <= sbtBuffer->getSize());
-	ANKI_ASSERT(isAligned(sbtRecordSize, sbtBufferOffset));
+	ANKI_ASSERT(isAligned(getGrManagerImpl().getDeviceCapabilities().m_sbtRecordAlignment, sbtBufferOffset));
 
 	commandCommon();
 

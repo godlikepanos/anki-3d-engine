@@ -167,6 +167,7 @@ MaterialResource::MaterialResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 	memset(&m_materialGpuDescriptor, 0, sizeof(m_materialGpuDescriptor));
+	memset(&m_rtShaderGroupHandleIndices, 0xFF, sizeof(m_rtShaderGroupHandleIndices));
 }
 
 MaterialResource::~MaterialResource()
@@ -1149,7 +1150,7 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 
 		const ShaderProgramResourceVariant* progVariant;
 		m_rtPrograms[type]->getOrCreateVariant(variantInitInfo, progVariant);
-		m_rtShaderGroupHandles[type] = progVariant->getHitShaderGroupHandle();
+		m_rtShaderGroupHandleIndices[type] = progVariant->getHitShaderGroupHandleIndex();
 
 		// Advance
 		ANKI_CHECK(rayTypeEl.getNextSiblingElement("rayType", rayTypeEl));
