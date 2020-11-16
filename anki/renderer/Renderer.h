@@ -200,6 +200,11 @@ public:
 		return *m_rtShadows;
 	}
 
+	Bool getRtShadowsEnabled() const
+	{
+		return m_rtShadows.get() != nullptr;
+	}
+
 	Ssr& getSsr()
 	{
 		return *m_ssr;

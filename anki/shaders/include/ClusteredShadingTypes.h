@@ -143,7 +143,8 @@ struct LightingUniforms
 
 	UVec4 m_clusterCount;
 
-	Vec3 m_padding;
+	Vec2 m_padding;
+	U32 m_frameCount;
 	U32 m_lightVolumeLastCluster;
 
 	Mat4 m_viewMat;

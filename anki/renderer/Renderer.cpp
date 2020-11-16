@@ -559,6 +559,7 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	blk->m_prevClustererMagicValues = ctx.m_prevClustererMagicValues;
 
 	blk->m_lightVolumeLastCluster = m_volLighting->getFinalClusterInZ();
+	blk->m_frameCount = m_frameCount & MAX_U32;
 
 	// Matrices
 	blk->m_viewMat = ctx.m_renderQueue->m_viewMatrix;

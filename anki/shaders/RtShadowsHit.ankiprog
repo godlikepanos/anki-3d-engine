@@ -22,9 +22,9 @@ layout(set = 0, binding = 0) uniform sampler u_sampler;
 ANKI_BINDLESS_SET(1);
 #endif
 
-#pragma anki start ahit
-
 layout(location = 0) rayPayloadInEXT F32 g_payload;
+
+#pragma anki start ahit
 
 hitAttributeEXT vec2 g_attribs;
 
@@ -59,7 +59,6 @@ void main()
 		terminateRayEXT();
 	}
 #else
-	g_payload = 1.0;
 	terminateRayEXT();
 #endif
 }

@@ -153,13 +153,13 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 			Vec3 newOrigin = worldTransform.getOrigin().xyz();
 			newOrigin.z() += far / 2.0f;
 			extendedFrustumTransform.setOrigin(newOrigin.xyz0());
+			fc.setTransform(extendedFrustumTransform);
 		}
 
 		++count;
 		return Error::NONE;
 	});
 	(void)err;
-	ANKI_ASSERT(count == 2);
 
 	// Spatial
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();

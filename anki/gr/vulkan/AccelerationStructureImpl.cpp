@@ -206,7 +206,8 @@ void AccelerationStructureImpl::initBuildInfo()
 				outInst.instanceCustomIndex = i & 0xFFFFFF;
 				outInst.mask = inInst.m_mask;
 				outInst.instanceShaderBindingTableRecordOffset = inInst.m_hitgroupSbtRecordIndex & 0xFFFFFF;
-				outInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR;
+				outInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FRONT_COUNTERCLOCKWISE_BIT_KHR
+								| VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 				outInst.accelerationStructureReference =
 					static_cast<const AccelerationStructureImpl&>(*inInst.m_bottomLevel).m_bottomLevelInfo.m_gpuAddress;
 				ANKI_ASSERT(outInst.accelerationStructureReference != 0);

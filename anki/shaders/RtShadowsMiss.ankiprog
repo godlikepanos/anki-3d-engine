@@ -12,6 +12,6 @@ layout(location = 0) rayPayloadInEXT F32 g_payload;
 
 void main()
 {
-	g_payload = 0.0;
+	g_payload = 1.0;
 }
 #pragma anki end

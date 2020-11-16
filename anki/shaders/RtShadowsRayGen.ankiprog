@@ -19,6 +19,7 @@ layout(set = 0, binding = 4) uniform accelerationStructureEXT u_tlas;
 #define LIGHT_LIGHTS_BINDING 6
 #define LIGHT_CLUSTERS_BINDING 9
 #include <anki/shaders/ClusteredShadingCommon.glsl>
+#include <anki/shaders/ImportanceSampling.glsl>
 
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
@@ -42,13 +43,20 @@ void main()
 	const U32 maxShadowCastersPerFragment = 4;
 	F32 shadowFactors[maxShadowCastersPerFragment] = F32[](0.0, 0.0, 0.0, 0.0);
 
+	// Get random
+	const UVec3 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_lightingUniforms.m_frameCount));
+	const Vec3 randomf = Vec3(random) / F32(0xFFFF) * 2.0 - 1.0;
+
 	// Dir light
 	if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
 	{
-		g_payload = 1.0;
+		g_payload = 0.0;
+
+		Vec3 dirLightPos = worldPos + -u_dirLight.m_dir * 10.0;
+		dirLightPos += randomf;
 
 		const Vec3 rayOrigin = worldPos;
-		const Vec3 rayDir = -u_dirLight.m_dir;
+		const Vec3 rayDir = normalize(dirLightPos - rayOrigin);
 		const U32 cullMask = 0xFF;
 		const U32 sbtRecordOffset = 0;
 		const U32 sbtRecordStride = 0;
@@ -56,8 +64,9 @@ void main()
 		const F32 tMin = 0.1;
 		const F32 tMax = 10000.0;
 		const I32 payloadLocation = 0;
-		traceRayEXT(u_tlas, gl_RayFlagsOpaqueEXT, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin,
-					tMin, rayDir, tMax, payloadLocation);
+		traceRayEXT(
+			u_tlas, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT,
+			cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin, tMin, rayDir, tMax, payloadLocation);
 
 		++shadowCasterCountPerFragment;
 		shadowFactors[0] = g_payload;
