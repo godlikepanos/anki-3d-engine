@@ -45,6 +45,7 @@ class GlobalIllumination;
 class GenericCompute;
 class ShadowmapsResolve;
 class RtShadows;
+class AccelerationStructureBuilder;
 
 class RenderingContext;
 class DebugDrawer;

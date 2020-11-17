@@ -12,14 +12,16 @@ layout(set = 0, binding = 0) uniform sampler u_trilinearRepeatSampler; // Used b
 layout(set = 0, binding = 1, rgba8) uniform image2D out_img;
 layout(set = 0, binding = 2) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 3) uniform texture2D u_depthRt;
-layout(set = 0, binding = 4) uniform accelerationStructureEXT u_tlas;
+layout(set = 0, binding = 4) uniform texture2D u_normalRt;
+layout(set = 0, binding = 5) uniform accelerationStructureEXT u_tlas;
 
 #define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 5
-#define LIGHT_LIGHTS_BINDING 6
-#define LIGHT_CLUSTERS_BINDING 9
+#define LIGHT_COMMON_UNIS_BINDING 6
+#define LIGHT_LIGHTS_BINDING 7
+#define LIGHT_CLUSTERS_BINDING 10
 #include <anki/shaders/ClusteredShadingCommon.glsl>
 #include <anki/shaders/ImportanceSampling.glsl>
+#include <anki/shaders/Pack.glsl>
 
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
@@ -33,6 +35,9 @@ void main()
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
 	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	// World normal
+	const Vec3 normal = readNormalFromGBuffer(u_normalRt, u_linearAnyClampSampler, uv);
 
 	// Cluster
 	const U32 clusterIdx = computeClusterIndex(u_clustererMagic, uv, worldPos, u_lightingUniforms.m_clusterCount.x,
@@ -50,26 +55,28 @@ void main()
 	// Dir light
 	if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
 	{
-		g_payload = 0.0;
+		const Vec3 dirLightPos = worldPos + -u_dirLight.m_dir * 10.0 + randomf;
+		const Vec3 rayDir = normalize(dirLightPos - worldPos);
 
-		Vec3 dirLightPos = worldPos + -u_dirLight.m_dir * 10.0;
-		dirLightPos += randomf;
-
-		const Vec3 rayOrigin = worldPos;
-		const Vec3 rayDir = normalize(dirLightPos - rayOrigin);
-		const U32 cullMask = 0xFF;
-		const U32 sbtRecordOffset = 0;
-		const U32 sbtRecordStride = 0;
-		const U32 missIndex = 0;
-		const F32 tMin = 0.1;
-		const F32 tMax = 10000.0;
-		const I32 payloadLocation = 0;
-		traceRayEXT(
-			u_tlas, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT,
-			cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin, tMin, rayDir, tMax, payloadLocation);
+		const F32 lambertTerm = dot(rayDir, normal);
+		if(lambertTerm > 0.0)
+		{
+			const Vec3 rayOrigin = worldPos;
+			const U32 cullMask = 0xFF;
+			const U32 sbtRecordOffset = 0;
+			const U32 sbtRecordStride = 0;
+			const U32 missIndex = 0;
+			const F32 tMin = 0.1;
+			const F32 tMax = 10000.0;
+			const I32 payloadLocation = 0;
+			g_payload = 0.0;
+			traceRayEXT(
+				u_tlas, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT,
+				cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin, tMin, rayDir, tMax, payloadLocation);
+			shadowFactors[0] = g_payload;
+		}
 
 		++shadowCasterCountPerFragment;
-		shadowFactors[0] = g_payload;
 	}
 
 	// TODO rest of lights

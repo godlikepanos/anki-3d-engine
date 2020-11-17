@@ -195,6 +195,11 @@ public:
 		return *m_smResolve;
 	}
 
+	AccelerationStructureBuilder& getAccelerationStructureBuilder()
+	{
+		return *m_accelerationStructureBuilder;
+	}
+
 	RtShadows& getRtShadows()
 	{
 		return *m_rtShadows;
@@ -427,6 +432,7 @@ private:
 	UniquePtr<UiStage> m_uiStage;
 	UniquePtr<GenericCompute> m_genericCompute;
 	UniquePtr<ShadowmapsResolve> m_smResolve;
+	UniquePtr<AccelerationStructureBuilder> m_accelerationStructureBuilder;
 	UniquePtr<RtShadows> m_rtShadows;
 	/// @}
 

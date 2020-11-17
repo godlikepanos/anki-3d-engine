@@ -9,6 +9,7 @@
 #include <anki/core/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/collision/Aabb.h>
+#include <anki/shaders/include/ClusteredShadingTypes.h>
 
 #include <anki/renderer/ProbeReflections.h>
 #include <anki/renderer/GBuffer.h>
@@ -34,7 +35,7 @@
 #include <anki/renderer/GenericCompute.h>
 #include <anki/renderer/ShadowmapsResolve.h>
 #include <anki/renderer/RtShadows.h>
-#include <anki/shaders/include/ClusteredShadingTypes.h>
+#include <anki/renderer/AccelerationStructureBuilder.h>
 
 namespace anki
 {
@@ -197,6 +198,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	if(getGrManager().getDeviceCapabilities().m_rayTracingEnabled && config.getBool("scene_rayTracedShadows"))
 	{
+		m_accelerationStructureBuilder.reset(m_alloc.newInstance<AccelerationStructureBuilder>(this));
+		ANKI_CHECK(m_accelerationStructureBuilder->init(config));
+
 		m_rtShadows.reset(m_alloc.newInstance<RtShadows>(this));
 		ANKI_CHECK(m_rtShadows->init(config));
 	}
@@ -299,6 +303,10 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Populate render graph. WARNING Watch the order
 	m_genericCompute->populateRenderGraph(ctx);
+	if(m_accelerationStructureBuilder)
+	{
+		m_accelerationStructureBuilder->populateRenderGraph(ctx);
+	}
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_gi->populateRenderGraph(ctx);
 	m_probeReflections->populateRenderGraph(ctx);
