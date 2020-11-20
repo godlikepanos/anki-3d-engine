@@ -9,16 +9,17 @@
 #pragma anki start rgen
 
 layout(set = 0, binding = 0) uniform sampler u_trilinearRepeatSampler; // Used by the hit shaders
-layout(set = 0, binding = 1, rgba8) uniform image2D out_img;
-layout(set = 0, binding = 2) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 3) uniform texture2D u_depthRt;
-layout(set = 0, binding = 4) uniform texture2D u_normalRt;
-layout(set = 0, binding = 5) uniform accelerationStructureEXT u_tlas;
+layout(set = 0, binding = 1, rgba8) uniform image2D u_outImg;
+layout(set = 0, binding = 2) uniform texture2D u_historyRt;
+layout(set = 0, binding = 3) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 4) uniform texture2D u_depthRt;
+layout(set = 0, binding = 5) uniform texture2D u_normalRt;
+layout(set = 0, binding = 6) uniform accelerationStructureEXT u_tlas;
 
 #define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 6
-#define LIGHT_LIGHTS_BINDING 7
-#define LIGHT_CLUSTERS_BINDING 10
+#define LIGHT_COMMON_UNIS_BINDING 7
+#define LIGHT_LIGHTS_BINDING 8
+#define LIGHT_CLUSTERS_BINDING 11
 #include <anki/shaders/ClusteredShadingCommon.glsl>
 #include <anki/shaders/ImportanceSampling.glsl>
 #include <anki/shaders/Pack.glsl>
@@ -45,8 +46,7 @@ void main()
 	U32 idxOffset = u_clusters[clusterIdx];
 
 	U32 shadowCasterCountPerFragment = 0;
-	const U32 maxShadowCastersPerFragment = 4;
-	F32 shadowFactors[maxShadowCastersPerFragment] = F32[](0.0, 0.0, 0.0, 0.0);
+	Vec4 shadowFactors = Vec4(0.0);
 
 	// Get random
 	const UVec3 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_lightingUniforms.m_frameCount));
@@ -81,8 +81,11 @@ void main()
 
 	// TODO rest of lights
 
+	// Read the history buffer
+	Vec4 history = textureLod(u_historyRt, u_linearAnyClampSampler, uv, 0.0);
+	shadowFactors = mix(history, shadowFactors, 0.05);
+
 	// Store
-	imageStore(out_img, IVec2(gl_LaunchIDEXT.xy),
-			   Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
+	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), shadowFactors);
 }
 #pragma anki end

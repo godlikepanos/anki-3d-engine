@@ -77,3 +77,42 @@ F32 calculateBilateralWeight(BilateralSample center, BilateralSample tap, Bilate
 
 	return depthWeight * normalWeight * planeWeight * glossyWeight;
 }
+
+struct SpatialBilateralContext
+{
+	U32 sampleCount;
+	UVec2 referencePointUnormalizedTextureUv;
+	U32 maxRadiusPixels;
+	U32 spiralTurnCount;
+	F32 randomRotationAngle;
+};
+
+// Initialize the spatial bilateral context. Its purpose it to create samples that form a spiral around the reference
+// point. To experiment and play with the values use this: https://www.shadertoy.com/view/3s3BRs
+SpatialBilateralContext spatialBilateralInit(U32 sampleCount, UVec2 referencePointUnormalizedTextureUv,
+											 U32 maxRadiusPixels, U32 spiralTurnCount, F32 time)
+{
+	SpatialBilateralContext ctx;
+
+	ctx.sampleCount = sampleCount;
+	ctx.referencePointUnormalizedTextureUv = referencePointUnormalizedTextureUv;
+	ctx.maxRadiusPixels = maxRadiusPixels;
+	ctx.spiralTurnCount = spiralTurnCount;
+
+	const UVec2 ref = referencePointUnormalizedTextureUv;
+	ctx.randomRotationAngle = F32((3u * ref.x) ^ (ref.y + ref.x * ref.y)) + time;
+
+	return ctx;
+}
+
+// Iterate to get a new sample. See spatialBilateralInit()
+UVec2 spatialBilateralIterate(SpatialBilateralContext ctx, U32 iteration)
+{
+	const F32 alpha = F32(F32(iteration) + 0.5) * (1.0 / F32(ctx.sampleCount));
+	const F32 angle = alpha * F32(ctx.spiralTurnCount) * 6.28 + ctx.randomRotationAngle;
+
+	const Vec2 unitOffset = Vec2(cos(angle), sin(angle));
+
+	const IVec2 tapOffset = IVec2(alpha * F32(ctx.maxRadiusPixels) * unitOffset);
+	return UVec2(IVec2(ctx.referencePointUnormalizedTextureUv) + tapOffset);
+}

@@ -46,10 +46,19 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	ANKI_ASSERT(library);
 	m_grProg = library->getShaderProgram();
 
-	// RT descriptor
-	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8G8B8A8_UNORM,
-													 "RtShadows");
-	m_rtDescr.bake();
+	// RTs
+	for(U i = 0; i < 2; ++i)
+	{
+		TextureInitInfo texinit =
+			m_r->create2DRenderTargetInitInfo(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8G8B8A8_UNORM,
+											  TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
+												  | TextureUsageBit::IMAGE_COMPUTE_WRITE,
+											  "RtShadows");
+
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+
+		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit);
+	}
 
 	// Misc
 	m_sbtRecordSize = getAlignedRoundUp(getGrManager().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
@@ -66,15 +75,28 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 	buildSbt();
 
-	// RT
-	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+	// Import RTs
+	const U historyIdx = m_r->getFrameCount() & 1;
+	if(ANKI_UNLIKELY(!m_runCtx.m_rtsImportedOnce))
+	{
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyIdx], TextureUsageBit::SAMPLED_FRAGMENT);
+		m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[!historyIdx], TextureUsageBit::SAMPLED_FRAGMENT);
+		m_runCtx.m_rtsImportedOnce = true;
+	}
+	else
+	{
+		m_runCtx.m_historyRt = rgraph.importRenderTarget(m_rtTextures[historyIdx]);
+		m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[!historyIdx], TextureUsageBit::NONE);
+	}
 
+	// Build the pass
 	ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("RtShadows");
 	rpass.setWork(
 		[](RenderPassWorkContext& rgraphCtx) { static_cast<RtShadows*>(rgraphCtx.m_userData)->run(rgraphCtx); }, this,
 		0);
 
-	rpass.newDependency(RenderPassDependency(m_runCtx.m_rt, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE));
+	rpass.newDependency(RenderPassDependency(m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_TRACE_RAYS));
+	rpass.newDependency(RenderPassDependency(m_runCtx.m_renderRt, TextureUsageBit::IMAGE_TRACE_RAYS_WRITE));
 	rpass.newDependency(RenderPassDependency(m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 											 AccelerationStructureUsageBit::TRACE_RAYS_READ));
 	rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
@@ -90,20 +112,21 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
-	rgraphCtx.bindImage(0, 1, m_runCtx.m_rt, TextureSubresourceInfo());
-	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 3, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindAccelerationStructure(0, 5, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
+	rgraphCtx.bindImage(0, 1, m_runCtx.m_renderRt, TextureSubresourceInfo());
+	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
+	cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
+	rgraphCtx.bindTexture(0, 4, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindColorTexture(0, 5, m_r->getGBuffer().getColorRt(2));
+	rgraphCtx.bindAccelerationStructure(0, 6, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
 
-	bindUniforms(cmdb, 0, 6, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 7, ctx.m_lightShadingUniformsToken);
 
-	bindUniforms(cmdb, 0, 7, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 8, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTexture(0, 9, m_r->getShadowMapping().getShadowmapRt());
+	bindUniforms(cmdb, 0, 8, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 9, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(0, 10, m_r->getShadowMapping().getShadowmapRt());
 
-	bindStorage(cmdb, 0, 10, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 11, rsrc.m_indicesToken);
+	bindStorage(cmdb, 0, 11, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 12, rsrc.m_indicesToken);
 
 	cmdb->bindAllBindless(1);
 

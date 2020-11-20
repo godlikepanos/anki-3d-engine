@@ -34,23 +34,26 @@ public:
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
 	{
 		ANKI_ASSERT(rtName == "RtShadows");
-		handle = m_runCtx.m_rt;
+		handle = m_runCtx.m_renderRt;
 	}
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_rt;
+		return m_runCtx.m_renderRt;
 	}
 
 public:
 	ShaderProgramPtr m_grProg;
-	RenderTargetDescription m_rtDescr;
+	Array<TexturePtr, 2> m_rtTextures;
 
 	class
 	{
 	public:
-		RenderTargetHandle m_rt;
 		RenderingContext* m_ctx = nullptr;
+
+		RenderTargetHandle m_renderRt;
+		RenderTargetHandle m_historyRt;
+		Bool m_rtsImportedOnce = false;
 
 		BufferPtr m_sbtBuffer;
 		PtrSize m_sbtOffset;
