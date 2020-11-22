@@ -32,19 +32,29 @@ Error ShaderProgramResourceSystem::init()
 {
 	ANKI_TRACE_SCOPED_EVENT(COMPILE_SHADERS);
 
-	ANKI_CHECK(compileAllShaders(m_cacheDir, *m_gr, *m_fs, m_alloc));
+	StringListAuto rtProgramFilenames(m_alloc);
+	ANKI_CHECK(compileAllShaders(m_cacheDir, *m_gr, *m_fs, m_alloc, rtProgramFilenames));
 
 	if(m_gr->getDeviceCapabilities().m_rayTracingEnabled)
 	{
-		ANKI_CHECK(createRayTracingPrograms(m_cacheDir, *m_gr, *m_fs, m_alloc, m_rtLibraries));
+		ANKI_CHECK(createRayTracingPrograms(m_cacheDir, rtProgramFilenames, *m_gr, m_alloc, m_rtLibraries));
 	}
 
 	return Error::NONE;
 }
 
 Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager& gr, ResourceFilesystem& fs,
-													 GenericMemoryPoolAllocator<U8>& alloc)
+													 GenericMemoryPoolAllocator<U8>& alloc,
+													 StringListAuto& rtProgramFilenames)
 {
+	class MetaFileData
+	{
+	public:
+		U64 m_hash;
+		ShaderTypeBit m_shaderTypes;
+		Array<U16, 3> m_padding = {};
+	};
+
 	ANKI_RESOURCE_LOGI("Compiling shader programs");
 	U32 shadersCompileCount = 0;
 
@@ -68,7 +78,7 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 
 		if(fname.find("/Rt") != CString::NPOS && !gr.getDeviceCapabilities().m_rayTracingEnabled)
 		{
-			// Skip RT programs
+			// Skip RT programs when RT is disabled
 			return Error::NONE;
 		}
 
@@ -80,11 +90,22 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 
 		// Get the hash from the meta file
 		U64 metafileHash = 0;
+		ShaderTypeBit metafileShaderTypes = ShaderTypeBit::NONE;
 		if(fileExists(metaFname))
 		{
 			File metaFile;
 			ANKI_CHECK(metaFile.open(metaFname, FileOpenFlag::READ | FileOpenFlag::BINARY));
-			ANKI_CHECK(metaFile.read(&metafileHash, sizeof(metafileHash)));
+			MetaFileData data;
+			ANKI_CHECK(metaFile.read(&data, sizeof(data)));
+
+			if(data.m_hash == 0 || data.m_shaderTypes == ShaderTypeBit::NONE)
+			{
+				ANKI_RESOURCE_LOGE("Wrong data found in the metafile: %s", metaFname.cstr());
+				return Error::USER_DATA;
+			}
+
+			metafileHash = data.m_hash;
+			metafileShaderTypes = data.m_shaderTypes;
 		}
 
 		// Load interface
@@ -189,7 +210,12 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 		{
 			File metaFile;
 			ANKI_CHECK(metaFile.open(metaFname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
-			ANKI_CHECK(metaFile.write(&skip.m_newHash, sizeof(skip.m_newHash)));
+
+			MetaFileData data;
+			data.m_hash = skip.m_newHash;
+			data.m_shaderTypes = binary.getBinary().m_presentShaderTypes;
+			metafileShaderTypes = data.m_shaderTypes;
+			ANKI_CHECK(metaFile.write(&data, sizeof(data)));
 		}
 
 		// Save the binary to the cache
@@ -200,6 +226,12 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 			ANKI_CHECK(binary.serializeToFile(storeFname));
 		}
 
+		// Gather RT programs
+		if(!!(metafileShaderTypes & ShaderTypeBit::ALL_RAY_TRACING))
+		{
+			rtProgramFilenames.pushBack(fname);
+		}
+
 		return Error::NONE;
 	}));
 
@@ -207,34 +239,12 @@ Error ShaderProgramResourceSystem::compileAllShaders(CString cacheDir, GrManager
 	return Error::NONE;
 }
 
-Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, GrManager& gr, ResourceFilesystem& fs,
-															GenericMemoryPoolAllocator<U8>& alloc,
+Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, const StringListAuto& rtProgramFilenames,
+															GrManager& gr, GenericMemoryPoolAllocator<U8>& alloc,
 															DynamicArray<ShaderProgramRaytracingLibrary>& outLibs)
 {
 	ANKI_RESOURCE_LOGI("Creating ray tracing programs");
 	U32 rtProgramCount = 0;
-
-	// Gather the RT program fnames
-	StringListAuto rtPrograms(alloc);
-	ANKI_CHECK(fs.iterateAllFilenames([&](CString fname) -> Error {
-		// Check file extension
-		StringAuto extension(alloc);
-		getFilepathExtension(fname, extension);
-		if(extension.getLength() != 8 || extension != "ankiprog")
-		{
-			return Error::NONE;
-		}
-
-		if(fname.find("/Rt") == CString::NPOS)
-		{
-			// Skip non-RT programs
-			return Error::NONE;
-		}
-
-		rtPrograms.pushBack(fname);
-
-		return Error::NONE;
-	}));
 
 	// Group things together
 	class Shader
@@ -283,7 +293,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, Gr
 
 	DynamicArrayAuto<Lib> libs(alloc);
 
-	for(const String& filename : rtPrograms)
+	for(const String& filename : rtProgramFilenames)
 	{
 		// Get the binary
 		StringAuto baseFilename(alloc);

@@ -34,17 +34,20 @@ public:
 	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
 	{
 		ANKI_ASSERT(rtName == "RtShadows");
-		handle = m_runCtx.m_renderRt;
+		handle = m_runCtx.m_historyAndFinalRt;
 	}
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_renderRt;
+		return m_runCtx.m_historyAndFinalRt;
 	}
 
 public:
 	ShaderProgramPtr m_grProg;
 	Array<TexturePtr, 2> m_rtTextures;
+
+	ShaderProgramResourcePtr m_denoiseProg;
+	ShaderProgramPtr m_grDenoiseProg;
 
 	class
 	{
@@ -52,7 +55,7 @@ public:
 		RenderingContext* m_ctx = nullptr;
 
 		RenderTargetHandle m_renderRt;
-		RenderTargetHandle m_historyRt;
+		RenderTargetHandle m_historyAndFinalRt;
 		Bool m_rtsImportedOnce = false;
 
 		BufferPtr m_sbtBuffer;
@@ -65,6 +68,7 @@ public:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
 	void run(RenderPassWorkContext& rgraphCtx);
+	void runDenoise(RenderPassWorkContext& rgraphCtx);
 
 	void buildSbt();
 };

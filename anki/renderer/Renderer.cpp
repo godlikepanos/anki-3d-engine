@@ -193,9 +193,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_uiStage.reset(m_alloc.newInstance<UiStage>(this));
 	ANKI_CHECK(m_uiStage->init(config));
 
-	m_smResolve.reset(m_alloc.newInstance<ShadowmapsResolve>(this));
-	ANKI_CHECK(m_smResolve->init(config));
-
 	if(getGrManager().getDeviceCapabilities().m_rayTracingEnabled && config.getBool("scene_rayTracedShadows"))
 	{
 		m_accelerationStructureBuilder.reset(m_alloc.newInstance<AccelerationStructureBuilder>(this));
@@ -203,6 +200,11 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 		m_rtShadows.reset(m_alloc.newInstance<RtShadows>(this));
 		ANKI_CHECK(m_rtShadows->init(config));
+	}
+	else
+	{
+		m_smResolve.reset(m_alloc.newInstance<ShadowmapsResolve>(this));
+		ANKI_CHECK(m_smResolve->init(config));
 	}
 
 	// Init samplers
@@ -314,10 +316,13 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_gbuffer->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depth->populateRenderGraph(ctx);
-	m_smResolve->populateRenderGraph(ctx);
 	if(m_rtShadows)
 	{
 		m_rtShadows->populateRenderGraph(ctx);
+	}
+	else
+	{
+		m_smResolve->populateRenderGraph(ctx);
 	}
 	m_volFog->populateRenderGraph(ctx);
 	m_ssao->populateRenderGraph(ctx);

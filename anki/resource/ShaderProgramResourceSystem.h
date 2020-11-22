@@ -8,6 +8,7 @@
 #include <anki/resource/Common.h>
 #include <anki/gr/ShaderProgram.h>
 #include <anki/util/HashMap.h>
+#include <anki/util/StringList.h>
 #include <anki/shader_compiler/ShaderProgramBinary.h>
 
 namespace anki
@@ -111,9 +112,9 @@ private:
 
 	/// Iterate all programs in the filesystem and compile them to AnKi's binary format.
 	static Error compileAllShaders(CString cacheDir, GrManager& gr, ResourceFilesystem& fs,
-								   GenericMemoryPoolAllocator<U8>& alloc);
+								   GenericMemoryPoolAllocator<U8>& alloc, StringListAuto& rtProgramFilenames);
 
-	static Error createRayTracingPrograms(CString cacheDir, GrManager& gr, ResourceFilesystem& fs,
+	static Error createRayTracingPrograms(CString cacheDir, const StringListAuto& rtProgramFilenames, GrManager& gr,
 										  GenericMemoryPoolAllocator<U8>& alloc,
 										  DynamicArray<ShaderProgramRaytracingLibrary>& libs);
 };

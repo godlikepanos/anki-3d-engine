@@ -216,10 +216,13 @@ void LightShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newDependency({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getSsgi().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newDependency({m_r->getShadowmapsResolve().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	if(m_r->getRtShadowsEnabled())
 	{
 		pass.newDependency({m_r->getRtShadows().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	}
+	else
+	{
+		pass.newDependency({m_r->getShadowmapsResolve().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	}
 
 	// Refl & indirect
