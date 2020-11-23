@@ -83,7 +83,7 @@ void main()
 
 	// Read the history buffer
 	Vec4 history = textureLod(u_historyRt, u_linearAnyClampSampler, uv, 0.0);
-	shadowFactors = mix(history, shadowFactors, 0.05);
+	shadowFactors = mix(history, shadowFactors, 0.1);
 
 	// Store
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), shadowFactors);

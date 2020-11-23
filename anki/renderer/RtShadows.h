@@ -44,7 +44,8 @@ public:
 
 public:
 	ShaderProgramPtr m_grProg;
-	Array<TexturePtr, 2> m_rtTextures;
+	TexturePtr m_historyAndFinalRt;
+	RenderTargetDescription m_renderRt;
 
 	ShaderProgramResourcePtr m_denoiseProg;
 	ShaderProgramPtr m_grDenoiseProg;
@@ -56,7 +57,7 @@ public:
 
 		RenderTargetHandle m_renderRt;
 		RenderTargetHandle m_historyAndFinalRt;
-		Bool m_rtsImportedOnce = false;
+		Bool m_historyAndFinalRtImportedOnce = false;
 
 		BufferPtr m_sbtBuffer;
 		PtrSize m_sbtOffset;

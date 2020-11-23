@@ -49,29 +49,26 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	// Denoise program
 	ANKI_CHECK(getResourceManager().loadResource("shaders/RtShadowsDenoise.ankiprog", m_denoiseProg));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
-	variantInitInfo.addConstant("IN_TEX_SIZE", UVec2(m_r->getWidth() / 2, m_r->getHeight() / 2));
-	variantInitInfo.addConstant("OUT_IMAGE_SIZE", UVec2(m_r->getWidth() / 2, m_r->getHeight() / 2));
-	variantInitInfo.addConstant("SAMPLE_COUNT", 16u);
-	variantInitInfo.addConstant("PIXEL_RADIUS", max(20u, m_r->getWidth() / 40));
-	variantInitInfo.addConstant("SPIRAL_TURN_COUNT", 60u);
+	variantInitInfo.addConstant("OUT_IMAGE_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+	variantInitInfo.addConstant("SAMPLE_COUNT", 8u);
+	variantInitInfo.addConstant("SPIRAL_TURN_COUNT", 19u);
+	variantInitInfo.addConstant("PIXEL_RADIUS", 15u);
 
 	const ShaderProgramResourceVariant* variant;
 	m_denoiseProg->getOrCreateVariant(variantInitInfo, variant);
 	m_grDenoiseProg = variant->getProgram();
 
 	// RTs
-	for(U i = 0; i < 2; ++i)
-	{
-		TextureInitInfo texinit =
-			m_r->create2DRenderTargetInitInfo(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8G8B8A8_UNORM,
-											  TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
-												  | TextureUsageBit::IMAGE_COMPUTE_WRITE,
-											  "RtShadows");
+	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
+		m_r->getWidth(), m_r->getHeight(), Format::R8G8B8A8_UNORM,
+		TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
+		"RtShadows");
+	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+	m_historyAndFinalRt = m_r->createAndClearRenderTarget(texinit);
 
-		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-
-		m_rtTextures[i] = m_r->createAndClearRenderTarget(texinit);
-	}
+	m_renderRt = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8G8B8A8_UNORM,
+													  "RtShadowsTmp");
+	m_renderRt.bake();
 
 	// Misc
 	m_sbtRecordSize = getAlignedRoundUp(getGrManager().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
@@ -88,20 +85,19 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 
 	buildSbt();
 
-	// Import RTs
-	const U historyIdx = m_r->getFrameCount() & 1;
-	if(ANKI_UNLIKELY(!m_runCtx.m_rtsImportedOnce))
+	// RTs
+	if(ANKI_UNLIKELY(!m_runCtx.m_historyAndFinalRtImportedOnce))
 	{
 		m_runCtx.m_historyAndFinalRt =
-			rgraph.importRenderTarget(m_rtTextures[historyIdx], TextureUsageBit::SAMPLED_FRAGMENT);
-		m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[!historyIdx], TextureUsageBit::SAMPLED_FRAGMENT);
-		m_runCtx.m_rtsImportedOnce = true;
+			rgraph.importRenderTarget(m_historyAndFinalRt, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_runCtx.m_historyAndFinalRtImportedOnce = true;
 	}
 	else
 	{
-		m_runCtx.m_historyAndFinalRt = rgraph.importRenderTarget(m_rtTextures[historyIdx]);
-		m_runCtx.m_renderRt = rgraph.importRenderTarget(m_rtTextures[!historyIdx], TextureUsageBit::NONE);
+		m_runCtx.m_historyAndFinalRt = rgraph.importRenderTarget(m_historyAndFinalRt);
 	}
+
+	m_runCtx.m_renderRt = rgraph.newRenderTarget(m_renderRt);
 
 	// RT shadows pass
 	{
@@ -190,7 +186,7 @@ void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
 	pc.m_time = F32(m_r->getGlobalTimestamp());
 	cmdb->setPushConstants(&pc, sizeof(pc));
 
-	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth() / 2, m_r->getHeight() / 2);
+	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth(), m_r->getHeight());
 }
 
 void RtShadows::buildSbt()

@@ -5,11 +5,10 @@
 
 #pragma anki start comp
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_TEX_SIZE, 0, UVec2(1));
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(OUT_IMAGE_SIZE, 2, UVec2(1));
-ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 4, 1);
-ANKI_SPECIALIZATION_CONSTANT_U32(PIXEL_RADIUS, 5, 1);
-ANKI_SPECIALIZATION_CONSTANT_U32(SPIRAL_TURN_COUNT, 6, 1);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(OUT_IMAGE_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_U32(SAMPLE_COUNT, 2, 1);
+ANKI_SPECIALIZATION_CONSTANT_U32(PIXEL_RADIUS, 3, 1);
+ANKI_SPECIALIZATION_CONSTANT_U32(SPIRAL_TURN_COUNT, 4, 1);
 
 #include <anki/shaders/BilateralFilter.glsl>
 #include <anki/shaders/Pack.glsl>
@@ -72,13 +71,13 @@ void main()
 		crnt.m_normal = unpackNormalFromGBuffer(texelFetch(u_gbuffer2Tex, unormalizedUvs, 0));
 
 		BilateralConfig config;
-		const Vec3 weights = normalize(Vec3(0.0, 1.0, 1.0));
+		const Vec3 weights = normalize(Vec3(0.0, 1.0, 0.0));
 		config.m_depthWeight = weights.x;
 		config.m_normalWeight = weights.y;
 		config.m_planeWeight = weights.z;
 		config.m_roughnessWeight = 0.0;
 
-		const Vec4 sampleColor = texelFetch(u_inTex, unormalizedUvs, 0);
+		const Vec4 sampleColor = texelFetch(u_inTex, unormalizedUvs / 2, 0);
 		const F32 w = calculateBilateralWeight(crnt, ref, config);
 		color += sampleColor * w;
 		weight += w;
