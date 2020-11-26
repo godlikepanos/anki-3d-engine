@@ -62,7 +62,7 @@ void main()
 
 	for(U32 i = 0; i < SAMPLE_COUNT; ++i)
 	{
-		const IVec2 unormalizedUvs = IVec2(spatialBilateralIterate(ctx, i));
+		const IVec2 unormalizedUvs = clamp(IVec2(spatialBilateralIterate(ctx, i)), IVec2(0), IVec2(OUT_IMAGE_SIZE - 1));
 		const Vec2 sampleUv = Vec2(unormalizedUvs) / Vec2(OUT_IMAGE_SIZE);
 
 		BilateralSample crnt;

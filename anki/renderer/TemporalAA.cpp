@@ -41,7 +41,7 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 	for(U32 i = 0; i < 2; ++i)
 	{
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-		variantInitInfo.addConstant("VARIANCE_CLIPPING_GAMMA", 1.7f);
+		variantInitInfo.addConstant("VARIANCE_CLIPPING_GAMMA", 2.7f);
 		variantInitInfo.addConstant("BLEND_FACTOR", 1.0f / 16.0f);
 		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
 		variantInitInfo.addMutation("SHARPEN", i + 1);

@@ -22,7 +22,7 @@ Error GBuffer::init(const ConfigSet& initializer)
 {
 	ANKI_R_LOGI("Initializing g-buffer pass");
 
-	Error err = initInternal(initializer);
+	const Error err = initInternal(initializer);
 	if(err)
 	{
 		ANKI_R_LOGE("Failed to initialize g-buffer pass");
@@ -33,10 +33,18 @@ Error GBuffer::init(const ConfigSet& initializer)
 
 Error GBuffer::initInternal(const ConfigSet& initializer)
 {
-	// RT descrs
-	m_depthRtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(), m_r->getHeight(),
-														  GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT, "GBuffer depth");
-	m_depthRtDescr.bake();
+	// RTs
+	static const Array<const char*, 2> depthRtNames = {{"GBuffer depth #0", "GBuffer depth #1"}};
+	for(U32 i = 0; i < 2; ++i)
+	{
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
+			m_r->getWidth(), m_r->getHeight(), GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
+			TextureUsageBit::ALL_SAMPLED | TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, depthRtNames[i]);
+
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+
+		m_depthRts[i] = m_r->createAndClearRenderTarget(texinit);
+	}
 
 	static const Array<const char*, GBUFFER_COLOR_ATTACHMENT_COUNT> rtNames = {
 		{"GBuffer rt0", "GBuffer rt1", "GBuffer rt2", "GBuffer rt3"}};
@@ -135,27 +143,41 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(R_MS);
 
-	m_ctx = &ctx;
+	m_runCtx.m_ctx = &ctx;
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
 	// Create RTs
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		m_colorRts[i] = rgraph.newRenderTarget(m_colorRtDescrs[i]);
-		rts[i] = m_colorRts[i];
+		m_runCtx.m_colorRts[i] = rgraph.newRenderTarget(m_colorRtDescrs[i]);
+		rts[i] = m_runCtx.m_colorRts[i];
 	}
-	m_depthRt = rgraph.newRenderTarget(m_depthRtDescr);
+
+	if(ANKI_LIKELY(m_runCtx.m_crntFrameDepthRt.isValid()))
+	{
+		// Already imported once
+		m_runCtx.m_crntFrameDepthRt =
+			rgraph.importRenderTarget(m_depthRts[m_r->getFrameCount() & 1], TextureUsageBit::NONE);
+		m_runCtx.m_prevFrameDepthRt = rgraph.importRenderTarget(m_depthRts[(m_r->getFrameCount() + 1) & 1]);
+	}
+	else
+	{
+		m_runCtx.m_crntFrameDepthRt =
+			rgraph.importRenderTarget(m_depthRts[m_r->getFrameCount() & 1], TextureUsageBit::NONE);
+		m_runCtx.m_prevFrameDepthRt =
+			rgraph.importRenderTarget(m_depthRts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
+	}
 
 	// Create pass
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
 	pass.setFramebufferInfo(m_fbDescr, ConstWeakArray<RenderTargetHandle>(&rts[0], GBUFFER_COLOR_ATTACHMENT_COUNT),
-							m_depthRt);
+							m_runCtx.m_crntFrameDepthRt);
 	pass.setWork(
 		[](RenderPassWorkContext& rgraphCtx) {
 			GBuffer* self = static_cast<GBuffer*>(rgraphCtx.m_userData);
-			self->runInThread(*self->m_ctx, rgraphCtx);
+			self->runInThread(*self->m_runCtx.m_ctx, rgraphCtx);
 		},
 		this,
 		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
@@ -163,11 +185,11 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		pass.newDependency({m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newDependency({m_runCtx.m_colorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	TextureSubresourceInfo subresource(DepthStencilAspectBit::DEPTH);
-	pass.newDependency({m_depthRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
+	pass.newDependency({m_runCtx.m_crntFrameDepthRt, TextureUsageBit::ALL_FRAMEBUFFER_ATTACHMENT, subresource});
 }
 
 } // end namespace anki

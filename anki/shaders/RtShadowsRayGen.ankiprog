@@ -13,13 +13,14 @@ layout(set = 0, binding = 1, rgba8) uniform image2D u_outImg;
 layout(set = 0, binding = 2) uniform texture2D u_historyRt;
 layout(set = 0, binding = 3) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 4) uniform texture2D u_depthRt;
-layout(set = 0, binding = 5) uniform texture2D u_normalRt;
-layout(set = 0, binding = 6) uniform accelerationStructureEXT u_tlas;
+layout(set = 0, binding = 5) uniform texture2D u_historyDepthRt;
+layout(set = 0, binding = 6) uniform texture2D u_normalRt;
+layout(set = 0, binding = 7) uniform accelerationStructureEXT u_tlas;
 
 #define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 7
-#define LIGHT_LIGHTS_BINDING 8
-#define LIGHT_CLUSTERS_BINDING 11
+#define LIGHT_COMMON_UNIS_BINDING 8
+#define LIGHT_LIGHTS_BINDING 9
+#define LIGHT_CLUSTERS_BINDING 12
 #include <anki/shaders/ClusteredShadingCommon.glsl>
 #include <anki/shaders/ImportanceSampling.glsl>
 #include <anki/shaders/Pack.glsl>
@@ -27,6 +28,9 @@ layout(set = 0, binding = 6) uniform accelerationStructureEXT u_tlas;
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
 layout(location = 0) rayPayloadEXT F32 g_payload;
+
+#define readDepth(texture_, uv, offsetX, offsetY) \
+	textureLodOffset(sampler2D(texture_, u_linearAnyClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).r
 
 void main()
 {
@@ -36,6 +40,12 @@ void main()
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
 	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	if(depth == 1.0)
+	{
+		imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
+		return;
+	}
 
 	// World normal
 	const Vec3 normal = readNormalFromGBuffer(u_normalRt, u_linearAnyClampSampler, uv);
@@ -82,8 +92,42 @@ void main()
 	// TODO rest of lights
 
 	// Read the history buffer
-	Vec4 history = textureLod(u_historyRt, u_linearAnyClampSampler, uv, 0.0);
-	shadowFactors = mix(history, shadowFactors, 0.1);
+	{
+		const Vec2 historyUv =
+			reprojectHistoryBuffer(uv, depth, u_lightingUniforms.m_prevViewProjMatMulInvViewProjMat, Vec2(-1.0));
+
+		// Clamp history to neghbours of current pixel
+		const F32 historyDepth = readDepth(u_historyDepthRt, historyUv, 0, 0);
+		const F32 near0 = readDepth(u_depthRt, uv, 1, 0);
+		const F32 near1 = readDepth(u_depthRt, uv, 0, 1);
+		const F32 near2 = readDepth(u_depthRt, uv, -1, 0);
+		const F32 near3 = readDepth(u_depthRt, uv, 0, -1);
+
+		const F32 ldepth = linearizeDepth(depth, u_lightingUniforms.m_near, u_lightingUniforms.m_far);
+		const F32 boxMin = min(depth, min(near0, min(near1, min(near2, near3))));
+		const F32 boxMax = max(depth, max(near0, max(near1, max(near2, near3))));
+
+		const F32 clampedDepth = clamp(historyDepth, boxMin, boxMax);
+
+		// This factor shows when new pixels appeared
+		F32 disocclusionFactor =
+			abs(linearizeDepth(clampedDepth, u_lightingUniforms.m_near, u_lightingUniforms.m_far)
+				- linearizeDepth(historyDepth, u_lightingUniforms.m_near, u_lightingUniforms.m_far));
+		disocclusionFactor = min(1.0, disocclusionFactor * 100.0);
+
+		// Compute blend factor
+		F32 blendFactor = 0.1;
+		blendFactor = mix(blendFactor, 1.0, disocclusionFactor);
+
+		const Vec4 history = textureLod(u_historyRt, u_linearAnyClampSampler, historyUv, 0.0);
+
+#if 0
+		const Vec2 historyNdc = abs(UV_TO_NDC(historyUv));
+		blendFactor = (max(historyNdc.x, historyNdc.y) >= 1.0) ? 1.0 : blendFactor;
+#endif
+
+		shadowFactors = mix(history, shadowFactors, blendFactor);
+	}
 
 	// Store
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), shadowFactors);

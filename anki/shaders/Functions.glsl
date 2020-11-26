@@ -474,3 +474,20 @@ Bool rayTriangleIntersect(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, out F3
 	t = dot(v0v2, qvec) * invDet;
 	return true;
 }
+
+// Given some info of the current fragment unproject it to the previous frame. Will return UV coordinates
+Vec2 reprojectHistoryBuffer(Vec2 cnrtPixelUv, F32 crntPixelDepth, Mat4 prevViewProjMatMulInvViewProjMat, Vec2 velocity)
+{
+	Vec2 oldUv;
+	if(velocity.x != -1.0)
+	{
+		oldUv = cnrtPixelUv + velocity;
+	}
+	else
+	{
+		const Vec4 v4 = prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(cnrtPixelUv), crntPixelDepth, 1.0);
+		oldUv = NDC_TO_UV(v4.xy / v4.w);
+	}
+
+	return oldUv;
+}

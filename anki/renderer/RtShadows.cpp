@@ -51,8 +51,8 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
 	variantInitInfo.addConstant("OUT_IMAGE_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
 	variantInitInfo.addConstant("SAMPLE_COUNT", 8u);
-	variantInitInfo.addConstant("SPIRAL_TURN_COUNT", 19u);
-	variantInitInfo.addConstant("PIXEL_RADIUS", 15u);
+	variantInitInfo.addConstant("SPIRAL_TURN_COUNT", 27u);
+	variantInitInfo.addConstant("PIXEL_RADIUS", 12u);
 
 	const ShaderProgramResourceVariant* variant;
 	m_denoiseProg->getOrCreateVariant(variantInitInfo, variant);
@@ -112,6 +112,8 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			RenderPassDependency(m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle(),
 								 AccelerationStructureUsageBit::TRACE_RAYS_READ));
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
+		rpass.newDependency(
+			RenderPassDependency(m_r->getGBuffer().getPreviousFrameDepthRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_TRACE_RAYS));
 	}
 
@@ -144,17 +146,19 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyAndFinalRt);
 	cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindTexture(0, 4, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	rgraphCtx.bindColorTexture(0, 5, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindAccelerationStructure(0, 6, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
+	rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getPreviousFrameDepthRt(),
+						  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindColorTexture(0, 6, m_r->getGBuffer().getColorRt(2));
+	rgraphCtx.bindAccelerationStructure(0, 7, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
 
-	bindUniforms(cmdb, 0, 7, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 8, ctx.m_lightShadingUniformsToken);
 
-	bindUniforms(cmdb, 0, 8, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 9, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTexture(0, 10, m_r->getShadowMapping().getShadowmapRt());
+	bindUniforms(cmdb, 0, 9, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 10, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(0, 11, m_r->getShadowMapping().getShadowmapRt());
 
-	bindStorage(cmdb, 0, 11, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 12, rsrc.m_indicesToken);
+	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 13, rsrc.m_indicesToken);
 
 	cmdb->bindAllBindless(1);
 
