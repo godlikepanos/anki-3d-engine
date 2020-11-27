@@ -32,6 +32,22 @@ layout(location = 0) rayPayloadEXT F32 g_payload;
 #define readDepth(texture_, uv, offsetX, offsetY) \
 	textureLodOffset(sampler2D(texture_, u_linearAnyClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).r
 
+F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
+{
+	const U32 flags = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
+	const U32 cullMask = 0xFF;
+	const U32 sbtRecordOffset = 0;
+	const U32 sbtRecordStride = 0;
+	const U32 missIndex = 0;
+	const F32 tMin = 0.1;
+	const I32 payloadLocation = 0;
+	g_payload = 0.0;
+	traceRayEXT(u_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin, tMin, rayDir, tMax,
+				payloadLocation);
+
+	return g_payload;
+}
+
 void main()
 {
 	// World position
@@ -57,10 +73,11 @@ void main()
 
 	U32 shadowCasterCountPerFragment = 0;
 	Vec4 shadowFactors = Vec4(0.0);
+	const U32 maxShadowCastersPerFragment = 4; // element_count(shadowFactors) == 4
 
-	// Get random
+	// Get a random factor
 	const UVec3 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_lightingUniforms.m_frameCount));
-	const Vec3 randomf = Vec3(random) / F32(0xFFFF) * 2.0 - 1.0;
+	const Vec3 randomf = Vec3(random) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
 
 	// Dir light
 	if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
@@ -69,27 +86,52 @@ void main()
 		const Vec3 rayDir = normalize(dirLightPos - worldPos);
 
 		const F32 lambertTerm = dot(rayDir, normal);
-		if(lambertTerm > 0.0)
+		ANKI_BRANCH if(lambertTerm > 0.0)
 		{
-			const Vec3 rayOrigin = worldPos;
-			const U32 cullMask = 0xFF;
-			const U32 sbtRecordOffset = 0;
-			const U32 sbtRecordStride = 0;
-			const U32 missIndex = 0;
-			const F32 tMin = 0.1;
-			const F32 tMax = 10000.0;
-			const I32 payloadLocation = 0;
-			g_payload = 0.0;
-			traceRayEXT(
-				u_tlas, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT,
-				cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin, tMin, rayDir, tMax, payloadLocation);
-			shadowFactors[0] = g_payload;
+			shadowFactors[0] = trace(worldPos, rayDir, 10000.0);
 		}
 
 		++shadowCasterCountPerFragment;
 	}
 
-	// TODO rest of lights
+	// Point lights
+	U32 idx;
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		PointLight light = u_pointLights[idx];
+
+		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
+		{
+			const Vec3 dirLightPos = light.m_position + 0.05 * light.m_radius * randomf;
+			const Vec3 rayDir = normalize(dirLightPos - worldPos);
+
+			const F32 lambertTerm = dot(rayDir, normal);
+			ANKI_BRANCH if(lambertTerm > 0.0)
+			{
+				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment++)] =
+					trace(worldPos, rayDir, light.m_radius);
+			}
+		}
+	}
+
+	// Spot lights
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		SpotLight light = u_spotLights[idx];
+
+		ANKI_BRANCH if(light.m_shadowmapId >= 0.0)
+		{
+			const Vec3 dirLightPos = light.m_position + 0.05 * light.m_radius * randomf;
+			const Vec3 rayDir = normalize(dirLightPos - worldPos);
+
+			const F32 lambertTerm = dot(rayDir, normal);
+			ANKI_BRANCH if(lambertTerm > 0.0)
+			{
+				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment++)] =
+					trace(worldPos, rayDir, light.m_radius);
+			}
+		}
+	}
 
 	// Read the history buffer
 	{
