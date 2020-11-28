@@ -242,7 +242,7 @@ void String::appendInternal(Allocator& alloc, const Char* str, PtrSize strLen)
 	m_data = std::move(newData);
 }
 
-void String::sprintf(Allocator alloc, CString fmt, ...)
+String& String::sprintf(Allocator alloc, CString fmt, ...)
 {
 	Array<Char, 512> buffer;
 	va_list args;
@@ -272,6 +272,8 @@ void String::sprintf(Allocator alloc, CString fmt, ...)
 		// buffer was enough
 		create(alloc, CString(&buffer[0]));
 	}
+
+	return *this;
 }
 
 String& String::replaceAll(Allocator alloc, CString from, CString to)

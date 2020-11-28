@@ -418,32 +418,35 @@ public:
 	}
 
 	/// Append another string to this one.
-	void append(Allocator alloc, const String& b)
+	String& append(Allocator alloc, const String& b)
 	{
 		if(!b.isEmpty())
 		{
 			appendInternal(alloc, &b.m_data[0], b.m_data.getSize() - 1);
 		}
+		return *this;
 	}
 
 	/// Append a const string to this one.
-	void append(Allocator alloc, const CStringType& cstr)
+	String& append(Allocator alloc, const CStringType& cstr)
 	{
 		if(!cstr.isEmpty())
 		{
 			appendInternal(alloc, cstr.cstr(), cstr.getLength());
 		}
+		return *this;
 	}
 
 	/// Append using a range. Copies the range of [first, oneAfterLast)
-	void append(Allocator alloc, ConstIterator first, ConstIterator oneAfterLast)
+	String& append(Allocator alloc, ConstIterator first, ConstIterator oneAfterLast)
 	{
 		const PtrSize len = oneAfterLast - first;
 		appendInternal(alloc, first, len);
+		return *this;
 	}
 
 	/// Create formated string.
-	void sprintf(Allocator alloc, CString fmt, ...);
+	String& sprintf(Allocator alloc, CString fmt, ...);
 
 	/// Destroy the string.
 	void destroy(Allocator alloc)

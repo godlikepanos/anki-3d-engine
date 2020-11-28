@@ -12,15 +12,16 @@
 	</mutation>
 
 	<inputs>
-
+		
 
 		<input shaderVar="m_diffColor" value="0.015215 0.459168 0.800000"/>
 		<input shaderVar="m_specColor" value="0.040000 0.040000 0.040000"/>
 		<input shaderVar="m_roughness" value="0.500000"/>
 		<input shaderVar="m_metallic" value="0.000000"/>
-
+		
 		<input shaderVar="m_emission" value="0.110506 0.266543 1.000000"/>
 		<input shaderVar="m_subsurface" value="0.000000"/>
-
+		
 	</inputs>
 </material>
+

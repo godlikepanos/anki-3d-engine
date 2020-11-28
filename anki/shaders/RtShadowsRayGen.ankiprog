@@ -80,7 +80,7 @@ void main()
 	const Vec3 randomf = Vec3(random) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
 
 	// Dir light
-	if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
+	ANKI_BRANCH if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
 	{
 		const Vec3 dirLightPos = worldPos + -u_dirLight.m_dir * 10.0 + randomf;
 		const Vec3 rayDir = normalize(dirLightPos - worldPos);
@@ -102,14 +102,16 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			const Vec3 dirLightPos = light.m_position + 0.05 * light.m_radius * randomf;
-			const Vec3 rayDir = normalize(dirLightPos - worldPos);
+			const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * randomf;
+			const Vec3 toLight = lightPos - worldPos;
+			const F32 distanceToLight = length(toLight);
+			const Vec3 rayDir = toLight / distanceToLight; // normalize
 
 			const F32 lambertTerm = dot(rayDir, normal);
 			ANKI_BRANCH if(lambertTerm > 0.0)
 			{
 				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment++)] =
-					trace(worldPos, rayDir, light.m_radius);
+					trace(worldPos, rayDir, distanceToLight);
 			}
 		}
 	}
@@ -121,14 +123,16 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowmapId >= 0.0)
 		{
-			const Vec3 dirLightPos = light.m_position + 0.05 * light.m_radius * randomf;
-			const Vec3 rayDir = normalize(dirLightPos - worldPos);
+			const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * randomf;
+			const Vec3 toLight = lightPos - worldPos;
+			const F32 distanceToLight = length(toLight);
+			const Vec3 rayDir = toLight / distanceToLight; // normalize
 
 			const F32 lambertTerm = dot(rayDir, normal);
 			ANKI_BRANCH if(lambertTerm > 0.0)
 			{
 				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment++)] =
-					trace(worldPos, rayDir, light.m_radius);
+					trace(worldPos, rayDir, distanceToLight);
 			}
 		}
 	}

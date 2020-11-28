@@ -8,6 +8,7 @@
 #include <anki/resource/MeshLoader.h>
 #include <anki/resource/AsyncLoader.h>
 #include <anki/util/Functions.h>
+#include <anki/util/Filesystem.h>
 #include <anki/util/Xml.h>
 
 namespace anki
@@ -67,6 +68,9 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	LoadContext* ctx;
 	LoadContext localCtx(this, getTempAllocator());
 
+	StringAuto basename(getTempAllocator());
+	getFilepathFilename(filename, basename);
+
 	const Bool rayTracingEnabled = getManager().getGrManager().getDeviceCapabilities().m_rayTracingEnabled;
 	if(rayTracingEnabled)
 	{
@@ -114,7 +118,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		indexBufferUsage |= BufferUsageBit::ACCELERATION_STRUCTURE_BUILD;
 	}
 	m_indexBuff = getManager().getGrManager().newBuffer(
-		BufferInitInfo(indexBuffSize, indexBufferUsage, BufferMapAccessBit::NONE, "MeshIdx"));
+		BufferInitInfo(indexBuffSize, indexBufferUsage, BufferMapAccessBit::NONE,
+					   StringAuto(getTempAllocator()).sprintf("%s_%s", "Idx", basename.cstr())));
 
 	// Vertex stuff
 	m_vertCount = header.m_totalVertexCount;
@@ -137,7 +142,8 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 		vertexBufferUsage |= BufferUsageBit::ACCELERATION_STRUCTURE_BUILD;
 	}
 	m_vertBuff = getManager().getGrManager().newBuffer(
-		BufferInitInfo(totalVertexBuffSize, vertexBufferUsage, BufferMapAccessBit::NONE, "MeshVert"));
+		BufferInitInfo(totalVertexBuffSize, vertexBufferUsage, BufferMapAccessBit::NONE,
+					   StringAuto(getTempAllocator()).sprintf("%s_%s", "Vert", basename.cstr())));
 
 	m_texChannelCount = !!header.m_vertexAttributes[VertexAttributeLocation::UV2].m_format ? 2 : 1;
 
@@ -182,7 +188,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	// Create the BLAS
 	if(rayTracingEnabled)
 	{
-		AccelerationStructureInitInfo inf("Mesh BLAS");
+		AccelerationStructureInitInfo inf(StringAuto(getTempAllocator()).sprintf("%s_%s", "Blas", basename.cstr()));
 		inf.m_type = AccelerationStructureType::BOTTOM_LEVEL;
 
 		inf.m_bottomLevel.m_indexBuffer = m_indexBuff;
