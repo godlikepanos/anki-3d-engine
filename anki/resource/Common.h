@@ -72,7 +72,9 @@ enum class RayTypeBit : U8
 	SHADOWS = 1 << 0,
 	GI = 1 << 1,
 	REFLECTIONS = 1 << 2,
-	PATH_TRACING = 1 << 3
+	PATH_TRACING = 1 << 3,
+
+	ALL = SHADOWS | GI | REFLECTIONS | PATH_TRACING
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(RayTypeBit)
 /// @}

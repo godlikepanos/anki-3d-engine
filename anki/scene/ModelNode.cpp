@@ -343,6 +343,8 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, const void* userDat
 	const ModelNode& self = *static_cast<const ModelNode*>(userData);
 	const ModelPatch& patch = self.m_model->getModelPatches()[self.m_modelPatchIdx];
 
+	// printf("%s\n", patch.getMaterial()->getFilename().cstr());
+
 	ModelRayTracingInfo info;
 	patch.getRayTracingInfo(lod, info);
 

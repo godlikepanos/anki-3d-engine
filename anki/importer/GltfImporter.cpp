@@ -430,8 +430,12 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		// Handle special nodes
 		HashMapAuto<CString, StringAuto> extras(parentExtras);
 		ANKI_CHECK(getExtras(node.mesh->extras, extras));
+		ANKI_CHECK(getExtras(node.extras, extras));
 
 		HashMapAuto<CString, StringAuto>::Iterator it;
+
+		const Bool skipRt = (it = extras.find("no_rt")) != extras.getEnd() && (*it == "true" || *it == "1");
+
 		if((it = extras.find("particles")) != extras.getEnd())
 		{
 			const StringAuto& fname = *it;
@@ -605,12 +609,14 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				cgltf_material* m_mtl;
 				cgltf_skin* m_skin;
 				Bool m_selfCollision;
+				RayTypeBit m_rayTypes;
 			};
 			Ctx* ctx = m_alloc.newInstance<Ctx>();
 			ctx->m_importer = this;
 			ctx->m_mesh = node.mesh;
 			ctx->m_mtl = node.mesh->primitives[0].material;
 			ctx->m_skin = node.skin;
+			ctx->m_rayTypes = (skipRt) ? RayTypeBit::NONE : RayTypeBit::ALL;
 
 			HashMapAuto<CString, StringAuto>::Iterator it2;
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
@@ -644,7 +650,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 				if(!err)
 				{
-					err = self.m_importer->writeMaterial(*self.m_mtl);
+					err = self.m_importer->writeMaterial(*self.m_mtl, self.m_rayTypes);
 				}
 
 				if(!err)

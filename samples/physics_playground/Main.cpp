@@ -129,8 +129,7 @@ Error MyApp::sampleExtraInit()
 	// Create a body component with joint
 	{
 		ModelNode* monkey;
-		ANKI_CHECK(
-			getSceneGraph().newSceneNode<ModelNode>("monkey_p2p", monkey, "assets/Suzannedynamic-material.ankimdl"));
+		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>("monkey_p2p", monkey, "assets/Suzanne_dynamic.ankimdl"));
 
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankicl"));
@@ -152,7 +151,7 @@ Error MyApp::sampleExtraInit()
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
 				StringAuto(getAllocator()).sprintf("monkey_chain%u", i).toCString(), monkey,
-				"assets/Suzannedynamic-material.ankimdl"));
+				"assets/Suzanne_dynamic.ankimdl"));
 
 			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
 			trf.getOrigin().y() -= F32(i) * 1.25f;
@@ -242,7 +241,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		ModelNode* monkey;
 		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
 			StringAuto(getAllocator()).sprintf("monkey%u", instance++).toCString(), monkey,
-			"assets/Suzannedynamic-material.ankimdl"));
+			"assets/Suzanne_dynamic.ankimdl"));
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
 
 		BodyNode* body;
@@ -291,7 +290,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
 				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(), monkey,
-				"assets/Suzannedynamic-material.ankimdl"));
+				"assets/Suzanne_dynamic.ankimdl"));
 			monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
 
 			createDestructionEvent(monkey);

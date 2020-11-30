@@ -152,6 +152,54 @@ public:
 		return m_perspective.m_fovY;
 	}
 
+	F32 getLeft() const
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		return m_ortho.m_left;
+	}
+
+	void setLeft(F32 value)
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		m_ortho.m_left = value;
+	}
+
+	F32 getRight() const
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		return m_ortho.m_right;
+	}
+
+	void setRight(F32 value)
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		m_ortho.m_right = value;
+	}
+
+	F32 getTop() const
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		return m_ortho.m_top;
+	}
+
+	void setTop(F32 value)
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		m_ortho.m_top = value;
+	}
+
+	F32 getBottom() const
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		return m_ortho.m_bottom;
+	}
+
+	void setBottom(F32 value)
+	{
+		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
+		m_ortho.m_bottom = value;
+	}
+
 	const SceneNode& getSceneNode() const
 	{
 		return *m_node;

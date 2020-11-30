@@ -97,7 +97,7 @@ static Error identifyMetallicRoughnessTexture(CString fname, F32& constantMetali
 	return Error::NONE;
 }
 
-Error GltfImporter::writeMaterial(const cgltf_material& mtl)
+Error GltfImporter::writeMaterial(const cgltf_material& mtl, RayTypeBit usedRayTypes)
 {
 	StringAuto fname(m_alloc);
 	fname.sprintf("%s%s.ankimtl", m_outDir.cstr(), mtl.name);
@@ -116,7 +116,11 @@ Error GltfImporter::writeMaterial(const cgltf_material& mtl)
 	xml.append(XML_HEADER);
 	xml.append("\n");
 	xml.append(MATERIAL_TEMPLATE);
-	xml.append(RT_MATERIAL_TEMPLATE);
+
+	if(!!(usedRayTypes & RayTypeBit::SHADOWS))
+	{
+		xml.append(RT_MATERIAL_TEMPLATE);
+	}
 
 	// Diffuse
 	if(mtl.pbr_metallic_roughness.base_color_texture.texture)

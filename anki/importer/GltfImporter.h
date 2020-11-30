@@ -8,6 +8,7 @@
 #include <anki/util/String.h>
 #include <anki/util/File.h>
 #include <anki/util/HashMap.h>
+#include <anki/resource/Common.h>
 #include <anki/Math.h>
 #include <cgltf/cgltf.h>
 
@@ -130,7 +131,7 @@ private:
 
 	// Resources
 	ANKI_USE_RESULT Error writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 decimateFactor);
-	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl);
+	ANKI_USE_RESULT Error writeMaterial(const cgltf_material& mtl, RayTypeBit usedRayTypes);
 	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh, CString skinName);
 	ANKI_USE_RESULT Error writeAnimation(const cgltf_animation& anim);
 	ANKI_USE_RESULT Error writeSkeleton(const cgltf_skin& skin);
