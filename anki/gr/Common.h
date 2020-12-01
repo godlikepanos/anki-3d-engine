@@ -366,10 +366,11 @@ public:
 		// Zero it because the derived classes may be hashed.
 		zeroMemory(m_name);
 
-		if(name && name.getLength())
+		U32 len;
+		if(name && (len = name.getLength()) > 0)
 		{
-			ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
-			memcpy(&m_name[0], &name[0], PtrSize(name.getLength()) + 1);
+			len = min(len, MAX_GR_OBJECT_NAME_LENGTH);
+			memcpy(&m_name[0], &name[0], len);
 		}
 	}
 

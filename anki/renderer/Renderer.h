@@ -207,7 +207,7 @@ public:
 
 	Bool getRtShadowsEnabled() const
 	{
-		return m_rtShadows.get() != nullptr;
+		return m_rtShadows.isCreated();
 	}
 
 	Ssr& getSsr()

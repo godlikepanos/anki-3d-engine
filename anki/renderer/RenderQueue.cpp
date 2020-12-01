@@ -15,21 +15,21 @@ PtrSize RenderQueue::countAllRenderables() const
 	drawableCount += m_renderables.getSize();
 	drawableCount += m_forwardShadingRenderables.getSize();
 
-	for(const SpotLightQueueElement* slight : m_shadowSpotLights)
+	for(const SpotLightQueueElement& slight : m_spotLights)
 	{
-		if(slight->m_shadowRenderQueue)
+		if(slight.m_shadowRenderQueue)
 		{
-			drawableCount += slight->m_shadowRenderQueue->countAllRenderables();
+			drawableCount += slight.m_shadowRenderQueue->countAllRenderables();
 		}
 	}
 
-	for(const PointLightQueueElement* plight : m_shadowPointLights)
+	for(const PointLightQueueElement& plight : m_pointLights)
 	{
 		for(U i = 0; i < 6; ++i)
 		{
-			if(plight->m_shadowRenderQueues[i])
+			if(plight.m_shadowRenderQueues[i])
 			{
-				drawableCount += plight->m_shadowRenderQueues[i]->countAllRenderables();
+				drawableCount += plight.m_shadowRenderQueues[i]->countAllRenderables();
 			}
 		}
 	}

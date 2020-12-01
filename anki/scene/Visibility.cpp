@@ -446,9 +446,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 					el->m_shadowRenderQueues[3] = &nextQueues[3];
 					el->m_shadowRenderQueues[4] = &nextQueues[4];
 					el->m_shadowRenderQueues[5] = &nextQueues[5];
-
-					U32* p = result.m_shadowPointLights.newElement(alloc);
-					*p = result.m_pointLights.m_elementCount - 1;
 				}
 				else
 				{
@@ -468,9 +465,6 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 					RenderQueue* a = alloc.newInstance<RenderQueue>();
 					nextQueues = WeakArray<RenderQueue>(a, 1);
 					el->m_shadowRenderQueue = a;
-
-					U32* p = result.m_shadowSpotLights.newElement(alloc);
-					*p = result.m_spotLights.m_elementCount - 1;
 				}
 				else
 				{
@@ -672,25 +666,11 @@ void CombineResultsTask::combine()
 								 nullptr, results.member_, nullptr); \
 	}
 
-#define ANKI_VIS_COMBINE_AND_PTR(t_, member_, ptrMember_) \
-	{ \
-		Array<TRenderQueueElementStorage<t_>, 64> subStorages; \
-		Array<TRenderQueueElementStorage<U32>, 64> ptrSubStorages; \
-		for(U32 i = 0; i < threadCount; ++i) \
-		{ \
-			subStorages[i] = m_frcCtx->m_queueViews[i].member_; \
-			ptrSubStorages[i] = m_frcCtx->m_queueViews[i].ptrMember_; \
-		} \
-		WeakArray<TRenderQueueElementStorage<U32>> arr(&ptrSubStorages[0], threadCount); \
-		combineQueueElements<t_>(alloc, WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], threadCount), &arr, \
-								 results.member_, &results.ptrMember_); \
-	}
-
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_renderables);
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_earlyZRenderables);
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_forwardShadingRenderables);
-	ANKI_VIS_COMBINE_AND_PTR(PointLightQueueElement, m_pointLights, m_shadowPointLights);
-	ANKI_VIS_COMBINE_AND_PTR(SpotLightQueueElement, m_spotLights, m_shadowSpotLights);
+	ANKI_VIS_COMBINE(PointLightQueueElement, m_pointLights);
+	ANKI_VIS_COMBINE(SpotLightQueueElement, m_spotLights);
 	ANKI_VIS_COMBINE(ReflectionProbeQueueElement, m_reflectionProbes);
 	ANKI_VIS_COMBINE(LensFlareQueueElement, m_lensFlares);
 	ANKI_VIS_COMBINE(DecalQueueElement, m_decals);
@@ -708,30 +688,32 @@ void CombineResultsTask::combine()
 	}
 
 #undef ANKI_VIS_COMBINE
-#undef ANKI_VIS_COMBINE_AND_PTR
 
-#if ANKI_EXTRA_CHECKS
-	for(PointLightQueueElement* light : results.m_shadowPointLights)
-	{
-		ANKI_ASSERT(light->hasShadow());
-	}
-
-	for(SpotLightQueueElement* light : results.m_shadowSpotLights)
-	{
-		ANKI_ASSERT(light->hasShadow());
-	}
-#endif
+	const Bool isShadowFrustum =
+		!!(m_frcCtx->m_frc->getEnabledVisibilityTests() & FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
 
 	// Sort some of the arrays
-	std::sort(results.m_renderables.getBegin(), results.m_renderables.getEnd(), MaterialDistanceSortFunctor(20.0f));
+	if(!isShadowFrustum)
+	{
+		std::sort(results.m_renderables.getBegin(), results.m_renderables.getEnd(), MaterialDistanceSortFunctor(20.0f));
 
-	std::sort(results.m_earlyZRenderables.getBegin(), results.m_earlyZRenderables.getEnd(),
-			  DistanceSortFunctor<RenderableQueueElement>());
+		std::sort(results.m_earlyZRenderables.getBegin(), results.m_earlyZRenderables.getEnd(),
+				  DistanceSortFunctor<RenderableQueueElement>());
 
-	std::sort(results.m_forwardShadingRenderables.getBegin(), results.m_forwardShadingRenderables.getEnd(),
-			  RevDistanceSortFunctor<RenderableQueueElement>());
+		std::sort(results.m_forwardShadingRenderables.getBegin(), results.m_forwardShadingRenderables.getEnd(),
+				  RevDistanceSortFunctor<RenderableQueueElement>());
+	}
 
 	std::sort(results.m_giProbes.getBegin(), results.m_giProbes.getEnd());
+
+	// Sort the ligths as well because some rendering effects expect the same order from frame to frame
+	std::sort(
+		results.m_pointLights.getBegin(), results.m_pointLights.getEnd(),
+		[](const PointLightQueueElement& a, const PointLightQueueElement& b) -> Bool { return a.m_uuid < b.m_uuid; });
+
+	std::sort(
+		results.m_spotLights.getBegin(), results.m_spotLights.getEnd(),
+		[](const SpotLightQueueElement& a, const SpotLightQueueElement& b) -> Bool { return a.m_uuid < b.m_uuid; });
 
 	// Cleanup
 	if(m_frcCtx->m_r)

@@ -107,9 +107,7 @@ public:
 	TRenderQueueElementStorage<RenderableQueueElement> m_forwardShadingRenderables;
 	TRenderQueueElementStorage<RenderableQueueElement> m_earlyZRenderables;
 	TRenderQueueElementStorage<PointLightQueueElement> m_pointLights;
-	TRenderQueueElementStorage<U32> m_shadowPointLights;
 	TRenderQueueElementStorage<SpotLightQueueElement> m_spotLights;
-	TRenderQueueElementStorage<U32> m_shadowSpotLights;
 	DirectionalLightQueueElement m_directionalLight;
 	TRenderQueueElementStorage<ReflectionProbeQueueElement> m_reflectionProbes;
 	TRenderQueueElementStorage<LensFlareQueueElement> m_lensFlares;

@@ -110,9 +110,11 @@ void main()
 			const F32 lambertTerm = dot(rayDir, normal);
 			ANKI_BRANCH if(lambertTerm > 0.0)
 			{
-				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment++)] =
+				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment)] =
 					trace(worldPos, rayDir, distanceToLight);
 			}
+
+			++shadowCasterCountPerFragment;
 		}
 	}
 
@@ -131,9 +133,11 @@ void main()
 			const F32 lambertTerm = dot(rayDir, normal);
 			ANKI_BRANCH if(lambertTerm > 0.0)
 			{
-				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment++)] =
+				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment)] =
 					trace(worldPos, rayDir, distanceToLight);
 			}
+
+			++shadowCasterCountPerFragment;
 		}
 	}
 

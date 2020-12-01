@@ -40,11 +40,11 @@ Error MyApp::init(int argc, char* argv[])
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
 	// Other init
-	MainRenderer& renderer = getMainRenderer();
+	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 	ResourceManager& resources = getResourceManager();
 
-	renderer.getOffscreenRenderer().getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f));
-	renderer.getOffscreenRenderer().getVolumetricFog().setParticleDensity(1.0f);
+	renderer.getVolumetricFog().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f));
+	renderer.getVolumetricFog().setParticleDensity(1.0f);
 
 	if(getenv("PROFILE"))
 	{
@@ -65,7 +65,7 @@ Error MyApp::init(int argc, char* argv[])
 	ANKI_CHECK(resources.loadResource(argv[1], script));
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
-	// ANKI_CHECK(renderer.getOffscreenRenderer().getFinalComposite().loadColorGradingTexture(
+	// ANKI_CHECK(renderer.getFinalComposite().loadColorGradingTexture(
 	//	"textures/color_gradient_luts/forge_lut.ankitex"));
 
 #if PLAYER
@@ -94,7 +94,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	SceneGraph& scene = getSceneGraph();
 	Input& in = getInput();
-	MainRenderer& renderer = getMainRenderer();
+	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 
 	if(in.getKey(KeyCode::ESCAPE))
 	{
@@ -111,7 +111,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	}
 	if(in.getKey(KeyCode::_2))
 	{
-		mover = &scene.findSceneNode("Cylinder.049").getFirstComponentOfType<MoveComponent>();
+		mover = &scene.findSceneNode("Point.018_Orientation").getFirstComponentOfType<MoveComponent>();
 	}
 
 	if(in.getKey(KeyCode::L) == 1)
@@ -227,20 +227,24 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::U) == 1)
 	{
-		renderer.getOffscreenRenderer().setCurrentDebugRenderTarget(
-			(renderer.getOffscreenRenderer().getCurrentDebugRenderTarget() == "SSGI") ? "" : "SSGI");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSGI") ? "" : "SSGI");
 	}
 
 	if(in.getKey(KeyCode::I) == 1)
 	{
-		renderer.getOffscreenRenderer().setCurrentDebugRenderTarget(
-			(renderer.getOffscreenRenderer().getCurrentDebugRenderTarget() == "SSR") ? "" : "SSR");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSR") ? "" : "SSR");
 	}
 
 	if(in.getKey(KeyCode::O) == 1)
 	{
-		renderer.getOffscreenRenderer().setCurrentDebugRenderTarget(
-			(renderer.getOffscreenRenderer().getCurrentDebugRenderTarget() == "SM_resolve") ? "" : "SM_resolve");
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SM_resolve") ? ""
+																									  : "SM_resolve");
+	}
+
+	if(in.getKey(KeyCode::H) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? ""
+																									 : "RtShadows");
 	}
 
 	if(in.getEvent(InputEvent::WINDOW_CLOSED))

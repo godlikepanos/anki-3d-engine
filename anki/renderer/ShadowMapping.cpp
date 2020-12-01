@@ -537,8 +537,13 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 	}
 
 	// Process the point lights.
-	for(PointLightQueueElement* light : ctx.m_renderQueue->m_shadowPointLights)
+	for(PointLightQueueElement& light : ctx.m_renderQueue->m_pointLights)
 	{
+		if(!light.hasShadow())
+		{
+			continue;
+		}
+
 		// Prepare data to allocate tiles and allocate
 		Array<U64, 6> timestamps;
 		Array<U32, 6> faceIndices;
@@ -550,21 +555,20 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		U32 numOfFacesThatHaveDrawcalls = 0;
 
 		Bool blurAtlas;
-		const U32 lod = choseLod(cameraOrigin, *light, blurAtlas);
+		const U32 lod = choseLod(cameraOrigin, light, blurAtlas);
 
 		for(U32 face = 0; face < 6; ++face)
 		{
-			ANKI_ASSERT(light->m_shadowRenderQueues[face]);
-			if(light->m_shadowRenderQueues[face]->m_renderables.getSize())
+			ANKI_ASSERT(light.m_shadowRenderQueues[face]);
+			if(light.m_shadowRenderQueues[face]->m_renderables.getSize())
 			{
 				// Has renderables, need to allocate tiles for it so add it to the arrays
 
 				faceIndices[numOfFacesThatHaveDrawcalls] = face;
 				timestamps[numOfFacesThatHaveDrawcalls] =
-					light->m_shadowRenderQueues[face]->m_shadowRenderablesLastUpdateTimestamp;
+					light.m_shadowRenderQueues[face]->m_shadowRenderablesLastUpdateTimestamp;
 
-				drawcallCounts[numOfFacesThatHaveDrawcalls] =
-					light->m_shadowRenderQueues[face]->m_renderables.getSize();
+				drawcallCounts[numOfFacesThatHaveDrawcalls] = light.m_shadowRenderQueues[face]->m_renderables.getSize();
 
 				lods[numOfFacesThatHaveDrawcalls] = lod;
 
@@ -574,7 +578,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 		const Bool allocationFailed =
 			numOfFacesThatHaveDrawcalls == 0
-			|| allocateTilesAndScratchTiles(light->m_uuid, numOfFacesThatHaveDrawcalls, &timestamps[0], &faceIndices[0],
+			|| allocateTilesAndScratchTiles(light.m_uuid, numOfFacesThatHaveDrawcalls, &timestamps[0], &faceIndices[0],
 											&drawcallCounts[0], &lods[0], &atlasViewports[0], &scratchViewports[0],
 											&subResults[0])
 				   == TileAllocatorResult::ALLOCATION_FAILED;
@@ -587,12 +591,12 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			F32 superTileSize = F32(atlasViewports[0][2]); // Should be the same for all tiles and faces
 			superTileSize -= 1.0f; // Remove 2 half texels to avoid bilinear filtering bleeding
 
-			light->m_shadowAtlasTileSize = superTileSize / atlasResolution;
+			light.m_shadowAtlasTileSize = superTileSize / atlasResolution;
 
 			numOfFacesThatHaveDrawcalls = 0;
 			for(U face = 0; face < 6; ++face)
 			{
-				if(light->m_shadowRenderQueues[face]->m_renderables.getSize())
+				if(light.m_shadowRenderQueues[face]->m_renderables.getSize())
 				{
 					// Has drawcalls, asigned it to a tile
 
@@ -600,13 +604,13 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 					const Viewport& scratchViewport = scratchViewports[numOfFacesThatHaveDrawcalls];
 
 					// Add a half texel to the viewport's start to avoid bilinear filtering bleeding
-					light->m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + 0.5f) / atlasResolution;
-					light->m_shadowAtlasTileOffsets[face].y() = (F32(atlasViewport[1]) + 0.5f) / atlasResolution;
+					light.m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + 0.5f) / atlasResolution;
+					light.m_shadowAtlasTileOffsets[face].y() = (F32(atlasViewport[1]) + 0.5f) / atlasResolution;
 
 					if(subResults[numOfFacesThatHaveDrawcalls] != TileAllocatorResult::CACHED)
 					{
 						newScratchAndAtlasResloveRenderWorkItems(atlasViewport, scratchViewport, blurAtlas,
-																 light->m_shadowRenderQueues[face], lightsToRender,
+																 light.m_shadowRenderQueues[face], lightsToRender,
 																 atlasWorkItems, drawcallCount);
 					}
 
@@ -620,36 +624,39 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 					atlasViewport[2] = U32(superTileSize);
 					atlasViewport[3] = U32(superTileSize);
 
-					light->m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + 0.5f) / atlasResolution;
-					light->m_shadowAtlasTileOffsets[face].y() = (F32(atlasViewport[1]) + 0.5f) / atlasResolution;
+					light.m_shadowAtlasTileOffsets[face].x() = (F32(atlasViewport[0]) + 0.5f) / atlasResolution;
+					light.m_shadowAtlasTileOffsets[face].y() = (F32(atlasViewport[1]) + 0.5f) / atlasResolution;
 				}
 			}
 		}
 		else
 		{
 			// Light can't be a caster this frame
-			zeroMemory(light->m_shadowRenderQueues);
+			zeroMemory(light.m_shadowRenderQueues);
 		}
 	}
 
 	// Process the spot lights
-	for(SpotLightQueueElement* light : ctx.m_renderQueue->m_shadowSpotLights)
+	for(SpotLightQueueElement& light : ctx.m_renderQueue->m_spotLights)
 	{
-		ANKI_ASSERT(light->m_shadowRenderQueue);
+		if(!light.hasShadow())
+		{
+			continue;
+		}
 
 		// Allocate tiles
 		U32 faceIdx = 0;
 		TileAllocatorResult subResult;
 		Viewport atlasViewport;
 		Viewport scratchViewport;
-		const U32 localDrawcallCount = light->m_shadowRenderQueue->m_renderables.getSize();
+		const U32 localDrawcallCount = light.m_shadowRenderQueue->m_renderables.getSize();
 
 		Bool blurAtlas;
-		const U32 lod = choseLod(cameraOrigin, *light, blurAtlas);
+		const U32 lod = choseLod(cameraOrigin, light, blurAtlas);
 		const Bool allocationFailed =
 			localDrawcallCount == 0
 			|| allocateTilesAndScratchTiles(
-				   light->m_uuid, 1, &light->m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp, &faceIdx,
+				   light.m_uuid, 1, &light.m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp, &faceIdx,
 				   &localDrawcallCount, &lod, &atlasViewport, &scratchViewport, &subResult)
 				   == TileAllocatorResult::ALLOCATION_FAILED;
 
@@ -658,19 +665,19 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 			// All good, update the light
 
 			// Update the texture matrix to point to the correct region in the atlas
-			light->m_textureMatrix = createSpotLightTextureMatrix(atlasViewport) * light->m_textureMatrix;
+			light.m_textureMatrix = createSpotLightTextureMatrix(atlasViewport) * light.m_textureMatrix;
 
 			if(subResult != TileAllocatorResult::CACHED)
 			{
 				newScratchAndAtlasResloveRenderWorkItems(atlasViewport, scratchViewport, blurAtlas,
-														 light->m_shadowRenderQueue, lightsToRender, atlasWorkItems,
+														 light.m_shadowRenderQueue, lightsToRender, atlasWorkItems,
 														 drawcallCount);
 			}
 		}
 		else
 		{
 			// Doesn't have renderables or the allocation failed, won't be a shadow caster
-			light->m_shadowRenderQueue = nullptr;
+			light.m_shadowRenderQueue = nullptr;
 		}
 	}
 

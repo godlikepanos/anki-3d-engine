@@ -373,10 +373,8 @@ public:
 	WeakArray<RenderableQueueElement> m_earlyZRenderables; ///< Some renderables that will be used for Early Z pass.
 	WeakArray<RenderableQueueElement> m_forwardShadingRenderables;
 	WeakArray<PointLightQueueElement> m_pointLights;
-	WeakArray<PointLightQueueElement*> m_shadowPointLights; ///< Points to elements in m_pointLights.
 	WeakArray<SpotLightQueueElement> m_spotLights;
 	DirectionalLightQueueElement m_directionalLight;
-	WeakArray<SpotLightQueueElement*> m_shadowSpotLights; ///< Points to elements in m_spotLights.
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
 	WeakArray<GlobalIlluminationProbeQueueElement> m_giProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
