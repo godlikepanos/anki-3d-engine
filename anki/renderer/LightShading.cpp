@@ -62,10 +62,15 @@ Error LightShading::initLightShading(const ConfigSet& config)
 	variantInitInfo.addConstant("CLUSTER_COUNT_Z", U32(m_r->getClusterCount()[2]));
 	variantInitInfo.addConstant("CLUSTER_COUNT", U32(m_r->getClusterCount()[3]));
 	variantInitInfo.addConstant("IR_MIPMAP_COUNT", U32(m_r->getProbeReflections().getReflectionTextureMipmapCount()));
-
 	const ShaderProgramResourceVariant* variant;
+
+	variantInitInfo.addMutation("USE_SHADOW_LAYERS", 0);
 	m_lightShading.m_prog->getOrCreateVariant(variantInitInfo, variant);
-	m_lightShading.m_grProg = variant->getProgram();
+	m_lightShading.m_grProg[0] = variant->getProgram();
+
+	variantInitInfo.addMutation("USE_SHADOW_LAYERS", 1);
+	m_lightShading.m_prog->getOrCreateVariant(variantInitInfo, variant);
+	m_lightShading.m_grProg[1] = variant->getProgram();
 
 	// Create RT descr
 	m_lightShading.m_rtDescr = m_r->create2DRenderTargetDescription(
@@ -109,7 +114,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 	// Do light shading first
 	if(rgraphCtx.m_currentSecondLevelCommandBufferIndex == 0)
 	{
-		cmdb->bindShaderProgram(m_lightShading.m_grProg);
+		cmdb->bindShaderProgram(m_lightShading.m_grProg[m_r->getRtShadowsEnabled()]);
 		cmdb->setDepthWrite(false);
 
 		// Bind all

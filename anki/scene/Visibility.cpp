@@ -707,13 +707,29 @@ void CombineResultsTask::combine()
 	std::sort(results.m_giProbes.getBegin(), results.m_giProbes.getEnd());
 
 	// Sort the ligths as well because some rendering effects expect the same order from frame to frame
-	std::sort(
-		results.m_pointLights.getBegin(), results.m_pointLights.getEnd(),
-		[](const PointLightQueueElement& a, const PointLightQueueElement& b) -> Bool { return a.m_uuid < b.m_uuid; });
+	std::sort(results.m_pointLights.getBegin(), results.m_pointLights.getEnd(),
+			  [](const PointLightQueueElement& a, const PointLightQueueElement& b) -> Bool {
+				  if(a.hasShadow() != b.hasShadow())
+				  {
+					  return a.hasShadow() < b.hasShadow();
+				  }
+				  else
+				  {
+					  return a.m_uuid < b.m_uuid;
+				  }
+			  });
 
-	std::sort(
-		results.m_spotLights.getBegin(), results.m_spotLights.getEnd(),
-		[](const SpotLightQueueElement& a, const SpotLightQueueElement& b) -> Bool { return a.m_uuid < b.m_uuid; });
+	std::sort(results.m_spotLights.getBegin(), results.m_spotLights.getEnd(),
+			  [](const SpotLightQueueElement& a, const SpotLightQueueElement& b) -> Bool {
+				  if(a.hasShadow() != b.hasShadow())
+				  {
+					  return a.hasShadow() > b.hasShadow();
+				  }
+				  else
+				  {
+					  return a.m_uuid < b.m_uuid;
+				  }
+			  });
 
 	// Cleanup
 	if(m_frcCtx->m_r)

@@ -131,6 +131,73 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_COMPUTE));
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE));
 	}
+
+	// Find out the lights that will take part in RT pass
+	{
+		RenderQueue& rqueue = *m_runCtx.m_ctx->m_renderQueue;
+		m_runCtx.m_layersWithRejectedHistory.unsetAll();
+
+		if(rqueue.m_directionalLight.hasShadow())
+		{
+			U32 layerIdx;
+			Bool rejectHistory;
+			const Bool layerFound = findShadowLayer(0, layerIdx, rejectHistory);
+			(void)layerFound;
+			ANKI_ASSERT(layerFound && "Directional can't fail");
+
+			rqueue.m_directionalLight.m_shadowLayer = U8(layerIdx);
+			ANKI_ASSERT(rqueue.m_directionalLight.m_shadowLayer < MAX_SHADOW_LAYERS);
+			m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
+		}
+
+		for(PointLightQueueElement& light : rqueue.m_pointLights)
+		{
+			if(!light.hasShadow())
+			{
+				continue;
+			}
+
+			U32 layerIdx;
+			Bool rejectHistory;
+			const Bool layerFound = findShadowLayer(light.m_uuid, layerIdx, rejectHistory);
+
+			if(layerFound)
+			{
+				light.m_shadowLayer = U8(layerIdx);
+				ANKI_ASSERT(light.m_shadowLayer < MAX_SHADOW_LAYERS);
+				m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
+			}
+			else
+			{
+				// Disable shadows
+				light.m_shadowRenderQueues = {};
+			}
+		}
+
+		for(SpotLightQueueElement& light : rqueue.m_spotLights)
+		{
+			if(!light.hasShadow())
+			{
+				continue;
+			}
+
+			U32 layerIdx;
+			Bool rejectHistory;
+			const Bool layerFound = findShadowLayer(light.m_uuid, layerIdx, rejectHistory);
+
+			if(layerFound)
+			{
+				light.m_shadowLayer = U8(layerIdx);
+				ANKI_ASSERT(light.m_shadowLayer < MAX_SHADOW_LAYERS);
+				m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
+			}
+			else
+			{
+				// Disable shadows
+				light.m_shadowRenderQueue = nullptr;
+			}
+		}
+	}
 }
 
 void RtShadows::run(RenderPassWorkContext& rgraphCtx)
@@ -161,6 +228,14 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	bindStorage(cmdb, 0, 13, rsrc.m_indicesToken);
 
 	cmdb->bindAllBindless(1);
+
+	Vec4 rejectFactors;
+	static_assert(4 == MAX_SHADOW_LAYERS, "Wrong assumption");
+	for(U32 i = 0; i < MAX_SHADOW_LAYERS; ++i)
+	{
+		rejectFactors[i] = F32(m_runCtx.m_layersWithRejectedHistory.get(i));
+	}
+	cmdb->setPushConstants(&rejectFactors, sizeof(rejectFactors));
 
 	cmdb->traceRays(m_runCtx.m_sbtBuffer, m_runCtx.m_sbtOffset, m_sbtRecordSize, m_runCtx.m_hitGroupCount, 1,
 					m_r->getWidth() / 2, m_r->getHeight() / 2, 1);
@@ -239,6 +314,53 @@ void RtShadows::buildSbt()
 	}
 
 	ANKI_ASSERT(sbtStart + m_sbtRecordSize * (instanceCount + extraSbtRecords) == sbt);
+}
+
+Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistoryBuffer)
+{
+	const U64 crntFrame = m_r->getFrameCount();
+	layerIdx = MAX_U32;
+	U32 nextBestLayerIdx = MAX_U32;
+	U64 nextBestLayerFame = crntFrame;
+	rejectHistoryBuffer = false;
+
+	for(U32 i = 0; i < m_runCtx.m_shadowLayers.getSize(); ++i)
+	{
+		ShadowLayer& layer = m_runCtx.m_shadowLayers[i];
+		if(layer.m_lightUuid == lightUuid && layer.m_frameLastUsed == crntFrame - 1)
+		{
+			// Found it being used last frame
+			layerIdx = i;
+			layer.m_frameLastUsed = crntFrame;
+			layer.m_lightUuid = lightUuid;
+			break;
+		}
+		else if(layer.m_lightUuid == lightUuid || layer.m_frameLastUsed == MAX_U64)
+		{
+			// Found an empty slot or slot used by the same light
+			layerIdx = i;
+			layer.m_frameLastUsed = crntFrame;
+			layer.m_lightUuid = lightUuid;
+			rejectHistoryBuffer = true;
+			break;
+		}
+		else if(layer.m_frameLastUsed < nextBestLayerFame)
+		{
+			nextBestLayerIdx = i;
+			nextBestLayerFame = crntFrame;
+		}
+	}
+
+	// Not found but there is a good candidate. Use that
+	if(layerIdx == MAX_U32 && nextBestLayerIdx != MAX_U32)
+	{
+		layerIdx = nextBestLayerIdx;
+		m_runCtx.m_shadowLayers[nextBestLayerIdx].m_frameLastUsed = crntFrame;
+		m_runCtx.m_shadowLayers[nextBestLayerIdx].m_lightUuid = lightUuid;
+		rejectHistoryBuffer = true;
+	}
+
+	return layerIdx != MAX_U32;
 }
 
 } // end namespace anki

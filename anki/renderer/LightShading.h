@@ -40,7 +40,7 @@ private:
 
 		// Light shaders
 		ShaderProgramResourcePtr m_prog;
-		ShaderProgramPtr m_grProg;
+		Array<ShaderProgramPtr, 2> m_grProg;
 	} m_lightShading;
 
 	class

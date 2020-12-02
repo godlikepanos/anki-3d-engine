@@ -113,6 +113,7 @@ public:
 
 	Array<Vec2, 6> m_shadowAtlasTileOffsets; ///< Renderer internal.
 	F32 m_shadowAtlasTileSize; ///< Renderer internal.
+	U8 m_shadowLayer; ///< Renderer internal.
 
 	PointLightQueueElement()
 	{
@@ -142,6 +143,8 @@ public:
 	RenderQueueDrawCallback m_debugDrawCallback;
 	const void* m_debugDrawCallbackUserData;
 
+	U8 m_shadowLayer; ///< Renderer internal.
+
 	SpotLightQueueElement()
 	{
 	}
@@ -168,6 +171,7 @@ public:
 	F32 m_effectiveShadowDistance;
 	F32 m_shadowCascadesDistancePower;
 	U8 m_shadowCascadeCount; ///< Zero means that it doesn't case any shadows
+	U8 m_shadowLayer; ///< Renderer internal.
 
 	DirectionalLightQueueElement()
 	{
@@ -372,8 +376,8 @@ public:
 	WeakArray<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
 	WeakArray<RenderableQueueElement> m_earlyZRenderables; ///< Some renderables that will be used for Early Z pass.
 	WeakArray<RenderableQueueElement> m_forwardShadingRenderables;
-	WeakArray<PointLightQueueElement> m_pointLights;
-	WeakArray<SpotLightQueueElement> m_spotLights;
+	WeakArray<PointLightQueueElement> m_pointLights; ///< Those who cast shadows are first.
+	WeakArray<SpotLightQueueElement> m_spotLights; ///< Those who cast shadows are first.
 	DirectionalLightQueueElement m_directionalLight;
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
 	WeakArray<GlobalIlluminationProbeQueueElement> m_giProbes;

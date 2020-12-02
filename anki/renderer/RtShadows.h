@@ -8,6 +8,7 @@
 #include <anki/Gr.h>
 #include <anki/renderer/RendererObject.h>
 #include <anki/resource/TextureResource.h>
+#include <anki/util/BitSet.h>
 
 namespace anki
 {
@@ -50,6 +51,17 @@ public:
 	ShaderProgramResourcePtr m_denoiseProg;
 	ShaderProgramPtr m_grDenoiseProg;
 
+	U32 m_sbtRecordSize = 256;
+
+	static constexpr U32 MAX_SHADOW_LAYERS = 4;
+
+	class ShadowLayer
+	{
+	public:
+		U64 m_lightUuid = MAX_U64;
+		U64 m_frameLastUsed = MAX_U64;
+	};
+
 	class
 	{
 	public:
@@ -62,9 +74,10 @@ public:
 		BufferPtr m_sbtBuffer;
 		PtrSize m_sbtOffset;
 		U32 m_hitGroupCount = 0;
-	} m_runCtx;
 
-	U32 m_sbtRecordSize = 256;
+		Array<ShadowLayer, MAX_SHADOW_LAYERS> m_shadowLayers;
+		BitSet<MAX_SHADOW_LAYERS, U8> m_layersWithRejectedHistory = {false};
+	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 
@@ -72,6 +85,8 @@ public:
 	void runDenoise(RenderPassWorkContext& rgraphCtx);
 
 	void buildSbt();
+
+	Bool findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistoryBuffer);
 };
 /// @}
 

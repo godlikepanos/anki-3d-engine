@@ -33,8 +33,9 @@ struct PointLight
 	F32 m_squareRadiusOverOne; // 1/(radius^2)
 	Vec3 m_diffuseColor;
 	F32 m_shadowAtlasTileScale; // UV scale for all tiles
-	Vec3 m_padding;
+	Vec2 m_padding;
 	F32 m_radius; // Radius
+	U32 m_shadowLayer;
 	Vec4 m_shadowAtlasTileOffsets[3u]; // It's a Vec4 because of the std140 limitations
 };
 const U32 _ANKI_SIZEOF_PointLight = 6 * ANKI_SIZEOF(Vec4);
@@ -51,8 +52,8 @@ struct SpotLight
 	F32 m_radius; // Max distance
 	F32 m_outerCos;
 	F32 m_innerCos;
-	F32 m_padding0;
-	F32 m_padding1;
+	U32 m_shadowLayer;
+	U32 m_padding;
 	Mat4 m_texProjectionMat;
 };
 const U32 _ANKI_SIZEOF_SpotLight = 4 * ANKI_SIZEOF(Vec4) + ANKI_SIZEOF(Mat4);
@@ -65,9 +66,10 @@ struct DirectionalLight
 	U32 m_cascadeCount; // If it's zero then it doesn't case shadow
 	Vec3 m_dir;
 	U32 m_active;
-	Vec2 m_padding;
 	F32 m_effectiveShadowDistance;
 	F32 m_shadowCascadesDistancePower;
+	U32 m_shadowLayer;
+	U32 m_padding;
 	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES];
 };
 const U32 _ANKI_SIZEOF_DirectionalLight = 3 * ANKI_SIZEOF(Vec4) + MAX_SHADOW_CASCADES * ANKI_SIZEOF(Mat4);

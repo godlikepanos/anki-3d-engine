@@ -95,6 +95,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 	el.m_effectiveShadowDistance = frustumComp.getEffectiveShadowDistance();
 	el.m_shadowCascadesDistancePower = frustumComp.getShadowCascadesDistancePower();
 	el.m_shadowCascadeCount = U8(shadowCascadeCount);
+	el.m_shadowLayer = MAX_U8;
 
 	if(shadowCascadeCount == 0)
 	{

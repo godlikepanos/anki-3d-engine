@@ -608,6 +608,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			}
 
 			out.m_radius = in.m_radius;
+			out.m_shadowLayer = in.m_shadowLayer;
 		}
 	}
 	else
@@ -646,6 +647,7 @@ void ClusterBin::writeTypedObjectsToGpuBuffers(BinCtx& ctx) const
 			// Diff color and shadowmap ID now
 			out.m_diffuseColor = in.m_diffuseColor;
 			out.m_shadowmapId = shadowmapIndex;
+			out.m_shadowLayer = in.m_shadowLayer;
 
 			// Light dir & radius
 			Vec3 lightDir = -in.m_worldTransform.getRotationPart().getZAxis();

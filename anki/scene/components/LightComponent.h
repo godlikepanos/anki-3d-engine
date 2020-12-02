@@ -144,6 +144,7 @@ public:
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_debugDrawCallback = m_drawCallback;
 		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
+		el.m_shadowLayer = MAX_U8;
 	}
 
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
@@ -158,6 +159,7 @@ public:
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_debugDrawCallback = m_drawCallback;
 		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
+		el.m_shadowLayer = MAX_U8;
 	}
 
 	/// Setup a directional queue element.

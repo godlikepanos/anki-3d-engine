@@ -27,6 +27,11 @@ layout(set = 0, binding = 7) uniform accelerationStructureEXT u_tlas;
 
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
+layout(push_constant) uniform b_pc
+{
+	Vec4 u_historyRejectFactor; // 1.0 means reject, 0.0 not reject
+};
+
 layout(location = 0) rayPayloadEXT F32 g_payload;
 
 #define readDepth(texture_, uv, offsetX, offsetY) \
@@ -71,7 +76,6 @@ void main()
 											   u_lightingUniforms.m_clusterCount.y);
 	U32 idxOffset = u_clusters[clusterIdx];
 
-	U32 shadowCasterCountPerFragment = 0;
 	Vec4 shadowFactors = Vec4(0.0);
 	const U32 maxShadowCastersPerFragment = 4; // element_count(shadowFactors) == 4
 
@@ -88,10 +92,8 @@ void main()
 		const F32 lambertTerm = dot(rayDir, normal);
 		ANKI_BRANCH if(lambertTerm > 0.0)
 		{
-			shadowFactors[0] = trace(worldPos, rayDir, 10000.0);
+			shadowFactors[u_dirLight.m_shadowLayer] = trace(worldPos, rayDir, 10000.0);
 		}
-
-		++shadowCasterCountPerFragment;
 	}
 
 	// Point lights
@@ -110,11 +112,8 @@ void main()
 			const F32 lambertTerm = dot(rayDir, normal);
 			ANKI_BRANCH if(lambertTerm > 0.0)
 			{
-				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment)] =
-					trace(worldPos, rayDir, distanceToLight);
+				shadowFactors[light.m_shadowLayer] = trace(worldPos, rayDir, distanceToLight);
 			}
-
-			++shadowCasterCountPerFragment;
 		}
 	}
 
@@ -133,11 +132,8 @@ void main()
 			const F32 lambertTerm = dot(rayDir, normal);
 			ANKI_BRANCH if(lambertTerm > 0.0)
 			{
-				shadowFactors[min(maxShadowCastersPerFragment - 1, shadowCasterCountPerFragment)] =
-					trace(worldPos, rayDir, distanceToLight);
+				shadowFactors[light.m_shadowLayer] = trace(worldPos, rayDir, distanceToLight);
 			}
-
-			++shadowCasterCountPerFragment;
 		}
 	}
 
@@ -171,12 +167,12 @@ void main()
 
 		const Vec4 history = textureLod(u_historyRt, u_linearAnyClampSampler, historyUv, 0.0);
 
-#if 0
+#if 1
 		const Vec2 historyNdc = abs(UV_TO_NDC(historyUv));
 		blendFactor = (max(historyNdc.x, historyNdc.y) >= 1.0) ? 1.0 : blendFactor;
 #endif
 
-		shadowFactors = mix(history, shadowFactors, blendFactor);
+		shadowFactors = mix(history, shadowFactors, min(Vec4(1.0), u_historyRejectFactor + blendFactor));
 	}
 
 	// Store
