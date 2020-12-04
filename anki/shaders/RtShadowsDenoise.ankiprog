@@ -17,10 +17,10 @@ const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 1) uniform texture2D u_inTex;
+layout(set = 0, binding = 1) uniform texture2DArray u_inTex;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
 layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
-layout(set = 0, binding = 4) writeonly uniform image2D u_outImg;
+layout(set = 0, binding = 4) writeonly uniform image2D u_outImg[2];
 
 layout(std140, push_constant, row_major) uniform b_pc
 {
@@ -48,7 +48,8 @@ void main()
 	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(OUT_IMAGE_SIZE);
 
 	// Reference
-	Vec4 color = textureLod(u_inTex, u_linearAnyClampSampler, uv, 0.0);
+	Vec4 color0 = textureLod(u_inTex, u_linearAnyClampSampler, Vec3(uv, 0.0), 0.0);
+	Vec4 color1 = textureLod(u_inTex, u_linearAnyClampSampler, Vec3(uv, 1.0), 0.0);
 	F32 weight = 1.0;
 
 	BilateralSample ref;
@@ -76,17 +77,21 @@ void main()
 		config.m_normalWeight = weights.y;
 		config.m_planeWeight = weights.z;
 		config.m_roughnessWeight = 0.0;
-
-		const Vec4 sampleColor = texelFetch(u_inTex, unormalizedUvs / 2, 0);
 		const F32 w = calculateBilateralWeight(crnt, ref, config);
-		color += sampleColor * w;
 		weight += w;
+
+		const Vec4 sampleColor0 = texelFetch(u_inTex, IVec3(unormalizedUvs / 2, 0), 0);
+		const Vec4 sampleColor1 = texelFetch(u_inTex, IVec3(unormalizedUvs / 2, 1), 0);
+		color0 += sampleColor0 * w;
+		color1 += sampleColor1 * w;
 	}
 
-	color /= weight;
+	color0 /= weight;
+	color1 /= weight;
 
 	// Write value
-	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), color);
+	imageStore(u_outImg[0], IVec2(gl_GlobalInvocationID.xy), color0);
+	imageStore(u_outImg[1], IVec2(gl_GlobalInvocationID.xy), color1);
 }
 
 #pragma anki end

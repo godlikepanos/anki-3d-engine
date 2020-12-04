@@ -63,11 +63,15 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 		m_r->getWidth(), m_r->getHeight(), Format::R8G8B8A8_UNORM,
 		TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 		"RtShadows");
+	texinit.m_type = TextureType::_2D_ARRAY;
+	texinit.m_layerCount = 2;
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	m_historyAndFinalRt = m_r->createAndClearRenderTarget(texinit);
 
 	m_renderRt = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8G8B8A8_UNORM,
 													  "RtShadowsTmp");
+	m_renderRt.m_type = TextureType::_2D_ARRAY;
+	m_renderRt.m_layerCount = 2;
 	m_renderRt.bake();
 
 	// Misc
@@ -209,7 +213,12 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
-	rgraphCtx.bindImage(0, 1, m_runCtx.m_renderRt, TextureSubresourceInfo());
+
+	TextureSubresourceInfo subresource;
+	rgraphCtx.bindImage(0, 1, m_runCtx.m_renderRt, subresource, 0);
+	subresource.m_firstLayer = 1;
+	rgraphCtx.bindImage(0, 1, m_runCtx.m_renderRt, subresource, 1);
+
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyAndFinalRt);
 	cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindTexture(0, 4, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
@@ -229,8 +238,7 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindAllBindless(1);
 
-	Vec4 rejectFactors;
-	static_assert(4 == MAX_SHADOW_LAYERS, "Wrong assumption");
+	Array<F32, MAX_SHADOW_LAYERS> rejectFactors;
 	for(U32 i = 0; i < MAX_SHADOW_LAYERS; ++i)
 	{
 		rejectFactors[i] = F32(m_runCtx.m_layersWithRejectedHistory.get(i));
@@ -251,7 +259,11 @@ void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_renderRt);
 	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindImage(0, 4, m_runCtx.m_historyAndFinalRt, TextureSubresourceInfo());
+
+	TextureSubresourceInfo subresource;
+	rgraphCtx.bindImage(0, 4, m_runCtx.m_historyAndFinalRt, subresource, 0);
+	subresource.m_firstLayer = 1;
+	rgraphCtx.bindImage(0, 4, m_runCtx.m_historyAndFinalRt, subresource, 1);
 
 	class PC
 	{

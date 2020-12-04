@@ -54,7 +54,7 @@ layout(set = 0, binding = 16) uniform texture2D u_msDepthRt;
 layout(set = 0, binding = 17) uniform texture2D u_ssrRt;
 layout(set = 0, binding = 18) uniform texture2D u_ssaoRt;
 layout(set = 0, binding = 19) uniform texture2D u_ssgiRt;
-layout(set = 0, binding = 20) uniform texture2D u_resolvedSm;
+layout(set = 0, binding = 20) uniform texture2DArray u_resolvedSm;
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;
@@ -103,8 +103,20 @@ void main()
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
 
 	// SM
-	Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);
-#if !USE_SHADOW_LAYERS
+#if USE_SHADOW_LAYERS
+	const Vec4 resolvedSm0 = textureLod(u_resolvedSm, u_trilinearClampSampler, Vec3(in_uv, 0.0), 0.0);
+	const Vec4 resolvedSm1 = textureLod(u_resolvedSm, u_trilinearClampSampler, Vec3(in_uv, 1.0), 0.0);
+	F32 resolvedSm[8];
+	resolvedSm[0] = resolvedSm0[0];
+	resolvedSm[1] = resolvedSm0[1];
+	resolvedSm[2] = resolvedSm0[2];
+	resolvedSm[3] = resolvedSm0[3];
+	resolvedSm[4] = resolvedSm1[0];
+	resolvedSm[5] = resolvedSm1[1];
+	resolvedSm[6] = resolvedSm1[2];
+	resolvedSm[7] = resolvedSm1[3];
+#else
+	Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, Vec3(in_uv, 0.0), 0.0);
 	U32 resolvedSmIdx = 0;
 #endif
 

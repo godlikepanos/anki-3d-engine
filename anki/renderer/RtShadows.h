@@ -53,7 +53,7 @@ public:
 
 	U32 m_sbtRecordSize = 256;
 
-	static constexpr U32 MAX_SHADOW_LAYERS = 4;
+	static constexpr U32 MAX_SHADOW_LAYERS = 8;
 
 	class ShadowLayer
 	{

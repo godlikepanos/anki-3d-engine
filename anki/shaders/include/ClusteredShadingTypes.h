@@ -16,7 +16,7 @@ const U32 TYPED_OBJECT_COUNT = 6u; // Point lights, spot lights, refl probes, GI
 const F32 INVALID_TEXTURE_INDEX = -1.0f;
 const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; // The near plane on the shadow map frustums.
 const U32 MAX_SHADOW_CASCADES = 4u;
-const F32 SUBSURFACE_MIN = 0.05f;
+const F32 SUBSURFACE_MIN = 0.01f;
 const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES = 8u; // Global illumination clipmap count.
 
 // See the documentation in the ClustererBin class.
