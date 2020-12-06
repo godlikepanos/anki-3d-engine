@@ -1,0 +1,65 @@
+<serializer>
+	<includes>
+		<include file="&lt;anki/resource/Common.h&gt;"/>
+		<include file="&lt;anki/Math.h&gt;"/>
+	</includes>
+
+	<doxygen_group name="resource"/>
+
+	<prefix_code><![CDATA[
+static constexpr const char* MESH_MAGIC = "ANKIMES5";
+
+enum class MeshBinaryFlag : U32
+{
+	NONE = 0,
+	QUAD = 1 << 0,
+	CONVEX = 1 << 1,
+
+	ALL = QUAD | CONVEX,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
+]]></prefix_code>
+
+	<classes>
+		<class name="MeshBinaryVertexBuffer" comment="Vertex buffer info. The size of the buffer is m_vertexStride*MeshBinaryHeader::m_totalVertexCount aligned to 16">
+			<members>
+				<member name="m_vertexStride" type="U32" comment="The size of the vertex"/>
+			</members>
+		</class>
+
+		<class name="MeshBinaryVertexAttribute" comment="Vertex attribute">
+			<members>
+				<member name="m_bufferBinding" type="U32"/>
+				<member name="m_format" type="Format" comment="If the format is NONE then the attribute is not present"/>
+				<member name="m_relativeOffset" type="U32"/>
+				<member name="m_scale" type="F32"/>
+			</members>
+		</class>
+
+		<class name="MeshBinarySubMesh">
+			<members>
+				<member name="m_firstIndex" type="U32"/>
+				<member name="m_indexCount" type="U32"/>
+				<member name="m_aabbMin" type="Vec3" comment="Bounding box min"/>
+				<member name="m_aabbMax" type="Vec3" comment="Bounding box max"/>
+			</members>
+		</class>
+
+		<class name="MeshBinaryHeader" comment="The 1st things that appears in a mesh binary. @note The index and vertex buffers are aligned to 16 bytes">
+			<members>
+				<member name="m_magic" type="U8" array_size="8"/>
+				<member name="m_flags" type="MeshBinaryFlag"/>
+				<member name="m_vertexBuffers" type="MeshBinaryVertexBuffer" array_size="U32(VertexAttributeLocation::COUNT)"/>
+				<member name="m_vertexBufferCount" type="U32"/>
+				<member name="m_vertexAttributes" type="MeshBinaryVertexAttribute" array_size="U32(VertexAttributeLocation::COUNT)"/>
+				<member name="m_indexType" type="IndexType"/>
+				<member name="m_padding" type="U8" array_size="3"/>
+				<member name="m_totalIndexCount" type="U32"/>
+				<member name="m_totalVertexCount" type="U32"/>
+				<member name="m_subMeshCount" type="U32"/>
+				<member name="m_aabbMin" type="Vec3" comment="Bounding box min"/>
+				<member name="m_aabbMax" type="Vec3" comment="Bounding box max"/>
+			</members>
+		</class>
+	</classes>
+</serializer>

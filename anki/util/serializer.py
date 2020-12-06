@@ -54,8 +54,11 @@ def parse_commandline():
 
     parser = optparse.OptionParser(usage="usage: %prog [options]", description="Create serialization code using XML")
 
-    parser.add_option(
-        "-i", "--input", dest="inp", type="string", help="specify the XML files to parse. Seperate with :")
+    parser.add_option("-i",
+                      "--input",
+                      dest="inp",
+                      type="string",
+                      help="specify the XML files to parse. Seperate with :")
 
     parser.add_option("-o", "--output", dest="out", type="string", help="specify the .h file to populate")
 
@@ -160,8 +163,8 @@ def gen_class(root_el):
         if member.is_pointer(member_arr_copy):
             writeln("s.doPointer(\"%s\", offsetof(%s, %s), self.%s);" % (member.name, name, member.name, member.name))
         elif member.is_dynamic_array(member_arr_copy):
-            writeln("s.doDynamicArray(\"%s\", offsetof(%s, %s), self.%s, self.%s);" % (member.name, name, member.name,
-                                                                                       member.name, member.array_size))
+            writeln("s.doDynamicArray(\"%s\", offsetof(%s, %s), self.%s, self.%s);" %
+                    (member.name, name, member.name, member.name, member.array_size))
         elif member.array_size != "1":
             writeln("s.doArray(\"%s\", offsetof(%s, %s), &self.%s[0], self.%s.getSize());" %
                     (member.name, name, member.name, member.name, member.name))
@@ -213,9 +216,24 @@ def gen_file(filename):
     writeln("{")
     writeln("")
 
+    doxygen_group_el = root.find("doxygen_group")
+    if doxygen_group_el is not None:
+        doxygen_group = doxygen_group_el.get("name")
+        writeln("/// @addtogroup %s" % doxygen_group)
+        writeln("/// @{")
+        writeln("")
+
+    prefix_code = root.find("prefix_code")
+    if prefix_code is not None:
+        writeln("%s" % prefix_code.text)
+
     for cls in root.iter("classes"):
         for cl in cls.iter("class"):
             gen_class(cl)
+
+    if doxygen_group_el is not None:
+        writeln("/// @}")
+        writeln("")
 
     writeln("} // end namespace anki")
 
