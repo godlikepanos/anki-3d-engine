@@ -59,8 +59,6 @@ private:
 
 	DynamicArray<MeshBinarySubMesh> m_subMeshes;
 
-	U32 m_loadedChunk = 0; ///< Because the store methods need to be called in sequence.
-
 	Bool isLoaded() const
 	{
 		return m_file.get() != nullptr;
@@ -71,6 +69,14 @@ private:
 		ANKI_ASSERT(isLoaded());
 		return getAlignedRoundUp(16, PtrSize(m_header.m_totalIndexCount)
 										 * ((m_header.m_indexType == IndexType::U16) ? 2 : 4));
+	}
+
+	PtrSize getVertexBufferSize(U32 bufferIdx) const
+	{
+		ANKI_ASSERT(isLoaded());
+		ANKI_ASSERT(bufferIdx < m_header.m_vertexBufferCount);
+		return getAlignedRoundUp(16, PtrSize(m_header.m_totalVertexCount)
+										 * PtrSize(m_header.m_vertexBuffers[bufferIdx].m_vertexStride));
 	}
 
 	ANKI_USE_RESULT Error checkHeader() const;
