@@ -7,6 +7,7 @@
 
 #include <anki/resource/MeshBinary.h>
 #include <anki/resource/ResourceFilesystem.h>
+#include <anki/resource/MeshBinary.h>
 #include <anki/util/WeakArray.h>
 
 namespace anki
@@ -50,6 +51,11 @@ public:
 		return m_header.m_vertexAttributes[VertexAttributeLocation::BONE_INDICES].m_format != Format::NONE;
 	}
 
+	ConstWeakArray<MeshBinarySubMesh> getSubMeshes() const
+	{
+		return ConstWeakArray<MeshBinarySubMesh>(m_subMeshes);
+	}
+
 private:
 	ResourceManager* m_manager;
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -67,16 +73,18 @@ private:
 	PtrSize getIndexBufferSize() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return getAlignedRoundUp(16, PtrSize(m_header.m_totalIndexCount)
-										 * ((m_header.m_indexType == IndexType::U16) ? 2 : 4));
+		return getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT,
+								 PtrSize(m_header.m_totalIndexCount)
+									 * ((m_header.m_indexType == IndexType::U16) ? 2 : 4));
 	}
 
 	PtrSize getVertexBufferSize(U32 bufferIdx) const
 	{
 		ANKI_ASSERT(isLoaded());
 		ANKI_ASSERT(bufferIdx < m_header.m_vertexBufferCount);
-		return getAlignedRoundUp(16, PtrSize(m_header.m_totalVertexCount)
-										 * PtrSize(m_header.m_vertexBuffers[bufferIdx].m_vertexStride));
+		return getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT,
+								 PtrSize(m_header.m_totalVertexCount)
+									 * PtrSize(m_header.m_vertexBuffers[bufferIdx].m_vertexStride));
 	}
 
 	ANKI_USE_RESULT Error checkHeader() const;

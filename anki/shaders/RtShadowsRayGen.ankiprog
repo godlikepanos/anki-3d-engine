@@ -157,7 +157,6 @@ void main()
 		const F32 near2 = readDepth(u_depthRt, uv, -1, 0);
 		const F32 near3 = readDepth(u_depthRt, uv, 0, -1);
 
-		const F32 ldepth = linearizeDepth(depth, u_lightingUniforms.m_near, u_lightingUniforms.m_far);
 		const F32 boxMin = min(depth, min(near0, min(near1, min(near2, near3))));
 		const F32 boxMax = max(depth, max(near0, max(near1, max(near2, near3))));
 

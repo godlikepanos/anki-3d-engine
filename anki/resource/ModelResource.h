@@ -115,17 +115,17 @@ public:
 		return *m_model;
 	}
 
-	const Obb& getBoundingShape() const
+	const Aabb& getBoundingShape() const
 	{
 		return m_meshes[0]->getBoundingShape();
 	}
 
-	const Obb& getBoundingShapeSub(U32 subMeshId) const
+	Aabb getBoundingShapeSub(U32 subMeshId) const
 	{
 		U32 firstIdx, idxCount;
-		const Obb* obb;
-		m_meshes[0]->getSubMeshInfo(subMeshId, firstIdx, idxCount, obb);
-		return *obb;
+		Aabb aabb;
+		m_meshes[0]->getSubMeshInfo(subMeshId, firstIdx, idxCount, aabb);
+		return aabb;
 	}
 
 	U32 getSubMeshCount() const
@@ -198,7 +198,7 @@ public:
 		return m_modelPatches;
 	}
 
-	const Obb& getVisibilityShape() const
+	const Aabb& getVisibilityShape() const
 	{
 		return m_visibilityShape;
 	}
@@ -212,7 +212,7 @@ public:
 
 private:
 	DynamicArray<ModelPatch> m_modelPatches;
-	Obb m_visibilityShape;
+	Aabb m_visibilityShape;
 	SkeletonResourcePtr m_skeleton;
 	DynamicArray<AnimationResourcePtr> m_animations;
 };

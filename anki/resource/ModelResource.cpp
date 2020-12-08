@@ -6,7 +6,6 @@
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/MeshResource.h>
-#include <anki/resource/MeshLoader.h>
 #include <anki/util/Xml.h>
 #include <anki/util/Logger.h>
 

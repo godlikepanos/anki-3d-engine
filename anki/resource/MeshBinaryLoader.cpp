@@ -146,7 +146,7 @@ Error MeshBinaryLoader::checkHeader() const
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::UV, Array<Format, 1>{{Format::R32G32_SFLOAT}}, 1, 8));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::UV2, Array<Format, 1>{{Format::NONE}}, 1, 0));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::BONE_INDICES,
-						   Array<Format, 2>{{Format::NONE, Format::R16G16B16A16_UINT}}, 2, 0));
+						   Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}, 2, 0));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::BONE_WEIGHTS,
 						   Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}, 2, 8));
 

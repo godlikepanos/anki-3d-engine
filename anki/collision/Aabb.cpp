@@ -16,11 +16,11 @@ Aabb Aabb::getTransformed(const Transform& trf) const
 		absM[i] = absolute(trf.getRotation()[i]);
 	}
 
-	Vec4 center = (m_min + m_max) * 0.5;
-	Vec4 extend = (m_max - m_min) * 0.5;
+	Vec4 center = (m_min + m_max) * 0.5f;
+	Vec4 extend = (m_max - m_min) * 0.5f;
 
 	Vec4 newC = trf.transform(center);
-	Vec4 newE = Vec4(absM * (extend * trf.getScale()), 0.0);
+	Vec4 newE = Vec4(absM * (extend * trf.getScale()), 0.0f);
 
 	return Aabb(newC - newE, newC + newE);
 }

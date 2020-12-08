@@ -20,7 +20,7 @@
 #include <anki/resource/ShaderProgramResource.h>
 #include <anki/resource/CollisionResource.h>
 
-#include <anki/resource/MeshLoader.h>
+#include <anki/resource/MeshBinaryLoader.h>
 
 /// @defgroup resource Collection of resources and management
 

@@ -7,7 +7,7 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/OccluderComponent.h>
-#include <anki/resource/MeshLoader.h>
+#include <anki/resource/MeshBinaryLoader.h>
 
 namespace anki
 {
@@ -45,7 +45,7 @@ OccluderNode::~OccluderNode()
 Error OccluderNode::init(const CString& meshFname)
 {
 	// Load mesh
-	MeshLoader loader(&getSceneGraph().getResourceManager());
+	MeshBinaryLoader loader(&getSceneGraph().getResourceManager());
 	ANKI_CHECK(loader.load(meshFname));
 
 	const U32 indexCount = loader.getHeader().m_totalIndexCount;

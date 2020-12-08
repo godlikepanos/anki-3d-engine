@@ -27,12 +27,12 @@ ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_MainVertex == sizeof(MainVertex));
 /// The vertex that contains the bone influences.
 struct BoneInfoVertex
 {
-	F32 m_boneIndices[4];
-	U8 m_boneWeights[4];
+	U8Vec4 m_boneIndices;
+	U8Vec4 m_boneWeights;
 };
 
-const U32 _ANKI_SIZEOF_BoneInfoVertex = 5 * 4;
-const U32 _ANKI_ALIGNOF_BoneInfoVertex = 4;
+const U32 _ANKI_SIZEOF_BoneInfoVertex = 8;
+const U32 _ANKI_ALIGNOF_BoneInfoVertex = 1;
 ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_BoneInfoVertex == sizeof(BoneInfoVertex));
 
 /// A structure that contains all the info of a geometry.

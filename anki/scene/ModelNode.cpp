@@ -60,11 +60,7 @@ public:
 		if(skin.getTimestamp() == node.getGlobalTimestamp())
 		{
 			ModelNode& mnode = static_cast<ModelNode&>(node);
-
-			const Aabb& box = skin.getBoneBoundingVolume();
-			mnode.m_obbLocal.setCenter((box.getMin() + box.getMax()) / 2.0f);
-			mnode.m_obbLocal.setExtend(box.getMax() - mnode.m_obbLocal.getCenter());
-			mnode.m_obbLocal.setRotation(Mat3x4::getIdentity());
+			mnode.m_aabbLocal = skin.getBoneBoundingVolume();
 		}
 
 		return Error::NONE;
@@ -102,7 +98,7 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 	}
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
-	newComponent<SpatialComponent>(this, &m_obbWorld);
+	newComponent<SpatialComponent>(this, &m_aabbWorld);
 	RenderComponent* rcomp = newComponent<RenderComponent>();
 	rcomp->initRaster(
 		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
@@ -117,7 +113,7 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 		rcomp->initRayTracing(setupRayTracingInstanceQueueElement, this);
 	}
 
-	m_obbLocal = m_model->getModelPatches()[m_modelPatchIdx].getBoundingShape();
+	m_aabbLocal = m_model->getModelPatches()[m_modelPatchIdx].getBoundingShape();
 
 	return Error::NONE;
 }
@@ -144,7 +140,7 @@ Error ModelNode::init(const CString& modelFname)
 
 void ModelNode::updateSpatialComponent(const MoveComponent& move)
 {
-	m_obbWorld = m_obbLocal.getTransformed(move.getWorldTransform());
+	m_aabbWorld = m_aabbLocal.getTransformed(move.getWorldTransform());
 
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
 	sp.markForUpdate();
@@ -251,10 +247,9 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		for(U32 i = 0; i < userData.getSize(); ++i)
 		{
 			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
-
-			const Mat3 rot = self2.m_obbWorld.getRotation().getRotationPart();
-			const Vec4 tsl = self2.m_obbWorld.getCenter().xyz1();
-			const Vec3 scale = self2.m_obbWorld.getExtend().xyz();
+			const Aabb& box = self2.m_aabbWorld;
+			const Vec4 tsl = (box.getMin() + box.getMax()) / 2.0f;
+			const Vec3 scale = (box.getMax().xyz() - box.getMin().xyz()) / 2.0f;
 
 			// Set non uniform scale. Add a margin to avoid flickering
 			Mat3 nonUniScale = Mat3::getZero();
@@ -263,7 +258,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			nonUniScale(1, 1) = scale.y() * MARGIN;
 			nonUniScale(2, 2) = scale.z() * MARGIN;
 
-			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl, rot * nonUniScale, 1.0f);
+			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl, Mat3::getIdentity() * nonUniScale, 1.0f);
 		}
 
 		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);

@@ -5,7 +5,7 @@
 
 #include <anki/resource/CollisionResource.h>
 #include <anki/resource/ResourceManager.h>
-#include <anki/resource/MeshLoader.h>
+#include <anki/resource/MeshBinaryLoader.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/util/Xml.h>
 
@@ -47,14 +47,14 @@ Error CollisionResource::load(const ResourceFilename& filename, Bool async)
 		CString meshfname;
 		ANKI_CHECK(valEl.getText(meshfname));
 
-		MeshLoader loader(&getManager(), getTempAllocator());
+		MeshBinaryLoader loader(&getManager(), getTempAllocator());
 		ANKI_CHECK(loader.load(meshfname));
 
 		DynamicArrayAuto<U32> indices(getTempAllocator());
 		DynamicArrayAuto<Vec3> positions(getTempAllocator());
 		ANKI_CHECK(loader.storeIndicesAndPosition(indices, positions));
 
-		const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFile::Flag::CONVEX);
+		const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::CONVEX);
 
 		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(positions, indices, convex);
 	}
