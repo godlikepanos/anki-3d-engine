@@ -49,7 +49,6 @@ protected:
 
 	void registerResource(Type* ptr)
 	{
-		ANKI_ASSERT(ptr->getRefcount().load() == 0);
 		ANKI_ASSERT(find(ptr->getFilename()) == m_ptrs.getEnd());
 		m_ptrs.pushBack(m_alloc, ptr);
 	}

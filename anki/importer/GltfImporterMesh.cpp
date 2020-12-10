@@ -620,7 +620,8 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 	}
 
 	// Chose the formats of the attributes
-	MeshBinaryHeader header = {};
+	MeshBinaryHeader header;
+	memset(&header, 0, sizeof(header));
 	{
 		// Positions
 		MeshBinaryVertexAttribute& posa = header.m_vertexAttributes[VertexAttributeLocation::POSITION];
@@ -655,14 +656,14 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 		{
 			MeshBinaryVertexAttribute& bidxa = header.m_vertexAttributes[VertexAttributeLocation::BONE_INDICES];
 			bidxa.m_bufferBinding = 2;
-			bidxa.m_format = Format::R16G16B16A16_UINT;
+			bidxa.m_format = Format::R8G8B8A8_UINT;
 			bidxa.m_relativeOffset = 0;
 			bidxa.m_scale = 1.0f;
 
 			MeshBinaryVertexAttribute& wa = header.m_vertexAttributes[VertexAttributeLocation::BONE_WEIGHTS];
 			wa.m_bufferBinding = 2;
 			wa.m_format = Format::R8G8B8A8_UNORM;
-			wa.m_relativeOffset = sizeof(U16Vec4);
+			wa.m_relativeOffset = sizeof(U8Vec4);
 			wa.m_scale = 1.0f;
 		}
 	}
@@ -809,9 +810,9 @@ Error GltfImporter::writeMesh(const cgltf_mesh& mesh, CString nameOverride, F32 
 
 			ANKI_CHECK(file.write(&verts[0], verts.getSizeInBytes()));
 		}
-	}
 
-	ANKI_CHECK(alignBufferInFile(header.m_totalVertexCount * sizeof(BoneInfoVertex), file));
+		ANKI_CHECK(alignBufferInFile(header.m_totalVertexCount * sizeof(BoneInfoVertex), file));
+	}
 
 	return Error::NONE;
 }

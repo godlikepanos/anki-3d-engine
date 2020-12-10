@@ -73,18 +73,27 @@ private:
 	PtrSize getIndexBufferSize() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT,
-								 PtrSize(m_header.m_totalIndexCount)
-									 * ((m_header.m_indexType == IndexType::U16) ? 2 : 4));
+		return PtrSize(m_header.m_totalIndexCount) * ((m_header.m_indexType == IndexType::U16) ? 2 : 4);
+	}
+
+	PtrSize getAlignedIndexBufferSize() const
+	{
+		ANKI_ASSERT(isLoaded());
+		return getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, getIndexBufferSize());
 	}
 
 	PtrSize getVertexBufferSize(U32 bufferIdx) const
 	{
 		ANKI_ASSERT(isLoaded());
 		ANKI_ASSERT(bufferIdx < m_header.m_vertexBufferCount);
-		return getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT,
-								 PtrSize(m_header.m_totalVertexCount)
-									 * PtrSize(m_header.m_vertexBuffers[bufferIdx].m_vertexStride));
+		return PtrSize(m_header.m_totalVertexCount) * PtrSize(m_header.m_vertexBuffers[bufferIdx].m_vertexStride);
+	}
+
+	PtrSize getAlignedVertexBufferSize(U32 bufferIdx) const
+	{
+		ANKI_ASSERT(isLoaded());
+		ANKI_ASSERT(bufferIdx < m_header.m_vertexBufferCount);
+		return getAlignedRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, getVertexBufferSize(bufferIdx));
 	}
 
 	ANKI_USE_RESULT Error checkHeader() const;

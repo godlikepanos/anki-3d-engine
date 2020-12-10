@@ -146,9 +146,9 @@ Error MeshBinaryLoader::checkHeader() const
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::UV, Array<Format, 1>{{Format::R32G32_SFLOAT}}, 1, 8));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::UV2, Array<Format, 1>{{Format::NONE}}, 1, 0));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::BONE_INDICES,
-						   Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}, 2, 0));
+						   Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UINT}}, 2, 0));
 	ANKI_CHECK(checkFormat(VertexAttributeLocation::BONE_WEIGHTS,
-						   Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}, 2, 8));
+						   Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}, 2, 4));
 
 	// Vertex buffers
 	if(m_header.m_vertexBufferCount != 2 + hasBoneInfo())
@@ -158,7 +158,7 @@ Error MeshBinaryLoader::checkHeader() const
 	}
 
 	if(m_header.m_vertexBuffers[0].m_vertexStride != sizeof(Vec3) || m_header.m_vertexBuffers[1].m_vertexStride != 16
-	   || (hasBoneInfo() && m_header.m_vertexBuffers[2].m_vertexStride != 12))
+	   || (hasBoneInfo() && m_header.m_vertexBuffers[2].m_vertexStride != 8))
 	{
 		ANKI_RESOURCE_LOGE("Some of the vertex buffers have incorrect vertex stride");
 		return Error::USER_DATA;
@@ -207,11 +207,11 @@ Error MeshBinaryLoader::checkHeader() const
 	PtrSize totalSize = sizeof(m_header);
 
 	totalSize += sizeof(MeshBinarySubMesh) * m_header.m_subMeshCount;
-	totalSize += getIndexBufferSize();
+	totalSize += getAlignedIndexBufferSize();
 
 	for(U32 i = 0; i < m_header.m_vertexBufferCount; ++i)
 	{
-		totalSize += getVertexBufferSize(i);
+		totalSize += getAlignedVertexBufferSize(i);
 	}
 
 	if(totalSize != m_file->getSize())
@@ -243,10 +243,10 @@ Error MeshBinaryLoader::storeVertexBuffer(U32 bufferIdx, void* ptr, PtrSize size
 	ANKI_ASSERT(bufferIdx < m_header.m_vertexBufferCount);
 	ANKI_ASSERT(size == getVertexBufferSize(bufferIdx));
 
-	PtrSize seek = sizeof(m_header) + m_subMeshes.getSizeInBytes() + getIndexBufferSize();
+	PtrSize seek = sizeof(m_header) + m_subMeshes.getSizeInBytes() + getAlignedIndexBufferSize();
 	for(U32 i = 0; i < bufferIdx; ++i)
 	{
-		seek += getVertexBufferSize(i);
+		seek += getAlignedVertexBufferSize(i);
 	}
 
 	ANKI_CHECK(m_file->seek(seek, FileSeekOrigin::BEGINNING));

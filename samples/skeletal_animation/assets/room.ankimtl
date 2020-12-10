@@ -12,15 +12,23 @@
 	</mutation>
 
 	<inputs>
-
+		
 
 		<input shaderVar="m_diffColor" value="0.613641 0.750176 0.800000"/>
 		<input shaderVar="m_specColor" value="0.040000 0.040000 0.040000"/>
 		<input shaderVar="m_roughness" value="0.500000"/>
 		<input shaderVar="m_metallic" value="0.000000"/>
-
+		
 		<input shaderVar="m_emission" value="0.000000 0.000000 0.000000"/>
 		<input shaderVar="m_subsurface" value="0.000000"/>
-
+		
 	</inputs>
 </material>
+
+<rtMaterial>
+	<rayType type="shadows" shaderProgram="anki/shaders/RtShadowsHit.ankiprog">
+		<mutation>
+			<mutator name="ALPHA_TEXTURE" value="0"/>
+		</mutation>
+	</rayType>
+</rtMaterial>
