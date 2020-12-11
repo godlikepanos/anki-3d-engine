@@ -151,7 +151,7 @@ Error MeshBinaryLoader::checkHeader() const
 						   Array<Format, 2>{{Format::NONE, Format::R8G8B8A8_UNORM}}, 2, 4));
 
 	// Vertex buffers
-	if(m_header.m_vertexBufferCount != 2 + hasBoneInfo())
+	if(m_header.m_vertexBufferCount != 2 + U32(hasBoneInfo()))
 	{
 		ANKI_RESOURCE_LOGE("Wrong number of vertex buffers");
 		return Error::USER_DATA;

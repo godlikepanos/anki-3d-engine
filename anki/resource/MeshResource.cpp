@@ -125,7 +125,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	U32 totalVertexBuffSize = 0;
 	for(U32 i = 0; i < header.m_vertexBufferCount; ++i)
 	{
-		alignRoundUp(VERTEX_BUFFER_ALIGNMENT, totalVertexBuffSize);
+		alignRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, totalVertexBuffSize);
 
 		m_vertexBufferInfos[i].m_offset = totalVertexBuffSize;
 		m_vertexBufferInfos[i].m_stride = header.m_vertexBuffers[i].m_vertexStride;
@@ -292,7 +292,7 @@ Error MeshResource::loadAsync(MeshBinaryLoader& loader) const
 		PtrSize offset = 0;
 		for(U32 i = 0; i < m_vertexBufferInfos.getSize(); ++i)
 		{
-			alignRoundUp(VERTEX_BUFFER_ALIGNMENT, offset);
+			alignRoundUp(MESH_BINARY_BUFFER_ALIGNMENT, offset);
 			ANKI_CHECK(
 				loader.storeVertexBuffer(i, data + offset, PtrSize(m_vertexBufferInfos[i].m_stride) * m_vertexCount));
 

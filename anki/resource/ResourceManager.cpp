@@ -12,6 +12,7 @@
 
 #include <anki/resource/MaterialResource.h>
 #include <anki/resource/MeshResource.h>
+#include <anki/resource/CpuMeshResource.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ScriptResource.h>
 #include <anki/resource/DummyResource.h>

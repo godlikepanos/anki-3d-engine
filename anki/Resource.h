@@ -10,6 +10,7 @@
 #include <anki/resource/AnimationResource.h>
 #include <anki/resource/ScriptResource.h>
 #include <anki/resource/MeshResource.h>
+#include <anki/resource/CpuMeshResource.h>
 #include <anki/resource/MaterialResource.h>
 #include <anki/resource/TextureAtlasResource.h>
 #include <anki/resource/TextureResource.h>

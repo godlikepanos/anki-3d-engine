@@ -124,8 +124,6 @@ public:
 	}
 
 private:
-	static constexpr U32 VERTEX_BUFFER_ALIGNMENT = 16;
-
 	class LoadTask;
 	class LoadContext;
 
