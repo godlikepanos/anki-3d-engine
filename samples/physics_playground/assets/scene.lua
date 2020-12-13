@@ -19,7 +19,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.912920)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Icosphere.001_cl", "assets/Icosphere.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Icosphere.001_cl", "assets/Icosphere.ankimesh", trf)
 
 node = scene:newModelNode("Icosphere", "assets/Icosphere_walls.ankimdl")
 trf = Transform.new()
@@ -29,7 +29,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.264235)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Icosphere_cl", "assets/Icosphere.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Icosphere_cl", "assets/Icosphere.ankimesh", trf)
 
 node = scene:newModelNode("Cube.019", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -39,7 +39,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.019_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.019_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.018", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -49,7 +49,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.018_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.018_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.017", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -59,7 +59,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.017_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.017_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.016", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -69,7 +69,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.016_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.016_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.015", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -79,7 +79,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.015_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.015_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.014", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -89,7 +89,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.014_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.014_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.013", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -99,7 +99,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.013_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.013_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.012", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -109,7 +109,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.012_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.012_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.011", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -119,7 +119,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.011_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.011_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.010", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -129,7 +129,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.010_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.010_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.009", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -139,7 +139,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.009_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.009_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.008", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -149,7 +149,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.008_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.008_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.007", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -159,7 +159,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.007_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.007_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.006", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -169,7 +169,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.006_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.006_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.005", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -179,7 +179,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.005_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.005_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.004", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -189,7 +189,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.004_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.004_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.003", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -199,7 +199,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.003_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.003_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.002", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -209,7 +209,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.002_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.002_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Suzanne", "assets/Suzanne_dynamic.ankimdl")
 trf = Transform.new()
@@ -219,7 +219,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Suzanne_cl", "assets/Suzanne.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Suzanne_cl", "assets/Suzanne.ankimesh", trf)
 
 node = scene:newModelNode("Cube.001", "assets/walls_sky.ankimdl")
 trf = Transform.new()
@@ -238,7 +238,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube_cl", "assets/floor.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube_cl", "assets/floor.ankimesh", trf)
 
 node = scene:newDirectionalLightNode("Lamp_Orientation")
 lcomp = node:getSceneNodeBase():getLightComponent()
@@ -274,7 +274,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.021_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.021_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.022", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -284,7 +284,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.022_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.022_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.023", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -294,7 +294,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.023_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.023_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.024", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -304,7 +304,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.024_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.024_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.025", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -314,7 +314,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.025_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.025_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.026", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -324,7 +324,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.026_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.026_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.027", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -334,7 +334,7 @@ rot:setAll(0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.027_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.027_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.028", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -344,7 +344,7 @@ rot:setAll(0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.028_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.028_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.029", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -354,7 +354,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.029_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.029_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.030", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -364,7 +364,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.030_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.030_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.031", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -374,7 +374,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.031_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.031_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.032", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -384,7 +384,7 @@ rot:setAll(1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.032_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.032_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.033", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -394,7 +394,7 @@ rot:setAll(0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.033_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.033_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.034", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -404,7 +404,7 @@ rot:setAll(0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.034_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.034_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.035", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -414,7 +414,7 @@ rot:setAll(0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000,
 trf:setRotation(rot)
 trf:setScale(0.995130)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.035_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.035_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.036", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -424,7 +424,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.036_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.036_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.038", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -434,7 +434,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.038_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.038_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.039", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -444,7 +444,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.039_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.039_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.037", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -454,7 +454,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.037_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.037_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.040", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -464,7 +464,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.040_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.040_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.041", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -474,7 +474,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.041_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.041_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.042", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -484,7 +484,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.042_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.042_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.043", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -494,7 +494,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.043_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.043_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newModelNode("Cube.044", "assets/wall_walls.001.ankimdl")
 trf = Transform.new()
@@ -504,7 +504,7 @@ rot:setAll(0.000000, 1.000000, 0.000000, 0.000000, -1.000000, 0.000000, 0.000000
 trf:setRotation(rot)
 trf:setScale(1.000000)
 node:getSceneNodeBase():getMoveComponent():setLocalTransform(trf)
-node2 = scene:newStaticCollisionNode("Cube.044_cl", "assets/wall.ankicl", trf)
+node2 = scene:newStaticCollisionNode("Cube.044_cl", "assets/wall.ankimesh", trf)
 
 node = scene:newGlobalIlluminationProbeNode("refl_probe.002")
 comp = node:getSceneNodeBase():getGlobalIlluminationProbeComponent()

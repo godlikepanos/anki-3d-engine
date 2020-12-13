@@ -258,7 +258,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 			nonUniScale(1, 1) = scale.y() * MARGIN;
 			nonUniScale(2, 2) = scale.z() * MARGIN;
 
-			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl, Mat3::getIdentity() * nonUniScale, 1.0f);
+			mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
 		}
 
 		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);

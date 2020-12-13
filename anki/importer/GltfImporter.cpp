@@ -608,7 +608,6 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				cgltf_mesh* m_mesh;
 				cgltf_material* m_mtl;
 				cgltf_skin* m_skin;
-				Bool m_selfCollision;
 				RayTypeBit m_rayTypes;
 			};
 			Ctx* ctx = m_alloc.newInstance<Ctx>();
@@ -620,7 +619,16 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 			HashMapAuto<CString, StringAuto>::Iterator it2;
 			const Bool selfCollision = (it2 = extras.find("collision_mesh")) != extras.getEnd() && *it2 == "self";
-			ctx->m_selfCollision = selfCollision;
+
+			U32 maxLod = 0;
+			if(m_lodCount > 1 && !skipMeshLod(*node.mesh, 1))
+			{
+				maxLod = 1;
+			}
+			if(m_lodCount > 2 && !skipMeshLod(*node.mesh, 2))
+			{
+				maxLod = 2;
+			}
 
 			// Thread task
 			auto callback = [](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
@@ -628,7 +636,6 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 				// LOD 0
 				Error err = self.m_importer->writeMesh(*self.m_mesh, CString(), self.m_importer->computeLodFactor(0));
-				U32 maxLod = 0;
 
 				// LOD 1
 				if(!err && self.m_importer->m_lodCount > 1 && !self.m_importer->skipMeshLod(*self.m_mesh, 1))
@@ -636,7 +643,6 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 					StringAuto name(self.m_importer->m_alloc);
 					name.sprintf("%s_lod1", self.m_mesh->name);
 					err = self.m_importer->writeMesh(*self.m_mesh, name, self.m_importer->computeLodFactor(1));
-					maxLod = 1;
 				}
 
 				// LOD 2
@@ -645,7 +651,6 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 					StringAuto name(self.m_importer->m_alloc);
 					name.sprintf("%s_lod2", self.m_mesh->name);
 					err = self.m_importer->writeMesh(*self.m_mesh, name, self.m_importer->computeLodFactor(2));
-					maxLod = 2;
 				}
 
 				if(!err)
@@ -661,11 +666,6 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				if(!err && self.m_skin)
 				{
 					err = self.m_importer->writeSkeleton(*self.m_skin);
-				}
-
-				if(!err && self.m_selfCollision)
-				{
-					err = self.m_importer->writeCollisionMesh(*self.m_mesh, maxLod);
 				}
 
 				if(err)
@@ -693,9 +693,18 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 			if(selfCollision)
 			{
-				ANKI_CHECK(
-					m_sceneFile.writeText("node2 = scene:newStaticCollisionNode(\"%s_cl\", \"%s%s.ankicl\", trf)\n",
-										  getNodeName(node).cstr(), m_rpath.cstr(), node.mesh->name));
+				if(maxLod == 0)
+				{
+					ANKI_CHECK(m_sceneFile.writeText(
+						"node2 = scene:newStaticCollisionNode(\"%s_cl\", \"%s%s.ankimesh\", trf)\n",
+						getNodeName(node).cstr(), m_rpath.cstr(), node.mesh->name));
+				}
+				else
+				{
+					ANKI_CHECK(m_sceneFile.writeText(
+						"node2 = scene:newStaticCollisionNode(\"%s_cl\", \"%s%s_lod%u.ankimesh\", trf)\n",
+						getNodeName(node).cstr(), m_rpath.cstr(), node.mesh->name, maxLod));
+				}
 			}
 		}
 	}
@@ -1162,34 +1171,6 @@ Error GltfImporter::writeSkeleton(const cgltf_skin& skin)
 
 	ANKI_CHECK(file.writeText("\t</bones>\n"));
 	ANKI_CHECK(file.writeText("</skeleton>\n"));
-
-	return Error::NONE;
-}
-
-Error GltfImporter::writeCollisionMesh(const cgltf_mesh& mesh, U32 maxLod)
-{
-	StringAuto fname(m_alloc);
-	fname.sprintf("%s%s.ankicl", m_outDir.cstr(), mesh.name);
-	ANKI_GLTF_LOGI("Importing collision mesh %s", fname.cstr());
-
-	// Write file
-	File file;
-	ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
-
-	ANKI_CHECK(file.writeText("%s\n", XML_HEADER));
-
-	if(maxLod == 0)
-	{
-		ANKI_CHECK(file.writeText("<collisionShape>\n\t<type>staticMesh</type>\n\t<value>"
-								  "%s%s.ankimesh</value>\n</collisionShape>\n",
-								  m_rpath.cstr(), mesh.name));
-	}
-	else
-	{
-		ANKI_CHECK(file.writeText("<collisionShape>\n\t<type>staticMesh</type>\n\t<value>"
-								  "%s%s_lod%u.ankimesh</value>\n</collisionShape>\n",
-								  m_rpath.cstr(), mesh.name, maxLod));
-	}
 
 	return Error::NONE;
 }

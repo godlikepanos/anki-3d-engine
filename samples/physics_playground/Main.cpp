@@ -132,7 +132,7 @@ Error MyApp::sampleExtraInit()
 		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>("monkey_p2p", monkey, "assets/Suzanne_dynamic.ankimdl"));
 
 		BodyNode* body;
-		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankicl"));
+		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankimesh"));
 		body->getFirstComponentOfType<BodyComponent>().setTransform(
 			Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 
@@ -161,7 +161,7 @@ Error MyApp::sampleExtraInit()
 
 			BodyNode* body;
 			ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body, "assets/Suzanne.ankicl"));
+				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body, "assets/Suzanne.ankimesh"));
 			body->getFirstComponentOfType<BodyComponent>().setTransform(trf);
 
 			// Create joint
@@ -246,7 +246,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body, "assets/Suzanne.ankicl"));
+			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body, "assets/Suzanne.ankimesh"));
 		body->getFirstComponentOfType<BodyComponent>().setTransform(camTrf);
 
 		PhysicsBodyPtr pbody = body->getFirstComponentOfType<BodyComponent>().getPhysicsBody();

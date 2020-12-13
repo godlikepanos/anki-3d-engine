@@ -5,6 +5,8 @@
 
 #include <anki/resource/CpuMeshResource.h>
 #include <anki/resource/MeshBinaryLoader.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/physics/PhysicsWorld.h>
 
 namespace anki
 {
@@ -33,6 +35,10 @@ Error CpuMeshResource::load(const ResourceFilename& filename, Bool async)
 
 	m_indices = std::move(tempIndices);
 	m_positions = std::move(tempPositions);
+
+	// Create the collision shape
+	const Bool convex = !!(loader.getHeader().m_flags & MeshBinaryFlag::CONVEX);
+	m_physicsShape = getManager().getPhysicsWorld().newInstance<PhysicsTriangleSoup>(m_positions, m_indices, convex);
 
 	return Error::NONE;
 }

@@ -7,6 +7,7 @@
 
 #include <anki/scene/components/SceneComponent.h>
 #include <anki/physics/PhysicsBody.h>
+#include <anki/resource/Forward.h>
 
 namespace anki
 {
@@ -20,13 +21,11 @@ class BodyComponent : public SceneComponent
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::BODY;
 
-	BodyComponent(PhysicsBodyPtr body)
-		: SceneComponent(CLASS_TYPE)
-		, m_body(body)
-	{
-	}
+	BodyComponent(SceneNode* node);
 
 	~BodyComponent();
+
+	void setMeshResource(CString meshFilename);
 
 	const Transform& getTransform() const
 	{
@@ -35,7 +34,10 @@ public:
 
 	void setTransform(const Transform& trf)
 	{
-		m_body->setTransform(trf);
+		if(m_body.isCreated())
+		{
+			m_body->setTransform(trf);
+		}
 	}
 
 	PhysicsBodyPtr getPhysicsBody() const
@@ -52,6 +54,8 @@ public:
 	}
 
 private:
+	SceneNode* m_node = nullptr;
+	CpuMeshResourcePtr m_mesh;
 	PhysicsBodyPtr m_body;
 	Transform m_trf = Transform::getIdentity();
 };

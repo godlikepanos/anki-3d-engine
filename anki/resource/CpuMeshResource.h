@@ -8,6 +8,7 @@
 #include <anki/resource/ResourceObject.h>
 #include <anki/Math.h>
 #include <anki/util/WeakArray.h>
+#include <anki/physics/PhysicsCollisionShape.h>
 
 namespace anki
 {
@@ -32,9 +33,20 @@ public:
 		return m_positions;
 	}
 
+	ConstWeakArray<U32> getIndices() const
+	{
+		return m_indices;
+	}
+
+	const PhysicsCollisionShapePtr& getCollisionShape() const
+	{
+		return m_physicsShape;
+	}
+
 private:
 	DynamicArray<Vec3> m_positions;
 	DynamicArray<U32> m_indices;
+	PhysicsCollisionShapePtr m_physicsShape;
 };
 /// @}
 

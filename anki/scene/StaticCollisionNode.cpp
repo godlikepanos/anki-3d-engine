@@ -5,7 +5,7 @@
 
 #include <anki/scene/StaticCollisionNode.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/resource/CollisionResource.h>
+#include <anki/resource/CpuMeshResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/physics/PhysicsBody.h>
 #include <anki/physics/PhysicsWorld.h>
@@ -29,7 +29,7 @@ Error StaticCollisionNode::init(const CString& resourceFname, const Transform& t
 
 	// Create body
 	PhysicsBodyInitInfo init;
-	init.m_shape = m_rsrc->getShape();
+	init.m_shape = m_rsrc->getCollisionShape();
 	init.m_mass = 0.0f;
 	init.m_transform = transform;
 

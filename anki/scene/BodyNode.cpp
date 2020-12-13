@@ -50,21 +50,12 @@ BodyNode::~BodyNode()
 
 Error BodyNode::init(const CString& resourceFname)
 {
-	// Load resource
-	ANKI_CHECK(getResourceManager().loadResource(resourceFname, m_rsrc));
-
-	// Create body
-	PhysicsBodyInitInfo init;
-	init.m_mass = 1.0f;
-	init.m_shape = m_rsrc->getShape();
-	m_body = getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
-	m_body->setUserData(this);
-
 	// Joint component
 	newComponent<JointComponent>(this);
 
 	// Body component
-	newComponent<BodyComponent>(m_body);
+	BodyComponent& bodyc = *newComponent<BodyComponent>(this);
+	bodyc.setMeshResource(resourceFname);
 
 	// Feedback component
 	newComponent<FeedbackComponent>();

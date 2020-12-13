@@ -21,7 +21,6 @@
 #include <anki/resource/GenericResource.h>
 #include <anki/resource/TextureAtlasResource.h>
 #include <anki/resource/ShaderProgramResource.h>
-#include <anki/resource/CollisionResource.h>
 
 namespace anki
 {

@@ -135,7 +135,6 @@ private:
 	ANKI_USE_RESULT Error writeModel(const cgltf_mesh& mesh, CString skinName);
 	ANKI_USE_RESULT Error writeAnimation(const cgltf_animation& anim);
 	ANKI_USE_RESULT Error writeSkeleton(const cgltf_skin& skin);
-	ANKI_USE_RESULT Error writeCollisionMesh(const cgltf_mesh& mesh, U32 maxLod);
 
 	// Scene
 	ANKI_USE_RESULT Error writeTransform(const Transform& trf);

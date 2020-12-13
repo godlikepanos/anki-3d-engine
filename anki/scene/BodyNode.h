@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/resource/CollisionResource.h>
 
 namespace anki
 {
@@ -26,9 +25,6 @@ public:
 
 private:
 	class FeedbackComponent;
-
-	CollisionResourcePtr m_rsrc;
-	PhysicsBodyPtr m_body;
 };
 /// @}
 

@@ -24,12 +24,12 @@ public:
 	~StaticCollisionNode();
 
 	/// Initialize the node.
-	/// @param[in] resourceFname The file to load. It points to a .ankicl file.
+	/// @param[in] resourceFname The file to load. It points to a .ankimesh file.
 	/// @param[in] transform The transformation. That cannot change.
 	ANKI_USE_RESULT Error init(const CString& resourceFname, const Transform& transform);
 
 private:
-	CollisionResourcePtr m_rsrc;
+	CpuMeshResourcePtr m_rsrc;
 	PhysicsBodyPtr m_body;
 };
 /// @}
