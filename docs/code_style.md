@@ -1,20 +1,25 @@
-This document describes the code style of AnKi 3D Engine.
+This document describes the style of code in AnKi 3D Engine. The code is written primarily in C++ with some GLSL and python as well.
 
 
-Comments
-========
+Comments in C++ & GLSL
+=====================
 
 All comments are C++ like:
 
 	// Some comment
 
-And for doxygen comments:
+And for doxygen comments in C++ only:
 
 	/// @brief blah blah
 	/// @param blah blah
 
-Naming Conventions
+Comments in python
 ==================
+
+Whatever the PEP 8 guide proposes.
+
+Naming conventions in C++ & GLSL
+================================
 
 **Variables, functions and methods** are lower camelCase.
 
@@ -58,7 +63,7 @@ All **function and method names** should form a sentence with at least one verb.
 
 **No hungarian notations** with 2 exceptions.
 
-- All member variables have the `m_` prefix.
+- All member variables have the `m_` prefix. That applies to classes and structs.
 - All global variables have the `g_` prefix.
 
 In GLSL there are more exceptions:
@@ -67,13 +72,18 @@ In GLSL there are more exceptions:
 - All input globals the `in_` prefix.
 - All output globals the `out_` prefix.
 - All shared storage the `s_` prefix.
-- All blocks (storage or uniform) block names the  `b_` prefix.
+- All storage or uniform block names have the  `b_` prefix.
 
 **Variables that act as a measure for quantity** should have the `count` suffix. Not `num` or `numberOf` or similar.
 
 	int appleCount = ...; // YES
 	int appleNum = ...;   // NO
 	int numApples = ...;  // NO
+
+Naming conventions in python
+============================
+
+Whatever the PEP 8 guide proposes.
 
 C++ rules
 =========
@@ -161,11 +171,11 @@ Always **use AnKi's fudmental types** (U32, I32, F32, Bool etc etc). For integer
 
 	for(U32 i = 0; i < 10; ++i) {...}
 
-If you have to overload the operator Bool always use **`explicit operator Bool` operator** overloading.
+If you have to overload the operator Bool always use **`explicit operator Bool` operator** overloading. Omitting the `explicit` may lead to bugs.
 
 	explicit operator Bool() const {...}
 
-The use of **references and pointers** is govern by some rules. Always use references except when you transfer or share ownership where you should use pointers. Pointers are also allowed for optional data that can be nullptr.
+The use of **references and pointers** is govern by some rules. Always use references except when you transfer or share ownership. Pointers are also allowed for optional data that can be nullptr.
 
 	// ptr is a pointer so you CAN NOT destroy it after a call to doSomething is done
 	// ref is a reference so you CAN destroy it after a call to doSomething is done
@@ -194,25 +204,13 @@ Always **use `nullptr`**.
 
 Always try to **comment parts of the source code**. Self documenting code is never enough.
 
-Always use `override` or `final` on virtual methods and try to use `final` on classes when applicable.
+Always **use `override` or `final`** on virtual methods and try to use `final` on classes when applicable.
 
 	class Foo final
 	{
 	public:
 		void myVirtual(...) override {...}
 	};
-
-Code formatting
-===============
-
-clang-format deals with code formatting. To format the whole source tree type the following in a terminal:
-
-	$ cd /path/to/anki
-	$ ./tools/format_source.sh
-
-If you need to format on Windows do the same from a WSL terminal.
-
-Some cases that are not handled by clang-format follow.
 
 **Always use curly braces** on single line expressions.
 
@@ -232,3 +230,23 @@ Always place the **condition of a conditional ternary operator** inside parenthe
 
 	// YES!!!!!!!!!!!!!!
 	a = (b) ? 1 : 0;
+
+GLSL rules
+==========
+
+Same rules as in C++ (when applicable) with one exception: You **can use `structs`** in GLSL because there is no other way.
+
+Code formatting in C++ & GLSL
+=============================
+
+clang-format deals with code formatting. To format all the C++ and GLSL files in the source tree type the following in a terminal:
+
+	$ cd /path/to/anki
+	$ ./tools/format_source.sh
+
+If you need to format on Windows do the same from a WSL terminal.
+
+Code formatting in python
+=========================
+
+Whatever the PEP 8 guide proposes.

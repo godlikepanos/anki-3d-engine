@@ -14,6 +14,10 @@ namespace anki
 /// @addtogroup physics
 /// @{
 
+#define ANKI_PHYSICS_OBJECT \
+	friend class PhysicsWorld; \
+	friend class PhysicsPtrDeleter;
+
 /// Type of the physics object.
 enum class PhysicsObjectType : U8
 {
@@ -87,10 +91,6 @@ private:
 	void* m_userData = nullptr;
 };
 
-#define ANKI_PHYSICS_OBJECT \
-	friend class PhysicsWorld; \
-	friend class PhysicsPtrDeleter;
-
 /// This is a factor that will decide if two filtered objects will be checked for collision.
 /// @memberof PhysicsFilteredObject
 class PhysicsBroadPhaseFilterCallback
@@ -99,18 +99,37 @@ public:
 	virtual Bool needsCollision(const PhysicsFilteredObject& a, const PhysicsFilteredObject& b) = 0;
 };
 
+/// A pair of a trigger and a filtered object.
+class PhysicsTriggerFilteredPair
+{
+public:
+	PhysicsFilteredObject* m_filteredObject = nullptr;
+	PhysicsTrigger* m_trigger = nullptr;
+	U64 m_frame = 0;
+
+	Bool isAlive() const
+	{
+		return m_filteredObject && m_trigger;
+	}
+
+	Bool shouldDelete() const
+	{
+		return m_filteredObject == nullptr && m_trigger == nullptr;
+	}
+};
+
 /// A PhysicsObject that takes part into collision detection. Has functionality to filter the broad phase detection.
 class PhysicsFilteredObject : public PhysicsObject
 {
 public:
+	ANKI_PHYSICS_OBJECT
+
 	PhysicsFilteredObject(PhysicsObjectType type, PhysicsWorld* world)
 		: PhysicsObject(type, world)
 	{
 	}
 
-	~PhysicsFilteredObject()
-	{
-	}
+	~PhysicsFilteredObject();
 
 	static Bool classof(const PhysicsObject* obj)
 	{
@@ -159,6 +178,9 @@ private:
 	PhysicsMaterialBit m_materialMask = PhysicsMaterialBit::ALL;
 
 	PhysicsBroadPhaseFilterCallback* m_filter = nullptr;
+
+	static constexpr U32 MAX_TRIGGER_FILTERED_PAIRS = 4;
+	Array<PhysicsTriggerFilteredPair*, MAX_TRIGGER_FILTERED_PAIRS> m_triggerFilteredPairs = {};
 };
 /// @}
 

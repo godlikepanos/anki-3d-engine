@@ -48,15 +48,14 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 
 	setTransform(init.m_transform);
 
-	// Add to world
-	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->addRigidBody(m_body.get());
+	// Register
+	world->getBtWorld().addRigidBody(m_body.get());
 }
 
 PhysicsBody::~PhysicsBody()
 {
-	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->removeRigidBody(m_body.get());
+	getWorld().getBtWorld().removeRigidBody(m_body.get());
+	m_body.destroy();
 }
 
 void PhysicsBody::setMass(F32 mass)

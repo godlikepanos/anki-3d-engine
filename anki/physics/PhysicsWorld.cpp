@@ -195,19 +195,12 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 Error PhysicsWorld::update(Second dt)
 {
 	// Update world
-	{
-		auto lock = lockBtWorld();
-		m_world->stepSimulation(F32(dt), 1, 1.0f / 60.0f);
-	}
+	m_world->stepSimulation(F32(dt), 1, 1.0f / 60.0f);
 
 	// Process trigger contacts
+	for(PhysicsObject& trigger : m_objectLists[PhysicsObjectType::TRIGGER])
 	{
-		LockGuard<Mutex> lock(m_objectListsMtx);
-
-		for(PhysicsObject& trigger : m_objectLists[PhysicsObjectType::TRIGGER])
-		{
-			static_cast<PhysicsTrigger&>(trigger).processContacts();
-		}
+		static_cast<PhysicsTrigger&>(trigger).processContacts();
 	}
 
 	// Reset the pool
@@ -220,25 +213,73 @@ void PhysicsWorld::destroyObject(PhysicsObject* obj)
 {
 	ANKI_ASSERT(obj);
 
-	{
-		LockGuard<Mutex> lock(m_objectListsMtx);
-		m_objectLists[obj->getType()].erase(obj);
-	}
-
+	m_objectLists[obj->getType()].erase(obj);
 	obj->~PhysicsObject();
 	m_alloc.getMemoryPool().free(obj);
 }
 
-void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts)
+void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts) const
 {
-	auto lock = lockBtWorld();
-
 	MyRaycastCallback callback;
 	for(PhysicsWorldRayCastCallback* cb : rayCasts)
 	{
 		callback.m_raycast = cb;
 		m_world->rayTest(toBt(cb->m_from), toBt(cb->m_to), callback);
 	}
+}
+
+PhysicsTriggerFilteredPair* PhysicsWorld::getOrCreatePhysicsTriggerFilteredPair(PhysicsTrigger* trigger,
+																				PhysicsFilteredObject* filtered,
+																				Bool& isNew)
+{
+	ANKI_ASSERT(trigger && filtered);
+
+	U32 emptySlot = MAX_U32;
+	for(U32 i = 0; i < filtered->m_triggerFilteredPairs.getSize(); ++i)
+	{
+		PhysicsTriggerFilteredPair* pair = filtered->m_triggerFilteredPairs[i];
+
+		if(pair && pair->m_trigger == trigger)
+		{
+			// Found it
+			ANKI_ASSERT(pair->m_filteredObject == filtered);
+			isNew = false;
+			return pair;
+		}
+		else if(pair == nullptr)
+		{
+			// Empty slot, save it for later
+			emptySlot = i;
+		}
+		else if(pair && pair->m_trigger == nullptr)
+		{
+			// Pair exists but it's invalid, repurpose it
+			ANKI_ASSERT(pair->m_filteredObject == filtered);
+			emptySlot = i;
+		}
+	}
+
+	if(emptySlot == MAX_U32)
+	{
+		ANKI_PHYS_LOGW("Contact ignored. Too many active contacts for the filtered object");
+		return nullptr;
+	}
+
+	// Not found, create a new one
+	isNew = true;
+
+	PhysicsTriggerFilteredPair* newPair;
+	if(filtered->m_triggerFilteredPairs[emptySlot] == nullptr)
+	{
+		filtered->m_triggerFilteredPairs[emptySlot] = m_alloc.newInstance<PhysicsTriggerFilteredPair>();
+	}
+	newPair = filtered->m_triggerFilteredPairs[emptySlot];
+
+	newPair->m_filteredObject = filtered;
+	newPair->m_trigger = trigger;
+	newPair->m_frame = 0;
+
+	return newPair;
 }
 
 } // end namespace anki

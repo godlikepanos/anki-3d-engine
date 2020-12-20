@@ -29,7 +29,7 @@ public:
 		const MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
-			static_cast<TriggerNode&>(node).m_trigger->setTransform(move.getWorldTransform());
+			node.getFirstComponentOfType<TriggerComponent>().setTransform(move.getWorldTransform());
 		}
 
 		return Error::NONE;
@@ -47,13 +47,10 @@ TriggerNode::~TriggerNode()
 
 Error TriggerNode::init(F32 sphereRadius)
 {
-	m_shape = getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(sphereRadius);
-	m_trigger = getSceneGraph().getPhysicsWorld().newInstance<PhysicsTrigger>(m_shape);
-	m_trigger->setUserData(this);
-
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
-	newComponent<TriggerComponent>(this, m_trigger);
+	TriggerComponent* triggerc = newComponent<TriggerComponent>(this);
+	triggerc->setSphere(sphereRadius);
 
 	return Error::NONE;
 }

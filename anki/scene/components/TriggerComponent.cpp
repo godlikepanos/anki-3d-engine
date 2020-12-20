@@ -5,54 +5,102 @@
 
 #include <anki/scene/components/TriggerComponent.h>
 #include <anki/scene/SceneNode.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/physics/PhysicsCollisionShape.h>
+#include <anki/physics/PhysicsWorld.h>
 
 namespace anki
 {
 
-class TriggerComponent::MyPhysicsTriggerProcessContactCallback : public PhysicsTriggerProcessContactCallback
+/// The callbacks execute before the TriggerComponent::update
+class TriggerComponent::MyPhysicsTriggerProcessContactCallback final : public PhysicsTriggerProcessContactCallback
 {
 public:
 	TriggerComponent* m_comp = nullptr;
+	Bool m_updated = false;
+	Bool m_enterUpdated = false;
+	Bool m_insideUpdated = false;
+	Bool m_exitUpdated = false;
 
-	void processContact(PhysicsTrigger& trigger, PhysicsFilteredObject& obj) final
+	void onTriggerEnter(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
 	{
-		void* ptr = obj.getUserData();
-		ANKI_ASSERT(ptr);
+		// Clean previous results
+		if(!m_enterUpdated)
+		{
+			m_enterUpdated = true;
+			m_comp->m_bodiesEnter.destroy(m_comp->m_node->getAllocator());
+		}
 
-		SceneNode* node = static_cast<SceneNode*>(ptr);
-		m_comp->processContact(*node);
+		m_updated = true;
+
+		m_comp->m_bodiesEnter.emplaceBack(m_comp->m_node->getAllocator(),
+										  static_cast<BodyComponent*>(obj.getUserData()));
+	}
+
+	void onTriggerInside(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	{
+		// Clean previous results
+		if(!m_insideUpdated)
+		{
+			m_insideUpdated = true;
+			m_comp->m_bodiesInside.destroy(m_comp->m_node->getAllocator());
+		}
+
+		m_updated = true;
+
+		m_comp->m_bodiesInside.emplaceBack(m_comp->m_node->getAllocator(),
+										   static_cast<BodyComponent*>(obj.getUserData()));
+	}
+
+	void onTriggerExit(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	{
+		// Clean previous results
+		if(!m_exitUpdated)
+		{
+			m_exitUpdated = true;
+			m_comp->m_bodiesExit.destroy(m_comp->m_node->getAllocator());
+		}
+
+		m_updated = true;
+
+		m_comp->m_bodiesExit.emplaceBack(m_comp->m_node->getAllocator(),
+										 static_cast<BodyComponent*>(obj.getUserData()));
 	}
 };
 
-TriggerComponent::TriggerComponent(SceneNode* node, PhysicsTriggerPtr trigger)
+TriggerComponent::TriggerComponent(SceneNode* node)
 	: SceneComponent(CLASS_TYPE)
 	, m_node(node)
-	, m_trigger(trigger)
 {
 	ANKI_ASSERT(node);
-	m_contactCb = m_node->getAllocator().newInstance<MyPhysicsTriggerProcessContactCallback>();
-	m_contactCb->m_comp = this;
-	m_trigger->setContactProcessCallback(m_contactCb);
+	m_callbacks = m_node->getAllocator().newInstance<MyPhysicsTriggerProcessContactCallback>();
+	m_callbacks->m_comp = this;
 }
 
 TriggerComponent::~TriggerComponent()
 {
-	m_node->getAllocator().deleteInstance(m_contactCb);
-	m_contactNodes.destroy(m_node->getAllocator());
+	m_node->getAllocator().deleteInstance(m_callbacks);
+	m_bodiesEnter.destroy(m_node->getAllocator());
+	m_bodiesInside.destroy(m_node->getAllocator());
+	m_bodiesExit.destroy(m_node->getAllocator());
 }
 
-void TriggerComponent::processContact(SceneNode& node)
+void TriggerComponent::setSphere(F32 radius)
 {
-	ANKI_ASSERT(&node != m_node);
+	m_shape = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(radius);
+	m_trigger = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsTrigger>(m_shape);
+	m_trigger->setUserData(this);
+	m_trigger->setContactProcessCallback(m_callbacks);
+}
 
-	// Clear the list if it's a new frame
-	if(m_contactNodesArrayTimestamp != node.getGlobalTimestamp())
-	{
-		m_contactNodesArrayTimestamp = node.getGlobalTimestamp();
-		m_contactNodes.destroy(node.getAllocator());
-	}
-
-	m_contactNodes.emplaceBack(node.getAllocator(), &node);
+Error TriggerComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
+{
+	updated = m_callbacks->m_updated;
+	m_callbacks->m_updated = false;
+	m_callbacks->m_enterUpdated = false;
+	m_callbacks->m_insideUpdated = false;
+	m_callbacks->m_exitUpdated = false;
+	return Error::NONE;
 }
 
 } // end namespace anki

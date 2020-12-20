@@ -20,49 +20,108 @@ PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr sha
 	m_ghostShape->setWorldTransform(btTransform::getIdentity());
 	m_ghostShape->setCollisionShape(shape->getBtShape(true));
 
+	// If you don't have that bodies will bounce on the trigger
+	m_ghostShape->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
 	m_ghostShape->setUserPointer(static_cast<PhysicsObject*>(this));
 
 	setMaterialGroup(PhysicsMaterialBit::TRIGGER);
-	setMaterialMask(PhysicsMaterialBit::ALL);
+	setMaterialMask(PhysicsMaterialBit::ALL ^ PhysicsMaterialBit::STATIC_GEOMETRY);
 
-	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->addCollisionObject(m_ghostShape.get());
+	getWorld().getBtWorld().addCollisionObject(m_ghostShape.get());
 }
 
 PhysicsTrigger::~PhysicsTrigger()
 {
+	for(PhysicsTriggerFilteredPair* pair : m_pairs)
 	{
-		auto lock = getWorld().lockBtWorld();
-		getWorld().getBtWorld()->removeCollisionObject(m_ghostShape.get());
+		ANKI_ASSERT(pair);
+
+		pair->m_trigger = nullptr;
+
+		if(pair->shouldDelete())
+		{
+			getAllocator().deleteInstance(pair);
+		}
 	}
 
+	m_pairs.destroy(getAllocator());
+
+	getWorld().getBtWorld().removeCollisionObject(m_ghostShape.get());
 	m_ghostShape.destroy();
 }
 
 void PhysicsTrigger::processContacts()
 {
+	++m_processContactsFrame;
+
 	if(m_contactCallback == nullptr)
 	{
+		m_pairs.destroy(getAllocator());
 		return;
 	}
 
-	if(m_ghostShape->getOverlappingPairs().size() < 0)
-	{
-		return;
-	}
-
-	// Process contacts
+	// Gather the new pairs
+	DynamicArrayAuto<PhysicsTriggerFilteredPair*> newPairs(getWorld().getTempAllocator());
+	newPairs.resizeStorage(m_ghostShape->getOverlappingPairs().size());
 	for(U32 i = 0; i < U32(m_ghostShape->getOverlappingPairs().size()); ++i)
 	{
-		btCollisionObject* obj = m_ghostShape->getOverlappingPairs()[i];
-
-		ANKI_ASSERT(obj);
-
-		PhysicsObject* aobj = static_cast<PhysicsObject*>(obj->getUserPointer());
+		btCollisionObject* bobj = m_ghostShape->getOverlappingPairs()[i];
+		ANKI_ASSERT(bobj);
+		PhysicsObject* aobj = static_cast<PhysicsObject*>(bobj->getUserPointer());
 		ANKI_ASSERT(aobj);
+		PhysicsFilteredObject* obj = dcast<PhysicsFilteredObject*>(aobj);
 
-		PhysicsFilteredObject* fobj = dcast<PhysicsFilteredObject*>(aobj);
-		m_contactCallback->processContact(*this, *fobj);
+		Bool isNew;
+		PhysicsTriggerFilteredPair* pair = getWorld().getOrCreatePhysicsTriggerFilteredPair(this, obj, isNew);
+		if(pair)
+		{
+			ANKI_ASSERT(pair->isAlive());
+			newPairs.emplaceBack(pair);
+
+			if(isNew)
+			{
+				m_contactCallback->onTriggerEnter(*this, *obj);
+			}
+			else
+			{
+				m_contactCallback->onTriggerInside(*this, *obj);
+			}
+
+			pair->m_frame = m_processContactsFrame;
+		}
+	}
+
+	// Remove stale pairs
+	for(U32 i = 0; i < m_pairs.getSize(); ++i)
+	{
+		PhysicsTriggerFilteredPair* pair = m_pairs[i];
+		ANKI_ASSERT(pair->m_trigger == this);
+
+		if(pair->m_filteredObject == nullptr)
+		{
+			// Filtered object died while inside the tigger, destroy the pair
+			getAllocator().deleteInstance(pair);
+		}
+		else if(pair->m_frame == m_processContactsFrame)
+		{
+			// Was updated this frame so don't touch it
+		}
+		else
+		{
+			// Was updated in some previous frame, notify and brake the link to the pair
+			ANKI_ASSERT(pair->isAlive());
+			ANKI_ASSERT(pair->m_frame < m_processContactsFrame);
+			m_contactCallback->onTriggerExit(*this, *pair->m_filteredObject);
+			pair->m_trigger = nullptr;
+		}
+	}
+
+	// Store the new contacts
+	m_pairs.resize(getAllocator(), newPairs.getSize());
+	if(m_pairs.getSize())
+	{
+		memcpy(&m_pairs[0], &newPairs[0], m_pairs.getSizeInBytes());
 	}
 }
 

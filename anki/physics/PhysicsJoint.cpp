@@ -19,15 +19,12 @@ PhysicsJoint::PhysicsJoint(PhysicsWorld* world, JointType type)
 void PhysicsJoint::addToWorld()
 {
 	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
-
-	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->addConstraint(getJoint());
+	getWorld().getBtWorld().addConstraint(getJoint());
 }
 
 void PhysicsJoint::removeFromWorld()
 {
-	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->removeConstraint(getJoint());
+	getWorld().getBtWorld().removeConstraint(getJoint());
 }
 
 PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos)

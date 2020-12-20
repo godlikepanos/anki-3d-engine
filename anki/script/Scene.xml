@@ -60,6 +60,7 @@ static EventManager* getEventManager(lua_State* l)
 }
 
 using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
+using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 ]]></head>
 
 	<classes>
@@ -73,6 +74,19 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 					<overrideCall><![CDATA[SceneNode* ret = (*self)[arg0];]]></overrideCall>
 					<args><arg>U32</arg></args>
 					<return>SceneNode*</return>
+				</method>
+			</methods>
+		</class>
+
+		<class name="WeakArrayBodyComponentPtr">
+			<methods>
+				<method name="getSize">
+					<return>U32</return>
+				</method>
+				<method name="getAt">
+					<overrideCall><![CDATA[BodyComponent* ret = (*self)[arg0];]]></overrideCall>
+					<args><arg>U32</arg></args>
+					<return>BodyComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -211,10 +225,34 @@ using WeakArraySceneNodePtr = WeakArray<SceneNode*>;
 			</methods>
 		</class>
 
+		<class name="BodyComponent">
+			<methods>
+				<method name="setMeshResource">
+					<args>
+						<arg>CString</arg>
+					</args>
+				</method>
+				<method name="setTransform">
+					<args>
+						<arg>const Transform&amp;</arg>
+					</args>
+				</method>
+				<method name="getTransform">
+					<return>Transform</return>
+				</method>
+			</methods>
+		</class>
+
 		<class name="TriggerComponent">
 			<methods>
-				<method name="getContactSceneNodes">
-					<return>WeakArraySceneNodePtr</return>
+				<method name="getBodyComponentsEnter">
+					<return>WeakArrayBodyComponentPtr</return>
+				</method>
+				<method name="getBodyComponentsInside">
+					<return>WeakArrayBodyComponentPtr</return>
+				</method>
+				<method name="getBodyComponentsExit">
+					<return>WeakArrayBodyComponentPtr</return>
 				</method>
 			</methods>
 		</class>
