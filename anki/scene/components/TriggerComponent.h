@@ -20,9 +20,9 @@ class BodyComponent;
 /// Trigger component.
 class TriggerComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::TRIGGER;
+	ANKI_SCENE_COMPONENT(TriggerComponent)
 
+public:
 	TriggerComponent(SceneNode* node);
 
 	~TriggerComponent();

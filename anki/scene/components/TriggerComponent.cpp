@@ -12,6 +12,8 @@
 namespace anki
 {
 
+ANKI_SCENE_COMPONENT_STATICS(TriggerComponent)
+
 /// The callbacks execute before the TriggerComponent::update
 class TriggerComponent::MyPhysicsTriggerProcessContactCallback final : public PhysicsTriggerProcessContactCallback
 {
@@ -69,7 +71,7 @@ public:
 };
 
 TriggerComponent::TriggerComponent(SceneNode* node)
-	: SceneComponent(CLASS_TYPE)
+	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
 {
 	ANKI_ASSERT(node);

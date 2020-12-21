@@ -32,11 +32,11 @@ using FillRayTracingInstanceQueueElementCallback = void (*)(U32 lod, const void*
 /// Render component interface. Implemented by renderable scene nodes
 class RenderComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::RENDER;
+	ANKI_SCENE_COMPONENT(RenderComponent)
 
-	RenderComponent()
-		: SceneComponent(CLASS_TYPE)
+public:
+	RenderComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 

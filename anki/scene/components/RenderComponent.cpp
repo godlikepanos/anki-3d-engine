@@ -12,6 +12,8 @@
 namespace anki
 {
 
+ANKI_SCENE_COMPONENT_STATICS(RenderComponent)
+
 void RenderComponent::allocateAndSetupUniforms(const MaterialResourcePtr& mtl, const RenderQueueDrawContext& ctx,
 											   ConstWeakArray<Mat4> transforms, ConstWeakArray<Mat4> prevTransforms,
 											   StagingGpuMemoryManager& alloc)

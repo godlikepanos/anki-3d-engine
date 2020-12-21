@@ -18,9 +18,9 @@ namespace anki
 /// Rigid body component.
 class BodyComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::BODY;
+	ANKI_SCENE_COMPONENT(BodyComponent)
 
+public:
 	BodyComponent(SceneNode* node);
 
 	~BodyComponent();

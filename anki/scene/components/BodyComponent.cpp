@@ -13,8 +13,10 @@
 namespace anki
 {
 
+ANKI_SCENE_COMPONENT_STATICS(BodyComponent)
+
 BodyComponent::BodyComponent(SceneNode* node)
-	: SceneComponent(CLASS_TYPE)
+	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
 {
 }
