@@ -38,13 +38,17 @@ public:
 /// Skin component.
 class SkinComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(SkinComponent)
+
 public:
-	static constexpr SceneComponentType CLASS_TYPE = SceneComponentType::SKIN;
 	static constexpr U32 MAX_ANIMATION_TRACKS = 4;
 
-	SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton);
+	SkinComponent(SceneNode* node);
 
 	~SkinComponent();
+
+	/// Load the skeleton resource.
+	ANKI_USE_RESULT Error loadSkeletonResource(CString filename);
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
@@ -94,7 +98,7 @@ private:
 	SkeletonResourcePtr m_skeleton;
 	Array<DynamicArray<Mat4>, 2> m_boneTrfs;
 	DynamicArray<Trf> m_animationTrfs;
-	Aabb m_boneBoundingVolume{Vec3(-1.0f), Vec3(1.0f)};
+	Aabb m_boneBoundingVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	Array<Track, MAX_ANIMATION_TRACKS> m_tracks;
 	Second m_absoluteTime = 0.0;
 	U8 m_crntBoneTrfs = 0;

@@ -17,11 +17,11 @@ namespace anki
 /// Contains a list of joints.
 class JointComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::JOINT;
+	ANKI_SCENE_COMPONENT(JointComponent)
 
+public:
 	JointComponent(SceneNode* node)
-		: SceneComponent(CLASS_TYPE)
+		: SceneComponent(node, getStaticClassId())
 		, m_node(node)
 	{
 		ANKI_ASSERT(node);

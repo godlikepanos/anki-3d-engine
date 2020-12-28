@@ -15,16 +15,18 @@
 namespace anki
 {
 
-const FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
+constexpr FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
 	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
 	| FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_1_CASCADE;
 
 /// Feedback component
 class GlobalIlluminationProbeNode::MoveFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(GlobalIlluminationProbeNode::MoveFeedbackComponent)
+
 public:
-	MoveFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MoveFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -44,12 +46,16 @@ public:
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeNode::MoveFeedbackComponent)
+
 /// Feedback component
 class GlobalIlluminationProbeNode::ShapeFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(GlobalIlluminationProbeNode::ShapeFeedbackComponent)
+
 public:
-	ShapeFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	ShapeFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -69,6 +75,8 @@ public:
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeNode::ShapeFeedbackComponent)
+
 GlobalIlluminationProbeNode::~GlobalIlluminationProbeNode()
 {
 }
@@ -82,10 +90,7 @@ Error GlobalIlluminationProbeNode::init()
 	newComponent<MoveFeedbackComponent>();
 
 	// GI probe comp
-	GlobalIlluminationProbeComponent* giprobec =
-		newComponent<GlobalIlluminationProbeComponent>(getSceneGraph().getNewUuid());
-	ANKI_CHECK(giprobec->init());
-	giprobec->setBoundingBox(m_spatialAabb.getMin(), m_spatialAabb.getMax());
+	GlobalIlluminationProbeComponent* giprobec = newComponent<GlobalIlluminationProbeComponent>();
 	giprobec->setDrawCallback(debugDrawCallback, this);
 
 	// Second feedback component
@@ -114,16 +119,17 @@ Error GlobalIlluminationProbeNode::init()
 		m_cubeFaceTransforms[i].setOrigin(Vec4(0.0f));
 		m_cubeFaceTransforms[i].setScale(1.0f);
 
-		FrustumComponent* frc = newComponent<FrustumComponent>(this, FrustumType::PERSPECTIVE);
+		FrustumComponent* frc = newComponent<FrustumComponent>();
+		frc->setFrustumType(FrustumType::PERSPECTIVE);
 		const F32 tempEffectiveDistance = 1.0f;
 		frc->setPerspective(zNear, tempEffectiveDistance, ang, ang);
-		frc->setTransform(m_cubeFaceTransforms[i]);
+		frc->setWorldTransform(m_cubeFaceTransforms[i]);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 		frc->setEffectiveShadowDistance(getSceneGraph().getConfig().m_reflectionProbeShadowEffectiveDistance);
 	}
 
 	// Spatial component
-	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_spatialAabb);
+	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 	spatialc->setUpdateOctreeBounds(false);
 
 	// Misc
@@ -135,12 +141,11 @@ Error GlobalIlluminationProbeNode::init()
 
 void GlobalIlluminationProbeNode::onMoveUpdate(MoveComponent& move)
 {
-	// Update the probe comp
-	const Vec4 displacement = move.getWorldTransform().getOrigin() - m_previousPosition;
-	m_previousPosition = move.getWorldTransform().getOrigin();
-
 	GlobalIlluminationProbeComponent& gic = getFirstComponentOfType<GlobalIlluminationProbeComponent>();
-	gic.setBoundingBox(gic.getAlignedBoundingBoxMin() + displacement, gic.getAlignedBoundingBoxMax() + displacement);
+	gic.setWorldPosition(move.getWorldTransform().getOrigin().xyz());
+
+	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
+	sp.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 }
 
 void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
@@ -151,20 +156,17 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 	if(gic.getMarkedForRendering())
 	{
 		// Compute effective distance
-		F32 effectiveDistance = gic.getAlignedBoundingBoxMax().x() - gic.getAlignedBoundingBoxMin().x();
-		effectiveDistance =
-			max(effectiveDistance, gic.getAlignedBoundingBoxMax().y() - gic.getAlignedBoundingBoxMin().y());
-		effectiveDistance =
-			max(effectiveDistance, gic.getAlignedBoundingBoxMax().z() - gic.getAlignedBoundingBoxMin().z());
+		F32 effectiveDistance = max(gic.getBoxVolumeSize().x(), gic.getBoxVolumeSize().y());
+		effectiveDistance = max(effectiveDistance, gic.getBoxVolumeSize().z());
 		effectiveDistance = max(effectiveDistance, getSceneGraph().getConfig().m_reflectionProbeEffectiveDistance);
 
 		// Update frustum components
 		U count = 0;
-		Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
+		const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
 			Transform trf = m_cubeFaceTransforms[count];
-			trf.setOrigin(gic.getRenderPosition());
+			trf.setOrigin(gic.getRenderPosition().xyz0());
 
-			frc.setTransform(trf);
+			frc.setWorldTransform(trf);
 			frc.setFar(effectiveDistance);
 			++count;
 
@@ -182,10 +184,7 @@ void GlobalIlluminationProbeNode::onShapeUpdateOrProbeNeedsRendering()
 		// Update only when the shape was actually update
 
 		SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-		sp.markForUpdate();
-		sp.setSpatialOrigin((m_spatialAabb.getMax() + m_spatialAabb.getMin()) / 2.0f);
-		m_spatialAabb.setMin(gic.getAlignedBoundingBoxMin());
-		m_spatialAabb.setMax(gic.getAlignedBoundingBoxMax());
+		sp.setAabbWorldSpace(gic.getAabbWorldSpace());
 	}
 }
 
@@ -195,7 +194,7 @@ Error GlobalIlluminationProbeNode::frameUpdate(Second prevUpdateTime, Second crn
 	const GlobalIlluminationProbeComponent& gic = getFirstComponentOfType<GlobalIlluminationProbeComponent>();
 
 	const FrustumComponentVisibilityTestFlag testFlags =
-		gic.getMarkedForRendering() ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
+		(gic.getMarkedForRendering()) ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
 
 	const Error err = iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) -> Error {
 		frc.setEnabledVisibilityTests(testFlags);
@@ -216,8 +215,8 @@ void GlobalIlluminationProbeNode::debugDrawCallback(RenderQueueDrawContext& ctx,
 		const GlobalIlluminationProbeComponent& giComp =
 			self.getFirstComponentOfType<GlobalIlluminationProbeComponent>();
 
-		const Vec3 tsl = (giComp.getAlignedBoundingBoxMin().xyz() + giComp.getAlignedBoundingBoxMax().xyz()) / 2.0f;
-		const Vec3 scale = (tsl - giComp.getAlignedBoundingBoxMin().xyz());
+		const Vec3 tsl = (giComp.getAabbWorldSpace().getMax().xyz() + giComp.getAabbWorldSpace().getMin().xyz()) / 2.0f;
+		const Vec3 scale = (tsl - giComp.getAabbWorldSpace().getMin().xyz());
 
 		// Set non uniform scale.
 		Mat3 rot = Mat3::getIdentity();

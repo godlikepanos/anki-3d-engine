@@ -51,7 +51,6 @@ private:
 	ParticleEmitterResourcePtr m_particleEmitterResource;
 	DynamicArray<ParticleBase*> m_particles;
 	Second m_timeLeftForNextEmission = 0.0;
-	Obb m_obb;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitterNode's rotation is the identity
 	Bool m_identityRotation = true;

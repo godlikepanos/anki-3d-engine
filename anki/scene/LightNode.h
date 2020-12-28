@@ -26,8 +26,6 @@ public:
 
 	~LightNode();
 
-	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
-
 protected:
 	class MovedFeedbackComponent;
 	class LightChangedFeedbackComponent;
@@ -68,7 +66,6 @@ private:
 		Transform m_localTrf = Transform::getIdentity();
 	};
 
-	Sphere m_sphereW = Sphere(Vec4(0.0f), 1.0f);
 	DynamicArray<ShadowCombo> m_shadowData;
 
 	void onMoveUpdate(const MoveComponent& move) override;
@@ -100,8 +97,6 @@ public:
 
 private:
 	class FeedbackComponent;
-
-	Aabb m_boundingBox;
 
 	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
 	{

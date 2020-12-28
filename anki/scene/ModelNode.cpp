@@ -6,8 +6,9 @@
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/DebugDrawer.h>
-#include <anki/scene/components/BodyComponent.h>
+#include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SkinComponent.h>
+#include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/RenderComponent.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
@@ -18,11 +19,13 @@ namespace anki
 {
 
 /// Feedback component.
-class ModelNode::MoveFeedbackComponent : public SceneComponent
+class ModelNode::FeedbackToSpatialComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(ModelNode::FeedbackToSpatialComponent)
+
 public:
-	MoveFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	FeedbackToSpatialComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -36,36 +39,14 @@ public:
 		   || (skin && skin->getTimestamp() == node.getGlobalTimestamp()))
 		{
 			ModelNode& mnode = static_cast<ModelNode&>(node);
-			mnode.updateSpatialComponent(move);
+			mnode.updateSpatialComponent(move, skin);
 		}
 
 		return Error::NONE;
 	}
 };
 
-/// Feedback component.
-class ModelNode::SkinFeedbackComponent : public SceneComponent
-{
-public:
-	SkinFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
-	{
-	}
-
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
-	{
-		updated = false;
-
-		const SkinComponent& skin = node.getFirstComponentOfType<SkinComponent>();
-		if(skin.getTimestamp() == node.getGlobalTimestamp())
-		{
-			ModelNode& mnode = static_cast<ModelNode&>(node);
-			mnode.m_aabbLocal = skin.getBoneBoundingVolume();
-		}
-
-		return Error::NONE;
-	}
-};
+ANKI_SCENE_COMPONENT_STATICS(ModelNode::FeedbackToSpatialComponent)
 
 ModelNode::ModelNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -93,12 +74,12 @@ Error ModelNode::init(ModelResourcePtr resource, U32 modelPatchIdx)
 	// Components
 	if(m_model->getSkeleton().isCreated())
 	{
-		newComponent<SkinComponent>(this, m_model->getSkeleton());
-		newComponent<SkinFeedbackComponent>();
+		SkinComponent* skinc = newComponent<SkinComponent>();
+		ANKI_CHECK(skinc->loadSkeletonResource(m_model->getSkeleton()->getFilename()));
 	}
 	newComponent<MoveComponent>();
-	newComponent<MoveFeedbackComponent>();
-	newComponent<SpatialComponent>(this, &m_aabbWorld);
+	newComponent<FeedbackToSpatialComponent>();
+	newComponent<SpatialComponent>();
 	RenderComponent* rcomp = newComponent<RenderComponent>();
 	rcomp->initRaster(
 		[](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
@@ -138,13 +119,18 @@ Error ModelNode::init(const CString& modelFname)
 	return Error::NONE;
 }
 
-void ModelNode::updateSpatialComponent(const MoveComponent& move)
+void ModelNode::updateSpatialComponent(const MoveComponent& movec, const SkinComponent* skinc)
 {
-	m_aabbWorld = m_aabbLocal.getTransformed(move.getWorldTransform());
+	if(skinc)
+	{
+		m_aabbLocal = skinc->getBoneBoundingVolume();
+	}
 
-	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-	sp.markForUpdate();
-	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
+	const Aabb aabbWorld = m_aabbLocal.getTransformed(movec.getWorldTransform());
+
+	SpatialComponent& spatialc = getFirstComponentOfType<SpatialComponent>();
+	spatialc.setSpatialOrigin(movec.getWorldTransform().getOrigin().xyz());
+	spatialc.setAabbWorldSpace(aabbWorld);
 }
 
 void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) const

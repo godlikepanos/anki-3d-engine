@@ -14,60 +14,32 @@
 namespace anki
 {
 
-LightComponent::LightComponent(LightComponentType type, U64 uuid)
-	: SceneComponent(CLASS_TYPE)
-	, m_uuid(uuid)
-	, m_type(type)
+ANKI_SCENE_COMPONENT_STATICS(LightComponent)
+
+LightComponent::LightComponent(SceneNode* node)
+	: SceneComponent(node, getStaticClassId())
+	, m_uuid(node->getSceneGraph().getNewUuid())
+	, m_type(LightComponentType::POINT)
 	, m_shadow(false)
-	, m_componentDirty(true)
-	, m_trfDirty(true)
+	, m_markedForUpdate(true)
 {
 	ANKI_ASSERT(m_uuid > 0);
-
-	switch(type)
-	{
-	case LightComponentType::POINT:
-		m_point.m_radius = 1.0f;
-		break;
-	case LightComponentType::SPOT:
-		setInnerAngle(toRad(45.0f));
-		setOuterAngle(toRad(30.0f));
-		m_spot.m_distance = 1.0f;
-		m_spot.m_textureMat = Mat4::getIdentity();
-		break;
-	case LightComponentType::DIRECTIONAL:
-		m_dir.m_sceneMax = Vec3(MIN_F32);
-		m_dir.m_sceneMin = Vec3(MAX_F32);
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
+	m_point.m_radius = 1.0f;
 }
 
 Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
 {
-	updated = false;
+	updated = m_markedForUpdate;
+	m_markedForUpdate = false;
 
-	if(m_componentDirty)
+	if(updated && m_type == LightComponentType::SPOT)
 	{
-		updated = true;
+
+		static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+		const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle,
+																	 LIGHT_FRUSTUM_NEAR_PLANE, m_spot.m_distance);
+		m_spot.m_textureMat = biasMat4 * proj * Mat4(m_trf.getInverse());
 	}
-
-	if(m_trfDirty)
-	{
-		updated = true;
-
-		if(m_type == LightComponentType::SPOT)
-		{
-			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-			Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle,
-																   LIGHT_FRUSTUM_NEAR_PLANE, m_spot.m_distance);
-			m_spot.m_textureMat = biasMat4 * proj * Mat4(m_trf.getInverse());
-		}
-	}
-
-	m_trfDirty = false;
-	m_componentDirty = false;
 
 	// Update the scene bounds always
 	if(m_type == LightComponentType::DIRECTIONAL)
@@ -147,7 +119,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 			// Set the sphere
 			boundingSpheres[i].setRadius(r);
-			boundingSpheres[i].setCenter(frustumComp.getTransform().transform(C));
+			boundingSpheres[i].setCenter(frustumComp.getWorldTransform().transform(C));
 		}
 
 		// Compute the matrices
@@ -223,7 +195,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 			FrustumComponent& cascadeFrustumComp = cascadeFrustumComponents[i];
 			cascadeFrustumComp.setOrthographic(LIGHT_FRUSTUM_NEAR_PLANE, far, right, left, top, bottom);
-			cascadeFrustumComp.setTransform(cascadeTransform);
+			cascadeFrustumComp.setWorldTransform(cascadeTransform);
 		}
 	}
 	else

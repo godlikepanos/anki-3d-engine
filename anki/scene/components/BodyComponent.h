@@ -25,19 +25,28 @@ public:
 
 	~BodyComponent();
 
-	void setMeshResource(CString meshFilename);
+	ANKI_USE_RESULT Error loadMeshResource(CString meshFilename);
 
-	const Transform& getTransform() const
+	CString getMeshResourceFilename() const;
+
+	void setMass(F32 mass);
+
+	F32 getMass() const
 	{
-		return m_trf;
+		return (m_body) ? m_body->getMass() : 0.0f;
 	}
 
-	void setTransform(const Transform& trf)
+	void setWorldTransform(const Transform& trf)
 	{
-		if(m_body.isCreated())
+		if(m_body)
 		{
 			m_body->setTransform(trf);
 		}
+	}
+
+	Transform getWorldTransform() const
+	{
+		return (m_body) ? m_body->getTransform() : Transform::getIdentity();
 	}
 
 	PhysicsBodyPtr getPhysicsBody() const
@@ -45,19 +54,14 @@ public:
 		return m_body;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
-	{
-		Transform newTrf = m_body->getTransform();
-		updated = newTrf != m_trf;
-		m_trf = newTrf;
-		return Error::NONE;
-	}
+	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override;
 
 private:
 	SceneNode* m_node = nullptr;
 	CpuMeshResourcePtr m_mesh;
 	PhysicsBodyPtr m_body;
 	Transform m_trf = Transform::getIdentity();
+	Bool m_markedForUpdate = true;
 };
 /// @}
 

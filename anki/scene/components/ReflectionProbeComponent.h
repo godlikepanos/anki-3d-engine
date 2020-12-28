@@ -7,6 +7,7 @@
 
 #include <anki/scene/components/SceneComponent.h>
 #include <anki/renderer/RenderQueue.h>
+#include <anki/collision/Aabb.h>
 
 namespace anki
 {
@@ -17,39 +18,37 @@ namespace anki
 /// Reflection probe component.
 class ReflectionProbeComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(ReflectionProbeComponent)
+
 public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::REFLECTION_PROBE;
+	ReflectionProbeComponent(SceneNode* node);
 
-	ReflectionProbeComponent(U64 uuid)
-		: SceneComponent(CLASS_TYPE)
-		, m_uuid(uuid)
+	/// Set the local size of the probe volume.
+	void setBoxVolumeSize(const Vec3 sizeXYZ)
 	{
+		m_halfSize = sizeXYZ / 2.0f;
+		m_markedForUpdate = true;
 	}
 
-	Vec4 getPosition() const
+	Vec3 getBoxVolumeSize() const
 	{
-		return m_pos.xyz0();
+		return m_halfSize * 2.0f;
 	}
 
-	void setPosition(const Vec4& pos)
+	Vec3 getWorldPosition() const
 	{
-		m_pos = pos.xyz();
+		return m_worldPos;
 	}
 
-	void setBoundingBox(const Vec4& min, const Vec4& max)
+	void setWorldPosition(const Vec3& pos)
 	{
-		m_aabbMin = min.xyz();
-		m_aabbMax = max.xyz();
+		m_worldPos = pos;
+		m_markedForUpdate = true;
 	}
 
-	Vec4 getBoundingBoxMin() const
+	Aabb getAabbWorldSpace() const
 	{
-		return m_aabbMin.xyz0();
-	}
-
-	Vec4 getBoundingBoxMax() const
-	{
-		return m_aabbMax.xyz0();
+		return Aabb(-m_halfSize + m_worldPos, m_halfSize + m_worldPos);
 	}
 
 	Bool getMarkedForRendering() const
@@ -65,27 +64,32 @@ public:
 
 	void setupReflectionProbeQueueElement(ReflectionProbeQueueElement& el) const
 	{
-		ANKI_ASSERT(m_aabbMin < m_aabbMax);
-		ANKI_ASSERT(m_pos > m_aabbMin && m_pos < m_aabbMax);
 		el.m_feedbackCallback = reflectionProbeQueueElementFeedbackCallback;
 		el.m_feedbackCallbackUserData = const_cast<ReflectionProbeComponent*>(this);
 		el.m_uuid = m_uuid;
-		el.m_worldPosition = m_pos;
-		el.m_aabbMin = m_aabbMin;
-		el.m_aabbMax = m_aabbMax;
+		el.m_worldPosition = m_worldPos;
+		el.m_aabbMin = -m_halfSize + m_worldPos;
+		el.m_aabbMax = m_halfSize + m_worldPos;
 		el.m_textureArrayIndex = MAX_U32;
 		el.m_debugDrawCallback = m_drawCallback;
 		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
+	}
+
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	{
+		updated = m_markedForUpdate;
+		m_markedForUpdate = false;
+		return Error::NONE;
 	}
 
 private:
 	U64 m_uuid;
 	RenderQueueDrawCallback m_drawCallback = nullptr;
 	const void* m_drawCallbackUserData = nullptr;
-	Vec3 m_pos = Vec3(0.0f);
-	Vec3 m_aabbMin = Vec3(+1.0f);
-	Vec3 m_aabbMax = Vec3(-1.0f);
-	Bool m_markedForRendering = false;
+	Vec3 m_worldPos = Vec3(0.0f);
+	Vec3 m_halfSize = Vec3(1.0f);
+	Bool m_markedForRendering : 1;
+	Bool m_markedForUpdate : 1;
 
 	static void reflectionProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData)
 	{

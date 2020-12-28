@@ -17,11 +17,11 @@ namespace anki
 /// Holds some info for GPU compute jobs.
 class GenericGpuComputeJobComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::GENERIC_GPU_COMPUTE_JOB_COMPONENT;
+	ANKI_SCENE_COMPONENT(GenericGpuComputeJobComponent)
 
-	GenericGpuComputeJobComponent()
-		: SceneComponent(CLASS_TYPE)
+public:
+	GenericGpuComputeJobComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 

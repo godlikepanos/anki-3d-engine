@@ -53,7 +53,7 @@ private:
 
 	SamplerPtr m_nearestAnyClampSampler;
 
-	Aabb m_spatialVolume = Aabb(Vec3(-1.0f), Vec3(1.0f));
+	Aabb m_spatialVolumeWorldSpace = Aabb(Vec3(-1.0f), Vec3(1.0f));
 	F32 m_maxDistanceAParticleCanGo = -1.0f;
 	U32 m_particleCount = 0;
 	Second m_dt = 0.0;

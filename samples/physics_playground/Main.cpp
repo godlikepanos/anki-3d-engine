@@ -133,7 +133,7 @@ Error MyApp::sampleExtraInit()
 
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankimesh"));
-		body->getFirstComponentOfType<BodyComponent>().setTransform(
+		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(
 			Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 
 		body->addChild(monkey);
@@ -162,7 +162,7 @@ Error MyApp::sampleExtraInit()
 			BodyNode* body;
 			ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
 				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body, "assets/Suzanne.ankimesh"));
-			body->getFirstComponentOfType<BodyComponent>().setTransform(trf);
+			body->getFirstComponentOfType<BodyComponent>().setWorldTransform(trf);
 
 			// Create joint
 			JointComponent& jointc = body->getFirstComponentOfType<JointComponent>();
@@ -184,7 +184,8 @@ Error MyApp::sampleExtraInit()
 	// Trigger
 	{
 		TriggerNode* node;
-		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node, 1.8f));
+		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node));
+		node->getFirstComponentOfType<TriggerComponent>().setSphereVolumeRadius(1.8f);
 
 		node->getFirstComponentOfType<MoveComponent>().setLocalOrigin(Vec4(1.0f, 0.5f, 0.0f, 0.0f));
 	}
@@ -226,7 +227,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(getInput().getKey(KeyCode::R))
 	{
 		SceneNode& player = getSceneGraph().findSceneNode("player");
-		player.getFirstComponentOfType<PlayerControllerComponent>().moveToPosition(Vec4(0.0f, 2.0f, 0.0f, 0.0f));
+		player.getFirstComponentOfType<PlayerControllerComponent>().moveToPosition(Vec3(0.0f, 2.0f, 0.0f));
 	}
 
 	if(getInput().getMouseButton(MouseButton::LEFT) == 1)
@@ -247,7 +248,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
 			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body, "assets/Suzanne.ankimesh"));
-		body->getFirstComponentOfType<BodyComponent>().setTransform(camTrf);
+		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(camTrf);
 
 		PhysicsBodyPtr pbody = body->getFirstComponentOfType<BodyComponent>().getPhysicsBody();
 		pbody->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));
@@ -315,7 +316,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 				FogDensityNode* fogNode;
 				ANKI_CHECK(getSceneGraph().newSceneNode(name.toCString(), fogNode));
 				FogDensityComponent& fogComp = fogNode->getFirstComponentOfType<FogDensityComponent>();
-				fogComp.setSphere(2.1f);
+				fogComp.setSphereVolumeRadius(2.1f);
 				fogComp.setDensity(15.0f);
 
 				fogNode->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);

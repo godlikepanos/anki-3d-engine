@@ -7,7 +7,6 @@
 
 #include <anki/scene/SceneNode.h>
 #include <anki/Math.h>
-#include <anki/physics/PhysicsPlayerController.h>
 
 namespace anki
 {
@@ -28,8 +27,6 @@ public:
 private:
 	class FeedbackComponent;
 	class FeedbackComponent2;
-
-	PhysicsPlayerControllerPtr m_player;
 };
 /// @}
 

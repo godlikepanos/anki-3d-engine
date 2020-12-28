@@ -17,9 +17,11 @@ namespace anki
 /// Body feedback component.
 class BodyNode::FeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(BodyNode::FeedbackComponent)
+
 public:
-	FeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	FeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -32,12 +34,14 @@ public:
 		if(bodyc.getTimestamp() == node.getGlobalTimestamp())
 		{
 			MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
-			move.setLocalTransform(bodyc.getTransform());
+			move.setLocalTransform(bodyc.getWorldTransform());
 		}
 
 		return Error::NONE;
 	}
 };
+
+ANKI_SCENE_COMPONENT_STATICS(BodyNode::FeedbackComponent)
 
 BodyNode::BodyNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -51,17 +55,18 @@ BodyNode::~BodyNode()
 Error BodyNode::init(const CString& resourceFname)
 {
 	// Joint component
-	newComponent<JointComponent>(this);
+	newComponent<JointComponent>();
 
 	// Body component
-	BodyComponent& bodyc = *newComponent<BodyComponent>(this);
-	bodyc.setMeshResource(resourceFname);
+	BodyComponent& bodyc = *newComponent<BodyComponent>();
+	ANKI_CHECK(bodyc.loadMeshResource(resourceFname));
 
 	// Feedback component
 	newComponent<FeedbackComponent>();
 
 	// Move component
-	newComponent<MoveComponent>(MoveComponentFlag::IGNORE_PARENT_TRANSFORM);
+	MoveComponent* movec = newComponent<MoveComponent>();
+	movec->setIgnoreParentTransform(true);
 
 	return Error::NONE;
 }

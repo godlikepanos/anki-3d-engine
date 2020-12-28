@@ -254,10 +254,10 @@ public:
 
 protected:
 	/// Create and append a component to the components container. The SceneNode has the ownership.
-	template<typename TComponent, typename... TArgs>
-	TComponent* newComponent(TArgs&&... args)
+	template<typename TComponent>
+	TComponent* newComponent()
 	{
-		TComponent* comp = getAllocator().newInstance<TComponent>(std::forward<TArgs>(args)...);
+		TComponent* comp = getAllocator().newInstance<TComponent>(this);
 		m_components.emplaceBack(getAllocator(), comp);
 		return comp;
 	}

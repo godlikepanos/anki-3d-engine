@@ -18,9 +18,11 @@ namespace anki
 /// Feedback component.
 class LightNode::MovedFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(LightNode::MovedFeedbackComponent)
+
 public:
-	MovedFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MovedFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -39,12 +41,16 @@ public:
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(LightNode::MovedFeedbackComponent)
+
 /// Feedback component.
 class LightNode::LightChangedFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(LightNode::LightChangedFeedbackComponent)
+
 public:
-	LightChangedFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	LightChangedFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -62,6 +68,8 @@ public:
 		return Error::NONE;
 	}
 };
+
+ANKI_SCENE_COMPONENT_STATICS(LightNode::LightChangedFeedbackComponent)
 
 LightNode::LightNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -116,34 +124,17 @@ void LightNode::onMoveUpdateCommon(const MoveComponent& move)
 {
 	// Update the spatial
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-	sp.markForUpdate();
-	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
+	sp.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 
 	// Update the lens flare
 	LensFlareComponent* lf = tryGetFirstComponentOfType<LensFlareComponent>();
 	if(lf)
 	{
-		lf->setWorldPosition(move.getWorldTransform().getOrigin());
+		lf->setWorldPosition(move.getWorldTransform().getOrigin().xyz());
 	}
 
 	// Update light component
-	getFirstComponentOfType<LightComponent>().updateWorldTransform(move.getWorldTransform());
-}
-
-Error LightNode::loadLensFlare(const CString& filename)
-{
-	ANKI_ASSERT(tryGetFirstComponentOfType<LensFlareComponent>() == nullptr);
-
-	LensFlareComponent* flareComp = newComponent<LensFlareComponent>(this);
-
-	const Error err = flareComp->init(filename);
-	if(err)
-	{
-		ANKI_ASSERT(!"TODO: Remove component");
-		return err;
-	}
-
-	return Error::NONE;
+	getFirstComponentOfType<LightComponent>().setWorldTransform(move.getWorldTransform());
 }
 
 void LightNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
@@ -167,7 +158,7 @@ void LightNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		color /= max(max(color.x(), color.y()), color.z());
 
 		self.m_dbgDrawer.drawBillboardTexture(
-			ctx.m_projectionMatrix, ctx.m_viewMatrix, lcomp.getTransform().getOrigin().xyz(), color.xyz1(),
+			ctx.m_projectionMatrix, ctx.m_viewMatrix, lcomp.getWorldTransform().getOrigin().xyz(), color.xyz1(),
 			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
 			self.m_dbgTex->getGrTextureView(), ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator,
 			ctx.m_commandBuffer);
@@ -201,14 +192,15 @@ Error PointLightNode::init()
 	newComponent<MovedFeedbackComponent>();
 
 	// Light component
-	LightComponent* lc = newComponent<LightComponent>(LightComponentType::POINT, getSceneGraph().getNewUuid());
+	LightComponent* lc = newComponent<LightComponent>();
+	lc->setLightComponentType(LightComponentType::POINT);
 	lc->setDrawCallback(drawCallback, static_cast<LightNode*>(this));
 
 	// Feedback component
 	newComponent<LightChangedFeedbackComponent>();
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, &m_sphereW);
+	newComponent<SpatialComponent>();
 
 	return Error::NONE;
 }
@@ -223,36 +215,36 @@ void PointLightNode::onMoveUpdate(const MoveComponent& move)
 		Transform trf = m_shadowData[count].m_localTrf;
 		trf.setOrigin(move.getWorldTransform().getOrigin());
 
-		fr.setTransform(trf);
+		fr.setWorldTransform(trf);
 		++count;
 
 		return Error::NONE;
 	});
-
 	(void)err;
-
-	m_sphereW.setCenter(move.getWorldTransform().getOrigin());
 }
 
 void PointLightNode::onShapeUpdate(LightComponent& light)
 {
-	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
+	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
 		fr.setFar(light.getRadius());
 		return Error::NONE;
 	});
 	(void)err;
 
-	m_sphereW.setRadius(light.getRadius());
+	SpatialComponent& spatialc = getFirstComponentOfType<SpatialComponent>();
+	spatialc.setSphereWorldSpace(Sphere(light.getWorldTransform().getOrigin(), light.getRadius()));
 }
 
 Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
-	if(getFirstComponentOfType<LightComponent>().getShadowEnabled() && m_shadowData.isEmpty())
+	// Lazily init
+	const LightComponent& lightc = getFirstComponentOfType<LightComponent>();
+	if(lightc.getShadowEnabled() && m_shadowData.isEmpty())
 	{
 		m_shadowData.create(getAllocator(), 6);
 
 		const F32 ang = toRad(90.0f);
-		const F32 dist = m_sphereW.getRadius();
+		const F32 dist = lightc.getRadius();
 		const F32 zNear = LIGHT_FRUSTUM_NEAR_PLANE;
 
 		Mat3 rot;
@@ -276,9 +268,10 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 			Transform trf = m_shadowData[i].m_localTrf;
 			trf.setOrigin(origin);
 
-			FrustumComponent* frc = newComponent<FrustumComponent>(this, FrustumType::PERSPECTIVE);
+			FrustumComponent* frc = newComponent<FrustumComponent>();
+			frc->setFrustumType(FrustumType::PERSPECTIVE);
 			frc->setPerspective(zNear, dist, ang, ang);
-			frc->setTransform(trf);
+			frc->setWorldTransform(trf);
 		}
 	}
 
@@ -303,18 +296,20 @@ Error SpotLightNode::init()
 	newComponent<MovedFeedbackComponent>();
 
 	// Light component
-	LightComponent* lc = newComponent<LightComponent>(LightComponentType::SPOT, getSceneGraph().getNewUuid());
+	LightComponent* lc = newComponent<LightComponent>();
+	lc->setLightComponentType(LightComponentType::SPOT);
 	lc->setDrawCallback(drawCallback, static_cast<LightNode*>(this));
 
 	// Feedback component
 	newComponent<LightChangedFeedbackComponent>();
 
 	// Frustum component
-	FrustumComponent* fr = newComponent<FrustumComponent>(this, FrustumType::PERSPECTIVE);
+	FrustumComponent* fr = newComponent<FrustumComponent>();
+	fr->setFrustumType(FrustumType::PERSPECTIVE);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, &fr->getPerspectiveBoundingShape());
+	newComponent<SpatialComponent>();
 
 	return Error::NONE;
 }
@@ -323,7 +318,7 @@ void SpotLightNode::onMoveUpdate(const MoveComponent& move)
 {
 	// Update the frustums
 	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
-		fr.setTransform(move.getWorldTransform());
+		fr.setWorldTransform(move.getWorldTransform());
 		return Error::NONE;
 	});
 
@@ -340,7 +335,7 @@ void SpotLightNode::onShapeUpdate(LightComponent& light)
 
 	// Mark the spatial for update
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-	sp.markForUpdate();
+	sp.setConvexHullWorldSpace(frc.getPerspectiveBoundingShapeWorldSpace());
 }
 
 Error SpotLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
@@ -351,9 +346,11 @@ Error SpotLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 
 class DirectionalLightNode::FeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(DirectionalLightNode::FeedbackComponent)
+
 public:
-	FeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	FeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -364,16 +361,17 @@ public:
 		{
 			// Move updated
 			LightComponent& lightc = node.getFirstComponentOfType<LightComponent>();
-			lightc.updateWorldTransform(move.getWorldTransform());
+			lightc.setWorldTransform(move.getWorldTransform());
 
 			SpatialComponent& spatialc = node.getFirstComponentOfType<SpatialComponent>();
-			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin());
-			spatialc.markForUpdate();
+			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 		}
 
 		return Error::NONE;
 	}
 };
+
+ANKI_SCENE_COMPONENT_STATICS(DirectionalLightNode::FeedbackComponent)
 
 DirectionalLightNode::DirectionalLightNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -385,14 +383,17 @@ Error DirectionalLightNode::init()
 	newComponent<MoveComponent>();
 	newComponent<FeedbackComponent>();
 
-	LightComponent* lc = newComponent<LightComponent>(LightComponentType::DIRECTIONAL, getSceneGraph().getNewUuid());
+	LightComponent* lc = newComponent<LightComponent>();
+	lc->setLightComponentType(LightComponentType::DIRECTIONAL);
 	lc->setDrawCallback(drawCallback, this);
 
-	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_boundingBox);
+	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 
 	// Make the bounding box large enough so it will always be visible. Because of that don't update the octree bounds
-	m_boundingBox.setMin(getSceneGraph().getSceneMin());
-	m_boundingBox.setMax(getSceneGraph().getSceneMax());
+	Aabb boundingBox;
+	boundingBox.setMin(getSceneGraph().getSceneMin());
+	boundingBox.setMax(getSceneGraph().getSceneMax());
+	spatialc->setAabbWorldSpace(boundingBox);
 	spatialc->setUpdateOctreeBounds(false);
 
 	return Error::NONE;

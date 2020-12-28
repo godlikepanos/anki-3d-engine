@@ -6,20 +6,12 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/components/MoveComponent.h>
-#include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/DebugDrawer.h>
 #include <anki/resource/ModelResource.h>
-#include <anki/collision/Obb.h>
 #include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
-
-// Forward
-class ObbSpatialComponent;
-class BodyComponent;
-class ModelNode;
 
 /// @addtogroup scene
 /// @{
@@ -39,8 +31,7 @@ public:
 	ANKI_USE_RESULT Error init(ModelResourcePtr resource, U32 modelPatchIdx);
 
 private:
-	class MoveFeedbackComponent;
-	class SkinFeedbackComponent;
+	class FeedbackToSpatialComponent;
 
 	ModelResourcePtr m_model; ///< The resource
 
@@ -51,7 +42,7 @@ private:
 
 	DebugDrawer2 m_dbgDrawer;
 
-	void updateSpatialComponent(const MoveComponent& move);
+	void updateSpatialComponent(const MoveComponent& move, const SkinComponent* skinc);
 
 	void draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) const;
 

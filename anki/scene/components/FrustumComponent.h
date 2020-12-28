@@ -61,10 +61,10 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag)
 /// Frustum component. Useful for nodes that take part in visibility tests like cameras and lights.
 class FrustumComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::FRUSTUM;
+	ANKI_SCENE_COMPONENT(FrustumComponent)
 
-	FrustumComponent(SceneNode* node, FrustumType frustumType);
+public:
+	FrustumComponent(SceneNode* node);
 
 	~FrustumComponent();
 
@@ -73,8 +73,28 @@ public:
 		return *m_node;
 	}
 
+	const SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+
+	void setFrustumType(FrustumType type)
+	{
+		ANKI_ASSERT(type >= FrustumType::FIRST && type < FrustumType::COUNT);
+		m_frustumType = type;
+		if(m_frustumType == FrustumType::PERSPECTIVE)
+		{
+			setPerspective(0.1f, 100.0f, toRad(45.0f), toRad(45.0f));
+		}
+		else
+		{
+			setOrthographic(0.1f, 100.0f, 5.0f, -5.0f, 5.0f, -5.0f);
+		}
+	}
+
 	FrustumType getFrustumType() const
 	{
+		ANKI_ASSERT(m_frustumType != FrustumType::COUNT);
 		return m_frustumType;
 	}
 
@@ -200,17 +220,12 @@ public:
 		m_ortho.m_bottom = value;
 	}
 
-	const SceneNode& getSceneNode() const
-	{
-		return *m_node;
-	}
-
-	const Transform& getTransform() const
+	const Transform& getWorldTransform() const
 	{
 		return m_trf;
 	}
 
-	void setTransform(const Transform& trf)
+	void setWorldTransform(const Transform& trf)
 	{
 		m_trf = trf;
 		m_trfMarkedForUpdate = true;
@@ -321,13 +336,13 @@ public:
 												  getEffectiveShadowDistance(), getCascadeCount());
 	}
 
-	const ConvexHullShape& getPerspectiveBoundingShape() const
+	const ConvexHullShape& getPerspectiveBoundingShapeWorldSpace() const
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::PERSPECTIVE);
 		return m_perspective.m_hull;
 	}
 
-	const Obb& getOrthographicBoundingShape() const
+	const Obb& getOrthographicBoundingShapeWorldSpace() const
 	{
 		ANKI_ASSERT(m_frustumType == FrustumType::ORTHOGRAPHIC);
 		return m_ortho.m_obbW;
@@ -418,8 +433,8 @@ private:
 	} m_coverageBuff; ///< Coverage buffer for extra visibility tests.
 
 	FrustumComponentVisibilityTestFlag m_flags = FrustumComponentVisibilityTestFlag::NONE;
-	Bool m_shapeMarkedForUpdate = true;
-	Bool m_trfMarkedForUpdate = true;
+	Bool m_shapeMarkedForUpdate : 1;
+	Bool m_trfMarkedForUpdate : 1;
 
 	Bool updateInternal();
 

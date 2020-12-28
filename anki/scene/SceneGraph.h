@@ -256,8 +256,8 @@ private:
 
 	Octree* m_octree = nullptr;
 
-	Vec3 m_sceneMin = {-1000.0f, -200.0f, -1000.0f};
-	Vec3 m_sceneMax = {1000.0f, 200.0f, 1000.0f};
+	Vec3 m_sceneMin = Vec3(-1000.0f, -200.0f, -1000.0f);
+	Vec3 m_sceneMax = Vec3(1000.0f, 200.0f, 1000.0f);
 
 	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
 

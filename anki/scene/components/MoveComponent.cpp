@@ -9,9 +9,12 @@
 namespace anki
 {
 
-MoveComponent::MoveComponent(MoveComponentFlag flags)
-	: SceneComponent(CLASS_TYPE)
-	, m_flags(flags)
+ANKI_SCENE_COMPONENT_STATICS(MoveComponent)
+
+MoveComponent::MoveComponent(SceneNode* node)
+	: SceneComponent(node, getStaticClassId())
+	, m_ignoreLocalTransform(false)
+	, m_ignoreParentTransform(false)
 {
 	markForUpdate();
 }
@@ -29,7 +32,7 @@ Error MoveComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 Bool MoveComponent::updateWorldTransform(SceneNode& node)
 {
 	m_prevWTrf = m_wtrf;
-	const Bool dirty = m_flags.get(MoveComponentFlag::MARKED_FOR_UPDATE);
+	const Bool dirty = m_markedForUpdate;
 
 	// If dirty then update world transform
 	if(dirty)
@@ -45,11 +48,11 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 				// Parent not movable
 				m_wtrf = m_ltrf;
 			}
-			else if(m_flags.get(MoveComponentFlag::IGNORE_PARENT_TRANSFORM))
+			else if(m_ignoreParentTransform)
 			{
 				m_wtrf = m_ltrf;
 			}
-			else if(m_flags.get(MoveComponentFlag::IGNORE_LOCAL_TRANSFORM))
+			else if(m_ignoreLocalTransform)
 			{
 				m_wtrf = parentMove->getWorldTransform();
 			}
@@ -66,7 +69,7 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 		}
 
 		// Now it's a good time to cleanse parent
-		m_flags.unset(MoveComponentFlag::MARKED_FOR_UPDATE);
+		m_markedForUpdate = false;
 	}
 
 	// If this is dirty then make children dirty as well. Don't walk the whole tree because you will re-walk it later

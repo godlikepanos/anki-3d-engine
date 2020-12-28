@@ -27,13 +27,9 @@ protected:
 
 private:
 	class MoveFeedbackComponent;
-	class FrustumFeedbackComponent;
 
 	/// Called when moved.
 	void onMoveComponentUpdate(MoveComponent& move);
-
-	/// Called when something changed in the frustum.
-	void onFrustumComponentUpdate(FrustumComponent& fr);
 };
 
 /// Perspective camera

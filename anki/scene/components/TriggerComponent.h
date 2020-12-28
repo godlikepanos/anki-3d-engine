@@ -29,14 +29,14 @@ public:
 
 	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
-	void setSphere(F32 radius);
+	void setSphereVolumeRadius(F32 radius);
 
-	Transform getTransform() const
+	Transform getWorldTransform() const
 	{
 		return (m_trigger.isCreated()) ? m_trigger->getTransform() : Transform::getIdentity();
 	}
 
-	void setTransform(const Transform& trf)
+	void setWorldTransform(const Transform& trf)
 	{
 		if(m_trigger.isCreated())
 		{

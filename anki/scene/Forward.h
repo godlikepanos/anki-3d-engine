@@ -18,6 +18,8 @@ class SpatialComponent;
 class DecalComponent;
 class ReflectionProxyComponent;
 class ReflectionProbeComponent;
+class FogDensityComponent;
+class SkinComponent;
 
 // Nodes
 class SceneNode;
@@ -25,6 +27,10 @@ class LightNode;
 class PointLightNode;
 class SpotLightNode;
 class CameraNode;
+
+// Events
+class EventManager;
+class Event;
 
 // Other
 class SceneGraph;

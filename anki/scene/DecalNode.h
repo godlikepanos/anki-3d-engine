@@ -36,7 +36,7 @@ private:
 	TextureResourcePtr m_dbgTex;
 
 	void onMove(MoveComponent& movec);
-	void onDecalUpdated();
+	void onDecalUpdated(DecalComponent& decalc);
 
 	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 };

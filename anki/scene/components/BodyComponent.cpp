@@ -25,20 +25,72 @@ BodyComponent::~BodyComponent()
 {
 }
 
-void BodyComponent::setMeshResource(CString meshFilename)
+Error BodyComponent::loadMeshResource(CString meshFilename)
 {
-	const Error err = m_node->getSceneGraph().getResourceManager().loadResource(meshFilename, m_mesh);
-	if(err)
-	{
-		ANKI_SCENE_LOGE("Couldn't initialize the body component. Error ignored");
-		return;
-	}
+	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(meshFilename, m_mesh));
+
+	const Transform prevTransform = (m_body) ? m_body->getTransform() : Transform::getIdentity();
+	const F32 prevMass = (m_body) ? m_body->getMass() : 0.0f;
 
 	PhysicsBodyInitInfo init;
-	init.m_mass = 1.0f;
+	init.m_mass = prevMass;
+	init.m_transform = prevTransform;
 	init.m_shape = m_mesh->getCollisionShape();
 	m_body = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
-	m_body->setUserData(m_node);
+	m_body->setUserData(this);
+
+	m_markedForUpdate = true;
+	return Error::NONE;
+}
+
+CString BodyComponent::getMeshResourceFilename() const
+{
+	return (m_mesh.isCreated()) ? m_mesh->getFilename() : CString();
+}
+
+void BodyComponent::setMass(F32 mass)
+{
+	if(mass < 0.0f)
+	{
+		ANKI_SCENE_LOGW("Attempting to set a negative mass");
+		mass = 0.0f;
+	}
+
+	if(m_body.isCreated())
+	{
+		if((m_body->getMass() == 0.0f && mass != 0.0f) || (m_body->getMass() != 0.0f && mass == 0.0f))
+		{
+			// Will become from static to dynamic or the opposite, re-create the body
+
+			const Transform prevTransform = getWorldTransform();
+			PhysicsBodyInitInfo init;
+			init.m_transform = prevTransform;
+			init.m_mass = mass;
+			init.m_shape = m_mesh->getCollisionShape();
+			m_body = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
+			m_body->setUserData(this);
+
+			m_markedForUpdate = true;
+		}
+		else
+		{
+			m_body->setMass(mass);
+		}
+	}
+}
+
+Error BodyComponent::update(SceneNode& node, Second, Second, Bool& updated)
+{
+	updated = m_markedForUpdate;
+	m_markedForUpdate = false;
+
+	if(m_body && m_body->getTransform() != m_trf)
+	{
+		updated = true;
+		m_trf = m_body->getTransform();
+	}
+
+	return Error::NONE;
 }
 
 } // end namespace anki

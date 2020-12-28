@@ -13,8 +13,10 @@
 namespace anki
 {
 
+ANKI_SCENE_COMPONENT_STATICS(ScriptComponent)
+
 ScriptComponent::ScriptComponent(SceneNode* node)
-	: SceneComponent(CLASS_TYPE)
+	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
 {
 	ANKI_ASSERT(node);
@@ -22,18 +24,24 @@ ScriptComponent::ScriptComponent(SceneNode* node)
 
 ScriptComponent::~ScriptComponent()
 {
+	m_node->getAllocator().deleteInstance(m_env);
 }
 
-Error ScriptComponent::load(CString fname)
+Error ScriptComponent::loadScriptResource(CString fname)
 {
 	// Load
 	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(fname, m_script));
 
 	// Create the env
-	ANKI_CHECK(m_env.init(&m_node->getSceneGraph().getScriptManager()));
+	if(m_env)
+	{
+		m_node->getAllocator().deleteInstance(m_env);
+	}
+	m_env = m_node->getAllocator().newInstance<ScriptEnvironment>();
+	ANKI_CHECK(m_env->init(&m_node->getSceneGraph().getScriptManager()));
 
 	// Exec the script
-	ANKI_CHECK(m_env.evalString(m_script->getSource()));
+	ANKI_CHECK(m_env->evalString(m_script->getSource()));
 
 	return Error::NONE;
 }
@@ -42,7 +50,12 @@ Error ScriptComponent::update(SceneNode& node, Second prevTime, Second crntTime,
 {
 	ANKI_ASSERT(&node == m_node);
 	updated = false;
-	lua_State* lua = &m_env.getLuaState();
+	if(m_env == nullptr)
+	{
+		return Error::NONE;
+	}
+
+	lua_State* lua = &m_env->getLuaState();
 
 	// Push function name
 	lua_getglobal(lua, "update");

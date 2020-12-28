@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
+#include <anki/scene/DebugDrawer.h>
 
 namespace anki
 {
@@ -16,6 +17,7 @@ class PhysicsDebugNode : public SceneNode
 public:
 	PhysicsDebugNode(SceneGraph* scene, CString name)
 		: SceneNode(scene, name)
+		, m_physDbgDrawer(&m_dbgDrawer)
 	{
 	}
 
@@ -24,7 +26,10 @@ public:
 	ANKI_USE_RESULT Error init();
 
 private:
-	class MyRenderComponent;
+	DebugDrawer m_dbgDrawer;
+	PhysicsDebugDrawer m_physDbgDrawer;
+
+	void draw(RenderQueueDrawContext& ctx);
 };
 
 } // end namespace anki

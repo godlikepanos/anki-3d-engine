@@ -19,43 +19,66 @@ namespace anki
 /// Fog density component. Controls the fog density.
 class FogDensityComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(FogDensityComponent)
+
 public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::FOG_DENSITY;
+	static constexpr F32 MIN_SHAPE_SIZE = 1.0_cm;
 
-	FogDensityComponent()
-		: SceneComponent(CLASS_TYPE)
+	FogDensityComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
+		, m_isBox(true)
+		, m_markedForUpdate(true)
 	{
 	}
 
-	void setAabb(const Vec4& aabbMin, const Vec4& aabbMax)
+	void setBoxVolumeSize(Vec3 sizeXYZ)
 	{
-		m_aabbMin = aabbMin;
-		m_aabbMax = aabbMax;
-		m_box = true;
+		sizeXYZ = sizeXYZ.max(Vec3(MIN_SHAPE_SIZE));
+		m_aabbMin = -sizeXYZ / 2.0f;
+		m_aabbMax = sizeXYZ / 2.0f;
+		m_isBox = true;
+		m_markedForUpdate = true;
 	}
 
-	void setSphere(F32 radius)
+	Vec3 getBoxVolumeSize() const
 	{
-		m_sphereRadius = radius;
-		m_box = false;
+		ANKI_ASSERT(isAabb());
+		return m_aabbMax.xyz() - m_aabbMin.xyz();
+	}
+
+	Aabb getAabbWorldSpace() const
+	{
+		ANKI_ASSERT(isAabb());
+		return Aabb(m_aabbMin + m_worldPos, m_aabbMax + m_worldPos);
+	}
+
+	void setSphereVolumeRadius(F32 radius)
+	{
+		m_sphereRadius = max(MIN_SHAPE_SIZE, radius);
+		m_isBox = false;
+		m_markedForUpdate = true;
+	}
+
+	F32 getSphereVolumeRadius() const
+	{
+		ANKI_ASSERT(isSphere());
+		return m_sphereRadius;
+	}
+
+	Sphere getSphereWorldSpace() const
+	{
+		ANKI_ASSERT(isSphere());
+		return Sphere(m_worldPos, m_sphereRadius);
 	}
 
 	Bool isAabb() const
 	{
-		return m_box == true;
+		return m_isBox == true;
 	}
 
-	void getAabb(Vec4& aabbMin, Vec4& aabbMax) const
+	Bool isSphere() const
 	{
-		ANKI_ASSERT(isAabb());
-		aabbMin = m_aabbMin;
-		aabbMax = m_aabbMax;
-	}
-
-	void getSphere(F32& radius) const
-	{
-		ANKI_ASSERT(!isAabb());
-		radius = m_sphereRadius;
+		return !m_isBox;
 	}
 
 	void setDensity(F32 d)
@@ -69,16 +92,17 @@ public:
 		return m_density;
 	}
 
-	void updatePosition(const Vec4& pos)
+	void setWorldPosition(const Vec3& pos)
 	{
 		m_worldPos = pos;
+		m_markedForUpdate = true;
 	}
 
 	void setupFogDensityQueueElement(FogDensityQueueElement& el) const
 	{
 		el.m_density = m_density;
-		el.m_isBox = m_box;
-		if(m_box)
+		el.m_isBox = m_isBox;
+		if(m_isBox)
 		{
 			el.m_aabbMin = (m_aabbMin + m_worldPos).xyz();
 			el.m_aabbMax = (m_aabbMax + m_worldPos).xyz();
@@ -90,19 +114,27 @@ public:
 		}
 	}
 
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	{
+		updated = m_markedForUpdate;
+		m_markedForUpdate = false;
+		return Error::NONE;
+	}
+
 private:
-	Vec4 m_aabbMin{0.0f};
+	Vec3 m_aabbMin = Vec3(0.0f);
 
 	union
 	{
-		Vec4 m_aabbMax{1.0f};
+		Vec3 m_aabbMax = Vec3(1.0f);
 		F32 m_sphereRadius;
 	};
 
-	Vec4 m_worldPos{0.0f};
-
+	Vec3 m_worldPos = Vec3(0.0f);
 	F32 m_density = 1.0f;
-	Bool m_box = false;
+
+	Bool m_isBox : 1;
+	Bool m_markedForUpdate : 1;
 };
 
 } // end namespace anki

@@ -9,7 +9,6 @@
 #include <anki/scene/components/LensFlareComponent.h>
 #include <anki/scene/components/RenderComponent.h>
 #include <anki/scene/components/ReflectionProbeComponent.h>
-#include <anki/scene/components/OccluderComponent.h>
 #include <anki/scene/components/DecalComponent.h>
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/FogDensityComponent.h>
@@ -57,7 +56,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 		return;
 	}
 
-	rqueue.m_cameraTransform = Mat4(frc.getTransform());
+	rqueue.m_cameraTransform = Mat4(frc.getWorldTransform());
 	rqueue.m_viewMatrix = frc.getViewMatrix();
 	rqueue.m_projectionMatrix = frc.getProjectionMatrix();
 	rqueue.m_viewProjectionMatrix = frc.getViewProjectionMatrix();
@@ -317,11 +316,11 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		U32 spIdx = 0;
 		U32 count = 0;
 		Error err = node.iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp) {
-			if(spatialInsideFrustum(testedFrc, sp) && testAgainstRasterizer(sp.getAabb()))
+			if(spatialInsideFrustum(testedFrc, sp) && testAgainstRasterizer(sp.getAabbWorldSpace()))
 			{
 				// Inside
 				ANKI_ASSERT(spIdx < MAX_U8);
-				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx), sp.getSpatialOrigin()};
+				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx), sp.getSpatialOrigin().xyz0()};
 			}
 
 			++spIdx;
@@ -338,7 +337,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 		ANKI_ASSERT(count == 1 && "TODO: Support sub-spatials");
 
 		// Sort sub-spatials
-		const Vec4 origin = testedFrc.getTransform().getOrigin();
+		const Vec4 origin = testedFrc.getWorldTransform().getOrigin();
 		std::sort(sps.begin(), sps.begin() + count, [origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool {
 			const Vec4& spa = a.m_origin;
 			const Vec4& spb = b.m_origin;
@@ -370,7 +369,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			const Plane& nearPlane = testedFrc.getViewPlanes()[FrustumPlaneType::NEAR];
 			el->m_distanceFromCamera = !!(rc->getFlags() & RenderComponentFlag::SORT_LAST)
 										   ? testedFrc.getFar()
-										   : max(0.0f, testPlane(nearPlane, sps[0].m_sp->getAabb()));
+										   : max(0.0f, testPlane(nearPlane, sps[0].m_sp->getAabbWorldSpace()));
 
 			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
 			   && !(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
@@ -388,7 +387,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			ANKI_ASSERT(m_frcCtx->m_primaryFrustum);
 			const FrustumComponent& primartFrc = *m_frcCtx->m_primaryFrustum;
 			const Plane& nearPlane = primartFrc.getViewPlanes()[FrustumPlaneType::NEAR];
-			const F32 dist = testPlane(nearPlane, sps[0].m_sp->getAabb());
+			const F32 dist = testPlane(nearPlane, sps[0].m_sp->getAabbWorldSpace());
 
 			static_assert(MAX_LOD_COUNT == 3, "Following code was designed around that");
 			U32 lod;
@@ -422,7 +421,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 
 				// Compute distance from the frustum
 				const Plane& nearPlane = testedFrc.getViewPlanes()[FrustumPlaneType::NEAR];
-				const F32 distFromFrustum = max(0.0f, testPlane(nearPlane, sps[0].m_sp->getAabb()));
+				const F32 distFromFrustum = max(0.0f, testPlane(nearPlane, sps[0].m_sp->getAabbWorldSpace()));
 
 				castsShadow = distFromFrustum < testedFrc.getEffectiveShadowDistance();
 			}
@@ -503,7 +502,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 					cascadeCount);
 				for(U32 i = 0; i < cascadeCount; ++i)
 				{
-					::new(&cascadeFrustumComponents[i]) FrustumComponent(&node, FrustumType::ORTHOGRAPHIC);
+					::new(&cascadeFrustumComponents[i]) FrustumComponent(&node);
+					cascadeFrustumComponents[i].setFrustumType(FrustumType::ORTHOGRAPHIC);
 				}
 
 				lc->setupDirectionalLightQueueElement(testedFrc, result.m_directionalLight, cascadeFrustumComponents);

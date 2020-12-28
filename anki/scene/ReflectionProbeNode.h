@@ -26,12 +26,13 @@ public:
 
 	~ReflectionProbeNode();
 
-	ANKI_USE_RESULT Error init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLSpace);
+	ANKI_USE_RESULT Error init();
 
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	class MoveFeedbackComponent;
+	class ShapeFeedbackComponent;
 
 	class CubeSide
 	{
@@ -40,14 +41,12 @@ private:
 	};
 
 	Array<CubeSide, 6> m_cubeSides;
-	Vec3 m_aabbMinLSpace = Vec3(+1.0f);
-	Vec3 m_aabbMaxLSpace = Vec3(-1.0f);
-	Aabb m_spatialAabb;
 
 	DebugDrawer2 m_dbgDrawer;
 	TextureResourcePtr m_dbgTex;
 
 	void onMoveUpdate(MoveComponent& move);
+	void onShapeUpdate(ReflectionProbeComponent& reflc);
 
 	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 };

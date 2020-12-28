@@ -260,10 +260,11 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	Timestamp componentTimestamp = 0;
 	err = node.iterateComponents([&](SceneComponent& comp) -> Error {
 		Bool updated = false;
-		Error e = comp.update(node, prevTime, crntTime, updated);
+		const Error e = comp.update(node, prevTime, crntTime, updated);
 
 		if(updated)
 		{
+			ANKI_TRACE_INC_COUNTER(SCENE_COMPONENTS_UPDATED, 1);
 			comp.setTimestamp(node.getSceneGraph().m_timestamp);
 			componentTimestamp = max(componentTimestamp, node.getSceneGraph().m_timestamp);
 			ANKI_ASSERT(componentTimestamp > 0);

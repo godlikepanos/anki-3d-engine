@@ -87,7 +87,7 @@ TriggerComponent::~TriggerComponent()
 	m_bodiesExit.destroy(m_node->getAllocator());
 }
 
-void TriggerComponent::setSphere(F32 radius)
+void TriggerComponent::setSphereVolumeRadius(F32 radius)
 {
 	m_shape = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(radius);
 	m_trigger = m_node->getSceneGraph().getPhysicsWorld().newInstance<PhysicsTrigger>(m_shape);

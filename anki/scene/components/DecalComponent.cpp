@@ -11,8 +11,10 @@
 namespace anki
 {
 
+ANKI_SCENE_COMPONENT_STATICS(DecalComponent)
+
 DecalComponent::DecalComponent(SceneNode* node)
-	: SceneComponent(CLASS_TYPE)
+	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
 {
 	ANKI_ASSERT(node);
@@ -37,9 +39,10 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 		return Error::USER_DATA;
 	}
 
-	Vec2 marginf = F32(ATLAS_SUB_TEXTURE_MARGIN / 2) / Vec2(F32(l.m_atlas->getWidth()), F32(l.m_atlas->getHeight()));
-	Vec2 minUv = l.m_uv.xy() - marginf;
-	Vec2 sizeUv = (l.m_uv.zw() - l.m_uv.xy()) + 2.0f * marginf;
+	const Vec2 marginf =
+		F32(ATLAS_SUB_TEXTURE_MARGIN / 2) / Vec2(F32(l.m_atlas->getWidth()), F32(l.m_atlas->getHeight()));
+	const Vec2 minUv = l.m_uv.xy() - marginf;
+	const Vec2 sizeUv = (l.m_uv.zw() - l.m_uv.xy()) + 2.0f * marginf;
 	l.m_uv = Vec4(minUv.x(), minUv.y(), minUv.x() + sizeUv.x(), minUv.y() + sizeUv.y());
 
 	l.m_blendFactor = blendFactor;
@@ -48,25 +51,25 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 
 void DecalComponent::updateInternal()
 {
+	const Vec3 halfBoxSize = m_boxSize / 2.0f;
+
 	// Calculate the texture matrix
-	Mat4 worldTransform(m_trf);
+	const Mat4 worldTransform(m_trf);
 
-	Mat4 viewMat = worldTransform.getInverse();
+	const Mat4 viewMat = worldTransform.getInverse();
 
-	Mat4 projMat =
-		Mat4::calculateOrthographicProjectionMatrix(m_sizes.x() / 2.0f, -m_sizes.x() / 2.0f, m_sizes.y() / 2.0f,
-													-m_sizes.y() / 2.0f, LIGHT_FRUSTUM_NEAR_PLANE, m_sizes.z());
+	const Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(
+		halfBoxSize.x(), -halfBoxSize.x(), halfBoxSize.y(), -halfBoxSize.y(), LIGHT_FRUSTUM_NEAR_PLANE, m_boxSize.z());
 
-	static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+	static const Mat4 biasMat4(0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+							   1.0f);
 
 	m_biasProjViewMat = biasMat4 * projMat * viewMat;
 
 	// Calculate the OBB
-	Vec4 center(0.0f, 0.0f, -m_sizes.z() / 2.0f, 0.0f);
-	Vec4 extend(m_sizes.x() / 2.0f, m_sizes.y() / 2.0f, m_sizes.z() / 2.0f, 0.0f);
-
-	Obb obbL(center, Mat3x4::getIdentity(), extend);
-
+	const Vec4 center(0.0f, 0.0f, -halfBoxSize.z(), 0.0f);
+	const Vec4 extend(halfBoxSize.x(), halfBoxSize.y(), halfBoxSize.z(), 0.0f);
+	const Obb obbL(center, Mat3x4::getIdentity(), extend);
 	m_obb = obbL.getTransformed(m_trf);
 }
 

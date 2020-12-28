@@ -21,24 +21,41 @@ namespace anki
 /// Spatial component. It is used by scene nodes that need to be placed inside the visibility structures.
 class SpatialComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(SpatialComponent)
+
 public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::SPATIAL;
-
-	SpatialComponent(SceneNode* node, const Obb* obb);
-
-	SpatialComponent(SceneNode* node, const Aabb* aabb);
-
-	SpatialComponent(SceneNode* node, const Sphere* sphere);
-
-	SpatialComponent(SceneNode* node, const ConvexHullShape* hull);
+	SpatialComponent(SceneNode* node);
 
 	~SpatialComponent();
+
+	void setObbWorldSpace(const Obb& obb)
+	{
+		m_obb = obb;
+		m_collisionObjectType = obb.CLASS_TYPE;
+		m_markedForUpdate = true;
+	}
+
+	void setAabbWorldSpace(const Aabb& aabb)
+	{
+		m_aabb = aabb;
+		m_collisionObjectType = aabb.CLASS_TYPE;
+		m_markedForUpdate = true;
+	}
+
+	void setSphereWorldSpace(const Sphere& sphere)
+	{
+		m_sphere = sphere;
+		m_collisionObjectType = sphere.CLASS_TYPE;
+		m_markedForUpdate = true;
+	}
+
+	void setConvexHullWorldSpace(const ConvexHullShape& hull);
 
 	template<typename T>
 	const T& getCollisionShape() const
 	{
 		ANKI_ASSERT(T::CLASS_TYPE == m_collisionObjectType);
-		return *reinterpret_cast<const T*>(m_shapePtr);
+		return *reinterpret_cast<const T*>(&m_anyShape);
 	}
 
 	CollisionShapeType getCollisionShapeType() const
@@ -46,7 +63,7 @@ public:
 		return m_collisionObjectType;
 	}
 
-	const Aabb& getAabb() const
+	const Aabb& getAabbWorldSpace() const
 	{
 		return m_derivedAabb;
 	}
@@ -63,21 +80,16 @@ public:
 
 	/// Used for sorting spatials. In most object the origin is the center of mass but for cameras the origin is the
 	/// eye point.
-	const Vec4& getSpatialOrigin() const
+	const Vec3& getSpatialOrigin() const
 	{
 		ANKI_ASSERT(m_origin.x() != MAX_F32);
 		return m_origin;
 	}
 
-	void setSpatialOrigin(const Vec4& origin)
+	/// See getSpatialOrigin()
+	void setSpatialOrigin(const Vec3& origin)
 	{
 		m_origin = origin;
-	}
-
-	/// The derived class has to manually call this method when the collision shape got updated.
-	void markForUpdate()
-	{
-		m_markedForUpdate = true;
 	}
 
 	/// Update the "actual scene bounds" of the octree or not.
@@ -86,46 +98,32 @@ public:
 		m_updateOctreeBounds = update;
 	}
 
-	/// @name SceneComponent overrides
-	/// @{
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
-	/// @}
 
 private:
 	SceneNode* m_node;
 
 	union
 	{
-		const Obb* m_obb;
-		const Aabb* m_aabb;
-		const Sphere* m_sphere;
-		const ConvexHullShape* m_hull;
-		const void* m_shapePtr;
+		Obb m_obb;
+		Aabb m_aabb;
+		Sphere m_sphere;
+		ConvexHullShape m_hull;
+		U8 m_anyShape;
 	};
 
-	CollisionShapeType m_collisionObjectType;
+	DynamicArray<Vec4> m_convexHullPoints;
+
+	CollisionShapeType m_collisionObjectType = CollisionShapeType::COUNT;
 	Aabb m_derivedAabb; ///< A faster shape
 
-	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0f);
+	Vec3 m_origin = Vec3(MAX_F32);
 
 	OctreePlaceable m_octreeInfo;
 
-	Bool m_markedForUpdate = false;
-	Bool m_placed = false;
-	Bool m_updateOctreeBounds = true;
-};
-
-/// A class that holds spatial information and implements the SpatialComponent virtuals. You just need to update the
-/// OBB manually
-class ObbSpatialComponent : public SpatialComponent
-{
-public:
-	Obb m_obb;
-
-	ObbSpatialComponent(SceneNode* node)
-		: SpatialComponent(node, &m_obb)
-	{
-	}
+	Bool m_markedForUpdate : 1;
+	Bool m_placed : 1;
+	Bool m_updateOctreeBounds : 1;
 };
 /// @}
 

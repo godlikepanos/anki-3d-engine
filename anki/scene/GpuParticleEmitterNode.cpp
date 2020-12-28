@@ -17,9 +17,11 @@ namespace anki
 
 class GpuParticleEmitterNode::MoveFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(GpuParticleEmitterNode::MoveFeedbackComponent)
+
 public:
-	MoveFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MoveFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -37,6 +39,8 @@ public:
 		return Error::NONE;
 	}
 };
+
+ANKI_SCENE_COMPONENT_STATICS(GpuParticleEmitterNode::MoveFeedbackComponent)
 
 GpuParticleEmitterNode::GpuParticleEmitterNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -141,7 +145,7 @@ Error GpuParticleEmitterNode::init(const CString& filename)
 	// Create the components
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
-	newComponent<SpatialComponent>(this, &m_spatialVolume);
+	newComponent<SpatialComponent>();
 	GenericGpuComputeJobComponent* gpuComp = newComponent<GenericGpuComputeJobComponent>();
 	gpuComp->setCallback(
 		[](GenericGpuComputeJobQueueElementContext& ctx, const void* userData) {
@@ -167,11 +171,11 @@ void GpuParticleEmitterNode::onMoveComponentUpdate(const MoveComponent& movec)
 	const Vec4& pos = movec.getWorldTransform().getOrigin();
 
 	// Update the AABB
-	m_spatialVolume.setMin((pos - m_maxDistanceAParticleCanGo).xyz());
-	m_spatialVolume.setMax((pos + m_maxDistanceAParticleCanGo).xyz());
+	m_spatialVolumeWorldSpace.setMin((pos - m_maxDistanceAParticleCanGo).xyz());
+	m_spatialVolumeWorldSpace.setMax((pos + m_maxDistanceAParticleCanGo).xyz());
 	SpatialComponent& spatialc = getFirstComponentOfType<SpatialComponent>();
-	spatialc.markForUpdate();
-	spatialc.setSpatialOrigin(pos);
+	spatialc.setAabbWorldSpace(m_spatialVolumeWorldSpace);
+	spatialc.setSpatialOrigin(pos.xyz());
 
 	// Stash the position
 	m_worldPosition = pos.xyz();

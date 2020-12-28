@@ -15,9 +15,11 @@ namespace anki
 /// Feedback component.
 class CameraNode::MoveFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(CameraNode::MoveFeedbackComponent)
+
 public:
-	MoveFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MoveFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -36,29 +38,7 @@ public:
 	}
 };
 
-/// Feedback component.
-class CameraNode::FrustumFeedbackComponent : public SceneComponent
-{
-public:
-	FrustumFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
-	{
-	}
-
-	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
-	{
-		updated = false;
-
-		FrustumComponent& fr = node.getFirstComponentOfType<FrustumComponent>();
-		if(fr.getTimestamp() == node.getGlobalTimestamp())
-		{
-			CameraNode& cam = static_cast<CameraNode&>(node);
-			cam.onFrustumComponentUpdate(fr);
-		}
-
-		return Error::NONE;
-	}
-};
+ANKI_SCENE_COMPONENT_STATICS(CameraNode::MoveFeedbackComponent)
 
 CameraNode::CameraNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -78,7 +58,8 @@ Error CameraNode::init(FrustumType frustumType)
 	newComponent<MoveFeedbackComponent>();
 
 	// Frustum component
-	FrustumComponent* frc = newComponent<FrustumComponent>(this, frustumType);
+	FrustumComponent* frc = newComponent<FrustumComponent>();
+	frc->setFrustumType(frustumType);
 	const FrustumComponentVisibilityTestFlag visibilityFlags =
 		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
@@ -96,7 +77,8 @@ Error CameraNode::init(FrustumType frustumType)
 	// Extended frustum for RT
 	if(getSceneGraph().getConfig().m_rayTracedShadows)
 	{
-		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>(this, FrustumType::ORTHOGRAPHIC);
+		FrustumComponent* rtFrustumComponent = newComponent<FrustumComponent>();
+		rtFrustumComponent->setFrustumType(FrustumType::ORTHOGRAPHIC);
 		rtFrustumComponent->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RAY_TRACING_SHADOWS);
 
 		const F32 dist = getSceneGraph().getConfig().m_rayTracingExtendedFrustumDistance;
@@ -107,30 +89,7 @@ Error CameraNode::init(FrustumType frustumType)
 		rtFrustumComponent->setLodDistance(2, getSceneGraph().getConfig().m_maxLodDistances[2]);
 	}
 
-	// Feedback component #2
-	newComponent<FrustumFeedbackComponent>();
-
-	// Spatial component
-	SpatialComponent* spatialc;
-	if(frustumType == FrustumType::PERSPECTIVE)
-	{
-		spatialc = newComponent<SpatialComponent>(this, &frc->getPerspectiveBoundingShape());
-	}
-	else
-	{
-		spatialc = newComponent<SpatialComponent>(this, &frc->getOrthographicBoundingShape());
-	}
-
-	spatialc->setUpdateOctreeBounds(false);
-
 	return Error::NONE;
-}
-
-void CameraNode::onFrustumComponentUpdate(FrustumComponent& fr)
-{
-	// Spatial
-	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-	sp.markForUpdate();
 }
 
 void CameraNode::onMoveComponentUpdate(MoveComponent& move)
@@ -142,7 +101,7 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fc) {
 		if(count == 0)
 		{
-			fc.setTransform(worldTransform);
+			fc.setWorldTransform(worldTransform);
 		}
 		else
 		{
@@ -153,18 +112,13 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 			Vec3 newOrigin = worldTransform.getOrigin().xyz();
 			newOrigin.z() += far / 2.0f;
 			extendedFrustumTransform.setOrigin(newOrigin.xyz0());
-			fc.setTransform(extendedFrustumTransform);
+			fc.setWorldTransform(extendedFrustumTransform);
 		}
 
 		++count;
 		return Error::NONE;
 	});
 	(void)err;
-
-	// Spatial
-	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
-	sp.markForUpdate();
 }
 
 PerspectiveCameraNode::PerspectiveCameraNode(SceneGraph* scene, CString name)

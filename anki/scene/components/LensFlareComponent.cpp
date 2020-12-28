@@ -11,8 +11,10 @@
 namespace anki
 {
 
+ANKI_SCENE_COMPONENT_STATICS(LensFlareComponent)
+
 LensFlareComponent::LensFlareComponent(SceneNode* node)
-	: SceneComponent(CLASS_TYPE)
+	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
 {
 	ANKI_ASSERT(node);
@@ -22,12 +24,9 @@ LensFlareComponent::~LensFlareComponent()
 {
 }
 
-Error LensFlareComponent::init(const CString& textureFilename)
+Error LensFlareComponent::loadTextureResource(CString textureFilename)
 {
-	// Texture
-	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(textureFilename, m_tex));
-
-	return Error::NONE;
+	return m_node->getSceneGraph().getResourceManager().loadResource(textureFilename, m_tex);
 }
 
 } // end namespace anki

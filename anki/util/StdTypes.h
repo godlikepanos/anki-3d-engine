@@ -114,29 +114,6 @@ ANKI_DO_LIMIT(F64, MIN_F64, MAX_F64)
 
 #undef ANKI_DO_LIMIT
 
-/// @name AnKi type literals.
-/// @{
-inline constexpr U8 operator"" _U8(unsigned long long arg) noexcept
-{
-	return static_cast<U8>(arg);
-}
-
-inline constexpr U16 operator"" _U16(unsigned long long arg) noexcept
-{
-	return static_cast<U16>(arg);
-}
-
-inline constexpr U32 operator"" _U32(unsigned long long arg) noexcept
-{
-	return static_cast<U32>(arg);
-}
-
-inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
-{
-	return static_cast<U64>(arg);
-}
-/// @}
-
 /// Representation of error and a wrapper on top of error codes.
 class Error
 {
@@ -220,20 +197,10 @@ private:
 #define ANKI_CHECK(x_) \
 	do \
 	{ \
-		Error error = x_; \
+		const Error error = x_; \
 		if(error) \
 		{ \
 			return error; \
-		} \
-	} while(0)
-
-/// Macro the check if a memory allocation is OOM.
-#define ANKI_CHECK_OOM(x_) \
-	do \
-	{ \
-		if(ANKI_UNLIKELY(x_ == nullptr)) \
-		{ \
-			return Error::OUT_OF_MEMORY; \
 		} \
 	} while(0)
 
@@ -242,6 +209,29 @@ private:
 #else
 #	define ANKI_DEBUG_CODE(x)
 #endif
+
+/// @name AnKi type user literals.
+/// @{
+inline constexpr U8 operator"" _U8(unsigned long long arg) noexcept
+{
+	return static_cast<U8>(arg);
+}
+
+inline constexpr U16 operator"" _U16(unsigned long long arg) noexcept
+{
+	return static_cast<U16>(arg);
+}
+
+inline constexpr U32 operator"" _U32(unsigned long long arg) noexcept
+{
+	return static_cast<U32>(arg);
+}
+
+inline constexpr U64 operator"" _U64(unsigned long long arg) noexcept
+{
+	return static_cast<U64>(arg);
+}
+/// @}
 
 /// @name Size user literals
 /// @{
@@ -276,6 +266,24 @@ static constexpr long double operator""_ms(long double x)
 static constexpr long double operator""_ns(long double x)
 {
 	return x / 1000000000.0;
+}
+/// @}
+
+/// @name Distance user literals
+/// @{
+static constexpr F32 operator""_dm(long double x)
+{
+	return F32(x) / 10.0f;
+}
+
+static constexpr F32 operator""_cm(long double x)
+{
+	return F32(x) / 100.0f;
+}
+
+static constexpr F32 operator""_mm(long double x)
+{
+	return F32(x) / 1000.0f;
 }
 /// @}
 

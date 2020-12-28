@@ -17,23 +17,17 @@ namespace anki
 /// Physics player controller component.
 class PlayerControllerComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(PlayerControllerComponent)
+
 public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::PLAYER_CONTROLLER;
+	PlayerControllerComponent(SceneNode* node);
 
-	PlayerControllerComponent(PhysicsPlayerControllerPtr player)
-		: SceneComponent(CLASS_TYPE)
-		, m_player(player)
-	{
-	}
-
-	~PlayerControllerComponent() = default;
-
-	const Transform& getTransform() const
+	const Transform& getWorldTransform() const
 	{
 		return m_trf;
 	}
 
-	void setTransform(const Transform& trf)
+	void setWorldTransform(const Transform& trf)
 	{
 		m_player->moveToPosition(trf.getOrigin());
 	}
@@ -43,9 +37,9 @@ public:
 		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
 	}
 
-	void moveToPosition(Vec4 pos)
+	void moveToPosition(const Vec3& pos)
 	{
-		m_player->moveToPosition(pos);
+		m_player->moveToPosition(pos.xyz0());
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
@@ -61,7 +55,7 @@ public:
 
 private:
 	PhysicsPlayerControllerPtr m_player;
-	Transform m_trf;
+	Transform m_trf = Transform::getIdentity();
 };
 /// @}
 

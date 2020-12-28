@@ -17,32 +17,27 @@ namespace anki
 /// @addtogroup scene
 /// @{
 
-enum class MoveComponentFlag : U8
-{
-	NONE = 0,
-
-	/// Get the parent's world transform
-	IGNORE_LOCAL_TRANSFORM = 1 << 1,
-
-	/// Ignore parent's transform
-	IGNORE_PARENT_TRANSFORM = 1 << 2,
-
-	/// If dirty then is marked for update
-	MARKED_FOR_UPDATE = 1 << 3,
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MoveComponentFlag)
-
-/// Interface for movable scene nodes
+/// Interface for movable scene nodes.
 class MoveComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::MOVE;
+	ANKI_SCENE_COMPONENT(MoveComponent)
 
-	/// The one and only constructor
-	/// @param flags The flags
-	MoveComponent(MoveComponentFlag flags = MoveComponentFlag::NONE);
+public:
+	MoveComponent(SceneNode* node);
 
 	~MoveComponent();
+
+	/// Get the parent's world transform.
+	void setIgnoreLocalTransform(Bool ignore)
+	{
+		m_ignoreLocalTransform = ignore;
+	}
+
+	/// Ignore parent nodes's transform.
+	void setIgnoreParentTransform(Bool ignore)
+	{
+		m_ignoreParentTransform = ignore;
+	}
 
 	const Transform& getLocalTransform() const
 	{
@@ -158,11 +153,13 @@ private:
 	/// Keep the previous transformation for checking if it moved
 	Transform m_prevWTrf = Transform::getIdentity();
 
-	BitMask<MoveComponentFlag> m_flags;
+	Bool m_markedForUpdate : 1;
+	Bool m_ignoreLocalTransform : 1;
+	Bool m_ignoreParentTransform : 1;
 
 	void markForUpdate()
 	{
-		m_flags.set(MoveComponentFlag::MARKED_FOR_UPDATE);
+		m_markedForUpdate = true;
 	}
 
 	/// Called every frame. It updates the @a m_wtrf if @a shouldUpdateWTrf is true. Then it moves to the children.

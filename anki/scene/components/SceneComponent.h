@@ -37,10 +37,14 @@ public:
 	{ \
 		::new(self) className(node); \
 	} \
+\
+public: \
 	static U8 getStaticClassId() \
 	{ \
 		return _m_rtti.m_classId; \
-	}
+	} \
+\
+private:
 
 /// Define the statics of a scene component.
 #define ANKI_SCENE_COMPONENT_STATICS(className) \

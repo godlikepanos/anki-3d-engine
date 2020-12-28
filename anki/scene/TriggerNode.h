@@ -22,7 +22,7 @@ public:
 
 	~TriggerNode();
 
-	ANKI_USE_RESULT Error init(F32 sphereRadius);
+	ANKI_USE_RESULT Error init();
 
 private:
 	class MoveFeedbackComponent;

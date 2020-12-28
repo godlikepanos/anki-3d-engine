@@ -23,9 +23,11 @@ const FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
 /// Feedback component
 class ReflectionProbeNode::MoveFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(ReflectionProbeNode::MoveFeedbackComponent)
+
 public:
-	MoveFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MoveFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -45,18 +47,42 @@ public:
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(ReflectionProbeNode::MoveFeedbackComponent)
+
+/// Feedback component
+class ReflectionProbeNode::ShapeFeedbackComponent : public SceneComponent
+{
+	ANKI_SCENE_COMPONENT(ReflectionProbeNode::ShapeFeedbackComponent)
+
+public:
+	ShapeFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
+	{
+	}
+
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	{
+		updated = false;
+
+		ReflectionProbeComponent& reflc = node.getFirstComponentOfType<ReflectionProbeComponent>();
+		if(reflc.getTimestamp() == node.getGlobalTimestamp())
+		{
+			ReflectionProbeNode& dnode = static_cast<ReflectionProbeNode&>(node);
+			dnode.onShapeUpdate(reflc);
+		}
+
+		return Error::NONE;
+	}
+};
+
+ANKI_SCENE_COMPONENT_STATICS(ReflectionProbeNode::ShapeFeedbackComponent)
+
 ReflectionProbeNode::~ReflectionProbeNode()
 {
 }
 
-Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLSpace)
+Error ReflectionProbeNode::init()
 {
-	// Compute effective distance
-	F32 effectiveDistance = aabbMaxLSpace.x() - aabbMinLSpace.x();
-	effectiveDistance = max(effectiveDistance, aabbMaxLSpace.y() - aabbMinLSpace.y());
-	effectiveDistance = max(effectiveDistance, aabbMaxLSpace.z() - aabbMinLSpace.z());
-	effectiveDistance = max(effectiveDistance, getSceneGraph().getConfig().m_reflectionProbeEffectiveDistance);
-
 	// Move component first
 	newComponent<MoveComponent>();
 
@@ -65,7 +91,6 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 
 	// The frustum components
 	const F32 ang = toRad(90.0f);
-	const F32 zNear = LIGHT_FRUSTUM_NEAR_PLANE;
 
 	Mat3 rot;
 
@@ -87,25 +112,20 @@ Error ReflectionProbeNode::init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLS
 		m_cubeSides[i].m_localTrf.setOrigin(Vec4(0.0f));
 		m_cubeSides[i].m_localTrf.setScale(1.0f);
 
-		FrustumComponent* frc = newComponent<FrustumComponent>(this, FrustumType::PERSPECTIVE);
-		frc->setPerspective(zNear, effectiveDistance, ang, ang);
-		frc->setTransform(m_cubeSides[i].m_localTrf);
+		FrustumComponent* frc = newComponent<FrustumComponent>();
+		frc->setFrustumType(FrustumType::PERSPECTIVE);
+		frc->setPerspective(LIGHT_FRUSTUM_NEAR_PLANE, 10.0f, ang, ang);
+		frc->setWorldTransform(m_cubeSides[i].m_localTrf);
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 		frc->setEffectiveShadowDistance(getSceneGraph().getConfig().m_reflectionProbeShadowEffectiveDistance);
 	}
 
 	// Spatial component
-	m_aabbMinLSpace = aabbMinLSpace.xyz();
-	m_aabbMaxLSpace = aabbMaxLSpace.xyz();
-	m_spatialAabb.setMin(aabbMinLSpace);
-	m_spatialAabb.setMax(aabbMaxLSpace);
-	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_spatialAabb);
+	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 	spatialc->setUpdateOctreeBounds(false);
 
 	// Reflection probe comp
-	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>(getSceneGraph().getNewUuid());
-	reflc->setPosition(Vec4(0.0f));
-	reflc->setBoundingBox(aabbMinLSpace, aabbMaxLSpace);
+	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>();
 	reflc->setDrawCallback(drawCallback, this);
 
 	// Misc
@@ -123,7 +143,7 @@ void ReflectionProbeNode::onMoveUpdate(MoveComponent& move)
 		Transform trf = m_cubeSides[count].m_localTrf;
 		trf.setOrigin(move.getWorldTransform().getOrigin());
 
-		frc.setTransform(trf);
+		frc.setWorldTransform(trf);
 		++count;
 
 		return Error::NONE;
@@ -134,17 +154,30 @@ void ReflectionProbeNode::onMoveUpdate(MoveComponent& move)
 
 	// Update the spatial comp
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-	sp.markForUpdate();
-	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
-	const Vec3 aabbMinWSpace = m_aabbMinLSpace + move.getWorldTransform().getOrigin().xyz();
-	const Vec3 aabbMaxWSpace = m_aabbMaxLSpace + move.getWorldTransform().getOrigin().xyz();
-	m_spatialAabb.setMin(aabbMinWSpace);
-	m_spatialAabb.setMax(aabbMaxWSpace);
+	sp.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 
 	// Update the refl comp
 	ReflectionProbeComponent& reflc = getFirstComponentOfType<ReflectionProbeComponent>();
-	reflc.setPosition(move.getWorldTransform().getOrigin());
-	reflc.setBoundingBox(aabbMinWSpace.xyz0(), aabbMaxWSpace.xyz0());
+	reflc.setWorldPosition(move.getWorldTransform().getOrigin().xyz());
+}
+
+void ReflectionProbeNode::onShapeUpdate(ReflectionProbeComponent& reflc)
+{
+	const Vec3 halfProbeSize = reflc.getBoxVolumeSize() / 2.0f;
+	F32 effectiveDistance = max(halfProbeSize.x(), halfProbeSize.y());
+	effectiveDistance = max(effectiveDistance, halfProbeSize.z());
+	effectiveDistance = max(effectiveDistance, getSceneGraph().getConfig().m_reflectionProbeEffectiveDistance);
+
+	// Update frustum components
+	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
+		frc.setFar(effectiveDistance);
+		return Error::NONE;
+	});
+	(void)err;
+
+	// Update the spatial comp
+	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
+	sp.setAabbWorldSpace(reflc.getAabbWorldSpace());
 }
 
 Error ReflectionProbeNode::frameUpdate(Second prevUpdateTime, Second crntTime)
@@ -171,10 +204,10 @@ void ReflectionProbeNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArr
 	for(U32 i = 0; i < userData.getSize(); ++i)
 	{
 		const ReflectionProbeNode& self = *static_cast<const ReflectionProbeNode*>(userData[i]);
-		const ReflectionProbeComponent& rComp = self.getFirstComponentOfType<ReflectionProbeComponent>();
+		const ReflectionProbeComponent& reflc = self.getFirstComponentOfType<ReflectionProbeComponent>();
 
-		const Vec3 tsl = (rComp.getBoundingBoxMin().xyz() + rComp.getBoundingBoxMax().xyz()) / 2.0f;
-		const Vec3 scale = (tsl - rComp.getBoundingBoxMin().xyz());
+		const Vec3 tsl = reflc.getWorldPosition();
+		const Vec3 scale = reflc.getBoxVolumeSize() / 2.0f;
 
 		// Set non uniform scale.
 		Mat3 rot = Mat3::getIdentity();

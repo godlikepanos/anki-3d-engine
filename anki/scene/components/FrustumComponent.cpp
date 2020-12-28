@@ -5,30 +5,24 @@
 
 #include <anki/scene/components/FrustumComponent.h>
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/components/SpatialComponent.h>
+#include <anki/collision/Functions.h>
 
 namespace anki
 {
 
-FrustumComponent::FrustumComponent(SceneNode* node, FrustumType frustumType)
-	: SceneComponent(CLASS_TYPE)
+ANKI_SCENE_COMPONENT_STATICS(FrustumComponent)
+
+FrustumComponent::FrustumComponent(SceneNode* node)
+	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
-	, m_frustumType(frustumType)
+	, m_shapeMarkedForUpdate(true)
+	, m_trfMarkedForUpdate(true)
 {
 	ANKI_ASSERT(&m_perspective.m_far == &m_ortho.m_far);
 	ANKI_ASSERT(node);
-	ANKI_ASSERT(frustumType < FrustumType::COUNT);
 
 	// Set some default values
-	if(frustumType == FrustumType::PERSPECTIVE)
-	{
-		setPerspective(0.1f, 100.0f, toRad(45.0f), toRad(45.0f));
-	}
-	else
-	{
-		setOrthographic(0.1f, 100.0f, 5.0f, -5.0f, 5.0f, -5.0f);
-	}
-
+	setFrustumType(FrustumType::PERSPECTIVE);
 	updateInternal();
 }
 

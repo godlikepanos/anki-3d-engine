@@ -20,19 +20,28 @@ enum class LightComponentType : U8
 	POINT,
 	SPOT,
 	DIRECTIONAL, ///< Basically the sun.
-	COUNT
+
+	COUNT,
+	FIRST = 0
 };
 
 /// Light component. It's a dummy component used to identify lights
 class LightComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::LIGHT;
+	ANKI_SCENE_COMPONENT(LightComponent)
 
-	LightComponent(LightComponentType type, U64 uuid);
+public:
+	LightComponent(SceneNode* node);
 
 	~LightComponent()
 	{
+	}
+
+	void setLightComponentType(LightComponentType type)
+	{
+		ANKI_ASSERT(type >= LightComponentType::FIRST && type < LightComponentType::COUNT);
+		m_type = type;
+		m_markedForUpdate = true;
 	}
 
 	LightComponentType getLightComponentType() const
@@ -40,10 +49,15 @@ public:
 		return m_type;
 	}
 
-	void updateWorldTransform(const Transform& trf)
+	void setWorldTransform(const Transform& trf)
 	{
 		m_trf = trf;
-		m_trfDirty = true;
+		m_markedForUpdate = true;
+	}
+
+	const Transform& getWorldTransform() const
+	{
+		return m_trf;
 	}
 
 	const Vec4& getDiffuseColor() const
@@ -59,7 +73,7 @@ public:
 	void setRadius(F32 x)
 	{
 		m_point.m_radius = x;
-		m_componentDirty = true;
+		m_markedForUpdate = true;
 	}
 
 	F32 getRadius() const
@@ -70,7 +84,7 @@ public:
 	void setDistance(F32 x)
 	{
 		m_spot.m_distance = x;
-		m_componentDirty = true;
+		m_markedForUpdate = true;
 	}
 
 	F32 getDistance() const
@@ -82,7 +96,7 @@ public:
 	{
 		m_spot.m_innerAngleCos = cos(ang / 2.0f);
 		m_spot.m_innerAngle = ang;
-		m_componentDirty = true;
+		m_markedForUpdate = true;
 	}
 
 	F32 getInnerAngleCos() const
@@ -99,7 +113,7 @@ public:
 	{
 		m_spot.m_outerAngleCos = cos(ang / 2.0f);
 		m_spot.m_outerAngle = ang;
-		m_componentDirty = true;
+		m_markedForUpdate = true;
 	}
 
 	F32 getOuterAngle() const
@@ -126,11 +140,6 @@ public:
 	{
 		m_drawCallback = callback;
 		m_drawCallbackUserData = userData;
-	}
-
-	const Transform& getTransform() const
-	{
-		return m_trf;
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
@@ -211,8 +220,7 @@ private:
 	LightComponentType m_type;
 
 	U8 m_shadow : 1;
-	U8 m_componentDirty : 1;
-	U8 m_trfDirty : 1;
+	U8 m_markedForUpdate : 1;
 };
 /// @}
 

@@ -15,7 +15,6 @@
 #include <anki/scene/BodyNode.h>
 #include <anki/scene/ReflectionProbeNode.h>
 #include <anki/scene/PlayerNode.h>
-#include <anki/scene/OccluderNode.h>
 #include <anki/scene/DecalNode.h>
 #include <anki/scene/Octree.h>
 #include <anki/scene/PhysicsDebugNode.h>
@@ -25,7 +24,6 @@
 
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/RenderComponent.h>
-#include <anki/scene/components/OccluderComponent.h>
 #include <anki/scene/components/LensFlareComponent.h>
 #include <anki/scene/components/PlayerControllerComponent.h>
 #include <anki/scene/components/SkinComponent.h>

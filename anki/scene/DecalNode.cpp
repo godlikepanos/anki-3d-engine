@@ -15,9 +15,11 @@ namespace anki
 /// Decal feedback component.
 class DecalNode::MoveFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(DecalNode::MoveFeedbackComponent)
+
 public:
-	MoveFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MoveFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -36,12 +38,16 @@ public:
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(DecalNode::MoveFeedbackComponent)
+
 /// Decal feedback component.
 class DecalNode::ShapeFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(DecalNode::ShapeFeedbackComponent)
+
 public:
-	ShapeFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	ShapeFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -53,12 +59,14 @@ public:
 
 		if(decalc.getTimestamp() == node.getGlobalTimestamp())
 		{
-			static_cast<DecalNode&>(node).onDecalUpdated();
+			static_cast<DecalNode&>(node).onDecalUpdated(decalc);
 		}
 
 		return Error::NONE;
 	}
 };
+
+ANKI_SCENE_COMPONENT_STATICS(DecalNode::ShapeFeedbackComponent)
 
 DecalNode::~DecalNode()
 {
@@ -68,10 +76,10 @@ Error DecalNode::init()
 {
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
-	DecalComponent* decalc = newComponent<DecalComponent>(this);
+	DecalComponent* decalc = newComponent<DecalComponent>();
 	decalc->setDrawCallback(drawCallback, this);
 	newComponent<ShapeFeedbackComponent>();
-	newComponent<SpatialComponent>(this, &decalc->getBoundingVolume());
+	newComponent<SpatialComponent>();
 
 	ANKI_CHECK(m_dbgDrawer.init(&getResourceManager()));
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/GreenDecal.ankitex", m_dbgTex));
@@ -81,18 +89,13 @@ Error DecalNode::init()
 
 void DecalNode::onMove(MoveComponent& movec)
 {
-	SpatialComponent& sc = getFirstComponentOfType<SpatialComponent>();
-	sc.setSpatialOrigin(movec.getWorldTransform().getOrigin());
-	sc.markForUpdate();
-
-	DecalComponent& decalc = getFirstComponentOfType<DecalComponent>();
-	decalc.updateTransform(movec.getWorldTransform());
+	getFirstComponentOfType<SpatialComponent>().setSpatialOrigin(movec.getWorldTransform().getOrigin().xyz());
+	getFirstComponentOfType<DecalComponent>().setWorldTransform(movec.getWorldTransform());
 }
 
-void DecalNode::onDecalUpdated()
+void DecalNode::onDecalUpdated(DecalComponent& decalc)
 {
-	SpatialComponent& sc = getFirstComponentOfType<SpatialComponent>();
-	sc.markForUpdate();
+	getFirstComponentOfType<SpatialComponent>().setObbWorldSpace(decalc.getBoundingVolumeWorldSpace());
 }
 
 void DecalNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
@@ -104,9 +107,9 @@ void DecalNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> 
 		const DecalNode& self = *static_cast<const DecalNode*>(userData[i]);
 		const DecalComponent& decalComp = self.getFirstComponentOfType<DecalComponent>();
 
-		const Mat3 rot = decalComp.getBoundingVolume().getRotation().getRotationPart();
-		const Vec4 tsl = decalComp.getBoundingVolume().getCenter().xyz1();
-		const Vec3 scale = decalComp.getBoundingVolume().getExtend().xyz();
+		const Mat3 rot = decalComp.getBoundingVolumeWorldSpace().getRotation().getRotationPart();
+		const Vec4 tsl = decalComp.getBoundingVolumeWorldSpace().getCenter().xyz1();
+		const Vec3 scale = decalComp.getBoundingVolumeWorldSpace().getExtend().xyz();
 
 		Mat3 nonUniScale = Mat3::getZero();
 		nonUniScale(0, 0) = scale.x();

@@ -11,7 +11,7 @@ namespace anki
 
 Error ScriptEnvironment::init(ScriptManager* manager)
 {
-	ANKI_ASSERT(!isCreated());
+	ANKI_ASSERT(!isInitialized());
 	ANKI_ASSERT(manager);
 	m_manager = manager;
 	return m_thread.init(m_manager->getAllocator(), &m_manager->getOtherSystems());

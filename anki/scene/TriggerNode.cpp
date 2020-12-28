@@ -16,9 +16,11 @@ namespace anki
 
 class TriggerNode::MoveFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(TriggerNode::MoveFeedbackComponent)
+
 public:
-	MoveFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MoveFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -29,12 +31,14 @@ public:
 		const MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
-			node.getFirstComponentOfType<TriggerComponent>().setTransform(move.getWorldTransform());
+			node.getFirstComponentOfType<TriggerComponent>().setWorldTransform(move.getWorldTransform());
 		}
 
 		return Error::NONE;
 	}
 };
+
+ANKI_SCENE_COMPONENT_STATICS(TriggerNode::MoveFeedbackComponent)
 
 TriggerNode::TriggerNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -45,13 +49,11 @@ TriggerNode::~TriggerNode()
 {
 }
 
-Error TriggerNode::init(F32 sphereRadius)
+Error TriggerNode::init()
 {
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
-	TriggerComponent* triggerc = newComponent<TriggerComponent>(this);
-	triggerc->setSphere(sphereRadius);
-
+	newComponent<TriggerComponent>();
 	return Error::NONE;
 }
 

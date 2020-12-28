@@ -200,11 +200,9 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					</args>
 					<return>Error</return>
 				</method>
-				<method name="updateShape">
+				<method name="setBoxVolumeSize">
 					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
+						<arg>const Vec3&amp;</arg>
 					</args>
 				</method>
 			</methods>
@@ -212,6 +210,12 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 		<class name="LensFlareComponent">
 			<methods>
+				<method name="loadTextureResource">
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>Error</return>
+				</method>
 				<method name="setFirstFlareSize">
 					<args>
 						<arg>const Vec2&amp;</arg>
@@ -227,17 +231,18 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 		<class name="BodyComponent">
 			<methods>
-				<method name="setMeshResource">
+				<method name="loadMeshResource">
 					<args>
 						<arg>CString</arg>
 					</args>
+					<return>Error</return>
 				</method>
-				<method name="setTransform">
+				<method name="setWorldTransform">
 					<args>
 						<arg>const Transform&amp;</arg>
 					</args>
 				</method>
-				<method name="getTransform">
+				<method name="getWorldTransform">
 					<return>Transform</return>
 				</method>
 			</methods>
@@ -259,13 +264,12 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 		<class name="FogDensityComponent">
 			<methods>
-				<method name="setAabb">
+				<method name="setBoxVolumeSize">
 					<args>
-						<arg>const Vec4&amp;</arg>
-						<arg>const Vec4&amp;</arg>
+						<arg>Vec3</arg>
 					</args>
 				</method>
-				<method name="setSphere">
+				<method name="setSphereVolumeRadius">
 					<args>
 						<arg>F32</arg>
 					</args>
@@ -306,17 +310,10 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 
 		<class name="GlobalIlluminationProbeComponent">
 			<methods>
-				<method name="setBoundingBox">
+				<method name="setBoxVolumeSize">
 					<args>
-						<arg>const Vec4&amp;</arg>
-						<arg>const Vec4&amp;</arg>
+						<arg>const Vec3&amp;</arg>
 					</args>
-				</method>
-				<method name="getAlignedBoundingBoxMin">
-					<return>Vec4</return>
-				</method>
-				<method name="getAlignedBoundingBoxMax">
-					<return>Vec4</return>
 				</method>
 				<method name="setCellSize">
 					<args>
@@ -397,12 +394,6 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
 					<return>SceneNode&amp;</return>
 				</method>
-				<method name="loadLensFlare">
-					<args>
-						<arg>const CString&amp;</arg>
-					</args>
-					<return>Error</return>
-				</method>
 			</methods>
 		</class>
 		<class name="SpotLightNode">
@@ -453,14 +444,6 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 			</methods>
 		</class>
-		<class name="OccluderNode">
-			<methods>
-				<method name="getSceneNodeBase">
-					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
-					<return>SceneNode&amp;</return>
-				</method>
-			</methods>
-		</class>
 		<class name="DecalNode">
 			<methods>
 				<method name="getSceneNodeBase">
@@ -498,100 +481,87 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				<method name="newPerspectiveCameraNode">
 					<overrideCall><![CDATA[PerspectiveCameraNode* ret = newSceneNode<PerspectiveCameraNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
+						<arg>CString</arg>
 					</args>
 					<return>PerspectiveCameraNode*</return>
 				</method>
 				<method name="newModelNode">
 					<overrideCall><![CDATA[ModelNode* ret = newSceneNode<ModelNode>(self, arg0, arg1);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const CString&amp;</arg>
+						<arg>CString</arg>
+						<arg>CString</arg>
 					</args>
 					<return>ModelNode*</return>
 				</method>
 				<method name="newPointLightNode">
 					<overrideCall><![CDATA[PointLightNode* ret = newSceneNode<PointLightNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
+						<arg>CString</arg>
 					</args>
 					<return>PointLightNode*</return>
 				</method>
 				<method name="newSpotLightNode">
 					<overrideCall><![CDATA[SpotLightNode* ret = newSceneNode<SpotLightNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
+						<arg>CString</arg>
 					</args>
 					<return>SpotLightNode*</return>
 				</method>
 				<method name="newDirectionalLightNode">
 					<overrideCall><![CDATA[DirectionalLightNode* ret = newSceneNode<DirectionalLightNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
+						<arg>CString</arg>
 					</args>
 					<return>DirectionalLightNode*</return>
 				</method>
 				<method name="newStaticCollisionNode">
-					<overrideCall><![CDATA[StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0, arg1, arg2);]]></overrideCall>
+					<overrideCall><![CDATA[StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const CString&amp;</arg>
-						<arg>const Transform&amp;</arg>
+						<arg>CString</arg>
 					</args>
 					<return>StaticCollisionNode*</return>
 				</method>
 				<method name="newParticleEmitterNode">
 					<overrideCall><![CDATA[ParticleEmitterNode* ret = newSceneNode<ParticleEmitterNode>(self, arg0, arg1);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const CString&amp;</arg>
+						<arg>CString</arg>
+						<arg>CString</arg>
 					</args>
 					<return>ParticleEmitterNode*</return>
 				</method>
 				<method name="newGpuParticleEmitterNode">
 					<overrideCall><![CDATA[GpuParticleEmitterNode* ret = newSceneNode<GpuParticleEmitterNode>(self, arg0, arg1);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const CString&amp;</arg>
+						<arg>CString</arg>
+						<arg>CString</arg>
 					</args>
 					<return>GpuParticleEmitterNode*</return>
 				</method>
 				<method name="newReflectionProbeNode">
-					<overrideCall><![CDATA[ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0, arg1, arg2);]]></overrideCall>
+					<overrideCall><![CDATA[ReflectionProbeNode* ret = newSceneNode<ReflectionProbeNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const Vec4&amp;</arg>
-						<arg>const Vec4&amp;</arg>
+						<arg>CString</arg>
 					</args>
 					<return>ReflectionProbeNode*</return>
-				</method>
-				<method name="newOccluderNode">
-					<overrideCall><![CDATA[OccluderNode* ret = newSceneNode<OccluderNode>(self, arg0, arg1);]]></overrideCall>
-					<args>
-						<arg>const CString&amp;</arg>
-						<arg>const CString&amp;</arg>
-					</args>
-					<return>OccluderNode*</return>
 				</method>
 				<method name="newDecalNode">
 					<overrideCall><![CDATA[DecalNode* ret = newSceneNode<DecalNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
+						<arg>CString</arg>
 					</args>
 					<return>DecalNode*</return>
 				</method>
 				<method name="newTriggerNode">
-					<overrideCall><![CDATA[TriggerNode* ret = newSceneNode<TriggerNode>(self, arg0, arg1);]]></overrideCall>
+					<overrideCall><![CDATA[TriggerNode* ret = newSceneNode<TriggerNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
-						<arg>F32</arg>
+						<arg>CString</arg>
 					</args>
 					<return>TriggerNode*</return>
 				</method>
 				<method name="newGlobalIlluminationProbeNode">
 					<overrideCall><![CDATA[GlobalIlluminationProbeNode* ret = newSceneNode<GlobalIlluminationProbeNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>const CString&amp;</arg>
+						<arg>CString</arg>
 					</args>
 					<return>GlobalIlluminationProbeNode*</return>
 				</method>

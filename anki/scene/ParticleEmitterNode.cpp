@@ -202,9 +202,11 @@ public:
 /// Feedback component
 class ParticleEmitterNode::MoveFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(ParticleEmitterNode::MoveFeedbackComponent)
+
 public:
-	MoveFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MoveFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId())
 	{
 	}
 
@@ -221,6 +223,8 @@ public:
 		return Error::NONE;
 	}
 };
+
+ANKI_SCENE_COMPONENT_STATICS(ParticleEmitterNode::MoveFeedbackComponent)
 
 ParticleEmitterNode::ParticleEmitterNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -250,17 +254,12 @@ Error ParticleEmitterNode::init(const CString& filename)
 	newComponent<MoveFeedbackComponent>();
 
 	// Spatial component
-	newComponent<SpatialComponent>(this, &m_obb);
+	newComponent<SpatialComponent>();
 
 	// Render component
 	RenderComponent* rcomp = newComponent<RenderComponent>();
 	rcomp->initRaster(drawCallback, this, 0); // No merging
 	rcomp->setFlagsFromMaterial(m_particleEmitterResource->getMaterial());
-
-	// Other
-	m_obb.setCenter(Vec4(0.0));
-	m_obb.setExtend(Vec4(1.0, 1.0, 1.0, 0.0));
-	m_obb.setRotation(Mat3x4::getIdentity());
 
 	// copy the resource to me
 	ParticleEmitterProperties& me = *this;
@@ -338,8 +337,7 @@ void ParticleEmitterNode::onMoveComponentUpdate(MoveComponent& move)
 	m_identityRotation = move.getWorldTransform().getRotation() == Mat3x4::getIdentity();
 
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
-	sp.markForUpdate();
+	sp.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 }
 
 void ParticleEmitterNode::createParticlesPhysicsSimulation(SceneGraph* scene)
@@ -434,22 +432,21 @@ Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 		}
 	}
 
+	Aabb worldBoundingVolume;
 	if(m_aliveParticlesCount != 0)
 	{
 		ANKI_ASSERT(maxParticleSize > 0.0f);
 		Vec4 min = aabbmin - maxParticleSize;
 		Vec4 max = aabbmax + maxParticleSize;
-		Vec4 center = (min + max) / 2.0;
-
-		m_obb = Obb(center.xyz0(), Mat3x4::getIdentity(), (max - center).xyz0());
+		worldBoundingVolume = Aabb(min.xyz0(), max.xyz0());
 	}
 	else
 	{
-		m_obb = Obb(Vec4(0.0), Mat3x4::getIdentity(), Vec4(Vec3(0.001f), 0.0f));
+		worldBoundingVolume = Aabb(Vec4(0.0f), Vec3(0.001f).xyz0());
 		m_verts = nullptr;
 	}
 
-	getFirstComponentOfType<SpatialComponent>().markForUpdate();
+	getFirstComponentOfType<SpatialComponent>().setAabbWorldSpace(worldBoundingVolume);
 
 	//
 	// Emit new particles
