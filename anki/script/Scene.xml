@@ -334,6 +334,19 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			</methods>
 		</class>
 
+		<class name="ReflectionProbeComponent">
+			<methods>
+				<method name="setBoxVolumeSize">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+				</method>
+				<method name="getBoxVolumeSize">
+					<return>Vec3</return>
+				</method>
+			</methods>
+		</class>
+
 		<!-- Nodes -->
 		<class name="SceneNode">
 			<methods>
@@ -369,6 +382,12 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 				<method name="tryGetFirstComponentOfType&lt;GlobalIlluminationProbeComponent&gt;" alias="getGlobalIlluminationProbeComponent">
 					<return>GlobalIlluminationProbeComponent*</return>
+				</method>
+				<method name="tryGetFirstComponentOfType&lt;ReflectionProbeComponent&gt;" alias="getReflectionProbeComponent">
+					<return>ReflectionProbeComponent*</return>
+				</method>
+				<method name="tryGetFirstComponentOfType&lt;BodyComponent&gt;" alias="getBodyComponent">
+					<return>BodyComponent*</return>
 				</method>
 			</methods>
 		</class>

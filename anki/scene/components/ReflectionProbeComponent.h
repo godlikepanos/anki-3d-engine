@@ -24,7 +24,7 @@ public:
 	ReflectionProbeComponent(SceneNode* node);
 
 	/// Set the local size of the probe volume.
-	void setBoxVolumeSize(const Vec3 sizeXYZ)
+	void setBoxVolumeSize(const Vec3& sizeXYZ)
 	{
 		m_halfSize = sizeXYZ / 2.0f;
 		m_markedForUpdate = true;

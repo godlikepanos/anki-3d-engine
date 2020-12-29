@@ -50,7 +50,7 @@ function update(event, prevTime, crntTime)
 	if density <= 0.0 or radius <= 0.0 then
 		event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
 	else
-		fogComponent:setSphere(radius)
+		fogComponent:setSphereVolumeRadius(radius)
 		fogComponent:setDensity(density)
 	end
 
@@ -135,6 +135,7 @@ Error MyApp::sampleExtraInit()
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankimesh"));
 		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(
 			Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
+		body->getFirstComponentOfType<BodyComponent>().setMass(2.0f);
 
 		body->addChild(monkey);
 
@@ -163,6 +164,7 @@ Error MyApp::sampleExtraInit()
 			ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
 				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body, "assets/Suzanne.ankimesh"));
 			body->getFirstComponentOfType<BodyComponent>().setWorldTransform(trf);
+			body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
 
 			// Create joint
 			JointComponent& jointc = body->getFirstComponentOfType<JointComponent>();
@@ -186,8 +188,8 @@ Error MyApp::sampleExtraInit()
 		TriggerNode* node;
 		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node));
 		node->getFirstComponentOfType<TriggerComponent>().setSphereVolumeRadius(1.8f);
-
-		node->getFirstComponentOfType<MoveComponent>().setLocalOrigin(Vec4(1.0f, 0.5f, 0.0f, 0.0f));
+		node->getFirstComponentOfType<TriggerComponent>().setWorldTransform(
+			Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 	}
 
 	return Error::NONE;
@@ -249,6 +251,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
 			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body, "assets/Suzanne.ankimesh"));
 		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(camTrf);
+		body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
 
 		PhysicsBodyPtr pbody = body->getFirstComponentOfType<BodyComponent>().getPhysicsBody();
 		pbody->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));

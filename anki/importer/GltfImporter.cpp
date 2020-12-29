@@ -455,20 +455,12 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 		}
 		else if((it = extras.find("collision")) != extras.getEnd() && *it == "true")
 		{
-			// Write colission mesh
-			{
-				StringAuto fname(m_alloc);
-				fname.sprintf("%s%s.ankicl", m_outDir.cstr(), node.mesh->name);
-				File file;
-				ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
+			ANKI_CHECK(
+				m_sceneFile.writeText("\nnode = scene:newStaticCollisionNode(\"%s\")\n", getNodeName(node).cstr()));
 
-				ANKI_CHECK(file.writeText("<collisionShape>\n\t<type>staticMesh</type>\n\t<value>%s%s.ankimesh"
-										  "</value>\n</collisionShape>\n",
-										  m_rpath.cstr(), node.mesh->name));
-			}
-
-			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newStaticCollisionNode(\"%s\", \"%s%s.ankicl\")\n",
-											 getNodeName(node).cstr(), m_rpath.cstr(), node.mesh->name));
+			ANKI_CHECK(m_sceneFile.writeText("comp = scene:getSceneNodeBase():getBodyComponent()\n"));
+			ANKI_CHECK(
+				m_sceneFile.writeText("comp:loadMeshResource(\"%s%s.ankimesh\")\n", m_rpath.cstr(), node.mesh->name));
 
 			Transform localTrf;
 			ANKI_CHECK(getNodeTransform(node, localTrf));
@@ -481,16 +473,16 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
 
-			const Vec3 half = scale;
-			const Vec3 aabbMin = tsl - half - tsl;
-			const Vec3 aabbMax = tsl + half - tsl;
+			const Vec3 boxSize = scale * 2.0f;
 
-			ANKI_CHECK(m_sceneFile.writeText(
-				"\nnode = scene:newReflectionProbeNode(\"%s\", Vec4.new(%f, %f, %f, 0), Vec4.new(%f, %f, %f, 0))\n",
-				getNodeName(node).cstr(), aabbMin.x(), aabbMin.y(), aabbMin.z(), aabbMax.x(), aabbMax.y(),
-				aabbMax.z()));
+			ANKI_CHECK(
+				m_sceneFile.writeText("\nnode = scene:newReflectionProbeNode(\"%s\")\n", getNodeName(node).cstr()));
 
-			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getReflectionProbeComponent()\n"));
+			ANKI_CHECK(m_sceneFile.writeText("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(),
+											 boxSize.z()));
+
+			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else if((it = extras.find("gi_probe")) != extras.getEnd() && *it == "true")
@@ -500,9 +492,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
 
-			const Vec3 half = scale;
-			const Vec3 aabbMin = tsl - half - tsl;
-			const Vec3 aabbMax = tsl + half - tsl;
+			const Vec3 boxSize = scale * 2.0f;
 
 			F32 fadeDistance = -1.0f;
 			if((it = extras.find("gi_probe_fade_distance")) != extras.getEnd())
@@ -519,10 +509,8 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newGlobalIlluminationProbeNode(\"%s\")\n",
 											 getNodeName(node).cstr()));
 			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():getGlobalIlluminationProbeComponent()\n"));
-
-			ANKI_CHECK(m_sceneFile.writeText("comp:setBoundingBox(Vec4.new(%f, %f, %f, 0), Vec4.new(%f, %f, %f, 0))\n",
-											 aabbMin.x(), aabbMin.y(), aabbMin.z(), aabbMax.x(), aabbMax.y(),
-											 aabbMax.z()));
+			ANKI_CHECK(m_sceneFile.writeText("comp:setBoxVolumeSize(Vec3.new(%f, %f, %f))\n", boxSize.x(), boxSize.y(),
+											 boxSize.z()));
 
 			if(fadeDistance > 0.0f)
 			{
@@ -594,7 +582,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 			Mat3 rot;
 			Vec3 scale;
 			getNodeTransform(node, tsl, rot, scale);
-			Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
+			const Transform localTrf = Transform(tsl.xyz0(), Mat3x4(Vec3(0.0f), rot), 1.0f);
 			ANKI_CHECK(writeTransform(parentTrf.combineTransformations(localTrf)));
 		}
 		else
@@ -693,18 +681,21 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 			if(selfCollision)
 			{
+				ANKI_CHECK(m_sceneFile.writeText("node2 = scene:newStaticCollisionNode(\"%s_cl\")\n",
+												 getNodeName(node).cstr()));
+
+				ANKI_CHECK(m_sceneFile.writeText("comp = node2:getSceneNodeBase():getBodyComponent()\n"));
 				if(maxLod == 0)
 				{
-					ANKI_CHECK(m_sceneFile.writeText(
-						"node2 = scene:newStaticCollisionNode(\"%s_cl\", \"%s%s.ankimesh\", trf)\n",
-						getNodeName(node).cstr(), m_rpath.cstr(), node.mesh->name));
+					ANKI_CHECK(m_sceneFile.writeText("comp:loadMeshResource(\"%s%s.ankimesh\")\n", m_rpath.cstr(),
+													 node.mesh->name));
 				}
 				else
 				{
-					ANKI_CHECK(m_sceneFile.writeText(
-						"node2 = scene:newStaticCollisionNode(\"%s_cl\", \"%s%s_lod%u.ankimesh\", trf)\n",
-						getNodeName(node).cstr(), m_rpath.cstr(), node.mesh->name, maxLod));
+					ANKI_CHECK(m_sceneFile.writeText("comp:loadMeshResource(\"%s%s_lod%u.ankimesh\")\n", m_rpath.cstr(),
+													 node.mesh->name, maxLod));
 				}
+				ANKI_CHECK(m_sceneFile.writeText("comp:setWorldTransform(trf)\n"));
 			}
 		}
 	}

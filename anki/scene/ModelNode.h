@@ -36,7 +36,6 @@ private:
 	ModelResourcePtr m_model; ///< The resource
 
 	Aabb m_aabbLocal;
-	Aabb m_aabbWorld;
 	U64 m_mergeKey = 0;
 	U32 m_modelPatchIdx = 0;
 

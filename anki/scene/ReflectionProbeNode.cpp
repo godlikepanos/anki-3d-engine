@@ -120,13 +120,16 @@ Error ReflectionProbeNode::init()
 		frc->setEffectiveShadowDistance(getSceneGraph().getConfig().m_reflectionProbeShadowEffectiveDistance);
 	}
 
-	// Spatial component
-	SpatialComponent* spatialc = newComponent<SpatialComponent>();
-	spatialc->setUpdateOctreeBounds(false);
-
 	// Reflection probe comp
 	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>();
 	reflc->setDrawCallback(drawCallback, this);
+
+	// Feedback
+	newComponent<ShapeFeedbackComponent>();
+
+	// Spatial component
+	SpatialComponent* spatialc = newComponent<SpatialComponent>();
+	spatialc->setUpdateOctreeBounds(false);
 
 	// Misc
 	ANKI_CHECK(m_dbgDrawer.init(&getResourceManager()));

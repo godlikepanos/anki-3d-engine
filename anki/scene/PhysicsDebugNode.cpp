@@ -28,7 +28,7 @@ Error PhysicsDebugNode::init()
 
 	SpatialComponent* scomp = newComponent<SpatialComponent>();
 	scomp->setUpdateOctreeBounds(false); // Don't mess with the bounds
-	scomp->setAabbWorldSpace(Aabb(getSceneGraph().getSceneMax(), getSceneGraph().getSceneMin()));
+	scomp->setAabbWorldSpace(Aabb(getSceneGraph().getSceneMin(), getSceneGraph().getSceneMax()));
 	scomp->setSpatialOrigin(Vec3(0.0f));
 
 	return Error::NONE;

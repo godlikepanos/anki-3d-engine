@@ -233,7 +233,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		for(U32 i = 0; i < userData.getSize(); ++i)
 		{
 			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
-			const Aabb& box = self2.m_aabbWorld;
+			const Aabb& box = self2.getFirstComponentOfType<SpatialComponent>().getAabbWorldSpace();
 			const Vec4 tsl = (box.getMin() + box.getMax()) / 2.0f;
 			const Vec3 scale = (box.getMax().xyz() - box.getMin().xyz()) / 2.0f;
 
@@ -323,8 +323,6 @@ void ModelNode::setupRayTracingInstanceQueueElement(U32 lod, const void* userDat
 {
 	const ModelNode& self = *static_cast<const ModelNode*>(userData);
 	const ModelPatch& patch = self.m_model->getModelPatches()[self.m_modelPatchIdx];
-
-	// printf("%s\n", patch.getMaterial()->getFilename().cstr());
 
 	ModelRayTracingInfo info;
 	patch.getRayTracingInfo(lod, info);
