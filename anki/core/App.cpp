@@ -408,7 +408,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	m_physics = m_heapAlloc.newInstance<PhysicsWorld>();
 
-	ANKI_CHECK(m_physics->create(m_allocCb, m_allocCbData));
+	ANKI_CHECK(m_physics->init(m_allocCb, m_allocCbData));
 
 	//
 	// Resource FS

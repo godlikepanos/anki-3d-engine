@@ -17,9 +17,9 @@ namespace anki
 /// Joint base class. Joints connect two (or a single one) rigid bodies together.
 class PhysicsJoint : public PhysicsObject
 {
-public:
-	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::JOINT;
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::JOINT)
 
+public:
 	/// Set the breaking impulse.
 	void setBreakingImpulseThreshold(F32 impulse)
 	{
@@ -58,8 +58,8 @@ protected:
 
 	PhysicsJoint(PhysicsWorld* world, JointType type);
 
-	void addToWorld();
-	void removeFromWorld();
+	void registerToWorld() override;
+	void unregisterFromWorld() override;
 
 	const btTypedConstraint* getJoint() const
 	{
@@ -89,7 +89,7 @@ protected:
 /// Point to point joint.
 class PhysicsPoint2PointJoint : public PhysicsJoint
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::JOINT)
 
 private:
 	PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos);
@@ -103,7 +103,7 @@ private:
 /// Hinge joint.
 class PhysicsHingeJoint : public PhysicsJoint
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::JOINT)
 
 private:
 	PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPos, const Vec3& axis);

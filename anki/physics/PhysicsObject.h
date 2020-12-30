@@ -14,10 +14,6 @@ namespace anki
 /// @addtogroup physics
 /// @{
 
-#define ANKI_PHYSICS_OBJECT \
-	friend class PhysicsWorld; \
-	friend class PhysicsPtrDeleter;
-
 /// Type of the physics object.
 enum class PhysicsObjectType : U8
 {
@@ -35,9 +31,24 @@ enum class PhysicsObjectType : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType)
 
+#define ANKI_PHYSICS_OBJECT_FRIENDS \
+	friend class PhysicsWorld; \
+	friend class PhysicsPtrDeleter; \
+	template<typename T, typename TDeleter> \
+	friend class IntrusivePtr;
+
+#define ANKI_PHYSICS_OBJECT(type) \
+	ANKI_PHYSICS_OBJECT_FRIENDS \
+public: \
+	static constexpr PhysicsObjectType CLASS_TYPE = type; \
+\
+private:
+
 /// Base of all physics objects.
 class PhysicsObject : public IntrusiveListEnabled<PhysicsObject>
 {
+	ANKI_PHYSICS_OBJECT_FRIENDS
+
 public:
 	PhysicsObject(PhysicsObjectType type, PhysicsWorld* world)
 		: m_world(world)
@@ -48,12 +59,26 @@ public:
 
 	virtual ~PhysicsObject()
 	{
+		ANKI_ASSERT(!m_registered);
 	}
 
 	PhysicsObjectType getType() const
 	{
 		return m_type;
 	}
+
+	void setUserData(void* ud)
+	{
+		m_userData = ud;
+	}
+
+	void* getUserData() const
+	{
+		return m_userData;
+	}
+
+protected:
+	PhysicsWorld* m_world = nullptr;
 
 	PhysicsWorld& getWorld()
 	{
@@ -72,18 +97,12 @@ public:
 
 	HeapAllocator<U8> getAllocator() const;
 
-	void setUserData(void* ud)
-	{
-		m_userData = ud;
-	}
+private:
+	Bool m_registered = false;
 
-	void* getUserData() const
-	{
-		return m_userData;
-	}
+	virtual void registerToWorld() = 0;
 
-protected:
-	PhysicsWorld* m_world = nullptr;
+	virtual void unregisterFromWorld() = 0;
 
 private:
 	Atomic<I32> m_refcount = {0};
@@ -122,7 +141,7 @@ public:
 class PhysicsFilteredObject : public PhysicsObject
 {
 public:
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT_FRIENDS
 
 	PhysicsFilteredObject(PhysicsObjectType type, PhysicsWorld* world)
 		: PhysicsObject(type, world)

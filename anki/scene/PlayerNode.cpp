@@ -131,7 +131,7 @@ Error PlayerNode::init(const Vec4& position)
 {
 	// Player controller component
 	PlayerControllerComponent* playerc = newComponent<PlayerControllerComponent>();
-	playerc->getPhysicsPlayerController()->moveToPosition(position);
+	playerc->getPhysicsPlayerController()->moveToPosition(position.xyz());
 
 	// Feedback component
 	newComponent<FeedbackComponent>();

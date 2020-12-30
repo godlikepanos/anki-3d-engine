@@ -7,6 +7,7 @@
 #include <anki/physics/PhysicsCollisionShape.h>
 #include <anki/physics/PhysicsBody.h>
 #include <anki/physics/PhysicsTrigger.h>
+#include <anki/physics/PhysicsPlayerController.h>
 #include <anki/util/Rtti.h>
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
@@ -14,18 +15,18 @@ namespace anki
 {
 
 // Ugly but there is no other way
-static HeapAllocator<U8>* gAlloc = nullptr;
+static HeapAllocator<U8>* g_alloc = nullptr;
 
 static void* btAlloc(size_t size)
 {
-	ANKI_ASSERT(gAlloc);
-	return gAlloc->getMemoryPool().allocate(size, 16);
+	ANKI_ASSERT(g_alloc);
+	return g_alloc->getMemoryPool().allocate(size, 16);
 }
 
 static void btFree(void* ptr)
 {
-	ANKI_ASSERT(gAlloc);
-	gAlloc->getMemoryPool().free(ptr);
+	ANKI_ASSERT(g_alloc);
+	g_alloc->getMemoryPool().free(ptr);
 }
 
 /// Broad phase collision callback.
@@ -145,12 +146,9 @@ PhysicsWorld::PhysicsWorld()
 
 PhysicsWorld::~PhysicsWorld()
 {
-#if ANKI_ENABLE_ASSERTS
-	for(PhysicsObjectType type = PhysicsObjectType::FIRST; type < PhysicsObjectType::COUNT; ++type)
-	{
-		ANKI_ASSERT(m_objectLists[type].isEmpty() && "Someone is holding refs to some physics objects");
-	}
-#endif
+	destroyMarkedForDeletion();
+
+	ANKI_ASSERT(m_objectsCreatedCount.load() == 0 && "Forgot to delete some objects");
 
 	m_world.destroy();
 	m_solver.destroy();
@@ -160,16 +158,16 @@ PhysicsWorld::~PhysicsWorld()
 	m_gpc.destroy();
 	m_alloc.deleteInstance(m_filterCallback);
 
-	gAlloc = nullptr;
+	g_alloc = nullptr;
 }
 
-Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
+Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 {
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbData);
 	m_tmpAlloc = StackAllocator<U8>(allocCb, allocCbData, 1_KB, 2.0f);
 
 	// Set allocators
-	gAlloc = &m_alloc;
+	g_alloc = &m_alloc;
 	btAlignedAllocSetCustom(btAlloc, btFree);
 
 	// Create objects
@@ -192,8 +190,66 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	return Error::NONE;
 }
 
+void PhysicsWorld::destroyMarkedForDeletion()
+{
+	while(true)
+	{
+		PhysicsObject* obj = nullptr;
+
+		// Don't delete the instance (call the destructor) while holding the lock to avoid deadlocks
+		{
+			LockGuard<Mutex> lock(m_markedMtx);
+			if(!m_markedForDeletion.isEmpty())
+			{
+				obj = m_markedForDeletion.popFront();
+				if(obj->m_registered)
+				{
+					obj->unregisterFromWorld();
+					obj->m_registered = false;
+				}
+			}
+		}
+
+		if(obj == nullptr)
+		{
+			break;
+		}
+
+		m_alloc.deleteInstance(obj);
+#if ANKI_ENABLE_ASSERTS
+		const I32 count = m_objectsCreatedCount.fetchSub(1) - 1;
+		ANKI_ASSERT(count >= 0);
+#endif
+	}
+}
+
 Error PhysicsWorld::update(Second dt)
 {
+	// First destroy
+	destroyMarkedForDeletion();
+
+	// Create new objects
+	{
+		LockGuard<Mutex> lock(m_markedMtx);
+
+		// Create
+		while(!m_markedForCreation.isEmpty())
+		{
+			PhysicsObject* obj = m_markedForCreation.popFront();
+			ANKI_ASSERT(!obj->m_registered);
+			obj->registerToWorld();
+			obj->m_registered = true;
+			m_objectLists[obj->getType()].pushBack(obj);
+		}
+	}
+
+	// Update the player controllers
+	for(PhysicsObject& obj : m_objectLists[PhysicsObjectType::PLAYER_CONTROLLER])
+	{
+		PhysicsPlayerController& playerController = static_cast<PhysicsPlayerController&>(obj);
+		playerController.moveToPositionForReal();
+	}
+
 	// Update world
 	m_world->stepSimulation(F32(dt), 1, 1.0f / 60.0f);
 
@@ -212,10 +268,16 @@ Error PhysicsWorld::update(Second dt)
 void PhysicsWorld::destroyObject(PhysicsObject* obj)
 {
 	ANKI_ASSERT(obj);
-
-	m_objectLists[obj->getType()].erase(obj);
-	obj->~PhysicsObject();
-	m_alloc.getMemoryPool().free(obj);
+	LockGuard<Mutex> lock(m_markedMtx);
+	if(obj->m_registered)
+	{
+		m_objectLists[obj->getType()].erase(obj);
+	}
+	else
+	{
+		m_markedForCreation.erase(obj);
+	}
+	m_markedForDeletion.pushBack(obj);
 }
 
 void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts) const

@@ -40,11 +40,9 @@ public:
 /// A trigger that uses a PhysicsShape and its purpose is to collect collision events.
 class PhysicsTrigger : public PhysicsFilteredObject
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::TRIGGER)
 
 public:
-	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::TRIGGER;
-
 	Transform getTransform() const
 	{
 		return toAnki(m_ghostShape->getWorldTransform());
@@ -73,6 +71,10 @@ private:
 	PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape);
 
 	~PhysicsTrigger();
+
+	void registerToWorld() override;
+
+	void unregisterFromWorld() override;
 
 	void processContacts();
 };

@@ -37,6 +37,7 @@ radius = 3.5
 
 function update(event, prevTime, crntTime)
 	node = event:getAssociatedSceneNodes():getAt(0)
+	logi(string.format("Will fade fog for %s", node:getName()))
 	fogComponent = node:getFogDensityComponent()
 
 	dt = crntTime - prevTime

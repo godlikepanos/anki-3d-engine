@@ -44,15 +44,21 @@ public:
 	PhysicsWorld();
 	~PhysicsWorld();
 
-	ANKI_USE_RESULT Error create(AllocAlignedCallback allocCb, void* allocCbData);
+	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb, void* allocCbData);
 
-	/// @note This is not thread safe with other operations.
 	template<typename T, typename... TArgs>
 	PhysicsPtr<T> newInstance(TArgs&&... args)
 	{
 		T* obj = static_cast<T*>(m_alloc.getMemoryPool().allocate(sizeof(T), alignof(T)));
 		::new(obj) T(this, std::forward<TArgs>(args)...);
-		m_objectLists[obj->getType()].pushBack(obj);
+		{
+			LockGuard<Mutex> lock(m_markedMtx);
+			m_markedForCreation.pushBack(obj);
+		}
+#if ANKI_ENABLE_ASSERTS
+		const U32 count = m_objectsCreatedCount.fetchAdd(1) + 1;
+		ANKI_ASSERT(count > 0);
+#endif
 		return PhysicsPtr<T>(obj);
 	}
 
@@ -108,11 +114,6 @@ public:
 	ANKI_INTERNAL PhysicsTriggerFilteredPair*
 	getOrCreatePhysicsTriggerFilteredPair(PhysicsTrigger* trigger, PhysicsFilteredObject* filtered, Bool& isNew);
 
-	ANKI_INTERNAL ANKI_USE_RESULT LockGuard<Mutex> lockBtWorld() const
-	{
-		return LockGuard<Mutex>(m_btWorldMtx);
-	}
-
 private:
 	class MyOverlapFilterCallback;
 	class MyRaycastCallback;
@@ -128,9 +129,17 @@ private:
 	ClassWrapper<btCollisionDispatcher> m_dispatcher;
 	ClassWrapper<btSequentialImpulseConstraintSolver> m_solver;
 	ClassWrapper<btDiscreteDynamicsWorld> m_world;
-	mutable Mutex m_btWorldMtx;
 
 	Array<IntrusiveList<PhysicsObject>, U(PhysicsObjectType::COUNT)> m_objectLists;
+	IntrusiveList<PhysicsObject> m_markedForCreation;
+	IntrusiveList<PhysicsObject> m_markedForDeletion;
+	Mutex m_markedMtx; ///< Locks the above
+
+#if ANKI_ENABLE_ASSERTS
+	Atomic<I32> m_objectsCreatedCount = {0};
+#endif
+
+	void destroyMarkedForDeletion();
 };
 /// @}
 

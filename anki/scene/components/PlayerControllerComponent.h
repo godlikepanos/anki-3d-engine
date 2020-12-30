@@ -29,7 +29,7 @@ public:
 
 	void setWorldTransform(const Transform& trf)
 	{
-		m_player->moveToPosition(trf.getOrigin());
+		m_player->moveToPosition(trf.getOrigin().xyz());
 	}
 
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
@@ -39,12 +39,14 @@ public:
 
 	void moveToPosition(const Vec3& pos)
 	{
-		m_player->moveToPosition(pos.xyz0());
+		m_player->moveToPosition(pos);
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
-		m_trf = m_player->getTransform(updated);
+		const Transform newTrf = m_player->getTransform();
+		updated = newTrf != m_trf;
+		m_trf = newTrf;
 		return Error::NONE;
 	}
 

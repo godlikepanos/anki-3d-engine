@@ -27,8 +27,6 @@ PhysicsTrigger::PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr sha
 
 	setMaterialGroup(PhysicsMaterialBit::TRIGGER);
 	setMaterialMask(PhysicsMaterialBit::ALL ^ PhysicsMaterialBit::STATIC_GEOMETRY);
-
-	getWorld().getBtWorld().addCollisionObject(m_ghostShape.get());
 }
 
 PhysicsTrigger::~PhysicsTrigger()
@@ -47,8 +45,17 @@ PhysicsTrigger::~PhysicsTrigger()
 
 	m_pairs.destroy(getAllocator());
 
-	getWorld().getBtWorld().removeCollisionObject(m_ghostShape.get());
 	m_ghostShape.destroy();
+}
+
+void PhysicsTrigger::registerToWorld()
+{
+	getWorld().getBtWorld().addCollisionObject(m_ghostShape.get());
+}
+
+void PhysicsTrigger::unregisterFromWorld()
+{
+	getWorld().getBtWorld().removeCollisionObject(m_ghostShape.get());
 }
 
 void PhysicsTrigger::processContacts()

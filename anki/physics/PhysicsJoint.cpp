@@ -16,13 +16,12 @@ PhysicsJoint::PhysicsJoint(PhysicsWorld* world, JointType type)
 {
 }
 
-void PhysicsJoint::addToWorld()
+void PhysicsJoint::registerToWorld()
 {
-	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 	getWorld().getBtWorld().addConstraint(getJoint());
 }
 
-void PhysicsJoint::removeFromWorld()
+void PhysicsJoint::unregisterFromWorld()
 {
 	getWorld().getBtWorld().removeConstraint(getJoint());
 }
@@ -32,7 +31,7 @@ PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBod
 {
 	m_bodyA = bodyA;
 	m_p2p.init(*m_bodyA->getBtBody(), toBt(relPos));
-	addToWorld();
+	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 }
 
 PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, const Vec3& relPosA,
@@ -44,12 +43,11 @@ PhysicsPoint2PointJoint::PhysicsPoint2PointJoint(PhysicsWorld* world, PhysicsBod
 	m_bodyB = bodyB;
 
 	m_p2p.init(*m_bodyA->getBtBody(), *m_bodyB->getBtBody(), toBt(relPosA), toBt(relPosB));
-	addToWorld();
+	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 }
 
 PhysicsPoint2PointJoint::~PhysicsPoint2PointJoint()
 {
-	removeFromWorld();
 	m_p2p.destroy();
 }
 
@@ -58,12 +56,11 @@ PhysicsHingeJoint::PhysicsHingeJoint(PhysicsWorld* world, PhysicsBodyPtr bodyA, 
 {
 	m_bodyA = bodyA;
 	m_hinge.init(*m_bodyA->getBtBody(), toBt(relPos), toBt(axis));
-	addToWorld();
+	getJoint()->setUserConstraintPtr(static_cast<PhysicsObject*>(this));
 }
 
 PhysicsHingeJoint::~PhysicsHingeJoint()
 {
-	removeFromWorld();
 	m_hinge.destroy();
 }
 
