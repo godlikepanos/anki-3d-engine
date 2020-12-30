@@ -199,7 +199,8 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	// Delete stuff
 	{
 		ANKI_TRACE_SCOPED_EVENT(SCENE_MARKED_FOR_DELETION);
-		m_events.deleteEventsMarkedForDeletion();
+		const Bool fullCleanup = m_objectsMarkedForDeletionCount.load() != 0;
+		m_events.deleteEventsMarkedForDeletion(fullCleanup);
 		deleteNodesMarkedForDeletion();
 	}
 
