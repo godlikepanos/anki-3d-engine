@@ -22,7 +22,7 @@ class SpinLock;
 /// @addtogroup util_memory
 /// @{
 
-#define ANKI_MEM_USE_SIGNATURES ANKI_EXTRA_CHECKS
+#define ANKI_MEM_EXTRA_CHECKS ANKI_EXTRA_CHECKS
 
 /// Allocate aligned memory
 void* mallocAligned(PtrSize size, PtrSize alignmentBytes);
@@ -35,7 +35,7 @@ void freeAligned(void* ptr);
 using AllocAlignedCallback = void* (*)(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
 /// An internal type.
-using AllocationSignature = U32;
+using PoolSignature = U32;
 
 /// This is a function that allocates and deallocates heap memory. If the @a ptr is nullptr then it allocates using the
 /// @a size and @a alignment. If the @a ptr is not nullptr it deallocates the memory and the @a size and @a alignment is
@@ -120,7 +120,7 @@ protected:
 	}
 
 	/// Check if already created.
-	Bool isCreated() const;
+	Bool isInitialized() const;
 
 private:
 	/// Refcount.
@@ -144,7 +144,7 @@ public:
 	/// The real constructor.
 	/// @param allocCb The allocation function callback
 	/// @param allocCbUserData The user data to pass to the allocation function
-	void create(AllocAlignedCallback allocCb, void* allocCbUserData);
+	void init(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	/// Allocate memory
 	void* allocate(PtrSize size, PtrSize alignment);
@@ -154,10 +154,8 @@ public:
 	void free(void* ptr);
 
 private:
-#if ANKI_MEM_USE_SIGNATURES
-	AllocationSignature m_signature = 0;
-	static const U32 MAX_ALIGNMENT = 64;
-	U32 m_headerSize = 0;
+#if ANKI_MEM_EXTRA_CHECKS
+	PoolSignature m_signature = 0;
 #endif
 };
 
@@ -175,7 +173,7 @@ public:
 	/// Destroy
 	~StackMemoryPool();
 
-	/// Create with parameters
+	/// Init with parameters
 	/// @param allocCb The allocation function callback
 	/// @param allocCbUserData The user data to pass to the allocation function
 	/// @param initialChunkSize The size of the first chunk.
@@ -184,9 +182,9 @@ public:
 	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is not in the top of the stack. Set that to
 	///        true to suppress such errors
 	/// @param alignmentBytes The maximum supported alignment for returned memory
-	void create(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F32 nextChunkScale = 2.0,
-				PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true,
-				PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
+	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F32 nextChunkScale = 2.0,
+			  PtrSize nextChunkBias = 0, Bool ignoreDeallocationErrors = true,
+			  PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Allocate aligned memory. The operation is thread safe
 	/// @param size The size to allocate
@@ -274,15 +272,15 @@ public:
 	/// Destroy
 	~ChainMemoryPool();
 
-	/// Creates the pool.
+	/// Init the pool.
 	/// @param allocCb The allocation function callback.
 	/// @param allocCbUserData The user data to pass to the allocation function.
 	/// @param initialChunkSize The size of the first chunk.
 	/// @param nextChunkScale Value that controls the next chunk.
 	/// @param nextChunkBias Value that controls the next chunk.
 	/// @param alignmentBytes The maximum supported alignment for returned memory.
-	void create(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F32 nextChunkScale = 2.0,
-				PtrSize nextChunkBias = 0, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
+	void init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize, F32 nextChunkScale = 2.0,
+			  PtrSize nextChunkBias = 0, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Allocate memory. This operation is thread safe
 	/// @param size The size to allocate
@@ -304,8 +302,9 @@ public:
 
 private:
 	/// A chunk of memory
-	struct Chunk
+	class Chunk
 	{
+	public:
 		/// Pre-allocated memory chunk.
 		U8* m_memory = nullptr;
 

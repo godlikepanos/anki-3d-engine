@@ -17,21 +17,27 @@
 namespace anki
 {
 
-#define ANKI_MEM_SIGNATURES ANKI_EXTRA_CHECKS
-
-#if ANKI_MEM_SIGNATURES
-using Signature = U32;
-
-static Signature computeSignature(void* ptr)
+#if ANKI_MEM_EXTRA_CHECKS
+static PoolSignature computePoolSignature(void* ptr)
 {
 	ANKI_ASSERT(ptr);
 	PtrSize sig64 = ptrToNumber(ptr);
-	Signature sig = Signature(sig64);
+	PoolSignature sig = PoolSignature(sig64);
 	sig ^= 0x5bd1e995;
 	sig ^= sig << 24;
 	ANKI_ASSERT(sig != 0);
 	return sig;
 }
+
+class AllocationHeader
+{
+public:
+	PtrSize m_allocationSize;
+	PoolSignature m_signature;
+};
+
+constexpr U32 MAX_ALIGNMENT = 64;
+constexpr U32 ALLOCATION_HEADER_SIZE = getAlignedRoundUp(MAX_ALIGNMENT, sizeof(AllocationHeader));
 #endif
 
 #define ANKI_CREATION_OOM_ACTION() ANKI_UTIL_LOGF("Out of memory")
@@ -40,7 +46,7 @@ static Signature computeSignature(void* ptr)
 template<typename TPtr, typename TSize>
 static void invalidateMemory(TPtr ptr, TSize size)
 {
-#if ANKI_EXTRA_CHECKS
+#if ANKI_MEM_EXTRA_CHECKS
 	memset(static_cast<void*>(ptr), 0xCC, size);
 #endif
 }
@@ -142,7 +148,7 @@ BaseMemoryPool::~BaseMemoryPool()
 	ANKI_ASSERT(m_refcount.load() == 0 && "Refcount should be zero");
 }
 
-Bool BaseMemoryPool::isCreated() const
+Bool BaseMemoryPool::isInitialized() const
 {
 	return m_allocCb != nullptr;
 }
@@ -163,26 +169,25 @@ HeapMemoryPool::~HeapMemoryPool()
 	}
 }
 
-void HeapMemoryPool::create(AllocAlignedCallback allocCb, void* allocCbUserData)
+void HeapMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData)
 {
-	ANKI_ASSERT(!isCreated());
+	ANKI_ASSERT(!isInitialized());
 	ANKI_ASSERT(m_allocCb == nullptr);
 	ANKI_ASSERT(allocCb != nullptr);
 
 	m_allocCb = allocCb;
 	m_allocCbUserData = allocCbUserData;
-#if ANKI_MEM_SIGNATURES
-	m_signature = computeSignature(this);
-	m_headerSize = getAlignedRoundUp(MAX_ALIGNMENT, sizeof(Signature));
+#if ANKI_MEM_EXTRA_CHECKS
+	m_signature = computePoolSignature(this);
 #endif
 }
 
 void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
-	ANKI_ASSERT(isCreated());
-#if ANKI_MEM_SIGNATURES
+	ANKI_ASSERT(isInitialized());
+#if ANKI_MEM_EXTRA_CHECKS
 	ANKI_ASSERT(alignment <= MAX_ALIGNMENT && "Wrong assumption");
-	size += m_headerSize;
+	size += ALLOCATION_HEADER_SIZE;
 #endif
 
 	void* mem = m_allocCb(m_allocCbUserData, nullptr, size, alignment);
@@ -191,12 +196,13 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 	{
 		m_allocationsCount.fetchAdd(1);
 
-#if ANKI_MEM_SIGNATURES
-		memset(mem, 0, m_headerSize);
-		memcpy(mem, &m_signature, sizeof(m_signature));
-		U8* memU8 = static_cast<U8*>(mem);
-		memU8 += m_headerSize;
-		mem = static_cast<void*>(memU8);
+#if ANKI_MEM_EXTRA_CHECKS
+		memset(mem, 0, ALLOCATION_HEADER_SIZE);
+		AllocationHeader& header = *static_cast<AllocationHeader*>(mem);
+		header.m_signature = m_signature;
+		header.m_allocationSize = size;
+
+		mem = static_cast<void*>(static_cast<U8*>(mem) + ALLOCATION_HEADER_SIZE);
 #endif
 	}
 	else
@@ -209,22 +215,23 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 
 void HeapMemoryPool::free(void* ptr)
 {
-	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(isInitialized());
 
 	if(ANKI_UNLIKELY(ptr == nullptr))
 	{
 		return;
 	}
 
-#if ANKI_MEM_SIGNATURES
-	U8* memU8 = static_cast<U8*>(ptr);
-	memU8 -= m_headerSize;
-	if(memcmp(memU8, &m_signature, sizeof(m_signature)) != 0)
+#if ANKI_MEM_EXTRA_CHECKS
+	U8* memU8 = static_cast<U8*>(ptr) - ALLOCATION_HEADER_SIZE;
+	AllocationHeader& header = *reinterpret_cast<AllocationHeader*>(memU8);
+	if(header.m_signature != m_signature)
 	{
 		ANKI_UTIL_LOGE("Signature missmatch on free");
 	}
 
 	ptr = static_cast<void*>(memU8);
+	invalidateMemory(ptr, header.m_allocationSize);
 #endif
 	m_allocationsCount.fetchSub(1);
 	m_allocCb(m_allocCbUserData, ptr, 0, 0);
@@ -261,11 +268,11 @@ StackMemoryPool::~StackMemoryPool()
 	}
 }
 
-void StackMemoryPool::create(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
-							 F32 nextChunkScale, PtrSize nextChunkBias, Bool ignoreDeallocationErrors,
-							 PtrSize alignmentBytes)
+void StackMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
+						   F32 nextChunkScale, PtrSize nextChunkBias, Bool ignoreDeallocationErrors,
+						   PtrSize alignmentBytes)
 {
-	ANKI_ASSERT(!isCreated());
+	ANKI_ASSERT(!isInitialized());
 	ANKI_ASSERT(allocCb);
 	ANKI_ASSERT(initialChunkSize > 0);
 	ANKI_ASSERT(nextChunkScale >= 1.0);
@@ -300,7 +307,7 @@ void StackMemoryPool::create(AllocAlignedCallback allocCb, void* allocCbUserData
 
 void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
-	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(isInitialized());
 	ANKI_ASSERT(alignment <= m_alignmentBytes);
 	(void)alignment;
 
@@ -393,7 +400,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 
 void StackMemoryPool::free(void* ptr)
 {
-	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(isInitialized());
 
 	if(ANKI_UNLIKELY(ptr == nullptr))
 	{
@@ -411,7 +418,7 @@ void StackMemoryPool::free(void* ptr)
 
 void StackMemoryPool::reset()
 {
-	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(isInitialized());
 
 	// Iterate all until you find an unused
 	for(Chunk& ch : m_chunks)
@@ -481,10 +488,10 @@ ChainMemoryPool::~ChainMemoryPool()
 	}
 }
 
-void ChainMemoryPool::create(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
-							 F32 nextChunkScale, PtrSize nextChunkBias, PtrSize alignmentBytes)
+void ChainMemoryPool::init(AllocAlignedCallback allocCb, void* allocCbUserData, PtrSize initialChunkSize,
+						   F32 nextChunkScale, PtrSize nextChunkBias, PtrSize alignmentBytes)
 {
-	ANKI_ASSERT(!isCreated());
+	ANKI_ASSERT(!isInitialized());
 	ANKI_ASSERT(initialChunkSize > 0);
 	ANKI_ASSERT(nextChunkScale >= 1.0);
 	ANKI_ASSERT(alignmentBytes > 0);
@@ -517,7 +524,7 @@ void ChainMemoryPool::create(AllocAlignedCallback allocCb, void* allocCbUserData
 
 void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
-	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(isInitialized());
 
 	Chunk* ch;
 	void* mem = nullptr;
@@ -554,7 +561,7 @@ void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 
 void ChainMemoryPool::free(void* ptr)
 {
-	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(isInitialized());
 
 	if(ANKI_UNLIKELY(ptr == nullptr))
 	{
@@ -584,7 +591,7 @@ void ChainMemoryPool::free(void* ptr)
 
 PtrSize ChainMemoryPool::getChunksCount() const
 {
-	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(isInitialized());
 
 	PtrSize count = 0;
 	Chunk* ch = m_headChunk;
@@ -599,7 +606,7 @@ PtrSize ChainMemoryPool::getChunksCount() const
 
 PtrSize ChainMemoryPool::getAllocatedSize() const
 {
-	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(isInitialized());
 
 	PtrSize sum = 0;
 	Chunk* ch = m_headChunk;
