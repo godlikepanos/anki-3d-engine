@@ -347,6 +347,17 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			</methods>
 		</class>
 
+		<class name="ParticleEmitterComponent">
+			<methods>
+				<method name="loadParticleEmitterResource">
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>Error</return>
+				</method>
+			</methods>
+		</class>
+
 		<!-- Nodes -->
 		<class name="SceneNode">
 			<methods>
@@ -388,6 +399,9 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 				<method name="tryGetFirstComponentOfType&lt;BodyComponent&gt;" alias="getBodyComponent">
 					<return>BodyComponent*</return>
+				</method>
+				<method name="tryGetFirstComponentOfType&lt;ParticleEmitterComponent&gt;" alias="getParticleEmitterComponent">
+					<return>ParticleEmitterComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -541,9 +555,8 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<return>StaticCollisionNode*</return>
 				</method>
 				<method name="newParticleEmitterNode">
-					<overrideCall><![CDATA[ParticleEmitterNode* ret = newSceneNode<ParticleEmitterNode>(self, arg0, arg1);]]></overrideCall>
+					<overrideCall><![CDATA[ParticleEmitterNode* ret = newSceneNode<ParticleEmitterNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>CString</arg>
 						<arg>CString</arg>
 					</args>
 					<return>ParticleEmitterNode*</return>

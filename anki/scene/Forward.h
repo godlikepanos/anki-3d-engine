@@ -20,6 +20,7 @@ class ReflectionProxyComponent;
 class ReflectionProbeComponent;
 class FogDensityComponent;
 class SkinComponent;
+class ParticleEmitterComponent;
 
 // Nodes
 class SceneNode;

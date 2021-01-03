@@ -39,6 +39,7 @@
 #include <anki/scene/components/FogDensityComponent.h>
 #include <anki/scene/components/GlobalIlluminationProbeComponent.h>
 #include <anki/scene/components/GenericGpuComputeJobComponent.h>
+#include <anki/scene/components/ParticleEmitterComponent.h>
 
 #include <anki/scene/events/EventManager.h>
 #include <anki/scene/events/Event.h>

@@ -25,12 +25,6 @@ ANKI_USE_RESULT Error getXmlVal(const XmlElement& el, const CString& tag, Vec3& 
 	return el.getAttributeNumbersOptional(tag, out, found);
 }
 
-ParticleEmitterProperties& ParticleEmitterProperties::operator=(const ParticleEmitterProperties& b)
-{
-	memcpy(this, &b, sizeof(ParticleEmitterProperties));
-	return *this;
-}
-
 ParticleEmitterResource::ParticleEmitterResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {

@@ -304,7 +304,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			// Create some particles
 			ParticleEmitterNode* particles;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
-				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("parts%u", id++).toCString(), particles,
+				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("parts%u", id++).toCString(), particles));
+			ANKI_CHECK(particles->getFirstComponentOfType<ParticleEmitterComponent>().loadParticleEmitterResource(
 				"assets/smoke.ankipart"));
 			particles->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
 			createDestructionEvent(particles);

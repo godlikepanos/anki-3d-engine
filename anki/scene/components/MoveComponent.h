@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <anki/scene/Common.h>
 #include <anki/scene/components/SceneComponent.h>
 #include <anki/util/BitMask.h>
 #include <anki/util/Enum.h>

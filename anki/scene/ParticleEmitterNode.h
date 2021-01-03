@@ -6,10 +6,6 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/resource/ParticleEmitterResource.h>
-#include <anki/renderer/RenderQueue.h>
-#include <anki/collision/Obb.h>
-#include <anki/physics/Forward.h>
 
 namespace anki
 {
@@ -18,59 +14,23 @@ namespace anki
 /// @{
 
 /// The particle emitter scene node. This scene node emitts
-class ParticleEmitterNode : public SceneNode, private ParticleEmitterProperties
+class ParticleEmitterNode : public SceneNode
 {
 public:
 	ParticleEmitterNode(SceneGraph* scene, CString name);
 
 	~ParticleEmitterNode();
 
-	ANKI_USE_RESULT Error init(const CString& filename);
+	ANKI_USE_RESULT Error init();
 
-	/// @name SceneNode virtuals
-	/// @{
-	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
-	/// @}
+	Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	class MoveFeedbackComponent;
-	class ParticleBase;
-	class ParticleSimple;
-	class PhysParticle;
-
-	enum class SimulationType : U8
-	{
-		UNDEFINED,
-		SIMPLE,
-		PHYSICS_ENGINE
-	};
-
-	/// Size of a single vertex.
-	static const U32 VERTEX_SIZE = 5 * sizeof(F32);
-
-	ParticleEmitterResourcePtr m_particleEmitterResource;
-	DynamicArray<ParticleBase*> m_particles;
-	Second m_timeLeftForNextEmission = 0.0;
-
-	// Opt: We dont have to make extra calculations if the ParticleEmitterNode's rotation is the identity
-	Bool m_identityRotation = true;
-
-	U32 m_aliveParticlesCount = 0;
-
-	/// @name Graphics
-	/// @{
-	U32 m_vertBuffSize = 0;
-	void* m_verts = nullptr;
-	/// @}
-
-	SimulationType m_simulationType = SimulationType::UNDEFINED;
-
-	void createParticlesPhysicsSimulation(SceneGraph* scene);
-	void createParticlesSimpleSimulation();
+	class ShapeFeedbackComponent;
 
 	void onMoveComponentUpdate(MoveComponent& move);
-
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
+	void onShapeUpdate();
 };
 /// @}
 

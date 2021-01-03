@@ -23,17 +23,6 @@ class XmlElement;
 class ParticleEmitterProperties
 {
 public:
-	ParticleEmitterProperties()
-	{
-	}
-
-	ParticleEmitterProperties(const ParticleEmitterProperties& b)
-	{
-		*this = b;
-	}
-
-	ParticleEmitterProperties& operator=(const ParticleEmitterProperties& b);
-
 	/// @name Particle specific properties
 	/// @{
 	class
@@ -80,6 +69,21 @@ public:
 
 	Bool m_usePhysicsEngine = false; ///< Use bullet for the simulation
 	/// @}
+
+	ParticleEmitterProperties()
+	{
+	}
+
+	ParticleEmitterProperties(const ParticleEmitterProperties& b)
+	{
+		*this = b;
+	}
+
+	ParticleEmitterProperties& operator=(const ParticleEmitterProperties& b)
+	{
+		memcpy(this, &b, sizeof(*this));
+		return *this;
+	}
 
 	Bool forceEnabled() const
 	{
