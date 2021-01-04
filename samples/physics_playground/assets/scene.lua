@@ -2,7 +2,9 @@
 local scene = getSceneGraph()
 local events = getEventManager()
 
-node = scene:newGpuParticleEmitterNode("Cube.020", "assets/gpu_sparks.ankipart")
+node = scene:newGpuParticleEmitterNode("Cube.020")
+comp = node:getSceneNodeBase():getGpuParticleEmitterComponent()
+comp:loadParticleEmitterResource("assets/gpu_sparks.ankipart")
 trf = Transform.new()
 trf:setOrigin(Vec4.new(25.411236, 0.543148, 22.679190, 0))
 rot = Mat3x4.new()

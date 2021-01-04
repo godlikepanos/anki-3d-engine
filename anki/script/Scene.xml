@@ -358,6 +358,17 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			</methods>
 		</class>
 
+		<class name="GpuParticleEmitterComponent">
+			<methods>
+				<method name="loadParticleEmitterResource">
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>Error</return>
+				</method>
+			</methods>
+		</class>
+
 		<!-- Nodes -->
 		<class name="SceneNode">
 			<methods>
@@ -402,6 +413,9 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 				<method name="tryGetFirstComponentOfType&lt;ParticleEmitterComponent&gt;" alias="getParticleEmitterComponent">
 					<return>ParticleEmitterComponent*</return>
+				</method>
+				<method name="tryGetFirstComponentOfType&lt;GpuParticleEmitterComponent&gt;" alias="getGpuParticleEmitterComponent">
+					<return>GpuParticleEmitterComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -562,9 +576,8 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<return>ParticleEmitterNode*</return>
 				</method>
 				<method name="newGpuParticleEmitterNode">
-					<overrideCall><![CDATA[GpuParticleEmitterNode* ret = newSceneNode<GpuParticleEmitterNode>(self, arg0, arg1);]]></overrideCall>
+					<overrideCall><![CDATA[GpuParticleEmitterNode* ret = newSceneNode<GpuParticleEmitterNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>CString</arg>
 						<arg>CString</arg>
 					</args>
 					<return>GpuParticleEmitterNode*</return>

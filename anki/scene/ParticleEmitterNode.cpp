@@ -78,6 +78,7 @@ Error ParticleEmitterNode::init()
 
 	ParticleEmitterComponent* particleEmitterc = newComponent<ParticleEmitterComponent>();
 
+	newComponent<ShapeFeedbackComponent>();
 	newComponent<SpatialComponent>();
 
 	RenderComponent* rcomp = newComponent<RenderComponent>();

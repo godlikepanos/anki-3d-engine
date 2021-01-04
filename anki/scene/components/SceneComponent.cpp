@@ -51,7 +51,7 @@ const SceneComponentRtti& SceneComponent::findClassRtti(CString className)
 	}
 
 	ANKI_ASSERT(0);
-	return *g_rttis[0xFFFF];
+	return *g_rttis[0];
 }
 
 const SceneComponentRtti& SceneComponent::findClassRtti(U8 classId)

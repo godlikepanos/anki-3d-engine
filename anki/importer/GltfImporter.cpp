@@ -446,8 +446,12 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 				gpuParticles = true;
 			}
 
-			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:new%sParticleEmitterNode(\"%s\", \"%s\")\n",
-											 (gpuParticles) ? "Gpu" : "", getNodeName(node).cstr(), fname.cstr()));
+			ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:new%sParticleEmitterNode(\"%s\")\n",
+											 (gpuParticles) ? "Gpu" : "", getNodeName(node).cstr()));
+
+			ANKI_CHECK(m_sceneFile.writeText("comp = node:getSceneNodeBase():get%sParticleEmitterComponent()\n",
+											 (gpuParticles) ? "Gpu" : ""));
+			ANKI_CHECK(m_sceneFile.writeText("comp:loadParticleEmitterResource(\"%s\")\n", fname.cstr()));
 
 			Transform localTrf;
 			ANKI_CHECK(getNodeTransform(node, localTrf));

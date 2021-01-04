@@ -21,6 +21,7 @@ class ReflectionProbeComponent;
 class FogDensityComponent;
 class SkinComponent;
 class ParticleEmitterComponent;
+class GpuParticleEmitterComponent;
 
 // Nodes
 class SceneNode;
