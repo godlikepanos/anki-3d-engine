@@ -29,6 +29,13 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 {
 	m_markedForUpdate = true;
 
+	// Create the debug drawer
+	if(!m_dbgTex.isCreated())
+	{
+		ANKI_CHECK(
+			m_node->getSceneGraph().getResourceManager().loadResource("engine_data/ParticleEmitter.ankitex", m_dbgTex));
+	}
+
 	// Load particle props
 	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(filename, m_particleEmitterResource));
 	const ParticleEmitterProperties& inProps = m_particleEmitterResource->getProperties();
@@ -116,16 +123,31 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	}
 
 	// Find the extend of the particles
+	if(inProps.m_emitterBoundingVolumeMin.x() >= inProps.m_emitterBoundingVolumeMax.x())
 	{
 		const Vec3 maxForce = inProps.m_particle.m_maxForceDirection * inProps.m_particle.m_maxForceMagnitude;
 		const Vec3& maxGravity = inProps.m_particle.m_maxGravity;
 		const F32 maxMass = inProps.m_particle.m_maxMass;
-		const F32 maxTime = F32(inProps.m_particle.m_maxLife);
+		const F32 maxLife = F32(inProps.m_particle.m_maxLife);
 
-		const Vec3 totalForce = maxGravity * maxMass + maxForce;
-		const Vec3 accelleration = totalForce / maxMass;
-		const Vec3 velocity = accelleration * maxTime;
-		m_maxDistanceAParticleCanGo = (velocity * maxTime).getLength();
+		const F32 dt = 1.0f / 30.0f;
+		const Vec3 initialForce = maxGravity * maxMass + maxForce;
+		const Vec3 initialAcceleration = initialForce / maxMass;
+		const Vec3 velocity = initialAcceleration * dt;
+
+		F32 life = maxLife;
+		Vec3 pos(0.0f);
+		while(life > dt)
+		{
+			pos = maxGravity * (dt * dt) + velocity * dt + pos;
+			life -= dt;
+		}
+
+		m_emitterBoundingBoxLocal = Aabb(-Vec3(pos.getLength()), Vec3(pos.getLength()));
+	}
+	else
+	{
+		m_emitterBoundingBoxLocal = Aabb(inProps.m_emitterBoundingVolumeMin, inProps.m_emitterBoundingVolumeMax);
 	}
 
 	return Error::NONE;
@@ -204,7 +226,42 @@ void GpuParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 	}
 	else
 	{
-		// TODO
+		const Vec4 tsl = (m_worldAabb.getMin() + m_worldAabb.getMax()) / 2.0f;
+		const Vec4 scale = (m_worldAabb.getMax() - m_worldAabb.getMin()) / 2.0f;
+
+		// Set non uniform scale. Add a margin to avoid flickering
+		Mat3 nonUniScale = Mat3::getZero();
+		nonUniScale(0, 0) = scale.x();
+		nonUniScale(1, 1) = scale.y();
+		nonUniScale(2, 2) = scale.z();
+
+		const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
+
+		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+		if(enableDepthTest)
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+		}
+		else
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+		}
+
+		m_node->getSceneGraph().getDebugDrawer().drawCubes(
+			ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f,
+			*ctx.m_stagingGpuAllocator, cmdb);
+
+		m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
+			ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&m_worldPosition, 1), Vec4(1.0f),
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_dbgTex->getGrTextureView(),
+			ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
+
+		// Restore state
+		if(!enableDepthTest)
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+		}
 	}
 }
 
@@ -229,8 +286,8 @@ void GpuParticleEmitterComponent::setWorldTransform(const Transform& trf)
 	m_worldPosition = trf.getOrigin().xyz();
 	m_worldRotation = trf.getRotation();
 
-	m_worldAabb.setMin(m_worldPosition - m_maxDistanceAParticleCanGo);
-	m_worldAabb.setMax(m_worldPosition + m_maxDistanceAParticleCanGo);
+	m_worldAabb.setMin(m_worldPosition + m_emitterBoundingBoxLocal.getMin().xyz());
+	m_worldAabb.setMax(m_worldPosition + m_emitterBoundingBoxLocal.getMax().xyz());
 
 	m_markedForUpdate = true;
 }

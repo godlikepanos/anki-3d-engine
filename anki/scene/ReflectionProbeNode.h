@@ -6,8 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/collision/Aabb.h>
-#include <anki/scene/DebugDrawer.h>
+#include <anki/Math.h>
 
 namespace anki
 {
@@ -34,21 +33,10 @@ private:
 	class MoveFeedbackComponent;
 	class ShapeFeedbackComponent;
 
-	class CubeSide
-	{
-	public:
-		Transform m_localTrf;
-	};
-
-	Array<CubeSide, 6> m_cubeSides;
-
-	DebugDrawer2 m_dbgDrawer;
-	TextureResourcePtr m_dbgTex;
+	Array<Transform, 6> m_frustumTransforms;
 
 	void onMoveUpdate(MoveComponent& move);
 	void onShapeUpdate(ReflectionProbeComponent& reflc);
-
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
 };
 /// @}
 

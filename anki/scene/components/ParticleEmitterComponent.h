@@ -49,7 +49,11 @@ public:
 	}
 
 	/// RenderComponent callback. The userData is the component.
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
+	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
+	{
+		ANKI_ASSERT(userData.getSize() == 1);
+		static_cast<const ParticleEmitterComponent*>(userData[0])->draw(ctx);
+	}
 
 private:
 	class ParticleBase;
@@ -81,10 +85,14 @@ private:
 	U32 m_vertBuffSize = 0;
 	void* m_verts = nullptr;
 
+	TextureResourcePtr m_dbgTex;
+
 	SimulationType m_simulationType = SimulationType::UNDEFINED;
 
 	template<typename TParticle>
 	void simulate(Second prevUpdateTime, Second crntTime, WeakArray<TParticle> particles);
+
+	void draw(RenderQueueDrawContext& ctx) const;
 };
 /// @}
 

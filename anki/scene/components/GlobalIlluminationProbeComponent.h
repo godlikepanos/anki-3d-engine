@@ -80,19 +80,16 @@ public:
 		return m_renderPosition;
 	}
 
-	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
-	{
-		m_drawCallback = callback;
-		m_drawCallbackUserData = userData;
-	}
-
 	void setupGlobalIlluminationProbeQueueElement(GlobalIlluminationProbeQueueElement& el)
 	{
 		el.m_uuid = m_uuid;
 		el.m_feedbackCallback = giProbeQueueElementFeedbackCallback;
 		el.m_feedbackCallbackUserData = this;
-		el.m_debugDrawCallback = m_drawCallback;
-		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
+		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+			ANKI_ASSERT(userData.getSize() == 1);
+			static_cast<const GlobalIlluminationProbeComponent*>(userData[0])->draw(ctx);
+		};
+		el.m_debugDrawCallbackUserData = this;
 		el.m_renderQueues = {};
 		el.m_aabbMin = -m_halfBoxSize + m_worldPosition;
 		el.m_aabbMax = m_halfBoxSize + m_worldPosition;
@@ -116,8 +113,7 @@ public:
 	}
 
 private:
-	RenderQueueDrawCallback m_drawCallback = nullptr;
-	const void* m_drawCallbackUserData = nullptr;
+	SceneNode* m_node;
 	U64 m_uuid;
 	Vec3 m_halfBoxSize = Vec3(0.5f);
 	Vec3 m_worldPosition = Vec3(0.0f);
@@ -127,6 +123,8 @@ private:
 	F32 m_fadeDistance = 0.2f;
 	Bool m_markedForRendering : 1;
 	Bool m_shapeDirty : 1;
+
+	TextureResourcePtr m_debugTex;
 
 	static void giProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData,
 													const Vec4& eyeWorldPosition)
@@ -147,6 +145,8 @@ private:
 		m_cellCounts = UVec3(dist / m_cellSize);
 		m_cellCounts = m_cellCounts.max(UVec3(1));
 	}
+
+	void draw(RenderQueueDrawContext& ctx) const;
 };
 /// @}
 

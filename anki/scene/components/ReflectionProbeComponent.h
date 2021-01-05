@@ -23,6 +23,8 @@ class ReflectionProbeComponent : public SceneComponent
 public:
 	ReflectionProbeComponent(SceneNode* node);
 
+	~ReflectionProbeComponent();
+
 	/// Set the local size of the probe volume.
 	void setBoxVolumeSize(const Vec3& sizeXYZ)
 	{
@@ -56,12 +58,6 @@ public:
 		return m_markedForRendering;
 	}
 
-	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
-	{
-		m_drawCallback = callback;
-		m_drawCallbackUserData = userData;
-	}
-
 	void setupReflectionProbeQueueElement(ReflectionProbeQueueElement& el) const
 	{
 		el.m_feedbackCallback = reflectionProbeQueueElementFeedbackCallback;
@@ -71,8 +67,11 @@ public:
 		el.m_aabbMin = -m_halfSize + m_worldPos;
 		el.m_aabbMax = m_halfSize + m_worldPos;
 		el.m_textureArrayIndex = MAX_U32;
-		el.m_debugDrawCallback = m_drawCallback;
-		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
+		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+			ANKI_ASSERT(userData.getSize() == 1);
+			static_cast<const ReflectionProbeComponent*>(userData[0])->draw(ctx);
+		};
+		el.m_debugDrawCallbackUserData = this;
 	}
 
 	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
@@ -83,19 +82,22 @@ public:
 	}
 
 private:
-	U64 m_uuid;
-	RenderQueueDrawCallback m_drawCallback = nullptr;
-	const void* m_drawCallbackUserData = nullptr;
+	SceneNode* m_node = nullptr;
+	U64 m_uuid = 0;
 	Vec3 m_worldPos = Vec3(0.0f);
 	Vec3 m_halfSize = Vec3(1.0f);
 	Bool m_markedForRendering : 1;
 	Bool m_markedForUpdate : 1;
+
+	TextureResourcePtr m_debugTex;
 
 	static void reflectionProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData)
 	{
 		ANKI_ASSERT(userData);
 		static_cast<ReflectionProbeComponent*>(userData)->m_markedForRendering = fillRenderQueuesOnNextFrame;
 	}
+
+	void draw(RenderQueueDrawContext& ctx) const;
 };
 /// @}
 

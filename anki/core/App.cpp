@@ -11,6 +11,7 @@
 #include <anki/util/System.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/util/Tracer.h>
+#include <anki/util/HighRezTimer.h>
 #include <anki/core/CoreTracer.h>
 #include <anki/core/DeveloperConsole.h>
 #include <anki/core/NativeWindow.h>

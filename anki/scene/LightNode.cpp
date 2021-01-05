@@ -9,7 +9,6 @@
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/FrustumComponent.h>
-#include <anki/resource/ResourceManager.h>
 #include <anki/shaders/include/ClusteredShadingTypes.h>
 
 namespace anki
@@ -80,25 +79,6 @@ LightNode::~LightNode()
 {
 }
 
-Error LightNode::initCommon(LightComponentType lightType)
-{
-	CString texFname;
-	switch(lightType)
-	{
-	case LightComponentType::POINT:
-		texFname = "engine_data/LightBulb.ankitex";
-		break;
-	case LightComponentType::SPOT:
-		texFname = "engine_data/SpotLight.ankitex";
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-	ANKI_CHECK(getResourceManager().loadResource(texFname, m_dbgTex));
-
-	return m_dbgDrawer.init(&getResourceManager());
-}
-
 void LightNode::frameUpdateCommon()
 {
 	// Update frustum comps shadow info
@@ -137,40 +117,6 @@ void LightNode::onMoveUpdateCommon(const MoveComponent& move)
 	getFirstComponentOfType<LightComponent>().setWorldTransform(move.getWorldTransform());
 }
 
-void LightNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-{
-	for(const void* plight : userData)
-	{
-		const LightNode& self = *static_cast<const LightNode*>(plight);
-		const LightComponent& lcomp = self.getFirstComponentOfType<LightComponent>();
-
-		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
-		if(enableDepthTest)
-		{
-			ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
-		}
-		else
-		{
-			ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
-		}
-
-		Vec3 color = lcomp.getDiffuseColor().xyz();
-		color /= max(max(color.x(), color.y()), color.z());
-
-		self.m_dbgDrawer.drawBillboardTexture(
-			ctx.m_projectionMatrix, ctx.m_viewMatrix, lcomp.getWorldTransform().getOrigin().xyz(), color.xyz1(),
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-			self.m_dbgTex->getGrTextureView(), ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator,
-			ctx.m_commandBuffer);
-
-		// Restore state
-		if(!enableDepthTest)
-		{
-			ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
-		}
-	}
-}
-
 PointLightNode::PointLightNode(SceneGraph* scene, CString name)
 	: LightNode(scene, name)
 {
@@ -183,8 +129,6 @@ PointLightNode::~PointLightNode()
 
 Error PointLightNode::init()
 {
-	ANKI_CHECK(initCommon(LightComponentType::POINT));
-
 	// Move component
 	newComponent<MoveComponent>();
 
@@ -194,7 +138,6 @@ Error PointLightNode::init()
 	// Light component
 	LightComponent* lc = newComponent<LightComponent>();
 	lc->setLightComponentType(LightComponentType::POINT);
-	lc->setDrawCallback(drawCallback, static_cast<LightNode*>(this));
 
 	// Feedback component
 	newComponent<LightChangedFeedbackComponent>();
@@ -287,8 +230,6 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 
 Error SpotLightNode::init()
 {
-	ANKI_CHECK(initCommon(LightComponentType::SPOT));
-
 	// Move component
 	newComponent<MoveComponent>();
 
@@ -298,7 +239,6 @@ Error SpotLightNode::init()
 	// Light component
 	LightComponent* lc = newComponent<LightComponent>();
 	lc->setLightComponentType(LightComponentType::SPOT);
-	lc->setDrawCallback(drawCallback, static_cast<LightNode*>(this));
 
 	// Feedback component
 	newComponent<LightChangedFeedbackComponent>();
@@ -385,7 +325,6 @@ Error DirectionalLightNode::init()
 
 	LightComponent* lc = newComponent<LightComponent>();
 	lc->setLightComponentType(LightComponentType::DIRECTIONAL);
-	lc->setDrawCallback(drawCallback, this);
 
 	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 

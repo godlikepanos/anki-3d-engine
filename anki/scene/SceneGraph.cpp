@@ -15,6 +15,7 @@
 #include <anki/core/ConfigSet.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/util/Tracer.h>
+#include <anki/util/HighRezTimer.h>
 
 namespace anki
 {
@@ -94,6 +95,9 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	// Create a special node for debugging the physics world
 	PhysicsDebugNode* pnode;
 	ANKI_CHECK(newSceneNode<PhysicsDebugNode>("_physicsDebugNode", pnode));
+
+	// Other
+	ANKI_CHECK(m_debugDrawer.init(&getResourceManager()));
 
 	return Error::NONE;
 }

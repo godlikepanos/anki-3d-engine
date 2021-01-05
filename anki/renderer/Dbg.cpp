@@ -97,6 +97,16 @@ void Dbg::run(RenderPassWorkContext& rgraphCtx, const RenderingContext& ctx)
 		el.m_callback(dctx, a);
 	}
 
+	// Draw forward shaded
+	if(threadId == 0)
+	{
+		for(const RenderableQueueElement& el : ctx.m_renderQueue->m_forwardShadingRenderables)
+		{
+			Array<void*, 1> a = {const_cast<void*>(el.m_userData)};
+			el.m_callback(dctx, a);
+		}
+	}
+
 	// Draw probes
 	if(threadId == 0)
 	{

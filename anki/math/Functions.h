@@ -16,7 +16,7 @@ namespace anki
 /// @{
 
 /// Just PI.
-const F32 PI = 3.14159265358979323846f;
+constexpr F32 PI = 3.14159265358979323846f;
 
 /// Floating point epsilon.
 const F32 EPSILON = 1.0e-6f;

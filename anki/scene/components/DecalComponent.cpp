@@ -18,6 +18,10 @@ DecalComponent::DecalComponent(SceneNode* node)
 	, m_node(node)
 {
 	ANKI_ASSERT(node);
+	if(node->getSceneGraph().getResourceManager().loadResource("engine_data/GreenDecal.ankitex", m_debugTex))
+	{
+		ANKI_SCENE_LOGF("Failed to load resources");
+	}
 }
 
 DecalComponent::~DecalComponent()
@@ -71,6 +75,47 @@ void DecalComponent::updateInternal()
 	const Vec4 extend(halfBoxSize.x(), halfBoxSize.y(), halfBoxSize.z(), 0.0f);
 	const Obb obbL(center, Mat3x4::getIdentity(), extend);
 	m_obb = obbL.getTransformed(m_trf);
+}
+
+void DecalComponent::draw(RenderQueueDrawContext& ctx) const
+{
+	const Mat3 rot = m_obb.getRotation().getRotationPart();
+	const Vec4 tsl = m_obb.getCenter().xyz1();
+	const Vec3 scale = m_obb.getExtend().xyz();
+
+	Mat3 nonUniScale = Mat3::getZero();
+	nonUniScale(0, 0) = scale.x();
+	nonUniScale(1, 1) = scale.y();
+	nonUniScale(2, 2) = scale.z();
+
+	const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(tsl, rot * nonUniScale, 1.0f);
+
+	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	if(enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+	}
+	else
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+	}
+
+	m_node->getSceneGraph().getDebugDrawer().drawCubes(
+		ConstWeakArray<Mat4>(&mvp, 1), Vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.0f,
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f, *ctx.m_stagingGpuAllocator,
+		ctx.m_commandBuffer);
+
+	const Vec3 pos = m_obb.getCenter().xyz();
+	m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
+		ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_debugTex->getGrTextureView(),
+		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
+
+	// Restore state
+	if(!enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+	}
 }
 
 } // end namespace anki

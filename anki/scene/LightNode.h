@@ -6,11 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/Forward.h>
-#include <anki/scene/DebugDrawer.h>
 #include <anki/scene/components/LightComponent.h>
-#include <anki/resource/TextureResource.h>
-#include <anki/Collision.h>
 
 namespace anki
 {
@@ -30,8 +26,6 @@ protected:
 	class MovedFeedbackComponent;
 	class LightChangedFeedbackComponent;
 
-	ANKI_USE_RESULT Error initCommon(LightComponentType lightType);
-
 	/// Called when moved
 	void onMoveUpdateCommon(const MoveComponent& move);
 
@@ -40,12 +34,6 @@ protected:
 	virtual void onMoveUpdate(const MoveComponent& move) = 0;
 
 	virtual void onShapeUpdate(LightComponent& light) = 0;
-
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
-
-private:
-	DebugDrawer2 m_dbgDrawer;
-	TextureResourcePtr m_dbgTex;
 };
 
 /// Point light

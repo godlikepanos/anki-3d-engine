@@ -62,12 +62,6 @@ public:
 		m_markedForUpdate = true;
 	}
 
-	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
-	{
-		m_drawCallback = callback;
-		m_drawCallbackUserData = userData;
-	}
-
 	/// Implements SceneComponent::update.
 	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
@@ -123,8 +117,11 @@ public:
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
 		el.m_obbRotation = m_obb.getRotation().getRotationPart();
-		el.m_debugDrawCallback = m_drawCallback;
-		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
+		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+			ANKI_ASSERT(userData.getSize() == 1);
+			static_cast<const DecalComponent*>(userData[0])->draw(ctx);
+		};
+		el.m_debugDrawCallbackUserData = this;
 	}
 
 private:
@@ -143,19 +140,20 @@ private:
 		F32 m_blendFactor = 0.0f;
 	};
 
-	SceneNode* m_node;
-	RenderQueueDrawCallback m_drawCallback = nullptr;
-	const void* m_drawCallbackUserData = nullptr;
+	SceneNode* m_node = nullptr;
 	Array<Layer, U(LayerType::COUNT)> m_layers;
-	Mat4 m_biasProjViewMat;
+	Mat4 m_biasProjViewMat = Mat4::getIdentity();
 	Vec3 m_boxSize = Vec3(1.0f);
 	Transform m_trf = Transform::getIdentity();
 	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(0.5f, 0.5f, 0.5f, 0.0f));
+	TextureResourcePtr m_debugTex;
 	Bool m_markedForUpdate = true;
 
 	ANKI_USE_RESULT Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
 
 	void updateInternal();
+
+	void draw(RenderQueueDrawContext& ctx) const;
 };
 /// @}
 

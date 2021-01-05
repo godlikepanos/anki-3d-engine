@@ -131,6 +131,11 @@ class DebugDrawer2
 public:
 	ANKI_USE_RESULT Error init(ResourceManager* rsrcManager);
 
+	Bool isInitialized() const
+	{
+		return m_prog.isCreated();
+	}
+
 	void drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, F32 cubeSideSize,
 				   StagingGpuMemoryManager& stagingGpuAllocator, CommandBufferPtr& cmdb) const;
 
@@ -167,6 +172,8 @@ public:
 
 private:
 	ShaderProgramResourcePtr m_prog;
+	BufferPtr m_cubePositionsBuffer;
+	BufferPtr m_cubeIndicesBuffer;
 };
 /// @}
 

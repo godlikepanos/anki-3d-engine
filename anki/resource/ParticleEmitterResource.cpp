@@ -74,6 +74,13 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async
 		ANKI_CHECK(el.getAttributeNumber("value", m_usePhysicsEngine));
 	}
 
+	ANKI_CHECK(rootEl.getChildElementOptional("emitterBoundingVolume", el));
+	if(el)
+	{
+		ANKI_CHECK(el.getAttributeNumbers("min", m_emitterBoundingVolumeMin));
+		ANKI_CHECK(el.getAttributeNumbers("max", m_emitterBoundingVolumeMax));
+	}
+
 	CString cstr;
 	ANKI_CHECK(rootEl.getChildElement("material", el));
 	ANKI_CHECK(el.getAttributeText("value", cstr));

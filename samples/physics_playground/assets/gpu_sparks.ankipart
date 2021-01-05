@@ -14,4 +14,6 @@
 	<emissionPeriod value="0.05"/>
 	<particlesPerEmission value="1"/>
 	<material value="assets/gpu_sparks.ankimtl"/>
+
+	<emitterBoundingVolume min="-1.0 0.0 -1.0" max="1 2 1" />
 </particleEmitter>

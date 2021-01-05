@@ -8,6 +8,7 @@
 #include <anki/renderer/RenderQueue.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/physics/PhysicsWorld.h>
+#include <anki/gr/Buffer.h>
 #include <anki/Collision.h>
 
 namespace anki
@@ -292,67 +293,92 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator, S
 
 Error DebugDrawer2::init(ResourceManager* rsrcManager)
 {
-	return rsrcManager->loadResource("shaders/SceneDebug.ankiprog", m_prog);
+	ANKI_CHECK(rsrcManager->loadResource("shaders/SceneDebug.ankiprog", m_prog));
+
+	{
+		BufferInitInfo bufferInit("DebugCube");
+		bufferInit.m_usage = BufferUsageBit::VERTEX;
+		bufferInit.m_size = sizeof(Vec3) * 8;
+		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		m_cubePositionsBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
+
+		Vec3* verts = static_cast<Vec3*>(m_cubePositionsBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+
+		const F32 size = 1.0f;
+		verts[0] = Vec3(size, size, size); // front top right
+		verts[1] = Vec3(-size, size, size); // front top left
+		verts[2] = Vec3(-size, -size, size); // front bottom left
+		verts[3] = Vec3(size, -size, size); // front bottom right
+		verts[4] = Vec3(size, size, -size); // back top right
+		verts[5] = Vec3(-size, size, -size); // back top left
+		verts[6] = Vec3(-size, -size, -size); // back bottom left
+		verts[7] = Vec3(size, -size, -size); // back bottom right
+
+		m_cubePositionsBuffer->unmap();
+	}
+
+	{
+		constexpr U INDEX_COUNT = 12 * 2;
+
+		BufferInitInfo bufferInit("DebugCube");
+		bufferInit.m_usage = BufferUsageBit::VERTEX;
+		bufferInit.m_size = sizeof(U16) * INDEX_COUNT;
+		bufferInit.m_mapAccess = BufferMapAccessBit::WRITE;
+		m_cubeIndicesBuffer = rsrcManager->getGrManager().newBuffer(bufferInit);
+
+		U16* indices = static_cast<U16*>(m_cubeIndicesBuffer->map(0, MAX_PTR_SIZE, BufferMapAccessBit::WRITE));
+
+		U32 indexCount = 0;
+		indices[indexCount++] = 0;
+		indices[indexCount++] = 1;
+		indices[indexCount++] = 1;
+		indices[indexCount++] = 2;
+		indices[indexCount++] = 2;
+		indices[indexCount++] = 3;
+		indices[indexCount++] = 3;
+		indices[indexCount++] = 0;
+
+		indices[indexCount++] = 4;
+		indices[indexCount++] = 5;
+		indices[indexCount++] = 5;
+		indices[indexCount++] = 6;
+		indices[indexCount++] = 6;
+		indices[indexCount++] = 7;
+		indices[indexCount++] = 7;
+		indices[indexCount++] = 4;
+
+		indices[indexCount++] = 0;
+		indices[indexCount++] = 4;
+		indices[indexCount++] = 1;
+		indices[indexCount++] = 5;
+		indices[indexCount++] = 2;
+		indices[indexCount++] = 6;
+		indices[indexCount++] = 3;
+		indices[indexCount++] = 7;
+
+		m_cubeIndicesBuffer->unmap();
+	}
+
+	return Error::NONE;
 }
 
 void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
 							 F32 cubeSideSize, StagingGpuMemoryManager& stagingGpuAllocator,
 							 CommandBufferPtr& cmdb) const
 {
-	StagingGpuMemoryToken vertsToken;
-	StagingGpuMemoryToken indicesToken;
-
-	Vec3* verts = static_cast<Vec3*>(
-		stagingGpuAllocator.allocateFrame(sizeof(Vec3) * 8, StagingGpuMemoryType::VERTEX, vertsToken));
-
-	const F32 size = cubeSideSize / 2.0f;
-	verts[0] = Vec3(size, size, size); // front top right
-	verts[1] = Vec3(-size, size, size); // front top left
-	verts[2] = Vec3(-size, -size, size); // front bottom left
-	verts[3] = Vec3(size, -size, size); // front bottom right
-	verts[4] = Vec3(size, size, -size); // back top right
-	verts[5] = Vec3(-size, size, -size); // back top left
-	verts[6] = Vec3(-size, -size, -size); // back bottom left
-	verts[7] = Vec3(size, -size, -size); // back bottom right
-
-	const U INDEX_COUNT = 12 * 2;
-	U16* indices = static_cast<U16*>(
-		stagingGpuAllocator.allocateFrame(sizeof(U16) * INDEX_COUNT, StagingGpuMemoryType::VERTEX, indicesToken));
-
-	U32 indexCount = 0;
-	indices[indexCount++] = 0;
-	indices[indexCount++] = 1;
-	indices[indexCount++] = 1;
-	indices[indexCount++] = 2;
-	indices[indexCount++] = 2;
-	indices[indexCount++] = 3;
-	indices[indexCount++] = 3;
-	indices[indexCount++] = 0;
-
-	indices[indexCount++] = 4;
-	indices[indexCount++] = 5;
-	indices[indexCount++] = 5;
-	indices[indexCount++] = 6;
-	indices[indexCount++] = 6;
-	indices[indexCount++] = 7;
-	indices[indexCount++] = 7;
-	indices[indexCount++] = 4;
-
-	indices[indexCount++] = 0;
-	indices[indexCount++] = 4;
-	indices[indexCount++] = 1;
-	indices[indexCount++] = 5;
-	indices[indexCount++] = 2;
-	indices[indexCount++] = 6;
-	indices[indexCount++] = 3;
-	indices[indexCount++] = 7;
-
 	// Set the uniforms
 	StagingGpuMemoryToken unisToken;
 	Mat4* pmvps = static_cast<Mat4*>(stagingGpuAllocator.allocateFrame(sizeof(Mat4) * mvps.getSize() + sizeof(Vec4),
 																	   StagingGpuMemoryType::UNIFORM, unisToken));
 
-	memcpy(pmvps, &mvps[0], mvps.getSizeInBytes());
+	if(cubeSideSize == 2.0f)
+	{
+		memcpy(pmvps, &mvps[0], mvps.getSizeInBytes());
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
+	}
 
 	Vec4* pcolor = reinterpret_cast<Vec4*>(pmvps + mvps.getSize());
 	*pcolor = color;
@@ -367,13 +393,14 @@ void DebugDrawer2::drawCubes(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 l
 	cmdb->bindShaderProgram(variant->getProgram());
 
 	cmdb->setVertexAttribute(0, 0, Format::R32G32B32_SFLOAT, 0);
-	cmdb->bindVertexBuffer(0, vertsToken.m_buffer, vertsToken.m_offset, sizeof(Vec3));
-	cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
+	cmdb->bindVertexBuffer(0, m_cubePositionsBuffer, 0, sizeof(Vec3));
+	cmdb->bindIndexBuffer(m_cubeIndicesBuffer, 0, IndexType::U16);
 
 	cmdb->bindUniformBuffer(1, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
 
 	cmdb->setLineWidth(lineSize);
-	cmdb->drawElements(PrimitiveTopology::LINES, indexCount, mvps.getSize());
+	constexpr U INDEX_COUNT = 12 * 2;
+	cmdb->drawElements(PrimitiveTopology::LINES, INDEX_COUNT, mvps.getSize());
 }
 
 void DebugDrawer2::drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,

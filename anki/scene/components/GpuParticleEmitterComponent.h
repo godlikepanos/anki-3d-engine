@@ -72,12 +72,14 @@ private:
 
 	SamplerPtr m_nearestAnyClampSampler;
 
-	F32 m_maxDistanceAParticleCanGo = -1.0f;
+	Aabb m_emitterBoundingBoxLocal = Aabb(Vec3(0.0f), Vec3(1.0f));
 	U32 m_maxParticleCount = 0;
 	Second m_dt = 0.0;
 	Vec3 m_worldPosition = Vec3(0.0f); //< Cache it.
 	Mat3x4 m_worldRotation = Mat3x4::getIdentity();
 	Aabb m_worldAabb = Aabb(Vec3(0.0f), Vec3(1.0f));
+
+	TextureResourcePtr m_dbgTex;
 
 	Bool m_markedForUpdate = true;
 

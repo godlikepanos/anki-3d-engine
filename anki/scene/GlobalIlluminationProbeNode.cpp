@@ -9,8 +9,6 @@
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/GlobalIlluminationProbeComponent.h>
-#include <anki/resource/ResourceManager.h>
-#include <anki/resource/TextureResource.h>
 
 namespace anki
 {
@@ -90,14 +88,13 @@ Error GlobalIlluminationProbeNode::init()
 	newComponent<MoveFeedbackComponent>();
 
 	// GI probe comp
-	GlobalIlluminationProbeComponent* giprobec = newComponent<GlobalIlluminationProbeComponent>();
-	giprobec->setDrawCallback(debugDrawCallback, this);
+	newComponent<GlobalIlluminationProbeComponent>();
 
 	// Second feedback component
 	newComponent<ShapeFeedbackComponent>();
 
 	// The frustum components
-	const F32 ang = toRad(90.0f);
+	constexpr F32 ang = toRad(90.0f);
 	const F32 zNear = LIGHT_FRUSTUM_NEAR_PLANE;
 
 	Mat3 rot;
@@ -131,10 +128,6 @@ Error GlobalIlluminationProbeNode::init()
 	// Spatial component
 	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 	spatialc->setUpdateOctreeBounds(false);
-
-	// Misc
-	ANKI_CHECK(m_dbgDrawer.init(&getResourceManager()));
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/GiProbe.ankitex", m_dbgTex));
 
 	return Error::NONE;
 }
@@ -203,59 +196,6 @@ Error GlobalIlluminationProbeNode::frameUpdate(Second prevUpdateTime, Second crn
 	(void)err;
 
 	return Error::NONE;
-}
-
-void GlobalIlluminationProbeNode::debugDrawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-{
-	Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(userData.getSize());
-	Vec3* const positions = ctx.m_frameAllocator.newArray<Vec3>(userData.getSize());
-	for(U32 i = 0; i < userData.getSize(); ++i)
-	{
-		const GlobalIlluminationProbeNode& self = *static_cast<const GlobalIlluminationProbeNode*>(userData[i]);
-		const GlobalIlluminationProbeComponent& giComp =
-			self.getFirstComponentOfType<GlobalIlluminationProbeComponent>();
-
-		const Vec3 tsl = (giComp.getAabbWorldSpace().getMax().xyz() + giComp.getAabbWorldSpace().getMin().xyz()) / 2.0f;
-		const Vec3 scale = (tsl - giComp.getAabbWorldSpace().getMin().xyz());
-
-		// Set non uniform scale.
-		Mat3 rot = Mat3::getIdentity();
-		rot(0, 0) *= scale.x();
-		rot(1, 1) *= scale.y();
-		rot(2, 2) *= scale.z();
-
-		mvps[i] = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), rot, 1.0f);
-		positions[i] = tsl.xyz();
-	}
-
-	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
-	if(enableDepthTest)
-	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
-	}
-	else
-	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
-	}
-
-	const GlobalIlluminationProbeNode& self = *static_cast<const GlobalIlluminationProbeNode*>(userData[0]);
-	self.m_dbgDrawer.drawCubes(ConstWeakArray<Mat4>(mvps, userData.getSize()), Vec4(0.729f, 0.635f, 0.196f, 1.0f), 1.0f,
-							   ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f,
-							   *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
-
-	self.m_dbgDrawer.drawBillboardTextures(
-		ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(positions, userData.getSize()), Vec4(1.0f),
-		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), self.m_dbgTex->getGrTextureView(),
-		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
-
-	ctx.m_frameAllocator.deleteArray(positions, userData.getSize());
-	ctx.m_frameAllocator.deleteArray(mvps, userData.getSize());
-
-	// Restore state
-	if(!enableDepthTest)
-	{
-		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
-	}
 }
 
 } // end namespace anki

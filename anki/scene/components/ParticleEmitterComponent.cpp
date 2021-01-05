@@ -211,13 +211,20 @@ ParticleEmitterComponent::~ParticleEmitterComponent()
 
 Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 {
-	// Cleanup
-	m_simpleParticles.destroy(m_node->getAllocator());
-	m_physicsParticles.destroy(m_node->getAllocator());
+	// Create the debug drawer
+	if(!m_dbgTex.isCreated())
+	{
+		ANKI_CHECK(
+			m_node->getSceneGraph().getResourceManager().loadResource("engine_data/ParticleEmitter.ankitex", m_dbgTex));
+	}
 
 	// Load
 	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(filename, m_particleEmitterResource));
 	m_props = m_particleEmitterResource->getProperties();
+
+	// Cleanup
+	m_simpleParticles.destroy(m_node->getAllocator());
+	m_physicsParticles.destroy(m_node->getAllocator());
 
 	// Init particles
 	m_simulationType = (m_props.m_usePhysicsEngine) ? SimulationType::PHYSICS_ENGINE : SimulationType::SIMPLE;
@@ -373,14 +380,10 @@ void ParticleEmitterComponent::simulate(Second prevUpdateTime, Second crntTime, 
 	}
 }
 
-void ParticleEmitterComponent::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
+void ParticleEmitterComponent::draw(RenderQueueDrawContext& ctx) const
 {
-	ANKI_ASSERT(userData.getSize() == 1);
-
-	const ParticleEmitterComponent& self = *static_cast<const ParticleEmitterComponent*>(userData[0]);
-
 	// Early exit
-	if(ANKI_UNLIKELY(self.m_aliveParticleCount == 0))
+	if(ANKI_UNLIKELY(m_aliveParticleCount == 0))
 	{
 		return;
 	}
@@ -391,13 +394,13 @@ void ParticleEmitterComponent::drawCallback(RenderQueueDrawContext& ctx, ConstWe
 	{
 		// Load verts
 		StagingGpuMemoryToken token;
-		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(self.m_aliveParticleCount * VERTEX_SIZE,
+		void* gpuStorage = ctx.m_stagingGpuAllocator->allocateFrame(m_aliveParticleCount * VERTEX_SIZE,
 																	StagingGpuMemoryType::VERTEX, token);
-		memcpy(gpuStorage, self.m_verts, self.m_aliveParticleCount * VERTEX_SIZE);
+		memcpy(gpuStorage, m_verts, m_aliveParticleCount * VERTEX_SIZE);
 
 		// Program
 		ShaderProgramPtr prog;
-		self.m_particleEmitterResource->getRenderingInfo(ctx.m_key, prog);
+		m_particleEmitterResource->getRenderingInfo(ctx.m_key, prog);
 		cmdb->bindShaderProgram(prog);
 
 		// Vertex attribs
@@ -410,15 +413,51 @@ void ParticleEmitterComponent::drawCallback(RenderQueueDrawContext& ctx, ConstWe
 
 		// Uniforms
 		Array<Mat4, 1> trf = {Mat4::getIdentity()};
-		RenderComponent::allocateAndSetupUniforms(self.m_particleEmitterResource->getMaterial(), ctx, trf, trf,
+		RenderComponent::allocateAndSetupUniforms(m_particleEmitterResource->getMaterial(), ctx, trf, trf,
 												  *ctx.m_stagingGpuAllocator);
 
 		// Draw
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, self.m_aliveParticleCount, 0, 0);
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, m_aliveParticleCount, 0, 0);
 	}
 	else
 	{
-		// TODO
+		const Vec4 tsl = (m_worldBoundingVolume.getMin() + m_worldBoundingVolume.getMax()) / 2.0f;
+		const Vec4 scale = (m_worldBoundingVolume.getMax() - m_worldBoundingVolume.getMin()) / 2.0f;
+
+		// Set non uniform scale. Add a margin to avoid flickering
+		Mat3 nonUniScale = Mat3::getZero();
+		nonUniScale(0, 0) = scale.x();
+		nonUniScale(1, 1) = scale.y();
+		nonUniScale(2, 2) = scale.z();
+
+		const Mat4 mvp = ctx.m_viewProjectionMatrix * Mat4(tsl.xyz1(), Mat3::getIdentity() * nonUniScale, 1.0f);
+
+		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+		if(enableDepthTest)
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+		}
+		else
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+		}
+
+		m_node->getSceneGraph().getDebugDrawer().drawCubes(
+			ConstWeakArray<Mat4>(&mvp, 1), Vec4(1.0f, 0.0f, 1.0f, 1.0f), 2.0f,
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), 2.0f,
+			*ctx.m_stagingGpuAllocator, cmdb);
+
+		const Vec3 pos = m_transform.getOrigin().xyz();
+		m_node->getSceneGraph().getDebugDrawer().drawBillboardTextures(
+			ctx.m_projectionMatrix, ctx.m_viewMatrix, ConstWeakArray<Vec3>(&pos, 1), Vec4(1.0f),
+			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), m_dbgTex->getGrTextureView(),
+			ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
+
+		// Restore state
+		if(!enableDepthTest)
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::LESS);
+		}
 	}
 }
 
