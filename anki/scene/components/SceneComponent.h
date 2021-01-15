@@ -48,8 +48,8 @@ private:
 
 /// Define the statics of a scene component.
 #define ANKI_SCENE_COMPONENT_STATICS(className) \
-	SceneComponentRtti className::_m_rtti{ANKI_STRINGIZE(className), sizeof(className), alignof(className), \
-										  className::_construct};
+	SceneComponentRtti className::_m_rtti(ANKI_STRINGIZE(className), sizeof(className), alignof(className), \
+										  className::_construct);
 
 /// Scene node component
 class SceneComponent

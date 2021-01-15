@@ -1345,7 +1345,8 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CSt
 	StringAuto modelFname(m_alloc);
 	modelFname.sprintf("%s%s_%s.ankimdl", m_rpath.cstr(), node.mesh->name, node.mesh->primitives[0].material->name);
 
-	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newModelNode(\"%s\", \"%s\")\n", getNodeName(node).cstr(),
+	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newModelNode(\"%s\")\n", getNodeName(node).cstr()));
+	ANKI_CHECK(m_sceneFile.writeText("node:getSceneNodeBase():getModelComponent():loadModelResource(\"%s\")\n",
 									 modelFname.cstr()));
 
 	return Error::NONE;

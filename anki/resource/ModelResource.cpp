@@ -31,7 +31,7 @@ static Bool attributeIsRequired(VertexAttributeLocation loc, Pass pass, Bool has
 
 void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& inf) const
 {
-	ANKI_ASSERT(!m_model->supportsSkinning() && key.isSkinned());
+	ANKI_ASSERT(!(!m_model->supportsSkinning() && key.isSkinned()));
 
 	// Get the resources
 	const MeshResource& mesh = *getMesh(min<U32>(key.getLod(), m_meshLodCount - 1));

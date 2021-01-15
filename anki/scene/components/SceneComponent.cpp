@@ -32,17 +32,13 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 
 	// Sort everything because the IDs should be consistend between platforms and compilation builds
 	std::sort(&g_rttis[0], &g_rttis[g_rttiCount], [](const SceneComponentRtti* a, const SceneComponentRtti* b) {
-		return std::strcmp(a->m_className, b->m_className);
+		return std::strcmp(a->m_className, b->m_className) < 0;
 	});
 
-	// Find the new item and set the class ID
+	// Re-calculate the glass IDs
 	for(U32 i = 0; i < g_rttiCount; ++i)
 	{
-		if(g_rttis[i] == this)
-		{
-			g_rttis[i]->m_classId = U8(i);
-			break;
-		}
+		g_rttis[i]->m_classId = U8(i);
 	}
 
 	if(m_classId == MAX_U8)

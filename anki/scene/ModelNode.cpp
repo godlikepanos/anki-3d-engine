@@ -53,6 +53,7 @@ ModelNode::ModelNode(SceneGraph* scene, CString name)
 
 ModelNode::~ModelNode()
 {
+	m_renderProxies.destroy(getAllocator());
 }
 
 Error ModelNode::init()

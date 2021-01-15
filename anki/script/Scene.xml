@@ -369,6 +369,17 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 			</methods>
 		</class>
 
+		<class name="ModelComponent">
+			<methods>
+				<method name="loadModelResource">
+					<args>
+						<arg>CString</arg>
+					</args>
+					<return>Error</return>
+				</method>
+			</methods>
+		</class>
+
 		<!-- Nodes -->
 		<class name="SceneNode">
 			<methods>
@@ -416,6 +427,9 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 				</method>
 				<method name="tryGetFirstComponentOfType&lt;GpuParticleEmitterComponent&gt;" alias="getGpuParticleEmitterComponent">
 					<return>GpuParticleEmitterComponent*</return>
+				</method>
+				<method name="tryGetFirstComponentOfType&lt;ModelComponent&gt;" alias="getModelComponent">
+					<return>ModelComponent*</return>
 				</method>
 			</methods>
 		</class>
