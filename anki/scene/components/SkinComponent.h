@@ -69,7 +69,7 @@ public:
 		return m_skeleton;
 	}
 
-	const Aabb& getBoneBoundingVolume() const
+	const Aabb& getBoneBoundingVolumeLocalSpace() const
 	{
 		return m_boneBoundingVolume;
 	}

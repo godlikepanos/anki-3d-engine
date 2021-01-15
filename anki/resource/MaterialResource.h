@@ -326,12 +326,21 @@ public:
 
 	U32 getBoneTransformsBinding() const
 	{
+		ANKI_ASSERT(supportsSkinning());
 		return m_boneTrfsBinding;
 	}
 
 	U32 getPrevFrameBoneTransformsBinding() const
 	{
+		ANKI_ASSERT(supportsSkinning());
 		return m_prevFrameBoneTrfsBinding;
+	}
+
+	Bool supportsSkinning() const
+	{
+		ANKI_ASSERT((m_boneTrfsBinding == MAX_U32 && m_prevFrameBoneTrfsBinding == MAX_U32)
+					|| (m_boneTrfsBinding != MAX_U32 && m_prevFrameBoneTrfsBinding != MAX_U32));
+		return m_boneTrfsBinding != MAX_U32;
 	}
 
 	U32 getUniformsBinding() const

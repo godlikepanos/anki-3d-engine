@@ -15,21 +15,41 @@ static U32 g_rttiCount = 0;
 
 SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment, Constructor constructor)
 {
-	U32 index = g_rttiCount++;
+	if(g_rttiCount >= MAX_SCENE_COMPONENT_CLASSES)
+	{
+		// Force a crash because this function is called before main
+		*(g_rttis + MAX_U32) = this;
+		return;
+	}
 
 	m_constructorCallback = constructor;
 	m_className = name;
 	m_classSize = size;
 	m_classAlignment = alignment;
-	m_classId = U8(index);
+	m_classId = MAX_U8;
 
-	if(index >= MAX_SCENE_COMPONENT_CLASSES)
+	g_rttis[g_rttiCount++] = this;
+
+	// Sort everything because the IDs should be consistend between platforms and compilation builds
+	std::sort(&g_rttis[0], &g_rttis[g_rttiCount], [](const SceneComponentRtti* a, const SceneComponentRtti* b) {
+		return std::strcmp(a->m_className, b->m_className);
+	});
+
+	// Find the new item and set the class ID
+	for(U32 i = 0; i < g_rttiCount; ++i)
 	{
-		// Force a crash because this function is called before main
-		index = MAX_U32;
+		if(g_rttis[i] == this)
+		{
+			g_rttis[i]->m_classId = U8(i);
+			break;
+		}
 	}
 
-	g_rttis[index] = this;
+	if(m_classId == MAX_U8)
+	{
+		// Force a crash
+		*(g_rttis + MAX_U32) = this;
+	}
 }
 
 SceneComponent::SceneComponent(SceneNode* node, U8 classId)

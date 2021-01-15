@@ -6,12 +6,15 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/DebugDrawer.h>
-#include <anki/resource/ModelResource.h>
-#include <anki/renderer/RenderQueue.h>
+#include <anki/collision/Aabb.h>
+#include <anki/util/WeakArray.h>
 
 namespace anki
 {
+
+// Forward
+class RenderQueueDrawContext;
+class RayTracingInstanceQueueElement;
 
 /// @addtogroup scene
 /// @{
@@ -19,33 +22,27 @@ namespace anki
 /// The model scene node.
 class ModelNode : public SceneNode
 {
-	friend class ModelPatchNode;
-
 public:
 	ModelNode(SceneGraph* scene, CString name);
 
 	~ModelNode();
 
-	ANKI_USE_RESULT Error init(const CString& modelFname);
-
-	ANKI_USE_RESULT Error init(ModelResourcePtr resource, U32 modelPatchIdx);
+	ANKI_USE_RESULT Error init();
 
 private:
-	class FeedbackToSpatialComponent;
-
-	ModelResourcePtr m_model; ///< The resource
+	class FeedbackComponent;
+	class RenderProxy;
 
 	Aabb m_aabbLocal;
-	U64 m_mergeKey = 0;
-	U32 m_modelPatchIdx = 0;
+	DynamicArray<RenderProxy> m_renderProxies; ///< The size matches the number of render components.
 
-	DebugDrawer2 m_dbgDrawer;
+	void feedbackUpdate();
 
-	void updateSpatialComponent(const MoveComponent& move, const SkinComponent* skinc);
+	void draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData, U32 modelPatchIdx) const;
 
-	void draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) const;
+	void setupRayTracingInstanceQueueElement(U32 lod, U32 modelPatchIdx, RayTracingInstanceQueueElement& el) const;
 
-	static void setupRayTracingInstanceQueueElement(U32 lod, const void* userData, RayTracingInstanceQueueElement& el);
+	void initRenderComponents();
 };
 /// @}
 

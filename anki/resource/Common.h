@@ -34,7 +34,6 @@ class TransferGpuAllocatorHandle;
 /// @{
 constexpr U32 MAX_LOD_COUNT = 3;
 constexpr U32 MAX_INSTANCES = 64; ///< @warning Change MAX_INSTANCE_GROUPS as well
-constexpr U32 MAX_SUB_DRAWCALLS = 64;
 constexpr U32 MAX_INSTANCE_GROUPS = 7; ///< It's log2(MAX_INSTANCES) + 1
 
 /// Standard attribute locations. Should be the same as in Common.glsl.

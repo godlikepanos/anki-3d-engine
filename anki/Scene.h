@@ -41,6 +41,7 @@
 #include <anki/scene/components/GenericGpuComputeJobComponent.h>
 #include <anki/scene/components/ParticleEmitterComponent.h>
 #include <anki/scene/components/GpuParticleEmitterComponent.h>
+#include <anki/scene/components/ModelComponent.h>
 
 #include <anki/scene/events/EventManager.h>
 #include <anki/scene/events/Event.h>

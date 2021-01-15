@@ -533,9 +533,8 @@ using WeakArrayBodyComponentPtr = WeakArray<BodyComponent*>;
 					<return>PerspectiveCameraNode*</return>
 				</method>
 				<method name="newModelNode">
-					<overrideCall><![CDATA[ModelNode* ret = newSceneNode<ModelNode>(self, arg0, arg1);]]></overrideCall>
+					<overrideCall><![CDATA[ModelNode* ret = newSceneNode<ModelNode>(self, arg0);]]></overrideCall>
 					<args>
-						<arg>CString</arg>
 						<arg>CString</arg>
 					</args>
 					<return>ModelNode*</return>

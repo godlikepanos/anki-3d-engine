@@ -22,6 +22,7 @@ class FogDensityComponent;
 class SkinComponent;
 class ParticleEmitterComponent;
 class GpuParticleEmitterComponent;
+class ModelComponent;
 
 // Nodes
 class SceneNode;

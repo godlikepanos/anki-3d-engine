@@ -192,7 +192,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 
 		U32 bufferIdx;
 		Format format;
-		PtrSize relativeOffset;
+		U32 relativeOffset;
 		getVertexAttributeInfo(VertexAttributeLocation::POSITION, bufferIdx, format, relativeOffset);
 
 		BufferPtr buffer;
@@ -214,7 +214,7 @@ Error MeshResource::load(const ResourceFilename& filename, Bool async)
 	{
 		U32 bufferIdx;
 		Format format;
-		PtrSize relativeOffset;
+		U32 relativeOffset;
 		getVertexAttributeInfo(VertexAttributeLocation::POSITION, bufferIdx, format, relativeOffset);
 		BufferPtr buffer;
 		PtrSize offset;

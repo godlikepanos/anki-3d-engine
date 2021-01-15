@@ -229,6 +229,22 @@ public:
 		return const_cast<TComponent*>(c);
 	}
 
+	template<typename TComponent>
+	const TComponent& getNthComponentOfType(U32 nth) const
+	{
+		const TComponent* out = tryGetNthComponentOfType<TComponent>(nth);
+		ANKI_ASSERT(out);
+		return *out;
+	}
+
+	template<typename TComponent>
+	TComponent& getNthComponentOfType(U32 nth)
+	{
+		TComponent* out = tryGetNthComponentOfType<TComponent>(nth);
+		ANKI_ASSERT(out);
+		return *out;
+	}
+
 	/// Get the nth component.
 	template<typename TComponent>
 	TComponent& getComponentAt(U32 idx)
@@ -250,6 +266,18 @@ public:
 	U32 getComponentCount() const
 	{
 		return m_components.getSize();
+	}
+
+	template<typename TComponent>
+	U32 countComponentsOfType() const
+	{
+		U32 count = 0;
+		const Error err = iterateComponentsOfType<TComponent>([&](const TComponent& c) -> Error {
+			++count;
+			return Error::NONE;
+		});
+		(void)err;
+		return count;
 	}
 
 protected:
