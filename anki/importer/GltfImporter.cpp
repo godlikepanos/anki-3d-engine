@@ -652,7 +652,7 @@ Error GltfImporter::visitNode(const cgltf_node& node, const Transform& parentTrf
 
 				if(!err)
 				{
-					err = self.m_importer->writeModel(*self.m_mesh, (self.m_skin) ? self.m_skin->name : CString());
+					err = self.m_importer->writeModel(*self.m_mesh);
 				}
 
 				if(!err && self.m_skin)
@@ -747,7 +747,7 @@ Error GltfImporter::writeTransform(const Transform& trf)
 	return Error::NONE;
 }
 
-Error GltfImporter::writeModel(const cgltf_mesh& mesh, CString skinName)
+Error GltfImporter::writeModel(const cgltf_mesh& mesh)
 {
 	StringAuto modelFname(m_alloc);
 	modelFname.sprintf("%s%s_%s.ankimdl", m_outDir.cstr(), mesh.name, mesh.primitives[0].material->name);
@@ -802,11 +802,6 @@ Error GltfImporter::writeModel(const cgltf_mesh& mesh, CString skinName)
 	ANKI_CHECK(file.writeText("\t\t</modelPatch>\n"));
 
 	ANKI_CHECK(file.writeText("\t</modelPatches>\n"));
-
-	if(skinName)
-	{
-		ANKI_CHECK(file.writeText("\t<skeleton>%s%s.ankiskel</skeleton>\n", m_rpath.cstr(), skinName.cstr()));
-	}
 
 	ANKI_CHECK(file.writeText("</model>\n"));
 
@@ -1348,6 +1343,13 @@ Error GltfImporter::writeModelNode(const cgltf_node& node, const HashMapAuto<CSt
 	ANKI_CHECK(m_sceneFile.writeText("\nnode = scene:newModelNode(\"%s\")\n", getNodeName(node).cstr()));
 	ANKI_CHECK(m_sceneFile.writeText("node:getSceneNodeBase():getModelComponent():loadModelResource(\"%s\")\n",
 									 modelFname.cstr()));
+
+	if(node.skin)
+	{
+		ANKI_CHECK(m_sceneFile.writeText(
+			"node:getSceneNodeBase():getSkinComponent():loadSkeletonResource(\"%s%s.ankiskel\")\n", m_rpath.cstr(),
+			node.skin->name));
+	}
 
 	return Error::NONE;
 }

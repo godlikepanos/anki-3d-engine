@@ -5,5 +5,4 @@
 			<material>assets/Robot.001.ankimtl</material>
 		</modelPatch>
 	</modelPatches>
-	<skeleton>assets/Armature.002.ankiskel</skeleton>
 </model>
