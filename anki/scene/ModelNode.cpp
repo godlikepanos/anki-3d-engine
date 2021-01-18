@@ -263,7 +263,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		Mat4* const mvps = ctx.m_frameAllocator.newArray<Mat4>(instanceCount);
 		for(U32 i = 0; i < instanceCount; ++i)
 		{
-			const ModelNode& otherNode = *static_cast<const ModelNode*>(userData[i]);
+			const ModelNode& otherNode = *static_cast<const RenderProxy*>(userData[i])->m_node;
 			const Aabb& box = otherNode.getFirstComponentOfType<SpatialComponent>().getAabbWorldSpace();
 			const Vec4 tsl = (box.getMin() + box.getMax()) / 2.0f;
 			const Vec3 scale = (box.getMax().xyz() - box.getMin().xyz()) / 2.0f;
