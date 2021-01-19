@@ -18,7 +18,7 @@ class DecalNode::MoveFeedbackComponent : public SceneComponent
 
 public:
 	MoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -27,7 +27,6 @@ public:
 		updated = false;
 
 		MoveComponent& movec = node.getFirstComponentOfType<MoveComponent>();
-
 		if(movec.getTimestamp() == node.getGlobalTimestamp())
 		{
 			static_cast<DecalNode&>(node).onMove(movec);
@@ -46,7 +45,7 @@ class DecalNode::ShapeFeedbackComponent : public SceneComponent
 
 public:
 	ShapeFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 

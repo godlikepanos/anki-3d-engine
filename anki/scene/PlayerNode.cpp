@@ -21,7 +21,7 @@ class PlayerNode::FeedbackComponent final : public SceneComponent
 
 public:
 	FeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -71,7 +71,7 @@ class PlayerNode::FeedbackComponent2 final : public SceneComponent
 
 public:
 	FeedbackComponent2(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 

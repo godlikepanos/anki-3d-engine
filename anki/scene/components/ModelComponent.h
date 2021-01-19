@@ -44,6 +44,11 @@ public:
 		return m_modelPatchMergeKeys;
 	}
 
+	Bool isEnabled() const
+	{
+		return m_model.isCreated();
+	}
+
 private:
 	SceneNode* m_node = nullptr;
 	ModelResourcePtr m_model;

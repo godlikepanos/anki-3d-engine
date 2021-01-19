@@ -24,7 +24,7 @@ class GlobalIlluminationProbeNode::MoveFeedbackComponent : public SceneComponent
 
 public:
 	MoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -53,7 +53,9 @@ class GlobalIlluminationProbeNode::ShapeFeedbackComponent : public SceneComponen
 
 public:
 	ShapeFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(),
+						 false // Not feedback component. Can't be skipped because of getMarkedForRendering()
+		)
 	{
 	}
 

@@ -26,7 +26,7 @@ class ReflectionProbeNode::MoveFeedbackComponent : public SceneComponent
 
 public:
 	MoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -55,7 +55,7 @@ class ReflectionProbeNode::ShapeFeedbackComponent : public SceneComponent
 
 public:
 	ShapeFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 

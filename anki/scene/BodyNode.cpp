@@ -21,7 +21,7 @@ class BodyNode::FeedbackComponent : public SceneComponent
 
 public:
 	FeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 

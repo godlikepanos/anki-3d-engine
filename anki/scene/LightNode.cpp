@@ -21,7 +21,7 @@ class LightNode::MovedFeedbackComponent : public SceneComponent
 
 public:
 	MovedFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -49,7 +49,7 @@ class LightNode::LightChangedFeedbackComponent : public SceneComponent
 
 public:
 	LightChangedFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -290,7 +290,7 @@ class DirectionalLightNode::FeedbackComponent : public SceneComponent
 
 public:
 	FeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 

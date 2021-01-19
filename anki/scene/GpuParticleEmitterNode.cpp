@@ -20,7 +20,7 @@ class GpuParticleEmitterNode::MoveFeedbackComponent : public SceneComponent
 
 public:
 	MoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -48,7 +48,7 @@ class GpuParticleEmitterNode::ShapeFeedbackComponent : public SceneComponent
 
 public:
 	ShapeFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -101,7 +101,7 @@ Error GpuParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime
 {
 	const GpuParticleEmitterComponent& pec = getFirstComponentOfType<GpuParticleEmitterComponent>();
 
-	if(pec.getParticleEmitterResource().isCreated())
+	if(pec.isEnabled())
 	{
 		RenderComponent& rc = getFirstComponentOfType<RenderComponent>();
 		rc.setFlagsFromMaterial(pec.getParticleEmitterResource()->getMaterial());

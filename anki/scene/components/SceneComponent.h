@@ -56,7 +56,7 @@ class SceneComponent
 {
 public:
 	/// Construct the scene component.
-	SceneComponent(SceneNode* node, U8 classId);
+	SceneComponent(SceneNode* node, U8 classId, Bool isFeedbackComponent = false);
 
 	virtual ~SceneComponent()
 	{
@@ -72,6 +72,11 @@ public:
 		return m_timestamp;
 	}
 
+	Bool isFeedbackComponent() const
+	{
+		return m_feedbackComponent;
+	}
+
 	/// Do some updating
 	/// @param node The owner node of this component.
 	/// @param prevTime Previous update time.
@@ -82,9 +87,6 @@ public:
 		updated = false;
 		return Error::NONE;
 	}
-
-	/// Called only by the SceneGraph
-	ANKI_USE_RESULT Error updateReal(SceneNode& node, Second prevTime, Second crntTime, Bool& updated);
 
 	/// Don't call it.
 	void setTimestamp(Timestamp timestamp)
@@ -100,7 +102,8 @@ public:
 
 private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
-	U8 m_classId; ///< Cache the type ID.
+	U8 m_classId : 7; ///< Cache the type ID.
+	U8 m_feedbackComponent : 1;
 };
 /// @}
 

@@ -19,7 +19,7 @@ class CameraNode::MoveFeedbackComponent : public SceneComponent
 
 public:
 	MoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 

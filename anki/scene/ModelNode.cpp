@@ -26,7 +26,7 @@ class ModelNode::FeedbackComponent : public SceneComponent
 
 public:
 	FeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -75,7 +75,7 @@ void ModelNode::feedbackUpdate()
 	const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
 	const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
 
-	if(!modelc.getModelResource().isCreated())
+	if(!modelc.isEnabled())
 	{
 		// Disable everything
 		ANKI_ASSERT(!"TODO");
@@ -104,7 +104,7 @@ void ModelNode::feedbackUpdate()
 	}
 
 	// Skin update
-	if(skinc.getSkeleronResource().isCreated() && skinc.getTimestamp() == globTimestamp)
+	if(skinc.isEnabled() && skinc.getTimestamp() == globTimestamp)
 	{
 		m_aabbLocal = skinc.getBoneBoundingVolumeLocalSpace();
 		updateSpatial = true;
@@ -198,12 +198,12 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		}
 
 		ctx.m_key.setVelocity(moved && ctx.m_key.getPass() == Pass::GB);
-		ctx.m_key.setSkinned(skinc.getSkeleronResource().isCreated());
+		ctx.m_key.setSkinned(skinc.isEnabled());
 		ModelRenderingInfo modelInf;
 		patch.getRenderingInfo(ctx.m_key, modelInf);
 
 		// Bones storage
-		if(skinc.getSkeleronResource().isCreated())
+		if(skinc.isEnabled())
 		{
 			const U32 boneCount = skinc.getBoneTransforms().getSize();
 			StagingGpuMemoryToken token, tokenPrev;
@@ -297,7 +297,7 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 
 		// Bones
 		const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
-		if(skinc.getSkeleronResource().isCreated())
+		if(skinc.isEnabled())
 		{
 			const SkinComponent& skinc = getComponentAt<SkinComponent>(0);
 			SkeletonResourcePtr skeleton = skinc.getSkeleronResource();

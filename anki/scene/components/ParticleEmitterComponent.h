@@ -55,6 +55,11 @@ public:
 		static_cast<const ParticleEmitterComponent*>(userData[0])->draw(ctx);
 	}
 
+	Bool isEnabled() const
+	{
+		return m_particleEmitterResource.isCreated();
+	}
+
 private:
 	class ParticleBase;
 	class SimpleParticle;

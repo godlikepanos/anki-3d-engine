@@ -263,9 +263,18 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 	// Components update
 	Timestamp componentTimestamp = 0;
+	Bool atLeastOneComponentUpdated = false;
 	err = node.iterateComponents([&](SceneComponent& comp) -> Error {
 		Bool updated = false;
-		const Error e = comp.update(node, prevTime, crntTime, updated);
+		Error e = Error::NONE;
+		if(!atLeastOneComponentUpdated && comp.isFeedbackComponent())
+		{
+			// Skip feedback component if prior components didn't got updated
+		}
+		else
+		{
+			e = comp.update(node, prevTime, crntTime, updated);
+		}
 
 		if(updated)
 		{
@@ -273,6 +282,7 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 			comp.setTimestamp(node.getSceneGraph().m_timestamp);
 			componentTimestamp = max(componentTimestamp, node.getSceneGraph().m_timestamp);
 			ANKI_ASSERT(componentTimestamp > 0);
+			atLeastOneComponentUpdated = true;
 		}
 
 		return e;

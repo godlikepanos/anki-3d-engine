@@ -17,7 +17,7 @@ class FogDensityNode::MoveFeedbackComponent : public SceneComponent
 
 public:
 	MoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -43,7 +43,7 @@ class FogDensityNode::DensityShapeFeedbackComponent : public SceneComponent
 
 public:
 	DensityShapeFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 

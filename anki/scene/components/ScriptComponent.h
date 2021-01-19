@@ -29,6 +29,11 @@ public:
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
+	Bool isEnabled() const
+	{
+		return m_script.isCreated();
+	}
+
 private:
 	SceneNode* m_node;
 	ScriptResourcePtr m_script;

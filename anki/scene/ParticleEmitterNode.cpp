@@ -19,7 +19,7 @@ class ParticleEmitterNode::MoveFeedbackComponent : public SceneComponent
 
 public:
 	MoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -46,7 +46,8 @@ class ParticleEmitterNode::ShapeFeedbackComponent : public SceneComponent
 
 public:
 	ShapeFeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId())
+		: SceneComponent(node, getStaticClassId(), false // Not feedback because it's always being called
+		)
 	{
 	}
 
@@ -102,7 +103,7 @@ void ParticleEmitterNode::onShapeUpdate()
 Error ParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	const ParticleEmitterComponent& pec = getFirstComponentOfType<ParticleEmitterComponent>();
-	if(pec.getParticleEmitterResource().isCreated())
+	if(pec.isEnabled())
 	{
 		RenderComponent& rc = getFirstComponentOfType<RenderComponent>();
 		rc.setFlagsFromMaterial(pec.getParticleEmitterResource()->getMaterial());

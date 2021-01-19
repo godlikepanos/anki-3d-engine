@@ -40,6 +40,11 @@ public:
 	{
 	}
 
+	Bool isEnabled() const
+	{
+		return m_callback != nullptr;
+	}
+
 	RenderComponentFlag getFlags() const
 	{
 		return m_flags;

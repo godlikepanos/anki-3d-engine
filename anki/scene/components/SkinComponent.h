@@ -74,6 +74,11 @@ public:
 		return m_boneBoundingVolume;
 	}
 
+	Bool isEnabled() const
+	{
+		return m_skeleton.isCreated();
+	}
+
 private:
 	class Track
 	{

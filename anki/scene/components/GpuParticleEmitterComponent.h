@@ -56,6 +56,11 @@ public:
 		return m_worldAabb;
 	}
 
+	Bool isEnabled() const
+	{
+		return m_particleEmitterResource.isCreated();
+	}
+
 private:
 	static constexpr U32 MAX_RAND_FACTORS = 32;
 

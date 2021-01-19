@@ -9,7 +9,7 @@ namespace anki
 {
 
 constexpr U32 MAX_SCENE_COMPONENT_CLASSES = 64;
-static_assert(MAX_SCENE_COMPONENT_CLASSES < MAX_U8, "See file");
+static_assert(MAX_SCENE_COMPONENT_CLASSES < 128, "It can oly be 7 bits because of SceneComponent::m_classId");
 static SceneComponentRtti* g_rttis[MAX_SCENE_COMPONENT_CLASSES] = {};
 static U32 g_rttiCount = 0;
 
@@ -18,7 +18,7 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 	if(g_rttiCount >= MAX_SCENE_COMPONENT_CLASSES)
 	{
 		// Force a crash because this function is called before main
-		*(g_rttis + MAX_U32) = this;
+		*reinterpret_cast<U32*>(0) = 1;
 		return;
 	}
 
@@ -44,14 +44,15 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 	if(m_classId == MAX_U8)
 	{
 		// Force a crash
-		*(g_rttis + MAX_U32) = this;
+		*reinterpret_cast<U32*>(0) = 1;
 	}
 }
 
-SceneComponent::SceneComponent(SceneNode* node, U8 classId)
-	: m_classId(classId)
+SceneComponent::SceneComponent(SceneNode* node, U8 classId, Bool isFeedbackComponent)
+	: m_classId(classId & 0x7F)
+	, m_feedbackComponent(isFeedbackComponent)
 {
-	ANKI_ASSERT(m_classId < g_rttiCount);
+	ANKI_ASSERT(classId < g_rttiCount);
 }
 
 const SceneComponentRtti& SceneComponent::findClassRtti(CString className)
