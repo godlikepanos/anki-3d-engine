@@ -120,32 +120,19 @@ void LightNode::onMoveUpdateCommon(const MoveComponent& move)
 PointLightNode::PointLightNode(SceneGraph* scene, CString name)
 	: LightNode(scene, name)
 {
+	newComponent<MoveComponent>();
+	newComponent<MovedFeedbackComponent>();
+
+	LightComponent* lc = newComponent<LightComponent>();
+	lc->setLightComponentType(LightComponentType::POINT);
+
+	newComponent<LightChangedFeedbackComponent>();
+	newComponent<SpatialComponent>();
 }
 
 PointLightNode::~PointLightNode()
 {
 	m_shadowData.destroy(getAllocator());
-}
-
-Error PointLightNode::init()
-{
-	// Move component
-	newComponent<MoveComponent>();
-
-	// Feedback component
-	newComponent<MovedFeedbackComponent>();
-
-	// Light component
-	LightComponent* lc = newComponent<LightComponent>();
-	lc->setLightComponentType(LightComponentType::POINT);
-
-	// Feedback component
-	newComponent<LightChangedFeedbackComponent>();
-
-	// Spatial component
-	newComponent<SpatialComponent>();
-
-	return Error::NONE;
 }
 
 void PointLightNode::onMoveUpdate(const MoveComponent& move)
@@ -226,32 +213,19 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 	: LightNode(scene, name)
 {
-}
-
-Error SpotLightNode::init()
-{
-	// Move component
 	newComponent<MoveComponent>();
-
-	// Feedback component
 	newComponent<MovedFeedbackComponent>();
 
-	// Light component
 	LightComponent* lc = newComponent<LightComponent>();
 	lc->setLightComponentType(LightComponentType::SPOT);
 
-	// Feedback component
 	newComponent<LightChangedFeedbackComponent>();
 
-	// Frustum component
 	FrustumComponent* fr = newComponent<FrustumComponent>();
 	fr->setFrustumType(FrustumType::PERSPECTIVE);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 
-	// Spatial component
 	newComponent<SpatialComponent>();
-
-	return Error::NONE;
 }
 
 void SpotLightNode::onMoveUpdate(const MoveComponent& move)
@@ -316,10 +290,6 @@ ANKI_SCENE_COMPONENT_STATICS(DirectionalLightNode::FeedbackComponent)
 DirectionalLightNode::DirectionalLightNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
-}
-
-Error DirectionalLightNode::init()
-{
 	newComponent<MoveComponent>();
 	newComponent<FeedbackComponent>();
 
@@ -334,8 +304,6 @@ Error DirectionalLightNode::init()
 	boundingBox.setMax(getSceneGraph().getSceneMax());
 	spatialc->setAabbWorldSpace(boundingBox);
 	spatialc->setUpdateOctreeBounds(false);
-
-	return Error::NONE;
 }
 
 } // end namespace anki

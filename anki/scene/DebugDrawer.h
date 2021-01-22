@@ -23,104 +23,6 @@ class StagingGpuMemoryToken;
 /// @addtogroup renderer
 /// @{
 
-/// Draws simple primitives
-class DebugDrawer
-{
-public:
-	ANKI_USE_RESULT Error init(ResourceManager* rsrcManager);
-
-	void prepareFrame(RenderQueueDrawContext* ctx);
-
-	void finishFrame()
-	{
-		flush();
-		m_ctx = nullptr;
-	}
-
-	void drawGrid();
-	void drawSphere(F32 radius, I complexity = 8);
-	void drawCube(F32 size = 1.0);
-	void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
-
-	void setTopology(PrimitiveTopology topology)
-	{
-		if(topology != m_topology)
-		{
-			flush();
-		}
-		m_topology = topology;
-	}
-
-	void pushBackVertex(const Vec3& pos)
-	{
-		if((m_cachedPositionCount + 3) >= m_cachedPositions.getSize())
-		{
-			flush();
-			ANKI_ASSERT(m_cachedPositionCount == 0);
-		}
-		m_cachedPositions[m_cachedPositionCount++] = pos;
-	}
-
-	/// Something like glColor
-	void setColor(const Vec4& col)
-	{
-		if(m_crntCol != col)
-		{
-			flush();
-		}
-		m_crntCol = col;
-	}
-
-	void setModelMatrix(const Mat4& m)
-	{
-		flush();
-		m_mMat = m;
-		m_mvpMat = m_vpMat * m_mMat;
-	}
-
-	void setViewProjectionMatrix(const Mat4& m)
-	{
-		flush();
-		m_vpMat = m;
-		m_mvpMat = m_vpMat * m_mMat;
-	}
-
-private:
-	ShaderProgramResourcePtr m_prog;
-
-	RenderQueueDrawContext* m_ctx = nullptr;
-
-	// State
-	Mat4 m_mMat = Mat4::getIdentity();
-	Mat4 m_vpMat = Mat4::getIdentity();
-	Mat4 m_mvpMat = Mat4::getIdentity(); ///< Optimization.
-	Vec4 m_crntCol = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	PrimitiveTopology m_topology = PrimitiveTopology::LINES;
-
-	static const U MAX_VERTS_BEFORE_FLUSH = 128;
-	Array<Vec3, MAX_VERTS_BEFORE_FLUSH> m_cachedPositions;
-	U32 m_cachedPositionCount = 0;
-
-	DynamicArray<Vec3> m_sphereVerts;
-
-	void flush();
-};
-
-/// Implement physics debug drawer.
-class PhysicsDebugDrawer : public PhysicsDrawer
-{
-public:
-	PhysicsDebugDrawer(DebugDrawer* dbg)
-		: m_dbg(dbg)
-	{
-	}
-
-	void drawLines(const Vec3* lines, const U32 vertCount, const Vec4& color) final;
-
-private:
-	DebugDrawer* m_dbg; ///< The debug drawer
-};
-
 /// Allocate memory for a line cube and populate it.
 void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator, StagingGpuMemoryToken& vertsToken,
 								 StagingGpuMemoryToken& indicesToken, U32& indexCount);
@@ -147,7 +49,7 @@ public:
 	}
 
 	void drawLines(ConstWeakArray<Mat4> mvps, const Vec4& color, F32 lineSize, Bool ditherFailedDepth,
-				   ConstWeakArray<Vec3> lines, StagingGpuMemoryManager& stagingGpuAllocator,
+				   ConstWeakArray<Vec3> linePositions, StagingGpuMemoryManager& stagingGpuAllocator,
 				   CommandBufferPtr& cmdb) const;
 
 	void drawLine(const Mat4& mvp, const Vec4& color, F32 lineSize, Bool ditherFailedDepth, const Vec3& a,
@@ -174,6 +76,47 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	BufferPtr m_cubePositionsBuffer;
 	BufferPtr m_cubeIndicesBuffer;
+};
+
+/// Implement physics debug drawer.
+class PhysicsDebugDrawer : public PhysicsDrawer
+{
+public:
+	PhysicsDebugDrawer(const DebugDrawer2* dbg)
+		: m_dbg(dbg)
+	{
+	}
+
+	void start(const Mat4& mvp, CommandBufferPtr& cmdb, StagingGpuMemoryManager* stagingGpuAllocator)
+	{
+		ANKI_ASSERT(stagingGpuAllocator);
+		ANKI_ASSERT(m_vertCount == 0);
+		m_mvp = mvp;
+		m_cmdb = cmdb;
+		m_stagingGpuAllocator = stagingGpuAllocator;
+	}
+
+	void drawLines(const Vec3* lines, const U32 vertCount, const Vec4& color) final;
+
+	void end()
+	{
+		flush();
+		m_cmdb.reset(nullptr); // This is essential!!!
+		m_stagingGpuAllocator = nullptr;
+	}
+
+private:
+	const DebugDrawer2* m_dbg; ///< The debug drawer
+	Mat4 m_mvp = Mat4::getIdentity();
+	CommandBufferPtr m_cmdb;
+	StagingGpuMemoryManager* m_stagingGpuAllocator = nullptr;
+
+	// Use a vertex cache because drawLines() is practically called for every line
+	Array<Vec3, 32> m_vertCache;
+	U32 m_vertCount = 0;
+	Vec4 m_currentColor = Vec4(-1.0f);
+
+	void flush();
 };
 /// @}
 

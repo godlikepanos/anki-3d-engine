@@ -22,8 +22,6 @@ public:
 
 	~TriggerNode();
 
-	ANKI_USE_RESULT Error init();
-
 private:
 	class MoveFeedbackComponent;
 };

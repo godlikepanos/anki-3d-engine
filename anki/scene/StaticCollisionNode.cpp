@@ -12,16 +12,11 @@ namespace anki
 StaticCollisionNode::StaticCollisionNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
+	newComponent<BodyComponent>();
 }
 
 StaticCollisionNode::~StaticCollisionNode()
 {
-}
-
-Error StaticCollisionNode::init()
-{
-	newComponent<BodyComponent>();
-	return Error::NONE;
 }
 
 } // namespace anki

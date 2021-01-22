@@ -21,8 +21,6 @@ public:
 
 	~BodyNode();
 
-	ANKI_USE_RESULT Error init(const CString& resourceFname);
-
 private:
 	class FeedbackComponent;
 };

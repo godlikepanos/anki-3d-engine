@@ -35,6 +35,12 @@ public:
 	/// Unregister node
 	virtual ~SceneNode();
 
+	/// A dummy init for those scene nodes that don't need it.
+	ANKI_USE_RESULT Error init()
+	{
+		return Error::NONE;
+	}
+
 	SceneGraph& getSceneGraph()
 	{
 		return *m_scene;

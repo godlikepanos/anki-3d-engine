@@ -12,14 +12,10 @@
 namespace anki
 {
 
-PhysicsDebugNode::~PhysicsDebugNode()
+PhysicsDebugNode::PhysicsDebugNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
+	, m_physDbgDrawer(&scene->getDebugDrawer())
 {
-}
-
-Error PhysicsDebugNode::init()
-{
-	ANKI_CHECK(m_dbgDrawer.init(&getSceneGraph().getResourceManager()));
-
 	RenderComponent* rcomp = newComponent<RenderComponent>();
 	rcomp->setFlags(RenderComponentFlag::NONE);
 	rcomp->initRaster([](RenderQueueDrawContext& ctx,
@@ -30,19 +26,19 @@ Error PhysicsDebugNode::init()
 	scomp->setUpdateOctreeBounds(false); // Don't mess with the bounds
 	scomp->setAabbWorldSpace(Aabb(getSceneGraph().getSceneMin(), getSceneGraph().getSceneMax()));
 	scomp->setSpatialOrigin(Vec3(0.0f));
+}
 
-	return Error::NONE;
+PhysicsDebugNode::~PhysicsDebugNode()
+{
 }
 
 void PhysicsDebugNode::draw(RenderQueueDrawContext& ctx)
 {
 	if(ctx.m_debugDraw)
 	{
-		m_dbgDrawer.prepareFrame(&ctx);
-		m_dbgDrawer.setViewProjectionMatrix(ctx.m_viewProjectionMatrix);
-		m_dbgDrawer.setModelMatrix(Mat4::getIdentity());
+		m_physDbgDrawer.start(ctx.m_viewProjectionMatrix, ctx.m_commandBuffer, ctx.m_stagingGpuAllocator);
 		m_physDbgDrawer.drawWorld(getSceneGraph().getPhysicsWorld());
-		m_dbgDrawer.finishFrame();
+		m_physDbgDrawer.end();
 	}
 }
 

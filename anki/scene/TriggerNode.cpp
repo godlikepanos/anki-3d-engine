@@ -43,18 +43,13 @@ ANKI_SCENE_COMPONENT_STATICS(TriggerNode::MoveFeedbackComponent)
 TriggerNode::TriggerNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
+	newComponent<MoveComponent>();
+	newComponent<MoveFeedbackComponent>();
+	newComponent<TriggerComponent>();
 }
 
 TriggerNode::~TriggerNode()
 {
-}
-
-Error TriggerNode::init()
-{
-	newComponent<MoveComponent>();
-	newComponent<MoveFeedbackComponent>();
-	newComponent<TriggerComponent>();
-	return Error::NONE;
 }
 
 } // end namespace anki

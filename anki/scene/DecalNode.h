@@ -17,14 +17,9 @@ namespace anki
 class DecalNode : public SceneNode
 {
 public:
-	DecalNode(SceneGraph* scene, CString name)
-		: SceneNode(scene, name)
-	{
-	}
+	DecalNode(SceneGraph* scene, CString name);
 
 	~DecalNode();
-
-	ANKI_USE_RESULT Error init();
 
 private:
 	class MoveFeedbackComponent;

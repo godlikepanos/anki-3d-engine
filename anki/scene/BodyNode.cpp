@@ -46,29 +46,15 @@ ANKI_SCENE_COMPONENT_STATICS(BodyNode::FeedbackComponent)
 BodyNode::BodyNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
+	newComponent<JointComponent>();
+	newComponent<BodyComponent>();
+	newComponent<FeedbackComponent>();
+	MoveComponent* movec = newComponent<MoveComponent>();
+	movec->setIgnoreParentTransform(true);
 }
 
 BodyNode::~BodyNode()
 {
-}
-
-Error BodyNode::init(const CString& resourceFname)
-{
-	// Joint component
-	newComponent<JointComponent>();
-
-	// Body component
-	BodyComponent& bodyc = *newComponent<BodyComponent>();
-	ANKI_CHECK(bodyc.loadMeshResource(resourceFname));
-
-	// Feedback component
-	newComponent<FeedbackComponent>();
-
-	// Move component
-	MoveComponent* movec = newComponent<MoveComponent>();
-	movec->setIgnoreParentTransform(true);
-
-	return Error::NONE;
 }
 
 } // end namespace anki

@@ -22,8 +22,6 @@ public:
 	StaticCollisionNode(SceneGraph* scene, CString name);
 
 	~StaticCollisionNode();
-
-	ANKI_USE_RESULT Error init();
 };
 /// @}
 

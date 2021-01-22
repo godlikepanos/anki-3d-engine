@@ -50,10 +50,15 @@ public:
 	}
 
 	template<typename T>
-	void pushObjectRef(T& x)
+	void pushObjectRef(GrObjectPtrT<T>& x)
 	{
-		GrObject* grobj = x.get();
-		m_objectRefs.emplaceBack(m_fastAlloc, IntrusivePtr<GrObject>(grobj));
+		pushToArray(m_objectRefs[T::CLASS_TYPE], x.get());
+	}
+
+	template<>
+	void pushObjectRef<GrObject>(GrObjectPtr& x)
+	{
+		pushToArray(m_objectRefs[x->getType()], x.get());
 	}
 
 	void setFence(MicroFencePtr& fence)
@@ -68,7 +73,7 @@ private:
 	VkCommandBuffer m_handle = {};
 
 	MicroFencePtr m_fence;
-	DynamicArray<IntrusivePtr<GrObject>> m_objectRefs;
+	Array<DynamicArray<GrObjectPtr>, U(GrObjectType::COUNT)> m_objectRefs;
 
 	// Cacheline boundary
 
@@ -78,6 +83,16 @@ private:
 
 	void destroy();
 	void reset();
+
+	void pushToArray(DynamicArray<GrObjectPtr>& arr, GrObject* grobj)
+	{
+		ANKI_ASSERT(grobj);
+		// Check what if gobj is already there to avoid allocations and excessive dereferencing
+		if(arr.getSize() == 0 || arr.getBack().get() != grobj)
+		{
+			arr.emplaceBack(m_fastAlloc, GrObjectPtr(grobj));
+		}
+	}
 };
 
 /// Deleter.

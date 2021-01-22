@@ -49,7 +49,7 @@ CameraNode::~CameraNode()
 {
 }
 
-Error CameraNode::init(FrustumType frustumType)
+void CameraNode::initCommon(FrustumType frustumType)
 {
 	// Move component
 	newComponent<MoveComponent>();
@@ -88,8 +88,6 @@ Error CameraNode::init(FrustumType frustumType)
 		rtFrustumComponent->setLodDistance(1, getSceneGraph().getConfig().m_maxLodDistances[1]);
 		rtFrustumComponent->setLodDistance(2, getSceneGraph().getConfig().m_maxLodDistances[2]);
 	}
-
-	return Error::NONE;
 }
 
 void CameraNode::onMoveComponentUpdate(MoveComponent& move)
@@ -124,6 +122,7 @@ void CameraNode::onMoveComponentUpdate(MoveComponent& move)
 PerspectiveCameraNode::PerspectiveCameraNode(SceneGraph* scene, CString name)
 	: CameraNode(scene, name)
 {
+	initCommon(FrustumType::PERSPECTIVE);
 }
 
 PerspectiveCameraNode::~PerspectiveCameraNode()
@@ -133,6 +132,7 @@ PerspectiveCameraNode::~PerspectiveCameraNode()
 OrthographicCameraNode::OrthographicCameraNode(SceneGraph* scene, CString name)
 	: CameraNode(scene, name)
 {
+	initCommon(FrustumType::ORTHOGRAPHIC);
 }
 
 OrthographicCameraNode::~OrthographicCameraNode()

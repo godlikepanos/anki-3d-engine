@@ -27,8 +27,6 @@ public:
 
 	~ModelNode();
 
-	ANKI_USE_RESULT Error init();
-
 private:
 	class FeedbackComponent;
 	class RenderProxy;

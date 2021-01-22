@@ -72,14 +72,6 @@ ANKI_SCENE_COMPONENT_STATICS(GpuParticleEmitterNode::ShapeFeedbackComponent)
 GpuParticleEmitterNode::GpuParticleEmitterNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
-}
-
-GpuParticleEmitterNode::~GpuParticleEmitterNode()
-{
-}
-
-Error GpuParticleEmitterNode::init()
-{
 	// Create the components
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
@@ -93,8 +85,10 @@ Error GpuParticleEmitterNode::init()
 	RenderComponent* rcomp = newComponent<RenderComponent>();
 	const U64 noMerging = 0;
 	rcomp->initRaster(GpuParticleEmitterComponent::drawCallback, pec, noMerging);
+}
 
-	return Error::NONE;
+GpuParticleEmitterNode::~GpuParticleEmitterNode()
+{
 }
 
 Error GpuParticleEmitterNode::frameUpdate(Second prevUpdateTime, Second crntTime)

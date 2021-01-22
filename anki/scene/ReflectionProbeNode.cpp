@@ -76,11 +76,8 @@ public:
 
 ANKI_SCENE_COMPONENT_STATICS(ReflectionProbeNode::ShapeFeedbackComponent)
 
-ReflectionProbeNode::~ReflectionProbeNode()
-{
-}
-
-Error ReflectionProbeNode::init()
+ReflectionProbeNode::ReflectionProbeNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 	// Move component first
 	newComponent<MoveComponent>();
@@ -128,8 +125,10 @@ Error ReflectionProbeNode::init()
 	// Spatial component
 	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 	spatialc->setUpdateOctreeBounds(false);
+}
 
-	return Error::NONE;
+ReflectionProbeNode::~ReflectionProbeNode()
+{
 }
 
 void ReflectionProbeNode::onMoveUpdate(MoveComponent& move)

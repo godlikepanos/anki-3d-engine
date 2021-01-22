@@ -15,18 +15,11 @@ namespace anki
 class PhysicsDebugNode : public SceneNode
 {
 public:
-	PhysicsDebugNode(SceneGraph* scene, CString name)
-		: SceneNode(scene, name)
-		, m_physDbgDrawer(&m_dbgDrawer)
-	{
-	}
+	PhysicsDebugNode(SceneGraph* scene, CString name);
 
 	~PhysicsDebugNode();
 
-	ANKI_USE_RESULT Error init();
-
 private:
-	DebugDrawer m_dbgDrawer;
 	PhysicsDebugDrawer m_physDbgDrawer;
 
 	void draw(RenderQueueDrawContext& ctx);

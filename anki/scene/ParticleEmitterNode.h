@@ -21,8 +21,6 @@ public:
 
 	~ParticleEmitterNode();
 
-	ANKI_USE_RESULT Error init();
-
 	Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:

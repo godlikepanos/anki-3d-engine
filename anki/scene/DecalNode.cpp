@@ -66,19 +66,18 @@ public:
 
 ANKI_SCENE_COMPONENT_STATICS(DecalNode::ShapeFeedbackComponent)
 
-DecalNode::~DecalNode()
-{
-}
-
-Error DecalNode::init()
+DecalNode::DecalNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 	newComponent<MoveComponent>();
 	newComponent<MoveFeedbackComponent>();
 	newComponent<DecalComponent>();
 	newComponent<ShapeFeedbackComponent>();
 	newComponent<SpatialComponent>();
+}
 
-	return Error::NONE;
+DecalNode::~DecalNode()
+{
 }
 
 void DecalNode::onMove(MoveComponent& movec)

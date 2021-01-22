@@ -27,9 +27,10 @@ BodyComponent::~BodyComponent()
 
 Error BodyComponent::loadMeshResource(CString meshFilename)
 {
+	m_body.reset(nullptr);
 	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(meshFilename, m_mesh));
 
-	const Transform prevTransform = (m_body) ? m_body->getTransform() : Transform::getIdentity();
+	const Transform prevTransform = (m_body) ? m_body->getTransform() : m_trf;
 	const F32 prevMass = (m_body) ? m_body->getMass() : 0.0f;
 
 	PhysicsBodyInitInfo init;
@@ -76,6 +77,10 @@ void BodyComponent::setMass(F32 mass)
 		{
 			m_body->setMass(mass);
 		}
+	}
+	else
+	{
+		ANKI_SCENE_LOGW("BodyComponent is not initialized. Ignoring setting of mass");
 	}
 }
 

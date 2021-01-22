@@ -18,14 +18,9 @@ namespace anki
 class ReflectionProbeNode : public SceneNode
 {
 public:
-	ReflectionProbeNode(SceneGraph* scene, CString name)
-		: SceneNode(scene, name)
-	{
-	}
+	ReflectionProbeNode(SceneGraph* scene, CString name);
 
 	~ReflectionProbeNode();
-
-	ANKI_USE_RESULT Error init();
 
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 

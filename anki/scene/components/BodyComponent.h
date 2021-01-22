@@ -42,11 +42,15 @@ public:
 		{
 			m_body->setTransform(trf);
 		}
+		else
+		{
+			m_trf = trf;
+		}
 	}
 
 	Transform getWorldTransform() const
 	{
-		return (m_body) ? m_body->getTransform() : Transform::getIdentity();
+		return (m_body) ? m_body->getTransform() : m_trf;
 	}
 
 	PhysicsBodyPtr getPhysicsBody() const
@@ -55,6 +59,11 @@ public:
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override;
+
+	Bool isEnabled() const
+	{
+		return m_mesh.isCreated();
+	}
 
 private:
 	SceneNode* m_node = nullptr;

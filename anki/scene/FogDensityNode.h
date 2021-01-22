@@ -22,11 +22,6 @@ public:
 
 	~FogDensityNode();
 
-	ANKI_USE_RESULT Error init()
-	{
-		return Error::NONE;
-	}
-
 private:
 	class MoveFeedbackComponent;
 	class DensityShapeFeedbackComponent;

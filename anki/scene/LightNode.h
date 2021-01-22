@@ -43,8 +43,6 @@ public:
 	PointLightNode(SceneGraph* scene, CString name);
 	~PointLightNode();
 
-	ANKI_USE_RESULT Error init();
-
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
@@ -66,8 +64,6 @@ class SpotLightNode : public LightNode
 public:
 	SpotLightNode(SceneGraph* scene, CString name);
 
-	ANKI_USE_RESULT Error init();
-
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
@@ -80,8 +76,6 @@ class DirectionalLightNode : public SceneNode
 {
 public:
 	DirectionalLightNode(SceneGraph* scene, CString name);
-
-	ANKI_USE_RESULT Error init();
 
 private:
 	class FeedbackComponent;

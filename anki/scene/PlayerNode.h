@@ -22,8 +22,6 @@ public:
 
 	~PlayerNode();
 
-	ANKI_USE_RESULT Error init(const Vec4& position);
-
 private:
 	class FeedbackComponent;
 	class FeedbackComponent2;

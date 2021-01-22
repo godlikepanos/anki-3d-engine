@@ -77,11 +77,8 @@ public:
 
 ANKI_SCENE_COMPONENT_STATICS(GlobalIlluminationProbeNode::ShapeFeedbackComponent)
 
-GlobalIlluminationProbeNode::~GlobalIlluminationProbeNode()
-{
-}
-
-Error GlobalIlluminationProbeNode::init()
+GlobalIlluminationProbeNode::GlobalIlluminationProbeNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 	// Move component first
 	newComponent<MoveComponent>();
@@ -130,8 +127,10 @@ Error GlobalIlluminationProbeNode::init()
 	// Spatial component
 	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 	spatialc->setUpdateOctreeBounds(false);
+}
 
-	return Error::NONE;
+GlobalIlluminationProbeNode::~GlobalIlluminationProbeNode()
+{
 }
 
 void GlobalIlluminationProbeNode::onMoveUpdate(MoveComponent& move)

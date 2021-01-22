@@ -17,9 +17,9 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 {
 	if(g_rttiCount >= MAX_SCENE_COMPONENT_CLASSES)
 	{
-		// Force a crash because this function is called before main
-		*reinterpret_cast<U32*>(0) = 1;
-		return;
+		// No special logging because this function is called before main
+		printf("Reached maximum component count. Increase MAX_SCENE_COMPONENT_CLASSES\n");
+		exit(-1);
 	}
 
 	m_constructorCallback = constructor;
@@ -39,12 +39,6 @@ SceneComponentRtti::SceneComponentRtti(const char* name, U32 size, U32 alignment
 	for(U32 i = 0; i < g_rttiCount; ++i)
 	{
 		g_rttis[i]->m_classId = U8(i);
-	}
-
-	if(m_classId == MAX_U8)
-	{
-		// Force a crash
-		*reinterpret_cast<U32*>(0) = 1;
 	}
 }
 

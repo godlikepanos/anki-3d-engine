@@ -64,14 +64,6 @@ ANKI_SCENE_COMPONENT_STATICS(ParticleEmitterNode::ShapeFeedbackComponent)
 ParticleEmitterNode::ParticleEmitterNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
-}
-
-ParticleEmitterNode::~ParticleEmitterNode()
-{
-}
-
-Error ParticleEmitterNode::init()
-{
 	// Components
 	newComponent<MoveComponent>();
 
@@ -84,8 +76,10 @@ Error ParticleEmitterNode::init()
 
 	RenderComponent* rcomp = newComponent<RenderComponent>();
 	rcomp->initRaster(ParticleEmitterComponent::drawCallback, particleEmitterc, 0); // No merging
+}
 
-	return Error::NONE;
+ParticleEmitterNode::~ParticleEmitterNode()
+{
 }
 
 void ParticleEmitterNode::onMoveComponentUpdate(MoveComponent& move)

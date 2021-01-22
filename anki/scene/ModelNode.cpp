@@ -49,15 +49,6 @@ public:
 ModelNode::ModelNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
-}
-
-ModelNode::~ModelNode()
-{
-	m_renderProxies.destroy(getAllocator());
-}
-
-Error ModelNode::init()
-{
 	newComponent<ModelComponent>();
 	newComponent<SkinComponent>();
 	newComponent<MoveComponent>();
@@ -65,8 +56,11 @@ Error ModelNode::init()
 	newComponent<SpatialComponent>();
 	newComponent<RenderComponent>(); // One of many
 	m_renderProxies.create(getAllocator(), 1);
+}
 
-	return Error::NONE;
+ModelNode::~ModelNode()
+{
+	m_renderProxies.destroy(getAllocator());
 }
 
 void ModelNode::feedbackUpdate()
@@ -114,6 +108,7 @@ void ModelNode::feedbackUpdate()
 	if(movec.getTimestamp() == globTimestamp)
 	{
 		getFirstComponentOfType<SpatialComponent>().setSpatialOrigin(movec.getWorldTransform().getOrigin().xyz());
+		updateSpatial = true;
 	}
 
 	// Spatial update

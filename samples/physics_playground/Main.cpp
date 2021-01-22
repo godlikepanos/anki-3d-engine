@@ -120,8 +120,9 @@ Error MyApp::sampleExtraInit()
 			Transform(Vec4(0.0, 0.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
 
 		PlayerNode* player;
-		ANKI_CHECK(getSceneGraph().newSceneNode("player", player, Vec4(0.0f, 2.5f, 0.0f, 0.0f)));
+		ANKI_CHECK(getSceneGraph().newSceneNode("player", player));
 		PlayerControllerComponent& pcomp = player->getFirstComponentOfType<PlayerControllerComponent>();
+		pcomp.moveToPosition(Vec3(0.0f, 2.5f, 0.0f));
 		pcomp.getPhysicsPlayerController()->setMaterialMask(PhysicsMaterialBit::STATIC_GEOMETRY);
 
 		player->addChild(&cam);
@@ -135,7 +136,8 @@ Error MyApp::sampleExtraInit()
 			monkey->getFirstComponentOfType<ModelComponent>().loadModelResource("assets/Suzanne_dynamic.ankimdl"));
 
 		BodyNode* body;
-		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankimesh"));
+		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body));
+		ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource("assets/Suzanne.ankimesh"));
 		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(
 			Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 		body->getFirstComponentOfType<BodyComponent>().setMass(2.0f);
@@ -166,7 +168,8 @@ Error MyApp::sampleExtraInit()
 
 			BodyNode* body;
 			ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body, "assets/Suzanne.ankimesh"));
+				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body));
+			ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource("assets/Suzanne.ankimesh"));
 			body->getFirstComponentOfType<BodyComponent>().setWorldTransform(trf);
 			body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
 
@@ -254,7 +257,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body, "assets/Suzanne.ankimesh"));
+			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body));
+		ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource("assets/Suzanne.ankimesh"));
 		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(camTrf);
 		body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
 

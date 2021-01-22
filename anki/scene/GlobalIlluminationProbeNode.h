@@ -18,14 +18,9 @@ namespace anki
 class GlobalIlluminationProbeNode : public SceneNode
 {
 public:
-	GlobalIlluminationProbeNode(SceneGraph* scene, CString name)
-		: SceneNode(scene, name)
-	{
-	}
+	GlobalIlluminationProbeNode(SceneGraph* scene, CString name);
 
 	~GlobalIlluminationProbeNode();
-
-	ANKI_USE_RESULT Error init();
 
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 

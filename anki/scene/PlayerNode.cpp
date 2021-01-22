@@ -21,7 +21,7 @@ class PlayerNode::FeedbackComponent final : public SceneComponent
 
 public:
 	FeedbackComponent(SceneNode* node)
-		: SceneComponent(node, getStaticClassId(), true)
+		: SceneComponent(node, getStaticClassId(), false)
 	{
 	}
 
@@ -71,7 +71,8 @@ class PlayerNode::FeedbackComponent2 final : public SceneComponent
 
 public:
 	FeedbackComponent2(SceneNode* node)
-		: SceneComponent(node, getStaticClassId(), true)
+		: SceneComponent(node, getStaticClassId(), false // This shouldn't behave as a feedback component
+		)
 	{
 	}
 
@@ -121,28 +122,14 @@ ANKI_SCENE_COMPONENT_STATICS(PlayerNode::FeedbackComponent2)
 PlayerNode::PlayerNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
+	newComponent<PlayerControllerComponent>();
+	newComponent<FeedbackComponent>();
+	newComponent<MoveComponent>();
+	newComponent<FeedbackComponent2>();
 }
 
 PlayerNode::~PlayerNode()
 {
-}
-
-Error PlayerNode::init(const Vec4& position)
-{
-	// Player controller component
-	PlayerControllerComponent* playerc = newComponent<PlayerControllerComponent>();
-	playerc->getPhysicsPlayerController()->moveToPosition(position.xyz());
-
-	// Feedback component
-	newComponent<FeedbackComponent>();
-
-	// Move component
-	newComponent<MoveComponent>();
-
-	// Feedback component #2
-	newComponent<FeedbackComponent2>();
-
-	return Error::NONE;
 }
 
 } // end namespace anki
