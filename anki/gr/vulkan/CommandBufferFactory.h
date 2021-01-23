@@ -55,12 +55,6 @@ public:
 		pushToArray(m_objectRefs[T::CLASS_TYPE], x.get());
 	}
 
-	template<>
-	void pushObjectRef<GrObject>(GrObjectPtr& x)
-	{
-		pushToArray(m_objectRefs[x->getType()], x.get());
-	}
-
 	void setFence(MicroFencePtr& fence)
 	{
 		ANKI_ASSERT(!(m_flags & CommandBufferFlag::SECOND_LEVEL));
@@ -94,6 +88,12 @@ private:
 		}
 	}
 };
+
+template<>
+inline void MicroCommandBuffer::pushObjectRef<GrObject>(GrObjectPtr& x)
+{
+	pushToArray(m_objectRefs[x->getType()], x.get());
+}
 
 /// Deleter.
 class MicroCommandBufferPtrDeleter

@@ -87,8 +87,15 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 
 		inf.m_program = variant.getShaderProgram();
 
-		inf.m_boneTransformsBinding = m_mtl->getBoneTransformsBinding();
-		inf.m_prevFrameBoneTransformsBinding = m_mtl->getPrevFrameBoneTransformsBinding();
+		if(m_mtl->supportsSkinning())
+		{
+			inf.m_boneTransformsBinding = m_mtl->getBoneTransformsBinding();
+			inf.m_prevFrameBoneTransformsBinding = m_mtl->getPrevFrameBoneTransformsBinding();
+		}
+		else
+		{
+			inf.m_boneTransformsBinding = inf.m_prevFrameBoneTransformsBinding = MAX_U32;
+		}
 	}
 }
 
