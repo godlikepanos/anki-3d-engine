@@ -23,17 +23,17 @@ public:
 	~LightNode();
 
 protected:
-	class MovedFeedbackComponent;
-	class LightChangedFeedbackComponent;
+	class OnMovedFeedbackComponent;
+	class OnLightShapeUpdatedFeedbackComponent;
 
 	/// Called when moved
 	void onMoveUpdateCommon(const MoveComponent& move);
 
 	void frameUpdateCommon();
 
-	virtual void onMoveUpdate(const MoveComponent& move) = 0;
+	virtual void onMoved(const MoveComponent& move) = 0;
 
-	virtual void onShapeUpdate(LightComponent& light) = 0;
+	virtual void onLightShapeUpdated(LightComponent& light) = 0;
 };
 
 /// Point light
@@ -54,8 +54,8 @@ private:
 
 	DynamicArray<ShadowCombo> m_shadowData;
 
-	void onMoveUpdate(const MoveComponent& move) override;
-	void onShapeUpdate(LightComponent& light) override;
+	void onMoved(const MoveComponent& move) override;
+	void onLightShapeUpdated(LightComponent& light) override;
 };
 
 /// Spot light
@@ -67,8 +67,11 @@ public:
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
-	void onMoveUpdate(const MoveComponent& move) override;
-	void onShapeUpdate(LightComponent& light) override;
+	class OnFrustumUpdatedFeedbackComponent;
+
+	void onMoved(const MoveComponent& move) override;
+	void onLightShapeUpdated(LightComponent& light) override;
+	void onFrustumUpdated(FrustumComponent& frc);
 };
 
 /// Directional light (the sun).
