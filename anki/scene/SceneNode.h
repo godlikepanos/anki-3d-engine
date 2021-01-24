@@ -111,7 +111,7 @@ public:
 		for(; !err && it != end; ++it)
 		{
 			const SceneComponent* c = *it;
-			err = func(*c);
+			err = func(*c, it->isFeedbackComponent());
 		}
 
 		return err;
@@ -127,7 +127,7 @@ public:
 		for(; !err && it != end; ++it)
 		{
 			SceneComponent* c = *it;
-			err = func(*c);
+			err = func(*c, it->isFeedbackComponent());
 		}
 
 		return err;
@@ -304,7 +304,7 @@ private:
 	class ComponentsArrayElement
 	{
 	public:
-		/// Encodes the SceneComponent class ID in the high 8bits and the SceneComponent* to the remaining.
+		/// Encodes the SceneComponent's class ID, the SceneComponent* and if it's feedback component or not.
 		PtrSize m_combo;
 
 		ComponentsArrayElement(SceneComponent* comp)
@@ -348,12 +348,20 @@ private:
 			return m_combo & 0xFF;
 		}
 
+		Bool isFeedbackComponent() const
+		{
+			return m_combo & PtrSize(1 << 7);
+		}
+
 	private:
 		void set(SceneComponent* comp)
 		{
 			m_combo = ptrToNumber(comp) << 8;
-			m_combo |= PtrSize(comp->getClassId());
+			m_combo |= PtrSize(comp->isFeedbackComponent()) << 7;
+			m_combo |= PtrSize(comp->getClassId()) & 0x7F;
 			ANKI_ASSERT(getPtr() == comp);
+			ANKI_ASSERT(getComponentClassId() == comp->getClassId());
+			ANKI_ASSERT(isFeedbackComponent() == comp->isFeedbackComponent());
 		}
 
 		SceneComponent* getPtr() const

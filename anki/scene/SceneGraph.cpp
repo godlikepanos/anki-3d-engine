@@ -264,10 +264,10 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 	// Components update
 	Timestamp componentTimestamp = 0;
 	Bool atLeastOneComponentUpdated = false;
-	err = node.iterateComponents([&](SceneComponent& comp) -> Error {
+	err = node.iterateComponents([&](SceneComponent& comp, Bool isFeedbackComponent) -> Error {
 		Bool updated = false;
 		Error e = Error::NONE;
-		if(!atLeastOneComponentUpdated && comp.isFeedbackComponent())
+		if(!atLeastOneComponentUpdated && isFeedbackComponent)
 		{
 			// Skip feedback component if prior components didn't got updated
 		}
