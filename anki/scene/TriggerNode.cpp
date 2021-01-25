@@ -16,9 +16,11 @@ namespace anki
 
 class TriggerNode::MoveFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(TriggerNode::MoveFeedbackComponent)
+
 public:
-	MoveFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MoveFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -29,33 +31,25 @@ public:
 		const MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
-			static_cast<TriggerNode&>(node).m_trigger->setTransform(move.getWorldTransform());
+			node.getFirstComponentOfType<TriggerComponent>().setWorldTransform(move.getWorldTransform());
 		}
 
 		return Error::NONE;
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(TriggerNode::MoveFeedbackComponent)
+
 TriggerNode::TriggerNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
+	newComponent<MoveComponent>();
+	newComponent<MoveFeedbackComponent>();
+	newComponent<TriggerComponent>();
 }
 
 TriggerNode::~TriggerNode()
 {
-}
-
-Error TriggerNode::init(F32 sphereRadius)
-{
-	m_shape = getSceneGraph().getPhysicsWorld().newInstance<PhysicsSphere>(sphereRadius);
-	m_trigger = getSceneGraph().getPhysicsWorld().newInstance<PhysicsTrigger>(m_shape);
-	m_trigger->setUserData(this);
-
-	newComponent<MoveComponent>();
-	newComponent<MoveFeedbackComponent>();
-	newComponent<TriggerComponent>(this, m_trigger);
-
-	return Error::NONE;
 }
 
 } // end namespace anki

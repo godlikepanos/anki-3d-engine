@@ -31,9 +31,24 @@ enum class PhysicsObjectType : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsObjectType)
 
+#define ANKI_PHYSICS_OBJECT_FRIENDS \
+	friend class PhysicsWorld; \
+	friend class PhysicsPtrDeleter; \
+	template<typename T, typename TDeleter> \
+	friend class IntrusivePtr;
+
+#define ANKI_PHYSICS_OBJECT(type) \
+	ANKI_PHYSICS_OBJECT_FRIENDS \
+public: \
+	static constexpr PhysicsObjectType CLASS_TYPE = type; \
+\
+private:
+
 /// Base of all physics objects.
 class PhysicsObject : public IntrusiveListEnabled<PhysicsObject>
 {
+	ANKI_PHYSICS_OBJECT_FRIENDS
+
 public:
 	PhysicsObject(PhysicsObjectType type, PhysicsWorld* world)
 		: m_world(world)
@@ -44,12 +59,26 @@ public:
 
 	virtual ~PhysicsObject()
 	{
+		ANKI_ASSERT(!m_registered);
 	}
 
 	PhysicsObjectType getType() const
 	{
 		return m_type;
 	}
+
+	void setUserData(void* ud)
+	{
+		m_userData = ud;
+	}
+
+	void* getUserData() const
+	{
+		return m_userData;
+	}
+
+protected:
+	PhysicsWorld* m_world = nullptr;
 
 	PhysicsWorld& getWorld()
 	{
@@ -68,28 +97,18 @@ public:
 
 	HeapAllocator<U8> getAllocator() const;
 
-	void setUserData(void* ud)
-	{
-		m_userData = ud;
-	}
+private:
+	Bool m_registered = false;
 
-	void* getUserData() const
-	{
-		return m_userData;
-	}
+	virtual void registerToWorld() = 0;
 
-protected:
-	PhysicsWorld* m_world = nullptr;
+	virtual void unregisterFromWorld() = 0;
 
 private:
 	Atomic<I32> m_refcount = {0};
 	PhysicsObjectType m_type;
 	void* m_userData = nullptr;
 };
-
-#define ANKI_PHYSICS_OBJECT \
-	friend class PhysicsWorld; \
-	friend class PhysicsPtrDeleter;
 
 /// This is a factor that will decide if two filtered objects will be checked for collision.
 /// @memberof PhysicsFilteredObject
@@ -99,18 +118,37 @@ public:
 	virtual Bool needsCollision(const PhysicsFilteredObject& a, const PhysicsFilteredObject& b) = 0;
 };
 
+/// A pair of a trigger and a filtered object.
+class PhysicsTriggerFilteredPair
+{
+public:
+	PhysicsFilteredObject* m_filteredObject = nullptr;
+	PhysicsTrigger* m_trigger = nullptr;
+	U64 m_frame = 0;
+
+	Bool isAlive() const
+	{
+		return m_filteredObject && m_trigger;
+	}
+
+	Bool shouldDelete() const
+	{
+		return m_filteredObject == nullptr && m_trigger == nullptr;
+	}
+};
+
 /// A PhysicsObject that takes part into collision detection. Has functionality to filter the broad phase detection.
 class PhysicsFilteredObject : public PhysicsObject
 {
 public:
+	ANKI_PHYSICS_OBJECT_FRIENDS
+
 	PhysicsFilteredObject(PhysicsObjectType type, PhysicsWorld* world)
 		: PhysicsObject(type, world)
 	{
 	}
 
-	~PhysicsFilteredObject()
-	{
-	}
+	~PhysicsFilteredObject();
 
 	static Bool classof(const PhysicsObject* obj)
 	{
@@ -159,6 +197,9 @@ private:
 	PhysicsMaterialBit m_materialMask = PhysicsMaterialBit::ALL;
 
 	PhysicsBroadPhaseFilterCallback* m_filter = nullptr;
+
+	static constexpr U32 MAX_TRIGGER_FILTERED_PAIRS = 4;
+	Array<PhysicsTriggerFilteredPair*, MAX_TRIGGER_FILTERED_PAIRS> m_triggerFilteredPairs = {};
 };
 /// @}
 

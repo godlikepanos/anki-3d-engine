@@ -11,6 +11,8 @@
 namespace anki
 {
 
+ANKI_SCENE_COMPONENT_STATICS(JointComponent)
+
 class JointComponent::JointNode : public IntrusiveListEnabled<JointNode>
 {
 public:
@@ -125,7 +127,7 @@ Error JointComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 	while(true)
 	{
 		Bool erasedOne = false;
-		for(auto otherNode : m_jointList)
+		for(JointNode& otherNode : m_jointList)
 		{
 			if(otherNode.m_parentNode != node.getParent() || otherNode.m_joint->isBroken())
 			{

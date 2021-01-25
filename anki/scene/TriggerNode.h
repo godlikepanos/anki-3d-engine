@@ -22,15 +22,8 @@ public:
 
 	~TriggerNode();
 
-	ANKI_USE_RESULT Error init(const CString& collisionShapeFilename);
-
-	ANKI_USE_RESULT Error init(F32 sphereRadius);
-
 private:
 	class MoveFeedbackComponent;
-
-	PhysicsCollisionShapePtr m_shape;
-	PhysicsTriggerPtr m_trigger;
 };
 /// @}
 

@@ -18,6 +18,8 @@ namespace anki
 
 static constexpr const char* MESH_MAGIC = "ANKIMES5";
 
+constexpr U32 MESH_BINARY_BUFFER_ALIGNMENT = 16;
+
 enum class MeshBinaryFlag : U32
 {
 	NONE = 0,
@@ -28,7 +30,8 @@ enum class MeshBinaryFlag : U32
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 
-/// Vertex buffer info. The size of the buffer is m_vertexStride*MeshBinaryHeader::m_totalVertexCount aligned to 16.
+/// Vertex buffer info. The size of the buffer is m_vertexStride*MeshBinaryHeader::m_totalVertexCount aligned to
+/// MESH_BINARY_BUFFER_ALIGNMENT.
 class MeshBinaryVertexBuffer
 {
 public:
@@ -115,7 +118,8 @@ public:
 	}
 };
 
-/// The 1st things that appears in a mesh binary. @note The index and vertex buffers are aligned to 16 bytes.
+/// The 1st things that appears in a mesh binary. @note The index and vertex buffers are aligned to
+/// MESH_BINARY_BUFFER_ALIGNMENT bytes.
 class MeshBinaryHeader
 {
 public:

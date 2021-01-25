@@ -44,7 +44,7 @@ public:
 		ANKI_ASSERT(isZero(scales.x() - scales.y(), E) && isZero(scales.y() - scales.z(), E)
 					&& "Expecting uniform scale");
 
-		m_rotation.setColumns(s0 / scales.x(), s1 / scales.x(), s2 / scales.x(), TVec<T, 3>(0.0));
+		m_rotation.setColumns(s0 / scales.x(), s1 / scales.x(), s2 / scales.x(), TVec<T, 3>(T(0)));
 		m_origin = m4.getTranslationPart().xyz0();
 		m_scale = scales.x();
 		checkW();
@@ -60,23 +60,23 @@ public:
 
 	explicit TTransform(const TVec<T, 4>& origin)
 		: m_origin(origin)
-		, m_rotation(Mat3x4::getIdentity())
-		, m_scale(1.0)
+		, m_rotation(TMat<T, 3, 4>::getIdentity())
+		, m_scale(T(1))
 	{
 		checkW();
 	}
 
 	explicit TTransform(const TMat<T, 3, 4>& rotation)
-		: m_origin(Vec4(0.0))
+		: m_origin(TVec<T, 4>(T(0)))
 		, m_rotation(rotation)
-		, m_scale(1.0)
+		, m_scale(T(1))
 	{
 		checkW();
 	}
 
 	TTransform(const T scale)
-		: m_origin(Vec4(0.0))
-		, m_rotation(Mat3x4::getIdentity())
+		: m_origin(TVec<T, 4>(T(0)))
+		, m_rotation(TMat<T, 3, 4>::getIdentity())
 		, m_scale(scale)
 	{
 		checkW();
@@ -163,7 +163,7 @@ public:
 
 	static TTransform getIdentity()
 	{
-		return TTransform(TVec<T, 4>(0.0), TMat<T, 3, 4>::getIdentity(), 1.0);
+		return TTransform(TVec<T, 4>(T(0)), TMat<T, 3, 4>::getIdentity(), T(1));
 	}
 
 	/// @copybrief combineTTransformations
@@ -173,7 +173,7 @@ public:
 		const TTransform& a = *this;
 		TTransform out;
 
-		out.m_origin = TVec<T, 4>(a.m_rotation * (b.m_origin * a.m_scale), 0.0) + a.m_origin;
+		out.m_origin = TVec<T, 4>(a.m_rotation * (b.m_origin * a.m_scale), T(0)) + a.m_origin;
 
 		out.m_rotation = a.m_rotation.combineTransformations(b.m_rotation);
 		out.m_scale = a.m_scale * b.m_scale;
@@ -196,7 +196,7 @@ public:
 	void invert()
 	{
 		m_rotation.transposeRotationPart();
-		m_scale = 1.0 / m_scale;
+		m_scale = T(1) / m_scale;
 		m_origin = -(m_rotation * (m_scale * m_origin));
 	}
 
@@ -254,7 +254,7 @@ private:
 
 	void checkW() const
 	{
-		ANKI_ASSERT(m_origin.w() == 0.0);
+		ANKI_ASSERT(m_origin.w() == T(0));
 	}
 };
 

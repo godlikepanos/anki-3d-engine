@@ -23,17 +23,6 @@ class XmlElement;
 class ParticleEmitterProperties
 {
 public:
-	ParticleEmitterProperties()
-	{
-	}
-
-	ParticleEmitterProperties(const ParticleEmitterProperties& b)
-	{
-		*this = b;
-	}
-
-	ParticleEmitterProperties& operator=(const ParticleEmitterProperties& b);
-
 	/// @name Particle specific properties
 	/// @{
 	class
@@ -79,7 +68,26 @@ public:
 	U32 m_particlesPerEmission = 1; ///< How many particles are emitted every emission. Required
 
 	Bool m_usePhysicsEngine = false; ///< Use bullet for the simulation
+
+	Vec3 m_emitterBoundingVolumeMin = Vec3(0.0f); ///< Limit the size of the emitter. Mainly for visibility tests.
+
+	Vec3 m_emitterBoundingVolumeMax = Vec3(0.0f); ///< Limit the size of the emitter. Mainly for visibility tests.
 	/// @}
+
+	ParticleEmitterProperties()
+	{
+	}
+
+	ParticleEmitterProperties(const ParticleEmitterProperties& b)
+	{
+		*this = b;
+	}
+
+	ParticleEmitterProperties& operator=(const ParticleEmitterProperties& b)
+	{
+		memcpy(this, &b, sizeof(*this));
+		return *this;
+	}
 
 	Bool forceEnabled() const
 	{

@@ -18,9 +18,9 @@ namespace anki
 /// The base of all collision shapes.
 class PhysicsCollisionShape : public PhysicsObject
 {
-public:
-	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::COLLISION_SHAPE;
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::COLLISION_SHAPE)
 
+public:
 	ANKI_INTERNAL const btCollisionShape* getBtShape(Bool forDynamicBodies = false) const
 	{
 		return getBtShapeInternal(forDynamicBodies);
@@ -88,12 +88,20 @@ protected:
 			return nullptr;
 		}
 	}
+
+	void registerToWorld() override
+	{
+	}
+
+	void unregisterFromWorld() override
+	{
+	}
 };
 
 /// Sphere collision shape.
 class PhysicsSphere final : public PhysicsCollisionShape
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::COLLISION_SHAPE)
 
 private:
 	PhysicsSphere(PhysicsWorld* world, F32 radius);
@@ -104,7 +112,7 @@ private:
 /// Box collision shape.
 class PhysicsBox final : public PhysicsCollisionShape
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::COLLISION_SHAPE)
 
 private:
 	PhysicsBox(PhysicsWorld* world, const Vec3& extend);
@@ -115,7 +123,7 @@ private:
 /// Convex hull collision shape.
 class PhysicsConvexHull final : public PhysicsCollisionShape
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::COLLISION_SHAPE)
 
 private:
 	PhysicsConvexHull(PhysicsWorld* world, const Vec3* positions, U32 positionsCount, U32 positionsStride);
@@ -126,7 +134,7 @@ private:
 /// Static triangle mesh shape.
 class PhysicsTriangleSoup final : public PhysicsCollisionShape
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::COLLISION_SHAPE)
 
 private:
 	ClassWrapper<btTriangleMesh> m_mesh;

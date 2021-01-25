@@ -7,9 +7,8 @@
 
 #include <anki/scene/Common.h>
 #include <anki/scene/SceneNode.h>
+#include <anki/scene/DebugDrawer.h>
 #include <anki/Math.h>
-#include <anki/util/Singleton.h>
-#include <anki/util/HighRezTimer.h>
 #include <anki/util/HashMap.h>
 #include <anki/core/App.h>
 #include <anki/scene/events/EventManager.h>
@@ -19,13 +18,11 @@ namespace anki
 {
 
 // Forward
-class MainRenderer;
 class ResourceManager;
 class CameraNode;
 class Input;
 class ConfigSet;
 class PerspectiveCameraNode;
-class UpdateSceneNodesCtx;
 class Octree;
 
 /// @addtogroup scene
@@ -227,6 +224,11 @@ public:
 		return *m_octree;
 	}
 
+	const DebugDrawer2& getDebugDrawer() const
+	{
+		return m_debugDrawer;
+	}
+
 private:
 	class UpdateSceneNodesCtx;
 
@@ -256,8 +258,8 @@ private:
 
 	Octree* m_octree = nullptr;
 
-	Vec3 m_sceneMin = {-1000.0f, -200.0f, -1000.0f};
-	Vec3 m_sceneMax = {1000.0f, 200.0f, 1000.0f};
+	Vec3 m_sceneMin = Vec3(-1000.0f, -200.0f, -1000.0f);
+	Vec3 m_sceneMax = Vec3(1000.0f, 200.0f, 1000.0f);
 
 	Atomic<U32> m_objectsMarkedForDeletionCount = {0};
 
@@ -265,6 +267,8 @@ private:
 
 	SceneGraphConfig m_config;
 	SceneGraphStats m_stats;
+
+	DebugDrawer2 m_debugDrawer;
 
 	/// Put a node in the appropriate containers
 	ANKI_USE_RESULT Error registerNode(SceneNode* node);

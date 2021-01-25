@@ -6,8 +6,6 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/scene/DebugDrawer.h>
-#include <anki/collision/Obb.h>
 
 namespace anki
 {
@@ -19,26 +17,16 @@ namespace anki
 class DecalNode : public SceneNode
 {
 public:
-	DecalNode(SceneGraph* scene, CString name)
-		: SceneNode(scene, name)
-	{
-	}
+	DecalNode(SceneGraph* scene, CString name);
 
 	~DecalNode();
-
-	ANKI_USE_RESULT Error init();
 
 private:
 	class MoveFeedbackComponent;
 	class ShapeFeedbackComponent;
 
-	DebugDrawer2 m_dbgDrawer;
-	TextureResourcePtr m_dbgTex;
-
 	void onMove(MoveComponent& movec);
-	void onDecalUpdated();
-
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
+	void onDecalUpdated(DecalComponent& decalc);
 };
 /// @}
 

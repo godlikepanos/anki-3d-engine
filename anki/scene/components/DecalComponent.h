@@ -19,8 +19,9 @@ namespace anki
 /// Decal component. Contains all the relevant info for a deferred decal.
 class DecalComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(DecalComponent)
+
 public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::DECAL;
 	static constexpr U32 ATLAS_SUB_TEXTURE_MARGIN = 16;
 
 	DecalComponent(SceneNode* node);
@@ -38,53 +39,36 @@ public:
 	}
 
 	/// Update the internal structures.
-	void updateShape(F32 width, F32 height, F32 depth)
+	void setBoxVolumeSize(const Vec3& sizeXYZ)
 	{
-		m_sizes = Vec3(width, height, depth);
+		m_boxSize = sizeXYZ;
 		m_markedForUpdate = true;
 	}
 
-	F32 getWidth() const
+	const Vec3& getBoxVolumeSize() const
 	{
-		return m_sizes.x();
+		return m_boxSize;
 	}
 
-	F32 getHeight() const
-	{
-		return m_sizes.y();
-	}
-
-	F32 getDepth() const
-	{
-		return m_sizes.z();
-	}
-
-	const Obb& getBoundingVolume() const
+	const Obb& getBoundingVolumeWorldSpace() const
 	{
 		return m_obb;
 	}
 
-	void updateTransform(const Transform& trf)
+	void setWorldTransform(const Transform& trf)
 	{
 		ANKI_ASSERT(trf.getScale() == 1.0f);
 		m_trf = trf;
 		m_markedForUpdate = true;
 	}
 
-	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
-	{
-		m_drawCallback = callback;
-		m_drawCallbackUserData = userData;
-	}
-
 	/// Implements SceneComponent::update.
 	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
 		updated = m_markedForUpdate;
-
-		if(m_markedForUpdate)
+		m_markedForUpdate = false;
+		if(updated)
 		{
-			m_markedForUpdate = false;
 			updateInternal();
 		}
 
@@ -117,11 +101,6 @@ public:
 		blendFactor = m_layers[LayerType::SPECULAR_ROUGHNESS].m_blendFactor;
 	}
 
-	const Vec3& getVolumeSize() const
-	{
-		return m_sizes;
-	}
-
 	void setupDecalQueueElement(DecalQueueElement& el)
 	{
 		el.m_diffuseAtlas = (m_layers[LayerType::DIFFUSE].m_atlas)
@@ -138,12 +117,15 @@ public:
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
 		el.m_obbRotation = m_obb.getRotation().getRotationPart();
-		el.m_debugDrawCallback = m_drawCallback;
-		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
+		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+			ANKI_ASSERT(userData.getSize() == 1);
+			static_cast<const DecalComponent*>(userData[0])->draw(ctx);
+		};
+		el.m_debugDrawCallbackUserData = this;
 	}
 
 private:
-	enum class LayerType
+	enum class LayerType : U8
 	{
 		DIFFUSE,
 		SPECULAR_ROUGHNESS,
@@ -158,19 +140,20 @@ private:
 		F32 m_blendFactor = 0.0f;
 	};
 
-	SceneNode* m_node;
-	RenderQueueDrawCallback m_drawCallback = nullptr;
-	const void* m_drawCallbackUserData = nullptr;
+	SceneNode* m_node = nullptr;
 	Array<Layer, U(LayerType::COUNT)> m_layers;
-	Mat4 m_biasProjViewMat;
-	Vec3 m_sizes = Vec3(1.0f);
+	Mat4 m_biasProjViewMat = Mat4::getIdentity();
+	Vec3 m_boxSize = Vec3(1.0f);
 	Transform m_trf = Transform::getIdentity();
-	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(0.5f, 0.5f, 0.5f, 0.0f));
+	TextureResourcePtr m_debugTex;
 	Bool m_markedForUpdate = true;
 
 	ANKI_USE_RESULT Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
 
 	void updateInternal();
+
+	void draw(RenderQueueDrawContext& ctx) const;
 };
 /// @}
 

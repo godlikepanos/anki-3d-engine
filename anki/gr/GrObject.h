@@ -31,7 +31,9 @@ enum class GrObjectType : U8
 	FENCE,
 	RENDER_GRAPH,
 	ACCELERATION_STRUCTURE,
-	COUNT
+
+	COUNT,
+	FIRST = 0
 };
 
 /// Base of all graphics objects.

@@ -18,21 +18,26 @@ namespace anki
 /// Component of scripts.
 class ScriptComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::SCRIPT;
+	ANKI_SCENE_COMPONENT(ScriptComponent)
 
+public:
 	ScriptComponent(SceneNode* node);
 
 	~ScriptComponent();
 
-	ANKI_USE_RESULT Error load(CString fname);
+	ANKI_USE_RESULT Error loadScriptResource(CString fname);
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
+
+	Bool isEnabled() const
+	{
+		return m_script.isCreated();
+	}
 
 private:
 	SceneNode* m_node;
 	ScriptResourcePtr m_script;
-	ScriptEnvironment m_env;
+	ScriptEnvironment* m_env = nullptr;
 };
 /// @}
 

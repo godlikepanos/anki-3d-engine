@@ -12,6 +12,7 @@
 
 #include <anki/resource/MaterialResource.h>
 #include <anki/resource/MeshResource.h>
+#include <anki/resource/CpuMeshResource.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ScriptResource.h>
 #include <anki/resource/DummyResource.h>
@@ -20,7 +21,7 @@
 #include <anki/resource/GenericResource.h>
 #include <anki/resource/TextureAtlasResource.h>
 #include <anki/resource/ShaderProgramResource.h>
-#include <anki/resource/CollisionResource.h>
+#include <anki/resource/SkeletonResource.h>
 
 namespace anki
 {
@@ -99,6 +100,9 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 		T* ptr = m_alloc.newInstance<T>(this);
 		ANKI_ASSERT(ptr->getRefcount().load() == 0);
 
+		// Increment the refcount in that case where async jobs increment it and decrement it in the scope of a load()
+		ptr->getRefcount().fetchAdd(1);
+
 		// Populate the ptr. Use a block to cleanup temp_pool allocations
 		auto& pool = m_tmpAlloc.getMemoryPool();
 
@@ -130,6 +134,9 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 		// Register resource
 		registerResource(ptr);
 		out.reset(ptr);
+
+		// Decrement because of the increment happened a few lines above
+		ptr->getRefcount().fetchSub(1);
 	}
 
 	return err;

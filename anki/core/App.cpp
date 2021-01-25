@@ -11,6 +11,7 @@
 #include <anki/util/System.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/util/Tracer.h>
+#include <anki/util/HighRezTimer.h>
 #include <anki/core/CoreTracer.h>
 #include <anki/core/DeveloperConsole.h>
 #include <anki/core/NativeWindow.h>
@@ -408,7 +409,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	m_physics = m_heapAlloc.newInstance<PhysicsWorld>();
 
-	ANKI_CHECK(m_physics->create(m_allocCb, m_allocCbData));
+	ANKI_CHECK(m_physics->init(m_allocCb, m_allocCbData));
 
 	//
 	// Resource FS

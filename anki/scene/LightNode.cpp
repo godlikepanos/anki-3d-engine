@@ -9,18 +9,19 @@
 #include <anki/scene/components/MoveComponent.h>
 #include <anki/scene/components/SpatialComponent.h>
 #include <anki/scene/components/FrustumComponent.h>
-#include <anki/resource/ResourceManager.h>
 #include <anki/shaders/include/ClusteredShadingTypes.h>
 
 namespace anki
 {
 
 /// Feedback component.
-class LightNode::MovedFeedbackComponent : public SceneComponent
+class LightNode::OnMovedFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(LightNode::OnMovedFeedbackComponent)
+
 public:
-	MovedFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	OnMovedFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -32,19 +33,23 @@ public:
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Move updated
-			static_cast<LightNode&>(node).onMoveUpdate(move);
+			static_cast<LightNode&>(node).onMoved(move);
 		}
 
 		return Error::NONE;
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(LightNode::OnMovedFeedbackComponent)
+
 /// Feedback component.
-class LightNode::LightChangedFeedbackComponent : public SceneComponent
+class LightNode::OnLightShapeUpdatedFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(LightNode::OnLightShapeUpdatedFeedbackComponent)
+
 public:
-	LightChangedFeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	OnLightShapeUpdatedFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -56,12 +61,14 @@ public:
 		if(light.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Shape updated
-			static_cast<LightNode&>(node).onShapeUpdate(light);
+			static_cast<LightNode&>(node).onLightShapeUpdated(light);
 		}
 
 		return Error::NONE;
 	}
 };
+
+ANKI_SCENE_COMPONENT_STATICS(LightNode::OnLightShapeUpdatedFeedbackComponent)
 
 LightNode::LightNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
@@ -70,25 +77,6 @@ LightNode::LightNode(SceneGraph* scene, CString name)
 
 LightNode::~LightNode()
 {
-}
-
-Error LightNode::initCommon(LightComponentType lightType)
-{
-	CString texFname;
-	switch(lightType)
-	{
-	case LightComponentType::POINT:
-		texFname = "engine_data/LightBulb.ankitex";
-		break;
-	case LightComponentType::SPOT:
-		texFname = "engine_data/SpotLight.ankitex";
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-	ANKI_CHECK(getResourceManager().loadResource(texFname, m_dbgTex));
-
-	return m_dbgDrawer.init(&getResourceManager());
 }
 
 void LightNode::frameUpdateCommon()
@@ -116,73 +104,30 @@ void LightNode::onMoveUpdateCommon(const MoveComponent& move)
 {
 	// Update the spatial
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-	sp.markForUpdate();
-	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
+	sp.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 
 	// Update the lens flare
 	LensFlareComponent* lf = tryGetFirstComponentOfType<LensFlareComponent>();
 	if(lf)
 	{
-		lf->setWorldPosition(move.getWorldTransform().getOrigin());
+		lf->setWorldPosition(move.getWorldTransform().getOrigin().xyz());
 	}
 
 	// Update light component
-	getFirstComponentOfType<LightComponent>().updateWorldTransform(move.getWorldTransform());
-}
-
-Error LightNode::loadLensFlare(const CString& filename)
-{
-	ANKI_ASSERT(tryGetFirstComponentOfType<LensFlareComponent>() == nullptr);
-
-	LensFlareComponent* flareComp = newComponent<LensFlareComponent>(this);
-
-	const Error err = flareComp->init(filename);
-	if(err)
-	{
-		ANKI_ASSERT(!"TODO: Remove component");
-		return err;
-	}
-
-	return Error::NONE;
-}
-
-void LightNode::drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData)
-{
-	for(const void* plight : userData)
-	{
-		const LightNode& self = *static_cast<const LightNode*>(plight);
-		const LightComponent& lcomp = self.getFirstComponentOfType<LightComponent>();
-
-		const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
-		if(enableDepthTest)
-		{
-			ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
-		}
-		else
-		{
-			ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
-		}
-
-		Vec3 color = lcomp.getDiffuseColor().xyz();
-		color /= max(max(color.x(), color.y()), color.z());
-
-		self.m_dbgDrawer.drawBillboardTexture(
-			ctx.m_projectionMatrix, ctx.m_viewMatrix, lcomp.getTransform().getOrigin().xyz(), color.xyz1(),
-			ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON),
-			self.m_dbgTex->getGrTextureView(), ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator,
-			ctx.m_commandBuffer);
-
-		// Restore state
-		if(!enableDepthTest)
-		{
-			ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
-		}
-	}
+	getFirstComponentOfType<LightComponent>().setWorldTransform(move.getWorldTransform());
 }
 
 PointLightNode::PointLightNode(SceneGraph* scene, CString name)
 	: LightNode(scene, name)
 {
+	newComponent<MoveComponent>();
+	newComponent<OnMovedFeedbackComponent>();
+
+	LightComponent* lc = newComponent<LightComponent>();
+	lc->setLightComponentType(LightComponentType::POINT);
+
+	newComponent<OnLightShapeUpdatedFeedbackComponent>();
+	newComponent<SpatialComponent>();
 }
 
 PointLightNode::~PointLightNode()
@@ -190,30 +135,7 @@ PointLightNode::~PointLightNode()
 	m_shadowData.destroy(getAllocator());
 }
 
-Error PointLightNode::init()
-{
-	ANKI_CHECK(initCommon(LightComponentType::POINT));
-
-	// Move component
-	newComponent<MoveComponent>();
-
-	// Feedback component
-	newComponent<MovedFeedbackComponent>();
-
-	// Light component
-	LightComponent* lc = newComponent<LightComponent>(LightComponentType::POINT, getSceneGraph().getNewUuid());
-	lc->setDrawCallback(drawCallback, static_cast<LightNode*>(this));
-
-	// Feedback component
-	newComponent<LightChangedFeedbackComponent>();
-
-	// Spatial component
-	newComponent<SpatialComponent>(this, &m_sphereW);
-
-	return Error::NONE;
-}
-
-void PointLightNode::onMoveUpdate(const MoveComponent& move)
+void PointLightNode::onMoved(const MoveComponent& move)
 {
 	onMoveUpdateCommon(move);
 
@@ -223,36 +145,36 @@ void PointLightNode::onMoveUpdate(const MoveComponent& move)
 		Transform trf = m_shadowData[count].m_localTrf;
 		trf.setOrigin(move.getWorldTransform().getOrigin());
 
-		fr.setTransform(trf);
+		fr.setWorldTransform(trf);
 		++count;
 
 		return Error::NONE;
 	});
-
 	(void)err;
-
-	m_sphereW.setCenter(move.getWorldTransform().getOrigin());
 }
 
-void PointLightNode::onShapeUpdate(LightComponent& light)
+void PointLightNode::onLightShapeUpdated(LightComponent& light)
 {
-	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
+	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
 		fr.setFar(light.getRadius());
 		return Error::NONE;
 	});
 	(void)err;
 
-	m_sphereW.setRadius(light.getRadius());
+	SpatialComponent& spatialc = getFirstComponentOfType<SpatialComponent>();
+	spatialc.setSphereWorldSpace(Sphere(light.getWorldTransform().getOrigin(), light.getRadius()));
 }
 
 Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
-	if(getFirstComponentOfType<LightComponent>().getShadowEnabled() && m_shadowData.isEmpty())
+	// Lazily init
+	const LightComponent& lightc = getFirstComponentOfType<LightComponent>();
+	if(lightc.getShadowEnabled() && m_shadowData.isEmpty())
 	{
 		m_shadowData.create(getAllocator(), 6);
 
 		const F32 ang = toRad(90.0f);
-		const F32 dist = m_sphereW.getRadius();
+		const F32 dist = lightc.getRadius();
 		const F32 zNear = LIGHT_FRUSTUM_NEAR_PLANE;
 
 		Mat3 rot;
@@ -276,9 +198,10 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 			Transform trf = m_shadowData[i].m_localTrf;
 			trf.setOrigin(origin);
 
-			FrustumComponent* frc = newComponent<FrustumComponent>(this, FrustumType::PERSPECTIVE);
+			FrustumComponent* frc = newComponent<FrustumComponent>();
+			frc->setFrustumType(FrustumType::PERSPECTIVE);
 			frc->setPerspective(zNear, dist, ang, ang);
-			frc->setTransform(trf);
+			frc->setWorldTransform(trf);
 		}
 	}
 
@@ -287,43 +210,58 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 	return Error::NONE;
 }
 
+class SpotLightNode::OnFrustumUpdatedFeedbackComponent : public SceneComponent
+{
+	ANKI_SCENE_COMPONENT(SpotLightNode::OnFrustumUpdatedFeedbackComponent)
+
+public:
+	OnFrustumUpdatedFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), true)
+	{
+	}
+
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	{
+		updated = false;
+
+		FrustumComponent& frc = node.getFirstComponentOfType<FrustumComponent>();
+		if(frc.getTimestamp() == node.getGlobalTimestamp())
+		{
+			// Shape updated
+			static_cast<SpotLightNode&>(node).onFrustumUpdated(frc);
+		}
+
+		return Error::NONE;
+	}
+};
+
+ANKI_SCENE_COMPONENT_STATICS(SpotLightNode::OnFrustumUpdatedFeedbackComponent)
+
 SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 	: LightNode(scene, name)
 {
-}
-
-Error SpotLightNode::init()
-{
-	ANKI_CHECK(initCommon(LightComponentType::SPOT));
-
-	// Move component
 	newComponent<MoveComponent>();
+	newComponent<OnMovedFeedbackComponent>();
 
-	// Feedback component
-	newComponent<MovedFeedbackComponent>();
+	LightComponent* lc = newComponent<LightComponent>();
+	lc->setLightComponentType(LightComponentType::SPOT);
 
-	// Light component
-	LightComponent* lc = newComponent<LightComponent>(LightComponentType::SPOT, getSceneGraph().getNewUuid());
-	lc->setDrawCallback(drawCallback, static_cast<LightNode*>(this));
+	newComponent<OnLightShapeUpdatedFeedbackComponent>();
 
-	// Feedback component
-	newComponent<LightChangedFeedbackComponent>();
-
-	// Frustum component
-	FrustumComponent* fr = newComponent<FrustumComponent>(this, FrustumType::PERSPECTIVE);
+	FrustumComponent* fr = newComponent<FrustumComponent>();
+	fr->setFrustumType(FrustumType::PERSPECTIVE);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 
-	// Spatial component
-	newComponent<SpatialComponent>(this, &fr->getPerspectiveBoundingShape());
+	newComponent<OnFrustumUpdatedFeedbackComponent>();
 
-	return Error::NONE;
+	newComponent<SpatialComponent>();
 }
 
-void SpotLightNode::onMoveUpdate(const MoveComponent& move)
+void SpotLightNode::onMoved(const MoveComponent& move)
 {
 	// Update the frustums
 	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
-		fr.setTransform(move.getWorldTransform());
+		fr.setWorldTransform(move.getWorldTransform());
 		return Error::NONE;
 	});
 
@@ -332,15 +270,16 @@ void SpotLightNode::onMoveUpdate(const MoveComponent& move)
 	onMoveUpdateCommon(move);
 }
 
-void SpotLightNode::onShapeUpdate(LightComponent& light)
+void SpotLightNode::onLightShapeUpdated(LightComponent& light)
 {
-	// Update the frustum first
 	FrustumComponent& frc = getFirstComponentOfType<FrustumComponent>();
 	frc.setPerspective(LIGHT_FRUSTUM_NEAR_PLANE, light.getDistance(), light.getOuterAngle(), light.getOuterAngle());
+}
 
-	// Mark the spatial for update
+void SpotLightNode::onFrustumUpdated(FrustumComponent& frc)
+{
 	SpatialComponent& sp = getFirstComponentOfType<SpatialComponent>();
-	sp.markForUpdate();
+	sp.setConvexHullWorldSpace(frc.getPerspectiveBoundingShapeWorldSpace());
 }
 
 Error SpotLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
@@ -351,9 +290,11 @@ Error SpotLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 
 class DirectionalLightNode::FeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(DirectionalLightNode::FeedbackComponent)
+
 public:
-	FeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	FeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -364,38 +305,35 @@ public:
 		{
 			// Move updated
 			LightComponent& lightc = node.getFirstComponentOfType<LightComponent>();
-			lightc.updateWorldTransform(move.getWorldTransform());
+			lightc.setWorldTransform(move.getWorldTransform());
 
 			SpatialComponent& spatialc = node.getFirstComponentOfType<SpatialComponent>();
-			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin());
-			spatialc.markForUpdate();
+			spatialc.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 		}
 
 		return Error::NONE;
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(DirectionalLightNode::FeedbackComponent)
+
 DirectionalLightNode::DirectionalLightNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
-{
-}
-
-Error DirectionalLightNode::init()
 {
 	newComponent<MoveComponent>();
 	newComponent<FeedbackComponent>();
 
-	LightComponent* lc = newComponent<LightComponent>(LightComponentType::DIRECTIONAL, getSceneGraph().getNewUuid());
-	lc->setDrawCallback(drawCallback, this);
+	LightComponent* lc = newComponent<LightComponent>();
+	lc->setLightComponentType(LightComponentType::DIRECTIONAL);
 
-	SpatialComponent* spatialc = newComponent<SpatialComponent>(this, &m_boundingBox);
+	SpatialComponent* spatialc = newComponent<SpatialComponent>();
 
 	// Make the bounding box large enough so it will always be visible. Because of that don't update the octree bounds
-	m_boundingBox.setMin(getSceneGraph().getSceneMin());
-	m_boundingBox.setMax(getSceneGraph().getSceneMax());
+	Aabb boundingBox;
+	boundingBox.setMin(getSceneGraph().getSceneMin());
+	boundingBox.setMax(getSceneGraph().getSceneMax());
+	spatialc->setAabbWorldSpace(boundingBox);
 	spatialc->setUpdateOctreeBounds(false);
-
-	return Error::NONE;
 }
 
 } // end namespace anki

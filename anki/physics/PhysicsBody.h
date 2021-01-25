@@ -27,11 +27,9 @@ public:
 /// Rigid body.
 class PhysicsBody : public PhysicsFilteredObject
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::BODY)
 
 public:
-	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::BODY;
-
 	const Transform& getTransform() const
 	{
 		return m_trf;
@@ -129,6 +127,10 @@ private:
 	PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init);
 
 	~PhysicsBody();
+
+	void registerToWorld() override;
+
+	void unregisterFromWorld() override;
 };
 /// @}
 

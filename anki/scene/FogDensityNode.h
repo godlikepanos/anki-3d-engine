@@ -22,17 +22,12 @@ public:
 
 	~FogDensityNode();
 
-	ANKI_USE_RESULT Error init()
-	{
-		return Error::NONE;
-	}
-
 private:
-	class FeedbackComponent;
+	class MoveFeedbackComponent;
+	class DensityShapeFeedbackComponent;
 
-	Aabb m_spatialBox;
-
-	void moveUpdated(const MoveComponent& movec);
+	void onMoveUpdated(const MoveComponent& movec);
+	void onDensityShapeUpdated(const FogDensityComponent& fogc);
 };
 /// @}
 

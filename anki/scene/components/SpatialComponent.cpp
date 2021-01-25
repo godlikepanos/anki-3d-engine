@@ -10,52 +10,18 @@
 namespace anki
 {
 
-SpatialComponent::SpatialComponent(SceneNode* node, const Obb* obb)
-	: SceneComponent(CLASS_TYPE)
-	, m_node(node)
-{
-	ANKI_ASSERT(node);
-	ANKI_ASSERT(obb);
-	markForUpdate();
-	m_octreeInfo.m_userData = this;
-	m_obb = obb;
-	m_collisionObjectType = obb->CLASS_TYPE;
-}
+ANKI_SCENE_COMPONENT_STATICS(SpatialComponent)
 
-SpatialComponent::SpatialComponent(SceneNode* node, const Aabb* aabb)
-	: SceneComponent(CLASS_TYPE)
+SpatialComponent::SpatialComponent(SceneNode* node)
+	: SceneComponent(node, getStaticClassId())
 	, m_node(node)
+	, m_markedForUpdate(true)
+	, m_placed(false)
+	, m_updateOctreeBounds(true)
 {
 	ANKI_ASSERT(node);
-	ANKI_ASSERT(aabb);
-	markForUpdate();
 	m_octreeInfo.m_userData = this;
-	m_aabb = aabb;
-	m_collisionObjectType = aabb->CLASS_TYPE;
-}
-
-SpatialComponent::SpatialComponent(SceneNode* node, const Sphere* sphere)
-	: SceneComponent(CLASS_TYPE)
-	, m_node(node)
-{
-	ANKI_ASSERT(node);
-	ANKI_ASSERT(sphere);
-	markForUpdate();
-	m_octreeInfo.m_userData = this;
-	m_sphere = sphere;
-	m_collisionObjectType = sphere->CLASS_TYPE;
-}
-
-SpatialComponent::SpatialComponent(SceneNode* node, const ConvexHullShape* hull)
-	: SceneComponent(CLASS_TYPE)
-	, m_node(node)
-{
-	ANKI_ASSERT(node);
-	ANKI_ASSERT(hull);
-	markForUpdate();
-	m_octreeInfo.m_userData = this;
-	m_hull = hull;
-	m_collisionObjectType = hull->CLASS_TYPE;
+	setAabbWorldSpace(Aabb(Vec3(-1.0f), Vec3(1.0f)));
 }
 
 SpatialComponent::~SpatialComponent()
@@ -64,6 +30,29 @@ SpatialComponent::~SpatialComponent()
 	{
 		m_node->getSceneGraph().getOctree().remove(m_octreeInfo);
 	}
+
+	m_convexHullPoints.destroy(m_node->getAllocator());
+}
+
+void SpatialComponent::setConvexHullWorldSpace(const ConvexHullShape& hull)
+{
+	ANKI_ASSERT(hull.getPoints().getSize() > 0);
+
+	if(m_convexHullPoints.getSize() != hull.getPoints().getSize())
+	{
+		m_convexHullPoints.resize(m_node->getAllocator(), hull.getPoints().getSize());
+	}
+
+	memcpy(&m_convexHullPoints[0], &hull.getPoints()[0], hull.getPoints().getSizeInBytes());
+
+	m_hull = ConvexHullShape(&m_convexHullPoints[0], m_convexHullPoints.getSize());
+	if(!hull.isTransformIdentity())
+	{
+		m_hull.setTransform(hull.getTransform());
+	}
+
+	m_collisionObjectType = hull.CLASS_TYPE;
+	m_markedForUpdate = true;
 }
 
 Error SpatialComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
@@ -77,16 +66,16 @@ Error SpatialComponent::update(SceneNode& node, Second prevTime, Second crntTime
 		switch(m_collisionObjectType)
 		{
 		case CollisionShapeType::AABB:
-			m_derivedAabb = *m_aabb;
+			m_derivedAabb = m_aabb;
 			break;
 		case CollisionShapeType::OBB:
-			m_derivedAabb = computeAabb(*m_obb);
+			m_derivedAabb = computeAabb(m_obb);
 			break;
 		case CollisionShapeType::SPHERE:
-			m_derivedAabb = computeAabb(*m_sphere);
+			m_derivedAabb = computeAabb(m_sphere);
 			break;
 		case CollisionShapeType::CONVEX_HULL:
-			m_derivedAabb = computeAabb(*m_hull);
+			m_derivedAabb = computeAabb(m_hull);
 			break;
 		default:
 			ANKI_ASSERT(0);

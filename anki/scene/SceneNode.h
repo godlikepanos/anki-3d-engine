@@ -5,13 +5,12 @@
 
 #pragma once
 
-#include <anki/scene/Common.h>
+#include <anki/scene/components/SceneComponent.h>
 #include <anki/util/Hierarchy.h>
 #include <anki/util/BitMask.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/List.h>
 #include <anki/util/Enum.h>
-#include <anki/scene/components/SceneComponent.h>
 
 namespace anki
 {
@@ -35,6 +34,12 @@ public:
 
 	/// Unregister node
 	virtual ~SceneNode();
+
+	/// A dummy init for those scene nodes that don't need it.
+	ANKI_USE_RESULT Error init()
+	{
+		return Error::NONE;
+	}
 
 	SceneGraph& getSceneGraph()
 	{
@@ -106,7 +111,7 @@ public:
 		for(; !err && it != end; ++it)
 		{
 			const SceneComponent* c = *it;
-			err = func(*c);
+			err = func(*c, it->isFeedbackComponent());
 		}
 
 		return err;
@@ -122,7 +127,7 @@ public:
 		for(; !err && it != end; ++it)
 		{
 			SceneComponent* c = *it;
-			err = func(*c);
+			err = func(*c, it->isFeedbackComponent());
 		}
 
 		return err;
@@ -137,7 +142,7 @@ public:
 		auto end = m_components.getEnd();
 		for(; !err && it != end; ++it)
 		{
-			if(it->getComponentType() == TComponent::CLASS_TYPE)
+			if(it->getComponentClassId() == TComponent::getStaticClassId())
 			{
 				const SceneComponent* comp = *it;
 				err = func(static_cast<const TComponent&>(*comp));
@@ -156,7 +161,7 @@ public:
 		auto end = m_components.getEnd();
 		for(; !err && it != end; ++it)
 		{
-			if(it->getComponentType() == TComponent::CLASS_TYPE)
+			if(it->getComponentClassId() == TComponent::getStaticClassId())
 			{
 				SceneComponent* comp = *it;
 				err = func(static_cast<TComponent&>(*comp));
@@ -172,7 +177,7 @@ public:
 	{
 		for(const ComponentsArrayElement& el : m_components)
 		{
-			if(el.getComponentType() == TComponent::CLASS_TYPE)
+			if(el.getComponentClassId() == TComponent::getStaticClassId())
 			{
 				const SceneComponent* comp = el;
 				return static_cast<const TComponent*>(comp);
@@ -213,7 +218,7 @@ public:
 		I32 inth = I32(nth);
 		for(const ComponentsArrayElement& el : m_components)
 		{
-			if(el.getComponentType() == TComponent::CLASS_TYPE && inth-- == 0)
+			if(el.getComponentClassId() == TComponent::getStaticClassId() && inth-- == 0)
 			{
 				const SceneComponent* comp = el;
 				return static_cast<const TComponent*>(comp);
@@ -230,11 +235,27 @@ public:
 		return const_cast<TComponent*>(c);
 	}
 
+	template<typename TComponent>
+	const TComponent& getNthComponentOfType(U32 nth) const
+	{
+		const TComponent* out = tryGetNthComponentOfType<TComponent>(nth);
+		ANKI_ASSERT(out);
+		return *out;
+	}
+
+	template<typename TComponent>
+	TComponent& getNthComponentOfType(U32 nth)
+	{
+		TComponent* out = tryGetNthComponentOfType<TComponent>(nth);
+		ANKI_ASSERT(out);
+		return *out;
+	}
+
 	/// Get the nth component.
 	template<typename TComponent>
 	TComponent& getComponentAt(U32 idx)
 	{
-		ANKI_ASSERT(m_components[idx].getComponentType() == TComponent::CLASS_TYPE);
+		ANKI_ASSERT(m_components[idx].getComponentClassId() == TComponent::getStaticClassId());
 		SceneComponent* c = m_components[idx];
 		return *static_cast<TComponent*>(c);
 	}
@@ -243,7 +264,7 @@ public:
 	template<typename TComponent>
 	const TComponent& getComponentAt(U32 idx) const
 	{
-		ANKI_ASSERT(m_components[idx].getComponentType() == TComponent::CLASS_TYPE);
+		ANKI_ASSERT(m_components[idx].getComponentClassId() == TComponent::getStaticClassId());
 		const SceneComponent* c = m_components[idx];
 		return *static_cast<const TComponent*>(c);
 	}
@@ -253,12 +274,24 @@ public:
 		return m_components.getSize();
 	}
 
+	template<typename TComponent>
+	U32 countComponentsOfType() const
+	{
+		U32 count = 0;
+		const Error err = iterateComponentsOfType<TComponent>([&](const TComponent& c) -> Error {
+			++count;
+			return Error::NONE;
+		});
+		(void)err;
+		return count;
+	}
+
 protected:
 	/// Create and append a component to the components container. The SceneNode has the ownership.
-	template<typename TComponent, typename... TArgs>
-	TComponent* newComponent(TArgs&&... args)
+	template<typename TComponent>
+	TComponent* newComponent()
 	{
-		TComponent* comp = getAllocator().newInstance<TComponent>(std::forward<TArgs>(args)...);
+		TComponent* comp = getAllocator().newInstance<TComponent>(this);
 		m_components.emplaceBack(getAllocator(), comp);
 		return comp;
 	}
@@ -271,7 +304,8 @@ private:
 	class ComponentsArrayElement
 	{
 	public:
-		PtrSize m_combo; ///< Encodes the SceneComponentType in the high 8bits and the SceneComponent* to the remaining.
+		/// Encodes the SceneComponent's class ID, the SceneComponent* and if it's feedback component or not.
+		PtrSize m_combo;
 
 		ComponentsArrayElement(SceneComponent* comp)
 		{
@@ -309,17 +343,25 @@ private:
 			return getPtr();
 		}
 
-		SceneComponentType getComponentType() const
+		U8 getComponentClassId() const
 		{
-			return SceneComponentType(m_combo & 0xFF);
+			return m_combo & 0xFF;
+		}
+
+		Bool isFeedbackComponent() const
+		{
+			return m_combo & PtrSize(1 << 7);
 		}
 
 	private:
 		void set(SceneComponent* comp)
 		{
 			m_combo = ptrToNumber(comp) << 8;
-			m_combo |= PtrSize(comp->getType());
+			m_combo |= PtrSize(comp->isFeedbackComponent()) << 7;
+			m_combo |= PtrSize(comp->getClassId()) & 0x7F;
 			ANKI_ASSERT(getPtr() == comp);
+			ANKI_ASSERT(getComponentClassId() == comp->getClassId());
+			ANKI_ASSERT(isFeedbackComponent() == comp->isFeedbackComponent());
 		}
 
 		SceneComponent* getPtr() const
@@ -328,7 +370,6 @@ private:
 		}
 	};
 
-	static_assert(sizeof(SceneComponentType) == 1, "Wrong size");
 	static_assert(sizeof(ComponentsArrayElement) == sizeof(void*), "Wrong size");
 
 	SceneGraph* m_scene = nullptr;

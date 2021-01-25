@@ -11,11 +11,13 @@
 namespace anki
 {
 
-class FogDensityNode::FeedbackComponent : public SceneComponent
+class FogDensityNode::MoveFeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(FogDensityNode::MoveFeedbackComponent)
+
 public:
-	FeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	MoveFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -26,58 +28,74 @@ public:
 		const MoveComponent& movec = node.getFirstComponentOfType<MoveComponent>();
 		if(movec.getTimestamp() == node.getGlobalTimestamp())
 		{
-			static_cast<FogDensityNode&>(node).moveUpdated(movec);
+			static_cast<FogDensityNode&>(node).onMoveUpdated(movec);
 		}
 
 		return Error::NONE;
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(FogDensityNode::MoveFeedbackComponent)
+
+class FogDensityNode::DensityShapeFeedbackComponent : public SceneComponent
+{
+	ANKI_SCENE_COMPONENT(FogDensityNode::DensityShapeFeedbackComponent)
+
+public:
+	DensityShapeFeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), true)
+	{
+	}
+
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
+	{
+		updated = false;
+
+		const FogDensityComponent& fogc = node.getFirstComponentOfType<FogDensityComponent>();
+		if(fogc.getTimestamp() == node.getGlobalTimestamp())
+		{
+			static_cast<FogDensityNode&>(node).onDensityShapeUpdated(fogc);
+		}
+
+		return Error::NONE;
+	}
+};
+
+ANKI_SCENE_COMPONENT_STATICS(FogDensityNode::DensityShapeFeedbackComponent)
+
 FogDensityNode::FogDensityNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
-	// Create components
-	newComponent<MoveComponent>(MoveComponentFlag::NONE);
-	newComponent<FeedbackComponent>();
+	newComponent<MoveComponent>();
+	newComponent<MoveFeedbackComponent>();
 	newComponent<FogDensityComponent>();
-	newComponent<SpatialComponent>(this, &m_spatialBox);
+	newComponent<DensityShapeFeedbackComponent>();
+	newComponent<SpatialComponent>();
 }
 
 FogDensityNode::~FogDensityNode()
 {
 }
 
-void FogDensityNode::moveUpdated(const MoveComponent& movec)
+void FogDensityNode::onMoveUpdated(const MoveComponent& movec)
 {
-	// Update the fog component
-	FogDensityComponent& fogc = getFirstComponentOfType<FogDensityComponent>();
-	fogc.updatePosition(movec.getWorldTransform().getOrigin());
+	getFirstComponentOfType<FogDensityComponent>().setWorldPosition(movec.getWorldTransform().getOrigin().xyz());
+	getFirstComponentOfType<SpatialComponent>().setSpatialOrigin(movec.getWorldTransform().getOrigin().xyz());
+}
 
-	// Update the spatial component
+void FogDensityNode::onDensityShapeUpdated(const FogDensityComponent& fogc)
+{
 	SpatialComponent& spatialc = getFirstComponentOfType<SpatialComponent>();
 
-	Vec4 min, max;
 	if(fogc.isAabb())
 	{
-		fogc.getAabb(min, max);
+		spatialc.setAabbWorldSpace(fogc.getAabbWorldSpace());
 	}
 	else
 	{
-		F32 radius;
-		fogc.getSphere(radius);
-
-		min = Vec4(-radius, -radius, -radius, 0.0f);
-		max = Vec4(radius, radius, radius, 0.0f);
+		ANKI_ASSERT(fogc.isSphere());
+		spatialc.setSphereWorldSpace(fogc.getSphereWorldSpace());
 	}
-
-	min += movec.getWorldTransform().getOrigin();
-	max += movec.getWorldTransform().getOrigin();
-
-	m_spatialBox.setMin(min);
-	m_spatialBox.setMax(max);
-
-	spatialc.setSpatialOrigin(movec.getWorldTransform().getOrigin());
-	spatialc.markForUpdate();
 }
 
 } // end namespace anki

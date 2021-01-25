@@ -15,6 +15,7 @@
 #include <anki/core/ConfigSet.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/util/Tracer.h>
+#include <anki/util/HighRezTimer.h>
 
 namespace anki
 {
@@ -94,6 +95,9 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	// Create a special node for debugging the physics world
 	PhysicsDebugNode* pnode;
 	ANKI_CHECK(newSceneNode<PhysicsDebugNode>("_physicsDebugNode", pnode));
+
+	// Other
+	ANKI_CHECK(m_debugDrawer.init(&getResourceManager()));
 
 	return Error::NONE;
 }
@@ -199,7 +203,8 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	// Delete stuff
 	{
 		ANKI_TRACE_SCOPED_EVENT(SCENE_MARKED_FOR_DELETION);
-		m_events.deleteEventsMarkedForDeletion();
+		const Bool fullCleanup = m_objectsMarkedForDeletionCount.load() != 0;
+		m_events.deleteEventsMarkedForDeletion(fullCleanup);
 		deleteNodesMarkedForDeletion();
 	}
 
@@ -258,15 +263,26 @@ Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 
 	// Components update
 	Timestamp componentTimestamp = 0;
-	err = node.iterateComponents([&](SceneComponent& comp) -> Error {
+	Bool atLeastOneComponentUpdated = false;
+	err = node.iterateComponents([&](SceneComponent& comp, Bool isFeedbackComponent) -> Error {
 		Bool updated = false;
-		Error e = comp.update(node, prevTime, crntTime, updated);
+		Error e = Error::NONE;
+		if(!atLeastOneComponentUpdated && isFeedbackComponent)
+		{
+			// Skip feedback component if prior components didn't got updated
+		}
+		else
+		{
+			e = comp.update(node, prevTime, crntTime, updated);
+		}
 
 		if(updated)
 		{
+			ANKI_TRACE_INC_COUNTER(SCENE_COMPONENTS_UPDATED, 1);
 			comp.setTimestamp(node.getSceneGraph().m_timestamp);
 			componentTimestamp = max(componentTimestamp, node.getSceneGraph().m_timestamp);
 			ANKI_ASSERT(componentTimestamp > 0);
+			atLeastOneComponentUpdated = true;
 		}
 
 		return e;

@@ -262,7 +262,7 @@ ResourceManager* createResourceManager(const ConfigSet& cfg, GrManager* gr, Phys
 
 	physics = new PhysicsWorld();
 
-	ANKI_TEST_EXPECT_NO_ERR(physics->create(allocAligned, nullptr));
+	ANKI_TEST_EXPECT_NO_ERR(physics->init(allocAligned, nullptr));
 
 	resourceFs = new ResourceFilesystem(alloc);
 	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(cfg, "./"));

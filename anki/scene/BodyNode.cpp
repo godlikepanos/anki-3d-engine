@@ -17,9 +17,11 @@ namespace anki
 /// Body feedback component.
 class BodyNode::FeedbackComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(BodyNode::FeedbackComponent)
+
 public:
-	FeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	FeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), true)
 	{
 	}
 
@@ -32,47 +34,27 @@ public:
 		if(bodyc.getTimestamp() == node.getGlobalTimestamp())
 		{
 			MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
-			move.setLocalTransform(bodyc.getTransform());
+			move.setLocalTransform(bodyc.getWorldTransform());
 		}
 
 		return Error::NONE;
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(BodyNode::FeedbackComponent)
+
 BodyNode::BodyNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
+	newComponent<JointComponent>();
+	newComponent<BodyComponent>();
+	newComponent<FeedbackComponent>();
+	MoveComponent* movec = newComponent<MoveComponent>();
+	movec->setIgnoreParentTransform(true);
 }
 
 BodyNode::~BodyNode()
 {
-}
-
-Error BodyNode::init(const CString& resourceFname)
-{
-	// Load resource
-	ANKI_CHECK(getResourceManager().loadResource(resourceFname, m_rsrc));
-
-	// Create body
-	PhysicsBodyInitInfo init;
-	init.m_mass = 1.0f;
-	init.m_shape = m_rsrc->getShape();
-	m_body = getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
-	m_body->setUserData(this);
-
-	// Joint component
-	newComponent<JointComponent>(this);
-
-	// Body component
-	newComponent<BodyComponent>(m_body);
-
-	// Feedback component
-	newComponent<FeedbackComponent>();
-
-	// Move component
-	newComponent<MoveComponent>(MoveComponentFlag::IGNORE_PARENT_TRANSFORM);
-
-	return Error::NONE;
 }
 
 } // end namespace anki

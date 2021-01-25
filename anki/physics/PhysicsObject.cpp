@@ -9,6 +9,24 @@
 namespace anki
 {
 
+PhysicsFilteredObject::~PhysicsFilteredObject()
+{
+	for(PhysicsTriggerFilteredPair* pair : m_triggerFilteredPairs)
+	{
+		if(pair == nullptr)
+		{
+			continue;
+		}
+
+		pair->m_filteredObject = nullptr;
+
+		if(pair->shouldDelete())
+		{
+			getAllocator().deleteInstance(pair);
+		}
+	}
+}
+
 HeapAllocator<U8> PhysicsObject::getAllocator() const
 {
 	return m_world->getAllocator();

@@ -17,9 +17,11 @@ namespace anki
 /// Feedback component.
 class PlayerNode::FeedbackComponent final : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(PlayerNode::FeedbackComponent)
+
 public:
-	FeedbackComponent()
-		: SceneComponent(SceneComponentType::NONE)
+	FeedbackComponent(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), false)
 	{
 	}
 
@@ -38,7 +40,7 @@ public:
 			MoveComponent& move = node.getFirstComponentOfType<MoveComponent>();
 
 			// Set origin
-			Vec4 origin = playerc.getTransform().getOrigin();
+			Vec4 origin = playerc.getWorldTransform().getOrigin();
 			origin.y() += 1.9f;
 
 			// Set rotation
@@ -60,12 +62,17 @@ public:
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(PlayerNode::FeedbackComponent)
+
 /// Feedback component.
 class PlayerNode::FeedbackComponent2 final : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(PlayerNode::FeedbackComponent2)
+
 public:
-	FeedbackComponent2()
-		: SceneComponent(SceneComponentType::NONE)
+	FeedbackComponent2(SceneNode* node)
+		: SceneComponent(node, getStaticClassId(), false // This shouldn't behave as a feedback component
+		)
 	{
 	}
 
@@ -110,36 +117,19 @@ public:
 	}
 };
 
+ANKI_SCENE_COMPONENT_STATICS(PlayerNode::FeedbackComponent2)
+
 PlayerNode::PlayerNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
+	newComponent<PlayerControllerComponent>();
+	newComponent<FeedbackComponent>();
+	newComponent<MoveComponent>();
+	newComponent<FeedbackComponent2>();
 }
 
 PlayerNode::~PlayerNode()
 {
-}
-
-Error PlayerNode::init(const Vec4& position)
-{
-	// Create physics object
-	PhysicsPlayerControllerInitInfo init;
-	init.m_position = position;
-	m_player = getSceneGraph().getPhysicsWorld().newInstance<PhysicsPlayerController>(init);
-	m_player->setUserData(this);
-
-	// Player controller component
-	newComponent<PlayerControllerComponent>(m_player);
-
-	// Feedback component
-	newComponent<FeedbackComponent>();
-
-	// Move component
-	newComponent<MoveComponent>();
-
-	// Feedback component #2
-	newComponent<FeedbackComponent2>();
-
-	return Error::NONE;
 }
 
 } // end namespace anki

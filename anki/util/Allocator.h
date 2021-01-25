@@ -92,7 +92,7 @@ public:
 
 		::new(m_pool) TPool();
 
-		m_pool->create(allocCb, allocCbUserData, std::forward<TArgs>(args)...);
+		m_pool->init(allocCb, allocCbUserData, std::forward<TArgs>(args)...);
 		m_pool->getRefcount().store(1);
 	}
 

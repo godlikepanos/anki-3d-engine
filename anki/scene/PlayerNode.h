@@ -7,7 +7,6 @@
 
 #include <anki/scene/SceneNode.h>
 #include <anki/Math.h>
-#include <anki/physics/PhysicsPlayerController.h>
 
 namespace anki
 {
@@ -23,13 +22,9 @@ public:
 
 	~PlayerNode();
 
-	ANKI_USE_RESULT Error init(const Vec4& position);
-
 private:
 	class FeedbackComponent;
 	class FeedbackComponent2;
-
-	PhysicsPlayerControllerPtr m_player;
 };
 /// @}
 

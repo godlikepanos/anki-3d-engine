@@ -13,6 +13,8 @@ namespace anki
 PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 	: PhysicsFilteredObject(CLASS_TYPE, world)
 {
+	ANKI_ASSERT(init.m_mass >= 0.0f);
+
 	const Bool dynamic = init.m_mass > 0.0f;
 	m_shape = init.m_shape;
 	m_mass = init.m_mass;
@@ -45,18 +47,12 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world, const PhysicsBodyInitInfo& init)
 		collidesWith &= ~PhysicsMaterialBit::STATIC_GEOMETRY;
 	}
 	setMaterialMask(collidesWith);
-
 	setTransform(init.m_transform);
-
-	// Add to world
-	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->addRigidBody(m_body.get());
 }
 
 PhysicsBody::~PhysicsBody()
 {
-	auto lock = getWorld().lockBtWorld();
-	getWorld().getBtWorld()->removeRigidBody(m_body.get());
+	m_body.destroy();
 }
 
 void PhysicsBody::setMass(F32 mass)
@@ -67,6 +63,16 @@ void PhysicsBody::setMass(F32 mass)
 	m_shape->getBtShape(true)->calculateLocalInertia(mass, inertia);
 	m_body->setMassProps(mass, inertia);
 	m_mass = mass;
+}
+
+void PhysicsBody::registerToWorld()
+{
+	getWorld().getBtWorld().addRigidBody(m_body.get());
+}
+
+void PhysicsBody::unregisterFromWorld()
+{
+	getWorld().getBtWorld().removeRigidBody(m_body.get());
 }
 
 } // end namespace anki

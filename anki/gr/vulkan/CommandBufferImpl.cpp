@@ -229,18 +229,35 @@ void CommandBufferImpl::endRecording()
 	m_finalized = true;
 
 #if ANKI_EXTRA_CHECKS
+	static Atomic<U32> messagePrintCount(0);
+	constexpr U32 MAX_PRINT_COUNT = 10;
+
+	CString message;
 	if(!!(m_flags & CommandBufferFlag::SMALL_BATCH))
 	{
 		if(m_commandCount > COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS * 4)
 		{
-			ANKI_VK_LOGW("Command buffer has too many commands: %u", m_commandCount);
+			message = "Command buffer has too many commands%s: %u";
 		}
 	}
 	else
 	{
 		if(m_commandCount <= COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS / 4)
 		{
-			ANKI_VK_LOGW("Command buffer has too few commands: %u", m_commandCount);
+			message = "Command buffer has too few commands%s: %u";
+		}
+	}
+
+	if(!message.isEmpty())
+	{
+		const U32 count = messagePrintCount.fetchAdd(1) + 1;
+		if(count < MAX_PRINT_COUNT)
+		{
+			ANKI_VK_LOGW(message.cstr(), "", m_commandCount);
+		}
+		else if(count == MAX_PRINT_COUNT)
+		{
+			ANKI_VK_LOGW(message.cstr(), " (will ignore further warnings)", m_commandCount);
 		}
 	}
 #endif

@@ -7,6 +7,7 @@
 
 #include <anki/scene/components/SceneComponent.h>
 #include <anki/physics/PhysicsBody.h>
+#include <anki/resource/Forward.h>
 
 namespace anki
 {
@@ -17,25 +18,39 @@ namespace anki
 /// Rigid body component.
 class BodyComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::BODY;
+	ANKI_SCENE_COMPONENT(BodyComponent)
 
-	BodyComponent(PhysicsBodyPtr body)
-		: SceneComponent(CLASS_TYPE)
-		, m_body(body)
-	{
-	}
+public:
+	BodyComponent(SceneNode* node);
 
 	~BodyComponent();
 
-	const Transform& getTransform() const
+	ANKI_USE_RESULT Error loadMeshResource(CString meshFilename);
+
+	CString getMeshResourceFilename() const;
+
+	void setMass(F32 mass);
+
+	F32 getMass() const
 	{
-		return m_trf;
+		return (m_body) ? m_body->getMass() : 0.0f;
 	}
 
-	void setTransform(const Transform& trf)
+	void setWorldTransform(const Transform& trf)
 	{
-		m_body->setTransform(trf);
+		if(m_body)
+		{
+			m_body->setTransform(trf);
+		}
+		else
+		{
+			m_trf = trf;
+		}
+	}
+
+	Transform getWorldTransform() const
+	{
+		return (m_body) ? m_body->getTransform() : m_trf;
 	}
 
 	PhysicsBodyPtr getPhysicsBody() const
@@ -43,17 +58,19 @@ public:
 		return m_body;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override;
+
+	Bool isEnabled() const
 	{
-		Transform newTrf = m_body->getTransform();
-		updated = newTrf != m_trf;
-		m_trf = newTrf;
-		return Error::NONE;
+		return m_mesh.isCreated();
 	}
 
 private:
+	SceneNode* m_node = nullptr;
+	CpuMeshResourcePtr m_mesh;
 	PhysicsBodyPtr m_body;
 	Transform m_trf = Transform::getIdentity();
+	Bool m_markedForUpdate = true;
 };
 /// @}
 

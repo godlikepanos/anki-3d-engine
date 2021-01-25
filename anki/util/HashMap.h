@@ -167,6 +167,11 @@ public:
 		return m_sparseArr.isEmpty();
 	}
 
+	PtrSize getSize() const
+	{
+		return m_sparseArr.getSize();
+	}
+
 	/// Destroy the list.
 	template<typename TAllocator>
 	void destroy(TAllocator alloc)

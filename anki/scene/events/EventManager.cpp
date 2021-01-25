@@ -22,7 +22,7 @@ EventManager::~EventManager()
 		event->setMarkedForDeletion();
 	}
 
-	deleteEventsMarkedForDeletion();
+	deleteEventsMarkedForDeletion(false);
 }
 
 Error EventManager::init(SceneGraph* scene)
@@ -46,12 +46,8 @@ Error EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 {
 	Error err = Error::NONE;
 
-	auto it = m_events.getBegin();
-	auto end = m_events.getEnd();
-	for(; it != end && !err; ++it)
+	for(Event& event : m_events)
 	{
-		Event& event = *it;
-
 		// If event or the node's event is marked for deletion then dont do anything else for that event
 		if(event.getMarkedForDeletion())
 		{
@@ -59,15 +55,17 @@ Error EventManager::updateAllEvents(Second prevUpdateTime, Second crntTime)
 		}
 
 		// Check if the associated scene nodes are marked for deletion
+		Bool skip = false;
 		for(SceneNode* node : event.m_associatedNodes)
 		{
 			if(node->getMarkedForDeletion())
 			{
-				event.setMarkedForDeletion();
+				skip = true;
+				break;
 			}
 		}
 
-		if(event.getMarkedForDeletion())
+		if(skip)
 		{
 			continue;
 		}
@@ -125,9 +123,32 @@ void EventManager::markEventForDeletion(Event* event)
 	m_eventsMarkedForDeletion.pushBack(event);
 }
 
-void EventManager::deleteEventsMarkedForDeletion()
+void EventManager::deleteEventsMarkedForDeletion(Bool fullCleanup)
 {
 	SceneAllocator<U8> alloc = getAllocator();
+
+	// Mark events with to-be-deleted nodes as also to be deleted
+	if(fullCleanup)
+	{
+		// Gather in an array because we can't call setMarkedForDeletion while iterating m_events
+		DynamicArrayAuto<Event*> markedForDeletion(getFrameAllocator());
+		for(Event& event : m_events)
+		{
+			for(SceneNode* node : event.m_associatedNodes)
+			{
+				if(node->getMarkedForDeletion())
+				{
+					markedForDeletion.emplaceBack(&event);
+					break;
+				}
+			}
+		}
+
+		for(Event* event : markedForDeletion)
+		{
+			event->setMarkedForDeletion();
+		}
+	}
 
 	// Gather events for deletion
 	while(!m_eventsMarkedForDeletion.isEmpty())

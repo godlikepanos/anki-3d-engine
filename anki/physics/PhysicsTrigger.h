@@ -8,6 +8,7 @@
 #include <anki/physics/PhysicsObject.h>
 #include <anki/util/WeakArray.h>
 #include <anki/util/ClassWrapper.h>
+#include <anki/util/HashMap.h>
 
 namespace anki
 {
@@ -20,20 +21,32 @@ namespace anki
 class PhysicsTriggerProcessContactCallback
 {
 public:
-	virtual ~PhysicsTriggerProcessContactCallback()
+	/// Will be called whenever a contact first touches a trigger.
+	virtual void onTriggerEnter(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
 	{
 	}
 
-	virtual void processContact(PhysicsTrigger& trigger, PhysicsFilteredObject& obj) = 0;
+	/// Will be called whenever a contact touches a trigger.
+	virtual void onTriggerInside(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	{
+	}
+
+	/// Will be called whenever a contact stops touching a trigger.
+	virtual void onTriggerExit(PhysicsTrigger& trigger, PhysicsFilteredObject& obj)
+	{
+	}
 };
 
 /// A trigger that uses a PhysicsShape and its purpose is to collect collision events.
 class PhysicsTrigger : public PhysicsFilteredObject
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::TRIGGER)
 
 public:
-	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::TRIGGER;
+	Transform getTransform() const
+	{
+		return toAnki(m_ghostShape->getWorldTransform());
+	}
 
 	void setTransform(const Transform& trf)
 	{
@@ -49,11 +62,19 @@ private:
 	PhysicsCollisionShapePtr m_shape;
 	ClassWrapper<btGhostObject> m_ghostShape;
 
+	DynamicArray<PhysicsTriggerFilteredPair*> m_pairs;
+
 	PhysicsTriggerProcessContactCallback* m_contactCallback = nullptr;
+
+	U64 m_processContactsFrame = 0;
 
 	PhysicsTrigger(PhysicsWorld* world, PhysicsCollisionShapePtr shape);
 
 	~PhysicsTrigger();
+
+	void registerToWorld() override;
+
+	void unregisterFromWorld() override;
 
 	void processContacts();
 };

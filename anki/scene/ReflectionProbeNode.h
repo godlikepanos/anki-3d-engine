@@ -6,8 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneNode.h>
-#include <anki/collision/Aabb.h>
-#include <anki/scene/DebugDrawer.h>
+#include <anki/Math.h>
 
 namespace anki
 {
@@ -19,37 +18,20 @@ namespace anki
 class ReflectionProbeNode : public SceneNode
 {
 public:
-	ReflectionProbeNode(SceneGraph* scene, CString name)
-		: SceneNode(scene, name)
-	{
-	}
+	ReflectionProbeNode(SceneGraph* scene, CString name);
 
 	~ReflectionProbeNode();
-
-	ANKI_USE_RESULT Error init(const Vec4& aabbMinLSpace, const Vec4& aabbMaxLSpace);
 
 	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 private:
 	class MoveFeedbackComponent;
+	class ShapeFeedbackComponent;
 
-	class CubeSide
-	{
-	public:
-		Transform m_localTrf;
-	};
-
-	Array<CubeSide, 6> m_cubeSides;
-	Vec3 m_aabbMinLSpace = Vec3(+1.0f);
-	Vec3 m_aabbMaxLSpace = Vec3(-1.0f);
-	Aabb m_spatialAabb;
-
-	DebugDrawer2 m_dbgDrawer;
-	TextureResourcePtr m_dbgTex;
+	Array<Transform, 6> m_frustumTransforms;
 
 	void onMoveUpdate(MoveComponent& move);
-
-	static void drawCallback(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData);
+	void onShapeUpdate(ReflectionProbeComponent& reflc);
 };
 /// @}
 

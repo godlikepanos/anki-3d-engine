@@ -9,65 +9,46 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Octree.h>
 #include <anki/Collision.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/resource/TextureResource.h>
 #include <anki/shaders/include/ClusteredShadingTypes.h>
 
 namespace anki
 {
 
-LightComponent::LightComponent(LightComponentType type, U64 uuid)
-	: SceneComponent(CLASS_TYPE)
-	, m_uuid(uuid)
-	, m_type(type)
+ANKI_SCENE_COMPONENT_STATICS(LightComponent)
+
+LightComponent::LightComponent(SceneNode* node)
+	: SceneComponent(node, getStaticClassId())
+	, m_node(node)
+	, m_uuid(node->getSceneGraph().getNewUuid())
+	, m_type(LightComponentType::POINT)
 	, m_shadow(false)
-	, m_componentDirty(true)
-	, m_trfDirty(true)
+	, m_markedForUpdate(true)
 {
 	ANKI_ASSERT(m_uuid > 0);
+	m_point.m_radius = 1.0f;
 
-	switch(type)
+	if(node->getSceneGraph().getResourceManager().loadResource("engine_data/LightBulb.ankitex", m_pointDebugTex)
+	   || node->getSceneGraph().getResourceManager().loadResource("engine_data/SpotLight.ankitex", m_spotDebugTex))
 	{
-	case LightComponentType::POINT:
-		m_point.m_radius = 1.0f;
-		break;
-	case LightComponentType::SPOT:
-		setInnerAngle(toRad(45.0f));
-		setOuterAngle(toRad(30.0f));
-		m_spot.m_distance = 1.0f;
-		m_spot.m_textureMat = Mat4::getIdentity();
-		break;
-	case LightComponentType::DIRECTIONAL:
-		m_dir.m_sceneMax = Vec3(MIN_F32);
-		m_dir.m_sceneMin = Vec3(MAX_F32);
-		break;
-	default:
-		ANKI_ASSERT(0);
+		ANKI_SCENE_LOGF("Failed to load resources");
 	}
 }
 
 Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated)
 {
-	updated = false;
+	updated = m_markedForUpdate;
+	m_markedForUpdate = false;
 
-	if(m_componentDirty)
+	if(updated && m_type == LightComponentType::SPOT)
 	{
-		updated = true;
+
+		static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+		const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle,
+																	 LIGHT_FRUSTUM_NEAR_PLANE, m_spot.m_distance);
+		m_spot.m_textureMat = biasMat4 * proj * Mat4(m_worldtransform.getInverse());
 	}
-
-	if(m_trfDirty)
-	{
-		updated = true;
-
-		if(m_type == LightComponentType::SPOT)
-		{
-			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-			Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle,
-																   LIGHT_FRUSTUM_NEAR_PLANE, m_spot.m_distance);
-			m_spot.m_textureMat = biasMat4 * proj * Mat4(m_trf.getInverse());
-		}
-	}
-
-	m_trfDirty = false;
-	m_componentDirty = false;
 
 	// Update the scene bounds always
 	if(m_type == LightComponentType::DIRECTIONAL)
@@ -87,11 +68,14 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 	const U32 shadowCascadeCount = cascadeFrustumComponents.getSize();
 
-	el.m_drawCallback = m_drawCallback;
-	el.m_drawCallbackUserData = m_drawCallbackUserData;
+	el.m_drawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+		ANKI_ASSERT(userData.getSize() == 1);
+		static_cast<const LightComponent*>(userData[0])->draw(ctx);
+	};
+	el.m_drawCallbackUserData = this;
 	el.m_uuid = m_uuid;
 	el.m_diffuseColor = m_diffColor.xyz();
-	el.m_direction = -m_trf.getRotation().getZAxis().xyz();
+	el.m_direction = -m_worldtransform.getRotation().getZAxis().xyz();
 	el.m_effectiveShadowDistance = frustumComp.getEffectiveShadowDistance();
 	el.m_shadowCascadesDistancePower = frustumComp.getShadowCascadesDistancePower();
 	el.m_shadowCascadeCount = U8(shadowCascadeCount);
@@ -103,7 +87,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 	}
 
 	// Compute the texture matrices
-	const Mat4 lightTrf(m_trf);
+	const Mat4 lightTrf(m_worldtransform);
 	if(frustumComp.getFrustumType() == FrustumType::PERSPECTIVE)
 	{
 		// Get some stuff
@@ -147,7 +131,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 			// Set the sphere
 			boundingSpheres[i].setRadius(r);
-			boundingSpheres[i].setCenter(frustumComp.getTransform().transform(C));
+			boundingSpheres[i].setCenter(frustumComp.getWorldTransform().transform(C));
 		}
 
 		// Compute the matrices
@@ -180,7 +164,7 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 				sphereRadius, -sphereRadius, sphereRadius, -sphereRadius, LIGHT_FRUSTUM_NEAR_PLANE, far);
 
 			// View
-			Transform cascadeTransform = m_trf;
+			Transform cascadeTransform = m_worldtransform;
 			cascadeTransform.setOrigin(eye.xyz0());
 			const Mat4 cascadeViewMat = Mat4(cascadeTransform.getInverse());
 
@@ -223,12 +207,40 @@ void LightComponent::setupDirectionalLightQueueElement(const FrustumComponent& f
 
 			FrustumComponent& cascadeFrustumComp = cascadeFrustumComponents[i];
 			cascadeFrustumComp.setOrthographic(LIGHT_FRUSTUM_NEAR_PLANE, far, right, left, top, bottom);
-			cascadeFrustumComp.setTransform(cascadeTransform);
+			cascadeFrustumComp.setWorldTransform(cascadeTransform);
 		}
 	}
 	else
 	{
 		ANKI_ASSERT(!"TODO");
+	}
+}
+
+void LightComponent::draw(RenderQueueDrawContext& ctx) const
+{
+	const Bool enableDepthTest = ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DEPTH_TEST_ON);
+	if(enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
+	}
+	else
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::ALWAYS);
+	}
+
+	Vec3 color = m_diffColor.xyz();
+	color /= max(max(color.x(), color.y()), color.z());
+
+	TextureResourcePtr texResource = (m_type == LightComponentType::POINT) ? m_pointDebugTex : m_spotDebugTex;
+	m_node->getSceneGraph().getDebugDrawer().drawBillboardTexture(
+		ctx.m_projectionMatrix, ctx.m_viewMatrix, m_worldtransform.getOrigin().xyz(), color.xyz1(),
+		ctx.m_debugDrawFlags.get(RenderQueueDebugDrawFlag::DITHERED_DEPTH_TEST_ON), texResource->getGrTextureView(),
+		ctx.m_sampler, Vec2(0.75f), *ctx.m_stagingGpuAllocator, ctx.m_commandBuffer);
+
+	// Restore state
+	if(!enableDepthTest)
+	{
+		ctx.m_commandBuffer->setDepthCompareOperation(CompareOperation::LESS);
 	}
 }
 

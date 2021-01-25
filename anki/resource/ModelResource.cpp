@@ -6,7 +6,6 @@
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/MeshResource.h>
-#include <anki/resource/MeshLoader.h>
 #include <anki/util/Xml.h>
 #include <anki/util/Logger.h>
 
@@ -30,29 +29,12 @@ static Bool attributeIsRequired(VertexAttributeLocation loc, Pass pass, Bool has
 	}
 }
 
-void ModelPatch::getRenderingInfo(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray,
-								  ModelRenderingInfo& inf) const
+void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& inf) const
 {
-	const Bool hasSkin = m_model->getSkeleton().isCreated();
+	ANKI_ASSERT(!(!m_model->supportsSkinning() && key.isSkinned()));
 
 	// Get the resources
-	RenderingKey meshKey = key;
-	meshKey.setLod(min<U32>(key.getLod(), m_meshCount - 1));
-	const MeshResource& mesh = getMesh(meshKey);
-
-	// Get program
-	{
-		RenderingKey mtlKey = key;
-		mtlKey.setLod(min(key.getLod(), m_mtl->getLodCount() - 1));
-		mtlKey.setSkinned(hasSkin);
-
-		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey);
-
-		inf.m_program = variant.getShaderProgram();
-
-		inf.m_boneTransformsBinding = m_mtl->getBoneTransformsBinding();
-		inf.m_prevFrameBoneTransformsBinding = m_mtl->getPrevFrameBoneTransformsBinding();
-	}
+	const MeshResource& mesh = *getMesh(min<U32>(key.getLod(), m_meshLodCount - 1));
 
 	// Vertex attributes & bindings
 	{
@@ -64,13 +46,13 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, WeakArray<U8> subMesh
 
 		for(VertexAttributeLocation loc = VertexAttributeLocation::FIRST; loc < VertexAttributeLocation::COUNT; ++loc)
 		{
-			if(!mesh.isVertexAttributePresent(loc) || !attributeIsRequired(loc, key.getPass(), hasSkin))
+			if(!mesh.isVertexAttributePresent(loc) || !attributeIsRequired(loc, key.getPass(), key.isSkinned()))
 			{
 				continue;
 			}
 
 			// Attribute
-			VertexAttributeInfo& attrib = inf.m_vertexAttributes[inf.m_vertexAttributeCount++];
+			ModelVertexAttribute& attrib = inf.m_vertexAttributes[inf.m_vertexAttributeCount++];
 			attrib.m_location = loc;
 			mesh.getVertexAttributeInfo(loc, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
 
@@ -79,7 +61,7 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, WeakArray<U8> subMesh
 			{
 				bufferBindingVisitedMask |= 1 << attrib.m_bufferBinding;
 
-				VertexBufferBinding& binding = inf.m_vertexBufferBindings[inf.m_vertexBufferBindingCount];
+				ModelVertexBufferBinding& binding = inf.m_vertexBufferBindings[inf.m_vertexBufferBindingCount];
 				mesh.getVertexBufferInfo(attrib.m_bufferBinding, binding.m_buffer, binding.m_offset, binding.m_stride);
 
 				realBufferBindingToVirtual[attrib.m_bufferBinding] = inf.m_vertexBufferBindingCount;
@@ -94,14 +76,27 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, WeakArray<U8> subMesh
 	}
 
 	// Index buff
-	U32 indexCount;
-	mesh.getIndexBufferInfo(inf.m_indexBuffer, inf.m_indexBufferOffset, indexCount, inf.m_indexType);
+	mesh.getIndexBufferInfo(inf.m_indexBuffer, inf.m_indexBufferOffset, inf.m_indexCount, inf.m_indexType);
 
-	// Other
-	ANKI_ASSERT(subMeshIndicesArray.getSize() == 0 && mesh.getSubMeshCount() == 1 && "Not supported ATM");
-	inf.m_drawcallCount = 1;
-	inf.m_indicesOffsetArray[0] = 0;
-	inf.m_indicesCountArray[0] = indexCount;
+	// Get program
+	{
+		RenderingKey mtlKey = key;
+		mtlKey.setLod(min(key.getLod(), m_mtl->getLodCount() - 1));
+
+		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey);
+
+		inf.m_program = variant.getShaderProgram();
+
+		if(m_mtl->supportsSkinning())
+		{
+			inf.m_boneTransformsBinding = m_mtl->getBoneTransformsBinding();
+			inf.m_prevFrameBoneTransformsBinding = m_mtl->getPrevFrameBoneTransformsBinding();
+		}
+		else
+		{
+			inf.m_boneTransformsBinding = inf.m_prevFrameBoneTransformsBinding = MAX_U32;
+		}
+	}
 }
 
 void ModelPatch::getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const
@@ -112,7 +107,7 @@ void ModelPatch::getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const
 	memset(&info.m_descriptor, 0, sizeof(info.m_descriptor));
 
 	// Mesh
-	const MeshResourcePtr& mesh = m_meshes[min(U32(m_meshCount - 1), lod)];
+	const MeshResourcePtr& mesh = m_meshes[min(U32(m_meshLodCount - 1), lod)];
 	info.m_bottomLevelAccelerationStructure = mesh->getBottomLevelAccelerationStructure();
 	info.m_descriptor.m_mesh = mesh->getMeshGpuDescriptor();
 	info.m_grObjectReferences[info.m_grObjectReferenceCount++] = mesh->getIndexBuffer();
@@ -139,11 +134,6 @@ void ModelPatch::getRayTracingInfo(U32 lod, ModelRayTracingInfo& info) const
 	}
 }
 
-U32 ModelPatch::getLodCount() const
-{
-	return max<U32>(m_meshCount, getMaterial()->getLodCount());
-}
-
 Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames, const CString& mtlFName, Bool async,
 					   ResourceManager* manager)
 {
@@ -154,7 +144,7 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl, async));
 
 	// Load meshes
-	m_meshCount = 0;
+	m_meshLodCount = 0;
 	for(U32 i = 0; i < meshFNames.getSize(); i++)
 	{
 		ANKI_CHECK(manager->loadResource(meshFNames[i], m_meshes[i], async));
@@ -166,7 +156,7 @@ Error ModelPatch::init(ModelResource* model, ConstWeakArray<CString> meshFNames,
 			return Error::USER_DATA;
 		}
 
-		++m_meshCount;
+		++m_meshLodCount;
 	}
 
 	return Error::NONE;
@@ -231,7 +221,6 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		Array<CString, 3> meshesFnames;
 		U32 meshesCount = 1;
 
-		// Get mesh
 		XmlElement meshEl;
 		ANKI_CHECK(modelPatchEl.getChildElement("mesh", meshEl));
 
@@ -261,28 +250,25 @@ Error ModelResource::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(m_modelPatches[count].init(this, ConstWeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async,
 											  &getManager()));
 
+		if(count > 0 && m_modelPatches[count].supportsSkinning() != m_modelPatches[count - 1].supportsSkinning())
+		{
+			ANKI_RESOURCE_LOGE("All model patches should support skinning or all shouldn't support skinning");
+			return Error::USER_DATA;
+		}
+
+		m_skinning = m_modelPatches[count].supportsSkinning();
+
 		// Move to next
 		ANKI_CHECK(modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
+		++count;
 	} while(modelPatchEl);
-
-	// <skeleton>
-	XmlElement skeletonEl;
-	ANKI_CHECK(rootEl.getChildElementOptional("skeleton", skeletonEl));
-	if(skeletonEl)
-	{
-		CString fname;
-		ANKI_CHECK(skeletonEl.getText(fname));
-		ANKI_CHECK(getManager().loadResource(fname, m_skeleton));
-	}
+	ANKI_ASSERT(count == m_modelPatches.getSize());
 
 	// Calculate compound bounding volume
-	RenderingKey key;
-	key.setLod(0);
-	m_visibilityShape = m_modelPatches[0].getMesh(key).getBoundingShape();
-
+	m_boundingVolume = m_modelPatches[0].m_meshes[0]->getBoundingShape();
 	for(auto it = m_modelPatches.getBegin() + 1; it != m_modelPatches.getEnd(); ++it)
 	{
-		m_visibilityShape = m_visibilityShape.getCompoundShape((*it).getMesh(key).getBoundingShape());
+		m_boundingVolume = m_boundingVolume.getCompoundShape((*it).m_meshes[0]->getBoundingShape());
 	}
 
 	return Error::NONE;

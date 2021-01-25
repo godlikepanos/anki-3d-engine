@@ -25,12 +25,6 @@ ANKI_USE_RESULT Error getXmlVal(const XmlElement& el, const CString& tag, Vec3& 
 	return el.getAttributeNumbersOptional(tag, out, found);
 }
 
-ParticleEmitterProperties& ParticleEmitterProperties::operator=(const ParticleEmitterProperties& b)
-{
-	memcpy(this, &b, sizeof(ParticleEmitterProperties));
-	return *this;
-}
-
 ParticleEmitterResource::ParticleEmitterResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
@@ -78,6 +72,13 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async
 	if(el)
 	{
 		ANKI_CHECK(el.getAttributeNumber("value", m_usePhysicsEngine));
+	}
+
+	ANKI_CHECK(rootEl.getChildElementOptional("emitterBoundingVolume", el));
+	if(el)
+	{
+		ANKI_CHECK(el.getAttributeNumbers("min", m_emitterBoundingVolumeMin));
+		ANKI_CHECK(el.getAttributeNumbers("max", m_emitterBoundingVolumeMax));
 	}
 
 	CString cstr;

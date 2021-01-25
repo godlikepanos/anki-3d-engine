@@ -15,55 +15,66 @@ namespace anki
 /// @addtogroup scene
 /// @{
 
-// The type of the components
-enum class SceneComponentType : U8
+/// Scene component class info.
+class SceneComponentRtti
 {
-	NONE,
-	FRUSTUM,
-	MOVE,
-	RENDER,
-	SPATIAL,
-	LIGHT,
-	LENS_FLARE,
-	BODY,
-	REFLECTION_PROBE,
-	GLOBAL_ILLUMINATION_PROBE,
-	OCCLUDER,
-	DECAL,
-	SKIN,
-	SCRIPT,
-	JOINT,
-	TRIGGER,
-	FOG_DENSITY,
-	GENERIC_GPU_COMPUTE_JOB_COMPONENT,
-	PLAYER_CONTROLLER,
+public:
+	using Constructor = void (*)(SceneComponent*, SceneNode*);
 
-	COUNT,
-	LAST_COMPONENT_ID = PLAYER_CONTROLLER
+	U8 m_classId;
+	const char* m_className;
+	U32 m_classSize;
+	U32 m_classAlignment;
+	Constructor m_constructorCallback;
+
+	SceneComponentRtti(const char* name, U32 size, U32 alignment, Constructor constructor);
 };
+
+/// Define a scene component.
+#define ANKI_SCENE_COMPONENT(className) \
+	static SceneComponentRtti _m_rtti; \
+	static void _construct(SceneComponent* self, SceneNode* node) \
+	{ \
+		::new(self) className(node); \
+	} \
+\
+public: \
+	static U8 getStaticClassId() \
+	{ \
+		return _m_rtti.m_classId; \
+	} \
+\
+private:
+
+/// Define the statics of a scene component.
+#define ANKI_SCENE_COMPONENT_STATICS(className) \
+	SceneComponentRtti className::_m_rtti(ANKI_STRINGIZE(className), sizeof(className), alignof(className), \
+										  className::_construct);
 
 /// Scene node component
 class SceneComponent
 {
 public:
 	/// Construct the scene component.
-	SceneComponent(SceneComponentType type)
-		: m_type(type)
-	{
-	}
+	SceneComponent(SceneNode* node, U8 classId, Bool isFeedbackComponent = false);
 
 	virtual ~SceneComponent()
 	{
 	}
 
-	SceneComponentType getType() const
+	U8 getClassId() const
 	{
-		return m_type;
+		return m_classId;
 	}
 
 	Timestamp getTimestamp() const
 	{
 		return m_timestamp;
+	}
+
+	Bool isFeedbackComponent() const
+	{
+		return m_feedbackComponent;
 	}
 
 	/// Do some updating
@@ -77,9 +88,6 @@ public:
 		return Error::NONE;
 	}
 
-	/// Called only by the SceneGraph
-	ANKI_USE_RESULT Error updateReal(SceneNode& node, Second prevTime, Second crntTime, Bool& updated);
-
 	/// Don't call it.
 	void setTimestamp(Timestamp timestamp)
 	{
@@ -88,9 +96,14 @@ public:
 		m_timestamp = timestamp;
 	}
 
+	static const SceneComponentRtti& findClassRtti(CString className);
+
+	static const SceneComponentRtti& findClassRtti(U8 classId);
+
 private:
 	Timestamp m_timestamp = 1; ///< Indicates when an update happened
-	SceneComponentType m_type;
+	U8 m_classId : 7; ///< Cache the type ID.
+	U8 m_feedbackComponent : 1;
 };
 /// @}
 

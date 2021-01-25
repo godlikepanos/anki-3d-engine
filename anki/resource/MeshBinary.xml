@@ -9,6 +9,8 @@
 	<prefix_code><![CDATA[
 static constexpr const char* MESH_MAGIC = "ANKIMES5";
 
+constexpr U32 MESH_BINARY_BUFFER_ALIGNMENT = 16;
+
 enum class MeshBinaryFlag : U32
 {
 	NONE = 0,
@@ -21,7 +23,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 ]]></prefix_code>
 
 	<classes>
-		<class name="MeshBinaryVertexBuffer" comment="Vertex buffer info. The size of the buffer is m_vertexStride*MeshBinaryHeader::m_totalVertexCount aligned to 16">
+		<class name="MeshBinaryVertexBuffer" comment="Vertex buffer info. The size of the buffer is m_vertexStride*MeshBinaryHeader::m_totalVertexCount aligned to MESH_BINARY_BUFFER_ALIGNMENT">
 			<members>
 				<member name="m_vertexStride" type="U32" comment="The size of the vertex"/>
 			</members>
@@ -45,7 +47,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MeshBinaryFlag)
 			</members>
 		</class>
 
-		<class name="MeshBinaryHeader" comment="The 1st things that appears in a mesh binary. @note The index and vertex buffers are aligned to 16 bytes">
+		<class name="MeshBinaryHeader" comment="The 1st things that appears in a mesh binary. @note The index and vertex buffers are aligned to MESH_BINARY_BUFFER_ALIGNMENT bytes">
 			<members>
 				<member name="m_magic" type="U8" array_size="8"/>
 				<member name="m_flags" type="MeshBinaryFlag"/>

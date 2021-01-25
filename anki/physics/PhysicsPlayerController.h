@@ -23,42 +23,48 @@ public:
 	F32 m_outerRadius = 0.50f;
 	F32 m_height = 1.9f;
 	F32 m_stepHeight = 1.9f * 0.33f;
-	Vec4 m_position = Vec4(0.0f);
+	Vec3 m_position = Vec3(0.0f);
 };
 
 /// A player controller that walks the world.
 class PhysicsPlayerController final : public PhysicsFilteredObject
 {
-	ANKI_PHYSICS_OBJECT
+	ANKI_PHYSICS_OBJECT(PhysicsObjectType::PLAYER_CONTROLLER)
 
 public:
-	static const PhysicsObjectType CLASS_TYPE = PhysicsObjectType::PLAYER_CONTROLLER;
-
 	// Update the state machine
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
 	{
 		m_controller->setWalkDirection(toBt((forwardDir * forwardSpeed).xyz()));
 	}
 
-	void moveToPosition(const Vec4& position);
-
-	Transform getTransform(Bool& updated)
+	/// This is a deferred operation, will happen on the next PhysicsWorld::update.
+	void moveToPosition(const Vec3& position)
 	{
-		Transform out = toAnki(m_ghostObject->getWorldTransform());
-		updated = m_prevTrf != out;
-		return out;
+		m_moveToPosition = position;
+	}
+
+	Transform getTransform()
+	{
+		return toAnki(m_ghostObject->getWorldTransform());
 	}
 
 private:
 	ClassWrapper<btPairCachingGhostObject> m_ghostObject;
 	ClassWrapper<btCapsuleShape> m_convexShape;
 	ClassWrapper<btKinematicCharacterController> m_controller;
-
-	Transform m_prevTrf = Transform::getIdentity();
+	Vec3 m_moveToPosition = Vec3(MAX_F32);
 
 	PhysicsPlayerController(PhysicsWorld* world, const PhysicsPlayerControllerInitInfo& init);
 
 	~PhysicsPlayerController();
+
+	void registerToWorld() override;
+
+	void unregisterFromWorld() override;
+
+	/// Called in PhysicsWorld::update.
+	void moveToPositionForReal();
 };
 /// @}
 

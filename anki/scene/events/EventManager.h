@@ -60,7 +60,7 @@ public:
 	ANKI_USE_RESULT Error updateAllEvents(Second prevUpdateTime, Second crntTime);
 
 	/// Delete events that pending deletion
-	void deleteEventsMarkedForDeletion();
+	void deleteEventsMarkedForDeletion(Bool fullCleanup);
 
 	/// @note It's thread-safe against itself.
 	void markEventForDeletion(Event* event);

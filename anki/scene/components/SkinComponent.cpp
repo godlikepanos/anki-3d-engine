@@ -5,24 +5,21 @@
 
 #include <anki/scene/components/SkinComponent.h>
 #include <anki/scene/SceneNode.h>
+#include <anki/scene/SceneGraph.h>
 #include <anki/resource/SkeletonResource.h>
 #include <anki/resource/AnimationResource.h>
+#include <anki/resource/ResourceManager.h>
 #include <anki/util/BitSet.h>
 
 namespace anki
 {
 
-SkinComponent::SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton)
-	: SceneComponent(CLASS_TYPE)
-	, m_node(node)
-	, m_skeleton(skeleton)
-{
-	ANKI_ASSERT(node);
+ANKI_SCENE_COMPONENT_STATICS(SkinComponent)
 
-	m_boneTrfs[0].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
-	m_boneTrfs[1].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
-	m_animationTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize(),
-						   {Vec3(0.0f), Quat::getIdentity(), 1.0f});
+SkinComponent::SkinComponent(SceneNode* node)
+	: SceneComponent(node, getStaticClassId())
+	, m_node(node)
+{
 }
 
 SkinComponent::~SkinComponent()
@@ -30,6 +27,22 @@ SkinComponent::~SkinComponent()
 	m_boneTrfs[0].destroy(m_node->getAllocator());
 	m_boneTrfs[1].destroy(m_node->getAllocator());
 	m_animationTrfs.destroy(m_node->getAllocator());
+}
+
+Error SkinComponent::loadSkeletonResource(CString fname)
+{
+	ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource(fname, m_skeleton));
+
+	m_boneTrfs[0].destroy(m_node->getAllocator());
+	m_boneTrfs[1].destroy(m_node->getAllocator());
+	m_animationTrfs.destroy(m_node->getAllocator());
+
+	m_boneTrfs[0].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
+	m_boneTrfs[1].create(m_node->getAllocator(), m_skeleton->getBones().getSize(), Mat4::getIdentity());
+	m_animationTrfs.create(m_node->getAllocator(), m_skeleton->getBones().getSize(),
+						   {Vec3(0.0f), Quat::getIdentity(), 1.0f});
+
+	return Error::NONE;
 }
 
 void SkinComponent::playAnimation(U32 track, AnimationResourcePtr anim, const AnimationPlayInfo& info)
@@ -57,6 +70,11 @@ Error SkinComponent::update(SceneNode& node, Second prevTime, Second crntTime, B
 	ANKI_ASSERT(&node == m_node);
 
 	updated = false;
+	if(!m_skeleton.isCreated())
+	{
+		return Error::NONE;
+	}
+
 	const Second dt = crntTime - prevTime;
 
 	Vec4 minExtend(MAX_F32, MAX_F32, MAX_F32, 0.0f);

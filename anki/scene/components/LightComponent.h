@@ -20,19 +20,28 @@ enum class LightComponentType : U8
 	POINT,
 	SPOT,
 	DIRECTIONAL, ///< Basically the sun.
-	COUNT
+
+	COUNT,
+	FIRST = 0
 };
 
-/// Light component. It's a dummy component used to identify lights
+/// Light component. Contains all the info of lights.
 class LightComponent : public SceneComponent
 {
-public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::LIGHT;
+	ANKI_SCENE_COMPONENT(LightComponent)
 
-	LightComponent(LightComponentType type, U64 uuid);
+public:
+	LightComponent(SceneNode* node);
 
 	~LightComponent()
 	{
+	}
+
+	void setLightComponentType(LightComponentType type)
+	{
+		ANKI_ASSERT(type >= LightComponentType::FIRST && type < LightComponentType::COUNT);
+		m_type = type;
+		m_markedForUpdate = true;
 	}
 
 	LightComponentType getLightComponentType() const
@@ -40,10 +49,15 @@ public:
 		return m_type;
 	}
 
-	void updateWorldTransform(const Transform& trf)
+	void setWorldTransform(const Transform& trf)
 	{
-		m_trf = trf;
-		m_trfDirty = true;
+		m_worldtransform = trf;
+		m_markedForUpdate = true;
+	}
+
+	const Transform& getWorldTransform() const
+	{
+		return m_worldtransform;
 	}
 
 	const Vec4& getDiffuseColor() const
@@ -59,7 +73,7 @@ public:
 	void setRadius(F32 x)
 	{
 		m_point.m_radius = x;
-		m_componentDirty = true;
+		m_markedForUpdate = true;
 	}
 
 	F32 getRadius() const
@@ -70,7 +84,7 @@ public:
 	void setDistance(F32 x)
 	{
 		m_spot.m_distance = x;
-		m_componentDirty = true;
+		m_markedForUpdate = true;
 	}
 
 	F32 getDistance() const
@@ -82,7 +96,7 @@ public:
 	{
 		m_spot.m_innerAngleCos = cos(ang / 2.0f);
 		m_spot.m_innerAngle = ang;
-		m_componentDirty = true;
+		m_markedForUpdate = true;
 	}
 
 	F32 getInnerAngleCos() const
@@ -99,7 +113,7 @@ public:
 	{
 		m_spot.m_outerAngleCos = cos(ang / 2.0f);
 		m_spot.m_outerAngle = ang;
-		m_componentDirty = true;
+		m_markedForUpdate = true;
 	}
 
 	F32 getOuterAngle() const
@@ -122,28 +136,20 @@ public:
 		m_shadow = x;
 	}
 
-	void setDrawCallback(RenderQueueDrawCallback callback, const void* userData)
-	{
-		m_drawCallback = callback;
-		m_drawCallbackUserData = userData;
-	}
-
-	const Transform& getTransform() const
-	{
-		return m_trf;
-	}
-
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override;
 
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::POINT);
 		el.m_uuid = m_uuid;
-		el.m_worldPosition = m_trf.getOrigin().xyz();
+		el.m_worldPosition = m_worldtransform.getOrigin().xyz();
 		el.m_radius = m_point.m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_debugDrawCallback = m_drawCallback;
-		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
+		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+			ANKI_ASSERT(userData.getSize() == 1);
+			static_cast<const LightComponent*>(userData[0])->draw(ctx);
+		};
+		el.m_debugDrawCallbackUserData = this;
 		el.m_shadowLayer = MAX_U8;
 	}
 
@@ -151,14 +157,17 @@ public:
 	{
 		ANKI_ASSERT(m_type == LightComponentType::SPOT);
 		el.m_uuid = m_uuid;
-		el.m_worldTransform = Mat4(m_trf);
+		el.m_worldTransform = Mat4(m_worldtransform);
 		el.m_textureMatrix = m_spot.m_textureMat;
 		el.m_distance = m_spot.m_distance;
 		el.m_outerAngle = m_spot.m_outerAngle;
 		el.m_innerAngle = m_spot.m_innerAngle;
 		el.m_diffuseColor = m_diffColor.xyz();
-		el.m_debugDrawCallback = m_drawCallback;
-		el.m_debugDrawCallbackUserData = m_drawCallbackUserData;
+		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
+			ANKI_ASSERT(userData.getSize() == 1);
+			static_cast<const LightComponent*>(userData[0])->draw(ctx);
+		};
+		el.m_debugDrawCallbackUserData = this;
 		el.m_shadowLayer = MAX_U8;
 	}
 
@@ -171,11 +180,10 @@ public:
 										   WeakArray<FrustumComponent> cascadeFrustumComponents) const;
 
 private:
+	SceneNode* m_node = nullptr;
 	U64 m_uuid;
 	Vec4 m_diffColor = Vec4(0.5f);
-	Transform m_trf = Transform::getIdentity();
-	RenderQueueDrawCallback m_drawCallback = nullptr;
-	const void* m_drawCallbackUserData = nullptr;
+	Transform m_worldtransform = Transform::getIdentity();
 
 	class Point
 	{
@@ -208,11 +216,15 @@ private:
 		Dir m_dir;
 	};
 
+	TextureResourcePtr m_pointDebugTex;
+	TextureResourcePtr m_spotDebugTex;
+
 	LightComponentType m_type;
 
 	U8 m_shadow : 1;
-	U8 m_componentDirty : 1;
-	U8 m_trfDirty : 1;
+	U8 m_markedForUpdate : 1;
+
+	void draw(RenderQueueDrawContext& ctx) const;
 };
 /// @}
 

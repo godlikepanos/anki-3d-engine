@@ -25,41 +25,45 @@ PhysicsPlayerController::PhysicsPlayerController(PhysicsWorld* world, const Phys
 
 	m_controller.init(m_ghostObject.get(), m_convexShape.get(), init.m_stepHeight, btVector3(0, 1, 0));
 
-	{
-		auto lock = getWorld().lockBtWorld();
-		btDynamicsWorld* btworld = getWorld().getBtWorld();
-
-		btworld->addCollisionObject(m_ghostObject.get(), btBroadphaseProxy::CharacterFilter,
-									btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
-		btworld->addAction(m_controller.get());
-	}
-
 	// Need to call this else the player is upside down
 	moveToPosition(init.m_position);
 }
 
 PhysicsPlayerController::~PhysicsPlayerController()
 {
-	{
-		auto lock = getWorld().lockBtWorld();
-		getWorld().getBtWorld()->removeAction(m_controller.get());
-		getWorld().getBtWorld()->removeCollisionObject(m_ghostObject.get());
-	}
-
 	m_controller.destroy();
 	m_ghostObject.destroy();
 	m_convexShape.destroy();
 }
 
-void PhysicsPlayerController::moveToPosition(const Vec4& position)
+void PhysicsPlayerController::registerToWorld()
 {
-	auto lock = getWorld().lockBtWorld();
+	btDynamicsWorld& btworld = getWorld().getBtWorld();
+	btworld.addCollisionObject(m_ghostObject.get(), btBroadphaseProxy::CharacterFilter,
+							   btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+	btworld.addAction(m_controller.get());
+}
 
-	getWorld().getBtWorld()->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(
-		m_ghostObject->getBroadphaseHandle(), getWorld().getBtWorld()->getDispatcher());
+void PhysicsPlayerController::unregisterFromWorld()
+{
+	getWorld().getBtWorld().removeAction(m_controller.get());
+	getWorld().getBtWorld().removeCollisionObject(m_ghostObject.get());
+}
 
-	m_controller->reset(getWorld().getBtWorld());
-	m_controller->warp(toBt(position.xyz()));
+void PhysicsPlayerController::moveToPositionForReal()
+{
+	if(m_moveToPosition.x() == MAX_F32)
+	{
+		return;
+	}
+
+	getWorld().getBtWorld().getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(
+		m_ghostObject->getBroadphaseHandle(), getWorld().getBtWorld().getDispatcher());
+
+	m_controller->reset(&getWorld().getBtWorld());
+	m_controller->warp(toBt(m_moveToPosition));
+
+	m_moveToPosition.x() = MAX_F32;
 }
 
 } // end namespace anki

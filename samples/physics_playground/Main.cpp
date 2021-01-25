@@ -37,6 +37,7 @@ radius = 3.5
 
 function update(event, prevTime, crntTime)
 	node = event:getAssociatedSceneNodes():getAt(0)
+	-- logi(string.format("Will fade fog for %s", node:getName()))
 	fogComponent = node:getFogDensityComponent()
 
 	dt = crntTime - prevTime
@@ -50,7 +51,7 @@ function update(event, prevTime, crntTime)
 	if density <= 0.0 or radius <= 0.0 then
 		event:getAssociatedSceneNodes():getAt(0):setMarkedForDeletion()
 	else
-		fogComponent:setSphere(radius)
+		fogComponent:setSphereVolumeRadius(radius)
 		fogComponent:setDensity(density)
 	end
 
@@ -119,8 +120,9 @@ Error MyApp::sampleExtraInit()
 			Transform(Vec4(0.0, 0.0, 5.0, 0.0), Mat3x4::getIdentity(), 1.0));
 
 		PlayerNode* player;
-		ANKI_CHECK(getSceneGraph().newSceneNode("player", player, Vec4(0.0f, 2.5f, 0.0f, 0.0f)));
+		ANKI_CHECK(getSceneGraph().newSceneNode("player", player));
 		PlayerControllerComponent& pcomp = player->getFirstComponentOfType<PlayerControllerComponent>();
+		pcomp.moveToPosition(Vec3(0.0f, 2.5f, 0.0f));
 		pcomp.getPhysicsPlayerController()->setMaterialMask(PhysicsMaterialBit::STATIC_GEOMETRY);
 
 		player->addChild(&cam);
@@ -129,12 +131,16 @@ Error MyApp::sampleExtraInit()
 	// Create a body component with joint
 	{
 		ModelNode* monkey;
-		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>("monkey_p2p", monkey, "assets/Suzanne_dynamic.ankimdl"));
+		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>("monkey_p2p", monkey));
+		ANKI_CHECK(
+			monkey->getFirstComponentOfType<ModelComponent>().loadModelResource("assets/Suzanne_dynamic.ankimdl"));
 
 		BodyNode* body;
-		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body, "assets/Suzanne.ankicl"));
-		body->getFirstComponentOfType<BodyComponent>().setTransform(
+		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>("bmonkey_p2p", body));
+		ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource("assets/Suzanne.ankimesh"));
+		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(
 			Transform(Vec4(-0.0f, 4.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
+		body->getFirstComponentOfType<BodyComponent>().setMass(2.0f);
 
 		body->addChild(monkey);
 
@@ -150,8 +156,9 @@ Error MyApp::sampleExtraInit()
 		{
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
-				StringAuto(getAllocator()).sprintf("monkey_chain%u", i).toCString(), monkey,
-				"assets/Suzanne_dynamic.ankimdl"));
+				StringAuto(getAllocator()).sprintf("monkey_chain%u", i).toCString(), monkey));
+			ANKI_CHECK(
+				monkey->getFirstComponentOfType<ModelComponent>().loadModelResource("assets/Suzanne_dynamic.ankimdl"));
 
 			Transform trf(Vec4(-4.3f, 12.0f, -3.0f, 0.0f), Mat3x4::getIdentity(), 1.0f);
 			trf.getOrigin().y() -= F32(i) * 1.25f;
@@ -161,8 +168,10 @@ Error MyApp::sampleExtraInit()
 
 			BodyNode* body;
 			ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body, "assets/Suzanne.ankicl"));
-			body->getFirstComponentOfType<BodyComponent>().setTransform(trf);
+				StringAuto(getAllocator()).sprintf("bmonkey_chain%u", i).toCString(), body));
+			ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource("assets/Suzanne.ankimesh"));
+			body->getFirstComponentOfType<BodyComponent>().setWorldTransform(trf);
+			body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
 
 			// Create joint
 			JointComponent& jointc = body->getFirstComponentOfType<JointComponent>();
@@ -184,9 +193,10 @@ Error MyApp::sampleExtraInit()
 	// Trigger
 	{
 		TriggerNode* node;
-		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node, 1.8f));
-
-		node->getFirstComponentOfType<MoveComponent>().setLocalOrigin(Vec4(1.0f, 0.5f, 0.0f, 0.0f));
+		ANKI_CHECK(getSceneGraph().newSceneNode("trigger", node));
+		node->getFirstComponentOfType<TriggerComponent>().setSphereVolumeRadius(1.8f);
+		node->getFirstComponentOfType<TriggerComponent>().setWorldTransform(
+			Transform(Vec4(1.0f, 0.5f, 0.0f, 0.0f), Mat3x4::getIdentity(), 1.0f));
 	}
 
 	return Error::NONE;
@@ -226,7 +236,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 	if(getInput().getKey(KeyCode::R))
 	{
 		SceneNode& player = getSceneGraph().findSceneNode("player");
-		player.getFirstComponentOfType<PlayerControllerComponent>().moveToPosition(Vec4(0.0f, 2.0f, 0.0f, 0.0f));
+		player.getFirstComponentOfType<PlayerControllerComponent>().moveToPosition(Vec3(0.0f, 2.0f, 0.0f));
 	}
 
 	if(getInput().getMouseButton(MouseButton::LEFT) == 1)
@@ -240,14 +250,17 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 		ModelNode* monkey;
 		ANKI_CHECK(getSceneGraph().newSceneNode<ModelNode>(
-			StringAuto(getAllocator()).sprintf("monkey%u", instance++).toCString(), monkey,
-			"assets/Suzanne_dynamic.ankimdl"));
+			StringAuto(getAllocator()).sprintf("monkey%u", instance++).toCString(), monkey));
+		ANKI_CHECK(
+			monkey->getFirstComponentOfType<ModelComponent>().loadModelResource("assets/Suzanne_dynamic.ankimdl"));
 		// monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(camTrf);
 
 		BodyNode* body;
 		ANKI_CHECK(getSceneGraph().newSceneNode<BodyNode>(
-			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body, "assets/Suzanne.ankicl"));
-		body->getFirstComponentOfType<BodyComponent>().setTransform(camTrf);
+			StringAuto(getAllocator()).sprintf("bmonkey%u", instance++).toCString(), body));
+		ANKI_CHECK(body->getFirstComponentOfType<BodyComponent>().loadMeshResource("assets/Suzanne.ankimesh"));
+		body->getFirstComponentOfType<BodyComponent>().setWorldTransform(camTrf);
+		body->getFirstComponentOfType<BodyComponent>().setMass(1.0f);
 
 		PhysicsBodyPtr pbody = body->getFirstComponentOfType<BodyComponent>().getPhysicsBody();
 		pbody->applyForce(camTrf.getRotation().getZAxis().xyz() * -1500.0f, Vec3(0.0f, 0.0f, 0.0f));
@@ -289,8 +302,9 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			static U id = 0;
 			ModelNode* monkey;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
-				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(), monkey,
-				"assets/Suzanne_dynamic.ankimdl"));
+				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("decal%u", id++).toCString(), monkey));
+			ANKI_CHECK(
+				monkey->getFirstComponentOfType<ModelComponent>().loadModelResource("assets/Suzanne_dynamic.ankimdl"));
 			monkey->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
 
 			createDestructionEvent(monkey);
@@ -299,7 +313,8 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 			// Create some particles
 			ParticleEmitterNode* particles;
 			ANKI_CHECK(getSceneGraph().newSceneNode(
-				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("parts%u", id++).toCString(), particles,
+				StringAuto(getSceneGraph().getFrameAllocator()).sprintf("parts%u", id++).toCString(), particles));
+			ANKI_CHECK(particles->getFirstComponentOfType<ParticleEmitterComponent>().loadParticleEmitterResource(
 				"assets/smoke.ankipart"));
 			particles->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
 			createDestructionEvent(particles);
@@ -315,7 +330,7 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 				FogDensityNode* fogNode;
 				ANKI_CHECK(getSceneGraph().newSceneNode(name.toCString(), fogNode));
 				FogDensityComponent& fogComp = fogNode->getFirstComponentOfType<FogDensityComponent>();
-				fogComp.setSphere(2.1f);
+				fogComp.setSphereVolumeRadius(2.1f);
 				fogComp.setDensity(15.0f);
 
 				fogNode->getFirstComponentOfType<MoveComponent>().setLocalTransform(trf);
@@ -331,9 +346,9 @@ Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 		SceneNode& node = getSceneGraph().findSceneNode("trigger");
 		TriggerComponent& comp = node.getFirstComponentOfType<TriggerComponent>();
 
-		for(U32 i = 0; i < comp.getContactSceneNodes().getSize(); ++i)
+		for(U32 i = 0; i < comp.getBodyComponentsEnter().getSize(); ++i)
 		{
-			ANKI_LOGI("Touching %s", comp.getContactSceneNodes()[i]->getName().cstr());
+			// ANKI_LOGI("Touching %s", comp.getContactSceneNodes()[i]->getName().cstr());
 		}
 	}
 

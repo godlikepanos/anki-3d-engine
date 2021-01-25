@@ -38,6 +38,14 @@ public:
 		check();
 	}
 
+	/// Constructor
+	Sphere(const Vec3& center, F32 radius)
+		: m_center(center.xyz0())
+		, m_radius(radius)
+	{
+		check();
+	}
+
 	/// Set from point cloud.
 	Sphere(const Vec3* pointBuffer, U pointCount, PtrSize pointStride, PtrSize buffSize)
 	{

@@ -23,17 +23,13 @@ public:
 	~CameraNode();
 
 protected:
-	ANKI_USE_RESULT Error init(FrustumType frustumType);
+	void initCommon(FrustumType frustumType);
 
 private:
 	class MoveFeedbackComponent;
-	class FrustumFeedbackComponent;
 
 	/// Called when moved.
 	void onMoveComponentUpdate(MoveComponent& move);
-
-	/// Called when something changed in the frustum.
-	void onFrustumComponentUpdate(FrustumComponent& fr);
 };
 
 /// Perspective camera
@@ -43,11 +39,6 @@ public:
 	PerspectiveCameraNode(SceneGraph* scene, CString name);
 
 	~PerspectiveCameraNode();
-
-	ANKI_USE_RESULT Error init()
-	{
-		return CameraNode::init(FrustumType::PERSPECTIVE);
-	}
 };
 
 /// Orthographic camera
@@ -57,11 +48,6 @@ public:
 	OrthographicCameraNode(SceneGraph* scene, CString name);
 
 	~OrthographicCameraNode();
-
-	ANKI_USE_RESULT Error init()
-	{
-		return CameraNode::init(FrustumType::ORTHOGRAPHIC);
-	}
 };
 /// @}
 

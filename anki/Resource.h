@@ -10,6 +10,7 @@
 #include <anki/resource/AnimationResource.h>
 #include <anki/resource/ScriptResource.h>
 #include <anki/resource/MeshResource.h>
+#include <anki/resource/CpuMeshResource.h>
 #include <anki/resource/MaterialResource.h>
 #include <anki/resource/TextureAtlasResource.h>
 #include <anki/resource/TextureResource.h>
@@ -18,9 +19,8 @@
 #include <anki/resource/DummyResource.h>
 #include <anki/resource/ModelResource.h>
 #include <anki/resource/ShaderProgramResource.h>
-#include <anki/resource/CollisionResource.h>
 
-#include <anki/resource/MeshLoader.h>
+#include <anki/resource/MeshBinaryLoader.h>
 
 /// @defgroup resource Collection of resources and management
 

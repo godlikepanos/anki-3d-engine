@@ -27,7 +27,10 @@ void MicroCommandBuffer::reset()
 	ANKI_ASSERT(m_refcount.load() == 0);
 	ANKI_ASSERT(!m_fence.isCreated() || m_fence->done());
 
-	m_objectRefs.destroy(m_fastAlloc);
+	for(GrObjectType type : EnumIterable<GrObjectType>())
+	{
+		m_objectRefs[type].destroy(m_fastAlloc);
+	}
 
 	m_fastAlloc.getMemoryPool().reset();
 

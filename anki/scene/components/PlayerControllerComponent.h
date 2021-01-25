@@ -17,25 +17,19 @@ namespace anki
 /// Physics player controller component.
 class PlayerControllerComponent : public SceneComponent
 {
+	ANKI_SCENE_COMPONENT(PlayerControllerComponent)
+
 public:
-	static const SceneComponentType CLASS_TYPE = SceneComponentType::PLAYER_CONTROLLER;
+	PlayerControllerComponent(SceneNode* node);
 
-	PlayerControllerComponent(PhysicsPlayerControllerPtr player)
-		: SceneComponent(CLASS_TYPE)
-		, m_player(player)
-	{
-	}
-
-	~PlayerControllerComponent() = default;
-
-	const Transform& getTransform() const
+	const Transform& getWorldTransform() const
 	{
 		return m_trf;
 	}
 
-	void setTransform(const Transform& trf)
+	void setWorldTransform(const Transform& trf)
 	{
-		m_player->moveToPosition(trf.getOrigin());
+		m_player->moveToPosition(trf.getOrigin().xyz());
 	}
 
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
@@ -43,14 +37,16 @@ public:
 		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
 	}
 
-	void moveToPosition(Vec4 pos)
+	void moveToPosition(const Vec3& pos)
 	{
 		m_player->moveToPosition(pos);
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
-		m_trf = m_player->getTransform(updated);
+		const Transform newTrf = m_player->getTransform();
+		updated = newTrf != m_trf;
+		m_trf = newTrf;
 		return Error::NONE;
 	}
 
@@ -61,7 +57,7 @@ public:
 
 private:
 	PhysicsPlayerControllerPtr m_player;
-	Transform m_trf;
+	Transform m_trf = Transform::getIdentity();
 };
 /// @}
 

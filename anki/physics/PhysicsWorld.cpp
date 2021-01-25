@@ -7,6 +7,7 @@
 #include <anki/physics/PhysicsCollisionShape.h>
 #include <anki/physics/PhysicsBody.h>
 #include <anki/physics/PhysicsTrigger.h>
+#include <anki/physics/PhysicsPlayerController.h>
 #include <anki/util/Rtti.h>
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
@@ -14,18 +15,18 @@ namespace anki
 {
 
 // Ugly but there is no other way
-static HeapAllocator<U8>* gAlloc = nullptr;
+static HeapAllocator<U8>* g_alloc = nullptr;
 
 static void* btAlloc(size_t size)
 {
-	ANKI_ASSERT(gAlloc);
-	return gAlloc->getMemoryPool().allocate(size, 16);
+	ANKI_ASSERT(g_alloc);
+	return g_alloc->getMemoryPool().allocate(size, 16);
 }
 
 static void btFree(void* ptr)
 {
-	ANKI_ASSERT(gAlloc);
-	gAlloc->getMemoryPool().free(ptr);
+	ANKI_ASSERT(g_alloc);
+	g_alloc->getMemoryPool().free(ptr);
 }
 
 /// Broad phase collision callback.
@@ -145,12 +146,9 @@ PhysicsWorld::PhysicsWorld()
 
 PhysicsWorld::~PhysicsWorld()
 {
-#if ANKI_ENABLE_ASSERTS
-	for(PhysicsObjectType type = PhysicsObjectType::FIRST; type < PhysicsObjectType::COUNT; ++type)
-	{
-		ANKI_ASSERT(m_objectLists[type].isEmpty() && "Someone is holding refs to some physics objects");
-	}
-#endif
+	destroyMarkedForDeletion();
+
+	ANKI_ASSERT(m_objectsCreatedCount.load() == 0 && "Forgot to delete some objects");
 
 	m_world.destroy();
 	m_solver.destroy();
@@ -160,16 +158,16 @@ PhysicsWorld::~PhysicsWorld()
 	m_gpc.destroy();
 	m_alloc.deleteInstance(m_filterCallback);
 
-	gAlloc = nullptr;
+	g_alloc = nullptr;
 }
 
-Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
+Error PhysicsWorld::init(AllocAlignedCallback allocCb, void* allocCbData)
 {
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbData);
 	m_tmpAlloc = StackAllocator<U8>(allocCb, allocCbData, 1_KB, 2.0f);
 
 	// Set allocators
-	gAlloc = &m_alloc;
+	g_alloc = &m_alloc;
 	btAlignedAllocSetCustom(btAlloc, btFree);
 
 	// Create objects
@@ -192,22 +190,73 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	return Error::NONE;
 }
 
+void PhysicsWorld::destroyMarkedForDeletion()
+{
+	while(true)
+	{
+		PhysicsObject* obj = nullptr;
+
+		// Don't delete the instance (call the destructor) while holding the lock to avoid deadlocks
+		{
+			LockGuard<Mutex> lock(m_markedMtx);
+			if(!m_markedForDeletion.isEmpty())
+			{
+				obj = m_markedForDeletion.popFront();
+				if(obj->m_registered)
+				{
+					obj->unregisterFromWorld();
+					obj->m_registered = false;
+				}
+			}
+		}
+
+		if(obj == nullptr)
+		{
+			break;
+		}
+
+		m_alloc.deleteInstance(obj);
+#if ANKI_ENABLE_ASSERTS
+		const I32 count = m_objectsCreatedCount.fetchSub(1) - 1;
+		ANKI_ASSERT(count >= 0);
+#endif
+	}
+}
+
 Error PhysicsWorld::update(Second dt)
 {
-	// Update world
+	// First destroy
+	destroyMarkedForDeletion();
+
+	// Create new objects
 	{
-		auto lock = lockBtWorld();
-		m_world->stepSimulation(F32(dt), 1, 1.0f / 60.0f);
+		LockGuard<Mutex> lock(m_markedMtx);
+
+		// Create
+		while(!m_markedForCreation.isEmpty())
+		{
+			PhysicsObject* obj = m_markedForCreation.popFront();
+			ANKI_ASSERT(!obj->m_registered);
+			obj->registerToWorld();
+			obj->m_registered = true;
+			m_objectLists[obj->getType()].pushBack(obj);
+		}
 	}
 
-	// Process trigger contacts
+	// Update the player controllers
+	for(PhysicsObject& obj : m_objectLists[PhysicsObjectType::PLAYER_CONTROLLER])
 	{
-		LockGuard<Mutex> lock(m_objectListsMtx);
+		PhysicsPlayerController& playerController = static_cast<PhysicsPlayerController&>(obj);
+		playerController.moveToPositionForReal();
+	}
 
-		for(PhysicsObject& trigger : m_objectLists[PhysicsObjectType::TRIGGER])
-		{
-			static_cast<PhysicsTrigger&>(trigger).processContacts();
-		}
+	// Update world
+	m_world->stepSimulation(F32(dt), 1, 1.0f / 60.0f);
+
+	// Process trigger contacts
+	for(PhysicsObject& trigger : m_objectLists[PhysicsObjectType::TRIGGER])
+	{
+		static_cast<PhysicsTrigger&>(trigger).processContacts();
 	}
 
 	// Reset the pool
@@ -219,26 +268,80 @@ Error PhysicsWorld::update(Second dt)
 void PhysicsWorld::destroyObject(PhysicsObject* obj)
 {
 	ANKI_ASSERT(obj);
-
+	LockGuard<Mutex> lock(m_markedMtx);
+	if(obj->m_registered)
 	{
-		LockGuard<Mutex> lock(m_objectListsMtx);
 		m_objectLists[obj->getType()].erase(obj);
 	}
-
-	obj->~PhysicsObject();
-	m_alloc.getMemoryPool().free(obj);
+	else
+	{
+		m_markedForCreation.erase(obj);
+	}
+	m_markedForDeletion.pushBack(obj);
 }
 
-void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts)
+void PhysicsWorld::rayCast(WeakArray<PhysicsWorldRayCastCallback*> rayCasts) const
 {
-	auto lock = lockBtWorld();
-
 	MyRaycastCallback callback;
 	for(PhysicsWorldRayCastCallback* cb : rayCasts)
 	{
 		callback.m_raycast = cb;
 		m_world->rayTest(toBt(cb->m_from), toBt(cb->m_to), callback);
 	}
+}
+
+PhysicsTriggerFilteredPair* PhysicsWorld::getOrCreatePhysicsTriggerFilteredPair(PhysicsTrigger* trigger,
+																				PhysicsFilteredObject* filtered,
+																				Bool& isNew)
+{
+	ANKI_ASSERT(trigger && filtered);
+
+	U32 emptySlot = MAX_U32;
+	for(U32 i = 0; i < filtered->m_triggerFilteredPairs.getSize(); ++i)
+	{
+		PhysicsTriggerFilteredPair* pair = filtered->m_triggerFilteredPairs[i];
+
+		if(pair && pair->m_trigger == trigger)
+		{
+			// Found it
+			ANKI_ASSERT(pair->m_filteredObject == filtered);
+			isNew = false;
+			return pair;
+		}
+		else if(pair == nullptr)
+		{
+			// Empty slot, save it for later
+			emptySlot = i;
+		}
+		else if(pair && pair->m_trigger == nullptr)
+		{
+			// Pair exists but it's invalid, repurpose it
+			ANKI_ASSERT(pair->m_filteredObject == filtered);
+			emptySlot = i;
+		}
+	}
+
+	if(emptySlot == MAX_U32)
+	{
+		ANKI_PHYS_LOGW("Contact ignored. Too many active contacts for the filtered object");
+		return nullptr;
+	}
+
+	// Not found, create a new one
+	isNew = true;
+
+	PhysicsTriggerFilteredPair* newPair;
+	if(filtered->m_triggerFilteredPairs[emptySlot] == nullptr)
+	{
+		filtered->m_triggerFilteredPairs[emptySlot] = m_alloc.newInstance<PhysicsTriggerFilteredPair>();
+	}
+	newPair = filtered->m_triggerFilteredPairs[emptySlot];
+
+	newPair->m_filteredObject = filtered;
+	newPair->m_trigger = trigger;
+	newPair->m_frame = 0;
+
+	return newPair;
 }
 
 } // end namespace anki
