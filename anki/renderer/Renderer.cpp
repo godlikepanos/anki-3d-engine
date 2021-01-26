@@ -36,6 +36,7 @@
 #include <anki/renderer/ShadowmapsResolve.h>
 #include <anki/renderer/RtShadows.h>
 #include <anki/renderer/AccelerationStructureBuilder.h>
+#include <anki/renderer/MotionVectors.h>
 
 namespace anki
 {
@@ -207,6 +208,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 		ANKI_CHECK(m_smResolve->init(config));
 	}
 
+	m_motionVectors.reset(m_alloc.newInstance<MotionVectors>(this));
+	ANKI_CHECK(m_motionVectors->init(config));
+
 	// Init samplers
 	{
 		SamplerInitInfo sinit("Renderer");
@@ -314,6 +318,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	m_probeReflections->populateRenderGraph(ctx);
 	m_volLighting->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
+	m_motionVectors->populateRenderGraph(ctx);
 	m_gbufferPost->populateRenderGraph(ctx);
 	m_depth->populateRenderGraph(ctx);
 	if(m_rtShadows)

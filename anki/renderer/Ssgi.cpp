@@ -8,6 +8,7 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/DownscaleBlur.h>
+#include <anki/renderer/MotionVectors.h>
 #include <anki/core/ConfigSet.h>
 #include <anki/shaders/include/SsgiTypes.h>
 
@@ -145,6 +146,8 @@ void Ssgi::populateRenderGraph(RenderingContext& ctx)
 		rpass.newDependency({m_r->getDepthDownscale().getHiZRt(), TextureUsageBit::SAMPLED_COMPUTE, hizSubresource});
 		rpass.newDependency({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_COMPUTE});
 		rpass.newDependency({m_r->getDownscaleBlur().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_COMPUTE});
+		rpass.newDependency({m_r->getMotionVectors().getRejectionFactorRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	}
 
 	// Blur vertical
@@ -223,6 +226,8 @@ void Ssgi::run(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindColorTexture(0, 5, m_r->getDownscaleBlur().getRt());
 	rgraphCtx.bindColorTexture(0, 6, m_runCtx.m_finalRt);
+	rgraphCtx.bindColorTexture(0, 7, m_r->getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getRejectionFactorRt());
 
 	// Dispatch
 	dispatchPPCompute(cmdb, 16, 16, m_r->getWidth() / 2, m_r->getHeight() / 2);

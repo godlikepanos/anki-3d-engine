@@ -205,6 +205,11 @@ public:
 		return *m_rtShadows;
 	}
 
+	MotionVectors& getMotionVectors()
+	{
+		return *m_motionVectors;
+	}
+
 	Bool getRtShadowsEnabled() const
 	{
 		return m_rtShadows.isCreated();
@@ -434,6 +439,7 @@ private:
 	UniquePtr<ShadowmapsResolve> m_smResolve;
 	UniquePtr<AccelerationStructureBuilder> m_accelerationStructureBuilder;
 	UniquePtr<RtShadows> m_rtShadows;
+	UniquePtr<MotionVectors> m_motionVectors;
 	/// @}
 
 	Array<U32, 4> m_clusterCount;

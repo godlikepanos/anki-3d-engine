@@ -7,57 +7,50 @@
 
 #include <anki/shaders/Common.glsl>
 
-// TAA blurs the edges of objects and expands them. The velocity in the edges may be zero (static object) so that will
-// create an outline around those objects
-#if !defined(TAA_FIX)
-#	define TAA_FIX 1
-#endif
-
 // Perform motion blur.
-Vec3 motionBlur(texture2D velocityTex, sampler velocityTexSampler, texture2D toBlurTex, sampler toBlurTexSampler,
-				texture2D depthTex, sampler depthTexSampler, Vec2 nowUv, Mat4 prevViewProjMatMulInvViewProjMat,
-				U32 maxSamples)
+Vec3 motionBlur(texture2D motionVectorsRt, sampler motionVectorsRtSampler, texture2D toBlurRt, Vec2 toBlurRtSize,
+				sampler toBlurRtSampler, Vec2 uv, U32 maxSamples)
 {
-	// Compute previous UV
-	Vec2 velocity = textureLod(velocityTex, velocityTexSampler, nowUv, 0.0).rg;
+	// Compute velocity. Get the max velocity around the curent sample to avoid outlines. TAA's result and the motion
+	// vectors RT do not quite overlap
+	Vec2 velocityMin = textureLod(motionVectorsRt, motionVectorsRtSampler, uv, 0.0).rg;
+	Vec2 velocityMax = velocityMin;
 
-	// Compute the velocity if it's static geometry
-	ANKI_BRANCH if(velocity.x == -1.0)
-	{
-#if TAA_FIX
-		const Vec2 a = textureLodOffset(sampler2D(velocityTex, velocityTexSampler), nowUv, 0.0, ivec2(-2, 2)).rg;
-		const Vec2 b = textureLodOffset(sampler2D(velocityTex, velocityTexSampler), nowUv, 0.0, ivec2(2, 2)).rg;
-		const Vec2 c = textureLodOffset(sampler2D(velocityTex, velocityTexSampler), nowUv, 0.0, ivec2(0, -2)).rg;
+	Vec2 v = textureLodOffset(sampler2D(motionVectorsRt, motionVectorsRtSampler), uv, 0.0, ivec2(-2, -2)).rg;
+	velocityMin = min(velocityMin, v);
+	velocityMax = max(velocityMax, v);
 
-		velocity = max(max(a, b), c);
+	v = textureLodOffset(sampler2D(motionVectorsRt, motionVectorsRtSampler), uv, 0.0, ivec2(2, 2)).rg;
+	velocityMin = min(velocityMin, v);
+	velocityMax = max(velocityMax, v);
 
-		ANKI_BRANCH if(velocity.x == -1.0)
-#endif
-		{
-			const F32 depth = textureLod(depthTex, depthTexSampler, nowUv, 0.0).r;
+	v = textureLodOffset(sampler2D(motionVectorsRt, motionVectorsRtSampler), uv, 0.0, ivec2(-2, 2)).rg;
+	velocityMin = min(velocityMin, v);
+	velocityMax = max(velocityMax, v);
 
-			const Vec4 v4 = prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(nowUv), depth, 1.0);
-			velocity = NDC_TO_UV(v4.xy / v4.w) - nowUv;
-		}
-	}
+	v = textureLodOffset(sampler2D(motionVectorsRt, motionVectorsRtSampler), uv, 0.0, ivec2(2, -2)).rg;
+	velocityMin = min(velocityMin, v);
+	velocityMax = max(velocityMax, v);
 
-	// March direction
-	const Vec2 slopes = abs(velocity);
+	const F32 mag0 = length(velocityMin);
+	const F32 mag1 = length(velocityMax);
+	const Vec2 velocity = (mag0 > mag1) ? velocityMin : velocityMax;
 
 	// Compute the sample count
-	const Vec2 sampleCount2D = slopes * Vec2(FB_SIZE);
+	const Vec2 slopes = abs(velocity);
+	const Vec2 sampleCount2D = slopes * toBlurRtSize;
 	F32 sampleCountf = max(sampleCount2D.x, sampleCount2D.y);
 	sampleCountf = clamp(sampleCountf, 1.0, F32(maxSamples));
 	sampleCountf = round(sampleCountf);
 
-	// Loop
-	Vec3 outColor = Vec3(0.0);
-	ANKI_LOOP for(F32 s = 0.0; s < sampleCountf; s += 1.0)
+	// Sample
+	Vec3 outColor = textureLod(toBlurRt, toBlurRtSampler, uv, 0.0).rgb;
+	ANKI_LOOP for(F32 s = 1.0; s < sampleCountf; s += 1.0)
 	{
 		const F32 f = s / sampleCountf;
-		const Vec2 sampleUv = nowUv + velocity * f;
+		const Vec2 sampleUv = uv + velocity * f;
 
-		outColor += textureLod(toBlurTex, toBlurTexSampler, sampleUv, 0.0).rgb;
+		outColor += textureLod(toBlurRt, toBlurRtSampler, sampleUv, 0.0).rgb;
 	}
 
 	outColor /= sampleCountf;

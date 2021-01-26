@@ -13,14 +13,15 @@ layout(set = 0, binding = 1) uniform image2D u_outImg[2];
 layout(set = 0, binding = 2) uniform texture2DArray u_historyRt;
 layout(set = 0, binding = 3) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 4) uniform texture2D u_depthRt;
-layout(set = 0, binding = 5) uniform texture2D u_historyDepthRt;
-layout(set = 0, binding = 6) uniform texture2D u_normalRt;
-layout(set = 0, binding = 7) uniform accelerationStructureEXT u_tlas;
+layout(set = 0, binding = 5) uniform texture2D u_motionVectorsRt;
+layout(set = 0, binding = 6) uniform texture2D u_motionVectorsRejectionRt;
+layout(set = 0, binding = 7) uniform texture2D u_normalRt;
+layout(set = 0, binding = 8) uniform accelerationStructureEXT u_tlas;
 
 #define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 8
-#define LIGHT_LIGHTS_BINDING 9
-#define LIGHT_CLUSTERS_BINDING 12
+#define LIGHT_COMMON_UNIS_BINDING 9
+#define LIGHT_LIGHTS_BINDING 10
+#define LIGHT_CLUSTERS_BINDING 13
 #include <anki/shaders/ClusteredShadingCommon.glsl>
 #include <anki/shaders/ImportanceSampling.glsl>
 #include <anki/shaders/Pack.glsl>
@@ -145,40 +146,14 @@ void main()
 	Vec4 shadowFactors0 = Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]);
 	Vec4 shadowFactors1 = Vec4(shadowFactors[4], shadowFactors[5], shadowFactors[6], shadowFactors[7]);
 
-	// Read the history buffer
+	// Do temporal accumulation
 	{
-		const Vec2 historyUv =
-			reprojectHistoryBuffer(uv, depth, u_lightingUniforms.m_prevViewProjMatMulInvViewProjMat, Vec2(-1.0));
-
-		// Clamp history to neghbours of current pixel
-		const F32 historyDepth = readDepth(u_historyDepthRt, historyUv, 0, 0);
-		const F32 near0 = readDepth(u_depthRt, uv, 1, 0);
-		const F32 near1 = readDepth(u_depthRt, uv, 0, 1);
-		const F32 near2 = readDepth(u_depthRt, uv, -1, 0);
-		const F32 near3 = readDepth(u_depthRt, uv, 0, -1);
-
-		const F32 boxMin = min(depth, min(near0, min(near1, min(near2, near3))));
-		const F32 boxMax = max(depth, max(near0, max(near1, max(near2, near3))));
-
-		const F32 clampedDepth = clamp(historyDepth, boxMin, boxMax);
-
-		// This factor shows when new pixels appeared by checking depth differences
-		F32 disocclusionFactor =
-			abs(linearizeDepth(clampedDepth, u_lightingUniforms.m_near, u_lightingUniforms.m_far)
-				- linearizeDepth(historyDepth, u_lightingUniforms.m_near, u_lightingUniforms.m_far));
-		disocclusionFactor *= 20.0;
-
-		// New pixels might appeared, add them to the disocclusion
-		const F32 minUv = min(historyUv.x, historyUv.y);
-		const F32 maxUv = max(historyUv.x, historyUv.y);
-		if(minUv <= 0.0 || maxUv >= 1.0)
-		{
-			disocclusionFactor = 1.0;
-		}
+		const Vec2 historyUv = uv + textureLod(u_motionVectorsRt, u_linearAnyClampSampler, uv, 0.0).rg;
+		const F32 rejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).r;
 
 		// Compute blend factors
 		const F32 nominalBlendFactor = 0.1;
-		const F32 blendFactor = mix(nominalBlendFactor, 1.0, disocclusionFactor);
+		const F32 blendFactor = mix(nominalBlendFactor, 1.0, rejectionFactor);
 
 		// Sample and blend with history
 		const Vec4 history0 = textureLod(u_historyRt, u_linearAnyClampSampler, Vec3(historyUv, 0.0), 0.0);

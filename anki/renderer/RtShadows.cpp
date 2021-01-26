@@ -8,6 +8,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/AccelerationStructureBuilder.h>
+#include <anki/renderer/MotionVectors.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/resource/ShaderProgramResourceSystem.h>
 #include <anki/util/Tracer.h>
@@ -117,7 +118,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 								 AccelerationStructureUsageBit::TRACE_RAYS_READ));
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
 		rpass.newDependency(
-			RenderPassDependency(m_r->getGBuffer().getPreviousFrameDepthRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
+			RenderPassDependency(m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
+		rpass.newDependency(
+			RenderPassDependency(m_r->getMotionVectors().getRejectionFactorRt(), TextureUsageBit::SAMPLED_TRACE_RAYS));
 		rpass.newDependency(RenderPassDependency(m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_TRACE_RAYS));
 	}
 
@@ -222,19 +225,19 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyAndFinalRt);
 	cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindTexture(0, 4, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getPreviousFrameDepthRt(),
-						  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	rgraphCtx.bindColorTexture(0, 6, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindAccelerationStructure(0, 7, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
+	rgraphCtx.bindColorTexture(0, 5, m_r->getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(0, 6, m_r->getMotionVectors().getRejectionFactorRt());
+	rgraphCtx.bindColorTexture(0, 7, m_r->getGBuffer().getColorRt(2));
+	rgraphCtx.bindAccelerationStructure(0, 8, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
 
-	bindUniforms(cmdb, 0, 8, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 9, ctx.m_lightShadingUniformsToken);
 
-	bindUniforms(cmdb, 0, 9, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 10, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTexture(0, 11, m_r->getShadowMapping().getShadowmapRt());
+	bindUniforms(cmdb, 0, 10, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 11, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(0, 12, m_r->getShadowMapping().getShadowmapRt());
 
-	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 13, rsrc.m_indicesToken);
+	bindStorage(cmdb, 0, 13, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 14, rsrc.m_indicesToken);
 
 	cmdb->bindAllBindless(1);
 

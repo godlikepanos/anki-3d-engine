@@ -96,6 +96,12 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 																									 : "RtShadows");
 	}
 
+	if(in.getKey(KeyCode::J) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget(
+			(renderer.getCurrentDebugRenderTarget() == "MotionVectorsRejection") ? "" : "MotionVectorsRejection");
+	}
+
 	if(!getDisplayDeveloperConsole())
 	{
 		in.hideCursor(true);

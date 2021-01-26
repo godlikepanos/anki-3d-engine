@@ -34,7 +34,7 @@ layout(set = 0, binding = 4) uniform texture2D u_lightShadingRt;
 layout(set = 0, binding = 5) uniform texture2D u_ppsBloomLfRt;
 layout(set = 0, binding = 6) uniform texture3D u_lut;
 layout(set = 0, binding = 7) uniform texture2DArray u_blueNoise;
-layout(set = 0, binding = 8) uniform texture2D u_velocityRt;
+layout(set = 0, binding = 8) uniform texture2D u_motionVectorsRt;
 layout(set = 0, binding = 9) uniform texture2D u_depthRt;
 #if DBG_ENABLED
 layout(set = 0, binding = 10) uniform texture2D u_dbgOutlineRt;
@@ -68,9 +68,8 @@ void main()
 
 	if(MOTION_BLUR_SAMPLES > 0u)
 	{
-		out_color =
-			motionBlur(u_velocityRt, u_nearestAnyClampSampler, u_lightShadingRt, u_linearAnyClampSampler, u_depthRt,
-					   u_nearestAnyClampSampler, uv, u_prevViewProjMatMulInvViewProjMat, MOTION_BLUR_SAMPLES);
+		out_color = motionBlur(u_motionVectorsRt, u_nearestAnyClampSampler, u_lightShadingRt, Vec2(FB_SIZE),
+							   u_linearAnyClampSampler, uv, MOTION_BLUR_SAMPLES);
 	}
 	else
 	{

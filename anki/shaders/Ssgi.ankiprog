@@ -33,6 +33,8 @@ layout(set = 0, binding = 3) uniform texture2D u_gbufferRt2;
 layout(set = 0, binding = 4) uniform texture2D u_depthRt;
 layout(set = 0, binding = 5) uniform texture2D u_lightBufferRt;
 layout(set = 0, binding = 6) uniform texture2D u_historyTex;
+layout(set = 0, binding = 7) uniform texture2D u_motionVectorsTex;
+layout(set = 0, binding = 8) uniform texture2D u_motionVectorRejectionTex;
 
 void main()
 {
@@ -131,10 +133,15 @@ void main()
 	}
 
 	// Blend with history
-	const Vec4 v4 = u_unis.m_prevViewProjMatMulInvViewProjMat * Vec4(ndc, depth, 1.0);
-	const Vec2 historyUv = NDC_TO_UV(v4.xy / v4.w);
-	const Vec3 history = textureLod(u_historyTex, u_trilinearClampSampler, historyUv, 0.0).rgb;
-	outColor = mix(history, outColor, 0.15);
+	{
+		const Vec2 historyUv = uv + textureLod(u_motionVectorsTex, u_trilinearClampSampler, uv, 0.0).rg;
+		const F32 rejection = textureLod(u_motionVectorRejectionTex, u_trilinearClampSampler, uv, 0.0).r;
+		const Vec3 history = textureLod(u_historyTex, u_trilinearClampSampler, historyUv, 0.0).rgb;
+
+		const F32 MAX_BLEND = 0.05;
+		const F32 blend = mix(MAX_BLEND, 1.0, rejection);
+		outColor = mix(history, outColor, blend);
+	}
 
 	// Remove fireflies
 #if 0

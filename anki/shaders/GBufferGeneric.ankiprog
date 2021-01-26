@@ -387,7 +387,7 @@ void main()
 #	if ANKI_VELOCITY || ANKI_BONES
 	const Vec2 velocity = in_velocity;
 #	else
-	const Vec2 velocity = Vec2(-1.0);
+	const Vec2 velocity = Vec2(1.0);
 #	endif
 
 	writeGBuffer(diffColor, normal, specColor, roughness, u_ankiPerDraw.m_subsurface, emission, metallic, velocity);

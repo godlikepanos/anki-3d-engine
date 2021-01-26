@@ -15,6 +15,7 @@
 #include <anki/renderer/Ssr.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/UiStage.h>
+#include <anki/renderer/MotionVectors.h>
 #include <anki/util/Logger.h>
 #include <anki/core/ConfigSet.h>
 
@@ -112,7 +113,7 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	rgraphCtx.bindColorTexture(0, 5, m_r->getBloom().getRt());
 	cmdb->bindTexture(0, 6, m_lut->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(0, 7, m_blueNoise->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
-	rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(3));
+	rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getMotionVectorsRt());
 	rgraphCtx.bindTexture(0, 9, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
 	if(dbgEnabled)
@@ -168,8 +169,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	pass.newDependency({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-
-	pass.newDependency({m_r->getGBuffer().getColorRt(3), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newDependency({m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newDependency({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 
 	RenderTargetHandle dbgRt;

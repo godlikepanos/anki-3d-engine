@@ -69,7 +69,7 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 	}
 
 	m_fbDescr.m_colorAttachments[3].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	m_fbDescr.m_colorAttachments[3].m_clearValue.m_colorf = {-1.0f, -1.0f, 0.0f, 0.0f}; // TODO This clear value is slow
+	m_fbDescr.m_colorAttachments[3].m_clearValue.m_colorf = {1.0f, 1.0f, 1.0f, 1.0f};
 
 	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0f;

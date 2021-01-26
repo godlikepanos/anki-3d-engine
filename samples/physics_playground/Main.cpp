@@ -205,10 +205,22 @@ Error MyApp::sampleExtraInit()
 Error MyApp::userMainLoop(Bool& quit, Second elapsedTime)
 {
 	// ANKI_CHECK(SampleApp::userMainLoop(quit));
+	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 
 	if(getInput().getKey(KeyCode::ESCAPE))
 	{
 		quit = true;
+	}
+
+	if(getInput().getKey(KeyCode::H) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? ""
+																									 : "RtShadows");
+	}
+
+	if(getInput().getKey(KeyCode::U) == 1)
+	{
+		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "SSGI") ? "" : "SSGI");
 	}
 
 	if(getInput().getKey(KeyCode::F1) == 1)

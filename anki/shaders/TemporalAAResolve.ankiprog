@@ -17,26 +17,21 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 2, UVec2(1));
 #include <anki/shaders/Pack.glsl>
 #include <anki/shaders/Tonemapping.glsl>
 
-const UVec2 WORKGROUP_SIZE = UVec2(16, 16);
+const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 1) uniform texture2D u_depthRt;
 layout(set = 0, binding = 2) uniform texture2D u_inputRt;
 layout(set = 0, binding = 3) uniform texture2D u_historyRt;
-layout(set = 0, binding = 4) uniform texture2D u_velocityRt;
-layout(set = 0, binding = 5) writeonly uniform image2D out_img;
+layout(set = 0, binding = 4) uniform texture2D u_motionVectorsTex;
+layout(set = 0, binding = 5) writeonly uniform image2D u_outImg;
 
 #if TONEMAP_FIX
 #	define TONEMAPPING_SET 0
 #	define TONEMAPPING_BINDING 6
 #	include <anki/shaders/TonemappingResources.glsl>
 #endif
-
-layout(push_constant, std140, row_major) uniform pc_
-{
-	Mat4 u_prevViewProjMatMulInvViewProjMat;
-};
 
 #if YCBCR
 #	define sample(s, uv) rgbToYCbCr(textureLod(s, u_linearAnyClampSampler, uv, 0.0).rgb)
@@ -76,19 +71,7 @@ void main()
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
 
 	// Get prev uv coords
-	Vec2 oldUv;
-#if VELOCITY
-	const Vec2 velocity = textureLod(u_velocityRt, u_linearAnyClampSampler, uv, 0.0).rg;
-	if(velocity.x != -1.0)
-	{
-		oldUv = uv + velocity;
-	}
-	else
-#endif
-	{
-		const Vec4 v4 = u_prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
-		oldUv = NDC_TO_UV(v4.xy / v4.w);
-	}
+	const Vec2 oldUv = uv + textureLod(u_motionVectorsTex, u_linearAnyClampSampler, uv, 0.0).rg;
 
 	// Read textures
 	Vec3 historyCol = sample(u_historyRt, oldUv);
@@ -147,7 +130,7 @@ void main()
 #else
 	const Vec3 outColor = mix(historyCol, crntCol, feedback);
 #endif
-	imageStore(out_img, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), Vec4(outColor, 0.0));
 }
 
 #pragma anki end

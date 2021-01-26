@@ -8,6 +8,7 @@
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/Tonemapping.h>
+#include <anki/renderer/MotionVectors.h>
 
 namespace anki
 {
@@ -82,13 +83,9 @@ void TemporalAA::run(const RenderingContext& ctx, RenderPassWorkContext& rgraphC
 	rgraphCtx.bindTexture(0, 1, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	rgraphCtx.bindColorTexture(0, 2, m_r->getLightShading().getRt());
 	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_historyRt);
-	rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(3));
+	rgraphCtx.bindColorTexture(0, 4, m_r->getMotionVectors().getMotionVectorsRt());
 	rgraphCtx.bindImage(0, 5, m_runCtx.m_renderRt, TextureSubresourceInfo());
 	rgraphCtx.bindUniformBuffer(0, 6, m_r->getTonemapping().getAverageLuminanceBuffer());
-
-	const Mat4 mat = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection
-					 * ctx.m_matrices.m_viewProjectionJitter.getInverse();
-	cmdb->setPushConstants(&mat, sizeof(mat));
 
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_r->getWidth(), m_r->getHeight());
 }
@@ -118,7 +115,7 @@ void TemporalAA::populateRenderGraph(RenderingContext& ctx)
 						TextureSubresourceInfo(DepthStencilAspectBit::DEPTH)});
 	pass.newDependency({m_r->getLightShading().getRt(), TextureUsageBit::SAMPLED_COMPUTE});
 	pass.newDependency({m_runCtx.m_historyRt, TextureUsageBit::SAMPLED_COMPUTE});
-	pass.newDependency({m_r->getGBuffer().getColorRt(3), TextureUsageBit::SAMPLED_COMPUTE});
+	pass.newDependency({m_r->getMotionVectors().getMotionVectorsRt(), TextureUsageBit::SAMPLED_COMPUTE});
 }
 
 } // end namespace anki

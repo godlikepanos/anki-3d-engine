@@ -46,6 +46,7 @@ class GenericCompute;
 class ShadowmapsResolve;
 class RtShadows;
 class AccelerationStructureBuilder;
+class MotionVectors;
 
 class RenderingContext;
 class DebugDrawer;

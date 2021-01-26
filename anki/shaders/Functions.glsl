@@ -475,19 +475,76 @@ Bool rayTriangleIntersect(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, out F3
 	return true;
 }
 
-// Given some info of the current fragment unproject it to the previous frame. Will return UV coordinates
-Vec2 reprojectHistoryBuffer(Vec2 cnrtPixelUv, F32 crntPixelDepth, Mat4 prevViewProjMatMulInvViewProjMat, Vec2 velocity)
+#if defined(ANKI_COMPUTE_SHADER)
+// See getOptimalGlobalInvocationId8x8Amd
+U32 ABfiM(U32 src, U32 ins, U32 bits)
 {
-	Vec2 oldUv;
-	if(velocity.x != -1.0)
+	const U32 mask = (1 << bits) - 1;
+	return (ins & mask) | (src & (~mask));
+}
+
+// See getOptimalGlobalInvocationId8x8Amd
+U32 ABfe(U32 src, U32 off, U32 bits)
+{
+	const U32 mask = (1 << bits) - 1;
+	return (src >> off) & mask;
+}
+
+// See getOptimalGlobalInvocationId8x8Amd
+UVec2 ARmpRed8x8(U32 a)
+{
+	return UVec2(ABfiM(ABfe(a, 2u, 3u), a, 1u), ABfiM(ABfe(a, 3u, 3u), ABfe(a, 1u, 2u), 2u));
+}
+
+// https://github.com/GPUOpen-Effects/FidelityFX-CAS/blob/master/ffx-cas/ffx_a.h
+UVec2 getOptimalGlobalInvocationId8x8Amd()
+{
+	const UVec2 localInvocationId = ARmpRed8x8(gl_LocalInvocationIndex);
+	return gl_WorkGroupID.xy * UVec2(8u) + localInvocationId;
+}
+
+// https://github.com/LouisBavoil/ThreadGroupIDSwizzling/blob/master/ThreadGroupTilingX.hlsl
+UVec2 getOptimalGlobalInvocationId8x8Nvidia()
+{
+	const U32 maxTileWidth = 8u;
+	const UVec2 workgroupSize = UVec2(8u);
+
+	const U32 workgroupsInAPerfectTile = maxTileWidth * gl_NumWorkGroups.y;
+
+	const U32 perfectTileCount = gl_NumWorkGroups.x / maxTileWidth;
+
+	const U32 totalWorkgroupsInAllPerfectTiles = perfectTileCount * maxTileWidth * gl_NumWorkGroups.y;
+	const U32 vThreadGroupIDFlattened = gl_NumWorkGroups.x * gl_WorkGroupID.y + gl_WorkGroupID.x;
+
+	const U32 tileIdOfCurrentWorkgroup = vThreadGroupIDFlattened / workgroupsInAPerfectTile;
+	const U32 localWorkgroupIdWithinCurrentTile = vThreadGroupIDFlattened % workgroupsInAPerfectTile;
+	U32 localWorkgroupIdYWithinCurrentTile;
+	U32 localWorgroupIdXWithinCurrentTile;
+
+	if(totalWorkgroupsInAllPerfectTiles <= vThreadGroupIDFlattened)
 	{
-		oldUv = cnrtPixelUv + velocity;
+		U32 xDimensionOfLastTile = gl_NumWorkGroups.x % maxTileWidth;
+		localWorkgroupIdYWithinCurrentTile = localWorkgroupIdWithinCurrentTile / xDimensionOfLastTile;
+		localWorgroupIdXWithinCurrentTile = localWorkgroupIdWithinCurrentTile % xDimensionOfLastTile;
 	}
 	else
 	{
-		const Vec4 v4 = prevViewProjMatMulInvViewProjMat * Vec4(UV_TO_NDC(cnrtPixelUv), crntPixelDepth, 1.0);
-		oldUv = NDC_TO_UV(v4.xy / v4.w);
+		localWorkgroupIdYWithinCurrentTile = localWorkgroupIdWithinCurrentTile / maxTileWidth;
+		localWorgroupIdXWithinCurrentTile = localWorkgroupIdWithinCurrentTile % maxTileWidth;
 	}
 
-	return oldUv;
+	const U32 swizzledvThreadGroupIdFlattened = tileIdOfCurrentWorkgroup * maxTileWidth
+												+ localWorkgroupIdYWithinCurrentTile * gl_NumWorkGroups.x
+												+ localWorgroupIdXWithinCurrentTile;
+
+	UVec2 swizzledvThreadGroupId;
+	swizzledvThreadGroupId.y = swizzledvThreadGroupIdFlattened / gl_NumWorkGroups.x;
+	swizzledvThreadGroupId.x = swizzledvThreadGroupIdFlattened % gl_NumWorkGroups.x;
+
+	UVec2 swizzledGlobalId;
+	swizzledGlobalId.x = workgroupSize.x * swizzledvThreadGroupId.x + gl_LocalInvocationID.x;
+	swizzledGlobalId.y = workgroupSize.y * swizzledvThreadGroupId.y + gl_LocalInvocationID.y;
+
+	return swizzledGlobalId.xy;
 }
+#endif
