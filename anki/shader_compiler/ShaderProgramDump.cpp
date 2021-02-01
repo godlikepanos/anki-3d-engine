@@ -13,8 +13,8 @@ namespace anki
 
 #define ANKI_TAB "    "
 
-static void disassembleBlock(const ShaderProgramBinaryBlockInstance& instance, const ShaderProgramBinaryBlock& block,
-							 StringListAuto& lines)
+static void disassembleBlockInstance(const ShaderProgramBinaryBlockInstance& instance,
+									 const ShaderProgramBinaryBlock& block, StringListAuto& lines)
 {
 	lines.pushBackSprintf(ANKI_TAB ANKI_TAB ANKI_TAB "%-32s set %4u binding %4u size %4u\n", block.m_name.getBegin(),
 						  block.m_set, block.m_binding, instance.m_size);
@@ -31,6 +31,18 @@ static void disassembleBlock(const ShaderProgramBinaryBlockInstance& instance, c
 	}
 }
 
+static void disassembleBlock(const ShaderProgramBinaryBlock& block, StringListAuto& lines)
+{
+	lines.pushBackSprintf(ANKI_TAB "%-32s set %4u binding %4u\n", block.m_name.getBegin(), block.m_set,
+						  block.m_binding);
+
+	for(const ShaderProgramBinaryVariable& var : block.m_variables)
+	{
+		lines.pushBackSprintf(ANKI_TAB ANKI_TAB "%-48s type %8s\n", var.m_name.getBegin(),
+							  shaderVariableDataTypeToString(var.m_type).cstr());
+	}
+}
+
 void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& humanReadable)
 {
 	GenericMemoryPoolAllocator<U8> alloc = humanReadable.getAllocator();
@@ -39,16 +51,16 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 	if(binary.m_libraryName[0])
 	{
 		lines.pushBack("**LIBRARY**\n");
-		lines.pushBackSprintf(ANKI_TAB "%s\n\n", &binary.m_libraryName[0]);
+		lines.pushBackSprintf(ANKI_TAB "%s\n", &binary.m_libraryName[0]);
 	}
 
 	if(binary.m_rayType != MAX_U32)
 	{
-		lines.pushBack("**RAY TYPE**\n");
-		lines.pushBackSprintf(ANKI_TAB "%u\n\n", binary.m_rayType);
+		lines.pushBack("**\nRAY TYPE**\n");
+		lines.pushBackSprintf(ANKI_TAB "%u\n", binary.m_rayType);
 	}
 
-	lines.pushBack("**MUTATORS**\n");
+	lines.pushBack("**\nMUTATORS**\n");
 	if(binary.m_mutators.getSize() > 0)
 	{
 		for(const ShaderProgramBinaryMutator& mutator : binary.m_mutators)
@@ -59,6 +71,70 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 				lines.pushBackSprintf((i < mutator.m_values.getSize() - 1) ? "%d," : "%d", mutator.m_values[i]);
 			}
 			lines.pushBack("\n");
+		}
+	}
+	else
+	{
+		lines.pushBack(ANKI_TAB "N/A\n");
+	}
+
+	lines.pushBack("\n**UNIFORM BLOCKS**\n");
+	if(binary.m_uniformBlocks.getSize() > 0)
+	{
+		for(const ShaderProgramBinaryBlock& block : binary.m_uniformBlocks)
+		{
+			disassembleBlock(block, lines);
+		}
+	}
+	else
+	{
+		lines.pushBack(ANKI_TAB "N/A\n");
+	}
+
+	lines.pushBack("\n**STORAGE BLOCKS**\n");
+	if(binary.m_storageBlocks.getSize() > 0)
+	{
+		for(const ShaderProgramBinaryBlock& block : binary.m_storageBlocks)
+		{
+			disassembleBlock(block, lines);
+		}
+	}
+	else
+	{
+		lines.pushBack(ANKI_TAB "N/A\n");
+	}
+
+	lines.pushBack("\n**PUSH CONSTANTS**\n");
+	if(binary.m_pushConstantBlock)
+	{
+		disassembleBlock(*binary.m_pushConstantBlock, lines);
+	}
+	else
+	{
+		lines.pushBack(ANKI_TAB "N/A\n");
+	}
+
+	lines.pushBack("\n**OPAQUE**\n");
+	if(binary.m_opaques.getSize() > 0)
+	{
+		for(const ShaderProgramBinaryOpaque& o : binary.m_opaques)
+		{
+			lines.pushBackSprintf(ANKI_TAB "%-32s set %4u binding %4u type %12s\n", o.m_name.getBegin(), o.m_set,
+								  o.m_binding, shaderVariableDataTypeToString(o.m_type).cstr());
+		}
+	}
+	else
+	{
+		lines.pushBack(ANKI_TAB "N/A\n");
+	}
+
+	lines.pushBack("\n**CONSTANTS**\n");
+	if(binary.m_constants.getSize() > 0)
+	{
+		for(const ShaderProgramBinaryConstant& c : binary.m_constants)
+		{
+			lines.pushBackSprintf(ANKI_TAB "%-32s type %8s id %4u\n", c.m_name.getBegin(),
+								  shaderVariableDataTypeToString(c.m_type).cstr(), c.m_constantId);
 		}
 	}
 	else
@@ -101,7 +177,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Uniform blocks\n");
 			for(const ShaderProgramBinaryBlockInstance& instance : variant.m_uniformBlocks)
 			{
-				disassembleBlock(instance, binary.m_uniformBlocks[instance.m_index], lines);
+				disassembleBlockInstance(instance, binary.m_uniformBlocks[instance.m_index], lines);
 			}
 		}
 
@@ -111,7 +187,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Storage blocks\n");
 			for(const ShaderProgramBinaryBlockInstance& instance : variant.m_storageBlocks)
 			{
-				disassembleBlock(instance, binary.m_storageBlocks[instance.m_index], lines);
+				disassembleBlockInstance(instance, binary.m_storageBlocks[instance.m_index], lines);
 			}
 		}
 
@@ -132,7 +208,7 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 		if(variant.m_pushConstantBlock)
 		{
 			lines.pushBackSprintf(ANKI_TAB ANKI_TAB "Push constants\n");
-			disassembleBlock(*variant.m_pushConstantBlock, *binary.m_pushConstantBlock, lines);
+			disassembleBlockInstance(*variant.m_pushConstantBlock, *binary.m_pushConstantBlock, lines);
 		}
 
 		// Constants

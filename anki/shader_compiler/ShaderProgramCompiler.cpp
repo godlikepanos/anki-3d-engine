@@ -13,8 +13,8 @@
 namespace anki
 {
 
-static const char* SHADER_BINARY_MAGIC = "ANKISDR4"; ///< @warning If changed change SHADER_BINARY_VERSION
-const U32 SHADER_BINARY_VERSION = 4;
+static const char* SHADER_BINARY_MAGIC = "ANKISDR5"; ///< @warning If changed change SHADER_BINARY_VERSION
+const U32 SHADER_BINARY_VERSION = 5;
 
 Error ShaderProgramBinaryWrapper::serializeToFile(CString fname) const
 {
@@ -555,8 +555,6 @@ public:
 				idx = i;
 				break;
 			}
-
-			return Error::NONE;
 		}
 
 		return Error::NONE;
@@ -567,6 +565,7 @@ public:
 		// Init the block
 		U32 blockIdx;
 		ANKI_CHECK(findBlock(name, set, binding, m_blocks[blockType], blockIdx));
+
 		if(blockIdx == MAX_U32)
 		{
 			// Not found, create it

@@ -107,16 +107,38 @@ static Error work(const CmdLineArgs& info)
 	{
 	public:
 		CString m_includePath;
+		U32 m_fileReadCount = 0;
 
-		Error readAllText(CString filename, StringAuto& txt) final
+		Error readAllTextInternal(CString filename, StringAuto& txt)
 		{
 			StringAuto fname(txt.getAllocator());
-			fname.sprintf("%s/%s", m_includePath.cstr(), filename.cstr());
+
+			// The first file is the input file. Don't append the include path to it
+			if(m_fileReadCount == 0)
+			{
+				fname.sprintf("%s", filename.cstr());
+			}
+			else
+			{
+				fname.sprintf("%s/%s", m_includePath.cstr(), filename.cstr());
+			}
+			++m_fileReadCount;
 
 			File file;
 			ANKI_CHECK(file.open(fname, FileOpenFlag::READ));
 			ANKI_CHECK(file.readAllText(txt));
 			return Error::NONE;
+		}
+
+		Error readAllText(CString filename, StringAuto& txt) final
+		{
+			const Error err = readAllTextInternal(filename, txt);
+			if(err)
+			{
+				ANKI_LOGE("Failed to read file: %s", filename.cstr());
+			}
+
+			return err;
 		}
 	} fsystem;
 	fsystem.m_includePath = info.m_includePath;
@@ -196,7 +218,8 @@ int main(int argc, char** argv)
 
 	if(info.m_outFname.isEmpty())
 	{
-		info.m_outFname.sprintf("%sbin", info.m_inputFname.cstr());
+		getFilepathFilename(info.m_inputFname, info.m_outFname);
+		info.m_outFname.append("bin");
 	}
 
 	if(info.m_includePath.isEmpty())
@@ -209,6 +232,8 @@ int main(int argc, char** argv)
 		ANKI_LOGE("Failed");
 		return 1;
 	}
+
+	ANKI_LOGI("Done!");
 
 	return 0;
 }
