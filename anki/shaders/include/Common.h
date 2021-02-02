@@ -52,3 +52,14 @@ ANKI_END_NAMESPACE
 
 #	define ANKI_SHADER_STATIC_ASSERT(cond_)
 #endif
+
+//
+// Various
+//
+ANKI_BEGIN_NAMESPACE
+
+/// The renderer will group drawcalls into instances up to this number.
+const U32 MAX_INSTANCE_COUNT = 64;
+const U32 MAX_LOD_COUNT = 3;
+
+ANKI_END_NAMESPACE

@@ -21,9 +21,9 @@ public:
 
 	const RenderableQueueElement* m_renderableElement = nullptr;
 
-	Array<RenderableQueueElement, MAX_INSTANCES> m_cachedRenderElements;
-	Array<U8, MAX_INSTANCES> m_cachedRenderElementLods;
-	Array<const void*, MAX_INSTANCES> m_userData;
+	Array<RenderableQueueElement, MAX_INSTANCE_COUNT> m_cachedRenderElements;
+	Array<U8, MAX_INSTANCE_COUNT> m_cachedRenderElementLods;
+	Array<const void*, MAX_INSTANCE_COUNT> m_userData;
 	U32 m_cachedRenderElementCount = 0;
 	U32 m_minLod = 0;
 };
@@ -88,7 +88,7 @@ void RenderableDrawer::flushDrawcall(DrawContext& ctx)
 
 void RenderableDrawer::drawSingle(DrawContext& ctx)
 {
-	if(ctx.m_cachedRenderElementCount == MAX_INSTANCES)
+	if(ctx.m_cachedRenderElementCount == MAX_INSTANCE_COUNT)
 	{
 		flushDrawcall(ctx);
 	}

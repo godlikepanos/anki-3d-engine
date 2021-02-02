@@ -10,6 +10,7 @@
 #include <anki/util/String.h>
 #include <anki/util/Ptr.h>
 #include <anki/gr/Enums.h>
+#include <anki/shaders/include/Common.h>
 
 namespace anki
 {
@@ -32,9 +33,6 @@ class TransferGpuAllocatorHandle;
 
 /// @name Constants
 /// @{
-constexpr U32 MAX_LOD_COUNT = 3;
-constexpr U32 MAX_INSTANCES = 64; ///< @warning Change MAX_INSTANCE_GROUPS as well
-constexpr U32 MAX_INSTANCE_GROUPS = 7; ///< It's log2(MAX_INSTANCES) + 1
 
 /// Standard attribute locations. Should be the same as in Common.glsl.
 enum class VertexAttributeLocation : U8

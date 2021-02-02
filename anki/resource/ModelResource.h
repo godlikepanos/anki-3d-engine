@@ -93,7 +93,7 @@ public:
 	U32 m_grObjectReferenceCount;
 };
 
-/// Model patch interface class. Its very important class and it binds the material with the mesh
+/// Model patch class. Its very important class and it binds a material with a few mesh (one for each LOD).
 class ModelPatch
 {
 	friend class ModelResource;

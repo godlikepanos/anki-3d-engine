@@ -12,7 +12,7 @@ namespace anki
 {
 
 static const Array<CString, U32(BuiltinMutatorId::COUNT)> BUILTIN_MUTATOR_NAMES = {
-	{"NONE", "ANKI_INSTANCE_COUNT", "ANKI_PASS", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY"}};
+	{"NONE", "ANKI_INSTANCED", "ANKI_PASS", "ANKI_LOD", "ANKI_BONES", "ANKI_VELOCITY"}};
 
 class BuiltinVarInfo
 {
@@ -176,7 +176,7 @@ MaterialResource::~MaterialResource()
 	{
 		for(U32 l = 0; l < MAX_LOD_COUNT; ++l)
 		{
-			for(U32 inst = 0; inst < MAX_INSTANCE_GROUPS; ++inst)
+			for(U32 inst = 0; inst < 2; ++inst)
 			{
 				for(U32 skinned = 0; skinned <= 1; ++skinned)
 				{
@@ -184,7 +184,6 @@ MaterialResource::~MaterialResource()
 					{
 						MaterialVariant& variant = m_variantMatrix[p][l][inst][skinned][vel];
 						variant.m_blockInfos.destroy(getAllocator());
-						variant.m_opaqueBindings.destroy(getAllocator());
 					}
 				}
 			}
@@ -293,7 +292,7 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 
 			if(mutatorName == BUILTIN_MUTATOR_NAMES[id])
 			{
-				ANKI_RESOURCE_LOGE("Cannot list builtin mutator: %s", mutatorName.cstr());
+				ANKI_RESOURCE_LOGE("Materials sholdn't list builtin mutators: %s", mutatorName.cstr());
 				return Error::USER_DATA;
 			}
 		}
@@ -334,31 +333,38 @@ Error MaterialResource::parseMutators(XmlElement mutatorsEl)
 
 Error MaterialResource::findBuiltinMutators()
 {
-	// INSTANCE_COUNT
+	// INSTANCED
 	U builtinMutatorCount = 0;
 
-	m_builtinMutators[BuiltinMutatorId::INSTANCE_COUNT] =
-		m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCE_COUNT]);
-	if(m_builtinMutators[BuiltinMutatorId::INSTANCE_COUNT])
+	m_builtinMutators[BuiltinMutatorId::INSTANCED] =
+		m_prog->tryFindMutator(BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCED]);
+	if(m_builtinMutators[BuiltinMutatorId::INSTANCED])
 	{
-		if(m_builtinMutators[BuiltinMutatorId::INSTANCE_COUNT]->m_values.getSize() != MAX_INSTANCE_GROUPS)
+		if(m_builtinMutators[BuiltinMutatorId::INSTANCED]->m_values.getSize() != 2)
 		{
-			ANKI_RESOURCE_LOGE("Mutator %s should have %u values in the program",
-							   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCE_COUNT].cstr(), MAX_INSTANCE_GROUPS);
+			ANKI_RESOURCE_LOGE("Mutator %s should have 2 values in the program",
+							   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCED].cstr());
 			return Error::USER_DATA;
 		}
 
-		for(U32 i = 0; i < MAX_INSTANCE_GROUPS; ++i)
+		for(I32 i = 0; i < 1; ++i)
 		{
-			if(m_builtinMutators[BuiltinMutatorId::INSTANCE_COUNT]->m_values[i] != (1 << i))
+			if(m_builtinMutators[BuiltinMutatorId::INSTANCED]->m_values[i] != i)
 			{
 				ANKI_RESOURCE_LOGE("Values of the %s mutator in the program are not the expected",
-								   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCE_COUNT].cstr());
+								   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCED].cstr());
 				return Error::USER_DATA;
 			}
 		}
 
 		++builtinMutatorCount;
+	}
+
+	if(m_builtinMutators[BuiltinMutatorId::INSTANCED] && m_perInstanceUboBinding == MAX_U32)
+	{
+		ANKI_RESOURCE_LOGE("The program has the %s mutator but no b_ankiPerInstance UBO",
+						   BUILTIN_MUTATOR_NAMES[BuiltinMutatorId::INSTANCED].cstr());
+		return Error::USER_DATA;
 	}
 
 	// PASS
@@ -527,21 +533,19 @@ Error MaterialResource::findBuiltinMutators()
 	return Error::NONE;
 }
 
-Error MaterialResource::parseVariable(CString fullVarName, Bool& instanced, U32& idx, CString& name)
+Error MaterialResource::parseVariable(CString fullVarName, Bool instanced, U32& idx, CString& name)
 {
 	idx = 0;
 
-	if(fullVarName.find("u_ankiPerDraw") != CString::NPOS)
+	if(!instanced && fullVarName.find("u_ankiPerDraw.") != 0)
 	{
-		instanced = false;
+		ANKI_RESOURCE_LOGE("Variable in the per draw block is incorrect: %s", fullVarName.cstr());
+		return Error::USER_DATA;
 	}
-	else if(fullVarName.find("u_ankiPerInstance") != CString::NPOS)
+
+	if(instanced && fullVarName.find("u_ankiPerInstance[") != 0)
 	{
-		instanced = true;
-	}
-	else
-	{
-		ANKI_RESOURCE_LOGE("Wrong variable name: %s", fullVarName.cstr());
+		ANKI_RESOURCE_LOGE("Variable in the per instance block is incorrect: %s", fullVarName.cstr());
 		return Error::USER_DATA;
 	}
 
@@ -600,32 +604,68 @@ Error MaterialResource::createVars()
 	const ShaderProgramBinary& binary = m_prog->getBinary();
 
 	// Create the uniform vars
-	U32 descriptorSet = MAX_U32;
 	U32 maxDescriptorSet = 0;
+	U32 descriptorSet = MAX_U32;
+	U32 instancedVarCount = 0;
+	U32 instancedVarWithMaxInstanceIdxCount = 0;
 	for(const ShaderProgramBinaryBlock& block : binary.m_uniformBlocks)
 	{
 		maxDescriptorSet = max(maxDescriptorSet, block.m_set);
 
-		if(block.m_name.getBegin() != CString("b_ankiMaterial"))
+		U32 localDescriptorSet = MAX_U32;
+		Bool instanced;
+		if(block.m_name.getBegin() == CString("b_ankiPerDraw"))
+		{
+			localDescriptorSet = block.m_set;
+			m_perDrawUboBinding = U32(&block - binary.m_uniformBlocks.getBegin());
+			m_perDrawUboBinding = block.m_binding;
+			instanced = false;
+
+			ANKI_ASSERT(m_perDrawUboIdx == MAX_U32 || m_perDrawUboIdx == U32(&block - &binary.m_uniformBlocks[0]));
+			m_perDrawUboIdx = U32(&block - &binary.m_uniformBlocks[0]);
+		}
+		else if(block.m_name.getBegin() == CString("b_ankiPerInstance"))
+		{
+			localDescriptorSet = block.m_set;
+			m_perInstanceUboBinding = U32(&block - binary.m_uniformBlocks.getBegin());
+			m_perInstanceUboBinding = block.m_binding;
+			instanced = true;
+
+			ANKI_ASSERT(m_perInstanceUboIdx == MAX_U32
+						|| m_perInstanceUboIdx == U32(&block - &binary.m_uniformBlocks[0]));
+			m_perInstanceUboIdx = U32(&block - &binary.m_uniformBlocks[0]);
+		}
+		else
 		{
 			continue;
 		}
 
-		descriptorSet = block.m_set;
-		m_uboIdx = U32(&block - binary.m_uniformBlocks.getBegin());
-		m_uboBinding = block.m_binding;
+		if(descriptorSet == MAX_U32)
+		{
+			descriptorSet = localDescriptorSet;
+		}
+		else if(descriptorSet != localDescriptorSet)
+		{
+			ANKI_RESOURCE_LOGE("All b_anki UBOs should have the same descriptor set");
+			return Error::USER_DATA;
+		}
 
 		for(const ShaderProgramBinaryVariable& var : block.m_variables)
 		{
-			Bool instanced;
 			U32 idx;
 			CString name;
 			ANKI_CHECK(parseVariable(var.m_name.getBegin(), instanced, idx, name));
-			ANKI_ASSERT(name.getLength() > 0 && (instanced || idx == 0));
+			ANKI_ASSERT(name.getLength() > 0);
+			ANKI_ASSERT(instanced || idx == 0);
+
+			if(instanced && idx == MAX_INSTANCE_COUNT - 1)
+			{
+				++instancedVarWithMaxInstanceIdxCount;
+			}
 
 			if(idx > 0)
 			{
-				if(idx > MAX_INSTANCES)
+				if(idx >= MAX_INSTANCE_COUNT)
 				{
 					ANKI_RESOURCE_LOGE("Array variable exceeds the instance count: %s", var.m_name.getBegin());
 					return Error::USER_DATA;
@@ -659,14 +699,25 @@ Error MaterialResource::createVars()
 			in.m_instanced = instanced;
 			in.m_dataType = var.m_type;
 
+			if(instanced)
+			{
+				++instancedVarCount;
+			}
+
 			// Check if it's builtin
 			ANKI_CHECK(checkBuiltin(name, in.m_dataType, instanced, in.m_builtin));
 		}
 	}
 
-	if(descriptorSet == MAX_U32)
+	if(instancedVarWithMaxInstanceIdxCount != instancedVarCount)
 	{
-		ANKI_RESOURCE_LOGE("The b_ankiMaterial UBO is missing");
+		ANKI_RESOURCE_LOGE("The u_ankiPerInstance should be an array of %u elements", MAX_INSTANCE_COUNT);
+		return Error::USER_DATA;
+	}
+
+	if(m_perDrawUboBinding == MAX_U32 && m_perInstanceUboBinding == MAX_U32)
+	{
+		ANKI_RESOURCE_LOGE("The b_ankiPerDraw and b_ankiPerInstance UBOs are both missing");
 		return Error::USER_DATA;
 	}
 
@@ -687,6 +738,7 @@ Error MaterialResource::createVars()
 		in.m_constant = false;
 		in.m_instanced = false;
 		in.m_dataType = o.m_type;
+		in.m_opaqueBinding = o.m_binding;
 
 		// Check if it's builtin
 		ANKI_CHECK(checkBuiltin(in.m_name, in.m_dataType, false, in.m_builtin));
@@ -730,7 +782,7 @@ Error MaterialResource::parseInputs(XmlElement inputsEl, Bool async)
 
 		if(foundVar == nullptr)
 		{
-			ANKI_RESOURCE_LOGE("Variable \"%s\" not found", varName.cstr());
+			ANKI_RESOURCE_LOGE("Variable not found: %s", varName.cstr());
 			return Error::USER_DATA;
 		}
 
@@ -810,18 +862,14 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	RenderingKey key = key_;
 	key.setLod(min<U32>(m_lodCount - 1, key.getLod()));
 
-	if(!isInstanced())
-	{
-		ANKI_ASSERT(key.getInstanceCount() == 1);
-	}
+	const Bool instanced = key.getInstanceCount() > 1;
+	ANKI_ASSERT(!(!isInstanced() && instanced));
 
 	ANKI_ASSERT(!key.isSkinned() || m_builtinMutators[BuiltinMutatorId::BONES]);
 	ANKI_ASSERT(!key.hasVelocity() || m_builtinMutators[BuiltinMutatorId::VELOCITY]);
 
-	key.setInstanceCount(1 << getInstanceGroupIdx(key.getInstanceCount()));
-
-	MaterialVariant& variant = m_variantMatrix[key.getPass()][key.getLod()][getInstanceGroupIdx(key.getInstanceCount())]
-											  [key.isSkinned()][key.hasVelocity()];
+	MaterialVariant& variant =
+		m_variantMatrix[key.getPass()][key.getLod()][instanced][key.isSkinned()][key.hasVelocity()];
 
 	// Check if it's initialized
 	{
@@ -848,9 +896,9 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 		initInfo.addMutation(m.m_mutator->m_name, m.m_value);
 	}
 
-	if(m_builtinMutators[BuiltinMutatorId::INSTANCE_COUNT])
+	if(m_builtinMutators[BuiltinMutatorId::INSTANCED])
 	{
-		initInfo.addMutation(m_builtinMutators[BuiltinMutatorId::INSTANCE_COUNT]->m_name, key.getInstanceCount());
+		initInfo.addMutation(m_builtinMutators[BuiltinMutatorId::INSTANCED]->m_name, instanced);
 	}
 
 	if(m_builtinMutators[BuiltinMutatorId::PASS])
@@ -903,39 +951,37 @@ const MaterialVariant& MaterialResource::getOrCreateVariant(const RenderingKey& 
 	m_prog->getOrCreateVariant(initInfo, progVariant);
 
 	// Init the variant
-	initVariant(*progVariant, variant, key.getInstanceCount());
+	initVariant(*progVariant, variant, instanced);
 
 	return variant;
 }
 
 void MaterialResource::initVariant(const ShaderProgramResourceVariant& progVariant, MaterialVariant& variant,
-								   U32 instanceCount) const
+								   Bool instanced) const
 {
-	// Find the block instance
-	const ShaderProgramBinary& binary = m_prog->getBinary();
+	// Find the block instances
 	const ShaderProgramBinaryVariant& binaryVariant = progVariant.getBinaryVariant();
-	const ShaderProgramBinaryBlockInstance* binaryBlockInstance = nullptr;
+	const ShaderProgramBinaryBlockInstance* perDrawBinaryBlockInstance = nullptr;
+	const ShaderProgramBinaryBlockInstance* perInstanceBinaryBlockInstance = nullptr;
 	for(const ShaderProgramBinaryBlockInstance& instance : binaryVariant.m_uniformBlocks)
 	{
-		if(instance.m_index == m_uboIdx)
+		if(instance.m_index == m_perDrawUboIdx)
 		{
-			binaryBlockInstance = &instance;
-			break;
+			perDrawBinaryBlockInstance = &instance;
+		}
+		else if(instance.m_index == m_perInstanceUboIdx)
+		{
+			perInstanceBinaryBlockInstance = &instance;
 		}
 	}
-
-	if(binaryBlockInstance == nullptr)
-	{
-		ANKI_RESOURCE_LOGF("The uniform block doesn't appear to be active for variant. Material: %s",
-						   getFilename().cstr());
-	}
+	ANKI_ASSERT(perDrawBinaryBlockInstance || perInstanceBinaryBlockInstance);
 
 	// Some init
 	variant.m_prog = progVariant.getProgram();
 	variant.m_blockInfos.create(getAllocator(), m_vars.getSize());
-	variant.m_opaqueBindings.create(getAllocator(), m_vars.getSize(), -1);
-	variant.m_uniBlockSize = binaryBlockInstance->m_size;
-	ANKI_ASSERT(variant.m_uniBlockSize > 0);
+	variant.m_perDrawUboSize = (perDrawBinaryBlockInstance) ? perDrawBinaryBlockInstance->m_size : 0;
+	variant.m_perInstanceUboSizeSingleInstance =
+		(perInstanceBinaryBlockInstance) ? (perInstanceBinaryBlockInstance->m_size / MAX_INSTANCE_COUNT) : 0;
 
 	// Initialize the block infos, active vars and bindings
 	for(const MaterialVariable& var : m_vars)
@@ -951,28 +997,44 @@ void MaterialResource::initVariant(const ShaderProgramResourceVariant& progVaria
 				}
 			}
 		}
-		else if(var.inBlock())
+		else if(var.inBlock() && !var.isInstanced())
 		{
-			for(const ShaderProgramBinaryVariableInstance& instance : binaryBlockInstance->m_variables)
+			if(perDrawBinaryBlockInstance == nullptr)
+			{
+				continue;
+			}
+
+			for(const ShaderProgramBinaryVariableInstance& instance : perDrawBinaryBlockInstance->m_variables)
+			{
+				if(instance.m_index == var.m_indexInBinary)
+				{
+					variant.m_activeVars.set(var.m_index, true);
+					variant.m_blockInfos[var.m_index] = instance.m_blockInfo;
+				}
+			}
+		}
+		else if(var.inBlock() && var.isInstanced())
+		{
+			if(perInstanceBinaryBlockInstance == nullptr)
+			{
+				continue;
+			}
+
+			for(const ShaderProgramBinaryVariableInstance& instance : perInstanceBinaryBlockInstance->m_variables)
 			{
 				if(instance.m_index == var.m_indexInBinary)
 				{
 					variant.m_activeVars.set(var.m_index, true);
 					variant.m_blockInfos[var.m_index] = instance.m_blockInfo;
 
-					if(var.m_instanced)
-					{
-						variant.m_blockInfos[var.m_index].m_arraySize = I16(instanceCount);
-					}
-					else
-					{
-						break;
-					}
+					// Add a random array size, someone else will set it to instance count
+					variant.m_blockInfos[var.m_index].m_arraySize = I16(MAX_INSTANCE_COUNT);
 				}
 				else if(instance.m_index == var.m_indexInBinary2ndElement)
 				{
 					// Then we need to update the stride
-					ANKI_ASSERT(variant.m_blockInfos[var.m_index].m_offset >= 0);
+					ANKI_ASSERT(variant.m_blockInfos[var.m_index].m_offset >= 0
+								&& "Should have been initialized already");
 
 					const I16 stride = I16(instance.m_blockInfo.m_offset - variant.m_blockInfos[var.m_index].m_offset);
 					ANKI_ASSERT(stride >= 4);
@@ -988,14 +1050,13 @@ void MaterialResource::initVariant(const ShaderProgramResourceVariant& progVaria
 				if(instance.m_index == var.m_indexInBinary)
 				{
 					variant.m_activeVars.set(var.m_index, true);
-					variant.m_opaqueBindings[var.m_index] = I16(binary.m_opaques[instance.m_index].m_binding);
 					break;
 				}
 			}
 		}
 	}
 
-	// No make sure that the vars that are active
+	// All active vars should have a value set by the material
 	for(const MaterialVariable& var : m_vars)
 	{
 		if(var.m_builtin == BuiltinMaterialVariableId::NONE && variant.m_activeVars.get(var.m_index)
@@ -1023,14 +1084,6 @@ void MaterialResource::initVariant(const ShaderProgramResourceVariant& progVaria
 		}
 	}
 #endif
-}
-
-U32 MaterialResource::getInstanceGroupIdx(U32 instanceCount)
-{
-	ANKI_ASSERT(instanceCount > 0);
-	instanceCount = nextPowerOfTwo(instanceCount);
-	ANKI_ASSERT(instanceCount <= MAX_INSTANCES);
-	return U32(std::log2(F32(instanceCount)));
 }
 
 Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)

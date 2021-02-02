@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <anki/shaders/include/Common.h>
 #include <anki/shaders/TextureFunctions.glsl>
 
 // WORKAROUNDS

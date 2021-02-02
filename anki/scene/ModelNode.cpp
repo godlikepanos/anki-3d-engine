@@ -158,7 +158,7 @@ void ModelNode::initRenderComponents()
 void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData, U32 modelPatchIdx) const
 {
 	const U32 instanceCount = userData.getSize();
-	ANKI_ASSERT(instanceCount > 0 && instanceCount <= MAX_INSTANCES);
+	ANKI_ASSERT(instanceCount > 0 && instanceCount <= MAX_INSTANCE_COUNT);
 	ANKI_ASSERT(ctx.m_key.getInstanceCount() == instanceCount);
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
@@ -170,8 +170,8 @@ void ModelNode::draw(RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData
 		const SkinComponent& skinc = getFirstComponentOfType<SkinComponent>();
 
 		// Transforms
-		Array<Mat4, MAX_INSTANCES> trfs;
-		Array<Mat4, MAX_INSTANCES> prevTrfs;
+		Array<Mat4, MAX_INSTANCE_COUNT> trfs;
+		Array<Mat4, MAX_INSTANCE_COUNT> prevTrfs;
 		const MoveComponent& movec = getFirstComponentOfType<MoveComponent>();
 		trfs[0] = Mat4(movec.getWorldTransform());
 		prevTrfs[0] = Mat4(movec.getPreviousWorldTransform());

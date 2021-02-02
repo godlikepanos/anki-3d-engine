@@ -17,7 +17,7 @@ struct PerDraw
 	Vec4 m_colorBias;
 };
 
-layout(set = 1, binding = 0, row_major) uniform b_ankiMaterial
+layout(set = 1, binding = 0, row_major) uniform b_ankiPerDraw
 {
 	PerDraw u_ankiPerDraw;
 };

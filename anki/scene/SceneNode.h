@@ -345,7 +345,7 @@ private:
 
 		U8 getComponentClassId() const
 		{
-			return m_combo & 0xFF;
+			return m_combo & 0x7F;
 		}
 
 		Bool isFeedbackComponent() const

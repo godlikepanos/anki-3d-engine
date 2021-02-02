@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator ANKI_INSTANCE_COUNT 1 2 4 8 16 32 64
+#pragma anki mutator ANKI_INSTANCED 0 1
 #pragma anki mutator ANKI_LOD 0 1 2
 #pragma anki mutator ANKI_VELOCITY 0 1
 #pragma anki mutator ANKI_PASS 0 2 3
@@ -41,32 +41,32 @@
 
 #include <anki/shaders/GBufferCommon.glsl>
 
-layout(set = 0, binding = 1) uniform sampler u_ankiGlobalSampler;
+layout(set = 0, binding = 2) uniform sampler u_ankiGlobalSampler;
 #if DIFFUSE_TEX == 1 && ANKI_PASS == PASS_GB
-layout(set = 0, binding = 2) uniform texture2D u_diffTex;
+layout(set = 0, binding = 3) uniform texture2D u_diffTex;
 #	define USING_DIFF_TEX 1
 #endif
 #if SPECULAR_TEX == 1 && ANKI_PASS == PASS_GB
-layout(set = 0, binding = 3) uniform texture2D u_specTex;
+layout(set = 0, binding = 4) uniform texture2D u_specTex;
 #	define USING_SPECULAR_TEX 1
 #endif
 #if ROUGHNESS_TEX == 1 && ANKI_PASS == PASS_GB
-layout(set = 0, binding = 4) uniform texture2D u_roughnessTex;
+layout(set = 0, binding = 5) uniform texture2D u_roughnessTex;
 #	define USING_ROUGHNESS_TEX 1
 #endif
 #if NORMAL_TEX == 1 && ANKI_PASS == PASS_GB && ANKI_LOD < 2
-layout(set = 0, binding = 5) uniform texture2D u_normalTex;
+layout(set = 0, binding = 6) uniform texture2D u_normalTex;
 #	define USING_NORMAL_TEX 1
 #endif
 #if METAL_TEX == 1 && ANKI_PASS == PASS_GB
-layout(set = 0, binding = 6) uniform texture2D u_metallicTex;
+layout(set = 0, binding = 7) uniform texture2D u_metallicTex;
 #	define USING_METALLIC_TEX 1
 #endif
 #if REALLY_USING_PARALLAX
-layout(set = 0, binding = 7) uniform texture2D u_heightTex;
+layout(set = 0, binding = 8) uniform texture2D u_heightTex;
 #endif
 #if EMISSIVE_TEX == 1 && ANKI_PASS == PASS_GB
-layout(set = 0, binding = 8) uniform texture2D u_emissiveTex;
+layout(set = 0, binding = 9) uniform texture2D u_emissiveTex;
 #	define USING_EMISSIVE_TEX 1
 #endif
 
@@ -111,27 +111,31 @@ struct PerInstance
 #endif
 };
 
-layout(set = 0, binding = 0, row_major, std140) uniform b_ankiMaterial
-{
 #if ANKI_PASS == PASS_GB
+layout(set = 0, binding = 0, row_major, std140) uniform b_ankiPerDraw
+{
 	PerDraw u_ankiPerDraw;
+};
 #endif
-	PerInstance u_ankiPerInstance[ANKI_INSTANCE_COUNT];
+
+layout(set = 0, binding = 1, row_major, std140) uniform b_ankiPerInstance
+{
+	PerInstance u_ankiPerInstance[MAX_INSTANCE_COUNT];
 };
 
 #if ANKI_BONES
-layout(set = 0, binding = 9, row_major, std140) readonly buffer b_ankiBoneTransforms
+layout(set = 0, binding = 10, row_major, std140) readonly buffer b_ankiBoneTransforms
 {
 	Mat4 u_ankiBoneTransforms[];
 };
 
-layout(set = 0, binding = 10, row_major, std140) readonly buffer b_ankiPrevFrameBoneTransforms
+layout(set = 0, binding = 11, row_major, std140) readonly buffer b_ankiPrevFrameBoneTransforms
 {
 	Mat4 u_ankiPrevFrameBoneTransforms[];
 };
 #endif
 
-#if ANKI_INSTANCE_COUNT == 1
+#if !ANKI_INSTANCED
 #	define INSTANCE_ID 0
 #else
 #	define INSTANCE_ID gl_InstanceIndex

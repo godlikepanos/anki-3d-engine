@@ -34,7 +34,7 @@ public:
 		, m_skinned(skinned)
 		, m_velocity(velocity)
 	{
-		ANKI_ASSERT(instanceCount <= MAX_INSTANCES && instanceCount != 0);
+		ANKI_ASSERT(instanceCount <= MAX_INSTANCE_COUNT && instanceCount != 0);
 		ANKI_ASSERT(lod <= MAX_LOD_COUNT);
 	}
 
@@ -88,7 +88,7 @@ public:
 
 	void setInstanceCount(U32 instanceCount)
 	{
-		ANKI_ASSERT(instanceCount <= MAX_INSTANCES && instanceCount > 0);
+		ANKI_ASSERT(instanceCount <= MAX_INSTANCE_COUNT && instanceCount > 0);
 		m_instanceCount = U8(instanceCount);
 	}
 

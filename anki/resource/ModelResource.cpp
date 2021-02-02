@@ -89,8 +89,8 @@ void ModelPatch::getRenderingInfo(const RenderingKey& key, ModelRenderingInfo& i
 
 		if(m_mtl->supportsSkinning())
 		{
-			inf.m_boneTransformsBinding = m_mtl->getBoneTransformsBinding();
-			inf.m_prevFrameBoneTransformsBinding = m_mtl->getPrevFrameBoneTransformsBinding();
+			inf.m_boneTransformsBinding = m_mtl->getBoneTransformsStorageBlockBinding();
+			inf.m_prevFrameBoneTransformsBinding = m_mtl->getPrevFrameBoneTransformsStorageBlockBinding();
 		}
 		else
 		{
