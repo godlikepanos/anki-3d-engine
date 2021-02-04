@@ -243,11 +243,6 @@ else()
 	set(SDL2_INCLUDE_DIRS "")
 endif()
 
-# freetype
-message("++ Configuring freetype")
-add_subdirectory(thirdparty/freetype)
-message("++ End configuring freetype")
-
 # glslang
 message("++ Configuring glslang")
 add_subdirectory(thirdparty/glslang)
@@ -337,8 +332,6 @@ include_directories(
 	"thirdparty/imgui"
 	"thirdparty/z"
 	"${SDL2_INCLUDE_DIRS}"
-	"thirdparty/freetype/include"
-	"${CMAKE_CURRENT_BINARY_DIR}/thirdparty/freetype/include/freetype2"
 	"thirdparty/khronos"
 	"${CMAKE_CURRENT_BINARY_DIR}"
 	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang"
