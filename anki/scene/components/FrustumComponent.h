@@ -363,6 +363,7 @@ public:
 	/// See setLodDistance.
 	F32 getLodDistance(U32 lod) const
 	{
+		ANKI_ASSERT(m_maxLodDistances[lod] > 0.0f);
 		return m_maxLodDistances[lod];
 	}
 
@@ -422,7 +423,7 @@ private:
 	/// Defines the the rate of the cascade distances
 	F32 m_shadowCascadesDistancePower = 1.0f;
 
-	Array<F32, MAX_LOD_COUNT> m_maxLodDistances = {};
+	Array<F32, MAX_LOD_COUNT - 1> m_maxLodDistances = {};
 
 	class
 	{

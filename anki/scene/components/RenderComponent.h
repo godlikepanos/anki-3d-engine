@@ -87,6 +87,8 @@ public:
 		el.m_userData = m_userData;
 		ANKI_ASSERT(el.m_mergeKey != MAX_U64);
 		el.m_mergeKey = m_mergeKey;
+		el.m_distanceFromCamera = -1.0f;
+		el.m_lod = MAX_U8;
 	}
 
 	void setupRayTracingInstanceQueueElement(U32 lod, RayTracingInstanceQueueElement& el) const

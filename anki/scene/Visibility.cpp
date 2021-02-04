@@ -23,6 +23,31 @@
 namespace anki
 {
 
+static U8 computeLod(const FrustumComponent& frc, F32 distanceFromTheNearPlane)
+{
+	static_assert(MAX_LOD_COUNT == 3, "Wrong assumption");
+	U8 lod;
+	if(distanceFromTheNearPlane < 0.0f)
+	{
+		// In RT objects may fall behind the camera, use the max LOD on those
+		lod = 2;
+	}
+	else if(distanceFromTheNearPlane <= frc.getLodDistance(0))
+	{
+		lod = 0;
+	}
+	else if(distanceFromTheNearPlane <= frc.getLodDistance(1))
+	{
+		lod = 1;
+	}
+	else
+	{
+		lod = 2;
+	}
+
+	return lod;
+}
+
 static Bool spatialInsideFrustum(const FrustumComponent& frc, const SpatialComponent& spc)
 {
 	switch(spc.getCollisionShapeType())
@@ -45,7 +70,7 @@ static Bool spatialInsideFrustum(const FrustumComponent& frc, const SpatialCompo
 	}
 }
 
-void VisibilityContext::submitNewWork(const FrustumComponent& frc, const FrustumComponent* primaryFrustum,
+void VisibilityContext::submitNewWork(const FrustumComponent& frc, const FrustumComponent& primaryFrustum,
 									  RenderQueue& rqueue, ThreadHive& hive)
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VIS_SUBMIT_WORK);
@@ -97,7 +122,7 @@ void VisibilityContext::submitNewWork(const FrustumComponent& frc, const Frustum
 	FrustumVisibilityContext* frcCtx = alloc.newInstance<FrustumVisibilityContext>();
 	frcCtx->m_visCtx = this;
 	frcCtx->m_frc = &frc;
-	frcCtx->m_primaryFrustum = primaryFrustum;
+	frcCtx->m_primaryFrustum = &primaryFrustum;
 	frcCtx->m_queueViews.create(alloc, hive.getThreadCount());
 	frcCtx->m_visTestsSignalSem = hive.newSemaphore(1);
 	frcCtx->m_renderQueue = &rqueue;
@@ -231,6 +256,8 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 	const FrustumComponent& testedFrc = *m_frcCtx->m_frc;
 	const FrustumComponentVisibilityTestFlag enabledVisibilityTests = testedFrc.getEnabledVisibilityTests();
 	ANKI_ASSERT(enabledVisibilityTests != FrustumComponentVisibilityTestFlag::NONE);
+	ANKI_ASSERT(m_frcCtx->m_primaryFrustum);
+	const FrustumComponent& primaryFrc = *m_frcCtx->m_primaryFrustum;
 
 	const SceneNode& testedNode = testedFrc.getSceneNode();
 	auto alloc = m_frcCtx->m_visCtx->m_scene->getFrameAllocator();
@@ -333,10 +360,12 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			rc->setupRenderableQueueElement(*el);
 
 			// Compute distance from the frustum
-			const Plane& nearPlane = testedFrc.getViewPlanes()[FrustumPlaneType::NEAR];
+			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::NEAR];
 			el->m_distanceFromCamera = !!(rc->getFlags() & RenderComponentFlag::SORT_LAST)
-										   ? testedFrc.getFar()
+										   ? primaryFrc.getFar()
 										   : max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
+
+			el->m_lod = computeLod(primaryFrc, el->m_distanceFromCamera);
 
 			if(wantsEarlyZ && el->m_distanceFromCamera < m_frcCtx->m_visCtx->m_earlyZDist
 			   && !(rc->getFlags() & RenderComponentFlag::FORWARD_SHADING))
@@ -351,31 +380,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			RayTracingInstanceQueueElement* el = result.m_rayTracingInstances.newElement(alloc);
 
 			// Compute the LOD
-			ANKI_ASSERT(m_frcCtx->m_primaryFrustum);
-			const FrustumComponent& primartFrc = *m_frcCtx->m_primaryFrustum;
-			const Plane& nearPlane = primartFrc.getViewPlanes()[FrustumPlaneType::NEAR];
+			const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::NEAR];
 			const F32 dist = testPlane(nearPlane, spatialc->getAabbWorldSpace());
-
-			static_assert(MAX_LOD_COUNT == 3, "Following code was designed around that");
-			U32 lod;
-			if(dist < 0.0f)
-			{
-				lod = 2;
-			}
-			else if(dist <= primartFrc.getLodDistance(0))
-			{
-				lod = 0;
-			}
-			else if(dist <= primartFrc.getLodDistance(1))
-			{
-				lod = 1;
-			}
-			else
-			{
-				lod = 2;
-			}
-
-			rtRc->setupRayTracingInstanceQueueElement(lod, *el);
+			rtRc->setupRayTracingInstanceQueueElement(computeLod(primaryFrc, dist), *el);
 		}
 
 		if(lc)
@@ -387,10 +394,10 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				// Extra check
 
 				// Compute distance from the frustum
-				const Plane& nearPlane = testedFrc.getViewPlanes()[FrustumPlaneType::NEAR];
+				const Plane& nearPlane = primaryFrc.getViewPlanes()[FrustumPlaneType::NEAR];
 				const F32 distFromFrustum = max(0.0f, testPlane(nearPlane, spatialc->getAabbWorldSpace()));
 
-				castsShadow = distFromFrustum < testedFrc.getEffectiveShadowDistance();
+				castsShadow = distFromFrustum < primaryFrc.getEffectiveShadowDistance();
 			}
 
 			switch(lc->getLightComponentType())
@@ -586,7 +593,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			if(ANKI_LIKELY(nextQueueFrustumComponents.getSize() == 0))
 			{
 				const Error err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
-					m_frcCtx->m_visCtx->submitNewWork(frc, nullptr, nextQueues[count++], hive);
+					m_frcCtx->m_visCtx->submitNewWork(frc, primaryFrc, nextQueues[count++], hive);
 					return Error::NONE;
 				});
 				(void)err;
@@ -595,7 +602,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			{
 				for(FrustumComponent& frc : nextQueueFrustumComponents)
 				{
-					m_frcCtx->m_visCtx->submitNewWork(frc, nullptr, nextQueues[count++], hive);
+					m_frcCtx->m_visCtx->submitNewWork(frc, primaryFrc, nextQueues[count++], hive);
 				}
 			}
 		}
@@ -662,7 +669,7 @@ void CombineResultsTask::combine()
 	// Sort some of the arrays
 	if(!isShadowFrustum)
 	{
-		std::sort(results.m_renderables.getBegin(), results.m_renderables.getEnd(), MaterialDistanceSortFunctor(20.0f));
+		std::sort(results.m_renderables.getBegin(), results.m_renderables.getEnd(), MaterialDistanceSortFunctor());
 
 		std::sort(results.m_earlyZRenderables.getBegin(), results.m_earlyZRenderables.getEnd(),
 				  DistanceSortFunctor<RenderableQueueElement>());
@@ -810,7 +817,7 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 	ctx.m_scene = &scene;
 	ctx.m_earlyZDist = scene.getConfig().m_earlyZDistance;
 	const FrustumComponent& mainFrustum = fsn.getFirstComponentOfType<FrustumComponent>();
-	ctx.submitNewWork(mainFrustum, nullptr, rqueue, hive);
+	ctx.submitNewWork(mainFrustum, mainFrustum, rqueue, hive);
 
 	const FrustumComponent* extendedFrustum = fsn.tryGetNthComponentOfType<FrustumComponent>(1);
 	if(extendedFrustum)
@@ -820,7 +827,7 @@ void SceneGraph::doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueu
 			!(extendedFrustum->getEnabledVisibilityTests() & ~FrustumComponentVisibilityTestFlag::ALL_RAY_TRACING));
 
 		rqueue.m_rayTracingQueue = scene.getFrameAllocator().newInstance<RenderQueue>();
-		ctx.submitNewWork(*extendedFrustum, &mainFrustum, *rqueue.m_rayTracingQueue, hive);
+		ctx.submitNewWork(*extendedFrustum, mainFrustum, *rqueue.m_rayTracingQueue, hive);
 	}
 
 	hive.waitAllTasks();

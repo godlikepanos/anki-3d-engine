@@ -101,15 +101,15 @@ private:
 	/// @name Misc & common
 	/// @{
 
-	static const U32 m_lodCount = 3;
-	static const U32 m_pointLightsMaxLod = 1;
-
-	Array<F32, m_lodCount - 1> m_lodDistances;
+	static constexpr U32 m_pointLightsMaxLod = 1;
+	Array<F32, MAX_LOD_COUNT - 1> m_lodDistances;
 
 	/// Find the lod of the light
-	U32 choseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurAtlas) const;
+	void chooseLod(const Vec4& cameraOrigin, const PointLightQueueElement& light, Bool& blurAtlas, U32& tileBufferLod,
+				   U32& renderQueueElementsLod) const;
 	/// Find the lod of the light
-	U32 choseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurAtlas) const;
+	void chooseLod(const Vec4& cameraOrigin, const SpotLightQueueElement& light, Bool& blurAtlas, U32& tileBufferLod,
+				   U32& renderQueueElementsLod) const;
 
 	/// Try to allocate a number of scratch tiles and regular tiles.
 	TileAllocatorResult allocateTilesAndScratchTiles(U64 lightUuid, U32 faceCount, const U64* faceTimestamps,
@@ -120,7 +120,7 @@ private:
 	/// Add new work to render to scratch buffer and atlas buffer.
 	void newScratchAndAtlasResloveRenderWorkItems(
 		const Viewport& atlasViewport, const Viewport& scratchVewport, Bool blurAtlas, RenderQueue* lightRenderQueue,
-		DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
+		U32 renderQueueElementsLod, DynamicArrayAuto<Scratch::LightToRenderToScratchInfo>& scratchWorkItem,
 		DynamicArrayAuto<Atlas::ResolveWorkItem>& atlasResolveWorkItem, U32& drawcallCount) const;
 
 	/// Iterate lights and create work items.

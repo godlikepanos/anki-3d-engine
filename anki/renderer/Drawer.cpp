@@ -25,7 +25,8 @@ public:
 	Array<U8, MAX_INSTANCE_COUNT> m_cachedRenderElementLods;
 	Array<const void*, MAX_INSTANCE_COUNT> m_userData;
 	U32 m_cachedRenderElementCount = 0;
-	U32 m_minLod = 0;
+	U8 m_minLod = 0;
+	U8 m_maxLod = 0;
 };
 
 /// Check if the drawcalls can be merged.
@@ -40,7 +41,7 @@ RenderableDrawer::~RenderableDrawer()
 
 void RenderableDrawer::drawRange(Pass pass, const Mat4& viewMat, const Mat4& viewProjMat, const Mat4& prevViewProjMat,
 								 CommandBufferPtr cmdb, SamplerPtr sampler, const RenderableQueueElement* begin,
-								 const RenderableQueueElement* end, U32 minLod)
+								 const RenderableQueueElement* end, U32 minLod, U32 maxLod)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -56,8 +57,9 @@ void RenderableDrawer::drawRange(Pass pass, const Mat4& viewMat, const Mat4& vie
 	ctx.m_queueCtx.m_key = RenderingKey(pass, 0, 1, false, false);
 	ctx.m_queueCtx.m_debugDraw = false;
 
-	ANKI_ASSERT(minLod < MAX_LOD_COUNT);
-	ctx.m_minLod = minLod;
+	ANKI_ASSERT(minLod < MAX_LOD_COUNT && maxLod < MAX_LOD_COUNT);
+	ctx.m_minLod = U8(minLod);
+	ctx.m_maxLod = U8(maxLod);
 
 	for(; begin != end; ++begin)
 	{
@@ -95,13 +97,12 @@ void RenderableDrawer::drawSingle(DrawContext& ctx)
 
 	const RenderableQueueElement& rqel = *ctx.m_renderableElement;
 
-	U32 lod = min(m_r->calculateLod(rqel.m_distanceFromCamera), MAX_LOD_COUNT - 1);
-	lod = max(lod, ctx.m_minLod);
+	const U8 overridenLod = clamp(rqel.m_lod, ctx.m_minLod, ctx.m_maxLod);
 
 	const Bool shouldFlush =
 		ctx.m_cachedRenderElementCount > 0
 		&& (!canMergeRenderableQueueElements(ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount - 1], rqel)
-			|| ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount - 1] != lod);
+			|| ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount - 1] != overridenLod);
 
 	if(shouldFlush)
 	{
@@ -110,7 +111,7 @@ void RenderableDrawer::drawSingle(DrawContext& ctx)
 
 	// Cache the new one
 	ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount] = rqel;
-	ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount] = U8(lod);
+	ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount] = overridenLod;
 	ctx.m_userData[ctx.m_cachedRenderElementCount] = rqel.m_userData;
 	++ctx.m_cachedRenderElementCount;
 }

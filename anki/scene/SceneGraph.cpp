@@ -77,9 +77,8 @@ Error SceneGraph::init(AllocAlignedCallback allocCb, void* allocCbData, ThreadHi
 	m_config.m_rayTracedShadows =
 		config.getBool("scene_rayTracedShadows") && m_gr->getDeviceCapabilities().m_rayTracingEnabled;
 	m_config.m_rayTracingExtendedFrustumDistance = config.getNumberF32("scene_rayTracingExtendedFrustumDistance");
-	m_config.m_maxLodDistances[0] = config.getNumberF32("scene_lod0MaxDistance");
-	m_config.m_maxLodDistances[1] = config.getNumberF32("scene_lod1MaxDistance");
-	m_config.m_maxLodDistances[2] = config.getNumberF32("scene_lod2MaxDistance");
+	m_config.m_maxLodDistances[0] = config.getNumberF32("lod0MaxDistance");
+	m_config.m_maxLodDistances[1] = config.getNumberF32("lod1MaxDistance");
 
 	ANKI_CHECK(m_events.init(this));
 

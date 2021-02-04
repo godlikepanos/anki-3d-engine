@@ -44,32 +44,21 @@ public:
 	}
 };
 
-/// Material and distance sort.
+/// Sorts first by LOD and then by material (merge key).
 class MaterialDistanceSortFunctor
 {
 public:
-	MaterialDistanceSortFunctor(F32 distanceGranularity)
-		: m_distGranularity(1.0f / distanceGranularity)
-	{
-	}
-
 	Bool operator()(const RenderableQueueElement& a, const RenderableQueueElement& b)
 	{
-		const U32 aClass = U32(a.m_distanceFromCamera * m_distGranularity);
-		const U32 bClass = U32(b.m_distanceFromCamera * m_distGranularity);
-
-		if(aClass == bClass && a.m_callback == b.m_callback)
+		if(a.m_lod == b.m_lod)
 		{
 			return a.m_mergeKey < b.m_mergeKey;
 		}
 		else
 		{
-			return a.m_distanceFromCamera < b.m_distanceFromCamera;
+			return a.m_lod < b.m_lod;
 		}
 	}
-
-private:
-	F32 m_distGranularity;
 };
 
 /// Storage for a single element type.
@@ -139,7 +128,7 @@ public:
 	List<const FrustumComponent*> m_testedFrcs;
 	Mutex m_mtx;
 
-	void submitNewWork(const FrustumComponent& frc, const FrustumComponent* primaryFrustum, RenderQueue& result,
+	void submitNewWork(const FrustumComponent& frc, const FrustumComponent& primaryFrustum, RenderQueue& result,
 					   ThreadHive& hive);
 };
 
@@ -149,10 +138,9 @@ class FrustumVisibilityContext
 {
 public:
 	VisibilityContext* m_visCtx = nullptr;
-	const FrustumComponent* m_frc = nullptr;
 
-	/// If this is !=nullptr then m_frc is an extended frustum and m_primaryFrustum is the main frustum.
-	const FrustumComponent* m_primaryFrustum = nullptr;
+	const FrustumComponent* m_frc = nullptr; ///< This is the frustum to be tested.
+	const FrustumComponent* m_primaryFrustum = nullptr; ///< This is the primary camera frustum.
 
 	// S/W rasterizer members
 	SoftwareRasterizer* m_r = nullptr;

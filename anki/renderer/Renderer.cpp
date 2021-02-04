@@ -85,9 +85,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_height = config.getNumberU32("height");
 	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
 
-	ANKI_ASSERT(m_lodDistances.getSize() == 2);
-	m_lodDistances[0] = config.getNumberF32("r_lodDistance0");
-	m_lodDistances[1] = config.getNumberF32("r_lodDistance1");
 	m_frameCount = 0;
 
 	m_clusterCount[0] = config.getNumberU32("r_clusterSizeX");

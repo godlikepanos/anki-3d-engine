@@ -152,7 +152,7 @@ inline constexpr T toDegrees(const T rad)
 template<typename T>
 inline constexpr T clamp(T v, T minv, T maxv)
 {
-	ANKI_ASSERT(minv < maxv);
+	ANKI_ASSERT(minv <= maxv);
 	return min<T>(max<T>(minv, v), maxv);
 }
 

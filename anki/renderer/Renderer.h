@@ -281,24 +281,6 @@ public:
 		return *m_ui;
 	}
 
-	/// Get the LOD given the distance of an object from the camera
-	U32 calculateLod(F32 distance) const
-	{
-		ANKI_ASSERT(m_lodDistances.getSize() == 2);
-		if(distance < m_lodDistances[0])
-		{
-			return 0;
-		}
-		else if(distance < m_lodDistances[1])
-		{
-			return 1;
-		}
-		else
-		{
-			return 2;
-		}
-	}
-
 	/// Create the init info for a 2D texture that will be used as a render target.
 	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(U32 w, U32 h, Format format, TextureUsageBit usage,
 																 CString name = {});
@@ -447,8 +429,6 @@ private:
 
 	U32 m_width;
 	U32 m_height;
-
-	Array<F32, MAX_LOD_COUNT - 1> m_lodDistances; ///< Distance that used to calculate the LOD
 
 	RenderableDrawer m_sceneDrawer;
 
