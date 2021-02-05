@@ -2348,19 +2348,20 @@ macro(asan_check_add_debug_flag2 ASAN_FLAG)
 endmacro()
 
 # enable AddressSanitizer if supported
-asan_check_add_debug_flag2("address")
-asan_check_add_debug_flag("bool")
-asan_check_add_debug_flag("bounds")
-asan_check_add_debug_flag("enum")
-asan_check_add_debug_flag("float-cast-overflow")
-asan_check_add_debug_flag("float-divide-by-zero")
-asan_check_add_debug_flag("nonnull-attribute")
-asan_check_add_debug_flag("returns-nonnull-attribute")
-asan_check_add_debug_flag("signed-integer-overflow")
-asan_check_add_debug_flag("undefined")
-asan_check_add_debug_flag("vla-bound")
-asan_check_add_debug_flag("leak")
-asan_check_add_debug_flag("object-size")
+# NO!!!! It fails to compile with clang
+#asan_check_add_debug_flag2("address")
+#asan_check_add_debug_flag("bool")
+#asan_check_add_debug_flag("bounds")
+#asan_check_add_debug_flag("enum")
+#asan_check_add_debug_flag("float-cast-overflow")
+#asan_check_add_debug_flag("float-divide-by-zero")
+#asan_check_add_debug_flag("nonnull-attribute")
+#asan_check_add_debug_flag("returns-nonnull-attribute")
+#asan_check_add_debug_flag("signed-integer-overflow")
+#asan_check_add_debug_flag("undefined")
+#asan_check_add_debug_flag("vla-bound")
+#asan_check_add_debug_flag("leak")
+#asan_check_add_debug_flag("object-size")
 
 ##### Tests #####
 
