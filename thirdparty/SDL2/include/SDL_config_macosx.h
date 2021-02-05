@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -115,8 +115,12 @@
 #define HAVE_LOGF   1
 #define HAVE_LOG10  1
 #define HAVE_LOG10F 1
+#define HAVE_LROUND 1
+#define HAVE_LROUNDF 1
 #define HAVE_POW    1
 #define HAVE_POWF   1
+#define HAVE_ROUND 1
+#define HAVE_ROUNDF 1
 #define HAVE_SCALBN 1
 #define HAVE_SCALBNF    1
 #define HAVE_SIN    1
@@ -125,6 +129,8 @@
 #define HAVE_SQRTF  1
 #define HAVE_TAN    1
 #define HAVE_TANF   1
+#define HAVE_TRUNC    1
+#define HAVE_TRUNCF   1
 #define HAVE_SIGACTION  1
 #define HAVE_SETJMP 1
 #define HAVE_NANOSLEEP  1
@@ -139,9 +145,15 @@
 #define SDL_AUDIO_DRIVER_DUMMY  1
 
 /* Enable various input drivers */
+#define SDL_JOYSTICK_HIDAPI 1
 #define SDL_JOYSTICK_IOKIT  1
-#define SDL_JOYSTICK_HIDAPI  1
+#define SDL_JOYSTICK_VIRTUAL    1
 #define SDL_HAPTIC_IOKIT    1
+
+/* The MFI controller support requires ARC Objective C runtime */
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1080 && !defined(__i386__)
+#define SDL_JOYSTICK_MFI 1
+#endif
 
 /* Enable the dummy sensor driver */
 #define SDL_SENSOR_DUMMY  1
@@ -195,7 +207,7 @@
 #endif
 
 /* Metal only supported on 64-bit architectures with 10.11+ */
-#if TARGET_CPU_X86_64 && (MAC_OS_X_VERSION_MAX_ALLOWED >= 101100)
+#if TARGET_RT_64_BIT && (MAC_OS_X_VERSION_MAX_ALLOWED >= 101100)
 #define SDL_PLATFORM_SUPPORTS_METAL    1
 #else
 #define SDL_PLATFORM_SUPPORTS_METAL    0

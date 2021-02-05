@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -232,7 +232,8 @@ struct SDL_VideoDevice
     void (*SetWindowFullscreen) (_THIS, SDL_Window * window, SDL_VideoDisplay * display, SDL_bool fullscreen);
     int (*SetWindowGammaRamp) (_THIS, SDL_Window * window, const Uint16 * ramp);
     int (*GetWindowGammaRamp) (_THIS, SDL_Window * window, Uint16 * ramp);
-    void (*SetWindowGrab) (_THIS, SDL_Window * window, SDL_bool grabbed);
+    void (*SetWindowMouseGrab) (_THIS, SDL_Window * window, SDL_bool grabbed);
+    void (*SetWindowKeyboardGrab) (_THIS, SDL_Window * window, SDL_bool grabbed);
     void (*DestroyWindow) (_THIS, SDL_Window * window);
     int (*CreateWindowFramebuffer) (_THIS, SDL_Window * window, Uint32 * format, void ** pixels, int *pitch);
     int (*UpdateWindowFramebuffer) (_THIS, SDL_Window * window, const SDL_Rect * rects, int numrects);
@@ -281,6 +282,8 @@ struct SDL_VideoDevice
      */
     SDL_MetalView (*Metal_CreateView) (_THIS, SDL_Window * window);
     void (*Metal_DestroyView) (_THIS, SDL_MetalView view);
+    void *(*Metal_GetLayer) (_THIS, SDL_MetalView view);
+    void (*Metal_GetDrawableSize) (_THIS, SDL_Window * window, int *w, int *h);
 
     /* * * */
     /*
@@ -373,6 +376,11 @@ struct SDL_VideoDevice
     SDL_TLSID current_glwin_tls;
     SDL_TLSID current_glctx_tls;
 
+    /* Flag that stores whether it's allowed to call SDL_GL_MakeCurrent()
+     * with a NULL window, but a non-NULL context. (Not allowed in most cases,
+     * except on EGL under some circumstances.) */
+    SDL_bool gl_allow_no_surface;
+
     /* * * */
     /* Data used by the Vulkan drivers */
     struct
@@ -406,7 +414,6 @@ typedef struct VideoBootStrap
 {
     const char *name;
     const char *desc;
-    int (*available) (void);
     SDL_VideoDevice *(*create) (int devindex);
 } VideoBootStrap;
 
@@ -423,6 +430,7 @@ extern VideoBootStrap Android_bootstrap;
 extern VideoBootStrap PSP_bootstrap;
 extern VideoBootStrap RPI_bootstrap;
 extern VideoBootStrap KMSDRM_bootstrap;
+extern VideoBootStrap KMSDRM_LEGACY_bootstrap;
 extern VideoBootStrap DUMMY_bootstrap;
 extern VideoBootStrap Wayland_bootstrap;
 extern VideoBootStrap NACL_bootstrap;
@@ -430,10 +438,13 @@ extern VideoBootStrap VIVANTE_bootstrap;
 extern VideoBootStrap Emscripten_bootstrap;
 extern VideoBootStrap QNX_bootstrap;
 extern VideoBootStrap OFFSCREEN_bootstrap;
+extern VideoBootStrap OS2DIVE_bootstrap;
+extern VideoBootStrap OS2VMAN_bootstrap;
 
 extern SDL_VideoDevice *SDL_GetVideoDevice(void);
 extern int SDL_AddBasicVideoDisplay(const SDL_DisplayMode * desktop_mode);
-extern int SDL_AddVideoDisplay(const SDL_VideoDisplay * display);
+extern int SDL_AddVideoDisplay(const SDL_VideoDisplay * display, SDL_bool send_event);
+extern void SDL_DelVideoDisplay(int index);
 extern SDL_bool SDL_AddDisplayMode(SDL_VideoDisplay *display, const SDL_DisplayMode * mode);
 extern int SDL_GetIndexOfDisplay(SDL_VideoDisplay *display);
 extern SDL_VideoDisplay *SDL_GetDisplay(int displayIndex);
@@ -461,13 +472,6 @@ extern SDL_Window * SDL_GetFocusWindow(void);
 extern SDL_bool SDL_ShouldAllowTopmost(void);
 
 extern float SDL_ComputeDiagonalDPI(int hpix, int vpix, float hinches, float vinches);
-
-extern void SDL_OnApplicationWillTerminate(void);
-extern void SDL_OnApplicationDidReceiveMemoryWarning(void);
-extern void SDL_OnApplicationWillResignActive(void);
-extern void SDL_OnApplicationDidEnterBackground(void);
-extern void SDL_OnApplicationWillEnterForeground(void);
-extern void SDL_OnApplicationDidBecomeActive(void);
 
 extern void SDL_ToggleDragAndDropSupport(void);
 

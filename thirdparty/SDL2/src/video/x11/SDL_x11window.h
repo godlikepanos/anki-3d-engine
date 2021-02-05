@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -99,7 +99,8 @@ extern void X11_SetWindowBordered(_THIS, SDL_Window * window, SDL_bool bordered)
 extern void X11_SetWindowResizable(_THIS, SDL_Window * window, SDL_bool resizable);
 extern void X11_SetWindowFullscreen(_THIS, SDL_Window * window, SDL_VideoDisplay * display, SDL_bool fullscreen);
 extern int X11_SetWindowGammaRamp(_THIS, SDL_Window * window, const Uint16 * ramp);
-extern void X11_SetWindowGrab(_THIS, SDL_Window * window, SDL_bool grabbed);
+extern void X11_SetWindowMouseGrab(_THIS, SDL_Window * window, SDL_bool grabbed);
+extern void X11_SetWindowKeyboardGrab(_THIS, SDL_Window * window, SDL_bool grabbed);
 extern void X11_DestroyWindow(_THIS, SDL_Window * window);
 extern SDL_bool X11_GetWindowWMInfo(_THIS, SDL_Window * window,
                                     struct SDL_SysWMinfo *info);

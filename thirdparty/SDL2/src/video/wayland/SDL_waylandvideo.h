@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,6 +20,7 @@
 */
 
 #include "../../SDL_internal.h"
+#include "SDL_stdinc.h"
 
 #ifndef SDL_waylandvideo_h_
 #define SDL_waylandvideo_h_
@@ -36,6 +37,8 @@
 #define MESA_EGL_NO_X11_HEADERS
 #include <EGL/egl.h>
 #include "wayland-util.h"
+
+#include "../../core/linux/SDL_dbus.h"
 
 struct xkb_context;
 struct SDL_WaylandInput;
@@ -64,6 +67,8 @@ typedef struct {
     struct wl_data_device_manager *data_device_manager;
     struct zxdg_decoration_manager_v1 *decoration_manager;
     struct org_kde_kwin_server_decoration_manager *kwin_server_decoration_manager;
+    struct zwp_keyboard_shortcuts_inhibit_manager_v1 *key_inhibitor_manager;
+    struct zwp_idle_inhibit_manager_v1 *idle_inhibit_manager;
 
     EGLDisplay edpy;
     EGLContext context;
@@ -86,6 +91,8 @@ typedef struct {
 typedef struct {
     struct wl_output *output;
     float scale_factor;
+    int width, height, refresh, transform;
+    SDL_bool done;
 } SDL_WaylandOutputData;
 
 #endif /* SDL_waylandvideo_h_ */

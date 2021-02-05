@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 #include "../../SDL_internal.h"
+
+#include "SDL_render.h"
+#include "SDL_system.h"
 
 #if SDL_VIDEO_RENDER_D3D11 && !SDL_RENDER_DISABLED
 
@@ -51,7 +54,11 @@ extern ISwapChainBackgroundPanelNative * WINRT_GlobalSwapChainBackgroundPanelNat
 #endif  /* __WINRT__ */
 
 
+#ifdef _MSC_VER
+#define SDL_COMPOSE_ERROR(str) __FUNCTION__ ", " str
+#else
 #define SDL_COMPOSE_ERROR(str) SDL_STRINGIFY_ARG(__FUNCTION__) ", " str
+#endif
 
 #define SAFE_RELEASE(X) if ((X)) { IUnknown_Release(SDL_static_cast(IUnknown*, X)); X = NULL; }
 
@@ -636,7 +643,8 @@ D3D11_CreateDeviceResources(SDL_Renderer * renderer)
     /* Create blending states: */
     if (!D3D11_CreateBlendState(renderer, SDL_BLENDMODE_BLEND) ||
         !D3D11_CreateBlendState(renderer, SDL_BLENDMODE_ADD) ||
-        !D3D11_CreateBlendState(renderer, SDL_BLENDMODE_MOD)) {
+        !D3D11_CreateBlendState(renderer, SDL_BLENDMODE_MOD) ||
+        !D3D11_CreateBlendState(renderer, SDL_BLENDMODE_MUL)) {
         /* D3D11_CreateBlendMode will set the SDL error, if it fails */
         goto done;
     }
@@ -1239,6 +1247,8 @@ D3D11_DestroyTexture(SDL_Renderer * renderer,
     SAFE_RELEASE(data->mainTextureResourceViewU);
     SAFE_RELEASE(data->mainTextureV);
     SAFE_RELEASE(data->mainTextureResourceViewV);
+    SAFE_RELEASE(data->mainTextureNV);
+    SAFE_RELEASE(data->mainTextureResourceViewNV);
     SDL_free(data->pixels);
     SDL_free(data);
     texture->driverdata = NULL;
@@ -1370,6 +1380,7 @@ D3D11_UpdateTexture(SDL_Renderer * renderer, SDL_Texture * texture,
     return 0;
 }
 
+#if SDL_HAVE_YUV
 static int
 D3D11_UpdateTextureYUV(SDL_Renderer * renderer, SDL_Texture * texture,
                        const SDL_Rect * rect,
@@ -1396,6 +1407,31 @@ D3D11_UpdateTextureYUV(SDL_Renderer * renderer, SDL_Texture * texture,
     }
     return 0;
 }
+
+static int
+D3D11_UpdateTextureNV(SDL_Renderer * renderer, SDL_Texture * texture,
+                       const SDL_Rect * rect,
+                       const Uint8 *Yplane, int Ypitch,
+                       const Uint8 *UVplane, int UVpitch)
+{
+    D3D11_RenderData *rendererData = (D3D11_RenderData *)renderer->driverdata;
+    D3D11_TextureData *textureData = (D3D11_TextureData *)texture->driverdata;
+
+    if (!textureData) {
+        SDL_SetError("Texture is not currently available");
+        return -1;
+    }
+
+    if (D3D11_UpdateTextureInternal(rendererData, textureData->mainTexture, SDL_BYTESPERPIXEL(texture->format), rect->x, rect->y, rect->w, rect->h, Yplane, Ypitch) < 0) {
+        return -1;
+    }
+
+    if (D3D11_UpdateTextureInternal(rendererData, textureData->mainTextureNV, 2, rect->x / 2, rect->y / 2, ((rect->w + 1) / 2), (rect->h + 1) / 2, UVplane, UVpitch) < 0) {
+        return -1;
+    }
+    return 0;
+}
+#endif
 
 static int
 D3D11_LockTexture(SDL_Renderer * renderer, SDL_Texture * texture,
@@ -1521,6 +1557,18 @@ D3D11_UnlockTexture(SDL_Renderer * renderer, SDL_Texture * texture)
         NULL);
 
     SAFE_RELEASE(textureData->stagingTexture);
+}
+
+static void
+D3D11_SetTextureScaleMode(SDL_Renderer * renderer, SDL_Texture * texture, SDL_ScaleMode scaleMode)
+{
+    D3D11_TextureData *textureData = (D3D11_TextureData *) texture->driverdata;
+    
+    if (!textureData) {
+        return;
+    }
+
+    textureData->scaleMode = (scaleMode == SDL_ScaleModeNearest) ?  D3D11_FILTER_MIN_MAG_MIP_POINT : D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 }
 
 static int
@@ -1823,6 +1871,8 @@ D3D11_UpdateVertexBuffer(SDL_Renderer *renderer,
     D3D11_RenderData *rendererData = (D3D11_RenderData *) renderer->driverdata;
     HRESULT result = S_OK;
     const int vbidx = rendererData->currentVertexBuffer;
+    const UINT stride = sizeof(VertexPositionColor);
+    const UINT offset = 0;
 
     if (dataSizeInBytes == 0) {
         return 0;  /* nothing to do. */
@@ -1846,8 +1896,6 @@ D3D11_UpdateVertexBuffer(SDL_Renderer *renderer,
     } else {
         D3D11_BUFFER_DESC vertexBufferDesc;
         D3D11_SUBRESOURCE_DATA vertexBufferData;
-        const UINT stride = sizeof(VertexPositionColor);
-        const UINT offset = 0;
 
         SAFE_RELEASE(rendererData->vertexBuffers[vbidx]);
 
@@ -1873,15 +1921,15 @@ D3D11_UpdateVertexBuffer(SDL_Renderer *renderer,
         }
 
         rendererData->vertexBufferSizes[vbidx] = dataSizeInBytes;
-
-        ID3D11DeviceContext_IASetVertexBuffers(rendererData->d3dContext,
-            0,
-            1,
-            &rendererData->vertexBuffers[vbidx],
-            &stride,
-            &offset
-            );
     }
+
+    ID3D11DeviceContext_IASetVertexBuffers(rendererData->d3dContext,
+        0,
+        1,
+        &rendererData->vertexBuffers[vbidx],
+        &stride,
+        &offset
+        );
 
     rendererData->currentVertexBuffer++;
     if (rendererData->currentVertexBuffer >= SDL_arraysize(rendererData->vertexBuffers)) {
@@ -2312,6 +2360,7 @@ D3D11_RenderReadPixels(SDL_Renderer * renderer, const SDL_Rect * rect,
                        Uint32 format, void * pixels, int pitch)
 {
     D3D11_RenderData * data = (D3D11_RenderData *) renderer->driverdata;
+    ID3D11RenderTargetView *renderTargetView = NULL;
     ID3D11Texture2D *backBuffer = NULL;
     ID3D11Texture2D *stagingTexture = NULL;
     HRESULT result;
@@ -2321,14 +2370,15 @@ D3D11_RenderReadPixels(SDL_Renderer * renderer, const SDL_Rect * rect,
     D3D11_BOX srcBox;
     D3D11_MAPPED_SUBRESOURCE textureMemory;
 
-    /* Retrieve a pointer to the back buffer: */
-    result = IDXGISwapChain_GetBuffer(data->swapChain,
-        0,
-        &SDL_IID_ID3D11Texture2D,
-        (void **)&backBuffer
-        );
-    if (FAILED(result)) {
-        WIN_SetErrorFromHRESULT(SDL_COMPOSE_ERROR("IDXGISwapChain1::GetBuffer [get back buffer]"), result);
+    ID3D11DeviceContext_OMGetRenderTargets(data->d3dContext, 1, &renderTargetView, NULL);
+    if (renderTargetView == NULL) {
+        SDL_SetError("%s, ID3D11DeviceContext::OMGetRenderTargets failed", __FUNCTION__);
+        goto done;
+    }
+
+    ID3D11View_GetResource(renderTargetView, (ID3D11Resource**)&backBuffer);
+    if (backBuffer == NULL) {
+        SDL_SetError("%s, ID3D11View::GetResource failed", __FUNCTION__);
         goto done;
     }
 
@@ -2495,9 +2545,13 @@ D3D11_CreateRenderer(SDL_Window * window, Uint32 flags)
     renderer->SupportsBlendMode = D3D11_SupportsBlendMode;
     renderer->CreateTexture = D3D11_CreateTexture;
     renderer->UpdateTexture = D3D11_UpdateTexture;
+#if SDL_HAVE_YUV
     renderer->UpdateTextureYUV = D3D11_UpdateTextureYUV;
+    renderer->UpdateTextureNV = D3D11_UpdateTextureNV;
+#endif
     renderer->LockTexture = D3D11_LockTexture;
     renderer->UnlockTexture = D3D11_UnlockTexture;
+    renderer->SetTextureScaleMode = D3D11_SetTextureScaleMode;
     renderer->SetRenderTarget = D3D11_SetRenderTarget;
     renderer->QueueSetViewport = D3D11_QueueSetViewport;
     renderer->QueueSetDrawColor = D3D11_QueueSetViewport;  /* SetViewport and SetDrawColor are (currently) no-ops. */
@@ -2576,5 +2630,31 @@ SDL_RenderDriver D3D11_RenderDriver = {
 };
 
 #endif /* SDL_VIDEO_RENDER_D3D11 && !SDL_RENDER_DISABLED */
+
+#ifdef __WIN32__
+/* This function needs to always exist on Windows, for the Dynamic API. */
+ID3D11Device *
+SDL_RenderGetD3D11Device(SDL_Renderer * renderer)
+{
+    ID3D11Device *device = NULL;
+
+#if SDL_VIDEO_RENDER_D3D11 && !SDL_RENDER_DISABLED
+    D3D11_RenderData *data = (D3D11_RenderData *) renderer->driverdata;
+
+    /* Make sure that this is a D3D renderer */
+    if (renderer->DestroyRenderer != D3D11_DestroyRenderer) {
+        SDL_SetError("Renderer is not a D3D11 renderer");
+        return NULL;
+    }
+
+    device = (ID3D11Device *)data->d3dDevice;
+    if (device) {
+        ID3D11Device_AddRef(device);
+    }
+#endif /* SDL_VIDEO_RENDER_D3D11 && !SDL_RENDER_DISABLED */
+
+    return device;
+}
+#endif /* __WIN32__ */
 
 /* vi: set ts=4 sw=4 expandtab: */

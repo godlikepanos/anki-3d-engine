@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,14 +37,17 @@ typedef struct
     HINSTANCE hinstance;
     HBITMAP hbm;
     WNDPROC wndproc;
+    HHOOK keyboard_hook;
     SDL_bool created;
     WPARAM mouse_button_flags;
+    LPARAM last_pointer_update;
     SDL_bool initializing;
     SDL_bool expected_resize;
     SDL_bool in_border_change;
     SDL_bool in_title_click;
     Uint8 focus_click_pending;
     SDL_bool skip_update_clipcursor;
+    Uint32 last_updated_clipcursor;
     SDL_bool windowed_mode_was_maximized;
     SDL_bool in_window_deactivation;
     RECT cursor_clipped_rect;
@@ -73,7 +76,8 @@ extern void WIN_SetWindowResizable(_THIS, SDL_Window * window, SDL_bool resizabl
 extern void WIN_SetWindowFullscreen(_THIS, SDL_Window * window, SDL_VideoDisplay * display, SDL_bool fullscreen);
 extern int WIN_SetWindowGammaRamp(_THIS, SDL_Window * window, const Uint16 * ramp);
 extern int WIN_GetWindowGammaRamp(_THIS, SDL_Window * window, Uint16 * ramp);
-extern void WIN_SetWindowGrab(_THIS, SDL_Window * window, SDL_bool grabbed);
+extern void WIN_SetWindowMouseGrab(_THIS, SDL_Window * window, SDL_bool grabbed);
+extern void WIN_SetWindowKeyboardGrab(_THIS, SDL_Window * window, SDL_bool grabbed);
 extern void WIN_DestroyWindow(_THIS, SDL_Window * window);
 extern SDL_bool WIN_GetWindowWMInfo(_THIS, SDL_Window * window,
                                     struct SDL_SysWMinfo *info);

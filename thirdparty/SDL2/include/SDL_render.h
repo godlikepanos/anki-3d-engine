@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -84,6 +84,16 @@ typedef struct SDL_RendererInfo
     int max_texture_width;      /**< The maximum texture width */
     int max_texture_height;     /**< The maximum texture height */
 } SDL_RendererInfo;
+
+/**
+ *  \brief The scaling mode for a texture.
+ */
+typedef enum
+{
+    SDL_ScaleModeNearest, /**< nearest pixel sampling */
+    SDL_ScaleModeLinear,  /**< linear filtering */
+    SDL_ScaleModeBest     /**< anisotropic filtering */
+} SDL_ScaleMode;
 
 /**
  *  \brief The access pattern allowed for a texture.
@@ -367,6 +377,35 @@ extern DECLSPEC int SDLCALL SDL_GetTextureBlendMode(SDL_Texture * texture,
                                                     SDL_BlendMode *blendMode);
 
 /**
+ *  \brief Set the scale mode used for texture scale operations.
+ *
+ *  \param texture The texture to update.
+ *  \param scaleMode ::SDL_ScaleMode to use for texture scaling.
+ *
+ *  \return 0 on success, or -1 if the texture is not valid.
+ *
+ *  \note If the scale mode is not supported, the closest supported mode is
+ *        chosen.
+ *
+ *  \sa SDL_GetTextureScaleMode()
+ */
+extern DECLSPEC int SDLCALL SDL_SetTextureScaleMode(SDL_Texture * texture,
+                                                    SDL_ScaleMode scaleMode);
+
+/**
+ *  \brief Get the scale mode used for texture scale operations.
+ *
+ *  \param texture   The texture to query.
+ *  \param scaleMode A pointer filled in with the current scale mode.
+ *
+ *  \return 0 on success, or -1 if the texture is not valid.
+ *
+ *  \sa SDL_SetTextureScaleMode()
+ */
+extern DECLSPEC int SDLCALL SDL_GetTextureScaleMode(SDL_Texture * texture,
+                                                    SDL_ScaleMode *scaleMode);
+
+/**
  *  \brief Update the given texture rectangle with new pixel data.
  *
  *  \param texture   The texture to update
@@ -410,6 +449,28 @@ extern DECLSPEC int SDLCALL SDL_UpdateYUVTexture(SDL_Texture * texture,
                                                  const Uint8 *Yplane, int Ypitch,
                                                  const Uint8 *Uplane, int Upitch,
                                                  const Uint8 *Vplane, int Vpitch);
+
+/**
+ *  \brief Update a rectangle within a planar NV12 or NV21 texture with new pixel data.
+ *
+ *  \param texture   The texture to update
+ *  \param rect      A pointer to the rectangle of pixels to update, or NULL to
+ *                   update the entire texture.
+ *  \param Yplane    The raw pixel data for the Y plane.
+ *  \param Ypitch    The number of bytes between rows of pixel data for the Y plane.
+ *  \param UVplane   The raw pixel data for the UV plane.
+ *  \param UVpitch   The number of bytes between rows of pixel data for the UV plane.
+ *
+ *  \return 0 on success, or -1 if the texture is not valid.
+ *
+ *  \note You can use SDL_UpdateTexture() as long as your pixel data is
+ *        a contiguous block of NV12/21 planes in the proper order, but
+ *        this function is available if your pixel data is not contiguous.
+ */
+extern DECLSPEC int SDLCALL SDL_UpdateNVTexture(SDL_Texture * texture,
+                                                 const SDL_Rect * rect,
+                                                 const Uint8 *Yplane, int Ypitch,
+                                                 const Uint8 *UVplane, int UVpitch);
 
 /**
  *  \brief Lock a portion of the texture for write-only pixel access.
@@ -579,8 +640,8 @@ extern DECLSPEC void SDLCALL SDL_RenderGetViewport(SDL_Renderer * renderer,
  *  \brief Set the clip rectangle for the current target.
  *
  *  \param renderer The renderer for which clip rectangle should be set.
- *  \param rect   A pointer to the rectangle to set as the clip rectangle, or
- *                NULL to disable clipping.
+ *  \param rect   A pointer to the rectangle to set as the clip rectangle,
+ *                relative to the viewport, or NULL to disable clipping.
  *
  *  \return 0 on success, or -1 on error
  *

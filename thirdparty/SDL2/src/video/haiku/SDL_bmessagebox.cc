@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
   Copyright (C) 2018-2019 EXL <exlmotodev@gmail.com>
 
   This software is provided 'as-is', without any express or implied
@@ -154,9 +154,9 @@ class HAIKU_SDL_MessageBox : public BAlert
 			ApplyAndParseColorScheme(aMessageBoxData->colorScheme);
 		}
 
-		(aMessageBoxData->title != NULL) ?
+		(aMessageBoxData->title[0]) ?
 			SetTitle(aMessageBoxData->title) : SetTitle(HAIKU_SDL_DefTitle);
-		(aMessageBoxData->message != NULL) ?
+		(aMessageBoxData->message[0]) ?
 			SetMessageText(aMessageBoxData->message) : SetMessageText(HAIKU_SDL_DefMessage);
 
 		SetType(ConvertMessageBoxType(static_cast<SDL_MessageBoxFlags>(aMessageBoxData->flags)));

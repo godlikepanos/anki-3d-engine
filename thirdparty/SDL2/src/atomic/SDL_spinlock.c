@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -30,6 +30,10 @@
 
 #if !defined(HAVE_GCC_ATOMICS) && defined(__SOLARIS__)
 #include <atomic.h>
+#endif
+
+#if !defined(HAVE_GCC_ATOMICS) && defined(__RISCOS__)
+#include <unixlib/local.h>
 #endif
 
 #if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
@@ -68,6 +72,9 @@ SDL_AtomicTryLock(SDL_SpinLock *lock)
         return SDL_FALSE;
     }
 
+#elif defined(_MSC_VER) && (defined(_M_ARM) || defined(_M_ARM64))
+    return (_InterlockedExchange_acq(lock, 1) == 0);
+
 #elif defined(_MSC_VER)
     SDL_COMPILE_TIME_ASSERT(locksize, sizeof(*lock) == sizeof(long));
     return (InterlockedExchange((long*)lock, 1) == 0);
@@ -84,6 +91,16 @@ SDL_AtomicTryLock(SDL_SpinLock *lock)
          defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5TE__) || \
          defined(__ARM_ARCH_5TEJ__))
     int result;
+
+#if defined(__RISCOS__)
+    if (__cpucap_have_rex()) {
+        __asm__ __volatile__ (
+            "ldrex %0, [%2]\nteq   %0, #0\nstrexeq %0, %1, [%2]"
+            : "=&r" (result) : "r" (1), "r" (lock) : "cc", "memory");
+        return (result == 0);
+    }
+#endif
+
     __asm__ __volatile__ (
         "swp %0, %1, [%2]\n"
         : "=&r,&r" (result) : "r,0" (1), "r,r" (lock) : "memory");
@@ -124,8 +141,14 @@ SDL_AtomicTryLock(SDL_SpinLock *lock)
 /* "REP NOP" is PAUSE, coded for tools that don't know it by that name. */
 #if (defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))
     #define PAUSE_INSTRUCTION() __asm__ __volatile__("pause\n")  /* Some assemblers can't do REP NOP, so go with PAUSE. */
+#elif (defined(__arm__) && __ARM_ARCH__ >= 7) || defined(__aarch64__)
+    #define PAUSE_INSTRUCTION() __asm__ __volatile__("yield" ::: "memory")
+#elif (defined(__powerpc__) || defined(__powerpc64__))
+    #define PAUSE_INSTRUCTION() __asm__ __volatile__("or 27,27,27");
 #elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
     #define PAUSE_INSTRUCTION() _mm_pause()  /* this is actually "rep nop" and not a SIMD instruction. No inline asm in MSVC x86-64! */
+#elif defined(_MSC_VER) && (defined(_M_ARM) || defined(_M_ARM64))
+    #define PAUSE_INSTRUCTION() __yield()
 #elif defined(__WATCOMC__) && defined(__386__)
     /* watcom assembler rejects PAUSE if CPU < i686, and it refuses REP NOP as an invalid combination. Hardcode the bytes.  */
     extern _inline void PAUSE_INSTRUCTION(void);
@@ -153,7 +176,9 @@ SDL_AtomicLock(SDL_SpinLock *lock)
 void
 SDL_AtomicUnlock(SDL_SpinLock *lock)
 {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && (defined(_M_ARM) || defined(_M_ARM64))
+    _InterlockedExchange_rel(lock, 0);
+#elif defined(_MSC_VER)
     _ReadWriteBarrier();
     *lock = 0;
 

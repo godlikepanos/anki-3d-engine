@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -186,6 +186,8 @@ typedef struct SDL_VideoData
     DWORD ime_convmodesinkcookie;
     TSFSink *ime_uielemsink;
     TSFSink *ime_ippasink;
+
+    BYTE pre_hook_key_state[256];
 } SDL_VideoData;
 
 extern SDL_bool g_WindowsEnableMessageLoop;

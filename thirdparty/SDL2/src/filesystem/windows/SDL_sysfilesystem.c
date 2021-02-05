@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -28,7 +28,6 @@
 #include "../../core/windows/SDL_windows.h"
 #include <shlobj.h>
 
-#include "SDL_assert.h"
 #include "SDL_error.h"
 #include "SDL_stdinc.h"
 #include "SDL_filesystem.h"
@@ -40,7 +39,7 @@ SDL_GetBasePath(void)
     GetModuleFileNameExW_t pGetModuleFileNameExW;
     DWORD buflen = 128;
     WCHAR *path = NULL;
-    HANDLE psapi = LoadLibrary(L"psapi.dll");
+    HANDLE psapi = LoadLibrary(TEXT("psapi.dll"));
     char *retval = NULL;
     DWORD len = 0;
     int i;
@@ -94,7 +93,7 @@ SDL_GetBasePath(void)
     SDL_assert(i > 0); /* Should have been an absolute path. */
     path[i+1] = '\0';  /* chop off filename. */
 
-    retval = WIN_StringToUTF8(path);
+    retval = WIN_StringToUTF8W(path);
     SDL_free(path);
 
     return retval;
@@ -131,13 +130,13 @@ SDL_GetPrefPath(const char *org, const char *app)
         return NULL;
     }
 
-    worg = WIN_UTF8ToString(org);
+    worg = WIN_UTF8ToStringW(org);
     if (worg == NULL) {
         SDL_OutOfMemory();
         return NULL;
     }
 
-    wapp = WIN_UTF8ToString(app);
+    wapp = WIN_UTF8ToStringW(app);
     if (wapp == NULL) {
         SDL_free(worg);
         SDL_OutOfMemory();
@@ -182,7 +181,7 @@ SDL_GetPrefPath(const char *org, const char *app)
 
     lstrcatW(path, L"\\");
 
-    retval = WIN_StringToUTF8(path);
+    retval = WIN_StringToUTF8W(path);
 
     return retval;
 }

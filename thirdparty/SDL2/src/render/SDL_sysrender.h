@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -31,13 +31,6 @@
 /* The SDL 2D rendering system */
 
 typedef struct SDL_RenderDriver SDL_RenderDriver;
-
-typedef enum
-{
-    SDL_ScaleModeNearest,
-    SDL_ScaleModeLinear,
-    SDL_ScaleModeBest
-} SDL_ScaleMode;
 
 /* Define the SDL texture structure */
 struct SDL_Texture
@@ -138,14 +131,21 @@ struct SDL_Renderer
     int (*UpdateTexture) (SDL_Renderer * renderer, SDL_Texture * texture,
                           const SDL_Rect * rect, const void *pixels,
                           int pitch);
+#if SDL_HAVE_YUV
     int (*UpdateTextureYUV) (SDL_Renderer * renderer, SDL_Texture * texture,
                             const SDL_Rect * rect,
                             const Uint8 *Yplane, int Ypitch,
                             const Uint8 *Uplane, int Upitch,
                             const Uint8 *Vplane, int Vpitch);
+    int (*UpdateTextureNV) (SDL_Renderer * renderer, SDL_Texture * texture,
+                            const SDL_Rect * rect,
+                            const Uint8 *Yplane, int Ypitch,
+                            const Uint8 *UVplane, int UVpitch);
+#endif
     int (*LockTexture) (SDL_Renderer * renderer, SDL_Texture * texture,
                         const SDL_Rect * rect, void **pixels, int *pitch);
     void (*UnlockTexture) (SDL_Renderer * renderer, SDL_Texture * texture);
+    void (*SetTextureScaleMode) (SDL_Renderer * renderer, SDL_Texture * texture, SDL_ScaleMode scaleMode);
     int (*SetRenderTarget) (SDL_Renderer * renderer, SDL_Texture * texture);
     int (*RenderReadPixels) (SDL_Renderer * renderer, const SDL_Rect * rect,
                              Uint32 format, void * pixels, int pitch);
@@ -194,6 +194,13 @@ struct SDL_Renderer
 
     /* The pixel to point coordinate scale */
     SDL_FPoint dpi_scale;
+
+    /* Whether or not to scale relative mouse motion */
+    SDL_bool relative_scaling;
+
+    /* Remainder from scaled relative motion */
+    float xrel;
+    float yrel;
 
     /* The list of textures */
     SDL_Texture *textures;
@@ -256,6 +263,9 @@ extern SDL_BlendOperation SDL_GetBlendModeAlphaOperation(SDL_BlendMode blendMode
    for a vertex buffer during RunCommandQueue(). Pointers returned here are only valid until
    the next call, because it might be in an array that gets realloc()'d. */
 extern void *SDL_AllocateRenderVertices(SDL_Renderer *renderer, const size_t numbytes, const size_t alignment, size_t *offset);
+
+extern int SDL_PrivateLowerBlitScaled(SDL_Surface * src, SDL_Rect * srcrect, SDL_Surface * dst, SDL_Rect * dstrect, SDL_ScaleMode scaleMode);
+extern int SDL_PrivateUpperBlitScaled(SDL_Surface * src, const SDL_Rect * srcrect, SDL_Surface * dst, SDL_Rect * dstrect, SDL_ScaleMode scaleMode);
 
 #endif /* SDL_sysrender_h_ */
 

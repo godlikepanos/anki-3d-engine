@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -312,6 +312,11 @@ SDL_FillRects(SDL_Surface * dst, const SDL_Rect * rects, int count,
     /* This function doesn't work on surfaces < 8 bpp */
     if (dst->format->BitsPerPixel < 8) {
         return SDL_SetError("SDL_FillRect(): Unsupported surface format");
+    }
+
+    /* Nothing to do */
+    if (dst->w == 0 || dst->h == 0) {
+        return 0;
     }
 
     /* Perform software fill */

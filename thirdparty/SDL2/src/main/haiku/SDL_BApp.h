@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -22,6 +22,7 @@
 #define SDL_BAPP_H
 
 #include <InterfaceKit.h>
+#include <LocaleRoster.h>
 #if SDL_VIDEO_OPENGL
 #include <OpenGLKit.h>
 #endif
@@ -151,6 +152,10 @@ public:
 
         case BAPP_WINDOW_RESIZED:
             _HandleWindowResized(message);
+            break;
+
+        case B_LOCALE_CHANGED:
+            SDL_SendLocaleChangedEvent();
             break;
 
         case BAPP_SCREEN_CHANGED:

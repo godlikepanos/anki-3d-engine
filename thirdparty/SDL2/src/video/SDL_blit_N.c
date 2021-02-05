@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,12 +20,13 @@
 */
 #include "../SDL_internal.h"
 
+#if SDL_HAVE_BLIT_N
+
 #include "SDL_video.h"
 #include "SDL_endian.h"
 #include "SDL_cpuinfo.h"
 #include "SDL_blit.h"
 
-#include "SDL_assert.h"
 
 /* General optimized routines that write char by char */
 #define HAVE_FAST_WRITE_INT8 1
@@ -1450,6 +1451,8 @@ Blit_RGB888_RGB565(SDL_BlitInfo * info)
 }
 
 
+#if SDL_HAVE_BLIT_N_RGB565
+
 /* Special optimized blit for RGB 5-6-5 --> 32-bit RGB surfaces */
 #define RGB565_32(dst, src, map) (map[src[LO]*2] + map[src[HI]*2+1])
 static void
@@ -2068,6 +2071,8 @@ Blit_RGB565_BGRA8888(SDL_BlitInfo * info)
     Blit_RGB565_32(info, RGB565_BGRA8888_LUT);
 }
 
+#endif /* SDL_HAVE_BLIT_N_RGB565 */
+
 static void
 BlitNto1(SDL_BlitInfo * info)
 {
@@ -2177,7 +2182,7 @@ Blit4to4MaskAlpha(SDL_BlitInfo * info)
 
     if (dstfmt->Amask) {
         /* RGB->RGBA, SET_ALPHA */
-        Uint32 mask = (info->a >> dstfmt->Aloss) << dstfmt->Ashift;
+        Uint32 mask = ((Uint32)info->a >> dstfmt->Aloss) << dstfmt->Ashift;
 
         while (height--) {
             /* *INDENT-OFF* */
@@ -2626,7 +2631,7 @@ BlitNtoNKey(SDL_BlitInfo * info)
 
         if (dstfmt->Amask) {
             /* RGB->RGBA, SET_ALPHA */
-            Uint32 mask = info->a << dstfmt->Ashift;
+            Uint32 mask = ((Uint32)info->a) << dstfmt->Ashift;
             while (height--) {
                 /* *INDENT-OFF* */
                 DUFFS_LOOP(
@@ -3053,7 +3058,7 @@ Blit_3or4_to_3or4__same_rgb(SDL_BlitInfo * info)
 
     if (dstfmt->Amask) {
         /* SET_ALPHA */
-        Uint32 mask = info->a << dstfmt->Ashift;
+        Uint32 mask = ((Uint32)info->a) << dstfmt->Ashift;
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
         int i0 = 0, i1 = 1, i2 = 2;
 #else
@@ -3142,7 +3147,7 @@ Blit_3or4_to_3or4__inversed_rgb(SDL_BlitInfo * info)
                     Uint8 s0 = src[i0];
                     Uint8 s1 = src[i1];
                     Uint8 s2 = src[i2];
-                    Uint32 alphashift = src[i3] << dstfmt->Ashift;
+                    Uint32 alphashift = ((Uint32)src[i3]) << dstfmt->Ashift;
                     /* inversed, compared to Blit_3or4_to_3or4__same_rgb */
                     *dst32 = (s0 << 16) | (s1 << 8) | (s2) | alphashift;
                     dst += 4;
@@ -3154,7 +3159,7 @@ Blit_3or4_to_3or4__inversed_rgb(SDL_BlitInfo * info)
             }
         } else {
             /* SET_ALPHA */
-            Uint32 mask = info->a << dstfmt->Ashift;
+            Uint32 mask = ((Uint32)info->a) << dstfmt->Ashift;
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
             int i0 = 0, i1 = 1, i2 = 2;
 #else
@@ -3244,6 +3249,7 @@ static const struct blit_table normal_blit_2[] = {
     {0x00000F00, 0x000000F0, 0x0000000F, 4, 0x00FF0000, 0x0000FF00, 0x000000FF,
      BLIT_FEATURE_HAS_ARM_SIMD, Blit_RGB444_RGB888ARMSIMD, NO_ALPHA | COPY_ALPHA},
 #endif
+#if SDL_HAVE_BLIT_N_RGB565
     {0x0000F800, 0x000007E0, 0x0000001F, 4, 0x00FF0000, 0x0000FF00, 0x000000FF,
      0, Blit_RGB565_ARGB8888, NO_ALPHA | COPY_ALPHA | SET_ALPHA},
     {0x0000F800, 0x000007E0, 0x0000001F, 4, 0x000000FF, 0x0000FF00, 0x00FF0000,
@@ -3252,6 +3258,7 @@ static const struct blit_table normal_blit_2[] = {
      0, Blit_RGB565_RGBA8888, NO_ALPHA | COPY_ALPHA | SET_ALPHA},
     {0x0000F800, 0x000007E0, 0x0000001F, 4, 0x0000FF00, 0x00FF0000, 0xFF000000,
      0, Blit_RGB565_BGRA8888, NO_ALPHA | COPY_ALPHA | SET_ALPHA},
+#endif
 
     /* Default for 16-bit RGB source, used if no other blitter matches */
     {0, 0, 0, 0, 0, 0, 0, 0, BlitNtoN, 0}
@@ -3458,5 +3465,7 @@ SDL_CalculateBlitN(SDL_Surface * surface)
 
     return NULL;
 }
+
+#endif /* SDL_HAVE_BLIT_N */
 
 /* vi: set ts=4 sw=4 expandtab: */

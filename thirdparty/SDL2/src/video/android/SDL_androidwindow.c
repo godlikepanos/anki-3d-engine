@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -58,7 +58,6 @@ Android_CreateWindow(_THIS, SDL_Window * window)
     window->w = Android_SurfaceWidth;
     window->h = Android_SurfaceHeight;
 
-    window->flags &= ~SDL_WINDOW_RESIZABLE;     /* window is NEVER resizeable */
     window->flags &= ~SDL_WINDOW_HIDDEN;
     window->flags |= SDL_WINDOW_SHOWN;          /* only one window on Android */
 

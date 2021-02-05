@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -59,11 +59,19 @@ extern DECLSPEC int SDLCALL SDL_Direct3D9GetAdapterIndex( int displayIndex );
 
 typedef struct IDirect3DDevice9 IDirect3DDevice9;
 /**
-   \brief Returns the D3D device associated with a renderer, or NULL if it's not a D3D renderer.
+   \brief Returns the D3D9 device associated with a renderer, or NULL if it's not a D3D9 renderer.
 
    Once you are done using the device, you should release it to avoid a resource leak.
  */
 extern DECLSPEC IDirect3DDevice9* SDLCALL SDL_RenderGetD3D9Device(SDL_Renderer * renderer);
+
+typedef struct ID3D11Device ID3D11Device;
+/**
+   \brief Returns the D3D11 device associated with a renderer, or NULL if it's not a D3D11 renderer.
+
+   Once you are done using the device, you should release it to avoid a resource leak.
+ */
+extern DECLSPEC ID3D11Device* SDLCALL SDL_RenderGetD3D11Device(SDL_Renderer * renderer);
 
 /**
    \brief Returns the DXGI Adapter and Output indices for the specified display index.
@@ -89,7 +97,7 @@ extern DECLSPEC int SDLCALL SDL_LinuxSetThreadPriority(Sint64 threadID, int prio
 #endif /* __LINUX__ */
 	
 /* Platform specific functions for iOS */
-#if defined(__IPHONEOS__) && __IPHONEOS__
+#ifdef __IPHONEOS__
 
 #define SDL_iOSSetAnimationCallback(window, interval, callback, callbackParam) SDL_iPhoneSetAnimationCallback(window, interval, callback, callbackParam)
 extern DECLSPEC int SDLCALL SDL_iPhoneSetAnimationCallback(SDL_Window * window, int interval, void (*callback)(void*), void *callbackParam);
@@ -101,7 +109,7 @@ extern DECLSPEC void SDLCALL SDL_iPhoneSetEventPump(SDL_bool enabled);
 
 
 /* Platform specific functions for Android */
-#if defined(__ANDROID__) && __ANDROID__
+#ifdef __ANDROID__
 
 /**
    \brief Get the JNI environment for the current thread
@@ -119,6 +127,33 @@ extern DECLSPEC void * SDLCALL SDL_AndroidGetJNIEnv(void);
    (using env->Push/PopLocalFrame or manually with env->DeleteLocalRef)
  */
 extern DECLSPEC void * SDLCALL SDL_AndroidGetActivity(void);
+
+/**
+   \brief Return API level of the current device
+
+    API level 30: Android 11
+    API level 29: Android 10
+    API level 28: Android 9
+    API level 27: Android 8.1
+    API level 26: Android 8.0
+    API level 25: Android 7.1
+    API level 24: Android 7.0
+    API level 23: Android 6.0
+    API level 22: Android 5.1
+    API level 21: Android 5.0
+    API level 20: Android 4.4W
+    API level 19: Android 4.4
+    API level 18: Android 4.3
+    API level 17: Android 4.2
+    API level 16: Android 4.1
+    API level 15: Android 4.0.3
+    API level 14: Android 4.0
+    API level 13: Android 3.2
+    API level 12: Android 3.1
+    API level 11: Android 3.0
+    API level 10: Android 2.3.3
+ */
+extern DECLSPEC int SDLCALL SDL_GetAndroidSDKVersion(void);
 
 /**
    \brief Return true if the application is running on Android TV
@@ -172,10 +207,18 @@ extern DECLSPEC int SDLCALL SDL_AndroidGetExternalStorageState(void);
  */
 extern DECLSPEC const char * SDLCALL SDL_AndroidGetExternalStoragePath(void);
 
+/**
+   \brief Request permissions at runtime.
+
+   This blocks the calling thread until the permission is granted or
+   denied. Returns SDL_TRUE if the permission was granted.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_AndroidRequestPermission(const char *permission);
+
 #endif /* __ANDROID__ */
 
 /* Platform specific functions for WinRT */
-#if defined(__WINRT__) && __WINRT__
+#ifdef __WINRT__
 
 /**
  *  \brief WinRT / Windows Phone path types
@@ -267,6 +310,17 @@ extern DECLSPEC SDL_WinRT_DeviceFamily SDLCALL SDL_WinRTGetDeviceFamily();
  \brief Return true if the current device is a tablet.
  */
 extern DECLSPEC SDL_bool SDLCALL SDL_IsTablet(void);
+
+/* Functions used by iOS application delegates to notify SDL about state changes */
+extern DECLSPEC void SDLCALL SDL_OnApplicationWillTerminate(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationDidReceiveMemoryWarning(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationWillResignActive(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationDidEnterBackground(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationWillEnterForeground(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationDidBecomeActive(void);
+#ifdef __IPHONEOS__
+extern DECLSPEC void SDLCALL SDL_OnApplicationDidChangeStatusBarOrientation(void);
+#endif
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

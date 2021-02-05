@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2019 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2021 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -39,11 +39,11 @@
 #include <linux/input.h>
 
 #include "SDL.h"
-#include "SDL_assert.h"
 #include "SDL_endian.h"
 #include "SDL_scancode.h"
 #include "../../events/SDL_events_c.h"
 #include "../../events/scancodes_linux.h" /* adds linux_scancode_table */
+#include "../../core/linux/SDL_evdev_capabilities.h"
 #include "../../core/linux/SDL_udev.h"
 
 /* These are not defined in older Linux kernel headers */
@@ -220,6 +220,9 @@ static void SDL_EVDEV_udev_callback(SDL_UDEV_deviceevent udev_event, int udev_cl
     case SDL_UDEV_DEVICEADDED:
         if (!(udev_class & (SDL_UDEV_DEVICE_MOUSE | SDL_UDEV_DEVICE_KEYBOARD |
             SDL_UDEV_DEVICE_TOUCHSCREEN)))
+            return;
+
+        if ((udev_class & SDL_UDEV_DEVICE_JOYSTICK))
             return;
 
         SDL_EVDEV_device_added(dev_path, udev_class);
