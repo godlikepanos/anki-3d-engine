@@ -15,7 +15,6 @@
 #else
 #	error TODO
 #endif
-#define VK_ENABLE_BETA_EXTENSIONS
 #include <volk/volk.h>
 
 // Cleanup global namespace from these dirty libaries
