@@ -380,16 +380,17 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	count = 1;
 	ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &m_physicalDevice));
 
-	m_rtProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_KHR;
-	VkPhysicalDeviceProperties2 props = {};
-	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	props.pNext = &m_rtProps;
+	m_rtPipelineProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+	m_accelerationStructureProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
 
-	vkGetPhysicalDeviceProperties2(m_physicalDevice, &props);
-	m_devProps = props.properties;
+	m_devProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	m_devProps.pNext = &m_rtPipelineProps;
+	m_rtPipelineProps.pNext = &m_accelerationStructureProps;
+
+	vkGetPhysicalDeviceProperties2(m_physicalDevice, &m_devProps);
 
 	// Find vendor
-	switch(m_devProps.vendorID)
+	switch(m_devProps.properties.vendorID)
 	{
 	case 0x13B5:
 		m_capabilities.m_gpuVendor = GpuVendor::ARM;
@@ -407,25 +408,25 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	default:
 		m_capabilities.m_gpuVendor = GpuVendor::UNKNOWN;
 	}
-	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s", m_devProps.deviceName,
+	ANKI_VK_LOGI("GPU is %s. Vendor identified as %s", m_devProps.properties.deviceName,
 				 &GPU_VENDOR_STR[m_capabilities.m_gpuVendor][0]);
 
 	// Set limits
 	m_capabilities.m_uniformBufferBindOffsetAlignment =
-		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.limits.minUniformBufferOffsetAlignment));
-	m_capabilities.m_uniformBufferMaxRange = m_devProps.limits.maxUniformBufferRange;
+		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minUniformBufferOffsetAlignment));
+	m_capabilities.m_uniformBufferMaxRange = m_devProps.properties.limits.maxUniformBufferRange;
 	m_capabilities.m_storageBufferBindOffsetAlignment =
-		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.limits.minStorageBufferOffsetAlignment));
-	m_capabilities.m_storageBufferMaxRange = m_devProps.limits.maxStorageBufferRange;
+		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minStorageBufferOffsetAlignment));
+	m_capabilities.m_storageBufferMaxRange = m_devProps.properties.limits.maxStorageBufferRange;
 	m_capabilities.m_textureBufferBindOffsetAlignment =
-		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.limits.minTexelBufferOffsetAlignment));
+		max<U32>(ANKI_SAFE_ALIGNMENT, U32(m_devProps.properties.limits.minTexelBufferOffsetAlignment));
 	m_capabilities.m_textureBufferMaxRange = MAX_U32;
 
 	m_capabilities.m_majorApiVersion = vulkanMajor;
 	m_capabilities.m_minorApiVersion = vulkanMinor;
 
-	m_capabilities.m_shaderGroupHandleSize = m_rtProps.shaderGroupHandleSize;
-	m_capabilities.m_sbtRecordAlignment = m_rtProps.shaderGroupBaseAlignment;
+	m_capabilities.m_shaderGroupHandleSize = m_rtPipelineProps.shaderGroupHandleSize;
+	m_capabilities.m_sbtRecordAlignment = m_rtPipelineProps.shaderGroupBaseAlignment;
 
 	return Error::NONE;
 }
@@ -499,44 +500,52 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 		while(extCount-- != 0)
 		{
-			if(CString(&extensionInfos[extCount].extensionName[0]) == VK_KHR_SWAPCHAIN_EXTENSION_NAME)
+			const CString extensionName(&extensionInfos[extCount].extensionName[0]);
+
+			if(extensionName == VK_KHR_SWAPCHAIN_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::KHR_SWAPCHAIN;
-				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME
-					&& init.m_config->getBool("gr_debugMarkers"))
+			else if(extensionName == VK_EXT_DEBUG_MARKER_EXTENSION_NAME && init.m_config->getBool("gr_debugMarkers"))
 			{
 				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
-				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_AMD_SHADER_INFO_EXTENSION_NAME
-					&& init.m_config->getBool("core_displayStats"))
+			else if(extensionName == VK_AMD_SHADER_INFO_EXTENSION_NAME && init.m_config->getBool("core_displayStats"))
 			{
 				m_extensions |= VulkanExtensions::AMD_SHADER_INFO;
-				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_SHADER_INFO_EXTENSION_NAME;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME)
+			else if(extensionName == VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME)
 			{
 				m_extensions |= VulkanExtensions::AMD_RASTERIZATION_ORDER;
-				extensionsToEnable[extensionsToEnableCount++] = VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_KHR_RAY_TRACING_EXTENSION_NAME
+			else if(extensionName == VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
 					&& init.m_config->getBool("gr_rayTracing"))
 			{
 				m_extensions |= VulkanExtensions::KHR_RAY_TRACING;
-				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_RAY_TRACING_EXTENSION_NAME;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 				m_capabilities.m_rayTracingEnabled = true;
 			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME
-					&& init.m_config->getBool("gr_rayTracing"))
+			else if(extensionName == VK_KHR_RAY_QUERY_EXTENSION_NAME && init.m_config->getBool("gr_rayTracing"))
 			{
-				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
-			else if(CString(extensionInfos[extCount].extensionName) == VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME
+			else if(extensionName == VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME
 					&& init.m_config->getBool("gr_rayTracing"))
 			{
-				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME
+					&& init.m_config->getBool("gr_rayTracing"))
+			{
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
+			else if(extensionName == VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME && init.m_config->getBool("gr_rayTracing"))
+			{
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
 		}
 
@@ -628,27 +637,35 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	// Set RT features
 	if(!!(m_extensions & VulkanExtensions::KHR_RAY_TRACING))
 	{
-		m_rtFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
+		m_rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+		m_rayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
+		m_accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
 
 		VkPhysicalDeviceFeatures2 features = {};
 		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-		features.pNext = &m_rtFeatures;
+		features.pNext = &m_rtPipelineFeatures;
+		m_rtPipelineFeatures.pNext = &m_rayQueryFeatures;
+		m_rayQueryFeatures.pNext = &m_accelerationStructureFeatures;
 		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
 
-		if(!m_rtFeatures.rayTracing || !m_rtFeatures.rayQuery)
+		if(!m_rtPipelineFeatures.rayTracingPipeline || !m_rayQueryFeatures.rayQuery
+		   || !m_accelerationStructureFeatures.accelerationStructure)
 		{
 			ANKI_VK_LOGE("Ray tracing and ray query are both required");
 			return Error::FUNCTION_FAILED;
 		}
 
 		// Only enable what's necessary
-		m_rtFeatures = {};
-		m_rtFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
-		m_rtFeatures.rayTracing = true;
-		m_rtFeatures.rayQuery = true;
+		m_rtPipelineFeatures.rayTracingPipelineShaderGroupHandleCaptureReplay = false;
+		m_rtPipelineFeatures.rayTracingPipelineShaderGroupHandleCaptureReplayMixed = false;
+		m_rtPipelineFeatures.rayTraversalPrimitiveCulling = false;
+		m_accelerationStructureFeatures.accelerationStructureCaptureReplay = false;
+		m_accelerationStructureFeatures.accelerationStructureHostCommands = false;
+		m_accelerationStructureFeatures.descriptorBindingAccelerationStructureUpdateAfterBind = false;
 
-		m_rtFeatures.pNext = const_cast<void*>(ci.pNext);
-		ci.pNext = &m_rtFeatures;
+		ANKI_ASSERT(m_accelerationStructureFeatures.pNext == nullptr);
+		m_accelerationStructureFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_rtPipelineFeatures;
 	}
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));

@@ -251,10 +251,13 @@ private:
 	VkQueue m_queue = VK_NULL_HANDLE;
 	Mutex m_globalMtx;
 
-	VkPhysicalDeviceProperties m_devProps = {};
-	VkPhysicalDeviceRayTracingPropertiesKHR m_rtProps = {};
+	VkPhysicalDeviceProperties2 m_devProps = {};
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR m_accelerationStructureProps = {};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR m_rtPipelineProps = {};
 	VkPhysicalDeviceFeatures m_devFeatures = {};
-	VkPhysicalDeviceRayTracingFeaturesKHR m_rtFeatures = {};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR m_accelerationStructureFeatures = {};
+	VkPhysicalDeviceRayTracingPipelineFeaturesKHR m_rtPipelineFeatures = {};
+	VkPhysicalDeviceRayQueryFeaturesKHR m_rayQueryFeatures = {};
 	VkPhysicalDeviceVulkan12Features m_12Features = {};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
