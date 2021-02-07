@@ -1,0 +1,46 @@
+diff --git a/lib/Format/FormatToken.h b/lib/Format/FormatToken.h
+index 79e8df9..ac82e96 100644
+--- a/lib/Format/FormatToken.h
++++ b/lib/Format/FormatToken.h
+@@ -699,6 +699,7 @@ struct AdditionalKeywords {
+     kw_qsignals = &IdentTable.get("Q_SIGNALS");
+     kw_slots = &IdentTable.get("slots");
+     kw_qslots = &IdentTable.get("Q_SLOTS");
++    kw_anki_internal = &IdentTable.get("anki_internal");
+ 
+     // Keep this at the end of the constructor to make sure everything here is
+     // already initialized.
+@@ -771,6 +772,7 @@ struct AdditionalKeywords {
+   IdentifierInfo *kw_qsignals;
+   IdentifierInfo *kw_slots;
+   IdentifierInfo *kw_qslots;
++  IdentifierInfo *kw_anki_internal;
+ 
+   /// \brief Returns \c true if \p Tok is a true JavaScript identifier, returns
+   /// \c false if it is a keyword or a pseudo keyword.
+diff --git a/lib/Format/UnwrappedLineFormatter.cpp b/lib/Format/UnwrappedLineFormatter.cpp
+index 253f89d..5c03631 100644
+--- a/lib/Format/UnwrappedLineFormatter.cpp
++++ b/lib/Format/UnwrappedLineFormatter.cpp
+@@ -98,7 +98,7 @@ private:
+       return 0;
+     if (RootToken.isAccessSpecifier(false) ||
+         RootToken.isObjCAccessSpecifier() ||
+-        (RootToken.isOneOf(Keywords.kw_signals, Keywords.kw_qsignals) &&
++        (RootToken.isOneOf(Keywords.kw_signals, Keywords.kw_qsignals, Keywords.kw_anki_internal) &&
+          RootToken.Next && RootToken.Next->is(tok::colon)))
+       return Style.AccessModifierOffset;
+     return 0;
+diff --git a/lib/Format/UnwrappedLineParser.cpp b/lib/Format/UnwrappedLineParser.cpp
+index 7cde7ca..b630a0c 100644
+--- a/lib/Format/UnwrappedLineParser.cpp
++++ b/lib/Format/UnwrappedLineParser.cpp
+@@ -1083,7 +1083,7 @@ void UnwrappedLineParser::parseStructuralElement() {
+     }
+     if (Style.isCpp() &&
+         FormatTok->isOneOf(Keywords.kw_signals, Keywords.kw_qsignals,
+-                           Keywords.kw_slots, Keywords.kw_qslots)) {
++                           Keywords.kw_slots, Keywords.kw_qslots, Keywords.kw_anki_internal)) {
+       nextToken();
+       if (FormatTok->is(tok::colon)) {
+         nextToken();
