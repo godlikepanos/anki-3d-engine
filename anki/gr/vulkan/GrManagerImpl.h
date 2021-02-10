@@ -54,12 +54,12 @@ public:
 
 	const VkPhysicalDeviceProperties& getPhysicalDeviceProperties() const
 	{
-		return m_devProps;
+		return m_devProps.properties;
 	}
 
-	const VkPhysicalDeviceRayTracingPropertiesKHR& getPhysicalDeviceRayTracingProperties() const
+	const VkPhysicalDeviceRayTracingPipelinePropertiesKHR& getPhysicalDeviceRayTracingProperties() const
 	{
-		return m_rtProps;
+		return m_rtPipelineProps;
 	}
 
 	TexturePtr acquireNextPresentableTexture();
