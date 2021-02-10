@@ -806,18 +806,18 @@ void CommandBufferImpl::buildAccelerationStructureInternal(AccelerationStructure
 
 	// Create the scrach buffer
 	BufferInitInfo bufferInit;
-	bufferInit.m_usage = InternalBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH;
+	bufferInit.m_usage = PrivateBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH;
 	bufferInit.m_size = asImpl.getBuildScratchBufferSize();
 	BufferPtr scratchBuff = getManager().newBuffer(bufferInit);
 
 	// Create the build info
 	VkAccelerationStructureBuildGeometryInfoKHR buildInfo;
-	VkAccelerationStructureBuildOffsetInfoKHR offsetInfo;
-	asImpl.generateBuildInfo(scratchBuff->getGpuAddress(), buildInfo, offsetInfo);
+	VkAccelerationStructureBuildRangeInfoKHR rangeInfo;
+	asImpl.generateBuildInfo(scratchBuff->getGpuAddress(), buildInfo, rangeInfo);
 
 	// Do the command
-	VkAccelerationStructureBuildOffsetInfoKHR* offsetInfoPtr = &offsetInfo;
-	ANKI_CMD(vkCmdBuildAccelerationStructureKHR(m_handle, 1, &buildInfo, &offsetInfoPtr), ANY_OTHER_COMMAND);
+	Array<const VkAccelerationStructureBuildRangeInfoKHR*, 1> pRangeInfos = {&rangeInfo};
+	ANKI_CMD(vkCmdBuildAccelerationStructuresKHR(m_handle, 1, &buildInfo, &pRangeInfos[0]), ANY_OTHER_COMMAND);
 
 	// Push refs
 	m_microCmdb->pushObjectRef(as);
