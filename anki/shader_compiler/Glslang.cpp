@@ -246,7 +246,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 {
 	const EShLanguage stage = ankiToGlslangShaderType(shaderType);
 	const EShMessages messages = EShMessages(EShMsgSpvRules | EShMsgVulkanRules);
-	const glslang::EShTargetLanguageVersion langVersion = glslang::EShTargetSpv_1_3;
+	const glslang::EShTargetLanguageVersion langVersion = glslang::EShTargetSpv_1_4;
 
 	glslang::TShader shader(stage);
 	Array<const char*, 1> csrc = {&src[0]};

@@ -11,6 +11,8 @@ namespace anki
 
 AccelerationStructureImpl::~AccelerationStructureImpl()
 {
+	m_topLevelInfo.m_blas.destroy(getAllocator());
+
 	if(m_handle)
 	{
 		vkDestroyAccelerationStructureKHR(getDevice(), m_handle, nullptr);
@@ -159,7 +161,7 @@ Error AccelerationStructureImpl::init(const AccelerationStructureInitInfo& inf)
 		asCi.buffer = static_cast<const BufferImpl&>(*m_asBuffer).getHandle();
 		asCi.offset = 0;
 		asCi.size = buildSizes.accelerationStructureSize;
-		asCi.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		asCi.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
 		ANKI_VK_CHECK(vkCreateAccelerationStructureKHR(getDevice(), &asCi, nullptr, &m_handle));
 
 		// Almost finalize the build info
