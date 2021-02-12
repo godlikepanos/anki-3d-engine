@@ -246,12 +246,12 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 {
 	const EShLanguage stage = ankiToGlslangShaderType(shaderType);
 	const EShMessages messages = EShMessages(EShMsgSpvRules | EShMsgVulkanRules);
-	const glslang::EShTargetLanguageVersion langVersion = glslang::EShTargetSpv_1_4;
 
 	glslang::TShader shader(stage);
 	Array<const char*, 1> csrc = {&src[0]};
 	shader.setStrings(&csrc[0], 1);
-	shader.setEnvTarget(glslang::EShTargetSpv, langVersion);
+	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
+	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
 		logShaderErrorCode(shader.getInfoLog(), src, tmpAlloc);
