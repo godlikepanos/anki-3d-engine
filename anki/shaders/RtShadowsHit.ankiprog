@@ -56,10 +56,10 @@ void main()
 
 	if(g_payload >= 1.0)
 	{
-		terminateRayEXT();
+		terminateRayEXT;
 	}
 #else
-	terminateRayEXT();
+	terminateRayEXT;
 #endif
 }
 #pragma anki end
