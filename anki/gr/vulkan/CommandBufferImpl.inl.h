@@ -439,28 +439,26 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 		}
 	}
 
-	Array<VkStridedBufferRegionKHR, 4> regions;
+	Array<VkStridedDeviceAddressRegionKHR, 4> regions;
+	const U64 stbFufferAddress = sbtBuffer->getGpuAddress();
 
 	// Rgen
-	regions[0].buffer = static_cast<const BufferImpl&>(*sbtBuffer).getHandle();
-	regions[0].offset = sbtBufferOffset;
+	regions[0].deviceAddress = stbFufferAddress;
 	regions[0].stride = sbtRecordSize;
 	regions[0].size = sbtRecordSize;
 
 	// Miss
-	regions[1].buffer = regions[0].buffer;
-	regions[1].offset = regions[0].offset + regions[0].size;
+	regions[1].deviceAddress = regions[0].deviceAddress + regions[0].size;
 	regions[1].stride = sbtRecordSize;
 	regions[1].size = sbtRecordSize * rayTypeCount;
 
 	// Hit
-	regions[2].buffer = regions[1].buffer;
-	regions[2].offset = regions[1].offset + regions[1].size;
+	regions[2].deviceAddress = regions[1].deviceAddress + regions[1].size;
 	regions[2].stride = sbtRecordSize * rayTypeCount;
 	regions[2].size = sbtRecordSize * hitGroupSbtRecordCount;
 
 	// Callable, nothing for now
-	regions[3] = VkStridedBufferRegionKHR();
+	regions[3] = VkStridedDeviceAddressRegionKHR();
 
 	ANKI_CMD(vkCmdTraceRaysKHR(m_handle, &regions[0], &regions[1], &regions[2], &regions[3], width, height, depth),
 			 ANY_OTHER_COMMAND);

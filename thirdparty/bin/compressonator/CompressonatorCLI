@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# ----------------------------------------------------------------------------------------------------------------------------------
+# This script launches the CompressonatorCLI executable after configuring the environment.
+# (c) 2017 Advanced Micro Devices Inc. All Rights Reserved.
+# ----------------------------------------------------------------------------------------------------------------------------------
+
+if echo "$0" | grep '^/' ; then
+	thisScriptFullPath="$0"
+else
+	thisScriptFullPath=`pwd`/$0
+fi
+
+# Enable the use of symbolic links to the script
+if [ -h ${thisScriptFullPath} ]
+then
+    LINKTARGET=`readlink -f "$thisScriptFullPath"`
+    thisScriptFullPath=${LINKTARGET}
+fi
+
+CMPCLI_BIN_PATH=`dirname "$thisScriptFullPath"`
+
+# Add CompressonatorCLI's binaries directory to PATH:
+export PATH="${CMPCLI_BIN_PATH}:$PATH"
+
+# Add CompressonatorCLI's binaries directory to LD_LIBRARY_PATH:
+if [ -z "$LD_LIBRARY_PATH" ]; then
+    export LD_LIBRARY_PATH="${CMPCLI_BIN_PATH}"
+else
+    export LD_LIBRARY_PATH="${CMPCLI_BIN_PATH}:$LD_LIBRARY_PATH"
+fi
+
+# Call CompressonatorCLI executable
+if [ -e $CMPCLI_BIN_PATH/CompressonatorCLI-bin ]; then
+    $CMPCLI_BIN_PATH/CompressonatorCLI-bin "$@"
+else
+    echo "Error:Cannot find CompressonatorCLI-bin"
+fi

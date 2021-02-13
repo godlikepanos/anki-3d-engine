@@ -569,6 +569,7 @@ enum class AttachmentStoreOperation : U8
 /// stages) and finaly FRAGMENT.
 /// The compute from the consists of the following: INDIRECT and COMPUTE.
 /// The trace rays from the: INDIRECT and TRACE_RAYS
+/// !!WARNING!! If you change this remember to change PrivateBufferUsageBit.
 enum class BufferUsageBit : U64
 {
 	NONE = 0,
@@ -636,6 +637,7 @@ enum class BufferUsageBit : U64
 	ALL_WRITE = STORAGE_GEOMETRY_WRITE | STORAGE_FRAGMENT_WRITE | STORAGE_COMPUTE_WRITE | STORAGE_TRACE_RAYS_WRITE
 				| TEXTURE_GEOMETRY_WRITE | TEXTURE_FRAGMENT_WRITE | TEXTURE_COMPUTE_WRITE | TEXTURE_TRACE_RAYS_WRITE
 				| TRANSFER_DESTINATION,
+	ALL = ALL_READ | ALL_WRITE,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit)
 

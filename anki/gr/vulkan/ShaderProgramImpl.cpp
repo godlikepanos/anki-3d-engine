@@ -314,14 +314,13 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		ci.pStages = &stages[0];
 		ci.groupCount = groups.getSize();
 		ci.pGroups = &groups[0];
-		ci.maxRecursionDepth = inf.m_rayTracingShaders.m_maxRecursionDepth;
-		ci.libraries.sType = VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR;
+		ci.maxPipelineRayRecursionDepth = inf.m_rayTracingShaders.m_maxRecursionDepth;
 		ci.layout = m_pplineLayout.getHandle();
 
 		{
 			ANKI_TRACE_SCOPED_EVENT(VK_PIPELINE_CREATE);
-			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci,
-														 nullptr, &m_rt.m_ppline));
+			ANKI_VK_CHECK(vkCreateRayTracingPipelinesKHR(
+				getDevice(), VK_NULL_HANDLE, getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_rt.m_ppline));
 		}
 
 		// Get RT handles

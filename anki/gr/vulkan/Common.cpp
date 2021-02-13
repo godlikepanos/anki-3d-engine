@@ -296,24 +296,34 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::ALL_TEXTURE) && !(usageMask & BufferUsageBit::ALL_WRITE))
-	{
-		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
-	}
-
-	if(!!(usageMask & BufferUsageBit::ALL_TEXTURE) && !(usageMask & BufferUsageBit::ALL_READ))
+	if(!!(usageMask & (BufferUsageBit::ALL_TEXTURE & BufferUsageBit::ALL_WRITE)))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::ALL_RAY_TRACING & ~BufferUsageBit::INDIRECT_TRACE_RAYS)))
+	if(!!(usageMask & (BufferUsageBit::ALL_TEXTURE & BufferUsageBit::ALL_READ)))
 	{
-		out |= VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR;
+		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & InternalBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH))
+	if(!!(usageMask & BufferUsageBit::ACCELERATION_STRUCTURE_BUILD))
 	{
-		out |= VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR;
+		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+	}
+
+	if(!!(usageMask & PrivateBufferUsageBit::ACCELERATION_STRUCTURE_BUILD_SCRATCH))
+	{
+		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT; // Spec says that this will be enough
+	}
+
+	if(!!(usageMask & PrivateBufferUsageBit::ACCELERATION_STRUCTURE))
+	{
+		out |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
+	}
+
+	if(!!(usageMask & BufferUsageBit::SBT))
+	{
+		out |= VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR;
 	}
 
 	ANKI_ASSERT(out);

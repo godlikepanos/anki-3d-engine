@@ -104,7 +104,7 @@ public:
 	}
 
 #define _ANKI_ENUM_NEGATIVE_OPERATOR(enumType, qualifier) \
-	qualifier Bool operator!(const enumType a) \
+	constexpr qualifier Bool operator!(const enumType a) \
 	{ \
 		using EnumInt = std::underlying_type<enumType>::type; \
 		return EnumInt(a) == 0; \

@@ -42,12 +42,12 @@ public:
 		return m_scratchBufferSize;
 	}
 
-	void generateBuildInfo(U64 scratchBufferAddress, VkAccelerationStructureBuildGeometryInfoKHR& info,
-						   VkAccelerationStructureBuildOffsetInfoKHR& offsetInfo) const
+	void generateBuildInfo(U64 scratchBufferAddress, VkAccelerationStructureBuildGeometryInfoKHR& buildInfo,
+						   VkAccelerationStructureBuildRangeInfoKHR& rangeInfo) const
 	{
-		info = m_buildInfo;
-		info.scratchData.deviceAddress = scratchBufferAddress;
-		offsetInfo = m_offsetInfo;
+		buildInfo = m_buildInfo;
+		buildInfo.scratchData.deviceAddress = scratchBufferAddress;
+		rangeInfo = m_rangeInfo;
 	}
 
 	static void computeBarrierInfo(AccelerationStructureUsageBit before, AccelerationStructureUsageBit after,
@@ -55,33 +55,34 @@ public:
 								   VkPipelineStageFlags& dstStages, VkAccessFlags& dstAccesses);
 
 private:
-	class ASBottomLevelInfo : public BottomLevelAccelerationStructureInitInfo
+	class ASBottomLevelInfo
 	{
 	public:
-		U64 m_gpuAddress = 0;
+		BufferPtr m_positionsBuffer;
+		BufferPtr m_indexBuffer;
 	};
 
 	class ASTopLevelInfo
 	{
 	public:
-		DynamicArray<AccelerationStructureInstance> m_instances;
-		BufferPtr m_instancesBuff;
+		BufferPtr m_instancesBuffer;
+		DynamicArray<AccelerationStructurePtr> m_blas;
 	};
 
+	BufferPtr m_asBuffer;
 	VkAccelerationStructureKHR m_handle = VK_NULL_HANDLE;
-	GpuMemoryHandle m_memHandle;
+	VkDeviceAddress m_deviceAddress = 0;
 
 	ASBottomLevelInfo m_bottomLevelInfo;
 	ASTopLevelInfo m_topLevelInfo;
 
-	U32 m_scratchBufferSize = 0;
-
-	VkAccelerationStructureBuildGeometryInfoKHR m_buildInfo = {};
+	/// @name Build-time info
+	/// @{
 	VkAccelerationStructureGeometryKHR m_geometry = {};
-	VkAccelerationStructureGeometryKHR* m_geometryPtr = &m_geometry;
-	VkAccelerationStructureBuildOffsetInfoKHR m_offsetInfo = {};
-
-	void initBuildInfo();
+	VkAccelerationStructureBuildGeometryInfoKHR m_buildInfo = {};
+	VkAccelerationStructureBuildRangeInfoKHR m_rangeInfo = {};
+	U32 m_scratchBufferSize = 0;
+	/// @}
 };
 /// @}
 

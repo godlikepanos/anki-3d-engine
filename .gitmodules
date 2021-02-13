@@ -1,4 +1,0 @@
-[submodule "thirdparty"]
-	path = thirdparty
-	url = https://github.com/godlikepanos/anki-3d-engine-3rd-party.git
-	branch = master
