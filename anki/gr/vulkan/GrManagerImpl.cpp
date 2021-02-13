@@ -572,6 +572,33 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		ci.pEnabledFeatures = &m_devFeatures;
 	}
 
+	// Enable 1.1 features
+	{
+		m_11Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+
+		VkPhysicalDeviceFeatures2 features = {};
+		features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features.pNext = &m_11Features;
+		vkGetPhysicalDeviceFeatures2(m_physicalDevice, &features);
+
+		if(!m_11Features.storageBuffer16BitAccess || !m_11Features.uniformAndStorageBuffer16BitAccess
+		   || !m_11Features.storagePushConstant16)
+		{
+			ANKI_VK_LOGE("16bit buffer access is not supported");
+			return Error::FUNCTION_FAILED;
+		}
+
+		// Disable a few things
+		m_11Features.protectedMemory = false;
+		m_11Features.multiview = false;
+		m_11Features.multiviewGeometryShader = false;
+		m_11Features.multiviewTessellationShader = false;
+		m_11Features.samplerYcbcrConversion = false;
+
+		m_11Features.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_11Features;
+	}
+
 	// Enable a few 1.2 features
 	{
 		m_12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;

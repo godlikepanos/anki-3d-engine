@@ -258,6 +258,7 @@ private:
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR m_accelerationStructureFeatures = {};
 	VkPhysicalDeviceRayTracingPipelineFeaturesKHR m_rtPipelineFeatures = {};
 	VkPhysicalDeviceRayQueryFeaturesKHR m_rayQueryFeatures = {};
+	VkPhysicalDeviceVulkan11Features m_11Features = {};
 	VkPhysicalDeviceVulkan12Features m_12Features = {};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
