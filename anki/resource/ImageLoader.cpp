@@ -16,7 +16,7 @@
 #	pragma GCC diagnostic ignored "-Wconversion"
 #	pragma GCC diagnostic ignored "-Wtype-limits"
 #endif
-#include <stb/stb_image.h>
+#include <Stb/stb_image.h>
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic pop
 #endif

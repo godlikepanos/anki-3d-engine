@@ -7,7 +7,7 @@
 
 #include <anki/util/DynamicArray.h>
 #include <anki/util/String.h>
-#include <tinyxml2.h>
+#include <TinyXml2/include/tinyxml2.h>
 #if !ANKI_TINYXML2
 #	error "Wrong tinyxml2 included"
 #endif

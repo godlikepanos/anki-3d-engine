@@ -12,9 +12,9 @@
 #	pragma GCC diagnostic ignored "-Wundef"
 #	pragma GCC diagnostic ignored "-Wconversion"
 #endif
-#include <glslang/Public/ShaderLang.h>
-#include <glslang/SPIRV/GlslangToSpv.h>
-#include <glslang/StandAlone/DirStackFileIncluder.h>
+#include <Glslang/glslang/Public/ShaderLang.h>
+#include <Glslang/SPIRV/GlslangToSpv.h>
+#include <Glslang/StandAlone/DirStackFileIncluder.h>
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic pop
 #endif

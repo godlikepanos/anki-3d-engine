@@ -15,7 +15,7 @@
 #else
 #	error TODO
 #endif
-#include <volk/volk.h>
+#include <Volk/volk.h>
 
 // Cleanup global namespace from these dirty libaries
 #if ANKI_OS_LINUX
@@ -30,7 +30,7 @@ namespace anki
 // Forward
 class GrManagerImpl;
 
-/// @addtogrou/cygdrive/c/VulkanSDK/1.0.39.1/Include/vulkan/vulkan.h
+/// @addtogroup vulkan
 /// @{
 
 #define ANKI_VK_LOGI(...) ANKI_LOG("VK  ", NORMAL, __VA_ARGS__)

@@ -24,7 +24,7 @@
 #ifndef SPIRV_CROSS_COMMON_HPP
 #define SPIRV_CROSS_COMMON_HPP
 
-#include "khronos/spirv/spirv.hpp"
+#include "Khronos/spirv/spirv.hpp"
 #include "spirv_cross_containers.hpp"
 #include "spirv_cross_error_handling.hpp"
 #include <functional>

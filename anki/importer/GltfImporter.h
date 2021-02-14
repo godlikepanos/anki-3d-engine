@@ -10,7 +10,7 @@
 #include <anki/util/HashMap.h>
 #include <anki/resource/Common.h>
 #include <anki/Math.h>
-#include <cgltf/cgltf.h>
+#include <Cgltf/cgltf.h>
 
 namespace anki
 {

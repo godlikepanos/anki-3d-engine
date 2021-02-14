@@ -211,7 +211,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z bullet imgui meshoptimizer)
+set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua LibZ Bullet ImGui MeshOptimizer SprivCross)
 
 # Bullet config
 option(BUILD_BULLET2_DEMOS OFF)
@@ -224,35 +224,30 @@ if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
 endif()
 
-set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} SPIRV-Cross)
-
 if(VULKAN)
-	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} volk)
+	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} Volk)
 endif()
 
 # SDL
 if(SDL)
 	message("++ Configuring SDL2")
-	add_subdirectory(thirdparty/SDL2)
+	add_subdirectory(ThirdParty/Sdl2)
 	message("++ End configuring SDL2")
 
 	# Include first the build directory.
-	set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/thirdparty/SDL2/include"
-		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SDL2/include")
+	set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/ThirdParty/Sdl2/include"
+		"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Sdl2/include")
 else()
 	set(SDL2_INCLUDE_DIRS "")
 endif()
 
 # glslang
 message("++ Configuring glslang")
-add_subdirectory(thirdparty/glslang)
+add_subdirectory(ThirdParty/Glslang)
 message("++ End configuring glslang")
 
-# tinyexpr
-add_subdirectory(thirdparty/tinyexpr)
-
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
-	add_subdirectory(thirdparty/${TMP})
+	add_subdirectory(ThirdParty/${TMP})
 endforeach()
 
 ################################################################################
@@ -327,23 +322,17 @@ configure_file("anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h"
 
 # Include & lib directories
 include_directories(
-	"thirdparty/tinyxml2/include"
-	"thirdparty/lua"
-	"thirdparty/imgui"
-	"thirdparty/z"
 	"${SDL2_INCLUDE_DIRS}"
-	"thirdparty/khronos"
+	"ThirdParty/Khronos"
 	"${CMAKE_CURRENT_BINARY_DIR}"
-	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang"
-	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/tinyexpr"
-	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/bullet/src"
-	"thirdparty"
+	"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Bullet/src"
+	"ThirdParty"
 	${CMAKE_CURRENT_SOURCE_DIR})
 
 if(LINUX OR MACOS OR WINDOWS)
-	include_directories("thirdparty/GLEW/include")
+	include_directories("ThirdParty/GLEW/include")
 else()
-	#include_directories("thirdparty/GLES3/include")
+	#include_directories("ThirdParty/GLES3/include")
 endif()
 
 if(ANDROID)
@@ -398,8 +387,7 @@ if(SDL)
 endif()
 
 set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath
-	ankispirvcross ankitinyxml2 ankilua ankimeshoptimizer ankiz glslang SPIRV OGLCompiler OSDependent ankitinyexpr
-	ankiimgui)
+	ankispirvcross ankitinyxml2 ankilua ankimeshoptimizer ankiz glslang SPIRV OGLCompiler OSDependent ankiimgui)
 
 # Add anki sub libraries
 add_subdirectory(anki)

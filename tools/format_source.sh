@@ -9,7 +9,7 @@ for f in ${files[@]}
 do
 	# Run it in parallel
 	echo -ne Formatting ${count}/${filecount}\\r
-	./thirdparty/bin/clang-format -sort-includes=false -i ${f} &
+	./ThirdParty/Bin/clang-format -sort-includes=false -i ${f} &
 	count=$((${count}+1))
 
 	# Throttle the parallel commands

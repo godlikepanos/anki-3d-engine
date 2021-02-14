@@ -7,7 +7,7 @@
 
 // Include ImGUI
 #include <anki/ui/ImGuiConfig.h>
-#include <imgui/imgui.h>
+#include <ImGui/imgui.h>
 
 #include <anki/util/Allocator.h>
 #include <anki/util/Ptr.h>

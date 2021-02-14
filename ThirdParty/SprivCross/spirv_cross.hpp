@@ -24,7 +24,7 @@
 #ifndef SPIRV_CROSS_HPP
 #define SPIRV_CROSS_HPP
 
-#include "khronos/spirv/spirv.hpp"
+#include "Khronos/spirv/spirv.hpp"
 #include "spirv_cfg.hpp"
 #include "spirv_cross_parsed_ir.hpp"
 

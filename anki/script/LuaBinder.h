@@ -12,7 +12,7 @@
 #include <anki/util/String.h>
 #include <anki/util/Functions.h>
 #include <anki/util/HashMap.h>
-#include <lua.hpp>
+#include <Lua/lua.hpp>
 #ifndef ANKI_LUA_HPP
 #	error "Wrong LUA header included"
 #endif

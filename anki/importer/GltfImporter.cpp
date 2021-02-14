@@ -13,7 +13,7 @@
 #	pragma GCC diagnostic ignored "-Wconversion"
 #endif
 #define CGLTF_IMPLEMENTATION
-#include <cgltf/cgltf.h>
+#include <Cgltf/cgltf.h>
 #if ANKI_COMPILER_GCC_COMPATIBLE
 #	pragma GCC diagnostic pop
 #endif
