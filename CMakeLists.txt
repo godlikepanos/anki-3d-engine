@@ -401,7 +401,7 @@ target_link_libraries(anki ${THIRD_PARTY_LIBS})
 # AnKi extra                                                                   #
 ################################################################################
 if(ANKI_BUILD_TESTS)
-	add_subdirectory(tests)
+	add_subdirectory(Tests)
 endif()
 
 if(ANKI_BUILD_TOOLS)
@@ -409,7 +409,7 @@ if(ANKI_BUILD_TOOLS)
 endif()
 
 if(ANKI_BUILD_SANDBOX)
-	add_subdirectory(sandbox)
+	add_subdirectory(Sandbox)
 endif()
 
 if(ANKI_BUILD_SAMPLES)

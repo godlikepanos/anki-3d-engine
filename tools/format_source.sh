@@ -1,6 +1,6 @@
 #!/bin/bash
 
-files=(`find ./anki ./tests ./sandbox ./tools ./samples -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.glsl' -o -name '*.glslp' -o -name '*.ankiprog'`)
+files=(`find ./anki ./Tests ./Sandbox ./tools ./samples -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.glsl' -o -name '*.glslp' -o -name '*.ankiprog'`)
 
 filecount=${#files[@]}
 
