@@ -7,7 +7,7 @@
 #include <anki/util/Filesystem.h>
 #include <anki/core/ConfigSet.h>
 #include <anki/util/Tracer.h>
-#include <LibZ/contrib/minizip/unzip.h>
+#include <ZLib/contrib/minizip/unzip.h>
 
 namespace anki
 {

@@ -211,7 +211,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua LibZ Bullet ImGui MeshOptimizer SprivCross)
+set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SprivCross)
 
 # Bullet config
 option(BUILD_BULLET2_DEMOS OFF)
@@ -327,6 +327,7 @@ include_directories(
 	"${CMAKE_CURRENT_BINARY_DIR}"
 	"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Bullet/src"
 	"ThirdParty"
+	"ThirdParty/ZLib"
 	${CMAKE_CURRENT_SOURCE_DIR})
 
 if(LINUX OR MACOS OR WINDOWS)
