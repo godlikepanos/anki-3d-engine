@@ -4,15 +4,15 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/Gr.h>
-#include <anki/core/NativeWindow.h>
-#include <anki/core/ConfigSet.h>
-#include <anki/util/HighRezTimer.h>
-#include <anki/core/StagingGpuMemoryManager.h>
-#include <anki/resource/TransferGpuAllocator.h>
-#include <anki/shader_compiler/Glslang.h>
-#include <anki/shader_compiler/ShaderProgramParser.h>
-#include <anki/collision/Aabb.h>
+#include <AnKi/Gr.h>
+#include <AnKi/Core/NativeWindow.h>
+#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Core/StagingGpuMemoryManager.h>
+#include <AnKi/Resource/TransferGpuAllocator.h>
+#include <AnKi/ShaderCompiler/Glslang.h>
+#include <AnKi/ShaderCompiler/ShaderProgramParser.h>
+#include <AnKi/Collision/Aabb.h>
 #include <ctime>
 
 namespace anki

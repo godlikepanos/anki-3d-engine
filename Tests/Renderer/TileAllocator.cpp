@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/renderer/TileAllocator.h>
+#include <AnKi/Renderer/TileAllocator.h>
 
 namespace anki
 {

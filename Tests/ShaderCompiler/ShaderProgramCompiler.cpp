@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/shader_compiler/ShaderProgramCompiler.h>
-#include <anki/util/ThreadHive.h>
+#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
+#include <AnKi/Util/ThreadHive.h>
 
 ANKI_TEST(ShaderCompiler, ShaderProgramCompilerSimple)
 {

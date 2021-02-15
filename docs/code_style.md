@@ -121,9 +121,9 @@ C++ rules
 
 **Includes should always have the full file path**. This avoids issues with files of similar name. Non-AnKi includes follow AnKi includes.
 
-	#include <anki/util/Thread.h>
-	#include <anki/util/WeakArray.h>
-	#include <anki/util/Allocator.h>
+	#include <AnKi/Util/Thread.h>
+	#include <AnKi/Util/WeakArray.h>
+	#include <AnKi/Util/Allocator.h>
 	#include <cstdio>
 
 **Never use public nested classes**. Only private nested classes are allowed. Nested classes cannot be forward declared.

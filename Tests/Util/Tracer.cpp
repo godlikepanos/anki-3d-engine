@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/util/Tracer.h>
-#include <anki/core/CoreTracer.h>
-#include <anki/util/HighRezTimer.h>
+#include <AnKi/Util/Tracer.h>
+#include <AnKi/Core/CoreTracer.h>
+#include <AnKi/Util/HighRezTimer.h>
 
 #if ANKI_ENABLE_TRACE
 ANKI_TEST(Util, Tracer)

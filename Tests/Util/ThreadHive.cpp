@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/util/ThreadHive.h>
-#include <anki/util/HighRezTimer.h>
-#include <anki/util/System.h>
+#include <AnKi/Util/ThreadHive.h>
+#include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Util/System.h>
 
 namespace anki
 {

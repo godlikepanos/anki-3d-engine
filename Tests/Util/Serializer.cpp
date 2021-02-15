@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/util/Serializer.h>
+#include <AnKi/Util/Serializer.h>
 #include <Tests/Util/SerializerTest.h>
 
 ANKI_TEST(Util, BinarySerializer)

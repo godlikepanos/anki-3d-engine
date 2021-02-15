@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/util/DynamicArray.h>
+#include <AnKi/Util/DynamicArray.h>
 #include <vector>
 #include <ctime>
 

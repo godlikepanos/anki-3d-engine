@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/shader_compiler/ShaderProgramCompiler.h>
+#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
 
 using namespace anki;
 

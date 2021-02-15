@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <anki/util/Array.h>
+#include <AnKi/Util/Array.h>
 
 namespace anki
 {

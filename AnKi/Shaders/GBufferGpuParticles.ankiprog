@@ -1,0 +1,89 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator ANKI_PASS 0 2 3
+#pragma anki mutator ANKI_VELOCITY 0 1
+
+#include <AnKi/Shaders/Include/ParticleTypes.h>
+
+struct PerDraw
+{
+	Mat4 m_ankiMvp;
+	Vec3 m_diffColor;
+	F32 m_roughness;
+	Vec3 m_specColor;
+	F32 m_metallic;
+	Vec3 m_initialEmission;
+	Vec3 m_finalEmission;
+};
+
+layout(set = 0, binding = 0, std140, row_major) uniform b_ankiPerDraw
+{
+	PerDraw u_ankiPerDraw;
+};
+
+layout(set = 0, binding = 1) buffer b_particles
+{
+	GpuParticle u_particles[];
+};
+
+layout(set = 0, binding = 2) uniform b_extra
+{
+	Vec3 u_minusCameraZ;
+};
+
+#pragma anki start vert
+
+#include <AnKi/Shaders/Common.glsl>
+
+layout(location = 0) out Vec2 out_velocity;
+layout(location = 1) flat out F32 out_lifeFactor;
+
+void main()
+{
+	const GpuParticle part = u_particles[gl_VertexID / 2];
+
+	const Vec4 crntClipPos = u_ankiPerDraw.m_ankiMvp * Vec4(part.m_newWorldPosition, 1.0);
+	const Vec4 prevClipPos = u_ankiPerDraw.m_ankiMvp * Vec4(part.m_oldWorldPosition, 1.0);
+
+	gl_Position = ((gl_VertexID & 1) == 0) ? crntClipPos : prevClipPos;
+
+	const Vec2 crntNdc = crntClipPos.xy / crntClipPos.w;
+	const Vec2 prevNdc = prevClipPos.xy / prevClipPos.w;
+
+	// It's NDC_TO_UV(prevNdc) - NDC_TO_UV(crntNdc) or:
+	out_velocity = ((gl_VertexID & 1) == 0) ? Vec2(0.0) : (prevNdc - crntNdc) * 0.5;
+
+	out_lifeFactor = saturate(1.0 - (part.m_life / part.m_startingLife));
+}
+#pragma anki end
+
+#pragma anki start frag
+#define MAX_EMISSION 1024.0
+#include <AnKi/Shaders/Pack.glsl>
+
+layout(location = 0) out Vec4 out_gbuffer0;
+layout(location = 1) out Vec4 out_gbuffer1;
+layout(location = 2) out Vec4 out_gbuffer2;
+layout(location = 3) out Vec2 out_gbuffer3;
+
+layout(location = 0) in Vec2 in_velocity;
+layout(location = 1) flat in F32 in_lifeFactor;
+
+void main()
+{
+	GbufferInfo g;
+	g.m_diffuse = u_ankiPerDraw.m_diffColor;
+	g.m_normal = u_minusCameraZ;
+	g.m_specular = u_ankiPerDraw.m_specColor;
+	g.m_roughness = u_ankiPerDraw.m_roughness;
+	g.m_subsurface = 0.0;
+	const Vec3 emission = mix(u_ankiPerDraw.m_initialEmission, u_ankiPerDraw.m_finalEmission, in_lifeFactor);
+	g.m_emission = (emission.r + emission.g + emission.b) / 3.0;
+	g.m_metallic = u_ankiPerDraw.m_metallic;
+	g.m_velocity = in_velocity;
+	writeGBuffer(g, out_gbuffer0, out_gbuffer1, out_gbuffer2, out_gbuffer3);
+}
+#pragma anki end

@@ -5,9 +5,9 @@
 
 #include <Tests/Framework/Framework.h>
 #include <Tests/Util/Foo.h>
-#include "anki/util/HashMap.h"
-#include "anki/util/DynamicArray.h"
-#include "anki/util/HighRezTimer.h"
+#include <AnKi/Util/HashMap.h>
+#include <AnKi/Util/DynamicArray.h>
+#include <AnKi/Util/HighRezTimer.h>
 #include <unordered_map>
 #include <algorithm>
 

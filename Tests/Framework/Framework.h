@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include <anki/util/Singleton.h>
-#include <anki/Math.h>
-#include <anki/util/Logger.h>
-#include <anki/Core.h>
-#include <anki/Gr.h>
-#include <anki/Resource.h>
-#include <anki/Physics.h>
+#include <AnKi/Util/Singleton.h>
+#include <AnKi/Math.h>
+#include <AnKi/Util/Logger.h>
+#include <AnKi/Core.h>
+#include <AnKi/Gr.h>
+#include <AnKi/Resource.h>
+#include <AnKi/Physics.h>
 #include <stdexcept>
 #include <vector>
 #include <string>

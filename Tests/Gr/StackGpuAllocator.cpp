@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/utils/StackGpuAllocator.h>
-#include <anki/util/ThreadHive.h>
+#include <AnKi/Gr/Utils/StackGpuAllocator.h>
+#include <AnKi/Util/ThreadHive.h>
 #include <Tests/Framework/Framework.h>
 #include <algorithm>
 

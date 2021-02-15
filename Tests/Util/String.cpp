@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include "anki/util/String.h"
+#include <AnKi/Util/String.h>
 #include <string>
 
 namespace anki

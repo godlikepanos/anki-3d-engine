@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
 include(ProcessorCount)
 
-PROJECT(anki)
+PROJECT(AnKi)
 
 ################################################################################
 # Funcs                                                                        #
@@ -145,7 +145,7 @@ add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 add_definitions(-DANKI_BUILD)
 
 # ImGUI
-add_definitions(-DIMGUI_USER_CONFIG=<anki/ui/ImGuiConfig.h>)
+add_definitions(-DIMGUI_USER_CONFIG=<AnKi/Ui/ImGuiConfig.h>)
 
 if(NOT MSVC)
 	# When building AnKi define this special flag
@@ -318,7 +318,7 @@ else()
 	set(ANKI_TESTS 0)
 endif()
 
-configure_file("anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
+configure_file("AnKi/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/AnKi/Config.h")
 
 # Include & lib directories
 include_directories(
@@ -390,8 +390,8 @@ endif()
 set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath
 	ankispirvcross ankitinyxml2 ankilua ankimeshoptimizer ankiz glslang SPIRV OGLCompiler OSDependent ankiimgui)
 
-# Add anki sub libraries
-add_subdirectory(anki)
+# Add AnKi sub libraries
+add_subdirectory(AnKi)
 
 separate_arguments(AK_SOURCES)
 add_library(anki ${AK_SOURCES})

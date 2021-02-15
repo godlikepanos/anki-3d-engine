@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/shader_compiler/ShaderProgramCompiler.h>
-#include <anki/Util.h>
+#include <AnKi/ShaderCompiler/ShaderProgramCompiler.h>
+#include <AnKi/Util.h>
 using namespace anki;
 
 static const char* USAGE = R"(Usage: %s shader_program_file [options]

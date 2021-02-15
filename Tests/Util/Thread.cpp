@@ -4,10 +4,10 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include "anki/util/Thread.h"
-#include "anki/util/StdTypes.h"
-#include "anki/util/HighRezTimer.h"
-#include "anki/util/ThreadPool.h"
+#include <AnKi/Util/Thread.h>
+#include <AnKi/Util/StdTypes.h>
+#include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Util/ThreadPool.h>
 #include <cstring>
 
 namespace anki

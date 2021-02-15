@@ -4,10 +4,10 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/resource/AsyncLoader.h>
-#include <anki/util/HighRezTimer.h>
-#include <anki/util/Atomic.h>
-#include <anki/util/Functions.h>
+#include <AnKi/Resource/AsyncLoader.h>
+#include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Util/Atomic.h>
+#include <AnKi/Util/Functions.h>
 
 namespace anki
 {

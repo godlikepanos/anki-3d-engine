@@ -5,7 +5,7 @@
 
 #include <Tests/Framework/Framework.h>
 #include <Tests/Util/Foo.h>
-#include "anki/util/Allocator.h"
+#include <AnKi/Util/Allocator.h>
 #include <string>
 #include <iostream>
 

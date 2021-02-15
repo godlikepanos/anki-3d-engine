@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/AnKi.h>
+#include <AnKi/AnKi.h>
 
 class SampleApp : public anki::App
 {

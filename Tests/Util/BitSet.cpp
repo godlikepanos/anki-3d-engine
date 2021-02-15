@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/util/BitSet.h>
+#include <AnKi/Util/BitSet.h>
 #include <bitset>
 
 using namespace anki;

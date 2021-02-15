@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include "anki/resource/ResourceFilesystem.h"
+#include <AnKi/Resource/ResourceFilesystem.h>
 
 namespace anki
 {

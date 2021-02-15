@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/util/HighRezTimer.h>
+#include <AnKi/Util/HighRezTimer.h>
 #include <chrono>
 #include <thread>
 

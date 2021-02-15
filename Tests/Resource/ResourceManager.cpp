@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include "anki/resource/DummyResource.h"
-#include "anki/resource/ResourceManager.h"
-#include "anki/core/ConfigSet.h"
+#include <AnKi/Resource/DummyResource.h>
+#include <AnKi/Resource/ResourceManager.h>
+#include <AnKi/Core/ConfigSet.h>
 
 namespace anki
 {

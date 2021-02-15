@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/Script.h>
-#include <anki/Math.h>
+#include <AnKi/Script.h>
+#include <AnKi/Math.h>
 
 static const char* script = R"(
 b = Vec4.new(0, 0, 0, 1.1)

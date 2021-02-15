@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include "anki/Math.h"
+#include <AnKi/Math.h>
 
 using namespace anki;
 

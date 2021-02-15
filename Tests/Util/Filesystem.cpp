@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include "anki/util/Filesystem.h"
-#include "anki/util/File.h"
+#include <AnKi/Util/Filesystem.h>
+#include <AnKi/Util/File.h>
 
 ANKI_TEST(Util, FileExists)
 {

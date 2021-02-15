@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
-#include <anki/AnKi.h>
+#include <AnKi/AnKi.h>
 
 using namespace anki;
 

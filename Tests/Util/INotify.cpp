@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/util/INotify.h>
-#include <anki/util/Filesystem.h>
+#include <AnKi/Util/INotify.h>
+#include <AnKi/Util/Filesystem.h>
 
 ANKI_TEST(Util, INotify)
 {

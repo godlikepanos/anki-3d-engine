@@ -5,8 +5,8 @@
 
 #include <Tests/Framework/Framework.h>
 #include <Tests/Util/Foo.h>
-#include "anki/util/Memory.h"
-#include "anki/util/ThreadPool.h"
+#include <AnKi/Util/Memory.h>
+#include <AnKi/Util/ThreadPool.h>
 #include <type_traits>
 #include <cstring>
 

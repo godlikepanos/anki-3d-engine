@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/util/Atomic.h>
+#include <AnKi/Util/Atomic.h>
 
 ANKI_TEST(Util, Atomic)
 {

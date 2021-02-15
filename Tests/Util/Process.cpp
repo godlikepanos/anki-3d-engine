@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/util/Process.h>
-#include <anki/util/File.h>
-#include <anki/util/HighRezTimer.h>
+#include <AnKi/Util/Process.h>
+#include <AnKi/Util/File.h>
+#include <AnKi/Util/HighRezTimer.h>
 
 ANKI_TEST(Util, Process)
 {

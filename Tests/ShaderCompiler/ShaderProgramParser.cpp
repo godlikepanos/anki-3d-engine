@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/shader_compiler/ShaderProgramParser.h>
+#include <AnKi/ShaderCompiler/ShaderProgramParser.h>
 
 ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 {

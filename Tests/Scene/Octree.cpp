@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/scene/Octree.h>
+#include <AnKi/Scene/Octree.h>
 
 namespace anki
 {

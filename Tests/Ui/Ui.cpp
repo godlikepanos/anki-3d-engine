@@ -4,11 +4,11 @@
 // http://www.anki3d.org/LICENSE
 
 #include <Tests/Framework/Framework.h>
-#include <anki/core/ConfigSet.h>
-#include <anki/util/HighRezTimer.h>
-#include <anki/Ui.h>
-#include <anki/Input.h>
-#include <anki/core/StagingGpuMemoryManager.h>
+#include <AnKi/Core/ConfigSet.h>
+#include <AnKi/Util/HighRezTimer.h>
+#include <AnKi/Ui.h>
+#include <AnKi/Input.h>
+#include <AnKi/Core/StagingGpuMemoryManager.h>
 
 namespace anki
 {

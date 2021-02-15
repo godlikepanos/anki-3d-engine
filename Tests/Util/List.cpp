@@ -5,8 +5,8 @@
 
 #include <Tests/Framework/Framework.h>
 #include <Tests/Util/Foo.h>
-#include "anki/util/List.h"
-#include "anki/util/HighRezTimer.h"
+#include <AnKi/Util/List.h>
+#include <AnKi/Util/HighRezTimer.h>
 #include <list>
 
 ANKI_TEST(Util, List)
