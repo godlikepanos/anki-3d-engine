@@ -54,7 +54,7 @@ Error LightShading::init(const ConfigSet& config)
 Error LightShading::initLightShading(const ConfigSet& config)
 {
 	// Load shaders and programs
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShading.ankiprog", m_lightShading.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShading.ankiprog", m_lightShading.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
 	variantInitInfo.addConstant("CLUSTER_COUNT_X", U32(m_r->getClusterCount()[0]));
@@ -91,7 +91,7 @@ Error LightShading::initLightShading(const ConfigSet& config)
 Error LightShading::initApplyFog(const ConfigSet& config)
 {
 	// Load shaders and programs
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LightShadingApplyFog.ankiprog", m_applyFog.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingApplyFog.ankiprog", m_applyFog.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
 	variantInitInfo.addConstant("FOG_LAST_CLASTER", m_r->getVolumetricFog().getFinalClusterInZ());

@@ -60,7 +60,7 @@ ANKI_TEST(Ui, Ui)
 	cfg.set("gr_debugContext", 0);
 	cfg.set("width", 1024);
 	cfg.set("height", 760);
-	cfg.set("rsrc_dataPaths", "engine_data");
+	cfg.set("rsrc_dataPaths", "EngineAssets");
 
 	NativeWindow* win = createWindow(cfg);
 	Input* in = new Input();

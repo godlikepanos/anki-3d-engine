@@ -38,7 +38,7 @@ Error ShadowmapsResolve::initInternal(const ConfigSet& cfg)
 	m_rtDescr = m_r->create2DRenderTargetDescription(width, height, Format::R8G8B8A8_UNORM, "SM_resolve");
 	m_rtDescr.bake();
 
-	ANKI_CHECK(getResourceManager().loadResource("shaders/ShadowmapsResolve.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/ShadowmapsResolve.ankiprog", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("CLUSTER_COUNT_X", U32(m_r->getClusterCount()[0]));
 	variantInitInfo.addConstant("CLUSTER_COUNT_Y", U32(m_r->getClusterCount()[1]));

@@ -32,8 +32,8 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	// Create the debug drawer
 	if(!m_dbgTex.isCreated())
 	{
-		ANKI_CHECK(
-			m_node->getSceneGraph().getResourceManager().loadResource("engine_data/ParticleEmitter.ankitex", m_dbgTex));
+		ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource("EngineAssets/ParticleEmitter.ankitex",
+																			 m_dbgTex));
 	}
 
 	// Load particle props
@@ -43,7 +43,7 @@ Error GpuParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 
 	// Create program
 	ANKI_CHECK(
-		m_node->getSceneGraph().getResourceManager().loadResource("shaders/GpuParticlesSimulation.ankiprog", m_prog));
+		m_node->getSceneGraph().getResourceManager().loadResource("Shaders/GpuParticlesSimulation.ankiprog", m_prog));
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();

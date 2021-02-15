@@ -222,7 +222,7 @@ Error GlobalIllumination::initLightShading(const ConfigSet& cfg)
 
 Error GlobalIllumination::initIrradiance(const ConfigSet& cfg)
 {
-	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 	variantInitInfo.addMutation("WORKGROUP_SIZE_XY", m_tileSize);

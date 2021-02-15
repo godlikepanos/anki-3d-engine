@@ -20,7 +20,7 @@ Error MotionVectors::init(const ConfigSet& config)
 	ANKI_R_LOGI("Initializing motion vectors");
 
 	// Prog
-	ANKI_CHECK(getResourceManager().loadResource("shaders/MotionVectors.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/MotionVectors.ankiprog", m_prog));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
 	const ShaderProgramResourceVariant* variant;

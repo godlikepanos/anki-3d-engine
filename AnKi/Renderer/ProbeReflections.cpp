@@ -53,7 +53,7 @@ Error ProbeReflections::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initShadowMapping(config));
 
 	// Load split sum integration LUT
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/SplitSumIntegration.ankitex", m_integrationLut));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/SplitSumIntegration.ankitex", m_integrationLut));
 
 	SamplerInitInfo sinit;
 	sinit.m_minMagFilter = SamplingFilter::LINEAR;
@@ -145,7 +145,7 @@ Error ProbeReflections::initIrradiance(const ConfigSet& config)
 
 	// Create prog
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/IrradianceDice.ankiprog", m_irradiance.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_irradiance.m_prog);
 
@@ -173,7 +173,7 @@ Error ProbeReflections::initIrradiance(const ConfigSet& config)
 Error ProbeReflections::initIrradianceToRefl(const ConfigSet& cfg)
 {
 	// Create program
-	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/ApplyIrradianceToReflection.ankiprog",
+	ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/ApplyIrradianceToReflection.ankiprog",
 													  m_irradianceToRefl.m_prog));
 
 	const ShaderProgramResourceVariant* variant;

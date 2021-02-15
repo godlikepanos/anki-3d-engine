@@ -53,7 +53,7 @@ Error LensFlare::initSprite(const ConfigSet& config)
 	m_maxSprites = U16(m_maxSpritesPerFlare * m_maxFlares);
 
 	// Load prog
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LensFlareSprite.ankiprog", m_realProg));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/LensFlareSprite.ankiprog", m_realProg));
 	const ShaderProgramResourceVariant* variant;
 	m_realProg->getOrCreateVariant(variant);
 	m_realGrProg = variant->getProgram();
@@ -70,7 +70,7 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 												 BufferMapAccessBit::NONE, "LensFlares"));
 
 	ANKI_CHECK(
-		getResourceManager().loadResource("shaders/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
+		getResourceManager().loadResource("Shaders/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_updateIndirectBuffProg);
 	variantInitInfo.addConstant("IN_DEPTH_MAP_SIZE", UVec2(m_r->getWidth() / 2 / 2, m_r->getHeight() / 2 / 2));

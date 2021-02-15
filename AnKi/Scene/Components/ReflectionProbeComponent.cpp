@@ -21,7 +21,7 @@ ReflectionProbeComponent::ReflectionProbeComponent(SceneNode* node)
 	, m_markedForRendering(false)
 	, m_markedForUpdate(true)
 {
-	if(node->getSceneGraph().getResourceManager().loadResource("engine_data/Mirror.ankitex", m_debugTex))
+	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/Mirror.ankitex", m_debugTex))
 	{
 		ANKI_SCENE_LOGF("Failed to load resources");
 	}

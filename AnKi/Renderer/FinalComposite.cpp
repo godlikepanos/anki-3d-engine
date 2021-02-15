@@ -35,16 +35,16 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 {
 	ANKI_ASSERT("Initializing PPS");
 
-	ANKI_CHECK(loadColorGradingTexture("engine_data/DefaultLut.ankitex"));
+	ANKI_CHECK(loadColorGradingTexture("EngineAssets/DefaultLut.ankitex"));
 
 	m_fbDescr.m_colorAttachmentCount = 1;
 	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("shaders/FinalComposite.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/FinalComposite.ankiprog", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("BLUE_NOISE", 1);

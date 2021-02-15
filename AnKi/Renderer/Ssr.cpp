@@ -38,7 +38,7 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	m_depthLod = cfg.getNumberU32("r_ssrDepthLod");
 	m_firstStepPixels = 32;
 
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseRgb816x16.png", m_noiseTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb816x16.png", m_noiseTex));
 
 	// Create RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
@@ -49,7 +49,7 @@ Error Ssr::initInternal(const ConfigSet& cfg)
 	m_rt = m_r->createAndClearRenderTarget(texinit);
 
 	// Create shader
-	ANKI_CHECK(getResourceManager().loadResource("shaders/Ssr.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/Ssr.ankiprog", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("VARIANT", 0);

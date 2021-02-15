@@ -21,7 +21,7 @@ GlobalIlluminationProbeComponent::GlobalIlluminationProbeComponent(SceneNode* no
 	, m_markedForRendering(false)
 	, m_shapeDirty(true)
 {
-	if(node->getSceneGraph().getResourceManager().loadResource("engine_data/GiProbe.ankitex", m_debugTex))
+	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/GiProbe.ankitex", m_debugTex))
 	{
 		ANKI_SCENE_LOGF("Failed to load resources");
 	}

@@ -56,7 +56,7 @@ Error MainRenderer::init(ThreadHive* hive, ResourceManager* resources, GrManager
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(resources->loadResource("shaders/Blit.ankiprog", m_blitProg));
+		ANKI_CHECK(resources->loadResource("Shaders/Blit.ankiprog", m_blitProg));
 		const ShaderProgramResourceVariant* variant;
 		m_blitProg->getOrCreateVariant(variant);
 		m_blitGrProg = variant->getProgram();

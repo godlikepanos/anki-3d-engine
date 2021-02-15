@@ -25,7 +25,7 @@ Error TraditionalDeferredLightShading::init()
 {
 	// Init progs
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/TraditionalDeferredShading.ankiprog", m_lightProg));
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/TraditionalDeferredShading.ankiprog", m_lightProg));
 
 		for(U32 specular = 0; specular <= 1; ++specular)
 		{
@@ -48,8 +48,8 @@ Error TraditionalDeferredLightShading::init()
 	}
 
 	// Init meshes
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/Plight.ankimesh", m_plightMesh, false));
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/Slight.ankimesh", m_slightMesh, false));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/Plight.ankimesh", m_plightMesh, false));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/Slight.ankimesh", m_slightMesh, false));
 
 	return Error::NONE;
 }

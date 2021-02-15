@@ -68,7 +68,7 @@ void allocateAndPopulateDebugBox(StagingGpuMemoryManager& stagingGpuAllocator, S
 
 Error DebugDrawer2::init(ResourceManager* rsrcManager)
 {
-	ANKI_CHECK(rsrcManager->loadResource("shaders/SceneDebug.ankiprog", m_prog));
+	ANKI_CHECK(rsrcManager->loadResource("Shaders/SceneDebug.ankiprog", m_prog));
 
 	{
 		BufferInitInfo bufferInit("DebugCube");

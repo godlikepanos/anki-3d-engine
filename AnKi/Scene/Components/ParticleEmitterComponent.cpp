@@ -214,8 +214,8 @@ Error ParticleEmitterComponent::loadParticleEmitterResource(CString filename)
 	// Create the debug drawer
 	if(!m_dbgTex.isCreated())
 	{
-		ANKI_CHECK(
-			m_node->getSceneGraph().getResourceManager().loadResource("engine_data/ParticleEmitter.ankitex", m_dbgTex));
+		ANKI_CHECK(m_node->getSceneGraph().getResourceManager().loadResource("EngineAssets/ParticleEmitter.ankitex",
+																			 m_dbgTex));
 	}
 
 	// Load

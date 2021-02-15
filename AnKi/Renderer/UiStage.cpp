@@ -24,7 +24,7 @@ UiStage::~UiStage()
 
 Error UiStage::init(const ConfigSet&)
 {
-	ANKI_CHECK(m_r->getUiManager().newInstance(m_font, "engine_data/UbuntuRegular.ttf",
+	ANKI_CHECK(m_r->getUiManager().newInstance(m_font, "EngineAssets/UbuntuRegular.ttf",
 											   std::initializer_list<U32>{12, 16, 20}));
 	ANKI_CHECK(m_r->getUiManager().newInstance(m_canvas, m_font, 12, m_r->getWidth(), m_r->getHeight()));
 

@@ -29,7 +29,7 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	ANKI_R_LOGI("Initializing tonemapping (input %ux%u)", width, height);
 
 	// Create program
-	ANKI_CHECK(getResourceManager().loadResource("shaders/TonemappingAverageLuminance.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/TonemappingAverageLuminance.ankiprog", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("INPUT_TEX_SIZE", UVec2(width, height));

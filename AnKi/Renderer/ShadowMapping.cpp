@@ -114,7 +114,7 @@ Error ShadowMapping::initAtlas(const ConfigSet& cfg)
 
 	// Programs and shaders
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/ExponentialShadowmappingResolve.ankiprog",
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/ExponentialShadowmappingResolve.ankiprog",
 													 m_atlas.m_resolveProg));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_atlas.m_resolveProg);

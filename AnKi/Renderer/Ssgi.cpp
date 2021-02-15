@@ -42,7 +42,7 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 	m_main.m_depthLod = min(cfg.getNumberU32("r_ssgiDepthLod"), m_r->getDepthDownscale().getMipmapCount() - 1);
 	m_main.m_firstStepPixels = 32;
 
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseRgb816x16.png", m_main.m_noiseTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb816x16.png", m_main.m_noiseTex));
 
 	// Init main
 	{
@@ -50,7 +50,7 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 			m_r->create2DRenderTargetDescription(width / 2, height / 2, Format::B10G11R11_UFLOAT_PACK32, "SSGI_tmp");
 		m_main.m_rtDescr.bake();
 
-		ANKI_CHECK(getResourceManager().loadResource("shaders/Ssgi.ankiprog", m_main.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/Ssgi.ankiprog", m_main.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_main.m_prog);
 
@@ -66,7 +66,7 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 
 	// Init denoise
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/SsgiDenoise.ankiprog", m_denoise.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/SsgiDenoise.ankiprog", m_denoise.m_prog));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoise.m_prog);
 		const ShaderProgramResourceVariant* variant;
 
@@ -90,7 +90,7 @@ Error Ssgi::initInternal(const ConfigSet& cfg)
 
 	// Init reconstruction
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/SsgiReconstruct.ankiprog", m_recontruction.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/SsgiReconstruct.ankiprog", m_recontruction.m_prog));
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_recontruction.m_prog);
 		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
 		const ShaderProgramResourceVariant* variant;

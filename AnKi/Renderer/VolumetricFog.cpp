@@ -31,7 +31,7 @@ Error VolumetricFog::init(const ConfigSet& config)
 	ANKI_R_LOGI("Initializing volumetric fog. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]);
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricFogAccumulation.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/VolumetricFogAccumulation.ankiprog", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));

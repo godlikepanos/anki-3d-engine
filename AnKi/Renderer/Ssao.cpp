@@ -21,16 +21,16 @@ Ssao::~Ssao()
 Error Ssao::initMain(const ConfigSet& config)
 {
 	// Noise
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_main.m_noiseTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseLdrRgb64x64.ankitex", m_main.m_noiseTex));
 
 	// Shader
 	if(m_useCompute)
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/SsaoCompute.ankiprog", m_main.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/SsaoCompute.ankiprog", m_main.m_prog));
 	}
 	else
 	{
-		ANKI_CHECK(getResourceManager().loadResource("shaders/Ssao.ankiprog", m_main.m_prog));
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/Ssao.ankiprog", m_main.m_prog));
 	}
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_main.m_prog);
@@ -56,7 +56,7 @@ Error Ssao::initBlur(const ConfigSet& config)
 	// shader
 	if(m_blurUseCompute)
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlurCompute.ankiprog", m_blur.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/GaussianBlurCompute.ankiprog", m_blur.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_blur.m_prog);
 		variantInitInfo.addMutation("ORIENTATION", 2);
@@ -74,7 +74,7 @@ Error Ssao::initBlur(const ConfigSet& config)
 	}
 	else
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/GaussianBlur.ankiprog", m_blur.m_prog));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("Shaders/GaussianBlur.ankiprog", m_blur.m_prog));
 
 		ShaderProgramResourceVariantInitInfo variantInitInfo(m_blur.m_prog);
 		variantInitInfo.addMutation("ORIENTATION", 2);

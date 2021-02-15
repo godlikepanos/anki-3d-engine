@@ -38,10 +38,10 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	ANKI_R_LOGI("Initializing volumetric lighting accumulation. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1],
 				m_volumeSize[2]);
 
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/blue_noise_rgb8_16x16x16_3d.ankitex", m_noiseTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseLdr16x16x16.ankitex", m_noiseTex));
 
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricLightingAccumulation.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/VolumetricLightingAccumulation.ankiprog", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);

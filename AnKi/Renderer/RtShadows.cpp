@@ -48,7 +48,7 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	m_grProg = library->getShaderProgram();
 
 	// Denoise program
-	ANKI_CHECK(getResourceManager().loadResource("shaders/RtShadowsDenoise.ankiprog", m_denoiseProg));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsDenoise.ankiprog", m_denoiseProg));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
 	variantInitInfo.addConstant("OUT_IMAGE_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
 	variantInitInfo.addConstant("SAMPLE_COUNT", 8u);

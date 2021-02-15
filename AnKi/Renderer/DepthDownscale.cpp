@@ -40,7 +40,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 	m_hizTex = m_r->createAndClearRenderTarget(texInit);
 
 	// Progs
-	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/DepthDownscale.ankiprog", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("SAMPLE_RESOLVE_TYPE", 2);

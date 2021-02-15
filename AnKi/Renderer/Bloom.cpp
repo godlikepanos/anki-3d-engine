@@ -36,7 +36,7 @@ Error Bloom::initExposure(const ConfigSet& config)
 	m_exposure.m_rtDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/Bloom.ankiprog", m_exposure.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/Bloom.ankiprog", m_exposure.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_exposure.m_prog);
 	variantInitInfo.addConstant("FB_SIZE", UVec2(m_exposure.m_width, m_exposure.m_height));
@@ -62,7 +62,7 @@ Error Bloom::initUpscale(const ConfigSet& config)
 	m_upscale.m_rtDescr.bake();
 
 	// init shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/BloomUpscale.ankiprog", m_upscale.m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/BloomUpscale.ankiprog", m_upscale.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_upscale.m_prog);
 	variantInitInfo.addConstant("FB_SIZE", UVec2(m_upscale.m_width, m_upscale.m_height));
@@ -76,7 +76,7 @@ Error Bloom::initUpscale(const ConfigSet& config)
 				&& variant->getWorkgroupSizes()[2] == m_workgroupSize[2]);
 
 	// Textures
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/LensDirt.ankitex", m_upscale.m_lensDirtTex));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/LensDirt.ankitex", m_upscale.m_lensDirtTex));
 
 	return Error::NONE;
 }

@@ -122,7 +122,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_dummyBuff = getGrManager().newBuffer(BufferInitInfo(
 		1024, BufferUsageBit::ALL_UNIFORM | BufferUsageBit::ALL_STORAGE, BufferMapAccessBit::NONE, "Dummy"));
 
-	ANKI_CHECK(m_resources->loadResource("shaders/ClearTextureCompute.ankiprog", m_clearTexComputeProg));
+	ANKI_CHECK(m_resources->loadResource("Shaders/ClearTextureCompute.ankiprog", m_clearTexComputeProg));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_genericCompute.reset(m_alloc.newInstance<GenericCompute>(this));

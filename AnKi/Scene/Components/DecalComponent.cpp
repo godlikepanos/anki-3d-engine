@@ -18,7 +18,7 @@ DecalComponent::DecalComponent(SceneNode* node)
 	, m_node(node)
 {
 	ANKI_ASSERT(node);
-	if(node->getSceneGraph().getResourceManager().loadResource("engine_data/GreenDecal.ankitex", m_debugTex))
+	if(node->getSceneGraph().getResourceManager().loadResource("EngineAssets/GreenDecal.ankitex", m_debugTex))
 	{
 		ANKI_SCENE_LOGF("Failed to load resources");
 	}
