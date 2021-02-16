@@ -85,6 +85,11 @@ Naming conventions in python
 
 Whatever the PEP 8 guide proposes.
 
+Naming conventions for files and directories
+============================================
+
+Filenames and directories should be PascalCase. The extensions of the files are lowercase.
+
 C++ rules
 =========
 
