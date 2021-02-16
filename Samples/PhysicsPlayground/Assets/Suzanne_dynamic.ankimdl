@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/Suzanne.ankimesh</mesh>
+			<material>Assets/dynamic.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

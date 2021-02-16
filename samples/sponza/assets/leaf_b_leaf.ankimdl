@@ -1,9 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>assets/leaf_b.ankimesh</mesh>
-			<mesh1>assets/leaf_b_lod1.ankimesh</mesh1>
-			<material>assets/leaf.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

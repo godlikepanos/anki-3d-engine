@@ -1,0 +1,4 @@
+add_subdirectory(SimpleScene)
+add_subdirectory(Sponza)
+add_subdirectory(PhysicsPlayground)
+add_subdirectory(SkeletalAnimation)

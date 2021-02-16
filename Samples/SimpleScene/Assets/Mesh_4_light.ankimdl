@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/Mesh_4.ankimesh</mesh>
+			<material>Assets/light.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

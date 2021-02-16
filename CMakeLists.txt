@@ -10,8 +10,8 @@ PROJECT(AnKi)
 
 macro(installExecutable exe)
 	add_custom_command(TARGET ${exe} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin
-		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${exe}> ${CMAKE_BINARY_DIR}/bin)
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Bin
+		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${exe}> ${CMAKE_BINARY_DIR}/Bin)
 endmacro()
 
 macro(addAnkiSourceFiles)
@@ -77,7 +77,6 @@ option(ANKI_LTO "LTO compilation" OFF)
 option(ANKI_BUILD_TOOLS "Build tools" ON)
 option(ANKI_BUILD_TESTS "Build unit tests" OFF)
 option(ANKI_BUILD_SANDBOX "Build sandbox application" ON)
-option(ANKI_BUILD_BENCH "Build benchmark application" OFF)
 option(ANKI_BUILD_SAMPLES "Build sample applications" ON)
 
 option(ANKI_STRIP "Srip the symbols from the executables" OFF)
@@ -406,7 +405,7 @@ if(ANKI_BUILD_TESTS)
 endif()
 
 if(ANKI_BUILD_TOOLS)
-	add_subdirectory(tools)
+	add_subdirectory(Tools)
 endif()
 
 if(ANKI_BUILD_SANDBOX)
@@ -414,10 +413,6 @@ if(ANKI_BUILD_SANDBOX)
 endif()
 
 if(ANKI_BUILD_SAMPLES)
-	add_subdirectory(samples)
-endif()
-
-if(ANKI_BUILD_BENCH)
-	add_subdirectory(bench)
+	add_subdirectory(Samples)
 endif()
 

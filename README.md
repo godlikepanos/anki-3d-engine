@@ -85,19 +85,19 @@ Alternatively, recent Visual Studio versions support building CMake projects fro
 
 This code repository contains **4 sample projects** that are built by default (`ANKI_BUILD_SAMPLES` CMake option):
 
-- `sponza`: The Crytek's Sponza scene
-- `simple_scene`: A simple scene
-- `physics_playground`: A scene with programmer's art and some physics interactions
-- `skeletal_animation`: A simple scene with an animated skin
+- `Sponza`: The Crytek's Sponza scene
+- `SimpleScene`: A simple scene
+- `PhysicsPlayground`: A scene with programmer's art and some physics interactions
+- `SkeletalAnimation`: A simple scene with an animated skin
 
 You can try running them and interacting with them. To run sponza, for example, execute the binary from any working
 directory.
 
 On Linux:
 
-	$./path/to/build/bin/sponza
+	$./path/to/build/Bin/Sponza
 
-On Windows just find the `sponza.exe` and execute it. It's preferable to run the samples from a terminal because that
+On Windows just find the `Sponza.exe` and execute it. It's preferable to run the samples from a terminal because that
 prints some information, including possible errors.
 
 4 Contributing

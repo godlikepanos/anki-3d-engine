@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/vase_chains.ankimesh</mesh>
+			<material>Assets/chain.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>
