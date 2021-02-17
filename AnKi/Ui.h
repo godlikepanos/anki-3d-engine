@@ -5,7 +5,7 @@
 
 #pragma once
 
-/// @defgroup ui User interface that is using nuklear library.
+/// @defgroup ui User interface that is using the ImGUI library.
 
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Font.h>

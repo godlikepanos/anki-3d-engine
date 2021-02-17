@@ -10,7 +10,7 @@
 namespace anki
 {
 
-/// @addtogroup util_misc
+/// @addtogroup util_other
 /// @{
 
 /// A wrapper template to compensate for the fact that some classes get initialized in the constructor but that's not

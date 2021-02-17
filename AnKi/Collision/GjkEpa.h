@@ -11,7 +11,7 @@
 namespace anki
 {
 
-/// @addtogroup collision_internal
+/// @addtogroup collision
 /// @{
 
 using GjkSupportCallback = Vec4 (*)(const void* shape, const Vec4& dir);
