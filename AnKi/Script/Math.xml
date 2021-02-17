@@ -1,0 +1,521 @@
+<glue>
+	<head><![CDATA[// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// WARNING: This file is auto generated.
+
+#include <AnKi/Script/LuaBinder.h>
+#include <AnKi/Math.h>
+
+namespace anki {]]></head>
+
+	<classes>
+		<class name="Vec2" serialize="true">
+			<constructors>
+				<constructor></constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</constructor>
+			</constructors>
+			<methods>
+				<method name="getX">
+					<overrideCall>F32 ret = (*self).x();</overrideCall>
+					<return>F32</return>
+				</method>
+				<method name="getY">
+					<overrideCall>F32 ret = (*self).y();</overrideCall>
+					<return>F32</return>
+				</method>
+				<method name="setX">
+					<overrideCall>(*self).x() = arg0;</overrideCall>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setY">
+					<overrideCall>(*self).y() = arg0;</overrideCall>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setAll">
+					<overrideCall>(*self) = Vec2(arg0, arg1);</overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getAt">
+					<overrideCall>F32 ret = (*self)[arg0];</overrideCall>
+					<args>
+						<arg>U</arg>
+					</args>
+					<return>F32</return>
+				</method>
+				<method name="setAt">
+					<overrideCall>(*self)[arg0] = arg1;</overrideCall>
+					<args>
+						<arg>U</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="operator=">
+					<args>
+						<arg>const Vec2&amp;</arg>
+					</args>
+				</method>
+				<method name="operator+">
+					<args>
+						<arg>const Vec2&amp;</arg>
+					</args>
+					<return>Vec2</return>
+				</method>
+				<method name="operator-">
+					<args>
+						<arg>const Vec2&amp;</arg>
+					</args>
+					<return>Vec2</return>
+				</method>
+				<method name="operator*">
+					<args>
+						<arg>const Vec2&amp;</arg>
+					</args>
+					<return>Vec2</return>
+				</method>
+				<method name="operator/">
+					<args>
+						<arg>const Vec2&amp;</arg>
+					</args>
+					<return>Vec2</return>
+				</method>
+				<method name="operator==">
+					<args>
+						<arg>const Vec2&amp;</arg>
+					</args>
+					<return>Bool</return>
+				</method>
+				<method name="getLength">
+					<return>F32</return>
+				</method>
+				<method name="getNormalized">
+					<return>Vec2</return>
+				</method>
+				<method name="normalize"></method>
+				<method name="dot">
+					<args>
+						<arg>const Vec2&amp;</arg>
+					</args>
+					<return>F32</return>
+				</method>
+			</methods>
+		</class>
+		<class name="Vec3" serialize="true">
+			<constructors>
+				<constructor></constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</constructor>
+			</constructors>
+			<methods>
+				<method name="getX">
+					<overrideCall>F32 ret = (*self).x();</overrideCall>
+					<return>F32</return>
+				</method>
+				<method name="getY">
+					<overrideCall>F32 ret = (*self).y();</overrideCall>
+					<return>F32</return>
+				</method>
+				<method name="getZ">
+					<overrideCall>F32 ret = (*self).z();</overrideCall>
+					<return>F32</return>
+				</method>
+				<method name="setX">
+					<overrideCall>(*self).x() = arg0;</overrideCall>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setY">
+					<overrideCall>(*self).y() = arg0;</overrideCall>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setZ">
+					<overrideCall>(*self).z() = arg0;</overrideCall>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setAll">
+					<overrideCall>(*self) = Vec3(arg0, arg1, arg2);</overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getAt">
+					<overrideCall>F32 ret = (*self)[arg0];</overrideCall>
+					<args>
+						<arg>U</arg>
+					</args>
+					<return>F32</return>
+				</method>
+				<method name="setAt">
+					<overrideCall>(*self)[arg0] = arg1;</overrideCall>
+					<args>
+						<arg>U</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="operator=">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+				</method>
+				<method name="operator+">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
+				<method name="operator-">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
+				<method name="operator*">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
+				<method name="operator/">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Vec3</return>
+				</method>
+				<method name="operator==">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>Bool</return>
+				</method>
+				<method name="getLength">
+					<return>F32</return>
+				</method>
+				<method name="getNormalized">
+					<return>Vec3</return>
+				</method>
+				<method name="normalize"></method>
+				<method name="dot">
+					<args>
+						<arg>const Vec3&amp;</arg>
+					</args>
+					<return>F32</return>
+				</method>
+
+			</methods>
+		</class>
+		<class name="Vec4" serialize="true">
+			<constructors>
+				<constructor></constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</constructor>
+			</constructors>
+			<methods>
+				<method name="getX">
+					<overrideCall>F32 ret = (*self).x();</overrideCall>
+					<return>F32</return>
+				</method>
+				<method name="getY">
+					<overrideCall>F32 ret = (*self).y();</overrideCall>
+					<return>F32</return>
+				</method>
+				<method name="getZ">
+					<overrideCall>F32 ret = (*self).z();</overrideCall>
+					<return>F32</return>
+				</method>
+				<method name="getW">
+					<overrideCall>F32 ret = (*self).w();</overrideCall>
+					<return>F32</return>
+				</method>
+				<method name="setX">
+					<overrideCall>(*self).x() = arg0;</overrideCall>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setY">
+					<overrideCall>(*self).y() = arg0;</overrideCall>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setZ">
+					<overrideCall>(*self).z() = arg0;</overrideCall>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setW">
+					<overrideCall>(*self).w() = arg0;</overrideCall>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setAll">
+					<overrideCall>(*self) = Vec4(arg0, arg1, arg2, arg3);</overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="getAt">
+					<overrideCall>F32 ret = (*self)[arg0];</overrideCall>
+					<args>
+						<arg>U</arg>
+					</args>
+					<return>F32</return>
+				</method>
+				<method name="setAt">
+					<overrideCall>(*self)[arg0] = arg1;</overrideCall>
+					<args>
+						<arg>U</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="operator=">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+				</method>
+				<method name="operator+">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+					<return>Vec4</return>
+				</method>
+				<method name="operator-">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+					<return>Vec4</return>
+				</method>
+				<method name="operator*">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+					<return>Vec4</return>
+				</method>
+				<method name="operator/">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+					<return>Vec4</return>
+				</method>
+				<method name="operator==">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+					<return>Bool</return>
+				</method>
+				<method name="getLength">
+					<return>F32</return>
+				</method>
+				<method name="getNormalized">
+					<return>Vec4</return>
+				</method>
+				<method name="normalize"></method>
+				<method name="dot">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+					<return>F32</return>
+				</method>
+
+			</methods>
+		</class>
+		<class name="Mat3">
+			<constructors>
+				<constructor></constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</constructor>
+			</constructors>
+			<methods>
+				<method name="operator=">
+					<args>
+						<arg>const Mat3&amp;</arg>
+					</args>
+				</method>
+				<method name="getAt">
+					<overrideCall>F32 ret = (*self)(arg0, arg1);</overrideCall>
+					<args>
+						<arg>U</arg>
+						<arg>U</arg>
+					</args>
+					<return>F32</return>
+				</method>
+				<method name="setAt">
+					<overrideCall>(*self)(arg0, arg1) = arg2;</overrideCall>
+					<args>
+						<arg>U</arg>
+						<arg>U</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setAll">
+					<overrideCall>(*self) = Mat3(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);</overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
+		<class name="Mat3x4">
+			<constructors>
+				<constructor></constructor>
+				<constructor>
+					<args>
+						<arg>F32</arg>
+					</args>
+				</constructor>
+			</constructors>
+			<methods>
+				<method name="operator=">
+					<args>
+						<arg>const Mat3x4&amp;</arg>
+					</args>
+				</method>
+				<method name="getAt">
+					<overrideCall>F32 ret = (*self)(arg0, arg1);</overrideCall>
+					<args>
+						<arg>U</arg>
+						<arg>U</arg>
+					</args>
+					<return>F32</return>
+				</method>
+				<method name="setAt">
+					<overrideCall>(*self)(arg0, arg1) = arg2;</overrideCall>
+					<args>
+						<arg>U</arg>
+						<arg>U</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+				<method name="setAll">
+					<overrideCall>(*self) = Mat3x4(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);</overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
+		<class name="Transform">
+			<constructors>
+				<constructor></constructor>
+				<constructor>
+					<args>
+						<arg>Vec4</arg>
+						<arg>Mat3x4</arg>
+						<arg>F32</arg>
+					</args>
+				</constructor>
+			</constructors>
+			<methods>
+				<method name="operator=">
+					<args>
+						<arg>const Transform&amp;</arg>
+					</args>
+				</method>
+				<method name="getOrigin">
+					<return>Vec4</return>
+				</method>
+				<method name="setOrigin">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+				</method>
+				<method name="getRotation">
+					<return>Mat3x4</return>
+				</method>
+				<method name="setRotation">
+					<args>
+						<arg>const Mat3x4&amp;</arg>
+					</args>
+				</method>
+				<method name="getScale">
+					<return>F32</return>
+				</method>
+				<method name="setScale">
+					<args>
+						<arg>F32</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
+	</classes>
+	<functions>
+		<function name="toRad">
+			<overrideCall>F32 ret = toRad(arg0);</overrideCall>
+			<args>
+				<arg>F32</arg>
+			</args>
+			<return>F32</return>
+		</function>
+	</functions>
+	<tail><![CDATA[} // end namespace anki]]></tail>
+</glue>
+

@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 
 include(ProcessorCount)
 
-PROJECT(anki)
+PROJECT(AnKi)
 
 ################################################################################
 # Funcs                                                                        #
@@ -10,8 +10,8 @@ PROJECT(anki)
 
 macro(installExecutable exe)
 	add_custom_command(TARGET ${exe} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin
-		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${exe}> ${CMAKE_BINARY_DIR}/bin)
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/Bin
+		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${exe}> ${CMAKE_BINARY_DIR}/Bin)
 endmacro()
 
 macro(addAnkiSourceFiles)
@@ -77,7 +77,6 @@ option(ANKI_LTO "LTO compilation" OFF)
 option(ANKI_BUILD_TOOLS "Build tools" ON)
 option(ANKI_BUILD_TESTS "Build unit tests" OFF)
 option(ANKI_BUILD_SANDBOX "Build sandbox application" ON)
-option(ANKI_BUILD_BENCH "Build benchmark application" OFF)
 option(ANKI_BUILD_SAMPLES "Build sample applications" ON)
 
 option(ANKI_STRIP "Srip the symbols from the executables" OFF)
@@ -145,7 +144,7 @@ add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 add_definitions(-DANKI_BUILD)
 
 # ImGUI
-add_definitions(-DIMGUI_USER_CONFIG=<anki/ui/ImGuiConfig.h>)
+add_definitions(-DIMGUI_USER_CONFIG=<AnKi/Ui/ImGuiConfig.h>)
 
 if(NOT MSVC)
 	# When building AnKi define this special flag
@@ -211,7 +210,7 @@ endif()
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z bullet imgui meshoptimizer)
+set(ANKI_EXTERN_SUB_DIRS TinyXml2 Lua ZLib Bullet ImGui MeshOptimizer SprivCross)
 
 # Bullet config
 option(BUILD_BULLET2_DEMOS OFF)
@@ -224,35 +223,30 @@ if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
 endif()
 
-set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} SPIRV-Cross)
-
 if(VULKAN)
-	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} volk)
+	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} Volk)
 endif()
 
 # SDL
 if(SDL)
 	message("++ Configuring SDL2")
-	add_subdirectory(thirdparty/SDL2)
+	add_subdirectory(ThirdParty/Sdl2)
 	message("++ End configuring SDL2")
 
 	# Include first the build directory.
-	set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/thirdparty/SDL2/include"
-		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SDL2/include")
+	set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/ThirdParty/Sdl2/include"
+		"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Sdl2/include")
 else()
 	set(SDL2_INCLUDE_DIRS "")
 endif()
 
 # glslang
 message("++ Configuring glslang")
-add_subdirectory(thirdparty/glslang)
+add_subdirectory(ThirdParty/Glslang)
 message("++ End configuring glslang")
 
-# tinyexpr
-add_subdirectory(thirdparty/tinyexpr)
-
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
-	add_subdirectory(thirdparty/${TMP})
+	add_subdirectory(ThirdParty/${TMP})
 endforeach()
 
 ################################################################################
@@ -275,14 +269,14 @@ else()
 endif()
 
 # Doxygen
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Docs/Doxyfile ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
 
 find_package(Doxygen)
 
 if(DOXYGEN_FOUND)
 	message("++ Doxygen found")
 
-	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
+	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif()
@@ -323,27 +317,22 @@ else()
 	set(ANKI_TESTS 0)
 endif()
 
-configure_file("anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
+configure_file("AnKi/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/AnKi/Config.h")
 
 # Include & lib directories
 include_directories(
-	"thirdparty/tinyxml2/include"
-	"thirdparty/lua"
-	"thirdparty/imgui"
-	"thirdparty/z"
 	"${SDL2_INCLUDE_DIRS}"
-	"thirdparty/khronos"
+	"ThirdParty/Khronos"
 	"${CMAKE_CURRENT_BINARY_DIR}"
-	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang"
-	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/tinyexpr"
-	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/bullet/src"
-	"thirdparty"
+	"${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/Bullet/src"
+	"ThirdParty"
+	"ThirdParty/ZLib"
 	${CMAKE_CURRENT_SOURCE_DIR})
 
 if(LINUX OR MACOS OR WINDOWS)
-	include_directories("thirdparty/GLEW/include")
+	include_directories("ThirdParty/GLEW/include")
 else()
-	#include_directories("thirdparty/GLES3/include")
+	#include_directories("ThirdParty/GLES3/include")
 endif()
 
 if(ANDROID)
@@ -363,9 +352,9 @@ endif()
 # Set platform specific
 if(LINUX)
 	if(GL)
-		set(THIRD_PARTY_LIBS ${ANKI_GR_BACKEND} ankiglew)
+		set(THIRD_PARTY_LIBS ${ANKI_GR_BACKEND} AnKiGlew)
 	else()
-		set(THIRD_PARTY_LIBS ankivolk)
+		set(THIRD_PARTY_LIBS AnKiVolk)
 		if(SDL)
 			set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
 		else()
@@ -376,16 +365,16 @@ if(LINUX)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} pthread dl)
 elseif(MACOS)
 	find_package(OpenGL REQUIRED)
-	set(THIRD_PARTY_LIBS ${OPENGL_LIBRARIES} ankiglew pthread)
+	set(THIRD_PARTY_LIBS ${OPENGL_LIBRARIES} AnKiGlew pthread)
 elseif(ANDROID)
 	set(THIRD_PARTY_LIBS GLESv3 EGL log android)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 	set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 elseif(WINDOWS)
 	if(GL)
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankiglew opengl32)
+		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiGlew opengl32)
 	else()
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankivolk)
+		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiVolk)
 	endif()
 
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} version Imm32 Winmm DbgHelp)
@@ -398,37 +387,32 @@ if(SDL)
 endif()
 
 set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath
-	ankispirvcross ankitinyxml2 ankilua ankimeshoptimizer ankiz glslang SPIRV OGLCompiler OSDependent ankitinyexpr
-	ankiimgui)
+	AnKiSpirvCross AnKiTinyXml2 AnKiLua AnKiMeshOptimizer AnKiZLib glslang SPIRV OGLCompiler OSDependent AnKiImGui)
 
-# Add anki sub libraries
-add_subdirectory(anki)
+# Add AnKi sub libraries
+add_subdirectory(AnKi)
 
 separate_arguments(AK_SOURCES)
-add_library(anki ${AK_SOURCES})
-target_compile_definitions(anki PRIVATE -DANKI_SOURCE_FILE)
-target_link_libraries(anki ${THIRD_PARTY_LIBS})
+add_library(AnKi ${AK_SOURCES})
+target_compile_definitions(AnKi PRIVATE -DANKI_SOURCE_FILE)
+target_link_libraries(AnKi ${THIRD_PARTY_LIBS})
 
 ################################################################################
 # AnKi extra                                                                   #
 ################################################################################
 if(ANKI_BUILD_TESTS)
-	add_subdirectory(tests)
+	add_subdirectory(Tests)
 endif()
 
 if(ANKI_BUILD_TOOLS)
-	add_subdirectory(tools)
+	add_subdirectory(Tools)
 endif()
 
 if(ANKI_BUILD_SANDBOX)
-	add_subdirectory(sandbox)
+	add_subdirectory(Sandbox)
 endif()
 
 if(ANKI_BUILD_SAMPLES)
-	add_subdirectory(samples)
-endif()
-
-if(ANKI_BUILD_BENCH)
-	add_subdirectory(bench)
+	add_subdirectory(Samples)
 endif()
 

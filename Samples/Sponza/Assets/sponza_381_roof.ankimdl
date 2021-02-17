@@ -1,0 +1,9 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/sponza_381.ankimesh</mesh>
+			<mesh1>Assets/sponza_381_lod1.ankimesh</mesh1>
+			<material>Assets/roof.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

@@ -1,0 +1,170 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki library RtShadows
+#pragma anki ray_type 0
+
+#pragma anki start rgen
+
+layout(set = 0, binding = 0) uniform sampler u_trilinearRepeatSampler; // Used by the hit shaders
+layout(set = 0, binding = 1) uniform image2D u_outImg[2];
+layout(set = 0, binding = 2) uniform texture2DArray u_historyRt;
+layout(set = 0, binding = 3) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 4) uniform texture2D u_depthRt;
+layout(set = 0, binding = 5) uniform texture2D u_motionVectorsRt;
+layout(set = 0, binding = 6) uniform texture2D u_motionVectorsRejectionRt;
+layout(set = 0, binding = 7) uniform texture2D u_normalRt;
+layout(set = 0, binding = 8) uniform accelerationStructureEXT u_tlas;
+
+#define LIGHT_SET 0
+#define LIGHT_COMMON_UNIS_BINDING 9
+#define LIGHT_LIGHTS_BINDING 10
+#define LIGHT_CLUSTERS_BINDING 13
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+#include <AnKi/Shaders/ImportanceSampling.glsl>
+#include <AnKi/Shaders/Pack.glsl>
+
+ANKI_BINDLESS_SET(1); // Used by the hit shaders
+
+layout(push_constant) uniform b_pc
+{
+	Vec4 u_historyRejectFactor0; // 1.0 means reject, 0.0 not reject
+	Vec4 u_historyRejectFactor1;
+};
+
+layout(location = 0) rayPayloadEXT F32 g_payload;
+
+#define readDepth(texture_, uv, offsetX, offsetY) \
+	textureLodOffset(sampler2D(texture_, u_linearAnyClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).r
+
+F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
+{
+	const U32 flags = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
+	const U32 cullMask = 0xFF;
+	const U32 sbtRecordOffset = 0;
+	const U32 sbtRecordStride = 0;
+	const U32 missIndex = 0;
+	const F32 tMin = 0.1;
+	const I32 payloadLocation = 0;
+	g_payload = 0.0;
+	traceRayEXT(u_tlas, flags, cullMask, sbtRecordOffset, sbtRecordStride, missIndex, rayOrigin, tMin, rayDir, tMax,
+				payloadLocation);
+
+	return g_payload;
+}
+
+void main()
+{
+	// World position
+	const Vec2 uv = (Vec2(gl_LaunchIDEXT.xy) + 0.5) / Vec2(gl_LaunchSizeEXT.xy);
+	const Vec2 ndc = UV_TO_NDC(uv);
+	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
+	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
+
+	if(depth == 1.0)
+	{
+		imageStore(u_outImg[0], IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
+		imageStore(u_outImg[1], IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
+		return;
+	}
+
+	// World normal
+	const Vec3 normal = readNormalFromGBuffer(u_normalRt, u_linearAnyClampSampler, uv);
+
+	// Cluster
+	const U32 clusterIdx = computeClusterIndex(u_clustererMagic, uv, worldPos, u_lightingUniforms.m_clusterCount.x,
+											   u_lightingUniforms.m_clusterCount.y);
+	U32 idxOffset = u_clusters[clusterIdx];
+
+	F32 shadowFactors[8];
+	ANKI_UNROLL for(U32 i = 0; i < 8; ++i)
+	{
+		shadowFactors[i] = 0.0;
+	}
+
+	// Get a random factor
+	const UVec3 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_lightingUniforms.m_frameCount));
+	const Vec3 randomf = Vec3(random) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
+
+	// Dir light
+	ANKI_BRANCH if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
+	{
+		const Vec3 dirLightPos = worldPos + -u_dirLight.m_dir * 10.0 + randomf;
+		const Vec3 rayDir = normalize(dirLightPos - worldPos);
+
+		const F32 lambertTerm = dot(rayDir, normal);
+		ANKI_BRANCH if(lambertTerm > 0.0)
+		{
+			shadowFactors[u_dirLight.m_shadowLayer] = trace(worldPos, rayDir, 10000.0);
+		}
+	}
+
+	// Point lights
+	U32 idx;
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		PointLight light = u_pointLights[idx];
+
+		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
+		{
+			const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * randomf;
+			const Vec3 toLight = lightPos - worldPos;
+			const F32 distanceToLight = length(toLight);
+			const Vec3 rayDir = toLight / distanceToLight; // normalize
+
+			const F32 lambertTerm = dot(rayDir, normal);
+			ANKI_BRANCH if(lambertTerm > 0.0)
+			{
+				shadowFactors[light.m_shadowLayer] = trace(worldPos, rayDir, distanceToLight);
+			}
+		}
+	}
+
+	// Spot lights
+	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	{
+		SpotLight light = u_spotLights[idx];
+
+		ANKI_BRANCH if(light.m_shadowmapId >= 0.0)
+		{
+			const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * randomf;
+			const Vec3 toLight = lightPos - worldPos;
+			const F32 distanceToLight = length(toLight);
+			const Vec3 rayDir = toLight / distanceToLight; // normalize
+
+			const F32 lambertTerm = dot(rayDir, normal);
+			ANKI_BRANCH if(lambertTerm > 0.0)
+			{
+				shadowFactors[light.m_shadowLayer] = trace(worldPos, rayDir, distanceToLight);
+			}
+		}
+	}
+
+	Vec4 shadowFactors0 = Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]);
+	Vec4 shadowFactors1 = Vec4(shadowFactors[4], shadowFactors[5], shadowFactors[6], shadowFactors[7]);
+
+	// Do temporal accumulation
+	{
+		const Vec2 historyUv = uv + textureLod(u_motionVectorsRt, u_linearAnyClampSampler, uv, 0.0).rg;
+		const F32 rejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).r;
+
+		// Compute blend factors
+		const F32 nominalBlendFactor = 0.1;
+		const F32 blendFactor = mix(nominalBlendFactor, 1.0, rejectionFactor);
+
+		// Sample and blend with history
+		const Vec4 history0 = textureLod(u_historyRt, u_linearAnyClampSampler, Vec3(historyUv, 0.0), 0.0);
+		const Vec4 history1 = textureLod(u_historyRt, u_linearAnyClampSampler, Vec3(historyUv, 1.0), 0.0);
+
+		shadowFactors0 = mix(history0, shadowFactors0, min(Vec4(1.0), u_historyRejectFactor0 + blendFactor));
+		shadowFactors1 = mix(history1, shadowFactors1, min(Vec4(1.0), u_historyRejectFactor1 + blendFactor));
+	}
+
+	// Store
+	imageStore(u_outImg[0], IVec2(gl_LaunchIDEXT.xy), shadowFactors0);
+	imageStore(u_outImg[1], IVec2(gl_LaunchIDEXT.xy), shadowFactors1);
+}
+#pragma anki end

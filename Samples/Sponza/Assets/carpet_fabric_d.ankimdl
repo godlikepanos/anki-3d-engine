@@ -1,0 +1,9 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/carpet.ankimesh</mesh>
+			<mesh1>Assets/carpet_lod1.ankimesh</mesh1>
+			<material>Assets/fabric_d.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

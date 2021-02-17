@@ -1,0 +1,7 @@
+add_executable(ShaderDump ShaderProgramBinaryDumpMain.cpp)
+target_link_libraries(ShaderDump AnKi)
+installExecutable(ShaderDump)
+
+add_executable(ShaderCompiler ShaderProgramCompilerMain.cpp)
+target_link_libraries(ShaderCompiler AnKi)
+installExecutable(ShaderCompiler)

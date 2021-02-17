@@ -1,6 +1,6 @@
 [![AnKi logo](http://anki3d.org/wp-content/uploads/2015/11/logo_248.png)](http://anki3d.org)
 
-AnKi 3D engine is a Linux and Windows opensource game engine that runs on Vulkan 1.1 and OpenGL 4.5 (now deprecated).
+AnKi 3D engine is a Linux and Windows opensource game engine that runs on Vulkan 1.2.
 
 [![Video](http://img.youtube.com/vi/va7nZ2EFR4c/0.jpg)](http://www.youtube.com/watch?v=va7nZ2EFR4c)
 
@@ -85,23 +85,23 @@ Alternatively, recent Visual Studio versions support building CMake projects fro
 
 This code repository contains **4 sample projects** that are built by default (`ANKI_BUILD_SAMPLES` CMake option):
 
-- `sponza`: The Crytek's Sponza scene
-- `simple_scene`: A simple scene
-- `physics_playground`: A scene with programmer's art and some physics interactions
-- `skeletal_animation`: A simple scene with an animated skin
+- `Sponza`: The Crytek's Sponza scene
+- `SimpleScene`: A simple scene
+- `PhysicsPlayground`: A scene with programmer's art and some physics interactions
+- `SkeletalAnimation`: A simple scene with an animated skin
 
 You can try running them and interacting with them. To run sponza, for example, execute the binary from any working
 directory.
 
 On Linux:
 
-	$./path/to/build/bin/sponza
+	$./path/to/build/Bin/Sponza
 
-On Windows just find the `sponza.exe` and execute it. It's preferable to run the samples from a terminal because that
+On Windows just find the `Sponza.exe` and execute it. It's preferable to run the samples from a terminal because that
 prints some information, including possible errors.
 
 4 Contributing
 ==============
 
-There are no special rules if you want to contribute. Just create a PR. Read the code [style guide](docs/code_style.md)
+There are no special rules if you want to contribute. Just create a PR. Read the code [style guide](Docs/CodeStyle.md)
 before that though.

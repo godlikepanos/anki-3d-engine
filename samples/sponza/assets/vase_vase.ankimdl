@@ -1,9 +1,0 @@
-<model>
-	<modelPatches>
-		<modelPatch>
-			<mesh>assets/vase.ankimesh</mesh>
-			<mesh1>assets/vase_lod1.ankimesh</mesh1>
-			<material>assets/vase.ankimtl</material>
-		</modelPatch>
-	</modelPatches>
-</model>

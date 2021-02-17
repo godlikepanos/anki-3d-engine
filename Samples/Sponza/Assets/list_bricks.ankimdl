@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/list.ankimesh</mesh>
+			<material>Assets/bricks.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

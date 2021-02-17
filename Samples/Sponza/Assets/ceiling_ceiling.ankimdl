@@ -1,0 +1,9 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/ceiling.ankimesh</mesh>
+			<mesh1>Assets/ceiling_lod1.ankimesh</mesh1>
+			<material>Assets/ceiling.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

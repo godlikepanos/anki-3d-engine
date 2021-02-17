@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/Mesh_3.ankimesh</mesh>
+			<material>Assets/leftWall.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/marble_list.ankimesh</mesh>
+			<material>Assets/arch.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

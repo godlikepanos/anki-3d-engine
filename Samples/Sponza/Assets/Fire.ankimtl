@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<material shaderProgram="Anki/Shaders/ForwardShadingParticles.ankiprog" forwardShading="1" shadow="0">
+	<mutation>
+		<mutator name="ANIMATED_TEXTURE" value="0"/>
+		<mutator name="LIGHT" value="0"/>
+	</mutation>
+
+	<inputs>
+		<input shaderVar="u_diffuseMap" value="Assets/ember_mid.ankitex"/>
+		<input shaderVar="m_colorScale" value="3 3 3 1.0"/>
+		<input shaderVar="m_colorBias" value="0 0 0 0"/>
+	</inputs>
+</material>
+

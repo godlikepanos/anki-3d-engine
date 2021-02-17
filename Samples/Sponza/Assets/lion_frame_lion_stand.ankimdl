@@ -1,0 +1,9 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/lion_frame.ankimesh</mesh>
+			<mesh1>Assets/lion_frame_lod1.ankimesh</mesh1>
+			<material>Assets/lion_stand.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

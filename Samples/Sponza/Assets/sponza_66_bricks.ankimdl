@@ -1,0 +1,8 @@
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>Assets/sponza_66.ankimesh</mesh>
+			<material>Assets/bricks.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>
