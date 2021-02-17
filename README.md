@@ -1,6 +1,6 @@
 [![AnKi logo](http://anki3d.org/wp-content/uploads/2015/11/logo_248.png)](http://anki3d.org)
 
-AnKi 3D engine is a Linux and Windows opensource game engine that runs on Vulkan 1.1 and OpenGL 4.5 (now deprecated).
+AnKi 3D engine is a Linux and Windows opensource game engine that runs on Vulkan 1.2.
 
 [![Video](http://img.youtube.com/vi/va7nZ2EFR4c/0.jpg)](http://www.youtube.com/watch?v=va7nZ2EFR4c)
 
@@ -103,5 +103,5 @@ prints some information, including possible errors.
 4 Contributing
 ==============
 
-There are no special rules if you want to contribute. Just create a PR. Read the code [style guide](docs/code_style.md)
+There are no special rules if you want to contribute. Just create a PR. Read the code [style guide](Docs/CodeStyle.md)
 before that though.
