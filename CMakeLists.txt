@@ -352,9 +352,9 @@ endif()
 # Set platform specific
 if(LINUX)
 	if(GL)
-		set(THIRD_PARTY_LIBS ${ANKI_GR_BACKEND} ankiglew)
+		set(THIRD_PARTY_LIBS ${ANKI_GR_BACKEND} AnKiGlew)
 	else()
-		set(THIRD_PARTY_LIBS ankivolk)
+		set(THIRD_PARTY_LIBS AnKiVolk)
 		if(SDL)
 			set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
 		else()
@@ -365,16 +365,16 @@ if(LINUX)
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} pthread dl)
 elseif(MACOS)
 	find_package(OpenGL REQUIRED)
-	set(THIRD_PARTY_LIBS ${OPENGL_LIBRARIES} ankiglew pthread)
+	set(THIRD_PARTY_LIBS ${OPENGL_LIBRARIES} AnKiGlew pthread)
 elseif(ANDROID)
 	set(THIRD_PARTY_LIBS GLESv3 EGL log android)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 	set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 elseif(WINDOWS)
 	if(GL)
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankiglew opengl32)
+		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiGlew opengl32)
 	else()
-		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ankivolk)
+		set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} AnKiVolk)
 	endif()
 
 	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} version Imm32 Winmm DbgHelp)
@@ -387,15 +387,15 @@ if(SDL)
 endif()
 
 set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath
-	ankispirvcross ankitinyxml2 ankilua ankimeshoptimizer ankiz glslang SPIRV OGLCompiler OSDependent ankiimgui)
+	AnKiSpirvCross AnKiTinyXml2 AnKiLua AnKiMeshOptimizer AnKiZLib glslang SPIRV OGLCompiler OSDependent AnKiImGui)
 
 # Add AnKi sub libraries
 add_subdirectory(AnKi)
 
 separate_arguments(AK_SOURCES)
-add_library(anki ${AK_SOURCES})
-target_compile_definitions(anki PRIVATE -DANKI_SOURCE_FILE)
-target_link_libraries(anki ${THIRD_PARTY_LIBS})
+add_library(AnKi ${AK_SOURCES})
+target_compile_definitions(AnKi PRIVATE -DANKI_SOURCE_FILE)
+target_link_libraries(AnKi ${THIRD_PARTY_LIBS})
 
 ################################################################################
 # AnKi extra                                                                   #

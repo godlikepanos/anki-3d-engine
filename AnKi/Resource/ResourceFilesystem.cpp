@@ -263,7 +263,7 @@ void ResourceFilesystem::addCachePath(const CString& path)
 Error ResourceFilesystem::addNewPath(const CString& path)
 {
 	U32 fileCount = 0;
-	static const CString extension(".ankizip");
+	static const CString extension(".AnKiZLibip");
 
 	auto pos = path.find(extension);
 	if(pos != CString::NPOS && pos == path.getLength() - extension.getLength())

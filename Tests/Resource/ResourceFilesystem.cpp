@@ -26,7 +26,7 @@ ANKI_TEST(Resource, ResourceFilesystem)
 	}
 
 	{
-		ANKI_TEST_EXPECT_NO_ERR(fs.addNewPath("./Tests/Data/Dir.ankizip"));
+		ANKI_TEST_EXPECT_NO_ERR(fs.addNewPath("./Tests/Data/Dir.AnKiZLibip"));
 		ResourceFilePtr file;
 		ANKI_TEST_EXPECT_NO_ERR(fs.openFile("subdir0/hello.txt", file));
 		StringAuto txt(alloc);

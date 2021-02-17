@@ -7,6 +7,5 @@ if(NOT WINDOWS)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(ankilua ${LUA_SOURCES} ${LUA_HEADERS})
-#set_target_properties(ankilua PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-DLUA_USE_POSIX")
+add_library(AnKiLua ${LUA_SOURCES} ${LUA_HEADERS})
 
