@@ -86,7 +86,7 @@ Alternatively, recent Visual Studio versions support building CMake projects fro
 This code repository contains **4 sample projects** that are built by default (`ANKI_BUILD_SAMPLES` CMake option):
 
 - `Sponza`: The Crytek's Sponza scene
-- `SimpleScene`: A simple scene
+- `SimpleScene`: A simple scene (Cornell box)
 - `PhysicsPlayground`: A scene with programmer's art and some physics interactions
 - `SkeletalAnimation`: A simple scene with an animated skin
 
@@ -103,5 +103,5 @@ prints some information, including possible errors.
 4 Contributing
 ==============
 
-There are no special rules if you want to contribute. Just create a PR. Read the code [style guide](Docs/CodeStyle.md)
+There are no special rules if you want to contribute. Just create a PR. Read the [code style guide](Docs/CodeStyle.md)
 before that though.

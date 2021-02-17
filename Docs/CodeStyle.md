@@ -1,8 +1,20 @@
 This document describes the style of code in AnKi 3D Engine. The code is written primarily in C++ with some GLSL and python as well.
 
+Table of contents
+=================
+
+* [Comments in C++ & GLSL](#Comments%20in%20C++%20&%20GLSL)
+* [Comments in python](#Comments%20in%20python)
+* [Naming conventions in C++ & GLSL](#Naming%20conventions%20in%20C++%20&%20GLSL)
+* [Naming conventions in python](#Naming%20conventions%20in%20python)
+* [Naming conventions for files and directories](#Naming%20conventions%20for%20files%20and%20directories)
+* [C++ rules](#C++%20rules)
+* [GLSL rules](#GLSL%20rules)
+* [Code formatting in C++ & GLSL](#Code%20formatting%20in%20C++%20&%20GLSL)
+* [Code formatting in python](#Code%20formatting%20in%20python)
 
 Comments in C++ & GLSL
-=====================
+======================
 
 All comments are C++ like:
 
@@ -247,7 +259,7 @@ Code formatting in C++ & GLSL
 clang-format deals with code formatting. To format all the C++ and GLSL files in the source tree type the following in a terminal:
 
 	$ cd /path/to/anki
-	$ ./tools/format_source.sh
+	$ ./Tools/FormatSource.sh
 
 If you need to format on Windows do the same from a WSL terminal.
 
