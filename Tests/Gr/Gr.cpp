@@ -2751,7 +2751,7 @@ ANKI_TEST(Gr, RayGen)
 
 	using Mat3x4Scalar = Array2d<F32, 3, 4>;
 #define MAGIC_MACRO(x) x
-#include "RtTypes.h"
+#include <Tests/Gr/RtTypes.h>
 #undef MAGIC_MACRO
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -3051,7 +3051,7 @@ F32 scatteringPdfLambertian(Vec3 normal, Vec3 scatteredDir)
 
 #define MAGIC_MACRO ANKI_STRINGIZE
 		const CString rtTypesStr =
-#include "RtTypes.h"
+#include <Tests/Gr/RtTypes.h>
 			;
 #undef MAGIC_MACRO
 

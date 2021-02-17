@@ -6,7 +6,7 @@
 /// @file
 /// This file is mainly used to test that Windows.h works with our own minimal version of it.
 
-#include "Win32Minimal.h"
+#include <AnKi/Util/Win32Minimal.h>
 #include <Windows.h>
 
 #define ANKI_T_STRUCT(type) \
