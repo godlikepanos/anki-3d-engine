@@ -1,6 +1,6 @@
 <serializer>
 	<includes>
-		<include file="&lt;anki/util/Array.h&gt;"/>
+		<include file="&lt;AnKi/Util/Array.h&gt;"/>
 	</includes>
 
 	<classes>
