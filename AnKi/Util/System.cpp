@@ -38,14 +38,15 @@ U32 getCpuCoresCount()
 #endif
 }
 
-void BackTraceWalker::exec()
+void getBacktrace(BackTraceWalker& walker)
 {
 #if ANKI_POSIX && !ANKI_OS_ANDROID
 	// Get addresses's for all entries on the stack
-	void** array = static_cast<void**>(malloc(m_stackSize * sizeof(void*)));
+	const U32 maxStackSize = 64;
+	void** array = static_cast<void**>(malloc(maxStackSize * sizeof(void*)));
 	if(array)
 	{
-		I32 size = backtrace(array, I32(m_stackSize));
+		const I32 size = backtrace(array, I32(maxStackSize));
 
 		// Get symbols
 		char** strings = backtrace_symbols(array, size);
@@ -54,7 +55,7 @@ void BackTraceWalker::exec()
 		{
 			for(I32 i = 0; i < size; ++i)
 			{
-				operator()(strings[i]);
+				walker(strings[i]);
 			}
 
 			free(strings);
@@ -63,7 +64,7 @@ void BackTraceWalker::exec()
 		free(array);
 	}
 #else
-	ANKI_UTIL_LOGW("BackTraceWalker::exec() Not supported in this platform");
+	walker("getBacktrace() not supported in " ANKI_OS_STR);
 #endif
 }
 

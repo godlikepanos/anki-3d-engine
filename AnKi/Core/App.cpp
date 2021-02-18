@@ -27,6 +27,7 @@
 #include <AnKi/Core/StagingGpuMemoryManager.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Canvas.h>
+#include <csignal>
 
 #if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
@@ -307,6 +308,8 @@ Error App::init(const ConfigSet& config, AllocAlignedCallback allocCb, void* all
 
 Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
+	setSignalHandlers();
+
 	ConfigSet config = config_;
 	m_displayStats = config.getNumberU32("core_displayStats");
 
@@ -699,6 +702,63 @@ void App::initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserDat
 		m_allocCb = allocCb;
 		m_allocCbData = allocCbUserData;
 	}
+}
+
+void App::setSignalHandlers()
+{
+	auto handler = [](int signum) -> void {
+		const char* name = nullptr;
+		switch(signum)
+		{
+		case SIGABRT:
+			name = "SIGABRT";
+			break;
+		case SIGSEGV:
+			name = "SIGSEGV";
+			break;
+#if ANKI_POSIX
+		case SIGBUS:
+			name = "SIGBUS";
+			break;
+#endif
+		case SIGILL:
+			name = "SIGILL";
+			break;
+		case SIGFPE:
+			name = "SIGFPE";
+			break;
+		}
+
+		if(name)
+			printf("Caught signal %d (%s)\n", signum, name);
+		else
+			printf("Caught signal %d\n", signum);
+
+		class BW : public BackTraceWalker
+		{
+		public:
+			U32 m_c = 0;
+
+			void operator()(const char* symbol)
+			{
+				printf("%.2u: %s\n", m_c++, symbol);
+			}
+		};
+
+		BW bw;
+		printf("Backtrace:\n");
+		getBacktrace(bw);
+
+		ANKI_DEBUG_BREAK();
+	};
+
+	signal(SIGSEGV, handler);
+	signal(SIGILL, handler);
+	signal(SIGFPE, handler);
+#if ANKI_POSIX
+	signal(SIGBUS, handler);
+#endif
+	// Ignore for now: signal(SIGABRT, handler);
 }
 
 } // end namespace anki

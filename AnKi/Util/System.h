@@ -16,26 +16,18 @@ namespace anki
 /// Get the number of CPU cores
 U32 getCpuCoresCount();
 
-/// Visit the program stack.
+/// Backtrace walker.
 class BackTraceWalker
 {
 public:
-	BackTraceWalker(U stackSize = 50)
-		: m_stackSize(stackSize)
-	{
-	}
-
 	virtual ~BackTraceWalker()
 	{
 	}
 
 	virtual void operator()(const char* symbol) = 0;
-
-	void exec();
-
-private:
-	U m_stackSize;
 };
+
+void getBacktrace(BackTraceWalker& walker);
 
 /// Return true if the engine is running from a terminal emulator.
 Bool runningFromATerminal();
