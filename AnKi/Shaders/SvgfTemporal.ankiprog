@@ -1,0 +1,61 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// Part of SVGF. It reprojects and accumulates the input image and computes its moments
+
+#pragma anki mutator INPUT_TEXTURE_COMPONENTS 1 3 // 1: for shadows, 3: for any other HDR color value
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 2, UVec2(1));
+
+#pragma anki start comp
+#include <AnKi/Shaders/Functions.glsl>
+
+const UVec2 WORKGROUP_SIZE = UVec2(8, 8);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 1) uniform texture2D u_motionVectorsTex;
+layout(set = 0, binding = 2) uniform texture2D u_currentInputTex;
+layout(set = 0, binding = 3) uniform texture2D u_historyInputTex;
+layout(set = 0, binding = 4) uniform texture2D u_historyMomentsTex;
+layout(set = 0, binding = 5) uniform writeonly image2D u_outputImage;
+layout(set = 0, binding = 6) uniform writeonly image2D u_outputMomentsImage;
+
+void main()
+{
+	if((FB_SIZE.x % WORKGROUP_SIZE.x) != 0u || (FB_SIZE.y % WORKGROUP_SIZE.y) != 0u) // This check is free
+	{
+		if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y)
+		{
+			return;
+		}
+	}
+
+	// Get UVs
+	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
+	const Vec3 motionVecs = textureLod(u_motionVectorsTex, u_linearAnyClampSampler, uv, 0.0).rg;
+	const Vec2 historyUv = uv + motionVecs.xy;
+	const F32 rejectionFactor = motionVecs.z;
+
+	// Blend current and hitory
+	const F32 nominalBlendFactor = 0.1;
+	const F32 blendFactor = mix(nominalBlendFactor, 1.0, rejectionFactor);
+
+	const Vec3 current = textureLod(u_currentInputTex, u_linearAnyClampSampler, uv, 0.0)
+#if INPUT_TEXTURE_COMPONENTS == 1
+							 .rrr;
+#else
+							 .rgb;
+#endif
+
+	const Vec3 history = textureLod(u_historyInputTex, u_linearAnyClampSampler, historyUv, 0.0)
+#if INPUT_TEXTURE_COMPONENTS == 1
+							 .rrr;
+#else
+							 .rgb;
+#endif
+}
+
+#pragma anki end
