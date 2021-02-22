@@ -35,6 +35,7 @@ void main()
 #pragma anki start frag
 #include <AnKi/Shaders/Pack.glsl>
 #include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/Include/RtShadows.h>
 
 #define LIGHT_SET 0
 #define LIGHT_COMMON_UNIS_BINDING 0
@@ -54,7 +55,11 @@ layout(set = 0, binding = 16) uniform texture2D u_msDepthRt;
 layout(set = 0, binding = 17) uniform texture2D u_ssrRt;
 layout(set = 0, binding = 18) uniform texture2D u_ssaoRt;
 layout(set = 0, binding = 19) uniform texture2D u_ssgiRt;
-layout(set = 0, binding = 20) uniform texture2DArray u_resolvedSm;
+#if USE_SHADOW_LAYERS
+layout(set = 0, binding = 20) uniform texture3D u_shadowLayersTex;
+#else
+layout(set = 0, binding = 21) uniform texture2D u_resolvedSm;
+#endif
 
 layout(location = 0) in Vec2 in_uv;
 layout(location = 1) in Vec2 in_clusterIJ;
@@ -103,20 +108,8 @@ void main()
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
 
 	// SM
-#if USE_SHADOW_LAYERS
-	const Vec4 resolvedSm0 = textureLod(u_resolvedSm, u_trilinearClampSampler, Vec3(in_uv, 0.0), 0.0);
-	const Vec4 resolvedSm1 = textureLod(u_resolvedSm, u_trilinearClampSampler, Vec3(in_uv, 1.0), 0.0);
-	F32 resolvedSm[8];
-	resolvedSm[0] = resolvedSm0[0];
-	resolvedSm[1] = resolvedSm0[1];
-	resolvedSm[2] = resolvedSm0[2];
-	resolvedSm[3] = resolvedSm0[3];
-	resolvedSm[4] = resolvedSm1[0];
-	resolvedSm[5] = resolvedSm1[1];
-	resolvedSm[6] = resolvedSm1[2];
-	resolvedSm[7] = resolvedSm1[3];
-#else
-	Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, Vec3(in_uv, 0.0), 0.0);
+#if !USE_SHADOW_LAYERS
+	Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);
 	U32 resolvedSmIdx = 0;
 #endif
 
@@ -135,7 +128,8 @@ void main()
 		if(u_dirLight.m_cascadeCount > 0)
 		{
 #if USE_SHADOW_LAYERS
-			shadowFactor = resolvedSm[u_dirLight.m_shadowLayer];
+			const F32 w = (F32(u_dirLight.m_shadowLayer) + 0.5) / F32(MAX_RT_SHADOW_LAYERS);
+			shadowFactor = textureLod(u_shadowLayersTex, u_trilinearClampSampler, Vec3(in_uv, w), 0.0).r;
 #else
 			shadowFactor = resolvedSm[0];
 			++resolvedSmIdx;
@@ -167,7 +161,8 @@ void main()
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 #if USE_SHADOW_LAYERS
-			const F32 shadow = resolvedSm[light.m_shadowLayer];
+			const F32 w = (F32(light.m_shadowLayer) + 0.5) / F32(MAX_RT_SHADOW_LAYERS);
+			const F32 shadow = textureLod(u_shadowLayersTex, u_trilinearClampSampler, Vec3(in_uv, w), 0.0).r;
 #else
 			const F32 shadow = resolvedSm[resolvedSmIdx++];
 #endif
@@ -190,7 +185,8 @@ void main()
 		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
 		{
 #if USE_SHADOW_LAYERS
-			const F32 shadow = resolvedSm[light.m_shadowLayer];
+			const F32 w = (F32(light.m_shadowLayer) + 0.5) / F32(MAX_RT_SHADOW_LAYERS);
+			const F32 shadow = textureLod(u_shadowLayersTex, u_trilinearClampSampler, Vec3(in_uv, w), 0.0).r;
 #else
 			const F32 shadow = resolvedSm[resolvedSmIdx++];
 #endif

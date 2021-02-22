@@ -12,26 +12,25 @@ ANKI_SPECIALIZATION_CONSTANT_U32(SPIRAL_TURN_COUNT, 4, 1);
 
 #include <AnKi/Shaders/BilateralFilter.glsl>
 #include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/Include/RtShadows.h>
 
 const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 1) uniform texture2DArray u_inTex;
+layout(set = 0, binding = 1) uniform texture3D u_inTex;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
 layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
-layout(set = 0, binding = 4) writeonly uniform image2D u_outImg[2];
+layout(set = 0, binding = 4) writeonly uniform image3D u_outImg;
 
-layout(std140, push_constant, row_major) uniform b_pc
+layout(std430, push_constant, row_major) uniform b_pc
 {
-	Mat4 u_invViewProjMat;
-	Vec3 m_padding;
-	F32 u_time;
+	RtShadowsDenoiseUniforms u_unis;
 };
 
 Vec3 unproject(Vec2 ndc, F32 depth)
 {
-	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec4 worldPos4 = u_unis.invViewProjMat * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 	return worldPos;
 }
@@ -48,8 +47,16 @@ void main()
 	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(OUT_IMAGE_SIZE);
 
 	// Reference
-	Vec4 color0 = textureLod(u_inTex, u_linearAnyClampSampler, Vec3(uv, 0.0), 0.0);
-	Vec4 color1 = textureLod(u_inTex, u_linearAnyClampSampler, Vec3(uv, 1.0), 0.0);
+	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
+	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	{
+		if((u_unis.activeShadowLayerMask & (1 << i)) != 0)
+		{
+			const F32 w = (F32(i) + 0.5) / F32(MAX_RT_SHADOW_LAYERS);
+			shadowFactors[i] = textureLod(u_inTex, u_linearAnyClampSampler, Vec3(uv, w), 0.0).r;
+		}
+	}
+
 	F32 weight = 1.0;
 
 	BilateralSample ref;
@@ -59,7 +66,7 @@ void main()
 
 	// Sample
 	SpatialBilateralContext ctx =
-		spatialBilateralInit(SAMPLE_COUNT, gl_GlobalInvocationID.xy, PIXEL_RADIUS, SPIRAL_TURN_COUNT, u_time);
+		spatialBilateralInit(SAMPLE_COUNT, gl_GlobalInvocationID.xy, PIXEL_RADIUS, SPIRAL_TURN_COUNT, u_unis.time);
 
 	for(U32 i = 0; i < SAMPLE_COUNT; ++i)
 	{
@@ -80,18 +87,23 @@ void main()
 		const F32 w = calculateBilateralWeight(crnt, ref, config);
 		weight += w;
 
-		const Vec4 sampleColor0 = texelFetch(u_inTex, IVec3(unormalizedUvs / 2, 0), 0);
-		const Vec4 sampleColor1 = texelFetch(u_inTex, IVec3(unormalizedUvs / 2, 1), 0);
-		color0 += sampleColor0 * w;
-		color1 += sampleColor1 * w;
+		ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+		{
+			if((u_unis.activeShadowLayerMask & (1 << i)) != 0)
+			{
+				shadowFactors[i] += texelFetch(u_inTex, IVec3(unormalizedUvs / 2, i), 0).r * w;
+			}
+		}
 	}
 
-	color0 /= weight;
-	color1 /= weight;
-
 	// Write value
-	imageStore(u_outImg[0], IVec2(gl_GlobalInvocationID.xy), color0);
-	imageStore(u_outImg[1], IVec2(gl_GlobalInvocationID.xy), color1);
+	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	{
+		if((u_unis.activeShadowLayerMask & (1 << i)) != 0)
+		{
+			imageStore(u_outImg, IVec3(gl_GlobalInvocationID.xy, i), Vec4(shadowFactors[i] / weight));
+		}
+	}
 }
 
 #pragma anki end

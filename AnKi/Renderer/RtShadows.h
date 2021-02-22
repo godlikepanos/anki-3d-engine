@@ -9,6 +9,7 @@
 #include <AnKi/Renderer/RendererObject.h>
 #include <AnKi/Resource/TextureResource.h>
 #include <AnKi/Util/BitSet.h>
+#include <AnKi/Shaders/Include/RtShadows.h>
 
 namespace anki
 {
@@ -44,6 +45,13 @@ public:
 	}
 
 public:
+	class ShadowLayer
+	{
+	public:
+		U64 m_lightUuid = MAX_U64;
+		U64 m_frameLastUsed = MAX_U64;
+	};
+
 	ShaderProgramPtr m_grProg;
 	TexturePtr m_historyAndFinalRt;
 	RenderTargetDescription m_renderRt;
@@ -53,14 +61,9 @@ public:
 
 	U32 m_sbtRecordSize = 256;
 
-	static constexpr U32 MAX_SHADOW_LAYERS = 8;
+	Array<ShadowLayer, MAX_RT_SHADOW_LAYERS> m_shadowLayers;
 
-	class ShadowLayer
-	{
-	public:
-		U64 m_lightUuid = MAX_U64;
-		U64 m_frameLastUsed = MAX_U64;
-	};
+	Bool m_historyAndFinalRtImportedOnce = false;
 
 	class
 	{
@@ -69,14 +72,13 @@ public:
 
 		RenderTargetHandle m_renderRt;
 		RenderTargetHandle m_historyAndFinalRt;
-		Bool m_historyAndFinalRtImportedOnce = false;
 
 		BufferPtr m_sbtBuffer;
 		PtrSize m_sbtOffset;
 		U32 m_hitGroupCount = 0;
 
-		Array<ShadowLayer, MAX_SHADOW_LAYERS> m_shadowLayers;
-		BitSet<MAX_SHADOW_LAYERS, U8> m_layersWithRejectedHistory = {false};
+		BitSet<MAX_RT_SHADOW_LAYERS, U8> m_layersWithRejectedHistory = {false};
+		U32 m_activeShadowLayerMask = 0;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);

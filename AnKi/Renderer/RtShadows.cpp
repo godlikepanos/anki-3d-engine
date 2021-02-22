@@ -61,18 +61,18 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 
 	// RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-		m_r->getWidth(), m_r->getHeight(), Format::R8G8B8A8_UNORM,
+		m_r->getWidth(), m_r->getHeight(), Format::R8_UNORM,
 		TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 		"RtShadows");
-	texinit.m_type = TextureType::_2D_ARRAY;
-	texinit.m_layerCount = 2;
+	texinit.m_type = TextureType::_3D;
+	texinit.m_depth = MAX_RT_SHADOW_LAYERS;
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	m_historyAndFinalRt = m_r->createAndClearRenderTarget(texinit);
 
-	m_renderRt = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8G8B8A8_UNORM,
+	m_renderRt = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8_UNORM,
 													  "RtShadowsTmp");
-	m_renderRt.m_type = TextureType::_2D_ARRAY;
-	m_renderRt.m_layerCount = 2;
+	m_renderRt.m_type = TextureType::_3D;
+	m_renderRt.m_depth = MAX_RT_SHADOW_LAYERS;
 	m_renderRt.bake();
 
 	// Misc
@@ -91,11 +91,11 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	buildSbt();
 
 	// RTs
-	if(ANKI_UNLIKELY(!m_runCtx.m_historyAndFinalRtImportedOnce))
+	if(ANKI_UNLIKELY(!m_historyAndFinalRtImportedOnce))
 	{
 		m_runCtx.m_historyAndFinalRt =
 			rgraph.importRenderTarget(m_historyAndFinalRt, TextureUsageBit::SAMPLED_FRAGMENT);
-		m_runCtx.m_historyAndFinalRtImportedOnce = true;
+		m_historyAndFinalRtImportedOnce = true;
 	}
 	else
 	{
@@ -143,6 +143,7 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	{
 		RenderQueue& rqueue = *m_runCtx.m_ctx->m_renderQueue;
 		m_runCtx.m_layersWithRejectedHistory.unsetAll();
+		m_runCtx.m_activeShadowLayerMask = 0;
 
 		if(rqueue.m_directionalLight.hasShadow())
 		{
@@ -153,8 +154,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			ANKI_ASSERT(layerFound && "Directional can't fail");
 
 			rqueue.m_directionalLight.m_shadowLayer = U8(layerIdx);
-			ANKI_ASSERT(rqueue.m_directionalLight.m_shadowLayer < MAX_SHADOW_LAYERS);
+			ANKI_ASSERT(rqueue.m_directionalLight.m_shadowLayer < MAX_RT_SHADOW_LAYERS);
 			m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
+			m_runCtx.m_activeShadowLayerMask |= 1 << layerIdx;
 		}
 
 		for(PointLightQueueElement& light : rqueue.m_pointLights)
@@ -171,8 +173,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			if(layerFound)
 			{
 				light.m_shadowLayer = U8(layerIdx);
-				ANKI_ASSERT(light.m_shadowLayer < MAX_SHADOW_LAYERS);
+				ANKI_ASSERT(light.m_shadowLayer < MAX_RT_SHADOW_LAYERS);
 				m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
+				m_runCtx.m_activeShadowLayerMask |= 1 << layerIdx;
 			}
 			else
 			{
@@ -195,8 +198,9 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			if(layerFound)
 			{
 				light.m_shadowLayer = U8(layerIdx);
-				ANKI_ASSERT(light.m_shadowLayer < MAX_SHADOW_LAYERS);
+				ANKI_ASSERT(light.m_shadowLayer < MAX_RT_SHADOW_LAYERS);
 				m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
+				m_runCtx.m_activeShadowLayerMask |= 1 << layerIdx;
 			}
 			else
 			{
@@ -217,10 +221,7 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
 
-	TextureSubresourceInfo subresource;
-	rgraphCtx.bindImage(0, 1, m_runCtx.m_renderRt, subresource, 0);
-	subresource.m_firstLayer = 1;
-	rgraphCtx.bindImage(0, 1, m_runCtx.m_renderRt, subresource, 1);
+	rgraphCtx.bindImage(0, 1, m_runCtx.m_renderRt, TextureSubresourceInfo());
 
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyAndFinalRt);
 	cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
@@ -241,12 +242,13 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindAllBindless(1);
 
-	Array<F32, MAX_SHADOW_LAYERS> rejectFactors;
-	for(U32 i = 0; i < MAX_SHADOW_LAYERS; ++i)
+	RtShadowsUniforms unis;
+	unis.activeShadowLayerMask = m_runCtx.m_activeShadowLayerMask;
+	for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
-		rejectFactors[i] = F32(m_runCtx.m_layersWithRejectedHistory.get(i));
+		unis.historyRejectFactor[i] = F32(m_runCtx.m_layersWithRejectedHistory.get(i));
 	}
-	cmdb->setPushConstants(&rejectFactors, sizeof(rejectFactors));
+	cmdb->setPushConstants(&unis, sizeof(unis));
 
 	cmdb->traceRays(m_runCtx.m_sbtBuffer, m_runCtx.m_sbtOffset, m_sbtRecordSize, m_runCtx.m_hitGroupCount, 1,
 					m_r->getWidth() / 2, m_r->getHeight() / 2, 1);
@@ -263,22 +265,13 @@ void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
 
-	TextureSubresourceInfo subresource;
-	rgraphCtx.bindImage(0, 4, m_runCtx.m_historyAndFinalRt, subresource, 0);
-	subresource.m_firstLayer = 1;
-	rgraphCtx.bindImage(0, 4, m_runCtx.m_historyAndFinalRt, subresource, 1);
+	rgraphCtx.bindImage(0, 4, m_runCtx.m_historyAndFinalRt, TextureSubresourceInfo());
 
-	class PC
-	{
-	public:
-		Mat4 m_invViewProjMat;
-		Vec3 m_padding;
-		F32 m_time;
-	} pc;
-
-	pc.m_invViewProjMat = m_runCtx.m_ctx->m_matrices.m_viewProjectionJitter.getInverse();
-	pc.m_time = F32(m_r->getGlobalTimestamp());
-	cmdb->setPushConstants(&pc, sizeof(pc));
+	RtShadowsDenoiseUniforms unis;
+	unis.invViewProjMat = m_runCtx.m_ctx->m_matrices.m_viewProjectionJitter.getInverse();
+	unis.time = F32(m_r->getGlobalTimestamp());
+	unis.activeShadowLayerMask = m_runCtx.m_activeShadowLayerMask;
+	cmdb->setPushConstants(&unis, sizeof(unis));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth(), m_r->getHeight());
 }
@@ -339,9 +332,9 @@ Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistor
 	U64 nextBestLayerFame = crntFrame;
 	rejectHistoryBuffer = false;
 
-	for(U32 i = 0; i < m_runCtx.m_shadowLayers.getSize(); ++i)
+	for(U32 i = 0; i < m_shadowLayers.getSize(); ++i)
 	{
-		ShadowLayer& layer = m_runCtx.m_shadowLayers[i];
+		ShadowLayer& layer = m_shadowLayers[i];
 		if(layer.m_lightUuid == lightUuid && layer.m_frameLastUsed == crntFrame - 1)
 		{
 			// Found it being used last frame
@@ -370,8 +363,8 @@ Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistor
 	if(layerIdx == MAX_U32 && nextBestLayerIdx != MAX_U32)
 	{
 		layerIdx = nextBestLayerIdx;
-		m_runCtx.m_shadowLayers[nextBestLayerIdx].m_frameLastUsed = crntFrame;
-		m_runCtx.m_shadowLayers[nextBestLayerIdx].m_lightUuid = lightUuid;
+		m_shadowLayers[nextBestLayerIdx].m_frameLastUsed = crntFrame;
+		m_shadowLayers[nextBestLayerIdx].m_lightUuid = lightUuid;
 		rejectHistoryBuffer = true;
 	}
 
