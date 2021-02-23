@@ -24,9 +24,6 @@ matrix:
       before_install:
         - choco install python3
         - export PATH="/c/Python39:/c/Python39/Scripts:$PATH"
-        - wget http://anki3d.org/VulkanSDKLib.zip
-        - unzip VulkanSDKLib.zip -d vulkansdk
-        - export VULKAN_SDK=$TRAVIS_BUILD_DIR/vulkansdk
       env:
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON TOOLS=ON TESTS=ON
         - GENERATOR="Visual Studio 15 2017 Win64" BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF TOOLS=ON TESTS=ON
@@ -48,7 +45,6 @@ script:
   - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then PYTHON3=$(which python3); fi
   - $CC --version
   - $CXX --version
-  - echo "VULKAN_SDK ENV" $VULKAN_SDK
   - mkdir build
   - cd build
   - cmake .. -G "${GENERATOR}" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DANKI_EXTRA_CHECKS=${EXTRA_CHECKS} -DANKI_BUILD_TOOLS=${TOOLS} -DANKI_BUILD_TESTS=${TESTS} -DANKI_TRACE=${TRACE} -DPYTHON_EXECUTABLE:FILEPATH="${PYTHON3}"
