@@ -56,7 +56,7 @@ F32 calculateBilateralWeight(BilateralSample center, BilateralSample tap, Bilate
 		const F32 lowDistanceThreshold2 = 0.001;
 
 		// Change in position in camera space
-		Vec3 dq = center.m_position - tap.m_position;
+		const Vec3 dq = center.m_position - tap.m_position;
 
 		// How far away is this point from the original sample in camera space? (Max value is unbounded)
 		const F32 distance2 = dot(dq, dq);

@@ -633,7 +633,8 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 	m_debugRts.emplaceBack(getAllocator(), std::move(inf));
 }
 
-void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid)
+void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid,
+										   ShaderProgramPtr& optionalShaderProgram)
 {
 	if(ANKI_LIKELY(m_currentDebugRtName.isEmpty()))
 	{
@@ -651,7 +652,7 @@ void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& han
 	}
 	ANKI_ASSERT(obj);
 
-	obj->getDebugRenderTarget(m_currentDebugRtName, handle);
+	obj->getDebugRenderTarget(m_currentDebugRtName, handle, optionalShaderProgram);
 	handleValid = true;
 }
 

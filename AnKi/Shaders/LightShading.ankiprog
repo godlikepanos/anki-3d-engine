@@ -35,7 +35,7 @@ void main()
 #pragma anki start frag
 #include <AnKi/Shaders/Pack.glsl>
 #include <AnKi/Shaders/Functions.glsl>
-#include <AnKi/Shaders/Include/RtShadows.h>
+#include <AnKi/Shaders/RtShadows.glsl>
 
 #define LIGHT_SET 0
 #define LIGHT_COMMON_UNIS_BINDING 0
@@ -56,7 +56,7 @@ layout(set = 0, binding = 17) uniform texture2D u_ssrRt;
 layout(set = 0, binding = 18) uniform texture2D u_ssaoRt;
 layout(set = 0, binding = 19) uniform texture2D u_ssgiRt;
 #if USE_SHADOW_LAYERS
-layout(set = 0, binding = 20) uniform texture3D u_shadowLayersTex;
+layout(set = 0, binding = 20) uniform utexture2D u_shadowLayersTex;
 #else
 layout(set = 0, binding = 21) uniform texture2D u_resolvedSm;
 #endif
@@ -108,7 +108,10 @@ void main()
 	gbuffer.m_subsurface = max(gbuffer.m_subsurface, SUBSURFACE_MIN);
 
 	// SM
-#if !USE_SHADOW_LAYERS
+#if USE_SHADOW_LAYERS
+	F32 resolvedSm[MAX_RT_SHADOW_LAYERS];
+	unpackRtShadows(textureLod(u_shadowLayersTex, u_nearestAnyClampSampler, in_uv, 0.0).rg, resolvedSm);
+#else
 	Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);
 	U32 resolvedSmIdx = 0;
 #endif
@@ -128,8 +131,7 @@ void main()
 		if(u_dirLight.m_cascadeCount > 0)
 		{
 #if USE_SHADOW_LAYERS
-			const F32 w = (F32(u_dirLight.m_shadowLayer) + 0.5) / F32(MAX_RT_SHADOW_LAYERS);
-			shadowFactor = textureLod(u_shadowLayersTex, u_trilinearClampSampler, Vec3(in_uv, w), 0.0).r;
+			shadowFactor = resolvedSm[u_dirLight.m_shadowLayer];
 #else
 			shadowFactor = resolvedSm[0];
 			++resolvedSmIdx;
@@ -161,8 +163,7 @@ void main()
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
 #if USE_SHADOW_LAYERS
-			const F32 w = (F32(light.m_shadowLayer) + 0.5) / F32(MAX_RT_SHADOW_LAYERS);
-			const F32 shadow = textureLod(u_shadowLayersTex, u_trilinearClampSampler, Vec3(in_uv, w), 0.0).r;
+			const F32 shadow = resolvedSm[light.m_shadowLayer];
 #else
 			const F32 shadow = resolvedSm[resolvedSmIdx++];
 #endif
@@ -185,8 +186,7 @@ void main()
 		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
 		{
 #if USE_SHADOW_LAYERS
-			const F32 w = (F32(light.m_shadowLayer) + 0.5) / F32(MAX_RT_SHADOW_LAYERS);
-			const F32 shadow = textureLod(u_shadowLayersTex, u_trilinearClampSampler, Vec3(in_uv, w), 0.0).r;
+			const F32 shadow = resolvedSm[light.m_shadowLayer];
 #else
 			const F32 shadow = resolvedSm[resolvedSmIdx++];
 #endif

@@ -6,7 +6,6 @@
 #pragma anki mutator BLUE_NOISE 0 1
 #pragma anki mutator BLOOM_ENABLED 0 1
 #pragma anki mutator DBG_ENABLED 0 1
-#pragma anki mutator DBG_RENDER_TARGET_ENABLED 0 1
 
 ANKI_SPECIALIZATION_CONSTANT_U32(LUT_SIZE, 0, 1);
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 1, UVec2(1, 1));
@@ -38,9 +37,6 @@ layout(set = 0, binding = 8) uniform texture2D u_motionVectorsRt;
 layout(set = 0, binding = 9) uniform texture2D u_depthRt;
 #if DBG_ENABLED
 layout(set = 0, binding = 10) uniform texture2D u_dbgOutlineRt;
-#endif
-#if DBG_RENDER_TARGET_ENABLED
-layout(set = 0, binding = 11) uniform texture2D u_dbgRt;
 #endif
 
 layout(push_constant, row_major, std430) uniform pc_
@@ -92,10 +88,6 @@ void main()
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
 
 	out_color += blueNoise / 255.0;
-#endif
-
-#if DBG_RENDER_TARGET_ENABLED
-	out_color = textureLod(u_dbgRt, u_linearAnyClampSampler, uv, 0.0).rgb;
 #endif
 
 #if DBG_ENABLED

@@ -14,16 +14,13 @@ const U32 MAX_RT_SHADOW_LAYERS = 8u;
 struct RtShadowsUniforms
 {
 	F32 historyRejectFactor[MAX_RT_SHADOW_LAYERS]; // 1.0 means reject, 0.0 not reject
-	U32 activeShadowLayerMask;
-	U32 padding[3];
 };
 
 struct RtShadowsDenoiseUniforms
 {
 	Mat4 invViewProjMat;
 	F32 time;
-	U32 activeShadowLayerMask;
-	U32 padding[2];
+	U32 padding[3];
 };
 
 ANKI_END_NAMESPACE

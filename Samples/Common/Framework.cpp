@@ -43,8 +43,8 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 
 Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 {
-	const F32 ROTATE_ANGLE = toRad(2.5f);
-	const F32 MOUSE_SENSITIVITY = 5.0f;
+	constexpr F32 ROTATE_ANGLE = toRad(2.5f);
+	constexpr F32 MOUSE_SENSITIVITY = 5.0f;
 	quit = false;
 
 	SceneGraph& scene = getSceneGraph();
@@ -92,8 +92,25 @@ Error SampleApp::userMainLoop(Bool& quit, Second elapsedTime)
 
 	if(in.getKey(KeyCode::H) == 1)
 	{
-		renderer.setCurrentDebugRenderTarget((renderer.getCurrentDebugRenderTarget() == "RtShadows") ? ""
-																									 : "RtShadows");
+		static U32 pressCount = 0;
+		CString rtName;
+		switch(pressCount)
+		{
+		case 0:
+			rtName = "RtShadows";
+			break;
+		case 1:
+			rtName = "RtShadows1";
+			break;
+		case 2:
+			rtName = "RtShadows2";
+			break;
+		default:
+			rtName = "";
+		}
+		renderer.setCurrentDebugRenderTarget(rtName);
+
+		pressCount = (pressCount + 1) % 4;
 	}
 
 	if(in.getKey(KeyCode::J) == 1)

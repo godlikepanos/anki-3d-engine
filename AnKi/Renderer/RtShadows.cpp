@@ -61,22 +61,20 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 
 	// RTs
 	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-		m_r->getWidth(), m_r->getHeight(), Format::R8_UNORM,
+		m_r->getWidth(), m_r->getHeight(), Format::R32G32_UINT,
 		TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
 		"RtShadows");
-	texinit.m_type = TextureType::_3D;
-	texinit.m_depth = MAX_RT_SHADOW_LAYERS;
 	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	m_historyAndFinalRt = m_r->createAndClearRenderTarget(texinit);
 
-	m_renderRt = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8_UNORM,
+	m_renderRt = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R32G32_UINT,
 													  "RtShadowsTmp");
-	m_renderRt.m_type = TextureType::_3D;
-	m_renderRt.m_depth = MAX_RT_SHADOW_LAYERS;
 	m_renderRt.bake();
 
 	// Misc
 	m_sbtRecordSize = getAlignedRoundUp(getGrManager().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsVisualizeRenderTarget.ankiprog",
+												 m_visualizeRenderTargetsProg));
 
 	return Error::NONE;
 }
@@ -143,7 +141,6 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 	{
 		RenderQueue& rqueue = *m_runCtx.m_ctx->m_renderQueue;
 		m_runCtx.m_layersWithRejectedHistory.unsetAll();
-		m_runCtx.m_activeShadowLayerMask = 0;
 
 		if(rqueue.m_directionalLight.hasShadow())
 		{
@@ -156,7 +153,6 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 			rqueue.m_directionalLight.m_shadowLayer = U8(layerIdx);
 			ANKI_ASSERT(rqueue.m_directionalLight.m_shadowLayer < MAX_RT_SHADOW_LAYERS);
 			m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
-			m_runCtx.m_activeShadowLayerMask |= 1 << layerIdx;
 		}
 
 		for(PointLightQueueElement& light : rqueue.m_pointLights)
@@ -175,7 +171,6 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 				light.m_shadowLayer = U8(layerIdx);
 				ANKI_ASSERT(light.m_shadowLayer < MAX_RT_SHADOW_LAYERS);
 				m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
-				m_runCtx.m_activeShadowLayerMask |= 1 << layerIdx;
 			}
 			else
 			{
@@ -200,7 +195,6 @@ void RtShadows::populateRenderGraph(RenderingContext& ctx)
 				light.m_shadowLayer = U8(layerIdx);
 				ANKI_ASSERT(light.m_shadowLayer < MAX_RT_SHADOW_LAYERS);
 				m_runCtx.m_layersWithRejectedHistory.set(layerIdx, rejectHistory);
-				m_runCtx.m_activeShadowLayerMask |= 1 << layerIdx;
 			}
 			else
 			{
@@ -225,25 +219,25 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyAndFinalRt);
 	cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
-	rgraphCtx.bindTexture(0, 4, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	rgraphCtx.bindColorTexture(0, 5, m_r->getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindColorTexture(0, 6, m_r->getMotionVectors().getRejectionFactorRt());
-	rgraphCtx.bindColorTexture(0, 7, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindAccelerationStructure(0, 8, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
+	cmdb->bindSampler(0, 4, m_r->getSamplers().m_nearestNearestClamp);
+	rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindColorTexture(0, 6, m_r->getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(0, 7, m_r->getMotionVectors().getRejectionFactorRt());
+	rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(2));
+	rgraphCtx.bindAccelerationStructure(0, 9, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
 
-	bindUniforms(cmdb, 0, 9, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 10, ctx.m_lightShadingUniformsToken);
 
-	bindUniforms(cmdb, 0, 10, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 11, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTexture(0, 12, m_r->getShadowMapping().getShadowmapRt());
+	bindUniforms(cmdb, 0, 11, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 12, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(0, 13, m_r->getShadowMapping().getShadowmapRt());
 
-	bindStorage(cmdb, 0, 13, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 14, rsrc.m_indicesToken);
+	bindStorage(cmdb, 0, 14, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 15, rsrc.m_indicesToken);
 
 	cmdb->bindAllBindless(1);
 
 	RtShadowsUniforms unis;
-	unis.activeShadowLayerMask = m_runCtx.m_activeShadowLayerMask;
 	for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
 		unis.historyRejectFactor[i] = F32(m_runCtx.m_layersWithRejectedHistory.get(i));
@@ -260,7 +254,7 @@ void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindShaderProgram(m_grDenoiseProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 	rgraphCtx.bindColorTexture(0, 1, m_runCtx.m_renderRt);
 	rgraphCtx.bindTexture(0, 2, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
@@ -270,7 +264,6 @@ void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
 	RtShadowsDenoiseUniforms unis;
 	unis.invViewProjMat = m_runCtx.m_ctx->m_matrices.m_viewProjectionJitter.getInverse();
 	unis.time = F32(m_r->getGlobalTimestamp());
-	unis.activeShadowLayerMask = m_runCtx.m_activeShadowLayerMask;
 	cmdb->setPushConstants(&unis, sizeof(unis));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth(), m_r->getHeight());
@@ -369,6 +362,34 @@ Bool RtShadows::findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistor
 	}
 
 	return layerIdx != MAX_U32;
+}
+
+void RtShadows::getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+									 ShaderProgramPtr& optionalShaderProgram) const
+{
+	U32 layerGroup = 0;
+	if(rtName == "RtShadows")
+	{
+		layerGroup = 0;
+	}
+	else if(rtName == "RtShadows1")
+	{
+		layerGroup = 1;
+	}
+	else
+	{
+		ANKI_ASSERT(rtName == "RtShadows2");
+		layerGroup = 2;
+	}
+
+	handle = m_runCtx.m_historyAndFinalRt;
+
+	ShaderProgramResourceVariantInitInfo variantInit(m_visualizeRenderTargetsProg);
+	variantInit.addMutation("LAYER_GROUP", layerGroup);
+
+	const ShaderProgramResourceVariant* variant;
+	m_visualizeRenderTargetsProg->getOrCreateVariant(variantInit, variant);
+	optionalShaderProgram = variant->getProgram();
 }
 
 } // end namespace anki

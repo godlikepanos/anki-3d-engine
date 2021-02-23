@@ -18,9 +18,9 @@ See the [LICENSE](LICENSE) file for more info.
 Build Status, Linux and Windows
 [![Build Status](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine)
 
-To checkout the source including the submodules type:
+To checkout the source type:
 
-	git clone --recurse-submodules https://github.com/godlikepanos/anki-3d-engine.git anki
+	git clone https://github.com/godlikepanos/anki-3d-engine.git anki
 
 AnKi's build system is using `CMake`. A great effort was made to ease the building process that's why the number of
 external dependencies are almost none.

@@ -12,16 +12,16 @@ ANKI_SPECIALIZATION_CONSTANT_U32(SPIRAL_TURN_COUNT, 4, 1);
 
 #include <AnKi/Shaders/BilateralFilter.glsl>
 #include <AnKi/Shaders/Pack.glsl>
-#include <AnKi/Shaders/Include/RtShadows.h>
+#include <AnKi/Shaders/RtShadows.glsl>
 
 const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
 
-layout(set = 0, binding = 0) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 1) uniform texture3D u_inTex;
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform utexture2D u_inTex;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
 layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
-layout(set = 0, binding = 4) writeonly uniform image3D u_outImg;
+layout(set = 0, binding = 4) writeonly uniform uimage2D u_outImg;
 
 layout(std430, push_constant, row_major) uniform b_pc
 {
@@ -48,21 +48,13 @@ void main()
 
 	// Reference
 	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
-	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
-	{
-		if((u_unis.activeShadowLayerMask & (1 << i)) != 0)
-		{
-			const F32 w = (F32(i) + 0.5) / F32(MAX_RT_SHADOW_LAYERS);
-			shadowFactors[i] = textureLod(u_inTex, u_linearAnyClampSampler, Vec3(uv, w), 0.0).r;
-		}
-	}
-
+	unpackRtShadows(textureLod(u_inTex, u_nearestAnyClampSampler, uv, 0.0).rg, shadowFactors);
 	F32 weight = 1.0;
 
 	BilateralSample ref;
-	ref.m_depth = textureLod(u_depthTex, u_linearAnyClampSampler, uv, 0.0).r;
+	ref.m_depth = textureLod(u_depthTex, u_nearestAnyClampSampler, uv, 0.0).r;
 	ref.m_position = unproject(UV_TO_NDC(uv), ref.m_depth);
-	ref.m_normal = readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
+	ref.m_normal = readNormalFromGBuffer(u_gbuffer2Tex, u_nearestAnyClampSampler, uv);
 
 	// Sample
 	SpatialBilateralContext ctx =
@@ -79,7 +71,7 @@ void main()
 		crnt.m_normal = unpackNormalFromGBuffer(texelFetch(u_gbuffer2Tex, unormalizedUvs, 0));
 
 		BilateralConfig config;
-		const Vec3 weights = normalize(Vec3(0.0, 1.0, 0.0));
+		const Vec3 weights = normalize(Vec3(0.0, 1.0, 1.0));
 		config.m_depthWeight = weights.x;
 		config.m_normalWeight = weights.y;
 		config.m_planeWeight = weights.z;
@@ -87,23 +79,23 @@ void main()
 		const F32 w = calculateBilateralWeight(crnt, ref, config);
 		weight += w;
 
+		F32 localShadowFactors[MAX_RT_SHADOW_LAYERS];
+		unpackRtShadows(texelFetch(u_inTex, IVec2(unormalizedUvs / 2), 0).rg, localShadowFactors);
+
 		ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 		{
-			if((u_unis.activeShadowLayerMask & (1 << i)) != 0)
-			{
-				shadowFactors[i] += texelFetch(u_inTex, IVec3(unormalizedUvs / 2, i), 0).r * w;
-			}
+			shadowFactors[i] += localShadowFactors[i] * w;
 		}
 	}
 
 	// Write value
 	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
-		if((u_unis.activeShadowLayerMask & (1 << i)) != 0)
-		{
-			imageStore(u_outImg, IVec3(gl_GlobalInvocationID.xy, i), Vec4(shadowFactors[i] / weight));
-		}
+		shadowFactors[i] /= weight;
 	}
+
+	const UVec2 packed = packRtShadows(shadowFactors);
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), UVec4(packed, 0, 0));
 }
 
 #pragma anki end

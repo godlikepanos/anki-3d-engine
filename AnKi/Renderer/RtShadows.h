@@ -25,6 +25,8 @@ public:
 		: RendererObject(r)
 	{
 		registerDebugRenderTarget("RtShadows");
+		registerDebugRenderTarget("RtShadows1");
+		registerDebugRenderTarget("RtShadows2");
 	}
 
 	~RtShadows();
@@ -33,11 +35,8 @@ public:
 
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
-	{
-		ANKI_ASSERT(rtName == "RtShadows");
-		handle = m_runCtx.m_historyAndFinalRt;
-	}
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+							  ShaderProgramPtr& optionalShaderProgram) const override;
 
 	RenderTargetHandle getRt() const
 	{
@@ -65,6 +64,8 @@ public:
 
 	Bool m_historyAndFinalRtImportedOnce = false;
 
+	ShaderProgramResourcePtr m_visualizeRenderTargetsProg;
+
 	class
 	{
 	public:
@@ -78,7 +79,6 @@ public:
 		U32 m_hitGroupCount = 0;
 
 		BitSet<MAX_RT_SHADOW_LAYERS, U8> m_layersWithRejectedHistory = {false};
-		U32 m_activeShadowLayerMask = 0;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);

@@ -48,7 +48,8 @@ public:
 		return m_runCtx.m_prevFrameDepthRt;
 	}
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+							  ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		if(rtName == "GBuffer_albedo")
 		{
