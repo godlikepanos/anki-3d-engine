@@ -6,8 +6,8 @@
 #include <AnKi/Core/CoreTracer.h>
 #include <AnKi/Util/DynamicArray.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Util/System.h>
 #include <AnKi/Math/Functions.h>
-#include <ctime>
 
 namespace anki
 {
@@ -118,11 +118,10 @@ Error CoreTracer::init(GenericMemoryPoolAllocator<U8> alloc, CString directory)
 		return static_cast<CoreTracer*>(info.m_userData)->threadWorker();
 	});
 
-	std::time_t t = std::time(nullptr);
-	std::tm* tm = std::localtime(&t);
+	std::tm tm = getLocalTime();
 	StringAuto fname(m_alloc);
-	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-				  tm->tm_hour, tm->tm_min);
+	fname.sprintf("%s/%d%02d%02d-%02d%02d_", directory.cstr(), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
+				  tm.tm_min);
 
 	ANKI_CHECK(m_traceJsonFile.open(StringAuto(alloc).sprintf("%strace.json", fname.cstr()), FileOpenFlag::WRITE));
 	ANKI_CHECK(m_traceJsonFile.writeText("[\n"));

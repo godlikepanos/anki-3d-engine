@@ -57,7 +57,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 		// Create buffer
 		BufferInitInfo buffInit("HiZ Client");
 		buffInit.m_mapAccess = BufferMapAccessBit::READ;
-		buffInit.m_size = lastMipHeight * lastMipWidth * sizeof(F32);
+		buffInit.m_size = PtrSize(lastMipHeight) * PtrSize(lastMipWidth) * sizeof(F32);
 		buffInit.m_usage = BufferUsageBit::STORAGE_COMPUTE_WRITE;
 		m_copyToBuff.m_buff = getGrManager().newBuffer(buffInit);
 

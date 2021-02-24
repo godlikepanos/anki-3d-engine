@@ -288,7 +288,7 @@ void RtShadows::buildSbt()
 
 	// Allocate SBT
 	StagingGpuMemoryToken token;
-	U8* sbt = allocateStorage<U8*>(m_sbtRecordSize * (instanceCount + extraSbtRecords), token);
+	U8* sbt = allocateStorage<U8*>(PtrSize(m_sbtRecordSize) * (instanceCount + extraSbtRecords), token);
 	const U8* sbtStart = sbt;
 	(void)sbtStart;
 	m_runCtx.m_sbtBuffer = token.m_buffer;

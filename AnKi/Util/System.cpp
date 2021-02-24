@@ -77,4 +77,20 @@ Bool runningFromATerminal()
 #endif
 }
 
+std::tm getLocalTime()
+{
+	std::time_t t = std::time(nullptr);
+	std::tm tm;
+
+#if ANKI_POSIX
+	localtime_r(&t, &tm);
+#elif ANKI_OS_WINDOWS
+	localtime_s(&tm, &t);
+#else
+#	error See file
+#endif
+
+	return tm;
+}
+
 } // end namespace anki

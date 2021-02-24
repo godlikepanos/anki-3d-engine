@@ -1318,9 +1318,10 @@ void RenderGraph::flush()
 
 	for(U32 i = 0; i < m_ctx->m_graphicsCmdbs.getSize(); ++i)
 	{
-		// Maybe write a timestamp before flush
 		if(ANKI_UNLIKELY(m_ctx->m_gatherStatistics && i == m_ctx->m_graphicsCmdbs.getSize() - 1))
 		{
+			// Write a timestamp before the last flush
+
 			TimestampQueryPtr query = getManager().newTimestampQuery();
 			m_ctx->m_graphicsCmdbs[i]->resetTimestampQuery(query);
 			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(query);

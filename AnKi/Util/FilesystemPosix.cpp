@@ -218,7 +218,8 @@ Error getFileModificationTime(CString filename, U32& year, U32& month, U32& day,
 		return Error::NONE;
 	}
 
-	const struct tm& t = *localtime(&buff.st_mtim.tv_sec);
+	struct tm t;
+	localtime_r(&buff.st_mtim.tv_sec, &t);
 	year = 1900 + t.tm_year;
 	month = t.tm_mon + 1;
 	day = t.tm_mday;

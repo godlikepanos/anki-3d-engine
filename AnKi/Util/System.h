@@ -6,6 +6,7 @@
 #pragma once
 
 #include <AnKi/Util/StdTypes.h>
+#include <ctime>
 
 namespace anki
 {
@@ -31,6 +32,9 @@ void getBacktrace(BackTraceWalker& walker);
 
 /// Return true if the engine is running from a terminal emulator.
 Bool runningFromATerminal();
+
+/// Return the local time in a thread safe way.
+std::tm getLocalTime();
 /// @}
 
 } // end namespace anki

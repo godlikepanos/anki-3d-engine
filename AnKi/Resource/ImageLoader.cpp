@@ -44,9 +44,11 @@ public:
 static_assert(sizeof(AnkiTextureHeader) == 128, "Check sizeof AnkiTextureHeader");
 
 /// Get the size in bytes of a single surface
-static PtrSize calcSurfaceSize(const U32 width, const U32 height, const ImageLoaderDataCompression comp,
+static PtrSize calcSurfaceSize(const U32 width32, const U32 height32, const ImageLoaderDataCompression comp,
 							   const ImageLoaderColorFormat cf)
 {
+	const PtrSize width = width32;
+	const PtrSize height = height32;
 	PtrSize out = 0;
 
 	ANKI_ASSERT(width >= 4 || height >= 4);

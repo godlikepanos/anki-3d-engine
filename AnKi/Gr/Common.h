@@ -228,6 +228,8 @@ public:
 	{
 	}
 
+	TextureSurfaceInfo& operator=(const TextureSurfaceInfo&) = default;
+
 	Bool operator==(const TextureSurfaceInfo& b) const
 	{
 		return m_level == b.m_level && m_depth == b.m_depth && m_face == b.m_face && m_layer == b.m_layer;
@@ -263,6 +265,8 @@ public:
 		: m_level(level)
 	{
 	}
+
+	TextureVolumeInfo& operator=(const TextureVolumeInfo&) = default;
 };
 
 /// Defines a subset of a texture.
@@ -310,6 +314,8 @@ public:
 		, m_depthStencilAspect(aspect)
 	{
 	}
+
+	TextureSubresourceInfo& operator=(const TextureSubresourceInfo&) = default;
 
 	Bool operator==(const TextureSubresourceInfo& b) const
 	{
