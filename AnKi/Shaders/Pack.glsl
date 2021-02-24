@@ -59,20 +59,20 @@ Vec3 signedOctDecode(const Vec3 n)
 	return outn;
 }
 
-// Vectorized version. See clean one at <= r1048
+// Vectorized version. Assumes that v is in [0.0, 1.0]
 U32 newPackUnorm4x8(const Vec4 v)
 {
-	Vec4 a = saturate(v) * 255.0;
-	UVec4 b = UVec4(a) << UVec4(0U, 8U, 16U, 24U);
+	Vec4 a = v * 255.0;
+	UVec4 b = UVec4(a) << UVec4(0u, 8u, 16u, 24u);
 	UVec2 c = b.xy | b.zw;
 	return c.x | c.y;
 }
 
-// Vectorized version. See clean one at <= r1048
+// Vectorized version
 Vec4 newUnpackUnorm4x8(const U32 u)
 {
-	const UVec4 a = UVec4(u) >> UVec4(0U, 8U, 16U, 24U);
-	const UVec4 b = a & UVec4(0xFFU);
+	const UVec4 a = UVec4(u) >> UVec4(0u, 8u, 16u, 24u);
+	const UVec4 b = a & UVec4(0xFFu);
 	const Vec4 c = Vec4(b);
 	return c * (1.0 / 255.0);
 }

@@ -147,7 +147,7 @@ void main()
 		const F32 rejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).r;
 
 		// Use nearest because it's an integer texture
-		const UVec2 history2 = textureLod(u_historyRt, u_nearestAnyClampSampler, historyUv, 0.0).rg;
+		const UVec4 history2 = textureLod(u_historyRt, u_nearestAnyClampSampler, historyUv, 0.0);
 		F32 history[MAX_RT_SHADOW_LAYERS];
 		unpackRtShadows(history2, history);
 
@@ -163,7 +163,7 @@ void main()
 	}
 
 	// Store
-	const UVec2 packed = packRtShadows(shadowFactors);
-	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), UVec4(packed, 0, 0));
+	const UVec4 packed = packRtShadows(shadowFactors);
+	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), packed);
 }
 #pragma anki end

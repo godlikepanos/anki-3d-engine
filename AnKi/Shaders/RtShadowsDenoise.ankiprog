@@ -48,7 +48,7 @@ void main()
 
 	// Reference
 	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
-	unpackRtShadows(textureLod(u_inTex, u_nearestAnyClampSampler, uv, 0.0).rg, shadowFactors);
+	unpackRtShadows(textureLod(u_inTex, u_nearestAnyClampSampler, uv, 0.0), shadowFactors);
 	F32 weight = 1.0;
 
 	BilateralSample ref;
@@ -80,7 +80,7 @@ void main()
 		weight += w;
 
 		F32 localShadowFactors[MAX_RT_SHADOW_LAYERS];
-		unpackRtShadows(texelFetch(u_inTex, IVec2(unormalizedUvs / 2), 0).rg, localShadowFactors);
+		unpackRtShadows(texelFetch(u_inTex, IVec2(unormalizedUvs / 2), 0), localShadowFactors);
 
 		ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 		{
@@ -94,8 +94,7 @@ void main()
 		shadowFactors[i] /= weight;
 	}
 
-	const UVec2 packed = packRtShadows(shadowFactors);
-	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), UVec4(packed, 0, 0));
+	imageStore(u_outImg, IVec2(gl_GlobalInvocationID.xy), packRtShadows(shadowFactors));
 }
 
 #pragma anki end

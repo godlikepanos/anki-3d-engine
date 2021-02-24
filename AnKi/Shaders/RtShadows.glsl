@@ -6,19 +6,19 @@
 #pragma once
 
 #include <AnKi/Shaders/Include/RtShadows.h>
-#include <AnKi/Shaders/Common.glsl>
+#include <AnKi/Shaders/Pack.glsl>
 
-UVec2 packRtShadows(F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
+UVec4 packRtShadows(F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 {
-	const U32 a = packUnorm4x8(Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
-	const U32 b = packUnorm4x8(Vec4(shadowFactors[4], shadowFactors[5], shadowFactors[6], shadowFactors[7]));
-	return UVec2(a, b);
+	const U32 a = newPackUnorm4x8(Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
+	const U32 b = newPackUnorm4x8(Vec4(shadowFactors[4], shadowFactors[5], shadowFactors[6], shadowFactors[7]));
+	return UVec4(a, b, 0, 0);
 }
 
-void unpackRtShadows(UVec2 packed, out F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
+void unpackRtShadows(UVec4 packed, out F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 {
-	const Vec4 a = unpackUnorm4x8(packed.x);
-	const Vec4 b = unpackUnorm4x8(packed.y);
+	const Vec4 a = newUnpackUnorm4x8(packed.x);
+	const Vec4 b = newUnpackUnorm4x8(packed.y);
 	shadowFactors[0] = a[0];
 	shadowFactors[1] = a[1];
 	shadowFactors[2] = a[2];

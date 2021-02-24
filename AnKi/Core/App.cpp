@@ -274,20 +274,33 @@ void App::cleanup()
 	m_console.reset(nullptr);
 
 	m_heapAlloc.deleteInstance(m_scene);
+	m_scene = nullptr;
 	m_heapAlloc.deleteInstance(m_script);
+	m_script = nullptr;
 	m_heapAlloc.deleteInstance(m_renderer);
+	m_renderer = nullptr;
 	m_heapAlloc.deleteInstance(m_ui);
+	m_ui = nullptr;
 	m_heapAlloc.deleteInstance(m_resources);
+	m_resources = nullptr;
 	m_heapAlloc.deleteInstance(m_resourceFs);
+	m_resourceFs = nullptr;
 	m_heapAlloc.deleteInstance(m_physics);
+	m_physics = nullptr;
 	m_heapAlloc.deleteInstance(m_stagingMem);
+	m_stagingMem = nullptr;
 	m_heapAlloc.deleteInstance(m_threadHive);
+	m_threadHive = nullptr;
 	GrManager::deleteInstance(m_gr);
+	m_gr = nullptr;
 	m_heapAlloc.deleteInstance(m_input);
+	m_input = nullptr;
 	m_heapAlloc.deleteInstance(m_window);
+	m_window = nullptr;
 
 #if ANKI_ENABLE_TRACE
 	m_heapAlloc.deleteInstance(m_coreTracer);
+	m_coreTracer = nullptr;
 #endif
 
 	m_settingsDir.destroy(m_heapAlloc);

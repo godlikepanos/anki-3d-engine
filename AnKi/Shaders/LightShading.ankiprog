@@ -110,7 +110,7 @@ void main()
 	// SM
 #if USE_SHADOW_LAYERS
 	F32 resolvedSm[MAX_RT_SHADOW_LAYERS];
-	unpackRtShadows(textureLod(u_shadowLayersTex, u_nearestAnyClampSampler, in_uv, 0.0).rg, resolvedSm);
+	unpackRtShadows(textureLod(u_shadowLayersTex, u_nearestAnyClampSampler, in_uv, 0.0), resolvedSm);
 #else
 	Vec4 resolvedSm = textureLod(u_resolvedSm, u_trilinearClampSampler, in_uv, 0.0);
 	U32 resolvedSmIdx = 0;
