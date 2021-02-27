@@ -26,7 +26,7 @@ public:
 class RayTracingShaders
 {
 public:
-	ShaderPtr m_rayGenShader;
+	WeakArray<ShaderPtr> m_rayGenShaders;
 	WeakArray<ShaderPtr> m_missShaders;
 	WeakArray<RayTracingHitGroup> m_hitGroups;
 	U32 m_maxRecursionDepth = 1;
@@ -62,7 +62,14 @@ public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER_PROGRAM;
 
 	/// Get the shader group handles that will be used in the SBTs. The size of each handle is
-	/// GpuDeviceCapabilities::m_shaderGroupHandleSize.
+	/// GpuDeviceCapabilities::m_shaderGroupHandleSize. To access a handle use:
+	/// @code
+	/// const U8* handleBegin = &getShaderGroupHandles()[handleIdx * devCapabilities.m_shaderGroupHandleSize];
+	/// const U8* handleEnd = &getShaderGroupHandles()[(handleIdx + 1) * devCapabilities.m_shaderGroupHandleSize];
+	/// @endcode
+	/// The handleIdx is defined via a convention. The ray gen shaders appear first where handleIdx is in the same order
+	/// as the shader in RayTracingShaders::m_rayGenShaders. Then miss shaders follow with a similar rule. Then hit
+	/// groups follow.
 	ConstWeakArray<U8> getShaderGroupHandles() const;
 
 protected:
@@ -78,7 +85,7 @@ protected:
 	}
 
 private:
-	/// Allocate and initialize new instance.
+	/// Allocate and initialize a new instance.
 	static ANKI_USE_RESULT ShaderProgram* newInstance(GrManager* manager, const ShaderProgramInitInfo& init);
 };
 /// @}

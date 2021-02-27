@@ -115,7 +115,7 @@ protected:
 	}
 
 private:
-	/// Allocate and initialize new instance.
+	/// Allocate and initialize a new instance.
 	static ANKI_USE_RESULT Buffer* newInstance(GrManager* manager, const BufferInitInfo& init);
 };
 /// @}

@@ -59,9 +59,14 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 	{
 		// Ray tracing
 
-		m_shaders.resizeStorage(getAllocator(), 1 + inf.m_rayTracingShaders.m_missShaders.getSize());
+		m_shaders.resizeStorage(getAllocator(), inf.m_rayTracingShaders.m_rayGenShaders.getSize()
+													+ inf.m_rayTracingShaders.m_missShaders.getSize()
+													+ 1); // Plus at least one hit shader
 
-		m_shaders.emplaceBack(getAllocator(), inf.m_rayTracingShaders.m_rayGenShader);
+		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_rayGenShaders)
+		{
+			m_shaders.emplaceBack(getAllocator(), s);
+		}
 
 		for(const ShaderPtr& s : inf.m_rayTracingShaders.m_missShaders)
 		{
@@ -270,16 +275,21 @@ Error ShaderProgramImpl::init(const ShaderProgramInitInfo& inf)
 		defaultGroup.anyHitShader = VK_SHADER_UNUSED_KHR;
 		defaultGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 
-		U32 groupCount =
-			1 + inf.m_rayTracingShaders.m_missShaders.getSize() + inf.m_rayTracingShaders.m_hitGroups.getSize();
+		U32 groupCount = inf.m_rayTracingShaders.m_rayGenShaders.getSize()
+						 + inf.m_rayTracingShaders.m_missShaders.getSize()
+						 + inf.m_rayTracingShaders.m_hitGroups.getSize();
 		DynamicArrayAuto<VkRayTracingShaderGroupCreateInfoKHR> groups(getAllocator(), groupCount, defaultGroup);
 
 		// 1st group is the ray gen
-		groups[0].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-		groups[0].generalShader = 0;
+		groupCount = 0;
+		for(U32 i = 0; i < inf.m_rayTracingShaders.m_rayGenShaders.getSize(); ++i)
+		{
+			groups[groupCount].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+			groups[groupCount].generalShader = groupCount;
+			++groupCount;
+		}
 
 		// Miss
-		groupCount = 1;
 		for(U32 i = 0; i < inf.m_rayTracingShaders.m_missShaders.getSize(); ++i)
 		{
 			groups[groupCount].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;

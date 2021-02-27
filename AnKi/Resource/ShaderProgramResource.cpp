@@ -428,20 +428,7 @@ void ShaderProgramResource::initVariant(const ShaderProgramResourceVariantInitIn
 		variant.m_prog = foundLib->getShaderProgram();
 
 		// Set the group handle index
-		if(m_shaderStages == ShaderTypeBit::RAY_GEN)
-		{
-			variant.m_hitShaderGroupHandleIndex = foundLib->getRayGenShaderGroupHandleIndex();
-		}
-		else if(m_shaderStages == ShaderTypeBit::MISS)
-		{
-			const U32 rayType = binary.m_rayType;
-			variant.m_hitShaderGroupHandleIndex = foundLib->getMissShaderGroupHandleIndex(rayType);
-		}
-		else
-		{
-			ANKI_ASSERT(!!(m_shaderStages & (ShaderTypeBit::ANY_HIT | ShaderTypeBit::CLOSEST_HIT)));
-			variant.m_hitShaderGroupHandleIndex = foundLib->getHitShaderGroupHandleIndex(getFilename(), mutationHash);
-		}
+		variant.m_shaderGroupHandleIndex = foundLib->getShaderGroupHandleIndex(getFilename(), mutationHash);
 	}
 }
 
