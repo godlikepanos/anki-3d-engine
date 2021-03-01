@@ -51,9 +51,15 @@ public:
 		U64 m_frameLastUsed = MAX_U64;
 	};
 
-	ShaderProgramPtr m_grProg;
 	TexturePtr m_historyAndFinalRt;
 	RenderTargetDescription m_renderRt;
+
+	ShaderProgramResourcePtr m_rayGenProg;
+	ShaderProgramPtr m_rtLibraryGrProg;
+	U32 m_rayGenShaderGroupIdx = MAX_U32;
+
+	ShaderProgramResourcePtr m_missProg;
+	U32 m_missShaderGroupIdx = MAX_U32;
 
 	ShaderProgramResourcePtr m_denoiseProg;
 	ShaderProgramPtr m_grDenoiseProg;
@@ -63,6 +69,7 @@ public:
 	Array<ShadowLayer, MAX_RT_SHADOW_LAYERS> m_shadowLayers;
 
 	Bool m_historyAndFinalRtImportedOnce = false;
+	Bool m_useSvgf = false;
 
 	ShaderProgramResourcePtr m_visualizeRenderTargetsProg;
 

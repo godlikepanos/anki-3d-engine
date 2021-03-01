@@ -33,30 +33,29 @@ Error RtShadows::init(const ConfigSet& cfg)
 
 Error RtShadows::initInternal(const ConfigSet& cfg)
 {
-	// Get the program
-	const ShaderProgramResourceSystem& shaderSystem = getResourceManager().getShaderProgramResourceSystem();
-	const ShaderProgramRaytracingLibrary* library = nullptr;
-	for(const ShaderProgramRaytracingLibrary& lib : shaderSystem.getRayTracingLibraries())
-	{
-		if(lib.getLibraryName() == "RtShadows")
-		{
-			library = &lib;
-			break;
-		}
-	}
-	ANKI_ASSERT(library);
-	m_grProg = library->getShaderProgram();
+	// Ray gen prog
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsRayGen.ankiprog", m_rayGenProg));
+	ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
+	variantInitInfo.addMutation("SVGF", 0);
+	const ShaderProgramResourceVariant* variant;
+	m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);
+	m_rtLibraryGrProg = variant->getProgram();
+	m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
+
+	// Miss prog
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsMiss.ankiprog", m_missProg));
+	m_missProg->getOrCreateVariant(variant);
+	m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
 	// Denoise program
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsDenoise.ankiprog", m_denoiseProg));
-	ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
-	variantInitInfo.addConstant("OUT_IMAGE_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
-	variantInitInfo.addConstant("SAMPLE_COUNT", 8u);
-	variantInitInfo.addConstant("SPIRAL_TURN_COUNT", 27u);
-	variantInitInfo.addConstant("PIXEL_RADIUS", 12u);
+	ShaderProgramResourceVariantInitInfo variantInitInfo2(m_denoiseProg);
+	variantInitInfo2.addConstant("OUT_IMAGE_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+	variantInitInfo2.addConstant("SAMPLE_COUNT", 8u);
+	variantInitInfo2.addConstant("SPIRAL_TURN_COUNT", 27u);
+	variantInitInfo2.addConstant("PIXEL_RADIUS", 12u);
 
-	const ShaderProgramResourceVariant* variant;
-	m_denoiseProg->getOrCreateVariant(variantInitInfo, variant);
+	m_denoiseProg->getOrCreateVariant(variantInitInfo2, variant);
 	m_grDenoiseProg = variant->getProgram();
 
 	// RTs
@@ -211,7 +210,7 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
 
-	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindShaderProgram(m_rtLibraryGrProg);
 
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
 
@@ -295,10 +294,10 @@ void RtShadows::buildSbt()
 	m_runCtx.m_sbtOffset = token.m_offset;
 
 	// Set the miss and ray gen handles
-	ConstWeakArray<U8> shaderGroupHandles = m_grProg->getShaderGroupHandles();
-	memcpy(sbt, &shaderGroupHandles[0], shaderHandleSize);
+	ConstWeakArray<U8> shaderGroupHandles = m_rtLibraryGrProg->getShaderGroupHandles();
+	memcpy(sbt, &shaderGroupHandles[m_rayGenShaderGroupIdx * shaderHandleSize], shaderHandleSize);
 	sbt += m_sbtRecordSize;
-	memcpy(sbt, &shaderGroupHandles[shaderHandleSize], shaderHandleSize);
+	memcpy(sbt, &shaderGroupHandles[m_missShaderGroupIdx * shaderHandleSize], shaderHandleSize);
 	sbt += m_sbtRecordSize;
 
 	// Init SBT and instances

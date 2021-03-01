@@ -56,11 +56,11 @@ void dumpShaderProgramBinary(const ShaderProgramBinary& binary, StringAuto& huma
 
 	if(binary.m_rayType != MAX_U32)
 	{
-		lines.pushBack("**\nRAY TYPE**\n");
+		lines.pushBack("\n**RAY TYPE**\n");
 		lines.pushBackSprintf(ANKI_TAB "%u\n", binary.m_rayType);
 	}
 
-	lines.pushBack("**\nMUTATORS**\n");
+	lines.pushBack("\n**MUTATORS**\n");
 	if(binary.m_mutators.getSize() > 0)
 	{
 		for(const ShaderProgramBinaryMutator& mutator : binary.m_mutators)

@@ -16,16 +16,19 @@
 namespace anki
 {
 
+U64 ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(CString resourceFilename, U64 mutationHash,
+																 GenericMemoryPoolAllocator<U8> alloc)
+{
+	ANKI_ASSERT(resourceFilename.getLength() > 0);
+	StringAuto basename(alloc);
+	getFilepathFilename(resourceFilename, basename);
+	const U64 hash = appendHash(basename.cstr(), basename.getLength(), mutationHash);
+	return hash;
+}
+
 ShaderProgramResourceSystem::~ShaderProgramResourceSystem()
 {
 	m_cacheDir.destroy(m_alloc);
-
-	for(ShaderProgramRaytracingLibrary& lib : m_rtLibraries)
-	{
-		lib.m_libraryName.destroy(m_alloc);
-		lib.m_resourceHashToShaderGroupHandleIndex.destroy(m_alloc);
-	}
-
 	m_rtLibraries.destroy(m_alloc);
 }
 
@@ -315,7 +318,8 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, co
 
 		void addGroup(CString filename, U64 mutationHash, U32 rayGen, U32 miss, U32 chit, U32 ahit)
 		{
-			const U64 groupHash = ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(filename, mutationHash);
+			const U64 groupHash =
+				ShaderProgramRaytracingLibrary::generateShaderGroupGroupHash(filename, mutationHash, m_alloc);
 			for(const ShaderGroup& group : m_shaderGroups)
 			{
 				ANKI_ASSERT(group.m_hitGroupHash != groupHash && "Shouldn't find group with the same hash");
@@ -415,7 +419,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, co
 			// Iterate all mutations
 			ConstWeakArray<ShaderProgramBinaryMutation> mutations;
 			ShaderProgramBinaryMutation dummyMutation;
-			if(binary.m_mutations.getSize())
+			if(binary.m_mutations.getSize() > 1)
 			{
 				mutations = binary.m_mutations;
 			}
@@ -462,7 +466,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, co
 			// Iterate all mutations
 			ConstWeakArray<ShaderProgramBinaryMutation> mutations;
 			ShaderProgramBinaryMutation dummyMutation;
-			if(binary.m_mutations.getSize())
+			if(binary.m_mutations.getSize() > 1)
 			{
 				mutations = binary.m_mutations;
 			}
@@ -502,7 +506,7 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, co
 			// Before you iterate the mutations do some work if there are none
 			ConstWeakArray<ShaderProgramBinaryMutation> mutations;
 			ShaderProgramBinaryMutation dummyMutation;
-			if(binary.m_mutations.getSize())
+			if(binary.m_mutations.getSize() > 1)
 			{
 				mutations = binary.m_mutations;
 			}
@@ -541,12 +545,14 @@ Error ShaderProgramResourceSystem::createRayTracingPrograms(CString cacheDir, co
 	// See the ShaderProgram class for info.
 	if(libs.getSize() != 0)
 	{
-		outLibs.resize(alloc, libs.getSize());
+		outLibs.create(alloc, libs.getSize());
 
 		for(U32 libIdx = 0; libIdx < libs.getSize(); ++libIdx)
 		{
 			ShaderProgramRaytracingLibrary& outLib = outLibs[libIdx];
 			const Lib& inLib = libs[libIdx];
+
+			outLib.m_alloc = alloc;
 
 			if(inLib.m_presentStages
 			   != (ShaderTypeBit::RAY_GEN | ShaderTypeBit::MISS | ShaderTypeBit::CLOSEST_HIT | ShaderTypeBit::ANY_HIT))

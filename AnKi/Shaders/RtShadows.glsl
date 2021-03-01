@@ -15,6 +15,13 @@ UVec4 packRtShadows(F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 	return UVec4(a, b, 0, 0);
 }
 
+UVec4 packRtShadows(F32 shadowFactors[MAX_RT_SHADOW_LAYERS], U32 temporalHistory)
+{
+	UVec4 packed = packRtShadows(shadowFactors);
+	packed.z = temporalHistory;
+	return packed;
+}
+
 void unpackRtShadows(UVec4 packed, out F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 {
 	const Vec4 a = newUnpackUnorm4x8(packed.x);
@@ -27,4 +34,10 @@ void unpackRtShadows(UVec4 packed, out F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 	shadowFactors[5] = b[1];
 	shadowFactors[6] = b[2];
 	shadowFactors[7] = b[3];
+}
+
+void unpackRtShadows(UVec4 packed, out F32 shadowFactors[MAX_RT_SHADOW_LAYERS], out U32 temporalHistory)
+{
+	unpackRtShadows(packed, shadowFactors);
+	temporalHistory = packed.z;
 }

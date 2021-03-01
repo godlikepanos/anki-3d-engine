@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator SVGF 0 1
+
 #pragma anki library RtShadows
 #pragma anki ray_type 0
 
@@ -142,6 +144,11 @@ void main()
 	}
 
 	// Do temporal accumulation
+#if SVGF
+	// Gives the number of frames with temporal stability
+	U32 temporalHistory;
+#endif
+
 	{
 		const Vec2 historyUv = uv + textureLod(u_motionVectorsRt, u_linearAnyClampSampler, uv, 0.0).rg;
 		const F32 rejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).r;
@@ -149,21 +156,47 @@ void main()
 		// Use nearest because it's an integer texture
 		const UVec4 history2 = textureLod(u_historyRt, u_nearestAnyClampSampler, historyUv, 0.0);
 		F32 history[MAX_RT_SHADOW_LAYERS];
+#if SVGF
+		unpackRtShadows(history2, history, temporalHistory);
+#else
 		unpackRtShadows(history2, history);
+#endif
 
 		// Compute blend factors
 		const F32 nominalBlendFactor = 0.1;
 		const F32 blendFactor = mix(nominalBlendFactor, 1.0, rejectionFactor);
 
 		// Blend with history
-		ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+#if SVGF
+		F32 maxLerp = 0.0;
+#endif
+		for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 		{
-			shadowFactors[i] = mix(history[i], shadowFactors[i], min(1.0, u_unis.historyRejectFactor[i] + blendFactor));
+			const F32 lerp = min(1.0, u_unis.historyRejectFactor[i] + blendFactor);
+			shadowFactors[i] = mix(history[i], shadowFactors[i], lerp);
+#if SVGF
+			maxLerp = max(maxLerp, lerp);
+#endif
 		}
+
+#if SVGF
+		if(maxLerp == 1.0)
+		{
+			temporalHistory = 1; // Rejected the history of one layer, reset the temporal history
+		}
+		else
+		{
+			++temporalHistory; // Sample seems stable, inc it's temporal history
+		}
+#endif
 	}
 
 	// Store
+#if SVGF
+	const UVec4 packed = packRtShadows(shadowFactors, temporalHistory);
+#else
 	const UVec4 packed = packRtShadows(shadowFactors);
+#endif
 	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), packed);
 }
 #pragma anki end
