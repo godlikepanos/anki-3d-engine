@@ -71,6 +71,7 @@ void main()
 		crnt.m_normal = unpackNormalFromGBuffer(texelFetch(u_gbuffer2Tex, unormalizedUvs, 0));
 
 		BilateralConfig config;
+		initConfig(config);
 		const Vec3 weights = normalize(Vec3(0.0, 1.0, 1.0));
 		config.m_depthWeight = weights.x;
 		config.m_normalWeight = weights.y;

@@ -23,6 +23,14 @@ struct BilateralConfig
 	F32 m_roughnessWeight;
 };
 
+void initConfig(out BilateralConfig cfg)
+{
+	cfg.m_depthWeight = 0.0;
+	cfg.m_normalWeight = 0.0;
+	cfg.m_planeWeight = 0.0;
+	cfg.m_roughnessWeight = 0.0;
+}
+
 // https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
 F32 calculateBilateralWeight(BilateralSample center, BilateralSample tap, BilateralConfig config)
 {

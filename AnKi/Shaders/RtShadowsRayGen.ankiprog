@@ -14,22 +14,28 @@
 #include <AnKi/Shaders/Pack.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
 
-layout(set = 0, binding = 0) uniform sampler u_trilinearRepeatSampler; // Used by the hit shaders
-layout(set = 0, binding = 1) uniform uimage2D u_outImg;
-layout(set = 0, binding = 2) uniform utexture2D u_historyRt;
-layout(set = 0, binding = 3) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 4) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 5) uniform texture2D u_depthRt;
-layout(set = 0, binding = 6) uniform texture2D u_motionVectorsRt;
-layout(set = 0, binding = 7) uniform texture2D u_motionVectorsRejectionRt;
-layout(set = 0, binding = 8) uniform texture2D u_normalRt;
-layout(set = 0, binding = 9) uniform accelerationStructureEXT u_tlas;
-
 #define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 10
-#define LIGHT_LIGHTS_BINDING 11
-#define LIGHT_CLUSTERS_BINDING 14
+#define LIGHT_COMMON_UNIS_BINDING 0
+#define LIGHT_LIGHTS_BINDING 1
+#define LIGHT_CLUSTERS_BINDING 4
 #include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+
+layout(set = 0, binding = 6) uniform sampler u_trilinearRepeatSampler; // Used by the hit shaders
+layout(set = 0, binding = 7) uniform uimage2D u_shadowsImage;
+layout(set = 0, binding = 8) uniform utexture2D u_historyShadowsTex;
+layout(set = 0, binding = 9) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 10) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 11) uniform texture2D u_depthRt;
+layout(set = 0, binding = 12) uniform texture2D u_motionVectorsRt;
+layout(set = 0, binding = 13) uniform texture2D u_motionVectorsRejectionRt;
+layout(set = 0, binding = 14) uniform texture2D u_normalRt;
+layout(set = 0, binding = 15) uniform accelerationStructureEXT u_tlas;
+#if SVGF
+layout(set = 0, binding = 16) uniform texture2D u_prevMomentsTex;
+layout(set = 0, binding = 17) uniform image2D u_momentsImage;
+layout(set = 0, binding = 18) uniform texture2D u_prevHistoryLengthTex;
+layout(set = 0, binding = 19) uniform image2D u_historyLengthImage;
+#endif
 
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
@@ -67,7 +73,14 @@ void main()
 
 	if(depth == 1.0)
 	{
-		imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), UVec4(0));
+		imageStore(u_shadowsImage, IVec2(gl_LaunchIDEXT.xy), UVec4(0));
+#if SVGF
+		imageStore(u_momentsImage, IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
+
+		// Set to max history length because this pixel won't need any processing from further compute stages
+		imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy),
+				   Vec4(RT_SHADOWS_MAX_HISTORY_LENGTH / RT_SHADOWS_MAX_HISTORY_LENGTH, 0.0, 0.0, 0.0));
+#endif
 		return;
 	}
 
@@ -80,10 +93,7 @@ void main()
 	U32 idxOffset = u_clusters[clusterIdx];
 
 	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
-	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
-	{
-		shadowFactors[i] = 0.0;
-	}
+	zeroRtShadowLayers(shadowFactors);
 
 	// Get a random factor
 	const UVec3 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_lightingUniforms.m_frameCount));
@@ -143,60 +153,61 @@ void main()
 		}
 	}
 
-	// Do temporal accumulation
-#if SVGF
-	// Gives the number of frames with temporal stability
-	U32 temporalHistory;
-#endif
+	// Get history info
+	const Vec2 historyUv = uv + textureLod(u_motionVectorsRt, u_linearAnyClampSampler, uv, 0.0).xy;
+	const F32 historyRejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).x;
+	const F32 nominalBlendFactor = 0.1;
+	const F32 blendFactor = mix(nominalBlendFactor, 1.0, historyRejectionFactor);
 
+	// Read the history. Use nearest sampler because it's an integer texture
+	const UVec4 packedhistory = textureLod(u_historyShadowsTex, u_nearestAnyClampSampler, historyUv, 0.0);
+	F32 history[MAX_RT_SHADOW_LAYERS];
+	unpackRtShadows(packedhistory, history);
+
+	// Blend with history
+	for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
-		const Vec2 historyUv = uv + textureLod(u_motionVectorsRt, u_linearAnyClampSampler, uv, 0.0).rg;
-		const F32 rejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).r;
-
-		// Use nearest because it's an integer texture
-		const UVec4 history2 = textureLod(u_historyRt, u_nearestAnyClampSampler, historyUv, 0.0);
-		F32 history[MAX_RT_SHADOW_LAYERS];
-#if SVGF
-		unpackRtShadows(history2, history, temporalHistory);
-#else
-		unpackRtShadows(history2, history);
-#endif
-
-		// Compute blend factors
-		const F32 nominalBlendFactor = 0.1;
-		const F32 blendFactor = mix(nominalBlendFactor, 1.0, rejectionFactor);
-
-		// Blend with history
-#if SVGF
-		F32 maxLerp = 0.0;
-#endif
-		for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
-		{
-			const F32 lerp = min(1.0, u_unis.historyRejectFactor[i] + blendFactor);
-			shadowFactors[i] = mix(history[i], shadowFactors[i], lerp);
-#if SVGF
-			maxLerp = max(maxLerp, lerp);
-#endif
-		}
-
-#if SVGF
-		if(maxLerp == 1.0)
-		{
-			temporalHistory = 1; // Rejected the history of one layer, reset the temporal history
-		}
-		else
-		{
-			++temporalHistory; // Sample seems stable, inc it's temporal history
-		}
-#endif
+		const F32 lerp = min(1.0, u_unis.historyRejectFactor[i] + blendFactor);
+		shadowFactors[i] = mix(history[i], shadowFactors[i], lerp);
 	}
 
-	// Store
-#if SVGF
-	const UVec4 packed = packRtShadows(shadowFactors, temporalHistory);
-#else
+	// Store the 1st image
 	const UVec4 packed = packRtShadows(shadowFactors);
+	imageStore(u_shadowsImage, IVec2(gl_LaunchIDEXT.xy), packed);
+
+#if SVGF
+	// Compute the moments
+	Vec2 moments = Vec2(0.0);
+	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	{
+		moments.x += shadowFactors[i];
+	}
+	moments.y = moments.x * moments.x;
+
+	// Blend the moments
+	const Vec2 prevMoments = textureLod(u_prevMomentsTex, u_nearestAnyClampSampler, historyUv, 0.0).xy;
+	moments = mix(prevMoments, moments, blendFactor);
+
+	// Store the moments
+	imageStore(u_momentsImage, IVec2(gl_LaunchIDEXT.xy), Vec4(moments, 0.0, 0.0));
+
+	// Compute the temporal history (Gives the number of frames with temporal stability)
+	F32 historyLength;
+	if(historyRejectionFactor >= 0.9)
+	{
+		// Rejection factor too high, reset the temporal history for all layers
+		historyLength = 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
+	}
+	else
+	{
+		// Sample seems stable, increment it's temporal history
+
+		historyLength = textureLod(u_prevHistoryLengthTex, u_nearestAnyClampSampler, historyUv, 0.0).r;
+		historyLength += 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
+	}
+
+	// Store temporal history
+	imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy), Vec4(historyLength));
 #endif
-	imageStore(u_outImg, IVec2(gl_LaunchIDEXT.xy), packed);
 }
 #pragma anki end

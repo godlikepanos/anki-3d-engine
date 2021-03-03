@@ -212,27 +212,36 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindShaderProgram(m_rtLibraryGrProg);
 
-	cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearRepeat);
+	bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
 
-	rgraphCtx.bindImage(0, 1, m_runCtx.m_renderRt, TextureSubresourceInfo());
+	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+	rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 
-	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyAndFinalRt);
-	cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearClamp);
-	cmdb->bindSampler(0, 4, m_r->getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-	rgraphCtx.bindColorTexture(0, 6, m_r->getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindColorTexture(0, 7, m_r->getMotionVectors().getRejectionFactorRt());
-	rgraphCtx.bindColorTexture(0, 8, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindAccelerationStructure(0, 9, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
+	bindStorage(cmdb, 0, 4, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 5, rsrc.m_indicesToken);
 
-	bindUniforms(cmdb, 0, 10, ctx.m_lightShadingUniformsToken);
+	cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearRepeat);
 
-	bindUniforms(cmdb, 0, 11, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 12, rsrc.m_spotLightsToken);
-	rgraphCtx.bindColorTexture(0, 13, m_r->getShadowMapping().getShadowmapRt());
+	rgraphCtx.bindImage(0, 7, m_runCtx.m_renderRt, TextureSubresourceInfo());
 
-	bindStorage(cmdb, 0, 14, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 15, rsrc.m_indicesToken);
+	rgraphCtx.bindColorTexture(0, 8, m_runCtx.m_historyAndFinalRt);
+	cmdb->bindSampler(0, 9, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 10, m_r->getSamplers().m_nearestNearestClamp);
+	rgraphCtx.bindTexture(0, 11, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+	rgraphCtx.bindColorTexture(0, 12, m_r->getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(0, 13, m_r->getMotionVectors().getRejectionFactorRt());
+	rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(2));
+	rgraphCtx.bindAccelerationStructure(0, 15, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
+
+	if(!m_useSvgf)
+	{
+		// Bind something random
+		rgraphCtx.bindColorTexture(0, 16, m_r->getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindImage(0, 17, m_runCtx.m_renderRt, TextureSubresourceInfo());
+		rgraphCtx.bindColorTexture(0, 18, m_r->getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindImage(0, 19, m_runCtx.m_renderRt, TextureSubresourceInfo());
+	}
 
 	cmdb->bindAllBindless(1);
 

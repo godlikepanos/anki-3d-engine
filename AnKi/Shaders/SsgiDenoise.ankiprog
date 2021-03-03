@@ -59,11 +59,11 @@ void sampleTex(Vec2 colorUv, Vec2 fullUv, BilateralSample ref, inout Vec3 col, i
 	crnt.m_normal = readNormal(fullUv);
 
 	BilateralConfig config;
+	initConfig(config);
 	const Vec3 weights = normalize(Vec3(0.0, 1.0, 1.0));
 	config.m_depthWeight = weights.x;
 	config.m_normalWeight = weights.y;
 	config.m_planeWeight = weights.z;
-	config.m_roughnessWeight = 0.0;
 
 	const F32 w = calculateBilateralWeight(crnt, ref, config);
 	col += color * w;

@@ -8,18 +8,13 @@
 #include <AnKi/Shaders/Include/RtShadows.h>
 #include <AnKi/Shaders/Pack.glsl>
 
+const F32 RT_SHADOWS_MAX_HISTORY_LENGTH = 31.0;
+
 UVec4 packRtShadows(F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 {
 	const U32 a = newPackUnorm4x8(Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]));
 	const U32 b = newPackUnorm4x8(Vec4(shadowFactors[4], shadowFactors[5], shadowFactors[6], shadowFactors[7]));
 	return UVec4(a, b, 0, 0);
-}
-
-UVec4 packRtShadows(F32 shadowFactors[MAX_RT_SHADOW_LAYERS], U32 temporalHistory)
-{
-	UVec4 packed = packRtShadows(shadowFactors);
-	packed.z = temporalHistory;
-	return packed;
 }
 
 void unpackRtShadows(UVec4 packed, out F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
@@ -36,8 +31,10 @@ void unpackRtShadows(UVec4 packed, out F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 	shadowFactors[7] = b[3];
 }
 
-void unpackRtShadows(UVec4 packed, out F32 shadowFactors[MAX_RT_SHADOW_LAYERS], out U32 temporalHistory)
+void zeroRtShadowLayers(out F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 {
-	unpackRtShadows(packed, shadowFactors);
-	temporalHistory = packed.z;
+	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	{
+		shadowFactors[i] = 0.0;
+	}
 }
