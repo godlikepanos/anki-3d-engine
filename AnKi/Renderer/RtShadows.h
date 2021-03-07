@@ -51,9 +51,19 @@ public:
 		U64 m_frameLastUsed = MAX_U64;
 	};
 
+	/// @name Render targets
+	/// @{
 	TexturePtr m_historyAndFinalRt;
 	RenderTargetDescription m_renderRt;
 
+	Array<TexturePtr, 2> m_momentsRts;
+	Array<TexturePtr, 2> m_historyLengthRts;
+
+	RenderTargetDescription m_varianceRt;
+	/// @}
+
+	/// @name Programs
+	/// @{
 	ShaderProgramResourcePtr m_rayGenProg;
 	ShaderProgramPtr m_rtLibraryGrProg;
 	U32 m_rayGenShaderGroupIdx = MAX_U32;
@@ -64,14 +74,21 @@ public:
 	ShaderProgramResourcePtr m_denoiseProg;
 	ShaderProgramPtr m_grDenoiseProg;
 
-	U32 m_sbtRecordSize = 256;
+	ShaderProgramResourcePtr m_svgfVarianceProg;
+	ShaderProgramPtr m_svgfVarianceGrProg;
+
+	ShaderProgramResourcePtr m_svgfAtrousProg;
+	ShaderProgramPtr m_svgfAtrousGrProg;
+
+	ShaderProgramResourcePtr m_visualizeRenderTargetsProg;
+	/// @}
 
 	Array<ShadowLayer, MAX_RT_SHADOW_LAYERS> m_shadowLayers;
 
+	U32 m_sbtRecordSize = 256;
+
 	Bool m_historyAndFinalRtImportedOnce = false;
 	Bool m_useSvgf = false;
-
-	ShaderProgramResourcePtr m_visualizeRenderTargetsProg;
 
 	class
 	{

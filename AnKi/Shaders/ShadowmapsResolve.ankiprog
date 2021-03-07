@@ -24,7 +24,10 @@ layout(set = 0, binding = 2) uniform texture2D u_depthRt;
 
 void main()
 {
-	SKIP_OUT_OF_BOUNDS_INVOCATIONS();
+	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, FB_SIZE))
+	{
+		return;
+	}
 
 	// World position
 	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);

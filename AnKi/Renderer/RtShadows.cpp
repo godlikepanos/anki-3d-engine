@@ -33,10 +33,10 @@ Error RtShadows::init(const ConfigSet& cfg)
 
 Error RtShadows::initInternal(const ConfigSet& cfg)
 {
-	// Ray gen prog
+	// Ray gen program
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsRayGen.ankiprog", m_rayGenProg));
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
-	variantInitInfo.addMutation("SVGF", 0);
+	variantInitInfo.addMutation("SVGF", m_useSvgf);
 	const ShaderProgramResourceVariant* variant;
 	m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);
 	m_rtLibraryGrProg = variant->getProgram();
@@ -48,32 +48,99 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	m_missShaderGroupIdx = variant->getShaderGroupHandleIndex();
 
 	// Denoise program
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsDenoise.ankiprog", m_denoiseProg));
-	ShaderProgramResourceVariantInitInfo variantInitInfo2(m_denoiseProg);
-	variantInitInfo2.addConstant("OUT_IMAGE_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
-	variantInitInfo2.addConstant("SAMPLE_COUNT", 8u);
-	variantInitInfo2.addConstant("SPIRAL_TURN_COUNT", 27u);
-	variantInitInfo2.addConstant("PIXEL_RADIUS", 12u);
+	if(!m_useSvgf)
+	{
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsDenoise.ankiprog", m_denoiseProg));
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_denoiseProg);
+		variantInitInfo.addConstant("OUT_IMAGE_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+		variantInitInfo.addConstant("SAMPLE_COUNT", 8u);
+		variantInitInfo.addConstant("SPIRAL_TURN_COUNT", 27u);
+		variantInitInfo.addConstant("PIXEL_RADIUS", 12u);
 
-	m_denoiseProg->getOrCreateVariant(variantInitInfo2, variant);
-	m_grDenoiseProg = variant->getProgram();
+		m_denoiseProg->getOrCreateVariant(variantInitInfo, variant);
+		m_grDenoiseProg = variant->getProgram();
+	}
 
-	// RTs
-	TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(
-		m_r->getWidth(), m_r->getHeight(), Format::R32G32_UINT,
-		TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
-		"RtShadows");
-	texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-	m_historyAndFinalRt = m_r->createAndClearRenderTarget(texinit);
+	// SVGF variance program
+	if(m_useSvgf)
+	{
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsSvgfVariance.ankiprog", m_svgfVarianceProg));
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfVarianceProg);
+		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth() / 2, m_r->getHeight() / 2));
 
-	m_renderRt = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R32G32_UINT,
-													  "RtShadowsTmp");
-	m_renderRt.bake();
+		m_svgfVarianceProg->getOrCreateVariant(variantInitInfo, variant);
+		m_svgfVarianceGrProg = variant->getProgram();
+	}
+
+	// SVGF atrous program
+	if(m_useSvgf)
+	{
+		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsSvgfAtrous.ankiprog", m_svgfAtrousProg));
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_svgfAtrousProg);
+		variantInitInfo.addConstant("FB_SIZE", UVec2(m_r->getWidth() / 2, m_r->getHeight() / 2));
+
+		m_svgfAtrousProg->getOrCreateVariant(variantInitInfo, variant);
+		m_svgfAtrousGrProg = variant->getProgram();
+	}
+
+	// Debug program
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsVisualizeRenderTarget.ankiprog",
+												 m_visualizeRenderTargetsProg));
+
+	// Shadow RT
+	{
+		TextureInitInfo texinit =
+			m_r->create2DRenderTargetInitInfo(m_r->getWidth(), m_r->getHeight(), Format::R32G32_UINT,
+											  TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
+												  | TextureUsageBit::IMAGE_COMPUTE_WRITE,
+											  "RtShadows");
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		m_historyAndFinalRt = m_r->createAndClearRenderTarget(texinit);
+	}
+
+	// Render RT
+	{
+		m_renderRt = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2,
+														  Format::R32G32_UINT, "RtShadows Tmp");
+		m_renderRt.bake();
+	}
+
+	// Moments RT
+	if(m_useSvgf)
+	{
+		TextureInitInfo texinit =
+			m_r->create2DRenderTargetInitInfo(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R32G32_SFLOAT,
+											  TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
+												  | TextureUsageBit::IMAGE_COMPUTE_WRITE,
+											  "RtShadows Moments");
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		m_momentsRts[0] = m_r->createAndClearRenderTarget(texinit);
+		m_momentsRts[1] = m_r->createAndClearRenderTarget(texinit);
+	}
+
+	// History len RT
+	if(m_useSvgf)
+	{
+		TextureInitInfo texinit =
+			m_r->create2DRenderTargetInitInfo(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8_UNORM,
+											  TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
+												  | TextureUsageBit::IMAGE_COMPUTE_WRITE,
+											  "RtShadows History Length");
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		m_historyLengthRts[0] = m_r->createAndClearRenderTarget(texinit);
+		m_historyLengthRts[1] = m_r->createAndClearRenderTarget(texinit);
+	}
+
+	// Variance RT
+	if(m_useSvgf)
+	{
+		m_varianceRt = m_r->create2DRenderTargetDescription(m_r->getWidth() / 2, m_r->getHeight() / 2,
+															Format::R32_SFLOAT, "RtShadows Variance");
+		m_varianceRt.bake();
+	}
 
 	// Misc
 	m_sbtRecordSize = getAlignedRoundUp(getGrManager().getDeviceCapabilities().m_sbtRecordAlignment, m_sbtRecordSize);
-	ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsVisualizeRenderTarget.ankiprog",
-												 m_visualizeRenderTargetsProg));
 
 	return Error::NONE;
 }
