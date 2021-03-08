@@ -54,12 +54,12 @@ public:
 	/// @name Render targets
 	/// @{
 	TexturePtr m_historyAndFinalRt;
-	RenderTargetDescription m_renderRt;
+	RenderTargetDescription m_intermediateShadowsRtDescr;
 
 	Array<TexturePtr, 2> m_momentsRts;
 	Array<TexturePtr, 2> m_historyLengthRts;
 
-	RenderTargetDescription m_varianceRt;
+	RenderTargetDescription m_varianceRtDescr;
 	/// @}
 
 	/// @name Programs
@@ -79,6 +79,7 @@ public:
 
 	ShaderProgramResourcePtr m_svgfAtrousProg;
 	ShaderProgramPtr m_svgfAtrousGrProg;
+	ShaderProgramPtr m_svgfAtrousLastPassGrProg;
 
 	ShaderProgramResourcePtr m_visualizeRenderTargetsProg;
 	/// @}
@@ -87,16 +88,25 @@ public:
 
 	U32 m_sbtRecordSize = 256;
 
-	Bool m_historyAndFinalRtImportedOnce = false;
+	Bool m_rtsImportedOnce = false;
 	Bool m_useSvgf = false;
+	U8 m_atrousPassCount = 1;
 
 	class
 	{
 	public:
 		RenderingContext* m_ctx = nullptr;
 
-		RenderTargetHandle m_renderRt;
+		Array<RenderTargetHandle, 2> m_intermediateShadowsRts;
 		RenderTargetHandle m_historyAndFinalRt;
+
+		RenderTargetHandle m_prevMomentsRt;
+		RenderTargetHandle m_currentMomentsRt;
+
+		RenderTargetHandle m_prevHistoryLengthRt;
+		RenderTargetHandle m_currentHistoryLengthRt;
+
+		Array<RenderTargetHandle, 2> m_varianceRts;
 
 		BufferPtr m_sbtBuffer;
 		PtrSize m_sbtOffset;
@@ -109,6 +119,8 @@ public:
 
 	void run(RenderPassWorkContext& rgraphCtx);
 	void runDenoise(RenderPassWorkContext& rgraphCtx);
+	void runSvgfVariance(RenderPassWorkContext& rgraphCtx);
+	void runSvgfAtrous(RenderPassWorkContext& rgraphCtx);
 
 	void buildSbt();
 

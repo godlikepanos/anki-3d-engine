@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator LAST_PASS 0 1
+
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
 
 #pragma anki start comp
@@ -22,7 +24,9 @@ layout(set = 0, binding = 4) uniform utexture2D u_shadowsTex;
 layout(set = 0, binding = 4) uniform texture2D u_varianceTex;
 
 layout(set = 0, binding = 5) uniform uimage2D u_shadowsImage;
+#if !LAST_PASS
 layout(set = 0, binding = 6) uniform image2D u_varianceImage;
+#endif
 
 layout(std430, push_constant, row_major) uniform b_pc
 {
@@ -63,7 +67,9 @@ void main()
 	{
 		// Sky
 		imageStore(u_shadowsImage, IVec2(gl_GlobalInvocationID), UVec4(0));
+#if !LAST_PASS
 		imageStore(u_varianceImage, IVec2(gl_GlobalInvocationID), Vec4(0.0));
+#endif
 		return;
 	}
 
@@ -144,6 +150,8 @@ void main()
 
 	// Store
 	imageStore(u_shadowsImage, IVec2(gl_GlobalInvocationID), packRtShadows(sumShadowLayers));
+#if !LAST_PASS
 	imageStore(u_varianceImage, IVec2(gl_GlobalInvocationID), Vec4(sumVariance, 0.0, 0.0, 0.0));
+#endif
 }
 #pragma anki end
