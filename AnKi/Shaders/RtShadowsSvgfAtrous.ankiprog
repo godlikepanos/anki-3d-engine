@@ -21,11 +21,11 @@ layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
 layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
 layout(set = 0, binding = 4) uniform utexture2D u_shadowsTex;
-layout(set = 0, binding = 4) uniform texture2D u_varianceTex;
+layout(set = 0, binding = 5) uniform texture2D u_varianceTex;
 
-layout(set = 0, binding = 5) uniform uimage2D u_shadowsImage;
+layout(set = 0, binding = 6) uniform uimage2D u_shadowsImage;
 #if !LAST_PASS
-layout(set = 0, binding = 6) uniform image2D u_varianceImage;
+layout(set = 0, binding = 7) uniform image2D u_varianceImage;
 #endif
 
 layout(std430, push_constant, row_major) uniform b_pc

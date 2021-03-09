@@ -113,6 +113,8 @@ public:
 		U32 m_hitGroupCount = 0;
 
 		BitSet<MAX_RT_SHADOW_LAYERS, U8> m_layersWithRejectedHistory = {false};
+
+		U8 m_atrousPassIdx = 0;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
