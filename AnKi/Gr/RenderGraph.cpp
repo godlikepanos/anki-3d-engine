@@ -675,7 +675,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 			// Create a new TextureInitInfo with the derived usage
 			TextureInitInfo initInf = inRt.m_initInfo;
 			initInf.m_usage = inRt.m_usageDerivedByDeps;
-			ANKI_ASSERT(initInf.m_usage != TextureUsageBit::NONE);
+			ANKI_ASSERT(initInf.m_usage != TextureUsageBit::NONE && "Probably not referenced by any pass");
 
 			// Create the new hash
 			const U64 hash = appendHash(&initInf.m_usage, sizeof(initInf.m_usage), inRt.m_hash);

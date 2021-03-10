@@ -101,10 +101,10 @@ void main()
 			// Read shadows
 			F32 shadowLayers[MAX_RT_SHADOW_LAYERS];
 			unpackRtShadows(textureLod(u_shadowsTex, u_nearestAnyClampSampler, sampleUv, 0.0), shadowLayers);
-			const F32 luma = computeShadowsLuma(shadowLayers);
 
 			// Compute luma weight
-			const F32 variance = textureLod(u_varianceTex, u_nearestAnyClampSampler, sampleUv, 0.0).x;
+			const F32 luma = computeShadowsLuma(shadowLayers);
+			const F32 variance = textureLod(u_varianceTex, u_linearAnyClampSampler, sampleUv, 0.0).x;
 			const F32 sigmaL = 4.0;
 			const F32 wl = min(1.0, exp(-abs(luma - refLuma) / (sigmaL * sqrt(variance + 0.001) + EPSILON)));
 

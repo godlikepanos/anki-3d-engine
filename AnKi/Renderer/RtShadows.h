@@ -90,7 +90,7 @@ public:
 
 	Bool m_rtsImportedOnce = false;
 	Bool m_useSvgf = false;
-	U8 m_atrousPassCount = 1;
+	U8 m_atrousPassCount = 5;
 
 	class
 	{

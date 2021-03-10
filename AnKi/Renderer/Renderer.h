@@ -38,6 +38,7 @@ public:
 	Mat4 m_jitter = Mat4::getIdentity();
 	Mat4 m_projectionJitter = Mat4::getIdentity();
 	Mat4 m_viewProjectionJitter = Mat4::getIdentity();
+	Mat4 m_invertedViewProjectionJitter = Mat4::getIdentity();
 };
 
 /// Rendering context.
