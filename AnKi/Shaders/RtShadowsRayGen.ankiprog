@@ -31,10 +31,10 @@ layout(set = 0, binding = 13) uniform texture2D u_motionVectorsRejectionRt;
 layout(set = 0, binding = 14) uniform texture2D u_normalRt;
 layout(set = 0, binding = 15) uniform accelerationStructureEXT u_tlas;
 #if SVGF
-layout(set = 0, binding = 16) uniform texture2D u_prevMomentsTex;
-layout(set = 0, binding = 17) uniform image2D u_momentsImage;
-layout(set = 0, binding = 18) uniform texture2D u_prevHistoryLengthTex;
-layout(set = 0, binding = 19) uniform image2D u_historyLengthImage;
+layout(set = 0, binding = 16) uniform texture2D u_prevHistoryLengthTex;
+layout(set = 0, binding = 17) uniform image2D u_historyLengthImage;
+layout(set = 0, binding = 18) uniform texture2D u_prevMomentsTex;
+layout(set = 0, binding = 19) uniform image2D u_momentsImage;
 #endif
 
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
@@ -185,7 +185,7 @@ void main()
 	moments.y = moments.x * moments.x;
 
 	// Blend the moments
-	const Vec2 prevMoments = textureLod(u_prevMomentsTex, u_nearestAnyClampSampler, historyUv, 0.0).xy;
+	const Vec2 prevMoments = textureLod(u_prevMomentsTex, u_linearAnyClampSampler, historyUv, 0.0).xy;
 	moments = mix(prevMoments, moments, blendFactor);
 
 	// Store the moments
@@ -202,7 +202,7 @@ void main()
 	{
 		// Sample seems stable, increment it's temporal history
 
-		historyLength = textureLod(u_prevHistoryLengthTex, u_nearestAnyClampSampler, historyUv, 0.0).r;
+		historyLength = textureLod(u_prevHistoryLengthTex, u_linearAnyClampSampler, historyUv, 0.0).r;
 		historyLength += 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
 	}
 

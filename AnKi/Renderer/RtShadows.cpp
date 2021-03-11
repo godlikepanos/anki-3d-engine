@@ -122,9 +122,11 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 			m_r->create2DRenderTargetInitInfo(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R32G32_SFLOAT,
 											  TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 												  | TextureUsageBit::IMAGE_COMPUTE_WRITE,
-											  "RtShadows Moments");
+											  "RtShadows Moments #1");
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		m_momentsRts[0] = m_r->createAndClearRenderTarget(texinit);
+
+		texinit.setName("RtShadows Moments #2");
 		m_momentsRts[1] = m_r->createAndClearRenderTarget(texinit);
 	}
 
@@ -135,9 +137,11 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 			m_r->create2DRenderTargetInitInfo(m_r->getWidth() / 2, m_r->getHeight() / 2, Format::R8_UNORM,
 											  TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_TRACE_RAYS_WRITE
 												  | TextureUsageBit::IMAGE_COMPUTE_WRITE,
-											  "RtShadows History Length");
+											  "RtShadows History Length #1");
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		m_historyLengthRts[0] = m_r->createAndClearRenderTarget(texinit);
+
+		texinit.setName("RtShadows History Length #2");
 		m_historyLengthRts[1] = m_r->createAndClearRenderTarget(texinit);
 	}
 
@@ -433,10 +437,10 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	}
 	else
 	{
-		rgraphCtx.bindColorTexture(0, 16, m_runCtx.m_prevMomentsRt);
-		rgraphCtx.bindImage(0, 17, m_runCtx.m_currentMomentsRt);
-		rgraphCtx.bindColorTexture(0, 18, m_runCtx.m_prevHistoryLengthRt);
-		rgraphCtx.bindImage(0, 19, m_runCtx.m_currentHistoryLengthRt);
+		rgraphCtx.bindColorTexture(0, 16, m_runCtx.m_prevHistoryLengthRt);
+		rgraphCtx.bindImage(0, 17, m_runCtx.m_currentHistoryLengthRt);
+		rgraphCtx.bindColorTexture(0, 18, m_runCtx.m_prevMomentsRt);
+		rgraphCtx.bindImage(0, 19, m_runCtx.m_currentMomentsRt);
 	}
 
 	cmdb->bindAllBindless(1);

@@ -57,7 +57,7 @@ void main()
 		return;
 	}
 
-	const F32 historyLength = textureLod(u_historyLengthTex, u_nearestAnyClampSampler, uv, 0.0).r;
+	const F32 historyLength = textureLod(u_historyLengthTex, u_linearAnyClampSampler, uv, 0.0).r;
 
 	UVec4 outPackedShadowLayers;
 	F32 outVariance;
@@ -104,7 +104,7 @@ void main()
 				const F32 w = calculateBilateralWeight(crnt, ref, config);
 
 				// Sum
-				const Vec2 moments = textureLod(u_momentsTex, u_nearestAnyClampSampler, sampleUv, 0.0).xy;
+				const Vec2 moments = textureLod(u_momentsTex, u_linearAnyClampSampler, sampleUv, 0.0).xy;
 				sumMoments += moments * w;
 
 				F32 shadowLayers[MAX_RT_SHADOW_LAYERS];
@@ -139,7 +139,7 @@ void main()
 
 		outPackedShadowLayers = textureLod(u_shadowsTex, u_nearestAnyClampSampler, uv, 0.0);
 
-		const Vec2 moments = textureLod(u_momentsTex, u_nearestAnyClampSampler, uv, 0.0).xy;
+		const Vec2 moments = textureLod(u_momentsTex, u_linearAnyClampSampler, uv, 0.0).xy;
 		outVariance = max(0.0, moments.y - moments.x * moments.x);
 	}
 
