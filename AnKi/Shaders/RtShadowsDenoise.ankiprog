@@ -51,10 +51,9 @@ void main()
 	unpackRtShadows(textureLod(u_inTex, u_nearestAnyClampSampler, uv, 0.0), shadowFactors);
 	F32 weight = 1.0;
 
-	BilateralSample ref;
-	ref.m_depth = textureLod(u_depthTex, u_nearestAnyClampSampler, uv, 0.0).r;
-	ref.m_position = unproject(UV_TO_NDC(uv), ref.m_depth);
-	ref.m_normal = readNormalFromGBuffer(u_gbuffer2Tex, u_nearestAnyClampSampler, uv);
+	const F32 depthCenter = textureLod(u_depthTex, u_nearestAnyClampSampler, uv, 0.0).r;
+	const Vec3 positionCenter = unproject(UV_TO_NDC(uv), depthCenter);
+	const Vec3 normalCenter = readNormalFromGBuffer(u_gbuffer2Tex, u_nearestAnyClampSampler, uv);
 
 	// Sample
 	SpatialBilateralContext ctx =
@@ -65,19 +64,11 @@ void main()
 		const IVec2 unormalizedUvs = clamp(IVec2(spatialBilateralIterate(ctx, i)), IVec2(0), IVec2(OUT_IMAGE_SIZE - 1));
 		const Vec2 sampleUv = Vec2(unormalizedUvs) / Vec2(OUT_IMAGE_SIZE);
 
-		BilateralSample crnt;
-		crnt.m_depth = texelFetch(u_depthTex, unormalizedUvs, 0).r;
-		crnt.m_position = unproject(UV_TO_NDC(sampleUv), crnt.m_depth);
-		crnt.m_normal = unpackNormalFromGBuffer(texelFetch(u_gbuffer2Tex, unormalizedUvs, 0));
+		const F32 depthTap = texelFetch(u_depthTex, unormalizedUvs, 0).r;
+		const Vec3 positionTap = unproject(UV_TO_NDC(sampleUv), depthTap);
+		const Vec3 normalTap = unpackNormalFromGBuffer(texelFetch(u_gbuffer2Tex, unormalizedUvs, 0));
 
-		BilateralConfig config;
-		initConfig(config);
-		const Vec3 weights = normalize(Vec3(0.0, 1.0, 1.0));
-		config.m_depthWeight = weights.x;
-		config.m_normalWeight = weights.y;
-		config.m_planeWeight = weights.z;
-		config.m_roughnessWeight = 0.0;
-		const F32 w = calculateBilateralWeight(crnt, ref, config);
+		const F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
 		weight += w;
 
 		F32 localShadowFactors[MAX_RT_SHADOW_LAYERS];

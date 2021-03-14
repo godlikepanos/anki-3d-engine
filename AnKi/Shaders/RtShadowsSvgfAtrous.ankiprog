@@ -74,10 +74,9 @@ void main()
 	}
 
 	// Set the reference sample
-	BilateralSample ref;
-	ref.m_depth = depth;
-	ref.m_position = unproject(uv, ref.m_depth);
-	ref.m_normal = readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
+	const F32 depthCenter = depth;
+	const Vec3 positionCenter = unproject(uv, depthCenter);
+	const Vec3 normalCenter = readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
 
 	// Read center luma
 	F32 shadowLayers[MAX_RT_SHADOW_LAYERS];
@@ -109,19 +108,13 @@ void main()
 			const F32 wl = min(1.0, exp(-abs(luma - refLuma) / (sigmaL * sqrt(variance + 0.001) + EPSILON)));
 
 			// Set the current sample
-			BilateralSample crnt;
-			crnt.m_depth = textureLod(u_depthTex, u_linearAnyClampSampler, sampleUv, 0.0).r;
-			crnt.m_position = unproject(sampleUv, crnt.m_depth);
-			crnt.m_normal = unpackNormalFromGBuffer(textureLod(u_gbuffer2Tex, u_linearAnyClampSampler, sampleUv, 0.0));
+			const F32 depthTap = textureLod(u_depthTex, u_linearAnyClampSampler, sampleUv, 0.0).r;
+			const Vec3 positionTap = unproject(sampleUv, depthTap);
+			const Vec3 normalTap =
+				unpackNormalFromGBuffer(textureLod(u_gbuffer2Tex, u_linearAnyClampSampler, sampleUv, 0.0));
 
 			// Do bilateral
-			BilateralConfig config;
-			initConfig(config);
-			const Vec3 weights = normalize(Vec3(0.0, 0.0, 1.0));
-			config.m_depthWeight = weights.x;
-			config.m_normalWeight = weights.y;
-			config.m_planeWeight = weights.z;
-			F32 w = calculateBilateralWeight(crnt, ref, config);
+			F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
 
 			// Include more weights
 			w *= wl;

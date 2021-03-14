@@ -49,23 +49,16 @@ Vec3 readNormal(Vec2 uv)
 	return readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
 }
 
-void sampleTex(Vec2 colorUv, Vec2 fullUv, BilateralSample ref, inout Vec3 col, inout F32 weight)
+void sampleTex(Vec2 colorUv, Vec2 fullUv, Vec3 positionCenter, Vec3 normalCenter, inout Vec3 col, inout F32 weight)
 {
 	const Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, colorUv, 0.0).rgb;
 
-	BilateralSample crnt;
-	crnt.m_depth = readDepth(fullUv);
-	crnt.m_position = unproject(UV_TO_NDC(fullUv), crnt.m_depth);
-	crnt.m_normal = readNormal(fullUv);
+	const F32 depthTap = readDepth(fullUv);
+	const Vec3 positionTap = unproject(UV_TO_NDC(fullUv), depthTap);
+	const Vec3 normalTap = readNormal(fullUv);
 
-	BilateralConfig config;
-	initConfig(config);
-	const Vec3 weights = normalize(Vec3(0.0, 1.0, 1.0));
-	config.m_depthWeight = weights.x;
-	config.m_normalWeight = weights.y;
-	config.m_planeWeight = weights.z;
-
-	const F32 w = calculateBilateralWeight(crnt, ref, config);
+	F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 0.5);
+	w *= calculateBilateralWeightNormal(normalCenter, normalTap, 0.5);
 	col += color * w;
 	weight += w;
 }
@@ -98,10 +91,9 @@ void main()
 	Vec3 color = textureLod(u_inTex, u_linearAnyClampSampler, inUv, 0.0).rgb;
 	F32 weight = 1.0;
 
-	BilateralSample ref;
-	ref.m_depth = readDepth(depthUv);
-	ref.m_position = unproject(UV_TO_NDC(depthUv), ref.m_depth);
-	ref.m_normal = readNormal(depthUv);
+	const F32 depthCenter = readDepth(depthUv);
+	const Vec3 positionCenter = unproject(UV_TO_NDC(depthUv), depthCenter);
+	const Vec3 normalCenter = readNormal(depthUv);
 
 #if ORIENTATION == 1
 #	define X_OR_Y x
@@ -116,8 +108,8 @@ void main()
 
 	ANKI_UNROLL for(U32 i = 0u; i < (SAMPLE_COUNT - 1u) / 2u; ++i)
 	{
-		sampleTex(inUv + inUvOffset, depthUv + depthUvOffset, ref, color, weight);
-		sampleTex(inUv - inUvOffset, depthUv - depthUvOffset, ref, color, weight);
+		sampleTex(inUv + inUvOffset, depthUv + depthUvOffset, positionCenter, normalCenter, color, weight);
+		sampleTex(inUv - inUvOffset, depthUv - depthUvOffset, positionCenter, normalCenter, color, weight);
 
 		inUvOffset.X_OR_Y += IN_TEXEL_SIZE.X_OR_Y;
 		depthUvOffset.X_OR_Y += 2.0 * DEPTH_TEXEL_SIZE.X_OR_Y;
