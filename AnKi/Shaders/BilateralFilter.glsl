@@ -10,9 +10,9 @@
 #include <AnKi/Shaders/Common.glsl>
 
 // https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
-F32 calculateBilateralWeightDepth(F32 center, F32 tap, F32 phi)
+F32 calculateBilateralWeightDepth(F32 depthCenter, F32 depthTap, F32 phi)
 {
-	const F32 diff = abs(tap - center);
+	const F32 diff = abs(depthTap - depthCenter);
 #if 0
 	return max(0.0, 1.0 - diff * phi);
 #else
@@ -21,7 +21,7 @@ F32 calculateBilateralWeightDepth(F32 center, F32 tap, F32 phi)
 }
 
 // From the SVGF sample code. Depth is linear
-F32 calculateBilateralWeightDepth2(F32 center, F32 tap, F32 phi)
+F32 calculateBilateralWeightDepth2(F32 depthCenter, F32 depthTap, F32 phi)
 {
 	return (phi == 0.0) ? 0.0 : abs(depthCenter - depthTap) / phi;
 }
@@ -71,7 +71,7 @@ F32 calculateBilateralWeightRoughness(F32 roughnessCenter, F32 roughnessTap, F32
 F32 calculateBilateralWeightLinearDepthAndLuminance(F32 depthCenter, F32 luminanceCenter, F32 depthTap,
 													F32 luminanceTap, F32 phiDepth, F32 phiLuminance)
 {
-	const F32 wZ = calculateBilateralWeightDepth(depthCenter, depthTap, phiDepth);
+	const F32 wZ = calculateBilateralWeightDepth2(depthCenter, depthTap, phiDepth);
 	const F32 wL = abs(luminanceCenter - luminanceTap) / phiLuminance;
 	return exp(0.0 - max(wL, 0.0) - max(wZ, 0.0));
 }

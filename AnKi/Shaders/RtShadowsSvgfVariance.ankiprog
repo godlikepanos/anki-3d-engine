@@ -93,7 +93,9 @@ void main()
 					unpackNormalFromGBuffer(textureLod(u_gbuffer2Tex, u_linearAnyClampSampler, sampleUv, 0.0));
 
 				// Do bilateral
-				const F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
+				// const F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap,
+				// normalTap, 1.0);
+				const F32 w = calculateBilateralWeightDepth(depthCenter, depthTap, 1.0);
 
 				// Sum
 				const Vec2 moments = textureLod(u_momentsTex, u_linearAnyClampSampler, sampleUv, 0.0).xy;

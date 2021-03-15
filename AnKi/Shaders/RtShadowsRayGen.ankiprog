@@ -125,8 +125,9 @@ void main()
 			const F32 distanceToLight = length(toLight);
 			const Vec3 rayDir = toLight / distanceToLight; // normalize
 
+			const Bool inside = distanceToLight < light.m_radius;
 			const F32 lambertTerm = dot(rayDir, normal);
-			ANKI_BRANCH if(lambertTerm > 0.0)
+			ANKI_BRANCH if(inside && lambertTerm > 0.0)
 			{
 				shadowFactors[light.m_shadowLayer] = trace(worldPos, rayDir, distanceToLight);
 			}
@@ -186,7 +187,9 @@ void main()
 
 	// Blend the moments
 	const Vec2 prevMoments = textureLod(u_prevMomentsTex, u_linearAnyClampSampler, historyUv, 0.0).xy;
-	moments = mix(prevMoments, moments, blendFactor);
+	F32 momentsBlendFactor = 0.2;
+	momentsBlendFactor = mix(momentsBlendFactor, 1.0, historyRejectionFactor);
+	moments = mix(prevMoments, moments, momentsBlendFactor);
 
 	// Store the moments
 	imageStore(u_momentsImage, IVec2(gl_LaunchIDEXT.xy), Vec4(moments, 0.0, 0.0));
