@@ -20,8 +20,9 @@ layout(location = 0) out Vec3 out_color;
 
 void main()
 {
+	const UVec4 packed = textureLod(u_inTex, u_nearestAnyClampSampler, in_uv, 0.0);
 	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
-	unpackRtShadows(textureLod(u_inTex, u_nearestAnyClampSampler, in_uv, 0.0), shadowFactors);
+	unpackRtShadows(packed, shadowFactors);
 
 #if LAYER_GROUP == 0
 	out_color = Vec3(shadowFactors[0], shadowFactors[1], shadowFactors[2]);

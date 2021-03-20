@@ -3,8 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki mutator SVGF 0 1
-
 #pragma anki library RtShadows
 #pragma anki ray_type 0
 
@@ -30,12 +28,10 @@ layout(set = 0, binding = 12) uniform texture2D u_motionVectorsRt;
 layout(set = 0, binding = 13) uniform texture2D u_motionVectorsRejectionRt;
 layout(set = 0, binding = 14) uniform texture2D u_normalRt;
 layout(set = 0, binding = 15) uniform accelerationStructureEXT u_tlas;
-#if SVGF
 layout(set = 0, binding = 16) uniform texture2D u_prevHistoryLengthTex;
 layout(set = 0, binding = 17) uniform image2D u_historyLengthImage;
 layout(set = 0, binding = 18) uniform texture2D u_prevMomentsTex;
 layout(set = 0, binding = 19) uniform image2D u_momentsImage;
-#endif
 
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
@@ -74,13 +70,12 @@ void main()
 	if(depth == 1.0)
 	{
 		imageStore(u_shadowsImage, IVec2(gl_LaunchIDEXT.xy), UVec4(0));
-#if SVGF
 		imageStore(u_momentsImage, IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
 
 		// Set to max history length because this pixel won't need any processing from further compute stages
 		imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy),
 				   Vec4(RT_SHADOWS_MAX_HISTORY_LENGTH / RT_SHADOWS_MAX_HISTORY_LENGTH, 0.0, 0.0, 0.0));
-#endif
+
 		return;
 	}
 
@@ -154,30 +149,47 @@ void main()
 		}
 	}
 
-	// Get history info
+	// Compute history length
 	const Vec2 historyUv = uv + textureLod(u_motionVectorsRt, u_linearAnyClampSampler, uv, 0.0).xy;
 	const F32 historyRejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).x;
-	const F32 nominalBlendFactor = 0.1;
-	const F32 blendFactor = mix(nominalBlendFactor, 1.0, historyRejectionFactor);
+	F32 historyLength;
+	if(historyRejectionFactor >= 0.5)
+	{
+		// Rejection factor too high, reset the temporal history for all layers
+		historyLength = 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
+	}
+	else
+	{
+		// Sample seems stable, increment its temporal history
 
-	// Read the history. Use nearest sampler because it's an integer texture
+		historyLength = textureLod(u_prevHistoryLengthTex, u_linearAnyClampSampler, historyUv, 0.0).r;
+		historyLength += 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
+	}
+
+	// Store history length
+	imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy), Vec4(historyLength));
+
+	// Compute blend fractor. Use nearest sampler because it's an integer texture
+	const F32 lowestBlendFactor = 0.05;
+	const F32 stableFrames = 4.0;
+	const F32 lerp = min(1.0, (historyLength * RT_SHADOWS_MAX_HISTORY_LENGTH - 1.0) / stableFrames);
+	const F32 blendFactor = mix(1.0, lowestBlendFactor, lerp);
+
+	// Blend with history
 	const UVec4 packedhistory = textureLod(u_historyShadowsTex, u_nearestAnyClampSampler, historyUv, 0.0);
 	F32 history[MAX_RT_SHADOW_LAYERS];
 	unpackRtShadows(packedhistory, history);
-
-	// Blend with history
 	for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
 		const F32 lerp = min(1.0, u_unis.historyRejectFactor[i] + blendFactor);
 		shadowFactors[i] = mix(history[i], shadowFactors[i], lerp);
 	}
 
-	// Store the 1st image
+	// Store the shadows image
 	const UVec4 packed = packRtShadows(shadowFactors);
 	imageStore(u_shadowsImage, IVec2(gl_LaunchIDEXT.xy), packed);
 
-#if SVGF
-	// Compute the moments
+	// Compute the moments that will give temporal variance
 	Vec2 moments = Vec2(0.0);
 	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
@@ -193,24 +205,5 @@ void main()
 
 	// Store the moments
 	imageStore(u_momentsImage, IVec2(gl_LaunchIDEXT.xy), Vec4(moments, 0.0, 0.0));
-
-	// Compute the temporal history (Gives the number of frames with temporal stability)
-	F32 historyLength;
-	if(historyRejectionFactor >= 0.9)
-	{
-		// Rejection factor too high, reset the temporal history for all layers
-		historyLength = 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
-	}
-	else
-	{
-		// Sample seems stable, increment it's temporal history
-
-		historyLength = textureLod(u_prevHistoryLengthTex, u_linearAnyClampSampler, historyUv, 0.0).r;
-		historyLength += 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
-	}
-
-	// Store temporal history
-	imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy), Vec4(historyLength));
-#endif
 }
 #pragma anki end
