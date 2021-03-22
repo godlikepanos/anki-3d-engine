@@ -72,7 +72,8 @@ public:
 	U32 m_missShaderGroupIdx = MAX_U32;
 
 	ShaderProgramResourcePtr m_denoiseProg;
-	ShaderProgramPtr m_grDenoiseProg;
+	ShaderProgramPtr m_grDenoiseHorizontalProg;
+	ShaderProgramPtr m_grDenoiseVerticalProg;
 
 	ShaderProgramResourcePtr m_svgfVarianceProg;
 	ShaderProgramPtr m_svgfVarianceGrProg;
@@ -115,6 +116,7 @@ public:
 		BitSet<MAX_RT_SHADOW_LAYERS, U8> m_layersWithRejectedHistory = {false};
 
 		U8 m_atrousPassIdx = 0;
+		U8 m_denoiseOrientation = 0;
 	} m_runCtx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);

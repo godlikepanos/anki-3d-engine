@@ -3,18 +3,18 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator BLUR_ORIENTATION 0 1
+
 #pragma anki start comp
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC2(OUT_IMAGE_SIZE, 0, UVec2(1));
 ANKI_SPECIALIZATION_CONSTANT_U32(MIN_SAMPLE_COUNT, 2, 1);
 ANKI_SPECIALIZATION_CONSTANT_U32(MAX_SAMPLE_COUNT, 3, 1);
-ANKI_SPECIALIZATION_CONSTANT_U32(MIN_PIXEL_RADIUS, 4, 1);
-ANKI_SPECIALIZATION_CONSTANT_U32(MAX_PIXEL_RADIUS, 5, 1);
-ANKI_SPECIALIZATION_CONSTANT_U32(SPIRAL_TURN_COUNT, 6, 1);
 
 #include <AnKi/Shaders/BilateralFilter.glsl>
 #include <AnKi/Shaders/Pack.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
+#include <AnKi/Shaders/Functions.glsl>
 
 const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
 layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
@@ -60,16 +60,6 @@ F32 computeVarianceCenter(Vec2 uv)
 	return abs(sumMoments.y - sumMoments.x * sumMoments.x);
 }
 
-F32 computeShadowsLuma(F32 shadowLayers[MAX_RT_SHADOW_LAYERS])
-{
-	F32 l = 0.0;
-	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
-	{
-		l += shadowLayers[i];
-	}
-	return min(1.0, l / 2.0);
-}
-
 void main()
 {
 	// Set UVs
@@ -100,18 +90,15 @@ void main()
 	const F32 historyLength =
 		textureLod(u_historyLengthTex, u_linearAnyClampSampler, uv, 0.0).x * RT_SHADOWS_MAX_HISTORY_LENGTH;
 
-	U32 pixelRadius;
 	U32 sampleCount;
 	if(historyLength < 2.0)
 	{
 		// Worst case
-		pixelRadius = MAX_PIXEL_RADIUS;
 		sampleCount = MAX_SAMPLE_COUNT;
 	}
 	else if(historyLength > 4.0 && varianceCenter < 0.0001)
 	{
 		// Best case
-		pixelRadius = MIN_PIXEL_RADIUS;
 		sampleCount = MIN_SAMPLE_COUNT;
 	}
 	else
@@ -121,31 +108,37 @@ void main()
 		F32 blur = varianceCenter * 100.0;
 		blur = min(1.0, blur);
 
-		const F32 pixelRadiusf = mix(F32(MIN_PIXEL_RADIUS), F32(MAX_PIXEL_RADIUS), blur);
 		const F32 sampleCountf = mix(F32(MIN_SAMPLE_COUNT), F32(MAX_SAMPLE_COUNT), blur);
 
-		pixelRadius = U32(pixelRadiusf);
 		sampleCount = U32(sampleCountf);
 	}
 
+	sampleCount = sampleCount / 2;
+
 	// Sample
-	SpatialBilateralContext ctx =
-		spatialBilateralInit(sampleCount, gl_GlobalInvocationID.xy, pixelRadius, SPIRAL_TURN_COUNT, u_unis.time);
 	F32 weight = 1.0;
 
-	for(U32 i = 0; i < sampleCount; ++i)
+	for(I32 i = -I32(sampleCount); i < I32(sampleCount); ++i)
 	{
-		const IVec2 unormalizedUvs = clamp(IVec2(spatialBilateralIterate(ctx, i)), IVec2(0), IVec2(OUT_IMAGE_SIZE - 1));
-		const Vec2 sampleUv = Vec2(unormalizedUvs) / Vec2(OUT_IMAGE_SIZE);
+		const Vec2 texelSize = 1.0 / Vec2(OUT_IMAGE_SIZE);
+#if BLUR_ORIENTATION == 0
+		const Vec2 sampleUv = Vec2(uv.x + F32(i) * texelSize.x, uv.y);
+#else
+		const Vec2 sampleUv = Vec2(uv.x, uv.y + F32(i) * texelSize.y);
+#endif
 
 		F32 localShadowFactors[MAX_RT_SHADOW_LAYERS];
-		unpackRtShadows(texelFetch(u_inTex, IVec2(unormalizedUvs / 2), 0), localShadowFactors);
+		unpackRtShadows(textureLod(u_inTex, u_nearestAnyClampSampler, sampleUv, 0.0), localShadowFactors);
 
-		const F32 depthTap = texelFetch(u_depthTex, unormalizedUvs, 0).r;
+		const F32 depthTap = textureLod(u_depthTex, u_linearAnyClampSampler, sampleUv, 0.0).r;
 		const Vec3 positionTap = unproject(UV_TO_NDC(sampleUv), depthTap);
-		const Vec3 normalTap = unpackNormalFromGBuffer(texelFetch(u_gbuffer2Tex, unormalizedUvs, 0));
+		const Vec3 normalTap =
+			unpackNormalFromGBuffer(textureLod(u_gbuffer2Tex, u_linearAnyClampSampler, sampleUv, 0.0));
 
-		const F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
+		// F32 w = calculateBilateralWeighPlane(depthCenter, depthTap, 1.0);
+		F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
+
+		w *= gaussianWeight(0.4, abs(F32(i)) / F32(sampleCount + 1));
 
 		ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 		{

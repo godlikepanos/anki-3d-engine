@@ -170,7 +170,7 @@ void main()
 	imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy), Vec4(historyLength));
 
 	// Compute blend fractor. Use nearest sampler because it's an integer texture
-	const F32 lowestBlendFactor = 0.05;
+	const F32 lowestBlendFactor = 0.1;
 	const F32 stableFrames = 4.0;
 	const F32 lerp = min(1.0, (historyLength * RT_SHADOWS_MAX_HISTORY_LENGTH - 1.0) / stableFrames);
 	const F32 blendFactor = mix(1.0, lowestBlendFactor, lerp);

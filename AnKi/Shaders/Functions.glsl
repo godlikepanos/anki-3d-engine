@@ -555,3 +555,11 @@ UVec2 getOptimalGlobalInvocationId8x8Nvidia()
 	return swizzledGlobalId.xy;
 }
 #endif
+
+// Gaussian distrubution function
+F32 gaussianWeight(F32 s, F32 x)
+{
+	F32 p = 1.0 / (s * sqrt(2.0 * PI));
+	p *= exp((x * x) / (-2.0 * s * s));
+	return p;
+}
