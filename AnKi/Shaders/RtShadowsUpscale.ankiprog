@@ -1,0 +1,34 @@
+// Copyright (C) 2009-2021, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma anki mutator QUALITY 0 1
+
+#pragma anki start comp
+
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(OUT_IMAGE_SIZE, 0, UVec2(1));
+
+const UVec2 WORKGROUP_SIZE = UVec2(8u, 8u);
+layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 2) uniform utexture2D u_quarterShadowsTex;
+layout(set = 0, binding = 3) uniform uimage2D u_fullShadowsImage;
+layout(set = 0, binding = 4) uniform texture2D u_quarterDepthTex;
+layout(set = 0, binding = 5) uniform texture2D u_fullDepthTex;
+
+void main()
+{
+	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, OUT_IMAGE_SIZE))
+	{
+		return;
+	}
+
+#if QUALITY == 0
+#else
+#endif
+}
+
+#pragma anki end

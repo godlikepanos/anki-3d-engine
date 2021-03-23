@@ -62,10 +62,8 @@ F32 computeVarianceCenter(Vec2 uv)
 
 void main()
 {
-	// Set UVs
-	ANKI_BRANCH if(gl_GlobalInvocationID.x >= OUT_IMAGE_SIZE.x || gl_GlobalInvocationID.y >= OUT_IMAGE_SIZE.y)
+	if(skipOutOfBoundsInvocations(WORKGROUP_SIZE, OUT_IMAGE_SIZE))
 	{
-		// Out of bounds
 		return;
 	}
 
