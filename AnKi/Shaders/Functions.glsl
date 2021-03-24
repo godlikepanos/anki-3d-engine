@@ -563,3 +563,16 @@ F32 gaussianWeight(F32 s, F32 x)
 	p *= exp((x * x) / (-2.0 * s * s));
 	return p;
 }
+
+Vec4 bilinearFiltering(texture2D tex, sampler nearestSampler, Vec2 uv, F32 lod, Vec2 textureSize)
+{
+	const Vec2 texelSize = 1.0 / textureSize;
+	const Vec2 unnormTexCoord = (uv * textureSize) - 0.5;
+	const Vec2 f = fract(unnormTexCoord);
+	const Vec2 snapTexCoord = (floor(unnormTexCoord) + 0.5) / textureSize;
+	const Vec4 s1 = textureLod(tex, nearestSampler, uv, lod);
+	const Vec4 s2 = textureLod(tex, nearestSampler, uv + Vec2(texelSize.x, 0.0), lod);
+	const Vec4 s3 = textureLod(tex, nearestSampler, uv + Vec2(0.0, texelSize.y), lod);
+	const Vec4 s4 = textureLod(tex, nearestSampler, uv + texelSize, lod);
+	return mix(mix(s1, s2, f.x), mix(s3, s4, f.x), f.y);
+}

@@ -82,6 +82,9 @@ public:
 	ShaderProgramPtr m_svgfAtrousGrProg;
 	ShaderProgramPtr m_svgfAtrousLastPassGrProg;
 
+	ShaderProgramResourcePtr m_upscaleProg;
+	ShaderProgramPtr m_upscaleGrProg;
+
 	ShaderProgramResourcePtr m_visualizeRenderTargetsProg;
 	/// @}
 
@@ -125,6 +128,7 @@ public:
 	void runDenoise(RenderPassWorkContext& rgraphCtx);
 	void runSvgfVariance(RenderPassWorkContext& rgraphCtx);
 	void runSvgfAtrous(RenderPassWorkContext& rgraphCtx);
+	void runUpscale(RenderPassWorkContext& rgraphCtx);
 
 	void buildSbt();
 
