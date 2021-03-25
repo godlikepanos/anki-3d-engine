@@ -112,7 +112,7 @@ void main()
 			}
 		}
 
-		sumWeight = max(EPSILON, sumWeight);
+		sumWeight += EPSILON;
 
 		ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
 		{
