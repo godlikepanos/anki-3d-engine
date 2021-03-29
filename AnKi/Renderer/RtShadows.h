@@ -40,7 +40,7 @@ public:
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_historyAndFinalRt;
+		return m_runCtx.m_upscaledRt;
 	}
 
 public:
@@ -53,8 +53,9 @@ public:
 
 	/// @name Render targets
 	/// @{
-	TexturePtr m_historyAndFinalRt;
+	TexturePtr m_historyRt;
 	RenderTargetDescription m_intermediateShadowsRtDescr;
+	RenderTargetDescription m_upscaledRtDescr;
 
 	Array<TexturePtr, 2> m_momentsRts;
 	Array<TexturePtr, 2> m_historyLengthRts;
@@ -102,7 +103,8 @@ public:
 		RenderingContext* m_ctx = nullptr;
 
 		Array<RenderTargetHandle, 2> m_intermediateShadowsRts;
-		RenderTargetHandle m_historyAndFinalRt;
+		RenderTargetHandle m_historyRt;
+		RenderTargetHandle m_upscaledRt;
 
 		RenderTargetHandle m_prevMomentsRt;
 		RenderTargetHandle m_currentMomentsRt;
@@ -133,6 +135,11 @@ public:
 	void buildSbt();
 
 	Bool findShadowLayer(U64 lightUuid, U32& layerIdx, Bool& rejectHistoryBuffer);
+
+	U32 getPassCountWithoutUpscaling() const
+	{
+		return (m_useSvgf) ? (m_atrousPassCount + 2) : 3;
+	}
 };
 /// @}
 
