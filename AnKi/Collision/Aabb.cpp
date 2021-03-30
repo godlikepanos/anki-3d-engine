@@ -45,6 +45,7 @@ void Aabb::setFromPointCloud(const Vec3* pointBuffer, U pointCount, PtrSize poin
 	ANKI_ASSERT(pointBuffer);
 	ANKI_ASSERT(pointCount > 1);
 	ANKI_ASSERT(pointStride >= sizeof(Vec3));
+	ANKI_ASSERT((pointStride % sizeof(F32)) == 0 && "Weird strides that breaks strict aliasing rules");
 	ANKI_ASSERT(buffSize >= pointStride * pointCount);
 
 	m_min = Vec4(Vec3(MAX_F32), 0.0f);

@@ -19,6 +19,10 @@ static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& va
 	ANKI_ASSERT(buffEnd != nullptr);
 	ANKI_ASSERT(buffBegin < buffEnd);
 
+	ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(elements)) && "Breaking strict aliasing rules");
+	ANKI_ASSERT(isAligned(alignof(T), ptrToNumber(static_cast<U8*>(buffBegin) + varBlkInfo.m_offset))
+				&& "Breaking strict aliasing rules");
+
 	// Check varBlkInfo
 	ANKI_ASSERT(varBlkInfo.m_offset != -1);
 	ANKI_ASSERT(varBlkInfo.m_arraySize > 0);
@@ -29,7 +33,7 @@ static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& va
 	}
 
 	// Check array size
-	ANKI_ASSERT(static_cast<I16>(elementsCount) <= varBlkInfo.m_arraySize);
+	ANKI_ASSERT(I16(elementsCount) <= varBlkInfo.m_arraySize);
 }
 
 template<typename T>

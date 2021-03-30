@@ -76,6 +76,14 @@ F32 calculateBilateralWeightLinearDepthAndLuminance(F32 depthCenter, F32 luminan
 	return exp(0.0 - max(wL, 0.0) - max(wZ, 0.0));
 }
 
+// Compute a weight given 2 viewspace positions.
+F32 calculateBilateralWeightViewspacePosition(Vec3 posCenter, Vec3 posTap, F32 sigma)
+{
+	const Vec3 t = posCenter - posTap;
+	const F32 dist2 = dot(t, t) + t.z * t.z;
+	return min(exp(-(dist2) / sigma), 1.0);
+}
+
 struct SpatialBilateralContext
 {
 	U32 sampleCount;
