@@ -19,28 +19,27 @@ layout(local_size_x = WORKGROUP_SIZE.x, local_size_y = WORKGROUP_SIZE.y, local_s
 layout(set = 0, binding = 0) uniform sampler u_nearestAnyClampSampler;
 layout(set = 0, binding = 1) uniform sampler u_linearAnyClampSampler;
 layout(set = 0, binding = 2) uniform texture2D u_depthTex;
-layout(set = 0, binding = 3) uniform texture2D u_gbuffer2Tex;
-layout(set = 0, binding = 4) uniform utexture2D u_shadowsTex;
-layout(set = 0, binding = 5) uniform texture2D u_varianceTex;
+layout(set = 0, binding = 3) uniform utexture2D u_shadowsTex;
+layout(set = 0, binding = 4) uniform texture2D u_varianceTex;
 
-layout(set = 0, binding = 6) uniform uimage2D u_shadowsImage;
+layout(set = 0, binding = 5) uniform uimage2D u_shadowsImage;
 #if !LAST_PASS
-layout(set = 0, binding = 7) uniform image2D u_varianceImage;
+layout(set = 0, binding = 6) uniform image2D u_varianceImage;
 #endif
 
 layout(std430, push_constant, row_major) uniform b_pc
 {
-	Mat4 u_invViewProjMat;
+	Mat4 u_invProjMat;
 };
 
 const I32 CONVOLUTION_RADIUS = 2;
 const F32 KERNEL_WEIGHTS[CONVOLUTION_RADIUS + 1] = F32[3](1.0, 2.0 / 3.0, 1.0 / 6.0);
 
-Vec3 unproject(Vec2 uv, F32 depth)
+Vec3 toViewspace(Vec2 uv, F32 depth)
 {
-	const Vec4 worldPos4 = u_invViewProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
-	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
-	return worldPos;
+	const Vec4 pos4 = u_invProjMat * Vec4(UV_TO_NDC(uv), depth, 1.0);
+	const Vec3 pos = pos4.xyz / pos4.w;
+	return pos;
 }
 
 F32 computeShadowsLuma(F32 shadowLayers[MAX_RT_SHADOW_LAYERS])
@@ -95,8 +94,7 @@ void main()
 
 	// Set the reference sample
 	const F32 depthCenter = depth;
-	const Vec3 positionCenter = unproject(uv, depthCenter);
-	const Vec3 normalCenter = readNormalFromGBuffer(u_gbuffer2Tex, u_linearAnyClampSampler, uv);
+	const Vec3 positionCenter = toViewspace(uv, depthCenter);
 
 	// Read center luma
 	F32 shadowLayers[MAX_RT_SHADOW_LAYERS];
@@ -133,13 +131,10 @@ void main()
 
 			// Set the current sample
 			const F32 depthTap = textureLod(u_depthTex, u_linearAnyClampSampler, sampleUv, 0.0).r;
-			const Vec3 positionTap = unproject(sampleUv, depthTap);
-			const Vec3 normalTap =
-				unpackNormalFromGBuffer(textureLod(u_gbuffer2Tex, u_linearAnyClampSampler, sampleUv, 0.0));
+			const Vec3 positionTap = toViewspace(sampleUv, depthTap);
 
 			// Do bilateral
-			// F32 w = calculateBilateralWeightPlane(positionCenter, normalCenter, positionTap, normalTap, 1.0);
-			F32 w = calculateBilateralWeightDepth(depthCenter, depthTap, 1.0);
+			F32 w = calculateBilateralWeightViewspacePosition(positionCenter, positionTap, 0.5);
 
 			// Include more weights
 			w *= wl;

@@ -554,13 +554,12 @@ void RtShadows::runSvgfVariance(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_currentMomentsRt);
 	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_currentHistoryLengthRt);
 	rgraphCtx.bindColorTexture(0, 5, m_r->getDepthDownscale().getHiZRt());
-	rgraphCtx.bindColorTexture(0, 6, m_r->getGBuffer().getColorRt(2));
 
-	rgraphCtx.bindImage(0, 7, m_runCtx.m_intermediateShadowsRts[1]);
-	rgraphCtx.bindImage(0, 8, m_runCtx.m_varianceRts[1]);
+	rgraphCtx.bindImage(0, 6, m_runCtx.m_intermediateShadowsRts[1]);
+	rgraphCtx.bindImage(0, 7, m_runCtx.m_varianceRts[1]);
 
-	// const Mat4& invViewProjMat = m_runCtx.m_ctx->m_matrices.m_invertedViewProjectionJitter;
-	// cmdb->setPushConstants(&invViewProjMat, sizeof(invViewProjMat));
+	const Mat4& invProjMat = m_runCtx.m_ctx->m_matrices.m_projectionJitter.getInverse();
+	cmdb->setPushConstants(&invProjMat, sizeof(invProjMat));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth() / 2, m_r->getHeight() / 2);
 }
@@ -585,22 +584,21 @@ void RtShadows::runSvgfAtrous(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 
 	rgraphCtx.bindColorTexture(0, 2, m_r->getDepthDownscale().getHiZRt());
-	rgraphCtx.bindColorTexture(0, 3, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_intermediateShadowsRts[readRtIdx]);
-	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_varianceRts[readRtIdx]);
+	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_intermediateShadowsRts[readRtIdx]);
+	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_varianceRts[readRtIdx]);
 
 	if(!lastPass)
 	{
-		rgraphCtx.bindImage(0, 7, m_runCtx.m_varianceRts[!readRtIdx]);
-		rgraphCtx.bindImage(0, 6, m_runCtx.m_intermediateShadowsRts[!readRtIdx]);
+		rgraphCtx.bindImage(0, 5, m_runCtx.m_intermediateShadowsRts[!readRtIdx]);
+		rgraphCtx.bindImage(0, 6, m_runCtx.m_varianceRts[!readRtIdx]);
 	}
 	else
 	{
-		rgraphCtx.bindImage(0, 6, m_runCtx.m_historyRt);
+		rgraphCtx.bindImage(0, 5, m_runCtx.m_historyRt);
 	}
 
-	// const Mat4& invViewProjMat = m_runCtx.m_ctx->m_matrices.m_invertedViewProjectionJitter;
-	// cmdb->setPushConstants(&invViewProjMat, sizeof(invViewProjMat));
+	const Mat4& invProjMat = m_runCtx.m_ctx->m_matrices.m_projectionJitter.getInverse();
+	cmdb->setPushConstants(&invProjMat, sizeof(invProjMat));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth() / 2, m_r->getHeight() / 2);
 
