@@ -3,6 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator RAYS_PER_PIXEL 1 2 4 8
 #pragma anki library RtShadows
 #pragma anki ray_type 0
 
@@ -92,26 +93,34 @@ void main()
 	zeroRtShadowLayers(shadowFactors);
 
 	// Get a random factor
+	Vec3 random[RAYS_PER_PIXEL];
+	for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
+	{
+		const U32 frameIdx = u_lightingUniforms.m_frameCount * RAYS_PER_PIXEL + i;
 #if 0
-	const UVec3 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_lightingUniforms.m_frameCount));
-	const Vec3 randomf = Vec3(random) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
+		const UVec3 irandom = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, frameIdx));
+		random[i] = Vec3(irandom) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
 #else
-	Vec3 randomf =
-		textureLod(u_blueNoiseTex, u_trilinearRepeatSampler, Vec2(gl_LaunchSizeEXT.xy) / Vec2(64.0) * uv, 0.0).rgb;
-	randomf = animateBlueNoise(randomf, u_lightingUniforms.m_frameCount);
-	randomf = randomf * 2.0 - 1.0;
+		random[i] =
+			textureLod(u_blueNoiseTex, u_trilinearRepeatSampler, Vec2(gl_LaunchSizeEXT.xy) / Vec2(64.0) * uv, 0.0).rgb;
+		random[i] = animateBlueNoise(random[i], frameIdx);
+		random[i] = random[i] * 2.0 - 1.0; // In [-1.0, 1.0]
 #endif
+	}
 
 	// Dir light
 	ANKI_BRANCH if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
 	{
-		const Vec3 dirLightPos = worldPos + -u_dirLight.m_dir * 10.0 + randomf;
-		const Vec3 rayDir = normalize(dirLightPos - worldPos);
-
-		const F32 lambertTerm = dot(rayDir, normal);
-		ANKI_BRANCH if(lambertTerm > 0.0)
+		for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
 		{
-			shadowFactors[u_dirLight.m_shadowLayer] = trace(worldPos, rayDir, 10000.0);
+			const Vec3 dirLightPos = worldPos + -u_dirLight.m_dir * 10.0 + random[i];
+			const Vec3 rayDir = normalize(dirLightPos - worldPos);
+
+			const F32 lambertTerm = dot(rayDir, normal);
+			ANKI_BRANCH if(lambertTerm > 0.0)
+			{
+				shadowFactors[u_dirLight.m_shadowLayer] += trace(worldPos, rayDir, 10000.0) / F32(RAYS_PER_PIXEL);
+			}
 		}
 	}
 
@@ -123,16 +132,20 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * randomf;
-			const Vec3 toLight = lightPos - worldPos;
-			const F32 distanceToLight = length(toLight);
-			const Vec3 rayDir = toLight / distanceToLight; // normalize
-
-			const Bool inside = distanceToLight < light.m_radius;
-			const F32 lambertTerm = dot(rayDir, normal);
-			ANKI_BRANCH if(inside && lambertTerm > 0.0)
+			for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
 			{
-				shadowFactors[light.m_shadowLayer] = trace(worldPos, rayDir, distanceToLight);
+				const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * random[i];
+				const Vec3 toLight = lightPos - worldPos;
+				const F32 distanceToLight = length(toLight);
+				const Vec3 rayDir = toLight / distanceToLight; // normalize
+
+				const Bool inside = distanceToLight < light.m_radius;
+				const F32 lambertTerm = dot(rayDir, normal);
+				ANKI_BRANCH if(inside && lambertTerm > 0.0)
+				{
+					shadowFactors[light.m_shadowLayer] +=
+						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
+				}
 			}
 		}
 	}
@@ -144,15 +157,19 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowmapId >= 0.0)
 		{
-			const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * randomf;
-			const Vec3 toLight = lightPos - worldPos;
-			const F32 distanceToLight = length(toLight);
-			const Vec3 rayDir = toLight / distanceToLight; // normalize
-
-			const F32 lambertTerm = dot(rayDir, normal);
-			ANKI_BRANCH if(lambertTerm > 0.0)
+			for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
 			{
-				shadowFactors[light.m_shadowLayer] = trace(worldPos, rayDir, distanceToLight);
+				const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * random[i];
+				const Vec3 toLight = lightPos - worldPos;
+				const F32 distanceToLight = length(toLight);
+				const Vec3 rayDir = toLight / distanceToLight; // normalize
+
+				const F32 lambertTerm = dot(rayDir, normal);
+				ANKI_BRANCH if(lambertTerm > 0.0)
+				{
+					shadowFactors[light.m_shadowLayer] +=
+						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
+				}
 			}
 		}
 	}

@@ -43,8 +43,12 @@ Error RtShadows::initInternal(const ConfigSet& cfg)
 	// Ray gen program
 	{
 		ANKI_CHECK(getResourceManager().loadResource("Shaders/RtShadowsRayGen.ankiprog", m_rayGenProg));
+
+		ShaderProgramResourceVariantInitInfo variantInitInfo(m_rayGenProg);
+		variantInitInfo.addMutation("RAYS_PER_PIXEL", cfg.getNumberU8("r_rtShadowsRaysPerPixel"));
+
 		const ShaderProgramResourceVariant* variant;
-		m_rayGenProg->getOrCreateVariant(variant);
+		m_rayGenProg->getOrCreateVariant(variantInitInfo, variant);
 		m_rtLibraryGrProg = variant->getProgram();
 		m_rayGenShaderGroupIdx = variant->getShaderGroupHandleIndex();
 	}
