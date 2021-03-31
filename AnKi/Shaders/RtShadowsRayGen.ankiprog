@@ -32,6 +32,7 @@ layout(set = 0, binding = 16) uniform texture2D u_prevHistoryLengthTex;
 layout(set = 0, binding = 17) uniform image2D u_historyLengthImage;
 layout(set = 0, binding = 18) uniform texture2D u_prevMomentsTex;
 layout(set = 0, binding = 19) uniform image2D u_momentsImage;
+layout(set = 0, binding = 20) uniform texture2D u_blueNoiseTex;
 
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
@@ -91,8 +92,15 @@ void main()
 	zeroRtShadowLayers(shadowFactors);
 
 	// Get a random factor
+#if 0
 	const UVec3 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_lightingUniforms.m_frameCount));
 	const Vec3 randomf = Vec3(random) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
+#else
+	Vec3 randomf =
+		textureLod(u_blueNoiseTex, u_trilinearRepeatSampler, Vec2(gl_LaunchSizeEXT.xy) / Vec2(64.0) * uv, 0.0).rgb;
+	randomf = animateBlueNoise(randomf, u_lightingUniforms.m_frameCount);
+	randomf = randomf * 2.0 - 1.0;
+#endif
 
 	// Dir light
 	ANKI_BRANCH if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)

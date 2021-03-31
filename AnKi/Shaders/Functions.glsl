@@ -576,3 +576,10 @@ Vec4 bilinearFiltering(texture2D tex, sampler nearestSampler, Vec2 uv, F32 lod, 
 	const Vec4 s4 = textureLod(tex, nearestSampler, uv + texelSize, lod);
 	return mix(mix(s1, s2, f.x), mix(s3, s4, f.x), f.y);
 }
+
+// https://www.shadertoy.com/view/WsfBDf
+Vec3 animateBlueNoise(Vec3 inputBlueNoise, U32 frameIdx)
+{
+	const F32 goldenRatioConjugate = 0.61803398875;
+	return fract(inputBlueNoise + F32(frameIdx % 64u) * goldenRatioConjugate);
+}

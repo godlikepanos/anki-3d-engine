@@ -89,6 +89,8 @@ public:
 	ShaderProgramResourcePtr m_visualizeRenderTargetsProg;
 	/// @}
 
+	TextureResourcePtr m_blueNoiseTex;
+
 	Array<ShadowLayer, MAX_RT_SHADOW_LAYERS> m_shadowLayers;
 
 	U32 m_sbtRecordSize = 256;

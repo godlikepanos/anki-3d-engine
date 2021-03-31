@@ -16,11 +16,11 @@ import shutil
 from PIL import Image
 from ctypes import Structure, sizeof, c_int, c_char, c_byte, c_uint
 from io import BytesIO
+import sys
 
 
 class CStruct(Structure):
     """ C structure """
-
     def to_bytearray(self):
         s = BytesIO()
         s.write(self)
@@ -194,27 +194,28 @@ def parse_commandline():
       "need to define the executable explicitly",
       formatter_class = argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(
-        "-i", "--input", nargs="+", required=True, help="specify the image(s) to convert. Seperate with space")
+    parser.add_argument("-i",
+                        "--input",
+                        nargs="+",
+                        required=True,
+                        help="specify the image(s) to convert. Seperate with space")
 
     parser.add_argument("-o", "--output", required=True, help="specify output AnKi image.")
 
-    parser.add_argument(
-        "-t",
-        "--type",
-        default="2D",
-        choices=["2D", "3D", "2DArray"],
-        help="type of the image (2D or cube or 3D or 2DArray)")
+    parser.add_argument("-t",
+                        "--type",
+                        default="2D",
+                        choices=["2D", "3D", "2DArray"],
+                        help="type of the image (2D or cube or 3D or 2DArray)")
 
     parser.add_argument("-f", "--fast", type=int, default=0, help="run the fast version of the converters")
 
     parser.add_argument("-n", "--normal", type=int, default=0, help="assume the texture is normal")
 
-    parser.add_argument(
-        "-c",
-        "--convert-path",
-        default="/usr/bin/convert",
-        help="the executable where convert tool is located. Stupid etcpack cannot get it from PATH")
+    parser.add_argument("-c",
+                        "--convert-path",
+                        default="/usr/bin/convert",
+                        help="the executable where convert tool is located. Stupid etcpack cannot get it from PATH")
 
     parser.add_argument("--no-alpha", type=int, default=0, help="remove alpha channel")
 
@@ -230,11 +231,10 @@ def parse_commandline():
         default=0,
         help="assume the input textures are sRGB. If this option is true then convert them to linear RGB")
 
-    parser.add_argument(
-        "--filter",
-        default="default",
-        choices=["default", "linear", "nearest"],
-        help="texture filtering. Can be: default, linear, nearest")
+    parser.add_argument("--filter",
+                        default="default",
+                        choices=["default", "linear", "nearest"],
+                        help="texture filtering. Can be: default, linear, nearest")
 
     parser.add_argument("--mip-count", type=int, default=0xFFFF, help="Max number of mipmaps")
 
@@ -426,7 +426,9 @@ def create_dds_images(mips_fnames, tmp_dir, fast, color_format, normal):
         args.append(out_fname)
 
         printi("  " + " ".join(args))
-        subprocess.check_call(args, stdout=subprocess.PIPE)
+        my_env = os.environ.copy()
+        my_env["PATH"] = sys.path[0] + "/../../ThirdParty/Bin/compressonator/:" + my_env["PATH"]
+        subprocess.check_call(args, stdout=subprocess.PIPE, env=my_env)
 
 
 def write_raw(tex_file, fname, width, height, color_format):

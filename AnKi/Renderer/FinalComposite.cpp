@@ -41,7 +41,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb864x64.png", m_blueNoise));
 
 	// Progs
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/FinalComposite.ankiprog", m_prog));
@@ -139,12 +139,13 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 			rgraphCtx.bindColorTexture(0, 10, m_r->getDbg().getRt());
 		}
 
-		struct PushConsts
+		class PushConsts
 		{
-			Vec4 m_blueNoiseLayerPad3;
+		public:
+			UVec4 m_frameCountPad3;
 			Mat4 m_prevViewProjMatMulInvViewProjMat;
 		} pconsts;
-		pconsts.m_blueNoiseLayerPad3.x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());
+		pconsts.m_frameCountPad3.x() = m_r->getFrameCount() & MAX_U32;
 		pconsts.m_prevViewProjMatMulInvViewProjMat = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection
 													 * ctx.m_matrices.m_viewProjectionJitter.getInverse();
 		cmdb->setPushConstants(&pconsts, sizeof(pconsts));

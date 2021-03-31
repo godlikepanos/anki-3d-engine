@@ -32,7 +32,7 @@ layout(set = 0, binding = 3) uniform sampler u_trilinearRepeatSampler;
 layout(set = 0, binding = 4) uniform texture2D u_lightShadingRt;
 layout(set = 0, binding = 5) uniform texture2D u_ppsBloomLfRt;
 layout(set = 0, binding = 6) uniform texture3D u_lut;
-layout(set = 0, binding = 7) uniform texture2DArray u_blueNoise;
+layout(set = 0, binding = 7) uniform texture2D u_blueNoise;
 layout(set = 0, binding = 8) uniform texture2D u_motionVectorsRt;
 layout(set = 0, binding = 9) uniform texture2D u_depthRt;
 #if DBG_ENABLED
@@ -41,7 +41,7 @@ layout(set = 0, binding = 10) uniform texture2D u_dbgOutlineRt;
 
 layout(push_constant, row_major, std430) uniform pc_
 {
-	Vec4 u_blueNoiseLayerPad3;
+	UVec4 u_frameCountPad3;
 	Mat4 u_prevViewProjMatMulInvViewProjMat;
 };
 
@@ -82,8 +82,9 @@ void main()
 	out_color = colorGrading(out_color);
 
 #if BLUE_NOISE
-	const Vec3 bnUvw = Vec3(Vec2(FB_SIZE) / Vec2(64.0) * uv, u_blueNoiseLayerPad3.x);
+	const Vec2 bnUvw = Vec2(FB_SIZE) / Vec2(64.0) * uv;
 	Vec3 blueNoise = textureLod(u_blueNoise, u_trilinearRepeatSampler, bnUvw, 0.0).rgb;
+	blueNoise = animateBlueNoise(blueNoise, u_frameCountPad3.x);
 	blueNoise = blueNoise * 2.0 - 1.0;
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
 
