@@ -127,7 +127,7 @@ void main()
 			const F32 variance = textureLod(u_varianceTex, u_linearAnyClampSampler, sampleUv, 0.0).x;
 			const F32 sigmaL = 4.0;
 			const F32 lumaDiff = abs(luma - refLuma);
-			const F32 wl = min(1.0, exp((lumaDiff - 1.0) / (sigmaL * sqrt(varianceCenter + 0.001) + EPSILON)));
+			const F32 wl = min(1.0, exp(-lumaDiff / (sigmaL * sqrt(varianceCenter + 0.001) + EPSILON)));
 
 			// Set the current sample
 			const F32 depthTap = textureLod(u_depthTex, u_linearAnyClampSampler, sampleUv, 0.0).r;
