@@ -517,7 +517,23 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				{
 					// Compute
 					ShaderProgramResourceVariantInitInfo variantInitInfo(m_clearTexComputeProg);
-					variantInitInfo.addMutation("IS_2D", I32((inf.m_type != TextureType::_3D) ? 1 : 0));
+					variantInitInfo.addMutation("TEXTURE_DIMENSIONS", I32((inf.m_type == TextureType::_3D) ? 3 : 2));
+
+					const FormatInfo formatInfo = getFormatInfo(inf.m_format);
+					I32 componentType = 0;
+					if(formatInfo.m_shaderType == 0)
+					{
+						componentType = 0;
+					}
+					else if(formatInfo.m_shaderType == 1)
+					{
+						componentType = 1;
+					}
+					else
+					{
+						ANKI_ASSERT(!"Not supported");
+					}
+					variantInitInfo.addMutation("COMPONENT_TYPE", componentType);
 
 					const ShaderProgramResourceVariant* variant;
 					m_clearTexComputeProg->getOrCreateVariant(variantInitInfo, variant);

@@ -40,7 +40,7 @@ public:
 		}
 
 		const PtrSize posRange = m_positionBufferOffset + PtrSize(m_positionStride) * m_positionCount;
-		const PtrSize formatSize = getFormatBytes(m_positionsFormat);
+		const PtrSize formatSize = getFormatInfo(m_positionsFormat).m_texelSize;
 		if(m_positionStride < formatSize)
 		{
 			return false;
