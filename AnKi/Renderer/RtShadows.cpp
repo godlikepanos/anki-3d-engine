@@ -497,7 +497,7 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 8, m_runCtx.m_historyRt);
 	cmdb->bindSampler(0, 9, m_r->getSamplers().m_trilinearClamp);
 	cmdb->bindSampler(0, 10, m_r->getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindColorTexture(0, 11, m_r->getDepthDownscale().getHiZRt());
+	rgraphCtx.bindTexture(0, 11, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 	rgraphCtx.bindColorTexture(0, 12, m_r->getMotionVectors().getMotionVectorsRt());
 	rgraphCtx.bindColorTexture(0, 13, m_r->getMotionVectors().getRejectionFactorRt());
 	rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(2));
@@ -530,7 +530,7 @@ void RtShadows::runDenoise(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_intermediateShadowsRts[m_runCtx.m_denoiseOrientation]);
-	rgraphCtx.bindColorTexture(0, 3, m_r->getDepthDownscale().getHiZRt());
+	rgraphCtx.bindTexture(0, 3, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 	rgraphCtx.bindColorTexture(0, 4, m_r->getGBuffer().getColorRt(2));
 	rgraphCtx.bindColorTexture(0, 5, m_runCtx.m_currentMomentsRt);
 	rgraphCtx.bindColorTexture(0, 6, m_runCtx.m_currentHistoryLengthRt);
@@ -560,7 +560,7 @@ void RtShadows::runSvgfVariance(RenderPassWorkContext& rgraphCtx)
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_intermediateShadowsRts[0]);
 	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_currentMomentsRt);
 	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_currentHistoryLengthRt);
-	rgraphCtx.bindColorTexture(0, 5, m_r->getDepthDownscale().getHiZRt());
+	rgraphCtx.bindTexture(0, 5, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 
 	rgraphCtx.bindImage(0, 6, m_runCtx.m_intermediateShadowsRts[1]);
 	rgraphCtx.bindImage(0, 7, m_runCtx.m_varianceRts[1]);
@@ -590,7 +590,7 @@ void RtShadows::runSvgfAtrous(RenderPassWorkContext& rgraphCtx)
 	cmdb->bindSampler(0, 0, m_r->getSamplers().m_nearestNearestClamp);
 	cmdb->bindSampler(0, 1, m_r->getSamplers().m_trilinearClamp);
 
-	rgraphCtx.bindColorTexture(0, 2, m_r->getDepthDownscale().getHiZRt());
+	rgraphCtx.bindTexture(0, 2, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 	rgraphCtx.bindColorTexture(0, 3, m_runCtx.m_intermediateShadowsRts[readRtIdx]);
 	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_varianceRts[readRtIdx]);
 
@@ -623,7 +623,7 @@ void RtShadows::runUpscale(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindColorTexture(0, 2, m_runCtx.m_historyRt);
 	rgraphCtx.bindImage(0, 3, m_runCtx.m_upscaledRt);
-	rgraphCtx.bindColorTexture(0, 4, m_r->getDepthDownscale().getHiZRt());
+	rgraphCtx.bindTexture(0, 4, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 	rgraphCtx.bindTexture(0, 5, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 
 	dispatchPPCompute(cmdb, 8, 8, m_r->getWidth(), m_r->getHeight());

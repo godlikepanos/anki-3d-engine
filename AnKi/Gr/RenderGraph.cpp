@@ -1528,6 +1528,11 @@ StringAuto RenderGraph::asUsageToStr(StackAllocator<U8>& alloc, AccelerationStru
 	ANKI_AS_USAGE(COMPUTE_READ);
 	ANKI_AS_USAGE(TRACE_RAYS_READ);
 
+	if(!usage)
+	{
+		slist.pushBackSprintf("NONE");
+	}
+
 #	undef ANKI_AS_USAGE
 
 	ANKI_ASSERT(!slist.isEmpty());
