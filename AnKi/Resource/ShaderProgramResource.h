@@ -91,10 +91,10 @@ public:
 	}
 
 	/// Only for hit ray tracing programs.
-	U32 getHitShaderGroupHandleIndex() const
+	U32 getShaderGroupHandleIndex() const
 	{
-		ANKI_ASSERT(m_hitShaderGroupHandleIndex < MAX_U32);
-		return m_hitShaderGroupHandleIndex;
+		ANKI_ASSERT(m_shaderGroupHandleIndex < MAX_U32);
+		return m_shaderGroupHandleIndex;
 	}
 
 private:
@@ -102,7 +102,7 @@ private:
 	const ShaderProgramBinaryVariant* m_binaryVariant = nullptr;
 	BitSet<128, U64> m_activeConsts = {false};
 	Array<U32, 3> m_workgroupSizes;
-	U32 m_hitShaderGroupHandleIndex = MAX_U32; ///< Cache the index of the handle here.
+	U32 m_shaderGroupHandleIndex = MAX_U32; ///< Cache the index of the handle here.
 };
 
 /// The value of a constant.

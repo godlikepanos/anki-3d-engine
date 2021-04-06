@@ -1,7 +1,7 @@
 <serializer>
 	<includes>
-		<include file="&lt;anki/resource/Common.h&gt;"/>
-		<include file="&lt;anki/Math.h&gt;"/>
+		<include file="&lt;AnKi/Resource/Common.h&gt;"/>
+		<include file="&lt;AnKi/Math.h&gt;"/>
 	</includes>
 
 	<doxygen_group name="resource"/>

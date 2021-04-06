@@ -38,6 +38,7 @@ public:
 	Mat4 m_jitter = Mat4::getIdentity();
 	Mat4 m_projectionJitter = Mat4::getIdentity();
 	Mat4 m_viewProjectionJitter = Mat4::getIdentity();
+	Mat4 m_invertedViewProjectionJitter = Mat4::getIdentity();
 };
 
 /// Rendering context.
@@ -382,7 +383,8 @@ public:
 	}
 
 	// Need to call it after the handle is set by the RenderGraph.
-	void getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid);
+	void getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid,
+									 ShaderProgramPtr& optionalShaderProgram);
 	/// @}
 
 private:

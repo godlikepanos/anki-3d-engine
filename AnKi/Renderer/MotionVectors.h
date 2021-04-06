@@ -41,7 +41,8 @@ public:
 		return m_runCtx.m_rejectionFactorRtHandle;
 	}
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+							  ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		if(rtName == "MotionVectors")
 		{

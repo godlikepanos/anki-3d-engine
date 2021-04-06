@@ -5,42 +5,61 @@
 
 // A slow compute program to clear an image with a contant color
 
-#pragma anki mutator IS_2D 0 1
+#pragma anki mutator TEXTURE_DIMENSIONS 2 3
+#pragma anki mutator COMPONENT_TYPE 0 1 // 0 is float, 1 is uint
 
 #pragma anki start comp
 #include <AnKi/Shaders/Common.glsl>
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = (IS_2D == 1) ? 1 : 8) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = (TEXTURE_DIMENSIONS == 2) ? 1 : 8) in;
 
 layout(push_constant) uniform pc_
 {
+#if COMPONENT_TYPE == 0
 	Vec4 u_clearColor;
+#	define CLEAR_COLOR u_clearColor
+#else
+	UVec4 u_uclearColor;
+#	define CLEAR_COLOR u_uclearColor
+#endif
 };
 
-#if IS_2D
+#if TEXTURE_DIMENSIONS == 2
+#	if COMPONENT_TYPE == 0
 layout(set = 0, binding = 0) uniform writeonly image2D u_img2d;
+#		define IMAGE u_img2d
+#	else
+layout(set = 0, binding = 0) uniform writeonly uimage2D u_uimg2d;
+#		define IMAGE u_uimg2d
+#	endif
 #else
+#	if COMPONENT_TYPE == 0
 layout(set = 0, binding = 0) uniform writeonly image3D u_img3d;
+#		define IMAGE u_img3d
+#	else
+layout(set = 0, binding = 0) uniform writeonly uimage3D u_uimg3d;
+#		define IMAGE u_uimg3d
+#	endif
 #endif
 
 void main()
 {
-#if IS_2D
-	const UVec2 size = UVec2(imageSize(u_img2d));
+#if TEXTURE_DIMENSIONS == 2
+	const UVec2 size = UVec2(imageSize(IMAGE));
 	if(gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y)
 	{
 		return;
 	}
 
-	imageStore(u_img2d, IVec2(gl_GlobalInvocationID.xy), u_clearColor);
+	imageStore(IMAGE, IVec2(gl_GlobalInvocationID.xy), CLEAR_COLOR);
 #else
-	const UVec3 size = UVec3(imageSize(u_img3d));
+	const UVec3 size = UVec3(imageSize(IMAGE));
 	if(gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y || gl_GlobalInvocationID.z >= size.z)
 	{
 		return;
 	}
 
-	imageStore(u_img3d, IVec3(gl_GlobalInvocationID), u_clearColor);
+	imageStore(IMAGE, IVec3(gl_GlobalInvocationID), CLEAR_COLOR);
 #endif
 }
 

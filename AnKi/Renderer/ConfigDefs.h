@@ -49,3 +49,7 @@ ANKI_CONFIG_OPTION(r_bloomThreshold, 2.5, 0.0, 256.0)
 ANKI_CONFIG_OPTION(r_bloomScale, 2.5, 0.0, 256.0)
 
 ANKI_CONFIG_OPTION(r_smResolveFactor, 0.5, 0.25, 1.0)
+
+ANKI_CONFIG_OPTION(r_rtShadowsSvgf, 0, 0, 1)
+ANKI_CONFIG_OPTION(r_rtShadowsSvgfAtrousPassCount, 1, 1, 20)
+ANKI_CONFIG_OPTION(r_rtShadowsRaysPerPixel, 1, 1, 8)

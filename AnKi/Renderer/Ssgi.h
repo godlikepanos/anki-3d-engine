@@ -37,7 +37,8 @@ public:
 		return m_runCtx.m_finalRt;
 	}
 
-	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle) const override
+	void getDebugRenderTarget(CString rtName, RenderTargetHandle& handle,
+							  ShaderProgramPtr& optionalShaderProgram) const override
 	{
 		ANKI_ASSERT(rtName == "SSGI");
 		handle = m_runCtx.m_finalRt;

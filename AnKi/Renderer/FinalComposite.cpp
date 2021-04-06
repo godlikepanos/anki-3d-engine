@@ -41,7 +41,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fbDescr.bake();
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb864x64.png", m_blueNoise));
 
 	// Progs
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/FinalComposite.ankiprog", m_prog));
@@ -56,15 +56,17 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 
 	for(U32 dbg = 0; dbg < 2; ++dbg)
 	{
-		for(U32 dbgRt = 0; dbgRt < 2; ++dbgRt)
-		{
-			const ShaderProgramResourceVariant* variant;
-			variantInitInfo.addMutation("DBG_ENABLED", dbg);
-			variantInitInfo.addMutation("DBG_RENDER_TARGET_ENABLED", dbgRt);
-			m_prog->getOrCreateVariant(variantInitInfo, variant);
-			m_grProgs[dbg][dbgRt] = variant->getProgram();
-		}
+		const ShaderProgramResourceVariant* variant;
+		variantInitInfo.addMutation("DBG_ENABLED", dbg);
+		m_prog->getOrCreateVariant(variantInitInfo, variant);
+		m_grProgs[dbg] = variant->getProgram();
 	}
+
+	ANKI_CHECK(getResourceManager().loadResource("Shaders/VisualizeRenderTarget.ankiprog",
+												 m_defaultVisualizeRenderTargetProg));
+	const ShaderProgramResourceVariant* variant;
+	m_defaultVisualizeRenderTargetProg->getOrCreateVariant(variant);
+	m_defaultVisualizeRenderTargetGrProg = variant->getProgram();
 
 	return Error::NONE;
 }
@@ -97,47 +99,64 @@ void FinalComposite::run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	const Bool dbgEnabled = m_r->getDbg().getEnabled();
 	RenderTargetHandle dbgRt;
 	Bool dbgRtValid;
-	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid);
+	ShaderProgramPtr optionalDebugProgram;
+	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid, optionalDebugProgram);
 
-	cmdb->bindShaderProgram(m_grProgs[dbgEnabled][dbgRtValid]);
+	// Bind program
+	if(dbgRtValid && optionalDebugProgram.isCreated())
+	{
+		cmdb->bindShaderProgram(optionalDebugProgram);
+	}
+	else if(dbgRtValid)
+	{
+		cmdb->bindShaderProgram(m_defaultVisualizeRenderTargetGrProg);
+	}
+	else
+	{
+		cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
+	}
 
 	// Bind stuff
-	rgraphCtx.bindUniformBuffer(0, 0, m_r->getTonemapping().getAverageLuminanceBuffer());
-
-	cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
-	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
-	cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearRepeat);
-
-	rgraphCtx.bindColorTexture(0, 4, m_r->getTemporalAA().getRt());
-
-	rgraphCtx.bindColorTexture(0, 5, m_r->getBloom().getRt());
-	cmdb->bindTexture(0, 6, m_lut->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(0, 7, m_blueNoise->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
-	rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindTexture(0, 9, m_r->getGBuffer().getDepthRt(), TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
-
-	if(dbgEnabled)
+	if(!dbgRtValid)
 	{
-		rgraphCtx.bindColorTexture(0, 10, m_r->getDbg().getRt());
+		rgraphCtx.bindUniformBuffer(0, 0, m_r->getTonemapping().getAverageLuminanceBuffer());
+
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
+		cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearClamp);
+		cmdb->bindSampler(0, 3, m_r->getSamplers().m_trilinearRepeat);
+
+		rgraphCtx.bindColorTexture(0, 4, m_r->getTemporalAA().getRt());
+
+		rgraphCtx.bindColorTexture(0, 5, m_r->getBloom().getRt());
+		cmdb->bindTexture(0, 6, m_lut->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->bindTexture(0, 7, m_blueNoise->getGrTextureView(), TextureUsageBit::SAMPLED_FRAGMENT);
+		rgraphCtx.bindColorTexture(0, 8, m_r->getMotionVectors().getMotionVectorsRt());
+		rgraphCtx.bindTexture(0, 9, m_r->getGBuffer().getDepthRt(),
+							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
+
+		if(dbgEnabled)
+		{
+			rgraphCtx.bindColorTexture(0, 10, m_r->getDbg().getRt());
+		}
+
+		class PushConsts
+		{
+		public:
+			UVec4 m_frameCountPad3;
+			Mat4 m_prevViewProjMatMulInvViewProjMat;
+		} pconsts;
+		pconsts.m_frameCountPad3.x() = m_r->getFrameCount() & MAX_U32;
+		pconsts.m_prevViewProjMatMulInvViewProjMat = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection
+													 * ctx.m_matrices.m_viewProjectionJitter.getInverse();
+		cmdb->setPushConstants(&pconsts, sizeof(pconsts));
 	}
-
-	if(dbgRtValid)
+	else
 	{
-		rgraphCtx.bindColorTexture(0, 11, dbgRt);
+		rgraphCtx.bindColorTexture(0, 0, dbgRt);
+		cmdb->bindSampler(0, 1, m_r->getSamplers().m_nearestNearestClamp);
 	}
-
-	struct PushConsts
-	{
-		Vec4 m_blueNoiseLayerPad3;
-		Mat4 m_prevViewProjMatMulInvViewProjMat;
-	} pconsts;
-	pconsts.m_blueNoiseLayerPad3.x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());
-	pconsts.m_prevViewProjMatMulInvViewProjMat = ctx.m_matrices.m_jitter * ctx.m_prevMatrices.m_viewProjection
-												 * ctx.m_matrices.m_viewProjectionJitter.getInverse();
-	cmdb->setPushConstants(&pconsts, sizeof(pconsts));
 
 	cmdb->setViewport(0, 0, ctx.m_outRenderTargetWidth, ctx.m_outRenderTargetHeight);
-
 	drawQuad(cmdb);
 
 	// Draw UI
@@ -174,7 +193,8 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 
 	RenderTargetHandle dbgRt;
 	Bool dbgRtValid;
-	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid);
+	ShaderProgramPtr debugProgram;
+	m_r->getCurrentDebugRenderTarget(dbgRt, dbgRtValid, debugProgram);
 	if(dbgRtValid)
 	{
 		pass.newDependency({dbgRt, TextureUsageBit::SAMPLED_FRAGMENT});

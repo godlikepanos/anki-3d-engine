@@ -46,9 +46,9 @@ Bool ShaderProgramInitInfo::isValid() const
 	}
 
 	ShaderTypeBit rtMask = ShaderTypeBit::NONE;
-	if(m_rayTracingShaders.m_rayGenShader)
+	for(const ShaderPtr& s : m_rayTracingShaders.m_rayGenShaders)
 	{
-		if(m_rayTracingShaders.m_rayGenShader->getShaderType() != ShaderType::RAY_GEN)
+		if(s->getShaderType() != ShaderType::RAY_GEN)
 		{
 			return false;
 		}

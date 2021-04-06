@@ -2924,13 +2924,13 @@ void main()
 
 	// Create the ppline
 	ShaderProgramPtr rtProg;
-	constexpr U32 rayGenGroupIdx = 0;
-	constexpr U32 missGroupIdx = 1;
-	constexpr U32 shadowMissGroupIdx = 2;
-	constexpr U32 lambertianChitGroupIdx = 3;
-	constexpr U32 lambertianRoomChitGroupIdx = 4;
-	constexpr U32 emissiveChitGroupIdx = 5;
-	constexpr U32 shadowAhitGroupIdx = 6;
+	constexpr U32 rayGenGroupIdx = 1;
+	constexpr U32 missGroupIdx = 2;
+	constexpr U32 shadowMissGroupIdx = 3;
+	constexpr U32 lambertianChitGroupIdx = 4;
+	constexpr U32 lambertianRoomChitGroupIdx = 5;
+	constexpr U32 emissiveChitGroupIdx = 6;
+	constexpr U32 shadowAhitGroupIdx = 7;
 	constexpr U32 hitgroupCount = 7;
 	{
 		const CString commonSrcPart = R"(
@@ -3294,9 +3294,12 @@ void main()
 
 		Array<ShaderPtr, 2> missShaders = {missShader, shadowMissShader};
 
+		// Add the same 2 times to test multiple ray gen shaders
+		Array<ShaderPtr, 2> rayGenShaders = {rayGenShader, rayGenShader};
+
 		ShaderProgramInitInfo inf;
 		inf.m_rayTracingShaders.m_hitGroups = hitGroups;
-		inf.m_rayTracingShaders.m_rayGenShader = rayGenShader;
+		inf.m_rayTracingShaders.m_rayGenShaders = rayGenShaders;
 		inf.m_rayTracingShaders.m_missShaders = missShaders;
 
 		rtProg = gr->newShaderProgram(inf);
@@ -3318,7 +3321,8 @@ void main()
 		memset(&mapped[0], 0, inf.m_size);
 
 		ConstWeakArray<U8> handles = rtProg->getShaderGroupHandles();
-		ANKI_TEST_EXPECT_EQ(handles.getSize(), gr->getDeviceCapabilities().m_shaderGroupHandleSize * hitgroupCount);
+		ANKI_TEST_EXPECT_EQ(handles.getSize(),
+							gr->getDeviceCapabilities().m_shaderGroupHandleSize * (hitgroupCount + 1));
 
 		// Ray gen
 		U32 record = 0;

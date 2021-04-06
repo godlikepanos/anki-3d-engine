@@ -3,41 +3,46 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma anki mutator RAYS_PER_PIXEL 1 2 4 8
 #pragma anki library RtShadows
 #pragma anki ray_type 0
 
 #pragma anki start rgen
 
-layout(set = 0, binding = 0) uniform sampler u_trilinearRepeatSampler; // Used by the hit shaders
-layout(set = 0, binding = 1) uniform image2D u_outImg[2];
-layout(set = 0, binding = 2) uniform texture2DArray u_historyRt;
-layout(set = 0, binding = 3) uniform sampler u_linearAnyClampSampler;
-layout(set = 0, binding = 4) uniform texture2D u_depthRt;
-layout(set = 0, binding = 5) uniform texture2D u_motionVectorsRt;
-layout(set = 0, binding = 6) uniform texture2D u_motionVectorsRejectionRt;
-layout(set = 0, binding = 7) uniform texture2D u_normalRt;
-layout(set = 0, binding = 8) uniform accelerationStructureEXT u_tlas;
-
-#define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 9
-#define LIGHT_LIGHTS_BINDING 10
-#define LIGHT_CLUSTERS_BINDING 13
-#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 #include <AnKi/Shaders/ImportanceSampling.glsl>
 #include <AnKi/Shaders/Pack.glsl>
+#include <AnKi/Shaders/RtShadows.glsl>
+
+#define LIGHT_SET 0
+#define LIGHT_COMMON_UNIS_BINDING 0
+#define LIGHT_LIGHTS_BINDING 1
+#define LIGHT_CLUSTERS_BINDING 4
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+
+layout(set = 0, binding = 6) uniform sampler u_trilinearRepeatSampler; // Used by the hit shaders
+layout(set = 0, binding = 7) uniform uimage2D u_shadowsImage;
+layout(set = 0, binding = 8) uniform utexture2D u_historyShadowsTex;
+layout(set = 0, binding = 9) uniform sampler u_linearAnyClampSampler;
+layout(set = 0, binding = 10) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 11) uniform texture2D u_depthRt;
+layout(set = 0, binding = 12) uniform texture2D u_motionVectorsRt;
+layout(set = 0, binding = 13) uniform texture2D u_motionVectorsRejectionRt;
+layout(set = 0, binding = 14) uniform texture2D u_normalRt;
+layout(set = 0, binding = 15) uniform accelerationStructureEXT u_tlas;
+layout(set = 0, binding = 16) uniform texture2D u_prevHistoryLengthTex;
+layout(set = 0, binding = 17) uniform image2D u_historyLengthImage;
+layout(set = 0, binding = 18) uniform texture2D u_prevMomentsTex;
+layout(set = 0, binding = 19) uniform image2D u_momentsImage;
+layout(set = 0, binding = 20) uniform texture2D u_blueNoiseTex;
 
 ANKI_BINDLESS_SET(1); // Used by the hit shaders
 
-layout(push_constant) uniform b_pc
+layout(push_constant, std430) uniform b_pc
 {
-	Vec4 u_historyRejectFactor0; // 1.0 means reject, 0.0 not reject
-	Vec4 u_historyRejectFactor1;
+	RtShadowsUniforms u_unis;
 };
 
 layout(location = 0) rayPayloadEXT F32 g_payload;
-
-#define readDepth(texture_, uv, offsetX, offsetY) \
-	textureLodOffset(sampler2D(texture_, u_linearAnyClampSampler), uv, 0.0, IVec2(offsetX, offsetY)).r
 
 F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 {
@@ -66,8 +71,13 @@ void main()
 
 	if(depth == 1.0)
 	{
-		imageStore(u_outImg[0], IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
-		imageStore(u_outImg[1], IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
+		imageStore(u_shadowsImage, IVec2(gl_LaunchIDEXT.xy), UVec4(0));
+		imageStore(u_momentsImage, IVec2(gl_LaunchIDEXT.xy), Vec4(0.0));
+
+		// Set to max history length because this pixel won't need any processing from further compute stages
+		imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy),
+				   Vec4(RT_SHADOWS_MAX_HISTORY_LENGTH / RT_SHADOWS_MAX_HISTORY_LENGTH, 0.0, 0.0, 0.0));
+
 		return;
 	}
 
@@ -79,26 +89,38 @@ void main()
 											   u_lightingUniforms.m_clusterCount.y);
 	U32 idxOffset = u_clusters[clusterIdx];
 
-	F32 shadowFactors[8];
-	ANKI_UNROLL for(U32 i = 0; i < 8; ++i)
-	{
-		shadowFactors[i] = 0.0;
-	}
+	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
+	zeroRtShadowLayers(shadowFactors);
 
 	// Get a random factor
-	const UVec3 random = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, u_lightingUniforms.m_frameCount));
-	const Vec3 randomf = Vec3(random) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
+	Vec3 random[RAYS_PER_PIXEL];
+	for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
+	{
+		const U32 frameIdx = u_lightingUniforms.m_frameCount * RAYS_PER_PIXEL + i;
+#if 0
+		const UVec3 irandom = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, frameIdx));
+		random[i] = Vec3(irandom) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
+#else
+		random[i] =
+			textureLod(u_blueNoiseTex, u_trilinearRepeatSampler, Vec2(gl_LaunchSizeEXT.xy) / Vec2(64.0) * uv, 0.0).rgb;
+		random[i] = animateBlueNoise(random[i], frameIdx);
+		random[i] = random[i] * 2.0 - 1.0; // In [-1.0, 1.0]
+#endif
+	}
 
 	// Dir light
 	ANKI_BRANCH if(u_dirLight.m_active != 0u && u_dirLight.m_cascadeCount > 0)
 	{
-		const Vec3 dirLightPos = worldPos + -u_dirLight.m_dir * 10.0 + randomf;
-		const Vec3 rayDir = normalize(dirLightPos - worldPos);
-
-		const F32 lambertTerm = dot(rayDir, normal);
-		ANKI_BRANCH if(lambertTerm > 0.0)
+		for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
 		{
-			shadowFactors[u_dirLight.m_shadowLayer] = trace(worldPos, rayDir, 10000.0);
+			const Vec3 dirLightPos = worldPos + -u_dirLight.m_dir * 10.0 + random[i];
+			const Vec3 rayDir = normalize(dirLightPos - worldPos);
+
+			const F32 lambertTerm = dot(rayDir, normal);
+			ANKI_BRANCH if(lambertTerm > 0.0)
+			{
+				shadowFactors[u_dirLight.m_shadowLayer] += trace(worldPos, rayDir, 10000.0) / F32(RAYS_PER_PIXEL);
+			}
 		}
 	}
 
@@ -110,15 +132,20 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * randomf;
-			const Vec3 toLight = lightPos - worldPos;
-			const F32 distanceToLight = length(toLight);
-			const Vec3 rayDir = toLight / distanceToLight; // normalize
-
-			const F32 lambertTerm = dot(rayDir, normal);
-			ANKI_BRANCH if(lambertTerm > 0.0)
+			for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
 			{
-				shadowFactors[light.m_shadowLayer] = trace(worldPos, rayDir, distanceToLight);
+				const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * random[i];
+				const Vec3 toLight = lightPos - worldPos;
+				const F32 distanceToLight = length(toLight);
+				const Vec3 rayDir = toLight / distanceToLight; // normalize
+
+				const Bool inside = distanceToLight < light.m_radius;
+				const F32 lambertTerm = dot(rayDir, normal);
+				ANKI_BRANCH if(inside && lambertTerm > 0.0)
+				{
+					shadowFactors[light.m_shadowLayer] +=
+						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
+				}
 			}
 		}
 	}
@@ -130,41 +157,78 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowmapId >= 0.0)
 		{
-			const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * randomf;
-			const Vec3 toLight = lightPos - worldPos;
-			const F32 distanceToLight = length(toLight);
-			const Vec3 rayDir = toLight / distanceToLight; // normalize
-
-			const F32 lambertTerm = dot(rayDir, normal);
-			ANKI_BRANCH if(lambertTerm > 0.0)
+			for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
 			{
-				shadowFactors[light.m_shadowLayer] = trace(worldPos, rayDir, distanceToLight);
+				const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * random[i];
+				const Vec3 toLight = lightPos - worldPos;
+				const F32 distanceToLight = length(toLight);
+				const Vec3 rayDir = toLight / distanceToLight; // normalize
+
+				const F32 lambertTerm = dot(rayDir, normal);
+				ANKI_BRANCH if(lambertTerm > 0.0)
+				{
+					shadowFactors[light.m_shadowLayer] +=
+						trace(worldPos, rayDir, distanceToLight) / F32(RAYS_PER_PIXEL);
+				}
 			}
 		}
 	}
 
-	Vec4 shadowFactors0 = Vec4(shadowFactors[0], shadowFactors[1], shadowFactors[2], shadowFactors[3]);
-	Vec4 shadowFactors1 = Vec4(shadowFactors[4], shadowFactors[5], shadowFactors[6], shadowFactors[7]);
-
-	// Do temporal accumulation
+	// Compute history length
+	const Vec2 historyUv = uv + textureLod(u_motionVectorsRt, u_linearAnyClampSampler, uv, 0.0).xy;
+	const F32 historyRejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).x;
+	F32 historyLength;
+	if(historyRejectionFactor >= 0.5)
 	{
-		const Vec2 historyUv = uv + textureLod(u_motionVectorsRt, u_linearAnyClampSampler, uv, 0.0).rg;
-		const F32 rejectionFactor = textureLod(u_motionVectorsRejectionRt, u_linearAnyClampSampler, uv, 0.0).r;
+		// Rejection factor too high, reset the temporal history for all layers
+		historyLength = 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
+	}
+	else
+	{
+		// Sample seems stable, increment its temporal history
 
-		// Compute blend factors
-		const F32 nominalBlendFactor = 0.1;
-		const F32 blendFactor = mix(nominalBlendFactor, 1.0, rejectionFactor);
-
-		// Sample and blend with history
-		const Vec4 history0 = textureLod(u_historyRt, u_linearAnyClampSampler, Vec3(historyUv, 0.0), 0.0);
-		const Vec4 history1 = textureLod(u_historyRt, u_linearAnyClampSampler, Vec3(historyUv, 1.0), 0.0);
-
-		shadowFactors0 = mix(history0, shadowFactors0, min(Vec4(1.0), u_historyRejectFactor0 + blendFactor));
-		shadowFactors1 = mix(history1, shadowFactors1, min(Vec4(1.0), u_historyRejectFactor1 + blendFactor));
+		historyLength = textureLod(u_prevHistoryLengthTex, u_linearAnyClampSampler, historyUv, 0.0).r;
+		historyLength += 1.0 / RT_SHADOWS_MAX_HISTORY_LENGTH;
 	}
 
-	// Store
-	imageStore(u_outImg[0], IVec2(gl_LaunchIDEXT.xy), shadowFactors0);
-	imageStore(u_outImg[1], IVec2(gl_LaunchIDEXT.xy), shadowFactors1);
+	// Store history length
+	imageStore(u_historyLengthImage, IVec2(gl_LaunchIDEXT.xy), Vec4(historyLength));
+
+	// Compute blend fractor. Use nearest sampler because it's an integer texture
+	const F32 lowestBlendFactor = 0.1;
+	const F32 stableFrames = 4.0;
+	const F32 lerp = min(1.0, (historyLength * RT_SHADOWS_MAX_HISTORY_LENGTH - 1.0) / stableFrames);
+	const F32 blendFactor = mix(1.0, lowestBlendFactor, lerp);
+
+	// Blend with history
+	const UVec4 packedhistory = textureLod(u_historyShadowsTex, u_nearestAnyClampSampler, historyUv, 0.0);
+	F32 history[MAX_RT_SHADOW_LAYERS];
+	unpackRtShadows(packedhistory, history);
+	for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	{
+		const F32 lerp = min(1.0, u_unis.historyRejectFactor[i] + blendFactor);
+		shadowFactors[i] = mix(history[i], shadowFactors[i], lerp);
+	}
+
+	// Store the shadows image
+	const UVec4 packed = packRtShadows(shadowFactors);
+	imageStore(u_shadowsImage, IVec2(gl_LaunchIDEXT.xy), packed);
+
+	// Compute the moments that will give temporal variance
+	Vec2 moments = Vec2(0.0);
+	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	{
+		moments.x += shadowFactors[i];
+	}
+	moments.y = moments.x * moments.x;
+
+	// Blend the moments
+	const Vec2 prevMoments = textureLod(u_prevMomentsTex, u_linearAnyClampSampler, historyUv, 0.0).xy;
+	F32 momentsBlendFactor = 0.2;
+	momentsBlendFactor = mix(momentsBlendFactor, 1.0, historyRejectionFactor);
+	moments = mix(prevMoments, moments, momentsBlendFactor);
+
+	// Store the moments
+	imageStore(u_momentsImage, IVec2(gl_LaunchIDEXT.xy), Vec4(moments, 0.0, 0.0));
 }
 #pragma anki end

@@ -382,10 +382,11 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 	getGrManagerImpl().endMarker(m_handle);
 }
 
-inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize,
+inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize sbtBufferOffset, U32 sbtRecordSize32,
 												 U32 hitGroupSbtRecordCount, U32 rayTypeCount, U32 width, U32 height,
 												 U32 depth)
 {
+	const PtrSize sbtRecordSize = sbtRecordSize32;
 	ANKI_ASSERT(hitGroupSbtRecordCount > 0);
 	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
 	ANKI_ASSERT(m_rtProg);
@@ -395,7 +396,7 @@ inline void CommandBufferImpl::traceRaysInternal(BufferPtr& sbtBuffer, PtrSize s
 
 	ANKI_ASSERT(rayTypeCount == sprog.getMissShaderCount() && "All the miss shaders should be in use");
 	ANKI_ASSERT((hitGroupSbtRecordCount % rayTypeCount) == 0);
-	const U32 sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
+	const PtrSize sbtRecordCount = 1 + rayTypeCount + hitGroupSbtRecordCount;
 	const PtrSize sbtBufferSize = sbtRecordCount * sbtRecordSize;
 	(void)sbtBufferSize;
 	ANKI_ASSERT(sbtBufferSize + sbtBufferOffset <= sbtBuffer->getSize());

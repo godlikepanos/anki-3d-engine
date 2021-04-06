@@ -30,8 +30,8 @@ static void wrapModules(lua_State* l)
 
 static int luaPanic(lua_State* l)
 {
-	ANKI_SCRIPT_LOGE("Lua panic attack: %s", lua_tostring(l, -1));
-	abort();
+	ANKI_SCRIPT_LOGF("Lua panic attack: %s", lua_tostring(l, -1));
+	return 0;
 }
 
 LuaBinder::LuaBinder()

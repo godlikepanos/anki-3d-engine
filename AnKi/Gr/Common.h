@@ -228,6 +228,8 @@ public:
 	{
 	}
 
+	TextureSurfaceInfo& operator=(const TextureSurfaceInfo&) = default;
+
 	Bool operator==(const TextureSurfaceInfo& b) const
 	{
 		return m_level == b.m_level && m_depth == b.m_depth && m_face == b.m_face && m_layer == b.m_layer;
@@ -263,6 +265,8 @@ public:
 		: m_level(level)
 	{
 	}
+
+	TextureVolumeInfo& operator=(const TextureVolumeInfo&) = default;
 };
 
 /// Defines a subset of a texture.
@@ -310,6 +314,8 @@ public:
 		, m_depthStencilAspect(aspect)
 	{
 	}
+
+	TextureSubresourceInfo& operator=(const TextureSubresourceInfo&) = default;
 
 	Bool operator==(const TextureSubresourceInfo& b) const
 	{
@@ -409,13 +415,10 @@ inline U32 computeMaxMipmapCount3d(U32 w, U32 h, U32 d)
 }
 
 /// Compute the size in bytes of a texture surface surface.
-PtrSize computeSurfaceSize(U width, U height, Format fmt);
+PtrSize computeSurfaceSize(U32 width, U32 height, Format fmt);
 
 /// Compute the size in bytes of the texture volume.
-PtrSize computeVolumeSize(U width, U height, U depth, Format fmt);
-
-/// Get the size of a single component of that format.
-PtrSize getFormatBytes(Format fmt);
+PtrSize computeVolumeSize(U32 width, U32 height, U32 depth, Format fmt);
 /// @}
 
 } // end namespace anki

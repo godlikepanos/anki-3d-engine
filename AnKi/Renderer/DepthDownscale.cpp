@@ -32,9 +32,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 
 	// Create RT descr
 	TextureInitInfo texInit = m_r->create2DRenderTargetInitInfo(
-		width, height, Format::R32_SFLOAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_COMPUTE | TextureUsageBit::IMAGE_COMPUTE_WRITE,
-		"HiZ");
+		width, height, Format::R32_SFLOAT, TextureUsageBit::ALL_SAMPLED | TextureUsageBit::IMAGE_COMPUTE_WRITE, "HiZ");
 	texInit.m_mipmapCount = U8(m_mipCount);
 	texInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	m_hizTex = m_r->createAndClearRenderTarget(texInit);
@@ -57,7 +55,7 @@ Error DepthDownscale::initInternal(const ConfigSet&)
 		// Create buffer
 		BufferInitInfo buffInit("HiZ Client");
 		buffInit.m_mapAccess = BufferMapAccessBit::READ;
-		buffInit.m_size = lastMipHeight * lastMipWidth * sizeof(F32);
+		buffInit.m_size = PtrSize(lastMipHeight) * PtrSize(lastMipWidth) * sizeof(F32);
 		buffInit.m_usage = BufferUsageBit::STORAGE_COMPUTE_WRITE;
 		m_copyToBuff.m_buff = getGrManager().newBuffer(buffInit);
 

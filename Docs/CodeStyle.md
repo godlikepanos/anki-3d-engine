@@ -62,11 +62,6 @@ All **template arguments** should start with `T`.
 
 	template<typename TSomething, typename TOther, U32 T_SOME_CONST>
 
-The **source files** are always PascalCase.
-
-	ThreadHive.h
-	MyShaderProgram.ankiprog
-
 All **function and method names** should form a sentence with at least one verb.
 
 	doSomething(...);
@@ -100,14 +95,20 @@ Whatever the PEP 8 guide proposes.
 Naming conventions for files and directories
 ============================================
 
-Filenames and directories should be PascalCase. The extensions of the files are lowercase.
+**Filenames and directories should be PascalCase**. The extensions of the files are lowercase.
+
+	Source/ThreadHive.h
+
+	Shaders/MyShaderProgram.ankiprog
+
+	Some/Path/Script.py
 
 C++ rules
 =========
 
 **Always use strongly typed enums**. If you need to relax the rules use the `ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS` macro.
 
-	enum class MyEnum : uint {...};
+	enum class MyEnum : U32 {...};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MyEnum);
 
 **Never use `typedef`** to define types. Use `using` instead.
@@ -123,7 +124,8 @@ C++ rules
 
 **Always use `constexpr`** when applicable. Never use defines for constants.
 
-	constexpr uint SOME_CONST = ...;
+	constexpr uint SOME_CONST = ...; // YES!!
+	#define SOME_CONST (...)         // NO
 
 **Never use `struct`** and always use `class` instead. Since it's difficult to come up with rules on when to use struct over class always use class and be done with it.
 

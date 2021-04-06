@@ -1203,7 +1203,7 @@ Error MaterialResource::parseRtMaterial(XmlElement rtMaterialEl)
 
 		const ShaderProgramResourceVariant* progVariant;
 		m_rtPrograms[type]->getOrCreateVariant(variantInitInfo, progVariant);
-		m_rtShaderGroupHandleIndices[type] = progVariant->getHitShaderGroupHandleIndex();
+		m_rtShaderGroupHandleIndices[type] = progVariant->getShaderGroupHandleIndex();
 
 		// Advance
 		ANKI_CHECK(rayTypeEl.getNextSiblingElement("rayType", rayTypeEl));

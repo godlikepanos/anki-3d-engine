@@ -151,7 +151,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		}
 		else
 		{
-			rgraphCtx.bindColorTexture(0, 20, m_r->getShadowmapsResolve().getRt());
+			rgraphCtx.bindColorTexture(0, 21, m_r->getShadowmapsResolve().getRt());
 		}
 
 		// Draw

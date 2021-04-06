@@ -1,8 +1,8 @@
 <serializer>
 	<includes>
-		<include file="&lt;anki/shader_compiler/Common.h&gt;"/>
-		<include file="&lt;anki/shader_compiler/ShaderProgramBinaryExtra.h&gt;"/>
-		<include file="&lt;anki/gr/Enums.h&gt;"/>
+		<include file="&lt;AnKi/ShaderCompiler/Common.h&gt;"/>
+		<include file="&lt;AnKi/ShaderCompiler/ShaderProgramBinaryExtra.h&gt;"/>
+		<include file="&lt;AnKi/Gr/Enums.h&gt;"/>
 	</includes>
 
 	<classes>

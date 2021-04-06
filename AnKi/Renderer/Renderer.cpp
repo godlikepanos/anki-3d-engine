@@ -281,6 +281,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_jitter = m_jitteredMats8x[m_frameCount & (m_jitteredMats8x.getSize() - 1)];
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
 	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * ctx.m_matrices.m_view;
+	ctx.m_matrices.m_invertedViewProjectionJitter = ctx.m_matrices.m_viewProjectionJitter.getInverse();
 
 	ctx.m_prevMatrices = m_prevMatrices;
 
@@ -516,7 +517,23 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 				{
 					// Compute
 					ShaderProgramResourceVariantInitInfo variantInitInfo(m_clearTexComputeProg);
-					variantInitInfo.addMutation("IS_2D", I32((inf.m_type != TextureType::_3D) ? 1 : 0));
+					variantInitInfo.addMutation("TEXTURE_DIMENSIONS", I32((inf.m_type == TextureType::_3D) ? 3 : 2));
+
+					const FormatInfo formatInfo = getFormatInfo(inf.m_format);
+					I32 componentType = 0;
+					if(formatInfo.m_shaderType == 0)
+					{
+						componentType = 0;
+					}
+					else if(formatInfo.m_shaderType == 1)
+					{
+						componentType = 1;
+					}
+					else
+					{
+						ANKI_ASSERT(!"Not supported");
+					}
+					variantInitInfo.addMutation("COMPONENT_TYPE", componentType);
 
 					const ShaderProgramResourceVariant* variant;
 					m_clearTexComputeProg->getOrCreateVariant(variantInitInfo, variant);
@@ -633,7 +650,8 @@ void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)
 	m_debugRts.emplaceBack(getAllocator(), std::move(inf));
 }
 
-void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid)
+void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& handleValid,
+										   ShaderProgramPtr& optionalShaderProgram)
 {
 	if(ANKI_LIKELY(m_currentDebugRtName.isEmpty()))
 	{
@@ -651,7 +669,7 @@ void Renderer::getCurrentDebugRenderTarget(RenderTargetHandle& handle, Bool& han
 	}
 	ANKI_ASSERT(obj);
 
-	obj->getDebugRenderTarget(m_currentDebugRtName, handle);
+	obj->getDebugRenderTarget(m_currentDebugRtName, handle, optionalShaderProgram);
 	handleValid = true;
 }
 

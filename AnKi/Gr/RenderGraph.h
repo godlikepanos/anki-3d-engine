@@ -185,6 +185,23 @@ public:
 		m_commandBuffer->bindImage(set, binding, view, arrayIdx);
 	}
 
+	/// Convenience method to bind the whole image.
+	void bindImage(U32 set, U32 binding, RenderTargetHandle handle, U32 arrayIdx = 0)
+	{
+		TexturePtr tex;
+#if ANKI_ENABLE_ASSERTS
+		tex = getTexture(handle);
+		ANKI_ASSERT(tex->getLayerCount() == 1 && tex->getMipmapCount() == 1
+					&& tex->getDepthStencilAspect() == DepthStencilAspectBit::NONE);
+#endif
+		const TextureSubresourceInfo subresource;
+		TextureUsageBit usage;
+		getRenderTargetState(handle, subresource, tex, usage);
+		TextureViewInitInfo viewInit(tex, subresource, "TmpRenderGraph");
+		TextureViewPtr view = m_commandBuffer->getManager().newTextureView(viewInit);
+		m_commandBuffer->bindImage(set, binding, view, arrayIdx);
+	}
+
 	/// Convenience method.
 	void bindStorageBuffer(U32 set, U32 binding, BufferHandle handle)
 	{

@@ -675,7 +675,7 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 			// Create a new TextureInitInfo with the derived usage
 			TextureInitInfo initInf = inRt.m_initInfo;
 			initInf.m_usage = inRt.m_usageDerivedByDeps;
-			ANKI_ASSERT(initInf.m_usage != TextureUsageBit::NONE);
+			ANKI_ASSERT(initInf.m_usage != TextureUsageBit::NONE && "Probably not referenced by any pass");
 
 			// Create the new hash
 			const U64 hash = appendHash(&initInf.m_usage, sizeof(initInf.m_usage), inRt.m_hash);
@@ -1318,9 +1318,10 @@ void RenderGraph::flush()
 
 	for(U32 i = 0; i < m_ctx->m_graphicsCmdbs.getSize(); ++i)
 	{
-		// Maybe write a timestamp before flush
 		if(ANKI_UNLIKELY(m_ctx->m_gatherStatistics && i == m_ctx->m_graphicsCmdbs.getSize() - 1))
 		{
+			// Write a timestamp before the last flush
+
 			TimestampQueryPtr query = getManager().newTimestampQuery();
 			m_ctx->m_graphicsCmdbs[i]->resetTimestampQuery(query);
 			m_ctx->m_graphicsCmdbs[i]->writeTimestamp(query);
@@ -1526,6 +1527,11 @@ StringAuto RenderGraph::asUsageToStr(StackAllocator<U8>& alloc, AccelerationStru
 	ANKI_AS_USAGE(FRAGMENT_READ);
 	ANKI_AS_USAGE(COMPUTE_READ);
 	ANKI_AS_USAGE(TRACE_RAYS_READ);
+
+	if(!usage)
+	{
+		slist.pushBackSprintf("NONE");
+	}
 
 #	undef ANKI_AS_USAGE
 

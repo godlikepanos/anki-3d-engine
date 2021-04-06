@@ -12,6 +12,7 @@
 #	pragma GCC diagnostic ignored "-Wundef"
 #	pragma GCC diagnostic ignored "-Wconversion"
 #endif
+#define ENABLE_OPT 0
 #include <Glslang/glslang/Public/ShaderLang.h>
 #include <Glslang/SPIRV/GlslangToSpv.h>
 #include <Glslang/StandAlone/DirStackFileIncluder.h>

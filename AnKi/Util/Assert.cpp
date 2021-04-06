@@ -24,31 +24,30 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 #	else
 #		if ANKI_OS_LINUX
 	if(runningFromATerminal())
+	{
 		fprintf(stderr, "\033[1;31m(%s:%d %s) Assertion failed: %s\033[0m\n", file, line, func, exprTxt);
+	}
 	else
 #		endif
+	{
 		fprintf(stderr, "(%s:%d %s) Assertion failed: %s\n", file, line, func, exprTxt);
+	}
 #	endif
 
 	class BW : public BackTraceWalker
 	{
 	public:
-		BW()
-			: BackTraceWalker(10)
-		{
-		}
-
-		U m_c = 0;
+		U32 m_c = 0;
 
 		void operator()(const char* symbol)
 		{
-			printf("%.2u: %s\n", unsigned(m_c++), symbol);
+			printf("%.2u: %s\n", m_c++, symbol);
 		}
 	};
 
 	BW bw;
 	printf("Backtrace:\n");
-	bw.exec();
+	getBacktrace(bw);
 
 	ANKI_DEBUG_BREAK();
 }

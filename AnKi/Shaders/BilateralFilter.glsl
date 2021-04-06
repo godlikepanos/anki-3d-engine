@@ -3,79 +3,85 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+// Contains a bounch of edge stopping functions plus some other things
+
 #pragma once
 
 #include <AnKi/Shaders/Common.glsl>
 
-struct BilateralSample
+// https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
+F32 calculateBilateralWeightDepth(F32 depthCenter, F32 depthTap, F32 phi)
 {
-	F32 m_depth;
-	Vec3 m_position;
-	Vec3 m_normal;
-	F32 m_roughness;
-};
+	const F32 diff = abs(depthTap - depthCenter);
+#if 0
+	return max(0.0, 1.0 - diff * phi);
+#else
+	return sqrt(1.0 / (EPSILON + diff)) * phi;
+#endif
+}
 
-struct BilateralConfig
+// From the SVGF sample code. Depth is linear
+F32 calculateBilateralWeightDepth2(F32 depthCenter, F32 depthTap, F32 phi)
 {
-	F32 m_depthWeight;
-	F32 m_normalWeight;
-	F32 m_planeWeight;
-	F32 m_roughnessWeight;
-};
+	return (phi == 0.0) ? 0.0 : abs(depthCenter - depthTap) / phi;
+}
 
 // https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
-F32 calculateBilateralWeight(BilateralSample center, BilateralSample tap, BilateralConfig config)
+F32 calculateBilateralWeightNormal(Vec3 center, Vec3 tap, F32 phi)
 {
-	F32 depthWeight = 1.0;
-	F32 normalWeight = 1.0;
-	F32 planeWeight = 1.0;
-	F32 glossyWeight = 1.0;
+	F32 normalCloseness = dot(tap, center);
+	normalCloseness = normalCloseness * normalCloseness;
+	normalCloseness = normalCloseness * normalCloseness;
 
-	if(config.m_depthWeight > 0.0)
-	{
-#if 0
-		depthWeight = max(0.0, 1.0 - abs(tap.m_depth - center.m_depth) * config.m_depthWeight);
-#else
-		const F32 diff = abs(tap.m_depth - center.m_depth);
-		depthWeight = sqrt(1.0 / (EPSILON + diff)) * config.m_depthWeight;
-#endif
-	}
+	const F32 normalError = (1.0 - normalCloseness);
+	return max((1.0 - normalError * phi), 0.0);
+}
 
-	if(config.m_normalWeight > 0.0)
-	{
-		F32 normalCloseness = dot(tap.m_normal, center.m_normal);
-		normalCloseness = normalCloseness * normalCloseness;
-		normalCloseness = normalCloseness * normalCloseness;
+F32 calculateBilateralWeightNormalCos(Vec3 ref, Vec3 tap, F32 phi)
+{
+	return pow(saturate(dot(ref, tap)), phi);
+}
 
-		const F32 normalError = (1.0 - normalCloseness);
-		normalWeight = max((1.0 - normalError * config.m_normalWeight), 0.0);
-	}
+// https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
+F32 calculateBilateralWeightPlane(Vec3 positionCenter, Vec3 centerNormal, Vec3 positionTap, Vec3 normalTap, F32 phi)
+{
+	const F32 lowDistanceThreshold2 = 0.001;
 
-	if(config.m_planeWeight > 0.0)
-	{
-		const F32 lowDistanceThreshold2 = 0.001;
+	// Change in position in camera space
+	const Vec3 dq = positionCenter - positionTap;
 
-		// Change in position in camera space
-		Vec3 dq = center.m_position - tap.m_position;
+	// How far away is this point from the original sample in camera space? (Max value is unbounded)
+	const F32 distance2 = dot(dq, dq);
 
-		// How far away is this point from the original sample in camera space? (Max value is unbounded)
-		const F32 distance2 = dot(dq, dq);
+	// How far off the expected plane (on the perpendicular) is this point? Max value is unbounded.
+	const F32 planeError = max(abs(dot(dq, normalTap)), abs(dot(dq, centerNormal)));
 
-		// How far off the expected plane (on the perpendicular) is this point? Max value is unbounded.
-		const F32 planeError = max(abs(dot(dq, tap.m_normal)), abs(dot(dq, center.m_normal)));
+	return (distance2 < lowDistanceThreshold2) ? 1.0
+											   : pow(max(0.0, 1.0 - 2.0 * phi * planeError / sqrt(distance2)), 2.0);
+}
 
-		planeWeight = (distance2 < lowDistanceThreshold2)
-						  ? 1.0
-						  : pow(max(0.0, 1.0 - 2.0 * config.m_planeWeight * planeError / sqrt(distance2)), 2.0);
-	}
+// https://cs.dartmouth.edu/~wjarosz/publications/mara17towards.html
+F32 calculateBilateralWeightRoughness(F32 roughnessCenter, F32 roughnessTap, F32 phi)
+{
+	const F32 gDiff = abs(roughnessCenter - roughnessTap) * 10.0;
+	return max(0.0, 1.0 - (gDiff * phi));
+}
 
-	if(config.m_roughnessWeight > 0.0)
-	{
-		const F32 gDiff = abs(tap.m_roughness - center.m_roughness) * 10.0;
-		glossyWeight = max(0.0, 1.0 - (gDiff * config.m_roughnessWeight));
-	}
+// From SVGF sample code.
+F32 calculateBilateralWeightLinearDepthAndLuminance(F32 depthCenter, F32 luminanceCenter, F32 depthTap,
+													F32 luminanceTap, F32 phiDepth, F32 phiLuminance)
+{
+	const F32 wZ = calculateBilateralWeightDepth2(depthCenter, depthTap, phiDepth);
+	const F32 wL = abs(luminanceCenter - luminanceTap) / phiLuminance;
+	return exp(0.0 - max(wL, 0.0) - max(wZ, 0.0));
+}
 
-	return depthWeight * normalWeight * planeWeight * glossyWeight;
+// Compute a weight given 2 viewspace positions.
+F32 calculateBilateralWeightViewspacePosition(Vec3 posCenter, Vec3 posTap, F32 sigma)
+{
+	const Vec3 t = posCenter - posTap;
+	const F32 dist2 = dot(t, t) + t.z * t.z;
+	return min(exp(-(dist2) / sigma), 1.0);
 }
 
 struct SpatialBilateralContext

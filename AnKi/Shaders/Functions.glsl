@@ -408,15 +408,22 @@ Bool aabbsOverlap(const Vec3 aMin, const Vec3 aMax, const Vec3 bMin, const Vec3 
 	return all(lessThan(aMin, bMax)) && all(lessThan(bMin, aMax));
 }
 
-// A convenience macro to skip out of bounds invocations on post-process compute shaders.
-#define SKIP_OUT_OF_BOUNDS_INVOCATIONS() \
-	if((FB_SIZE.x % WORKGROUP_SIZE.x) != 0u || (FB_SIZE.y % WORKGROUP_SIZE.y) != 0u) \
-	{ \
-		if(gl_GlobalInvocationID.x >= FB_SIZE.x || gl_GlobalInvocationID.y >= FB_SIZE.y) \
-		{ \
-			return; \
-		} \
+// A convenience function to skip out of bounds invocations on post-process compute shaders. Both the arguments should
+// be constexpr.
+#if defined(ANKI_COMPUTE_SHADER)
+Bool skipOutOfBoundsInvocations(UVec2 workgroupSize, UVec2 globalInvocationCount)
+{
+	if((globalInvocationCount.x % workgroupSize.x) != 0u || (globalInvocationCount.y % workgroupSize.y) != 0u)
+	{
+		if(gl_GlobalInvocationID.x >= globalInvocationCount.x || gl_GlobalInvocationID.y >= globalInvocationCount.y)
+		{
+			return true;
+		}
 	}
+
+	return false;
+}
+#endif
 
 // Create a matrix from some direction.
 Mat3 rotationFromDirection(Vec3 zAxis)
@@ -548,3 +555,31 @@ UVec2 getOptimalGlobalInvocationId8x8Nvidia()
 	return swizzledGlobalId.xy;
 }
 #endif
+
+// Gaussian distrubution function
+F32 gaussianWeight(F32 s, F32 x)
+{
+	F32 p = 1.0 / (s * sqrt(2.0 * PI));
+	p *= exp((x * x) / (-2.0 * s * s));
+	return p;
+}
+
+Vec4 bilinearFiltering(texture2D tex, sampler nearestSampler, Vec2 uv, F32 lod, Vec2 textureSize)
+{
+	const Vec2 texelSize = 1.0 / textureSize;
+	const Vec2 unnormTexCoord = (uv * textureSize) - 0.5;
+	const Vec2 f = fract(unnormTexCoord);
+	const Vec2 snapTexCoord = (floor(unnormTexCoord) + 0.5) / textureSize;
+	const Vec4 s1 = textureLod(tex, nearestSampler, uv, lod);
+	const Vec4 s2 = textureLod(tex, nearestSampler, uv + Vec2(texelSize.x, 0.0), lod);
+	const Vec4 s3 = textureLod(tex, nearestSampler, uv + Vec2(0.0, texelSize.y), lod);
+	const Vec4 s4 = textureLod(tex, nearestSampler, uv + texelSize, lod);
+	return mix(mix(s1, s2, f.x), mix(s3, s4, f.x), f.y);
+}
+
+// https://www.shadertoy.com/view/WsfBDf
+Vec3 animateBlueNoise(Vec3 inputBlueNoise, U32 frameIdx)
+{
+	const F32 goldenRatioConjugate = 0.61803398875;
+	return fract(inputBlueNoise + F32(frameIdx % 64u) * goldenRatioConjugate);
+}

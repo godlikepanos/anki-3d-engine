@@ -27,6 +27,7 @@
 #include <AnKi/Core/StagingGpuMemoryManager.h>
 #include <AnKi/Ui/UiManager.h>
 #include <AnKi/Ui/Canvas.h>
+#include <csignal>
 
 #if ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
@@ -273,20 +274,33 @@ void App::cleanup()
 	m_console.reset(nullptr);
 
 	m_heapAlloc.deleteInstance(m_scene);
+	m_scene = nullptr;
 	m_heapAlloc.deleteInstance(m_script);
+	m_script = nullptr;
 	m_heapAlloc.deleteInstance(m_renderer);
+	m_renderer = nullptr;
 	m_heapAlloc.deleteInstance(m_ui);
+	m_ui = nullptr;
 	m_heapAlloc.deleteInstance(m_resources);
+	m_resources = nullptr;
 	m_heapAlloc.deleteInstance(m_resourceFs);
+	m_resourceFs = nullptr;
 	m_heapAlloc.deleteInstance(m_physics);
+	m_physics = nullptr;
 	m_heapAlloc.deleteInstance(m_stagingMem);
+	m_stagingMem = nullptr;
 	m_heapAlloc.deleteInstance(m_threadHive);
+	m_threadHive = nullptr;
 	GrManager::deleteInstance(m_gr);
+	m_gr = nullptr;
 	m_heapAlloc.deleteInstance(m_input);
+	m_input = nullptr;
 	m_heapAlloc.deleteInstance(m_window);
+	m_window = nullptr;
 
 #if ANKI_ENABLE_TRACE
 	m_heapAlloc.deleteInstance(m_coreTracer);
+	m_coreTracer = nullptr;
 #endif
 
 	m_settingsDir.destroy(m_heapAlloc);
@@ -307,6 +321,8 @@ Error App::init(const ConfigSet& config, AllocAlignedCallback allocCb, void* all
 
 Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
+	setSignalHandlers();
+
 	ConfigSet config = config_;
 	m_displayStats = config.getNumberU32("core_displayStats");
 
@@ -699,6 +715,63 @@ void App::initMemoryCallbacks(AllocAlignedCallback allocCb, void* allocCbUserDat
 		m_allocCb = allocCb;
 		m_allocCbData = allocCbUserData;
 	}
+}
+
+void App::setSignalHandlers()
+{
+	auto handler = [](int signum) -> void {
+		const char* name = nullptr;
+		switch(signum)
+		{
+		case SIGABRT:
+			name = "SIGABRT";
+			break;
+		case SIGSEGV:
+			name = "SIGSEGV";
+			break;
+#if ANKI_POSIX
+		case SIGBUS:
+			name = "SIGBUS";
+			break;
+#endif
+		case SIGILL:
+			name = "SIGILL";
+			break;
+		case SIGFPE:
+			name = "SIGFPE";
+			break;
+		}
+
+		if(name)
+			printf("Caught signal %d (%s)\n", signum, name);
+		else
+			printf("Caught signal %d\n", signum);
+
+		class BW : public BackTraceWalker
+		{
+		public:
+			U32 m_c = 0;
+
+			void operator()(const char* symbol)
+			{
+				printf("%.2u: %s\n", m_c++, symbol);
+			}
+		};
+
+		BW bw;
+		printf("Backtrace:\n");
+		getBacktrace(bw);
+
+		ANKI_DEBUG_BREAK();
+	};
+
+	signal(SIGSEGV, handler);
+	signal(SIGILL, handler);
+	signal(SIGFPE, handler);
+#if ANKI_POSIX
+	signal(SIGBUS, handler);
+#endif
+	// Ignore for now: signal(SIGABRT, handler);
 }
 
 } // end namespace anki
