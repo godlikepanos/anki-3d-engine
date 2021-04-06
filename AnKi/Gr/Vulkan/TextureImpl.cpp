@@ -25,25 +25,15 @@ TextureImpl::~TextureImpl()
 
 	for(auto it : m_viewsMap)
 	{
-		if(it.m_handle != VK_NULL_HANDLE)
-		{
-			vkDestroyImageView(getDevice(), it.m_handle, nullptr);
-		}
-
-		if(it.m_bindlessIndices[0] != MAX_U32)
-		{
-			getGrManagerImpl().getDescriptorSetFactory().unbindBindlessTexture(it.m_bindlessIndices[0]);
-			it.m_bindlessIndices[0] = MAX_U32;
-		}
-
-		if(it.m_bindlessIndices[1] != MAX_U32)
-		{
-			getGrManagerImpl().getDescriptorSetFactory().unbindBindlessImage(it.m_bindlessIndices[1]);
-			it.m_bindlessIndices[1] = MAX_U32;
-		}
+		destroyMicroImageView(it);
 	}
 
 	m_viewsMap.destroy(getAllocator());
+
+	if(m_singleSurfaceImageView.m_handle != VK_NULL_HANDLE)
+	{
+		destroyMicroImageView(m_singleSurfaceImageView);
+	}
 
 	if(m_imageHandle && !(m_usage & TextureUsageBit::PRESENT))
 	{
@@ -140,6 +130,19 @@ Error TextureImpl::initInternal(VkImage externalImage, const TextureInitInfo& in
 
 		static_cast<CommandBufferImpl&>(*cmdb).endRecording();
 		getGrManagerImpl().flushCommandBuffer(cmdb, nullptr);
+	}
+
+	// Create a view if the texture is a single surface
+	if(m_texType == TextureType::_2D && m_mipCount == 1 && m_aspect == DepthStencilAspectBit::NONE)
+	{
+		VkImageViewCreateInfo viewCi;
+		TextureSubresourceInfo subresource;
+		computeVkImageViewCreateInfo(subresource, viewCi, m_singleSurfaceImageView.m_derivedTextureType);
+		ANKI_ASSERT(m_singleSurfaceImageView.m_derivedTextureType == m_texType);
+
+		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &viewCi, nullptr, &m_singleSurfaceImageView.m_handle));
+		getGrManagerImpl().trySetVulkanHandleName(getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT,
+												  ptrToNumber(m_singleSurfaceImageView.m_handle));
 	}
 
 	return Error::NONE;
@@ -576,6 +579,11 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 
 const MicroImageView& TextureImpl::getOrCreateView(const TextureSubresourceInfo& subresource) const
 {
+	if(m_singleSurfaceImageView.m_handle != VK_NULL_HANDLE)
+	{
+		return m_singleSurfaceImageView;
+	}
+
 	{
 		RLockGuard<RWMutex> lock(m_viewsMapMtx);
 		auto it = m_viewsMap.find(subresource);
@@ -639,6 +647,27 @@ TextureType TextureImpl::computeNewTexTypeOfSubresource(const TextureSubresource
 		}
 	}
 	return m_texType;
+}
+
+void TextureImpl::destroyMicroImageView(MicroImageView& view)
+{
+	if(view.m_handle != VK_NULL_HANDLE)
+	{
+		vkDestroyImageView(getDevice(), view.m_handle, nullptr);
+		view.m_handle = VK_NULL_HANDLE;
+	}
+
+	if(view.m_bindlessIndices[0] != MAX_U32)
+	{
+		getGrManagerImpl().getDescriptorSetFactory().unbindBindlessTexture(view.m_bindlessIndices[0]);
+		view.m_bindlessIndices[0] = MAX_U32;
+	}
+
+	if(view.m_bindlessIndices[1] != MAX_U32)
+	{
+		getGrManagerImpl().getDescriptorSetFactory().unbindBindlessImage(view.m_bindlessIndices[1]);
+		view.m_bindlessIndices[1] = MAX_U32;
+	}
 }
 
 } // end namespace anki

@@ -34,7 +34,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround)
 class MicroImageView
 {
 public:
-	VkImageView m_handle = {};
+	VkImageView m_handle = VK_NULL_HANDLE;
 
 	/// Index 0: Sampled image with SHADER_READ_ONLY layout.
 	/// Index 1: Storage image with ofcource GENERAL layout.
@@ -53,6 +53,7 @@ public:
 			ANKI_ASSERT(idx == MAX_U32 && "Forgot to unbind the bindless");
 			(void)idx;
 		}
+		ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
 	}
 
 	MicroImageView(const MicroImageView& b)
@@ -185,6 +186,10 @@ private:
 	mutable HashMap<TextureSubresourceInfo, MicroImageView> m_viewsMap;
 	mutable RWMutex m_viewsMapMtx;
 
+	/// This is a special optimization for textures that have only one surface. In this case we don't need to go through
+	/// the hashmap above.
+	MicroImageView m_singleSurfaceImageView;
+
 	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
 
 #if ANKI_ENABLE_ASSERTS
@@ -213,6 +218,8 @@ private:
 
 	void computeBarrierInfo(TextureUsageBit usage, Bool src, U32 level, VkPipelineStageFlags& stages,
 							VkAccessFlags& accesses) const;
+
+	void destroyMicroImageView(MicroImageView& view);
 };
 /// @}
 
