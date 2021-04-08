@@ -31,6 +31,8 @@ inline F32 dot(const T& a, const T& b)
 }
 ANKI_END_NAMESPACE
 
+#	define ANKI_CPP_CODE(x) x
+
 //
 // Macros & functions GLSL
 //
@@ -51,6 +53,8 @@ ANKI_END_NAMESPACE
 #	define ANKI_SHADER_OUT(type_) out type_
 
 #	define ANKI_SHADER_STATIC_ASSERT(cond_)
+
+#	define ANKI_CPP_CODE(x)
 #endif
 
 //

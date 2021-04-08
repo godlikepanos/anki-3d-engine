@@ -9,6 +9,8 @@
 #include <AnKi/Core/StagingGpuMemoryManager.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Shaders/Include/Evsm.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/Include/ClustererTypes.h>
 
 namespace anki
 {
@@ -48,7 +50,6 @@ class RtShadows;
 class AccelerationStructureBuilder;
 class MotionVectors;
 
-class RenderingContext;
 class DebugDrawer;
 
 class RenderQueue;
@@ -67,9 +68,6 @@ class ClusterBin;
 
 /// Don't create second level command buffers if they contain more drawcalls than this constant.
 constexpr U32 MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER = 16;
-
-/// FS size is rendererSize/FS_FRACTION.
-constexpr U32 FS_FRACTION = 2;
 
 /// SSAO size is rendererSize/SSAO_FRACTION.
 constexpr U32 SSAO_FRACTION = 2;
@@ -117,6 +115,74 @@ constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32B32A32_SFLOAT;
 #else
 constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32_SFLOAT;
 #endif
+
+/// @memberof ClusterBin
+class ClusterBinOut
+{
+public:
+	StagingGpuMemoryToken m_pointLightsToken;
+	StagingGpuMemoryToken m_spotLightsToken;
+	StagingGpuMemoryToken m_reflectionProbesToken;
+	StagingGpuMemoryToken m_decalsToken;
+	StagingGpuMemoryToken m_fogDensityVolumesToken;
+	StagingGpuMemoryToken m_globalIlluminationProbesToken;
+	StagingGpuMemoryToken m_clustersToken;
+	StagingGpuMemoryToken m_indicesToken;
+
+	TextureViewPtr m_diffDecalTexView;
+	TextureViewPtr m_specularRoughnessDecalTexView;
+
+	ClustererMagicValues m_shaderMagicValues;
+};
+
+/// GPU buffers and textures that the clusterer refers to.
+class ClustererGpuObjects
+{
+public:
+	StagingGpuMemoryToken m_pointLightsToken;
+	StagingGpuMemoryToken m_spotLightsToken;
+	StagingGpuMemoryToken m_reflectionProbesToken;
+	StagingGpuMemoryToken m_decalsToken;
+	StagingGpuMemoryToken m_fogDensityVolumesToken;
+	StagingGpuMemoryToken m_globalIlluminationProbesToken;
+	StagingGpuMemoryToken m_tilesToken;
+	StagingGpuMemoryToken m_zSplitsToken;
+	StagingGpuMemoryToken m_lightingUniformsToken;
+
+	TextureViewPtr m_diffDecalTexView;
+	TextureViewPtr m_specularRoughnessDecalTexView;
+};
+
+/// Rendering context.
+class RenderingContext
+{
+public:
+	StackAllocator<U8> m_tempAllocator;
+	RenderQueue* m_renderQueue ANKI_DEBUG_CODE(= nullptr);
+
+	RenderGraphDescription m_renderGraphDescr;
+
+	CommonMatrices m_matrices;
+	CommonMatrices m_prevMatrices;
+
+	/// The render target that the Renderer will populate.
+	RenderTargetHandle m_outRenderTarget;
+	U32 m_outRenderTargetWidth = 0;
+	U32 m_outRenderTargetHeight = 0;
+
+	Vec4 m_unprojParams;
+
+	ClusterBinOut m_clusterBinOut;
+	ClustererMagicValues m_prevClustererMagicValues;
+
+	StagingGpuMemoryToken m_lightShadingUniformsToken;
+
+	RenderingContext(const StackAllocator<U8>& alloc)
+		: m_tempAllocator(alloc)
+		, m_renderGraphDescr(alloc)
+	{
+	}
+};
 
 /// A convenience function to find empty cache entries. Used for various probes.
 template<typename THashMap, typename TCacheEntryArray, typename TAlloc>

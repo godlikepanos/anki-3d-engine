@@ -9,9 +9,9 @@
 
 ANKI_BEGIN_NAMESPACE
 
-const U32 CLUSTER_OBJECT_TYPE_COUNT = 6u; ///< Point lights, spot lights, refl probes, GI probes, decals and fog volumes
-const F32 LIGHT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< The near plane on the shadow map frustums.
-const U32 MAX_SHADOW_CASCADES = 4u;
+const U32 CLUSTER_OBJECT_TYPE_COUNT2 = 6u; ///< Point and spot lights, refl and GI probes, decals and fog volumes.
+const F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< The near plane of various clusterer object frustums.
+const U32 MAX_SHADOW_CASCADES2 = 4u;
 
 // Limits
 const U32 MAX_VISIBLE_POINT_LIGHTS = 64u;
@@ -19,157 +19,156 @@ const U32 MAX_VISIBLE_SPOT_LIGHTS = 64u;
 const U32 MAX_VISIBLE_DECALS = 64u;
 const U32 MAX_VISIBLE_FOG_DENSITY_VOLUMES = 32u;
 const U32 MAX_VISIBLE_REFLECTION_PROBES = 32u;
-const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES = 8u;
+const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2 = 8u;
 
 /// Point light.
-struct PointLight
+struct PointLight2
 {
-	Vec3 position; ///< Position in world space.
-	Vec3 diffuseColor;
-	F32 radius; ///< Radius
-	F32 squareRadiusOverOne; ///< 1/(radius^2).
-	U32 shadowLayer; ///< Shadow layer used in RT shadows.
-	F32 shadowAtlasTileScale; ///< UV scale for all tiles.
-	Vec2 shadowAtlasTileOffsets[6u];
+	Vec3 m_position; ///< Position in world space.
+	Vec3 m_diffuseColor;
+	F32 m_radius; ///< Radius
+	F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows.
+	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
+	Vec2 m_shadowAtlasTileOffsets[6u];
 };
-const U32 _ANKI_SIZEOF_PointLight = 22u * ANKI_SIZEOF(U32);
-ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == _ANKI_SIZEOF_PointLight);
+const U32 _ANKI_SIZEOF_PointLight2 = 22u * ANKI_SIZEOF(U32);
+ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight2) == _ANKI_SIZEOF_PointLight2);
 
 /// Spot light.
-struct SpotLight
+struct SpotLight2
 {
-	Vec3 position; ///< Position in world space.
-	Vec3 diffuseColor;
-	F32 radius; ///< Max distance.
-	F32 squareRadiusOverOne; ///< 1/(radius^2).
-	U32 shadowLayer; ///< Shadow layer used in RT shadows.
-	Vec3 direction; ///< Light direction.
-	F32 outerCos;
-	F32 innerCos;
-	Vec2 padding;
-	Mat4 textureProjectionMatrix;
+	Vec3 m_position; ///< Position in world space.
+	Vec3 m_diffuseColor;
+	F32 m_radius; ///< Max distance.
+	F32 m_squareRadiusOverOne; ///< 1/(radius^2).
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows.
+	Vec3 m_direction; ///< Light direction.
+	F32 m_outerCos;
+	F32 m_innerCos;
+	Vec2 m_padding;
+	Mat4 m_textureProjectionMatrix;
 };
-const U32 _ANKI_SIZEOF_SpotLight = 16u * ANKI_SIZEOF(U32) + ANKI_SIZEOF(Mat4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == _ANKI_SIZEOF_SpotLight);
+const U32 _ANKI_SIZEOF_SpotLight2 = 16u * ANKI_SIZEOF(U32) + ANKI_SIZEOF(Mat4);
+ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight2) == _ANKI_SIZEOF_SpotLight2);
 
 /// Directional light (sun).
-struct DirectionalLight
+struct DirectionalLight2
 {
-	Vec3 diffuseColor;
-	U32 cascadeCount; ///< If it's zero then it doesn't cast shadow.
-	Vec3 direction;
-	U32 active;
-	F32 effectiveShadowDistance;
-	F32 shadowCascadesDistancePower;
-	U32 shadowLayer;
-	U32 padding;
-	Mat4 textureMatrices[MAX_SHADOW_CASCADES];
+	Vec3 m_diffuseColor;
+	U32 m_cascadeCount; ///< If it's zero then it doesn't cast shadow.
+	Vec3 m_direction;
+	U32 m_active;
+	F32 m_effectiveShadowDistance;
+	F32 m_shadowCascadesDistancePower;
+	U32 m_shadowLayer;
+	U32 m_padding;
+	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES2];
 };
-const U32 _ANKI_SIZEOF_DirectionalLight = 12u * ANKI_SIZEOF(U32) + MAX_SHADOW_CASCADES * ANKI_SIZEOF(Mat4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == _ANKI_SIZEOF_DirectionalLight);
+const U32 _ANKI_SIZEOF_DirectionalLight2 = 12u * ANKI_SIZEOF(U32) + MAX_SHADOW_CASCADES2 * ANKI_SIZEOF(Mat4);
+ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight2) == _ANKI_SIZEOF_DirectionalLight2);
 
 /// Representation of a reflection probe.
-struct ReflectionProbe
+struct ReflectionProbe2
 {
-	Vec3 position; ///< Position of the probe in world space.
-	F32 cubemapIndex; ///< Index in the cubemap array texture.
-	Vec3 aabbMin;
-	Vec3 aabbMax;
+	Vec3 m_position; ///< Position of the probe in world space.
+	F32 m_cubemapIndex; ///< Index in the cubemap array texture.
+	Vec3 m_aabbMin;
+	Vec3 m_aabbMax;
 };
-const U32 _ANKI_SIZEOF_ReflectionProbe = 10u * ANKI_SIZEOF(U32);
-ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == _ANKI_SIZEOF_ReflectionProbe);
+const U32 _ANKI_SIZEOF_ReflectionProbe2 = 10u * ANKI_SIZEOF(U32);
+ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe2) == _ANKI_SIZEOF_ReflectionProbe2);
 
-/// Decal.
-struct Decal
+/// Decal2.
+struct Decal2
 {
-	Vec4 diffuseUv;
-	Vec4 normRoughnessUv;
-	Mat4 textureProjectionMatrix;
-	Vec4 blendFactors;
+	Vec4 m_diffuseUv;
+	Vec4 m_normRoughnessUv;
+	Mat4 m_textureProjectionMatrix;
+	Vec4 m_blendFactors;
 };
-const U32 _ANKI_SIZEOF_Decal = 3u * ANKI_SIZEOF(Vec4) + ANKI_SIZEOF(Mat4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(Decal) == _ANKI_SIZEOF_Decal);
+const U32 _ANKI_SIZEOF_Decal2 = 3u * ANKI_SIZEOF(Vec4) + ANKI_SIZEOF(Mat4);
+ANKI_SHADER_STATIC_ASSERT(sizeof(Decal2) == _ANKI_SIZEOF_Decal2);
 
 /// Fog density volume.
-struct FogDensityVolume
+struct FogDensityVolume2
 {
-	Vec3 aabbMinOrSphereCenter;
-	U32 isBox;
-	Vec3 aabbMaxOrSphereRadiusSquared;
-	F32 density;
+	Vec3 m_aabbMinOrSphereCenter;
+	U32 m_isBox;
+	Vec3 m_aabbMaxOrSphereRadiusSquared;
+	F32 m_density;
 };
-const U32 _ANKI_SIZEOF_FogDensityVolume = 2u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == _ANKI_SIZEOF_FogDensityVolume);
+const U32 _ANKI_SIZEOF_FogDensityVolume2 = 2u * ANKI_SIZEOF(Vec4);
+ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume2) == _ANKI_SIZEOF_FogDensityVolume2);
 
 /// Global illumination probe
-struct GlobalIlluminationProbe
+struct GlobalIlluminationProbe2
 {
-	Vec3 aabbMin;
-	Vec3 aabbMax;
+	Vec3 m_aabbMin;
+	Vec3 m_aabbMax;
 
-	U32 textureIndex; ///< Index to the array of volume textures.
-	F32 halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
+	U32 m_textureIndex; ///< Index to the array of volume textures.
+	F32 m_halfTexelSizeU; ///< (1.0 / textureSize(texArr[textureIndex]).x) / 2.0
 
 	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
-	F32 fadeDistance;
+	F32 m_fadeDistance;
 };
-const U32 _ANKI_SIZEOF_GlobalIlluminationProbe = 9u * ANKI_SIZEOF(U32);
-ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == _ANKI_SIZEOF_GlobalIlluminationProbe);
+const U32 _ANKI_SIZEOF_GlobalIlluminationProbe2 = 9u * ANKI_SIZEOF(U32);
+ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe2) == _ANKI_SIZEOF_GlobalIlluminationProbe2);
 
 /// Common matrices.
 class CommonMatrices
 {
 public:
-	Mat4 cameraTransform;
-	Mat4 view;
-	Mat4 projection;
-	Mat4 viewProjection;
+	Mat4 m_cameraTransform ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat4 m_view ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat4 m_projection ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat4 m_viewProjection ANKI_CPP_CODE(= Mat4::getIdentity());
 
-	Mat4 jitter;
-	Mat4 projectionJitter;
-	Mat4 viewProjectionJitter;
+	Mat4 m_jitter ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat4 m_projectionJitter ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat4 m_viewProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity());
 
-	Mat4 invertedViewProjectionJitter;
+	Mat4 m_invertedViewProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity()); ///< To unproject in world space.
 };
-const U32 _ANKI_SIZEOF_CommonMatrices = 9u * ANKI_SIZEOF(Mat4);
+const U32 _ANKI_SIZEOF_CommonMatrices = 8u * ANKI_SIZEOF(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(CommonMatrices) == _ANKI_SIZEOF_CommonMatrices);
 
 /// Common uniforms for light shading passes.
-struct LightingUniforms
+struct ClustererUniforms
 {
-	Vec2 rendereringSize;
+	Vec2 m_rendereringSize;
 
-	F32 time;
-	U32 frameCount;
+	F32 m_time;
+	U32 m_frame;
 
-	F32 near;
-	F32 far;
-	Vec3 cameraPosition;
+	F32 m_near;
+	F32 m_far;
+	Vec3 m_cameraPosition;
 
-	UVec3 clusterCounts;
-	U32 lightVolumeLastCluster;
+	UVec2 m_tileCounts;
+	U32 m_zSplitCount;
+	U32 m_lightVolumeLastCluster;
 
-	U32 frameCount;
+	Vec2 m_padding;
 
-	Vec2 padding;
-
-	CommonMatrices matrices;
-	CommonMatrices previousFrameMatrices;
+	CommonMatrices m_matrices;
+	CommonMatrices m_previousMatrices;
 };
-const U32 _ANKI_SIZEOF_LightingUniforms = 16u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices);
-ANKI_SHADER_STATIC_ASSERT(sizeof(LightingUniforms) == _ANKI_SIZEOF_LightingUniforms);
+const U32 _ANKI_SIZEOF_ClustererUniforms = 16u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices);
+ANKI_SHADER_STATIC_ASSERT(sizeof(ClustererUniforms) == _ANKI_SIZEOF_ClustererUniforms);
 
 /// Information that a tile or a Z-split will contain.
 struct Tile
 {
-	U64 pointLightsMask;
-	U64 spotLightsMask;
-	U64 decalsMask;
-	U32 fogDensityVolumesMask;
-	U32 reflectionProbesMask;
-	U8 giProbesMask;
+	U64 m_pointLightsMask;
+	U64 m_spotLightsMask;
+	U64 m_decalsMask;
+	U32 m_fogDensityVolumesMask;
+	U32 m_reflectionProbesMask;
+	U32 m_giProbesMask;
 };
-const U32 _ANKI_SIZEOF_Tile = 3u * ANKI_SIZEOF(U64) + 2u * ANKI_SIZEOF(U32) + ANKI_SIZEOF(U8);
+const U32 _ANKI_SIZEOF_Tile = 5u * ANKI_SIZEOF(U64);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Tile) == _ANKI_SIZEOF_Tile);
 
 ANKI_END_NAMESPACE

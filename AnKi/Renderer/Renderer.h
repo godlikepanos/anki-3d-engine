@@ -26,52 +26,6 @@ class UiManager;
 /// @addtogroup renderer
 /// @{
 
-/// Matrices.
-class RenderingContextMatrices
-{
-public:
-	Mat4 m_cameraTransform = Mat4::getIdentity();
-	Mat4 m_view = Mat4::getIdentity();
-	Mat4 m_projection = Mat4::getIdentity();
-	Mat4 m_viewProjection = Mat4::getIdentity();
-
-	Mat4 m_jitter = Mat4::getIdentity();
-	Mat4 m_projectionJitter = Mat4::getIdentity();
-	Mat4 m_viewProjectionJitter = Mat4::getIdentity();
-	Mat4 m_invertedViewProjectionJitter = Mat4::getIdentity();
-};
-
-/// Rendering context.
-class RenderingContext
-{
-public:
-	StackAllocator<U8> m_tempAllocator;
-	RenderQueue* m_renderQueue ANKI_DEBUG_CODE(= nullptr);
-
-	RenderGraphDescription m_renderGraphDescr;
-
-	RenderingContextMatrices m_matrices;
-	RenderingContextMatrices m_prevMatrices;
-
-	/// The render target that the Renderer will populate.
-	RenderTargetHandle m_outRenderTarget;
-	U32 m_outRenderTargetWidth = 0;
-	U32 m_outRenderTargetHeight = 0;
-
-	Vec4 m_unprojParams;
-
-	ClusterBinOut m_clusterBinOut;
-	ClustererMagicValues m_prevClustererMagicValues;
-
-	StagingGpuMemoryToken m_lightShadingUniformsToken;
-
-	RenderingContext(const StackAllocator<U8>& alloc)
-		: m_tempAllocator(alloc)
-		, m_renderGraphDescr(alloc)
-	{
-	}
-};
-
 /// Renderer statistics.
 class RendererStats
 {
@@ -440,7 +394,7 @@ private:
 	U64 m_prevAsyncTasksCompleted = 0;
 	Bool m_resourcesDirty = true;
 
-	RenderingContextMatrices m_prevMatrices;
+	CommonMatrices m_prevMatrices;
 	ClustererMagicValues m_prevClustererMagicValues;
 
 	Array<Mat4, 16> m_jitteredMats16x;

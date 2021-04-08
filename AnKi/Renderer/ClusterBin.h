@@ -32,25 +32,6 @@ public:
 	Bool m_shadowsEnabled ANKI_DEBUG_CODE(= false);
 };
 
-/// @memberof ClusterBin
-class ClusterBinOut
-{
-public:
-	StagingGpuMemoryToken m_pointLightsToken;
-	StagingGpuMemoryToken m_spotLightsToken;
-	StagingGpuMemoryToken m_reflectionProbesToken;
-	StagingGpuMemoryToken m_decalsToken;
-	StagingGpuMemoryToken m_fogDensityVolumesToken;
-	StagingGpuMemoryToken m_globalIlluminationProbesToken;
-	StagingGpuMemoryToken m_clustersToken;
-	StagingGpuMemoryToken m_indicesToken;
-
-	TextureViewPtr m_diffDecalTexView;
-	TextureViewPtr m_specularRoughnessDecalTexView;
-
-	ClustererMagicValues m_shaderMagicValues;
-};
-
 /// Bins lights, probes, decals etc to clusters.
 class ClusterBin
 {
