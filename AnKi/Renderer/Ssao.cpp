@@ -151,7 +151,7 @@ void Ssao::runMain(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx
 	} unis;
 
 	const Mat4& pmat = ctx.m_renderQueue->m_projectionMatrix;
-	unis.m_unprojectionParams = ctx.m_unprojParams;
+	unis.m_unprojectionParams = ctx.m_matrices.m_unprojectionParameters;
 	unis.m_projectionMat = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
 	unis.m_viewRotMat = Mat3x4(Vec3(0.0f), ctx.m_renderQueue->m_viewMatrix.getRotationPart());
 	cmdb->setPushConstants(&unis, sizeof(unis));

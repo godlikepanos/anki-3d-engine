@@ -28,7 +28,7 @@ struct PointLight2
 	Vec3 m_diffuseColor;
 	F32 m_radius; ///< Radius
 	F32 m_squareRadiusOverOne; ///< 1/(radius^2).
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows.
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
 	Vec2 m_shadowAtlasTileOffsets[6u];
 };
@@ -42,12 +42,12 @@ struct SpotLight2
 	Vec3 m_diffuseColor;
 	F32 m_radius; ///< Max distance.
 	F32 m_squareRadiusOverOne; ///< 1/(radius^2).
-	U32 m_shadowLayer; ///< Shadow layer used in RT shadows.
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	Vec3 m_direction; ///< Light direction.
 	F32 m_outerCos;
 	F32 m_innerCos;
 	Vec2 m_padding;
-	Mat4 m_textureProjectionMatrix;
+	Mat4 m_textureMatrix;
 };
 const U32 _ANKI_SIZEOF_SpotLight2 = 16u * ANKI_SIZEOF(U32) + ANKI_SIZEOF(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight2) == _ANKI_SIZEOF_SpotLight2);
@@ -61,7 +61,7 @@ struct DirectionalLight2
 	U32 m_active;
 	F32 m_effectiveShadowDistance;
 	F32 m_shadowCascadesDistancePower;
-	U32 m_shadowLayer;
+	U32 m_shadowLayer; ///< Shadow layer used in RT shadows. Also used to show that it doesn't cast shadow.
 	U32 m_padding;
 	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES2];
 };
@@ -84,7 +84,7 @@ struct Decal2
 {
 	Vec4 m_diffuseUv;
 	Vec4 m_normRoughnessUv;
-	Mat4 m_textureProjectionMatrix;
+	Mat4 m_textureMatrix;
 	Vec4 m_blendFactors;
 };
 const U32 _ANKI_SIZEOF_Decal2 = 3u * ANKI_SIZEOF(Vec4) + ANKI_SIZEOF(Mat4);
@@ -130,8 +130,10 @@ public:
 	Mat4 m_viewProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity());
 
 	Mat4 m_invertedViewProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity()); ///< To unproject in world space.
+
+	Vec4 m_unprojectionParameters ANKI_CPP_CODE(= Vec4(0.0f)); ///< To unproject. Jitter is not considered.
 };
-const U32 _ANKI_SIZEOF_CommonMatrices = 8u * ANKI_SIZEOF(Mat4);
+const U32 _ANKI_SIZEOF_CommonMatrices = 8u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(CommonMatrices) == _ANKI_SIZEOF_CommonMatrices);
 
 /// Common uniforms for light shading passes.
@@ -154,8 +156,11 @@ struct ClustererUniforms
 
 	CommonMatrices m_matrices;
 	CommonMatrices m_previousMatrices;
+
+	DirectionalLight2 m_directionalLight;
 };
-const U32 _ANKI_SIZEOF_ClustererUniforms = 16u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices);
+const U32 _ANKI_SIZEOF_ClustererUniforms =
+	16u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight2);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ClustererUniforms) == _ANKI_SIZEOF_ClustererUniforms);
 
 /// Information that a tile or a Z-split will contain.
@@ -167,6 +172,7 @@ struct Tile
 	U32 m_fogDensityVolumesMask;
 	U32 m_reflectionProbesMask;
 	U32 m_giProbesMask;
+	U32 m_padding; ///< Add some padding to be 100% sure nothing will break.
 };
 const U32 _ANKI_SIZEOF_Tile = 5u * ANKI_SIZEOF(U64);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Tile) == _ANKI_SIZEOF_Tile);

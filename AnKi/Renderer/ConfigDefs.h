@@ -7,6 +7,8 @@ ANKI_CONFIG_OPTION(r_clusterSizeX, 32, 1, 256)
 ANKI_CONFIG_OPTION(r_clusterSizeY, 26, 1, 256)
 ANKI_CONFIG_OPTION(r_clusterSizeZ, 32, 1, 256)
 ANKI_CONFIG_OPTION(r_textureAnisotropy, 8, 1, 16)
+ANKI_CONFIG_OPTION(r_tileSize, 64, 8, 256, "Tile lighting tile size")
+ANKI_CONFIG_OPTION(r_zSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
 
 ANKI_CONFIG_OPTION(r_renderingQuality, 1.0, 0.5, 1.0, "A factor over the requested renderingresolution")
 

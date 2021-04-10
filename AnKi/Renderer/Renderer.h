@@ -382,6 +382,8 @@ private:
 
 	Array<U32, 4> m_clusterCount;
 	ClusterBin m_clusterBin;
+	U32 m_tileSize = 64;
+	U32 m_zSplitCount = 1;
 
 	U32 m_width;
 	U32 m_height;
@@ -425,6 +427,9 @@ private:
 	void initJitteredMats();
 
 	void updateLightShadingUniforms(RenderingContext& ctx) const;
+
+	void writeClustererBuffers(RenderingContext& ctx);
+	void writeClustererBuffersTask(RenderingContext& ctx);
 };
 /// @}
 

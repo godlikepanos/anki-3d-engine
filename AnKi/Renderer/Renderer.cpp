@@ -6,6 +6,7 @@
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/RenderQueue.h>
 #include <AnKi/Util/Tracer.h>
+#include <AnKi/Util/ThreadHive.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Collision/Aabb.h>
@@ -93,6 +94,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_clusterCount[3] = m_clusterCount[0] * m_clusterCount[1] * m_clusterCount[2];
 
 	m_clusterBin.init(m_alloc, m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], config);
+
+	m_tileSize = config.getNumberU32("r_tileSize");
+	m_zSplitCount = config.getNumberU32("r_zSplitCount");
 
 	// A few sanity checks
 	if(m_width < 10 || m_height < 10)
@@ -283,9 +287,9 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * ctx.m_matrices.m_view;
 	ctx.m_matrices.m_invertedViewProjectionJitter = ctx.m_matrices.m_viewProjectionJitter.getInverse();
 
-	ctx.m_prevMatrices = m_prevMatrices;
+	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
-	ctx.m_unprojParams = ctx.m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
+	ctx.m_prevMatrices = m_prevMatrices;
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
@@ -576,7 +580,7 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 		sizeof(LightingUniforms), StagingGpuMemoryType::UNIFORM, ctx.m_lightShadingUniformsToken));
 
 	// Start writing
-	blk->m_unprojectionParams = ctx.m_unprojParams;
+	blk->m_unprojectionParams = ctx.m_matrices.m_unprojectionParameters;
 
 	blk->m_rendererSize = Vec2(F32(m_width), F32(m_height));
 	blk->m_time = F32(HighRezTimer::getCurrentTime());
@@ -680,6 +684,325 @@ void Renderer::setCurrentDebugRenderTarget(CString rtName)
 	if(!rtName.isEmpty() && rtName.getLength() > 0)
 	{
 		m_currentDebugRtName.create(getAllocator(), rtName);
+	}
+}
+
+void Renderer::writeClustererBuffers(RenderingContext& ctx)
+{
+	class Ctx
+	{
+	public:
+		Renderer* m_r;
+		RenderingContext* m_ctx;
+	};
+
+	Ctx c;
+	c.m_r = this;
+	c.m_ctx = &ctx;
+
+	m_threadHive->submitTask(
+		[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
+			static_cast<Ctx*>(userData)->m_r->writeClustererBuffersTask(*static_cast<Ctx*>(userData)->m_ctx);
+		},
+		&c);
+}
+
+void Renderer::writeClustererBuffersTask(RenderingContext& ctx)
+{
+	ANKI_TRACE_SCOPED_EVENT(R_WRITE_CLUSTERER_OBJECTS);
+
+	const RenderQueue& rqueue = *ctx.m_renderQueue;
+
+	// Clusterer uniforms
+	{
+		ClustererUniforms* unis = static_cast<ClustererUniforms*>(
+			m_stagingMem->allocateFrame(sizeof(ClustererUniforms), StagingGpuMemoryType::UNIFORM,
+										ctx.m_clustererGpuObjects.m_lightingUniformsToken));
+
+		unis->m_rendereringSize = Vec2(F32(m_width), F32(m_height));
+
+		unis->m_time = F32(HighRezTimer::getCurrentTime());
+		unis->m_frame = m_frameCount & MAX_U32;
+
+		unis->m_near = rqueue.m_cameraNear;
+		unis->m_far = rqueue.m_cameraFar;
+		unis->m_cameraPosition = rqueue.m_cameraTransform.getTranslationPart().xyz();
+
+		unis->m_tileCounts.x() = (m_width + m_tileSize - 1) / m_tileSize;
+		unis->m_tileCounts.y() = (m_height + m_tileSize - 1) / m_tileSize;
+		unis->m_zSplitCount = m_zSplitCount;
+		unis->m_lightVolumeLastCluster = m_volLighting->getFinalClusterInZ();
+
+		unis->m_matrices = ctx.m_matrices;
+		unis->m_previousMatrices = ctx.m_prevMatrices;
+
+		// Directional light
+		if(rqueue.m_directionalLight.m_uuid != 0)
+		{
+			DirectionalLight2& out = unis->m_directionalLight;
+			const DirectionalLightQueueElement& in = rqueue.m_directionalLight;
+
+			out.m_diffuseColor = in.m_diffuseColor;
+			out.m_cascadeCount = in.m_shadowCascadeCount;
+			out.m_direction = in.m_direction;
+			out.m_active = 1;
+			out.m_effectiveShadowDistance = in.m_effectiveShadowDistance;
+			out.m_shadowCascadesDistancePower = in.m_shadowCascadesDistancePower;
+			out.m_shadowLayer = (in.hasShadow()) ? in.m_shadowLayer : MAX_U32;
+
+			for(U cascade = 0; cascade < in.m_shadowCascadeCount; ++cascade)
+			{
+				out.m_textureMatrices[cascade] = in.m_textureMatrices[cascade];
+			}
+		}
+		else
+		{
+			unis->m_directionalLight.m_active = 0;
+		}
+	}
+
+	// Point lights
+	U32 visiblePointLightCount = rqueue.m_pointLights.getSize();
+	if(ANKI_UNLIKELY(visiblePointLightCount > MAX_VISIBLE_POINT_LIGHTS))
+	{
+		ANKI_R_LOGW("Visible point lights exceed the max value by %u",
+					visiblePointLightCount - MAX_VISIBLE_POINT_LIGHTS);
+		visiblePointLightCount = MAX_VISIBLE_POINT_LIGHTS;
+	}
+
+	if(visiblePointLightCount)
+	{
+		PointLight2* lights = static_cast<PointLight2*>(
+			m_stagingMem->allocateFrame(visiblePointLightCount * sizeof(PointLight2), StagingGpuMemoryType::STORAGE,
+										ctx.m_clustererGpuObjects.m_pointLightsToken));
+
+		for(U32 i = 0; i < visiblePointLightCount; ++i)
+		{
+			PointLight2& out = lights[i];
+			const PointLightQueueElement& in = rqueue.m_pointLights[i];
+
+			out.m_position = in.m_worldPosition;
+			out.m_diffuseColor = in.m_diffuseColor;
+			out.m_radius = in.m_radius;
+			out.m_squareRadiusOverOne = 1.0f / (in.m_radius * in.m_radius);
+			out.m_shadowLayer = in.m_shadowLayer;
+
+			if(in.m_shadowRenderQueues[0] == nullptr)
+			{
+				out.m_shadowAtlasTileScale = INVALID_TEXTURE_INDEX;
+			}
+			else
+			{
+				out.m_shadowAtlasTileScale = in.m_shadowAtlasTileSize;
+				static_assert(sizeof(out.m_shadowAtlasTileOffsets) == sizeof(in.m_shadowAtlasTileOffsets), "See file");
+				memcpy(&out.m_shadowAtlasTileOffsets[0], &in.m_shadowAtlasTileOffsets[0],
+					   sizeof(in.m_shadowAtlasTileOffsets));
+			}
+		}
+	}
+	else
+	{
+		ctx.m_clustererGpuObjects.m_pointLightsToken.markUnused();
+	}
+
+	// Spot lights
+	U32 visibleSpotLightCount = rqueue.m_spotLights.getSize();
+	if(visibleSpotLightCount > MAX_VISIBLE_SPOT_LIGHTS)
+	{
+		ANKI_R_LOGW("Visible spot lights exceed the max value by %u", visibleSpotLightCount - MAX_VISIBLE_SPOT_LIGHTS);
+		visibleSpotLightCount = MAX_VISIBLE_SPOT_LIGHTS;
+	}
+
+	if(visibleSpotLightCount)
+	{
+		SpotLight2* lights = static_cast<SpotLight2*>(
+			m_stagingMem->allocateFrame(visibleSpotLightCount * sizeof(SpotLight2), StagingGpuMemoryType::STORAGE,
+										ctx.m_clustererGpuObjects.m_spotLightsToken));
+
+		for(U32 i = 0; i < visibleSpotLightCount; ++i)
+		{
+			const SpotLightQueueElement& in = rqueue.m_spotLights[i];
+			SpotLight2& out = lights[i];
+
+			out.m_position = in.m_worldTransform.getTranslationPart().xyz();
+			out.m_diffuseColor = in.m_diffuseColor;
+			out.m_radius = in.m_distance;
+			out.m_squareRadiusOverOne = 1.0f / (in.m_distance * in.m_distance);
+			out.m_shadowLayer = (in.hasShadow()) ? in.m_shadowLayer : MAX_U32;
+			out.m_direction = -in.m_worldTransform.getRotationPart().getZAxis();
+			out.m_outerCos = cos(in.m_outerAngle / 2.0f);
+			out.m_innerCos = cos(in.m_innerAngle / 2.0f);
+
+			if(in.hasShadow())
+			{
+				// bias * proj_l * view_l
+				out.m_textureMatrix = in.m_textureMatrix;
+			}
+			else
+			{
+				out.m_textureMatrix = Mat4::getIdentity();
+			}
+		}
+	}
+	else
+	{
+		ctx.m_clustererGpuObjects.m_spotLightsToken.markUnused();
+	}
+
+	// Reflection probes
+	U32 visibleReflectionPRobeCount = rqueue.m_reflectionProbes.getSize();
+	if(visibleReflectionPRobeCount > MAX_VISIBLE_REFLECTION_PROBES)
+	{
+		ANKI_R_LOGW("Visible reflection probes exceed the max value by %u",
+					visibleReflectionPRobeCount - MAX_VISIBLE_REFLECTION_PROBES);
+		visibleReflectionPRobeCount = MAX_VISIBLE_REFLECTION_PROBES;
+	}
+
+	if(visibleReflectionPRobeCount)
+	{
+		ReflectionProbe2* probes = static_cast<ReflectionProbe2*>(m_stagingMem->allocateFrame(
+			visibleReflectionPRobeCount * sizeof(ReflectionProbe2), StagingGpuMemoryType::STORAGE,
+			ctx.m_clustererGpuObjects.m_reflectionProbesToken));
+
+		for(U32 i = 0; i < visibleReflectionPRobeCount; ++i)
+		{
+			const ReflectionProbeQueueElement& in = rqueue.m_reflectionProbes[i];
+			ReflectionProbe2& out = probes[i];
+
+			out.m_position = in.m_worldPosition;
+			out.m_cubemapIndex = F32(in.m_textureArrayIndex);
+			out.m_aabbMin = in.m_aabbMin;
+			out.m_aabbMax = in.m_aabbMax;
+		}
+	}
+	else
+	{
+		ctx.m_clustererGpuObjects.m_reflectionProbesToken.markUnused();
+	}
+
+	// Decals
+	U32 visibleDecalCount = rqueue.m_decals.getSize();
+	if(visibleDecalCount > MAX_VISIBLE_DECALS)
+	{
+		ANKI_R_LOGW("Visible decals exceed the max value by %u", visibleDecalCount - MAX_VISIBLE_DECALS);
+		visibleDecalCount = MAX_VISIBLE_DECALS;
+	}
+
+	if(visibleDecalCount)
+	{
+		Decal2* decals = static_cast<Decal2*>(m_stagingMem->allocateFrame(sizeof(Decal2) * visibleDecalCount,
+																		  StagingGpuMemoryType::STORAGE,
+																		  ctx.m_clustererGpuObjects.m_decalsToken));
+
+		TextureView* diffuseAtlas = nullptr;
+		TextureView* specularRoughnessAtlas = nullptr;
+		for(U32 i = 0; i < visibleDecalCount; ++i)
+		{
+			const DecalQueueElement& in = rqueue.m_decals[i];
+			Decal2& out = decals[i];
+
+			if((diffuseAtlas != nullptr && diffuseAtlas != in.m_diffuseAtlas)
+			   || (specularRoughnessAtlas != nullptr && specularRoughnessAtlas != in.m_specularRoughnessAtlas))
+			{
+				ANKI_R_LOGF("All decals should have the same tex atlas");
+			}
+
+			diffuseAtlas = in.m_diffuseAtlas;
+			specularRoughnessAtlas = in.m_specularRoughnessAtlas;
+
+			// Diff
+			Vec4 uv = in.m_diffuseAtlasUv;
+			out.m_diffuseUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
+			out.m_blendFactors[0] = in.m_diffuseAtlasBlendFactor;
+
+			// Other
+			uv = in.m_specularRoughnessAtlasUv;
+			out.m_normRoughnessUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
+			out.m_blendFactors[1] = in.m_specularRoughnessAtlasBlendFactor;
+
+			// bias * proj_l * view
+			out.m_textureMatrix = in.m_textureMatrix;
+		}
+
+		ANKI_ASSERT(diffuseAtlas || specularRoughnessAtlas);
+		ctx.m_clustererGpuObjects.m_diffuseDecalTextureView.reset(diffuseAtlas);
+		ctx.m_clustererGpuObjects.m_specularRoughnessDecalTextureView.reset(specularRoughnessAtlas);
+	}
+	else
+	{
+		ctx.m_clustererGpuObjects.m_decalsToken.markUnused();
+	}
+
+	// Fog volumes
+	U32 visibleFogCount = rqueue.m_fogDensityVolumes.getSize();
+	if(visibleFogCount > MAX_VISIBLE_FOG_DENSITY_VOLUMES)
+	{
+		ANKI_R_LOGW("Visible fog density volumes exceed the max value by %u",
+					visibleFogCount - MAX_VISIBLE_FOG_DENSITY_VOLUMES);
+		visibleFogCount = MAX_VISIBLE_FOG_DENSITY_VOLUMES;
+	}
+
+	if(visibleFogCount)
+	{
+		FogDensityVolume2* volumes = static_cast<FogDensityVolume2*>(
+			m_stagingMem->allocateFrame(sizeof(FogDensityVolume2) * visibleFogCount, StagingGpuMemoryType::STORAGE,
+										ctx.m_clustererGpuObjects.m_fogDensityVolumesToken));
+
+		for(U32 i = 0; i < visibleFogCount; ++i)
+		{
+			const FogDensityQueueElement& in = rqueue.m_fogDensityVolumes[i];
+			FogDensityVolume2& out = volumes[i];
+
+			out.m_density = in.m_density;
+			if(in.m_isBox)
+			{
+				out.m_isBox = 1;
+				out.m_aabbMinOrSphereCenter = in.m_aabbMin;
+				out.m_aabbMaxOrSphereRadiusSquared = in.m_aabbMax;
+			}
+			else
+			{
+				out.m_isBox = 0;
+				out.m_aabbMinOrSphereCenter = in.m_sphereCenter;
+				out.m_aabbMaxOrSphereRadiusSquared = Vec3(in.m_sphereRadius * in.m_sphereRadius);
+			}
+		}
+	}
+	else
+	{
+		ctx.m_clustererGpuObjects.m_fogDensityVolumesToken.markUnused();
+	}
+
+	// GI
+	U32 visibleGiProbeCount = rqueue.m_giProbes.getSize();
+	if(visibleGiProbeCount > MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2)
+	{
+		ANKI_R_LOGW("Visible GI probes exceed the max value by %u",
+					visibleGiProbeCount - MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2);
+		visibleGiProbeCount = MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2;
+	}
+
+	if(visibleGiProbeCount)
+	{
+		GlobalIlluminationProbe2* probes = static_cast<GlobalIlluminationProbe2*>(m_stagingMem->allocateFrame(
+			sizeof(GlobalIlluminationProbe2) * visibleGiProbeCount, StagingGpuMemoryType::STORAGE,
+			ctx.m_clustererGpuObjects.m_globalIlluminationProbesToken));
+
+		for(U32 i = 0; i < visibleGiProbeCount; ++i)
+		{
+			const GlobalIlluminationProbeQueueElement& in = rqueue.m_giProbes[i];
+			GlobalIlluminationProbe2& out = probes[i];
+
+			out.m_aabbMin = in.m_aabbMin;
+			out.m_aabbMax = in.m_aabbMax;
+			out.m_textureIndex = U32(&in - &rqueue.m_giProbes.getFront());
+			out.m_halfTexelSizeU = 1.0f / F32(F32(in.m_cellCounts.x()) * 6.0f) / 2.0f;
+			out.m_fadeDistance = in.m_fadeDistance;
+		}
+	}
+	else
+	{
+		ctx.m_clustererGpuObjects.m_globalIlluminationProbesToken.markUnused();
 	}
 }
 

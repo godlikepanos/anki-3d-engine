@@ -149,8 +149,8 @@ public:
 	StagingGpuMemoryToken m_zSplitsToken;
 	StagingGpuMemoryToken m_lightingUniformsToken;
 
-	TextureViewPtr m_diffDecalTexView;
-	TextureViewPtr m_specularRoughnessDecalTexView;
+	TextureViewPtr m_diffuseDecalTextureView;
+	TextureViewPtr m_specularRoughnessDecalTextureView;
 };
 
 /// Rendering context.
@@ -158,7 +158,7 @@ class RenderingContext
 {
 public:
 	StackAllocator<U8> m_tempAllocator;
-	RenderQueue* m_renderQueue ANKI_DEBUG_CODE(= nullptr);
+	RenderQueue* m_renderQueue = nullptr;
 
 	RenderGraphDescription m_renderGraphDescr;
 
@@ -170,12 +170,12 @@ public:
 	U32 m_outRenderTargetWidth = 0;
 	U32 m_outRenderTargetHeight = 0;
 
-	Vec4 m_unprojParams;
-
 	ClusterBinOut m_clusterBinOut;
 	ClustererMagicValues m_prevClustererMagicValues;
 
 	StagingGpuMemoryToken m_lightShadingUniformsToken;
+
+	ClustererGpuObjects m_clustererGpuObjects;
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
