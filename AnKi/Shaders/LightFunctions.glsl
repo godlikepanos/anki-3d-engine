@@ -8,6 +8,7 @@
 #pragma once
 
 #include <AnKi/Shaders/Functions.glsl>
+#include <AnKi/Shaders/CollisionFunctions.glsl>
 #include <AnKi/Shaders/Pack.glsl>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
@@ -305,7 +306,7 @@ Vec3 intersectProbe(Vec3 fragPos, // Ray origin
 )
 {
 	// Compute the intersection point
-	const F32 intresectionDist = rayAabbIntersectionInside(fragPos, rayDir, probeAabbMin, probeAabbMax);
+	const F32 intresectionDist = testRayAabbInside(fragPos, rayDir, probeAabbMin, probeAabbMax);
 	const Vec3 intersectionPoint = fragPos + intresectionDist * rayDir;
 
 	// Compute the cubemap vector

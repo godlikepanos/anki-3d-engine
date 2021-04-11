@@ -390,24 +390,6 @@ F32 cubeCoordSolidAngle(Vec2 norm, F32 cubeFaceSize)
 	return areaElement(v0.x, v0.y) - areaElement(v0.x, v1.y) - areaElement(v1.x, v0.y) + areaElement(v1.x, v1.y);
 }
 
-// Intersect a ray against an AABB. The ray is inside the AABB. The function returns the distance 'a' where the
-// intersection point is rayOrigin + rayDir * a
-// https://community.arm.com/graphics/b/blog/posts/reflections-based-on-local-cubemaps-in-unity
-F32 rayAabbIntersectionInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax)
-{
-	const Vec3 intersectMaxPointPlanes = (aabbMax - rayOrigin) / rayDir;
-	const Vec3 intersectMinPointPlanes = (aabbMin - rayOrigin) / rayDir;
-	const Vec3 largestParams = max(intersectMaxPointPlanes, intersectMinPointPlanes);
-	const F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
-	return distToIntersect;
-}
-
-// Return true if to AABBs overlap
-Bool aabbsOverlap(const Vec3 aMin, const Vec3 aMax, const Vec3 bMin, const Vec3 bMax)
-{
-	return all(lessThan(aMin, bMax)) && all(lessThan(bMin, aMax));
-}
-
 // A convenience function to skip out of bounds invocations on post-process compute shaders. Both the arguments should
 // be constexpr.
 #if defined(ANKI_COMPUTE_SHADER)
@@ -447,39 +429,6 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 
 	return Mat3(x, y, z);
 #endif
-}
-
-// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-Bool rayTriangleIntersect(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, out F32 t, out F32 u, out F32 v)
-{
-	const Vec3 v0v1 = v1 - v0;
-	const Vec3 v0v2 = v2 - v0;
-	const Vec3 pvec = cross(dir, v0v2);
-	const F32 det = dot(v0v1, pvec);
-
-	if(det < EPSILON)
-	{
-		return false;
-	}
-
-	const F32 invDet = 1.0 / det;
-
-	const Vec3 tvec = orig - v0;
-	u = dot(tvec, pvec) * invDet;
-	if(u < 0.0 || u > 1.0)
-	{
-		return false;
-	}
-
-	const Vec3 qvec = cross(tvec, v0v1);
-	v = dot(dir, qvec) * invDet;
-	if(v < 0.0 || u + v > 1.0)
-	{
-		return false;
-	}
-
-	t = dot(v0v2, qvec) * invDet;
-	return true;
 }
 
 #if defined(ANKI_COMPUTE_SHADER)
