@@ -56,10 +56,28 @@ F32 testRayAabbInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax)
 	return distToIntersect;
 }
 
-Bool testRaySphere(Vec3 rayOrigin, Vec3 rayDir, Vec3 sphereCenter, F32 sphereRadius)
+/// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+Bool testRaySphere(Vec3 rayOrigin, Vec3 rayDir, Vec3 sphereCenter, F32 sphereRadius, out F32 t0, out F32 t1)
 {
 	const Vec3 L = sphereCenter - rayOrigin;
 	const F32 tca = dot(L, rayDir);
 	const F32 d2 = dot(L, L) - tca * tca;
-	return d2 <= radius * radius;
+	const F32 radius2 = sphereRadius * sphereRadius;
+	const F32 diff = radius2 - d2;
+	if(diff < 0.0)
+	{
+		return false;
+	}
+	else
+	{
+		const F32 thc = sqrt(diff);
+		t0 = tca - thc;
+		t1 = tca + thc;
+		return true;
+	}
+}
+
+F32 testPlanePoint(Vec3 planeNormal, F32 planeOffset, Vec3 point)
+{
+	return dot(planeNormal, point) - planeOffset;
 }

@@ -534,7 +534,7 @@ public:
 
 	/// @name Operators with other types
 	/// @{
-	ANKI_ENABLE_METHOD(!HAS_MAT3X4_SIMD)
+	ANKI_ENABLE_METHOD(!HAS_SIMD)
 	ColumnVec operator*(const RowVec& v) const
 	{
 		const TMat& m = *this;
@@ -551,7 +551,7 @@ public:
 		return out;
 	}
 
-	ANKI_ENABLE_METHOD(HAS_MAT3X4_SIMD)
+	ANKI_ENABLE_METHOD(HAS_SIMD)
 	ColumnVec operator*(const RowVec& v) const
 	{
 		ColumnVec out;

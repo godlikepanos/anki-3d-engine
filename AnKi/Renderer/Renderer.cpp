@@ -719,7 +719,7 @@ void Renderer::writeClustererBuffersTask(RenderingContext& ctx)
 			m_stagingMem->allocateFrame(sizeof(ClustererUniforms), StagingGpuMemoryType::UNIFORM,
 										ctx.m_clustererGpuObjects.m_lightingUniformsToken));
 
-		unis->m_rendereringSize = Vec2(F32(m_width), F32(m_height));
+		unis->m_renderingSize = Vec2(F32(m_width), F32(m_height));
 
 		unis->m_time = F32(HighRezTimer::getCurrentTime());
 		unis->m_frame = m_frameCount & MAX_U32;

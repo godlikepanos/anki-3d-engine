@@ -184,7 +184,6 @@ inline Bool testCollision(const Ray& a, const Cone& b)
 {
 	return testCollision(b, a);
 }
-Bool testCollision(const Cone& a, const Ray& b);
 
 // Extra testCollision functions
 

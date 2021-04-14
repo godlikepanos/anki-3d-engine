@@ -9,7 +9,15 @@
 
 ANKI_BEGIN_NAMESPACE
 
+// Enum of clusterer object types
+const U32 CLUSTER_OBJECT_TYPE_POINT_LIGHT = 0u;
+const U32 CLUSTER_OBJECT_TYPE_SPOT_LIGHT = 1u;
+const U32 CLUSTER_OBJECT_TYPE_DECAL = 2u;
+const U32 CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME = 3u;
+const U32 CLUSTER_OBJECT_TYPE_REFLECTION_PROBE = 4u;
+const U32 CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE = 5u;
 const U32 CLUSTER_OBJECT_TYPE_COUNT2 = 6u; ///< Point and spot lights, refl and GI probes, decals and fog volumes.
+
 const F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< The near plane of various clusterer object frustums.
 const U32 MAX_SHADOW_CASCADES2 = 4u;
 
@@ -117,9 +125,8 @@ const U32 _ANKI_SIZEOF_GlobalIlluminationProbe2 = 9u * ANKI_SIZEOF(U32);
 ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe2) == _ANKI_SIZEOF_GlobalIlluminationProbe2);
 
 /// Common matrices.
-class CommonMatrices
+struct CommonMatrices
 {
-public:
 	Mat4 m_cameraTransform ANKI_CPP_CODE(= Mat4::getIdentity());
 	Mat4 m_view ANKI_CPP_CODE(= Mat4::getIdentity());
 	Mat4 m_projection ANKI_CPP_CODE(= Mat4::getIdentity());
@@ -130,29 +137,39 @@ public:
 	Mat4 m_viewProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity());
 
 	Mat4 m_invertedViewProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity()); ///< To unproject in world space.
+	Mat4 m_invertedViewProjection ANKI_CPP_CODE(= Mat4::getIdentity());
 
-	Vec4 m_unprojectionParameters ANKI_CPP_CODE(= Vec4(0.0f)); ///< To unproject. Jitter is not considered.
+	Vec4 m_unprojectionParameters ANKI_CPP_CODE(= Vec4(0.0f)); ///< To unproject to view space. Jitter not considered.
 };
-const U32 _ANKI_SIZEOF_CommonMatrices = 8u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec4);
+const U32 _ANKI_SIZEOF_CommonMatrices = 9u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(CommonMatrices) == _ANKI_SIZEOF_CommonMatrices);
 
 /// Common uniforms for light shading passes.
 struct ClustererUniforms
 {
-	Vec2 m_rendereringSize;
+	Vec2 m_renderingSize;
 
 	F32 m_time;
 	U32 m_frame;
 
+	Vec4 m_nearPlaneWSpace;
 	F32 m_near;
 	F32 m_far;
+	F32 m_oneOverFrustumLength; ///< 1/(far-near)
 	Vec3 m_cameraPosition;
 
 	UVec2 m_tileCounts;
 	U32 m_zSplitCount;
 	U32 m_lightVolumeLastCluster;
 
-	Vec2 m_padding;
+	U32 m_pointLightCount;
+	U32 m_spotLightCount;
+	U32 m_decalCount;
+	U32 m_fogDensityVolumeCount;
+	U32 m_reflectionProbeCount;
+	U32 m_giProbeCount;
+
+	F32 m_padding[3u];
 
 	CommonMatrices m_matrices;
 	CommonMatrices m_previousMatrices;
@@ -160,11 +177,11 @@ struct ClustererUniforms
 	DirectionalLight2 m_directionalLight;
 };
 const U32 _ANKI_SIZEOF_ClustererUniforms =
-	16u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight2);
+	28u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight2);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ClustererUniforms) == _ANKI_SIZEOF_ClustererUniforms);
 
 /// Information that a tile or a Z-split will contain.
-struct Tile
+struct TileOrZSplit
 {
 	U64 m_pointLightsMask;
 	U64 m_spotLightsMask;
@@ -174,7 +191,7 @@ struct Tile
 	U32 m_giProbesMask;
 	U32 m_padding; ///< Add some padding to be 100% sure nothing will break.
 };
-const U32 _ANKI_SIZEOF_Tile = 5u * ANKI_SIZEOF(U64);
-ANKI_SHADER_STATIC_ASSERT(sizeof(Tile) == _ANKI_SIZEOF_Tile);
+const U32 _ANKI_SIZEOF_TileOrZSplit = 5u * ANKI_SIZEOF(U64);
+ANKI_SHADER_STATIC_ASSERT(sizeof(TileOrZSplit) == _ANKI_SIZEOF_TileOrZSplit);
 
 ANKI_END_NAMESPACE
