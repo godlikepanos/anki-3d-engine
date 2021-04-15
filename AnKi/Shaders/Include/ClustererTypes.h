@@ -54,10 +54,11 @@ struct SpotLight2
 	Vec3 m_direction; ///< Light direction.
 	F32 m_outerCos;
 	F32 m_innerCos;
-	Vec2 m_padding;
+	Vec3 m_edgePoints[5u]; ///< Edge points in world space
+	Vec3 m_padding;
 	Mat4 m_textureMatrix;
 };
-const U32 _ANKI_SIZEOF_SpotLight2 = 16u * ANKI_SIZEOF(U32) + ANKI_SIZEOF(Mat4);
+const U32 _ANKI_SIZEOF_SpotLight2 = 32u * ANKI_SIZEOF(U32) + ANKI_SIZEOF(Mat4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight2) == _ANKI_SIZEOF_SpotLight2);
 
 /// Directional light (sun).
