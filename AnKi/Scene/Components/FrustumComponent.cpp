@@ -48,7 +48,7 @@ Bool FrustumComponent::updateInternal()
 			m_projMat = Mat4::calculatePerspectiveProjectionMatrix(m_perspective.m_fovX, m_perspective.m_fovY,
 																   m_perspective.m_near, m_perspective.m_far);
 
-			computeEdgesOfFrustum(m_perspective.m_far, m_perspective.m_fovY, m_perspective.m_fovY,
+			computeEdgesOfFrustum(m_perspective.m_far, m_perspective.m_fovX, m_perspective.m_fovY,
 								  &m_perspective.m_edgesL[0]);
 
 			// Planes

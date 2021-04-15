@@ -6,14 +6,15 @@
 #pragma once
 
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-Bool testRayTriangle(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, out F32 t, out F32 u, out F32 v)
+Bool testRayTriangle(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, Bool backfaceCulling, out F32 t, out F32 u,
+					 out F32 v)
 {
 	const Vec3 v0v1 = v1 - v0;
 	const Vec3 v0v2 = v2 - v0;
 	const Vec3 pvec = cross(dir, v0v2);
 	const F32 det = dot(v0v1, pvec);
 
-	if(det < EPSILON)
+	if((backfaceCulling && det <= 0.0) || det == 0.0)
 	{
 		return false;
 	}
@@ -68,13 +69,26 @@ Bool testRaySphere(Vec3 rayOrigin, Vec3 rayDir, Vec3 sphereCenter, F32 sphereRad
 	{
 		return false;
 	}
-	else
+
+	const F32 thc = sqrt(diff);
+	t0 = tca - thc;
+	t1 = tca + thc;
+
+	if(t0 < 0.0 && t1 < 0.0)
 	{
-		const F32 thc = sqrt(diff);
-		t0 = tca - thc;
-		t1 = tca + thc;
-		return true;
+		return false;
 	}
+
+	// Swap
+	if(t0 > t1)
+	{
+		const F32 tmp = t0;
+		t0 = t1;
+		t1 = tmp;
+	}
+
+	t0 = max(0.0, t0);
+	return true;
 }
 
 F32 testPlanePoint(Vec3 planeNormal, F32 planeOffset, Vec3 point)
