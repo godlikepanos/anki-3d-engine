@@ -102,7 +102,7 @@ Error BufferImpl::init(const BufferInitInfo& inf)
 																			 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
-	else if((access & BufferMapAccessBit::READ) != BufferMapAccessBit::NONE)
+	else if(!!(access & BufferMapAccessBit::READ))
 	{
 		// Read or read/write
 

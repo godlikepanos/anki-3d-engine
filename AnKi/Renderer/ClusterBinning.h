@@ -27,7 +27,18 @@ public:
 	void populateRenderGraph(RenderingContext& ctx);
 
 private:
-	void run(RenderingContext& ctx, RenderPassWorkContext& rgraphCtx);
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
+
+	U32 m_clusterCount = 0;
+
+	class
+	{
+	public:
+		const RenderingContext* m_ctx = nullptr;
+	} m_runCtx;
+
+	void run(RenderPassWorkContext& rgraphCtx);
 };
 /// @}
 

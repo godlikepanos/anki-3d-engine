@@ -10,6 +10,8 @@
 #include <AnKi/Core/ConfigSet.h>
 #include <AnKi/Util/HighRezTimer.h>
 #include <AnKi/Collision/Aabb.h>
+#include <AnKi/Collision/Plane.h>
+#include <AnKi/Collision/Functions.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
@@ -38,6 +40,7 @@
 #include <AnKi/Renderer/RtShadows.h>
 #include <AnKi/Renderer/AccelerationStructureBuilder.h>
 #include <AnKi/Renderer/MotionVectors.h>
+#include <AnKi/Renderer/ClusterBinning.h>
 
 namespace anki
 {
@@ -81,12 +84,12 @@ Error Renderer::init(ThreadHive* hive, ResourceManager* resources, GrManager* gl
 
 Error Renderer::initInternal(const ConfigSet& config)
 {
+	m_frameCount = 0;
+
 	// Set from the config
 	m_width = config.getNumberU32("width");
 	m_height = config.getNumberU32("height");
 	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
-
-	m_frameCount = 0;
 
 	m_clusterCount[0] = config.getNumberU32("r_clusterSizeX");
 	m_clusterCount[1] = config.getNumberU32("r_clusterSizeY");
@@ -96,6 +99,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_clusterBin.init(m_alloc, m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], config);
 
 	m_tileSize = config.getNumberU32("r_tileSize");
+	m_tileCounts.x() = (m_width + m_tileSize - 1) / m_tileSize;
+	m_tileCounts.y() = (m_height + m_tileSize - 1) / m_tileSize;
 	m_zSplitCount = config.getNumberU32("r_zSplitCount");
 
 	// A few sanity checks
@@ -212,6 +217,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_motionVectors.reset(m_alloc.newInstance<MotionVectors>(this));
 	ANKI_CHECK(m_motionVectors->init(config));
 
+	m_clusterBinning.reset(m_alloc.newInstance<ClusterBinning>(this));
+	ANKI_CHECK(m_clusterBinning->init(config));
+
 	// Init samplers
 	{
 		SamplerInitInfo sinit("Renderer");
@@ -286,6 +294,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_projectionJitter = ctx.m_matrices.m_jitter * ctx.m_matrices.m_projection;
 	ctx.m_matrices.m_viewProjectionJitter = ctx.m_matrices.m_projectionJitter * ctx.m_matrices.m_view;
 	ctx.m_matrices.m_invertedViewProjectionJitter = ctx.m_matrices.m_viewProjectionJitter.getInverse();
+	ctx.m_matrices.m_invertedViewProjection = ctx.m_matrices.m_viewProjection.getInverse();
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
@@ -724,12 +733,15 @@ void Renderer::writeClustererBuffersTask(RenderingContext& ctx)
 		unis->m_time = F32(HighRezTimer::getCurrentTime());
 		unis->m_frame = m_frameCount & MAX_U32;
 
+		Plane nearPlane;
+		extractClipPlane(rqueue.m_viewProjectionMatrix, FrustumPlaneType::NEAR, nearPlane);
+		unis->m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
 		unis->m_near = rqueue.m_cameraNear;
 		unis->m_far = rqueue.m_cameraFar;
+		unis->m_oneOverFrustumLength = 1.0f / (rqueue.m_cameraFar - rqueue.m_cameraNear);
 		unis->m_cameraPosition = rqueue.m_cameraTransform.getTranslationPart().xyz();
 
-		unis->m_tileCounts.x() = (m_width + m_tileSize - 1) / m_tileSize;
-		unis->m_tileCounts.y() = (m_height + m_tileSize - 1) / m_tileSize;
+		unis->m_tileCounts = m_tileCounts;
 		unis->m_zSplitCount = m_zSplitCount;
 		unis->m_lightVolumeLastCluster = m_volLighting->getFinalClusterInZ();
 

@@ -321,6 +321,21 @@ public:
 		return *m_threadHive;
 	}
 
+	U32 getTileSize() const
+	{
+		return m_tileSize;
+	}
+
+	const UVec2& getTileCounts() const
+	{
+		return m_tileCounts;
+	}
+
+	U32 getZSplitCount() const
+	{
+		return m_zSplitCount;
+	}
+
 	/// @name Debug render targets
 	/// @{
 
@@ -378,12 +393,14 @@ private:
 	UniquePtr<AccelerationStructureBuilder> m_accelerationStructureBuilder;
 	UniquePtr<RtShadows> m_rtShadows;
 	UniquePtr<MotionVectors> m_motionVectors;
+	UniquePtr<ClusterBinning> m_clusterBinning;
 	/// @}
 
 	Array<U32, 4> m_clusterCount;
 	ClusterBin m_clusterBin;
-	U32 m_tileSize = 64;
-	U32 m_zSplitCount = 1;
+	U32 m_tileSize = 0;
+	UVec2 m_tileCounts = UVec2(0u);
+	U32 m_zSplitCount = 0;
 
 	U32 m_width;
 	U32 m_height;

@@ -49,6 +49,7 @@ class ShadowmapsResolve;
 class RtShadows;
 class AccelerationStructureBuilder;
 class MotionVectors;
+class ClusterBinning;
 
 class DebugDrawer;
 
@@ -145,9 +146,8 @@ public:
 	StagingGpuMemoryToken m_decalsToken;
 	StagingGpuMemoryToken m_fogDensityVolumesToken;
 	StagingGpuMemoryToken m_globalIlluminationProbesToken;
-	StagingGpuMemoryToken m_tilesToken;
-	StagingGpuMemoryToken m_zSplitsToken;
 	StagingGpuMemoryToken m_lightingUniformsToken;
+	StagingGpuMemoryToken m_clusterersToken;
 
 	TextureViewPtr m_diffuseDecalTextureView;
 	TextureViewPtr m_specularRoughnessDecalTextureView;

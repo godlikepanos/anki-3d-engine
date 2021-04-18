@@ -182,7 +182,7 @@ const U32 _ANKI_SIZEOF_ClustererUniforms =
 ANKI_SHADER_STATIC_ASSERT(sizeof(ClustererUniforms) == _ANKI_SIZEOF_ClustererUniforms);
 
 /// Information that a tile or a Z-split will contain.
-struct TileOrZSplit
+struct Cluster
 {
 	U64 m_pointLightsMask;
 	U64 m_spotLightsMask;
@@ -192,7 +192,7 @@ struct TileOrZSplit
 	U32 m_giProbesMask;
 	U32 m_padding; ///< Add some padding to be 100% sure nothing will break.
 };
-const U32 _ANKI_SIZEOF_TileOrZSplit = 5u * ANKI_SIZEOF(U64);
-ANKI_SHADER_STATIC_ASSERT(sizeof(TileOrZSplit) == _ANKI_SIZEOF_TileOrZSplit);
+const U32 _ANKI_SIZEOF_Cluster = 5u * ANKI_SIZEOF(U64);
+ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster) == _ANKI_SIZEOF_Cluster);
 
 ANKI_END_NAMESPACE
