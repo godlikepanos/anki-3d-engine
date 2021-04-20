@@ -25,8 +25,8 @@ const U32 MAX_SHADOW_CASCADES2 = 4u;
 const U32 MAX_VISIBLE_POINT_LIGHTS = 64u;
 const U32 MAX_VISIBLE_SPOT_LIGHTS = 64u;
 const U32 MAX_VISIBLE_DECALS = 64u;
-const U32 MAX_VISIBLE_FOG_DENSITY_VOLUMES = 32u;
-const U32 MAX_VISIBLE_REFLECTION_PROBES = 32u;
+const U32 MAX_VISIBLE_FOG_DENSITY_VOLUMES = 16u;
+const U32 MAX_VISIBLE_REFLECTION_PROBES = 16u;
 const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2 = 8u;
 
 /// Point light.
@@ -187,12 +187,12 @@ struct Cluster
 	U64 m_pointLightsMask;
 	U64 m_spotLightsMask;
 	U64 m_decalsMask;
-	U32 m_fogDensityVolumesMask;
-	U32 m_reflectionProbesMask;
-	U32 m_giProbesMask;
-	U32 m_padding; ///< Add some padding to be 100% sure nothing will break.
+	U16 m_fogDensityVolumesMask;
+	U16 m_reflectionProbesMask;
+	U16 m_giProbesMask;
+	U16 m_padding; ///< Add some padding to be 100% sure nothing will break.
 };
-const U32 _ANKI_SIZEOF_Cluster = 5u * ANKI_SIZEOF(U64);
+const U32 _ANKI_SIZEOF_Cluster = 4u * ANKI_SIZEOF(U64);
 ANKI_SHADER_STATIC_ASSERT(sizeof(Cluster) == _ANKI_SIZEOF_Cluster);
 
 ANKI_END_NAMESPACE

@@ -320,6 +320,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	// Populate render graph. WARNING Watch the order
 	m_genericCompute->populateRenderGraph(ctx);
+	m_clusterBinning->populateRenderGraph(ctx);
 	if(m_accelerationStructureBuilder)
 	{
 		m_accelerationStructureBuilder->populateRenderGraph(ctx);

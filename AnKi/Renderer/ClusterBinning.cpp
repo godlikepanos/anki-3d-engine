@@ -45,14 +45,15 @@ Error ClusterBinning::init(const ConfigSet& config)
 void ClusterBinning::populateRenderGraph(RenderingContext& ctx)
 {
 	m_runCtx.m_ctx = &ctx;
-	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
-	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
 
 	const RenderQueue& rqueue = *m_runCtx.m_ctx->m_renderQueue;
 	if(ANKI_LIKELY(rqueue.m_pointLights.getSize() || rqueue.m_spotLights.getSize() || rqueue.m_decals.getSize()
 				   || rqueue.m_reflectionProbes.getSize() || rqueue.m_fogDensityVolumes.getSize()
 				   || rqueue.m_giProbes.getSize()))
 	{
+		RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+		ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Cluster Binning");
+
 		pass.setWork(
 			[](RenderPassWorkContext& rgraphCtx) {
 				static_cast<ClusterBinning*>(rgraphCtx.m_userData)->run(rgraphCtx);

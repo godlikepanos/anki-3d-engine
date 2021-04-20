@@ -64,7 +64,6 @@ public:
 		else
 		{
 			// Create new
-			mem = m_alloc.newInstance<Memory>();
 
 			VkMemoryAllocateInfo ci = {};
 			ci.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -79,8 +78,15 @@ public:
 				ci.pNext = &flags;
 			}
 
-			ANKI_VK_CHECKF(vkAllocateMemory(m_dev, &ci, nullptr, &mem->m_handle));
+			VkDeviceMemory memHandle;
+			if(ANKI_UNLIKELY(vkAllocateMemory(m_dev, &ci, nullptr, &memHandle) < 0))
+			{
+				ANKI_VK_LOGF("Out of GPU memory. Mem type index %u, size %zu", m_memTypeIdx,
+							 CLASSES[classIdx].m_chunkSize);
+			}
 
+			mem = m_alloc.newInstance<Memory>();
+			mem->m_handle = memHandle;
 			mem->m_classIdx = U8(classIdx);
 		}
 

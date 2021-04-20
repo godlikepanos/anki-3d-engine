@@ -5,7 +5,7 @@
 
 ANKI_CONFIG_OPTION(core_uniformPerFrameMemorySize, 16_MB, 1_MB, 1_GB)
 ANKI_CONFIG_OPTION(core_storagePerFrameMemorySize, 16_MB, 1_MB, 1_GB)
-ANKI_CONFIG_OPTION(core_vertexPerFrameMemorySize, 10_MB, 1_MB, 1_GB)
+ANKI_CONFIG_OPTION(core_vertexPerFrameMemorySize, 8_MB, 1_MB, 1_GB)
 ANKI_CONFIG_OPTION(core_textureBufferPerFrameMemorySize, 1_MB, 1_MB, 1_GB)
 
 ANKI_CONFIG_OPTION(width, 1920, 16, 16 * 1024, "Width")

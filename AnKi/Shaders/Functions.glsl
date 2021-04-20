@@ -532,3 +532,15 @@ Vec3 animateBlueNoise(Vec3 inputBlueNoise, U32 frameIdx)
 	const F32 goldenRatioConjugate = 0.61803398875;
 	return fract(inputBlueNoise + F32(frameIdx % 64u) * goldenRatioConjugate);
 }
+
+#if defined(ANKI_FRAGMENT_SHADER)
+/// https://bgolus.medium.com/distinctive-derivative-differences-cce38d36797b
+/// normalizedUvs is uv*textureResolution
+F32 computeMipLevel(Vec2 normalizedUvs)
+{
+	const Vec2 dx = dFdxCoarse(normalizedUvs);
+	const Vec2 dy = dFdyCoarse(normalizedUvs);
+	const F32 deltaMax2 = max(dot(dx, dx), dot(dy, dy));
+	return max(0.0, 0.5 * log2(deltaMax2));
+}
+#endif
