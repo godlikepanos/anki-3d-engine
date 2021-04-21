@@ -9,8 +9,6 @@
 namespace anki
 {
 
-constexpr U32 CLASS_COUNT = 7;
-
 class ClassInf
 {
 public:
@@ -18,13 +16,16 @@ public:
 	PtrSize m_chunkSize;
 };
 
-static const Array<ClassInf, CLASS_COUNT> CLASSES{{{256_B, 16_KB},
-												   {4_KB, 256_KB},
-												   {128_KB, 8_MB},
-												   {1_MB, 64_MB},
-												   {16_MB, 128_MB},
-												   {64_MB, 256_MB},
-												   {128_MB, 256_MB}}};
+static constexpr Array<ClassInf, 7> CLASSES{{{256_B, 16_KB},
+											 {4_KB, 256_KB},
+											 {128_KB, 8_MB},
+											 {1_MB, 64_MB},
+											 {16_MB, 128_MB},
+											 {64_MB, 256_MB},
+											 {128_MB, 256_MB}}};
+
+/// Special classes for the ReBAR memory. Have that as a special case because it's so limited and needs special care.
+static constexpr Array<ClassInf, 3> REBAR_CLASSES{{{1_MB, 1_MB}, {12_MB, 12_MB}, {24_MB, 24_MB}}};
 
 class GpuMemoryManager::Memory final :
 	public ClassGpuAllocatorMemory,
@@ -43,7 +44,9 @@ class GpuMemoryManager::Interface final : public ClassGpuAllocatorInterface
 {
 public:
 	GrAllocator<U8> m_alloc;
-	Array<IntrusiveList<Memory>, CLASS_COUNT> m_vacantMemory;
+	Array<IntrusiveList<Memory>, CLASSES.getSize()> m_vacantMemory;
+	Array<ClassInf, CLASSES.getSize()> m_classes = {};
+	U8 m_classCount = 0;
 	Mutex m_mtx;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	U8 m_memTypeIdx = MAX_U8;
@@ -51,6 +54,7 @@ public:
 
 	Error allocate(U32 classIdx, ClassGpuAllocatorMemory*& cmem) override
 	{
+		ANKI_ASSERT(classIdx < m_classCount);
 		Memory* mem;
 
 		LockGuard<Mutex> lock(m_mtx);
@@ -67,7 +71,7 @@ public:
 
 			VkMemoryAllocateInfo ci = {};
 			ci.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			ci.allocationSize = CLASSES[classIdx].m_chunkSize;
+			ci.allocationSize = m_classes[classIdx].m_chunkSize;
 			ci.memoryTypeIndex = m_memTypeIdx;
 
 			VkMemoryAllocateFlagsInfo flags = {};
@@ -82,7 +86,7 @@ public:
 			if(ANKI_UNLIKELY(vkAllocateMemory(m_dev, &ci, nullptr, &memHandle) < 0))
 			{
 				ANKI_VK_LOGF("Out of GPU memory. Mem type index %u, size %zu", m_memTypeIdx,
-							 CLASSES[classIdx].m_chunkSize);
+							 m_classes[classIdx].m_chunkSize);
 			}
 
 			mem = m_alloc.newInstance<Memory>();
@@ -119,20 +123,21 @@ public:
 
 	U32 getClassCount() const override
 	{
-		return CLASS_COUNT;
+		return m_classCount;
 	}
 
 	void getClassInfo(U32 classIdx, PtrSize& slotSize, PtrSize& chunkSize) const override
 	{
-		slotSize = CLASSES[classIdx].m_slotSize;
-		chunkSize = CLASSES[classIdx].m_chunkSize;
+		ANKI_ASSERT(classIdx < m_classCount);
+		slotSize = m_classes[classIdx].m_slotSize;
+		chunkSize = m_classes[classIdx].m_chunkSize;
 	}
 
 	void collectGarbage()
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		for(U classIdx = 0; classIdx < CLASS_COUNT; ++classIdx)
+		for(U classIdx = 0; classIdx < m_classCount; ++classIdx)
 		{
 			while(!m_vacantMemory[classIdx].isEmpty())
 			{
@@ -165,7 +170,7 @@ public:
 		}
 		else
 		{
-			ANKI_VK_CHECKF(vkMapMemory(m_dev, mem->m_handle, 0, CLASSES[mem->m_classIdx].m_chunkSize, 0, &out));
+			ANKI_VK_CHECKF(vkMapMemory(m_dev, mem->m_handle, 0, m_classes[mem->m_classIdx].m_chunkSize, 0, &out));
 			mem->m_mappedAddress = out;
 		}
 
@@ -220,10 +225,37 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 	{
 		for(U32 linear = 0; linear < 2; ++linear)
 		{
-			m_ifaces[memTypeIdx][linear].m_alloc = alloc;
-			m_ifaces[memTypeIdx][linear].m_dev = dev;
-			m_ifaces[memTypeIdx][linear].m_memTypeIdx = U8(memTypeIdx);
-			m_ifaces[memTypeIdx][linear].m_exposesBufferGpuAddress = (linear == 1) && exposeBufferGpuAddress;
+			Interface& iface = m_ifaces[memTypeIdx][linear];
+			iface.m_alloc = alloc;
+			iface.m_dev = dev;
+			iface.m_memTypeIdx = U8(memTypeIdx);
+			iface.m_exposesBufferGpuAddress = (linear == 1) && exposeBufferGpuAddress;
+
+			// Find if it's ReBAR
+			const VkMemoryPropertyFlags props = m_memoryProperties.memoryTypes[memTypeIdx].propertyFlags;
+			const VkMemoryPropertyFlags reBarProps = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+													 | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+													 | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+			const PtrSize heapSize =
+				m_memoryProperties.memoryHeaps[m_memoryProperties.memoryTypes[memTypeIdx].heapIndex].size;
+			const Bool isReBar = props == reBarProps && heapSize <= 256_MB;
+
+			if(isReBar)
+			{
+				ANKI_VK_LOGI("Memory type %u is ReBAR", memTypeIdx);
+			}
+
+			// Choose different classes
+			if(!isReBar)
+			{
+				iface.m_classCount = CLASSES.getSize();
+				iface.m_classes = CLASSES;
+			}
+			else
+			{
+				iface.m_classCount = REBAR_CLASSES.getSize();
+				memcpy(&iface.m_classes[0], &REBAR_CLASSES[0], REBAR_CLASSES.getSizeInBytes());
+			}
 		}
 	}
 
