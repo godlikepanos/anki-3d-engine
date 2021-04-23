@@ -146,7 +146,7 @@ const U32 _ANKI_SIZEOF_CommonMatrices = 9u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec
 ANKI_SHADER_STATIC_ASSERT(sizeof(CommonMatrices) == _ANKI_SIZEOF_CommonMatrices);
 
 /// Common uniforms for light shading passes.
-struct ClustererUniforms
+struct ClusteredShadingUniforms
 {
 	Vec2 m_renderingSize;
 
@@ -177,9 +177,9 @@ struct ClustererUniforms
 
 	DirectionalLight2 m_directionalLight;
 };
-const U32 _ANKI_SIZEOF_ClustererUniforms =
+const U32 _ANKI_SIZEOF_ClusteredShadingUniforms =
 	28u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight2);
-ANKI_SHADER_STATIC_ASSERT(sizeof(ClustererUniforms) == _ANKI_SIZEOF_ClustererUniforms);
+ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == _ANKI_SIZEOF_ClusteredShadingUniforms);
 
 /// Information that a tile or a Z-split will contain.
 struct Cluster

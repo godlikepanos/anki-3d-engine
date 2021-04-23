@@ -36,6 +36,7 @@ void main()
 #include <AnKi/Shaders/Pack.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 #define LIGHT_SET 0
 #define LIGHT_COMMON_UNIS_BINDING 0

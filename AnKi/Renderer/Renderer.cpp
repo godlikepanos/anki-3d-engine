@@ -725,8 +725,8 @@ void Renderer::writeClustererBuffersTask(RenderingContext& ctx)
 
 	// Clusterer uniforms
 	{
-		ClustererUniforms* unis = static_cast<ClustererUniforms*>(
-			m_stagingMem->allocateFrame(sizeof(ClustererUniforms), StagingGpuMemoryType::UNIFORM,
+		ClusteredShadingUniforms* unis = static_cast<ClusteredShadingUniforms*>(
+			m_stagingMem->allocateFrame(sizeof(ClusteredShadingUniforms), StagingGpuMemoryType::UNIFORM,
 										ctx.m_clustererGpuObjects.m_lightingUniformsToken));
 
 		unis->m_renderingSize = Vec2(F32(m_width), F32(m_height));

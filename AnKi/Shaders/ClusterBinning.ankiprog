@@ -11,7 +11,7 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(RENDERING_SIZE, 4, UVec2(1u));
 
 #pragma anki start comp
 
-#include <AnKi/Shaders/Include/ClustererTypes.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/CollisionFunctions.glsl>
 
@@ -20,7 +20,7 @@ layout(local_size_x = WORKGROUP_SIZE) in;
 
 layout(set = 0, binding = 0, scalar) uniform b_unis
 {
-	ClustererUniforms u_unis;
+	ClusteredShadingUniforms u_unis;
 };
 
 layout(set = 0, binding = 1, scalar) writeonly buffer b_tiles

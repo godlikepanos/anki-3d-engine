@@ -10,7 +10,7 @@
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Shaders/Include/Evsm.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
-#include <AnKi/Shaders/Include/ClustererTypes.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
 
 namespace anki
 {

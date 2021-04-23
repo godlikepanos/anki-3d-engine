@@ -11,6 +11,7 @@
 #include <AnKi/Shaders/CollisionFunctions.glsl>
 #include <AnKi/Shaders/Pack.glsl>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
 #include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
 #include <AnKi/Shaders/Include/Evsm.h>
 
