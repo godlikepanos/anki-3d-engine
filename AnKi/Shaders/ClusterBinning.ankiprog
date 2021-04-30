@@ -228,10 +228,10 @@ void main()
 	{
 		objectArrayIdx = clustererObjectIdx
 						 - (u_unis.m_pointLightCount + u_unis.m_spotLightCount + u_unis.m_reflectionProbeCount
-							+ u_unis.m_reflectionProbeCount + u_unis.m_giProbeCount + u_unis.m_fogDensityVolumesCount);
+							+ u_unis.m_reflectionProbeCount + u_unis.m_giProbeCount + u_unis.m_fogDensityVolumeCount);
 		const Decal2 decal = u_decals[objectArrayIdx];
 
-		collides = testRayObb(rayOrigin, rayDir, decal.m_extend, decal.m_invertedTransform, t0, t1);
+		collides = testRayObb(rayOrigin, rayDir, decal.m_obbExtend, decal.m_invertedTransform, t0, t1);
 	}
 
 	// Update the masks

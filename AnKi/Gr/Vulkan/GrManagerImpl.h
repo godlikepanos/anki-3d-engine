@@ -260,6 +260,7 @@ private:
 	VkPhysicalDeviceRayQueryFeaturesKHR m_rayQueryFeatures = {};
 	VkPhysicalDeviceVulkan11Features m_11Features = {};
 	VkPhysicalDeviceVulkan12Features m_12Features = {};
+	VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR m_pplineExecutablePropertiesFeatures = {};
 
 	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
 	PFN_vkCmdDebugMarkerBeginEXT m_pfnCmdDebugMarkerBeginEXT = nullptr;

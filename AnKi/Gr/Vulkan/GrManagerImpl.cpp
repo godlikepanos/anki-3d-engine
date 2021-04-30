@@ -10,6 +10,7 @@
 #include <AnKi/Gr/Fence.h>
 #include <AnKi/Gr/Vulkan/FenceImpl.h>
 #include <AnKi/Util/Functions.h>
+#include <AnKi/Util/StringList.h>
 #include <AnKi/Core/ConfigSet.h>
 #include <glslang/Public/ShaderLang.h>
 
@@ -547,6 +548,12 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 			{
 				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
 			}
+			else if(extensionName == VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME
+					&& init.m_config->getBool("core_displayStats"))
+			{
+				m_extensions |= VulkanExtensions::PIPELINE_EXECUTABLE_PROPERTIES;
+				extensionsToEnable[extensionsToEnableCount++] = extensionName.cstr();
+			}
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -693,6 +700,17 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		ANKI_ASSERT(m_accelerationStructureFeatures.pNext == nullptr);
 		m_accelerationStructureFeatures.pNext = const_cast<void*>(ci.pNext);
 		ci.pNext = &m_rtPipelineFeatures;
+	}
+
+	// Pipeline features
+	if(!!(m_extensions & VulkanExtensions::PIPELINE_EXECUTABLE_PROPERTIES))
+	{
+		m_pplineExecutablePropertiesFeatures.sType =
+			VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
+		m_pplineExecutablePropertiesFeatures.pipelineExecutableInfo = true;
+
+		m_pplineExecutablePropertiesFeatures.pNext = const_cast<void*>(ci.pNext);
+		ci.pNext = &m_pplineExecutablePropertiesFeatures;
 	}
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
@@ -1117,6 +1135,71 @@ Error GrManagerImpl::printPipelineShaderInfoInternal(VkPipeline ppline, CString 
 
 		// Flush the file just in case
 		ANKI_CHECK(m_shaderStatsFile.flush());
+	}
+
+	if(!!(m_extensions & VulkanExtensions::PIPELINE_EXECUTABLE_PROPERTIES))
+	{
+		StringListAuto log(m_alloc);
+
+		VkPipelineInfoKHR pplineInf = {};
+		pplineInf.sType = VK_STRUCTURE_TYPE_PIPELINE_INFO_KHR;
+		pplineInf.pipeline = ppline;
+		U32 executableCount = 0;
+		ANKI_VK_CHECK(vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, nullptr));
+		DynamicArrayAuto<VkPipelineExecutablePropertiesKHR> executableProps(m_alloc, executableCount);
+		ANKI_VK_CHECK(
+			vkGetPipelineExecutablePropertiesKHR(m_device, &pplineInf, &executableCount, &executableProps[0]));
+
+		log.pushBackSprintf("Pipeline info \"%s\" (0x%016" PRIx64 "): ", name.cstr(), hash);
+		for(U32 i = 0; i < executableCount; ++i)
+		{
+			const VkPipelineExecutablePropertiesKHR& p = executableProps[i];
+			log.pushBackSprintf("%s: ", p.description);
+
+			// Get stats
+			VkPipelineExecutableInfoKHR exeInf = {};
+			exeInf.sType = VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_INFO_KHR;
+			exeInf.executableIndex = i;
+			exeInf.pipeline = ppline;
+			U32 statCount = 0;
+			vkGetPipelineExecutableStatisticsKHR(m_device, &exeInf, &statCount, nullptr);
+			DynamicArrayAuto<VkPipelineExecutableStatisticKHR> stats(m_alloc, statCount);
+			vkGetPipelineExecutableStatisticsKHR(m_device, &exeInf, &statCount, &stats[0]);
+
+			for(U32 s = 0; s < statCount; ++s)
+			{
+				const VkPipelineExecutableStatisticKHR& ss = stats[s];
+
+				switch(ss.format)
+				{
+				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_BOOL32_KHR:
+					log.pushBackSprintf("%s: %u, ", ss.name, ss.value.b32);
+					break;
+				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_INT64_KHR:
+					log.pushBackSprintf("%s: %" PRId64 ", ", ss.name, ss.value.i64);
+					break;
+				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_UINT64_KHR:
+					log.pushBackSprintf("%s: %" PRIu64 ", ", ss.name, ss.value.u64);
+					break;
+				case VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_FLOAT64_KHR:
+					log.pushBackSprintf("%s: %f, ", ss.name, ss.value.f64);
+					break;
+				default:
+					ANKI_ASSERT(0);
+				}
+			}
+
+			log.pushBackSprintf("Subgroup size: %u", p.subgroupSize);
+
+			if(i < executableCount - 1)
+			{
+				log.pushBack(", ");
+			}
+		}
+
+		StringAuto finalLog(m_alloc);
+		log.join("", finalLog);
+		ANKI_VK_LOGI("%s", finalLog.cstr());
 	}
 
 	return Error::NONE;
