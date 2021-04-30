@@ -20,8 +20,14 @@
 #	pragma GCC diagnostic pop
 #endif
 
+#define ANKI_GLSLANG_DUMP 0
+
 namespace anki
 {
+
+#if ANKI_GLSLANG_DUMP
+static Atomic<U32> g_dumpFileCount;
+#endif
 
 class GlslangCtx
 {
@@ -245,6 +251,23 @@ Error preprocessGlsl(CString in, StringAuto& out)
 Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolAllocator<U8> tmpAlloc,
 						  DynamicArrayAuto<U8>& spirv)
 {
+#if ANKI_GLSLANG_DUMP
+	// Dump it
+	{
+		const U32 count = g_dumpFileCount.fetchAdd(1) / 2;
+		if(count == 0)
+		{
+			ANKI_SHADER_COMPILER_LOGW("GLSL dumping is enabled");
+		}
+
+		File file;
+		StringAuto fname(tmpAlloc);
+		fname.sprintf("/tmp/%u.glsl", count);
+		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE));
+		ANKI_CHECK(file.writeText("%s", src.cstr()));
+	}
+#endif
+
 	const EShLanguage stage = ankiToGlslangShaderType(shaderType);
 	const EShMessages messages = EShMessages(EShMsgSpvRules | EShMsgVulkanRules);
 
@@ -280,10 +303,10 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	spirv.resize(U32(glslangSpirv.size() * sizeof(unsigned int)));
 	memcpy(&spirv[0], &glslangSpirv[0], spirv.getSizeInBytes());
 
-#if 0
+#if ANKI_GLSLANG_DUMP
 	// Dump it
 	{
-		static U32 count = 0;
+		const U32 count = g_dumpFileCount.fetchAdd(1) / 2;
 		if(count == 0)
 		{
 			ANKI_SHADER_COMPILER_LOGW("SPIR-V dumping is enabled");
@@ -291,7 +314,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 
 		File file;
 		StringAuto fname(tmpAlloc);
-		fname.sprintf("/tmp/%u.spv", count++);
+		fname.sprintf("/tmp/%u.spv", count);
 		ANKI_CHECK(file.open(fname, FileOpenFlag::WRITE | FileOpenFlag::BINARY));
 		ANKI_CHECK(file.write(spirv.getBegin(), spirv.getSizeInBytes()));
 	}

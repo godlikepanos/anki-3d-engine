@@ -77,7 +77,6 @@ void ClassGpuAllocator::init(GenericMemoryPoolAllocator<U8> alloc, ClassGpuAlloc
 		m_iface->getClassInfo(i, slotSize, chunkSize);
 		ANKI_ASSERT(slotSize > 0 && chunkSize > 0);
 
-		ANKI_ASSERT(isPowerOfTwo(slotSize));
 		ANKI_ASSERT((chunkSize % slotSize) == 0);
 		ANKI_ASSERT((chunkSize / slotSize) <= MAX_SLOTS_PER_CHUNK);
 

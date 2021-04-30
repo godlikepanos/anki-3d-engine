@@ -41,11 +41,6 @@ public:
 
 	~StagingGpuMemoryToken() = default;
 
-	explicit operator Bool() const
-	{
-		return m_range != 0;
-	}
-
 	Bool operator==(const StagingGpuMemoryToken& b) const
 	{
 		return m_buffer == b.m_buffer && m_offset == b.m_offset && m_range == b.m_range && m_type == b.m_type;

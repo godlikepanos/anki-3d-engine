@@ -44,10 +44,17 @@ Error LightComponent::update(SceneNode& node, Second prevTime, Second crntTime, 
 	if(updated && m_type == LightComponentType::SPOT)
 	{
 
-		static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+		const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 		const Mat4 proj = Mat4::calculatePerspectiveProjectionMatrix(m_spot.m_outerAngle, m_spot.m_outerAngle,
 																	 LIGHT_FRUSTUM_NEAR_PLANE, m_spot.m_distance);
 		m_spot.m_textureMat = biasMat4 * proj * Mat4(m_worldtransform.getInverse());
+
+		Array<Vec4, 4> points;
+		computeEdgesOfFrustum(m_spot.m_distance, m_spot.m_outerAngle, m_spot.m_outerAngle, &points[0]);
+		for(U32 i = 0; i < 4; ++i)
+		{
+			m_spot.m_edgePointsWspace[i] = m_worldtransform.transform(points[i].xyz());
+		}
 	}
 
 	// Update the scene bounds always

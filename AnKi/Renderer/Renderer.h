@@ -444,9 +444,6 @@ private:
 	void initJitteredMats();
 
 	void updateLightShadingUniforms(RenderingContext& ctx) const;
-
-	void writeClustererBuffers(RenderingContext& ctx);
-	void writeClustererBuffersTask(RenderingContext& ctx);
 };
 /// @}
 

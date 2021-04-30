@@ -7,7 +7,7 @@
 #include <AnKi/Util.h>
 using namespace anki;
 
-static const char* USAGE = R"(Usage: %s shader_program_file [options]
+static const char* USAGE = R"(Usage: %s input_shader_program_file [options]
 Options:
 -o <name of output>    : The name of the output binary
 -j <thread count>      : Number of threads. Defaults to system's max

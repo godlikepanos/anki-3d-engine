@@ -94,7 +94,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_GI_BINDING + 1, sc
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_CLUSTERS_BINDING,
 	   scalar) readonly buffer ANKI_RANDOM_BLOCK_NAME
 {
-	Cluster u_clusters[];
+	Cluster u_clusters2[];
 };
 #endif
 

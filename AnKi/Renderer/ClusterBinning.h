@@ -35,10 +35,12 @@ private:
 	class
 	{
 	public:
-		const RenderingContext* m_ctx = nullptr;
+		RenderingContext* m_ctx = nullptr;
 	} m_runCtx;
 
 	void run(RenderPassWorkContext& rgraphCtx);
+	void writeClustererBuffers(RenderingContext& ctx);
+	void writeClustererBuffersTask();
 };
 /// @}
 

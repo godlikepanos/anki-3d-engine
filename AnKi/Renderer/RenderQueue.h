@@ -141,6 +141,7 @@ public:
 	F32 m_outerAngle;
 	F32 m_innerAngle;
 	Vec3 m_diffuseColor;
+	Array<Vec3, 4> m_edgePoints;
 	RenderQueue* m_shadowRenderQueue;
 	RenderQueueDrawCallback m_debugDrawCallback;
 	const void* m_debugDrawCallbackUserData;

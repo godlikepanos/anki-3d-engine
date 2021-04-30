@@ -6,22 +6,22 @@
 #pragma once
 
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-Bool testRayTriangle(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, Bool backfaceCulling, out F32 t, out F32 u,
+Bool testRayTriangle(Vec3 rayOrigin, Vec3 rayDir, Vec3 v0, Vec3 v1, Vec3 v2, Bool backfaceCulling, out F32 t, out F32 u,
 					 out F32 v)
 {
 	const Vec3 v0v1 = v1 - v0;
 	const Vec3 v0v2 = v2 - v0;
-	const Vec3 pvec = cross(dir, v0v2);
+	const Vec3 pvec = cross(rayDir, v0v2);
 	const F32 det = dot(v0v1, pvec);
 
-	if((backfaceCulling && det <= 0.0) || det == 0.0)
+	if((backfaceCulling && det < EPSILON) || abs(det) < EPSILON)
 	{
 		return false;
 	}
 
 	const F32 invDet = 1.0 / det;
 
-	const Vec3 tvec = orig - v0;
+	const Vec3 tvec = rayOrigin - v0;
 	u = dot(tvec, pvec) * invDet;
 	if(u < 0.0 || u > 1.0)
 	{
@@ -29,13 +29,20 @@ Bool testRayTriangle(Vec3 orig, Vec3 dir, Vec3 v0, Vec3 v1, Vec3 v2, Bool backfa
 	}
 
 	const Vec3 qvec = cross(tvec, v0v1);
-	v = dot(dir, qvec) * invDet;
+	v = dot(rayDir, qvec) * invDet;
 	if(v < 0.0 || u + v > 1.0)
 	{
 		return false;
 	}
 
 	t = dot(v0v2, qvec) * invDet;
+
+	if(t <= EPSILON)
+	{
+		// This is an addition to the original code. Can't have rays that don't touch the triangle
+		return false;
+	}
+
 	return true;
 }
 
@@ -55,6 +62,32 @@ F32 testRayAabbInside(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax)
 	const Vec3 largestParams = max(intersectMaxPointPlanes, intersectMinPointPlanes);
 	const F32 distToIntersect = min(min(largestParams.x, largestParams.y), largestParams.z);
 	return distToIntersect;
+}
+
+/// Ray box intersection by Simon Green
+Bool testRayAabb(Vec3 rayOrigin, Vec3 rayDir, Vec3 aabbMin, Vec3 aabbMax, out F32 t0, out F32 t1)
+{
+	const Vec3 invR = 1.0 / rayDir;
+	const Vec3 tbot = invR * (aabbMin - rayOrigin);
+	const Vec3 ttop = invR * (aabbMax - rayOrigin);
+
+	const Vec3 tmin = min(ttop, tbot);
+	const Vec3 tmax = max(ttop, tbot);
+
+	t0 = max(tmin.x, max(tmin.y, tmin.z));
+	t1 = min(tmax.x, min(tmax.y, tmax.z));
+
+	return t0 < t1 && t1 > EPSILON;
+}
+
+Bool testRayObb(Vec3 rayOrigin, Vec3 rayDir, Vec3 obbExtend, Mat4 obbTransformInv, out F32 t0, out F32 t1)
+{
+	// Transform ray to OBB space
+	const Vec3 rayOriginS = (obbTransformInv * Vec4(rayOrigin, 1.0)).xyz;
+	const Vec3 rayDirS = (obbTransformInv * Vec4(rayDir, 0.0)).xyz;
+
+	// Test as AABB
+	return testRayAabb(rayOriginS, rayDirS, -obbExtend, obbExtend, t0, t1);
 }
 
 /// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection

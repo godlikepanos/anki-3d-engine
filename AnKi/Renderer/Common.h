@@ -141,13 +141,21 @@ class ClustererGpuObjects
 {
 public:
 	StagingGpuMemoryToken m_pointLightsToken;
+	void* m_pointLightsAddress = nullptr;
 	StagingGpuMemoryToken m_spotLightsToken;
+	void* m_spotLightsAddress = nullptr;
 	StagingGpuMemoryToken m_reflectionProbesToken;
+	void* m_reflectionProbesAddress = nullptr;
 	StagingGpuMemoryToken m_decalsToken;
+	void* m_decalsAddress = nullptr;
 	StagingGpuMemoryToken m_fogDensityVolumesToken;
+	void* m_fogDensityVolumesAddress = nullptr;
 	StagingGpuMemoryToken m_globalIlluminationProbesToken;
-	StagingGpuMemoryToken m_lightingUniformsToken;
-	StagingGpuMemoryToken m_clusterersToken;
+	void* m_globalIlluminationProbesAddress = nullptr;
+	StagingGpuMemoryToken m_clusteredShadingUniformsToken;
+	void* m_clusteredShadingUniformsAddress = nullptr;
+	StagingGpuMemoryToken m_clustersToken;
+	void* m_clustersAddress = nullptr;
 
 	TextureViewPtr m_diffuseDecalTextureView;
 	TextureViewPtr m_specularRoughnessDecalTextureView;
@@ -175,7 +183,7 @@ public:
 
 	StagingGpuMemoryToken m_lightShadingUniformsToken;
 
-	ClustererGpuObjects m_clustererGpuObjects;
+	ClustererGpuObjects m_clusterShading;
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)

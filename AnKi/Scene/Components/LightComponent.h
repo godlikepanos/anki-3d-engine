@@ -163,6 +163,7 @@ public:
 		el.m_outerAngle = m_spot.m_outerAngle;
 		el.m_innerAngle = m_spot.m_innerAngle;
 		el.m_diffuseColor = m_diffColor.xyz();
+		el.m_edgePoints = m_spot.m_edgePointsWspace;
 		el.m_debugDrawCallback = [](RenderQueueDrawContext& ctx, ConstWeakArray<void*> userData) {
 			ANKI_ASSERT(userData.getSize() == 1);
 			static_cast<const LightComponent*>(userData[0])->draw(ctx);
@@ -188,33 +189,31 @@ private:
 	class Point
 	{
 	public:
-		F32 m_radius;
+		F32 m_radius = 1.0f;
 	};
 
 	class Spot
 	{
 	public:
-		Mat4 m_textureMat;
-		F32 m_distance;
-		F32 m_innerAngleCos;
-		F32 m_outerAngleCos;
-		F32 m_outerAngle;
-		F32 m_innerAngle;
+		Mat4 m_textureMat = Mat4::getIdentity();
+		F32 m_distance = 1.0f;
+		F32 m_outerAngle = toRad(30.0f);
+		F32 m_innerAngle = toRad(15.0f);
+		F32 m_outerAngleCos = cos(m_outerAngle / 2.0f);
+		F32 m_innerAngleCos = cos(m_innerAngle / 2.0f);
+		Array<Vec3, 4> m_edgePointsWspace = {};
 	};
 
 	class Dir
 	{
 	public:
-		Vec3 m_sceneMin;
-		Vec3 m_sceneMax;
+		Vec3 m_sceneMin = Vec3(-1.0f);
+		Vec3 m_sceneMax = Vec3(1.0f);
 	};
 
-	union
-	{
-		Point m_point;
-		Spot m_spot;
-		Dir m_dir;
-	};
+	Point m_point;
+	Spot m_spot;
+	Dir m_dir;
 
 	TextureResourcePtr m_pointDebugTex;
 	TextureResourcePtr m_spotDebugTex;

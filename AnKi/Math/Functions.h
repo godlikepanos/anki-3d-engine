@@ -125,19 +125,19 @@ inline constexpr T log2(const T x)
 	return T(std::log2(x));
 }
 
-template<typename T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
+template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
 inline constexpr Bool isZero(const T f, const T e = EPSILON)
 {
 	return absolute<T>(f) < e;
 }
 
-template<typename T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
+template<typename T, ANKI_ENABLE(std::is_integral<T>::value)>
 inline constexpr Bool isZero(const T f)
 {
 	return f == 0;
 }
 
-template<typename T>
+template<typename T, ANKI_ENABLE(std::is_floating_point<T>::value)>
 inline constexpr T toRad(const T degrees)
 {
 	return degrees * (PI / T(180));
