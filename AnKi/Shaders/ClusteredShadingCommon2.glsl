@@ -99,41 +99,82 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_CLUSTERS_BINDING,
 #endif
 
 // Debugging function
-Vec3 lightHeatmap2(U32 firstIndex, U32 maxObjects, U32 typeMask)
+Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 {
-	U32 count = 0;
-	U32 idx;
+	U32 maxObjects = 0u;
+	U32 count = 0u;
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT)) != 0)
 	{
-		count += ((typeMask & (1u << 0u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_POINT_LIGHTS;
+		count += bitCount(cluster.m_pointLightsMask);
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_SPOT_LIGHT)) != 0)
 	{
-		count += ((typeMask & (1u << 1u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_SPOT_LIGHTS;
+		count += bitCount(cluster.m_spotLightsMask);
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_DECAL)) != 0)
 	{
-		count += ((typeMask & (1u << 2u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_DECALS;
+		count += bitCount(cluster.m_decalsMask);
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME)) != 0)
 	{
-		count += ((typeMask & (1u << 3u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_FOG_DENSITY_VOLUMES;
+		count += bitCount(cluster.m_fogDensityVolumesMask);
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_REFLECTION_PROBE)) != 0)
 	{
-		count += ((typeMask & (1u << 4u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_REFLECTION_PROBES;
+		count += bitCount(cluster.m_reflectionProbesMask);
 	}
 
-	while((idx = u_lightIndices[firstIndex++]) != MAX_U32)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE)) != 0)
 	{
-		count += ((typeMask & (1u << 5u)) != 0u) ? 1u : 0u;
+		maxObjects += MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES;
+		count += bitCount(cluster.m_giProbesMask);
 	}
 
 	const F32 factor = min(1.0, F32(count) / F32(maxObjects));
 	return heatmap(factor);
 }
+
+/// Returns the index of the zSplit or linearizeDepth(n, f, depth)*zSplitCount
+/// Simplifying this equation is 1/(a+b/depth) where a=(n-f)/(n*zSplitCount) and b=f/(n*zSplitCount)
+U32 computeZSplitClusterIndex(F32 depth, U32 zSplitCount, F32 a, F32 b)
+{
+	const F32 fSplitIdx = 1.0 / (a + b / depth);
+	return min(zSplitCount - 1u, U32(fSplitIdx));
+}
+
+/// Return the tile index.
+U32 computeTileClusterIndex(Vec2 uv, U32 tileCountX, U32 tileCountY)
+{
+	return U32(uv.y * F32(tileCountY * tileCountX) + uv.x * F32(tileCountX));
+}
+
+#if defined(CLUSTER_SHADING_CLUSTERS_BINDING)
+/// Get the final cluster after ORing and ANDing the masks.
+Cluster getCluster(F32 uv, F32 depth, U32 tileCountX, U32 tileCountY, U32 zSplitCount, F32 a, F32 b)
+{
+	const Cluster tileCluster = u_clusters2[computeTileClusterIndex(uv, tileCountX, tileCountY)];
+	const Cluster zCluster = u_clusters2[computeZSplitClusterIndex(depth, zSplitCount, a, b) + tileCountX * tileCountY];
+
+	Cluster outCluster;
+	outCluster.m_pointLightsMask = subgroupOr(tileCluster.m_pointLightsMask & zCluster.m_pointLightsMask);
+	outCluster.m_spotLightsMask = subgroupOr(tileCluster.m_spotLightsMask & zCluster.m_spotLightsMask);
+	outCluster.m_decalsMask = subgroupOr(tileCluster.m_decalsMask & zCluster.m_decalsMask);
+	outCluster.m_fogDensityVolumesMask =
+		subgroupOr(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
+	outCluster.m_reflectionProbesMask =
+		subgroupOr(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
+	outCluster.m_giProbesMask = subgroupOr(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
+
+	return outCluster;
+}
+#endif

@@ -411,15 +411,16 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_nearPlaneWSpace = Vec4(nearPlane.getNormal().xyz(), nearPlane.getOffset());
 		unis.m_near = rqueue.m_cameraNear;
 		unis.m_far = rqueue.m_cameraFar;
-		unis.m_zSplitCountOverFrustumLength = F32(m_r->getZSplitCount()) / (rqueue.m_cameraFar - rqueue.m_cameraNear);
 		unis.m_cameraPosition = rqueue.m_cameraTransform.getTranslationPart().xyz();
 
 		unis.m_tileCounts = m_r->getTileCounts();
 		unis.m_zSplitCount = m_r->getZSplitCount();
+		unis.m_zSplitCountOverFrustumLength = F32(m_r->getZSplitCount()) / (rqueue.m_cameraFar - rqueue.m_cameraNear);
+		unis.m_zSplitMagic.x() =
+			(rqueue.m_cameraNear - rqueue.m_cameraFar) / (rqueue.m_cameraNear * F32(m_r->getZSplitCount()));
+		unis.m_zSplitMagic.y() = rqueue.m_cameraFar / (rqueue.m_cameraNear * F32(m_r->getZSplitCount()));
+		unis.m_tileSize = F32(m_r->getTileSize());
 		unis.m_lightVolumeLastCluster = m_r->getVolumetricLightingAccumulation().getFinalClusterInZ();
-
-		unis.m_matrices = ctx.m_matrices;
-		unis.m_previousMatrices = ctx.m_prevMatrices;
 
 		unis.m_pointLightCount = rqueue.m_pointLights.getSize();
 		unis.m_spotLightCount = rqueue.m_spotLights.getSize();
@@ -427,6 +428,9 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_fogDensityVolumeCount = rqueue.m_fogDensityVolumes.getSize();
 		unis.m_reflectionProbeCount = rqueue.m_reflectionProbes.getSize();
 		unis.m_giProbeCount = rqueue.m_giProbes.getSize();
+
+		unis.m_matrices = ctx.m_matrices;
+		unis.m_previousMatrices = ctx.m_prevMatrices;
 
 		// Directional light
 		if(rqueue.m_directionalLight.m_uuid != 0)

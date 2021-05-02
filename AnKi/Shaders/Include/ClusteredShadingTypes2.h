@@ -177,11 +177,13 @@ struct ClusteredShadingUniforms
 	Vec4 m_nearPlaneWSpace;
 	F32 m_near;
 	F32 m_far;
-	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
 	Vec3 m_cameraPosition;
 
 	UVec2 m_tileCounts;
 	U32 m_zSplitCount;
+	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
+	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
+	F32 m_tileSize;
 	U32 m_lightVolumeLastCluster;
 
 	U32 m_pointLightCount;
@@ -191,13 +193,15 @@ struct ClusteredShadingUniforms
 	U32 m_reflectionProbeCount;
 	U32 m_giProbeCount;
 
+	U32 m_padding;
+
 	CommonMatrices m_matrices;
 	CommonMatrices m_previousMatrices;
 
 	DirectionalLight2 m_directionalLight;
 };
 const U32 _ANKI_SIZEOF_ClusteredShadingUniforms =
-	24u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight2);
+	28u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight2);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == _ANKI_SIZEOF_ClusteredShadingUniforms);
 
 /// Information that a tile or a Z-split will contain.
