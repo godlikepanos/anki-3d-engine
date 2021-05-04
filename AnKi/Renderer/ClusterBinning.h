@@ -26,6 +26,10 @@ public:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
+	/// It will populate the clusters and the rest of the objects (lights, probes etc) in an async job. Needs to be
+	/// called after the render queue is finalized.
+	void writeClusterBuffersAsync();
+
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;

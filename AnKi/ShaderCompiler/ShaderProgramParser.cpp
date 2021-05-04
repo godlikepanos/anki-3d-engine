@@ -55,6 +55,7 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #extension GL_EXT_shader_explicit_arithmetic_types_float32 : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_float64 : enable
 #extension GL_EXT_shader_atomic_int64 : enable
+#extension GL_EXT_shader_subgroup_extended_types_int64 : enable
 
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable

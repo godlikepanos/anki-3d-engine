@@ -347,7 +347,40 @@ Vec3 sampleAmbientDice(Vec3 posx, Vec3 negx, Vec3 posy, Vec3 negy, Vec3 posz, Ve
 }
 
 // Sample the irradiance term from the clipmap
+// TODO remove
 Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
+							  texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES], sampler linearAnyClampSampler)
+{
+	// Find the UVW
+	Vec3 uvw = (worldPos - probe.m_aabbMin) / (probe.m_aabbMax - probe.m_aabbMin);
+
+	// The U contains the 6 directions so divide
+	uvw.x /= 6.0;
+
+	// Calmp it to avoid direction leaking
+	uvw.x = clamp(uvw.x, probe.m_halfTexelSizeU, (1.0 / 6.0) - probe.m_halfTexelSizeU);
+
+	// Read the irradiance
+	Vec3 irradiancePerDir[6u];
+	ANKI_UNROLL for(U32 dir = 0u; dir < 6u; ++dir)
+	{
+		// Point to the correct UV
+		Vec3 shiftedUVw = uvw;
+		shiftedUVw.x += (1.0 / 6.0) * F32(dir);
+
+		irradiancePerDir[dir] =
+			textureLod(textures[nonuniformEXT(probe.m_textureIndex)], linearAnyClampSampler, shiftedUVw, 0.0).rgb;
+	}
+
+	// Sample the irradiance
+	const Vec3 irradiance = sampleAmbientDice(irradiancePerDir[0], irradiancePerDir[1], irradiancePerDir[2],
+											  irradiancePerDir[3], irradiancePerDir[4], irradiancePerDir[5], normal);
+
+	return irradiance;
+}
+
+// Sample the irradiance term from the clipmap
+Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe2 probe,
 							  texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES], sampler linearAnyClampSampler)
 {
 	// Find the UVW

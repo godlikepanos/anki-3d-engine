@@ -20,55 +20,56 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING
 //
 // Light uniforms (3)
 //
-#if defined(CLUSTER_SHADING_LIGHTS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_LIGHTS_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+#if defined(CLUSTERED_SHADING_LIGHTS_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
 {
 	PointLight2 u_pointLights2[MAX_VISIBLE_POINT_LIGHTS];
 };
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_LIGHTS_BINDING + 1, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 1,
+	   scalar) uniform ANKI_RANDOM_BLOCK_NAME
 {
 	SpotLight2 u_spotLights2[MAX_VISIBLE_SPOT_LIGHTS];
 };
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_LIGHTS_BINDING + 2) uniform texture2D u_shadowAtlasTex;
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 2) uniform texture2D u_shadowAtlasTex;
 #endif
 
 //
-// Indirect uniforms (3)
+// Reflection probes (3)
 //
-#if defined(CLUSTER_SHADING_REFLECTIONS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_REFLECTIONS_BINDING,
+#if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BINDING,
 	   scalar) uniform ANKI_RANDOM_BLOCK_NAME
 {
 	ReflectionProbe2 u_reflectionProbes2[MAX_VISIBLE_REFLECTION_PROBES];
 };
 
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTER_SHADING_REFLECTIONS_BINDING + 1) uniform textureCubeArray u_reflectionsTex2;
+	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 1) uniform textureCubeArray u_reflectionsTex2;
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTER_SHADING_REFLECTIONS_BINDING + 2) uniform texture2D u_integrationLut2;
+	   binding = CLUSTERED_SHADING_REFLECTIONS_BINDING + 2) uniform texture2D u_integrationLut2;
 #endif
 
 //
 // Decal uniforms (3)
 //
-#if defined(CLUSTER_SHADING_DECALS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_DECALS_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+#if defined(CLUSTERED_SHADING_DECALS_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
 {
 	Decal2 u_decals2[MAX_VISIBLE_DECALS];
 };
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_DECALS_BINDING + 1) uniform texture2D u_diffuseDecalTex;
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING + 1) uniform texture2D u_diffuseDecalTex;
 layout(set = CLUSTERED_SHADING_SET,
-	   binding = CLUSTER_SHADING_DECALS_BINDING + 2) uniform texture2D u_specularRoughnessDecalTex;
+	   binding = CLUSTERED_SHADING_DECALS_BINDING + 2) uniform texture2D u_specularRoughnessDecalTex;
 #endif
 
 //
 // Fog density uniforms (1)
 //
-#if defined(CLUSTER_SHADING_FOG_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_FOG_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+#if defined(CLUSTERED_SHADING_FOG_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
 {
 	FogDensityVolume u_fogDensityVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
 };
@@ -77,21 +78,21 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_FOG_BINDING, scala
 //
 // GI (2)
 //
-#if defined(CLUSTER_SHADING_GI_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_GI_BINDING) uniform texture3D
+#if defined(CLUSTERED_SHADING_GI_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING) uniform texture3D
 	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_GI_BINDING + 1, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, scalar) uniform ANKI_RANDOM_BLOCK_NAME
 {
-	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
+	GlobalIlluminationProbe2 u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 };
 #endif
 
 //
 // Cluster uniforms
 //
-#if defined(CLUSTER_SHADING_CLUSTERS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_CLUSTERS_BINDING,
+#if defined(CLUSTERED_SHADING_CLUSTERS_BINDING)
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_CLUSTERS_BINDING,
 	   scalar) readonly buffer ANKI_RANDOM_BLOCK_NAME
 {
 	Cluster u_clusters2[];
@@ -102,24 +103,24 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTER_SHADING_CLUSTERS_BINDING,
 Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 {
 	U32 maxObjects = 0u;
-	U32 count = 0u;
+	I32 count = 0;
 
 	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT)) != 0)
 	{
 		maxObjects += MAX_VISIBLE_POINT_LIGHTS;
-		count += bitCount(cluster.m_pointLightsMask);
+		count += I32(bitCount(cluster.m_pointLightsMask));
 	}
 
 	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_SPOT_LIGHT)) != 0)
 	{
 		maxObjects += MAX_VISIBLE_SPOT_LIGHTS;
-		count += bitCount(cluster.m_spotLightsMask);
+		count += I32(bitCount(cluster.m_spotLightsMask));
 	}
 
 	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_DECAL)) != 0)
 	{
 		maxObjects += MAX_VISIBLE_DECALS;
-		count += bitCount(cluster.m_decalsMask);
+		count += I32(bitCount(cluster.m_decalsMask));
 	}
 
 	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME)) != 0)
@@ -144,6 +145,7 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 	return heatmap(factor);
 }
 
+#if defined(ANKI_FRAGMENT_SHADER)
 /// Returns the index of the zSplit or linearizeDepth(n, f, depth)*zSplitCount
 /// Simplifying this equation is 1/(a+b/depth) where a=(n-f)/(n*zSplitCount) and b=f/(n*zSplitCount)
 U32 computeZSplitClusterIndex(F32 depth, U32 zSplitCount, F32 a, F32 b)
@@ -153,16 +155,17 @@ U32 computeZSplitClusterIndex(F32 depth, U32 zSplitCount, F32 a, F32 b)
 }
 
 /// Return the tile index.
-U32 computeTileClusterIndex(Vec2 uv, U32 tileCountX, U32 tileCountY)
+U32 computeTileClusterIndex(U32 tileSize, U32 tileCountX)
 {
-	return U32(uv.y * F32(tileCountY * tileCountX) + uv.x * F32(tileCountX));
+	const UVec2 tileXY = UVec2(gl_FragCoord.xy / F32(tileSize));
+	return tileXY.y * tileCountX + tileXY.x;
 }
 
-#if defined(CLUSTER_SHADING_CLUSTERS_BINDING)
+#	if defined(CLUSTERED_SHADING_CLUSTERS_BINDING)
 /// Get the final cluster after ORing and ANDing the masks.
-Cluster getCluster(F32 uv, F32 depth, U32 tileCountX, U32 tileCountY, U32 zSplitCount, F32 a, F32 b)
+Cluster getCluster(F32 depth, U32 tileSize, U32 tileCountX, U32 tileCountY, U32 zSplitCount, F32 a, F32 b)
 {
-	const Cluster tileCluster = u_clusters2[computeTileClusterIndex(uv, tileCountX, tileCountY)];
+	const Cluster tileCluster = u_clusters2[computeTileClusterIndex(tileSize, tileCountX)];
 	const Cluster zCluster = u_clusters2[computeZSplitClusterIndex(depth, zSplitCount, a, b) + tileCountX * tileCountY];
 
 	Cluster outCluster;
@@ -177,4 +180,5 @@ Cluster getCluster(F32 uv, F32 depth, U32 tileCountX, U32 tileCountY, U32 zSplit
 
 	return outCluster;
 }
-#endif
+#	endif
+#endif // defined(ANKI_FRAGMENT_SHADER)

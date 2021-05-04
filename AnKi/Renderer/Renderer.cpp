@@ -359,6 +359,9 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 
 	m_finalComposite->populateRenderGraph(ctx);
 
+	// Populate the uniforms
+	m_clusterBinning->writeClusterBuffersAsync();
+
 	// Bin lights and update uniforms
 	m_stats.m_lightBinTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
 	ClusterBinIn cin;

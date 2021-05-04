@@ -5,31 +5,13 @@
 
 #pragma anki mutator USE_SHADOW_LAYERS 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_X, 0, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_Y, 1, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT_Z, 2, 1u);
-ANKI_SPECIALIZATION_CONSTANT_U32(CLUSTER_COUNT, 3, 1u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNT, 0, UVec2(1u));
+ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 2, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3, 1u);
 ANKI_SPECIALIZATION_CONSTANT_U32(IR_MIPMAP_COUNT, 4, 1u);
 
 #pragma anki start vert
-#include <AnKi/Shaders/Common.glsl>
-
-layout(location = 0) out Vec2 out_uv;
-layout(location = 1) out Vec2 out_clusterIJ;
-
-out gl_PerVertex
-{
-	Vec4 gl_Position;
-};
-
-void main()
-{
-	out_uv = Vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
-	Vec2 pos = out_uv * 2.0 - 1.0;
-	gl_Position = Vec4(pos, 0.0, 1.0);
-
-	out_clusterIJ = Vec2(CLUSTER_COUNT_X, CLUSTER_COUNT_Y) * out_uv;
-}
+#include <AnKi/Shaders/QuadVert.glsl>
 #pragma anki end
 
 #pragma anki start frag
@@ -38,32 +20,31 @@ void main()
 #include <AnKi/Shaders/RtShadows.glsl>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
-#define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 0
-#define LIGHT_LIGHTS_BINDING 1
-#define LIGHT_INDIRECT_SPECULAR_BINDING 4
-#define LIGHT_GLOBAL_ILLUMINATION_BINDING 7
-#define LIGHT_CLUSTERS_BINDING 9
-#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
+#define CLUSTERED_SHADING_SET 0
+#define CLUSTERED_SHADING_UNIFORMS_BINDING 0
+#define CLUSTERED_SHADING_LIGHTS_BINDING 1
+#define CLUSTERED_SHADING_REFLECTIONS_BINDING 4
+#define CLUSTERED_SHADING_GI_BINDING 7
+#define CLUSTERED_SHADING_CLUSTERS_BINDING 9
+#include <AnKi/Shaders/ClusteredShadingCommon2.glsl>
 
-layout(set = 0, binding = 11) uniform sampler u_nearestAnyClampSampler;
-layout(set = 0, binding = 12) uniform sampler u_trilinearClampSampler;
+layout(set = 0, binding = 10) uniform sampler u_nearestAnyClampSampler;
+layout(set = 0, binding = 11) uniform sampler u_trilinearClampSampler;
 
-layout(set = 0, binding = 13) uniform texture2D u_msRt0;
-layout(set = 0, binding = 14) uniform texture2D u_msRt1;
-layout(set = 0, binding = 15) uniform texture2D u_msRt2;
-layout(set = 0, binding = 16) uniform texture2D u_msDepthRt;
-layout(set = 0, binding = 17) uniform texture2D u_ssrRt;
-layout(set = 0, binding = 18) uniform texture2D u_ssaoRt;
-layout(set = 0, binding = 19) uniform texture2D u_ssgiRt;
+layout(set = 0, binding = 12) uniform texture2D u_msRt0;
+layout(set = 0, binding = 13) uniform texture2D u_msRt1;
+layout(set = 0, binding = 14) uniform texture2D u_msRt2;
+layout(set = 0, binding = 15) uniform texture2D u_msDepthRt;
+layout(set = 0, binding = 16) uniform texture2D u_ssrRt;
+layout(set = 0, binding = 17) uniform texture2D u_ssaoRt;
+layout(set = 0, binding = 18) uniform texture2D u_ssgiRt;
 #if USE_SHADOW_LAYERS
-layout(set = 0, binding = 20) uniform utexture2D u_shadowLayersTex;
+layout(set = 0, binding = 19) uniform utexture2D u_shadowLayersTex;
 #else
-layout(set = 0, binding = 21) uniform texture2D u_resolvedSm;
+layout(set = 0, binding = 20) uniform texture2D u_resolvedSm;
 #endif
 
 layout(location = 0) in Vec2 in_uv;
-layout(location = 1) in Vec2 in_clusterIJ;
 
 layout(location = 0) out Vec3 out_color;
 
@@ -88,20 +69,14 @@ void main()
 	}
 
 	// Get world position
-	const Vec4 worldPos4 = u_invViewProjMat * Vec4(ndc, depth, 1.0);
+	const Vec4 worldPos4 = u_clusterShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
-	// Get first light index
-	U32 idxOffset;
-	{
-		U32 k = computeClusterK(u_clustererMagic, worldPos);
-		U32 clusterIdx =
-			k * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y) + U32(in_clusterIJ.y) * CLUSTER_COUNT_X + U32(in_clusterIJ.x);
+	// Get the cluster
+	Cluster cluster = getCluster(depth, TILE_SIZE, TILE_COUNT.x, TILE_COUNT.y, Z_SPLIT_COUNT,
+								 u_clusterShading.m_zSplitMagic.x, u_clusterShading.m_zSplitMagic.y);
 
-		idxOffset = u_clusters[clusterIdx];
-
-		// out_color = lightHeatmap(idxOffset, 5, 1u << 3); return;
-	}
+	// out_color = clusterHeatmap(cluster, 1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT); return;
 
 	// Decode GBuffer
 	GbufferInfo gbuffer;
@@ -125,14 +100,15 @@ void main()
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
 
 	// Dir light
-	Vec3 viewDir = normalize(u_cameraPos - worldPos);
-	if(u_dirLight.m_active != 0u)
+	const Vec3 viewDir = normalize(u_clusterShading.m_cameraPosition - worldPos);
+	const DirectionalLight2 dirLight = u_clusterShading.m_directionalLight;
+	if(dirLight.m_active != 0u)
 	{
 		F32 shadowFactor;
-		if(u_dirLight.m_cascadeCount > 0)
+		if(dirLight.m_cascadeCount > 0)
 		{
 #if USE_SHADOW_LAYERS
-			shadowFactor = resolvedSm[u_dirLight.m_shadowLayer];
+			shadowFactor = resolvedSm[dirLight.m_shadowLayer];
 #else
 			shadowFactor = resolvedSm[0];
 			++resolvedSmIdx;
@@ -143,21 +119,22 @@ void main()
 			shadowFactor = 1.0;
 		}
 
-		const Vec3 l = -u_dirLight.m_dir;
+		const Vec3 l = -dirLight.m_direction;
 
 		const F32 lambert = max(gbuffer.m_subsurface, dot(l, gbuffer.m_normal));
 
 		const Vec3 diffC = diffuseLambert(gbuffer.m_diffuse);
 		const Vec3 specC = computeSpecularColorBrdf(gbuffer, viewDir, l);
 
-		out_color += (diffC + specC) * u_dirLight.m_diffuseColor * (shadowFactor * lambert);
+		out_color += (diffC + specC) * dirLight.m_diffuseColor * (shadowFactor * lambert);
 	}
 
 	// Point lights
-	U32 idx;
-	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	ANKI_LOOP while(cluster.m_pointLightsMask != 0u)
 	{
-		PointLight light = u_pointLights[idx];
+		const I32 idx = findLSB64(cluster.m_pointLightsMask);
+		cluster.m_pointLightsMask &= ~(1ul << U64(idx));
+		const PointLight2 light = u_pointLights2[idx];
 
 		LIGHTING_COMMON_BRDF();
 
@@ -175,16 +152,17 @@ void main()
 	}
 
 	// Spot lights
-	ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+	ANKI_LOOP while(cluster.m_spotLightsMask != 0u)
 	{
-		SpotLight light = u_spotLights[idx];
+		const I32 idx = findLSB64(cluster.m_spotLightsMask);
+		cluster.m_spotLightsMask &= ~(1ul << U64(idx));
+		const SpotLight2 light = u_spotLights2[idx];
 
 		LIGHTING_COMMON_BRDF();
 
-		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_dir);
+		const F32 spot = computeSpotFactor(l, light.m_outerCos, light.m_innerCos, light.m_direction);
 
-		const F32 shadowmapLayerIdx = light.m_shadowmapId;
-		ANKI_BRANCH if(shadowmapLayerIdx >= 0.0)
+		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
 		{
 #if USE_SHADOW_LAYERS
 			const F32 shadow = resolvedSm[light.m_shadowLayer];
@@ -205,17 +183,16 @@ void main()
 		const Vec3 reflDir = reflect(-viewDir, gbuffer.m_normal);
 		const F32 reflLod = F32(IR_MIPMAP_COUNT - 1u) * gbuffer.m_roughness;
 
-		if(subgroupAll(u_lightIndices[idxOffset] != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
+		if(bitCount(cluster.m_reflectionProbesMask) == 1)
 		{
 			// Only one probe, do a fast path without blend weight
 
-			const ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset]];
-			idxOffset += 2u;
+			const ReflectionProbe2 probe = u_reflectionProbes2[findLSB(cluster.m_reflectionProbesMask)];
 
 			// Sample
 			const Vec3 cubeUv = intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
 			const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-			specIndirect = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+			specIndirect = textureLod(u_reflectionsTex2, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
 		}
 		else
 		{
@@ -224,9 +201,11 @@ void main()
 			F32 totalBlendWeight = EPSILON;
 
 			// Loop probes
-			ANKI_LOOP while((idx = u_lightIndices[idxOffset++]) != MAX_U32)
+			ANKI_LOOP while(cluster.m_reflectionProbesMask != 0u)
 			{
-				const ReflectionProbe probe = u_reflectionProbes[idx];
+				const U32 idx = U32(findLSB(cluster.m_reflectionProbesMask));
+				cluster.m_reflectionProbesMask &= ~(1u << idx);
+				const ReflectionProbe2 probe = u_reflectionProbes2[idx];
 
 				// Compute blend weight
 				const F32 blendWeight = computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, 0.2);
@@ -236,7 +215,7 @@ void main()
 				const Vec3 cubeUv =
 					intersectProbe(worldPos, reflDir, probe.m_aabbMin, probe.m_aabbMax, probe.m_position);
 				const Vec4 cubeArrUv = Vec4(cubeUv, probe.m_cubemapIndex);
-				Vec3 c = textureLod(u_reflectionsTex, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
+				const Vec3 c = textureLod(u_reflectionsTex2, u_trilinearClampSampler, cubeArrUv, reflLod).rgb;
 				specIndirect += c * blendWeight;
 			}
 
@@ -253,7 +232,7 @@ void main()
 		// Compute env BRDF
 		const F32 NoV = max(EPSILON, dot(gbuffer.m_normal, viewDir));
 		const Vec3 env =
-			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut, u_trilinearClampSampler, NoV);
+			envBRDF(gbuffer.m_specular, gbuffer.m_roughness, u_integrationLut2, u_trilinearClampSampler, NoV);
 
 		out_color += finalSpecIndirect * env;
 	}
@@ -262,13 +241,11 @@ void main()
 	{
 		Vec3 diffIndirect;
 
-		const U32 crntProbeIdx = u_lightIndices[idxOffset];
-		if(subgroupAllEqual(crntProbeIdx)
-		   && subgroupAll(crntProbeIdx != MAX_U32 && u_lightIndices[idxOffset + 1u] == MAX_U32))
+		if(cluster.m_giProbesMask != 0u)
 		{
 			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
 
-			GlobalIlluminationProbe probe = u_giProbes[subgroupBroadcastFirst(crntProbeIdx)]; // It should be uniform
+			const GlobalIlluminationProbe2 probe = u_giProbes[findLSB(cluster.m_giProbesMask)];
 
 			// Sample
 			diffIndirect = sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures,
@@ -281,32 +258,22 @@ void main()
 			F32 totalBlendWeight = EPSILON;
 			diffIndirect = Vec3(0.0);
 
-			Bool laneActive = true;
-			ANKI_LOOP while(laneActive)
+			// Loop probes
+			ANKI_LOOP while(cluster.m_giProbesMask != 0u)
 			{
-				U32 uniformIdxOffset = subgroupBroadcastFirst(idxOffset); // Should be uniform
-				const Bool laneMatch = uniformIdxOffset == idxOffset;
+				const U32 idx = U32(findLSB(cluster.m_giProbesMask));
+				cluster.m_giProbesMask &= ~(1u << idx);
+				const GlobalIlluminationProbe2 probe = u_giProbes[idx];
 
-				if(laneMatch)
-				{
-					laneActive = false;
+				// Compute blend weight
+				const F32 blendWeight =
+					computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
+				totalBlendWeight += blendWeight;
 
-					// Loop probes
-					ANKI_LOOP while((idx = u_lightIndices[uniformIdxOffset++]) != MAX_U32)
-					{
-						GlobalIlluminationProbe probe = u_giProbes[idx];
-
-						// Compute blend weight
-						const F32 blendWeight =
-							computeProbeBlendWeight(worldPos, probe.m_aabbMin, probe.m_aabbMax, probe.m_fadeDistance);
-						totalBlendWeight += blendWeight;
-
-						// Sample
-						const Vec3 c = sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe,
-																u_globalIlluminationTextures, u_trilinearClampSampler);
-						diffIndirect += c * blendWeight;
-					}
-				}
+				// Sample
+				const Vec3 c = sampleGlobalIllumination(worldPos, gbuffer.m_normal, probe, u_globalIlluminationTextures,
+														u_trilinearClampSampler);
+				diffIndirect += c * blendWeight;
 			}
 
 			// Normalize

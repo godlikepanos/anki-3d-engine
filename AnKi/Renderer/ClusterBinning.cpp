@@ -217,8 +217,10 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 
 	cs.m_clustersAddress =
 		stagingMem.allocateFrame(sizeof(Cluster) * m_clusterCount, StagingGpuMemoryType::STORAGE, cs.m_clustersToken);
+}
 
-	// Fire the async job
+void ClusterBinning::writeClusterBuffersAsync()
+{
 	m_r->getThreadHive().submitTask(
 		[](void* userData, U32 threadId, ThreadHive& hive, ThreadHiveSemaphore* signalSemaphore) {
 			static_cast<ClusterBinning*>(userData)->writeClustererBuffersTask();
@@ -248,14 +250,15 @@ void ClusterBinning::writeClustererBuffersTask()
 			out.m_diffuseColor = in.m_diffuseColor;
 			out.m_radius = in.m_radius;
 			out.m_squareRadiusOverOne = 1.0f / (in.m_radius * in.m_radius);
-			out.m_shadowLayer = in.m_shadowLayer;
 
 			if(in.m_shadowRenderQueues[0] == nullptr)
 			{
 				out.m_shadowAtlasTileScale = INVALID_TEXTURE_INDEX;
+				out.m_shadowLayer = MAX_U32;
 			}
 			else
 			{
+				out.m_shadowLayer = in.m_shadowLayer;
 				out.m_shadowAtlasTileScale = in.m_shadowAtlasTileSize;
 				static_assert(sizeof(out.m_shadowAtlasTileOffsets) == sizeof(in.m_shadowAtlasTileOffsets), "See file");
 				memcpy(&out.m_shadowAtlasTileOffsets[0], &in.m_shadowAtlasTileOffsets[0],
