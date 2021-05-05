@@ -189,7 +189,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 	}
 
 	// Forward shading last
-	// TODO m_r->getForwardShading().run(ctx, rgraphCtx);
+	m_r->getForwardShading().run(ctx, rgraphCtx);
 }
 
 void LightShading::populateRenderGraph(RenderingContext& ctx)

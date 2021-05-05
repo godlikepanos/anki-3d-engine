@@ -164,6 +164,7 @@ U32 computeShadowSampleCount(const U32 COUNT, F32 zVSpace)
 	return sampleCount;
 }
 
+// TODO rm
 F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
 {
 	const Vec4 texCoords4 = light.m_texProjectionMat * Vec4(worldPos, 1.0);
@@ -174,8 +175,62 @@ F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotM
 	return evsmComputeShadowFactor(texCoords3.z, shadowMoments);
 }
 
+F32 computeShadowFactorSpotLight(SpotLight2 light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
+{
+	const Vec4 texCoords4 = light.m_textureMatrix * Vec4(worldPos, 1.0);
+	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+
+	const Vec4 shadowMoments = textureLod(spotMap, spotMapSampler, texCoords3.xy, 0.0);
+
+	return evsmComputeShadowFactor(texCoords3.z, shadowMoments);
+}
+
 // Compute the shadow factor of point (omni) lights.
+// TODO rm
 F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D shadowMap, sampler shadowMapSampler)
+{
+	const Vec3 dir = -frag2Light;
+	const Vec3 dirabs = abs(dir);
+	const F32 dist = max(dirabs.x, max(dirabs.y, dirabs.z));
+
+	// 1) Project the dist to light's proj mat
+	//
+	const F32 near = LIGHT_FRUSTUM_NEAR_PLANE;
+	const F32 far = light.m_radius;
+	const F32 g = near - far;
+
+	const F32 zVSpace = -dist;
+	const F32 w = -zVSpace;
+	F32 z = (far * zVSpace + far * near) / g;
+	z /= w;
+
+	// 2) Read shadow tex
+	//
+
+	// Convert cube coords
+	U32 faceIdxu;
+	Vec2 uv = convertCubeUvsu(dir, faceIdxu);
+
+	// Get the atlas offset
+	Vec2 atlasOffset;
+	atlasOffset.x = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][(faceIdxu & 1u) << 1u];
+	atlasOffset.y = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][((faceIdxu & 1u) << 1u) + 1u];
+
+	// Compute UV
+	uv = fma(uv, Vec2(light.m_shadowAtlasTileScale), atlasOffset);
+
+	// Sample
+	const Vec4 shadowMoments = textureLod(shadowMap, shadowMapSampler, uv, 0.0);
+
+	// 3) Compare
+	//
+	const F32 shadowFactor = evsmComputeShadowFactor(z, shadowMoments);
+
+	return shadowFactor;
+}
+
+// Compute the shadow factor of point (omni) lights.
+F32 computeShadowFactorPointLight(PointLight2 light, Vec3 frag2Light, texture2D shadowMap, sampler shadowMapSampler)
 {
 	const Vec3 dir = -frag2Light;
 	const Vec3 dirabs = abs(dir);

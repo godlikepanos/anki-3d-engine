@@ -40,18 +40,17 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb->setDepthWrite(false);
 		cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 
-		const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
+		const ClustererGpuObjects& rsrc = ctx.m_clusterShading;
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 
 		rgraphCtx.bindTexture(0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
 		rgraphCtx.bindColorTexture(0, 2, m_r->getVolumetricLightingAccumulation().getRt());
 
-		bindUniforms(cmdb, 0, 3, ctx.m_lightShadingUniformsToken);
+		bindUniforms(cmdb, 0, 3, rsrc.m_clusteredShadingUniformsToken);
 		bindUniforms(cmdb, 0, 4, rsrc.m_pointLightsToken);
 		bindUniforms(cmdb, 0, 5, rsrc.m_spotLightsToken);
 		rgraphCtx.bindColorTexture(0, 6, m_r->getShadowMapping().getShadowmapRt());
 		bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
-		bindStorage(cmdb, 0, 8, rsrc.m_indicesToken);
 
 		// Start drawing
 		m_r->getSceneDrawer().drawRange(Pass::FS, ctx.m_matrices.m_view, ctx.m_matrices.m_viewProjectionJitter,

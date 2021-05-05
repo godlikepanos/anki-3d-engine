@@ -160,10 +160,11 @@ struct CommonMatrices
 
 	Mat4 m_invertedViewProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity()); ///< To unproject in world space.
 	Mat4 m_invertedViewProjection ANKI_CPP_CODE(= Mat4::getIdentity());
+	Mat4 m_invertedProjectionJitter ANKI_CPP_CODE(= Mat4::getIdentity()); ///< To unproject in view space.
 
 	Vec4 m_unprojectionParameters ANKI_CPP_CODE(= Vec4(0.0f)); ///< To unproject to view space. Jitter not considered.
 };
-const U32 _ANKI_SIZEOF_CommonMatrices = 9u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec4);
+const U32 _ANKI_SIZEOF_CommonMatrices = 10u * ANKI_SIZEOF(Mat4) + ANKI_SIZEOF(Vec4);
 ANKI_SHADER_STATIC_ASSERT(sizeof(CommonMatrices) == _ANKI_SIZEOF_CommonMatrices);
 
 /// Common uniforms for light shading passes.
@@ -183,7 +184,7 @@ struct ClusteredShadingUniforms
 	U32 m_zSplitCount;
 	F32 m_zSplitCountOverFrustumLength; ///< m_zSplitCount/(far-near)
 	Vec2 m_zSplitMagic; ///< It's the "a" and "b" of computeZSplitClusterIndex(). See there for details.
-	F32 m_tileSize;
+	U32 m_tileSize;
 	U32 m_lightVolumeLastCluster;
 
 	U32 m_pointLightCount;

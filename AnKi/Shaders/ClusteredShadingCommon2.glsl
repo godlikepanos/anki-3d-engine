@@ -180,5 +180,12 @@ Cluster getCluster(F32 depth, U32 tileSize, U32 tileCountX, U32 tileCountY, U32 
 
 	return outCluster;
 }
+
+Cluster getCluster(F32 depth)
+{
+	return getCluster(depth, u_clusterShading.m_tileSize, u_clusterShading.m_tileCounts.x,
+					  u_clusterShading.m_tileCounts.y, u_clusterShading.m_zSplitCount, u_clusterShading.m_zSplitMagic.x,
+					  u_clusterShading.m_zSplitMagic.y);
+}
 #	endif
 #endif // defined(ANKI_FRAGMENT_SHADER)
