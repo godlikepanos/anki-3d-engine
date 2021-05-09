@@ -25,20 +25,25 @@ VolumetricLightingAccumulation::~VolumetricLightingAccumulation()
 Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 {
 	// Misc
-	const U32 fractionXY = config.getNumberU32("r_volumetricLightingAccumulationClusterFractionXY");
-	ANKI_ASSERT(fractionXY >= 1);
-	const U32 fractionZ = config.getNumberU32("r_volumetricLightingAccumulationClusterFractionZ");
-	ANKI_ASSERT(fractionZ >= 1);
-	m_finalClusterZ = config.getNumberU32("r_volumetricLightingAccumulationFinalClusterInZ");
-	ANKI_ASSERT(m_finalClusterZ > 0 && m_finalClusterZ < m_r->getClusterCount()[2]);
+	const F32 qualityXY = config.getNumberF32("r_volumetricLightingAccumulationQualityXY");
+	const F32 qualityZ = config.getNumberF32("r_volumetricLightingAccumulationQualityZ");
+	m_finalZSplit = min(m_r->getZSplitCount(), config.getNumberU32("r_volumetricLightingAccumulationFinalZSplit"));
 
-	m_volumeSize[0] = m_r->getClusterCount()[0] * fractionXY;
-	m_volumeSize[1] = m_r->getClusterCount()[1] * fractionXY;
-	m_volumeSize[2] = (m_finalClusterZ + 1) * fractionZ;
+	m_volumeSize[0] = U32(F32(m_r->getTileCounts().x()) * qualityXY);
+	m_volumeSize[1] = U32(F32(m_r->getTileCounts().y()) * qualityXY);
+	m_volumeSize[2] = U32(F32(m_finalZSplit + 1) * qualityZ);
 	ANKI_R_LOGI("Initializing volumetric lighting accumulation. Size %ux%ux%u", m_volumeSize[0], m_volumeSize[1],
 				m_volumeSize[2]);
 
-	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseLdr16x16x16.ankitex", m_noiseTex));
+	if(!isAligned(m_r->getTileCounts().x(), m_volumeSize[0]) || !isAligned(m_r->getTileCounts().y(), m_volumeSize[1])
+	   || m_volumeSize[2] > m_r->getZSplitCount() || m_volumeSize[0] == 0 || m_volumeSize[1] == 0
+	   || m_volumeSize[2] == 0)
+	{
+		ANKI_R_LOGE("Wrong input");
+		return Error::USER_DATA;
+	}
+
+	ANKI_CHECK(getResourceManager().loadResource("EngineAssets/BlueNoiseRgb864x64.png", m_noiseTex));
 
 	// Shaders
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/VolumetricLightingAccumulation.ankiprog", m_prog));
@@ -46,12 +51,9 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addMutation("ENABLE_SHADOWS", 1);
 	variantInitInfo.addConstant("VOLUME_SIZE", UVec3(m_volumeSize[0], m_volumeSize[1], m_volumeSize[2]));
-	variantInitInfo.addConstant("CLUSTER_COUNT",
-								UVec3(m_r->getClusterCount()[0], m_r->getClusterCount()[1], m_r->getClusterCount()[2]));
-	variantInitInfo.addConstant("FINAL_CLUSTER_Z", U32(m_finalClusterZ));
-	variantInitInfo.addConstant("FRACTION", UVec3(fractionXY, fractionXY, fractionZ));
-	variantInitInfo.addConstant("NOISE_TEX_SIZE",
-								UVec3(m_noiseTex->getWidth(), m_noiseTex->getHeight(), m_noiseTex->getDepth()));
+	variantInitInfo.addConstant("TILE_COUNT", UVec2(m_r->getTileCounts().x(), m_r->getTileCounts().y()));
+	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
+	variantInitInfo.addConstant("FINAL_Z_SPLIT", m_finalZSplit);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -101,7 +103,7 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	RenderingContext& ctx = *m_runCtx.m_ctx;
-	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
+	const ClustererGpuObjects& rsrc = ctx.m_clusterShading;
 
 	cmdb->bindShaderProgram(m_grProg);
 
@@ -115,7 +117,7 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 
 	rgraphCtx.bindColorTexture(0, 4, m_runCtx.m_rts[0]);
 
-	bindUniforms(cmdb, 0, 5, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 5, rsrc.m_clusteredShadingUniformsToken);
 	bindUniforms(cmdb, 0, 6, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 7, rsrc.m_spotLightsToken);
 	rgraphCtx.bindColorTexture(0, 8, m_r->getShadowMapping().getShadowmapRt());
@@ -125,17 +127,6 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 
 	bindUniforms(cmdb, 0, 11, rsrc.m_fogDensityVolumesToken);
 	bindStorage(cmdb, 0, 12, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 13, rsrc.m_indicesToken);
-
-	struct PushConsts
-	{
-		Vec3 m_padding;
-		F32 m_noiseOffset;
-	} regs;
-	const F32 texelSize = 1.0f / F32(m_noiseTex->getDepth());
-	regs.m_noiseOffset = texelSize * F32(m_r->getFrameCount() % m_noiseTex->getDepth()) + texelSize / 2.0f;
-
-	cmdb->setPushConstants(&regs, sizeof(regs));
 
 	dispatchPPCompute(cmdb, m_workgroupSize[0], m_workgroupSize[1], m_workgroupSize[2], m_volumeSize[0],
 					  m_volumeSize[1], m_volumeSize[2]);

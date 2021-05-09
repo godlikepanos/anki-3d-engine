@@ -12,9 +12,9 @@ ANKI_CONFIG_OPTION(r_zSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
 
 ANKI_CONFIG_OPTION(r_renderingQuality, 1.0, 0.5, 1.0, "A factor over the requested renderingresolution")
 
-ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationClusterFractionXY, 4, 1, 16)
-ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationClusterFractionZ, 4, 1, 16)
-ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationFinalClusterInZ, 26, 1, 256)
+ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationQualityXY, 1.0, 0.5, 16.0)
+ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationQualityZ, 1.0, 0.5, 16.0)
+ANKI_CONFIG_OPTION(r_volumetricLightingAccumulationFinalZSplit, 26, 1, 256)
 
 ANKI_CONFIG_OPTION(r_ssrMaxSteps, 64, 1, 2048)
 ANKI_CONFIG_OPTION(r_ssrDepthLod, 2, 0, 1000)

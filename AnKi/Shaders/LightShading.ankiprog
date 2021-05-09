@@ -241,7 +241,7 @@ void main()
 	{
 		Vec3 diffIndirect;
 
-		if(cluster.m_giProbesMask != 0u)
+		if(bitCount(cluster.m_giProbesMask) == 1)
 		{
 			// All subgroups point to the same probe and there is only one probe, do a fast path without blend weight
 

@@ -4,7 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 ANKI_SPECIALIZATION_CONSTANT_UVEC3(VOLUME_SIZE, 0, UVec3(1));
-ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_CLUSTER_Z, 9, 1);
+ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 3, 1);
+ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 4, 1);
 
 #pragma anki start comp
 
@@ -24,10 +25,9 @@ layout(push_constant, std430) uniform pc_
 	F32 u_fogScatteringCoeff;
 	F32 u_fogAbsorptionCoeff;
 	F32 u_density;
-	F32 u_padding0;
+	F32 u_near;
 	Vec3 u_fogDiffuse;
-	U32 u_padding1;
-	ClustererMagicValues u_clustererMagic;
+	F32 u_far;
 };
 
 void main()
@@ -42,20 +42,24 @@ void main()
 	Vec4 colorAndDensityFront = Vec4(0.0);
 	ANKI_LOOP for(U32 i = 0u; i < VOLUME_SIZE.z; ++i)
 	{
-		// Compute the cluster K limits of this cluster fragment
-		const F32 clusterKNear = F32(i) * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
-		const F32 clusterKFar = F32(i + 1u) * (F32(FINAL_CLUSTER_Z + 1u) / F32(VOLUME_SIZE.z));
+		const F32 fi = F32(i);
+
+		// Compute the linear depth
+		const F32 maxLinearDepth = F32(FINAL_Z_SPLIT + 1u) / F32(Z_SPLIT_COUNT);
+		const F32 linearDepthFraction = maxLinearDepth / F32(VOLUME_SIZE.z);
+		const F32 linearDepthNear = fi * linearDepthFraction;
+		const F32 linearDepthFar = (fi + 1.0) * linearDepthFraction;
 
 		// Compute the min and max Z in view space if this cluster fragment
-		const F32 zVSpaceNear = -computeClusterNearf(u_clustererMagic, clusterKNear);
-		const F32 zVSpaceFar = -computeClusterNearf(u_clustererMagic, clusterKFar);
+		const F32 zVSpaceNear = -linearDepthNear * (u_far - u_near) + u_near;
+		const F32 zVSpaceFar = -linearDepthFar * (u_far - u_near) + u_near;
 
 		// Compute the thikness of this fragment
 		const F32 layerThinkness = abs(zVSpaceNear - zVSpaceFar);
 
 		// Read the light value and the fog density from the fog volumes
-		Vec4 lightAndFogDensity =
-			textureLod(u_lightVolume, u_linearAnyClampSampler, Vec3(uv, clusterKFar / F32(FINAL_CLUSTER_Z + 1u)), 0.0);
+		const F32 w = (fi + 0.5) / F32(VOLUME_SIZE.z);
+		Vec4 lightAndFogDensity = textureLod(u_lightVolume, u_linearAnyClampSampler, Vec3(uv, w), 0.0);
 		lightAndFogDensity.xyz *= u_fogDiffuse / PI;
 		lightAndFogDensity.w += u_density; // Apply the default density
 

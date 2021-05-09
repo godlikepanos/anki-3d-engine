@@ -423,7 +423,7 @@ void ClusterBinning::writeClustererBuffersTask()
 			(rqueue.m_cameraNear - rqueue.m_cameraFar) / (rqueue.m_cameraNear * F32(m_r->getZSplitCount()));
 		unis.m_zSplitMagic.y() = rqueue.m_cameraFar / (rqueue.m_cameraNear * F32(m_r->getZSplitCount()));
 		unis.m_tileSize = m_r->getTileSize();
-		unis.m_lightVolumeLastCluster = m_r->getVolumetricLightingAccumulation().getFinalClusterInZ();
+		unis.m_lightVolumeLastZSplit = m_r->getVolumetricLightingAccumulation().getFinalZSplit();
 
 		unis.m_pointLightCount = rqueue.m_pointLights.getSize();
 		unis.m_spotLightCount = rqueue.m_spotLights.getSize();

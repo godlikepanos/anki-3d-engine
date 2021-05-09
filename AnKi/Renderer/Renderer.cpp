@@ -296,6 +296,7 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	ctx.m_matrices.m_invertedViewProjectionJitter = ctx.m_matrices.m_viewProjectionJitter.getInverse();
 	ctx.m_matrices.m_invertedViewProjection = ctx.m_matrices.m_viewProjection.getInverse();
 	ctx.m_matrices.m_invertedProjectionJitter = ctx.m_matrices.m_projectionJitter.getInverse();
+	ctx.m_matrices.m_invertedView = ctx.m_matrices.m_view.getInverse();
 
 	ctx.m_matrices.m_unprojectionParameters = ctx.m_matrices.m_projection.extractPerspectiveUnprojectionParams();
 
@@ -608,7 +609,7 @@ void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
 	blk->m_clustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
 	blk->m_prevClustererMagicValues = ctx.m_prevClustererMagicValues;
 
-	blk->m_lightVolumeLastCluster = m_volLighting->getFinalClusterInZ();
+	blk->m_lightVolumeLastCluster = m_volLighting->getFinalZSplit();
 	blk->m_frameCount = m_frameCount & MAX_U32;
 
 	// Matrices

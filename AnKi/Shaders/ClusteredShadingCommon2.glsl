@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/LightFunctions.glsl>
+#include <AnKi/Shaders/LightFunctions2.glsl>
 
 //
 // Common uniforms
@@ -71,7 +71,7 @@ layout(set = CLUSTERED_SHADING_SET,
 #if defined(CLUSTERED_SHADING_FOG_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
 {
-	FogDensityVolume u_fogDensityVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
+	FogDensityVolume2 u_fogDensityVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
 };
 #endif
 
@@ -80,11 +80,11 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, sca
 //
 #if defined(CLUSTERED_SHADING_GI_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING) uniform texture3D
-	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
+	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2];
 
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, scalar) uniform ANKI_RANDOM_BLOCK_NAME
 {
-	GlobalIlluminationProbe2 u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
+	GlobalIlluminationProbe2 u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2];
 };
 #endif
 
@@ -137,7 +137,7 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 
 	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE)) != 0)
 	{
-		maxObjects += MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES;
+		maxObjects += MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2;
 		count += bitCount(cluster.m_giProbesMask);
 	}
 

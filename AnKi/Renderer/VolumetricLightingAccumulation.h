@@ -31,9 +31,9 @@ public:
 	}
 
 	/// Get the last cluster split in Z axis that will be affected by lighting.
-	U32 getFinalClusterInZ() const
+	U32 getFinalZSplit() const
 	{
-		return m_finalClusterZ;
+		return m_finalZSplit;
 	}
 
 private:
@@ -43,7 +43,7 @@ private:
 	Array<TexturePtr, 2> m_rtTextures;
 	TextureResourcePtr m_noiseTex;
 
-	U32 m_finalClusterZ = 0;
+	U32 m_finalZSplit = 0;
 
 	Array<U32, 3> m_workgroupSize = {};
 	Array<U32, 3> m_volumeSize;
