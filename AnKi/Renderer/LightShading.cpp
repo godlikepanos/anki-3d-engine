@@ -93,7 +93,8 @@ Error LightShading::initApplyFog(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShadingApplyFog.ankiprog", m_applyFog.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_applyFog.m_prog);
-	variantInitInfo.addConstant("FOG_LAST_CLASTER", m_r->getVolumetricFog().getFinalClusterInZ());
+	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
+	variantInitInfo.addConstant("FINAL_Z_SPLIT", m_r->getVolumetricFog().getFinalClusterInZ());
 
 	const ShaderProgramResourceVariant* variant;
 	m_applyFog.m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -169,13 +170,15 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 							  TextureSubresourceInfo(DepthStencilAspectBit::DEPTH));
 		rgraphCtx.bindColorTexture(0, 3, m_r->getVolumetricFog().getRt());
 
-		struct PushConsts
+		class PushConsts
 		{
-			ClustererMagicValues m_clustererMagic;
-			Mat4 m_invViewProjMat;
+		public:
+			Vec2 m_padding;
+			F32 m_near;
+			F32 m_far;
 		} regs;
-		regs.m_clustererMagic = ctx.m_clusterBinOut.m_shaderMagicValues;
-		regs.m_invViewProjMat = ctx.m_matrices.m_viewProjectionJitter.getInverse();
+		regs.m_near = ctx.m_renderQueue->m_cameraNear;
+		regs.m_far = ctx.m_renderQueue->m_cameraFar;
 
 		cmdb->setPushConstants(&regs, sizeof(regs));
 

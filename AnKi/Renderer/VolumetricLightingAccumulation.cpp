@@ -36,8 +36,7 @@ Error VolumetricLightingAccumulation::init(const ConfigSet& config)
 				m_volumeSize[2]);
 
 	if(!isAligned(m_r->getTileCounts().x(), m_volumeSize[0]) || !isAligned(m_r->getTileCounts().y(), m_volumeSize[1])
-	   || m_volumeSize[2] > m_r->getZSplitCount() || m_volumeSize[0] == 0 || m_volumeSize[1] == 0
-	   || m_volumeSize[2] == 0)
+	   || m_volumeSize[0] == 0 || m_volumeSize[1] == 0 || m_volumeSize[2] == 0)
 	{
 		ANKI_R_LOGE("Wrong input");
 		return Error::USER_DATA;

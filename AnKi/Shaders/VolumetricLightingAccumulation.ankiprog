@@ -280,12 +280,13 @@ void main()
 		// Project
 		const Vec4 prevClipPos4 = u_clusterShading.m_previousMatrices.m_viewProjection * Vec4(midWPos, 1.0);
 		const Vec3 prevClipPos = prevClipPos4.xyz / prevClipPos4.w;
-		const F32 linearDepth = linearizeDepth(prevClipPos.z, u_clusterShading.m_near, u_clusterShading.m_far);
 
 		// Read prev
-		if(all(greaterThan(prevClipPos, Vec3(-1.0))) && all(lessThan(prevClipPos, Vec3(1.0))))
+		if(all(greaterThan(prevClipPos.xy, Vec2(-1.0))) && all(lessThan(prevClipPos.xy, Vec2(1.0))))
 		{
-			const Vec3 uvw = Vec3(NDC_TO_UV(prevClipPos.xy), linearDepth);
+			const F32 linearDepth = linearizeDepth(prevClipPos.z, u_clusterShading.m_near, u_clusterShading.m_far);
+			const Vec3 uvw =
+				Vec3(NDC_TO_UV(prevClipPos.xy), linearDepth * (F32(Z_SPLIT_COUNT) / F32(FINAL_Z_SPLIT + 1u)));
 			const Vec4 history = textureLod(u_prevVolume, u_linearAnyClampSampler, uvw, 0.0);
 			lightAndFog = mix(history, lightAndFog, 1.0 / 16.0);
 		}

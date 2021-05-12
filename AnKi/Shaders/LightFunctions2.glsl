@@ -198,9 +198,7 @@ F32 computeShadowFactorPointLight(PointLight2 light, Vec3 frag2Light, texture2D 
 	Vec2 uv = convertCubeUvsu(dir, faceIdxu);
 
 	// Get the atlas offset
-	Vec2 atlasOffset;
-	atlasOffset.x = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][(faceIdxu & 1u) << 1u];
-	atlasOffset.y = light.m_shadowAtlasTileOffsets[faceIdxu >> 1u][((faceIdxu & 1u) << 1u) + 1u];
+	const Vec2 atlasOffset = light.m_shadowAtlasTileOffsets[faceIdxu];
 
 	// Compute UV
 	uv = fma(uv, Vec2(light.m_shadowAtlasTileScale), atlasOffset);
