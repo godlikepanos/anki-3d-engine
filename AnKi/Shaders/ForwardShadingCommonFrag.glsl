@@ -104,7 +104,7 @@ Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
 {
 	// TODO
 #if 0
-	const Vec2 uv = gl_FragCoord.xy / u_clusterShading.m_renderingSize;
+	const Vec2 uv = gl_FragCoord.xy / u_clusteredShading.m_renderingSize;
 	const Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, uv, worldPos, u_lightVolumeLastCluster + 1u);
 
 	const Vec3 light = textureLod(u_lightVol, u_linearAnyClampSampler, uv3d, 0.0).rgb;
@@ -121,14 +121,14 @@ void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor)
 
 void fog(Vec3 color, F32 fogAlphaScale, F32 fogDistanceOfMaxThikness, F32 zVSpace)
 {
-	const Vec2 screenSize = 1.0 / u_clusterShading.m_renderingSize;
+	const Vec2 screenSize = 1.0 / u_clusteredShading.m_renderingSize;
 
 	const Vec2 texCoords = gl_FragCoord.xy * screenSize;
 	const F32 depth = textureLod(u_gbufferDepthRt, u_linearAnyClampSampler, texCoords, 0.0).r;
 	F32 zFeatherFactor;
 
 	const Vec4 fragPosVspace4 =
-		u_clusterShading.m_matrices.m_invertedProjectionJitter * Vec4(Vec3(UV_TO_NDC(texCoords), depth), 1.0);
+		u_clusteredShading.m_matrices.m_invertedProjectionJitter * Vec4(Vec3(UV_TO_NDC(texCoords), depth), 1.0);
 	const F32 sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
 	const F32 diff = max(0.0, zVSpace - sceneZVspace);

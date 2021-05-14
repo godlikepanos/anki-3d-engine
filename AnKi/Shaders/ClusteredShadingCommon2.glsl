@@ -13,7 +13,7 @@
 #if defined(CLUSTERED_SHADING_UNIFORMS_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
 {
-	ClusteredShadingUniforms u_clusterShading;
+	ClusteredShadingUniforms u_clusteredShading;
 };
 #endif
 
@@ -195,9 +195,9 @@ Cluster getClusterFragCoord(Vec3 fragCoord, U32 tileSize, UVec2 tileCounts, U32 
 
 Cluster getClusterFragCoord(Vec3 fragCoord)
 {
-	return getClusterFragCoord(fragCoord, u_clusterShading.m_tileSize, u_clusterShading.m_tileCounts,
-							   u_clusterShading.m_zSplitCount, u_clusterShading.m_zSplitMagic.x,
-							   u_clusterShading.m_zSplitMagic.y);
+	return getClusterFragCoord(fragCoord, u_clusteredShading.m_tileSize, u_clusteredShading.m_tileCounts,
+							   u_clusteredShading.m_zSplitCount, u_clusteredShading.m_zSplitMagic.x,
+							   u_clusteredShading.m_zSplitMagic.y);
 }
 
 Cluster getClusterUv(Vec2 uv, F32 depth, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)

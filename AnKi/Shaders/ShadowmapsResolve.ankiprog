@@ -33,12 +33,12 @@ void main()
 	const Vec2 uv = (Vec2(gl_GlobalInvocationID.xy) + 0.5) / Vec2(FB_SIZE);
 	const Vec2 ndc = UV_TO_NDC(uv);
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
-	const Vec4 worldPos4 = u_clusterShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Cluster
-	Cluster cluster = getClusterUv(uv, depth, TILE_COUNTS, Z_SPLIT_COUNT, u_clusterShading.m_zSplitMagic.x,
-								   u_clusterShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterUv(uv, depth, TILE_COUNTS, Z_SPLIT_COUNT, u_clusteredShading.m_zSplitMagic.x,
+								   u_clusteredShading.m_zSplitMagic.y);
 
 	// Layers
 	U32 shadowCasterCountPerFragment = 0;
@@ -46,12 +46,12 @@ void main()
 	F32 shadowFactors[maxShadowCastersPerFragment] = F32[](0.0, 0.0, 0.0, 0.0);
 
 	// Dir light
-	const DirectionalLight2 dirLight = u_clusterShading.m_directionalLight;
+	const DirectionalLight2 dirLight = u_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u && dirLight.m_cascadeCount > 0)
 	{
 		const F32 positiveZViewSpace =
-			testPlanePoint(u_clusterShading.m_nearPlaneWSpace.xyz, u_clusterShading.m_nearPlaneWSpace.w, worldPos)
-			+ u_clusterShading.m_near;
+			testPlanePoint(u_clusteredShading.m_nearPlaneWSpace.xyz, u_clusteredShading.m_nearPlaneWSpace.w, worldPos)
+			+ u_clusteredShading.m_near;
 
 		F32 shadowFactor;
 		if(positiveZViewSpace < dirLight.m_effectiveShadowDistance)

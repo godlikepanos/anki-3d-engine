@@ -34,8 +34,8 @@ Error GBufferPost::initInternal(const ConfigSet& cfg)
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/GBufferPost.ankiprog", m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
-	variantInitInfo.addConstant("CLUSTER_COUNT_X", cfg.getNumberU32("r_clusterSizeX"));
-	variantInitInfo.addConstant("CLUSTER_COUNT_Y", cfg.getNumberU32("r_clusterSizeY"));
+	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
+	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
@@ -73,7 +73,7 @@ void GBufferPost::populateRenderGraph(RenderingContext& ctx)
 void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 {
 	const RenderingContext& ctx = *m_runCtx.m_ctx;
-	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
+	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
@@ -89,18 +89,18 @@ void GBufferPost::run(RenderPassWorkContext& rgraphCtx)
 
 	cmdb->bindSampler(0, 2, m_r->getSamplers().m_trilinearRepeat);
 
-	bindUniforms(cmdb, 0, 3, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 3, rsrc.m_clusteredShadingUniformsToken);
 	bindUniforms(cmdb, 0, 4, rsrc.m_decalsToken);
 
-	cmdb->bindTexture(0, 5, (rsrc.m_diffDecalTexView) ? rsrc.m_diffDecalTexView : m_r->getDummyTextureView2d(),
+	cmdb->bindTexture(0, 5,
+					  (rsrc.m_diffuseDecalTextureView) ? rsrc.m_diffuseDecalTextureView : m_r->getDummyTextureView2d(),
 					  TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(0, 6,
-					  (rsrc.m_specularRoughnessDecalTexView) ? rsrc.m_specularRoughnessDecalTexView
-															 : m_r->getDummyTextureView2d(),
+					  (rsrc.m_specularRoughnessDecalTextureView) ? rsrc.m_specularRoughnessDecalTextureView
+																 : m_r->getDummyTextureView2d(),
 					  TextureUsageBit::SAMPLED_FRAGMENT);
 
 	bindStorage(cmdb, 0, 7, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 8, rsrc.m_indicesToken);
 
 	// Draw
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);

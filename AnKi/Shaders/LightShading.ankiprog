@@ -69,12 +69,12 @@ void main()
 	}
 
 	// Get world position
-	const Vec4 worldPos4 = u_clusterShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
 	Cluster cluster = getClusterFragCoord(Vec3(gl_FragCoord.xy, depth), TILE_SIZE, TILE_COUNTS, Z_SPLIT_COUNT,
-										  u_clusterShading.m_zSplitMagic.x, u_clusterShading.m_zSplitMagic.y);
+										  u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
 
 	// out_color = clusterHeatmap(cluster, 1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT); return;
 
@@ -100,8 +100,8 @@ void main()
 	out_color = gbuffer.m_diffuse * gbuffer.m_emission;
 
 	// Dir light
-	const Vec3 viewDir = normalize(u_clusterShading.m_cameraPosition - worldPos);
-	const DirectionalLight2 dirLight = u_clusterShading.m_directionalLight;
+	const Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);
+	const DirectionalLight2 dirLight = u_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u)
 	{
 		F32 shadowFactor;

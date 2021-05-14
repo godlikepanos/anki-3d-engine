@@ -68,7 +68,7 @@ void main()
 	const Vec2 uv = (Vec2(gl_LaunchIDEXT.xy) + 0.5) / Vec2(gl_LaunchSizeEXT.xy);
 	const Vec2 ndc = UV_TO_NDC(uv);
 	const F32 depth = textureLod(u_depthRt, u_linearAnyClampSampler, uv, 0.0).r;
-	const Vec4 worldPos4 = u_clusterShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
+	const Vec4 worldPos4 = u_clusteredShading.m_matrices.m_invertedViewProjectionJitter * Vec4(ndc, depth, 1.0);
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	if(depth == 1.0)
@@ -87,8 +87,8 @@ void main()
 	const Vec3 normal = readNormalFromGBuffer(u_normalRt, u_linearAnyClampSampler, uv);
 
 	// Cluster
-	Cluster cluster = getClusterUv(uv, depth, u_clusterShading.m_tileCounts, u_clusterShading.m_zSplitCount,
-								   u_clusterShading.m_zSplitMagic.x, u_clusterShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterUv(uv, depth, u_clusteredShading.m_tileCounts, u_clusteredShading.m_zSplitCount,
+								   u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
 
 	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
 	zeroRtShadowLayers(shadowFactors);
@@ -97,7 +97,7 @@ void main()
 	Vec3 random[RAYS_PER_PIXEL];
 	for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
 	{
-		const U32 frameIdx = u_clusterShading.m_frame * RAYS_PER_PIXEL + i;
+		const U32 frameIdx = u_clusteredShading.m_frame * RAYS_PER_PIXEL + i;
 #if 0
 		const UVec3 irandom = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, frameIdx));
 		random[i] = Vec3(irandom) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
@@ -110,7 +110,7 @@ void main()
 	}
 
 	// Dir light
-	const DirectionalLight2 dirLight = u_clusterShading.m_directionalLight;
+	const DirectionalLight2 dirLight = u_clusteredShading.m_directionalLight;
 	ANKI_BRANCH if(dirLight.m_active != 0u && dirLight.m_cascadeCount > 0)
 	{
 		for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)

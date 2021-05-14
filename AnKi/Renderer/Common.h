@@ -183,7 +183,7 @@ public:
 
 	StagingGpuMemoryToken m_lightShadingUniformsToken;
 
-	ClusteredShadingContext m_clusterShading;
+	ClusteredShadingContext m_clusteredShading;
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)

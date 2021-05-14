@@ -74,7 +74,7 @@ void ClusterBinning::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	const ClusteredShadingContext& tokens = m_runCtx.m_ctx->m_clusterShading;
+	const ClusteredShadingContext& tokens = m_runCtx.m_ctx->m_clusteredShading;
 
 	cmdb->bindShaderProgram(m_grProg);
 	bindUniforms(cmdb, 0, 0, tokens.m_clusteredShadingUniformsToken);
@@ -146,7 +146,7 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 	}
 
 	// Allocate buffers
-	ClusteredShadingContext& cs = ctx.m_clusterShading;
+	ClusteredShadingContext& cs = ctx.m_clusteredShading;
 	StagingGpuMemoryManager& stagingMem = m_r->getStagingGpuMemoryManager();
 
 	cs.m_clusteredShadingUniformsAddress = stagingMem.allocateFrame(
@@ -233,7 +233,7 @@ void ClusterBinning::writeClustererBuffersTask()
 	ANKI_TRACE_SCOPED_EVENT(R_WRITE_CLUSTER_SHADING_OBJECTS);
 
 	RenderingContext& ctx = *m_runCtx.m_ctx;
-	ClusteredShadingContext& cs = ctx.m_clusterShading;
+	ClusteredShadingContext& cs = ctx.m_clusteredShading;
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
 
 	// Point lights
@@ -352,8 +352,8 @@ void ClusterBinning::writeClustererBuffersTask()
 		}
 
 		ANKI_ASSERT(diffuseAtlas || specularRoughnessAtlas);
-		ctx.m_clusterShading.m_diffuseDecalTextureView.reset(diffuseAtlas);
-		ctx.m_clusterShading.m_specularRoughnessDecalTextureView.reset(specularRoughnessAtlas);
+		ctx.m_clusteredShading.m_diffuseDecalTextureView.reset(diffuseAtlas);
+		ctx.m_clusteredShading.m_specularRoughnessDecalTextureView.reset(specularRoughnessAtlas);
 	}
 
 	// Fog volumes

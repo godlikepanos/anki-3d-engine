@@ -102,7 +102,7 @@ void VolumetricLightingAccumulation::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 	RenderingContext& ctx = *m_runCtx.m_ctx;
-	const ClusteredShadingContext& rsrc = ctx.m_clusterShading;
+	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 
 	cmdb->bindShaderProgram(m_grProg);
 

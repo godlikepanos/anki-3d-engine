@@ -40,7 +40,7 @@ void ForwardShading::run(const RenderingContext& ctx, RenderPassWorkContext& rgr
 		cmdb->setDepthWrite(false);
 		cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 
-		const ClusteredShadingContext& rsrc = ctx.m_clusterShading;
+		const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 		cmdb->bindSampler(0, 0, m_r->getSamplers().m_trilinearClamp);
 
 		rgraphCtx.bindTexture(0, 1, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);

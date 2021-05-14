@@ -477,7 +477,7 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 {
 	const RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const ClusteredShadingContext& rsrc = ctx.m_clusterShading;
+	const ClusteredShadingContext& rsrc = ctx.m_clusteredShading;
 
 	cmdb->bindShaderProgram(m_rtLibraryGrProg);
 
