@@ -5,7 +5,7 @@
 
 #pragma anki mutator LAST_PASS 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0);
 
 #pragma anki start comp
 

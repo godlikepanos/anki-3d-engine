@@ -6,7 +6,7 @@
 #pragma anki mutator COLOR_TEXTURE 0 1
 #pragma anki mutator DITHERED_DEPTH_TEST 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_U32(INSTANCE_COUNT, 0, 1);
+ANKI_SPECIALIZATION_CONSTANT_U32(INSTANCE_COUNT, 0);
 
 layout(set = 1, binding = 0, row_major) uniform u0_
 {

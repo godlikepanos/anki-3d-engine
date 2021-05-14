@@ -5,7 +5,7 @@
 
 // Calculates the motion vectors that will be used to sample from the previous frame
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0, UVec2(1));
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0);
 const F32 MAX_REJECTION_DISTANCE = 2.0; // In meters
 #define VARIANCE_CLIPPING 0
 const F32 VARIANCE_CLIPPING_GAMMA = 2.0;

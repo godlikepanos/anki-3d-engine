@@ -213,25 +213,25 @@ layout(set = 0, binding = 0) uniform ankiMaterial
 #if PASS == 0
 
 #if DIFFUSE_TEX == 0
-ANKI_SPECIALIZATION_CONSTANT_VEC3(diffColor, 0, Vec3(0));
+ANKI_SPECIALIZATION_CONSTANT_VEC3(diffColor, 0);
 #else
 layout(set = 0, binding = 1) uniform texture2D diffTex;
 #endif
 
 #if SPECULAR_TEX == 0
-ANKI_SPECIALIZATION_CONSTANT_VEC3(specColor, 3, Vec3(0));
+ANKI_SPECIALIZATION_CONSTANT_VEC3(specColor, 3);
 #else
 layout(set = 0, binding = 2) uniform texture2D specTex;
 #endif
 
 #if ROUGHNESS_TEX == 0
-ANKI_SPECIALIZATION_CONSTANT_F32(roughness, 6, 0.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(roughness, 6);
 #else
 layout(set = 0, binding = 3) uniform texture2D roughnessTex;
 #endif
 
 #if METAL_TEX == 0
-ANKI_SPECIALIZATION_CONSTANT_F32(metallic, 7, 0.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(metallic, 7);
 #else
 layout(set = 0, binding = 4) uniform texture2D metallicTex;
 #endif
@@ -243,7 +243,7 @@ layout(set = 0, binding = 5) uniform texture2D emissiveTex;
 #endif
 
 #if PARALLAX == 1 && LOD == 0
-ANKI_SPECIALIZATION_CONSTANT_F32(heightMapScale, 11, 0.0);
+ANKI_SPECIALIZATION_CONSTANT_F32(heightMapScale, 11);
 layout(set = 0, binding = 6) uniform texture2D heightTex;
 #endif
 

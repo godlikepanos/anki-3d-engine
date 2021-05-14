@@ -181,55 +181,44 @@ static const char* SHADER_HEADER = R"(#version 460 core
 #define ANKI_SIZEOF(type) _ANKI_CONCATENATE(_ANKI_SIZEOF_, type)
 #define ANKI_ALIGNOF(type) _ANKI_CONCATENATE(_ANKI_ALIGNOF_, type)
 
-#define _ANKI_SCONST_X(type, n, id, defltVal) \
-	layout(constant_id = id) const type n = defltVal; \
+#define _ANKI_SCONST_X(type, n, id) \
+	layout(constant_id = id) const type n = type(1); \
 	const U32 ANKI_CONCATENATE(n, _CONST_ID) = id
 
-#define _ANKI_SCONST_X2(type, componentType, n, id, defltVal, constWorkaround) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = defltVal[0]; \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_2_, n) = defltVal[1]; \
-	constWorkaround componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_2_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_2_, n) + componentType(0); \
-	constWorkaround type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y)); \
-	const UVec2 ANKI_CONCATENATE(n, _CONST_ID) = UVec2(id, id + 1)
+#define _ANKI_SCONST_X2(type, componentType, n, id, constWorkaround) \
+	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = componentType(1); \
+	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_2_, n) = componentType(1); \
+	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_2_, n), ANKI_CONCATENATE(_anki_const_1_2_, n))
 
-#define _ANKI_SCONST_X3(type, componentType, n, id, defltVal, constWorkaround) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = defltVal[0]; \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = defltVal[1]; \
-	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = defltVal[2]; \
-	constWorkaround componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_3_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_3_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_3_, n) + componentType(0); \
-	constWorkaround type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y), ANKI_CONCATENATE(n, _Z)); \
-	const UVec3 ANKI_CONCATENATE(n, _CONST_ID) = UVec3(id, id + 1, id + 2)
+#define _ANKI_SCONST_X3(type, componentType, n, id, constWorkaround) \
+	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = componentType(1); \
+	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = componentType(1); \
+	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = componentType(1); \
+	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), \
+		ANKI_CONCATENATE(_anki_const_2_3_, n))
 
-#define _ANKI_SCONST_X4(type, componentType, n, id, defltVal, constWorkaround) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = defltVal[0]; \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_4_, n) = defltVal[1]; \
-	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_4_, n) = defltVal[2]; \
-	layout(constant_id = id + 3) const componentType ANKI_CONCATENATE(_anki_const_3_4_, n) = defltVal[3]; \
-	constWorkaround componentType ANKI_CONCATENATE(n, _X) = ANKI_CONCATENATE(_anki_const_0_4_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Y) = ANKI_CONCATENATE(_anki_const_1_4_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _Z) = ANKI_CONCATENATE(_anki_const_2_4_, n) + componentType(0); \
-	constWorkaround componentType ANKI_CONCATENATE(n, _W) = ANKI_CONCATENATE(_anki_const_3_4_, n) + componentType(0); \
-	constWorkaround type n = type(ANKI_CONCATENATE(n, _X), ANKI_CONCATENATE(n, _Y), ANKI_CONCATENATE(n, _Z), \
-		ANKI_CONCATENATE(n, _W)); \
-	const UVec4 ANKI_CONCATENATE(n, _CONST_ID) = UVec4(id, id + 1, id + 2, id + 3)
+#define _ANKI_SCONST_X4(type, componentType, n, id, constWorkaround) \
+	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = componentType(1); \
+	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_4_, n) = componentType(1); \
+	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_4_, n) = componentType(1); \
+	layout(constant_id = id + 3) const componentType ANKI_CONCATENATE(_anki_const_3_4_, n) = componentType(1); \
+	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_4_, n), ANKI_CONCATENATE(_anki_const_1_4_, n), \
+		ANKI_CONCATENATE(_anki_const_2_4_, n), ANKI_CONCATENATE(_anki_const_2_4_, n))
 
-#define ANKI_SPECIALIZATION_CONSTANT_I32(n, id, defltVal) _ANKI_SCONST_X(I32, n, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC2(n, id, defltVal) _ANKI_SCONST_X2(IVec2, I32, n, id, defltVal, const)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC3(n, id, defltVal) _ANKI_SCONST_X3(IVec3, I32, n, id, defltVal, const)
-#define ANKI_SPECIALIZATION_CONSTANT_IVEC4(n, id, defltVal) _ANKI_SCONST_X4(IVec4, I32, n, id, defltVal, const)
+#define ANKI_SPECIALIZATION_CONSTANT_I32(n, id) _ANKI_SCONST_X(I32, n, id)
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC2(n, id) _ANKI_SCONST_X2(IVec2, I32, n, id, const)
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC3(n, id) _ANKI_SCONST_X3(IVec3, I32, n, id, const)
+#define ANKI_SPECIALIZATION_CONSTANT_IVEC4(n, id) _ANKI_SCONST_X4(IVec4, I32, n, id, const)
 
-#define ANKI_SPECIALIZATION_CONSTANT_U32(n, id, defltVal) _ANKI_SCONST_X(U32, n, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_UVEC2(n, id, defltVal) _ANKI_SCONST_X2(UVec2, U32, n, id, defltVal, const)
-#define ANKI_SPECIALIZATION_CONSTANT_UVEC3(n, id, defltVal) _ANKI_SCONST_X3(UVec3, U32, n, id, defltVal, const)
-#define ANKI_SPECIALIZATION_CONSTANT_UVEC4(n, id, defltVal) _ANKI_SCONST_X4(UVec4, U32, n, id, defltVal, const)
+#define ANKI_SPECIALIZATION_CONSTANT_U32(n, id) _ANKI_SCONST_X(U32, n, id)
+#define ANKI_SPECIALIZATION_CONSTANT_UVEC2(n, id) _ANKI_SCONST_X2(UVec2, U32, n, id, const)
+#define ANKI_SPECIALIZATION_CONSTANT_UVEC3(n, id) _ANKI_SCONST_X3(UVec3, U32, n, id, const)
+#define ANKI_SPECIALIZATION_CONSTANT_UVEC4(n, id) _ANKI_SCONST_X4(UVec4, U32, n, id, const)
 
-#define ANKI_SPECIALIZATION_CONSTANT_F32(n, id, defltVal) _ANKI_SCONST_X(F32, n, id, defltVal)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC2(n, id, defltVal) _ANKI_SCONST_X2(Vec2, F32, n, id, defltVal,)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id, defltVal) _ANKI_SCONST_X3(Vec3, F32, n, id, defltVal,)
-#define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id, defltVal) _ANKI_SCONST_X4(Vec4, F32, n, id, defltVal,)
+#define ANKI_SPECIALIZATION_CONSTANT_F32(n, id) _ANKI_SCONST_X(F32, n, id)
+#define ANKI_SPECIALIZATION_CONSTANT_VEC2(n, id) _ANKI_SCONST_X2(Vec2, F32, n, id,)
+#define ANKI_SPECIALIZATION_CONSTANT_VEC3(n, id) _ANKI_SCONST_X3(Vec3, F32, n, id,)
+#define ANKI_SPECIALIZATION_CONSTANT_VEC4(n, id) _ANKI_SCONST_X4(Vec4, F32, n, id,)
 
 #define ANKI_REF(type, alignment) \
 	layout(buffer_reference, scalar, buffer_reference_align = (alignment)) buffer type##Ref \
