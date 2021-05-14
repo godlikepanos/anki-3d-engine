@@ -57,7 +57,7 @@ Error LightShading::initLightShading(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("Shaders/LightShading.ankiprog", m_lightShading.m_prog));
 
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_lightShading.m_prog);
-	variantInitInfo.addConstant("TILE_COUNT", m_r->getTileCounts());
+	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
 	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
 	variantInitInfo.addConstant("TILE_SIZE", m_r->getTileSize());
 	variantInitInfo.addConstant("IR_MIPMAP_COUNT", U32(m_r->getProbeReflections().getReflectionTextureMipmapCount()));

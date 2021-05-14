@@ -5,7 +5,7 @@
 
 #pragma anki mutator USE_SHADOW_LAYERS 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNT, 0);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNTS, 0);
 ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 2);
 ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 3);
 ANKI_SPECIALIZATION_CONSTANT_U32(IR_MIPMAP_COUNT, 4);
@@ -73,8 +73,8 @@ void main()
 	const Vec3 worldPos = worldPos4.xyz / worldPos4.w;
 
 	// Get the cluster
-	Cluster cluster = getCluster(depth, TILE_SIZE, TILE_COUNT.x, TILE_COUNT.y, Z_SPLIT_COUNT,
-								 u_clusterShading.m_zSplitMagic.x, u_clusterShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterFragCoord(Vec3(gl_FragCoord.xy, depth), TILE_SIZE, TILE_COUNTS, Z_SPLIT_COUNT,
+										  u_clusterShading.m_zSplitMagic.x, u_clusterShading.m_zSplitMagic.y);
 
 	// out_color = clusterHeatmap(cluster, 1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT); return;
 

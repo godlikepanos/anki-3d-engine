@@ -40,7 +40,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	Vec3 outColor = Vec3(0.0);
 
 	// Find the cluster and then the light counts
-	Cluster cluster = getCluster(gl_FragCoord.z);
+	Cluster cluster = getClusterFragCoord(gl_FragCoord.xyz);
 
 	// Point lights
 	ANKI_LOOP while(cluster.m_pointLightsMask != 0u)
