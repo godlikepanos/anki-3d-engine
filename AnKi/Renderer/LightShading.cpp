@@ -117,7 +117,7 @@ void LightShading::run(RenderPassWorkContext& rgraphCtx)
 		cmdb->setDepthWrite(false);
 
 		// Bind all
-		const ClustererGpuObjects& binning = ctx.m_clusterShading;
+		const ClusteredShadingContext& binning = ctx.m_clusterShading;
 		bindUniforms(cmdb, 0, 0, binning.m_clusteredShadingUniformsToken);
 
 		bindUniforms(cmdb, 0, 1, binning.m_pointLightsToken);

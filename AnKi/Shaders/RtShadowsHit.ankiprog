@@ -17,7 +17,7 @@ layout(shaderRecordEXT, scalar) buffer b_model
 	ModelGpuDescriptor u_modelDescriptor;
 };
 
-layout(set = 0, binding = 6) uniform sampler u_sampler;
+layout(set = 0, binding = 5) uniform sampler u_sampler;
 
 ANKI_BINDLESS_SET(1);
 #endif

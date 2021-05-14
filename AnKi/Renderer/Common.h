@@ -137,7 +137,7 @@ public:
 };
 
 /// GPU buffers and textures that the clusterer refers to.
-class ClustererGpuObjects
+class ClusteredShadingContext
 {
 public:
 	StagingGpuMemoryToken m_pointLightsToken;
@@ -183,7 +183,7 @@ public:
 
 	StagingGpuMemoryToken m_lightShadingUniformsToken;
 
-	ClustererGpuObjects m_clusterShading;
+	ClusteredShadingContext m_clusterShading;
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)

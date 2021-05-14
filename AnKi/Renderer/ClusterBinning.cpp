@@ -74,7 +74,7 @@ void ClusterBinning::run(RenderPassWorkContext& rgraphCtx)
 {
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
 
-	const ClustererGpuObjects& tokens = m_runCtx.m_ctx->m_clusterShading;
+	const ClusteredShadingContext& tokens = m_runCtx.m_ctx->m_clusterShading;
 
 	cmdb->bindShaderProgram(m_grProg);
 	bindUniforms(cmdb, 0, 0, tokens.m_clusteredShadingUniformsToken);
@@ -146,7 +146,7 @@ void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
 	}
 
 	// Allocate buffers
-	ClustererGpuObjects& cs = ctx.m_clusterShading;
+	ClusteredShadingContext& cs = ctx.m_clusterShading;
 	StagingGpuMemoryManager& stagingMem = m_r->getStagingGpuMemoryManager();
 
 	cs.m_clusteredShadingUniformsAddress = stagingMem.allocateFrame(
@@ -233,7 +233,7 @@ void ClusterBinning::writeClustererBuffersTask()
 	ANKI_TRACE_SCOPED_EVENT(R_WRITE_CLUSTER_SHADING_OBJECTS);
 
 	RenderingContext& ctx = *m_runCtx.m_ctx;
-	ClustererGpuObjects& cs = ctx.m_clusterShading;
+	ClusteredShadingContext& cs = ctx.m_clusterShading;
 	const RenderQueue& rqueue = *ctx.m_renderQueue;
 
 	// Point lights

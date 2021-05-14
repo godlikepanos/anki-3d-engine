@@ -477,36 +477,35 @@ void RtShadows::run(RenderPassWorkContext& rgraphCtx)
 {
 	const RenderingContext& ctx = *m_runCtx.m_ctx;
 	CommandBufferPtr& cmdb = rgraphCtx.m_commandBuffer;
-	const ClusterBinOut& rsrc = ctx.m_clusterBinOut;
+	const ClusteredShadingContext& rsrc = ctx.m_clusterShading;
 
 	cmdb->bindShaderProgram(m_rtLibraryGrProg);
 
-	bindUniforms(cmdb, 0, 0, ctx.m_lightShadingUniformsToken);
+	bindUniforms(cmdb, 0, 0, rsrc.m_clusteredShadingUniformsToken);
 
 	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 	rgraphCtx.bindColorTexture(0, 3, m_r->getShadowMapping().getShadowmapRt());
 
 	bindStorage(cmdb, 0, 4, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 5, rsrc.m_indicesToken);
 
-	cmdb->bindSampler(0, 6, m_r->getSamplers().m_trilinearRepeat);
+	cmdb->bindSampler(0, 5, m_r->getSamplers().m_trilinearRepeat);
 
-	rgraphCtx.bindImage(0, 7, m_runCtx.m_intermediateShadowsRts[0]);
+	rgraphCtx.bindImage(0, 6, m_runCtx.m_intermediateShadowsRts[0]);
 
-	rgraphCtx.bindColorTexture(0, 8, m_runCtx.m_historyRt);
-	cmdb->bindSampler(0, 9, m_r->getSamplers().m_trilinearClamp);
-	cmdb->bindSampler(0, 10, m_r->getSamplers().m_nearestNearestClamp);
-	rgraphCtx.bindTexture(0, 11, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
-	rgraphCtx.bindColorTexture(0, 12, m_r->getMotionVectors().getMotionVectorsRt());
-	rgraphCtx.bindColorTexture(0, 13, m_r->getMotionVectors().getRejectionFactorRt());
-	rgraphCtx.bindColorTexture(0, 14, m_r->getGBuffer().getColorRt(2));
-	rgraphCtx.bindAccelerationStructure(0, 15, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
-	rgraphCtx.bindColorTexture(0, 16, m_runCtx.m_prevHistoryLengthRt);
-	rgraphCtx.bindImage(0, 17, m_runCtx.m_currentHistoryLengthRt);
-	rgraphCtx.bindColorTexture(0, 18, m_runCtx.m_prevMomentsRt);
-	rgraphCtx.bindImage(0, 19, m_runCtx.m_currentMomentsRt);
-	cmdb->bindTexture(0, 20, m_blueNoiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_TRACE_RAYS);
+	rgraphCtx.bindColorTexture(0, 7, m_runCtx.m_historyRt);
+	cmdb->bindSampler(0, 8, m_r->getSamplers().m_trilinearClamp);
+	cmdb->bindSampler(0, 9, m_r->getSamplers().m_nearestNearestClamp);
+	rgraphCtx.bindTexture(0, 10, m_r->getDepthDownscale().getHiZRt(), HIZ_HALF_DEPTH);
+	rgraphCtx.bindColorTexture(0, 11, m_r->getMotionVectors().getMotionVectorsRt());
+	rgraphCtx.bindColorTexture(0, 12, m_r->getMotionVectors().getRejectionFactorRt());
+	rgraphCtx.bindColorTexture(0, 13, m_r->getGBuffer().getColorRt(2));
+	rgraphCtx.bindAccelerationStructure(0, 14, m_r->getAccelerationStructureBuilder().getAccelerationStructureHandle());
+	rgraphCtx.bindColorTexture(0, 15, m_runCtx.m_prevHistoryLengthRt);
+	rgraphCtx.bindImage(0, 16, m_runCtx.m_currentHistoryLengthRt);
+	rgraphCtx.bindColorTexture(0, 17, m_runCtx.m_prevMomentsRt);
+	rgraphCtx.bindImage(0, 18, m_runCtx.m_currentMomentsRt);
+	cmdb->bindTexture(0, 19, m_blueNoiseTex->getGrTextureView(), TextureUsageBit::SAMPLED_TRACE_RAYS);
 
 	cmdb->bindAllBindless(1);
 
