@@ -102,16 +102,14 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 // Just read the light color from the vol texture
 Vec3 computeLightColorLow(Vec3 diffCol, Vec3 worldPos)
 {
-	// TODO
-#if 0
 	const Vec2 uv = gl_FragCoord.xy / u_clusteredShading.m_renderingSize;
-	const Vec3 uv3d = computeClustererVolumeTextureUvs(u_clustererMagic, uv, worldPos, u_lightVolumeLastCluster + 1u);
+	const F32 linearDepth = linearizeDepth(gl_FragCoord.z, u_clusteredShading.m_near, u_clusteredShading.m_far);
+	const Vec3 uvw =
+		Vec3(uv, linearDepth
+					 * (F32(u_clusteredShading.m_zSplitCount) / F32(u_clusteredShading.m_lightVolumeLastZSplit + 1u)));
 
-	const Vec3 light = textureLod(u_lightVol, u_linearAnyClampSampler, uv3d, 0.0).rgb;
+	const Vec3 light = textureLod(u_lightVol, u_linearAnyClampSampler, uvw, 0.0).rgb;
 	return diffuseLambert(diffCol) * light;
-#else
-	return Vec3(diffCol);
-#endif
 }
 
 void particleAlpha(Vec4 color, Vec4 scaleColor, Vec4 biasColor)
