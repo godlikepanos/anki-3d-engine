@@ -515,7 +515,7 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 			}
 		}
 
-		if(lfc)
+		if(lfc && lfc->isLoaded())
 		{
 			LensFlareQueueElement* el = result.m_lensFlares.newElement(alloc);
 			lfc->setupLensFlareQueueElement(*el);

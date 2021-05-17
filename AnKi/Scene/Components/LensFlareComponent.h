@@ -28,6 +28,11 @@ public:
 
 	ANKI_USE_RESULT Error loadTextureResource(CString textureFilename);
 
+	Bool isLoaded() const
+	{
+		return m_tex.get() != nullptr;
+	}
+
 	CString getTextureResourceFilename() const
 	{
 		return (m_tex) ? m_tex->getFilename() : CString();

@@ -107,11 +107,8 @@ void LightNode::onMoveUpdateCommon(const MoveComponent& move)
 	sp.setSpatialOrigin(move.getWorldTransform().getOrigin().xyz());
 
 	// Update the lens flare
-	LensFlareComponent* lf = tryGetFirstComponentOfType<LensFlareComponent>();
-	if(lf)
-	{
-		lf->setWorldPosition(move.getWorldTransform().getOrigin().xyz());
-	}
+	LensFlareComponent& lf = getFirstComponentOfType<LensFlareComponent>();
+	lf.setWorldPosition(move.getWorldTransform().getOrigin().xyz());
 
 	// Update light component
 	getFirstComponentOfType<LightComponent>().setWorldTransform(move.getWorldTransform());
@@ -126,6 +123,7 @@ PointLightNode::PointLightNode(SceneGraph* scene, CString name)
 	LightComponent* lc = newComponent<LightComponent>();
 	lc->setLightComponentType(LightComponentType::POINT);
 
+	newComponent<LensFlareComponent>();
 	newComponent<OnLightShapeUpdatedFeedbackComponent>();
 	newComponent<SpatialComponent>();
 }
@@ -141,7 +139,7 @@ void PointLightNode::onMoved(const MoveComponent& move)
 
 	// Update the frustums
 	U32 count = 0;
-	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
+	const Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
 		Transform trf = m_shadowData[count].m_localTrf;
 		trf.setOrigin(move.getWorldTransform().getOrigin());
 
@@ -245,6 +243,8 @@ SpotLightNode::SpotLightNode(SceneGraph* scene, CString name)
 
 	LightComponent* lc = newComponent<LightComponent>();
 	lc->setLightComponentType(LightComponentType::SPOT);
+
+	newComponent<LensFlareComponent>();
 
 	newComponent<OnLightShapeUpdatedFeedbackComponent>();
 

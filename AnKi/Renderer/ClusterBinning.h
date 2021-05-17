@@ -34,6 +34,7 @@ private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 
+	U32 m_tileCount = 0;
 	U32 m_clusterCount = 0;
 
 	class

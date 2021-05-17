@@ -43,7 +43,8 @@ Error ClusterBinning::init(const ConfigSet& config)
 	m_prog->getOrCreateVariant(variantInitInfo, variant);
 	m_grProg = variant->getProgram();
 
-	m_clusterCount = m_r->getTileCounts().x() * m_r->getTileCounts().y() + m_r->getZSplitCount();
+	m_tileCount = m_r->getTileCounts().x() * m_r->getTileCounts().y();
+	m_clusterCount = m_tileCount + m_r->getZSplitCount();
 
 	return Error::NONE;
 }
@@ -86,8 +87,8 @@ void ClusterBinning::run(RenderPassWorkContext& rgraphCtx)
 	bindUniforms(cmdb, 0, 6, tokens.m_fogDensityVolumesToken);
 	bindUniforms(cmdb, 0, 7, tokens.m_decalsToken);
 
-	const U32 sampleCount = 8;
-	const U32 sizex = m_clusterCount * sampleCount;
+	const U32 sampleCount = 4;
+	const U32 sizex = m_tileCount * sampleCount;
 	const RenderQueue& rqueue = *m_runCtx.m_ctx->m_renderQueue;
 	U32 clusterObjectCounts = rqueue.m_pointLights.getSize();
 	clusterObjectCounts += rqueue.m_spotLights.getSize();
@@ -95,7 +96,7 @@ void ClusterBinning::run(RenderPassWorkContext& rgraphCtx)
 	clusterObjectCounts += rqueue.m_giProbes.getSize();
 	clusterObjectCounts += rqueue.m_fogDensityVolumes.getSize();
 	clusterObjectCounts += rqueue.m_decals.getSize();
-	cmdb->dispatchCompute((sizex - 64 - 1) / 64, clusterObjectCounts, 1);
+	cmdb->dispatchCompute((sizex + 64 - 1) / 64, clusterObjectCounts, 1);
 }
 
 void ClusterBinning::writeClustererBuffers(RenderingContext& ctx)
