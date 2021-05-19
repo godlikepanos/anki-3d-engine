@@ -30,7 +30,7 @@ public:
 
 	Bool isLoaded() const
 	{
-		return m_tex.get() != nullptr;
+		return m_tex.isCreated();
 	}
 
 	CString getTextureResourceFilename() const

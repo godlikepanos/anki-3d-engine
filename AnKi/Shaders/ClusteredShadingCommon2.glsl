@@ -11,7 +11,7 @@
 // Common uniforms
 //
 #if defined(CLUSTERED_SHADING_UNIFORMS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING, scalar) uniform b_clusteredShading
 {
 	ClusteredShadingUniforms u_clusteredShading;
 };
@@ -21,13 +21,12 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING
 // Light uniforms (3)
 //
 #if defined(CLUSTERED_SHADING_LIGHTS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING, scalar) uniform b_pointLights
 {
 	PointLight2 u_pointLights2[MAX_VISIBLE_POINT_LIGHTS];
 };
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 1,
-	   scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 1, scalar) uniform b_spotLights
 {
 	SpotLight2 u_spotLights2[MAX_VISIBLE_SPOT_LIGHTS];
 };
@@ -39,8 +38,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING +
 // Reflection probes (3)
 //
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BINDING,
-	   scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BINDING, scalar) uniform b_reflectionProbes
 {
 	ReflectionProbe2 u_reflectionProbes2[MAX_VISIBLE_REFLECTION_PROBES];
 };
@@ -55,7 +53,7 @@ layout(set = CLUSTERED_SHADING_SET,
 // Decal uniforms (3)
 //
 #if defined(CLUSTERED_SHADING_DECALS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING, scalar) uniform b_decals
 {
 	Decal2 u_decals2[MAX_VISIBLE_DECALS];
 };
@@ -69,7 +67,7 @@ layout(set = CLUSTERED_SHADING_SET,
 // Fog density uniforms (1)
 //
 #if defined(CLUSTERED_SHADING_FOG_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, scalar) uniform b_fogDensityVolumes
 {
 	FogDensityVolume2 u_fogDensityVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
 };
@@ -82,7 +80,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, sca
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING) uniform texture3D
 	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2];
 
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, scalar) uniform b_giProbes
 {
 	GlobalIlluminationProbe2 u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2];
 };
@@ -92,8 +90,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, 
 // Cluster uniforms
 //
 #if defined(CLUSTERED_SHADING_CLUSTERS_BINDING)
-layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_CLUSTERS_BINDING,
-	   scalar) readonly buffer ANKI_RANDOM_BLOCK_NAME
+layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_CLUSTERS_BINDING, scalar) readonly buffer b_clusters
 {
 	Cluster u_clusters2[];
 };

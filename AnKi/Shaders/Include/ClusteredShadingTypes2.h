@@ -16,7 +16,7 @@ const U32 CLUSTER_OBJECT_TYPE_DECAL = 2u;
 const U32 CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME = 3u;
 const U32 CLUSTER_OBJECT_TYPE_REFLECTION_PROBE = 4u;
 const U32 CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE = 5u;
-const U32 CLUSTER_OBJECT_TYPE_COUNT2 = 6u; ///< Point and spot lights, refl and GI probes, decals and fog volumes.
+const U32 CLUSTER_OBJECT_TYPE_COUNT = 6u; ///< Point and spot lights, refl and GI probes, decals and fog volumes.
 
 const F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< The near plane of various clusterer object frustums.
 const U32 MAX_SHADOW_CASCADES2 = 4u;
@@ -188,12 +188,8 @@ struct ClusteredShadingUniforms
 	U32 m_tileSize;
 	U32 m_lightVolumeLastZSplit;
 
-	U32 m_pointLightCount;
-	U32 m_spotLightCount;
-	U32 m_decalCount;
-	U32 m_fogDensityVolumeCount;
-	U32 m_reflectionProbeCount;
-	U32 m_giProbeCount;
+	/// This are some additive counts used to map a flat index to the index of the specific object.
+	U32 m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_COUNT];
 
 	U32 m_padding;
 

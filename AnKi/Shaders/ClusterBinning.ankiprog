@@ -18,42 +18,42 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(RENDERING_SIZE, 4);
 const U32 WORKGROUP_SIZE = 64u;
 layout(local_size_x = WORKGROUP_SIZE) in;
 
-layout(set = 0, binding = 0, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = 0, binding = 0, scalar) uniform b_unis
 {
 	ClusteredShadingUniforms u_unis;
 };
 
-layout(set = 0, binding = 1, scalar) writeonly buffer ANKI_RANDOM_BLOCK_NAME
+layout(set = 0, binding = 1, scalar) writeonly buffer b_clusters
 {
 	Cluster u_clusters[];
 };
 
-layout(set = 0, binding = 2, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = 0, binding = 2, scalar) uniform b_pointLights
 {
 	PointLight2 u_pointLights[MAX_VISIBLE_POINT_LIGHTS];
 };
 
-layout(set = 0, binding = 3, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = 0, binding = 3, scalar) uniform b_spotLights
 {
 	SpotLightBinning u_spotLights[MAX_VISIBLE_SPOT_LIGHTS];
 };
 
-layout(set = 0, binding = 4, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = 0, binding = 4, scalar) uniform b_reflectionProbes
 {
 	ReflectionProbe2 u_reflectionProbes[MAX_VISIBLE_REFLECTION_PROBES];
 };
 
-layout(set = 0, binding = 5, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = 0, binding = 5, scalar) uniform b_giProbes
 {
 	GlobalIlluminationProbe2 u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2];
 };
 
-layout(set = 0, binding = 6, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = 0, binding = 6, scalar) uniform b_fogVolumes
 {
 	FogDensityVolume2 u_fogVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
 };
 
-layout(set = 0, binding = 7, scalar) uniform ANKI_RANDOM_BLOCK_NAME
+layout(set = 0, binding = 7, scalar) uniform b_decals
 {
 	Decal2 u_decals[MAX_VISIBLE_DECALS];
 };
@@ -75,34 +75,32 @@ shared U64 s_zSplitMasks[Z_SPLIT_COUNT];
 
 Bool isPointLight()
 {
-	const U32 clustererObjectIdx = gl_GlobalInvocationID.y;
-	return clustererObjectIdx < u_unis.m_pointLightCount;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_POINT_LIGHT];
 }
 
 Bool isSpotLight()
 {
-	const U32 clustererObjectIdx = gl_GlobalInvocationID.y;
-	return clustererObjectIdx < u_unis.m_pointLightCount + u_unis.m_spotLightCount;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT];
 }
 
-Bool isReflectionProbe()
+Bool isDecal()
 {
-	const U32 clustererObjectIdx = gl_GlobalInvocationID.y;
-	return clustererObjectIdx < u_unis.m_pointLightCount + u_unis.m_spotLightCount + u_unis.m_reflectionProbeCount;
-}
-
-Bool isGiProbe()
-{
-	const U32 clustererObjectIdx = gl_GlobalInvocationID.y;
-	return clustererObjectIdx < u_unis.m_pointLightCount + u_unis.m_spotLightCount + u_unis.m_reflectionProbeCount
-									+ u_unis.m_reflectionProbeCount;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL];
 }
 
 Bool isFogVolume()
 {
-	const U32 clustererObjectIdx = gl_GlobalInvocationID.y;
-	return clustererObjectIdx < u_unis.m_pointLightCount + u_unis.m_spotLightCount + u_unis.m_reflectionProbeCount
-									+ u_unis.m_reflectionProbeCount + u_unis.m_giProbeCount;
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME];
+}
+
+Bool isReflectionProbe()
+{
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE];
+}
+
+Bool isGiProbe()
+{
+	return gl_GlobalInvocationID.y < u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE];
 }
 
 void main()
@@ -148,15 +146,17 @@ void main()
 	F32 t0, t1;
 	U32 objectArrayIdx;
 	Bool collides;
+	// Point light
 	if(isPointLight())
 	{
 		objectArrayIdx = clustererObjectIdx;
 		const PointLight2 light = u_pointLights[objectArrayIdx];
 		collides = testRaySphere(rayOrigin, rayDir, light.m_position, light.m_radius, t0, t1);
 	}
+	// Spot light
 	else if(isSpotLight())
 	{
-		objectArrayIdx = clustererObjectIdx - u_unis.m_pointLightCount;
+		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT - 1u];
 		const SpotLightBinning light = u_spotLights[objectArrayIdx];
 
 		t0 = 10000.0;
@@ -191,26 +191,18 @@ void main()
 
 		collides = (hits != 0u);
 	}
-	else if(isReflectionProbe())
+	// Decal
+	else if(isDecal())
 	{
-		objectArrayIdx = clustererObjectIdx - (u_unis.m_pointLightCount + u_unis.m_spotLightCount);
-		const ReflectionProbe2 probe = u_reflectionProbes[objectArrayIdx];
+		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL - 1u];
+		const Decal2 decal = u_decals[objectArrayIdx];
 
-		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
+		collides = testRayObb(rayOrigin, rayDir, decal.m_obbExtend, decal.m_invertedTransform, t0, t1);
 	}
-	else if(isGiProbe())
-	{
-		objectArrayIdx =
-			clustererObjectIdx - (u_unis.m_pointLightCount + u_unis.m_spotLightCount + u_unis.m_reflectionProbeCount);
-		const GlobalIlluminationProbe2 probe = u_giProbes[objectArrayIdx];
-
-		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
-	}
+	// Fog volume
 	else if(isFogVolume())
 	{
-		objectArrayIdx = clustererObjectIdx
-						 - (u_unis.m_pointLightCount + u_unis.m_spotLightCount + u_unis.m_reflectionProbeCount
-							+ u_unis.m_reflectionProbeCount + u_unis.m_giProbeCount);
+		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME - 1u];
 		const FogDensityVolume2 vol = u_fogVolumes[objectArrayIdx];
 
 		if(vol.m_isBox != 0u)
@@ -224,14 +216,22 @@ void main()
 									 sqrt(vol.m_aabbMaxOrSphereRadiusSquared.x), t0, t1);
 		}
 	}
+	// Reflection probe
+	else if(isReflectionProbe())
+	{
+		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE - 1u];
+		const ReflectionProbe2 probe = u_reflectionProbes[objectArrayIdx];
+
+		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
+	}
+	// GI probe
 	else
 	{
-		objectArrayIdx = clustererObjectIdx
-						 - (u_unis.m_pointLightCount + u_unis.m_spotLightCount + u_unis.m_reflectionProbeCount
-							+ u_unis.m_reflectionProbeCount + u_unis.m_giProbeCount + u_unis.m_fogDensityVolumeCount);
-		const Decal2 decal = u_decals[objectArrayIdx];
+		objectArrayIdx =
+			clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE - 1u];
+		const GlobalIlluminationProbe2 probe = u_giProbes[objectArrayIdx];
 
-		collides = testRayObb(rayOrigin, rayDir, decal.m_obbExtend, decal.m_invertedTransform, t0, t1);
+		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
 	}
 
 	// Update the masks
@@ -286,21 +286,21 @@ void main()
 		{
 			atomicOr(u_clusters[tileIdx].m_spotLightsMask, s_tileMasks[localTileIdx]);
 		}
-		else if(isReflectionProbe())
+		else if(isDecal())
 		{
-			atomicOr(u_clusters[tileIdx].m_reflectionProbesMask, U32(s_tileMasks[localTileIdx]));
-		}
-		else if(isGiProbe())
-		{
-			atomicOr(u_clusters[tileIdx].m_giProbesMask, U32(s_tileMasks[localTileIdx]));
+			atomicOr(u_clusters[tileIdx].m_decalsMask, s_tileMasks[localTileIdx]);
 		}
 		else if(isFogVolume())
 		{
 			atomicOr(u_clusters[tileIdx].m_fogDensityVolumesMask, U32(s_tileMasks[localTileIdx]));
 		}
+		else if(isReflectionProbe())
+		{
+			atomicOr(u_clusters[tileIdx].m_reflectionProbesMask, U32(s_tileMasks[localTileIdx]));
+		}
 		else
 		{
-			atomicOr(u_clusters[tileIdx].m_decalsMask, U32(s_tileMasks[localTileIdx]));
+			atomicOr(u_clusters[tileIdx].m_giProbesMask, U32(s_tileMasks[localTileIdx]));
 		}
 	}
 
@@ -318,21 +318,21 @@ void main()
 			{
 				atomicOr(u_clusters[TILE_COUNT + i].m_spotLightsMask, s_zSplitMasks[i]);
 			}
-			else if(isReflectionProbe())
+			else if(isDecal())
 			{
-				atomicOr(u_clusters[TILE_COUNT + i].m_reflectionProbesMask, U32(s_zSplitMasks[i]));
-			}
-			else if(isGiProbe())
-			{
-				atomicOr(u_clusters[TILE_COUNT + i].m_giProbesMask, U32(s_zSplitMasks[i]));
+				atomicOr(u_clusters[TILE_COUNT + i].m_decalsMask, s_zSplitMasks[i]);
 			}
 			else if(isFogVolume())
 			{
 				atomicOr(u_clusters[TILE_COUNT + i].m_fogDensityVolumesMask, U32(s_zSplitMasks[i]));
 			}
+			else if(isReflectionProbe())
+			{
+				atomicOr(u_clusters[TILE_COUNT + i].m_reflectionProbesMask, U32(s_zSplitMasks[i]));
+			}
 			else
 			{
-				atomicOr(u_clusters[TILE_COUNT + i].m_decalsMask, U32(s_zSplitMasks[i]));
+				atomicOr(u_clusters[TILE_COUNT + i].m_giProbesMask, U32(s_zSplitMasks[i]));
 			}
 		}
 	}

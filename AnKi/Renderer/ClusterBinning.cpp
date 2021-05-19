@@ -350,6 +350,11 @@ void ClusterBinning::writeClustererBuffersTask()
 
 			// bias * proj_l * view
 			out.m_textureMatrix = in.m_textureMatrix;
+
+			// Transform
+			const Mat4 trf(in.m_obbCenter.xyz1(), in.m_obbRotation, 1.0f);
+			out.m_invertedTransform = trf.getInverse();
+			out.m_obbExtend = in.m_obbExtend;
 		}
 
 		ANKI_ASSERT(diffuseAtlas || specularRoughnessAtlas);
@@ -426,12 +431,17 @@ void ClusterBinning::writeClustererBuffersTask()
 		unis.m_tileSize = m_r->getTileSize();
 		unis.m_lightVolumeLastZSplit = m_r->getVolumetricLightingAccumulation().getFinalZSplit();
 
-		unis.m_pointLightCount = rqueue.m_pointLights.getSize();
-		unis.m_spotLightCount = rqueue.m_spotLights.getSize();
-		unis.m_decalCount = rqueue.m_decals.getSize();
-		unis.m_fogDensityVolumeCount = rqueue.m_fogDensityVolumes.getSize();
-		unis.m_reflectionProbeCount = rqueue.m_reflectionProbes.getSize();
-		unis.m_giProbeCount = rqueue.m_giProbes.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_POINT_LIGHT] = rqueue.m_pointLights.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT] =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_SPOT_LIGHT - 1] + rqueue.m_spotLights.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL] =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL - 1] + rqueue.m_decals.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME] =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME - 1] + rqueue.m_fogDensityVolumes.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE] =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE - 1] + rqueue.m_reflectionProbes.getSize();
+		unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE] =
+			unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE - 1] + rqueue.m_giProbes.getSize();
 
 		unis.m_matrices = ctx.m_matrices;
 		unis.m_previousMatrices = ctx.m_prevMatrices;
