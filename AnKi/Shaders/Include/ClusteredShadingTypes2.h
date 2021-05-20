@@ -18,9 +18,6 @@ const U32 CLUSTER_OBJECT_TYPE_REFLECTION_PROBE = 4u;
 const U32 CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE = 5u;
 const U32 CLUSTER_OBJECT_TYPE_COUNT = 6u; ///< Point and spot lights, refl and GI probes, decals and fog volumes.
 
-const F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< The near plane of various clusterer object frustums.
-const U32 MAX_SHADOW_CASCADES2 = 4u;
-
 // Limits
 const U32 MAX_VISIBLE_POINT_LIGHTS = 64u;
 const U32 MAX_VISIBLE_SPOT_LIGHTS = 64u;
@@ -28,6 +25,11 @@ const U32 MAX_VISIBLE_DECALS = 64u;
 const U32 MAX_VISIBLE_FOG_DENSITY_VOLUMES = 16u;
 const U32 MAX_VISIBLE_REFLECTION_PROBES = 16u;
 const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2 = 8u;
+
+// Other consts
+const F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< The near plane of various clusterer object frustums.
+const U32 MAX_SHADOW_CASCADES2 = 4u;
+const F32 SUBSURFACE_MIN = 0.01f;
 
 /// Point light.
 struct PointLight2

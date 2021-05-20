@@ -3,9 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_CONFIG_OPTION(r_clusterSizeX, 32, 1, 256)
-ANKI_CONFIG_OPTION(r_clusterSizeY, 26, 1, 256)
-ANKI_CONFIG_OPTION(r_clusterSizeZ, 32, 1, 256)
 ANKI_CONFIG_OPTION(r_textureAnisotropy, 8, 1, 16)
 ANKI_CONFIG_OPTION(r_tileSize, 64, 8, 256, "Tile lighting tile size")
 ANKI_CONFIG_OPTION(r_zSplitCount, 64, 8, 1024, "Clusterer number of Z splits")
@@ -24,7 +21,7 @@ ANKI_CONFIG_OPTION(r_ssgiDepthLod, 2, 0, 1000)
 
 ANKI_CONFIG_OPTION(r_shadowMappingTileResolution, 128, 16, 2048)
 ANKI_CONFIG_OPTION(r_shadowMappingTileCountPerRowOrColumn, 16, 1, 256)
-ANKI_CONFIG_OPTION(r_shadowMappingScratchTileCountX, 4 * (MAX_SHADOW_CASCADES + 2), 1u, 256u,
+ANKI_CONFIG_OPTION(r_shadowMappingScratchTileCountX, 4 * (MAX_SHADOW_CASCADES2 + 2), 1u, 256u,
 				   "Number of tiles of the scratch buffer in X")
 ANKI_CONFIG_OPTION(r_shadowMappingScratchTileCountY, 4, 1, 256, "Number of tiles of the scratch buffer in Y")
 

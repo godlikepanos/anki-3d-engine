@@ -14,7 +14,7 @@
 
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/Pack.glsl>
-#include <AnKi/Shaders/LightFunctions.glsl>
+#include <AnKi/Shaders/LightFunctions2.glsl>
 
 #define DEBUG_MODE 0 // 0: disable, 1: different color per dice face, 2: different color per cell
 

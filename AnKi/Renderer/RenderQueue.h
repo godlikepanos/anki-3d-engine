@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/Common.h>
 #include <AnKi/Resource/RenderingKey.h>
 #include <AnKi/Ui/Canvas.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
 #include <AnKi/Shaders/Include/ModelTypes.h>
 
 namespace anki
@@ -164,8 +164,8 @@ static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == tr
 class DirectionalLightQueueElement final
 {
 public:
-	Array<Mat4, MAX_SHADOW_CASCADES> m_textureMatrices;
-	Array<RenderQueue*, MAX_SHADOW_CASCADES> m_shadowRenderQueues;
+	Array<Mat4, MAX_SHADOW_CASCADES2> m_textureMatrices;
+	Array<RenderQueue*, MAX_SHADOW_CASCADES2> m_shadowRenderQueues;
 	RenderQueueDrawCallback m_drawCallback;
 	const void* m_drawCallbackUserData;
 	U64 m_uuid; ///< Zero means that there is no dir light

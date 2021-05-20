@@ -8,13 +8,6 @@
 // Common code for all vertex shaders of FS
 #include <AnKi/Shaders/Common.glsl>
 
-// Global resources
-#define LIGHT_SET 0
-#define LIGHT_COMMON_UNIS_BINDING 3
-#define LIGHT_LIGHTS_BINDING 4
-#define LIGHT_CLUSTERS_BINDING 7
-#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
-
 // In/out
 layout(location = POSITION_LOCATION) in Vec3 in_position;
 

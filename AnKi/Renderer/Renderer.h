@@ -7,7 +7,6 @@
 
 #include <AnKi/Renderer/Common.h>
 #include <AnKi/Renderer/Drawer.h>
-#include <AnKi/Renderer/ClusterBin.h>
 #include <AnKi/Math.h>
 #include <AnKi/Gr.h>
 #include <AnKi/Resource/Forward.h>
@@ -27,12 +26,6 @@ class UiManager;
 /// @{
 
 /// Renderer statistics.
-class RendererStats
-{
-public:
-	Second m_lightBinTime ANKI_DEBUG_CODE(= -1.0);
-};
-
 class RendererPrecreatedSamplers
 {
 public:
@@ -205,16 +198,6 @@ public:
 
 	void finalize(const RenderingContext& ctx);
 
-	void setStatsEnabled(Bool enable)
-	{
-		m_statsEnabled = enable;
-	}
-
-	const RendererStats& getStats() const
-	{
-		return m_stats;
-	}
-
 	U64 getFrameCount() const
 	{
 		return m_frameCount;
@@ -296,11 +279,6 @@ public:
 	const RendererPrecreatedSamplers& getSamplers() const
 	{
 		return m_samplers;
-	}
-
-	const Array<U32, 4>& getClusterCount() const
-	{
-		return m_clusterCount;
 	}
 
 	StagingGpuMemoryManager& getStagingGpuMemoryManager()
@@ -396,8 +374,6 @@ private:
 	UniquePtr<ClusterBinning> m_clusterBinning;
 	/// @}
 
-	Array<U32, 4> m_clusterCount;
-	ClusterBin m_clusterBin;
 	U32 m_tileSize = 0;
 	UVec2 m_tileCounts = UVec2(0u);
 	U32 m_zSplitCount = 0;
@@ -414,7 +390,6 @@ private:
 	Bool m_resourcesDirty = true;
 
 	CommonMatrices m_prevMatrices;
-	ClustererMagicValues m_prevClustererMagicValues;
 
 	Array<Mat4, 16> m_jitteredMats16x;
 	Array<Mat4, 8> m_jitteredMats8x;
@@ -426,9 +401,6 @@ private:
 	RendererPrecreatedSamplers m_samplers;
 
 	ShaderProgramResourcePtr m_clearTexComputeProg;
-
-	RendererStats m_stats;
-	Bool m_statsEnabled = false;
 
 	class DebugRtInfo
 	{
@@ -442,8 +414,6 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	void initJitteredMats();
-
-	void updateLightShadingUniforms(RenderingContext& ctx) const;
 };
 /// @}
 

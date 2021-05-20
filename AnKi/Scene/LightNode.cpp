@@ -9,7 +9,7 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/FrustumComponent.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
 
 namespace anki
 {
@@ -173,7 +173,7 @@ Error PointLightNode::frameUpdate(Second prevUpdateTime, Second crntTime)
 
 		const F32 ang = toRad(90.0f);
 		const F32 dist = lightc.getRadius();
-		const F32 zNear = LIGHT_FRUSTUM_NEAR_PLANE;
+		const F32 zNear = CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE;
 
 		Mat3 rot;
 
@@ -273,7 +273,8 @@ void SpotLightNode::onMoved(const MoveComponent& move)
 void SpotLightNode::onLightShapeUpdated(LightComponent& light)
 {
 	FrustumComponent& frc = getFirstComponentOfType<FrustumComponent>();
-	frc.setPerspective(LIGHT_FRUSTUM_NEAR_PLANE, light.getDistance(), light.getOuterAngle(), light.getOuterAngle());
+	frc.setPerspective(CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE, light.getDistance(), light.getOuterAngle(),
+					   light.getOuterAngle());
 }
 
 void SpotLightNode::onFrustumUpdated(FrustumComponent& frc)

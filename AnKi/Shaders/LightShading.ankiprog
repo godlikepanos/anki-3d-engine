@@ -18,7 +18,6 @@ ANKI_SPECIALIZATION_CONSTANT_U32(IR_MIPMAP_COUNT, 4);
 #include <AnKi/Shaders/Pack.glsl>
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/RtShadows.glsl>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 #define CLUSTERED_SHADING_SET 0
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0

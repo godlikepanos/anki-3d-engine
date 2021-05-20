@@ -464,9 +464,9 @@ void VisibilityTestTask::test(ThreadHive& hive, U32 taskId)
 				{
 					ANKI_ASSERT(!!(enabledVisibilityTests
 								   & FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES));
-					cascadeCount = MAX_SHADOW_CASCADES;
+					cascadeCount = MAX_SHADOW_CASCADES2;
 				}
-				ANKI_ASSERT(cascadeCount <= MAX_SHADOW_CASCADES);
+				ANKI_ASSERT(cascadeCount <= MAX_SHADOW_CASCADES2);
 
 				// Create some dummy frustum components and initialize them
 				WeakArray<FrustumComponent> cascadeFrustumComponents(

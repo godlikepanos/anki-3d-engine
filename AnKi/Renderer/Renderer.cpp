@@ -12,7 +12,7 @@
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Collision/Functions.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>
@@ -90,13 +90,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_width = config.getNumberU32("width");
 	m_height = config.getNumberU32("height");
 	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
-
-	m_clusterCount[0] = config.getNumberU32("r_clusterSizeX");
-	m_clusterCount[1] = config.getNumberU32("r_clusterSizeY");
-	m_clusterCount[2] = config.getNumberU32("r_clusterSizeZ");
-	m_clusterCount[3] = m_clusterCount[0] * m_clusterCount[1] * m_clusterCount[2];
-
-	m_clusterBin.init(m_alloc, m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], config);
 
 	m_tileSize = config.getNumberU32("r_tileSize");
 	m_tileCounts.x() = (m_width + m_tileSize - 1) / m_tileSize;
@@ -364,23 +357,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	// Populate the uniforms
 	m_clusterBinning->writeClusterBuffersAsync();
 
-	// Bin lights and update uniforms
-	m_stats.m_lightBinTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
-	ClusterBinIn cin;
-	cin.m_renderQueue = ctx.m_renderQueue;
-	cin.m_tempAlloc = ctx.m_tempAllocator;
-	cin.m_shadowsEnabled = true; // TODO
-	cin.m_stagingMem = m_stagingMem;
-	cin.m_threadHive = m_threadHive;
-	m_clusterBin.bin(cin, ctx.m_clusterBinOut);
-
-	ctx.m_prevClustererMagicValues =
-		(m_frameCount > 0) ? m_prevClustererMagicValues : ctx.m_clusterBinOut.m_shaderMagicValues;
-	m_prevClustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
-
-	updateLightShadingUniforms(ctx);
-	m_stats.m_lightBinTime = (m_statsEnabled) ? (HighRezTimer::getCurrentTime() - m_stats.m_lightBinTime) : -1.0;
-
 	return Error::NONE;
 }
 
@@ -587,69 +563,6 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 	cmdb->flush();
 
 	return tex;
-}
-
-void Renderer::updateLightShadingUniforms(RenderingContext& ctx) const
-{
-	LightingUniforms* blk = static_cast<LightingUniforms*>(m_stagingMem->allocateFrame(
-		sizeof(LightingUniforms), StagingGpuMemoryType::UNIFORM, ctx.m_lightShadingUniformsToken));
-
-	// Start writing
-	blk->m_unprojectionParams = ctx.m_matrices.m_unprojectionParameters;
-
-	blk->m_rendererSize = Vec2(F32(m_width), F32(m_height));
-	blk->m_time = F32(HighRezTimer::getCurrentTime());
-	blk->m_near = ctx.m_renderQueue->m_cameraNear;
-
-	blk->m_clusterCount = UVec4(m_clusterCount[0], m_clusterCount[1], m_clusterCount[2], m_clusterCount[3]);
-
-	blk->m_cameraPos = ctx.m_renderQueue->m_cameraTransform.getTranslationPart().xyz();
-	blk->m_far = ctx.m_renderQueue->m_cameraFar;
-
-	blk->m_clustererMagicValues = ctx.m_clusterBinOut.m_shaderMagicValues;
-	blk->m_prevClustererMagicValues = ctx.m_prevClustererMagicValues;
-
-	blk->m_lightVolumeLastCluster = m_volLighting->getFinalZSplit();
-	blk->m_frameCount = m_frameCount & MAX_U32;
-
-	// Matrices
-	blk->m_viewMat = ctx.m_renderQueue->m_viewMatrix;
-	blk->m_invViewMat = ctx.m_renderQueue->m_viewMatrix.getInverse();
-
-	blk->m_projMat = ctx.m_matrices.m_projectionJitter;
-	blk->m_invProjMat = ctx.m_matrices.m_projectionJitter.getInverse();
-
-	blk->m_viewProjMat = ctx.m_matrices.m_viewProjectionJitter;
-	blk->m_invViewProjMat = ctx.m_matrices.m_viewProjectionJitter.getInverse();
-
-	blk->m_prevViewProjMat = ctx.m_prevMatrices.m_viewProjectionJitter;
-
-	blk->m_prevViewProjMatMulInvViewProjMat =
-		ctx.m_prevMatrices.m_viewProjection * ctx.m_matrices.m_viewProjectionJitter.getInverse();
-
-	// Directional light
-	if(ctx.m_renderQueue->m_directionalLight.m_uuid != 0)
-	{
-		DirectionalLight& out = blk->m_dirLight;
-		const DirectionalLightQueueElement& in = ctx.m_renderQueue->m_directionalLight;
-
-		out.m_diffuseColor = in.m_diffuseColor;
-		out.m_cascadeCount = in.m_shadowCascadeCount;
-		out.m_dir = in.m_direction;
-		out.m_active = 1;
-		out.m_effectiveShadowDistance = in.m_effectiveShadowDistance;
-		out.m_shadowCascadesDistancePower = in.m_shadowCascadesDistancePower;
-		out.m_shadowLayer = in.m_shadowLayer;
-
-		for(U cascade = 0; cascade < in.m_shadowCascadeCount; ++cascade)
-		{
-			out.m_textureMatrices[cascade] = in.m_textureMatrices[cascade];
-		}
-	}
-	else
-	{
-		blk->m_dirLight.m_active = 0;
-	}
 }
 
 void Renderer::registerDebugRenderTarget(RendererObject* obj, CString rtName)

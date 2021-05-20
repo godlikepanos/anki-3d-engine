@@ -79,7 +79,6 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER);
 
-	m_r->setStatsEnabled(m_statsEnabled);
 	m_stats.m_renderingCpuTime = (m_statsEnabled) ? HighRezTimer::getCurrentTime() : -1.0;
 
 	// First thing, reset the temp mem pool
@@ -178,7 +177,6 @@ Error MainRenderer::render(RenderQueue& rqueue, TexturePtr presentTex)
 	// Stats
 	if(m_statsEnabled)
 	{
-		static_cast<RendererStats&>(m_stats) = m_r->getStats();
 		m_stats.m_renderingCpuTime = HighRezTimer::getCurrentTime() - m_stats.m_renderingCpuTime;
 
 		RenderGraphStatistics rgraphStats;

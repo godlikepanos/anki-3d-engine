@@ -254,7 +254,7 @@ void ClusterBinning::writeClustererBuffersTask()
 
 			if(in.m_shadowRenderQueues[0] == nullptr)
 			{
-				out.m_shadowAtlasTileScale = INVALID_TEXTURE_INDEX;
+				out.m_shadowAtlasTileScale = -1.0f;
 				out.m_shadowLayer = MAX_U32;
 			}
 			else

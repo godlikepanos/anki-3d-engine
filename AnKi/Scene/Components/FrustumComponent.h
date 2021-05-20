@@ -11,8 +11,8 @@
 #include <AnKi/Collision/Obb.h>
 #include <AnKi/Collision/ConvexHullShape.h>
 #include <AnKi/Collision/Plane.h>
-#include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
 #include <AnKi/Resource/Common.h>
+#include <AnKi/Shaders/Include/ClusteredShadingFunctions.h>
 
 namespace anki
 {
@@ -442,7 +442,7 @@ private:
 	U32 getCascadeCount() const
 	{
 		return !!(m_flags & FrustumComponentVisibilityTestFlag::DIRECTIONAL_LIGHT_SHADOWS_ALL_CASCADES)
-				   ? MAX_SHADOW_CASCADES
+				   ? MAX_SHADOW_CASCADES2
 				   : 1;
 	}
 };

@@ -10,7 +10,8 @@
 
 // Used by the config options
 #include <AnKi/Util/System.h>
-#include <AnKi/Renderer/ClusterBin.h>
+#include <AnKi/Math.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
 
 namespace anki
 {

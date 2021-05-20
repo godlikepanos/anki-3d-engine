@@ -83,7 +83,7 @@ void GlobalIllumination::setRenderGraphDependencies(RenderingContext& ctx, Rende
 void GlobalIllumination::bindVolumeTextures(const RenderingContext& ctx, RenderPassWorkContext& rgraphCtx, U32 set,
 											U32 binding) const
 {
-	for(U32 idx = 0; idx < MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES; ++idx)
+	for(U32 idx = 0; idx < MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2; ++idx)
 	{
 		if(idx < ctx.m_renderQueue->m_giProbes.getSize())
 		{

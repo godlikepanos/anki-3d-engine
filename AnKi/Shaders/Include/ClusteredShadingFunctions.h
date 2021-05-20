@@ -5,49 +5,9 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
 
 ANKI_BEGIN_NAMESPACE
-
-ANKI_SHADER_FUNC_INLINE F32 computeClusterKf(ClustererMagicValues magic, Vec3 worldPos)
-{
-	const F32 fz = sqrt(dot(magic.m_val0.xyz(), worldPos) - magic.m_val0.w());
-	return fz;
-}
-
-ANKI_SHADER_FUNC_INLINE U32 computeClusterK(ClustererMagicValues magic, Vec3 worldPos)
-{
-	return U32(computeClusterKf(magic, worldPos));
-}
-
-// Compute cluster index
-ANKI_SHADER_FUNC_INLINE U32 computeClusterIndex(ClustererMagicValues magic, Vec2 uv, Vec3 worldPos, U32 clusterCountX,
-												U32 clusterCountY)
-{
-	const UVec2 xy = UVec2(uv * Vec2(F32(clusterCountX), F32(clusterCountY)));
-	const U32 k = computeClusterK(magic, worldPos);
-	return k * (clusterCountX * clusterCountY) + xy.y() * clusterCountX + xy.x();
-}
-
-// Compute the Z of the near plane given a cluster idx
-ANKI_SHADER_FUNC_INLINE F32 computeClusterNearf(ClustererMagicValues magic, F32 fk)
-{
-	return magic.m_val1.x() * fk * fk + magic.m_val1.y();
-}
-
-// Compute the Z of the near plane given a cluster idx
-ANKI_SHADER_FUNC_INLINE F32 computeClusterNear(ClustererMagicValues magic, U32 k)
-{
-	return computeClusterNearf(magic, F32(k));
-}
-
-// Compute the UV coordinates of a volume texture that encloses the clusterer
-ANKI_SHADER_FUNC_INLINE Vec3 computeClustererVolumeTextureUvs(ClustererMagicValues magic, Vec2 uv, Vec3 worldPos,
-															  U32 clusterCountZ)
-{
-	const F32 k = computeClusterKf(magic, worldPos);
-	return Vec3(uv, k / F32(clusterCountZ));
-}
 
 // Compute the far plane of a shadow cascade. "p" is the power that defines the distance curve.
 // "effectiveShadowDistance" is the far plane of the last cascade.

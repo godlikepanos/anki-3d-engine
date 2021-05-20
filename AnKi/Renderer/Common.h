@@ -9,7 +9,6 @@
 #include <AnKi/Core/StagingGpuMemoryManager.h>
 #include <AnKi/Util/Ptr.h>
 #include <AnKi/Shaders/Include/Evsm.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
 
 namespace anki
@@ -62,7 +61,6 @@ class ReflectionProbeQueueElement;
 class DecalQueueElement;
 
 class ShaderProgramResourceVariant;
-class ClusterBin;
 
 /// @addtogroup renderer
 /// @{
@@ -117,25 +115,6 @@ constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32B32A32_SFLOAT;
 constexpr Format SHADOW_COLOR_PIXEL_FORMAT = Format::R32G32_SFLOAT;
 #endif
 
-/// @memberof ClusterBin
-class ClusterBinOut
-{
-public:
-	StagingGpuMemoryToken m_pointLightsToken;
-	StagingGpuMemoryToken m_spotLightsToken;
-	StagingGpuMemoryToken m_reflectionProbesToken;
-	StagingGpuMemoryToken m_decalsToken;
-	StagingGpuMemoryToken m_fogDensityVolumesToken;
-	StagingGpuMemoryToken m_globalIlluminationProbesToken;
-	StagingGpuMemoryToken m_clustersToken;
-	StagingGpuMemoryToken m_indicesToken;
-
-	TextureViewPtr m_diffDecalTexView;
-	TextureViewPtr m_specularRoughnessDecalTexView;
-
-	ClustererMagicValues m_shaderMagicValues;
-};
-
 /// GPU buffers and textures that the clusterer refers to.
 class ClusteredShadingContext
 {
@@ -177,11 +156,6 @@ public:
 	RenderTargetHandle m_outRenderTarget;
 	U32 m_outRenderTargetWidth = 0;
 	U32 m_outRenderTargetHeight = 0;
-
-	ClusterBinOut m_clusterBinOut;
-	ClustererMagicValues m_prevClustererMagicValues;
-
-	StagingGpuMemoryToken m_lightShadingUniformsToken;
 
 	ClusteredShadingContext m_clusteredShading;
 

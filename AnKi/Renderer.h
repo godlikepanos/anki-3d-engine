@@ -11,7 +11,6 @@
 #include <AnKi/Renderer/VolumetricFog.h>
 #include <AnKi/Renderer/ForwardShading.h>
 #include <AnKi/Renderer/FinalComposite.h>
-#include <AnKi/Renderer/ClusterBin.h>
 #include <AnKi/Renderer/Renderer.h>
 #include <AnKi/Renderer/ShadowMapping.h>
 #include <AnKi/Renderer/MainRenderer.h>

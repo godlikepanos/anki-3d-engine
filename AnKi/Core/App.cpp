@@ -74,7 +74,6 @@ public:
 
 	BufferedValue<Second> m_frameTime;
 	BufferedValue<Second> m_renderTime;
-	BufferedValue<Second> m_lightBinTime;
 	BufferedValue<Second> m_sceneUpdateTime;
 	BufferedValue<Second> m_visTestsTime;
 	BufferedValue<Second> m_physicsTime;
@@ -122,8 +121,7 @@ public:
 
 			ImGui::Text("CPU Time:");
 			labelTime(m_frameTime.get(flush), "Total frame");
-			labelTime(m_renderTime.get(flush) - m_lightBinTime.get(flush), "Renderer");
-			labelTime(m_lightBinTime.get(false), "Light bin");
+			labelTime(m_renderTime.get(flush), "Renderer");
 			labelTime(m_sceneUpdateTime.get(flush), "Scene update");
 			labelTime(m_visTestsTime.get(flush), "Visibility");
 			labelTime(m_physicsTime.get(flush), "Physics");
@@ -627,7 +625,6 @@ Error App::mainLoop()
 				StatsUi& statsUi = static_cast<StatsUi&>(*m_statsUi);
 				statsUi.m_frameTime.set(frameTime);
 				statsUi.m_renderTime.set(m_renderer->getStats().m_renderingCpuTime);
-				statsUi.m_lightBinTime.set(m_renderer->getStats().m_lightBinTime);
 				statsUi.m_sceneUpdateTime.set(m_scene->getStats().m_updateTime);
 				statsUi.m_visTestsTime.set(m_scene->getStats().m_visibilityTestsTime);
 				statsUi.m_physicsTime.set(m_scene->getStats().m_physicsUpdate);
