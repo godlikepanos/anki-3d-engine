@@ -87,8 +87,7 @@ void main()
 	const Vec3 normal = readNormalFromGBuffer(u_normalRt, u_linearAnyClampSampler, uv);
 
 	// Cluster
-	Cluster cluster = getClusterUv(uv, depth, u_clusteredShading.m_tileCounts, u_clusteredShading.m_zSplitCount,
-								   u_clusteredShading.m_zSplitMagic.x, u_clusteredShading.m_zSplitMagic.y);
+	Cluster cluster = getClusterFragCoord(Vec3(uv * u_clusteredShading.m_renderingSize, depth));
 
 	F32 shadowFactors[MAX_RT_SHADOW_LAYERS];
 	zeroRtShadowLayers(shadowFactors);

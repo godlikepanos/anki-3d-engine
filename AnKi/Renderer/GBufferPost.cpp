@@ -36,6 +36,7 @@ Error GBufferPost::initInternal(const ConfigSet& cfg)
 	ShaderProgramResourceVariantInitInfo variantInitInfo(m_prog);
 	variantInitInfo.addConstant("TILE_COUNTS", m_r->getTileCounts());
 	variantInitInfo.addConstant("Z_SPLIT_COUNT", m_r->getZSplitCount());
+	variantInitInfo.addConstant("TILE_SIZE", m_r->getTileSize());
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(variantInitInfo, variant);

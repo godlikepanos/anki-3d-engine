@@ -151,13 +151,6 @@ U32 computeZSplitClusterIndex(F32 depth, U32 zSplitCount, F32 a, F32 b)
 }
 
 /// Return the tile index.
-U32 computeTileClusterIndexUv(Vec2 uv, UVec2 tileCounts)
-{
-	const UVec2 tileXY = UVec2(uv * Vec2(tileCounts));
-	return tileXY.y * tileCounts.x + tileXY.x;
-}
-
-/// Return the tile index.
 U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileSize, U32 tileCountX)
 {
 	const UVec2 tileXY = UVec2(fragCoord / F32(tileSize));
@@ -167,15 +160,20 @@ U32 computeTileClusterIndexFragCoord(Vec2 fragCoord, U32 tileSize, U32 tileCount
 /// Merge the tiles with z splits into a single cluster.
 Cluster mergeClusters(Cluster tileCluster, Cluster zCluster)
 {
+//#define ANKI_OR_MASKS(x) subgroupOr(x)
+#define ANKI_OR_MASKS(x) (x)
+
 	Cluster outCluster;
-	outCluster.m_pointLightsMask = subgroupOr(tileCluster.m_pointLightsMask & zCluster.m_pointLightsMask);
-	outCluster.m_spotLightsMask = subgroupOr(tileCluster.m_spotLightsMask & zCluster.m_spotLightsMask);
-	outCluster.m_decalsMask = subgroupOr(tileCluster.m_decalsMask & zCluster.m_decalsMask);
+	outCluster.m_pointLightsMask = ANKI_OR_MASKS(tileCluster.m_pointLightsMask & zCluster.m_pointLightsMask);
+	outCluster.m_spotLightsMask = ANKI_OR_MASKS(tileCluster.m_spotLightsMask & zCluster.m_spotLightsMask);
+	outCluster.m_decalsMask = ANKI_OR_MASKS(tileCluster.m_decalsMask & zCluster.m_decalsMask);
 	outCluster.m_fogDensityVolumesMask =
-		subgroupOr(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
+		ANKI_OR_MASKS(tileCluster.m_fogDensityVolumesMask & zCluster.m_fogDensityVolumesMask);
 	outCluster.m_reflectionProbesMask =
-		subgroupOr(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
-	outCluster.m_giProbesMask = subgroupOr(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
+		ANKI_OR_MASKS(tileCluster.m_reflectionProbesMask & zCluster.m_reflectionProbesMask);
+	outCluster.m_giProbesMask = ANKI_OR_MASKS(tileCluster.m_giProbesMask & zCluster.m_giProbesMask);
+
+#undef ANKI_OR_MASKS
 
 	return outCluster;
 }
@@ -195,13 +193,5 @@ Cluster getClusterFragCoord(Vec3 fragCoord)
 	return getClusterFragCoord(fragCoord, u_clusteredShading.m_tileSize, u_clusteredShading.m_tileCounts,
 							   u_clusteredShading.m_zSplitCount, u_clusteredShading.m_zSplitMagic.x,
 							   u_clusteredShading.m_zSplitMagic.y);
-}
-
-Cluster getClusterUv(Vec2 uv, F32 depth, UVec2 tileCounts, U32 zSplitCount, F32 a, F32 b)
-{
-	const Cluster tileCluster = u_clusters2[computeTileClusterIndexUv(uv, tileCounts)];
-	const Cluster zCluster =
-		u_clusters2[computeZSplitClusterIndex(depth, zSplitCount, a, b) + tileCounts.x * tileCounts.y];
-	return mergeClusters(tileCluster, zCluster);
 }
 #endif
