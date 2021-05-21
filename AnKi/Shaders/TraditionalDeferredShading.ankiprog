@@ -46,7 +46,7 @@ void main()
 // FRAG
 #pragma anki start frag
 #include <AnKi/Shaders/Pack.glsl>
-#include <AnKi/Shaders/LightFunctions2.glsl>
+#include <AnKi/Shaders/LightFunctions.glsl>
 #include <AnKi/Shaders/Include/TraditionalDeferredShadingTypes.h>
 
 layout(location = 0) out Vec3 out_color;

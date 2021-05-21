@@ -8,7 +8,7 @@
 #include <AnKi/Renderer/Common.h>
 #include <AnKi/Resource/RenderingKey.h>
 #include <AnKi/Ui/Canvas.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/ModelTypes.h>
 
 namespace anki

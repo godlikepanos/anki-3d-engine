@@ -32,7 +32,7 @@ layout(set = 0, binding = 4) uniform texture3D u_prevVolume;
 #define CLUSTERED_SHADING_GI_BINDING 9
 #define CLUSTERED_SHADING_FOG_BINDING 11
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 12
-#include <AnKi/Shaders/ClusteredShadingCommon2.glsl>
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 Vec3 g_globalInvocationID = Vec3(gl_GlobalInvocationID);
 
@@ -99,7 +99,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	const Vec3 viewDir = normalize(u_clusteredShading.m_cameraPosition - worldPos);
 
 	// Dir light
-	const DirectionalLight2 dirLight = u_clusteredShading.m_directionalLight;
+	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
 	if(dirLight.m_active != 0u)
 	{
 		F32 factor = phaseFunction(viewDir, dirLight.m_direction, PHASE_FUNCTION_ANISOTROPY);
@@ -124,7 +124,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	{
 		const I32 idx = findLSB64(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(1ul << U64(idx));
-		const PointLight2 light = u_pointLights2[idx];
+		const PointLight light = u_pointLights2[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
@@ -146,7 +146,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	{
 		const I32 idx = findLSB64(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(1ul << U64(idx));
-		const SpotLight2 light = u_spotLights2[idx];
+		const SpotLight light = u_spotLights2[idx];
 
 		const Vec3 frag2Light = light.m_position - worldPos;
 		F32 factor = computeAttenuationFactor(light.m_squareRadiusOverOne, frag2Light);
@@ -175,7 +175,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		{
 			// Only one probe, do a fast path without blend weight
 
-			const GlobalIlluminationProbe2 probe = u_giProbes[findLSB(cluster.m_giProbesMask)];
+			const GlobalIlluminationProbe probe = u_giProbes[findLSB(cluster.m_giProbesMask)];
 
 			// Sample
 			diffIndirect = sampleGlobalIllumination(worldPos, viewDir, probe, u_globalIlluminationTextures,
@@ -193,7 +193,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 			{
 				const U32 idx = U32(findLSB(cluster.m_giProbesMask));
 				cluster.m_giProbesMask &= ~(1u << idx);
-				const GlobalIlluminationProbe2 probe = u_giProbes[idx];
+				const GlobalIlluminationProbe probe = u_giProbes[idx];
 
 				// Compute blend weight
 				const F32 blendWeight =
@@ -222,7 +222,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 		{
 			const U32 idx = U32(findLSB(cluster.m_fogDensityVolumesMask));
 			cluster.m_fogDensityVolumesMask &= ~(1u << idx);
-			const FogDensityVolume2 vol = u_fogDensityVolumes[idx];
+			const FogDensityVolume vol = u_fogDensityVolumes[idx];
 
 			F32 factor;
 			ANKI_BRANCH if(vol.m_isBox == 1u)

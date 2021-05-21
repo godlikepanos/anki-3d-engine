@@ -10,7 +10,7 @@
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Renderer/LightShading.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 namespace anki
 {

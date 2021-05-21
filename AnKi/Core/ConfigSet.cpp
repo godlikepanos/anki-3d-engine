@@ -11,7 +11,7 @@
 // Used by the config options
 #include <AnKi/Util/System.h>
 #include <AnKi/Math.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 namespace anki
 {

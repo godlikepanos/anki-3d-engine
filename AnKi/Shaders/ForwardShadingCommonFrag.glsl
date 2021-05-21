@@ -17,7 +17,7 @@ layout(set = 0, binding = 2) uniform texture3D u_lightVol;
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 3
 #define CLUSTERED_SHADING_LIGHTS_BINDING 4
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 7
-#include <AnKi/Shaders/ClusteredShadingCommon2.glsl>
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) out Vec4 out_color;
 
@@ -47,7 +47,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	{
 		const I32 idx = findLSB64(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(1ul << U64(idx));
-		const PointLight2 light = u_pointLights2[idx];
+		const PointLight light = u_pointLights2[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 
@@ -72,7 +72,7 @@ Vec3 computeLightColorHigh(Vec3 diffCol, Vec3 worldPos)
 	{
 		const I32 idx = findLSB64(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(1ul << U64(idx));
-		const SpotLight2 light = u_spotLights2[idx];
+		const SpotLight light = u_spotLights2[idx];
 
 		const Vec3 diffC = diffCol * light.m_diffuseColor;
 

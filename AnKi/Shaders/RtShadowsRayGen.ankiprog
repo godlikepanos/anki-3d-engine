@@ -17,7 +17,7 @@
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 0
 #define CLUSTERED_SHADING_LIGHTS_BINDING 1
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 4
-#include <AnKi/Shaders/ClusteredShadingCommon2.glsl>
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 // Used by the hit shaders. When changing the binding you need to update other shaders
 layout(set = 0, binding = 5) uniform sampler u_trilinearRepeatSampler;
@@ -109,7 +109,7 @@ void main()
 	}
 
 	// Dir light
-	const DirectionalLight2 dirLight = u_clusteredShading.m_directionalLight;
+	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
 	ANKI_BRANCH if(dirLight.m_active != 0u && dirLight.m_cascadeCount > 0)
 	{
 		for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
@@ -130,7 +130,7 @@ void main()
 	{
 		const I32 idx = findLSB64(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(1ul << U64(idx));
-		const PointLight2 light = u_pointLights2[idx];
+		const PointLight light = u_pointLights2[idx];
 
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
@@ -157,7 +157,7 @@ void main()
 	{
 		const I32 idx = findLSB64(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(1ul << U64(idx));
-		const SpotLight2 light = u_spotLights2[idx];
+		const SpotLight light = u_spotLights2[idx];
 
 		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
 		{

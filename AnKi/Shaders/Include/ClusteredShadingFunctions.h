@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 ANKI_BEGIN_NAMESPACE
 

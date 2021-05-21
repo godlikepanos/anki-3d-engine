@@ -9,7 +9,7 @@
 #include <AnKi/Scene/Components/MoveComponent.h>
 #include <AnKi/Scene/Components/SpatialComponent.h>
 #include <AnKi/Scene/Components/FrustumComponent.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 namespace anki
 {

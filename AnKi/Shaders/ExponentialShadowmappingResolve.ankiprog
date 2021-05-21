@@ -7,7 +7,7 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEXTURE_SIZE, 0);
 
 #pragma anki start comp
 #include <AnKi/Shaders/GaussianBlurCommon.glsl>
-#include <AnKi/Shaders/LightFunctions2.glsl>
+#include <AnKi/Shaders/LightFunctions.glsl>
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 

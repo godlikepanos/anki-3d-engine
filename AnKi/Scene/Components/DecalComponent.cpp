@@ -6,7 +6,7 @@
 #include <AnKi/Scene/Components/DecalComponent.h>
 #include <AnKi/Scene/SceneGraph.h>
 #include <AnKi/Resource/ResourceManager.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 namespace anki
 {

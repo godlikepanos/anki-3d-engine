@@ -10,7 +10,7 @@
 #include <AnKi/Shaders/Functions.glsl>
 #include <AnKi/Shaders/CollisionFunctions.glsl>
 #include <AnKi/Shaders/Pack.glsl>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Include/Evsm.h>
 
 // Do some EVSM magic with depth
@@ -162,7 +162,7 @@ U32 computeShadowSampleCount(const U32 COUNT, F32 zVSpace)
 	return sampleCount;
 }
 
-F32 computeShadowFactorSpotLight(SpotLight2 light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
+F32 computeShadowFactorSpotLight(SpotLight light, Vec3 worldPos, texture2D spotMap, sampler spotMapSampler)
 {
 	const Vec4 texCoords4 = light.m_textureMatrix * Vec4(worldPos, 1.0);
 	const Vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
@@ -173,7 +173,7 @@ F32 computeShadowFactorSpotLight(SpotLight2 light, Vec3 worldPos, texture2D spot
 }
 
 // Compute the shadow factor of point (omni) lights.
-F32 computeShadowFactorPointLight(PointLight2 light, Vec3 frag2Light, texture2D shadowMap, sampler shadowMapSampler)
+F32 computeShadowFactorPointLight(PointLight light, Vec3 frag2Light, texture2D shadowMap, sampler shadowMapSampler)
 {
 	const Vec3 dir = -frag2Light;
 	const Vec3 dirabs = abs(dir);
@@ -214,7 +214,7 @@ F32 computeShadowFactorPointLight(PointLight2 light, Vec3 frag2Light, texture2D 
 }
 
 // Compute the shadow factor of a directional light
-F32 computeShadowFactorDirLight(DirectionalLight2 light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
+F32 computeShadowFactorDirLight(DirectionalLight light, U32 cascadeIdx, Vec3 worldPos, texture2D shadowMap,
 								sampler shadowMapSampler)
 {
 #define ANKI_FAST_CASCADES_WORKAROUND 1 // Doesn't make sense but it's super fast
@@ -343,9 +343,8 @@ Vec3 sampleAmbientDice(Vec3 posx, Vec3 negx, Vec3 posy, Vec3 negy, Vec3 posz, Ve
 }
 
 // Sample the irradiance term from the clipmap
-Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe2 probe,
-							  texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2],
-							  sampler linearAnyClampSampler)
+Vec3 sampleGlobalIllumination(const Vec3 worldPos, const Vec3 normal, const GlobalIlluminationProbe probe,
+							  texture3D textures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES], sampler linearAnyClampSampler)
 {
 	// Find the UVW
 	Vec3 uvw = (worldPos - probe.m_aabbMin) / (probe.m_aabbMax - probe.m_aabbMin);

@@ -23,7 +23,7 @@ layout(set = 0, binding = 2) uniform sampler u_trilinearRepeatSampler;
 #define CLUSTERED_SHADING_UNIFORMS_BINDING 3
 #define CLUSTERED_SHADING_DECALS_BINDING 4
 #define CLUSTERED_SHADING_CLUSTERS_BINDING 7
-#include <AnKi/Shaders/ClusteredShadingCommon2.glsl>
+#include <AnKi/Shaders/ClusteredShadingCommon.glsl>
 
 layout(location = 0) in Vec2 in_uv;
 
@@ -62,7 +62,7 @@ void main()
 	{
 		const I32 idx = findLSB64(cluster.m_decalsMask);
 		cluster.m_decalsMask &= ~(1ul << U64(idx));
-		const Decal2 decal = u_decals2[idx];
+		const Decal decal = u_decals2[idx];
 
 		// Project pos to decal space
 		const Vec4 texCoords4 = decal.m_textureMatrix * Vec4(worldPos, 1.0);

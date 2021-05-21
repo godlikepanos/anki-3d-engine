@@ -11,7 +11,7 @@ ANKI_SPECIALIZATION_CONSTANT_UVEC2(RENDERING_SIZE, 4);
 
 #pragma anki start comp
 
-#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 #include <AnKi/Shaders/Common.glsl>
 #include <AnKi/Shaders/CollisionFunctions.glsl>
 
@@ -30,7 +30,7 @@ layout(set = 0, binding = 1, scalar) writeonly buffer b_clusters
 
 layout(set = 0, binding = 2, scalar) uniform b_pointLights
 {
-	PointLight2 u_pointLights[MAX_VISIBLE_POINT_LIGHTS];
+	PointLight u_pointLights[MAX_VISIBLE_POINT_LIGHTS];
 };
 
 layout(set = 0, binding = 3, scalar) uniform b_spotLights
@@ -40,22 +40,22 @@ layout(set = 0, binding = 3, scalar) uniform b_spotLights
 
 layout(set = 0, binding = 4, scalar) uniform b_reflectionProbes
 {
-	ReflectionProbe2 u_reflectionProbes[MAX_VISIBLE_REFLECTION_PROBES];
+	ReflectionProbe u_reflectionProbes[MAX_VISIBLE_REFLECTION_PROBES];
 };
 
 layout(set = 0, binding = 5, scalar) uniform b_giProbes
 {
-	GlobalIlluminationProbe2 u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2];
+	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 };
 
 layout(set = 0, binding = 6, scalar) uniform b_fogVolumes
 {
-	FogDensityVolume2 u_fogVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
+	FogDensityVolume u_fogVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
 };
 
 layout(set = 0, binding = 7, scalar) uniform b_decals
 {
-	Decal2 u_decals[MAX_VISIBLE_DECALS];
+	Decal u_decals[MAX_VISIBLE_DECALS];
 };
 
 const U32 TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
@@ -150,7 +150,7 @@ void main()
 	if(isPointLight())
 	{
 		objectArrayIdx = clustererObjectIdx;
-		const PointLight2 light = u_pointLights[objectArrayIdx];
+		const PointLight light = u_pointLights[objectArrayIdx];
 		collides = testRaySphere(rayOrigin, rayDir, light.m_position, light.m_radius, t0, t1);
 	}
 	// Spot light
@@ -195,7 +195,7 @@ void main()
 	else if(isDecal())
 	{
 		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_DECAL - 1u];
-		const Decal2 decal = u_decals[objectArrayIdx];
+		const Decal decal = u_decals[objectArrayIdx];
 
 		collides = testRayObb(rayOrigin, rayDir, decal.m_obbExtend, decal.m_invertedTransform, t0, t1);
 	}
@@ -203,7 +203,7 @@ void main()
 	else if(isFogVolume())
 	{
 		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME - 1u];
-		const FogDensityVolume2 vol = u_fogVolumes[objectArrayIdx];
+		const FogDensityVolume vol = u_fogVolumes[objectArrayIdx];
 
 		if(vol.m_isBox != 0u)
 		{
@@ -220,7 +220,7 @@ void main()
 	else if(isReflectionProbe())
 	{
 		objectArrayIdx = clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_REFLECTION_PROBE - 1u];
-		const ReflectionProbe2 probe = u_reflectionProbes[objectArrayIdx];
+		const ReflectionProbe probe = u_reflectionProbes[objectArrayIdx];
 
 		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
 	}
@@ -229,7 +229,7 @@ void main()
 	{
 		objectArrayIdx =
 			clustererObjectIdx - u_unis.m_objectCountsUpTo[CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE - 1u];
-		const GlobalIlluminationProbe2 probe = u_giProbes[objectArrayIdx];
+		const GlobalIlluminationProbe probe = u_giProbes[objectArrayIdx];
 
 		collides = testRayAabb(rayOrigin, rayDir, probe.m_aabbMin, probe.m_aabbMax, t0, t1);
 	}

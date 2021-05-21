@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <AnKi/Shaders/LightFunctions2.glsl>
+#include <AnKi/Shaders/LightFunctions.glsl>
 
 //
 // Common uniforms
@@ -23,12 +23,12 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_UNIFORMS_BINDING
 #if defined(CLUSTERED_SHADING_LIGHTS_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING, scalar) uniform b_pointLights
 {
-	PointLight2 u_pointLights2[MAX_VISIBLE_POINT_LIGHTS];
+	PointLight u_pointLights2[MAX_VISIBLE_POINT_LIGHTS];
 };
 
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 1, scalar) uniform b_spotLights
 {
-	SpotLight2 u_spotLights2[MAX_VISIBLE_SPOT_LIGHTS];
+	SpotLight u_spotLights2[MAX_VISIBLE_SPOT_LIGHTS];
 };
 
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING + 2) uniform texture2D u_shadowAtlasTex;
@@ -40,7 +40,7 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_LIGHTS_BINDING +
 #if defined(CLUSTERED_SHADING_REFLECTIONS_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_REFLECTIONS_BINDING, scalar) uniform b_reflectionProbes
 {
-	ReflectionProbe2 u_reflectionProbes2[MAX_VISIBLE_REFLECTION_PROBES];
+	ReflectionProbe u_reflectionProbes2[MAX_VISIBLE_REFLECTION_PROBES];
 };
 
 layout(set = CLUSTERED_SHADING_SET,
@@ -55,7 +55,7 @@ layout(set = CLUSTERED_SHADING_SET,
 #if defined(CLUSTERED_SHADING_DECALS_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING, scalar) uniform b_decals
 {
-	Decal2 u_decals2[MAX_VISIBLE_DECALS];
+	Decal u_decals2[MAX_VISIBLE_DECALS];
 };
 
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_DECALS_BINDING + 1) uniform texture2D u_diffuseDecalTex;
@@ -69,7 +69,7 @@ layout(set = CLUSTERED_SHADING_SET,
 #if defined(CLUSTERED_SHADING_FOG_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, scalar) uniform b_fogDensityVolumes
 {
-	FogDensityVolume2 u_fogDensityVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
+	FogDensityVolume u_fogDensityVolumes[MAX_VISIBLE_FOG_DENSITY_VOLUMES];
 };
 #endif
 
@@ -78,11 +78,11 @@ layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_FOG_BINDING, sca
 //
 #if defined(CLUSTERED_SHADING_GI_BINDING)
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING) uniform texture3D
-	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2];
+	u_globalIlluminationTextures[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 
 layout(set = CLUSTERED_SHADING_SET, binding = CLUSTERED_SHADING_GI_BINDING + 1, scalar) uniform b_giProbes
 {
-	GlobalIlluminationProbe2 u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2];
+	GlobalIlluminationProbe u_giProbes[MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES];
 };
 #endif
 
@@ -134,7 +134,7 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 
 	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE)) != 0)
 	{
-		maxObjects += MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2;
+		maxObjects += MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES;
 		count += bitCount(cluster.m_giProbesMask);
 	}
 

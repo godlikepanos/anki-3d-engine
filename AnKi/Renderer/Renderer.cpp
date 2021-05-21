@@ -12,7 +12,7 @@
 #include <AnKi/Collision/Aabb.h>
 #include <AnKi/Collision/Plane.h>
 #include <AnKi/Collision/Functions.h>
-#include <AnKi/Shaders/Include/ClusteredShadingTypes2.h>
+#include <AnKi/Shaders/Include/ClusteredShadingTypes.h>
 
 #include <AnKi/Renderer/ProbeReflections.h>
 #include <AnKi/Renderer/GBuffer.h>

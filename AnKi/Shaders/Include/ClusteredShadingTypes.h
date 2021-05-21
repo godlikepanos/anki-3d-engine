@@ -24,7 +24,7 @@ const U32 MAX_VISIBLE_SPOT_LIGHTS = 64u;
 const U32 MAX_VISIBLE_DECALS = 64u;
 const U32 MAX_VISIBLE_FOG_DENSITY_VOLUMES = 16u;
 const U32 MAX_VISIBLE_REFLECTION_PROBES = 16u;
-const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES2 = 8u;
+const U32 MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES = 8u;
 
 // Other consts
 const F32 CLUSTER_OBJECT_FRUSTUM_NEAR_PLANE = 0.1f / 4.0f; ///< The near plane of various clusterer object frustums.
@@ -32,7 +32,7 @@ const U32 MAX_SHADOW_CASCADES2 = 4u;
 const F32 SUBSURFACE_MIN = 0.01f;
 
 /// Point light.
-struct PointLight2
+struct PointLight
 {
 	Vec3 m_position; ///< Position in world space.
 	Vec3 m_diffuseColor;
@@ -42,11 +42,11 @@ struct PointLight2
 	F32 m_shadowAtlasTileScale; ///< UV scale for all tiles.
 	Vec2 m_shadowAtlasTileOffsets[6u];
 };
-const U32 _ANKI_SIZEOF_PointLight2 = 22u * ANKI_SIZEOF(U32);
-ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight2) == _ANKI_SIZEOF_PointLight2);
+const U32 _ANKI_SIZEOF_PointLight = 22u * ANKI_SIZEOF(U32);
+ANKI_SHADER_STATIC_ASSERT(sizeof(PointLight) == _ANKI_SIZEOF_PointLight);
 
 /// Spot light.
-struct SpotLight2
+struct SpotLight
 {
 	Vec3 m_position; ///< Position in world space.
 	Vec3 m_edgePoints[4u]; ///< Edge points in world space.
@@ -60,8 +60,8 @@ struct SpotLight2
 	Vec2 m_padding;
 	Mat4 m_textureMatrix;
 };
-const U32 _ANKI_SIZEOF_SpotLight2 = 28u * ANKI_SIZEOF(U32) + ANKI_SIZEOF(Mat4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight2) == _ANKI_SIZEOF_SpotLight2);
+const U32 _ANKI_SIZEOF_SpotLight = 28u * ANKI_SIZEOF(U32) + ANKI_SIZEOF(Mat4);
+ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLight) == _ANKI_SIZEOF_SpotLight);
 
 /// Spot light different view. This is the same structure as SpotLight but it's designed for binning.
 struct SpotLightBinning
@@ -77,12 +77,12 @@ struct SpotLightBinning
 	Vec2 m_padding;
 	Mat4 m_textureMatrix;
 };
-const U32 _ANKI_SIZEOF_SpotLightBinning = _ANKI_SIZEOF_SpotLight2;
+const U32 _ANKI_SIZEOF_SpotLightBinning = _ANKI_SIZEOF_SpotLight;
 ANKI_SHADER_STATIC_ASSERT(sizeof(SpotLightBinning) == _ANKI_SIZEOF_SpotLightBinning);
-ANKI_SHADER_STATIC_ASSERT(alignof(SpotLightBinning) == alignof(SpotLight2));
+ANKI_SHADER_STATIC_ASSERT(alignof(SpotLightBinning) == alignof(SpotLight));
 
 /// Directional light (sun).
-struct DirectionalLight2
+struct DirectionalLight
 {
 	Vec3 m_diffuseColor;
 	U32 m_cascadeCount; ///< If it's zero then it doesn't cast shadow.
@@ -94,22 +94,22 @@ struct DirectionalLight2
 	U32 m_padding;
 	Mat4 m_textureMatrices[MAX_SHADOW_CASCADES2];
 };
-const U32 _ANKI_SIZEOF_DirectionalLight2 = 12u * ANKI_SIZEOF(U32) + MAX_SHADOW_CASCADES2 * ANKI_SIZEOF(Mat4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight2) == _ANKI_SIZEOF_DirectionalLight2);
+const U32 _ANKI_SIZEOF_DirectionalLight = 12u * ANKI_SIZEOF(U32) + MAX_SHADOW_CASCADES2 * ANKI_SIZEOF(Mat4);
+ANKI_SHADER_STATIC_ASSERT(sizeof(DirectionalLight) == _ANKI_SIZEOF_DirectionalLight);
 
 /// Representation of a reflection probe.
-struct ReflectionProbe2
+struct ReflectionProbe
 {
 	Vec3 m_position; ///< Position of the probe in world space.
 	F32 m_cubemapIndex; ///< Index in the cubemap array texture.
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
 };
-const U32 _ANKI_SIZEOF_ReflectionProbe2 = 10u * ANKI_SIZEOF(U32);
-ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe2) == _ANKI_SIZEOF_ReflectionProbe2);
+const U32 _ANKI_SIZEOF_ReflectionProbe = 10u * ANKI_SIZEOF(U32);
+ANKI_SHADER_STATIC_ASSERT(sizeof(ReflectionProbe) == _ANKI_SIZEOF_ReflectionProbe);
 
-/// Decal2.
-struct Decal2
+/// Decal.
+struct Decal
 {
 	Vec4 m_diffuseUv;
 	Vec4 m_normRoughnessUv;
@@ -119,22 +119,22 @@ struct Decal2
 	Vec3 m_obbExtend;
 	F32 m_padding;
 };
-const U32 _ANKI_SIZEOF_Decal2 = 4u * ANKI_SIZEOF(Vec4) + 2u * ANKI_SIZEOF(Mat4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(Decal2) == _ANKI_SIZEOF_Decal2);
+const U32 _ANKI_SIZEOF_Decal = 4u * ANKI_SIZEOF(Vec4) + 2u * ANKI_SIZEOF(Mat4);
+ANKI_SHADER_STATIC_ASSERT(sizeof(Decal) == _ANKI_SIZEOF_Decal);
 
 /// Fog density volume.
-struct FogDensityVolume2
+struct FogDensityVolume
 {
 	Vec3 m_aabbMinOrSphereCenter;
 	U32 m_isBox;
 	Vec3 m_aabbMaxOrSphereRadiusSquared;
 	F32 m_density;
 };
-const U32 _ANKI_SIZEOF_FogDensityVolume2 = 2u * ANKI_SIZEOF(Vec4);
-ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume2) == _ANKI_SIZEOF_FogDensityVolume2);
+const U32 _ANKI_SIZEOF_FogDensityVolume = 2u * ANKI_SIZEOF(Vec4);
+ANKI_SHADER_STATIC_ASSERT(sizeof(FogDensityVolume) == _ANKI_SIZEOF_FogDensityVolume);
 
 /// Global illumination probe
-struct GlobalIlluminationProbe2
+struct GlobalIlluminationProbe
 {
 	Vec3 m_aabbMin;
 	Vec3 m_aabbMax;
@@ -145,8 +145,8 @@ struct GlobalIlluminationProbe2
 	/// Used to calculate a factor that is zero when fragPos is close to AABB bounds and 1.0 at fadeDistance and less.
 	F32 m_fadeDistance;
 };
-const U32 _ANKI_SIZEOF_GlobalIlluminationProbe2 = 9u * ANKI_SIZEOF(U32);
-ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe2) == _ANKI_SIZEOF_GlobalIlluminationProbe2);
+const U32 _ANKI_SIZEOF_GlobalIlluminationProbe = 9u * ANKI_SIZEOF(U32);
+ANKI_SHADER_STATIC_ASSERT(sizeof(GlobalIlluminationProbe) == _ANKI_SIZEOF_GlobalIlluminationProbe);
 
 /// Common matrices.
 struct CommonMatrices
@@ -198,10 +198,10 @@ struct ClusteredShadingUniforms
 	CommonMatrices m_matrices;
 	CommonMatrices m_previousMatrices;
 
-	DirectionalLight2 m_directionalLight;
+	DirectionalLight m_directionalLight;
 };
 const U32 _ANKI_SIZEOF_ClusteredShadingUniforms =
-	28u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight2);
+	28u * ANKI_SIZEOF(U32) + 2u * ANKI_SIZEOF(CommonMatrices) + ANKI_SIZEOF(DirectionalLight);
 ANKI_SHADER_STATIC_ASSERT(sizeof(ClusteredShadingUniforms) == _ANKI_SIZEOF_ClusteredShadingUniforms);
 
 /// Information that a tile or a Z-split will contain.
