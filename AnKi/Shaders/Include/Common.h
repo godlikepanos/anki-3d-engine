@@ -63,7 +63,7 @@ ANKI_END_NAMESPACE
 ANKI_BEGIN_NAMESPACE
 
 /// The renderer will group drawcalls into instances up to this number.
-const U32 MAX_INSTANCE_COUNT = 64;
-const U32 MAX_LOD_COUNT = 3;
+const U32 MAX_INSTANCE_COUNT = 64u;
+const U32 MAX_LOD_COUNT = 3u;
 
 ANKI_END_NAMESPACE

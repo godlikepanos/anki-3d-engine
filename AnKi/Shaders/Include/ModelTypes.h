@@ -9,8 +9,8 @@
 
 ANKI_BEGIN_NAMESPACE
 
-const U32 UV_CHANNEL_0 = 0;
-const U32 UV_CHANNEL_COUNT = 1;
+const U32 UV_CHANNEL_0 = 0u;
+const U32 UV_CHANNEL_COUNT = 1u;
 
 /// The main vertex that contains normals, tangents and UVs
 struct MainVertex
@@ -20,8 +20,8 @@ struct MainVertex
 	Vec2 m_uvs[UV_CHANNEL_COUNT];
 };
 
-const U32 _ANKI_SIZEOF_MainVertex = 4 * 4;
-const U32 _ANKI_ALIGNOF_MainVertex = 4;
+const U32 _ANKI_SIZEOF_MainVertex = 4u * 4u;
+const U32 _ANKI_ALIGNOF_MainVertex = 4u;
 ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_MainVertex == sizeof(MainVertex));
 
 /// The vertex that contains the bone influences.
@@ -31,8 +31,8 @@ struct BoneInfoVertex
 	U8Vec4 m_boneWeights;
 };
 
-const U32 _ANKI_SIZEOF_BoneInfoVertex = 8;
-const U32 _ANKI_ALIGNOF_BoneInfoVertex = 1;
+const U32 _ANKI_SIZEOF_BoneInfoVertex = 8u;
+const U32 _ANKI_ALIGNOF_BoneInfoVertex = 1u;
 ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_BoneInfoVertex == sizeof(BoneInfoVertex));
 
 /// A structure that contains all the info of a geometry.
@@ -48,20 +48,20 @@ struct MeshGpuDescriptor
 	Vec3 m_aabbMax;
 };
 
-const U32 _ANKI_SIZEOF_MeshGpuDescriptor = 4 * ANKI_SIZEOF(U64) + 8 * ANKI_SIZEOF(F32);
-const U32 _ANKI_ALIGNOF_MeshGpuDescriptor = 8;
+const U32 _ANKI_SIZEOF_MeshGpuDescriptor = 4u * ANKI_SIZEOF(U64) + 8u * ANKI_SIZEOF(F32);
+const U32 _ANKI_ALIGNOF_MeshGpuDescriptor = 8u;
 ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_MeshGpuDescriptor == sizeof(MeshGpuDescriptor));
 
-const U32 TEXTURE_CHANNEL_DIFFUSE = 0;
-const U32 TEXTURE_CHANNEL_NORMAL = 1;
-const U32 TEXTURE_CHANNEL_ROUGHNESS_METALNESS = 2;
-const U32 TEXTURE_CHANNEL_EMISSION = 3;
-const U32 TEXTURE_CHANNEL_HEIGHT = 4;
-const U32 TEXTURE_CHANNEL_AUX_0 = 5;
-const U32 TEXTURE_CHANNEL_AUX_1 = 6;
-const U32 TEXTURE_CHANNEL_AUX_2 = 7;
+const U32 TEXTURE_CHANNEL_DIFFUSE = 0u;
+const U32 TEXTURE_CHANNEL_NORMAL = 1u;
+const U32 TEXTURE_CHANNEL_ROUGHNESS_METALNESS = 2u;
+const U32 TEXTURE_CHANNEL_EMISSION = 3u;
+const U32 TEXTURE_CHANNEL_HEIGHT = 4u;
+const U32 TEXTURE_CHANNEL_AUX_0 = 5u;
+const U32 TEXTURE_CHANNEL_AUX_1 = 6u;
+const U32 TEXTURE_CHANNEL_AUX_2 = 7u;
 
-const U32 TEXTURE_CHANNEL_COUNT = 8;
+const U32 TEXTURE_CHANNEL_COUNT = 8u;
 
 struct MaterialGpuDescriptor
 {
@@ -74,8 +74,8 @@ struct MaterialGpuDescriptor
 };
 
 const U32 _ANKI_SIZEOF_MaterialGpuDescriptor =
-	TEXTURE_CHANNEL_COUNT * ANKI_SIZEOF(U16) + 3 * ANKI_SIZEOF(Vec3) + 2 * ANKI_SIZEOF(F32);
-const U32 _ANKI_ALIGNOF_MaterialGpuDescriptor = 4;
+	TEXTURE_CHANNEL_COUNT * ANKI_SIZEOF(U16) + 3u * ANKI_SIZEOF(Vec3) + 2u * ANKI_SIZEOF(F32);
+const U32 _ANKI_ALIGNOF_MaterialGpuDescriptor = 4u;
 ANKI_SHADER_STATIC_ASSERT(_ANKI_SIZEOF_MaterialGpuDescriptor == sizeof(MaterialGpuDescriptor));
 
 struct ModelGpuDescriptor

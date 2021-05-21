@@ -76,102 +76,102 @@ static const char* SHADER_HEADER = R"(#version 460 core
 	layout(set = set_, binding = 1) uniform readonly image2D u_bindlessImages2dF32[ANKI_MAX_BINDLESS_IMAGES]
 
 #define F32 float
-#define _ANKI_SIZEOF_float 4
+#define _ANKI_SIZEOF_float 4u
 #define Vec2 vec2
-#define _ANKI_SIZEOF_vec2 8
+#define _ANKI_SIZEOF_vec2 8u
 #define Vec3 vec3
-#define _ANKI_SIZEOF_vec3 12
+#define _ANKI_SIZEOF_vec3 12u
 #define Vec4 vec4
-#define _ANKI_SIZEOF_vec4 16
+#define _ANKI_SIZEOF_vec4 16u
 
 #define F16 float16_t
-#define _ANKI_SIZEOF_float16_t 2
+#define _ANKI_SIZEOF_float16_t 2u
 #define HVec2 f16vec2
-#define _ANKI_SIZEOF_f16vec2 4
+#define _ANKI_SIZEOF_f16vec2 4u
 #define HVec3 f16vec3
-#define _ANKI_SIZEOF_f16vec3 6
+#define _ANKI_SIZEOF_f16vec3 6u
 #define HVec4 f16vec4
-#define _ANKI_SIZEOF_f16vec4 8
+#define _ANKI_SIZEOF_f16vec4 8u
 
 #define U8 uint8_t
-#define _ANKI_SIZEOF_uint8_t 1
+#define _ANKI_SIZEOF_uint8_t 1u
 #define U8Vec2 u8vec2
-#define _ANKI_SIZEOF_u8vec2 2
+#define _ANKI_SIZEOF_u8vec2 2u
 #define U8Vec3 u8vec3
-#define _ANKI_SIZEOF_u8vec3 3
+#define _ANKI_SIZEOF_u8vec3 3u
 #define U8Vec4 u8vec4
-#define _ANKI_SIZEOF_u8vec4 4
+#define _ANKI_SIZEOF_u8vec4 4u
 
 #define I8 int8_t
-#define _ANKI_SIZEOF_int8_t 1
+#define _ANKI_SIZEOF_int8_t 1u
 #define I8Vec2 i8vec2
-#define _ANKI_SIZEOF_i8vec2 2
+#define _ANKI_SIZEOF_i8vec2 2u
 #define I8Vec3 i8vec3
-#define _ANKI_SIZEOF_i8vec3 3
+#define _ANKI_SIZEOF_i8vec3 3u
 #define I8Vec4 i8vec4
-#define _ANKI_SIZEOF_i8vec4 4
+#define _ANKI_SIZEOF_i8vec4 4u
 
 #define U16 uint16_t
-#define _ANKI_SIZEOF_uint16_t 2
+#define _ANKI_SIZEOF_uint16_t 2u
 #define U16Vec2 u16vec2
-#define _ANKI_SIZEOF_u16vec2 4
+#define _ANKI_SIZEOF_u16vec2 4u
 #define U16Vec3 u16vec3
-#define _ANKI_SIZEOF_u16vec3 6
+#define _ANKI_SIZEOF_u16vec3 6u
 #define U16Vec4 u16vec4
-#define _ANKI_SIZEOF_u16vec4 8
+#define _ANKI_SIZEOF_u16vec4 8u
 
 #define I16 int16_t
-#define _ANKI_SIZEOF_int16_t 2
+#define _ANKI_SIZEOF_int16_t 2u
 #define I16Vec2 i16vec2
-#define _ANKI_SIZEOF_i16vec2 4
+#define _ANKI_SIZEOF_i16vec2 4u
 #define I16Vec3 i16vec3
-#define _ANKI_SIZEOF_i16vec3 6
+#define _ANKI_SIZEOF_i16vec3 6u
 #define i16Vec4 i16vec4
-#define _ANKI_SIZEOF_i16vec4 8
+#define _ANKI_SIZEOF_i16vec4 8u
 
 #define U32 uint
-#define _ANKI_SIZEOF_uint 4
+#define _ANKI_SIZEOF_uint 4u
 #define UVec2 uvec2
-#define _ANKI_SIZEOF_uvec2 8
+#define _ANKI_SIZEOF_uvec2 8u
 #define UVec3 uvec3
-#define _ANKI_SIZEOF_uvec3 12
+#define _ANKI_SIZEOF_uvec3 12u
 #define UVec4 uvec4
-#define _ANKI_SIZEOF_uvec4 16
+#define _ANKI_SIZEOF_uvec4 16u
 
 #define I32 int
-#define _ANKI_SIZEOF_int 4
+#define _ANKI_SIZEOF_int 4u
 #define IVec2 ivec2
-#define _ANKI_SIZEOF_ivec2 8
+#define _ANKI_SIZEOF_ivec2 8u
 #define IVec3 ivec3
-#define _ANKI_SIZEOF_ivec3 12
+#define _ANKI_SIZEOF_ivec3 12u
 #define IVec4 ivec4
-#define _ANKI_SIZEOF_ivec4 16
+#define _ANKI_SIZEOF_ivec4 16u
 
 #define U64 uint64_t
-#define _ANKI_SIZEOF_uint64_t 8
+#define _ANKI_SIZEOF_uint64_t 8u
 #define U64Vec2 u64vec2
-#define _ANKI_SIZEOF_u64vec2 16
+#define _ANKI_SIZEOF_u64vec2 16u
 #define U64Vec3 u64vec3
-#define _ANKI_SIZEOF_u64vec3 24
+#define _ANKI_SIZEOF_u64vec3 24u
 #define U64Vec4 u64vec4
-#define _ANKI_SIZEOF_u64vec4 32
+#define _ANKI_SIZEOF_u64vec4 32u
 
 #define I64 int64_t
-#define _ANKI_SIZEOF_int64_t 8
+#define _ANKI_SIZEOF_int64_t 8u
 #define I64Vec2 i64vec2
-#define _ANKI_SIZEOF_i64vec2 16
+#define _ANKI_SIZEOF_i64vec2 16u
 #define I64Vec3 i64vec3
-#define _ANKI_SIZEOF_i64vec3 24
+#define _ANKI_SIZEOF_i64vec3 24u
 #define I64Vec4 i64vec4
-#define _ANKI_SIZEOF_i64vec4 32
+#define _ANKI_SIZEOF_i64vec4 32u
 
 #define Mat3 mat3
 
 #define Mat4 mat4
-#define _ANKI_SIZEOF_mat4 64
+#define _ANKI_SIZEOF_mat4 64u
 
 #define Mat3x4 mat3x4
-#define _ANKI_SIZEOF_mat3x4 48
+#define _ANKI_SIZEOF_mat3x4 48u
 
 #define Bool bool
 
@@ -186,22 +186,22 @@ static const char* SHADER_HEADER = R"(#version 460 core
 	const U32 ANKI_CONCATENATE(n, _CONST_ID) = id
 
 #define _ANKI_SCONST_X2(type, componentType, n, id, constWorkaround) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = componentType(1); \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_2_, n) = componentType(1); \
+	layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_2_, n) = componentType(1); \
+	layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_2_, n) = componentType(1); \
 	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_2_, n), ANKI_CONCATENATE(_anki_const_1_2_, n))
 
 #define _ANKI_SCONST_X3(type, componentType, n, id, constWorkaround) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = componentType(1); \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = componentType(1); \
-	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = componentType(1); \
+	layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_3_, n) = componentType(1); \
+	layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_3_, n) = componentType(1); \
+	layout(constant_id = id + 2u) const componentType ANKI_CONCATENATE(_anki_const_2_3_, n) = componentType(1); \
 	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_3_, n), ANKI_CONCATENATE(_anki_const_1_3_, n), \
 		ANKI_CONCATENATE(_anki_const_2_3_, n))
 
 #define _ANKI_SCONST_X4(type, componentType, n, id, constWorkaround) \
-	layout(constant_id = id + 0) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = componentType(1); \
-	layout(constant_id = id + 1) const componentType ANKI_CONCATENATE(_anki_const_1_4_, n) = componentType(1); \
-	layout(constant_id = id + 2) const componentType ANKI_CONCATENATE(_anki_const_2_4_, n) = componentType(1); \
-	layout(constant_id = id + 3) const componentType ANKI_CONCATENATE(_anki_const_3_4_, n) = componentType(1); \
+	layout(constant_id = id + 0u) const componentType ANKI_CONCATENATE(_anki_const_0_4_, n) = componentType(1); \
+	layout(constant_id = id + 1u) const componentType ANKI_CONCATENATE(_anki_const_1_4_, n) = componentType(1); \
+	layout(constant_id = id + 2u) const componentType ANKI_CONCATENATE(_anki_const_2_4_, n) = componentType(1); \
+	layout(constant_id = id + 3u) const componentType ANKI_CONCATENATE(_anki_const_3_4_, n) = componentType(1); \
 	constWorkaround type n = type(ANKI_CONCATENATE(_anki_const_0_4_, n), ANKI_CONCATENATE(_anki_const_1_4_, n), \
 		ANKI_CONCATENATE(_anki_const_2_4_, n), ANKI_CONCATENATE(_anki_const_2_4_, n))
 

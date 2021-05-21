@@ -43,8 +43,8 @@ UVec3 rand3DPCG16(UVec3 v)
 // It will return a uniform 2D point inside [0.0, 1.0]. For random use rand3DPCG16()
 Vec2 hammersleyRandom16(U32 sampleIdx, U32 sampleCount, UVec2 random)
 {
-	const F32 e1 = fract(F32(sampleIdx) / sampleCount + F32(random.x) * (1.0 / 65536.0));
-	const F32 e2 = F32((bitfieldReverse(sampleIdx) >> 16) ^ random.y) * (1.0 / 65536.0);
+	const F32 e1 = fract(F32(sampleIdx) / F32(sampleCount) + F32(random.x) * (1.0 / 65536.0));
+	const F32 e2 = F32((bitfieldReverse(sampleIdx) >> 16u) ^ random.y) * (1.0 / 65536.0);
 	return Vec2(e1, e2);
 }
 

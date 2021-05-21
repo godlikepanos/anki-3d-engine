@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEX_SIZE, 0);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(INPUT_TEX_SIZE, 0u);
 
 #pragma anki start comp
 #define LOG_AVG 0
@@ -34,9 +34,9 @@ void main()
 	const U32 xStart = gl_LocalInvocationID.x * PIXELS_PER_TILE.x;
 
 	F32 avgLum = 0.0;
-	ANKI_UNROLL for(U32 y = 0; y < PIXELS_PER_TILE.y; ++y)
+	ANKI_UNROLL for(U32 y = 0u; y < PIXELS_PER_TILE.y; ++y)
 	{
-		ANKI_UNROLL for(U32 x = 0; x < PIXELS_PER_TILE.x; ++x)
+		ANKI_UNROLL for(U32 x = 0u; x < PIXELS_PER_TILE.x; ++x)
 		{
 			const UVec2 uv = UVec2(xStart, yStart) + UVec2(x, y);
 			if(uv.x >= INPUT_TEX_SIZE.x || uv.y >= INPUT_TEX_SIZE.y)

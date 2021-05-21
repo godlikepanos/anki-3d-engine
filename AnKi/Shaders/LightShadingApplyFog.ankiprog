@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 0);
-ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 1);
+ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 1u);
 
 #pragma anki start vert
 #include <AnKi/Shaders/QuadVert.glsl>

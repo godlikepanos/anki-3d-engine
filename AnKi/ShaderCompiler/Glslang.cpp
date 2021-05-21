@@ -197,8 +197,41 @@ static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 	return gslangShader;
 }
 
-static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
+/// Parse Glslang's error message for the line of the error.
+static ANKI_USE_RESULT Error parseErrorLine(CString error, GenericMemoryPoolAllocator<U8> alloc, U32& lineNumber)
 {
+	lineNumber = MAX_U32;
+
+	StringListAuto lines(alloc);
+	lines.splitString(error, '\n');
+	for(String& line : lines)
+	{
+		if(line.find("ERROR: ") == 0)
+		{
+			StringListAuto tokens(alloc);
+			tokens.splitString(line, ':');
+
+			if(tokens.getSize() < 3 || (tokens.getBegin() + 2)->toNumber(lineNumber) != Error::NONE)
+			{
+
+				ANKI_SHADER_COMPILER_LOGE("Failed to parse the error message: %s", error.cstr());
+				return Error::FUNCTION_FAILED;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	return Error::NONE;
+}
+
+static ANKI_USE_RESULT Error logShaderErrorCode(CString error, CString source, GenericMemoryPoolAllocator<U8> alloc)
+{
+	U32 errorLineNumber = 0;
+	ANKI_CHECK(parseErrorLine(error, alloc, errorLineNumber));
+
 	StringAuto prettySrc(alloc);
 	StringListAuto lines(alloc);
 
@@ -206,19 +239,23 @@ static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolA
 
 	lines.splitString(source, '\n', true);
 
-	I lineno = 0;
+	U32 lineno = 0;
 	for(auto it = lines.getBegin(); it != lines.getEnd(); ++it)
 	{
 		++lineno;
 		StringAuto tmp(alloc);
 
-		if(!it->isEmpty())
+		if(!it->isEmpty() && lineno == errorLineNumber)
 		{
-			tmp.sprintf("%8d: %s\n", lineno, &(*it)[0]);
+			tmp.sprintf(">>%8u: %s\n", lineno, &(*it)[0]);
+		}
+		else if(!it->isEmpty())
+		{
+			tmp.sprintf("  %8u: %s\n", lineno, &(*it)[0]);
 		}
 		else
 		{
-			tmp.sprintf("%8d:\n", lineno);
+			tmp.sprintf("  %8u:\n", lineno);
 		}
 
 		prettySrc.append(tmp);
@@ -226,6 +263,8 @@ static void logShaderErrorCode(CString error, CString source, GenericMemoryPoolA
 
 	ANKI_SHADER_COMPILER_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s", padding, &error[0], padding,
 							  &prettySrc[0], padding, &error[0]);
+
+	return Error::NONE;
 }
 
 Error preprocessGlsl(CString in, StringAuto& out)
@@ -278,7 +317,7 @@ Error compilerGlslToSpirv(CString src, ShaderType shaderType, GenericMemoryPoolA
 	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
-		logShaderErrorCode(shader.getInfoLog(), src, tmpAlloc);
+		ANKI_CHECK(logShaderErrorCode(shader.getInfoLog(), src, tmpAlloc));
 		return Error::USER_DATA;
 	}
 

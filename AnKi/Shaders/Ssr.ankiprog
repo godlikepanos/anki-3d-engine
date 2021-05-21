@@ -77,15 +77,15 @@ void main()
 
 	// Rand idx
 	const Vec2 noiseUv = Vec2(u_unis.m_framebufferSize) / NOISE_TEX_SIZE * uv;
-	const Vec2 noiseShift = 1.0 / NOISE_TEX_SIZE * (u_unis.m_frameCount % 4u);
+	const Vec2 noiseShift = 1.0 / NOISE_TEX_SIZE * F32(u_unis.m_frameCount % 4u);
 	const F32 noise = textureLod(u_noiseTex, u_trilinearRepeatSampler, noiseUv + noiseShift, 0.0).r;
 
 	// Do the heavy work
 	Vec3 hitPoint;
 	F32 hitAttenuation;
-	const U32 lod = 0;
+	const U32 lod = 0u;
 	const U32 step = u_unis.m_firstStepPixels;
-	const F32 stepf = step;
+	const F32 stepf = F32(step);
 	const F32 minStepf = stepf / 4.0;
 	raymarchGroundTruth(viewPos, reflVec, uv, depth, u_unis.m_projMat, u_unis.m_maxSteps, u_depthRt,
 						u_trilinearClampSampler, F32(lod), u_unis.m_depthBufferSize, step,

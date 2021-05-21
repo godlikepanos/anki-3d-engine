@@ -102,37 +102,37 @@ Vec3 clusterHeatmap(Cluster cluster, U32 objectTypeMask)
 	U32 maxObjects = 0u;
 	I32 count = 0;
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT)) != 0)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_POINT_LIGHT)) != 0u)
 	{
 		maxObjects += MAX_VISIBLE_POINT_LIGHTS;
 		count += I32(bitCount(cluster.m_pointLightsMask));
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_SPOT_LIGHT)) != 0)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_SPOT_LIGHT)) != 0u)
 	{
 		maxObjects += MAX_VISIBLE_SPOT_LIGHTS;
 		count += I32(bitCount(cluster.m_spotLightsMask));
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_DECAL)) != 0)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_DECAL)) != 0u)
 	{
 		maxObjects += MAX_VISIBLE_DECALS;
 		count += I32(bitCount(cluster.m_decalsMask));
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME)) != 0)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_FOG_DENSITY_VOLUME)) != 0u)
 	{
 		maxObjects += MAX_VISIBLE_FOG_DENSITY_VOLUMES;
 		count += bitCount(cluster.m_fogDensityVolumesMask);
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_REFLECTION_PROBE)) != 0)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_REFLECTION_PROBE)) != 0u)
 	{
 		maxObjects += MAX_VISIBLE_REFLECTION_PROBES;
 		count += bitCount(cluster.m_reflectionProbesMask);
 	}
 
-	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE)) != 0)
+	if((objectTypeMask & (1u << CLUSTER_OBJECT_TYPE_GLOBAL_ILLUMINATION_PROBE)) != 0u)
 	{
 		maxObjects += MAX_VISIBLE_GLOBAL_ILLUMINATION_PROBES;
 		count += bitCount(cluster.m_giProbesMask);

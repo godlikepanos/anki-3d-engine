@@ -9,7 +9,7 @@
 #pragma anki mutator KERNEL_SIZE 3 5 7 9 11
 #pragma anki mutator COLOR_COMPONENTS 4 3 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(TEXTURE_SIZE, 0u);
 
 #include <AnKi/Shaders/GaussianBlurCommon.glsl>
 

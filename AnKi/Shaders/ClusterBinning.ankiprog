@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 0);
-ANKI_SPECIALIZATION_CONSTANT_U32(TILE_COUNT_X, 1);
-ANKI_SPECIALIZATION_CONSTANT_U32(TILE_COUNT_Y, 2);
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 3);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(RENDERING_SIZE, 4);
+ANKI_SPECIALIZATION_CONSTANT_U32(TILE_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_U32(TILE_COUNT_X, 1u);
+ANKI_SPECIALIZATION_CONSTANT_U32(TILE_COUNT_Y, 2u);
+ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 3u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(RENDERING_SIZE, 4u);
 
 #pragma anki start comp
 
@@ -132,12 +132,12 @@ void main()
 	const Vec3 rayDir = normalize(farWorldPos - rayOrigin);
 
 	// Zero shared memory
-	s_tileMasks[localTileIdx] = 0u;
+	s_tileMasks[localTileIdx] = 0ul;
 	const U32 splitsPerInvocation = max(1u, Z_SPLIT_COUNT / WORKGROUP_SIZE);
 	for(U32 i = gl_LocalInvocationIndex * splitsPerInvocation;
 		i < (gl_LocalInvocationIndex + 1u) * splitsPerInvocation && i < Z_SPLIT_COUNT; ++i)
 	{
-		s_zSplitMasks[i] = 0u;
+		s_zSplitMasks[i] = 0ul;
 	}
 	memoryBarrierShared();
 	barrier();
@@ -238,7 +238,7 @@ void main()
 	if(collides)
 	{
 		// Set the tile
-		const U64 mask = U64(1u) << U64(objectArrayIdx);
+		const U64 mask = 1ul << U64(objectArrayIdx);
 		atomicOr(s_tileMasks[localTileIdx], mask);
 
 		// Compute and set the Z splits
@@ -276,7 +276,7 @@ void main()
 	barrier();
 
 	// First sample writes the tile
-	if(sampleIdx == 0u && s_tileMasks[localTileIdx] != 0u)
+	if(sampleIdx == 0u && s_tileMasks[localTileIdx] != 0ul)
 	{
 		if(isPointLight())
 		{
@@ -308,7 +308,7 @@ void main()
 	for(U32 i = gl_LocalInvocationIndex * splitsPerInvocation;
 		i < (gl_LocalInvocationIndex + 1u) * splitsPerInvocation && i < Z_SPLIT_COUNT; ++i)
 	{
-		if(s_zSplitMasks[i] != 0u)
+		if(s_zSplitMasks[i] != 0ul)
 		{
 			if(isPointLight())
 			{

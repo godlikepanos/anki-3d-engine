@@ -7,10 +7,10 @@
 
 #pragma anki mutator ENABLE_SHADOWS 0 1
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC3(VOLUME_SIZE, 0);
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNT, 3);
-ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 5);
-ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 6);
+ANKI_SPECIALIZATION_CONSTANT_UVEC3(VOLUME_SIZE, 0u);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(TILE_COUNT, 3u);
+ANKI_SPECIALIZATION_CONSTANT_U32(Z_SPLIT_COUNT, 5u);
+ANKI_SPECIALIZATION_CONSTANT_U32(FINAL_Z_SPLIT, 6u);
 
 #pragma anki start comp
 
@@ -120,7 +120,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	}
 
 	// Point lights
-	ANKI_LOOP while(cluster.m_pointLightsMask != 0u)
+	ANKI_LOOP while(cluster.m_pointLightsMask != 0ul)
 	{
 		const I32 idx = findLSB64(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(1ul << U64(idx));
@@ -142,7 +142,7 @@ Vec4 accumulateLightsAndFog(Cluster cluster, Vec3 worldPos, F32 negativeZViewSpa
 	}
 
 	// Spot lights
-	ANKI_LOOP while(cluster.m_spotLightsMask != 0u)
+	ANKI_LOOP while(cluster.m_spotLightsMask != 0ul)
 	{
 		const I32 idx = findLSB64(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(1ul << U64(idx));

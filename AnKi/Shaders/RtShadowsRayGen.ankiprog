@@ -49,10 +49,10 @@ layout(location = 0) rayPayloadEXT F32 g_payload;
 F32 trace(const Vec3 rayOrigin, const Vec3 rayDir, F32 tMax)
 {
 	const U32 flags = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
-	const U32 cullMask = 0xFF;
-	const U32 sbtRecordOffset = 0;
-	const U32 sbtRecordStride = 0;
-	const U32 missIndex = 0;
+	const U32 cullMask = 0xFFu;
+	const U32 sbtRecordOffset = 0u;
+	const U32 sbtRecordStride = 0u;
+	const U32 missIndex = 0u;
 	const F32 tMin = 0.1;
 	const I32 payloadLocation = 0;
 	g_payload = 0.0;
@@ -94,9 +94,9 @@ void main()
 
 	// Get a random factor
 	Vec3 random[RAYS_PER_PIXEL];
-	for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
+	for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
 	{
-		const U32 frameIdx = u_clusteredShading.m_frame * RAYS_PER_PIXEL + i;
+		const U32 frameIdx = u_clusteredShading.m_frame * U32(RAYS_PER_PIXEL + i);
 #if 0
 		const UVec3 irandom = rand3DPCG16(UVec3(gl_LaunchIDEXT.xy, frameIdx));
 		random[i] = Vec3(irandom) / F32(0xFFFF) * 2.0 - 1.0; // In [-1.0, 1.0]
@@ -110,9 +110,9 @@ void main()
 
 	// Dir light
 	const DirectionalLight dirLight = u_clusteredShading.m_directionalLight;
-	ANKI_BRANCH if(dirLight.m_active != 0u && dirLight.m_cascadeCount > 0)
+	ANKI_BRANCH if(dirLight.m_active != 0u && dirLight.m_cascadeCount > 0u)
 	{
-		for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
+		for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
 		{
 			const Vec3 dirLightPos = worldPos + -dirLight.m_direction * 10.0 + random[i];
 			const Vec3 rayDir = normalize(dirLightPos - worldPos);
@@ -126,7 +126,7 @@ void main()
 	}
 
 	// Point lights
-	ANKI_LOOP while(cluster.m_pointLightsMask != 0u)
+	ANKI_LOOP while(cluster.m_pointLightsMask != 0ul)
 	{
 		const I32 idx = findLSB64(cluster.m_pointLightsMask);
 		cluster.m_pointLightsMask &= ~(1ul << U64(idx));
@@ -134,7 +134,7 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowAtlasTileScale >= 0.0)
 		{
-			for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
+			for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
 			{
 				const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * random[i];
 				const Vec3 toLight = lightPos - worldPos;
@@ -153,7 +153,7 @@ void main()
 	}
 
 	// Spot lights
-	ANKI_LOOP while(cluster.m_spotLightsMask != 0u)
+	ANKI_LOOP while(cluster.m_spotLightsMask != 0ul)
 	{
 		const I32 idx = findLSB64(cluster.m_spotLightsMask);
 		cluster.m_spotLightsMask &= ~(1ul << U64(idx));
@@ -161,7 +161,7 @@ void main()
 
 		ANKI_BRANCH if(light.m_shadowLayer != MAX_U32)
 		{
-			for(U32 i = 0; i < RAYS_PER_PIXEL; ++i)
+			for(I32 i = 0; i < RAYS_PER_PIXEL; ++i)
 			{
 				const Vec3 lightPos = light.m_position + 0.05 * light.m_radius * random[i];
 				const Vec3 toLight = lightPos - worldPos;
@@ -208,7 +208,7 @@ void main()
 	const UVec4 packedhistory = textureLod(u_historyShadowsTex, u_nearestAnyClampSampler, historyUv, 0.0);
 	F32 history[MAX_RT_SHADOW_LAYERS];
 	unpackRtShadows(packedhistory, history);
-	for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
 		const F32 lerp = min(1.0, u_unis.historyRejectFactor[i] + blendFactor);
 		shadowFactors[i] = mix(history[i], shadowFactors[i], lerp);
@@ -220,7 +220,7 @@ void main()
 
 	// Compute the moments that will give temporal variance
 	Vec2 moments = Vec2(0.0);
-	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
 		moments.x += shadowFactors[i];
 	}

@@ -21,8 +21,9 @@ layout(set = 0, binding = 3, r11f_g11f_b10f) uniform imageCube u_cubeTex;
 
 void main()
 {
-	const Vec2 cubeSize = Vec2(imageSize(u_cubeTex));
-	if(gl_GlobalInvocationID.x >= cubeSize.x || gl_GlobalInvocationID.y >= cubeSize.y)
+	const UVec2 cubeSizeu = UVec2(imageSize(u_cubeTex));
+	const Vec2 cubeSize = Vec2(cubeSizeu);
+	if(gl_GlobalInvocationID.x >= cubeSizeu.x || gl_GlobalInvocationID.y >= cubeSizeu.y)
 	{
 		return;
 	}

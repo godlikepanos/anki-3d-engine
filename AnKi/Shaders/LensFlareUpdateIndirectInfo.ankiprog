@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_DEPTH_MAP_SIZE, 0);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(IN_DEPTH_MAP_SIZE, 0u);
 
 #pragma anki start comp
 #include <AnKi/Shaders/Common.glsl>
 
-const U32 WORKGROUP_SIZE = 8;
+const U32 WORKGROUP_SIZE = 8u;
 layout(local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE, local_size_z = 1) in;
 
 struct DrawArraysIndirectInfo
@@ -38,9 +38,9 @@ shared U32 s_maxDepth;
 void main()
 {
 	// Init the s_maxDepth
-	if(gl_LocalInvocationIndex == 0)
+	if(gl_LocalInvocationIndex == 0u)
 	{
-		s_maxDepth = 0;
+		s_maxDepth = 0u;
 	}
 	memoryBarrierShared();
 	barrier();
@@ -65,7 +65,7 @@ void main()
 	memoryBarrierShared();
 	barrier();
 
-	if(gl_LocalInvocationIndex == 0)
+	if(gl_LocalInvocationIndex == 0u)
 	{
 		const F32 refDepth2 = F32(s_maxDepth) / F32(MAX_U32);
 		u_indirectInfo[flareIdx].count = (depth > refDepth2) ? 0u : 4u;

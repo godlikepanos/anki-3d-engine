@@ -111,23 +111,23 @@ Vec4 nearestDepthUpscale(Vec2 uv, texture2D depthFull, texture2D depthHalf, text
 		const Vec4 a = textureGather(sampler2D(colorTex, linearAnyClampSampler), uv, 3);
 
 		F32 minDiff = diffs.x;
-		U32 comp = 0;
+		U32 comp = 0u;
 
 		if(diffs.y < minDiff)
 		{
-			comp = 1;
+			comp = 1u;
 			minDiff = diffs.y;
 		}
 
 		if(diffs.z < minDiff)
 		{
-			comp = 2;
+			comp = 2u;
 			minDiff = diffs.z;
 		}
 
 		if(diffs.w < minDiff)
 		{
-			comp = 3;
+			comp = 3u;
 		}
 
 		color = Vec4(r[comp], g[comp], b[comp], a[comp]);
@@ -435,14 +435,14 @@ Mat3 rotationFromDirection(Vec3 zAxis)
 // See getOptimalGlobalInvocationId8x8Amd
 U32 ABfiM(U32 src, U32 ins, U32 bits)
 {
-	const U32 mask = (1 << bits) - 1;
+	const U32 mask = (1u << bits) - 1u;
 	return (ins & mask) | (src & (~mask));
 }
 
 // See getOptimalGlobalInvocationId8x8Amd
 U32 ABfe(U32 src, U32 off, U32 bits)
 {
-	const U32 mask = (1 << bits) - 1;
+	const U32 mask = (1u << bits) - 1u;
 	return (src >> off) & mask;
 }
 

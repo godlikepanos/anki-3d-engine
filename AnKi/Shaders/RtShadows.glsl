@@ -33,7 +33,7 @@ void unpackRtShadows(UVec4 packed, out F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 
 void zeroRtShadowLayers(out F32 shadowFactors[MAX_RT_SHADOW_LAYERS])
 {
-	ANKI_UNROLL for(U32 i = 0; i < MAX_RT_SHADOW_LAYERS; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < MAX_RT_SHADOW_LAYERS; ++i)
 	{
 		shadowFactors[i] = 0.0;
 	}

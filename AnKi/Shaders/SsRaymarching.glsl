@@ -97,7 +97,7 @@ void raymarch(Vec3 rayOrigin, // Ray origin in view space
 
 	// Start looping
 	I32 mipLevel = 0;
-	while(mipLevel > -1 && maxIterations > 0)
+	while(mipLevel > -1 && maxIterations > 0u)
 	{
 		// Step to the next cell
 		Vec3 newOrigin;
@@ -182,7 +182,7 @@ void raymarchGroundTruth(Vec3 rayOrigin, // Ray origin in view space
 
 	// Iterate
 	Vec3 origin;
-	ANKI_LOOP while(maxIterations-- != 0)
+	ANKI_LOOP while(maxIterations-- != 0u)
 	{
 		origin = start + dir * (F32(step) * stepSize);
 

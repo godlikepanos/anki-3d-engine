@@ -1616,6 +1616,8 @@ bool TIntermediate::isFPIntegralConversion(TBasicType from, TBasicType to) const
 //
 bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperator op) const
 {
+    return (from == to); // godlike: Because I like explicitness
+
     if ((isEsProfile() && version < 310 ) || version == 110)
         return false;
 

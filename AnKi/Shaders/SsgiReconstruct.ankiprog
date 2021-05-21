@@ -11,7 +11,7 @@
 
 #pragma anki mutator VARIANT 0 1 2 3
 
-ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0);
+ANKI_SPECIALIZATION_CONSTANT_UVEC2(FB_SIZE, 0u);
 
 #pragma anki start comp
 
@@ -55,31 +55,31 @@ void reconstructAll(Vec4 depthRefs, Vec3 masterColor)
 	const IVec2 localInvocationId = IVec2(gl_LocalInvocationID.xy);
 
 #if VARIANT == 0
-	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2);
+	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2u);
 	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(1, 0), IVec2(1, 1), IVec2(0, 1));
-	const U32 masterDrefIdx = 3;
-	const U32 slaveDrefIdx[3] = U32[](2, 1, 0);
+	const U32 masterDrefIdx = 3u;
+	const U32 slaveDrefIdx[3] = U32[](2u, 1u, 0u);
 #elif VARIANT == 1
-	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2) + IVec2(1, 0);
+	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2u) + IVec2(1, 0);
 	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(-1, 0), IVec2(0, 1), IVec2(-1, 1));
-	const U32 masterDrefIdx = 2;
-	const U32 slaveDrefIdx[3] = U32[](3, 1, 0);
+	const U32 masterDrefIdx = 2u;
+	const U32 slaveDrefIdx[3] = U32[](3u, 1u, 0u);
 #elif VARIANT == 2
-	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2) + IVec2(1, 1);
+	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2u) + IVec2(1, 1);
 	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(-1, -1), IVec2(0, -1), IVec2(-1, 0));
-	const U32 masterDrefIdx = 1;
-	const U32 slaveDrefIdx[3] = U32[](3, 2, 0);
+	const U32 masterDrefIdx = 1u;
+	const U32 slaveDrefIdx[3] = U32[](3u, 2u, 0u);
 #else
-	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2) + IVec2(0, 1);
+	const IVec2 masterStoreCoord = IVec2(gl_GlobalInvocationID.xy * 2u) + IVec2(0, 1);
 	const IVec2 slaveRelativeCoords[3] = IVec2[](IVec2(0, -1), IVec2(1, -1), IVec2(1, 0));
-	const U32 masterDrefIdx = 0;
-	const U32 slaveDrefIdx[3] = U32[](3, 2, 1);
+	const U32 masterDrefIdx = 0u;
+	const U32 slaveDrefIdx[3] = U32[](3u, 2u, 1u);
 #endif
 
 	const Vec4 masterColorAndDepth = Vec4(masterColor, depthRefs[masterDrefIdx]);
 	imageStore(u_outImg, masterStoreCoord, Vec4(masterColor, 0.0));
 
-	ANKI_UNROLL for(U32 i = 0; i < 3; ++i)
+	ANKI_UNROLL for(U32 i = 0u; i < 3u; ++i)
 	{
 		const IVec2 sharedCoord =
 			clamp(localInvocationId + slaveRelativeCoords[i], IVec2(0), IVec2(WORKGROUP_SIZE) - 1);
@@ -92,10 +92,10 @@ void reconstructAll(Vec4 depthRefs, Vec3 masterColor)
 
 void main()
 {
-	const UVec2 IN_TEXTURE_SIZE = FB_SIZE / 2;
+	const UVec2 IN_TEXTURE_SIZE = FB_SIZE / 2u;
 
 	// Initialize the storage for all threads, including helpers. The check should be a constexpr
-	if((WORKGROUP_SIZE.x % IN_TEXTURE_SIZE.x) != 0 || (WORKGROUP_SIZE.y % IN_TEXTURE_SIZE.y) != 0)
+	if((WORKGROUP_SIZE.x % IN_TEXTURE_SIZE.x) != 0u || (WORKGROUP_SIZE.y % IN_TEXTURE_SIZE.y) != 0u)
 	{
 		s_colors[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec3(0.0);
 		s_depths[gl_LocalInvocationID.y][gl_LocalInvocationID.x] = Vec4(1000.0); // High value so it has low weight
