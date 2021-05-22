@@ -364,7 +364,7 @@ static ShaderPtr createShader(CString src, ShaderType type, GrManager& gr,
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	StringAuto header(alloc);
-	ShaderProgramParser::generateAnkiShaderHeader(type, gr.getDeviceCapabilities(), gr.getBindlessLimits(), header);
+	ShaderProgramParser::generateAnkiShaderHeader(type, ShaderCompilerOptions(), header);
 	header.append(src);
 	DynamicArrayAuto<U8> spirv(alloc);
 	ANKI_TEST_EXPECT_NO_ERR(compilerGlslToSpirv(header, type, alloc, spirv));

@@ -8,6 +8,7 @@
 #include <AnKi/Util/Logger.h>
 #include <AnKi/Util/String.h>
 #include <AnKi/Util/BitSet.h>
+#include <AnKi/Gr/Common.h>
 
 namespace anki
 {
@@ -45,6 +46,13 @@ public:
 	virtual void enqueueTask(void (*callback)(void* userData), void* userData) = 0;
 
 	virtual ANKI_USE_RESULT Error joinTasks() = 0;
+};
+
+/// Options to be passed to the compiler.
+class ShaderCompilerOptions
+{
+public:
+	BindlessLimits m_bindlessLimits;
 };
 /// @}
 

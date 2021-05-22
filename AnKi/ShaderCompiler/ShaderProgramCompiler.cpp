@@ -767,8 +767,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 								   ShaderProgramPostParseInterface* postParseCallback,
 								   ShaderProgramAsyncTaskInterface* taskManager_,
 								   GenericMemoryPoolAllocator<U8> tempAllocator,
-								   const GpuDeviceCapabilities& gpuCapabilities, const BindlessLimits& bindlessLimits,
-								   ShaderProgramBinaryWrapper& binaryW)
+								   const ShaderCompilerOptions& compilerOptions, ShaderProgramBinaryWrapper& binaryW)
 {
 	// Initialize the binary
 	binaryW.cleanup();
@@ -780,7 +779,7 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 	memcpy(&binary.m_magic[0], SHADER_BINARY_MAGIC, 8);
 
 	// Parse source
-	ShaderProgramParser parser(fname, &fsystem, tempAllocator, gpuCapabilities, bindlessLimits);
+	ShaderProgramParser parser(fname, &fsystem, tempAllocator, compilerOptions);
 	ANKI_CHECK(parser.parse());
 
 	if(postParseCallback && postParseCallback->skipCompilation(parser.getHash()))
@@ -1008,11 +1007,10 @@ Error compileShaderProgramInternal(CString fname, ShaderProgramFilesystemInterfa
 Error compileShaderProgram(CString fname, ShaderProgramFilesystemInterface& fsystem,
 						   ShaderProgramPostParseInterface* postParseCallback,
 						   ShaderProgramAsyncTaskInterface* taskManager, GenericMemoryPoolAllocator<U8> tempAllocator,
-						   const GpuDeviceCapabilities& gpuCapabilities, const BindlessLimits& bindlessLimits,
-						   ShaderProgramBinaryWrapper& binaryW)
+						   const ShaderCompilerOptions& compilerOptions, ShaderProgramBinaryWrapper& binaryW)
 {
 	const Error err = compileShaderProgramInternal(fname, fsystem, postParseCallback, taskManager, tempAllocator,
-												   gpuCapabilities, bindlessLimits, binaryW);
+												   compilerOptions, binaryW);
 	if(err)
 	{
 		ANKI_SHADER_COMPILER_LOGE("Failed to compile: %s", fname.cstr());

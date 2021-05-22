@@ -45,9 +45,7 @@ ANKI_TEST(ShaderCompiler, ShaderCompilerParser)
 		}
 	} interface;
 
-	BindlessLimits bindlessLimits;
-	GpuDeviceCapabilities gpuCapabilities;
-	ShaderProgramParser parser("filename0", &interface, alloc, gpuCapabilities, bindlessLimits);
+	ShaderProgramParser parser("filename0", &interface, alloc, ShaderCompilerOptions());
 	ANKI_TEST_EXPECT_NO_ERR(parser.parse());
 
 	// Test a variant
